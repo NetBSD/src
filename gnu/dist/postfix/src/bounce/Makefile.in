@@ -1,8 +1,8 @@
 SHELL	= /bin/sh
 SRCS	= bounce.c bounce_append_service.c bounce_notify_service.c \
-	bounce_cleanup.c bounce_notify_util.c
+	bounce_cleanup.c bounce_notify_util.c bounce_notify_verp.c
 OBJS	= bounce.o bounce_append_service.o bounce_notify_service.o \
-	bounce_cleanup.o bounce_notify_util.o
+	bounce_cleanup.o bounce_notify_util.o bounce_notify_verp.o
 HDRS	= 
 TESTSRC	= 
 WARN	= -W -Wformat -Wimplicit -Wmissing-prototypes \
@@ -65,10 +65,12 @@ bounce.o: ../../include/vstream.h
 bounce.o: ../../include/stringops.h
 bounce.o: ../../include/mail_proto.h
 bounce.o: ../../include/iostuff.h
+bounce.o: ../../include/attr.h
 bounce.o: ../../include/mail_queue.h
 bounce.o: ../../include/mail_params.h
 bounce.o: ../../include/mail_conf.h
 bounce.o: ../../include/bounce.h
+bounce.o: ../../include/mail_addr.h
 bounce.o: ../../include/mail_server.h
 bounce.o: bounce_service.h
 bounce.o: ../../include/bounce_log.h
@@ -133,3 +135,19 @@ bounce_notify_util.o: ../../include/name_mask.h
 bounce_notify_util.o: ../../include/bounce_log.h
 bounce_notify_util.o: ../../include/mail_date.h
 bounce_notify_util.o: bounce_service.h
+bounce_notify_verp.o: bounce_notify_verp.c
+bounce_notify_verp.o: ../../include/sys_defs.h
+bounce_notify_verp.o: ../../include/msg.h
+bounce_notify_verp.o: ../../include/vstream.h
+bounce_notify_verp.o: ../../include/vbuf.h
+bounce_notify_verp.o: ../../include/name_mask.h
+bounce_notify_verp.o: ../../include/mail_params.h
+bounce_notify_verp.o: ../../include/mail_queue.h
+bounce_notify_verp.o: ../../include/vstring.h
+bounce_notify_verp.o: ../../include/post_mail.h
+bounce_notify_verp.o: ../../include/cleanup_user.h
+bounce_notify_verp.o: ../../include/mail_addr.h
+bounce_notify_verp.o: ../../include/mail_error.h
+bounce_notify_verp.o: ../../include/verp_sender.h
+bounce_notify_verp.o: bounce_service.h
+bounce_notify_verp.o: ../../include/bounce_log.h

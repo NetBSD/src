@@ -62,12 +62,14 @@
 
 #include <mail_params.h>
 #include <maps.h>
+#include <match_parent_style.h>
 
 /* Application-specific. */
 
 #include "transport.h"
 
 static MAPS *transport_path;
+static int transport_match_parent_style;
 
 /* transport_init - pre-jail initialization */
 
@@ -77,6 +79,7 @@ void    transport_init(void)
 	msg_panic("transport_init: repeated call");
     transport_path = maps_create("transport", var_transport_maps,
 				 DICT_FLAG_LOCK);
+    transport_match_parent_style = match_parent_style(VAR_TRANSPORT_MAPS);
 }
 
 /* transport_lookup - map a transport domain */
@@ -85,6 +88,7 @@ int     transport_lookup(const char *domain, VSTRING *channel, VSTRING *nexthop)
 {
     char   *low_domain = lowercase(mystrdup(domain));
     const char *name;
+    const char *next;
     const char *value;
     const char *host;
     char   *saved_value;
@@ -113,7 +117,7 @@ int     transport_lookup(const char *domain, VSTRING *channel, VSTRING *nexthop)
      * Specify if a key is partial or full, to avoid matching partial keys with
      * regular expressions.
      */
-    for (name = low_domain; name != 0; name = strchr(name + 1, '.')) {
+    for (name = low_domain; /* void */; name = next) {
 	if ((value = maps_find(transport_path, name, maps_flag)) != 0) {
 	    saved_value = mystrdup(value);
 	    if ((host = split_at(saved_value, ':')) == 0 || *host == 0)
@@ -132,6 +136,10 @@ int     transport_lookup(const char *domain, VSTRING *channel, VSTRING *nexthop)
 	} else if (dict_errno != 0) {
 	    msg_fatal("transport table lookup problem");
 	}
+	if ((next = strchr(name + 1, '.')) == 0)
+	    break;
+	if (transport_match_parent_style == MATCH_FLAG_PARENT)
+	    next++;
 	maps_flag = PARTIAL;
     }
     myfree(low_domain);

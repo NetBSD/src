@@ -72,6 +72,9 @@
 /*	int	vstream_fileno(stream)
 /*	VSTREAM	*stream;
 /*
+/*	void	*vstream_context(stream)
+/*	VSTREAM *stream;
+/*
 /*	int	vstream_ferror(stream)
 /*	VSTREAM	*stream;
 /*
@@ -97,7 +100,7 @@
 /*	int	vstream_setjmp(stream)
 /*	VSTREAM	*stream;
 /*
-/*	void	longjmp(stream, val)
+/*	void	vstream_longjmp(stream, val)
 /*	VSTREAM	*stream;
 /*	int	val;
 /*
@@ -175,11 +178,11 @@
 /*
 /*	VSTREAM_PUTCHAR(c) is an alias for VSTREAM_PUTC(c, VSTREAM_OUT).
 /*
-/*	vstream_unget() pushes back a character onto the specified stream
+/*	vstream_ungetc() pushes back a character onto the specified stream
 /*	and returns the character, or VSTREAM_EOF in case of problems.
 /*	It is an error to push back before reading (or immediately after
 /*	changing the stream offset via vstream_fseek()). Upon successful
-/*	return, vstream_unget() clears the end-of-file stream flag.
+/*	return, vstream_ungetc() clears the end-of-file stream flag.
 /*
 /*	vstream_fputs() appends the given null-terminated string to the
 /*	specified buffered stream. The result is 0 in case of success,
@@ -249,6 +252,9 @@
 /*	vstream_fileno() gives access to the file handle associated with
 /*	a buffered stream. With streams that have separate read/write
 /*	file descriptors, the result is the current descriptor.
+/*
+/*	vstream_context() returns the application context that is passed on to
+/*	the application-specified read/write routines.
 /*
 /*	VSTREAM_PATH() is an unsafe macro that returns the name stored
 /*	with vstream_fopen() or with vstream_control(). The macro is

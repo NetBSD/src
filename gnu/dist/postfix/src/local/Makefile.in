@@ -213,6 +213,7 @@ forward.o: ../../include/vstring_vstream.h
 forward.o: ../../include/iostuff.h
 forward.o: ../../include/stringops.h
 forward.o: ../../include/mail_proto.h
+forward.o: ../../include/attr.h
 forward.o: ../../include/cleanup_user.h
 forward.o: ../../include/sent.h
 forward.o: ../../include/record.h
@@ -334,13 +335,16 @@ mailbox.o: ../../include/deliver_request.h
 mailbox.o: ../../include/recipient_list.h
 mailbox.o: ../../include/mail_proto.h
 mailbox.o: ../../include/iostuff.h
+mailbox.o: ../../include/attr.h
 mailbox.o: ../../include/mbox_open.h
 mailbox.o: ../../include/safe_open.h
+mailbox.o: ../../include/maps.h
+mailbox.o: ../../include/dict.h
+mailbox.o: ../../include/argv.h
 mailbox.o: local.h
 mailbox.o: ../../include/tok822.h
 mailbox.o: ../../include/resolve_clnt.h
 mailbox.o: ../../include/mbox_conf.h
-mailbox.o: ../../include/argv.h
 mailbox.o: biff_notify.h
 maildir.o: maildir.c
 maildir.o: ../../include/sys_defs.h
@@ -403,6 +407,7 @@ resolve.o: ../../include/htable.h
 resolve.o: ../../include/mail_proto.h
 resolve.o: ../../include/vstream.h
 resolve.o: ../../include/iostuff.h
+resolve.o: ../../include/attr.h
 resolve.o: ../../include/resolve_clnt.h
 resolve.o: ../../include/rewrite_clnt.h
 resolve.o: ../../include/tok822.h
@@ -446,6 +451,7 @@ unknown.o: ../../include/mail_params.h
 unknown.o: ../../include/mail_proto.h
 unknown.o: ../../include/vstream.h
 unknown.o: ../../include/iostuff.h
+unknown.o: ../../include/attr.h
 unknown.o: ../../include/bounce.h
 unknown.o: local.h
 unknown.o: ../../include/htable.h

@@ -4,25 +4,26 @@
 .SH NAME
 postdrop
 \-
-Postfix mail posting agent
+Postfix mail posting utility
 .SH SYNOPSIS
 .na
 .nf
-\fBpostdrop\fR [\fIoption ...\fR]
+\fBpostdrop\fR [\fB-rv\fR] [\fB-c \fIconfig_dir\fR]
 .SH DESCRIPTION
 .ad
 .fi
 The \fBpostdrop\fR command creates a file in the \fBmaildrop\fR
 directory and copies its standard input to the file.
 
-The command is designed to run with set-gid privileges, and with
-group write permission to the \fBmaildrop\fR queue directory.
-
-The \fBpostdrop\fR command is automatically invoked by the
-\fBsendmail\fR(1) mail posting agent when the \fBmaildrop\fR
-queue directory is not world-writable.
-
 Options:
+.IP \fB-c \fIconfig_dir\fR
+The \fBmain.cf\fR configuration file is in the named directory
+instead of the default configuration directory. See also the
+MAIL_CONFIG environment setting below.
+.IP \fB-r\fR
+Use a Postfix-internal protocol for reading the message from
+standard input, and for reporting status information on standard
+output. This is currently the only supported method.
 .IP \fB-v\fR
 Enable verbose logging for debugging purposes. Multiple \fB-v\fR
 options make the software increasingly verbose.
@@ -31,8 +32,9 @@ options make the software increasingly verbose.
 .nf
 .ad
 .fi
-This program is designed so that it can run with set-user (or
-group) id privileges.
+The command is designed to run with set-group ID privileges, so
+that it can write to the \fBmaildrop\fR queue directory and so that
+it can connect to Postfix daemon processes.
 .SH DIAGNOSTICS
 .ad
 .fi
@@ -45,8 +47,16 @@ INT, QUIT or TERM signal, the queue file is deleted.
 .nf
 .ad
 .fi
-The program deletes all environment information, because the C
-library can't be trusted.
+.IP MAIL_CONFIG
+Directory with the \fBmain.cf\fR file. In order to avoid exploitation
+of set-group ID privileges, it is not possible to specify arbitrary
+directory names.
+
+A non-standard directory is allowed only if the name is listed in the
+standard \fBmain.cf\fR file, in the \fBalternate_config_directories\fR
+configuration parameter value.
+
+Only the super-user is allowed to specify arbitrary directory names.
 .SH FILES
 .na
 .nf

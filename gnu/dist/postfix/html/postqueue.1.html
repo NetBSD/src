@@ -1,0 +1,115 @@
+<html> <head> </head> <body> <pre>
+
+POSTQUEUE(1)                                         POSTQUEUE(1)
+
+<b>NAME</b>
+       postqueue - Postfix queue control
+
+<b>SYNOPSIS</b>
+       <b>postqueue</b> [<b>-c</b> <i>config_dir</i>] <b>-f</b>
+       <b>postqueue</b> [<b>-c</b> <i>config_dir</i>] <b>-p</b>
+       <b>postqueue</b> [<b>-c</b> <i>config_dir</i>] <b>-s</b> <i>site</i>
+
+<b>DESCRIPTION</b>
+       The  <b>postqueue</b>  program implements the Postfix user inter-
+       face for queue management. It implements  all  the  opera-
+       tions that are traditionally available via the <a href="sendmail.1.html"><b>sendmail</b>(1)</a>
+       command.
+
+       The following options are recognized:
+
+       <b>-c</b> <i>config_dir</i>
+              The <b>main.cf</b> configuration  file  is  in  the  named
+              directory  instead  of  the  default  configuration
+              directory. See  also  the  MAIL_CONFIG  environment
+              setting below.
+
+       <b>-f</b>     Flush  the  queue:  attempt  to  deliver all queued
+              mail.
+
+              This option implements the traditional <b>sendmail</b>  <b>-q</b>
+              command,  by contacting the Postfix <a href="qmgr.8.html"><b>qmgr</b>(8)</a> daemon.
+
+       <b>-p</b>     Produce a traditional sendmail-style queue listing.
+
+              This  option  implements the traditional <b>mailq</b> com-
+              mand, by contacting the Postfix <a href="showq.8.html"><b>showq</b>(8)</a> daemon.
+
+       <b>-s</b> <i>site</i>
+              Schedule immediate delivery of  all  mail  that  is
+              queued  for the named <i>site</i>. The site must be eligi-
+              ble for the "fast flush" service.  See <a href="flushd.8.html"><b>flush</b>(8)</a> for
+              more information about the "fast flush" service.
+
+              This  option  implements  the  traditional <b>sendmail</b>
+              <b>-qR</b><i>site</i> command, by contacting the Postfix <a href="flushd.8.html"><b>flush</b>(8)</a>
+              daemon.
+
+       <b>-v</b>     Enable verbose logging for debugging purposes. Mul-
+              tiple <b>-v</b> options  make  the  software  increasingly
+              verbose.
+
+<b>SECURITY</b>
+       This  program  is designed to run with set-group ID privi-
+       leges, so that it can connect to Postfix daemon processes.
+
+<b>DIAGNOSTICS</b>
+       Problems  are  logged  to  <b>syslogd</b>(8)  and to the standard
+       error stream.
+
+<b>ENVIRONMENT</b>
+       MAIL_CONFIG
+              Directory with the <b>main.cf</b> file.
+
+              In order to  avoid  exploitation  of  set-group  ID
+              privileges, it is not possible to specify arbitrary
+              directory names.
+
+              A non-standard directory is  allowed  only  if  the
+              name is listed in the standard <b>main.cf</b> file, in the
+              <b>alternate</b><i>_</i><b>config</b><i>_</i><b>directories</b> configuration  parame-
+              ter value.
+
+              Only the super-user is allowed to specify arbitrary
+              directory names.
+
+<b>FILES</b>
+       /var/spool/postfix, mail queue
+       /etc/postfix, configuration files
+
+<b>CONFIGURATION</b> <b>PARAMETERS</b>
+       <b>import</b><i>_</i><b>environment</b>
+              List of names of environment parameters that can be
+              imported from non-Postfix processes.
+
+       <b>queue</b><i>_</i><b>directory</b>
+              Top-level  directory  of the Postfix queue. This is
+              also the root directory of Postfix daemons that run
+              chrooted.
+
+       <b>fast</b><i>_</i><b>flush</b><i>_</i><b>domains</b>
+              List of domains that will receive "fast flush" ser-
+              vice (default: all  domains  that  this  system  is
+              willing  to relay mail to). This list specifies the
+              domains that  Postfix  accepts  in  the  SMTP  <b>ETRN</b>
+              request and in the <b>sendmail</b> <b>-qR</b> command.
+
+<b>SEE</b> <b>ALSO</b>
+       sendmail(8) sendmail-compatible user interface
+       <a href="qmgr.8.html">qmgr(8)</a> queue manager
+       <a href="showq.8.html">showq(8)</a> list mail queue
+       <a href="flushd.8.html">flush(8)</a> fast flush service
+
+<b>LICENSE</b>
+       The  Secure  Mailer  license must be distributed with this
+       software.
+
+<b>AUTHOR(S)</b>
+       Wietse Venema
+       IBM T.J. Watson Research
+       P.O. Box 704
+       Yorktown Heights, NY 10598, USA
+
+                                                                1
+
+</pre> </body> </html>

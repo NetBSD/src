@@ -252,7 +252,7 @@ void    smtp_chat_notify(SMTP_STATE *state)
 
     notice = post_mail_fopen_nowait(mail_addr_double_bounce(),
 				    var_error_rcpt,
-				    NULL_CLEANUP_FLAGS, "NOTICE");
+				    NULL_CLEANUP_FLAGS);
     if (notice == 0) {
 	msg_warn("postmaster notify: %m");
 	return;

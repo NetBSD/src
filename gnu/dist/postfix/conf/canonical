@@ -47,21 +47,19 @@
 # TABLE FORMAT
 #        The format of the canonical table is as follows:
 # 
-#        blanks and comments
-#               Blank lines are ignored,  as  are  lines  beginning
-#               with `#'.
-# 
-#        leading whitespace
-#               Lines  that begin with whitespace continue the pre-
-#               vious line.
-# 
-#                                                                 1
-# 
-# CANONICAL(5)                                         CANONICAL(5)
-# 
 #        pattern result
 #               When pattern matches a mail address, replace it  by
 #               the corresponding result.
+# 
+#        blank lines and comments
+#               Empty  lines and whitespace-only lines are ignored,
+#               as are lines whose first  non-whitespace  character
+#               is a `#'.
+# 
+#        multi-line text
+#               A  logical  line starts with non-whitespace text. A
+#               line that starts with whitespace continues a  logi-
+#               cal line.
 # 
 #        With lookups from indexed files such as DB or DBM, or from
 #        networked tables such as NIS, LDAP or  SQL,  patterns  are
@@ -92,13 +90,11 @@
 #        domain, the result is the same user in otherdomain.
 # 
 # ADDRESS EXTENSION
-#        When table lookup fails, and the  address  localpart  con-
-#        tains    the    optional    recipient   delimiter   (e.g.,
-#        user+foo@domain), the search is  repeated  for  the  unex-
-#        tended  address  (e.g.   user@domain),  and  the unmatched
-#        extension is propagated to the result of table lookup. The
-#        matching order is: user+foo@domain, user@domain, user+foo,
-#        user, and @domain.
+#        When a mail address localpart contains the optional recip-
+#        ient  delimiter  (e.g., user+foo@domain), the lookup order
+#        becomes: user+foo@domain, user@domain, user+foo, user, and
+#        @domain.   An unmatched address extension (+foo) is propa-
+#        gated to the result of table lookup.
 # 
 # REGULAR EXPRESSION TABLES
 #        This section describes how the table lookups  change  when
@@ -113,25 +109,20 @@
 #        foo.
 # 
 #        Patterns  are  applied  in  the  order as specified in the
-# 
-#                                                                 2
-# 
-# CANONICAL(5)                                         CANONICAL(5)
-# 
 #        table, until a pattern is found that  matches  the  search
 #        string.
 # 
-#        Results  are the same as with normal indexed file lookups,
-#        with the additional feature that parenthesized  substrings
-#        from  the pattern can be interpolated as $1, $2 and so on.
+#        Results  are  the  same as with indexed file lookups, with
+#        the additional feature that parenthesized substrings  from
+#        the pattern can be interpolated as $1, $2 and so on.
 # 
 # BUGS
-#        The table format does not understand quoting  conventions.
+#        The  table format does not understand quoting conventions.
 # 
 # CONFIGURATION PARAMETERS
-#        The  following  main.cf parameters are especially relevant
-#        to this topic. See the Postfix  main.cf  file  for  syntax
-#        details  and  for  default  values. Use the postfix reload
+#        The following main.cf parameters are  especially  relevant
+#        to  this  topic.  See  the Postfix main.cf file for syntax
+#        details and for default values.  Use  the  postfix  reload
 #        command after a configuration change.
 # 
 #        canonical_maps
@@ -148,19 +139,24 @@
 #        Other parameters of interest:
 # 
 #        inet_interfaces
-#               The network interface addresses  that  this  system
+#               The  network  interface  addresses that this system
 #               receives mail on.
 # 
+#        masquerade_classes
+#               List of address classes  subject  to  masquerading:
+#               zero  or  more of envelope_sender, envelope_recipi-
+#               ent, header_sender, header_recipient.
+# 
 #        masquerade_domains
-#               List  of  domains  that hide their subdomain struc-
+#               List of domains that hide  their  subdomain  struc-
 #               ture.
 # 
 #        masquerade_exceptions
-#               List of user names that are not subject to  address
+#               List  of user names that are not subject to address
 #               masquerading.
 # 
 #        mydestination
-#               List  of  domains  that  this mail system considers
+#               List of domains that  this  mail  system  considers
 #               local.
 # 
 #        myorigin
@@ -172,18 +168,13 @@
 # 
 # SEE ALSO
 #        cleanup(8) canonicalize and enqueue mail
-# 
-#                                                                 3
-# 
-# CANONICAL(5)                                         CANONICAL(5)
-# 
 #        postmap(1) create mapping table
 #        virtual(5) virtual domain mapping
 #        pcre_table(5) format of PCRE tables
 #        regexp_table(5) format of POSIX regular expression tables
 # 
 # LICENSE
-#        The Secure Mailer license must be  distributed  with  this
+#        The  Secure  Mailer  license must be distributed with this
 #        software.
 # 
 # AUTHOR(S)
@@ -192,5 +183,5 @@
 #        P.O. Box 704
 #        Yorktown Heights, NY 10598, USA
 # 
-#                                                                 4
+#                                                                 1
 # 

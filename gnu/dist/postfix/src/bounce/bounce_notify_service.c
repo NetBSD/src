@@ -138,8 +138,7 @@ int     bounce_notify_service(char *service, char *queue_name,
 	    postmaster = flush ? var_2bounce_rcpt : var_delay_rcpt;
 	    if ((bounce = post_mail_fopen_nowait(mail_addr_double_bounce(),
 						 postmaster,
-						 NULL_CLEANUP_FLAGS,
-						 "BOUNCE")) != 0) {
+						 NULL_CLEANUP_FLAGS)) != 0) {
 
 		/*
 		 * Double bounce to Postmaster. This is the last opportunity
@@ -163,8 +162,7 @@ int     bounce_notify_service(char *service, char *queue_name,
      */
     else {
 	if ((bounce = post_mail_fopen_nowait(NULL_SENDER, recipient,
-					     NULL_CLEANUP_FLAGS,
-					     "BOUNCE")) != 0) {
+					     NULL_CLEANUP_FLAGS)) != 0) {
 
 	    /*
 	     * Send the bounce message header, some boilerplate text that
@@ -203,8 +201,7 @@ int     bounce_notify_service(char *service, char *queue_name,
 	    postmaster = flush ? var_bounce_rcpt : var_delay_rcpt;
 	    if ((bounce = post_mail_fopen_nowait(mail_addr_double_bounce(),
 						 postmaster,
-						 NULL_CLEANUP_FLAGS,
-						 "BOUNCE")) != 0) {
+						 NULL_CLEANUP_FLAGS)) != 0) {
 		if (bounce_header(bounce, bounce_info, postmaster) == 0
 		    && bounce_diagnostic_log(bounce, bounce_info) == 0
 		    && bounce_header_dsn(bounce, bounce_info) == 0

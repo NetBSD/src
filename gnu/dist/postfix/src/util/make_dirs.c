@@ -54,6 +54,7 @@ int     make_dirs(const char *path, int perms)
     int     saved_ch;
     struct stat st;
     int     ret;
+    mode_t  saved_mode = 0;
 
     /*
      * Initialize. Make a copy of the path that we can safely clobber.
@@ -78,14 +79,31 @@ int     make_dirs(const char *path, int perms)
 		ret = -1;
 		break;
 	    }
+	    saved_mode = st.st_mode;
 	} else {
 	    if (errno != ENOENT)
 		break;
+
+	    /*
+	     * Create a new directory. Unfortunately, mkdir(2) has no
+	     * equivalent of open(2)'s O_CREAT|O_EXCL safety net, so we must
+	     * require that the parent directory is not world writable.
+	     * Detecting a lost race condition after the fact is not
+	     * sufficient, as an attacker could repeat the attack and add one
+	     * directory level at a time.
+	     */
+	    if (saved_mode & S_IWOTH) {
+		msg_warn("refusing to mkdir %s: parent directory is writable by everyone",
+			 saved_path);
+		errno = EPERM;
+		ret = -1;
+		break;
+	    }
 	    if ((ret = mkdir(saved_path, perms)) < 0) {
 		if (errno != EEXIST)
 		    break;
 		/* Race condition? */
-		if ((ret = stat(saved_path, &st)) < 0) 
+		if ((ret = stat(saved_path, &st)) < 0)
 		    break;
 		if (!S_ISDIR(st.st_mode)) {
 		    errno = ENOTDIR;

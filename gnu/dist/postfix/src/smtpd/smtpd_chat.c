@@ -107,6 +107,9 @@ static void smtp_chat_append(SMTPD_STATE *state, char *direction)
 {
     char   *line;
 
+    if (state->notify_mask == 0)
+	return;
+
     if (state->history == 0)
 	state->history = argv_alloc(10);
     line = concatenate(direction, STR(state->buffer), (char *) 0);
@@ -207,7 +210,7 @@ void    smtpd_chat_notify(SMTPD_STATE *state)
 
     notice = post_mail_fopen_nowait(mail_addr_double_bounce(),
 				    var_error_rcpt,
-				    NULL_CLEANUP_FLAGS, "NOTICE");
+				    NULL_CLEANUP_FLAGS);
     if (notice == 0) {
 	msg_warn("postmaster notify: %m");
 	return;
@@ -227,7 +230,5 @@ void    smtpd_chat_notify(SMTPD_STATE *state)
     post_mail_fputs(notice, "");
     if (state->reason)
 	post_mail_fprintf(notice, "Session aborted, reason: %s", state->reason);
-    else
-	post_mail_fputs(notice, "No message was collected successfully.");
     (void) post_mail_fclose(notice);
 }

@@ -48,7 +48,9 @@ REC_TYPE_NAME rec_type_names[] = {
     REC_TYPE_FROM, "sender",
     REC_TYPE_DONE, "done",
     REC_TYPE_RCPT, "recipient",
+    REC_TYPE_ORCP, "original recipient",
     REC_TYPE_WARN, "warning_message_time",
+    REC_TYPE_ATTR, "named attribute",
     REC_TYPE_MESG, "message_content",
     REC_TYPE_CONT, "unterminated",
     REC_TYPE_NORM, "normal_data",
@@ -56,6 +58,7 @@ REC_TYPE_NAME rec_type_names[] = {
     REC_TYPE_RRTO, "return_receipt",
     REC_TYPE_ERTO, "errors_to",
     REC_TYPE_PRIO, "priority",
+    REC_TYPE_VERP, "verp_delimiters",
     REC_TYPE_END, "message_end",
     0, 0,
 };

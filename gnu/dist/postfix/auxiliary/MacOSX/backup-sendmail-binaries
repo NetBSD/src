@@ -1,0 +1,20 @@
+#! /bin/sh
+
+# Written by Gerben Wierda, Oct 2001. I waive every copyright on this and
+# I also do not give any warranty.
+
+# We use tar, as we do not know beforehand if we are dealing with real
+# files or symbolic links. Since we use tar, we cannot change filenames
+# we need to create a directory to hold our backup binaries.
+
+. ./defines
+
+if [ ! -d ${SENDMAILBACKUPDIR} ]
+then
+	mkdir -p ${SENDMAILBACKUPDIR}
+fi
+
+(cd /usr/sbin; tar cf - sendmail) | (cd ${SENDMAILBACKUPDIR}; tar xf -) 
+(cd /usr/bin; tar cf - newaliases) | (cd ${SENDMAILBACKUPDIR}; tar xf -) 
+(cd /usr/bin; tar cf - mailq) | (cd ${SENDMAILBACKUPDIR}; tar xf -) 
+

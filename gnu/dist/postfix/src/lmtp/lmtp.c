@@ -50,6 +50,7 @@
 /*	RFC 2033 (LMTP protocol)
 /*	RFC 2197 (Pipelining)
 /*	RFC 2554 (AUTH command)
+/*	RFC 2821 (SMTP protocol)
 /* DIAGNOSTICS
 /*	Problems and transactions are logged to \fBsyslogd\fR(8).
 /*	Corrupted message files are marked so that the queue manager can
@@ -87,7 +88,7 @@
 /*	The TCP port to be used when connecting to a LMTP server.  Used as
 /*	backup if the \fBlmtp\fR service is not found in \fBservices\fR(4).
 /* .SH "Authentication controls"
-/* .IP \fBlmtp_enable_sasl_auth\fR
+/* .IP \fBlmtp_sasl_auth_enable\fR
 /*	Enable per-session authentication as per RFC 2554 (SASL).
 /*	By default, Postfix is built without SASL support.
 /* .IP \fBlmtp_sasl_password_maps\fR
@@ -226,8 +227,6 @@
 #include <string.h>
 #include <fcntl.h>
 #include <dict.h>
-#include <pwd.h>
-#include <grp.h>
 
 /* Utility library. */
 
@@ -269,8 +268,6 @@ int     var_lmtp_data0_tmout;
 int     var_lmtp_data1_tmout;
 int     var_lmtp_data2_tmout;
 int     var_lmtp_quit_tmout;
-char   *var_debug_peer_list;
-int     var_debug_peer_level;
 int     var_lmtp_cache_conn;
 int     var_lmtp_skip_quit_resp;
 char   *var_notify_classes;
@@ -512,7 +509,6 @@ static void pre_accept(char *unused_name, char **unused_argv)
 int     main(int argc, char **argv)
 {
     static CONFIG_STR_TABLE str_table[] = {
-	VAR_DEBUG_PEER_LIST, DEF_DEBUG_PEER_LIST, &var_debug_peer_list, 0, 0,
 	VAR_NOTIFY_CLASSES, DEF_NOTIFY_CLASSES, &var_notify_classes, 0, 0,
 	VAR_ERROR_RCPT, DEF_ERROR_RCPT, &var_error_rcpt, 1, 0,
 	VAR_LMTP_SASL_PASSWD, DEF_LMTP_SASL_PASSWD, &var_lmtp_sasl_passwd, 0, 0,
@@ -521,7 +517,6 @@ int     main(int argc, char **argv)
     };
     static CONFIG_INT_TABLE int_table[] = {
 	VAR_LMTP_TCP_PORT, DEF_LMTP_TCP_PORT, &var_lmtp_tcp_port, 0, 0,
-	VAR_DEBUG_PEER_LEVEL, DEF_DEBUG_PEER_LEVEL, &var_debug_peer_level, 1, 0,
 	0,
     };
     static CONFIG_TIME_TABLE time_table[] = {

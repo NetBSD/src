@@ -92,6 +92,7 @@ int     var_dup_filter_limit;
 
 #define STRING_FORMAT	"%-10s %8s %-20s %s\n"
 #define DATA_FORMAT	"%-10s%c%8ld %20.20s %s\n"
+#define DROP_FORMAT	"%-10s%c%8ld %20.20s (maildrop queue, sender UID %u)\n"
 
 static void showq_reasons(VSTREAM *, BOUNCE_LOG *, HTABLE *);
 
@@ -106,6 +107,7 @@ static void showq_report(VSTREAM *client, char *queue, char *id,
     BOUNCE_LOG *logfile;
     HTABLE *dup_filter = 0;
     char    status = (strcmp(queue, MAIL_QUEUE_ACTIVE) == 0 ? '*' : ' ');
+    long    offset;
 
     while (!vstream_ferror(client) && (rec_type = rec_get(qfile, buf, 0)) > 0) {
 	start = vstring_str(buf);
@@ -114,7 +116,8 @@ static void showq_report(VSTREAM *client, char *queue, char *id,
 	    arrival_time = atol(start);
 	    break;
 	case REC_TYPE_SIZE:
-	    msg_size = atol(start);
+	    if ((msg_size = atol(start)) <= 0)
+		msg_size = size;
 	    break;
 	case REC_TYPE_FROM:
 	    if (*start == 0)
@@ -132,7 +135,8 @@ static void showq_report(VSTREAM *client, char *queue, char *id,
 				"", "", "", printable(start, '?'));
 	    break;
 	case REC_TYPE_MESG:
-	    if (vstream_fseek(qfile, atol(start), SEEK_SET) < 0)
+	    if ((offset = atol(start)) > 0
+		&& vstream_fseek(qfile, offset, SEEK_SET) < 0)
 		msg_fatal("seek file %s: %m", VSTREAM_PATH(qfile));
 	    break;
 	case REC_TYPE_END:
@@ -203,7 +207,6 @@ static void showq_reasons(VSTREAM *client, BOUNCE_LOG *bp, HTABLE *dup_filter)
 
 static void showq_service(VSTREAM *client, char *unused_service, char **argv)
 {
-    char  **queue;
     VSTREAM *qfile;
     const char *path;
     int     status;
@@ -211,11 +214,17 @@ static void showq_service(VSTREAM *client, char *unused_service, char **argv)
     int     file_count;
     unsigned long queue_size = 0;
     struct stat st;
-    char   *queue_names[] = {		/* XXX configurable */
-	MAIL_QUEUE_INCOMING,
-	MAIL_QUEUE_ACTIVE,
-	MAIL_QUEUE_DEFERRED,
-	/* No maildrop until we can disable recursive scans. */
+    struct queue_info {
+	char   *name;			/* queue name */
+	char   *(*scan_next) (SCAN_DIR *);	/* flat or recursive */
+    };
+    struct queue_info *qp;
+
+    static struct queue_info queue_info[] = {
+	MAIL_QUEUE_MAILDROP, scan_dir_next,
+	MAIL_QUEUE_INCOMING, mail_scan_dir_next,
+	MAIL_QUEUE_ACTIVE, mail_scan_dir_next,
+	MAIL_QUEUE_DEFERRED, mail_scan_dir_next,
 	0,
     };
 
@@ -231,11 +240,11 @@ static void showq_service(VSTREAM *client, char *unused_service, char **argv)
      * mis-configured, and force backoff by raising a fatal error.
      */
     file_count = 0;
-    for (queue = queue_names; *queue != 0; queue++) {
-	SCAN_DIR *scan = scan_dir_open(*queue);
+    for (qp = queue_info; qp->name != 0; qp++) {
+	SCAN_DIR *scan = scan_dir_open(qp->name);
 	char   *saved_id = 0;
 
-	while ((id = mail_scan_dir_next(scan)) != 0) {
+	while ((id = qp->scan_next(scan)) != 0) {
 
 	    /*
 	     * XXX I have seen showq loop on the same queue id. That would be
@@ -244,13 +253,13 @@ static void showq_service(VSTREAM *client, char *unused_service, char **argv)
 	     */
 	    if (saved_id) {
 		if (strcmp(saved_id, id) == 0) {
-		    msg_warn("readdir loop on queue %s id %s", *queue, id);
+		    msg_warn("readdir loop on queue %s id %s", qp->name, id);
 		    break;
 		}
 		myfree(saved_id);
 	    }
 	    saved_id = mystrdup(id);
-	    status = mail_open_ok(*queue, id, &st, &path);
+	    status = mail_open_ok(qp->name, id, &st, &path);
 	    if (status == MAIL_OPEN_YES) {
 		if (file_count == 0)
 		    vstream_fprintf(client, STRING_FORMAT,
@@ -259,19 +268,19 @@ static void showq_service(VSTREAM *client, char *unused_service, char **argv)
 				    "-Sender/Recipient-------");
 		else
 		    vstream_fprintf(client, "\n");
-		if ((qfile = mail_queue_open(*queue, id, O_RDONLY, 0)) != 0) {
+		if ((qfile = mail_queue_open(qp->name, id, O_RDONLY, 0)) != 0) {
 		    queue_size += st.st_size;
-		    showq_report(client, *queue, id, qfile, (long) st.st_size);
+		    showq_report(client, qp->name, id, qfile, (long) st.st_size);
 		    if (vstream_fclose(qfile))
-			msg_warn("close file %s %s: %m", *queue, id);
-		} else if (strcmp(*queue, MAIL_QUEUE_MAILDROP) == 0) {
+			msg_warn("close file %s %s: %m", qp->name, id);
+		} else if (strcmp(qp->name, MAIL_QUEUE_MAILDROP) == 0) {
 		    queue_size += st.st_size;
-		    vstream_fprintf(client, DATA_FORMAT, id, ' ',
+		    vstream_fprintf(client, DROP_FORMAT, id, ' ',
 				    (long) st.st_size,
 				    asctime(localtime(&st.st_mtime)),
-				    "(to be determined)");
+				    (unsigned) st.st_uid);
 		} else if (errno != ENOENT)
-		    msg_fatal("open %s %s: %m", *queue, id);
+		    msg_fatal("open %s %s: %m", qp->name, id);
 		file_count++;
 		vstream_fflush(client);
 	    }

@@ -16,8 +16,8 @@ debug_peer_level = 2
 # increase the verbose logging level by the amount specified in the
 # debug_peer_level parameter.
 #
-# debug_peer_list = 127.0.0.1
-# debug_peer_list = some.domain
+#debug_peer_list = 127.0.0.1
+#debug_peer_list = some.domain
 debug_peer_list = 
 
 # The debugger_command specifies the external command that is executed

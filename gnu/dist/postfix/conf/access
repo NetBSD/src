@@ -9,9 +9,9 @@
 # 
 # DESCRIPTION
 #        The  optional access table directs the Postfix SMTP server
-#        to selectively reject or accept mail from or  to  specific
-#        hosts,   domains,   networks,   host   addresses  or  mail
-#        addresses.
+#        to selectively  reject  or  accept  mail.  Access  can  be
+#        allowed  or  denied for specific host names, domain names,
+#        networks, host network addresses or mail addresses.
 # 
 #        Normally, the access table is specified  as  a  text  file
 #        that  serves  as  input  to  the  postmap(1) command.  The
@@ -32,38 +32,68 @@
 # TABLE FORMAT
 #        The format of the access table is as follows:
 # 
-#        blanks and comments
-#               Blank lines are ignored,  as  are  lines  beginning
-#               with `#'.
-# 
-#        leading whitespace
-#               Lines  that begin with whitespace continue the pre-
-#               vious line.
-# 
 #        pattern action
 #               When pattern matches a mail address, domain or host
 #               address, perform the corresponding action.
 # 
-# PATTERNS
+#        blank lines and comments
+#               Empty  lines and whitespace-only lines are ignored,
+#               as are lines whose first  non-whitespace  character
+#               is a `#'.
+# 
+#        multi-line text
+#               A  logical  line starts with non-whitespace text. A
+#               line that starts with whitespace continues a  logi-
+#               cal line.
+# 
+# EMAIL ADDRESS PATTERNS
 #        With lookups from indexed files such as DB or DBM, or from
-#        networked tables such as NIS, LDAP or  SQL,  patterns  are
-#        tried in the order as listed below:
+#        networked tables such as NIS, LDAP or SQL,  the  following
+#        lookup patterns are examined in the order as listed:
 # 
 #        user@domain
 #               Matches the specified mail address.
 # 
 #        domain.name
-#               Matches  the  domain.name  itself and any subdomain
-#               thereof, either in hostnames or in mail  addresses.
+#               Matches  domain.name as the domain part of an email
+#               address.
 # 
-#                                                                 1
-# 
-# ACCESS(5)                                               ACCESS(5)
-# 
-#               Top-level domains will never be matched.
+#               The pattern domain.name  also  matches  subdomains,
+#               but  only  when  the  string  smtpd_access_maps  is
+#               listed in the Postfix  parent_domain_matches_subdo-
+#               mains  configuration  setting.   Otherwise, specify
+#               .domain.name (note the initial  dot)  in  order  to
+#               match subdomains.
 # 
 #        user@  Matches  all mail addresses with the specified user
 #               part.
+# 
+#        Note: lookup of the null sender address may not be  possi-
+#        ble with all supported types of lookup table. A workaround
+#        is to specify smtpd_null_access_lookup_key  =  <>  in  the
+#        Postfix  main.cf  file, and to specify <> as the left-hand
+#        field in the access table.
+# 
+# ADDRESS EXTENSION
+#        When a mail address localpart contains the optional recip-
+#        ient  delimiter  (e.g., user+foo@domain), the lookup order
+#        becomes: user+foo@domain, user@domain, domain,  user+foo@,
+#        and user@.
+# 
+# HOST NAME/ADDRESS PATTERNS
+#        With lookups from indexed files such as DB or DBM, or from
+#        networked tables such as NIS, LDAP or SQL,  the  following
+#        lookup patterns are examined in the order as listed:
+# 
+#        domain.name
+#               Matches domain.name.
+# 
+#               The  pattern  domain.name  also matches subdomains,
+#               but  only  when  the  string  smtpd_access_maps  is
+#               listed  in the Postfix parent_domain_matches_subdo-
+#               mains configuration  setting.   Otherwise,  specify
+#               .domain.name  (note  the  initial  dot) in order to
+#               match subdomains.
 # 
 #        net.work.addr.ess
 # 
@@ -99,24 +129,21 @@
 #        the entire string being looked up. Depending on the appli-
 #        cation, that string  is  an  entire  client  hostname,  an
 #        entire client IP address, or an entire mail address. Thus,
-#        no parent domain or parent network  search  is  done,  and
+#        no  parent  domain  or  parent  network  search  is  done,
 #        user@domain  mail  addresses  are not broken up into their
-#        user@ and domain constituent parts.
+#        user@ and domain constituent parts, nor is user+foo broken
+#        up into user and foo.
 # 
-#        Patterns are applied in the  order  as  specified  in  the
-#        table,  until  a  pattern is found that matches the search
+#        Patterns  are  applied  in  the  order as specified in the
+#        table, until a pattern is found that  matches  the  search
 #        string.
 # 
-#        Actions are the same as with normal indexed file  lookups,
-#        with  the additional feature that parenthesized substrings
-#        from the pattern can be interpolated as $1, $2 and so  on.
+#        Actions  are  the  same as with indexed file lookups, with
+#        the additional feature that parenthesized substrings  from
+#        the pattern can be interpolated as $1, $2 and so on.
 # 
 # BUGS
 #        The  table format does not understand quoting conventions.
-# 
-#                                                                 2
-# 
-# ACCESS(5)                                               ACCESS(5)
 # 
 # SEE ALSO
 #        postmap(1) create mapping table
@@ -134,5 +161,5 @@
 #        P.O. Box 704
 #        Yorktown Heights, NY 10598, USA
 # 
-#                                                                 3
+#                                                                 1
 # 

@@ -71,10 +71,14 @@ flush.o: ../../include/mail_params.h
 flush.o: ../../include/mail_queue.h
 flush.o: ../../include/mail_proto.h
 flush.o: ../../include/iostuff.h
+flush.o: ../../include/attr.h
 flush.o: ../../include/mail_flush.h
 flush.o: ../../include/flush_clnt.h
 flush.o: ../../include/mail_conf.h
 flush.o: ../../include/mail_scan_dir.h
 flush.o: ../../include/maps.h
 flush.o: ../../include/domain_list.h
+flush.o: ../../include/match_list.h
+flush.o: ../../include/match_ops.h
+flush.o: ../../include/match_parent_style.h
 flush.o: ../../include/mail_server.h

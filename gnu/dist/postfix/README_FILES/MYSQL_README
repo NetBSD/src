@@ -1,0 +1,92 @@
+[Code contributed by Scott Cotton and Joshua Marcus, IC Group, Inc.]
+
+We've written code to add a mysql map type.  It utilizes the mysql
+client library, which can be obtained from:
+
+	http://www.mysql.com/downloads/
+	http://sourceforge.net/projects/mysql/
+
+In order to build postfix with mysql map support, you will need to add 
+-DHAS_MYSQL and -I for the directory containing the mysql headers, and 
+the mysqlclient library (and libm) to AUXLIBS, for example:
+
+make -f Makefile.init makefiles \
+	'CCARGS=-DHAS_MYSQL -I/usr/local/mysql/include' \
+	'AUXLIBS=-L/usr/local/mysql/lib -lmysqlclient -lz -lm'
+
+then, just run 'make'. This requires libz, the compression library.
+Older mysql implementations build without libz.
+
+Postfix installations which may benefit from using mysql map types
+include sites that have a need for instantaneous updates of
+forwarding, and sites that may benefit from having mail exchangers
+reference a networked database, possibly working in conjunction with a
+customer database of sorts.
+
+Once postfix is built with mysql support, you can specify a map type
+in main.cf like this:
+
+alias_maps = mysql:/etc/postfix/mysql-aliases.cf
+
+The file /etc/postfix/mysql-aliases.cf specifies lots of information
+telling postfix how to reference the mysql database.  An example mysql 
+map config file follows:
+
+#
+# mysql config file for alias lookups on postfix
+# comments are ok.
+#
+
+# the user name and password to log into the mysql server
+user = someone
+password = some_password 
+
+# the database name on the servers
+dbname = customer_database
+
+# the table name
+table = mxaliases
+
+#
+select_field = forw_addr
+where_field = alias
+
+# you may specify additional_conditions here
+additional_conditions = and status = 'paid'
+
+# the above variables will result in a query of
+# the form: 
+# select forw_addr from mxaliases where alias = '$lookup' and status = 'paid'
+# ($lookup is escaped so if it contains single quotes or other odd
+# characters, it will not cause a parse error in the sql).
+#
+# the hosts that postfix will try to connect to
+# and query from (in the order listed)
+# specify unix: for unix-domain sockets, inet: for TCP connections (default)
+hosts = host1.some.domain host2.some.domain unix:/file/name
+
+# end mysql config file
+
+Some notes:
+
+This configuration interface setup allows for multiple mysql
+databases: you can use one for a virtual table, one for an access
+table, and one for an aliases table if you want.
+
+Since sites that have a need for multiple mail exchangers may enjoy
+the convenience of using a networked mailer database, but do not want 
+to introduce a single point of failure to their system, we've included 
+the ability to have postfix reference multiple hosts for access to a
+single mysql map.  This will work if sites set up mirrored mysql
+databases on two or more hosts.  Whenever queries fail with an error
+at one host, the rest of the hosts will be tried in order.  Each host
+that is in an error state will undergo a reconnection attempt every so 
+often, and if no mysql server hosts are reachable, then mail will be
+deferred until at least one of those hosts is reachable.
+
+Performance of postfix with mysql has not been thoroughly tested,
+however, we have found it to be stable.  Busy mail servers using mysql
+maps will generate lots of concurrent mysql clients, so the mysql
+server(s) should be run with this fact in mind.  Any further
+performance information, in addition to any feedback is most welcome.
+

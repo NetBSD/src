@@ -257,7 +257,9 @@ int     resolve_proto(VSTREAM *stream)
 {
     int     flags;
 
-    if (mail_scan(stream, "%s", query) != 1)
+    if (attr_scan(stream, ATTR_FLAG_STRICT,
+		  ATTR_TYPE_STR, MAIL_ATTR_ADDR, query,
+		  ATTR_TYPE_END) != 1)
 	return (-1);
 
     resolve_addr(STR(query), channel, nexthop, nextrcpt, &flags);
@@ -266,8 +268,12 @@ int     resolve_proto(VSTREAM *stream)
 	msg_info("%s -> (`%s' `%s' `%s' `%d')", STR(query), STR(channel),
 		 STR(nexthop), STR(nextrcpt), flags);
 
-    mail_print(stream, "%s %s %s %d",
-	       STR(channel), STR(nexthop), STR(nextrcpt), flags);
+    attr_print(stream, ATTR_FLAG_NONE,
+	       ATTR_TYPE_STR, MAIL_ATTR_TRANSPORT, STR(channel),
+	       ATTR_TYPE_STR, MAIL_ATTR_NEXTHOP, STR(nexthop),
+	       ATTR_TYPE_STR, MAIL_ATTR_RECIP, STR(nextrcpt),
+	       ATTR_TYPE_NUM, MAIL_ATTR_FLAGS, flags,
+	       ATTR_TYPE_END);
 
     if (vstream_fflush(stream) != 0) {
 	msg_warn("write resolver reply: %m");

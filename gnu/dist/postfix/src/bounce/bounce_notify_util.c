@@ -199,7 +199,7 @@ BOUNCE_INFO *bounce_mail_init(const char *service, const char *queue_name,
      */
     if ((bounce_info->log_handle = bounce_log_open(bounce_info->service,
 						   bounce_info->queue_id,
-						   O_RDONLY, 0)) == 0
+						   O_RDWR, 0)) == 0
 	&& errno != ENOENT)
 	msg_fatal("open %s %s: %m", bounce_info->service,
 		  bounce_info->queue_id);
@@ -222,14 +222,16 @@ BOUNCE_INFO *bounce_mail_init(const char *service, const char *queue_name,
      * corrupted just send whatever we can (remember this is a best effort,
      * it does not have to be perfect).
      */
-    while ((rec_type = rec_get(bounce_info->orig_fp,
-			       bounce_info->buf, 0)) > 0) {
-	if (rec_type == REC_TYPE_TIME && bounce_info->arrival_time == 0) {
-	    if ((bounce_info->arrival_time = atol(STR(bounce_info->buf))) < 0)
-		bounce_info->arrival_time = 0;
-	} else if (rec_type == REC_TYPE_MESG) {
-	    bounce_info->orig_offs = vstream_ftell(bounce_info->orig_fp);
-	    break;
+    if (bounce_info->orig_fp != 0) {
+	while ((rec_type = rec_get(bounce_info->orig_fp,
+				   bounce_info->buf, 0)) > 0) {
+	    if (rec_type == REC_TYPE_TIME && bounce_info->arrival_time == 0) {
+		if ((bounce_info->arrival_time = atol(STR(bounce_info->buf))) < 0)
+		    bounce_info->arrival_time = 0;
+	    } else if (rec_type == REC_TYPE_MESG) {
+		bounce_info->orig_offs = vstream_ftell(bounce_info->orig_fp);
+		break;
+	    }
 	}
     }
     return (bounce_info);
@@ -339,7 +341,7 @@ int     bounce_boilerplate(VSTREAM *bounce, BOUNCE_INFO *bounce_info)
 			"####################################################################");
 	post_mail_fputs(bounce, "");
 	post_mail_fprintf(bounce,
-			"Your message could not be delivered for %.1f hours.",
+		      "Your message could not be delivered for %.1f hours.",
 			  var_delay_warn_time / 3600.0);
 	post_mail_fprintf(bounce,
 			  "It will be retried until it is %.1f days old.",
@@ -478,7 +480,7 @@ int     bounce_recipient_dsn(VSTREAM *bounce, BOUNCE_INFO *bounce_info)
 #endif
     if (bounce_info->flush == 0)
 	post_mail_fprintf(bounce, "Will-Retry-Until: %s",
-	 mail_date(bounce_info->arrival_time + var_max_queue_time));
+		 mail_date(bounce_info->arrival_time + var_max_queue_time));
     return (vstream_ferror(bounce));
 }
 
@@ -547,12 +549,16 @@ int     bounce_original(VSTREAM *bounce, BOUNCE_INFO *bounce_info,
 	if (var_bounce_limit == 0 || bounce_length < var_bounce_limit) {
 	    bounce_length += VSTRING_LEN(bounce_info->buf) + 2;
 	    status = (REC_PUT_BUF(bounce, rec_type, bounce_info->buf) != rec_type);
-	}
+	} else
+	    break;
     }
 
     /*
      * Final MIME headers. These require -- at the end of the boundary
      * string.
+     * 
+     * XXX This should be a separate bounce_terminate() entry so we can be
+     * assured that the terminator will always be sent.
      */
     post_mail_fputs(bounce, "");
     post_mail_fprintf(bounce, "--%s--", bounce_info->mime_boundary);

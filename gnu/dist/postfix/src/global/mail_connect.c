@@ -66,6 +66,7 @@
 #include <connect.h>
 #include <mymalloc.h>
 #include <iostuff.h>
+#include <stringops.h>
 
 /* Global library. */
 
@@ -79,6 +80,7 @@ VSTREAM *mail_connect(const char *class, const char *name, int block_mode)
     char   *path;
     VSTREAM *stream;
     int     fd;
+    char   *sock_name;
 
     path = mail_pathname(class, name);
     if ((fd = LOCAL_CONNECT(path, block_mode, 0)) < 0) {
@@ -90,9 +92,11 @@ VSTREAM *mail_connect(const char *class, const char *name, int block_mode)
 	    msg_info("connect to subsystem %s", path);
 	stream = vstream_fdopen(fd, O_RDWR);
 	timed_ipc_setup(stream);
+	sock_name = concatenate(path, " socket", (char *) 0);
 	vstream_control(stream,
-			VSTREAM_CTL_PATH, path,
+			VSTREAM_CTL_PATH, sock_name,
 			VSTREAM_CTL_END);
+	myfree(sock_name);
     }
     myfree(path);
     return (stream);

@@ -19,6 +19,7 @@ exec sed '
 	s/[<bB>]*pickup[</bB>]*(8)/<a href="pickup.8.html">&<\/a>/
 	s/[<bB>]*pipe[</bB>]*(8)/<a href="pipe.8.html">&<\/a>/
 	s/[<bB>]*qmgr[</bB>]*(8)/<a href="qmgr.8.html">&<\/a>/
+	s/[<bB>]*qmqpd[</bB>]*(8)/<a href="qmqpd.8.html">&<\/a>/
 	s/[<bB>]*showq[</bB>]*(8)/<a href="showq.8.html">&<\/a>/
 	s/[<bB>]*smtp[</bB>]*(8)/<a href="smtp.8.html">&<\/a>/
 	s/[<bB>]*smtpd[</bB>]*(8)/<a href="smtpd.8.html">&<\/a>/
@@ -35,6 +36,8 @@ exec sed '
 	s/[<bB>]*postlock[</bB>]*(1)/<a href="postlock.1.html">&<\/a>/
 	s/[<bB>]*postlog[</bB>]*(1)/<a href="postlog.1.html">&<\/a>/
 	s/[<bB>]*postmap[</bB>]*(1)/<a href="postmap.1.html">&<\/a>/
+	s/[<bB>]*postqueue[</bB>]*(1)/<a href="postqueue.1.html">&<\/a>/
+	s/[<bB>]*postsuper[</bB>]*(1)/<a href="postsuper.1.html">&<\/a>/
 	s/[<bB>]*send[-</bB>]*\n*[ <bB>]*mail[</bB>]*(1)/<a href="sendmail.1.html">&<\/a>/
 	s/[<bB>]*access[</bB>]*(5)/<a href="access.5.html">&<\/a>/
 	s/[<bB>]*aliases[</bB>]*(5)/<a href="aliases.5.html">&<\/a>/
@@ -47,5 +50,6 @@ exec sed '
 	s/[<bB>]*virtual[</bB>]*(5)/<a href="virtual.5.html">&<\/a>/
 	s/[<bB>]*virtual[</bB>]*(8)/<a href="virtual.8.html">&<\/a>/
 	s/\(<a href="[^"]*">\)\([<bB>]*[a-z0-9-]*[-</bB>]*\)\(\n *\)\([<bB>]*[a-z0-9-]*[</bB>]*([0-9])\)\(<\/a>\)/\1\2\5\3\1\4\5/
+	s/http:\/\/[^ ,]*/<a href="&">&<\/a>/
 	s/RFC *\([0-9]*\)/<a href="http:\/\/www.faqs.org\/rfcs\/rfc\1.html">&<\/a>/
 ' "$@"

@@ -106,7 +106,7 @@ mydestination = $myhostname localhost.$mydomain $mydomain
 The \fBmain.cf mydestination\fR entry is required for a Sendmail-style
 virtual domain.
 
-Do not specify a \fIvirtual.domain whatever\fR virtual map entry
+Do not specify a \fIvirtual.domain anything\fR virtual map entry
 for a Sendmail-style virtual domain.
 Such an entry is required only with a Postfix-style virtual domain.
 
@@ -122,13 +122,15 @@ mail to the sender.
 .fi
 The format of the virtual table is as follows, mappings being
 tried in the order as listed in this manual page:
-.IP "blanks and comments"
-Blank lines are ignored, as are lines beginning with `#'.
-.IP "leading whitespace"
-Lines that begin with whitespace continue the previous line.
 .IP "\fIpattern result\fR"
 When \fIpattern\fR matches a mail address, replace it by the
 corresponding \fIresult\fR.
+.IP "blank lines and comments"
+Empty lines and whitespace-only lines are ignored, as
+are lines whose first non-whitespace character is a `#'.
+.IP "multi-line text"
+A logical line starts with non-whitespace text. A line that
+starts with whitespace continues a logical line.
 .PP
 With lookups from indexed files such as DB or DBM, or from networked
 tables such as NIS, LDAP or SQL, patterns are tried in the order as
@@ -156,13 +158,11 @@ This works for the first address in the expansion only.
 .nf
 .fi
 .ad
-When the search fails, and the address localpart contains the
-optional recipient delimiter (e.g., \fIuser+foo\fR@\fIdomain\fR),
-the search is repeated for the unextended address (e.g.
-\fIuser\fR@\fIdomain\fR), and the unmatched address extension is
-propagated to the result of expansion. The matching order is:
-\fIuser+foo\fR@\fIdomain\fR, \fIuser\fR@\fIdomain\fR,
-\fIuser+foo\fR, \fIuser\fR, and @\fIdomain\fR.
+When a mail address localpart contains the optional recipient delimiter
+(e.g., \fIuser+foo\fR@\fIdomain\fR), the lookup order becomes:
+\fIuser+foo\fR@\fIdomain\fR, \fIuser\fR@\fIdomain\fR, \fIuser+foo\fR,
+\fIuser\fR, and @\fIdomain\fR.  An unmatched address extension
+(\fI+foo\fR) is propagated to the result of table lookup.
 .SH REGULAR EXPRESSION TABLES
 .na
 .nf
@@ -181,7 +181,7 @@ nor is \fIuser+foo\fR broken up into \fIuser\fR and \fIfoo\fR.
 Patterns are applied in the order as specified in the table, until a
 pattern is found that matches the search string.
 
-Results are the same as with normal indexed file lookups, with
+Results are the same as with indexed file lookups, with
 the additional feature that parenthesized substrings from the
 pattern can be interpolated as \fB$1\fR, \fB$2\fR and so on.
 .SH BUGS
