@@ -1,4 +1,4 @@
-/*	$NetBSD: setrunelocale.c,v 1.9 2002/03/17 22:14:31 tshiozak Exp $	*/
+/*	$NetBSD: setrunelocale.c,v 1.10 2002/03/18 11:49:19 yamt Exp $	*/
 
 /*-
  * Copyright (c)1999 Citrus Project,
@@ -100,7 +100,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: setrunelocale.c,v 1.9 2002/03/17 22:14:31 tshiozak Exp $");
+__RCSID("$NetBSD: setrunelocale.c,v 1.10 2002/03/18 11:49:19 yamt Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 /*#include "namespace.h"*/
@@ -124,7 +124,7 @@ struct localetable {
 	_RuneLocale *runelocale;
 	struct localetable *next;
 };
-static struct localetable localetable;
+static struct localetable *localetable_head;
 
 _RuneLocale *
 _findrunelocale(path)
@@ -135,7 +135,7 @@ _findrunelocale(path)
 	_DIAGASSERT(path != NULL);
 
 	/* ones which we have seen already */
-	for (lt = localetable.next; lt; lt = lt->next)
+	for (lt = localetable_head; lt; lt = lt->next)
 		if (strcmp(path, lt->path) == 0)
 			return lt->runelocale;
 
@@ -195,10 +195,14 @@ found:
 
 	/* register it */
 	lt = malloc(sizeof(struct localetable));
+	if (lt == NULL) {
+		_NukeRune(rl);
+		return ENOMEM;
+	}
 	strlcpy(lt->path, path, sizeof(lt->path));
 	lt->runelocale = rl;
-	lt->next = localetable.next;
-	localetable.next = lt;
+	lt->next = localetable_head;
+	localetable_head = lt;
 
 	return 0;
 }
@@ -214,7 +218,7 @@ delrunelocale(path)
 	_DIAGASSERT(path != NULL);
 
 	prev = NULL;
-	for (lt = localetable.next; lt; prev = lt, lt = prev->next)
+	for (lt = localetable_head; lt; prev = lt, lt = prev->next)
 		if (strcmp(path, lt->path) == 0)
 			break;
 	if (!lt)
@@ -224,7 +228,7 @@ delrunelocale(path)
 	if (prev)
 		prev->next = lt->next;
 	else
-		localetable.next = lt->next;
+		localetable_head = lt->next;
 	lt->next = NULL;
 	free(lt);
 
