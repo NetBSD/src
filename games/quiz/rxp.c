@@ -1,4 +1,4 @@
-/*	$NetBSD: rxp.c,v 1.9 2002/08/06 11:39:53 tron Exp $	*/
+/*	$NetBSD: rxp.c,v 1.10 2002/12/06 01:54:55 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)rxp.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: rxp.c,v 1.9 2002/08/06 11:39:53 tron Exp $");
+__RCSID("$NetBSD: rxp.c,v 1.10 2002/12/06 01:54:55 thorpej Exp $");
 #endif
 #endif /* not lint */
 
@@ -68,6 +68,7 @@ __RCSID("$NetBSD: rxp.c,v 1.9 2002/08/06 11:39:53 tron Exp $");
  */
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <ctype.h>
 #include "quiz.h"
 					/* regexp tokens,	arg */
