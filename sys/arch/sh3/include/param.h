@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.4 2000/06/30 17:55:17 itojun Exp $	*/
+/*	$NetBSD: param.h,v 1.5 2001/01/04 07:03:21 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -50,11 +50,13 @@
 #endif
 #endif
 
+#if 0 /* machine/param.h should define it */
 #define	_MACHINE	sh3
 #define	MACHINE		"sh3"
 #define	_MACHINE_ARCH	sh3
 #define	MACHINE_ARCH	"sh3"
 #define	MID_MACHINE	MID_SH3
+#endif
 
 /*
  * Round p (pointer or byte index) up to a correctly-aligned value
