@@ -1,4 +1,4 @@
-/* $NetBSD: atppc.c,v 1.6 2004/01/22 14:28:57 jdolecek Exp $ */
+/* $NetBSD: atppc.c,v 1.7 2004/01/25 00:28:01 bjh21 Exp $ */
 
 /*
  * Copyright (c) 2001 Alcove - Nicolas Souchu
@@ -25,9 +25,12 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $FreeBSD: src/sys/isa/ppc.c,v 1.26.2.5 2001/10/02 05:21:45 nsouch Exp $
+ * FreeBSD: src/sys/isa/ppc.c,v 1.26.2.5 2001/10/02 05:21:45 nsouch Exp
  *
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: atppc.c,v 1.7 2004/01/25 00:28:01 bjh21 Exp $");
 
 #include "opt_atppc.h"
 

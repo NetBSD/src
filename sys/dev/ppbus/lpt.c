@@ -1,4 +1,4 @@
-/* $NetBSD: lpt.c,v 1.4 2004/01/22 01:18:54 bjh21 Exp $ */
+/* $NetBSD: lpt.c,v 1.5 2004/01/25 00:28:01 bjh21 Exp $ */
 
 /*
  * Copyright (c) 1990 William F. Jolitz, TeleMuse
@@ -50,7 +50,7 @@
  *	from: unknown origin, 386BSD 0.1
  *	From Id: lpt.c,v 1.55.2.1 1996/11/12 09:08:38 phk Exp
  *	From Id: nlpt.c,v 1.14 1999/02/08 13:55:43 des Exp
- * $FreeBSD: src/sys/dev/ppbus/lpt.c,v 1.15.2.3 2000/07/07 00:30:40 obrien Exp $
+ * FreeBSD: src/sys/dev/ppbus/lpt.c,v 1.15.2.3 2000/07/07 00:30:40 obrien Exp
  */
 
 /*
@@ -62,6 +62,9 @@
  * Updated for ppbus by Nicolas Souchu
  * [Mon Jul 28 1997]
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: lpt.c,v 1.5 2004/01/25 00:28:01 bjh21 Exp $");
 
 #include "opt_ppbus_lpt.h"
 

@@ -1,4 +1,4 @@
-/* $NetBSD: ppbus_1284.c,v 1.3 2004/01/22 01:17:03 bjh21 Exp $ */
+/* $NetBSD: ppbus_1284.c,v 1.4 2004/01/25 00:28:01 bjh21 Exp $ */
 
 /*-
  * Copyright (c) 1997 Nicolas Souchu
@@ -25,11 +25,14 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $FreeBSD: src/sys/dev/ppbus/ppb_1284.c,v 1.11 2000/01/14 08:03:14 nsouch Exp $
+ * FreeBSD: src/sys/dev/ppbus/ppb_1284.c,v 1.11 2000/01/14 08:03:14 nsouch Exp
  *
  */
 
 /* General purpose routines for the IEEE1284-1994 Standard */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ppbus_1284.c,v 1.4 2004/01/25 00:28:01 bjh21 Exp $");
 
 #include "opt_ppbus_1284.h"
 
