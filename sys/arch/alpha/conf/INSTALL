@@ -1,4 +1,4 @@
-# $NetBSD: INSTALL,v 1.39 2000/06/01 20:30:30 thorpej Exp $
+# $NetBSD: INSTALL,v 1.40 2000/07/12 20:54:38 thorpej Exp $
 #
 # Alpha INSTALL kernel.
 
@@ -15,8 +15,10 @@ options 	MEMORY_DISK_IS_ROOT	# Force root on ram-disk
 options 	MINIROOTSIZE=9300	# 4 Megabytes
 
 # CPU Support
-#options 	DEC_2000_300	# "Jensen":	2000/300 (DECpc AXP 150)
+options 	DEC_2000_300	# "Jensen":	2000/300 (DECpc AXP 150)
 options 	DEC_2100_A50	# Avanti etc:	AlphaStation 400, 200, etc.
+#options 	DEC_2100_A500	# Sable:	AlphaServer 2100
+#options 	DEC_2100A_A500	# Lynx:		AlphaServer 2100A
 options 	DEC_3000_500	# Flamingo etc:	3000/[4-9]00*
 options 	DEC_3000_300	# Pelican etc:	3000/300*
 options 	DEC_AXPPCI_33	# NoName:	AXPpci33, Multia, etc.
@@ -94,6 +96,14 @@ mcmem*	at	mcbus? mid ?
 
 tsc*	at	mainbus0
 
+# DECpc AXP150 (Jensen) internal bus support
+jensenio* at	mainbus0
+
+com*	at	jensenio? port ?
+lpt*	at	jensenio? port ?
+mcclock* at	jensenio? port ?
+pckbc*	at	jensenio? port ?
+
 # TurboChannel host bus adapter support
 tcasic*	at	mainbus0
 
@@ -119,6 +129,15 @@ lca*	at	mainbus?
 dwlpx*	at	kft?
 mcpcia*	at	mcbus? mid ?
 tsp*	at	tsc?
+#ttwoga*	at	mainbus?
+
+# Sable PCI and STDIO bus and devices
+#ttwopci* at	ttwoga? hose ?  
+#sableio* at	ttwopci? bus ?  
+#com*	at	sableio? port ? 
+#lpt*	at	sableio? port ? 
+#pckbc*	at	sableio? port ? 
+#fdc*	at	sableio? port ?
 
 # PCI bus support
 pci*	at	apecs?
@@ -129,6 +148,7 @@ pci*	at	ppb?
 pci*	at	dwlpx?
 pci*	at	mcpcia?
 pci*	at	tsp?
+#pci*	at	ttwopci?
 
 # PCI devices
 adv*	at	pci? dev ? function ?		# AdvanSys SCSI
@@ -149,7 +169,8 @@ fpa*	at	pci? dev ? function ?		# DEC DEFPA FDDI
 fxp*	at	pci? dev ? function ?		# Intel EEPRO 10+/100B
 isp*	at	pci? dev ? function ?		# Qlogic ISP 10x0 SCSI
 le*	at	pci? dev ? function ?		# PCI LANCE Ethernet (untested)
-ncr*	at	pci? dev ? function ?		# NCR 53c8xx SCSI
+#ncr*	at	pci? dev ? function ?		# NCR 53c8xx SCSI
+siop*	at	pci? dev ? function ?		# Symbios 53c8xx SCSI
 ne*	at	pci? dev ? function ?		# NE2000-compatible Ethernet
 pceb*	at	pci? dev ? function ?		# Intel PCI-EISA Bridges
 pciide*	at	pci? dev ? function ?		# PCI IDE controllers
@@ -180,6 +201,8 @@ tlphy*	at mii? phy ?			# ThunderLAN PHYs
 ukphy*	at mii? phy ?			# generic unknown PHYs
 
 # ISA/EISA bus support
+isa*	at	jensenio?
+eisa*	at	jensenio?
 isa*	at	pceb?
 eisa*	at	pceb?
 isa*	at	sio?
@@ -213,13 +236,19 @@ uha*	at	eisa? slot ?			# UltraStor 24f SCSI (unt.)
 
 # SCSI bus support
 scsibus* at	adv?
+#scsibus* at	aic?
 scsibus* at	adw?
+#scsibus* at	aha?
+scsibus* at	ahb?
 scsibus* at	ahc?
 scsibus* at	asc?
 scsibus* at	bha?
 scsibus* at	dpt?
 scsibus* at	isp?
-scsibus* at	ncr?
+#scsibus* at	ncr?
+scsibus* at	siop?
+scsibus* at	pcscp?
+scsibus* at	uha?
 
 # SCSI devices
 cd*	at	scsibus? target ? lun ?		# SCSI CD-ROM drives

@@ -1,4 +1,4 @@
-# $NetBSD: ALPHA,v 1.127 2000/06/14 22:02:13 veego Exp $
+# $NetBSD: ALPHA,v 1.128 2000/07/12 20:54:38 thorpej Exp $
 #
 # Alpha kernel with all the options you'd want, and more.
 
@@ -6,12 +6,14 @@ include	"arch/alpha/conf/std.alpha"
 
 maxusers 32
 
-ident		"ALPHA-$Revision: 1.127 $"
+ident		"ALPHA-$Revision: 1.128 $"
 
 # CPU Support
-#options 	DEC_2000_300	# "Jensen":	2000/300 (DECpc AXP 150)
+options 	DEC_2000_300	# "Jensen":	2000/300 (DECpc AXP 150)
 options 	DEC_2100_A50	# Avanti etc:	AlphaStation 400, 200, etc.
 options 	DEC_3000_500	# Flamingo etc:	3000/[4-9]00*
+#options 	DEC_2100_A500	# Sable:	AlphaServer 2100
+#options 	DEC_2100A_A500	# Lynx:		AlphaServer 2100A
 options 	DEC_3000_300	# Pelican etc:	3000/300*
 options 	DEC_AXPPCI_33	# NoName:	AXPpci33, etc.
 options 	DEC_EB164	# EB164:	AlphaPC 164
@@ -161,6 +163,14 @@ mcmem*	at	mcbus? mid ?
 
 tsc*	at	mainbus0
 
+# DECpc AXP150 (Jensen) internal bus support
+jensenio* at	mainbus0
+
+com*	at	jensenio? port ?
+lpt*	at	jensenio? port ?
+mcclock* at	jensenio? port ?
+pckbc*	at	jensenio? port ?
+
 # TurboChannel host bus adapter support
 tcasic*	at	mainbus0
 
@@ -190,6 +200,15 @@ lca*	at	mainbus?
 dwlpx*	at	kft?
 mcpcia*	at	mcbus? mid ?
 tsp*	at	tsc?
+#ttwoga*	at	mainbus?
+
+# Sable PCI and STDIO bus and devices
+#ttwopci* at	ttwoga? hose ?  
+#sableio* at	ttwopci? bus ?  
+#com*	at	sableio? port ? 
+#lpt*	at	sableio? port ? 
+#pckbc*	at	sableio? port ? 
+#fdc*	at	sableio? port ? 
 
 # PCI bus support
 pci*	at	apecs?
@@ -200,6 +219,7 @@ pci*	at	ppb?
 pci*	at	dwlpx?
 pci*	at	mcpcia?
 pci*	at	tsp?
+#pci*	at	ttwopci?
 
 # PCI devices
 adv*	at	pci? dev ? function ?		# AdvanSys SCSI
@@ -225,7 +245,8 @@ fpa*	at	pci? dev ? function ?		# DEC DEFPA FDDI
 fxp*	at	pci? dev ? function ?		# Intel EEPRO 10+/100B
 isp*	at	pci? dev ? function ?		# Qlogic ISP 10x0 SCSI
 le*	at	pci? dev ? function ?		# PCI LANCE Ethernet (untested)
-ncr*	at	pci? dev ? function ?		# NCR 53c8xx SCSI
+#ncr*	at	pci? dev ? function ?		# NCR 53c8xx SCSI
+siop*	at	pci? dev ? function ?		# Symbios 53c8xx SCSI
 ne*	at	pci? dev ? function ?		# NE2000-compatible Ethernet
 ohci*	at	pci? dev ? function ?		# USB Open Host Controller
 pceb*	at	pci? dev ? function ?		# Intel PCI-EISA Bridges
@@ -272,6 +293,8 @@ tqphy*	at mii? phy ?			# TDK Semiconductor PHYs
 ukphy*	at mii? phy ?			# generic unknown PHYs
 
 # ISA/EISA bus support
+isa*	at	jensenio?
+eisa*	at	jensenio?
 isa*	at	pceb?
 eisa*	at	pceb?
 isa*	at	sio?
@@ -334,7 +357,8 @@ scsibus* at	asc?
 scsibus* at	bha?
 scsibus* at	dpt?
 scsibus* at	isp?
-scsibus* at	ncr?
+#scsibus* at	ncr?
+scsibus* at	siop?
 scsibus* at	pcscp?
 scsibus* at	uha?
 
