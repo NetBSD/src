@@ -1,4 +1,4 @@
-/*	$NetBSD: adutil.c,v 1.11 1996/05/24 20:16:05 is Exp $	*/
+/*	$NetBSD: adutil.c,v 1.12 1996/08/10 07:28:49 veego Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -177,7 +177,7 @@ adoscksum(bp, n)
 int
 adoscaseequ(name1, name2, len, inter)
 	const u_char *name1, *name2;
-	int len;
+	int len, inter;
 {
 	while (len-- > 0) 
 		if (CapitalChar(*name1++, inter) != 
