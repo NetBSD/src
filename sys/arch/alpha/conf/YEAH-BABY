@@ -1,4 +1,4 @@
-# $NetBSD: YEAH-BABY,v 1.7 2001/07/09 15:05:23 soren Exp $
+# $NetBSD: YEAH-BABY,v 1.8 2001/08/22 15:39:04 hubertf Exp $
 #
 # yeah-baby.shagadelic.org -- thorpej's Alphastation 200 file server
 # and wireless network gateway
@@ -202,7 +202,7 @@ adw*	at	pci? dev ? function ?		# AdvanSys Wide SCSI
 #de*	at	pci? dev ? function ?		# 21x4x-based Ethernet
 #en*	at	pci? dev ? function ?		# ENI PCI ATM (untested)
 #ep*	at	pci? dev ? function ?		# 3COM 3c59x
-#ex*	at	pci? dev ? function ?		# 3COM 3c90x[B] Ethernet
+#ex*	at	pci? dev ? function ?		# 3COM 3c90x[BC] Ethernet
 #esh*	at	pci? dev ? function ?		# Essential HIPPI card
 #epic*	at	pci? dev ? function ?		# SMC EPIC/100 Ethernet
 #fpa*	at	pci? dev ? function ?		# DEC DEFPA FDDI
