@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_denode.c,v 1.41 2000/03/27 17:40:26 jdolecek Exp $	*/
+/*	$NetBSD: msdosfs_denode.c,v 1.42 2000/05/13 06:04:41 cgd Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -476,7 +476,7 @@ detrunc(dep, length, flags, cred, p)
 	 * Now free the clusters removed from the file because of the
 	 * truncation.
 	 */
-	if (chaintofree != 0 && !MSDOSFSEOF(pmp, chaintofree))
+	if (chaintofree != 0 && !MSDOSFSEOF(chaintofree, pmp->pm_fatmask))
 		freeclusterchain(pmp, chaintofree);
 
 	return (allerror);

@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_fat.c,v 1.32 2000/03/27 17:40:26 jdolecek Exp $	*/
+/*	$NetBSD: msdosfs_fat.c,v 1.33 2000/05/13 06:04:42 cgd Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -240,7 +240,7 @@ pcbmap(dep, findcn, bnp, cnp, sp)
 		cn &= pmp->pm_fatmask;
 	}
 
-	if (!MSDOSFSEOF(pmp, cn)) {
+	if (!MSDOSFSEOF(cn, pmp->pm_fatmask)) {
 		if (bp)
 			brelse(bp);
 		if (bnp)
