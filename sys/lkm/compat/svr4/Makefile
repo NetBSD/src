@@ -1,12 +1,12 @@
-#	$NetBSD: Makefile,v 1.5 2000/12/09 11:21:41 jdolecek Exp $
+#	$NetBSD: Makefile,v 1.6 2000/12/13 11:18:39 enami Exp $
 
 .include "../Makefile.inc"
 
 .PATH:	$S/compat/svr4 $S/arch/${MACHINE_ARCH}/${MACHINE_ARCH}
 
 CPPFLAGS+= -DCOMPAT_SVR4 -DSYSVSEM -DSYSVMSG -DSYSVSHM -DSVR4_COMPAT_SOLARIS2
-AFLAGS=         -x assembler-with-cpp -traditional-cpp -D_LOCORE \
-                -I. -I${S}
+AFLAGS=		-x assembler-with-cpp -traditional-cpp -D_LOCORE \
+		-I. -I${S}
 
 MKMAN=	no
 KMOD=	compat_svr4

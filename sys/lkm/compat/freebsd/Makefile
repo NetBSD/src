@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.7 2000/12/08 20:15:14 jdolecek Exp $
+#	$NetBSD: Makefile,v 1.8 2000/12/13 11:18:38 enami Exp $
 
 .include "../Makefile.inc"
 
@@ -6,8 +6,8 @@
 
 CPPFLAGS+=	-DVM86 -DSYSVSEM -DSYSVMSG -DSYSVSHM -DCOMPAT_FREEBSD
 CPPFLAGS+=	-nostdinc
-AFLAGS=         -x assembler-with-cpp -traditional-cpp -D_LOCORE \
-                -I. -I${S}
+AFLAGS=		-x assembler-with-cpp -traditional-cpp -D_LOCORE \
+		-I. -I${S}
 
 MKMAN=	no
 
