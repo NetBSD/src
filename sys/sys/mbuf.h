@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)mbuf.h	7.14 (Berkeley) 12/5/90
- *	$Id: mbuf.h,v 1.3 1993/05/20 16:22:39 cgd Exp $
+ *	$Id: mbuf.h,v 1.4 1993/08/03 01:50:21 glass Exp $
  */
 
 #ifndef _SYS_MBUF_H_
@@ -360,25 +360,25 @@ struct	mbuf *m_free(), *m_copym(), *m_pullup(), *m_prepend();
 int	m_clalloc();
 extern	int mbtypes[];			/* XXX */
 
-#ifdef MBTYPES
-int mbtypes[] = {				/* XXX */
-	M_FREE,		/* MT_FREE	0	/* should be on free list */
-	M_MBUF,		/* MT_DATA	1	/* dynamic (data) allocation */
-	M_MBUF,		/* MT_HEADER	2	/* packet header */
-	M_SOCKET,	/* MT_SOCKET	3	/* socket structure */
-	M_PCB,		/* MT_PCB	4	/* protocol control block */
-	M_RTABLE,	/* MT_RTABLE	5	/* routing tables */
-	M_HTABLE,	/* MT_HTABLE	6	/* IMP host tables */
-	0,		/* MT_ATABLE	7	/* address resolution tables */
-	M_MBUF,		/* MT_SONAME	8	/* socket name */
-	0,		/* 		9 */
-	M_SOOPTS,	/* MT_SOOPTS	10	/* socket options */
-	M_FTABLE,	/* MT_FTABLE	11	/* fragment reassembly header */
-	M_MBUF,		/* MT_RIGHTS	12	/* access rights */
-	M_IFADDR,	/* MT_IFADDR	13	/* interface address */
-	M_MBUF,		/* MT_CONTROL	14	/* extra-data protocol message */
-	M_MBUF,		/* MT_OOBDATA	15	/* expedited data  */
-#ifdef DATAKIT
+#ifdef MBTYPES				    
+int mbtypes[] = {			        /* XXX */
+	M_FREE,		/* MT_FREE	0        * should be on free list */
+	M_MBUF,		/* MT_DATA	1        * dynamic (data) allocation */
+	M_MBUF,		/* MT_HEADER	2        * packet header */
+	M_SOCKET,	/* MT_SOCKET	3        * socket structure */
+	M_PCB,		/* MT_PCB	4        * protocol control block */
+	M_RTABLE,	/* MT_RTABLE	5        * routing tables */
+	M_HTABLE,	/* MT_HTABLE	6        * IMP host tables */
+	0,		/* MT_ATABLE	7        * address resolution tables */
+	M_MBUF,		/* MT_SONAME	8        * socket name */
+	0,		/* 		9 */    
+	M_SOOPTS,	/* MT_SOOPTS	10       * socket options */
+	M_FTABLE,	/* MT_FTABLE	11       * fragment reassembly header */
+	M_MBUF,		/* MT_RIGHTS	12       * access rights */
+	M_IFADDR,	/* MT_IFADDR	13       * interface address */
+	M_MBUF,		/* MT_CONTROL	14       * extra-data protocol message */
+	M_MBUF,		/* MT_OOBDATA	15	 * expedited data  */
+#ifdef DATAKIT					
 	25, 26, 27, 28, 29, 30, 31, 32		/* datakit ugliness */
 #endif
 };
