@@ -1,4 +1,4 @@
-/*	$NetBSD: mb86960.c,v 1.39 2000/05/12 16:45:43 thorpej Exp $	*/
+/*	$NetBSD: mb86960.c,v 1.39.2.1 2000/06/22 17:06:46 minoura Exp $	*/
 
 /*
  * All Rights Reserved, Copyright (C) Fujitsu Limited 1995
@@ -335,6 +335,9 @@ mb86960_config(sc, media, nmedia, defmedia)
 		    sc->sc_dev.dv_xname, buf, bbw, ram, txb, sbw);
 	}
 #endif
+
+	/* The attach is successful. */
+	sc->sc_flags |= FE_FLAGS_ATTACHED;
 }
 
 /*
@@ -361,7 +364,7 @@ mb86960_mediastatus(ifp, ifmr)
 {
 	struct mb86960_softc *sc = ifp->if_softc;
 
-	if (sc->sc_enabled == 0) {
+	if ((sc->sc_flags & FE_FLAGS_ENABLED) == 0) {
 		ifmr->ifm_active = IFM_ETHER | IFM_NONE;
 		ifmr->ifm_status = 0;
 		return;
@@ -1106,7 +1109,7 @@ mb86960_intr(arg)
 	struct ifnet *ifp = &sc->sc_ec.ec_if;
 	u_char tstat, rstat;
 
-	if (sc->sc_enabled == 0 ||
+	if ((sc->sc_flags & FE_FLAGS_ENABLED) == 0 ||
 	    (sc->sc_dev.dv_flags & DVF_ACTIVE) == 0)
 		return (0);
 
@@ -1278,7 +1281,7 @@ mb86960_ioctl(ifp, cmd, data)
 
 	case SIOCADDMULTI:
 	case SIOCDELMULTI:
-		if (sc->sc_enabled == 0) {
+		if ((sc->sc_flags & FE_FLAGS_ENABLED) == 0) {
 			error = EIO;
 			break;
 		}
@@ -1770,7 +1773,7 @@ mb86960_enable(sc)
 	log(LOG_INFO, "%s: mb86960_enable()\n", sc->sc_dev.dv_xname);
 #endif
 
-	if (sc->sc_enabled == 0 && sc->sc_enable != NULL) {
+	if ((sc->sc_flags & FE_FLAGS_ENABLED) == 0 && sc->sc_enable != NULL) {
 		if ((*sc->sc_enable)(sc) != 0) {
 			printf("%s: device enable failed\n",
 			    sc->sc_dev.dv_xname);
@@ -1778,7 +1781,7 @@ mb86960_enable(sc)
 		}
 	}
 
-	sc->sc_enabled = 1;
+	sc->sc_flags |= FE_FLAGS_ENABLED;
 	return (0);
 }
 
@@ -1794,9 +1797,9 @@ mb86960_disable(sc)
 	log(LOG_INFO, "%s: mb86960_disable()\n", sc->sc_dev.dv_xname);
 #endif
 
-	if (sc->sc_enabled != 0 && sc->sc_disable != NULL) {
+	if ((sc->sc_flags & FE_FLAGS_ENABLED) != 0 && sc->sc_disable != NULL) {
 		(*sc->sc_disable)(sc);
-		sc->sc_enabled = 0;
+		sc->sc_flags &= ~FE_FLAGS_ENABLED;
 	}
 }
 
@@ -1837,6 +1840,10 @@ mb86960_detach(sc)
 	struct mb86960_softc *sc;
 {
 	struct ifnet *ifp = &sc->sc_ec.ec_if;
+
+	/* Succeed now if there's no work to do. */
+	if ((sc->sc_flags & FE_FLAGS_ATTACHED) == 0)
+		return (0);
 
 	/* Delete all media. */
 	ifmedia_delete_instance(&sc->sc_media, IFM_INST_ANY);

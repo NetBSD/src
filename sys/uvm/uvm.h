@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm.h,v 1.21 2000/04/24 17:12:00 thorpej Exp $	*/
+/*	$NetBSD: uvm.h,v 1.21.2.1 2000/06/22 17:10:42 minoura Exp $	*/
 
 /*
  *
@@ -148,12 +148,15 @@ UVMHIST_DECL(maphist);
 UVMHIST_DECL(pdhist);
 
 /*
- * UVM_UNLOCK_AND_WAIT: atomic unlock+wait... front end for the 
- * uvm_sleep() function.
+ * UVM_UNLOCK_AND_WAIT: atomic unlock+wait... wrapper around the
+ * interlocked tsleep() function.
  */
 
-#define UVM_UNLOCK_AND_WAIT(event, lock, intr, msg, timo) \
-	uvm_sleep(event, lock, intr, msg, timo)
+#define	UVM_UNLOCK_AND_WAIT(event, slock, intr, msg, timo)		\
+do {									\
+	(void) ltsleep(event, PVM | PNORELOCK | (intr ? PCATCH : 0),	\
+	    msg, timo, slock);						\
+} while (0)
 
 /*
  * UVM_PAGE_OWN: track page ownership (only if UVM_PAGE_TRKOWN)

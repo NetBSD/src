@@ -1,4 +1,4 @@
-/*	$NetBSD: sysv_msg.c,v 1.28 2000/04/12 13:08:26 simonb Exp $	*/
+/*	$NetBSD: sysv_msg.c,v 1.28.2.1 2000/06/22 17:09:18 minoura Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -59,13 +59,11 @@
 #define SYSVMSG
 
 #include <sys/param.h>
-#include <sys/systm.h>
 #include <sys/kernel.h>
-#include <sys/proc.h>
 #include <sys/msg.h>
-#include <sys/malloc.h>
-
-#include <sys/mount.h>
+#include <vm/vm.h>		/* XXX for <sys/sysctl.h> */
+#include <sys/sysctl.h>
+#include <sys/mount.h>		/* XXX for <sys/syscallargs.h> */
 #include <sys/syscallargs.h>
 
 #define MSG_DEBUG
@@ -77,9 +75,13 @@
 #define MSG_PRINTF(a)
 #endif
 
-int nfree_msgmaps;		/* # of free map entries */
-short free_msgmaps;		/* head of linked list of free map entries */
-struct __msg *free_msghdrs;	/* list of free msg headers */
+int	nfree_msgmaps;		/* # of free map entries */
+short	free_msgmaps;		/* head of linked list of free map entries */
+struct	__msg *free_msghdrs;	/* list of free msg headers */
+char	*msgpool;		/* MSGMAX byte long msg buffer pool */
+struct	msgmap *msgmaps;	/* MSGSEG msgmap structures */
+struct __msg *msghdrs;		/* MSGTQL msg headers */
+struct	msqid_ds *msqids;	/* MSGMNI msqid_ds struct's */
 
 static void msg_freehdr __P((struct __msg *));
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_upl.c,v 1.3 2000/04/27 15:26:46 augustss Exp $	*/
+/*	$NetBSD: if_upl.c,v 1.3.2.1 2000/06/22 17:08:30 minoura Exp $	*/
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -191,27 +191,23 @@ Static struct upl_type sc_devs[] = {
 
 USB_DECLARE_DRIVER(upl);
 
-Static int upl_openpipes	__P((struct upl_softc *));
-Static int upl_tx_list_init	__P((struct upl_softc *));
-Static int upl_rx_list_init	__P((struct upl_softc *));
-Static int upl_newbuf		__P((struct upl_softc *, struct upl_chain *,
-				    struct mbuf *));
-Static int upl_send		__P((struct upl_softc *, struct mbuf *, int));
-Static void upl_intr		__P((usbd_xfer_handle,
-				    usbd_private_handle, usbd_status));
-Static void upl_rxeof		__P((usbd_xfer_handle,
-				    usbd_private_handle, usbd_status));
-Static void upl_txeof		__P((usbd_xfer_handle,
-				    usbd_private_handle, usbd_status));
-Static void upl_start		__P((struct ifnet *));
-Static int upl_ioctl		__P((struct ifnet *, u_long, caddr_t));
-Static void upl_init		__P((void *));
-Static void upl_stop		__P((struct upl_softc *));
-Static void upl_watchdog		__P((struct ifnet *));
+Static int upl_openpipes(struct upl_softc *);
+Static int upl_tx_list_init(struct upl_softc *);
+Static int upl_rx_list_init(struct upl_softc *);
+Static int upl_newbuf(struct upl_softc *, struct upl_chain *, struct mbuf *);
+Static int upl_send(struct upl_softc *, struct mbuf *, int);
+Static void upl_intr(usbd_xfer_handle, usbd_private_handle, usbd_status);
+Static void upl_rxeof(usbd_xfer_handle, usbd_private_handle, usbd_status);
+Static void upl_txeof(usbd_xfer_handle, usbd_private_handle, usbd_status);
+Static void upl_start(struct ifnet *);
+Static int upl_ioctl(struct ifnet *, u_long, caddr_t);
+Static void upl_init(void *);
+Static void upl_stop(struct upl_softc *);
+Static void upl_watchdog(struct ifnet *);
 
-Static int upl_output __P((struct ifnet *, struct mbuf *, struct sockaddr *,
-			   struct rtentry *));
-Static void upl_input __P((struct ifnet *, struct mbuf *));
+Static int upl_output(struct ifnet *, struct mbuf *, struct sockaddr *,
+		      struct rtentry *);
+Static void upl_input(struct ifnet *, struct mbuf *);
 
 /*
  * Probe for a Prolific chip.
@@ -383,9 +379,7 @@ USB_DETACH(upl)
 }
 
 int
-upl_activate(self, act)
-	device_ptr_t self;
-	enum devact act;
+upl_activate(device_ptr_t self, enum devact act)
 {
 	struct upl_softc *sc = (struct upl_softc *)self;
 
@@ -409,10 +403,7 @@ upl_activate(self, act)
  * Initialize an RX descriptor and attach an MBUF cluster.
  */
 Static int
-upl_newbuf(sc, c, m)
-	struct upl_softc	*sc;
-	struct upl_chain	*c;
-	struct mbuf		*m;
+upl_newbuf(struct upl_softc *sc, struct upl_chain *c, struct mbuf *m)
 {
 	struct mbuf		*m_new = NULL;
 
@@ -446,8 +437,7 @@ upl_newbuf(sc, c, m)
 }
 
 Static int
-upl_rx_list_init(sc)
-	struct upl_softc	*sc;
+upl_rx_list_init(struct upl_softc *sc)
 {
 	struct upl_cdata	*cd;
 	struct upl_chain	*c;
@@ -478,8 +468,7 @@ upl_rx_list_init(sc)
 }
 
 Static int
-upl_tx_list_init(sc)
-	struct upl_softc	*sc;
+upl_tx_list_init(struct upl_softc *sc)
 {
 	struct upl_cdata	*cd;
 	struct upl_chain	*c;
@@ -513,10 +502,7 @@ upl_tx_list_init(sc)
  * the higher level protocols.
  */
 Static void
-upl_rxeof(xfer, priv, status)
-	usbd_xfer_handle	xfer;
-	usbd_private_handle	priv;
-	usbd_status		status;
+upl_rxeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 {
 	struct upl_chain	*c = priv;
 	struct upl_softc	*sc = c->upl_sc;
@@ -605,10 +591,7 @@ upl_rxeof(xfer, priv, status)
  * the list buffers.
  */
 Static void
-upl_txeof(xfer, priv, status)
-	usbd_xfer_handle	xfer;
-	usbd_private_handle	priv;
-	usbd_status		status;
+upl_txeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 {
 	struct upl_chain	*c = priv;
 	struct upl_softc	*sc = c->upl_sc;
@@ -652,10 +635,7 @@ upl_txeof(xfer, priv, status)
 }
 
 Static int
-upl_send(sc, m, idx)
-	struct upl_softc	*sc;
-	struct mbuf		*m;
-	int			idx;
+upl_send(struct upl_softc *sc, struct mbuf *m, int idx)
 {
 	int			total_len;
 	struct upl_chain	*c;
@@ -694,8 +674,7 @@ upl_send(sc, m, idx)
 }
 
 Static void
-upl_start(ifp)
-	struct ifnet		*ifp;
+upl_start(struct ifnet *ifp)
 {
 	struct upl_softc	*sc = ifp->if_softc;
 	struct mbuf		*m_head = NULL;
@@ -736,8 +715,7 @@ upl_start(ifp)
 }
 
 Static void
-upl_init(xsc)
-	void			*xsc;
+upl_init(void *xsc)
 {
 	struct upl_softc	*sc = xsc;
 	struct ifnet		*ifp = &sc->sc_if;
@@ -781,8 +759,7 @@ upl_init(xsc)
 }
 
 Static int
-upl_openpipes(sc)
-	struct upl_softc	*sc;
+upl_openpipes(struct upl_softc *sc)
 {
 	struct upl_chain	*c;
 	usbd_status		err;
@@ -830,10 +807,7 @@ upl_openpipes(sc)
 }
 
 Static void
-upl_intr(xfer, priv, status)
-	usbd_xfer_handle	xfer;
-	usbd_private_handle	priv;
-	usbd_status		status;
+upl_intr(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 {
 	struct upl_softc	*sc = priv;
 	struct ifnet		*ifp = &sc->sc_if;
@@ -874,10 +848,7 @@ upl_intr(xfer, priv, status)
 }
 
 Static int
-upl_ioctl(ifp, command, data)
-	struct ifnet		*ifp;
-	u_long			command;
-	caddr_t			data;
+upl_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 {
 	struct upl_softc	*sc = ifp->if_softc;
 	struct ifaddr 		*ifa = (struct ifaddr *)data;
@@ -948,8 +919,7 @@ upl_ioctl(ifp, command, data)
 }
 
 Static void
-upl_watchdog(ifp)
-	struct ifnet		*ifp;
+upl_watchdog(struct ifnet *ifp)
 {
 	struct upl_softc	*sc = ifp->if_softc;
 
@@ -973,8 +943,7 @@ upl_watchdog(ifp)
  * RX and TX lists.
  */
 Static void
-upl_stop(sc)
-	struct upl_softc	*sc;
+upl_stop(struct upl_softc *sc)
 {
 	usbd_status		err;
 	struct ifnet		*ifp;
@@ -1056,11 +1025,8 @@ upl_stop(sc)
 }
 
 Static int
-upl_output(ifp, m, dst, rt0)
-	struct ifnet *ifp;
-	struct mbuf *m;
-	struct sockaddr *dst;
-	struct rtentry *rt0;
+upl_output(struct ifnet *ifp, struct mbuf *m, struct sockaddr *dst,
+	   struct rtentry *rt0)
 {
 	int s;
 
@@ -1088,9 +1054,7 @@ upl_output(ifp, m, dst, rt0)
 }
 
 Static void
-upl_input(ifp, m)
-	struct ifnet *ifp;
-	struct mbuf *m;
+upl_input(struct ifnet *ifp, struct mbuf *m)
 {
 	struct ifqueue *inq;
 	int s;

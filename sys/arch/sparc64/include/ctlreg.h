@@ -1,4 +1,4 @@
-/*	$NetBSD: ctlreg.h,v 1.13 2000/04/10 16:05:13 mrg Exp $ */
+/*	$NetBSD: ctlreg.h,v 1.13.2.1 2000/06/22 17:04:26 minoura Exp $ */
 
 /*
  * Copyright (c) 1996-1999 Eduardo Horvath
@@ -164,9 +164,17 @@
 #define ASI_BLK_S			ASI_BLOCK_SECONDARY
 #define ASI_BLK_SL			ASI_BLOCK_SECONDARY_LITTLE
 
+#define PHYS_ASI(x)	(((x) | 0x09) == 0x1d)
+#define LITTLE_ASI(x)	((x) & ASI_LITTLE)
+
 /* 
  * The following are 4u control registers
  */
+
+
+/* Get the CPU's UPAID */
+#define	UPA_CR_MID(x)	(((x)>>17)&0x1f)	
+#define	CPU_UPAID	UPA_CR_MID(ldxa(0, ASI_MID_REG))
 
 /*
  * [4u] MMU and Cache Control Register (MCCR)
@@ -431,23 +439,25 @@
 /* load byte from alternate address space */
 #ifdef DCACHE_BUG
 #define	lduba(loc, asi) ({ \
-	register int _lduba_v; \
-	if (asi == ASI_PHYS_CACHED) { \
+	register unsigned int _lduba_v; \
+	if (PHYS_ASI(asi)) { \
 		__asm __volatile("wr %2,%%g0,%%asi; " \
 " andn %1,0x1f,%0; stxa %%g0,[%0] %3; membar #Sync; " \
 " lduba [%1]%%asi,%0" : "=&r" (_lduba_v) : \
-		"r" ((long)(loc)), "r" (asi), "n" (ASI_DCACHE_TAG)); \
+		"r" ((unsigned long)(loc)), "r" (asi), "n" (ASI_DCACHE_TAG)); \
 	} else { \
-		__asm __volatile("wr %2,%%g0,%%asi; lduba [%1]%%asi,%0" : "=r" (_lduba_v) : \
-		"r" ((long)(loc)), "r" (asi)); \
+		__asm __volatile("wr %2,%%g0,%%asi; lduba [%1]%%asi,%0" : \
+		"=r" (_lduba_v) : \
+		"r" ((unsigned long)(loc)), "r" (asi)); \
 	} \
 	_lduba_v; \
 })
 #else
 #define	lduba(loc, asi) ({ \
-	register int _lduba_v; \
-	__asm __volatile("wr %2,%%g0,%%asi; lduba [%1]%%asi,%0" : "=r" (_lduba_v) : \
-	    "r" ((long)(loc)), "r" (asi)); \
+	register unsigned int _lduba_v; \
+	__asm __volatile("wr %2,%%g0,%%asi; lduba [%1]%%asi,%0" : \
+		"=r" (_lduba_v) : \
+		"r" ((unsigned long)(loc)), "r" (asi)); \
 	_lduba_v; \
 })
 #endif
@@ -455,28 +465,31 @@
 /* load byte from alternate address space */
 #ifdef DCACHE_BUG
 #define	lduba(loc, asi) ({ \
-	register int _lduba_v, _loc_hi; \
+	register unsigned int _lduba_v, _loc_hi, _pstate; \
 	_loc_hi = (((u_int64_t)loc)>>32); \
-	if (asi == ASI_PHYS_CACHED) { \
-		__asm __volatile("wr %3,%%g0,%%asi; " \
-" andn %1,0x1f,%0; stxa %%g0,[%0] %4; " \
-" sllx %2,32,%0; or %0,%1,%0; membar #Sync; lduba [%0]%%asi,%0" : "=&r" (_lduba_v) : \
-		"r" ((long)(loc)), "r" (_loc_hi), \
+	if (PHYS_ASI(asi)) { \
+		__asm __volatile("wr %4,%%g0,%%asi; " \
+" andn %2,0x1f,%0; stxa %%g0,[%0] %5; rdpr %%pstate,%1; " \
+" sllx %3,32,%0; or %0,%2,%0; wrpr %1,8,%%pstate; " \
+" membar #Sync; lduba [%0]%%asi,%0; wrpr %1,0,%%pstate" : \
+		"=&r" (_lduba_v),  "=&r" (_pstate) : \
+		"r" ((unsigned long)(loc)), "r" (_loc_hi), \
 		"r" (asi), "n" (ASI_DCACHE_TAG)); \
 	} else { \
 		__asm __volatile("wr %3,%%g0,%%asi; sllx %2,32,%0; " \
 " or %0,%1,%0; lduba [%0]%%asi,%0" : "=&r" (_lduba_v) : \
-		"r" ((long)(loc)), "r" (_loc_hi), "r" (asi)); \
+		"r" ((unsigned long)(loc)), "r" (_loc_hi), "r" (asi)); \
 	} \
 	_lduba_v; \
 })
 #else
 #define	lduba(loc, asi) ({ \
-	register int _lduba_v, _loc_hi; \
+	register unsigned int _lduba_v, _loc_hi, _pstate; \
 	_loc_hi = (((u_int64_t)loc)>>32); \
-	__asm __volatile("wr %3,%%g0,%%asi;  sllx %2,32,%0; " \
-" or %0,%1,%0; lduba [%0]%%asi,%0" : "=&r" (_lduba_v) : \
-	    "r" ((long)(loc)), "r" (_loc_hi), "r" (asi)); \
+	__asm __volatile("wr %4,%%g0,%%asi; rdpr %%pstate,%1; sllx %3,32,%0; " \
+" wrpr %1,8,%%pstate; or %0,%2,%0; lduba [%0]%%asi,%0; wrpr %1,0,%%pstate" : \
+		"=&r" (_lduba_v), "=&r" (_pstate) : \
+		"r" ((unsigned long)(loc)), "r" (_loc_hi), "r" (asi)); \
 	_lduba_v; \
 })
 #endif
@@ -486,23 +499,23 @@
 /* load half-word from alternate address space */
 #ifdef DCACHE_BUG
 #define	lduha(loc, asi) ({ \
-	register int _lduha_v; \
-	if (asi == ASI_PHYS_CACHED) { \
+	register unsigned int _lduha_v; \
+	if (PHYS_ASI(asi)) { \
 		__asm __volatile("wr %2,%%g0,%%asi; " \
 " andn %1,0x1f,%0; stxa %%g0,[%0] %3; membar #Sync; " \
 " lduha [%1]%%asi,%0" : "=&r" (_lduha_v) : \
-		"r" ((long)(loc)), "r" (asi), "n" (ASI_DCACHE_TAG)); \
+		"r" ((unsigned long)(loc)), "r" (asi), "n" (ASI_DCACHE_TAG)); \
 	} else { \
 		__asm __volatile("wr %2,%%g0,%%asi; lduha [%1]%%asi,%0" : "=r" (_lduha_v) : \
-		"r" ((long)(loc)), "r" (asi)); \
+		"r" ((unsigned long)(loc)), "r" (asi)); \
 	} \
 	_lduha_v; \
 })
 #else
 #define	lduha(loc, asi) ({ \
-	register int _lduha_v; \
+	register unsigned int _lduha_v; \
 	__asm __volatile("wr %2,%%g0,%%asi; lduha [%1]%%asi,%0" : "=r" (_lduha_v) : \
-	    "r" ((long)(loc)), "r" (asi)); \
+	    "r" ((unsigned long)(loc)), "r" (asi)); \
 	_lduha_v; \
 })
 #endif
@@ -510,28 +523,30 @@
 /* load half-word from alternate address space */
 #ifdef DCACHE_BUG
 #define	lduha(loc, asi) ({ \
-	register int _lduha_v, _loc_hi; \
+	register unsigned int _lduha_v, _loc_hi, _pstate; \
 	_loc_hi = (((u_int64_t)loc)>>32); \
-	if (asi == ASI_PHYS_CACHED) { \
-		__asm __volatile("wr %3,%%g0,%%asi; " \
-" andn %1,0x1f,%0; stxa %%g0,[%0] %4; " \
-" sllx %2,32,%0; or %0,%1,%0; membar #Sync; lduha [%0]%%asi,%0" : "=&r" (_lduha_v) : \
-		"r" ((long)(loc)), "r" (_loc_hi), \
+	if (PHYS_ASI(asi)) { \
+		__asm __volatile("wr %4,%%g0,%%asi; rdpr %%pstate,%1; " \
+" andn %2,0x1f,%0; stxa %%g0,[%0] %5; wrpr %1,8,%%pstate; sllx %3,32,%0; " \
+" or %0,%2,%0; membar #Sync; lduha [%0]%%asi,%0; wrpr %1,0,%%pstate" : \
+		"=&r" (_lduha_v), "=&r" (_pstate) : \
+		"r" ((unsigned long)(loc)), "r" (_loc_hi), \
 		"r" (asi), "n" (ASI_DCACHE_TAG)); \
 	} else { \
 		__asm __volatile("wr %3,%%g0,%%asi; sllx %2,32,%0; " \
 " or %0,%1,%0; lduha [%0]%%asi,%0" : "=&r" (_lduha_v) : \
-		"r" ((long)(loc)), "r" (_loc_hi), "r" (asi)); \
+		"r" ((unsigned long)(loc)), "r" (_loc_hi), "r" (asi)); \
 	} \
 	_lduha_v; \
 })
 #else
 #define	lduha(loc, asi) ({ \
-	register int _lduha_v, _loc_hi; \
+	register unsigned int _lduha_v, _loc_hi, _pstate; \
 	_loc_hi = (((u_int64_t)loc)>>32); \
-	__asm __volatile("wr %3,%%g0,%%asi; sllx %2,32,%0; " \
-" or %0,%1,%0; lduha [%0]%%asi,%0" : "=&r" (_lduha_v) : \
-	    "r" ((long)(loc)), "r" (_loc_hi), "r" (asi)); \
+	__asm __volatile("wr %4,%%g0,%%asi; sllx %3,32,%0; rdpr %%pstate,%1; " \
+" or %0,%2,%0; wrpr %1,8,%%pstate; lduha [%0]%%asi,%0; wrpr %1,0,%%pstate" : \
+		"=&r" (_lduha_v), "=&r" (_pstate) : \
+		"r" ((unsigned long)(loc)), "r" (_loc_hi), "r" (asi)); \
 	_lduha_v; \
 })
 #endif
@@ -542,14 +557,14 @@
 #ifdef DCACHE_BUG
 #define	lda(loc, asi) ({ \
 	register int _lda_v; \
-	if (asi == ASI_PHYS_CACHED) { \
+	if (PHYS_ASI(asi)) { \
 		__asm __volatile("wr %2,%%g0,%%asi; " \
 " andn %1,0x1f,%0; stxa %%g0,[%0] %3; membar #Sync; " \
 " lda [%1]%%asi,%0" : "=&r" (_lda_v) : \
-		"r" ((long)(loc)), "r" (asi), "n" (ASI_DCACHE_TAG)); \
+		"r" ((unsigned long)(loc)), "r" (asi), "n" (ASI_DCACHE_TAG)); \
 	} else { \
 		__asm __volatile("wr %2,%%g0,%%asi; lda [%1]%%asi,%0" : "=r" (_lda_v) : \
-		"r" ((long)(loc)), "r" (asi)); \
+		"r" ((unsigned long)(loc)), "r" (asi)); \
 	} \
 	_lda_v; \
 })
@@ -557,14 +572,14 @@
 /* load signed int from alternate address space */
 #define	ldswa(loc, asi) ({ \
 	register int _lda_v; \
-	if (asi == ASI_PHYS_CACHED) { \
+	if (PHYS_ASI(asi)) { \
 		__asm __volatile("wr %2,%%g0,%%asi; " \
 " andn %1,0x1f,%0; stxa %%g0,[%0] %3; membar #Sync; " \
 " ldswa [%1]%%asi,%0" : "=&r" (_lda_v) : \
-		"r" ((long)(loc)), "r" (asi), "n" (ASI_DCACHE_TAG)); \
+		"r" ((unsigned long)(loc)), "r" (asi), "n" (ASI_DCACHE_TAG)); \
 	} else { \
 		__asm __volatile("wr %2,%%g0,%%asi; ldswa [%1]%%asi,%0" : "=r" (_lda_v) : \
-		"r" ((long)(loc)), "r" (asi)); \
+		"r" ((unsigned long)(loc)), "r" (asi)); \
 	} \
 	_lda_v; \
 })
@@ -572,14 +587,14 @@
 #define	lda(loc, asi) ({ \
 	register int _lda_v; \
 	__asm __volatile("wr %2,%%g0,%%asi; lda [%1]%%asi,%0" : "=r" (_lda_v) : \
-	    "r" ((long)(loc)), "r" (asi)); \
+	    "r" ((unsigned long)(loc)), "r" (asi)); \
 	_lda_v; \
 })
 
 #define	ldswa(loc, asi) ({ \
 	register int _lda_v; \
 	__asm __volatile("wr %2,%%g0,%%asi; ldswa [%1]%%asi,%0" : "=r" (_lda_v) : \
-	    "r" ((long)(loc)), "r" (asi)); \
+	    "r" ((unsigned long)(loc)), "r" (asi)); \
 	_lda_v; \
 })
 #endif
@@ -587,55 +602,59 @@
 /* load unsigned int from alternate address space */
 #ifdef DCACHE_BUG
 #define	lda(loc, asi) ({ \
-	register int _lda_v, _loc_hi; \
+	register int _lda_v, _loc_hi, _pstate; \
 	_loc_hi = (((u_int64_t)loc)>>32); \
-	if (asi == ASI_PHYS_CACHED) { \
-		__asm __volatile("wr %3,%%g0,%%asi; " \
-" andn %1,0x1f,%0; stxa %%g0,[%0] %4; " \
-" sllx %2,32,%0; or %0,%1,%0; membar #Sync; lda [%1]%%asi,%0" : "=&r" (_lda_v) : \
-		"r" ((long)(loc)), "r" (_loc_hi), \
+	if (PHYS_ASI(asi)) { \
+		__asm __volatile("wr %4,%%g0,%%asi; rdpr %%pstate,%1;" \
+" andn %2,0x1f,%0; stxa %%g0,[%0] %5; wrpr %1,8,%%pstate; " \
+" sllx %3,32,%0; or %0,%2,%0; membar #Sync;lda [%0]%%asi,%0; " \
+" wrpr %1,0,%%pstate" : "=&r" (_lda_v), "=&r" (_pstate) : \
+		"r" ((unsigned long)(loc)), "r" (_loc_hi), \
 		"r" (asi), "n" (ASI_DCACHE_TAG)); \
 	} else { \
 		__asm __volatile("wr %3,%%g0,%%asi; sllx %2,32,%0; " \
 " or %0,%1,%0; lda [%0]%%asi,%0" : "=&r" (_lda_v) : \
-		"r" ((long)(loc)), "r" (_loc_hi), "r" (asi)); \
+		"r" ((unsigned long)(loc)), "r" (_loc_hi), "r" (asi)); \
 	} \
 	_lda_v; \
 })
 
 /* load signed int from alternate address space */
 #define	ldswa(loc, asi) ({ \
-	register int _lda_v, _loc_hi; \
+	register int _lda_v, _loc_hi, _pstate; \
 	_loc_hi = (((u_int64_t)loc)>>32); \
-	if (asi == ASI_PHYS_CACHED) { \
-		__asm __volatile("wr %3,%%g0,%%asi; " \
-" andn %1,0x1f,%0; stxa %%g0,[%0] %4; " \
-"  sllx %2,32,%0; or %0,%1,%0; membar #Sync; ldswa [%1]%%asi,%0" : "=&r" (_lda_v) : \
-		"r" ((long)(loc)), "r" (_loc_hi), \
+	if (PHYS_ASI(asi)) { \
+		__asm __volatile("wr %4,%%g0,%%asi; rdpr %%pstate,%1;" \
+" andn %2,0x1f,%0; stxa %%g0,[%0] %5; wrpr %1,8,%%pstate; sllx %3,32,%0;" \
+" or %0,%2,%0; membar #Sync; ldswa [%0]%%asi,%0; wrpr %1,0,%%pstate" : \
+		"=&r" (_lda_v), "=&r" (_pstate) : \
+		"r" ((unsigned long)(loc)), "r" (_loc_hi), \
 		"r" (asi), "n" (ASI_DCACHE_TAG)); \
 	} else { \
 		__asm __volatile("wr %3,%%g0,%%asi; sllx %2,32,%0; " \
 " or %0,%1,%0; ldswa [%0]%%asi,%0" : "=&r" (_lda_v) : \
-		"r" ((long)(loc)), "r" (_loc_hi), "r" (asi)); \
+		"r" ((unsigned long)(loc)), "r" (_loc_hi), "r" (asi)); \
 	} \
 	_lda_v; \
 })
 #else
 #define	lda(loc, asi) ({ \
-	register int _lda_v, _loc_hi; \
+	register int _lda_v, _loc_hi, _pstate; \
 	_loc_hi = (((u_int64_t)loc)>>32); \
-	__asm __volatile("wr %3,%%g0,%%asi; sllx %2,32,%0; " \
-" or %0,%1,%0; lda [%0]%%asi,%0" : "=&r" (_lda_v) : \
-	    "r" ((long)(loc)), "r" (_loc_hi), "r" (asi)); \
+	__asm __volatile("wr %4,%%g0,%%asi; sllx %3,32,%0; rdpr %%pstate,%1;" \
+" wrpr %1,8,%%pstate; or %0,%2,%0; lda [%0]%%asi,%0; wrpr %1,0,%%pstate" : \
+		"=&r" (_lda_v), "=&r" (_pstate) : \
+		"r" ((unsigned long)(loc)), "r" (_loc_hi), "r" (asi)); \
 	_lda_v; \
 })
 
 #define	ldswa(loc, asi) ({ \
-	register int _lda_v, _loc_hi; \
+	register int _lda_v, _loc_hi, _pstate;; \
 	_loc_hi = (((u_int64_t)loc)>>32); \
-	__asm __volatile("wr %3,%%g0,%%asi; sllx %2,32,%0; " \
-" or %0,%1,%0; ldswa [%0]%%asi,%0" : "=&r" (_lda_v) : \
-	    "r" ((long)(loc)), "r" (_loc_hi), "r" (asi)); \
+	__asm __volatile("wr %4,%%g0,%%asi; sllx %3,32,%0; rdpr %%pstate,%1;" \
+" wrpr %1,8,%%pstate; or %0,%2,%0; ldswa [%0]%%asi,%0; wrpr %1,0,%pstate" : \
+		"=&r" (_lda_v), "=&r" (_pstate) : \
+		"r" ((unsigned long)(loc)), "r" (_loc_hi), "r" (asi)); \
 	_lda_v; \
 })
 #endif
@@ -647,31 +666,32 @@
 /* load 64-bit int from alternate address space */
 #define	ldda(loc, asi) ({ \
 	register long long _lda_v; \
-	if (asi == ASI_PHYS_CACHED) { \
+	if (PHYS_ASI(asi)) { \
 		__asm __volatile("wr %2,%%g0,%%asi; " \
 " andn %1,0x1f,%0; stxa %%g0,[%0] %3; membar #Sync; " \
 " ldda [%1]%%asi,%0" : "=&r" (_lda_v) : \
-		"r" ((long)(loc)), "r" (asi), "n" (ASI_DCACHE_TAG)); \
+		"r" ((unsigned long)(loc)), "r" (asi), "n" (ASI_DCACHE_TAG)); \
 	} else { \
 		__asm __volatile("wr %2,%%g0,%%asi; ldda [%1]%%asi,%0" : "=r" (_lda_v) : \
-		"r" ((long)(loc)), "r" (asi)); \
+		"r" ((unsigned long)(loc)), "r" (asi)); \
 	} \
 	_lda_v; \
 })
 #else
 /* load 64-bit int from alternate address space */
 #define	ldda(loc, asi) ({ \
-	register long long _lda_v, _loc_hi; \
+	register long long _lda_v, _loc_hi, _pstate; \
 	_loc_hi = (((u_int64_t)loc)>>32); \
-	if (asi == ASI_PHYS_CACHED) { \
-		__asm __volatile("wr %3,%%g0,%%asi; " \
-" andn %1,0x1f,%0; stxa %%g0,[%0] %4; " \
-" sllx %2,32,%0; or %0,%1,%0; membar #Sync; ldda [%0]%%asi,%0" : "=&r" (_lda_v) : \
-		"r" ((long)(loc)), "r" (_loc_hi), "r" (asi), "n" (ASI_DCACHE_TAG)); \
+	if (PHYS_ASI(asi)) { \
+		__asm __volatile("wr %4,%%g0,%%asi; rdpr %%pstate,%1;" \
+" andn %2,0x1f,%0; rdpr %%pstate,%1; stxa %%g0,[%0] %5; wrpr %1,8,%%pstate;" \
+" sllx %3,32,%0; or %0,%2,%0; membar #Sync; ldda [%0]%%asi,%0; wrpr %1,0,%%pstate" :\
+		 "=&r" (_lda_v), "=&r" (_pstate) : \
+		"r" ((unsigned long)(loc)), "r" (_loc_hi), "r" (asi), "n" (ASI_DCACHE_TAG)); \
 	} else { \
 		__asm __volatile("wr %3,%%g0,%%asi; sllx %2,32,%0; " \
 " or %0,%1,%0; ldda [%0]%%asi,%0" : "=&r" (_lda_v) : \
-		"r" ((long)(loc)), "r" (_loc_hi), "r" (asi)); \
+			"r" ((unsigned long)(loc)), "r" (_loc_hi), "r" (asi)); \
 	} \
 	_lda_v; \
 })
@@ -680,36 +700,36 @@
 #ifdef __arch64__
 /* native load 64-bit int from alternate address space w/64-bit compiler*/
 #define	ldxa(loc, asi) ({ \
-	register long _lda_v; \
-	if (asi == ASI_PHYS_CACHED) { \
+	register unsigned long _lda_v; \
+	if (PHYS_ASI(asi)) { \
 		__asm __volatile("wr %2,%%g0,%%asi; "\
 " andn %1,0x1f,%0; stxa %%g0,[%0] %3; membar #Sync; " \
 " ldxa [%1]%%asi,%0" : "=&r" (_lda_v) : \
-		"r" ((long)(loc)), "r" (asi), "n" (ASI_DCACHE_TAG)); \
+		"r" ((unsigned long)(loc)), "r" (asi), "n" (ASI_DCACHE_TAG)); \
 	} else { \
 		__asm __volatile("wr %2,%%g0,%%asi; ldxa [%1]%%asi,%0" : "=r" (_lda_v) : \
-		"r" ((long)(loc)), "r" (asi)); \
+		"r" ((unsigned long)(loc)), "r" (asi)); \
 	} \
 	_lda_v; \
 })
 #else
 /* native load 64-bit int from alternate address space w/32-bit compiler*/
 #define	ldxa(loc, asi) ({ \
-	register long _ldxa_lo, _ldxa_hi, _loc_hi; \
+	register unsigned long _ldxa_lo, _ldxa_hi, _loc_hi; \
 	_loc_hi = (((u_int64_t)loc)>>32); \
-	if (asi == ASI_PHYS_CACHED) { \
+	if (PHYS_ASI(asi)) { \
 		__asm __volatile("wr %4,%%g0,%%asi; " \
-" andn %2,0x1f,%0; stxa %%g0,[%0] %5; " \
-" sllx %3,32,%0; or %0,%2,%0; membar #Sync; ldxa [%0]%%asi,%0; " \
-" srlx %0,32,%1; srl %0,0,%0" : \
+" andn %2,0x1f,%0; rdpr %%pstate,%1; stxa %%g0,[%0] %5; " \
+" sllx %3,32,%0; wrpr %1,8,%%pstate; or %0,%2,%0; membar #Sync; ldxa [%0]%%asi,%0; " \
+" wrpr %1,0,%%pstate; srlx %0,32,%1; srl %0,0,%0" : \
 		"=&r" (_ldxa_lo), "=&r" (_ldxa_hi) : \
-		"r" ((long)(loc)), "r" (_loc_hi), \
+		"r" ((unsigned long)(loc)), "r" (_loc_hi), \
 		"r" (asi), "n" (ASI_DCACHE_TAG)); \
 	} else { \
 		__asm __volatile("wr %4,%%g0,%%asi; sllx %3,32,%0; " \
 " or %0,%2,%0; ldxa [%0]%%asi,%0; srlx %0,32,%1; srl %0,0,%0;" : \
 		"=&r" (_ldxa_lo), "=&r" (_ldxa_hi) : \
-		"r" ((long)(loc)), "r" (_loc_hi), "r" (asi)); \
+		"r" ((unsigned long)(loc)), "r" (_loc_hi), "r" (asi)); \
 	} \
 	((((int64_t)_ldxa_hi)<<32)|_ldxa_lo); \
 })
@@ -722,16 +742,17 @@
 #define	ldda(loc, asi) ({ \
 	register long long _lda_v; \
 	__asm __volatile("wr %2,%%g0,%%asi; ldda [%1]%%asi,%0" : "=r" (_lda_v) : \
-	    "r" ((long)(loc)), "r" (asi)); \
+	    "r" ((unsigned long)(loc)), "r" (asi)); \
 	_lda_v; \
 })
 #else
 #define	ldda(loc, asi) ({ \
-	register long long _lda_v, _loc_hi; \
+	register long long _lda_v, _loc_hi, _pstate; \
 	_loc_hi = (((u_int64_t)loc)>>32); \
-	__asm __volatile("wr %3,%%g0,%%asi; sllx %2,32,%0; " \
-" or %0,%1,%0; ldda [%0]%%asi,%0" : "=&r" (_lda_v) : \
-	    "r" ((long)(loc)), "r" (_loc_hi), "r" (asi)); \
+	__asm __volatile("wr %4,%%g0,%%asi; sllx %3,32,%0; rdpr %%pstate,%1;" \
+" or %0,%2,%0; wrpr %1,8,%%pstate; ldda [%0]%%asi,%0; wrpr %1,0,%%pstate" : \
+		"=&r" (_lda_v), "=&r" (_pstate) : \
+		"r" ((unsigned long)(loc)), "r" (_loc_hi), "r" (asi)); \
 	_lda_v; \
 })
 #endif
@@ -741,18 +762,26 @@
 #define	ldxa(loc, asi) ({ \
 	register long _lda_v; \
 	__asm __volatile("wr %2,%%g0,%%asi; ldxa [%1]%%asi,%0" : "=r" (_lda_v) : \
-	    "r" ((long)(loc)), "r" (asi)); \
+	    "r" ((unsigned long)(loc)), "r" (asi)); \
 	_lda_v; \
 })
 #else
 /* native load 64-bit int from alternate address space w/32-bit compiler*/
 #define	ldxa(loc, asi) ({ \
-	register long _ldxa_lo, _ldxa_hi, _loc_hi; \
+	register unsigned long _ldxa_lo, _ldxa_hi, _loc_hi; \
 	_loc_hi = (((u_int64_t)loc)>>32); \
-	__asm __volatile("wr %4,%%g0,%%asi; sllx %2,32,%0; " \
+	if (PHYS_ASI(asi)) { \
+		__asm __volatile("wr %4,%%g0,%%asi; sllx %2,32,%0; rdpr %%pstate,%1;" \
+" or %0,%1,%0; wrpr %1,8,%%pstate; ldxa [%0]%%asi,%0; wrpr %1,0,%%pstate;" \
+" srlx %0,32,%1; srl %0,0,%0;" : \
+	    "=&r" (_ldxa_lo), "=&r" (_ldxa_hi) : \
+	    "r" ((unsigned long)(loc)), "r" (_loc_hi), "r" (asi)); \
+	} else { \
+		__asm __volatile("wr %4,%%g0,%%asi; sllx %2,32,%0; " \
 " or %0,%1,%0; ldxa [%2]%%asi,%0; srlx %0,32,%1; srl %0,0,%0;" : \
 	    "=&r" (_ldxa_lo), "=&r" (_ldxa_hi) : \
 	    "r" ((long)(loc)), "r" (_loc_hi), "r" (asi)); \
+	} \
 	((((int64_t)_ldxa_hi)<<32)|_ldxa_lo); \
 })
 #endif
@@ -763,15 +792,24 @@
 #ifdef __arch64__
 #define	stba(loc, asi, value) ({ \
 	__asm __volatile("wr %2,%%g0,%%asi; stba %0,[%1]%%asi" : : \
-	    "r" ((int)(value)), "r" ((long)(loc)), "r" (asi)); \
+	    "r" ((int)(value)), "r" ((unsigned long)(loc)), "r" (asi)); \
 })
 #else
 #define	stba(loc, asi, value) ({ \
-	register int _loc_hi; \
+	register int _loc_hi, _pstate; \
 	_loc_hi = (((u_int64_t)loc)>>32); \
-	__asm __volatile("wr %4,%%g0,%%asi; sllx %3,32,%0; " \
+	if (PHYS_ASI(asi)) { \
+		__asm __volatile("wr %5,%%g0,%%asi; sllx %4,32,%0; rdpr %%pstate,%1;" \
+" or %3,%0,%0; wrpr %1,8,%%pstate; stba %2,[%0]%%asi; wrpr %1,0,%%pstate" : \
+		"=&r" (_loc_hi), "=&r" (_pstate) : \
+		"r" ((int)(value)), "r" ((unsigned long)(loc)), \
+		"r" (_loc_hi), "r" (asi)); \
+	} else { \
+		__asm __volatile("wr %4,%%g0,%%asi; sllx %3,32,%0; " \
 " or %2,%0,%0; stba %1,[%0]%%asi" : "=&r" (_loc_hi) : \
-	    "r" ((int)(value)), "r" ((long)(loc)), "r" (_loc_hi), "r" (asi)); \
+		"r" ((int)(value)), "r" ((unsigned long)(loc)), \
+		"r" (_loc_hi), "r" (asi)); \
+	} \
 })
 #endif
 
@@ -779,15 +817,24 @@
 #ifdef __arch64__
 #define	stha(loc, asi, value) ({ \
 	__asm __volatile("wr %2,%%g0,%%asi; stha %0,[%1]%%asi" : : \
-	    "r" ((int)(value)), "r" ((long)(loc)), "r" (asi)); \
+	    "r" ((int)(value)), "r" ((unsigned long)(loc)), "r" (asi)); \
 })
 #else
 #define	stha(loc, asi, value) ({ \
-	register int _loc_hi; \
+	register int _loc_hi, _pstate; \
 	_loc_hi = (((u_int64_t)loc)>>32); \
-__asm __volatile("wr %4,%%g0,%%asi; sllx %3,32,%0; " \
+	if (PHYS_ASI(asi)) { \
+		__asm __volatile("wr %5,%%g0,%%asi; sllx %4,32,%0; rdpr %%pstate,%1;" \
+" or %3,%0,%0; wrpr %1,8,%%pstate; stha %2,[%0]%%asi; wrpr %1,0,%%pstate" : \
+		"=&r" (_loc_hi), "=&r" (_pstate) : \
+		"r" ((int)(value)), "r" ((unsigned long)(loc)), \
+		"r" (_loc_hi), "r" (asi)); \
+	} else { \
+		__asm __volatile("wr %4,%%g0,%%asi; sllx %3,32,%0; " \
 " or %2,%0,%0; stha %1,[%0]%%asi" : "=&r" (_loc_hi) : \
-	    "r" ((int)(value)), "r" ((long)(loc)), "r" (_loc_hi), "r" (asi)); \
+	    "r" ((int)(value)), "r" ((unsigned long)(loc)), \
+		"r" (_loc_hi), "r" (asi)); \
+	} \
 })
 #endif
 
@@ -795,15 +842,24 @@ __asm __volatile("wr %4,%%g0,%%asi; sllx %3,32,%0; " \
 #ifdef __arch64__
 #define	sta(loc, asi, value) ({ \
 	__asm __volatile("wr %2,%%g0,%%asi; sta %0,[%1]%%asi" : : \
-	    "r" ((int)(value)), "r" ((long)(loc)), "r" (asi)); \
+	    "r" ((int)(value)), "r" ((unsigned long)(loc)), "r" (asi)); \
 })
 #else
 #define	sta(loc, asi, value) ({ \
-	register int _loc_hi; \
+	register int _loc_hi, _pstate; \
 	_loc_hi = (((u_int64_t)loc)>>32); \
-	__asm __volatile("wr %4,%%g0,%%asi; sllx %3,32,%0; " \
+	if (PHYS_ASI(asi)) { \
+		__asm __volatile("wr %5,%%g0,%%asi; sllx %4,32,%0; rdpr %%pstate,%1;" \
+" or %3,%0,%0; wrpr %1,8,%%pstate; sta %2,[%0]%%asi; wrpr %1,0,%%pstate" : \
+		"=&r" (_loc_hi), "=&r" (_pstate) : \
+		"r" ((int)(value)), "r" ((unsigned long)(loc)), \
+		"r" (_loc_hi), "r" (asi)); \
+	} else { \
+		__asm __volatile("wr %4,%%g0,%%asi; sllx %3,32,%0; " \
 " or %2,%0,%0; sta %1,[%0]%%asi" : "=&r" (_loc_hi) : \
-	    "r" ((int)(value)), "r" ((int)(loc)), "r" (_loc_hi), "r" (asi)); \
+		"r" ((int)(value)), "r" ((unsigned long)(loc)), \
+		"r" (_loc_hi), "r" (asi)); \
+	} \
 })
 #endif
 
@@ -811,15 +867,24 @@ __asm __volatile("wr %4,%%g0,%%asi; sllx %3,32,%0; " \
 #ifdef __arch64__
 #define	stda(loc, asi, value) ({ \
 	__asm __volatile("wr %2,%%g0,%%asi; stda %0,[%1]%%asi" : : \
-	    "r" ((long long)(value)), "r" ((long)(loc)), "r" (asi)); \
+	    "r" ((long long)(value)), "r" ((unsigned long)(loc)), "r" (asi)); \
 })
 #else
 #define	stda(loc, asi, value) ({ \
-	register int _loc_hi; \
+	register int _loc_hi, _pstate; \
 	_loc_hi = (((u_int64_t)loc)>>32); \
-	__asm __volatile("wr %4,%%g0,%%asi; sllx %3,32,%0; " \
+	if (PHYS_ASI(asi)) { \
+	__asm __volatile("wr %5,%%g0,%%asi; sllx %4,32,%0; rdpr %%pstate,%1; " \
+" or %3,%0,%0; wrpr %1,8,%%pstate; stda %2,[%0]%%asi; wrpr %1,0,%%pstate" : \
+		"=&r" (_loc_hi), "=&r" (_pstate) : \
+		"r" ((long long)(value)), "r" ((unsigned long)(loc)), \
+		"r" (_loc_hi), "r" (asi)); \
+	} else { \
+		__asm __volatile("wr %4,%%g0,%%asi; sllx %3,32,%0; " \
 " or %2,%0,%0; stda %1,[%0]%%asi" : "=&r" (_loc_hi) : \
-	    "r" ((long long)(value)), "r" ((int)(loc)), "r" (_loc_hi), "r" (asi)); \
+		"r" ((long long)(value)), "r" ((unsigned long)(loc)), \
+		"r" (_loc_hi), "r" (asi)); \
+	} \
 })
 #endif
 
@@ -827,26 +892,35 @@ __asm __volatile("wr %4,%%g0,%%asi; sllx %3,32,%0; " \
 /* native store 64-bit int to alternate address space w/64-bit compiler*/
 #define	stxa(loc, asi, value) ({ \
 	__asm __volatile("wr %2,%%g0,%%asi; stxa %0,[%1]%%asi" : : \
-	    "r" ((long)(value)), "r" ((long)(loc)), "r" (asi)); \
+	    "r" ((unsigned long)(value)), "r" ((unsigned long)(loc)), "r" (asi)); \
 })
 #else
 /* native store 64-bit int to alternate address space w/32-bit compiler*/
 #define	stxa(loc, asi, value) ({ \
 	int _stxa_lo, _stxa_hi, _loc_hi; \
 	_stxa_lo = value; _stxa_hi = ((u_int64_t)value)>>32; \
-	_loc_hi = (((u_int64_t)(long)loc)>>32); \
+	_loc_hi = (((u_int64_t)(u_long)loc)>>32); \
+	if (PHYS_ASI(asi)) { \
+		__asm __volatile("wr %7,%%g0,%%asi; sllx %4,32,%1; sllx %6,32,%0; " \
+" or %1,%3,%1; rdpr %%pstate,%3; or %0,%5,%0; wrpr %3,8,%%pstate; " \
+" stxa %1,[%0]%%asi; wrpr %3,0,%%pstate" : \
+		"=&r" (_loc_hi), "=&r" (_stxa_hi), "=&r" ((int)(_stxa_lo)): \
+		"r" ((int)(_stxa_lo)), "r" ((int)(_stxa_hi)), \
+		"r" ((unsigned long)(loc)), "r" (_loc_hi), "r" (asi)); \
+	} else { \
 	__asm __volatile("wr %6,%%g0,%%asi; sllx %3,32,%1; sllx %5,32,%0; " \
 " or %1,%2,%1; or %0,%4,%0; stxa %1,[%0]%%asi" : \
 	    "=&r" (_loc_hi), "=&r" (_stxa_hi) : \
 	    "r" ((int)(_stxa_lo)), "r" ((int)(_stxa_hi)), \
-	    "r" ((int)(loc)), "r" (_loc_hi), "r" (asi)); \
+	    "r" ((unsigned long)(loc)), "r" (_loc_hi), "r" (asi)); \
+	} \
 })
 #endif
 
 /* flush address from data cache */
 #define flush(loc) ({ \
 	__asm __volatile("flush %0" : : \
-	     "r" ((long)(loc))); \
+	     "r" ((unsigned long)(loc))); \
 })
 
 /* Flush a D$ line */

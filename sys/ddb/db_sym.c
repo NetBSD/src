@@ -1,4 +1,4 @@
-/*	$NetBSD: db_sym.c,v 1.21 2000/05/25 19:57:36 jhawk Exp $	*/
+/*	$NetBSD: db_sym.c,v 1.21.2.1 2000/06/22 17:06:12 minoura Exp $	*/
 
 /* 
  * Mach Operating System
@@ -525,7 +525,7 @@ db_printsym(off, strategy, pr)
 			return;
 		}
 	}
-	(*pr)("%#ln", off);
+	(*pr)(db_num_to_str(off));
 	return;
 }
 

@@ -1,4 +1,4 @@
-/*      $NetBSD: cpu.h,v 1.46 2000/05/27 03:23:22 matt Exp $      */
+/*      $NetBSD: cpu.h,v 1.46.2.1 2000/06/22 17:05:05 minoura Exp $      */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden
@@ -58,21 +58,27 @@
  * All cpu-dependent info is kept in this struct. Pointer to the
  * struct for the current cpu is set up in locore.c.
  */
+struct cpu_info;
+
 struct	cpu_dep {
-	void	(*cpu_steal_pages) __P((void)); /* pmap init before mm is on */
-	int	(*cpu_mchk) __P((caddr_t));   /* Machine check handling */
-	void	(*cpu_memerr) __P((void)); /* Memory subsystem errors */
+	void	(*cpu_steal_pages)(void); /* pmap init before mm is on */
+	int	(*cpu_mchk)(caddr_t);   /* Machine check handling */
+	void	(*cpu_memerr)(void); /* Memory subsystem errors */
 	    /* Autoconfiguration */
-	void	(*cpu_conf) __P((void));
-	int	(*cpu_clkread) __P((time_t));	/* Read cpu clock time */
-	void	(*cpu_clkwrite) __P((void));	/* Write system time to cpu */
+	void	(*cpu_conf)(void);
+	int	(*cpu_clkread)(time_t);	/* Read cpu clock time */
+	void	(*cpu_clkwrite)(void);	/* Write system time to cpu */
 	short	cpu_vups;	/* speed of cpu */
 	short	cpu_scbsz;	/* (estimated) size of system control block */
-	void	(*cpu_halt) __P((void)); /* Cpu dependent halt call */
-	void	(*cpu_reboot) __P((int)); /* Cpu dependent reboot call */
-	void	(*cpu_clrf) __P((void)); /* Clear cold/warm start flags */
-	void	(*cpu_subconf) __P((struct device *));/*config cpu dep. devs */
+	void	(*cpu_halt)(void); /* Cpu dependent halt call */
+	void	(*cpu_reboot)(int); /* Cpu dependent reboot call */
+	void	(*cpu_clrf)(void); /* Clear cold/warm start flags */
+	void	(*cpu_subconf)(struct device *);/*config cpu dep. devs */
 	int     cpu_flags;
+#if defined(MULTIPROCESSOR)
+	/* Kick off slave cpu */
+	void	(*cpu_startslave)(struct device *, struct cpu_info *);
+#endif
 };
   
 #define	CPU_RAISEIPL	1	/* Must raise IPL until intr is handled */ 
@@ -94,53 +100,34 @@ struct cpu_info {
 	u_long ci_simple_locks;         /* # of simple locks held */
 #endif
 
-#if defined(MULTIPROCESSOR)
 	struct proc *ci_curproc;        /* current owner of the processor */
-#endif
 
 	/*
 	 * Private members.
 	 */
+	int ci_want_resched;		/* Should change process */
+	struct device *ci_dev;		/* device struct for this cpu */
+	long ci_exit;			/* Page to use while exiting */
 #if defined(MULTIPROCESSOR)
-	int	ci_want_resched;	/* Should change process */
+	struct pcb *ci_pcb;		/* Idle PCB for this CPU */
+	vaddr_t ci_istack;		/* Interrupt stack location */
+	int ci_flags;			/* See below */
 #endif
 };
+#define	CI_MASTERCPU	1		/* Set if master CPU */
+#define	CI_RUNNING	2		/* Set when a slave CPU is running */
 
-#if defined(MULTIPROCESSOR)
-
-/*
- * VAX internal CPU numbering is not sequential; therefore have a separate
- * function call that returns the cpu_info struct for this CPU.
- *
- * For the master CPU (or only) this struct is allocated early in startup;
- * for other CPUs it is allocated when the CPU is found.
- */
-extern	int (*vax_cpu_number)(void);
-extern	struct cpu_info *(*vax_curcpu)(void);
-
-#define	cpu_number()		(*vax_cpu_number)()
-#define	curcpu()		(*vax_curcpu)()
+#define	curcpu() ((struct cpu_info *)mfpr(PR_SSP))
+#define	curproc	(curcpu()->ci_curproc)
+#define	cpu_number() (curcpu()->ci_dev->dv_unit)
 #define	need_resched() {curcpu()->ci_want_resched++; mtpr(AST_OK,PR_ASTLVL); }
-#define	cpu_boot_secondary_processors()
+#if defined(MULTIPROCESSOR)
+#define	CPU_IS_PRIMARY(ci)	(ci->ci_flags & CI_MASTERCPU)
 
-#else /* MULTIPROCESSOR */
+extern char tramp;
+#endif
 
-extern	int     want_resched;   /* resched() was called */
-extern	struct cpu_info cpu_info_store;
-
-#define	curcpu()		(&cpu_info_store)
-#define	cpu_number()		0
-#define need_resched() { want_resched++; mtpr(AST_OK,PR_ASTLVL); }
-
-#endif /* MULTIPROCESSOR */
-
-extern struct device *booted_from;
 extern int mastercpu;
-extern int bootdev;
-
-#define	setsoftnet()	mtpr(12,PR_SIRR)
-#define setsoftclock()	mtpr(8,PR_SIRR)
-#define	todr()		mfpr(PR_TODR)
 
 /*
  * Notify the current process (p) that it has a signal pending,
@@ -165,22 +152,25 @@ extern int bootdev;
 struct device;
 
 /* Some low-level prototypes */
-int	badaddr __P((caddr_t, int));
-void	cpu_swapin __P((struct proc *));
-int	hp_getdev __P((int, int, struct device **));
-int	ra_getdev __P((int, int, int, struct device **));
-void	dumpconf __P((void));
-void	dumpsys __P((void));
-void	swapconf __P((void));
-void	disk_printtype __P((int, int));
-void	disk_reallymapin __P((struct buf *, struct pte *, int, int));
-vaddr_t	vax_map_physmem __P((paddr_t, int));
-void	vax_unmap_physmem __P((vaddr_t, int));
-void	ioaccess __P((vaddr_t, paddr_t, int));
-void	iounaccess __P((vaddr_t, int));
+#if defined(MULTIPROCESSOR)
+struct	cpu_info *cpu_slavesetup(struct device *);
+void	cpu_boot_secondary_processors(void);
+#endif
+int	badaddr(caddr_t, int);
+void	cpu_swapin(struct proc *);
+void	dumpconf(void);
+void	dumpsys(void);
+void	swapconf(void);
+void	disk_printtype(int, int);
+void	disk_reallymapin(struct buf *, struct pte *, int, int);
+vaddr_t	vax_map_physmem(paddr_t, int);
+void	vax_unmap_physmem(vaddr_t, int);
+void	ioaccess(vaddr_t, paddr_t, int);
+void	iounaccess(vaddr_t, int);
 void	findcpu(void);
+void	child_return(void *);
 #ifdef DDB
-int	kdbrint __P((int));
+int	kdbrint(int);
 #endif
 #endif /* _KERNEL */
 #ifdef _STANDALONE

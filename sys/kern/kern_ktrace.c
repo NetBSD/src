@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ktrace.c,v 1.42 2000/05/27 00:40:45 sommerfeld Exp $	*/
+/*	$NetBSD: kern_ktrace.c,v 1.42.2.1 2000/06/22 17:09:07 minoura Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -61,6 +61,23 @@ int	ktrsetchildren __P((struct proc *, struct proc *, int, int,
     struct file *));
 int	ktrwrite __P((struct proc *, struct ktr_header *));
 int	ktrcanset __P((struct proc *, struct proc *));
+int	ktrsamefile __P((struct file *, struct file *));
+
+/*
+ * "deep" compare of two files for the purposes of clearing a trace.
+ * Returns true if they're the same open file, or if they point at the
+ * same underlying vnode/socket.
+ */
+
+int
+ktrsamefile (f1, f2)
+	struct file *f1, *f2;
+{
+	return ((f1 == f2) ||
+	    ((f1 != NULL) && (f2 != NULL) &&
+		(f1->f_type == f2->f_type) &&
+		(f1->f_data == f2->f_data)));
+}
 
 void
 ktrderef(p)
@@ -215,7 +232,9 @@ ktrgenio(p, fd, rw, iov, len, error)
 	buflen -= sizeof(struct ktr_genio);
 
 	while (resid > 0) {
-		if (curcpu()->ci_schedstate.spc_flags & SPCF_SHOULDYIELD)
+		KDASSERT(p->p_cpu != NULL);
+		KDASSERT(p->p_cpu == curcpu());
+		if (p->p_cpu->ci_schedstate.spc_flags & SPCF_SHOULDYIELD)
 			preempt(NULL);
 
 		cnt = min(iov->iov_len, buflen);
@@ -311,7 +330,7 @@ ktrace_common (curp, ops, facs, pid, fp)
 		proclist_lock_read();
 		for (p = LIST_FIRST(&allproc); p != NULL;
 		     p = LIST_NEXT(p, p_list)) {
-			if (p->p_tracep == fp) {
+			if (ktrsamefile(p->p_tracep, fp)) {
 				if (ktrcanset(curp, p))
 					ktrderef(p);
 				else
@@ -326,9 +345,10 @@ ktrace_common (curp, ops, facs, pid, fp)
 	 * Mark fp non-blocking, to avoid problems from possible deadlocks.
 	 */
 
-	fp->f_flag |= FNONBLOCK;
-	(*fp->f_ops->fo_ioctl)(fp, FIONBIO, (caddr_t)&one, curp);
-
+	if (fp != NULL) {
+		fp->f_flag |= FNONBLOCK;
+		(*fp->f_ops->fo_ioctl)(fp, FIONBIO, (caddr_t)&one, curp);
+	}
 	
 	/*
 	 * need something to (un)trace (XXX - why is this here?)
@@ -475,8 +495,8 @@ done:
 	if (vp != NULL)
 		(void) vn_close(vp, FWRITE, curp->p_ucred, curp);
 	if (fp != NULL) {
-		fdrelease(curp, fd); 	/* release fd table slot */
 		FILE_UNUSE(fp, curp);	/* release file */
+		fdrelease(curp, fd); 	/* release fd table slot */
 	}
 	return (error);
 }
@@ -605,7 +625,7 @@ ktrwrite(p, kth)
 		    error);
 	proclist_lock_read();
 	for (p = LIST_FIRST(&allproc); p != NULL; p = LIST_NEXT(p, p_list)) {
-		if (p->p_tracep == fp)
+		if (ktrsamefile(p->p_tracep, fp))
 			ktrderef(p);
 	}
 	proclist_unlock_read();

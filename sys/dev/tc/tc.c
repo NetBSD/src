@@ -1,4 +1,4 @@
-/*	$NetBSD: tc.c,v 1.27 1999/11/15 03:41:49 nisimura Exp $	*/
+/*	$NetBSD: tc.c,v 1.27.2.1 2000/06/22 17:08:25 minoura Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -89,6 +89,7 @@ tcattach(parent, self, aux)
 	sc->sc_speed = tba->tba_speed;
 	sc->sc_nslots = tba->tba_nslots;
 	sc->sc_slots = tba->tba_slots;
+	sc->sc_intr_evcnt = tba->tba_intr_evcnt;
 	sc->sc_intr_establish = tba->tba_intr_establish;
 	sc->sc_intr_disestablish = tba->tba_intr_disestablish;
 	sc->sc_get_dma_tag = tba->tba_get_dma_tag;
@@ -257,6 +258,14 @@ tc_checkslot(slotbase, namep)
 		return (1);
 	}
 	return (0);
+}
+
+const struct evcnt *
+tc_intr_evcnt(struct device *dev, void *cookie)
+{
+	struct tc_softc *sc = tc_cd.cd_devs[0];
+
+	return ((*sc->sc_intr_evcnt)(dev, cookie));
 }
 
 void

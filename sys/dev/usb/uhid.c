@@ -1,4 +1,4 @@
-/*	$NetBSD: uhid.c,v 1.38 2000/04/27 15:26:48 augustss Exp $	*/
+/*	$NetBSD: uhid.c,v 1.38.2.1 2000/06/22 17:08:37 minoura Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhid.c,v 1.22 1999/11/17 22:33:43 n_hibma Exp $	*/
 
 /*
@@ -149,13 +149,11 @@ Static struct cdevsw uhid_cdevsw = {
 };
 #endif
 
-Static void uhid_intr __P((usbd_xfer_handle, usbd_private_handle,
-			   usbd_status));
+Static void uhid_intr(usbd_xfer_handle, usbd_private_handle, usbd_status);
 
-Static int uhid_do_read __P((struct uhid_softc *, struct uio *uio, int));
-Static int uhid_do_write __P((struct uhid_softc *, struct uio *uio, int));
-Static int uhid_do_ioctl __P((struct uhid_softc *, u_long, caddr_t, int,
-			      struct proc *));
+Static int uhid_do_read(struct uhid_softc *, struct uio *uio, int);
+Static int uhid_do_write(struct uhid_softc *, struct uio *uio, int);
+Static int uhid_do_ioctl(struct uhid_softc*, u_long, caddr_t, int,struct proc*);
 
 USB_DECLARE_DRIVER(uhid);
 
@@ -253,9 +251,7 @@ USB_ATTACH(uhid)
 
 #if defined(__NetBSD__) || defined(__OpenBSD__)
 int
-uhid_activate(self, act)
-	device_ptr_t self;
-	enum devact act;
+uhid_activate(device_ptr_t self, enum devact act)
 {
 	struct uhid_softc *sc = (struct uhid_softc *)self;
 
@@ -321,10 +317,7 @@ USB_DETACH(uhid)
 }
 
 void
-uhid_intr(xfer, addr, status)
-	usbd_xfer_handle xfer;
-	usbd_private_handle addr;
-	usbd_status status;
+uhid_intr(usbd_xfer_handle xfer, usbd_private_handle addr, usbd_status status)
 {
 	struct uhid_softc *sc = addr;
 
@@ -365,11 +358,7 @@ uhid_intr(xfer, addr, status)
 }
 
 int
-uhidopen(dev, flag, mode, p)
-	dev_t dev;
-	int flag;
-	int mode;
-	struct proc *p;
+uhidopen(dev_t dev, int flag, int mode, struct proc *p)
 {
 	struct uhid_softc *sc;
 	usbd_status err;
@@ -414,11 +403,7 @@ uhidopen(dev, flag, mode, p)
 }
 
 int
-uhidclose(dev, flag, mode, p)
-	dev_t dev;
-	int flag;
-	int mode;
-	struct proc *p;
+uhidclose(dev_t dev, int flag, int mode, struct proc *p)
 {
 	struct uhid_softc *sc;
 
@@ -444,10 +429,7 @@ uhidclose(dev, flag, mode, p)
 }
 
 int
-uhid_do_read(sc, uio, flag)
-	struct uhid_softc *sc;
-	struct uio *uio;
-	int flag;
+uhid_do_read(struct uhid_softc *sc, struct uio *uio, int flag)
 {
 	int s;
 	int error = 0;
@@ -509,10 +491,7 @@ uhid_do_read(sc, uio, flag)
 }
 
 int
-uhidread(dev, uio, flag)
-	dev_t dev;
-	struct uio *uio;
-	int flag;
+uhidread(dev_t dev, struct uio *uio, int flag)
 {
 	struct uhid_softc *sc;
 	int error;
@@ -527,10 +506,7 @@ uhidread(dev, uio, flag)
 }
 
 int
-uhid_do_write(sc, uio, flag)
-	struct uhid_softc *sc;
-	struct uio *uio;
-	int flag;
+uhid_do_write(struct uhid_softc *sc, struct uio *uio, int flag)
 {
 	int error;
 	int size;
@@ -561,10 +537,7 @@ uhid_do_write(sc, uio, flag)
 }
 
 int
-uhidwrite(dev, uio, flag)
-	dev_t dev;
-	struct uio *uio;
-	int flag;
+uhidwrite(dev_t dev, struct uio *uio, int flag)
 {
 	struct uhid_softc *sc;
 	int error;
@@ -579,12 +552,8 @@ uhidwrite(dev, uio, flag)
 }
 
 int
-uhid_do_ioctl(sc, cmd, addr, flag, p)
-	struct uhid_softc *sc;
-	u_long cmd;
-	caddr_t addr;
-	int flag;
-	struct proc *p;
+uhid_do_ioctl(struct uhid_softc *sc, u_long cmd, caddr_t addr,
+	      int flag, struct proc *p)
 {
 	struct usb_ctl_report_desc *rd;
 	struct usb_ctl_report *re;
@@ -694,12 +663,7 @@ uhid_do_ioctl(sc, cmd, addr, flag, p)
 }
 
 int
-uhidioctl(dev, cmd, addr, flag, p)
-	dev_t dev;
-	u_long cmd;
-	caddr_t addr;
-	int flag;
-	struct proc *p;
+uhidioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
 {
 	struct uhid_softc *sc;
 	int error;
@@ -714,10 +678,7 @@ uhidioctl(dev, cmd, addr, flag, p)
 }
 
 int
-uhidpoll(dev, events, p)
-	dev_t dev;
-	int events;
-	struct proc *p;
+uhidpoll(dev_t dev, int events, struct proc *p)
 {
 	struct uhid_softc *sc;
 	int revents = 0;

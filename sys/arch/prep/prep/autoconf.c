@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.1 2000/02/29 15:21:47 nonaka Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.1.2.1 2000/06/22 17:02:53 minoura Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -58,7 +58,10 @@
 #include <machine/pte.h>
 #include <machine/intr.h>
 
-void findroot __P((struct device **, int *));
+struct device *booted_device;
+int booted_partition;
+
+static void findroot __P((void));
 
 /*
  * Determine i/o configuration for a machine.
@@ -81,10 +84,7 @@ cpu_configure()
 void
 cpu_rootconf()
 {
-	struct device *booted_device;
-	int booted_partition;
-
-	findroot(&booted_device, &booted_partition);
+	findroot();
 
 	printf("boot device: %s\n",
 	    booted_device ? booted_device->dv_xname : "<unknown>");
@@ -100,19 +100,11 @@ u_long	bootdev = 0;		/* should be dev_t, but not until 32 bits */
  * change rootdev to correspond to the load device.
  */
 void
-findroot(devpp, partp)
-	struct device **devpp;
-	int *partp;
+findroot(void)
 {
 	int i, majdev, unit, part;
 	struct device *dv;
 	char buf[32];
-
-	/*
-	 * Default to "not found."
-	 */
-	*devpp = NULL;
-	*partp = 0;
 
 #if 0
 	printf("howto %x bootdev %x ", boothowto, bootdev);
@@ -135,8 +127,8 @@ findroot(devpp, partp)
 	for (dv = alldevs.tqh_first; dv != NULL;
 	    dv = dv->dv_list.tqe_next) {
 		if (strcmp(buf, dv->dv_xname) == 0) {
-			*devpp = dv;
-			*partp = part;
+			booted_device = dv;
+			booted_partition = part;
 			return;
 		}
 	}

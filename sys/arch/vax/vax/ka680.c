@@ -1,4 +1,4 @@
-/*	$NetBSD: ka680.c,v 1.1 2000/05/08 18:45:27 ragge Exp $	*/
+/*	$NetBSD: ka680.c,v 1.1.2.1 2000/06/22 17:05:24 minoura Exp $	*/
 /*
  * Copyright (c) 2000 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -209,8 +209,8 @@ ka680_steal_pages()
 	 * Get the soft and hard memory error vectors now.
 	 */
 #ifdef notyet
-	scb_vecalloc(0x54, ka680_softmem, 0, 0);
-	scb_vecalloc(0x60, ka680_hardmem, 0, 0);
+	scb_vecalloc(0x54, ka680_softmem, NULL, 0, NULL);
+	scb_vecalloc(0x60, ka680_hardmem, NULL, 0, NULL);
 #endif
 
 	/* Turn on caches (to speed up execution a bit) */

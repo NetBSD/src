@@ -1,7 +1,8 @@
-#	$NetBSD: Makefile,v 1.3 1998/07/28 00:36:31 pk Exp $
+#	$NetBSD: Makefile,v 1.3.22.1 2000/06/22 17:06:13 minoura Exp $
 
-SUBDIR=	eisa ata vme ic isa isapnp microcode ofw pci rcons sbus sun tc dec \
-	scsipi pcmcia i2c mii ofisa pckbc wscons usb
+SUBDIR=	ata dec eisa i2c ic isa isapnp microcode mii \
+	ofisa ofw pckbc pcmcia pci rcons sbus scsipi \
+	sun tc usb wscons vme
 
 KDIR=	/sys/dev
 INCSDIR= /usr/include/dev

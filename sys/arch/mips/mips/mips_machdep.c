@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_machdep.c,v 1.81 2000/05/23 04:21:40 soren Exp $	*/
+/*	$NetBSD: mips_machdep.c,v 1.81.2.1 2000/06/22 17:01:36 minoura Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -52,7 +52,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.81 2000/05/23 04:21:40 soren Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.81.2.1 2000/06/22 17:01:36 minoura Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_ultrix.h"
@@ -321,7 +321,7 @@ mips3_vector_init()
  * The principal purpose of this function is to examine the
  * variable cpu_id, into which the kernel locore start code
  * writes the cpu ID register, and to then copy appropriate
- * cod into the CPU exception-vector entries and the jump tables
+ * code into the CPU exception-vector entries and the jump tables
  * used to hide the differences in cache and TLB handling in
  * different MIPS CPUs.
  *
@@ -406,7 +406,6 @@ mips_vector_init()
 #ifndef ENABLE_MIPS_R3NKK /* ID conflict */
 	case MIPS_R5000:
 #endif
-	case MIPS_R12000:
 	case MIPS_RM5200:
 		cpu_arch = 4;
 		mips_num_tlb_entries = MIPS3_TLB_NUM_TLB_ENTRIES;
@@ -414,6 +413,7 @@ mips_vector_init()
 		break;
 
 	case MIPS_R10000:
+	case MIPS_R12000:
 		cpu_arch = 4;
 		mips_num_tlb_entries = 64;
 		mips3_L1TwoWayCache = 1;
@@ -421,7 +421,7 @@ mips_vector_init()
 #endif /* MIPS3 */
 
 	default:
-		printf("CPU type (%d) not supported\n", cpu_id.cpu.cp_imp);
+		printf("CPU type (0x%x) not supported\n", cpu_id.cpuprid);
 		cpu_reboot(RB_HALT, NULL);
 	}
 
@@ -438,7 +438,7 @@ mips_vector_init()
 	case 4:
 		mips3_SetWIRED(0);
 		mips3_TBIA(mips_num_tlb_entries);
-		mips3_SetWIRED(MIPS3_TLB_WIRED_ENTRIES);
+		mips3_SetWIRED(MIPS3_TLB_WIRED_UPAGES);
 		mips3_vector_init();
 		memcpy(mips_locoresw, mips3_locoresw, sizeof(mips_locoresw));
 		break;
@@ -544,9 +544,9 @@ cpu_identify()
 		fpuname = "built-in FPU";
 
 	if (cpuname != NULL)
-		printf(cpuname);
+		printf("%s (0x%x)", cpuname, cpu_id.cpuprid);
 	else
-		printf("unknown CPU type (0x%x)", cpu_id.cpu.cp_imp);
+		printf("unknown CPU type (0x%x)", cpu_id.cpuprid);
 	printf(" Rev. %d.%d", cpu_id.cpu.cp_majrev, cpu_id.cpu.cp_minrev);
 
 	if (fpuname != NULL)
@@ -678,7 +678,7 @@ setregs(p, pack, stack)
 	f->f_regs[A2] = 0;
 	f->f_regs[A3] = (int)PS_STRINGS;
 
-	if (fpcurproc == p)
+	if ((p->p_md.md_flags & MDP_FPUSED) && p == fpcurproc)
 		fpcurproc = (struct proc *)0;
 	memset(&p->p_addr->u_pcb.pcb_fpregs, 0, sizeof(struct fpreg));
 	p->p_md.md_flags &= ~MDP_FPUSED;
@@ -757,11 +757,9 @@ sendsig(catcher, sig, mask, code)
 	/* Save the floating-pointstate, if necessary, then copy it. */
 	ksc.sc_fpused = p->p_md.md_flags & MDP_FPUSED;
 	if (ksc.sc_fpused) {
-#if !defined(NOFPU) && !defined(SOFTFLOAT)
 		/* if FPU has current state, save it first */
 		if (p == fpcurproc)
 			savefpregs(p);
-#endif
 		*(struct fpreg *)ksc.sc_fpregs = p->p_addr->u_pcb.pcb_fpregs;
 	}
 
@@ -1046,7 +1044,6 @@ dumpsys()
 	/* Save registers. */
 	savectx(&dumppcb);
 
-	msgbufenabled = 0;	/* don't record dump msgs in msgbuf */
 	if (dumpdev == NODEV)
 		return;
 
@@ -1167,4 +1164,162 @@ mips_init_msgbuf()
 	if (sz != reqsz)
 		printf("WARNING: %ld bytes not available for msgbuf "
 		    "in last cluster (%ld used)\n", reqsz, sz);
+}
+
+void
+savefpregs(p)
+	struct proc *p;
+{
+#ifndef NOFPU
+	u_int32_t status, fpcsr, *fp;
+	struct frame *f;
+
+	if (p == NULL)
+		return;
+	/*
+	 * turnoff interrupts enabling CP1 to read FPCSR register.
+	 */
+	__asm __volatile (
+		".set noreorder		;"
+		".set noat		;"
+		"mfc0	%0, $12		;"
+		"li	$1, %2		;"
+		"mtc0	$1, $12		;"
+		"nop; nop; nop; nop	;"
+		"cfc1	%1, $31		;"
+		"cfc1	%1, $31		;"
+		".set reorder		;"
+		".set at" 
+		: "=r" (status), "=r"(fpcsr) : "i"(MIPS_SR_COP_1_BIT));
+	/*
+	 * this process yielded FPA.
+	 */
+	f = (struct frame *)p->p_md.md_regs;
+	f->f_regs[SR] &= ~MIPS_SR_COP_1_BIT;
+
+	/*
+	 * save FPCSR and 32bit FP register values.
+	 */
+	fp = (int *)p->p_addr->u_pcb.pcb_fpregs.r_regs;
+	fp[32] = fpcsr;
+	__asm __volatile (
+		".set noreorder		;"
+		"swc1	$f0, 0(%0)	;"
+		"swc1	$f1, 4(%0)	;"
+		"swc1	$f2, 8(%0)	;"
+		"swc1	$f3, 12(%0)	;"
+		"swc1	$f4, 16(%0)	;"
+		"swc1	$f5, 20(%0)	;"
+		"swc1	$f6, 24(%0)	;"
+		"swc1	$f7, 28(%0)	;"
+		"swc1	$f8, 32(%0)	;"
+		"swc1	$f9, 36(%0)	;"
+		"swc1	$f10, 40(%0)	;"
+		"swc1	$f11, 44(%0)	;"
+		"swc1	$f12, 48(%0)	;"
+		"swc1	$f13, 52(%0)	;"
+		"swc1	$f14, 56(%0)	;"
+		"swc1	$f15, 60(%0)	;"
+		"swc1	$f16, 64(%0)	;"
+		"swc1	$f17, 68(%0)	;"
+		"swc1	$f18, 72(%0)	;"
+		"swc1	$f19, 76(%0)	;"
+		"swc1	$f20, 80(%0)	;"
+		"swc1	$f21, 84(%0)	;"
+		"swc1	$f22, 88(%0)	;"
+		"swc1	$f23, 92(%0)	;"
+		"swc1	$f24, 96(%0)	;"
+		"swc1	$f25, 100(%0)	;"
+		"swc1	$f26, 104(%0)	;"
+		"swc1	$f27, 108(%0)	;"
+		"swc1	$f28, 112(%0)	;"
+		"swc1	$f29, 116(%0)	;"
+		"swc1	$f30, 120(%0)	;"
+		"swc1	$f31, 124(%0)	;"
+		".set reorder" :: "r"(fp));
+	/*
+	 * stop CP1, enable interrupts.
+	 */
+	__asm __volatile ("mtc0 %0, $12" :: "r"(status));
+	return;
+#endif
+}
+
+void
+loadfpregs(p)
+	struct proc *p;
+{
+#ifndef NOFPU
+	u_int32_t status, *fp;
+	struct frame *f;
+
+	if (p == NULL)
+		panic("loading fpregs for NULL proc");
+
+	/*
+	 * turnoff interrupts enabling CP1 to load FP registers.
+	 */
+	__asm __volatile(
+		".set noreorder		;"
+		".set noat		;"
+		"mfc0	%0, $12		;"
+		"li	$1, %1		;"
+		"mtc0	$1, $12		;"
+		"nop; nop; nop; nop	;"
+		".set reorder		;"
+		".set at" : "=r"(status) : "i"(MIPS_SR_COP_1_BIT));
+
+	f = (struct frame *)p->p_md.md_regs;
+	fp = (int *)p->p_addr->u_pcb.pcb_fpregs.r_regs;
+	/*
+	 * load 32bit FP registers and establish processes' FP context.
+	 */
+	__asm __volatile(
+		".set noreorder		;"
+		"lwc1	$f0, 0(%0)	;"
+		"lwc1	$f1, 4(%0)	;"
+		"lwc1	$f2, 8(%0)	;"
+		"lwc1	$f3, 12(%0)	;"
+		"lwc1	$f4, 16(%0)	;"
+		"lwc1	$f5, 20(%0)	;"
+		"lwc1	$f6, 24(%0)	;"
+		"lwc1	$f7, 28(%0)	;"
+		"lwc1	$f8, 32(%0)	;"
+		"lwc1	$f9, 36(%0)	;"
+		"lwc1	$f10, 40(%0)	;"
+		"lwc1	$f11, 44(%0)	;"
+		"lwc1	$f12, 48(%0)	;"
+		"lwc1	$f13, 52(%0)	;"
+		"lwc1	$f14, 56(%0)	;"
+		"lwc1	$f15, 60(%0)	;"
+		"lwc1	$f16, 64(%0)	;"
+		"lwc1	$f17, 68(%0)	;"
+		"lwc1	$f18, 72(%0)	;"
+		"lwc1	$f19, 76(%0)	;"
+		"lwc1	$f20, 80(%0)	;"
+		"lwc1	$f21, 84(%0)	;"
+		"lwc1	$f22, 88(%0)	;"
+		"lwc1	$f23, 92(%0)	;"
+		"lwc1	$f24, 96(%0)	;"
+		"lwc1	$f25, 100(%0)	;"
+		"lwc1	$f26, 104(%0)	;"
+		"lwc1	$f27, 108(%0)	;"
+		"lwc1	$f28, 112(%0)	;"
+		"lwc1	$f29, 116(%0)	;"
+		"lwc1	$f30, 120(%0)	;"
+		"lwc1	$f31, 124(%0)	;"
+		".set reorder" :: "r"(fp));
+	/*
+	 * load FPCSR and stop CP1 again while enabling interrupts.
+	 */
+	__asm __volatile(
+		".set noreorder		;"
+		".set noat		;"
+		"ctc1	%0, $31		;"
+		"mtc0	%1, $12		;"
+		".set reorder		;"
+		".set at"
+		:: "r"(fp[32] &~ MIPS_FPU_EXCEPTION_BITS), "r"(status));
+	return;
+#endif
 }

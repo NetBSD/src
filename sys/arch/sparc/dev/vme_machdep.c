@@ -1,4 +1,4 @@
-/*	$NetBSD: vme_machdep.c,v 1.23 2000/05/09 22:39:36 pk Exp $	*/
+/*	$NetBSD: vme_machdep.c,v 1.23.2.1 2000/06/22 17:03:58 minoura Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -103,6 +103,8 @@ static int	sparc_vme_map __P((void *, vme_addr_t, vme_size_t, vme_am_t,
 				   vme_mapresc_t *));
 static void	sparc_vme_unmap __P((void *, vme_mapresc_t));
 static int	sparc_vme_intr_map __P((void *, int, int, vme_intr_handle_t *));
+static const struct evcnt *sparc_vme_intr_evcnt __P((void *,
+						     vme_intr_handle_t));
 static void *	sparc_vme_intr_establish __P((void *, vme_intr_handle_t, int,
 					      int (*) __P((void *)), void *));
 static void	sparc_vme_intr_disestablish __P((void *, void *));
@@ -193,6 +195,7 @@ struct vme_chipset_tag sparc_vme_chipset_tag = {
 	sparc_vme_unmap,
 	sparc_vme_probe,
 	sparc_vme_intr_map,
+	sparc_vme_intr_evcnt,
 	sparc_vme_intr_establish,
 	sparc_vme_intr_disestablish,
 	0, 0, 0 /* bus specific DMA stuff */
@@ -737,6 +740,16 @@ sparc_vme_intr_map(cookie, level, vec, ihp)
 	return (0);
 }
 
+const struct evcnt *
+sparc_vme_intr_evcnt(cookie, vih)
+	void *cookie;
+	vme_intr_handle_t vih;
+{
+
+	/* XXX for now, no evcnt parent reported */
+	return NULL;
+}
+
 void *
 sparc_vme_intr_establish(cookie, vih, pri, func, arg)
 	void *cookie;
@@ -815,59 +828,62 @@ sparc_vme4_dmamap_load(t, map, buf, buflen, p, flags)
 	struct proc *p;
 	int flags;
 {
-	bus_addr_t dvmaddr;
+	bus_addr_t dva;
 	bus_size_t sgsize;
-	vaddr_t vaddr;
+	vaddr_t va, voff;
 	pmap_t pmap;
 	int pagesz = PAGE_SIZE;
 	int error;
 
-	error = extent_alloc(vme_dvmamap, round_page(buflen), NBPG,
+	cpuinfo.cache_flush(buf, buflen); /* XXX - move to bus_dma_sync */
+
+	va = (vaddr_t)buf;
+	voff = va & (pagesz - 1);
+	va &= -pagesz;
+
+	/*
+	 * Allocate an integral number of pages from DVMA space
+	 * covering the passed buffer.
+	 */
+	sgsize = (buflen + voff + pagesz - 1) & -pagesz;
+	error = extent_alloc(vme_dvmamap, sgsize, pagesz,
 			     map->_dm_boundary,
 			     (flags & BUS_DMA_NOWAIT) == 0
 					? EX_WAITOK
 					: EX_NOWAIT,
-			     (u_long *)&dvmaddr);
+			     (u_long *)&dva);
 	if (error != 0)
 		return (error);
 
-	vaddr = (vaddr_t)buf;
 	map->dm_mapsize = buflen;
 	map->dm_nsegs = 1;
-	map->dm_segs[0].ds_addr = dvmaddr + (vaddr & PGOFSET);
+	/* Adjust DVMA address to VME view */
+	map->dm_segs[0].ds_addr = dva + voff - VME4_DVMA_BASE;
 	map->dm_segs[0].ds_len = buflen;
+	map->dm_segs[0]._ds_sgsize = sgsize;
 
 	pmap = (p == NULL) ? pmap_kernel() : p->p_vmspace->vm_map.pmap;
 
-	for (; buflen > 0; ) {
+	for (; sgsize != 0; ) {
 		paddr_t pa;
 		/*
 		 * Get the physical address for this page.
 		 */
-		(void) pmap_extract(pmap, vaddr, &pa);
-
-		/*
-		 * Compute the segment size, and adjust counts.
-		 */
-		sgsize = pagesz - ((u_long)vaddr & (pagesz - 1));
-		if (buflen < sgsize)
-			sgsize = buflen;
+		(void) pmap_extract(pmap, va, &pa);
 
 #ifdef notyet
 		if (have_iocache)
-			curaddr |= PG_IOC;
+			pa |= PG_IOC;
 #endif
-		pmap_enter(pmap_kernel(), dvmaddr,
-		    (pa & ~(pagesz-1)) | PMAP_NC,
-		    VM_PROT_READ|VM_PROT_WRITE, PMAP_WIRED);
+		pmap_enter(pmap_kernel(), dva,
+			   pa | PMAP_NC,
+			   VM_PROT_READ|VM_PROT_WRITE, PMAP_WIRED);
 
-		dvmaddr += pagesz;
-		vaddr += sgsize;
-		buflen -= sgsize;
+		dva += pagesz;
+		va += pagesz;
+		sgsize -= pagesz;
 	}
 
-	/* Adjust DVMA address to VME view */
-	map->dm_segs[0].ds_addr -= VME4_DVMA_BASE;
 	return (0);
 }
 
@@ -880,20 +896,22 @@ sparc_vme4_dmamap_unload(t, map)
 	int nsegs = map->dm_nsegs;
 	bus_addr_t dva;
 	bus_size_t len;
-	int i;
+	int i, s, error;
 
 	for (i = 0; i < nsegs; i++) {
 		/* Go from VME to CPU view */
 		dva = segs[i].ds_addr + VME4_DVMA_BASE;
-
-		dva &= ~PGOFSET;
-		len = round_page(segs[i].ds_len);
+		dva &= -PAGE_SIZE;
+		len = segs[i]._ds_sgsize;
 
 		/* Remove double-mapping in DVMA space */
 		pmap_remove(pmap_kernel(), dva, dva + len);
 
 		/* Release DVMA space */
-		if (extent_free(vme_dvmamap, dva, len, EX_NOWAIT) != 0)
+		s = splhigh();
+		error = extent_free(vme_dvmamap, dva, len, EX_NOWAIT);
+		splx(s);
+		if (error != 0)
 			printf("warning: %ld of DVMA space lost\n", len);
 	}
 

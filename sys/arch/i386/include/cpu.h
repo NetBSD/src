@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.63 2000/05/26 21:19:48 thorpej Exp $	*/
+/*	$NetBSD: cpu.h,v 1.63.2.1 2000/06/22 17:00:32 minoura Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -87,7 +87,7 @@ extern struct cpu_info cpu_info_store;
 #define	CLKF_USERMODE(frame)	USERMODE((frame)->if_cs, (frame)->if_eflags)
 #define	CLKF_BASEPRI(frame)	((frame)->if_ppl == 0)
 #define	CLKF_PC(frame)		((frame)->if_eip)
-#define	CLKF_INTR(frame)	(0)	/* XXX should have an interrupt stack */
+#define	CLKF_INTR(frame)	((frame)->if_ppl & (1 << IPL_TAGINTR))
 
 /*
  * Preempt the current process if in interrupt from user mode,

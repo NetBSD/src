@@ -1,4 +1,4 @@
-/*	$NetBSD: cmpci.c,v 1.2 2000/04/30 22:16:56 augustss Exp $	*/
+/*	$NetBSD: cmpci.c,v 1.2.2.1 2000/06/22 17:07:16 minoura Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -149,32 +149,32 @@ static int cmpci_trigger_input __P((void *, void *, void *, int,
                                     struct audio_params *));
 
 static struct audio_hw_if cmpci_hw_if = {
-	&cmpci_open,		/* open */
-	&cmpci_close,		/* close */
+	cmpci_open,		/* open */
+	cmpci_close,		/* close */
 	NULL,			/* drain */
-	&cmpci_query_encoding,	/* query_encoding */
-	&cmpci_set_params,	/* set_params */
-	&cmpci_round_blocksize,	/* round_blocksize */
+	cmpci_query_encoding,	/* query_encoding */
+	cmpci_set_params,	/* set_params */
+	cmpci_round_blocksize,	/* round_blocksize */
 	NULL,			/* commit_settings */
 	NULL,			/* init_output */
 	NULL,			/* init_input */
 	NULL,			/* start_output */
 	NULL,			/* start_input */
-	&cmpci_halt_output,	/* halt_output */
-	&cmpci_halt_input,	/* halt_input */
+	cmpci_halt_output,	/* halt_output */
+	cmpci_halt_input,	/* halt_input */
 	NULL,			/* speaker_ctl */
-	&cmpci_getdev,		/* getdev */
+	cmpci_getdev,		/* getdev */
 	NULL,			/* setfd */
-	&cmpci_set_port,	/* set_port */
-	&cmpci_get_port,	/* get_port */
-	&cmpci_query_devinfo,	/* query_devinfo */
-	&cmpci_allocm,		/* allocm */
-	&cmpci_freem,		/* freem */
-	&cmpci_round_buffersize,/* round_buffersize */
-	&cmpci_mappage,		/* mappage */
-	&cmpci_get_props,	/* get_props */
-	&cmpci_trigger_output,	/* trigger_output */
-	&cmpci_trigger_input	/* trigger_input */
+	cmpci_set_port,		/* set_port */
+	cmpci_get_port,		/* get_port */
+	cmpci_query_devinfo,	/* query_devinfo */
+	cmpci_allocm,		/* allocm */
+	cmpci_freem,		/* freem */
+	cmpci_round_buffersize,/* round_buffersize */
+	cmpci_mappage,		/* mappage */
+	cmpci_get_props,	/* get_props */
+	cmpci_trigger_output,	/* trigger_output */
+	cmpci_trigger_input	/* trigger_input */
 };
 
 
@@ -360,7 +360,7 @@ cmpci_attach(parent, self, aux)
 		printf("\n");
 		return;
 	}
-	printf("%s: intr at %s\n", sc->sc_dev.dv_xname, strintr);
+	printf("%s: interrupting at %s\n", sc->sc_dev.dv_xname, strintr);
 
 	sc->sc_dmat = pa->pa_dmat;
 

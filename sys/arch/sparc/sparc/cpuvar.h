@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuvar.h,v 1.25 2000/05/27 11:44:54 mason Exp $ */
+/*	$NetBSD: cpuvar.h,v 1.25.2.1 2000/06/22 17:04:08 minoura Exp $ */
 
 /*
  *  Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@ struct module_info {
 	void (*sp_vcache_flush_segment)__P((int, int));
 	void (*sp_vcache_flush_region)__P((int));
 	void (*sp_vcache_flush_context)__P((void));
-	void (*pcache_flush_line)__P((int, int));
+	void (*pcache_flush_page)__P((paddr_t, int));
 	void (*pure_vcache_flush)__P((void));
 	void (*cache_flush_all)__P((void));
 	void (*memerr)__P((unsigned, u_int, u_int, struct trapframe *));
@@ -141,6 +141,17 @@ struct cpu_info {
 	u_long ci_spin_locks;		/* # of spin locks held */
 	u_long ci_simple_locks;		/* # of simple locks held */
 #endif
+
+	/*
+	 * SPARC cpu_info structures live at two VAs: one global
+	 * VA (so each CPU can access any other CPU's cpu_info)
+	 * and an alias VA CPUINFO_VA which is the same on each
+	 * CPU and maps to that CPU's cpu_info.  Since the alias
+	 * CPUINFO_VA is how we locate our cpu_info, we have to
+	 * self-reference the global VA so that we can return it
+	 * in the curcpu() macro.
+	 */
+	struct cpu_info * __volatile ci_self;
 
 	int		node;		/* PROM node for this CPU */
 
@@ -269,7 +280,7 @@ struct cpu_info {
 	void	(*vcache_flush_context)__P((void));
 	void	(*sp_vcache_flush_context)__P((void));
 
-	void	(*pcache_flush_line)__P((int, int));
+	void	(*pcache_flush_page)__P((paddr_t, int));
 	void	(*pure_vcache_flush)__P((void));
 	void	(*cache_flush_all)__P((void));
 
@@ -376,6 +387,7 @@ struct cpu_info {
 void getcpuinfo __P((struct cpu_info *sc, int node));
 void mmu_install_tables __P((struct cpu_info *));
 void pmap_alloc_cpu __P((struct cpu_info *));
+void pmap_globalize_boot_cpu __P((struct cpu_info *));
 
 extern struct cpu_info **cpus;
 

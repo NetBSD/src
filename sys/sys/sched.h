@@ -1,4 +1,4 @@
-/* $NetBSD: sched.h,v 1.4 2000/05/27 13:51:38 sommerfeld Exp $ */
+/* $NetBSD: sched.h,v 1.4.2.1 2000/06/22 17:10:27 minoura Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -118,11 +118,25 @@ struct prochd {
 };
 
 /*
+ * CPU states.
+ * XXX Not really scheduler state, but no other good place to put
+ * it right now, and it really is per-CPU.
+ */
+#define	CP_USER		0
+#define	CP_NICE		1
+#define	CP_SYS		2
+#define	CP_INTR		3
+#define	CP_IDLE		4
+#define	CPUSTATES	5
+
+/*
  * Per-CPU scheduler state.
  */
 struct schedstate_percpu {
 	struct timeval spc_runtime;	/* time curproc started running */
 	__volatile int spc_flags;	/* flags; see below */
+	u_int spc_schedticks;		/* ticks for schedclock() */
+	u_int64_t spc_cp_time[CPUSTATES]; /* CPU state statistics */
 	u_char spc_curpriority;		/* usrpri of curproc */
 };
 

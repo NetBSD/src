@@ -1,8 +1,8 @@
-# 	$NetBSD: GENERIC,v 1.105 2000/05/08 13:49:49 augustss Exp $
+# 	$NetBSD: GENERIC,v 1.105.2.1 2000/06/22 17:03:53 minoura Exp $
 
 include "arch/sparc/conf/std.sparc"
 
-#ident 		"GENERIC-$Revision: 1.105 $"
+#ident 		"GENERIC-$Revision: 1.105.2.1 $"
 
 maxusers	32
 
@@ -159,19 +159,6 @@ options 	QUOTA		# FFS quotas
 #options 	FFS_EI		# FFS Endian Independent support
 #options 	SOFTDEP         # FFS soft updates support.
 
-# Pull in config fragments for kernel crypto.  This is required for
-# options IPSEC etc. to work. If you want to run with IPSEC, uncomment
-# one of these, based on whether you use crypto-us or crypto-intl, and
-# adjust the prefixes as necessary.
-
-#prefix ../crypto-us/sys
-#cinclude "conf/files.crypto-us"
-#prefix
-
-#prefix ../crypto-intl/sys
-#cinclude "conf/files.crypto-intl"
-#prefix
-
 ## Network protocol support.  In most environments, INET is required.
 options 	INET		# IP (Internet Protocol) v4
 options 	INET6		# IPV6
@@ -225,6 +212,7 @@ sbus*	at xbox?
 ## Auxiliary system registers on sun4c and sun4m
 auxreg0	at mainbus0				# sun4c
 auxreg0	at obio0				# sun4m
+auxiotwo0 at obio0				# only on Tadpole SPARCbook.
 
 ## Power status and control register on Sun4m systems
 power0	at obio0
@@ -560,8 +548,13 @@ tcx*		at sbus? slot ? offset ?
 # Sun "cgfourteen" accelerated 24-bit framebuffer.
 cgfourteen0	at obio0			# sun4m
 
+# P9100-based display on Tadpole SPARCbook 3.
+pnozz0		at sbus? slot ? offset ?
 
 #### Other device configuration
+
+# Tadpole microcontroller
+tctrl0 at obio0
 
 ## Pseudo ttys, required for network logins and programs like screen.
 ## 32 is a good number for average systems; you may have as many as you

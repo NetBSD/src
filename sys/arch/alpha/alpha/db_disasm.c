@@ -1,4 +1,4 @@
-/* $NetBSD: db_disasm.c,v 1.8 2000/05/25 19:57:30 jhawk Exp $ */
+/* $NetBSD: db_disasm.c,v 1.8.2.1 2000/06/22 16:58:11 minoura Exp $ */
 
 /* 
  * Mach Operating System
@@ -48,7 +48,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: db_disasm.c,v 1.8 2000/05/25 19:57:30 jhawk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_disasm.c,v 1.8.2.1 2000/06/22 16:58:11 minoura Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -124,7 +124,6 @@ typedef union {
 
 } pal_instruction;
 
-
 /*
  * Major opcodes
  */
@@ -189,11 +188,8 @@ static const struct tbl pal_op_tbl[] = {
 	{ NULL,			-1 },
 };
 
-static const char *pal_opname __P((int));
-
 static const char *
-pal_opname(op)
-	int op;
+pal_opname(int op)
 {
 	static char unk[8];
 	int i;
@@ -245,10 +241,8 @@ static const char **arit_opname[8] = {
 	arit_c0, arit_c2, 0, 0, arit_c9, arit_cB, arit_cD, arit_cF
 };
 
-static __inline const char *arit_name __P((int));
-static __inline const char *
-arit_name(op)
-	int op;
+static const char *
+arit_name(int op)
 {
 	static char unk[32];
 	const char *name = NULL;
@@ -286,10 +280,8 @@ static const char *logical_c8[4] = {
 	"andnot", "ornot", "xornot", 0
 };
 
-static __inline const char *logical_name __P((int));
-static __inline const char *
-logical_name(op)
-	int op;
+static const char *
+logical_name(int op)
 {
 	static char unk[32];
 	const char *name = NULL;
@@ -335,10 +327,8 @@ static const char *bitop_c67ab[4][4] = {
 /* 7 */	{ 0, "inswh", "inslh", "insqh" },
 };
 
-static __inline const char *bitop_name __P((int));
-static __inline const char *
-bitop_name(op)
-	int op;
+static const char *
+bitop_name(int op)
 {
 	static char unk[32];
 	const char *name = NULL;
@@ -365,10 +355,8 @@ static const char *mul_opname[4] = {
 	"mull", "mulq", "mull/v", "mulq/v"
 };
 
-static __inline const char *mul_name __P((int));
-static __inline const char *
-mul_name(op)
-	int op;
+static const char *
+mul_name(int op)
 {
 	static char unk[32];
 	const char *name = NULL;
@@ -391,10 +379,8 @@ static const char *special_opname[8] = {
 	"trapb", 0, "mb", 0, "fetch", "fetch_m", "rpcc", "rc"
 };
 
-static __inline const char *special_name __P((int));
-static __inline const char *
-special_name(op)
-	int op;
+static const char *
+special_name(int op)
 {
 	static char unk[32];
 	const char *name;
@@ -434,10 +420,8 @@ static const char *intmisc_opname_3x[16] = {
 	"maxuw4", "maxsb8", "maxsw4",
 };
 
-static __inline const char *intmisc_name __P((int));
-static __inline const char *
-intmisc_name(op)
-	int op;
+static const char *
+intmisc_name(int op)
 {
 	static char unk[32];
 
@@ -455,13 +439,8 @@ intmisc_name(op)
 	return (unk);
 }
 
-static const char *float_name __P((const struct tbl[], int, const char *type));
-
 static const char *
-float_name(tbl, op, type)
-	const struct tbl tbl[];
-	int op;
-	const char *type;
+float_name(const struct tbl *tbl, int op, const char *type)
 {
 	static char unk[32];
 	int i;
@@ -805,11 +784,8 @@ static const char *name_of_register[32] = {
 static int regcount;		/* how many regs used in this inst */
 static int regnum[3];		/* which regs used in this inst */
 
-static const char *register_name __P((int));
-
 static const char *
-register_name (ireg)
-	int ireg;
+register_name(int ireg)
 {
 	int	i;
 
@@ -826,26 +802,10 @@ register_name (ireg)
  * (optional) alternate format.  Return address of start of
  * next instruction.
  */
-int	alpha_print_instruction __P((db_addr_t, alpha_instruction, boolean_t));
 
-db_addr_t
-db_disasm(loc, altfmt)
-	db_addr_t	loc;
-	boolean_t	altfmt;
-{
-	alpha_instruction inst;
-
-	inst.bits = db_get_value(loc, 4, 0);
-
-	loc += alpha_print_instruction(loc, inst, altfmt);
-	return (loc);
-}
-
-int
-alpha_print_instruction(iadr, i, showregs)
-	db_addr_t	iadr;
-	alpha_instruction i;
-	boolean_t	showregs;
+static int
+alpha_print_instruction(db_addr_t iadr, alpha_instruction i,
+    boolean_t showregs)
 {
 	const char	*opcode;
 	int		ireg;
@@ -1105,4 +1065,15 @@ branch_displacement:
 	}
 	db_printf("\n");
 	return (sizeof(alpha_instruction));
+}
+
+db_addr_t
+db_disasm(db_addr_t loc, boolean_t altfmt)
+{
+	alpha_instruction inst;
+
+	inst.bits = db_get_value(loc, 4, 0);
+
+	loc += alpha_print_instruction(loc, inst, altfmt);
+	return (loc);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vfsops.c,v 1.62 2000/04/04 09:23:20 jdolecek Exp $	*/
+/*	$NetBSD: ffs_vfsops.c,v 1.62.2.1 2000/06/22 17:10:34 minoura Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1994
@@ -39,6 +39,7 @@
 #include "opt_ffs.h"
 #include "opt_quota.h"
 #include "opt_compat_netbsd.h"
+#include "opt_softdep.h"
 #endif
 
 #include <sys/param.h>
@@ -182,6 +183,11 @@ ffs_mount(mp, path, data, ndp, p)
 	error = copyin(data, (caddr_t)&args, sizeof (struct ufs_args));
 	if (error)
 		return (error);
+
+#if !defined(SOFTDEP)
+	mp->mnt_flag &= ~MNT_SOFTDEP;
+#endif
+
 	/*
 	 * If updating, check whether changing from read-only to
 	 * read/write; if there is no device name, that's all we do.
@@ -200,6 +206,8 @@ ffs_mount(mp, path, data, ndp, p)
 			if (error == 0 &&
 			    ffs_cgupdate(ump, MNT_WAIT) == 0 &&
 			    fs->fs_clean & FS_WASCLEAN) {
+				if (mp->mnt_flag & MNT_SOFTDEP)
+					fs->fs_flags &= ~FS_DOSOFTDEP;
 				fs->fs_clean = FS_ISCLEAN;
 				(void) ffs_sbupdate(ump, MNT_WAIT);
 			}
@@ -207,6 +215,43 @@ ffs_mount(mp, path, data, ndp, p)
 				return (error);
 			fs->fs_ronly = 1;
 		}
+
+		/*
+		 * Flush soft dependencies if disabling it via an update
+		 * mount. This may leave some items to be processed,
+		 * so don't do this yet XXX.
+		 */
+		if ((fs->fs_flags & FS_DOSOFTDEP) &&
+		    !(mp->mnt_flag & MNT_SOFTDEP) && fs->fs_ronly == 0) {
+#ifdef notyet
+			flags = WRITECLOSE;
+			if (mp->mnt_flag & MNT_FORCE)
+				flags |= FORCECLOSE;
+			error = softdep_flushfiles(mp, flags, p);
+			if (error == 0 && ffs_cgupdate(ump, MNT_WAIT) == 0)
+				fs->fs_flags &= ~FS_DOSOFTDEP;
+				(void) ffs_sbupdate(ump, MNT_WAIT);
+#elif defined(SOFTDEP)
+			mp->mnt_flag |= MNT_SOFTDEP;
+#endif
+		}
+
+		/*
+		 * When upgrading to a softdep mount, we must first flush
+		 * all vnodes. (not done yet -- see above)
+		 */
+		if (!(fs->fs_flags & FS_DOSOFTDEP) &&
+		    (mp->mnt_flag & MNT_SOFTDEP) && fs->fs_ronly == 0) {
+#ifdef notyet
+			flags = WRITECLOSE;
+			if (mp->mnt_flag & MNT_FORCE)
+				flags |= FORCECLOSE;
+			error = ffs_flushfiles(mp, flags, p);
+#else
+			mp->mnt_flag &= ~MNT_SOFTDEP;
+#endif
+		}
+
 		if (mp->mnt_flag & MNT_RELOAD) {
 			error = ffs_reload(mp, ndp->ni_cnd.cn_cred, p);
 			if (error)
@@ -234,8 +279,7 @@ ffs_mount(mp, path, data, ndp, p)
 				    p->p_ucred);
 				if (error)
 					return (error);
-			} else
-				mp->mnt_flag &= ~MNT_SOFTDEP;
+			}
 		}
 		if (args.fspec == 0) {
 			/*
@@ -313,6 +357,8 @@ ffs_mount(mp, path, data, ndp, p)
 	(void) copyinstr(args.fspec, mp->mnt_stat.f_mntfromname, MNAMELEN - 1, 
 	    &size);
 	memset(mp->mnt_stat.f_mntfromname + size, 0, MNAMELEN - size);
+	if (mp->mnt_flag & MNT_SOFTDEP)
+		fs->fs_flags |= FS_DOSOFTDEP;
 	if (fs->fs_fmod != 0) {	/* XXX */
 		fs->fs_fmod = 0;
 		if (fs->fs_clean & FS_WASCLEAN)
@@ -432,8 +478,6 @@ ffs_reload(mountp, cred, p)
 	}
 	if ((fs->fs_flags & FS_DOSOFTDEP))
 		softdep_mount(devvp, mountp, fs, cred);
-	else
-		mountp->mnt_flag &= ~MNT_SOFTDEP;
 	/*
 	 * We no longer know anything about clusters per cylinder group.
 	 */
@@ -746,6 +790,8 @@ ffs_unmount(mp, mntflags, p)
 	if (fs->fs_ronly == 0 &&
 	    ffs_cgupdate(ump, MNT_WAIT) == 0 &&
 	    fs->fs_clean & FS_WASCLEAN) {
+		if (mp->mnt_flag & MNT_SOFTDEP)
+			fs->fs_flags &= ~FS_DOSOFTDEP;
 		fs->fs_clean = FS_ISCLEAN;
 		(void) ffs_sbupdate(ump, MNT_WAIT);
 	}
@@ -879,7 +925,7 @@ ffs_sync(mp, waitfor, cred, p)
 	 */
 	simple_lock(&mntvnode_slock);
 loop:
-	for (vp = mp->mnt_vnodelist.lh_first; vp != NULL; vp = nvp) {
+	for (vp = LIST_FIRST(&mp->mnt_vnodelist); vp != NULL; vp = nvp) {
 		/*
 		 * If the vnode that we are about to sync is no longer
 		 * associated with this mount point, start over.
@@ -887,12 +933,12 @@ loop:
 		if (vp->v_mount != mp)
 			goto loop;
 		simple_lock(&vp->v_interlock);
-		nvp = vp->v_mntvnodes.le_next;
+		nvp = LIST_NEXT(vp, v_mntvnodes);
 		ip = VTOI(vp);
 		if (vp->v_type == VNON ||
 		    ((ip->i_flag &
-		      (IN_ACCESS | IN_CHANGE | IN_MODIFIED | IN_UPDATE)) == 0 &&
-		     vp->v_dirtyblkhd.lh_first == NULL))
+		      (IN_ACCESS | IN_CHANGE | IN_UPDATE | IN_MODIFIED | IN_ACCESSED)) == 0 &&
+		     LIST_EMPTY(&vp->v_dirtyblkhd)))
 		{
 			simple_unlock(&vp->v_interlock);
 			continue;
@@ -933,7 +979,8 @@ loop:
 	if (fs->fs_fmod != 0) {
 		fs->fs_fmod = 0;
 		fs->fs_time = time.tv_sec;
-		allerror = ffs_cgupdate(ump, waitfor);
+		if ((error = ffs_cgupdate(ump, waitfor)))
+			allerror = error;
 	}
 	return (allerror);
 }

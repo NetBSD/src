@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_threadstuff.h,v 1.7 2000/01/09 01:34:29 oster Exp $	*/
+/*	$NetBSD: rf_threadstuff.h,v 1.7.2.1 2000/06/22 17:08:01 minoura Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -85,9 +85,6 @@ typedef void *RF_ThreadArg_t;
 /*
  * In NetBSD, kernel threads are simply processes which share several
  * substructures and never run in userspace.
- *
- * XXX Note, NetBSD does not yet have a wakeup_one(), so we always
- * XXX get Thundering Herd when a condition occurs.
  */
 #define RF_WAIT_COND(_c_,_m_)           { \
 	RF_UNLOCK_MUTEX(_m_); \

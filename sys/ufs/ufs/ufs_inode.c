@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_inode.c,v 1.14 2000/03/30 12:41:14 augustss Exp $	*/
+/*	$NetBSD: ufs_inode.c,v 1.14.2.1 2000/06/22 17:10:40 minoura Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -94,7 +94,7 @@ ufs_inactive(v)
 		VOP_VFREE(vp, ip->i_number, mode);
 	}
 
-	if (ip->i_flag & (IN_ACCESS | IN_CHANGE | IN_MODIFIED | IN_UPDATE))
+	if (ip->i_flag & (IN_ACCESS | IN_CHANGE | IN_UPDATE | IN_MODIFIED | IN_ACCESSED))
 		VOP_UPDATE(vp, NULL, NULL, 0);
 out:
 	VOP_UNLOCK(vp, 0);

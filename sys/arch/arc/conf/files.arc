@@ -1,4 +1,4 @@
-#	$NetBSD: files.arc,v 1.19 2000/03/15 17:08:37 soren Exp $
+#	$NetBSD: files.arc,v 1.19.2.1 2000/06/22 16:59:10 minoura Exp $
 #	$OpenBSD: files.arc,v 1.21 1999/09/11 10:20:20 niklas Exp $
 #
 # maxpartitions must be first item in files.${ARCH}
@@ -16,6 +16,11 @@ file	arch/arc/dev/dma.c
 file	arch/arc/arc/machdep.c
 #file	arch/arc/arc/minidebug.c
 file	arch/arc/arc/arc_trap.c
+file	arch/arc/arc/bus_space.c
+file	arch/arc/arc/bus_space_sparse.c
+file	arch/arc/arc/bus_space_large.c
+file	arch/arc/arc/bus_dma.c
+file	arch/arc/arc/wired_map.c
 
 file	arch/arc/arc/arcbios.c
 
@@ -25,10 +30,16 @@ file	arch/arc/arc/arcbios.c
 include "dev/ata/files.ata"
 major	{ wd = 4 }
 
+# Raster operations
+include "dev/rasops/files.rasops"
+include "dev/wsfont/files.wsfont"
+
 #
 # "Workstation Console" glue.
 #
 include "dev/wscons/files.wscons"
+
+include "dev/pckbc/files.pckbc"
 
 #
 #	System BUS types
@@ -48,6 +59,8 @@ file arch/arc/arc/cpu.c			cpu
 device	pica {}
 attach	pica at mainbus			# optional
 file	arch/arc/pica/picabus.c		pica
+file	arch/arc/jazz/jazzdmatlb.c	# XXX pica
+file	arch/arc/jazz/bus_dma_jazz.c	# XXX pica
 
 #
 #	ALGOR bus autoconfiguration devices
@@ -62,6 +75,7 @@ file	arch/arc/algor/algorbus.c	algor
 device	isabr {} : isabus
 attach	isabr at mainbus		# optional
 file	arch/arc/isa/isabus.c		isabr
+file	arch/arc/isa/isadma_bounce.c	# XXX DESKSTATION_RPC44
 
 #
 #	PCI Bus bridge
@@ -70,10 +84,22 @@ device	pbcpcibr {} : pcibus
 attach	pbcpcibr at mainbus		# optional
 file	arch/arc/pci/pbcpcibus.c	pbcpcibr
 
+#
+#	NEC RISCstation PCI host bridge
+#
+device	necpb: pcibus
+attach	necpb at mainbus		# optional
+file	arch/arc/pci/necpb.c		necpb
+
 #	Ethernet chip on PICA bus
 device	sn: ifnet, ether, arp
 attach	sn at pica
 file	arch/arc/dev/if_sn.c		sn
+
+#
+# Machine-independent MII/PHY drivers.
+#
+include "dev/mii/files.mii"
 
 #	Use machine independent SCSI driver routines
 include	"dev/scsipi/files.scsipi"
@@ -93,6 +119,22 @@ attach	fd at fdc
 file	arch/arc/dev/fd.c		fdc	needs-flag
 major	{fd = 7}
 
+#	bus independent raster console glue
+device	rasdisplay: wsemuldisplaydev, pcdisplayops
+file	arch/arc/dev/rasdisplay.c	rasdisplay
+
+#	raster console glue on PICA bus
+attach	rasdisplay at pica with rasdisplay_jazzio
+file	arch/arc/jazz/rasdisplay_jazzio.c rasdisplay_jazzio needs-flag
+
+#	VGA display driver on PICA bus
+attach	vga at pica with vga_jazzio
+file	arch/arc/jazz/vga_jazzio.c	vga_jazzio needs-flag
+
+#	PC keyboard controller on PICA bus
+attach  pckbc at pica with pckbc_jazzio
+file    arch/arc/jazz/pckbc_jazzio.c	pckbc_jazzio needs-flag
+
 #
 #	Stock ISA bus support
 #
@@ -100,6 +142,8 @@ define	pcmcia {}			# XXX dummy decl...
 
 include	"dev/pci/files.pci"
 include	"dev/isa/files.isa"
+
+file arch/arc/pci/pciide_machdep.c		pciide
 
 #	Real time clock, must have one..
 device	aclock
@@ -115,7 +159,7 @@ attach	pc at pica with pc_pica
 attach	pc at isa with pc_isa
 device	opms: tty
 attach	opms at pica
-file	arch/arc/dev/pccons.c		pc & (pc_pica | pc_isa)	needs-flag
+file	arch/arc/dev/pccons.c	pc & (pc_pica | pc_isa | opms) needs-flag
 
 #	BusLogic BT-445C VLB SCSI Controller. Special on TYNE local bus.
 device	btl: scsi
@@ -174,6 +218,3 @@ file	dev/cons.c
 #file	dev/cninit.c
 #file	netinet/in_cksum.c
 #file	netns/ns_cksum.c			ns
-
-# Ultrix binary compatibility (COMPAT_ULTRIX)
-include "compat/ultrix/files.ultrix"

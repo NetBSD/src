@@ -1,4 +1,4 @@
-/*	$NetBSD: audioamd.c,v 1.3 2000/05/08 03:09:56 mycroft Exp $	*/
+/*	$NetBSD: audioamd.c,v 1.3.2.1 2000/06/22 17:03:54 minoura Exp $	*/
 /*	NetBSD: am7930_sparc.c,v 1.44 1999/03/14 22:29:00 jonathan Exp 	*/
 
 /*
@@ -289,13 +289,14 @@ audioamd_attach(sc, pri)
 				 (int (*) __P((void *)))amd7930_trap, NULL);
 #else
 	(void)bus_intr_establish(sc->sc_bt, pri, 0,
-				 am7930hwintr, &sc->sc_au);
+				 am7930hwintr, sc);
 #endif
 	(void)bus_intr_establish(sc->sc_bt, PIL_AUSOFT,
 				 BUS_INTR_ESTABLISH_SOFTINTR,
 				 am7930swintr, sc);
 
-	evcnt_attach(&sc->sc_am7930.sc_dev, "intr", &sc->sc_intrcnt);
+	evcnt_attach_dynamic(&sc->sc_intrcnt, EVCNT_TYPE_INTR, NULL,
+	    sc->sc_am7930.sc_dev.dv_xname, "intr");
 
 	audio_attach_mi(&sa_hw_if, sc, &sc->sc_am7930.sc_dev);
 }
@@ -347,6 +348,10 @@ audioamd_start_output(addr, p, cc, intr, arg)
 	}
 	sc->sc_pintr = intr;
 	sc->sc_parg = arg;
+#ifndef AUDIO_C_HANDLER
+	sc->sc_au.au_bt = sc->sc_bt;
+	sc->sc_au.au_bh = sc->sc_bh;
+#endif
 	sc->sc_au.au_pdata = p;
 	sc->sc_au.au_pend = (char *)p + cc - 1;
 	return(0);
@@ -372,6 +377,10 @@ audioamd_start_input(addr, p, cc, intr, arg)
 	}
 	sc->sc_rintr = intr;
 	sc->sc_rarg = arg;
+#ifndef AUDIO_C_HANDLER
+	sc->sc_au.au_bt = sc->sc_bt;
+	sc->sc_au.au_bh = sc->sc_bh;
+#endif
 	sc->sc_au.au_rdata = p;
 	sc->sc_au.au_rend = (char *)p + cc -1;
 	return(0);
@@ -384,14 +393,12 @@ audioamd_start_input(addr, p, cc, intr, arg)
 
 #ifdef AUDIO_C_HANDLER
 int
-am7930hwintr(au0)
-	void *au0;
+am7930hwintr(sc)
+	struct audioamd_softc *au0;
 {
-	struct auio *au = au0;
+	struct auio *au = &sc->sc_au;
 	u_int8_t *d, *e;
 	int k;
-
-	/* XXX where is sc? */
 
 	/* clear interrupt */
 	k = audioamd_codec_dread(sc, AM7930_DREG_IR);

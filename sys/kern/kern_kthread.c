@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_kthread.c,v 1.9 2000/05/08 19:59:48 thorpej Exp $	*/
+/*	$NetBSD: kern_kthread.c,v 1.9.2.1 2000/06/22 17:09:07 minoura Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@ kthread_create1(func, arg, newpp, fmt, va_alist)
 
 	/* First, create the new process. */
 	error = fork1(&proc0, FORK_SHAREVM | FORK_SHARECWD | FORK_SHAREFILES |
-	    FORK_SHARESIGS, SIGCHLD, NULL, 0, NULL, &p2);
+	    FORK_SHARESIGS, SIGCHLD, NULL, 0, func, arg, NULL, &p2);
 	if (__predict_false(error != 0))
 		return (error);
 
@@ -94,9 +94,6 @@ kthread_create1(func, arg, newpp, fmt, va_alist)
 	va_start(ap, fmt);
 	vsnprintf(p2->p_comm, MAXCOMLEN, fmt, ap);
 	va_end(ap);
-
-	/* Arrange for it to start at the specified function. */
-	cpu_set_kpc(p2, func, arg);
 
 	/* All done! */
 	if (newpp != NULL)

@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.h,v 1.34 2000/05/23 05:12:56 thorpej Exp $ */
+/* $NetBSD: pmap.h,v 1.34.2.1 2000/06/22 16:58:32 minoura Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -189,8 +189,8 @@ struct pv_head {
 #endif /* NEW_SCC_DRIVER */
 
 #if defined(MULTIPROCESSOR)
-void	pmap_tlb_shootdown __P((pmap_t, vaddr_t, pt_entry_t));
-void	pmap_do_tlb_shootdown __P((void));
+void	pmap_tlb_shootdown(pmap_t, vaddr_t, pt_entry_t);
+void	pmap_do_tlb_shootdown(void);
 #endif /* MULTIPROCESSOR */
 #endif /* _LKM */
  
@@ -207,14 +207,14 @@ extern	pt_entry_t *VPT;		/* Virtual Page Table */
 #define	PMAP_MAP_POOLPAGE(pa)		ALPHA_PHYS_TO_K0SEG((pa))
 #define	PMAP_UNMAP_POOLPAGE(va)		ALPHA_K0SEG_TO_PHYS((va))
 
-paddr_t vtophys __P((vaddr_t));
+paddr_t vtophys(vaddr_t);
 
 /* Machine-specific functions. */
-void	pmap_bootstrap __P((paddr_t ptaddr, u_int maxasn, u_long ncpuids));
-void	pmap_emulate_reference __P((struct proc *p, vaddr_t v,
-		int user, int write));
+void	pmap_bootstrap(paddr_t ptaddr, u_int maxasn, u_long ncpuids);
+void	pmap_emulate_reference(struct proc *p, vaddr_t v,
+		int user, int write);
 #ifdef _PMAP_MAY_USE_PROM_CONSOLE
-int	pmap_uses_prom_console __P((void));
+int	pmap_uses_prom_console(void);
 #endif
 
 #define	pmap_pte_pa(pte)	(PG_PFNUM(*(pte)) << PGSHIFT)
@@ -243,8 +243,8 @@ do {									\
 
 #define	pmap_pte_prot_chg(pte, np) ((np) ^ pmap_pte_prot(pte))
 
-static __inline pt_entry_t *pmap_l2pte __P((pmap_t, vaddr_t, pt_entry_t *));
-static __inline pt_entry_t *pmap_l3pte __P((pmap_t, vaddr_t, pt_entry_t *));
+static __inline pt_entry_t *pmap_l2pte(pmap_t, vaddr_t, pt_entry_t *);
+static __inline pt_entry_t *pmap_l3pte(pmap_t, vaddr_t, pt_entry_t *);
 
 #define	pmap_l1pte(pmap, v)						\
 	(&(pmap)->pm_lev1map[l1pte_index((vaddr_t)(v))])

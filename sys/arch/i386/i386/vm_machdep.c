@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.87 2000/03/26 20:42:28 kleink Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.87.2.1 2000/06/22 17:00:30 minoura Exp $	*/
 
 /*-
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
@@ -86,17 +86,20 @@ void	setredzone __P((u_short *, caddr_t));
  * fork(), while the parent process returns normally.
  *
  * p1 is the process being forked; if p1 == &proc0, we are creating
- * a kernel thread, and the return path will later be changed in cpu_set_kpc.
+ * a kernel thread, and the return path and argument are specified with
+ * `func' and `arg'.
  *
  * If an alternate user-level stack is requested (with non-zero values
  * in both the stack and stacksize args), set up the user stack pointer
  * accordingly.
  */
 void
-cpu_fork(p1, p2, stack, stacksize)
+cpu_fork(p1, p2, stack, stacksize, func, arg)
 	register struct proc *p1, *p2;
 	void *stack;
 	size_t stacksize;
+	void (*func) __P((void *));
+	void *arg;
 {
 	register struct pcb *pcb = &p2->p_addr->u_pcb;
 	register struct trapframe *tf;
@@ -147,10 +150,7 @@ cpu_fork(p1, p2, stack, stacksize)
 	tss_alloc(pcb);
 
 	/*
-	 * Copy the trapframe, and arrange for the child to return directly
-	 * through rei().
-	 *
-	 * Note the inlined version of cpu_set_kpc().
+	 * Copy the trapframe.
 	 */
 	p2->p_md.md_regs = tf = (struct trapframe *)pcb->pcb_tss.tss_esp0 - 1;
 	*tf = *p1->p_md.md_regs;
@@ -163,23 +163,11 @@ cpu_fork(p1, p2, stack, stacksize)
 
 	sf = (struct switchframe *)tf - 1;
 	sf->sf_ppl = 0;
-	sf->sf_esi = (int)child_return;
-	sf->sf_ebx = (int)p2;
+	sf->sf_esi = (int)func;
+	sf->sf_ebx = (int)arg;
 	sf->sf_eip = (int)proc_trampoline;
 	pcb->pcb_esp = (int)sf;
-}
-
-void
-cpu_set_kpc(p, pc, arg)
-	struct proc *p;
-	void (*pc) __P((void *));
-	void *arg;
-{
-	struct switchframe *sf = (struct switchframe *)p->p_addr->u_pcb.pcb_esp;
-
-	sf->sf_esi = (int) pc;
-	sf->sf_ebx = (int) arg;
-	sf->sf_eip = (int) proc_trampoline;
+	pcb->pcb_ebp = 0;
 }
 
 void

@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.13 2000/01/23 21:01:50 soda Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.13.2.1 2000/06/22 16:59:04 minoura Exp $	*/
 /*	$OpenBSD: autoconf.c,v 1.9 1997/05/18 13:45:20 pefo Exp $	*/
 
 /*
@@ -63,7 +63,7 @@
 #include <machine/cpu.h>
 #include <machine/autoconf.h>
 
-void findroot __P((struct device **devpp, int *partp));
+static void findroot __P((void));
 int getpno __P((char **cp));
 
 /*
@@ -72,8 +72,8 @@ int getpno __P((char **cp));
  * the machine.
  */
 int	cpuspeed = 150;	/* approx # instr per usec. */
-
-void	findroot __P((struct device **, int *));
+struct device *booted_device;
+int booted_partition;
 
 /*
  *  Configure all devices found that we know about.
@@ -97,10 +97,7 @@ int nfs_boot_rfc951 = 1;
 void
 cpu_rootconf()
 {
-	struct device *booted_device;
-	int booted_partition;
-
-	findroot(&booted_device, &booted_partition);
+	findroot();
 
 	printf("boot device: %s\n",
 	    booted_device ? booted_device->dv_xname : "<unknown>");
@@ -116,19 +113,11 @@ u_long	bootdev;		/* should be dev_t, but not until 32 bits */
  * change rootdev to correspond to the load device.
  */
 void
-findroot(devpp, partp)
-	struct device **devpp;
-	int *partp;
+findroot(void)
 {
 	int i, majdev, unit, part;
 	struct device *dv;
 	char buf[32];
-
-	/*
-	 * Default to "not found."
-	 */
-	*devpp = NULL;
-	*partp = 0;
 
 #if 0
 	printf("howto %x bootdev %x ", boothowto, bootdev);
@@ -151,8 +140,8 @@ findroot(devpp, partp)
 	for (dv = alldevs.tqh_first; dv != NULL;
 	    dv = dv->dv_list.tqe_next) {
 		if (strcmp(buf, dv->dv_xname) == 0) {
-			*devpp = dv;
-			*partp = part;
+			booted_device = dv;
+			booted_partition = part;
 			return;
 		}
 	}

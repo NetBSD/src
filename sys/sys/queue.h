@@ -1,4 +1,4 @@
-/*	$NetBSD: queue.h,v 1.20 2000/03/15 02:03:11 fvdl Exp $	*/
+/*	$NetBSD: queue.h,v 1.20.2.1 2000/06/22 17:10:26 minoura Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -130,8 +130,8 @@ struct {								\
 /*
  * List access methods.
  */
+#define	LIST_EMPTY(head)		((head)->lh_first == NULL)
 #define	LIST_FIRST(head)		((head)->lh_first)
-
 #define	LIST_NEXT(elm, field)		((elm)->field.le_next)
 
 /*
@@ -154,8 +154,8 @@ struct {								\
  * Singly-linked List functions.
  */
 #define	SLIST_EMPTY(head)	((head)->slh_first == NULL)
-
 #define	SLIST_FIRST(head)	((head)->slh_first)
+#define	SLIST_NEXT(elm, field)	((elm)->field.sle_next)
 
 #define SLIST_FOREACH(var, head, field)					\
 	for((var) = (head)->slh_first; (var); (var) = (var)->field.sle_next)
@@ -244,8 +244,8 @@ struct {								\
 /*
  * Simple queue access methods.
  */
+#define	SIMPLEQ_EMPTY(head)		((head)->sqh_first == NULL)
 #define	SIMPLEQ_FIRST(head)		((head)->sqh_first)
-
 #define	SIMPLEQ_NEXT(elm, field)	((elm)->field.sqe_next)
 
 /*
@@ -320,6 +320,7 @@ struct {								\
 /*
  * Tail queue access methods.
  */
+#define	TAILQ_EMPTY(head)		((head)->tqh_first == NULL)
 #define	TAILQ_FIRST(head)		((head)->tqh_first)
 #define	TAILQ_NEXT(elm, field)		((elm)->field.tqe_next)
 
@@ -410,11 +411,9 @@ struct {								\
 /*
  * Circular queue access methods.
  */
+#define	CIRCLEQ_EMPTY(head)		((head)->cqh_first == (void *)(head))
 #define	CIRCLEQ_FIRST(head)		((head)->cqh_first)
-
 #define	CIRCLEQ_LAST(head)		((head)->cqh_last)
-
 #define	CIRCLEQ_NEXT(elm, field)	((elm)->field.cqe_next)
-
 #define	CIRCLEQ_PREV(elm, field)	((elm)->field.cqe_prev)
 #endif	/* !_SYS_QUEUE_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: uaudioreg.h,v 1.5 2000/04/27 15:26:47 augustss Exp $	*/
+/*	$NetBSD: uaudioreg.h,v 1.5.2.1 2000/06/22 17:08:33 minoura Exp $	*/
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@ typedef struct {
 	 */
 	uByte		bRefresh;
 	uByte		bSynchAddress;
-} usb_endpoint_descriptor_audio_t;
+} UPACKED usb_endpoint_descriptor_audio_t;
 
 struct usb_audio_control_descriptor {
 	uByte		bLength;
@@ -81,7 +81,7 @@ struct usb_audio_control_descriptor {
 	uWord		wTotalLength;
 	uByte		bInCollection;
 	uByte		baInterfaceNr[1];
-};
+} UPACKED;
 
 struct usb_audio_streaming_interface_descriptor {
 	uByte		bLength;
@@ -90,7 +90,7 @@ struct usb_audio_streaming_interface_descriptor {
 	uByte		bTerminalLink;
 	uByte		bDelay;
 	uWord		wFormatTag;
-};
+} UPACKED;
 
 struct usb_audio_streaming_endpoint_descriptor {
 	uByte		bLength;
@@ -99,7 +99,7 @@ struct usb_audio_streaming_endpoint_descriptor {
 	uByte		bmAttributes;
 	uByte		bLockDelayUnits;
 	uWord		wLockDelay;
-};
+} UPACKED;
 
 struct usb_audio_streaming_type1_descriptor {
 	uByte		bLength;
@@ -115,13 +115,13 @@ struct usb_audio_streaming_type1_descriptor {
 #define UA_GETSAMP(p, n) ((p)->tSamFreq[(n)*3+0] | ((p)->tSamFreq[(n)*3+1] << 8) | ((p)->tSamFreq[(n)*3+2] << 16))
 #define UA_SAMP_LO(p) UA_GETSAMP(p, 0)
 #define UA_SAMP_HI(p) UA_GETSAMP(p, 1)
-};
+} UPACKED;
 
 struct usb_audio_cluster {
 	uByte		bNrChannels;
 	uWord		wChannelConfig;
 	uByte		iChannelNames;
-};
+} UPACKED;
 
 /* UDESCSUB_AC_INPUT */
 struct usb_audio_input_terminal {
@@ -135,7 +135,7 @@ struct usb_audio_input_terminal {
 	uWord		wChannelConfig;
 	uByte		iChannelNames;
 	uByte		iTerminal;
-};
+} UPACKED;
 
 /* UDESCSUB_AC_OUTPUT */
 struct usb_audio_output_terminal {
@@ -147,7 +147,7 @@ struct usb_audio_output_terminal {
 	uByte		bAssocTerminal;
 	uByte		bSourceId;
 	uByte		iTerminal;
-};
+} UPACKED;
 
 /* UDESCSUB_AC_MIXER */
 struct usb_audio_mixer_unit {
@@ -158,14 +158,14 @@ struct usb_audio_mixer_unit {
 	uByte		bNrInPins;
 	uByte		baSourceId[255]; /* [bNrInPins] */
 	/* struct usb_audio_mixer_unit_1 */
-};
+} UPACKED;
 struct usb_audio_mixer_unit_1 {
 	uByte		bNrChannels;
 	uWord		wChannelConfig;
 	uByte		iChannelNames;
 	uByte		bmControls[255]; /* [bNrChannels] */
 	/*uByte		iMixer;*/
-};
+} UPACKED;
 
 /* UDESCSUB_AC_SELECTOR */
 struct usb_audio_selector_unit {
@@ -176,7 +176,7 @@ struct usb_audio_selector_unit {
 	uByte		bNrInPins;
 	uByte		baSourceId[255]; /* [bNrInPins] */
 	/* uByte	iSelector; */
-};
+} UPACKED;
 
 /* UDESCSUB_AC_FEATURE */
 struct usb_audio_feature_unit {
@@ -188,7 +188,7 @@ struct usb_audio_feature_unit {
 	uByte		bControlSize;
 	uByte		bmaControls[255]; /* size for more than enough */
 	/* uByte	iFeature; */
-};
+} UPACKED;
 
 /* UDESCSUB_AC_PROCESSING */
 struct usb_audio_processing_unit {
@@ -200,7 +200,7 @@ struct usb_audio_processing_unit {
 	uByte		bNrInPins;
 	uByte		baSourceId[255]; /* [bNrInPins] */
 	/* struct usb_audio_processing_unit_1 */
-};
+} UPACKED;
 struct usb_audio_processing_unit_1{
 	uByte		bNrChannels;
 	uWord		wChannelConfig;
@@ -208,13 +208,13 @@ struct usb_audio_processing_unit_1{
 	uByte		bControlSize;
 	uByte		bmControls[255]; /* [bControlSize] */
 #define UA_PROC_ENABLE_MASK 1
-};
+} UPACKED;
 
 struct usb_audio_processing_unit_updown {
 	uByte		iProcessing;
 	uByte		bNrModes;
 	uWord		waModes[255]; /* [bNrModes] */
-};
+} UPACKED;
 
 /* UDESCSUB_AC_EXTENSION */
 struct usb_audio_extension_unit {
@@ -226,7 +226,7 @@ struct usb_audio_extension_unit {
 	uByte		bNrInPins;
 	uByte		baSourceId[255]; /* [bNrInPins] */
 	/* struct usb_audio_extension_unit_1 */
-};
+} UPACKED;
 struct usb_audio_extension_unit_1 {
 	uByte		bNrChannels;
 	uWord		wChannelConfig;
@@ -236,7 +236,7 @@ struct usb_audio_extension_unit_1 {
 #define UA_EXT_ENABLE_MASK 1
 #define UA_EXT_ENABLE 1
 	/*uByte		iExtension;*/
-};
+} UPACKED;
 
 #define UAT_STREAM 0x0101
 

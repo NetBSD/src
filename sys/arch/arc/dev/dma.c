@@ -1,4 +1,4 @@
-/*	$NetBSD: dma.c,v 1.14 2000/03/30 21:37:51 soren Exp $	*/
+/*	$NetBSD: dma.c,v 1.14.2.1 2000/06/22 16:59:11 minoura Exp $	*/
 /*	$OpenBSD: dma.c,v 1.5 1998/03/01 16:49:57 niklas Exp $	*/
 
 /*
@@ -37,8 +37,7 @@
  */
 
 /*
- * PICA system dma driver. Handles resource allocation and
- * logical (viritual) address remaping. 
+ * PICA system dma driver.
  */
 
 #include <sys/param.h>
@@ -66,20 +65,15 @@
 #include <arc/pica/pica.h>
 #include <arc/pica/rd94.h>
 #include <arc/arc/arctype.h>
+#include <arc/jazz/jazzdmatlbreg.h>
+#include <arc/jazz/jazzdmatlbvar.h>
 #include <arc/dev/dma.h>
 
 void picaDmaReset __P((dma_softc_t *sc));
 void picaDmaEnd __P((dma_softc_t *sc));
 void picaDmaNull __P((dma_softc_t *sc));
 
-extern vm_map_t phys_map;
-
-#define dma_pte_to_pa(x)	(((x) - first_dma_pte) * R4030_DMA_PAGE_SIZE)
-
-dma_pte_t *free_dma_pte;	/* Pointer to free dma pte list */
-dma_pte_t *first_dma_pte;	/* Pointer to first dma pte */
-
-static vaddr_t ivalid_reg;
+extern struct arc_bus_space pica_bus;	/* XXX */
 
 /*
  *  Initialize the dma mapping register area and pool.
@@ -87,29 +81,16 @@ static vaddr_t ivalid_reg;
 void
 picaDmaInit()
 {
-	int map = PICA_TL_BASE;
-
-	mips3_FlushCache();	/* Make sure no map entries are cached */
-
-	bzero((char *)map, PICA_TL_SIZE);
-	free_dma_pte = (dma_pte_t *)map;
-	first_dma_pte = (dma_pte_t *)map;
-	free_dma_pte->queue.next = NULL;
-	free_dma_pte->queue.size = PICA_TL_SIZE / sizeof(dma_pte_t);
-
 	switch (cputype) {
 	case ACER_PICA_61:
 	case MAGNUM:
-		out32(R4030_SYS_TL_BASE, MIPS_KSEG1_TO_PHYS(map));
-		out32(R4030_SYS_TL_LIMIT, PICA_TL_SIZE);
-		out32(R4030_SYS_TL_IVALID, 0);
-		ivalid_reg = R4030_SYS_TL_IVALID;
+		jazz_dmatlb_init(&pica_bus, R4030_SYS_TL_BASE);
 		break;
+	case NEC_R94:
+	case NEC_RAx94:
 	case NEC_RD94:
-		out32(RD94_SYS_TL_BASE, MIPS_KSEG1_TO_PHYS(map));
-		out32(RD94_SYS_TL_LIMIT, PICA_TL_SIZE);
-		out32(RD94_SYS_TL_IVALID, 0);
-		ivalid_reg = RD94_SYS_TL_IVALID;
+	case NEC_R96:
+		jazz_dmatlb_init(&pica_bus, RD94_SYS_TL_BASE);
 		break;
 	}
 }
@@ -121,36 +102,8 @@ picaDmaInit()
 void
 picaDmaTLBAlloc(dma_softc_t *dma)
 {
-	dma_pte_t *list;
-	dma_pte_t *found;
-	int size;
-	int s;
-
-	found = NULL;
-	size = dma->pte_size;
-	do {
-		list = (dma_pte_t *)&free_dma_pte;
-		s = splhigh();
-		while(list) {
-			if(list->queue.next->queue.size >= size) {
-				found = list->queue.next;
-				break;
-			}
-		}
-/*XXX Wait for release wakeup */
-	} while(found == NULL);
-	if(found->queue.size == size) {
-		list->queue.next = found->queue.next;
-	}
-	else {
-		list->queue.next = found + size;
-		list = found + size;
-		list->queue.next = found->queue.next;
-		list->queue.size = found->queue.size - size;
-	}
-	splx(s);
-	dma->pte_base = found;
-	dma->dma_va = dma_pte_to_pa(found);
+	dma->pte_base = jazz_dmatlb_alloc(dma->pte_size, 0, BUS_DMA_WAITOK,
+	    &dma->dma_va);
 }
 
 /*
@@ -159,43 +112,8 @@ picaDmaTLBAlloc(dma_softc_t *dma)
 void
 picaDmaTLBFree(dma_softc_t *dma)
 {
-	dma_pte_t *list;
-	dma_pte_t *entry;
-	int	   size;
-	int s;
+	jazz_dmatlb_free(dma->dma_va, dma->pte_size);
 
-	s = splhigh();
-	entry = dma->pte_base;
-	size = dma->pte_size;
-	entry->queue.next = NULL;
-	entry->queue.size = size;
-	if(free_dma_pte == NULL || entry < free_dma_pte) {
-		list = entry;
-		list->queue.next = free_dma_pte;
-		free_dma_pte = entry;
-	}
-	else {
-		list = free_dma_pte;
-		while(list < entry && list->queue.next != NULL) {
-			if(list + list->queue.size == entry) {
-				list->queue.size += size;
-				break;
-			}
-			else if(list->queue.next == NULL) {
-				list->queue.next = entry;
-				break;
-			}
-			else
-				list = list->queue.next;
-		}
-	}
-	if(list->queue.next != NULL) {
-		if(list + list->queue.size == list->queue.next) {
-			list->queue.size += list->queue.next->queue.size;
-			list->queue.next = list->queue.next->queue.next;
-		}
-	}
-	splx(s);
 /*XXX Wakeup waiting */
 }
 
@@ -207,32 +125,14 @@ picaDmaTLBFree(dma_softc_t *dma)
 void
 picaDmaTLBMap(dma_softc_t *sc)
 {
-	paddr_t pa;
 	vaddr_t va;
-	dma_pte_t *dma_pte;
-	int nbytes;
+	jazz_dma_pte_t *dma_pte;
 
 	va = sc->next_va - sc->dma_va;
-	dma_pte = sc->pte_base + (va / R4030_DMA_PAGE_SIZE);
-	nbytes = dma_page_round(sc->next_size + dma_page_offs(va));
-	va = sc->req_va;
-	while(nbytes > 0) {
-		if(va < VM_MIN_KERNEL_ADDRESS) {
-			pa = MIPS_KSEG0_TO_PHYS(va);
-		}
-		else {
-			if (!pmap_extract(vm_map_pmap(phys_map), va, &pa))
-				panic("picaDmaTLBMap: pmap_extract %p", va);
-		}
-		pa &= R4030_DMA_PAGE_NUM;
-		if(pa == 0)
-			panic("picaDmaTLBMap: null page frame");
-		dma_pte->entry.lo_addr = pa;
-		dma_pte->entry.hi_addr = 0;
-		dma_pte++;
-		va += R4030_DMA_PAGE_SIZE;
-		nbytes -= R4030_DMA_PAGE_SIZE;
-	}
+	dma_pte = sc->pte_base + (va / JAZZ_DMA_PAGE_SIZE);
+
+	jazz_dmatlb_map_va(NULL, sc->req_va, sc->next_size, dma_pte);
+
 }
 
 /*
@@ -254,12 +154,12 @@ picaDmaStart(sc, addr, size, datain)
 	/* Remap request space va into dma space va */
 
 	sc->req_va = (int)addr;
-	sc->next_va = sc->dma_va + dma_page_offs(addr);
+	sc->next_va = sc->dma_va + jazz_dma_page_offs(addr);
 	sc->next_size = size;
 
 	/* Map up the request viritual dma space */
 	picaDmaTLBMap(sc);
-	out32(ivalid_reg, 0);	/* Flush dma map cache */
+	jazz_dmatlb_flush();
 
 	/* Load new transfer parameters */
 	regs->dma_addr = sc->next_va;
@@ -292,7 +192,7 @@ picaDmaMap(sc, addr, size, offset)
 	/* Remap request space va into dma space va */
 
 	sc->req_va = (vaddr_t)addr;
-	sc->next_va = sc->dma_va + dma_page_offs(addr) + offset;
+	sc->next_va = sc->dma_va + jazz_dma_page_offs(addr) + offset;
 	sc->next_size = size;
 
 	/* Map up the request viritual dma space */
@@ -309,7 +209,7 @@ picaDmaFlush(sc, addr, size, datain)
 	size_t  size;
 	int     datain;
 {
-	out32(ivalid_reg, 0);	/* Flush dma map cache */
+	jazz_dmatlb_flush();
 }
 
 /*
@@ -389,7 +289,10 @@ fdc_dma_init(dma_softc_t *sc)
 	sc->end = picaDmaEnd;
 
 	switch (cputype) {
+	case NEC_R94:
+	case NEC_RAx94:
 	case NEC_RD94:
+	case NEC_R96:
 		sc->dma_reg = (pDmaReg)RD94_SYS_DMA0_REGS;
 		break;
 	default:

@@ -1,4 +1,4 @@
-/* $NetBSD: mcpcia.c,v 1.7 1999/11/16 18:33:11 mjacob Exp $ */
+/* $NetBSD: mcpcia.c,v 1.7.2.1 2000/06/22 16:58:39 minoura Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mcpcia.c,v 1.7 1999/11/16 18:33:11 mjacob Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mcpcia.c,v 1.7.2.1 2000/06/22 16:58:39 minoura Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -200,14 +200,7 @@ mcpciaattach(parent, self, aux)
 	 * Set up interrupts
 	 */
 	pci_kn300_pickintr(ccp, first);
-#ifdef EVCNT_COUNTERS
-	if (first == 1) {
-		evcnt_attach(self, "intr", kn300_intr_evcnt);
-		first = 0;
-	}
-#else
 	first = 0;
-#endif
 
 	/*
 	 * Attach PCI bus

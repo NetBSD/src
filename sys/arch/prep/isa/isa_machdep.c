@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_machdep.c,v 1.1 2000/02/29 15:21:42 nonaka Exp $	*/
+/*	$NetBSD: isa_machdep.c,v 1.1.2.1 2000/06/22 17:02:52 minoura Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -87,6 +87,14 @@
 
 #define	IO_ELCR1	0x4d0
 #define	IO_ELCR2	0x4d1
+
+const struct evcnt *
+isa_intr_evcnt(isa_chipset_tag_t ic, int irq)
+{
+
+	/* XXX for now, no evcnt parent reported */
+	return NULL;
+}
 
 /*
  * Set up an interrupt handler to start being called.

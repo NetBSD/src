@@ -1,8 +1,8 @@
-#	$NetBSD: GENERIC,v 1.5 2000/05/08 13:49:46 augustss Exp $
+#	$NetBSD: GENERIC,v 1.5.2.1 2000/06/22 16:59:46 minoura Exp $
 
 include 	"arch/cobalt/conf/std.cobalt"
 
-#ident 		"GENERIC-$Revision: 1.5 $"
+#ident 		"GENERIC-$Revision: 1.5.2.1 $"
 
 maxusers	32
 
@@ -37,16 +37,17 @@ options 	COMPAT_43	# compatibility with 4.3BSD binaries
 
 # File systems
 file-system	FFS		# Berkeley Fast Filesystem
+file-system 	EXT2FS		# second extended file system (linux) 
 file-system	NFS		# Sun NFS-compatible filesystem client
-file-system	KERNFS		# kernel data-structure filesystem
+#file-system	KERNFS		# kernel data-structure filesystem
 #file-system	NULLFS		# NULL layered filesystem
-file-system 	OVERLAY		# overlay file system
+#file-system 	OVERLAY		# overlay file system
 file-system	MFS		# memory-based filesystem
 file-system	FDESC		# user file descriptor filesystem
 #file-system	UMAPFS		# uid/gid remapping filesystem
-file-system	LFS		# Log-based filesystem (still experimental)
+#file-system	LFS		# Log-based filesystem (still experimental)
 #file-system	PORTAL		# portal filesystem (still experimental)
-file-system	PROCFS		# /proc
+#file-system	PROCFS		# /proc
 #file-system	CD9660		# ISO 9660 + Rock Ridge file system
 #file-system	UNION		# union file system
 #file-system	MSDOSFS		# MS-DOS FAT filesystem(s).
@@ -60,23 +61,10 @@ options 	QUOTA		# FFS quotas
 #options 	EXT2FS_SYSTEM_FLAGS # makes ext2fs file flags (append and
 				# immutable) behave as system flags.
 
-# Pull in config fragments for kernel crypto.  This is required for
-# options IPSEC etc. to work. If you want to run with IPSEC, uncomment
-# one of these, based on whether you use crypto-us or crypto-intl, and
-# adjust the prefixes as necessary.
-
-#prefix ../crypto-us/sys
-#cinclude "conf/files.crypto-us"
-#prefix
-
-#prefix ../crypto-intl/sys
-#cinclude "conf/files.crypto-intl"
-#prefix
-
 # Networking options
 #options 	GATEWAY		# IP packet forwarding
 options 	INET		# Internet protocols
-options 	INET6		# IPV6
+#options 	INET6		# IPV6
 #options 	IPSEC		# IP security
 #options 	IPSEC_ESP	# IP security (encryption part; define w/IPSEC)
 #options 	IPSEC_DEBUG	# debug for IP security
@@ -149,8 +137,8 @@ scsibus* 	at siop?
 # SCSI devices
 sd*		at scsibus? target ? lun ?	# SCSI disk drives
 st*		at scsibus? target ? lun ?	# SCSI tape drives
-cd*		at scsibus? target ? lun ?	# SCSI CD-ROM drives
-ch*		at scsibus? target ? lun ?	# SCSI autochangers
+#cd*		at scsibus? target ? lun ?	# SCSI CD-ROM drives
+#ch*		at scsibus? target ? lun ?	# SCSI autochangers
 #ss*		at scsibus? target ? lun ?	# SCSI scanners
 uk*		at scsibus? target ? lun ?	# SCSI unknown
 
@@ -226,11 +214,11 @@ lxtphy*		at mii? phy ?			# Level One LXT-970 PHYs
 # Pseudo-devices
 
 # Disk/mass storage pseudo-devices
-pseudo-device	ccd		4		# concatenated disk devices
+#pseudo-device	ccd		4		# concatenated disk devices
 #pseudo-device	raid		4		# RAIDframe disk driver
 #options 	RAID_AUTOCONFIG			# auto-configuration of RAID
-pseudo-device	md		1		# memory disk device (ramdisk)
-pseudo-device	vnd		4		# disk-like interface to files
+#pseudo-device	md		1		# memory disk device (ramdisk)
+#pseudo-device	vnd		4		# disk-like interface to files
 
 # Network pseudo-devices
 pseudo-device	bpfilter	8		# Berkeley packet filter

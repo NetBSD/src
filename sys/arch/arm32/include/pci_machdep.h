@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.h,v 1.2 1999/03/19 03:34:22 cgd Exp $	*/
+/*	$NetBSD: pci_machdep.h,v 1.2.16.1 2000/06/22 16:59:30 minoura Exp $	*/
 
 /*
  * Modified for arm32 by Mark Brinicombe
@@ -53,22 +53,23 @@ struct pci_attach_args;
  */
 struct arm32_pci_chipset {
 	void		*pc_conf_v;
-	void		(*pc_attach_hook) __P((struct device *,
-			    struct device *, struct pcibus_attach_args *));
-	int		(*pc_bus_maxdevs) __P((void *, int));
-	pcitag_t	(*pc_make_tag) __P((void *, int, int, int));
-	void		(*pc_decompose_tag) __P((void *, pcitag_t, int *,
-			    int *, int *));
-	pcireg_t	(*pc_conf_read) __P((void *, pcitag_t, int));
-	void		(*pc_conf_write) __P((void *, pcitag_t, int, pcireg_t));
+	void		(*pc_attach_hook)(struct device *,
+			    struct device *, struct pcibus_attach_args *);
+	int		(*pc_bus_maxdevs)(void *, int);
+	pcitag_t	(*pc_make_tag)(void *, int, int, int);
+	void		(*pc_decompose_tag)(void *, pcitag_t, int *,
+			    int *, int *);
+	pcireg_t	(*pc_conf_read)(void *, pcitag_t, int);
+	void		(*pc_conf_write)(void *, pcitag_t, int, pcireg_t);
 
 	void		*pc_intr_v;
-	int		(*pc_intr_map) __P((void *, pcitag_t, int, int,
-			    pci_intr_handle_t *));
-	const char	*(*pc_intr_string) __P((void *, pci_intr_handle_t));
-	void		*(*pc_intr_establish) __P((void *, pci_intr_handle_t,
-			    int, int (*)(void *), void *));
-	void		(*pc_intr_disestablish) __P((void *, void *));
+	int		(*pc_intr_map)(void *, pcitag_t, int, int,
+			    pci_intr_handle_t *);
+	const char	*(*pc_intr_string)(void *, pci_intr_handle_t);
+	const struct evcnt *(*pc_intr_evcnt)(void *, pci_intr_handle_t);
+	void		*(*pc_intr_establish)(void *, pci_intr_handle_t,
+			    int, int (*)(void *), void *);
+	void		(*pc_intr_disestablish)(void *, void *);
 };
 
 /*
@@ -90,6 +91,8 @@ struct arm32_pci_chipset {
     (*(c)->pc_intr_map)((c)->pc_intr_v, (it), (ip), (il), (ihp))
 #define	pci_intr_string(c, ih)						\
     (*(c)->pc_intr_string)((c)->pc_intr_v, (ih))
+#define	pci_intr_evcnt(c, ih)						\
+    (*(c)->pc_intr_evcnt)((c)->pc_intr_v, (ih))
 #define	pci_intr_establish(c, ih, l, h, a)				\
     (*(c)->pc_intr_establish)((c)->pc_intr_v, (ih), (l), (h), (a))
 #define	pci_intr_disestablish(c, iv)					\

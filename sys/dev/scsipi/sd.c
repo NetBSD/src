@@ -1,4 +1,4 @@
-/*	$NetBSD: sd.c,v 1.161 2000/05/23 10:20:14 bouyer Exp $	*/
+/*	$NetBSD: sd.c,v 1.161.2.1 2000/06/22 17:08:16 minoura Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -718,7 +718,8 @@ sdstart(v)
 		 *  fit in a "small" cdb, use it.
 		 */
 		if (((bp->b_rawblkno & 0x1fffff) == bp->b_rawblkno) &&
-		    ((nblks & 0xff) == nblks) && sc_link->type == BUS_SCSI) {
+		    ((nblks & 0xff) == nblks) && sc_link->type == BUS_SCSI &&
+		    !(sc_link->quirks & SDEV_ONLYBIG)) {
 			/*
 			 * We can fit in a small cdb.
 			 */
@@ -1100,7 +1101,7 @@ sd_reassign_blocks(sd, blkno)
 	return (scsipi_command(sd->sc_link,
 	    (struct scsipi_generic *)&scsipi_cmd, sizeof(scsipi_cmd),
 	    (u_char *)&rbdata, sizeof(rbdata), SDRETRIES, 5000, NULL,
-	    XS_CTL_DATA_OUT));
+	    XS_CTL_DATA_OUT | XS_CTL_DATA_ONSTACK));
 }
 
 /*

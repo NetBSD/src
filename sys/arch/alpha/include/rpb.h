@@ -1,4 +1,4 @@
-/* $NetBSD: rpb.h,v 1.33 2000/03/29 03:50:40 simonb Exp $ */
+/* $NetBSD: rpb.h,v 1.33.2.1 2000/06/22 16:58:33 minoura Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -77,6 +77,12 @@ struct rpb {
 #define	ST_DEC_EV56_PBP		32		/* "Takara" */
 #define	ST_DEC_ALPHAVME_320	33		/* "Yukon" (VME) */
 #define	ST_DEC_6600		34		/* EV6-Tsunami based systems */
+#define	ST_DEC_WILDFIRE		35		/* "Wildfire" */
+#define	ST_DEC_CUSCO		36		/* "CUSCO" */
+#define	ST_DEC_EIGER		37		/* "Eiger" */
+
+	/* Alpha Processor, Inc. systypes */
+#define	ST_API_NAUTILUS		201		/* EV6-AMD 751 UP1000 */
 
 	u_int64_t	rpb_type;		/*  50: */
 
@@ -270,7 +276,9 @@ struct pcs {
 #define	PCS_PROC_EV45		6			/* EV45: 21064A */
 #define	PCS_PROC_EV56		7			/* EV56: 21164A */
 #define	PCS_PROC_EV6		8			/* EV6: 21264 */
-#define	PCS_PROC_PCA56		9			/* PCA256: 21164PC */
+#define	PCS_PROC_PCA56		9			/* PCA56: 21164PC */
+#define	PCS_PROC_PCA57		10			/* PCA57: 21164?? */
+#define	PCS_PROC_EV67		11			/* EV67: 21246A */
 
 #define	PCS_CPU_MAJORTYPE(p) ((p)->pcs_proc_type & 0xffffffff)
 #define	PCS_CPU_MINORTYPE(p) ((p)->pcs_proc_type >> 32)

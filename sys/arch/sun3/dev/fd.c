@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.19 2000/05/16 05:45:51 thorpej Exp $	*/
+/*	$NetBSD: fd.c,v 1.19.2.1 2000/06/22 17:04:45 minoura Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles M. Hannum.
@@ -426,7 +426,8 @@ fdcattach(parent, self, aux)
 	fdc->sc_cfg = CFG_EIS|/*CFG_EFIFO|*/CFG_POLL|(8 & CFG_THRHLD_MASK);
 	fdconf(fdc);
 
-	evcnt_attach(&fdc->sc_dev, "intr", &fdc->sc_intrcnt);
+	evcnt_attach_dynamic(&fdc->sc_intrcnt, EVCNT_TYPE_INTR, NULL,
+	    fdc->sc_dev.dv_xname, "intr");
 
 	/* physical limit: four drives per controller. */
 	for (fa.fa_drive = 0; fa.fa_drive < 4; fa.fa_drive++) {

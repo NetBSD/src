@@ -1,10 +1,10 @@
-# $NetBSD: TCWSCONS,v 1.9 2000/03/22 00:58:17 cgd Exp $
+# $NetBSD: TCWSCONS,v 1.9.2.1 2000/06/22 16:58:24 minoura Exp $
 #
 # TURBOchannel Alpha DEC3000
 
 include	"arch/alpha/conf/std.alpha"
 
-#ident 		"GENERIC-$Revision: 1.9 $"
+#ident 		"GENERIC-$Revision: 1.9.2.1 $"
 
 maxusers 32
 
@@ -39,19 +39,6 @@ file-system 	PROCFS		# /proc
 options 	NFSSERVER	# Sun NFS-compatible file system server
 #options 	FFS_EI		# FFS Endian Independant support
 #options 	SOFTDEP		# FFS soft updates support.
-
-# Pull in config fragments for kernel crypto.  This is required for
-# options IPSEC etc. to work. If you want to run with IPSEC, uncomment
-# one of these, based on whether you use crypto-us or crypto-intl, and
-# adjust the prefixes as necessary.
-
-#prefix ../crypto-us/sys
-#cinclude "conf/files.crypto-us"
-#prefix
-
-#prefix ../crypto-intl/sys
-#cinclude "conf/files.crypto-intl"
-#prefix
 
 # Networking options
 options 	INET		# Internet protocol suite
@@ -136,6 +123,8 @@ mcclock* at	ioasic? offset ?
 le*	at	ioasic? offset ?
 zsc0	at	ioasic? offset 0x100000
 zsc1	at	ioasic? offset 0x180000
+bba0	at	ioasic? offset ?
+audio*	at	bba?
 tcds*	at	tc? slot ? offset ?
 asc*	at	tcds? chip ?
 #cfb*	at	tc? slot ? offset ?

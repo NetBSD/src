@@ -1,4 +1,4 @@
-/* $NetBSD: irq.c,v 1.1 2000/05/09 21:55:56 bjh21 Exp $ */
+/* $NetBSD: irq.c,v 1.1.2.1 2000/06/22 16:59:21 minoura Exp $ */
 
 /*-
  * Copyright (c) 2000 Ben Harris
@@ -33,7 +33,7 @@
 
 #include <sys/param.h>
 
-__RCSID("$NetBSD: irq.c,v 1.1 2000/05/09 21:55:56 bjh21 Exp $");
+__RCSID("$NetBSD: irq.c,v 1.1.2.1 2000/06/22 16:59:21 minoura Exp $");
 
 #include <sys/device.h>
 #include <sys/kernel.h> /* for cold */
@@ -252,28 +252,19 @@ raisespl(int s)
 {
 
 	if (s > current_spl)
-		return splx(s);
+		return hardsplx(s);
 	else
 		return current_spl;
 }
 
-int
+void
 lowerspl(int s)
 {
 
-	if (s < current_spl)
-		return splx(s);
-	else
-		return current_spl;
-}
-
-int
-splx(int s)
-{
-
-	if (current_spl > s)
+	if (s < current_spl) {
 		dosoftints(s);
-	return hardsplx(s);
+		hardsplx(s);
+	}
 }
 
 int

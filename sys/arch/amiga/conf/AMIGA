@@ -1,4 +1,4 @@
-# $NetBSD: AMIGA,v 1.27 2000/03/28 20:17:14 is Exp $
+# $NetBSD: AMIGA,v 1.27.2.1 2000/06/22 16:58:53 minoura Exp $
 #
 # This file was automatically created. Changes will be
 # lost when running make in this directory.
@@ -8,7 +8,7 @@
 
 include "arch/amiga/conf/std.amiga"
 
-#ident  		"GENERIC-$Revision: 1.27 $"
+#ident  		"GENERIC-$Revision: 1.27.2.1 $"
 
 maxusers	8
 options 	RTC_OFFSET=0
@@ -33,19 +33,6 @@ options 	FPSP		# MC68040 floating point support
 options 	M68030		# support for 030
 options 	M68020		# support for 020/851
 options 	FPU_EMULATE	# FPU emulation
-
-#Pull in config fragments for kernel crypto.  This is required for
-#options IPSEC etc. to work. If you want to run with IPSEC, uncomment
-#one of these, based on whether you use crypto-us or crypto-intl, and
-#adjust the prefixes as necessary.
-
-#prefix ../crypto-us/sys
-#cinclude "conf/files.crypto-us"
-#prefix
-#prefix ../crypto-intl/sys
-#cinclude "conf/files.crypto-intl"
-#prefix
-#Networking options
 
 options 	INET		# IP networking support (Required)
 options 	INET6		# IPV6

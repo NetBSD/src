@@ -1,4 +1,4 @@
-/*	$NetBSD: esp.c,v 1.10 1999/04/08 04:46:41 gwr Exp $	*/
+/*	$NetBSD: esp.c,v 1.10.16.1 2000/06/22 17:04:44 minoura Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -75,13 +75,6 @@ static void	espattach	__P((struct device *, struct device *, void *));
 
 struct cfattach esp_ca = {
 	sizeof(struct esp_softc), espmatch, espattach
-};
-
-static struct scsipi_device esp_dev = {
-	NULL,			/* Use default error handler */
-	NULL,			/* have a queue, served by this */
-	NULL,			/* have no async handler */
-	NULL,			/* Use default 'done' routine */
 };
 
 /*
@@ -242,13 +235,12 @@ espattach(parent, self, aux)
 	}
 
 	/* and the interuppts */
-	isr_add_autovect((void*)ncr53c9x_intr, sc, ca->ca_intpri);
-	evcnt_attach(&sc->sc_dev, "intr", &sc->sc_intrcnt);
+	isr_add_autovect(ncr53c9x_intr, sc, ca->ca_intpri);
+	evcnt_attach_dynamic(&sc->sc_intrcnt, EVCNT_TYPE_INTR, NULL,
+	    sc->sc_dev.dv_xname, "intr");
 
 	/* Do the common parts of attachment. */
-	sc->sc_adapter.scsipi_cmd = ncr53c9x_scsi_cmd;
-	sc->sc_adapter.scsipi_minphys = minphys; 
-	ncr53c9x_attach(sc, &esp_dev);
+	ncr53c9x_attach(sc, NULL, NULL);
 
 #if 0
 	/* XXX - This doesn't work yet.  Not sure why... */

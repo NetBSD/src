@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_ioctl.c,v 1.18 2000/03/30 11:27:16 augustss Exp $	*/
+/*	$NetBSD: ibcs2_ioctl.c,v 1.18.2.1 2000/06/22 17:05:46 minoura Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Scott Bartram
@@ -552,7 +552,7 @@ ibcs2_sys_ioctl(p, v, retval)
 		return sys_ioctl(p, uap, retval);
 
 	default:
-		DPRINTF(("ibcs2_ioctl(%d): unknown cmd 0x%lx ",
+		DPRINTF(("ibcs2_ioctl(%d): unknown cmd 0x%x ",
 			 p->p_pid, SCARG(uap, cmd)));
 		return ENOSYS;
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: apcdmareg.h,v 1.1 1999/06/05 14:29:10 mrg Exp $	*/
+/*	$NetBSD: apcdmareg.h,v 1.1.12.1 2000/06/22 17:06:34 minoura Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -103,9 +103,10 @@ struct apc_dma {
  * List of device memory allocations (see cs4231_malloc/cs4231_free).
  */
 struct cs_dma {
-	struct	cs_dma *next;
-	caddr_t	addr;
+	struct	cs_dma	*next;
+	caddr_t		addr;
+	bus_dmamap_t	dmamap;
 	bus_dma_segment_t segs[1];
-	int	nsegs;
-	size_t	size;
+	int		nsegs;
+	size_t		size;
 };

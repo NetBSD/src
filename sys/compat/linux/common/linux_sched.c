@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_sched.c,v 1.5 2000/03/30 11:27:17 augustss Exp $	*/
+/*	$NetBSD: linux_sched.c,v 1.5.2.1 2000/06/22 17:05:48 minoura Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -99,7 +99,8 @@ linux_sys_clone(p, v, retval)
 	 * or down.  So, we pass a stack size of 0, so that the code
 	 * that makes this adjustment is a noop.
 	 */
-	return (fork1(p, flags, sig, SCARG(uap, stack), 0, retval, NULL));
+	return (fork1(p, flags, sig, SCARG(uap, stack), 0,
+	    NULL, NULL, retval, NULL));
 }
 
 int

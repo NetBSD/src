@@ -1,4 +1,4 @@
-/*	$NetBSD: pio.h,v 1.2 2000/01/23 21:01:57 soda Exp $	*/
+/*	$NetBSD: pio.h,v 1.2.2.1 2000/06/22 16:59:14 minoura Exp $	*/
 /*	$OpenBSD: pio.h,v 1.3 1997/04/19 17:19:58 pefo Exp $	*/
 
 /*
@@ -53,5 +53,7 @@ void insl __P((u_int32_t *, u_int32_t *,int));
 void outsb __P((u_int8_t *, const u_int8_t *,int));
 void outsw __P((u_int16_t *, const u_int16_t *,int));
 void outsl __P((u_int32_t *, const u_int32_t *,int));
+
+extern struct arc_bus_space arc_bus_io, arc_bus_mem;
 
 #endif /*_ARC_PIO_H_*/

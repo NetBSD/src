@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_fork.c,v 1.64 2000/05/08 19:59:21 thorpej Exp $	*/
+/*	$NetBSD: kern_fork.c,v 1.64.2.1 2000/06/22 17:09:06 minoura Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -41,6 +41,7 @@
  */
 
 #include "opt_ktrace.h"
+#include "opt_multiprocessor.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -77,7 +78,7 @@ sys_fork(p, v, retval)
 	register_t *retval;
 {
 
-	return (fork1(p, 0, SIGCHLD, NULL, 0, retval, NULL));
+	return (fork1(p, 0, SIGCHLD, NULL, 0, NULL, NULL, retval, NULL));
 }
 
 /*
@@ -92,7 +93,8 @@ sys_vfork(p, v, retval)
 	register_t *retval;
 {
 
-	return (fork1(p, FORK_PPWAIT, SIGCHLD, NULL, 0, retval, NULL));
+	return (fork1(p, FORK_PPWAIT, SIGCHLD, NULL, 0, NULL, NULL,
+	    retval, NULL));
 }
 
 /*
@@ -108,16 +110,18 @@ sys___vfork14(p, v, retval)
 {
 
 	return (fork1(p, FORK_PPWAIT|FORK_SHAREVM, SIGCHLD, NULL, 0,
-	    retval, NULL));
+	    NULL, NULL, retval, NULL));
 }
 
 int
-fork1(p1, flags, exitsig, stack, stacksize, retval, rnewprocp)
+fork1(p1, flags, exitsig, stack, stacksize, func, arg, retval, rnewprocp)
 	struct proc *p1;
 	int flags;
 	int exitsig;
 	void *stack;
 	size_t stacksize;
+	void (*func) __P((void *));
+	void *arg;
 	register_t *retval;
 	struct proc **rnewprocp;
 {
@@ -270,6 +274,17 @@ again:
 	memcpy(&p2->p_startcopy, &p1->p_startcopy,
 	    (unsigned) ((caddr_t)&p2->p_endcopy - (caddr_t)&p2->p_startcopy));
 
+#if !defined(MULTIPROCESSOR)
+	/*
+	 * In the single-processor case, all processes will always run
+	 * on the same CPU.  So, initialize the child's CPU to the parent's
+	 * now.  In the multiprocessor case, the child's CPU will be
+	 * initialized in the low-level context switch code when the
+	 * process runs.
+	 */
+	p2->p_cpu = p1->p_cpu;
+#endif /* ! MULTIPROCESSOR */
+
 	/*
 	 * Duplicate sub-structures as needed.
 	 * Increase reference counts on shared objects.
@@ -357,7 +372,9 @@ again:
 	 */
 	p2->p_addr = (struct user *)uaddr;
 	uvm_fork(p1, p2, (flags & FORK_SHAREVM) ? TRUE : FALSE,
-	    stack, stacksize);
+	    stack, stacksize,
+	    (func != NULL) ? func : child_return,
+	    (arg != NULL) ? arg : p2);
 
 	/*
 	 * Make child runnable, set start time, and add to run queue.

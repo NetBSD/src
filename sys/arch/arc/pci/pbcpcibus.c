@@ -1,8 +1,8 @@
+/*	$NetBSD: pbcpcibus.c,v 1.3.2.1 2000/06/22 16:59:19 minoura Exp $	*/
 /*	$OpenBSD: pbcpcibus.c,v 1.7 1998/03/25 11:52:48 pefo Exp $ */
-/*	$OpenBSD: pbcpcibus.c,v 1.4 1997/04/19 17:20:02 pefo Exp $ */
 
 /*
- * Copyright (c) 1997 Per Fogelstrom
+ * Copyright (c) 1997, 1998 Per Fogelstrom, Opsycon AB
  * 
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -64,32 +64,31 @@ void	 pbcpcibrattach __P((struct device *, struct device *, void *));
 
 void	 pbc_attach_hook __P((struct device *, struct device *,
 				struct pcibus_attach_args *));
-int	 pbc_bus_maxdevs __P((void *, int));
-pcitag_t pbc_make_tag __P((void *, int, int, int));
-void	 pbc_decompose_tag __P((void *, pcitag_t, int *, int *, int *));
-pcireg_t pbc_conf_read __P((void *, pcitag_t, int));
-void	 pbc_conf_write __P((void *, pcitag_t, int, pcireg_t));
+int	 pbc_bus_maxdevs __P((pci_chipset_tag_t, int));
+pcitag_t pbc_make_tag __P((pci_chipset_tag_t, int, int, int));
+void	 pbc_decompose_tag __P((pci_chipset_tag_t, pcitag_t, int *, int *,
+	    int *));
+pcireg_t pbc_conf_read __P((pci_chipset_tag_t, pcitag_t, int));
+void	 pbc_conf_write __P((pci_chipset_tag_t, pcitag_t, int, pcireg_t));
 
-int      pbc_intr_map __P((void *, pcitag_t, int, int, pci_intr_handle_t *));
-const char *pbc_intr_string __P((void *, pci_intr_handle_t));
-void     *pbc_intr_establish __P((void *, pci_intr_handle_t,
-            int, int (*func)(void *), void *, char *));
-void     pbc_intr_disestablish __P((void *, void *));
-int      pbc_ether_hw_addr __P((u_int8_t *));
+int      pbc_intr_map __P((pci_chipset_tag_t, pcitag_t, int, int,
+	    pci_intr_handle_t *));
+const char *pbc_intr_string __P((pci_chipset_tag_t, pci_intr_handle_t));
+void     *pbc_intr_establish __P((pci_chipset_tag_t, pci_intr_handle_t,
+	    int, int (*)(void *), void *));
+void     pbc_intr_disestablish __P((pci_chipset_tag_t, void *));
 
 struct cfattach pbcpcibr_ca = {
         sizeof(struct pcibr_softc), pbcpcibrmatch, pbcpcibrattach,
 };
 
-struct cfdriver pbcpcibr_cd = {
-	NULL, "pbcpcibr", DV_DULL,
-};
+extern struct cfdriver pbcpcibr_cd;
 
 static int      pbcpcibrprint __P((void *, const char *pnp));
 
-struct pcibr_config pbc_config;
 static int pbc_version;
 
+#ifdef __OpenBSD__
 /*
  * Code from "pci/if_de.c" used to calculate crc32 of ether rom data.
  * Another example can be found in document EC-QPQWA-TE from DEC.
@@ -108,6 +107,7 @@ srom_crc32(const unsigned char *databuf, size_t datalen)
 	}
 	return (crc);
 }
+#endif
 
 
 int
@@ -131,39 +131,35 @@ pbcpcibrattach(parent, self, aux)
 	void *aux;
 {
 	struct pcibr_softc *sc = (struct pcibr_softc *)self;
-	struct pcibr_config *lcp;
 	struct pcibus_attach_args pba;
 
 	switch(cputype) {
 	case ALGOR_P4032:
 	case ALGOR_P5064:
 		V96X_PCI_BASE0 = V96X_PCI_BASE0 & 0xffff0000;
-
-		lcp = sc->sc_pcibr = &pbc_config;
-
-		sc->sc_bus_space.bus_base = V96X_PCI_MEM_SPACE;
-		sc->sc_bus_space.bus_sparse1 = 0;
-		sc->sc_bus_space.bus_sparse2 = 0;
-		sc->sc_bus_space.bus_sparse4 = 0;
-		sc->sc_bus_space.bus_sparse8 = 0;
-
-		lcp->lc_pc.pc_conf_v = lcp;
-		lcp->lc_pc.pc_attach_hook = pbc_attach_hook;
-		lcp->lc_pc.pc_bus_maxdevs = pbc_bus_maxdevs;
-		lcp->lc_pc.pc_make_tag = pbc_make_tag;
-		lcp->lc_pc.pc_decompose_tag = pbc_decompose_tag;
-		lcp->lc_pc.pc_conf_read = pbc_conf_read;
-		lcp->lc_pc.pc_conf_write = pbc_conf_write;
-		lcp->lc_pc.pc_ether_hw_addr = pbc_ether_hw_addr;
-		lcp->lc_pc.pc_sync_cache = mips3_HitFlushDCache;
-
-	        lcp->lc_pc.pc_intr_v = lcp;
-		lcp->lc_pc.pc_intr_map = pbc_intr_map;
-		lcp->lc_pc.pc_intr_string = pbc_intr_string;
-		lcp->lc_pc.pc_intr_establish = pbc_intr_establish;
-		lcp->lc_pc.pc_intr_disestablish = pbc_intr_disestablish;
-
 		pbc_version = V96X_PCI_CC_REV;
+
+		arc_bus_space_init(&sc->sc_bus_space, "pbcpci",
+		    0LL, MIPS_KSEG1_START,
+		    V96X_PCI_MEM_SPACE, MIPS_KSEG2_START - MIPS_KSEG1_START);
+
+		_bus_dma_tag_init(&sc->sc_dmat);
+		if (pbc_version < V96X_VREV_C0) {
+			/* XXX - Is this OK? */
+			/* BUG in early V962PBC's: Use aparture II */
+			sc->sc_dmat.dma_offset = 0xc0000000;
+		}
+
+		sc->sc_pc.pc_attach_hook = pbc_attach_hook;
+		sc->sc_pc.pc_bus_maxdevs = pbc_bus_maxdevs;
+		sc->sc_pc.pc_make_tag = pbc_make_tag;
+		sc->sc_pc.pc_conf_read = pbc_conf_read;
+		sc->sc_pc.pc_conf_write = pbc_conf_write;
+		sc->sc_pc.pc_intr_map = pbc_intr_map;
+		sc->sc_pc.pc_intr_string = pbc_intr_string;
+		sc->sc_pc.pc_intr_establish = pbc_intr_establish;
+		sc->sc_pc.pc_intr_disestablish = pbc_intr_disestablish;
+
 		printf(": V3 V962, Revision %x.\n", pbc_version);
 		break;
 	}
@@ -171,7 +167,9 @@ pbcpcibrattach(parent, self, aux)
 	pba.pba_busname = "pci";
 	pba.pba_iot = &sc->sc_bus_space;
 	pba.pba_memt = &sc->sc_bus_space;
-	pba.pba_pc = &lcp->lc_pc;
+	pba.pba_dmat = &sc->sc_dmat;
+	pba.pba_pc = &sc->sc_pc;
+	pba.pba_flags = PCI_FLAGS_IO_ENABLED | PCI_FLAGS_MEM_ENABLED;
 	pba.pba_bus = 0;
 	config_found(self, &pba, pbcpcibrprint);
 
@@ -190,6 +188,7 @@ pbcpcibrprint(aux, pnp)
 	return(UNCONF);
 }
 
+#ifdef __OpenBSD__
 /*
  *  Get PCI physical address from given viritual address.
  */
@@ -205,7 +204,7 @@ vtophysaddr(dp, va)
 		va = (vaddr_t)curproc->p_addr + (va & ~UADDR);
 	}
 	if(va < VM_MIN_KERNEL_ADDRESS) {
-		pa = MIPS_CACHED_TO_PHYS(va);
+		pa = MIPS_KSEG0_TO_PHYS(va);
 	}
 	else if (!pmap_extract(vm_map_pmap(phys_map), va, &pa)) {
 		panic("pbcpcibus.c:vtophysaddr(): pmap_extract %p", va);
@@ -216,6 +215,7 @@ vtophysaddr(dp, va)
 	}
 	return(pa);
 }
+#endif
 
 void
 pbc_attach_hook(parent, self, pba)
@@ -225,24 +225,24 @@ pbc_attach_hook(parent, self, pba)
 }
 
 int
-pbc_bus_maxdevs(cpv, busno)
-	void *cpv;
+pbc_bus_maxdevs(pc, busno)
+	pci_chipset_tag_t pc;
 	int busno;
 {
 	return(16);
 }
 
 pcitag_t
-pbc_make_tag(cpv, bus, dev, fnc)
-	void *cpv;
+pbc_make_tag(pc, bus, dev, fnc)
+	pci_chipset_tag_t pc;
 	int bus, dev, fnc;
 {
 	return (bus << 16) | (dev << 11) | (fnc << 8);
 }
 
 void
-pbc_decompose_tag(cpv, tag, busp, devp, fncp)
-	void *cpv;
+pbc_decompose_tag(pc, tag, busp, devp, fncp)
+	pci_chipset_tag_t pc;
 	pcitag_t tag;
 	int *busp, *devp, *fncp;
 {
@@ -255,8 +255,8 @@ pbc_decompose_tag(cpv, tag, busp, devp, fncp)
 }
 
 pcireg_t
-pbc_conf_read(cpv, tag, offset)
-	void *cpv;
+pbc_conf_read(pc, tag, offset)
+	pci_chipset_tag_t pc;
 	pcitag_t tag;
 	int offset;
 {
@@ -265,11 +265,15 @@ pbc_conf_read(cpv, tag, offset)
 	int bus, device, func, ad_low;
 	int s;
 
+#ifdef __GNUC__
+	addr = 0;		/* XXX: shut up gcc warning */
+#endif
+
 	if(offset & 3 || offset < 0 || offset >= 0x100) {
 		printf ("pci_conf_read: bad reg %x\n", offset);
 		return(~0);
 	}
-	pbc_decompose_tag(cpv, tag, &bus, &device, &func);
+	pbc_decompose_tag(pc, tag, &bus, &device, &func);
 	ad_low = 0;
 
 	switch (cputype) {
@@ -309,8 +313,6 @@ pbc_conf_read(cpv, tag, offset)
 	/* clear aborts */
 	V96X_PCI_STAT |= V96X_PCI_STAT_M_ABORT | V96X_PCI_STAT_T_ABORT;
 
-	/* high 12 bits of address go in map register, and set for conf space */
-	V96X_LB_MAP0 = ((addr >> 16) & V96X_LB_MAPx_MAP_ADR) | V96X_LB_TYPE_CONF;
 	wbflush();
 
 	/* low 20 bits of address are in the actual address */
@@ -332,8 +334,8 @@ pbc_conf_read(cpv, tag, offset)
 }
 
 void
-pbc_conf_write(cpv, tag, offset, data)
-	void *cpv;
+pbc_conf_write(pc, tag, offset, data)
+	pci_chipset_tag_t pc;
 	pcitag_t tag;
 	int offset;
 	pcireg_t data;
@@ -342,7 +344,10 @@ pbc_conf_write(cpv, tag, offset, data)
 	int bus, device, func, ad_low;
 	int s;
 
-	pbc_decompose_tag(cpv, tag, &bus, &device, &func);
+#ifdef __GNUC__
+	addr = 0;		/* XXX: shut up gcc warning */
+#endif
+	pbc_decompose_tag(pc, tag, &bus, &device, &func);
 	ad_low = 0;
 
 	switch (cputype) {
@@ -382,8 +387,6 @@ pbc_conf_write(cpv, tag, offset, data)
 	/* clear aborts */
 	V96X_PCI_STAT |= V96X_PCI_STAT_M_ABORT | V96X_PCI_STAT_T_ABORT;
 
-	/* high 12 bits of address go in map register, and set for conf space */
-	V96X_LB_MAP0 = ((addr >> 16) & V96X_LB_MAPx_MAP_ADR) | V96X_LB_TYPE_CONF;
 	wbflush();
 
 	/* low 20 bits of address are in the actual address */
@@ -406,6 +409,7 @@ pbc_conf_write(cpv, tag, offset, data)
 	splx(s);
 }
 
+#ifdef __OpenBSD__
 /*
  *	Build the serial rom info normaly stored in an EEROM on
  *	PCI DEC21x4x boards. Cheapo designs skips the rom so
@@ -465,16 +469,15 @@ pbc_ether_hw_addr(p)
 	p[127] = i >> 8;
 	return(1);	/* Got it! */
 }
+#endif
 
 int
-pbc_intr_map(lcv, bustag, buspin, line, ihp)
-	void *lcv;
+pbc_intr_map(pc, bustag, buspin, line, ihp)
+	pci_chipset_tag_t pc;
 	pcitag_t bustag;
 	int buspin, line;
 	pci_intr_handle_t *ihp;
 {
-	struct pcibr_config *lcp = lcv;
-	pci_chipset_tag_t pc = &lcp->lc_pc;
 	int device, pirq;
 
         if (buspin == 0) {
@@ -488,7 +491,7 @@ pbc_intr_map(lcv, bustag, buspin, line, ihp)
                 return 1;
         }
 
-	pci_decompose_tag(pc, bustag, NULL, &device, NULL);
+	pbc_decompose_tag(pc, bustag, NULL, &device, NULL);
 	pirq = buspin - 1;
 
 	switch(device) {
@@ -519,31 +522,31 @@ pbc_intr_map(lcv, bustag, buspin, line, ihp)
 }
 
 const char *
-pbc_intr_string(lcv, ih)
-	void *lcv;
+pbc_intr_string(pc, ih)
+	pci_chipset_tag_t pc;
 	pci_intr_handle_t ih;
 {
 	static char str[16];
 
-	sprintf(str, "pciirq%d", ih);
+	sprintf(str, "pciirq%ld", ih);
 	return(str);
 }
 
 void *
-pbc_intr_establish(lcv, ih, level, func, arg, name)
-	void *lcv;
+pbc_intr_establish(pc, ih, level, func, arg)
+	pci_chipset_tag_t pc;
 	pci_intr_handle_t ih;
 	int level;
 	int (*func) __P((void *));
 	void *arg;
-	char *name;
 {
-	return algor_pci_intr_establish(ih, level, func, arg, name);
+	return algor_pci_intr_establish(ih, level, func, arg);
 }
 
 void
-pbc_intr_disestablish(lcv, cookie)
-	void *lcv, *cookie;
+pbc_intr_disestablish(pc, cookie)
+	pci_chipset_tag_t pc;
+	void *cookie;
 {
 	algor_pci_intr_disestablish(cookie);
 }

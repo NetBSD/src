@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.49 2000/04/12 06:23:21 matthias Exp $	*/
+/*	$NetBSD: pmap.c,v 1.49.2.1 2000/06/22 17:02:11 minoura Exp $	*/
 
 /*
  *
@@ -3385,6 +3385,7 @@ pmap_growkernel(maxkvaddr)
 
 			if (uvm_page_physget(&ptaddr) == FALSE)
 				panic("pmap_growkernel: out of memory");
+			pmap_zero_page(ptaddr);
 
 			kpm->pm_pdir[PDSLOT_KERN + nkpde] =
 				ptaddr | PG_RW | PG_V;

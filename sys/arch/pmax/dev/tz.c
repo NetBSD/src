@@ -1,4 +1,4 @@
-/*	$NetBSD: tz.c,v 1.30 2000/05/27 04:52:31 thorpej Exp $	*/
+/*	$NetBSD: tz.c,v 1.30.2.1 2000/06/22 17:02:23 minoura Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -210,6 +210,7 @@ tzprobe(xxxsd)
 	sc->sc_cmd.sd = sd;
 	sc->sc_cmd.unit = sd->sd_unit;
 	sc->sc_cmd.flags = 0;
+	sc->sc_cmd.lun = 0;
 	sc->sc_rwcmd.unitNumber = sd->sd_slave;
 
 	/* XXX set up device info */				/* XXX */

@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr5380sbc.c,v 1.37 2000/05/26 21:11:00 ragge Exp $	*/
+/*	$NetBSD: ncr5380sbc.c,v 1.37.2.1 2000/06/22 17:06:48 minoura Exp $	*/
 
 /*
  * Copyright (c) 1995 David Jones, Gordon W. Ross
@@ -128,7 +128,9 @@ void	ncr5380_cmd_timeout __P((void *));
 
 #ifndef DDB
 /* This is used only in recoverable places. */
+#ifndef Debugger
 #define Debugger() printf("Debug: ncr5380.c:%d\n", __LINE__)
+#endif
 #endif
 
 #ifdef	NCR5380_DEBUG

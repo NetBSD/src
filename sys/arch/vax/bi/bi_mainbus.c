@@ -1,4 +1,4 @@
-/*	$NetBSD: bi_mainbus.c,v 1.2 2000/03/26 11:41:25 ragge Exp $	   */
+/*	$NetBSD: bi_mainbus.c,v 1.2.2.1 2000/06/22 17:04:52 minoura Exp $	   */
 /*
  * Copyright (c) 1999 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -52,21 +52,16 @@ struct	cfattach bi_mainbus_ca = {
 extern	struct vax_bus_space vax_mem_bus_space;
 extern	struct vax_bus_dma_tag vax_bus_dma_tag;
 
-int
-bi_mainbus_match(parent, vcf, aux)
-	struct device *parent;
-	struct cfdata *vcf;
-	void *aux;
+static int
+bi_mainbus_match(struct device *parent, struct cfdata *vcf, void *aux)
 {
 	if (vax_bustype == VAX_BIBUS)
 		return 1;
 	return 0;
 }
 
-void
-bi_mainbus_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+static void
+bi_mainbus_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct bi_softc *sc = (void *)self;
 
@@ -82,7 +77,8 @@ bi_mainbus_attach(parent, self, aux)
 }
 
 void
-bi_intr_establish(void *icookie, int vec, void (*func)(void *), void *arg)
+bi_intr_establish(void *icookie, int vec, void (*func)(void *), void *arg,
+	struct evcnt *ev)
 {
-	scb_vecalloc(vec, func, arg, SCB_ISTACK);
+	scb_vecalloc(vec, func, arg, SCB_ISTACK, ev);
 }

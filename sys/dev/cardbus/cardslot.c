@@ -1,4 +1,4 @@
-/*	$NetBSD: cardslot.c,v 1.9 2000/03/22 09:35:06 haya Exp $	*/
+/*	$NetBSD: cardslot.c,v 1.9.2.1 2000/06/22 17:06:22 minoura Exp $	*/
 
 /*
  * Copyright (c) 1999 and 2000
@@ -88,21 +88,11 @@ struct cfdriver cardslot_cd = {
 
 
 STATIC int
-#if defined __BROKEN_INDIRECT_CONFIG
-cardslotmatch(parent, match, aux)
-     struct device *parent;
-     void *match;
-     void *aux;
-#else
 cardslotmatch(parent, cf, aux)
      struct device *parent;
      struct cfdata *cf;
      void *aux;
-#endif
 {
-#if defined __BROKEN_INDIRECT_CONFIG
-  struct cfdata *cf = match;
-#endif
   struct cardslot_attach_args *caa = aux;
 
   if (caa->caa_cb_attach == NULL && caa->caa_16_attach == NULL) {

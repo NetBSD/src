@@ -1,4 +1,4 @@
-/* $NetBSD: loadbootstrap.c,v 1.2 1999/12/01 05:02:03 simonb Exp $ */
+/* $NetBSD: loadbootstrap.c,v 1.2.4.1 2000/06/22 17:02:34 minoura Exp $ */
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
 #include <stdio.h>
 #include <unistd.h>
 
-#include <include/dec_boot.h>
+#include <dev/dec/dec_boot.h>
 
 #include "installboot.h"
 
@@ -76,7 +76,7 @@ load_bootstrap(const char *bootstrap, char **data,
 		errx(EXIT_FAILURE, "no ELF header in %s", bootstrap);
 	
 	nsegs = highaddr = 0;
-	lowaddr = ULONG_MAX;
+	lowaddr = (uint32_t) ULONG_MAX;
 
 	for (i = 0; i < ehdr.e_phnum; i++) {
 		if (lseek(fd, (off_t) ehdr.e_phoff + i * sizeof(phdr), 0) < 0)
@@ -99,9 +99,9 @@ load_bootstrap(const char *bootstrap, char **data,
 
 	*loadaddr = lowaddr;
 	*execaddr = ehdr.e_entry;
-	*len = roundup(highaddr - lowaddr, BOOT_BLOCK_BLOCKSIZE);
+	*len = roundup(highaddr - lowaddr, PMAX_BOOT_BLOCK_BLOCKSIZE);
 	if ((*data = malloc(*len)) == NULL)
-		err(1, "malloc %d bytes", *len);
+		err(1, "malloc %lu bytes", (unsigned long) *len);
 
 	/* Now load the bootstrap into memory */
 	for (i = 0; i < nsegs; i++) {

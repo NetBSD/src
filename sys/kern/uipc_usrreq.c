@@ -1,7 +1,7 @@
-/*	$NetBSD: uipc_usrreq.c,v 1.46 2000/03/30 09:27:14 augustss Exp $	*/
+/*	$NetBSD: uipc_usrreq.c,v 1.46.2.1 2000/06/22 17:09:20 minoura Exp $	*/
 
 /*-
- * Copyright (c) 1998 The NetBSD Foundation, Inc.
+ * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -803,15 +803,19 @@ unp_externalize(rights)
 {
 	struct proc *p = curproc;		/* XXX */
 	struct cmsghdr *cm = mtod(rights, struct cmsghdr *);
-	int i, *fdp = (int *)(cm + 1);
+	int i, *fdp;
 	struct file **rp;
 	struct file *fp;
-	int nfds = (cm->cmsg_len - ALIGN(sizeof(*cm))) / sizeof(struct file *);
-	int f, error = 0;
+	int nfds, f, error = 0;
+
+	nfds = (cm->cmsg_len - CMSG_ALIGN(sizeof(*cm))) /
+	    sizeof(struct file *);
+	fdp = (int *)CMSG_DATA(cm);
+	rp = (struct file **)CMSG_DATA(cm);
 
 	/* Make sure the recipient should be able to see the descriptors.. */
 	if (p->p_cwdi->cwdi_rdir != NULL) {
-		rp = (struct file **)ALIGN(cm + 1);
+		rp = (struct file **)CMSG_DATA(cm);
 		for (i = 0; i < nfds; i++) {
 			fp = *rp++;
 			/*
@@ -830,7 +834,7 @@ unp_externalize(rights)
 			}
 		}
 	}
-	rp = (struct file **)ALIGN(cm + 1);
+	rp = (struct file **)CMSG_DATA(cm);
 	
 	/* Make sure that the recipient has space */
 	if (error || (!fdavail(p, nfds))) {
@@ -867,8 +871,8 @@ unp_externalize(rights)
 	 * Adjust length, in case of transition from large struct file
 	 * pointers to ints.
 	 */
-	cm->cmsg_len = sizeof(*cm) + (nfds * sizeof(int));
-	rights->m_len = cm->cmsg_len;
+	cm->cmsg_len = CMSG_LEN(nfds * sizeof(int));
+	rights->m_len = CMSG_SPACE(nfds * sizeof(int));
 	return (0);
 }
 
@@ -885,26 +889,14 @@ unp_internalize(control, p)
 	int nfds;
 	u_int neededspace;
 
-	/*
-	 * A VERY IMPORTANT NOTE ON THE USE OF sizeof(*cm) AS IT RELATES
-	 * TO SCM_RIGHTS MESSAGES!
-	 *
-	 * SCM_RIGHTS messages are an array of ints, which have 4-byte
-	 * alignment.  A cmsghdr is a 12-byte long structure, so the
-	 * ints can be packed directly after the cmsghdr.  When they
-	 * are converted to file *s, however, we must ALIGN() the
-	 * size of the cmsghdr, since pointers may be larger than ints,
-	 * and thus have more strict alignment requirements.
-	 */
-
 	/* Sanity check the control message header */
 	if (cm->cmsg_type != SCM_RIGHTS || cm->cmsg_level != SOL_SOCKET ||
 	    cm->cmsg_len != control->m_len)
 		return (EINVAL);
 
 	/* Verify that the file descriptors are valid */
-	nfds = (cm->cmsg_len - sizeof(*cm)) / sizeof(int);
-	fdp = (int *)(cm + 1);
+	nfds = (cm->cmsg_len - CMSG_ALIGN(sizeof(*cm))) / sizeof(int);
+	fdp = (int *)CMSG_DATA(cm);
 	for (i = 0; i < nfds; i++) {
 		fd = *fdp++;
 		if ((unsigned)fd >= fdescp->fd_nfiles ||
@@ -914,9 +906,9 @@ unp_internalize(control, p)
 	}
 
 	/* Make sure we have room for the struct file pointers */
-morespace:
-	neededspace = (ALIGN(sizeof(*cm)) + nfds * sizeof(struct file *)) -
-		control->m_len;
+ morespace:
+	neededspace = CMSG_SPACE(nfds * sizeof(struct file *)) -
+	    control->m_len;
 	if (neededspace > M_TRAILINGSPACE(control)) {
 
 		/* if we already have a cluster, the message is just too big */
@@ -935,16 +927,16 @@ morespace:
 	}
 
 	/* adjust message & mbuf to note amount of space actually used. */
-	cm->cmsg_len += neededspace;
-	control->m_len = cm->cmsg_len;
+	cm->cmsg_len = CMSG_LEN(nfds * sizeof(struct file *));
+	control->m_len = CMSG_SPACE(nfds * sizeof(struct file *));
 
 	/*
 	 * Transform the file descriptors into struct file pointers, in
 	 * reverse order so that if pointers are bigger than ints, the
 	 * int won't get until we're done.
 	 */
-	fdp = ((int *)(cm + 1)) + nfds - 1;
-	rp = ((struct file **)ALIGN(cm + 1)) + nfds - 1;
+	fdp = ((int *)CMSG_DATA(cm)) + nfds - 1;
+	rp = ((struct file **)CMSG_DATA(cm)) + nfds - 1;
 	for (i = 0; i < nfds; i++) {
 		fp = fdescp->fd_ofiles[*fdp--];
 		FILE_USE(fp);
@@ -965,14 +957,15 @@ unp_addsockcred(p, control)
 	struct cmsghdr *cmp;
 	struct sockcred *sc;
 	struct mbuf *m, *n;
-	int len, i;
+	int len, space, i;
 
-	len = sizeof(struct cmsghdr) + SOCKCREDSIZE(p->p_ucred->cr_ngroups);
+	len = CMSG_LEN(SOCKCREDSIZE(p->p_ucred->cr_ngroups));
+	space = CMSG_SPACE(SOCKCREDSIZE(p->p_ucred->cr_ngroups));
 
 	m = m_get(M_WAIT, MT_CONTROL);
-	if (len > MLEN) {
-		if (len > MCLBYTES)
-			MEXTMALLOC(m, len, M_WAITOK);
+	if (space > MLEN) {
+		if (space > MCLBYTES)
+			MEXTMALLOC(m, space, M_WAITOK);
 		else
 			MCLGET(m, M_WAIT);
 		if ((m->m_flags & M_EXT) == 0) {
@@ -981,7 +974,7 @@ unp_addsockcred(p, control)
 		}
 	}
 
-	m->m_len = len;
+	m->m_len = space;
 	m->m_next = NULL;
 	cmp = mtod(m, struct cmsghdr *);
 	sc = (struct sockcred *)CMSG_DATA(cmp);
@@ -1212,16 +1205,16 @@ unp_scan(m0, op, discard)
 	int qfds;
 
 	while (m0) {
-		for (m = m0; m; m = m->m_next)
+		for (m = m0; m; m = m->m_next) {
 			if (m->m_type == MT_CONTROL &&
 			    m->m_len >= sizeof(*cm)) {
 				cm = mtod(m, struct cmsghdr *);
 				if (cm->cmsg_level != SOL_SOCKET ||
 				    cm->cmsg_type != SCM_RIGHTS)
 					continue;
-				qfds = (cm->cmsg_len - ALIGN(sizeof(*cm)))
-						/ sizeof(struct file *);
-				rp = (struct file **)ALIGN(cm + 1);
+				qfds = (cm->cmsg_len - CMSG_ALIGN(sizeof(*cm)))
+				    / sizeof(struct file *);
+				rp = (struct file **)CMSG_DATA(cm);
 				for (i = 0; i < qfds; i++) {
 					struct file *fp = *rp;
 					if (discard)
@@ -1231,6 +1224,7 @@ unp_scan(m0, op, discard)
 				}
 				break;		/* XXX, but saves time */
 			}
+		}
 		m0 = m0->m_act;
 	}
 }

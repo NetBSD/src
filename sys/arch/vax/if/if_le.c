@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le.c,v 1.15 2000/01/27 16:58:44 bouyer Exp $	*/
+/*	$NetBSD: if_le.c,v 1.15.2.1 2000/06/22 17:05:02 minoura Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -98,7 +98,6 @@
 
 #include <machine/cpu.h>
 #include <machine/nexus.h>
-#include <machine/rpb.h>
 #include <machine/scb.h>
 
 #include <dev/ic/lancereg.h>
@@ -112,6 +111,7 @@
 
 struct le_softc {
 	struct	am7990_softc sc_am7990; /* Must be first */
+	struct	evcnt sc_intrcnt;
 	volatile u_short *sc_rap;
 	volatile u_short *sc_rdp;
 };
@@ -187,7 +187,10 @@ le_ibus_attach(parent, self, aux)
 	i = scb_vecref(&vec, &br);
 	if (i == 0 || vec == 0)
 		return;
-	scb_vecalloc(vec, (void (*)(void *))am7990_intr, sc, SCB_ISTACK);
+	scb_vecalloc(vec, (void (*)(void *))am7990_intr, sc,
+		SCB_ISTACK, &sc->sc_intrcnt);
+	evcnt_attach_dynamic(&sc->sc_intrcnt, EVCNT_TYPE_INTR, NULL,
+		self->dv_xname, "intr");
 
 	printf(": vec %o ipl %x\n%s", vec, br, self->dv_xname);
 	/*
@@ -226,14 +229,6 @@ le_ibus_attach(parent, self, aux)
 	bcopy(self->dv_xname, sc->sc_am7990.lsc.sc_ethercom.ec_if.if_xname,
 	    IFNAMSIZ);
 	am7990_config(&sc->sc_am7990);
-
-	/*
-	 * Register this device as boot device if we booted from it.
-	 * This will fail if there are more than one le in a machine,
-	 * fortunately there may be only one.
-	 */
-	if (B_TYPE(bootdev) == BDEV_LE)
-		booted_from = self;
 }
 
 /*

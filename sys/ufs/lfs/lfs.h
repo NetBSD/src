@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs.h,v 1.23 2000/05/27 00:19:52 perseant Exp $	*/
+/*	$NetBSD: lfs.h,v 1.23.2.1 2000/06/22 17:10:35 minoura Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -88,6 +88,9 @@
 #define MIN_FREE_SEGS	4
 #define LFS_MAX_ACTIVE	10
 #define LFS_MAXDIROP	(desiredvnodes>>2)
+
+/* For convenience */
+#define IN_ALLMOD (IN_MODIFIED|IN_ACCESS|IN_CHANGE|IN_UPDATE|IN_ACCESSED|IN_CLEANING)
 
 #ifndef LFS_ATIME_IFILE
 # define LFS_ITIMES(ip, acc, mod, cre) FFS_ITIMES((ip),(acc),(mod),(cre))
@@ -288,6 +291,7 @@ struct lfs {
 	u_int32_t lfs_nactive;		/* Number of segments since last ckp */
 	int8_t	  lfs_fmod;		/* super block modified flag */
 	int8_t	  lfs_ronly;		/* mounted read-only flag */
+#define LFS_NOTYET 0x01
 	int8_t	  lfs_flags;		/* currently unused flag */
 	u_int16_t lfs_activesb;         /* toggle between superblocks */
 #ifdef LFS_TRACK_IOS
@@ -300,6 +304,7 @@ struct lfs {
 	struct vnode *lfs_unlockvp;     /* being inactivated in lfs_segunlock */
 	u_int32_t lfs_diropwait;	/* # procs waiting on dirop flush */
 	struct lock lfs_freelock;
+	pid_t lfs_rfpid;		/* Process ID of roll-forward agent */
 	int       lfs_nadirop;		/* number of active dirop nodes */
 };
 
@@ -485,6 +490,7 @@ struct segment {
 #define	SEGM_CKP	0x01		/* doing a checkpoint */
 #define	SEGM_CLEAN	0x02		/* cleaner call; don't sort */
 #define	SEGM_SYNC	0x04		/* wait for segment */
+#define	SEGM_PROT	0x08		/* don't inactivate at segunlock */
 	u_int16_t seg_flags;		/* run-time flags for this segment */
 };
 

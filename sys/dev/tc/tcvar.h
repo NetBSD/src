@@ -1,4 +1,4 @@
-/* $NetBSD: tcvar.h,v 1.15 1999/11/15 03:41:49 nisimura Exp $ */
+/* $NetBSD: tcvar.h,v 1.15.2.1 2000/06/22 17:08:26 minoura Exp $ */
 
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
@@ -69,10 +69,11 @@ struct tc_softc {
 	int	sc_nslots;
 	struct tc_slotdesc *sc_slots;
 
-	void	(*sc_intr_establish) __P((struct device *, void *,
-			int, int (*)(void *), void *));
-	void	(*sc_intr_disestablish) __P((struct device *, void *));
-	bus_dma_tag_t (*sc_get_dma_tag) __P((int));
+	const struct evcnt *(*sc_intr_evcnt)(struct device *, void *);
+	void	(*sc_intr_establish)(struct device *, void *,
+			int, int (*)(void *), void *);
+	void	(*sc_intr_disestablish)(struct device *, void *);
+	bus_dma_tag_t (*sc_get_dma_tag)(int);
 };
 
 /*
@@ -91,10 +92,11 @@ struct tcbus_attach_args {
 	
 
 	/* TC bus resource management; XXX will move elsewhere eventually. */
-	void	(*tba_intr_establish) __P((struct device *, void *,
-			int, int (*)(void *), void *));
-	void	(*tba_intr_disestablish) __P((struct device *, void *));
-	bus_dma_tag_t (*tba_get_dma_tag) __P((int));
+	const struct evcnt *(*tba_intr_evcnt)(struct device *, void *);
+	void	(*tba_intr_establish)(struct device *, void *,
+			int, int (*)(void *), void *);
+	void	(*tba_intr_disestablish)(struct device *, void *);
+	bus_dma_tag_t (*tba_get_dma_tag)(int);
 };
 
 /*
@@ -136,12 +138,13 @@ struct tc_builtin {
 /*
  * Interrupt establishment functions.
  */
-int	tc_checkslot __P((tc_addr_t, char *));
-void	tc_devinfo __P((const char *, char *));
-void	tcattach __P((struct device *, struct device *, void *));
-void	tc_intr_establish __P((struct device *, void *,
-					int, int (*)(void *), void *));
-void	tc_intr_disestablish __P((struct device *, void *));
+int	tc_checkslot(tc_addr_t, char *);
+void	tc_devinfo(const char *, char *);
+void	tcattach(struct device *, struct device *, void *);
+const struct evcnt *tc_intr_evcnt(struct device *, void *);
+void	tc_intr_establish(struct device *, void *, int, int (*)(void *),
+	    void *);
+void	tc_intr_disestablish(struct device *, void *);
 
 #include "locators.h"
 /*

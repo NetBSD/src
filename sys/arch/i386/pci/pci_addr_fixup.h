@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_addr_fixup.h,v 1.1 2000/04/28 17:19:10 uch Exp $	*/
+/*	$NetBSD: pci_addr_fixup.h,v 1.1.4.1 2000/06/22 17:01:05 minoura Exp $	*/
 
 /*-
  * Copyright (c) 2000 UCHIYAMA Yasushi.  All rights reserved.
@@ -25,5 +25,15 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+struct pciaddr {
+	struct extent *extent_mem;
+	struct extent *extent_port;
+	bus_addr_t mem_alloc_start;
+	bus_addr_t port_alloc_start;
+	int nbogus;
+};
+
+extern struct pciaddr pciaddr;
 
 void	pci_addr_fixup __P((pci_chipset_tag_t, int));

@@ -1,4 +1,4 @@
-/* $NetBSD: pci_550.h,v 1.3 1998/06/05 15:28:40 ross Exp $ */
+/* $NetBSD: pci_550.h,v 1.3.22.1 2000/06/22 16:58:40 minoura Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -28,7 +28,3 @@
  */
 
 void	pci_550_pickintr __P((struct cia_config *));
-
-#ifdef EVCNT_COUNTERS
-extern struct evcnt pci_550_intr_evcnt;
-#endif

@@ -1,11 +1,11 @@
-#	$NetBSD: Makefile,v 1.8 2000/05/22 15:33:13 matt Exp $
+#	$NetBSD: Makefile,v 1.8.2.1 2000/06/22 17:04:54 minoura Exp $
 
 S=	${.CURDIR}/../../../..
 
 PROG=	boot
 NOMAN=	1
 WARNS?=	1
-DEVS=	hp.c ctu.c ra.c mfm.c if_qe.c if_le.c if_ze.c if_de.c
+DEVS=	hp.c ctu.c ra.c mfm.c if_qe.c if_le.c if_ze.c if_de.c if_ni.c
 SRCS=	srt0.s boot.c devopen.c conf.c autoconf.c netio.c rom.c romread.s \
 	urem.s udiv.s consio.c str.s ${DEVS} findcpu.c
 
@@ -28,6 +28,12 @@ LIBZ=	${ZLIB}
 KERN_AS=library
 .include "${S}/lib/libkern/Makefile.inc"
 LIBKERN=${KERNLIB}
+
+.BEGIN:
+	@[ -h machine ] || ln -s ${S}/arch/${MACHINE}/include machine
+	@[ -h ${MACHINE_ARCH} ] || ln -s ${S}/arch/${MACHINE_ARCH}/include ${MACHINE_ARCH}
+.NOPATH: machine ${MACHINE_ARCH}
+CLEANFILES+= machine ${MACHINE_ARCH}
 
 ${PROG}: ${OBJS} ${LIBSA} ${LIBZ} ${LIBKERN}
 	ld -N -Ttext ${RELOC} -e nisse -o ${PROG} ${OBJS} \

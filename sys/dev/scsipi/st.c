@@ -1,4 +1,4 @@
-/*	$NetBSD: st.c,v 1.122 2000/05/19 06:55:42 kleink Exp $ */
+/*	$NetBSD: st.c,v 1.122.2.1 2000/06/22 17:08:21 minoura Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -488,7 +488,7 @@ stattach(parent, self, aux)
 	    XS_CTL_DISCOVERY | XS_CTL_SILENT | XS_CTL_IGNORE_MEDIA_CHANGE))
 		printf("drive empty\n");
 	else {
-		printf("density code 0x%x, ", st->media_density);
+		printf("density code %d, ", st->media_density);
 		if (st->media_blksize > 0)
 			printf("%d-byte", st->media_blksize);
 		else
@@ -1633,7 +1633,8 @@ st_read_block_limits(st, flags)
 	 */
 	error = scsipi_command(sc_link, (struct scsipi_generic *)&cmd,
 	    sizeof(cmd), (u_char *)&block_limits, sizeof(block_limits),
-	    ST_RETRIES, ST_CTL_TIME, NULL, flags | XS_CTL_DATA_IN);
+	    ST_RETRIES, ST_CTL_TIME, NULL,
+	    flags | XS_CTL_DATA_IN | XS_CTL_DATA_ONSTACK);
 	if (error)
 		return (error);
 
@@ -1687,7 +1688,8 @@ st_mode_sense(st, flags)
 	 */
 	error = scsipi_command(sc_link, (struct scsipi_generic *)&cmd,
 	    sizeof(cmd), (u_char *)&scsipi_sense, scsipi_sense_len,
-	    ST_RETRIES, ST_CTL_TIME, NULL, flags | XS_CTL_DATA_IN);
+	    ST_RETRIES, ST_CTL_TIME, NULL,
+	    flags | XS_CTL_DATA_IN | XS_CTL_DATA_ONSTACK);
 	if (error)
 		return (error);
 
@@ -1699,7 +1701,7 @@ st_mode_sense(st, flags)
 	else
 		st->flags &= ~ST_READONLY;
 	SC_DEBUG(sc_link, SDEV_DB3,
-	    ("density code 0x%x, %d-byte blocks, write-%s, ",
+	    ("density code %d, %d-byte blocks, write-%s, ",
 	    st->media_density, st->media_blksize,
 	    st->flags & ST_READONLY ? "protected" : "enabled"));
 	SC_DEBUG(sc_link, SDEV_DB3,
@@ -1769,7 +1771,8 @@ st_mode_select(st, flags)
 	 */
 	return (scsipi_command(sc_link, (struct scsipi_generic *)&cmd,
 	    sizeof(cmd), (u_char *)&scsi_select, scsi_select_len,
-	    ST_RETRIES, ST_CTL_TIME, NULL, flags | XS_CTL_DATA_OUT));
+	    ST_RETRIES, ST_CTL_TIME, NULL,
+	    flags | XS_CTL_DATA_OUT | XS_CTL_DATA_ONSTACK));
 }
 
 int
@@ -1813,7 +1816,8 @@ again:
 	error = scsipi_command(sc_link,
 	    (struct scsipi_generic *)&scmd, sizeof(scmd), 
 	    (u_char *)&scsi_pdata, scsi_dlen,
-	    ST_RETRIES, ST_CTL_TIME, NULL, flags | XS_CTL_DATA_IN);
+	    ST_RETRIES, ST_CTL_TIME, NULL,
+	    flags | XS_CTL_DATA_IN | XS_CTL_DATA_ONSTACK);
 
 	if (error) {
 		if (scmd.byte2 != SMS_DBD) {
@@ -1899,7 +1903,8 @@ again:
 	error = scsipi_command(sc_link,
 	    (struct scsipi_generic *)&mcmd, sizeof(mcmd),
 	    (u_char *)&scsi_pdata, scsi_dlen,
-	    ST_RETRIES, ST_CTL_TIME, NULL, flags | XS_CTL_DATA_OUT);
+	    ST_RETRIES, ST_CTL_TIME, NULL,
+	    flags | XS_CTL_DATA_OUT | XS_CTL_DATA_ONSTACK);
 
 	if (error && (scmd.page & SMS_PAGE_CODE) == 0xf) {
 		/*
@@ -2220,7 +2225,7 @@ st_rdpos(st, hard, blkptr)
 	error = scsipi_command(st->sc_link,
 	    (struct scsipi_generic *)&cmd, sizeof(cmd), (u_char *)&posdata,
 	    sizeof(posdata), ST_RETRIES, ST_CTL_TIME, NULL,
-	    XS_CTL_SILENT | XS_CTL_DATA_IN);
+	    XS_CTL_SILENT | XS_CTL_DATA_IN | XS_CTL_DATA_ONSTACK);
 
 	if (error == 0) {
 #if	0

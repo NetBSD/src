@@ -1,0 +1,28 @@
+$NetBSD: README.IPn,v 1.2.4.2 2000/06/22 17:02:54 minoura Exp $
+
+Arch (kernel)	Models
+-------------	------
+IP2		IRIS 3000
+IP4		4D/50, 4D/70
+IP4.5		4D/60, 4D/80, 4D/85
+IP5		4D/1x0
+IP6		4D/20
+IP10 (IP6)	4D/25
+IP7		4D/2x0
+IP9		4D/210
+IP13 (IP7)	4D/3x0
+IP15 (IP7)	4D/4x0
+IP12		4D/30, 4D/35, Indigo R3K
+IP17		Crimson
+IP19		Onyx, Challenge M/L(/XL?)
+IP20		Indigo R4K
+IP21		Power Challenge, Power Onyx 
+IP22		Indigo2 ("Fullhouse")
+IP24 (IP22)	Indy ("Guiness"), Challenge S 
+IP25		Power Challenge R10K
+IP26		Power Indigo2 R8K ("Teton")
+IP27		Origin 200, Origin 2000, Onyx2
+IP28		Power Indigo2 R10K ("Pacecar")
+IP30		Octane
+IP32		O2 ("Moosehead")
+IP35		SN1 (?)

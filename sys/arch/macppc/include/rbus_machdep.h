@@ -1,4 +1,4 @@
-/*	$NetBSD: rbus_machdep.h,v 1.2 1999/10/15 07:20:42 tsubai Exp $	*/
+/*	$NetBSD: rbus_machdep.h,v 1.2.10.1 2000/06/22 17:01:23 minoura Exp $	*/
 
 /*
  * Copyright (c) 1999
@@ -31,12 +31,12 @@
 #define _MACHINE_RBUS_MACHDEP_H_
 
 struct pci_attach_args;
-rbus_tag_t rbus_pccbb_parent_io __P((struct pci_attach_args *));
-rbus_tag_t rbus_pccbb_parent_mem __P((struct pci_attach_args *));
+rbus_tag_t rbus_pccbb_parent_io(struct pci_attach_args *);
+rbus_tag_t rbus_pccbb_parent_mem(struct pci_attach_args *);
 
-int md_space_map __P((bus_space_tag_t, bus_addr_t, bus_size_t, int,
-		      bus_space_handle_t *));
-void md_space_unmap __P((bus_space_tag_t, bus_space_handle_t, bus_size_t,
-			 bus_addr_t *));
+int md_space_map(bus_space_tag_t, bus_addr_t, bus_size_t, int,
+		      bus_space_handle_t *);
+void md_space_unmap(bus_space_tag_t, bus_space_handle_t, bus_size_t,
+			 bus_addr_t *);
 
 #endif /* _MACHINE_RBUS_MACHDEP_H_ */

@@ -1,4 +1,38 @@
-/*	$NetBSD: device.h,v 1.37 2000/03/06 02:48:51 mhitch Exp $	*/
+/* $NetBSD: device.h,v 1.37.2.1 2000/06/22 17:10:22 minoura Exp $ */
+
+/*
+ * Copyright (c) 1996, 2000 Christopher G. Demetriou
+ * All rights reserved.
+ * 
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *          This product includes software developed for the
+ *          NetBSD Project.  See http://www.netbsd.org/ for
+ *          information about NetBSD.
+ * 4. The name of the author may not be used to endorse or promote products
+ *    derived from this software without specific prior written permission.
+ * 
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+ * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+ * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ * IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+ * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+ * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+ * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+ * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ * 
+ * --(license Id: LICENSE.proto,v 1.1 2000/06/13 21:40:26 cgd Exp )--
+ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -85,14 +119,46 @@ struct device {
 
 TAILQ_HEAD(devicelist, device);
 
-/* `event' counters (use zero or more per device instance, as needed) */
+/*
+ * `event' counters (use zero or more per device instance, as needed)
+ */
+
 struct evcnt {
+	u_int64_t	ev_count;	/* how many have occurred */
 	TAILQ_ENTRY(evcnt) ev_list;	/* entry on list of all counters */
-	struct	device *ev_dev;		/* associated device */
-	int	ev_count;		/* how many have occurred */
-	char	ev_name[8];		/* what to call them (systat display) */
+	unsigned char	ev_type;	/* counter type; see below */
+	unsigned char	ev_grouplen;	/* 'group' len, excluding NUL */
+	unsigned char	ev_namelen;	/* 'name' len, excluding NUL */
+	char		ev_pad1;	/* reserved (for now); 0 */
+	const struct evcnt *ev_parent;	/* parent, for hierarchical ctrs */
+	const char	*ev_group;	/* name of group */
+	const char	*ev_name;	/* name of specific event */
 };
 TAILQ_HEAD(evcntlist, evcnt);
+
+/* maximum group/name lengths, including trailing NUL */
+#define	EVCNT_STRING_MAX	256
+
+/* ev_type values */
+#define	EVCNT_TYPE_MISC		0	/* miscellaneous; catch all */
+#define	EVCNT_TYPE_INTR		1	/* interrupt; count with vmstat -i */
+
+/*
+ * initializer for an event count structure.  the lengths are initted and
+ * it is added to the evcnt list at attach time.
+ */
+#define	EVCNT_INITIALIZER(type, parent, group, name)			\
+    {									\
+	0,			/* ev_count */				\
+	{ },			/* ev_list */				\
+	type,			/* ev_type */				\
+	0,			/* ev_grouplen */			\
+	0,			/* ev_namelen */			\
+	0,			/* ev_pad1 */				\
+	parent,			/* ev_parent */				\
+	group,			/* ev_group */				\
+	name,			/* ev_name */				\
+    }
 
 /*
  * Configuration data (i.e., data placed in ioconf.c).
@@ -111,7 +177,7 @@ struct cfdata {
 #define	FSTATE_FOUND	1	/* has been found */
 #define	FSTATE_STAR	2	/* duplicable */
 
-typedef int (*cfmatch_t) __P((struct device *, struct cfdata *, void *));
+typedef int (*cfmatch_t)(struct device *, struct cfdata *, void *);
 
 /*
  * `configuration' attachment and driver (what the machine-independent
@@ -131,9 +197,9 @@ typedef int (*cfmatch_t) __P((struct device *, struct cfdata *, void *));
 struct cfattach {
 	size_t	  ca_devsize;		/* size of dev data (for malloc) */
 	cfmatch_t ca_match;		/* returns a match level */
-	void	(*ca_attach) __P((struct device *, struct device *, void *));
-	int	(*ca_detach) __P((struct device *, int));
-	int	(*ca_activate) __P((struct device *, enum devact));
+	void	(*ca_attach)(struct device *, struct device *, void *);
+	int	(*ca_detach)(struct device *, int);
+	int	(*ca_activate)(struct device *, enum devact);
 };
 
 /* Flags given to config_detach(), and the ca_detach function. */
@@ -153,7 +219,7 @@ struct cfdriver {
  * of the parent device.  The return value is ignored if the device was
  * configured, so most functions can return UNCONF unconditionally.
  */
-typedef int (*cfprint_t) __P((void *, const char *));
+typedef int (*cfprint_t)(void *, const char *);		/* XXX const char * */
 #define	QUIET	0		/* print nothing */
 #define	UNCONF	1		/* print " not configured\n" */
 #define	UNSUPP	2		/* print " not supported\n" */
@@ -162,7 +228,7 @@ typedef int (*cfprint_t) __P((void *, const char *));
  * Pseudo-device attach information (function + number of pseudo-devs).
  */
 struct pdevinit {
-	void	(*pdev_attach) __P((int));
+	void	(*pdev_attach)(int);
 	int	pdev_count;
 };
 
@@ -170,32 +236,36 @@ struct pdevinit {
 
 extern struct devicelist alldevs;	/* list of all devices */
 extern struct evcntlist allevents;	/* list of all event counters */
+extern struct device *booted_device;	/* the device we booted from */
 
 extern __volatile int config_pending; 	/* semaphore for mountroot */
 
-void configure __P((void));
-struct cfdata *config_search __P((cfmatch_t, struct device *, void *));
-struct cfdata *config_rootsearch __P((cfmatch_t, char *, void *));
-struct device *config_found_sm __P((struct device *, void *, cfprint_t,
-    cfmatch_t));
-struct device *config_rootfound __P((char *, void *));
-struct device *config_attach __P((struct device *, struct cfdata *, void *,
-    cfprint_t));
-int config_detach __P((struct device *, int));
-int config_activate __P((struct device *));
-int config_deactivate __P((struct device *));
-void config_defer __P((struct device *, void (*)(struct device *)));
-void config_interrupts __P((struct device *, void (*)(struct device *)));
-void config_pending_incr __P((void));
-void config_pending_decr __P((void));
+void configure(void);
+struct cfdata *config_search(cfmatch_t, struct device *, void *);
+struct cfdata *config_rootsearch(cfmatch_t, const char *, void *);
+struct device *config_found_sm(struct device *, void *, cfprint_t, cfmatch_t);
+struct device *config_rootfound(const char *, void *);
+struct device *config_attach(struct device *, struct cfdata *, void *,
+    cfprint_t);
+int config_detach(struct device *, int);
+int config_activate(struct device *);
+int config_deactivate(struct device *);
+void config_defer(struct device *, void (*)(struct device *));
+void config_interrupts(struct device *, void (*)(struct device *));
+void config_pending_incr(void);
+void config_pending_decr(void);
 #ifdef __HAVE_DEVICE_REGISTER
-void device_register __P((struct device *, void *));
+void device_register(struct device *, void *);
 #endif
-void evcnt_attach __P((struct device *, const char *, struct evcnt *));
-void evcnt_detach __P((struct evcnt *));
+
+void	evcnt_attach_static(struct evcnt *);
+void	evcnt_attach_dynamic(struct evcnt *, int, const struct evcnt *,
+	    const char *, const char *);
+void	evcnt_detach(struct evcnt *);
 
 /* compatibility definitions */
 #define config_found(d, a, p)	config_found_sm((d), (a), (p), NULL)
+
 #endif /* _KERNEL */
 
 #endif /* !_SYS_DEVICE_H_ */

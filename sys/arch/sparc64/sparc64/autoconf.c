@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.30 2000/05/19 05:26:18 eeh Exp $ */
+/*	$NetBSD: autoconf.c,v 1.30.2.1 2000/06/22 17:04:28 minoura Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -220,7 +220,7 @@ bootstrap(nctx)
 #ifdef DDB
 	db_machine_init();
 #ifdef DB_ELF_SYMBOLS
-	ddb_init((int)((caddr_t)esym - (caddr_t)ssym), ssym, esym); /* No symbols as yet */
+	ddb_init((int)((caddr_t)esym - (caddr_t)ssym), ssym, esym); 
 #else
 	ddb_init();
 #endif
@@ -230,18 +230,6 @@ bootstrap(nctx)
 #endif
 #endif
 
-	/* 
-	 * These are the best approximations for the spitfire: 
-	 *
-	 * Contexts are 13 bits.
-	 *
-	 * Other values are not relevant, but used to simulate a sun4
-	 * 3-level MMU so we can address a full 32-bit virtual address
-	 * space.  
-	 *
-	 * Eventually we should drop all of this in favor of traversing
-	 * process address spaces during MMU faults.
-	 */
 	pmap_bootstrap(KERNBASE, (u_long)&end, nctx);
 }
 

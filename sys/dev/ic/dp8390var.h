@@ -1,4 +1,4 @@
-/*	$NetBSD: dp8390var.h,v 1.18 2000/03/22 20:58:28 ws Exp $	*/
+/*	$NetBSD: dp8390var.h,v 1.18.2.1 2000/06/22 17:06:39 minoura Exp $	*/
 
 /*
  * Device driver for National Semiconductor DS8390/WD83C690 based ethernet
@@ -131,6 +131,8 @@ struct dp8390_softc {
  * The chip is ASIX AX88190 and needs work around.
  */
 #define	DP8390_DO_AX88190_WORKAROUND	0x0020
+
+#define DP8390_ATTACHED			0x0040	/* attach has succeeded */
 
 /*
  * NIC register access macros

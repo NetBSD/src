@@ -1,4 +1,4 @@
-/*	$NetBSD: umap_vfsops.c,v 1.24 2000/03/16 19:00:26 jdolecek Exp $	*/
+/*	$NetBSD: umap_vfsops.c,v 1.24.2.1 2000/06/22 17:09:38 minoura Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -181,7 +181,7 @@ umapfs_mount(mp, path, data, ndp, p)
 	 * Make sure the mount point's sufficiently initialized
 	 * that the node create call will work.
 	 */
-	vfs_getnewfsid(mp, MOUNT_UMAP);
+	vfs_getnewfsid(mp);
 	amp->umapm_size = sizeof(struct umap_node);
 	amp->umapm_tag = VT_UMAP;
 	amp->umapm_bypass = umap_bypass;

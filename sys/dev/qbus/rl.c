@@ -1,4 +1,4 @@
-/*	$NetBSD: rl.c,v 1.3 2000/05/19 18:54:30 thorpej Exp $	*/
+/*	$NetBSD: rl.c,v 1.3.2.1 2000/06/22 17:07:51 minoura Exp $	*/
 
 /*
  * Copyright (c) 2000 Ludd, University of Lule}, Sweden. All rights reserved.
@@ -66,6 +66,7 @@
 
 struct rlc_softc {
 	struct device sc_dev;
+	struct evcnt sc_intrcnt;
 	bus_space_tag_t sc_iot;
 	bus_space_handle_t sc_ioh;
 	bus_dma_tag_t sc_dmat;
@@ -178,7 +179,10 @@ rlcattach(struct device *parent, struct device *self, void *aux)
 	sc->sc_iot = ua->ua_iot;
 	sc->sc_ioh = ua->ua_ioh;
 	sc->sc_dmat = ua->ua_dmat;
-	uba_intr_establish(ua->ua_icookie, ua->ua_cvec, rlcintr, sc);
+	uba_intr_establish(ua->ua_icookie, ua->ua_cvec,
+		rlcintr, sc, &sc->sc_intrcnt);
+	evcnt_attach_dynamic(&sc->sc_intrcnt, EVCNT_TYPE_INTR, ua->ua_evcnt,
+		sc->sc_dev.dv_xname, "intr");
 	printf("\n");
 
 	/*

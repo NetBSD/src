@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.16 2000/03/26 20:42:36 kleink Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.16.2.1 2000/06/22 17:02:47 minoura Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -49,7 +49,7 @@
 /*
  * Finish a fork operation, with process p2 nearly set up.
  * Copy and update the pcb and trap frame, making the child ready to run.
- * 
+ *
  * Rig the child's kernel stack so that it will start out in
  * fork_trampoline() and call child_return() with p2 as an
  * argument. This causes the newly-created child process to go
@@ -57,24 +57,26 @@
  * fork(), while the parent process returns normally.
  *
  * p1 is the process being forked; if p1 == &proc0, we are creating
- * a kernel thread, and the return path will later be changed in cpu_set_kpc.
+ * a kernel thread, and the return path and argument are specified with
+ * `func' and `arg'.
  *
  * If an alternate user-level stack is requested (with non-zero values
  * in both the stack and stacksize args), set up the user stack pointer
  * accordingly.
  */
 void
-cpu_fork(p1, p2, stack, stacksize)
+cpu_fork(p1, p2, stack, stacksize, func, arg)
 	struct proc *p1, *p2;
 	void *stack;
 	size_t stacksize;
+	void (*func) __P((void *));
+	void *arg;
 {
 	struct trapframe *tf;
 	struct callframe *cf;
 	struct switchframe *sf;
 	caddr_t stktop1, stktop2;
 	extern void fork_trampoline __P((void));
-	extern void child_return __P((void *));
 	struct pcb *pcb = &p2->p_addr->u_pcb;
 
 #ifdef DIAGNOSTIC
@@ -88,7 +90,7 @@ cpu_fork(p1, p2, stack, stacksize)
 	if (p1 == fpuproc)
 		save_fpu(p1);
 	*pcb = p1->p_addr->u_pcb;
-	
+
 	pcb->pcb_pm = p2->p_vmspace->vm_map.pmap;
 	(void) pmap_extract(pmap_kernel(), (vaddr_t)pcb->pcb_pm,
 	    (paddr_t *)&pcb->pcb_pmreal);
@@ -107,21 +109,21 @@ cpu_fork(p1, p2, stack, stacksize)
 		tf->fixreg[1] = (register_t)stack + stacksize;
 
 	stktop2 = (caddr_t)((u_long)stktop2 & ~15);	/* Align stack pointer */
-	
+
 	/*
 	 * There happens to be a callframe, too.
 	 */
 	cf = (struct callframe *)stktop2;
 	cf->lr = (int)fork_trampoline;
-	
+
 	/*
 	 * Below the trap frame, there is another call frame:
 	 */
 	stktop2 -= 16;
 	cf = (struct callframe *)stktop2;
-	cf->r31 = (register_t)child_return;
-	cf->r30 = (register_t)p2;
-	
+	cf->r31 = (register_t)func;
+	cf->r30 = (register_t)arg;
+
 	/*
 	 * Below that, we allocate the switch frame:
 	 */
@@ -134,29 +136,12 @@ cpu_fork(p1, p2, stack, stacksize)
 	pcb->pcb_spl = 0;
 }
 
-/*
- * Set initial pc of process forked by above.
- */
-void
-cpu_set_kpc(p, pc, arg)
-	struct proc *p;
-	void (*pc) __P((void *));
-	void *arg;
-{
-	struct switchframe *sf = (struct switchframe *)p->p_addr->u_pcb.pcb_sp;
-	struct callframe *cf = (struct callframe *)sf->sp;
-	
-	cf->r30 = (int)arg;
-	cf->r31 = (int)pc;
-	cf++->lr = (int)pc;
-}
-
 void
 cpu_swapin(p)
 	struct proc *p;
 {
 	struct pcb *pcb = &p->p_addr->u_pcb;
-	
+
 	(void) pmap_extract(pmap_kernel(), (vaddr_t)pcb->pcb_pm,
 	    (paddr_t *)&pcb->pcb_pmreal);
 }
@@ -171,7 +156,7 @@ pagemove(from, to, size)
 {
 	paddr_t pa;
 	vaddr_t va;
-	
+
 	for (va = (vaddr_t)from; size > 0; size -= NBPG) {
 		(void) pmap_extract(pmap_kernel(), va, &pa);
 		pmap_remove(pmap_kernel(), va, va + NBPG);
@@ -197,7 +182,7 @@ cpu_exit(p)
 {
 	if (p == fpuproc)	/* release the fpu */
 		fpuproc = 0;
-	
+
 	switchexit(p);
 }
 
@@ -214,8 +199,9 @@ cpu_coredump(p, vp, cred, chdr)
 	struct coreseg cseg;
 	struct md_coredump md_core;
 	struct trapframe *tf;
+	struct pcb *pcb = &p->p_addr->u_pcb;
 	int error;
-	
+
 	CORE_SETMAGIC(*chdr, COREMAGIC, MID_POWERPC, 0);
 	chdr->c_hdrsize = ALIGN(sizeof *chdr);
 	chdr->c_seghdrsize = ALIGN(sizeof cseg);
@@ -223,7 +209,13 @@ cpu_coredump(p, vp, cred, chdr)
 
 	tf = trapframe(p);
 	bcopy(tf, &md_core.frame, sizeof md_core.frame);
-	
+	if (pcb->pcb_flags & PCB_FPU) {
+		if (p == fpuproc)
+			save_fpu(p);
+		md_core.fpstate = pcb->pcb_fpu;
+	} else
+		bzero(&md_core.fpstate, sizeof(md_core.fpstate));
+
 	CORE_SETMAGIC(cseg, CORESEGMAGIC, MID_MACHINE, CORE_CPU);
 	cseg.c_addr = 0;
 	cseg.c_size = chdr->c_cpusize;
@@ -244,7 +236,7 @@ cpu_coredump(p, vp, cred, chdr)
 /*
  * Map a user I/O request into kernel virtual address space.
  * Note: the pages are already locked by uvm_vslock(), so we
- * do not need to pass an access_type to pmap_enter().   
+ * do not need to pass an access_type to pmap_enter().
  */
 void
 vmapbuf(bp, len)
@@ -254,7 +246,7 @@ vmapbuf(bp, len)
 	vaddr_t faddr, taddr;
 	vsize_t off;
 	paddr_t pa;
-	
+
 #ifdef	DIAGNOSTIC
 	if (!(bp->b_flags & B_PHYS))
 		panic("vmapbuf");
@@ -284,7 +276,7 @@ vunmapbuf(bp, len)
 {
 	vaddr_t addr;
 	vsize_t off;
-	
+
 #ifdef	DIAGNOSTIC
 	if (!(bp->b_flags & B_PHYS))
 		panic("vunmapbuf");

@@ -1,4 +1,4 @@
-/*	$NetBSD: igmp.c,v 1.24 2000/03/30 13:24:54 augustss Exp $	*/
+/*	$NetBSD: igmp.c,v 1.24.2.1 2000/06/22 17:09:45 minoura Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -62,7 +62,7 @@
 
 #define IP_MULTICASTOPTS	0
 
-int		igmp_timers_are_running;
+int igmp_timers_are_running;
 static struct router_info *rti_head;
 
 void igmp_sendpkt __P((struct in_multi *, int));
@@ -164,10 +164,13 @@ igmp_input(m, va_alist)
 		m_freem(m);
 		return;
 	}
-	if ((m->m_flags & M_EXT || m->m_len < minlen) &&
-	    (m = m_pullup(m, minlen)) == 0) {
-		++igmpstat.igps_rcv_tooshort;
-		return;
+	if (((m->m_flags & M_EXT) && (ip->ip_src.s_addr & IN_CLASSA_NET) == 0)
+	    || m->m_len < minlen) {
+		if ((m = m_pullup(m, minlen)) == 0) {
+			++igmpstat.igps_rcv_tooshort;
+			return;
+		}
+		ip = mtod(m, struct ip *);
 	}
 
 	/*
@@ -183,7 +186,6 @@ igmp_input(m, va_alist)
 	}
 	m->m_data -= iphlen;
 	m->m_len += iphlen;
-	ip = mtod(m, struct ip *);
 
 	switch (igmp->igmp_type) {
 

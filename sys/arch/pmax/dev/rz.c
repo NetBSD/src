@@ -1,4 +1,4 @@
-/*	$NetBSD: rz.c,v 1.61 2000/05/27 04:52:30 thorpej Exp $	*/
+/*	$NetBSD: rz.c,v 1.61.2.1 2000/06/22 17:02:20 minoura Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: rz.c,v 1.61 2000/05/27 04:52:30 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rz.c,v 1.61.2.1 2000/06/22 17:02:20 minoura Exp $");
 
 /*
  * SCSI CCS (Command Command Set) disk driver.
@@ -419,6 +419,7 @@ rzprobe(xxxsd)
 	sc->sc_sd = sd;
 	sc->sc_cmd.sd = sd;
 	sc->sc_cmd.unit = sd->sd_unit;
+	sc->sc_cmd.lun = 0;
 	sc->sc_rwcmd.unitNumber = sd->sd_slave;
 
 	/* XXX set up the external name */

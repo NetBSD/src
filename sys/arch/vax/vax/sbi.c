@@ -1,4 +1,4 @@
-/*	$NetBSD: sbi.c,v 1.20 1999/08/07 10:36:50 ragge Exp $ */
+/*	$NetBSD: sbi.c,v 1.20.10.1 2000/06/22 17:05:28 minoura Exp $ */
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -38,41 +38,37 @@
 #include <sys/device.h>
 #include <sys/systm.h>
 
+#include <machine/bus.h>
 #include <machine/sid.h>
 #include <machine/cpu.h>
 #include <machine/nexus.h>
 
-static	int sbi_print __P((void *, const char *));
-static	int sbi_match __P((struct device *, struct cfdata *, void *));
-static	void sbi_attach __P((struct device *, struct device *, void*));
+static	int sbi_print(void *, const char *);
+static	int sbi_match(struct device *, struct cfdata *, void *);
+static	void sbi_attach(struct device *, struct device *, void*);
 
 int
-sbi_print(aux, name)
-	void *aux;
-	const char *name;
+sbi_print(void *aux, const char *name)
 {
 	struct sbi_attach_args *sa = (struct sbi_attach_args *)aux;
 	int unsupp = 0;
 
 	if (name) {
-		switch (sa->type) {
+		switch (sa->sa_type) {
 		case NEX_MBA:
 			printf("mba at %s", name);
 			break;
 		default:
-			printf("unknown device 0x%x at %s", sa->type, name);
+			printf("unknown device 0x%x at %s", sa->sa_type, name);
 			unsupp++;
 		}		
 	}
-	printf(" tr%d", sa->nexnum);
+	printf(" tr%d", sa->sa_nexnum);
 	return (unsupp ? UNSUPP : UNCONF);
 }
 
 int
-sbi_match(parent, cf, aux)
-	struct device	*parent;
-	struct cfdata *cf;
-	void *aux;
+sbi_match(struct device *parent, struct cfdata *cf, void *aux)
 {
 	if (vax_bustype == VAX_SBIBUS)
 		return 1;
@@ -80,9 +76,7 @@ sbi_match(parent, cf, aux)
 }
 
 void
-sbi_attach(parent, self, aux)
-	struct	device	*parent, *self;
-	void	*aux;
+sbi_attach(struct device *parent, struct device *self, void *aux)
 {
 	u_int	nexnum, minnex;
 	struct	sbi_attach_args sa;
@@ -101,10 +95,10 @@ sbi_attach(parent, self, aux)
 			vax_unmap_physmem((vaddr_t)nexusP, NEXPAGES);
 		} else {
 			tmp = nexusP->nexcsr.nex_csr; /* no byte reads */
-			sa.type = tmp & 255;
+			sa.sa_type = tmp & 255;
 
-			sa.nexnum = nexnum;
-			sa.nexaddr = nexusP;
+			sa.sa_nexnum = nexnum;
+			sa.sa_ioh = (vaddr_t)nexusP;
 			config_found(self, (void*)&sa, sbi_print);
 		}
 	}

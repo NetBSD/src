@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.4 1999/09/17 20:04:51 thorpej Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.4.10.1 2000/06/22 17:03:49 minoura Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -64,7 +64,10 @@
 
 static int match_harddisk __P((struct device *, struct btinfo_bootdisk *));
 
-void findroot __P((struct device **, int *));
+struct device *booted_device;
+int booted_partition;
+
+static void findroot __P((void));
 
 /*
  * Determine i/o configuration for a machine.
@@ -87,10 +90,7 @@ cpu_configure()
 void
 cpu_rootconf()
 {
-	struct device *booted_device;
-	int booted_partition;
-
-	findroot(&booted_device, &booted_partition);
+	findroot();
 
 	printf("boot device: %s\n",
 	    booted_device ? booted_device->dv_xname : "<unknown>");
@@ -185,25 +185,16 @@ closeout:
  * change rootdev to correspond to the load device.
  */
 void
-findroot(devpp, partp)
-	struct device **devpp;
-	int *partp;
+findroot(void)
 {
 	struct btinfo_bootdisk *bid;
 	struct device *dv;
 	int i, majdev, unit, part;
 	char buf[32];
 
-	/*
-	 * Default to "not found."
-	 */
-	*devpp = NULL;
-	*partp = 0;
-
-	if (booted_device) {
-		*devpp = booted_device;
+	if (booted_device)
 		return;
-	}
+
 	if (lookup_bootinfo(BTINFO_NETIF)) {
 		/*
 		 * We got netboot interface information, but
@@ -261,17 +252,17 @@ findroot(devpp, partp)
 			continue;
 
 found:
-			if (*devpp) {
+			if (booted_device) {
 				printf("warning: double match for boot "
-				    "device (%s, %s)\n", (*devpp)->dv_xname,
+				    "device (%s, %s)\n", booted_device->dv_xname,
 				    dv->dv_xname);
 				continue;
 			}
-			*devpp = dv;
-			*partp = bid->partition;
+			booted_device = dv;
+			booted_partition = bid->partition;
 		}
 
-		if (*devpp)
+		if (booted_device)
 			return;
 	}
 
@@ -296,8 +287,8 @@ found:
 	for (dv = alldevs.tqh_first; dv != NULL;
 	    dv = dv->dv_list.tqe_next) {
 		if (strcmp(buf, dv->dv_xname) == 0) {
-			*devpp = dv;
-			*partp = part;
+			booted_device = dv;
+			booted_partition = part;
 			return;
 		}
 	}

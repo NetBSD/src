@@ -1,4 +1,4 @@
-/*	$NetBSD: dp8390.c,v 1.36 2000/05/12 16:44:19 thorpej Exp $	*/
+/*	$NetBSD: dp8390.c,v 1.36.2.1 2000/06/22 17:06:39 minoura Exp $	*/
 
 /*
  * Device driver for National Semiconductor DS8390/WD83C690 based ethernet
@@ -159,6 +159,9 @@ dp8390_config(sc, media, nmedia, defmedia)
 	/* Print additional info when attached. */
 	printf("%s: Ethernet address %s\n", sc->sc_dev.dv_xname,
 	    ether_sprintf(sc->sc_enaddr));
+
+	/* The attach is successful. */
+	sc->sc_flags |= DP8390_ATTACHED;
 
 	rv = 0;
 out:
@@ -1331,6 +1334,10 @@ dp8390_detach(sc, flags)
 	int flags;
 {
 	struct ifnet *ifp = &sc->sc_ec.ec_if;
+
+	/* Succeed now if there's no work to do. */
+	if ((sc->sc_flags & DP8390_ATTACHED) == 0)
+		return (0);
 
 	/* dp8390_disable() checks sc->sc_enabled */
 	dp8390_disable(sc);

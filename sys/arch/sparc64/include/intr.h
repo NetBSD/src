@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.2 2000/03/16 02:36:58 eeh Exp $ */
+/*	$NetBSD: intr.h,v 1.2.2.1 2000/06/22 17:04:27 minoura Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -51,3 +51,11 @@
 #define IPL_SERIAL	9	/* serial */
 #define IPL_HIGH	10	/* everything */
 
+void *
+softintr_establish __P((int level, int (*fun)(void *), void *arg));
+
+void
+softintr_disestablish __P((void *cookie));
+
+void
+softintr_schedule __P((void *cookie));

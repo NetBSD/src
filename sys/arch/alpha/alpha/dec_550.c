@@ -1,4 +1,4 @@
-/* $NetBSD: dec_550.c,v 1.7 2000/05/22 20:13:32 thorpej Exp $ */
+/* $NetBSD: dec_550.c,v 1.7.2.1 2000/06/22 16:58:12 minoura Exp $ */
 
 /*
  * Copyright (c) 1995, 1996, 1997 Carnegie-Mellon University.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_550.c,v 1.7 2000/05/22 20:13:32 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_550.c,v 1.7.2.1 2000/06/22 16:58:12 minoura Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -50,6 +50,7 @@ __KERNEL_RCSID(0, "$NetBSD: dec_550.c,v 1.7 2000/05/22 20:13:32 thorpej Exp $");
 
 #include <dev/isa/isareg.h>
 #include <dev/isa/isavar.h>
+#include <dev/ic/i8042reg.h>
 #include <dev/ic/pckbcvar.h>
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>
@@ -132,7 +133,8 @@ dec_550_cons_init()
 #if NPCKBD > 0
 		/* display console ... */
 		/* XXX */
-		(void) pckbc_cnattach(&ccp->cc_iot, IO_KBD, PCKBC_KBD_SLOT);
+		(void) pckbc_cnattach(&ccp->cc_iot, IO_KBD, KBCMDP,
+		    PCKBC_KBD_SLOT);
 
 		if (CTB_TURBOSLOT_TYPE(ctb->ctb_turboslot) ==
 		    CTB_TURBOSLOT_TYPE_ISA)
@@ -219,7 +221,7 @@ dec_550_device_register(dev, aux)
 		}
 	}
 
-	if (scsiboot &&
+	if ((ideboot || scsiboot) &&
 	    (!strcmp(cd->cd_name, "sd") ||
 	     !strcmp(cd->cd_name, "st") ||
 	     !strcmp(cd->cd_name, "cd"))) {
@@ -228,7 +230,11 @@ dec_550_device_register(dev, aux)
 		if (parent->dv_parent != scsipidev)
 			return;
 
-		if (b->unit / 100 != sa->sa_sc_link->scsipi_scsi.target)
+		if (sa->sa_sc_link->type == BUS_SCSI
+		    && b->unit / 100 != sa->sa_sc_link->scsipi_scsi.target)
+			return;
+		if (sa->sa_sc_link->type == BUS_ATAPI
+		    && b->unit / 100 != sa->sa_sc_link->scsipi_atapi.drive) 
 			return;
 
 		/* XXX LUN! */

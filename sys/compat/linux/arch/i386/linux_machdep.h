@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.h,v 1.10 1999/10/04 17:46:37 fvdl Exp $	*/
+/*	$NetBSD: linux_machdep.h,v 1.10.10.1 2000/06/22 17:05:47 minoura Exp $	*/
 
 /*-
  * Copyright (c) 1995 The NetBSD Foundation, Inc.
@@ -94,7 +94,6 @@ __END_DECLS
  * ugly patch to fake device numbers.
  */
 #define LINUX_CONS_MAJOR   4
-#define NETBSD_PCCONS_MAJOR 12
 #define NETBSD_WSCONS_MAJOR 47
 
 /*
@@ -117,7 +116,7 @@ __END_DECLS
 #define LINUX_K_MEDIUMRAW 2
 
 /*
- * VT ioctl calls in Linux (the ones that pcvt can handle)
+ * VT ioctl calls in Linux (the ones that the pcvt emulation in wscons can handle)
  */
 #define LINUX_VT_OPENQRY    0x5600
 #define LINUX_VT_GETMODE    0x5601

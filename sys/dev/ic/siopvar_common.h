@@ -1,4 +1,4 @@
-/*	$NetBSD: siopvar_common.h,v 1.2 2000/05/23 17:08:07 bouyer Exp $	*/
+/*	$NetBSD: siopvar_common.h,v 1.2.2.1 2000/06/22 17:06:55 minoura Exp $	*/
 
 /*
  * Copyright (c) 2000 Manuel Bouyer.
@@ -126,6 +126,7 @@ struct siop_target {
 #define TARF_WIDE	0x01 /* target is wide */
 
 void	siop_common_reset __P((struct siop_softc *));
+int	siop_modechange __P((struct siop_softc *));
 
 int	siop_wdtr_neg __P((struct siop_cmd *siop_cmd));
 int	siop_sdtr_neg __P((struct siop_cmd *siop_cmd));

@@ -1,4 +1,4 @@
-/*	$NetBSD: shm.h,v 1.25 2000/03/28 05:14:04 simonb Exp $	*/
+/*	$NetBSD: shm.h,v 1.25.2.1 2000/06/22 17:10:27 minoura Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -114,6 +114,7 @@ struct shmid_ds14 {
 	time_t		shm_ctime;	/* time of last change by shmctl() */
 	void		*shm_internal;	/* sysv stupidity */
 };
+#endif /* _KERNEL */
 
 #if !defined(_XOPEN_SOURCE)
 /*
@@ -124,17 +125,38 @@ struct shmid_ds14 {
 #define	SHM_UNLOCK	4	/* Unlock a segment locked by SHM_LOCK. */
 #endif /* _XOPEN_SOURCE */
 
+#if !defined(_POSIX_C_SOURCE) && !defined(_XOPEN_SOURCE)
 /*
  * System 5 style catch-all structure for shared memory constants that
  * might be of interest to user programs.  Do we really want/need this?
  */
 struct shminfo {
-	int	shmmax;		/* max shared memory segment size (bytes) */
-	int	shmmin;		/* min shared memory segment size (bytes) */
-	int	shmmni;		/* max number of shared memory identifiers */
-	int	shmseg;		/* max shared memory segments per process */
-	int	shmall;		/* max amount of shared memory (pages) */
+	int32_t	shmmax;		/* max shared memory segment size (bytes) */
+	int32_t	shmmin;		/* min shared memory segment size (bytes) */
+	int32_t	shmmni;		/* max number of shared memory identifiers */
+	int32_t	shmseg;		/* max shared memory segments per process */
+	int32_t	shmall;		/* max amount of shared memory (pages) */
 };
+
+/* Warning: 64-bit structure padding is needed here */
+struct shmid_ds_sysctl {
+	struct		ipc_perm_sysctl shm_perm;
+	u_int64_t	shm_segsz;
+	pid_t		shm_lpid;
+	pid_t		shm_cpid;
+	time_t		shm_atime;
+	time_t		shm_dtime;
+	time_t		shm_ctime;
+	u_int32_t	shm_nattch;
+};
+struct shm_sysctl_info {
+	struct	shminfo shminfo;
+	int32_t	pad;	/* shminfo not a multiple of 64 bits */
+	struct	shmid_ds_sysctl shmids[1];
+};
+#endif /* !_POSIX_C_SOURCE && !_XOPEN_SOURCE */
+
+#ifdef _KERNEL
 extern struct shminfo shminfo;
 extern struct shmid_ds *shmsegs;
 
@@ -144,9 +166,6 @@ void	shminit __P((void));
 void	shmfork __P((struct vmspace *, struct vmspace *));
 void	shmexit __P((struct vmspace *));
 int	shmctl1 __P((struct proc *, int, int, struct shmid_ds *));
-
-void	shmid_ds14_to_native __P((struct shmid_ds14 *, struct shmid_ds *));
-void	native_to_shmid_ds14 __P((struct shmid_ds *, struct shmid_ds14 *));
 #else /* !_KERNEL */
 
 #include <sys/cdefs.h>

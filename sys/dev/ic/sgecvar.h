@@ -1,4 +1,4 @@
-/*      $NetBSD: sgecvar.h,v 1.1 1999/08/08 11:41:30 ragge Exp $ */
+/*      $NetBSD: sgecvar.h,v 1.1.10.1 2000/06/22 17:06:54 minoura Exp $ */
 /*
  * Copyright (c) 1999 Ludd, University of Lule}, Sweden. All rights reserved.
  *
@@ -43,6 +43,7 @@ struct ze_cdata {
 
 struct	ze_softc {
 	struct device	sc_dev;		/* Configuration common part	*/
+	struct evcnt	sc_intrcnt;	/* Interrupt counters		*/
 	struct ethercom sc_ec;		/* Ethernet common part		*/
 #define sc_if	sc_ec.ec_if		/* network-visible interface	*/
 	bus_space_tag_t sc_iot;

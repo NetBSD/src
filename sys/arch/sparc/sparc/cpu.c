@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.98 2000/04/30 21:09:46 pk Exp $ */
+/*	$NetBSD: cpu.c,v 1.98.2.1 2000/06/22 17:04:07 minoura Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -114,45 +114,49 @@ void fpu_init __P((struct cpu_info *));
 #define SRMMU_IMPL(mmusr)	((u_int)(mmusr) >> 28)
 #define SRMMU_VERS(mmusr)	(((mmusr) >> 24) & 0xf)
 
-
 #if defined(MULTIPROCESSOR)
+struct cpu_info *alloc_cpuinfo_global_va __P((int, vsize_t *));
 struct cpu_info	*alloc_cpuinfo __P((void));
 
 struct cpu_info *
-alloc_cpuinfo()
+alloc_cpuinfo_global_va(ismaster, sizep)
+	int ismaster;
+	vsize_t *sizep;
 {
 	int align;
 	vaddr_t sva, va;
 	vsize_t sz, esz;
-	vaddr_t low, high;
-	vm_page_t m;
-	struct pglist mlist;
-	struct cpu_info *cpi;
 
 	/*
-	 * Allocate aligned KVA. `cpuinfo' resides at a fixed virtual
+	 * Allocate aligned KVA.  `cpuinfo' resides at a fixed virtual
 	 * address. Since we need to access an other CPU's cpuinfo
 	 * structure occasionally, this must be done at a virtual address
 	 * that's cache congruent to the fixed address CPUINFO_VA.
+	 *
+	 * NOTE: we're using the cache properties of the boot CPU to
+	 * determine the alignment (XXX).
 	 */
 	align = NBPG;
 	if (CACHEINFO.c_totalsize > align)
 		/* Assumes `c_totalsize' is power of two */
 		align = CACHEINFO.c_totalsize;
 
-	/*
-	 * While we're here, allocate a per-CPU idle PCB and
-	 * interrupt stack as well.
-	 */
 	sz = sizeof(struct cpu_info);
-	sz += USPACE;		/* `idle' u-area for this CPU */
-	sz += INT_STACK_SIZE;	/* interrupt stack for this CPU */
+
+	if (ismaster == 0) {
+		/*
+		 * While we're here, allocate a per-CPU idle PCB and
+		 * interrupt stack as well.
+		 */
+		sz += USPACE;		/* `idle' u-area for this CPU */
+		sz += INT_STACK_SIZE;	/* interrupt stack for this CPU */
+	}
 
 	sz = (sz + NBPG - 1) & -NBPG;
 	esz = sz + align - NBPG;
 
 	if ((sva = uvm_km_valloc(kernel_map, esz)) == 0)
-		panic("alloc_cpuinfo: no virtual space");
+		panic("alloc_cpuinfo_global_va: no virtual space");
 
 	va = sva + (((CPUINFO_VA & (align - 1)) + align - sva) & (align - 1));
 
@@ -162,6 +166,26 @@ alloc_cpuinfo()
 	if (va + sz != sva + esz)
 		(void)uvm_unmap(kernel_map, va + sz, sva + esz);
 
+	if (sizep != NULL)
+		*sizep = sz;
+
+	return ((struct cpu_info *)va);
+}
+
+struct cpu_info *
+alloc_cpuinfo()
+{
+	vaddr_t va;
+	vsize_t sz;
+	vaddr_t low, high;
+	vm_page_t m;
+	struct pglist mlist;
+	struct cpu_info *cpi;
+
+	/* Allocate the aligned VA and determine the size. */
+	cpi = alloc_cpuinfo_global_va(0, &sz);
+	va = (vaddr_t)cpi;
+
 	/* Allocate physical pages */
 	low = vm_first_phys;
 	high = vm_first_phys + vm_num_phys - NBPG;
@@ -169,10 +193,8 @@ alloc_cpuinfo()
 	if (uvm_pglistalloc(sz, low, high, NBPG, 0, &mlist, 1, 0) != 0)
 		panic("alloc_cpuinfo: no pages");
 
-	cpi = (struct cpu_info *)va;
-
 	/* Map the pages */
-	for (m = TAILQ_FIRST(&mlist); m != NULL; m = TAILQ_NEXT(m,pageq)) {
+	for (m = TAILQ_FIRST(&mlist); m != NULL; m = TAILQ_NEXT(m, pageq)) {
 		paddr_t pa = VM_PAGE_TO_PHYS(m);
 		pmap_enter(pmap_kernel(), va, pa,
 		    VM_PROT_READ|VM_PROT_WRITE,
@@ -181,8 +203,8 @@ alloc_cpuinfo()
 	}
 
 	bzero((void *)cpi, sizeof(struct cpu_info));
-	cpi->eintstack = (void *)((u_int)cpi + sz);
-	cpi->idle_u = (void *)((u_int)cpi + sz - INT_STACK_SIZE - USPACE);
+	cpi->eintstack = (void *)((vaddr_t)cpi + sz);
+	cpi->idle_u = (void *)((vaddr_t)cpi + sz - INT_STACK_SIZE - USPACE);
 
 	return (cpi);
 }
@@ -250,7 +272,7 @@ cpu_attach(parent, self, aux)
 	void *aux;
 {
 static	struct cpu_softc *bootcpu;
-static	int cpu_number;
+static	int cpu_instance;
 	struct mainbus_attach_args *ma = aux;
 	struct cpu_softc *sc = (struct cpu_softc *)self;
 	struct cpu_info *cpi;
@@ -269,10 +291,30 @@ static	int cpu_number;
 	 */
 	if (bootcpu == NULL) {
 		extern struct pcb idle_u[];
+
 		bootcpu = sc;
 		cpus = malloc(ncpu * sizeof(cpi), M_DEVBUF, M_NOWAIT);
 		bzero(cpus, ncpu * sizeof(cpi));
+
+		getcpuinfo(&cpuinfo, node);
+
+#if defined(MULTIPROCESSOR)
+		/*
+		 * Allocate a suitable global VA for the boot CPU's
+		 * cpu_info (which is already statically allocated),
+		 * and double map it to that global VA.  Then fixup
+		 * the self-reference to use the globalized address.
+		 */
+		cpi = sc->sc_cpuinfo = alloc_cpuinfo_global_va(1, NULL);
+		pmap_globalize_boot_cpuinfo(cpi);
+		cpuinfo.ci_self = cpi;
+
+		/* XXX - fixup proc0.p_cpu */
+		proc0.p_cpu = cpi;
+#else
+		/* The `local' VA is global for uniprocessor. */
 		cpi = sc->sc_cpuinfo = (struct cpu_info *)CPUINFO_VA;
+#endif
 		cpi->master = 1;
 		cpi->eintstack = eintstack;
 		cpi->idle_u = idle_u;
@@ -280,8 +322,10 @@ static	int cpu_number;
 	} else {
 #if defined(MULTIPROCESSOR)
 		cpi = sc->sc_cpuinfo = alloc_cpuinfo();
+		cpi->ci_self = cpi;
 		cpi->curpcb = cpi->idle_u;
 		/* Note: `idle_u' and `eintstack' are set in alloc_cpuinfo() */
+		getcpuinfo(cpi, node);
 #else
 		printf(": no SMP support in kernel\n");
 		return;
@@ -292,15 +336,13 @@ static	int cpu_number;
 	cpi->redzone = (void *)((long)cpi->idle_u + REDSIZE);
 #endif
 
-	cpus[cpu_number] = cpi;
-	cpi->cpu_no = cpu_number++;
+	cpus[cpu_instance] = cpi;
+	cpi->cpu_no = cpu_instance++;
 	cpi->mid = mid;
 	cpi->node = node;
 
 	if (ncpu > 1)
 		printf(": mid %d", mid);
-
-	getcpuinfo(cpi, node);
 
 	if (cpi->master) {
 		cpu_setup(sc);
@@ -323,7 +365,7 @@ static	int cpu_number;
 
 	cache_print(sc);
 
-	if (cpu_number == ncpu) {
+	if (cpu_instance == ncpu) {
 		/* Install MP cache flush functions on boot cpu */
 		cpuinfo.cache_flush = smp_cache_flush;
 		cpuinfo.vcache_flush_page = smp_vcache_flush_page;
@@ -439,7 +481,7 @@ mp_pause_cpus()
 
 	for (n = 0; n < ncpu; n++) {
 		struct cpu_info *cpi = cpus[n];
-		if (cpuinfo.mid == cpi->mid)
+		if (cpi == NULL || cpuinfo.mid == cpi->mid)
 			continue;
 
 		simple_lock(&cpi->msg.lock);
@@ -457,7 +499,7 @@ mp_resume_cpus()
 
 	for (n = 0; n < ncpu; n++) {
 		struct cpu_info *cpi = cpus[n];
-		if (cpuinfo.mid == cpi->mid)
+		if (cpi == NULL || cpuinfo.mid == cpi->mid)
 			continue;
 
 		simple_lock(&cpi->msg.lock);
@@ -629,7 +671,7 @@ struct module_info module_sun4 = {
 	sun4_vcache_flush_segment,
 	sun4_vcache_flush_region,
 	sun4_vcache_flush_context,
-	noop_pcache_flush_line,
+	noop_pcache_flush_page,
 	noop_pure_vcache_flush,
 	noop_cache_flush_all,
 	0,
@@ -757,7 +799,7 @@ struct module_info module_sun4c = {
 	sun4_vcache_flush_segment,
 	sun4_vcache_flush_region,
 	sun4_vcache_flush_context,
-	noop_pcache_flush_line,
+	noop_pcache_flush_page,
 	noop_pure_vcache_flush,
 	noop_cache_flush_all,
 	0,
@@ -957,7 +999,7 @@ struct module_info module_ms1 = {
 	noop_vcache_flush_segment,
 	noop_vcache_flush_region,
 	noop_vcache_flush_context,
-	noop_pcache_flush_line,
+	noop_pcache_flush_page,
 	noop_pure_vcache_flush,
 	ms1_cache_flush_all,
 	memerr4m,
@@ -987,7 +1029,7 @@ struct module_info module_ms2 = {		/* UNTESTED */
 	srmmu_vcache_flush_segment,
 	srmmu_vcache_flush_region,
 	srmmu_vcache_flush_context,
-	noop_pcache_flush_line,
+	noop_pcache_flush_page,
 	noop_pure_vcache_flush,
 	srmmu_cache_flush_all,
 	memerr4m,
@@ -1012,7 +1054,7 @@ struct module_info module_swift = {
 	srmmu_vcache_flush_segment,
 	srmmu_vcache_flush_region,
 	srmmu_vcache_flush_context,
-	srmmu_pcache_flush_line,
+	noop_pcache_flush_page,
 	noop_pure_vcache_flush,
 	srmmu_cache_flush_all,
 	memerr4m,
@@ -1053,7 +1095,7 @@ struct module_info module_viking = {
 	noop_vcache_flush_segment,
 	noop_vcache_flush_region,
 	noop_vcache_flush_context,
-	viking_pcache_flush_line,
+	viking_pcache_flush_page,
 	noop_pure_vcache_flush,
 	noop_cache_flush_all,
 	viking_memerr,
@@ -1138,7 +1180,7 @@ struct module_info module_hypersparc = {
 	srmmu_vcache_flush_segment,
 	srmmu_vcache_flush_region,
 	srmmu_vcache_flush_context,
-	srmmu_pcache_flush_line,
+	noop_pcache_flush_page,
 	hypersparc_pure_vcache_flush,
 	hypersparc_cache_flush_all,
 	hypersparc_memerr,
@@ -1188,7 +1230,7 @@ struct module_info module_cypress = {
 	srmmu_vcache_flush_segment,
 	srmmu_vcache_flush_region,
 	srmmu_vcache_flush_context,
-	srmmu_pcache_flush_line,
+	noop_pcache_flush_page,
 	noop_pure_vcache_flush,
 	cypress_cache_flush_all,
 	memerr4m,
@@ -1213,7 +1255,7 @@ struct module_info module_turbosparc = {
 	srmmu_vcache_flush_segment,
 	srmmu_vcache_flush_region,
 	srmmu_vcache_flush_context,
-	srmmu_pcache_flush_line,
+	noop_pcache_flush_page,
 	noop_pure_vcache_flush,
 	srmmu_cache_flush_all,
 	memerr4m,
@@ -1253,7 +1295,7 @@ cpumatch_turbosparc(sc, mp, node)
 	sc->sp_vcache_flush_segment = 0;
 	sc->sp_vcache_flush_region = 0;
 	sc->sp_vcache_flush_context = 0;
-	sc->pcache_flush_line = 0;
+	sc->pcache_flush_page = 0;
 }
 
 void
@@ -1438,7 +1480,7 @@ getcpuinfo(sc, node)
 		MPCOPY(sp_vcache_flush_segment);
 		MPCOPY(sp_vcache_flush_region);
 		MPCOPY(sp_vcache_flush_context);
-		MPCOPY(pcache_flush_line);
+		MPCOPY(pcache_flush_page);
 		MPCOPY(pure_vcache_flush);
 		MPCOPY(cache_flush_all);
 		MPCOPY(memerr);

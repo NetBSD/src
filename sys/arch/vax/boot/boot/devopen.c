@@ -1,4 +1,4 @@
-/*	$NetBSD: devopen.c,v 1.4 2000/05/21 09:45:34 ragge Exp $ */
+/*	$NetBSD: devopen.c,v 1.4.2.1 2000/06/22 17:04:55 minoura Exp $ */
 /*
  * Copyright (c) 1997 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -68,6 +68,9 @@ devopen(f, fname, file)
 	dev = bootrpb.devtyp;
 	unit = bootrpb.unit;
 	adapt = ctlr = -1;
+
+	if (dev == BDEV_KDB)
+		dev = BDEV_UDA; /* use the same driver */
 
 	for (i = 0, dp = 0; i < ndevs; i++)
 		if (cnvtab[i] == dev)
@@ -145,12 +148,13 @@ devopen(f, fname, file)
 	case VAX_8800:
 	case VAX_TYP_8PS:
 		csrbase = 0; /* _may_ be a KDB */
+		nexaddr = bootrpb.csrphy;
 		if (ctlr < 0)
 			break;
 		if (adapt < 0)
-			nexaddr = (bootrpb.adpphy & 0xff000000) + BI_NODE(ctlr);
+			nexaddr = (nexaddr & 0xff000000) + BI_NODE(ctlr);
 		else
-			nexaddr = BI_BASE(ctlr, adapt);
+			nexaddr = BI_BASE(adapt, ctlr);
 		break;
 #ifdef notyet
 	case VAX_6200:

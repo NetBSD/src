@@ -1,4 +1,4 @@
-/*	$NetBSD: if_dereg.h,v 1.1 2000/04/30 11:43:26 ragge Exp $	*/
+/*	$NetBSD: if_dereg.h,v 1.1.2.1 2000/06/22 17:07:51 minoura Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986 Regents of the University of California.
@@ -169,7 +169,6 @@ struct de_ring {
 	u_int8_t	r_flags;		/* Status flags */
 	u_int16_t	r_tdrerr;		/* Errors */
 #define	r_lenerr	r_tdrerr
-	int16_t	r_rid;			/* Request ID */
 };
 
 #define	XFLG_OWN	0x80		/* If 0 then owned by driver */
@@ -219,9 +218,3 @@ struct de_ring {
 #define	MOD_DRDC	0x2000		/* Disable data chaining */
 #define	MOD_ENAL	0x4000		/* Enable all multicast */
 #define	MOD_PROM	0x8000		/* Enable promiscuous mode */
-
-struct	de_buf {
-	struct ether_header db_head;	/* header */
-	char	db_data[ETHERMTU];	/* packet data */
-	int	db_crc;			/* CRC - on receive only */
-};

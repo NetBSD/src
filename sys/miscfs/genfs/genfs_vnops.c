@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_vnops.c,v 1.17 2000/05/13 23:43:09 perseant Exp $	*/
+/*	$NetBSD: genfs_vnops.c,v 1.17.2.1 2000/06/22 17:09:31 minoura Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -89,7 +89,7 @@ genfs_fsync(v)
 	if ((ap->a_flags & FSYNC_DATAONLY) != 0)
 		return (0);
 	else
-		return (VOP_UPDATE(ap->a_vp, NULL, NULL, wait ? UPDATE_WAIT : 0));
+		return (VOP_UPDATE(vp, NULL, NULL, wait ? UPDATE_WAIT : 0));
 }
 
 int

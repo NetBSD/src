@@ -1,4 +1,4 @@
-/*	$NetBSD: rnd.h,v 1.11 1999/02/28 17:18:42 explorer Exp $	*/
+/*	$NetBSD: rnd.h,v 1.11.16.1 2000/06/22 17:10:26 minoura Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  * rnd.c and rndpool.c to decide when enough entropy exists to do a
  * hash to extract it.
  */
-#define RND_ENTROPY_THRESHOLD	12
+#define RND_ENTROPY_THRESHOLD	10
 
 /*
  * size of the event queue.  This _MUST_ be a power of 2.
@@ -76,10 +76,24 @@
 #define RND_EVENTQSIZE	128
 #endif
 
+typedef struct 
+{
+	u_int32_t	poolsize;
+	u_int32_t 	threshold;
+	u_int32_t	maxentropy;
+	
+	u_int32_t	added;
+	u_int32_t	curentropy;
+	u_int32_t	removed;
+	u_int32_t	discarded;
+	u_int32_t	generated;
+} rndpoolstat_t;
+
+
 typedef struct {
 	u_int32_t	cursor;		/* current add point in the pool */
-	u_int32_t	entropy;	/* current entropy estimate in bits */
 	u_int32_t	rotate;		/* how many bits to rotate by */
+	rndpoolstat_t	stats;		/* current statistics */
 	u_int32_t	pool[RND_POOLWORDS];	/* random pool data */
 } rndpool_t;
 
@@ -93,6 +107,7 @@ typedef struct {
 	u_int32_t	flags;		/* flags */
 	void	       *state;		/* state informaiton */
 } rndsource_t;
+
 
 /*
  * Flags to control the source.  Low byte is type, upper bits are flags.
@@ -125,11 +140,10 @@ struct __rndsource_element {
 void		rndpool_init __P((rndpool_t *));
 void		rndpool_init_global __P((void));
 u_int32_t	rndpool_get_entropy_count __P((rndpool_t *));
-void		rndpool_set_entropy_count __P((rndpool_t *, u_int32_t));
+void		rndpool_get_stats __P((rndpool_t *, void *, int));
 void		rndpool_increment_entropy_count __P((rndpool_t *, u_int32_t));
 u_int32_t      *rndpool_get_pool __P((rndpool_t *));
 u_int32_t	rndpool_get_poolsize __P((void));
-void		rndpool_add_uint32 __P((rndpool_t *, u_int32_t, u_int32_t));
 void		rndpool_add_data __P((rndpool_t *, void *, u_int32_t,
 				      u_int32_t));
 int		rndpool_extract_data __P((rndpool_t *, void *, u_int32_t,
@@ -186,5 +200,6 @@ typedef struct {
 #define RNDGETSRCNAME	_IOWR('R', 103, rndstat_name_t) /* get src by name */
 #define RNDCTL		_IOW('R',  104, rndctl_t)  /* set/clear source flags */
 #define RNDADDDATA	_IOW('R',  105, rnddata_t) /* add data to the pool */
+#define RNDGETPOOLSTAT	_IOR('R',  106, rndpoolstat_t)
 
 #endif /* !_SYS_RND_H_ */

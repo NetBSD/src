@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.142 2000/04/19 06:50:29 itojun Exp $
+#	$NetBSD: GENERIC,v 1.142.2.1 2000/06/22 16:58:55 minoura Exp $
 
 #
 #if 0
@@ -16,7 +16,7 @@
 
 include "arch/amiga/conf/std.amiga"
 
-#ident 		"GENERIC-$Revision: 1.142 $"
+#ident 		"GENERIC-$Revision: 1.142.2.1 $"
 
 maxusers	8
 options 	RTC_OFFSET=0
@@ -49,19 +49,6 @@ options 	M68030		# support for 030
 options 	M68020		# support for 020/851
 options 	FPU_EMULATE	# FPU emulation
 #endif
-
-# Pull in config fragments for kernel crypto.  This is required for
-# options IPSEC etc. to work. If you want to run with IPSEC, uncomment
-# one of these, based on whether you use crypto-us or crypto-intl, and
-# adjust the prefixes as necessary.
-
-#prefix ../crypto-us/sys
-#cinclude "conf/files.crypto-us"
-#prefix
-
-#prefix ../crypto-intl/sys
-#cinclude "conf/files.crypto-intl"
-#prefix
 
 #
 # Networking options

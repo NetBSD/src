@@ -1,4 +1,4 @@
-/*	$NetBSD: vsbus.c,v 1.25 2000/05/26 21:05:01 ragge Exp $ */
+/*	$NetBSD: vsbus.c,v 1.25.2.1 2000/06/22 17:05:33 minoura Exp $ */
 /*
  * Copyright (c) 1996, 1999 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -66,9 +66,7 @@
 #include <machine/vsbus.h>
 
 #include "ioconf.h"
-#include "opt_vax46.h"
-#include "opt_vax48.h"
-#include "opt_vax49.h"
+#include "opt_cputype.h"
 
 int	vsbus_match	__P((struct device *, struct cfdata *, void *));
 void	vsbus_attach	__P((struct device *, struct device *, void *));

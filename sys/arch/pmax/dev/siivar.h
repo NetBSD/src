@@ -1,4 +1,4 @@
-/*	$NetBSD: siivar.h,v 1.5 2000/01/08 01:02:36 simonb Exp $	*/
+/*	$NetBSD: siivar.h,v 1.5.2.1 2000/06/22 17:02:22 minoura Exp $	*/
 
 #ifndef _SIIVAR_H
 #define _SIIVAR_H
@@ -32,6 +32,12 @@ typedef struct scsi_state {
 #define SII_NCMD	8
 struct siisoftc {
 	struct device sc_dev;		/* us as a device */
+#if NXSII > 0
+	struct scsipi_link sc_link;		/* scsipi link struct */
+	struct scsipi_adapter sc_adapter;	/* scsipi adapter glue */
+	ScsiCmd sc_cmd_fake[SII_NCMD];		/* XXX - hack!!! */
+	struct scsipi_xfer *sc_xs[SII_NCMD];	/* XXX - hack!!! */
+#endif
 	void *sc_buf;			/* DMA buffer (may be special mem) */
 	SIIRegs	*sc_regs;		/* HW address of SII controller chip */
 	int	sc_flags;
@@ -41,14 +47,17 @@ struct siisoftc {
 	void (*sii_copyfrombuf) __P((volatile u_short *src, char *dst, int len));
 
 	State	sc_st[SII_NCMD];	/* state info for each active command */
-#ifdef NEW_SCSI
-	struct scsipi_link sc_link;		/* scsipi lint struct */
-#endif
 };
 
 int	siiintr __P((void *sc));
 
 /* Machine-indepedent back-end attach entry point */
+
+#if NXSII > 0
+void	siiattach __P((struct siisoftc *, struct scsipi_device *));
+int	sii_scsi_cmd __P((struct scsipi_xfer *));
+#else
 void	siiattach __P((struct siisoftc *sc));
+#endif
 
 #endif	/* _SIIVAR_H */

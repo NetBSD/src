@@ -1,4 +1,4 @@
-#	$NetBSD: CATSINST,v 1.18 2000/05/26 19:01:22 tsutsui Exp $
+#	$NetBSD: CATSINST,v 1.18.2.1 2000/06/22 16:59:26 minoura Exp $
 #
 #	CATSINST -- CHALTECH CATS Install kernel
 #
@@ -71,17 +71,6 @@ file-system	KERNFS		# /kern
 #options 	SOFTDEP		# FFS soft updates support
 
 # Networking options
-
-# Pull in config fragments for kernel crypto.  Use only one of these,
-# and adjust the prefixes as necessary.
-
-#prefix ../crypto-us/sys
-#cinclude "conf/files.crypto-us"
-#prefix
-
-#prefix ../crypto-intl/sys
-#cinclude "conf/files.crypto-intl"
-#prefix
 
 #options 	GATEWAY		# packet forwarding
 options 	INET		# IP + ICMP + TCP + UDP

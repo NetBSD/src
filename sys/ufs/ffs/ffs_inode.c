@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_inode.c,v 1.31 2000/05/13 23:43:13 perseant Exp $	*/
+/*	$NetBSD: ffs_inode.c,v 1.31.2.1 2000/06/22 17:10:33 minoura Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -95,7 +95,7 @@ ffs_update(v)
 	int error;
 	struct timespec ts;
 	caddr_t cp;
-	int waitfor;
+	int waitfor, flags;
 
 	if (ap->a_vp->v_mount->mnt_flag & MNT_RDONLY)
 		return (0);
@@ -104,15 +104,18 @@ ffs_update(v)
 	FFS_ITIMES(ip,
 	    ap->a_access ? ap->a_access : &ts,
 	    ap->a_modify ? ap->a_modify : &ts, &ts);
-	if ((ip->i_flag & IN_MODIFIED) == 0 && (ap->a_flags & UPDATE_WAIT) == 0)
+	flags = ip->i_flag & (IN_MODIFIED | IN_ACCESSED);
+	if (flags == 0)
 		return (0);
-	ip->i_flag &= ~IN_MODIFIED;
 	fs = ip->i_fs;
 
-	waitfor=0;
-	if ((ap->a_flags & UPDATE_DIROP) && !DOINGSOFTDEP(ap->a_vp))
-		waitfor = UPDATE_WAIT;
-	waitfor |= ap->a_flags & UPDATE_WAIT;
+	if ((flags & IN_MODIFIED) != 0 &&
+	    (ap->a_vp->v_mount->mnt_flag & MNT_ASYNC) == 0) {
+		waitfor = ap->a_flags & UPDATE_WAIT;
+		if ((ap->a_flags & UPDATE_DIROP) && !DOINGSOFTDEP(ap->a_vp))
+			waitfor |= UPDATE_WAIT;
+	} else
+		waitfor = 0;
 
 	/*
 	 * Ensure that uid and gid are correct. This is a temporary
@@ -129,6 +132,7 @@ ffs_update(v)
 		brelse(bp);
 		return (error);
 	}
+	ip->i_flag &= ~(IN_MODIFIED | IN_ACCESSED);
 	if (DOINGSOFTDEP(ap->a_vp))
 		softdep_update_inodeblock(ip, bp, waitfor);
 	else if (ip->i_ffs_effnlink != ip->i_ffs_nlink)
@@ -141,7 +145,7 @@ ffs_update(v)
 	else
 #endif
 		memcpy(cp, &ip->i_din.ffs_din, DINODE_SIZE);
-	if (waitfor && (ap->a_vp->v_mount->mnt_flag & MNT_ASYNC) == 0) {
+	if (waitfor) {
 		return (bwrite(bp));
 	} else {
 		bdwrite(bp);
@@ -176,9 +180,9 @@ ffs_truncate(v)
 	struct fs *fs;
 	struct buf *bp;
 	int offset, size, level;
-	long count, nblocks, vflags, blocksreleased = 0;
+	long count, nblocks, blocksreleased = 0;
 	int i;
-	int aflags, error, allerror;
+	int aflags, error, allerror = 0;
 	off_t osize;
 
 	if (length < 0)
@@ -325,8 +329,10 @@ ffs_truncate(v)
 	for (i = NDADDR - 1; i > lastblock; i--)
 		oip->i_ffs_db[i] = 0;
 	oip->i_flag |= IN_CHANGE | IN_UPDATE;
-	if ((error = VOP_UPDATE(ovp, NULL, NULL, UPDATE_WAIT)) != 0)
+	error = VOP_UPDATE(ovp, NULL, NULL, UPDATE_WAIT);
+	if (error && !allerror)
 		allerror = error;
+
 	/*
 	 * Having written the new inode to disk, save its new configuration
 	 * and put back the old block pointers long enough to process them.
@@ -336,8 +342,9 @@ ffs_truncate(v)
 	memcpy((caddr_t)newblks, (caddr_t)&oip->i_ffs_db[0], sizeof newblks);
 	memcpy((caddr_t)&oip->i_ffs_db[0], (caddr_t)oldblks, sizeof oldblks);
 	oip->i_ffs_size = osize;
-	vflags = ((length > 0) ? V_SAVE : 0) | V_SAVEMETA;
-	allerror = vinvalbuf(ovp, vflags, ap->a_cred, ap->a_p, 0, 0);
+	error = vtruncbuf(ovp, lastblock + 1, 0, 0);
+	if (error && !allerror)
+		allerror = error;
 
 	/*
 	 * Indirect blocks first.
@@ -408,6 +415,7 @@ ffs_truncate(v)
 			blocksreleased += btodb(oldspace - newspace);
 		}
 	}
+
 done:
 #ifdef DIAGNOSTIC
 	for (level = SINGLE; level <= TRIPLE; level++)
@@ -417,7 +425,7 @@ done:
 		if (newblks[i] != oip->i_ffs_db[i])
 			panic("itrunc2");
 	if (length == 0 &&
-	    (ovp->v_dirtyblkhd.lh_first || ovp->v_cleanblkhd.lh_first))
+	    (!LIST_EMPTY(&ovp->v_cleanblkhd) || !LIST_EMPTY(&ovp->v_dirtyblkhd)))
 		panic("itrunc3");
 #endif /* DIAGNOSTIC */
 	/*
@@ -503,7 +511,7 @@ ffs_indirtrunc(ip, lbn, dbn, lastbn, level, countp)
 	}
 
 	bap = (ufs_daddr_t *)bp->b_data;
-	if (lastbn != -1) {
+	if (lastbn >= 0) {
 		MALLOC(copy, ufs_daddr_t *, fs->fs_bsize, M_TEMP, M_WAITOK);
 		memcpy((caddr_t)copy, (caddr_t)bap, (u_int)fs->fs_bsize);
 		memset((caddr_t)&bap[last + 1], 0,

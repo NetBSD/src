@@ -1,4 +1,4 @@
-/*	$NetBSD: systm.h,v 1.109 2000/05/26 21:20:33 thorpej Exp $	*/
+/*	$NetBSD: systm.h,v 1.109.2.1 2000/06/22 17:10:28 minoura Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1988, 1991, 1993
@@ -87,6 +87,7 @@ struct vnode;
 
 extern int securelevel;		/* system security level */
 extern const char *panicstr;	/* panic message */
+extern int doing_shutdown;	/* shutting down */
 
 extern char copyright[];	/* system copyright */
 extern char cpu_model[];	/* machine/cpu model name */
@@ -306,8 +307,6 @@ void	cpu_startup __P((void));
 void	cpu_configure __P((void));
 void	cpu_rootconf __P((void));
 void	cpu_dumpconf __P((void));
-void	cpu_set_kpc __P((struct proc *, void (*)(void *), void *));
-
 
 #ifdef GPROF
 void	kmstartup __P((void));

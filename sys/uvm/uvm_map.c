@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.c,v 1.74 2000/05/19 17:43:55 thorpej Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.74.2.1 2000/06/22 17:10:44 minoura Exp $	*/
 
 /* 
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -670,6 +670,7 @@ step3:
 		new_entry->aref.ar_pageoff = 0;
 		new_entry->aref.ar_amap = amap;
 	} else {
+		new_entry->aref.ar_pageoff = 0;
 		new_entry->aref.ar_amap = NULL;
 	}
 
@@ -1158,7 +1159,7 @@ uvm_map_reserve(map, size, offset, raddr)
 	vm_map_t map;
 	vsize_t size;
 	vaddr_t offset;    /* hint for pmap_prefer */
-	vaddr_t *raddr;	/* OUT: reserved VA */
+	vaddr_t *raddr;	/* IN:hint, OUT: reserved VA */
 {
 	UVMHIST_FUNC("uvm_map_reserve"); UVMHIST_CALLED(maphist); 
  
@@ -1350,7 +1351,7 @@ uvm_map_extract(srcmap, start, len, dstmap, dstaddrp, flags)
 	 * step 1: reserve space in the target map for the extracted area
 	 */
 
-	dstaddr = *dstaddrp;
+	dstaddr = vm_map_min(dstmap);
 	if (uvm_map_reserve(dstmap, len, start, &dstaddr) == FALSE)
 		return(ENOMEM);
 	*dstaddrp = dstaddr;	/* pass address back to caller */

@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.47 2000/03/23 13:49:49 ad Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.47.2.1 2000/06/22 17:00:23 minoura Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -70,7 +70,7 @@
 
 static int match_harddisk __P((struct device *, struct btinfo_bootdisk *));
 static void matchbiosdisks __P((void));
-void findroot __P((struct device **, int *));
+static void findroot __P((void));
 
 extern struct disklist *i386_alldisks;
 extern int i386_ndisks;
@@ -86,6 +86,9 @@ extern int i386_ndisks;
 #include <dev/pci/pcivar.h>
 #include <i386/pci/pcibios.h>
 #endif
+
+struct device *booted_device;
+int booted_partition;
 
 /*
  * Determine i/o configuration for a machine.
@@ -122,10 +125,7 @@ cpu_configure()
 void
 cpu_rootconf()
 {
-	struct device *booted_device;
-	int booted_partition;
-
-	findroot(&booted_device, &booted_partition);
+	findroot();
 	matchbiosdisks();
 
 	printf("boot device: %s\n",
@@ -261,7 +261,6 @@ matchbiosdisks()
 #ifdef COMPAT_OLDBOOT
 u_long	bootdev = 0;		/* should be dev_t, but not until 32 bits */
 #endif
-struct device *booted_device;
 
 /*
  * helper function for "findroot()":
@@ -346,9 +345,7 @@ closeout:
  * change rootdev to correspond to the load device.
  */
 void
-findroot(devpp, partp)
-	struct device **devpp;
-	int *partp;
+findroot(void)
 {
 	struct btinfo_bootdisk *bid;
 	struct device *dv;
@@ -357,16 +354,9 @@ findroot(devpp, partp)
 	char buf[32];
 #endif
 
-	/*
-	 * Default to "not found."
-	 */
-	*devpp = NULL;
-	*partp = 0;
-
-	if (booted_device) {
-		*devpp = booted_device;
+	if (booted_device)
 		return;
-	}
+
 	if (lookup_bootinfo(BTINFO_NETIF)) {
 		/*
 		 * We got netboot interface information, but
@@ -425,17 +415,17 @@ findroot(devpp, partp)
 			continue;
 
 found:
-			if (*devpp) {
+			if (booted_device) {
 				printf("warning: double match for boot "
-				    "device (%s, %s)\n", (*devpp)->dv_xname,
+				    "device (%s, %s)\n", booted_device->dv_xname,
 				    dv->dv_xname);
 				continue;
 			}
-			*devpp = dv;
-			*partp = bid->partition;
+			booted_device = dv;
+			booted_partition = bid->partition;
 		}
 
-		if (*devpp)
+		if (booted_device)
 			return;
 	}
 
@@ -461,8 +451,8 @@ found:
 	for (dv = alldevs.tqh_first; dv != NULL;
 	    dv = dv->dv_list.tqe_next) {
 		if (strcmp(buf, dv->dv_xname) == 0) {
-			*devpp = dv;
-			*partp = part;
+			booted_device = dv;
+			booted_partition = part;
 			return;
 		}
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_glue.c,v 1.33 2000/05/26 00:36:53 thorpej Exp $	*/
+/*	$NetBSD: uvm_glue.c,v 1.33.2.1 2000/06/22 17:10:43 minoura Exp $	*/
 
 /* 
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -107,31 +107,6 @@ unsigned maxsmap = MAXSSIZ;	/* kern_resource.c: RLIMIT_STACK max */
 int readbuffers = 0;		/* allow KGDB to read kern buffer pool */
 				/* XXX: see uvm_kernacc */
 
-
-/*
- * uvm_sleep: atomic unlock and sleep for UVM_UNLOCK_AND_WAIT().
- */
-
-void
-uvm_sleep(event, slock, canintr, msg, timo)
-	void *event;
-	struct simplelock *slock;
-	boolean_t canintr;
-	const char *msg;
-	int timo;
-{
-	int s, pri;
-
-	pri = PVM;
-	if (canintr)
-		pri |= PCATCH;
-
-	s = splhigh();
-	if (slock != NULL)
-		simple_unlock(slock);
-	(void) tsleep(event, pri, msg, timo);
-	splx(s);
-}
 
 /*
  * uvm_kernacc: can the kernel access a region of memory
@@ -296,11 +271,13 @@ uvm_vsunlock(p, addr, len)
  *   than just hang
  */
 void
-uvm_fork(p1, p2, shared, stack, stacksize)
+uvm_fork(p1, p2, shared, stack, stacksize, func, arg)
 	struct proc *p1, *p2;
 	boolean_t shared;
 	void *stack;
 	size_t stacksize;
+	void (*func) __P((void *));
+	void *arg;
 {
 	struct user *up = p2->p_addr;
 	int rv;
@@ -337,11 +314,13 @@ uvm_fork(p1, p2, shared, stack, stacksize)
 	 (caddr_t)&up->u_stats.pstat_startcopy));
 	
 	/*
-	 * cpu_fork will copy and update the kernel stack and pcb, and make
-	 * the child ready to run.  The child will exit directly to user
-	 * mode on its first time slice, and will not return here.
+	 * cpu_fork() copy and update the pcb, and make the child ready
+	 * to run.  If this is a normal user fork, the child will exit
+	 * directly to user mode via child_return() on its first time
+	 * slice and will not return here.  If this is a kernel thread,
+	 * the specified entry point will be executed.
 	 */
-	cpu_fork(p1, p2, stack, stacksize);
+	cpu_fork(p1, p2, stack, stacksize, func, arg);
 }
 
 /*
@@ -359,6 +338,7 @@ uvm_exit(p)
 
 	uvmspace_free(p->p_vmspace);
 	uvm_km_free(kernel_map, (vaddr_t)p->p_addr, USPACE);
+	p->p_addr = NULL;
 }
 
 /*

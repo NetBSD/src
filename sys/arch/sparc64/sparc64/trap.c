@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.41 2000/05/27 00:40:41 sommerfeld Exp $ */
+/*	$NetBSD: trap.c,v 1.41.2.1 2000/06/22 17:04:39 minoura Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -49,8 +49,10 @@
  */
 
 #define NEW_FPSTATE
+#define	TRAPWIN
 
 #include "opt_ddb.h"
+#include "opt_syscall_debug.h"
 #include "opt_ktrace.h"
 #include "opt_compat_svr4.h"
 #include "opt_compat_netbsd32.h"
@@ -89,7 +91,7 @@
 #include <machine/svr4_machdep.h>
 #endif
 
-#include <sparc64/fpu/fpu_extern.h>
+#include <sparc/fpu/fpu_extern.h>
 #include <sparc64/sparc64/memreg.h>
 #include <sparc64/sparc64/cache.h>
 
@@ -500,7 +502,7 @@ trap(type, tstate, pc, tf)
 		int* sp;
 
 		__asm("mov %%sp, %0" : "=r" (sp) :);
-		if (sp < eintstack) {
+		if (sp < EINTSTACK) {
 			printf("trap: We're on the interrupt stack!\ntype=0x%x tf=%p %s\n", 
 			       type, tf, type < N_TRAP_TYPES ? trap_type[type] : 
 			       ((type == T_AST) ? "ast" : 
@@ -1456,7 +1458,7 @@ out:
 void
 text_access_fault(type, pc, tf)
 	register unsigned type;
-	register u_long pc;
+	register vaddr_t pc;
 	register struct trapframe64 *tf;
 {
 	register u_int64_t tstate;
@@ -1514,7 +1516,7 @@ text_access_fault(type, pc, tf)
 		extern int trap_trace_dis;
 		trap_trace_dis = 1; /* Disable traptrace for printf */
 		(void) splhigh();
-		printf("text_access_fault: pc=%x\n", pc);
+		printf("text_access_fault: pc=%lx\n", pc);
 		DEBUGGER(type, tf);
 		panic("kernel fault");
 		/* NOTREACHED */

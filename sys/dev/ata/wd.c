@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.204 2000/05/15 08:32:07 bouyer Exp $ */
+/*	$NetBSD: wd.c,v 1.204.2.1 2000/06/22 17:06:16 minoura Exp $ */
 
 /*
  * Copyright (c) 1998 Manuel Bouyer.  All rights reserved.
@@ -1186,7 +1186,7 @@ wddump(dev, blkno, va, size)
 	if (wddumprecalibrated == 0) {
 		wddumpmulti = wd->sc_multi;
 		wddumprecalibrated = 1;
-		wd->drvp->state = RECAL;
+		wd->drvp->state = RESET;
 	}
   
 	while (nblks > 0) {

@@ -1,11 +1,11 @@
-#	$NetBSD: GENERIC,v 1.342 2000/05/25 01:34:18 mason Exp $
+#	$NetBSD: GENERIC,v 1.342.2.1 2000/06/22 17:00:16 minoura Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
 
 include "arch/i386/conf/std.i386"
 
-#ident 		"GENERIC-$Revision: 1.342 $"
+#ident 		"GENERIC-$Revision: 1.342.2.1 $"
 
 maxusers	32		# estimated number of users
 
@@ -112,19 +112,6 @@ options 	NFSSERVER	# Network File System server
 #options 	EXT2FS_SYSTEM_FLAGS # makes ext2fs file flags (append and
 				# immutable) behave as system flags.
 
-# Pull in config fragments for kernel crypto.  This is required for
-# options IPSEC etc. to work. If you want to run with IPSEC, uncomment
-# one of these, based on whether you use crypto-us or crypto-intl, and
-# adjust the prefixes as necessary.
-
-#prefix ../crypto-us/sys
-#cinclude "conf/files.crypto-us"
-#prefix
-
-#prefix ../crypto-intl/sys
-#cinclude "conf/files.crypto-intl"
-#prefix
-
 # Networking options
 #options 	GATEWAY		# packet forwarding
 options 	INET		# IP + ICMP + TCP + UDP
@@ -158,7 +145,7 @@ options 	PCIVERBOSE	# verbose PCI device autoconfig messages
 options 	SCSIVERBOSE	# human readable SCSI error messages
 options 	USBVERBOSE	# verbose USB device autoconfig messages
 #options 	PNPBIOSVERBOSE	# verbose PnP BIOS messages
-
+#options	PNPBIOSDEBUG	# more fullsome Pnp BIOS debugging messages
 options 	NFS_BOOT_DHCP,NFS_BOOT_BOOTPARAM
 
 #
@@ -199,11 +186,39 @@ mainbus0 at root
 #options 	APM_NO_IDLE		# Don't call BIOS CPU idle function
 #options 	APM_V10_ONLY		# Use only the APM 1.0 calls
 #options 	APM_NO_POWEROFF		# Don't power off on halt(8)
-#options 	APM_POWER_PRINT		# Don't print stats on the console
+#options 	APM_POWER_PRINT		# Print stats on the console
 #options 	APM_DISABLE_INTERRUPTS=0 # Don't disable interrupts
 
 
 # Basic Bus Support
+
+# Plug-and-Play BIOS and attached devices
+
+#pnpbios*	at mainbus?
+
+# mainboard audio chips
+#ess*		at pnpbios? index ?	# ESS AudioDrive
+#sb*		at pnpbios? index ?	# NeoMagic 256AV in sb mode
+#wss*		at pnpbios? index ?	# NeoMagic 256AV in wss mode
+#ym*		at pnpbios? index ?	# OPL3-SA3
+
+# com port
+# If enabled, consider changing "com0", "com1", and "com2" under "ISA Serial
+# Interfaces" to "com*", otherwise com2 will attach at pnpbios? and there
+# will be no com0.  A side effect is pcmcia (and other) com? previously
+# starting at com3 may attach as com1 or com2.
+#com*		at pnpbios? index ?	# serial ports
+
+# parallel port
+# The above "com*" comments apply, cf. "lpt0" under "ISA parallel
+# "printer interfaces".
+#lpt*		at pnpbios? index ?	# parallel ports
+
+#pckbc*		at pnpbios? index ?	# PC keyboard/mouse controller
+#fdc*		at pnpbios? index ?	# floppy controller
+
+# IDE controller on Toshiba Portege 3000 series (crippled PCI device)
+#pciide* at pnpbios? index ?
 
 # PCI bus support
 pci*	at mainbus? bus ?
@@ -214,10 +229,10 @@ pci*	at ppb? bus ?
 #options 	PCIBIOS			# PCI BIOS support
 #options 	PCIBIOSVERBOSE		# PCI BIOS verbose info
 #options 	PCIBIOS_INTR_FIXUP	# fixup PCI interrupt routing
-#options 	PCIBIOS_IRQS_HINT="0x0a00"	# PCI interrupts hint. IRQ 9 or 11
+#options 	PCIBIOS_IRQS_HINT="0x0a00" # PCI interrupts hint. IRQ 9 or 11
 #options 	PCIINTR_DEBUG		# super-verbose PCI interrupt fixup
 #options 	PCIBIOS_BUS_FIXUP	# fixup PCI bus numbering
-#options 	PCIBIOS_ADDR_FIXUP	# fixup PCI I/O address
+#options 	PCIBIOS_ADDR_FIXUP	# fixup PCI I/O addresses
 
 # PCI bridges
 pchb*	at pci? dev ? function ?	# PCI-Host bridges
@@ -254,10 +269,11 @@ isapnp0	at isa?
 # ISA Plug-and-Play PCMCIA controllers
 pcic*	at isapnp?
 
-# CardBus bus support
+# CardBus bridge support
 #cbb*		at pci? dev ? function ?
 #cardslot*	at cbb?	
 
+# CardBus bus support
 #cardbus*	at cardslot?
 #pcmcia* 	at cardslot?
 
@@ -269,17 +285,15 @@ npx0	at isa? port 0xf0 irq 13	# x86 math coprocessor
 
 # Console Devices
 
-# ISA console.  You can only configure one of these!
+# ISA console
 #pc0	at isa? port 0x60 irq 1		# pccons generic PC console driver
-#vt0	at isa? port 0x60 irq 1		# PCVT console driver
 # Keyboard layout configuration for pccons
 #options 	FRENCH_KBD
 #options 	FINNISH_KBD
 #options 	GERMAN_KBD
 #options 	NORWEGIAN_KBD
-# pccons-specific option:
+# pccons-specific options:
 #options 	XSERVER_DDB	# PF12 gets you into DDB when X is running
-# pccons/pcvt -specific option:
 #options 	XSERVER		# X server support
 
 
@@ -356,7 +370,7 @@ lpt2	at isa? port 0x3bc
 
 # VIA VT82C686A hardware monitor
 #viapm*	at pci? dev ? function ?
-#viaenv*	at viapm?
+#viaenv* at viapm?
 
 # SCSI Controllers and Devices
 
@@ -367,7 +381,8 @@ ahc*	at pci? dev ? function ?	# Adaptec [23]94x, aic78x0 SCSI
 bha*	at pci? dev ? function ?	# BusLogic 9xx SCSI
 dpt*	at pci? dev ? function ?	# DPT SmartCache/SmartRAID
 isp*	at pci? dev ? function ?	# Qlogic ISP [12]0x0 SCSI/FibreChannel
-ncr*	at pci? dev ? function ?	# NCR 53c8xx SCSI
+#ncr*	at pci? dev ? function ?	# NCR 53c8xx SCSI (old driver)
+siop*	at pci? dev ? function ?	# Symbios 53c8xx SCSI
 pcscp*	at pci? dev ? function ?	# AMD 53c974 PCscsi-PCI SCSI
 
 # EISA SCSI controllers
@@ -418,9 +433,10 @@ scsibus* at dpt?
 scsibus* at esp?
 scsibus* at isp?
 #scsibus* at nca?
-scsibus* at ncr?
+#scsibus* at ncr?
 scsibus* at pcscp?
 scsibus* at sea?
+scsibus* at siop?
 scsibus* at uha?
 scsibus* at wds?
 
@@ -429,8 +445,8 @@ sd*	at scsibus? target ? lun ?	# SCSI disk drives
 st*	at scsibus? target ? lun ?	# SCSI tape drives
 cd*	at scsibus? target ? lun ?	# SCSI CD-ROM drives
 ch*	at scsibus? target ? lun ?	# SCSI autochangers
-ss*	at scsibus? target ? lun ?	# SCSI scanners
 ses*	at scsibus? target ? lun ?	# SCSI Enclosure Services devices
+ss*	at scsibus? target ? lun ?	# SCSI scanners
 uk*	at scsibus? target ? lun ?	# SCSI unknown
 
 # RAID controllers and devices
@@ -518,6 +534,7 @@ ne*	at pci? dev ? function ?	# NE2000-compatible Ethernet
 ntwoc*	at pci? dev ? function ?	# Riscom/N2 PCI Sync Serial
 rtk*	at pci? dev ? function ?	# Realtek 8129/8139
 sip*	at pci? dev ? function ?	# SiS 900 Ethernet
+ti*	at pci? dev ? function ?	# Alteon ACEnic gigabit Ethernet
 tl*	at pci? dev ? function ?	# ThunderLAN-based Ethernet
 tlp*	at pci? dev ? function ?	# DECchip 21x4x (and clones) Ethernet
 #options 	TLP_MATCH_21040
@@ -545,7 +562,7 @@ ne*	at pcmcia? function ?		# NE2000-compatible Ethernet
 ray*	at pcmcia? function ?		# Raytheon Raylink (802.11)
 sm*	at pcmcia? function ?		# Megahertz Ethernet
 wi*	at pcmcia? function ?		# Lucent WaveLan IEEE (802.11)
-#xe*	at pcmcia? function ?		# Xircom PCMCIA cards
+xi*	at pcmcia? function ?		# Xircom CreditCard Ethernet
 
 mhzc*	at pcmcia? function ?		# Megahertz Ethernet/Modem combo cards
 com*	at mhzc?
@@ -557,7 +574,7 @@ cs0	at isa? port 0x300 iomem ? irq ? drq ?	# CS8900 Ethernet
 ec0	at isa? port 0x250 iomem 0xd8000 irq 9	# 3Com 3c503 Ethernet
 eg0	at isa? port 0x280 irq 9		# 3C505 ethernet cards
 el0	at isa? port 0x300 irq 9		# 3C501 ethernet cards
-ep0	at isa? port ? irq ?			# 3C509 ethernet cards
+ep*	at isa? port ? irq ?			# 3C509 ethernet cards
 ef0	at isa? port 0x360 iomem 0xd0000 irq 7	# 3C507
 ai0	at isa? port 0x360 iomem 0xd0000 irq 7	# StarLAN
 fmv0	at isa? port 0x2a0 irq ?		# FMV-180 series
@@ -567,8 +584,8 @@ lc0	at isa? port 0x320 iomem ? irq ?	# DEC EtherWORKS III (LEMAC)
 #depca0	at isa? port 0x300 iomem 0xc8000 iosiz 0x8000 irq 5	# DEPCA
 #le*	at depca?
 nele0	at isa? port 0x320 irq 9 drq 7		# NE2100
-#ntwoc0	at isa? port 0x300 irq 5 iomem 0xc8000 flags 1	# Riscom/N2 sync serial
 le*	at nele?
+#ntwoc0	at isa? port 0x300 irq 5 iomem 0xc8000 flags 1	# Riscom/N2 sync serial
 bicc0	at isa? port 0x320 irq 10 drq 7		# BICC IsoLan
 le*	at bicc?
 ne0	at isa? port 0x280 irq 9		# NE[12]000 ethernet cards
@@ -587,6 +604,7 @@ we1	at isa? port 0x300 iomem 0xcc000 irq 10
 #tlp*	at cardbus? dev ? function ?	# DECchip 21143
 
 # MII/PHY support
+dmphy*	at mii? phy ?			# Davicom DM9101 PHYs
 exphy*	at mii? phy ?			# 3Com internal PHYs
 icsphy*	at mii? phy ?			# Integrated Circuit Systems ICS1890
 inphy*	at mii? phy ?			# Intel 82555 PHYs
@@ -666,33 +684,6 @@ ucom*	at uvisor?
 # USB Generic driver
 ugen*	at uhub? port ?
 
-
-# Plug-and-Play BIOS and attached devices
-
-#pnpbios0 at mainbus0
-
-# mainboard audio chips
-#ess*	at pnpbios0 index ?	# ESS AudioDrive
-#sb*	at pnpbios0 index ?	# NeoMagic 256AV in sb mode
-#wss*	at pnpbios0 index ?	# NeoMagic 256AV in wss mode
-#ym*	at pnpbios0 index ?	# OPL3-SA3
-
-# com port
-# If enabled, consider changing "com0", "com1", and "com2" under "ISA Serial
-# Interfaces" to "com*", otherwise com2 will attach at pnpbios0 and there
-# will be no com0.  A side effect is pcmcia (and other) com? previously
-# starting at com3 may attach as com1 or com2.
-#com*	at pnpbios0 index ?
-
-# parallel port
-# The above "com*" comments apply, cf. "lpt0" under "ISA parallel
-# "printer interfaces".
-#lpt*	at pnpbios0 index ?
-
-# IDE controller on Toshiba Portege 3000 series (crippled PCI device)
-#pciide* at pnpbios0 index ?
-
-
 # Audio Devices
 
 # PCI audio devices
@@ -702,7 +693,6 @@ cmpci*	at pci? dev ? function ?	# C-Media CMI8338/8738
 eap*	at pci? dev ? function ?	# Ensoniq AudioPCI
 eso*	at pci? dev ? function ?	# ESS Solo-1 PCI AudioDrive
 fms*	at pci? dev ? function ?	# Forte Media FM801
-#sbl*	at pci? dev ? function ?	# SoundBlaster Live!
 sv*	at pci? dev ? function ?	# S3 SonicVibes
 
 # ISA Plug-and-Play audio devices
@@ -748,7 +738,6 @@ audio*	at gus?
 audio*	at guspnp?
 audio*	at pas?
 audio*	at sb?
-#audio*	at sbl?
 audio*	at sp?
 audio*	at sv?
 audio*	at uaudio?
@@ -793,7 +782,6 @@ wsmouse*	at mms? mux 0
 #omms0	at isa? port 0x23c irq 5	# Microsoft InPort mouse
 #omms1	at isa? port 0x238 irq 5
 #opms0	at pc? irq 12		# PS/2 auxiliary port mouse
-#opms0	at vt? irq 12		# PS/2 auxiliary port mouse
 
 
 # Joysticks

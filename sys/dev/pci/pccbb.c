@@ -1,4 +1,4 @@
-/*	$NetBSD: pccbb.c,v 1.39 2000/05/08 07:31:20 kleink Exp $	*/
+/*	$NetBSD: pccbb.c,v 1.39.2.1 2000/06/22 17:07:24 minoura Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 and 2000
@@ -89,11 +89,7 @@ struct cfdriver cbb_cd = {
 #define STATIC static
 #endif
 
-#ifdef __BROKEN_INDIRECT_CONFIG
-int pcicbbmatch __P((struct device *, void *, void *));
-#else
 int pcicbbmatch __P((struct device *, struct cfdata *, void *));
-#endif
 void pccbbattach __P((struct device *, struct device *, void *));
 int pccbbintr __P((void *));
 static void pci113x_insert __P((void *));
@@ -260,11 +256,7 @@ static struct cardbus_functions pccbb_funcs = {
 int
 pcicbbmatch(parent, match, aux)
 	struct device *parent;
-#ifdef __BROKEN_INDIRECT_CONFIG
-	void *match;
-#else
 	struct cfdata *match;
-#endif
 	void *aux;
 {
 	struct pci_attach_args *pa = (struct pci_attach_args *)aux;
@@ -593,6 +585,11 @@ pccbb_pci_callback(self)
 		return;
 	}
 	intrstr = pci_intr_string(pc, ih);
+
+	/*
+	 * XXX pccbbintr should be called under the priority lower
+	 * than any other hard interrputs.
+	 */
 	sc->sc_ih = pci_intr_establish(pc, ih, IPL_BIO, pccbbintr, sc);
 
 	if (sc->sc_ih == NULL) {
@@ -972,9 +969,44 @@ pccbbintr_function(sc)
 {
 	int retval = 0, val;
 	struct pccbb_intrhand_list *pil;
+	int s, splchanged;
 
 	for (pil = sc->sc_pil; pil != NULL; pil = pil->pil_next) {
-		val = (*pil->pil_func) (pil->pil_arg);
+		/*
+		 * XXX priority change.  gross.  I use if-else
+		 * sentense instead of switch-case sentense because of
+		 * avoiding duplicate case value error.  More than one
+		 * IPL_XXX use same value.  It depends on
+		 * implimentation.
+		 */
+		splchanged = 1;
+		if (pil->pil_level == IPL_SERIAL) {
+			s = splserial();
+		} else if (pil->pil_level == IPL_HIGH) {
+			s = splhigh();
+		} else if (pil->pil_level == IPL_CLOCK) {
+			s = splclock();
+		} else if (pil->pil_level == IPL_AUDIO) {
+			s = splaudio();
+		} else if (pil->pil_level == IPL_IMP) {
+			s = splimp();
+		} else if (pil->pil_level == IPL_TTY) {
+			s = spltty();
+		} else if (pil->pil_level == IPL_SOFTSERIAL) {
+			s = splsoftserial();
+		} else if (pil->pil_level == IPL_NET) {
+			s = splnet();
+		} else {
+			splchanged = 0;
+			/* XXX: ih lower than IPL_BIO runs w/ IPL_BIO. */
+		}
+
+		val = (*pil->pil_func)(pil->pil_arg);
+
+		if (splchanged != 0) {
+			splx(s);
+		}
+
 		retval = retval == 1 ? 1 :
 		    retval == 0 ? val : val != 0 ? val : retval;
 	}
@@ -1329,12 +1361,14 @@ cb_reset(sc)
 	    (sc->sc_chipset == CB_RX5C47X ? 400 * 1000 : 40 * 1000);
 	u_int32_t bcr = pci_conf_read(sc->sc_pc, sc->sc_tag, PCI_BCR_INTR);
 
-	bcr |= (0x40 << 16);	       /* Reset bit Assert (bit 6 at 0x3E) */
+	/* Reset bit Assert (bit 6 at 0x3E) */
+	bcr |= CB_BCR_RESET_ENABLE;
 	pci_conf_write(sc->sc_pc, sc->sc_tag, PCI_BCR_INTR, bcr);
 	delay(reset_duration);
 
 	if (CBB_CARDEXIST & sc->sc_flags) {	/* A card exists.  Reset it! */
-		bcr &= ~(0x40 << 16);  /* Reset bit Deassert (bit 6 at 0x3E) */
+		/* Reset bit Deassert (bit 6 at 0x3E) */
+		bcr &= ~CB_BCR_RESET_ENABLE;
 		pci_conf_write(sc->sc_pc, sc->sc_tag, PCI_BCR_INTR, bcr);
 		delay(reset_duration);
 	}
@@ -1592,7 +1626,7 @@ pccbb_cb_intr_disestablish(ct, ih)
  *   order not to call the interrupt handlers of child devices when
  *   a card-deletion interrupt occurs.
  *
- *   The arguments irq and level are not used.
+ *   The arguments irq is not used because pccbb selects intr vector.
  */
 static void *
 pccbb_intr_establish(sc, irq, level, func, arg)
@@ -1636,6 +1670,7 @@ pccbb_intr_establish(sc, irq, level, func, arg)
 
 	newpil->pil_func = func;
 	newpil->pil_arg = arg;
+	newpil->pil_level = level;
 	newpil->pil_next = NULL;
 
 	if (sc->sc_pil == NULL) {

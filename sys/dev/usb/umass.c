@@ -1,4 +1,4 @@
-/*	$NetBSD: umass.c,v 1.34 2000/04/28 21:34:05 augustss Exp $	*/
+/*	$NetBSD: umass.c,v 1.34.2.1 2000/06/22 17:08:39 minoura Exp $	*/
 /*-
  * Copyright (c) 1999 MAEKAWA Masahide <bishop@rr.iij4u.or.jp>,
  *		      Nick Hibma <n_hibma@freebsd.org>
@@ -145,6 +145,8 @@
 #include <dev/scsipi/scsi_changer.h>
 
 #include <dev/ata/atavar.h>	/* XXX */
+#include <sys/disk.h>		/* XXX */
+#include <dev/scsipi/sdvar.h>	/* XXX */
 #endif
 
 #ifdef UMASS_DEBUG
@@ -172,7 +174,7 @@ int umassdebug = 0; //UDMASS_ALL;
 
 /* Generic definitions */
 
-#define UFI_PROTO_LEN 12
+#define UFI_COMMAND_LENGTH 12
 
 /* Direction for umass_*_transfer */
 #define DIR_NONE	0
@@ -281,24 +283,24 @@ typedef union {
 
 struct umass_softc;		/* see below */
 
-typedef void (*transfer_cb_f)	__P((struct umass_softc *sc, void *priv,
-				int residue, int status));
+typedef void (*transfer_cb_f)(struct umass_softc *sc, void *priv,
+			      int residue, int status);
 #define STATUS_CMD_OK		0	/* everything ok */
 #define STATUS_CMD_UNKNOWN	1	/* will have to fetch sense */
 #define STATUS_CMD_FAILED	2	/* transfer was ok, command failed */
 #define STATUS_WIRE_FAILED	3	/* couldn't even get command across */
 
-typedef void (*wire_reset_f)	__P((struct umass_softc *sc, int status));
-typedef void (*wire_transfer_f) __P((struct umass_softc *sc, int lun,
+typedef void (*wire_reset_f)(struct umass_softc *sc, int status);
+typedef void (*wire_transfer_f)(struct umass_softc *sc, int lun,
 				void *cmd, int cmdlen, void *data, int datalen, 
-				int dir, transfer_cb_f cb, void *priv));
-typedef void (*wire_state_f)	__P((usbd_xfer_handle xfer,
-				usbd_private_handle priv, usbd_status err));
+				int dir, transfer_cb_f cb, void *priv);
+typedef void (*wire_state_f)(usbd_xfer_handle xfer,
+			     usbd_private_handle priv, usbd_status err);
 
 #if defined(__FreeBSD__)
-typedef int (*command_transform_f)	__P((struct umass_softc *sc,
-				unsigned char *cmd, int cmdlen,
-				unsigned char **rcmd, int *rcmdlen));
+typedef int (*command_transform_f)(struct umass_softc *sc,
+				   u_char *cmd, int cmdlen,
+				   u_char **rcmd, int *rcmdlen));
 #endif
 
 
@@ -338,7 +340,7 @@ struct umass_softc {
 #	define PROTO_CBI_I	0x0004
 #	define PROTO_WIRE	0x00ff		/* USB wire protocol mask */
 #	define PROTO_SCSI	0x0100		/* command protocol */
-#	define PROTO_8070	0x0200
+#	define PROTO_ATAPI	0x0200
 #	define PROTO_UFI	0x0400
 #	define PROTO_COMMAND	0xff00		/* command protocol mask */
 
@@ -503,72 +505,70 @@ struct cam_path *umass_path;	/*   and its path */
 
 /* USB device probe/attach/detach functions */
 USB_DECLARE_DRIVER(umass);
-Static void umass_disco		__P((struct umass_softc *sc));
-Static int umass_match_proto	__P((struct umass_softc *sc,
-				usbd_interface_handle iface,
-				usbd_device_handle dev));
-Static void umass_init_shuttle	__P((struct umass_softc *sc));
+Static void umass_disco(struct umass_softc *sc);
+Static int umass_match_proto(struct umass_softc *sc,
+			     usbd_interface_handle iface,
+			     usbd_device_handle dev);
+Static void umass_init_shuttle(struct umass_softc *sc);
 
 /* generic transfer functions */
-Static usbd_status umass_setup_transfer __P((struct umass_softc *sc,
+Static usbd_status umass_setup_transfer(struct umass_softc *sc,
 				usbd_pipe_handle pipe,
 				void *buffer, int buflen, int flags,
-				usbd_xfer_handle xfer));
-Static usbd_status umass_setup_ctrl_transfer	__P((struct umass_softc *sc,
+				usbd_xfer_handle xfer);
+Static usbd_status umass_setup_ctrl_transfer(struct umass_softc *sc,
 				usbd_device_handle dev,
 				usb_device_request_t *req,
 				void *buffer, int buflen, int flags, 
-				usbd_xfer_handle xfer));
-Static void umass_clear_endpoint_stall	__P((struct umass_softc *sc,
+				usbd_xfer_handle xfer);
+Static void umass_clear_endpoint_stall(struct umass_softc *sc,
 				u_int8_t endpt, usbd_pipe_handle pipe,
-				int state, usbd_xfer_handle xfer));
+				int state, usbd_xfer_handle xfer);
 #if 0
-Static void umass_reset		__P((struct umass_softc *sc,
-				transfer_cb_f cb, void *priv));
+Static void umass_reset(struct umass_softc *sc,	transfer_cb_f cb, void *priv);
 #endif
 
 /* Bulk-Only related functions */
-Static void umass_bbb_reset	__P((struct umass_softc *sc, int status));
-Static void umass_bbb_transfer	__P((struct umass_softc *sc, int lun,
+Static void umass_bbb_reset(struct umass_softc *sc, int status);
+Static void umass_bbb_transfer(struct umass_softc *sc, int lun,
 				void *cmd, int cmdlen,
 				void *data, int datalen, int dir,
-				transfer_cb_f cb, void *priv));
-Static void umass_bbb_state	__P((usbd_xfer_handle xfer,
+				transfer_cb_f cb, void *priv);
+Static void umass_bbb_state(usbd_xfer_handle xfer,
 				usbd_private_handle priv,
-				usbd_status err));
-usbd_status umass_bbb_get_max_lun __P((struct umass_softc *sc,
-				       u_int8_t *maxlun));
+				usbd_status err);
+usbd_status umass_bbb_get_max_lun(struct umass_softc *sc, u_int8_t *maxlun);
 
 
 /* CBI related functions */
-Static int umass_cbi_adsc	__P((struct umass_softc *sc, char *buffer,int buflen,
-				usbd_xfer_handle xfer));
-Static void umass_cbi_reset	__P((struct umass_softc *sc, int status));
-Static void umass_cbi_transfer	__P((struct umass_softc *sc, int lun,
+Static int umass_cbi_adsc(struct umass_softc *sc, char *buffer,int buflen,
+				usbd_xfer_handle xfer);
+Static void umass_cbi_reset(struct umass_softc *sc, int status);
+Static void umass_cbi_transfer(struct umass_softc *sc, int lun,
 				void *cmd, int cmdlen,
 				void *data, int datalen, int dir,
-				transfer_cb_f cb, void *priv));
-Static void umass_cbi_state	__P((usbd_xfer_handle xfer,
-				usbd_private_handle priv, usbd_status err));
+				transfer_cb_f cb, void *priv);
+Static void umass_cbi_state(usbd_xfer_handle xfer,
+				usbd_private_handle priv, usbd_status err);
 
 #if defined(__FreeBSD__)
 /* CAM related functions */
-Static void umass_cam_action	__P((struct cam_sim *sim, union ccb *ccb));
-Static void umass_cam_poll	__P((struct cam_sim *sim));
+Static void umass_cam_action(struct cam_sim *sim, union ccb *ccb);
+Static void umass_cam_poll(struct cam_sim *sim);
 
-Static void umass_cam_cb	__P((struct umass_softc *sc, void *priv,
-				int residue, int status));
-Static void umass_cam_sense_cb	__P((struct umass_softc *sc, void *priv,
-				int residue, int status));
+Static void umass_cam_cb(struct umass_softc *sc, void *priv,
+				int residue, int status);
+Static void umass_cam_sense_cb(struct umass_softc *sc, void *priv,
+				int residue, int status);
 
 #ifdef UMASS_DO_CAM_RESCAN
-Static void umass_cam_rescan	__P((struct umass_softc *sc));
+Static void umass_cam_rescan(struct umass_softc *sc);
 #endif
 
-Static int umass_cam_attach_sim __P((void));
-Static int umass_cam_attach	__P((struct umass_softc *sc));
-Static int umass_cam_detach_sim __P((void));
-Static int umass_cam_detach	__P((struct umass_softc *sc));
+Static int umass_cam_attach_sim(void);
+Static int umass_cam_attach(struct umass_softc *sc);
+Static int umass_cam_detach_sim(void);
+Static int umass_cam_detach(struct umass_softc *sc);
 
 #elif defined(__NetBSD__) || defined(__OpenBSD__)
 
@@ -585,46 +585,52 @@ struct scsipi_device umass_dev =
 	NULL,			/* Use default 'done' routine */
 };
 
-Static int umass_scsipi_cmd __P((struct scsipi_xfer *xs));
-Static void umass_scsipi_minphys __P((struct buf *bp));
-Static int umass_scsipi_ioctl __P((struct scsipi_link *, u_long,
-				   caddr_t, int, struct proc *));
-Static void umass_scsipi_cb	__P((struct umass_softc *sc, void *priv,
-				     int residue, int status));
-Static void umass_scsipi_sense_cb __P((struct umass_softc *sc, void *priv,
-				       int residue, int status));
+Static int umass_scsipi_cmd(struct scsipi_xfer *xs);
+Static void umass_scsipi_minphys(struct buf *bp);
+Static int umass_scsipi_ioctl(struct scsipi_link *, u_long,
+				   caddr_t, int, struct proc *);
+Static int umass_scsipi_getgeom(struct scsipi_link *link,
+			      struct disk_parms *, u_long sectors);
 
-Static int scsipiprint __P((void *aux, const char *pnp));
+Static void umass_scsipi_cb(struct umass_softc *sc, void *priv,
+				     int residue, int status);
+Static void umass_scsipi_sense_cb(struct umass_softc *sc, void *priv,
+				       int residue, int status);
+
+Static int scsipiprint(void *aux, const char *pnp);
+Static int umass_ufi_transform(struct umass_softc *sc,
+			       struct scsipi_generic *cmd, int cmdlen,
+			       struct scsipi_generic *rcmd, int *rcmdlen);
 #if NATAPIBUS > 0
-Static void umass_atapi_probedev __P((struct atapibus_softc *, int));
+Static void umass_atapi_probedev(struct atapibus_softc *, int);
 #endif
 #endif
 
 #if defined(__FreeBSD__)
 /* SCSI specific functions */
-Static int umass_scsi_transform __P((struct umass_softc *sc,
+Static int umass_scsi_transform(struct umass_softc *sc,
 				unsigned char *cmd, int cmdlen,
-				unsigned char **rcmd, int *rcmdlen));
+				unsigned char **rcmd, int *rcmdlen);
 
 /* UFI specific functions */
-Static int umass_ufi_transform	__P((struct umass_softc *sc,
+Static int umass_ufi_transform(struct umass_softc *sc,
 				unsigned char *cmd, int cmdlen,
-				unsigned char **rcmd, int *rcmdlen));
+				unsigned char **rcmd, int *rcmdlen);
 
 /* 8070 specific functions */
-Static int umass_8070_transform __P((struct umass_softc *sc,
+Static int umass_8070_transform(struct umass_softc *sc,
 				unsigned char *cmd, int cmdlen,
-				unsigned char **rcmd, int *rcmdlen));
+				unsigned char **rcmd, int *rcmdlen);
 #endif
 
 #ifdef UMASS_DEBUG
 /* General debugging functions */
-Static void umass_bbb_dump_cbw	__P((struct umass_softc *sc,
-				umass_bbb_cbw_t *cbw));
-Static void umass_bbb_dump_csw	__P((struct umass_softc *sc,
-				umass_bbb_csw_t *csw));
-Static void umass_dump_buffer	__P((struct umass_softc *sc, u_int8_t *buffer,
-				int buflen, int printlen));
+Static void umass_bbb_dump_cbw(struct umass_softc *sc,
+				umass_bbb_cbw_t *cbw);
+Static void umass_bbb_dump_csw(struct umass_softc *sc,
+				umass_bbb_csw_t *csw);
+Static void umass_dump_buffer(struct umass_softc *sc, u_int8_t *buffer,
+				int buflen, int printlen);
 #endif
 
 
@@ -641,10 +647,8 @@ void usbd_clear_endpoint_toggle(usbd_pipe_handle pipe);	/* XXXXX */
  */
 
 Static int
-umass_match_proto(sc, iface, dev)
-	struct umass_softc *sc;
-	usbd_interface_handle iface;
-	usbd_device_handle dev;
+umass_match_proto(struct umass_softc *sc, usbd_interface_handle iface,
+		  usbd_device_handle dev)
 {
 	usb_device_descriptor_t *dd;
 	usb_interface_descriptor_t *id;
@@ -665,9 +669,9 @@ umass_match_proto(sc, iface, dev)
 	    && UGETW(dd->idProduct) == USB_PRODUCT_SHUTTLE_EUSB) {
 		sc->drive = SHUTTLE_EUSB;
 #if CBI_I
-		sc->proto = PROTO_8070 | PROTO_CBI_I;
+		sc->proto = PROTO_ATAPI | PROTO_CBI_I;
 #else
-		sc->proto = PROTO_8070 | PROTO_CBI;
+		sc->proto = PROTO_ATAPI | PROTO_CBI;
 #endif
 		sc->quirks |= NO_TEST_UNIT_READY | NO_START_STOP;
 		return (UMATCH_VENDOR_PRODUCT);
@@ -715,7 +719,7 @@ umass_match_proto(sc, iface, dev)
 	case UISUBCLASS_SFF8020I:
 	case UISUBCLASS_SFF8070I:
 	case UISUBCLASS_QIC157:
-		sc->proto |= PROTO_8070;
+		sc->proto |= PROTO_ATAPI;
 		break;
 	default:
 		DPRINTF(UDMASS_GEN, ("%s: Unsupported command protocol %d\n",
@@ -1005,7 +1009,7 @@ USB_ATTACH(umass)
 		sc->transform = umass_scsi_transform;
 	else if (sc->proto & PROTO_UFI)
 		sc->transform = umass_ufi_transform;
-	else if (sc->proto & PROTO_8070)
+	else if (sc->proto & PROTO_ATAPI)
 		sc->transform = umass_8070_transform;
 #ifdef UMASS_DEBUG
 	else
@@ -1016,7 +1020,7 @@ USB_ATTACH(umass)
 	/* From here onwards the device can be used. */
 
 	if ((sc->proto & PROTO_SCSI) ||
-	    (sc->proto & PROTO_8070) ||
+	    (sc->proto & PROTO_ATAPI) ||
 	    (sc->proto & PROTO_UFI)) {
 		/* Prepare the SCSI command block */
 		sc->cam_scsi_sense.opcode = REQUEST_SENSE;
@@ -1047,13 +1051,16 @@ USB_ATTACH(umass)
 	sc->sc_adapter.scsipi_cmd = umass_scsipi_cmd;
 	sc->sc_adapter.scsipi_minphys = umass_scsipi_minphys;
 	sc->sc_adapter.scsipi_ioctl = umass_scsipi_ioctl;
+	sc->sc_adapter.scsipi_getgeom = umass_scsipi_getgeom;
 	
 	/*
 	 * fill in the prototype scsipi_link.
 	 */
 	switch (sc->proto & PROTO_COMMAND) {
-	case PROTO_SCSI:
 	case PROTO_UFI:
+		sc->u.sc_link.quirks |= SDEV_ONLYBIG;
+		/* fall into */
+	case PROTO_SCSI:
 		sc->u.sc_link.type = BUS_SCSI;
 		sc->u.sc_link.scsipi_scsi.channel = SCSI_CHANNEL_ONLY_ONE;
 		sc->u.sc_link.adapter_softc = sc;
@@ -1064,12 +1071,12 @@ USB_ATTACH(umass)
 		sc->u.sc_link.scsipi_scsi.max_target = UMASS_SCSIID_DEVICE;
 		sc->u.sc_link.scsipi_scsi.max_lun = sc->maxlun;
 
-		if(sc->quirks & NO_TEST_UNIT_READY)
+		if (sc->quirks & NO_TEST_UNIT_READY)
 			sc->u.sc_link.quirks |= ADEV_NOTUR;
 		break;
 
 #if NATAPIBUS > 0
-	case PROTO_8070:
+	case PROTO_ATAPI:
 		sc->u.aa.sc_aa.aa_type = T_ATAPI;
 		sc->u.aa.sc_aa.aa_channel = 0;
 		sc->u.aa.sc_aa.aa_openings = 1;
@@ -1104,9 +1111,7 @@ USB_ATTACH(umass)
 }
 
 Static int
-scsipiprint(aux, pnp)
-	void *aux;
-	const char *pnp;
+scsipiprint(void *aux, const char *pnp)
 {
 	struct scsipi_link *l = aux;
 
@@ -1114,7 +1119,7 @@ scsipiprint(aux, pnp)
 		return (scsiprint(aux, pnp));
 	else {
 #if NATAPIBUS > 0
-		extern int atapi_print __P((void *aux, const char *pnp));
+		extern int atapi_print(void *aux, const char *pnp);
 		return (atapi_print(aux, pnp));
 #else
 		if (pnp)
@@ -1151,7 +1156,7 @@ USB_DETACH(umass)
 
 #if defined(__FreeBSD__)
 	if ((sc->proto & PROTO_SCSI) ||
-	    (sc->proto & PROTO_8070) ||
+	    (sc->proto & PROTO_ATAPI) ||
 	    (sc->proto & PROTO_UFI))
 		/* detach the device from the SCSI host controller (SIM) */
 		rv = umass_cam_detach(sc);
@@ -1172,9 +1177,7 @@ USB_DETACH(umass)
 
 #if defined(__NetBSD__) || defined(__OpenBSD__)
 int
-umass_activate(self, act)
-	struct device *self;
-	enum devact act;
+umass_activate(struct device *self, enum devact act)
 {
 	struct umass_softc *sc = (struct umass_softc *) self;
 	int rv = 0;
@@ -1202,8 +1205,7 @@ umass_activate(self, act)
 #endif
 
 Static void
-umass_disco(sc)
-	struct umass_softc *sc;
+umass_disco(struct umass_softc *sc)
 { 
 	int i;
 
@@ -2271,7 +2273,7 @@ umass_bbb_get_max_lun(struct umass_softc *sc, u_int8_t *maxlun)
  */
 
 Static int
-umass_cam_attach_sim()
+umass_cam_attach_sim(void)
 {
 	struct cam_devq *devq;		/* Per device Queue */
 
@@ -2402,7 +2404,7 @@ umass_cam_attach(struct umass_softc *sc)
  */
 
 Static int
-umass_cam_detach_sim()
+umass_cam_detach_sim(void)
 {
 	if (umass_sim)
 		return(EBUSY);	/* XXX CAM can't handle disappearing SIMs yet */
@@ -3040,11 +3042,11 @@ umass_dump_buffer(struct umass_softc *sc, u_int8_t *buffer, int buflen,
 
 #if defined(__NetBSD__) || defined(__OpenBSD__)
 Static int
-umass_scsipi_cmd(xs)
-	struct scsipi_xfer *xs;
+umass_scsipi_cmd(struct scsipi_xfer *xs)
 {
 	struct scsipi_link *sc_link = xs->sc_link;
 	struct umass_softc *sc = sc_link->adapter_softc;
+	struct scsipi_generic *cmd, trcmd;
 	int cmdlen;
 	int dir;
 
@@ -3111,17 +3113,23 @@ umass_scsipi_cmd(xs)
 		goto done;
 	}
 
+	cmd = xs->cmd;
 	cmdlen = xs->cmdlen;
-	/* All UFI commands are 12 bytes.  We'll get a few garbage bytes by extending... */
-	if (sc->proto & PROTO_UFI)
-		cmdlen = UFI_PROTO_LEN;
+	if (sc->proto & PROTO_UFI) {
+		if (!umass_ufi_transform(sc, cmd, cmdlen, &trcmd, &cmdlen)) {
+			xs->error = XS_DRIVER_STUFFUP;
+			goto done;
+		}
+		cmd = &trcmd;
+
+	}
 
 	if (xs->xs_control & XS_CTL_POLL) {
 		/* Use sync transfer. XXX Broken! */
 		DPRINTF(UDMASS_SCSI, ("umass_scsi_cmd: sync dir=%d\n", dir));
 		sc->sc_xfer_flags = USBD_SYNCHRONOUS;
 		sc->sc_sync_status = USBD_INVAL;
-		sc->transfer(sc, sc_link->scsipi_scsi.lun, xs->cmd, cmdlen,
+		sc->transfer(sc, sc_link->scsipi_scsi.lun, cmd, cmdlen,
 			     xs->data, xs->datalen, dir, 0, xs);
 		sc->sc_xfer_flags = 0;
 		DPRINTF(UDMASS_SCSI, ("umass_scsi_cmd: done err=%d\n", 
@@ -3142,7 +3150,7 @@ umass_scsipi_cmd(xs)
 		DPRINTF(UDMASS_SCSI, ("umass_scsi_cmd: async dir=%d, cmdlen=%d"
 				      " datalen=%d\n",
 				      dir, cmdlen, xs->datalen));
-		sc->transfer(sc, sc_link->scsipi_scsi.lun, xs->cmd, cmdlen,
+		sc->transfer(sc, sc_link->scsipi_scsi.lun, cmd, cmdlen,
 		    xs->data, xs->datalen, dir, umass_scsipi_cb, xs);
 		return (SUCCESSFULLY_QUEUED);
 	}
@@ -3158,8 +3166,7 @@ umass_scsipi_cmd(xs)
 }
 
 Static void
-umass_scsipi_minphys(bp)
-	struct buf *bp;
+umass_scsipi_minphys(struct buf *bp)
 {
 	if (bp->b_bcount > UMASS_MAX_TRANSFER_SIZE)
 		bp->b_bcount = UMASS_MAX_TRANSFER_SIZE;
@@ -3167,12 +3174,8 @@ umass_scsipi_minphys(bp)
 }
 
 int
-umass_scsipi_ioctl(link, cmd, arg, flag, p)
-	struct scsipi_link *link;
-	u_long cmd;
-	caddr_t arg;
-	int flag;
-	struct proc *p;
+umass_scsipi_ioctl(struct scsipi_link *link, u_long cmd, caddr_t arg,
+		   int flag, struct proc *p)
 {
 	/*struct umass_softc *sc = link->adapter_softc;*/
 
@@ -3185,6 +3188,34 @@ umass_scsipi_ioctl(link, cmd, arg, flag, p)
 #endif
 	default:
 		return (ENOTTY);
+	}
+}
+
+Static int
+umass_scsipi_getgeom(struct scsipi_link *sc_link, struct disk_parms *dp,
+		     u_long sectors)
+{
+	struct umass_softc *sc = sc_link->adapter_softc;
+
+	/* If it's not a floppy, we don't know what to do. */
+	if (!(sc->proto & PROTO_UFI))
+		return (0);
+
+	switch (sectors) {
+	case 1440:
+		/* Most likely a single density 3.5" floppy. */
+		dp->heads = 2;
+		dp->sectors = 9;
+		dp->cyls = 80;
+		return (1);
+	case 2880:
+		/* Most likely a double density 3.5" floppy. */
+		dp->heads = 2;
+		dp->sectors = 18;
+		dp->cyls = 80;
+		return (1);
+	default:
+		return (0);
 	}
 }
 
@@ -3216,8 +3247,8 @@ umass_scsipi_cb(struct umass_softc *sc, void *priv, int residue, int status)
 		sc->sc_sense_cmd.length = sizeof(xs->sense);
 
 		cmdlen = sizeof(sc->sc_sense_cmd);
-		if (sc->proto & PROTO_UFI)
-			cmdlen = UFI_PROTO_LEN;
+		if (sc->proto & PROTO_UFI) /* XXX */
+			cmdlen = UFI_COMMAND_LENGTH;
 		sc->transfer(sc, sc_link->scsipi_scsi.lun,
 			     &sc->sc_sense_cmd, cmdlen,
 			     &xs->sense, sizeof(xs->sense), DIR_IN,
@@ -3261,7 +3292,8 @@ umass_scsipi_sense_cb(struct umass_softc *sc, void *priv, int residue,
 	case STATUS_CMD_OK:
 	case STATUS_CMD_UNKNOWN:
 		/* getting sense data succeeded */
-		if (xs->cmd->opcode == INQUIRY  && xs->resid < xs->datalen) {
+		if (xs->cmd->opcode == INQUIRY && (xs->resid < xs->datalen
+		    || ((sc->quirks & RS_NO_CLEAR_UA) /* XXX */) )) {
 			/*
 			 * Some drivers return SENSE errors even after INQUIRY.
 			 * The upper layer doesn't like that.
@@ -3293,11 +3325,74 @@ umass_scsipi_sense_cb(struct umass_softc *sc, void *priv, int residue,
 	splx(s);
 }
 
+/*
+ * UFI specific functions
+ */
+
+Static int
+umass_ufi_transform(struct umass_softc *sc, struct scsipi_generic *cmd, 
+		    int cmdlen, struct scsipi_generic *rcmd, int *rcmdlen)
+{
+	*rcmdlen = UFI_COMMAND_LENGTH;
+	memset(rcmd, 0, sizeof *rcmd);
+
+	/* Handle any quirks */
+	if (cmd->opcode == TEST_UNIT_READY
+	    && (sc->quirks & NO_TEST_UNIT_READY)) {
+		/*
+		 * Some devices do not support this command.
+		 * Start Stop Unit should give the same results
+		 */
+		DPRINTF(UDMASS_UFI, ("%s: Converted TEST_UNIT_READY "
+			"to START_UNIT\n", USBDEVNAME(sc->sc_dev)));
+		cmd->opcode = START_STOP;
+		cmd->bytes[3] = SSS_START;
+		return 1;
+	} 
+
+	switch (cmd->opcode) {
+	/* Commands of which the format has been verified. They should work. */
+	case TEST_UNIT_READY:
+	case SCSI_REZERO_UNIT:
+	case REQUEST_SENSE:
+	case INQUIRY:
+	case START_STOP:
+	/*case SEND_DIAGNOSTIC: ??*/
+	case PREVENT_ALLOW:
+	case READ_CAPACITY:
+	case READ_BIG:
+	case WRITE_BIG:
+	case POSITION_TO_ELEMENT:	/* SEEK_10 */
+	case SCSI_MODE_SELECT_BIG:
+	case SCSI_MODE_SENSE_BIG:
+		/* Copy the command into the (zeroed out) destination buffer */
+		memcpy(rcmd, cmd, cmdlen);
+		return (1);	/* success */
+
+	/* 
+	 * Other UFI commands: FORMAT_UNIT, MODE_SELECT, READ_FORMAT_CAPACITY,
+	 * VERIFY, WRITE_AND_VERIFY.
+	 * These should be checked whether they somehow can be made to fit.
+	 */
+
+	/* These commands are known _not_ to work. They should be converted. */
+	case SCSI_READ_COMMAND:
+	case SCSI_WRITE_COMMAND:
+	case SCSI_MODE_SENSE:
+	case SCSI_MODE_SELECT:
+	default:
+		printf("%s: Unsupported UFI command 0x%02x",
+			USBDEVNAME(sc->sc_dev), cmd->opcode);
+		if (cmdlen == 6)
+			printf(", 6 byte command should have been converted");
+		printf("\n");
+		return (0);	/* failure */
+	}
+}
+
 #if NATAPIBUS > 0
 Static void
-umass_atapi_probedev(atapi, target)
-	struct atapibus_softc *atapi;
-	int target;
+umass_atapi_probedev(struct atapibus_softc *atapi, int target)
 {
 	struct scsipi_link *sc_link;
 	struct scsipibus_attach_args sa;

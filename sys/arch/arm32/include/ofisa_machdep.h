@@ -1,4 +1,4 @@
-/*	$NetBSD: ofisa_machdep.h,v 1.6 1999/03/19 03:29:50 cgd Exp $	*/
+/*	$NetBSD: ofisa_machdep.h,v 1.6.16.1 2000/06/22 16:59:30 minoura Exp $	*/
 
 /*
  * Copyright 1998
@@ -33,8 +33,8 @@
  *    even if advised of the possibility of such damage.
  */
 
-int	ofisa_get_isabus_data __P((int, struct isabus_attach_args *));
-int	ofisa_ignore_child __P((int pphandle, int cphandle));
+int	ofisa_get_isabus_data(int, struct isabus_attach_args *);
+int	ofisa_ignore_child(int pphandle, int cphandle);
 
 #if defined(_KERNEL) && !defined(_LKM)
 #include "opt_compat_old_ofw.h"
@@ -43,44 +43,44 @@ int	ofisa_ignore_child __P((int pphandle, int cphandle));
 #ifdef COMPAT_OLD_OFW
 
 #define	_OFISA_MD_MATCH
-int	ofisa_md_match __P((struct device *, struct cfdata *, void *));
+int	ofisa_md_match(struct device *, struct cfdata *, void *);
 
 #define	_COM_OFISA_MD_MATCH
 #define	_COM_OFISA_MD_INTR_FIXUP
-int	com_ofisa_md_match __P((struct device *, struct cfdata *, void *));
-int	com_ofisa_md_intr_fixup __P((struct device *, struct device*, void *,
-	    struct ofisa_intr_desc *, int, int));
+int	com_ofisa_md_match(struct device *, struct cfdata *, void *);
+int	com_ofisa_md_intr_fixup(struct device *, struct device*, void *,
+	    struct ofisa_intr_desc *, int, int);
 
 #define	_CS_OFISA_MD_MATCH
 #define	_CS_OFISA_MD_REG_FIXUP
 #define	_CS_OFISA_MD_INTR_FIXUP
 #define	_CS_OFISA_MD_DMA_FIXUP
 #define	_CS_OFISA_MD_MEDIA_FIXUP
-int	cs_ofisa_md_match __P((struct device *, struct cfdata *, void *));
-int	cs_ofisa_md_reg_fixup __P((struct device *, struct device *, void *,
-	    struct ofisa_reg_desc *, int, int));
-int	cs_ofisa_md_intr_fixup __P((struct device *, struct device *, void *,
-	    struct ofisa_intr_desc *, int, int));
-int	cs_ofisa_md_dma_fixup __P((struct device *, struct device *, void *,
-	    struct ofisa_dma_desc *, int, int));
-int	*cs_ofisa_md_media_fixup __P((struct device *, struct device *, void *,
-	    int *, int *, int *));
+int	cs_ofisa_md_match(struct device *, struct cfdata *, void *);
+int	cs_ofisa_md_reg_fixup(struct device *, struct device *, void *,
+	    struct ofisa_reg_desc *, int, int);
+int	cs_ofisa_md_intr_fixup(struct device *, struct device *, void *,
+	    struct ofisa_intr_desc *, int, int);
+int	cs_ofisa_md_dma_fixup(struct device *, struct device *, void *,
+	    struct ofisa_dma_desc *, int, int);
+int	*cs_ofisa_md_media_fixup(struct device *, struct device *, void *,
+	    int *, int *, int *);
 
 #define	_LPT_OFISA_MD_MATCH
 #define	_LPT_OFISA_MD_INTR_FIXUP
-int	lpt_ofisa_md_match __P((struct device *, struct cfdata *, void *));
-int	lpt_ofisa_md_intr_fixup __P((struct device *, struct device*, void *,
-	    struct ofisa_intr_desc *, int, int));
+int	lpt_ofisa_md_match(struct device *, struct cfdata *, void *);
+int	lpt_ofisa_md_intr_fixup(struct device *, struct device*, void *,
+	    struct ofisa_intr_desc *, int, int);
 
 #define	_WDC_OFISA_MD_MATCH
 #define	_WDC_OFISA_MD_INTR_FIXUP
-int	wdc_ofisa_md_match __P((struct device *, struct cfdata *, void *));
-int	wdc_ofisa_md_intr_fixup __P((struct device *, struct device*, void *,
-	    struct ofisa_intr_desc *, int, int));
+int	wdc_ofisa_md_match(struct device *, struct cfdata *, void *);
+int	wdc_ofisa_md_intr_fixup(struct device *, struct device*, void *,
+	    struct ofisa_intr_desc *, int, int);
 
 #endif /* COMPAT_OLD_OFW */
 
 /* The following aren't dependent on old OpenFirmware. */
 #define	_CS_OFISA_MD_CFGFLAGS_FIXUP
-int	cs_ofisa_md_cfgflags_fixup __P((struct device *, struct device *,
-	    void *));
+int	cs_ofisa_md_cfgflags_fixup(struct device *, struct device *,
+	    void *);

@@ -1,4 +1,4 @@
-/*	$NetBSD: ubavar.h,v 1.27 2000/04/30 11:46:03 ragge Exp $	*/
+/*	$NetBSD: ubavar.h,v 1.27.2.1 2000/06/22 17:07:52 minoura Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986 Regents of the University of California.
@@ -69,6 +69,7 @@
  */
 struct	uba_softc {
 	struct	device uh_dev;		/* Device struct, autoconfig */
+	struct	evcnt uh_intrcnt;		/* interrupt counting */
 	SIMPLEQ_HEAD(, uba_unit) uh_resq;	/* resource wait chain */
 	SIMPLEQ_HEAD(, uba_reset) uh_resetq;	/* ubareset queue */
 	int	uh_lastiv;		/* last free interrupt vector */
@@ -116,7 +117,8 @@ struct	uba_reset {
 struct uba_attach_args {
 	bus_space_tag_t	ua_iot;		/* Tag for this bus I/O-space */
 	bus_addr_t	ua_ioh;		/* I/O regs addr */
-	bus_dma_tag_t	ua_dmat;
+	bus_dma_tag_t	ua_dmat;	/* DMA tag for this bus'es dma */
+	struct evcnt	*ua_evcnt;
 	void		*ua_icookie;	/* Cookie for interrupt establish */
 	int		ua_iaddr;	/* Full CSR address of device */
 	int		ua_br;		/* IPL this dev interrupted on */
@@ -139,12 +141,12 @@ struct uba_attach_args {
 #define ubdevreg(addr) ((addr) & 017777)
 
 #ifdef _KERNEL
-void	uba_intr_establish(void *, int, void (*)(void *), void *);
-void	uba_reset_establish(void (*)(struct device *), struct device *);
-void	uba_attach(struct uba_softc *, unsigned long);
-void	uba_enqueue(struct uba_unit *);
-void	uba_done(struct uba_softc *);
-void	ubareset(struct uba_softc *);
+void uba_intr_establish(void *, int, void (*)(void *), void *, struct evcnt *);
+void uba_reset_establish(void (*)(struct device *), struct device *);
+void uba_attach(struct uba_softc *, unsigned long);
+void uba_enqueue(struct uba_unit *);
+void uba_done(struct uba_softc *);
+void ubareset(struct uba_softc *);
 #endif /* _KERNEL */
 
 #endif /* _QBUS_UBAVAR_H */

@@ -1,4 +1,4 @@
-/*	$NetBSD: sysv_msg_14.c,v 1.1 1999/08/25 04:47:12 thorpej Exp $	*/
+/*	$NetBSD: sysv_msg_14.c,v 1.1.10.1 2000/06/22 17:05:44 minoura Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -48,7 +48,10 @@
 
 #include <sys/syscallargs.h>
 
-void
+static void msqid_ds14_to_native __P((struct msqid_ds14 *, struct msqid_ds *));
+static void native_to_msqid_ds14 __P((struct msqid_ds *, struct msqid_ds14 *));
+
+static void
 msqid_ds14_to_native(omsqbuf, msqbuf)
 	struct msqid_ds14 *omsqbuf;
 	struct msqid_ds *msqbuf;
@@ -67,7 +70,7 @@ msqid_ds14_to_native(omsqbuf, msqbuf)
 #undef CVT
 }
 
-void
+static void
 native_to_msqid_ds14(msqbuf, omsqbuf)
 	struct msqid_ds *msqbuf;
 	struct msqid_ds14 *omsqbuf;

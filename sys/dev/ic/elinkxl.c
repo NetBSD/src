@@ -1,4 +1,4 @@
-/*	$NetBSD: elinkxl.c,v 1.33 2000/05/12 16:44:19 thorpej Exp $	*/
+/*	$NetBSD: elinkxl.c,v 1.33.2.1 2000/06/22 17:06:42 minoura Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -452,6 +452,9 @@ ex_config(sc)
 
 	/*  Establish callback to reset card when we reboot. */
 	sc->sc_sdhook = shutdownhook_establish(ex_shutdown, sc);
+
+	/* The attach is successful. */
+	sc->ex_flags |= EX_FLAGS_ATTACHED;
 	return;
 
  fail:
@@ -1560,6 +1563,10 @@ ex_detach(sc)
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	struct ex_rxdesc *rxd;
 	int i;
+
+	/* Succeed now if there's no work to do. */
+	if ((sc->ex_flags & EX_FLAGS_ATTACHED) == 0)
+		return (0);
 
 	/* Unhook our tick handler. */
 	callout_stop(&sc->ex_mii_callout);

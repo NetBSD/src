@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.220 2000/05/26 21:19:44 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.220.2.1 2000/06/22 17:00:25 minoura Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -85,6 +85,7 @@
 #include "opt_compat_ibcs2.h"
 #include "opt_compat_svr4.h"
 #include "opt_compat_oldboot.h"
+#include "opt_multiprocessor.h"
 
 #include "npx.h"
 #include "assym.h"
@@ -1865,7 +1866,7 @@ NENTRY(switch_error)
 #endif /* DIAGNOSTIC */
 
 /*
- * cpu_switch(void);
+ * void cpu_switch(struct proc *)
  * Find a runnable process and switch to it.  Wait if necessary.  If the new
  * process is the same as the old one, we short-circuit the context save and
  * restore.
@@ -1940,6 +1941,13 @@ sw1:	bsfl	%ecx,%ebx		# find a full q
 
 	/* Isolate process.  XXX Is this necessary? */
 	movl	%eax,P_BACK(%edi)
+
+#if defined(MULTIPROCESSOR)
+	/*
+	 * p->p_cpu = curcpu()
+	 * XXXSMP
+	 */
+#endif
 
 	/* Record new process. */
 	movb	$SONPROC,P_STAT(%edi)	# p->p_stat = SONPROC

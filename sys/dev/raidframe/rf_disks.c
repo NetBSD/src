@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_disks.c,v 1.27 2000/03/31 02:05:24 oster Exp $	*/
+/*	$NetBSD: rf_disks.c,v 1.27.2.1 2000/06/22 17:07:53 minoura Exp $	*/
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -388,6 +388,7 @@ rf_AutoConfigureDisks(raidPtr, cfgPtr, auto_config)
 	RF_AutoConfig_t *ac;
 	int parity_good;
 	int mod_counter;
+	int mod_counter_found;
 
 #if DEBUG
 	printf("Starting autoconfiguration of RAID set...\n");
@@ -404,26 +405,19 @@ rf_AutoConfigureDisks(raidPtr, cfgPtr, auto_config)
 	parity_good = RF_RAID_CLEAN;
 
 	/* Check for mod_counters that are too low */
-	mod_counter = -1;
+	mod_counter_found = 0;
 	ac = auto_config;
 	while(ac!=NULL) {
-		if (ac->clabel->mod_counter > mod_counter) {
+		if (mod_counter_found==0) {
 			mod_counter = ac->clabel->mod_counter;
-		}
-		ac = ac->next;
-	}
-	if (mod_counter == -1) {
-		/* mod_counters were all negative!?!?!? 
-		   Ok, we can deal with that. */
-#if 0
-		ac = auto_config;
-		while(ac!=NULL) {
+			mod_counter_found = 1;
+		} else {
 			if (ac->clabel->mod_counter > mod_counter) {
 				mod_counter = ac->clabel->mod_counter;
 			}
-			ac = ac->next;
 		}
-#endif
+		ac->flag = 0; /* clear the general purpose flag */
+		ac = ac->next;
 	}
 
 	for (r = 0; r < raidPtr->numRow; r++) {
@@ -442,8 +436,12 @@ rf_AutoConfigureDisks(raidPtr, cfgPtr, auto_config)
 					goto fail;
 				}
 				if ((ac->clabel->row == r) &&
-				    (ac->clabel->column == c)) {
+				    (ac->clabel->column == c) &&
+				    (ac->clabel->mod_counter == mod_counter)) {
 					/* it's this one... */
+					/* flag it as 'used', so we don't
+					   free it later. */
+					ac->flag = 1;
 #if DEBUG
 					printf("Found: %s at %d,%d\n",
 					       ac->devname,r,c);
@@ -453,6 +451,40 @@ rf_AutoConfigureDisks(raidPtr, cfgPtr, auto_config)
 				}
 				ac=ac->next;
 			}
+
+			if (ac==NULL) {
+				/* we didn't find an exact match with a 
+				   correct mod_counter above... can we
+				   find one with an incorrect mod_counter
+				   to use instead?  (this one, if we find
+				   it, will be marked as failed once the 
+				   set configures) 
+				*/
+
+				ac = auto_config;
+				while(ac!=NULL) {
+					if (ac->clabel==NULL) {
+						/* big-time bad news. */
+						goto fail;
+					}
+					if ((ac->clabel->row == r) &&
+					    (ac->clabel->column == c)) {
+						/* it's this one... 
+						   flag it as 'used', so we 
+						   don't free it later. */
+						ac->flag = 1;
+#if DEBUG
+						printf("Found(low mod_counter): %s at %d,%d\n",
+						       ac->devname,r,c);
+#endif
+						
+						break;
+					}
+					ac=ac->next;
+				}
+			}
+
+
 
 			if (ac!=NULL) {
 				/* Found it.  Configure it.. */
@@ -519,6 +551,8 @@ rf_AutoConfigureDisks(raidPtr, cfgPtr, auto_config)
 				/* Didn't find it at all!! 
 				   Component must really be dead */
 				disks[r][c].status = rf_ds_failed;
+				sprintf(disks[r][c].devname,"component%d",
+					r * raidPtr->numCol + c);
 				numFailuresThisRow++;
 			}
 		}
@@ -527,6 +561,22 @@ rf_AutoConfigureDisks(raidPtr, cfgPtr, auto_config)
 		   we can handle for this configuration! */
 		if (numFailuresThisRow > 0)
 			raidPtr->status[r] = rf_rs_degraded;
+	}
+
+	/* close the device for the ones that didn't get used */
+
+	ac = auto_config;
+	while(ac!=NULL) {
+		if (ac->flag == 0) {
+			VOP_CLOSE(ac->vp, FREAD, NOCRED, 0);
+			vput(ac->vp);
+			ac->vp = NULL;
+#if DEBUG 
+			printf("Released %s from auto-config set.\n",
+			       ac->devname);
+#endif
+		}
+		ac = ac->next;
 	}
 
 	raidPtr->mod_counter = mod_counter;
