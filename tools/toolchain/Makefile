@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.10 2001/11/13 14:49:00 tv Exp $
+#	$NetBSD: Makefile,v 1.11 2001/11/13 15:30:06 tv Exp $
 
 .include <bsd.own.mk>
 
@@ -24,4 +24,5 @@ INSTALL_TARGET+=install-gdb
 
 afterinstall: _mvcpp
 _mvcpp:
-	mv -f ${TOOLDIR}/bin/cpp ${TOOLDIR}/bin/${MACHINE_GNU_PLATFORM}-cpp
+	[ -f ${TOOLDIR}/bin/cpp ] && \
+		mv -f ${TOOLDIR}/bin/cpp ${TOOLDIR}/bin/${MACHINE_GNU_PLATFORM}-cpp
