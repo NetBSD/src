@@ -1,4 +1,4 @@
-/*	$NetBSD: cats_machdep.c,v 1.14 2002/02/10 11:31:47 chris Exp $	*/
+/*	$NetBSD: cats_machdep.c,v 1.15 2002/02/10 13:19:27 chris Exp $	*/
 
 /*
  * Copyright (c) 1997,1998 Mark Brinicombe.
@@ -470,6 +470,22 @@ initarm(bootargs)
 			alloc_pages(kernel_pt_table[loop1], PT_SIZE / NBPG);
 			++loop1;
 		}
+	}
+
+	/*
+	 * we require the that the pt's for mapping the kernel be
+	 * contiguous, otherwise map_chunk etc will fail.  To achieve this we
+	 * swap the last 2 pt's for the kernel mapping pt's
+	 */
+	{
+	    paddr_t	tmp;
+	    tmp = kernel_pt_table[KERNEL_PT_KERNEL];
+	    kernel_pt_table[KERNEL_PT_KERNEL] = kernel_pt_table[NUM_KERNEL_PTS-2];
+	    kernel_pt_table[NUM_KERNEL_PTS-2] = tmp;
+
+	    tmp = kernel_pt_table[KERNEL_PT_KERNEL2];
+	    kernel_pt_table[KERNEL_PT_KERNEL2] = kernel_pt_table[NUM_KERNEL_PTS-1];
+	    kernel_pt_table[NUM_KERNEL_PTS-1] = tmp;
 	}
 
 #ifdef DIAGNOSTIC
