@@ -1,4 +1,4 @@
-/* $NetBSD: dumb.c,v 1.1 1996/01/31 23:19:40 mark Exp $ */
+/* $NetBSD: dumb.c,v 1.2 1996/03/18 19:33:05 mark Exp $ */
 
 /*
  * Copyright (c) 1994-1995 Melvyn Tang-Richardson
@@ -39,9 +39,6 @@
  * Console functions
  *
  * Created      : 17/09/94
- * Last updated : 15/11/95
- *
- *    $Id: dumb.c,v 1.1 1996/01/31 23:19:40 mark Exp $
  */
 
 #include <sys/cdefs.h>
