@@ -1,4 +1,4 @@
-/*	$NetBSD: auth2-chall.c,v 1.13 2005/02/13 05:57:26 christos Exp $	*/
+/*	$NetBSD: auth2-chall.c,v 1.14 2005/02/13 18:14:04 christos Exp $	*/
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
  * Copyright (c) 2001 Per Allansson.  All rights reserved.
@@ -25,7 +25,7 @@
  */
 #include "includes.h"
 RCSID("$OpenBSD: auth2-chall.c,v 1.21 2004/06/01 14:20:45 dtucker Exp $");
-__RCSID("$NetBSD: auth2-chall.c,v 1.13 2005/02/13 05:57:26 christos Exp $");
+__RCSID("$NetBSD: auth2-chall.c,v 1.14 2005/02/13 18:14:04 christos Exp $");
 
 #include "ssh2.h"
 #include "auth.h"
@@ -42,6 +42,9 @@ static void input_userauth_info_response(int, u_int32_t, void *);
 #ifdef BSD_AUTH
 extern KbdintDevice bsdauth_device;
 #else
+#ifdef USE_PAM
+extern KbdintDevice sshpam_device;
+#endif
 #ifdef SKEY
 extern KbdintDevice skey_device;
 #endif
@@ -51,6 +54,9 @@ KbdintDevice *devices[] = {
 #ifdef BSD_AUTH
 	&bsdauth_device,
 #else
+#ifdef USE_PAM
+	&sshpam_device,
+#endif
 #ifdef SKEY
 	&skey_device,
 #endif
@@ -321,18 +327,28 @@ input_userauth_info_response(int type, u_int32_t seq, void *ctxt)
 void
 privsep_challenge_enable(void)
 {
+#if defined(BSD_AUTH) || defined(USE_PAM) || defined(SKEY)
+	int n = 0;
+#endif
 #ifdef BSD_AUTH
 	extern KbdintDevice mm_bsdauth_device;
+#else
+#ifdef USE_PAM
+	extern KbdintDevice mm_sshpam_device;
 #endif
 #ifdef SKEY
 	extern KbdintDevice mm_skey_device;
 #endif
+#endif
 	/* As long as SSHv1 has devices[0] hard coded this is fine */
 #ifdef BSD_AUTH
-	devices[0] = &mm_bsdauth_device;
+	devices[n++] = &mm_bsdauth_device;
 #else
+#ifdef USE_PAM
+	devices[n++] = &mm_sshpam_device;
+#endif
 #ifdef SKEY
-	devices[0] = &mm_skey_device;
+	devices[n++] = &mm_skey_device;
 #endif
 #endif
 }

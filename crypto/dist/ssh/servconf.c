@@ -1,4 +1,4 @@
-/*	$NetBSD: servconf.c,v 1.28 2005/02/13 05:57:26 christos Exp $	*/
+/*	$NetBSD: servconf.c,v 1.29 2005/02/13 18:14:04 christos Exp $	*/
 /*
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
  *                    All rights reserved
@@ -12,7 +12,7 @@
 
 #include "includes.h"
 RCSID("$OpenBSD: servconf.c,v 1.137 2004/08/13 11:09:24 dtucker Exp $");
-__RCSID("$NetBSD: servconf.c,v 1.28 2005/02/13 05:57:26 christos Exp $");
+__RCSID("$NetBSD: servconf.c,v 1.29 2005/02/13 18:14:04 christos Exp $");
 
 #ifdef KRB4
 #include <krb.h>
@@ -46,6 +46,11 @@ void
 initialize_server_options(ServerOptions *options)
 {
 	memset(options, 0, sizeof(*options));
+
+	/* Portable-specific options */
+	options->use_pam = -1;
+
+	/* Standard Options */
 	options->num_ports = 0;
 	options->ports_from_cmdline = 0;
 	options->listen_addrs = NULL;
@@ -115,6 +120,11 @@ initialize_server_options(ServerOptions *options)
 void
 fill_default_server_options(ServerOptions *options)
 {
+	/* Portable-specific options */
+	if (options->use_pam == -1)
+		options->use_pam = 0;
+
+	/* Standard Options */
 	if (options->protocol == SSH_PROTO_UNKNOWN)
 		options->protocol = SSH_PROTO_1|SSH_PROTO_2;
 	if (options->num_host_key_files == 0) {
@@ -236,11 +246,24 @@ fill_default_server_options(ServerOptions *options)
 	/* Turn privilege separation on by default */
 	if (use_privsep == -1)
 		use_privsep = 1;
+
+#ifndef HAVE_MMAP
+	if (use_privsep && options->compression == 1) {
+		error("This platform does not support both privilege "
+		    "separation and compression");
+		error("Compression disabled");
+		options->compression = 0;
+	}
+#endif
+
 }
 
 /* Keyword tokens. */
 typedef enum {
 	sBadOption,		/* == unknown option */
+	/* Portable-specific options */
+	sUsePAM,
+	/* Standard Options */
 	sPort, sHostKeyFile, sServerKeyBits, sLoginGraceTime, sKeyRegenerationTime,
 	sPermitRootLogin, sLogFacility, sLogLevel,
 	sRhostsRSAAuthentication, sRSAAuthentication,
@@ -269,6 +292,13 @@ static struct {
 	const char *name;
 	ServerOpCodes opcode;
 } keywords[] = {
+	/* Portable-specific options */
+#ifdef USE_PAM
+	{ "usepam", sUsePAM },
+#else
+	{ "usepam", sUnsupported },
+#endif
+	/* Standard Options */
 	{ "port", sPort },
 	{ "hostkey", sHostKeyFile },
 	{ "hostdsakey", sHostKeyFile },					/* alias */
@@ -427,6 +457,12 @@ process_server_config_line(ServerOptions *options, char *line,
 	charptr = NULL;
 	opcode = parse_token(arg, filename, linenum);
 	switch (opcode) {
+	/* Portable-specific options */
+	case sUsePAM:
+		intptr = &options->use_pam;
+		goto parse_flag;
+
+	/* Standard Options */
 	case sBadOption:
 		return -1;
 	case sPort:

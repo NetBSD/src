@@ -1,4 +1,4 @@
-/*	$NetBSD: session.c,v 1.37 2005/02/13 05:57:26 christos Exp $	*/
+/*	$NetBSD: session.c,v 1.38 2005/02/13 18:14:04 christos Exp $	*/
 /*
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
  *                    All rights reserved
@@ -35,7 +35,7 @@
 
 #include "includes.h"
 RCSID("$OpenBSD: session.c,v 1.180 2004/07/28 09:40:29 markus Exp $");
-__RCSID("$NetBSD: session.c,v 1.37 2005/02/13 05:57:26 christos Exp $");
+__RCSID("$NetBSD: session.c,v 1.38 2005/02/13 18:14:04 christos Exp $");
 
 #include "ssh.h"
 #include "ssh1.h"
@@ -396,6 +396,12 @@ do_exec_no_pty(Session *s, const char *command)
 
 	session_proctitle(s);
 
+#if defined(USE_PAM)
+	if (options.use_pam && !use_privsep)
+		do_pam_setcred(1);
+#endif /* USE_PAM */
+
+
 	/* Fork the child. */
 	if ((pid = fork()) == 0) {
 		is_child = 1;
@@ -507,6 +513,14 @@ do_exec_pty(Session *s, const char *command)
 		fatal("do_exec_pty: no session");
 	ptyfd = s->ptyfd;
 	ttyfd = s->ttyfd;
+
+#if defined(USE_PAM)
+	if (options.use_pam) {
+		do_pam_set_tty(s->tty);
+		if (!use_privsep)
+			do_pam_setcred(1);
+	}
+#endif
 
 	/* Fork the child. */
 	if ((pid = fork()) == 0) {
@@ -637,6 +651,19 @@ do_login(Session *s, const char *command)
 		    get_remote_name_or_ip(utmp_len,
 		    options.use_dns),
 		    (struct sockaddr *)&from, fromlen);
+
+#ifdef USE_PAM
+	/*
+	 * If password change is needed, do it now.
+	 * This needs to occur before the ~/.hushlogin check.
+	 */
+	if (options.use_pam && !use_privsep && s->authctxt->force_pwchange) {
+		display_loginmsg();
+		do_pam_chauthtok();
+		s->authctxt->force_pwchange = 0;
+		/* XXX - signal [net] parent to enable forwardings */
+	}
+#endif
 
 	if (check_quietlogin(s, command))
 		return;
@@ -845,6 +872,32 @@ read_environment_file(char ***env, u_int *envsize,
 	fclose(f);
 }
 
+#ifdef USE_PAM
+void copy_environment(char **, char ***, u_int *);
+void copy_environment(char **source, char ***env, u_int *envsize)
+{
+	char *var_name, *var_val;
+	int i;
+
+	if (source == NULL)
+		return;
+
+	for(i = 0; source[i] != NULL; i++) {
+		var_name = xstrdup(source[i]);
+		if ((var_val = strstr(var_name, "=")) == NULL) {
+			xfree(var_name);
+			continue;
+		}
+		*var_val++ = '\0';
+
+		debug3("Copy environment: %s=%s", var_name, var_val);
+		child_set_env(env, envsize, var_name, var_val);
+
+		xfree(var_name);
+	}
+}
+#endif
+
 static char **
 do_setup_env(Session *s, const char *shell)
 {
@@ -939,6 +992,24 @@ do_setup_env(Session *s, const char *shell)
 		child_set_env(&env, &envsize, "KRB5CCNAME",
 		    s->authctxt->krb5_ticket_file);
 #endif
+#ifdef USE_PAM
+	/*
+	 * Pull in any environment variables that may have
+	 * been set by PAM.
+	 */
+	if (options.use_pam) {
+		char **p;
+
+		p = fetch_pam_child_environment();
+		copy_environment(p, &env, &envsize);
+		free_pam_environment(p);
+
+		p = fetch_pam_environment();
+		copy_environment(p, &env, &envsize);
+		free_pam_environment(p);
+	}
+#endif /* USE_PAM */
+
 	if (auth_sock_name != NULL)
 		child_set_env(&env, &envsize, SSH_AUTHSOCKET_ENV_NAME,
 		    auth_sock_name);
@@ -1059,6 +1130,12 @@ void
 do_setusercontext(struct passwd *pw)
 {
 	if (getuid() == 0 || geteuid() == 0) {
+# ifdef USE_PAM
+		if (options.use_pam) {
+			do_pam_session();
+			do_pam_setcred(0);
+		}
+# endif /* USE_PAM */
 #ifdef HAVE_LOGIN_CAP
 		if (setusercontext(lc, pw, pw->pw_uid,
 		    (LOGIN_SETALL & ~LOGIN_SETPATH)) < 0) {
@@ -1078,6 +1155,17 @@ do_setusercontext(struct passwd *pw)
 			exit(1);
 		}
 		endgrent();
+# ifdef USE_PAM
+		/*
+		 * PAM credentials may take the form of supplementary groups.
+		 * These will have been wiped by the above initgroups() call.
+		 * Reestablish them here.
+		 */
+		if (options.use_pam) {
+			do_pam_session();
+			do_pam_setcred(0);
+		}
+# endif /* USE_PAM */
 
 		/* Permanently switch to the desired uid. */
 		permanently_set_uid(pw);
@@ -2023,6 +2111,13 @@ do_cleanup(Authctxt *authctxt)
 #ifdef GSSAPI
 	if (compat20 && options.gss_cleanup_creds)
 		ssh_gssapi_cleanup_creds();
+#endif
+
+#ifdef USE_PAM
+	if (options.use_pam) {
+		sshpam_cleanup();
+		sshpam_thread_cleanup();
+	}
 #endif
 
 	/* remove agent socket */
