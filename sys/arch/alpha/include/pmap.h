@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.h,v 1.56 2002/09/22 07:53:40 chs Exp $ */
+/* $NetBSD: pmap.h,v 1.57 2002/09/24 13:30:43 ad Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -157,22 +157,11 @@ typedef struct pv_entry {
 #ifdef _KERNEL
 
 #ifndef _LKM
-#include "opt_new_scc_driver.h"
-#include "opt_dec_3000_300.h"			/* XXX */
-#include "opt_dec_3000_500.h"			/* XXX */
 #include "opt_dec_kn8ae.h"			/* XXX */
 
-#if defined(NEW_SCC_DRIVER)
 #if defined(DEC_KN8AE)
 #define	_PMAP_MAY_USE_PROM_CONSOLE
 #endif
-#else /* ! NEW_SCC_DRIVER */
-#if defined(DEC_3000_300)		\
- || defined(DEC_3000_500)		\
- || defined(DEC_KN8AE) 				/* XXX */
-#define _PMAP_MAY_USE_PROM_CONSOLE		/* XXX */
-#endif						/* XXX */
-#endif /* NEW_SCC_DRIVER */
 
 #if defined(MULTIPROCESSOR)
 struct cpu_info;
