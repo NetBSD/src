@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.77 1997/08/21 18:12:34 scottr Exp $	*/
+/*	$NetBSD: locore.s,v 1.78 1997/09/12 08:35:15 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Gordon W. Ross
@@ -1838,16 +1838,14 @@ L_delay:
 
 /*
  * Save and restore 68881 state.
- * Pretty awful looking since our assembler does not
- * recognize FP mnemonics.
  */
 ENTRY(m68881_save)
 	movl	sp@(4),a0		| save area pointer
 	fsave	a0@			| save state
 	tstb	a0@			| null state frame?
 	jeq	Lm68881sdone		| yes, all done
-	fmovem fp0-fp7,a0@(216)		| save FP general registers
-	fmovem fpcr/fpsr/fpi,a0@(312)	| save FP control registers
+	fmovem	fp0-fp7,a0@(216)	| save FP general registers
+	fmovem	fpcr/fpsr/fpi,a0@(312)	| save FP control registers
 Lm68881sdone:
 	rts
 
