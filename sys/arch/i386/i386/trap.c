@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.95 1996/05/05 06:50:02 mycroft Exp $	*/
+/*	$NetBSD: trap.c,v 1.95.4.1 1997/03/19 04:03:24 mycroft Exp $	*/
 
 #undef DEBUG
 #define DEBUG
@@ -277,6 +277,7 @@ trap(frame)
 			goto out;
 		}
 #endif
+	case T_TSSFLT|T_USER:
 	case T_SEGNPFLT|T_USER:
 	case T_STKFLT|T_USER:
 	case T_ALIGNFLT|T_USER:
