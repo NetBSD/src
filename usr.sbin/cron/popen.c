@@ -1,4 +1,4 @@
-/*	$NetBSD: popen.c,v 1.5 1998/01/31 14:44:47 christos Exp $	*/
+/*	$NetBSD: popen.c,v 1.6 1998/01/31 15:07:14 christos Exp $	*/
 
 /*
  * Copyright (c) 1988 The Regents of the University of California.
@@ -27,7 +27,7 @@
 static char rcsid[] = "Id: popen.c,v 1.5 1994/01/15 20:43:43 vixie Exp";
 static char sccsid[] = "@(#)popen.c	5.7 (Berkeley) 2/14/89";
 #else
-__RCSID("$NetBSD: popen.c,v 1.5 1998/01/31 14:44:47 christos Exp $");
+__RCSID("$NetBSD: popen.c,v 1.6 1998/01/31 15:07:14 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -42,6 +42,8 @@ __RCSID("$NetBSD: popen.c,v 1.5 1998/01/31 14:44:47 christos Exp $");
 static PID_T *pids;
 static int fds;
 
+#define MAX_ARGS 1024
+
 FILE *
 cron_popen(program, type)
 	char *program, *type;
@@ -50,7 +52,7 @@ cron_popen(program, type)
 	FILE *iop;
 	int argc, pdes[2];
 	PID_T pid;
-	char *argv[MAX_ARGS + 1];
+	char *argv[MAX_ARGS];
 
 #ifdef __GNUC__
 	(void) &iop;	/* Avoid vfork clobbering */
