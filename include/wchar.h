@@ -1,7 +1,7 @@
-/*	$NetBSD: wchar.h,v 1.2 2000/04/11 13:57:10 blymn Exp $	*/
+/*	$NetBSD: wchar.h,v 1.1 2000/04/20 09:56:37 kleink Exp $	*/
 
 /*-
- * Copyright (c) 1999 The NetBSD Foundation, Inc.
+ * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -36,9 +36,24 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#ifndef _WCHAR_H_
+#define _WCHAR_H_
+
 #include <machine/ansi.h>
 
 #ifdef	_BSD_WCHAR_T_
 typedef	_BSD_WCHAR_T_	wchar_t;
 #undef	_BSD_WCHAR_T_
 #endif
+
+#ifdef	_BSD_WINT_T_
+typedef	_BSD_WINT_T_	wint_t;
+#undef	_BSD_WINT_T_
+#endif
+
+#ifdef	_BSD_SIZE_T_
+typedef	_BSD_SIZE_T_	size_t;
+#undef	_BSD_SIZE_T_
+#endif
+
+#endif /* !_WCHAR_H_ */
