@@ -1,4 +1,4 @@
-/* $NetBSD: lfs.c,v 1.1 2003/03/28 08:09:53 perseant Exp $ */
+/* $NetBSD: lfs.c,v 1.2 2003/04/02 10:39:27 fvdl Exp $ */
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -176,7 +176,7 @@ ufs_bmaparray(struct lfs * fs, struct uvnode * vp, daddr_t bn, daddr_t * bnp, st
 	if (bn >= 0 && bn < NDADDR) {
 		if (nump != NULL)
 			*nump = 0;
-		*bnp = fsbtodb(fs, ip->i_ffs_db[bn]);
+		*bnp = fsbtodb(fs, ip->i_ffs1_db[bn]);
 		if (*bnp == 0)
 			*bnp = -1;
 		return (0);
@@ -190,7 +190,7 @@ ufs_bmaparray(struct lfs * fs, struct uvnode * vp, daddr_t bn, daddr_t * bnp, st
 	num = *nump;
 
 	/* Get disk address out of indirect block array */
-	daddr = ip->i_ffs_ib[xap->in_off];
+	daddr = ip->i_ffs1_ib[xap->in_off];
 
 	for (bp = NULL, ++xap; --num; ++xap) {
 		/* Exit the loop if there is no disk address assigned yet and
@@ -231,7 +231,7 @@ ufs_bmaparray(struct lfs * fs, struct uvnode * vp, daddr_t bn, daddr_t * bnp, st
  * contains the logical block number of the appropriate single, double or
  * triple indirect block and the offset into the inode indirect block array.
  * Note, the logical block number of the inode single/double/triple indirect
- * block appears twice in the array, once with the offset into the i_ffs_ib and
+ * block appears twice in the array, once with the offset into the i_ffs1_ib and
  * once with the offset into the page itself.
  */
 int
@@ -314,11 +314,11 @@ lfs_vop_bmap(struct uvnode * vp, daddr_t lbn, daddr_t * daddrp)
 }
 
 /* Search a block for a specific dinode. */
-struct dinode *
+struct ufs1_dinode *
 lfs_ifind(struct lfs * fs, ino_t ino, struct ubuf * bp)
 {
-	struct dinode *dip = (struct dinode *) bp->b_data;
-	struct dinode *ldip, *fin;
+	struct ufs1_dinode *dip = (struct ufs1_dinode *) bp->b_data;
+	struct ufs1_dinode *ldip, *fin;
 
 	fin = dip + INOPB(fs);
 
@@ -342,7 +342,7 @@ lfs_raw_vget(struct lfs * fs, ino_t ino, int fd, ufs_daddr_t daddr)
 {
 	struct uvnode *vp;
 	struct inode *ip;
-	struct dinode *dip;
+	struct ufs1_dinode *dip;
 	struct ubuf *bp;
 	int i;
 
@@ -362,6 +362,10 @@ lfs_raw_vget(struct lfs * fs, ino_t ino, int fd, ufs_daddr_t daddr)
 	vp->v_data = ip = (struct inode *) malloc(sizeof(*ip));
 	memset(ip, 0, sizeof(*ip));
 
+	ip->i_din.ffs1_din = (struct ufs1_dinode *)
+	    malloc(sizeof(struct ufs1_dinode));
+	memset(ip->i_din.ffs1_din, 0, sizeof (struct ufs1_dinode));
+
 	/* Initialize the inode -- from lfs_vcreate. */
 	ip->inode_ext.lfs = malloc(sizeof(struct lfs_inode_ext));
 	memset(ip->inode_ext.lfs, 0, sizeof(struct lfs_inode_ext));
@@ -370,9 +374,6 @@ lfs_raw_vget(struct lfs * fs, ino_t ino, int fd, ufs_daddr_t daddr)
 	ip->i_number = ino;
 	ip->i_lockf = 0;
 	ip->i_diroff = 0;
-	ip->i_ffs_mode = 0;
-	ip->i_ffs_size = 0;
-	ip->i_ffs_blocks = 0;
 	ip->i_lfs_effnblks = 0;
 	ip->i_flag = 0;
 
@@ -385,25 +386,25 @@ lfs_raw_vget(struct lfs * fs, ino_t ino, int fd, ufs_daddr_t daddr)
 		free(vp);
 		return NULL;
 	}
-	memcpy(&ip->i_din.ffs_din, dip, sizeof(*dip));
+	memcpy(ip->i_din.ffs1_din, dip, sizeof(*dip));
 	brelse(bp);
 	ip->i_number = ino;
 	/* ip->i_devvp = fs->lfs_unlockvp; */
 	ip->i_lfs = fs;
 
-	ip->i_ffs_effnlink = ip->i_ffs_nlink;
-	ip->i_lfs_effnblks = ip->i_ffs_blocks;
-	ip->i_lfs_osize = ip->i_ffs_size;
+	ip->i_ffs_effnlink = ip->i_ffs1_nlink;
+	ip->i_lfs_effnblks = ip->i_ffs1_blocks;
+	ip->i_lfs_osize = ip->i_ffs1_size;
 #if 0
 	if (fs->lfs_version > 1) {
-		ip->i_ffs_atime = ts.tv_sec;
-		ip->i_ffs_atimensec = ts.tv_nsec;
+		ip->i_ffs1_atime = ts.tv_sec;
+		ip->i_ffs1_atimensec = ts.tv_nsec;
 	}
 #endif
 
 	memset(ip->i_lfs_fragsize, 0, NDADDR * sizeof(*ip->i_lfs_fragsize));
 	for (i = 0; i < NDADDR; i++)
-		if (ip->i_ffs_db[i] != 0)
+		if (ip->i_ffs1_db[i] != 0)
 			ip->i_lfs_fragsize[i] = blksize(fs, ip, i);
 
 	return vp;

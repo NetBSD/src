@@ -1,4 +1,4 @@
-/*      $NetBSD: coalesce.c,v 1.8 2003/02/25 23:12:08 perseant Exp $  */
+/*      $NetBSD: coalesce.c,v 1.9 2003/04/02 10:39:22 fvdl Exp $  */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -123,7 +123,7 @@ int clean_inode(struct fs_info *fsp, ino_t ino)
 {
 	int i, error;
 	BLOCK_INFO *bip = NULL, *tbip;
-	struct dinode *dip;
+	struct ufs1_dinode *dip;
 	int nb, onb, noff;
 	daddr_t toff;
 	struct lfs *lfsp;

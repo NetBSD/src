@@ -1,4 +1,4 @@
-/*	$NetBSD: utilities.c,v 1.35 2003/01/24 21:55:09 fvdl Exp $	*/
+/*	$NetBSD: utilities.c,v 1.36 2003/04/02 10:39:27 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)utilities.c	8.6 (Berkeley) 5/19/95";
 #else
-__RCSID("$NetBSD: utilities.c,v 1.35 2003/01/24 21:55:09 fvdl Exp $");
+__RCSID("$NetBSD: utilities.c,v 1.36 2003/04/02 10:39:27 fvdl Exp $");
 #endif
 #endif /* not lint */
 
@@ -70,9 +70,9 @@ extern int returntosingle;
 
 int
 ftypeok(dp)
-	struct dinode *dp;
+	union dinode *dp;
 {
-	switch (iswap16(dp->di_mode) & IFMT) {
+	switch (iswap16(DIP(dp, mode)) & IFMT) {
 
 	case IFDIR:
 	case IFREG:
@@ -85,7 +85,7 @@ ftypeok(dp)
 
 	default:
 		if (debug)
-			printf("bad file type 0%o\n", iswap16(dp->di_mode));
+			printf("bad file type 0%o\n", iswap16(DIP(dp, mode)));
 		return (0);
 	}
 }
@@ -278,9 +278,12 @@ ckfini()
 		return;
 	}
 	flush(fswritefd, &sblk);
-	if (havesb && sblk.b_bno != SBOFF / dev_bsize &&
+	if (havesb && is_ufs2 && sblk.b_bno !=
+	    sblock->fs_sblockloc / dev_bsize &&
 	    !preen && reply("UPDATE STANDARD SUPERBLOCK")) {
-		sblk.b_bno = SBOFF / dev_bsize;
+		printf("sblk.b_bno %lld sblockloc %lld\n",
+		    (long long)sblk.b_bno, (long long)sblock->fs_sblockloc);
+		sblk.b_bno = sblock->fs_sblockloc / dev_bsize;
 		sbdirty();
 		flush(fswritefd, &sblk);
 	}
@@ -308,6 +311,8 @@ ckfini()
 			markclean = 0;
 		if (markclean) {
 			sblock->fs_clean = FS_ISCLEAN;
+			sblock->fs_pendingblocks = 0;
+			sblock->fs_pendinginodes = 0;
 			sbdirty();
 			ofsmodified = fsmodified;
 			flush(fswritefd, &sblk);
@@ -427,7 +432,7 @@ allocblk(frags)
 			getblk(&cgblk, cgtod(sblock, cg), sblock->fs_cgsize);
 			memcpy(cgp, cgblk.b_un.b_cg, sblock->fs_cgsize);
 			if ((doswap && !needswap) || (!doswap && needswap))
-				swap_cg(cgblk.b_un.b_cg, cgp);
+				ffs_cg_swap(cgblk.b_un.b_cg, cgp, sblock);
 			if (!cg_chkmagic(cgp, 0))
 				pfatal("CG %d: ALLOCBLK: BAD MAGIC NUMBER\n",
 				    cg);
@@ -475,13 +480,14 @@ getpathname(namebuf, curdir, ino)
 	char *cp;
 	struct inodesc idesc;
 	static int busy = 0;
+	struct inostat *info;
 
 	if (curdir == ino && ino == ROOTINO) {
 		(void)strcpy(namebuf, "/");
 		return;
 	}
-	if (busy ||
-	    (statemap[curdir] != DSTATE && statemap[curdir] != DFOUND)) {
+	info = inoinfo(curdir);
+	if (busy || (info->ino_state != DSTATE && info->ino_state != DFOUND)) {
 		(void)strcpy(namebuf, "?");
 		return;
 	}
@@ -610,85 +616,7 @@ copyback_cg(blk)
 
 	memcpy(blk->b_un.b_cg, cgrp, sblock->fs_cgsize);
 	if (needswap)
-		swap_cg(cgrp, blk->b_un.b_cg);
-}
-
-void
-swap_cg(o, n)
-	struct cg *o, *n;
-{
-	int i;
-	u_int32_t *n32, *o32;
-	u_int16_t *n16, *o16;
-
-	n->cg_firstfield = bswap32(o->cg_firstfield);
-	n->cg_magic = bswap32(o->cg_magic);
-	n->cg_time = bswap32(o->cg_time);
-	n->cg_cgx = bswap32(o->cg_cgx);
-	n->cg_ncyl = bswap16(o->cg_ncyl);
-	n->cg_niblk = bswap16(o->cg_niblk);
-	n->cg_ndblk = bswap32(o->cg_ndblk);
-	n->cg_cs.cs_ndir = bswap32(o->cg_cs.cs_ndir);
-	n->cg_cs.cs_nbfree = bswap32(o->cg_cs.cs_nbfree);
-	n->cg_cs.cs_nifree = bswap32(o->cg_cs.cs_nifree);
-	n->cg_cs.cs_nffree = bswap32(o->cg_cs.cs_nffree);
-	n->cg_rotor = bswap32(o->cg_rotor);
-	n->cg_frotor = bswap32(o->cg_frotor);
-	n->cg_irotor = bswap32(o->cg_irotor);
-	n->cg_btotoff = bswap32(o->cg_btotoff);
-	n->cg_boff = bswap32(o->cg_boff);
-	n->cg_iusedoff = bswap32(o->cg_iusedoff);
-	n->cg_freeoff = bswap32(o->cg_freeoff);
-	n->cg_nextfreeoff = bswap32(o->cg_nextfreeoff);
-	n->cg_clustersumoff = bswap32(o->cg_clustersumoff);
-	n->cg_clusteroff = bswap32(o->cg_clusteroff);
-	n->cg_nclusterblks = bswap32(o->cg_nclusterblks);
-	for (i=0; i < MAXFRAG; i++)
-		n->cg_frsum[i] = bswap32(o->cg_frsum[i]);
-
-	if (sblock->fs_postblformat == FS_42POSTBLFMT) { /* old format */
-		struct ocg *on, *oo;
-		int j;
-		on = (struct ocg *)n;
-		oo = (struct ocg *)o;
-		for(i = 0; i < 8; i++) {
-			on->cg_frsum[i] = bswap32(oo->cg_frsum[i]);
-		}
-		for(i = 0; i < 32; i++) {
-			on->cg_btot[i] = bswap32(oo->cg_btot[i]);
-			for (j = 0; j < 8; j++)
-				on->cg_b[i][j] = bswap16(oo->cg_b[i][j]);
-		}
-		memmove(on->cg_iused, oo->cg_iused, 256);
-		on->cg_magic = bswap32(oo->cg_magic);
-	} else {  /* new format */
-		if (n->cg_magic == CG_MAGIC) {
-			n32 = (u_int32_t*)((u_int8_t*)n + n->cg_btotoff);
-			o32 = (u_int32_t*)((u_int8_t*)o + n->cg_btotoff);
-			n16 = (u_int16_t*)((u_int8_t*)n + n->cg_boff);
-			o16 = (u_int16_t*)((u_int8_t*)o + n->cg_boff);
-		} else {
-			n32 = (u_int32_t*)((u_int8_t*)n + o->cg_btotoff);
-			o32 = (u_int32_t*)((u_int8_t*)o + o->cg_btotoff);
-			n16 = (u_int16_t*)((u_int8_t*)n + o->cg_boff);
-			o16 = (u_int16_t*)((u_int8_t*)o + o->cg_boff);
-		}
-		for (i=0; i < sblock->fs_cpg; i++)
-			n32[i] = bswap32(o32[i]);
-		
-		for (i=0; i < sblock->fs_cpg * sblock->fs_nrpos; i++)
-			n16[i] = bswap16(o16[i]);
-
-		if (n->cg_magic == CG_MAGIC) {
-			n32 = (u_int32_t*)((u_int8_t*)n + n->cg_clustersumoff);
-			o32 = (u_int32_t*)((u_int8_t*)o + n->cg_clustersumoff);
-		} else {
-			n32 = (u_int32_t*)((u_int8_t*)n + o->cg_clustersumoff);
-			o32 = (u_int32_t*)((u_int8_t*)o + o->cg_clustersumoff);
-		}
-		for (i = 1; i < sblock->fs_contigsumsize + 1; i++)
-			n32[i] = bswap32(o32[i]);
-	}
+		ffs_cg_swap(cgrp, blk->b_un.b_cg, sblock);
 }
 
 void
@@ -697,3 +625,21 @@ infohandler(int sig)
 	got_siginfo = 1;
 }
 
+/*
+ * Look up state information for an inode.
+ */
+struct inostat *
+inoinfo(ino_t inum)
+{
+	static struct inostat unallocated = { USTATE, 0, 0 };
+	struct inostatlist *ilp;
+	int iloff;
+
+	if (inum > maxino)
+		errx(EEXIT, "inoinfo: inumber %d out of range", inum);
+	ilp = &inostathead[inum / sblock->fs_ipg];
+	iloff = inum % sblock->fs_ipg;
+	if (iloff >= ilp->il_numalloced)
+		return (&unallocated);
+	return (&ilp->il_stat[iloff]);
+}

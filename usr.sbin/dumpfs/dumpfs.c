@@ -1,4 +1,4 @@
-/*	$NetBSD: dumpfs.c,v 1.32 2002/01/08 05:32:45 lukem Exp $	*/
+/*	$NetBSD: dumpfs.c,v 1.33 2003/04/02 10:39:47 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1983, 1992, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1992, 1993\n\
 #if 0
 static char sccsid[] = "@(#)dumpfs.c	8.5 (Berkeley) 4/29/95";
 #else
-__RCSID("$NetBSD: dumpfs.c,v 1.32 2002/01/08 05:32:45 lukem Exp $");
+__RCSID("$NetBSD: dumpfs.c,v 1.33 2003/04/02 10:39:47 fvdl Exp $");
 #endif
 #endif /* not lint */
 
@@ -79,6 +79,7 @@ union {
 
 long	dev_bsize = 1;
 int	needswap, Fflag;
+int	is_ufs2;
 
 int	dumpfs(const char *);
 int	dumpcg(const char *, int, int);
@@ -116,10 +117,12 @@ main(int argc, char *argv[])
 	exit(eval);
 }
 
+off_t sblock_try[] = SBLOCKSEARCH;
+
 int
 dumpfs(const char *name)
 {
-	int fd, c, i, j, k, size;
+	int fd, i, j, size, printold;
 	time_t t;
 	char device[MAXPATHLEN];
 	struct csum *ccsp;
@@ -133,22 +136,47 @@ dumpfs(const char *name)
 	if (fd == -1)
 		goto err;
 
-	if (lseek(fd, (off_t)SBOFF, SEEK_SET) == (off_t)-1)
-		goto err;
-	if (read(fd, &afs, SBSIZE) != SBSIZE)
-		goto err;
-
- 	if (afs.fs_magic != FS_MAGIC) {
-		if (afs.fs_magic == bswap32(FS_MAGIC)) {
-			ffs_sb_swap(&afs, &afs);
+	for (i = 0; sblock_try[i] != -1; i++) {
+		if (lseek(fd, sblock_try[i], SEEK_SET) == (off_t)-1)
+			continue;
+		if (read(fd, &afs, SBLOCKSIZE) != SBLOCKSIZE)
+			continue;
+		switch(afs.fs_magic) {
+		case FS_UFS2_MAGIC:
+			is_ufs2 = 1;
+			/*FALLTHROUGH*/
+		case FS_UFS1_MAGIC:
+			goto found;
+		case FS_UFS2_MAGIC_SWAPPED:
+			/*FALLTHROUGH*/
+		case FS_UFS1_MAGIC_SWAPPED:
 			needswap = 1;
-		} else {
-			warnx("%s: superblock has bad magic number, skipped",
-			    name);
-			(void)close(fd);
- 			return (1);
- 		}
- 	}
+			goto found;
+		default:
+			continue;
+		}
+	}
+	warnx("%s: could not find superblock, skipped", name);
+	return 1;
+found:
+
+	if (needswap)
+		ffs_sb_swap(&afs, &afs);
+
+	printold = (afs.fs_magic == FS_UFS1_MAGIC &&
+		    (afs.fs_old_flags & FS_FLAGS_UPDATED) == 0);
+	if (printold) {
+		afs.fs_flags = afs.fs_old_flags;
+		afs.fs_maxbsize = afs.fs_bsize;
+		afs.fs_time = afs.fs_old_time;
+		afs.fs_size = afs.fs_old_size;
+		afs.fs_dsize = afs.fs_old_dsize;
+		afs.fs_csaddr = afs.fs_old_csaddr;
+		afs.fs_cstotal.cs_ndir = afs.fs_old_cstotal.cs_ndir;
+		afs.fs_cstotal.cs_nbfree = afs.fs_old_cstotal.cs_nbfree;
+		afs.fs_cstotal.cs_nifree = afs.fs_old_cstotal.cs_nifree;
+		afs.fs_cstotal.cs_nffree = afs.fs_old_cstotal.cs_nffree;
+	}
 
 	printf("file system: %s\n", name);
 #if BYTE_ORDER == LITTLE_ENDIAN
@@ -159,16 +187,16 @@ dumpfs(const char *name)
 		printf("endian\tbig-endian\n");
 	else
 		printf("endian\tlittle-endian\n");
-	if (afs.fs_postblformat == FS_42POSTBLFMT)
-		afs.fs_nrpos = 8;
+	if (printold && afs.fs_old_postblformat == FS_42POSTBLFMT)
+		afs.fs_old_nrpos = 8;
 	dev_bsize = afs.fs_fsize / fsbtodb(&afs, 1);
 	t = afs.fs_time;
-	printf("magic\t%x\ttime\t%s", afs.fs_magic,
+	printf("location%lld\tmagic\t%x\ttime\t%s", sblock_try[i], afs.fs_magic,
 	    ctime(&t));
 	i = 0;
-	if (afs.fs_postblformat != FS_42POSTBLFMT) {
+	if (printold && afs.fs_old_postblformat != FS_42POSTBLFMT) {
 		i++;
-		if (afs.fs_inodefmt >= FS_44INODEFMT) {
+		if (afs.fs_old_inodefmt >= FS_44INODEFMT) {
 			int max;
 
 			i++;
@@ -183,63 +211,63 @@ dumpfs(const char *name)
 	printf("cylgrp\t%s\tinodes\t%s\tfslevel %d\tsoftdep %sabled\n",
 	    i < 1 ? "static" : "dynamic", i < 2 ? "4.2/4.3BSD" : "4.4BSD", i,
 	    (afs.fs_flags & FS_DOSOFTDEP) ? "en" : "dis");
-	printf("nbfree\t%d\tndir\t%d\tnifree\t%d\tnffree\t%d\n",
-	    afs.fs_cstotal.cs_nbfree, afs.fs_cstotal.cs_ndir,
-	    afs.fs_cstotal.cs_nifree, afs.fs_cstotal.cs_nffree);
-	printf("ncg\t%d\tncyl\t%d\tsize\t%d\tblocks\t%d\n",
-	    afs.fs_ncg, afs.fs_ncyl, afs.fs_size, afs.fs_dsize);
+	printf("nbfree\t%lld\tndir\t%lld\tnifree\t%lld\tnffree\t%lld\n",
+	    (long long)afs.fs_cstotal.cs_nbfree,
+	    (long long)afs.fs_cstotal.cs_ndir,
+	    (long long)afs.fs_cstotal.cs_nifree,
+	    (long long)afs.fs_cstotal.cs_nffree);
+	printf("ncg\t%d\tsize\t%lld\tblocks\t%lld\n",
+	    afs.fs_ncg, afs.fs_size, afs.fs_dsize);
+	if (printold)
+		printf("ncyl\t%d\n", afs.fs_old_ncyl);
 	printf("bsize\t%d\tshift\t%d\tmask\t0x%08x\n",
 	    afs.fs_bsize, afs.fs_bshift, afs.fs_bmask);
 	printf("fsize\t%d\tshift\t%d\tmask\t0x%08x\n",
 	    afs.fs_fsize, afs.fs_fshift, afs.fs_fmask);
 	printf("frag\t%d\tshift\t%d\tfsbtodb\t%d\n",
 	    afs.fs_frag, afs.fs_fragshift, afs.fs_fsbtodb);
-	printf("cpg\t%d\tbpg\t%d\tfpg\t%d\tipg\t%d\n",
-	    afs.fs_cpg, afs.fs_fpg / afs.fs_frag, afs.fs_fpg, afs.fs_ipg);
+	printf("bpg\t%d\tfpg\t%d\tipg\t%d\n",
+	    afs.fs_fpg / afs.fs_frag, afs.fs_fpg, afs.fs_ipg);
 	printf("minfree\t%d%%\toptim\t%s\tmaxcontig %d\tmaxbpg\t%d\n",
 	    afs.fs_minfree, afs.fs_optim == FS_OPTSPACE ? "space" : "time",
 	    afs.fs_maxcontig, afs.fs_maxbpg);
-	printf("rotdelay %dms\trps\t%d\n",
-	    afs.fs_rotdelay, afs.fs_rps);
-	printf("ntrak\t%d\tnsect\t%d\tnpsect\t%d\tspc\t%d\n",
-	    afs.fs_ntrak, afs.fs_nsect, afs.fs_npsect, afs.fs_spc);
-	printf("symlinklen %d\ttrackskew %d\tinterleave %d\tcontigsumsize %d\n",
-	    afs.fs_maxsymlinklen, afs.fs_trackskew, afs.fs_interleave,
-	    afs.fs_contigsumsize);
+	if (printold) {
+		printf("cpg\t%d\trotdelay %dms\trps\t%d\n",
+		    afs.fs_old_cpg, afs.fs_old_rotdelay, afs.fs_old_rps);
+		printf("ntrak\t%d\tnsect\t%d\tnpsect\t%d\tspc\t%d\n",
+		    afs.fs_spare2, afs.fs_old_nsect, afs.fs_old_npsect,
+		    afs.fs_old_spc);
+		printf("trackskew %d\tinterleave %d\n",
+		    afs.fs_old_trackskew, afs.fs_old_interleave);
+	}
+	printf("symlinklen %d\tcontigsumsize %d\n",
+	    afs.fs_maxsymlinklen, afs.fs_contigsumsize);
 	printf("maxfilesize 0x%016llx\n",
 	    (unsigned long long)afs.fs_maxfilesize);
-	printf("nindir\t%d\tinopb\t%d\tnspf\t%d\n",
-	    afs.fs_nindir, afs.fs_inopb, afs.fs_nspf);
+	printf("nindir\t%d\tinopb\t%d\n", afs.fs_nindir, afs.fs_inopb);
+	if (printold)
+		printf("nspf\t%d\n", afs.fs_old_nspf);
 	printf("avgfilesize %d\tavgfpdir %d\n",
 	    afs.fs_avgfilesize, afs.fs_avgfpdir);
 	printf("sblkno\t%d\tcblkno\t%d\tiblkno\t%d\tdblkno\t%d\n",
 	    afs.fs_sblkno, afs.fs_cblkno, afs.fs_iblkno, afs.fs_dblkno);
-	printf("sbsize\t%d\tcgsize\t%d\toffset\t%d\tmask\t0x%08x\n",
-	    afs.fs_sbsize, afs.fs_cgsize, afs.fs_cgoffset, afs.fs_cgmask);
-	printf("csaddr\t%d\tcssize\t%d\tshift\t%d\tmask\t0x%08x\n",
-	    afs.fs_csaddr, afs.fs_cssize, afs.fs_csshift, afs.fs_csmask);
+	printf("sbsize\t%d\tcgsize\t%d\n", afs.fs_sbsize, afs.fs_cgsize);
+	if (printold)
+		printf("offset\t%d\tmask\t0x%08x\n",
+		    afs.fs_old_cgoffset, afs.fs_old_cgmask);
+	printf("csaddr\t%lld\tcssize %d\n",
+	    (long long)afs.fs_csaddr, afs.fs_cssize);
+	if (printold)
+		printf("shift\t%d\tmask\t0x%08x\n",
+		    afs.fs_spare1[0], afs.fs_spare1[1]);
 	printf("cgrotor\t%d\tfmod\t%d\tronly\t%d\tclean\t0x%02x\n",
 	    afs.fs_cgrotor, afs.fs_fmod, afs.fs_ronly, afs.fs_clean);
-	if (afs.fs_cpc != 0)
-		printf("blocks available in each of %d rotational positions",
-		     afs.fs_nrpos);
-	else
-		printf("(no rotational position table)\n");
-	for (c = 0; c < afs.fs_cpc; c++) {
-		printf("\ncylinder number %d:", c);
-		for (i = 0; i < afs.fs_nrpos; i++) {
-			if (fs_postbl(&afs, c)[i] == -1)
-				continue;
-			printf("\n   position %d:\t", i);
-			for (j = fs_postbl(&afs, c)[i], k = 1; ;
-			     j += fs_rotbl(&afs)[j], k++) {
-				printf("%5d", j);
-				if (k % 12 == 0)
-					printf("\n\t\t");
-				if (fs_rotbl(&afs)[j] == 0)
-					break;
-			}
-		}
+	if (printold) {
+		if (afs.fs_old_cpc != 0)
+			printf("blocks available in each of %d rotational "
+			       "positions", afs.fs_old_nrpos);
+		else
+			printf("(no rotational position table)\n");
 	}
 	printf("\ncs[].cs_(nbfree,ndir,nifree,nffree):\n\t");
 	afs.fs_csp = calloc(1, afs.fs_cssize);
@@ -264,23 +292,23 @@ dumpfs(const char *name)
 		    cs->cs_nbfree, cs->cs_ndir, cs->cs_nifree, cs->cs_nffree);
 	}
 	printf("\n");
-	if (afs.fs_ncyl % afs.fs_cpg) {
+	if (printold && (afs.fs_old_ncyl % afs.fs_old_cpg)) {
 		printf("cylinders in last group %d\n",
-		    i = afs.fs_ncyl % afs.fs_cpg);
+		    i = afs.fs_old_ncyl % afs.fs_old_cpg);
 		printf("blocks in last group %d\n",
-		    i * afs.fs_spc / NSPB(&afs));
+		    i * afs.fs_old_spc / (afs.fs_old_nspf << afs.fs_fragshift));
 	}
 	printf("\n");
 	for (i = 0; i < afs.fs_ncg; i++)
 		if (dumpcg(name, fd, i))
 			goto err;
 	(void)close(fd);
-	return (0);
+	return 0;
 
 err:	if (fd != -1)
 		(void)close(fd);
 	warn("%s", name);
-	return (1);
+	return 1;
 };
 
 int
@@ -299,14 +327,14 @@ dumpcg(const char *name, int fd, int c)
 		return (1);
 	}
 	if (needswap)
-		swap_cg(&acg);
+		ffs_cg_swap(&acg, &acg, &afs);
 	t = acg.cg_time;
 	printf("magic\t%x\ttell\t%llx\ttime\t%s",
-	    afs.fs_postblformat == FS_42POSTBLFMT ?
+	    afs.fs_old_postblformat == FS_42POSTBLFMT ?
 	    ((struct ocg *)&acg)->cg_magic : acg.cg_magic,
 	    (long long)cur, ctime(&t));
-	printf("cgx\t%d\tncyl\t%d\tniblk\t%d\tndblk\t%d\n",
-	    acg.cg_cgx, acg.cg_ncyl, acg.cg_niblk, acg.cg_ndblk);
+	printf("cgx\t%d\tniblk\t%d\tndblk\t%d\n",
+	    acg.cg_cgx, acg.cg_niblk, acg.cg_ndblk);
 	printf("nbfree\t%d\tndir\t%d\tnifree\t%d\tnffree\t%d\n",
 	    acg.cg_cs.cs_nbfree, acg.cg_cs.cs_ndir,
 	    acg.cg_cs.cs_nifree, acg.cg_cs.cs_nffree);
@@ -336,19 +364,6 @@ dumpcg(const char *name, int fd, int c)
 	pbits(cg_inosused(&acg, 0), afs.fs_ipg);
 	printf("free:\t");
 	pbits(cg_blksfree(&acg, 0), afs.fs_fpg);
-	printf("b:\n");
-	for (i = 0; i < afs.fs_cpg; i++) {
-		if (cg_blktot(&acg, 0)[i] == 0)
-			continue;
-		printf("   c%d:\t(%d)\t", i, cg_blktot(&acg, 0)[i]);
-		for (j = 0; j < afs.fs_nrpos; j++) {
-			if (afs.fs_cpc > 0 &&
-			    fs_postbl(&afs, i % afs.fs_cpc)[j] == -1)
-				continue;
-			printf(" %d", cg_blks(&afs, &acg, i, 0)[j]);
-		}
-		printf("\n");
-	}
 	return (0);
 };
 
@@ -380,75 +395,6 @@ usage(void)
 
 	(void)fprintf(stderr, "usage: dumpfs [-F] filesys | device [...]\n");
 	exit(1);
-}
-
-void
-swap_cg(struct cg *cg)
-{
-	int i;
-	u_int32_t *n32;
-	u_int16_t *n16;
-
-	cg->cg_firstfield = bswap32(cg->cg_firstfield);
-	cg->cg_magic = bswap32(cg->cg_magic);
-	cg->cg_time = bswap32(cg->cg_time);
-	cg->cg_cgx = bswap32(cg->cg_cgx);
-	cg->cg_ncyl = bswap16(cg->cg_ncyl);
-	cg->cg_niblk = bswap16(cg->cg_niblk);
-	cg->cg_ndblk = bswap32(cg->cg_ndblk);
-	cg->cg_cs.cs_ndir = bswap32(cg->cg_cs.cs_ndir);
-	cg->cg_cs.cs_nbfree = bswap32(cg->cg_cs.cs_nbfree);
-	cg->cg_cs.cs_nifree = bswap32(cg->cg_cs.cs_nifree);
-	cg->cg_cs.cs_nffree = bswap32(cg->cg_cs.cs_nffree);
-	cg->cg_rotor = bswap32(cg->cg_rotor);
-	cg->cg_frotor = bswap32(cg->cg_frotor);
-	cg->cg_irotor = bswap32(cg->cg_irotor);
-	cg->cg_btotoff = bswap32(cg->cg_btotoff);
-	cg->cg_boff = bswap32(cg->cg_boff);
-	cg->cg_iusedoff = bswap32(cg->cg_iusedoff);
-	cg->cg_freeoff = bswap32(cg->cg_freeoff);
-	cg->cg_nextfreeoff = bswap32(cg->cg_nextfreeoff);
-	cg->cg_clustersumoff = bswap32(cg->cg_clustersumoff);
-	cg->cg_clusteroff = bswap32(cg->cg_clusteroff);
-	cg->cg_nclusterblks = bswap32(cg->cg_nclusterblks);
-	for (i=0; i < MAXFRAG; i++)
-		cg->cg_frsum[i] = bswap32(cg->cg_frsum[i]);
-
-	if (afs.fs_postblformat == FS_42POSTBLFMT) { /* old format */
-		struct ocg *ocg;
-		int j;
-		ocg = (struct ocg *)cg;
-		for(i = 0; i < 8; i++) {
-			ocg->cg_frsum[i] = bswap32(ocg->cg_frsum[i]);
-		}
-		for(i = 0; i < 32; i++) {
-			ocg->cg_btot[i] = bswap32(ocg->cg_btot[i]);
-			for (j = 0; j < 8; j++)
-				ocg->cg_b[i][j] = bswap16(ocg->cg_b[i][j]);
-		}
-		ocg->cg_magic = bswap32(ocg->cg_magic);
-	} else {  /* new format */
-		if (cg->cg_magic == CG_MAGIC) {
-			n32 = (u_int32_t*)((u_int8_t*)cg + cg->cg_btotoff);
-			n16 = (u_int16_t*)((u_int8_t*)cg + cg->cg_boff);
-		} else {
-			n32 = (u_int32_t*)((u_int8_t*)cg + bswap32(cg->cg_btotoff));
-			n16 = (u_int16_t*)((u_int8_t*)cg + bswap32(cg->cg_boff));
-		}
-		for (i=0; i< afs.fs_cpg; i++)
-			n32[i] = bswap32(n32[i]);
-		
-		for (i=0; i < afs.fs_cpg * afs.fs_nrpos; i++)
-			n16[i] = bswap16(n16[i]);
-
-		if (cg->cg_magic == CG_MAGIC) {
-			n32 = (u_int32_t*)((u_int8_t*)cg + cg->cg_clustersumoff);
-		} else {
-			n32 = (u_int32_t*)((u_int8_t*)cg + cg->cg_clustersumoff);
-		}
-		for (i = 0; i < afs.fs_contigsumsize + 1; i++)
-			n32[i] = bswap32(n32[i]);
-	}
 }
 
 int

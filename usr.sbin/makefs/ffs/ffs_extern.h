@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_extern.h,v 1.3 2003/01/24 21:55:32 fvdl Exp $	*/
+/*	$NetBSD: ffs_extern.h,v 1.4 2003/04/02 10:39:49 fvdl Exp $	*/
 /* From: NetBSD: ffs_extern.h,v 1.19 2001/08/17 02:18:48 lukem Exp */
 
 /*-
@@ -54,18 +54,20 @@ void panic(const char *, ...)
 
 	/* ffs_alloc.c */
 int ffs_alloc(struct inode *, daddr_t, daddr_t, int, daddr_t *);
-/* XXX ondisk32 */
-daddr_t ffs_blkpref(struct inode *, daddr_t, int, int32_t *);
+daddr_t ffs_blkpref_ufs1(struct inode *, daddr_t, int, int32_t *);
+daddr_t ffs_blkpref_ufs2(struct inode *, daddr_t, int, int64_t *);
 void ffs_blkfree(struct inode *, daddr_t, long);
-void ffs_clusteracct(struct fs *, struct cg *, daddr_t, int);
+void ffs_clusteracct(struct fs *, struct cg *, int32_t, int);
 
 	/* ffs_balloc.c */
 int ffs_balloc(struct inode *, off_t, int, struct buf **);
 
 	/* ffs_bswap.c */
 void ffs_sb_swap(struct fs*, struct fs *);
-void ffs_dinode_swap(struct dinode *, struct dinode *);
+void ffs_dinode1_swap(struct ufs1_dinode *, struct ufs1_dinode *);
+void ffs_dinode2_swap(struct ufs2_dinode *, struct ufs2_dinode *);
 void ffs_csum_swap(struct csum *, struct csum *, int);
+void ffs_cg_swap(struct cg *, struct cg *, struct fs *);
 
 	/* ffs_subr.c */
 void ffs_fragacct(struct fs *, int, int32_t[], int, int);

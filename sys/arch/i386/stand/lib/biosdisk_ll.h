@@ -1,4 +1,4 @@
-/*	$NetBSD: biosdisk_ll.h,v 1.6 1999/04/28 23:24:42 fvdl Exp $	 */
+/*	$NetBSD: biosdisk_ll.h,v 1.7 2003/04/02 10:39:33 fvdl Exp $	 */
 
 /*
  * Copyright (c) 1996
@@ -86,4 +86,4 @@ struct biosdisk_ext13info {
 #define BIOSDISK_SECSIZE 512
 
 int set_geometry __P((struct biosdisk_ll *, struct biosdisk_ext13info *));
-int readsects   __P((struct biosdisk_ll *, int, int, char *, int));
+int readsects   __P((struct biosdisk_ll *, int64_t, int, char *, int));

@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_subr.c,v 1.27 2003/01/25 18:12:32 tron Exp $	*/
+/*	$NetBSD: ffs_subr.c,v 1.28 2003/04/02 10:39:38 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__KERNEL_RCSID)
-__KERNEL_RCSID(0, "$NetBSD: ffs_subr.c,v 1.27 2003/01/25 18:12:32 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_subr.c,v 1.28 2003/04/02 10:39:38 fvdl Exp $");
 #endif
 
 #if HAVE_CONFIG_H
@@ -64,6 +64,7 @@ void    panic __P((const char *, ...))
 #include <sys/mount.h>
 #include <sys/buf.h>
 #include <sys/inttypes.h>
+#include <sys/pool.h>
 #include <ufs/ufs/inode.h>
 #include <ufs/ufs/ufsmount.h>
 #include <ufs/ufs/ufs_extern.h>
@@ -107,6 +108,57 @@ ffs_blkatoff(v)
 	*ap->a_bpp = bp;
 	return (0);
 }
+
+
+/*
+ * Load up the contents of an inode and copy the appropriate pieces
+ * to the incore copy.
+ */
+void
+ffs_load_inode(bp, ip, fs, ino)
+	struct buf *bp;
+	struct inode *ip;
+	struct fs *fs;
+	ino_t ino;
+{
+	struct ufs1_dinode *dp1;
+	struct ufs2_dinode *dp2;
+
+	if (ip->i_ump->um_fstype == UFS1) {
+		dp1 = (struct ufs1_dinode *)bp->b_data + ino_to_fsbo(fs, ino);
+#ifdef FFS_EI
+		if (UFS_FSNEEDSWAP(fs))
+			ffs_dinode1_swap(dp1, ip->i_din.ffs1_din);
+		else
+#endif
+		*ip->i_din.ffs1_din = *dp1;
+
+		ip->i_mode = ip->i_ffs1_mode;
+		ip->i_nlink = ip->i_ffs1_nlink;
+		ip->i_size = ip->i_ffs1_size;
+		ip->i_flags = ip->i_ffs1_flags;
+		ip->i_gen = ip->i_ffs1_gen;
+		ip->i_uid = ip->i_ffs1_uid;
+		ip->i_gid = ip->i_ffs1_gid;
+	} else {
+		dp2 = (struct ufs2_dinode *)bp->b_data + ino_to_fsbo(fs, ino);
+#ifdef FFS_EI
+		if (UFS_FSNEEDSWAP(fs))
+			ffs_dinode2_swap(dp2, ip->i_din.ffs2_din);
+		else
+#endif
+		*ip->i_din.ffs2_din = *dp2;
+
+		ip->i_mode = ip->i_ffs2_mode;
+		ip->i_nlink = ip->i_ffs2_nlink;
+		ip->i_size = ip->i_ffs2_size;
+		ip->i_flags = ip->i_ffs2_flags;
+		ip->i_gen = ip->i_ffs2_gen;
+		ip->i_uid = ip->i_ffs2_uid;
+		ip->i_gid = ip->i_ffs2_gid;
+	}
+}
+
 #endif	/* _KERNEL */
 
 /*
@@ -191,7 +243,7 @@ int
 ffs_isblock(fs, cp, h)
 	struct fs *fs;
 	u_char *cp;
-	daddr_t h;
+	int32_t h;
 {
 	u_char mask;
 
@@ -220,7 +272,7 @@ int
 ffs_isfreeblock(fs, cp, h)
 	struct fs *fs;
 	u_char *cp;
-	daddr_t h;
+	int32_t h;
 {
 
 	switch ((int)fs->fs_fragshift) {
@@ -245,7 +297,7 @@ void
 ffs_clrblock(fs, cp, h)
 	struct fs *fs;
 	u_char *cp;
-	daddr_t h;
+	int32_t h;
 {
 
 	switch ((int)fs->fs_fragshift) {
@@ -274,7 +326,7 @@ void
 ffs_setblock(fs, cp, h)
 	struct fs *fs;
 	u_char *cp;
-	daddr_t h;
+	int32_t h;
 {
 
 	switch ((int)fs->fs_fragshift) {

@@ -1,4 +1,4 @@
-/* $NetBSD: utilities.c,v 1.12 2003/03/31 19:57:00 perseant Exp $	 */
+/* $NetBSD: utilities.c,v 1.13 2003/04/02 10:39:28 fvdl Exp $	 */
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -67,7 +67,7 @@ extern int returntosingle;
 extern off_t locked_queue_bytes;
 
 int
-ftypeok(struct dinode * dp)
+ftypeok(struct ufs1_dinode * dp)
 {
 	switch (dp->di_mode & IFMT) {
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: pass1b.c,v 1.15 2003/01/24 21:55:08 fvdl Exp $	*/
+/*	$NetBSD: pass1b.c,v 1.16 2003/04/02 10:39:26 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)pass1b.c	8.4 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: pass1b.c,v 1.15 2003/01/24 21:55:08 fvdl Exp $");
+__RCSID("$NetBSD: pass1b.c,v 1.16 2003/04/02 10:39:26 fvdl Exp $");
 #endif
 #endif /* not lint */
 
@@ -61,7 +61,7 @@ void
 pass1b()
 {
 	int c, i;
-	struct dinode *dp;
+	union dinode *dp;
 	struct inodesc idesc;
 	ino_t inumber;
 
@@ -85,7 +85,7 @@ pass1b()
 			if (dp == NULL)
 				continue;
 			idesc.id_number = inumber;
-			if (statemap[inumber] != USTATE &&
+			if (inoinfo(inumber)->ino_state != USTATE &&
 			    (ckinode(dp, &idesc) & STOP))
 				return;
 		}
