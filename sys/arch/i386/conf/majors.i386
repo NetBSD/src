@@ -1,4 +1,4 @@
-#	$NetBSD: majors.i386,v 1.9 2003/03/16 18:04:08 jdolecek Exp $
+#	$NetBSD: majors.i386,v 1.10 2003/04/20 16:51:35 martin Exp $
 #
 # Device majors for i386
 #
@@ -65,7 +65,7 @@ device-major	esh		char 63			esh
 device-major	ugen		char 64			ugen
 device-major	wsmux		char 65			wsmux
 device-major	ucom		char 66			ucom
-device-major	sysmon		char 67			sysmon_envsys | sysmon_wdog
+device-major	sysmon		char 67			sysmon_envsys | sysmon_wdog | sysmon_power
 device-major	vmegeneric	char 68			vmegeneric
 device-major	ld		char 69  block 19	ld
 device-major	urio		char 70			urio
