@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.7 2001/04/24 04:30:53 thorpej Exp $	*/
+/*	$NetBSD: pmap.c,v 1.8 2001/04/25 17:35:01 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -173,7 +173,6 @@ int l1pt_reuse_count;			/* stat - L1's reused count */
 
 /* Local function prototypes (not used outside this file) */
 pt_entry_t *pmap_pte __P((pmap_t pmap, vaddr_t va));
-int pmap_page_index __P((paddr_t pa)); 
 void map_pagetable __P((vaddr_t pagetable, vaddr_t va,
     paddr_t pa, unsigned int flags));
 void pmap_copy_on_write __P((paddr_t pa));

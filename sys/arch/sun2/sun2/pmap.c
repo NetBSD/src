@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.7 2001/04/24 04:31:13 thorpej Exp $	*/
+/*	$NetBSD: pmap.c,v 1.8 2001/04/25 17:35:02 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -1883,35 +1883,6 @@ pmap_page_upload()
 		uvm_page_physload(a, d, a, d, VM_FREELIST_DEFAULT);
 	}
 }
-
-/*
- * pmap_page_index()
- *
- * Given a physical address, return a page index.
- *
- * There can be some values that we never return (i.e. a hole)
- * as long as the range of indices returned by this function
- * is smaller than the value returned by pmap_free_pages().
- * The returned index does NOT need to start at zero.
- * (This is normally a macro in pmap.h)
- */
-#ifndef	pmap_page_index
-int
-pmap_page_index(pa)
-	vm_offset_t pa;
-{
-	int idx;
-
-#ifdef	DIAGNOSTIC
-	if (pa < avail_start || pa >= avail_end)
-		panic("pmap_page_index: pa=0x%lx", pa);
-#endif	/* DIAGNOSTIC */
-
-	idx = atop(pa);
-	return (idx);
-}
-#endif	/* !pmap_page_index */
-
 
 /*
  *	Initialize the pmap module.

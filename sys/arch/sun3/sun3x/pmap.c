@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.65 2001/04/24 04:31:15 thorpej Exp $	*/
+/*	$NetBSD: pmap.c,v 1.66 2001/04/25 17:35:03 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -579,7 +579,6 @@ static void pmap_page_upload __P((void));
  ** - functions required by the Mach VM Pmap interface, with MACHINE_CONTIG
  **   defined.
  **/
-int    pmap_page_index __P((vm_offset_t));
 void pmap_pinit __P((pmap_t));
 void pmap_release __P((pmap_t));
 
@@ -3692,36 +3691,6 @@ pmap_page_upload()
 		if (avail_mem[i].pmem_next == NULL)
 			break;
 	}
-}
-
-/* pmap_page_index			INTERFACE
- **
- * Return the index of the given physical page in a list of useable
- * physical pages in the system.  Holes in physical memory may be counted
- * if so desired.  As long as pmap_free_pages() and pmap_page_index()
- * agree as to whether holes in memory do or do not count as valid pages,
- * it really doesn't matter.  However, if you like to save a little
- * memory, don't count holes as valid pages.  This is even more true when
- * the holes are large.
- *
- * We will not count holes as valid pages.  We can generate page indices
- * that conform to this by using the memory bank structures initialized
- * in pmap_alloc_pv().
- */
-int
-pmap_page_index(pa)
-	vm_offset_t pa;
-{
-	struct pmap_physmem_struct *bank = avail_mem;
-	vm_offset_t off;
-
-	/* Search for the memory bank with this page. */
-	/* XXX - What if it is not physical memory? */
-	while (pa > bank->pmem_end)
-		bank = bank->pmem_next;
-	off = pa - bank->pmem_start;
-
-	return (bank->pmem_pvbase + m68k_btop(off));
 }
 
 /* pmap_count			INTERFACE
