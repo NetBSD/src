@@ -1,10 +1,10 @@
-/*	$NetBSD: pcmciadevs_data.h,v 1.92.2.7 2001/06/16 19:19:37 he Exp $	*/
+/*	$NetBSD: pcmciadevs_data.h,v 1.92.2.8 2002/02/14 20:09:01 he Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcmciadevs,v 1.93.2.6 2001/05/26 16:16:05 he Exp 
+ *	NetBSD: pcmciadevs,v 1.93.2.8 2002/02/14 20:08:32 he Exp 
  */
 
 /*-
@@ -162,6 +162,13 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    0,
 	    "Digital Equipment Corporation",
 	    "Digital Mobile Media CD-ROM"	},
+	},
+	{
+	    PCMCIA_VENDOR_EDIMAX, PCMCIA_PRODUCT_EDIMAX_EP4000A,
+	    PCMCIA_CIS_EDIMAX_EP4000A,
+	    0,
+	    "Edimax Technology Inc.",
+	    "Edimax EP4000A"	},
 	},
 	{
 	    PCMCIA_VENDOR_FUJITSU, PCMCIA_PRODUCT_FUJITSU_SCSI600,
@@ -568,6 +575,13 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    0,
 	    "Standard Microsystems Corporation",
 	    "SMC EZCard 10 PCMCIA"	},
+	},
+	{
+	    PCMCIA_VENDOR_ZONET, PCMCIA_PRODUCT_ZONET_ZEN,
+	    PCMCIA_CIS_ZONET_ZEN,
+	    0,
+	    "Zonet Technology Inc.",
+	    "Zonet Zen 10/10"	},
 	},
 	{
 	    PCMCIA_VENDOR_CONTEC, PCMCIA_PRODUCT_CONTEC_CNETPC,
@@ -1088,6 +1102,13 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    NULL,
 	},
 	{
+	    PCMCIA_VENDOR_EDIMAX, 0,
+	    PCMCIA_KNOWNDEV_NOPROD,
+	    PCMCIA_CIS_INVALID,
+	    "Edimax Technology Inc.",
+	    NULL,
+	},
+	{
 	    PCMCIA_VENDOR_COMPEX, 0,
 	    PCMCIA_KNOWNDEV_NOPROD,
 	    PCMCIA_CIS_INVALID,
@@ -1099,6 +1120,13 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    PCMCIA_KNOWNDEV_NOPROD,
 	    PCMCIA_CIS_INVALID,
 	    "Melco Corporation",
+	    NULL,
+	},
+	{
+	    PCMCIA_VENDOR_ZONET, 0,
+	    PCMCIA_KNOWNDEV_NOPROD,
+	    PCMCIA_CIS_INVALID,
+	    "Zonet Technology Inc.",
 	    NULL,
 	},
 	{
