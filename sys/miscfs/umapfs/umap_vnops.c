@@ -1,4 +1,4 @@
-/*	$NetBSD: umap_vnops.c,v 1.26 2004/05/28 18:55:20 wrstuden Exp $	*/
+/*	$NetBSD: umap_vnops.c,v 1.27 2004/06/07 17:36:38 yamt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umap_vnops.c,v 1.26 2004/05/28 18:55:20 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umap_vnops.c,v 1.27 2004/06/07 17:36:38 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -508,6 +508,7 @@ umap_rename(v)
 	struct componentname *compnamep;
 	struct ucred *compcredp, *savecompcredp;
 	struct vnode *vp;
+	struct vnode *tvp;
 
 	/*
 	 * Rename is irregular, having two componentname structures.
@@ -535,7 +536,19 @@ umap_rename(v)
 		printf("umap_rename: rename component credit user now %d, group %d\n", 
 		    compcredp->cr_uid, compcredp->cr_gid);
 
+	tvp = ap->a_tvp;
+	if (tvp) {
+		if (tvp->v_mount != vp->v_mount)
+			tvp = NULL;
+		else
+			vref(tvp);
+	}
 	error = umap_bypass(ap);
+	if (tvp) {
+		if (error == 0)
+			VTOLAYER(tvp)->layer_flags |= LAYERFS_REMOVED;
+		vrele(tvp);
+	}
 	
 	/* Restore the additional mapped componentname cred structure. */
 
