@@ -1,4 +1,4 @@
-/*	$NetBSD: rdate.c,v 1.10 2000/02/05 22:14:20 kleink Exp $	*/
+/*	$NetBSD: rdate.c,v 1.10.4.1 2000/07/27 16:25:17 itojun Exp $	*/
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -39,7 +39,7 @@
  */
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: rdate.c,v 1.10 2000/02/05 22:14:20 kleink Exp $");
+__RCSID("$NetBSD: rdate.c,v 1.10.4.1 2000/07/27 16:25:17 itojun Exp $");
 #endif/* lint */
 
 #include <sys/types.h>
@@ -142,7 +142,7 @@ main(argc, argv)
 		break;
 	}
 	if (s < 0)
-		err(1, emsg);
+		err(1, "%s", emsg);
 
 	if (read(s, &tim, sizeof(time_t)) != sizeof(time_t))
 		err(1, "Could not read data");

@@ -1,4 +1,4 @@
-/*	$NetBSD: ypserv.c,v 1.10 1999/06/06 02:43:05 thorpej Exp $	*/
+/*	$NetBSD: ypserv.c,v 1.10.8.1 2000/07/27 16:25:18 itojun Exp $	*/
 
 /*
  * Copyright (c) 1994 Mats O Jansson <moj@stacken.kth.se>
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ypserv.c,v 1.10 1999/06/06 02:43:05 thorpej Exp $");
+__RCSID("$NetBSD: ypserv.c,v 1.10.8.1 2000/07/27 16:25:18 itojun Exp $");
 #endif
 
 #include <sys/types.h>
@@ -107,7 +107,7 @@ void _msgout(char* msg)
 	if (foreground && ! _rpcpmstart)
                 warnx("%s", msg);
         else
-                syslog(LOG_ERR, msg);
+                syslog(LOG_ERR, "%s", msg);
 }
 
 static void

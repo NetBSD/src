@@ -1,4 +1,4 @@
-/*	$NetBSD: traceroute6.c,v 1.11.2.1 2000/07/03 22:39:00 thorpej Exp $	*/
+/*	$NetBSD: traceroute6.c,v 1.11.2.2 2000/07/27 16:25:18 itojun Exp $	*/
 /*	$KAME: traceroute6.c,v 1.30 2000/06/30 18:56:01 itojun Exp $	*/
 
 /*
@@ -79,7 +79,7 @@ static char sccsid[] = "@(#)traceroute.c	8.1 (Berkeley) 6/6/93";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: traceroute6.c,v 1.11.2.1 2000/07/03 22:39:00 thorpej Exp $");
+__RCSID("$NetBSD: traceroute6.c,v 1.11.2.2 2000/07/27 16:25:18 itojun Exp $");
 #endif
 #endif
 
@@ -604,9 +604,9 @@ main(argc, argv)
 	 * turned off.
 	 */
 	if (setpolicy(rcvsock, "in bypass") < 0)
-		errx(1, ipsec_strerror());
+		errx(1, "%s", ipsec_strerror());
 	if (setpolicy(rcvsock, "out bypass") < 0)
-		errx(1, ipsec_strerror());
+		errx(1, "%s", ipsec_strerror());
 #else
     {
 	int level = IPSEC_LEVEL_NONE;
@@ -678,9 +678,9 @@ main(argc, argv)
 	 * turned off.
 	 */
 	if (setpolicy(sndsock, "in bypass") < 0)
-		errx(1, ipsec_strerror());
+		errx(1, "%s", ipsec_strerror());
 	if (setpolicy(sndsock, "out bypass") < 0)
-		errx(1, ipsec_strerror());
+		errx(1, "%s", ipsec_strerror());
 #else
     {
 	int level = IPSEC_LEVEL_BYPASS;
