@@ -1,4 +1,4 @@
-/*	$NetBSD: loadbsd.c,v 1.4 1995/04/16 14:47:58 leo Exp $	*/
+/*	$NetBSD: loadbsd.c,v 1.5 1995/05/02 05:54:28 leo Exp $	*/
 
 /*
  * Copyright (c) 1995 L. Weppelman
@@ -46,7 +46,7 @@ int	t_flag = 0;		/* Just test, do not execute	*/
 int	d_flag = 0;		/* Output debugging output?	*/
 int	s_flag = 0;		/* St-ram only			*/
 
-char version[] = "$Revision: 1.4 $";
+char version[] = "$Revision: 1.5 $";
 
 /*
  * Default name of kernel to boot, large enough to patch
@@ -90,7 +90,7 @@ char	**argv;
 
 	kparam.boothowto = RB_SINGLE;
 
-	while ((ch = getopt(argc, argv, "abdhstvDS:")) != EOF) {
+	while ((ch = getopt(argc, argv, "abdhstvDS:T:")) != EOF) {
 		switch(ch) {
 		case 'a':
 			kparam.boothowto &= ~(RB_SINGLE);
@@ -113,6 +113,9 @@ char	**argv;
 			break;
 		case 't':
 			t_flag = 1;
+			break;
+		case 'T':
+			kparam.ttmem_size = atoi(optarg);
 			break;
 		case 'v':
 			fprintf(stderr,"%s\r\n", version);
@@ -219,13 +222,17 @@ void get_sys_info()
 	if(kparam.stmem_size <= 0)
 		kparam.stmem_size  = *ADDR_PHYSTOP;
 
-	if(!s_flag && (*ADDR_CHKRAMTOP == RAM_TOP_MAGIC)) {
-		kparam.ttmem_size  = *ADDR_RAMTOP;
-		if(kparam.ttmem_size > TTRAM_BASE) {
-			kparam.ttmem_size  -= TTRAM_BASE;
-			kparam.ttmem_start  = TTRAM_BASE;
+	if(kparam.ttmem_size)
+		kparam.ttmem_start  = TTRAM_BASE;
+	else {
+		if(!s_flag && (*ADDR_CHKRAMTOP == RAM_TOP_MAGIC)) {
+			kparam.ttmem_size  = *ADDR_RAMTOP;
+			if(kparam.ttmem_size > TTRAM_BASE) {
+				kparam.ttmem_size  -= TTRAM_BASE;
+				kparam.ttmem_start  = TTRAM_BASE;
+			}
+			else kparam.ttmem_size = 0;
 		}
-		else kparam.ttmem_size = 0;
 	}
 
 	/*
@@ -318,6 +325,7 @@ Description of options:\r
 \t-h  What your getting right now.\r
 \t-s  Use only ST-compatible RAM\r
 \t-S  Set amount of ST-compatible RAM\r
+\t-T  Set amount of TT-compatible RAM\r
 \t-t  Test the loader. It will do everything except executing the\r
 \t    loaded kernel.\r
 \t-D  printout debugging information while loading\r
