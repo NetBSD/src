@@ -41,42 +41,75 @@
 #include "sys/param.h"
 #include "sys/conf.h"
 #include "sys/buf.h"
-#include "sys/vm.h"
 #include "sys/systm.h"
 #include "sys/reboot.h"
+
+#include "i386/isa/isa_device.h"
+
+#include "wd.h"
+#include "fd.h"
+#include "sd.h"
+#include "cd.h"
 
 /*
  * Generic configuration;  all in one
  */
-dev_t	rootdev = makedev(0,0);
-dev_t	dumpdev = makedev(0,1);
+dev_t	rootdev = NODEV;
+dev_t	argdev = NODEV;
+dev_t	dumpdev = NODEV;
 int	nswap;
 struct	swdevt swdevt[] = {
-	{ 1,	0,	0 },
-	{ 0,	1,	0 },
+	{ NODEV,	1,	0 },
+	{ 0,		0,	0 },
 };
 long	dumplo;
 int	dmmin, dmmax, dmtext;
 
-extern	struct driver wddriver;
+#if NWD > 0
+extern	struct driver wdcdriver;
+#endif
+#if NFD > 0
+extern	struct driver fdcdriver;
+#endif
+#if NSD > 0
+extern	struct driver sddriver;
+#endif
+#if NCD > 0
+extern	struct driver cddriver;
+#endif
 
 struct	genericconf {
 	caddr_t	gc_driver;
 	char	*gc_name;
 	dev_t	gc_root;
 } genericconf[] = {
-	{ (caddr_t)&wddriver,	"wd",	makedev(0, 0),	},
+#if NWD > 0
+	{ (caddr_t)&wdcdriver,	"wd",	makedev(0, 0),	},
+#endif
+#if NSD > 0
+	{ (caddr_t)&sddriver,	"sd",	makedev(4, 0),	},
+#endif
+#if NCD > 0
+	{ (caddr_t)&cddriver,	"cd",	makedev(6, 0),	},
+#endif
+#if NFD > 0
+	{ (caddr_t)&fdcdriver,	"fd",	makedev(2, 0),	},
+#endif
 	{ 0 },
 };
 
 setconf()
 {
-#ifdef notdef
 	register struct genericconf *gc;
 	int unit, swaponroot = 0;
+	struct isa_device *id;
 
 	if (rootdev != NODEV)
 		goto doswap;
+
+	if (genericconf[0].gc_driver == NULL)
+		goto verybad;
+
 	if (boothowto & RB_ASKNAME) {
 		char name[128];
 retry:
@@ -98,34 +131,42 @@ gotit:
 		}
 		printf("bad/missing unit number\n");
 bad:
-		printf("use dk%%d\n");
+		printf("use:\n");	
+		for (gc = genericconf; gc->gc_driver; gc++)
+			printf("\t%s%%d\n", gc->gc_name);
 		goto retry;
 	}
 	unit = 0;
 	for (gc = genericconf; gc->gc_driver; gc++) {
-		for (ui = vbdinit; ui->ui_driver; ui++) {
-			if (ui->ui_alive == 0)
+		for (id = isa_subdev; id->id_driver; id++) {
+			if (id->id_alive == 0)
 				continue;
-			if (ui->ui_unit == 0 && ui->ui_driver ==
-			    (struct vba_driver *)gc->gc_driver) {
+			if (id->id_unit == 0 && id->id_driver ==
+			    (struct isa_driver *)gc->gc_driver) {
 				printf("root on %s0\n",
-				    ui->ui_driver->ud_dname);
+				    gc->gc_name);
 				goto found;
 			}
 		}
 	}
-	printf("no suitable root\n");
-	asm("halt");
+verybad:
+	printf("no suitable root -- hit any key to reboot\n");
+	printf("\n>");						/* XXX */						/* XXX */						/* XXX */
+	cngetc();
+	cpu_reset();
+	for (;;) ;
+
 found:
+/*	printf("m/m was: %d/%d\n", major(gc->gc_root), minor(gc->gc_root));*/
 	gc->gc_root = makedev(major(gc->gc_root), unit*8);
 	rootdev = gc->gc_root;
+/*	printf("m/m is: %d/%d\n", major(gc->gc_root), minor(gc->gc_root));*/
 doswap:
 	swdevt[0].sw_dev = argdev = dumpdev =
 	    makedev(major(rootdev), minor(rootdev)+1);
 	/* swap size and dumplo set during autoconfigure */
 	if (swaponroot)
 		rootdev = dumpdev;
-#endif
 }
 
 gets(cp)
