@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.18 2002/02/28 01:58:53 uch Exp $	*/
+/*	$NetBSD: pmap.h,v 1.19 2002/03/03 14:31:24 uch Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -39,8 +39,8 @@
 #define _SH3_PMAP_H_
 
 #include <sh3/cache.h>
-#include <machine/cpufunc.h>
-#include <machine/pte.h>
+#include <sh3/psl.h>
+#include <sh3/pte.h>
 #include <uvm/uvm_object.h>
 
 /*

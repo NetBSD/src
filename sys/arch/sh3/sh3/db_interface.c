@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.11 2002/03/02 22:26:27 uch Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.12 2002/03/03 14:31:27 uch Exp $	*/
 
 /*-
  * Copyright (C) 2002 UCHIYAMA Yasushi.  All rights reserved.
@@ -37,7 +37,6 @@
 
 #include <dev/cons.h>
 
-#include <machine/cpufunc.h>
 #include <machine/db_machdep.h>
 #include <ddb/db_run.h>
 
