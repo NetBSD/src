@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.40 2004/02/17 22:03:52 matt Exp $	*/
+/*	$NetBSD: cpu.h,v 1.41 2004/06/06 10:45:06 kleink Exp $	*/
 
 /*
  * Copyright (C) 1999 Wolfgang Solfrank.
@@ -242,7 +242,7 @@ mfrtc(uint32_t *rtcp)
 "	mfrtcu	%2	\n"
 "	cmplw	%0,%2	\n"
 "	bne-	1b"
-	    : "=r"(*rtcp), "=r"(*(rtcp + 1)), "=r"(tmp));
+	    : "=r"(*rtcp), "=r"(*(rtcp + 1)), "=r"(tmp) :: "cr0");
 }
 
 static __inline uint32_t
