@@ -125,7 +125,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: psparse.c,v 1.9 2003/12/13 18:11:01 kochi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: psparse.c,v 1.10 2003/12/21 07:53:57 kochi Exp $");
 
 #include "acpi.h"
 #include "acparser.h"
@@ -1214,6 +1214,10 @@ AcpiPsParseAml (
     ACPI_THREAD_STATE       *Thread;
     ACPI_THREAD_STATE       *PrevWalkList = AcpiGbl_CurrentWalkList;
     ACPI_WALK_STATE         *PreviousWalkState;
+#ifndef ACPICA_PEDANTIC
+    ACPI_OPERAND_OBJECT     **CallerReturnDesc = WalkState->CallerReturnDesc;
+    ACPI_OPERAND_OBJECT     *EffectiveReturnDesc = NULL;
+#endif
 
 
     ACPI_FUNCTION_TRACE ("PsParseAml");
@@ -1290,6 +1294,17 @@ AcpiPsParseAml (
 
         WalkState = AcpiDsPopWalkState (Thread);
 
+#ifndef ACPICA_PEDANTIC
+        /* Save the last effective return value */
+
+        if (CallerReturnDesc && WalkState->ReturnDesc)
+        {
+            AcpiUtRemoveReference (EffectiveReturnDesc);
+            EffectiveReturnDesc = WalkState->ReturnDesc;
+            AcpiUtAddReference (EffectiveReturnDesc);
+        }
+#endif
+
         /* Reset the current scope to the beginning of scope stack */
 
         AcpiDsScopeStackClear (WalkState);
@@ -1352,6 +1367,19 @@ AcpiPsParseAml (
          */
         else if (PreviousWalkState->CallerReturnDesc)
         {
+#ifndef ACPICA_PEDANTIC
+            /*
+             * Some AML code expects a return value without a ReturnOp.
+             * Return the saved effective return value instead.
+             */
+
+            if (PreviousWalkState->ReturnDesc == NULL && EffectiveReturnDesc != NULL)
+            {
+                PreviousWalkState->ReturnDesc = EffectiveReturnDesc;
+                AcpiUtAddReference (PreviousWalkState->ReturnDesc);
+            }
+#endif
+
             *(PreviousWalkState->CallerReturnDesc) = PreviousWalkState->ReturnDesc; /* NULL if no return value */
         }
         else if (PreviousWalkState->ReturnDesc)
@@ -1366,6 +1394,9 @@ AcpiPsParseAml (
 
     /* Normal exit */
 
+#ifndef ACPICA_PEDANTIC
+    AcpiUtRemoveReference (EffectiveReturnDesc);
+#endif
     AcpiExReleaseAllMutexes (Thread);
     AcpiUtDeleteGenericState (ACPI_CAST_PTR (ACPI_GENERIC_STATE, Thread));
     AcpiGbl_CurrentWalkList = PrevWalkList;
