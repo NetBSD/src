@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.61.2.18 2001/04/06 11:17:14 he Exp $
+.\"	$NetBSD: main,v 1.61.2.19 2001/04/06 11:34:01 he Exp $
 .\"
 .\" Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -255,6 +255,10 @@ about 10%.
 The DHCP software has been upgraded to ISC version 3, Beta 2, patchlevel 23,
 to fix among many other things core dumps in
 .Xr dhclient 8 .
+Please note that the new
+.Xr dhcpd 8
+forces you to configure a "ddns-update-style" of either
+"ad-hoc", "interim" or "none".
 .It
 Various fixes and enhancements to INET6 and IPSEC code;
 among them improved interaction between IPF/Nat and IPSEC.
