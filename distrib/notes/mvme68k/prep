@@ -1,4 +1,4 @@
-.\"	$NetBSD: prep,v 1.12 2002/04/05 21:12:21 scw Exp $
+.\"	$NetBSD: prep,v 1.13 2002/06/30 00:46:49 lukem Exp $
 .
 \*M machines usually need little or no preparation before installing
 .Nx ,
@@ -43,7 +43,8 @@ Once you've made any necessary jumper changes,
 the following instructions should make your machine
 .Dq NetBSD Ready .
 .Pp
-Power-up your MVME147 board. You should have the
+Power-up your MVME147 board.
+You should have the
 .Em bug No prompt:
 .(disp
 COLD Start
@@ -82,14 +83,17 @@ Also make sure the clock is ticking:
 Note that
 .Nx
 bases its year at 1968, and adds the year offset in
-the system's real-time clock to get the current year. So the
+the system's real-time clock to get the current year.
+So the
 .Li 31
 here
-equates to 1999. You may have to adjust your clock using the
+equates to 1999.
+You may have to adjust your clock using the
 .Ic set
 command to comply with
 .Nx "" 's
-requirements. Don't worry if the
+requirements.
+Don't worry if the
 .Sq Day of the week
 is not correct, as
 .Nx
@@ -101,7 +105,8 @@ doesn't get set correctly by the 147Bug PROM.
 .Nx "" !
 .Pp
 Also make sure that your board's ethernet address is initialised to
-the correct value. You'll find the address on a label on the inside of
+the correct value.
+You'll find the address on a label on the inside of
 the MVME147's front panel, and on the VMEbus P2 connector of the other
 board types.
 On the
@@ -109,7 +114,8 @@ On the
 enter the last five digits of the address
 using the
 .Ic lsad
-command. On the MVME162/172 and MVME167/177, you should use the
+command.
+On the MVME162/172 and MVME167/177, you should use the
 .Ic cnfg
 command.
 .Pp
@@ -157,25 +163,28 @@ Also note that, for various reasons beyond the scope of this document,
 VMEbus RAM should be configured in A32 address space.
 .Pp
 To install successfully to a local SCSI disk, you need to ensure that
-the system is aware of what targets are connected to the SCSI bus. This
-can be done by issuing the following command:
+the system is aware of what targets are connected to the SCSI bus.
+This can be done by issuing the following command:
 .Pp
 .Dl 1xx-Bug\*> Ic iot;t
 .Pp
-At this point, Bug will scan for any attached SCSI devices. After
-a short delay, a list of SCSI devices will be displayed. 147Bug will
-ask if LUNs should be assigned from SCSI ids, to which you should
-answer Y. You should also answer Y when asked if the information is
-to be saved to NVRAM. 16xBug does not prompt for this information.
+At this point, Bug will scan for any attached SCSI devices.
+After a short delay, a list of SCSI devices will be displayed.
+147Bug will ask if LUNs should be assigned from SCSI ids, to which you should
+answer Y.
+You should also answer Y when asked if the information is
+to be saved to NVRAM.
+16xBug does not prompt for this information.
 .Pp
 The following installation instructions will assume that your target
-SCSI disk drive appears at SCSI-ID 0. If you have a tape drive, the
-instructions assume is is configured for SCSI-ID 5. When the RAMDISK
-root boots,
+SCSI disk drive appears at SCSI-ID 0.
+If you have a tape drive, the instructions assume is is configured
+for SCSI-ID 5.
+When the RAMDISK root boots,
 .Nx
 will refer to these devices as
 .Li sd0
 and
 .Li rst0
-respectively. You may wish to note these down; you'll be using them
-a lot. :-)
+respectively.
+You may wish to note these down; you'll be using them a lot. :-)
