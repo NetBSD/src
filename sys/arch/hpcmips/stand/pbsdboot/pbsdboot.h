@@ -1,4 +1,4 @@
-/*	$NetBSD: pbsdboot.h,v 1.8 2000/03/19 11:10:58 takemura Exp $	*/
+/*	$NetBSD: pbsdboot.h,v 1.9 2000/06/04 04:30:49 takemura Exp $	*/
 
 /*-
  * Copyright (c) 1999 Shin Takemura.
@@ -43,6 +43,7 @@
 extern TCHAR szAppName[ ];
 #define whoami szAppName
 #define PREFNAME TEXT("pbsdboot.ini")
+#define LOGNAME TEXT("pbsdboot.log")
 #define PATHBUFLEN 200
 
 
@@ -153,6 +154,10 @@ int pbsdboot(TCHAR*, int argc, char *argv[], struct bootinfo *bi);
  */
 int debug_printf(LPWSTR lpszFmt, ...);
 int msg_printf(UINT type, LPWSTR caption, LPWSTR lpszFmt, ...);
+int stat_printf(LPWSTR lpszFmt, ...);
+int set_debug_log(TCHAR* path);
+void close_debug_log(void);
+
 
 #define	MSG_ERROR	(MB_OK | MB_ICONERROR)
 #define MSG_INFO	(MB_OK | MB_ICONINFORMATION)

@@ -1,10 +1,12 @@
-#	$NetBSD: Makefile,v 1.3 2000/03/19 11:10:57 takemura Exp $
+#	$NetBSD: Makefile,v 1.4 2000/06/04 04:30:48 takemura Exp $
 
-all: pbsdboot.exe
+all: pbsdboot.exe pbsdboot1.exe
 
 pbsdboot.exe: pbsdboot.uu
 	uudecode pbsdboot.uu
 	chmod 755 pbsdboot.exe
+
+pbsdboot1.exe: pbsdboot1.uu
 	uudecode pbsdboot1.uu
 	chmod 755 pbsdboot1.exe
 
