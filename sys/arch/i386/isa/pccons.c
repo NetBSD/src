@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)pccons.c	5.11 (Berkeley) 5/21/91
- *	$Id: pccons.c,v 1.56 1994/03/03 19:11:59 mycroft Exp $
+ *	$Id: pccons.c,v 1.57 1994/03/03 19:28:04 mycroft Exp $
  */
 
 /*
@@ -158,7 +158,7 @@ kbd_wait()
 	return 0;
 }
 
-#if 0
+#if 1
 /*
  * Get the current command byte.
  */
@@ -339,7 +339,7 @@ pcprobe(dev)
 		return 0;
 	}
 
-#if 0
+#if 1
 	/* Flush any garbage. */
 	while (inb(KBSTATP) & KBS_DIB)
 		(void) inb(KBDATAP);
@@ -353,15 +353,32 @@ pcprobe(dev)
 		printf("pcprobe: reset error %d\n", 2);
 		goto lose;
 	}
-	/* Flush any garbage. */
+	/*
+	 * Some keyboards seem to leave a second ack byte after the reset.
+	 * This is kind of stupid, but we account for them anyway by just
+	 * flushing the buffer.
+	 */
 	while (inb(KBSTATP) & KBS_DIB)
 		(void) inb(KBDATAP);
-	/* Just to be safe. */
+	/* Just to be sure. */
 	if (!kbd_cmd(KBC_ENABLE, 1)) {
 		printf("pcprobe: reset error %d\n", 3);
 		goto lose;
 	}
 
+	/*
+	 * Some keyboard/8042 combinations do not seem to work if the keyboard
+	 * is set to table 1; in fact, it would appear that some keyboards just
+	 * ignore the command altogether.  So by default, we use the AT scan
+	 * codes and have the 8042 translate them.  Unfortunately, this is
+	 * known to not work on some PS/2 machines.  We try desparately to deal
+	 * with this by checking the (lack of a) translate bit in the 8042 and
+	 * attempting to set the keyboard to XT mode.  If this all fails, well,
+	 * tough luck.
+	 *
+	 * XXX It would perhaps be a better choice to just use AT scan codes
+	 * and not bother with this.
+	 */
 	if (kbc_get8042cmd() & KC8_TRANS) {
 		/* The 8042 is translating for us; use AT codes. */
 		if (!kbd_cmd(KBC_SETTABLE, 1) || !kbd_cmd(2, 1)) {
