@@ -38,7 +38,7 @@
  * from: Utah $Hdr: machdep.c 1.63 91/04/24$
  *
  *	@(#)machdep.c	7.16 (Berkeley) 6/3/91
- *	$Id: machdep.c,v 1.14 1994/03/30 17:24:08 chopps Exp $
+ *	$Id: machdep.c,v 1.15 1994/04/05 18:09:02 chopps Exp $
  */
 
 #include <sys/param.h>
@@ -1392,15 +1392,17 @@ intrhand(sr)
 	{
 	  ser_outintr ();
 	}
-
+      if (ireq & INTF_DSKBLK)
+	{
+	  fpintr(0);
+	  custom.intreq = INTF_DSKBLK;
+	}
       if (ireq & INTF_SOFTINT)
 	{
 	  /* first call installed callbacks, then clear the softint-bit */
 	  call_sicallbacks ();
 	  custom.intreq = INTF_SOFTINT;
 	}
-
-      custom.intreq = INTF_DSKBLK;
       break;
 
     case 2:

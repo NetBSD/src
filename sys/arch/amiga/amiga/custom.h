@@ -27,7 +27,7 @@
  * on the Hardware Reference Manual.  It is NOT based on the Amiga's
  * hardware/custom.h.
  *
- *	$Id: custom.h,v 1.5 1994/02/11 06:59:34 chopps Exp $
+ *	$Id: custom.h,v 1.6 1994/04/05 18:09:00 chopps Exp $
  */
 
 #ifndef _amiga_custom_
@@ -286,6 +286,23 @@ extern volatile struct Custom *CUSTOMbase;
 #define INTF_DSKBLK     (1<<INTB_DSKBLK)
 #define INTF_TBE        (1<<INTB_TBE)
 
+/* Bit definitions for adkcon, adkconr */
+#define ADKB_SETCLR   15
+#define ADKB_PRECOMP1 14
+#define ADKB_PRECOMP0 13
+#define ADKB_MFMPREC  12
+#define ADKB_UARTBRK  11
+#define ADKB_WORDSYNC 10
+#define ADKB_MSBSYNC  9
+#define ADKB_FAST     8
 
+#define ADKF_SETCLR     (1<<ADKB_SETCLR)
+#define ADKF_PRECOMP1 (1<<ADKB_PRECOMP1)
+#define ADKF_PRECOMP0 (1<<ADKB_PRECOMP0)
+#define ADKF_MFMPREC  (1<<ADKB_MFMPREC)
+#define ADKF_UARTBRK  (1<<ADKB_UARTBRK)
+#define ADKF_WORDSYNC (1<<ADKB_WORDSYNC)
+#define ADKF_MSBSYNC  (1<<ADKB_MSBSYNC)
+#define ADKF_FAST     (1<<ADKB_FAST)
 
 #endif /* _machine_custom_ */
