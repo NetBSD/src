@@ -1,4 +1,4 @@
-/*	$NetBSD: mbr.h,v 1.4 1999/03/31 00:44:48 fvdl Exp $	*/
+/*	$NetBSD: mbr.h,v 1.4.2.1 1999/04/05 15:08:40 simonb Exp $	*/
 
 /*
  * Copyright 1997, 1988 Piermont Information Systems Inc.
@@ -71,6 +71,7 @@ void	set_fdisk_geom __P((void));	/* edit incore BIOS geometry */
 void	disp_cur_geom __P((void));
 int	check_geom __P((void));		/* primitive geometry sanity-check */
 
+void	disp_cur_part __P((struct mbr_partition *, int, int));
 int	edit_mbr __P((struct mbr_partition *));		
 int 	partsoverlap __P((struct mbr_partition *, int, int));
 
