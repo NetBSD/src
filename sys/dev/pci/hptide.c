@@ -1,4 +1,4 @@
-/*	$NetBSD: hptide.c,v 1.9 2004/01/03 22:56:53 thorpej Exp $	*/
+/*	$NetBSD: hptide.c,v 1.9.2.1 2004/08/11 19:46:13 jmc Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Manuel Bouyer.
@@ -236,6 +236,9 @@ hpt_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 		} else {
 			pciide_mapregs_compat(pa, cp, compatchan,
 			    &cmdsize, &ctlsize);
+			if ((cp->wdc_channel.ch_flags & WDCF_DISABLED) == 0)
+				pciide_map_compat_intr(pa, cp,
+				    sc->sc_cy_compatchan);
 		}
 		wdcattach(&cp->wdc_channel);
 	}
