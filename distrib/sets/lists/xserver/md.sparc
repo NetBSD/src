@@ -1,21 +1,17 @@
-# $NetBSD: md.sparc,v 1.11 2004/01/08 06:34:48 rtr Exp $
+# $NetBSD: md.sparc,v 1.12 2004/01/09 16:22:12 rtr Exp $
 ./usr/X11R6/bin/X
 ./usr/X11R6/bin/Xnest
 ./usr/X11R6/bin/Xsun
 ./usr/X11R6/bin/Xsun24
 ./usr/X11R6/bin/XsunMono
 ./usr/X11R6/bin/Xvfb
-./usr/X11R6/bin/xvidtune
-./usr/X11R6/lib/X11/app-defaults/Xvidtune
 ./usr/X11R6/man/cat1/Xnest.0
 ./usr/X11R6/man/cat1/Xsun.0
 ./usr/X11R6/man/cat1/Xsun24.0
 ./usr/X11R6/man/cat1/XsunMono.0
 ./usr/X11R6/man/cat1/Xvfb.0
-./usr/X11R6/man/cat1/xvidtune.0
 ./usr/X11R6/man/man1/Xnest.1
 ./usr/X11R6/man/man1/Xsun.1
 ./usr/X11R6/man/man1/Xsun24.1
 ./usr/X11R6/man/man1/XsunMono.1
 ./usr/X11R6/man/man1/Xvfb.1
-./usr/X11R6/man/man1/xvidtune.1
