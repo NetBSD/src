@@ -1,4 +1,4 @@
-/*	$NetBSD: pci.c,v 1.80.2.1 2004/08/03 10:49:10 skrll Exp $	*/
+/*	$NetBSD: pci.c,v 1.80.2.2 2004/08/25 06:58:06 skrll Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997, 1998
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci.c,v 1.80.2.1 2004/08/03 10:49:10 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci.c,v 1.80.2.2 2004/08/25 06:58:06 skrll Exp $");
 
 #include "opt_pci.h"
 
@@ -60,17 +60,20 @@ int pci_config_dump = 0;
 
 int pcimatch __P((struct device *, struct cfdata *, void *));
 void pciattach __P((struct device *, struct device *, void *));
+int pcirescan(struct device *, const char *, const int *);
+void pcidevdetached(struct device *, struct device *);
 
-CFATTACH_DECL(pci, sizeof(struct pci_softc),
-    pcimatch, pciattach, NULL, NULL);
+CFATTACH_DECL2(pci, sizeof(struct pci_softc),
+    pcimatch, pciattach, NULL, NULL, pcirescan, pcidevdetached);
 
 int	pciprint __P((void *, const char *));
-int	pcisubmatch __P((struct device *, struct cfdata *, void *));
+int	pcisubmatch __P((struct device *, struct cfdata *,
+			 const locdesc_t *, void *));
 
 #ifdef PCI_MACHDEP_ENUMERATE_BUS
 #define pci_enumerate_bus PCI_MACHDEP_ENUMERATE_BUS
 #else
-int pci_enumerate_bus(struct pci_softc *,
+int pci_enumerate_bus(struct pci_softc *, const int *,
     int (*)(struct pci_attach_args *), struct pci_attach_args *);
 #endif
 
@@ -136,6 +139,8 @@ pciattach(parent, self, aux)
 	struct pci_softc *sc = (struct pci_softc *)self;
 	int io_enabled, mem_enabled, mrl_enabled, mrm_enabled, mwi_enabled;
 	const char *sep = "";
+	static const int wildcard[2] = { PCICF_DEV_DEFAULT,
+					 PCICF_FUNCTION_DEFAULT };
 
 	pci_attach_hook(parent, self, pba);
 
@@ -192,7 +197,18 @@ do {									\
 	sc->sc_intrswiz = pba->pba_intrswiz;
 	sc->sc_intrtag = pba->pba_intrtag;
 	sc->sc_flags = pba->pba_flags;
-	pci_enumerate_bus(sc, NULL, NULL);
+	pcirescan(&sc->sc_dev, "pci", wildcard);
+}
+
+int
+pcirescan(struct device *sc, const char *ifattr, const int *locators)
+{
+
+	KASSERT(ifattr && !strcmp(ifattr, "pci"));
+	KASSERT(locators);
+
+	pci_enumerate_bus((struct pci_softc *)sc, locators, NULL, NULL);
+	return (0);
 }
 
 int
@@ -246,18 +262,15 @@ pciprint(aux, pnp)
 }
 
 int
-pcisubmatch(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+pcisubmatch(struct device *parent, struct cfdata *cf,
+	    const locdesc_t *ldesc, void *aux)
 {
-	struct pci_attach_args *pa = aux;
 
 	if (cf->pcicf_dev != PCI_UNK_DEV &&
-	    cf->pcicf_dev != pa->pa_device)
+	    cf->pcicf_dev != ldesc->locs[PCICF_DEV])
 		return (0);
 	if (cf->pcicf_function != PCI_UNK_FUNCTION &&
-	    cf->pcicf_function != pa->pa_function)
+	    cf->pcicf_function != ldesc->locs[PCICF_FUNCTION])
 		return (0);
 	return (config_match(parent, cf, aux));
 }
@@ -270,8 +283,15 @@ pci_probe_device(struct pci_softc *sc, pcitag_t tag,
 	struct pci_attach_args pa;
 	pcireg_t id, csr, class, intr, bhlcr;
 	int ret, pin, bus, device, function;
+	int help[3];
+	locdesc_t *ldp = (void *)&help; /* XXX XXX */
+	struct device *subdev;
 
 	pci_decompose_tag(pc, tag, &bus, &device, &function);
+
+	/* a driver already attached? */
+	if (sc->PCI_SC_DEVICESC(device, function) && !match)
+		return (0);
 
 	bhlcr = pci_conf_read(pc, tag, PCI_BHLC_REG);
 	if (PCI_HDRTYPE_TYPE(bhlcr) > 2)
@@ -348,11 +368,32 @@ pci_probe_device(struct pci_softc *sc, pcitag_t tag,
 		if (ret != 0 && pap != NULL)
 			*pap = pa;
 	} else {
-		ret = config_found_sm(&sc->sc_dev, &pa, pciprint,
-		    pcisubmatch) != NULL;
+		ldp->len = 2;
+		ldp->locs[PCICF_DEV] = device;
+		ldp->locs[PCICF_FUNCTION] = function;
+
+		subdev = config_found_sm_loc(&sc->sc_dev, "pci", ldp, &pa,
+					     pciprint, pcisubmatch);
+		sc->PCI_SC_DEVICESC(device, function) = subdev;
+		ret = (subdev != NULL);
 	}
 
 	return (ret);
+}
+
+void
+pcidevdetached(struct device *sc, struct device *dev)
+{
+	struct pci_softc *psc = (struct pci_softc *)sc;
+	int d, f;
+
+	KASSERT(dev->dv_locators);
+	d = dev->dv_locators[PCICF_DEV];
+	f = dev->dv_locators[PCICF_FUNCTION];
+
+	KASSERT(psc->PCI_SC_DEVICESC(d, f) == dev);
+
+	psc->PCI_SC_DEVICESC(d, f) = 0;
 }
 
 int
@@ -410,11 +451,15 @@ pci_find_device(struct pci_attach_args *pa,
 	extern struct cfdriver pci_cd;
 	struct device *pcidev;
 	int i;
+	static const int wildcard[2] = {
+		PCICF_DEV_DEFAULT,
+		PCICF_FUNCTION_DEFAULT
+	};
 
 	for (i = 0; i < pci_cd.cd_ndevs; i++) {
 		pcidev = pci_cd.cd_devs[i];
 		if (pcidev != NULL &&
-		    pci_enumerate_bus((struct pci_softc *) pcidev,
+		    pci_enumerate_bus((struct pci_softc *)pcidev, wildcard,
 		    		      match, pa) != 0)
 			return (1);
 	}
@@ -427,7 +472,7 @@ pci_find_device(struct pci_attach_args *pa,
  * code needs to provide something else.
  */
 int
-pci_enumerate_bus(struct pci_softc *sc,
+pci_enumerate_bus(struct pci_softc *sc, const int *locators,
     int (*match)(struct pci_attach_args *), struct pci_attach_args *pap)
 {
 	pci_chipset_tag_t pc = sc->sc_pc;
@@ -447,6 +492,10 @@ pci_enumerate_bus(struct pci_softc *sc,
 	for (device = 0; device < sc->sc_maxndevs; device++)
 #endif
 	{
+		if ((locators[PCICF_DEV] != PCICF_DEV_DEFAULT) &&
+		    (locators[PCICF_DEV] != device))
+			continue;
+
 		tag = pci_make_tag(pc, sc->sc_bus, device, 0);
 
 		bhlcr = pci_conf_read(pc, tag, PCI_BHLC_REG);
@@ -474,6 +523,10 @@ pci_enumerate_bus(struct pci_softc *sc,
 			nfunctions = PCI_HDRTYPE_MULTIFN(bhlcr) ? 8 : 1;
 
 		for (function = 0; function < nfunctions; function++) {
+			if ((locators[PCICF_FUNCTION] != PCICF_FUNCTION_DEFAULT)
+			    && (locators[PCICF_FUNCTION] != function))
+				continue;
+
 			if (qd != NULL &&
 			    (qd->quirks & PCI_QUIRK_SKIP_FUNC(function)) != 0)
 				continue;

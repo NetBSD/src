@@ -1,4 +1,4 @@
-/*	$NetBSD: pcmciavar.h,v 1.17.6.2 2004/08/12 11:42:05 skrll Exp $	*/
+/*	$NetBSD: pcmciavar.h,v 1.17.6.3 2004/08/25 06:58:43 skrll Exp $	*/
 
 /*
  * Copyright (c) 1997 Marc Horowitz.  All rights reserved.
@@ -147,9 +147,8 @@ struct pcmcia_function {
 #define	pf_ccr_realsize	pf_pcmh.realsize
 	bus_size_t	pf_ccr_offset;
 	int		pf_ccr_window;
-	bus_addr_t	pf_mfc_iobase[2];
-	bus_size_t	pf_mfc_iomask;
-	int		pf_mfc_windows;
+	bus_addr_t	pf_mfc_iobase;
+	bus_addr_t	pf_mfc_iomax;
 	void		*pf_ih;
 	int		pf_flags;
 
@@ -161,6 +160,7 @@ struct pcmcia_function {
 
 /* pf_flags */
 #define	PFF_ENABLED	0x0001		/* function is enabled */
+#define	PFF_DETACHED	0x0002		/* card is detached */
 
 SIMPLEQ_HEAD(pcmcia_function_head, pcmcia_function);
 
@@ -289,7 +289,7 @@ void	pcmcia_ccr_write __P((struct pcmcia_function *, int, int));
 
 void	pcmcia_socket_enable __P((struct device *));
 void	pcmcia_socket_disable __P((struct device *));
-void	pcmcia_socket_settype __P((struct device *));
+void	pcmcia_socket_settype __P((struct device *, int));
 
 int	pcmcia_config_alloc __P((struct pcmcia_function *,
 	    struct pcmcia_config_entry *));

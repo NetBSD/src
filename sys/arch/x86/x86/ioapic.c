@@ -1,4 +1,4 @@
-/* 	$NetBSD: ioapic.c,v 1.6.2.1 2004/08/03 10:43:05 skrll Exp $	*/
+/* 	$NetBSD: ioapic.c,v 1.6.2.2 2004/08/25 06:57:20 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ioapic.c,v 1.6.2.1 2004/08/03 10:43:05 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ioapic.c,v 1.6.2.2 2004/08/25 06:57:20 skrll Exp $");
 
 #include "opt_ddb.h"
 
@@ -235,8 +235,13 @@ ioapic_find_bybase(int vec)
 static __inline void
 ioapic_add(struct ioapic_softc *sc)
 {
-	sc->sc_next = ioapics;
-	ioapics = sc;
+	struct ioapic_softc **scp;
+
+	sc->sc_next = NULL;
+
+	for (scp = &ioapics; *scp != NULL; scp = &(*scp)->sc_next)
+		;
+	*scp = sc;
 	nioapics++;
 }
 

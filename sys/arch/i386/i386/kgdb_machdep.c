@@ -1,4 +1,4 @@
-/*	$NetBSD: kgdb_machdep.c,v 1.12 2001/11/15 07:03:29 lukem Exp $	*/
+/*	$NetBSD: kgdb_machdep.c,v 1.12.18.1 2004/08/25 06:57:19 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -68,14 +68,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kgdb_machdep.c,v 1.12 2001/11/15 07:03:29 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kgdb_machdep.c,v 1.12.18.1 2004/08/25 06:57:19 skrll Exp $");
 
 #include "opt_ddb.h"
 #include "opt_largepages.h"
-
-#if defined(DDB)
-#error "Can't build DDB and KGDB together."
-#endif
 
 /*
  * Machine-dependent functions for remote KGDB.  Originally written

@@ -1,4 +1,4 @@
-/*	$NetBSD: rapide.c,v 1.8.2.1 2004/08/03 10:30:56 skrll Exp $	*/
+/*	$NetBSD: rapide.c,v 1.8.2.2 2004/08/25 06:57:17 skrll Exp $	*/
 
 /*
  * Copyright (c) 1997-1998 Mark Brinicombe
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rapide.c,v 1.8.2.1 2004/08/03 10:30:56 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rapide.c,v 1.8.2.2 2004/08/25 06:57:17 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -110,7 +110,7 @@ __KERNEL_RCSID(0, "$NetBSD: rapide.c,v 1.8.2.1 2004/08/03 10:30:56 skrll Exp $")
 
 struct rapide_softc {
 	struct wdc_softc	sc_wdcdev;	/* common wdc definitions */
-	struct wdc_channel	*wdc_chanarray[2]; /* channels definition */
+	struct ata_channel	*sc_chanarray[2]; /* channels definition */
 	podule_t 		*sc_podule;		/* Our podule info */
 	int 			sc_podule_number;	/* Our podule number */
 	int			sc_intr_enable_mask;	/* Global intr mask */
@@ -118,11 +118,12 @@ struct rapide_softc {
 	bus_space_tag_t		sc_ctliot;		/* Bus tag */
 	bus_space_handle_t	sc_ctlioh;		/* control handler */
 	struct rapide_channel {
-		struct wdc_channel wdc_channel;	/* generic part */
-		struct ata_queue wdc_chqueue;		/* channel queue */
+		struct ata_channel rc_channel;	/* generic part */
+		struct ata_queue rc_chqueue;		/* channel queue */
 		irqhandler_t	rc_ih;			/* interrupt handler */
 		int		rc_irqmask;	/* IRQ mask for this channel */
 	} rapide_channels[2];
+	struct wdc_regs sc_wdc_regs[2];
 };
 
 int	rapide_probe	__P((struct device *, struct cfdata *, void *));
@@ -200,7 +201,8 @@ rapide_attach(parent, self, aux)
 	u_int iobase;
 	int channel, i;
 	struct rapide_channel *rcp;
-	struct wdc_channel *cp;
+	struct ata_channel *cp;
+	struct wdc_regs *wdr;
 	irqhandler_t *ihp;
 
 	/* Note the podule number and validate */
@@ -210,6 +212,8 @@ rapide_attach(parent, self, aux)
 	sc->sc_podule_number = pa->pa_podule_number;
 	sc->sc_podule = pa->pa_podule;
 	podules[sc->sc_podule_number].attached = 1;
+
+	sc->sc_wdcdev.regs = sc->sc_wdc_regs;
 
 	set_easi_cycle_type(sc->sc_podule_number, EASI_CYCLE_TYPE_C);
 
@@ -246,45 +250,46 @@ rapide_attach(parent, self, aux)
 	iobase = pa->pa_podule->easi_base;
 
 	/* Fill in wdc and channel infos */
-	sc->sc_wdcdev.cap |= WDC_CAPABILITY_DATA32;
-	sc->sc_wdcdev.PIO_cap = 0;
-	sc->sc_wdcdev.channels = sc->wdc_chanarray;
-	sc->sc_wdcdev.nchannels = 2;
+	sc->sc_wdcdev.sc_atac.atac_cap |= ATAC_CAP_DATA32;
+	sc->sc_wdcdev.sc_atac.atac_pio_cap = 0;
+	sc->sc_wdcdev.sc_atac.atac_channels = sc->sc_chanarray;
+	sc->sc_wdcdev.sc_atac.atac_nchannels = 2;
 	for (channel = 0 ; channel < 2; channel++) {
 		rcp = &sc->rapide_channels[channel];
-		sc->wdc_chanarray[channel] = &rcp->wdc_channel;
-		cp = &rcp->wdc_channel;
+		sc->sc_chanarray[channel] = &rcp->rc_channel;
+		cp = &rcp->rc_channel;
+		wdr = &sc->sc_wdc_regs[channel];
 
 		cp->ch_channel = channel;
-		cp->ch_wdc = &sc->sc_wdcdev;
-		cp->ch_queue = &rcp->wdc_chqueue;
-		cp->cmd_iot = iot;
-		cp->ctl_iot = iot;
-		cp->data32iot = iot;
+		cp->ch_atac = &sc->sc_wdcdev.sc_atac;
+		cp->ch_queue = &rcp->rc_chqueue;
+		wdr->cmd_iot = iot;
+		wdr->ctl_iot = iot;
+		wdr->data32iot = iot;
 
 		if (bus_space_map(iot, iobase + rapide_info[channel].registers,
-		    DRIVE_REGISTERS_SPACE, 0, &cp->cmd_baseioh))
+		    DRIVE_REGISTERS_SPACE, 0, &wdr->cmd_baseioh))
 			continue;
 		for (i = 0; i < DRIVE_REGISTERS_SPACE; i++) {
-			if (bus_space_subregion(cp->cmd_iot, cp->cmd_baseioh,
-				i, i == 0 ? 4 : 1, &cp->cmd_iohs[i]) != 0) {
-				bus_space_unmap(iot, cp->cmd_baseioh,
+			if (bus_space_subregion(wdr->cmd_iot, wdr->cmd_baseioh,
+				i, i == 0 ? 4 : 1, &wdr->cmd_iohs[i]) != 0) {
+				bus_space_unmap(iot, wdr->cmd_baseioh,
 				    DRIVE_REGISTERS_SPACE);
 				continue;
 			}
 		}
 		wdc_init_shadow_regs(cp);
 		if (bus_space_map(iot, iobase +
-		    rapide_info[channel].aux_register, 4, 0, &cp->ctl_ioh)) {
-			bus_space_unmap(iot, cp->cmd_baseioh,
+		    rapide_info[channel].aux_register, 4, 0, &wdr->ctl_ioh)) {
+			bus_space_unmap(iot, wdr->cmd_baseioh,
 			   DRIVE_REGISTERS_SPACE);
 			continue;
 		}
 		if (bus_space_map(iot, iobase +
-		    rapide_info[channel].data_register, 4, 0, &cp->data32ioh)) {
-			bus_space_unmap(iot, cp->cmd_baseioh,
+		    rapide_info[channel].data_register, 4, 0, &wdr->data32ioh)) {
+			bus_space_unmap(iot, wdr->cmd_baseioh,
 			   DRIVE_REGISTERS_SPACE);
-			bus_space_unmap(iot, cp->ctl_ioh, 4);
+			bus_space_unmap(iot, wdr->ctl_ioh, 4);
 			continue;
 		}
 		/* Disable interrupts and clear any pending interrupts */
@@ -348,7 +353,7 @@ rapide_intr(arg)
 
 	/* XXX - not bus space yet - should really be handled by podulebus */
 	if ((*intraddr) & ihp->ih_maskbits)
-		wdcintr(&rcp->wdc_channel);
+		wdcintr(&rcp->rc_channel);
 
 	return(0);
 }

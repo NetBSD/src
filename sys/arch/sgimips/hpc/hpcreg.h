@@ -1,4 +1,4 @@
-/*	$NetBSD: hpcreg.h,v 1.5.12.1 2004/08/03 10:40:06 skrll Exp $	*/
+/*	$NetBSD: hpcreg.h,v 1.5.12.2 2004/08/25 06:57:20 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001 Rafal K. Boni
@@ -29,6 +29,15 @@
 
 #ifndef _ARCH_SGIMIPS_HPC_HPCREG_H_
 #define	_ARCH_SGIMIPS_HPC_HPCREG_H_
+
+/*
+ * HPC locations are identical across all HPC-supported
+ * platforms.
+ */
+#define HPC_BASE_ADDRESS_0	0x1fb80000	/* Primary onboard */
+#define HPC_BASE_ADDRESS_1	0x1fb00000
+#define HPC_BASE_ADDRESS_2	0x1f980000
+#define HPC_BASE_ADDRESS_3	0x1f900000
 
 /*
  * HPC3 descriptor layout.

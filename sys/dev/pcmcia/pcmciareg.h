@@ -1,4 +1,4 @@
-/*	$NetBSD: pcmciareg.h,v 1.7.46.1 2004/08/12 11:42:04 skrll Exp $	*/
+/*	$NetBSD: pcmciareg.h,v 1.7.46.2 2004/08/25 06:58:43 skrll Exp $	*/
 
 /*
  * Copyright (c) 1997 Marc Horowitz.  All rights reserved.
@@ -243,6 +243,6 @@
 #define	PCMCIA_CCR_IOBASE1			6
 #define	PCMCIA_CCR_IOBASE2			7
 #define	PCMCIA_CCR_IOBASE3			8
-#define	PCMCIA_CCR_IOSIZE			9
+#define	PCMCIA_CCR_IOLIMIT			9
 
 #define	PCMCIA_CCR_SIZE				0x14

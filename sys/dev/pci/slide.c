@@ -1,4 +1,4 @@
-/*	$NetBSD: slide.c,v 1.4.4.2 2004/08/03 10:49:12 skrll Exp $	*/
+/*	$NetBSD: slide.c,v 1.4.4.3 2004/08/25 06:58:06 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
 #include <dev/pci/pciide_sl82c105_reg.h>
 
 static void sl82c105_chip_map(struct pciide_softc*, struct pci_attach_args*);
-static void sl82c105_setup_channel(struct wdc_channel*);
+static void sl82c105_setup_channel(struct ata_channel*);
 
 static int  slide_match(struct device *, struct cfdata *, void *);
 static void slide_attach(struct device *, struct device *, void *);
@@ -136,7 +136,7 @@ sl82c105_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 		return;
 
 	aprint_normal("%s: bus-master DMA support present",
-	    sc->sc_wdcdev.sc_dev.dv_xname);
+	    sc->sc_wdcdev.sc_atac.atac_dev.dv_xname);
 
 	/*
 	 * Check to see if we're part of the Winbond 83c553 Southbridge.
@@ -149,32 +149,34 @@ sl82c105_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 		pciide_mapreg_dma(sc, pa);
 	aprint_normal("\n");
 
-	sc->sc_wdcdev.cap = WDC_CAPABILITY_DATA32 | WDC_CAPABILITY_DATA16 |
-	    WDC_CAPABILITY_MODE;
-	sc->sc_wdcdev.PIO_cap = 4;
+	sc->sc_wdcdev.sc_atac.atac_cap = ATAC_CAP_DATA32 | ATAC_CAP_DATA16;
+	sc->sc_wdcdev.sc_atac.atac_pio_cap = 4;
 	if (sc->sc_dma_ok) {
-		sc->sc_wdcdev.cap |= WDC_CAPABILITY_DMA | WDC_CAPABILITY_IRQACK;
+		sc->sc_wdcdev.sc_atac.atac_cap |= ATAC_CAP_DMA;
 		sc->sc_wdcdev.irqack = pciide_irqack;
-		sc->sc_wdcdev.DMA_cap = 2;
+		sc->sc_wdcdev.sc_atac.atac_dma_cap = 2;
 	}
-	sc->sc_wdcdev.set_modes = sl82c105_setup_channel;
+	sc->sc_wdcdev.sc_atac.atac_set_modes = sl82c105_setup_channel;
 
-	sc->sc_wdcdev.channels = sc->wdc_chanarray;
-	sc->sc_wdcdev.nchannels = PCIIDE_NUM_CHANNELS;
+	sc->sc_wdcdev.sc_atac.atac_channels = sc->wdc_chanarray;
+	sc->sc_wdcdev.sc_atac.atac_nchannels = PCIIDE_NUM_CHANNELS;
 
 	idecr = pci_conf_read(sc->sc_pc, sc->sc_tag, SYMPH_IDECSR);
 
 	interface = PCI_INTERFACE(pa->pa_class);
 
-	for (channel = 0; channel < sc->sc_wdcdev.nchannels; channel++) {
+	wdc_allocate_regs(&sc->sc_wdcdev);
+
+	for (channel = 0; channel < sc->sc_wdcdev.sc_atac.atac_nchannels;
+	     channel++) {
 		cp = &sc->pciide_channels[channel];
 		if (pciide_chansetup(sc, channel, interface) == 0) 
 			continue;
 		if ((channel == 0 && (idecr & IDECR_P0EN) == 0) ||
 		    (channel == 1 && (idecr & IDECR_P1EN) == 0)) {
 			aprint_normal("%s: %s channel ignored (disabled)\n",
-			    sc->sc_wdcdev.sc_dev.dv_xname, cp->name);
-			cp->wdc_channel.ch_flags |= WDCF_DISABLED;
+			    sc->sc_wdcdev.sc_atac.atac_dev.dv_xname, cp->name);
+			cp->ata_channel.ch_flags |= ATACH_DISABLED;
 			continue;
 		}
 		pciide_mapchan(pa, cp, interface, &cmdsize, &ctlsize,
@@ -183,12 +185,12 @@ sl82c105_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 }
 
 static void
-sl82c105_setup_channel(struct wdc_channel *chp)
+sl82c105_setup_channel(struct ata_channel *chp)
 {
 	struct ata_drive_datas *drvp;
-	struct pciide_channel *cp = (struct pciide_channel*)chp;
-	struct pciide_softc *sc = (struct pciide_softc *)cp->wdc_channel.ch_wdc;
-	int pxdx_reg, drive;
+	struct pciide_channel *cp = CHAN_TO_PCHAN(chp);
+	struct pciide_softc *sc = CHAN_TO_PCIIDE(chp);
+	int pxdx_reg, drive, s;
 	pcireg_t pxdx;
 
 	/* Set up DMA if needed. */
@@ -224,14 +226,18 @@ sl82c105_setup_channel(struct wdc_channel *chp)
 					 * Can't mix both PIO and DMA.
 					 * Disable DMA.
 					 */
+					s = splbio();
 					drvp->drive_flags &= ~DRIVE_DMA;
+					splx(s);
 				}
 			} else {
 				/*
 				 * Can't mix both PIO and DMA.  Disable
 				 * DMA.
 				 */
+				s = splbio();
 				drvp->drive_flags &= ~DRIVE_DMA;
+				splx(s);
 			}
 		}
 

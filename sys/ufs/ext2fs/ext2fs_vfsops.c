@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_vfsops.c,v 1.60.2.3 2004/08/24 17:57:42 skrll Exp $	*/
+/*	$NetBSD: ext2fs_vfsops.c,v 1.60.2.4 2004/08/25 06:59:14 skrll Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1994
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_vfsops.c,v 1.60.2.3 2004/08/24 17:57:42 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_vfsops.c,v 1.60.2.4 2004/08/25 06:59:14 skrll Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -656,10 +656,10 @@ ext2fs_mountfs(devvp, mp, l)
 	mp->mnt_stat.f_fsidx.__fsid_val[1] = makefstype(MOUNT_EXT2FS);
 	mp->mnt_stat.f_fsid = mp->mnt_stat.f_fsidx.__fsid_val[0];
 	mp->mnt_stat.f_namemax = MAXNAMLEN;
-	mp->mnt_maxsymlinklen = EXT2_MAXSYMLINKLEN;
 	mp->mnt_flag |= MNT_LOCAL;
 	mp->mnt_dev_bshift = DEV_BSHIFT;	/* XXX */
 	mp->mnt_fs_bshift = m_fs->e2fs_bshift;
+	mp->mnt_iflag |= IMNT_DTYPE;
 	ump->um_flags = 0;
 	ump->um_mountp = mp;
 	ump->um_dev = dev;
@@ -668,6 +668,9 @@ ext2fs_mountfs(devvp, mp, l)
 	ump->um_lognindir = ffs(NINDIR(m_fs)) - 1;
 	ump->um_bptrtodb = m_fs->e2fs_fsbtodb;
 	ump->um_seqinc = 1; /* no frags */
+	ump->um_maxsymlinklen = EXT2_MAXSYMLINKLEN;
+	ump->um_dirblksiz = m_fs->e2fs_bsize;
+	ump->um_maxfilesize = ((u_int64_t)0x80000000 * m_fs->e2fs_bsize - 1);
 	devvp->v_specmountpoint = mp;
 	return (0);
 
@@ -839,9 +842,9 @@ loop:
 		simple_lock(&vp->v_interlock);
 		nvp = LIST_NEXT(vp, v_mntvnodes);
 		ip = VTOI(vp);
-		if (waitfor == MNT_LAZY || vp->v_type == VNON ||
+		if (vp->v_type == VNON ||
 		    ((ip->i_flag &
-		      (IN_ACCESS | IN_CHANGE | IN_UPDATE | IN_MODIFIED | IN_ACCESSED)) == 0 &&
+		      (IN_CHANGE | IN_UPDATE | IN_MODIFIED)) == 0 &&
 		     LIST_EMPTY(&vp->v_dirtyblkhd) &&
 		     vp->v_uobj.uo_npages == 0))
 		{   
@@ -856,8 +859,12 @@ loop:
 				goto loop;
 			continue;
 		}
-		if ((error = VOP_FSYNC(vp, cred,
-		    waitfor == MNT_WAIT ? FSYNC_WAIT : 0, 0, 0, l)) != 0)
+		if (vp->v_type == VREG && waitfor == MNT_LAZY)
+			error = VOP_UPDATE(vp, NULL, NULL, 0);
+		else
+			error = VOP_FSYNC(vp, cred,
+			    waitfor == MNT_WAIT ? FSYNC_WAIT : 0, 0, 0, l);
+		if (error)
 			allerror = error;
 		vput(vp);
 		simple_lock(&mntvnode_slock);

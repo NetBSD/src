@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_file.c,v 1.61.2.2 2004/08/03 10:44:03 skrll Exp $	*/
+/*	$NetBSD: linux_file.c,v 1.61.2.3 2004/08/25 06:57:33 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_file.c,v 1.61.2.2 2004/08/03 10:44:03 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_file.c,v 1.61.2.3 2004/08/25 06:57:33 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -662,10 +662,34 @@ linux_sys_unlink(l, v, retval)
 	} */ *uap = v;
 	struct proc *p = l->l_proc;
 	caddr_t sg = stackgap_init(p, 0);
+	int error;
+	struct nameidata nd;
 
 	CHECK_ALT_EXIST(l, &sg, SCARG(uap, path));
 
-	return sys_unlink(l, uap, retval);
+	error = sys_unlink(l, uap, retval);
+	if (error != EPERM)
+		return (error);
+
+	/*
+	 * Linux returns EISDIR if unlink(2) is called on a directory.
+	 * We return EPERM in such cases. To emulate correct behaviour,
+	 * check if the path points to directory and return EISDIR if this
+	 * is the case.
+	 */
+	NDINIT(&nd, LOOKUP, FOLLOW | LOCKLEAF, UIO_USERSPACE,
+	    SCARG(uap, path), l);
+	if (namei(&nd) == 0) {
+		struct stat sb;
+
+		if (vn_stat(nd.ni_vp, &sb, l) == 0
+		    && S_ISDIR(sb.st_mode))
+			error = EISDIR;
+
+		vput(nd.ni_vp);
+	}
+
+	return (error);
 }
 
 int

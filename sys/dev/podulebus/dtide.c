@@ -1,4 +1,4 @@
-/* $NetBSD: dtide.c,v 1.8.6.1 2004/08/03 10:50:27 skrll Exp $ */
+/* $NetBSD: dtide.c,v 1.8.6.2 2004/08/25 06:58:43 skrll Exp $ */
 
 /*-
  * Copyright (c) 2000, 2001 Ben Harris
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dtide.c,v 1.8.6.1 2004/08/03 10:50:27 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dtide.c,v 1.8.6.2 2004/08/25 06:58:43 skrll Exp $");
 
 #include <sys/param.h>
 
@@ -51,9 +51,10 @@ __KERNEL_RCSID(0, "$NetBSD: dtide.c,v 1.8.6.1 2004/08/03 10:50:27 skrll Exp $");
 
 struct dtide_softc {
 	struct wdc_softc sc_wdc;
-	struct wdc_channel *sc_chp[DTIDE_NCHANNELS];/* pointers to sc_chan */
-	struct wdc_channel sc_chan[DTIDE_NCHANNELS];
+	struct ata_channel *sc_chp[DTIDE_NCHANNELS];/* pointers to sc_chan */
+	struct ata_channel sc_chan[DTIDE_NCHANNELS];
 	struct ata_queue sc_chq[DTIDE_NCHANNELS];
+	struct wdc_regs sc_wdc_regs[DTIDE_NCHANNELS];
 	bus_space_tag_t		sc_magict;
 	bus_space_handle_t	sc_magich;
 };
@@ -80,16 +81,19 @@ dtide_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct podulebus_attach_args *pa = aux;
 	struct dtide_softc *sc = (void *)self;
-	struct wdc_channel *ch;
+	struct wdc_regs *wdr;
+	struct ata_channel *ch;
 	int i, j;
 	bus_space_tag_t bst;
 
-	sc->sc_wdc.cap = WDC_CAPABILITY_DATA16 | WDC_CAPABILITY_NOIRQ;
-	sc->sc_wdc.PIO_cap = 0; /* XXX correct? */
-	sc->sc_wdc.DMA_cap = 0; /* XXX correct? */
-	sc->sc_wdc.UDMA_cap = 0;
-	sc->sc_wdc.nchannels = DTIDE_NCHANNELS;
-	sc->sc_wdc.channels = sc->sc_chp;
+	sc->sc_wdc.regs = sc->sc_wdc_regs;
+
+	sc->sc_wdc.sc_atac.atac_cap = ATAC_CAP_DATA16 | ATAC_CAP_NOIRQ;
+	sc->sc_wdc.sc_atac.atac_pio_cap = 0; /* XXX correct? */
+	sc->sc_wdc.sc_atac.atac_dma_cap = 0; /* XXX correct? */
+	sc->sc_wdc.sc_atac.atac_udma_cap = 0;
+	sc->sc_wdc.sc_atac.atac_nchannels = DTIDE_NCHANNELS;
+	sc->sc_wdc.sc_atac.atac_channels = sc->sc_chp;
 	sc->sc_magict = pa->pa_fast_t;
 	bus_space_map(pa->pa_fast_t, pa->pa_fast_base + DTIDE_MAGICBASE, 0, 1,
 	    &sc->sc_magich);
@@ -97,22 +101,22 @@ dtide_attach(struct device *parent, struct device *self, void *aux)
 	printf("\n");
 	for (i = 0; i < DTIDE_NCHANNELS; i++) {
 		ch = sc->sc_chp[i] = &sc->sc_chan[i];
+		wdr = &sc->sc_wdc_regs[i];
 		ch->ch_channel = i;
-		ch->ch_wdc = &sc->sc_wdc;
-		ch->cmd_iot = bst;
-		ch->ctl_iot = bst;
+		ch->ch_atac = &sc->sc_wdc.sc_atac;
+		wdr->cmd_iot = bst;
+		wdr->ctl_iot = bst;
 		ch->ch_queue = &sc->sc_chq[i];
 		bus_space_map(pa->pa_fast_t,
 		    pa->pa_fast_base + dtide_cmdoffsets[i], 0, 8,
-		    &ch->cmd_baseioh);
+		    &wdr->cmd_baseioh);
 		for (j = 0; j < WDC_NREG; j++)
-			bus_space_subregion(ch->cmd_iot, ch->cmd_baseioh,
-			    j, j == 0 ? 4 : 1, &ch->cmd_iohs[j]);
+			bus_space_subregion(wdr->cmd_iot, wdr->cmd_baseioh,
+			    j, j == 0 ? 4 : 1, &wdr->cmd_iohs[j]);
 		wdc_init_shadow_regs(ch);
 		bus_space_map(pa->pa_fast_t,
 		    pa->pa_fast_base + dtide_ctloffsets[i], 0, 8,
-		    &ch->ctl_ioh);
+		    &wdr->ctl_ioh);
 		wdcattach(ch);
 	}
-
 }

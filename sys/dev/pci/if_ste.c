@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ste.c,v 1.17.2.1 2004/08/03 10:49:09 skrll Exp $	*/
+/*	$NetBSD: if_ste.c,v 1.17.2.2 2004/08/25 06:58:05 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ste.c,v 1.17.2.1 2004/08/03 10:49:09 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ste.c,v 1.17.2.2 2004/08/25 06:58:05 skrll Exp $");
 
 #include "bpfilter.h"
 
@@ -204,49 +204,49 @@ do {									\
 
 #define STE_TIMEOUT 1000
 
-void	ste_start(struct ifnet *);
-void	ste_watchdog(struct ifnet *);
-int	ste_ioctl(struct ifnet *, u_long, caddr_t);
-int	ste_init(struct ifnet *);
-void	ste_stop(struct ifnet *, int);
+static void	ste_start(struct ifnet *);
+static void	ste_watchdog(struct ifnet *);
+static int	ste_ioctl(struct ifnet *, u_long, caddr_t);
+static int	ste_init(struct ifnet *);
+static void	ste_stop(struct ifnet *, int);
 
-void	ste_shutdown(void *);
+static void	ste_shutdown(void *);
 
-void	ste_reset(struct ste_softc *, u_int32_t);
-void	ste_setthresh(struct ste_softc *);
-void	ste_txrestart(struct ste_softc *, u_int8_t);
-void	ste_rxdrain(struct ste_softc *);
-int	ste_add_rxbuf(struct ste_softc *, int);
-void	ste_read_eeprom(struct ste_softc *, int, uint16_t *);
-void	ste_tick(void *);
+static void	ste_reset(struct ste_softc *, u_int32_t);
+static void	ste_setthresh(struct ste_softc *);
+static void	ste_txrestart(struct ste_softc *, u_int8_t);
+static void	ste_rxdrain(struct ste_softc *);
+static int	ste_add_rxbuf(struct ste_softc *, int);
+static void	ste_read_eeprom(struct ste_softc *, int, uint16_t *);
+static void	ste_tick(void *);
 
-void	ste_stats_update(struct ste_softc *);
+static void	ste_stats_update(struct ste_softc *);
 
-void	ste_set_filter(struct ste_softc *);
+static void	ste_set_filter(struct ste_softc *);
 
-int	ste_intr(void *);
-void	ste_txintr(struct ste_softc *);
-void	ste_rxintr(struct ste_softc *);
+static int	ste_intr(void *);
+static void	ste_txintr(struct ste_softc *);
+static void	ste_rxintr(struct ste_softc *);
 
-int	ste_mii_readreg(struct device *, int, int);
-void	ste_mii_writereg(struct device *, int, int, int);
-void	ste_mii_statchg(struct device *);
+static int	ste_mii_readreg(struct device *, int, int);
+static void	ste_mii_writereg(struct device *, int, int, int);
+static void	ste_mii_statchg(struct device *);
 
-int	ste_mediachange(struct ifnet *);
-void	ste_mediastatus(struct ifnet *, struct ifmediareq *);
+static int	ste_mediachange(struct ifnet *);
+static void	ste_mediastatus(struct ifnet *, struct ifmediareq *);
 
-int	ste_match(struct device *, struct cfdata *, void *);
-void	ste_attach(struct device *, struct device *, void *);
+static int	ste_match(struct device *, struct cfdata *, void *);
+static void	ste_attach(struct device *, struct device *, void *);
 
 int	ste_copy_small = 0;
 
 CFATTACH_DECL(ste, sizeof(struct ste_softc),
     ste_match, ste_attach, NULL, NULL);
 
-uint32_t ste_mii_bitbang_read(struct device *);
-void	ste_mii_bitbang_write(struct device *, uint32_t);
+static uint32_t ste_mii_bitbang_read(struct device *);
+static void	ste_mii_bitbang_write(struct device *, uint32_t);
 
-const struct mii_bitbang_ops ste_mii_bitbang_ops = {
+static const struct mii_bitbang_ops ste_mii_bitbang_ops = {
 	ste_mii_bitbang_read,
 	ste_mii_bitbang_write,
 	{
@@ -261,7 +261,7 @@ const struct mii_bitbang_ops ste_mii_bitbang_ops = {
 /*
  * Devices supported by this driver.
  */
-const struct ste_product {
+static const struct ste_product {
 	pci_vendor_id_t		ste_vendor;
 	pci_product_id_t	ste_product;
 	const char		*ste_name;
@@ -289,7 +289,7 @@ ste_lookup(const struct pci_attach_args *pa)
 	return (NULL);
 }
 
-int
+static int
 ste_match(struct device *parent, struct cfdata *cf, void *aux)
 {
 	struct pci_attach_args *pa = aux;
@@ -300,7 +300,7 @@ ste_match(struct device *parent, struct cfdata *cf, void *aux)
 	return (0);
 }
 
-void
+static void
 ste_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct ste_softc *sc = (struct ste_softc *) self;
@@ -572,7 +572,7 @@ ste_attach(struct device *parent, struct device *self, void *aux)
  *
  *	Make sure the interface is stopped at reboot time.
  */
-void
+static void
 ste_shutdown(void *arg)
 {
 	struct ste_softc *sc = arg;
@@ -601,7 +601,7 @@ ste_dmahalt_wait(struct ste_softc *sc)
  *
  *	Start packet transmission on the interface.
  */
-void
+static void
 ste_start(struct ifnet *ifp)
 {
 	struct ste_softc *sc = ifp->if_softc;
@@ -791,7 +791,7 @@ ste_start(struct ifnet *ifp)
  *
  *	Watchdog timer handler.
  */
-void
+static void
 ste_watchdog(struct ifnet *ifp)
 {
 	struct ste_softc *sc = ifp->if_softc;
@@ -810,7 +810,7 @@ ste_watchdog(struct ifnet *ifp)
  *
  *	Handle control requests from the operator.
  */
-int
+static int
 ste_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 {
 	struct ste_softc *sc = ifp->if_softc;
@@ -850,7 +850,7 @@ ste_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
  *
  *	Interrupt service routine.
  */
-int
+static int
 ste_intr(void *arg)
 {
 	struct ste_softc *sc = arg;
@@ -949,7 +949,7 @@ ste_intr(void *arg)
  *
  *	Helper; handle transmit interrupts.
  */
-void
+static void
 ste_txintr(struct ste_softc *sc)
 {
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
@@ -997,7 +997,7 @@ ste_txintr(struct ste_softc *sc)
  *
  *	Helper; handle receive interrupts.
  */
-void
+static void
 ste_rxintr(struct ste_softc *sc)
 {
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
@@ -1097,7 +1097,7 @@ ste_rxintr(struct ste_softc *sc)
  *
  *	One second timer, used to tick the MII.
  */
-void
+static void
 ste_tick(void *arg)
 {
 	struct ste_softc *sc = arg;
@@ -1116,7 +1116,7 @@ ste_tick(void *arg)
  *
  *	Read the ST-201 statistics counters.
  */
-void
+static void
 ste_stats_update(struct ste_softc *sc)
 {
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
@@ -1160,7 +1160,7 @@ ste_stats_update(struct ste_softc *sc)
  *
  *	Perform a soft reset on the ST-201.
  */
-void
+static void
 ste_reset(struct ste_softc *sc, u_int32_t rstbits)
 {
 	uint32_t ac;
@@ -1190,7 +1190,7 @@ ste_reset(struct ste_softc *sc, u_int32_t rstbits)
  *
  * 	set the various transmit threshold registers
  */
-void
+static void
 ste_setthresh(struct ste_softc *sc)
 {
 	/* set the TX threhold */
@@ -1205,8 +1205,7 @@ ste_setthresh(struct ste_softc *sc)
 /*
  * restart TX at the given frame ID in the transmitter ring
  */
-
-void
+static void
 ste_txrestart(struct ste_softc *sc, u_int8_t id)
 {
 	u_int32_t control;
@@ -1231,7 +1230,7 @@ ste_txrestart(struct ste_softc *sc, u_int8_t id)
  *
  *	Initialize the interface.  Must be called at splnet().
  */
-int
+static int
 ste_init(struct ifnet *ifp)
 {
 	struct ste_softc *sc = ifp->if_softc;
@@ -1379,7 +1378,7 @@ ste_init(struct ifnet *ifp)
  *
  *	Drain the receive queue.
  */
-void
+static void
 ste_rxdrain(struct ste_softc *sc)
 {
 	struct ste_descsoft *ds;
@@ -1400,7 +1399,7 @@ ste_rxdrain(struct ste_softc *sc)
  *
  *	Stop transmission on the interface.
  */
-void
+static void
 ste_stop(struct ifnet *ifp, int disable)
 {
 	struct ste_softc *sc = ifp->if_softc;
@@ -1474,7 +1473,7 @@ ste_eeprom_wait(struct ste_softc *sc)
  *
  *	Read data from the serial EEPROM.
  */
-void
+static void
 ste_read_eeprom(struct ste_softc *sc, int offset, uint16_t *data)
 {
 
@@ -1495,7 +1494,7 @@ ste_read_eeprom(struct ste_softc *sc, int offset, uint16_t *data)
  *
  *	Add a receive buffer to the indicated descriptor.
  */
-int
+static int
 ste_add_rxbuf(struct ste_softc *sc, int idx)
 {
 	struct ste_descsoft *ds = &sc->sc_rxsoft[idx];
@@ -1539,7 +1538,7 @@ ste_add_rxbuf(struct ste_softc *sc, int idx)
  *
  *	Set up the receive filter.
  */
-void
+static void
 ste_set_filter(struct ste_softc *sc)
 {
 	struct ethercom *ec = &sc->sc_ethercom;
@@ -1629,7 +1628,7 @@ ste_set_filter(struct ste_softc *sc)
  *
  *	Read a PHY register on the MII of the ST-201.
  */
-int
+static int
 ste_mii_readreg(struct device *self, int phy, int reg)
 {
 
@@ -1641,7 +1640,7 @@ ste_mii_readreg(struct device *self, int phy, int reg)
  *
  *	Write a PHY register on the MII of the ST-201.
  */
-void
+static void
 ste_mii_writereg(struct device *self, int phy, int reg, int val)
 {
 
@@ -1653,7 +1652,7 @@ ste_mii_writereg(struct device *self, int phy, int reg, int val)
  *
  *	Callback from MII layer when media changes.
  */
-void
+static void
 ste_mii_statchg(struct device *self)
 {
 	struct ste_softc *sc = (struct ste_softc *) self;
@@ -1673,7 +1672,7 @@ ste_mii_statchg(struct device *self)
  *
  *	Read the MII serial port for the MII bit-bang module.
  */
-uint32_t
+static uint32_t
 ste_mii_bitbang_read(struct device *self)
 {
 	struct ste_softc *sc = (void *) self;
@@ -1686,7 +1685,7 @@ ste_mii_bitbang_read(struct device *self)
  *
  *	Write the MII serial port for the MII bit-bang module.
  */
-void
+static void
 ste_mii_bitbang_write(struct device *self, uint32_t val)
 {
 	struct ste_softc *sc = (void *) self;
@@ -1699,7 +1698,7 @@ ste_mii_bitbang_write(struct device *self, uint32_t val)
  *
  *	Get the current interface media status.
  */
-void
+static void
 ste_mediastatus(struct ifnet *ifp, struct ifmediareq *ifmr)
 {
 	struct ste_softc *sc = ifp->if_softc;
@@ -1714,7 +1713,7 @@ ste_mediastatus(struct ifnet *ifp, struct ifmediareq *ifmr)
  *
  *	Set hardware to newly-selected media.
  */
-int
+static int
 ste_mediachange(struct ifnet *ifp)
 {
 	struct ste_softc *sc = ifp->if_softc;

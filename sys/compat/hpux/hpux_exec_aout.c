@@ -1,4 +1,4 @@
-/*	$NetBSD: hpux_exec_aout.c,v 1.8.2.2 2004/08/03 10:43:45 skrll Exp $	*/
+/*	$NetBSD: hpux_exec_aout.c,v 1.8.2.3 2004/08/25 06:57:33 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -48,6 +48,7 @@
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
  *	This product includes software developed by Christopher G. Demetriou.
  * 4. The name of the author may not be used to endorse or promote products
  *    derived from this software without specific prior written permission
@@ -70,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpux_exec_aout.c,v 1.8.2.2 2004/08/03 10:43:45 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpux_exec_aout.c,v 1.8.2.3 2004/08/25 06:57:33 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

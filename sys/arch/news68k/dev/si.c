@@ -1,4 +1,4 @@
-/*	$NetBSD: si.c,v 1.12.2.1 2004/08/03 10:38:22 skrll Exp $	*/
+/*	$NetBSD: si.c,v 1.12.2.2 2004/08/25 06:57:19 skrll Exp $	*/
 
 /*
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: si.c,v 1.12.2.1 2004/08/03 10:38:22 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: si.c,v 1.12.2.2 2004/08/25 06:57:19 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -66,6 +66,7 @@ __KERNEL_RCSID(0, "$NetBSD: si.c,v 1.12.2.1 2004/08/03 10:38:22 skrll Exp $");
 
 #define MIN_DMA_LEN 128
 #define DMAC_BASE	0xe0e80000 /* XXX */
+#define SI_REGSIZE	8
 
 struct si_dma_handle {
 	int	dh_flags;
@@ -128,6 +129,8 @@ si_match(parent, cf, aux)
 	if (badaddr((void *)addr, 1))
 		return 0;
 
+	ha->ha_size = SI_REGSIZE;
+
 	return 1;
 }
 
@@ -144,7 +147,13 @@ si_attach(parent, self, aux)
 	struct ncr5380_softc *ncr_sc = &sc->ncr_sc;
 	struct cfdata *cf = self->dv_cfdata;
 	struct hb_attach_args *ha = aux;
-	u_char *addr;
+
+	ncr_sc->sc_regt = ha->ha_bust;
+	if (bus_space_map(ncr_sc->sc_regt, (bus_addr_t)ha->ha_address,
+	    ha->ha_size, 0, &ncr_sc->sc_regh) != 0) {
+		printf("can't map device space\n");
+		return;
+	}
 
 	/* Get options from config flags if specified. */
 	if (cf->cf_flags)
@@ -172,15 +181,14 @@ si_attach(parent, self, aux)
 		/* Override this function pointer. */
 		ncr_sc->sc_dma_alloc = NULL;
 
-	addr = (u_char *)IIOV(ha->ha_address);
-	ncr_sc->sci_r0 = addr + 0;
-	ncr_sc->sci_r1 = addr + 1;
-	ncr_sc->sci_r2 = addr + 2;
-	ncr_sc->sci_r3 = addr + 3;
-	ncr_sc->sci_r4 = addr + 4;
-	ncr_sc->sci_r5 = addr + 5;
-	ncr_sc->sci_r6 = addr + 6;
-	ncr_sc->sci_r7 = addr + 7;
+	ncr_sc->sci_r0 = 0;
+	ncr_sc->sci_r1 = 1;
+	ncr_sc->sci_r2 = 2;
+	ncr_sc->sci_r3 = 3;
+	ncr_sc->sci_r4 = 4;
+	ncr_sc->sci_r5 = 5;
+	ncr_sc->sci_r6 = 6;
+	ncr_sc->sci_r7 = 7;
 
 	ncr_sc->sc_rev = NCR_VARIANT_CXD1180;
 

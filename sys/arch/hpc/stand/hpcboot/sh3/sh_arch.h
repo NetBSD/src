@@ -1,7 +1,7 @@
-/* -*-C++-*-	$NetBSD: sh_arch.h,v 1.6.16.1 2004/08/12 11:41:05 skrll Exp $	*/
+/* -*-C++-*-	$NetBSD: sh_arch.h,v 1.6.16.2 2004/08/25 06:57:19 skrll Exp $	*/
 
 /*-
- * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
+ * Copyright (c) 2001, 2002, 2004 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -119,6 +119,7 @@ public:									\
 
 SH_(7709);
 SH_(7709A);
+SH_(7707);
 
 //
 // SH4 series.

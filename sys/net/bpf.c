@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf.c,v 1.82.2.3 2004/08/12 11:42:20 skrll Exp $	*/
+/*	$NetBSD: bpf.c,v 1.82.2.4 2004/08/25 06:58:58 skrll Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.82.2.3 2004/08/12 11:42:20 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.82.2.4 2004/08/25 06:58:58 skrll Exp $");
 
 #include "bpfilter.h"
 
@@ -66,6 +66,7 @@ __KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.82.2.3 2004/08/12 11:42:20 skrll Exp $");
 #include <sys/sysctl.h>
 
 #include <net/if.h>
+#include <net/slip.h>
 
 #include <net/bpf.h>
 #include <net/bpfdesc.h>
@@ -78,6 +79,8 @@ __KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.82.2.3 2004/08/12 11:42:20 skrll Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_bpf.h"
+#include "sl.h"
+#include "strip.h"
 #endif
 
 #ifndef BPF_BUFSIZE
@@ -105,26 +108,26 @@ int bpf_maxbufsize = BPF_DFLTBUFSIZE;	/* XXX set dynamically, see above */
 struct bpf_if	*bpf_iflist;
 struct bpf_d	bpf_dtab[NBPFILTER];
 
-static int	bpf_allocbufs __P((struct bpf_d *));
+static int	bpf_allocbufs(struct bpf_d *);
 static void	bpf_deliver(struct bpf_if *,
 		            void *(*cpfn)(void *, const void *, size_t),
 			    void *, u_int, u_int, struct ifnet *);
-static void	bpf_freed __P((struct bpf_d *));
-static void	bpf_ifname __P((struct ifnet *, struct ifreq *));
-static void	*bpf_mcpy __P((void *, const void *, size_t));
-static int	bpf_movein __P((struct uio *, int, int,
-			        struct mbuf **, struct sockaddr *));
-static void	bpf_attachd __P((struct bpf_d *, struct bpf_if *));
-static void	bpf_detachd __P((struct bpf_d *));
-static int	bpf_setif __P((struct bpf_d *, struct ifreq *));
-static void	bpf_timed_out __P((void *));
+static void	bpf_freed(struct bpf_d *);
+static void	bpf_ifname(struct ifnet *, struct ifreq *);
+static void	*bpf_mcpy(void *, const void *, size_t);
+static int	bpf_movein(struct uio *, int, int,
+			        struct mbuf **, struct sockaddr *);
+static void	bpf_attachd(struct bpf_d *, struct bpf_if *);
+static void	bpf_detachd(struct bpf_d *);
+static int	bpf_setif(struct bpf_d *, struct ifreq *);
+static void	bpf_timed_out(void *);
 static __inline void
-		bpf_wakeup __P((struct bpf_d *));
-static void	catchpacket __P((struct bpf_d *, u_char *, u_int, u_int,
-				 void *(*)(void *, const void *, size_t)));
-static void	reset_d __P((struct bpf_d *));
-static int	bpf_getdltlist __P((struct bpf_d *, struct bpf_dltlist *));
-static int	bpf_setdlt __P((struct bpf_d *, u_int));
+		bpf_wakeup(struct bpf_d *);
+static void	catchpacket(struct bpf_d *, u_char *, u_int, u_int,
+				 void *(*)(void *, const void *, size_t));
+static void	reset_d(struct bpf_d *);
+static int	bpf_getdltlist(struct bpf_d *, struct bpf_dltlist *);
+static int	bpf_setdlt(struct bpf_d *, u_int);
 
 dev_type_open(bpfopen);
 dev_type_close(bpfclose);
@@ -246,11 +249,11 @@ bpf_movein(uio, linktype, mtu, mp, sockp)
 		m->m_len -= align;
 	}
 
-	error = uiomove(mtod(m, caddr_t), len, uio);
+	error = uiomove(mtod(m, void *), len, uio);
 	if (error)
 		goto bad;
 	if (hlen != 0) {
-		memcpy(sockp->sa_data, mtod(m, caddr_t), hlen);
+		memcpy(sockp->sa_data, mtod(m, void *), hlen);
 		m->m_data += hlen; /* XXX */
 		len -= hlen;
 	}
@@ -478,7 +481,7 @@ bpfread(dev, uio, ioflag)
 			ROTATE_BUFFERS(d);
 			break;
 		}
-		error = tsleep((caddr_t)d, PRINET|PCATCH, "bpf",
+		error = tsleep(d, PRINET|PCATCH, "bpf",
 				d->bd_rtout);
 		if (error == EINTR || error == ERESTART) {
 			splx(s);
@@ -537,7 +540,7 @@ static __inline void
 bpf_wakeup(d)
 	struct bpf_d *d;
 {
-	wakeup((caddr_t)d);
+	wakeup(d);
 	if (d->bd_async)
 		fownsignal(d->bd_pgid, SIGIO, 0, 0, NULL);
 
@@ -551,7 +554,7 @@ static void
 bpf_timed_out(arg)
 	void *arg;
 {
-	struct bpf_d *d = (struct bpf_d *)arg;
+	struct bpf_d *d = arg;
 	int s;
 
 	s = splnet();
@@ -648,18 +651,14 @@ extern struct bpf_insn *bpf_udp_filter;
  */
 /* ARGSUSED */
 int
-bpfioctl(dev, cmd, addr, flag, l)
-	dev_t dev;
-	u_long cmd;
-	caddr_t addr;
-	int flag;
-	struct lwp *l;
+bpfioctl(dev_t dev, u_long cmd, caddr_t arg, int flag, struct lwp *l)
 {
 	struct bpf_d *d = &bpf_dtab[minor(dev)];
 	int s, error = 0;
 #ifdef BPF_KERN_FILTER
 	struct bpf_insn **p;
 #endif
+	void *addr = arg;
 
 	s = splnet();
 	if (d->bd_state == BPF_WAITING)
@@ -718,7 +717,7 @@ bpfioctl(dev, cmd, addr, flag, l)
 	 * Set link layer read filter.
 	 */
 	case BIOCSETF:
-		error = bpf_setf(d, (struct bpf_program *)addr);
+		error = bpf_setf(d, addr);
 		break;
 
 #ifdef BPF_KERN_FILTER
@@ -733,7 +732,7 @@ bpfioctl(dev, cmd, addr, flag, l)
 		}
 
 		/* Validate and store filter */
-		error = bpf_setf(d, (struct bpf_program *)addr);
+		error = bpf_setf(d, addr);
 
 		/* Free possible old filter */
 		if (cmd == BIOCSTCPF)
@@ -741,7 +740,7 @@ bpfioctl(dev, cmd, addr, flag, l)
 		else
 			p = &bpf_udp_filter;
 		if (*p != NULL)
-			free((caddr_t)*p, M_DEVBUF);
+			free(*p, M_DEVBUF);
 
 		/* Steal new filter (noop if error) */
 		s = splnet();
@@ -797,7 +796,7 @@ bpfioctl(dev, cmd, addr, flag, l)
 		if (d->bd_bif == 0)
 			error = EINVAL;
 		else
-			error = bpf_getdltlist(d, (struct bpf_dltlist *)addr);
+			error = bpf_getdltlist(d, addr);
 		break;
 
 	/*
@@ -817,14 +816,14 @@ bpfioctl(dev, cmd, addr, flag, l)
 		if (d->bd_bif == 0)
 			error = EINVAL;
 		else
-			bpf_ifname(d->bd_bif->bif_ifp, (struct ifreq *)addr);
+			bpf_ifname(d->bd_bif->bif_ifp, addr);
 		break;
 
 	/*
 	 * Set interface.
 	 */
 	case BIOCSETIF:
-		error = bpf_setif(d, (struct ifreq *)addr);
+		error = bpf_setif(d, addr);
 		break;
 
 	/*
@@ -832,7 +831,7 @@ bpfioctl(dev, cmd, addr, flag, l)
 	 */
 	case BIOCSRTIMEOUT:
 		{
-			struct timeval *tv = (struct timeval *)addr;
+			struct timeval *tv = addr;
 
 			/* Compute number of ticks. */
 			d->bd_rtout = tv->tv_sec * hz + tv->tv_usec / tick;
@@ -846,7 +845,7 @@ bpfioctl(dev, cmd, addr, flag, l)
 	 */
 	case BIOCGRTIMEOUT:
 		{
-			struct timeval *tv = (struct timeval *)addr;
+			struct timeval *tv = addr;
 
 			tv->tv_sec = d->bd_rtout / hz;
 			tv->tv_usec = (d->bd_rtout % hz) * tick;
@@ -858,7 +857,7 @@ bpfioctl(dev, cmd, addr, flag, l)
 	 */
 	case BIOCGSTATS:
 		{
-			struct bpf_stat *bs = (struct bpf_stat *)addr;
+			struct bpf_stat *bs = addr;
 
 			bs->bs_recv = d->bd_rcount;
 			bs->bs_drop = d->bd_dcount;
@@ -868,7 +867,7 @@ bpfioctl(dev, cmd, addr, flag, l)
 
 	case BIOCGSTATSOLD:
 		{
-			struct bpf_stat_old *bs = (struct bpf_stat_old *)addr;
+			struct bpf_stat_old *bs = addr;
 
 			bs->bs_recv = d->bd_rcount;
 			bs->bs_drop = d->bd_dcount;
@@ -884,7 +883,7 @@ bpfioctl(dev, cmd, addr, flag, l)
 
 	case BIOCVERSION:
 		{
-			struct bpf_version *bv = (struct bpf_version *)addr;
+			struct bpf_version *bv = addr;
 
 			bv->bv_major = BPF_MAJOR_VERSION;
 			bv->bv_minor = BPF_MINOR_VERSION;
@@ -943,9 +942,7 @@ bpfioctl(dev, cmd, addr, flag, l)
  * free it and replace it.  Returns EINVAL for bogus requests.
  */
 int
-bpf_setf(d, fp)
-	struct bpf_d *d;
-	struct bpf_program *fp;
+bpf_setf(struct bpf_d *d, struct bpf_program *fp)
 {
 	struct bpf_insn *fcode, *old;
 	u_int flen, size;
@@ -960,7 +957,7 @@ bpf_setf(d, fp)
 		reset_d(d);
 		splx(s);
 		if (old != 0)
-			free((caddr_t)old, M_DEVBUF);
+			free(old, M_DEVBUF);
 		return (0);
 	}
 	flen = fp->bf_len;
@@ -968,19 +965,19 @@ bpf_setf(d, fp)
 		return (EINVAL);
 
 	size = flen * sizeof(*fp->bf_insns);
-	fcode = (struct bpf_insn *)malloc(size, M_DEVBUF, M_WAITOK);
-	if (copyin((caddr_t)fp->bf_insns, (caddr_t)fcode, size) == 0 &&
+	fcode = malloc(size, M_DEVBUF, M_WAITOK);
+	if (copyin(fp->bf_insns, fcode, size) == 0 &&
 	    bpf_validate(fcode, (int)flen)) {
 		s = splnet();
 		d->bd_filter = fcode;
 		reset_d(d);
 		splx(s);
 		if (old != 0)
-			free((caddr_t)old, M_DEVBUF);
+			free(old, M_DEVBUF);
 
 		return (0);
 	}
-	free((caddr_t)fcode, M_DEVBUF);
+	free(fcode, M_DEVBUF);
 	return (EINVAL);
 }
 
@@ -990,9 +987,7 @@ bpf_setf(d, fp)
  * Return an errno or 0.
  */
 static int
-bpf_setif(d, ifr)
-	struct bpf_d *d;
-	struct ifreq *ifr;
+bpf_setif(struct bpf_d *d, struct ifreq *ifr)
 {
 	struct bpf_if *bp;
 	char *cp;
@@ -1066,11 +1061,8 @@ bpf_setif(d, ifr)
  * Copy the interface name to the ifreq.
  */
 static void
-bpf_ifname(ifp, ifr)
-	struct ifnet *ifp;
-	struct ifreq *ifr;
+bpf_ifname(struct ifnet *ifp, struct ifreq *ifr)
 {
-
 	memcpy(ifr->ifr_name, ifp->if_xname, IFNAMSIZ);
 }
 
@@ -1083,10 +1075,7 @@ bpf_ifname(ifp, ifr)
  * Otherwise, return false but make a note that a selwakeup() must be done.
  */
 int
-bpfpoll(dev, events, l)
-	dev_t dev;
-	int events;
-	struct lwp *l;
+bpfpoll(dev_t dev, int events, struct lwp *l)
 {
 	struct bpf_d *d = &bpf_dtab[minor(dev)];
 	int s = splnet();
@@ -1146,9 +1135,7 @@ static const struct filterops bpfread_filtops =
 	{ 1, NULL, filt_bpfrdetach, filt_bpfread };
 
 int
-bpfkqfilter(dev, kn)
-	dev_t dev;
-	struct knote *kn;
+bpfkqfilter(dev_t dev, struct knote *kn)
 {
 	struct bpf_d *d = &bpf_dtab[minor(dev)];
 	struct klist *klist;
@@ -1180,10 +1167,7 @@ bpfkqfilter(dev, kn)
  * buffer.
  */
 void
-bpf_tap(arg, pkt, pktlen)
-	caddr_t arg;
-	u_char *pkt;
-	u_int pktlen;
+bpf_tap(void *arg, u_char *pkt, u_int pktlen)
 {
 	struct bpf_if *bp;
 	struct bpf_d *d;
@@ -1193,7 +1177,7 @@ bpf_tap(arg, pkt, pktlen)
 	 * The only problem that could arise here is that if two different
 	 * interfaces shared any data.  This is not the case.
 	 */
-	bp = (struct bpf_if *)arg;
+	bp = arg;
 	for (d = bp->bif_dlist; d != 0; d = d->bd_next) {
 		++d->bd_rcount;
 		slen = bpf_filter(d->bd_filter, pkt, pktlen, pktlen);
@@ -1207,10 +1191,7 @@ bpf_tap(arg, pkt, pktlen)
  * from m_copydata in sys/uipc_mbuf.c.
  */
 static void *
-bpf_mcpy(dst_arg, src_arg, len)
-	void *dst_arg;
-	const void *src_arg;
-	size_t len;
+bpf_mcpy(void *dst_arg, const void *src_arg, size_t len)
 {
 	const struct mbuf *m;
 	u_int count;
@@ -1222,7 +1203,7 @@ bpf_mcpy(dst_arg, src_arg, len)
 		if (m == 0)
 			panic("bpf_mcpy");
 		count = min(m->m_len, len);
-		memcpy((caddr_t)dst, mtod(m, caddr_t), count);
+		memcpy(dst, mtod(m, void *), count);
 		m = m->m_next;
 		dst += count;
 		len -= count;
@@ -1261,13 +1242,9 @@ bpf_deliver(struct bpf_if *bp, void *(*cpfn)(void *, const void *, size_t),
  * a buffer, and the tail is in an mbuf chain.
  */
 void
-bpf_mtap2(arg, data, dlen, m)
-	caddr_t arg;
-	void *data;
-	u_int dlen;
-	struct mbuf *m;
+bpf_mtap2(void *arg, void *data, u_int dlen, struct mbuf *m)
 {
-	struct bpf_if *bp = (struct bpf_if *)arg;
+	struct bpf_if *bp = arg;
 	u_int pktlen;
 	struct mbuf mb;
 
@@ -1290,12 +1267,10 @@ bpf_mtap2(arg, data, dlen, m)
  * Incoming linkage from device drivers, when packet is in an mbuf chain.
  */
 void
-bpf_mtap(arg, m)
-	caddr_t arg;
-	struct mbuf *m;
+bpf_mtap(void *arg, struct mbuf *m)
 {
-	void *(*cpfn) __P((void *, const void *, size_t));
-	struct bpf_if *bp = (struct bpf_if *)arg;
+	void *(*cpfn)(void *, const void *, size_t);
+	struct bpf_if *bp = arg;
 	u_int pktlen, buflen;
 	void *marg;
 
@@ -1315,6 +1290,101 @@ bpf_mtap(arg, m)
 }
 
 /*
+ * We need to prepend the address family as
+ * a four byte field.  Cons up a dummy header
+ * to pacify bpf.  This is safe because bpf
+ * will only read from the mbuf (i.e., it won't
+ * try to free it or keep a pointer a to it).
+ */
+void
+bpf_mtap_af(void *arg, u_int32_t af, struct mbuf *m)
+{
+	struct mbuf m0;
+	
+	m0.m_flags = 0;
+	m0.m_next = m;
+	m0.m_len = 4;
+	m0.m_data = (char *)&af;
+
+	bpf_mtap(arg, &m0);
+}
+
+void
+bpf_mtap_et(void *arg, u_int16_t et, struct mbuf *m)
+{
+	struct mbuf m0;
+
+	m0.m_flags = 0;
+	m0.m_next = m;
+	m0.m_len = 14;
+	m0.m_data = m0.m_dat;
+
+	((u_int32_t *)m0.m_data)[0] = 0;
+	((u_int32_t *)m0.m_data)[1] = 0;
+	((u_int32_t *)m0.m_data)[2] = 0;
+	((u_int16_t *)m0.m_data)[6] = et;
+
+	bpf_mtap(arg, &m0);
+}
+
+#if NSL > 0 || NSTRIP > 0
+/*
+ * Put the SLIP pseudo-"link header" in place.
+ * Note this M_PREPEND() should never fail,
+ * swince we know we always have enough space
+ * in the input buffer.
+ */
+void
+bpf_mtap_sl_in(void *arg, u_char *chdr, struct mbuf **m)
+{
+	int s;
+	u_char *hp;
+
+	M_PREPEND(*m, SLIP_HDRLEN, M_DONTWAIT);
+	if (*m == NULL)
+		return;
+
+	hp = mtod(*m, u_char *);
+	hp[SLX_DIR] = SLIPDIR_IN;
+	(void)memcpy(&hp[SLX_CHDR], chdr, CHDR_LEN);
+
+	s = splnet();
+	bpf_mtap(arg, *m);
+	splx(s);
+
+	m_adj(*m, SLIP_HDRLEN);
+}
+
+/*
+ * Put the SLIP pseudo-"link header" in
+ * place.  The compressed header is now
+ * at the beginning of the mbuf.
+ */
+void
+bpf_mtap_sl_out(void *arg, u_char *chdr, struct mbuf *m)
+{
+	struct mbuf m0;
+	u_char *hp;
+	int s;
+
+	m0.m_flags = 0;
+	m0.m_next = m;
+	m0.m_data = m0.m_dat;
+	m0.m_len = SLIP_HDRLEN;
+
+	hp = mtod(&m0, u_char *);
+
+	hp[SLX_DIR] = SLIPDIR_OUT;
+	(void)memcpy(&hp[SLX_CHDR], chdr, CHDR_LEN);
+
+	s = splnet();
+	bpf_mtap(arg, &m0);
+	splx(s);
+	m_freem(m);
+}
+#endif
+
+/*
  * Move the packet data from interface memory (pkt) into the
  * store buffer.  Return 1 if it's time to wakeup a listener (buffer full),
  * otherwise 0.  "copy" is the routine called to do the actual data
@@ -1323,11 +1393,8 @@ bpf_mtap(arg, m)
  * pkt is really an mbuf.
  */
 static void
-catchpacket(d, pkt, pktlen, snaplen, cpfn)
-	struct bpf_d *d;
-	u_char *pkt;
-	u_int pktlen, snaplen;
-	void *(*cpfn) __P((void *, const void *, size_t));
+catchpacket(struct bpf_d *d, u_char *pkt, u_int pktlen, u_int snaplen,
+    void *(*cpfn)(void *, const void *, size_t))
 {
 	struct bpf_hdr *hp;
 	int totlen, curlen;
@@ -1397,14 +1464,13 @@ catchpacket(d, pkt, pktlen, snaplen, cpfn)
  * Initialize all nonzero fields of a descriptor.
  */
 static int
-bpf_allocbufs(d)
-	struct bpf_d *d;
+bpf_allocbufs(struct bpf_d *d)
 {
 
-	d->bd_fbuf = (caddr_t)malloc(d->bd_bufsize, M_DEVBUF, M_NOWAIT);
+	d->bd_fbuf = malloc(d->bd_bufsize, M_DEVBUF, M_NOWAIT);
 	if (!d->bd_fbuf)
 		return (ENOBUFS);
-	d->bd_sbuf = (caddr_t)malloc(d->bd_bufsize, M_DEVBUF, M_NOWAIT);
+	d->bd_sbuf = malloc(d->bd_bufsize, M_DEVBUF, M_NOWAIT);
 	if (!d->bd_sbuf) {
 		free(d->bd_fbuf, M_DEVBUF);
 		return (ENOBUFS);
@@ -1419,8 +1485,7 @@ bpf_allocbufs(d)
  * Called on close.
  */
 static void
-bpf_freed(d)
-	struct bpf_d *d;
+bpf_freed(struct bpf_d *d)
 {
 	/*
 	 * We don't need to lock out interrupts since this descriptor has
@@ -1435,7 +1500,7 @@ bpf_freed(d)
 			free(d->bd_fbuf, M_DEVBUF);
 	}
 	if (d->bd_filter)
-		free((caddr_t)d->bd_filter, M_DEVBUF);
+		free(d->bd_filter, M_DEVBUF);
 
 	D_MARKFREE(d);
 }
@@ -1445,9 +1510,7 @@ bpf_freed(d)
  * fixed size of the link header (variable length headers not yet supported).
  */
 void
-bpfattach(ifp, dlt, hdrlen)
-	struct ifnet *ifp;
-	u_int dlt, hdrlen;
+bpfattach(struct ifnet *ifp, u_int dlt, u_int hdrlen)
 {
 
 	bpfattach2(ifp, dlt, hdrlen, &ifp->if_bpf);
@@ -1459,18 +1522,15 @@ bpfattach(ifp, dlt, hdrlen)
  * (variable length headers not yet supported).
  */
 void
-bpfattach2(ifp, dlt, hdrlen, driverp)
-	struct ifnet *ifp;
-	u_int dlt, hdrlen;
-	caddr_t *driverp;
+bpfattach2(struct ifnet *ifp, u_int dlt, u_int hdrlen, void *driverp)
 {
 	struct bpf_if *bp;
-	bp = (struct bpf_if *)malloc(sizeof(*bp), M_DEVBUF, M_DONTWAIT);
+	bp = malloc(sizeof(*bp), M_DEVBUF, M_DONTWAIT);
 	if (bp == 0)
 		panic("bpfattach");
 
 	bp->bif_dlist = 0;
-	bp->bif_driverp = (struct bpf_if **)driverp;
+	bp->bif_driverp = driverp;
 	bp->bif_ifp = ifp;
 	bp->bif_dlt = dlt;
 
@@ -1496,8 +1556,7 @@ bpfattach2(ifp, dlt, hdrlen, driverp)
  * Remove an interface from bpf.
  */
 void
-bpfdetach(ifp)
-	struct ifnet *ifp;
+bpfdetach(struct ifnet *ifp)
 {
 	struct bpf_if *bp, **pbp;
 	struct bpf_d *d;
@@ -1538,9 +1597,7 @@ bpfdetach(ifp)
  * Change the data link type of a interface.
  */
 void
-bpf_change_type(ifp, dlt, hdrlen)
-	struct ifnet *ifp;
-	u_int dlt, hdrlen;
+bpf_change_type(struct ifnet *ifp, u_int dlt, u_int hdrlen)
 {
 	struct bpf_if *bp;
 
@@ -1566,9 +1623,7 @@ bpf_change_type(ifp, dlt, hdrlen)
  * Get a list of available data link type of the interface.
  */
 static int
-bpf_getdltlist(d, bfl)
-	struct bpf_d *d;
-	struct bpf_dltlist *bfl;
+bpf_getdltlist(struct bpf_d *d, struct bpf_dltlist *bfl)
 {
 	int n, error;
 	struct ifnet *ifp;
@@ -1596,9 +1651,7 @@ bpf_getdltlist(d, bfl)
  * Set the data link type of a BPF instance.
  */
 static int
-bpf_setdlt(d, dlt)
-	struct bpf_d *d;
-	u_int dlt;
+bpf_setdlt(struct bpf_d *d, u_int dlt)
 {
 	int s, error, opromisc;
 	struct ifnet *ifp;

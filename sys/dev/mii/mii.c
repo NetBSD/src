@@ -1,4 +1,4 @@
-/*	$NetBSD: mii.c,v 1.33 2003/01/01 00:10:21 thorpej Exp $	*/
+/*	$NetBSD: mii.c,v 1.33.2.1 2004/08/25 06:58:05 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mii.c,v 1.33 2003/01/01 00:10:21 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mii.c,v 1.33.2.1 2004/08/25 06:58:05 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -56,8 +56,8 @@ __KERNEL_RCSID(0, "$NetBSD: mii.c,v 1.33 2003/01/01 00:10:21 thorpej Exp $");
 #include <dev/mii/mii.h>
 #include <dev/mii/miivar.h>
 
-int	mii_print(void *, const char *);
-int	mii_submatch(struct device *, struct cfdata *, void *);
+static int	mii_print(void *, const char *);
+static int	mii_submatch(struct device *, struct cfdata *, void *);
 
 /*
  * Helper function used by network interface drivers, attaches PHYs
@@ -72,7 +72,7 @@ mii_attach(struct device *parent, struct mii_data *mii, int capmask,
 	int bmsr, offset = 0;
 	int phymin, phymax;
 
-	if (phyloc != MII_PHY_ANY && offloc != MII_PHY_ANY)
+	if (phyloc != MII_PHY_ANY && offloc != MII_OFFSET_ANY)
 		panic("mii_attach: phyloc and offloc specified");
 
 	if (phyloc == MII_PHY_ANY) {
@@ -158,7 +158,7 @@ mii_activate(struct mii_data *mii, enum devact act, int phyloc, int offloc)
 {
 	struct mii_softc *child;
 
-	if (phyloc != MII_PHY_ANY && offloc != MII_PHY_ANY)
+	if (phyloc != MII_PHY_ANY && offloc != MII_OFFSET_ANY)
 		panic("mii_activate: phyloc and offloc specified");
 
 	if ((mii->mii_flags & MIIF_INITDONE) == 0)
@@ -214,7 +214,7 @@ mii_detach(struct mii_data *mii, int phyloc, int offloc)
 	}
 }
 
-int
+static int
 mii_print(void *aux, const char *pnp)
 {
 	struct mii_attach_args *ma = aux;
@@ -228,7 +228,7 @@ mii_print(void *aux, const char *pnp)
 	return (UNCONF);
 }
 
-int
+static int
 mii_submatch(struct device *parent, struct cfdata *cf, void *aux)
 {
 	struct mii_attach_args *ma = aux;

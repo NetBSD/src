@@ -1,4 +1,4 @@
-/*	$NetBSD: rccide.c,v 1.7.4.2 2004/08/03 10:49:12 skrll Exp $	*/
+/*	$NetBSD: rccide.c,v 1.7.4.3 2004/08/25 06:58:06 skrll Exp $	*/
 
 /*
  * Copyright (c) 2003 By Noon Software, Inc.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rccide.c,v 1.7.4.2 2004/08/03 10:49:12 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rccide.c,v 1.7.4.3 2004/08/25 06:58:06 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -39,7 +39,7 @@ __KERNEL_RCSID(0, "$NetBSD: rccide.c,v 1.7.4.2 2004/08/03 10:49:12 skrll Exp $")
 
 static void serverworks_chip_map(struct pciide_softc *,
 				 struct pci_attach_args *);
-static void serverworks_setup_channel(struct wdc_channel *);
+static void serverworks_setup_channel(struct ata_channel *);
 static int  serverworks_pci_intr(void *);
 static int  serverworkscsb6_pci_intr(void *);
 
@@ -115,40 +115,41 @@ serverworks_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 		return;
 
 	aprint_normal("%s: bus-master DMA support present",
-	    sc->sc_wdcdev.sc_dev.dv_xname);
+	    sc->sc_wdcdev.sc_atac.atac_dev.dv_xname);
 	pciide_mapreg_dma(sc, pa);
 	aprint_normal("\n");
-	sc->sc_wdcdev.cap = WDC_CAPABILITY_DATA16 | WDC_CAPABILITY_DATA32 |
-	    WDC_CAPABILITY_MODE;
+	sc->sc_wdcdev.sc_atac.atac_cap = ATAC_CAP_DATA16 | ATAC_CAP_DATA32;
 
 	if (sc->sc_dma_ok) {
-		sc->sc_wdcdev.cap |= WDC_CAPABILITY_DMA | WDC_CAPABILITY_UDMA;
-		sc->sc_wdcdev.cap |= WDC_CAPABILITY_IRQACK;
+		sc->sc_wdcdev.sc_atac.atac_cap |= ATAC_CAP_DMA | ATAC_CAP_UDMA;
 		sc->sc_wdcdev.irqack = pciide_irqack;
 	}
-	sc->sc_wdcdev.PIO_cap = 4;
-	sc->sc_wdcdev.DMA_cap = 2;
+	sc->sc_wdcdev.sc_atac.atac_pio_cap = 4;
+	sc->sc_wdcdev.sc_atac.atac_dma_cap = 2;
 	switch (sc->sc_pp->ide_product) {
 	case PCI_PRODUCT_SERVERWORKS_OSB4_IDE:
-		sc->sc_wdcdev.UDMA_cap = 2;
+		sc->sc_wdcdev.sc_atac.atac_udma_cap = 2;
 		break;
 	case PCI_PRODUCT_SERVERWORKS_CSB5_IDE:
 		if (PCI_REVISION(pa->pa_class) < 0x92)
-			sc->sc_wdcdev.UDMA_cap = 4;
+			sc->sc_wdcdev.sc_atac.atac_udma_cap = 4;
 		else
-			sc->sc_wdcdev.UDMA_cap = 5;
+			sc->sc_wdcdev.sc_atac.atac_udma_cap = 5;
 		break;
 	case PCI_PRODUCT_SERVERWORKS_CSB6_IDE:
 	case PCI_PRODUCT_SERVERWORKS_CSB6_RAID:
-		sc->sc_wdcdev.UDMA_cap = 5;
+		sc->sc_wdcdev.sc_atac.atac_udma_cap = 5;
 		break;
 	}
 
-	sc->sc_wdcdev.set_modes = serverworks_setup_channel;
-	sc->sc_wdcdev.channels = sc->wdc_chanarray;
-	sc->sc_wdcdev.nchannels = 2;
+	sc->sc_wdcdev.sc_atac.atac_set_modes = serverworks_setup_channel;
+	sc->sc_wdcdev.sc_atac.atac_channels = sc->wdc_chanarray;
+	sc->sc_wdcdev.sc_atac.atac_nchannels = 2;
 
-	for (channel = 0; channel < sc->sc_wdcdev.nchannels; channel++) {
+	wdc_allocate_regs(&sc->sc_wdcdev);
+
+	for (channel = 0; channel < sc->sc_wdcdev.sc_atac.atac_nchannels;
+	     channel++) {
 		cp = &sc->pciide_channels[channel];
 		if (pciide_chansetup(sc, channel, interface) == 0)
 			continue;
@@ -170,14 +171,14 @@ serverworks_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 }
 
 static void
-serverworks_setup_channel(struct wdc_channel *chp)
+serverworks_setup_channel(struct ata_channel *chp)
 {
 	struct ata_drive_datas *drvp;
-	struct pciide_channel *cp = (struct pciide_channel*)chp;
-	struct pciide_softc *sc = (struct pciide_softc *)cp->wdc_channel.ch_wdc;
-	struct wdc_softc *wdc = &sc->sc_wdcdev;
+	struct atac_softc *atac = chp->ch_atac;
+	struct pciide_channel *cp = CHAN_TO_PCHAN(chp);
+	struct pciide_softc *sc = CHAN_TO_PCIIDE(chp);
 	int channel = chp->ch_channel;
-	int drive, unit;
+	int drive, unit, s;
 	u_int32_t pio_time, dma_time, pio_mode, udma_mode;
 	u_int32_t idedma_ctl;
 	static const u_int8_t pio_modes[5] = {0x5d, 0x47, 0x34, 0x22, 0x20};
@@ -209,7 +210,7 @@ serverworks_setup_channel(struct wdc_channel *chp)
 		/* add timing values, setup DMA if needed */
 		pio_time |= pio_modes[drvp->PIO_mode] << (8 * (unit^1));
 		pio_mode |= drvp->PIO_mode << (4 * unit + 16);
-		if ((wdc->cap & WDC_CAPABILITY_UDMA) &&
+		if ((atac->atac_cap & ATAC_CAP_UDMA) &&
 		    (drvp->drive_flags & DRIVE_UDMA)) {
 			/* use Ultra/DMA, check for 80-pin cable */
 			if (drvp->UDMA_mode > 2 &&
@@ -221,15 +222,19 @@ serverworks_setup_channel(struct wdc_channel *chp)
 			udma_mode |= drvp->UDMA_mode << (4 * unit + 16);
 			udma_mode |= 1 << unit;
 			idedma_ctl |= IDEDMA_CTL_DRV_DMA(drive);
-		} else if ((wdc->cap & WDC_CAPABILITY_DMA) &&
+		} else if ((atac->atac_cap & ATAC_CAP_DMA) &&
 		    (drvp->drive_flags & DRIVE_DMA)) {
 			/* use Multiword DMA */
+			s = splbio();
 			drvp->drive_flags &= ~DRIVE_UDMA;
+			splx(s);
 			dma_time |= dma_modes[drvp->DMA_mode] << (8 * (unit^1));
 			idedma_ctl |= IDEDMA_CTL_DRV_DMA(drive);
 		} else {
 			/* PIO only */
+			s = splbio();
 			drvp->drive_flags &= ~(DRIVE_UDMA | DRIVE_DMA);
+			splx(s);
 		}
 	}
 
@@ -252,22 +257,22 @@ serverworks_pci_intr(arg)
 {
 	struct pciide_softc *sc = arg;
 	struct pciide_channel *cp;
-	struct wdc_channel *wdc_cp;
+	struct ata_channel *wdc_cp;
 	int rv = 0;
 	int dmastat, i, crv;
 
-	for (i = 0; i < sc->sc_wdcdev.nchannels; i++) {
+	for (i = 0; i < sc->sc_wdcdev.sc_atac.atac_nchannels; i++) {
 		cp = &sc->pciide_channels[i];
 		dmastat = bus_space_read_1(sc->sc_dma_iot,
 		    cp->dma_iohs[IDEDMA_CTL], 0);
 		if ((dmastat & (IDEDMA_CTL_ACT | IDEDMA_CTL_INTR)) !=
 		    IDEDMA_CTL_INTR)
 			continue;
-		wdc_cp = &cp->wdc_channel;
+		wdc_cp = &cp->ata_channel;
 		crv = wdcintr(wdc_cp);
 		if (crv == 0) {
 			printf("%s:%d: bogus intr\n",
-			    sc->sc_wdcdev.sc_dev.dv_xname, i);
+			    sc->sc_wdcdev.sc_atac.atac_dev.dv_xname, i);
 			bus_space_write_1(sc->sc_dma_iot,
 			    cp->dma_iohs[IDEDMA_CTL], 0, dmastat);
 		} else
@@ -282,13 +287,13 @@ serverworkscsb6_pci_intr(arg)
 {
 	struct pciide_softc *sc = arg;
 	struct pciide_channel *cp;
-	struct wdc_channel *wdc_cp;
+	struct ata_channel *wdc_cp;
 	int rv = 0;
 	int i, crv;
 
-	for (i = 0; i < sc->sc_wdcdev.nchannels; i++) {
+	for (i = 0; i < sc->sc_wdcdev.sc_atac.atac_nchannels; i++) {
 		cp = &sc->pciide_channels[i];
-		wdc_cp = &cp->wdc_channel;
+		wdc_cp = &cp->ata_channel;
 		/*
 		 * The CSB6 doesn't assert IDEDMA_CTL_INTR for non-DMA commands.
 		 * Until we find a way to know if the controller posted an

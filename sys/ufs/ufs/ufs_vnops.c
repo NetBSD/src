@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_vnops.c,v 1.102.2.3 2004/08/24 17:57:56 skrll Exp $	*/
+/*	$NetBSD: ufs_vnops.c,v 1.102.2.4 2004/08/25 06:59:15 skrll Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993, 1995
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_vnops.c,v 1.102.2.3 2004/08/24 17:57:56 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_vnops.c,v 1.102.2.4 2004/08/25 06:59:15 skrll Exp $");
 
 #ifndef _LKM
 #include "opt_quota.h"
@@ -140,16 +140,17 @@ ufs_mknod(void *v)
 	ino = ip->i_number;
 	ip->i_flag |= IN_ACCESS | IN_CHANGE | IN_UPDATE;
 	if (vap->va_rdev != VNOVAL) {
+		struct ufsmount *ump = ip->i_ump;
 		/*
 		 * Want to be able to use this to make badblock
 		 * inodes, so don't truncate the dev number.
 		 */
-		if (ip->i_ump->um_fstype == UFS1)
+		if (ump->um_fstype == UFS1)
 			ip->i_ffs1_rdev = ufs_rw32(vap->va_rdev,
-			    UFS_MPNEEDSWAP(mp));
+			    UFS_MPNEEDSWAP(ump));
 		else
 			ip->i_ffs2_rdev = ufs_rw64(vap->va_rdev,
-			    UFS_MPNEEDSWAP(mp));
+			    UFS_MPNEEDSWAP(ump));
 	}
 	/*
 	 * Remove inode so that it will be reloaded by VFS_VGET and
@@ -310,7 +311,7 @@ ufs_getattr(void *v)
 	vap->va_size = vp->v_size;
 	if (ip->i_ump->um_fstype == UFS1) {
 		vap->va_rdev = (dev_t)ufs_rw32(ip->i_ffs1_rdev,
-		    UFS_MPNEEDSWAP(vp->v_mount));
+		    UFS_MPNEEDSWAP(ip->i_ump));
 		vap->va_atime.tv_sec = ip->i_ffs1_atime;
 		vap->va_atime.tv_nsec = ip->i_ffs1_atimensec;
 		vap->va_mtime.tv_sec = ip->i_ffs1_mtime;
@@ -322,7 +323,7 @@ ufs_getattr(void *v)
 		vap->va_bytes = dbtob((u_quad_t)ip->i_ffs1_blocks);
 	} else {
 		vap->va_rdev = (dev_t)ufs_rw64(ip->i_ffs2_rdev,
-		    UFS_MPNEEDSWAP(vp->v_mount));
+		    UFS_MPNEEDSWAP(ip->i_ump));
 		vap->va_atime.tv_sec = ip->i_ffs2_atime;
 		vap->va_atime.tv_nsec = ip->i_ffs2_atimensec;
 		vap->va_mtime.tv_sec = ip->i_ffs2_mtime;
@@ -744,18 +745,17 @@ ufs_whiteout(void *v)
 		struct componentname	*a_cnp;
 		int			a_flags;
 	} */ *ap = v;
-	struct vnode		*dvp;
-	struct componentname	*cnp;
+	struct vnode		*dvp = ap->a_dvp;
+	struct componentname	*cnp = ap->a_cnp;
 	struct direct		*newdir;
 	int			error;
+	struct ufsmount		*ump = VFSTOUFS(dvp->v_mount);
 
-	dvp = ap->a_dvp;
-	cnp = ap->a_cnp;
 	error = 0;
 	switch (ap->a_flags) {
 	case LOOKUP:
 		/* 4.4 format directories support whiteout operations */
-		if (dvp->v_mount->mnt_maxsymlinklen > 0)
+		if (ump->um_maxsymlinklen > 0)
 			return (0);
 		return (EOPNOTSUPP);
 
@@ -764,7 +764,7 @@ ufs_whiteout(void *v)
 #ifdef DIAGNOSTIC
 		if ((cnp->cn_flags & SAVENAME) == 0)
 			panic("ufs_whiteout: missing name");
-		if (dvp->v_mount->mnt_maxsymlinklen <= 0)
+		if (ump->um_maxsymlinklen <= 0)
 			panic("ufs_whiteout: old format filesystem");
 #endif
 
@@ -782,7 +782,7 @@ ufs_whiteout(void *v)
 	case DELETE:
 		/* remove an existing directory whiteout */
 #ifdef DIAGNOSTIC
-		if (dvp->v_mount->mnt_maxsymlinklen <= 0)
+		if (ump->um_maxsymlinklen <= 0)
 			panic("ufs_whiteout: old format filesystem");
 #endif
 
@@ -1096,7 +1096,7 @@ ufs_rename(void *v)
 		}
 		if ((error = ufs_dirrewrite(dp, xp, ip->i_number, 
 		    IFTODT(ip->i_mode), doingdirectory && newparent ?
-		    newparent : doingdirectory, IN_CHANGE|IN_UPDATE)) != 0)
+		    newparent : doingdirectory, IN_CHANGE | IN_UPDATE)) != 0)
 			goto bad;
 		if (doingdirectory) {
 			if (!newparent) {
@@ -1230,27 +1230,21 @@ ufs_mkdir(void *v)
 		struct componentname	*a_cnp;
 		struct vattr		*a_vap;
 	} */ *ap = v;
-	struct vnode		*dvp, *tvp;
-	struct vattr		*vap;
-	struct componentname *cnp;
-	struct inode		*ip, *dp;
+	struct vnode		*dvp = ap->a_dvp, *tvp;
+	struct vattr		*vap = ap->a_vap;
+	struct componentname	*cnp = ap->a_cnp;
+	struct inode		*ip, *dp = VTOI(dvp);
 	struct buf		*bp;
 	struct dirtemplate	dirtemplate;
 	struct direct		*newdir;
 	int			error, dmode, blkoff;
-	int dirblksiz = DIRBLKSIZ;
-	if (UFS_MPISAPPLEUFS(ap->a_dvp->v_mount)) {
-		dirblksiz = APPLEUFS_DIRBLKSIZ;
-	}
+	struct ufsmount		*ump = dp->i_ump;
+	int			dirblksiz = ump->um_dirblksiz;
 
-	dvp = ap->a_dvp;
-	vap = ap->a_vap;
-	cnp = ap->a_cnp;
 #ifdef DIAGNOSTIC
 	if ((cnp->cn_flags & HASBUF) == 0)
 		panic("ufs_mkdir: no name");
 #endif
-	dp = VTOI(dvp);
 	if ((nlink_t)dp->i_nlink >= LINK_MAX) {
 		error = EMLINK;
 		goto out;
@@ -1312,19 +1306,17 @@ ufs_mkdir(void *v)
 	 */
 	dirtemplate = mastertemplate;
 	dirtemplate.dotdot_reclen = dirblksiz - dirtemplate.dot_reclen;
-	dirtemplate.dot_ino = ufs_rw32(ip->i_number,
-	    UFS_MPNEEDSWAP(dvp->v_mount));
-	dirtemplate.dotdot_ino = ufs_rw32(dp->i_number,
-	    UFS_MPNEEDSWAP(dvp->v_mount));
+	dirtemplate.dot_ino = ufs_rw32(ip->i_number, UFS_MPNEEDSWAP(ump));
+	dirtemplate.dotdot_ino = ufs_rw32(dp->i_number, UFS_MPNEEDSWAP(ump));
 	dirtemplate.dot_reclen = ufs_rw16(dirtemplate.dot_reclen,
-	    UFS_MPNEEDSWAP(dvp->v_mount));
+	    UFS_MPNEEDSWAP(ump));
 	dirtemplate.dotdot_reclen = ufs_rw16(dirtemplate.dotdot_reclen,
-	    UFS_MPNEEDSWAP(dvp->v_mount));
-	if (dvp->v_mount->mnt_maxsymlinklen <= 0) {
+	    UFS_MPNEEDSWAP(ump));
+	if (ump->um_maxsymlinklen <= 0) {
 #if BYTE_ORDER == LITTLE_ENDIAN
-		if (UFS_MPNEEDSWAP(dvp->v_mount) == 0)
+		if (UFS_MPNEEDSWAP(ump) == 0)
 #else
-		if (UFS_MPNEEDSWAP(dvp->v_mount) != 0)
+		if (UFS_MPNEEDSWAP(ump) != 0)
 #endif
 		{
 			dirtemplate.dot_type = dirtemplate.dot_namlen;
@@ -1537,8 +1529,8 @@ ufs_symlink(void *v)
 	VN_KNOTE(ap->a_dvp, NOTE_WRITE);
 	vp = *vpp;
 	len = strlen(ap->a_target);
-	if (len < vp->v_mount->mnt_maxsymlinklen) {
-		ip = VTOI(vp);
+	ip = VTOI(vp);
+	if (len < ip->i_ump->um_maxsymlinklen) {
 		memcpy((char *)SHORTLINK(ip), ap->a_target, len);
 		ip->i_size = len;
 		DIP_ASSIGN(ip, size, len);
@@ -1573,14 +1565,13 @@ ufs_readdir(void *v)
 		off_t		**a_cookies;
 		int		*ncookies;
 	} */ *ap = v;
+	struct vnode	*vp = ap->a_vp;
 	struct uio	*uio;
 	int		error;
 	size_t		count, lost;
 	off_t		off;
-	int dirblksiz = DIRBLKSIZ;
-	if (UFS_MPISAPPLEUFS(ap->a_vp->v_mount)) {
-		dirblksiz = APPLEUFS_DIRBLKSIZ;
-	}
+	struct ufsmount	*ump = VFSTOUFS(vp->v_mount);
+	int		dirblksiz = ump->um_dirblksiz;
 
 	uio = ap->a_uio;
 	off = uio->uio_offset;
@@ -1593,13 +1584,12 @@ ufs_readdir(void *v)
 	uio->uio_resid = count;
 	uio->uio_iov->iov_len = count;
 #if BYTE_ORDER == LITTLE_ENDIAN
-	if (ap->a_vp->v_mount->mnt_maxsymlinklen > 0 &&
-	    UFS_MPNEEDSWAP(ap->a_vp->v_mount) == 0)
+	if (ump->um_maxsymlinklen > 0 && UFS_MPNEEDSWAP(ump) == 0)
 #else
-	if (UFS_MPNEEDSWAP(ap->a_vp->v_mount) == 0)
+	if (UFS_MPNEEDSWAP(ump) == 0)
 #endif
 	{
-		error = VOP_READ(ap->a_vp, uio, 0, ap->a_cred);
+		error = VOP_READ(vp, uio, 0, ap->a_cred);
 	} else {
 		struct dirent	*dp, *edp;
 		struct uio	auio;
@@ -1615,17 +1605,17 @@ ufs_readdir(void *v)
 		aiov.iov_len = count;
 		MALLOC(dirbuf, caddr_t, count, M_TEMP, M_WAITOK);
 		aiov.iov_base = dirbuf;
-		error = VOP_READ(ap->a_vp, &auio, 0, ap->a_cred);
+		error = VOP_READ(vp, &auio, 0, ap->a_cred);
 		if (error == 0) {
 			readcnt = count - auio.uio_resid;
 			edp = (struct dirent *)&dirbuf[readcnt];
 			for (dp = (struct dirent *)dirbuf; dp < edp; ) {
 #if BYTE_ORDER == LITTLE_ENDIAN
-				if (ap->a_vp->v_mount->mnt_maxsymlinklen <= 0 &&
-					UFS_MPNEEDSWAP(ap->a_vp->v_mount) == 0)
+				if (ump->um_maxsymlinklen <= 0 &&
+					UFS_MPNEEDSWAP(ump) == 0)
 #else
-				if (ap->a_vp->v_mount->mnt_maxsymlinklen <= 0 &&
-					UFS_MPNEEDSWAP(ap->a_vp->v_mount) != 0)
+				if (ump->um_maxsymlinklen <= 0 &&
+					UFS_MPNEEDSWAP(ump) != 0)
 #endif
 				{
 					tmp = dp->d_namlen;
@@ -1633,9 +1623,9 @@ ufs_readdir(void *v)
 					dp->d_type = tmp;
 				}
 				dp->d_fileno = ufs_rw32(dp->d_fileno,
-				    UFS_MPNEEDSWAP(ap->a_vp->v_mount));
+				    UFS_MPNEEDSWAP(ump));
 				dp->d_reclen = ufs_rw16(dp->d_reclen,
-				    UFS_MPNEEDSWAP(ap->a_vp->v_mount));
+				    UFS_MPNEEDSWAP(ump));
 				if (dp->d_reclen > 0) {
 					dp = (struct dirent *)
 					    ((char *)dp + dp->d_reclen);
@@ -1683,7 +1673,7 @@ ufs_readdir(void *v)
 		}
 	}
 	uio->uio_resid += lost;
-	*ap->a_eofflag = VTOI(ap->a_vp)->i_size <= uio->uio_offset;
+	*ap->a_eofflag = VTOI(vp)->i_size <= uio->uio_offset;
 	return (error);
 }
 
@@ -1698,15 +1688,14 @@ ufs_readlink(void *v)
 		struct uio	*a_uio;
 		struct ucred	*a_cred;
 	} */ *ap = v;
-	struct vnode	*vp;
-	struct inode	*ip;
+	struct vnode	*vp = ap->a_vp;
+	struct inode	*ip = VTOI(vp);
+	struct ufsmount	*ump = VFSTOUFS(vp->v_mount);
 	int		isize;
 
-	vp = ap->a_vp;
-	ip = VTOI(vp);
 	isize = ip->i_size;
-	if (isize < vp->v_mount->mnt_maxsymlinklen ||
-	    (vp->v_mount->mnt_maxsymlinklen == 0 && DIP(ip, blocks) == 0)) {
+	if (isize < ump->um_maxsymlinklen ||
+	    (ump->um_maxsymlinklen == 0 && DIP(ip, blocks) == 0)) {
 		uiomove((char *)SHORTLINK(ip), isize, ap->a_uio);
 		return (0);
 	}
@@ -1821,7 +1810,7 @@ ufsspec_write(void *v)
 	 * Set update and change flags.
 	 */
 	if ((ap->a_vp->v_mount->mnt_flag & MNT_NODEVMTIME) == 0)
-		VTOI(ap->a_vp)->i_flag |= IN_CHANGE | IN_UPDATE;
+		VTOI(ap->a_vp)->i_flag |= IN_MODIFY;
 	return (VOCALL (spec_vnodeop_p, VOFFSET(vop_write), ap));
 }
 
@@ -1890,7 +1879,7 @@ ufsfifo_write(void *v)
 	/*
 	 * Set update and change flags.
 	 */
-	VTOI(ap->a_vp)->i_flag |= IN_CHANGE | IN_UPDATE;
+	VTOI(ap->a_vp)->i_flag |= IN_MODIFY;
 	return (VOCALL (fifo_vnodeop_p, VOFFSET(vop_write), ap));
 }
 
@@ -1996,6 +1985,7 @@ ufs_vinit(struct mount *mntp, int (**specops)(void *), int (**fifoops)(void *),
 	struct inode	*ip;
 	struct vnode	*vp, *nvp;
 	dev_t		rdev;
+	struct ufsmount	*ump;
 
 	vp = *vpp;
 	ip = VTOI(vp);
@@ -2003,12 +1993,13 @@ ufs_vinit(struct mount *mntp, int (**specops)(void *), int (**fifoops)(void *),
 	case VCHR:
 	case VBLK:
 		vp->v_op = specops;
-		if (ip->i_ump->um_fstype == UFS1)
+		ump = ip->i_ump;
+		if (ump->um_fstype == UFS1)
 			rdev = (dev_t)ufs_rw32(ip->i_ffs1_rdev,
-			    UFS_MPNEEDSWAP(vp->v_mount));
+			    UFS_MPNEEDSWAP(ump));
 		else
 			rdev = (dev_t)ufs_rw64(ip->i_ffs2_rdev,
-			    UFS_MPNEEDSWAP(vp->v_mount));
+			    UFS_MPNEEDSWAP(ump));
 		if ((nvp = checkalias(vp, rdev, mntp)) != NULL) {
 			/*
 			 * Discard unneeded vnode, but save its inode.

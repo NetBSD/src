@@ -1,4 +1,4 @@
-/*	$NetBSD: acardide.c,v 1.9.2.2 2004/08/03 10:49:06 skrll Exp $	*/
+/*	$NetBSD: acardide.c,v 1.9.2.3 2004/08/25 06:58:05 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001 Izumi Tsutsui.
@@ -36,7 +36,7 @@
 #include <dev/pci/pciide_acard_reg.h>
 
 static void acard_chip_map(struct pciide_softc*, struct pci_attach_args*);
-static void acard_setup_channel(struct wdc_channel*);
+static void acard_setup_channel(struct ata_channel*);
 #if 0 /* XXX !! */
 static int  acard_pci_intr(void *);
 #endif
@@ -129,38 +129,38 @@ acard_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 	}
 
 	aprint_normal("%s: bus-master DMA support present",
-	    sc->sc_wdcdev.sc_dev.dv_xname);
+	    sc->sc_wdcdev.sc_atac.atac_dev.dv_xname);
 	pciide_mapreg_dma(sc, pa);
 	aprint_normal("\n");
-	sc->sc_wdcdev.cap = WDC_CAPABILITY_DATA16 | WDC_CAPABILITY_DATA32 |
-	    WDC_CAPABILITY_MODE;
+	sc->sc_wdcdev.sc_atac.atac_cap = ATAC_CAP_DATA16 | ATAC_CAP_DATA32;
 
 	if (sc->sc_dma_ok) {
-		sc->sc_wdcdev.cap |= WDC_CAPABILITY_DMA | WDC_CAPABILITY_UDMA;
-		sc->sc_wdcdev.cap |= WDC_CAPABILITY_IRQACK;
+		sc->sc_wdcdev.sc_atac.atac_cap |= ATAC_CAP_DMA | ATAC_CAP_UDMA;
 		sc->sc_wdcdev.irqack = pciide_irqack;
 	}
-	sc->sc_wdcdev.PIO_cap = 4;
-	sc->sc_wdcdev.DMA_cap = 2;
+	sc->sc_wdcdev.sc_atac.atac_pio_cap = 4;
+	sc->sc_wdcdev.sc_atac.atac_dma_cap = 2;
 	switch (sc->sc_pp->ide_product) {
 	case PCI_PRODUCT_ACARD_ATP860:
 	case PCI_PRODUCT_ACARD_ATP860A:
-		sc->sc_wdcdev.UDMA_cap = 4;
+		sc->sc_wdcdev.sc_atac.atac_udma_cap = 4;
 		break;
 	case PCI_PRODUCT_ACARD_ATP865:
 	case PCI_PRODUCT_ACARD_ATP865A:
-		sc->sc_wdcdev.UDMA_cap = 5;
+		sc->sc_wdcdev.sc_atac.atac_udma_cap = 5;
 		break;
 	default:
-		sc->sc_wdcdev.UDMA_cap = 2;
+		sc->sc_wdcdev.sc_atac.atac_udma_cap = 2;
 		break;
 	}
 
-	sc->sc_wdcdev.set_modes = acard_setup_channel;
-	sc->sc_wdcdev.channels = sc->wdc_chanarray;
-	sc->sc_wdcdev.nchannels = 2;
+	sc->sc_wdcdev.sc_atac.atac_set_modes = acard_setup_channel;
+	sc->sc_wdcdev.sc_atac.atac_channels = sc->wdc_chanarray;
+	sc->sc_wdcdev.sc_atac.atac_nchannels = 2;
 
-	for (i = 0; i < sc->sc_wdcdev.nchannels; i++) {
+	wdc_allocate_regs(&sc->sc_wdcdev);
+
+	for (i = 0; i < sc->sc_wdcdev.sc_atac.atac_nchannels; i++) {
 		cp = &sc->pciide_channels[i];
 		if (pciide_chansetup(sc, i, interface) == 0)
 			continue;
@@ -176,14 +176,14 @@ acard_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 }
 
 static void
-acard_setup_channel(struct wdc_channel *chp)
+acard_setup_channel(struct ata_channel *chp)
 {
 	struct ata_drive_datas *drvp;
-	struct pciide_channel *cp = (struct pciide_channel*)chp;
-	struct pciide_softc *sc = (struct pciide_softc *)cp->wdc_channel.ch_wdc;
-	struct wdc_softc *wdc = &sc->sc_wdcdev;
+	struct atac_softc *atac = chp->ch_atac;
+	struct pciide_channel *cp = CHAN_TO_PCHAN(chp);
+	struct pciide_softc *sc = CHAN_TO_PCIIDE(chp);
 	int channel = chp->ch_channel;
-	int drive;
+	int drive, s;
 	u_int32_t idetime, udma_mode;
 	u_int32_t idedma_ctl;
 
@@ -222,7 +222,7 @@ acard_setup_channel(struct wdc_channel *chp)
 		if ((drvp->drive_flags & DRIVE) == 0)
 			continue;
 		/* add timing values, setup DMA if needed */
-		if ((wdc->cap & WDC_CAPABILITY_UDMA) &&
+		if ((atac->atac_cap & ATAC_CAP_UDMA) &&
 		    (drvp->drive_flags & DRIVE_UDMA)) {
 			/* use Ultra/DMA */
 			if (ACARD_IS_850(sc)) {
@@ -239,10 +239,12 @@ acard_setup_channel(struct wdc_channel *chp)
 				    acard_udma_conf[drvp->UDMA_mode]);
 			}
 			idedma_ctl |= IDEDMA_CTL_DRV_DMA(drive);
-		} else if ((wdc->cap & WDC_CAPABILITY_DMA) &&
+		} else if ((atac->atac_cap & ATAC_CAP_DMA) &&
 		    (drvp->drive_flags & DRIVE_DMA)) {
 			/* use Multiword DMA */
+			s = splbio();
 			drvp->drive_flags &= ~DRIVE_UDMA;
+			splx(s);
 			if (ACARD_IS_850(sc)) {
 				idetime |= ATP850_SETTIME(drive,
 				    acard_act_dma[drvp->DMA_mode],
@@ -255,7 +257,9 @@ acard_setup_channel(struct wdc_channel *chp)
 			idedma_ctl |= IDEDMA_CTL_DRV_DMA(drive);
 		} else {
 			/* PIO only */
+			s = splbio();
 			drvp->drive_flags &= ~(DRIVE_UDMA | DRIVE_DMA);
+			splx(s);
 			if (ACARD_IS_850(sc)) {
 				idetime |= ATP850_SETTIME(drive,
 				    acard_act_pio[drvp->PIO_mode],
@@ -293,18 +297,18 @@ acard_pci_intr(void *arg)
 {
 	struct pciide_softc *sc = arg;
 	struct pciide_channel *cp;
-	struct wdc_channel *wdc_cp;
+	struct ata_channel *wdc_cp;
 	int rv = 0;
 	int dmastat, i, crv;
 
-	for (i = 0; i < sc->sc_wdcdev.nchannels; i++) {
+	for (i = 0; i < sc->sc_wdcdev.sc_atac.atac_nchannels; i++) {
 		cp = &sc->pciide_channels[i];
 		dmastat = bus_space_read_1(sc->sc_dma_iot,
 		    cp->dma_iohs[IDEDMA_CTL], 0);
 		if ((dmastat & IDEDMA_CTL_INTR) == 0)
 			continue;
-		wdc_cp = &cp->wdc_channel;
-		if ((wdc_cp->ch_flags & WDCF_IRQ_WAIT) == 0) {
+		wdc_cp = &cp->ata_channel;
+		if ((wdc_cp->ch_flags & ATACH_IRQ_WAIT) == 0) {
 			(void)wdcintr(wdc_cp);
 			bus_space_write_1(sc->sc_dma_iot,
 			    cp->dma_iohs[IDEDMA_CTL], 0, dmastat);
@@ -313,7 +317,7 @@ acard_pci_intr(void *arg)
 		crv = wdcintr(wdc_cp);
 		if (crv == 0) {
 			printf("%s:%d: bogus intr\n",
-			    sc->sc_wdcdev.sc_dev.dv_xname, i);
+			    sc->sc_wdcdev.sc_atac.atac_dev.dv_xname, i);
 			bus_space_write_1(sc->sc_dma_iot,
 			    cp->dma_iohs[IDEDMA_CTL], 0, dmastat);
 		} else if (crv == 1)

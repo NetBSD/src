@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.201.2.3 2004/08/24 17:57:38 skrll Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.201.2.4 2004/08/25 06:58:58 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.201.2.3 2004/08/24 17:57:38 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.201.2.4 2004/08/25 06:58:58 skrll Exp $");
 
 #include "opt_inet.h"
 #include "opt_ddb.h"
@@ -1154,15 +1154,21 @@ loop:
 		 * Alias, but not in use, so flush it out.
 		 */
 		simple_lock(&vp->v_interlock);
+		simple_unlock(&spechash_slock);
 		if (vp->v_usecount == 0) {
-			simple_unlock(&spechash_slock);
 			vgonel(vp, l);
 			goto loop;
 		}
-		if (vget(vp, LK_EXCLUSIVE | LK_INTERLOCK | LK_NOWAIT)) {
-			simple_unlock(&spechash_slock);
+		/*
+		 * What we're interested to know here is if someone else has
+		 * removed this vnode from the device hash list while we were
+		 * waiting.  This can only happen if vclean() did it, and
+		 * this requires the vnode to be locked.  Therefore, we use
+		 * LK_SLEEPFAIL and retry.
+		 */
+		if (vget(vp, LK_EXCLUSIVE | LK_INTERLOCK | LK_SLEEPFAIL))
 			goto loop;
-		}
+		simple_lock(&spechash_slock);
 		break;
 	}
 	if (vp == NULL || vp->v_tag != VT_NON || vp->v_type != VBLK) {
@@ -1618,9 +1624,13 @@ vclean(vp, flags, l)
 
 	/*
 	 * Clean out any cached data associated with the vnode.
+	 * If special device, remove it from special device alias list.
+	 * if it is on one.
 	 */
 	if (flags & DOCLOSE) {
 		int error;
+		struct vnode *vq, *vx;
+
 		vn_start_write(vp, &mp, V_WAIT | V_LOWER);
 		error = vinvalbuf(vp, V_SAVE, NOCRED, l, 0, 0);
 		vn_finished_write(mp, V_LOWER);
@@ -1628,6 +1638,49 @@ vclean(vp, flags, l)
 			error = vinvalbuf(vp, 0, NOCRED, l, 0, 0);
 		KASSERT(error == 0);
 		KASSERT((vp->v_flag & VONWORKLST) == 0);
+
+		if (active)
+			VOP_CLOSE(vp, FNONBLOCK, NOCRED, NULL);
+
+		if ((vp->v_type == VBLK || vp->v_type == VCHR) &&
+		    vp->v_specinfo != 0) {
+			simple_lock(&spechash_slock);
+			if (vp->v_hashchain != NULL) {
+				if (*vp->v_hashchain == vp) {
+					*vp->v_hashchain = vp->v_specnext;
+				} else {
+					for (vq = *vp->v_hashchain; vq;
+					     vq = vq->v_specnext) {
+						if (vq->v_specnext != vp)
+							continue;
+						vq->v_specnext = vp->v_specnext;
+						break;
+					}
+					if (vq == NULL)
+						panic("missing bdev");
+				}
+				if (vp->v_flag & VALIASED) {
+					vx = NULL;
+						for (vq = *vp->v_hashchain; vq;
+						     vq = vq->v_specnext) {
+						if (vq->v_rdev != vp->v_rdev ||
+						    vq->v_type != vp->v_type)
+							continue;
+						if (vx)
+							break;
+						vx = vq;
+					}
+					if (vx == NULL)
+						panic("missing alias");
+					if (vq == NULL)
+						vx->v_flag &= ~VALIASED;
+					vp->v_flag &= ~VALIASED;
+				}
+			}
+			simple_unlock(&spechash_slock);
+			FREE(vp->v_specinfo, M_VNODE);
+			vp->v_specinfo = NULL;
+		}
 	}
 	LOCK_ASSERT(!simple_lock_held(&vp->v_interlock));
 
@@ -1637,8 +1690,6 @@ vclean(vp, flags, l)
 	 * VOP_INACTIVE will unlock the vnode.
 	 */
 	if (active) {
-		if (flags & DOCLOSE)
-			VOP_CLOSE(vp, FNONBLOCK, NOCRED, NULL);
 		VOP_INACTIVE(vp, l);
 	} else {
 		/*
@@ -1744,8 +1795,6 @@ vgonel(vp, l)
 	struct vnode *vp;
 	struct lwp *l;
 {
-	struct vnode *vq;
-	struct vnode *vx;
 
 	LOCK_ASSERT(simple_lock_held(&vp->v_interlock));
 
@@ -1773,50 +1822,6 @@ vgonel(vp, l)
 
 	if (vp->v_mount != NULL)
 		insmntque(vp, (struct mount *)0);
-
-	/*
-	 * If special device, remove it from special device alias list.
-	 * if it is on one.
-	 */
-
-	if ((vp->v_type == VBLK || vp->v_type == VCHR) && vp->v_specinfo != 0) {
-		simple_lock(&spechash_slock);
-		if (vp->v_hashchain != NULL) {
-			if (*vp->v_hashchain == vp) {
-				*vp->v_hashchain = vp->v_specnext;
-			} else {
-				for (vq = *vp->v_hashchain; vq;
-							vq = vq->v_specnext) {
-					if (vq->v_specnext != vp)
-						continue;
-					vq->v_specnext = vp->v_specnext;
-					break;
-				}
-				if (vq == NULL)
-					panic("missing bdev");
-			}
-			if (vp->v_flag & VALIASED) {
-				vx = NULL;
-				for (vq = *vp->v_hashchain; vq;
-							vq = vq->v_specnext) {
-					if (vq->v_rdev != vp->v_rdev ||
-					    vq->v_type != vp->v_type)
-						continue;
-					if (vx)
-						break;
-					vx = vq;
-				}
-				if (vx == NULL)
-					panic("missing alias");
-				if (vq == NULL)
-					vx->v_flag &= ~VALIASED;
-				vp->v_flag &= ~VALIASED;
-			}
-		}
-		simple_unlock(&spechash_slock);
-		FREE(vp->v_specinfo, M_VNODE);
-		vp->v_specinfo = NULL;
-	}
 
 	/*
 	 * The test of the back pointer and the reference count of
@@ -3177,8 +3182,8 @@ vfs_mount_print(mp, full, pr)
 	(*pr)("vnodecovered = %p syncer = %p data = %p\n",
 			mp->mnt_vnodecovered,mp->mnt_syncer,mp->mnt_data);
 
-	(*pr)("fs_bshift %d dev_bshift = %d maxsymlinklen = %d\n",
-			mp->mnt_fs_bshift,mp->mnt_dev_bshift,mp->mnt_maxsymlinklen);
+	(*pr)("fs_bshift %d dev_bshift = %d\n",
+			mp->mnt_fs_bshift,mp->mnt_dev_bshift);
 
 	bitmask_snprintf(mp->mnt_flag, __MNT_FLAG_BITS, sbuf, sizeof(sbuf));
 	(*pr)("flag = %s\n", sbuf);

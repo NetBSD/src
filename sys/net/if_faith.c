@@ -1,4 +1,4 @@
-/*	$NetBSD: if_faith.c,v 1.25.6.1 2004/08/03 10:54:13 skrll Exp $	*/
+/*	$NetBSD: if_faith.c,v 1.25.6.2 2004/08/25 06:58:58 skrll Exp $	*/
 /*	$KAME: if_faith.c,v 1.21 2001/02/20 07:59:26 itojun Exp $	*/
 
 /*
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_faith.c,v 1.25.6.1 2004/08/03 10:54:13 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_faith.c,v 1.25.6.2 2004/08/25 06:58:58 skrll Exp $");
 
 #include "opt_inet.h"
 
@@ -181,27 +181,8 @@ faithoutput(ifp, m, dst, rt)
 		m->m_data += sizeof(int);
 	}
 
-	if (ifp->if_bpf) {
-		/*
-		 * We need to prepend the address family as
-		 * a four byte field.  Cons up a faith header
-		 * to pacify bpf.  This is safe because bpf
-		 * will only read from the mbuf (i.e., it won't
-		 * try to free it or keep a pointer a to it).
-		 */
-		struct mbuf m0;
-		u_int32_t af = dst->sa_family;
-
-		m0.m_next = m;
-		m0.m_len = 4;
-		m0.m_data = (char *)&af;
-
-#ifdef HAVE_OLD_BPF
-		bpf_mtap(ifp, &m0);
-#else
-		bpf_mtap(ifp->if_bpf, &m0);
-#endif
-	}
+	if (ifp->if_bpf)
+		bpf_mtap_af(ifp->if_bpf, dst->sa_family, m);
 #endif
 
 	if (rt && rt->rt_flags & (RTF_REJECT|RTF_BLACKHOLE)) {

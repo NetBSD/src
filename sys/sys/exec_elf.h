@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf.h,v 1.70.2.2 2004/08/03 10:56:26 skrll Exp $	*/
+/*	$NetBSD: exec_elf.h,v 1.70.2.3 2004/08/25 06:59:14 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -381,6 +381,10 @@ typedef struct {
 #define	SHT_DYNSYM	11		/* Symbol table for dynamic linker */
 #define	SHT_NUM		12
 
+#define	SHT_GNU_verdef	0x6ffffffd	/* Version definition section */
+#define	SHT_GNU_versym	0x6ffffffe	/* Version dependency section */
+#define	SHT_GNU_verneed	0x6fffffff	/* Version symbol table */
+
 #define	SHT_LOOS	0x60000000	/* Operating system specific range */
 #define	SHT_HIOS	0x6fffffff
 #define	SHT_LOPROC	0x70000000	/* Processor-specific range */
@@ -708,6 +712,70 @@ struct netbsd_elfcore_procinfo {
 	/* Add version 2 fields below here. */
 	int32_t		cpi_siglwp;	/* LWP target of killing signal */
 };
+
+/* GNU-specific symbol versioning */
+typedef struct {
+	Elf32_Half	vd_version;	/* Version revision */
+	Elf32_Half	vd_flags;	/* Version information */
+	Elf32_Half	vd_ndx;		/* Version Index */
+	Elf32_Half	vd_cnt;		/* Number of associated aux entries */
+	Elf32_Word	vd_hash;	/* Version name hash value */
+	Elf32_Word	vd_aux;		/* Offset in bytes to verdaux array */
+	Elf32_Word	vd_next;	/* Offset in bytes to next verdef entry */
+} Elf32_Verdef;
+
+typedef struct {
+	Elf32_Word	vda_name;	/* Version or dependency names */
+	Elf32_Word	vda_next;	/* Offset in bytes to next verdaux entry */
+} Elf32_Verdaux;
+
+typedef struct {
+	Elf32_Half	vn_version;	/* Version of structure */
+	Elf32_Half	vn_cnt;		/* Number of associated aux entries */
+	Elf32_Word	vn_file;	/* Offset of filename for this dependency */
+	Elf32_Word	vn_aux;		/* Offset in bytes to vernaux array */
+	Elf32_Word	vn_next;	/* Offset in bytes to next verneed entry */
+} Elf32_Verneed;
+
+typedef struct {
+	Elf32_Word	vna_hash;	/* Hash value of dependency name */
+	Elf32_Half	vna_flags;	/* Dependency specific information */
+	Elf32_Half	vna_other;	/* Unused */
+	Elf32_Word	vna_name;	/* Dependency name string offset */
+	Elf32_Word	vna_next;	/* Offset in bytes to next vernaux entry */
+} Elf32_Vernaux;
+
+typedef struct {
+	Elf64_Half	vd_version;	/* Version revision */
+	Elf64_Half	vd_flags;	/* Version information */
+	Elf64_Half	vd_ndx;		/* Version Index */
+	Elf64_Half	vd_cnt;		/* Number of associated aux entries */
+	Elf64_Word	vd_hash;	/* Version name hash value */
+	Elf64_Word	vd_aux;		/* Offset in bytes to verdaux array */
+	Elf64_Word	vd_next;	/* Offset in bytes to next verdef entry */
+} Elf64_Verdef;
+
+typedef struct {
+	Elf64_Word	vda_name;	/* Version or dependency names */
+	Elf64_Word	vda_next;	/* Offset in bytes to next verdaux entry */
+} Elf62_Verdaux;
+
+typedef struct {
+	Elf64_Half	vn_version;	/* Version of structure */
+	Elf64_Half	vn_cnt;		/* Number of associated aux entries */
+	Elf64_Word	vn_file;	/* Offset of filename for this dependency */
+	Elf64_Word	vn_aux;		/* Offset in bytes to vernaux array */
+	Elf64_Word	vn_next;	/* Offset in bytes to next verneed entry */
+} Elf64_Verneed;
+
+typedef struct {
+	Elf64_Word	vna_hash;	/* Hash value of dependency name */
+	Elf64_Half	vna_flags;	/* Dependency specific information */
+	Elf64_Half	vna_other;	/* Unused */
+	Elf64_Word	vna_name;	/* Dependency name string offset */
+	Elf64_Word	vna_next;	/* Offset in bytes to next vernaux entry */
+} Elf64_Vernaux;
+
 
 #if defined(ELFSIZE)
 #define	CONCAT(x,y)	__CONCAT(x,y)

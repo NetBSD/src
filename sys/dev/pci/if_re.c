@@ -1,4 +1,4 @@
-/*	$NetBSD: if_re.c,v 1.4.4.2 2004/08/03 10:49:08 skrll Exp $	*/
+/*	$NetBSD: if_re.c,v 1.4.4.3 2004/08/25 06:58:05 skrll Exp $	*/
 /*
  * Copyright (c) 1997, 1998-2003
  *	Bill Paul <wpaul@windriver.com>.  All rights reserved.
@@ -190,10 +190,10 @@ static struct rtk_hwrev re_hwrevs[] = {
 	{ 0, 0, NULL }
 };
 
-int re_probe(struct device *, struct cfdata *, void *);
-void re_attach(struct device *, struct device *, void *);
+static int	re_probe(struct device *, struct cfdata *, void *);
+static void	re_attach(struct device *, struct device *, void *);
 #if 0
-int re_detach(struct device *, int);
+static int	re_detach(struct device *, int);
 #endif
 
 static int re_encap		(struct rtk_softc *, struct mbuf *, int *);
@@ -431,8 +431,7 @@ re_miibus_statchg(struct device *dev)
 }
 
 static void
-re_reset(sc)
-	struct rtk_softc	*sc;
+re_reset(struct rtk_softc *sc)
 {
 	register int		i;
 
@@ -472,8 +471,7 @@ re_reset(sc)
  */
 
 static int
-re_diag(sc)
-	struct rtk_softc	*sc;
+re_diag(struct rtk_softc *sc)
 {
 	struct ifnet		*ifp = &sc->ethercom.ec_if;
 	struct mbuf		*m0;
@@ -612,7 +610,7 @@ done:
  * Probe for a RealTek 8139C+/8169/8110 chip. Check the PCI vendor and device
  * IDs against our list and return a device name if we find a match.
  */
-int
+static int
 re_probe(struct device *parent, struct cfdata *match, void *aux)
 {
 	struct rtk_type		*t;
@@ -731,7 +729,7 @@ re_allocmem(struct rtk_softc *sc)
  * Attach the interface. Allocate softc structures, do ifmedia
  * setup and ethernet/BPF attach.
  */
-void
+static void
 re_attach(struct device *parent, struct device *self, void *aux)
 {
 	u_char			eaddr[ETHER_ADDR_LEN];
@@ -963,7 +961,7 @@ fail:
  * to be careful about only freeing resources that have actually been
  * allocated.
  */
-int
+static int
 re_detach(struct device *self, int flags)
 {
 	struct rtk_softc	*sc;
@@ -1049,10 +1047,7 @@ re_detach(struct device *self, int flags)
 #endif
 
 static int
-re_newbuf(sc, idx, m)
-	struct rtk_softc	*sc;
-	int			idx;
-	struct mbuf		*m;
+re_newbuf(struct rtk_softc *sc, int idx, struct mbuf *m)
 {
 	struct mbuf		*n = NULL;
 	bus_dmamap_t		map;
@@ -1120,8 +1115,7 @@ out:
 }
 
 static int
-re_tx_list_init(sc)
-	struct rtk_softc	*sc;
+re_tx_list_init(struct rtk_softc *sc)
 {
 	memset((char *)sc->rtk_ldata.rtk_tx_list, 0, RTK_TX_LIST_SZ);
 	memset((char *)&sc->rtk_ldata.rtk_tx_mbuf, 0,
@@ -1138,8 +1132,7 @@ re_tx_list_init(sc)
 }
 
 static int
-re_rx_list_init(sc)
-	struct rtk_softc	*sc;
+re_rx_list_init(struct rtk_softc *sc)
 {
 	int			i;
 
@@ -1171,8 +1164,7 @@ re_rx_list_init(sc)
  * across multiple 2K mbuf cluster buffers.
  */
 static void
-re_rxeof(sc)
-	struct rtk_softc	*sc;
+re_rxeof(struct rtk_softc *sc)
 {
 	struct mbuf		*m;
 	struct ifnet		*ifp;
@@ -1358,8 +1350,7 @@ re_rxeof(sc)
 }
 
 static void
-re_txeof(sc)
-	struct rtk_softc	*sc;
+re_txeof(struct rtk_softc *sc)
 {
 	struct ifnet		*ifp;
 	u_int32_t		txstat;
@@ -1426,8 +1417,7 @@ re_txeof(sc)
 }
 
 static void
-re_tick(xsc)
-	void			*xsc;
+re_tick(void *xsc)
 {
 	struct rtk_softc	*sc = xsc;
 	int s = splnet();
@@ -1440,7 +1430,7 @@ re_tick(xsc)
 
 #ifdef DEVICE_POLLING
 static void
-re_poll (struct ifnet *ifp, enum poll_cmd cmd, int count)
+re_poll(struct ifnet *ifp, enum poll_cmd cmd, int count)
 {
 	struct rtk_softc *sc = ifp->if_softc;
 
@@ -1485,8 +1475,7 @@ done:
 #endif /* DEVICE_POLLING */
 
 static int
-re_intr(arg)
-	void			*arg;
+re_intr(void *arg)
 {
 	struct rtk_softc	*sc = arg;
 	struct ifnet		*ifp;
@@ -1561,10 +1550,7 @@ done:
 }
 
 static int
-re_encap(sc, m_head, idx)
-	struct rtk_softc	*sc;
-	struct mbuf		*m_head;
-	int			*idx;
+re_encap(struct rtk_softc *sc, struct mbuf *m_head, int *idx)
 {
 	bus_dmamap_t		map;
 	int			error, i, curidx;
@@ -1683,8 +1669,7 @@ re_encap(sc, m_head, idx)
  */
 
 static void
-re_start(ifp)
-	struct ifnet		*ifp;
+re_start(struct ifnet *ifp)
 {
 	struct rtk_softc	*sc;
 	struct mbuf		*m_head = NULL;
@@ -1918,8 +1903,7 @@ re_init(struct ifnet *ifp)
  * Set media options.
  */
 static int
-re_ifmedia_upd(ifp)
-	struct ifnet		*ifp;
+re_ifmedia_upd(struct ifnet *ifp)
 {
 	struct rtk_softc	*sc;
 
@@ -1932,9 +1916,7 @@ re_ifmedia_upd(ifp)
  * Report current media status.
  */
 static void
-re_ifmedia_sts(ifp, ifmr)
-	struct ifnet		*ifp;
-	struct ifmediareq	*ifmr;
+re_ifmedia_sts(struct ifnet *ifp, struct ifmediareq *ifmr)
 {
 	struct rtk_softc	*sc;
 
@@ -1948,10 +1930,7 @@ re_ifmedia_sts(ifp, ifmr)
 }
 
 static int
-re_ioctl(ifp, command, data)
-	struct ifnet		*ifp;
-	u_long			command;
-	caddr_t			data;
+re_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 {
 	struct rtk_softc	*sc = ifp->if_softc;
 	struct ifreq		*ifr = (struct ifreq *) data;
@@ -1994,8 +1973,7 @@ re_ioctl(ifp, command, data)
 }
 
 static void
-re_watchdog(ifp)
-	struct ifnet		*ifp;
+re_watchdog(struct ifnet *ifp)
 {
 	struct rtk_softc	*sc;
 	int			s;
@@ -2018,8 +1996,7 @@ re_watchdog(ifp)
  * RX and TX lists.
  */
 static void
-re_stop(sc)
-	struct rtk_softc	*sc;
+re_stop(struct rtk_softc *sc)
 {
 	register int		i;
 	struct ifnet		*ifp;
@@ -2072,8 +2049,7 @@ re_stop(sc)
  * resume.
  */
 static int
-re_suspend(dev)
-	device_t		dev;
+re_suspend(device_t dev)
 {
 	register int		i;
 	struct rtk_softc	*sc;
@@ -2100,8 +2076,7 @@ re_suspend(dev)
  * appropriate.
  */
 static int
-re_resume(dev)
-	device_t		dev;
+re_resume(device_t dev)
 {
 	register int		i;
 	struct rtk_softc	*sc;
@@ -2136,8 +2111,7 @@ re_resume(dev)
  * get confused by errant DMAs when rebooting.
  */
 static void
-re_shutdown(dev)
-	device_t		dev;
+re_shutdown(device_t dev)
 {
 	struct rtk_softc	*sc;
 

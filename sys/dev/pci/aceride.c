@@ -1,4 +1,4 @@
-/*	$NetBSD: aceride.c,v 1.7.2.2 2004/08/03 10:49:06 skrll Exp $	*/
+/*	$NetBSD: aceride.c,v 1.7.2.3 2004/08/25 06:58:05 skrll Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Manuel Bouyer.
@@ -39,7 +39,7 @@
 #include <dev/pci/pciide_acer_reg.h>
 
 static void acer_chip_map(struct pciide_softc*, struct pci_attach_args*);
-static void acer_setup_channel(struct wdc_channel*);
+static void acer_setup_channel(struct ata_channel*);
 static int  acer_pci_intr(void *);
 
 static int  aceride_match(struct device *, struct cfdata *, void *);
@@ -99,31 +99,29 @@ acer_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 		return;
 
 	aprint_normal("%s: bus-master DMA support present",
-	    sc->sc_wdcdev.sc_dev.dv_xname);
+	    sc->sc_wdcdev.sc_atac.atac_dev.dv_xname);
 	pciide_mapreg_dma(sc, pa);
 	aprint_normal("\n");
-	sc->sc_wdcdev.cap = WDC_CAPABILITY_DATA16 | WDC_CAPABILITY_DATA32 |
-	    WDC_CAPABILITY_MODE;
+	sc->sc_wdcdev.sc_atac.atac_cap = ATAC_CAP_DATA16 | ATAC_CAP_DATA32;
 	if (sc->sc_dma_ok) {
-		sc->sc_wdcdev.cap |= WDC_CAPABILITY_DMA;
+		sc->sc_wdcdev.sc_atac.atac_cap |= ATAC_CAP_DMA;
 		if (rev >= 0x20) {
-			sc->sc_wdcdev.cap |= WDC_CAPABILITY_UDMA;
+			sc->sc_wdcdev.sc_atac.atac_cap |= ATAC_CAP_UDMA;
 			if (rev >= 0xC4)
-				sc->sc_wdcdev.UDMA_cap = 5;
+				sc->sc_wdcdev.sc_atac.atac_udma_cap = 5;
 			else if (rev >= 0xC2)
-				sc->sc_wdcdev.UDMA_cap = 4;
+				sc->sc_wdcdev.sc_atac.atac_udma_cap = 4;
 			else
-				sc->sc_wdcdev.UDMA_cap = 2;
+				sc->sc_wdcdev.sc_atac.atac_udma_cap = 2;
 		}
-		sc->sc_wdcdev.cap |= WDC_CAPABILITY_IRQACK;
 		sc->sc_wdcdev.irqack = pciide_irqack;
 	}
 	    
-	sc->sc_wdcdev.PIO_cap = 4;
-	sc->sc_wdcdev.DMA_cap = 2;
-	sc->sc_wdcdev.set_modes = acer_setup_channel;
-	sc->sc_wdcdev.channels = sc->wdc_chanarray;
-	sc->sc_wdcdev.nchannels = PCIIDE_NUM_CHANNELS;
+	sc->sc_wdcdev.sc_atac.atac_pio_cap = 4;
+	sc->sc_wdcdev.sc_atac.atac_dma_cap = 2;
+	sc->sc_wdcdev.sc_atac.atac_set_modes = acer_setup_channel;
+	sc->sc_wdcdev.sc_atac.atac_channels = sc->wdc_chanarray;
+	sc->sc_wdcdev.sc_atac.atac_nchannels = PCIIDE_NUM_CHANNELS;
 
 	pciide_pci_write(sc->sc_pc, sc->sc_tag, ACER_CDRC,
 	    (pciide_pci_read(sc->sc_pc, sc->sc_tag, ACER_CDRC) |
@@ -152,14 +150,17 @@ acer_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 		    | ACER_0x4B_CDETECT);
 	}
 
-	for (channel = 0; channel < sc->sc_wdcdev.nchannels; channel++) {
+	wdc_allocate_regs(&sc->sc_wdcdev);
+
+	for (channel = 0; channel < sc->sc_wdcdev.sc_atac.atac_nchannels;
+	     channel++) {
 		cp = &sc->pciide_channels[channel];
 		if (pciide_chansetup(sc, channel, interface) == 0)
 			continue;
 		if ((interface & PCIIDE_CHAN_EN(channel)) == 0) {
 			aprint_normal("%s: %s channel ignored (disabled)\n",
-			    sc->sc_wdcdev.sc_dev.dv_xname, cp->name);
-			cp->wdc_channel.ch_flags |= WDCF_DISABLED;
+			    sc->sc_wdcdev.sc_atac.atac_dev.dv_xname, cp->name);
+			cp->ata_channel.ch_flags |= ATACH_DISABLED;
 			continue;
 		}
 		/* newer controllers seems to lack the ACER_CHIDS. Sigh */
@@ -169,18 +170,18 @@ acer_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 }
 
 static void
-acer_setup_channel(struct wdc_channel *chp)
+acer_setup_channel(struct ata_channel *chp)
 {
 	struct ata_drive_datas *drvp;
-	int drive;
+	int drive, s;
 	u_int32_t acer_fifo_udma;
 	u_int32_t idedma_ctl;
 	struct pciide_channel *cp = (struct pciide_channel*)chp;
-	struct pciide_softc *sc = (struct pciide_softc *)cp->wdc_channel.ch_wdc;
+	struct pciide_softc *sc = CHAN_TO_PCIIDE(chp);
 
 	idedma_ctl = 0;
 	acer_fifo_udma = pci_conf_read(sc->sc_pc, sc->sc_tag, ACER_FTH_UDMA);
-	WDCDEBUG_PRINT(("acer_setup_channel: old fifo/udma reg 0x%x\n", 
+	ATADEBUG_PRINT(("acer_setup_channel: old fifo/udma reg 0x%x\n", 
 	    acer_fifo_udma), DEBUG_PROBE);
 	/* setup DMA if needed */
 	pciide_channel_dma_setup(cp);
@@ -201,7 +202,7 @@ acer_setup_channel(struct wdc_channel *chp)
 		/* If no drive, skip */
 		if ((drvp->drive_flags & DRIVE) == 0)
 			continue;
-		WDCDEBUG_PRINT(("acer_setup_channel: old timings reg for "
+		ATADEBUG_PRINT(("acer_setup_channel: old timings reg for "
 		    "channel %d drive %d 0x%x\n", chp->ch_channel, drive,
 		    pciide_pci_read(sc->sc_pc, sc->sc_tag,
 		    ACER_IDETIM(chp->ch_channel, drive))), DEBUG_PROBE);
@@ -221,7 +222,9 @@ acer_setup_channel(struct wdc_channel *chp)
 		acer_fifo_udma |= ACER_FTH_OPL(chp->ch_channel, drive, 0x2);
 		if (drvp->drive_flags & DRIVE_UDMA) {
 			/* use Ultra/DMA */
+			s = splbio();
 			drvp->drive_flags &= ~DRIVE_DMA;
+			splx(s);
 			acer_fifo_udma |= ACER_UDMA_EN(chp->ch_channel, drive);
 			acer_fifo_udma |= 
 			    ACER_UDMA_TIM(chp->ch_channel, drive,
@@ -252,7 +255,7 @@ pio:		pciide_pci_write(sc->sc_pc, sc->sc_tag,
 		    ACER_IDETIM(chp->ch_channel, drive),
 		    acer_pio[drvp->PIO_mode]);
 	}
-	WDCDEBUG_PRINT(("acer_setup_channel: new fifo/udma reg 0x%x\n",
+	ATADEBUG_PRINT(("acer_setup_channel: new fifo/udma reg 0x%x\n",
 	    acer_fifo_udma), DEBUG_PROBE);
 	pci_conf_write(sc->sc_pc, sc->sc_tag, ACER_FTH_UDMA, acer_fifo_udma);
 	if (idedma_ctl != 0) {
@@ -267,15 +270,15 @@ acer_pci_intr(void *arg)
 {
 	struct pciide_softc *sc = arg;
 	struct pciide_channel *cp;
-	struct wdc_channel *wdc_cp;
+	struct ata_channel *wdc_cp;
 	int i, rv, crv; 
 	u_int32_t chids;
 
 	rv = 0;
 	chids = pciide_pci_read(sc->sc_pc, sc->sc_tag, ACER_CHIDS);
-	for (i = 0; i < sc->sc_wdcdev.nchannels; i++) {
+	for (i = 0; i < sc->sc_wdcdev.sc_atac.atac_nchannels; i++) {
 		cp = &sc->pciide_channels[i];
-		wdc_cp = &cp->wdc_channel;
+		wdc_cp = &cp->ata_channel;
 		/* If a compat channel skip. */
 		if (cp->compat)
 			continue;
@@ -283,7 +286,7 @@ acer_pci_intr(void *arg)
 			crv = wdcintr(wdc_cp);
 			if (crv == 0) {
 				printf("%s:%d: bogus intr\n",
-				    sc->sc_wdcdev.sc_dev.dv_xname, i);
+				    sc->sc_wdcdev.sc_atac.atac_dev.dv_xname, i);
 				pciide_irqack(wdc_cp);
 			} else
 				rv = 1;

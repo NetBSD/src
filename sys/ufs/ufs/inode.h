@@ -1,4 +1,4 @@
-/*	$NetBSD: inode.h,v 1.35.2.1 2004/08/03 10:56:59 skrll Exp $	*/
+/*	$NetBSD: inode.h,v 1.35.2.2 2004/08/25 06:59:14 skrll Exp $	*/
 
 /*
  * Copyright (c) 1982, 1989, 1993
@@ -207,7 +207,8 @@ struct inode {
 /* These flags are kept in i_flag. */
 #define	IN_ACCESS	0x0001		/* Access time update request. */
 #define	IN_CHANGE	0x0002		/* Inode change time update request. */
-#define	IN_UPDATE	0x0004		/* Modification time update request. */
+#define	IN_UPDATE	0x0004		/* Inode was written to; update mtime. */
+#define	IN_MODIFY	0x2000		/* Modification time update request. */	
 #define	IN_MODIFIED	0x0008		/* Inode has been modified. */
 #define	IN_ACCESSED	0x0010		/* Inode has been accessed. */
 #define	IN_RENAME	0x0020		/* Inode is being renamed. */
@@ -264,45 +265,47 @@ struct indir {
 #define	ITOV(ip)	((ip)->i_vnode)
 
 #define	FFS_ITIMES(ip, acc, mod, cre) {					\
-	if ((ip)->i_flag & (IN_ACCESS | IN_CHANGE | IN_UPDATE)) {	\
+	if ((ip)->i_flag & (IN_ACCESS | IN_CHANGE | IN_UPDATE | IN_MODIFY)) {\
 		if ((ip)->i_flag & IN_ACCESS) {				\
 			DIP_ASSIGN(ip, atime, (acc)->tv_sec);		\
 			DIP_ASSIGN(ip, atimensec, (acc)->tv_nsec);	\
-			(ip)->i_flag |= IN_ACCESSED;			\
 		}							\
-		if ((ip)->i_flag & IN_UPDATE) {				\
+		if ((ip)->i_flag & (IN_UPDATE | IN_MODIFY)) {		\
 			if (((ip)->i_flags & SF_SNAPSHOT) == 0) {	\
 				DIP_ASSIGN(ip, mtime, (mod)->tv_sec);	\
 				DIP_ASSIGN(ip, mtimensec, (mod)->tv_nsec); \
 			}						\
 			(ip)->i_modrev++;				\
-			(ip)->i_flag |= IN_MODIFIED;			\
 		}							\
-		if ((ip)->i_flag & IN_CHANGE) {				\
+		if ((ip)->i_flag & (IN_CHANGE | IN_MODIFY)) {		\
 			DIP_ASSIGN(ip, ctime, (cre)->tv_sec);		\
 			DIP_ASSIGN(ip, ctimensec, (cre)->tv_nsec);	\
-			(ip)->i_flag |= IN_MODIFIED;			\
 		}							\
-		(ip)->i_flag &= ~(IN_ACCESS | IN_CHANGE | IN_UPDATE);	\
+		if ((ip)->i_flag & (IN_ACCESS | IN_MODIFY))		\
+			ip->i_flag |= IN_ACCESSED;			\
+		if ((ip)->i_flag & (IN_UPDATE | IN_CHANGE))		\
+			ip->i_flag |= IN_MODIFIED;			\
+		(ip)->i_flag &= ~(IN_ACCESS | IN_CHANGE | IN_UPDATE | IN_MODIFY);	\
 	}								\
 }
 
 #define	EXT2FS_ITIMES(ip, acc, mod, cre) {				\
-	if ((ip)->i_flag & (IN_ACCESS | IN_CHANGE | IN_UPDATE)) {	\
+	if ((ip)->i_flag & (IN_ACCESS | IN_CHANGE | IN_UPDATE | IN_MODIFY)) {\
 		if ((ip)->i_flag & IN_ACCESS) {				\
 			(ip)->i_e2fs_atime = (acc)->tv_sec;		\
-			(ip)->i_flag |= IN_ACCESSED;			\
 		}							\
-		if ((ip)->i_flag & IN_UPDATE) {				\
+		if ((ip)->i_flag & (IN_UPDATE | IN_MODIFY)) {		\
 			(ip)->i_e2fs_mtime = (mod)->tv_sec;		\
 			(ip)->i_modrev++;				\
-			(ip)->i_flag |= IN_MODIFIED;			\
 		}							\
-		if ((ip)->i_flag & IN_CHANGE) {				\
+		if ((ip)->i_flag & (IN_CHANGE | IN_MODIFY)) {		\
 			(ip)->i_e2fs_ctime = (cre)->tv_sec;		\
-			(ip)->i_flag |= IN_MODIFIED;			\
 		}							\
-		(ip)->i_flag &= ~(IN_ACCESS | IN_CHANGE | IN_UPDATE);	\
+		if ((ip)->i_flag & (IN_ACCESS | IN_MODIFY))		\
+			(ip)->i_flag |= IN_ACCESSED;			\
+		if ((ip)->i_flag & (IN_UPDATE | IN_CHANGE))		\
+			(ip)->i_flag |= IN_MODIFIED;			\
+		(ip)->i_flag &= ~(IN_ACCESS | IN_CHANGE | IN_UPDATE | IN_MODIFY);	\
 	}								\
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: ess_pnpbios.c,v 1.9.6.1 2004/08/03 10:36:14 skrll Exp $	*/
+/*	$NetBSD: ess_pnpbios.c,v 1.9.6.2 2004/08/25 06:57:19 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ess_pnpbios.c,v 1.9.6.1 2004/08/03 10:36:14 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ess_pnpbios.c,v 1.9.6.2 2004/08/25 06:57:19 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -140,6 +140,5 @@ ess_pnpbios_attach(parent, self, aux)
 		return;
 	}
 
-	essattach(sc);
+	essattach(sc, 0);
 }
-

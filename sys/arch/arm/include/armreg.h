@@ -1,4 +1,4 @@
-/*	$NetBSD: armreg.h,v 1.25.2.1 2004/08/03 10:32:36 skrll Exp $	*/
+/*	$NetBSD: armreg.h,v 1.25.2.2 2004/08/25 06:57:17 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Ben Harris
@@ -349,5 +349,7 @@
 #define INSN_SIZE		4		/* Always 4 bytes */
 #define INSN_COND_MASK		0xf0000000	/* Condition mask */
 #define INSN_COND_AL		0xe0000000	/* Always condition */
+
+#define THUMB_INSN_SIZE		2		/* Some are 4 bytes.  */
 
 #endif

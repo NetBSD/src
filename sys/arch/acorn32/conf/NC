@@ -1,4 +1,4 @@
-#	$NetBSD: NC,v 1.15.8.1 2004/08/03 10:30:48 skrll Exp $
+#	$NetBSD: NC,v 1.15.8.2 2004/08/25 06:57:17 skrll Exp $
 #
 #	NC - with vidcconsole
 #
@@ -181,7 +181,7 @@ pioc0	at mainbus? base 0x00210000
 #wdc*	at pioc? offset 0x0170 irq -1
 
 # ATA (IDE) bus support
-atabus* at ata?
+#atabus* at ata?
 
 #wd*	at atabus? drive ?
 #atapibus* at atapi?

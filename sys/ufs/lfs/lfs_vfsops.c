@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vfsops.c,v 1.121.2.4 2004/08/24 17:57:53 skrll Exp $	*/
+/*	$NetBSD: lfs_vfsops.c,v 1.121.2.5 2004/08/25 06:59:14 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.121.2.4 2004/08/24 17:57:53 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.121.2.5 2004/08/25 06:59:14 skrll Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -597,7 +597,7 @@ update_inoblk(struct lfs *fs, daddr_t offset, struct ucred *cred,
 			ip->i_nlink = ip->i_ffs_effnlink = ip->i_ffs1_nlink;
 			ip->i_size = ip->i_ffs1_size;
 
-			LFS_SET_UINO(ip, IN_CHANGE | IN_MODIFIED | IN_UPDATE);
+			LFS_SET_UINO(ip, IN_CHANGE | IN_UPDATE);
 
 			/* Re-initialize to get type right */
 			ufs_vinit(vp->v_mount, lfs_specop_p, lfs_fifoop_p,
@@ -1062,7 +1062,6 @@ lfs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l)
 	mp->mnt_stat.f_fsid = mp->mnt_stat.f_fsidx.__fsid_val[0];
 	mp->mnt_stat.f_namemax = MAXNAMLEN;
 	mp->mnt_stat.f_iosize = fs->lfs_bsize;
-	mp->mnt_maxsymlinklen = fs->lfs_maxsymlinklen;
 	mp->mnt_flag |= MNT_LOCAL;
 	mp->mnt_fs_bshift = fs->lfs_bshift;
 	ump->um_flags = 0;
@@ -1075,6 +1074,11 @@ lfs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l)
 	ump->um_lognindir = ffs(fs->lfs_nindir) - 1;
 	for (i = 0; i < MAXQUOTAS; i++)
 		ump->um_quotas[i] = NULLVP;
+	ump->um_maxsymlinklen = fs->lfs_maxsymlinklen;
+	ump->um_dirblksiz = DIRBLKSIZ;
+	ump->um_maxfilesize = fs->lfs_maxfilesize;
+	if (ump->um_maxsymlinklen > 0)
+		mp->mnt_iflag |= IMNT_DTYPE;
 	devvp->v_specmountpoint = mp;
 
 	/* Set up reserved memory for pageout */
@@ -2065,8 +2069,7 @@ lfs_vinit(struct mount *mp, struct vnode **vpp)
 	ufs_vinit(mp, lfs_specop_p, lfs_fifoop_p, &vp);
 
 	memset(ip->i_lfs_fragsize, 0, NDADDR * sizeof(*ip->i_lfs_fragsize));
-	if (vp->v_type != VLNK ||
-	    VTOI(vp)->i_size >= vp->v_mount->mnt_maxsymlinklen) {
+	if (vp->v_type != VLNK || ip->i_size >= ip->i_ump->um_maxsymlinklen) {
 		struct lfs *fs = ump->um_lfs;
 #ifdef DEBUG
 		for (i = (ip->i_size + fs->lfs_bsize - 1) >> fs->lfs_bshift;

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_xi.c,v 1.31.2.2 2004/08/12 11:42:01 skrll Exp $ */
+/*	$NetBSD: if_xi.c,v 1.31.2.3 2004/08/25 06:58:42 skrll Exp $ */
 /*	OpenBSD: if_xe.c,v 1.9 1999/09/16 11:28:42 niklas Exp 	*/
 
 /*
@@ -54,15 +54,8 @@
  * A driver for Xircom CreditCard PCMCIA Ethernet adapters.
  */
 
-/*
- * Known Bugs:
- *
- * 1) Promiscuous mode doesn't work on at least the CE2.
- * 2) Slow. ~450KB/s.  Memory access would be better.
- */
-
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_xi.c,v 1.31.2.2 2004/08/12 11:42:01 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_xi.c,v 1.31.2.3 2004/08/25 06:58:42 skrll Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipx.h"
@@ -75,6 +68,8 @@ __KERNEL_RCSID(0, "$NetBSD: if_xi.c,v 1.31.2.2 2004/08/12 11:42:01 skrll Exp $")
 #include <sys/mbuf.h>
 #include <sys/malloc.h>
 #include <sys/socket.h>
+#include <sys/kernel.h>
+#include <sys/proc.h>
 
 #include <net/if.h>
 #include <net/if_dl.h>
@@ -335,13 +330,12 @@ xi_intr(arg)
 	PAGE(sc, 0);
 	if (sc->sc_chipset >= XI_CHIPSET_MOHAWK) {
 		/* Disable interrupt (Linux does it). */
-		bus_space_write_1(sc->sc_bst, sc->sc_bsh, sc->sc_offset + CR,
-		    0);
+		bus_space_write_1(sc->sc_bst, sc->sc_bsh, CR, 0);
 	}
 
-	esr = bus_space_read_1(sc->sc_bst, sc->sc_bsh, sc->sc_offset + ESR);
-	isr = bus_space_read_1(sc->sc_bst, sc->sc_bsh, sc->sc_offset + ISR0);
-	rsr = bus_space_read_1(sc->sc_bst, sc->sc_bsh, sc->sc_offset + RSR);
+	esr = bus_space_read_1(sc->sc_bst, sc->sc_bsh, ESR);
+	isr = bus_space_read_1(sc->sc_bst, sc->sc_bsh, ISR0);
+	rsr = bus_space_read_1(sc->sc_bst, sc->sc_bsh, RSR);
 				
 	/* Check to see if card has been ejected. */
 	if (isr == 0xff) {
@@ -354,15 +348,14 @@ xi_intr(arg)
 
 	PAGE(sc, 0x40);
 	rx_status =
-	    bus_space_read_1(sc->sc_bst, sc->sc_bsh, sc->sc_offset + RXST0);
-	bus_space_write_1(sc->sc_bst, sc->sc_bsh, sc->sc_offset + RXST0,
-	    ~rx_status & 0xff);
+	    bus_space_read_1(sc->sc_bst, sc->sc_bsh, RXST0);
+	bus_space_write_1(sc->sc_bst, sc->sc_bsh, RXST0, ~rx_status & 0xff);
 	tx_status =
-	    bus_space_read_1(sc->sc_bst, sc->sc_bsh, sc->sc_offset + TXST0);
+	    bus_space_read_1(sc->sc_bst, sc->sc_bsh, TXST0);
 	tx_status |=
-	    bus_space_read_1(sc->sc_bst, sc->sc_bsh, sc->sc_offset + TXST1) << 8;
-	bus_space_write_1(sc->sc_bst, sc->sc_bsh, sc->sc_offset + TXST0,0);
-	bus_space_write_1(sc->sc_bst, sc->sc_bsh, sc->sc_offset + TXST1,0);
+	    bus_space_read_1(sc->sc_bst, sc->sc_bsh, TXST1) << 8;
+	bus_space_write_1(sc->sc_bst, sc->sc_bsh, TXST0, 0);
+	bus_space_write_1(sc->sc_bst, sc->sc_bsh, TXST1, 0);
 	DPRINTF(XID_INTR, ("xi: rx_status=%02x tx_status=%04x\n", rx_status,
 	    tx_status));
 
@@ -377,16 +370,14 @@ xi_intr(arg)
 			    ("xi: too many bytes this interrupt\n"));
 			ifp->if_iqdrops++;
 			/* Drop packet. */
-			bus_space_write_2(sc->sc_bst, sc->sc_bsh,
-			    sc->sc_offset + DO0, DO_SKIP_RX_PKT);
+			bus_space_write_2(sc->sc_bst, sc->sc_bsh, DO0,
+			    DO_SKIP_RX_PKT);
 		}
 		tempint = xi_get(sc);	/* XXX doesn't check the error! */
 		recvcount += tempint;
 		ifp->if_ibytes += tempint;
-		esr = bus_space_read_1(sc->sc_bst, sc->sc_bsh,
-		    sc->sc_offset + ESR);
-		rsr = bus_space_read_1(sc->sc_bst, sc->sc_bsh,
-		    sc->sc_offset + RSR);
+		esr = bus_space_read_1(sc->sc_bst, sc->sc_bsh, ESR);
+		rsr = bus_space_read_1(sc->sc_bst, sc->sc_bsh, RSR);
 	}
 	
 	/* Packet too long? */
@@ -410,8 +401,7 @@ xi_intr(arg)
 	/* Check for rx overrun. */
 	if (rx_status & RX_OVERRUN) {
 		ifp->if_ierrors++;
-		bus_space_write_1(sc->sc_bst, sc->sc_bsh, sc->sc_offset + CR,
-		    CLR_RX_OVERRUN);
+		bus_space_write_1(sc->sc_bst, sc->sc_bsh, CR, CLR_RX_OVERRUN);
 		DPRINTF(XID_INTR, ("xi: overrun cleared\n"));
 	}
 			
@@ -422,8 +412,7 @@ xi_intr(arg)
 	/* Detected excessive collisions? */
 	if ((tx_status & EXCESSIVE_COLL) && ifp->if_opackets > 0) {
 		DPRINTF(XID_INTR, ("xi: excessive collisions\n"));
-		bus_space_write_1(sc->sc_bst, sc->sc_bsh, sc->sc_offset + CR,
-		    RESTART_TX);
+		bus_space_write_1(sc->sc_bst, sc->sc_bsh, CR, RESTART_TX);
 		ifp->if_oerrors++;
 	}
 	
@@ -438,8 +427,7 @@ xi_intr(arg)
 end:
 	/* Reenable interrupts. */
 	PAGE(sc, 0);
-	bus_space_write_1(sc->sc_bst, sc->sc_bsh, sc->sc_offset + CR,
-	    ENABLE_INT);
+	bus_space_write_1(sc->sc_bst, sc->sc_bsh, CR, ENABLE_INT);
 
 	return (1);
 }
@@ -460,8 +448,7 @@ xi_get(sc)
 
 	PAGE(sc, 0);
 	pktlen =
-	    bus_space_read_2(sc->sc_bst, sc->sc_bsh, sc->sc_offset + RBC0) &
-	    RBC_COUNT_MASK;
+	    bus_space_read_2(sc->sc_bst, sc->sc_bsh, RBC0) & RBC_COUNT_MASK;
 
 	DPRINTF(XID_CONFIG, ("xi_get: pktlen=%d\n", pktlen));
 
@@ -515,11 +502,10 @@ xi_get(sc)
 		data = mtod(m, u_int8_t *);
 		if (len > 1) {
 		        len &= ~1;
-			bus_space_read_multi_2(sc->sc_bst, sc->sc_bsh,
-			    sc->sc_offset + EDP, (u_int16_t *)data, len>>1);
+			bus_space_read_multi_2(sc->sc_bst, sc->sc_bsh, EDP,
+			    (u_int16_t *)data, len>>1);
 		} else
-			*data = bus_space_read_1(sc->sc_bst, sc->sc_bsh,
-			    sc->sc_offset + EDP);
+			*data = bus_space_read_1(sc->sc_bst, sc->sc_bsh, EDP);
 		m->m_len = len;
 		pktlen -= len;
 		*mp = m;
@@ -527,8 +513,7 @@ xi_get(sc)
 	}
 
 	/* Skip Rx packet. */
-	bus_space_write_2(sc->sc_bst, sc->sc_bsh, sc->sc_offset + DO0,
-	    DO_SKIP_RX_PKT);
+	bus_space_write_2(sc->sc_bst, sc->sc_bsh, DO0, DO_SKIP_RX_PKT);
 	
 	ifp->if_ipackets++;
 	
@@ -556,14 +541,13 @@ xi_mdi_idle(sc)
 {
 	bus_space_tag_t bst = sc->sc_bst;
 	bus_space_handle_t bsh = sc->sc_bsh;
-	bus_size_t offset = sc->sc_offset;
 
 	/* Drive MDC low... */
-	bus_space_write_1(bst, bsh, offset + GP2, MDC_LOW);
+	bus_space_write_1(bst, bsh, GP2, MDC_LOW);
 	DELAY(1);
 
 	/* and high again. */
-	bus_space_write_1(bst, bsh, offset + GP2, MDC_HIGH);
+	bus_space_write_1(bst, bsh, GP2, MDC_HIGH);
 	DELAY(1);
 }
 
@@ -576,15 +560,14 @@ xi_mdi_pulse(sc, data)
 {
 	bus_space_tag_t bst = sc->sc_bst;
 	bus_space_handle_t bsh = sc->sc_bsh;
-	bus_size_t offset = sc->sc_offset;
 	u_int8_t bit = data ? MDIO_HIGH : MDIO_LOW;
 
 	/* First latch the data bit MDIO with clock bit MDC low...*/
-	bus_space_write_1(bst, bsh, offset + GP2, bit | MDC_LOW);
+	bus_space_write_1(bst, bsh, GP2, bit | MDC_LOW);
 	DELAY(1);
 
 	/* then raise the clock again, preserving the data bit. */
-	bus_space_write_1(bst, bsh, offset + GP2, bit | MDC_HIGH);
+	bus_space_write_1(bst, bsh, GP2, bit | MDC_HIGH);
 	DELAY(1);
 }
 
@@ -596,16 +579,15 @@ xi_mdi_probe(sc)
 {
 	bus_space_tag_t bst = sc->sc_bst;
 	bus_space_handle_t bsh = sc->sc_bsh;
-	bus_size_t offset = sc->sc_offset;
 	u_int8_t x;
 
 	/* Pull clock bit MDCK low... */
-	bus_space_write_1(bst, bsh, offset + GP2, MDC_LOW);
+	bus_space_write_1(bst, bsh, GP2, MDC_LOW);
 	DELAY(1);
 
 	/* Read data and drive clock high again. */
-	x = bus_space_read_1(bst, bsh, offset + GP2);
-	bus_space_write_1(bst, bsh, offset + GP2, MDC_HIGH);
+	x = bus_space_read_1(bst, bsh, GP2);
+	bus_space_write_1(bst, bsh, GP2, MDC_HIGH);
 	DELAY(1);
 
 	return (x & MDIO);
@@ -760,19 +742,18 @@ xi_stop(sc)
 {
 	bus_space_tag_t bst = sc->sc_bst;
 	bus_space_handle_t bsh = sc->sc_bsh;
-	bus_size_t offset = sc->sc_offset;
 
 	DPRINTF(XID_CONFIG, ("xi_stop()\n"));
 
 	PAGE(sc, 0x40);
-	bus_space_write_1(bst, bsh, offset + CMD0, DISABLE_RX);
+	bus_space_write_1(bst, bsh, CMD0, DISABLE_RX);
 
 	/* Disable interrupts. */
 	PAGE(sc, 0);
-	bus_space_write_1(bst, bsh, offset + CR, 0);
+	bus_space_write_1(bst, bsh, CR, 0);
 
 	PAGE(sc, 1);
-	bus_space_write_1(bst, bsh, offset + IMR0, 0);
+	bus_space_write_1(bst, bsh, IMR0, 0);
 	
 	/* Cancel watchdog timer. */
 	sc->sc_ethercom.ec_if.if_timer = 0;
@@ -812,29 +793,28 @@ xi_init(sc)
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	bus_space_tag_t bst = sc->sc_bst;
 	bus_space_handle_t bsh = sc->sc_bsh;
-	bus_size_t offset = sc->sc_offset;
 
 	DPRINTF(XID_CONFIG, ("xi_init()\n"));
 
 	/* Setup the ethernet interrupt mask. */
 	PAGE(sc, 1);
-	bus_space_write_1(bst, bsh, offset + IMR0,
+	bus_space_write_1(bst, bsh, IMR0,
 	    ISR_TX_OFLOW | ISR_PKT_TX | ISR_MAC_INT | /* ISR_RX_EARLY | */
 	    ISR_RX_FULL | ISR_RX_PKT_REJ | ISR_FORCED_INT);
 	if (sc->sc_chipset < XI_CHIPSET_DINGO) {
 		/* XXX What is this?  Not for Dingo at least. */
 		/* Unmask TX underrun detection */
-		bus_space_write_1(bst, bsh, offset + IMR1, 1);
+		bus_space_write_1(bst, bsh, IMR1, 1);
 	}
 
 	/* Enable interrupts. */
 	PAGE(sc, 0);
-	bus_space_write_1(bst, bsh, offset + CR, ENABLE_INT);
+	bus_space_write_1(bst, bsh, CR, ENABLE_INT);
 
 	xi_set_address(sc);
 
 	PAGE(sc, 0x40);
-	bus_space_write_1(bst, bsh, offset + CMD0, ENABLE_RX | ONLINE);
+	bus_space_write_1(bst, bsh, CMD0, ENABLE_RX | ONLINE);
 
 	PAGE(sc, 0);
 
@@ -858,7 +838,6 @@ xi_start(ifp)
 	struct xi_softc *sc = ifp->if_softc;
 	bus_space_tag_t bst = sc->sc_bst;
 	bus_space_handle_t bsh = sc->sc_bsh;
-	bus_size_t offset = sc->sc_offset;
 	unsigned int s, len, pad = 0;
 	struct mbuf *m0, *m;
 	u_int16_t space;
@@ -892,8 +871,8 @@ xi_start(ifp)
 
 	PAGE(sc, 0);
 
-	bus_space_write_2(bst, bsh, offset + TRS, (u_int16_t)len + pad + 2);
-	space = bus_space_read_2(bst, bsh, offset + TSO) & 0x7fff;
+	bus_space_write_2(bst, bsh, TRS, (u_int16_t)len + pad + 2);
+	space = bus_space_read_2(bst, bsh, TSO) & 0x7fff;
 	if (len + pad + 2 > space) {
 		DPRINTF(XID_FIFO,
 		    ("xi: not enough space in output FIFO (%d > %d)\n",
@@ -914,14 +893,14 @@ xi_start(ifp)
 	 */
 	s = splhigh();
 
-	bus_space_write_2(bst, bsh, offset + EDP, (u_int16_t)len + pad);
+	bus_space_write_2(bst, bsh, EDP, (u_int16_t)len + pad);
 	for (m = m0; m; ) {
 		if (m->m_len > 1)
-			bus_space_write_multi_2(bst, bsh, offset + EDP,
+			bus_space_write_multi_2(bst, bsh, EDP,
 			    mtod(m, u_int16_t *), m->m_len>>1);
 		if (m->m_len & 1) {
 			DPRINTF(XID_CONFIG, ("xi: XXX odd!\n"));
-			bus_space_write_1(bst, bsh, offset + EDP,
+			bus_space_write_1(bst, bsh, EDP,
 			    *(mtod(m, u_int8_t *) + m->m_len - 1));
 		}
 		MFREE(m, m0);
@@ -929,12 +908,12 @@ xi_start(ifp)
 	}
 	DPRINTF(XID_CONFIG, ("xi: len=%d pad=%d total=%d\n", len, pad, len+pad+4));
 	if (sc->sc_chipset >= XI_CHIPSET_MOHAWK)
-		bus_space_write_1(bst, bsh, offset + CR, TX_PKT | ENABLE_INT);
+		bus_space_write_1(bst, bsh, CR, TX_PKT | ENABLE_INT);
 	else {
 		for (; pad > 1; pad -= 2)
-			bus_space_write_2(bst, bsh, offset + EDP, 0);
+			bus_space_write_2(bst, bsh, EDP, 0);
 		if (pad == 1)
-			bus_space_write_1(bst, bsh, offset + EDP, 0);
+			bus_space_write_1(bst, bsh, EDP, 0);
 	}
 
 	splx(s);
@@ -1087,7 +1066,6 @@ xi_set_address(sc)
 {
 	bus_space_tag_t bst = sc->sc_bst;
 	bus_space_handle_t bsh = sc->sc_bsh;
-	bus_size_t offset = sc->sc_offset;
 	struct ethercom *ether = &sc->sc_ethercom;
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	struct ether_multistep step;
@@ -1151,8 +1129,8 @@ done:
 #endif
 
 		PAGE(sc, 0x50 + page);
-		bus_space_write_region_1(bst, bsh, offset + IA,
-		    &indaddr[page * 8], page == 7 ? 4 : 8);
+		bus_space_write_region_1(bst, bsh, IA, &indaddr[page * 8],
+		    page == 7 ? 4 : 8);
 		/*
 		 * XXX
 		 * Without this delay, the address registers on my CE2 get
@@ -1163,7 +1141,7 @@ done:
 
 #ifdef XIDEBUG
 		if (xidebug & XID_MCAST) {
-			bus_space_read_region_1(bst, bsh, offset + IA,
+			bus_space_read_region_1(bst, bsh, IA,
 			    &indaddr[page * 8], page == 7 ? 4 : 8);
 			printf("page %d after: ", page);
 			for (i = 0; i < 8; i++)
@@ -1181,7 +1159,7 @@ done:
 		x |= SWC1_MCAST_PROM;
 	if (!LIST_FIRST(&sc->sc_mii.mii_phys))
 		x |= SWC1_AUTO_MEDIA;
-	bus_space_write_1(sc->sc_bst, sc->sc_bsh, sc->sc_offset + SWC1, x);
+	bus_space_write_1(sc->sc_bst, sc->sc_bsh, SWC1, x);
 }
 
 STATIC void
@@ -1190,20 +1168,19 @@ xi_cycle_power(sc)
 {
 	bus_space_tag_t bst = sc->sc_bst;
 	bus_space_handle_t bsh = sc->sc_bsh;
-	bus_size_t offset = sc->sc_offset;
 
 	DPRINTF(XID_CONFIG, ("xi_cycle_power()\n"));
 
 	PAGE(sc, 4);
 	DELAY(1);
-	bus_space_write_1(bst, bsh, offset + GP1, 0);
-	DELAY(40000);
+	bus_space_write_1(bst, bsh, GP1, 0);
+	tsleep(&xi_cycle_power, PWAIT, "xipwr1", hz * 40 / 1000);
 	if (sc->sc_chipset >= XI_CHIPSET_MOHAWK)
-		bus_space_write_1(bst, bsh, offset + GP1, POWER_UP);
+		bus_space_write_1(bst, bsh, GP1, POWER_UP);
 	else
 		/* XXX What is bit 2 (aka AIC)? */
-		bus_space_write_1(bst, bsh, offset + GP1, POWER_UP | 4);
-	DELAY(20000);
+		bus_space_write_1(bst, bsh, GP1, POWER_UP | 4);
+	tsleep(&xi_cycle_power, PWAIT, "xipwr2", hz * 20 / 1000);
 }
 
 STATIC void
@@ -1212,30 +1189,28 @@ xi_full_reset(sc)
 {
 	bus_space_tag_t bst = sc->sc_bst;
 	bus_space_handle_t bsh = sc->sc_bsh;
-	bus_size_t offset = sc->sc_offset;
 	u_int8_t x;
 
 	DPRINTF(XID_CONFIG, ("xi_full_reset()\n"));
 
 	/* Do an as extensive reset as possible on all functions. */
 	xi_cycle_power(sc);
-	bus_space_write_1(bst, bsh, offset + CR, SOFT_RESET);
-	DELAY(20000);
-	bus_space_write_1(bst, bsh, offset + CR, 0);
-	DELAY(20000);
+	bus_space_write_1(bst, bsh, CR, SOFT_RESET);
+	tsleep(&xi_full_reset, PWAIT, "xirst1", hz * 20 / 1000);
+	bus_space_write_1(bst, bsh, CR, 0);
+	tsleep(&xi_full_reset, PWAIT, "xirst2", hz * 20 / 1000);
 	PAGE(sc, 4);
 	if (sc->sc_chipset >= XI_CHIPSET_MOHAWK) {
 		/*
 		 * Drive GP1 low to power up ML6692 and GP2 high to power up
 		 * the 10MHz chip.  XXX What chip is that?  The phy?
 		 */
-		bus_space_write_1(bst, bsh, offset + GP0,
-		    GP1_OUT | GP2_OUT | GP2_WR);
+		bus_space_write_1(bst, bsh, GP0, GP1_OUT | GP2_OUT | GP2_WR);
 	}
-	DELAY(500000);
+	tsleep(&xi_full_reset, PWAIT, "xirst3", hz * 500 / 1000);
 
 	/* Get revision information.  XXX Symbolic constants. */
-	sc->sc_rev = bus_space_read_1(bst, bsh, offset + BV) &
+	sc->sc_rev = bus_space_read_1(bst, bsh, BV) &
 	    ((sc->sc_chipset >= XI_CHIPSET_MOHAWK) ? 0x70 : 0x30) >> 4;
 	DPRINTF(XID_CONFIG, ("xi: rev=%02x\n", sc->sc_rev));
 
@@ -1245,9 +1220,9 @@ xi_full_reset(sc)
 		 * XXX I have no idea what this really does, it is from the
 		 * Linux driver.
 		 */
-		bus_space_write_1(bst, bsh, offset + GP0, GP1_OUT);
+		bus_space_write_1(bst, bsh, GP0, GP1_OUT);
 	}
-	DELAY(40000);
+	tsleep(&xi_full_reset, PWAIT, "xirst4", hz * 40 / 1000);
 
 	/*
 	 * Disable source insertion.
@@ -1255,14 +1230,14 @@ xi_full_reset(sc)
 	 */
 	if (sc->sc_chipset < XI_CHIPSET_DINGO) {
 		PAGE(sc, 0x42);
-		bus_space_write_1(bst, bsh, offset + SWC0, 0x20);
+		bus_space_write_1(bst, bsh, SWC0, 0x20);
 	}
 
 	/* Set the local memory dividing line. */
 	if (sc->sc_rev != 1) {
 		PAGE(sc, 2);
 		/* XXX Symbolic constant preferrable. */
-		bus_space_write_2(bst, bsh, offset + RBS0, 0x2000);
+		bus_space_write_2(bst, bsh, RBS0, 0x2000);
 	}
 
 	/*
@@ -1270,21 +1245,21 @@ xi_full_reset(sc)
 	 * we hardwire it correctly.
 	 */
 	PAGE(sc, 0);
-	bus_space_write_2(bst, bsh, offset + DO0, DO_CHG_OFFSET);
+	bus_space_write_2(bst, bsh, DO0, DO_CHG_OFFSET);
 
 	/* Setup ethernet MAC registers. XXX Symbolic constants. */
 	PAGE(sc, 0x40);
-	bus_space_write_1(bst, bsh, offset + RX0MSK,
+	bus_space_write_1(bst, bsh, RX0MSK,
 	    PKT_TOO_LONG | CRC_ERR | RX_OVERRUN | RX_ABORT | RX_OK);
-	bus_space_write_1(bst, bsh, offset + TX0MSK,
+	bus_space_write_1(bst, bsh, TX0MSK,
 	    CARRIER_LOST | EXCESSIVE_COLL | TX_UNDERRUN | LATE_COLLISION |
 	    SQE | TX_ABORT | TX_OK);
 	if (sc->sc_chipset < XI_CHIPSET_DINGO)
 		/* XXX From Linux, dunno what 0xb0 means. */
-		bus_space_write_1(bst, bsh, offset + TX1MSK, 0xb0);
-	bus_space_write_1(bst, bsh, offset + RXST0, 0);
-	bus_space_write_1(bst, bsh, offset + TXST0, 0);
-	bus_space_write_1(bst, bsh, offset + TXST1, 0);
+		bus_space_write_1(bst, bsh, TX1MSK, 0xb0);
+	bus_space_write_1(bst, bsh, RXST0, 0);
+	bus_space_write_1(bst, bsh, TXST0, 0);
+	bus_space_write_1(bst, bsh, TXST1, 0);
 
 	PAGE(sc, 2);
 
@@ -1292,16 +1267,15 @@ xi_full_reset(sc)
 	x = 0;
 	if (LIST_FIRST(&sc->sc_mii.mii_phys))
 		x |= SELECT_MII;
-	bus_space_write_1(bst, bsh, offset + MSR, x);
-	DELAY(20000);
+	bus_space_write_1(bst, bsh, MSR, x);
+	tsleep(&xi_full_reset, PWAIT, "xirst5", hz * 20 / 1000);
 
 	/* Configure the LED registers. */
 	/* XXX This is not good for 10base2. */
-	bus_space_write_1(bst, bsh, offset + LED,
+	bus_space_write_1(bst, bsh, LED,
 	    (LED_TX_ACT << LED1_SHIFT) | (LED_10MB_LINK << LED0_SHIFT));
 	if (sc->sc_chipset >= XI_CHIPSET_DINGO)
-		bus_space_write_1(bst, bsh, offset + LED3,
-		    LED_100MB_LINK << LED3_SHIFT);
+		bus_space_write_1(bst, bsh, LED3, LED_100MB_LINK << LED3_SHIFT);
 
 	/*
 	 * The Linux driver says this:

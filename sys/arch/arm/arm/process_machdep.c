@@ -1,4 +1,4 @@
-/*	$NetBSD: process_machdep.c,v 1.10.2.1 2004/08/03 10:32:29 skrll Exp $	*/
+/*	$NetBSD: process_machdep.c,v 1.10.2.2 2004/08/25 06:57:17 skrll Exp $	*/
 
 /*
  * Copyright (c) 1993 The Regents of the University of California.
@@ -133,7 +133,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.10.2.1 2004/08/03 10:32:29 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.10.2.2 2004/08/25 06:57:17 skrll Exp $");
 
 #include <sys/proc.h>
 #include <sys/ptrace.h>
@@ -169,6 +169,10 @@ process_read_regs(struct lwp *l, struct reg *regs)
 	regs->r_pc = tf->tf_pc;
 	regs->r_cpsr = tf->tf_spsr;
 
+#ifdef THUMB_CODE
+	if (tf->tf_spsr & PSR_T_bit)
+		regs->r_pc |= 1;
+#endif
 #ifdef DIAGNOSTIC
 	if ((tf->tf_spsr & PSR_MODE) == PSR_USR32_MODE
 	    && tf->tf_spsr & I32_bit)
@@ -202,8 +206,12 @@ process_write_regs(struct lwp *l, struct reg *regs)
 	tf->tf_usr_lr = regs->r_lr;
 #ifdef __PROG32
 	tf->tf_pc = regs->r_pc;
-	tf->tf_spsr &=  ~PSR_FLAGS;
+	tf->tf_spsr &=  ~(PSR_FLAGS | PSR_T_bit);
 	tf->tf_spsr |= regs->r_cpsr & PSR_FLAGS;
+#ifdef THUMB_CODE
+	if ((regs->r_pc & 1) || (regs->r_cpsr & PSR_T_bit))
+		tf->tf_spsr |= PSR_T_bit;
+#endif
 #ifdef DIAGNOSTIC
 	if ((tf->tf_spsr & PSR_MODE) == PSR_USR32_MODE
 	    && tf->tf_spsr & I32_bit)
@@ -239,6 +247,12 @@ process_set_pc(struct lwp *l, caddr_t addr)
 	KASSERT(tf != NULL);
 #ifdef __PROG32
 	tf->tf_pc = (int)addr;
+#ifdef THUMB_CODE
+	if (((int)addr) & 1)
+		tf->tf_spsr |= PSR_T_bit;
+	else
+		tf->tf_spsr &= ~PSR_T_bit;
+#endif
 #else /* __PROG26 */
 	/* Only set the PC, not the PSR */
 	if (((register_t)addr & R15_PC) != (register_t)addr)

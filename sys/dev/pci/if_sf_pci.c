@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sf_pci.c,v 1.7 2002/12/23 02:58:37 tsutsui Exp $	*/
+/*	$NetBSD: if_sf_pci.c,v 1.7.2.1 2004/08/25 06:58:05 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sf_pci.c,v 1.7 2002/12/23 02:58:37 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sf_pci.c,v 1.7.2.1 2004/08/25 06:58:05 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -78,8 +78,8 @@ struct sf_pci_softc {
 	void	*sc_ih;			/* interrupt handle */
 };
 
-int	sf_pci_match(struct device *, struct cfdata *, void *);
-void	sf_pci_attach(struct device *, struct device *, void *);
+static int	sf_pci_match(struct device *, struct cfdata *, void *);
+static void	sf_pci_attach(struct device *, struct device *, void *);
 
 CFATTACH_DECL(sf_pci, sizeof(struct sf_pci_softc),
     sf_pci_match, sf_pci_attach, NULL, NULL);
@@ -91,7 +91,7 @@ struct sf_pci_product {
 	const struct sf_pci_product *spp_subsys; /* subsystm IDs */
 };
 
-const struct sf_pci_product sf_subsys_adaptec[] = {
+static const struct sf_pci_product sf_subsys_adaptec[] = {
 	/* ANA-62011 (rev 0) Single port 10/100 64-bit */
 	{ PCI_VENDOR_ADP,			0x0008,
 	  "ANA-62011 (rev 0) 10/100 Ethernet",	NULL },
@@ -124,7 +124,7 @@ const struct sf_pci_product sf_subsys_adaptec[] = {
 	  NULL,					NULL },
 };
 
-const struct sf_pci_product sf_pci_products[] = {
+static const struct sf_pci_product sf_pci_products[] = {
 	{ PCI_VENDOR_ADP,			PCI_PRODUCT_ADP_AIC6915,
 	  "AIC-6915 10/100 Ethernet",		sf_subsys_adaptec },
 
@@ -159,7 +159,7 @@ sf_pci_lookup(const struct pci_attach_args *pa)
 	return (NULL);
 }
 
-int
+static int
 sf_pci_match(struct device *parent, struct cfdata *match, void *aux)
 {
 	struct pci_attach_args *pa = aux;
@@ -170,7 +170,7 @@ sf_pci_match(struct device *parent, struct cfdata *match, void *aux)
 	return (0);
 }
 
-void
+static void
 sf_pci_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct sf_pci_softc *psc = (void *) self;

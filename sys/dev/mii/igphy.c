@@ -1,4 +1,4 @@
-/*	$NetBSD: igphy.c,v 1.3.2.2 2004/08/03 10:48:49 skrll Exp $	*/
+/*	$NetBSD: igphy.c,v 1.3.2.3 2004/08/25 06:58:05 skrll Exp $	*/
 
 /*
  * The Intel copyright applies to the analog register setup, and the
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: igphy.c,v 1.3.2.2 2004/08/03 10:48:49 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: igphy.c,v 1.3.2.3 2004/08/25 06:58:05 skrll Exp $");
 
 #include "opt_mii.h"
 
@@ -103,20 +103,20 @@ static void igphy_load_dspcode(struct mii_softc *);
 static void igphy_smartspeed_workaround(struct mii_softc *sc);
 #endif
 
-int	igphymatch(struct device *, struct cfdata *, void *);
-void	igphyattach(struct device *, struct device *, void *);
+static int	igphymatch(struct device *, struct cfdata *, void *);
+static void	igphyattach(struct device *, struct device *, void *);
 
 CFATTACH_DECL(igphy, sizeof(struct mii_softc),
     igphymatch, igphyattach, mii_phy_detach, mii_phy_activate);
 
-int	igphy_service(struct mii_softc *, struct mii_data *, int);
-void	igphy_status(struct mii_softc *);
+static int	igphy_service(struct mii_softc *, struct mii_data *, int);
+static void	igphy_status(struct mii_softc *);
 
-const struct mii_phy_funcs igphy_funcs = {
+static const struct mii_phy_funcs igphy_funcs = {
 	igphy_service, igphy_status, igphy_reset,
 };
 
-const struct mii_phydesc igphys[] = {
+static const struct mii_phydesc igphys[] = {
 	{ MII_OUI_yyINTEL,		MII_MODEL_yyINTEL_IGP01E1000,
 	  MII_STR_yyINTEL_IGP01E1000 },
 
@@ -124,7 +124,7 @@ const struct mii_phydesc igphys[] = {
 	 NULL },
 };
 
-int
+static int
 igphymatch(struct device *parent, struct cfdata *match, void *aux)
 {
 	struct mii_attach_args *ma = aux;
@@ -135,7 +135,7 @@ igphymatch(struct device *parent, struct cfdata *match, void *aux)
 	return 0;
 }
 
-void
+static void
 igphyattach(struct device *parent, struct device *self, void *aux)
 {
 	struct mii_softc *sc = (struct mii_softc *)self;
@@ -236,7 +236,7 @@ igphy_reset(struct mii_softc *sc)
 }
 
 
-int
+static int
 igphy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 {
 	struct ifmedia_entry *ife = mii->mii_media.ifm_cur;
@@ -300,7 +300,7 @@ igphy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 }
 
 
-void
+static void
 igphy_status(struct mii_softc *sc)
 {
 	struct mii_data *mii = sc->mii_pdata;

@@ -1,7 +1,7 @@
-/* -*-C++-*-	$NetBSD: sh3.h,v 1.1.18.1 2004/08/12 11:41:06 skrll Exp $	*/
+/* -*-C++-*-	$NetBSD: sh3.h,v 1.1.18.2 2004/08/25 06:57:19 skrll Exp $	*/
 
 /*-
- * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
+ * Copyright (c) 2001, 2002, 2004 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -41,7 +41,7 @@
 #include <sh3/cpu/sh.h>
 
 /*
- * SH3 designed for Windows CE (SH7709, SH7709A) common defines.
+ * SH3 designed for Windows CE (SH7709, SH7709A, SH7707) common defines.
  */
 #define	SH3_TRA			0xffffffd0
 #define	SH3_EXPEVT		0xffffffd4

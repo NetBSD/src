@@ -1,4 +1,4 @@
-/* $NetBSD: cgd_crypto.h,v 1.1 2002/10/04 18:22:35 elric Exp $ */
+/* $NetBSD: cgd_crypto.h,v 1.1.8.1 2004/08/25 06:57:34 skrll Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -36,6 +36,9 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#ifndef _DEV_CGD_CRYPTO_H_
+#define	_DEV_CGD_CRYPTO_H_
+
 #ifdef _KERNEL
 #define CGD_CIPHER_DECRYPT	1
 #define CGD_CIPHER_ENCRYPT	2
@@ -52,5 +55,6 @@ struct cryptfuncs {
 };
 
 struct cryptfuncs	*cryptfuncs_find(char *);
+#endif /* _KERNEL */
 
-#endif
+#endif /* _DEV_CGD_CRYPTO_H_ */

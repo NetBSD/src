@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.boot,v 1.6.2.1 2004/08/03 10:36:19 skrll Exp $
+# $NetBSD: Makefile.boot,v 1.6.2.2 2004/08/25 06:57:19 skrll Exp $
 
 S=	${.CURDIR}/../../../../../
 
@@ -58,6 +58,7 @@ CPPFLAGS+= -DDIRECT_SERIAL
 CPPFLAGS+= -DSUPPORT_SERIAL=boot_params.bp_consdev
 
 CPPFLAGS+= -DCONSPEED=boot_params.bp_conspeed
+CPPFLAGS+= -DCONSADDR=boot_params.bp_consaddr
 CPPFLAGS+= -DCONSOLE_KEYMAP=boot_params.bp_keymap
 
 CPPFLAGS+= -DSUPPORT_USTARFS

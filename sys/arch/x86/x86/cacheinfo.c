@@ -1,4 +1,4 @@
-/*	$NetBSD: cacheinfo.c,v 1.2.2.2 2004/08/12 11:41:14 skrll Exp $	*/
+/*	$NetBSD: cacheinfo.c,v 1.2.2.3 2004/08/25 06:57:20 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cacheinfo.c,v 1.2.2.2 2004/08/12 11:41:14 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cacheinfo.c,v 1.2.2.3 2004/08/25 06:57:20 skrll Exp $");
 
 #include <sys/types.h>
 #include <sys/systm.h>
@@ -318,9 +318,15 @@ via_cpu_cacheinfo(struct cpu_info *ci)
 	CPUID(0x80000006, descs[0], descs[1], descs[2], descs[3]);
 
 	cai = &ci->ci_cinfo[CAI_L2CACHE];
-	cai->cai_totalsize = VIA_L2_ECX_C_SIZE(descs[2]);
-	cai->cai_associativity = VIA_L2_ECX_C_ASSOC(descs[2]);
-	cai->cai_linesize = VIA_L2_ECX_C_LS(descs[2]);
+	if (model >= 9) {
+		cai->cai_totalsize = VIA_L2N_ECX_C_SIZE(descs[2]);
+		cai->cai_associativity = VIA_L2N_ECX_C_ASSOC(descs[2]);
+		cai->cai_linesize = VIA_L2N_ECX_C_LS(descs[2]);
+	} else {
+		cai->cai_totalsize = VIA_L2_ECX_C_SIZE(descs[2]);
+		cai->cai_associativity = VIA_L2_ECX_C_ASSOC(descs[2]);
+		cai->cai_linesize = VIA_L2_ECX_C_LS(descs[2]);
+	}
 }
 
 void

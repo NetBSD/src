@@ -1,4 +1,4 @@
-/*	$NetBSD: pccbb.c,v 1.90.2.2 2004/08/12 11:41:44 skrll Exp $	*/
+/*	$NetBSD: pccbb.c,v 1.90.2.3 2004/08/25 06:58:06 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 and 2000
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pccbb.c,v 1.90.2.2 2004/08/12 11:41:44 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pccbb.c,v 1.90.2.3 2004/08/25 06:58:06 skrll Exp $");
 
 /*
 #define CBB_DEBUG
@@ -1302,9 +1302,6 @@ pccbb_power(ct, command)
 
 	status = bus_space_read_4(memt, memh, CB_SOCKET_STAT);
 	sock_ctrl = bus_space_read_4(memt, memh, CB_SOCKET_CTRL);
-#if 0
-	bus_space_write_4(memt, memh, CB_SOCKET_FORCE, 0);
-#endif
 
 	switch (command & CARDBUS_VCCMASK) {
 	case CARDBUS_VCC_UC:
@@ -1365,8 +1362,10 @@ pccbb_power(ct, command)
 		sock_ctrl &= ~CB_SOCKET_CTRL_VCCMASK;
 		sock_ctrl &= ~CB_SOCKET_CTRL_VPPMASK;
 		bus_space_write_4(memt, memh, CB_SOCKET_CTRL, sock_ctrl);
+#if 0
 		bus_space_write_4(memt, memh, CB_SOCKET_FORCE,
 		    CB_SOCKET_FORCE_BADVCC);
+#endif
 		printf("new status 0x%x\n", bus_space_read_4(memt, memh,
 		    CB_SOCKET_STAT));
 		return 0;
@@ -1381,18 +1380,6 @@ pccbb_power(ct, command)
 			reg_ctrl |= TOPIC97_REG_CTRL_CLKRUN_ENA;
 		pci_conf_write(sc->sc_pc, sc->sc_tag, TOPIC_REG_CTRL, reg_ctrl);
 	}
-
-#if 0
-	/*
-	 * XXX delay 300 ms: though the standard defines that the Vcc set-up
-	 * time is 20 ms, some PC-Card bridge requires longer duration.
-	 */
-#if 0	/* XXX called on interrupt context */
-	DELAY_MS(300, sc);
-#else
-	delay(300 * 1000);
-#endif
-#endif
 
 	return 1;		       /* power changed correctly */
 }
@@ -2384,7 +2371,7 @@ pccbb_pcmcia_delay(ph, timo, wmesg)
 #endif
 #endif
 	DPRINTF(("pccbb_pcmcia_delay: \"%s\" %p, sleep %d ms\n",
-	    wmesg, h->event_thread, timo));
+	    wmesg, ph->event_thread, timo));
 	tsleep(pccbb_pcmcia_delay, PWAIT, wmesg, roundup(timo * hz, 1000) / 1000);
 }
 
@@ -2427,54 +2414,43 @@ pccbb_pcmcia_socket_enable(pch)
 		return;
 	}
 
-	/* disable interrupts */
+	/* disable interrupts; assert RESET */
 	intr = Pcic_read(ph, PCIC_INTR);
-	intr &= ~(PCIC_INTR_IRQ_MASK | PCIC_INTR_CARDTYPE_MASK);
+	intr &= PCIC_INTR_ENABLE;
 	Pcic_write(ph, PCIC_INTR, intr);
 
 	/* zero out the address windows */
 	Pcic_write(ph, PCIC_ADDRWIN_ENABLE, 0);
 
-	/* disable socket: negate output enable bit and power off */
-	power = 0;
-	Pcic_write(ph, PCIC_PWRCTL, power);
-
 	/* power down the socket to reset it, clear the card reset pin */
 	pccbb_power(sc, CARDBUS_VCC_0V | CARDBUS_VPP_0V);
 
-	/* now make sure we have reset# active */
-	intr &= ~PCIC_INTR_RESET;
-	Pcic_write(ph, PCIC_INTR, intr);
+	/* power off; assert output enable bit */
+	power = PCIC_PWRCTL_OE;
+	Pcic_write(ph, PCIC_PWRCTL, power);
 
+	/* power up the socket */
 	if (pccbb_power(sc, voltage) == 0)
 		return;
 
 	/*
-	 * wait 100ms until power raise (Tpr) and 20ms to become
-	 * stable (Tsu(Vcc)).
+	 * Table 4-18 and figure 4-6 of the PC Card specifiction say:
+	 * Vcc Rising Time (Tpr) = 100ms
+	 * RESET Width (Th (Hi-z RESET)) = 1ms
+	 * RESET Width (Tw (RESET)) = 10us
 	 *
 	 * some machines require some more time to be settled
-	 * (300ms is added here).
+	 * (100ms is added here).
 	 */
-	pccbb_pcmcia_delay(ph, 100 + 20 + 300, "pccen1");
+	pccbb_pcmcia_delay(ph, 200 + 1, "pccen1");
 
-	power |= PCIC_PWRCTL_OE;
-	Pcic_write(ph, PCIC_PWRCTL, power);
-
-	if (pccbb_power(sc, voltage) == 0)
-		return;
-
-	/* 
-	 * hold RESET at least 10us, this is a min allow for slop in
-	 * delay routine.
-	 */
-	pccbb_pcmcia_delay(ph, 20, "pccen1.5");
-
-	/* clear the reset flag */
+	/* negate RESET */
 	intr |= PCIC_INTR_RESET;
 	Pcic_write(ph, PCIC_INTR, intr);
 
-	/* wait 20ms as per pc card standard (r2.01) section 4.3.6 */
+	/*
+	 * RESET Setup Time (Tsu (RESET)) = 20ms
+	 */
 	pccbb_pcmcia_delay(ph, 20, "pccen2");
 
 #ifdef DIAGNOSTIC
@@ -2516,21 +2492,23 @@ pccbb_pcmcia_socket_disable(pch)
 
 	DPRINTF(("pccbb_pcmcia_socket_disable\n"));
 
-	/* disable interrupts */
+	/* disable interrupts; assert RESET */
 	intr = Pcic_read(ph, PCIC_INTR);
-	intr &= ~(PCIC_INTR_IRQ_MASK | PCIC_INTR_CARDTYPE_MASK);
+	intr &= PCIC_INTR_ENABLE;
 	Pcic_write(ph, PCIC_INTR, intr);
 
 	/* zero out the address windows */
 	Pcic_write(ph, PCIC_ADDRWIN_ENABLE, 0);
 
-	/* disable socket: negate output enable bit and power off */
-	Pcic_write(ph, PCIC_PWRCTL, 0);
-
 	/* power down the socket to reset it, clear the card reset pin */
 	pccbb_power(sc, CARDBUS_VCC_0V | CARDBUS_VPP_0V);
 
-	/* wait 300ms for power to fall */
+	/* disable socket: negate output enable bit and power off */
+	Pcic_write(ph, PCIC_PWRCTL, 0);
+
+	/*
+	 * Vcc Falling Time (Tpf) = 300ms
+	 */
 	pccbb_pcmcia_delay(ph, 300, "pccwr1");
 }
 

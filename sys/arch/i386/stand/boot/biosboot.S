@@ -1,4 +1,4 @@
-/*	$NetBSD: biosboot.S,v 1.1.2.1 2004/08/03 10:36:19 skrll Exp $	*/
+/*	$NetBSD: biosboot.S,v 1.1.2.2 2004/08/25 06:57:19 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -84,7 +84,7 @@ boot_start_1:
 	mov	%cs, %ax
 	mov	%ax, %es
 
-	/* Grab bootparams patched into bootxx by installboot */
+	/* Grab boot_params patched into bootxx by installboot */
 	cmpl	$X86_BOOT_MAGIC_1,-4(%si)	/* sanity check ptr */
 	jne	2f
 	mov	$boot_params, %di

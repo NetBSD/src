@@ -1,4 +1,4 @@
-/*	$NetBSD: makphy.c,v 1.12.2.1 2004/08/03 10:48:49 skrll Exp $	*/
+/*	$NetBSD: makphy.c,v 1.12.2.2 2004/08/25 06:58:05 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: makphy.c,v 1.12.2.1 2004/08/03 10:48:49 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: makphy.c,v 1.12.2.2 2004/08/25 06:58:05 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -89,20 +89,20 @@ __KERNEL_RCSID(0, "$NetBSD: makphy.c,v 1.12.2.1 2004/08/03 10:48:49 skrll Exp $"
 
 #include <dev/mii/makphyreg.h>
 
-int	makphymatch(struct device *, struct cfdata *, void *);
-void	makphyattach(struct device *, struct device *, void *);
+static int	makphymatch(struct device *, struct cfdata *, void *);
+static void	makphyattach(struct device *, struct device *, void *);
 
 CFATTACH_DECL(makphy, sizeof(struct mii_softc),
     makphymatch, makphyattach, mii_phy_detach, mii_phy_activate);
 
-int	makphy_service(struct mii_softc *, struct mii_data *, int);
-void	makphy_status(struct mii_softc *);
+static int	makphy_service(struct mii_softc *, struct mii_data *, int);
+static void	makphy_status(struct mii_softc *);
 
-const struct mii_phy_funcs makphy_funcs = {
+static const struct mii_phy_funcs makphy_funcs = {
 	makphy_service, makphy_status, mii_phy_reset,
 };
 
-const struct mii_phydesc makphys[] = {
+static const struct mii_phydesc makphys[] = {
 	{ MII_OUI_xxMARVELL,		MII_MODEL_xxMARVELL_E1000_3,
 	  MII_STR_xxMARVELL_E1000_3 },
 
@@ -116,7 +116,7 @@ const struct mii_phydesc makphys[] = {
 	  NULL },
 };
 
-int
+static int
 makphymatch(struct device *parent, struct cfdata *match, void *aux)
 {
 	struct mii_attach_args *ma = aux;
@@ -127,7 +127,7 @@ makphymatch(struct device *parent, struct cfdata *match, void *aux)
 	return (0);
 }
 
-void
+static void
 makphyattach(struct device *parent, struct device *self, void *aux)
 {
 	struct mii_softc *sc = (struct mii_softc *)self;
@@ -162,7 +162,7 @@ makphyattach(struct device *parent, struct device *self, void *aux)
 	aprint_normal("\n");
 }
 
-int
+static int
 makphy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 {
 	struct ifmedia_entry *ife = mii->mii_media.ifm_cur;
@@ -221,7 +221,7 @@ makphy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 	return (0);
 }
 
-void
+static void
 makphy_status(struct mii_softc *sc)
 {
 	struct mii_data *mii = sc->mii_pdata;

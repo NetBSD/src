@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_amiga.c,v 1.10.6.1 2004/08/03 10:31:54 skrll Exp $ */
+/*	$NetBSD: wdc_amiga.c,v 1.10.6.2 2004/08/25 06:57:17 skrll Exp $ */
 
 /*-
  * Copyright (c) 2000, 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc_amiga.c,v 1.10.6.1 2004/08/03 10:31:54 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc_amiga.c,v 1.10.6.2 2004/08/25 06:57:17 skrll Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -61,9 +61,10 @@ __KERNEL_RCSID(0, "$NetBSD: wdc_amiga.c,v 1.10.6.1 2004/08/03 10:31:54 skrll Exp
 
 struct wdc_amiga_softc {
 	struct wdc_softc sc_wdcdev;
-	struct	wdc_channel *wdc_chanlist[1];
-	struct  wdc_channel wdc_channel;
-	struct	ata_queue wdc_chqueue;
+	struct	ata_channel *sc_chanlist[1];
+	struct  ata_channel sc_channel;
+	struct	ata_queue sc_chqueue;
+	struct wdc_regs sc_wdc_regs;
 	struct isr sc_isr;
 	volatile u_char *sc_intreg;
 	struct bus_space_tag cmd_iot;
@@ -90,9 +91,12 @@ void
 wdc_amiga_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct wdc_amiga_softc *sc = (void *)self;
+	struct wdc_regs *wdr;
 	int i;
 
 	printf("\n");
+
+	sc->sc_wdcdev.regs = wdr = &sc->sc_wdc_regs;
 
 	if (is_a4000()) {
 		sc->cmd_iot.base = (u_long)ztwomap(0xdd2020 + 2);
@@ -106,44 +110,46 @@ wdc_amiga_attach(struct device *parent, struct device *self, void *aux)
 		sc->sc_a1200 = 1;
 	}
 	sc->cmd_iot.absm = sc->ctl_iot.absm = &amiga_bus_stride_4swap;
-	sc->wdc_channel.cmd_iot = &sc->cmd_iot;
-	sc->wdc_channel.ctl_iot = &sc->ctl_iot;
+	wdr->cmd_iot = &sc->cmd_iot;
+	wdr->ctl_iot = &sc->ctl_iot;
 
-	if (bus_space_map(sc->wdc_channel.cmd_iot, 0, 0x40, 0,
-			  &sc->wdc_channel.cmd_baseioh)) {
+	if (bus_space_map(wdr->cmd_iot, 0, 0x40, 0,
+			  &wdr->cmd_baseioh)) {
 		printf("%s: couldn't map registers\n",
-		    sc->sc_wdcdev.sc_dev.dv_xname);
+		    sc->sc_wdcdev.sc_atac.atac_dev.dv_xname);
 		return;
 	}
 
 	for (i = 0; i < WDC_NREG; i++) {
-		if (bus_space_subregion(sc->wdc_channel.cmd_iot,
-		    sc->wdc_channel.cmd_baseioh, i, i == 0 ? 4 : 1,
-		    &sc->wdc_channel.cmd_iohs[i]) != 0) {
+		if (bus_space_subregion(wdr->cmd_iot,
+		    wdr->cmd_baseioh, i, i == 0 ? 4 : 1,
+		    &wdr->cmd_iohs[i]) != 0) {
 
-			bus_space_unmap(sc->wdc_channel.cmd_iot,
-			    sc->wdc_channel.cmd_baseioh, 0x40);
+			bus_space_unmap(wdr->cmd_iot,
+			    wdr->cmd_baseioh, 0x40);
 			printf("%s: couldn't map registers\n",
-			    sc->sc_wdcdev.sc_dev.dv_xname);
+			    sc->sc_wdcdev.sc_atac.atac_dev.dv_xname);
 			return;
 		}
 	}
-	wdc_init_shadow_regs(&sc->wdc_channel);
 
 	if (sc->sc_a1200)
-		sc->wdc_channel.ctl_ioh = sc->ctl_iot.base;
-	else if (bus_space_subregion(sc->wdc_channel.cmd_iot,
-	    sc->wdc_channel.cmd_baseioh, 0x406, 1, &sc->wdc_channel.ctl_ioh))
+		wdr->ctl_ioh = sc->ctl_iot.base;
+	else if (bus_space_subregion(wdr->cmd_iot,
+	    wdr->cmd_baseioh, 0x406, 1, &wdr->ctl_ioh))
 		return;
 
-	sc->sc_wdcdev.cap = WDC_CAPABILITY_DATA16;
-	sc->sc_wdcdev.PIO_cap = 0;
-	sc->wdc_chanlist[0] = &sc->wdc_channel;
-	sc->sc_wdcdev.channels = sc->wdc_chanlist;
-	sc->sc_wdcdev.nchannels = 1;
-	sc->wdc_channel.ch_channel = 0;
-	sc->wdc_channel.ch_wdc = &sc->sc_wdcdev;
-	sc->wdc_channel.ch_queue = &sc->wdc_chqueue;
+	sc->sc_wdcdev.sc_atac.atac_cap = ATAC_CAP_DATA16;
+	sc->sc_wdcdev.sc_atac.atac_pio_cap = 0;
+	sc->sc_chanlist[0] = &sc->sc_channel;
+	sc->sc_wdcdev.sc_atac.atac_channels = sc->sc_chanlist;
+	sc->sc_wdcdev.sc_atac.atac_nchannels = 1;
+	sc->sc_channel.ch_channel = 0;
+	sc->sc_channel.ch_atac = &sc->sc_wdcdev.sc_atac;
+	sc->sc_channel.ch_queue = &sc->sc_chqueue;
+
+	wdc_init_shadow_regs(&sc->sc_channel);
+
 	sc->sc_isr.isr_intr = wdc_amiga_intr;
 	sc->sc_isr.isr_arg = sc;
 	sc->sc_isr.isr_ipl = 2;
@@ -152,7 +158,7 @@ wdc_amiga_attach(struct device *parent, struct device *self, void *aux)
 	if (sc->sc_a1200)
 		gayle.intena |= GAYLE_INT_IDE;
 
-	wdcattach(&sc->wdc_channel);
+	wdcattach(&sc->sc_channel);
 }
 
 int
@@ -165,7 +171,7 @@ wdc_amiga_intr(void *arg)
 	if (intreq & GAYLE_INT_IDE) {
 		if (sc->sc_a1200)
 			gayle.intreq = 0x7c | (intreq & 0x03);
-		ret = wdcintr(&sc->wdc_channel);
+		ret = wdcintr(&sc->sc_channel);
 	}
 
 	return ret;

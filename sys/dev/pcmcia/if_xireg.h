@@ -1,4 +1,4 @@
-/*	$NetBSD: if_xireg.h,v 1.3.22.2 2004/08/12 11:42:01 skrll Exp $	*/
+/*	$NetBSD: if_xireg.h,v 1.3.22.3 2004/08/25 06:58:43 skrll Exp $	*/
 /*	OpenBSD: if_xereg.h,v 1.1 1999/05/18 19:18:21 niklas Exp	*/
 
 /*
@@ -281,7 +281,7 @@
 /* Misc. defines. */
 
 #define PAGE(sc, page)	\
-    bus_space_write_1((sc->sc_bst), (sc->sc_bsh), (sc->sc_offset) + PR, (page))
+    bus_space_write_1((sc->sc_bst), (sc->sc_bsh), PR, (page))
 
 /*
  * GP3 is connected to the MDC pin of the NS DP83840A PHY, GP4 is

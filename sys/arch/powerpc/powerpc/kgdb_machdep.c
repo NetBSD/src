@@ -1,4 +1,4 @@
-/*	$NetBSD: kgdb_machdep.c,v 1.6.2.1 2004/08/03 10:39:37 skrll Exp $	*/
+/*	$NetBSD: kgdb_machdep.c,v 1.6.2.2 2004/08/25 06:57:20 skrll Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -36,13 +36,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kgdb_machdep.c,v 1.6.2.1 2004/08/03 10:39:37 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kgdb_machdep.c,v 1.6.2.2 2004/08/25 06:57:20 skrll Exp $");
 
 #include "opt_ddb.h"
-
-#if defined(DDB)
-#error "Can't build DDB and KGDB together."
-#endif
 
 /*
  * Machine-dependent functions for remote KGDB.

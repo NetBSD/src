@@ -1,4 +1,4 @@
-/* $NetBSD: if_mec_mace.c,v 1.5.2.2 2004/08/03 10:40:07 skrll Exp $ */
+/* $NetBSD: if_mec_mace.c,v 1.5.2.3 2004/08/25 06:57:20 skrll Exp $ */
 
 /*
  * Copyright (c) 2004 Izumi Tsutsui.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mec_mace.c,v 1.5.2.2 2004/08/03 10:40:07 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mec_mace.c,v 1.5.2.3 2004/08/25 06:57:20 skrll Exp $");
 
 #include "opt_ddb.h"
 #include "bpfilter.h"
@@ -998,7 +998,7 @@ mec_start(struct ifnet *ifp)
 		/* but also set TXINT bit on a half of TXDESC */
 		if (sc->sc_txpending == (MEC_NTXDESC / 2))
 			txd->txd_cmd |= MEC_TXCMD_TXINT;
-			
+
 		if (txs->txs_flags & MEC_TXS_TXDBUF)
 			txd->txd_cmd |= TXCMD_BUFSTART(MEC_TXDESCSIZE - buflen);
 		if (txs->txs_flags & MEC_TXS_TXDPTR1) {
@@ -1047,7 +1047,7 @@ mec_start(struct ifnet *ifp)
 		sc->sc_txdesc[sc->sc_txlast].txd_cmd |= MEC_TXCMD_TXINT;
 		MEC_TXCMDSYNC(sc, sc->sc_txlast,
 		    BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
-		
+
 		/* start TX */
 		bus_space_write_8(st, sh, MEC_TX_RING_PTR,
 		    MEC_NEXTTX(sc->sc_txlast));

@@ -1,4 +1,4 @@
-/*	$NetBSD: an.c,v 1.24.2.2 2004/08/12 11:41:23 skrll Exp $	*/
+/*	$NetBSD: an.c,v 1.24.2.3 2004/08/25 06:57:35 skrll Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999
  *	Bill Paul <wpaul@ctr.columbia.edu>.  All rights reserved.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: an.c,v 1.24.2.2 2004/08/12 11:41:23 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: an.c,v 1.24.2.3 2004/08/25 06:57:35 skrll Exp $");
 
 #include "bpfilter.h"
 
@@ -83,37 +83,38 @@ __KERNEL_RCSID(0, "$NetBSD: an.c,v 1.24.2.2 2004/08/12 11:41:23 skrll Exp $");
 #include <dev/ic/anreg.h>
 #include <dev/ic/anvar.h>
 
-static int an_reset(struct an_softc *);
-static void an_wait(struct an_softc *);
-static int an_init(struct ifnet *);
-static void an_stop(struct ifnet *, int);
-static void an_start(struct ifnet *);
-static void an_watchdog(struct ifnet *);
-static int an_ioctl(struct ifnet *, u_long, caddr_t);
-static int an_media_change(struct ifnet *);
-static void an_media_status(struct ifnet *, struct ifmediareq *);
+static int	an_reset(struct an_softc *);
+static void	an_wait(struct an_softc *);
+static int	an_init(struct ifnet *);
+static void	an_stop(struct ifnet *, int);
+static void	an_start(struct ifnet *);
+static void	an_watchdog(struct ifnet *);
+static int	an_ioctl(struct ifnet *, u_long, caddr_t);
+static int	an_media_change(struct ifnet *);
+static void	an_media_status(struct ifnet *, struct ifmediareq *);
 
-static int an_set_nwkey(struct an_softc *, struct ieee80211_nwkey *);
-static int an_set_nwkey_wep(struct an_softc *, struct ieee80211_nwkey *);
-static int an_set_nwkey_eap(struct an_softc *, struct ieee80211_nwkey *);
-static int an_get_nwkey(struct an_softc *, struct ieee80211_nwkey *);
-static int an_write_wepkey(struct an_softc *, int, struct an_wepkey *, int);
+static int	an_set_nwkey(struct an_softc *, struct ieee80211_nwkey *);
+static int	an_set_nwkey_wep(struct an_softc *, struct ieee80211_nwkey *);
+static int	an_set_nwkey_eap(struct an_softc *, struct ieee80211_nwkey *);
+static int	an_get_nwkey(struct an_softc *, struct ieee80211_nwkey *);
+static int	an_write_wepkey(struct an_softc *, int, struct an_wepkey *,
+				int);
 
-static void an_rx_intr(struct an_softc *);
-static void an_tx_intr(struct an_softc *, int);
-static void an_linkstat_intr(struct an_softc *);
+static void	an_rx_intr(struct an_softc *);
+static void	an_tx_intr(struct an_softc *, int);
+static void	an_linkstat_intr(struct an_softc *);
 
-static int an_cmd(struct an_softc *, int, int);
-static int an_seek_bap(struct an_softc *, int, int);
-static int an_read_bap(struct an_softc *, int, int, void *, int);
-static int an_write_bap(struct an_softc *, int, int, void *, int);
-static int an_mwrite_bap(struct an_softc *, int, int, struct mbuf *, int);
-static int an_read_rid(struct an_softc *, int, void *, int *);
-static int an_write_rid(struct an_softc *, int, void *, int);
+static int	an_cmd(struct an_softc *, int, int);
+static int	an_seek_bap(struct an_softc *, int, int);
+static int	an_read_bap(struct an_softc *, int, int, void *, int);
+static int	an_write_bap(struct an_softc *, int, int, void *, int);
+static int	an_mwrite_bap(struct an_softc *, int, int, struct mbuf *, int);
+static int	an_read_rid(struct an_softc *, int, void *, int *);
+static int	an_write_rid(struct an_softc *, int, void *, int);
 
-static int an_alloc_fid(struct an_softc *, int, int *);
+static int	an_alloc_fid(struct an_softc *, int, int *);
 
-static int an_newstate(struct ieee80211com *, enum ieee80211_state, int);
+static int	an_newstate(struct ieee80211com *, enum ieee80211_state, int);
 
 #ifdef AN_DEBUG
 int an_debug = 0;
@@ -569,7 +570,7 @@ an_init(struct ifnet *ifp)
 	return 0;
 }
 
-void
+static void
 an_stop(struct ifnet *ifp, int disable)
 {
 	struct an_softc *sc = ifp->if_softc;

@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipiconf.h,v 1.76.2.2 2004/08/03 10:51:15 skrll Exp $	*/
+/*	$NetBSD: scsipiconf.h,v 1.76.2.3 2004/08/25 06:58:43 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -167,11 +167,11 @@ typedef enum {
  *	psw_done	Called by the midlayer when an xfer has completed.
  */
 struct scsipi_periphsw {
-	int	(*psw_error) __P((struct scsipi_xfer *));
-	void	(*psw_start) __P((struct scsipi_periph *));
-	int	(*psw_async) __P((struct scsipi_periph *,
-		    scsipi_async_event_t, void *));
-	void	(*psw_done) __P((struct scsipi_xfer *));
+	int	(*psw_error)(struct scsipi_xfer *);
+	void	(*psw_start)(struct scsipi_periph *);
+	int	(*psw_async)(struct scsipi_periph *,
+		    scsipi_async_event_t, void *);
+	void	(*psw_done)(struct scsipi_xfer *);
 };
 
 struct disk_parms;
@@ -199,16 +199,16 @@ struct scsipi_adapter {
 	int	adapt_max_periph;	/* max openings per periph */
 	int	adapt_flags;
 
-	void	(*adapt_request) __P((struct scsipi_channel *,
-		    scsipi_adapter_req_t, void *));
-	void	(*adapt_minphys) __P((struct buf *));
-	int	(*adapt_ioctl) __P((struct scsipi_channel *, u_long,
-		    caddr_t, int, struct proc *));
-	int	(*adapt_enable) __P((struct device *, int));
-	int	(*adapt_getgeom) __P((struct scsipi_periph *,
-			struct disk_parms *, u_long));
-	int	(*adapt_accesschk) __P((struct scsipi_periph *,
-			struct scsipi_inquiry_pattern *));
+	void	(*adapt_request)(struct scsipi_channel *,
+		    scsipi_adapter_req_t, void *);
+	void	(*adapt_minphys)(struct buf *);
+	int	(*adapt_ioctl)(struct scsipi_channel *, u_long,
+		    caddr_t, int, struct proc *);
+	int	(*adapt_enable)(struct device *, int);
+	int	(*adapt_getgeom)(struct scsipi_periph *,
+			struct disk_parms *, u_long);
+	int	(*adapt_accesschk)(struct scsipi_periph *,
+			struct scsipi_inquiry_pattern *);
 };
 
 /* adapt_flags */
@@ -237,12 +237,12 @@ struct scsipi_adapter {
 struct scsipi_bustype {
 	int	bustype_type;		/* symbolic name of type */
 	
-	int	(*bustype_cmd) __P((struct scsipi_periph *,
+	int	(*bustype_cmd)(struct scsipi_periph *,
 		    struct scsipi_generic *, int, void *, size_t, int,
-		    int, struct buf *, int));
-	int	(*bustype_interpret_sense) __P((struct scsipi_xfer *));
-	void	(*bustype_printaddr) __P((struct scsipi_periph *));
-	void	(*bustype_kill_pending) __P((struct scsipi_periph *));
+		    int, struct buf *, int);
+	int	(*bustype_interpret_sense)(struct scsipi_xfer *);
+	void	(*bustype_printaddr)(struct scsipi_periph *);
+	void	(*bustype_kill_pending)(struct scsipi_periph *);
 };
 
 /* bustype_type */
@@ -296,11 +296,11 @@ struct scsipi_channel {
 	struct scsipi_xfer_queue chan_complete;
 
 	/* callback we may have to call from completion thread */
-	void (*chan_callback) __P((struct scsipi_channel *, void *));
+	void (*chan_callback)(struct scsipi_channel *, void *);
 	void *chan_callback_arg;
 
 	/* callback we may have to call after forking the kthread */
-	void (*chan_init_cb) __P((struct scsipi_channel *, void *));
+	void (*chan_init_cb)(struct scsipi_channel *, void *);
 	void *chan_init_cb_arg;
 };
 
@@ -625,126 +625,94 @@ struct scsi_quirk_inquiry_pattern {
 
 
 #ifdef _KERNEL
-void	scsipi_init __P((void));
-int	scsipi_command __P((struct scsipi_periph *,
+void	scsipi_init(void);
+int	scsipi_command(struct scsipi_periph *,
 	    struct scsipi_generic *, int, u_char *, int,
-	    int, int, struct buf *, int));
-void	scsipi_create_completion_thread __P((void *));
-caddr_t	scsipi_inqmatch __P((struct scsipi_inquiry_pattern *, caddr_t,
-	    int, int, int *));
-char	*scsipi_dtype __P((int));
-void	scsipi_strvis __P((u_char *, int, u_char *, int));
-int	scsipi_execute_xs __P((struct scsipi_xfer *));
-u_int64_t scsipi_size __P((struct scsipi_periph *, int));
-int	scsipi_test_unit_ready __P((struct scsipi_periph *, int));
-int	scsipi_prevent __P((struct scsipi_periph *, int, int));
-int	scsipi_inquire __P((struct scsipi_periph *,
-	    struct scsipi_inquiry_data *, int));
-int	scsipi_mode_select __P((struct scsipi_periph *, int,
-	    struct scsipi_mode_header *, int, int, int, int));
-int	scsipi_mode_select_big __P((struct scsipi_periph *, int,
-	    struct scsipi_mode_header_big *, int, int, int, int));
-int	scsipi_mode_sense __P((struct scsipi_periph *, int, int,
-	    struct scsipi_mode_header *, int, int, int, int));
-int	scsipi_mode_sense_big __P((struct scsipi_periph *, int, int,
-	    struct scsipi_mode_header_big *, int, int, int, int));
-int	scsipi_start __P((struct scsipi_periph *, int, int));
-void	scsipi_done __P((struct scsipi_xfer *));
-void	scsipi_user_done __P((struct scsipi_xfer *));
-int	scsipi_interpret_sense __P((struct scsipi_xfer *));
-void	scsipi_wait_drain __P((struct scsipi_periph *));
-void	scsipi_kill_pending __P((struct scsipi_periph *));
-struct scsipi_periph *scsipi_alloc_periph __P((int));
+	    int, int, struct buf *, int);
+void	scsipi_create_completion_thread(void *);
+caddr_t	scsipi_inqmatch(struct scsipi_inquiry_pattern *, caddr_t,
+	    int, int, int *);
+const char *scsipi_dtype(int);
+void	scsipi_strvis(u_char *, int, u_char *, int);
+int	scsipi_execute_xs(struct scsipi_xfer *);
+u_int64_t scsipi_size(struct scsipi_periph *, int);
+int	scsipi_test_unit_ready(struct scsipi_periph *, int);
+int	scsipi_prevent(struct scsipi_periph *, int, int);
+int	scsipi_inquire(struct scsipi_periph *,
+	    struct scsipi_inquiry_data *, int);
+int	scsipi_mode_select(struct scsipi_periph *, int,
+	    struct scsipi_mode_header *, int, int, int, int);
+int	scsipi_mode_select_big(struct scsipi_periph *, int,
+	    struct scsipi_mode_header_big *, int, int, int, int);
+int	scsipi_mode_sense(struct scsipi_periph *, int, int,
+	    struct scsipi_mode_header *, int, int, int, int);
+int	scsipi_mode_sense_big(struct scsipi_periph *, int, int,
+	    struct scsipi_mode_header_big *, int, int, int, int);
+int	scsipi_start(struct scsipi_periph *, int, int);
+void	scsipi_done(struct scsipi_xfer *);
+void	scsipi_user_done(struct scsipi_xfer *);
+int	scsipi_interpret_sense(struct scsipi_xfer *);
+void	scsipi_wait_drain(struct scsipi_periph *);
+void	scsipi_kill_pending(struct scsipi_periph *);
+struct scsipi_periph *scsipi_alloc_periph(int);
 #ifdef SCSIVERBOSE
-void	scsipi_print_sense __P((struct scsipi_xfer *, int));
-void	scsipi_print_sense_data __P((struct scsipi_sense_data *, int));
-char   *scsipi_decode_sense __P((void *, int));
+void	scsipi_print_sense(struct scsipi_xfer *, int);
+void	scsipi_print_sense_data(struct scsipi_sense_data *, int);
+char   *scsipi_decode_sense(void *, int);
 #endif
-void	scsipi_print_cdb __P((struct scsipi_generic *cmd));
-int	scsipi_thread_call_callback __P((struct scsipi_channel *,
-	    void (*callback) __P((struct scsipi_channel *, void *)),
-	    void *));
-void	scsipi_async_event __P((struct scsipi_channel *,
-	    scsipi_async_event_t, void *));
-int	scsipi_do_ioctl __P((struct scsipi_periph *, dev_t, u_long, caddr_t,
-	    int, struct lwp *));
+void	scsipi_print_cdb(struct scsipi_generic *cmd);
+int	scsipi_thread_call_callback(struct scsipi_channel *,
+	    void (*callback)(struct scsipi_channel *, void *),
+	    void *);
+void	scsipi_async_event(struct scsipi_channel *,
+	    scsipi_async_event_t, void *);
+int	scsipi_do_ioctl(struct scsipi_periph *, dev_t, u_long, caddr_t,
+	    int, struct lwp *);
 
-void	scsipi_print_xfer_mode __P((struct scsipi_periph *));
-void	scsipi_set_xfer_mode __P((struct scsipi_channel *, int, int));
+void	scsipi_print_xfer_mode(struct scsipi_periph *);
+void	scsipi_set_xfer_mode(struct scsipi_channel *, int, int);
 
-int	scsipi_channel_init __P((struct scsipi_channel *));
-void	scsipi_channel_shutdown __P((struct scsipi_channel *));
+int	scsipi_channel_init(struct scsipi_channel *);
+void	scsipi_channel_shutdown(struct scsipi_channel *);
 
-void	scsipi_insert_periph __P((struct scsipi_channel *,
-	    struct scsipi_periph *));
-void	scsipi_remove_periph __P((struct scsipi_channel *,
-	    struct scsipi_periph *));
-struct scsipi_periph *scsipi_lookup_periph __P((struct scsipi_channel *,
-	    int, int));
-int	scsipi_target_detach __P((struct scsipi_channel *, int, int, int));
+void	scsipi_insert_periph(struct scsipi_channel *,
+	    struct scsipi_periph *);
+void	scsipi_remove_periph(struct scsipi_channel *,
+	    struct scsipi_periph *);
+struct scsipi_periph *scsipi_lookup_periph(struct scsipi_channel *,
+	    int, int);
+int	scsipi_target_detach(struct scsipi_channel *, int, int, int);
 
-int	scsipi_adapter_addref __P((struct scsipi_adapter *));
-void	scsipi_adapter_delref __P((struct scsipi_adapter *));
+int	scsipi_adapter_addref(struct scsipi_adapter *);
+void	scsipi_adapter_delref(struct scsipi_adapter *);
 
-void	scsipi_channel_freeze __P((struct scsipi_channel *, int));
-void	scsipi_channel_thaw __P((struct scsipi_channel *, int));
-void	scsipi_channel_timed_thaw __P((void *));
+void	scsipi_channel_freeze(struct scsipi_channel *, int);
+void	scsipi_channel_thaw(struct scsipi_channel *, int);
+void	scsipi_channel_timed_thaw(void *);
 
-void	scsipi_periph_freeze __P((struct scsipi_periph *, int));
-void	scsipi_periph_thaw __P((struct scsipi_periph *, int));
-void	scsipi_periph_timed_thaw __P((void *));
+void	scsipi_periph_freeze(struct scsipi_periph *, int);
+void	scsipi_periph_thaw(struct scsipi_periph *, int);
+void	scsipi_periph_timed_thaw(void *);
 
-int	scsipi_sync_period_to_factor __P((int));
-int	scsipi_sync_factor_to_period __P((int));
-int	scsipi_sync_factor_to_freq __P((int));
+int	scsipi_sync_period_to_factor(int);
+int	scsipi_sync_factor_to_period(int);
+int	scsipi_sync_factor_to_freq(int);
 
-void	show_scsipi_xs __P((struct scsipi_xfer *));
-void	show_scsipi_cmd __P((struct scsipi_xfer *));
-void	show_mem __P((u_char *, int));
+void	show_scsipi_xs(struct scsipi_xfer *);
+void	show_scsipi_cmd(struct scsipi_xfer *);
+void	show_mem(u_char *, int);
 #endif /* _KERNEL */
 
-static __inline void _lto2b __P((u_int32_t val, u_int8_t *bytes))
-	__attribute__ ((unused));
-static __inline void _lto3b __P((u_int32_t val, u_int8_t *bytes))
-	__attribute__ ((unused));
-static __inline void _lto4b __P((u_int32_t val, u_int8_t *bytes))
-	__attribute__ ((unused));
-static __inline u_int32_t _2btol __P((const u_int8_t *bytes))
-	__attribute__ ((unused));
-static __inline u_int32_t _3btol __P((const u_int8_t *bytes))
-	__attribute__ ((unused));
-static __inline u_int32_t _4btol __P((const u_int8_t *bytes))
-	__attribute__ ((unused));
-static __inline u_int64_t _5btol __P((const u_int8_t *bytes))
-	__attribute__ ((unused));
-
-static __inline void _lto2l __P((u_int32_t val, u_int8_t *bytes))
-	__attribute__ ((unused));
-static __inline void _lto3l __P((u_int32_t val, u_int8_t *bytes))
-	__attribute__ ((unused));
-static __inline void _lto4l __P((u_int32_t val, u_int8_t *bytes))
-	__attribute__ ((unused));
-static __inline u_int32_t _2ltol __P((const u_int8_t *bytes))
-	__attribute__ ((unused));
-static __inline u_int32_t _3ltol __P((const u_int8_t *bytes))
-	__attribute__ ((unused));
-static __inline u_int32_t _4ltol __P((const u_int8_t *bytes))
-	__attribute__ ((unused));
-
-static __inline void
-_lto2b(val, bytes)
-	u_int32_t val;
-	u_int8_t *bytes;
+static __inline void __unused
+_lto2b(u_int32_t val, u_int8_t *bytes)
 {
 
 	bytes[0] = (val >> 8) & 0xff;
 	bytes[1] = val & 0xff;
 }
 
-static __inline void
-_lto3b(val, bytes)
-	u_int32_t val;
-	u_int8_t *bytes;
+static __inline void __unused
+_lto3b(u_int32_t val, u_int8_t *bytes)
 {
 
 	bytes[0] = (val >> 16) & 0xff;
@@ -752,10 +720,8 @@ _lto3b(val, bytes)
 	bytes[2] = val & 0xff;
 }
 
-static __inline void
-_lto4b(val, bytes)
-	u_int32_t val;
-	u_int8_t *bytes;
+static __inline void __unused
+_lto4b(u_int32_t val, u_int8_t *bytes)
 {
 
 	bytes[0] = (val >> 24) & 0xff;
@@ -764,9 +730,8 @@ _lto4b(val, bytes)
 	bytes[3] = val & 0xff;
 }
 
-static __inline u_int32_t
-_2btol(bytes)
-	const u_int8_t *bytes;
+static __inline u_int32_t __unused
+_2btol(const u_int8_t *bytes)
 {
 	u_int32_t rv;
 
@@ -775,9 +740,8 @@ _2btol(bytes)
 	return (rv);
 }
 
-static __inline u_int32_t
-_3btol(bytes)
-	const u_int8_t *bytes;
+static __inline u_int32_t __unused
+_3btol(const u_int8_t *bytes)
 {
 	u_int32_t rv;
 
@@ -787,9 +751,8 @@ _3btol(bytes)
 	return (rv);
 }
 
-static __inline u_int32_t
-_4btol(bytes)
-	const u_int8_t *bytes;
+static __inline u_int32_t __unused
+_4btol(const u_int8_t *bytes)
 {
 	u_int32_t rv;
 
@@ -800,9 +763,8 @@ _4btol(bytes)
 	return (rv);
 }
 
-static __inline u_int64_t
-_5btol(bytes)
-	const u_int8_t *bytes;
+static __inline u_int64_t __unused
+_5btol(const u_int8_t *bytes)
 {
 	u_int64_t rv;
 
@@ -814,20 +776,16 @@ _5btol(bytes)
 	return (rv);
 }
 
-static __inline void
-_lto2l(val, bytes)
-	u_int32_t val;
-	u_int8_t *bytes;
+static __inline void __unused
+_lto2l(u_int32_t val, u_int8_t *bytes)
 {
 
 	bytes[0] = val & 0xff;
 	bytes[1] = (val >> 8) & 0xff;
 }
 
-static __inline void
-_lto3l(val, bytes)
-	u_int32_t val;
-	u_int8_t *bytes;
+static __inline void __unused
+_lto3l(u_int32_t val, u_int8_t *bytes)
 {
 
 	bytes[0] = val & 0xff;
@@ -835,10 +793,8 @@ _lto3l(val, bytes)
 	bytes[2] = (val >> 16) & 0xff;
 }
 
-static __inline void
-_lto4l(val, bytes)
-	u_int32_t val;
-	u_int8_t *bytes;
+static __inline void __unused
+_lto4l(u_int32_t val, u_int8_t *bytes)
 {
 
 	bytes[0] = val & 0xff;
@@ -847,9 +803,8 @@ _lto4l(val, bytes)
 	bytes[3] = (val >> 24) & 0xff;
 }
 
-static __inline u_int32_t
-_2ltol(bytes)
-	const u_int8_t *bytes;
+static __inline u_int32_t __unused
+_2ltol(const u_int8_t *bytes)
 {
 	u_int32_t rv;
 
@@ -858,9 +813,8 @@ _2ltol(bytes)
 	return (rv);
 }
 
-static __inline u_int32_t
-_3ltol(bytes)
-	const u_int8_t *bytes;
+static __inline u_int32_t __unused
+_3ltol(const u_int8_t *bytes)
 {
 	u_int32_t rv;
 
@@ -870,9 +824,8 @@ _3ltol(bytes)
 	return (rv);
 }
 
-static __inline u_int32_t
-_4ltol(bytes)
-	const u_int8_t *bytes;
+static __inline u_int32_t __unused
+_4ltol(const u_int8_t *bytes)
 {
 	u_int32_t rv;
 

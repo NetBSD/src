@@ -1,4 +1,4 @@
-/*	$NetBSD: ukphy.c,v 1.23 2003/04/29 01:49:34 thorpej Exp $	*/
+/*	$NetBSD: ukphy.c,v 1.23.2.1 2004/08/25 06:58:05 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ukphy.c,v 1.23 2003/04/29 01:49:34 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ukphy.c,v 1.23.2.1 2004/08/25 06:58:05 skrll Exp $");
 
 #include "opt_mii.h"
 
@@ -98,19 +98,19 @@ struct mii_knowndev {
 #include <dev/mii/miidevs_data.h>
 #endif
 
-int	ukphymatch(struct device *, struct cfdata *, void *);
-void	ukphyattach(struct device *, struct device *, void *);
+static int	ukphymatch(struct device *, struct cfdata *, void *);
+static void	ukphyattach(struct device *, struct device *, void *);
 
 CFATTACH_DECL(ukphy, sizeof(struct mii_softc),
     ukphymatch, ukphyattach, mii_phy_detach, mii_phy_activate);
 
-int	ukphy_service(struct mii_softc *, struct mii_data *, int);
+static int	ukphy_service(struct mii_softc *, struct mii_data *, int);
 
-const struct mii_phy_funcs ukphy_funcs = {
+static const struct mii_phy_funcs ukphy_funcs = {
 	ukphy_service, ukphy_status, mii_phy_reset,
 };
 
-int
+static int
 ukphymatch(struct device *parent, struct cfdata *match, void *aux)
 {
 
@@ -120,7 +120,7 @@ ukphymatch(struct device *parent, struct cfdata *match, void *aux)
 	return (1);
 }
 
-void
+static void
 ukphyattach(struct device *parent, struct device *self, void *aux)
 {
 	struct mii_softc *sc = (struct mii_softc *)self;
@@ -176,7 +176,7 @@ ukphyattach(struct device *parent, struct device *self, void *aux)
 	aprint_normal("\n");
 }
 
-int
+static int
 ukphy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 {
 	struct ifmedia_entry *ife = mii->mii_media.ifm_cur;

@@ -1,4 +1,4 @@
-/*	$NetBSD: atapiconf.h,v 1.14.16.1 2004/08/12 11:42:05 skrll Exp $	*/
+/*	$NetBSD: atapiconf.h,v 1.14.16.2 2004/08/25 06:58:43 skrll Exp $	*/
 
 /*
  * Copyright (c) 1996, 2001 Manuel Bouyer.  All rights reserved.
@@ -49,15 +49,15 @@ extern const struct scsipi_periphsw atapi_probe_periphsw;
  */
 struct atapi_adapter {
 	struct scsipi_adapter _generic;
-	void (*atapi_probe_device) __P((struct atapibus_softc *, int));
+	void (*atapi_probe_device)(struct atapibus_softc *, int);
 };
 
-void 	*atapi_probe_device __P((struct atapibus_softc *, int,
-	    struct scsipi_periph *, struct scsipibus_attach_args *));
-int	atapiprint __P((void *, const char *));
-void	atapi_print_addr __P((struct scsipi_periph *));
-int	atapi_interpret_sense __P((struct scsipi_xfer *));
-int	atapi_scsipi_cmd __P((struct scsipi_periph *, struct scsipi_generic *,
-	    int, void *, size_t, int, int, struct buf *, int));
+void 	*atapi_probe_device(struct atapibus_softc *, int,
+	    struct scsipi_periph *, struct scsipibus_attach_args *);
+int	atapiprint(void *, const char *);
+void	atapi_print_addr(struct scsipi_periph *);
+int	atapi_interpret_sense(struct scsipi_xfer *);
+int	atapi_scsipi_cmd(struct scsipi_periph *, struct scsipi_generic *,
+	    int, void *, size_t, int, int, struct buf *, int);
 
 #endif /* _DEV_SCSIPI_ATAPICONF_H */

@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_vnops.c,v 1.48.2.3 2004/08/24 17:57:42 skrll Exp $	*/
+/*	$NetBSD: ext2fs_vnops.c,v 1.48.2.4 2004/08/25 06:59:14 skrll Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_vnops.c,v 1.48.2.3 2004/08/24 17:57:42 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_vnops.c,v 1.48.2.4 2004/08/25 06:59:14 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1044,19 +1044,18 @@ ext2fs_mkdir(v)
 		struct componentname *a_cnp;
 		struct vattr *a_vap;
 	} */ *ap = v;
-	struct vnode *dvp = ap->a_dvp;
-	struct vattr *vap = ap->a_vap;
-	struct componentname *cnp = ap->a_cnp;
-	struct inode *ip, *dp;
-	struct vnode *tvp;
+	struct vnode		*dvp = ap->a_dvp;
+	struct vattr		*vap = ap->a_vap;
+	struct componentname	*cnp = ap->a_cnp;
+	struct inode		*ip, *dp = VTOI(dvp);
+	struct vnode		*tvp;
 	struct ext2fs_dirtemplate dirtemplate;
-	int error, dmode;
+	int			error, dmode;
 
 #ifdef DIAGNOSTIC
 	if ((cnp->cn_flags & HASBUF) == 0)
 		panic("ext2fs_mkdir: no name");
 #endif
-	dp = VTOI(dvp);
 	if ((nlink_t)dp->i_e2fs_nlink >= LINK_MAX) {
 		error = EMLINK;
 		goto out;
@@ -1077,7 +1076,6 @@ ext2fs_mkdir(v)
 	ip->i_e2fs_mode = dmode;
 	tvp->v_type = VDIR;	/* Rest init'd in getnewvnode(). */
 	ip->i_e2fs_nlink = 2;
-	error = VOP_UPDATE(tvp, NULL, NULL, UPDATE_WAIT);
 
 	/*
 	 * Bump link count in parent directory
@@ -1087,7 +1085,7 @@ ext2fs_mkdir(v)
 	 */
 	dp->i_e2fs_nlink++;
 	dp->i_flag |= IN_CHANGE;
-	if ((error = VOP_UPDATE(dvp, NULL, NULL, UPDATE_WAIT)) != 0)
+	if ((error = VOP_UPDATE(dvp, NULL, NULL, UPDATE_DIROP)) != 0)
 		goto bad;
 
 	/* Initialize directory with "." and ".." from static template. */
@@ -1116,8 +1114,7 @@ ext2fs_mkdir(v)
 		dp->i_flag |= IN_CHANGE;
 		goto bad;
 	}
-	if (VTOI(dvp)->i_e2fs->e2fs_bsize >
-							VFSTOUFS(dvp->v_mount)->um_mountp->mnt_stat.f_bsize)
+	if (VTOI(dvp)->i_e2fs->e2fs_bsize > dvp->v_mount->mnt_stat.f_bsize)
 		panic("ext2fs_mkdir: blksize"); /* XXX should grow with balloc() */
 	else {
 		ip->i_e2fs_size = VTOI(dvp)->i_e2fs->e2fs_bsize;
@@ -1246,10 +1243,11 @@ ext2fs_symlink(v)
 		struct vattr *a_vap;
 		char *a_target;
 	} */ *ap = v;
-	struct vnode *vp, **vpp = ap->a_vpp;
-	struct inode *ip;
-	int len, error;
+	struct vnode	*vp, **vpp;
+	struct inode	*ip;
+	int		len, error;
 
+	vpp = ap->a_vpp;
 	error = ext2fs_makeinode(IFLNK | ap->a_vap->va_mode, ap->a_dvp,
 			      vpp, ap->a_cnp);
 	if (error)
@@ -1257,8 +1255,8 @@ ext2fs_symlink(v)
 	VN_KNOTE(ap->a_dvp, NOTE_WRITE);
 	vp = *vpp;
 	len = strlen(ap->a_target);
-	if (len < vp->v_mount->mnt_maxsymlinklen) {
-		ip = VTOI(vp);
+	ip = VTOI(vp);
+	if (len < ip->i_ump->um_maxsymlinklen) {
 		memcpy((char *)ip->i_din.e2fs_din->e2di_shortlink, ap->a_target, len);
 		ip->i_e2fs_size = len;
 		ip->i_flag |= IN_CHANGE | IN_UPDATE;
@@ -1283,13 +1281,14 @@ ext2fs_readlink(v)
 		struct uio *a_uio;
 		struct ucred *a_cred;
 	} */ *ap = v;
-	struct vnode *vp = ap->a_vp;
-	struct inode *ip = VTOI(vp);
-	int isize;
+	struct vnode	*vp = ap->a_vp;
+	struct inode	*ip = VTOI(vp);
+	struct ufsmount	*ump = ip->i_ump;
+	int		isize;
 
 	isize = ip->i_e2fs_size;
-	if (isize < vp->v_mount->mnt_maxsymlinklen ||
-	    (vp->v_mount->mnt_maxsymlinklen == 0 && ip->i_e2fs_nblock == 0)) {
+	if (isize < ump->um_maxsymlinklen ||
+	    (ump->um_maxsymlinklen == 0 && ip->i_e2fs_nblock == 0)) {
 		uiomove((char *)ip->i_din.e2fs_din->e2di_shortlink, isize, ap->a_uio);
 		return (0);
 	}
@@ -1455,27 +1454,13 @@ ext2fs_reclaim(v)
 		struct vnode *a_vp;
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
-	struct inode *ip;
+	struct inode *ip = VTOI(vp);
+	int error;
 
-	if (prtactive && vp->v_usecount != 0) 
-		vprint("ext2fs_reclaim: pushing active", vp);
-	/*
-	 * Remove the inode from its hash chain.
-	 */
-	ip = VTOI(vp);
-	ufs_ihashrem(ip);
-	/*
-	 * Purge old data structures associated with the inode.
-	 */
-	cache_purge(vp);
-	if (ip->i_devvp) {
-		vrele(ip->i_devvp);
-		ip->i_devvp = 0;
-	}
-
+	if ((error = ufs_reclaim(vp, ap->a_l)) != 0)
+		return (error);
 	if (ip->i_din.e2fs_din != NULL)
 		pool_put(&ext2fs_dinode_pool, ip->i_din.e2fs_din);
-
 	pool_put(&ext2fs_inode_pool, vp->v_data);
 	vp->v_data = NULL;
 	return (0);

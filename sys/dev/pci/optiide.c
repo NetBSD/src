@@ -1,4 +1,4 @@
-/*	$NetBSD: optiide.c,v 1.5.4.2 2004/08/03 10:49:10 skrll Exp $	*/
+/*	$NetBSD: optiide.c,v 1.5.4.3 2004/08/25 06:58:06 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
 #include <dev/pci/pciide_opti_reg.h>
 
 static void opti_chip_map(struct pciide_softc*, struct pci_attach_args*);
-static void opti_setup_channel(struct wdc_channel*);
+static void opti_setup_channel(struct ata_channel*);
 
 static int  optiide_match(struct device *, struct cfdata *, void *);
 static void optiide_attach(struct device *, struct device *, void *);
@@ -115,7 +115,7 @@ opti_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 		return;
 
 	aprint_normal("%s: bus-master DMA support present",
-	    sc->sc_wdcdev.sc_dev.dv_xname);
+	    sc->sc_wdcdev.sc_atac.atac_dev.dv_xname);
 
 	/*
 	 * XXXSCW:
@@ -133,33 +133,35 @@ opti_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 
 	aprint_normal("\n");
 
-	sc->sc_wdcdev.cap = WDC_CAPABILITY_DATA32 | WDC_CAPABILITY_DATA16 |
-		WDC_CAPABILITY_MODE;
-	sc->sc_wdcdev.PIO_cap = 4;
+	sc->sc_wdcdev.sc_atac.atac_cap = ATAC_CAP_DATA32 | ATAC_CAP_DATA16;
+	sc->sc_wdcdev.sc_atac.atac_pio_cap = 4;
 	if (sc->sc_dma_ok) {
-		sc->sc_wdcdev.cap |= WDC_CAPABILITY_DMA | WDC_CAPABILITY_IRQACK;
+		sc->sc_wdcdev.sc_atac.atac_cap |= ATAC_CAP_DMA;
 		sc->sc_wdcdev.irqack = pciide_irqack;
-		sc->sc_wdcdev.DMA_cap = 2;
+		sc->sc_wdcdev.sc_atac.atac_dma_cap = 2;
 	}
-	sc->sc_wdcdev.set_modes = opti_setup_channel;
+	sc->sc_wdcdev.sc_atac.atac_set_modes = opti_setup_channel;
 
-	sc->sc_wdcdev.channels = sc->wdc_chanarray;
-	sc->sc_wdcdev.nchannels = PCIIDE_NUM_CHANNELS;
+	sc->sc_wdcdev.sc_atac.atac_channels = sc->wdc_chanarray;
+	sc->sc_wdcdev.sc_atac.atac_nchannels = PCIIDE_NUM_CHANNELS;
 
 	init_ctrl = pciide_pci_read(sc->sc_pc, sc->sc_tag,
 	    OPTI_REG_INIT_CONTROL);
 
 	interface = PCI_INTERFACE(pa->pa_class);
 
-	for (channel = 0; channel < sc->sc_wdcdev.nchannels; channel++) {
+	wdc_allocate_regs(&sc->sc_wdcdev);
+
+	for (channel = 0; channel < sc->sc_wdcdev.sc_atac.atac_nchannels;
+	     channel++) {
 		cp = &sc->pciide_channels[channel];
 		if (pciide_chansetup(sc, channel, interface) == 0)
 			continue;
 		if (channel == 1 &&
 		    (init_ctrl & OPTI_INIT_CONTROL_CH2_DISABLE) != 0) {
 			aprint_normal("%s: %s channel ignored (disabled)\n",
-			    sc->sc_wdcdev.sc_dev.dv_xname, cp->name);
-			cp->wdc_channel.ch_flags |= WDCF_DISABLED;
+			    sc->sc_wdcdev.sc_atac.atac_dev.dv_xname, cp->name);
+			cp->ata_channel.ch_flags |= ATACH_DISABLED;
 			continue;
 		}
 		pciide_mapchan(pa, cp, interface, &cmdsize, &ctlsize,
@@ -168,12 +170,12 @@ opti_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 }
 
 static void
-opti_setup_channel(struct wdc_channel *chp)
+opti_setup_channel(struct ata_channel *chp)
 {
 	struct ata_drive_datas *drvp;
-	struct pciide_channel *cp = (struct pciide_channel*)chp;
-	struct pciide_softc *sc = (struct pciide_softc *)cp->wdc_channel.ch_wdc;
-	int drive, spd;
+	struct pciide_channel *cp = CHAN_TO_PCHAN(chp);
+	struct pciide_softc *sc = CHAN_TO_PCIIDE(chp);
+	int drive, spd, s;
 	int mode[2];
 	u_int8_t rv, mr;
 
@@ -234,7 +236,9 @@ opti_setup_channel(struct wdc_channel *chp)
 			mode[d] = mode[1-d];
 			chp->ch_drive[d].PIO_mode = chp->ch_drive[1-d].PIO_mode;
 			chp->ch_drive[d].DMA_mode = 0;
+			s = splbio();
 			chp->ch_drive[d].drive_flags &= ~DRIVE_DMA;
+			splx(s);
 		}
 	}
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_quota.c,v 1.27.2.3 2004/08/24 17:57:56 skrll Exp $	*/
+/*	$NetBSD: ufs_quota.c,v 1.27.2.4 2004/08/25 06:59:15 skrll Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993, 1995
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_quota.c,v 1.27.2.3 2004/08/24 17:57:56 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_quota.c,v 1.27.2.4 2004/08/25 06:59:15 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -69,11 +69,10 @@ int
 getinoquota(ip)
 	struct inode *ip;
 {
-	struct ufsmount *ump;
+	struct ufsmount *ump = ip->i_ump;
 	struct vnode *vp = ITOV(ip);
 	int error;
 
-	ump = VFSTOUFS(vp->v_mount);
 	/*
 	 * Set up the user quota based on file uid.
 	 * EINVAL means that quotas are not enabled.
@@ -188,8 +187,7 @@ chkdqchg(ip, change, cred, type)
 	 */
 	if (ncurblocks >= dq->dq_bsoftlimit && dq->dq_bsoftlimit) {
 		if (dq->dq_curblocks < dq->dq_bsoftlimit) {
-			dq->dq_btime = time.tv_sec +
-			    VFSTOUFS(ITOV(ip)->v_mount)->um_btime[type];
+			dq->dq_btime = time.tv_sec + ip->i_ump->um_btime[type];
 			if (ip->i_uid == cred->cr_uid)
 				uprintf("\n%s: warning, %s %s\n",
 				    ITOV(ip)->v_mount->mnt_stat.f_mntonname,
@@ -303,8 +301,7 @@ chkiqchg(ip, change, cred, type)
 	 */
 	if (ncurinodes >= dq->dq_isoftlimit && dq->dq_isoftlimit) {
 		if (dq->dq_curinodes < dq->dq_isoftlimit) {
-			dq->dq_itime = time.tv_sec +
-			    VFSTOUFS(ITOV(ip)->v_mount)->um_itime[type];
+			dq->dq_itime = time.tv_sec + ip->i_ump->um_itime[type];
 			if (ip->i_uid == cred->cr_uid)
 				uprintf("\n%s: warning, %s %s\n",
 				    ITOV(ip)->v_mount->mnt_stat.f_mntonname,
@@ -335,7 +332,7 @@ void
 chkdquot(ip)
 	struct inode *ip;
 {
-	struct ufsmount *ump = VFSTOUFS(ITOV(ip)->v_mount);
+	struct ufsmount *ump = ip->i_ump;
 	int i;
 
 	for (i = 0; i < MAXQUOTAS; i++) {

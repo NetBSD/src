@@ -1,4 +1,4 @@
-/*	$NetBSD: platid.def,v 1.14.16.1 2004/08/03 10:34:55 skrll Exp $	*/
+/*	$NetBSD: platid.def,v 1.14.16.2 2004/08/25 06:57:17 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1999-2001
@@ -67,6 +67,7 @@ SH {
 	3 {
 		7709
 		7709A
+		7707
 	}
 	4 {
 		7750
@@ -169,9 +170,14 @@ Sharp {
     }
   }
   Telios {
-    HC {
-      CPU=MIPS_TX_3922 HCAJ1 --" HC-AJ1/AJ2"
-      CPU=MIPS_TX_3922 HCVJ1C_JP --" HC-VJ1C (Japanese)"
+    HCAJ {
+      CPU=MIPS_TX_3922
+      HCAJ1_JP --" HC-AJ1 (Japanese)"
+      HCAJ2_JP --" HC-AJ2 (Japanese)"
+      HCAJ3_JP --" HC-AJ3 (Japanese)"
+    }
+    HCVJ {
+      HCVJ1C_JP --" HC-VJ1C (Japanese)"
     }
   }
   Mobilon {
@@ -289,6 +295,8 @@ HP {
 		CPU=SH_3_7709
 			620   --"HP 620LX"
 			620JP --"HP 620LX (Japanese)"
+		CPU=SH_3_7707
+			360   --"HP 360LX (Ericsson MC-16)"
 	}
 #endif /* hpcsh */
 	JORNADA " Jornada" {

@@ -1,4 +1,4 @@
-/*	$NetBSD: ahavar.h,v 1.11 2001/04/25 17:53:30 bouyer Exp $	*/
+/*	$NetBSD: ahavar.h,v 1.11.22.1 2004/08/25 06:57:35 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -36,6 +36,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#ifndef _DEV_IC_AHAVAR_H_
+#define	_DEV_IC_AHAVAR_H_
 
 #include <sys/queue.h>
 
@@ -116,7 +119,9 @@ struct aha_probe_data {
 	int sc_scsi_dev;		/* adapters scsi id */
 };
 
-int	aha_find __P((bus_space_tag_t, bus_space_handle_t,
-	    struct aha_probe_data *));
-void	aha_attach __P((struct aha_softc *, struct aha_probe_data *));
-int	aha_intr __P((void *));
+int	aha_find(bus_space_tag_t, bus_space_handle_t,
+	    struct aha_probe_data *);
+void	aha_attach(struct aha_softc *, struct aha_probe_data *);
+int	aha_intr(void *);
+
+#endif /* _DEV_IC_AHAVAR_H_ */

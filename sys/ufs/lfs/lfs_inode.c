@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_inode.c,v 1.77.2.2 2004/08/03 10:56:57 skrll Exp $	*/
+/*	$NetBSD: lfs_inode.c,v 1.77.2.3 2004/08/25 06:59:14 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_inode.c,v 1.77.2.2 2004/08/03 10:56:57 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_inode.c,v 1.77.2.3 2004/08/25 06:59:14 skrll Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -149,6 +149,7 @@ lfs_update(void *v)
 	struct timespec ts;
 	struct lfs *fs = VFSTOUFS(vp->v_mount)->um_lfs;
 	int s;
+	int flags;
 	
 	if (vp->v_mount->mnt_flag & MNT_RDONLY)
 		return (0);
@@ -175,9 +176,12 @@ lfs_update(void *v)
 	LFS_ITIMES(ip,
 		   ap->a_access ? ap->a_access : &ts,
 		   ap->a_modify ? ap->a_modify : &ts, &ts);
-	if ((ip->i_flag & (IN_MODIFIED | IN_ACCESSED | IN_CLEANING)) == 0) {
+	if (ap->a_flags & UPDATE_CLOSE)
+		flags = ip->i_flag & (IN_MODIFIED | IN_ACCESSED | IN_CLEANING);
+	else
+		flags = ip->i_flag & (IN_MODIFIED | IN_CLEANING);
+	if (flags == 0)
 		return (0);
-	}
 	
 	/* If sync, push back the vnode and any dirty blocks it may have. */
 	if ((ap->a_flags & (UPDATE_WAIT|UPDATE_DIROP)) == UPDATE_WAIT) {
@@ -226,7 +230,7 @@ lfs_truncate(void *v)
 	struct vnode *ovp = ap->a_vp;
 	struct genfs_node *gp = VTOG(ovp);
 	daddr_t lastblock;
-	struct inode *oip;
+	struct inode *oip = VTOI(ovp);
 	daddr_t bn, lbn, lastiblock[NIADDR], indir_lbn[NIADDR];
 	/* XXX ondisk32 */
 	int32_t newblks[NDADDR + NIADDR];
@@ -234,19 +238,18 @@ lfs_truncate(void *v)
 	struct lfs *fs;
 	struct buf *bp;
 	int offset, size, level;
-	long count, rcount, nblocks, blocksreleased = 0, real_released = 0;
-	int i;
+	long count, rcount, blocksreleased = 0, real_released = 0;
+	int i, ioflag, nblocks;
 	int aflags, error, allerror = 0;
 	off_t osize;
-	voff_t eoz;
 	long lastseg;
 	size_t bc;
 	int obufsize, odb;
 	int usepc;
+	struct ufsmount *ump = oip->i_ump;
 
 	if (length < 0)
 		return (EINVAL);
-	oip = VTOI(ovp);
 
 	/*
 	 * Just return and not update modification times.
@@ -255,8 +258,8 @@ lfs_truncate(void *v)
 		return (0);
 
 	if (ovp->v_type == VLNK &&
-	    (oip->i_size < ovp->v_mount->mnt_maxsymlinklen ||
-	     (ovp->v_mount->mnt_maxsymlinklen == 0 &&
+	    (oip->i_size < ump->um_maxsymlinklen ||
+	     (ump->um_maxsymlinklen == 0 &&
 	      oip->i_ffs1_blocks == 0))) {
 #ifdef DIAGNOSTIC
 		if (length != 0)
@@ -278,6 +281,7 @@ lfs_truncate(void *v)
 	fs = oip->i_lfs;
 	lfs_imtime(fs);
 	osize = oip->i_size;
+	ioflag = ap->a_flags;
 	usepc = (ovp->v_type == VREG && ovp != fs->lfs_ivnode);
 
 	/*
@@ -286,28 +290,28 @@ lfs_truncate(void *v)
 	 * value of osize is 0, length will be at least 1.
 	 */
 	if (osize < length) {
-		if (length > fs->lfs_maxfilesize)
+		if (length > ump->um_maxfilesize)
 			return (EFBIG);
 		aflags = B_CLRBUF;
-		if (ap->a_flags & IO_SYNC)
+		if (ioflag & IO_SYNC)
 			aflags |= B_SYNC;
 		if (usepc) {
 			if (lblkno(fs, osize) < NDADDR &&
 			    lblkno(fs, osize) != lblkno(fs, length) &&
 			    blkroundup(fs, osize) != osize) {
+				off_t eob;
+
+				eob = blkroundup(fs, osize);
 				error = ufs_balloc_range(ovp, osize,
-							 blkroundup(fs, osize) -
-							 osize, ap->a_cred,
-							 aflags);
-				if (error) {
+				    eob - osize, ap->a_cred, aflags);
+				if (error)
 					return error;
-				}
-				if (ap->a_flags & IO_SYNC) {
-					ovp->v_size = blkroundup(fs, osize);
+				if (ioflag & IO_SYNC) {
+					ovp->v_size = eob;
 					simple_lock(&ovp->v_interlock);
 					VOP_PUTPAGES(ovp,
 					    trunc_page(osize & fs->lfs_bmask),
-					    round_page(ovp->v_size),
+					    round_page(eob),
 					    PGO_CLEANIT | PGO_SYNCIO);
 				}
 			}
@@ -315,7 +319,7 @@ lfs_truncate(void *v)
 						 aflags);
 			if (error) {
 				(void) VOP_TRUNCATE(ovp, osize,
-						    ap->a_flags & IO_SYNC,
+						    ioflag & IO_SYNC,
 				    		    ap->a_cred, ap->a_l);
 				return error;
 			}
@@ -364,7 +368,7 @@ lfs_truncate(void *v)
 	} else if (!usepc) {
 		lbn = lblkno(fs, length);
 		aflags = B_CLRBUF;
-		if (ap->a_flags & IO_SYNC)
+		if (ioflag & IO_SYNC)
 			aflags |= B_SYNC;
 		error = VOP_BALLOC(ovp, length - 1, 1, ap->a_cred, aflags, &bp);
 		if (error) {
@@ -397,23 +401,32 @@ lfs_truncate(void *v)
 		 * So there is a window where another thread could see a whole
 		 * zeroed page past EOF, but that's life.
 		 */
-		aflags = ap->a_flags & IO_SYNC ? B_SYNC : 0;
+		daddr_t lbn;
+		voff_t eoz;
+
+		aflags = ioflag & IO_SYNC ? B_SYNC : 0;
 		error = ufs_balloc_range(ovp, length - 1, 1, ap->a_cred,
-					 aflags);
+		    aflags);
 		if (error) {
 			lfs_reserve(fs, ovp, NULL,
 				    -btofsb(fs, (2 * NIADDR + 3) << fs->lfs_bshift));
 			goto errout;
 		}
-		eoz = blkroundup(fs, length);
+		lbn = lblkno(fs, length);
+		size = blksize(fs, oip, lbn);
+		eoz = MIN(lblktosize(fs, lbn) + size, osize);
 		uvm_vnp_zerorange(ovp, length, eoz - length);
-		simple_lock(&ovp->v_interlock);
-		error = VOP_PUTPAGES(ovp, trunc_page(length), round_page(eoz),
-		    PGO_CLEANIT | PGO_DEACTIVATE | (aflags ? PGO_SYNCIO : 0));
-		if (error) {
-			lfs_reserve(fs, ovp, NULL,
-				    -btofsb(fs, (2 * NIADDR + 3) << fs->lfs_bshift));
-			goto errout;
+		if (round_page(eoz) > round_page(length)) {
+			simple_lock(&ovp->v_interlock);
+			error = VOP_PUTPAGES(ovp, round_page(length),
+			    round_page(eoz),
+			    PGO_CLEANIT | PGO_DEACTIVATE |
+			    ((ioflag & IO_SYNC) ? PGO_SYNCIO : 0));
+			if (error) {
+				lfs_reserve(fs, ovp, NULL,
+					    -btofsb(fs, (2 * NIADDR + 3) << fs->lfs_bshift));
+				goto errout;
+			}
 		}
 	}
 
@@ -780,9 +793,8 @@ lfs_vtruncbuf(struct vnode *vp, daddr_t lbn, int slpflag, int slptimeo)
 	off = round_page((voff_t)lbn << vp->v_mount->mnt_fs_bshift);
 	simple_lock(&vp->v_interlock);
 	error = VOP_PUTPAGES(vp, off, 0, PGO_FREE | PGO_SYNCIO);
-	if (error) {
+	if (error)
 		return error;
-	} 
 
 	fs = VTOI(vp)->i_lfs;
 	s = splbio();

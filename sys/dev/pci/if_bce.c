@@ -1,4 +1,4 @@
-/* $NetBSD: if_bce.c,v 1.5.2.2 2004/08/03 10:49:07 skrll Exp $	 */
+/* $NetBSD: if_bce.c,v 1.5.2.3 2004/08/25 06:58:05 skrll Exp $	 */
 
 /*
  * Copyright (c) 2003 Clifford Wright. All rights reserved.
@@ -249,11 +249,8 @@ bce_lookup(const struct pci_attach_args * pa)
  * Probe for a Broadcom chip. Check the PCI vendor and device IDs
  * against drivers product list, and return its name if a match is found.
  */
-int
-bce_probe(parent, match, aux)
-	struct device  *parent;
-	struct cfdata  *match;
-	void           *aux;
+static int
+bce_probe(struct device *parent, struct cfdata *match, void *aux)
 {
 	struct pci_attach_args *pa = (struct pci_attach_args *) aux;
 
@@ -263,10 +260,8 @@ bce_probe(parent, match, aux)
 	return (0);
 }
 
-void
-bce_attach(parent, self, aux)
-	struct device  *parent, *self;
-	void           *aux;
+static void
+bce_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct bce_softc *sc = (struct bce_softc *) self;
 	struct pci_attach_args *pa = aux;
@@ -494,10 +489,7 @@ bce_attach(parent, self, aux)
 
 /* handle media, and ethernet requests */
 static int
-bce_ioctl(ifp, cmd, data)
-	struct ifnet   *ifp;
-	u_long          cmd;
-	caddr_t         data;
+bce_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 {
 	struct bce_softc *sc = ifp->if_softc;
 	struct ifreq   *ifr = (struct ifreq *) data;
@@ -527,8 +519,7 @@ bce_ioctl(ifp, cmd, data)
 
 /* Start packet transmission on the interface. */
 static void
-bce_start(ifp)
-	struct ifnet   *ifp;
+bce_start(struct ifnet *ifp)
 {
 	struct bce_softc *sc = ifp->if_softc;
 	struct mbuf    *m0;
@@ -659,8 +650,7 @@ bce_start(ifp)
 
 /* Watchdog timer handler. */
 static void
-bce_watchdog(ifp)
-	struct ifnet   *ifp;
+bce_watchdog(struct ifnet *ifp)
 {
 	struct bce_softc *sc = ifp->if_softc;
 
@@ -674,8 +664,7 @@ bce_watchdog(ifp)
 }
 
 int
-bce_intr(xsc)
-	void           *xsc;
+bce_intr(void *xsc)
 {
 	struct bce_softc *sc;
 	struct ifnet   *ifp;
@@ -748,8 +737,7 @@ bce_intr(xsc)
 
 /* Receive interrupt handler */
 void
-bce_rxintr(sc)
-	struct bce_softc *sc;
+bce_rxintr(struct bce_softc *sc)
 {
 	struct ifnet   *ifp = &sc->ethercom.ec_if;
 	struct rx_pph  *pph;
@@ -856,8 +844,7 @@ bce_rxintr(sc)
 
 /* Transmit interrupt handler */
 void
-bce_txintr(sc)
-	struct bce_softc *sc;
+bce_txintr(struct bce_softc *sc)
 {
 	struct ifnet   *ifp = &sc->ethercom.ec_if;
 	int             curr;
@@ -899,8 +886,7 @@ bce_txintr(sc)
 
 /* initialize the interface */
 static int
-bce_init(ifp)
-	struct ifnet   *ifp;
+bce_init(struct ifnet *ifp)
 {
 	struct bce_softc *sc = ifp->if_softc;
 	u_int32_t reg_win;
@@ -1027,10 +1013,7 @@ bce_init(ifp)
 
 /* add a mac address to packet filter */
 void
-bce_add_mac(sc, mac, idx)
-	struct bce_softc *sc;
-	u_int8_t *mac;
-	unsigned long   idx;
+bce_add_mac(struct bce_softc *sc, u_int8_t *mac, u_long idx)
 {
 	int             i;
 	u_int32_t rval;
@@ -1057,9 +1040,7 @@ bce_add_mac(sc, mac, idx)
 
 /* Add a receive buffer to the indiciated descriptor. */
 static int
-bce_add_rxbuf(sc, idx)
-	struct bce_softc *sc;
-	int             idx;
+bce_add_rxbuf(struct bce_softc *sc, int idx)
 {
 	struct mbuf    *m;
 	int             error;
@@ -1096,8 +1077,7 @@ bce_add_rxbuf(sc, idx)
 
 /* Drain the receive queue. */
 static void
-bce_rxdrain(sc)
-	struct bce_softc *sc;
+bce_rxdrain(struct bce_softc *sc)
 {
 	int             i;
 
@@ -1113,9 +1093,7 @@ bce_rxdrain(sc)
 
 /* Stop transmission on the interface */
 static void
-bce_stop(ifp, disable)
-	struct ifnet   *ifp;
-	int             disable;
+bce_stop(struct ifnet *ifp, int disable)
 {
 	struct bce_softc *sc = ifp->if_softc;
 	int             i;
@@ -1168,8 +1146,7 @@ bce_stop(ifp, disable)
 
 /* reset the chip */
 static void
-bce_reset(sc)
-	struct bce_softc *sc;
+bce_reset(struct bce_softc *sc)
 {
 	u_int32_t val;
 	u_int32_t sbval;
@@ -1340,8 +1317,7 @@ bce_reset(sc)
 
 /* Set up the receive filter. */
 void
-bce_set_filter(ifp)
-	struct ifnet   *ifp;
+bce_set_filter(struct ifnet *ifp)
 {
 	struct bce_softc *sc = ifp->if_softc;
 
@@ -1390,9 +1366,7 @@ bce_set_filter(ifp)
 
 /* Read a PHY register on the MII. */
 int
-bce_mii_read(self, phy, reg)
-	struct device  *self;
-	int             phy, reg;
+bce_mii_read(struct device *self, int phy, int reg)
 {
 	struct bce_softc *sc = (struct bce_softc *) self;
 	int             i;
@@ -1423,9 +1397,7 @@ bce_mii_read(self, phy, reg)
 
 /* Write a PHY register on the MII */
 void
-bce_mii_write(self, phy, reg, val)
-	struct device  *self;
-	int             phy, reg, val;
+bce_mii_write(struct device *self, int phy, int reg, int val)
 {
 	struct bce_softc *sc = (struct bce_softc *) self;
 	int             i;
@@ -1458,8 +1430,7 @@ bce_mii_write(self, phy, reg, val)
 
 /* sync hardware duplex mode to software state */
 void
-bce_statchg(self)
-	struct device  *self;
+bce_statchg(struct device *self)
 {
 	struct bce_softc *sc = (struct bce_softc *) self;
 	u_int32_t reg;
@@ -1486,8 +1457,7 @@ bce_statchg(self)
 
 /* Set hardware to newly-selected media */
 int
-bce_mediachange(ifp)
-	struct ifnet   *ifp;
+bce_mediachange(struct ifnet *ifp)
 {
 	struct bce_softc *sc = ifp->if_softc;
 
@@ -1498,9 +1468,7 @@ bce_mediachange(ifp)
 
 /* Get the current interface media status */
 static void
-bce_mediastatus(ifp, ifmr)
-	struct ifnet   *ifp;
-	struct ifmediareq *ifmr;
+bce_mediastatus(struct ifnet *ifp, struct ifmediareq *ifmr)
 {
 	struct bce_softc *sc = ifp->if_softc;
 
@@ -1511,8 +1479,7 @@ bce_mediastatus(ifp, ifmr)
 
 /* One second timer, checks link status */
 static void
-bce_tick(v)
-	void           *v;
+bce_tick(void *v)
 {
 	struct bce_softc *sc = v;
 

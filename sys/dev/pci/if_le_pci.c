@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le_pci.c,v 1.39.6.1 2004/08/03 10:49:08 skrll Exp $	*/
+/*	$NetBSD: if_le_pci.c,v 1.39.6.2 2004/08/25 06:58:05 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_le_pci.c,v 1.39.6.1 2004/08/03 10:49:08 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_le_pci.c,v 1.39.6.2 2004/08/25 06:58:05 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -102,27 +102,12 @@ __KERNEL_RCSID(0, "$NetBSD: if_le_pci.c,v 1.39.6.1 2004/08/03 10:49:08 skrll Exp
 
 #include <dev/pci/if_levar.h>
 
-int le_pci_match __P((struct device *, struct cfdata *, void *));
-void le_pci_attach __P((struct device *, struct device *, void *));
-int le_pci_mediachange __P((struct lance_softc *));
+static int	le_pci_match(struct device *, struct cfdata *, void *);
+static void	le_pci_attach(struct device *, struct device *, void *);
+static int	le_pci_mediachange(struct lance_softc *);
 
 CFATTACH_DECL(le_pci, sizeof(struct le_softc),
     le_pci_match, le_pci_attach, NULL, NULL);
-
-#if defined(_KERNEL_OPT)
-#include "opt_ddb.h"
-#endif
-
-#ifdef DDB
-#define	integrate
-#define hide
-#else
-#define	integrate	static __inline
-#define hide		static
-#endif
-
-hide void le_pci_wrcsr __P((struct lance_softc *, u_int16_t, u_int16_t));
-hide u_int16_t le_pci_rdcsr __P((struct lance_softc *, u_int16_t));
 
 /*
  * PCI constants.
@@ -141,10 +126,8 @@ static int le_pci_supmedia[] = {
 	IFM_ETHER|IFM_10_5|IFM_FDX,
 };
 
-hide void
-le_pci_wrcsr(sc, port, val)
-	struct lance_softc *sc;
-	u_int16_t port, val;
+static void
+le_pci_wrcsr(struct lance_softc *sc, u_int16_t port, u_int16_t val)
 {
 	struct le_softc *lesc = (struct le_softc *)sc;
 	bus_space_tag_t iot = lesc->sc_iot;
@@ -154,10 +137,8 @@ le_pci_wrcsr(sc, port, val)
 	bus_space_write_2(iot, ioh, lesc->sc_rdp, val);
 }
 
-hide u_int16_t
-le_pci_rdcsr(sc, port)
-	struct lance_softc *sc;
-	u_int16_t port;
+static u_int16_t
+le_pci_rdcsr(struct lance_softc *sc, u_int16_t port)
 {
 	struct le_softc *lesc = (struct le_softc *)sc;
 	bus_space_tag_t iot = lesc->sc_iot;
@@ -169,9 +150,8 @@ le_pci_rdcsr(sc, port)
 	return (val);
 }
 
-int
-le_pci_mediachange(sc)
-	struct lance_softc *sc;
+static int
+le_pci_mediachange(struct lance_softc *sc)
 {
 	struct le_softc *lesc = (struct le_softc *)sc;
 	bus_space_tag_t iot = lesc->sc_iot;
@@ -232,11 +212,8 @@ le_pci_mediachange(sc)
 	return (0);
 }
 
-int
-le_pci_match(parent, match, aux)
-	struct device *parent;
-	struct cfdata *match;
-	void *aux;
+static int
+le_pci_match(struct device *parent, struct cfdata *match, void *aux)
 {
 	struct pci_attach_args *pa = aux;
 
@@ -251,10 +228,8 @@ le_pci_match(parent, match, aux)
 	return (0);
 }
 
-void
-le_pci_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+static void
+le_pci_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct le_softc *lesc = (void *)self;
 	struct lance_softc *sc = &lesc->sc_am79900.lsc;
