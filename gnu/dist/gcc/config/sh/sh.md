@@ -2210,7 +2210,8 @@
     FAIL;
   reg = XEXP (addr, 0);
   const_int = XEXP (addr, 1);
-  if (GET_CODE (reg) != REG || GET_CODE (const_int) != CONST_INT)
+  if (! (BASE_REGISTER_RTX_P (reg) && INDEX_REGISTER_RTX_P (operands[2])
+	 && GET_CODE (const_int) == CONST_INT))
     FAIL;
   emit_move_insn (operands[2], const_int);
   emit_move_insn (operands[0],
@@ -2236,7 +2237,8 @@
     FAIL;
   reg = XEXP (addr, 0);
   const_int = XEXP (addr, 1);
-  if (GET_CODE (reg) != REG || GET_CODE (const_int) != CONST_INT)
+  if (! (BASE_REGISTER_RTX_P (reg) && INDEX_REGISTER_RTX_P (operands[2])
+	 && GET_CODE (const_int) == CONST_INT))
     FAIL;
   emit_move_insn (operands[2], const_int);
   emit_move_insn (change_address (operands[1], VOIDmode,
@@ -3097,6 +3099,7 @@
 	      (use (match_operand:SI 0 "arith_reg_operand" "r"))
 	      (use (reg:SI 6))
 	      (clobber (reg:SI 17))
+	      (clobber (reg:SI 18))
 	      (clobber (reg:SI 4))
 	      (clobber (reg:SI 5))
 	      (clobber (reg:SI 6))
@@ -3267,10 +3270,9 @@
 
   size /= 8;
   orig_address = XEXP (operands[0], 0);
-  addr_target = gen_reg_rtx (SImode);
   shift_reg = gen_reg_rtx (SImode);
   emit_insn (gen_movsi (shift_reg, operands[3]));
-  emit_insn (gen_addsi3 (addr_target, orig_address, GEN_INT (size - 1)));
+  addr_target = copy_addr_to_reg (plus_constant (orig_address, size - 1));
 
   operands[0] = change_address (operands[0], QImode, addr_target);
   emit_insn (gen_movqi (operands[0], gen_rtx (SUBREG, QImode, shift_reg, 0)));
