@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.32 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.33 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -142,9 +142,8 @@ Changes from NetBSD 1.6 to NetBSD 1.7:
 		[itojun 20021010]
 	Allow pseudo-devices to be parents of "real" devices.
 		[thorpej 20021009]
-	Allow options to register dependencies on attributes (the
-		way it already can for other options).
-		[thorpej 20021010]
+	Allow options to register dependencies on attributes (the way it already
+		can for other options).  [thorpej 20021010]
 	Allow devices to be orphaned in the kernel config file, but
 		emit an informational message when this happens.
 		[thorpej 20021010]
@@ -158,3 +157,6 @@ Changes from NetBSD 1.6 to NetBSD 1.7:
 		kernel using the new toolchain.
 		From Alan Barrett in PR#18739.  [lukem 20021021]
 	kernel: kqueue branch merged [jdolecek 20021023]
+	kernel: keep separate read & write disk statistics.  [mrg 20021101]
+	iostat(8): Report read/write stats in iostat -x.  [mrg 20021101]
+	systat(1): Report read/write stats in iostat "rw" mode.  [mrg 20021101]
