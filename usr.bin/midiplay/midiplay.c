@@ -1,4 +1,4 @@
-/*	$NetBSD: midiplay.c,v 1.5 1998/08/13 18:26:36 augustss Exp $	*/
+/*	$NetBSD: midiplay.c,v 1.6 1998/08/13 21:01:53 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -84,6 +84,7 @@ void usage __P((void));
 void send_event __P((seq_event_rec *));
 void dometa __P((u_int, u_char *, u_int));
 void midireset __P((void));
+void send_sysex __P((u_char *, u_int));
 u_long getvar __P((struct track *));
 void playfile __P((FILE *, char *));
 void playdata __P((u_char *, u_int, char *));
@@ -127,7 +128,7 @@ u_char sample[] = {
 void
 usage()
 {
-	printf("Usage: %s [-d unit] [-f file] [-l] [-m] [-t tempo] [-v] [-x] [file ...]\n",
+	printf("Usage: %s [-d unit] [-f file] [-l] [-m] [-q] [-t tempo] [-v] [-x] [file ...]\n",
 		__progname);
 	exit(1);
 }
@@ -217,13 +218,32 @@ void
 midireset()
 {
 	/* General MIDI reset sequence */
-	static u_char gm_reset[] = { 0x7e, 0x7f, 0x09, 0x01, 0xf7, 0xff };
+	static u_char gm_reset[] = { 0x7e, 0x7f, 0x09, 0x01, 0xf7 };
+
+	send_sysex(gm_reset, sizeof gm_reset);
+}
+
+#define SYSEX_CHUNK 6
+void
+send_sysex(p, l)
+	u_char *p;
+	u_int l;
+{
 	seq_event_rec event;
+	u_int n;
 
 	event.arr[0] = SEQ_SYSEX;
 	event.arr[1] = unit;
-	memcpy(&event.arr[2], gm_reset, sizeof gm_reset);
-	send_event(&event);
+	do {
+		n = SYSEX_CHUNK;
+		if (l < n) {
+			memset(&event.arr[2], 0xff, SYSEX_CHUNK);
+			n = l;
+		}
+		memcpy(&event.arr[2], p, n);
+		send_event(&event);
+		l -= n;
+	} while (l > 0);
 }
 
 void
@@ -312,12 +332,12 @@ playdata(buf, tot, name)
 	for (t = 0; t < ntrks; ) {
 		if (p >= end - MARK_LEN - SIZE_LEN) {
 			warnx("Cannot find track %d\n", t);
-			goto ret1;
+			goto ret;
 		}
 		len = GET32(p + MARK_LEN);
 		if (len > 1000000) { /* a safe guard */
 			warnx("Crazy track length\n");
-			goto ret1;
+			goto ret;
 		}
 		if (memcmp(p, MARK_TRACK, MARK_LEN) == 0) {
 			tracks[t].start = p + MARK_LEN + SIZE_LEN;
@@ -438,6 +458,13 @@ playdata(buf, tot, name)
 						  ((msg[1] & 0x7f) << 7));
 				send_event(&event);
 				break;
+			case MIDI_SYSTEM_PREFIX:
+				mlen = getvar(tp);
+				if (tp->status == MIDI_SYSEX_START)
+					send_sysex(tp->start, mlen);
+				else
+					/* Sorry, can't do this yet */;
+				break;
 			default:
 				if (verbose)
 					printf("MIDI event 0x%02x ignored\n",
@@ -450,9 +477,10 @@ playdata(buf, tot, name)
 		else
 			tp->curtime += getvar(tp);
 	}
-		
+	if (ioctl(fd, SEQUENCER_SYNC, 0) < 0)
+		err(1, "SEQUENCER_SYNC");
 
- ret1:
+ ret:
 	free(tracks);
 }
 
