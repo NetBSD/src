@@ -1,4 +1,4 @@
-.\"	$NetBSD: ssh.1,v 1.25 2003/04/07 06:56:41 wiz Exp $
+.\"	$NetBSD: ssh.1,v 1.26 2003/06/27 09:14:56 wiz Exp $
 .\"  -*- nroff -*-
 .\"
 .\" Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -195,7 +195,9 @@ file, and has one key
 per line, though the lines can be very long).
 After this, the user can log in without giving the password.
 RSA authentication is much
-more secure than rhosts authentication.
+more secure than
+.Pa \&.rhosts
+authentication.
 .Pp
 The most convenient way to use RSA authentication may be with an
 authentication agent.
@@ -898,7 +900,9 @@ accessible by others.
 Note that by default
 .Xr sshd 8
 will be installed so that it requires successful RSA host
-authentication before permitting \s+2.\s0rhosts authentication.
+authentication before permitting
+.Pa \&.rhosts
+authentication.
 If the server machine does not have the client's host key in
 .Pa /etc/ssh/ssh_known_hosts ,
 it can be stored in
@@ -911,7 +915,9 @@ will automatically add the host key to
 This file is used exactly the same way as
 .Pa \&.rhosts .
 The purpose for
-having this file is to be able to use rhosts authentication with
+having this file is to be able to use
+.Pa \&.rhosts
+authentication with
 .Nm
 without permitting login with
 .Nm rlogin
@@ -919,7 +925,8 @@ or
 .Xr rsh 1 .
 .It Pa /etc/hosts.equiv
 This file is used during
-.Pa \&.rhosts authentication.
+.Pa \&.rhosts
+authentication.
 It contains
 canonical hosts names, one per line (the full format is described on
 the
