@@ -1,4 +1,4 @@
-/* $NetBSD: dwlpx_bus_mem.c,v 1.9 1997/09/02 11:09:57 thorpej Exp $ */
+/* $NetBSD: dwlpx_bus_mem.c,v 1.10 1997/09/02 12:43:23 thorpej Exp $ */
 
 /*
  * Copyright (c) 1997 by Matthew Jacob
@@ -33,7 +33,7 @@
 #include <machine/options.h>		/* Config options headers */
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(1, "$NetBSD: dwlpx_bus_mem.c,v 1.9 1997/09/02 11:09:57 thorpej Exp $");
+__KERNEL_RCSID(1, "$NetBSD: dwlpx_bus_mem.c,v 1.10 1997/09/02 12:43:23 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -48,7 +48,6 @@ __KERNEL_RCSID(1, "$NetBSD: dwlpx_bus_mem.c,v 1.9 1997/09/02 11:09:57 thorpej Ex
 #include <alpha/pci/dwlpxvar.h>
 
 #define	CHIP		dwlpx
-#define	CHIP_MEM_CHIPSET_ALLOC
 
 #define	CHIP_EX_MALLOC_SAFE(v)	(1)
 #define	CHIP_D_MEM_EXTENT(v)	(((struct dwlpx_config *)(v))->cc_d_mem_ex)
