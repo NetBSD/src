@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0.1,v 1.1.2.6 2005/01/10 22:04:25 jmc Exp $
+#	$NetBSD: CHANGES-2.0.1,v 1.1.2.7 2005/01/11 06:35:56 jmc Exp $
 
 A complete list of changes from the NetBSD 2.0 release to the NetBSD 2.0.1 
 release.
@@ -112,3 +112,10 @@ sys/netinet/fil.c				patch
 	Pull revs 1.2-1.7 from sys/dist/ipf/netinet/fil.c from trunk to fix 
 	panics with ipf and IPv6. Fixes PR#28875 and #26839
 	[hubertf, ticket #1068]
+
+sys/nfs/nfsnode.h				patch
+sys/nfs/nfs_vnops.c				patch
+
+	nfs_lookup: check n_nctime for positive entries as well to improve
+	cache consistency.
+	[yamt, ticket #1077]
