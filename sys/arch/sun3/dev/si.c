@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 1994 Adam Glass
+ * Copyright (C) 1994 Adam Glass, Gordon W. Ross
  * Copyright (C) 1993	Allen K. Briggs, Chris P. Caputo,
  *			Michael L. Finch, Bradley A. Grantham, and
  *			Lawrence A. Kesteloot
@@ -31,13 +31,21 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * $Id: si.c,v 1.1 1994/02/23 08:28:56 glass Exp $
- *
+ * $Id: si.c,v 1.2 1994/05/13 15:01:39 gwr Exp $
  */
 
-#define PSEUDO_DMA 1
+#define DEBUG
 
-static int pdebug=0;
+#ifdef	DEBUG
+#define	STATIC	/* let DDB see the symbols */
+#else
+#define	STATIC	static
+#endif
+
+/* XXX - Need to add support for real DMA. -gwr */
+/* #define PSEUDO_DMA 1 (broken) */
+
+STATIC int si_debug=0;
 
 #include <sys/types.h>
 #include <sys/malloc.h>
@@ -54,9 +62,10 @@ static int pdebug=0;
 #include <machine/mtpr.h>
 #include <machine/obio.h>
 
-#include "../scsi/scsi_all.h"
-#include "../scsi/scsi_debug.h"
-#include "../scsi/scsiconf.h"
+#include <scsi/scsi_all.h>
+#include <scsi/scsi_debug.h>
+#include <scsi/scsiconf.h>
+
 #include "scsi_defs.h"
 #include "scsi_5380.h"
 
@@ -71,7 +80,8 @@ static int pdebug=0;
 		 ((ptr)->sci_bus_csr & SCI_BUS_REQ) && \
 		 (--scsi_timeout) ); \
 	if (!scsi_timeout) { \
-		printf("scsi timeout--WAIT_FOR_NOT_REQ---scsi.c, line %d.\n", __LINE__); \
+		printf("scsi timeout--WAIT_FOR_NOT_REQ---%s, line %d.\n", \
+			__FILE__, __LINE__); \
 		goto scsi_timeout_error; \
 	} \
 	}
@@ -82,7 +92,8 @@ static int pdebug=0;
 		(((ptr)->sci_bus_csr & SCI_BUS_REQ) == 0) && \
 		 (--scsi_timeout) ); \
 	if (!scsi_timeout) { \
-		printf("scsi timeout--WAIT_FOR_REQ---scsi.c, line %d.\n", __LINE__); \
+		printf("scsi timeout--WAIT_FOR_REQ---%s, line %d.\n", \
+			__FILE__, __LINE__); \
 		goto scsi_timeout_error; \
 	} \
 	}
@@ -93,7 +104,8 @@ static int pdebug=0;
 		(((ptr)->sci_bus_csr & SCI_BUS_BSY) == 0) && \
 		 (--scsi_timeout) ); \
 	if (!scsi_timeout) { \
-		printf("scsi timeout--WAIT_FOR_BSY---scsi.c, line %d.\n", __LINE__); \
+		printf("scsi timeout--WAIT_FOR_BSY---%s, line %d.\n", \
+			__FILE__, __LINE__); \
 		goto scsi_timeout_error; \
 	} \
 	}
@@ -101,7 +113,8 @@ static int pdebug=0;
 #ifdef DDB
 int Debugger();
 #else
-#define Debugger() panic("Should call Debugger here (sun3/dev/scsi.c).")
+#define Debugger() panic("Should call Debugger here %s:%d", \
+			 __FILE__, __LINE__)
 #endif
 
 struct ncr5380_softc {
@@ -111,32 +124,21 @@ struct ncr5380_softc {
     struct scsi_link sc_link;
 };
 
-#if 0
-In your dreams dude...
-/* From Guide to Mac II family hardware, p. 137 */
-static volatile sci_padded_regmap_t	*ncr  =   (sci_regmap_t *) 0x50F10000;
-static volatile long			*sci_4byte_addr=  (long *) 0x50F06000;
-static volatile u_char			*sci_1byte_addr=(u_char *) 0x50F12000;
-#endif
+STATIC u_int	ncr5380_adapter_info(struct ncr5380_softc *ncr5380);
+STATIC void		ncr5380_minphys(struct buf *bp);
+STATIC int		ncr5380_scsi_cmd(struct scsi_xfer *xs);
 
-static unsigned int	ncr5380_adapter_info(struct ncr5380_softc *ncr5380);
-static void		ncr5380_minphys(struct buf *bp);
-static int		ncr5380_scsi_cmd(struct scsi_xfer *xs);
+STATIC int		ncr5380_show_scsi_cmd(struct scsi_xfer *xs);
+STATIC int		ncr5380_reset_target(int adapter, int target);
+STATIC int		ncr5380_poll(int adapter, int timeout);
+STATIC int		ncr5380_send_cmd(struct scsi_xfer *xs);
 
-static int		ncr5380_show_scsi_cmd(struct scsi_xfer *xs);
-static int		ncr5380_reset_target(int adapter, int target);
-static int		ncr5380_poll(int adapter, int timeout);
-static int		ncr5380_send_cmd(struct scsi_xfer *xs);
+void		ncr5380_intr(int adapter);
 
-extern void		ncr5380_intr(int adapter);
-extern void		spinwait(int);
-
-static void		delay(int);
-
-static int	scsi_gen(int adapter, int id, int lun,
+STATIC int	si_generic(int adapter, int id, int lun,
 			 struct scsi_generic *cmd, int cmdlen,
 			 void *databuf, int datalen);
-static int	scsi_group0(int adapter, int id, int lun,
+STATIC int	si_group0(int adapter, int id, int lun,
 			    int opcode, int addr, int len,
 			    int flags, caddr_t databuf, int datalen);
 
@@ -149,40 +151,42 @@ struct scsi_adapter	ncr5380_switch = {
 	0,				/* close_target_lu()	*/
 	ncr5380_adapter_info,		/* adapter_info()	*/
 	scsi_name,			/* name			*/
-	{0, 0}				/* spare[3]		*/
+	0, 0				/* spare[2]		*/
 };
 
 /* This is copied from julian's bt driver */
 /* "so we have a default dev struct for our link struct." */
 struct scsi_device ncr_dev = {
 	NULL,		/* Use default error handler.	    */
-	NULL,		/* have a queue, served by this (?) */
-	NULL,		/* have no async handler.	    */
+	NULL,		/* Use default start handler.		*/
+	NULL,		/* Use default async handler.	    */
 	NULL,		/* Use default "done" routine.	    */
-	"si",
-	0,
-	0, 0
+	"si",		/* name of device type */
+	0,			/* device type dependent flags */
+	0, 0		/* spare[2] */
 };
 
 extern int	matchbyname();
-static int	ncrprobe();
-static void	ncrattach();
+STATIC int	si_match();
+STATIC void	si_attach();
 
-struct cfdriver ncrcd =
-      {	NULL, "si", ncrprobe, ncrattach,
-	DV_DULL, sizeof(struct ncr5380_softc), NULL, 0 };
+struct cfdriver sicd = {
+	NULL, "si", si_match, si_attach, DV_DULL,
+	sizeof(struct ncr5380_softc), NULL, 0,
+};
 
-static int
-ncr_print(aux, name)
+STATIC int
+si_print(aux, name)
 	void *aux;
 	char *name;
 {
-	/* printf("%s: (sc_link = 0x%x)", name, (int) aux); 
-	return UNCONF;*/
+	if (name)
+		printf("%s: (sc_link = 0x%x)", name, (int) aux);
+	return UNCONF;
 }
 
-static int
-ncrprobe(parent, cf, aux)
+STATIC int
+si_match(parent, cf, aux)
 	struct device	*parent;
 	struct cfdata	*cf;
 	void		*aux;
@@ -191,11 +195,11 @@ ncrprobe(parent, cf, aux)
     struct obio_cf_loc *obio_loc = (struct obio_cf_loc *) CFDATA_LOC(cf);
 
     si_addr = OBIO_DEFAULT_PARAM(caddr_t, obio_loc->obio_addr, OBIO_NCR_SCSI);
-    return /* !obio_probe_byte(si_addr)*/ 1;
+    return !obio_probe_byte(si_addr);
 }
 
-static void
-ncrattach(parent, self, aux)
+STATIC void
+si_attach(parent, self, aux)
 	struct device	*parent, *self;
 	void		*aux;
 {
@@ -203,14 +207,16 @@ ncrattach(parent, self, aux)
     int level, ncr_intr(), unit = DEVICE_UNIT(self);
     struct ncr5380_softc *ncr5380 = (struct ncr5380_softc *) self;
     struct obio_cf_loc *obio_loc = OBIO_LOC(self);
+	struct cfdata *new_match;
 
     si_addr = OBIO_DEFAULT_PARAM(caddr_t, obio_loc->obio_addr, OBIO_NCR_SCSI);
-    ncr5380->sc_regs = (sci_regmap_t *) 
-	obio_alloc(si_addr, OBIO_AMD_ETHER_SIZE, OBIO_WRITE);
+    ncr5380->sc_regs = (sci_regmap_t *)
+        obio_alloc(si_addr, OBIO_NCR_SCSI_SIZE, OBIO_WRITE);
 
-    level = OBIO_DEFAULT_PARAM(int, obio_loc->obio_level, 3);
+    level = OBIO_DEFAULT_PARAM(int, obio_loc->obio_level, 2);
 
-    ncr5380->sc_link.scsibus = unit;
+    ncr5380->sc_link.scsibus = unit;	/* needed? */
+    ncr5380->sc_link.adapter_softc = ncr5380;
     ncr5380->sc_link.adapter_targ = 7;
     ncr5380->sc_link.adapter = &ncr5380_switch;
     ncr5380->sc_link.device = &ncr_dev;
@@ -218,17 +224,18 @@ ncrattach(parent, self, aux)
     obio_print(si_addr, level);
     printf("\n");
 
-    config_found(self, &(ncr5380->sc_link), ncr_print);
+	Debugger();	/* XXX */
+    config_found(self, &(ncr5380->sc_link), si_print);
 }
 
-static unsigned int
+STATIC u_int
 ncr5380_adapter_info(struct ncr5380_softc *ncr5380)
 {
 	return 1;
 }
 
 #define MIN_PHYS	65536	/*BARF!!!!*/
-static void
+STATIC void
 ncr5380_minphys(struct buf *bp)
 {
 	if (bp->b_bcount > MIN_PHYS) {
@@ -238,7 +245,7 @@ ncr5380_minphys(struct buf *bp)
 }
 #undef MIN_PHYS
 
-static int
+STATIC int									/* si_attach+0x190 */
 ncr5380_scsi_cmd(struct scsi_xfer *xs)
 {
 	int flags, s, r;
@@ -269,24 +276,27 @@ ncr5380_scsi_cmd(struct scsi_xfer *xs)
 			return (COMPLETE);
 		}
 	}
+#if 0
 	/*
 	 * OK.  Now that that's over with, let's pack up that
 	 * SCSI puppy and send it off.  If we can, we'll just
 	 * queue and go; otherwise, we'll wait for the command
 	 * to finish.
+	 */
 	if ( ! ( flags & SCSI_NOSLEEP ) ) {
 		s = splbio();
 		ncr5380_send_cmd(xs);
 		splx(s);
 		return(SUCCESSFULLY_QUEUED);
 	}
-	 */
+#endif
 
 	r = ncr5380_send_cmd(xs);
 	xs->flags |= ITSDONE;
 	scsi_done(xs);
 	switch(r) {
-		case COMPLETE: case SUCCESSFULLY_QUEUED:
+		case COMPLETE:
+		case SUCCESSFULLY_QUEUED:
 			r = SUCCESSFULLY_QUEUED;
 			if (xs->flags&SCSI_NOMASK)
 				r = COMPLETE;
@@ -295,7 +305,7 @@ ncr5380_scsi_cmd(struct scsi_xfer *xs)
 			break;
 	}
 	return r;
-/*
+#if 0
 	do {
 		if (ncr5380_poll(xs->sc_link->scsibus, xs->timeout)) {
 			if ( ! ( xs->flags & SCSI_SILENT ) )
@@ -305,10 +315,10 @@ ncr5380_scsi_cmd(struct scsi_xfer *xs)
 			splx(s);
 		}
 	} while ( ! ( xs->flags & ITSDONE ) );
-*/
+#endif
 }
 
-static int
+STATIC int
 ncr5380_show_scsi_cmd(struct scsi_xfer *xs)
 {
 	u_char	*b = (u_char *) xs->cmd;
@@ -316,7 +326,9 @@ ncr5380_show_scsi_cmd(struct scsi_xfer *xs)
 
 	if ( ! ( xs->flags & SCSI_RESET ) ) {
 		printf("si(%d:%d:%d)-",
-			xs->sc_link->scsibus, xs->sc_link->target, xs->sc_link->lun);
+			   xs->sc_link->scsibus,
+			   xs->sc_link->target,
+			   xs->sc_link->lun);
 		while (i < xs->cmdlen) {
 			if (i) printf(",");
 			printf("%x",b[i++]);
@@ -324,7 +336,9 @@ ncr5380_show_scsi_cmd(struct scsi_xfer *xs)
 		printf("-\n");
 	} else {
 		printf("si(%d:%d:%d)-RESET-\n",
-			xs->sc_link->scsibus, xs->sc_link->target, xs->sc_link->lun);
+			   xs->sc_link->scsibus,
+			   xs->sc_link->target,
+			   xs->sc_link->lun);
 	}
 }
 
@@ -332,81 +346,69 @@ ncr5380_show_scsi_cmd(struct scsi_xfer *xs)
  * Actual chip control.
  */
 
-static void
-delay(int timeo)
-{
-	int	len;
-	for (len=0;len<timeo*2;len++);
-}
-
-extern void
-spinwait(int ms)
-{
-	while (ms--)
-		delay(500);
-}
-
-extern void
+void
 ncr5380_intr(int adapter)
 {
-    register struct ncr5380_softc *ncr5380 = ncrcd.cd_devs[adapter];
+    register struct ncr5380_softc *ncr5380 = sicd.cd_devs[adapter];
     register volatile sci_regmap_t *regs = ncr5380->sc_regs;
 
     SCI_CLR_INTR(regs);
     regs->sci_mode    = 0x00;
+#ifdef	DEBUG
+	printf ("ncr_intr\n");
+#endif
 }
 
-#if 0
-extern int
+int
 scsi_irq_intr(void)
 {
+#if 0	/* XXX - no way to get regs */
     register volatile sci_regmap_t *regs = ncr;
-
-/*	if (regs->sci_csr != SCI_CSR_PHASE_MATCH)
+	if (regs->sci_csr != SCI_CSR_PHASE_MATCH)
 		printf("scsi_irq_intr called (not just phase match -- "
 			"csr = 0x%x, bus_csr = 0x%x).\n",
 			regs->sci_csr, regs->sci_bus_csr);
-	ncr5380_intr(0); */
+	ncr5380_intr(0);
+#endif
 	return 1;
 }
-#endif
 
-#if 0
-extern int
+int
 scsi_drq_intr(void)
 {
-/*	printf("scsi_drq_intr called.\n"); */
-/*	ncr5380_intr(0); */
+#if 0
+	printf("scsi_drq_intr called.\n");
+	ncr5380_intr(0);
+#endif
 	return 1;
 }
-#endif
 
-static int
+STATIC int
 ncr5380_reset_target(int adapter, int target)
 {
-    register struct ncr5380_softc *ncr5380 = ncrcd.cd_devs[adapter];
-    register volatile sci_regmap_t *regs = ncr5380->sc_regs;
-    int dummy;
+	register struct ncr5380_softc *ncr5380 = sicd.cd_devs[adapter];
+	register volatile sci_regmap_t *regs = ncr5380->sc_regs;
+	int dummy;
 
-    regs->sci_icmd = SCI_ICMD_TEST;
-    regs->sci_icmd = SCI_ICMD_TEST | SCI_ICMD_RST;
-    delay(2500);
-    regs->sci_icmd = 0;
+	regs->sci_icmd = SCI_ICMD_TEST;
+	regs->sci_icmd = SCI_ICMD_TEST | SCI_ICMD_RST;
+	delay(2500);
+	regs->sci_icmd = 0;
 
-    regs->sci_mode = 0;
-    regs->sci_tcmd = SCI_PHASE_DISC;
-    regs->sci_sel_enb = 0;
+	regs->sci_mode = 0;
+	regs->sci_tcmd = SCI_PHASE_DISC;
+	regs->sci_sel_enb = 0;
 
-    SCI_CLR_INTR(regs);
-    SCI_CLR_INTR(regs);
+	SCI_CLR_INTR(regs);
+	SCI_CLR_INTR(regs);
 }
 
-static int
+STATIC int
 ncr5380_poll(int adapter, int timeout)
 {
 }
 
-static int
+STATIC int
 ncr5380_send_cmd(struct scsi_xfer *xs)
 {
 	int	s;
@@ -414,16 +416,19 @@ ncr5380_send_cmd(struct scsi_xfer *xs)
 
 /*	ncr5380_show_scsi_cmd(xs); */
 	s = splbio();
-	sense = scsi_gen( xs->sc_link->scsibus, xs->sc_link->target,
+	sense = si_generic( xs->sc_link->scsibus, xs->sc_link->target,
 			  xs->sc_link->lun, xs->cmd, xs->cmdlen,
 			  xs->data, xs->datalen );
 	splx(s);
 	if (sense) {
 		switch (sense) {
 			case 0x02:	/* Check condition */
-/*				printf("check cond. target %d.\n", xs->targ);*/
+#ifdef	DEBUG
+				printf("check cond. target %d.\n",
+					   xs->sc_link->target);
+#endif
 				s = splbio();
-				scsi_group0(xs->sc_link->scsibus,
+				si_group0(xs->sc_link->scsibus,
 					    xs->sc_link->target,
 					    xs->sc_link->lun,
 					    0x3, 0x0,
@@ -445,8 +450,8 @@ ncr5380_send_cmd(struct scsi_xfer *xs)
 	return (COMPLETE);
 }
 
-static int
-select_target(register volatile sci_regmap_t *regs,
+STATIC int
+si_select_target(register volatile sci_regmap_t *regs,
 	      u_char myid, u_char tid, int with_atn)
 {
 	register u_char	bid, icmd;
@@ -461,11 +466,13 @@ select_target(register volatile sci_regmap_t *regs,
 	myid = 1 << myid;
 	tid = 1 << tid;
 
-	regs->sci_sel_enb = 0; /*myid;	we don't want any interrupts. */
+	regs->sci_sel_enb = 0; /* we don't want any interrupts. */
+	regs->sci_tcmd = 0;	/* get into a harmless state */
+	regs->sci_mode = 0;	/* get into a harmless state */
 
 	regs->sci_odata = myid;
 	regs->sci_mode = SCI_MODE_ARB;
-/*	regs->sci_mode |= SCI_MODE_ARB;		*/
+/*	regs->sci_mode |= SCI_MODE_ARB;	XXX? */
 	/* AIP might not set if BSY went true after we checked */
 	for (bid = 0; bid < 20; bid++)	/* 20usec circa */
 		if (regs->sci_icmd & SCI_ICMD_AIP)
@@ -474,9 +481,12 @@ select_target(register volatile sci_regmap_t *regs,
 		goto lost;
 	}
 
-	spinwait(2);	/* 2.2us arb delay */
+	delay(2200);	/* 2.2 millisecond arbitration delay */
 
 	if (regs->sci_icmd & SCI_ICMD_LST) {
+#ifdef	DEBUG
+		printf ("lost 1\n");
+#endif
 		goto lost;
 	}
 
@@ -484,9 +494,15 @@ select_target(register volatile sci_regmap_t *regs,
 	bid = regs->sci_data;
 
 	if ((bid & ~myid) > myid) {
+#ifdef	DEBUG
+		printf ("lost 2\n");
+#endif
 		goto lost;
 	}
 	if (regs->sci_icmd & SCI_ICMD_LST) {
+#ifdef	DEBUG
+		printf ("lost 3\n");
+#endif
 		goto lost;
 	}
 
@@ -497,6 +513,9 @@ select_target(register volatile sci_regmap_t *regs,
 	regs->sci_icmd = icmd;
 
 	if (regs->sci_icmd & SCI_ICMD_LST) {
+#ifdef	DEBUG
+		printf ("nosel\n");
+#endif
 		goto nosel;
 	}
 
@@ -504,7 +523,7 @@ select_target(register volatile sci_regmap_t *regs,
 	/* XXX should put our id out, and after the delay check nothi XXX */
 	/* XXX ng else is out there.				      XXX */
 
-	delay(0);
+	delay2us();
 
 	regs->sci_tcmd = 0;
 	regs->sci_odata = myid | tid;
@@ -519,7 +538,7 @@ select_target(register volatile sci_regmap_t *regs,
 	regs->sci_icmd = icmd;
 
 	/* bus settle delay, 400ns */
-	delay(2); /* too much (was 2) ? */
+	delay2us(); /* too much (was 2) ? */
 
 /*	regs->sci_mode |= SCI_MODE_PAR_CHK; */
 
@@ -551,7 +570,7 @@ lost:
 }
 
 sci_data_out(regs, phase, count, data)
-	register sci_regmap_t	*regs;
+	register volatile sci_regmap_t	*regs;
 	unsigned char		*data;
 {
 	register unsigned char	icmd;
@@ -582,7 +601,7 @@ scsi_timeout_error:
 }
 
 sci_data_in(regs, phase, count, data)
-	register sci_regmap_t	*regs;
+	register volatile sci_regmap_t	*regs;
 	unsigned char		*data;
 {
 	register unsigned char	icmd;
@@ -612,8 +631,8 @@ scsi_timeout_error:
 	return cnt;
 }
 
-static int
-command_transfer(register volatile sci_regmap_t *regs,
+STATIC int
+si_command_transfer(register volatile sci_regmap_t *regs,
 		 int maxlen, u_char *data, u_char *status, u_char *msg)
 {
 	int	xfer=0, phase;
@@ -667,8 +686,8 @@ scsi_timeout_error:
 	}
 }
 
-static int
-data_transfer(register volatile sci_regmap_t *regs,
+STATIC int
+si_data_transfer(register volatile sci_regmap_t *regs,
 	      int maxlen, u_char *data, u_char *status, u_char *msg)
 {
 	int	retlen = 0, xfer, phase;
@@ -742,8 +761,8 @@ scsi_timeout_error:
 	}
 }
 
-static int
-scsi_request(register volatile sci_regmap_t *regs,
+STATIC int
+si_dorequest(register volatile sci_regmap_t *regs,
 		int target, int lun, u_char *cmd, int cmdlen,
 		char *databuf, int datalen, int *sent, int *ret)
 {
@@ -753,14 +772,14 @@ scsi_request(register volatile sci_regmap_t *regs,
 
 	*sent = 0;
 
-	if ( ( r = select_target(regs, 7, target, 1) ) != SCSI_RET_SUCCESS) {
+	if ( ( r = si_select_target(regs, 7, target, 1) ) != SCSI_RET_SUCCESS) {
 		*ret = r;
 		SCI_CLR_INTR(regs);
 		switch (r) {
 		case SCSI_RET_RETRY:
 			return 0x08;
 		default:
-			printf("select_target(target %d, lun %d) failed(%d).\n",
+			printf("si_select_target(target %d, lun %d) failed(%d).\n",
 				target, lun, r);
 		case SCSI_RET_DEVICE_DOWN:
 			return -1;
@@ -769,7 +788,7 @@ scsi_request(register volatile sci_regmap_t *regs,
 
 	c = 0x80 | lun;
 
-	if ((cmd_bytes_sent = command_transfer(regs, cmdlen,
+	if ((cmd_bytes_sent = si_command_transfer(regs, cmdlen,
 				(u_char *) cmd, &stat, &c))
 	     != cmdlen) {
 		SCI_CLR_INTR(regs);
@@ -779,190 +798,47 @@ scsi_request(register volatile sci_regmap_t *regs,
 		return -1;
 	}
 
-	*sent=data_transfer(regs, datalen, (u_char *)databuf,
+	*sent=si_data_transfer(regs, datalen, (u_char *)databuf,
 				  &stat, &msg);
 
 	*ret = 0;
-
 	return stat;
 }
 
-static int
-scsi_gen(int adapter, int id, int lun, struct scsi_generic *cmd,
+STATIC int
+si_generic(int adapter, int id, int lun, struct scsi_generic *cmd,
   	 int cmdlen, void *databuf, int datalen)
 {
-    register struct ncr5380_softc *ncr5380 = ncrcd.cd_devs[adapter];
-    register volatile sci_regmap_t *regs = ncr5380->sc_regs;
-    int i,j,sent,ret;
+	register struct ncr5380_softc *ncr5380 = sicd.cd_devs[adapter];
+	register volatile sci_regmap_t *regs = ncr5380->sc_regs;
+	int i,j,sent,ret;
 
-  cmd->bytes[0] = ((u_char) lun << 5);
+	if (cmd->opcode == TEST_UNIT_READY)	/* XXX */
+		cmd->bytes[0] = ((u_char) lun << 5);
 
-  i = scsi_request(regs, id, lun, (u_char *) cmd, cmdlen,
-		   databuf, datalen, &sent, &ret);
+	i = si_dorequest(regs, id, lun, (u_char *) cmd, cmdlen,
+					 databuf, datalen, &sent, &ret);
 
-  return i;
+	return i;
 }
 
-static int
-scsi_group0(int adapter, int id, int lun, int opcode, int addr, int len,
+STATIC int
+si_group0(int adapter, int id, int lun, int opcode, int addr, int len,
 		int flags, caddr_t databuf, int datalen)
 {
-    register struct ncr5380_softc *ncr5380 = ncrcd.cd_devs[adapter];
-    register volatile sci_regmap_t *regs = ncr5380->sc_regs;
-  unsigned char cmd[6];
-  int i,j,sent,ret;
+	register struct ncr5380_softc *ncr5380 = sicd.cd_devs[adapter];
+	register volatile sci_regmap_t *regs = ncr5380->sc_regs;
+	unsigned char cmd[6];
+	int i,j,sent,ret;
 
-  cmd[0] = opcode;		/* Operation code           		*/
-  cmd[1] = (lun << 5) | ((addr >> 16) & 0x1F);	/* Lun & MSB of addr	*/
-  cmd[2] = (addr >> 8) & 0xFF;	/* addr					*/
-  cmd[3] = addr & 0xFF;		/* LSB of addr				*/
-  cmd[4] = len;			/* Allocation length			*/
-  cmd[5] = flags;		/* Link/Flag				*/
+	cmd[0] = opcode;		/* Operation code           		*/
+	cmd[1] = (lun << 5) | ((addr >> 16) & 0x1F);	/* Lun & MSB of addr	*/
+	cmd[2] = (addr >> 8) & 0xFF;	/* addr					*/
+	cmd[3] = addr & 0xFF;		/* LSB of addr				*/
+	cmd[4] = len;			/* Allocation length			*/
+	cmd[5] = flags;		/* Link/Flag				*/
 
-  i = scsi_request(regs, id, lun, cmd, 6, databuf, datalen, &sent, &ret);
+	i = si_dorequest(regs, id, lun, cmd, 6, databuf, datalen, &sent, &ret);
 
-  return i;
+	return i;
 }
-
-/* pseudo-dma action */
-
-#if PSEUDO_DMA
-
-#define TIMEOUT	1000000
-#define READY(poll) \
-	i = TIMEOUT; \
-	while ((regs->sci_csr & (SCI_CSR_DREQ|SCI_CSR_PHASE_MATCH)) \
-	       !=(SCI_CSR_DREQ|SCI_CSR_PHASE_MATCH)) \
-		if (   !(regs->sci_csr     & SCI_CSR_PHASE_MATCH) \
-		    || !(regs->sci_bus_csr & SCI_BUS_BSY) \
-		    || (i-- < 0) ) { \
-			printf("scsi.c: timeout counter = %d, len = %d count=%d (count-len %d).\n", \
-				i, len,count,count-len); \
-			printf("pdebug = %d,  1=out, 2=in",pdebug); \
-			/*dump_regs();*/ \
-			if (poll && !(regs->sci_csr & SCI_CSR_PHASE_MATCH)) { \
-				regs->sci_icmd &= ~SCI_ICMD_DATA; \
-				len--; \
-			} else { \
-				regs->sci_mode &= ~SCI_MODE_DMA; \
-			} \
-			return count-len; \
-		}
-
-#define W1	*byte_data = *data++
-#define W4	W1; W1; W1; W1;
-/*#define W4	*long_data = *((long*)data)++*/
-
-sci_pdma_out(regs, phase, count, data)
-	register volatile sci_regmap_t	*regs;
-	int					phase;
-	int					count;
-	u_char					*data;
-{
-	register volatile u_char	*byte_data = (u_char *)&regs->sci_data;
-	register int			len = count, i;
-
-pdebug=1;
-
-	if (count < 128)
-		return sci_data_out(regs, phase, count, data);
-
-	WAIT_FOR_BSY(regs);
-	regs->sci_mode |= SCI_MODE_DMA;
-	regs->sci_icmd |= SCI_ICMD_DATA;
-	regs->sci_dma_send = 0;
-
-	while ( len >= 64 ) {
-		READY(1); W1; READY(1); W1; READY(1); W1; READY(1); W1;
-		READY(1);
-		W4;W4;W4; W4;W4;W4;W4; W4;W4;W4;W4; W4;W4;W4;W4;
-		len -= 64;
-	}
-	while (len) {
-		READY(1);
-		W1;
-		len--;
-	}
-	i = TIMEOUT;
-	while ( ((regs->sci_csr & (SCI_CSR_DREQ|SCI_CSR_PHASE_MATCH))
-		== SCI_CSR_PHASE_MATCH) && --i);
-	if (!i)
-		printf("scsi.c:%d: timeout waiting for SCI_CSR_DREQ.\n", __LINE__);
-	*byte_data = 0;
-scsi_timeout_error:
-	regs->sci_mode &= ~SCI_MODE_DMA;
-	return count-len;
-}
-
-#undef  W1
-#undef  W4
-
-
-#define R1	*data++ = *byte_data
-#define R4	R1; R1; R1; R1;
-/*#define R4	(*((long *)data)++ = *long_data*/
-sci_pdma_in(regs, phase, count, data)
-	register volatile sci_regmap_t	*regs;
-	int					phase;
-	int					count;
-	u_char					*data;
-{
-	register volatile u_char	*byte_data = (u_char *) &regs->sci_data;
-	register int			len = count, i;
-
-pdebug=2;
-	if (count < 128)
-		return sci_data_in(regs, phase, count, data);
-
-/*	printf("Called sci_pdma_in(0x%x, 0x%x, %d, 0x%x.\n", regs, phase, count, data); */
-
-	WAIT_FOR_BSY(regs);
-	regs->sci_mode |= SCI_MODE_DMA;
-	regs->sci_icmd |= SCI_ICMD_DATA;
-	regs->sci_irecv = 0;
-
-	while (len >= 1024) {
-		READY(0);
-		R4;R4;R4;R4; R4;R4;R4;R4; R4;R4;R4;R4; R4;R4;R4;R4; 
-		R4;R4;R4;R4; R4;R4;R4;R4; R4;R4;R4;R4; R4;R4;R4;R4; /* 128 */
-		READY(0);
-		R4;R4;R4;R4; R4;R4;R4;R4; R4;R4;R4;R4; R4;R4;R4;R4; 
-		R4;R4;R4;R4; R4;R4;R4;R4; R4;R4;R4;R4; R4;R4;R4;R4; /* 256 */
-		READY(0);
-		R4;R4;R4;R4; R4;R4;R4;R4; R4;R4;R4;R4; R4;R4;R4;R4; 
-		R4;R4;R4;R4; R4;R4;R4;R4; R4;R4;R4;R4; R4;R4;R4;R4; /* 384 */
-		READY(0);
-		R4;R4;R4;R4; R4;R4;R4;R4; R4;R4;R4;R4; R4;R4;R4;R4; 
-		R4;R4;R4;R4; R4;R4;R4;R4; R4;R4;R4;R4; R4;R4;R4;R4; /* 512 */
-		READY(0);
-		R4;R4;R4;R4; R4;R4;R4;R4; R4;R4;R4;R4; R4;R4;R4;R4; 
-		R4;R4;R4;R4; R4;R4;R4;R4; R4;R4;R4;R4; R4;R4;R4;R4; /* 640 */
-		READY(0);
-		R4;R4;R4;R4; R4;R4;R4;R4; R4;R4;R4;R4; R4;R4;R4;R4; 
-		R4;R4;R4;R4; R4;R4;R4;R4; R4;R4;R4;R4; R4;R4;R4;R4; /* 768 */
-		READY(0);
-		R4;R4;R4;R4; R4;R4;R4;R4; R4;R4;R4;R4; R4;R4;R4;R4; 
-		R4;R4;R4;R4; R4;R4;R4;R4; R4;R4;R4;R4; R4;R4;R4;R4; /* 896 */
-		READY(0);
-		R4;R4;R4;R4; R4;R4;R4;R4; R4;R4;R4;R4; R4;R4;R4;R4; 
-		R4;R4;R4;R4; R4;R4;R4;R4; R4;R4;R4;R4; R4;R4;R4;R4; /*1024 */
-		len -= 1024;
-	}
-	while (len >= 128) {
-		READY(0);
-		R4;R4;R4;R4; R4;R4;R4;R4; R4;R4;R4;R4; R4;R4;R4;R4; 
-		R4;R4;R4;R4; R4;R4;R4;R4; R4;R4;R4;R4; R4;R4;R4;R4; /* 128 */
-		len -= 128;
-	}
-	while (len) {
-		READY(0);
-		R1;
-		len--;
-	}
-scsi_timeout_error:
-	regs->sci_mode &= ~SCI_MODE_DMA;
-	return count - len;
-}
-#undef R4
-#undef R1
-#endif
