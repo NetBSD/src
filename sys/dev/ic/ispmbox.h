@@ -1,5 +1,5 @@
-/* $NetBSD: ispmbox.h,v 1.16 1999/04/04 01:32:44 mjacob Exp $ */
-/* release_4_3_99 */
+/* $NetBSD: ispmbox.h,v 1.17 1999/05/12 16:45:58 mjacob Exp $ */
+/* release_5_11_99 */
 /*
  * Mailbox and Queue Entry Definitions for for Qlogic ISP SCSI adapters.
  *
@@ -83,7 +83,7 @@
 #define MBOX_GET_SBUS_PARAMS		0x0027
 #define MBOX_GET_TARGET_PARAMS		0x0028
 #define MBOX_GET_DEV_QUEUE_PARAMS	0x0029
-					/*  2a */
+#define	MBOX_GET_RESET_DELAY_PARAMS	0x002a
 					/*  2b */
 					/*  2c */
 					/*  2d */
@@ -94,13 +94,13 @@
 #define MBOX_SET_RETRY_COUNT		0x0032
 #define MBOX_SET_TAG_AGE_LIMIT		0x0033
 #define MBOX_SET_CLOCK_RATE		0x0034
-#define MBOX_SET_ACTIVE_NEG_STATE	0x0035
+#define MBOX_SET_ACT_NEG_STATE		0x0035
 #define MBOX_SET_ASYNC_DATA_SETUP_TIME	0x0036
 #define MBOX_SET_SBUS_CONTROL_PARAMS	0x0037
 #define		MBOX_SET_PCI_PARAMETERS	0x0037
 #define MBOX_SET_TARGET_PARAMS		0x0038
 #define MBOX_SET_DEV_QUEUE_PARAMS	0x0039
-					/*  3a */
+#define	MBOX_SET_RESET_DELAY_PARAMS	0x003a
 					/*  3b */
 					/*  3c */
 					/*  3d */
