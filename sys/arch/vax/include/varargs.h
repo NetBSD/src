@@ -31,19 +31,30 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)varargs.h	5.3 (Berkeley) 4/3/91
- *	$Id: varargs.h,v 1.1 1994/08/02 20:21:04 ragge Exp $
+ *	$Id: varargs.h,v 1.2 1994/10/15 04:58:14 cgd Exp $
  */
 
-#ifndef _MACHINE_VARARGS_H_
-#define	_MACHINE_VARARGS_H_
+#ifndef _VAX_VARARGS_H_
+#define	_VAX_VARARGS_H_
 
-#include <machine/stdarg.h>
+#include <machine/ansi.h>
 
-#undef	va_dcl
+typedef _BSD_VA_LIST_	va_list;
+
 #define	va_dcl	int va_alist;
 
-#undef	va_start
 #define	va_start(ap) \
 	ap = (char *)&va_alist
 
-#endif /* !_MACHINE_VARARGS_H_ */
+#ifdef KERNEL
+#define va_arg(ap, type) \
+        ((type *)(ap += sizeof(type)))[-1]
+#else
+#define va_arg(ap, type) \
+        ((type *)(ap += sizeof(type) < sizeof(int) ? \
+                (abort(), 0) : sizeof(type)))[-1]
+#endif
+
+#define	va_end(ap)
+
+#endif /* !_VAX_VARARGS_H_ */
