@@ -1,4 +1,4 @@
-/*	$NetBSD: pmax_trap.c,v 1.41 1997/03/25 19:06:02 jonathan Exp $	*/
+/*	$NetBSD: pmax_trap.c,v 1.42 1997/05/15 05:03:42 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -206,11 +206,12 @@ kn01_intr(mask, pc, statusReg, causeReg)
 		hardclock(&cf);
 		intrcnt[HARDCLOCK]++;
 
-		/* keep clock interrupts enabled */
+		/* keep clock interrupts enabled when we return */
 		causeReg &= ~MACH_INT_MASK_3;
 	}
-	/* Re-enable clock interrupts ASAP*/
-	splx(MACH_INT_MASK_3 | MACH_SR_INT_ENA_CUR);
+
+	/* If clock interrupts were enabled, re-enable them ASAP. */
+	splx(MACH_SR_INT_ENA_CUR | (statusReg & MACH_INT_MASK_3));
 
 #if NSII > 0
 	if (mask & MACH_INT_MASK_0) {
@@ -284,11 +285,13 @@ kn02_intr(mask, pc, statusReg, causeReg)
 		hardclock(&cf);
 		intrcnt[HARDCLOCK]++;
 
-		/* keep clock interrupts enabled */
+		/* keep clock interrupts enabled when we return */
 		causeReg &= ~MACH_INT_MASK_1;
 	}
-	/* Re-enable clock interrupts */
-	splx(MACH_INT_MASK_1 | MACH_SR_INT_ENA_CUR);
+
+	/* If clock interrups were enabled, re-enable them ASAP. */
+	splx(MACH_SR_INT_ENA_CUR | (statusReg & MACH_INT_MASK_1));
+
 	if (mask & MACH_INT_MASK_0) {
 		static int intr_map[8] = { SLOT0_INTR, SLOT1_INTR, SLOT2_INTR,
 					   /* these two bits reserved */
@@ -478,10 +481,12 @@ xine_intr(mask, pc, statusReg, causeReg)
 		cf.sr = statusReg;
 		hardclock(&cf);
 		intrcnt[HARDCLOCK]++;
+		/* keep clock interrupts enabled when we return */
 		causeReg &= ~MACH_INT_MASK_1;
 	}
-	/* reenable clock interrupts */
-	splx(MACH_INT_MASK_1 | MACH_SR_INT_ENA_CUR);
+
+	/* If clock interrups were enabled, re-enable them ASAP. */
+	splx(MACH_SR_INT_ENA_CUR | (statusReg & MACH_INT_MASK_1));
 
 	if (mask & MACH_INT_MASK_3) {
 		intr = *intrp;
@@ -618,10 +623,12 @@ kn03_intr(mask, pc, statusReg, causeReg)
 		hardclock(&cf);
 		intrcnt[HARDCLOCK]++;
 		old_buscycle = latched_cycle_cnt - old_buscycle;
+		/* keep clock interrupts enabled when we return */
 		causeReg &= ~MACH_INT_MASK_1;
 	}
-	/* reenable clock interrupts */
-	splx(MACH_INT_MASK_1 | MACH_SR_INT_ENA_CUR);
+
+	/* If clock interrups were enabled, re-enable them ASAP. */
+	splx(MACH_SR_INT_ENA_CUR | (statusReg & MACH_INT_MASK_1));
 
 	/*
 	 * Check for late clock interrupts (allow 10% slop). Be careful
