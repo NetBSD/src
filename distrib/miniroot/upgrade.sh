@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$NetBSD: upgrade.sh,v 1.16.2.1 1999/04/13 17:20:42 is Exp $
+#	$NetBSD: upgrade.sh,v 1.16.2.2 1999/04/13 19:38:18 pk Exp $
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -76,6 +76,29 @@ RELOCATED_FILES_13="${RELOCATED_FILES_13} /sbin/nfsiod /usr/sbin/nfsiod"
 RELOCATED_FILES_13="${RELOCATED_FILES_13} /sbin/mountd /usr/sbin/mountd"
 RELOCATED_FILES_13="${RELOCATED_FILES_13} /sbin/quotacheck /usr/sbin/quotacheck"
 RELOCATED_FILES_13="${RELOCATED_FILES_13} /sbin/rtquery /usr/sbin/rtquery"
+
+# Files that moved between 1.3 and 1.4
+RELOCATED_FILES_14="${RELOCATED_FILES_14} /sbin/newlfs /sbin/newfs_lfs"
+RELOCATED_FILES_14="${RELOCATED_FILES_14} /usr/games/chess /usr/games/chess"
+RELOCATED_FILES_14="${RELOCATED_FILES_14} /usr/games/hide/chess /usr/games/hide/chess"
+RELOCATED_FILES_14="${RELOCATED_FILES_14} /usr/share/games/gnuchess.book /usr/share/games/gnuchess.book"
+RELOCATED_FILES_14="${RELOCATED_FILES_14} /usr/share/games/atc/ATC_scores /usr/share/games/atc/ATC_scores"
+RELOCATED_FILES_14="${RELOCATED_FILES_14} /usr/share/games/atc/ATC_scores /usr/share/games/atc/ATC_scores"
+RELOCATED_FILES_14="${RELOCATED_FILES_14} /usr/lib/libamu.a /usr/lib/libamu.a"
+RELOCATED_FILES_14="${RELOCATED_FILES_14} /usr/lib/libamu_p.a /usr/lib/libamu_p.a"
+RELOCATED_FILES_14="${RELOCATED_FILES_14} /usr/lib/libamu_pic.a /usr/lib/libamu_pic.a"
+RELOCATED_FILES_14="${RELOCATED_FILES_14} /usr/lib/libbfd.a /usr/lib/libbfd.a"
+RELOCATED_FILES_14="${RELOCATED_FILES_14} /usr/lib/libbfd_pic.a /usr/lib/libbfd_pic.a"
+RELOCATED_FILES_14="${RELOCATED_FILES_14} /usr/lib/libg++.a /usr/lib/libg++.a"
+RELOCATED_FILES_14="${RELOCATED_FILES_14} /usr/lib/libg++_p.a /usr/lib/libg++_p.a"
+RELOCATED_FILES_14="${RELOCATED_FILES_14} /usr/lib/libg++_pic.a /usr/lib/libg++_pic.a"
+
+RELOCATED_FILES_14="${RELOCATED_FILES_14} /usr/sbin/gettable /usr/sbin/gettable"
+RELOCATED_FILES_14="${RELOCATED_FILES_14} /usr/sbin/dig /usr/bin/dig"
+RELOCATED_FILES_14="${RELOCATED_FILES_14} /usr/sbin/dnsquery /usr/bin/dnsquery"
+RELOCATED_FILES_14="${RELOCATED_FILES_14} /usr/sbin/htable /usr/bin/htable"
+RELOCATED_FILES_14="${RELOCATED_FILES_14} /usr/sbin/htable /usr/sbin/htable"
+RELOCATED_FILES_14="${RELOCATED_FILES_14} /usr/sbin/nslookup /usr/sbin/nslookup"
 
 rm_relocated_files()
 {
