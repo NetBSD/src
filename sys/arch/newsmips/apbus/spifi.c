@@ -1,4 +1,4 @@
-/*	$NetBSD: spifi.c,v 1.3 2001/04/26 15:52:00 tsubai Exp $	*/
+/*	$NetBSD: spifi.c,v 1.4 2001/07/26 11:44:06 tsubai Exp $	*/
 
 /*-
  * Copyright (c) 2000 Tsubai Masanari.  All rights reserved.
@@ -316,6 +316,9 @@ spifi_poll(sc)
 
 	printf("spifi_poll: not implemented yet\n");
 	delay(10000);
+	scb->status = SCSI_OK;
+	scb->resid = 0;
+	spifi_done(sc);
 	return 0;
 
 	if (xs == NULL)
