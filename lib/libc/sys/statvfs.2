@@ -1,4 +1,4 @@
-.\"	$NetBSD: statvfs.2,v 1.1 2004/04/21 01:05:32 christos Exp $
+.\"	$NetBSD: statvfs.2,v 1.2 2004/04/21 12:18:23 wiz Exp $
 .\"
 .\" Copyright (c) 1989, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -35,7 +35,7 @@
 .Sh NAME
 .Nm statvfs ,
 .Nm statvfs1 ,
-.Nm fstatvfs,
+.Nm fstatvfs ,
 .Nm fstatvfs1
 .Nd get file system statistics
 .Sh LIBRARY
@@ -100,7 +100,7 @@ specified as the
 argument.
 .Sh RETURN VALUES
 Upon successful completion, a value of 0 is returned.
-Otherwise, -1 is returned and the global variable
+Otherwise, \-1 is returned and the global variable
 .Va errno
 is set to indicate the error.
 .Sh ERRORS
@@ -117,11 +117,11 @@ is not a directory.
 The length of a component of
 .Fa path
 exceeds
-.Dv {NAME_MAX}
+.Dv NAME_MAX
 characters, or the length of
 .Fa path
 exceeds
-.Dv {PATH_MAX}
+.Dv PATH_MAX
 characters.
 .It Bq Er ENOENT
 The file referred to by
@@ -168,7 +168,7 @@ The
 and
 .Fn fstatvfs1
 functions first appeared in
-.Nx 2.1 
+.Nx 2.1
 to replace
 the
 .Fn statfs
