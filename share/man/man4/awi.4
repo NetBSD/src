@@ -1,7 +1,7 @@
-.\"     $NetBSD: awi.4,v 1.1 1999/11/04 19:36:01 sommerfeld Exp $
+.\"     $NetBSD: awi.4,v 1.2 1999/12/10 15:17:05 sommerfeld Exp $
 .\"
 .\"
-.\"	$Id: awi.4,v 1.1 1999/11/04 19:36:01 sommerfeld Exp $
+.\"	$Id: awi.4,v 1.2 1999/12/10 15:17:05 sommerfeld Exp $
 .\"
 .Dd October 31, 1999
 .Dt AWI 4 
@@ -16,7 +16,11 @@ Bay Networks BayStack 650 IEEE 802.11 PCMCIA driver
 The
 .Nm
 driver provides support for BayStack 650 IEEE 802.11 Frequency Hopping
-PCCARD adapters. 
+PCCARD adapters.  It is also reported to support the Netwave AirSurfer
+.Dq Plus 
+The original Xircom Netwave AirSurfer is supported by the 
+.Xr cnw 4
+driver.
 .Pp
 The BayStack 650 is based on an AMD 79c930 controller, which provides
 access to 32kb of memory shared between the controller and the host.
@@ -80,15 +84,17 @@ The access point the card was most recently associated with has
 forgotten about us.
 .El
 .Sh BUGS
+.Pp
 Doesn't support ad-hoc mode or WEP.
-Round trip times seem higher than what one might expect.
+.Pp
+Doesn't yet support the BayStack 660 Direct Sequence cards.
 .Sh SEE ALSO
 .Xr arp 4 ,
 .Xr netintro 4 , 
 .Xr pcmcia 4 ,
 .Xr wi 4 ,
-.Xr ifconfig 8 ,
-.Xr wiconfig 8
+.Xr cnw 4 ,
+.Xr ifconfig 8
 .Rs
 .%T Am79C930 PCnet Mobile Single-Chip Wireless LAN Media Access Controller
 .%O http://www.amd.com
