@@ -33,7 +33,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char *sccsid = "from: @(#)getttyent.c	5.10 (Berkeley) 3/23/91";*/
-static char *rcsid = "$Id: getttyent.c,v 1.4 1993/11/24 19:43:56 jtc Exp $";
+static char *rcsid = "$Id: getttyent.c,v 1.5 1994/03/12 06:38:55 cgd Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <ttyent.h>
@@ -64,7 +64,7 @@ getttyent()
 	static struct ttyent tty;
 	register int c;
 	register char *p;
-#define	MAXLINELENGTH	100
+#define	MAXLINELENGTH	200
 	static char line[MAXLINELENGTH];
 	static char *skip(), *value();
 
@@ -111,6 +111,12 @@ getttyent()
 			tty.ty_status |= TTY_SECURE;
 		else if (vcmp(_TTYS_WINDOW))
 			tty.ty_window = value(p);
+		else if (vcmp(_TTYS_LOCAL))
+			tty.ty_status |= TTY_LOCAL;
+		else if (vcmp(_TTYS_RTSCTS))
+			tty.ty_status |= TTY_RTSCTS;
+		else if (vcmp(_TTYS_SOFTCAR))
+			tty.ty_status |= TTY_SOFTCAR;
 		else
 			break;
 	}
