@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs.h,v 1.17 1999/11/06 20:33:05 perseant Exp $	*/
+/*	$NetBSD: lfs.h,v 1.18 1999/12/08 23:17:31 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -185,13 +185,13 @@ struct dlfs {
         u_int32_t dlfs_frag;      /* 28: number of frags in a block in fs */
 
 /* Checkpoint region. */
-        ino_t     dlfs_free;      /* 32: start of the free list */
+        u_int32_t dlfs_free;      /* 32: start of the free list */
         u_int32_t dlfs_bfree;     /* 36: number of free disk blocks */
         u_int32_t dlfs_nfiles;    /* 40: number of allocated inodes */
         int32_t   dlfs_avail;     /* 44: blocks available for writing */
         u_int32_t dlfs_uinodes;   /* 48: inodes in cache not yet on disk */
         ufs_daddr_t  dlfs_idaddr; /* 52: inode file disk address */
-        ino_t     dlfs_ifile;     /* 56: inode file inode number */
+        u_int32_t dlfs_ifile;     /* 56: inode file inode number */
         ufs_daddr_t  dlfs_lastseg; /* 60: address of last segment written */
         ufs_daddr_t  dlfs_nextseg; /* 64: address of next segment to write */
         ufs_daddr_t  dlfs_curseg; /* 68: current segment being written */
