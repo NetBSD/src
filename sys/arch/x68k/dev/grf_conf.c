@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_conf.c,v 1.2 1997/10/12 14:44:12 oki Exp $	*/
+/*	$NetBSD: grf_conf.c,v 1.3 1998/08/06 14:08:53 minoura Exp $	*/
 
 /*
  * Copyright (c) 1991 University of Utah.
@@ -49,7 +49,8 @@
 #include <sys/types.h>
 #include <sys/device.h>
 
-#include <x68k/dev/grfioctl.h>
+#include <machine/grfioctl.h>
+
 #include <x68k/dev/grfvar.h>
 #include <x68k/x68k/iodevice.h>
 /*#include <x68k/dev/grfreg.h>*/
