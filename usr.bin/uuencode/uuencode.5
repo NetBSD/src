@@ -1,4 +1,4 @@
-.\"	$NetBSD: uuencode.5,v 1.6 2001/12/08 19:21:02 wiz Exp $
+.\"	$NetBSD: uuencode.5,v 1.7 2002/08/06 15:26:04 soren Exp $
 .\"
 .\" Copyright (c) 1989, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -104,8 +104,8 @@ The remaining characters in the line represent the data of the input
 file encoded as follows.
 Input data are broken into groups of three eight-bit bytes,
 which are then interpreted together as a 24-bit block.
-The first bit of the block is the lowest order bit of the first character,
-and the last is the highest order bit of the third character.
+The first bit of the block is the highest order bit of the first character,
+and the last is the lowest order bit of the third character.
 This block is then broken into four six-bit integers which are encoded one by
 one starting from the first bit of the block.
 The result is a four character
