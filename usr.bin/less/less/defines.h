@@ -1,4 +1,4 @@
-/*	$NetBSD: defines.h,v 1.1.1.2 1997/04/22 13:45:15 mrg Exp $	*/
+/*	$NetBSD: defines.h,v 1.1.1.3 1997/09/21 12:22:47 mrg Exp $	*/
 
 /* defines.h.  Generated automatically by configure.  */
 /* defines.h.in.  Generated automatically from configure.in by autoheader.  */
@@ -134,11 +134,6 @@
 /* #undef HAVE_SGSTAT_H */
 
 /*
- * HAVE_STAT is 1 if your system has the stat() call.
- */
-#define	HAVE_STAT	1
-
-/*
  * HAVE_PERROR is 1 if your system has the perror() call.
  * (Actually, if it has sys_errlist, sys_nerr and errno.)
  */
@@ -153,6 +148,12 @@
  * HAVE_SHELL is 1 if your system supports a SHELL command interpreter.
  */
 #define	HAVE_SHELL	1
+
+/*
+ * Default shell metacharacters and meta-escape character.
+ */
+#define	DEF_METACHARS	"; \t\n'\"()<>|&^`\\"
+#define	DEF_METAESCAPE	"\\"
 
 /* 
  * HAVE_DUP is 1 if your system has the dup() call.
@@ -245,8 +246,14 @@
 /* Define if you have the memcpy function.  */
 #define HAVE_MEMCPY 1
 
+/* Define if you have the popen function.  */
+#define HAVE_POPEN 1
+
 /* Define if you have the sigsetmask function.  */
 #define HAVE_SIGSETMASK 1
+
+/* Define if you have the stat function.  */
+#define HAVE_STAT 1
 
 /* Define if you have the strchr function.  */
 #define HAVE_STRCHR 1

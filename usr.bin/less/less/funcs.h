@@ -1,4 +1,4 @@
-/*	$NetBSD: funcs.h,v 1.1.1.2 1997/04/22 13:45:46 mrg Exp $	*/
+/*	$NetBSD: funcs.h,v 1.1.1.3 1997/09/21 12:23:14 mrg Exp $	*/
 
 	public void strtcpy ();
 	public char * save ();
@@ -13,7 +13,9 @@
 	public void deinit ();
 	public void home ();
 	public void add_line ();
+	public void remove_top ();
 	public void lower_left ();
+	public void check_winch ();
 	public void goto_line ();
 	public void vbell ();
 	public void bell ();
@@ -58,6 +60,7 @@
 	public void cmd_putstr ();
 	public int len_cmdbuf ();
 	public void set_mlist ();
+	public void cmd_addhist ();
 	public void cmd_accept ();
 	public int cmd_char ();
 	public int cmd_int ();
@@ -90,10 +93,13 @@
 	public int edit_next ();
 	public int edit_prev ();
 	public int edit_index ();
+	public IFILE save_curr_ifile ();
+	public void unsave_ifile ();
 	public void reedit_ifile ();
 	public int edit_stdin ();
 	public void cat_file ();
 	public void use_logfile ();
+	public char * unquote_file ();
 	public char * homefile ();
 	public char * fexpand ();
 	public char * fcomplete ();
@@ -101,16 +107,7 @@
 	public char * lglob ();
 	public char * open_altfile ();
 	public void close_altfile ();
-	public char * lglob ();
-	public char * open_altfile ();
-	public void close_altfile ();
-	public char * lglob ();
-	public char * open_altfile ();
-	public void close_altfile ();
-	public char * bad_file ();
-	public POSITION filesize ();
-	public char * bad_file ();
-	public POSITION filesize ();
+	public int is_dir ();
 	public char * bad_file ();
 	public POSITION filesize ();
 	public void forw ();
@@ -130,6 +127,8 @@
 	public void get_pos ();
 	public void set_open ();
 	public int opened ();
+	public void hold_ifile ();
+	public int held_ifile ();
 	public void * get_filestate ();
 	public void set_filestate ();
 	public void if_dump ();
@@ -175,6 +174,7 @@
 	public void opt_i ();
 	public void opt__V ();
 	public void opt_D ();
+	public void opt_quote ();
 	public void opt_query ();
 	public int get_swindow ();
 	public void scan_option ();
@@ -229,6 +229,7 @@
 	public void init_signals ();
 	public void psignals ();
 	public void findtag ();
+	public int edit_tagfile ();
 	public POSITION tagsearch ();
 	public void open_getchr ();
 	public void close_getchr ();

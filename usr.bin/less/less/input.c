@@ -1,4 +1,4 @@
-/*	$NetBSD: input.c,v 1.1.1.2 1997/04/22 13:45:46 mrg Exp $	*/
+/*	$NetBSD: input.c,v 1.1.1.3 1997/09/21 12:23:15 mrg Exp $	*/
 
 /*
  * Copyright (c) 1984,1985,1989,1994,1995,1996  Mark Nudelman

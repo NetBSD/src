@@ -1,4 +1,4 @@
-/*	$NetBSD: output.c,v 1.1.1.2 1997/04/22 13:45:50 mrg Exp $	*/
+/*	$NetBSD: output.c,v 1.1.1.3 1997/09/21 12:23:18 mrg Exp $	*/
 
 /*
  * Copyright (c) 1984,1985,1989,1994,1995,1996  Mark Nudelman
@@ -135,16 +135,50 @@ flush()
 	register int n;
 	register int fd;
 
+	n = ob - obuf;
+	if (n == 0)
+		return;
 #if MSDOS_COMPILER==WIN32C
 	if (is_tty && any_display)
-	{
+        {
+		char *p;
 		DWORD nwritten = 0;
+		CONSOLE_SCREEN_BUFFER_INFO scr;
+		DWORD nchars;
+		COORD cpos;
 		extern HANDLE con_out;
+
 		*ob = '\0';
-		WriteConsole(con_out, obuf, strlen(obuf), &nwritten, NULL);
+		GetConsoleScreenBufferInfo(con_out, &scr);
+		if (scr.dwCursorPosition.Y != scr.srWindow.Bottom ||
+		    (p = strchr(obuf, '\n')) == NULL)
+		{
+			WriteConsole(con_out, obuf, strlen(obuf), 
+					&nwritten, NULL);
+		} else
+		{
+			/*
+			 * To avoid color problems, if we're writing a
+			 * newline at the bottom of the screen, we write
+			 * only up to the newline, then fill the bottom
+			 * line with the correct attribute, then write
+			 * the rest.  When Windows-95 scrolls, it takes the
+			 * attributes for the new line from the first char 
+			 * of the (previously) bottom line.
+			 */
+			WriteConsole(con_out, obuf, p - obuf + 1, 
+					&nwritten, NULL);
+			cpos.X = 0;
+			cpos.Y = scr.dwCursorPosition.Y;
+			FillConsoleOutputAttribute(con_out, scr.wAttributes,
+						sc_width, cpos, &nchars);
+			WriteConsole(con_out, p + 1, strlen(p + 1), 
+					&nwritten, NULL);
+		}
 		ob = obuf;
 		return;
-	}
+        }
+
 #else
 #if MSDOS_COMPILER==MSOFTC
 	if (is_tty && any_display)
@@ -155,7 +189,7 @@ flush()
 		return;
 	}
 #else
-#if MSDOS_COMPILER==BORLANDC
+#if MSDOS_COMPILER==BORLANDC || MSDOS_COMPILER==DJGPPC
 	if (is_tty && any_display)
 	{
 		*ob = '\0';
@@ -166,9 +200,6 @@ flush()
 #endif
 #endif
 #endif
-	n = ob - obuf;
-	if (n == 0)
-		return;
 	fd = (any_display) ? 1 : 2;
 	if (write(fd, obuf, n) != n)
 		screen_trashed = 1;
@@ -182,8 +213,6 @@ flush()
 putchr(c)
 	int c;
 {
-	if (ob >= &obuf[sizeof(obuf)])
-		flush();
 	if (need_clr)
 	{
 		need_clr = 0;
@@ -198,6 +227,12 @@ putchr(c)
 		putchr(0x0A);
 #endif
 #endif
+	/*
+	 * Some versions of flush() write to *ob, so we must flush
+	 * when we are still one char from the end of obuf.
+	 */
+	if (ob >= &obuf[sizeof(obuf)-1])
+		flush();
 	*ob++ = c;
 	return (c);
 }
@@ -324,7 +359,7 @@ error(fmt, parg)
 
 	errmsgs++;
 
-	if (any_display)
+	if (any_display && is_tty)
 	{
 		clear_bot();
 		so_enter();
@@ -333,7 +368,7 @@ error(fmt, parg)
 
 	col += iprintf(fmt, parg);
 
-	if (!any_display)
+	if (!(any_display && is_tty))
 	{
 		putchr('\n');
 		return;
@@ -391,13 +426,13 @@ query(fmt, parg)
 	register int c;
 	int col = 0;
 
-	if (any_display)
+	if (any_display && is_tty)
 		clear_bot();
 
 	(void) iprintf(fmt, parg);
 	c = getchr();
 
-	if (!any_display)
+	if (!(any_display && is_tty))
 	{
 		putchr('\n');
 		return (c);

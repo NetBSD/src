@@ -1,4 +1,4 @@
-/*	$NetBSD: charset.c,v 1.1.1.2 1997/04/22 13:45:28 mrg Exp $	*/
+/*	$NetBSD: charset.c,v 1.1.1.3 1997/09/21 12:22:58 mrg Exp $	*/
 
 /*
  * Copyright (c) 1984,1985,1989,1994,1995,1996  Mark Nudelman
@@ -165,7 +165,7 @@ ilocale()
 {
 	register int c;
 
-	setlocale(LC_CTYPE, "");
+	setlocale(LC_ALL, "");
 	for (c = 0;  c < sizeof(chardef);  c++)
 	{
 		if (isprint(c))
@@ -249,7 +249,7 @@ init_charset()
  */
 	public int
 binary_char(c)
-	int c;
+	unsigned char c;
 {
 	c &= 0377;
 	return (chardef[c] & IS_BINARY_CHAR);

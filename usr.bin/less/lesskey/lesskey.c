@@ -1,4 +1,4 @@
-/*	$NetBSD: lesskey.c,v 1.1.1.2 1997/04/22 13:45:56 mrg Exp $	*/
+/*	$NetBSD: lesskey.c,v 1.1.1.3 1997/09/21 12:23:24 mrg Exp $	*/
 
 /*
  * Copyright (c) 1984,1985,1989,1994,1995,1996  Mark Nudelman
@@ -185,8 +185,8 @@ struct cmdname editnames[] =
 	"up",			EC_UP,
 	"word-backspace",	EC_W_BACKSPACE,
 	"word-delete",		EC_W_DELETE,
-	"word-left",		EC_W_RIGHT,
-	"word-right",		EC_W_LEFT,
+	"word-left",		EC_W_LEFT,
+	"word-right",		EC_W_RIGHT,
 	NULL,			0
 };
 

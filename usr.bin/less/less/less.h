@@ -1,4 +1,4 @@
-/*	$NetBSD: less.h,v 1.1.1.2 1997/04/22 13:45:47 mrg Exp $	*/
+/*	$NetBSD: less.h,v 1.1.1.3 1997/09/21 12:23:16 mrg Exp $	*/
 
 /*
  * Copyright (c) 1984,1985,1989,1994,1995,1996  Mark Nudelman
@@ -36,7 +36,8 @@
  */
 #define	MSOFTC		1	/* Microsoft C */
 #define	BORLANDC	2	/* Borland C */
-#define	WIN32C		3	/* Windows (Borland C) */
+#define	WIN32C		3	/* Windows (Borland C or Microsoft C) */
+#define	DJGPPC		4	/* DJGPP C */
 
 /*
  * Include the file of compile-time options.
@@ -95,7 +96,7 @@
 #include <modes.h>
 #include <strings.h>
 #endif
-#if MSDOS_COMPILER==WIN32C
+#if MSDOS_COMPILER==WIN32C || MSDOS_COMPILER==DJGPPC
 #include <io.h>
 #endif
 
@@ -128,7 +129,7 @@ void free();
 #define	OPT_ON		1
 #define	OPT_ONPLUS	2
 
-#ifndef HAVE_MEMCPY
+#if !HAVE_MEMCPY
 #ifndef memcpy
 #define	memcpy(to,from,len)	bcopy((from),(to),(len))
 #endif
@@ -175,17 +176,29 @@ typedef long		POSITION;
 #endif
 #endif
 
-#if MSDOS_COMPILER || OS2
-#define	OPEN_TTYIN()	open("CON", OPEN_READ)
+/*
+ * Set a file descriptor to binary mode.
+ */
+#if MSDOS_COMPILER==MSOFTC
+#define	SET_BINARY(f)	_setmode(f, _O_BINARY);
 #else
-#define	OPEN_TTYIN()	open("/dev/tty", OPEN_READ)
+#if MSDOS_COMPILER
+#define	SET_BINARY(f)	setmode(f, O_BINARY)
+#else
+#define	SET_BINARY(f)
+#endif
 #endif
 
+/*
+ * Does the shell treat "?" as a metacharacter?
+ */
 #if MSDOS_COMPILER || OS2 || _OSK
 #define	SHELL_META_QUEST 0
 #else
 #define	SHELL_META_QUEST 1
 #endif
+
+#define	SPACES_IN_FILENAMES 1
 
 /*
  * An IFILE represents an input file.
@@ -300,3 +313,4 @@ struct textlist
 #define	FAKE_HELPFILE	"@/\\less/\\help/\\file/\\@"
 
 #include "funcs.h"
+

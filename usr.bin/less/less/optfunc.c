@@ -1,4 +1,4 @@
-/*	$NetBSD: optfunc.c,v 1.1.1.2 1997/04/22 13:45:21 mrg Exp $	*/
+/*	$NetBSD: optfunc.c,v 1.1.1.3 1997/09/21 12:22:52 mrg Exp $	*/
 
 /*
  * Copyright (c) 1984,1985,1989,1994,1995,1996  Mark Nudelman
@@ -52,9 +52,10 @@ extern int pr_type;
 extern int plusoption;
 extern int swindow;
 extern int sc_height;
-extern int any_display;
 extern int secure;
 extern int dohelp;
+extern char openquote;
+extern char closequote;
 extern char *prproto[];
 extern char *eqproto;
 extern char *hproto;
@@ -66,7 +67,6 @@ extern int logfile;
 #endif
 #if TAGS
 public char *tagoption = NULL;
-extern char *tagfile;
 extern char *tags;
 extern int jump_sline;
 #endif
@@ -121,8 +121,9 @@ opt_o(type, s)
 			error("No log file", NULL_PARG);
 		else
 		{
-			parg.p_string = namelogfile;
+			parg.p_string = unquote_file(namelogfile);
 			error("Log file \"%s\"", &parg);
+			free(parg.p_string);
 		}
 		break;
 	}
@@ -182,8 +183,9 @@ opt_k(type, s)
 	case INIT:
 		if (lesskey(s))
 		{
-			parg.p_string = s;
+			parg.p_string = unquote_file(s);
 			error("Cannot use lesskey file \"%s\"", &parg);
+			free(parg.p_string);
 		}
 		break;
 	}
@@ -215,16 +217,15 @@ opt_t(type, s)
 			break;
 		}
 		findtag(skipsp(s));
-		if (tagfile == NULL)
-			break;
-		save_ifile = curr_ifile;
-		if (edit(tagfile))
+		save_ifile = save_curr_ifile();
+		if (edit_tagfile())
 			break;
 		if ((pos = tagsearch()) == NULL_POSITION)
 		{
 			reedit_ifile(save_ifile);
 			break;
 		}
+		unsave_ifile(save_ifile);
 		jump_loc(pos, jump_sline);
 		break;
 	}
@@ -250,8 +251,9 @@ opt__T(type, s)
 		tags = lglob(s);
 		break;
 	case QUERY:
-		parg.p_string = tags;
+		parg.p_string = unquote_file(tags);
 		error("Tags file \"%s\"", &parg);
+		free(parg.p_string);
 		break;
 	}
 }
@@ -461,6 +463,42 @@ opt_D(type, s)
 	}
 }
 #endif
+
+/*
+ * Handler for the -" option.
+ */
+	public void
+opt_quote(type, s)
+	int type;
+	register char *s;
+{
+	char buf[3];
+	PARG parg;
+
+	switch (type)
+	{
+	case INIT:
+	case TOGGLE:
+		if (s[1] != '\0' && s[2] != '\0')
+		{
+			error("-\" must be followed by 1 or 2 chars", NULL_PARG);
+			return;
+		}
+		openquote = s[0];
+		if (s[1] == '\0')
+			closequote = openquote;
+		else
+			closequote = s[1];
+		break;
+	case QUERY:
+		buf[0] = openquote;
+		buf[1] = closequote;
+		buf[2] = '\0';
+		parg.p_string = buf;
+		error("quotes %s", &parg);
+		break;
+	}
+}
 
 /*
  * "-?" means display a help message.

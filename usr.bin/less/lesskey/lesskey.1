@@ -1,4 +1,4 @@
-.TH LESSKEY 1 "Version 321: 18 Jul 96"
+.TH LESSKEY 1 "Version 332: 22 Apr 97"
 .SH NAME
 lesskey \- specify key bindings for less
 .SH SYNOPSIS
@@ -86,6 +86,10 @@ string is parsed, just as if it were typed in to
 This feature can be used in certain cases to extend
 the functionality of a command.
 For example, see the "{" and ":t" commands in the example below.
+The extra string has a special meaning for the "quit" action:
+when
+.I less
+quits, first character of the extra string is used as its exit status.
 
 .SH EXAMPLE
 The following input file describes the set of
@@ -292,4 +296,4 @@ This NUL character should be represented as \e340 in a lesskey file.
 .SH COPYRIGHT
 Copyright (c) 1984,1985,1989,1994,1995  Mark Nudelman
 .br
-Comments to: markn@3do.com
+Comments to: markn@fog.net
