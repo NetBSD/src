@@ -1,4 +1,4 @@
-/*	$NetBSD: ebus.c,v 1.13 2000/06/26 14:21:00 mrg Exp $	*/
+/*	$NetBSD: ebus.c,v 1.14 2000/06/29 07:37:54 mrg Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Matthew R. Green
@@ -63,8 +63,6 @@ int ebus_debug = 0;
 #include <sys/malloc.h>
 #include <sys/systm.h>
 #include <sys/time.h>
-
-#include <vm/vm.h>
 
 #define _SPARC_BUS_DMA_PRIVATE
 #include <machine/bus.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: kgdb_stub.c,v 1.3 1998/09/05 23:57:28 eeh Exp $ */
+/*	$NetBSD: kgdb_stub.c,v 1.4 2000/06/29 07:37:57 mrg Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -56,8 +56,6 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/buf.h>
-
-#include <vm/vm.h>
 
 #include <machine/ctlreg.h>
 #include <machine/psl.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: iommu.c,v 1.18 2000/06/26 14:21:00 mrg Exp $	*/
+/*	$NetBSD: iommu.c,v 1.19 2000/06/29 07:37:55 mrg Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Matthew R. Green
@@ -119,7 +119,6 @@
 #include <sys/malloc.h>
 #include <sys/systm.h>
 #include <sys/device.h>
-#include <vm/vm.h>
 
 #include <uvm/uvm_extern.h>
 

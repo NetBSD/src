@@ -1,4 +1,4 @@
-/*	$NetBSD: tcx.c,v 1.4 2000/06/26 04:56:09 simonb Exp $ */
+/*	$NetBSD: tcx.c,v 1.5 2000/06/29 07:37:55 mrg Exp $ */
 
 /* 
  *  Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -59,8 +59,6 @@
 #include <sys/proc.h>
 #include <sys/syslog.h>
 #endif
-
-#include <vm/vm.h>
 
 #include <machine/autoconf.h>
 #include <machine/pmap.h>

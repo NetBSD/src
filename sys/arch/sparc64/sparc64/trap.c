@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.46 2000/06/26 14:21:01 mrg Exp $ */
+/*	$NetBSD: trap.c,v 1.47 2000/06/29 07:38:01 mrg Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -71,8 +71,6 @@
 #ifdef KTRACE
 #include <sys/ktrace.h>
 #endif
-
-#include <vm/vm.h>
 
 #include <uvm/uvm_extern.h>
 

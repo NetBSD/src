@@ -1,4 +1,4 @@
-/*	$NetBSD: sbus.c,v 1.32 2000/06/24 20:48:37 eeh Exp $ */
+/*	$NetBSD: sbus.c,v 1.33 2000/06/29 07:37:55 mrg Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -114,7 +114,6 @@
 #include <sys/malloc.h>
 #include <sys/systm.h>
 #include <sys/device.h>
-#include <vm/vm.h>
 
 #include <machine/bus.h>
 #include <sparc64/sparc64/cache.h>
@@ -517,7 +516,7 @@ sbus_establish(sd, dev)
 }
 
 /*
- * Reset the given sbus. (???)
+ * Reset the given sbus.
  */
 void
 sbusreset(sbus)

@@ -1,4 +1,4 @@
-/*	$NetBSD: upa.c,v 1.6 2000/01/14 14:33:31 pk Exp $ */
+/*	$NetBSD: upa.c,v 1.7 2000/06/29 07:37:55 mrg Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -90,7 +90,6 @@
 #include <sys/malloc.h>
 #include <sys/systm.h>
 #include <sys/device.h>
-#include <vm/vm.h>
 
 #include <machine/bus.h>
 #include <sparc64/dev/upavar.h>
