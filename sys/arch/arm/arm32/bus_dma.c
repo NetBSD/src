@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.11.4.1 2002/12/07 19:23:21 he Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.11.4.2 2002/12/07 19:33:41 he Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -665,7 +665,7 @@ _bus_dmamem_map(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs,
 				cpu_dcache_wbinv_range(va, NBPG);
 				cpu_drain_writebuf();
 				ptep = vtopte(va);
-				*ptep &= ~(L2_B | L2_C);
+				*ptep &= ~pte_l2_s_cache_mask;
 				tlb_flush();
 			}
 #ifdef DEBUG_DMA
