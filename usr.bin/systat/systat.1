@@ -1,4 +1,4 @@
-.\"	$NetBSD: systat.1,v 1.15 1999/08/02 17:27:28 ad Exp $
+.\"	$NetBSD: systat.1,v 1.16 1999/11/15 06:16:57 simonb Exp $
 .\"
 .\" Copyright (c) 1985, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -96,18 +96,19 @@ instead of the default
 The
 .Ar display
 argument expects to be one of:
+.Ic bufcache ,
+.Ic inet.icmp ,
+.Ic inet.ip ,
+.Ic inet.tcp ,
+.Ic inet.tcpsyn ,
+.Ic iostat ,
+.Ic mbufs ,
+.Ic netstat ,
 .Ic pigs ,
 .Ic ps ,
-.Ic iostat ,
-.Ic swap ,
-.Ic mbufs ,
-.Ic vmstat ,
-.Ic inet.ip ,
-.Ic inet.icmp ,
-.Ic inet.tcp ,
-.Ic inet.tcpsyn
+.Ic swap
 or
-.Ic netstat .
+.Ic vmstat .
 These displays can also be requested interactively and are described in
 full detail below.
 .It Ar refresh-interval
@@ -133,6 +134,8 @@ the lower window and the refresh interval.
 .It Ic \&^Z
 Stop
 .Nm ""  .
+.It Ic ? , Ic h
+Print the names of the available displays on the command line.
 .It Ic \&:
 Move the cursor to the command line and interpret the input
 line typed as a command.  While entering a command the
@@ -168,6 +171,11 @@ Exit
 .Pp
 The available displays are:
 .Bl -tag -width Ic
+.It Ic bufcache
+Display, in the lower window, statistics about the file system buffers.
+Statistics for each filesytem that has active buffers include the number
+of buffers for that file system, the number of active kilobytes in those
+buffers and the total size of the buffers for that filesystem.
 .It Ic inet.icmp
 Display ICMP statistics.
 .It Ic inet.ip
@@ -178,20 +186,6 @@ Display TCP statistics.
 Display statistics about the 
 .Tn TCP
 ``syncache''.
-.It Ic pigs
-Display, in the lower window, those processes resident in main
-memory and getting the
-largest portion of the processor (the default display).
-When less than 100% of the
-processor is scheduled to user processes, the remaining time
-is accounted to the ``idle'' process.
-.It Ic ps
-Display, in the lower window, the same information provided
-by the command
-.Xr ps 1
-with the flags
-.Fl aux .
-
 .It Ic iostat
 Display, in the lower window, statistics about processor use
 and disk throughput.  Statistics on processor use appear as
@@ -222,6 +216,71 @@ statistics in bar graph form (default).
 Toggle the display of time in disk activity (the default is to
 not display time).
 .El
+.It Ic mbufs
+Display, in the lower window, the number of mbufs allocated
+for particular uses, i.e. data, socket structures, etc.
+.It Ic netstat
+Display, in the lower window, network connections.  By default,
+network servers awaiting requests are not displayed.  Each address
+is displayed in the format ``host.port'', with each shown symbolically,
+when possible.  It is possible to have addresses displayed numerically,
+limit the display to a set of ports, hosts, and/or protocols
+(the minimum unambiguous prefix may be supplied):
+.Pp
+.Bl -tag -width Ar -compact
+.It Cm all
+Toggle the displaying of server processes awaiting requests (this
+is the equivalent of the
+.Fl a
+flag to
+.Ar netstat  1  ) .
+.It Cm numbers
+Display network addresses numerically.
+.It Cm names
+Display network addresses symbolically.
+.It Ar protocol
+Display only network connections using the indicated protocol
+(currently either ``tcp'' or ``udp'').
+.It Cm ignore Op Ar items
+Do not display information about connections associated with
+the specified hosts or ports.  Hosts and ports may be specified
+by name (``vangogh'', ``ftp''), or numerically.  Host addresses
+use the Internet dot notation (``128.32.0.9'').  Multiple items
+may be specified with a single command by separating them with
+spaces.
+.It Cm display Op Ar items
+Display information about the connections associated with the
+specified hosts or ports.  As for
+.Ar ignore  ,
+.Op Ar items
+may be names or numbers.
+.It Cm show Op Ar ports\&|hosts
+Show, on the command line, the currently selected protocols,
+hosts, and ports.  Hosts and ports which are being ignored
+are prefixed with a `!'.  If
+.Ar ports
+or
+.Ar hosts
+is supplied as an argument to
+.Cm show  ,
+then only the requested information will be displayed.
+.It Cm reset
+Reset the port, host, and protocol matching mechanisms to the default
+(any protocol, port, or host).
+.El
+.It Ic pigs
+Display, in the lower window, those processes resident in main
+memory and getting the
+largest portion of the processor (the default display).
+When less than 100% of the
+processor is scheduled to user processes, the remaining time
+is accounted to the ``idle'' process.
+.It Ic ps
+Display, in the lower window, the same information provided
+by the command
+.Xr ps 1
+with the flags
+.Fl aux .
 .It Ic swap
 Show information about swap space usage on all the 
 swap areas configured with
@@ -235,9 +294,6 @@ the graph shows the percentage of space in use on each partition.
 If there are more than one swap partition in use,
 a total line is also shown.
 Areas known to the kernel, but not in use are shown as not available.
-.It Ic mbufs
-Display, in the lower window, the number of mbufs allocated
-for particular uses, i.e. data, socket structures, etc.
 .It Ic vmstat
 Take over the entire display and show a (rather crowded) compendium
 of statistics related to virtual memory usage, process scheduling,
@@ -347,55 +403,6 @@ command is given.
 Display statistics averaged over the refresh interval (the default).
 .It Cm zero
 Reset running statistics to zero.
-.El
-.It Ic netstat
-Display, in the lower window, network connections.  By default,
-network servers awaiting requests are not displayed.  Each address
-is displayed in the format ``host.port'', with each shown symbolically,
-when possible.  It is possible to have addresses displayed numerically,
-limit the display to a set of ports, hosts, and/or protocols
-(the minimum unambiguous prefix may be supplied):
-.Pp
-.Bl -tag -width Ar -compact
-.It Cm all
-Toggle the displaying of server processes awaiting requests (this
-is the equivalent of the
-.Fl a
-flag to
-.Ar netstat  1  ) .
-.It Cm numbers
-Display network addresses numerically.
-.It Cm names
-Display network addresses symbolically.
-.It Ar protocol
-Display only network connections using the indicated protocol
-(currently either ``tcp'' or ``udp'').
-.It Cm ignore Op Ar items
-Do not display information about connections associated with
-the specified hosts or ports.  Hosts and ports may be specified
-by name (``vangogh'', ``ftp''), or numerically.  Host addresses
-use the Internet dot notation (``128.32.0.9'').  Multiple items
-may be specified with a single command by separating them with
-spaces.
-.It Cm display Op Ar items
-Display information about the connections associated with the
-specified hosts or ports.  As for
-.Ar ignore  ,
-.Op Ar items
-may be names or numbers.
-.It Cm show Op Ar ports\&|hosts
-Show, on the command line, the currently selected protocols,
-hosts, and ports.  Hosts and ports which are being ignored
-are prefixed with a `!'.  If
-.Ar ports
-or
-.Ar hosts
-is supplied as an argument to
-.Cm show  ,
-then only the requested information will be displayed.
-.It Cm reset
-Reset the port, host, and protocol matching mechanisms to the default
-(any protocol, port, or host).
 .El
 .El
 .Pp
