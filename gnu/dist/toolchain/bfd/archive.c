@@ -1484,7 +1484,7 @@ bfd_ar_hdr_from_filesystem (abfd, filename, member)
       hpux_uid_gid_encode (hdr->ar_uid, (long) status.st_gid);
 #else
       fprintf (stderr, "%s: gid %ld truncated to 5 digits\n", filename, (long) status.st_gid);
-      sprintf ((hdr->ar_gid), "%ld", (long) (status.st_gid % 100000);
+      sprintf ((hdr->ar_gid), "%ld", (long) (status.st_gid % 100000));
 #endif
     }
   else
