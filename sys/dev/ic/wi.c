@@ -1,4 +1,4 @@
-/*	$NetBSD: wi.c,v 1.158 2004/03/26 06:39:56 dyoung Exp $	*/
+/*	$NetBSD: wi.c,v 1.159 2004/03/26 06:43:25 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.158 2004/03/26 06:39:56 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.159 2004/03/26 06:43:25 dyoung Exp $");
 
 #define WI_HERMES_AUTOINC_WAR	/* Work around data write autoinc bug. */
 #define WI_HERMES_STATS_WAR	/* Work around stats counter bug. */
@@ -317,6 +317,8 @@ wi_attach(struct wi_softc *sc)
 			sc->sc_dbm_offset = WI_PRISM_DBM_OFFSET;
 	}
 
+	sc->sc_flags |= WI_FLAGS_RSSADAPTSTA;
+
 	/*
 	 * Set flags based on firmware version.
 	 */
@@ -329,21 +331,6 @@ wi_attach(struct wi_softc *sc)
 			sc->sc_flags |= WI_FLAGS_BUG_AUTOINC;
 		}
 #endif
-		/* RSS rate-adaptation is known to cause STA f/w
-		 * 8.42.1 to lock up. STA f/w 8.70.1 and 7.28.1
-		 * appear to work.  I suspect that most versions
-		 * will work.
-		 */
-		switch (sc->sc_sta_firmware_ver) {
-		case 84201:
-			sc->sc_flags &= ~WI_FLAGS_RSSADAPTSTA;
-			break;
-		case 87001:
-		case 72801:
-		default:
-			sc->sc_flags |= WI_FLAGS_RSSADAPTSTA;
-			break;
-		}
 		if (sc->sc_sta_firmware_ver >= 60000)
 			sc->sc_flags |= WI_FLAGS_HAS_MOR;
 		if (sc->sc_sta_firmware_ver >= 60006) {
@@ -354,7 +341,6 @@ wi_attach(struct wi_softc *sc)
 		break;
 
 	case WI_INTERSIL:
-		sc->sc_flags |= WI_FLAGS_RSSADAPTSTA;
 		sc->sc_flags |= WI_FLAGS_HAS_FRAGTHR;
 		sc->sc_flags |= WI_FLAGS_HAS_ROAMING;
 		sc->sc_flags |= WI_FLAGS_HAS_SYSSCALE;
@@ -371,7 +357,6 @@ wi_attach(struct wi_softc *sc)
 		break;
 
 	case WI_SYMBOL:
-		sc->sc_flags |= WI_FLAGS_RSSADAPTSTA;
 		sc->sc_flags |= WI_FLAGS_HAS_DIVERSITY;
 		if (sc->sc_sta_firmware_ver >= 20000)
 			ic->ic_caps |= IEEE80211_C_IBSS;
