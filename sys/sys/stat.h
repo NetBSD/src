@@ -1,4 +1,4 @@
-/*	$NetBSD: stat.h,v 1.22 1997/10/06 01:41:46 enami Exp $	*/
+/*	$NetBSD: stat.h,v 1.23 1997/10/16 23:33:10 christos Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -46,11 +46,11 @@
 #include <sys/time.h>
 
 #ifdef _KERNEL
-struct ostat {
+struct stat43 {				/* BSD-4.3 stat struct */
 	u_int16_t st_dev;		/* inode's device */
 	ino_t	  st_ino;		/* inode's number */
-	mode_t	  st_mode;		/* inode protection mode */
-	nlink_t	  st_nlink;		/* number of hard links */
+	u_int16_t st_mode;		/* inode protection mode */
+	u_int16_t st_nlink;		/* number of hard links */
 	u_int16_t st_uid;		/* user ID of the file's owner */
 	u_int16_t st_gid;		/* group ID of the file's group */
 	u_int16_t st_rdev;		/* device type */
@@ -62,6 +62,35 @@ struct ostat {
 	int32_t	  st_blocks;		/* blocks allocated for file */
 	u_int32_t st_flags;		/* user defined flags for file */
 	u_int32_t st_gen;		/* file generation number */
+};
+
+struct stat12 {				/* NetBSD-1.2 stat struct */
+	dev_t	  st_dev;		/* inode's device */
+	ino_t	  st_ino;		/* inode's number */
+	u_int16_t st_mode;		/* inode protection mode */
+	u_int16_t st_nlink;		/* number of hard links */
+	uid_t	  st_uid;		/* user ID of the file's owner */
+	gid_t	  st_gid;		/* group ID of the file's group */
+	dev_t	  st_rdev;		/* device type */
+#ifndef _POSIX_SOURCE
+	struct	timespec st_atimespec;	/* time of last access */
+	struct	timespec st_mtimespec;	/* time of last data modification */
+	struct	timespec st_ctimespec;	/* time of last file status change */
+#else
+	time_t	  st_atime;		/* time of last access */
+	long	  st_atimensec;		/* nsec of last access */
+	time_t	  st_mtime;		/* time of last data modification */
+	long	  st_mtimensec;		/* nsec of last data modification */
+	time_t	  st_ctime;		/* time of last file status change */
+	long	  st_ctimensec;		/* nsec of last file status change */
+#endif
+	off_t	  st_size;		/* file size, in bytes */
+	int64_t	  st_blocks;		/* blocks allocated for file */
+	u_int32_t st_blksize;		/* optimal blocksize for I/O */
+	u_int32_t st_flags;		/* user defined flags for file */
+	u_int32_t st_gen;		/* file generation number */
+	int32_t	  st_lspare;
+	int64_t	  st_qspare[2];
 };
 #endif /* !_KERNEL */
 
@@ -93,6 +122,7 @@ struct stat {
 	int32_t	  st_lspare;
 	int64_t	  st_qspare[2];
 };
+
 #ifndef _POSIX_SOURCE
 #define	st_atime	st_atimespec.tv_sec
 #define	st_atimensec	st_atimespec.tv_nsec
