@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.85 2000/07/24 07:40:40 eeh Exp $	*/
+/*	$NetBSD: locore.s,v 1.86 2000/07/24 14:55:56 pk Exp $	*/
 /*
  * Copyright (c) 1996-1999 Eduardo Horvath
  * Copyright (c) 1996 Paul Kranenburg
@@ -3937,6 +3937,10 @@ intrpending:
 #define INTRDEBUG_SPUR		0x8
 	.globl	_C_LABEL(intrdebug)
 _C_LABEL(intrdebug):	.word 0x0
+/*
+ * Note: we use the local label `97' to branch forward to, to skip
+ * actual debugging code following a `intrdebug' bit test.
+ */
 #endif
 	.text
 interrupt_vector:
@@ -3988,6 +3992,7 @@ interrupt_vector:
 #endif
 	brz,pn	%g5, 3f			! NULL means it isn't registered yet.  Skip it.
 	 nop
+
 setup_sparcintr:
 #ifdef	INTR_INTERLOCK
 	add	%g5, IH_PEND, %g6
@@ -4005,26 +4010,26 @@ setup_sparcintr:
 	mov	8, %g7			! Number of slots to search
 	sll	%g6, PTRSHFT+3, %g3	! Find start of table for this IPL
 	add	%g1, %g3, %g1
-2:
+1:
 #if 1
 	DLFLUSH(%g1, %g3)
 	mov	%g5, %g3
 	CASPTR	[%g1] ASI_N, %g0, %g3	! Try a slot -- MPU safe
-	brz,pt	%g3, 5f			! Available?
+	brz,pt	%g3, 2f			! Available?
 #else
 	DLFLUSH(%g1, %g3)
 	LDPTR	[%g1], %g3		! Try a slot
-	brz,a	%g3, 5f			! Available?
+	brz,a	%g3, 2f			! Available?
 	 STPTR	%g5, [%g1]		! Grab it
 #endif
 #ifdef DEBUG
 	cmp	%g5, %g3		! if these are the same
-	bne,pt	%icc, 1f		! then we aleady have the
+	bne,pt	%icc, 97f		! then we aleady have the
 	 nop				! interrupt registered
 	set	_C_LABEL(intrdebug), %g4
 	ld	[%g4], %g4
 	btst	INTRDEBUG_VECTOR, %g4
-	bz,pt	%icc, 1f
+	bz,pt	%icc, 97f
 	 nop
 
 	STACKFRAME(-CC64FSZ)		! Get a clean register window
@@ -4034,12 +4039,11 @@ setup_sparcintr:
 	call	prom_printf
 	 mov	%g3, %o1
 	LOCTOGLOB
-	ba	1f
 	 restore
-1:
+97:
 #endif
 	 dec	%g7
-	brgz,pt	%g7, 2b
+	brgz,pt	%g7, 1b
 	 inc	PTRSZ, %g1		! Next slot
 
 	!! If we get here we have a problem.
@@ -4054,14 +4058,14 @@ setup_sparcintr:
 	call	prom_printf
 	 rdpr	%pil, %o2
 	LOCTOGLOB
-	 restore
+	restore
 #endif
-5:
+2:
 #ifdef DEBUG
 	set	_C_LABEL(intrdebug), %g7
 	ld	[%g7], %g7
 	btst	INTRDEBUG_VECTOR, %g7
-	bz,pt	%icc, 1f
+	bz,pt	%icc, 97f
 	 nop
 
 	STACKFRAME(-CC64FSZ)		! Get a clean register window
@@ -4075,9 +4079,8 @@ setup_sparcintr:
 	call	prom_printf
 	 mov	%g6, %o2
 	LOCTOGLOB
-	ba	1f
-	 restore
-1:
+	restore
+97:
 #endif
 	 DLFLUSH(%g1, %g3)		! Prevent D$ pollution
 #endif	/* VECTORED_INTERRUPTS */
@@ -4095,7 +4098,7 @@ ret_from_intr_vector:
 	set	_C_LABEL(intrdebug), %g7
 	ld	[%g7], %g7
 	btst	INTRDEBUG_SPUR, %g7
-	bz,pt	%icc, ret_from_intr_vector
+	bz,pt	%icc, 97f
 	 nop
 
 	STACKFRAME(-CC64FSZ)		! Get a clean register window
@@ -4106,9 +4109,10 @@ ret_from_intr_vector:
 	call	prom_printf
 	 rdpr	%pil, %o2
 	LOCTOGLOB
-	ba	ret_from_intr_vector
-	 restore
+	restore
+97:
 #endif
+	ba,a	ret_from_intr_vector
 
 /*
  * Ultra1 and Ultra2 CPUs use soft interrupts for everything.  What we do
@@ -4253,11 +4257,11 @@ _C_LABEL(sparc_interrupt):
 	stx	%l1, [%sp + CC64FSZ + STKB + TF_PC]
 	btst	TSTATE_PRIV, %l0		! User mode?
 	stx	%l2, [%sp + CC64FSZ + STKB + TF_NPC]
-!	bnz,pt	%xcc, 1f			! No.
+!	bnz,pt	%xcc, 2f			! No.
 	 stx	%fp, [%sp + CC64FSZ + STKB + TF_KSTACK]	!  old frame pointer
 
 !	call	_C_LABEL(blast_vcache)		! Clear out our D$ if from user mode
-1:
+!2:
 	 sub	%l5, 0x40, %l6			! Convert to interrupt level
 
 	set	_C_LABEL(intrcnt), %l4		! intrcnt[intlev]++;
@@ -4282,27 +4286,39 @@ sparc_intr_retry:
 	sll	%l6, PTRSHFT+3, %l2
 	add	%l2, %l4, %l4
 	mov	8, %l7
-3:
+
+	/*
+	 * Register usage at this point:
+	 *	%l4 - current slot at intrpending[PIL]
+	 *	%l5 - sum of interrupt handler return values
+	 *	%l6 - PIL
+	 */
+sparc_intr_check_slot:
 !	DLFLUSH(%l4, %l2)
 	LDPTR	[%l4], %l2		! Check a slot
 	dec	%l7
 	brnz,pt	%l2, 1f			! Pending?
 	 nop
-	brgz,pt	%l7, 3b
+	brgz,pt	%l7, sparc_intr_check_slot
 	 inc	PTRSZ, %l4		! Next slot
-	ba,a,pt	%icc, 2f		! Not found -- use the old scheme
-	 nop				! XXX Spitfire bug
+
+	ba,a,pt	%icc, intrcmplt		! Only handle vectors -- don't poll XXXX
+
 1:
+	/*
+	 * We have a pending interrupt; prepare to call handler
+	 */
 !	DLFLUSH(%l2, %o3)
 	LDPTR	[%l2 + IH_CLR], %l1
 	add	%sp, CC64FSZ+STKB, %o2	! tf = %sp + CC64FSZ + STKB
 	LDPTR	[%l2 + IH_FUN], %o4	! ih->ih_fun
 	LDPTR	[%l2 + IH_ARG], %o0	! ih->ih_arg
+
 #ifdef DEBUG
 	set	_C_LABEL(intrdebug), %o3
 	ld	[%o3], %o3
 	btst	INTRDEBUG_FUNC, %o3
-	bz,a,pt	%icc, 0f
+	bz,a,pt	%icc, 97f
 	 nop
 
 	STACKFRAME(-CC64FSZ)		! Get a clean register window
@@ -4314,21 +4330,23 @@ sparc_intr_retry:
 	 mov	%i4, %o1		! fun
 	LOCTOGLOB
 	restore
-0:
-#endif
+97:
 	mov	%l4, %o1	! XXXXXXX DEBUGGGGGG!
+#endif
+
 	STPTR	%g0, [%l4]		! Clear the slot
 	jmpl	%o4, %o7		! handled = (*ih->ih_fun)(...)
 	 movrz	%o0, %o2, %o0		! arg = (arg == 0) ? arg : tf
 	clrb	[%l2 + IH_PEND]		! Clear pending flag
+
 #ifdef DEBUG
 	set	_C_LABEL(intrdebug), %o3
 	ld	[%o3], %o3
 	btst	INTRDEBUG_FUNC, %o3
-	bz,a,pt	%icc, 0f
+	bz,a,pt	%icc, 97f
 	 nop
 #if 0
-	brnz,pt	%l1, 0f
+	brnz,pt	%l1, 97f
 	 nop
 #endif
 
@@ -4343,22 +4361,31 @@ sparc_intr_retry:
 	 mov	%i4, %o2		! fun
 	LOCTOGLOB
 	restore
-0:
+97:
 #endif
+
 	brz,pn	%l1, 0f
 	 add	%l5, %o0, %l5
 	stx	%g0, [%l1]		! Clear intr source
-	membar	#Sync				! Should not be needed
+	membar	#Sync			! Should not be needed
 0:
-	brnz,pt	%o0, 3b			! Handle any others
+	brnz,pt	%o0, sparc_intr_check_slot	! Handle any others
 	 nop
+
+	/*
+	 * Interrupt not claimed by handler at this vector entry;
+	 * report that.
+	 */
 	mov	1, %o1
-	call	_C_LABEL(strayintr)	! strayintr(&intrframe, 1)
+	call	_C_LABEL(strayintr)		! strayintr(&intrframe, 1)
 	 add	%sp, CC64FSZ + STKB, %o0
-	ba,a,pt	%icc, 3b		! Try another
-2:
+
+	ba,a,pt	%icc, sparc_intr_check_slot	! Try another
+
+#if 0	/* UNUSED INTERRUPT CODE */
 	ba,a,pt	%icc, intrcmplt		! Only handle vectors -- don't poll XXXX
 	 nop
+
 	brnz,pt	%l5, intrcmplt		! Finish up
 	 nop
 #endif	/* VECTORED_INTERRUPTS */
@@ -4375,6 +4402,7 @@ sparc_intr_retry:
 	LDPTR	[%l4], %l4
 	wrpr	%g0, PSTATE_INTR, %pstate	! Reenable interrupts
 	clr	%l3
+
 #ifdef DEBUG
 	set	trapdebug, %o2
 	ld	[%o2], %o2
@@ -4396,32 +4424,28 @@ sparc_intr_retry:
 	set	_C_LABEL(intrdebug), %o0	! Check intrdebug
 	ld	[%o0], %o0
 	btst	INTRDEBUG_LEVEL, %o0
-	bz,a,pt	%icc, 3f
-	 clr	%l5
+	bz,a,pt	%icc, 97f
+	 nop
 	LOAD_ASCIZ(%o0, "sparc_interrupt:  got lev %ld\r\n")
 	call	prom_printf
 	 mov	%l6, %o1
+97:
 #endif
+
 	b	3f
 	 clr	%l5
-#ifdef DEBUG
-	.data
-	_ALIGN
-	.text
-#endif
 
 1:
 !	DLFLUSH(%l4, %o1)	! Should not be needed
 	LDPTR	[%l4 + IH_FUN], %o1	! do {
 	LDPTR	[%l4 + IH_ARG], %o0
+
 #ifdef DEBUG
-#ifndef	VECTORED_INTERRUPTS
 	set	_C_LABEL(intrdebug), %o2
 	ld	[%o2], %o2
 	btst	INTRDEBUG_FUNC, %o2
-	bz,a,pt	%icc, 7f			! Always print this
+	bz,a,pt	%icc, 97f			! Always print this
 	 nop
-#endif
 
 	STACKFRAME(-CC64FSZ)		! Get a clean register window
 	LOAD_ASCIZ(%o0, "sparc_interrupt(2):      calling %lx(%lx) sp = %p\r\n")
@@ -4433,27 +4457,35 @@ sparc_intr_retry:
 	LOCTOGLOB
 	restore
 	ta	1
-7:
+97:
 #endif
 	add	%sp, CC64FSZ + STKB, %o2
 	jmpl	%o1, %o7		!	handled = (*ih->ih_fun)(...)
 	 movrz	%o0, %o2, %o0
 	clrb	[%l4 + IH_PEND]		! Clear the pending bit
 	LDPTR	[%l4 + IH_CLR], %l3
-	brz,pn	%l3, 5f			! Clear intr?
+	brz,pn	%l3, 2f			! Clear intr?
 	 nop
 	stx	%g0, [%l3]		! Clear intr source
 	membar	#Sync				! Should not be needed
-5:	brnz,pn	%o0, intrcmplt		! if (handled) break
+2:	brnz,pn	%o0, intrcmplt		! if (handled) break
 	 LDPTR	[%l4 + IH_NEXT], %l4	!	and ih = ih->ih_next
 3:	brnz,pt	%l4, 1b			! while (ih)
 	 clr	%l3			! Make sure we don't have a valid pointer
+
+	/* Interrupt not claimed by any handler */
 	clr	%o1
 	call	_C_LABEL(strayintr)	!	strayintr(&intrframe, 0)
 	 add	%sp, CC64FSZ + STKB, %o0
 	/* all done: restore registers and go return */
+#endif /* UNUSED INTERRUPT CODE */
+
 intrcmplt:
 #ifdef VECTORED_INTERRUPTS
+	/*
+	 * Re-read SOFTINT to see if any new  pending interrupts
+	 * at this level.
+	 */
 	rd	SOFTINT, %l7		! %l5 contains #intr handled.
 	mov	1, %l3			! Ack softint
 	sll	%l3, %l6, %l3		! Generate IRQ mask
@@ -4461,11 +4493,12 @@ intrcmplt:
 	bnz,pn	%icc, sparc_intr_retry
 	 mov	1, %l5
 #endif
+
 #ifdef DEBUG
 	set	_C_LABEL(intrdebug), %o2
 	ld	[%o2], %o2
 	btst	INTRDEBUG_FUNC, %o2
-	bz,a,pt	%icc, 7f
+	bz,a,pt	%icc, 97f
 	 nop
 
 	STACKFRAME(-CC64FSZ)		! Get a clean register window
@@ -4475,9 +4508,9 @@ intrcmplt:
 	 nop
 	LOCTOGLOB
 	restore
-
-7:
+97:
 #endif
+
 	ldub	[%sp + CC64FSZ + STKB + TF_OLDPIL], %l3	! restore old %pil
 	wrpr	%g0, PSTATE_KERN, %pstate	! Disable interrupts
 	wrpr	%l3, 0, %pil
