@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_namemap.c,v 1.20 2003/03/09 18:33:29 manu Exp $ */
+/*	$NetBSD: mach_namemap.c,v 1.21 2003/03/29 11:04:10 manu Exp $ */
 
 /*-
  * Copyright (c) 2002-2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_namemap.c,v 1.20 2003/03/09 18:33:29 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_namemap.c,v 1.21 2003/03/29 11:04:10 manu Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -55,6 +55,11 @@ __KERNEL_RCSID(0, "$NetBSD: mach_namemap.c,v 1.20 2003/03/09 18:33:29 manu Exp $
 #include <compat/mach/mach_vm.h>
 
 struct mach_subsystem_namemap mach_namemap[] = {
+	{ 65, NULL, "notify_port_deleted" },
+	{ 69, NULL, "notify_port_destroyed" },
+	{ 70, NULL, "notify_no_senders" },
+	{ 71, NULL, "notify_send_once" },
+	{ 72, NULL, "notify_dead_name" },
 	{ 200, mach_host_info, "host_info" },
 	{ 202, mach_host_page_size, "host_page_size" },
 	{ 205, mach_host_get_io_master, "host_get_io_master" },
@@ -79,6 +84,8 @@ struct mach_subsystem_namemap mach_namemap[] = {
 	    "io_connect_set_notification_port" },
 	{ 2822, mach_io_connect_method_scalari_scalaro,
 	    "io_connect_method_scalari_scalaro" },
+	{ 2826, mach_io_registry_entry_get_path,
+	    "io_registry_entry_get_path" },
 	{ 2827, mach_io_registry_get_root_entry, 
 	    "io_registry_get_root_entry" },
 	{ 2833, mach_io_registry_entry_create_iterator,
@@ -94,14 +101,17 @@ struct mach_subsystem_namemap mach_namemap[] = {
 	{ 3205, mach_port_destroy, "port_destroy" },
 	{ 3206, mach_port_deallocate, "port_deallocate" },
 	{ 3212, mach_port_move_member, "port_move_member" },
-/*	{ 3213, mach_port_request_notification, "port_request_notification" },*/
+	{ 3213, mach_port_request_notification, "port_request_notification" },
 	{ 3214, mach_port_insert_right, "port_insert_right" },
 	{ 3218, mach_port_set_attributes, "port_set_attributes" },
 	{ 3226, mach_port_insert_member, "port_insert_member" },
+	{ 3402, mach_task_threads, "task_threads" },
 	{ 3404, mach_ports_lookup, "ports_lookup" },
 	{ 3409, mach_task_get_special_port, "task_get_special_port" },
 	{ 3410, mach_task_set_special_port, "task_set_special_port" },
 	{ 3412, mach_thread_create_running, "thread_create_running" },
+	{ 3413, mach_task_set_exception_ports, "task_set_exception_ports" },
+	{ 3414, mach_task_get_exception_ports, "task_get_exception_ports" },
 	{ 3418, mach_semaphore_create, "semaphore_create" },
 	{ 3419, mach_semaphore_destroy, "semaphore_destroy" },
 	{ 3616, mach_thread_policy, "thread_policy" },
