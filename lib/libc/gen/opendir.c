@@ -1,4 +1,4 @@
-/*	$NetBSD: opendir.c,v 1.14 1997/07/21 14:07:22 jtc Exp $	*/
+/*	$NetBSD: opendir.c,v 1.15 1997/10/10 02:18:18 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)opendir.c	8.7 (Berkeley) 12/10/94";
 #else
-__RCSID("$NetBSD: opendir.c,v 1.14 1997/07/21 14:07:22 jtc Exp $");
+__RCSID("$NetBSD: opendir.c,v 1.15 1997/10/10 02:18:18 fvdl Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -79,7 +79,8 @@ __opendir2(name, flags)
 	struct stat sb;
 	int pagesz;
 	int incr;
-	int unionstack;
+	int unionstack, nfsdir;
+	struct statfs sfb;
 
 	if ((fd = open(name, O_RDONLY | O_NONBLOCK)) == -1)
 		return (NULL);
@@ -108,35 +109,48 @@ __opendir2(name, flags)
 	/*
 	 * Determine whether this directory is the top of a union stack.
 	 */
-	if (flags & DTF_NODUP) {
-		struct statfs sfb;
 
-		if (fstatfs(fd, &sfb) < 0) {
-			free(dirp);
-			close(fd);
-			return (NULL);
-		}
-		unionstack = !(strncmp(sfb.f_fstypename, MOUNT_UNION,
-		    MFSNAMELEN)) || (sfb.f_flags & MNT_UNION);
-	} else {
-		unionstack = 0;
+	if (fstatfs(fd, &sfb) < 0) {
+		free(dirp);
+		close(fd);
+		return (NULL);
 	}
 
-	if (unionstack) {
-		int len = 0;
-		int space = 0;
-		char *buf = 0;
-		char *ddptr = 0;
+	if (flags & DTF_NODUP)
+		unionstack = !(strncmp(sfb.f_fstypename, MOUNT_UNION,
+		    MFSNAMELEN)) || (sfb.f_flags & MNT_UNION);
+	else
+		unionstack = 0;
+
+	nfsdir = !(strncmp(sfb.f_fstypename, MOUNT_NFS, MFSNAMELEN));
+
+	if (unionstack || nfsdir) {
+		int len;
+		int space;
+		char *buf;
+		char *ddptr;
 		char *ddeptr;
 		int n;
 		struct dirent **dpv;
 
 		/*
-		 * The strategy here is to read all the directory
-		 * entries into a buffer, sort the buffer, and
-		 * remove duplicate entries by setting the inode
-		 * number to zero.
+		 * The strategy here for directories on top of a union stack
+		 * is to read all the directory entries into a buffer, sort
+		 * the buffer, and remove duplicate entries by setting the
+		 * inode number to zero.
+		 *
+		 * For directories on an NFS mounted filesystem, we try
+	 	 * to get a consistent snapshot by trying until we have
+		 * successfully read all of the directory without errors
+		 * (i.e. 'bad cookie' errors from the server because
+		 * the directory was modified). These errors should not
+		 * happen often, but need to be dealt with.
 		 */
+retry:
+		len = 0;
+		space = 0;
+		buf = 0;
+		ddptr = 0;
 
 		do {
 			/*
@@ -155,7 +169,19 @@ __opendir2(name, flags)
 				ddptr = buf + (len - space);
 			}
 
-			n = getdirentries(fd, ddptr, space, &dirp->dd_seek);
+			dirp->dd_seek = lseek(fd, 0, SEEK_CUR);
+			n = getdents(fd, ddptr, space);
+			/*
+			 * For NFS: EINVAL means a bad cookie error
+			 * from the server. Keep trying to get a
+			 * consistent view, in this case this means
+			 * starting all over again.
+			 */
+			if (n == -1 && errno == EINVAL && nfsdir) {
+				free(buf);
+				lseek(fd, 0, SEEK_SET);
+				goto retry;
+			}
 			if (n > 0) {
 				ddptr += n;
 				space -= n;
@@ -194,59 +220,63 @@ __opendir2(name, flags)
 		 * On the second pass, save pointers to each one.
 		 * Then sort the pointers and remove duplicate names.
 		 */
-		for (dpv = 0;;) {
-			for (n = 0, ddptr = buf; ddptr < ddeptr;) {
-				struct dirent *dp;
+		if (!nfsdir) {
+			for (dpv = 0;;) {
+				for (n = 0, ddptr = buf; ddptr < ddeptr;) {
+					struct dirent *dp;
 
-				dp = (struct dirent *) ddptr;
-				if ((long)dp & 03)
-					break;
-				if ((dp->d_reclen <= 0) ||
-				    (dp->d_reclen > (ddeptr + 1 - ddptr)))
-					break;
-				ddptr += dp->d_reclen;
-				if (dp->d_fileno) {
-					if (dpv)
-						dpv[n] = dp;
-					n++;
-				}
-			}
-
-			if (dpv) {
-				struct dirent *xp;
-
-				/*
-				 * This sort must be stable.
-				 */
-				mergesort(dpv, n, sizeof(*dpv), alphasort);
-
-				dpv[n] = NULL;
-				xp = NULL;
-
-				/*
-				 * Scan through the buffer in sort order,
-				 * zapping the inode number of any
-				 * duplicate names.
-				 */
-				for (n = 0; dpv[n]; n++) {
-					struct dirent *dp = dpv[n];
-
-					if ((xp == NULL) ||
-					    strcmp(dp->d_name, xp->d_name))
-						xp = dp;
-					else
-						dp->d_fileno = 0;
-					if (dp->d_type == DT_WHT &&
-					    (flags & DTF_HIDEW))
-						dp->d_fileno = 0;
+					dp = (struct dirent *) ddptr;
+					if ((long)dp & 03)
+						break;
+					if ((dp->d_reclen <= 0) ||
+				    	(dp->d_reclen > (ddeptr + 1 - ddptr)))
+						break;
+					ddptr += dp->d_reclen;
+					if (dp->d_fileno) {
+						if (dpv)
+							dpv[n] = dp;
+						n++;
+					}
 				}
 
-				free(dpv);
-				break;
-			} else {
-				dpv = malloc((n+1) * sizeof(struct dirent *));
-				if (dpv == NULL)
+				if (dpv) {
+					struct dirent *xp;
+
+					/*
+					 * This sort must be stable.
+					 */
+					mergesort(dpv, n, sizeof(*dpv),
+					    alphasort);
+
+					dpv[n] = NULL;
+					xp = NULL;
+
+					/*
+					 * Scan through the buffer in sort
+					 * order, zapping the inode number
+					 * of any duplicate names.
+					 */
+					for (n = 0; dpv[n]; n++) {
+						struct dirent *dp = dpv[n];
+
+						if ((xp == NULL) ||
+						    strcmp(dp->d_name,
+						      xp->d_name))
+							xp = dp;
+						else
+							dp->d_fileno = 0;
+						if (dp->d_type == DT_WHT &&
+						    (flags & DTF_HIDEW))
+							dp->d_fileno = 0;
+					}
+
+					free(dpv);
 					break;
+				} else {
+					dpv = malloc((n+1) * sizeof(struct dirent *));
+					if (dpv == NULL)
+						break;
+				}
 			}
 		}
 
