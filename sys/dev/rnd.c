@@ -1,4 +1,4 @@
-/*	$NetBSD: rnd.c,v 1.36 2002/10/23 09:13:04 jdolecek Exp $	*/
+/*	$NetBSD: rnd.c,v 1.37 2002/11/10 03:29:00 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rnd.c,v 1.36 2002/10/23 09:13:04 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rnd.c,v 1.37 2002/11/10 03:29:00 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -374,8 +374,8 @@ int
 rndread(dev_t dev, struct uio *uio, int ioflag)
 {
 	u_int8_t *buf;
-	u_int32_t entcnt, mode, nread;
-	int n, ret, s;
+	u_int32_t entcnt, mode, n, nread;
+	int ret, s;
 
 	DPRINTF(RND_DEBUG_READ,
 	    ("Random:  Read of %d requested, flags 0x%08x\n",
@@ -1076,7 +1076,7 @@ rnd_timeout(void *arg)
 	rnd_wakeup_readers();
 }
 
-int
+u_int32_t
 rnd_extract_data(void *p, u_int32_t len, u_int32_t flags)
 {
 	int retval, s;
