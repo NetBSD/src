@@ -1,3 +1,5 @@
+/*	$NetBSD: e_sqrt.S,v 1.6 1999/11/10 16:45:40 thorpej Exp $	*/
+
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
@@ -40,7 +42,7 @@
 ;_sccsid:
 ;.asciz	"from: @(#)sqrt.s	5.1 (Berkeley) 5/17/90"
 
-RCSID("$NetBSD: e_sqrt.S,v 1.5 1999/08/15 18:45:18 kleink Exp $")
+RCSID("$NetBSD: e_sqrt.S,v 1.6 1999/11/10 16:45:40 thorpej Exp $")
 
 /*
  * sqrt(x)
@@ -49,10 +51,10 @@ RCSID("$NetBSD: e_sqrt.S,v 1.5 1999/08/15 18:45:18 kleink Exp $")
  */
 
 ENTRY(__ieee754_sqrt)
-	fsqrtd	sp@(4),fp0
+	fsqrtd	%sp@(4),%fp0
 #ifndef __SVR4_ABI__
-	fmoved	fp0,sp@-
-	movel	sp@+,d0
-	movel	sp@+,d1
+	fmoved	%fp0,%sp@-
+	movel	%sp@+,%d0
+	movel	%sp@+,%d1
 #endif
 	rts
