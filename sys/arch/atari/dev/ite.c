@@ -1,4 +1,4 @@
-/*	$NetBSD: ite.c,v 1.1.1.1 1995/03/26 07:12:10 leo Exp $	*/
+/*	$NetBSD: ite.c,v 1.2 1995/03/28 06:35:44 leo Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -442,7 +442,7 @@ int
 iteioctl(dev, cmd, addr, flag, p)
 	dev_t		dev;
 	u_long		cmd;
-	int			flag;
+	int		flag;
 	caddr_t		addr;
 	struct proc	*p;
 {
@@ -457,7 +457,7 @@ iteioctl(dev, cmd, addr, flag, p)
 	KDASSERT(tp);
 
 	error = (*linesw[tp->t_line].l_ioctl) (tp, cmd, addr, flag, p);
-	if (error >= 0)
+	if(error >= 0)
 		return (error);
 	error = ttioctl(tp, cmd, addr, flag, p);
 	if (error >= 0)
@@ -478,6 +478,7 @@ iteioctl(dev, cmd, addr, flag, p)
 		irp = (struct iterepeat *)addr;
 		irp->start = start_repeat_timeo;
 		irp->next = next_repeat_timeo;
+		return(0);
 	case ITEIOCSREPT:
 		irp = (struct iterepeat *)addr;
 		if (irp->start < ITEMINREPEAT && irp->next < ITEMINREPEAT)
@@ -486,14 +487,9 @@ iteioctl(dev, cmd, addr, flag, p)
 		next_repeat_timeo = irp->next;
 		return(0);
 	}
-#ifdef notyet /* LWP */
-	/* XXX */
-	if (minor(dev) == 0) {
-		error = ite_grf_ioctl(ip, cmd, addr, flag, p);
-		if (error >= 0)
-			return (error);
-	}
-#endif
+	error = ite_grf_ioctl(ip, cmd, addr, flag, p);
+	if(error >= 0)
+		return(error);
 	return (ENOTTY);
 }
 

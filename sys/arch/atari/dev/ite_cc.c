@@ -1,4 +1,4 @@
-/*	$NetBSD: ite_cc.c,v 1.1.1.1 1995/03/26 07:12:14 leo Exp $	*/
+/*	$NetBSD: ite_cc.c,v 1.2 1995/03/28 06:35:47 leo Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -190,18 +190,21 @@ ite_newsize(ip, winsz)
 struct ite_softc	*ip;
 struct itewinsize	*winsz;
 {
+	extern struct view_softc	views[];
 	struct view_size		vs;
 	ipriv_t				*cci = ip->priv;    
 	u_long				fbp, i, j;
 	int				error = 0;
-	view_t				*view = ip->grf->g_view;
+	view_t				*view;
 
 	vs.x      = winsz->x;
 	vs.y      = winsz->y;
 	vs.width  = winsz->width;
 	vs.height = winsz->height;
 	vs.depth  = winsz->depth;
+
 	error = viewioctl(ip->grf->g_viewdev, VIOCSSIZE, &vs, 0, -1);
+	view  = ip->grf->g_view = views[ip->grf->g_viewdev].view;
 
 	/*
 	 * Reinitialize our structs
@@ -233,13 +236,12 @@ struct itewinsize	*winsz;
 		cci->column_offset = con_columns;
 	}
 	else {
-	  cci->row_ptr = malloc(sizeof(u_char *) * ip->rows,M_DEVBUF,M_WAITOK);
-	  cci->column_offset = malloc(sizeof(u_int)*ip->cols,M_DEVBUF,M_WAITOK);
+	  cci->row_ptr = malloc(sizeof(u_char *) * ip->rows,M_DEVBUF,M_NOWAIT);
+	  cci->column_offset = malloc(sizeof(u_int)*ip->cols,M_DEVBUF,M_NOWAIT);
 	}
 
 	if(!cci->row_ptr || !cci->column_offset)
 		panic("No memory for ite-view");
-    
 
 	cci->width      = view->bitmap->bytes_per_row << 3;
 	cci->underline  = ip->font.baseline + 1;
@@ -266,6 +268,94 @@ struct itewinsize	*winsz;
 		cci->font_cell[i] = cci->font_cell[i-1] + ip->font.height;
 	    
 	return(error);
+}
+
+int
+ite_grf_ioctl(ip, cmd, addr, flag, p)
+struct ite_softc	*ip;
+u_long			cmd;
+caddr_t			addr;
+int			flag;
+struct proc		*p;
+{
+	struct winsize		ws;
+	struct itewinsize	*is;
+	struct itebell		*ib;
+	int			error = 0;
+	ipriv_t			*cci  = ip->priv;
+	view_t			*view = ip->grf->g_view;
+
+	switch (cmd) {
+	case ITEIOCGWINSZ:
+		is         = (struct itewinsize *)addr;
+		is->x      = view->display.x;
+		is->y      = view->display.y;
+		is->width  = view->display.width;
+		is->height = view->display.height;
+		is->depth  = view->bitmap->depth;
+		break;
+	case ITEIOCSWINSZ:
+		is = (struct itewinsize *)addr;
+
+		if(ite_newsize(ip, is))
+			error = ENOMEM;
+		else {
+			ws.ws_row    = ip->rows;
+			ws.ws_col    = ip->cols;
+			ws.ws_xpixel = view->display.width;
+			ws.ws_ypixel = view->display.height;
+			ite_reset(ip);
+			/*
+			 * XXX tell tty about the change 
+			 * XXX this is messy, but works 
+			 */
+			iteioctl(ip->grf->g_itedev,TIOCSWINSZ,(caddr_t)&ws,0,p);
+		}
+		break;
+	case ITEIOCDSPWIN:
+		ip->grf->g_mode(ip->grf, GM_GRFON, NULL, 0, 0);
+		break;
+	case ITEIOCREMWIN:
+		ip->grf->g_mode(ip->grf, GM_GRFOFF, NULL, 0, 0);
+		break;
+	case ITEIOCGBELL:
+#if 0 /* LWP */
+		/* XXX This won't work now			*/
+		/* XXX Should the bell be device dependent?	*/
+		ib         = (struct itebell *)addr;
+		ib->volume = bvolume;
+		ib->pitch  = bpitch;
+		ib->msec   = bmsec;
+#endif
+		break;
+	case ITEIOCSBELL:
+#if 0 /* LWP */
+		/* XXX See above				*/
+		ib = (struct itebell *)addr;
+		/* bounds check */
+		if(ib->pitch > MAXBPITCH || ib->pitch < MINBPITCH ||
+		    ib->volume > MAXBVOLUME || ib->msec > MAXBTIME)
+			error = EINVAL;
+		else {
+			bvolume = ib->volume;
+			bpitch  = ib->pitch;
+			bmsec   = ib->msec;
+		}
+#endif
+		break;
+	case VIOCSCMAP:
+	case VIOCGCMAP:
+		/*
+		 * XXX watchout for that -1 its not really the kernel talking
+		 * XXX these two commands don't use the proc pointer though
+		 */
+		error = viewioctl(ip->grf->g_viewdev, cmd, addr, flag, -1);
+		break;
+	default:
+		error = -1;
+		break;
+	}
+	return (error);
 }
 
 static void

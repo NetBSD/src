@@ -1,4 +1,4 @@
-/*	$NetBSD: view.c,v 1.1.1.1 1995/03/26 07:12:14 leo Exp $	*/
+/*	$NetBSD: view.c,v 1.2 1995/03/28 06:35:49 leo Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -52,7 +52,9 @@
 
 static void view_display __P((struct view_softc *));
 static void view_remove __P((struct view_softc *));
-static int view_setsize __P((struct view_softc *, struct view_size *));
+static int  view_setsize __P((struct view_softc *, struct view_size *));
+static int  view_get_colormap __P((struct view_softc *, colormap_t *));
+static int  view_set_colormap __P((struct view_softc *, colormap_t *));
 
 void viewclose __P((dev_t, int));
 int viewioctl __P((dev_t, u_long, caddr_t, int, struct proc *));
@@ -214,6 +216,60 @@ view_setsize(vu, vs)
 	return(0);
 }
 
+static int
+view_get_colormap (vu, ucm)
+struct view_softc	*vu;
+colormap_t		*ucm;
+{
+	int	error;
+	long	*cme;
+	long	*uep;
+
+	if(ucm->size > MAX_CENTRIES)
+		return(EINVAL);
+		
+	/* add one incase of zero, ick. */
+	cme = malloc(sizeof(ucm->entry[0])*(ucm->size+1), M_IOCTLOPS,M_WAITOK);
+	if (cme == NULL)
+		return(ENOMEM);
+
+	error      = 0;	
+	uep        = ucm->entry;
+	ucm->entry = cme;	  /* set entry to out alloc. */
+	if(vu->view == NULL || grf_get_colormap(vu->view, ucm))
+		error = EINVAL;
+	else error = copyout(cme, uep, sizeof(ucm->entry[0]) * ucm->size);
+	ucm->entry = uep;	  /* set entry back to users. */
+	free(cme, M_IOCTLOPS);
+	return(error);
+}
+
+static int
+view_set_colormap(vu, ucm)
+struct view_softc	*vu;
+colormap_t		*ucm;
+{
+	colormap_t	*cm;
+	int		error = 0;
+
+	if(ucm->size > MAX_CENTRIES)
+		return(EINVAL);
+		
+	cm = malloc(sizeof(ucm->entry[0])*ucm->size + sizeof(*cm), M_IOCTLOPS,
+								M_WAITOK);
+	if(cm == NULL)
+		return(ENOMEM);
+
+	bcopy(ucm, cm, sizeof(colormap_t));
+	cm->entry = (long *)&cm[1];		 /* table directly after. */
+	if (((error = 
+	    copyin(ucm->entry,cm->entry,sizeof(ucm->entry[0])*ucm->size)) == 0)
+	    && (vu->view == NULL || grf_use_colormap(vu->view, cm)))
+		error = EINVAL;
+	free(cm, M_IOCTLOPS);
+	return(error);
+}
+
 /*
  *  functions made available by conf.c
  */
@@ -318,58 +374,6 @@ struct proc	*p;
 		error = EINVAL;
 		break;
 	}
-	return(error);
-}
-
-int view_get_colormap (vu, ucm)
-struct view_softc	*vu;
-colormap_t		*ucm;
-{
-	int	error;
-	u_short	*cme;
-	u_short	*uep;
-
-	if(ucm->nentries > MAX_CENTRIES)
-		return(EINVAL);
-		
-	/* add one incase of zero, ick. */
-	cme = malloc(sizeof(u_short) * (ucm->nentries+1),M_IOCTLOPS,M_WAITOK);
-	if (cme == NULL)
-		return(ENOMEM);
-
-	error       = 0;	
-	uep         = ucm->centry;
-	ucm->centry = cme;	  /* set entry to out alloc. */
-	if(vu->view == NULL || grf_get_colormap(vu->view, ucm))
-		error = EINVAL;
-	else error = copyout(cme, uep, sizeof(u_short) * ucm->nentries);
-	ucm->centry = uep;	  /* set entry back to users. */
-	free(cme, M_IOCTLOPS);
-	return(error);
-}
-
-int view_set_colormap(vu, ucm)
-struct view_softc	*vu;
-colormap_t		*ucm;
-{
-	colormap_t	*cm;
-	int		error = 0;
-
-	if(ucm->nentries > MAX_CENTRIES)
-		return(EINVAL);
-		
-	cm = malloc(sizeof(u_short) * ucm->nentries + sizeof(*cm), M_IOCTLOPS,
-								M_WAITOK);
-	if(cm == NULL)
-		return(ENOMEM);
-
-	bcopy(ucm, cm, sizeof(colormap_t));
-	cm->centry = (u_short *)&cm[1];		 /* table directly after. */
-	if (((error = 
-	    copyin(ucm->centry,cm->centry,sizeof(u_short)*ucm->nentries)) == 0)
-	    && (vu->view == NULL || grf_use_colormap(vu->view, cm)))
-		error = EINVAL;
-	free(cm, M_IOCTLOPS);
 	return(error);
 }
 

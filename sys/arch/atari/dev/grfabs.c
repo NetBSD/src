@@ -1,4 +1,4 @@
-/*	$NetBSD: grfabs.c,v 1.1.1.1 1995/03/26 07:12:15 leo Exp $	*/
+/*	$NetBSD: grfabs.c,v 1.2 1995/03/28 06:35:40 leo Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -59,7 +59,7 @@ static colormap_t *alloc_colormap __P((dmode_t *));
 extern int		atari_realconfig;	/* 0 -> no malloc	*/
 static view_t		con_view;
 static colormap_t	con_cmap;
-static u_short		con_colors[MAX_CENTRIES];
+static long		con_colors[MAX_CENTRIES];
 
 /*
  * List of available graphic modes
@@ -67,7 +67,7 @@ static u_short		con_colors[MAX_CENTRIES];
 static LIST_HEAD(modelist, display_mode) modes;
 
 static dmode_t vid_modes[] = {
-	{ { NULL, NULL }, "stlow",  { 320,  200 },  1, RES_STLOW  },
+	{ { NULL, NULL }, "stlow",  { 320,  200 },  4, RES_STLOW  },
 	{ { NULL, NULL }, "stmid",  { 640,  200 },  2, RES_STMID  },
 	{ { NULL, NULL }, "sthigh", { 640,  400 },  1, RES_STHIGH },
 	{ { NULL, NULL }, "ttlow",  { 320,  480 },  8, RES_TTLOW  },
@@ -136,6 +136,13 @@ grfabs_probe()
 			continue;
 		LIST_INSERT_HEAD(&modes, dm, link);
 	}
+
+	/*
+	 * This seems to prevent bordered screens.
+	 */
+	for(i=0; i < 16; i++)
+		VIDEO->vd_tt_rgb[i] = def_color16[i];
+
 	return(1);
 }
 
@@ -214,12 +221,12 @@ colormap_t	*cm;
 	colormap_t	*gcm;
 	int		i, n;
 
-	bzero(cm->centry, cm->nentries * sizeof(u_short));
+	bzero(cm->entry, cm->size * sizeof(long));
 
 	gcm = v->colormap;
-	n   = cm->nentries < gcm->nentries ? cm->nentries : gcm->nentries;
+	n   = cm->size < gcm->size ? cm->size : gcm->size;
 	for(i = 0; i < n; i++)
-		cm->centry[i] = gcm->centry[i];
+		cm->entry[i] = gcm->entry[i];
 	return(0);
 }
 
@@ -230,7 +237,7 @@ colormap_t	*cm;
 {
 	dmode_t			*dm;
 	volatile u_short	*creg;
-	u_short			*src;
+	long			*src;
 	u_short			ncreg;
 	int			i;
 
@@ -240,7 +247,7 @@ colormap_t	*cm;
 		case RES_STLOW:
 			creg  = &VIDEO->vd_tt_rgb[0];
 			ncreg = 16;
-		break;
+			break;
 		case RES_STMID:
 			creg  = &VIDEO->vd_tt_rgb[0];
 			ncreg = 4;
@@ -262,11 +269,20 @@ colormap_t	*cm;
 		default:
 			panic("grf_get_colormap: wrong mode!?");
 	}
-	if(cm->nentries < ncreg)
-		ncreg = cm->nentries;
 
-	for(i = 0, src = cm->centry; i < ncreg; i++)
-		*creg++ = *src++;
+	if(cm->first >= ncreg)
+		return(EINVAL);
+	creg   = &creg[cm->first];
+	ncreg -= cm->first;
+
+	if(cm->size > ncreg)
+		return(EINVAL);
+	ncreg = cm->size;
+
+	for(i = 0, src = cm->entry; i < ncreg; i++) {
+		register long	val = *src++;
+		*creg++ = CM_LTOW(val);
+	}
 	return(0);
 }
 
@@ -317,7 +333,7 @@ u_char   depth;
 
 	if(!atari_realconfig)
 		v = &con_view;
-	else v = malloc(sizeof(*v), M_DEVBUF, M_WAITOK);
+	else v = malloc(sizeof(*v), M_DEVBUF, M_NOWAIT);
 
 	bm = alloc_bitmap(mode->size.width, mode->size.height, mode->depth, 1);
 	if(bm) {
@@ -407,6 +423,7 @@ dmode_t		*dm;
 {
 	int		nentries, i;
 	colormap_t	*cm;
+	u_char		type = CM_COLOR;
 
 	switch(dm->vm_reg) {
 		case RES_STLOW:
@@ -423,27 +440,33 @@ dmode_t		*dm;
 			nentries = 256;
 			break;
 		case RES_TTHIGH:
+			type     = CM_MONO;
 			nentries = 0;
 		default:
 			panic("grf:alloc_colormap: wrong mode!?");
 	}
 	if(!atari_realconfig) {
 		cm = &con_cmap;
-		cm->centry = con_colors;
+		cm->entry = con_colors;
 	}
 	else {
 		int size;
 
-		size = sizeof(*cm) + (nentries * sizeof(u_short));
-		cm   = malloc(size, M_DEVBUF, M_WAITOK);
+		size = sizeof(*cm) + (nentries * sizeof(cm->entry[0]));
+		cm   = malloc(size, M_DEVBUF, M_NOWAIT);
 		if(cm == NULL)
 			return(NULL);
-		cm->centry = (u_short *)&cm[1];
+		cm->entry = (long *)&cm[1];
 
 	}
-	cm->nentries = nentries;
+	if((cm->type = type) == CM_COLOR)
+		cm->red_mask = cm->green_mask = cm->blue_mask = 0xf;
+	cm->first = 0;
+	cm->size  = nentries;
 
-	for(i = 0; i < nentries; i++)
-		cm->centry[i] = def_color16[i % 16];
+	for(i = 0; i < nentries; i++) {
+		register short	val = def_color16[i % 16];
+		cm->entry[i] = CM_WTOL(val);
+	}
 	return(cm);
 }
