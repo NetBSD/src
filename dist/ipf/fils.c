@@ -1,4 +1,4 @@
-/*	$NetBSD: fils.c,v 1.10 2000/08/09 21:03:01 veego Exp $	*/
+/*	$NetBSD: fils.c,v 1.11 2001/03/13 16:30:39 christos Exp $	*/
 
 /*
  * Copyright (C) 1993-2000 by Darren Reed.
@@ -29,7 +29,11 @@
 #include <nlist.h>
 #ifdef STATETOP
 #include <ctype.h>
+#ifndef __NetBSD__
 #include <ncurses.h>
+#else
+#include <curses.h>
+#endif
 #endif
 #include <sys/socket.h>
 #include <sys/ioctl.h>
