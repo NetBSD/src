@@ -1,4 +1,4 @@
-/*	$NetBSD: fdformat.c,v 1.5 1997/10/21 00:14:47 thorpej Exp $	*/
+/*	$NetBSD: fdformat.c,v 1.6 1999/01/13 21:00:16 hubertf Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -299,6 +299,6 @@ main(int argc, char *argv[])
 	}
 	putchar('\n');
 	if (errcnt)
-		errx(1,"%d track formatting errors", errcnt);
+		errx(1,"%d track formatting error%s", errcnt, errcnt==1?"":"s");
 	return 0;
 }
