@@ -1,4 +1,4 @@
-/*	$NetBSD: getaddrinfo.c,v 1.65 2003/05/08 05:30:53 itojun Exp $	*/
+/*	$NetBSD: getaddrinfo.c,v 1.66 2003/05/17 01:36:03 itojun Exp $	*/
 /*	$KAME: getaddrinfo.c,v 1.29 2000/08/31 17:26:57 itojun Exp $	*/
 
 /*
@@ -79,7 +79,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: getaddrinfo.c,v 1.65 2003/05/08 05:30:53 itojun Exp $");
+__RCSID("$NetBSD: getaddrinfo.c,v 1.66 2003/05/17 01:36:03 itojun Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -895,10 +895,9 @@ get_canonname(pai, ai, str)
 	_DIAGASSERT(str != NULL);
 
 	if ((pai->ai_flags & AI_CANONNAME) != 0) {
-		ai->ai_canonname = (char *)malloc(strlen(str) + 1);
+		ai->ai_canonname = strdup(str);
 		if (ai->ai_canonname == NULL)
 			return EAI_MEMORY;
-		strcpy(ai->ai_canonname, str);
 	}
 	return 0;
 }
@@ -1240,7 +1239,7 @@ getanswer(answer, anslen, qname, qtype, pai)
 				had_error++;
 				continue;
 			}
-			strcpy(bp, tbuf);
+			strlcpy(bp, tbuf, (size_t)(ep - bp));
 			canonname = bp;
 			bp += n;
 			continue;
