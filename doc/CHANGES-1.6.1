@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.1,v 1.1.2.54 2002/11/26 18:36:04 tron Exp $
+#	$NetBSD: CHANGES-1.6.1,v 1.1.2.55 2002/11/27 08:15:05 tron Exp $
 
 A complete list of changes from NetBSD 1.6 to NetBSD 1.6.1:
 
@@ -1641,4 +1641,10 @@ sys/dev/pci/pcidevs_data.h			regenerate
 
 	Add IBM 133 PCI-X Bridge.
 	[thorpej, ticket #1018]
+
+sys/arch/powerpc/mpc6xx/pmap.c			patch
+
+	This change causes icache corruption, and reverting it shouldn't
+	re-introduce any old problems.
+	[chs, ticket #1016]
 
