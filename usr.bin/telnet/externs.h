@@ -1,4 +1,4 @@
-/*	$NetBSD: externs.h,v 1.16 2000/01/21 17:08:36 mycroft Exp $	*/
+/*	$NetBSD: externs.h,v 1.17 2000/01/31 14:25:43 itojun Exp $	*/
 
 /*
  * Copyright (c) 1988, 1990, 1993
@@ -95,7 +95,8 @@ typedef unsigned char cc_t;
 #if defined(IPSEC)
 #include <netinet6/ipsec.h>
 #if defined(IPSEC_POLICY_IPSEC)
-extern char *ipsec_policy;
+extern char *ipsec_policy_in;
+extern char *ipsec_policy_out;
 #endif
 #endif
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: commands.c,v 1.36 2000/01/27 19:20:49 itojun Exp $	*/
+/*	$NetBSD: commands.c,v 1.37 2000/01/31 14:25:42 itojun Exp $	*/
 
 /*
  * Copyright (C) 1997 and 1998 WIDE Project.
@@ -67,7 +67,7 @@
 #if 0
 static char sccsid[] = "@(#)commands.c	8.4 (Berkeley) 5/30/95";
 #else
-__RCSID("$NetBSD: commands.c,v 1.36 2000/01/27 19:20:49 itojun Exp $");
+__RCSID("$NetBSD: commands.c,v 1.37 2000/01/31 14:25:42 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -2180,6 +2180,39 @@ sockaddr_ntop(sa)
     return (char *)inet_ntop(sa->sa_family, addr, addrbuf, sizeof(addrbuf));
 }
 
+#if defined(IPSEC) && defined(IPSEC_POLICY_IPSEC)
+static int setpolicy __P((int, struct addrinfo *, char *));
+
+static int
+setpolicy(net, res, policy)
+	int net;
+	struct addrinfo *res;
+	char *policy;
+{
+	char *buf;
+	int level;
+	int optname;
+
+	if (policy == NULL)
+		return 0;
+
+	buf = ipsec_set_policy(policy, strlen(policy));
+	if (buf == NULL) {
+		printf("%s\n", ipsec_strerror());
+		return -1;
+	}
+	level = res->ai_family == AF_INET ? IPPROTO_IP : IPPROTO_IPV6;
+	optname = res->ai_family == AF_INET ? IP_IPSEC_POLICY : IPV6_IPSEC_POLICY;
+	if (setsockopt(net, level, optname, buf, ipsec_get_policylen(buf)) < 0){
+		perror("setsockopt");
+		return -1;
+	}
+
+	free(buf);
+	return 0;
+}
+#endif
+
     int
 tn(argc, argv)
     int argc;
@@ -2329,40 +2362,17 @@ tn(argc, argv)
 	    if (srp && setsockopt(net, proto, opt, srp, srlen) < 0)
 		perror("setsockopt (source route)");
 	}
-#if defined(IPSEC) && defined(IPSEC_POLICY_IPSEC)
-	if (ipsec_policy) {
-	    int len;
-	    char *buf;
-	    int level;
-	    int optname;
 
-	    if ((len = ipsec_get_policylen(ipsec_policy)) < 0) {
-		printf("%s\n", ipsec_strerror());
-		freeaddrinfo(res0);
-		return 0;
-	    }
-	    if ((buf = (char *)malloc(len)) == NULL) {
-		perror("malloc");
-		freeaddrinfo(res0);
-		return 0;
-	    }
-	    if ((len = ipsec_set_policy(buf, len, ipsec_policy)) < 0) {
-		printf("%s\n", ipsec_strerror());
-		(void) NetClose(net);
-		net = -1;
-		free(buf);
-		continue;
-	    }
-	    level = res->ai_family == AF_INET ? IPPROTO_IP : IPPROTO_IPV6;
-	    optname = res->ai_family == AF_INET ? IP_IPSEC_POLICY : IPV6_IPSEC_POLICY;
-	    if (setsockopt(net, level, optname, buf, len) < 0){
-		perror("setsockopt");
-		(void) NetClose(net);
-		net = -1;
-		free(buf);
-		continue;
-	    }
-	    free(buf);
+#if defined(IPSEC) && defined(IPSEC_POLICY_IPSEC)
+	if (setpolicy(net, res, ipsec_policy_in) < 0) {
+	    (void) NetClose(net);
+	    net = -1;
+	    continue;
+	}
+	if (setpolicy(net, res, ipsec_policy_out) < 0) {
+	    (void) NetClose(net);
+	    net = -1;
+	    continue;
 	}
 #endif
 
