@@ -1,4 +1,4 @@
-/* $NetBSD: pci_swiz_bus_mem_chipdep.c,v 1.36 2001/09/04 05:31:28 thorpej Exp $ */
+/* $NetBSD: pci_swiz_bus_mem_chipdep.c,v 1.37 2002/07/22 20:05:23 mycroft Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -576,8 +576,8 @@ __C(CHIP,_mem_get_window)(v, window, abst)
 		abst->abst_bus_end = CHIP_D_MEM_W1_BUS_END(v);
 		abst->abst_sys_start = CHIP_D_MEM_W1_SYS_START(v);
 		abst->abst_sys_end = CHIP_D_MEM_W1_SYS_END(v);
-		abst->abst_addr_shift = CHIP_ADDR_SHIFT;
-		abst->abst_size_shift = CHIP_SIZE_SHIFT;
+		abst->abst_addr_shift = 0;
+		abst->abst_size_shift = 0;
 		abst->abst_flags = ABST_DENSE;
 		break;
 #endif
