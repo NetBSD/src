@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_subs.c,v 1.90 2001/01/18 20:28:28 jdolecek Exp $	*/
+/*	$NetBSD: nfs_subs.c,v 1.91 2001/02/14 15:36:45 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -1964,24 +1964,23 @@ nfs_namei(ndp, fhp, len, slp, nam, mdp, dposp, retdirp, p, kerbflag, pubflag)
 	 * And call lookup() to do the real work
 	 */
 	error = lookup(ndp);
-	if (error)
-		break;
+	if (error) {
+		PNBUF_PUT(cnp->cn_pnbuf);
+		return (error);
+	}
 	/*
 	 * Check for encountering a symbolic link
 	 */
 	if ((cnp->cn_flags & ISSYMLINK) == 0) {
-		if (cnp->cn_flags & (SAVENAME | SAVESTART)) {
+		if (cnp->cn_flags & (SAVENAME | SAVESTART))
 			cnp->cn_flags |= HASBUF;
-			return (0);
-		}
-		break;
+		else
+			PNBUF_PUT(cnp->cn_pnbuf);
+		return (0);
 	} else {
-		if ((cnp->cn_flags & LOCKPARENT) && ndp->ni_pathlen == 1)
+		if ((cnp->cn_flags & LOCKPARENT) && (cnp->cn_flags & ISLASTCN))
 			VOP_UNLOCK(ndp->ni_dvp, 0);
 		if (!pubflag) {
-			vrele(ndp->ni_dvp);
-			vput(ndp->ni_vp);
-			ndp->ni_vp = NULL;
 			error = EINVAL;
 			break;
 		}
@@ -1989,6 +1988,12 @@ nfs_namei(ndp, fhp, len, slp, nam, mdp, dposp, retdirp, p, kerbflag, pubflag)
 		if (ndp->ni_loopcnt++ >= MAXSYMLINKS) {
 			error = ELOOP;
 			break;
+		}
+		if (ndp->ni_vp->v_mount->mnt_flag & MNT_SYMPERM) {
+			error = VOP_ACCESS(ndp->ni_vp, VEXEC, cnp->cn_cred,
+			    cnp->cn_proc);
+			if (error != 0)
+				break;
 		}
 		if (ndp->ni_pathlen > 1)
 			cp = PNBUF_GET();
@@ -2038,6 +2043,9 @@ nfs_namei(ndp, fhp, len, slp, nam, mdp, dposp, retdirp, p, kerbflag, pubflag)
 		}
 	}
    }
+	vrele(ndp->ni_dvp);
+	vput(ndp->ni_vp);
+	ndp->ni_vp = NULL;
 out:
 	PNBUF_PUT(cnp->cn_pnbuf);
 	return (error);
