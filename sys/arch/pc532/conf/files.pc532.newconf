@@ -1,0 +1,71 @@
+#
+# new style config file for pc532 architecture
+#
+
+maxusers 2 16 64
+
+device	membus at root {[port = -1], [size = 0],
+		     [iomem = -1], [iosiz = 0],
+		     [irq = -1], [drq = -1]}
+
+device  rd at membus: disk
+major	{rd = 4}
+
+#device	timer at membus
+#device	clock at membus
+file	arch/pc532/pc532/clock.c	# clock timer
+
+device	scn at membus: tty
+file	arch/pc532/dev/nscn.c		scn needs-count
+
+define	scsi {}
+
+device	ncr at membus: scsi
+file	arch/pc532/dev/nncr.c		ncr needs-count
+device	dp at membus: scsi
+file	arch/pc532/dev/dp.c		dp needs-count
+device	aic at membus: scsi
+file	arch/pc532/dev/aic.c		aic needs-count
+
+device	scsibus at scsi {target = -1, lun = -1}
+
+device	cd at scsibus: disk
+file	scsi/cd.c			cd needs-flag
+major	{cd = 3}
+device	sd at scsibus: disk
+file	scsi/sd.c			sd needs-flag
+major	{sd = 0}
+device	st at scsibus: tape
+file	scsi/st.c			st needs-flag
+major	{st = 2}
+device	ch at scsibus: disk
+file	scsi/ch.c			ch needs-flag
+device	uk at scsibus: disk
+file	scsi/uk.c			uk needs-flag
+device	su at scsibus: disk
+file	scsi/su.c			su needs-flag
+
+#pseudo-device rtc
+
+file	dev/cons.c
+file	scsi/scsiconf.c			scsi
+file	scsi/scsi_base.c		scsi
+file	scsi/scsi_ioctl.c		scsi
+file	arch/pc532/pc532/autoconf.c
+file	arch/pc532/pc532/db_disasm.c	ddb
+file	arch/pc532/pc532/db_interface.c	ddb
+file	arch/pc532/pc532/db_trace.c	ddb
+file	arch/pc532/pc532/disksubr.c	disk
+file	arch/pc532/pc532/icuinit.c
+file	arch/pc532/pc532/in_cksum.c	inet
+file	arch/pc532/pc532/machdep.c
+file	arch/pc532/pc532/mem.c
+file	arch/pc532/pc532/ns_cksum.c	ns
+file	arch/pc532/pc532/ntoh.s
+file	arch/pc532/pc532/oc_cksum.s	inet
+file	arch/pc532/pc532/pmap.c
+file	arch/pc532/pc532/process_machdep.c
+file 	arch/pc532/pc532/random.s
+file	arch/pc532/pc532/sys_machdep.c
+file	arch/pc532/pc532/trap.c
+file	arch/pc532/pc532/vm_machdep.c
