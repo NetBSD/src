@@ -1,4 +1,4 @@
-/*	$NetBSD: dma.c,v 1.10.2.1 1995/10/24 16:29:17 pk Exp $ */
+/*	$NetBSD: dma.c,v 1.10.2.2 1995/11/12 11:46:17 pk Exp $ */
 
 /*
  * Copyright (c) 1994 Peter Galbavy.  All rights reserved.
@@ -204,6 +204,7 @@ void
 dma_reset(sc)
 	struct dma_softc *sc;
 {
+	DMACSR(sc) &= ~D_EN_DMA;		/* Stop DMA */
 	DMAWAIT1(sc);				/* let things drain */
 	DMACSR(sc) |= D_RESET;			/* reset DMA */
 	DELAY(200);				/* what should this be ? */
@@ -246,6 +247,7 @@ dma_start(sc, addr, len, datain)
 	/* we do the loading of the transfer counter */
 	volatile caddr_t esp = sc->sc_esp->sc_reg;
 	size_t size;
+	u_long csr;
 
 	sc->sc_dmaaddr = addr;
 	sc->sc_dmalen = len;
@@ -271,12 +273,17 @@ dma_start(sc, addr, len, datain)
 	/* load the count in */
 	ESPCMD(sc->sc_esp, ESPCMD_NOP|ESPCMD_DMA);
 
-	DMADDR(sc) = *sc->sc_dmaaddr;
-	DMACSR(sc) |= datain|D_EN_DMA|D_INT_EN;
+	/* clear errors and D_TC flag */
+	DMAWAIT(sc);
+	DMACSR(sc) |= D_INVALIDATE;
+	DMAWAIT1(sc);
 
-	/* and clear from last read if this is a write */
-	if (!datain)
-		DMACSR(sc) &= ~D_WRITE;
+	DMADDR(sc) = *sc->sc_dmaaddr;
+	csr = DMACSR(sc);
+	/* clear from last read if this is a write */
+	csr &= ~D_WRITE;
+	csr |= datain|D_EN_DMA|D_INT_EN;
+	DMACSR(sc) = csr;
 
 	/*
 	 * and kick the SCSI
@@ -304,7 +311,7 @@ dmaintr(sc)
 	volatile caddr_t esp = sc->sc_esp->sc_reg;
 	int trans = 0, resid = 0;
 
-	ESP_DMA(("%s: intr\n", sc->sc_dev.dv_xname));
+	ESP_DMA(("%s: intr: <csr %x>", sc->sc_dev.dv_xname, DMACSR(sc)));
 
 	if (DMACSR(sc) & D_ERR_PEND) {
 		DMACSR(sc) &= ~D_EN_DMA;	/* Stop DMA */
@@ -321,10 +328,12 @@ dmaintr(sc)
 	DMACSR(sc) &= ~D_EN_DMA;
 	sc->sc_active = 0;
 
-	DMAWAIT(sc);
-	/* clear errors and D_TC flag */
-	DMACSR(sc) |= D_INVALIDATE;
-	DMAWAIT1(sc);
+	if ((DMACSR(sc) & D_WRITE)) {
+		DMAWAIT(sc);
+		/* clear errors and D_TC flag */
+		DMACSR(sc) |= D_INVALIDATE;
+		DMAWAIT1(sc);
+	}
 
 	if (sc->sc_dmasize == 0) {
 		/* A "Transfer Pad" operation completed */
@@ -356,6 +365,7 @@ dmaintr(sc)
 	*sc->sc_dmalen -= trans;
 	*sc->sc_dmaaddr += trans;
 
+#if 0   /* this is not normal operation just yet */
 	if (*sc->sc_dmalen == 0 ||
 	    sc->sc_esp->sc_phase != sc->sc_esp->sc_prevphase)
 		return 0;
@@ -363,4 +373,6 @@ dmaintr(sc)
 	/* and again */
 	dma_start(sc, sc->sc_dmaaddr, sc->sc_dmalen, DMACSR(sc) & D_WRITE);
 	return 1;
+#endif
+	return 0;
 }
