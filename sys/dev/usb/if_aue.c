@@ -1,4 +1,4 @@
-/*	$NetBSD: if_aue.c,v 1.15 2000/01/28 00:29:53 augustss Exp $	*/
+/*	$NetBSD: if_aue.c,v 1.16 2000/01/28 00:51:25 augustss Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
  *	Bill Paul <wpaul@ee.columbia.edu>.  All rights reserved.
@@ -192,6 +192,7 @@ static void aue_watchdog	__P((struct ifnet *));
 #ifdef __FreeBSD__
 static void aue_shutdown	__P((device_ptr_t));
 #endif
+static int aue_openpipes	__P((struct aue_softc *));
 static int aue_ifmedia_upd	__P((struct ifnet *));
 static void aue_ifmedia_sts	__P((struct ifnet *, struct ifmediareq *));
 
@@ -1417,8 +1418,6 @@ aue_init(xsc)
 	struct aue_softc	*sc = xsc;
 	struct ifnet		*ifp = GET_IFP(sc);
 	struct mii_data		*mii = GET_MII(sc);
-	struct aue_chain	*c;
-	usbd_status		err;
 	int			i, s;
 	u_char			*eaddr;
 
@@ -1473,46 +1472,10 @@ aue_init(xsc)
 	mii_mediachg(mii);
 
 	if (sc->aue_ep[AUE_ENDPT_RX] == NULL) {
-	/* Open RX and TX pipes. */
-	err = usbd_open_pipe(sc->aue_iface, sc->aue_ed[AUE_ENDPT_RX],
-	    USBD_EXCLUSIVE_USE, &sc->aue_ep[AUE_ENDPT_RX]);
-	if (err) {
-		printf("%s: open rx pipe failed: %s\n",
-		    USBDEVNAME(sc->aue_dev), usbd_errstr(err));
-		splx(s);
-		return;
-	}
-	usbd_open_pipe(sc->aue_iface, sc->aue_ed[AUE_ENDPT_TX],
-	    USBD_EXCLUSIVE_USE, &sc->aue_ep[AUE_ENDPT_TX]);
-	if (err) {
-		printf("%s: open tx pipe failed: %s\n",
-		    USBDEVNAME(sc->aue_dev), usbd_errstr(err));
-		splx(s);
-		return;
-	}
-	err = usbd_open_pipe_intr(sc->aue_iface, sc->aue_ed[AUE_ENDPT_INTR],
-	    USBD_EXCLUSIVE_USE, &sc->aue_ep[AUE_ENDPT_INTR], sc,
-	    &sc->aue_cdata.aue_ibuf, AUE_INTR_PKTLEN, aue_intr, 
-	    AUE_INTR_INTERVAL);
-	if (err) {
-		printf("%s: open intr pipe failed: %s\n",
-		    USBDEVNAME(sc->aue_dev), usbd_errstr(err));
-		splx(s);
-		return;
-	}
-
-	/* Start up the receive pipe. */
-	for (i = 0; i < AUE_RX_LIST_CNT; i++) {
-		c = &sc->aue_cdata.aue_rx_chain[i];
-		usbd_setup_xfer(c->aue_xfer, sc->aue_ep[AUE_ENDPT_RX],
-		    c, c->aue_buf, AUE_BUFSZ,
-		    USBD_SHORT_XFER_OK | USBD_NO_COPY, USBD_NO_TIMEOUT,
-		    aue_rxeof);
-		usbd_transfer(c->aue_xfer);
-		DPRINTFN(5,("%s: %s: start read\n", USBDEVNAME(sc->aue_dev),
-			    __FUNCTION__));
-
-	}
+		if (aue_openpipes(sc)) {
+			splx(s);
+			return;
+		}
 	}
 
 	ifp->if_flags |= IFF_RUNNING;
@@ -1522,6 +1485,54 @@ aue_init(xsc)
 
 	usb_untimeout(aue_tick, sc, sc->aue_stat_ch);
 	usb_timeout(aue_tick, sc, hz, sc->aue_stat_ch);
+}
+
+static int
+aue_openpipes(sc)
+	struct aue_softc	*sc;
+{
+	struct aue_chain	*c;
+	usbd_status		err;
+	int i;
+
+	/* Open RX and TX pipes. */
+	err = usbd_open_pipe(sc->aue_iface, sc->aue_ed[AUE_ENDPT_RX],
+	    USBD_EXCLUSIVE_USE, &sc->aue_ep[AUE_ENDPT_RX]);
+	if (err) {
+		printf("%s: open rx pipe failed: %s\n",
+		    USBDEVNAME(sc->aue_dev), usbd_errstr(err));
+		return (EIO);
+	}
+	usbd_open_pipe(sc->aue_iface, sc->aue_ed[AUE_ENDPT_TX],
+	    USBD_EXCLUSIVE_USE, &sc->aue_ep[AUE_ENDPT_TX]);
+	if (err) {
+		printf("%s: open tx pipe failed: %s\n",
+		    USBDEVNAME(sc->aue_dev), usbd_errstr(err));
+		return (EIO);
+	}
+	err = usbd_open_pipe_intr(sc->aue_iface, sc->aue_ed[AUE_ENDPT_INTR],
+	    USBD_EXCLUSIVE_USE, &sc->aue_ep[AUE_ENDPT_INTR], sc,
+	    &sc->aue_cdata.aue_ibuf, AUE_INTR_PKTLEN, aue_intr, 
+	    AUE_INTR_INTERVAL);
+	if (err) {
+		printf("%s: open intr pipe failed: %s\n",
+		    USBDEVNAME(sc->aue_dev), usbd_errstr(err));
+		return (EIO);
+	}
+
+	/* Start up the receive pipe. */
+	for (i = 0; i < AUE_RX_LIST_CNT; i++) {
+		c = &sc->aue_cdata.aue_rx_chain[i];
+		usbd_setup_xfer(c->aue_xfer, sc->aue_ep[AUE_ENDPT_RX],
+		    c, c->aue_buf, AUE_BUFSZ,
+		    USBD_SHORT_XFER_OK | USBD_NO_COPY, USBD_NO_TIMEOUT,
+		    aue_rxeof);
+		(void)usbd_transfer(c->aue_xfer); /* XXX */
+		DPRINTFN(5,("%s: %s: start read\n", USBDEVNAME(sc->aue_dev),
+			    __FUNCTION__));
+
+	}
+	return (0);
 }
 
 /*
