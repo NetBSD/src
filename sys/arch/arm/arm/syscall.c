@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.11 2002/10/05 13:46:59 bjh21 Exp $	*/
+/*	$NetBSD: syscall.c,v 1.12 2002/10/05 13:57:11 bjh21 Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -82,7 +82,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.11 2002/10/05 13:46:59 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.12 2002/10/05 13:57:11 bjh21 Exp $");
 
 #include <sys/device.h>
 #include <sys/errno.h>
@@ -306,9 +306,9 @@ child_return(arg)
 
 	frame->tf_r0 = 0;
 #ifdef __PROG32
-		frame->tf_spsr &= ~PSR_C_bit;	/* carry bit */
+	frame->tf_spsr &= ~PSR_C_bit;	/* carry bit */
 #else
-		frame->tf_r15 &= ~R15_FLAG_C;	/* carry bit */
+	frame->tf_r15 &= ~R15_FLAG_C;	/* carry bit */
 #endif
 
 	KERNEL_PROC_UNLOCK(p);
