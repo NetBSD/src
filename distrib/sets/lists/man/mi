@@ -189,6 +189,7 @@
 ./usr/share/man/cat1/rcsdiff.0
 ./usr/share/man/cat1/rcsfreeze.0
 ./usr/share/man/cat1/rcsintro.0
+./usr/share/man/cat1/rcslog.0
 ./usr/share/man/cat1/rcsmerge.0
 ./usr/share/man/cat1/rdist.0
 ./usr/share/man/cat1/rehash.0
@@ -318,6 +319,7 @@
 ./usr/share/man/cat4/cy.0
 ./usr/share/man/cat4/ddb.0
 ./usr/share/man/cat4/drum.0
+./usr/share/man/cat4/eap.0
 ./usr/share/man/cat4/ec.0
 ./usr/share/man/cat4/eg.0
 ./usr/share/man/cat4/eisa.0
@@ -367,6 +369,7 @@
 ./usr/share/man/cat4/sb.0
 ./usr/share/man/cat4/sd.0
 ./usr/share/man/cat4/sea.0
+./usr/share/man/cat4/si.0
 ./usr/share/man/cat4/sl.0
 ./usr/share/man/cat4/sm.0
 ./usr/share/man/cat4/spp.0
@@ -375,6 +378,7 @@
 ./usr/share/man/cat4/stdin.0
 ./usr/share/man/cat4/stdout.0
 ./usr/share/man/cat4/strip.0
+./usr/share/man/cat4/sw.0
 ./usr/share/man/cat4/tb.0
 ./usr/share/man/cat4/tcp.0
 ./usr/share/man/cat4/termios.0
@@ -624,7 +628,6 @@
 ./usr/share/man/cat8/ping.0
 ./usr/share/man/cat8/portmap.0
 ./usr/share/man/cat8/pppd.0
-./usr/share/man/cat8/pppd.cbcp.0
 ./usr/share/man/cat8/pppstats.0
 ./usr/share/man/cat8/praliases.0
 ./usr/share/man/cat8/pstat.0
@@ -1181,6 +1184,7 @@
 ./usr/share/man/man1/rcsdiff.1
 ./usr/share/man/man1/rcsfreeze.1
 ./usr/share/man/man1/rcsintro.1
+./usr/share/man/man1/rcslog.1
 ./usr/share/man/man1/rcsmerge.1
 ./usr/share/man/man1/rdist.1
 ./usr/share/man/man1/rehash.1
@@ -1310,6 +1314,7 @@
 ./usr/share/man/man4/cy.4
 ./usr/share/man/man4/ddb.4
 ./usr/share/man/man4/drum.4
+./usr/share/man/man4/eap.4
 ./usr/share/man/man4/ec.4
 ./usr/share/man/man4/eg.4
 ./usr/share/man/man4/eisa.4
@@ -1359,6 +1364,7 @@
 ./usr/share/man/man4/sb.4
 ./usr/share/man/man4/sd.4
 ./usr/share/man/man4/sea.4
+./usr/share/man/man4/si.4
 ./usr/share/man/man4/sl.4
 ./usr/share/man/man4/sm.4
 ./usr/share/man/man4/spp.4
@@ -1367,6 +1373,7 @@
 ./usr/share/man/man4/stdin.4
 ./usr/share/man/man4/stdout.4
 ./usr/share/man/man4/strip.4
+./usr/share/man/man4/sw.4
 ./usr/share/man/man4/tb.4
 ./usr/share/man/man4/tcp.4
 ./usr/share/man/man4/termios.4
@@ -1616,7 +1623,6 @@
 ./usr/share/man/man8/ping.8
 ./usr/share/man/man8/portmap.8
 ./usr/share/man/man8/pppd.8
-./usr/share/man/man8/pppd.cbcp.8
 ./usr/share/man/man8/pppstats.8
 ./usr/share/man/man8/praliases.8
 ./usr/share/man/man8/pstat.8
@@ -1887,12 +1893,12 @@
 ./usr/share/man/man9/rnd_add_uint32.9
 ./usr/share/man/man9/rnd_attach_source.9
 ./usr/share/man/man9/rnd_detach_source.9
-./usr/share/man/man9/rt_timer.0 
-./usr/share/man/man9/rt_timer_add.0
-./usr/share/man/man9/rt_timer_queue_change.0
-./usr/share/man/man9/rt_timer_queue_create.0
-./usr/share/man/man9/rt_timer_queue_destroy.0
-./usr/share/man/man9/rt_timer_remove_all.0
+./usr/share/man/man9/rt_timer.9 
+./usr/share/man/man9/rt_timer_add.9
+./usr/share/man/man9/rt_timer_queue_change.9
+./usr/share/man/man9/rt_timer_queue_create.9
+./usr/share/man/man9/rt_timer_queue_destroy.9
+./usr/share/man/man9/rt_timer_remove_all.9
 ./usr/share/man/man9/runtime.9
 ./usr/share/man/man9/setdisklabel.9
 ./usr/share/man/man9/shutdownhook_disestablish.9
