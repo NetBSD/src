@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.172 2002/01/27 13:23:10 jdolecek Exp $
+# $NetBSD: GENERIC,v 1.173 2002/01/27 13:27:51 is Exp $
 #
 # GENERIC machine description file
 #
@@ -34,7 +34,7 @@
 
 include "arch/amiga/conf/std.amiga"
 
-#ident 		"GENERIC-$Revision: 1.172 $"
+#ident 		"GENERIC-$Revision: 1.173 $"
 
 #ifdef INSTALL_CONFIGURATION
 makeoptions	COPTS="-Os"
@@ -353,8 +353,10 @@ fdc0		at mainbus0		# Amiga FDC
 fd*		at fdc0 unit ?		# floppy disks on the later
 a34kbbc0	at mainbus0		# A3000/A4000 battery backed clock
 a2kbbc0 	at mainbus0		# A2000 battery backed clock
+#ifndef INSTALL_CONFIGURATION
 aucc*		at mainbus0		# Amiga CC audio
 audio*		at aucc?
+#endif
 #endif
 
 #ifdef DRACO_CONFIGURATION
@@ -372,6 +374,7 @@ lpt0		at drsupio? port ?	# DraCo parallel
 # Zorro-II, Zorro-III, DraCo Direct-Bus devices (sans graphics)
 #
 
+#ifndef INSTALL_CONFIGURATION
 #ifndef DRACO_CONFIGURATION
 # Alas, Melody-Z2 dont configure in the DraCo bus.
 melody* 	at zbus0		# Melody MPEG audio decoder
@@ -383,6 +386,7 @@ audio*		at repulse?
 
 toccata*	at zbus0		# MacroSystem GmbH Toccata
 audio*		at toccata?
+#endif
 
 # Ethernet cards:
 le*		at zbus0		# A2065, Ameristar, Ariadne
