@@ -1,4 +1,4 @@
-/*	$NetBSD: abtn.c,v 1.5 2002/10/02 05:30:38 thorpej Exp $	*/
+/*	$NetBSD: abtn.c,v 1.6 2003/03/05 16:18:24 soren Exp $	*/
 
 /*-
  * Copyright (C) 1999 Tsubai Masanari.  All rights reserved.
@@ -35,6 +35,16 @@
 
 #define NVRAM_BRIGHTNESS 0x140e
 #define ABTN_HANDLER_ID 31
+
+#define BUTTON_LOUDER	0x06
+#define BUTTON_SOFTER	0x07
+#define BUTTON_MUTE	0x08
+#define BUTTON_BRIGHTER	0x09
+#define BUTTON_DIMMER	0x0a
+#define BUTTON_EJECT	0x0b
+#define BUTTON_DISPLAY	0x0c
+#define BUTTON_KEYPAD	0x7f
+#define BUTTON_DEPRESS	0x80
 
 struct abtn_softc {
 	struct device sc_dev;
@@ -79,8 +89,6 @@ abtn_attach(parent, self, aux)
 	ADBSetInfoBlock adbinfo;
 	int bright;
 
-	printf("brightness/volume button\n");
-
 	bright = pm_read_nvram(NVRAM_BRIGHTNESS);
 	if (bright != 0)
 		pm_set_brightness(bright);
@@ -106,8 +114,11 @@ abtn_adbcomplete(buffer, data, adb_command)
 
 	cmd = buffer[1];
 
+	if (cmd >= BUTTON_DEPRESS)
+		return;
+
 	switch (cmd) {
-	case 0x0a:
+	case BUTTON_DIMMER:
 		sc->brightness -= 8;
 		if (sc->brightness < 8)
 			sc->brightness = 8;
@@ -115,12 +126,35 @@ abtn_adbcomplete(buffer, data, adb_command)
 		pm_write_nvram(NVRAM_BRIGHTNESS, sc->brightness);
 		break;
 
-	case 0x09:
+	case BUTTON_BRIGHTER:
 		sc->brightness += 8;
 		if (sc->brightness > 0x78)
 			sc->brightness = 0x78;
 		pm_set_brightness(sc->brightness);
 		pm_write_nvram(NVRAM_BRIGHTNESS, sc->brightness);
 		break;
+
+	case BUTTON_MUTE:
+	case BUTTON_SOFTER:
+	case BUTTON_LOUDER:
+		printf("%s: volume setting not implemented\n",
+			sc->sc_dev.dv_xname);
+		break;
+	case BUTTON_DISPLAY:
+		printf("%s: display selection not implemented\n",
+			sc->sc_dev.dv_xname);
+		break;
+	case BUTTON_EJECT:
+		printf("%s: eject not implemented\n",
+			sc->sc_dev.dv_xname);
+		break;
+
+	/* The keyboard gets wacky when in keypad mode. */
+	case BUTTON_KEYPAD:
+		break;
+
+	default:
+		printf("%s: unknown button 0x%x\n",
+			sc->sc_dev.dv_xname, cmd);
 	}
 }
