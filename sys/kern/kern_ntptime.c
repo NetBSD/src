@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ntptime.c,v 1.13 2000/08/07 18:10:21 bjh21 Exp $	*/
+/*	$NetBSD: kern_ntptime.c,v 1.14 2001/09/16 06:50:06 manu Exp $	*/
 
 /******************************************************************************
  *                                                                            *
@@ -201,22 +201,33 @@ sys_ntp_adjtime(p, v, retval)
 	} */ *uap = v;
 	struct timex ntv;
 	int error = 0;
+
+	if ((error = copyin((caddr_t)SCARG(uap, tp), (caddr_t)&ntv,
+			sizeof(ntv))) != 0)
+		return (error);
+
+
+	if (ntv.modes != 0 && (error = suser(p->p_ucred, &p->p_acflag)) != 0)
+		return (error);
+
+	return (ntp_adjtime1(&ntv, retval));
+}
+
+int
+ntp_adjtime1(struct timex *, register_t*)
+	struct timex *ntv;
+	register_t	*retval;
+{
+	int error = 0;
 	int modes;
 	int s;
 
-	if ((error = copyin((caddr_t)SCARG(uap, tp), (caddr_t)&ntv,
-			sizeof(ntv))))
-		return (error);
-
 	/*
-	 * Update selected clock variables - only the superuser can
-	 * change anything. Note that there is no error checking here on
-	 * the assumption the superuser should know what it is doing.
+	 * Update selected clock variables. Note that there is no error 
+	 * checking here on the assumption the superuser should know 
+	 * what it is doing.
 	 */
 	modes = ntv.modes;
-	if (modes != 0 && (error = suser(p->p_ucred, &p->p_acflag)))
-		return (error);
-
 	s = splclock();
 	if (modes & MOD_FREQUENCY)
 #ifdef PPS_SYNC
