@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.11 2003/01/19 10:06:15 tsutsui Exp $	*/
+/*	$NetBSD: fd.c,v 1.12 2003/01/25 15:43:11 tsutsui Exp $	*/
 /*	$OpenBSD: fd.c,v 1.6 1998/10/03 21:18:57 millert Exp $	*/
 /*	NetBSD: fd.c,v 1.78 1995/07/04 07:23:09 mycroft Exp 	*/
 
@@ -898,8 +898,8 @@ loop:
 			block = (fd->sc_cylin * type->heads + head) *
 			    type->sectrac + sec;
 			if (block != fd->sc_blkno) {
-				printf("fdcintr: block %d != blkno %d\n",
-				    block, fd->sc_blkno);
+				printf("fdcintr: block %d != blkno %" PRId64
+				    "\n", block, fd->sc_blkno);
 #ifdef DDB
 				 Debugger();
 #endif
