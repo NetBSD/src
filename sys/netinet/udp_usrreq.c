@@ -1,4 +1,4 @@
-/*	$NetBSD: udp_usrreq.c,v 1.50 1999/07/09 22:57:23 thorpej Exp $	*/
+/*	$NetBSD: udp_usrreq.c,v 1.51 1999/08/09 10:55:29 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -454,6 +454,9 @@ udp_ctlinput(cmd, sa, v)
 	void (*notify) __P((struct inpcb *, int)) = udp_notify;
 	int errno;
 
+	if (sa->sa_family != AF_INET ||
+	    sa->sa_len != sizeof(struct sockaddr_in))
+		return NULL;
 	if ((unsigned)cmd >= PRC_NCMDS)
 		return NULL;
 	errno = inetctlerrmap[cmd];
