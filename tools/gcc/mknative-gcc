@@ -1,8 +1,8 @@
 #!/bin/sh
-#	$NetBSD: mknative-gcc,v 1.9 2003/11/27 01:05:45 mrg Exp $
+#	$NetBSD: mknative-gcc,v 1.10 2003/11/27 10:21:24 mrg Exp $
 #
 # Shell script for generating all the constants needed for a native
-# platform build of src/gnu/dist/toolchain.
+# platform build of src/gnu/dist/gcc.
 #
 
 # initialise
