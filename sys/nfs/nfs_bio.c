@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_bio.c,v 1.80 2002/05/06 00:07:51 enami Exp $	*/
+/*	$NetBSD: nfs_bio.c,v 1.81 2002/05/06 03:20:54 enami Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_bio.c,v 1.80 2002/05/06 00:07:51 enami Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_bio.c,v 1.81 2002/05/06 03:20:54 enami Exp $");
 
 #include "opt_nfs.h"
 #include "opt_ddb.h"
@@ -1133,8 +1133,7 @@ nfs_getpages(v)
 	 */
 
 	pgs = ap->a_m;
-	if (locked && v3) {
-		KASSERT(write);
+	if (write && locked && v3) {
 		KASSERT(pgs != NULL);
 #ifdef DEBUG
 
