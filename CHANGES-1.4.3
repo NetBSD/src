@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.4.3,v 1.1.2.18 2000/05/25 23:04:12 he Exp $
+#	$NetBSD: CHANGES-1.4.3,v 1.1.2.19 2000/06/01 18:11:13 he Exp $
 
 A complete list of changes from NetBSD 1.4.2 to NetBSD 1.4.3:
 
@@ -174,6 +174,7 @@ sys/kern/kern_ktrace.c				1.38-1.39 via patch
   Fix two bugs:
    o A malicious or erroneous program can hog the CPU in uiomove()
    o A ktrace of such a program can hog large amounts of kernel memory
+  Fixes SA#2000-005.
 
 distrib/notes/common/main			patch
 
@@ -319,7 +320,7 @@ distrib/i386/floppies/bootfloppy-common/Makefile.inc	patch
 libexec/ftpd/ftpd.c				patch
 
   Back out unnecessary half of revision 1.70 which breaks parsing
-  of /etc/ftpchroot.
+  of /etc/ftpchroot.  Fixes SA#2000-006.
 
 usr.sbin/chown/chown.c				1.21
 
@@ -431,3 +432,57 @@ lib/libc/stdio/fopen.3				1.11
 sys/netinet/ip_state.c				patch
 
   Do not let RST TCP segments create state.
+
+sys/dev/pci/if_fxp.c				patch
+
+  Calibrate the timeouts by using DELAY(1) so their values are less
+  machine-dependant. Fixes PR#10141, where spurious timeouts were
+  being seen.  Also report the line numbers of the timeouts so it
+  can be determined which is being seen.
+
+sbin/newfs/mkfs.c				1.38
+
+  Abort if the number of cylinder group summary area is larger than
+  MAXCSBUFS.
+
+usr.bin/gencat/gencat.1				1.1-1.2 (new)
+distrib/sets/lists/man/mi			patch
+
+  Add manual page for gencat.
+
+distrib/utils/sysinst/mbr.c			1.22
+sbin/fdisk/fdisk.c				1.40
+sys/arch/i386/stand/lib/crt/bootsect/start_bootsect.S 1.17
+
+  Fix a booting problem when int13 extensions are used (> 8GB),
+  and CHS values in MBRs were written from sysinst or fdisk that
+  some BIOSes (Adaptec SCSI BIOS 2.20 in particular) didn't like.
+
+sbin/ldconfig/ldconfig.c			1.28-1.29
+libexec/ld.aout_so/shlib.c			1.18 via patch
+include/paths.h					1.14
+
+  Enable searching for libraries under /emul/aout, and make sure
+  that ELF libraries are not erroneously accepted.
+
+sys/kern/sysv_sem.c				1.37
+
+  Remove existing semaphore system locking mechanism.  This avoids
+  giving users a way to wedge processes which use semaphores (NOTE:
+  this would only affect processes using semaphores).  Fixes
+  SA#2000-004.
+
+etc/inetd.conf					1.29 via patch
+
+  Disable everything except ftpd and telnetd by default.
+  Fixes PR#9673.
+
+sys/dev/pci/if_ti.c				patch
+
+  Fix compile error.
+
+sys/miscfs/procfs/procfs_cmdline.c		1.8
+
+  Fix a possible kernel memory leak - if the command line of a
+  process was requested after it had started to exit but before it
+  became a zombie a page of kernel memory would not be freed.
