@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_compat.c,v 1.1.2.4 1999/11/18 08:15:49 scottr Exp $	*/
+/*	$NetBSD: grf_compat.c,v 1.1.2.5 1999/11/20 08:35:20 scottr Exp $	*/
 
 /*
  * Copyright (C) 1999 Scott Reynolds
@@ -181,9 +181,7 @@ grfopen(dev, flag, mode, p)
 		return ENXIO;
 
 	sc = &grf_softc[unit];
-	if (sc->mfb_sc != NULL)
-		sc->sc_isopen++;
-	else
+	if (sc->mfb_sc == NULL)
 		rv = ENXIO;
 
 	return rv;
@@ -204,8 +202,8 @@ grfclose(dev, flag, mode, p)
 		return ENXIO;
 
 	sc = &grf_softc[unit];
-	if (sc->mfb_sc != NULL && sc->sc_isopen)
-		sc->sc_isopen = 0;
+	if (sc->mfb_sc != NULL)
+		macfb_clear(sc->mfb_sc->sc_dc);	/* clear the display */
 	else
 		rv = ENXIO;
 
@@ -332,7 +330,7 @@ grfmmap(dev, off, prot)
 		return ENXIO;
 
 	sc = &grf_softc[unit];
-	if (sc->mfb_sc == NULL || !sc->sc_isopen)
+	if (sc->mfb_sc == NULL)
 		return ENXIO;
 
 	dc = sc->mfb_sc->sc_dc;
