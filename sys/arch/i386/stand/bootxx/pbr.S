@@ -1,4 +1,4 @@
-/*	$NetBSD: pbr.S,v 1.2 2003/04/24 17:37:54 dsl Exp $	*/
+/*	$NetBSD: pbr.S,v 1.3 2003/05/15 08:50:53 dsl Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -134,6 +134,7 @@ start0:
 
 /* See if this is our code, if so we have already loaded the next stage */
 
+	xorl	%ebp, %ebp		/* pass sector 0 to next stage */
 	movl	(%bx), %eax		/* mbr code shouldn't even have ... */
 	cmpl	R(start), %eax		/* ... a jmp at the start. */
 	je	pbr_read_ok
@@ -350,8 +351,10 @@ _newline:
 #ifndef TERSE_ERROR
 ERR_READ:	.asciz	"Disk read error"
 ERR_NO_BOOTXX:	.asciz	"Not a bootxx image"
-ERR_NO_LBA:	.asciz	"Invalid CHS read"
 ERR_PTN:	.asciz	"No NetBSD partition"
+#ifndef NO_LBA_CHECK
+ERR_NO_LBA:	.asciz	"Invalid CHS read"
+#endif
 #endif
 
 /*
