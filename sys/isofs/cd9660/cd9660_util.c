@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_util.c,v 1.8 1994/12/13 22:33:25 mycroft Exp $	*/
+/*	$NetBSD: cd9660_util.c,v 1.9 1996/02/09 21:32:06 christos Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -91,7 +91,7 @@ isofncmp(fn, fnlen, isofn, isolen)
 			for (j = 0; --isolen >= 0; j = j * 10 + *isofn++ - '0');
 			return i - j;
 		}
-		if (c != *fn) {
+		if (((u_char) c) != *fn) {
 			if (c >= 'A' && c <= 'Z') {
 				if (c + ('a' - 'A') != *fn) {
 					if (*fn >= 'a' && *fn <= 'z')
