@@ -1,4 +1,4 @@
-/*      $NetBSD: catman.c,v 1.20 2003/05/09 00:43:46 itojun Exp $       */
+/*      $NetBSD: catman.c,v 1.21 2003/05/09 00:47:46 itojun Exp $       */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -113,8 +113,6 @@ main(argc, argv)
 		case 'M':
 			m_path = optarg;
 			break;
-
-		case '?':
 		default:
 			usage();
 		}
@@ -175,9 +173,9 @@ setdefentries(m_path, m_add, sections)
 	 */
 	if (sections != NULL) {
 		sectnewp = getlist("_section_new", 1);
-		for(p=sections; *p;) {
+		for (p = sections; *p;) {
 			i = snprintf(buf, sizeof(buf), "man%c", *p++);
-			for(; *p && !isdigit(*p) && i<sizeof(buf)-1; i++)
+			for (; *p && !isdigit(*p) && i < sizeof(buf) - 1; i++)
 				buf[i] = *p++;
 			buf[i] = '\0';
 			addentry(sectnewp, buf, 0);
@@ -201,7 +199,7 @@ setdefentries(m_path, m_add, sections)
 		    p != NULL; p = strtok(NULL, ":")) {
 			slashp = p[strlen(p) - 1] == '/' ? "" : "/";
 			TAILQ_FOREACH(e_subp, &subp->list, q) {
-				if(!strncmp(e_subp->s, "cat", 3))
+				if (!strncmp(e_subp->s, "cat", 3))
 					continue;
 				(void)snprintf(buf, sizeof(buf), "%s%s%s{/%s,}",
 				    p, slashp, e_subp->s, machine);
@@ -222,7 +220,7 @@ setdefentries(m_path, m_add, sections)
 			slashp =
 			    e_defp->s[strlen(e_defp->s) - 1] == '/' ? "" : "/";
 			TAILQ_FOREACH(e_subp, &subp->list, q) {
-				if(!strncmp(e_subp->s, "cat", 3))
+				if (!strncmp(e_subp->s, "cat", 3))
 					continue;
 				(void)snprintf(buf, sizeof(buf), "%s%s%s{/%s,}",
 					e_defp->s, slashp, e_subp->s, machine);
@@ -241,7 +239,7 @@ setdefentries(m_path, m_add, sections)
 		for (p = strtok(m_add, ":"); p != NULL; p = strtok(NULL, ":")) {
 			slashp = p[strlen(p) - 1] == '/' ? "" : "/";
 			TAILQ_FOREACH(e_subp, &subp->list, q) {
-				if(!strncmp(e_subp->s, "cat", 3))
+				if (!strncmp(e_subp->s, "cat", 3))
 					continue;
 				(void)snprintf(buf, sizeof(buf), "%s%s%s{/%s,}",
 				    p, slashp, e_subp->s, machine);
@@ -266,9 +264,8 @@ uniquepath(void)
 	struct stat st1;
 	struct stat st2;
 	struct stat st3;
-	int i,j,len,lnk, gflags;
+	int i, j, len, lnk, gflags;
 	char path[PATH_MAX], *p;
-
 
 	gflags = 0;
 	TAILQ_FOREACH(e_defp, &defp->list, q) {
@@ -279,15 +276,15 @@ uniquepath(void)
 
 	defnewp = getlist("_default_new2", 1);
 
-	for(i=0; i<manpaths.gl_pathc; i++) {
+	for (i = 0; i < manpaths.gl_pathc; i++) {
 		lnk = 0;
 		lstat(manpaths.gl_pathv[i], &st1);
-		for(j=0; j<manpaths.gl_pathc; j++) {
+		for (j = 0; j < manpaths.gl_pathc; j++) {
 			if (i != j) {
 				lstat(manpaths.gl_pathv[j], &st2);
 				if (st1.st_ino == st2.st_ino) {
 					strcpy(path, manpaths.gl_pathv[i]);
-					for(p = path; *(p+1) != '\0';) {
+					for (p = path; *(p+1) != '\0';) {
 						p = dirname(p);
 						lstat(p, &st3);
 						if (S_ISLNK(st3.st_mode)) {
@@ -297,7 +294,7 @@ uniquepath(void)
 					}
 				} else {
 					len = readlink(manpaths.gl_pathv[i],
-							path, sizeof(path) - 1);
+					    path, sizeof(path) - 1);
 					if (len == -1)
 						continue;
 					path[len] = '\0';
@@ -328,9 +325,9 @@ catman(void)
 	TAILQ_FOREACH(e_path, &defp->list, q) {
 		mandir = e_path->s;
 		strcpy(catdir, mandir);
-		if(!(cp = strstr(catdir, "man/man")))
+		if (!(cp = strstr(catdir, "man/man")))
 			continue;
-		cp+=4; *cp++ = 'c'; *cp++ = 'a'; *cp = 't';
+		cp += 4; *cp++ = 'c'; *cp++ = 'a'; *cp = 't';
 		scanmandir(catdir, mandir);
 	}
 }
@@ -370,7 +367,7 @@ scanmandir(catdir, mandir)
 		}
 		if (f_noprint == 0)
 			printf("mkdir %s\n", catdir);
-		if (f_noaction == 0 && mkdir(catdir,0755) < 0) {
+		if (f_noaction == 0 && mkdir(catdir, 0755) < 0) {
 			warn("can't create %s", catdir);
 			closedir(dirp);
 			return;
@@ -391,11 +388,11 @@ scanmandir(catdir, mandir)
 			splitentry(e_build->s, buildsuff, buildcmd);
 			snprintf(match, sizeof(match), "*%s",
 						buildsuff);
-			if(!fnmatch(match, manpage, 0))
+			if (!fnmatch(match, manpage, 0))
 				break;
 		}
 
-		if(e_build == NULL)
+		if (e_build == NULL)
 			continue;
 
 		e_crunch = NULL;
@@ -403,7 +400,7 @@ scanmandir(catdir, mandir)
 		TAILQ_FOREACH(e_crunch, &crunchp->list, q) {
 			splitentry(e_crunch->s, crunchsuff, crunchcmd);
 			snprintf(match, sizeof(match), "*%s", crunchsuff);
-			if(!fnmatch(match, manpage, 0))
+			if (!fnmatch(match, manpage, 0))
 				break;
 		}
 
@@ -411,7 +408,7 @@ scanmandir(catdir, mandir)
 			warn("can't stat %s", manpage);
 			continue;
 		} else {
-			if(S_ISLNK(manstat.st_mode)) {
+			if (S_ISLNK(manstat.st_mode)) {
 				strcpy(buffer, catpage);
 				strcpy(linkname, basename(buffer));
 				len = readlink(manpage, buffer,
@@ -432,14 +429,14 @@ scanmandir(catdir, mandir)
 						dirname(tmp), buffer);
 			}
 			else
-				*linkname='\0';
+				*linkname = '\0';
 		}
 
-		if(!e_crunch) {
+		if (!e_crunch) {
 			*crunchsuff = *crunchcmd = '\0';
 		}
 		setcatsuffix(catpage, buildsuff, crunchsuff);
-		if(*linkname != '\0')
+		if (*linkname != '\0')
 			setcatsuffix(linkname, buildsuff, crunchsuff);
 
 		if (stat(manpage, &manstat) < 0) {
@@ -448,7 +445,7 @@ scanmandir(catdir, mandir)
 		}
 
 		if (!S_ISREG(manstat.st_mode)) {
-			warnx("not a regular file %s",manpage);
+			warnx("not a regular file %s", manpage);
 			continue;
 		}
 
@@ -471,7 +468,7 @@ scanmandir(catdir, mandir)
 			}
 		}
 
-		if(*linkname != '\0') {
+		if (*linkname != '\0') {
 			strcpy(tmp, catpage);
 			snprintf(tmp, sizeof(tmp), "%s/%s", dirname(tmp),
 					linkname);
@@ -490,10 +487,10 @@ scanmandir(catdir, mandir)
 					 */
 					if (f_noprint == 0)
 						printf("ln -s %s %s\n", catpage,
-								 linkname);
+						    linkname);
 					if (f_noaction == 0) {
 						strcpy(tmp, catpage);
-						if(chdir(dirname(tmp)) == -1) {
+						if (chdir(dirname(tmp)) == -1) {
 							warn("can't chdir");
 							continue;
 						}
@@ -523,12 +520,14 @@ splitentry(s, first, second)
 {
 	char *c;
 
-	for(c = s; *c != '\0' && !isspace(*c); ++c);
-	if(*c == '\0')
+	for (c = s; *c != '\0' && !isspace(*c); ++c)
+		;
+	if (*c == '\0')
 		return(0);
 	strncpy(first, s, c-s);
 	first[c-s] = '\0';
-	for(; *c != '\0' && isspace(*c); ++c);
+	for (; *c != '\0' && isspace(*c); ++c)
+		;
 	strcpy(second, c);
 		return(1);
 }
@@ -542,8 +541,8 @@ setcatsuffix(catpage, suffix, crunchsuff)
 	TAG *tp;
 	char *p;
 
-	for(p = catpage + strlen(catpage); p!=catpage; p--)
-		if(!fnmatch(suffix, p, 0)) {
+	for (p = catpage + strlen(catpage); p != catpage; p--)
+		if (!fnmatch(suffix, p, 0)) {
 			tp = getlist("_suffix", 1);
 			if (! TAILQ_EMPTY(&tp->list)) {
 				sprintf(p, "%s%s",
@@ -567,7 +566,7 @@ makecat(manpage, catpage, buildcmd, crunchcmd)
 
 	snprintf(sysbuf, sizeof(sysbuf), buildcmd, manpage);
 
-	if(*crunchcmd != '\0') {
+	if (*crunchcmd != '\0') {
 		snprintf(crunchbuf, sizeof(crunchbuf), crunchcmd, catpage);
 		snprintf(sysbuf, sizeof(sysbuf), "%s | %s", sysbuf, crunchbuf);
 	} else {
