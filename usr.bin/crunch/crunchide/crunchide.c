@@ -1,4 +1,4 @@
-/*	$NetBSD: crunchide.c,v 1.6 1997/08/02 21:30:16 perry Exp $	*/
+/*	$NetBSD: crunchide.c,v 1.7 1997/08/08 11:08:10 hannken Exp $	*/
 /*
  * Copyright (c) 1997 Christopher G. Demetriou.  All rights reserved.
  * Copyright (c) 1994 University of Maryland
@@ -60,7 +60,7 @@
  */
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: crunchide.c,v 1.6 1997/08/02 21:30:16 perry Exp $");
+__RCSID("$NetBSD: crunchide.c,v 1.7 1997/08/08 11:08:10 hannken Exp $");
 #endif
 
 #include <unistd.h>
@@ -145,6 +145,8 @@ void add_to_keep_list(char *symbol)
 {
     struct keep *newp, *prevp, *curp;
     int cmp;
+
+    cmp = 0;
 
     for(curp = keep_list, prevp = NULL; curp; prevp = curp, curp = curp->next)
 	if((cmp = strcmp(symbol, curp->sym)) <= 0) break;
