@@ -1,4 +1,4 @@
-/*	$NetBSD: inet6.c,v 1.9 2000/06/16 02:08:40 itojun Exp $	*/
+/*	$NetBSD: inet6.c,v 1.10 2000/07/06 12:40:19 itojun Exp $	*/
 /*	BSDI inet.c,v 2.3 1995/10/24 02:19:29 prb Exp	*/
 
 /*
@@ -68,7 +68,7 @@
 #if 0
 static char sccsid[] = "@(#)inet.c	8.4 (Berkeley) 4/20/94";
 #else
-__RCSID("$NetBSD: inet6.c,v 1.9 2000/06/16 02:08:40 itojun Exp $");
+__RCSID("$NetBSD: inet6.c,v 1.10 2000/07/06 12:40:19 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -794,6 +794,9 @@ ip6_stats(off, name)
 			PRINT_SCOPESTAT(ip6s_sources_deprecated[i], i);
 		}
 	}
+
+	p1(ip6s_forward_cachehit, "\t%llu forward cache hit\n");
+	p1(ip6s_forward_cachemiss, "\t%llu forward cache miss\n");
 #undef p
 #undef p1
 }
@@ -811,7 +814,7 @@ ip6_ifstats(ifname)
     printf(m, (unsigned long long)ifr.ifr_ifru.ifru_stat.f, \
 	plural(ifr.ifr_ifru.ifru_stat.f))
 #define	p_5(f, m) if (ifr.ifr_ifru.ifru_stat.f || sflag <= 1) \
-    printf(m, ip6stat.f)
+    printf(m, (unsigned long long)ip6stat.f)
 
 	if ((s = socket(AF_INET6, SOCK_DGRAM, 0)) < 0) {
 		perror("Warning: socket(AF_INET6)");
@@ -1133,6 +1136,8 @@ icmp6_stats(off, name)
 
 #define	p(f, m) if (icmp6stat.f || sflag <= 1) \
     printf(m, (unsigned long long)icmp6stat.f, plural(icmp6stat.f))
+#define p_5(f, m) if (icmp6stat.f || sflag <= 1) \
+    printf(m, (unsigned long long)icmp6stat.f)
 
 	p(icp6s_error, "\t%llu call%s to icmp6_error\n");
 	p(icp6s_canterror,
@@ -1161,9 +1166,25 @@ icmp6_stats(off, name)
 			printf("\t\t%s: %llu\n", icmp6names[i],
 				(unsigned long long)icmp6stat.icp6s_inhist[i]);
 		}
+	printf("\tHistogram of error messages to be generated:\n");
+	p_5(icp6s_odst_unreach_noroute, "\t\t%llu no route\n");
+	p_5(icp6s_odst_unreach_admin, "\t\t%llu administratively prohibited\n");
+	p_5(icp6s_odst_unreach_beyondscope, "\t\t%llu beyond scope\n");
+	p_5(icp6s_odst_unreach_addr, "\t\t%llu address unreachable\n");
+	p_5(icp6s_odst_unreach_noport, "\t\t%llu port unreachable\n");
+	p_5(icp6s_opacket_too_big, "\t\t%llu packet too big\n");
+	p_5(icp6s_otime_exceed_transit, "\t\t%llu time exceed transit\n");
+	p_5(icp6s_otime_exceed_reassembly, "\t\t%llu time exceed reassembly\n");
+	p_5(icp6s_oparamprob_header, "\t\t%llu erroneous header field\n");
+	p_5(icp6s_oparamprob_nextheader, "\t\t%llu unrecognized next header\n");
+	p_5(icp6s_oparamprob_option, "\t\t%llu unrecognized option\n");
+	p_5(icp6s_oredirect, "\t\t%llu redirect\n");
+	p_5(icp6s_ounknown, "\t\t%llu unknown\n");
+
 	p(icp6s_reflect, "\t%llu message response%s generated\n");
 	p(icp6s_nd_toomanyopt, "\t%llu message%s with too many ND options\n");
 #undef p
+#undef p_5
 }
 
 /*
