@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.14 2002/02/19 17:21:21 uch Exp $	*/
+/*	$NetBSD: intr.h,v 1.15 2002/03/03 14:31:24 uch Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997 Charles M. Hannum.  All rights reserved.
@@ -38,7 +38,7 @@
 #ifndef _SH3_INTR_H_
 #define _SH3_INTR_H_
 
-#include <sh3/cpufunc.h>
+#include <sh3/psl.h>
 
 /* Interrupt sharing types. */
 #define	IST_NONE	0	/* none */
