@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.33 2002/12/11 16:24:38 atatat Exp $	*/
+/*	$NetBSD: md.c,v 1.34 2003/05/13 02:56:13 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon W. Ross, Leo Weppelman.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: md.c,v 1.33 2002/12/11 16:24:38 atatat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: md.c,v 1.34 2003/05/13 02:56:13 thorpej Exp $");
 
 #include "opt_md.h"
 
@@ -129,7 +129,7 @@ mdattach(n)
 
 #ifdef	DIAGNOSTIC
 	if (ramdisk_ndevs) {
-		printf("ramdisk: multiple attach calls?\n");
+		aprint_error("ramdisk: multiple attach calls?\n");
 		return;
 	}
 #endif
@@ -146,7 +146,7 @@ mdattach(n)
 
 		sc = malloc(sizeof(*sc), M_DEVBUF, M_NOWAIT|M_ZERO);
 		if (!sc) {
-			printf("ramdisk: malloc for attach failed!\n");
+			aprint_error("ramdisk: malloc for attach failed!\n");
 			return;
 		}
 		ramdisk_devs[i] = sc;
