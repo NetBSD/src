@@ -1,4 +1,4 @@
-#	$NetBSD: files.pc532,v 1.31 1997/08/27 11:25:53 bouyer Exp $
+#	$NetBSD: files.pc532,v 1.32 1997/10/20 03:19:16 phil Exp $
 #
 # new style config file for pc532 architecture
 #
@@ -41,9 +41,9 @@ major	{cd = 4}
 device	ncr: scsi, ncr5380sbc
 attach	ncr at mainbus
 file	arch/pc532/dev/ncr.c		ncr needs-flag
-device	aic: scsi
-attach	aic at mainbus
-file	arch/pc532/dev/aic.c		aic needs-flag
+#device	aic: scsi
+#attach	aic at mainbus
+#file	arch/pc532/dev/aic.c		aic needs-flag
 
 file	arch/pc532/fpu/ieee_dze.c
 file	arch/pc532/fpu/ieee_handler.c
