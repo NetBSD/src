@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ethersubr.c,v 1.58 2000/06/17 20:57:20 matt Exp $	*/
+/*	$NetBSD: if_ethersubr.c,v 1.59 2000/09/27 22:58:21 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -71,6 +71,7 @@
 #include "opt_iso.h"
 #include "opt_ns.h"
 #include "opt_gateway.h"
+#include "vlan.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -93,6 +94,9 @@
 #include <net/if_types.h>
 
 #include <net/if_ether.h>
+#if NVLAN > 0
+#include <net/if_vlanvar.h>
+#endif
 
 #include <netinet/in.h>
 #ifdef INET
@@ -521,6 +525,24 @@ ether_input(struct ifnet *ifp, struct mbuf *m)
 		ifp->if_imcasts++;
 
 	etype = ntohs(eh->ether_type);
+
+	/*
+	 * Handle protocols that expect to have the Ethernet header
+	 * (and possibly FCS) intact.
+	 */
+	switch (etype) {
+#if NVLAN > 0
+	case ETHERTYPE_VLAN:
+		/*
+		 * vlan_input() will either recursively call ether_input()
+		 * or drop the packet.
+		 */
+		vlan_input(ifp, m);
+		return;
+#endif /* NVLAN > 0 */
+	default:
+		/* Nothing. */
+	}
 
 	/* Strip off the Ethernet header. */
 	m_adj(m, sizeof(struct ether_header));
