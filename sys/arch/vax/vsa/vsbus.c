@@ -1,4 +1,4 @@
-/*	$NetBSD: vsbus.c,v 1.4 1996/10/13 03:36:17 christos Exp $ */
+/*	$NetBSD: vsbus.c,v 1.5 1997/03/15 16:07:17 ragge Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -232,8 +232,6 @@ vsbus_attach(parent, self, aux)
 	printf("\n");
 	trace (("vsbus_attach()\n"));
 
-	printf("vsbus_attach: boardtype = %x\n", vax_boardtype);
-
 	switch (vax_boardtype) {
 	case VAX_BTYP_410:
 	case VAX_BTYP_420:
@@ -243,7 +241,9 @@ vsbus_attach(parent, self, aux)
 	case VAX_BTYP_43:
 	case VAX_BTYP_46:
 	case VAX_BTYP_49:
+#ifdef VAX43
 		vsbus_devs = ka43_devs;
+#endif
 		break;
 
 	default:
