@@ -1,4 +1,4 @@
-/*	$NetBSD: table.c,v 1.1 1996/08/25 23:39:25 jtk Exp $ */
+/*	$NetBSD: table.c,v 1.2 1996/08/30 02:32:34 jtk Exp $ */
 /*
  * LP (Laptop Package)
  *
@@ -15,7 +15,6 @@
  * Oct., 1994	NetBSD port (1.0 BETA 10/2) by ukai
  */
 
-#include <apm_bios.h>
 
 struct pseudo_desc {
 	unsigned short	limit;
