@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.16 1998/02/09 06:25:16 mrg Exp $
+#	$NetBSD: Makefile,v 1.17 1998/02/18 03:55:59 perry Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/6/93
 
 PROG=	vmstat
@@ -15,4 +15,7 @@ BINMODE=2555
 # XXX
 .if defined(UVM)
 CPPFLAGS+=      -DUVM
+.endif
+.if defined(PMAP_NEW)
+CPPFLAGS+=      -DPMAP_NEW
 .endif
