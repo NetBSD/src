@@ -1,4 +1,4 @@
-/*	$NetBSD: newfs.c,v 1.73 2003/10/10 09:00:24 wiz Exp $	*/
+/*	$NetBSD: newfs.c,v 1.74 2003/10/15 00:25:28 dbj Exp $	*/
 
 /*
  * Copyright (c) 1983, 1989, 1993, 1994
@@ -78,7 +78,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1989, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)newfs.c	8.13 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: newfs.c,v 1.73 2003/10/10 09:00:24 wiz Exp $");
+__RCSID("$NetBSD: newfs.c,v 1.74 2003/10/15 00:25:28 dbj Exp $");
 #endif
 #endif /* not lint */
 
@@ -225,8 +225,8 @@ main(int argc, char *argv[])
 	int ch, fsi, fso, len, maxpartitions, n, Fflag, Iflag, Zflag, Vflag;
 	char *cp, *endp, *s1, *s2, *special;
 	const char *opstring;
-	long long llsize;
-	int llsizemult;
+	long long llsize = 0;
+	int llsizemult = 0;
 	int dfl_fragsize, dfl_blksize;
 #ifdef MFS
 	char mountfromname[100];
