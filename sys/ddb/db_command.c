@@ -1,4 +1,4 @@
-/*	$NetBSD: db_command.c,v 1.55 2001/01/22 13:56:55 jdolecek Exp $	*/
+/*	$NetBSD: db_command.c,v 1.56 2001/01/24 20:54:41 jdolecek Exp $	*/
 
 /* 
  * Mach Operating System
@@ -482,7 +482,7 @@ static const struct db_command db_show_cmds[] = {
 	{ NULL,		NULL,			0,	NULL }
 };
 
-static struct db_command db_command_table[] = {
+static const struct db_command db_command_table[] = {
 	{ "break",	db_breakpoint_cmd,	0,		NULL },
 	{ "c",		db_continue_cmd,	0,		NULL },
 	{ "call",	db_fncall,		CS_OWN,		NULL },
