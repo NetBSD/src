@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.15 1999/06/15 22:18:09 thorpej Exp $        */
+/*	$NetBSD: pmap.c,v 1.16 1999/06/17 18:21:33 thorpej Exp $        */
 
 /*
  * This file was taken from mvme68k/mvme68k/pmap.c
@@ -1873,33 +1873,6 @@ pmap_copy_page(src, dst)
 	copypage((caddr_t)skva, (caddr_t)dkva);
 	/* CADDR1 and CADDR2 are virtually contiguous */
 	pmap_remove(pmap_kernel(), skva, skva + (2 * NBPG));
-}
-
-/*
- *	Routine:	pmap_pageable
- *	Function:
- *		Make the specified pages (by pmap, offset)
- *		pageable (or not) as requested.
- *
- *		A page which is not pageable may not take
- *		a fault; therefore, its page table entry
- *		must remain valid for the duration.
- *
- *		This routine is merely advisory; pmap_enter
- *		will specify that these pages are to be wired
- *		down (or not) as appropriate.
- */
-void
-pmap_pageable(pmap, sva, eva, pageable)
-	pmap_t		pmap;
-	vaddr_t		sva, eva;
-	boolean_t	pageable;
-{
-#ifdef DEBUG
-	if (pmapdebug & PDB_FOLLOW)
-		printf("pmap_pageable(%p, %lx, %lx, %lx)\n",
-		       pmap, sva, eva, pageable);
-#endif
 }
 
 /*

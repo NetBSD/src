@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.8 1999/03/26 23:41:33 mycroft Exp $	*/
+/*	$NetBSD: pmap.c,v 1.9 1999/06/17 18:21:34 thorpej Exp $	*/
 
 /* 
  * Copyright (c) 1992, 1993
@@ -1324,34 +1324,6 @@ pmap_copy_page(src, dst)
 	} while (s != end);
 /*XXX FIXME Not very sophisticated */
 	MachFlushCache();
-}
-
-/*
- *	Routine:	pmap_pageable
- *	Function:
- *		Make the specified pages (by pmap, offset)
- *		pageable (or not) as requested.
- *
- *		A page which is not pageable may not take
- *		a fault; therefore, its page table entry
- *		must remain valid for the duration.
- *
- *		This routine is merely advisory; pmap_enter
- *		will specify that these pages are to be wired
- *		down (or not) as appropriate.
- */
-void
-pmap_pageable(pmap, sva, eva, pageable)
-	pmap_t		pmap;
-	vm_offset_t	sva, eva;
-	boolean_t	pageable;
-{
-
-#ifdef DEBUG
-	if (pmapdebug & PDB_FOLLOW)
-		printf("pmap_pageable(%x, %x, %x, %x)\n",
-		       pmap, sva, eva, pageable);
-#endif
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_fault.c,v 1.37 1999/06/16 23:02:40 thorpej Exp $	*/
+/*	$NetBSD: uvm_fault.c,v 1.38 1999/06/17 18:21:23 thorpej Exp $	*/
 
 /*
  *
@@ -1727,14 +1727,7 @@ uvm_fault_wire(map, start, end, access_type)
 	pmap = vm_map_pmap(map);
 
 	/*
-	 * call pmap pageable: this tells the pmap layer to lock down these
-	 * page tables.
-	 */
-
-	pmap_pageable(pmap, start, end, FALSE);
-
-	/*
-	 * now fault it in page at a time.   if the fault fails then we have
+	 * fault it in page at a time.   if the fault fails then we have
 	 * to undo what we have done.
 	 */
 
@@ -1845,11 +1838,4 @@ uvm_fault_unwire_locked(map, start, end)
 	}
 
 	uvm_unlock_pageq();
-
-	/*
-	 * now we call pmap_pageable to let the pmap know that the page tables
-	 * in this space no longer need to be wired.
-	 */
-
-	pmap_pageable(pmap, start, end, TRUE);
 }

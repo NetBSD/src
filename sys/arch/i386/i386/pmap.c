@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.70 1999/06/17 00:12:11 thorpej Exp $	*/
+/*	$NetBSD: pmap.c,v 1.71 1999/06/17 18:21:30 thorpej Exp $	*/
 
 /*
  *
@@ -2988,25 +2988,6 @@ struct pmap *pmap;
    * for its entire address space.
    */
   pmap_remove(pmap, VM_MIN_ADDRESS, VM_MAX_ADDRESS);
-}
-
-/*
- * pmap_pageable: set pageable status of a range of pages.
- *	could use this to ensure PTP is in place (but no need).
- *
- * => optional function.
- */
-
-void pmap_pageable(pmap, sva, eva, pageable)
-
-struct pmap *pmap;
-vaddr_t sva, eva;
-boolean_t pageable;
-
-{
-  /*
-   * nothing useful for us to do here.
-   */
 }
 
 /*

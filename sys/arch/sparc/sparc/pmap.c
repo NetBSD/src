@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.145 1999/05/20 10:03:12 pk Exp $ */
+/*	$NetBSD: pmap.c,v 1.146 1999/06/17 18:21:34 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -6349,25 +6349,6 @@ pmap_is_referenced4m(pa)
 	return (0);
 }
 #endif /* 4m */
-
-/*
- * Make the specified pages (by pmap, offset) pageable (or not) as requested.
- *
- * A page which is not pageable may not take a fault; therefore, its page
- * table entry must remain valid for the duration (or at least, the trap
- * handler must not call vm_fault).
- *
- * This routine is merely advisory; pmap_enter will specify that these pages
- * are to be wired down (or not) as appropriate.
- */
-/* ARGSUSED */
-void
-pmap_pageable(pm, start, end, pageable)
-	struct pmap *pm;
-	vaddr_t start, end;
-	int pageable;
-{
-}
 
 /*
  * Fill the given MI physical page with zero bytes.

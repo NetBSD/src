@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.102 1999/05/31 20:49:00 ross Exp $ */
+/* $NetBSD: pmap.c,v 1.103 1999/06/17 18:21:24 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -155,7 +155,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.102 1999/05/31 20:49:00 ross Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.103 1999/06/17 18:21:24 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -2314,32 +2314,6 @@ pmap_copy_page(src, dst)
         s = (caddr_t)ALPHA_PHYS_TO_K0SEG(src);
         d = (caddr_t)ALPHA_PHYS_TO_K0SEG(dst);
 	bcopy(s, d, PAGE_SIZE);
-}
-
-/*
- * pmap_pageable:		[ INTERFACE ]
- *
- *	Make the specified pages (by pmap, offset) pageable (or not) as
- *	requested.
- *
- *	A page which is not pageable may not take a fault; therefore,
- *	its page table entry must remain valid for the duration.
- *
- *	This routine is merely advisory; pmap_enter() will specify that
- *	these pages are to be wired down (or not) as appropriate.
- */
-void
-pmap_pageable(pmap, sva, eva, pageable)
-	pmap_t		pmap;
-	vaddr_t		sva, eva;
-	boolean_t	pageable;
-{
-
-#ifdef DEBUG
-	if (pmapdebug & PDB_FOLLOW)
-		printf("pmap_pageable(%p, %lx, %lx, %x)\n",
-		       pmap, sva, eva, pageable);
-#endif
 }
 
 /*
