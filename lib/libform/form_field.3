@@ -1,4 +1,4 @@
-.\"	$NetBSD: form_field.3,v 1.4 2002/02/20 11:30:58 wiz Exp $
+.\"	$NetBSD: form_field.3,v 1.5 2002/08/06 12:44:34 wiz Exp $
 .\"
 .\" Copyright (c) 2001
 .\"	Brett Lymn - blymn@baea.com.au, brett_lymn@yahoo.com.au
@@ -47,9 +47,9 @@
 .Ft FIELD **
 .Fn form_fields "FORM *form"
 .Ft int
-.Fn move_field "FIELD *field, int frow, int fcol"
+.Fn move_field "FIELD *field" "int frow" "int fcol"
 .Ft int
-.Fn set_form_fields "FORM *form, FIELD **fields"
+.Fn set_form_fields "FORM *form" " FIELD **fields"
 .Sh DESCRIPTION
 The
 .Fn field_count

@@ -1,4 +1,4 @@
-.\"	$NetBSD: form_win.3,v 1.4 2002/02/20 11:30:59 wiz Exp $
+.\"	$NetBSD: form_win.3,v 1.5 2002/08/06 12:44:35 wiz Exp $
 .\"
 .\" Copyright (c) 2001
 .\"	Brett Lymn - blymn@baea.com.au, brett_lymn@yahoo.com.au
@@ -48,11 +48,11 @@
 .Ft WINDOW *
 .Fn form_win "FORM *form"
 .Ft int
-.Fn scale_form "FORM *form, int *rows, int *cols"
+.Fn scale_form "FORM *form" "int *rows" "int *cols"
 .Ft int
-.Fn set_form_sub "FORM *form, WINDOW *window"
+.Fn set_form_sub "FORM *form" "WINDOW *window"
 .Ft int
-.Fn set_form_win "FORM *form, WINDOW *window"
+.Fn set_form_win "FORM *form" "WINDOW *window"
 .Sh DESCRIPTION
 All output to the screen done by the forms library is handled by the
 curses library routines.  By default, the forms library will output to
