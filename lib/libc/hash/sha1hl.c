@@ -1,4 +1,4 @@
-/*	$NetBSD: sha1hl.c,v 1.1 1999/02/04 05:08:58 explorer Exp $	*/
+/*	$NetBSD: sha1hl.c,v 1.2 1999/05/03 15:00:40 christos Exp $	*/
 /* sha1hl.c
  * ----------------------------------------------------------------------------
  * "THE BEER-WARE LICENSE" (Revision 42):
@@ -22,7 +22,7 @@
 #include <unistd.h>
 
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: sha1hl.c,v 1.1 1999/02/04 05:08:58 explorer Exp $");
+__RCSID("$NetBSD: sha1hl.c,v 1.2 1999/05/03 15:00:40 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #if defined(__weak_alias)
@@ -47,7 +47,7 @@ SHA1End(ctx, buf)
 
     SHA1Final(digest,ctx);
     for (i = 0; i < 20; i++) {
-	p[i + i] = hex[digest[i] >> 4];
+	p[i + i] = hex[((u_int32_t)digest[i]) >> 4];
 	p[i + i + 1] = hex[digest[i] & 0x0f];
     }
     p[i + i] = '\0';
@@ -69,7 +69,7 @@ SHA1File (filename, buf)
 	return(0);
 
     while ((num = read(fd, buffer, sizeof(buffer))) > 0)
-	SHA1Update(&ctx, buffer, num);
+	SHA1Update(&ctx, buffer, (size_t)num);
 
     oerrno = errno;
     close(fd);
