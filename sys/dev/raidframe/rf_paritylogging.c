@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_paritylogging.c,v 1.21 2003/12/29 05:48:13 oster Exp $	*/
+/*	$NetBSD: rf_paritylogging.c,v 1.22 2004/02/29 04:03:50 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_paritylogging.c,v 1.21 2003/12/29 05:48:13 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_paritylogging.c,v 1.22 2004/02/29 04:03:50 oster Exp $");
 
 #include "rf_archs.h"
 
@@ -297,13 +297,7 @@ rf_ConfigureParityLogging(
 			return (ENOMEM);
 		}
 	}
-	rc = rf_ShutdownCreate(listp, rf_ShutdownParityLoggingPool, raidPtr);
-	if (rc) {
-		RF_ERRORMSG3("Unable to create shutdown entry file %s line %d rc=%d\n", __FILE__,
-		    __LINE__, rc);
-		rf_ShutdownParityLoggingPool(raidPtr);
-		return (rc);
-	}
+	rf_ShutdownCreate(listp, rf_ShutdownParityLoggingPool, raidPtr);
 	/* build pool of region buffers */
 	rc = rf_mutex_init(&raidPtr->regionBufferPool.mutex);
 	if (rc) {
@@ -353,15 +347,9 @@ rf_ConfigureParityLogging(
 		printf("raidPtr->regionBufferPool.buffers[%d] = %lx\n", i,
 		    (long) raidPtr->regionBufferPool.buffers[i]);
 	}
-	rc = rf_ShutdownCreate(listp, 
-			       rf_ShutdownParityLoggingRegionBufferPool,
-			       raidPtr);
-	if (rc) {
-		RF_ERRORMSG3("Unable to create shutdown entry file %s line %d rc=%d\n", __FILE__,
-		    __LINE__, rc);
-		rf_ShutdownParityLoggingRegionBufferPool(raidPtr);
-		return (rc);
-	}
+	rf_ShutdownCreate(listp, 
+			  rf_ShutdownParityLoggingRegionBufferPool,
+			  raidPtr);
 	/* build pool of parity buffers */
 	parityBufferCapacity = maxRegionParityRange;
 	rc = rf_mutex_init(&raidPtr->parityBufferPool.mutex);
@@ -413,15 +401,9 @@ rf_ConfigureParityLogging(
 		printf("parityBufferPool.buffers[%d] = %lx\n", i,
 		    (long) raidPtr->parityBufferPool.buffers[i]);
 	}
-	rc = rf_ShutdownCreate(listp, 
-			       rf_ShutdownParityLoggingParityBufferPool, 
-			       raidPtr);
-	if (rc) {
-		RF_ERRORMSG3("Unable to create shutdown entry file %s line %d rc=%d\n", __FILE__,
-		    __LINE__, rc);
-		rf_ShutdownParityLoggingParityBufferPool(raidPtr);
-		return (rc);
-	}
+	rf_ShutdownCreate(listp, 
+			  rf_ShutdownParityLoggingParityBufferPool, 
+			  raidPtr);
 	/* initialize parityLogDiskQueue */
 	rf_mutex_init(&raidPtr->parityLogDiskQueue.mutex);
 	raidPtr->parityLogDiskQueue.cond = 0;
@@ -438,14 +420,9 @@ rf_ConfigureParityLogging(
 	raidPtr->parityLogDiskQueue.freeDataList = NULL;
 	raidPtr->parityLogDiskQueue.freeCommonList = NULL;
 
-	rc = rf_ShutdownCreate(listp, 
-			       rf_ShutdownParityLoggingDiskQueue, 
-			       raidPtr);
-	if (rc) {
-		RF_ERRORMSG3("Unable to create shutdown entry file %s line %d rc=%d\n", __FILE__,
-		    __LINE__, rc);
-		return (rc);
-	}
+	rf_ShutdownCreate(listp, 
+			  rf_ShutdownParityLoggingDiskQueue, 
+			  raidPtr);
 	for (i = 0; i < rf_numParityRegions; i++) {
 		rc = rf_mutex_init(&raidPtr->regionInfo[i].mutex);
 		if (rc) {
@@ -513,15 +490,9 @@ rf_ConfigureParityLogging(
 		raidPtr->regionInfo[i].loggingEnabled = RF_FALSE;
 		raidPtr->regionInfo[i].coreLog = NULL;
 	}
-	rc = rf_ShutdownCreate(listp,
-			       rf_ShutdownParityLoggingRegionInfo, 
-			       raidPtr);
-	if (rc) {
-		RF_ERRORMSG3("Unable to create shutdown entry file %s line %d rc=%d\n", __FILE__,
-		    __LINE__, rc);
-		rf_ShutdownParityLoggingRegionInfo(raidPtr);
-		return (rc);
-	}
+	rf_ShutdownCreate(listp,
+			  rf_ShutdownParityLoggingRegionInfo, 
+			  raidPtr);
 	RF_ASSERT(raidPtr->parityLogDiskQueue.threadState == 0);
 	raidPtr->parityLogDiskQueue.threadState = RF_PLOG_CREATED;
 	rc = RF_CREATE_THREAD(raidPtr->pLogDiskThreadHandle, 
@@ -540,12 +511,7 @@ rf_ConfigureParityLogging(
 	}
 	RF_UNLOCK_MUTEX(raidPtr->parityLogDiskQueue.mutex);
 
-	rc = rf_ShutdownCreate(listp, rf_ShutdownParityLogging, raidPtr);
-	if (rc) {
-		RF_ERRORMSG1("Got rc=%d adding parity logging shutdown event\n", rc);
-		rf_ShutdownParityLogging(raidPtr);
-		return (rc);
-	}
+	rf_ShutdownCreate(listp, rf_ShutdownParityLogging, raidPtr);
 	if (rf_parityLogDebug) {
 		printf("                            size of disk log in sectors: %d\n",
 		    (int) totalLogCapacity);

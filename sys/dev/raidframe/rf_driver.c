@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_driver.c,v 1.85 2004/02/27 02:55:17 oster Exp $	*/
+/*	$NetBSD: rf_driver.c,v 1.86 2004/02/29 04:03:50 oster Exp $	*/
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -73,7 +73,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_driver.c,v 1.85 2004/02/27 02:55:17 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_driver.c,v 1.86 2004/02/29 04:03:50 oster Exp $");
 
 #include "opt_raid_diagnostic.h"
 
@@ -330,14 +330,10 @@ rf_Configure(RF_Raid_t *raidPtr, RF_Config_t *cfgPtr, RF_AutoConfig_t *ac)
 		DO_RAID_FAIL();
 		return (ENOMEM);
 	}
-	rc = rf_ShutdownCreate(&raidPtr->shutdownList,
-	    (void (*) (void *)) rf_FreeAllocList,
-	    raidPtr->cleanupList);
-	if (rc) {
-		rf_print_unable_to_add_shutdown(__FILE__, __LINE__, rc);
-		DO_RAID_FAIL();
-		return (rc);
-	}
+	rf_ShutdownCreate(&raidPtr->shutdownList,
+			  (void (*) (void *)) rf_FreeAllocList,
+			  raidPtr->cleanupList);
+
 	raidPtr->numCol = cfgPtr->numCol;
 	raidPtr->numSpare = cfgPtr->numSpare;
 
@@ -434,18 +430,12 @@ rf_ShutdownRDFreeList(void *ignored)
 static int 
 rf_ConfigureRDFreeList(RF_ShutdownList_t **listp)
 {
-	int     rc;
 
 	pool_init(&rf_rad_pool, sizeof(RF_RaidAccessDesc_t), 0, 0, 0,
 		  "rf_rad_pl", NULL);
 	pool_sethiwat(&rf_rad_pool, RF_MAX_FREE_RAD);
 	pool_prime(&rf_rad_pool, RF_RAD_INITIAL);
-	rc = rf_ShutdownCreate(listp, rf_ShutdownRDFreeList, NULL);
-	if (rc) {
-		rf_print_unable_to_add_shutdown(__FILE__, __LINE__, rc);
-		rf_ShutdownRDFreeList(NULL);
-		return (rc);
-	}
+	rf_ShutdownCreate(listp, rf_ShutdownRDFreeList, NULL);
 	simple_lock_init(&rf_rad_pool_lock);
 	return (0);
 }

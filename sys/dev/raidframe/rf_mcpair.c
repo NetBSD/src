@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_mcpair.c,v 1.12 2003/12/30 21:59:03 oster Exp $	*/
+/*	$NetBSD: rf_mcpair.c,v 1.13 2004/02/29 04:03:50 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_mcpair.c,v 1.12 2003/12/30 21:59:03 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_mcpair.c,v 1.13 2004/02/29 04:03:50 oster Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -62,19 +62,13 @@ rf_ShutdownMCPair(void *ignored)
 int 
 rf_ConfigureMCPair(RF_ShutdownList_t **listp)
 {
-	int     rc;
 
 	pool_init(&rf_mcpair_pool, sizeof(RF_MCPair_t), 0, 0, 0,
 		  "rf_mcpair_pl", NULL);
 	pool_sethiwat(&rf_mcpair_pool, RF_MAX_FREE_MCPAIR);
 	pool_prime(&rf_mcpair_pool, RF_MCPAIR_INITIAL);
 
-	rc = rf_ShutdownCreate(listp, rf_ShutdownMCPair, NULL);
-	if (rc) {
-		rf_print_unable_to_add_shutdown(__FILE__, __LINE__, rc);
-		rf_ShutdownMCPair(NULL);
-		return (rc);
-	}
+	rf_ShutdownCreate(listp, rf_ShutdownMCPair, NULL);
 
 	return (0);
 }
