@@ -1,4 +1,6 @@
-#	$NetBSD: Makefile,v 1.10 2001/01/08 08:29:59 itojun Exp $
+#	$NetBSD: Makefile,v 1.11 2001/01/09 08:33:46 enami Exp $
+
+.include <bsd.own.mk>
 
 HAVE_GCC28!= ${CXX} --version | egrep "^(2\.8|egcs)" ; echo
 
@@ -14,6 +16,8 @@ DPSRCS+=	runtime-info.h
 INCS=		hash.h objc-list.h sarray.h objc.h objc-api.h NXConstStr.h \
 		Object.h Protocol.h encoding.h typedstream.h thr.h
 INCSDIR=	/usr/include/objc
+DIST=		${.CURDIR}/../../dist/gcc
+ARCH=		${.CURDIR}/../../usr.bin/egcs/arch
 
 .if exists(${ARCH}/${MACHINE_ARCH})
 ARCHSUBDIR= ${MACHINE_ARCH}
@@ -30,9 +34,6 @@ CPPFLAGS+=	-I. -I${ARCH}/${ARCHSUBDIR} -I${ARCH} \
 
 MKLINT=		no
 
-DIST=		${.CURDIR}/../../dist/gcc
-ARCH=		${.CURDIR}/../../usr.bin/egcs/arch
-
 CLEANFILES+=	rtscratch rtscratch.s
 runtime-info.h:
 	@touch rtscratch
@@ -47,7 +48,6 @@ sendmsg.o sendmsg.so sendmsg.po: runtime-info.h
 .else
 
 # XXX Temporary: during an egcs bootstrap, don't try to build with gcc 2.7
-.include <bsd.own.mk>
 ${TARGETS}:
 
 .endif
