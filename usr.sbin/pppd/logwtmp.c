@@ -28,8 +28,6 @@ static char sccsid[] = "@(#)logwtmp.c	5.2 (Berkeley) 9/22/88";
 #include <utmp.h>
 #include <string.h>
 
-#define	WTMPFILE	"/usr/adm/wtmp"
-
 static int fd;
 
 logwtmp(line, name, host)
@@ -40,7 +38,7 @@ logwtmp(line, name, host)
 	time_t time();
 	char *strncpy();
 
-	if (!fd && (fd = open(WTMPFILE, O_WRONLY|O_APPEND, 0)) < 0)
+	if (!fd && (fd = open(_PATH_WTMP, O_WRONLY|O_APPEND, 0)) < 0)
 		return;
 	if (!fstat(fd, &buf)) {
 		(void)strncpy(ut.ut_line, line, sizeof(ut.ut_line));

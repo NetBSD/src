@@ -14,7 +14,7 @@
  */
 
 /*static char sccs_id[] = "@(#)chat.c	1.7";*/
-static char rcsid[] = "$Id: chat.c,v 1.2 1993/08/16 00:47:33 mycroft Exp $";
+static char rcsid[] = "$Id: chat.c,v 1.3 1993/08/23 14:36:07 brezak Exp $";
 
 #include <stdio.h>
 #include <fcntl.h>
@@ -76,11 +76,17 @@ extern int strlen();
 #define	copyof(s)	((s) ? strcpy(malloc(strlen(s) + 1), s) : (s))
 
 #ifndef LOCK_DIR
+# ifdef __NetBSD__
+# define	PIDSTRING
+# define	LOCK_DIR	"/var/spool/lock"
+# else
 #  ifdef HDB
+#   define	PIDSTRING
 #   define	LOCK_DIR	"/usr/spool/locks"
 #  else /* HDB */
 #   define	LOCK_DIR	"/usr/spool/uucp"
 #  endif /* HDB */
+# endif
 #endif /* LOCK_DIR */
 
 #define	MAX_ABORTS		50
@@ -362,13 +368,13 @@ lock()
 	sysfatal("Can't get lock file '%s'", s);
 	}
 
-# ifdef HDB
+# ifdef PIDSTRING
     sprintf(hdb_lock_buffer, "%10d\n", getpid());
     write(fd, hdb_lock_buffer, 11);
-# else /* HDB */
+# else
     pid = getpid();
     write(fd, &pid, sizeof pid);
-# endif /* HDB */
+# endif
 
     close(fd);
     }
