@@ -1,4 +1,4 @@
-/*	$NetBSD: yacc.y,v 1.3 2003/10/27 00:12:43 lukem Exp $	*/
+/*	$NetBSD: yacc.y,v 1.4 2003/10/28 04:00:51 jmc Exp $	*/
 
 %{
 /*-
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: yacc.y,v 1.3 2003/10/27 00:12:43 lukem Exp $");
+__RCSID("$NetBSD: yacc.y,v 1.4 2003/10/28 04:00:51 jmc Exp $");
 #endif /* not lint */
 
 #include <assert.h>
@@ -44,6 +44,7 @@ __RCSID("$NetBSD: yacc.y,v 1.3 2003/10/27 00:12:43 lukem Exp $");
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <arpa/inet.h>
 #include <sys/types.h>
 
 #include "ldef.h"
