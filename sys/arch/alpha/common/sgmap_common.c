@@ -1,4 +1,4 @@
-/* $NetBSD: sgmap_common.c,v 1.7 1998/01/21 22:34:39 thorpej Exp $ */
+/* $NetBSD: sgmap_common.c,v 1.8 1998/02/11 01:37:54 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: sgmap_common.c,v 1.7 1998/01/21 22:34:39 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sgmap_common.c,v 1.8 1998/02/11 01:37:54 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -116,7 +116,7 @@ alpha_sgmap_init(t, sgmap, name, wbase, sgvabase, sgvasize, ptesize, ptva,
 	 * space.
 	 */
 	sgmap->aps_ex = extent_create(name, sgvabase, sgvasize - 1,
-	    M_DEVBUF, NULL, 0, EX_NOWAIT|EX_NOCOALESCE);
+	    M_DMAMAP, NULL, 0, EX_NOWAIT|EX_NOCOALESCE);
 	if (sgmap->aps_ex == NULL)
 		panic("alpha_sgmap_init: can't create extent map");
 

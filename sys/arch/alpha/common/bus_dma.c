@@ -1,4 +1,4 @@
-/* $NetBSD: bus_dma.c,v 1.13 1998/02/04 07:35:30 thorpej Exp $ */
+/* $NetBSD: bus_dma.c,v 1.14 1998/02/11 01:37:51 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.13 1998/02/04 07:35:30 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.14 1998/02/11 01:37:51 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -92,7 +92,7 @@ _bus_dmamap_create(t, size, nsegments, maxsegsz, boundary, flags, dmamp)
 	 */
 	mapsize = sizeof(struct alpha_bus_dmamap) +
 	    (sizeof(bus_dma_segment_t) * (nsegments - 1));
-	if ((mapstore = malloc(mapsize, M_DEVBUF,
+	if ((mapstore = malloc(mapsize, M_DMAMAP,
 	    (flags & BUS_DMA_NOWAIT) ? M_NOWAIT : M_WAITOK)) == NULL)
 		return (ENOMEM);
 
@@ -120,7 +120,7 @@ _bus_dmamap_destroy(t, map)
 	bus_dmamap_t map;
 {
 
-	free(map, M_DEVBUF);
+	free(map, M_DMAMAP);
 }
 
 /*
