@@ -1,4 +1,4 @@
-/*	$NetBSD: ahb.c,v 1.15 1998/01/28 02:28:02 thorpej Exp $	*/
+/*	$NetBSD: ahb.c,v 1.16 1998/02/04 00:35:57 thorpej Exp $	*/
 
 #undef	AHBDEBUG
 #ifdef DDB
@@ -615,7 +615,7 @@ ahb_create_ecbs(sc)
 	}
 
 	error = bus_dmamem_map(sc->sc_dmat, &seg, rseg, size,
-	    (caddr_t *)&ecb, BUS_DMA_NOWAIT|BUS_DMAMEM_NOSYNC);
+	    (caddr_t *)&ecb, BUS_DMA_NOWAIT|BUS_DMA_COHERENT);
 	if (error) {
 		printf("%s: can't map memory for ecbs\n",
 		    sc->sc_dev.dv_xname);

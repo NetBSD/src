@@ -1,7 +1,7 @@
-/*	$NetBSD: machdep.c,v 1.97 1998/01/24 16:46:45 mycroft Exp $ */
+/*	$NetBSD: machdep.c,v 1.98 1998/02/04 00:35:02 thorpej Exp $ */
 
 /*-
- * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
+ * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -1223,7 +1223,8 @@ _bus_dmamap_create(t, size, nsegments, maxsegsz, boundary, flags, dmamp)
 	map->_dm_maxsegsz = maxsegsz;
 	map->_dm_boundary = boundary;
 	map->_dm_flags = flags & ~(BUS_DMA_WAITOK|BUS_DMA_NOWAIT);
-	map->dm_nsegs = 0;		/* no valid mappings */
+	map->dm_mapsize = 0;		/* no valid mappings */
+	map->dm_nsegs = 0;
 
 	*dmamp = map;
 	return (0);
@@ -1280,6 +1281,7 @@ _bus_dmamap_load(t, map, buf, buflen, p, flags)
 	/*
 	 * We always use just one segment.
 	 */
+	map->dm_mapsize = buflen;
 	map->dm_nsegs = 1;
 	map->dm_segs[0].ds_addr = dvmaddr;
 	map->dm_segs[0].ds_len = buflen;
@@ -1399,6 +1401,7 @@ _bus_dmamap_unload(t, map)
 	dvmamap_free(addr, len);
 
 	/* Mark the mappings as invalid. */
+	map->dm_mapsize = 0;
 	map->dm_nsegs = 0;
 }
 
@@ -1604,7 +1607,7 @@ _bus_dmamem_map(t, segs, nsegs, size, kvap, flags)
 		pmap_enter(pmap_kernel(), va, addr | cbit,
 			   VM_PROT_READ | VM_PROT_WRITE, TRUE);
 #if 0
-			if (flags & BUS_DMAMEM_NOSYNC)
+			if (flags & BUS_DMA_COHERENT)
 				/* XXX */;
 #endif
 		va += PAGE_SIZE;
