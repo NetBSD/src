@@ -1,4 +1,4 @@
-/*	$NetBSD: shb.c,v 1.4 2000/02/24 19:01:25 msaitoh Exp $	*/
+/*	$NetBSD: shb.c,v 1.5 2000/03/21 04:42:58 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994 Charles Hannum.  All rights reserved.
@@ -569,6 +569,10 @@ Xsoftserial(void)
 void arpintr __P((void));
 void ipintr __P((void));
 void pppintr __P((void));
+#endif
+
+#ifdef INET6
+void ip6intr __P((void));
 #endif
 
 #ifdef NS
