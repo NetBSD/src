@@ -1,4 +1,4 @@
-/*	$NetBSD: uaudio.c,v 1.38 2001/01/04 07:05:00 mycroft Exp $	*/
+/*	$NetBSD: uaudio.c,v 1.39 2001/01/06 12:12:24 augustss Exp $	*/
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -69,7 +69,6 @@
 
 #include <dev/usb/uaudioreg.h>
 
-#define UAUDIO_DEBUG
 #ifdef UAUDIO_DEBUG
 #define DPRINTF(x)	if (uaudiodebug) logprintf x
 #define DPRINTFN(n,x)	if (uaudiodebug>(n)) logprintf x
