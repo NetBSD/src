@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_machdep.c,v 1.30 1998/03/30 06:05:39 mycroft Exp $	*/
+/*	$NetBSD: isa_machdep.c,v 1.31 1998/04/26 22:37:21 thorpej Exp $	*/
 
 #define ISA_DMA_STATS
 
@@ -150,7 +150,6 @@ void	_isa_dma_free_bouncebuf __P((bus_dma_tag_t, bus_dmamap_t));
  * buffers, if necessary.
  */
 struct i386_bus_dma_tag isa_bus_dma_tag = {
-	NULL,			/* _cookie */
 	_isa_bus_dmamap_create,
 	_isa_bus_dmamap_destroy,
 	_isa_bus_dmamap_load,
