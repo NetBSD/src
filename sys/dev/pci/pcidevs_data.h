@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.545 2003/07/06 14:59:54 tron Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.546 2003/07/06 17:08:44 simonb Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.546 2003/07/06 14:59:29 tron Exp 
+ *	NetBSD: pcidevs,v 1.547 2003/07/06 17:07:38 simonb Exp 
  */
 
 /*
@@ -4675,19 +4675,43 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_E7500_HI_D1,
 	    0,
 	    "Intel",
-	    "E7500 MCH HI_C vppb 1",
+	    "E7500 MCH HI_D vppb 1",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_E7500_HI_D2,
 	    0,
 	    "Intel",
-	    "E7500 MCH HI_C vppb 2",
+	    "E7500 MCH HI_D vppb 2",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_E7505_HB,
 	    0,
 	    "Intel",
-	    "E7505 MCH",
+	    "E7505 MCH Host",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_E7505_RAS,
+	    0,
+	    "Intel",
+	    "E7505 MCH RAS Controller",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_E7505_AGP,
+	    0,
+	    "Intel",
+	    "E7505 MCH Host-to-AGP Bridge",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_E7505_HI_B1,
+	    0,
+	    "Intel",
+	    "E7505 MCH HI_B PCI-to-PCI",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_E7505_HI_B2,
+	    0,
+	    "Intel",
+	    "E7505 MCH HI_B PCI-to-PCI Error Reporting",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82845G_DRAM,
