@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.3.2.2 1995/10/27 11:23:29 leo Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.3.2.3 1995/11/21 11:30:22 leo Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -615,9 +615,15 @@ struct tos_table	*tt;
 		  part->tp_id[0], part->tp_id[1], part->tp_id[2],
 		    (u_long)part->tp_st, (u_long)part->tp_size));
 		if (!(part->tp_flg & 1)
+#if 0 /* LWP: Temporary hack */
 		  || part->tp_st == 0 || part->tp_st >= subsize
 		  || part->tp_size == 0 || part->tp_size >= subsize
 		  || part->tp_st + part->tp_size > subsize) {
+#else
+		  || part->tp_st == 0
+		  || part->tp_size == 0
+		  || part->tp_size >= extsize) {
+#endif
 			MACHDSBR_DEBUG(("first entry exceeds parent\n"));
 			goto done;
 		}
@@ -645,9 +651,15 @@ struct tos_table	*tt;
 		MACHDSBR_DEBUG(("  %c%c%c %9lu %9lu\n",
 		  part->tp_id[0], part->tp_id[1], part->tp_id[2],
 		    (u_long)part->tp_st, (u_long)part->tp_size));
+#if 0 /* LWP: Temporary hack */
 		if (part->tp_st == 0 || part->tp_st >= extsize
 		  || part->tp_size == 0 || part->tp_size >= extsize
 		  || part->tp_st + part->tp_size > extsize) {
+#else
+		if (part->tp_st == 0
+		  || part->tp_st >= extsize
+		  || part->tp_size == 0) {
+#endif
 			MACHDSBR_DEBUG(("second entry exceeds parent\n"));
 			goto done;
 		}
