@@ -1,4 +1,4 @@
-/*	$NetBSD: xyreg.h,v 1.1 1997/11/02 23:09:25 pk Exp $	*/
+/*	$NetBSD: xyreg.h,v 1.2 1998/08/22 11:47:46 pk Exp $	*/
 
 /*
  *
@@ -40,15 +40,14 @@
  * author: Chuck Cranor <chuck@ccrc.wustl.edu>
  */
 
-#define XYC_MAXDEV    2       /* max devices per controller */
-#define XYC_CTLIOPB   XYC_MAXDEV /* controller's iopb */
-#define XYC_RESETUSEC 1000000 /* max time for xyc reset (same as xdc?) */
-#define XYC_MAXIOPB   (XYC_MAXDEV+1)
-			      /* max number of iopbs that can be active */
-#define XYC_MAXTIME   4*1000000 /* four seconds before we give up and reset */
-#define XYC_MAXTRIES  4       /* max number of times to retry an operation */
-#define XYC_INTERLEAVE 1      /* interleave (from disk label?) */
-#define XYFM_BPS	0x200 /* must be 512! */
+#define XYC_MAXDEV	2		/* max devices per controller */
+#define XYC_CTLIOPB	XYC_MAXDEV	/* controller's iopb */
+#define XYC_RESETUSEC	1000000		/* max time for xyc reset (same as xdc?) */
+#define XYC_MAXIOPB	(XYC_MAXDEV+1)	/* max # of iopbs that can be active */
+#define XYC_MAXTIME	(4*1000000)	/* four seconds before we give up and reset */
+#define XYC_MAXTRIES	4	/* max number of times to retry an operation */
+#define XYC_INTERLEAVE	1	/* interleave (from disk label?) */
+#define XYFM_BPS	0x200	/* must be 512! */
 
 /*
  * xyc device interface
