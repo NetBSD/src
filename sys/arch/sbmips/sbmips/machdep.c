@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.11 2002/11/08 19:35:38 cgd Exp $ */
+/* $NetBSD: machdep.c,v 1.12 2002/11/09 05:36:50 cgd Exp $ */
 
 /*
  * Copyright 2000, 2001
@@ -111,10 +111,6 @@
 
 #include <dev/cons.h>
 
-#ifdef IKOS
-#include <sbmips/ikos/ikosvar.h>
-#endif
-
 /* For sysctl_hw. */
 extern char cpu_model[];
 
@@ -202,14 +198,6 @@ mach_init(long fwhandle, long magic, long bootdata, long reserved)
 		bootinfo.fwhandle = fwhandle;
 		bootinfo.fwentry = bootdata;
 	}
-
-#ifdef IKOS
-	ikoscons_output_bufsize = IKOSCONS_OUTPUT_BUFSIZE;
-	memsize -= ikoscons_output_bufsize;
-	ikoscons_output_buf =
-	    (void *)MIPS_PHYS_TO_KSEG1(MIPS_KSEG0_TO_PHYS(memsize));
-	memset(ikoscons_output_buf, 0, ikoscons_output_bufsize);
-#endif
 
 	consinit();
 
@@ -515,21 +503,6 @@ haltsys:
 		cfe_exit(0, (howto & RB_DUMP) ? 1 : 0);
 		printf("cfe_exit didn't!\n");
 	}
-
-	delay(500000);
-
-#if defined(IKOS) && defined(REALLY_IKOS)
-	*(volatile char *)MIPS_PHYS_TO_KSEG1(0x408000) = 0;
-#else
-    {
-	static int broken;
-
-	if (!broken) {
-		broken = 1;
-		__asm__ ( "move $4, %0 ; break 0x3ff" : : "r"(howto) );
-	}
-    }
-#endif
 
 	printf("WARNING: reboot failed!\n");
 
