@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 1994/10/26 07:48:46 cgd Exp $
+#	$NetBSD: Makefile,v 1.5 1997/04/25 02:26:48 thorpej Exp $
 
 #	MOTOROLA MICROPROCESSOR & MEMORY TECHNOLOGY GROUP
 #	M68000 Hi-Performance Microprocessor Division
@@ -38,7 +38,7 @@
 
 TARGET = fpsp
 
-AS		= as -m68040
+AS		= cc -x assembler-with-cpp -traditional-cpp -c -m68040
 LD		= ld
 
 #
