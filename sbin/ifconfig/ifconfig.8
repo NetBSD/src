@@ -1,4 +1,4 @@
-.\"	$NetBSD: ifconfig.8,v 1.64 2003/04/12 01:08:28 perry Exp $
+.\"	$NetBSD: ifconfig.8,v 1.65 2003/04/16 12:55:15 wiz Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -48,27 +48,16 @@
 .Oc
 .Op Ar parameters
 .Nm
-.Op Fl mL
-.Op Fl v
-.Op Fl z
+.Op Fl Lmvz
 .Ar interface
 .Op Ar protocol_family
 .Nm
 .Fl a
-.Op Fl mL
-.Op Fl b
-.Op Fl d
-.Op Fl u
-.Op Fl s
-.Op Fl v
-.Op Fl z
+.Op Fl bdLmsuvz
 .Op Ar protocol_family
 .Nm
 .Fl l
-.Op Fl b
-.Op Fl d
-.Op Fl u
-.Op Fl s
+.Op Fl bdsu
 .Nm
 .Fl s
 .Ar interface
