@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_output.c,v 1.75 2003/12/10 22:35:35 itojun Exp $	*/
+/*	$NetBSD: ip6_output.c,v 1.76 2004/01/19 05:14:58 itojun Exp $	*/
 /*	$KAME: ip6_output.c,v 1.172 2001/03/25 09:55:56 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_output.c,v 1.75 2003/12/10 22:35:35 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_output.c,v 1.76 2004/01/19 05:14:58 itojun Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -193,6 +193,11 @@ ip6_output(m0, opt, ro, flags, im6o, so, ifpp)
 	}
 
 #ifdef IPSEC
+	if ((flags & IPV6_FORWARDING) != 0) {
+		needipsec = 0;
+		goto skippolicycheck;
+	}
+
 	/* get a security policy for this packet */
 	if (so == NULL)
 		sp = ipsec6_getpolicybyaddr(m, IPSEC_DIR_OUTBOUND, 0, &error);
@@ -235,6 +240,8 @@ ip6_output(m0, opt, ro, flags, im6o, so, ifpp)
 	default:
 		printf("ip6_output: Invalid policy found. %d\n", sp->policy);
 	}
+
+  skippolicycheck:;
 #endif /* IPSEC */
 
 	/*
