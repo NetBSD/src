@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *      from: @(#)conf.c	7.9 (Berkeley) 5/28/91
- *	$Id: conf.c,v 1.10 1994/05/20 09:52:15 mycroft Exp $
+ *	$Id: conf.c,v 1.11 1994/05/20 09:59:38 mycroft Exp $
  */
 
 #include <sys/param.h>
@@ -360,7 +360,7 @@ iszerodev(dev)
 
 /*
  * Returns true if dev is a disk device.
- *
+ */
 isdisk(dev, type)
 	dev_t dev;
 	int type;
@@ -380,6 +380,7 @@ isdisk(dev, type)
 		return (type == VCHR);
 	default:
 		return (0);
+	}
 }
 
 static int chrtoblktbl[] = {
