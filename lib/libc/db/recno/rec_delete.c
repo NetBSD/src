@@ -1,4 +1,4 @@
-/*	$NetBSD: rec_delete.c,v 1.11 1998/12/09 12:42:51 christos Exp $	*/
+/*	$NetBSD: rec_delete.c,v 1.12 2001/11/04 13:57:29 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)rec_delete.c	8.7 (Berkeley) 7/14/94";
 #else
-__RCSID("$NetBSD: rec_delete.c,v 1.11 1998/12/09 12:42:51 christos Exp $");
+__RCSID("$NetBSD: rec_delete.c,v 1.12 2001/11/04 13:57:29 lukem Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -159,10 +159,10 @@ rec_rdelete(t, nrec)
  *	RET_SUCCESS, RET_ERROR.
  */
 int
-__rec_dleaf(t, h, index)
+__rec_dleaf(t, h, idx)
 	BTREE *t;
 	PAGE *h;
-	u_int32_t index;
+	u_int32_t idx;
 {
 	RLEAF *rl;
 	indx_t *ip, cnt, offset;
@@ -180,7 +180,7 @@ __rec_dleaf(t, h, index)
 	 * down, overwriting the deleted record and its index.  If the record
 	 * uses overflow pages, make them available for reuse.
 	 */
-	to = rl = GETRLEAF(h, index);
+	to = rl = GETRLEAF(h, idx);
 	if (rl->flags & P_BIGDATA && __ovfl_delete(t, rl->bytes) == RET_ERROR)
 		return (RET_ERROR);
 	nbytes = NRLEAF(rl);
@@ -193,8 +193,8 @@ __rec_dleaf(t, h, index)
 	memmove(from + nbytes, from, (size_t)((char *)to - from));
 	h->upper += nbytes;
 
-	offset = h->linp[index];
-	for (cnt = &h->linp[index] - (ip = &h->linp[0]); cnt--; ++ip)
+	offset = h->linp[idx];
+	for (cnt = &h->linp[idx] - (ip = &h->linp[0]); cnt--; ++ip)
 		if (ip[0] < offset)
 			ip[0] += nbytes;
 	for (cnt = &h->linp[NEXTINDEX(h)] - ip; --cnt; ++ip)
