@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.14 1994/12/13 21:17:23 mycroft Exp $	*/
+/*	$NetBSD: fd.c,v 1.15 1995/04/06 19:45:00 chopps Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -294,6 +294,11 @@ fdcprint(auxp, pnp)
 	void *auxp;
 	char *pnp;
 {
+	struct fdcargs *fcp;
+
+	fcp = auxp;
+	if (pnp)
+		printf("fd%d at %s:", fcp->unit, pnp);
 	return(UNCONF);
 }
 
