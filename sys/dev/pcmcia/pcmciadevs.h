@@ -1,10 +1,10 @@
-/*	$NetBSD: pcmciadevs.h,v 1.151 2001/12/04 18:46:51 christos Exp $	*/
+/*	$NetBSD: pcmciadevs.h,v 1.152 2001/12/16 05:43:16 ichiro Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcmciadevs,v 1.151 2001/12/04 18:46:30 christos Exp 
+ *	NetBSD: pcmciadevs,v 1.152 2001/12/16 05:42:46 ichiro Exp 
  */
 /* $FreeBSD: src/sys/dev/pccard/pccarddevs,v 1.20 2001/11/19 05:02:55 imp Exp $*/
 
@@ -275,6 +275,9 @@
 #define	PCMCIA_CIS_FUJITSU_LA10S	{ NULL, NULL, NULL, NULL }
 #define	PCMCIA_PRODUCT_FUJITSU_LA10S	0x1003
 #define	PCMCIA_STR_FUJITSU_LA10S	"Fujitsu Compact Flash Ethernet"
+#define	PCMCIA_CIS_FUJITSU_ITCFJ182A	{ NULL, NULL, NULL, NULL }
+#define	PCMCIA_PRODUCT_FUJITSU_ITCFJ182A	0x1018
+#define	PCMCIA_STR_FUJITSU_ITCFJ182A	"Fujitsu J182A Compact Flash Ethernet"
 #define	PCMCIA_CIS_FUJITSU_LA501	{ NULL, NULL, NULL, NULL }
 #define	PCMCIA_PRODUCT_FUJITSU_LA501	0x2000
 #define	PCMCIA_STR_FUJITSU_LA501	"Fujitsu Towa LA501 Ethernet"
