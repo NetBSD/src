@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_threadstuff.h,v 1.8 2000/06/11 03:35:38 oster Exp $	*/
+/*	$NetBSD: rf_threadstuff.h,v 1.9 2000/08/20 16:15:31 thorpej Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -86,12 +86,9 @@ typedef void *RF_ThreadArg_t;
  * In NetBSD, kernel threads are simply processes which share several
  * substructures and never run in userspace.
  */
-#define RF_WAIT_COND(_c_,_m_)           { \
-	RF_UNLOCK_MUTEX(_m_); \
-	tsleep(&_c_, PRIBIO, "rfwcond", 0); \
-	RF_LOCK_MUTEX(_m_); \
-}
-#define RF_SIGNAL_COND(_c_)            wakeup(&(_c_))
+#define RF_WAIT_COND(_c_,_m_)		\
+	ltsleep(&(_c_), PRIBIO, "rfwcond", 0, &(_m_))
+#define RF_SIGNAL_COND(_c_)            wakeup_one(&(_c_))
 #define RF_BROADCAST_COND(_c_)         wakeup(&(_c_))
 #define	RF_CREATE_THREAD(_handle_, _func_, _arg_, _name_) \
 	kthread_create1((void (*) __P((void *)))(_func_), (void *)(_arg_), \
