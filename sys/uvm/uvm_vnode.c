@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_vnode.c,v 1.53 2001/09/22 22:33:16 sommerfeld Exp $	*/
+/*	$NetBSD: uvm_vnode.c,v 1.54 2001/09/26 07:23:51 chs Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -253,17 +253,17 @@ uvn_detach(uobj)
  */
 
 int
-uvn_put(uobj, off, len, flags)
+uvn_put(uobj, offlo, offhi, flags)
 	struct uvm_object *uobj;
-	voff_t off;
-	voff_t len;
+	voff_t offlo;
+	voff_t offhi;
 	int flags;
 {
 	struct vnode *vp = (struct vnode *)uobj;
 	int error;
 
 	LOCK_ASSERT(simple_lock_held(&vp->v_interlock));
-	error = VOP_PUTPAGES(vp, off, len, flags);
+	error = VOP_PUTPAGES(vp, offlo, offhi, flags);
 	LOCK_ASSERT(!simple_lock_held(&vp->v_interlock));
 	return error;
 }
