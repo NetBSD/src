@@ -1,4 +1,4 @@
-# 	$NetBSD: Makefile.sparc,v 1.61 1999/07/09 09:53:00 mrg Exp $
+# 	$NetBSD: Makefile.sparc,v 1.62 1999/07/10 22:18:34 christos Exp $
 
 # Makefile for NetBSD
 #
@@ -53,8 +53,6 @@ CWARNFLAGS?=	-Werror -Wall -Wstrict-prototypes -Wmissing-prototypes \
 CWARNFLAGS+=	-Wno-main
 .endif
 CFLAGS=		${DEBUG} ${COPTS} ${CWARNFLAGS}
-# add `-mno-fpu' to work around gcc (last noticed in v2.7.2) bug
-CFLAGS+=	-mno-fpu
 AFLAGS=		-x assembler-with-cpp -traditional-cpp -D_LOCORE
 LINKFLAGS=	-Ttext F0004000 -e start
 .if ${OBJECT_FMT} != "ELF"
