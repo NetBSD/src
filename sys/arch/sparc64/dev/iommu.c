@@ -1,4 +1,4 @@
-/*	$NetBSD: iommu.c,v 1.54 2002/06/14 00:11:07 eeh Exp $	*/
+/*	$NetBSD: iommu.c,v 1.55 2002/06/20 18:26:23 eeh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Eduardo Horvath
@@ -62,16 +62,13 @@ int iommudebug = 0x0;
 #define DPRINTF(l, s)
 #endif
 
-#define iommu_strbuf_flush(i,v) do {					\
-	if ((i)->is_sbvalid[0])						\
-		bus_space_write_8((i)->is_bustag, (i)->is_sb[0],	\
-			STRBUFREG(strbuf_pgflush), (v));		\
-	if ((i)->is_sbvalid[1])						\
-		bus_space_write_8((i)->is_bustag, (i)->is_sb[1],	\
+#define iommu_strbuf_flush(i, v) do {					\
+	if ((i)->sb_flush)						\
+		bus_space_write_8((i)->sb_is->is_bustag, (i)->sb_sb,	\
 			STRBUFREG(strbuf_pgflush), (v));		\
 	} while (0)
 
-static	int iommu_strbuf_flush_done __P((struct iommu_state *));
+static	int iommu_strbuf_flush_done __P((struct strbuf_ctl *));
 
 /*
  * initialise the UltraSPARC IOMMU (SBUS or PCI):
@@ -174,13 +171,6 @@ iommu_init(name, is, tsbsize, iovabase)
 #endif
 
 	/*
-	 * Initialize streaming buffer, if it is there.
-	 */
-	if (is->is_sbvalid[0] || is->is_sbvalid[1])
-		(void)pmap_extract(pmap_kernel(), (vaddr_t)&is->is_flush[0],
-		    &is->is_flushpa);
-
-	/*
 	 * now actually start up the IOMMU
 	 */
 	iommu_reset(is);
@@ -209,6 +199,7 @@ iommu_reset(is)
 	struct iommu_state *is;
 {
 	int i;
+	struct strbuf_ctl *sb;
 
 	/* Need to do 64-bit stores */
 	bus_space_write_8(is->is_bustag, is->is_iommu, IOMMUREG(iommu_tsb), 
@@ -219,16 +210,25 @@ iommu_reset(is)
 		is->is_cr|IOMMUCR_DE);
 
 	for (i=0; i<2; i++) {
-		if (is->is_sbvalid[i]) {
+		if ((sb = is->is_sb[i])) {
 
 			/* Enable diagnostics mode? */
-			bus_space_write_8(is->is_bustag, is->is_sb[i], 
+			bus_space_write_8(is->is_bustag, is->is_sb[i]->sb_sb, 
 				STRBUFREG(strbuf_ctl), STRBUF_EN);
 
 			/* No streaming buffers? Disable them */
-			if (bus_space_read_8(is->is_bustag, is->is_sb[i], 
-				STRBUFREG(strbuf_ctl)) == 0)
-				is->is_sbvalid[i] = 0;
+			if (bus_space_read_8(is->is_bustag, 
+				is->is_sb[i]->sb_sb, 
+				STRBUFREG(strbuf_ctl)) == 0) {
+				is->is_sb[i]->sb_flush = NULL;
+			} else {
+				/*
+				 * locate the pa of the flush buffer.
+				 */
+				(void)pmap_extract(pmap_kernel(),
+					(vaddr_t)is->is_sb[i]->sb_flush,
+					&is->is_sb[i]->sb_flushpa);
+			}
 		}
 	}
 }
@@ -237,12 +237,14 @@ iommu_reset(is)
  * Here are the iommu control routines. 
  */
 void
-iommu_enter(is, va, pa, flags)
-	struct iommu_state *is;
+iommu_enter(sb, va, pa, flags)
+	struct strbuf_ctl *sb;
 	vaddr_t va;
 	int64_t pa;
 	int flags;
 {
+	struct iommu_state *is = sb->sb_is;
+	int strbuf = (flags & BUS_DMA_STREAMING);
 	int64_t tte;
 
 #ifdef DIAGNOSTIC
@@ -250,17 +252,20 @@ iommu_enter(is, va, pa, flags)
 		panic("iommu_enter: va %#lx not in DVMA space", va);
 #endif
 
+	/* Is the streamcache flush really needed? */
+	if (sb->sb_flush) {
+		iommu_strbuf_flush(sb, va);
+		iommu_strbuf_flush_done(sb);
+	} else
+		/* If we can't flush the strbuf don't enable it. */
+		strbuf = 0;
+
 	tte = MAKEIOTTE(pa, !(flags & BUS_DMA_NOWRITE), 
-		!(flags & BUS_DMA_NOCACHE), (flags & BUS_DMA_STREAMING));
+		!(flags & BUS_DMA_NOCACHE), (strbuf));
 #ifdef DEBUG
 	tte |= (flags & 0xff000LL)<<(4*8);
 #endif
 	
-	/* Is the streamcache flush really needed? */
-	if (is->is_sbvalid[0] || is->is_sbvalid[1]) {
-		iommu_strbuf_flush(is, va);
-		iommu_strbuf_flush_done(is);
-	}
 	DPRINTF(IDB_IOMMU, ("Clearing TSB slot %d for va %p\n", 
 		       (int)IOTSBSLOT(va,is->is_tsbsize), (void *)(u_long)va));
 	is->is_tsb[IOTSBSLOT(va,is->is_tsbsize)] = tte;
@@ -284,7 +289,7 @@ iommu_extract(is, dva)
 	int64_t tte = 0;
 	
 	if (dva >= is->is_dvmabase && dva < is->is_dvmaend)
-		tte = is->is_tsb[IOTSBSLOT(dva,is->is_tsbsize)];
+		tte = is->is_tsb[IOTSBSLOT(dva, is->is_tsbsize)];
 
 	if ((tte & IOTTE_V) == 0)
 		return ((paddr_t)-1L);
@@ -324,26 +329,6 @@ iommu_remove(is, va, len)
 			"for va %p size %lx\n",
 			(int)IOTSBSLOT(va,is->is_tsbsize), (void *)(u_long)va,
 			(u_long)len));
-		if (is->is_sbvalid[0] || is->is_sbvalid[1]) {
-			DPRINTF(IDB_IOMMU, ("iommu_remove: flushing va %p "
-				"TSB[%lx]@%p=%lx, %lu bytes left\n",
-				(void *)(u_long)va,
-				(long)IOTSBSLOT(va,is->is_tsbsize),
-				(void *)(u_long)&is->is_tsb[IOTSBSLOT(va,
-					is->is_tsbsize)],
-				(long)(is->is_tsb[IOTSBSLOT(va,
-					is->is_tsbsize)]),
-				(u_long)len));
-			iommu_strbuf_flush(is, va);
-			if (len <= NBPG)
-				iommu_strbuf_flush_done(is);
-			DPRINTF(IDB_IOMMU, ("iommu_remove: flushed va %p TSB[%lx]@%p=%lx, %lu bytes left\n", 	       
-			       (void *)(u_long)va, (long)IOTSBSLOT(va,is->is_tsbsize), 
-			       (void *)(u_long)&is->is_tsb[IOTSBSLOT(va,is->is_tsbsize)],
-			       (long)(is->is_tsb[IOTSBSLOT(va,is->is_tsbsize)]), 
-			       (u_long)len));
-		}
-
 		if (len <= NBPG)
 			len = 0;
 		else
@@ -358,9 +343,10 @@ iommu_remove(is, va, len)
 }
 
 static int 
-iommu_strbuf_flush_done(is)
-	struct iommu_state *is;
+iommu_strbuf_flush_done(sb)
+	struct strbuf_ctl *sb;
 {
+	struct iommu_state *is = sb->sb_is;
 	struct timeval cur, flushtimeout;
 
 #define BUMPTIME(t, usec) { \
@@ -374,7 +360,7 @@ iommu_strbuf_flush_done(is)
 	} \
 }
 
-	if (!is->is_sbvalid[0] && !is->is_sbvalid[1])
+	if (!sb->sb_flush)
 		return (0);
 				
 	/*
@@ -390,66 +376,54 @@ iommu_strbuf_flush_done(is)
 	 * went wrong.
 	 */
 
-	is->is_flush[0] = 1;
-	is->is_flush[1] = 1;
-	if (is->is_sbvalid[0]) {
-		is->is_flush[0] = 0;
-		bus_space_write_8(is->is_bustag, is->is_sb[0], 
-			STRBUFREG(strbuf_flushsync), is->is_flushpa);
-	}
-	if (is->is_sbvalid[1]) {
-		is->is_flush[0] = 1;
-		bus_space_write_8(is->is_bustag, is->is_sb[1],
-			STRBUFREG(strbuf_flushsync), is->is_flushpa + 8);
-	}
+	*sb->sb_flush = 0;
+	bus_space_write_8(is->is_bustag, sb->sb_sb, 
+		STRBUFREG(strbuf_flushsync), sb->sb_flushpa);
 
 	microtime(&flushtimeout); 
 	cur = flushtimeout;
 	BUMPTIME(&flushtimeout, 500000); /* 1/2 sec */
 	
-	DPRINTF(IDB_IOMMU, ("iommu_strbuf_flush_done: flush = %lx,%lx "
+	DPRINTF(IDB_IOMMU, ("iommu_strbuf_flush_done: flush = %lx "
 		"at va = %lx pa = %lx now=%lx:%lx until = %lx:%lx\n",
-		(long)is->is_flush[0], (long)is->is_flush[1],
-		(long)&is->is_flush[0], (long)is->is_flushpa, 
+		(long)*sb->sb_flush, (long)sb->sb_flush, (long)sb->sb_flushpa, 
 		cur.tv_sec, cur.tv_usec,
 		flushtimeout.tv_sec, flushtimeout.tv_usec));
 
 	/* Bypass non-coherent D$ */
-	while ((!ldxa(is->is_flushpa, ASI_PHYS_CACHED) ||
-		!ldxa(is->is_flushpa + 8, ASI_PHYS_CACHED)) &&
+	while ((!ldxa(sb->sb_flushpa, ASI_PHYS_CACHED)) &&
 		((cur.tv_sec <= flushtimeout.tv_sec) &&
 			(cur.tv_usec <= flushtimeout.tv_usec)))
 		microtime(&cur);
 
 #ifdef DIAGNOSTIC
-	if (!ldxa(is->is_flushpa, ASI_PHYS_CACHED) ||
-	    !ldxa(is->is_flushpa + 8, ASI_PHYS_CACHED)) {
-		printf("iommu_strbuf_flush_done: flush timeout %p,%p at %p\n",
-			(void *)(u_long)is->is_flush[0],
-			(void *)(u_long)is->is_flush[1],
-			(void *)(u_long)is->is_flushpa); /* panic? */
+	if (!ldxa(sb->sb_flushpa, ASI_PHYS_CACHED)) {
+		printf("iommu_strbuf_flush_done: flush timeout %p, at %p\n",
+			(void *)(u_long)*sb->sb_flush,
+			(void *)(u_long)sb->sb_flushpa); /* panic? */
 #ifdef DDB
 		Debugger();
 #endif
 	}
 #endif
 	DPRINTF(IDB_IOMMU, ("iommu_strbuf_flush_done: flushed\n"));
-	return (is->is_flush[0] && is->is_flush[1]);
+	return (*sb->sb_flush);
 }
 
 /*
  * IOMMU DVMA operations, common to SBUS and PCI.
  */
 int
-iommu_dvmamap_load(t, is, map, buf, buflen, p, flags)
+iommu_dvmamap_load(t, sb, map, buf, buflen, p, flags)
 	bus_dma_tag_t t;
-	struct iommu_state *is;
+	struct strbuf_ctl *sb;
 	bus_dmamap_t map;
 	void *buf;
 	bus_size_t buflen;
 	struct proc *p;
 	int flags;
 {
+	struct iommu_state *is = sb->sb_is;
 	int s;
 	int err;
 	bus_size_t sgsize;
@@ -585,7 +559,7 @@ iommu_dvmamap_load(t, is, map, buf, buflen, p, flags)
 			    "dva %lx at pa %lx\n",
 			    map, (void *)vaddr, (long)dvmaddr,
 			    (long)(curaddr & ~(NBPG-1))));
-		iommu_enter(is, trunc_page(dvmaddr), trunc_page(curaddr),
+		iommu_enter(sb, trunc_page(dvmaddr), trunc_page(curaddr),
 		    flags|0x4000);
 			
 		dvmaddr += PAGE_SIZE;
@@ -608,11 +582,12 @@ iommu_dvmamap_load(t, is, map, buf, buflen, p, flags)
 
 
 void
-iommu_dvmamap_unload(t, is, map)
+iommu_dvmamap_unload(t, sb, map)
 	bus_dma_tag_t t;
-	struct iommu_state *is;
+	struct strbuf_ctl *sb;
 	bus_dmamap_t map;
 {
+	struct iommu_state *is = sb->sb_is;
 	int error, s;
 	bus_size_t sgsize;
 
@@ -648,15 +623,16 @@ iommu_dvmamap_unload(t, is, map)
 
 
 int
-iommu_dvmamap_load_raw(t, is, map, segs, nsegs, flags, size)
+iommu_dvmamap_load_raw(t, sb, map, segs, nsegs, flags, size)
 	bus_dma_tag_t t;
-	struct iommu_state *is;
+	struct strbuf_ctl *sb;
 	bus_dmamap_t map;
 	bus_dma_segment_t *segs;
 	int nsegs;
 	int flags;
 	bus_size_t size;
 {
+	struct iommu_state *is = sb->sb_is;
 	struct vm_page *m;
 	int i, j, s;
 	int left;
@@ -778,7 +754,7 @@ iommu_dvmamap_load_raw(t, is, map, segs, nsegs, flags, size)
 					map->dm_segs[j].ds_len));
 			} else {
 				if (j >= map->_dm_segcnt) {
-					iommu_dvmamap_unload(t, is, map);
+					iommu_dvmamap_unload(t, sb, map);
 					return (E2BIG);
 				}
 				map->dm_segs[j].ds_addr = sgstart;
@@ -801,7 +777,7 @@ iommu_dvmamap_load_raw(t, is, map, segs, nsegs, flags, size)
 					(long)map->dm_segs[j].ds_addr, 
 					map->dm_segs[j].ds_len));
 				if (++j >= map->_dm_segcnt) {
-					iommu_dvmamap_unload(t, is, map);
+					iommu_dvmamap_unload(t, sb, map);
 					return (E2BIG);
 				}
 				sgstart = roundup(sgstart, boundary);
@@ -821,7 +797,7 @@ iommu_dvmamap_load_raw(t, is, map, segs, nsegs, flags, size)
 						(long)(pa)));
 				/* Enter it if we haven't before. */
 				if (prev_va != dvmaddr)
-					iommu_enter(is, prev_va = dvmaddr,
+					iommu_enter(sb, prev_va = dvmaddr,
 						prev_pa = pa,
 						flags|(++npg<<12));
 				dvmaddr += pagesz;
@@ -891,7 +867,7 @@ iommu_dvmamap_load_raw(t, is, map, segs, nsegs, flags, size)
 		DPRINTF(IDB_BUSDMA,
 		    ("iommu_dvmamap_load_raw: map %p loading va %lx at pa %lx\n",
 		    map, (long)dvmaddr, (long)(pa)));
-		iommu_enter(is, dvmaddr, pa, flags|0x8000);
+		iommu_enter(sb, dvmaddr, pa, flags|0x8000);
 			
 		dvmaddr += pagesz;
 		sgsize -= pagesz;
@@ -915,15 +891,17 @@ iommu_dvmamap_load_raw(t, is, map, segs, nsegs, flags, size)
 }
 
 void
-iommu_dvmamap_sync(t, is, map, offset, len, ops)
+iommu_dvmamap_sync(t, sb, map, offset, len, ops)
 	bus_dma_tag_t t;
-	struct iommu_state *is;
+	struct strbuf_ctl *sb;
 	bus_dmamap_t map;
 	bus_addr_t offset;
 	bus_size_t len;
 	int ops;
 {
+	struct iommu_state *is = sb->sb_is;
 	vaddr_t va = map->dm_segs[0].ds_addr + offset;
+	int64_t tte;
 
 	/*
 	 * We only support one DMA segment; supporting more makes this code
@@ -941,16 +919,26 @@ iommu_dvmamap_sync(t, is, map, offset, len, ops)
 		DPRINTF(IDB_SYNC,
 		    ("iommu_dvmamap_sync: syncing va %p len %lu "
 		     "BUS_DMASYNC_POSTREAD\n", (void *)(u_long)va, (u_long)len));
+#ifdef DIAGNOSTIC
+		if (va < is->is_dvmabase || va >= is->is_dvmaend)
+			panic("iommu_dvmamap_sync: invalid dva %p", va);
+#endif
+		tte = is->is_tsb[IOTSBSLOT(va, is->is_tsbsize)];
+
+		DPRINTF(IDB_SYNC,
+		    ("iommu_dvmamap_sync: syncing va %p len %lu "
+		     "BUS_DMASYNC_PREWRITE\n", (void *)(u_long)va, (u_long)len));
+
 		/* if we have a streaming buffer, flush it here first */
-		if (is->is_sbvalid[0] || is->is_sbvalid[1])
+		if ((tte & IOTTE_STREAM) && sb->sb_flush)
 			while (len > 0) {
 				DPRINTF(IDB_BUSDMA,
-					("iommu_dvmamap_sync: flushing va %p, "
-					 "%lu bytes left\n", (void *)(u_long)va,
-						(u_long)len));
-				iommu_strbuf_flush(is, va);
+				    ("iommu_dvmamap_sync: flushing va %p, %lu "
+				     "bytes left\n", (void *)(u_long)va, 
+					    (u_long)len));
+				iommu_strbuf_flush(sb, va);
 				if (len <= NBPG) {
-					iommu_strbuf_flush_done(is);
+					iommu_strbuf_flush_done(sb);
 					len = 0;
 				} else
 					len -= NBPG;
@@ -958,19 +946,26 @@ iommu_dvmamap_sync(t, is, map, offset, len, ops)
 			}
 	}
 	if (ops & BUS_DMASYNC_PREWRITE) {
+#ifdef DIAGNOSTIC
+		if (va < is->is_dvmabase || va >= is->is_dvmaend)
+			panic("iommu_dvmamap_sync: invalid dva %p", va);
+#endif
+		tte = is->is_tsb[IOTSBSLOT(va, is->is_tsbsize)];
+
 		DPRINTF(IDB_SYNC,
 		    ("iommu_dvmamap_sync: syncing va %p len %lu "
 		     "BUS_DMASYNC_PREWRITE\n", (void *)(u_long)va, (u_long)len));
+
 		/* if we have a streaming buffer, flush it here first */
-		if (is->is_sbvalid[0] || is->is_sbvalid[1])
+		if ((tte & IOTTE_STREAM) && sb->sb_flush)
 			while (len > 0) {
 				DPRINTF(IDB_BUSDMA,
 				    ("iommu_dvmamap_sync: flushing va %p, %lu "
 				     "bytes left\n", (void *)(u_long)va, 
 					    (u_long)len));
-				iommu_strbuf_flush(is, va);
+				iommu_strbuf_flush(sb, va);
 				if (len <= NBPG) {
-					iommu_strbuf_flush_done(is);
+					iommu_strbuf_flush_done(sb);
 					len = 0;
 				} else
 					len -= NBPG;
@@ -986,9 +981,9 @@ iommu_dvmamap_sync(t, is, map, offset, len, ops)
 }
 
 int
-iommu_dvmamem_alloc(t, is, size, alignment, boundary, segs, nsegs, rsegs, flags)
+iommu_dvmamem_alloc(t, sb, size, alignment, boundary, segs, nsegs, rsegs, flags)
 	bus_dma_tag_t t;
-	struct iommu_state *is;
+	struct strbuf_ctl *sb;
 	bus_size_t size, alignment, boundary;
 	bus_dma_segment_t *segs;
 	int nsegs;
@@ -1005,9 +1000,9 @@ iommu_dvmamem_alloc(t, is, size, alignment, boundary, segs, nsegs, rsegs, flags)
 }
 
 void
-iommu_dvmamem_free(t, is, segs, nsegs)
+iommu_dvmamem_free(t, sb, segs, nsegs)
 	bus_dma_tag_t t;
-	struct iommu_state *is;
+	struct strbuf_ctl *sb;
 	bus_dma_segment_t *segs;
 	int nsegs;
 {
@@ -1022,9 +1017,9 @@ iommu_dvmamem_free(t, is, segs, nsegs)
  * Check the flags to see whether we're streaming or coherent.
  */
 int
-iommu_dvmamem_map(t, is, segs, nsegs, size, kvap, flags)
+iommu_dvmamem_map(t, sb, segs, nsegs, size, kvap, flags)
 	bus_dma_tag_t t;
-	struct iommu_state *is;
+	struct strbuf_ctl *sb;
 	bus_dma_segment_t *segs;
 	int nsegs;
 	size_t size;
@@ -1087,9 +1082,9 @@ iommu_dvmamem_map(t, is, segs, nsegs, size, kvap, flags)
  * Unmap DVMA mappings from kernel
  */
 void
-iommu_dvmamem_unmap(t, is, kva, size)
+iommu_dvmamem_unmap(t, sb, kva, size)
 	bus_dma_tag_t t;
-	struct iommu_state *is;
+	struct strbuf_ctl *sb;
 	caddr_t kva;
 	size_t size;
 {

@@ -1,4 +1,4 @@
-/*	$NetBSD: psycho.c,v 1.49 2002/06/12 00:43:22 eeh Exp $	*/
+/*	$NetBSD: psycho.c,v 1.50 2002/06/20 18:26:24 eeh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Eduardo E. Horvath
@@ -486,15 +486,27 @@ found:
 			M_DEVBUF, M_NOWAIT);
 		if (sc->sc_is == NULL)
 			panic("psycho_attach: malloc iommu_state");
-		sc->sc_is->is_sbvalid[0] = sc->sc_is->is_sbvalid[1] = 0;
 
+		/* Point the strbuf_ctl at the iommu_state */
+		pp->pp_sb.sb_is = sc->sc_is;
 
 		if (PROM_getproplen(sc->sc_node, "no-streaming-cache") < 0) {
+			struct strbuf_ctl *sb = &pp->pp_sb;
+			vaddr_t va = (vaddr_t)&pp->pp_flush[0x40];
+
+			/*
+			 * Initialize the strbuf_ctl.
+			 * 
+			 * The flush sync buffer must be 64-byte aligned.
+			 */
+			sb->sb_flush = (void *)(va & ~0x3f);
+
 			bus_space_subregion(sc->sc_bustag, pci_ctl,
 				offsetof(struct pci_ctl, pci_strbuf),
-				sizeof (struct iommu_strbuf), 
-				&sc->sc_is->is_sb[0]);
-			sc->sc_is->is_sbvalid[0] = 1;
+				sizeof (struct iommu_strbuf), &sb->sb_sb);
+
+			/* Point our iommu at the strbuf_ctl */
+			sc->sc_is->is_sb[0] = sb;
 		}
 
 		psycho_iommu_init(sc, 2);
@@ -518,12 +530,26 @@ found:
 		sc->sc_configtag = osc->sc_configtag;
 		sc->sc_configaddr = osc->sc_configaddr;
 
+		/* Point the strbuf_ctl at the iommu_state */
+		pp->pp_sb.sb_is = sc->sc_is;
+
 		if (PROM_getproplen(sc->sc_node, "no-streaming-cache") < 0) {
+			struct strbuf_ctl *sb = &pp->pp_sb;
+			vaddr_t va = (vaddr_t)&pp->pp_flush[0x40];
+
+			/*
+			 * Initialize the strbuf_ctl.
+			 * 
+			 * The flush sync buffer must be 64-byte aligned.
+			 */
+			sb->sb_flush = (void *)(va & ~0x3f);
+
 			bus_space_subregion(sc->sc_bustag, pci_ctl,
 				offsetof(struct pci_ctl, pci_strbuf),
-				sizeof (struct iommu_strbuf), 
-				&sc->sc_is->is_sb[1]);
-			sc->sc_is->is_sbvalid[1] = 1;
+				sizeof (struct iommu_strbuf), &sb->sb_sb);
+
+			/* Point our iommu at the strbuf_ctl */
+			sc->sc_is->is_sb[1] = sb;
 		}
 		iommu_reset(sc->sc_is);
 	}
@@ -1105,9 +1131,8 @@ psycho_dmamap_load(t, map, buf, buflen, p, flags)
 	int flags;
 {
 	struct psycho_pbm *pp = (struct psycho_pbm *)t->_cookie;
-	struct psycho_softc *sc = pp->pp_sc;
 
-	return (iommu_dvmamap_load(t, sc->sc_is, map, buf, buflen, p, flags));
+	return (iommu_dvmamap_load(t, &pp->pp_sb, map, buf, buflen, p, flags));
 }
 
 void
@@ -1116,9 +1141,8 @@ psycho_dmamap_unload(t, map)
 	bus_dmamap_t map;
 {
 	struct psycho_pbm *pp = (struct psycho_pbm *)t->_cookie;
-	struct psycho_softc *sc = pp->pp_sc;
 
-	iommu_dvmamap_unload(t, sc->sc_is, map);
+	iommu_dvmamap_unload(t, &pp->pp_sb, map);
 }
 
 int
@@ -1131,9 +1155,8 @@ psycho_dmamap_load_raw(t, map, segs, nsegs, size, flags)
 	int flags;
 {
 	struct psycho_pbm *pp = (struct psycho_pbm *)t->_cookie;
-	struct psycho_softc *sc = pp->pp_sc;
 
-	return (iommu_dvmamap_load_raw(t, sc->sc_is, map, segs, nsegs, flags, size));
+	return (iommu_dvmamap_load_raw(t, &pp->pp_sb, map, segs, nsegs, flags, size));
 }
 
 void
@@ -1145,16 +1168,15 @@ psycho_dmamap_sync(t, map, offset, len, ops)
 	int ops;
 {
 	struct psycho_pbm *pp = (struct psycho_pbm *)t->_cookie;
-	struct psycho_softc *sc = pp->pp_sc;
 
 	if (ops & (BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE)) {
 		/* Flush the CPU then the IOMMU */
 		bus_dmamap_sync(t->_parent, map, offset, len, ops);
-		iommu_dvmamap_sync(t, sc->sc_is, map, offset, len, ops);
+		iommu_dvmamap_sync(t, &pp->pp_sb, map, offset, len, ops);
 	}
 	if (ops & (BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE)) {
 		/* Flush the IOMMU then the CPU */
-		iommu_dvmamap_sync(t, sc->sc_is, map, offset, len, ops);
+		iommu_dvmamap_sync(t, &pp->pp_sb, map, offset, len, ops);
 		bus_dmamap_sync(t->_parent, map, offset, len, ops);
 	}
 
@@ -1172,9 +1194,8 @@ psycho_dmamem_alloc(t, size, alignment, boundary, segs, nsegs, rsegs, flags)
 	int flags;
 {
 	struct psycho_pbm *pp = (struct psycho_pbm *)t->_cookie;
-	struct psycho_softc *sc = pp->pp_sc;
 
-	return (iommu_dvmamem_alloc(t, sc->sc_is, size, alignment, boundary,
+	return (iommu_dvmamem_alloc(t, &pp->pp_sb, size, alignment, boundary,
 	    segs, nsegs, rsegs, flags));
 }
 
@@ -1185,9 +1206,8 @@ psycho_dmamem_free(t, segs, nsegs)
 	int nsegs;
 {
 	struct psycho_pbm *pp = (struct psycho_pbm *)t->_cookie;
-	struct psycho_softc *sc = pp->pp_sc;
 
-	iommu_dvmamem_free(t, sc->sc_is, segs, nsegs);
+	iommu_dvmamem_free(t, &pp->pp_sb, segs, nsegs);
 }
 
 int
@@ -1200,9 +1220,8 @@ psycho_dmamem_map(t, segs, nsegs, size, kvap, flags)
 	int flags;
 {
 	struct psycho_pbm *pp = (struct psycho_pbm *)t->_cookie;
-	struct psycho_softc *sc = pp->pp_sc;
 
-	return (iommu_dvmamem_map(t, sc->sc_is, segs, nsegs, size, kvap, flags));
+	return (iommu_dvmamem_map(t, &pp->pp_sb, segs, nsegs, size, kvap, flags));
 }
 
 void
@@ -1212,7 +1231,6 @@ psycho_dmamem_unmap(t, kva, size)
 	size_t size;
 {
 	struct psycho_pbm *pp = (struct psycho_pbm *)t->_cookie;
-	struct psycho_softc *sc = pp->pp_sc;
 
-	iommu_dvmamem_unmap(t, sc->sc_is, kva, size);
+	iommu_dvmamem_unmap(t, &pp->pp_sb, kva, size);
 }
