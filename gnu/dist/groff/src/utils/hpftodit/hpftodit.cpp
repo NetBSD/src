@@ -1,4 +1,4 @@
-/*	$NetBSD: hpftodit.cpp,v 1.3 2004/08/02 13:03:17 wiz Exp $	*/
+/*	$NetBSD: hpftodit.cpp,v 1.4 2004/08/25 16:52:44 wiz Exp $	*/
 
 // -*- C++ -*-
 /* Copyright (C) 1994, 2000, 2001, 2003, 2004 Free Software Foundation, Inc.
@@ -147,6 +147,7 @@ public:
   byte get_byte();
   uint16 get_uint16();
   uint32 get_uint32();
+  uint32 get_uint32(char *orig);
   void seek(uint32 n);
 private:
   unsigned char *buf_;
@@ -159,6 +160,7 @@ struct entry {
   uint16 type;
   uint32 count;
   uint32 value;
+  char orig_value[4];
   entry() : present(0) { }
 };
 
@@ -465,6 +467,22 @@ File::get_uint32()
   return n;
 }
 
+uint32
+File::get_uint32(char *orig)
+{
+  if (end_ - ptr_ < 4)
+    fatal("unexpected end of file");
+  unsigned char v = *ptr_++;
+  uint32 n = v;
+  orig[0] = v;
+  for (int i = 1; i < 4; i++) {
+    v = *ptr_++;
+    orig[i] = v;
+    n += v << i*8;
+  }
+  return n;
+}
+
 static void
 read_tags(File &f)
 {
@@ -483,7 +501,7 @@ read_tags(File &f)
     p->present = 1;
     p->type = f.get_uint16();
     p->count = f.get_uint32();
-    p->value = f.get_uint32();
+    p->value = f.get_uint32(p->orig_value);
   }
 }
 
@@ -549,9 +567,9 @@ output_font_name(File &f)
     while (--n)
       *p++ = f.get_byte();
   }
-  else			// value contains the string
+  else			// orig_value contains the string
     sprintf(font_name, "%.*s",
-	    count, (char*)&(tag_info(font_name_tag).value));
+	    count, tag_info(font_name_tag).orig_value);
 
   // remove any trailing space
   p = font_name + count - 1;
@@ -730,7 +748,7 @@ read_and_output_pcltypeface(File &f)
     }
   }
   else
-    printf("%.4s", (char *)&(tag_info(typeface_tag).value));
+    printf("%.4s", tag_info(typeface_tag).orig_value);
   printf("\n");
 }
 
@@ -1175,7 +1193,7 @@ dump_ascii(File &f, tag_type t)
       printf("%c", f.get_byte());
   }
   else
-    printf("%.4s", (char*)&(tag_info(t).value));
+    printf("%.4s", tag_info(t).orig_value);
   putchar('"');
 }
 
