@@ -1,4 +1,4 @@
-/*	$NetBSD: fdisk.c,v 1.82 2004/09/12 07:46:24 dsl Exp $ */
+/*	$NetBSD: fdisk.c,v 1.83 2004/10/28 19:48:41 dsl Exp $ */
 
 /*
  * Mach Operating System
@@ -35,7 +35,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: fdisk.c,v 1.82 2004/09/12 07:46:24 dsl Exp $");
+__RCSID("$NetBSD: fdisk.c,v 1.83 2004/10/28 19:48:41 dsl Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -979,14 +979,14 @@ get_diskname(const char *fullname, char *diskname, size_t size)
 		p++;
 
 	for (p2 = p; *p2 != 0; p2++)
-		if (isdigit(*p2))
+		if (isdigit((unsigned char)*p2))
 			break;
 	if (*p2 == 0) {
 		/* XXX invalid diskname? */
 		strlcpy(diskname, fullname, size);
 		return;
 	}
-	while (isdigit(*p2))
+	while (isdigit((unsigned char)*p2))
 		p2++; 
 
 	len = p2 - p;
@@ -2487,7 +2487,7 @@ decimal(const char *prompt, int dflt, int flags, int minval, int maxval)
 		if (cp[0] == '$' && cp[1] == 0)
 			return maxval;
 
-		if (isdigit(*cp) || *cp == '-') {
+		if (isdigit((unsigned char)*cp) || *cp == '-') {
 			acc = strtol(lbuf, &cp, 10);
 			if (flags & DEC_SEC) {
 				if (*cp == 'm' || *cp == 'M') {
