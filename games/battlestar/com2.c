@@ -1,4 +1,4 @@
-/*	$NetBSD: com2.c,v 1.6 1997/10/11 02:07:00 lukem Exp $	*/
+/*	$NetBSD: com2.c,v 1.7 1998/08/24 00:22:45 hubertf Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)com2.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: com2.c,v 1.6 1997/10/11 02:07:00 lukem Exp $");
+__RCSID("$NetBSD: com2.c,v 1.7 1998/08/24 00:22:45 hubertf Exp $");
 #endif
 #endif				/* not lint */
 
@@ -157,6 +157,7 @@ use()
 		else
 			position = 229;
 		ourtime++;
+		notes[CANTSEE] = 0;
 		return (0);
 	} else
 		if (position == FINAL)
