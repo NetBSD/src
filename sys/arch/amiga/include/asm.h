@@ -1,8 +1,8 @@
 /*
- *	$Id: asm.h,v 1.2 1994/04/10 02:06:33 chopps Exp $
+ *	$Id: asm.h,v 1.3 1994/04/10 02:28:16 chopps Exp $
  */
-#ifndef _MACHINE_ASM_H
-#define _MACHINE_ASM_H
+#ifndef _MACHINE_ASM_H_
+#define _MACHINE_ASM_H_
 
 #include <m68k/asm.h>
 
