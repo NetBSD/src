@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.54 1996/04/22 01:38:32 christos Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.54.4.1 1996/12/10 05:51:02 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -1045,16 +1045,15 @@ coredump(p)
 	register struct proc *p;
 {
 	register struct vnode *vp;
-	register struct pcred *pcred = p->p_cred;
-	register struct ucred *cred = pcred->pc_ucred;
 	register struct vmspace *vm = p->p_vmspace;
+	register struct ucred *cred = p->p_cred->pc_ucred;
 	struct nameidata nd;
 	struct vattr vattr;
 	int error, error1;
 	char name[MAXCOMLEN+6];		/* progname.core */
 	struct core core;
 
-	if (pcred->p_svuid != pcred->p_ruid || pcred->p_svgid != pcred->p_rgid)
+	if (p->p_flag & P_SUGID)
 		return (EFAULT);
 	if (USPACE + ctob(vm->vm_dsize + vm->vm_ssize) >=
 	    p->p_rlimit[RLIMIT_CORE].rlim_cur)
