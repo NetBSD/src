@@ -1,4 +1,4 @@
-/* 	$NetBSD: px.c,v 1.21 1999/12/08 21:33:43 ad Exp $	*/
+/* 	$NetBSD: px.c,v 1.22 1999/12/08 21:38:10 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: px.c,v 1.21 1999/12/08 21:33:43 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: px.c,v 1.22 1999/12/08 21:38:10 ad Exp $");
 
 /*
  * px.c: driver for the DEC TURBOchannel 2D and 3D accelerated framebuffers
@@ -371,7 +371,7 @@ px_init(fi, slotbase, unit, console)
 	pxi->pxi_stamp = (caddr_t) (pxi->pxi_slotbase + PX_STAMP_OFFSET);
 	pxi->pxi_poll = (int32_t *) (pxi->pxi_slotbase + PX_STIC_POLL_OFFSET);
 	pxi->pxi_stic = (struct stic_regs *) (pxi->pxi_slotbase + PX_STIC_OFFSET);
-	pxi->pxi_rbuf = (int *)MIPS_PHYS_TO_KSEG0(bufpa);
+	pxi->pxi_rbuf = (int *)MIPS_PHYS_TO_KSEG1(bufpa);
 	pxi->pxi_rbuf_phys = bufpa;
 	pxi->pxi_rbuf_size = PXMAP_RBUF_SIZE;
 	pxi->pxi_pbuf_select = 0;
