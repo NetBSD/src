@@ -1,4 +1,4 @@
-/*	$NetBSD: getcap.c,v 1.2 1999/03/13 19:11:54 sommerfe Exp $	*/
+/*	$NetBSD: getcap.c,v 1.3 2001/06/15 17:26:50 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -46,9 +46,22 @@
 #if 0
 static char sccsid[] = "@(#)getcap.c	8.3 (Berkeley) 3/25/94";
 #else
-__RCSID("$NetBSD: getcap.c,v 1.2 1999/03/13 19:11:54 sommerfe Exp $");
+__RCSID("$NetBSD: getcap.c,v 1.3 2001/06/15 17:26:50 tsutsui Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
+
+#ifdef __weak_alias
+#define cgetcap			_cgetcap
+#define cgetclose		_cgetclose
+#define cgetent			_cgetent
+#define cgetfirst		_cgetfirst
+#define cgetmatch		_cgetmatch
+#define cgetnext		_cgetnext
+#define cgetnum			_cgetnum
+#define cgetset			_cgetset
+#define cgetstr			_cgetstr
+#define cgetustr		_cgetustr
+#endif
 
 #include <sys/types.h>
 #include <ctype.h>
@@ -69,6 +82,19 @@ __RCSID("$NetBSD: getcap.c,v 1.2 1999/03/13 19:11:54 sommerfe Exp $");
 #define RECOK	(char)0
 #define TCERR	(char)1
 #define	SHADOW	(char)2
+
+#ifdef __weak_alias
+__weak_alias(cgetcap,_cgetcap)
+__weak_alias(cgetclose,_cgetclose)
+__weak_alias(cgetent,_cgetent)
+__weak_alias(cgetfirst,_cgetfirst)
+__weak_alias(cgetmatch,_cgetmatch)
+__weak_alias(cgetnext,_cgetnext)
+__weak_alias(cgetnum,_cgetnum)
+__weak_alias(cgetset,_cgetset)
+__weak_alias(cgetstr,_cgetstr)
+__weak_alias(cgetustr,_cgetustr)
+#endif
 
 static size_t	 topreclen;	/* toprec length */
 static char	*toprec;	/* Additional record specified by cgetset() */

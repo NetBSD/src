@@ -1,4 +1,4 @@
-/*	$NetBSD: getnet.c,v 1.1 1997/12/12 03:05:59 gwr Exp $	*/
+/*	$NetBSD: getnet.c,v 1.2 2001/06/15 17:26:51 tsutsui Exp $	*/
 
 /* Copyright (c) 1993 Carlos Leandro and Rui Salgueiro
  *	Dep. Matematica Universidade de Coimbra, Portugal, Europe
@@ -45,6 +45,13 @@
  * and then gutted, leaving only stubs.
  */
 
+#include <sys/cdefs.h>
+
+#ifdef __weak_alias
+#define getnetbyaddr		_getnetbyaddr
+#define getnetbyname		_getnetbyname
+#endif
+
 #include <sys/param.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
@@ -57,6 +64,11 @@
 #include <ctype.h>
 #include <errno.h>
 #include <string.h>
+
+#ifdef __weak_alias
+__weak_alias(getnetbyaddr,_getnetbyaddr)
+__weak_alias(getnetbyname,_getnetbyname)
+#endif
 
 struct netent *
 getnetbyaddr(net, net_type)

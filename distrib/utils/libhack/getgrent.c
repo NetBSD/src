@@ -1,4 +1,4 @@
-/*	$NetBSD: getgrent.c,v 1.3 1999/03/13 19:08:44 sommerfe Exp $	*/
+/*	$NetBSD: getgrent.c,v 1.4 2001/06/15 17:26:51 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -39,11 +39,31 @@
  * and then gutted, leaving only /etc/group support.
  */
 
+#include <sys/cdefs.h>
+
+#ifdef __weak_alias
+#define endgrent		_endgrent
+#define getgrent		_getgrent
+#define getgrgid		_getgrgid
+#define getgrnam		_getgrnam
+#define setgrent		_setgrent
+#define setgroupent		_setgroupent
+#endif
+
 #include <sys/types.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <grp.h>
+
+#ifdef __weak_alias
+__weak_alias(endgrent,_endgrent)
+__weak_alias(getgrent,_getgrent)
+__weak_alias(getgrgid,_getgrgid)
+__weak_alias(getgrnam,_getgrnam)
+__weak_alias(setgrent,_setgrent)
+__weak_alias(setgroupent,_setgroupent)
+#endif
 
 static FILE *_gr_fp;
 static struct group _gr_group;

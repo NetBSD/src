@@ -1,4 +1,4 @@
-/*	$NetBSD: strsignal.c,v 1.2 1999/05/27 05:41:15 gwr Exp $	*/
+/*	$NetBSD: strsignal.c,v 1.3 2001/06/15 17:26:51 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1988 Regents of the University of California.
@@ -33,9 +33,19 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
+
+#ifdef __weak_alias
+#define strsignal		_strsignal
+#endif
+
 #include <stdio.h>
 #include <signal.h>
 #include <unistd.h>
+
+#ifdef __weak_alias
+__weak_alias(strsignal,_strsignal)
+#endif
 
 /*
  * Simplified from the libc version.

@@ -1,4 +1,4 @@
-/*	$NetBSD: opendir.c,v 1.2 1999/05/23 22:08:17 gwr Exp $	*/
+/*	$NetBSD: opendir.c,v 1.3 2001/06/15 17:26:51 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -33,6 +33,12 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
+
+#ifdef __weak_alias
+#define opendir			_opendir
+#endif
+
 #include <sys/param.h>
 #include <sys/mount.h>
 #include <sys/stat.h>
@@ -43,6 +49,10 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+
+#ifdef __weak_alias
+__weak_alias(opendir,_opendir)
+#endif
 
 /*
  * Open a directory.
