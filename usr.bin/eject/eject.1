@@ -1,4 +1,4 @@
-.\"	$NetBSD: eject.1,v 1.5 1998/09/05 17:31:44 pk Exp $
+.\"	$NetBSD: eject.1,v 1.6 1999/02/08 16:35:33 bouyer Exp $
 .\"
 .\" Copyright (c) 1998 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -42,14 +42,15 @@
 .Nd eject a floppy disk, cdrom or tape
 .Sh SYNOPSIS
 .Nm
-.Op Fl fnv
+.Op Fl flnv
 .Op Fl d Ar raw-device
 .Op Fl t Ar device-type
 .Op Ar device
 .Sh DESCRIPTION
 The
 .Nm
-program ejects a medium from the specified device.
+program ejects a medium from the specified device. It can also load a cdrom
+in the drive if this operation is supported by the hardware.
 The
 .Ar device
 argument specifies a device either by its full path name
@@ -70,6 +71,8 @@ It need not start with
 .Pa /dev/ .
 .It Fl f
 Force the eject operation without attempting to unmount any filesystems first.
+.It Fl l
+Load media in the drive (only supporded for the cdrom device type).
 .It Fl n
 List the built-in nicknames on standard output.
 .It Fl t Ar device-type
