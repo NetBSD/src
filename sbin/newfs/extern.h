@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.1.12.2 2001/11/25 19:32:24 he Exp $	*/
+/*	$NetBSD: extern.h,v 1.1.12.3 2001/11/25 19:56:27 he Exp $	*/
 
 /*
  * Copyright (c) 1997 Christos Zoulas.  All rights reserved.
@@ -58,6 +58,8 @@ extern int	maxbpg;		/* maximum blocks per file in a cyl group */
 extern int	nrpos;		/* # of distinguished rotational positions */
 extern int	bbsize;		/* boot block size */
 extern int	sbsize;		/* superblock size */
+extern int	avgfilesize;	/* expected average file size */
+extern int	avgfpdir;	/* expected number of files per directory */
 extern u_long	memleft;	/* virtual memory available */
 extern caddr_t	membase;	/* start address of memory based filesystem */
 extern int	needswap;	/* Filesystem not in native byte order */
