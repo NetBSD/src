@@ -37,7 +37,7 @@
  *
  *	%W% (Berkeley) %G%
  *
- * $Id: os-bsd44.h,v 1.2 1993/11/27 21:38:37 mycroft Exp $
+ * $Id: os-bsd44.h,v 1.3 1993/12/10 09:01:24 mycroft Exp $
  *
  * 4.4 BSD definitions for Amd (automounter)
  */
@@ -193,4 +193,8 @@ struct mntent {
  * 4.4 has RE support built in
  */
 #undef RE_HDR
+#ifdef __NetBSD__
+#define RE_HDR <regex.h>
+#else
 #define RE_HDR <regexp.h>
+#endif
