@@ -1,4 +1,4 @@
-/*	$NetBSD: table.c,v 1.9 1999/02/23 10:47:40 christos Exp $	*/
+/*	$NetBSD: table.c,v 1.10 1999/02/25 11:03:22 ross Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -37,7 +37,7 @@
 static char sccsid[] __attribute__((unused)) = "@(#)tables.c	8.1 (Berkeley) 6/5/93";
 #elif defined(__NetBSD__)
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: table.c,v 1.9 1999/02/23 10:47:40 christos Exp $");
+__RCSID("$NetBSD: table.c,v 1.10 1999/02/25 11:03:22 ross Exp $");
 #endif
 
 #include "defs.h"
@@ -1091,8 +1091,8 @@ flush_kern(void)
 		rtm = (struct rt_msghdr *)next;
 		if (rtm->rtm_msglen == 0) {
 			msglog("zero length kernel route at "
-			       " %#x in buffer %#x before %#x",
-			       (int)rtm, (int)sysctl_buf, (int)lim);
+			       " %#lx in buffer %#lx before %#lx",
+			       (long)rtm, (long)sysctl_buf, (long)lim);
 			break;
 		}
 
