@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_driver.c,v 1.61 2002/09/17 03:54:42 oster Exp $	*/
+/*	$NetBSD: rf_driver.c,v 1.62 2002/09/21 01:00:43 oster Exp $	*/
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -73,7 +73,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_driver.c,v 1.61 2002/09/17 03:54:42 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_driver.c,v 1.62 2002/09/21 01:00:43 oster Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -185,32 +185,7 @@ rf_BootRaidframe()
 	globalShutdown = NULL;
 	return (0);
 }
-/*
- * This function is really just for debugging user-level stuff: it
- * frees up all memory, other RAIDframe resources which might otherwise
- * be kept around. This is used with systems like "sentinel" to detect
- * memory leaks.
- */
-int 
-rf_UnbootRaidframe()
-{
-	int     rc;
 
-	RF_LOCK_LKMGR_MUTEX(configureMutex);
-	if (configureCount) {
-		RF_UNLOCK_LKMGR_MUTEX(configureMutex);
-		return (EBUSY);
-	}
-	raidframe_booted = 0;
-	RF_UNLOCK_LKMGR_MUTEX(configureMutex);
-	rc = rf_lkmgr_mutex_destroy(&configureMutex);
-	if (rc) {
-		RF_ERRORMSG3("Unable to destroy mutex file %s line %d rc=%d\n", __FILE__,
-		    __LINE__, rc);
-		RF_PANIC();
-	}
-	return (0);
-}
 /*
  * Called whenever an array is shutdown
  */
@@ -1010,6 +985,7 @@ rf_print_panic_message(line,file)
 		line, file);
 }
 
+#ifdef RAID_DIAGNOSTIC
 void
 rf_print_assert_panic_message(line,file,condition)
 	int line;
@@ -1020,6 +996,7 @@ rf_print_assert_panic_message(line,file,condition)
 		"raidframe error at line %d file %s (failed asserting %s)\n",
 		line, file, condition);
 }
+#endif
 
 void
 rf_print_unable_to_init_mutex(file,line,rc)
