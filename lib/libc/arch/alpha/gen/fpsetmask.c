@@ -1,7 +1,7 @@
-/*	$NetBSD: fpsetmask.c,v 1.1 1995/04/29 05:11:01 cgd Exp $	*/
+/*	$NetBSD: fpsetmask.c,v 1.1.12.1 1999/04/30 15:07:07 perry Exp $	*/
 
 /*
- * Copyright (c) 1995 Christopher G. Demetriou
+ * Copyright (c) 1995 Ross Harvey
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -14,7 +14,7 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *      This product includes software developed by Christopher G. Demetriou
+ *      This product includes software developed by Ross Harvey
  *	for the NetBSD Project.
  * 4. The name of the author may not be used to endorse or promote products
  *    derived from this software without specific prior written permission
@@ -32,12 +32,14 @@
  */
 
 #include <ieeefp.h>
+#include <machine/sysarch.h>
 
 fp_except
 fpsetmask(mask)
 	fp_except mask;
 {
+	struct alpha_fp_except_args a;
 
-	/* XXX */
-	abort();
+	a.mask = mask;
+	return sysarch(ALPHA_FPSETMASK, &a);
 }
