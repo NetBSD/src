@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.8 1999/09/03 07:48:37 tron Exp $
+# $NetBSD: mi,v 1.9 2001/04/29 11:06:00 wiz Exp $
 ./usr/X11R6/bin/gccmakedep
 ./usr/X11R6/bin/imake
 ./usr/X11R6/bin/lndir
@@ -402,7 +402,6 @@
 ./usr/X11R6/man/cat3/WhitePixelOfScreen.0
 ./usr/X11R6/man/cat3/WidthMMOfScreen.0
 ./usr/X11R6/man/cat3/WidthOfScreen.0
-./usr/X11R6/man/cat3/X.0
 ./usr/X11R6/man/cat3/XActivateScreenSaver.0
 ./usr/X11R6/man/cat3/XAddConnectionWatch.0
 ./usr/X11R6/man/cat3/XAddHost.0
@@ -467,7 +466,6 @@
 ./usr/X11R6/man/cat3/XConfigureEvent.0
 ./usr/X11R6/man/cat3/XConfigureRequestEvent.0
 ./usr/X11R6/man/cat3/XConfigureWindow.0
-./usr/X11R6/man/cat3/XConsortium.0
 ./usr/X11R6/man/cat3/XContextDependentDrawing.0
 ./usr/X11R6/man/cat3/XContextualDrawing.0
 ./usr/X11R6/man/cat3/XConvertCase.0
@@ -834,7 +832,6 @@
 ./usr/X11R6/man/cat3/XShrinkRegion.0
 ./usr/X11R6/man/cat3/XSizeHints.0
 ./usr/X11R6/man/cat3/XStandardColormap.0
-./usr/X11R6/man/cat3/XStandards.0
 ./usr/X11R6/man/cat3/XStoreBuffer.0
 ./usr/X11R6/man/cat3/XStoreBytes.0
 ./usr/X11R6/man/cat3/XStoreColor.0
@@ -1005,7 +1002,6 @@
 ./usr/X11R6/man/cat3/XrmStringToQuarkList.0
 ./usr/X11R6/man/cat3/XrmUniqueQuark.0
 ./usr/X11R6/man/cat3/XrmValue.0
-./usr/X11R6/man/cat3/Xsecurity.0
 ./usr/X11R6/man/cat3/XtAddActions.0
 ./usr/X11R6/man/cat3/XtAddCallback.0
 ./usr/X11R6/man/cat3/XtAddCallbacks.0

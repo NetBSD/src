@@ -1,0 +1,5 @@
+# $NetBSD: obsolete.mi,v 1.1 2001/04/29 11:06:00 wiz Exp $
+/usr/X11R6/man/cat3/X.0
+/usr/X11R6/man/cat3/XConsortium.0
+/usr/X11R6/man/cat3/XStandards.0
+/usr/X11R6/man/cat3/Xsecurity.0
