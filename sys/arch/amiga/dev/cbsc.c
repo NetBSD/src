@@ -1,4 +1,4 @@
-/*	$NetBSD: cbsc.c,v 1.13 2002/01/26 13:40:53 aymeric Exp $ */
+/*	$NetBSD: cbsc.c,v 1.14 2002/01/28 09:56:53 aymeric Exp $ */
 
 /*
  * Copyright (c) 1997 Michael L. Hitch
@@ -34,6 +34,9 @@
  * SUCH DAMAGE.
  *
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: cbsc.c,v 1.14 2002/01/28 09:56:53 aymeric Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>

@@ -1,4 +1,4 @@
-/* $NetBSD: simple_busfuncs.c,v 1.3 2002/01/26 13:24:55 aymeric Exp $ */
+/* $NetBSD: simple_busfuncs.c,v 1.4 2002/01/28 09:56:48 aymeric Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -35,6 +35,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: simple_busfuncs.c,v 1.4 2002/01/28 09:56:48 aymeric Exp $");
 
 /*
  * Do NOT use this standalone.

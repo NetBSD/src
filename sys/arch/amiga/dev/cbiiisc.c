@@ -1,4 +1,4 @@
-/*	$NetBSD: cbiiisc.c,v 1.7 2002/01/26 13:40:53 aymeric Exp $ */
+/*	$NetBSD: cbiiisc.c,v 1.8 2002/01/28 09:56:52 aymeric Exp $ */
 
 /*
  * Copyright (c) 1994,1998 Michael L. Hitch
@@ -35,6 +35,9 @@
  *
  *	@(#)dma.c
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: cbiiisc.c,v 1.8 2002/01/28 09:56:52 aymeric Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

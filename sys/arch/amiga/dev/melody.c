@@ -1,4 +1,4 @@
-/*	$NetBSD: melody.c,v 1.8 2002/01/26 13:40:58 aymeric Exp $ */
+/*	$NetBSD: melody.c,v 1.9 2002/01/28 09:57:01 aymeric Exp $ */
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -35,6 +35,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: melody.c,v 1.9 2002/01/28 09:57:01 aymeric Exp $");
 
 /*
  * Melody audio driver.

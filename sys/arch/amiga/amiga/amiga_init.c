@@ -1,4 +1,4 @@
-/*	$NetBSD: amiga_init.c,v 1.75 2002/01/26 13:24:53 aymeric Exp $	*/
+/*	$NetBSD: amiga_init.c,v 1.76 2002/01/28 09:56:44 aymeric Exp $	*/
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -33,6 +33,9 @@
 
 #include "opt_amigaccgrf.h"
 #include "opt_p5ppc68kboard.h"
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: amiga_init.c,v 1.76 2002/01/28 09:56:44 aymeric Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

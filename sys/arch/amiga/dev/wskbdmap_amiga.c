@@ -1,4 +1,4 @@
-/*	$NetBSD: wskbdmap_amiga.c,v 1.3 2002/01/26 13:41:01 aymeric Exp $ */
+/*	$NetBSD: wskbdmap_amiga.c,v 1.4 2002/01/28 09:57:04 aymeric Exp $ */
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -46,6 +46,9 @@
  * US/DE keymaps are the ones that are supposed to work at least
  * partially.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: wskbdmap_amiga.c,v 1.4 2002/01/28 09:57:04 aymeric Exp $");
 
 #include <sys/types.h>
 #include <dev/wscons/wsksymdef.h>

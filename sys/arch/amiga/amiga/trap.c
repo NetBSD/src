@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.86 2002/01/26 13:24:55 aymeric Exp $	*/
+/*	$NetBSD: trap.c,v 1.87 2002/01/28 09:56:49 aymeric Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -45,6 +45,9 @@
 #include "opt_ddb.h"
 #include "opt_execfmt.h"
 #include "opt_compat_sunos.h"
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.87 2002/01/28 09:56:49 aymeric Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

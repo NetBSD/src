@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ed.c,v 1.38 2002/01/26 13:40:56 aymeric Exp $ */
+/*	$NetBSD: if_ed.c,v 1.39 2002/01/28 09:56:58 aymeric Exp $ */
 
 /*
  * Device driver for National Semiconductor DS8390/WD83C690 based ethernet
@@ -17,6 +17,10 @@
 
 #include "opt_inet.h"
 #include "opt_ns.h"
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: if_ed.c,v 1.39 2002/01/28 09:56:58 aymeric Exp $");
+
 #include "bpfilter.h"
 
 #include <sys/param.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: view.c,v 1.18 2002/01/26 13:41:00 aymeric Exp $ */
+/*	$NetBSD: view.c,v 1.19 2002/01/28 09:57:03 aymeric Exp $ */
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -36,6 +36,9 @@
  * words the graphics system as currently built does not like to be
  * refered to by open/close/ioctl.  This device serves as
  * a interface to graphics. */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: view.c,v 1.19 2002/01/28 09:57:03 aymeric Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

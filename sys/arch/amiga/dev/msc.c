@@ -1,4 +1,4 @@
-/*	$NetBSD: msc.c,v 1.20 2002/01/26 13:40:59 aymeric Exp $ */
+/*	$NetBSD: msc.c,v 1.21 2002/01/28 09:57:01 aymeric Exp $ */
 
 /*
  * Copyright (c) 1993 Zik.
@@ -50,6 +50,9 @@
  *   - Reformatted to NetBSD style format.
  *   - Rewritten the carrier detect system to prevent lock-ups (jm 951029)
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: msc.c,v 1.21 2002/01/28 09:57:01 aymeric Exp $");
 
 #include "msc.h"
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: aster.c,v 1.15 2002/01/26 13:40:52 aymeric Exp $ */
+/*	$NetBSD: aster.c,v 1.16 2002/01/28 09:56:51 aymeric Exp $ */
 
 /*-
  * Copyright (c) 1998,2001 The NetBSD Foundation, Inc.
@@ -35,6 +35,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: aster.c,v 1.16 2002/01/28 09:56:51 aymeric Exp $");
 
 /*
  * zbus ISDN Blaster, ISDN Master driver.
