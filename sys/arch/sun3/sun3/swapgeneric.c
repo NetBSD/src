@@ -42,7 +42,8 @@
 
 /*#include "../dev/device.h"*/
 
-#include "sd.h"
+/*#include "sd.h" XXX */
+#define NSD 0
 
 /*
  * Generic configuration;  all in one

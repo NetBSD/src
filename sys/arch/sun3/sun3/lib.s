@@ -3,7 +3,7 @@
  */ 
 
 .text
-ENTRY(_insque)
+ENTRY(insque)
 	movw	sr,d0
 	movw	#PSL_HIGHIPL,sr		| atomic
 	movl	sp@(8),a0		| where to insert (after)
@@ -16,7 +16,7 @@ ENTRY(_insque)
 	movw	d0,sr
 	rts
 
-ENTRY(_remque)
+ENTRY(remque)
 	movw	sr,d0
 	movw	#PSL_HIGHIPL,sr		| atomic
 	movl	sp@(4),a0		| element to remove (e)

@@ -245,6 +245,7 @@ Lswnofpsave:
 	addql	#8,sp
 	movl	_curpcb,a1		| restore p_addr
 Lswnochg:
+#if 0
 
 #ifdef PROFTIMER
 #ifdef notdef
@@ -336,7 +337,7 @@ Lresfprest:
 	movw	a1@(PCB_PS),sr		| no, restore PS
 	moveq	#1,d0			| return 1 (for alternate returns)
 	rts
-
+#endif
 /*
  * savectx(pcb, altreturn)
  * Update pcb, saving current processor state and arranging

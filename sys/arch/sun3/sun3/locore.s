@@ -38,7 +38,7 @@ perpmeg:
 	movsb d1, a0@				| establish mapping
 	addql #1, d1			
 	addl #SEG_SIZE, a0
-	cmpl #(MAINMEM_MONMAP / NBSEG), d1	| are we done
+	cmpl #(MAINMEM_MONMAP / NBSG), d1	| are we done
 	bne perpmeg
 
 
@@ -62,8 +62,9 @@ bsszero: clrl a0@
 	cmpl a0, a1
 	bne bsszero
 	movl #_start, sp
-	jsr _bootstrap
-
+	jsr _sun3_bootstrap
+	jsr _main
+	rts					|should never get here
 .text
 /*
  * Icode is copied out to process 1 to exec init.
