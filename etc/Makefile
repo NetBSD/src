@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.104 1999/02/19 05:58:40 itohy Exp $
+#	$NetBSD: Makefile,v 1.105 1999/03/05 07:21:44 mycroft Exp $
 #	from: @(#)Makefile	8.7 (Berkeley) 5/25/95
 
 # Environment variables without default values:
@@ -66,13 +66,22 @@ BINGRP= wheel
 BIN1+=	aliases bootptab changelist csh.cshrc csh.login \
 	csh.logout daily daily.conf dm.conf floppytab ftpchroot \
 	ftpusers ftpwelcome gettytab group hosts hosts.lpd \
-	inetd.conf ld.so.conf lkm.conf mailer.conf man.conf \
+	inetd.conf lkm.conf mailer.conf man.conf \
 	monthly monthly.conf mrouted.conf netstart networks \
 	newsyslog.conf nsswitch.conf phones printcap profile protocols \
 	rbootd.conf rc rc.conf rc.lkm rc.local rc.subr \
 	rc.shutdown remote rpc security security.conf services \
 	shells syslog.conf weekly weekly.conf etc.${MACHINE}/ttys \
 	etc.${MACHINE}/disktab
+
+.if	(${MACHINE_ARCH} == "i386") || \
+	(${MACHINE_ARCH} == "m68k") || \
+	(${MACHINE_ARCH} == "ns32k") || \
+	(${MACHINE_ARCH} == "sparc") || \
+	(${MACHINE_ARCH} == "vax") || \
+	(${MACHINE_ARCH} == "arm32")
+BIN1+=	ld.so.conf
+.endif
 
 # -rw-rw-r--
 BIN2+=	motd
