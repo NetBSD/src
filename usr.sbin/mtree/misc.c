@@ -1,4 +1,4 @@
-/*	$NetBSD: misc.c,v 1.24 2003/08/07 11:25:35 agc Exp $	*/
+/*	$NetBSD: misc.c,v 1.25 2004/06/20 22:20:18 jmc Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -31,9 +31,13 @@
  *	@(#)misc.c	8.1 (Berkeley) 6/6/93
  */
 
+#if HAVE_NBTOOL_CONFIG_H
+#include "nbtool_config.h"
+#endif
+
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: misc.c,v 1.24 2003/08/07 11:25:35 agc Exp $");
+__RCSID("$NetBSD: misc.c,v 1.25 2004/06/20 22:20:18 jmc Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -244,8 +248,10 @@ nodetoino(u_int type)
 		return S_IFREG;
 	case F_LINK:
 		return S_IFLNK;
+#ifdef S_IFSOCK
 	case F_SOCK:
 		return S_IFSOCK;
+#endif
 	default:
 		printf("unknown type %d", type);
 		abort();
@@ -278,8 +284,10 @@ inotype(u_int type)
 		return ("file");
 	case S_IFLNK:
 		return ("link");
+#ifdef S_IFSOCK
 	case S_IFSOCK:
 		return ("socket");
+#endif
 	default:
 		return ("unknown");
 	}

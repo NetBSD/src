@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc_main.c,v 1.25 2004/05/12 15:59:54 christos Exp $	*/
+/*	$NetBSD: rpc_main.c,v 1.26 2004/06/20 22:20:16 jmc Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -30,12 +30,16 @@
  * Mountain View, California  94043
  */
 
+#if HAVE_NBTOOL_CONFIG_H
+#include "nbtool_config.h"
+#endif
+
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
 #if 0
 static char sccsid[] = "@(#)rpc_main.c 1.30 89/03/30 (C) 1987 SMI";
 #else
-__RCSID("$NetBSD: rpc_main.c,v 1.25 2004/05/12 15:59:54 christos Exp $");
+__RCSID("$NetBSD: rpc_main.c,v 1.26 2004/06/20 22:20:16 jmc Exp $");
 #endif
 #endif
 

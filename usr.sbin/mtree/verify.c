@@ -1,4 +1,4 @@
-/*	$NetBSD: verify.c,v 1.36 2003/10/27 00:12:44 lukem Exp $	*/
+/*	$NetBSD: verify.c,v 1.37 2004/06/20 22:20:18 jmc Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -29,12 +29,16 @@
  * SUCH DAMAGE.
  */
 
+#if HAVE_NBTOOL_CONFIG_H
+#include "nbtool_config.h"
+#endif
+
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
 #if 0
 static char sccsid[] = "@(#)verify.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: verify.c,v 1.36 2003/10/27 00:12:44 lukem Exp $");
+__RCSID("$NetBSD: verify.c,v 1.37 2004/06/20 22:20:18 jmc Exp $");
 #endif
 #endif /* not lint */
 

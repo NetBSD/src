@@ -1,4 +1,4 @@
-/*	$NetBSD: file_subs.c,v 1.46 2004/05/03 02:22:54 christos Exp $	*/
+/*	$NetBSD: file_subs.c,v 1.47 2004/06/20 22:20:14 jmc Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)file_subs.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: file_subs.c,v 1.46 2004/05/03 02:22:54 christos Exp $");
+__RCSID("$NetBSD: file_subs.c,v 1.47 2004/06/20 22:20:14 jmc Exp $");
 #endif
 #endif /* not lint */
 
@@ -731,7 +731,7 @@ set_ftime(char *fnm, time_t mtime, time_t atime, int frc)
 		 * set. We get the current values of the times if we need them.
 		 */
 		if (lstat(fnm, &sb) == 0) {
-#ifdef BSD4_4
+#if BSD4_4 && !HAVE_NBTOOL_CONFIG_H
 			if (!patime)
 				TIMESPEC_TO_TIMEVAL(&tv[0], &sb.st_atimespec);
 			if (!pmtime)

@@ -1,4 +1,4 @@
-/*	$NetBSD: buf.c,v 1.11 2003/10/16 06:31:38 itojun Exp $	*/
+/*	$NetBSD: buf.c,v 1.12 2004/06/20 22:20:18 jmc Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -35,9 +35,13 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#if HAVE_NBTOOL_CONFIG_H
+#include "nbtool_config.h"
+#endif
+
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: buf.c,v 1.11 2003/10/16 06:31:38 itojun Exp $");
+__RCSID("$NetBSD: buf.c,v 1.12 2004/06/20 22:20:18 jmc Exp $");
 #endif	/* !__lint */
 
 #include <sys/param.h>

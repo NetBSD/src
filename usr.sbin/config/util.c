@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.20 2003/11/25 19:34:06 rafal Exp $	*/
+/*	$NetBSD: util.c,v 1.21 2004/06/20 22:20:17 jmc Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -39,6 +39,10 @@
  *
  *	from: @(#)util.c	8.1 (Berkeley) 6/6/93
  */
+
+#if HAVE_NBTOOL_CONFIG_H
+#include "nbtool_config.h"
+#endif
 
 #include <ctype.h>
 #include <stdio.h>
