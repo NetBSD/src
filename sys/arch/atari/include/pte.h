@@ -1,4 +1,4 @@
-/*	$NetBSD: pte.h,v 1.4 2001/04/10 19:51:00 leo Exp $	*/
+/*	$NetBSD: pte.h,v 1.5 2003/04/02 07:35:56 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -130,15 +130,15 @@ typedef u_int	st_entry_t;
  * ATARI_MAX_PTSIZE	the number of bytes to map everything
  */
 #define ATARI_MAX_COREUPT	1024
-#define ATARI_UPTSIZE		roundup(VM_MAXUSER_ADDRESS / NPTEPG, NBPG)
+#define ATARI_UPTSIZE		roundup(VM_MAXUSER_ADDRESS / NPTEPG, PAGE_SIZE)
 #define ATARI_UPTBASE		0x10000000
 #define ATARI_UPTMAXSIZE \
-    roundup((ATARI_MAX_COREUPT * ATARI_UPTSIZE), NBPG)
+    roundup((ATARI_MAX_COREUPT * ATARI_UPTSIZE), PAGE_SIZE)
 #define ATARI_MAX_KPTSIZE \
     (ATARI_MAX_COREUPT * ATARI_UPTSIZE / NPTEPG)
 #define ATARI_KPTSIZE \
-    roundup((VM_MAX_KERNEL_ADDRESS - VM_MIN_KERNEL_ADDRESS) / NPTEPG, NBPG)
-#define ATARI_MAX_PTSIZE	roundup(0xffffffff / NPTEPG, NBPG)
+    roundup((VM_MAX_KERNEL_ADDRESS - VM_MIN_KERNEL_ADDRESS) / NPTEPG, PAGE_SIZE)
+#define ATARI_MAX_PTSIZE	roundup(0xffffffff / NPTEPG, PAGE_SIZE)
 
 /*
  * Kernel virtual address to page table entry and to physical address.

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.29 2002/09/22 07:53:41 chs Exp $	*/
+/*	$NetBSD: pmap.h,v 1.30 2003/04/02 07:35:56 thorpej Exp $	*/
 
 /* 
  * Copyright (c) 1987 Carnegie-Mellon University
@@ -123,7 +123,7 @@ struct pv_page_info {
 
 /*
  * This is basically:
- * ((NBPG - sizeof(struct pv_page_info)) / sizeof(struct pv_entry))
+ * ((PAGE_SIZE - sizeof(struct pv_page_info)) / sizeof(struct pv_entry))
  */
 #define	NPVPPG	340
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.4 2003/04/01 20:47:25 thorpej Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.5 2003/04/02 07:35:58 thorpej Exp $	*/
 
 /*	$OpenBSD: vmparam.h,v 1.17 2001/09/22 18:00:09 miod Exp $	*/
 
@@ -47,7 +47,7 @@
 #define	SYSCALLGATE	0xC0000000		/* syscall gateway page */
 
 /* Alignment requirement for a uspace. */
-#define	USPACE_ALIGN	NBPG
+#define	USPACE_ALIGN	PAGE_SIZE
 
 /*
  * Virtual memory related constants, all in bytes
@@ -77,7 +77,7 @@
  * This is basically slop for kmempt which we actually allocate (malloc) from.
  */
 #ifndef SHMMAXPGS
-#define SHMMAXPGS	((1024*1024*10)/NBPG)	/* 10mb */
+#define SHMMAXPGS	((1024*1024*10)/PAGE_SIZE)	/* 10mb */
 #endif
 
 /*
