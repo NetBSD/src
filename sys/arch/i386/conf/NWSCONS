@@ -1,4 +1,4 @@
-#	$NetBSD: NWSCONS,v 1.23 1999/01/23 16:10:48 drochner Exp $
+#	$NetBSD: NWSCONS,v 1.24 1999/01/29 00:01:22 cjs Exp $
 #
 #	like GENERIC, with new console drivers
 #
@@ -48,7 +48,7 @@ options 	UCONSOLE	# users can use TIOCCONS (for xconsole)
 options 	INSECURE	# disable kernel security levels
 
 options 	RTC_OFFSET=0	# hardware clock is this many mins. west of GMT
-#options 	NTP		# NTP phase/frequency locked loop
+options 	NTP		# NTP phase/frequency locked loop
 
 options 	KTRACE		# system call tracing via ktrace(1)
 
