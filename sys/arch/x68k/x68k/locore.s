@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.2.4.2 1996/07/16 18:18:39 jtc Exp $	*/
+/*	$NetBSD: locore.s,v 1.2.4.3 1996/08/16 02:12:36 jtc Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -1028,8 +1028,8 @@ Ljupiterdone:
 	movc	d0,cacr			| turn on both caches
 	jmp	Lenab1
 Lmotommu2:
-	movl	#0x82c0aa00,a2@		| value to load TC with
-	pmove	a2@,tc			| load it
+	movl	#0x82c0aa00,sp@		| value to load TC with
+	pmove	sp@,tc			| load it
 
 /*
  * Should be running mapped from this point on
