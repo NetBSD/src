@@ -1,4 +1,4 @@
-/*	$NetBSD: printf.c,v 1.13 1998/06/16 19:10:15 gwr Exp $	*/
+/*	$NetBSD: printf.c,v 1.14 1999/02/11 14:32:00 pk Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -72,16 +72,17 @@ static void kprintn __P((void (*)(int), u_long, int));
 static void sputchar __P((int));
 static void kdoprnt __P((void (*)(int), const char *, va_list));
 
-static char *sbuf;
+static char *sbuf, *ebuf;
 
 static void
 sputchar(c)
 	int c;
 {
-	*sbuf++ = c;
+	if (sbuf < ebuf)
+		*sbuf++ = c;
 }
 
-void
+int
 #ifdef __STDC__
 sprintf(char *buf, const char *fmt, ...)
 #else
@@ -90,16 +91,38 @@ sprintf(buf, fmt, va_alist)
 #endif
 {
 	va_list ap;
+	int len;
 
-	sbuf = buf;
 #ifdef __STDC__
 	va_start(ap, fmt);
 #else
 	va_start(ap);
 #endif
-	kdoprnt(sputchar, fmt, ap);
+	len = vsnprintf(buf, -(size_t)buf, fmt, ap);
 	va_end(ap);
-	*sbuf = '\0';
+	return (len);
+}
+
+int
+#ifdef __STDC__
+snprintf(char *buf, size_t size, const char *fmt, ...)
+#else
+snprintf(buf, size, fmt, va_alist)
+	char *buf, *fmt;
+	size_t size;
+#endif
+{
+	va_list ap;
+	int len;
+
+#ifdef __STDC__
+	va_start(ap, fmt);
+#else
+	va_start(ap);
+#endif
+	len = vsnprintf(buf, size, fmt, ap);
+	va_end(ap);
+	return (len);
 }
 
 void
@@ -124,7 +147,26 @@ printf(fmt, va_alist)
 void
 vprintf(const char *fmt, va_list ap)
 {
+
 	kdoprnt(putchar, fmt, ap);
+}
+
+int
+vsnprintf(char *buf, size_t size, const char *fmt, va_list ap)
+{
+
+	sbuf = buf;
+	ebuf = buf + size - 1;
+	kdoprnt(sputchar, fmt, ap);
+	*sbuf = '\0';
+	return (sbuf - buf);
+}
+
+int
+vsprintf(char *buf, const char *fmt, va_list ap)
+{
+
+	return (vsnprintf(buf, -(size_t)buf, fmt, ap));
 }
 
 void
