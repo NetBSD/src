@@ -1,4 +1,4 @@
-/*	$NetBSD: db_trace.c,v 1.1 2002/11/29 22:17:17 fvdl Exp $	*/
+/*	$NetBSD: db_trace.c,v 1.2 2002/11/29 22:46:26 fvdl Exp $	*/
 
 /* 
  * Mach Operating System
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.1 2002/11/29 22:17:17 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.2 2002/11/29 22:46:26 fvdl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -115,29 +115,15 @@ db_find_trace_symbols()
 
 /*
  * Figure out how many arguments were passed into the frame at "fp".
+ * We can probably figure out how many arguments where passed above
+ * the first 6 (which are in registers), but since we can't
+ * reliably determine the values currently, just return 0.
  */
 int
 db_numargs(fp)
 	struct x86_64_frame *fp;
 {
-	long	*argp;
-	int	inst;
-	int	args;
-	extern char	etext[];
-
-	argp = (long *)db_get_value((db_addr_t)&fp->f_retaddr, 8, FALSE);
-	if (argp < (long *)VM_MIN_KERNEL_ADDRESS || argp > (long *)etext) {
-		args = 5;
-	} else {
-		inst = db_get_value((db_addr_t)argp, 4, FALSE);
-		if ((inst & 0xff) == 0x59)	/* popl %ecx */
-			args = 1;
-		else if ((inst & 0xffff) == 0xc483)	/* addl %n, %esp */
-			args = ((inst >> 16) & 0xff) / 8;
-		else
-			args = 5;
-	}
-	return (args);
+	return 0;
 }
 
 /* 
