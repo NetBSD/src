@@ -1,11 +1,11 @@
-#	$NetBSD: GENERIC,v 1.329 2000/04/28 17:23:52 uch Exp $
+#	$NetBSD: GENERIC,v 1.330 2000/04/30 19:08:19 dante Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
 
 include "arch/i386/conf/std.i386"
 
-#ident 		"GENERIC-$Revision: 1.329 $"
+#ident 		"GENERIC-$Revision: 1.330 $"
 
 maxusers	32		# estimated number of users
 
@@ -356,7 +356,7 @@ lpt2	at isa? port 0x3bc
 
 # PCI SCSI controllers
 adv*	at pci? dev ? function ?	# AdvanSys 1200[A,B], 9xx[U,UA] SCSI
-adw*	at pci? dev ? function ?	# AdvanSys 9xxUW SCSI
+adw*	at pci? dev ? function ?	# AdvanSys 9x0UW[D], 3940U[2,3]W SCSI
 ahc*	at pci? dev ? function ?	# Adaptec [23]94x, aic78x0 SCSI
 bha*	at pci? dev ? function ?	# BusLogic 9xx SCSI
 dpt*	at pci? dev ? function ?	# DPT SmartCache/SmartRAID
