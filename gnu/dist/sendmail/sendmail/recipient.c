@@ -12,10 +12,11 @@
  */
 
 #ifndef lint
-static char id[] = "@(#)Id: recipient.c,v 8.231.16.1 2000/05/27 19:56:01 gshapiro Exp";
+static char id[] = "@(#)Id: recipient.c,v 8.231.14.5 2000/06/27 20:15:46 gshapiro Exp";
 #endif /* ! lint */
 
 #include <sendmail.h>
+
 
 static void	includetimeout __P((void));
 static ADDRESS	*self_reference __P((ADDRESS *));
@@ -509,8 +510,18 @@ recipient(a, sendq, aliaslevel, e)
 					q->q_state = QS_DUPLICATE;
 				q->q_flags |= a->q_flags;
 			}
-			else if (bitset(QSELFREF, q->q_flags))
+			else if (bitset(QSELFREF, q->q_flags)
+#if _FFR_MILTER
+				 || q->q_state == QS_REMOVED
+#endif /* _FFR_MILTER */
+				 )
 			{
+#if _FFR_MILTER
+				/*
+				**  If an earlier milter removed the address,
+				**  a later one can still add it back.
+				*/
+#endif /* _FFR_MILTER */
 				q->q_state = a->q_state;
 				q->q_flags |= a->q_flags;
 			}
@@ -677,11 +688,13 @@ recipient(a, sendq, aliaslevel, e)
 		pw = finduser(buf, &fuzzy);
 		if (pw == NULL || strlen(pw->pw_name) > MAXNAME)
 		{
-			a->q_state = QS_BADADDR;
-			a->q_status = "5.1.1";
-			a->q_rstatus = newstr("550 5.1.1 User unknown");
-			giveresponse(EX_NOUSER, a->q_status, m, NULL,
-				     a->q_alias, (time_t) 0, e);
+			{
+				a->q_state = QS_BADADDR;
+				a->q_status = "5.1.1";
+				a->q_rstatus = newstr("550 5.1.1 User unknown");
+				giveresponse(EX_NOUSER, a->q_status, m, NULL,
+					     a->q_alias, (time_t) 0, e);
+			}
 		}
 		else
 		{
@@ -923,7 +936,7 @@ finduser(name, fuzzyp)
 # endif /* 0 */
 
 		buildfname(pw->pw_gecos, pw->pw_name, buf, sizeof buf);
-		if (strchr(buf, ' ') != NULL && !strcasecmp(buf, name))
+		if (strchr(buf, ' ') != NULL && strcasecmp(buf, name) == 0)
 		{
 			if (tTd(29, 4))
 				dprintf("fuzzy matches %s\n", pw->pw_name);
@@ -975,9 +988,9 @@ writable(filename, ctladdr, flags)
 	ADDRESS *ctladdr;
 	long flags;
 {
-	uid_t euid;
-	gid_t egid;
-	char *user;
+	uid_t euid = 0;
+	gid_t egid = 0;
+	char *user = NULL;
 
 	if (tTd(44, 5))
 		dprintf("writable(%s, 0x%lx)\n", filename, flags);
@@ -1093,8 +1106,10 @@ include(fname, forwarding, ctladdr, sendq, aliaslevel, e)
 	int mode;
 	volatile bool maxreached = FALSE;
 	register ADDRESS *ca;
-	volatile uid_t saveduid, uid;
-	volatile gid_t savedgid, gid;
+	volatile uid_t saveduid;
+	volatile gid_t savedgid;
+	volatile uid_t uid;
+	volatile gid_t gid;
 	char *volatile user;
 	int rval = 0;
 	volatile long sfflags = SFF_REGONLY;
@@ -1230,6 +1245,7 @@ include(fname, forwarding, ctladdr, sendq, aliaslevel, e)
 		ev = setevent(TimeOuts.to_fileopen, includetimeout, 0);
 	else
 		ev = NULL;
+
 
 	/* check for writable parent directory */
 	p = strrchr(fname, '/');

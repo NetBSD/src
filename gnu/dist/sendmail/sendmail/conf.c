@@ -12,13 +12,15 @@
  */
 
 #ifndef lint
-static char id[] = "@(#)Id: conf.c,v 8.646 2000/03/21 19:31:53 ca Exp";
+static char id[] = "@(#)Id: conf.c,v 8.646.2.2.2.23 2000/07/15 17:35:18 gshapiro Exp";
 #endif /* ! lint */
 
 #include <sendmail.h>
 #include <sendmail/pathnames.h>
-#include <sys/ioctl.h>
-#include <sys/param.h>
+
+# include <sys/ioctl.h>
+# include <sys/param.h>
+
 #include <limits.h>
 #if NETINET || NETINET6
 # include <arpa/inet.h>
@@ -26,6 +28,7 @@ static char id[] = "@(#)Id: conf.c,v 8.646 2000/03/21 19:31:53 ca Exp";
 #if HASULIMIT && defined(HPUX11)
 # include <ulimit.h>
 #endif /* HASULIMIT && defined(HPUX11) */
+
 
 static void	setupmaps __P((void));
 static void	setupmailers __P((void));
@@ -190,6 +193,7 @@ struct dbsval DontBlameSendmailValues[] =
 	{ "truststickybit",		DBS_TRUSTSTICKYBIT		},
 	{ "dontwarnforwardfileinunsafedirpath",
 					DBS_DONTWARNFORWARDFILEINUNSAFEDIRPATH },
+	{ "insufficiententropy",	DBS_INSUFFICIENTENTROPY },
 #if _FFR_UNSAFE_SASL
 	{ "groupreadablesaslfile",	DBS_GROUPREADABLESASLFILE	},
 #endif /* _FFR_UNSAFE_SASL */
@@ -1228,34 +1232,34 @@ setsignal(sig, handler)
 	**  and restartable syscalls
 	*/
 
-#ifdef SA_RESTART
+# ifdef SA_RESTART
 	struct sigaction n, o;
 
 	memset(&n, '\0', sizeof n);
-# if USE_SA_SIGACTION
+#  if USE_SA_SIGACTION
 	n.sa_sigaction = (void(*)(int, siginfo_t *, void *)) handler;
 	n.sa_flags = SA_RESTART|SA_SIGINFO;
-# else /* USE_SA_SIGACTION */
+#  else /* USE_SA_SIGACTION */
 	n.sa_handler = handler;
 	n.sa_flags = SA_RESTART;
-# endif /* USE_SA_SIGACTION */
+#  endif /* USE_SA_SIGACTION */
 	if (sigaction(sig, &n, &o) < 0)
 		return SIG_ERR;
 	return o.sa_handler;
-#else /* SA_RESTART */
+# else /* SA_RESTART */
 
 	/*
 	**  Else check for SYS5SIGNALS or
 	**  BSD4_3 signals
 	*/
 
-# if defined(SYS5SIGNALS) || defined(BSD4_3)
-#  ifdef BSD4_3
+#  if defined(SYS5SIGNALS) || defined(BSD4_3)
+#   ifdef BSD4_3
 	return signal(sig, handler);
-#  else /* BSD4_3 */
+#   else /* BSD4_3 */
 	return sigset(sig, handler);
-#  endif /* BSD4_3 */
-# else /* defined(SYS5SIGNALS) || defined(BSD4_3) */
+#   endif /* BSD4_3 */
+#  else /* defined(SYS5SIGNALS) || defined(BSD4_3) */
 
 	/*
 	**  Finally, if nothing else is available,
@@ -1269,8 +1273,8 @@ setsignal(sig, handler)
 	if (sigaction(sig, &n, &o) < 0)
 		return SIG_ERR;
 	return o.sa_handler;
-# endif /* defined(SYS5SIGNALS) || defined(BSD4_3) */
-#endif /* SA_RESTART */
+#  endif /* defined(SYS5SIGNALS) || defined(BSD4_3) */
+# endif /* SA_RESTART */
 }
 /*
 **  BLOCKSIGNAL -- hold a signal to prevent delivery
@@ -1288,13 +1292,13 @@ int
 blocksignal(sig)
 	int sig;
 {
-#ifdef BSD4_3
-# ifndef sigmask
-#  define sigmask(s)	(1 << ((s) - 1))
-# endif /* ! sigmask */
+# ifdef BSD4_3
+#  ifndef sigmask
+#   define sigmask(s)	(1 << ((s) - 1))
+#  endif /* ! sigmask */
 	return (sigblock(sigmask(sig)) & sigmask(sig)) != 0;
-#else /* BSD4_3 */
-# ifdef ALTOS_SYSTEM_V
+# else /* BSD4_3 */
+#  ifdef ALTOS_SYSTEM_V
 	sigfunc_t handler;
 
 	handler = sigset(sig, SIG_HOLD);
@@ -1302,7 +1306,7 @@ blocksignal(sig)
 		return -1;
 	else
 		return handler == SIG_HOLD;
-# else /* ALTOS_SYSTEM_V */
+#  else /* ALTOS_SYSTEM_V */
 	sigset_t sset, oset;
 
 	(void) sigemptyset(&sset);
@@ -1311,8 +1315,8 @@ blocksignal(sig)
 		return -1;
 	else
 		return sigismember(&oset, sig);
-# endif /* ALTOS_SYSTEM_V */
-#endif /* BSD4_3 */
+#  endif /* ALTOS_SYSTEM_V */
+# endif /* BSD4_3 */
 }
 /*
 **  RELEASESIGNAL -- release a held signal
@@ -1330,10 +1334,10 @@ int
 releasesignal(sig)
 	int sig;
 {
-#ifdef BSD4_3
+# ifdef BSD4_3
 	return (sigsetmask(sigblock(0) & ~sigmask(sig)) & sigmask(sig)) != 0;
-#else /* BSD4_3 */
-# ifdef ALTOS_SYSTEM_V
+# else /* BSD4_3 */
+#  ifdef ALTOS_SYSTEM_V
 	sigfunc_t handler;
 
 	handler = sigset(sig, SIG_HOLD);
@@ -1341,7 +1345,7 @@ releasesignal(sig)
 		return -1;
 	else
 		return handler == SIG_HOLD;
-# else /* ALTOS_SYSTEM_V */
+#  else /* ALTOS_SYSTEM_V */
 	sigset_t sset, oset;
 
 	(void) sigemptyset(&sset);
@@ -1350,8 +1354,8 @@ releasesignal(sig)
 		return -1;
 	else
 		return sigismember(&oset, sig);
-# endif /* ALTOS_SYSTEM_V */
-#endif /* BSD4_3 */
+#  endif /* ALTOS_SYSTEM_V */
+# endif /* BSD4_3 */
 }
 /*
 **  HOLDSIGS -- arrange to hold all signals
@@ -1444,6 +1448,7 @@ init_md(argc, argv)
 		setluid(0);
 # endif /* _SCO_unix_ */
 #endif /* SECUREWARE || defined(_SCO_unix_) */
+
 
 #ifdef VENDOR_DEFAULT
 	VendorCode = VENDOR_DEFAULT;
@@ -2221,6 +2226,7 @@ refuseconnections(name, e, d)
 	static time_t lastconn[MAXDAEMONS];
 	static int conncnt[MAXDAEMONS];
 
+
 #ifdef XLA
 	if (!xla_smtp_ok())
 		return TRUE;
@@ -2300,6 +2306,7 @@ refuseconnections(name, e, d)
 #ifndef SPT_TYPE
 # define SPT_TYPE	SPT_REUSEARGV
 #endif /* ! SPT_TYPE */
+
 
 #if SPT_TYPE != SPT_NONE && SPT_TYPE != SPT_BUILTIN
 
@@ -2562,37 +2569,37 @@ int
 waitfor(pid)
 	pid_t pid;
 {
-#ifdef WAITUNION
+# ifdef WAITUNION
 	union wait st;
-#else /* WAITUNION */
+# else /* WAITUNION */
 	auto int st;
-#endif /* WAITUNION */
+# endif /* WAITUNION */
 	pid_t i;
-#if defined(ISC_UNIX) || defined(_SCO_unix_)
+# if defined(ISC_UNIX) || defined(_SCO_unix_)
 	int savesig;
-#endif /* defined(ISC_UNIX) || defined(_SCO_unix_) */
+# endif /* defined(ISC_UNIX) || defined(_SCO_unix_) */
 
 	do
 	{
 		errno = 0;
-#if defined(ISC_UNIX) || defined(_SCO_unix_)
+# if defined(ISC_UNIX) || defined(_SCO_unix_)
 		savesig = releasesignal(SIGCHLD);
-#endif /* defined(ISC_UNIX) || defined(_SCO_unix_) */
+# endif /* defined(ISC_UNIX) || defined(_SCO_unix_) */
 		i = wait(&st);
-#if defined(ISC_UNIX) || defined(_SCO_unix_)
+# if defined(ISC_UNIX) || defined(_SCO_unix_)
 		if (savesig > 0)
 			blocksignal(SIGCHLD);
-#endif /* defined(ISC_UNIX) || defined(_SCO_unix_) */
+# endif /* defined(ISC_UNIX) || defined(_SCO_unix_) */
 		if (i > 0)
 			(void) proc_list_drop(i);
 	} while ((i >= 0 || errno == EINTR) && i != pid);
 	if (i < 0)
 		return -1;
-#ifdef WAITUNION
+# ifdef WAITUNION
 	return st.w_status;
-#else /* WAITUNION */
+# else /* WAITUNION */
 	return st;
-#endif /* WAITUNION */
+# endif /* WAITUNION */
 }
 /*
 **  REAPCHILD -- pick up the body of my child, lest it become a zombie
@@ -2848,22 +2855,22 @@ unsetenv(name)
 int
 getdtsize()
 {
-#ifdef RLIMIT_NOFILE
+# ifdef RLIMIT_NOFILE
 	struct rlimit rl;
 
 	if (getrlimit(RLIMIT_NOFILE, &rl) >= 0)
 		return rl.rlim_cur;
-#endif /* RLIMIT_NOFILE */
+# endif /* RLIMIT_NOFILE */
 
-#if HASGETDTABLESIZE
+# if HASGETDTABLESIZE
 	return getdtablesize();
-#else /* HASGETDTABLESIZE */
-# ifdef _SC_OPEN_MAX
+# else /* HASGETDTABLESIZE */
+#  ifdef _SC_OPEN_MAX
 	return sysconf(_SC_OPEN_MAX);
-# else /* _SC_OPEN_MAX */
+#  else /* _SC_OPEN_MAX */
 	return NOFILE;
-# endif /* _SC_OPEN_MAX */
-#endif /* HASGETDTABLESIZE */
+#  endif /* _SC_OPEN_MAX */
+# endif /* HASGETDTABLESIZE */
 }
 /*
 **  UNAME -- get the UUCP name of this system.
@@ -2908,7 +2915,7 @@ uname(name)
 			return 0;
 	}
 
-# if 0
+#  if 0
 	/*
 	**  Popen is known to have security holes.
 	*/
@@ -2924,7 +2931,7 @@ uname(name)
 		if (name->nodename[0] != '\0')
 			return 0;
 	}
-# endif /* 0 */
+#  endif /* 0 */
 
 	return -1;
 }
@@ -2971,7 +2978,7 @@ setgroups(ngroups, grouplist)
 pid_t
 setsid __P ((void))
 {
-# ifdef TIOCNOTTY
+#  ifdef TIOCNOTTY
 	int fd;
 
 	fd = open("/dev/tty", O_RDWR, 0);
@@ -2980,12 +2987,12 @@ setsid __P ((void))
 		(void) ioctl(fd, (int) TIOCNOTTY, (char *) 0);
 		(void) close(fd);
 	}
-# endif /* TIOCNOTTY */
-# ifdef SYS5SETPGRP
+#  endif /* TIOCNOTTY */
+#  ifdef SYS5SETPGRP
 	return setpgrp();
-# else /* SYS5SETPGRP */
+#  else /* SYS5SETPGRP */
 	return setpgid(0, getpid());
-# endif /* SYS5SETPGRP */
+#  endif /* SYS5SETPGRP */
 }
 
 #endif /* !HASSETSID */
@@ -3240,7 +3247,7 @@ usershellok(user, shell)
 	char *user;
 	char *shell;
 {
-#if HASGETUSERSHELL
+# if HASGETUSERSHELL
 	register char *p;
 	extern char *getusershell();
 
@@ -3254,10 +3261,10 @@ usershellok(user, shell)
 			break;
 	endusershell();
 	return p != NULL;
-#else /* HASGETUSERSHELL */
-# if USEGETCONFATTR
+# else /* HASGETUSERSHELL */
+#  if USEGETCONFATTR
 	auto char *v;
-# endif /* USEGETCONFATTR */
+#  endif /* USEGETCONFATTR */
 	register FILE *shellf;
 	char buf[MAXLINE];
 
@@ -3265,7 +3272,7 @@ usershellok(user, shell)
 	    ConfigLevel <= 1)
 		return TRUE;
 
-# if USEGETCONFATTR
+#  if USEGETCONFATTR
 	/*
 	**  Naturally IBM has a "better" idea.....
 	**
@@ -3289,7 +3296,7 @@ usershellok(user, shell)
 		}
 		return FALSE;
 	}
-# endif /* USEGETCONFATTR */
+#  endif /* USEGETCONFATTR */
 
 	shellf = fopen(_PATH_SHELLS, "r");
 	if (shellf == NULL)
@@ -3331,7 +3338,7 @@ usershellok(user, shell)
 	}
 	(void) fclose(shellf);
 	return FALSE;
-#endif /* HASGETUSERSHELL */
+# endif /* HASGETUSERSHELL */
 }
 /*
 **  FREEDISKSPACE -- see how much free space is on the queue filesystem
@@ -3344,7 +3351,7 @@ usershellok(user, shell)
 **			block size is stored.
 **
 **	Returns:
-**		The number of bytes free on the queue filesystem.
+**		The number of blocks free on the queue filesystem.
 **		-1 if the statfs call fails.
 **
 **	Side effects:
@@ -3385,48 +3392,48 @@ freediskspace(dir, bsize)
 	char *dir;
 	long *bsize;
 {
-#if SFS_TYPE != SFS_NONE
-# if SFS_TYPE == SFS_USTAT
+# if SFS_TYPE != SFS_NONE
+#  if SFS_TYPE == SFS_USTAT
 	struct ustat fs;
 	struct stat statbuf;
-#  define FSBLOCKSIZE	DEV_BSIZE
-#  define SFS_BAVAIL	f_tfree
-# else /* SFS_TYPE == SFS_USTAT */
-#  if defined(ultrix)
+#   define FSBLOCKSIZE	DEV_BSIZE
+#   define SFS_BAVAIL	f_tfree
+#  else /* SFS_TYPE == SFS_USTAT */
+#   if defined(ultrix)
 	struct fs_data fs;
-#   define SFS_BAVAIL	fd_bfreen
-#   define FSBLOCKSIZE	1024L
-#  else /* defined(ultrix) */
-#   if SFS_TYPE == SFS_STATVFS
+#    define SFS_BAVAIL	fd_bfreen
+#    define FSBLOCKSIZE	1024L
+#   else /* defined(ultrix) */
+#    if SFS_TYPE == SFS_STATVFS
 	struct statvfs fs;
-#    define FSBLOCKSIZE	fs.f_frsize
-#   else /* SFS_TYPE == SFS_STATVFS */
+#     define FSBLOCKSIZE	fs.f_frsize
+#    else /* SFS_TYPE == SFS_STATVFS */
 	struct statfs fs;
-#    define FSBLOCKSIZE	fs.f_bsize
-#   endif /* SFS_TYPE == SFS_STATVFS */
-#  endif /* defined(ultrix) */
-# endif /* SFS_TYPE == SFS_USTAT */
-# ifndef SFS_BAVAIL
-#  define SFS_BAVAIL f_bavail
-# endif /* ! SFS_BAVAIL */
+#     define FSBLOCKSIZE	fs.f_bsize
+#    endif /* SFS_TYPE == SFS_STATVFS */
+#   endif /* defined(ultrix) */
+#  endif /* SFS_TYPE == SFS_USTAT */
+#  ifndef SFS_BAVAIL
+#   define SFS_BAVAIL f_bavail
+#  endif /* ! SFS_BAVAIL */
 
-# if SFS_TYPE == SFS_USTAT
+#  if SFS_TYPE == SFS_USTAT
 	if (stat(dir, &statbuf) == 0 && ustat(statbuf.st_dev, &fs) == 0)
-# else /* SFS_TYPE == SFS_USTAT */
-#  if SFS_TYPE == SFS_4ARGS
+#  else /* SFS_TYPE == SFS_USTAT */
+#   if SFS_TYPE == SFS_4ARGS
 	if (statfs(dir, &fs, sizeof fs, 0) == 0)
-#  else /* SFS_TYPE == SFS_4ARGS */
-#   if SFS_TYPE == SFS_STATVFS
+#   else /* SFS_TYPE == SFS_4ARGS */
+#    if SFS_TYPE == SFS_STATVFS
 	if (statvfs(dir, &fs) == 0)
-#   else /* SFS_TYPE == SFS_STATVFS */
-#    if defined(ultrix)
+#    else /* SFS_TYPE == SFS_STATVFS */
+#     if defined(ultrix)
 	if (statfs(dir, &fs) > 0)
-#    else /* defined(ultrix) */
+#     else /* defined(ultrix) */
 	if (statfs(dir, &fs) == 0)
-#    endif /* defined(ultrix) */
-#   endif /* SFS_TYPE == SFS_STATVFS */
-#  endif /* SFS_TYPE == SFS_4ARGS */
-# endif /* SFS_TYPE == SFS_USTAT */
+#     endif /* defined(ultrix) */
+#    endif /* SFS_TYPE == SFS_STATVFS */
+#   endif /* SFS_TYPE == SFS_4ARGS */
+#  endif /* SFS_TYPE == SFS_USTAT */
 	{
 		if (bsize != NULL)
 			*bsize = FSBLOCKSIZE;
@@ -3437,7 +3444,7 @@ freediskspace(dir, bsize)
 		else
 			return (long) fs.SFS_BAVAIL;
 	}
-#endif /* SFS_TYPE != SFS_NONE */
+# endif /* SFS_TYPE != SFS_NONE */
 	return -1;
 }
 /*
@@ -3461,7 +3468,8 @@ enoughdiskspace(msize, log)
 	long msize;
 	bool log;
 {
-	long bfree, bsize;
+	long bfree;
+	long bsize;
 
 	if (MinBlocksFree <= 0 && msize <= 0)
 	{
@@ -3470,7 +3478,8 @@ enoughdiskspace(msize, log)
 		return TRUE;
 	}
 
-	if ((bfree = freediskspace(QueueDir, &bsize)) >= 0)
+	bfree = freediskspace(QueueDir, &bsize);
+	if (bfree >= 0)
 	{
 		if (tTd(4, 80))
 			dprintf("enoughdiskspace: bavail=%ld, need=%ld\n",
@@ -3629,7 +3638,7 @@ lockfile(fd, filename, ext, type)
 {
 	int i;
 	int save_errno;
-#if !HASFLOCK
+# if !HASFLOCK
 	int action;
 	struct flock lfd;
 
@@ -3686,15 +3695,15 @@ lockfile(fd, filename, ext, type)
 	    (save_errno != EACCES && save_errno != EAGAIN))
 	{
 		int omode = -1;
-# ifdef F_GETFL
+#  ifdef F_GETFL
 		(void) fcntl(fd, F_GETFL, &omode);
 		errno = save_errno;
-# endif /* F_GETFL */
+#  endif /* F_GETFL */
 		syserr("cannot lockf(%s%s, fd=%d, type=%o, omode=%o, euid=%d)",
 			filename, ext, fd, type, omode, geteuid());
 		dumpfd(fd, TRUE, TRUE);
 	}
-#else /* !HASFLOCK */
+# else /* !HASFLOCK */
 	if (ext == NULL)
 		ext = "";
 
@@ -3717,15 +3726,15 @@ lockfile(fd, filename, ext, type)
 	if (!bitset(LOCK_NB, type) || save_errno != EWOULDBLOCK)
 	{
 		int omode = -1;
-# ifdef F_GETFL
+#  ifdef F_GETFL
 		(void) fcntl(fd, F_GETFL, &omode);
 		errno = save_errno;
-# endif /* F_GETFL */
+#  endif /* F_GETFL */
 		syserr("cannot flock(%s%s, fd=%d, type=%o, omode=%o, euid=%d)",
 			filename, ext, fd, type, omode, geteuid());
 		dumpfd(fd, TRUE, TRUE);
 	}
-#endif /* !HASFLOCK */
+# endif /* !HASFLOCK */
 	if (tTd(55, 60))
 		dprintf("FAIL\n");
 	errno = save_errno;
@@ -3793,7 +3802,7 @@ chownsafe(fd, safedir)
 	int fd;
 	bool safedir;
 {
-#if (!defined(_POSIX_CHOWN_RESTRICTED) || _POSIX_CHOWN_RESTRICTED != -1) && \
+# if (!defined(_POSIX_CHOWN_RESTRICTED) || _POSIX_CHOWN_RESTRICTED != -1) && \
     (defined(_PC_CHOWN_RESTRICTED) || defined(_GNU_TYPES_H))
 	int rval;
 
@@ -3809,14 +3818,14 @@ chownsafe(fd, safedir)
 
 	errno = 0;
 	rval = fpathconf(fd, _PC_CHOWN_RESTRICTED);
-# if SAFENFSPATHCONF
+#  if SAFENFSPATHCONF
 	return errno == 0 && rval IS_SAFE_CHOWN;
-# else /* SAFENFSPATHCONF */
+#  else /* SAFENFSPATHCONF */
 	return safedir && errno == 0 && rval IS_SAFE_CHOWN;
-# endif /* SAFENFSPATHCONF */
-#else /* (!defined(_POSIX_CHOWN_RESTRICTED) || _POSIX_CHOWN_RESTRICTED != -1) && \ */
+#  endif /* SAFENFSPATHCONF */
+# else /* (!defined(_POSIX_CHOWN_RESTRICTED) || _POSIX_CHOWN_RESTRICTED != -1) && \ */
 	return bitnset(DBS_ASSUMESAFECHOWN, DontBlameSendmail);
-#endif /* (!defined(_POSIX_CHOWN_RESTRICTED) || _POSIX_CHOWN_RESTRICTED != -1) && \ */
+# endif /* (!defined(_POSIX_CHOWN_RESTRICTED) || _POSIX_CHOWN_RESTRICTED != -1) && \ */
 }
 /*
 **  RESETLIMITS -- reset system controlled resource limits
@@ -4121,8 +4130,8 @@ validate_connection(sap, hostname, e)
 		dprintf("validate_connection(%s, %s)\n",
 			hostname, anynet_ntoa(sap));
 
-	if (rscheck("check_relay", hostname, anynet_ntoa(sap), e, TRUE, TRUE, 4)
-	    != EX_OK)
+	if (rscheck("check_relay", hostname, anynet_ntoa(sap),
+		    e, TRUE, TRUE, 4) != EX_OK)
 	{
 		static char reject[BUFSIZ*2];
 		extern char MsgBuf[];
@@ -4130,22 +4139,8 @@ validate_connection(sap, hostname, e)
 		if (tTd(48, 4))
 			dprintf("  ... validate_connection: BAD (rscheck)\n");
 
-		if (strlen(MsgBuf) > 5)
-		{
-			if (ISSMTPCODE(MsgBuf))
-			{
-				int off;
-
-				if ((off = isenhsc(MsgBuf + 4, ' ')) > 0)
-					off += 5;
-				else
-					off = 4;
-				(void) strlcpy(reject, &MsgBuf[off],
-					       sizeof reject);
-			}
-			else
-				(void) strlcpy(reject, MsgBuf, sizeof reject);
-		}
+		if (strlen(MsgBuf) >= 3)
+			(void) strlcpy(reject, MsgBuf, sizeof reject);
 		else
 			(void) strlcpy(reject, "Access denied", sizeof reject);
 
@@ -4327,6 +4322,12 @@ strstr(big, little)
 
 #if NETINET6 && NEEDSGETIPNODE && __RES < 19990909
 
+# ifndef AI_DEFAULT
+#  define AI_DEFAULT	0	/* dummy */
+# endif /* ! AI_DEFAULT */
+# ifndef AI_ADDRCONFIG
+#  define AI_ADDRCONFIG	0	/* dummy */
+# endif /* ! AI_ADDRCONFIG */
 # ifndef AI_V4MAPPED
 #  define AI_V4MAPPED	0	/* dummy */
 # endif /* ! AI_V4MAPPED */
@@ -4399,6 +4400,7 @@ sm_gethostbyname(name, family)
 #else /* (SOLARIS > 10000 && SOLARIS < 20400) || (defined(SOLARIS) && SOLARIS < 204) || (defined(sony_news) && defined(__svr4)) */
 	int nmaps;
 # if NETINET6
+	int flags = AI_DEFAULT|AI_ALL;
 	int err;
 # endif /* NETINET6 */
 	int save_errno;
@@ -4410,7 +4412,10 @@ sm_gethostbyname(name, family)
 		dprintf("sm_gethostbyname(%s, %d)... ", name, family);
 
 # if NETINET6
-	h = getipnodebyname(name, family, AI_V4MAPPED|AI_ALL, &err);
+#  if ADDRCONFIG_IS_BROKEN
+	flags &= ~AI_ADDRCONFIG;
+#  endif /* ADDRCONFIG_IS_BROKEN */
+	h = getipnodebyname(name, family, flags, &err);
 	h_errno = err;
 # else /* NETINET6 */
 	h = gethostbyname(name);
@@ -4783,7 +4788,7 @@ load_if_names()
 		return;
 
 	/* get the list of known IP address from the kernel */
-# ifdef SIOCGLIFNUM
+#   ifdef SIOCGLIFNUM
 	lifn.lifn_family = AF_UNSPEC;
 	lifn.lifn_flags = 0;
 	if (ioctl(s, SIOCGLIFNUM, (char *)&lifn) < 0)
@@ -4800,7 +4805,7 @@ load_if_names()
 			dprintf("system has %d interfaces\n", numifs);
 	}
 	if (numifs < 0)
-# endif /* SIOCGLIFNUM */
+#   endif /* SIOCGLIFNUM */
 		numifs = MAXINTERFACES;
 
 	if (numifs <= 0)
@@ -4832,9 +4837,9 @@ load_if_names()
 		char *addr;
 		struct in6_addr ia6;
 		struct in_addr ia;
-# ifdef SIOCGLIFFLAGS
+#   ifdef SIOCGLIFFLAGS
 		struct lifreq ifrf;
-# endif /* SIOCGLIFFLAGS */
+#   endif /* SIOCGLIFFLAGS */
 		char ip_addr[256];
 		char buf6[INET6_ADDRSTRLEN];
 		int af = ifr->lifr_addr.ss_family;
@@ -4859,11 +4864,11 @@ load_if_names()
 		if ((lifc.lifc_len - i) < sizeof *ifr)
 			break;
 
-# ifdef BSD4_4_SOCKADDR
+#   ifdef BSD4_4_SOCKADDR
 		if (sa->sa.sa_len > sizeof ifr->lifr_addr)
 			i += sizeof ifr->lifr_name + sa->sa.sa_len;
 		else
-# endif /* BSD4_4_SOCKADDR */
+#   endif /* BSD4_4_SOCKADDR */
 			i += sizeof *ifr;
 
 		if (tTd(0, 20))
@@ -4872,7 +4877,7 @@ load_if_names()
 		if (af != AF_INET && af != AF_INET6)
 			continue;
 
-# ifdef SIOCGLIFFLAGS
+#   ifdef SIOCGLIFFLAGS
 		memset(&ifrf, '\0', sizeof(struct lifreq));
 		(void) strlcpy(ifrf.lifr_name, ifr->lifr_name,
 			       sizeof(ifrf.lifr_name));
@@ -4889,7 +4894,7 @@ load_if_names()
 
 		if (!bitset(IFF_UP, ifrf.lifr_flags))
 			continue;
-# endif /* SIOCGLIFFLAGS */
+#   endif /* SIOCGLIFFLAGS */
 
 		ip_addr[0] = '\0';
 
@@ -4941,11 +4946,11 @@ load_if_names()
 				dprintf("\ta.k.a.: %s\n", ip_addr);
 		}
 
-# ifdef SIOCGLIFFLAGS
+#   ifdef SIOCGLIFFLAGS
 		/* skip "loopback" interface "lo" */
 		if (bitset(IFF_LOOPBACK, ifrf.lifr_flags))
 			continue;
-# endif /* SIOCGLIFFLAGS */
+#   endif /* SIOCGLIFFLAGS */
 		(void) add_hostnames(sa);
 	}
 	free(lifc.lifc_buf);
@@ -4998,13 +5003,21 @@ load_if_names()
 
 	for (i = 0; i < ifc.ifc_len; )
 	{
+		int af;
 		struct ifreq *ifr = (struct ifreq *) &ifc.ifc_buf[i];
 		SOCKADDR *sa = (SOCKADDR *) &ifr->ifr_addr;
+#   if NETINET6
+		char *addr;
+		struct in6_addr ia6;
+#   endif /* NETINET6 */
 		struct in_addr ia;
-#  ifdef SIOCGIFFLAGS
+#   ifdef SIOCGIFFLAGS
 		struct ifreq ifrf;
-#  endif /* SIOCGIFFLAGS */
+#   endif /* SIOCGIFFLAGS */
 		char ip_addr[256];
+#   if NETINET6
+		char buf6[INET6_ADDRSTRLEN];
+#   endif /* NETINET6 */
 
 		/*
 		**  If we don't have a complete ifr structure,
@@ -5014,20 +5027,25 @@ load_if_names()
 		if ((ifc.ifc_len - i) < sizeof *ifr)
 			break;
 
-#  ifdef BSD4_4_SOCKADDR
+#   ifdef BSD4_4_SOCKADDR
 		if (sa->sa.sa_len > sizeof ifr->ifr_addr)
 			i += sizeof ifr->ifr_name + sa->sa.sa_len;
 		else
-#  endif /* BSD4_4_SOCKADDR */
+#   endif /* BSD4_4_SOCKADDR */
 			i += sizeof *ifr;
 
 		if (tTd(0, 20))
 			dprintf("%s\n", anynet_ntoa(sa));
 
-		if (ifr->ifr_addr.sa_family != AF_INET)
+		af = ifr->ifr_addr.sa_family;
+		if (af != AF_INET
+#   if NETINET6
+		    && af != AF_INET6
+#   endif /* NETINET6 */
+		    )
 			continue;
 
-#  ifdef SIOCGIFFLAGS
+#   ifdef SIOCGIFFLAGS
 		memset(&ifrf, '\0', sizeof(struct ifreq));
 		(void) strlcpy(ifrf.ifr_name, ifr->ifr_name,
 			       sizeof(ifrf.ifr_name));
@@ -5035,25 +5053,60 @@ load_if_names()
 		if (tTd(0, 41))
 			dprintf("\tflags: %lx\n",
 				(unsigned long) ifrf.ifr_flags);
-#   define IFRFREF ifrf
-#  else /* SIOCGIFFLAGS */
-#   define IFRFREF (*ifr)
-#  endif /* SIOCGIFFLAGS */
+#    define IFRFREF ifrf
+#   else /* SIOCGIFFLAGS */
+#    define IFRFREF (*ifr)
+#   endif /* SIOCGIFFLAGS */
+
 		if (!bitset(IFF_UP, IFRFREF.ifr_flags))
 			continue;
 
+		ip_addr[0] = '\0';
+
 		/* extract IP address from the list*/
-		ia = sa->sin.sin_addr;
-		if (ia.s_addr == INADDR_ANY || ia.s_addr == INADDR_NONE)
+		switch (af)
 		{
-			message("WARNING: interface %s is UP with %s address",
-				ifr->ifr_name, inet_ntoa(ia));
-			continue;
+		  case AF_INET:
+			ia = sa->sin.sin_addr;
+			if (ia.s_addr == INADDR_ANY ||
+			    ia.s_addr == INADDR_NONE)
+			{
+				message("WARNING: interface %s is UP with %s address",
+					ifr->ifr_name, inet_ntoa(ia));
+				continue;
+			}
+
+			/* save IP address in text from */
+			(void) snprintf(ip_addr, sizeof ip_addr, "[%.*s]",
+					(int) sizeof ip_addr - 3,
+					inet_ntoa(ia));
+			break;
+
+#   if NETINET6
+		  case AF_INET6:
+			ia6 = sa->sin6.sin6_addr;
+			if (ia6.s6_addr == in6addr_any.s6_addr)
+			{
+				addr = anynet_ntop(&ia6, buf6, sizeof buf6);
+				message("WARNING: interface %s is UP with %s address",
+					ifr->ifr_name,
+					addr == NULL ? "(NULL)" : addr);
+				continue;
+			}
+
+			/* save IP address in text from */
+			addr = anynet_ntop(&ia6, buf6, sizeof buf6);
+			if (addr != NULL)
+				(void) snprintf(ip_addr, sizeof ip_addr,
+						"[%.*s]",
+						sizeof ip_addr - 3, addr);
+			break;
+
+#   endif /* NETINET6 */
 		}
 
-		/* save IP address in text from */
-		(void) snprintf(ip_addr, sizeof ip_addr, "[%.*s]",
-				(int) sizeof ip_addr - 3, inet_ntoa(ia));
+		if (ip_addr[0] == '\0')
+			continue;
 
 		if (!wordinclass(ip_addr, 'w'))
 		{
@@ -5130,9 +5183,13 @@ get_num_procs_online()
 # ifdef _SC_NPROCESSORS_ONLN
 	nproc = (int) sysconf(_SC_NPROCESSORS_ONLN);
 # else /* _SC_NPROCESSORS_ONLN */
-#  ifdef MPC_GETNUMSPUS
-	nproc = mpctl(MPC_GETNUMSPUS, 0, 0);
-#  endif /* MPC_GETNUMSPUS */
+#  ifdef __hpux
+#   include <sys/pstat.h>
+	struct pst_dynamic psd;
+
+	if (pstat_getdynamic(&psd, sizeof(psd), (size_t)1, 0) != -1)
+		nproc = psd.psd_proc_cnt;
+#  endif /* __hpux */
 # endif /* _SC_NPROCESSORS_ONLN */
 #endif /* USESYSCTL */
 
@@ -5198,6 +5255,7 @@ sm_syslog(level, id, fmt, va_alist)
 	static char *buf = NULL;
 	static size_t bufsize;
 	char *begin, *end;
+	int save_errno;
 	int seq = 1;
 	int idlen;
 	char buf0[MAXLINE];
@@ -5206,7 +5264,7 @@ sm_syslog(level, id, fmt, va_alist)
 	extern char *DoprEnd;
 	VA_LOCAL_DECL
 
-	SyslogErrno = errno;
+	save_errno = SyslogErrno = errno;
 	if (id == NULL)
 		id = "NOQUEUE";
 	else if (strcmp(id, NOQID) == 0)
@@ -5256,6 +5314,7 @@ sm_syslog(level, id, fmt, va_alist)
 #endif /* LOG */
 		if (buf == buf0)
 			buf = NULL;
+		errno = save_errno;
 		return;
 	}
 
@@ -5310,6 +5369,7 @@ sm_syslog(level, id, fmt, va_alist)
 #endif /* LOG */
 	if (buf == buf0)
 		buf = NULL;
+	errno = save_errno;
 }
 /*
 **  HARD_SYSLOG -- call syslog repeatedly until it works
@@ -5467,12 +5527,18 @@ char	*CompileOptions[] =
 #if SCANF
 	"SCANF",
 #endif /* SCANF */
+#if SFIO
+	"SFIO",
+#endif /* SFIO */
 #if SMTP
 	"SMTP",
 #endif /* SMTP */
 #if SMTPDEBUG
 	"SMTPDEBUG",
 #endif /* SMTPDEBUG */
+#if STARTTLS
+	"STARTTLS",
+#endif /* STARTTLS */
 #ifdef SUID_ROOT_FILES_OK
 	"SUID_ROOT_FILES_OK",
 #endif /* SUID_ROOT_FILES_OK */
@@ -5555,6 +5621,9 @@ char	*OsCompileOptions[] =
 #if HASSRANDOMDEV
 	"HASSRANDOMDEV",
 #endif /* HASSRANDOMDEV */
+#if HASURANDOMDEV
+	"HASURANDOMDEV",
+#endif /* HASURANDOMDEV */
 #if HASSTRERROR
 	"HASSTRERROR",
 #endif /* HASSTRERROR */
@@ -5603,6 +5672,12 @@ char	*OsCompileOptions[] =
 #if SIOCGIFNUM_IS_BROKEN
 	"SIOCGIFNUM_IS_BROKEN",
 #endif /* SIOCGIFNUM_IS_BROKEN */
+#if SNPRINTF_IS_BROKEN
+	"SNPRINTF_IS_BROKEN",
+#endif /* SNPRINTF_IS_BROKEN */
+#if SO_REUSEADDR_IS_BROKEN
+	"SO_REUSEADDR_IS_BROKEN",
+#endif /* SO_REUSEADDR_IS_BROKEN */
 #if SYS5SETPGRP
 	"SYS5SETPGRP",
 #endif /* SYS5SETPGRP */
@@ -5620,3 +5695,4 @@ char	*OsCompileOptions[] =
 #endif /* USESETEUID */
 	NULL
 };
+

@@ -95,6 +95,8 @@ confCOPY	    cp			A program that copies files.
 confDEPEND_TYPE	    generic		How to build dependencies.  This should
 					be the name of a file in
 					devtools/M4/depend
+confDEPLIBS	    [empty]		Dependent libraries when building 
+					shared objects.	
 confEBINDIR	    /usr/libexec	The location for binaries executed
 					from other binaries, e.g., mail.local
 					or smrsh.
@@ -112,6 +114,7 @@ confINSTALL_RAWMAN  [undefined]		Install the unformatted manual pages.
 confLDOPTS	    [empty]		Linker options passed to ld.
 *confLDOPTS_SO	    -shared -Wl		Additional linker options for
 					linking shared object libraries.
+confLN		    ln			The command used to create links.
 *confMTLDOPTS	    [empty]		Additional linker options for
 					linking multithreaded binaries.
 confLIBDIRS	    [empty]		-L flags passed to ld.
@@ -196,6 +199,12 @@ confSRCDIR	    [varies]		The root of the source directories
 					directories.  If not set, the
 					Makefile will use a path set by the
 					Build script.
+confSHAREDLIB_EXT   .so              	Shared library file extenion name.
+confSHAREDLIBDIR    /usr/lib		Directory for installing shared 
+					library. 
+confSHAREDLIB_SUFFIX [empty]		Shared object version suffix.	
+confSONAME	    [empty]		ld flag	for recording the shared object
+					name into shared object.
 confSTDIO_TYPE	    portable		Buffered file implementation
 					(based on stdio library).  Either
 					portable or torek.
@@ -339,4 +348,4 @@ bldSOURCES - This should be defined to a space separated list of C source
 files that make up the library.
 
 
-Revision: 8.65, Last updated Date: 2000/04/06 20:27:43
+Revision: 8.65.4.2, Last updated Date: 2000/07/19 18:45:39

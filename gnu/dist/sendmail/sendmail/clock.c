@@ -12,7 +12,7 @@
  */
 
 #ifndef lint
-static char id[] = "@(#)Id: clock.c,v 8.52 1999/10/13 22:16:42 ca Exp";
+static char id[] = "@(#)Id: clock.c,v 8.52.18.2 2000/05/25 23:33:30 gshapiro Exp";
 #endif /* ! lint */
 
 #include <sendmail.h>
@@ -22,6 +22,7 @@ static char id[] = "@(#)Id: clock.c,v 8.52 1999/10/13 22:16:42 ca Exp";
 #endif /* ! sigmask */
 
 static void	endsleep __P((void));
+
 
 /*
 **  SETEVENT -- set an event to happen at a specific time.
@@ -278,6 +279,7 @@ tick(sig)
 **		waits for intvl time.  However, other events can
 **		be run during that interval.
 */
+
 
 static bool	SleepDone;
 

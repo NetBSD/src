@@ -12,10 +12,11 @@
  */
 
 #ifndef lint
-static char id[] = "@(#)Id: map.c,v 8.414 2000/03/15 06:13:16 gshapiro Exp";
+static char id[] = "@(#)Id: map.c,v 8.414.4.13 2000/07/14 16:48:21 ca Exp";
 #endif /* ! lint */
 
 #include <sendmail.h>
+
 
 #ifdef NDBM
 # include <ndbm.h>
@@ -240,6 +241,7 @@ map_parseargs(map, ap)
 			map->map_mflags |= MF_NODEFER;
 			break;
 
+
 		  case 'S':
 			map->map_spacesub = *++p;
 			break;
@@ -388,8 +390,8 @@ map_rewrite(map, s, slen, av)
 			if (c != '%')
 			{
   pushc:
-			        if (--len <= 0)
-				     break;
+				if (--len <= 0)
+					break;
 				*bp++ = c;
 				continue;
 			}
@@ -624,6 +626,7 @@ map_close(s, unused)
 
 	if (!bitset(MF_VALID, map->map_mflags) ||
 	    !bitset(MF_OPEN, map->map_mflags) ||
+	    bitset(MF_SHARED, map->map_mflags) ||
 	    map->map_pid != getpid())
 		return;
 
@@ -823,7 +826,7 @@ extract_canonname(name, line, cbuf, cbuflen)
 		char *domain = macvalue('m', CurEnv);
 
 		if (domain != NULL &&
-		    strlen(domain) + (i = strlen(cbuf)) + 1 < cbuflen)
+		    strlen(domain) + (i = strlen(cbuf)) + 1 < (size_t) cbuflen)
 		{
 			p = &cbuf[i];
 			*p++ = '.';
@@ -1087,7 +1090,7 @@ ndbm_map_open(map, mode)
 		map->map_mflags |= MF_LOCKED;
 		if (geteuid() == 0 && TrustedUid != 0)
 		{
-# if HASFCHOWN
+#  if HASFCHOWN
 			if (fchown(dfd, TrustedUid, -1) < 0 ||
 			    fchown(pfd, TrustedUid, -1) < 0)
 			{
@@ -1099,7 +1102,7 @@ ndbm_map_open(map, mode)
 				message("050 ownership change on %s failed: %s",
 					map->map_file, errstring(err));
 			}
-# endif /* HASFCHOWN */
+#  endif /* HASFCHOWN */
 		}
 	}
 	return TRUE;
@@ -1694,7 +1697,7 @@ db_map_open(map, mode, mapclassname, dbtype, openinfo)
 		(void) db->sync(db, 0);
 		if (geteuid() == 0 && TrustedUid != 0)
 		{
-# if HASFCHOWN
+#  if HASFCHOWN
 			if (fchown(fd, TrustedUid, -1) < 0)
 			{
 				int err = errno;
@@ -1705,7 +1708,7 @@ db_map_open(map, mode, mapclassname, dbtype, openinfo)
 				message("050 ownership change on %s failed: %s",
 					buf, errstring(err));
 			}
-# endif /* HASFCHOWN */
+#  endif /* HASFCHOWN */
 		}
 	}
 
@@ -1964,7 +1967,7 @@ db_map_store(map, lhs, rhs)
 			if (old.data != NULL)
 			{
 				old.size = strlen(old.data);
-				if (data.size + old.size + 2 > bufsiz)
+				if (data.size + old.size + 2 > (size_t)bufsiz)
 				{
 					if (buf != NULL)
 						(void) free(buf);
@@ -2437,7 +2440,7 @@ nisplus_map_open(map, mode)
 	/* verify the key column exist */
 	for (i = 0; i< max_col; i++)
 	{
-		if (!strcmp(map->map_keycolnm, COL_NAME(res,i)))
+		if (strcmp(map->map_keycolnm, COL_NAME(res,i)) == 0)
 			break;
 	}
 	if (i == max_col)
@@ -2838,6 +2841,7 @@ ldapmap_open(map, mode)
 	{
 		/* Already have a connection open to this LDAP server */
 		lmap->ldap_ld = s->s_ldap;
+		map->map_mflags |= MF_SHARED;
 		return TRUE;
 	}
 
@@ -2969,6 +2973,7 @@ ldapmap_start(map)
 	}
 # endif /* USE_LDAP_INIT */
 
+# ifdef LDAP_AUTH_KRBV4
 	if (lmap->ldap_method == LDAP_AUTH_KRBV4 &&
 	    lmap->ldap_secret != NULL)
 	{
@@ -2980,6 +2985,7 @@ ldapmap_start(map)
 
 		(void) putenv(lmap->ldap_secret);
 	}
+# endif /* LDAP_AUTH_KRBV4 */
 
 	bind_result = ldap_bind_s(ld, lmap->ldap_binddn,
 				  lmap->ldap_secret, lmap->ldap_method);
@@ -3025,6 +3031,9 @@ ldapmap_close(map)
 {
 	LDAPMAP_STRUCT *lmap;
 	STAB *s;
+
+	if (tTd(38, 2))
+		dprintf("ldapmap_close(%s)\n", map->map_mname);
 
 	lmap = (LDAPMAP_STRUCT *) map->map_db1;
 
@@ -3234,6 +3243,10 @@ ldapmap_lookup(map, name, av, statp)
 			}
 		}
 
+		/* If we don't want multiple values and we have one, break */
+		if (map->map_coldelim == '\0' && vp != NULL)
+			break;
+
 		/* Cycle through all entries */
 		for (entry = ldap_first_entry(lmap->ldap_ld, lmap->ldap_res);
 		     entry != NULL;
@@ -3241,7 +3254,7 @@ ldapmap_lookup(map, name, av, statp)
 		{
 			BerElement *ber;
 			char *attr;
-			char **vals;
+			char **vals = NULL;
 
 			/*
 			**  If matching only and found an entry,
@@ -3252,6 +3265,16 @@ ldapmap_lookup(map, name, av, statp)
 			    bitset(MF_MATCHONLY, map->map_mflags))
 				continue;
 
+# if !defined(LDAP_VERSION_MAX) && !defined(LDAP_OPT_SIZELIMIT)
+			/*
+			**  Reset value to prevent lingering
+			**  LDAP_DECODING_ERROR due to
+			**  OpenLDAP 1.X's hack (see below)
+			*/
+
+			lmap->ldap_ld->ld_errno = LDAP_SUCCESS;
+# endif /* !defined(LDAP_VERSION_MAX) !defined(LDAP_OPT_SIZELIMIT) */
+
 			for (attr = ldap_first_attribute(lmap->ldap_ld, entry,
 							 &ber);
 			     attr != NULL;
@@ -3260,44 +3283,58 @@ ldapmap_lookup(map, name, av, statp)
 			{
 				char *tmp, *vp_tmp;
 
-				vals = ldap_get_values(lmap->ldap_ld, entry,
-						       attr);
-				if (vals == NULL)
+				if (lmap->ldap_attrsonly == LDAPMAP_FALSE)
 				{
-					errno = ldapmap_geterrno(lmap->ldap_ld);
-					if (errno == LDAP_SUCCESS)
-						continue;
+					vals = ldap_get_values(lmap->ldap_ld,
+							       entry,
+							       attr);
+					if (vals == NULL)
+					{
+						errno = ldapmap_geterrno(lmap->ldap_ld);
+						if (errno == LDAP_SUCCESS)
+							continue;
 
-					/* Must be an error */
-					errno += E_LDAPBASE;
-					if (!bitset(MF_OPTIONAL,
-						    map->map_mflags))
-					{
-						if (bitset(MF_NODEFER,
-							   map->map_mflags))
-							syserr("Error getting LDAP values in map %s",
-							       map->map_mname);
-						else
-							syserr("421 4.0.0 Error getting LDAP values in map %s",
-							       map->map_mname);
-					}
-					*statp = EX_TEMPFAIL;
+						/* Must be an error */
+						errno += E_LDAPBASE;
+						if (!bitset(MF_OPTIONAL,
+							    map->map_mflags))
+						{
+							if (bitset(MF_NODEFER,
+								   map->map_mflags))
+								syserr("Error getting LDAP values in map %s",
+								       map->map_mname);
+							else
+								syserr("421 4.0.0 Error getting LDAP values in map %s",
+								       map->map_mname);
+						}
+						*statp = EX_TEMPFAIL;
 # if USING_NETSCAPE_LDAP
-					ldap_mem_free(attr);
+						ldap_mem_free(attr);
 # endif /* USING_NETSCAPE_LDAP */
-					if (lmap->ldap_res != NULL)
-					{
-						ldap_msgfree(lmap->ldap_res);
-						lmap->ldap_res = NULL;
+						if (lmap->ldap_res != NULL)
+						{
+							ldap_msgfree(lmap->ldap_res);
+							lmap->ldap_res = NULL;
+						}
+						(void) ldap_abandon(lmap->ldap_ld,
+								    msgid);
+						if (vp != NULL)
+							free(vp);
+						return NULL;
 					}
-					(void) ldap_abandon(lmap->ldap_ld,
-							    msgid);
-					if (vp != NULL)
-						free(vp);
-					return NULL;
 				}
 
 				*statp = EX_OK;
+
+# if !defined(LDAP_VERSION_MAX) && !defined(LDAP_OPT_SIZELIMIT)
+				/*
+				**  Reset value to prevent lingering
+				**  LDAP_DECODING_ERROR due to
+				**  OpenLDAP 1.X's hack (see below)
+				*/
+
+				lmap->ldap_ld->ld_errno = LDAP_SUCCESS;
+# endif /* !defined(LDAP_VERSION_MAX) !defined(LDAP_OPT_SIZELIMIT) */
 
 				/*
 				**  If matching only,
@@ -3314,6 +3351,15 @@ ldapmap_lookup(map, name, av, statp)
 
 				if (map->map_coldelim == '\0')
 				{
+					if (lmap->ldap_attrsonly == LDAPMAP_TRUE)
+					{
+						vp = newstr(attr);
+# if USING_NETSCAPE_LDAP
+						ldap_mem_free(attr);
+# endif /* USING_NETSCAPE_LDAP */
+						break;
+					}
+
 					if (vals[0] == NULL)
 					{
 						ldap_value_free(vals);
@@ -3329,6 +3375,28 @@ ldapmap_lookup(map, name, av, statp)
 					ldap_mem_free(attr);
 # endif /* USING_NETSCAPE_LDAP */
 					break;
+				}
+
+				/* attributes only */
+				if (lmap->ldap_attrsonly == LDAPMAP_TRUE)
+				{
+					if (vp == NULL)
+						vp = newstr(attr);
+					else
+					{
+						vsize = strlen(vp) +
+							strlen(attr) + 2;
+						tmp = xalloc(vsize);
+						snprintf(tmp, vsize, "%s%c%s",
+							 vp, map->map_coldelim,
+							 attr);
+						free(vp);
+						vp = tmp;
+					}
+# if USING_NETSCAPE_LDAP
+					ldap_mem_free(attr);
+# endif /* USING_NETSCAPE_LDAP */
+					continue;
 				}
 
 				/*
@@ -3414,7 +3482,7 @@ ldapmap_lookup(map, name, av, statp)
 				break;
 		}
 		errno = ldapmap_geterrno(lmap->ldap_ld);
-		if (errno != LDAP_SUCCESS)
+		if (errno != LDAP_SUCCESS && errno != LDAP_DECODING_ERROR)
 		{
 			/* Must be an error */
 			errno += E_LDAPBASE;
@@ -3440,10 +3508,6 @@ ldapmap_lookup(map, name, av, statp)
 		}
 		ldap_msgfree(lmap->ldap_res);
 		lmap->ldap_res = NULL;
-
-		/* If we don't want multiple values and we have one, break */
-		if (map->map_coldelim == '\0' && vp != NULL)
-			break;
 	}
 
 	/*
@@ -3661,7 +3725,9 @@ struct lamvalues LDAPAuthMethods[] =
 {
 	{	"none",		LDAP_AUTH_NONE		},
 	{	"simple",	LDAP_AUTH_SIMPLE	},
+# ifdef LDAP_AUTH_KRBV4
 	{	"krbv4",	LDAP_AUTH_KRBV4		},
+# endif /* LDAP_AUTH_KRBV4 */
 	{	NULL,		0			}
 };
 
@@ -4074,6 +4140,7 @@ ldapmap_parseargs(map, args)
 			}
 			break;
 
+# ifdef LDAP_AUTH_KRBV4
 		  case LDAP_AUTH_KRBV4:
 
 			/*
@@ -4086,6 +4153,7 @@ ldapmap_parseargs(map, args)
 				 ldapmap_dequote(lmap->ldap_secret));
 			lmap->ldap_secret = m_tmp;
 			break;
+# endif /* LDAP_AUTH_KRBV4 */
 
 		  default:	       /* Should NEVER get here */
 			syserr("LDAP map: Illegal value in lmap method");
@@ -4543,7 +4611,8 @@ ph_map_open(map, mode)
 
 	hostlist = newstr(pmap->ph_servers);
 	tmp = strtok(hostlist, " ");
-	do {
+	do
+	{
 #if _FFR_PHMAP_TIMEOUT
 		if (pmap->ph_timeout != 0)
 		{
@@ -4684,7 +4753,8 @@ ph_map_lookup(map, key, args, pstat)
 #endif /* _FFR_PHMAP_TIMEOUT */
 	/* check all relevant fields */
 	tmp = pmap->ph_field_list;
-	do {
+	do
+	{
 #if _FFR_PHMAP_TIMEOUT
 		server_data = NULL;
 #endif /* _FFR_PHMAP_TIMEOUT */

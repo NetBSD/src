@@ -3,7 +3,7 @@
 ## Copyright (c) 1998, 1999 Sendmail, Inc. and its suppliers.
 ##       All rights reserved.
 ##
-## Id: qtool.pl,v 8.15 1999/08/30 19:18:37 peterh Exp
+## Id: qtool.pl,v 8.15.16.1 2000/04/25 03:44:31 gshapiro Exp
 ##
 use strict;
 use File::Basename;
@@ -705,6 +705,14 @@ sub initialize
 	}
 }
 
+sub last_modified_time
+{
+	my $self = shift;
+	my @result;
+	@result = stat($self->{data_file}->{file_name});
+	return $result[9];
+}
+
 sub TIEHASH
 {
 	my $this = shift;
@@ -914,7 +922,7 @@ sub read
 	}
 
 	@control_files = grep { /^qf.*/ && -f "$control_dir/$_" } readdir(QUEUE_DIR);
-	closedir(DIR);
+	closedir(QUEUE_DIR);
 	foreach $file_name (@control_files)
 	{
 		$id = substr($file_name, 2);

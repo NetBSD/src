@@ -27,7 +27,7 @@ POPDIVERT
 ###   Local and Program Mailer specification   ###
 ##################################################
 
-VERSIONID(`Id: local.m4,v 8.50 1999/11/21 19:02:08 ca Exp')
+VERSIONID(`Id: local.m4,v 8.50.16.1 2000/06/12 18:25:40 gshapiro Exp')
 
 #
 #  Envelope sender rewriting
@@ -78,7 +78,7 @@ R$+			$@ $1 < @ *LOCAL* >	add local qualification',
 `dnl')
 
 Mlocal,		P=LOCAL_MAILER_PATH, F=_MODMF_(CONCAT(_DEF_LOCAL_MAILER_FLAGS, LOCAL_MAILER_FLAGS), `LOCAL'), S=EnvFromL/HdrFromL, R=EnvToL/HdrToL,_OPTINS(`LOCAL_MAILER_EOL', ` E=', `, ')
-		_OPTINS(`LOCAL_MAILER_MAX', `M=', `, ')_OPTINS(`LOCAL_MAILER_MAXMSGS', `m=', `, ')_OPTINS(`LOCAL_MAILER_CHARSET', `C=', `, ')T=DNS/RFC822/LOCAL_MAILER_DSN_DIAGNOSTIC_CODE,
+		_OPTINS(`LOCAL_MAILER_MAX', `M=', `, ')_OPTINS(`LOCAL_MAILER_MAXMSGS', `m=', `, ')_OPTINS(`LOCAL_MAILER_MAXRCPTS', `r=', `, ')_OPTINS(`LOCAL_MAILER_CHARSET', `C=', `, ')T=DNS/RFC822/LOCAL_MAILER_DSN_DIAGNOSTIC_CODE,
 		A=LOCAL_MAILER_ARGS
 Mprog,		P=LOCAL_SHELL_PATH, F=CONCAT(_DEF_LOCAL_SHELL_FLAGS, LOCAL_SHELL_FLAGS), S=EnvFromL/HdrFromL, R=EnvToL/HdrToL, D=LOCAL_SHELL_DIR,
 		_OPTINS(`LOCAL_MAILER_MAX', `M=', `, ')T=X-Unix/X-Unix/X-Unix,
