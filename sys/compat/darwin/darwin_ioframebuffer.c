@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_ioframebuffer.c,v 1.12 2003/07/11 18:55:14 christos Exp $ */
+/*	$NetBSD: darwin_ioframebuffer.c,v 1.13 2003/08/28 21:47:02 manu Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_ioframebuffer.c,v 1.12 2003/07/11 18:55:14 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_ioframebuffer.c,v 1.13 2003/08/28 21:47:02 manu Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -478,7 +478,7 @@ darwin_ioframebuffer_connect_map_memory(args)
 		dev_t device;
 		int screen;
 		struct uvm_object *udo;
-		struct wsdisplay_fbinfo *fbi;
+		struct wsdisplay_fbinfo fbi;
 
 		/* Find the first wsdisplay available */
 		TAILQ_FOREACH(dv, &alldevs, dv_list)
@@ -504,7 +504,6 @@ darwin_ioframebuffer_connect_map_memory(args)
 #endif
 
 		/* Find the framebuffer's size */
-#if 0
 		if ((error = (*wsdisplay_cdevsw.d_ioctl)(device, 
 		    WSDISPLAYIO_GINFO, (caddr_t)&fbi, 0, p)) != 0) {
 #ifdef DEBUG_DARWIN
@@ -514,14 +513,9 @@ darwin_ioframebuffer_connect_map_memory(args)
 		}
 #ifdef DEBUG_DARWIN
 		printf("framebuffer: %d x %d x %d\n", 
-		    fbi->width, fbi->height, fbi->depth);
+		    fbi.width, fbi.height, fbi.depth);
 #endif
-		len = round_page(fbi->height * fbi->width * fbi->depth / 8);
-#else
-		/* It does not work for now, assume 640 x 400 */
-		fbi = NULL; /* Avoid warning for unused var */
-		len = round_page(640 * 400);
-#endif
+		len = round_page(fbi.height * fbi.width * fbi.depth / 8);
 
 		/* Create the uvm_object */
 		udo = udv_attach(&device, UVM_PROT_RW, 0, len);
