@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_netbsd.h,v 1.2 2001/11/08 20:30:55 jmc Exp $	*/
+/*	$NetBSD: compat_netbsd.h,v 1.3 2001/11/11 01:36:16 jmc Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -41,6 +41,5 @@
 
 extern void setprogname(const char *);
 extern const char *getprogname(void);
-extern char *RMD160File(char *, char *);
 
 #endif
