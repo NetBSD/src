@@ -1,6 +1,6 @@
 #! /bin/sh
 #
-#	$NetBSD: file2netbsd,v 1.3 2003/03/26 00:10:36 pooka Exp $
+#	$NetBSD: file2netbsd,v 1.4 2003/03/28 19:44:58 pooka Exp $
 #
 # Copyright (c) 2003 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -60,7 +60,7 @@ done
 ### Add NetBSD RCS Id
 find . -type f -name '*.[chly]' -print | while read c; do
 	sed -e '1{/$NetBSD/!{i\
-/*	$NetBSD: file2netbsd,v 1.3 2003/03/26 00:10:36 pooka Exp $	*/\
+/*	\$NetBSD\$	*/\
 \
 
 };}
@@ -69,7 +69,7 @@ find . -type f -name '*.[chly]' -print | while read c; do
 /
 a\
 #else\
-__RCSID("$NetBSD: file2netbsd,v 1.3 2003/03/26 00:10:36 pooka Exp $");\
+__RCSID("\$NetBSD\$");\
 #endif
 }' $c > /tmp/file3$$
 mv /tmp/file3$$ $c && echo did source mods for $c
@@ -83,7 +83,7 @@ mv -f doc/magic.man doc/magic.5
 #### Add RCS tags to man pages
 find . -type f -name '*.[0-9]' -print | while read m; do
 	sed -e '1{/$NetBSD/!i\
-.\\"	$NetBSD: file2netbsd,v 1.3 2003/03/26 00:10:36 pooka Exp $\
+.\\"	\$NetBSD\$\
 .\\"
 
 }'	    -e 's/__CSECTION__/1/g' \
