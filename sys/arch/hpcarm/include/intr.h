@@ -1,4 +1,4 @@
-/* 	$NetBSD: intr.h,v 1.3 2001/05/15 16:15:22 toshii Exp $	*/
+/* 	$NetBSD: intr.h,v 1.4 2001/05/22 17:25:16 toshii Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe.
@@ -68,5 +68,11 @@
 
 #include <machine/irqhandler.h>
 #include <machine/psl.h>
+
+#ifndef _LOCORE
+void *softintr_establish(int, int (*)(void *), void *);
+void softintr_disestablish(void *);
+void softintr_schedule(void *);
+#endif
 
 #endif	/* _HPCARM_INTR_H */

@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.2 2001/04/30 15:54:28 toshii Exp $	*/
+/*	$NetBSD: intr.c,v 1.3 2001/05/22 17:25:16 toshii Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -52,6 +52,7 @@
 u_int soft_interrupts = 0;
 
 extern int current_spl_level;
+extern int softintr_dispatch(int);
 
 /* Generate soft interrupt counts if IRQSTATS is defined */
 #ifdef IRQSTATS
@@ -118,6 +119,8 @@ dosoftints()
 {
 	u_int softints;
 	int s;
+
+	softintr_dispatch(current_spl_level);
 
 	softints = soft_interrupts & spl_smasks[current_spl_level];
 	if (softints == 0) return;
