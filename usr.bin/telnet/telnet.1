@@ -1,4 +1,4 @@
-.\"	$NetBSD: telnet.1,v 1.15 2001/04/04 09:47:13 wiz Exp $
+.\"	$NetBSD: telnet.1,v 1.16 2001/11/28 20:31:36 abs Exp $
 .\"
 .\" Copyright (c) 1983, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -586,9 +586,9 @@ option may be used to specify the user name
 to be passed to the remote system via the
 .Ev ENVIRON
 option.
-When connecting to a non-standard port,
+If a port is specified on the command line
 .Nm
-omits any automatic initiation of
+omits any automatic initialisation of 
 .Tn TELNET
 options.  When the port number is preceded by a minus sign,
 the initial option negotiation is done.
