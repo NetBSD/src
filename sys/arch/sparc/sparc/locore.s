@@ -42,7 +42,7 @@
  *	@(#)locore.s	8.2 (Berkeley) 8/12/93
  *
  * from: Header: locore.s,v 1.51 93/04/21 06:19:37 torek Exp 
- * $Id: locore.s,v 1.8 1994/03/23 20:40:26 pk Exp $
+ * $Id: locore.s,v 1.9 1994/05/12 08:34:57 deraadt Exp $
  */
 
 #define	LOCORE
@@ -171,6 +171,29 @@ _kgdb_stack:
  */
 	.globl	_cpcb
 _cpcb:	.word	_u0
+
+/* 
+ * _cputyp is the current cpu type, to distinguish sun4c/sun4m
+ * machines. this should be cleaned up. 0 = sun4c/sun4; 1 = sun4m
+ */
+	.globl	_cputyp
+_cputyp:
+	.word	1
+
+#if defined(SUN4M)
+_mapme:
+	.asciz "0 0 f8000000 15c6a0 map-pages"
+#endif
+
+#if !defined(SUN4M)
+sun4m_notsup:
+	.asciz	"cr .( NetBSD/sparc: sun4m support not compiled into kernel) cr"
+#endif
+#if !(defined(SUN4) || defined(SUN4C))
+sun4c_notsup:
+	.asciz	"cr .( NetBSD/sparc: sun4/sun4c support not compiled into kernel) cr"
+#endif
+	ALIGN
 
 	.text
 
@@ -595,6 +618,7 @@ Lpanic_red:
 #define	CHECK_SP_REDZONE(t1, t2)
 #endif
 
+#if defined(SUN4) || defined(SUN4C)
 /*
  * The window code must verify user stack addresses before using them.
  * A user stack pointer is invalid if:
@@ -638,6 +662,7 @@ Lpanic_red:
 	lda	[pte] ASI_PTE, pte; \
 	srl	pte, PG_PROTSHIFT, pte; \
 	cmp	pte, PG_PROTUWRITE
+#endif
 
 /*
  * The calculations in PTE_OF_ADDR and CMP_PTE_USER_* are rather slow:
@@ -2264,11 +2289,38 @@ init_tables:
 	 stb	%o2, [%o3 + %o1]	! (wmask - 1)[i] = j;
 
 dostart:
-	rd	%psr, %l0		! paranoia: make sure ...
-	andn	%l0, PSR_ET, %l0	! we have traps off
-	wr	%l0, 0, %psr		! so that we can fiddle safely
-	nop; nop; nop
+	mov	%o0, %g7		! save prom vector pointer
 
+	rd	%psr, %g4		! hack: if the cpu version number is
+	srl	%g4, 24, %g4		! 4, we have a sun4m machine of some
+	and	%g4, 0xf, %g4		! ilk, with some SRMMU thingy instead
+	cmp	%g4, 0x4
+	bne	0f
+	 mov	%g0, %g4		! clear flag for sun4c
+#if !defined(SUN4M)
+	set	sun4m_notsup-KERNBASE, %o0
+	ld	[%g7 + 0x7c], %o1
+	call	%o1			! print a message saying that the
+	 nop				! sun4m architecture is not supported
+	ld	[%g7 + 0x74], %o1	! by this kernel, then halt
+	call	%o1
+	 nop
+#else
+	b	1f
+	 mov	1, %g4			! set flag for sun4m
+#endif
+0:
+#if !(defined(SUN4) || defined(SUN4C))
+	set	sun4c_notsup-KERNBASE, %o0
+	ld	[%g7 + 0x7c], %o1
+	call	%o1			! print a message saying that the
+	 nop				! sun4c architecture is not supported
+	ld	[%g7 + 0x74], %o1	! by this kernel, then halt
+	call	%o1
+	 nop
+#endif
+
+1:
 	/*
 	 * Startup.
 	 *
@@ -2285,17 +2337,16 @@ dostart:
 	 */
 #endif
 
-	wr	%g0, 0, %wim		! make sure we can set psr
-	mov	%o0, %g7		! save prom vector pointer
-	nop; nop
-	wr	%g0, PSR_S|PSR_PS|PSR_PIL, %psr	! set initial psr
+#if (defined(SUN4) || defined(SUN4C)) && defined(SUN4M)
+	cmp	%g4, %g0		! skip for sun4m!
+	bne	1f
+	 nop
+#endif
+#if defined(SUN4) || defined(SUN4C)
 	set	AC_CONTEXT, %g1		! paranoia: set context to kernel
 	stba	%g0, [%g1] ASI_CONTROL
-	wr	%g0, 2, %wim		! set initial %wim (w1 invalid)
-	mov	1, %g1			! set pcb_wim (log2(%wim) = 1)
-	sethi	%hi(_u0 - KERNBASE + PCB_WIM), %g2
-	st	%g1, [%g2 + %lo(_u0 - KERNBASE + PCB_WIM)]
-
+#endif
+1:
 	/*
 	 * Step 1: double map low RAM (addresses [0.._end-start-1])
 	 * to KERNBASE (addresses [KERNBASE.._end-1]).  None of these
@@ -2323,6 +2374,12 @@ dostart:
 	add	%l2, %o1, %l2
 1:
 #endif
+#if (defined(SUN4) || defined(SUN4C)) && defined(SUN4M)
+	cmp	%g4, %g0		! skip for sun4m!
+	bne	1f
+	 nop
+#endif
+#if defined(SUN4) || defined(SUN4C)
 	set	1 << 18, %l3		! segment size in bytes
 0:
 	lduba	[%l0] ASI_SEGMAP, %l4	! segmap[highva] = segmap[lowva];
@@ -2343,19 +2400,49 @@ dostart:
 	mov	IE_ALLIE, %l1
 	nop; nop			! paranoia
 	stb	%l1, [%l0]
-
+	b	2f
+	 nop
+#endif /* SUN4 || SUN4C */
+1:
+#if defined(SUN4M)
+	! rominterpret("0 0 f8000000 15c6a0 map-pages");
+	set	_mapme-KERNBASE, %o0
+	ld	[%g7 + 0x7c], %o1
+	call	%o1			! forth eval
+	 nop
+#endif /* SUN4M */
+2:
 	/*
 	 * All set, fix pc and npc.  Once we are where we should be,
 	 * we can give ourselves a stack and enable traps.
 	 */
-	set	1f, %l0
-	jmp	%l0
+	set	1f, %g1
+	jmp	%g1
 	 nop
 1:
+	sethi	%hi(_cputyp), %o0	! store sun4c/sun4m flag
+	st	%g4, [%o0 + %lo(_cputyp)]
+
+	rd	%psr, %g3		! paranoia: make sure ...
+	andn	%g3, PSR_ET, %g3	! we have traps off
+	wr	%g3, 0, %psr		! so that we can fiddle safely
+	nop; nop; nop
+
+	wr	%g0, 0, %wim		! make sure we can set psr
+	nop; nop; nop
+	wr	%g0, PSR_S|PSR_PS|PSR_PIL, %psr	! set initial psr
+	 nop; nop; nop
+
+	wr	%g0, 2, %wim		! set initial %wim (w1 invalid)
+	mov	1, %g1			! set pcb_wim (log2(%wim) = 1)
+	sethi	%hi(_u0 + PCB_WIM), %g2
+	st	%g1, [%g2 + %lo(_u0 + PCB_WIM)]
+
 	set	USRSTACK - CCFSZ, %fp	! as if called from user code
 	set	estack0 - CCFSZ - 80, %sp ! via syscall(boot_me_up) or somesuch
 	rd	%psr, %l0
 	wr	%l0, PSR_ET, %psr
+	nop; nop; nop
 
 	/*
 	 * Step 2: clear BSS.  This may just be paranoia; the boot
@@ -2393,7 +2480,7 @@ dostart:
 	 */
 	set	_trapbase, %l0
 	wr	%l0, 0, %tbr
-	nop				! paranoia
+	nop; nop; nop			! paranoia
 
 	/*
 	 * Bootstrap, call main, and `return' from a fake trap into `icode'.
@@ -3222,10 +3309,26 @@ Lsw_load:
 	/* p does have a context: just switch to it */
 Lsw_havectx:
 !	ld	[%o3 + VM_PMAP_CTXNUM], %o0	! (done in delay slot)
+#if (defined(SUN4) || defined(SUN4C)) && defined(SUN4M)
+	set	_cputyp, %o1
+	ld	[%o1], %o1
+	cmp	%o1, %g0
+	bne	1f
+	 nop
+#endif
+#if defined(SUN4) || defined(SUN4C)
 	set	AC_CONTEXT, %o1
 	stba	%o0, [%o1] ASI_CONTROL	! setcontext(vm->vm_pmap.pm_ctxnum);
 	retl
 	 nop
+#endif
+1:
+#if defined(SUN4M)
+	set	SRMMU_CXR, %o1
+	stba	%o0, [%o1] ASI_SRMMU	! setcontext(vm->vm_pmap.pm_ctxnum);
+	retl
+	 nop
+#endif
 
 Lsw_sameproc:
 	/*
