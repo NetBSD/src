@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.55.2.1.2.1 1999/06/21 00:52:10 thorpej Exp $	*/
+/*	$NetBSD: pmap.c,v 1.55.2.1.2.2 1999/08/02 19:55:51 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.55.2.1.2.1 1999/06/21 00:52:10 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.55.2.1.2.2 1999/08/02 19:55:51 thorpej Exp $");
 
 /*
  *	Manages physical address maps.
@@ -1396,12 +1396,13 @@ pmap_unwire(pmap, va)
  *		Extract the physical page address associated
  *		with the given map/virtual_address pair.
  */
-vaddr_t
-pmap_extract(pmap, va)
+boolean_t
+pmap_extract(pmap, va, pap)
 	pmap_t pmap;
 	vaddr_t va;
+	paddr_t *pap;
 {
-	vaddr_t pa;
+	paddr_t pa;
 
 #ifdef DEBUG
 	if (pmapdebug & PDB_FOLLOW)
@@ -1418,20 +1419,21 @@ pmap_extract(pmap, va)
 		pt_entry_t *pte;
 
 		if (!(pte = pmap_segmap(pmap, va)))
-			pa = 0;
+			return (FALSE);
 		else {
 			pte += (va >> PGSHIFT) & (NPTEPG - 1);
 			pa = pfn_to_vad(pte->pt_entry);
 		}
 	}
-	if (pa)
-		pa |= va & PGOFSET;
+	pa |= va & PGOFSET;
+	if (pap != NULL)
+		*pap = pa;
 
 #ifdef DEBUG
 	if (pmapdebug & PDB_FOLLOW)
 		printf("pmap_extract: pa %lx\n", pa);
 #endif
-	return (pa);
+	return (TRUE);
 }
 
 /*

@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.43.4.1 1999/06/21 00:49:19 thorpej Exp $
+#	$NetBSD: GENERIC,v 1.43.4.2 1999/08/02 19:46:09 thorpej Exp $
 #
 # Generic kernel - one size fits all.
 #
@@ -16,6 +16,7 @@ options 	HP360
 options 	HP370
 options 	HP375
 options 	HP380
+options 	HP385
 options 	HP400
 options 	HP425
 options 	HP433
@@ -31,6 +32,7 @@ options 	COMPAT_10	# compatibility with NetBSD 1.0
 options 	COMPAT_11	# compatibility with NetBSD 1.1
 options 	COMPAT_12	# compatibility with NetBSD 1.2
 options 	COMPAT_13	# compatibility with NetBSD 1.3
+options 	COMPAT_14	# compatibility with NetBSD 1.4
 options 	SYSVSHM		# System V-style shared memory
 options 	SYSVSEM		# System V-style semaphores
 options 	SYSVMSG		# System V-style message queues
@@ -60,7 +62,7 @@ options 	INET		# Internet protocols
 options 	GATEWAY		# IP forwarding + larger mb_map
 options 	MROUTING	# Multicast routing
 options 	TCP_COMPAT_42	# compatibility with 4.2BSD TCP/IP
-#options 	PFIL_HOOKS	# packet filter hooks
+options 	PFIL_HOOKS	# packet filter hooks
 
 # Options for HP hardware
 options 	FPSP		# floating point interface for 68040

@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.34.4.1 1999/06/21 00:52:12 thorpej Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.34.4.2 1999/08/02 19:55:51 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.34.4.1 1999/06/21 00:52:12 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.34.4.2 1999/08/02 19:55:51 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -322,8 +322,8 @@ vmapbuf(bp, len)
 	bp->b_data = (caddr_t)(taddr + off);
 	len = atop(len);
 	while (len--) {
-		pa = pmap_extract(vm_map_pmap(&p->p_vmspace->vm_map), faddr);
-		if (pa == 0)
+		if (pmap_extract(vm_map_pmap(&p->p_vmspace->vm_map), faddr,
+		    &pa) == FALSE)
 			panic("vmapbuf: null page frame");
 		pmap_enter(vm_map_pmap(phys_map), taddr, trunc_page(pa),
 		    VM_PROT_READ|VM_PROT_WRITE, TRUE, 0);

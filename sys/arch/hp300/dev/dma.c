@@ -1,4 +1,4 @@
-/*	$NetBSD: dma.c,v 1.23 1998/08/20 08:33:41 kleink Exp $	*/
+/*	$NetBSD: dma.c,v 1.23.8.1 1999/08/02 19:46:10 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -239,7 +239,7 @@ dmacomputeipl()
 	 * Our interrupt level must be as high as the highest
 	 * device using DMA (i.e. splbio).
 	 */
-	sc->sc_ipl = PSLTOIPL(hp300_bioipl);
+	sc->sc_ipl = PSLTOIPL(hp300_ipls[HP300_IPL_BIO]);
 	sc->sc_ih = intr_establish(dmaintr, sc, sc->sc_ipl, IPL_BIO);
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.122.2.1.2.1 1999/06/21 00:49:21 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.122.2.1.2.2 1999/08/02 19:46:11 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -447,24 +447,31 @@ extern	char version[];
 
 struct hp300_model {
 	int id;
+	int mmuid;
 	const char *name;
 	const char *speed;
 };
 
-struct hp300_model hp300_models[] = {
-	{ HP_320,	"320",		"16.67"	},
-	{ HP_330,	"318/319/330",	"16.67"	},
-	{ HP_340,	"340",		"16.67"	},
-	{ HP_345,	"345",		"50"	},
-	{ HP_350,	"350",		"25"	},
-	{ HP_360,	"360",		"25"	},
-	{ HP_370,	"370",		"33.33"	},
-	{ HP_375,	"375",		"50"	},
-	{ HP_380,	"380",		"25"	},
-	{ HP_400,	"400",		"50"	},
-	{ HP_425,	"425",		"25"	},
-	{ HP_433,	"433",		"33"	},
-	{ 0,		NULL,		NULL	},
+const struct hp300_model hp300_models[] = {
+	{ HP_320,	-1,		"320",		"16.67"	},
+	{ HP_330,	-1,		"318/319/330",	"16.67"	},
+	{ HP_340,	-1,		"340",		"16.67"	},
+	{ HP_345,	-1,		"345",		"50"	},
+	{ HP_350,	-1,		"350",		"25"	},
+	{ HP_360,	-1,		"360",		"25"	},
+	{ HP_370,	-1,		"370",		"33.33"	},
+	{ HP_375,	-1,		"375",		"50"	},
+	{ HP_380,	-1,		"380",		"25"	},
+	{ HP_385,	-1,		"385",		"33"	},
+	{ HP_400,	-1,		"400",		"50"	},
+	{ HP_425,	MMUID_425_T,	"425t",		"25"	},
+	{ HP_425,	MMUID_425_S,	"425s",		"25"	},
+	{ HP_425,	MMUID_425_E,	"425e",		"25"	},
+	{ HP_425,	-1,		"425",		"25"	},
+	{ HP_433,	MMUID_433_T,	"433t",		"33"	},
+	{ HP_433,	MMUID_433_S,	"433s",		"33"	},
+	{ HP_433,	-1,		"433",		"33"	},
+	{ 0,		-1,		NULL,		NULL	},
 };
 
 void
@@ -478,8 +485,12 @@ identifycpu()
 	 */
 	for (t = s = NULL, i = 0; hp300_models[i].name != NULL; i++) {
 		if (hp300_models[i].id == machineid) {
+			if (hp300_models[i].mmuid != -1 &&
+			    hp300_models[i].mmuid != mmuid)
+				continue;
 			t = hp300_models[i].name;
 			s = hp300_models[i].speed;
+			break;
 		}
 	}
 	if (t == NULL) {
@@ -605,6 +616,9 @@ identifycpu()
 #endif
 #if !defined(HP380)
 	case HP_380:
+#endif
+#if !defined(HP385)
+	case HP_385:
 #endif
 #if !defined(HP400)
 	case HP_400:

@@ -1,4 +1,4 @@
-#	$NetBSD: files.macppc,v 1.18.2.1.2.1 1999/06/21 00:51:36 thorpej Exp $
+#	$NetBSD: files.macppc,v 1.18.2.1.2.2 1999/08/02 19:55:11 thorpej Exp $
 #
 # macppc-specific configuration info
 
@@ -59,7 +59,7 @@ file arch/macppc/macppc/cpu.c
 # PCI bus support
 include "dev/pci/files.pci"
 
-file	arch/macppc/pci/pciide_machdep.c	pciide
+file arch/macppc/pci/pciide_machdep.c		pciide
 
 # network devices MII bus
 include "dev/mii/files.mii"
@@ -78,9 +78,14 @@ device pchb
 attach pchb at pci
 file arch/macppc/pci/pchb.c			pchb
 
-device obio {}
+define obio {}
+device obio: obio
 attach obio at pci
 file arch/macppc/dev/obio.c			obio
+
+device mediabay: obio
+attach mediabay at obio
+file arch/macppc/dev/mediabay.c			mediabay
 
 device esp: scsi, ncr53c9x
 attach esp at obio
@@ -126,6 +131,10 @@ device ams: wsmousedev
 attach ams at adb
 file arch/macppc/dev/ams.c			ams
 
+device abtn
+attach abtn at adb
+file arch/macppc/dev/abtn.c			abtn
+
 device nvram
 attach nvram at obio
 file arch/macppc/dev/nvram.c			nvram needs-flag
@@ -153,4 +162,3 @@ attach macofcons at pci
 file arch/macppc/dev/ofcons.c			macofcons needs-flag
 
 include "dev/usb/files.usb"
-defopt PCKBD_LAYOUT

@@ -1,4 +1,4 @@
-/*	$NetBSD: pm_direct.c,v 1.3.6.1 1999/07/01 23:12:05 thorpej Exp $	*/
+/*	$NetBSD: pm_direct.c,v 1.3.6.2 1999/08/02 19:55:12 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1997 Takashi Hamada
@@ -99,7 +99,7 @@ signed char pm_send_cmd_type[] = {
 	0x04, 0x14,   -1, 0x03,   -1,   -1,   -1,   -1,
 	0x00, 0x00, 0x02, 0x02,   -1,   -1,   -1,   -1,
 	0x01, 0x01,   -1,   -1,   -1,   -1,   -1,   -1,
-	0x00, 0x00,   -1,   -1,   -1,   -1,   -1,   -1,
+	0x00, 0x00,   -1,   -1, 0x01,   -1,   -1,   -1,
 	0x01, 0x00, 0x02, 0x02,   -1, 0x01, 0x03, 0x01,
 	0x00, 0x01, 0x00, 0x00, 0x00,   -1,   -1,   -1,
 	0x02,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
@@ -1173,6 +1173,19 @@ pm_adb_restart()
 }
 
 void
+pm_adb_poweroff()
+{
+	PMData p;
+
+	p.command = PMU_POWER_OFF;
+	p.num_data = 4;
+	p.s_buf = p.data;
+	p.r_buf = p.data;
+	strcpy(p.data, "MATT");
+	pmgrop(&p);
+}
+
+void
 pm_read_date_time(time)
 	u_long *time;
 {
@@ -1197,6 +1210,64 @@ pm_set_date_time(time)
 	p.num_data = 4;
 	p.s_buf = p.r_buf = p.data;
 	bcopy(&time, p.data, 4);
+	pmgrop(&p);
+}
+
+int
+pm_read_brightness()
+{
+	PMData p;
+
+	p.command = PMU_READ_BRIGHTNESS;
+	p.num_data = 1;		/* XXX why 1? */
+	p.s_buf = p.r_buf = p.data;
+	p.data[0] = 0;
+	pmgrop(&p);
+
+	return p.data[0];
+}
+
+void
+pm_set_brightness(val)
+	int val;
+{
+	PMData p;
+
+	val = 0x7f - val / 2;
+	if (val < 0x08)
+		val = 0x08;
+	if (val > 0x78)
+		val = 0x78;
+
+	p.command = PMU_SET_BRIGHTNESS;
+	p.num_data = 1;
+	p.s_buf = p.r_buf = p.data;
+	p.data[0] = val;
+	pmgrop(&p);
+}
+
+void
+pm_init_brightness()
+{
+	int val;
+
+	val = pm_read_brightness();
+	pm_set_brightness(val);
+}
+
+void
+pm_eject_pcmcia(slot)
+	int slot;
+{
+	PMData p;
+
+	if (slot != 0 && slot != 1)
+		return;
+
+	p.command = PMU_EJECT_PCMCIA;
+	p.num_data = 1;
+	p.s_buf = p.r_buf = p.data;
+	p.data[0] = slot * 18;	/* XXX */
 	pmgrop(&p);
 }
 
