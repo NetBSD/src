@@ -1,4 +1,4 @@
-/*	$NetBSD: fifo.h,v 1.16 1998/08/13 10:06:33 kleink Exp $	*/
+/*	$NetBSD: fifo.h,v 1.16.26.1 2001/07/10 14:00:00 lukem Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -51,6 +51,7 @@ int	fifo_write	__P((void *));
 #define fifo_lease_check genfs_nullop
 int	fifo_ioctl	__P((void *));
 int	fifo_poll	__P((void *));
+int	fifo_kqfilter	__P((void *));
 #define fifo_revoke	genfs_revoke
 #define fifo_mmap	genfs_badop
 #define fifo_fsync	genfs_nullop

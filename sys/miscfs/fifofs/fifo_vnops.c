@@ -1,4 +1,4 @@
-/*	$NetBSD: fifo_vnops.c,v 1.30 2001/02/27 19:52:21 lukem Exp $	*/
+/*	$NetBSD: fifo_vnops.c,v 1.30.4.1 2001/07/10 14:00:00 lukem Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993, 1995
@@ -50,6 +50,7 @@
 #include <sys/malloc.h>
 #include <sys/un.h>
 #include <sys/poll.h>
+#include <sys/event.h>
 
 #include <miscfs/fifofs/fifo.h>
 #include <miscfs/genfs/genfs.h>
@@ -64,6 +65,16 @@ struct fifoinfo {
 	long		fi_readers;
 	long		fi_writers;
 };
+
+static void	filt_fifordetach(struct knote *kn);
+static int	filt_fiforead(struct knote *kn, long hint);
+static void	filt_fifowdetach(struct knote *kn);
+static int	filt_fifowrite(struct knote *kn, long hint);
+
+struct filterops fiforead_filtops =
+	{ 1, NULL, filt_fifordetach, filt_fiforead };
+struct filterops fifowrite_filtops =
+	{ 1, NULL, filt_fifowdetach, filt_fifowrite };
 
 int (**fifo_vnodeop_p) __P((void *));
 const struct vnodeopv_entry_desc fifo_vnodeop_entries[] = {
@@ -81,6 +92,7 @@ const struct vnodeopv_entry_desc fifo_vnodeop_entries[] = {
 	{ &vop_lease_desc, fifo_lease_check },		/* lease */
 	{ &vop_ioctl_desc, fifo_ioctl },		/* ioctl */
 	{ &vop_poll_desc, fifo_poll },			/* poll */
+	{ &vop_kqfilter_desc, fifo_kqfilter },		/* kqfilter */
 	{ &vop_revoke_desc, fifo_revoke },		/* revoke */
 	{ &vop_mmap_desc, fifo_mmap },			/* mmap */
 	{ &vop_fsync_desc, fifo_fsync },		/* fsync */
@@ -504,4 +516,86 @@ fifo_pathconf(void *v)
 		return (EINVAL);
 	}
 	/* NOTREACHED */
+}
+
+/* ARGSUSED */
+int
+fifo_kqfilter(void *v)
+{
+	struct vop_kqfilter_args /* {
+		struct vnode *a_vp;
+		struct knote *a_kn;
+	} */ *ap = v;
+	struct socket	*so;
+	struct sockbuf	*sb;
+
+	so = (struct socket *)ap->a_vp->v_fifoinfo->fi_readsock;
+	switch (ap->a_kn->kn_filter) {
+	case EVFILT_READ:
+		ap->a_kn->kn_fop = &fiforead_filtops;
+		sb = &so->so_rcv;
+		break;
+	case EVFILT_WRITE:
+		ap->a_kn->kn_fop = &fifowrite_filtops;
+		sb = &so->so_snd;
+		break;
+	default:
+		return (1);
+	}
+
+	SLIST_INSERT_HEAD(&sb->sb_sel.si_klist, ap->a_kn, kn_selnext);
+	sb->sb_flags |= SB_KNOTE;
+	return (0);
+}
+
+static void
+filt_fifordetach(struct knote *kn)
+{
+	struct socket *so;
+
+	so = (struct socket *)kn->kn_hook;
+	SLIST_REMOVE(&so->so_rcv.sb_sel.si_klist, kn, knote, kn_selnext);
+	if (SLIST_EMPTY(&so->so_rcv.sb_sel.si_klist))
+		so->so_rcv.sb_flags &= ~SB_KNOTE;
+}
+
+static int
+filt_fiforead(struct knote *kn, long hint)
+{
+	struct socket *so;
+
+	so = (struct socket *)kn->kn_hook;
+	kn->kn_data = so->so_rcv.sb_cc;
+	if (so->so_state & SS_CANTRCVMORE) {
+		kn->kn_flags |= EV_EOF;
+		return (1);
+	}
+	kn->kn_flags &= ~EV_EOF;
+	return (kn->kn_data > 0);
+}
+
+static void
+filt_fifowdetach(struct knote *kn)
+{
+	struct socket *so;
+
+	so = (struct socket *)kn->kn_hook;
+	SLIST_REMOVE(&so->so_snd.sb_sel.si_klist, kn, knote, kn_selnext);
+	if (SLIST_EMPTY(&so->so_snd.sb_sel.si_klist))
+		so->so_snd.sb_flags &= ~SB_KNOTE;
+}
+
+static int
+filt_fifowrite(struct knote *kn, long hint)
+{
+	struct socket *so;
+
+	so = (struct socket *)kn->kn_hook;
+	kn->kn_data = sbspace(&so->so_snd);
+	if (so->so_state & SS_CANTSENDMORE) {
+		kn->kn_flags |= EV_EOF;
+		return (1);
+	}
+	kn->kn_flags &= ~EV_EOF;
+	return (kn->kn_data >= so->so_snd.sb_lowat);
 }
