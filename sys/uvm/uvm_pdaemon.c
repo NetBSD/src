@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pdaemon.c,v 1.22 2000/08/12 22:41:55 thorpej Exp $	*/
+/*	$NetBSD: uvm_pdaemon.c,v 1.23 2000/08/20 10:24:14 bjh21 Exp $	*/
 
 /* 
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -170,6 +170,10 @@ uvmpd_tune()
 	/* XXX:  what are these values good for? */
 	uvmexp.freemin = max(uvmexp.freemin, (16*1024) >> PAGE_SHIFT);
 	uvmexp.freemin = min(uvmexp.freemin, (256*1024) >> PAGE_SHIFT);
+
+	/* Make sure there's always a user page free. */
+	if (uvmexp.freemin < uvmexp.reserve_kernel + 1)
+		uvmexp.freemin = uvmexp.reserve_kernel + 1;
 
 	uvmexp.freetarg = (uvmexp.freemin * 4) / 3;
 	if (uvmexp.freetarg <= uvmexp.freemin)
