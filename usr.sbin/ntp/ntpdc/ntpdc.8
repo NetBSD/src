@@ -1,4 +1,4 @@
-.\"	$NetBSD: ntpdc.8,v 1.1 2000/03/29 13:54:45 simonb Exp $
+.\"	$NetBSD: ntpdc.8,v 1.2 2000/03/30 01:49:24 simonb Exp $
 .\" Converted from HTML to mandoc by html-to-mdoc.pl
 .\"
 .Dd Mar 29, 2000
@@ -118,10 +118,8 @@ the
 program itself and do not result in NTP mode 7 requests
 being sent to a server. These are described following.
 .Bl -tag -width indent
-.It Fl  Ar ? [ command_keyword ]
-<BR><TT>helpl [ 
-.Ar command_keyword
-]</TT>
+.It Ar ? [ command_keyword ]
+.It Ar helpl [ command_keyword ]
 A 
 .Pa ?
 by itself will print a list of all the command keywords known
@@ -134,39 +132,41 @@ keyword will print funcation and usage information about the command. This
 command is probably a better source of information about 
 .Pa ntpq
 than this manual page.
-.It Fl  Ar delay milliseconds
+.It Ar delay milliseconds
 Specify a time interval to be added to timestamps included in requests
 which require authentication. This is used to enable (unreliable) server
 reconfiguration over long delay network paths or between machines whose
 clocks are unsynchronized. Actually the server does not now require timestamps
 in authenticated requests, so this command may be obsolete.
-.It Fl  Ar host hostname
+.It Ar host hostname
 Set the host to which future queries will be sent. Hostname may be either
 a host name or a numeric address.
-.It Fl  Ar hostnames [ yes | no ]
+.It Ar hostnames [ yes | no ]
 If 
 .Pa yes
 is specified, host names are printed in information displays.
 If 
 .Pa no
 is specified, numeric addresses are printed instead. The
-default is <TT>yes, unless modified using the command line 
+default is
+.Em yes ,
+unless modified using the command line 
 .Fl n
 switch.
-.It Fl  Ar keyid keyid
+.It Ar keyid keyid
 This command allows the specification of a key number to be used to authenticate
 configuration requests. This must correspond to a key number the server
 has been configured to use for this purpose.
-.It Fl  Ar quit
+.It Ar quit
 Exit 
 .Nm
 .
-.It Fl  Ar passwd
+.It Ar passwd
 This command prompts you to type in a password (which will not be echoed)
 which will be used to authenticate configuration requests. The password
 must correspond to the key configured for use by the NTP server for this
 purpose if such requests are to be successful.
-.It Fl  Ar timeout millseconds
+.It Ar timeout millseconds
 Specify a timeout period for responses to server queries. The default is
 about 8000 milliseconds. Note that since 
 .Nm
@@ -179,12 +179,12 @@ Query commands result in NTP mode 7 packets containing requests for information
 being sent to the server. These are read-only commands in that they make
 no modification of the server configuration state.
 .Bl -tag -width indent
-.It Fl  Ar listpeers
+.It Ar listpeers
 Obtains and prints a brief list of the peers for which the server is maintaining
 state. These should include all configured peer associations as well as
 those peers whose stratum is such that they are considered by the server
 to be possible future synchonization candidates.
-.It Fl  Ar peers
+.It Ar peers
 Obtains a list of peers for which the server is maintaining state, along
 with a summary of that state. Summary information includes the address
 of the remote peer, the local interface address (0.0.0.0 if a local address
@@ -193,8 +193,10 @@ has yet to be determined), the stratum of the remote peer (a stratum of
 in seconds, the reachability register, in octal, and the current estimated
 delay, offset and dispersion of the peer, all in seconds. In addition,
 the character in the left margin indicates the mode this peer entry is
-operating in. A <TT>+ denotes symmetric active, a 
-.Fl 
+operating in. A
+.Pa +
+denotes symmetric active, a 
+.Pa ^
 indicates
 symmetric passive, a 
 .Pa =
@@ -211,15 +213,13 @@ marks the peer the server is currently synchonizing to.
 .Pp
 The contents of the host field may be one of four forms. It may be a
 host name, an IP address, a reference clock implementation name with its
-parameter or <TT>REFCLK(
-.Ar implementation number
-, 
-.Ar parameter
-)</TT>.
+parameter or REFCLK(
+.Ar implementation number ,
+.Ar parameter ).
 On 
-.Pa hostnames no
+.Pa "hostnames no"
 only IP-addresses will be displayed.
-.It Fl  Ar dmpeers
+.It Ar dmpeers
 A slightly different peer summary list. Identical to the output of the
 .Pa peers
 command, except for the character in the leftmost column.
@@ -234,20 +234,20 @@ that the peer made it through. A
 .Pa *
 denotes the peer the server
 is currently synchronizing with.
-.It Fl  Ar showpeer peer_address [...]
+.It Ar showpeer peer_address [...]
 Shows a detailed display of the current peer variables for one or more
 peers. Most of these values are described in the NTP Version 2 specification.
-.It Fl  Ar pstats peer_address [...]
+.It Ar pstats peer_address [...]
 Show per-peer statistic counters associated with the specified peer(s).
-.It Fl  Ar clockinfo clock_peer_address [...]
+.It Ar clockinfo clock_peer_address [...]
 Obtain and print information concerning a peer clock. The values obtained
 provide information on the setting of fudge factors and other clock performance
 information.
-.It Fl  Ar kerninfo
+.It Ar kerninfo
 Obtain and print kernel phase-lock loop operating parameters. This information
 is available only if the kernel has been specially modified for a precision
 timekeeping function.
-.It Fl  Ar loopinfo [ oneline | multiline ]
+.It Ar loopinfo [ oneline | multiline ]
 Print the values of selected loop filter variables. The loop filter is
 the part of NTP which deals with adjusting the local system clock. The
 .Pa offset
@@ -271,7 +271,7 @@ options specify
 the format in which this information is to be printed, with 
 .Pa multiline
 as the default.
-.It Fl  Ar sysinfo
+.It Ar sysinfo
 Print a variety of system state variables, i.e., state related to the local
 server. All except the last four lines are described in the NTP Version
 3 specification, RFC-1305.
@@ -332,22 +332,22 @@ the
 .Pa authdelay
 configuration command.
 .El
-.It Fl  Ar sysstats
+.It Ar sysstats
 Print statistics counters maintained in the protocol module.
-.It Fl  Ar memstats
+.It Ar memstats
 Print statistics counters related to memory allocation code.
-.It Fl  Ar iostats
+.It Ar iostats
 Print statistics counters maintained in the input-output module.
-.It Fl  Ar timerstats
+.It Ar timerstats
 Print statistics counters maintained in the timer/event queue support code.
-.It Fl  Ar reslist
+.It Ar reslist
 Obtain and print the server's restriction list. This list is (usually)
 printed in sorted order and may help to understand how the restrictions
 are applied.
-.It Fl  Ar monlist [ version ]
+.It Ar monlist [ version ]
 Obtain and print traffic counts collected and maintained by the monitor
 facility. The version number should not normally need to be specified.
-.It Fl  Ar clkbug clock_peer_address [...]
+.It Ar clkbug clock_peer_address [...]
 Obtain debugging information for a reference clock driver. This information
 is provided only by some clock drivers and is mostly undecodable without
 a copy of the driver source in hand.
@@ -382,7 +382,7 @@ should provide an adequate level of security.
 .Pp
 The following commands all make authenticated requests.
 .Bl -tag -width indent
-.It Fl  Ar addpeer peer_address [ keyid ] [ version ] [ prefer ]
+.It Ar addpeer peer_address [ keyid ] [ version ] [ prefer ]
 Add a configured peer association at the given address and operating in
 symmetric active mode. Note that an existing association with the same
 peer may be deleted when this command is executed, or may simply be converted
@@ -399,27 +399,25 @@ a preferred peer (and thus will be used primarily for clock synchronisation
 if possible). The preferred peer also determines the validity of the PPS
 signal - if the preferred peer is suitable for synchronisation so is the
 PPS signal.
-.It Fl  Ar addserver peer_address [ keyid ] [ version ] [ prefer ]
+.It Ar addserver peer_address [ keyid ] [ version ] [ prefer ]
 Identical to the addpeer command, except that the operating mode is client.
-.It Fl  Ar broadcast peer_address [ keyid ] [ version ] [ prefer ]
+.It Ar broadcast peer_address [ keyid ] [ version ] [ prefer ]
 Identical to the addpeer command, except that the operating mode is broadcast.
 In this case a valid key identifier and key are required. The 
 .Pa peer_address
 parameter can be the broadcast address of the local network or a multicast
 group address assigned to NTP. If a multicast address, a multicast-capable
 kernel is required.
-.It Fl  Ar unconfig peer_address [...]
+.It Ar unconfig peer_address [...]
 This command causes the configured bit to be removed from the specified
 peer(s). In many cases this will cause the peer association to be deleted.
 When appropriate, however, the association may persist in an unconfigured
 mode if the remote peer is willing to continue on in this fashion.
-.It Fl  Ar fudge peer_address [ time1 ] [ time2 ] [ stratum ] [ refid ]
+.It Ar fudge peer_address [ time1 ] [ time2 ] [ stratum ] [ refid ]
 This command provides a way to set certain data for a reference clock.
 See the source listing for further information.
-.It Fl  Ar enable [ flag ] [ ... ]
-<BR><TT>disable [ 
-.Ar flag
-] [ ... ]</TT>
+.It Ar enable [ flag ] [ ... ]
+.It Ar disable [ flag ] [ ... ]
 These commands operate in the same way as the 
 .Pa enable
 and 
@@ -448,24 +446,24 @@ and
 .Pa pps_kernel
 flags are read-only.
 .Bl -tag -width indent
-.It Fl  Ar auth
+.It Ar auth
 Enables the server to synchronize with unconfigured peers only if the peer
 has been correctly authenticated using a trusted key and key identifier.
 The default for this flag is enable.
-.It Fl  Ar bclient
+.It Ar bclient
 Enables the server to listen for a message from a broadcast or multicast
 server, as in the 
 .Pa multicastclient
 command with default address.
 The default for this flag is disable.
-.It Fl  Ar monitor
+.It Ar monitor
 Enables the monitoring facility. See the 
 .Nm
 program and the
 .Pa monlist
 command or further information. The default for this flag
 is enable.
-.It Fl  Ar pll
+.It Ar pll
 Enables the server to adjust its local clock by means of NTP. If disabled,
 the local clock free-runs at its intrinsic time and frequency offset. This
 flag is useful in case the local clock is controlled by some other device
@@ -476,7 +474,7 @@ page in
 .Pa /usr/share/doc/ntp/refclock.htm
 for further information. The default for this flag
 is enable.
-.It Fl  Ar pps
+.It Ar pps
 Enables the pulse-per-second (PPS) signal when frequency and time is disciplined
 by the precision time kernel modifications. See the 
 .%T "A Kernel Model for Precision Timekeeping"
@@ -484,18 +482,18 @@ page in
 .Pa /usr/share/doc/ntp/kern.htm
 for further information.
 The default for this flag is disable.
-.It Fl  Ar stats
+.It Ar stats
 Enables the statistics facility. See the 
 .%T "Monitoring Options"
 page in
 .Pa /usr/share/doc/ntp/monopt.htm
 for further information. The default for this flag is
 enable.
-.It Fl  Ar pll_kernel
+.It Ar pll_kernel
 When the precision time kernel modifications are installed, this indicates
 the kernel controls the clock discipline; otherwise, the daemon controls
 the clock discipline.
-.It Fl  Ar pps_kernel
+.It Ar pps_kernel
 When the precision time kernel modifications are installed and a pulse-per-second
 (PPS) signal is available, this indicates the PPS signal controls the clock
 discipline; otherwise, the daemon or kernel controls the clock discipline,
@@ -503,26 +501,26 @@ as indicated by the
 .Pa pll_kernel
 flag.
 .El
-.It Fl  Ar restrict address mask flag [ flag ]
+.It Ar restrict address mask flag [ flag ]
 This command operates in the same way as the 
 .Pa restrict
 configuration
 file commands of 
 .Pa ntpd
 .
-.It Fl  Ar unrestrict address mask flag [ flag ]
+.It Ar unrestrict address mask flag [ flag ]
 Unrestrict the matching entry from the restrict list.
-.It Fl  Ar delrestrict address mask [ ntpport ]
+.It Ar delrestrict address mask [ ntpport ]
 Delete the matching entry from the restrict list.
-.It Fl  Ar readkeys
+.It Ar readkeys
 Causes the current set of authentication keys to be purged and a new set
 to be obtained by rereading the keys file (which must have been specified
 in the 
 .Pa ntpd
 configuration file). This allows encryption keys to
 be changed without restarting the server.
-.It Fl  Ar trustkey keyid [...]
-.It Fl  Ar untrustkey keyid [...]
+.It Ar trustkey keyid [...]
+.It Ar untrustkey keyid [...]
 These commands operate in the same way as the 
 .Pa trustedkey
 and 
@@ -530,19 +528,19 @@ and
 configuration file commands of 
 .Pa ntpd
 .
-.It Fl  Ar authinfo
+.It Ar authinfo
 Returns information concerning the authentication module, including known
 keys and counts of encryptions and decryptions which have been done.
-.It Fl  Ar traps
+.It Ar traps
 Display the traps set in the server. See the source listing for further
 information.
-.It Fl  Ar addtrap [ address [ port ] [ interface ]
+.It Ar addtrap [ address [ port ] [ interface ]
 Set a trap for asynchronous messages. See the source listing for further
 information.
-.It Fl  Ar clrtrap [ address [ port ] [ interface]
+.It Ar clrtrap [ address [ port ] [ interface]
 Clear a trap for asynchronous messages. See the source listing for further
 information.
-.It Fl  Ar reset
+.It Ar reset
 Clear the statistics counters in various modules of the server. See the
 source listing for further information.
 .El
