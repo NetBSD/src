@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuregs.h,v 1.59 2003/01/10 03:22:48 rafal Exp $	*/
+/*	$NetBSD: cpuregs.h,v 1.60 2003/06/09 12:20:37 simonb Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -456,8 +456,6 @@
 					/* $5 and $6 new with MIPS-III */
 #define	MIPS_COP_0_BAD_VADDR	_(8)
 #define	MIPS_COP_0_TLB_HI	_(10)
-#define	MIPS_COP_0_STATUS_REG	_(12)
-#define	MIPS_COP_0_CAUSE_REG	_(13)
 #define	MIPS_COP_0_STATUS	_(12)
 #define	MIPS_COP_0_CAUSE	_(13)
 #define	MIPS_COP_0_EXC_PC	_(14)

@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_machdep.S,v 1.9 2003/05/25 14:00:12 tsutsui Exp $	*/
+/*	$NetBSD: locore_machdep.S,v 1.10 2003/06/09 12:20:38 simonb Exp $	*/
 /*	$OpenBSD: locore.S,v 1.12 1997/04/19 17:19:43 pefo Exp $	*/
 
 /*
@@ -359,8 +359,8 @@ END(mdbpanic)
  *--------------------------------------------------------------------------
  */
 LEAF(mips3_TLBWriteIndexedVPS)
-	mfc0	v1, MIPS_COP_0_STATUS_REG	# Save the status register.
-	mtc0	zero, MIPS_COP_0_STATUS_REG	# Disable interrupts
+	mfc0	v1, MIPS_COP_0_STATUS		# Save the status register.
+	mtc0	zero, MIPS_COP_0_STATUS		# Disable interrupts
 	nop
 	lw	a2, 8(a1)
 	lw	a3, 12(a1)
@@ -387,7 +387,7 @@ LEAF(mips3_TLBWriteIndexedVPS)
 	nop
 	dmtc0	v0, MIPS_COP_0_TLB_PG_MASK	# Restore page mask.
 	j	ra
-	mtc0	v1, MIPS_COP_0_STATUS_REG	# Restore the status register
+	mtc0	v1, MIPS_COP_0_STATUS		# Restore the status register
 END(mips3_TLBWriteIndexedVPS)
 
 
