@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_input.c,v 1.110 2000/03/31 08:34:20 jdolecek Exp $	*/
+/*	$NetBSD: ip_input.c,v 1.111 2000/03/31 14:27:17 jdolecek Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -134,11 +134,14 @@
 #include <netinet/in_pcb.h>
 #include <netinet/in_var.h>
 #include <netinet/ip_var.h>
-#include <netinet/ip_mroute.h>
 #include <netinet/ip_icmp.h>
 /* just for gif_ttl */
 #include <netinet/in_gif.h>
 #include "gif.h"
+
+#ifdef MROUTING
+#include <netinet/ip_mroute.h>
+#endif
 
 #ifdef IPSEC
 #include <netinet6/ipsec.h>
