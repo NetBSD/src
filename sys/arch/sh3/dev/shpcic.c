@@ -1,4 +1,4 @@
-/*	$NetBSD: shpcic.c,v 1.2 1999/09/14 10:22:35 tsubai Exp $	*/
+/*	$NetBSD: shpcic.c,v 1.3 2000/04/20 11:51:27 tsubai Exp $	*/
 
 #define	SHPCICDEBUG
 
@@ -240,6 +240,7 @@ shpcic_attach_socket(h)
 
 	/* now, config one pcmcia device per socket */
 
+	paa.paa_busname = "pcmcia";
 	paa.pct = (pcmcia_chipset_tag_t) h->sc->pct;
 	paa.pch = (pcmcia_chipset_handle_t) h;
 	paa.iobase = h->sc->iobase;
