@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr5380sbc.c,v 1.18 1997/03/04 21:42:32 mycroft Exp $	*/
+/*	$NetBSD: ncr5380sbc.c,v 1.19 1997/03/27 01:16:01 gwr Exp $	*/
 
 /*
  * Copyright (c) 1995 David Jones, Gordon W. Ross
@@ -591,18 +591,9 @@ ncr5380_scsi_cmd(xs)
 	struct	ncr5380_softc *sc;
 	struct sci_req	*sr;
 	int s, rv, i, flags;
-	extern int cold;		/* XXX */
 
 	sc = xs->sc_link->adapter_softc;
-
 	flags = xs->flags;
-	/*
-	 * XXX: Hack: During autoconfig, force polling mode.
-	 * Needed as long as sdsize() can be called while cold,
-	 * otherwise timeouts will never call back (grumble).
-	 */
-	if (cold)
-		flags |= SCSI_POLL;
 
 	if (sc->sc_flags & NCR5380_FORCE_POLLING)
 		flags |= SCSI_POLL;
