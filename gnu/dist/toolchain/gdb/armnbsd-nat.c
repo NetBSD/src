@@ -22,6 +22,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/ptrace.h>
+#include <sys/sysctl.h>
 #include <sys/user.h>
 #include <machine/reg.h>
 #include "inferior.h"
@@ -170,6 +171,20 @@ extern char *target_name;
 void
 _initialize_armnbsd_nat ()
 {
+  int mib[2];
+  char machine[16];
+  size_t len;
 
-/*  arm_apcs_32 = 0; */
+  /* XXX Grotty hack to guess whether this is a 26-bit system.  This
+     should really be determined on the fly, to allow debugging a
+     32-bit core on a 26-bit machine, or a 26-bit process on a 32-bit
+     machine.  For now, users will just have to use "set apcs32" as
+     appropriate. */
+  mib[0] = CTL_HW;
+  mib[1] = HW_MACHINE;
+  len = sizeof(machine);
+  if (sysctl(mib, 2, machine, &len, NULL, 0) == 0 &&
+      strcmp(machine, "arm26") == 0)
+    arm_apcs_32 = 0;
 }
+
