@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuvar.h,v 1.4 1997/07/06 21:14:25 pk Exp $ */
+/*	$NetBSD: cpuvar.h,v 1.5 1997/09/27 18:01:33 pk Exp $ */
 
 /*
  *  Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -140,6 +140,9 @@ struct cpu_softc {
 	/* various flags to workaround anomalies in chips */
 	int		flags;		/* see CPUFLG_xxx, below */
 
+	/* Per processor counter register (sun4m only) */
+	struct counter_4m	*counterreg_4m;
+
 	/*
 	 * The following pointers point to processes that are somehow
 	 * associated with this CPU--running on it, using its FPU,
@@ -267,4 +270,7 @@ void mmu_install_tables __P((struct cpu_softc *));
 void pmap_alloc_cpu __P((struct cpu_softc *));
 
 #define cpuinfo	(*(struct cpu_softc *)CPUINFO_VA)
+
+struct cpu_softc	**cpu_info;
+
 #endif	/* _sparc_cpuvar_h */

@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.78 1997/09/23 08:16:26 pk Exp $ */
+/*	$NetBSD: autoconf.c,v 1.79 1997/09/27 18:01:35 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -257,8 +257,7 @@ bootstrap()
 		register u_int pte;
 		register int i;
 		extern void setpte4m __P((u_int, u_int));
-		extern struct timer_4m *timerreg_4m;
-		extern struct counter_4m *counterreg_4m;
+		extern struct timer_4m *timerreg4m;
 
 		if ((node = opennode("/obio/interrupt")) == 0)
 		    if ((node=search_prom(findroot(),"interrupt"))==0)
@@ -325,8 +324,8 @@ bootstrap()
 		if (!romprop(&ra, "counter", node))
 			panic("bootstrap: could not find counter properties");
 
-		counterreg_4m = (struct counter_4m *)ra.ra_vaddrs[0];
-		timerreg_4m = (struct timer_4m *)ra.ra_vaddrs[ra.ra_nvaddrs-1];
+		cpuinfo.counterreg_4m = (struct counter_4m *)ra.ra_vaddrs[0];
+		timerreg4m = (struct timer_4m *)ra.ra_vaddrs[ra.ra_nvaddrs-1];
 		for (i = 0; i < ra.ra_nvaddrs - 1; i++) {
 			extern void stopcounter __P((struct counter_4m *));
 			stopcounter((struct counter_4m *)ra.ra_vaddrs[i]);
