@@ -1,3 +1,5 @@
+/*	$NetBSD: am_xdr_func.h,v 1.1.1.4 2001/05/13 17:50:31 veego Exp $	*/
+
 /*
  * Copyright (c) 1997-2001 Erez Zadok
  * Copyright (c) 1990 Jan-Simon Pendry
@@ -38,7 +40,7 @@
  *
  *      %W% (Berkeley) %G%
  *
- * $Id: am_xdr_func.h,v 1.1.1.3 2001/05/13 17:34:02 veego Exp $
+ * Id: am_xdr_func.h,v 1.3.2.2 2001/01/10 03:23:38 ezk Exp
  *
  */
 

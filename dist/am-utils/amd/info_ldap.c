@@ -1,3 +1,5 @@
+/*	$NetBSD: info_ldap.c,v 1.1.1.4 2001/05/13 17:50:14 veego Exp $	*/
+
 /*
  * Copyright (c) 1997-2001 Erez Zadok
  * Copyright (c) 1989 Jan-Simon Pendry
@@ -38,7 +40,7 @@
  *
  *      %W% (Berkeley) %G%
  *
- * $Id: info_ldap.c,v 1.1.1.3 2001/05/13 17:34:13 veego Exp $
+ * Id: info_ldap.c,v 1.9.2.2 2001/01/12 23:28:56 ro Exp
  *
  */
 

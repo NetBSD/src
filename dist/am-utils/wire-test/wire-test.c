@@ -1,3 +1,5 @@
+/*	$NetBSD: wire-test.c,v 1.1.1.4 2001/05/13 17:50:34 veego Exp $	*/
+
 /*
  * Copyright (c) 1997-2001 Erez Zadok
  * Copyright (c) 1990 Jan-Simon Pendry
@@ -38,7 +40,7 @@
  *
  *      %W% (Berkeley) %G%
  *
- * $Id: wire-test.c,v 1.1.1.3 2001/05/13 17:34:41 veego Exp $
+ * Id: wire-test.c,v 1.5.2.1 2001/01/10 03:23:43 ezk Exp
  *
  */
 

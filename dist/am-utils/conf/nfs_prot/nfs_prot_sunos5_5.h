@@ -1,3 +1,5 @@
+/*	$NetBSD: nfs_prot_sunos5_5.h,v 1.1.1.4 2001/05/13 17:50:22 veego Exp $	*/
+
 /*
  * Copyright (c) 1997-2001 Erez Zadok
  * Copyright (c) 1990 Jan-Simon Pendry
@@ -38,7 +40,7 @@
  *
  *      %W% (Berkeley) %G%
  *
- * $Id: nfs_prot_sunos5_5.h,v 1.1.1.3 2001/05/13 17:33:53 veego Exp $
+ * Id: nfs_prot_sunos5_5.h,v 1.3.2.2 2001/01/10 03:23:25 ezk Exp
  *
  */
 

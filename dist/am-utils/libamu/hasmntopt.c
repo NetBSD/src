@@ -1,3 +1,5 @@
+/*	$NetBSD: hasmntopt.c,v 1.1.1.4 2001/05/13 17:50:32 veego Exp $	*/
+
 /*
  * Copyright (c) 1997-2001 Erez Zadok
  * Copyright (c) 1990 Jan-Simon Pendry
@@ -38,7 +40,7 @@ n * modification, are permitted provided that the following conditions
  *
  *      %W% (Berkeley) %G%
  *
- * $Id: hasmntopt.c,v 1.1.1.3 2001/05/13 17:34:27 veego Exp $
+ * Id: hasmntopt.c,v 1.3.2.1 2001/01/10 03:23:39 ezk Exp
  *
  */
 

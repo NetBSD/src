@@ -1,3 +1,5 @@
+/*	$NetBSD: trap_hpux.h,v 1.1.1.4 2001/05/13 17:50:23 veego Exp $	*/
+
 /* $srcdir/conf/trap/trap_hpux.h */
 extern int mount_hpux(MTYPE_TYPE type, const char *dir, int flags, caddr_t data);
 #define MOUNT_TRAP(type, mnt, flags, mnt_data) 	mount_hpux(type, mnt->mnt_dir, flags, mnt_data)

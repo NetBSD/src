@@ -1,3 +1,5 @@
+/*	$NetBSD: mount_linux.c,v 1.1.1.4 2001/05/13 17:50:17 veego Exp $	*/
+
 /*
  * Copyright (c) 1997-2001 Erez Zadok
  * Copyright (c) 1990 Jan-Simon Pendry
@@ -38,7 +40,7 @@
  *
  *      %W% (Berkeley) %G%
  *
- * $Id: mount_linux.c,v 1.1.1.3 2001/05/13 17:33:41 veego Exp $
+ * Id: mount_linux.c,v 1.11.2.8 2001/05/01 23:05:55 ib42 Exp
  */
 
 /*

@@ -1,3 +1,5 @@
+/*	$NetBSD: am_defs.h,v 1.1.1.4 2001/05/13 17:50:31 veego Exp $	*/
+
 /*
  * Copyright (c) 1997-2001 Erez Zadok
  * Copyright (c) 1990 Jan-Simon Pendry
@@ -38,7 +40,7 @@
  *
  *      %W% (Berkeley) %G%
  *
- * $Id: am_defs.h,v 1.1.1.3 2001/05/13 17:34:02 veego Exp $
+ * Id: am_defs.h,v 1.15.2.9 2001/04/07 00:47:44 ib42 Exp
  *
  */
 

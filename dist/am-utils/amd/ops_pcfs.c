@@ -1,3 +1,5 @@
+/*	$NetBSD: ops_pcfs.c,v 1.1.1.4 2001/05/13 17:50:15 veego Exp $	*/
+
 /*
  * Copyright (c) 1997-2001 Erez Zadok
  * Copyright (c) 1990 Jan-Simon Pendry
@@ -38,7 +40,7 @@
  *
  *      %W% (Berkeley) %G%
  *
- * $Id: ops_pcfs.c,v 1.1.1.3 2001/05/13 17:34:18 veego Exp $
+ * Id: ops_pcfs.c,v 1.3.2.1 2001/01/10 03:23:10 ezk Exp
  *
  */
 

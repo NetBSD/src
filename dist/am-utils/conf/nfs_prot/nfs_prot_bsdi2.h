@@ -1,3 +1,5 @@
+/*	$NetBSD: nfs_prot_bsdi2.h,v 1.1.1.4 2001/05/13 17:50:18 veego Exp $	*/
+
 /*
  * Copyright (c) 1997-2001 Erez Zadok
  * Copyright (c) 1990 Jan-Simon Pendry
@@ -38,7 +40,7 @@
  *
  *      %W% (Berkeley) %G%
  *
- * $Id: nfs_prot_bsdi2.h,v 1.1.1.3 2001/05/13 17:33:47 veego Exp $
+ * Id: nfs_prot_bsdi2.h,v 1.3.2.3 2001/01/12 23:28:58 ro Exp
  *
  */
 

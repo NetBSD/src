@@ -1,3 +1,5 @@
+/*	$NetBSD: mount_headers2.h,v 1.1.1.2 2001/05/13 17:50:31 veego Exp $	*/
+
 
 #ifdef HAVE_RPCSVC_MOUNT_H
 # include <rpcsvc/mount.h>

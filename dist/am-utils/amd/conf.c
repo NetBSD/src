@@ -1,3 +1,5 @@
+/*	$NetBSD: conf.c,v 1.1.1.4 2001/05/13 17:50:12 veego Exp $	*/
+
 /*
  * Copyright (c) 1997-2001 Erez Zadok
  * Copyright (c) 1990 Jan-Simon Pendry
@@ -38,7 +40,7 @@
  *
  *      %W% (Berkeley) %G%
  *
- * $Id: conf.c,v 1.1.1.3 2001/05/13 17:34:09 veego Exp $
+ * Id: conf.c,v 1.7.2.3 2001/04/14 21:08:21 ezk Exp
  *
  */
 
