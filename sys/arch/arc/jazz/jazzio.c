@@ -1,4 +1,4 @@
-/*	$NetBSD: jazzio.c,v 1.9 2003/02/10 11:43:29 tsutsui Exp $	*/
+/*	$NetBSD: jazzio.c,v 1.10 2003/05/03 18:10:45 wiz Exp $	*/
 /*	$OpenBSD: picabus.c,v 1.11 1999/01/11 05:11:10 millert Exp $	*/
 /*	NetBSD: tc.c,v 1.2 1995/03/08 00:39:05 cgd Exp 	*/
 
@@ -146,7 +146,7 @@ jazzioattach(parent, self, aux)
 
 	sc->sc_bus.ab_dv = (struct device *)sc;
 
-	/* Initialize jazzio dma mapping register area and pool */
+	/* Initialize jazzio DMA mapping register area and pool */
 	jazz_dmatlb_init(&jazzio_bus, jazzio_conf->jc_dmatlbreg);
 
 	/* Create bus_dma_tag */

@@ -1,4 +1,4 @@
-/*	$NetBSD: grfabs_tt.c,v 1.12 2003/04/01 23:47:03 thorpej Exp $	*/
+/*	$NetBSD: grfabs_tt.c,v 1.13 2003/05/03 18:10:46 wiz Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -118,7 +118,7 @@ MODES	*modelp;
 	int	has_mono;
 
 	/*
-	 * First find out what kind of monitor is attached. Dma-sound
+	 * First find out what kind of monitor is attached. DMA-sound
 	 * should be off because the 'sound-done' and 'monochrome-detect'
 	 * are xor-ed together. I think that shutting it down here is the
 	 * wrong place.

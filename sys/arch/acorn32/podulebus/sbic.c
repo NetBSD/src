@@ -1,4 +1,4 @@
-/* $NetBSD: sbic.c,v 1.5 2002/10/04 22:46:29 bjh21 Exp $ */
+/* $NetBSD: sbic.c,v 1.6 2003/05/03 18:10:41 wiz Exp $ */
 
 /*
  * Copyright (c) 2001 Richard Earnshaw
@@ -87,7 +87,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: sbic.c,v 1.5 2002/10/04 22:46:29 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbic.c,v 1.6 2003/05/03 18:10:41 wiz Exp $");
 
 #include <sys/systm.h>
 #include <sys/callout.h>
@@ -2351,7 +2351,7 @@ sbictimeout(struct sbic_softc *dev)
 	s = splbio();
 	if (dev->sc_dmatimo) {
 		if (dev->sc_dmatimo > 1) {
-			printf("%s: dma timeout #%d\n",
+			printf("%s: DMA timeout #%d\n",
 			    dev->sc_dev.dv_xname, dev->sc_dmatimo - 1);
 			GET_SBIC_asr(&dev->sc_sbicp, asr);
 			if (asr & SBIC_ASR_INT) {

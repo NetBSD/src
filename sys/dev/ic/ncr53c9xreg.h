@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr53c9xreg.h,v 1.11 2003/02/21 17:14:05 tsutsui Exp $	*/
+/*	$NetBSD: ncr53c9xreg.h,v 1.12 2003/05/03 18:11:23 wiz Exp $	*/
 
 /*
  * Copyright (c) 1994 Peter Galbavy.  All rights reserved.
@@ -183,7 +183,7 @@
 #define  NCRF9XCFG3_T8M		0x01	/*	Threshold 8 Mode	*/
 
 /* Config #3 on FAS366 */
-#define  NCRFASCFG3_OBAUTO    	0x80    /*	auto push odd-byte to dma */
+#define  NCRFASCFG3_OBAUTO    	0x80    /*	auto push odd-byte to DMA */
 #define  NCRFASCFG3_EWIDE     	0x40    /* 	Enable Wide-SCSI     */
 #define  NCRFASCFG3_IDBIT3	0x20	/* 	Bit 3 of HME SCSI-ID */
 #define	 NCRFASCFG3_IDRESCHK	0x10	/* 	ID message checking */

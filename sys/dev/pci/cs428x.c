@@ -1,4 +1,4 @@
-/*	$NetBSD: cs428x.c,v 1.5 2003/02/01 06:23:38 thorpej Exp $	*/
+/*	$NetBSD: cs428x.c,v 1.6 2003/05/03 18:11:33 wiz Exp $	*/
 
 /*
  * Copyright (c) 2000 Tatoku Ogaito.  All rights reserved.
@@ -33,7 +33,7 @@
 /* Common functions for CS4280 and CS4281 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cs428x.c,v 1.5 2003/02/01 06:23:38 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cs428x.c,v 1.6 2003/05/03 18:11:33 wiz Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -181,7 +181,7 @@ cs428x_free(void *addr, void *ptr, struct malloc_type *pool)
 size_t
 cs428x_round_buffersize(void *addr, int direction, size_t size)
 {
-	/* The real dma buffersize are 4KB for CS4280
+	/* The real DMA buffersize are 4KB for CS4280
 	 * and 64kB/MAX_CHANNELS for CS4281.
 	 * But they are too small for high quality audio,
 	 * let the upper layer(audio) use a larger buffer.
@@ -329,7 +329,7 @@ cs428x_allocmem(struct cs428x_softc *sc,
 				 p->segs, sizeof(p->segs)/sizeof(p->segs[0]),
 				 &p->nsegs, BUS_DMA_NOWAIT);
 	if (error) {
-		printf("%s: unable to allocate dma. error=%d\n",
+		printf("%s: unable to allocate DMA. error=%d\n",
 		       sc->sc_dev.dv_xname, error);
 		goto allfree;
 	}
@@ -337,7 +337,7 @@ cs428x_allocmem(struct cs428x_softc *sc,
 	error = bus_dmamem_map(sc->sc_dmatag, p->segs, p->nsegs, p->size,
 			       &p->addr, BUS_DMA_NOWAIT|BUS_DMA_COHERENT);
 	if (error) {
-		printf("%s: unable to map dma, error=%d\n",
+		printf("%s: unable to map DMA, error=%d\n",
 		       sc->sc_dev.dv_xname, error);
 		goto free;
 	}
@@ -345,7 +345,7 @@ cs428x_allocmem(struct cs428x_softc *sc,
 	error = bus_dmamap_create(sc->sc_dmatag, p->size, 1, p->size,
 				  0, BUS_DMA_NOWAIT, &p->map);
 	if (error) {
-		printf("%s: unable to create dma map, error=%d\n",
+		printf("%s: unable to create DMA map, error=%d\n",
 		       sc->sc_dev.dv_xname, error);
 		goto unmap;
 	}
@@ -353,7 +353,7 @@ cs428x_allocmem(struct cs428x_softc *sc,
 	error = bus_dmamap_load(sc->sc_dmatag, p->map, p->addr, p->size, NULL,
 				BUS_DMA_NOWAIT);
 	if (error) {
-		printf("%s: unable to load dma map, error=%d\n",
+		printf("%s: unable to load DMA map, error=%d\n",
 		       sc->sc_dev.dv_xname, error);
 		goto destroy;
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: cs4280.c,v 1.25 2003/01/31 00:07:41 thorpej Exp $	*/
+/*	$NetBSD: cs4280.c,v 1.26 2003/05/03 18:11:33 wiz Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Tatoku Ogaito.  All rights reserved.
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cs4280.c,v 1.25 2003/01/31 00:07:41 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cs4280.c,v 1.26 2003/05/03 18:11:33 wiz Exp $");
 
 #include "midi.h"
 
@@ -343,9 +343,9 @@ cs4280_intr(p)
 	/*
 	 * XXX
 	 *
-	 * Since CS4280 has only 4kB dma buffer and
+	 * Since CS4280 has only 4kB DMA buffer and
 	 * interrupt occurs every 2kB block, I create dummy buffer
-	 * which returns to audio driver and actual dma buffer
+	 * which returns to audio driver and actual DMA buffer
 	 * using in DMA transfer.
 	 *
 	 *
@@ -356,8 +356,8 @@ cs4280_intr(p)
 	 *	|	|	|	|	|	| <- call audio_intp every
 	 *						     sc->sc_[pr]_count time.
 	 *
-	 *  actual dma buffer is pointed by KERNADDR
-	 *	 <-> dma buffer size = 4kB
+	 *  actual DMA buffer is pointed by KERNADDR
+	 *	 <-> DMA buffer size = 4kB
 	 *	|= =|
 	 *
 	 *
@@ -757,7 +757,7 @@ cs4280_trigger_output(addr, start, end, blksize, intr, arg, param)
 		memcpy(sc->sc_pbuf, start, sc->hw_blocksize);
 	}
 
-	/* initiate playback dma */
+	/* initiate playback DMA */
 	BA1WRITE4(sc, CS4280_PBA, DMAADDR(p));
 
 	/* set PFIE */
@@ -833,7 +833,7 @@ cs4280_trigger_input(addr, start, end, blksize, intr, arg, param)
 	sc->sc_ri = 0;
 	sc->sc_rn = sc->sc_rs;
 
-	/* initiate capture dma */
+	/* initiate capture DMA */
 	BA1WRITE4(sc, CS4280_CBA, DMAADDR(p));
 
 	/* setup format information for internal converter */

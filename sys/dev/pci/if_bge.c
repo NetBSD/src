@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bge.c,v 1.38 2003/03/24 12:06:05 tron Exp $	*/
+/*	$NetBSD: if_bge.c,v 1.39 2003/05/03 18:11:34 wiz Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -573,7 +573,7 @@ bge_alloc_jumbo_mem(sc)
 	state = 1;
 	if (bus_dmamem_map(sc->bge_dmatag, &seg, rseg, BGE_JMEM, &kva,
 	    BUS_DMA_NOWAIT)) {
-		printf("%s: can't map dma buffers (%d bytes)\n",
+		printf("%s: can't map DMA buffers (%d bytes)\n",
 		    sc->bge_dev.dv_xname, (int)BGE_JMEM);
 		error = ENOBUFS;
 		goto out;
@@ -582,7 +582,7 @@ bge_alloc_jumbo_mem(sc)
 	state = 2;
 	if (bus_dmamap_create(sc->bge_dmatag, BGE_JMEM, 1, BGE_JMEM, 0,
 	    BUS_DMA_NOWAIT, &sc->bge_cdata.bge_rx_jumbo_map)) {
-		printf("%s: can't create dma map\n", sc->bge_dev.dv_xname);
+		printf("%s: can't create DMA map\n", sc->bge_dev.dv_xname);
 		error = ENOBUFS;
 		goto out;
 	}
@@ -590,7 +590,7 @@ bge_alloc_jumbo_mem(sc)
 	state = 3;
 	if (bus_dmamap_load(sc->bge_dmatag, sc->bge_cdata.bge_rx_jumbo_map,
 	    kva, BGE_JMEM, NULL, BUS_DMA_NOWAIT)) {
-		printf("%s: can't load dma map\n", sc->bge_dev.dv_xname);
+		printf("%s: can't load DMA map\n", sc->bge_dev.dv_xname);
 		error = ENOBUFS;
 		goto out;
 	}
@@ -1139,13 +1139,13 @@ bge_chipinit(sc)
 	if (pci_conf_read(pa->pa_pc, pa->pa_tag,BGE_PCI_PCISTATE) &
 	    BGE_PCISTATE_PCI_BUSMODE) {
 		/* Conventional PCI bus */
-	  	DPRINTFN(4, ("(%s: PCI 2.2 dma setting)\n", sc->bge_dev.dv_xname));
+	  	DPRINTFN(4, ("(%s: PCI 2.2 DMA setting)\n", sc->bge_dev.dv_xname));
 		dma_rw_ctl = (BGE_PCI_READ_CMD | BGE_PCI_WRITE_CMD |
 		   (0x7 << BGE_PCIDMARWCTL_RD_WAT_SHIFT) |
 		   (0x7 << BGE_PCIDMARWCTL_WR_WAT_SHIFT) |
 		   (0x0F));
 	} else {
-	  	DPRINTFN(4, ("(:%s: PCI-X dma setting)\n", sc->bge_dev.dv_xname));
+	  	DPRINTFN(4, ("(:%s: PCI-X DMA setting)\n", sc->bge_dev.dv_xname));
 		/* PCI-X bus */
 		dma_rw_ctl = BGE_PCI_READ_CMD|BGE_PCI_WRITE_CMD |
 		    (0x3 << BGE_PCIDMARWCTL_RD_WAT_SHIFT) |
@@ -2018,7 +2018,7 @@ bge_attach(parent, self, aux)
 	if (bus_dmamem_map(sc->bge_dmatag, &seg, rseg,
 			   sizeof(struct bge_ring_data), &kva,
 			   BUS_DMA_NOWAIT)) {
-		aprint_error("%s: can't map dma buffers (%d bytes)\n",
+		aprint_error("%s: can't map DMA buffers (%d bytes)\n",
 		    sc->bge_dev.dv_xname, (int)sizeof(struct bge_ring_data));
 		bus_dmamem_free(sc->bge_dmatag, &seg, rseg);
 		return;
@@ -2027,7 +2027,7 @@ bge_attach(parent, self, aux)
 	if (bus_dmamap_create(sc->bge_dmatag, sizeof(struct bge_ring_data), 1,
 	    sizeof(struct bge_ring_data), 0,
 	    BUS_DMA_NOWAIT, &sc->bge_ring_map)) {
-		aprint_error("%s: can't create dma map\n",
+		aprint_error("%s: can't create DMA map\n",
 		    sc->bge_dev.dv_xname);
 		bus_dmamem_unmap(sc->bge_dmatag, kva,
 				 sizeof(struct bge_ring_data));

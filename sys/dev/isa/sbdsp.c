@@ -1,4 +1,4 @@
-/*	$NetBSD: sbdsp.c,v 1.110 2003/02/01 06:23:37 thorpej Exp $	*/
+/*	$NetBSD: sbdsp.c,v 1.111 2003/05/03 18:11:28 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbdsp.c,v 1.110 2003/02/01 06:23:37 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbdsp.c,v 1.111 2003/05/03 18:11:28 wiz Exp $");
 
 #include "midi.h"
 #include "mpu.h"
@@ -242,7 +242,7 @@ sb_printsc(sc)
 {
 	int i;
     
-	printf("open %d dmachan %d/%d %d/%d iobase 0x%x irq %d\n",
+	printf("open %d DMA chan %d/%d %d/%d iobase 0x%x irq %d\n",
 	    (int)sc->sc_open, sc->sc_i.run, sc->sc_o.run, 
 	    sc->sc_drq8, sc->sc_drq16,
 	    sc->sc_iobase, sc->sc_irq);
@@ -1282,7 +1282,7 @@ sbdsp_trigger_input(addr, start, end, blksize, intr, arg, param)
 		}
 	}
 
-	DPRINTF(("sbdsp: dma start loop input start=%p end=%p chan=%d\n", 
+	DPRINTF(("sbdsp: DMA start loop input start=%p end=%p chan=%d\n", 
 	    start, end, sc->sc_i.dmachan));
 	isa_dmastart(sc->sc_ic, sc->sc_i.dmachan, start, 
 	    (char *)end - (char *)start, NULL,
@@ -1418,7 +1418,7 @@ sbdsp_trigger_output(addr, start, end, blksize, intr, arg, param)
 		}
 	}
 
-	DPRINTF(("sbdsp: dma start loop output start=%p end=%p chan=%d\n",
+	DPRINTF(("sbdsp: DMA start loop output start=%p end=%p chan=%d\n",
 	    start, end, sc->sc_o.dmachan));
 	isa_dmastart(sc->sc_ic, sc->sc_o.dmachan, start, 
 	    (char *)end - (char *)start, NULL,
@@ -1514,8 +1514,8 @@ sbdsp_halt_input(addr)
 /*
  * Only the DSP unit on the sound blaster generates interrupts.
  * There are three cases of interrupt: reception of a midi byte
- * (when mode is enabled), completion of dma transmission, or 
- * completion of a dma reception.
+ * (when mode is enabled), completion of DMA transmission, or 
+ * completion of a DMA reception.
  *
  * If there is interrupt sharing or a spurious interrupt occurs
  * there is no way to distinguish this on an SB2.  So if you have

@@ -1,4 +1,4 @@
-/*	$NetBSD: beep.c,v 1.17 2003/04/01 23:19:10 thorpej Exp $	*/
+/*	$NetBSD: beep.c,v 1.18 2003/05/03 18:10:45 wiz Exp $	*/
 
 /*
  * Copyright (c) 1995 Mark Brinicombe
@@ -42,7 +42,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: beep.c,v 1.17 2003/04/01 23:19:10 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: beep.c,v 1.18 2003/05/03 18:10:45 wiz Exp $");
 
 #include <sys/systm.h>
 #include <sys/conf.h>
@@ -163,7 +163,7 @@ beepattach(struct device *parent, struct device *self, void *aux)
 	sc->sc_ih.ih_func = beepintr;
 	sc->sc_ih.ih_arg = sc;
 	sc->sc_ih.ih_level = IPL_AUDIO;
-	sc->sc_ih.ih_name = "dma snd ch 0";
+	sc->sc_ih.ih_name = "DMA snd ch 0";
 
 	if (irq_claim(sdma_channel, &sc->sc_ih))
 		panic("Cannot claim IRQ %d for beep%d",
@@ -325,7 +325,7 @@ beepdma(struct beep_softc *sc, int buf)
 {
 	int status;
 
-/*	printf("beep:dma %d", buf);    */
+/*	printf("beep: DMA %d", buf);    */
 	status = IOMD_READ_BYTE(IOMD_SD0ST);
 /*	printf("st=%02x\n", status);*/
 

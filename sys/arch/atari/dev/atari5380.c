@@ -1,4 +1,4 @@
-/*	$NetBSD: atari5380.c,v 1.34 2003/04/01 23:47:02 thorpej Exp $	*/
+/*	$NetBSD: atari5380.c,v 1.35 2003/05/03 18:10:45 wiz Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -256,7 +256,7 @@ scsi_tt_init(struct ncr_softc *sc)
 	MFP2->mf_aer  |= 0x80;		/* SCSI IRQ goes HIGH!!!!!	*/
 
 	if (machineid & ATARI_TT) {
-		/* SCSI-dma interrupts		*/
+		/* SCSI-DMA interrupts		*/
 		MFP2->mf_ierb |= IB_SCDM;
 		MFP2->mf_iprb  = (u_int8_t)~IB_SCDM;
 		MFP2->mf_imrb |= IB_SCDM;
@@ -521,7 +521,7 @@ extern	int			*nofault;
 
 		if (cnt != 0) {
 			/*
-			 * Update the dma pointer/count fields
+			 * Update the DMA pointer/count fields
 			 */
 			set_scsi_dma(SCSI_DMA->s_dma_ptr, dma_ptr);
 			get_scsi_dma(SCSI_DMA->s_dma_cnt, tmp);
@@ -741,8 +741,8 @@ scsi_falcon_ipending()
 		if (MFP->mf_gpip & IO_DINT)
 		    return (0); /* XXX: Actually: we're not allowed to check */
 
-		/* LWP: 28-06, must be a dma interrupt! should the
-		 * ST-DMA unit be taken out of dma mode?????
+		/* LWP: 28-06, must be a DMA interrupt! should the
+		 * ST-DMA unit be taken out of DMA mode?????
 		 */
 		DMA->dma_mode = 0x90;
 

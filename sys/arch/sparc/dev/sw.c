@@ -1,4 +1,4 @@
-/*	$NetBSD: sw.c,v 1.11 2002/12/10 13:44:50 pk Exp $	*/
+/*	$NetBSD: sw.c,v 1.12 2003/05/03 18:11:00 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -344,7 +344,7 @@ sw_attach(parent, self, aux)
 	i = SCI_OPENINGS * sizeof(struct sw_dma_handle);
 	sc->sc_dma = (struct sw_dma_handle *)malloc(i, M_DEVBUF, M_NOWAIT);
 	if (sc->sc_dma == NULL)
-		panic("sw: dma handle malloc failed");
+		panic("sw: DMA handle malloc failed");
 
 	for (i = 0; i < SCI_OPENINGS; i++) {
 		sc->sc_dma[i].dh_flags = 0;
@@ -848,7 +848,7 @@ sw_dma_stop(ncr_sc)
 
 	if ((ncr_sc->sc_state & NCR_DOINGDMA) == 0) {
 #ifdef	DEBUG
-		printf("sw_dma_stop: dma not running\n");
+		printf("sw_dma_stop: DMA not running\n");
 #endif
 		return;
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: vraiu.c,v 1.4 2003/04/06 18:20:10 wiz Exp $	*/
+/*	$NetBSD: vraiu.c,v 1.5 2003/05/03 18:10:49 wiz Exp $	*/
 
 /*
  * Copyright (c) 2001 HAMAJIMA Katsuomi. All rights reserved.
@@ -67,7 +67,7 @@ struct vraiu_softc {
 	vrdmaau_chipset_tag_t	sc_ac;
 	vrcmu_chipset_tag_t	sc_cc;
 	void			*sc_handler;
-	u_short	*sc_buf;	/* dma buffer pointer */
+	u_short	*sc_buf;	/* DMA buffer pointer */
 	int	sc_status;	/* status */
 	u_int	sc_rate;	/* sampling rate */
 	u_int	sc_channels;	/* # of channels used */
@@ -548,7 +548,7 @@ vraiu_commit_settings(void *self)
 	DPRINTFN(1, ("vraiu_commit_settings: enable DMA\n"))
 	if ((err = sc->sc_dc->dc_enable_aiuout(sc->sc_dc))) {
 		sc->sc_cc->cc_clock(sc->sc_cc, VR4102_CMUMSKAIU, 0);
-		DPRINTFN(0, ("vraiu_commit_settings: enable dma error\n"));
+		DPRINTFN(0, ("vraiu_commit_settings: enable DMA error\n"));
 		return err;
 	}
 	DPRINTFN(1, ("vraiu_commit_settings: Vref on\n"))

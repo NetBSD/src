@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_obio.c,v 1.23 2003/04/02 03:04:02 thorpej Exp $	*/
+/*	$NetBSD: wdc_obio.c,v 1.24 2003/05/03 18:10:51 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -185,7 +185,7 @@ wdc_obio_attach(parent, self, aux)
 		}
 #endif
 	} else {
-		/* all non-dma controllers can use adjust_timing */
+		/* all non-DMA controllers can use adjust_timing */
 		sc->sc_wdcdev.set_modes = adjust_timing;
 	}
 
@@ -304,7 +304,7 @@ adjust_timing(chp)
 			/* mask: 0x000007ff */
 			conf |= (inact_tick << 5) | act_tick;
 		}
-		/* Set up dma mode timings */
+		/* Set up DMA mode timings */
 		if (drvp->drive_flags & DRIVE_DMA) {
 			int dmamode = drvp->DMA_mode;
 			min_cycle = dma_timing[dmamode].cycle;

@@ -1,4 +1,4 @@
-/*	$NetBSD: fwohci.c,v 1.74 2003/04/02 21:53:15 christos Exp $	*/
+/*	$NetBSD: fwohci.c,v 1.75 2003/05/03 18:11:24 wiz Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fwohci.c,v 1.74 2003/04/02 21:53:15 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fwohci.c,v 1.75 2003/05/03 18:11:24 wiz Exp $");
 
 #define FWOHCI_WAIT_DEBUG 1
 
@@ -2274,7 +2274,7 @@ fwohci_as_input(struct fwohci_softc *sc, struct fwohci_ctx *fc)
 		int i;
 		u_int32_t reg;
 
-		/* stop dma engine before read buffer */
+		/* stop DMA engine before read buffer */
 		reg = OHCI_SYNC_RX_DMA_READ(sc, fc->fc_ctx,
 		    OHCI_SUBREG_ContextControlClear);
 		DPRINTFN(5, ("ir_input %08x =>", reg));
@@ -2288,16 +2288,16 @@ fwohci_as_input(struct fwohci_softc *sc, struct fwohci_ctx *fc)
 		while ((reg = OHCI_SYNC_RX_DMA_READ(sc, fc->fc_ctx, OHCI_SUBREG_ContextControlSet)) & OHCI_CTXCTL_ACTIVE) {
 			delay(10);
 			if (++i > 10000) {
-				printf("cannot stop dma engine 0x%08x\n", reg);
+				printf("cannot stop DMA engine 0x%08x\n", reg);
 				return;
 			}
 		}
 
-		/* rotate dma buffer */
+		/* rotate DMA buffer */
 		fb = TAILQ_FIRST(&fc->fc_buf2);
 		OHCI_SYNC_RX_DMA_WRITE(sc, fc->fc_ctx, OHCI_SUBREG_CommandPtr,
 		    fb->fb_daddr | 1);
-		/* start dma engine */
+		/* start DMA engine */
 		OHCI_SYNC_RX_DMA_WRITE(sc, fc->fc_ctx,
 		    OHCI_SUBREG_ContextControlSet, OHCI_CTXCTL_RUN);
 		OHCI_CSR_WRITE(sc, OHCI_REG_IsoRecvIntEventClear,
@@ -5998,7 +5998,7 @@ fwohci_it_ctx_flush(ieee1394_it_tag_t it)
  *	This function is the interrupt handler for isochronous
  *	transmit interrupt.  This function will 1) unlink used
  *	(already transmitted) buffers, 2) link new filled buffers, if
- *	necessary and 3) say some free dma buffers exist to
+ *	necessary and 3) say some free DMA buffers exist to
  *	fwiso_write()
  */
 static void

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.23 2003/04/26 11:05:21 ragge Exp $	*/
+/*	$NetBSD: machdep.c,v 1.24 2003/05/03 18:11:03 wiz Exp $	*/
 
 /*
  * Copyright (c) 2001 Matthew Fredette.
@@ -392,7 +392,7 @@ cpu_startup()
 	vmmap = uvm_km_valloc_wait(kernel_map, PAGE_SIZE);
 
 	/*
-	 * Allocate dma map for devices on the bus.
+	 * Allocate DMA map for devices on the bus.
 	 */
 	dvmamap = extent_create("dvmamap",
 	    DVMA_MAP_BASE, DVMA_MAP_BASE + DVMA_MAP_AVAIL,
@@ -992,7 +992,7 @@ _bus_dmamap_load(t, map, buf, buflen, p, flags)
 	 */
 	if ((map->_dm_flags & BUS_DMA_24BIT) != 0 && p == NULL) {
 		/*
-		 * XXX Need to implement "don't dma across this boundry".
+		 * XXX Need to implement "don't DMA across this boundry".
 		 */
 		if (map->_dm_boundary != 0)
 			panic("bus_dmamap_load: boundaries not implemented");

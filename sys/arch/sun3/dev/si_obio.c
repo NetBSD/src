@@ -1,4 +1,4 @@
-/*	$NetBSD: si_obio.c,v 1.25 2002/10/02 16:02:26 thorpej Exp $	*/
+/*	$NetBSD: si_obio.c,v 1.26 2003/05/03 18:11:04 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -449,7 +449,7 @@ si_obio_dma_stop(ncr_sc)
 
 	if ((ncr_sc->sc_state & NCR_DOINGDMA) == 0) {
 #ifdef	DEBUG
-		printf("si_dma_stop: dma not running\n");
+		printf("si_dma_stop: DMA not running\n");
 #endif
 		return;
 	}
@@ -484,7 +484,7 @@ si_obio_dma_stop(ncr_sc)
 			if (si->si_csr & SI_CSR_FIFO_EMPTY)
 				break;
 			if (--tmo <= 0) {
-				printf("si: dma fifo did not empty, reset\n");
+				printf("si: DMA FIFO did not empty, reset\n");
 				ncr_sc->sc_state |= NCR_ABORTING;
 				/* si_obio_reset(ncr_sc); */
 				goto out;

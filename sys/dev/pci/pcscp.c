@@ -1,4 +1,4 @@
-/*	$NetBSD: pcscp.c,v 1.23 2002/12/28 07:11:24 tsutsui Exp $	*/
+/*	$NetBSD: pcscp.c,v 1.24 2003/05/03 18:11:37 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcscp.c,v 1.23 2002/12/28 07:11:24 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcscp.c,v 1.24 2003/05/03 18:11:37 wiz Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -273,7 +273,7 @@ pcscp_attach(parent, self, aux)
 
 	if (bus_dmamap_create(esc->sc_dmat, MAXPHYS, MDL_SIZE, MAXPHYS, 0,
 	    BUS_DMA_NOWAIT, &esc->sc_xfermap)) {
-		printf("%s: can't create dma maps\n", sc->sc_dev.dv_xname);
+		printf("%s: can't create DMA maps\n", sc->sc_dev.dv_xname);
 		return;
 	}
 
@@ -317,7 +317,7 @@ pcscp_attach(parent, self, aux)
 	sc->sc_adapter.adapt_request = ncr53c9x_scsipi_request;
 	ncr53c9x_attach(sc);
 
-	/* Turn on target selection using the `dma' method */
+	/* Turn on target selection using the `DMA' method */
 	sc->sc_features |= NCR_F_DMASELECT;
 }
 
@@ -647,7 +647,7 @@ pcscp_dma_stop(sc)
 {
 	struct pcscp_softc *esc = (struct pcscp_softc *)sc;
 
-	/* dma stop */
+	/* DMA stop */
 	/* XXX What should we do here ? */
 	WRITE_DMAREG(esc, DMA_CMD,
 	    DMACMD_ABORT | (esc->sc_datain ? DMACMD_DIR : 0));

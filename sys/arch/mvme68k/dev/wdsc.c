@@ -1,4 +1,4 @@
-/*	$NetBSD: wdsc.c,v 1.23 2002/10/02 05:28:15 thorpej Exp $	*/
+/*	$NetBSD: wdsc.c,v 1.24 2003/05/03 18:10:53 wiz Exp $	*/
 
 /*
  * Copyright (c) 1996 Steve Woodford
@@ -137,7 +137,7 @@ wdsc_pcc_attach(pdp, dp, auxp)
     printf(": WD33C93 SCSI, target %d\n", sc->sc_channel.chan_id);
 
     /*
-     * Eveything is a valid dma address.
+     * Eveything is a valid DMA address.
      */
     sc->sc_dmamask = 0;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: sbicvar.h,v 1.19 2003/04/09 01:54:44 thorpej Exp $	*/
+/*	$NetBSD: sbicvar.h,v 1.20 2003/05/03 18:10:44 wiz Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -133,9 +133,9 @@ struct	sbic_softc {
 	u_char	sc_msg[7];
 	u_long	sc_clkfreq;
 	u_long	sc_tcnt;		/* number of bytes transfered */
-	u_short sc_dmacmd;		/* used by dma drivers */
-	u_short	sc_dmatimo;		/* dma timeout */
-	u_long	sc_dmamask;		/* dma valid mem mask */
+	u_short sc_dmacmd;		/* used by DMA drivers */
+	u_short	sc_dmatimo;		/* DMA timeout */
+	u_long	sc_dmamask;		/* DMA valid mem mask */
 	struct	dma_chain *sc_cur;
 	struct	dma_chain *sc_last;
 	int  (*sc_dmago)(struct sbic_softc *, char *, int, int);
@@ -147,7 +147,7 @@ struct	sbic_softc {
 
 /* sc_flags */
 #define	SBICF_ALIVE	0x01	/* controller initialized */
-#define SBICF_DCFLUSH	0x02	/* need flush for overlap after dma finishes */
+#define SBICF_DCFLUSH	0x02	/* need flush for overlap after DMA finishes */
 #define SBICF_SELECTED	0x04	/* bus is in selected state. */
 #define SBICF_ICMD	0x08	/* Immediate command in execution */
 #define SBICF_BADDMA	0x10	/* controller can only DMA to ztwobus space */

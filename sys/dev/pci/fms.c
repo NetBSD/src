@@ -1,4 +1,4 @@
-/*	$NetBSD: fms.c,v 1.17 2003/02/01 06:23:39 thorpej Exp $	*/
+/*	$NetBSD: fms.c,v 1.18 2003/05/03 18:11:34 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fms.c,v 1.17 2003/02/01 06:23:39 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fms.c,v 1.18 2003/05/03 18:11:34 wiz Exp $");
 
 #include "mpu.h"
 
@@ -777,28 +777,28 @@ fms_malloc(addr, direction, size, pool, flags)
 	p->size = size;
 	if ((error = bus_dmamem_alloc(sc->sc_dmat, size, PAGE_SIZE, 0, &p->seg,
 				      1, &rseg, BUS_DMA_NOWAIT)) != 0) {
-		printf("%s: unable to allocate dma, error = %d\n", 
+		printf("%s: unable to allocate DMA, error = %d\n", 
 		       sc->sc_dev.dv_xname, error);
 		goto fail_alloc;
 	}
 	
 	if ((error = bus_dmamem_map(sc->sc_dmat, &p->seg, rseg, size, &p->addr,
 				    BUS_DMA_NOWAIT | BUS_DMA_COHERENT)) != 0) {
-		printf("%s: unable to map dma, error = %d\n", 
+		printf("%s: unable to map DMA, error = %d\n", 
 		       sc->sc_dev.dv_xname, error);
 		goto fail_map;
 	}
 	
 	if ((error = bus_dmamap_create(sc->sc_dmat, size, 1, size, 0, 
 				       BUS_DMA_NOWAIT, &p->map)) != 0) {
-		printf("%s: unable to create dma map, error = %d\n",
+		printf("%s: unable to create DMA map, error = %d\n",
 		       sc->sc_dev.dv_xname, error);
 		goto fail_create;
 	}
 	
 	if ((error = bus_dmamap_load(sc->sc_dmat, p->map, p->addr, size, NULL,
 				     BUS_DMA_NOWAIT)) != 0) {
-		printf("%s: unable to load dma map, error = %d\n",
+		printf("%s: unable to load DMA map, error = %d\n",
 		       sc->sc_dev.dv_xname, error);
 		goto fail_load;
 	}

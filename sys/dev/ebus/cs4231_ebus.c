@@ -1,4 +1,4 @@
-/*	$NetBSD: cs4231_ebus.c,v 1.10 2002/12/10 13:44:49 pk Exp $ */
+/*	$NetBSD: cs4231_ebus.c,v 1.11 2003/05/03 18:11:09 wiz Exp $ */
 
 /*
  * Copyright (c) 2002 Valeriy E. Ushakov
@@ -69,7 +69,7 @@ int	cs4231_ebus_match(struct device *, struct cfdata *, void *);
 CFATTACH_DECL(audiocs_ebus, sizeof(struct cs4231_ebus_softc),
     cs4231_ebus_match, cs4231_ebus_attach, NULL, NULL);
 
-/* audio_hw_if methods specific to ebus dma */
+/* audio_hw_if methods specific to ebus DMA */
 static int	cs4231_ebus_trigger_output(void *, void *, void *, int,
 					   void (*)(void *), void *,
 					   struct audio_params *);
@@ -218,7 +218,7 @@ cs4231_ebus_regdump(label, ebsc)
 	/* char bits[128]; */
 
 	printf("cs4231regdump(%s): regs:", label);
-	/* XXX: dump ebus dma and aux registers */
+	/* XXX: dump ebus DMA and aux registers */
 	ad1848_dump_regs(&ebsc->sc_cs4231.sc_ad1848);
 }
 #endif /* AUDIO_DEBUG */
@@ -469,7 +469,7 @@ cs4231_ebus_dma_intr(t, dt, dh)
 
 	cs4231_ebus_dma_advance(t, dt, dh);
 
-	/* call audio(9) framework while dma is chugging along */
+	/* call audio(9) framework while DMA is chugging along */
 	if (t->t_intr != NULL)
 		(*t->t_intr)(t->t_arg);
 	return (1);

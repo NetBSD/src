@@ -1,4 +1,4 @@
-/*	$NetBSD: si.c,v 1.52 2002/12/29 14:38:11 kristerw Exp $	*/
+/*	$NetBSD: si.c,v 1.53 2003/05/03 18:11:04 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -404,7 +404,7 @@ si_dma_poll(ncr_sc)
 	 * XXX: I really doubt that is necessary...
 	 */
 
-	/* Wait for any "dma complete" or error bits. */
+	/* Wait for any "DMA complete" or error bits. */
 	tmo = POLL_TIMO;
 	for (;;) {
 		if (si->si_csr & CSR_MASK)

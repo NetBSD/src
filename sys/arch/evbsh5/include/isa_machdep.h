@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_machdep.h,v 1.1 2002/07/05 13:31:46 scw Exp $	*/
+/*	$NetBSD: isa_machdep.h,v 1.2 2003/05/03 18:10:47 wiz Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -58,7 +58,7 @@ extern void *isa_intr_establish(isa_chipset_tag_t, int, int,
 extern void isa_intr_disestablish(isa_chipset_tag_t, void *);
 
 /*
- * We don't support ISA dma, so these are just dummy stubs.
+ * We don't support ISA DMA, so these are just dummy stubs.
  */
 struct isa_dma_state;
 extern void isa_dmainit(struct isa_dma_state *, bus_space_tag_t,

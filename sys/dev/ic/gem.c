@@ -1,4 +1,4 @@
-/*	$NetBSD: gem.c,v 1.26 2003/02/26 06:31:09 matt Exp $ */
+/*	$NetBSD: gem.c,v 1.27 2003/05/03 18:11:17 wiz Exp $ */
 
 /*
  * 
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gem.c,v 1.26 2003/02/26 06:31:09 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gem.c,v 1.27 2003/05/03 18:11:17 wiz Exp $");
 
 #include "bpfilter.h"
 
@@ -559,7 +559,7 @@ gem_reset_rx(struct gem_softc *sc)
 		if ((bus_space_read_4(t, h, GEM_RX_CONFIG) & 1) == 0)
 			break;
 	if ((bus_space_read_4(t, h, GEM_RX_CONFIG) & 1) != 0)
-		printf("%s: cannot disable read dma\n",
+		printf("%s: cannot disable read DMA\n",
 			sc->sc_dev.dv_xname);
 
 	/* Wait 5ms extra. */
@@ -601,7 +601,7 @@ gem_reset_tx(struct gem_softc *sc)
 		if ((bus_space_read_4(t, h, GEM_TX_CONFIG) & 1) == 0)
 			break;
 	if ((bus_space_read_4(t, h, GEM_TX_CONFIG) & 1) != 0)
-		printf("%s: cannot disable read dma\n",
+		printf("%s: cannot disable read DMA\n",
 			sc->sc_dev.dv_xname);
 
 	/* Wait 5ms extra. */
@@ -1512,7 +1512,7 @@ gem_add_rxbuf(struct gem_softc *sc, int idx)
 	}
 
 #ifdef GEM_DEBUG
-/* bzero the packet to check dma */
+/* bzero the packet to check DMA */
 	memset(m->m_ext.ext_buf, 0, m->m_ext.ext_size);
 #endif
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: aria.c,v 1.17 2003/04/06 18:20:13 wiz Exp $	*/
+/*	$NetBSD: aria.c,v 1.18 2003/05/03 18:11:26 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1996, 1998 Roland C. Dowdeswell.  All rights reserved.
@@ -34,7 +34,7 @@
  *  o   Test the driver on cards other than a single
  *      Prometheus Aria 16.
  *  o   Look into where aria_prometheus_kludge() belongs.
- *  o   Add some dma code.  It accomplishes its goal by
+ *  o   Add some DMA code.  It accomplishes its goal by
  *      direct IO at the moment.
  *  o   Different programs should be able to open the device
  *      with O_RDONLY and O_WRONLY at the same time.  But I
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aria.c,v 1.17 2003/04/06 18:20:13 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aria.c,v 1.18 2003/05/03 18:11:26 wiz Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: aac.c,v 1.8 2003/01/31 00:26:25 thorpej Exp $	*/
+/*	$NetBSD: aac.c,v 1.9 2003/05/03 18:11:11 wiz Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aac.c,v 1.8 2003/01/31 00:26:25 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aac.c,v 1.9 2003/05/03 18:11:11 wiz Exp $");
 
 #include "locators.h"
 
@@ -1048,9 +1048,9 @@ aac_ccb_map(struct aac_softc *sc, struct aac_ccb *ac)
 	if (error) {
 		printf("%s: aac_ccb_map: ", sc->sc_dv.dv_xname);
 		if (error == EFBIG)
-			printf("more than %d dma segs\n", AAC_MAX_SGENTRIES);
+			printf("more than %d DMA segs\n", AAC_MAX_SGENTRIES);
 		else
-			printf("error %d loading dma map\n", error);
+			printf("error %d loading DMA map\n", error);
 		return (error);
 	}
 

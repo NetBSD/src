@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr5380.c,v 1.51 2003/04/02 01:09:19 thorpej Exp $	*/
+/*	$NetBSD: ncr5380.c,v 1.52 2003/05/03 18:10:50 wiz Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -566,8 +566,8 @@ struct ncr_softc *sc;
 connected:
 	    if (connected) {
 		/*
-		 * If the host is currently connected but a 'real-dma' transfer
-		 * is in progress, the 'end-of-dma' interrupt restarts main.
+		 * If the host is currently connected but a 'real-DMA' transfer
+		 * is in progress, the 'end-of-DMA' interrupt restarts main.
 		 * So quit.
 		 */
 		sps = splbio();
@@ -1478,8 +1478,8 @@ again:
 
 	if (poll) {
 		/*
-		 * On polled-dma transfers, we wait here until the
-		 * 'end-of-dma' condition occurs.
+		 * On polled-DMA transfers, we wait here until the
+		 * 'end-of-DMA' condition occurs.
 		 */
 		poll_edma(reqp);
 		if (!(dma_done = dma_ready()))
@@ -1801,7 +1801,7 @@ struct ncr_softc *sc;
 #ifdef REAL_DMA
 /*
  * Check if DMA can be used for this request. This function also builds
- * the dma-chain.
+ * the DMA-chain.
  */
 static int
 scsi_dmaok(reqp)

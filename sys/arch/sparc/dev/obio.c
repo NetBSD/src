@@ -1,4 +1,4 @@
-/*	$NetBSD: obio.c,v 1.62 2003/04/30 22:12:34 martin Exp $	*/
+/*	$NetBSD: obio.c,v 1.63 2003/05/03 18:11:00 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1997,1998 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
 struct obio4_softc {
 	struct device	sc_dev;		/* base device */
 	bus_space_tag_t	sc_bustag;	/* parent bus tag */
-	bus_dma_tag_t	sc_dmatag;	/* parent bus dma tag */
+	bus_dma_tag_t	sc_dmatag;	/* parent bus DMA tag */
 };
 
 union obio_softc {

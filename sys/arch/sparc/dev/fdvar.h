@@ -1,4 +1,4 @@
-/*	$NetBSD: fdvar.h,v 1.10 2000/01/21 13:22:02 pk Exp $	*/
+/*	$NetBSD: fdvar.h,v 1.11 2003/05/03 18:11:00 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -61,8 +61,8 @@ struct fdcio {
 	/*
 	 * IO state.
 	 */
-	char	*fdcio_data;		/* pseudo-dma data */
-	int	fdcio_tc;		/* pseudo-dma Terminal Count */
+	char	*fdcio_data;		/* pseudo-DMA data */
+	int	fdcio_tc;		/* pseudo-DMA Terminal Count */
 	u_char	fdcio_status[FDC_NSTATUS];	/* copy of registers */
 	int	fdcio_nstat;		/* # of valid status bytes */
 

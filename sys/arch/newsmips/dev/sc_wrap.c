@@ -1,4 +1,4 @@
-/*	$NetBSD: sc_wrap.c,v 1.21 2003/04/02 04:17:51 thorpej Exp $	*/
+/*	$NetBSD: sc_wrap.c,v 1.22 2003/05/03 18:10:54 wiz Exp $	*/
 
 /*
  * This driver is slow!  Need to rewrite.
@@ -310,7 +310,7 @@ start:
 	scb->identify = MSG_IDENT | sc_disconnect | (lun & IDT_DRMASK);
 	scb->sc_ctrnscnt = xs->datalen;
 
-	/* make va->pa mapping table for dma */
+	/* make va->pa mapping table for DMA */
 	if (xs->datalen > 0) {
 		int pages, offset;
 		int i, pn;

@@ -1,4 +1,4 @@
-/*	$NetBSD: desktech.h,v 1.3 2000/02/22 11:26:01 soda Exp $	*/
+/*	$NetBSD: desktech.h,v 1.4 2003/05/03 18:10:44 wiz Exp $	*/
 /*	$OpenBSD: desktech.h,v 1.6 1999/01/30 22:39:38 imp Exp $ */
 
 /*
@@ -62,7 +62,7 @@
 #define	TYNE_V_ISA_MEM		0xe1000000
 #define	TYNE_S_ISA_MEM		0x00100000
 
-#define	TYNE_P_BOUNCE		(0x0100800000LL)	/* Dma bounce buffer */
+#define	TYNE_P_BOUNCE		(0x0100800000LL)	/* DMA bounce buffer */
 #define	TYNE_V_BOUNCE		0xe2000000
 #define	TYNE_S_BOUNCE		0x00020000
 

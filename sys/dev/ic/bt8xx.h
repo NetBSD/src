@@ -1,4 +1,4 @@
-/*	$NetBSD: bt8xx.h,v 1.6 2003/03/12 00:14:54 wiz Exp $	*/
+/*	$NetBSD: bt8xx.h,v 1.7 2003/05/03 18:11:16 wiz Exp $	*/
 
 /* This file is merged from ioctl_meteor.h and ioctl_bt848.h from FreeBSD. */
 /* The copyright below only applies to the ioctl_meteor.h part of this file. */
@@ -63,10 +63,10 @@ struct meteor_geomet {
 	u_long		oformat;
 };
 
-/* structure for METEORGCOUNT-get count of frames, fifo errors and dma errors */
+/* structure for METEORGCOUNT-get count of frames, fifo errors and DMA errors */
 struct meteor_counts {
 	u_long fifo_errors;	/* count of fifo errors since open */
-	u_long dma_errors;	/* count of dma errors since open */
+	u_long dma_errors;	/* count of DMA errors since open */
 	u_long frames_captured;	/* count of frames captured since open */
 	u_long even_fields_captured; /* count of even fields captured */
 	u_long odd_fields_captured; /* count of odd fields captured */
@@ -74,7 +74,7 @@ struct meteor_counts {
 
 /* structure for getting and setting direct transfers to vram */
 struct meteor_video {
-	u_long	addr;	/* Address of location to dma to */
+	u_long	addr;	/* Address of location to DMA to */
 	u_long	width;	/* Width of memory area */
 	u_long	banksize;	/* Size of Vram bank */
 	u_long	ramsize;	/* Size of Vram */

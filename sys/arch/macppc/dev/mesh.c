@@ -1,4 +1,4 @@
-/*	$NetBSD: mesh.c,v 1.17 2003/04/02 03:04:02 thorpej Exp $	*/
+/*	$NetBSD: mesh.c,v 1.18 2003/05/03 18:10:51 wiz Exp $	*/
 
 /*-
  * Copyright (c) 2000	Tsubai Masanari.
@@ -1151,7 +1151,7 @@ mesh_timeout(arg)
 
 	s = splbio();
 	if (sc->sc_flags & MESH_DMA_ACTIVE) {
-		printf("mesh: resetting dma\n");
+		printf("mesh: resetting DMA\n");
 		dbdma_reset(sc->sc_dmareg);
 	}
 	scb->xs->error = XS_TIMEOUT;

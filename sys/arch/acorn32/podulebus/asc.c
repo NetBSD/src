@@ -1,4 +1,4 @@
-/*	$NetBSD: asc.c,v 1.11 2002/10/02 03:31:59 thorpej Exp $	*/
+/*	$NetBSD: asc.c,v 1.12 2003/05/03 18:10:41 wiz Exp $	*/
 
 /*
  * Copyright (c) 2001 Richard Earnshaw
@@ -74,7 +74,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: asc.c,v 1.11 2002/10/02 03:31:59 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: asc.c,v 1.12 2003/05/03 18:10:41 wiz Exp $");
 
 #include <sys/systm.h>
 #include <sys/kernel.h>
@@ -346,7 +346,7 @@ asc_minphys(struct buf *bp)
 	 * We must limit the DMA xfer size
 	 */
 	if (bp->b_bcount > MAX_DMA_LEN) {
-		printf("asc: Reducing dma length\n");
+		printf("asc: Reducing DMA length\n");
 		bp->b_bcount = MAX_DMA_LEN;
 	}
 #endif

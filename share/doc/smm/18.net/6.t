@@ -1,4 +1,4 @@
-.\"	$NetBSD: 6.t,v 1.3 2003/02/05 00:02:29 perry Exp $
+.\"	$NetBSD: 6.t,v 1.4 2003/05/03 18:10:39 wiz Exp $
 .\"
 .\" Copyright (c) 1983, 1986, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -530,7 +530,7 @@ struct	ifxmt {
 	struct	ifrw ifrw;
 	caddr_t	ifw_base;			/* virt addr of buffer */
 	struct	pte ifw_wmap[IF_MAXNUBAMR];	/* base pages for output */
-	struct	mbuf *ifw_xtofree;		/* pages being dma'd out */
+	struct	mbuf *ifw_xtofree;		/* pages being DMA'd out */
 	short	ifw_xswapd;			/* mask of clusters swapped */
 	short	ifw_nmr;			/* number of entries in wmap */
 };

@@ -115,7 +115,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dmresrc.c,v 1.2 2003/02/13 14:16:17 kanaoka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dmresrc.c,v 1.3 2003/05/03 18:11:09 wiz Exp $");
 
 #include "acpi.h"
 #include "amlcode.h"
@@ -136,7 +136,7 @@ __KERNEL_RCSID(0, "$NetBSD: dmresrc.c,v 1.2 2003/02/13 14:16:17 kanaoka Exp $");
  *
  * RETURN:      None
  *
- * DESCRIPTION: Dump a bit mask as a list of individual interrupt/dma levels.
+ * DESCRIPTION: Dump a bit mask as a list of individual interrupt/DMA levels.
  *
  ******************************************************************************/
 

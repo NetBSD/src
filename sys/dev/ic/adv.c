@@ -1,4 +1,4 @@
-/*	$NetBSD: adv.c,v 1.32 2003/01/31 00:26:26 thorpej Exp $	*/
+/*	$NetBSD: adv.c,v 1.33 2003/05/03 18:11:11 wiz Exp $	*/
 
 /*
  * Generic driver for the Advanced Systems Inc. Narrow SCSI controllers
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adv.c,v 1.32 2003/01/31 00:26:26 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adv.c,v 1.33 2003/05/03 18:11:11 wiz Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -663,12 +663,12 @@ adv_scsipi_request(chan, req, arg)
  				xs->error = XS_DRIVER_STUFFUP;
 				if (error == EFBIG) {
 					printf("%s: adv_scsi_cmd, more than %d"
-					    " dma segments\n",
+					    " DMA segments\n",
 					    sc->sc_dev.dv_xname,
 					    ASC_MAX_SG_LIST);
 				} else {
 					printf("%s: adv_scsi_cmd, error %d"
-					    " loading dma map\n",
+					    " loading DMA map\n",
 					    sc->sc_dev.dv_xname, error);
 				}
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: midwayvar.h,v 1.11 1999/07/01 08:12:46 itojun Exp $	*/
+/*	$NetBSD: midwayvar.h,v 1.12 2003/05/03 18:11:22 wiz Exp $	*/
 
 /*
  *
@@ -125,15 +125,15 @@ struct en_softc {
   u_int32_t swsl_size;		/* # of items in swsl */
   
 
-  /* xmit dma */
-  u_int32_t dtq[MID_DTQ_N];	/* sw copy of dma q (see ENIDQ macros) */
+  /* xmit DMA */
+  u_int32_t dtq[MID_DTQ_N];	/* sw copy of DMA q (see ENIDQ macros) */
   u_int32_t dtq_free;		/* # of dtq's free */
   u_int32_t dtq_us;		/* software copy of our pointer (byte offset) */
   u_int32_t dtq_chip;		/* chip's pointer (byte offset) */
   u_int32_t need_dtqs;		/* true if we ran out of DTQs */
 
-  /* recv dma */
-  u_int32_t drq[MID_DRQ_N];	/* sw copy of dma q (see ENIDQ macros) */
+  /* recv DMA */
+  u_int32_t drq[MID_DRQ_N];	/* sw copy of DMA q (see ENIDQ macros) */
   u_int32_t drq_free;		/* # of drq's free */
   u_int32_t drq_us;		/* software copy of our pointer (byte offset) */
   u_int32_t drq_chip;		/* chip's pointer (byte offset) */
@@ -142,12 +142,12 @@ struct en_softc {
   /* xmit buf ctrl. (per channel) */
   struct {
     u_int32_t mbsize;		/* # mbuf bytes we are using (max=TXHIWAT) */
-    u_int32_t bfree;		/* # free bytes in buffer (not dma or xmit) */
+    u_int32_t bfree;		/* # free bytes in buffer (not DMA or xmit) */
     u_int32_t start, stop;	/* ends of buffer area (byte offset) */
     u_int32_t cur;		/* next free area (byte offset) */
     u_int32_t nref;		/* # of VCs using this channel */
-    struct ifqueue indma;	/* mbufs being dma'd now */
-    struct ifqueue q;		/* mbufs waiting for dma now */
+    struct ifqueue indma;	/* mbufs being DMA'd now */
+    struct ifqueue q;		/* mbufs waiting for DMA now */
   } txslot[MID_NTX_CH];
 
   /* xmit vc ctrl. (per vc) */
@@ -172,8 +172,8 @@ struct en_softc {
     u_int8_t atm_flags;		/* copy of atm_flags from atm_ph */
     u_int8_t oth_flags;		/* other flags */
     u_int32_t raw_threshold;	/* for raw mode */
-    struct ifqueue indma;	/* mbufs being dma'd now */
-    struct ifqueue q;		/* mbufs waiting for dma now */
+    struct ifqueue indma;	/* mbufs being DMA'd now */
+    struct ifqueue q;		/* mbufs waiting for DMA now */
   } rxslot[EN_MAXNRX];		/* recv info */
 
   u_int8_t macaddr[6];		/* card unique mac address */
@@ -188,7 +188,7 @@ struct en_softc {
   u_int32_t tailbyte;		/* # of times we used BYTE DMA at end */
   u_int32_t tailflush;		/* # of times we had to FLUSH out DMA bytes */
   u_int32_t txmbovr;		/* # of times we dropped due to mbsize */
-  u_int32_t dmaovr;		/* tx dma overflow count */
+  u_int32_t dmaovr;		/* tx DMA overflow count */
   u_int32_t txoutspace;		/* out of space in xmit buffer */
   u_int32_t txdtqout;		/* out of DTQs */
   u_int32_t launch;		/* total # of launches */
@@ -208,7 +208,7 @@ struct en_softc {
   u_int8_t bestburstlen;	/* length of best burst (bytes) */
   u_int8_t bestburstshift;	/* (x >> shift) == (x / bestburstlen) */
   u_int8_t bestburstmask;	/* bits to check if not multiple of burst */
-  u_int8_t alburst;		/* align dma bursts? */
+  u_int8_t alburst;		/* align DMA bursts? */
   u_int8_t is_adaptec;		/* adaptec version of midway? */
 
 #if 1 /* for ATM_PVCEXT */

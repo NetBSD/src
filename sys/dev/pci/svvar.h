@@ -1,4 +1,4 @@
-/*      $NetBSD: svvar.h,v 1.3 1999/02/18 00:55:36 mycroft Exp $ */
+/*      $NetBSD: svvar.h,v 1.4 2003/05/03 18:11:37 wiz Exp $ */
 
 /*
  * Copyright (c) 1998 Constantine Paul Sapuntzakis
@@ -49,10 +49,10 @@ struct sv_softc {
 
 	struct sv_dma *sc_dmas;
 
-	void	(*sc_pintr)(void *);	/* dma completion intr handler */
+	void	(*sc_pintr)(void *);	/* DMA completion intr handler */
 	void	*sc_parg;		/* arg for sc_intr() */
 
-	void	(*sc_rintr)(void *);	/* dma completion intr handler */
+	void	(*sc_rintr)(void *);	/* DMA completion intr handler */
 	void	*sc_rarg;		/* arg for sc_intr() */
 
 	u_int	sc_record_source;	/* recording source mask */

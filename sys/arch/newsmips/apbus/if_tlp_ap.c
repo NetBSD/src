@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tlp_ap.c,v 1.4 2002/10/02 04:27:51 thorpej Exp $	*/
+/*	$NetBSD: if_tlp_ap.c,v 1.5 2003/05/03 18:10:53 wiz Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -209,8 +209,8 @@ tlp_ap_attach(parent, self, aux)
 		TULIP_WRITE(sc, CSR_GPP, 0xce);
 	}
 	TULIP_WRITE(sc, CSR_GPP, GPP_GPC | 0xcf);	/* read write */
-	TULIP_WRITE(sc, CSR_GPP, 0xc3);			/* mask abort/dma err */
-	TULIP_WRITE(sc, CSR_GPP, 0xcf);			/* mask abort/dma err */
+	TULIP_WRITE(sc, CSR_GPP, 0xc3);			/* mask abort/DMA err */
+	TULIP_WRITE(sc, CSR_GPP, 0xcf);			/* mask abort/DMA err */
 
 	if (tlp_read_srom(sc) == 0) {
 		printf("%s: srom read failed\n", sc->sc_dev.dv_xname);

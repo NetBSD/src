@@ -1,4 +1,4 @@
-/*	$NetBSD: elink3var.h,v 1.29 2001/07/23 17:08:18 thorpej Exp $	*/
+/*	$NetBSD: elink3var.h,v 1.30 2003/05/03 18:11:17 wiz Exp $	*/
 
 /*
  * Copyright (c) 1994 Herb Peyerl <hpeyerl@beer.org>
@@ -83,8 +83,8 @@ struct ep_softc {
 
 	u_short ep_chipset;		/* Chipset family on this board */
 #define	ELINK_CHIPSET_3C509		0x00	/* PIO: 3c509, 3c589 */
-#define	ELINK_CHIPSET_VORTEX		0x01	/* 100mbit, single-pkt dma */
-#define	ELINK_CHIPSET_BOOMERANG		0x02	/* Saner dma plus PIO */
+#define	ELINK_CHIPSET_VORTEX		0x01	/* 100mbit, single-pkt DMA */
+#define	ELINK_CHIPSET_BOOMERANG		0x02	/* Saner DMA plus PIO */
 #define	ELINK_CHIPSET_ROADRUNNER	0x03	/* like Boomerang, but for
 						   PCMCIA; has shared memory
 						   plus FIFO buffer */

@@ -1,4 +1,4 @@
-/*      $NetBSD: scsi.c,v 1.5 2002/09/21 19:49:47 mycroft Exp $        */
+/*      $NetBSD: scsi.c,v 1.6 2003/05/03 18:10:56 wiz Exp $        */
 /*
  * Copyright (c) 1994, 1997 Rolf Grossmann
  * All rights reserved.
@@ -80,7 +80,7 @@ scsi_init(void)
     
     P_FLOPPY[FLP_CTRL] &= ~FLC_82077_SEL;	/* select SCSI chip */
 
-    /* first reset dma */
+    /* first reset DMA */
     dma->dd_csr        = DMACSR_RESET;
     DELAY(200);
     sr[ESP_DCTL]       = ESPDCTL_20MHZ | ESPDCTL_INTENB | ESPDCTL_RESET;
@@ -194,9 +194,9 @@ scsiicmd(char target, char lun,
 
 	if (sc->sc_state == SCSI_DMA)
 	{
-	    /* registers are not valid on dma intr */
+	    /* registers are not valid on DMA intr */
 	    sc->sc_status = sc->sc_seqstep = sc->sc_intrstatus = 0;
-	    DPRINTF(("scsiicmd: dma intr\n"));
+	    DPRINTF(("scsiicmd: DMA intr\n"));
 	    sr[ESP_DCTL] = ESPDCTL_20MHZ | ESPDCTL_INTENB | ESPDCTL_DMARD;
 	}
 
@@ -347,26 +347,26 @@ dma_start(char *addr, int len)
     
     if (len > MAX_DMASIZE)
     {
-	scsierror("dma too long");
+	scsierror("DMA too long");
 	return -1;
     }
 
     if (addr == NULL || len == 0)
     {
 #if 0 /* I'd take that as an error in my code */
-	DPRINTF(("hmm ... no dma requested.\n"));
+	DPRINTF(("hmm ... no DMA requested.\n"));
 	sr[NCR_TCL] = 0;
 	sr[NCR_TCM] = 1;
 	sr[NCR_CMD] = NCRCMD_NOP;
 	sr[NCR_CMD] = NCRCMD_DMA | NCRCMD_TRPAD;
 	return 0;
 #else
-	scsierror("unrequested dma");
+	scsierror("unrequested DMA");
 	return -1;
 #endif
     }
     
-    PRINTF(("dma start: %lx, %d byte.\n", (long)addr, len));
+    PRINTF(("DMA start: %lx, %d byte.\n", (long)addr, len));
 
     DPRINTF(("dma_bufffer: start: 0x%lx end: 0x%lx \n", 
 				(long)dma_buffer,(long)DMA_ENDALIGN(char *, dma_buffer+len)));
@@ -414,7 +414,7 @@ dma_done(void)
 
     sr[ESP_DCTL] = ESPDCTL_20MHZ | ESPDCTL_INTENB | ESPDCTL_DMARD;
     resid = sr[NCR_TCM]<<8 | sr[NCR_TCL];
-    DPRINTF(("dma state = 0x%x, remain = %d.\n", state, resid));
+    DPRINTF(("DMA state = 0x%x, remain = %d.\n", state, resid));
 
     if (!(sr[NCR_FFLAG] & NCRFIFO_FF)) {
 	    sr[ESP_DCTL] = ESPDCTL_20MHZ | ESPDCTL_INTENB | ESPDCTL_DMAMOD
@@ -422,7 +422,7 @@ dma_done(void)
 	    while (!(state & DMACSR_COMPLETE) && (state & DMACSR_ENABLE) && flushcount < 16) 
 	    {
 		    
-		    DPRINTF(("dma still enabled, flushing DCTL.\n"));
+		    DPRINTF(("DMA still enabled, flushing DCTL.\n"));
 		    
 		    sr[ESP_DCTL] = ESPDCTL_20MHZ | ESPDCTL_INTENB | ESPDCTL_DMAMOD
 			    | ESPDCTL_DMARD | ESPDCTL_FLUSH;
@@ -439,13 +439,13 @@ dma_done(void)
 
     dma->dd_csr = DMACSR_CLRCOMPLETE | DMACSR_RESET;
 
-    DPRINTF(("dma done. remain = %d, state = 0x%x, fifo = 0x%x.\n", resid, state, sr[NCR_FFLAG] & NCRFIFO_FF));
+    DPRINTF(("DMA done. remain = %d, state = 0x%x, fifo = 0x%x.\n", resid, state, sr[NCR_FFLAG] & NCRFIFO_FF));
 
     if (resid != 0)
     {
 #if 1
-      printf("WARNING: unexpected %d characters remain in dma\n",resid);
-	scsierror("dma transfer incomplete");
+      printf("WARNING: unexpected %d characters remain in DMA\n",resid);
+	scsierror("DMA transfer incomplete");
 	return -1;
 #endif
     }
@@ -453,7 +453,7 @@ dma_done(void)
     if (state & DMACSR_BUSEXC)
     {
 #if 0
-	scsierror("dma failed");
+	scsierror("DMA failed");
 	return -1;
 #endif
     }
@@ -463,10 +463,10 @@ dma_done(void)
 	    sc->dma_len = 0;
     bcopy(dma_buffer, sc->dma_addr, sc->dma_len);
     sc->sc_state = SCSI_HASBUS;
-    DPRINTF(("dma done. got %d.\n", sc->dma_len));
+    DPRINTF(("DMA done. got %d.\n", sc->dma_len));
     return sc->dma_len;
 
-    /* scsierror("dma not completed\n"); */
+    /* scsierror("DMA not completed\n"); */
     
     return 0;
 }

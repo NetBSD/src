@@ -1,4 +1,4 @@
-/* $NetBSD: oosiopvar.h,v 1.1 2003/04/06 09:48:43 tsutsui Exp $ */
+/* $NetBSD: oosiopvar.h,v 1.2 2003/05/03 18:11:23 wiz Exp $ */
 
 /*
  * Copyright (c) 2001 Shuichiro URATA.  All rights reserved.
@@ -109,10 +109,10 @@ struct oosiop_softc {
 	bus_space_tag_t	sc_bst;		/* bus space tag */
 	bus_space_handle_t sc_bsh;	/* bus space handle */
 
-	bus_dma_tag_t sc_dmat;		/* bus dma tag */
-	bus_dmamap_t sc_scrdma;		/* script dma map */
+	bus_dma_tag_t sc_dmat;		/* bus DMA tag */
+	bus_dmamap_t sc_scrdma;		/* script DMA map */
 
-	bus_addr_t sc_scrbase;		/* script dma base address */
+	bus_addr_t sc_scrbase;		/* script DMA base address */
 	u_int32_t *sc_scr;		/* ptr to script memory */
 
 	int sc_chip;			/* 700 or 700-66 */

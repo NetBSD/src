@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ntwoc_pci.c,v 1.11 2003/01/20 05:30:07 simonb Exp $	*/
+/*	$NetBSD: if_ntwoc_pci.c,v 1.12 2003/05/03 18:11:36 wiz Exp $	*/
 
 /*
  * Copyright (c) 1998 Vixie Enterprises
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ntwoc_pci.c,v 1.11 2003/01/20 05:30:07 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ntwoc_pci.c,v 1.12 2003/05/03 18:11:36 wiz Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -283,7 +283,7 @@ ntwoc_pci_attach(struct device *parent, struct device *self, void *aux)
 			  0x68, 0x10900);
 
 	/*
-	 * pass the dma tag to the SCA
+	 * pass the DMA tag to the SCA
 	 */
 	sca->sc_usedma = 1;
 	sca->scu_dmat = pa->pa_dmat;
@@ -365,7 +365,7 @@ ntwoc_pci_attach(struct device *parent, struct device *self, void *aux)
 		    (flags & NTWOC_FLAGS_CLK1_MASK) >> NTWOC_FLAGS_CLK1_SHIFT,
 		    tmc, rdiv, tdiv);
 
-	/* allocate dma'able memory for card to use */
+	/* allocate DMA'able memory for card to use */
 	ntwoc_pci_alloc_dma(sca);
 	ntwoc_pci_setup_dma(sca);
 

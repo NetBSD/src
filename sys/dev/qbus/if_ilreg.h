@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ilreg.h,v 1.1 2001/05/06 15:30:47 ragge Exp $	*/
+/*	$NetBSD: if_ilreg.h,v 1.2 2003/05/03 18:11:38 wiz Exp $	*/
 /*
  * Copyright (c) 1982, 1986 Regents of the University of California.
  * All rights reserved.
@@ -140,7 +140,7 @@ char *ilerrs[NILERRS] = {
 char *ildiag[NILDIAGS] = {
 	"success",			/* 0 */
 	"checksum error",		/* 1 */
-	"NM10 dma error",		/* 2 */
+	"NM10 DMA error",		/* 2 */
 	"transmitter error",		/* 3 */
 	"receiver error",		/* 4 */
 	"loopback failure",		/* 5 */

@@ -1,4 +1,4 @@
-/*	$NetBSD: sereg.h,v 1.4 1998/03/08 18:56:08 gwr Exp $	*/
+/*	$NetBSD: sereg.h,v 1.5 2003/05/03 18:11:04 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@ struct se_regs {
  *	(rw)	indicates bit is read or write.
  */
 #define SE_CSR_SBC_IP		0x0200	/* (ro) sbc interrupt pending */
-#define SE_CSR_SEND 		0x0008	/* (rw) dma dir, 1=to device */
+#define SE_CSR_SEND 		0x0008	/* (rw) DMA dir, 1=to device */
 #define SE_CSR_INTR_EN		0x0004	/* (rw) interrupts enable */
 #define	SE_CSR_VCC  		0x0002	/* (ro) power signal to the chip */
 #define SE_CSR_SCSI_RES		0x0001	/* (rw) reset sbc and udc, 0=reset */

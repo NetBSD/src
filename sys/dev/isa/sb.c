@@ -1,4 +1,4 @@
-/*	$NetBSD: sb.c,v 1.73 2002/11/02 10:47:49 kristerw Exp $	*/
+/*	$NetBSD: sb.c,v 1.74 2003/05/03 18:11:28 wiz Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sb.c,v 1.73 2002/11/02 10:47:49 kristerw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sb.c,v 1.74 2003/05/03 18:11:28 wiz Exp $");
 
 #include "midi.h"
 
@@ -135,13 +135,13 @@ sbmatch(sc)
 	 */
 	if (ISSBPROCLASS(sc)) {
 		if (!SBP_DRQ_VALID(sc->sc_drq8)) {
-			printf("%s: configured dma chan %d invalid\n",
+			printf("%s: configured DMA chan %d invalid\n",
 			    sc->sc_dev.dv_xname, sc->sc_drq8);
 			return 0;
 		}
 	} else {
 		if (!SB_DRQ_VALID(sc->sc_drq8)) {
-			printf("%s: configured dma chan %d invalid\n",
+			printf("%s: configured DMA chan %d invalid\n",
 			    sc->sc_dev.dv_xname, sc->sc_drq8);
 			return 0;
 		}
@@ -159,7 +159,7 @@ sbmatch(sc)
 		if (sc->sc_drq16 == -1)
 			sc->sc_drq16 = sc->sc_drq8;
 		if (!SB16_DRQ_VALID(sc->sc_drq16)) {
-			printf("%s: configured dma chan %d invalid\n",
+			printf("%s: configured DMA chan %d invalid\n",
 			    sc->sc_dev.dv_xname, sc->sc_drq16);
 			return 0;
 		}

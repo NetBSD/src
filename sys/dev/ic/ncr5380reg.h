@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr5380reg.h,v 1.4 1999/04/12 20:38:21 pk Exp $	*/
+/*	$NetBSD: ncr5380reg.h,v 1.5 2003/05/03 18:11:22 wiz Exp $	*/
 
 /* 
  * Mach Operating System
@@ -81,13 +81,13 @@ struct ncr5380regs {
 #define sci_sel_enb sci_r4	/* w:  Select enable */
 
 #define	sci_csr 	 sci_r5	/* r:  Status */
-#define sci_dma_send sci_r5	/* w:  Start dma send data */
+#define sci_dma_send sci_r5	/* w:  Start DMA send data */
 
 #define	sci_idata	sci_r6	/* r:  Input data */
-#define	sci_trecv	sci_r6	/* w:  Start dma receive, target */
+#define	sci_trecv	sci_r6	/* w:  Start DMA receive, target */
 
 #define	sci_iack	sci_r7	/* r:  Interrupt Acknowledge  */
-#define sci_irecv	sci_r7	/* w:  Start dma receive, initiator */
+#define sci_irecv	sci_r7	/* w:  Start DMA receive, initiator */
 
 
 /*

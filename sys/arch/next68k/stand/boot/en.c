@@ -1,4 +1,4 @@
-/*      $NetBSD: en.c,v 1.9 2003/03/13 13:44:05 drochner Exp $        */
+/*      $NetBSD: en.c,v 1.10 2003/05/03 18:10:56 wiz Exp $        */
 /*
  * Copyright (c) 1996 Rolf Grossmann
  * All rights reserved.
@@ -246,7 +246,7 @@ en_put(struct iodesc *desc, void *pkt, size_t len)
 				 | DMACSR_SUPDATE | DMACSR_ENABLE);
 
 #if 01
-			DPRINTF(("en_put: dma state = 0x%x.\n", state));
+			DPRINTF(("en_put: DMA state = 0x%x.\n", state));
 #endif
 			if (state & (DMACSR_COMPLETE|DMACSR_BUSEXC))
 				txdma->dd_csr = DMACSR_RESET | DMACSR_CLRCOMPLETE;
@@ -326,7 +326,7 @@ en_get(struct iodesc *desc, void *pkt, size_t len, time_t timeout)
 		er->rxmode = EN_RMD_RECV_NORMAL;
 
 #if 01
-	DPRINTF(("en_get: blocking on rcv dma\n"));
+	DPRINTF(("en_get: blocking on rcv DMA\n"));
 #endif
 
 	while(1) {
@@ -336,14 +336,14 @@ en_get(struct iodesc *desc, void *pkt, size_t len, time_t timeout)
 		state = rxdma->dd_csr &
 			(DMACSR_BUSEXC | DMACSR_COMPLETE
 			 | DMACSR_SUPDATE | DMACSR_ENABLE);
-		DPRINTF(("en_get: dma state = 0x%x.\n", state));
+		DPRINTF(("en_get: DMA state = 0x%x.\n", state));
 		if ((state & DMACSR_ENABLE) == 0) {
 			rxdma->dd_csr = DMACSR_RESET | DMACSR_CLRCOMPLETE;
 			break;
 		}
 
 		if (state & DMACSR_COMPLETE) {
-			PRINTF(("en_get: ending dma sequence\n"));
+			PRINTF(("en_get: ending DMA sequence\n"));
 			rxdma->dd_csr = DMACSR_CLRCOMPLETE;
 		}
 

@@ -40,7 +40,7 @@
  * $FreeBSD: /repoman/r/ncvs/src/sys/dev/aic7xxx/aic79xx.seq,v 1.7 2003/02/27 23:23:16 gibbs Exp $
  */
 
-VERSION = "$NetBSD: aic79xx.seq,v 1.1 2003/04/19 19:26:10 fvdl Exp $"
+VERSION = "$NetBSD: aic79xx.seq,v 1.2 2003/05/03 18:11:30 wiz Exp $"
 PATCH_ARG_LIST = "struct ahd_softc *ahd"
 PREFIX = "ahd_"
 
@@ -206,7 +206,7 @@ fill_qoutfifo_dmadone:
 
 qoutfifo_updated:
 	/*
-	 * If there are more commands waiting to be dma'ed
+	 * If there are more commands waiting to be DMA'ed
 	 * to the host, always coaless.  Otherwise honor the
 	 * host's wishes.
 	 */
@@ -300,7 +300,7 @@ BEGIN_CRITICAL;
 	/* FALLTHROUGH */
 fill_qoutfifo:
 	/*
-	 * Keep track of the SCBs we are dmaing just
+	 * Keep track of the SCBs we are DMA'ing just
 	 * in case the DMA fails or is aborted.
 	 */
 	mov	A, QOUTFIFO_ENTRY_VALID_TAG;
@@ -1465,7 +1465,7 @@ data_group_fifoflush:
 data_phase_finish:
 	/*
 	 * If the target has left us in data phase, loop through
-	 * the dma code again.  We will only loop if there is a
+	 * the DMA code again.  We will only loop if there is a
 	 * data overrun.  
 	 */
 	if ((ahd->flags & AHD_TARGETROLE) != 0) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: ebus.c,v 1.12 2003/02/26 17:39:05 pk Exp $ */ 
+/*	$NetBSD: ebus.c,v 1.13 2003/05/03 18:10:59 wiz Exp $ */ 
 
 /*
  * Copyright (c) 1999, 2000 Matthew R. Green
@@ -104,7 +104,7 @@ void	ebus_destroy_attach_args(struct ebus_attach_args *);
 int	ebus_print(void *, const char *);
 
 /*
- * here are our bus space and bus dma routines.
+ * here are our bus space and bus DMA routines.
  */
 static paddr_t	ebus_bus_mmap(bus_space_tag_t, bus_addr_t, off_t, int, int);
 static int	_ebus_bus_map(bus_space_tag_t, bus_addr_t,
@@ -389,7 +389,7 @@ ebus_print(aux, p)
 
 
 /*
- * bus space and bus dma methods below here
+ * bus space and bus DMA methods below here
  */
 
 bus_space_tag_t
@@ -423,7 +423,7 @@ ebus_alloc_dma_tag(sc, pdt)
 	dt = (bus_dma_tag_t)
 		malloc(sizeof(struct sparc_bus_dma_tag), M_DEVBUF, M_NOWAIT);
 	if (dt == NULL)
-		panic("unable to allocate ebus dma tag");
+		panic("unable to allocate ebus DMA tag");
 
 	memset(dt, 0, sizeof *dt);
 	dt->_cookie = sc;

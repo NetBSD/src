@@ -1,4 +1,4 @@
-/*	$NetBSD: fhpib.c,v 1.24 2002/10/02 05:15:49 thorpej Exp $	*/
+/*	$NetBSD: fhpib.c,v 1.25 2003/05/03 18:10:47 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fhpib.c,v 1.24 2002/10/02 05:15:49 thorpej Exp $");                                                  
+__KERNEL_RCSID(0, "$NetBSD: fhpib.c,v 1.25 2003/05/03 18:10:47 wiz Exp $");                                                  
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -112,7 +112,7 @@ int	fhpibdebug = 0;
 #define FDB_PPOLL	0x08
 
 int	dopriodma = 0;	/* use high priority DMA */
-int	doworddma = 1;	/* non-zero if we should attempt word dma */
+int	doworddma = 1;	/* non-zero if we should attempt word DMA */
 int	doppollint = 1;	/* use ppoll interrupts instead of watchdog */
 int	fhpibppolldelay = 50;
 #endif
@@ -222,7 +222,7 @@ fhpibreset(hs)
 	hd->hpib_data = C_DCL;
 	DELAY(100000);
 	/*
-	 * See if we can do word dma.
+	 * See if we can do word DMA.
 	 * If so, we should be able to write and read back the appropos bit.
 	 */
 	hd->hpib_ie |= IDS_WDMA;
@@ -231,7 +231,7 @@ fhpibreset(hs)
 		hs->sc_flags |= HPIBF_DMA16;
 #ifdef DEBUG
 		if (fhpibdebug & FDB_DMA)
-			printf("fhpibtype: %s has word dma\n",
+			printf("fhpibtype: %s has word DMA\n",
 			    sc->sc_dev.dv_xname);
 
 #endif

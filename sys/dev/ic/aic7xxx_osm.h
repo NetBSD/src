@@ -1,4 +1,4 @@
-/*	$NetBSD: aic7xxx_osm.h,v 1.3 2003/04/20 15:32:10 fvdl Exp $	*/
+/*	$NetBSD: aic7xxx_osm.h,v 1.4 2003/05/03 18:11:15 wiz Exp $	*/
 
 /*
  * NetBSD platform specific driver option settings, data structures,
@@ -136,7 +136,7 @@ typedef pcireg_t ahc_dev_softc_t;
 
 /************************ Tunable Driver Parameters  **************************/
 /*
- * The number of dma segments supported.  The sequencer can handle any number
+ * The number of DMA segments supported.  The sequencer can handle any number
  * of physically contiguous S/G entrys.  To reduce the driver's memory
  * consumption, we limit the number supported to be sufficient to handle
  * the largest mapping supported by the kernel, MAXPHYS.  Assuming the

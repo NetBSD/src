@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.54 2003/04/01 15:15:25 thorpej Exp $	*/
+/*	$NetBSD: fd.c,v 1.55 2003/05/03 18:11:07 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -154,11 +154,11 @@ struct fdc_softc {
 	struct callout sc_timo_ch;	/* timeout callout */
 	struct callout sc_intr_ch;	/* pseudo-intr callout */
 
-	bus_dma_tag_t sc_dmat;		/* intio dma tag */
-	bus_dmamap_t sc_dmamap;		/* dma map */
+	bus_dma_tag_t sc_dmat;		/* intio DMA tag */
+	bus_dmamap_t sc_dmamap;		/* DMA map */
 	u_int8_t *sc_addr;			/* physical address */
-	struct dmac_channel_stat *sc_dmachan; /* intio dma channel */
-	struct dmac_dma_xfer *sc_xfer;	/* dma transfer */
+	struct dmac_channel_stat *sc_dmachan; /* intio DMA channel */
+	struct dmac_dma_xfer *sc_xfer;	/* DMA transfer */
 
 	struct fd_softc *sc_fd[4];	/* pointers to children */
 	TAILQ_HEAD(drivehead, fd_softc) sc_drives;
@@ -302,7 +302,7 @@ static void fd_do_eject __P((struct fdc_softc *, int));
 
 void fd_mountroot_hook __P((struct device *));
 
-/* dma transfer routines */
+/* DMA transfer routines */
 __inline static void fdc_dmastart __P((struct fdc_softc*, int,
 				       caddr_t, vsize_t));
 static int fdcdmaintr __P((void*));

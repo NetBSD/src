@@ -1,4 +1,4 @@
-/*	$NetBSD: si_vme.c,v 1.20 2002/10/08 21:29:46 jdolecek Exp $	*/
+/*	$NetBSD: si_vme.c,v 1.21 2003/05/03 18:11:04 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -455,7 +455,7 @@ si_vme_dma_stop(ncr_sc)
 
 	if ((ncr_sc->sc_state & NCR_DOINGDMA) == 0) {
 #ifdef	DEBUG
-		printf("si_dma_stop: dma not running\n");
+		printf("si_dma_stop: DMA not running\n");
 #endif
 		return;
 	}
@@ -488,7 +488,7 @@ si_vme_dma_stop(ncr_sc)
 	 * actually transferred for VME.
 	 *
 	 * SCSI-3 VME interface is a little funny on writes:
-	 * if we have a disconnect, the dma has overshot by
+	 * if we have a disconnect, the DMA has overshot by
 	 * one byte and the resid needs to be incremented.
 	 * Only happens for partial transfers.
 	 * (Thanks to Matt Jacob)

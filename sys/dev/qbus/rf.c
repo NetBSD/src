@@ -1,4 +1,4 @@
-/*	$NetBSD: rf.c,v 1.1 2003/03/23 11:01:16 ragge Exp $	*/
+/*	$NetBSD: rf.c,v 1.2 2003/05/03 18:11:38 wiz Exp $	*/
 /*
  * Copyright (c) 2002 Jochen Kunz.
  * All rights reserved.
@@ -340,7 +340,7 @@ rfc_attach(struct device *parent, struct device *self, void *aux)
 	i = bus_dmamap_create(rfc_sc->sc_dmat, RX2_BYTE_DD, 1, RX2_BYTE_DD, 0,
 	    BUS_DMA_ALLOCNOW, &rfc_sc->sc_dmam);
 	if (i != 0) {
-		printf("rfc_attach: Error creating bus dma map: %d\n", i);
+		printf("rfc_attach: Error creating bus DMA map: %d\n", i);
 		return;
 	}
 
@@ -825,7 +825,7 @@ rfc_intr(void *intarg)
 		    ? RX2_BYTE_SD : RX2_BYTE_DD, rfc_sc->sc_curbuf->b_proc,
 		    BUS_DMA_NOWAIT);
 		if (i != 0) {
-			printf("rfc_intr: Error while loading bus dma map: "
+			printf("rfc_intr: Error while loading bus DMA map: "
 			    "%d\n", i);
 			rfc_sc->sc_curbuf->b_flags |= B_ERROR;
 			break;
@@ -848,7 +848,7 @@ rfc_intr(void *intarg)
 		    ? RX2_BYTE_SD : RX2_BYTE_DD,
 		    rfc_sc->sc_curbuf->b_proc, BUS_DMA_NOWAIT);
 		if (i != 0) {
-			printf("rfc_intr: Error while loading bus dma map: "
+			printf("rfc_intr: Error while loading bus DMA map: "
 			    "%d\n", i);
 			rfc_sc->sc_curbuf->b_flags |= B_ERROR;
 			break;

@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.45 2003/01/01 00:48:33 thorpej Exp $	*/
+/*	$NetBSD: fd.c,v 1.46 2003/05/03 18:10:45 wiz Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -122,7 +122,7 @@ static short	motoron  = 0;		/* motor is spinning		*/
 static short	nopens   = 0;		/* Number of opens executed	*/
 
 static short	fd_state = FLP_IDLE;	/* Current driver state		*/
-static int	lock_stat= 0;		/* dma locking status		*/
+static int	lock_stat= 0;		/* DMA locking status		*/
 static short	fd_cmd   = 0;		/* command being executed	*/
 static char	*fd_error= NULL;	/* error from fd_xfer_ok()	*/
 
@@ -683,7 +683,7 @@ struct fd_softc	*sc;
 }
 
 /*
- * Called through the dma-dispatcher. So we know we are the only ones
+ * Called through the DMA-dispatcher. So we know we are the only ones
  * messing with the floppy-controler.
  * Initialize some fields in the fdsoftc for the state-machine and get
  * it going.
@@ -710,7 +710,7 @@ struct fd_softc	*sc;
 
 /*
  * The current transaction is finished (for good or bad). Let go of
- * the dma-resources. Call biodone() to finish the transaction.
+ * the DMA-resources. Call biodone() to finish the transaction.
  * Find a new transaction to work on.
  */
 static void
@@ -722,7 +722,7 @@ register struct fd_softc	*sc;
 	int		i, sps;
 
 	/*
-	 * Give others a chance to use the dma.
+	 * Give others a chance to use the DMA.
 	 */
 	st_dmafree(sc, &lock_stat);
 
@@ -1080,7 +1080,7 @@ register struct fd_softc	*sc;
 			 */
 			status = read_dmastat();
 			if(!(status & DMAOK)) {
-				fd_error = "Dma error";
+				fd_error = "DMA error";
 				return(X_ERROR);
 			}
 			/*
@@ -1100,7 +1100,7 @@ register struct fd_softc	*sc;
 			 */
 			status = read_dmastat();
 			if(!(status & DMAOK)) {
-				fd_error = "Dma error";
+				fd_error = "DMA error";
 				return(X_ERROR);
 			}
 			/*

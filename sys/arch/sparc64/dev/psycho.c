@@ -1,4 +1,4 @@
-/*	$NetBSD: psycho.c,v 1.60 2003/04/21 12:14:20 martin Exp $	*/
+/*	$NetBSD: psycho.c,v 1.61 2003/05/03 18:11:02 wiz Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Eduardo E. Horvath
@@ -96,8 +96,8 @@ static int psycho_wakeup __P((void *));
 static void psycho_iommu_init __P((struct psycho_softc *, int));
 
 /*
- * bus space and bus dma support for UltraSPARC `psycho'.  note that most
- * of the bus dma support is provided by the iommu dvma controller.
+ * bus space and bus DMA support for UltraSPARC `psycho'.  note that most
+ * of the bus DMA support is provided by the iommu dvma controller.
  */
 static int get_childspace __P((int));
 static struct psycho_ranges *get_psychorange __P((struct psycho_pbm *, int));
@@ -967,7 +967,7 @@ psycho_iommu_init(sc, tsbsize)
 }
 
 /*
- * below here is bus space and bus dma support
+ * below here is bus space and bus DMA support
  */
 bus_space_tag_t
 psycho_alloc_bus_tag(pp, type)
@@ -1002,7 +1002,7 @@ psycho_alloc_dma_tag(pp)
 	dt = (bus_dma_tag_t)
 		malloc(sizeof(struct sparc_bus_dma_tag), M_DEVBUF, M_NOWAIT);
 	if (dt == NULL)
-		panic("could not allocate psycho dma tag");
+		panic("could not allocate psycho DMA tag");
 
 	bzero(dt, sizeof *dt);
 	dt->_cookie = pp;

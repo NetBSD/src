@@ -1,4 +1,4 @@
-/*	$NetBSD: interwave.c,v 1.17 2003/04/06 18:20:13 wiz Exp $	*/
+/*	$NetBSD: interwave.c,v 1.18 2003/05/03 18:11:19 wiz Exp $	*/
 
 /*
  * Copyright (c) 1997, 1999 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: interwave.c,v 1.17 2003/04/06 18:20:13 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: interwave.c,v 1.18 2003/05/03 18:11:19 wiz Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -126,7 +126,7 @@ iwintr(arg)
 	/*
 	 * The proper order to do this seems to be to read CSR3 to get the
 	 * int cause and fifo over underrrun status, then deal with the ints
-	 * (new dma set up), and to clear ints by writing the respective bit
+	 * (new DMA set up), and to clear ints by writing the respective bit
 	 * to 0.
 	 */
 
@@ -462,7 +462,7 @@ iwreset(sc, warm)
 
 	IW_WRITE_DIRECT_1(sc->codec_index + 2, sc->p2xr_h, 0x00);
 
-	IW_WRITE_CODEC_1(CFIG1I | IW_MCE, 0x00);	/* dma 2 chan access */
+	IW_WRITE_CODEC_1(CFIG1I | IW_MCE, 0x00);	/* DMA 2 chan access */
 	IW_WRITE_CODEC_1(CEXTI, 0x00);	/* disable ints for now */
 
 
@@ -473,7 +473,7 @@ iwreset(sc, warm)
 					 * don't center output in case or
 					 * FIFO underrun */
 	IW_WRITE_CODEC_1(CFIG3I, 0xc0);	/* enable record/playback irq (still
-					 * turned off from CEXTI), max dma
+					 * turned off from CEXTI), max DMA
 					 * rate */
 	IW_WRITE_CODEC_1(CSR3I, 0x00);	/* clear status 3 reg */
 
@@ -525,7 +525,7 @@ iwreset(sc, warm)
 	 * (from codec?) bit 1 = 0 -> output on bit 2 = 1 -> mic in on bit 3
 	 * = 1 -> irq&drq pin enable bit 4 = 1 -> channel interrupts to chan
 	 * 1 bit 5 = 1 -> enable midi loop back bit 6 = 0 -> irq latches
-	 * URCR[2:0] bit 6 = 1 -> dma latches URCR[2:0]
+	 * URCR[2:0] bit 6 = 1 -> DMA latches URCR[2:0]
 	 */
 
 
@@ -1051,7 +1051,7 @@ iw_start_output(addr, p, cc, intr, arg)
 
 #ifdef AUDIO_DEBUG
 	if (sc->sc_playlocked) {
-		DPRINTF(("iw_start_output: playback dma already going on\n"));
+		DPRINTF(("iw_start_output: playback DMA already going on\n"));
 		/* return 0; */
 	}
 #endif
@@ -1116,7 +1116,7 @@ iw_start_input(addr, p, cc, intr, arg)
 
 #if AUDIO_DEBUG
 	if (sc->sc_reclocked) {
-		DPRINTF(("iw_start_input: record dma already going on\n"));
+		DPRINTF(("iw_start_input: record DMA already going on\n"));
 		/* return 0; */
 	}
 #endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: pss.c,v 1.63 2002/10/02 03:10:49 thorpej Exp $	*/
+/*	$NetBSD: pss.c,v 1.64 2003/05/03 18:11:28 wiz Exp $	*/
 
 /* XXX THIS DRIVER IS BROKEN.  IT WILL NOT EVEN COMPILE. */
 
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pss.c,v 1.63 2002/10/02 03:10:49 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pss.c,v 1.64 2003/05/03 18:11:28 wiz Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -114,7 +114,7 @@ struct pss_softc {
 	void	*sc_ih;			/* interrupt vectoring */
 
 	int	sc_iobase;		/* I/O port base address */
-	int	sc_drq;			/* dma channel */
+	int	sc_drq;			/* DMA channel */
 
 	struct	ad1848_softc *ad1848_sc;
 	
@@ -494,7 +494,7 @@ pss_testirq(struct pss_softc *sc, int intNum)
 }
 
 /*
- * This function tests a dma channel to see if
+ * This function tests a DMA channel to see if
  * it is available. It takes the DMA channel button
  * as its argument and returns TRUE if the channel
  * is ok.
@@ -797,7 +797,7 @@ pss_found:
       
     ia->ia_io[0].ir_size = PSS_NPORT;
 
-    /* Initialize PSS irq and dma */
+    /* Initialize PSS irq and DMA */
     pss_setint(ia->ia_irq[0].ir_irq, sc->sc_iobase+PSS_CONFIG);
     pss_setdma(ia->ia_drq[0].ir_drq, sc->sc_iobase+PSS_CONFIG);
 

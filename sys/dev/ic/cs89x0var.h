@@ -1,4 +1,4 @@
-/*	$NetBSD: cs89x0var.h,v 1.4 2003/01/06 13:05:10 wiz Exp $	*/
+/*	$NetBSD: cs89x0var.h,v 1.5 2003/05/03 18:11:16 wiz Exp $	*/
 
 /*
  * Copyright 1997
@@ -111,7 +111,7 @@ struct cs_softc {
 	void (*sc_disable)(struct cs_softc *);
 	void *sc_powerhook;
 
-	/* dma hooks */
+	/* DMA hooks */
 	void (*sc_dma_process_rx)(struct cs_softc *);
 	void (*sc_dma_chipinit)(struct cs_softc *);
 	void (*sc_dma_attach)(struct cs_softc *);

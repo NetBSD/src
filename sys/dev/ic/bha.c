@@ -1,4 +1,4 @@
-/*	$NetBSD: bha.c,v 1.53 2003/04/16 20:26:00 thorpej Exp $	*/
+/*	$NetBSD: bha.c,v 1.54 2003/05/03 18:11:15 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bha.c,v 1.53 2003/04/16 20:26:00 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bha.c,v 1.54 2003/05/03 18:11:15 wiz Exp $");
 
 #include "opt_ddb.h"
 
@@ -1009,7 +1009,7 @@ bha_inquire_config(bus_space_tag_t iot, bus_space_handle_t ioh,
 	struct bha_config config;
 
 	/*
-	 * Assume we have a board at this stage setup dma channel from
+	 * Assume we have a board at this stage setup DMA channel from
 	 * jumpers and save int level
 	 */
 	delay(1000);

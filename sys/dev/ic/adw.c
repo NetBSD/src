@@ -1,4 +1,4 @@
-/* $NetBSD: adw.c,v 1.39 2003/01/31 00:26:26 thorpej Exp $	 */
+/* $NetBSD: adw.c,v 1.40 2003/05/03 18:11:11 wiz Exp $	 */
 
 /*
  * Generic driver for the Advanced Systems Inc. SCSI controllers
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adw.c,v 1.39 2003/01/31 00:26:26 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adw.c,v 1.40 2003/05/03 18:11:11 wiz Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -761,7 +761,7 @@ adw_build_sglist(ADW_CCB *ccb, ADW_SCSI_REQ_Q *scsiqp, ADW_SG_BLOCK *sg_block)
 	scsiqp->sg_real_addr = htole32(sg_block_physical_addr);
 
 	/*
-	 * If there are more than NO_OF_SG_PER_BLOCK dma segments (hw sg-list)
+	 * If there are more than NO_OF_SG_PER_BLOCK DMA segments (hw sg-list)
 	 * then split the request into multiple sg-list blocks.
 	 */
 

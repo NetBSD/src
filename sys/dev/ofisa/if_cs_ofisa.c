@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cs_ofisa.c,v 1.10 2002/10/02 16:34:28 thorpej Exp $	*/
+/*	$NetBSD: if_cs_ofisa.c,v 1.11 2003/05/03 18:11:32 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_cs_ofisa.c,v 1.10 2002/10/02 16:34:28 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_cs_ofisa.c,v 1.11 2003/05/03 18:11:32 wiz Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -130,7 +130,7 @@ cs_ofisa_attach(parent, self, aux)
 	 *	1 i/o register region
 	 *	0 or 1 memory region
 	 *	1 interrupt
-	 *	0 or 1 dma channel
+	 *	0 or 1 DMA channel
 	 */
 
 	io_addr = mem_addr = -1;

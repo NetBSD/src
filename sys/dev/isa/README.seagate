@@ -1,4 +1,4 @@
-#	$NetBSD: README.seagate,v 1.2 1998/01/05 07:31:07 perry Exp $
+#	$NetBSD: README.seagate,v 1.3 2003/05/03 18:11:25 wiz Exp $
 
 The hardware:
 
@@ -42,7 +42,7 @@ of data without checking for changed phase. During polled transfers, the
 phase is checked between every character transfered. The polled transfers
 are always used for status information and command transfers.
 
-Because the card does not use dma in any way, there is no need to handle
+Because the card does not use DMA in any way, there is no need to handle
 physical addresses. There is no problem with the isa-bus address limit of
 16MB, making bounce-buffers unnecessary.
 

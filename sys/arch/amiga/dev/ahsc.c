@@ -1,4 +1,4 @@
-/*	$NetBSD: ahsc.c,v 1.31 2002/10/02 04:55:48 thorpej Exp $ */
+/*	$NetBSD: ahsc.c,v 1.32 2003/05/03 18:10:42 wiz Exp $ */
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ahsc.c,v 1.31 2002/10/02 04:55:48 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ahsc.c,v 1.32 2003/05/03 18:10:42 wiz Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -123,7 +123,7 @@ ahscattach(struct device *pdp, struct device *dp, void *auxp)
 	sc->sc_dmacmd = 0;
 
 	/*
-	 * eveything is a valid dma address
+	 * everything is a valid DMA address
 	 */
 	sc->sc_dmamask = 0;
 
@@ -234,7 +234,7 @@ ahsc_dmastop(struct sbic_softc *dev)
 				;
 		}
 		/*
-		 * clear possible interrupt and stop dma
+		 * clear possible interrupt and stop DMA
 		 */
 		sdp->CINT = 1;
 		sdp->SP_DMA = 1;
@@ -307,10 +307,10 @@ ahsc_dmanext(struct sbic_softc *dev)
 			;
 	}
 	/*
-	 * clear possible interrupt and stop dma
+	 * clear possible interrupt and stop DMA
 	 */
 	sdp->CINT = 1;	/* clear possible interrupt */
-	sdp->SP_DMA = 1;	/* stop dma */
+	sdp->SP_DMA = 1;	/* stop DMA */
 	sdp->CNTR = dev->sc_dmacmd;
 	sdp->ACR = (u_int)dev->sc_cur->dc_addr;
 	sdp->ST_DMA = 1;

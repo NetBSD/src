@@ -1,4 +1,4 @@
-/* $NetBSD: ispvar.h,v 1.59 2002/10/18 23:35:25 mjacob Exp $ */
+/* $NetBSD: ispvar.h,v 1.60 2003/05/03 18:11:21 wiz Exp $ */
 /*
  * This driver, which is contained in NetBSD in the files:
  *
@@ -457,7 +457,7 @@ typedef struct ispsoftc {
 	XS_T **isp_xflist;
 
 	/*
-	 * request/result queue pointers and dma handles for them.
+	 * request/result queue pointers and DMA handles for them.
 	 */
 	caddr_t			isp_rquest;
 	caddr_t			isp_result;

@@ -1,4 +1,4 @@
-/*	$NetBSD: mx98905.c,v 1.3 2003/01/15 22:20:06 bouyer Exp $	*/
+/*	$NetBSD: mx98905.c,v 1.4 2003/05/03 18:11:22 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -57,16 +57,16 @@
 /*
  * <URL:http://mail-index.netbsd.org/port-arm32/1996/06/23/0005.html>:
  * There are 2 types of etherh card.  One uses the macronics chipset MX98905
- * and that chipset has a bug in it, in that it the MSB remote dma
+ * and that chipset has a bug in it, in that it the MSB remote DMA
  * register does not work.  There is a workaround for this which
  * should be around soon.  In fact, I think only the buffer ram test
- * ever transfers more than 256 bytes across the dma channel, so diabling
+ * ever transfers more than 256 bytes across the DMA channel, so diabling
  * it will make the mx stuff work.
  */
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: mx98905.c,v 1.3 2003/01/15 22:20:06 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mx98905.c,v 1.4 2003/05/03 18:11:22 wiz Exp $");
 
 #include <sys/device.h>
 #include <sys/mbuf.h>

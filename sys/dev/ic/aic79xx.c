@@ -1,4 +1,4 @@
-/*	$NetBSD: aic79xx.c,v 1.3 2003/04/21 22:00:44 fvdl Exp $	*/
+/*	$NetBSD: aic79xx.c,v 1.4 2003/05/03 18:11:13 wiz Exp $	*/
 
 /*
  * Core routines and tables shareable across OS platforms.
@@ -379,7 +379,7 @@ ahd_clear_fifo(struct ahd_softc *ahd, u_int fifo)
 /************************* Input/Output Queues ********************************/
 /*
  * Flush and completed commands that are sitting in the command
- * complete queues down on the chip but have yet to be dma'ed back up.
+ * complete queues down on the chip but have yet to be DMA'ed back up.
  */
 void
 ahd_flush_qoutfifo(struct ahd_softc *ahd)
@@ -6819,7 +6819,7 @@ ahd_search_qinfifo(struct ahd_softc *ahd, int target, char channel,
 
 	/*
 	 * Halt any pending SCB DMA.  The sequencer will reinitiate
-	 * this dma if the qinfifo is not empty once we unpause.
+	 * this DMA if the qinfifo is not empty once we unpause.
 	 */
 	if ((ahd_inb(ahd, CCSCBCTL) & (CCARREN|CCSCBEN|CCSCBDIR))
 	    == (CCARREN|CCSCBEN|CCSCBDIR)) {

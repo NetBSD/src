@@ -1,4 +1,4 @@
-/*	$NetBSD: mba.c,v 1.30 2003/01/01 00:16:47 thorpej Exp $ */
+/*	$NetBSD: mba.c,v 1.31 2003/05/03 18:11:06 wiz Exp $ */
 /*
  * Copyright (c) 1994, 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -271,7 +271,7 @@ mbaqueue(struct mba_device *md)
 
 /*
  * Start activity on (idling) adapter. Calls mbamapregs() to setup
- * for dma transfer, then the unit-specific start routine.
+ * for DMA transfer, then the unit-specific start routine.
  */
 void
 mbastart(struct mba_softc *sc)

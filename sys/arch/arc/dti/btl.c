@@ -1,4 +1,4 @@
-/*	$NetBSD: btl.c,v 1.12 2003/04/27 17:05:57 tsutsui Exp $	*/
+/*	$NetBSD: btl.c,v 1.13 2003/05/03 18:10:44 wiz Exp $	*/
 /*	NetBSD: bt.c,v 1.10 1996/05/12 23:51:54 mycroft Exp 	*/
 
 #undef BTDIAG
@@ -186,7 +186,7 @@ struct btl_config *btl_conf = NULL;
  *    wait:   number of seconds to wait for response
  *
  * Performs an adapter command through the ports.  Not to be confused with a
- * scsi command, which is read in via the dma; one of the adapter commands
+ * scsi command, which is read in via the DMA; one of the adapter commands
  * tells it to read in a scsi command.
  */
 int
@@ -1012,7 +1012,7 @@ bt_find(ia, sc)
 	}
 
 	/*
-	 * Assume we have a board at this stage setup dma channel from
+	 * Assume we have a board at this stage setup DMA channel from
 	 * jumpers and save int level
 	 */
 	delay(1000);

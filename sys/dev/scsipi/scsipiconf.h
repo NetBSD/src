@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipiconf.h,v 1.73 2003/04/19 19:16:06 fvdl Exp $	*/
+/*	$NetBSD: scsipiconf.h,v 1.74 2003/05/03 18:11:40 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -515,7 +515,7 @@ struct scsipi_xfer {
 	int	timeout;		/* in milliseconds */
 	struct	scsipi_generic *cmd;	/* The scsipi command to execute */
 	int	cmdlen;			/* how long it is */
-	u_char	*data;			/* dma address OR a uio address */
+	u_char	*data;			/* DMA address OR a uio address */
 	int	datalen;		/* data len (blank if uio) */
 	int	resid;			/* how much buffer was not touched */
 	scsipi_xfer_result_t error;	/* an error value */

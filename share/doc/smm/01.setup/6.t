@@ -1,4 +1,4 @@
-.\"	$NetBSD: 6.t,v 1.2 1998/01/09 06:55:25 perry Exp $
+.\"	$NetBSD: 6.t,v 1.3 2003/05/03 18:10:39 wiz Exp $
 .\"
 .\" Copyright (c) 1980, 1986, 1988, 1993 The Regents of the University of California.
 .\" All rights reserved.
@@ -307,7 +307,7 @@ If you run in the ``vmstat'' mode
 when the system is busy, you can find
 imbalances by noting abnormal job distributions.  If many
 processes are blocked (b), then the disk subsystem
-is overloaded or imbalanced.  If you have several non-dma
+is overloaded or imbalanced.  If you have several non-DMA
 devices or open teletype lines that are ``ringing'', or user programs
 that are doing high-speed non-buffered input/output, then the system
 time may go high (60-70% or higher).

@@ -1,9 +1,9 @@
-$NetBSD: TODO,v 1.7 2003/05/03 08:22:35 jdolecek Exp $
+$NetBSD: TODO,v 1.8 2003/05/03 18:11:43 wiz Exp $
 
 Always a lot to do.  :)
 
 o  Learn how loadable devices can configure themselves, like the interrupt,
-   dma, probing, attaching, etc.  Then start adding some of those to the
+   DMA, probing, attaching, etc.  Then start adding some of those to the
    lkm tree.
 
 o  Test compat and exec modules on more platforms, make necessary MD

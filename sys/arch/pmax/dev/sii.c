@@ -1,4 +1,4 @@
-/*	$NetBSD: sii.c,v 1.45 2001/08/26 12:05:55 ad Exp $	*/
+/*	$NetBSD: sii.c,v 1.46 2003/05/03 18:10:57 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -395,7 +395,7 @@ sii_StartCmd(sc, target)
 
 #ifdef DEBUG
 	if (sii_debug > 1) {
-		printf("sii_StartCmd: %s target %d cmd 0x%x addr %p size %d dma %d\n",
+		printf("sii_StartCmd: %s target %d cmd 0x%x addr %p size %d DMA %d\n",
 			sc->sc_dev.dv_xname,
 			target, scsicmd->cmd[0], scsicmd->buf, scsicmd->buflen,
 			state->dmaDataPhase);
@@ -797,7 +797,7 @@ again:
 			if (state->dmaPrevPhase >= 0) {
 				/* restart DMA after disconnect/reconnect */
 				if (state->dmaPrevPhase != SII_CMD_PHASE) {
-					printf("%s: device %d: dma reselect phase doesn't match\n",
+					printf("%s: device %d: DMA reselect phase doesn't match\n",
 						sc->sc_dev.dv_xname, sc->sc_target);
 					goto abort;
 				}
@@ -864,7 +864,7 @@ again:
 				/* restart DMA after disconnect/reconnect */
 				if (state->dmaPrevPhase !=
 				    (dstat & SII_PHASE_MSK)) {
-					printf("%s: device %d: dma reselect phase doesn't match\n",
+					printf("%s: device %d: DMA reselect phase doesn't match\n",
 						sc->sc_dev.dv_xname, sc->sc_target);
 					goto abort;
 				}
@@ -1011,7 +1011,7 @@ again:
 			 * as DMA proceeds.
 			 */
 			if (state->dmaCurPhase >= 0) {
-				/* save dma registers */
+				/* save DMA registers */
 				state->dmaPrevPhase = state->dmaCurPhase;
 				state->dmaCurPhase = -1;
 				if (dstat & SII_OBB)

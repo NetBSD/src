@@ -1,4 +1,4 @@
-/*	$NetBSD: asc.c,v 1.10 2003/01/17 22:19:05 thorpej Exp $	*/
+/*	$NetBSD: asc.c,v 1.11 2003/05/03 18:10:44 wiz Exp $	*/
 /*	$OpenBSD: asc.c,v 1.9 1998/03/16 09:38:39 pefo Exp $	*/
 /*	NetBSD: asc.c,v 1.10 1994/12/05 19:11:12 dean Exp 	*/
 
@@ -255,7 +255,7 @@ static int asc_last_dma_in __P((struct asc_softc *, int, int, int));
 static int asc_resume_in __P((struct asc_softc *, int, int, int));
 	/* resume DMA after a disconnect */
 static int asc_resume_dma_in __P((struct asc_softc *, int, int, int));
-	/* send data to target via dma */
+	/* send data to target via DMA */
 static int asc_dma_out __P((struct asc_softc *, int, int, int));
 	/* cleanup after all data is written */
 static int asc_last_dma_out __P((struct asc_softc *, int, int, int));
@@ -432,7 +432,7 @@ struct asc_softc {
 	struct device	sc_dev;		/* use as a device */
 	asc_regmap_t	*regs;		/* chip address */
 	dma_softc_t	__dma;		/* stupid macro..... */
-	dma_softc_t	*dma;		/* dma control structure */
+	dma_softc_t	*dma;		/* DMA control structure */
 	int		sc_id;		/* SCSI ID of this interface */
 	int		myidmask;	/* ~(1 << myid) */
 	int		state;		/* current SCSI connection state */
@@ -547,7 +547,7 @@ ascattach(parent, self, aux)
 
 	/*
 	 * Set up machine dependencies.
-	 * 1) how to do dma
+	 * 1) how to do DMA
 	 * 2) timing based on chip clock frequency
 	 */
 #if 1	/*XXX check if code handles 0 as 64k */
@@ -611,7 +611,7 @@ ascattach(parent, self, aux)
 	/*
 	 * Give each target its DMA buffer region.
 	 * The buffer address is the same for all targets,
-	 * the allocated dma viritual scatter/gather space.
+	 * the allocated DMA viritual scatter/gather space.
 	 */
 	for (i = 0; i < ASC_NCMD; i++) {
 		asc->st[i].dmaBufSize = bufsiz;
@@ -1035,7 +1035,7 @@ printf("asc_intr: fifo flush %d len %d fifo %x\n", fifo, len, regs->asc_fifo);
 		}
 		else if (fifo && state->flags & DMA_IN_PROGRESS) {	
 			if (state->flags & DMA_OUT) {
-				len += fifo; /* Bytes dma'ed but not sent */
+				len += fifo; /* Bytes DMA'ed but not sent */
 			}
 			else if (state->flags & DMA_IN) {
 				printf("asc_intr: IN: dmalen %d len %d fifo %d\n",

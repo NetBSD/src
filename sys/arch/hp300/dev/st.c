@@ -1,4 +1,4 @@
-/*	$NetBSD: st.c,v 1.36 2002/10/23 09:11:10 jdolecek Exp $	*/
+/*	$NetBSD: st.c,v 1.37 2003/05/03 18:10:48 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -111,7 +111,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: st.c,v 1.36 2002/10/23 09:11:10 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: st.c,v 1.37 2003/05/03 18:10:48 wiz Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -152,7 +152,7 @@ int st_debug = 0x0000;
 #endif
 
 /*
- * Patchable variable.  If an even length read is requested a dma transfer is
+ * Patchable variable.  If an even length read is requested a DMA transfer is
  * used.  Only after the read will we find out if the read had an odd number
  * of bytes.  The HP98658 hardware cannot do odd length transfers, the last
  * byte of the data will always be 0x00.  Normally, the driver will complain

@@ -1,4 +1,4 @@
-/*	$NetBSD: auvia.c,v 1.30 2003/02/01 06:23:38 thorpej Exp $	*/
+/*	$NetBSD: auvia.c,v 1.31 2003/05/03 18:11:32 wiz Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auvia.c,v 1.30 2003/02/01 06:23:38 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auvia.c,v 1.31 2003/05/03 18:11:32 wiz Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -820,28 +820,28 @@ auvia_malloc(void *addr, int direction, size_t size, struct malloc_type * pool,
 	p->size = size;
 	if ((error = bus_dmamem_alloc(sc->sc_dmat, size, PAGE_SIZE, 0, &p->seg,
 				      1, &rseg, BUS_DMA_NOWAIT)) != 0) {
-		printf("%s: unable to allocate dma, error = %d\n",
+		printf("%s: unable to allocate DMA, error = %d\n",
 		       sc->sc_dev.dv_xname, error);
 		goto fail_alloc;
 	}
 
 	if ((error = bus_dmamem_map(sc->sc_dmat, &p->seg, rseg, size, &p->addr,
 				    BUS_DMA_NOWAIT | BUS_DMA_COHERENT)) != 0) {
-		printf("%s: unable to map dma, error = %d\n",
+		printf("%s: unable to map DMA, error = %d\n",
 		       sc->sc_dev.dv_xname, error);
 		goto fail_map;
 	}
 
 	if ((error = bus_dmamap_create(sc->sc_dmat, size, 1, size, 0,
 				       BUS_DMA_NOWAIT, &p->map)) != 0) {
-		printf("%s: unable to create dma map, error = %d\n",
+		printf("%s: unable to create DMA map, error = %d\n",
 		       sc->sc_dev.dv_xname, error);
 		goto fail_create;
 	}
 
 	if ((error = bus_dmamap_load(sc->sc_dmat, p->map, p->addr, size, NULL,
 				     BUS_DMA_NOWAIT)) != 0) {
-		printf("%s: unable to load dma map, error = %d\n",
+		printf("%s: unable to load DMA map, error = %d\n",
 		       sc->sc_dev.dv_xname, error);
 		goto fail_load;
 	}

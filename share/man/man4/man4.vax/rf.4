@@ -1,4 +1,4 @@
-.\"	$NetBSD: rf.4,v 1.2 2003/03/24 14:18:55 wiz Exp $
+.\"	$NetBSD: rf.4,v 1.3 2003/05/03 18:10:40 wiz Exp $
 .\" Copyright (c) 2002 Jochen Kunz.
 .\" All rights reserved.
 .\"
@@ -108,7 +108,7 @@ d/p/w 20001E7A 92
 .El
 .Sh DIAGNOSTICS
 .Bl -diag
-.It "rfc_attach: Error creating bus dma map: %d"
+.It "rfc_attach: Error creating bus_dma map: %d"
 .It "did not respond to INIT CMD"
 Possible errors during
 .Xr autoconf 4 .
@@ -120,7 +120,7 @@ An error occurred while the driver tried to send command %x to drive %s.
 .It "rfc_intr: Error while writing sector: %x"
 .It "rfc_intr: Error while DMA: %x"
 %x is status code from the controller error and status register.
-.It "rfc_intr: Error while loading bus dma map: %d"
+.It "rfc_intr: Error while loading bus_dma map: %d"
 %d is return code of
 .Xr bus_dmamap_load 9 .
 .It "%s: density error."

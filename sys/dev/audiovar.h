@@ -1,4 +1,4 @@
-/*	$NetBSD: audiovar.h,v 1.27 2002/03/18 00:42:36 enami Exp $	*/
+/*	$NetBSD: audiovar.h,v 1.28 2003/05/03 18:11:09 wiz Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -183,8 +183,8 @@ struct audio_softc {
 	u_char	*sc_sil_start;	/* start of silence in buffer */
 	int	sc_sil_count;	/* # of silence bytes */
 
-	u_char	sc_rbus;	/* input dma in progress */
-	u_char	sc_pbus;	/* output dma in progress */
+	u_char	sc_rbus;	/* input DMA in progress */
+	u_char	sc_pbus;	/* output DMA in progress */
 
 	struct	audio_params sc_pparams;	/* play encoding parameters */
 	struct	audio_params sc_rparams;	/* record encoding parameters */

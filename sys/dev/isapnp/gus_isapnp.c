@@ -1,4 +1,4 @@
-/*	$NetBSD: gus_isapnp.c,v 1.21 2002/10/11 19:14:07 fvdl Exp $	*/
+/*	$NetBSD: gus_isapnp.c,v 1.22 2003/05/03 18:11:30 wiz Exp $	*/
 
 /*
  * Copyright (c) 1997, 1999 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gus_isapnp.c,v 1.21 2002/10/11 19:14:07 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gus_isapnp.c,v 1.22 2003/05/03 18:11:30 wiz Exp $");
 
 #include "guspnp.h"
 #if NGUSPNP > 0
@@ -217,7 +217,7 @@ gus_isapnp_attach(parent, self, aux)
 	      }
 
         /*
-         * isapnp is a child if isa, and we need isa for the dma
+         * isapnp is a child if isa, and we need isa for the DMA
          * routines.
          */
 	sc->iw_cd = &guspnp_cd;

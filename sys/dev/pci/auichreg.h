@@ -1,4 +1,4 @@
-/*	$NetBSD: auichreg.h,v 1.4 2002/10/08 10:25:45 kent Exp $	*/
+/*	$NetBSD: auichreg.h,v 1.5 2003/05/03 18:11:32 wiz Exp $	*/
 
 /*
  * Copyright (c) 2000 Michael Shalayeff
@@ -54,7 +54,7 @@
 #define		ICH_BCIS	0x08	/* r- buf cmplt int sts; wr ack */
 #define		ICH_LVBCI	0x04	/* r- last valid bci, wr ack */
 #define		ICH_CELV	0x02	/* current equals last valid */
-#define		ICH_DCH		0x01	/* dma halted */
+#define		ICH_DCH		0x01	/* DMA halted */
 #define		ICH_ISTS_BITS	"\020\01dch\02celv\03lvbci\04bcis\05fifoe"
 #define	ICH_PICB	0x08	/* 16 bits */
 #define	ICH_PIV		0x0a	/* 5 bits prefetched index value */

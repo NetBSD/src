@@ -1,4 +1,4 @@
-/* $NetBSD: isp_pci.c,v 1.87 2002/11/25 02:16:50 thorpej Exp $ */
+/* $NetBSD: isp_pci.c,v 1.88 2003/05/03 18:11:36 wiz Exp $ */
 /*
  * This driver, which is contained in NetBSD in the files:
  *
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isp_pci.c,v 1.87 2002/11/25 02:16:50 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isp_pci.c,v 1.88 2003/05/03 18:11:36 wiz Exp $");
 
 #include <dev/ic/isp_netbsd.h>
 #include <dev/pci/pcireg.h>
@@ -927,13 +927,13 @@ isp_pci_mbxdma(struct ispsoftc *isp)
 	if (pcs->pci_xfer_dmap == NULL) {
 		free(isp->isp_xflist, M_DEVBUF);
 		isp->isp_xflist = NULL;
-		isp_prt(isp, ISP_LOGERR, "cannot malloc dma map array");
+		isp_prt(isp, ISP_LOGERR, "cannot malloc DMA map array");
 		return (1);
 	}
 	for (i = 0; i < isp->isp_maxcmds; i++) {
 		if (bus_dmamap_create(dmat, MAXPHYS, (MAXPHYS / PAGE_SIZE) + 1,
 		    MAXPHYS, 0, BUS_DMA_NOWAIT, &pcs->pci_xfer_dmap[i])) {
-			isp_prt(isp, ISP_LOGERR, "cannot create dma maps");
+			isp_prt(isp, ISP_LOGERR, "cannot create DMA maps");
 			break;
 		}
 	}
@@ -1006,7 +1006,7 @@ isp_pci_mbxdma(struct ispsoftc *isp)
 	fcp->isp_scdma = isp->isp_scdmap->dm_segs[0].ds_addr;
 	return (0);
 dmafail:
-	isp_prt(isp, ISP_LOGERR, "mailbox dma setup failure");
+	isp_prt(isp, ISP_LOGERR, "mailbox DMA setup failure");
 	for (i = 0; i < isp->isp_maxcmds; i++) {
 		bus_dmamap_destroy(dmat, pcs->pci_xfer_dmap[i]);
 	}
@@ -1056,7 +1056,7 @@ isp_pci_dmasetup(struct ispsoftc *isp, struct scsipi_xfer *xs, ispreq_t *rq,
 	    BUS_DMA_NOWAIT : BUS_DMA_WAITOK) | BUS_DMA_STREAMING |
 	    ((xs->xs_control & XS_CTL_DATA_IN) ? BUS_DMA_READ : BUS_DMA_WRITE));
 	if (error) {
-		isp_prt(isp, ISP_LOGWARN, "unable to load dma (%d)", error);
+		isp_prt(isp, ISP_LOGWARN, "unable to load DMA (%d)", error);
 		XS_SETERR(xs, HBA_BOTCH);
 		if (error == EAGAIN || error == ENOMEM)
 			return (CMD_EAGAIN);

@@ -1,4 +1,4 @@
-/* -*-C++-*-	$NetBSD: sh3_dev.cpp,v 1.1 2002/02/11 17:08:59 uch Exp $	*/
+/* -*-C++-*-	$NetBSD: sh3_dev.cpp,v 1.2 2003/05/03 18:10:49 wiz Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -626,6 +626,6 @@ val = VOLATILE_REF16(SH7707_LCDDMR);
 sh7707_fb_dma_addr |= (val << 16);
 resumeIntr(s);
 
-DPRINTF((TEXT("SH7707 frame buffer dma address: 0x%08x\n"),
+DPRINTF((TEXT("SH7707 frame buffer DMA address: 0x%08x\n"),
     sh7707_fb_dma_addr));
 #endif

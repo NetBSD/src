@@ -1,4 +1,4 @@
-/*	$NetBSD: scsi_low.c,v 1.1 1997/05/17 13:56:10 matthias Exp $	*/
+/*	$NetBSD: scsi_low.c,v 1.2 2003/05/03 18:10:56 wiz Exp $	*/
 
 /****************************************************************************
  * NS32K Monitor SCSI low-level driver
@@ -326,7 +326,7 @@ scsi_interrupt()
     if (ret != ISR_NOTDONE) {		/* if done, send message to task */
       sc_watchdog_error = 0;
       sc_accept_int = 0;
-      WR_ADR (SC_MODE, 0);		/* clear monbsy, dma */
+      WR_ADR (SC_MODE, 0);		/* clear monbsy, DMA */
       break;				/* reti re-enables ints */
     }
     if (0 == ((stat2 =			/* check for another interrupt */
@@ -371,11 +371,11 @@ scsi_interrupt()
  *	DMA destination.
  *
  * 4)	It is also possible to miss the first few bytes of a transfer.
- *	If the address used to access pseudo-dma port is not double word
+ *	If the address used to access pseudo-DMA port is not double word
  *	aligned, the whole double word is read into the cache, and then
  *	data is moved from the middle of the word (i.e. something other
  *	than the first bytes read from the SCSI controller) by the
- *	pseudo-dma loop in sc_receive().
+ *	pseudo-DMA loop in sc_receive().
  */
 sc_dma_setup (dir, adr)
 int dir;

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_xe.c,v 1.12 2003/01/20 15:01:44 bouyer Exp $	*/
+/*	$NetBSD: if_xe.c,v 1.13 2003/05/03 18:10:55 wiz Exp $	*/
 /*
  * Copyright (c) 1998 Darrin B. Jewell
  * All rights reserved.
@@ -182,16 +182,16 @@ findchannel_defer(self)
 	if (!xsc->sc_txdma) {
 		xsc->sc_txdma = nextdma_findchannel ("enetx");
 		if (xsc->sc_txdma == NULL)
-			panic ("%s: can't find enetx dma channel",
+			panic ("%s: can't find enetx DMA channel",
 			       sc->sc_dev.dv_xname);
 	}
 	if (!xsc->sc_rxdma) {
 		xsc->sc_rxdma = nextdma_findchannel ("enetr");
 		if (xsc->sc_rxdma == NULL)
-			panic ("%s: can't find enetr dma channel",
+			panic ("%s: can't find enetr DMA channel",
 			       sc->sc_dev.dv_xname);
 	}
-	printf ("%s: using dma channels %s %s\n", sc->sc_dev.dv_xname,
+	printf ("%s: using DMA channels %s %s\n", sc->sc_dev.dv_xname,
 		xsc->sc_txdma->sc_dev.dv_xname, xsc->sc_rxdma->sc_dev.dv_xname);
 
 	nextdma_setconf (xsc->sc_rxdma, continue_cb, xe_dma_rx_continue);
@@ -204,7 +204,7 @@ findchannel_defer(self)
 	nextdma_setconf (xsc->sc_txdma, shutdown_cb, xe_dma_tx_shutdown);
 	nextdma_setconf (xsc->sc_txdma, cb_arg, sc);
 
-	/* Initialize the dma maps */
+	/* Initialize the DMA maps */
 	error = bus_dmamap_create(xsc->sc_txdma->sc_dmat, MCLBYTES,
 				  (MCLBYTES/MSIZE), MCLBYTES, 0, BUS_DMA_ALLOCNOW,
 				  &xsc->sc_tx_dmamap);
@@ -352,7 +352,7 @@ xe_dma_reset(sc)
 	struct xe_softc *xsc = (struct xe_softc *)sc;
 	int i;
 
-	DPRINTF(("xe dma reset\n"));
+	DPRINTF(("xe DMA reset\n"));
 	
 	nextdma_reset(xsc->sc_rxdma);
 	nextdma_reset(xsc->sc_txdma);
@@ -385,7 +385,7 @@ xe_dma_rx_setup (sc)
 	struct xe_softc *xsc = (struct xe_softc *)sc;
 	int i;
 
-	DPRINTF(("xe dma rx setup\n"));
+	DPRINTF(("xe DMA rx setup\n"));
 
 	for(i = 0; i < MB8795_NRXBUFS; i++) {
 		xsc->sc_rx_mb_head[i] = 
@@ -404,7 +404,7 @@ xe_dma_rx_go (sc)
 {
 	struct xe_softc *xsc = (struct xe_softc *)sc;
 
-	DPRINTF(("xe dma rx go\n"));
+	DPRINTF(("xe DMA rx go\n"));
 
 	nextdma_start(xsc->sc_rxdma, DMACSR_SETREAD);
 }
@@ -438,7 +438,7 @@ xe_dma_rx_mbuf (sc)
 			xe_dma_rxmap_load(sc,map);
 
 		/* Punt runt packets
-		 * dma restarts create 0 length packets for example
+		 * DMA restarts create 0 length packets for example
 		 */
 		if (m->m_len < ETHER_MIN_LEN) {
 			m_freem(m);
@@ -454,7 +454,7 @@ xe_dma_tx_setup (sc)
 {
 	struct xe_softc *xsc = (struct xe_softc *)sc;
 
-	DPRINTF(("xe dma tx setup\n"));
+	DPRINTF(("xe DMA tx setup\n"));
 
 	nextdma_init(xsc->sc_txdma);
 }
@@ -465,7 +465,7 @@ xe_dma_tx_go (sc)
 {
 	struct xe_softc *xsc = (struct xe_softc *)sc;
 
-	DPRINTF(("xe dma tx go\n"));
+	DPRINTF(("xe DMA tx go\n"));
 
 	nextdma_start(xsc->sc_txdma, DMACSR_SETWRITE);
 }
@@ -675,7 +675,7 @@ xe_dma_rx_shutdown(arg)
 	}
 #ifdef DIAGNOSTIC
 	else
-		DPRINTF(("%s: Unexpected rx dma shutdown while if not running\n",
+		DPRINTF(("%s: Unexpected rx DMA shutdown while if not running\n",
 			 sc->sc_dev.dv_xname));
 #endif
 }
@@ -776,7 +776,7 @@ xe_dma_rx_continue(arg)
 	}
 #ifdef DIAGNOSTIC
 	else
-		panic("%s: Unexpected rx dma continue while if not running",
+		panic("%s: Unexpected rx DMA continue while if not running",
 		      sc->sc_dev.dv_xname);
 #endif
 	

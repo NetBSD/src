@@ -1,4 +1,4 @@
-/*	$NetBSD: hme.c,v 1.36 2003/04/26 22:08:29 wiz Exp $	*/
+/*	$NetBSD: hme.c,v 1.37 2003/05/03 18:11:18 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hme.c,v 1.36 2003/04/26 22:08:29 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hme.c,v 1.37 2003/05/03 18:11:18 wiz Exp $");
 
 #define HMEDEBUG
 
@@ -150,7 +150,7 @@ hme_config(sc)
 	 * the bus tag:
 	 *	sc_bustag
 	 *
-	 * the dma bus tag:
+	 * the DMA bus tag:
 	 *	sc_dmatag
 	 *
 	 * the bus handles:

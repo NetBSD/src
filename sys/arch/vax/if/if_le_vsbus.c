@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le_vsbus.c,v 1.16 2003/04/01 15:23:38 thorpej Exp $	*/
+/*	$NetBSD: if_le_vsbus.c,v 1.17 2003/05/03 18:11:06 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -254,14 +254,14 @@ le_vsbus_attach(parent, self, aux)
 	err = bus_dmamap_create(va->va_dmat, ALLOCSIZ, rseg, ALLOCSIZ, 
 	    0, BUS_DMA_NOWAIT, &sc->sc_dm);
         if (err) {
-                printf(": unable to create dma map: err %d\n", err);
+                printf(": unable to create DMA map: err %d\n", err);
                 bus_dmamem_free(va->va_dmat, &seg, rseg);
                 return;
         }
 	err = bus_dmamap_load(va->va_dmat, sc->sc_dm, sc->sc_am7990.lsc.sc_mem,
 	    ALLOCSIZ, NULL, BUS_DMA_NOWAIT);
         if (err) {
-                printf(": unable to load dma map: err %d\n", err);
+                printf(": unable to load DMA map: err %d\n", err);
                 bus_dmamap_destroy(va->va_dmat, sc->sc_dm);
                 bus_dmamem_free(va->va_dmat, &seg, rseg);
                 return;

@@ -1,4 +1,4 @@
-/*	$NetBSD: si.c,v 1.12 2002/10/02 16:53:13 thorpej Exp $	*/
+/*	$NetBSD: si.c,v 1.13 2003/05/03 18:11:42 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1996,2000 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: si.c,v 1.12 2002/10/02 16:53:13 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: si.c,v 1.13 2003/05/03 18:11:42 wiz Exp $");
 
 #include "opt_ddb.h"
 
@@ -319,7 +319,7 @@ si_attach(parent, self, aux)
 	i = SCI_OPENINGS * sizeof(struct si_dma_handle);
 	sc->sc_dma = (struct si_dma_handle *)malloc(i, M_DEVBUF, M_NOWAIT);
 	if (sc->sc_dma == NULL)
-		panic("si: dma handle malloc failed");
+		panic("si: DMA handle malloc failed");
 
 	for (i = 0; i < SCI_OPENINGS; i++) {
 		sc->sc_dma[i].dh_flags = 0;
@@ -825,7 +825,7 @@ si_dma_stop(ncr_sc)
 
 	if ((ncr_sc->sc_state & NCR_DOINGDMA) == 0) {
 #ifdef	DEBUG
-		printf("si_dma_stop: dma not running\n");
+		printf("si_dma_stop: DMA not running\n");
 #endif
 		return;
 	}
@@ -856,7 +856,7 @@ si_dma_stop(ncr_sc)
 	 * actually transferred for VME.
 	 *
 	 * SCSI-3 VME interface is a little funny on writes:
-	 * if we have a disconnect, the dma has overshot by
+	 * if we have a disconnect, the DMA has overshot by
 	 * one byte and the resid needs to be incremented.
 	 * Only happens for partial transfers.
 	 * (Thanks to Matt Jacob)

@@ -1,4 +1,4 @@
-/*	$NetBSD: ahbreg.h,v 1.10 2000/07/12 21:15:33 thorpej Exp $	*/
+/*	$NetBSD: ahbreg.h,v 1.11 2003/05/03 18:11:10 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -137,7 +137,7 @@ typedef u_int32_t physlen;
 
 #define	G2STAT2_HOST_READY	0x01
 
-#define	AHB_NSEG	33	/* number of dma segments supported */
+#define	AHB_NSEG	33	/* number of DMA segments supported */
 
 struct ahb_dma_seg {
 	physaddr seg_addr;

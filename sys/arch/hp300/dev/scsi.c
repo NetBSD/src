@@ -1,4 +1,4 @@
-/*	$NetBSD: scsi.c,v 1.34 2003/01/01 01:34:46 thorpej Exp $	*/
+/*	$NetBSD: scsi.c,v 1.35 2003/05/03 18:10:47 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scsi.c,v 1.34 2003/01/01 01:34:46 thorpej Exp $");                                                  
+__KERNEL_RCSID(0, "$NetBSD: scsi.c,v 1.35 2003/05/03 18:10:47 wiz Exp $");                                                  
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -169,7 +169,7 @@ int scsi_data_wait = SCSI_DATA_WAIT;
 int scsi_init_wait = SCSI_INIT_WAIT;
 
 int scsi_nosync = 1;		/* inhibit sync xfers if 1 */
-int scsi_pridma = 0;		/* use "priority" dma */
+int scsi_pridma = 0;		/* use "priority" DMA */
 
 #ifdef DEBUG
 int	scsi_debug = 0;
@@ -365,7 +365,7 @@ scsiattach(parent, self, aux)
 	 */
 	printf(":");
 	if (hs->sc_flags & SCSI_DMA32)
-		printf(" 32 bit dma, ");
+		printf(" 32 bit DMA, ");
 
 	switch (hs->sc_sync) {
 	case 0:
@@ -966,7 +966,7 @@ finishxfer(hs, hd, target)
 	/*
 	 * We specified padding xfer so we ended with either a phase
 	 * change interrupt (normal case) or an error interrupt (handled
-	 * elsewhere).  Reset the board dma logic then try to get the
+	 * elsewhere).  Reset the board DMA logic then try to get the
 	 * completion status & command done msg.  The reset confuses
 	 * the SPC REQ/ACK logic so we have to do any status/msg input
 	 * operations via 'manual xfer'.
@@ -974,7 +974,7 @@ finishxfer(hs, hd, target)
 	if (hd->scsi_ssts & SSTS_BUSY) {
 		int wait = scsi_cmd_wait;
 
-		/* wait for dma operation to finish */
+		/* wait for DMA operation to finish */
 		while (hd->scsi_ssts & SSTS_BUSY) {
 			if (--wait < 0) {
 #ifdef DEBUG
@@ -1280,8 +1280,8 @@ scsigo(ctlr, slave, unit, bp, cdb, pad)
 	}
 out:
 	/*
-	 * Reset the card dma logic, setup the dma channel then
-	 * get the dio part of the card set for a dma xfer.
+	 * Reset the card DMA logic, setup the DMA channel then
+	 * get the dio part of the card set for a DMA xfer.
 	 */
 	hd->scsi_hconf = 0;
 	cmd = CSR_IE;
@@ -1364,7 +1364,7 @@ scsidone(arg)
 	if (scsi_debug)
 		printf("%s: done called!\n", hs->sc_dev.dv_xname);
 #endif
-	/* dma operation is done -- turn off card dma */
+	/* DMA operation is done -- turn off card DMA */
 	hd->scsi_csr &=~ (CSR_DE1|CSR_DE0);
 }
 

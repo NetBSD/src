@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_machdep.c,v 1.4 2003/03/04 01:07:36 fvdl Exp $	*/
+/*	$NetBSD: isa_machdep.c,v 1.5 2003/05/03 18:11:08 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isa_machdep.c,v 1.4 2003/03/04 01:07:36 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isa_machdep.c,v 1.5 2003/05/03 18:11:08 wiz Exp $");
 
 #define ISA_DMA_STATS
 
@@ -119,7 +119,7 @@ typedef void (vector) __P((void));
 extern vector *IDTVEC(intr)[];
 
 /*
- * Cookie used by ISA dma.  A pointer to one of these it stashed in
+ * Cookie used by ISA DMA.  A pointer to one of these it stashed in
  * the DMA map.
  */
 struct x86_isa_dma_cookie {
@@ -395,7 +395,7 @@ isa_mem_free(t, bsh, size)
 }
 
 /**********************************************************************
- * bus.h dma interface entry points
+ * bus.h DMA interface entry points
  **********************************************************************/
 
 #ifdef ISA_DMA_STATS

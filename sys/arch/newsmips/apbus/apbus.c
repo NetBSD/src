@@ -1,4 +1,4 @@
-/*	$NetBSD: apbus.c,v 1.13 2003/04/19 14:56:05 tsutsui Exp $	*/
+/*	$NetBSD: apbus.c,v 1.14 2003/05/03 18:10:53 wiz Exp $	*/
 
 /*-
  * Copyright (C) 1999 SHIMIZU Ryo.  All rights reserved.
@@ -325,7 +325,7 @@ apbus_dma_mapfree(t, map)
 		for (i = 0; i < map->_dm_maptblcnt; i++, n++) {
 #ifdef DIAGNOSTIC
 			if (apbus_dma_maptbl[n] == 0)
-				panic("freeing free dma map");
+				panic("freeing free DMA map");
 			APBUS_MAPTBL(n, 0xffffffff);	/* causes DMA error */
 #endif
 			apbus_dma_maptbl[n] = 0;
@@ -352,7 +352,7 @@ apbus_dma_mapset(t, map)
 		    addr < eaddr; addr += PAGE_SIZE, i++) {
 #ifdef DIAGNOSTIC
 			if (i >= map->_dm_maptblcnt)
-				panic("dma map table overflow");
+				panic("DMA map table overflow");
 #endif
 			APBUS_MAPTBL(map->_dm_maptbl + i,
 				NEWS5000_APBUS_MAP_VALID |

@@ -1,4 +1,4 @@
-/*	$NetBSD: iha.c,v 1.21 2003/01/20 05:30:06 simonb Exp $ */
+/*	$NetBSD: iha.c,v 1.22 2003/05/03 18:11:18 wiz Exp $ */
 
 /*-
  * Device driver for the INI-9XXXU/UW or INIC-940/950 PCI SCSI Controller.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iha.c,v 1.21 2003/01/20 05:30:06 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iha.c,v 1.22 2003/05/03 18:11:18 wiz Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -629,7 +629,7 @@ iha_alloc_sglist(sc)
 	int error, rseg;
 
 	/*
-	 * Allocate dma-safe memory for the SCB's sglist
+	 * Allocate DMA-safe memory for the SCB's sglist
 	 */
 	if ((error = bus_dmamem_alloc(sc->sc_dmat,
 	    IHA_SG_SIZE * IHA_MAX_SCB,
@@ -732,7 +732,7 @@ iha_scsipi_request(chan, req, arg)
 			     BUS_DMA_READ : BUS_DMA_WRITE));
 
 			if (error) {
-				printf("%s: error %d loading dma map\n",
+				printf("%s: error %d loading DMA map\n",
 				    sc->sc_dev.dv_xname, error);
 				iha_append_free_scb(sc, scb);
 				xs->error = XS_DRIVER_STUFFUP;

@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.105 2003/02/25 21:25:40 thorpej Exp $	*/
+/*	$NetBSD: fd.c,v 1.106 2003/05/03 18:10:59 wiz Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -1307,7 +1307,7 @@ fdc_c_hwintr(arg)
 		softintr_schedule(fdc->sc_sicookie);
 		return (1);
 	case FDC_ITASK_DMA:
-		/* Proceed with pseudo-dma below */
+		/* Proceed with pseudo-DMA below */
 		break;
 	default:
 		printf("fdc: stray hard interrupt: itask=%d\n", fdc->sc_itask);

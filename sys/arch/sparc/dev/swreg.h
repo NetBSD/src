@@ -1,4 +1,4 @@
-/*	$NetBSD: swreg.h,v 1.1 2000/06/26 19:54:09 pk Exp $	*/
+/*	$NetBSD: swreg.h,v 1.2 2003/05/03 18:11:00 wiz Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -61,8 +61,8 @@ struct sw_regs {
 	} sci;
 
 	/* DMA controller registers on OBIO */
-	u_int	dma_addr;	/* dma address */
-	u_int	dma_count;	/* dma count */
+	u_int	dma_addr;	/* DMA address */
+	u_int	dma_count;	/* DMA count */
 	u_int	pad0;		/* no-existent register */
 	u_int	sw_csr;		/* sw control/status */
 	u_int	bpr;		/* sw byte pack */
@@ -92,17 +92,17 @@ struct sw_regs {
  *	(o)	sun3/50 onboard host adaptor interface only.
  *	(b)	both vme and sun3/50 host adaptor interfaces.
  */
-#define SW_CSR_DMA_ACTIVE	0x8000	/* (r,o) dma transfer active */
-#define SW_CSR_DMA_CONFLICT	0x4000	/* (r,b) reg accessed while dmaing */
-#define SW_CSR_DMA_BUS_ERR	0x2000	/* (r,b) bus error during dma */
+#define SW_CSR_DMA_ACTIVE	0x8000	/* (r,o) DMA transfer active */
+#define SW_CSR_DMA_CONFLICT	0x4000	/* (r,b) reg accessed while DMA'ing */
+#define SW_CSR_DMA_BUS_ERR	0x2000	/* (r,b) bus error during DMA */
 #define SW_CSR_ID		0x1000	/* (r,b) 0 for 3/50, 1 for SCSI-3, */
 					/* 0 if SCSI-3 unmodified */
 #define SW_CSR_FIFO_FULL	0x0800	/* (r,b) fifo full */
 #define SW_CSR_FIFO_EMPTY	0x0400	/* (r,b) fifo empty */
 #define SW_CSR_SBC_IP		0x0200	/* (r,b) sbc interrupt pending */
-#define SW_CSR_DMA_IP		0x0100	/* (r,b) dma interrupt pending */
-#define SW_CSR_DMA_EN		0x0010	/* (rw,v) dma/interrupt enable */
-#define SW_CSR_SEND		0x0008	/* (rw,b) dma dir, 1=to device */
+#define SW_CSR_DMA_IP		0x0100	/* (r,b) DMA interrupt pending */
+#define SW_CSR_DMA_EN		0x0010	/* (rw,v) DMA/interrupt enable */
+#define SW_CSR_SEND		0x0008	/* (rw,b) DMA dir, 1=to device */
 #define SW_CSR_INTR_EN		0x0004	/* (rw,b) interrupts enable */
 #define SW_CSR_FIFO_RES		0x0002	/* (rw,b) inits fifo, 0=reset */
 #define SW_CSR_SCSI_RES		0x0001	/* (rw,b) reset sbc and udc, 0=reset */

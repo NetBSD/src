@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.176 2003/04/25 03:02:11 gmcgarry Exp $	*/
+/*	$NetBSD: audio.c,v 1.177 2003/05/03 18:11:08 wiz Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.176 2003/04/25 03:02:11 gmcgarry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.177 2003/05/03 18:11:08 wiz Exp $");
 
 #include "audio.h"
 #if NAUDIO > 0
@@ -2218,7 +2218,7 @@ audio_pint_silence(struct audio_softc *sc, struct audio_ringbuffer *cb,
 }
 
 /*
- * Called from HW driver module on completion of dma output.
+ * Called from HW driver module on completion of DMA output.
  * Start output of new block, wrap in ring buffer if needed.
  * If no more buffers to play, output zero instead.
  * Do a wakeup if necessary.
@@ -2348,7 +2348,7 @@ audio_pint(void *v)
 }
 
 /*
- * Called from HW driver module on completion of dma input.
+ * Called from HW driver module on completion of DMA input.
  * Mark it as input in the ring buffer (fiddle pointers).
  * Do a wakeup if necessary.
  */

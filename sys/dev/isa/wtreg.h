@@ -1,4 +1,4 @@
-/*	$NetBSD: wtreg.h,v 1.5 1994/10/27 04:18:33 cgd Exp $	*/
+/*	$NetBSD: wtreg.h,v 1.6 2003/05/03 18:11:30 wiz Exp $	*/
 
 /*
  * Streamer tape driver.
@@ -87,7 +87,7 @@
 #define TPRANY          0x1000  /* read command requested */
 #define TPWP            0x2000  /* write protect error seen */
 #define TPTIMER         0x4000  /* timer() is active */
-#define TPACTIVE        0x8000  /* dma i/o active */
+#define TPACTIVE        0x8000  /* DMA i/o active */
 
 /* controller error register bits */
 #define TP_FIL          0x0001  /* File mark detected */

@@ -1,4 +1,4 @@
-.\"	$NetBSD: ntwoc.4,v 1.5 2003/02/04 22:38:15 perry Exp $
+.\"	$NetBSD: ntwoc.4,v 1.6 2003/05/03 18:10:39 wiz Exp $
 .\"
 .\" Copyright (c) 2000 Christian E. Hopps
 .\" All rights reserved.
@@ -148,7 +148,7 @@ SDL Communications WAN/ic 400 (untested)
 .It "ntwoc0: TXDMA underrun - fifo depth maxed"
 Indicates that the serial port's FIFO is being drained faster
 than DMA can fill it.  The driver automatically increases the
-low-water mark at which to begin dma transfers when underruns
+low-water mark at which to begin DMA transfers when underruns
 occur.  This diagnostic is issued when the low-water mark is
 maximized (i.e., 1 less than the depth of the FIFO).
 .It "ntwoc0: RXDMA buffer overflow"

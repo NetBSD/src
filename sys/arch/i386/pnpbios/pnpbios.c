@@ -1,4 +1,4 @@
-/* $NetBSD: pnpbios.c,v 1.36 2003/04/01 20:56:30 thorpej Exp $ */
+/* $NetBSD: pnpbios.c,v 1.37 2003/05/03 18:10:50 wiz Exp $ */
 
 /*
  * Copyright (c) 2000 Jason R. Thorpe.  All rights reserved.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pnpbios.c,v 1.36 2003/04/01 20:56:30 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pnpbios.c,v 1.37 2003/05/03 18:10:50 wiz Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -166,7 +166,7 @@ static struct{
 	{0, 5, 6}, /* logical device id */
 	{pnp_compatid, 4, 4}, /* compatible device id */
 	{pnp_newirq, 2, 3}, /* irq  descriptor */
-	{pnp_newdma, 2, 2}, /* dma  descriptor */
+	{pnp_newdma, 2, 2}, /* DMA  descriptor */
 	{0, 0, 1}, /* start dep */
 	{0, 0, 0}, /* end dep */
 	{pnp_newioport, 7, 7}, /* io descriptor */
@@ -757,7 +757,7 @@ pnpbios_printres(r)
 	if (dma) {
 		if (p)
 			printf(", ");
-		printf("dma");
+		printf("DMA");
 		do {
 			printf(" %d", ffs(dma->mask) - 1);
 		} while ((dma = SIMPLEQ_NEXT(dma, next)));
@@ -1199,7 +1199,7 @@ pnp_newdma(r, vres, len)
 
 	res = vres;
 	if (res->r_mask == 0) { /* disabled */
-		DPRINTF(("\ttag dma zeroed\n"));
+		DPRINTF(("\ttag DMA zeroed\n"));
 		return (0);
 	}
 	dma = malloc(sizeof(struct pnp_dma), M_DEVBUF, M_NOWAIT);
@@ -1208,7 +1208,7 @@ pnp_newdma(r, vres, len)
 	SIMPLEQ_INSERT_TAIL(&r->dma, dma, next);
 	r->numdma++;
 
-	DPRINTF(("\ttag dma flags %02x mask %02x\n", dma->flags,dma->mask));
+	DPRINTF(("\ttag DMA flags %02x mask %02x\n", dma->flags,dma->mask));
 
 	return (0);
 }

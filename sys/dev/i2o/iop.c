@@ -1,4 +1,4 @@
-/*	$NetBSD: iop.c,v 1.35 2003/01/20 04:26:02 simonb Exp $	*/
+/*	$NetBSD: iop.c,v 1.36 2003/05/03 18:11:10 wiz Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001, 2002 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iop.c,v 1.35 2003/01/20 04:26:02 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iop.c,v 1.36 2003/05/03 18:11:10 wiz Exp $");
 
 #include "opt_i2o.h"
 #include "iop.h"
@@ -1048,7 +1048,7 @@ iop_ofifo_init(struct iop_softc *sc)
 		rv = bus_dmamem_alloc(sc->sc_dmat, sc->sc_rep_size, PAGE_SIZE,
 		    0, &seg, 1, &rseg, BUS_DMA_NOWAIT);
 		if (rv != 0) {
-			printf("%s: dma alloc = %d\n", sc->sc_dv.dv_xname,
+			printf("%s: DMA alloc = %d\n", sc->sc_dv.dv_xname,
 			   rv);
 			return (rv);
 		}
@@ -1056,14 +1056,14 @@ iop_ofifo_init(struct iop_softc *sc)
 		rv = bus_dmamem_map(sc->sc_dmat, &seg, rseg, sc->sc_rep_size,
 		    &sc->sc_rep, BUS_DMA_NOWAIT | BUS_DMA_COHERENT);
 		if (rv != 0) {
-			printf("%s: dma map = %d\n", sc->sc_dv.dv_xname, rv);
+			printf("%s: DMA map = %d\n", sc->sc_dv.dv_xname, rv);
 			return (rv);
 		}
 
 		rv = bus_dmamap_create(sc->sc_dmat, sc->sc_rep_size, 1,
 		    sc->sc_rep_size, 0, BUS_DMA_NOWAIT, &sc->sc_rep_dmamap);
 		if (rv != 0) {
-			printf("%s: dma create = %d\n", sc->sc_dv.dv_xname,
+			printf("%s: DMA create = %d\n", sc->sc_dv.dv_xname,
 			    rv);
 			return (rv);
 		}
@@ -1071,7 +1071,7 @@ iop_ofifo_init(struct iop_softc *sc)
 		rv = bus_dmamap_load(sc->sc_dmat, sc->sc_rep_dmamap,
 		    sc->sc_rep, sc->sc_rep_size, NULL, BUS_DMA_NOWAIT);
 		if (rv != 0) {
-			printf("%s: dma load = %d\n", sc->sc_dv.dv_xname, rv);
+			printf("%s: DMA load = %d\n", sc->sc_dv.dv_xname, rv);
 			return (rv);
 		}
 

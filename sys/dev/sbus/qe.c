@@ -1,4 +1,4 @@
-/*	$NetBSD: qe.c,v 1.29 2002/12/10 13:44:48 pk Exp $	*/
+/*	$NetBSD: qe.c,v 1.30 2003/05/03 18:11:39 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: qe.c,v 1.29 2002/12/10 13:44:48 pk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: qe.c,v 1.30 2003/05/03 18:11:39 wiz Exp $");
 
 #define QEDEBUG
 
@@ -136,7 +136,7 @@ __KERNEL_RCSID(0, "$NetBSD: qe.c,v 1.29 2002/12/10 13:44:48 pk Exp $");
 struct qe_softc {
 	struct	device	sc_dev;		/* base device */
 	struct	sbusdev sc_sd;		/* sbus device */
-	bus_space_tag_t	sc_bustag;	/* bus & dma tags */
+	bus_space_tag_t	sc_bustag;	/* bus & DMA tags */
 	bus_dma_tag_t	sc_dmatag;
 	bus_dmamap_t	sc_dmamap;
 	struct	ethercom sc_ethercom;
@@ -824,14 +824,14 @@ qe_eint(sc, why)
 	}
 
 	if (why & QE_CR_STAT_TXPERR) {
-		printf("%s: tx dma parity error\n", sc->sc_dev.dv_xname);
+		printf("%s: tx DMA parity error\n", sc->sc_dev.dv_xname);
 		ifp->if_oerrors++;
 		rst = 1;
 		r |= 1;
 	}
 
 	if (why & QE_CR_STAT_TXSERR) {
-		printf("%s: tx dma sbus error ack\n", sc->sc_dev.dv_xname);
+		printf("%s: tx DMA sbus error ack\n", sc->sc_dev.dv_xname);
 		ifp->if_oerrors++;
 		rst = 1;
 		r |= 1;
@@ -897,14 +897,14 @@ qe_eint(sc, why)
 	}
 
 	if (why & QE_CR_STAT_RXPERR) {
-		printf("%s: rx dma parity error\n", sc->sc_dev.dv_xname);
+		printf("%s: rx DMA parity error\n", sc->sc_dev.dv_xname);
 		ifp->if_ierrors++;
 		r |= 1;
 		rst = 1;
 	}
 
 	if (why & QE_CR_STAT_RXSERR) {
-		printf("%s: rx dma sbus error ack\n", sc->sc_dev.dv_xname);
+		printf("%s: rx DMA sbus error ack\n", sc->sc_dev.dv_xname);
 		ifp->if_ierrors++;
 		r |= 1;
 		rst = 1;

@@ -1,4 +1,4 @@
-/*	$NetBSD: am9516.h,v 1.1 1995/10/29 21:19:06 gwr Exp $	*/
+/*	$NetBSD: am9516.h,v 1.2 2003/05/03 18:11:03 wiz Exp $	*/
 
 /*
  * This file is derived from the file dev/devSCSI3.c from
@@ -34,13 +34,13 @@
 #define UDC_ADR_COUNT		0x32	/* number of words to transfer */
 
 /* 
- * For a dma transfer, the appropriate udc registers are loaded from a 
+ * For a DMA transfer, the appropriate udc registers are loaded from a 
  * table in memory pointed to by the chain address register.
  */
 struct udc_table {
 	u_short			rsel;	/* tells udc which regs to load */
-	u_short			addrh;	/* high word of main mem dma address */
-	u_short			addrl;	/* low word of main mem dma address */
+	u_short			addrh;	/* high word of main mem DMA address */
+	u_short			addrl;	/* low word of main mem DMA address */
 	u_short			count;	/* num words to transfer */
 	u_short			cmrh;	/* high word of channel mode reg */
 	u_short			cmrl;	/* low word of channel mode reg */
@@ -50,7 +50,7 @@ struct udc_table {
 #define UDC_RSEL_RECV		0x0182
 #define UDC_RSEL_SEND		0x0282
 
-/* setting of chain mode reg: selects how the dma op is to be executed */
+/* setting of chain mode reg: selects how the DMA op is to be executed */
 #define UDC_CMR_HIGH		0x0040	/* high word of channel mode reg */
 #define UDC_CMR_LSEND		0x00c2	/* low word of cmr when send */
 #define UDC_CMR_LRECV		0x00d2	/* low word of cmr when receiving */
@@ -59,7 +59,7 @@ struct udc_table {
 #define UDC_MODE		0xd	/* enables udc chip */
 
 /* setting for the low byte in the high word of an address */
-#define UDC_ADDR_INFO		0x40	/* inc addr after each word is dma'd */
+#define UDC_ADDR_INFO		0x40	/* inc addr after each word is DMA'd */
 
 /* udc commands */
 #define UDC_CMD_STRT_CHN	0xa0	/* start chaining */
@@ -77,7 +77,7 @@ struct udc_table {
 #define UDC_SR_HRQ		0x0020	/* hardware request */
 #define UDC_SR_MCH		0x0010	/* match on upper comparator byte */
 #define UDC_SR_MCL		0x0008	/* match on lower comparator byte */
-#define UDC_SR_MC		0x0004	/* match condition ended dma */
-#define UDC_SR_EOP		0x0002	/* eop condition ended dma */
-#define UDC_SR_TC		0x0001	/* termination of count ended dma */
+#define UDC_SR_MC		0x0004	/* match condition ended DMA */
+#define UDC_SR_EOP		0x0002	/* eop condition ended DMA */
+#define UDC_SR_TC		0x0001	/* termination of count ended DMA */
 

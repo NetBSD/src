@@ -1,4 +1,4 @@
-/*	$NetBSD: z8530var.h,v 1.4 2002/03/11 07:11:26 chs Exp $	*/
+/*	$NetBSD: z8530var.h,v 1.5 2003/05/03 18:11:00 wiz Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -49,7 +49,7 @@
 
 struct zsc_softc {
 	struct device		zsc_dev;	/* base device */
-	bus_space_tag_t		zsc_bustag;	/* bus space/dma tags */
+	bus_space_tag_t		zsc_bustag;	/* bus space/DMA tags */
 	bus_dma_tag_t		zsc_dmatag;
 	struct zs_chanstate	*zsc_cs[2];	/* channel A and B soft state */
 

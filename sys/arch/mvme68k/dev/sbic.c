@@ -1,4 +1,4 @@
-/*	$NetBSD: sbic.c,v 1.20 2003/04/02 02:19:29 thorpej Exp $	*/
+/*	$NetBSD: sbic.c,v 1.21 2003/05/03 18:10:52 wiz Exp $	*/
 
 /*
  * Changes Copyright (c) 1996 Steve Woodford
@@ -668,13 +668,13 @@ sbicdmaok(dev, xs)
         return(0);
 
     /*
-     * controller supports dma to any addresses?
+     * controller supports DMA to any addresses?
      */
     if ( (dev->sc_flags & SBICF_BADDMA) == 0 )
         return(1);
 
     /*
-     * this address is ok for dma?
+     * this address is ok for DMA?
      */
     if ( sbiccheckdmap(xs->data, xs->datalen, dev->sc_dmamask) == 0 )
         return(1);
@@ -2206,7 +2206,7 @@ sbicnextstate(dev, csr, asr)
 
                 /*
                  * Do DMA transfer
-                 * set next dma addr and dec count
+                 * set next DMA addr and dec count
                  */
                 sbic_save_ptrs(dev);
                 sbic_load_ptrs(dev);
@@ -2632,7 +2632,7 @@ sbictimeout(dev)
 
         if ( dev->sc_dmatimo > 1 ) {
 
-            printf("%s: dma timeout #%d\n", dev->sc_dev.dv_xname,
+            printf("%s: DMA timeout #%d\n", dev->sc_dev.dv_xname,
                                             dev->sc_dmatimo - 1);
 
             GET_SBIC_asr(dev->sc_sbicp, asr);

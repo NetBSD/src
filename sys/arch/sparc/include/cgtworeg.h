@@ -1,4 +1,4 @@
-/*	$NetBSD: cgtworeg.h,v 1.3 1995/10/04 00:21:27 pk Exp $ */
+/*	$NetBSD: cgtworeg.h,v 1.4 2003/05/03 18:11:00 wiz Exp $ */
 
 /*
  * Copyright (c) 1994 Dennis Ferguson
@@ -173,11 +173,11 @@ struct cg2_nozoom {
 		u_short word;
 		u_char reg_pad[4096];
 	} dblbuf;
-	union {				/* start of dma window */
+	union {				/* start of DMA window */
 		u_short reg;
 		u_char reg_pad[4096];
 	} dmabase;
-	union {				/* dma window size */
+	union {				/* DMA window size */
 		u_short reg;		/* actually 8 bits.  reg*16 == size */
 		u_char reg_pad[4096];
 	} dmawidth;

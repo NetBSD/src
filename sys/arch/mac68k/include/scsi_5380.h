@@ -1,4 +1,4 @@
-/*	$NetBSD: scsi_5380.h,v 1.5 1999/04/12 20:38:19 pk Exp $	*/
+/*	$NetBSD: scsi_5380.h,v 1.6 2003/05/03 18:10:51 wiz Exp $	*/
 
 /*
  * Mach Operating System
@@ -56,15 +56,15 @@ typedef struct {
 	PAD(pad4);
 
 	volatile unsigned char sci_csr;		/* r:  Status */
-#define	sci_dma_send sci_csr			/* w:  Start dma send data */
+#define	sci_dma_send sci_csr			/* w:  Start DMA send data */
 	PAD(pad5);
 
 	volatile unsigned char sci_idata;	/* r:  Input data */
-#define	sci_trecv sci_idata			/* w:  Start dma receive, target */
+#define	sci_trecv sci_idata			/* w:  Start DMA receive, target */
 	PAD(pad6);
 
 	volatile unsigned char sci_iack;	/* r:  Interrupt Acknowledge  */
-#define	sci_irecv sci_iack			/* w:  Start dma receive, initiator */
+#define	sci_irecv sci_iack			/* w:  Start DMA receive, initiator */
 } sci_regmap_t;
 
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: rd.c,v 1.57 2003/05/02 08:45:13 dsl Exp $	*/
+/*	$NetBSD: rd.c,v 1.58 2003/05/03 18:10:47 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rd.c,v 1.57 2003/05/02 08:45:13 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rd.c,v 1.58 2003/05/03 18:10:47 wiz Exp $");
 
 #include "opt_useleds.h"
 #include "rnd.h"
@@ -1298,7 +1298,7 @@ rdprinterr(str, err, tab)
 static int rddoingadump;	/* simple mutex */
 
 /*
- * Non-interrupt driven, non-dma dump routine.
+ * Non-interrupt driven, non-DMA dump routine.
  */
 int
 rddump(dev, blkno, va, size)

@@ -1,4 +1,4 @@
-/*	$NetBSD: z8530var.h,v 1.6 2002/09/30 09:43:13 abs Exp $	*/
+/*	$NetBSD: z8530var.h,v 1.7 2003/05/03 18:11:02 wiz Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -63,7 +63,7 @@ extern struct consdev *cn_tab;
 
 struct zsc_softc {
 	struct device		zsc_dev;	/* base device */
-	bus_space_tag_t		zsc_bustag;	/* bus space/dma tags */
+	bus_space_tag_t		zsc_bustag;	/* bus space/DMA tags */
 	bus_dma_tag_t		zsc_dmatag;
 	struct zs_chanstate	*zsc_cs[2];	/* channel A and B soft state */
 

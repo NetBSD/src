@@ -1,4 +1,4 @@
-/*	$NetBSD: atzsc.c,v 1.33 2002/10/02 04:55:48 thorpej Exp $ */
+/*	$NetBSD: atzsc.c,v 1.34 2003/05/03 18:10:42 wiz Exp $ */
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atzsc.c,v 1.33 2002/10/02 04:55:48 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atzsc.c,v 1.34 2003/05/03 18:10:42 wiz Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -240,7 +240,7 @@ atzsc_dmastop(struct sbic_softc *dev)
 				;
 		}
 		/*
-		 * clear possible interrupt and stop dma
+		 * clear possible interrupt and stop DMA
 		 */
 		sdp->CINT = 1;
 		sdp->SP_DMA = 1;
@@ -313,10 +313,10 @@ atzsc_dmanext(struct sbic_softc *dev)
 			;
 	}
 	/*
-	 * clear possible interrupt and stop dma
+	 * clear possible interrupt and stop DMA
 	 */
 	sdp->CINT = 1;	/* clear possible interrupt */
-	sdp->SP_DMA = 1;	/* stop dma */
+	sdp->SP_DMA = 1;	/* stop DMA */
 	sdp->CNTR = dev->sc_dmacmd;
 	sdp->ACR = (u_int)dev->sc_cur->dc_addr;
 	sdp->ST_DMA = 1;
