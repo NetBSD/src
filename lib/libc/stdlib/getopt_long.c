@@ -1,4 +1,4 @@
-/*	$NetBSD: getopt_long.c,v 1.8 2000/08/25 17:05:49 thorpej Exp $	*/
+/*	$NetBSD: getopt_long.c,v 1.9 2000/11/26 23:39:11 wiz Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: getopt_long.c,v 1.8 2000/08/25 17:05:49 thorpej Exp $");
+__RCSID("$NetBSD: getopt_long.c,v 1.9 2000/11/26 23:39:11 wiz Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -76,7 +76,8 @@ __weak_alias(getopt_long,_getopt_long)
 
 /* return values */
 #define	BADCH	(int)'?'
-#define	BADARG	(int)':'
+#define	BADARG		((IGNORE_FIRST && options[1] == ':') \
+			 || (*options == ':') ? (int)':' : (int)'?')
 #define INORDER (int)1
 
 #define	EMSG	""
@@ -212,7 +213,8 @@ start:
 			nonopt_start = nonopt_end = -1;
 			return -1;
 		}
-		if (*(place = nargv[optind]) != '-') {  /* found non-option */
+		if ((*(place = nargv[optind]) != '-')
+		    || (place[1] == '\0')) {    /* found non-option */
 			place = EMSG;
 			if (IN_ORDER) {
 				/*
@@ -270,7 +272,6 @@ start:
 			if (PRINT_ERROR)
 				warnx(recargchar, optchar);
 			optopt = optchar;
-			/* XXX: GNU returns '?' if options[0] != ':' */
 			return BADARG;
 		} else				/* white space */
 			place = nargv[optind];
@@ -294,7 +295,6 @@ start:
 				if (PRINT_ERROR)
 					warnx(recargchar, optchar);
 				optopt = optchar;
-				/* XXX: GNU returns '?' if options[0] != ':' */
 				return BADARG;
 			} else
 				optarg = nargv[optind];
@@ -426,7 +426,6 @@ getopt_long(nargc, nargv, options, long_options, idx)
 					optopt = long_options[match].val;
 				else
 					optopt = 0;
-				/* XXX: GNU returns '?' if options[0] != ':' */
 				return BADARG;
 			}
 			if (long_options[match].has_arg == required_argument ||
@@ -458,7 +457,6 @@ getopt_long(nargc, nargv, options, long_options, idx)
 					optopt = long_options[match].val;
 				else
 					optopt = 0;
-				/* XXX: GNU returns '?' if options[0] != ':' */
 				--optind;
 				return BADARG;
 			}
