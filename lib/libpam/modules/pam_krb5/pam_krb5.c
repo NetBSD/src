@@ -1,4 +1,4 @@
-/*	$NetBSD: pam_krb5.c,v 1.3 2005/02/26 15:57:57 thorpej Exp $	*/
+/*	$NetBSD: pam_krb5.c,v 1.4 2005/02/26 18:03:37 thorpej Exp $	*/
 
 /*-
  * This pam_krb5 module contains code that is:
@@ -53,7 +53,7 @@
 #ifdef __FreeBSD__
 __FBSDID("$FreeBSD: src/lib/libpam/modules/pam_krb5/pam_krb5.c,v 1.22 2005/01/24 16:49:50 rwatson Exp $");
 #else
-__RCSID("$NetBSD: pam_krb5.c,v 1.3 2005/02/26 15:57:57 thorpej Exp $");
+__RCSID("$NetBSD: pam_krb5.c,v 1.4 2005/02/26 18:03:37 thorpej Exp $");
 #endif
 
 #include <sys/types.h>
@@ -668,8 +668,15 @@ pam_sm_chauthtok(pam_handle_t *pamh, int flags,
 	const void *user;
 	char *princ_name, *passdup;
 
-	if (!(flags & PAM_UPDATE_AUTHTOK))
-		return (PAM_AUTHTOK_ERR);
+	if (flags & PAM_PRELIM_CHECK) {
+		/* Nothing to do here. */
+		return (PAM_SUCCESS);
+	}
+
+	if (!(flags & PAM_UPDATE_AUTHTOK)) {
+		PAM_LOG("Illegal flags argument");
+		return (PAM_ABORT);
+	}
 
 	retval = pam_get_item(pamh, PAM_USER, &user);
 	if (retval != PAM_SUCCESS)
