@@ -1,4 +1,4 @@
-#	$NetBSD: special,v 1.75 2003/05/09 00:10:52 lukem Exp $
+#	$NetBSD: special,v 1.76 2003/05/14 16:36:22 ragge Exp $
 #	@(#)special	8.2 (Berkeley) 1/23/94
 #
 # Hand-crafted mtree specification for the dangerous files.
@@ -302,7 +302,6 @@
 ./var/cron/tabs			type=dir  mode=0700
 ./var/cron/tabs/root		type=file mode=0600
 ./var/db			type=dir  mode=0755
-./var/db/kvm.db			type=file mode=0644 tags=exclude
 ./var/log			type=dir  mode=0755
 ./var/log/authlog		type=file mode=0600 optional tags=exclude
 ./var/log/wtmp			type=file mode=0644 tags=exclude
