@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.28 2003/08/07 16:28:59 agc Exp $	*/
+/*	$NetBSD: param.h,v 1.29 2004/01/23 03:54:54 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -80,7 +80,7 @@
 #define	DEV_BSHIFT	9		/* log2(DEV_BSIZE) */
 #define	DEV_BSIZE	(1 << DEV_BSHIFT)
 #define BLKDEV_IOSIZE	4096		/* Was 2048 (pan) */
-#define	MAXPHYS		(128 * 1024)	/* max raw I/O transfer size */
+#define	MAXPHYS		(64 * 1024)	/* max raw I/O transfer size */
 
 #define	SSIZE	1		/* initial stack size/NBPG */
 #define	SINCR	1		/* increment of stack/NBPG */
