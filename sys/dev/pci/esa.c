@@ -1,4 +1,4 @@
-/* $NetBSD: esa.c,v 1.3.4.3 2002/04/01 07:46:20 nathanw Exp $ */
+/* $NetBSD: esa.c,v 1.3.4.4 2002/04/12 23:19:50 nathanw Exp $ */
 
 /*
  * Copyright (c) 2001, 2002 Jared D. McNeill <jmcneill@invisible.ca>
@@ -61,7 +61,6 @@
 #include <dev/auconv.h>
 #include <dev/ic/ac97var.h>
 #include <dev/ic/ac97reg.h>
-
 
 #include <dev/pci/esareg.h>
 #include <dev/pci/esadsp.h>
@@ -149,7 +148,6 @@ u_int8_t	esa_assp_halt(struct esa_softc *);
 void		esa_codec_reset(struct esa_softc *);
 int		esa_amp_enable(struct esa_softc *);
 void		esa_enable_interrupts(struct esa_softc *);
-int		esa_power(struct esa_softc *, int);
 u_int32_t	esa_get_pointer(struct esa_softc *, struct esa_channel *);
 
 /* list management */
@@ -1068,7 +1066,7 @@ esa_attach(struct device *parent, struct device *self, void *aux)
 	printf("%s: interrupting at %s\n", sc->sc_dev.dv_xname, intrstr);
 
 	/* Power up chip */
-	esa_power(sc, 0);
+	esa_power(sc, PCI_PMCSR_STATE_D0);
 
 	/* Init chip */
 	if (esa_init(sc) == -1) {
@@ -1076,6 +1074,28 @@ esa_attach(struct device *parent, struct device *self, void *aux)
 		    sc->sc_dev.dv_xname);
 		return;
 	}
+
+	/* create suspend save area */
+	len = sizeof(u_int16_t) * (ESA_REV_B_CODE_MEMORY_LENGTH
+	    + ESA_REV_B_DATA_MEMORY_LENGTH + 1);
+	sc->savemem = (u_int16_t *)malloc(len, M_DEVBUF, M_NOWAIT | M_ZERO);
+	if (sc->savemem == NULL) {
+		printf("%s: unable to allocate suspend buffer\n",
+		    sc->sc_dev.dv_xname);
+		return;
+	}
+
+	/*
+	 * Every card I've seen has had their channels swapped with respect
+	 * to the mixer. Ie:
+	 *  $ mixerctl -w outputs.master=0,191
+	 * Would result in the _right_ speaker being turned off.
+	 * 
+	 * So, we will swap the left and right mixer channels to compensate
+	 * for this.
+	 */ 
+	sc->codec_flags |= AC97_HOST_SWAPPED_CHANNELS;
+	sc->codec_flags |= AC97_HOST_DONT_READ;
 
 	/* Attach AC97 host interface */
 	sc->host_if.arg = self;
@@ -1112,6 +1132,11 @@ esa_attach(struct device *parent, struct device *self, void *aux)
 		    audio_attach_mi(&esa_hw_if, &sc->voice[i], &sc->sc_dev);
 	}
 
+	sc->powerhook = powerhook_establish(esa_powerhook, sc);
+	if (sc->powerhook == NULL)
+		printf("%s: WARNING: unable to establish powerhook\n",
+		    sc->sc_dev.dv_xname);
+
 	return;
 }
 
@@ -1130,6 +1155,8 @@ esa_detach(struct device *self, int flags)
 		pci_intr_disestablish(sc->sc_pct, sc->sc_ih);
 	if (sc->sc_ios)
 		bus_space_unmap(sc->sc_iot, sc->sc_ioh, sc->sc_ios);
+
+	free(sc->savemem, M_DEVBUF);
 
 	return (0);
 }
@@ -1634,10 +1661,34 @@ esa_resume(struct esa_softc *sc) {
 	int i, index;
 	u_int8_t reset_state;
 
-	data = pci_conf_read(pc, tag, 0x34);
-	if (pci_conf_read(pc, tag, data) == 1)
-		pci_conf_write(pc, tag, data + 4, state);
+	index = 0;
+
+	esa_power(sc, PCI_PMCSR_STATE_D0);
+	delay(10000);
+
+	esa_config(sc);
+
+	reset_state = esa_assp_halt(sc);
+
+	esa_codec_reset(sc);
+
+	/* restore ASSP */
+	for (i = ESA_REV_B_CODE_MEMORY_BEGIN; i <= ESA_REV_B_CODE_MEMORY_END;
+	    i++)
+		esa_write_assp(sc, ESA_MEMTYPE_INTERNAL_CODE, i,
+		    sc->savemem[index++]);
+	for (i = ESA_REV_B_DATA_MEMORY_BEGIN; i <= ESA_REV_B_DATA_MEMORY_END;
+	    i++)
+		esa_write_assp(sc, ESA_MEMTYPE_INTERNAL_DATA, i,
+		    sc->savemem[index++]);
+
+	esa_write_assp(sc, ESA_MEMTYPE_INTERNAL_DATA, ESA_KDATA_DMA_ACTIVE, 0);
+	bus_space_write_1(iot, ioh, ESA_DSP_PORT_CONTROL_REG_B,
+	    reset_state | ESA_REGB_ENABLE_RESET);
 	
+	esa_enable_interrupts(sc);
+	esa_amp_enable(sc);
+
 	return (0);
 }
 
@@ -1673,4 +1724,3 @@ esa_mappage(void *addr, void *mem, off_t off, int prot)
 	return (bus_dmamem_mmap(sc->sc_dmat, p->segs, p->nsegs, 
 				off, prot, BUS_DMA_WAITOK));
 }
-
