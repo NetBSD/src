@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_exec.c,v 1.7 2001/12/08 11:17:37 manu Exp $ */
+/*	$NetBSD: irix_exec.c,v 1.8 2001/12/08 18:08:04 manu Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_exec.c,v 1.7 2001/12/08 11:17:37 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_exec.c,v 1.8 2001/12/08 18:08:04 manu Exp $");
 
 #ifndef ELFSIZE
 #define ELFSIZE		32	/* XXX should die */
@@ -182,7 +182,7 @@ ELFNAME2(irix,probe)(p, epp, eh, itp, pos)
 	printf("irix_probe()\n");
 #endif
 	if ((error = ELFNAME2(irix,mipsopt_signature)(p, epp, eh)) != 0)
-		return error;
+	/*	return error; */ error = 0;
 
 	if (itp[0]) {
 		if ((error = emul_find(p, NULL, epp->ep_esch->es_emul->e_path,
