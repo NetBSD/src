@@ -1,4 +1,4 @@
-/*	$NetBSD: data.c,v 1.7 2000/04/02 11:02:21 augustss Exp $	*/
+/*	$NetBSD: data.c,v 1.8 2000/04/02 11:10:53 augustss Exp $	*/
 
 /*
  * Copyright (c) 1999 Lennart Augustsson <augustss@netbsd.org>
@@ -31,9 +31,9 @@
 #include "usb.h"
 
 int
-hid_get_data(void *p, hid_item_t *h)
+hid_get_data(const void *p, const hid_item_t *h)
 {
-	unsigned char *buf;
+	const unsigned char *buf;
 	unsigned int hpos;
 	unsigned int hsize;
 	int data;
@@ -64,7 +64,7 @@ hid_get_data(void *p, hid_item_t *h)
 }
 
 void
-hid_set_data(void *p, hid_item_t *h, int data)
+hid_set_data(void *p, const hid_item_t *h, int data)
 {
 	unsigned char *buf;
 	unsigned int hpos;

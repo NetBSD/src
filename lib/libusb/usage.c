@@ -1,4 +1,4 @@
-/*	$NetBSD: usage.c,v 1.4 1999/07/02 15:46:53 simonb Exp $	*/
+/*	$NetBSD: usage.c,v 1.5 2000/04/02 11:10:53 augustss Exp $	*/
 
 /*
  * Copyright (c) 1999 Lennart Augustsson <augustss@netbsd.org>
@@ -37,12 +37,12 @@
 #define _PATH_HIDTABLE "/usr/share/misc/usb_hid_usages"
 
 struct usage_in_page {
-	char *name;
+	const char *name;
 	int usage;
 };
 
 static struct usage_page {
-	char *name;
+	const char *name;
 	int usage;
 	struct usage_in_page *page_contents;
 	int pagesize, pagesizemax;
@@ -66,7 +66,7 @@ dump_hid_table(void)
 #endif
 
 void
-hid_init(char *hidname)
+hid_init(const char *hidname)
 {
 	FILE *f;
 	char line[100], name[100], *p, *n;
@@ -150,7 +150,7 @@ hid_init(char *hidname)
 #endif
 }
 
-char *
+const char *
 hid_usage_page(int i)
 {
 	static char b[10];
@@ -166,7 +166,7 @@ hid_usage_page(int i)
 	return b;
 }
 
-char *
+const char *
 hid_usage_in_page(unsigned int u)
 {
 	int page = HID_PAGE(u);
