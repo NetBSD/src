@@ -1,4 +1,4 @@
-/*	$NetBSD: vi.c,v 1.12 2002/11/15 14:32:34 christos Exp $	*/
+/*	$NetBSD: vi.c,v 1.13 2003/03/10 01:05:12 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -45,7 +45,7 @@
 #if 0
 static char sccsid[] = "@(#)vi.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: vi.c,v 1.12 2002/11/15 14:32:34 christos Exp $");
+__RCSID("$NetBSD: vi.c,v 1.13 2003/03/10 01:05:12 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -1054,7 +1054,7 @@ vi_history_word(EditLine *el, int c)
 	if (wp == NULL)
 		return CC_ERROR;
 
-	wsp = 0;
+	wep = wsp = 0;
 	do {
 		while (isspace((unsigned char)*wp))
 			wp++;
