@@ -1,4 +1,4 @@
-/*	$NetBSD: fdc_pnpbios.c,v 1.6 2002/10/02 05:47:16 thorpej Exp $	*/
+/*	$NetBSD: fdc_pnpbios.c,v 1.7 2003/09/25 01:12:43 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdc_pnpbios.c,v 1.6 2002/10/02 05:47:16 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdc_pnpbios.c,v 1.7 2003/09/25 01:12:43 mycroft Exp $");
 
 #include "rnd.h"
 
@@ -183,5 +183,5 @@ fdc_pnpbios_attach(struct device *parent,
 	fdc->sc_ih = pnpbios_intr_establish(aa->pbt, aa->resc, 0, IPL_BIO,
 	    fdcintr, fdc);
 
-	fdcattach(fdc);
+	config_interrupts(self, fdcattach);
 }
