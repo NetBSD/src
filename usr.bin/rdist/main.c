@@ -39,7 +39,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)main.c	5.6 (Berkeley) 8/27/90";*/
-static char rcsid[] = "$Id: main.c,v 1.2 1993/08/01 18:09:42 mycroft Exp $";
+static char rcsid[] = "$Id: main.c,v 1.3 1994/01/23 06:31:38 cgd Exp $";
 #endif /* not lint */
 
 #include "defs.h"
@@ -186,7 +186,7 @@ main(argc, argv)
 	}
 	*hp = NULL;
 
-	setreuid(0, userid);
+	seteuid(userid);
 	mktemp(tempfile);
 
 	if (iamremote) {
