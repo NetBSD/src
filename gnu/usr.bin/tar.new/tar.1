@@ -3,7 +3,7 @@
 .\"
 .\"	Written by John F. Woods <jfw@jfwhome.funhouse.com>
 .\"
-.\"	$NetBSD: tar.1,v 1.1 2002/10/09 11:55:03 itojun Exp $
+.\"	$NetBSD: tar.1,v 1.2 2002/10/09 17:01:34 itojun Exp $
 .\"
 .Dd August 6, 1994
 .Os
@@ -129,10 +129,11 @@ options to tar.
 Restore the access times on files which are written to tape (note that
 this will change the inode-change time!).
 .It Fl b
+.It Fl -blocking-factor Ar number
 .It Fl -block-size Ar number
 Sets the block size for reading or writing to N 512-byte blocks.
 .It Fl B
-.It Fl -read-full-blocks
+.It Fl -read-full-records
 Re-assemble short reads into full blocks (for reading 4.2BSD pipes).
 .It Fl C Ar directory
 .It Fl -directory Ar directory
@@ -193,6 +194,10 @@ Keep files which already exist on disk; don't overwrite them from the archive.
 Begin at
 .Ar file
 in the archive.
+.It Fl -overwrite
+Overwrite existing files when extracting.
+.It Fl -overwrite-dir
+Overwrite directory metadata when extracting.
 .It Fl l
 .It Fl -one-file-system
 Stay in local filesystem when creating an archive (do not cross mount
@@ -215,10 +220,17 @@ Only store files newer than
 Like
 .Fl N ,
 But files are selected according to their modification time.
+.It Fl -backup Ar control
+Backup before removal, choose version control.
+.It Fl -suffix Ar suffix
+Backup before removal, override usual
+.Ar suffix .
 .It Fl o
 .It Fl -old-archive
 .It Fl -portability
 Write a V7 format archive, rather than POSIX format.
+.It Fl -posix
+Write a POSIX format archive.
 .It Fl O
 .It Fl -to-stdout
 Extract files to standard output.
@@ -229,20 +241,34 @@ Extract all protection information.
 .It Fl -preserve
 Has the effect of
 .Fl p s .
+.It Fl -no-same-permissions
+Do not extract permissions information.
 .It Fl P
-.It Fl -absolute-paths
+.It Fl -absolute-names
 Don't strip leading `/'s from file names.
 .It Fl R
-.It Fl -record-number
+.It Fl -block-number
 Show record number within archive with each message.
+.It Fl -record-size Ar size
+.Ar size
+bytes per record, multiple of 512.
 .It Fl -remove-files
 Remove files after adding them to the archive.
+.It Fl -rsh-command Ar command
+Use remote
+.Ar command
+instead of
+.Xr rsh 1 .
 .It Fl s
 .It Fl -same-order
 .It Fl -preserve-order
 List of names to extract is sorted to match archive.
 .It Fl -same-owner
-create extracted files with the same ownership
+Create extracted files with the same ownership.
+.It Fl -no-same-owner
+Extract files as yourself.
+.It Fl -numeric-owner
+Always use numbers for user/group names.
 .It Fl -show-omitted-dirs
 Show directories which were omitted while processing the archive.
 .It Fl S
@@ -292,9 +318,28 @@ Exclude files matching the
 .It Fl -exclude-from Ar file
 Exclude files listed in
 .Ar file .
-.It Fl y
+.It Fl -anchored
+Exclude patterns match file name start (default).
+.It Fl -no-anchored
+Exclude patterns match after any
+.Pa / .
+.It Fl -ignore-case
+Exclusion ignores case.
+.It Fl -no-ignore-case
+Exclusion is case sensitive (default).
+.It Fl -wildcards
+Exclude patterns use wildcards (default).
+.It Fl -no-wildcards
+Exclude patterns are plain strings.
+.It Fl -wildcards-match-slash
+Exclude pattern wildcards match
+.Sq Pa /
+(default).
+.It Fl -no-wildcards-match-slash
+Exclude pattern wildcards do not match
+.Sq Pa / .
+.It Fl j
 .It Fl -bzip2
-.It Fl -unbzip2
 Filter the archive through
 .Xr bzip2 1 .
 .It Fl Z
@@ -325,6 +370,20 @@ Don't recurse into subdirectories when creating.
 .It Fl -unlink-first
 .It Fl -unlink
 Unlink files before creating them.
+.It Fl -recursive-unlink
+Empty hierarchies prior to extracting directory.
+.It Fl -owner Ar name
+Force
+.Ar name
+as owner for added files.
+.It Fl -group Ar name
+Force
+.Ar NAME
+as group for added files.
+.It Fl -mode Ar changes
+Force (symbolic) mode
+.Ar CHANGES
+for added files.
 .El
 .Sh ENVIRONMENT
 The
