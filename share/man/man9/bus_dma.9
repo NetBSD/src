@@ -1,4 +1,4 @@
-.\" $NetBSD: bus_dma.9,v 1.26 2003/01/28 01:07:51 kent Exp $
+.\" $NetBSD: bus_dma.9,v 1.27 2003/02/11 07:02:26 thorpej Exp $
 .\"
 .\" Copyright (c) 1996, 1997, 1998, 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -445,9 +445,9 @@ See
 .Fn bus_dmamem_map
 for more information on this subject.
 .Pp
-On platforms which implement reordered stores,
+On platforms which implement a weak memory access ordering model,
 .Fn bus_dmamap_sync
-will always cause the store buffer to be flushed.
+will always cause the the appropriate memory barriers to be issued.
 .Pp
 This function exists to ensure that the host and the device have
 a consistent view of a range of DMA memory, before and after
