@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.24 2000/04/18 12:23:01 blymn Exp $
+#	$NetBSD: Makefile,v 1.25 2000/04/20 09:56:38 kleink Exp $
 #	@(#)Makefile	8.2 (Berkeley) 1/2/94
 
 CPPFLAGS+=#-DTFILE=\"/dev/ttyp0\"
@@ -14,7 +14,7 @@ SRCS=	addbytes.c addch.c addnstr.c acs.c attributes.c background.c bell.c \
 	scanw.c scroll.c scrollok.c setterm.c standout.c timeout.c \
 	toucholap.c touchwin.c tscroll.c tstp.c tty.c unctrl.c underscore.c
 MAN=	curses.3
-INCS=	curses.h unctrl.h wchar.h
+INCS=	curses.h unctrl.h
 INCSDIR=/usr/include
 
 CPPFLAGS+=-DCM_N -DCM_GT -DCM_B -DCM_D
