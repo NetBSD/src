@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_13_machdep.c,v 1.3 2001/02/28 18:15:43 bjh21 Exp $	*/
+/*	$NetBSD: compat_13_machdep.c,v 1.1 2001/03/04 08:25:39 matt Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.

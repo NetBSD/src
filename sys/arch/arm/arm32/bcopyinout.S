@@ -1,4 +1,4 @@
-/*	$NetBSD: bcopyinout.S,v 1.1 2001/02/23 03:48:08 ichiro Exp $	*/
+/*	$NetBSD: bcopyinout.S,v 1.1 2001/03/04 08:25:39 matt Exp $	*/
 
 /*
  * Copyright (c) 1995-1998 Mark Brinicombe.
