@@ -1,7 +1,7 @@
 /*
  * cvt_pt.c
  *
- *	Covert partition type.	$Revision: 1.3 $
+ *	Covert partition type.	$Revision: 1.4 $
  *
  *	Copyright (c)  1999, Eryk Vershen
  * 
@@ -108,7 +108,8 @@ main(int argc, char **argv)
 	    bool_option = 1;
 	    break;
 	default:
-	    sprintf(option_error, "no such option as -%c", c);
+	    snprintf(option_error, sizeof(option_error),
+	        "no such option as -%c", c);
 	    usage(option_error);
 	}
     }

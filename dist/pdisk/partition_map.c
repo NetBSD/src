@@ -768,17 +768,17 @@ bzb_init_slice(BZB *bp, int slice)
 	return;
     case 'a':
 	bp->bzb_type = FST;
-	strcpy(bp->bzb_mount_point,"/");
+	strlcpy(bp->bzb_mount_point, "/", sizeof(bp->bzb_mount_point));
 	bp->bzb_inode = 1;
 	bzb_root_set(bp,1);
 	bzb_usr_set(bp,1);
 	break;
     case 'b':
 	bp->bzb_type = FSTSFS;
-	strcpy(bp->bzb_mount_point,"(swap)");
+	strlcpy(bp->bzb_mount_point, "(swap)", sizeof(bp->bzb_mount_point));
 	break;
     case 'g':
-	strcpy(bp->bzb_mount_point,"/usr");
+	strlcpy(bp->bzb_mount_point, "/usr", sizeof(bp->bzb_mount_point));
 	/* Fall through */
     default:
 	bp->bzb_type = FST;
