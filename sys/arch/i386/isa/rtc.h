@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)rtc.h	7.1 (Berkeley) 5/12/91
- *	rtc.h,v 1.3 1993/05/22 08:01:36 cgd Exp
+ *	$Id: rtc.h,v 1.5 1993/08/04 00:42:53 mycroft Exp $
  */
 /* 
  * Mach Operating System

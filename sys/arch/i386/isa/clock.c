@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)clock.c	7.2 (Berkeley) 5/12/91
- *	clock.c,v 1.11 1993/07/06 06:06:28 deraadt Exp
+ *	$Id: clock.c,v 1.13 1993/08/04 00:42:51 mycroft Exp $
  */
 /* 
  * Mach Operating System
