@@ -1,4 +1,4 @@
-/* $NetBSD: wi.c,v 1.4 2001/05/15 04:14:06 ichiro Exp $ */
+/* $NetBSD: wi.c,v 1.5 2001/05/15 04:27:22 ichiro Exp $ */
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -1404,12 +1404,13 @@ wi_init(ifp)
 		wi_write_record(sc, (struct wi_ltv_gen *)&sc->wi_keys);
 		if (sc->sc_prism2 && sc->wi_use_wep) {
 			/*
-			 * If promiscuous mode disable, Prism2 chip
-			 * does not work with WEP .
+			 * Prism firm version < ver.0.8.3
+			 *   If promiscuous mode disable, Prism2 chip
+			 *  does not work with WEP .
 			 * It is under investigation for details.
 			 * (ichiro@netbsd.org)
 			 */
-			WI_SETVAL(WI_RID_PROMISC, 1); /* XXX */
+			WI_SETVAL(WI_RID_PROMISC, 1); /* XXX firm ver < 0.8.3 */
 			WI_SETVAL(WI_RID_AUTH_CNTL, sc->wi_authtype);
 		}
 	}
