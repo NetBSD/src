@@ -1,4 +1,4 @@
-/*	$NetBSD: frame.h,v 1.2 2001/01/20 17:14:19 bjh21 Exp $	*/
+/*	$NetBSD: frame.h,v 1.3 2001/08/31 04:44:55 simonb Exp $	*/
 
 /*
  * Copyright (c) 1994-1997 Mark Brinicombe.
@@ -88,7 +88,7 @@ struct sigframe {
 	struct	sigcontext sf_sc;
 };
 
-#endif _LOCORE
+#endif /* _LOCORE */
 
 #endif /* _ARM_FRAME_H_ */
   

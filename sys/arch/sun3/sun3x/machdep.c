@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.71 2001/06/16 00:38:19 tsutsui Exp $	*/
+/*	$NetBSD: machdep.c,v 1.72 2001/08/31 04:44:57 simonb Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -151,7 +151,7 @@ consinit()
 
 		ddb_init(nsym, ssym, esym);
 	}
-#endif DDB
+#endif	/* DDB */
 
 	/*
 	 * Now that the console can do input as well as

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.46 2001/06/04 15:36:00 ragge Exp $	   */
+/*	$NetBSD: pmap.h,v 1.47 2001/08/31 04:44:57 simonb Exp $	   */
 
 /* 
  * Copyright (c) 1987 Carnegie-Mellon University
@@ -174,4 +174,4 @@ pmap_extract(pmap_t pmap, vaddr_t va, paddr_t *pap)
 void	pmap_bootstrap __P((void));
 vaddr_t pmap_map __P((vaddr_t, vaddr_t, vaddr_t, int));
 
-#endif PMAP_H
+#endif /* PMAP_H */
