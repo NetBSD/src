@@ -1,4 +1,4 @@
-/*	$NetBSD: eisavar.h,v 1.17 2000/08/11 00:46:17 thorpej Exp $	*/
+/*	$NetBSD: eisavar.h,v 1.18 2004/08/30 10:30:38 drochner Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -131,6 +131,8 @@ struct eisa_attach_args {
  */
 #define	eisacf_slot		cf_loc[EISACF_SLOT]
 #define	EISA_UNKNOWN_SLOT	EISACF_SLOT_DEFAULT	/* wildcarded 'slot' */
+
+int	eisabusprint(void *, const char *);
 
 /*
  * EISA Configuration entries, set up by an EISA Configuration Utility.
