@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_signal.h,v 1.5 1995/01/08 21:31:38 christos Exp $	 */
+/*	$NetBSD: svr4_signal.h,v 1.6 1995/02/01 01:37:35 christos Exp $	 */
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -119,5 +119,7 @@ typedef struct svr4_sigaltstack {
 int  bsd_to_svr4_signum __P((int));
 void bsd_to_svr4_sigset_t __P((const sigset_t *, svr4_sigset_t *));
 void svr4_to_bsd_sigset_t __P((const svr4_sigset_t *, sigset_t *));
+void bsd_to_svr4_sigaltstack __P((const struct sigaltstack *, svr4_stack_t *));
+void svr4_to_bsd_sigaltstack __P((const svr4_stack_t *, struct sigaltstack *));
 
 #endif /* !_SVR4_SIGNAL_H_ */

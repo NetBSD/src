@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.8 1995/01/25 04:17:08 christos Exp $
+	$NetBSD: syscalls.master,v 1.9 1995/02/01 01:37:38 christos Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 ; System call name/number master file (or rather, slave, from SVR4).
@@ -82,7 +82,7 @@
 43	STD		{ int svr4_times(struct tms *tp); }
 44	UNIMPL		svr4_profil
 45	UNIMPL		svr4_plock
-46	UNIMPL		svr4_setgid
+46	NOARGS		{ int setgid(gid_t gid); }
 47	NOARGS		{ gid_t getgid(void); }
 48	STD		{ int svr4_signal(int signum, svr4_sig_t handler); }
 #ifdef SYSVMSG
@@ -91,7 +91,7 @@
 #else
 49	UNIMPL		nosys
 #endif
-50	STD		{ int svr4_syssun(int gate); }
+50	STD		{ int svr4_sysarch(int op, void *a1); }
 51	UNIMPL		svr4_acct
 #ifdef SYSVSHM
 52	UNIMPL		{ int shmsys(int which, int a2, int a3, int a4); }
@@ -155,9 +155,9 @@
 94	NOARGS		{ int fchown(int fd, int uid, int gid); }
 95	STD		{ int svr4_sigprocmask(int how, svr4_sigset_t *set, \
 					       svr4_sigset_t *oset); }
-96	NOARGS		{ int sigaltstack(struct sigaltstack *nss, \
-					  struct sigaltstack *oss); }
-97	NOARGS		{ int sigsuspend(int mask); }
+96	STD		{ int svr4_sigsuspend(svr4_sigset_t *ss); }
+97	STD		{ int svr4_sigaltstack(svr4_stack_t *nss, \
+					       svr4_stack_t *oss); }
 98	STD		{ int svr4_sigaction(int signum, \
 					     struct svr4_sigaction *nsa, \
 					     struct svr4_sigaction *osa); }
