@@ -1,5 +1,5 @@
 /*	$OpenBSD: usb_port.h,v 1.18 2000/09/06 22:42:10 rahnds Exp $ */
-/*	$NetBSD: usb_port.h,v 1.44.2.5 2002/10/10 18:42:45 jdolecek Exp $	*/
+/*	$NetBSD: usb_port.h,v 1.44.2.6 2002/10/11 20:59:40 jdolecek Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_port.h,v 1.21 1999/11/17 22:33:47 n_hibma Exp $	*/
 
 /*
@@ -268,7 +268,6 @@ typedef int usb_malloc_type;
 #define	usbpoll			usbselect
 #define	uhidpoll		uhidselect
 #define	ugenpoll		ugenselect
-#define	uriopoll		urioselect
 #define uscannerpoll		uscannerselect
 
 #define powerhook_establish(fn, sc) (fn)
