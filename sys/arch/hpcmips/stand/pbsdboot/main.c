@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.38 2000/04/14 14:42:29 takemura Exp $	*/
+/*	$NetBSD: main.c,v 1.39 2000/04/16 03:17:59 takemura Exp $	*/
 
 /*-
  * Copyright (c) 1999 Shin Takemura.
@@ -59,7 +59,7 @@
  */
 TCHAR *version_string = 
 	TEXT("PocketBSD boot loader\r\n")
-	TEXT("Version 1.13.1 2000.04.14\r\n")
+	TEXT("Version 1.13.2 2000.04.16\r\n")
 #if ( _WIN32_WCE < 200 )
 	TEXT("Compiled for WinCE 1.01\r\n")
 #else
@@ -105,6 +105,7 @@ HWND		hWndCB = NULL;
 HWND		hDlgLoad = NULL;
 unsigned int	dlgStatus;
 int		user_define_idx;
+int		osversion;
 
 /*-----------------------------------------------------------------------------
 
@@ -370,6 +371,19 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
 	WNDCLASS     wc;
 	int i, idx;
 	RECT rect;
+#if ( 200 <= _WIN32_WCE )
+	OSVERSIONINFO	osverinfo;
+
+	osverinfo.dwOSVersionInfoSize = sizeof(osverinfo);
+	if (!GetVersionEx(&osverinfo)) {
+		msg_printf(MSG_ERROR,
+			   TEXT("Error"),
+			   TEXT("GetVersionEx() failed"));
+	}
+	osversion = osverinfo.dwMajorVersion * 100 + osverinfo.dwMinorVersion;
+#else
+	osversion = 100;
+#endif
 
 	wc.style          = (UINT)NULL;
 	wc.lpfnWndProc    = (WNDPROC) WndProc;
@@ -522,10 +536,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
 	ShowWindow(hWndMain, SW_SHOW);
 	UpdateWindow(hWndMain);
 	while (GetMessage(&msg, NULL, 0, 0)) {
-#if ( 200 <= _WIN32_WCE )
-		if (hWndMain == 0 || !IsDialogMessage(hWndMain, &msg))
-#endif
-		{
+		if (osversion < 211 ||
+		    hWndMain == 0 || !IsDialogMessage(hWndMain, &msg)) {
 			TranslateMessage(&msg);
 			DispatchMessage(&msg);
 		}
