@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.38.4.5 2001/07/29 19:47:03 he Exp $	*/
+/*	$NetBSD: route.c,v 1.38.4.6 2002/10/18 00:30:11 itojun Exp $	*/
 
 /*
  * Copyright (c) 1983, 1989, 1991, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1989, 1991, 1993\n\
 #if 0
 static char sccsid[] = "@(#)route.c	8.6 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: route.c,v 1.38.4.5 2001/07/29 19:47:03 he Exp $");
+__RCSID("$NetBSD: route.c,v 1.38.4.6 2002/10/18 00:30:11 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -788,14 +788,9 @@ newroute(argc, argv)
 				break;
 #ifdef INET6
 			case K_PREFIXLEN:
-				argc--;
-				if (prefixlen(*++argv) == 128) {
-					forcenet = 0;
-					ishost = 1;
-				} else {
-					forcenet = 1;
-					ishost = 0;
-				}
+				if (!--argc)
+					usage(1+*argv);
+				ishost = prefixlen(*++argv);
 				break;
 #endif
 			case K_MTU:
@@ -1182,7 +1177,7 @@ prefixlen(s)
 		memset((void *)&so_mask.sin6.sin6_addr, 0xff, q);
 	if (r > 0)
 		*((u_char *)&so_mask.sin6.sin6_addr + q) = (0xff00 >> r) & 0xff;
-	return(len);
+	return (len == 128);
 }
 #endif
 
