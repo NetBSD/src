@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_kq.c,v 1.3 2003/02/27 09:01:09 jdolecek Exp $	*/
+/*	$NetBSD: nfs_kq.c,v 1.4 2003/03/27 19:58:26 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_kq.c,v 1.3 2003/02/27 09:01:09 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_kq.c,v 1.4 2003/03/27 19:58:26 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -272,9 +272,6 @@ nfs_kqfilter(void *v)
 
 	kn->kn_hook = vp;
 
-	/* XXXLUKEM lock the struct? */
-	SLIST_INSERT_HEAD(&vp->v_klist, kn, kn_selnext);
-
 	/*
 	 * Put the vnode to watched list.
 	 */
@@ -320,6 +317,9 @@ nfs_kqfilter(void *v)
 
 	/* kick the poller */
 	wakeup(pnfskq);
+
+	/* XXXLUKEM lock the struct? */
+	SLIST_INSERT_HEAD(&vp->v_klist, kn, kn_selnext);
 
     out:
 	lockmgr(&nfskevq_lock, LK_RELEASE, NULL);
