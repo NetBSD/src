@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mbe_pcmcia.c,v 1.4 1998/11/17 20:44:02 thorpej Exp $	*/
+/*	$NetBSD: if_mbe_pcmcia.c,v 1.5 1998/11/18 18:15:56 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -203,14 +203,20 @@ mbe_pcmcia_detach(self, flags)
 	struct device *self;
 	int flags;
 {
-#ifdef notyet
-	struct mb86960_softc *sc = (struct mb86960_softc *)self;
+	struct mbe_pcmcia_softc *psc = (struct mbe_pcmcia_softc *)self;
 
+	/* Unmap our i/o window. */
+	pcmcia_io_unmap(psc->sc_pf, psc->sc_io_window);
+
+	/* Free our i/o space. */
+	pcmcia_io_free(psc->sc_pf, &psc->sc_pcioh);
+
+#ifdef notyet
 	/*
 	 * Our softc is about to go away, so drop our reference
 	 * to the ifnet.
 	 */
-	if_delref(sc->sc_ec.ec_if);
+	if_delref(psc->sc_mb86960.sc_ec.ec_if);
 	return (0);
 #else
 	return (EBUSY);
@@ -239,12 +245,6 @@ mbe_pcmcia_activate(self, act)
 
 		/* Now disable the interface.  This releases our interrupt. */
 		mb86960_disable(sc);
-
-		/* Unmap our i/o window. */
-		pcmcia_io_unmap(psc->sc_pf, psc->sc_io_window);
-
-		/* Free our i/o space. */
-		pcmcia_io_free(psc->sc_pf, &psc->sc_pcioh);
 		break;
 	}
 	return (rv);

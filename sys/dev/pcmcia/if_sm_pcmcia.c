@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sm_pcmcia.c,v 1.13 1998/11/17 20:44:03 thorpej Exp $	*/
+/*	$NetBSD: if_sm_pcmcia.c,v 1.14 1998/11/18 18:15:57 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -253,14 +253,20 @@ sm_pcmcia_detach(self, flags)
 	struct device *self;
 	int flags;
 {
-#ifdef notyet
-	struct smc91cxx_softc *sc = (struct smc91cxx_softc *)self;
+	struct sm_pcmcia_softc *psc = (struct sm_pcmcia_softc *)self;
 
+	/* Unmap our i/o window. */
+	pcmcia_io_unmap(psc->sc_pf, psc->sc_io_window);
+
+	/* Free our i/o space. */
+	pcmcia_io_free(psc->sc_pf, &psc->sc_pcioh);
+
+#ifdef notyet
 	/*
 	 * Our softc is about to go away, so drop our reference
 	 * to the ifnet.
 	 */
-	if_delref(sc->sc_ec.ec_if);
+	if_delref(psc->sc_smc.sc_ec.ec_if);
 	return (0);
 #else
 	return (EBUSY);
@@ -289,12 +295,6 @@ sm_pcmcia_activate(self, act)
 
 		/* Now disable the interface.  This releases our interrupt. */
 		smc91cxx_disable(sc);
-
-		/* Unmap our i/o window. */
-		pcmcia_io_unmap(psc->sc_pf, psc->sc_io_window);
-
-		/* Free our i/o space. */
-		pcmcia_io_free(psc->sc_pf, &psc->sc_pcioh);
 		break;
 	}
 	return (rv);
