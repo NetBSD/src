@@ -1,4 +1,4 @@
-/*	$NetBSD: cs4231.c,v 1.7 2002/03/12 04:48:28 uwe Exp $	*/
+/*	$NetBSD: cs4231.c,v 1.8 2002/08/22 10:02:21 martin Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cs4231.c,v 1.7 2002/03/12 04:48:28 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cs4231.c,v 1.8 2002/08/22 10:02:21 martin Exp $");
 
 #include "audio.h"
 #if NAUDIO > 0
@@ -80,7 +80,7 @@ __KERNEL_RCSID(0, "$NetBSD: cs4231.c,v 1.7 2002/03/12 04:48:28 uwe Exp $");
 #define CSAUDIO_MONITOR_CLASS	16
 
 #ifdef AUDIO_DEBUG
-int     cs4231_debug = 0;
+int     cs4231_debug = 1;
 #define DPRINTF(x)      if (cs4231_debug) printf x
 #else
 #define DPRINTF(x)
@@ -178,14 +178,13 @@ cs4231_common_attach(sc, ioh)
 
 	sc->sc_ad1848.mode = 2;	/* put ad1848 driver in `MODE 2' mode */
 	ad1848_attach(&sc->sc_ad1848);
-
 #if 0
-	/*
-	 * Before we give audiocs proper "outputs" handling, always mute
-	 * internal speaker so that I can test this w/out waking up my family.
-	 */
-	reg = ad_read(&sc->sc_ad1848, CS_MONO_IO_CONTROL);
-	ad_write(&sc->sc_ad1848, CS_MONO_IO_CONTROL, reg | MONO_OUTPUT_MUTE);
+        /*
+         * Before we give audiocs proper "outputs" handling, always mute
+         * internal speaker so that I can test this w/out waking up my family.
+         */
+        reg = ad_read(&sc->sc_ad1848, CS_MONO_IO_CONTROL);
+        ad_write(&sc->sc_ad1848, CS_MONO_IO_CONTROL, reg | MONO_OUTPUT_MUTE);
 #endif
 }
 
@@ -538,11 +537,11 @@ cs4231_query_devinfo(addr, dip)
 		strcpy(dip->un.v.units.name, AudioNvolume);
 		break;
 
-	case CSAUDIO_OUT_LVL:		/* cs4231 output volume: not useful? */
+	case CSAUDIO_OUT_LVL:		/* cs4231 output volume */
 		dip->type = AUDIO_MIXER_VALUE;
 		dip->mixer_class = CSAUDIO_MONITOR_CLASS;
 		dip->prev = dip->next = AUDIO_MIXER_LAST;
-		strcpy(dip->label.name, AudioNoutput);
+		strcpy(dip->label.name, AudioNmaster);
 		dip->un.v.num_channels = 2;
 		strcpy(dip->un.v.units.name, AudioNvolume);
 		break;
