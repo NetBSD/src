@@ -1,4 +1,4 @@
-/*	$NetBSD: siop.c,v 1.44 2001/05/23 15:51:32 bouyer Exp $	*/
+/*	$NetBSD: siop.c,v 1.45 2001/06/21 16:55:20 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2000 Manuel Bouyer.
@@ -383,8 +383,9 @@ siop_intr(v)
 		siop_lun = siop_target->siop_lun[lun];
 #ifdef DIAGNOSTIC
 		if (siop_cmd->status != CMDST_ACTIVE) {
-			printf("siop_cmd (lun %d) not active (%d)\n",
-				lun, siop_cmd->status);
+ 			printf("siop_cmd (lun %d) for DSA 0x%x "
+			    "not active (%d)\n", lun, (u_int)dsa,
+			    siop_cmd->status);
 			xs = NULL;
 			siop_target = NULL;
 			target = -1;
