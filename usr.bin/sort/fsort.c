@@ -1,4 +1,4 @@
-/*	$NetBSD: fsort.c,v 1.8 2001/01/11 14:05:24 jdolecek Exp $	*/
+/*	$NetBSD: fsort.c,v 1.9 2001/01/13 17:27:21 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -47,7 +47,7 @@
 #include "fsort.h"
 
 #ifndef lint
-__RCSID("$NetBSD: fsort.c,v 1.8 2001/01/11 14:05:24 jdolecek Exp $");
+__RCSID("$NetBSD: fsort.c,v 1.9 2001/01/13 17:27:21 itojun Exp $");
 __SCCSID("@(#)fsort.c	8.1 (Berkeley) 6/6/93");
 #endif /* not lint */
 
@@ -160,8 +160,9 @@ fsort(binno, depth, top, filelist, nfiles, outfp, ftbl)
 						: radixsort(keylist, nelem,
 							weights, REC_D) )
 						err(2, NULL);
-					append(keylist, nelem, depth, fstack[
-					 MAXFCT-16+mfct].fp, putrec, ftbl);
+					append(keylist, nelem, depth,
+					    fstack[MAXFCT-16+mfct].fp, putrec,
+					    ftbl);
 					mfct++;
 					/* reduce number of open files */
 					if (mfct == 16 ||(c == EOF && ntfiles)) {
@@ -172,9 +173,9 @@ fsort(binno, depth, top, filelist, nfiles, outfp, ftbl)
 						fstack[base + ntfiles].fp
 						    = ftmp();
 						fmerge(0, MSTART, filelist,
-						  mfct, geteasy,
-						  fstack[base].fp,
-						  putrec, ftbl);
+						    mfct, geteasy,
+						    fstack[base].fp,
+						    putrec, ftbl);
 						++ntfiles;
 						mfct = 0;
 						memmove(crec->data, tmpbuf,
@@ -184,7 +185,7 @@ fsort(binno, depth, top, filelist, nfiles, outfp, ftbl)
 				} else {
 					fstack[base + ntfiles].fp= ftmp();
 					onepass(keylist, depth, nelem, sizes,
-					weights, fstack[base + ntfiles].fp);
+					    weights, fstack[base + ntfiles].fp);
 					++ntfiles;
 				}
 			}
@@ -211,12 +212,12 @@ fsort(binno, depth, top, filelist, nfiles, outfp, ftbl)
 		}
 		total = maxb = lastb = 0;	/* find if one bin dominates */
 		for (i = 0; i < NBINS; i++)
-		  if (sizes[i]) {
-			if (sizes[i] > sizes[maxb])
-				maxb = i;
-			lastb = i;
-			total += sizes[i];
-		}
+			if (sizes[i]) {
+				if (sizes[i] > sizes[maxb])
+					maxb = i;
+				lastb = i;
+				total += sizes[i];
+			}
 		if (sizes[maxb] < max((total / 2) , BUFSIZE))
 			maxb = lastb;	/* otherwise pop after last bin */
 		fstack[base].lastb = lastb;
@@ -242,10 +243,10 @@ fsort(binno, depth, top, filelist, nfiles, outfp, ftbl)
 			for (i = maxb+1; i <= lastb; i++)
 				if (!sizes[i]) {
 					getnext(i, base, NULL, ntfiles, crec,
-						bufend,0);
+					    bufend,0);
 				} else {
 					fsort(i, depth+1, base, filelist,
-						ntfiles, prevfp, ftbl);
+					    ntfiles, prevfp, ftbl);
 				}
 		}
 
@@ -304,8 +305,8 @@ onepass(a, depth, n, sizes, tr, fp)
 		if (c <= 1)
 			continue;
 	}
-	for(aj = a; aj < an; *aj = r, aj = bin[c+1]) 
-		for(r = *aj; aj < (ak = --top[c = tr[r[depth]]]) ;)			
+	for (aj = a; aj < an; *aj = r, aj = bin[c+1]) 
+		for (r = *aj; aj < (ak = --top[c = tr[r[depth]]]) ;)
 			swap(*ak, r, t);
 
 	for (ak = a, c = 0; c < 256; c++) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: files.c,v 1.11 2001/01/13 10:17:43 jdolecek Exp $	*/
+/*	$NetBSD: files.c,v 1.12 2001/01/13 17:27:21 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -40,7 +40,7 @@
 #include "fsort.h"
 
 #ifndef lint
-__RCSID("$NetBSD: files.c,v 1.11 2001/01/13 10:17:43 jdolecek Exp $");
+__RCSID("$NetBSD: files.c,v 1.12 2001/01/13 17:27:21 itojun Exp $");
 __SCCSID("@(#)files.c	8.1 (Berkeley) 6/6/93");
 #endif /* not lint */
 
@@ -210,8 +210,8 @@ makekey(flno, top, filelist, nfiles, buffer, bufend, ftbl)
 	static int overflow = 0;
 	int c;
 	if (overflow) {
-		overflow =
-		  enterkey(buffer, line, bufend - (u_char *) buffer, ftbl);
+		overflow = enterkey(buffer, line, bufend - (u_char *) buffer,
+		    ftbl);
 		if (overflow)
 			return (BUFFEND);
 		else
