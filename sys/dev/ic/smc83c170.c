@@ -1,4 +1,4 @@
-/*	$NetBSD: smc83c170.c,v 1.42 2001/03/15 13:45:00 tsutsui Exp $	*/
+/*	$NetBSD: smc83c170.c,v 1.43 2001/05/17 17:32:47 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -82,6 +82,7 @@
 #include <machine/intr.h>
 
 #include <dev/mii/miivar.h>
+#include <dev/mii/lxtphyreg.h>
 
 #include <dev/ic/smc83c170reg.h>
 #include <dev/ic/smc83c170var.h>
@@ -124,7 +125,7 @@ epic_attach(sc)
 	bus_space_tag_t st = sc->sc_st;
 	bus_space_handle_t sh = sc->sc_sh;
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
-	int i, rseg, error;
+	int i, rseg, error, miiflags;
 	bus_dma_segment_t seg;
 	u_int8_t enaddr[ETHER_ADDR_LEN], devname[12 + 1];
 	u_int16_t myea[ETHER_ADDR_LEN / 2], mydevname[6];
@@ -232,6 +233,10 @@ epic_attach(sc)
 	printf("%s: %s, Ethernet address %s\n", sc->sc_dev.dv_xname,
 	    devname, ether_sprintf(enaddr));
 
+	miiflags = 0;
+	if (sc->sc_hwflags & EPIC_HAS_MII_FIBER)
+		miiflags |= MIIF_HAVEFIBER;
+
 	/*
 	 * Initialize our media structures and probe the MII.
 	 */
@@ -242,12 +247,23 @@ epic_attach(sc)
 	ifmedia_init(&sc->sc_mii.mii_media, 0, epic_mediachange,
 	    epic_mediastatus);
 	mii_attach(&sc->sc_dev, &sc->sc_mii, 0xffffffff, MII_PHY_ANY,
-	    MII_OFFSET_ANY, 0);
+	    MII_OFFSET_ANY, miiflags);
 	if (LIST_FIRST(&sc->sc_mii.mii_phys) == NULL) {
 		ifmedia_add(&sc->sc_mii.mii_media, IFM_ETHER|IFM_NONE, 0, NULL);
 		ifmedia_set(&sc->sc_mii.mii_media, IFM_ETHER|IFM_NONE);
 	} else
 		ifmedia_set(&sc->sc_mii.mii_media, IFM_ETHER|IFM_AUTO);
+
+	if (sc->sc_hwflags & EPIC_HAS_BNC) {
+		/* use the next free media instance */
+		sc->sc_serinst = sc->sc_mii.mii_instance++;
+		ifmedia_add(&sc->sc_mii.mii_media,
+			    IFM_MAKEWORD(IFM_ETHER, IFM_10_2, 0,
+					 sc->sc_serinst),
+			    0, NULL);
+		printf("%s: 10base2/BNC\n", sc->sc_dev.dv_xname);
+	} else
+		sc->sc_serinst = -1;
 
 	strcpy(ifp->if_xname, sc->sc_dev.dv_xname);
 	ifp->if_softc = sc;
@@ -944,7 +960,7 @@ epic_init(ifp)
 	bus_space_write_4(st, sh, EPIC_RXCON, reg0);
 
 	/* Set the current media. */
-	mii_mediachg(&sc->sc_mii);
+	epic_mediachange(ifp);
 
 	/* Set up the multicast hash table. */
 	epic_set_mchash(sc);
@@ -1376,7 +1392,7 @@ epic_statchg(self)
 	struct device *self;
 {
 	struct epic_softc *sc = (struct epic_softc *)self;
-	u_int32_t txcon;
+	u_int32_t txcon, miicfg;
 
 	/*
 	 * Update loopback bits in TXCON to reflect duplex mode.
@@ -1387,6 +1403,16 @@ epic_statchg(self)
 	else
 		txcon &= ~(TXCON_LOOPBACK_D1|TXCON_LOOPBACK_D2);
 	bus_space_write_4(sc->sc_st, sc->sc_sh, EPIC_TXCON, txcon);
+
+	/* On some cards we need manualy set fullduplex led */
+	if (sc->sc_hwflags & EPIC_DUPLEXLED_ON_694) {
+		miicfg = bus_space_read_4(sc->sc_st, sc->sc_sh, EPIC_MIICFG);
+		if (IFM_OPTIONS(sc->sc_mii.mii_media_active) & IFM_FDX) 
+			miicfg |= MIICFG_ENABLE;
+		else
+			miicfg &= ~MIICFG_ENABLE;
+		bus_space_write_4(sc->sc_st, sc->sc_sh, EPIC_MIICFG, miicfg);
+	}
 
 	/*
 	 * There is a multicast filter bug in 10Mbps mode.  Kick the
@@ -1418,8 +1444,78 @@ epic_mediachange(ifp)
 	struct ifnet *ifp;
 {
 	struct epic_softc *sc = ifp->if_softc;
+	struct mii_data *mii = &sc->sc_mii;
+	struct ifmedia *ifm = &mii->mii_media;
+	int media = ifm->ifm_cur->ifm_media;
+	u_int32_t miicfg;
+	struct mii_softc *miisc;
+	int cfg;
 
-	if (ifp->if_flags & IFF_UP)
-		mii_mediachg(&sc->sc_mii);
+	if (!(ifp->if_flags & IFF_UP))
+		return (0);
+
+	if (IFM_INST(media) != sc->sc_serinst) {
+		/* If we're not selecting serial interface, select MII mode */
+#ifdef EPICMEDIADEBUG
+		printf("%s: parallel mode\n", ifp->if_xname);
+#endif		
+		miicfg = bus_space_read_4(sc->sc_st, sc->sc_sh, EPIC_MIICFG);
+		miicfg &= ~MIICFG_SERMODEENA;
+		bus_space_write_4(sc->sc_st, sc->sc_sh, EPIC_MIICFG, miicfg);
+	}
+
+	mii_mediachg(mii);
+
+	if (IFM_INST(media) == sc->sc_serinst) {
+		/* select serial interface */
+#ifdef EPICMEDIADEBUG
+		printf("%s: serial mode\n", ifp->if_xname);
+#endif
+		miicfg = bus_space_read_4(sc->sc_st, sc->sc_sh, EPIC_MIICFG);
+		miicfg |= (MIICFG_SERMODEENA | MIICFG_ENABLE);
+		bus_space_write_4(sc->sc_st, sc->sc_sh, EPIC_MIICFG, miicfg);
+
+		/* There is no driver to fill this */
+		mii->mii_media_active = media;
+		mii->mii_media_status = 0;
+
+		epic_statchg(&sc->sc_dev);
+		return (0);
+	}
+
+	/* Lookup selected PHY */
+	for (miisc = LIST_FIRST(&mii->mii_phys); miisc != NULL;
+	     miisc = LIST_NEXT(miisc, mii_list)) {
+		if (IFM_INST(media) == miisc->mii_inst)
+			break;
+	}
+	if (!miisc) {
+		printf("epic_mediachange: can't happen\n"); /* ??? panic */
+		return (0);
+	}
+#ifdef EPICMEDIADEBUG
+	printf("%s: using phy %s\n", ifp->if_xname,
+	       miisc->mii_dev.dv_xname);
+#endif
+
+	if (miisc->mii_flags & MIIF_HAVEFIBER) {
+		/* XXX XXX assume it's a Level1 - should check */
+
+		/* We have to powerup fiber tranceivers */
+		cfg = PHY_READ(miisc, MII_LXTPHY_CONFIG);
+		if (IFM_SUBTYPE(media) == IFM_100_FX) {
+#ifdef EPICMEDIADEBUG
+			printf("%s: power up fiber\n", ifp->if_xname);
+#endif
+			cfg |= (CONFIG_LEDC1 | CONFIG_LEDC0);
+		} else {
+#ifdef EPICMEDIADEBUG
+			printf("%s: power down fiber\n", ifp->if_xname);
+#endif
+			cfg &= ~(CONFIG_LEDC1 | CONFIG_LEDC0);
+		}
+		PHY_WRITE(miisc, MII_LXTPHY_CONFIG, cfg);
+	}
+
 	return (0);
 }
