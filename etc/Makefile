@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.78.2.2 1997/11/12 01:47:38 mellon Exp $
+#	$NetBSD: Makefile,v 1.78.2.3 1997/11/20 09:00:28 mrg Exp $
 #	from: @(#)Makefile	8.7 (Berkeley) 5/25/95
 
 TZDIR=		/usr/share/zoneinfo
@@ -114,6 +114,32 @@ distribution: distrib-dirs
 		${DESTDIR}/var/msgs/bounds
 	${INSTALL} -c -o ${BINOWN} -g ${BINGRP} -m 664 /dev/null \
 		${DESTDIR}/var/run/utmp
+	${INSTALL} -c -o games -g games -m 664 /dev/null \
+		${DESTDIR}/var/games/atc_scores
+	${INSTALL} -c -o games -g games -m 664 /dev/null \
+		${DESTDIR}/var/games/battlestar.log
+	${INSTALL} -c -o games -g games -m 664 /dev/null \
+		${DESTDIR}/var/games/cfscores
+	${INSTALL} -c -o games -g games -m 664 /dev/null \
+		${DESTDIR}/var/games/cribloo
+	${INSTALL} -c -o games -g games -m 664 /dev/null \
+		${DESTDIR}/var/games/robots_roll
+	${INSTALL} -c -o games -g games -m 664 /dev/null \
+		${DESTDIR}/var/games/rogue.scores
+	${INSTALL} -c -o games -g games -m 664 /dev/null \
+		${DESTDIR}/var/games/saillog
+	${INSTALL} -c -o games -g games -m 664 /dev/null \
+		${DESTDIR}/var/games/snakerawscores
+	${INSTALL} -c -o games -g games -m 664 /dev/null \
+		${DESTDIR}/var/games/snake.log
+	${INSTALL} -c -o games -g games -m 664 /dev/null \
+		${DESTDIR}/var/games/tetris.scores
+	${INSTALL} -c -o games -g games -m 664 /dev/null \
+		${DESTDIR}/var/games/larn/llog12.0
+	${INSTALL} -c -o games -g games -m 664 /dev/null \
+		${DESTDIR}/var/games/larn/lscore12.0
+	${INSTALL} -c -o games -g games -m 664 /dev/null \
+		${DESTDIR}/var/games/larn/playerids
 	(cd etc.${MACHINE}; ${INSTALL} -c -o ${BINOWN} -g ${BINGRP} -m 444 \
 	    fstab.* ${DESTDIR}/etc)
 	(cd ${DESTDIR}/dev; ./MAKEDEV all)
