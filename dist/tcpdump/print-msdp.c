@@ -1,4 +1,4 @@
-/*	$NetBSD: print-msdp.c,v 1.2 2002/04/09 02:53:20 thorpej Exp $	*/
+/*	$NetBSD: print-msdp.c,v 1.3 2004/09/27 23:04:24 dyoung Exp $	*/
 
 /*
  * Copyright (c) 2001 William C. Fenner.
@@ -21,10 +21,10 @@
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
-static const char rcsid[] =
-    "@(#) Header: /tcpdump/master/tcpdump/print-msdp.c,v 1.2 2001/12/10 08:06:40 guy Exp";
+static const char rcsid[] _U_ =
+    "@(#) Header: /tcpdump/master/tcpdump/print-msdp.c,v 1.4.2.2 2003/11/16 08:51:34 guy Exp";
 #else
-__RCSID("$NetBSD: print-msdp.c,v 1.2 2002/04/09 02:53:20 thorpej Exp $");
+__RCSID("$NetBSD: print-msdp.c,v 1.3 2004/09/27 23:04:24 dyoung Exp $");
 #endif
 #endif
 
@@ -32,11 +32,10 @@ __RCSID("$NetBSD: print-msdp.c,v 1.2 2002/04/09 02:53:20 thorpej Exp $");
 #include "config.h"
 #endif
 
+#include <tcpdump-stdinc.h>
+
 #include <stdio.h>
 #include <stdlib.h>
-#include <unistd.h>
-
-#include <netinet/in.h>
 
 #include "interface.h"
 #include "addrtoname.h"
@@ -61,7 +60,7 @@ msdp_print(const unsigned char *sp, u_int length)
 		type = *sp;
 		len = EXTRACT_16BITS(sp + 1);
 		if (len > 1400 || vflag)
-			printf(" [len %d]", len);
+			printf(" [len %u]", len);
 		if (len < 3)
 			goto trunc;
 		sp += 3;
@@ -74,8 +73,8 @@ msdp_print(const unsigned char *sp, u_int length)
 			else
 				(void)printf(" SA-Response");
 			TCHECK(*sp);
-			(void)printf(" %d entries", *sp);
-			if (*sp * 12 + 8 < len) {
+			(void)printf(" %u entries", *sp);
+			if ((u_int)((*sp * 12) + 8) < len) {
 				(void)printf(" [w/data]");
 				if (vflag > 1) {
 					(void)printf(" ");
