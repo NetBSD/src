@@ -1,4 +1,4 @@
-.\" $NetBSD: installboot.old.8,v 1.10 1999/04/05 05:52:09 cgd Exp $
+.\" $NetBSD: installboot.old.8,v 1.11 1999/04/05 06:01:54 cgd Exp $
 .\"
 .\" Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
 .\" Copyright (c) 1995 Paul Kranenburg
@@ -34,53 +34,22 @@
 .Os
 .Sh NAME
 .Nm installboot.old
-.Nd install disk or CD-ROM bootstrap software
+.Nd install bootstrap software
 .Sh SYNOPSIS
 .Nm installboot.old
 .Op Fl nv
-.Op Fl b Ar bn
+.Fl b Ar bn
 .Ar boot
 .Ar bootxx
 .Ar rawdiskdevice
 .Sh DESCRIPTION
-The
-.Nm
-utility prepares a disk for bootstrapping.
-.Pp
-The
-.Nx Ns Tn /alpha
-disk bootstrap software is split into two parts:
-a small first-stage boot program that is written into the disklabel
-area of a disk
-.Po
-and hence is limited in size to 7680 bytes
-.Pc ,
-and a second-stage boot program that resides in a FFS, ISO-9660, or USTAR
-file system on a disk, CD-ROM image, or magnetic tape image,
-.Po
-typically with the name 
-.Pa /boot
-.Pc .
-The first-stage boot program is loaded into memory by the SRM console
-software.  After receiving control of the system, it loads the
-second-stage boot program from a set of filesystem block numbers that
-have been
-hard-coded into it by
-.Nm installboot.old .
-The second-stage boot program locates and loads the kernel.
-.Pp
-The second-stage boot program and the prototype code for the
-first-stage boot program can be found in
-.Pa /usr/mdec/boot
-and
-.Pa /usr/mdec/bootxx ,
-respectively.
-.Pa /usr/mdec/boot
-may be installed simply by copying it to the root directory of the
-partition you wish to boot from, but after it is installed
-.Nm
-.Em must
-be run.
+.Bf -symbolic
+This program has been obsoleted by
+.Xr installboot 8
+and should only be used to configure boot blocks for
+.Dq ustarfs
+booting.  Use it at your own risk.
+.Ef
 .Pp
 The options recognized by
 .Nm
@@ -91,7 +60,7 @@ Do not actually write anything on the disk.
 .It Fl v
 Verbose mode.
 .It Fl b Ar bn
-Ignore the file system type and assume that
+This flag and argument are required.  Assume that
 .Pa boot
 is contiguously present with initial block number
 .Ar bn .
@@ -109,59 +78,8 @@ The name of the device corresponding to the raw whole-disk partition (the
 .Dq raw partition )
 of the disk on which the first-stage boot program is to be installed.
 .El
-.Sh EXAMPLES
-Assuming the second-stage boot program
-.Pa boot
-resides in the FFS file system mounted on
-.Pa /
-from
-.Dq sd0a ,
-you would install the first-stage boot program on the disk
-(and therefore make the disk bootable) by using the command:
-.Bd -literal -offset indent
-installboot.old /boot /usr/mdec/bootxx /dev/rsd0c
-.Ed
-.Pp
-Assuming the second-stage boot program
-.Pa boot
-resides in the ISO-9660 file system mounted on
-.Pa /mnt
-from
-.Dq vnd0a ,
-you would install the first-stage boot progam into the CD-ROM image
-(and therefore make the image bootable once burned onto a CD) by using
-the command:
-.Bd -literal -offset indent
-installboot.old /mnt/boot /usr/mdec/bootxx /dev/rvnd0c
-.Ed
-.Sh BUGS
-The
-.Nx Ns Tn /alpha
-boot blocks can only load kernels from disks'
-.Dq a
-partitions.  (However, the second-stage boot
-program may be located on any FFS file system partition
-on the disk.)
-.Pp
-.Nm Installboot
-requires simultaneous access to the mounted file system and
-the disks' raw partition.
-That is not allowed with the kernel
-.Dv securelevel
-variable
-.Po
-see
-.Xr sysctl 8
-.Pc
-set to a value greater than one, or with
-.Dv securelevel
-set to one if the
-.Dq boot
-program resides in a file system on the disk's raw partition.
-.Sh "SEE ALSO"
-.Xr disklabel 8 ,
-.Xr init 8 ,
-.Xr sysctl 8
+.Sh SEE ALSO
+.Xr installboot 8
 .Sh HISTORY
 This version of the
 .Nx Ns Tn /alpha
