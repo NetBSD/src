@@ -1,4 +1,4 @@
-.\"	$NetBSD: dbm_clearerr.3,v 1.2 2004/05/01 07:59:09 wiz Exp $
+.\"	$NetBSD: dbm_clearerr.3,v 1.3 2004/05/06 19:16:32 wiz Exp $
 .\"
 .\" Copyright (c) 2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -231,9 +231,7 @@ The
 .Fn dbm_open
 function returns a pointer to a
 .Fa DBM
-when successful; otherwise a
-.Dv NULL
-pointer is returned.
+when successful; otherwise a null pointer is returned.
 .Pp
 The
 .Fn dbm_close
@@ -247,9 +245,7 @@ if no record matching
 .Fa key
 was found or if an error occured, its
 .Fa dptr
-member is a
-.Dv NULL
-pointer.
+member is a null pointer.
 .Pp
 The
 .Fn dbm_store
@@ -276,9 +272,7 @@ functions return a key
 .Fa datum .
 When the end of the database is reached or if an error occured, its
 .Fa dptr
-member is a
-.Dv NULL
-pointer.
+member is a null pointer.
 .Pp
 The
 .Fn dbm_error
