@@ -1,4 +1,4 @@
-/*	$NetBSD: umass_quirks.c,v 1.27 2002/11/28 10:08:28 gehenna Exp $	*/
+/*	$NetBSD: umass_quirks.c,v 1.28 2002/12/06 03:57:51 erh Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -236,7 +236,7 @@ Static const struct umass_quirk umass_quirks[] = {
 
 	{ { USB_VENDOR_SCANLOGIC, USB_PRODUCT_SCANLOGIC_SL11R },
 	  UMASS_WPROTO_UNSPEC, UMASS_CPROTO_UFI,
-	  0,
+	  UMASS_QUIRK_WRONG_CSWTAG,
 	  0,
 	  UMATCH_VENDOR_PRODUCT,
 	  NULL, NULL
