@@ -33,7 +33,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 	/* .asciz "@(#)_setjmp.s	8.1 (Berkeley) 6/4/93" */
-	.asciz "$NetBSD: _setjmp.S,v 1.4 2002/02/24 01:06:19 matt Exp $"
+	.asciz "$NetBSD: _setjmp.S,v 1.5 2002/02/24 02:43:46 matt Exp $"
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -90,7 +90,7 @@ done:
 2:
 	ret				# unwind stack before signals enabled
 3:
-	addl2	$8,sp			# compensate for PSL-PC push
+	addl2	$8,%sp			# compensate for PSL-PC push
 4:
 	jmp	*4(%r1)			# done, return....
 
