@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fddisubr.c,v 1.9.4.1 1997/02/07 18:06:59 is Exp $	*/
+/*	$NetBSD: if_fddisubr.c,v 1.9.4.2 1997/02/20 16:41:07 is Exp $	*/
 
 /*
  * Copyright (c) 1995
@@ -600,10 +600,15 @@ fddi_input(ifp, fh, m)
  * Perform common duties while attaching to interface list
  */
 void
+#ifdef __NetBSD__
+fddi_ifattach(ifp, lla)
+	register struct ifnet *ifp;
+	caddr_t lla;
+{
+#else
 fddi_ifattach(ifp)
 	register struct ifnet *ifp;
 {
-#ifndef __NetBSD__
 	register struct ifaddr *ifa;
 #endif
 	register struct sockaddr_dl *sdl;
@@ -618,8 +623,7 @@ fddi_ifattach(ifp)
 	    sdl->sdl_family == AF_LINK) {
 		sdl->sdl_type = IFT_FDDI;
 		sdl->sdl_alen = ifp->if_addrlen;
-		bcopy(LLADDR(ifp->if_sadl),
-		      LLADDR(sdl), ifp->if_addrlen);
+		bcopy(lla, LLADDR(sdl), ifp->if_addrlen);
 	}
 #else
 	for (ifa = ifp->if_addrlist; ifa; ifa = ifa->ifa_next)
