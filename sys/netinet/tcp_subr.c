@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_subr.c,v 1.49 1998/04/29 20:43:30 matt Exp $	*/
+/*	$NetBSD: tcp_subr.c,v 1.50 1998/05/03 19:54:56 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -112,6 +112,7 @@ int	tcp_do_rfc1323 = 1;	/* window scaling / timestamps (obsolete) */
 int	tcp_do_sack = 1;	/* selective acknowledgement */
 int	tcp_do_win_scale = 1;	/* RFC1323 window scaling */
 int	tcp_do_timestamps = 1;	/* RFC1323 timestamps */
+int	tcp_ack_on_push = 0;	/* set to enable immediate ACK-on-PUSH */
 int	tcp_init_win = 1;
 int	tcp_mss_ifmtu = 0;
 #ifdef TCP_COMPAT_42
