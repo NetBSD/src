@@ -208,6 +208,9 @@
 #elif __FreeBSD__
 #include "acfreebsd.h"
 
+#elif __NetBSD__
+#include "acnetbsd.h"
+
 #else
 
 /* All other environments */
