@@ -1,4 +1,4 @@
-/*	$NetBSD: loadfile.c,v 1.1 1996/09/17 22:00:24 cgd Exp $	*/
+/*	$NetBSD: loadfile.c,v 1.2 1996/09/18 19:34:33 cgd Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -179,7 +179,8 @@ elf_exec(fd, elf, entryp)
 			(void)printf("read phdr: %d\n", errno);
 			return (1);
 		}
-		if (phdr.p_type != Elf_pt_load)
+		if (phdr.p_type != Elf_pt_load ||
+		    (phdr.p_flags & (Elf_pf_w|Elf_pf_x)) == 0)
 			continue;
 
 		/* Read in segment. */
