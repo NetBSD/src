@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_attr.c,v 1.1 2003/07/18 22:33:46 nathanw Exp $	*/
+/*	$NetBSD: pthread_attr.c,v 1.2 2003/09/11 21:51:57 christos Exp $	*/
 
 /*-
  * Copyright (c) 2001,2002,2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_attr.c,v 1.1 2003/07/18 22:33:46 nathanw Exp $");
+__RCSID("$NetBSD: pthread_attr.c,v 1.2 2003/09/11 21:51:57 christos Exp $");
 
 #include <errno.h>
 #include <stdio.h>
@@ -237,6 +237,7 @@ pthread_attr_setscope(pthread_attr_t *attr, int scope)
 
 
 int
+/*ARGSUSED*/
 pthread_attr_setschedparam(pthread_attr_t *attr,
     const struct sched_param *param)
 {
@@ -252,6 +253,7 @@ pthread_attr_setschedparam(pthread_attr_t *attr,
 
 
 int
+/*ARGSUSED*/
 pthread_attr_getschedparam(const pthread_attr_t *attr,
     struct sched_param *param)
 {
