@@ -70,11 +70,9 @@ To upgrade your system, follow the following instructions:
 	your system as the kernel configures the hardware.  Note which
 	hard disk device is configured that contains your root and
 	swap partition.  When prompted for the root device, type
-	'sd0*' (replacing 0 with the disk number that NetBSD used for
-	your root/swap device).  The '*' character indicates that the
-	root file system is contained on the swap partition.
-	When you reach the prompt asking you for a shell name, just
-	hit return.
+	'sd0b' (replacing 0 with the disk number that NetBSD used for
+	your root/swap device). When you reach the prompt asking you
+	for a shell name, just hit return.
 
 	You will be presented with some information about the upgrade
 	process and a warning message, and will be asked if you wish

@@ -69,7 +69,7 @@ begin again from scratch.
 	your system as the kernel configures the hardware.  Note which
 	hard disk device(s) are configured (sd0, sd1, etc).  Then
 	you will be prompted for a root device.  At this time type
-	'sd0*', where '0' is the device which contains the swap
+	'sd0b', where '0' is the device which contains the swap
 	partition you created during the hard disk preparation.
 
 	If the system should hang after entering the root device, try
