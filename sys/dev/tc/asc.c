@@ -1,4 +1,4 @@
-/*	$NetBSD: asc.c,v 1.23 1996/07/16 15:20:38 mhitch Exp $	*/
+/*	$NetBSD: asc.c,v 1.24 1996/07/30 06:18:40 mhitch Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -1187,9 +1187,10 @@ again:
 				    &asc_scripts[SCRIPT_RESUME_NO_DATA];
 		} else if (state->flags & DMA_OUT) {
 			if (len) {
+#ifdef DEBUG
 				printf("asc_intr: 2: len %d (fifo %d)\n", len,
 					fifo); /* XXX */
-				goto abort;
+#endif
 			}
 			/*
 			 * If this is the last chunk, the next expected
