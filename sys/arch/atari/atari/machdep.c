@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.39 1997/03/15 18:09:43 is Exp $	*/
+/*	$NetBSD: machdep.c,v 1.40 1997/03/26 15:44:03 leo Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -458,6 +458,7 @@ identifycpu()
 	    case CPU_68030:
 		cpu = "m68030";
 		mmu = "/MMU";
+		break;
 	    default: /* XXX */
 		cpu = "m68020";
 		mmu = " m68851 MMU";
