@@ -1,4 +1,4 @@
-/*	$NetBSD: sd.c,v 1.195 2003/02/03 23:51:00 thorpej Exp $	*/
+/*	$NetBSD: sd.c,v 1.196 2003/03/20 05:49:21 dbj Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.195 2003/02/03 23:51:00 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.196 2003/03/20 05:49:21 dbj Exp $");
 
 #include "opt_scsi.h"
 #include "opt_bufq.h"
@@ -593,7 +593,7 @@ sdstrategy(bp)
 
 	SC_DEBUG(sd->sc_periph, SCSIPI_DB2, ("sdstrategy "));
 	SC_DEBUG(sd->sc_periph, SCSIPI_DB1,
-	    ("%ld bytes @ blk %d\n", bp->b_bcount, bp->b_blkno));
+	    ("%ld bytes @ blk %" PRId64 "\n", bp->b_bcount, bp->b_blkno));
 	/*
 	 * If the device has been made invalid, error out
 	 */
