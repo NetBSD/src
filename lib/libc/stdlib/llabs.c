@@ -1,4 +1,4 @@
-/*	$NetBSD: llabs.c,v 1.1 2000/03/06 18:32:31 kleink Exp $	*/
+/*	$NetBSD: llabs.c,v 1.2 2000/03/07 20:02:00 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "from: @(#)labs.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: llabs.c,v 1.1 2000/03/06 18:32:31 kleink Exp $");
+__RCSID("$NetBSD: llabs.c,v 1.2 2000/03/07 20:02:00 kleink Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -49,6 +49,7 @@ __RCSID("$NetBSD: llabs.c,v 1.1 2000/03/06 18:32:31 kleink Exp $");
 __weak_alias(llabs, _llabs)
 #endif
 
+/* LONGLONG */
 long long int
 llabs(j)
 	long long int j;

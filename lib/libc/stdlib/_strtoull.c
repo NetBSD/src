@@ -1,4 +1,4 @@
-/*	$NetBSD: _strtoull.c,v 1.1 2000/03/06 18:32:29 kleink Exp $	*/
+/*	$NetBSD: _strtoull.c,v 1.2 2000/03/07 20:02:00 kleink Exp $	*/
 
 /*
  * Copyright (c) 1996 Christos Zoulas.  All rights reserved.
@@ -35,8 +35,10 @@ __indr_reference(_strtoull, strtoull)
 #else
 
 #include <stdlib.h>
+/* LONGLONG */
 unsigned long long int	_strtoull __P((const char *, char **, int)); /* XXX */
 
+/* LONGLONG */
 unsigned long long int
 strtoull(nptr, endptr, base)
 	const char *nptr;
