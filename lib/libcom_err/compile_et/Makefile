@@ -1,11 +1,12 @@
-# $NetBSD: Makefile,v 1.2 2000/06/16 22:46:44 thorpej Exp $
+# $NetBSD: Makefile,v 1.3 2000/08/02 02:39:48 garbled Exp $
 DIST=		${.CURDIR}/../../../crypto/dist
 .PATH: ${DIST}/heimdal/lib/com_err ${DIST}/heimdal/lib/roken
 
 HOSTPROG= compile_et
 
 SRCS=	compile_et.c parse.y lex.l \
-	getarg.c print_version.c warnerr.c strupr.c get_window_size.c
+	getarg.c print_version.c warnerr.c strupr.c get_window_size.c \
+	strlcpy.c strlcat.c
 
 YHEADER=	1
 
