@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr53c9x.c,v 1.94 2002/06/21 13:27:49 lukem Exp $	*/
+/*	$NetBSD: ncr53c9x.c,v 1.95 2002/08/26 05:17:48 petrov Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ncr53c9x.c,v 1.94 2002/06/21 13:27:49 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ncr53c9x.c,v 1.95 2002/08/26 05:17:48 petrov Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -101,7 +101,7 @@ __KERNEL_RCSID(0, "$NetBSD: ncr53c9x.c,v 1.94 2002/06/21 13:27:49 lukem Exp $");
 #include <dev/ic/ncr53c9xreg.h>
 #include <dev/ic/ncr53c9xvar.h>
 
-int ncr53c9x_debug = 0; /*NCR_SHOWPHASE|NCR_SHOWMISC|NCR_SHOWTRAC|NCR_SHOWCMDS;*/
+int ncr53c9x_debug = NCR_SHOWMISC; /*NCR_SHOWPHASE|NCR_SHOWMISC|NCR_SHOWTRAC|NCR_SHOWCMDS;*/
 #ifdef DEBUG
 int ncr53c9x_notag = 0;
 #endif
@@ -430,7 +430,7 @@ ncr53c9x_init(sc, doreset)
 	struct ncr53c9x_linfo *li;
 	int i, r;
 
-	NCR_TRACE(("[NCR_INIT(%d) %d] ", doreset, sc->sc_state));
+	NCR_MISC(("[NCR_INIT(%d) %d] ", doreset, sc->sc_state));
 
 	if (!ecb_pool_initialized) {
 		/* All instances share this pool */
@@ -494,8 +494,7 @@ ncr53c9x_init(sc, doreset)
 
 		ti->flags = ((sc->sc_minsync && !(sc->sc_cfflags & (1<<(r+8))))
 		    ? 0 : T_SYNCHOFF) |
-		    ((sc->sc_cfflags & (1<<r)) ? T_RSELECTOFF : 0) |
-		    T_NEED_TO_RESET;
+		    ((sc->sc_cfflags & (1<<r)) ? T_RSELECTOFF : 0);
 #ifdef DEBUG
 		if (ncr53c9x_notag)
 			ti->flags &= ~T_TAG;
@@ -503,6 +502,8 @@ ncr53c9x_init(sc, doreset)
 		ti->period = sc->sc_minsync;
 		ti->offset = 0;
 		ti->cfg3   = 0;
+
+		ncr53c9x_update_xfer_mode(sc, r);
 	}
 
 	if (doreset) {
@@ -548,7 +549,7 @@ ncr53c9x_readregs(sc)
 	sc->sc_phase = (sc->sc_espintr & NCRINTR_DIS) ?
 	    /* Disconnected */ BUSFREE_PHASE : sc->sc_espstat & NCRSTAT_PHASE;
 
-	NCR_MISC(("regs[intr=%02x,stat=%02x,step=%02x,stat2=%02x] ",
+	NCR_INTS(("regs[intr=%02x,stat=%02x,step=%02x,stat2=%02x] ",
 	    sc->sc_espintr, sc->sc_espstat, sc->sc_espstep, sc->sc_espstat2));
 }
 
@@ -760,7 +761,7 @@ ncr53c9x_select(sc, ecb)
 
 	/* And get the targets attention */
 	if (selatns) {
-		NCR_MISC(("SELATNS \n"));
+		NCR_MSGS(("SELATNS \n"));
 		/* Arbitrate, select and stop after IDENTIFY message */
 		NCRCMD(sc, NCRCMD_SELATNS);
 	} else if (selatn3) {
@@ -901,9 +902,11 @@ ncr53c9x_scsipi_request(chan, req, arg)
 		ti->offset = 0;
 
 		if ((sc->sc_cfflags & (1<<(xm->xm_target+16))) == 0 &&
-		    (xm->xm_mode & PERIPH_CAP_TQING))
+		    (xm->xm_mode & PERIPH_CAP_TQING)) {
+			NCR_MISC(("%s: target %d: tagged queuing\n",
+			    sc->sc_dev.dv_xname, xm->xm_target));
 			ti->flags |= T_TAG;
-		else
+		} else
 			ti->flags &= ~T_TAG;
 
 		if ((xm->xm_mode & PERIPH_CAP_WIDE16) != 0) {
@@ -1001,7 +1004,6 @@ ncr53c9x_ioctl(chan, cmd, arg, flag, p)
 {
 	struct ncr53c9x_softc *sc = (void *)chan->chan_adapter->adapt_dev;
 	int s, error = 0;
-
 
 	switch (cmd) {
 	case SCBUSIORESET:
@@ -1122,7 +1124,7 @@ ncr53c9x_sched(sc)
 			ncr53c9x_select(sc, ecb);
 			break;
 		} else
-			NCR_MISC(("%d:%d busy\n",
+			NCR_TRACE(("%d:%d busy\n",
 			    periph->periph_target,
 			    periph->periph_lun));
 	}
@@ -1140,7 +1142,7 @@ ncr53c9x_sense(sc, ecb)
 	struct ncr53c9x_linfo *li;
 	int lun = periph->periph_lun;
 
-	NCR_MISC(("requesting sense "));
+	NCR_TRACE(("requesting sense "));
 	/* Next, setup a request sense command block */
 	memset(ss, 0, sizeof(*ss));
 	ss->opcode = REQUEST_SENSE;
@@ -1213,7 +1215,7 @@ ncr53c9x_done(sc, ecb)
 	}
 
 #ifdef NCR53C9X_DEBUG
-	if (ncr53c9x_debug & NCR_SHOWMISC) {
+	if (ncr53c9x_debug & NCR_SHOWTRAC) {
 		if (xs->resid != 0)
 			printf("resid=%d ", xs->resid);
 		if (xs->error == XS_SENSE)
@@ -1301,7 +1303,7 @@ ncr53c9x_dequeue(sc, ecb)
  */
 #define ncr53c9x_sched_msgout(m) \
 	do {							\
-		NCR_MISC(("ncr53c9x_sched_msgout %x %d", m, __LINE__));	\
+		NCR_MSGS(("ncr53c9x_sched_msgout %x %d", m, __LINE__));	\
 		NCRCMD(sc, NCRCMD_SETATN);			\
 		sc->sc_flags |= NCR_ATN;			\
 		sc->sc_msgpriq |= (m);				\
@@ -1310,7 +1312,7 @@ ncr53c9x_dequeue(sc, ecb)
 static void
 ncr53c9x_flushfifo(struct ncr53c9x_softc *sc)
 {
-	NCR_MISC(("[flushfifo] "));
+	NCR_TRACE(("[flushfifo] "));
 
 	NCRCMD(sc, NCRCMD_FLUSH);
 
@@ -1366,6 +1368,7 @@ ncr53c9x_rdfifo(struct ncr53c9x_softc *sc, int how)
 
 	sc->sc_imlen += i;
 
+#if 0
 #ifdef NCR53C9X_DEBUG
  	{
 		int j;
@@ -1380,6 +1383,7 @@ ncr53c9x_rdfifo(struct ncr53c9x_softc *sc, int how)
 		}
 	}
 #endif
+#endif
 	return sc->sc_imlen;
 }
 
@@ -1389,8 +1393,8 @@ ncr53c9x_wrfifo(struct ncr53c9x_softc *sc, u_char *p, int len)
 	int i;
 
 #ifdef NCR53C9X_DEBUG
-	NCR_MISC(("[wrfifo(%d):", len));
-	if (ncr53c9x_debug & NCR_SHOWTRAC) {
+	NCR_MSGS(("[wrfifo(%d):", len));
+	if (ncr53c9x_debug & NCR_SHOWMSGS) {
 		for (i = 0; i < len; i++)
 			printf(" %02x", p[i]);
 		printf("]\n");
@@ -2011,10 +2015,10 @@ ncr53c9x_msgout(sc)
 	{
 		int i;
 		
-		NCR_MISC(("<msgout:"));
+		NCR_MSGS(("<msgout:"));
 		for (i = 0; i < sc->sc_omlen; i++) 
-			NCR_MISC((" %02x", sc->sc_omess[i]));
-		NCR_MISC(("> "));
+			NCR_MSGS((" %02x", sc->sc_omess[i]));
+		NCR_MSGS(("> "));
 	}
 #endif
 	if (sc->sc_rev == NCR_VARIANT_FAS366) {
@@ -2058,7 +2062,7 @@ ncr53c9x_intr(arg)
 	size_t size;
 	int nfifo;
 
-	NCR_MISC(("[ncr53c9x_intr: state %d]", sc->sc_state));
+	NCR_INTS(("[ncr53c9x_intr: state %d]", sc->sc_state));
 
 	if (!NCRDMA_ISINTR(sc))
 		return (0);
@@ -2239,7 +2243,7 @@ again:
 
 	if ((sc->sc_espintr & NCRINTR_DIS) != 0) {
 		sc->sc_msgify = 0;
-		NCR_MISC(("<DISC [intr %x, stat %x, step %d]>",
+		NCR_INTS(("<DISC [intr %x, stat %x, step %d]>",
 		    sc->sc_espintr,sc->sc_espstat,sc->sc_espstep));
 		if (NCR_READ_REG(sc, NCR_FFLAG) & NCRFIFO_FF) {
 			NCRCMD(sc, NCRCMD_FLUSH);
@@ -2391,7 +2395,7 @@ printf("<<RESELECT CONT'd>>");
 			 * back into the ready list.
 			 */
 			if (sc->sc_state == NCR_SELECTING) {
-				NCR_MISC(("backoff selector "));
+				NCR_INTS(("backoff selector "));
 				callout_stop(&ecb->xs->xs_callout);
 				ncr53c9x_dequeue(sc, ecb);
 				TAILQ_INSERT_HEAD(&sc->ready_list, ecb, chain);
@@ -2436,7 +2440,7 @@ printf("<<RESELECT CONT'd>>");
 				return (1);
 			}
 			sc->sc_selid = sc->sc_imess[0];
-			NCR_MISC(("selid=%02x ", sc->sc_selid));
+			NCR_INTS(("selid=%02x ", sc->sc_selid));
 
 			/* Handle identify message */
 			ncr53c9x_msgin(sc);
