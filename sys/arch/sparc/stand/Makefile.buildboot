@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.buildboot,v 1.11 2000/02/21 15:07:32 pk Exp $
+#	$NetBSD: Makefile.buildboot,v 1.12 2000/02/21 15:13:11 pk Exp $
 
 S=	${.CURDIR}/../../../..
 
@@ -17,7 +17,7 @@ RELOC_DEFAULT?=	300000
 # flushing issues on Hypersparcs
 RELOC_BOOTXX=	340000
 
-CPPFLAGS+=	-D_STANDALONE -DSUN4 -DSUN4C -DSUN_BOOTPARAMS -DHEAP_VARIABLE
+CPPFLAGS+=	-D_STANDALONE -DSUN4 -DSUN4C -DHEAP_VARIABLE
 
 CPPFLAGS+=	-I. -I${.CURDIR}/../../.. -I${.CURDIR}/../../../..
 CFLAGS=		-O2
