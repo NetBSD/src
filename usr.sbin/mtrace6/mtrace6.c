@@ -1,4 +1,4 @@
-/*	$NetBSD: mtrace6.c,v 1.2 2000/02/06 11:21:45 itojun Exp $	*/
+/*	$NetBSD: mtrace6.c,v 1.3 2000/02/26 11:44:28 itojun Exp $	*/
 
 /*
  * Copyright (C) 1999 WIDE Project.
@@ -51,6 +51,9 @@
 #include <stdlib.h>
 #include <netdb.h>
 #include <err.h>
+#ifdef HAVE_GETIFADDRS
+#include <ifaddrs.h>
+#endif
 
 #include "trace.h"
 
@@ -450,6 +453,33 @@ get_my_sockaddr(family, addrp)
 	int family;
 	struct sockaddr *addrp;
 {
+#ifdef HAVE_GETIFADDRS
+	struct ifaddrs *ifap, *ifa;
+
+	if (getifaddrs(&ifap) != 0) {
+		err(1, "getifaddrs");
+		/*NOTREACHED */
+	}
+
+	for (ifa = ifap; ifa; ifa = ifa->ifa_next) {
+		if (ifa->ifa_addr->sa_family == family) {
+			switch(family) {
+			case AF_INET6:
+				if (ip6_validaddr(ifa->ifa_name,
+						  (struct sockaddr_in6 *)ifa->ifa_addr))
+					goto found;
+			}
+		}
+	}
+
+	freeifaddrs(ifap);
+	return (-1);		/* not found */
+
+  found:
+	memcpy((void *)addrp, (void *)ifa->ifa_addr, ifa->ifa_addr->sa_len);
+	freeifaddrs(ifap);
+	return (0);
+#else
 #define IF_BUFSIZE 8192		/* XXX: adhoc...should be customizable? */
 	int i, s;
 	struct ifconf ifconf;
@@ -491,6 +521,7 @@ get_my_sockaddr(family, addrp)
 	memcpy((void *)addrp, (void *)&ifrp->ifr_addr, ifrp->ifr_addr.sa_len);
 	return(0);
 #undef IF_BUFSIZE	
+#endif
 }
 
 static void
