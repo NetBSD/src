@@ -1,4 +1,4 @@
-.\"	$NetBSD: getdomainname.3,v 1.4 1998/02/05 18:46:33 perry Exp $
+.\"	$NetBSD: getdomainname.3,v 1.5 1998/05/06 19:53:41 kleink Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -45,9 +45,9 @@
 .Sh SYNOPSIS
 .Fd #include <unistd.h>
 .Ft int
-.Fn getdomainname "char *name" "int namelen"
+.Fn getdomainname "char *name" "size_t namelen"
 .Ft int
-.Fn setdomainname "const char *name" "int namelen"
+.Fn setdomainname "const char *name" "size_t namelen"
 .Sh DESCRIPTION
 .Fn Getdomainname
 returns the standard domain name for the current processor, as
@@ -94,7 +94,7 @@ Host names are limited to
 .Dv MAXHOSTNAMELEN
 (from
 .Ao Pa sys/param.h Ac )
-characters, currently 256.
+characters including null-termination, currently 256.
 .Sh HISTORY
 The
 .Nm
