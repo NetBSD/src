@@ -1,3 +1,5 @@
+/*	$NetBSD: print-ipx.c,v 1.2 1995/03/06 19:11:16 mycroft Exp $	*/
+
 /*
  * Copyright (c) 1994
  *	The Regents of the University of California.  All rights reserved.

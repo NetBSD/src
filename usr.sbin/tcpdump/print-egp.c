@@ -1,3 +1,5 @@
+/*	$NetBSD: print-egp.c,v 1.2 1995/03/06 19:11:09 mycroft Exp $	*/
+
 /*
  * Copyright (c) 1991, 1992, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
