@@ -46,6 +46,7 @@ __BEGIN_DECLS
 struct proc;
 struct user;
 char		*kvm_getargs __P((const struct proc *, const struct user *));
+char		*kvm_getenv __P((const struct proc *, const struct user *));
 struct eproc	*kvm_geteproc __P((const struct proc *));
 char		*kvm_geterr __P((void));
 int		 kvm_getprocs __P((int, int));
