@@ -1,4 +1,4 @@
-/*	$NetBSD: pcib.c,v 1.23 1998/10/26 03:47:19 enami Exp $	*/
+/*	$NetBSD: pcib.c,v 1.24 1999/07/14 09:18:20 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1998 The NetBSD Foundation, Inc.
@@ -140,6 +140,15 @@ pcibmatch(parent, match, aux)
 			/*
 			 * Some Intel 82371AB PCI-ISA bridge identifies
 			 * itself as miscellaneous bridge.
+			 */
+			return (1);
+		}
+	case PCI_VENDOR_SIS:
+		switch (PCI_PRODUCT(pa->pa_id)) {
+		case PCI_PRODUCT_SIS_85C503:
+			/*
+			 * The SIS 85C503 identifies itself as a
+			 * miscellaneous prehistoric.
 			 */
 			return (1);
 		}
