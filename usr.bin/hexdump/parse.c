@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.8 1998/12/19 16:43:39 christos Exp $	*/
+/*	$NetBSD: parse.c,v 1.8.2.1 2000/10/12 21:40:29 he Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)parse.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: parse.c,v 1.8 1998/12/19 16:43:39 christos Exp $");
+__RCSID("$NetBSD: parse.c,v 1.8.2.1 2000/10/12 21:40:29 he Exp $");
 #endif
 #endif /* not lint */
 
@@ -396,7 +396,7 @@ isint2:					switch(fu->bcnt) {
 			 */
 			savech = *p2;
 			p1[0] = '\0';
-			pr->fmt = emalloc(strlen(fmtp) + 2);
+			pr->fmt = emalloc(strlen(fmtp) + strlen(cs) + 1);
 			(void)strcpy(pr->fmt, fmtp);
 			(void)strcat(pr->fmt, cs);
 			*p2 = savech;
