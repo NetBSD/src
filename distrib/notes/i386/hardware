@@ -1,4 +1,4 @@
-	$NetBSD: hardware,v 1.35 1998/07/29 09:04:10 augustss Exp $	
+	$NetBSD: hardware,v 1.36 1998/10/19 13:18:27 bouyer Exp $	
 
 NetBSD/i386 _VER runs on ISA (AT-Bus), EISA, PCI, and VL-bus systems
 with 386-family processors, with or without math coprocessors.  It
@@ -16,6 +16,9 @@ more RAM is more important than getting a faster CPU.)
 Supported devices include:
 	Floppy controllers.
 	MFM, ESDI, IDE, and RLL hard disk controllers.
+		bus-master DMA is supported for the Intel PIIX and VIA
+		Apollo (VT82C586 and VT82C586A/B) series of pci ide
+		controllers.
 	SCSI host adapters:
 		Adaptec AHA-154xA, -B, -C, and -CF 
 		Adaptec AHA-174x
@@ -253,7 +256,7 @@ MFM/ESDI/IDE/RLL hard disk controllers
 		wdc1	0x170	15		[supports two devices]
 
 ATA disks	wd0, wd1, ...
-SCSI disks	sd0, sd1, ...
+SCSI and ATAPI disks sd0, sd1, ...
 SCSI tapes	st0, st1, ...
 SCSI and ATAPI CD-ROMs cd0, cd1, ...
 	For each SCSI and IDE controller found, the SCSI or ATA(PI) devices
