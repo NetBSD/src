@@ -39,7 +39,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)kdump.c	8.1 (Berkeley) 6/6/93";*/
-static char *rcsid = "$Id: kdump.c,v 1.10 1995/06/07 07:24:19 cgd Exp $";
+static char *rcsid = "$Id: kdump.c,v 1.11 1995/07/19 15:11:28 christos Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -69,6 +69,55 @@ struct ktr_header ktr_header;
 
 #define eqs(s1, s2)	(strcmp((s1), (s2)) == 0)
 
+#include <sys/syscall.h>
+
+#include "../../sys/compat/hpux/hpux_syscall.h"
+#include "../../sys/compat/ibcs2/ibcs2_syscall.h"
+#include "../../sys/compat/linux/linux_syscall.h"
+#include "../../sys/compat/osf1/osf1_syscall.h"
+#include "../../sys/compat/sunos/sunos_syscall.h"
+#include "../../sys/compat/svr4/svr4_syscall.h"
+#include "../../sys/compat/ultrix/ultrix_syscall.h"
+
+#define KTRACE
+#include "../../sys/kern/syscalls.c"
+
+#include "../../sys/compat/hpux/hpux_syscalls.c"
+#include "../../sys/compat/ibcs2/ibcs2_syscalls.c"
+#include "../../sys/compat/linux/linux_syscalls.c"
+#include "../../sys/compat/osf1/osf1_syscalls.c"
+#include "../../sys/compat/sunos/sunos_syscalls.c"
+#include "../../sys/compat/svr4/svr4_syscalls.c"
+#include "../../sys/compat/ultrix/ultrix_syscalls.c"
+#undef KTRACE
+
+struct emulation {
+	char *name;		/* Emulation name */
+	char **sysnames;	/* Array of system call names */
+	int  nsysnames;		/* Number of */
+};
+
+static struct emulation emulations[] = {
+	{ "netbsd",	     syscallnames,        SYS_MAXSYSCALL },
+	{ "hpux",	hpux_syscallnames,   HPUX_SYS_MAXSYSCALL },
+	{ "ibcs2",     ibcs2_syscallnames,  IBCS2_SYS_MAXSYSCALL },
+	{ "linux",     linux_syscallnames,  LINUX_SYS_MAXSYSCALL },
+	{ "osf1",       osf1_syscallnames,   OSF1_SYS_MAXSYSCALL },
+	{ "sunos",     sunos_syscallnames,  SUNOS_SYS_MAXSYSCALL },
+	{ "svr4",       svr4_syscallnames,   SVR4_SYS_MAXSYSCALL },
+	{ "ultrix",   ultrix_syscallnames, ULTRIX_SYS_MAXSYSCALL },
+	{ NULL,			     NULL,		    NULL }
+};
+
+struct emulation *current;
+
+
+static char *ptrace_ops[] = {
+	"PT_TRACE_ME",	"PT_READ_I",	"PT_READ_D",	"PT_READ_U",
+	"PT_WRITE_I",	"PT_WRITE_D",	"PT_WRITE_U",	"PT_CONTINUE",
+	"PT_KILL",	"PT_ATTACH",	"PT_DETACH",
+};
+
 int
 main(argc, argv)
 	int argc;
@@ -78,8 +127,13 @@ main(argc, argv)
 	register void *m;
 	int trpoints = ALL_POINTS;
 
-	while ((ch = getopt(argc, argv, "f:dlm:nRTt:")) != -1)
+	current = &emulations[0];	/* NetBSD */
+
+	while ((ch = getopt(argc, argv, "e:f:dlm:nRTt:")) != -1)
 		switch (ch) {
+		case 'e':
+			setemul(optarg);
+			break;
 		case 'f':
 			tracefile = optarg;
 			break;
@@ -154,6 +208,9 @@ main(argc, argv)
 		case KTR_CSW:
 			ktrcsw((struct ktr_csw *)m);
 			break;
+		case KTR_EMUL:
+			ktremul(m, ktrlen);
+			break;
 		}
 		if (tail)
 			(void)fflush(stdout);
@@ -199,6 +256,9 @@ dumpheader(kth)
 	case KTR_CSW:
 		type = "CSW";
 		break;
+	case KTR_EMUL:
+		type = "EMUL";
+		break;
 	default:
 		(void)sprintf(unknown, "UNKNOWN(%d)", kth->ktr_type);
 		type = unknown;
@@ -216,17 +276,6 @@ dumpheader(kth)
 	(void)printf("%s  ", type);
 }
 
-#include <sys/syscall.h>
-#define KTRACE
-#include "../../sys/kern/syscalls.c"
-#undef KTRACE
-int nsyscalls = sizeof (syscallnames) / sizeof (syscallnames[0]);
-
-static char *ptrace_ops[] = {
-	"PT_TRACE_ME",	"PT_READ_I",	"PT_READ_D",	"PT_READ_U",
-	"PT_WRITE_I",	"PT_WRITE_D",	"PT_WRITE_U",	"PT_CONTINUE",
-	"PT_KILL",	"PT_ATTACH",	"PT_DETACH",
-};
 
 ktrsyscall(ktr)
 	register struct ktr_syscall *ktr;
@@ -235,10 +284,10 @@ ktrsyscall(ktr)
 	register register_t *ap;
 	char *ioctlname();
 
-	if (ktr->ktr_code >= nsyscalls || ktr->ktr_code < 0)
+	if (ktr->ktr_code >= current->nsysnames || ktr->ktr_code < 0)
 		(void)printf("[%d]", ktr->ktr_code);
 	else
-		(void)printf("%s", syscallnames[ktr->ktr_code]);
+		(void)printf("%s", current->sysnames[ktr->ktr_code]);
 	ap = (register_t *)((char *)ktr + sizeof(struct ktr_syscall));
 	if (argsize) {
 		char c = '(';
@@ -295,10 +344,10 @@ ktrsysret(ktr)
 	register int error = ktr->ktr_error;
 	register int code = ktr->ktr_code;
 
-	if (code >= nsyscalls || code < 0)
+	if (code >= current->nsysnames || code < 0)
 		(void)printf("[%d] ", code);
 	else
-		(void)printf("%s ", syscallnames[code]);
+		(void)printf("%s ", current->sysnames[code]);
 
 	if (error == 0) {
 		if (fancy) {
@@ -327,6 +376,21 @@ ktrnamei(cp, len)
 	char *cp;
 {
 	(void)printf("\"%.*s\"\n", len, cp);
+}
+
+ktremul(cp, len) 
+	char *cp;
+{
+	char name[1024];
+
+	if (len >= sizeof(name))
+		errx(1, "Emulation name too long");
+
+	strncpy(name, cp, len);
+	name[len] = '\0';
+	(void)printf("\"%s\"\n", name);
+
+	setemul(name);
 }
 
 ktrgenio(ktr, len)
@@ -413,6 +477,18 @@ usage()
 {
 
 	(void)fprintf(stderr,
-	    "usage: kdump [-dnlRT] [-f trfile] [-m maxdata] [-t [cnis]]\n");
+"usage: kdump [-dnlRT] [-e emulation] [-f trfile] [-m maxdata] [-t [cnis]]\n");
 	exit(1);
+}
+
+setemul(name)
+	char *name;
+{
+	int i;
+	for (i = 0; emulations[i].name != NULL; i++)
+		if (strcmp(emulations[i].name, name) == 0) {
+			current = &emulations[i];
+			return;
+		}
+	warnx("Emulation `%s' unknown", name);
 }

@@ -31,11 +31,11 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)ktrace.h	8.1 (Berkeley) 6/6/93
- *	$Id: ktrace.h,v 1.2 1994/10/06 15:45:42 mycroft Exp $
+ *	$Id: ktrace.h,v 1.3 1995/07/19 15:14:06 christos Exp $
  */
 
 #define DEF_POINTS (KTRFAC_SYSCALL | KTRFAC_SYSRET | KTRFAC_NAMEI | \
-		  KTRFAC_GENIO | KTRFAC_PSIG)
+		  KTRFAC_GENIO | KTRFAC_PSIG | KTRFAC_EMUL)
 
 #define ALL_POINTS (DEF_POINTS | KTRFAC_CSW)
 

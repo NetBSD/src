@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"	from: @(#)ktrace.1	8.1 (Berkeley) 6/6/93
-.\"	$Id: ktrace.1,v 1.2 1994/10/06 15:45:39 mycroft Exp $
+.\"	$Id: ktrace.1,v 1.3 1995/07/19 15:14:00 christos Exp $
 .\"
 .Dd June 6, 1993
 .Dt KTRACE 1
@@ -108,6 +108,8 @@ The following table equates the letters with the tracepoints:
 .Bl -tag -width flag -compact
 .It Cm c
 trace system calls
+.It Cm e
+trace emulation changes
 .It Cm n
 trace namei translations
 .It Cm i
