@@ -1,4 +1,4 @@
-/*	$NetBSD: i80200_irq.S,v 1.2 2002/06/25 19:40:46 thorpej Exp $	*/
+/*	$NetBSD: i80200_irq.S,v 1.3 2002/07/29 22:00:00 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -46,17 +46,8 @@
 /*
  * irq_entry:
  *
- *	Main entry point for the IRQ vector.
- *
- *	This function reads the 2 IQ80310 CPLD interrupt source
- *	registers, and then calls the installed handlers for each
- *	bit that is set.  The function stray_irqhandler is called
- *	if a handler is not defined for a particular interrupt.
- *
- *	If an interrupt handler is found, then it is called with
- *	r0 containing the argument defined in the handler structure.
- *	If the field ih_arg is zero, then a pointer to the IRQ frame
- *	on the stack is passed instead.
+ *	Main entry point for the IRQ vector on i80200 CPUs.  Calls
+ *	board-specific external interrupt dispatch routine.
  */
 
 	.text
