@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_lid.c,v 1.11 2003/11/03 17:24:22 mycroft Exp $	*/
+/*	$NetBSD: acpi_lid.c,v 1.12 2003/11/03 18:07:10 mycroft Exp $	*/
 
 /*
  * Copyright 2001, 2003 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_lid.c,v 1.11 2003/11/03 17:24:22 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_lid.c,v 1.12 2003/11/03 18:07:10 mycroft Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -114,7 +114,7 @@ acpilid_attach(struct device *parent, struct device *self, void *aux)
 
 	rv = AcpiInstallNotifyHandler(sc->sc_node->ad_handle,
 	    ACPI_DEVICE_NOTIFY, acpilid_notify_handler, sc);
-	if (rv != AE_OK) {
+	if (ACPI_FAILURE(rv)) {
 		printf("%s: unable to register DEVICE NOTIFY handler: %s\n",
 		    sc->sc_dev.dv_xname, AcpiFormatException(rv));
 		return;
@@ -131,9 +131,10 @@ acpilid_status_changed(void *arg)
 {
 	struct acpilid_softc *sc = arg;
 	int status;
+	ACPI_STATUS rv;
 
-	if (acpi_eval_integer(sc->sc_node->ad_handle, "_LID",
-	    &status) != AE_OK)
+	rv = acpi_eval_integer(sc->sc_node->ad_handle, "_LID", &status);
+	if (ACPI_FAILURE(rv))
 		return;
 
 	sysmon_pswitch_event(&sc->sc_smpsw, status == 0 ?
@@ -159,7 +160,7 @@ acpilid_notify_handler(ACPI_HANDLE handle, UINT32 notify, void *context)
 #endif
 		rv = AcpiOsQueueForExecution(OSD_PRIORITY_LO,
 		    acpilid_status_changed, sc);
-		if (rv != AE_OK)
+		if (ACPI_FAILURE(rv))
 			printf("%s: WARNING: unable to queue lid change "
 			    "callback: %s\n", sc->sc_dev.dv_xname,
 			    AcpiFormatException(rv));
