@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.194 1998/05/01 03:53:47 scottr Exp $	*/
+/*	$NetBSD: machdep.c,v 1.195 1998/05/05 06:48:52 scottr Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -102,6 +102,9 @@
 #include <sys/mount.h>
 #include <sys/extent.h>
 #include <sys/syscallargs.h>
+#ifdef	KGDB
+#include <sys/kgdb.h>
+#endif
 #ifdef SYSVMSG
 #include <sys/msg.h>
 #endif
@@ -324,6 +327,10 @@ consinit(void)
 
 	if (!init) {
 		cninit();
+		init = 1;
+	} else {
+		mac68k_calibrate_delay();
+
 #if NZSC > 0 && defined(KGDB)
 		zs_kgdb_init();
 #endif
@@ -333,9 +340,20 @@ consinit(void)
 		 */
 		ddb_init();
 #endif
-		init = 1;
-	} else
-		mac68k_calibrate_delay();
+
+		if (boothowto & RB_KDB) {
+#ifdef KGDB
+			/* XXX - Ask on console for kgdb_dev? */
+			/* Note: this will just return if kgdb_dev==NODEV */
+			kgdb_connect(1);
+#else	/* KGDB */
+#ifdef DDB
+			/* Enter DDB.  We don't have a monitor PROM. */
+			Debugger();
+#endif /* DDB */
+#endif	/* KGDB */
+		}
+	}
 }
 
 #define CURRENTBOOTERVER	111
@@ -2354,7 +2372,7 @@ setmachdep()
 	}
 
 	/*
-	 * Set `internal' framebuffer location and length, if we know 
+	 * Set on-board video RAM location and length, if we know 
 	 * what they are.
 	 */
 	for (i = 0; intvid_info[i].machineid; i++) {
