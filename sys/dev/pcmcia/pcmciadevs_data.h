@@ -1,10 +1,10 @@
-/*	$NetBSD: pcmciadevs_data.h,v 1.138 2001/09/18 11:08:05 ichiro Exp $	*/
+/*	$NetBSD: pcmciadevs_data.h,v 1.139 2001/09/29 13:59:37 augustss Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcmciadevs,v 1.138 2001/09/18 11:07:33 ichiro Exp 
+ *	NetBSD: pcmciadevs,v 1.139 2001/09/29 13:59:16 augustss Exp 
  */
 /*$FreeBSD: src/sys/dev/pccard/pccarddevs,v 1.8 2001/01/20 01:48:55 imp Exp $*/
 
@@ -1110,6 +1110,13 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    "GEMTEK Prism2_5 WaveLAN Card"	},
 	},
 	{
+	    PCMCIA_VENDOR_UNKNOWN, PCMCIA_PRODUCT_EIGERLABS_EPX_AA2000,
+	    PCMCIA_CIS_EIGERLABS_EPX_AA2000,
+	    0,
+	    "Eiger labs,Inc.",
+	    "EPX-AA2000 PC Sound Card"	},
+	},
+	{
 	    PCMCIA_VENDOR_FUJITSU, 0,
 	    PCMCIA_KNOWNDEV_NOPROD,
 	    PCMCIA_CIS_INVALID,
@@ -1611,6 +1618,13 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    PCMCIA_KNOWNDEV_NOPROD,
 	    PCMCIA_CIS_INVALID,
 	    "CNet",
+	    NULL,
+	},
+	{
+	    PCMCIA_VENDOR_EIGERLABS, 0,
+	    PCMCIA_KNOWNDEV_NOPROD,
+	    PCMCIA_CIS_INVALID,
+	    "Eiger labs,Inc.",
 	    NULL,
 	},
 	{ 0, 0, { NULL, NULL, NULL, NULL }, 0, NULL, NULL, }
