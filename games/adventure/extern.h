@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.6 1998/08/29 22:40:07 hubertf Exp $	*/
+/*	$NetBSD: extern.h,v 1.7 1998/09/11 12:46:26 hubertf Exp $	*/
 
 /*
  * Copyright (c) 1997 Christos Zoulas.  All rights reserved.
@@ -69,9 +69,6 @@ void mspeak __P((int));
 struct text;
 void speak __P((struct text *));
 void pspeak __P((int, int));
-
-/* main.c */
-int main __P((int, char **));
 
 /* save.c */
 int save __P((char *));
