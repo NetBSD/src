@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.359 2004/07/26 12:47:17 tron Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.360 2004/07/28 10:50:30 tron Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -6188,4 +6188,13 @@ lib/libcurses/setterm.c				1.39
 	in getcap().  Fixed getcap() to use screen->cursesi_genbuf.
 	Thanks to Peter Bex for spotting this.  This closes pr lib/26404.
 	[blymn, ticket #716]
+
+sys/dev/usb/uplcom.c				1.35,1.37-1.38
+sys/dev/usb/usbdevs				1.376
+sys/dev/usb/usbdevs.h				regen
+sys/dev/usb/usbdevs_data.h			regen
+
+	Fix various bugs including PR kern/21043 and add support for
+	Sitecom USB to serial cable taken from PR kern/25510.
+	[dbj, ticket #717]
 
