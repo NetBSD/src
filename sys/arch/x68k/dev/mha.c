@@ -1,4 +1,4 @@
-/*	$NetBSD: mha.c,v 1.5 1998/07/04 22:18:46 jonathan Exp $	*/
+/*	$NetBSD: mha.c,v 1.6 1998/08/04 16:51:52 minoura Exp $	*/
 
 /*
  * Copyright (c) 1996 Masaru Oki, Takumi Nakamura and Masanobu Saitoh.  All rights reserved.
@@ -213,7 +213,7 @@ SPC_SHOWSTART|SPC_SHOWTRAC;
 #define	SPC_ASSERT(x)
 #endif
 
-int	mhamatch	__P((struct device *, void *, void *));
+int	mhamatch	__P((struct device *, struct cfdata *, void *));
 void	mhaattach	__P((struct device *, struct device *, void *));
 void	mhaselect	__P((struct mha_softc *,
 				     u_char, u_char, u_char *, u_char));
@@ -272,12 +272,11 @@ struct scsipi_device mha_dev = {
  * returns non-zero value if a controller is found.
  */
 int
-mhamatch(parent, match, aux)
+mhamatch(parent, cf, aux)
 	struct device *parent;
-	void *match, *aux;
+	struct cfdata *cf;
+	void *aux;
 {
-	struct cfdata *cf = match;
-
 	if (strcmp(aux, "mha") || mha_find(cf->cf_unit) == 0)
 		return 0;
 	return 1;
@@ -295,13 +294,13 @@ mha_find(unit)
 	if (unit > 1)
 		return 0;
 	/* Find only on-board ROM */
-  if (badaddr(IODEVbase->exscsirom)
-      || bcmp((void *)&IODEVbase->exscsirom[0x24], "SCSIEX", 6))
-    return 0;
+	if (badaddr(IODEVbase->exscsirom)
+	    || bcmp((void *)&IODEVbase->exscsirom[0x24], "SCSIEX", 6))
+	  return 0;
 
-  /* If bdid exists, this board is ``CZ-6BS1'' */
-  if (!badbaddr(&IODEVbase->io_exspc.bdid))
-    return 0;
+	/* If bdid exists, this board is ``CZ-6BS1'' */
+	if (!badbaddr(&IODEVbase->io_exspc.bdid))
+		return 0;
 
 	return (void *)(&IODEVbase->exscsirom[0x60]);
 }

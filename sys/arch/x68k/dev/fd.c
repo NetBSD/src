@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.19 1998/07/04 22:18:46 jonathan Exp $	*/
+/*	$NetBSD: fd.c,v 1.20 1998/08/04 16:51:51 minoura Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles Hannum.
@@ -122,7 +122,7 @@ int fdcintr __P((void));
 void fdcreset __P((void));
 
 /* controller driver configuration */
-int fdcprobe __P((struct device *, void *, void *));
+int fdcprobe __P((struct device *, struct cfdata *, void *));
 void fdcattach __P((struct device *, struct device *, void *));
 int fdprint __P((void *, const char *));
 
@@ -199,7 +199,7 @@ struct fd_softc {
 };
 
 /* floppy driver configuration */
-int fdprobe __P((struct device *, void *, void *));
+int fdprobe __P((struct device *, struct cfdata *, void *));
 void fdattach __P((struct device *, struct device *, void *));
 
 struct cfattach fd_ca = {
@@ -308,10 +308,12 @@ fdcdmaerrintr()
 	dmac->csr = 0xff;
 }
 
+/* ARGSUSED */
 int
-fdcprobe(parent, match, aux)
+fdcprobe(parent, cf, aux)
 	struct device *parent;
-	void *match, *aux;
+	struct cfdata *cf;
+	void *aux;
 {
 	if (strcmp("fdc", aux) != 0)
 		return 0;
@@ -416,12 +418,12 @@ fdcpoll(fdc)
 }
 
 int
-fdprobe(parent, match, aux)
+fdprobe(parent, cf, aux)
 	struct device *parent;
-	void *match, *aux;
+	struct cfdata *cf;
+	void *aux;
 {
 	struct fdc_softc *fdc = (void *)parent;
-	struct cfdata *cf = match;
 	struct fd_type *type;
 	int drive = cf->cf_unit;
 	int n;
@@ -599,7 +601,7 @@ fdstrategy(bp)
 		fdstart(fd);
 #ifdef DIAGNOSTIC
 	else {
-		struct fdc_softc *fdc = fdc_cd.cd_devs[0];	/* XXX */
+		struct fdc_softc *fdc = (void *)fd->sc_dev.dv_parent;
 		if (fdc->sc_state == DEVIDLE) {
 			printf("fdstrategy: controller inactive\n");
 			fdcstart(fdc);
@@ -946,7 +948,7 @@ fdcpseudointr(arg)
 int
 fdcintr()
 {
-	struct fdc_softc *fdc = fdc_cd.cd_devs[0];	/* XXX */
+	struct fdc_softc *fdc = (void *)((struct fd_softc*)fd_cd.cd_devs[0])->sc_dev.dv_parent; /* XXX */
 #define	st0	fdc->sc_status[0]
 #define	cyl	fdc->sc_status[1]
 	struct fd_softc *fd;

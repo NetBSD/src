@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_machdep.c,v 1.9 1998/01/12 21:13:44 thorpej Exp $	*/
+/*	$NetBSD: grf_machdep.c,v 1.10 1998/08/04 16:51:52 minoura Exp $	*/
 
 /*
  * Copyright (c) 1991 University of Utah.
@@ -61,12 +61,12 @@
 extern int x68k_realconfig;
 
 int grfbusprint __P((void *auxp, const char *));
-int grfbusmatch __P((struct device *, void *, void *));
+int grfbusmatch __P((struct device *, struct cfdata *, void *));
 void grfbusattach __P((struct device *, struct device *, void *));
-int grfbussearch __P((struct device *, void *, void *));
+int grfbussearch __P((struct device *, struct cfdata *, void *));
 
 void grfattach __P((struct device *, struct device *, void *));
-int grfmatch __P((struct device *, void *, void *));
+int grfmatch __P((struct device *, struct cfdata *, void *));
 int grfprint __P((void *, const char *));
 
 void grfconfig __P((struct device *));
@@ -89,12 +89,11 @@ static struct cfdata *cfdata_grf   = NULL;
 extern struct cfdriver grfbus_cd;
 
 int
-grfbusmatch(pdp, match, auxp)
+grfbusmatch(pdp, cfp, auxp)
 	struct device *pdp;
-	void *match, *auxp;
+	struct cfdata *cfp;
+	void *auxp;
 {
-	struct cfdata *cfp = match;
-
 	if (strcmp(auxp, grfbus_cd.cd_name))
 		return(0);
 
@@ -128,7 +127,9 @@ grfbusattach(pdp, dp, auxp)
 int
 grfbussearch(dp, match, aux)
 	struct device *dp;
-	void *match, *aux;
+	struct cfdata *match;
+	
+	void *aux;
 {
 	int i = 0;
 	config_found(dp, (void*)&i, grfbusprint);
@@ -166,12 +167,11 @@ grfconfig(dp)
  * Normal init routine called by configure() code
  */
 int
-grfmatch(parent, match, aux)
+grfmatch(parent, cfp, aux)
 	struct device *parent;
-	void *match, *aux;
+	struct cfdata *cfp;
+	void *aux;
 {
-	struct cfdata *cfp = match;
-
 	/* XXX console at grf0 */
 	if (x68k_realconfig == 0) {
 		if (cfp->cf_unit != 0)

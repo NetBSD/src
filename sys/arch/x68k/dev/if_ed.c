@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ed.c,v 1.8 1998/07/05 06:49:10 jonathan Exp $	*/
+/*	$NetBSD: if_ed.c,v 1.9 1998/08/04 16:51:52 minoura Exp $	*/
 
 /*
  * Device driver for National Semiconductor DS8390/WD83C690 based ethernet
@@ -111,7 +111,7 @@ struct ed_softc {
 #endif
 };
 
-int edmatch __P((struct device *, void *, void *));
+int edmatch __P((struct device *, struct cfdata *, void *));
 void edattach __P((struct device *, struct device *, void *));
 int ed_probe_generic8390 __P((caddr_t));
 int ed_find_Novell __P((caddr_t, caddr_t));
@@ -197,11 +197,11 @@ outsw(void *addr, void *src, int cnt)
  * Determine if the device is present.
  */
 int
-edmatch(parent, match, aux)
+edmatch(parent, cfp, aux)
 	struct device *parent;
-	void *match, *aux;
+	struct cfdata *cfp;
+	void *aux;
 {
-	struct cfdata *cfp = match;
 	caddr_t nic_addr = NEPTUNE_NIC;
 	caddr_t asic_addr = NEPTUNE_ASIC;
 
