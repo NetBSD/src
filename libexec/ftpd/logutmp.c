@@ -69,7 +69,7 @@ login(const UTMP *ut)
 	}
 	if ((topslot < 0) || ((fd < 0)
 	    && (fd = open(_PATH_UTMP, O_RDWR|O_CREAT, 0644)) < 0))
-	    	return;
+		return;
 
 	/*
 	 * Now find a slot that's not in use...
