@@ -1,4 +1,4 @@
-/*	$NetBSD: af.c,v 1.7 1995/03/18 15:00:22 cgd Exp $	*/
+/*	$NetBSD: af.c,v 1.8 1995/05/24 15:22:52 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)af.c	8.1 (Berkeley) 6/5/93";
 #else
-static char rcsid[] = "$NetBSD: af.c,v 1.7 1995/03/18 15:00:22 cgd Exp $";
+static char rcsid[] = "$NetBSD: af.c,v 1.8 1995/05/24 15:22:52 christos Exp $";
 #endif
 #endif /* not lint */
 
@@ -48,7 +48,7 @@ static char rcsid[] = "$NetBSD: af.c,v 1.7 1995/03/18 15:00:22 cgd Exp $";
  */
 int inet_canon __P((struct sockaddr_in *));
 int inet_checkhost __P((struct sockaddr_in *));
-char *inet_format __P((struct sockaddr_in *));
+char *inet_format __P((struct sockaddr_in *, char *buf, size_t sz));
 int inet_hash __P((struct sockaddr_in *, struct afhash *));
 int inet_netmatch __P((struct sockaddr_in *, struct sockaddr_in *));
 int inet_portcheck __P((struct sockaddr_in *));
@@ -180,10 +180,11 @@ inet_canon(sin)
 }
 
 char *
-inet_format(sin)
+inet_format(sin, buf, sz)
 	struct sockaddr_in *sin;
+	char *buf; size_t sz;
 {
-	char *inet_ntoa();
-
-	return (inet_ntoa(sin->sin_addr));
+	strncpy(buf, inet_ntoa(sin->sin_addr), sz);
+	buf[sz - 1] = '\0';
+	return buf;
 }
