@@ -1,4 +1,4 @@
-.\"	$NetBSD: netboot,v 1.4 2002/05/20 23:07:15 mbw Exp $
+.\"	$NetBSD: netboot,v 1.4.2.1 2002/06/06 07:49:51 lukem Exp $
 .\"
 .\" Copyright (c) 1999-2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -339,14 +339,13 @@ directory of the distribution.
 .disp)
 .\}
 .el .ie \n[next68k] \{\
-Extract
+Get
 .Pa boot
-from 
-.Pa binary/sets/base.tgz
-in the distribution
+from the 
+.Pa installation
+directory of the distribution.
 .(disp
-.No # Ic "tar -xpvzf base.tgz ./usr/mdec/boot"
-.No # Ic "cp ./usr/mdec/boot /tftpboot"
+.No # Ic "cp boot /tftpboot"
 .disp)
 .\}
 .el .ie \n[sparc] \{\
