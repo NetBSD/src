@@ -1195,6 +1195,44 @@ _bfd_archive_bsd_construct_extended_name_table (abfd, tabloc, tablen, name)
   return _bfd_construct_extended_name_table (abfd, false, tabloc, tablen);
 }
 
+/* 4.4BSD: frob short names, but leave extended name until write time. */
+
+boolean
+_bfd_archive_bsd44_construct_extended_name_table (abfd, tabloc, tablen, name)
+     bfd *abfd;
+     char **tabloc;
+     bfd_size_type *tablen;
+     const char **name;
+{
+  unsigned int maxname = abfd->xvec->ar_max_namelen;
+  bfd *current;
+
+  for (current = abfd->archive_head; current != NULL; current = current->next)
+    {
+      const char *normal;
+      unsigned int thislen;
+
+      normal = normalize (current, current->filename);
+      if (normal == NULL)
+	return false;
+
+      thislen = strlen (normal);
+      if (thislen > maxname
+	  && (bfd_get_file_flags (abfd) & BFD_TRADITIONAL_FORMAT) == 0)
+	{
+	  struct ar_hdr *hdr = arch_hdr (current);
+	  sprintf ((hdr->ar_name), "#1/%-12ld", (long) thislen);
+	  hdr->ar_name[15] = ' ';
+	  sprintf ((hdr->ar_size), "%-9ld", (long) arelt_size(current) + thislen);
+	  hdr->ar_size[9] = ' ';
+	}
+    }
+
+  *name = *tabloc = NULL;
+  *tablen = 0;
+  return true;
+}
+
 /* Build an SVR4 style extended name table.  */
 
 boolean
@@ -1364,8 +1402,12 @@ bfd_ar_hdr_from_filesystem (abfd, filename)
 
   /* Goddamned sprintf doesn't permit MAXIMUM field lengths */
   sprintf ((hdr->ar_date), "%-12ld", (long) status.st_mtime);
-  sprintf ((hdr->ar_uid), "%ld", (long) status.st_uid);
-  sprintf ((hdr->ar_gid), "%ld", (long) status.st_gid);
+  if (status.st_uid > 65535U)
+    fprintf (stderr, "%s: uid %ld truncated to 16 bits\n", filename, status.st_uid);
+  sprintf ((hdr->ar_uid), "%ld", (long) status.st_uid & 0xffffU);
+  if (status.st_gid > 65535U)
+    fprintf (stderr, "%s: gid %ld truncated to 16 bits\n", filename, status.st_gid);
+  sprintf ((hdr->ar_gid), "%ld", (long) status.st_gid & 0xffffU);
   sprintf ((hdr->ar_mode), "%-8o", (unsigned int) status.st_mode);
   sprintf ((hdr->ar_size), "%-10ld", (long) status.st_size);
   /* Correct for a lossage in sprintf whereby it null-terminates.  I cannot
@@ -1651,6 +1693,14 @@ _bfd_write_archive_contents (arch)
       /* write ar header */
       if (bfd_write ((char *) hdr, 1, sizeof (*hdr), arch) != sizeof (*hdr))
 	return false;
+      /* write filename if it is a 4.4BSD extended file */
+      if (!strncmp (hdr->ar_name, "#1/", 3))
+	{
+	  const char *normal = normalize (current, current->filename);
+	  unsigned int thislen = strlen (normal);
+	  if (bfd_write (normal, 1, thislen, arch) != thislen)
+	    return false;
+	}
       if (bfd_seek (current, (file_ptr) 0, SEEK_SET) != 0)
 	return false;
       while (remaining)
@@ -1669,11 +1719,17 @@ _bfd_write_archive_contents (arch)
 	    return false;
 	  remaining -= amt;
 	}
+#if 0
+      /*
+       * XXX.  This is not compatible with 4.4BSD ar(1).
+       * Do we *need* to be word aligned?
+       */
       if ((arelt_size (current) % 2) == 1)
 	{
 	  if (bfd_write ("\012", 1, 1, arch) != 1)
 	    return false;
 	}
+#endif
     }
 
   if (makemap && hasobjects)
