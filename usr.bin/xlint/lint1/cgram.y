@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: cgram.y,v 1.15 1998/11/23 14:37:08 christos Exp $	*/
+/* $NetBSD: cgram.y,v 1.15.8.1 2000/06/23 16:40:17 minoura Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.

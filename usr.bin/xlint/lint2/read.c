@@ -1,4 +1,4 @@
-/*	$NetBSD: read.c,v 1.7 1998/12/20 19:08:12 christos Exp $	*/
+/* $NetBSD: read.c,v 1.7.8.1 2000/06/23 16:40:21 minoura Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: read.c,v 1.7 1998/12/20 19:08:12 christos Exp $");
+__RCSID("$NetBSD: read.c,v 1.7.8.1 2000/06/23 16:40:21 minoura Exp $");
 #endif
 
 #include <stdio.h>

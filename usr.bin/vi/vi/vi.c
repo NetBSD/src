@@ -1,4 +1,4 @@
-/*	$NetBSD: vi.c,v 1.8 1998/01/09 08:08:48 perry Exp $	*/
+/*	$NetBSD: vi.c,v 1.8.8.1 2000/06/23 16:40:11 minoura Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -89,6 +89,7 @@ vi(spp)
 	/* Initialize the vi screen. */
 	if (v_init(sp))
 		return (1);
+	(void)gp->scr_attr(sp, SA_ALTERNATE, 1);
 
 	for (vip = VIP(sp), rval = 0;;) {
 		/* Resolve messages. */

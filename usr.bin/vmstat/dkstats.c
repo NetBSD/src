@@ -1,4 +1,4 @@
-/*	$NetBSD: dkstats.c,v 1.6 1998/08/10 03:11:08 perry Exp $	*/
+/*	$NetBSD: dkstats.c,v 1.6.8.1 2000/06/23 16:40:15 minoura Exp $	*/
 
 /*
  * Copyright (c) 1996 John M. Vinopal
@@ -32,8 +32,10 @@
  * SUCH DAMAGE.
  */
 
-#include <sys/types.h>
+#include <sys/param.h>
+#include <sys/sched.h>
 #include <sys/dkstat.h>
+#include <sys/sysctl.h>
 #include <sys/time.h>
 #include <sys/disk.h>
 
@@ -53,15 +55,13 @@ static struct nlist namelist[] = {
 	{ "_tk_nin" },		/* tty characters in */
 #define	X_TK_NOUT	1
 	{ "_tk_nout" },		/* tty characters out */
-#define	X_CP_TIME	2
-	{ "_cp_time" },		/* system timer ticks */
-#define	X_HZ		3
+#define	X_HZ		2
 	{ "_hz" },		/* ticks per second */
-#define	X_STATHZ	4
+#define	X_STATHZ	3
 	{ "_stathz" },
-#define X_DISK_COUNT	5
+#define X_DISK_COUNT	4
 	{ "_disk_count" },	/* number of disks */
-#define X_DISKLIST	6
+#define X_DISKLIST	5
 	{ "_disklist" },	/* TAILQ of disks */
 	{ NULL },
 };
@@ -152,6 +152,8 @@ void
 dkreadstats()
 {
 	struct disk	cur_disk, *p;
+	size_t		ssize;
+	int		mib[2];
 	int		i;
 
 	p = dk_drivehead;
@@ -164,7 +166,21 @@ dkreadstats()
 		timerset(&(cur_disk.dk_time), &(cur.dk_time[i]));
 		p = cur_disk.dk_link.tqe_next;
 	}
-	deref_nl(X_CP_TIME, cur.cp_time, sizeof(cur.cp_time));
+
+	/*
+	 * XXX Need to locate the `correct' CPU when looking for this
+	 * XXX in crash dumps.  Just don't report it for now, in that
+	 * XXX case.
+	 */
+	ssize = sizeof(cur.cp_time);
+	memset(cur.cp_time, 0, ssize);
+	if (memf == NULL) {
+		mib[0] = CTL_KERN;
+		mib[1] = KERN_CP_TIME;
+		if (sysctl(mib, 2, cur.cp_time, &ssize, NULL, 0) < 0)
+			memset(cur.cp_time, 0, sizeof(cur.cp_time));
+	}
+
 	deref_nl(X_TK_NIN, &cur.tk_nin, sizeof(cur.tk_nin));
 	deref_nl(X_TK_NOUT, &cur.tk_nout, sizeof(cur.tk_nout));
 }
