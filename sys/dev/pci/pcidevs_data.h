@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.636 2004/07/29 12:12:08 cube Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.637 2004/08/02 17:58:51 mycroft Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.637 2004/07/29 12:11:31 cube Exp 
+ *	NetBSD: pcidevs,v 1.638 2004/08/02 17:58:29 mycroft Exp 
  */
 
 /*
@@ -6230,6 +6230,12 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "MediaQ, Inc.",
 	    "MQ200",
+	},
+	{
+	    PCI_VENDOR_MICROSOFT, PCI_PRODUCT_MICROSOFT_MN120,
+	    0,
+	    "Microsoft Corporation",
+	    "MN-120 10/100 Ethernet Notebook Adapter",
 	},
 	{
 	    PCI_VENDOR_MIDDLE_DIGITAL, PCI_PRODUCT_MIDDLE_DIGITAL_WEASEL_VGA,
@@ -13819,6 +13825,12 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    PCI_VENDOR_ETIMEDIA, 0,
 	    PCI_KNOWNDEV_NOPROD,
 	    "eTIMedia Technology Co. Ltd.",
+	    NULL,
+	},
+	{
+	    PCI_VENDOR_MICROSOFT, 0,
+	    PCI_KNOWNDEV_NOPROD,
+	    "Microsoft Corporation",
 	    NULL,
 	},
 	{
