@@ -1,5 +1,5 @@
 #	from: @(#)Makefile	5.9 (Berkeley) 7/1/91
-#	$NetBSD: Makefile,v 1.12 2003/10/26 07:25:35 lukem Exp $
+#	$NetBSD: Makefile,v 1.13 2004/11/10 16:32:39 wiz Exp $
 
 NOOBJ=		# defined
 
@@ -18,7 +18,7 @@ CLEANFILES+=	toc? tocx?
 
 SECTIONS?=	1 2 3 4 5 6 7 8 9
 
-# Takes out some fluff from the PostScript files created bye
+# Takes out some fluff from the PostScript files created by
 # grops which does some VM saving/restoring that bloats the
 # PDF file pdf2ps generates.              By uwe@NetBSD.org.
 OPTIMIZE_PDF?=	\
