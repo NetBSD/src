@@ -1,4 +1,4 @@
-/*	$NetBSD: utmpx.h,v 1.7 2002/06/02 00:00:27 christos Exp $	 */
+/*	$NetBSD: utmpx.h,v 1.8 2002/07/27 19:38:08 christos Exp $	 */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -102,7 +102,7 @@ struct utmpx {
 
 #ifndef _XOPEN_SOURCE
 struct lastlogx {
-	struct timespec ll_time;	/* time entry was created */
+	struct timeval ll_tv;		/* time entry was created */
 	char ll_line[_UTX_LINESIZE];	/* tty name */
 	char ll_host[_UTX_HOSTSIZE];	/* host name */
 	struct sockaddr_storage ll_ss;	/* address where entry was made from */
@@ -119,10 +119,10 @@ struct utmpx *getutxline(const struct utmpx *);
 struct utmpx *pututxline(const struct utmpx *);
 
 #ifndef _XOPEN_SOURCE
-void updwtmpx(const char *, const struct utmpx *);
+int updwtmpx(const char *, const struct utmpx *);
 int lastlogxname(const char *);
-struct lastlogx *getlastlogxuid(uid_t);
-void updlastlogx(const char *, struct lastlogx *);
+struct lastlogx *getlastlogx(uid_t, struct lastlogx *);
+int updlastlogx(const char *, uid_t, struct lastlogx *);
 struct utmp;
 void getutmp(const struct utmpx *, struct utmp *);
 void getutmpx(const struct utmp *, struct utmpx *);
