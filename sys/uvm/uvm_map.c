@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.c,v 1.169 2004/05/01 19:40:39 petrov Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.170 2004/05/03 20:10:36 petrov Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.169 2004/05/01 19:40:39 petrov Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.170 2004/05/03 20:10:36 petrov Exp $");
 
 #include "opt_ddb.h"
 #include "opt_uvmhist.h"
@@ -103,7 +103,7 @@ __KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.169 2004/05/01 19:40:39 petrov Exp $")
 
 extern struct vm_map *pager_map;
 
-#ifdef UVMMAP_COUNTERS
+#ifndef UVMMAP_NOCOUNTERS
 #include <sys/device.h>
 struct evcnt map_ubackmerge = EVCNT_INITIALIZER(EVCNT_TYPE_MISC, NULL,
     "uvmmap", "ubackmerge");
