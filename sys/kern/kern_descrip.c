@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_descrip.c,v 1.30 1995/01/12 05:40:10 cgd Exp $	*/
+/*	$NetBSD: kern_descrip.c,v 1.31 1995/01/23 04:45:22 cgd Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -500,11 +500,7 @@ fpathconf(p, uap, retval)
 
 	case DTYPE_VNODE:
 		vp = (struct vnode *)fp->f_data;
-#ifdef notyet
 		return (VOP_PATHCONF(vp, SCARG(uap, name), retval));
-#else
-		return (ENOSYS);
-#endif
 
 	default:
 		panic("fpathconf");
