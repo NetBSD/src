@@ -1,4 +1,4 @@
-/* $NetBSD: cerror.S,v 1.3 1996/06/05 19:02:12 mark Exp $ */
+/*	$NetBSD: cerror.S,v 1.4 1997/10/06 00:07:11 mark Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -37,16 +37,31 @@
 
 #include "SYS.h"
 
-	.text
-	.align	0
-
-	.globl	_errno
+	.global	cerror
+	.type	cerror,@function
 cerror:
+#ifdef PIC
+	/* Setup the GOT */
+	ldr	r3, got
+	add	r3, pc, r3
+L1:
 	ldr	r1, Lerrno
+	ldr	r1, [r3, r1]
+#else
+	ldr	r1, Lerrno
+#endif
 	str	r0, [r1]
 	mvn	r0, #0x00000000
 	mvn	r1, #0x00000000
 	mov	r15, r14
+
+#ifdef PIC
+	.align	0
+got:
+	.word	__GLOBAL_OFFSET_TABLE_ + (. - (L1+4))
+#endif
+
+	.globl	_errno
 
 Lerrno:
 	.word	_errno

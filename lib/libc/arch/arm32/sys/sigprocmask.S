@@ -1,4 +1,4 @@
-/* $NetBSD: sigprocmask.S,v 1.2 1996/05/12 19:55:33 mark Exp $ */
+/*	$NetBSD: sigprocmask.S,v 1.3 1997/10/06 00:07:19 mark Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -36,9 +36,6 @@
  */
 
 #include "SYS.h"
-
-	.text
-	.align	0
 
 ENTRY(sigprocmask)
 	teq	r1, #0x00000000
