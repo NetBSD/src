@@ -1,4 +1,4 @@
-/*	$NetBSD: power.c,v 1.10 1998/06/06 21:40:20 thorpej Exp $ */
+/*	$NetBSD: power.c,v 1.11 1999/04/28 18:49:40 fair Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -107,4 +107,10 @@ powerdown()
 	/* Only try if the power node was attached. */
 	if (power_reg != NULL)
 		*POWER_REG |= POWER_OFF;
+
+	/*
+	 * don't return too quickly; the PROMs on some sparcs
+	 * report the powerdown as failed if we do.
+	 */
+	DELAY(1000000);
 }
