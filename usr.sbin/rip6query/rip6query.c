@@ -1,4 +1,4 @@
-/*	$NetBSD: rip6query.c,v 1.8 2002/09/08 01:40:08 itojun Exp $	*/
+/*	$NetBSD: rip6query.c,v 1.9 2003/04/15 07:23:19 itojun Exp $	*/
 /*	$KAME: rip6query.c,v 1.17 2002/09/08 01:35:17 itojun Exp $	*/
 
 /*
@@ -82,7 +82,7 @@ main(argc, argv)
 	int c;
 	int ifidx = -1;
 	int error;
-	char pbuf[10];
+	char pbuf[NI_MAXSERV];
 	struct addrinfo hints, *res;
 
 	while ((c = getopt(argc, argv, "I:w:")) != -1) {
