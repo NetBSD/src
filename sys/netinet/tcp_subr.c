@@ -1,7 +1,7 @@
-/*	$NetBSD: tcp_subr.c,v 1.32.2.3 1998/01/29 10:31:24 mellon Exp $	*/
+/*	$NetBSD: tcp_subr.c,v 1.32.2.4 1998/01/29 13:56:49 mellon Exp $	*/
 
 /*
- * Copyright (c) 1982, 1986, 1988, 1990, 1993
+ * Copyright (c) 1982, 1986, 1988, 1990, 1993, 1995
  *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -32,8 +32,10 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)tcp_subr.c	8.1 (Berkeley) 6/10/93
+ *	@(#)tcp_subr.c	8.2 (Berkeley) 5/24/95
  */
+
+#include "rnd.h"
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -45,6 +47,9 @@
 #include <sys/protosw.h>
 #include <sys/errno.h>
 #include <sys/kernel.h>
+#if NRND > 0
+#include <sys/rnd.h>
+#endif
 
 #include <net/route.h>
 #include <net/if.h>
@@ -66,11 +71,14 @@
 int 	tcp_mssdflt = TCP_MSS;
 int 	tcp_rttdflt = TCPTV_SRTTDFLT / PR_SLOWHZ;
 int	tcp_do_rfc1323 = 1;
+int	tcp_init_win = 1;
 
 #ifndef TCBHASHSIZE
 #define	TCBHASHSIZE	128
 #endif
 int	tcbhashsize = TCBHASHSIZE;
+
+int	tcp_freeq __P((struct tcpcb *));
 
 /*
  * Tcp initialization
@@ -79,8 +87,8 @@ void
 tcp_init()
 {
 
-	tcp_iss = 1;		/* XXX wrong */
 	in_pcbinit(&tcbtable, tcbhashsize, tcbhashsize);
+	LIST_INIT(&tcp_delacks);
 	if (max_protohdr < sizeof(struct tcpiphdr))
 		max_protohdr = sizeof(struct tcpiphdr);
 	if (max_linkhdr + sizeof(struct tcpiphdr) > MHLEN)
@@ -220,8 +228,9 @@ tcp_newtcpcb(inp)
 		return ((struct tcpcb *)0);
 	bzero((caddr_t)tp, sizeof(struct tcpcb));
 	LIST_INIT(&tp->segq);
-	tp->t_maxseg = tcp_mssdflt;
+	tp->t_peermss = tcp_mssdflt;
 	tp->t_ourmss = tcp_mssdflt;
+	tp->t_segsz = tcp_mssdflt;
 
 	tp->t_flags = tcp_do_rfc1323 ? (TF_REQ_SCALE|TF_REQ_TSTMP) : 0;
 	tp->t_inpcb = inp;
@@ -276,7 +285,6 @@ struct tcpcb *
 tcp_close(tp)
 	register struct tcpcb *tp;
 {
-	register struct ipqent *qe;
 	struct inpcb *inp = tp->t_inpcb;
 	struct socket *so = inp->inp_socket;
 #ifdef RTV_RTT
@@ -337,10 +345,10 @@ tcp_close(tp)
 			 * convert the limit from user data bytes to
 			 * packets then to packet data bytes.
 			 */
-			i = (i + tp->t_maxseg / 2) / tp->t_maxseg;
+			i = (i + tp->t_segsz / 2) / tp->t_segsz;
 			if (i < 2)
 				i = 2;
-			i *= (u_long)(tp->t_maxseg + sizeof (struct tcpiphdr));
+			i *= (u_long)(tp->t_segsz + sizeof (struct tcpiphdr));
 			if (rt->rt_rmx.rmx_ssthresh)
 				rt->rt_rmx.rmx_ssthresh =
 				    (rt->rt_rmx.rmx_ssthresh + i) / 2;
@@ -350,11 +358,8 @@ tcp_close(tp)
 	}
 #endif /* RTV_RTT */
 	/* free the reassembly queue, if any */
-	while ((qe = tp->segq.lh_first) != NULL) {
-		LIST_REMOVE(qe, ipqe_q);
-		m_freem(qe->ipqe_m);
-		FREE(qe, M_IPQ);
-	}
+	(void) tcp_freeq(tp);
+
 	if (tp->t_template)
 		FREE(tp->t_template, M_MBUF);
 	free(tp, M_PCB);
@@ -365,10 +370,43 @@ tcp_close(tp)
 	return ((struct tcpcb *)0);
 }
 
+int
+tcp_freeq(tp)
+	struct tcpcb *tp;
+{
+	register struct ipqent *qe;
+	int rv = 0;
+
+	while ((qe = tp->segq.lh_first) != NULL) {
+		LIST_REMOVE(qe, ipqe_q);
+		m_freem(qe->ipqe_m);
+		FREE(qe, M_IPQ);
+		rv = 1;
+	}
+	return (rv);
+}
+
+/*
+ * Protocol drain routine.  Called when memory is in short supply.
+ */
 void
 tcp_drain()
 {
+	register struct inpcb *inp;
+	register struct tcpcb *tp;
 
+	/*
+	 * Free the sequence queue of all TCP connections.
+	 */
+	inp = tcbtable.inpt_queue.cqh_first;
+	if (inp)						/* XXX */
+	for (; inp != (struct inpcb *)&tcbtable.inpt_queue;
+	    inp = inp->inp_queue.cqe_next) {
+		if ((tp = intotcpcb(inp)) != NULL) {
+			if (tcp_freeq(tp))
+				tcpstat.tcps_connsdrained++;
+		}
+	}
 }
 
 /*
@@ -425,6 +463,8 @@ tcp_ctlinput(cmd, sa, v)
 		notify = tcp_quench;
 	else if (PRC_IS_REDIRECT(cmd))
 		notify = in_rtchange, ip = 0;
+	else if (cmd == PRC_MSGSIZE && ip_mtudisc)
+		notify = tcp_mtudisc, ip = 0;
 	else if (cmd == PRC_HOSTDEAD)
 		ip = 0;
 	else if (errno == 0)
@@ -456,8 +496,51 @@ tcp_quench(inp, errno)
 	struct tcpcb *tp = intotcpcb(inp);
 
 	if (tp)
-		tp->snd_cwnd = tp->t_maxseg;
+		tp->snd_cwnd = tp->t_segsz;
 }
+
+/*
+ * On receipt of path MTU corrections, flush old route and replace it
+ * with the new one.  Retransmit all unacknowledged packets, to ensure
+ * that all packets will be received.
+ */
+void
+tcp_mtudisc(inp, errno)
+	struct inpcb *inp;
+	int errno;
+{
+	struct tcpcb *tp = intotcpcb(inp);
+	struct rtentry *rt = in_pcbrtentry(inp);
+
+	if (tp != 0) {
+		if (rt != 0) {
+			/*
+			 * If this was not a host route, remove and realloc.
+			 */
+			if ((rt->rt_flags & RTF_HOST) == 0) {
+				in_rtchange(inp, errno);
+				if ((rt = in_pcbrtentry(inp)) == 0)
+					return;
+			}
+
+			/*
+			 * Slow start out of the error condition.  We
+			 * use the MTU because we know it's smaller
+			 * than the previously transmitted segment.
+			 */
+			if (rt->rt_rmx.rmx_mtu != 0)
+				tp->snd_cwnd =
+				    TCP_INITIAL_WINDOW(rt->rt_rmx.rmx_mtu);
+		}
+	    
+		/*
+		 * Resend unacknowledged packets.
+		 */
+		tp->snd_nxt = tp->snd_una;
+		tcp_output(tp);
+	}
+}
+
 
 /*
  * Compute the MSS to advertise to the peer.  Called only during
@@ -543,10 +626,11 @@ tcp_mss_from_peer(tp, offer)
 			bufsize = sb_max;
 		(void) sbreserve(&so->so_snd, bufsize);
 	}
-	tp->t_maxseg = mss;
+	tp->t_peermss = mss;
+	tp->t_segsz = mss;
 
 	/* Initialize the initial congestion window. */
-	tp->snd_cwnd = mss;
+	tp->snd_cwnd = TCP_INITIAL_WINDOW(mss);
 
 #ifdef RTV_SSTHRESH
 	if (rt != NULL && rt->rt_rmx.rmx_ssthresh) {
@@ -631,4 +715,77 @@ tcp_rmx_rtt(tp)
 		    tp->t_rttmin, TCPTV_REXMTMAX);
 	}
 #endif
+}
+
+tcp_seq	 tcp_iss_seq = 0;	/* tcp initial seq # */
+
+/*
+ * Get a new sequence value given a tcp control block
+ */
+tcp_seq
+tcp_new_iss(tp, len, addin)
+	void            *tp;
+	u_long           len;
+	tcp_seq		 addin;
+{
+	tcp_seq          tcp_iss;
+
+	/*
+	 * add randomness about this connection, but do not estimate
+	 * entropy from the timing, since the physical device driver would
+	 * have done that for us.
+	 */
+#if NRND > 0
+	if (tp != NULL)
+		rnd_add_data(NULL, tp, len, 0);
+#endif
+
+	/*
+	 * randomize.
+	 */
+#if NRND > 0
+	rnd_extract_data(&tcp_iss, sizeof(tcp_iss), RND_EXTRACT_ANY);
+#else
+	tcp_iss = random();
+#endif
+
+	/*
+	 * If we were asked to add some amount to a known value,
+	 * we will take a random value obtained above, mask off the upper
+	 * bits, and add in the known value.  We also add in a constant to
+	 * ensure that we are at least a certain distance from the original
+	 * value.
+	 *
+	 * This is used when an old connection is in timed wait
+	 * and we have a new one coming in, for instance.
+	 */
+	if (addin != 0) {
+#ifdef TCPISS_DEBUG
+		printf("Random %08x, ", tcp_iss);
+#endif
+		tcp_iss &= TCP_ISS_RANDOM_MASK;
+		tcp_iss = tcp_iss + addin + TCP_ISSINCR;
+		tcp_iss_seq += TCP_ISSINCR;
+		tcp_iss += tcp_iss_seq;
+#ifdef TCPISS_DEBUG
+		printf("Old ISS %08x, ISS %08x\n", addin, tcp_iss);
+#endif
+	} else {
+		tcp_iss &= TCP_ISS_RANDOM_MASK;
+		tcp_iss_seq += TCP_ISSINCR;
+		tcp_iss += tcp_iss_seq;
+#ifdef TCPISS_DEBUG
+		printf("ISS %08x\n", tcp_iss);
+#endif
+	}
+
+#ifdef TCP_COMPAT_42
+	/*
+	 * limit it to the positive range for really old TCP implementations
+	 */
+	if ((int)tcp_iss < 0)
+		tcp_iss &= 0x7fffffff;		/* XXX */
+#endif
+
+	return tcp_iss;
 }
