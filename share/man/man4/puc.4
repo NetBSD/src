@@ -1,4 +1,4 @@
-.\"	$NetBSD: puc.4,v 1.3 1998/07/12 02:24:07 cgd Exp $
+.\"	$NetBSD: puc.4,v 1.4 1999/02/06 06:50:43 cgd Exp $
 .\"
 .\" Copyright (c) 1998 Christopher G. Demetriou.  All rights reserved.
 .\"
@@ -60,6 +60,7 @@ The driver currently supports the following cards:
 .It Tn "Dolphin 4014 (dual parallel)"
 .It Tn "Dolphin 4035 (dual serial)"
 .It Tn "SIIG CyberSerial PCI (single serial)"
+.It Tn "VScom PCI-800 (8 port serial, probably OEM)"
 .El
 .Pp
 The driver does not support the cards:
@@ -107,7 +108,15 @@ can't easily be used as console.
 Some of cards supported by this driver have jumper-selectable
 .Nm com
 port clock multipliers, which are unsupported by this
-driver.  Those can be easily accommodated with driver flags.
+driver.  Those can be easily accommodated with driver flags, or by
+using a properly scaled baud rate when talking to the card.
+.Pp
+Some of the cards supported by this driver, e.g. the VScom PCI-800,
+have software-selectable
+.Nm com
+port clock multipliers, which are unsupported by this driver.
+Those can be accomodated using internal driver flags, or by using
+a properly scaled baud rate when talking to the card.
 .Pp
 Some ports use an
 .Nm lpt
