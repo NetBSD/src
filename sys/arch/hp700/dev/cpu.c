@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.1 2002/06/06 19:48:03 fredette Exp $	*/
+/*	$NetBSD: cpu.c,v 1.2 2002/08/05 20:58:36 fredette Exp $	*/
 
 /*	$OpenBSD: cpu.c,v 1.8 2000/08/15 20:38:24 mickey Exp $	*/
 
@@ -87,47 +87,31 @@ cpuattach(parent, self, aux)
 	/* machdep.c */
 	extern struct pdc_cache pdc_cache;
 	extern struct pdc_btlb pdc_btlb;
+	extern struct pdc_model pdc_model;
 	extern u_int cpu_ticksnum, cpu_ticksdenom;
 
-	struct pdc_model pdc_model PDC_ALIGNMENT;
-	struct pdc_cpuid pdc_cpuid PDC_ALIGNMENT;
-	u_int pdc_cversion[32] PDC_ALIGNMENT;
 	register struct cpu_softc *sc = (struct cpu_softc *)self;
 	register struct confargs *ca = aux;
-	const char *p = NULL;
+	char c;
+	const char lvls[4][4] = { "0", "1", "1.5", "2" };
 	u_int mhz = 100 * cpu_ticksnum / cpu_ticksdenom;
-	int err;
 
-	bzero (&pdc_cpuid, sizeof(pdc_cpuid));
-	if (pdc_call((iodcio_t)pdc, 0, PDC_MODEL, PDC_MODEL_CPUID,
-		     &pdc_cpuid, sc->sc_dev.dv_unit, 0, 0, 0) >= 0) {
+	/* Print the CPU chip name, nickname, and rev. */
+	printf(": %s", hppa_cpu_info->hppa_cpu_info_chip_name);
+	if (hppa_cpu_info->hppa_cpu_info_chip_nickname != NULL)
+		printf(" (%s)", hppa_cpu_info->hppa_cpu_info_chip_nickname);
+	printf(" rev %d", (*hppa_cpu_info->desidhash)());
 
-		/* patch for old 8200 */
-		if (pdc_cpuid.version == HPPA_CPU_PCXUP &&
-		    pdc_cpuid.revision > 0x0d)
-			pdc_cpuid.version = HPPA_CPU_PCXUP1;
-			
-		p = hppa_mod_info(HPPA_TYPE_CPU, pdc_cpuid.version);
-	}
-	/* otherwise try to guess on component version numbers */
-	else if (pdc_call((iodcio_t)pdc, 0, PDC_MODEL, PDC_MODEL_COMP,
-		     &pdc_cversion, sc->sc_dev.dv_unit) >= 0) {
-		/* XXX p = hppa_mod_info(HPPA_TYPE_CPU,pdc_cversion[0]); */
-	}
-
-	printf (": %s rev %d, ", p? p : cpu_typename, (*cpu_desidhash)());
-
-	if ((err = pdc_call((iodcio_t)pdc, 0, PDC_MODEL, PDC_MODEL_INFO,
-			    &pdc_model)) < 0) {
-#ifdef DEBUG
-		printf("WARNING: PDC_MODEL failed (%d)\n", err);
-#endif
-	} else {
-		static const char lvls[4][4] = { "0", "1", "1.5", "2" };
-
-		printf("lev %s, cat %c, ",
-		       lvls[pdc_model.pa_lvl], "AB"[pdc_model.mc]);
-	}
+	/* Print the CPU type, spec, level, category, and speed. */
+	printf("\n%s: %s, PA-RISC %d.%d",
+		self->dv_xname,
+		hppa_cpu_info->hppa_cpu_info_chip_type,
+		HPPA_PA_SPEC_MAJOR(hppa_cpu_info->hppa_cpu_info_pa_spec),
+		HPPA_PA_SPEC_MINOR(hppa_cpu_info->hppa_cpu_info_pa_spec));
+	c = HPPA_PA_SPEC_LETTER(hppa_cpu_info->hppa_cpu_info_pa_spec);
+	if (c != '\0') printf("%c", c);
+	printf(", lev %s, cat %c, ",
+		lvls[pdc_model.pa_lvl], "AB"[pdc_model.mc]);
 
 	printf ("%d", mhz / 100);
 	if (mhz % 100 > 9)

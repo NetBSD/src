@@ -1,4 +1,4 @@
-#	$NetBSD: devlist2h.awk,v 1.1 2002/06/06 19:48:03 fredette Exp $
+#	$NetBSD: devlist2h.awk,v 1.2 2002/08/05 20:58:36 fredette Exp $
 
 #	$OpenBSD: devlist2h.awk,v 1.4 2001/03/29 00:43:00 mickey Exp $
 
@@ -58,15 +58,22 @@ busted	{
 	}
 }
 
-# first line is rcsid, beware
 NR == 1	{
+	printf("/*\t$NetBSD: devlist2h.awk,v 1.2 2002/08/05 20:58:36 fredette Exp $\t*/\n\n") > cpud;
+	printf("/* THIS FILE AUTOMATICALLY GENERATED. DO NOT EDIT. */\n\n") \
+		> cpud;
+	printf("/*\t$NetBSD: devlist2h.awk,v 1.2 2002/08/05 20:58:36 fredette Exp $\t*/\n\n") > cpuh;
+	printf("/* THIS FILE AUTOMATICALLY GENERATED. DO NOT EDIT. */\n\n") \
+		> cpuh;
+}
+
+/^\$/ {
 	VERSION = $0;
 	gsub("\\$", "", VERSION);
 
-	printf("/*\n * THIS FILE AUTOMATICALLY GENERATED. DO NOT EDIT.\n" \
-	       " * generated from:\n *\t%s\n */\n\n", VERSION) > cpud;
-	printf("/*\n * THIS FILE AUTOMATICALLY GENERATED. DO NOT EDIT.\n" \
-	       " * generated from:\n *\t%s\n */\n\n", VERSION) > cpuh;
+	printf("/* generated from: %s */\n\n", VERSION) > cpud;
+	printf("/* generated from: %s */\n\n", VERSION) > cpuh;
+	next;
 }
 
 $1 == "type"	{
@@ -77,10 +84,15 @@ $1 == "type"	{
 
 NR > 1 {
 	if (tolower($1) in types) {
-		printf("#define\tHPPA_%s_%s\t%s\n", toupper($1),
-		       toupper($2), $3) > cpuh;
-		printf("{HPPA_TYPE_%s,\tHPPA_%s_%s,\t\"", toupper($1),
-		       toupper($1), toupper($2), $3) > cpud;
+		printf("{HPPA_TYPE_%s,\t", toupper($1)) > cpud;
+		if ($2 != "x") {
+			printf("#define\tHPPA_%s_%s\t%s\n", toupper($1),
+			       toupper($2), $3) > cpuh;
+			printf("HPPA_%s_%s", toupper($1), toupper($2)) > cpud;
+		} else {
+			printf("%s", $3) > cpud;
+		}
+		printf(",\t\"") > cpud;
 		f = 4;
 		while (f <= NF) {
 			sub(/[ \t]*/, "", $f);

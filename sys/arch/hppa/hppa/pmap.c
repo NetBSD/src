@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.1 2002/06/05 01:04:20 fredette Exp $	*/
+/*	$NetBSD: pmap.c,v 1.2 2002/08/05 20:58:35 fredette Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -186,8 +186,6 @@
 #include <machine/pmap.h>
 #include <machine/pte.h>
 #include <machine/cpufunc.h>
-#include <machine/pdc.h>
-#include <machine/iomod.h>
 
 #include <hppa/hppa/hpt.h>
 #include <hppa/hppa/machdep.h>
@@ -238,7 +236,7 @@ int pmapdebug = 0
 #endif
 #define PMAP_PRINTF(v,x) PMAP_PRINTF_MASK(v,v,x)
 
-vaddr_t	virtual_steal, virtual_stolen, virtual_start, virtual_end;
+vaddr_t	virtual_steal, virtual_start, virtual_end;
 
 /* These two virtual pages are available for copying and zeroing. */
 static vaddr_t tmp_vpages[2];
@@ -298,6 +296,9 @@ vsize_t	hpt_mask;
  */
 #define BADALIAS(sp1, va1, pr1, sp2, va2, pr2) (TRUE)
 
+/* Prototypes. */
+static __inline void pmap_pv_remove __P((struct pv_entry *));
+
 /*
  * Given a directly-mapped region, this makes pv_entries out of it and
  * adds them to the free list.
@@ -327,22 +328,69 @@ pmap_pv_add(vaddr_t pv_start, vaddr_t pv_end)
 /*
  * This allocates and returns a new struct pv_entry.
  *
- * If we run out of preallocated struct pv_entries, we have to panic.  
- * malloc() isn't an option, because a) we'll probably end up back 
- * here anyways when malloc() maps what it's trying to return to us, 
- * and b) even if malloc() did succeed, the TLB fault handlers run in 
- * physical mode and thus require that all pv_entries be directly
+ * If we run out of preallocated struct pv_entries, we have to forcibly
+ * free one.   malloc() isn't an option, because a) we'll probably end 
+ * up back here anyways when malloc() maps what it's trying to return to 
+ * us, and b) even if malloc() did succeed, the TLB fault handlers run 
+ * in physical mode and thus require that all pv_entries be directly
  * mapped, a quality unlikely for malloc()-returned memory.
  */
 static __inline struct pv_entry *pmap_pv_alloc __P((void));
 static __inline struct pv_entry *
 pmap_pv_alloc(void)
 {
-	struct pv_entry *pv;
+	struct pv_entry *pv, *pv_fallback;
+	u_int hpt_index_first, hpt_index, hpt_size;
+	struct hpt_entry *hpt;
 
 	pv = pv_free_list;
-	if (pv == NULL)
-		panic("out of pv_entries");
+	if (pv == NULL) {
+		/*
+		 * We need to find a struct pv_entry to forcibly
+		 * free.  It cannot be wired or unmanaged.  We 
+		 * prefer to free mappings that aren't marked as 
+		 * referenced.  We search the HPT for an entry 
+		 * to free, starting at a semirandom HPT index 
+		 * determined by the current value of the interval 
+		 * timer.
+		 */
+		hpt_size = hpt_mask / sizeof(*hpt);
+		mfctl(CR_ITMR, hpt_index_first);
+		hpt_index = hpt_index_first = hpt_index_first & hpt_size;
+		pv_fallback = NULL;
+		do {
+			hpt = ((struct hpt_entry *) hpt_base) + hpt_index;
+			for (pv = hpt->hpt_entry; 
+			     pv != NULL; 
+			     pv = pv->pv_hash) {
+				if (!(pv->pv_tlbprot & TLB_WIRED) &&
+				    !(pv->pv_flags & HPPA_PV_UNMANAGED)) {
+					if (!(pv->pv_tlbprot & TLB_REF))
+						break;
+					pv_fallback = pv;
+				}
+			}
+			if (pv != NULL)
+				break;
+			if (pv_fallback != NULL) {
+				pv = pv_fallback;
+				break;
+			}
+			hpt_index = (hpt_index + 1) & hpt_size;
+		} while (hpt_index != hpt_index_first);
+
+		/* Remove the mapping. */
+		if (pv != NULL) {
+			KASSERT(pv->pv_pmap->pmap_stats.resident_count > 0);
+			pv->pv_pmap->pmap_stats.resident_count--;
+			pmap_pv_remove(pv);
+			pv = pv_free_list;
+		}
+
+		if (pv == NULL)
+			panic("out of pv_entries");
+		
+	}
 	pv_free_list = pv->pv_next;
 	pv->pv_next = NULL;
 
@@ -450,15 +498,10 @@ static __inline int pmap_table_find_pa __P((paddr_t));
 static __inline int
 pmap_table_find_pa(paddr_t pa)
 {
-	int bank, off;
+	int off;
 
-	if (pa < virtual_start)
-		off = atop(pa);
-	else if ((bank = vm_physseg_find(atop(pa), &off)) != -1) {
-		off += vm_physmem[bank].pmseg.pmap_table_off;
-	} else
-		return -1;
-	return off;
+	off = atop(pa);
+	return (off < totalphysmem) ? off : -1;
 }
 
 /*
@@ -516,13 +559,6 @@ pmap_pv_enter(pmap_t pmap, pa_space_t space, vaddr_t va,
 	} else
 		unmanaged = 0;
 
-	KASSERT(!pmap_initialized ||
-		(space == HPPA_SID_KERNEL ?
-		 ((pa == 0 && va == 0) ||
-		  (va == tmp_vpages[0]) ||
-		  (va == tmp_vpages[1]) ||
-		  (pa >= virtual_start && va >= virtual_start)) :
-		 (pa >= virtual_start)));
 #ifdef DIAGNOSTIC
 	/* Make sure this VA isn't already entered. */
 	for (pv = hpt->hpt_entry; pv != NULL; pv = pv->pv_hash)
@@ -599,7 +635,6 @@ pmap_pv_enter(pmap_t pmap, pa_space_t space, vaddr_t va,
 /*
  * Given a particular VA->PA mapping, this removes it.
  */
-static __inline void pmap_pv_remove __P((struct pv_entry *));
 static __inline void
 pmap_pv_remove(struct pv_entry *pv)
 {
@@ -701,9 +736,10 @@ pmap_bootstrap(vstart, vend)
 	vsize_t btlb_entry_size[BTLB_SET_SIZE];
 	int btlb_entry_vm_prot[BTLB_SET_SIZE];
 	int btlb_i, btlb_j;
-	vsize_t btlb_entry_min, btlb_entry_got;
+	vsize_t btlb_entry_min, btlb_entry_max, btlb_entry_got;
 	extern int kernel_text, etext;
-	PMAP_PRINTF(PDB_INIT, ("(%p, %p)\n", vstart, vend));
+	vaddr_t kernel_data;
+	paddr_t phys_start, phys_end;
 
 	uvm_setpagesize();
 
@@ -750,7 +786,6 @@ pmap_bootstrap(vstart, vend)
 	 */
 	addr = hppa_round_page(*vstart);
 	virtual_end = *vend;
-	pv_region = addr;
 
 	/*
 	 * Figure out how big the HPT must be, and align
@@ -758,6 +793,7 @@ pmap_bootstrap(vstart, vend)
 	 * waste the pages skipped for the alignment; 
 	 * they become struct pv_entry pages.
 	 */ 
+	pv_region = addr;
 	mfctl(CR_HPTMASK, size);
 	addr = (addr + size) & ~(size);
 	pv_free_list = NULL;
@@ -786,85 +822,172 @@ pmap_bootstrap(vstart, vend)
 	proc0.p_md.md_regs->tf_vtop = addr;
 	addr += size + 1;
 
+	/* Allocate the struct pv_entry lists heads array. */
+	addr = ALIGN(addr);
+	pv_head_tbl = (struct pv_entry **) addr;
+	memset(pv_head_tbl, 0, sizeof(*pv_head_tbl) * totalphysmem);
+	addr = (vaddr_t) (pv_head_tbl + totalphysmem);
+
+	/* Allocate the page modified/referenced flags table. */
+	addr = ALIGN(addr);
+	pv_flags_tbl = (u_char *) addr;
+	memset(pv_flags_tbl, 0, sizeof(*pv_flags_tbl) * totalphysmem);
+	addr = (vaddr_t) (pv_flags_tbl + totalphysmem);
+
 	/*
-	 * we know that btlb_insert() will round it up to the next
-	 * power of two at least anyway
+	 * Allocate the largest struct pv_entry region.   The
+	 * 6 is a magic constant, chosen to allow on average
+	 * all physical pages to have 6 simultaneous mappings 
+	 * without having to reclaim any struct pv_entry.
 	 */
-	for (physmem = 1; physmem < btoc(addr); physmem *= 2);
-
-	/* map the kernel space, which will give us virtual_start */
-	*vstart = hppa_round_page(addr + (totalphysmem - physmem) *
-				  (sizeof(struct pv_entry) * maxproc / 8 +
-				   sizeof(struct vm_page)));
-	/* XXX PCXS needs two separate inserts in separate btlbs */
+	pv_region = addr;
+	addr += sizeof(struct pv_entry) * totalphysmem * 6;
+	pmap_pv_add(pv_region, addr);
 
 	/*
-	 * We want to offer kernel NULL pointer dereference 
-	 * detection, and write protection for the kernel text.  
-	 * To keep things simple, we use BTLB entries to directly 
-	 * map the kernel text, data, bss, and anything else we've
-	 * allocated (directly-mapped) space for already.  The
-	 * region from 0 to the start of the kernel text is unmapped.
+	 * Allocate the steal region.  Because pmap_steal_memory
+	 * must panic whenever an allocation cannot be fulfilled,
+	 * we have to guess at the maximum amount of space that
+	 * might be stolen.  Overestimating is not really a problem,
+	 * as it only leads to lost virtual space, not lost physical
+	 * pages.
+	 */
+	addr = hppa_round_page(addr);
+	virtual_steal = addr;
+	addr += totalphysmem * sizeof(struct vm_page);
+	memset((caddr_t) virtual_steal, 0, addr - virtual_steal);
+	
+	/*
+	 * We now have a rough idea of where managed kernel virtual
+	 * space will begin, and we can start mapping everything
+	 * before that.
+	 */
+	addr = hppa_round_page(addr);
+	*vstart = addr;
+	
+	/*
+	 * In general, the virtual space below the kernel text is
+	 * left unmapped, to allow detection of NULL dereferences.
+	 * However, these tmp_vpages are two virtual pages right 
+	 * before the kernel text that can be mapped for page copying 
+	 * and zeroing.
+	 */
+	tmp_vpages[1] = hppa_trunc_page((vaddr_t) &kernel_text) - PAGE_SIZE;
+	tmp_vpages[0] = tmp_vpages[1] - PAGE_SIZE;
+
+	/*
+	 * The kernel text, data, and bss must be direct-mapped,
+	 * because the kernel often runs in physical mode, and 
+	 * anyways the loader loaded the kernel into physical 
+	 * memory exactly where it was linked.
 	 *
-	 * Note that a BTLB entry must be some power-of-two pages
-	 * in size, and must be aligned on that size.  This is
-	 * why we insist that the kernel text start no earlier than
-	 * 0x80000 (the minimum BTLB entry eize), why we need 
-	 * multiple entries to do the job, and why 100% of the 
-	 * kernel text isn't necessarily protected (one BTLB
-	 * entry may need to cover both text and data).
+	 * All memory already allocated after bss, either by
+	 * our caller or by this function itself, must also be
+	 * direct-mapped, because it's completely unmanaged 
+	 * and was allocated in physical mode.
+	 *
+	 * BTLB entries are used to do this direct mapping.
+	 * BTLB entries have a minimum and maximum possible size,
+	 * and MD code gives us these sizes in units of pages.
 	 */
-
-	/* XXX fredette - we should get this from machdep.c. */
-	btlb_entry_min = (vsize_t) &kernel_text;
-
-	/*
-	 * The address of the start of the kernel text must
-	 * be some multiple of the minimum BTLB entry size.
-	 */
-	btlb_entry_start[0] = (vaddr_t) &kernel_text;
-	if (btlb_entry_start[0] & (btlb_entry_min - 1))
-		panic("kernel text start incompatible with BTLB minimum");
-	btlb_entry_size[0] = btlb_entry_min;
-	btlb_entry_vm_prot[0] = VM_PROT_READ | VM_PROT_EXECUTE;
-	if (btlb_entry_start[0] + btlb_entry_size[0] > (vaddr_t) &etext)
-		btlb_entry_vm_prot[0] |= VM_PROT_WRITE;
-	btlb_j = 1;
+	btlb_entry_min = (vsize_t) hppa_btlb_size_min * PAGE_SIZE;
+	btlb_entry_max = (vsize_t) hppa_btlb_size_max * PAGE_SIZE;
 
 	/*
-	 * All BTLB entries allow reading.  Any BTLB entry
-	 * that maps kernel text also allows execution.  Any 
-	 * BTLB entry that maps data+bss also allows writing.
+	 * We begin by making BTLB entries for the kernel text.
+	 * To keep things simple, we insist that the kernel text
+	 * be aligned to the minimum BTLB entry size.
 	 */
-	do {
+	if (((vaddr_t) &kernel_text) & (btlb_entry_min - 1))
+		panic("kernel text not aligned to BTLB minimum size");
+
+	/*
+	 * To try to conserve BTLB entries, take a hint from how 
+	 * the kernel was linked: take the kernel text start as 
+	 * our effective minimum BTLB entry size, assuming that
+	 * the data segment was also aligned to that size.
+	 *
+	 * In practice, linking the kernel at 2MB, and aligning
+	 * the data segment to a 2MB boundary, should control well
+	 * how much of the BTLB the pmap uses.  However, this code
+	 * should not rely on this 2MB magic number, nor should
+	 * it rely on the data segment being aligned at all.  This
+	 * is to allow (smaller) kernels (linked lower) to work fine.
+	 */
+	btlb_entry_min = (vaddr_t) &kernel_text;
+	__asm __volatile (
+		"	ldil L%%$global$, %0	\n"
+		"	ldo R%%$global$(%0), %0	\n"
+		: "=r" (kernel_data)); 
+
+	/*
+	 * Now make BTLB entries to direct-map the kernel text
+	 * read- and execute-only as much as possible.  Note that
+	 * if the data segment isn't nicely aligned, the last
+	 * BTLB entry for the kernel text may also cover some of
+	 * the data segment, meaning it will have to allow writing.
+	 */
+	addr = (vaddr_t) &kernel_text;
+	btlb_j = 0;
+	while (addr < (vaddr_t) &etext) {
 
 		/* Set up the next BTLB entry. */
 		KASSERT(btlb_j < BTLB_SET_SIZE);
-		btlb_entry_start[btlb_j] = 
-			btlb_entry_start[btlb_j - 1] + 
-			btlb_entry_size[btlb_j - 1];
+		btlb_entry_start[btlb_j] = addr;
 		btlb_entry_size[btlb_j] = btlb_entry_min;
-		btlb_entry_vm_prot[btlb_j] = VM_PROT_READ;
-		if (btlb_entry_start[btlb_j] < (vaddr_t) &etext)
-			btlb_entry_vm_prot[btlb_j] |= VM_PROT_EXECUTE;
-		if ((btlb_entry_start[btlb_j] + btlb_entry_size[btlb_j]) > 
-			(vaddr_t) &etext)
+		btlb_entry_vm_prot[btlb_j] = VM_PROT_READ | VM_PROT_EXECUTE;
+		if (addr + btlb_entry_min > kernel_data)
 			btlb_entry_vm_prot[btlb_j] |= VM_PROT_WRITE;
 
-		/* As we can, aggregate BTLB entries. */
+		/* Coalesce BTLB entries whenever possible. */
 		while (btlb_j > 0 &&
 			btlb_entry_vm_prot[btlb_j] == 
 			btlb_entry_vm_prot[btlb_j - 1] &&
 			btlb_entry_size[btlb_j] ==
 			btlb_entry_size[btlb_j - 1] &&
 			!(btlb_entry_start[btlb_j - 1] &
-			  ((btlb_entry_size[btlb_j - 1] << 1) - 1)))
+			  ((btlb_entry_size[btlb_j - 1] << 1) - 1)) &&
+			(btlb_entry_size[btlb_j - 1] << 1) <=
+			btlb_entry_max)
 			btlb_entry_size[--btlb_j] <<= 1;
 
 		/* Move on. */
+		addr = btlb_entry_start[btlb_j] + btlb_entry_size[btlb_j];
 		btlb_j++;
-	} while ((btlb_entry_start[btlb_j - 1] + btlb_entry_size[btlb_j - 1]) < 			*vstart);
-		
+	} 
+
+	/*
+	 * Now make BTLB entries to direct-map the kernel data,
+	 * bss, and all of the preallocated space read-write.  
+	 * 
+	 * Note that, unlike above, we're not concerned with 
+	 * making these BTLB entries such that they finish as 
+	 * close as possible to the end of the space we need 
+	 * them to map.  Instead, to minimize the number of BTLB 
+	 * entries we need, we make them as large as possible.
+	 * The only thing this wastes is kernel virtual space,
+	 * which is plentiful.
+	 */
+	while (addr < *vstart) {
+
+		/* Make the next BTLB entry. */
+		KASSERT(btlb_j < BTLB_SET_SIZE);
+		size = btlb_entry_min;
+		while ((addr + size) < *vstart &&
+			(size << 1) < btlb_entry_max &&
+			!(addr & ((size << 1) - 1)))
+			size <<= 1;
+		btlb_entry_start[btlb_j] = addr;
+		btlb_entry_size[btlb_j] = size;
+		btlb_entry_vm_prot[btlb_j] = VM_PROT_READ | VM_PROT_WRITE;
+
+		/* Move on. */
+		addr = btlb_entry_start[btlb_j] + btlb_entry_size[btlb_j];
+		btlb_j++;
+	} 
+
+	/* XXX PCXS needs two separate inserts in separate btlbs */
+
 	/* Now insert all of the BTLB entries. */
 	for (btlb_i = 0; btlb_i < btlb_j; btlb_i++) {
 		btlb_entry_got = btlb_entry_size[btlb_i];
@@ -880,50 +1003,54 @@ pmap_bootstrap(vstart, vend)
 			panic("pmap_bootstrap: BTLB entry mapped wrong amount");
 	}
 
+	/*
+	 * We now know the exact beginning of managed kernel
+	 * virtual space.
+	 */
 	*vstart = btlb_entry_start[btlb_j - 1] + btlb_entry_size[btlb_j - 1];
 	virtual_start = *vstart;
 
 	/*
-	 * NOTE: we no longer trash the BTLB w/ unused entries,
-	 * lazy map only needed pieces (see bus_mem_add_mapping() for refs).
+	 * Finally, load physical pages into UVM.  There are
+	 * three segments of pages.
 	 */
-
-	/*
-	 * Allocate the struct pv_entry heads table and the flags table
-	 * for the physical pages.
-	 */
-	size = hppa_round_page(totalphysmem *
-			(sizeof(*pv_head_tbl) +
-			 sizeof(struct pv_entry) +
-			 sizeof(*pv_flags_tbl)));
-	bzero ((caddr_t)addr, size);
-#ifdef PMAPDEBUG
-	if (pmapdebug & PDB_INIT)
-		printf("pv_array: 0x%x @ %p\n", (u_int)size, (caddr_t)addr);
+	physmem = 0;
+	 
+	/* The first segment runs from [resvmem..kernel_text). */
+	phys_start = resvmem;
+	phys_end = atop(hppa_trunc_page(&kernel_text));
+#ifdef DIAGNOSTIC
+	printf("phys segment: 0x%x 0x%x\n", (u_int)phys_start, (u_int)phys_end);
 #endif
+	if (phys_end > phys_start) {
+		uvm_page_physload(phys_start, phys_end,
+			phys_start, phys_end, VM_FREELIST_DEFAULT);
+		physmem += phys_end - phys_start;
+	}
 
-	virtual_steal = addr + size;
-	virtual_steal = round_page(virtual_steal);
-	uvm_page_physload(atop(virtual_steal), totalphysmem,
-		atop(virtual_steal), totalphysmem, VM_FREELIST_DEFAULT);
-	/* we have only one initial phys memory segment */
-	pv_head_tbl = (struct pv_entry **)addr;
-	pv_region = (vaddr_t)(pv_head_tbl + totalphysmem);
-	pv_flags_tbl = (u_char *)(pv_region + 
-		totalphysmem * sizeof(struct pv_entry));
-	pmap_pv_add(pv_region, (vaddr_t) pv_flags_tbl);
-	vm_physmem[0].pmseg.pmap_table_off = atop(virtual_start);
+	/* The second segment runs from [etext..kernel_data). */
+	phys_start = atop(hppa_round_page((vaddr_t) &etext));
+	phys_end = atop(hppa_trunc_page(kernel_data));
+#ifdef DIAGNOSTIC
+	printf("phys segment: 0x%x 0x%x\n", (u_int)phys_start, (u_int)phys_end);
+#endif
+	if (phys_end > phys_start) {
+		uvm_page_physload(phys_start, phys_end,
+			phys_start, phys_end, VM_FREELIST_DEFAULT);
+		physmem += phys_end - phys_start;
+	}
 
-	/* here will be a hole due to the kernel memory alignment
-	   and we use it for pmap_steal_memory */
-
-	/*
-	 * The tmp_vpages are two virtual pages that can be
-	 * mapped for the copying and zeroing operations.
-	 * We use two pages immediately before the kernel text.
-	 */
-	tmp_vpages[1] = hppa_trunc_page((vaddr_t) &kernel_text) - PAGE_SIZE;
-	tmp_vpages[0] = tmp_vpages[1] - PAGE_SIZE;
+	/* The third segment runs from [virtual_steal..totalphysmem). */
+	phys_start = atop(virtual_steal);
+	phys_end = totalphysmem;
+#ifdef DIAGNOSTIC
+	printf("phys segment: 0x%x 0x%x\n", (u_int)phys_start, (u_int)phys_end);
+#endif
+	if (phys_end > phys_start) {
+		uvm_page_physload(phys_start, phys_end,
+			phys_start, phys_end, VM_FREELIST_DEFAULT);
+		physmem += phys_end - phys_start;
+	}
 }
 
 /*
@@ -939,6 +1066,7 @@ pmap_steal_memory(size, startp, endp)
 	vaddr_t *endp;
 {
 	vaddr_t va;
+	int lcv;
 
 	PMAP_PRINTF(PDB_STEAL, ("(%lx, %p, %p)\n", size, startp, endp));
 
@@ -958,25 +1086,15 @@ pmap_steal_memory(size, startp, endp)
 	/* Steal the memory. */
 	va = virtual_steal;
 	virtual_steal += size;
-	PMAP_PRINTF(PDB_STEAL, (": steal %ld bytes (%x+%x,%x)\n",
-		    size, (u_int)va, (u_int)size, (u_int)virtual_start));
-
-	/*
-	 * We are an unusual pmap in that we really, really
-	 * want to steal the rest of the directly-mapped
-	 * segment for struct pv_entries, after UVM has done
-	 * all of its stealing.  The tricky part is detecting
-	 * when UVM is doing the last of its stealing.
-	 * For now, we key off of uvmexp.ncolors being set
-	 * to 1, which it is by uvm_page_init before it
-	 * does the final stealing.
-	 */
-	if (uvmexp.ncolors == 1) {
-		virtual_stolen = virtual_steal;
-		virtual_steal = virtual_start;
-		vm_physmem[0].avail_start = atop(virtual_start);
-		vm_physmem[0].start = vm_physmem[0].avail_start;
-	}
+	PMAP_PRINTF(PDB_STEAL, (": steal %ld bytes @%x\n", size, (u_int)va));
+	for (lcv = 0; lcv < vm_nphysseg ; lcv++)
+		if (vm_physmem[lcv].start == atop(va)) {
+			vm_physmem[lcv].start = atop(virtual_steal);
+			vm_physmem[lcv].avail_start = atop(virtual_steal);
+			break;
+		}
+	if (lcv == vm_nphysseg)
+		panic("pmap_steal_memory inconsistency");
 
 	return va;
 }
@@ -1002,34 +1120,6 @@ void
 pmap_init()
 {
 	extern void gateway_page __P((void));
-#ifdef notyet
-	vaddr_t va;
-#endif
-
-	/* allocate the rest of the steal area for pv_entries */
-	pmap_pv_add(virtual_stolen, virtual_start);
-
-#ifdef notyet
-	/*
-	 * Enter direct mappings for many of the physical
-	 * pages below the tmp_vpages, so we can put them
-	 * to good use as pv_entry pages and not waste them.
-	 */
-	/*
-	 * XXX this is a poorly named constant.  It should
-	 * probably get a better name or maybe its value
-	 * should be VM_MIN_KERNEL_ADDRESS in vmparam.h.
-	 * Note that it is the old kernel text start 
-	 * address.  Pages below this are assumed to belong
-	 * to the firmware.
-	 */
-#define LOW_MEM_PAGES 0x12000
-	for (va = LOW_MEM_PAGES; 
-	     (va + NBPG) <= tmp_vpages[0];
-	     va += NBPG)
-		pmap_kenter_pa(va, va, VM_PROT_ALL);
-	pmap_pv_add(LOW_MEM_PAGES, va);
-#endif /* notyet */
 
 	TAILQ_INIT(&pmap_freelist);
 	pid_counter = HPPA_PID_KERNEL + 2;
@@ -1041,7 +1131,7 @@ pmap_init()
 	 *
 	 * no spls since no interrupts
 	 */
-	pmap_pv_enter(pmap_kernel(), HPPA_SID_KERNEL, SYSCALLGATE,
+	pmap_pv_enter(NULL, HPPA_SID_KERNEL, SYSCALLGATE,
 		      (paddr_t)&gateway_page, TLB_GATE_PROT);
 
 	pmap_initialized = TRUE;
@@ -1538,8 +1628,6 @@ pmap_zero_page(pa)
 
 	PMAP_PRINTF(PDB_ZERO, ("(%p)\n", (caddr_t)pa));
 
-	KASSERT(!pmap_initialized || pa >= virtual_start);
-
 	s = splvm(); /* XXX are we already that high? */
 
 	/* Map the physical page. */
@@ -1572,8 +1660,6 @@ pmap_copy_page(spa, dpa)
 	int s;
 
 	PMAP_PRINTF(PDB_COPY, ("(%p, %p)\n", (caddr_t)spa, (caddr_t)dpa));
-
-	KASSERT(!pmap_initialized || (spa >= virtual_start && dpa >= virtual_start));
 
 	s = splvm(); /* XXX are we already that high? */
 
