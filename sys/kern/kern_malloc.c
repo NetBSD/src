@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_malloc.c,v 1.23 1997/01/30 06:50:46 tls Exp $	*/
+/*	$NetBSD: kern_malloc.c,v 1.24 1997/02/02 21:22:16 thorpej Exp $	*/
 
 /*
  * Copyright 1996 Christopher G. Demetriou.  All rights reserved.
@@ -45,6 +45,8 @@
 
 #include <vm/vm.h>
 #include <vm/vm_kern.h>
+
+#include "opt_kmemstats.h"
 
 struct kmembuckets bucket[MINBUCKET + 16];
 struct kmemstats kmemstats[M_LAST];
