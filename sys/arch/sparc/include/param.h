@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.59 2003/04/09 16:22:33 thorpej Exp $ */
+/*	$NetBSD: param.h,v 1.60 2003/04/11 13:55:24 jdc Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -54,8 +54,8 @@
 #define	MACHINE_ARCH	"sparc"
 #define	MID_MACHINE	MID_SPARC
 
-#ifdef _KERNEL				/* XXX */
 #include <machine/cpuconf.h>		/* XXX */
+#ifdef _KERNEL				/* XXX */
 #ifndef _LOCORE				/* XXX */
 #include <machine/cpu.h>		/* XXX */
 #endif					/* XXX */
