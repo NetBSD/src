@@ -1,4 +1,4 @@
-#	$NetBSD: CATS,v 1.33 2000/05/25 14:50:34 tsutsui Exp $
+#	$NetBSD: CATS,v 1.34 2000/05/26 19:01:22 tsutsui Exp $
 #
 #	CATS -- CHALTECH CATS Development kernel
 #
@@ -264,7 +264,7 @@ ex*	at pci? dev ? function ?	# 3Com 90x[B]
 #epic*	at pci? dev ? function ?	# SMC EPIC/100 Ethernet
 #esh*	at pci? dev ? function ?	# Essential HIPPI card
 #fpa*	at pci? dev ? function ?	# DEC DEFPA FDDI
-fxp*	at pci? dev ? function ?	# Intel EtherExpress PRO 10+/100B
+#fxp*	at pci? dev ? function ?	# Intel EtherExpress PRO 10+/100B
 #le*	at pci? dev ? function ?	# PCnet-PCI Ethernet
 ne*	at pci? dev ? function ?	# NE2000 compat ethernet
 #ntwoc*	at pci? dev ? function ?	# Riscom/N2 PCI Sync Serial
@@ -282,7 +282,7 @@ rtk*	at pci? dev ? function ?	# Realtek 8129/8139
 # MII/PHY support
 exphy*	at mii? phy ?			# 3Com internal PHYs
 #icsphy* at mii? phy ?			# Integrated Circuit Systems ICS1890
-inphy*	at mii? phy ?			# Intel 82555 PHYs
+#inphy*	at mii? phy ?			# Intel 82555 PHYs
 #iophy*	at mii? phy ?			# Intel 82553 PHYs
 #lxtphy*	at mii? phy ?			# Level One LXT-970 PHYs
 nsphy*	at mii? phy ?			# NS83840 PHYs
