@@ -1,4 +1,4 @@
-/* $NetBSD: nlist_aout.c,v 1.12 2000/06/14 06:49:06 cgd Exp $ */
+/* $NetBSD: nlist_aout.c,v 1.13 2002/11/11 19:26:49 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -39,7 +39,7 @@
 #if 0
 static char sccsid[] = "@(#)nlist.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: nlist_aout.c,v 1.12 2000/06/14 06:49:06 cgd Exp $");
+__RCSID("$NetBSD: nlist_aout.c,v 1.13 2002/11/11 19:26:49 thorpej Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -123,7 +123,7 @@ __fdnlist_aout(fd, list)
 
 	while (symsize > 0) {
 		cc = MIN(symsize, sizeof(nbuf));
-		if (read(fd, nbuf, cc) != cc)
+		if (read(fd, nbuf, cc) != (ssize_t) cc)
 			break;
 		symsize -= cc;
 		for (s = nbuf; cc > 0; ++s, cc -= sizeof(*s)) {
