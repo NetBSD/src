@@ -1,4 +1,4 @@
-/*	$NetBSD: ser.c,v 1.19 1995/04/11 03:00:38 mycroft Exp $	*/
+/*	$NetBSD: ser.c,v 1.20 1995/04/12 14:55:45 briggs Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -662,7 +662,7 @@ ser_calc_regs(int unit, int cflag, unsigned char *preg3, unsigned char *preg4,
 	}
 	r4 = 0;
 	if ((cflag & PARODD) == 0)
-		r4 |= ZSWR4_EVENP
+		r4 |= ZSWR4_EVENP;
 	if (cflag & PARENB)
 		r4 |= ZSWR4_PARENB;
 	if (cflag & CSTOPB)
