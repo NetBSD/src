@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ne_pcmcia.c,v 1.86 2002/01/30 11:24:22 is Exp $	*/
+/*	$NetBSD: if_ne_pcmcia.c,v 1.87 2002/01/31 08:45:14 haya Exp $	*/
 
 /*
  * Copyright (c) 1997 Marc Horowitz.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ne_pcmcia.c,v 1.86 2002/01/30 11:24:22 is Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ne_pcmcia.c,v 1.87 2002/01/31 08:45:14 haya Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -212,6 +212,12 @@ static const struct ne2000dev {
       PCMCIA_VENDOR_IBM, PCMCIA_PRODUCT_IBM_INFOMOVER,
       PCMCIA_CIS_IBM_INFOMOVER,
       0, 0x0ff0, { 0x00, 0x06, 0x29 } },
+
+    /* NEC 9801N_J12 */
+    { PCMCIA_STR_IBM_INFOMOVER,
+      PCMCIA_VENDOR_IBM, PCMCIA_PRODUCT_IBM_INFOMOVER,
+      PCMCIA_CIS_IBM_INFOMOVER,
+      0, 0x0ff0, { 0x00, 0x00, 0x4c } },
 
     { PCMCIA_STR_LINKSYS_ECARD_1, 
       PCMCIA_VENDOR_LINKSYS, PCMCIA_PRODUCT_LINKSYS_ECARD_1,
