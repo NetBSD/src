@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.18 1999/10/28 13:38:45 leo Exp $	*/
+/*	$NetBSD: bus.h,v 1.19 1999/12/13 15:40:28 leo Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -314,8 +314,10 @@ struct atari_bus_space {
     #define	__abs_copy(sz, t, h1, o1, h2, o2, cnt)			\
 	(*(t)->__abs_opname(c,sz))(t, h1, o1, h2, o2, cnt)
 #else
-    #define	__abs_copy(sz, t, h1, o1, h2, o2, cnt)			\
-	memcpy((void*)(h2 + o2), (void *)(h1 + o1), sz * cnt)
+    #define	__abs_copy(sz, t, h1, o1, h2, o2, cnt) do {		\
+		    memcpy((void*)(h2 + o2), (void *)(h1 + o1), sz * cnt);  \
+		    (void)t;						    \
+		} while (0)
 #endif
 
 
