@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.27 1995/05/24 20:37:43 gwr Exp $	*/
+/*	$NetBSD: locore.s,v 1.28 1995/05/26 17:09:37 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Gordon W. Ross
@@ -120,9 +120,11 @@ L_high_code:
 	movc	d0, sfc			| space for copyin/copyout
 	movc	d0, dfc
 
-| Setup process zero kernel stack and user stack
+| Setup process zero user/kernel stacks and PCB.  Note:
+| Make sure PCB.sr is valid before cpu_fork copies it!
 	movl	_proc0paddr,a1		| get proc0 pcb addr
 	lea	a1@(USPACE-4),sp	| set kernel stack to end of it
+	movw	sr,a1@(PCB_PS)		| PSL_HIGHPRI
 	movl	#USRSTACK-4,a2
 	movl	a2,usp			| init user SP
 
@@ -950,8 +952,8 @@ Lbadsw:
  * XXX - Sould we use p->p_addr instead of curpcb? -gwr
  */
 ENTRY(cpu_switch)
-	movl	_curpcb,a0		| current pcb
-	movw	sr,a0@(PCB_PS)		| save sr before changing ipl
+	movl	_curpcb,a1		| current pcb
+	movw	sr,a1@(PCB_PS)		| save sr before changing ipl
 #ifdef notyet
 	movl	_curproc,sp@-		| remember last proc running
 #endif
