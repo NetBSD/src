@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.42 1995/03/09 08:03:51 mycroft Exp $	*/
+/*	$NetBSD: trap.c,v 1.43 1995/03/09 09:00:17 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -683,7 +683,7 @@ syscall(code, frame)
 	}
 
 #ifdef SYSCALL_DEBUG
-	scdebug_ret(p, code, error, rval[0]);
+	scdebug_ret(p, code, error, rval);
 #endif
 #ifdef COMPAT_SUNOS
 	/* need new p-value for this */
