@@ -37,7 +37,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)kern_acct.c	8.1 (Berkeley) 6/14/93
- *	$Id: kern_acct.c,v 1.27 1994/05/24 06:49:14 cgd Exp $
+ *	$Id: kern_acct.c,v 1.28 1994/06/08 11:28:33 mycroft Exp $
  */
 
 #include <sys/param.h>
@@ -110,12 +110,10 @@ acct(p, uap, retval)
 	 * writing and make sure it's a 'normal'.
 	 */
 	if (uap->path != NULL) {
-		nd.ni_segflg = UIO_USERSPACE;
-		nd.ni_dirp = uap->path;
-		if (error = vn_open(&nd, p, FWRITE, 0))
+		NDINIT(&nd, LOOKUP, NOFOLLOW, UIO_USERSPACE, uap->path, p);
+		if (error = vn_open(&nd, FWRITE, 0))
 			return (error);
 		VOP_UNLOCK(nd.ni_vp);
-
 		if (nd.ni_vp->v_type != VREG) {
 			vn_close(nd.ni_vp, FWRITE, p->p_ucred, p);
 			return (EACCES);
@@ -285,7 +283,9 @@ acctwatch(a)
 			acctp = NULLVP;
 			log(LOG_NOTICE, "Accounting suspended\n");
 		}
-	} else
+	} else {
+		/* Accounting was turned off behind our back. */
 		return;
+	}
 	timeout(acctwatch, NULL, acctchkfreq * hz);
 }

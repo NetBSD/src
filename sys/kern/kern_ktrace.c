@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)kern_ktrace.c	8.2 (Berkeley) 9/23/93
- *	$Id: kern_ktrace.c,v 1.9 1994/05/18 05:12:37 cgd Exp $
+ *	$Id: kern_ktrace.c,v 1.10 1994/06/08 11:28:37 mycroft Exp $
  */
 
 #ifdef KTRACE
@@ -243,14 +243,8 @@ ktrace(curp, uap, retval)
 		/*
 		 * an operation which requires a file argument.
 		 */
-#ifdef notyet
 		NDINIT(&nd, LOOKUP, FOLLOW, UIO_USERSPACE, uap->fname, curp);
 		if (error = vn_open(&nd, FREAD|FWRITE, 0)) {
-#else
-		nd.ni_segflg = UIO_USERSPACE;
-		nd.ni_dirp = uap->fname; 
-                if (error = vn_open(&nd, curp, FREAD|FWRITE, 0)) {
-#endif
 			curp->p_traceflag &= ~KTRFAC_ACTIVE;
 			return (error);
 		}

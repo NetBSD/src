@@ -27,7 +27,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: exec_script.c,v 1.6 1994/05/24 02:39:13 cgd Exp $
+ *	$Id: exec_script.c,v 1.7 1994/06/08 11:28:29 mycroft Exp $
  */
 
 #if defined(SETUIDSCRIPTS) && !defined(FDSCRIPTS)
@@ -221,7 +221,7 @@ check_shell:
 	 * them if check_exec() fails.
 	 */
 	scriptvp = epp->ep_vp;
-	oldpnbuf = epp->ep_ndp->ni_pnbuf;
+	oldpnbuf = epp->ep_ndp->ni_cnd.cn_pnbuf;
 
 	VOP_UNLOCK(scriptvp);
 
@@ -258,7 +258,7 @@ check_shell:
 	}
 
 	/* XXX oldpnbuf not set for "goto fail" path */
-	epp->ep_ndp->ni_pnbuf = oldpnbuf;
+	epp->ep_ndp->ni_cnd.cn_pnbuf = oldpnbuf;
 fail:
 	/* note that we've clobbered the header */
 	epp->ep_flags |= EXEC_DESTR;
@@ -270,7 +270,7 @@ fail:
         } else
 		vn_close(scriptvp, FREAD, p->p_ucred, p);
 
-        FREE(epp->ep_ndp->ni_pnbuf, M_NAMEI);
+        FREE(epp->ep_ndp->ni_cnd.cn_pnbuf, M_NAMEI);
 
 	/* free the fake arg list, because we're not returning it */
 	tmpsap = shellargp;

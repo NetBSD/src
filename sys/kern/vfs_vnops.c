@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 1982, 1986, 1989 Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1982, 1986, 1989, 1993
+ *	The Regents of the University of California.  All rights reserved.
  * (c) UNIX System Laboratories, Inc.
  * All or some portions of this file are derived from material licensed
  * to the University of California by American Telephone and Telegraph
@@ -35,8 +35,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)vfs_vnops.c	7.33 (Berkeley) 6/27/91
- *	$Id: vfs_vnops.c,v 1.10 1994/05/17 04:22:06 cgd Exp $
+ *	from: @(#)vfs_vnops.c	8.2 (Berkeley) 1/21/94
+ *	$Id: vfs_vnops.c,v 1.11 1994/06/08 11:29:00 mycroft Exp $
  */
 
 #include <sys/param.h>
@@ -52,6 +52,8 @@
 #include <sys/ioctl.h>
 #include <sys/tty.h>
 
+#include <vm/vm.h>
+
 struct 	fileops vnops =
 	{ vn_read, vn_write, vn_ioctl, vn_select, vn_closefile };
 
@@ -59,33 +61,36 @@ struct 	fileops vnops =
  * Common code for vnode open operations.
  * Check permissions, and call the VOP_OPEN or VOP_CREATE routine.
  */
-vn_open(ndp, p, fmode, cmode)
+vn_open(ndp, fmode, cmode)
 	register struct nameidata *ndp;
-	struct proc *p;
 	int fmode, cmode;
 {
 	register struct vnode *vp;
+	register struct proc *p = ndp->ni_cnd.cn_proc;
 	register struct ucred *cred = p->p_ucred;
 	struct vattr vat;
 	struct vattr *vap = &vat;
 	int error;
 
 	if (fmode & O_CREAT) {
-		ndp->ni_nameiop = CREATE | LOCKPARENT | LOCKLEAF;
+		ndp->ni_cnd.cn_nameiop = CREATE;
+		ndp->ni_cnd.cn_flags = LOCKPARENT | LOCKLEAF;
 		if ((fmode & O_EXCL) == 0)
-			ndp->ni_nameiop |= FOLLOW;
-		if (error = namei(ndp, p))
+			ndp->ni_cnd.cn_flags |= FOLLOW;
+		if (error = namei(ndp))
 			return (error);
 		if (ndp->ni_vp == NULL) {
 			VATTR_NULL(vap);
 			vap->va_type = VREG;
 			vap->va_mode = cmode;
-			if (error = VOP_CREATE(ndp, vap, p))
+			LEASE_CHECK(ndp->ni_dvp, p, cred, LEASE_WRITE);
+			if (error = VOP_CREATE(ndp->ni_dvp, &ndp->ni_vp,
+			    &ndp->ni_cnd, vap))
 				return (error);
 			fmode &= ~O_TRUNC;
 			vp = ndp->ni_vp;
 		} else {
-			VOP_ABORTOP(ndp);
+			VOP_ABORTOP(ndp->ni_dvp, &ndp->ni_cnd);
 			if (ndp->ni_dvp == ndp->ni_vp)
 				vrele(ndp->ni_dvp);
 			else
@@ -99,8 +104,9 @@ vn_open(ndp, p, fmode, cmode)
 			fmode &= ~O_CREAT;
 		}
 	} else {
-		ndp->ni_nameiop = LOOKUP | FOLLOW | LOCKLEAF;
-		if (error = namei(ndp, p))
+		ndp->ni_cnd.cn_nameiop = LOOKUP;
+		ndp->ni_cnd.cn_flags = FOLLOW | LOCKLEAF;
+		if (error = namei(ndp))
 			return (error);
 		vp = ndp->ni_vp;
 	}
@@ -124,6 +130,9 @@ vn_open(ndp, p, fmode, cmode)
 		}
 	}
 	if (fmode & O_TRUNC) {
+		VOP_UNLOCK(vp);				/* XXX */
+		LEASE_CHECK(vp, p, cred, LEASE_WRITE);
+		VOP_LOCK(vp);				/* XXX */
 		VATTR_NULL(vap);
 		vap->va_size = 0;
 		if (error = VOP_SETATTR(vp, vap, cred, p))
@@ -189,7 +198,6 @@ vn_close(vp, flags, cred, p)
 
 /*
  * Package up an I/O request on a vnode into a uio and do it.
- * [internal interface to file i/o for kernel only]
  */
 vn_rdwr(rw, vp, base, len, offset, segflg, ioflg, cred, aresid, p)
 	enum uio_rw rw;
@@ -218,10 +226,11 @@ vn_rdwr(rw, vp, base, len, offset, segflg, ioflg, cred, aresid, p)
 	auio.uio_segflg = segflg;
 	auio.uio_rw = rw;
 	auio.uio_procp = p;
-	if (rw == UIO_READ)
+	if (rw == UIO_READ) {
 		error = VOP_READ(vp, &auio, ioflg, cred);
-	else
+	} else {
 		error = VOP_WRITE(vp, &auio, ioflg, cred);
+	}
 	if (aresid)
 		*aresid = auio.uio_resid;
 	else
@@ -243,6 +252,7 @@ vn_read(fp, uio, cred)
 	register struct vnode *vp = (struct vnode *)fp->f_data;
 	int count, error;
 
+	LEASE_CHECK(vp, uio->uio_procp, cred, LEASE_READ);
 	VOP_LOCK(vp);
 	uio->uio_offset = fp->f_offset;
 	count = uio->uio_resid;
@@ -268,6 +278,7 @@ vn_write(fp, uio, cred)
 		ioflag |= IO_APPEND;
 	if (fp->f_flag & FNONBLOCK)
 		ioflag |= IO_NDELAY;
+	LEASE_CHECK(vp, uio->uio_procp, cred, LEASE_WRITE);
 	VOP_LOCK(vp);
 	uio->uio_offset = fp->f_offset;
 	count = uio->uio_resid;
@@ -302,7 +313,7 @@ vn_stat(vp, sb, p)
 	 */
 	sb->st_dev = vap->va_fsid;
 	sb->st_ino = vap->va_fileid;
-	mode = vap->va_mode&~S_IFMT;
+	mode = vap->va_mode;
 	switch (vp->v_type) {
 	case VREG:
 		mode |= S_IFREG;
@@ -409,26 +420,4 @@ vn_closefile(fp, p)
 
 	return (vn_close(((struct vnode *)fp->f_data), fp->f_flag,
 		fp->f_cred, p));
-}
-
-/*
- * vn_fhtovp() - convert a fh to a vnode ptr (optionally locked)
- * 	- look up fsid in mount list (if not found ret error)
- *	- get vp by calling VFS_FHTOVP() macro
- *	- if lockflag lock it with VOP_LOCK()
- */
-vn_fhtovp(fhp, lockflag, vpp)
-	fhandle_t *fhp;
-	int lockflag;
-	struct vnode **vpp;
-{
-	register struct mount *mp;
-
-	if ((mp = getvfs(&fhp->fh_fsid)) == NULL)
-		return (ESTALE);
-	if (VFS_FHTOVP(mp, &fhp->fh_fid, vpp))
-		return (ESTALE);
-	if (!lockflag)
-		VOP_UNLOCK(*vpp);
-	return (0);
 }
