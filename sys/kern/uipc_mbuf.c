@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_mbuf.c,v 1.24 1998/02/10 14:09:50 mrg Exp $	*/
+/*	$NetBSD: uipc_mbuf.c,v 1.25 1998/02/12 20:39:46 kleink Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1991, 1993
@@ -472,7 +472,7 @@ m_adj(mp, req_len)
 {
 	register int len = req_len;
 	register struct mbuf *m;
-	register count;
+	register int count;
 
 	if ((m = mp) == NULL)
 		return;

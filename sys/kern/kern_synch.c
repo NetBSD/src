@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_synch.c,v 1.48 1998/02/10 14:09:45 mrg Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.49 1998/02/12 20:39:41 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1991, 1993
@@ -302,7 +302,7 @@ tsleep(ident, priority, wmesg, timo)
 {
 	register struct proc *p = curproc;
 	register struct slpque *qp;
-	register s;
+	register int s;
 	int sig, catch = priority & PCATCH;
 	extern int cold;
 	void endtsleep __P((void *));
@@ -438,7 +438,7 @@ sleep(ident, priority)
 {
 	register struct proc *p = curproc;
 	register struct slpque *qp;
-	register s;
+	register int s;
 	extern int cold;
 
 #ifdef DIAGNOSTIC
