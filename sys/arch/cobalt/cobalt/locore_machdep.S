@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_machdep.S,v 1.2 2000/03/22 21:15:59 soren Exp $	*/
+/*	$NetBSD: locore_machdep.S,v 1.3 2000/03/31 14:51:49 soren Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang.  All rights reserved.
@@ -35,10 +35,6 @@
 	.globl _C_LABEL(eintrcnt)
 	.globl _C_LABEL(intrnames)
 	.globl _C_LABEL(eintrnames)
-
-	/*
-	 * For compatiblity with mips/mips interrupts().
-	 */
 
 _C_LABEL(intrnames):
 	.asciiz	"softclock"

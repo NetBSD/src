@@ -1,4 +1,4 @@
-#	$NetBSD: files.cobalt,v 1.1 2000/03/19 23:07:44 soren Exp $
+#	$NetBSD: files.cobalt,v 1.2 2000/03/31 14:51:51 soren Exp $
 
 maxpartitions 8
 
@@ -52,8 +52,6 @@ file arch/cobalt/pci/pchb.c		pchb
 device pcib
 attach pcib at pci
 file arch/cobalt/pci/pcib.c		pcib
-
-file arch/cobalt/pci/isaintr.c
 
 include "dev/mii/files.mii"
 include "dev/scsipi/files.scsipi"
