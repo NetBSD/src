@@ -1,4 +1,4 @@
-/*	$NetBSD: usb.c,v 1.31 1999/11/20 00:57:09 augustss Exp $	*/
+/*	$NetBSD: usb.c,v 1.32 1999/11/20 01:15:25 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb.c,v 1.20 1999/11/17 22:33:46 n_hibma Exp $	*/
 
 /*
@@ -186,9 +186,8 @@ USB_ATTACH(usb)
 	usbd_status err;
 	int usbrev;
 	
-#if defined(__NetBSD__) || defined(__OpenBSD__)
-	printf("\n");
-#elif defined(__FreeBSD__)
+#if defined(__FreeBSD__)
+	printf("%s", USBDEVNAME(sc->sc_dev));
 	sc->sc_dev = self;
 #endif
 
@@ -200,13 +199,12 @@ USB_ATTACH(usb)
 	sc->sc_port.power = USB_MAX_POWER;
 
 	usbrev = sc->sc_bus->usbrev;
-	printf("%s: USB revision %s", USBDEVNAME(sc->sc_dev),
-	       usbrev_str[usbrev]);
+	printf(": USB revision %s", usbrev_str[usbrev]);
 	if (usbrev != USBREV_1_0 && usbrev != USBREV_1_1) {
 		printf(", not supported\n");
 		USB_ATTACH_ERROR_RETURN;
-	} else
-		printf("\n");
+	}
+	printf("\n");
 
 	err = usbd_new_device(USBDEV(sc->sc_dev), sc->sc_bus, 0, 0, 0,
 		  &sc->sc_port);
