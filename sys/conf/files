@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.661 2004/03/20 03:12:47 jonathan Exp $
+#	$NetBSD: files,v 1.662 2004/03/28 22:43:56 matt Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -16,6 +16,7 @@ devclass tty
 defflag				INSECURE
 defflag				MBUFTRACE
 defflag				KMEMSTATS
+defflag				KCONT
 defflag				KTRACE
 defflag				SYSTRACE
 defparam			MAXUPRC
@@ -1135,10 +1136,9 @@ file	kern/kern_event.c
 file	kern/kern_exec.c
 file	kern/kern_exit.c
 file	kern/kern_fork.c
-file	kern/kern_kcont.c
+file	kern/kern_kcont.c		kcont
 file	kern/kern_kthread.c
 file	kern/kern_ktrace.c
-file	kern/kern_systrace.c		systrace
 file	kern/kern_ksyms.c		ksyms | ddb | lkm needs-flag
 file	kern/kern_lkm.c			lkm
 file	kern/kern_lock.c
@@ -1153,6 +1153,7 @@ file	kern/kern_ras.c
 file	kern/kern_resource.c
 file	kern/kern_sa.c
 file	kern/kern_sig.c
+file	kern/kern_systrace.c		systrace
 file	kern/kern_subr.c
 file	kern/kern_synch.c
 file	kern/kern_sysctl.c
