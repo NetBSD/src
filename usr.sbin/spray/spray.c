@@ -1,4 +1,4 @@
-/*	$NetBSD: spray.c,v 1.4 1996/08/30 20:12:20 thorpej Exp $	*/
+/*	$NetBSD: spray.c,v 1.5 1997/10/17 13:39:12 lukem Exp $	*/
 
 /*
  * Copyright (c) 1993 Winning Strategies, Inc.
@@ -30,6 +30,11 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
+#ifndef lint
+__RCSID("$NetBSD: spray.c,v 1.5 1997/10/17 13:39:12 lukem Exp $");
+#endif
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -41,8 +46,9 @@
 #define SPRAYOVERHEAD	86
 #endif
 
-void usage ();
-void print_xferstats ();
+int	main __P((int, char **));
+void	print_xferstats __P((int, int, double));
+void	usage __P((void));
 
 /* spray buffer */
 char spray_buffer[SPRAYMAX];

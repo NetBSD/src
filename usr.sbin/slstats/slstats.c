@@ -1,4 +1,4 @@
-/*	$NetBSD: slstats.c,v 1.8 1996/12/08 13:54:42 mycroft Exp $	*/
+/*	$NetBSD: slstats.c,v 1.9 1997/10/17 13:38:08 lukem Exp $	*/
 
 /*
  * print serial line IP statistics:
@@ -23,8 +23,9 @@
  *	- Initial distribution.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
-static char rcsid[] = "$NetBSD: slstats.c,v 1.8 1996/12/08 13:54:42 mycroft Exp $";
+__RCSID("$NetBSD: slstats.c,v 1.9 1997/10/17 13:38:08 lukem Exp $");
 #endif
 
 #define INET
@@ -50,17 +51,18 @@ static char rcsid[] = "$NetBSD: slstats.c,v 1.8 1996/12/08 13:54:42 mycroft Exp 
 #include <fcntl.h>
 #include <kvm.h>
 #include <limits.h>
+#include <nlist.h>
+#include <paths.h>
 #include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <paths.h>
-#include <nlist.h>
+#include <string.h>
 #include <unistd.h>
 
 struct nlist nl[] = {
 #define N_SOFTC 0
 	{ "_sl_softc" },
-	"",
+	{ "" },
 };
 
 extern	char *__progname;	/* from crt0.o */
@@ -74,8 +76,9 @@ int	vflag;
 unsigned interval = 5;
 int	unit;
 
-void	catchalarm __P((void));
+void	catchalarm __P((int));
 void	intpr __P((void));
+int	main __P((int, char **));
 void	usage __P((void));
 
 int
@@ -184,7 +187,7 @@ intpr()
 		if (kvm_read(kd, addr, (char *)sc, AMT) != AMT)
 			errx(1, "kvm_read: %s", kvm_geterr(kd));
 
-		(void)signal(SIGALRM, (void (*)())catchalarm);
+		(void)signal(SIGALRM, catchalarm);
 		signalled = 0;
 		(void)alarm(interval);
 
@@ -199,20 +202,20 @@ intpr()
 				printf(" %6.6s %6.6s", "SEARCH", "MISS");
 			putchar('\n');
 		}
-		printf("%8u %6d %6u %6u %6u",
+		printf("%8lu %6ld %6u %6u %6u",
 			V(sc_if.if_ibytes),
-			V(sc_if.if_ipackets),
+			(long)V(sc_if.if_ipackets),
 			V(sc_comp.sls_compressedin),
 			V(sc_comp.sls_uncompressedin),
 			V(sc_comp.sls_errorin));
 		if (vflag)
-			printf(" %6u %6u",
+			printf(" %6u %6lu",
 				V(sc_comp.sls_tossed),
 				V(sc_if.if_ipackets) -
 				  V(sc_comp.sls_compressedin) -
 				  V(sc_comp.sls_uncompressedin) -
 				  V(sc_comp.sls_errorin));
-		printf(" | %8u %6d %6u %6u %6u",
+		printf(" | %8lu %6ld %6u %6u %6lu",
 			V(sc_if.if_obytes),
 			V(sc_if.if_opackets),
 			V(sc_comp.sls_compressed),
@@ -242,7 +245,8 @@ intpr()
  * Sets a flag to not wait for the alarm.
  */
 void
-catchalarm()
+catchalarm(dummy)
+	int dummy;
 {
 	signalled = 1;
 }
