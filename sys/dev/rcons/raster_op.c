@@ -1,4 +1,4 @@
-/*	$NetBSD: raster_op.c,v 1.2 1995/11/24 23:50:54 cgd Exp $ */
+/*	$NetBSD: raster_op.c,v 1.3 1995/11/29 22:12:58 pk Exp $ */
 
 /*-
  * Copyright (c) 1991, 1993
@@ -446,6 +446,9 @@ static u_int32_t rightmask[32] = {
     0x000fffff, 0x001fffff, 0x003fffff, 0x007fffff,
     0x00ffffff, 0x01ffffff, 0x03ffffff, 0x07ffffff,
     0x0fffffff, 0x1fffffff, 0x3fffffff, 0x7fffffff };
+
+#define LSOP <<
+#define RSOP >>
 #endif /*MSBYTE_FIRST*/
 
 #else /*MSBIT_FIRST*/
@@ -479,6 +482,8 @@ static u_int32_t rightmask[32] = {
     0xfffff000, 0xfffff800, 0xfffffc00, 0xfffffe00,
     0xffffff00, 0xffffff80, 0xffffffc0, 0xffffffe0,
     0xfffffff0, 0xfffffff8, 0xfffffffc, 0xfffffffe };
+#define LSOP >>
+#define RSOP <<
 #endif /*not MSBYTE_FIRST*/
 
 #endif /*MSBIT_FIRST*/
@@ -1171,7 +1176,7 @@ raster_blit( src, srclin1, srcleftignore, srcrightignore, srclongs, dst, dstlin1
 		    ROP_SRCDST(
 		    /*op*/  op,
 		    /*pre*/ dl = *dstlin;,
-		    /*s*/   *srclin << prevleftshift,
+		    /*s*/   *srclin LSOP prevleftshift,
 		    /*d*/   dl,
 		    /*pst*/ *dstlin = ( *dstlin & lm ) | ( dl & nlm ); )
 
@@ -1186,7 +1191,7 @@ raster_blit( src, srclin1, srcleftignore, srcrightignore, srclongs, dst, dstlin1
 		    ROP_SRCDST(
 		    /*op*/  op,
 		    /*pre*/ dl = *dstlin;,
-		    /*s*/   *srclin >> currrightshift,
+		    /*s*/   *srclin RSOP currrightshift,
 		    /*d*/   dl,
 		    /*pst*/ *dstlin = ( *dstlin & lm ) | ( dl & nlm ); )
 
@@ -1211,7 +1216,7 @@ raster_blit( src, srclin1, srcleftignore, srcrightignore, srclongs, dst, dstlin1
 		    dstlong = dstlin;
 		    dstlong2 = dstlong + dstlongs;
 		    if ( srcleftignore > dstleftignore )
-			prevsl = *srclong++ << prevleftshift;
+			prevsl = *srclong++ LSOP prevleftshift;
 		    else
 			prevsl = 0;
 		    if ( dstrightignore != 0 )
@@ -1224,7 +1229,7 @@ raster_blit( src, srclin1, srcleftignore, srcrightignore, srclongs, dst, dstlin1
 			/*op*/  op,
 			/*pre*/ sl = *srclong;
 				dl = *dstlong;,
-			/*s*/   prevsl | ( sl >> currrightshift ),
+			/*s*/   prevsl | ( sl RSOP currrightshift ),
 			/*d*/   dl,
 			/*pst*/ *dstlong = ( *dstlong & lm ) | ( dl & nlm ); )
 			prevsl = sl << prevleftshift;
@@ -1238,9 +1243,9 @@ raster_blit( src, srclin1, srcleftignore, srcrightignore, srclongs, dst, dstlin1
 		    /*pre*/ while ( dstlong != dstlong2 )
 				{
 				sl = *srclong;,
-		    /*s*/       prevsl | ( sl >> currrightshift ),
+		    /*s*/       prevsl | ( sl RSOP currrightshift ),
 		    /*d*/       *dstlong,
-		    /*pst*/     prevsl = sl << prevleftshift;
+		    /*pst*/     prevsl = sl LSOP prevleftshift;
 				++srclong;
 				++dstlong;
 				} )
@@ -1251,7 +1256,7 @@ raster_blit( src, srclin1, srcleftignore, srcrightignore, srclongs, dst, dstlin1
 			ROP_SRCDST(
 			/*op*/  op,
 			/*pre*/ dl = *dstlong;,
-			/*s*/   prevsl | ( *srclong >> currrightshift ),
+			/*s*/   prevsl | ( *srclong RSOP currrightshift ),
 			/*d*/   dl,
 			/*pst*/ *dstlong = ( dl & nrm ) | ( *dstlong & rm ); )
 			}
@@ -1269,7 +1274,7 @@ raster_blit( src, srclin1, srcleftignore, srcrightignore, srclongs, dst, dstlin1
 		    dstlong = dstlin;
 		    dstlong2 = dstlong - dstlongs;
 		    if ( srcrightignore > dstrightignore )
-			prevsl = *srclong-- >> currrightshift;
+			prevsl = *srclong-- RSOP currrightshift;
 		    else
 			prevsl = 0;
 		    if ( dstleftignore != 0 )
@@ -1282,10 +1287,10 @@ raster_blit( src, srclin1, srcleftignore, srcrightignore, srclongs, dst, dstlin1
 			/*op*/  op,
 			/*pre*/ sl = *srclong;
 				dl = *dstlong;,
-			/*s*/   prevsl | ( sl << prevleftshift ),
+			/*s*/   prevsl | ( sl LSOP prevleftshift ),
 			/*d*/   dl,
 			/*pst*/ *dstlong = ( dl & nrm ) | ( *dstlong & rm ); )
-			prevsl = sl >> currrightshift;
+			prevsl = sl RSOP currrightshift;
 			--srclong;
 			--dstlong;
 			}
@@ -1296,9 +1301,9 @@ raster_blit( src, srclin1, srcleftignore, srcrightignore, srclongs, dst, dstlin1
 		    /*pre*/ while ( dstlong != dstlong2 )
 				{
 				sl = *srclong;,
-		    /*s*/       prevsl | ( sl << prevleftshift ),
+		    /*s*/       prevsl | ( sl LSOP prevleftshift ),
 		    /*d*/       *dstlong,
-		    /*pst*/     prevsl = sl >> currrightshift;
+		    /*pst*/     prevsl = sl RSOP currrightshift;
 				--srclong;
 				--dstlong;
 				} )
@@ -1309,7 +1314,7 @@ raster_blit( src, srclin1, srcleftignore, srcrightignore, srclongs, dst, dstlin1
 			ROP_SRCDST(
 			/*op*/  op,
 			/*pre*/ dl = *dstlong;,
-			/*s*/   prevsl | ( *srclong << prevleftshift ),
+			/*s*/   prevsl | ( *srclong LSOP prevleftshift ),
 			/*d*/   dl,
 			/*pst*/ *dstlong = ( *dstlong & lm ) | ( dl & nlm ); )
 			}
