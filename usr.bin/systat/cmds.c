@@ -1,4 +1,4 @@
-/*	$NetBSD: cmds.c,v 1.19 2000/01/10 21:06:15 itojun Exp $	*/
+/*	$NetBSD: cmds.c,v 1.20 2000/04/11 01:01:26 jwise Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1992, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)cmds.c	8.2 (Berkeley) 4/29/95";
 #endif
-__RCSID("$NetBSD: cmds.c,v 1.19 2000/01/10 21:06:15 itojun Exp $");
+__RCSID("$NetBSD: cmds.c,v 1.20 2000/04/11 01:01:26 jwise Exp $");
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -69,7 +69,7 @@ command(cmd)
 
 	if (curmode->c_commands) {
 		for (c = curmode->c_commands; c->c_name; c++) {
-			if (strcmp(cmd, c->c_name) == 0) {
+			if (strstr(c->c_name, cmd) == c->c_name) {
 				(c->c_cmd)(args);
 				goto done;
 			}
@@ -77,14 +77,14 @@ command(cmd)
 	}
 
 	for (c = global_commands; c->c_name; c++) {
-		if (strcmp(cmd, c->c_name) == 0) {
+		if (strstr(c->c_name, cmd) == c->c_name) {
 			(c->c_cmd)(args);
 			goto done;
 		}
 	}
 
 	for (p = modes; p->c_name; p++) {
-		if (strcmp(cmd, p->c_name) == 0) {
+		if (strstr(p->c_name, cmd) == p->c_name) {
 			switch_mode(p);
 			goto done;
 		}
