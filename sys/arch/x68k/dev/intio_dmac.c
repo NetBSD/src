@@ -1,4 +1,4 @@
-/*	$NetBSD: intio_dmac.c,v 1.17 2002/10/02 16:02:40 thorpej Exp $	*/
+/*	$NetBSD: intio_dmac.c,v 1.18 2002/10/13 10:00:47 isaki Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -361,12 +361,6 @@ dmac_prepare_xfer (chan, dmat, dmamap, dir, scr, dar)
 static struct dmac_channel_stat *debugchan = 0;
 #endif
 
-#ifdef DMAC_DEBUG
-static u_int8_t dcsr, dcer, ddcr, docr, dscr, dccr, dcpr, dgcr,
-  dnivr, deivr, ddfcr, dmfcr, dbfcr;
-static u_int16_t dmtcr, dbtcr;
-static u_int32_t ddar, dmar, dbar;
-#endif
 /*
  * Do the actual transfer.
  */
@@ -462,26 +456,7 @@ dmac_start_xfer_offset(self, xf, offset, size)
 
 	/* START!! */
 	DDUMPREGS (3, ("first start\n"));
-#ifdef DMAC_DEBUG
-	dcsr = bus_space_read_1(sc->sc_bst, chan->ch_bht, DMAC_REG_CSR);
-	dcer = bus_space_read_1(sc->sc_bst, chan->ch_bht, DMAC_REG_CER);
-	ddcr = bus_space_read_1(sc->sc_bst, chan->ch_bht, DMAC_REG_DCR);
-	docr = bus_space_read_1(sc->sc_bst, chan->ch_bht, DMAC_REG_OCR);
-	dscr = bus_space_read_1(sc->sc_bst, chan->ch_bht, DMAC_REG_SCR);
-	dccr = bus_space_read_1(sc->sc_bst, chan->ch_bht, DMAC_REG_CCR);
-	dcpr = bus_space_read_1(sc->sc_bst, chan->ch_bht, DMAC_REG_CPR);
-	dgcr = bus_space_read_1(sc->sc_bst, chan->ch_bht, DMAC_REG_GCR);
-	dnivr = bus_space_read_1(sc->sc_bst, chan->ch_bht, DMAC_REG_NIVR);
-	deivr = bus_space_read_1(sc->sc_bst, chan->ch_bht, DMAC_REG_EIVR);
-	ddfcr = bus_space_read_1(sc->sc_bst, chan->ch_bht, DMAC_REG_DFCR);
-	dmfcr = bus_space_read_1(sc->sc_bst, chan->ch_bht, DMAC_REG_MFCR);
-	dbfcr = bus_space_read_1(sc->sc_bst, chan->ch_bht, DMAC_REG_BFCR);
-	dmtcr = bus_space_read_2(sc->sc_bst, chan->ch_bht, DMAC_REG_MTCR);
-	dbtcr = bus_space_read_2(sc->sc_bst, chan->ch_bht, DMAC_REG_BTCR);
-	ddar = bus_space_read_4(sc->sc_bst, chan->ch_bht, DMAC_REG_DAR);
-	dmar = bus_space_read_4(sc->sc_bst, chan->ch_bht, DMAC_REG_MAR);
-	dbar = bus_space_read_4(sc->sc_bst, chan->ch_bht, DMAC_REG_BAR);
-#endif
+
 #ifdef DMAC_ARRAYCHAIN
 #if defined(M68040) || defined(M68060)
 	/* flush data cache for the map */
@@ -596,23 +571,10 @@ dmac_error(arg)
 	printf ("DMAC transfer error CSR=%02x, CER=%02x\n",
 		bus_space_read_1(sc->sc_bst, chan->ch_bht, DMAC_REG_CSR),
 		bus_space_read_1(sc->sc_bst, chan->ch_bht, DMAC_REG_CER));
-	DPRINTF(5, ("registers were:\n"));
-#ifdef DMAC_DEBUG
-	if ((dmacdebug & 0x0f) > 5) {
-		printf ("CSR=%02x, CER=%02x, DCR=%02x, OCR=%02x, SCR=%02x, "
-			"CCR=%02x, CPR=%02x, GCR=%02x\n",
-			dcsr, dcer, ddcr, docr, dscr, dccr, dcpr, dgcr);
-		printf ("NIVR=%02x, EIVR=%02x, MTCR=%04x, BTCR=%04x, "
-			"DFCR=%02x, MFCR=%02x, BFCR=%02x\n",
-			dnivr, deivr, dmtcr, dbtcr, ddfcr, dmfcr, dbfcr);
-		printf ("DAR=%08x, MAR=%08x, BAR=%08x\n",
-			ddar, dmar, dbar);
-	}
-#endif
+	DDUMPREGS(3, ("registers were:\n"));
 
 	/* Clear the status bits */
 	bus_space_write_1(sc->sc_bst, chan->ch_bht, DMAC_REG_CSR, 0xff);
-	DDUMPREGS(3, ("dmac_error\n"));
 
 #ifdef DMAC_ARRAYCHAIN
 	chan->ch_xfer.dx_done = 0;
@@ -649,7 +611,7 @@ dmac_dump_regs(void)
 	sc = (void*) chan->ch_softc;
 
 	printf ("DMAC channel %d registers\n", chan->ch_channel);
-	printf ("CSR=%02x, CER=%02x, DCR=%02x, OCR=%02x, SCR=%02x,"
+	printf ("CSR=%02x, CER=%02x, DCR=%02x, OCR=%02x, SCR=%02x, "
 		"CCR=%02x, CPR=%02x, GCR=%02x\n",
 		bus_space_read_1(sc->sc_bst, chan->ch_bht, DMAC_REG_CSR),
 		bus_space_read_1(sc->sc_bst, chan->ch_bht, DMAC_REG_CER),
@@ -659,7 +621,7 @@ dmac_dump_regs(void)
 		bus_space_read_1(sc->sc_bst, chan->ch_bht, DMAC_REG_CCR),
 		bus_space_read_1(sc->sc_bst, chan->ch_bht, DMAC_REG_CPR),
 		bus_space_read_1(sc->sc_bst, chan->ch_bht, DMAC_REG_GCR));
-	printf ("NIVR=%02x, EIVR=%02x, MTCR=%04x, BTCR=%04x, DFCR=%02x,"
+	printf ("NIVR=%02x, EIVR=%02x, MTCR=%04x, BTCR=%04x, DFCR=%02x, "
 		"MFCR=%02x, BFCR=%02x\n",
 		bus_space_read_1(sc->sc_bst, chan->ch_bht, DMAC_REG_NIVR),
 		bus_space_read_1(sc->sc_bst, chan->ch_bht, DMAC_REG_EIVR),
