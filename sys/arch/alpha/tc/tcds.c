@@ -1,4 +1,4 @@
-/*	$NetBSD: tcds.c,v 1.9 1996/04/12 06:10:12 cgd Exp $	*/
+/*	$NetBSD: tcds.c,v 1.9.4.1 1996/06/05 00:39:09 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -34,6 +34,9 @@
 
 #include <machine/pte.h>
 #include <machine/rpb.h>
+#ifndef EVCNT_COUNTERS
+#include <machine/intrcnt.h>
+#endif
 
 #include <dev/tc/tcreg.h>
 #include <dev/tc/tcvar.h>
@@ -355,8 +358,16 @@ tcds_intr(val)
 	tc_syncbus();
 	wbflush();
 
+#ifdef EVCNT_COUNTERS
+	/* No interrupt counting via evcnt counters */ 
+	XXX BREAK HERE XXX
+#else
+#define	INCRINTRCNT(slot)	intrcnt[INTRCNT_TCDS + slot]++
+#endif
+
 #define	CHECKINTR(slot)							\
 	if (ir & sc->sc_slots[slot].sc_intrbits) {			\
+		INCRINTRCNT(slot);					\
 		(void)(*sc->sc_slots[slot].sc_intrhand)			\
 		    (sc->sc_slots[slot].sc_intrarg);			\
 	}
