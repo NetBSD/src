@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.31 1997/01/11 11:00:41 matthias Exp $	*/
+/*	$NetBSD: conf.c,v 1.32 1997/03/18 01:41:40 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -120,6 +120,8 @@ cdev_decl(tun);
 cdev_decl(lpt);
 #include "ipfilter.h"
 cdev_decl(ipl);
+#include "se.h"
+cdev_decl(se);
 
 struct cdevsw	cdevsw[] =
 {
@@ -145,7 +147,7 @@ struct cdevsw	cdevsw[] =
 	cdev_scanner_init(NSS,ss),	/* 19: SCSI scanner */
 	cdev_uk_init(NUK,uk),		/* 20: SCSI unknown */
 	cdev_lkm_init(NLKM,lkm),	/* 21: loadable module driver */
-	cdev_lkm_dummy(),		/* 22 */
+	cdev_se_init(NSE, se),		/* 22: SCSI ethernet */
 	cdev_lkm_dummy(),		/* 23 */
 	cdev_lkm_dummy(),		/* 24 */
 	cdev_lkm_dummy(),		/* 25 */
