@@ -1,4 +1,4 @@
-/*	$NetBSD: mdreloc.c,v 1.5 1999/02/27 11:36:02 pk Exp $	*/
+/*	$NetBSD: mdreloc.c,v 1.6 1999/02/27 17:12:13 pk Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -297,16 +297,22 @@ _rtld_relocate_plt_object(
 	 * a direct transfer to the now fully resolved function
 	 * address.  The resulting code in the jump slot is:
 	 *
+	 *	sethi	%hi(roffset), %g1
 	 *	sethi	%hi(addr), %g1
 	 *	jmp	%g1+%lo(addr)
-	 *	nop	! delay slot
+	 *
+	 * We write the third instruction first, since that leaves the
+	 * previous `b,a' at the second word in place. Hence the whole
+	 * PLT slot can be atomically change to the new sequence by
+	 * writing the `sethi' instruction at word 2.
 	 */
 #define SETHI	0x03000000
 #define JMP	0x81c06000
 #define NOP	0x01000000
-	where[0] = SETHI | ((value >> 10) & 0x003fffff);
-	where[1] = JMP   | (value & 0x000003ff);
-	where[2] = NOP;
+	where[2] = JMP   | (value & 0x000003ff);
+	where[1] = SETHI | ((value >> 10) & 0x003fffff);
+	__asm __volatile("iflush %0+8" : : "r" (where));
+	__asm __volatile("iflush %0+4" : : "r" (where));
 
 	if (addrp != NULL)
 		*addrp = (caddr_t)value;
