@@ -1,4 +1,4 @@
-.\"	$NetBSD: stdarg.3,v 1.7 2000/02/04 14:21:07 kleink Exp $
+.\"	$NetBSD: stdarg.3,v 1.8 2001/04/14 17:14:50 kleink Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -37,7 +37,7 @@
 .\"
 .\"	@(#)stdarg.3	8.1 (Berkeley) 6/5/93
 .\"
-.Dd January 18, 2000
+.Dd April 14, 2001
 .Dt STDARG 3
 .Os
 .Sh NAME
@@ -204,10 +204,23 @@ void foo(char *fmt, ...)
 The
 .Fn va_start ,
 .Fn va_arg ,
+.Fn va_copy ,
 and
 .Fn va_end
 macros conform to
-.St -ansiC .
+.St -isoC99 .
+.Sh HISTORY
+The
+.Fn va_start ,
+.Fn va_arg
+and
+.Fn va_end
+macros were introduced in
+.St -isoC90 .
+The
+.Fn va_copy
+macro was introduced in
+.St -isoC99 .
 .Sh COMPATIBILITY
 These macros are
 .Em not
