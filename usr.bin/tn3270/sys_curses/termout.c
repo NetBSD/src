@@ -33,7 +33,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)termout.c	4.3 (Berkeley) 4/26/91";*/
-static char rcsid[] = "$Id: termout.c,v 1.2 1993/08/01 18:05:18 mycroft Exp $";
+static char rcsid[] = "$Id: termout.c,v 1.3 1994/02/25 03:40:25 cgd Exp $";
 #endif /* not lint */
 
 #if defined(unix)
@@ -66,7 +66,7 @@ static char rcsid[] = "$Id: termout.c,v 1.2 1993/08/01 18:05:18 mycroft Exp $";
 
 #include "../general/globals.h"
 
-#include "../telextrn.h"
+#include "telextrn.h"
 
 #define CorrectTerminalCursor() ((TransparentClock == OutputClock)? \
 		CursorAddress:UnLocked? CursorAddress: HighestScreen())
