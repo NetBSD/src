@@ -1,4 +1,4 @@
-.\"     $NetBSD: skey.3,v 1.3 2002/02/07 07:00:51 ross Exp $
+.\"     $NetBSD: skey.3,v 1.4 2002/10/01 19:31:05 wiz Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -127,42 +127,45 @@ Return a S/Key challenge for user
 .Fa name .
 If successful, the caller's skey structure
 .Fa mp
-is filled and 0 is returned.  If unsuccessful (e.g. if name is unknown),
+is filled and 0 is returned.
+If unsuccessful (e.g. if name is unknown),
 -1 is returned.
 .It Fn skeylookup "mp" "name"
 Find an entry for user
 .Fa name
-in the one-time password database.  Returns 0 if the entry is found
-and 1 if the entry is not found.  If an error occurs accessing the
-database, -1 is returned.
+in the one-time password database.
+Returns 0 if the entry is found and 1 if the entry is not found.
+If an error occurs accessing the database, -1 is returned.
 .It Fn skeygetnext "mp"
-Get the next entry in the one-time password database.  Returns 0 on
-success and the entry is stored in
+Get the next entry in the one-time password database.
+Returns 0 on success and the entry is stored in
 .Ar mp
-and 1 if no more entries are available.  If an error occurs accessing
-the database, -1 is returned.
+and 1 if no more entries are available.
+If an error occurs accessing the database, -1 is returned.
 .It Fn skeyverify "mp" "response"
 Verify response
 .Fa response
-to a S/Key challenge.  Returns 0 if the verification is successful and
-1 if the verification failed.  If an error occurs accessing the
-database, -1 is returned.
+to a S/Key challenge.
+Returns 0 if the verification is successful and 1 if the verification failed.
+If an error occurs accessing the database, -1 is returned.
 .It Fn skeyzero "mp" "response"
-Comment out user's entry in the S/Key database.  Returns 0 on success
-and the database is updated, otherwise -1 is returned and the database
-remains unchanged.
+Comment out user's entry in the S/Key database.
+Returns 0 on success and the database is updated,
+otherwise -1 is returned and the database remains unchanged.
 .It Fn getskeyprompt "mp" "name" "prompt"
 Issue a S/Key challenge for user
 .Ar name .
 If successful, fill in the caller's skey structure
 .Fa mp
-and return 0.  If unsuccessful (e.g. if name is unknown) -1 is returned.
+and return 0.
+If unsuccessful (e.g. if name is unknown) -1 is returned.
 .El
 .Pp
 The following lower-level functions are available:
 .Bl -tag -width compact
 .It Fn skey_set_algorithm "new"
-Set hash algorithm type.  Valid values for
+Set hash algorithm type.
+Valid values for
 .Fa new
 are "md4", "md5" and "sha1".
 .It Fn skey_get_algorithm "void"
@@ -170,7 +173,8 @@ Get current hash type.
 .It Fn skey_haskey "username"
 Returns 0 if the user
 .Fa username
-exists and 1 if the user doesn't exist.  Returns -1 on file error.
+exists and 1 if the user doesn't exist.
+Returns -1 on file error.
 .It Fn skey_keyinfo "username"
 Returns the current sequence number and seed for user
 .Ar username .
@@ -178,7 +182,8 @@ Returns the current sequence number and seed for user
 Check to see if answer is the correct one to the current challenge.
 .It Fn skey_authenticate "username"
 Used when calling program will allow input of the user's repsonse to
-the challenge.  Returns zero on success or -1 on failure.
+the challenge.
+Returns zero on success or -1 on failure.
 .El
 .Pp
 The following miscellaneous functions are available:
@@ -223,13 +228,14 @@ is all seven bits.
 .It Fn btoe "engout" "c"
 Encode 8 bytes in
 .Ar c
-as a string of English words.  Returns a pointer to a static buffer in
+as a string of English words.
+Returns a pointer to a static buffer in
 .Fa engout .
 .It Fn etob "out" "e"
-Convert English to binary.  Returns 0 if the word is not in the
-database, 1 if all good words and parity is valid, -1 if badly formed
-input (i.e. \*[Gt] 4 char word) and -2 if words are valid but parity is
-wrong.
+Convert English to binary.
+Returns 0 if the word is not in the database, 1 if all good words and
+parity is valid, -1 if badly formed input (i.e. \*[Gt] 4 char word)
+and -2 if words are valid but parity is wrong.
 .It Fn put8 "out" "s"
 Display 8 bytes
 .Fa s
@@ -255,5 +261,4 @@ library functions are not re-entrant or thread-safe.
 .Pp
 The
 .Nm
-library defines many poorly named functions which pollute the name
-space.
+library defines many poorly named functions which pollute the name space.

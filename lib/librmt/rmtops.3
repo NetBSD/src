@@ -1,4 +1,4 @@
-.\"	$NetBSD: rmtops.3,v 1.6 2002/02/07 07:00:51 ross Exp $
+.\"	$NetBSD: rmtops.3,v 1.7 2002/10/01 19:28:21 wiz Exp $
 .\"
 .Dd October 16, 2001
 .Os
@@ -106,8 +106,8 @@ This allows the programmer to use
 .Xr write 2 ,
 etc. in their normal fashion, with the
 .Nm
-routines taking care of differentiating between local and remote
-files.  This file should be included
+routines taking care of differentiating between local and remote files.
+This file should be included
 .Em before
 including the file
 .Pa \*[Lt]sys/stat.h\*[Gt] ,
@@ -179,6 +179,6 @@ short of recompiling it entirely to use these routines.
 .Pp
 The
 .Xr rmt 8
-protocol is not very capable.  In particular, it relies on TCP/IP
-sockets for error free transmission, and does no data validation of
-its own.
+protocol is not very capable.
+In particular, it relies on TCP/IP sockets for error
+free transmission, and does no data validation of its own.
