@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$NetBSD: install.sub,v 1.42 2002/05/23 02:57:08 nathanw Exp $
+#	$NetBSD: install.sub,v 1.43 2002/06/12 09:10:02 bouyer Exp $
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -518,6 +518,9 @@ enable_network() {
 if [ -f /mnt/etc/rc.conf ]; then
 (
 	# assume network interface configuration style 1.2D and up
+	if [ -f /mnt/etc/defaults/rc.conf ]; then
+		. /mnt/etc/defaults/rc.conf
+	fi
 	. /mnt/etc/rc.conf
 
 	if [ "$net_interfaces" != NO ]; then
