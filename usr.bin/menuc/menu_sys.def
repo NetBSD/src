@@ -1,4 +1,4 @@
-/*	$NetBSD: menu_sys.def,v 1.25 2001/01/07 06:09:20 phil Exp $	*/
+/*	$NetBSD: menu_sys.def,v 1.26 2001/11/17 01:12:47 perry Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -312,7 +312,13 @@ init_menu (struct menudesc *m)
 		(void) fprintf (stderr,
 			"Could not create window for menu \"%s\"\n", m->title);
 		exit(1);
-	} 
+	}
+
+	/* XXX is it even worth doing this right? */
+	if (has_colors()) {
+		wbkgd(m->mw, COLOR_PAIR(1));
+		wattrset(m->mw, COLOR_PAIR(1));
+	}
 }
 
 static char
@@ -406,7 +412,7 @@ post_menu (struct menudesc *m)
 
 	/* Add the box. */
 	if (!(m->mopt & MC_NOBOX))
-		box(m->mw, '*', '*');
+		box(m->mw, 0, 0);
 
 	wmove(m->mw, selrow, hasbox);
 }
@@ -611,6 +617,15 @@ menu_init (void)
 
 	cbreak();
 	noecho();
+
+	/* XXX Should be configurable but it almost isn't worth it. */
+	if (has_colors()) {
+		start_color();
+		init_pair(1, COLOR_WHITE, COLOR_BLUE);
+		bkgd(COLOR_PAIR(1));
+		attrset(COLOR_PAIR(1));
+	}
+
 	max_lines = getmaxy(stdscr);
 	max_cols = getmaxx(stdscr);
 	init_keyseq();
