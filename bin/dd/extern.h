@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.12 2001/11/25 10:50:06 lukem Exp $	*/
+/*	$NetBSD: extern.h,v 1.13 2001/11/26 00:13:24 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -59,8 +59,8 @@ ssize_t bwrite(int, const void *, size_t);
 extern IO		in, out;
 extern STAT		st;
 extern void		(*cfunc)(void);
-extern u_longlong_t	cpy_cnt;
-extern u_longlong_t	cbsz;
+extern uint64_t		cpy_cnt;
+extern uint64_t		cbsz;
 extern u_int		ddflags;
 extern u_int		files_cnt;
 extern int		progress;

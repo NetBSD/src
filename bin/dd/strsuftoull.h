@@ -1,7 +1,6 @@
-/*	$NetBSD: strsuftoull.h,v 1.1 2001/11/25 10:50:06 lukem Exp $	*/
+/*	$NetBSD: strsuftoull.h,v 1.2 2001/11/26 00:13:24 lukem Exp $	*/
 
-u_longlong_t strsuftoull(const char *, const char *,
-    		u_longlong_t, u_longlong_t);
+uint64_t strsuftoull(const char *, const char *, uint64_t, uint64_t);
 
-u_longlong_t strsuftoullx(const char *, const char *,
-    		u_longlong_t, u_longlong_t, char *, size_t);
+uint64_t strsuftoullx(const char *, const char *, uint64_t, uint64_t,
+	    char *, size_t);
