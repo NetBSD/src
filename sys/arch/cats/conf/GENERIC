@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.63 2004/06/18 15:04:04 christos Exp $
+# $NetBSD: GENERIC,v 1.64 2004/06/22 14:09:50 itojun Exp $
 #
 # GENERIC machine description file
 # 
@@ -564,3 +564,5 @@ pseudo-device	vcoda		4	# coda minicache <-> venus comm.
 pseudo-device	wsmux
 pseudo-device	wsfont
 pseudo-device	ksyms			# /dev/ksyms
+#pseudo-device	pf			# PF packet filter
+#pseudo-device	pflog			# PF log if
