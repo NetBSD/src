@@ -1,4 +1,4 @@
-#	$NetBSD: SPOT,v 1.21 1997/01/15 01:28:52 perry Exp $
+#	$NetBSD: SPOT,v 1.22 1997/01/20 00:31:42 scottr Exp $
 #
 # SPOT
 
@@ -6,7 +6,7 @@ include "arch/mac68k/conf/std.mac68k"
 
 maxusers	16
 
-makeoptions	COPTS="-m68030 -O"
+makeoptions	COPTS="-O2 -m68030"
 
 # Standard system options
 options 	DIAGNOSTIC		# DEBUG for extra kernel debugging
