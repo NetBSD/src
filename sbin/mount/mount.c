@@ -1,4 +1,4 @@
-/*	$NetBSD: mount.c,v 1.28 1997/05/31 09:27:57 pk Exp $	*/
+/*	$NetBSD: mount.c,v 1.29 1997/07/04 15:17:57 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1989, 1993, 1994
@@ -33,17 +33,17 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
-static char copyright[] =
-"@(#) Copyright (c) 1980, 1989, 1993, 1994\n\
-	The Regents of the University of California.  All rights reserved.\n";
+__COPYRIGHT("@(#) Copyright (c) 1980, 1989, 1993, 1994\n\
+	The Regents of the University of California.  All rights reserved.\n");
 #endif /* not lint */
 
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)mount.c	8.19 (Berkeley) 4/19/94";
 #else
-static char rcsid[] = "$NetBSD: mount.c,v 1.28 1997/05/31 09:27:57 pk Exp $";
+__RCSID("$NetBSD: mount.c,v 1.29 1997/07/04 15:17:57 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -76,6 +76,7 @@ int	mountfs __P((const char *, const char *, const char *,
 			int, const char *, const char *, int));
 void	prmount __P((struct statfs *));
 void	usage __P((void));
+int	main __P((int, char *[]));
 
 /* Map from mount otions to printable formats. */
 static struct opt {
@@ -106,13 +107,12 @@ static struct opt {
 int
 main(argc, argv)
 	int argc;
-	char * const argv[];
+	char *argv[];
 {
 	const char *mntonname, *vfstype;
 	struct fstab *fs;
 	struct statfs *mntbuf;
 	FILE *mountdfp;
-	pid_t pid;
 	int all, ch, forceall, i, init_flags, mntsize, rval;
 	char *options;
 
@@ -244,7 +244,9 @@ main(argc, argv)
 	 */
 	if (rval == 0 && getuid() == 0 &&
 	    (mountdfp = fopen(_PATH_MOUNTDPID, "r")) != NULL) {
-		if (fscanf(mountdfp, "%ld", &pid) == 1 &&
+		int pid;
+
+		if (fscanf(mountdfp, "%d", &pid) == 1 &&
 		     pid > 0 && kill(pid, SIGHUP) == -1 && errno != ESRCH)
 			err(1, "signal mountd");
 		(void)fclose(mountdfp);
@@ -294,6 +296,10 @@ mountfs(vfstype, spec, name, flags, options, mntopts, skipmounted)
 	pid_t pid;
 	int argc, i, status;
 	char *optbuf, execname[MAXPATHLEN + 1], mntpath[MAXPATHLEN];
+#ifdef __GNUC__
+	(void) &name;
+	(void) &optbuf;
+#endif
 
 	if (realpath(name, mntpath) == NULL) {
 		warn("realpath %s", name);
@@ -488,14 +494,14 @@ maketypelist(fslist)
 		which = IN_LIST;
 
 	/* Count the number of types. */
-	for (i = 1, nextcp = fslist; nextcp = strchr(nextcp, ','); i++)
+	for (i = 1, nextcp = fslist; (nextcp = strchr(nextcp, ',')) != NULL; i++)
 		++nextcp;
 
 	/* Build an array of that many types. */
 	if ((av = typelist = malloc((i + 1) * sizeof(char *))) == NULL)
-		err(1, NULL);
+		err(1, "%s", "");
 	av[0] = fslist;
-	for (i = 1, nextcp = fslist; nextcp = strchr(nextcp, ','); i++) {
+	for (i = 1, nextcp = fslist; (nextcp = strchr(nextcp, ',')) != NULL; i++) {
 		*nextcp = '\0';
 		av[i] = ++nextcp;
 	}
@@ -514,7 +520,7 @@ catopt(s0, s1)
 	if (s0 && *s0) {
 		i = strlen(s0) + strlen(s1) + 1 + 1;
 		if ((cp = malloc(i)) == NULL)
-			err(1, NULL);
+			err(1, "%s", "");
 		(void)snprintf(cp, i, "%s,%s", s0, s1);
 	} else
 		cp = strdup(s1);
