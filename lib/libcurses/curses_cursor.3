@@ -1,4 +1,4 @@
-.\"	$NetBSD: curses_cursor.3,v 1.4 2004/03/16 19:23:06 snj Exp $
+.\"	$NetBSD: curses_cursor.3,v 1.5 2004/07/23 13:38:48 wiz Exp $
 .\"
 .\" Copyright (c) 2002
 .\"	Brett Lymn (blymn@NetBSD.org, brett_lymn@yahoo.com.au)
@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"
-.Dd August 12, 2002
+.Dd July 23, 2004
 .Dt CURSES 3
 .Os
 .Sh NAME
@@ -197,6 +197,13 @@ The
 .Nx
 Curses library complies with the X/Open Curses specification, part of
 the Single Unix Specification.
+The
+.Fn getbegx ,
+.Fn getbegy ,
+.Fn getmaxx ,
+and
+.Fn getmaxy
+functions are extensions.
 .Sh HISTORY
 The Curses package appeared in
 .Bx 4.0 .
