@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_object.h,v 1.15 2002/05/15 06:57:50 matt Exp $	*/
+/*	$NetBSD: uvm_object.h,v 1.16 2002/06/20 15:05:29 chs Exp $	*/
 
 /*
  *
@@ -84,6 +84,8 @@ extern struct uvm_pagerops aobj_pager;
 	((uobj)->pgops == &uvm_vnodeops &&				\
 	 ((struct vnode *)uobj)->v_flag & VEXECMAP)
 
+#define	UVM_OBJ_IS_AOBJ(uobj)						\
+	((uobj)->pgops == &aobj_pager)
 
 #endif /* _KERNEL */
 
