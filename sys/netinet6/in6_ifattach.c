@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_ifattach.c,v 1.59 2004/02/11 17:36:33 christos Exp $	*/
+/*	$NetBSD: in6_ifattach.c,v 1.60 2004/02/11 20:51:24 itojun Exp $	*/
 /*	$KAME: in6_ifattach.c,v 1.124 2001/07/18 08:32:51 jinmei Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6_ifattach.c,v 1.59 2004/02/11 17:36:33 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6_ifattach.c,v 1.60 2004/02/11 20:51:24 itojun Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -579,9 +579,7 @@ in6_ifattach(ifp, altifp)
 
 	/* some of the interfaces are inherently not IPv6 capable */
 	switch (ifp->if_type) {
-#ifdef IFT_BRIDGE
 	case IFT_BRIDGE:
-#endif
 #ifdef IFT_PFLOG
 	case IFT_PFLOG:
 #endif
