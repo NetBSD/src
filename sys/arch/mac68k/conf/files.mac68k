@@ -1,4 +1,4 @@
-#	$NetBSD: files.mac68k,v 1.88.2.7 1999/11/01 06:19:09 scottr Exp $
+#	$NetBSD: files.mac68k,v 1.88.2.8 1999/11/15 23:31:13 scottr Exp $
 
 # mac68k-specific configuration info
 
@@ -132,6 +132,9 @@ file	arch/mac68k/mac68k/fpu.c	fpu
 file	arch/m68k/m68k/db_memrw.c	ddb | kgdb
 include "arch/m68k/fpe/files.fpe"
 
+# legitimate pseudo-devices
+defpseudo grf
+
 file	arch/mac68k/mac68k/autoconf.c
 file	arch/mac68k/mac68k/bus_space.c
 file	arch/mac68k/mac68k/clock.c
@@ -154,6 +157,8 @@ file	arch/mac68k/mac68k/sys_machdep.c
 file	arch/mac68k/mac68k/trap.c
 file	arch/mac68k/mac68k/via.c
 file	arch/mac68k/mac68k/vm_machdep.c
+
+file	arch/mac68k/dev/grf_compat.c		grf needs-flag
 
 file	dev/cons.c
 file	dev/cninit.c

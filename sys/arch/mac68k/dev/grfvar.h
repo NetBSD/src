@@ -1,4 +1,4 @@
-/*	$NetBSD: grfvar.h,v 1.23 1998/12/22 08:47:05 scottr Exp $	*/
+/*	$NetBSD: grfvar.h,v 1.23.2.1 1999/11/15 23:31:15 scottr Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -70,19 +70,9 @@ struct grfbus_softc {
  * State info, per grf instance.
  */
 struct grf_softc {
-	struct	device sc_dev;		/* device glue */
-
-	bus_space_tag_t		sc_tag;
-	bus_space_handle_t	sc_handle;
-
-	int	sc_flags;		/* driver flags */
-	u_long	sc_phys;		/* PA of framebuffer */
-
-	struct	grfmode *sc_grfmode;	/* forwarded ... */
-	nubus_slot	*sc_slot;
-					/* mode-change on/off/mode function */
-	int	(*sc_mode) __P((struct grf_softc *, int, void *));
-					/* find framebuffer physical addr */
+	char sc_xname[15];		/* name of the device */
+	struct macfb_softc *mfb_sc;
+	int sc_isopen;
 };
 
 /*
@@ -95,6 +85,7 @@ struct grfbus_attach_args {
 	struct grfmode	*ga_grfmode;
 	nubus_slot	*ga_slot;
 	bus_addr_t	ga_phys;
+	bus_addr_t	ga_fboff;
 	int		(*ga_mode) __P((struct grf_softc *, int, void *));
 };
 
@@ -116,7 +107,7 @@ typedef	caddr_t (*grf_phys_t) __P((struct grf_softc *gp, vaddr_t addr));
 #define GM_NEWMODE	5
 
 /* minor device interpretation */
-#define GRFUNIT(d)	((d) & 0x7)
+#define GRFUNIT(d)	(minor(d))
 
 /*
  * Nubus image data structure.  This is the equivalent of a PixMap in
@@ -148,16 +139,7 @@ struct image_data {
 #define VID_PAGE_CNT		3
 #define VID_DEV_TYPE		4
 
-int	grfopen __P((dev_t dev, int flag, int mode, struct proc *p));
-int	grfclose __P((dev_t dev, int flag, int mode, struct proc *p));
-int	grfioctl __P((dev_t, int, caddr_t, int, struct proc *p));
-int	grfpoll __P((dev_t dev, int events, struct proc *p));
-int	grfmmap __P((dev_t dev, int off, int prot));
-int	grfon __P((dev_t dev));
-int	grfoff __P((dev_t dev));
-int	grfaddr __P((struct grf_softc *gp, register int off));
-int	grfmap __P((dev_t dev, caddr_t *addrp, struct proc *p));
-int	grfunmap __P((dev_t dev, caddr_t addr, struct proc *p));
+void	grf_attach __P((struct macfb_softc *, int));
 
 void	grf_establish __P((struct grfbus_softc *, nubus_slot *,
 	    int (*)(struct grf_softc *, int, void *)));
