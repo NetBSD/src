@@ -1,4 +1,4 @@
-/*	$NetBSD: ite_subr.c,v 1.3 2003/11/14 16:52:40 tsutsui Exp $	*/
+/*	$NetBSD: ite_subr.c,v 1.4 2005/02/20 13:59:27 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -86,8 +86,7 @@
 #include <hp300/stand/common/itevar.h>
 
 void
-ite_fontinfo(ip)
-	struct ite_data *ip;
+ite_fontinfo(struct ite_data *ip)
 {
 	u_long fontaddr = getword(ip, getword(ip, FONTROM) + FONTADDR);
 
@@ -119,8 +118,7 @@ ite_fontinfo(ip)
 }
 
 void
-ite_fontinit(ip)
-	struct ite_data *ip;
+ite_fontinit(struct ite_data *ip)
 {
 	int bytewidth = (((ip->ftwidth - 1) / 8) + 1);
 	int glyphsize = bytewidth * ip->ftheight;
@@ -147,18 +145,14 @@ ite_fontinit(ip)
  * Display independent versions of the readbyte and writeglyph routines.
  */
 u_char
-ite_readbyte(ip, disp)
-	struct ite_data *ip;
-	int disp;
+ite_readbyte(struct ite_data *ip, int disp)
 {
 
 	return (u_char)*(((u_char *)ip->regbase) + disp);
 }
 
 void
-ite_writeglyph(ip, fbmem, glyphp)
-	struct ite_data *ip;
-	u_char *fbmem, *glyphp;
+ite_writeglyph(struct ite_data *ip, u_char *fbmem, u_char *glyphp)
 {
 	int bn;
 	int l, b;
