@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.0,v 1.1.2.15 2005/03/22 09:36:23 tron Exp $
+#	$NetBSD: CHANGES-3.0,v 1.1.2.16 2005/03/22 15:31:23 tron Exp $
 
 A complete list of changes from the initial NetBSD 3.0 branch on 16 March 2005
 until the 3.0 release:
@@ -215,4 +215,31 @@ usr.sbin/iwictl/iwictl.8			1.4
 
 	Document where to get firmware binaries (pkgsrc!).
 	[hubertf, ticket #45]
+
+lib/libpthread/pthread.h			1.21
+lib/libpthread/pthread_attr.3			1.4
+lib/libpthread/pthread_barrier_init.3		1.6
+lib/libpthread/pthread_cond_init.3		1.5
+lib/libpthread/pthread_cond_wait.3		1.6
+lib/libpthread/pthread_create.3			1.4
+lib/libpthread/pthread_mutex_init.3		1.3
+lib/libpthread/pthread_mutexattr.3		1.4
+lib/libpthread/pthread_rwlock_init.3		1.6
+lib/libpthread/pthread_rwlock_rdlock.3		1.8
+lib/libpthread/pthread_rwlock_wrlock.3		1.6
+lib/libpthread/pthread_schedparam.3		1.4
+
+	Add restrict qualifiers to <pthread.h> function arguments.
+	[kleink, ticket #46]
+
+sys/arch/xen/xen/if_xennet.c			1.15
+
+	In xennet_ioctl, we need a declaration for sc when debugging macros are
+	active.  Reported on current-users by Teemu Rinta-aho.
+	[bouyer, ticket #47]
+
+doc/CHANGES					patch
+
+	Document last month's ext2fs change.
+	[ws, ticket #48]
 
