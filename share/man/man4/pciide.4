@@ -1,4 +1,4 @@
-.\"	$NetBSD: pciide.4,v 1.24 2000/08/02 21:49:41 bouyer Exp $
+.\"	$NetBSD: pciide.4,v 1.25 2000/11/07 06:43:26 lukem Exp $
 .\"
 .\" Copyright (c) 1998 Manuel Bouyer.
 .\"
@@ -33,7 +33,7 @@
 .Dt PCIIDE 4
 .Os
 .Sh NAME
-.Nm PCIIDE
+.Nm pciide
 .Nd PCI IDE disk controllers driver
 .Sh SYNOPSIS
 .Cd "pciide* at pci? dev ? function ? flags 0x0000"
@@ -43,13 +43,13 @@
 .Cd "options PCIIDE_CMD0646U_ENABLEUDMA"
 .Sh DESCRIPTION
 The
-.Nm pciide
+.Nm
 driver supports the PCI IDE controllers as specified in the
 "PCI IDE controller specification, revision 1.0" draft, and provides the core
 functions for the
-.Nm wd
+.Ic wd
 and
-.Nm atapi
+.Ic atapi
 drivers. This driver include specific, enhanced support for the CMD Tech
 PCI0640 controller, and IDE DMA/Ultra-DMA support for the following
 controllers:
@@ -81,7 +81,7 @@ VIA Technologies VT82C586 and VT82C586A IDE Controllers
 Some of these controllers are only available in multifunction PCI chips.
 .Pp
 The 0x0001 flag forces the
-.Nm 
+.Nm
 driver to use DMA when there is no explicit DMA mode setting support for
 the controller but DMA is present. If the BIOS didn't set up the controller
 properly, this can cause a machine hang.

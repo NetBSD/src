@@ -1,4 +1,4 @@
-.\"	$NetBSD: nfssvc.2,v 1.11 2000/04/15 21:14:51 tsarna Exp $
+.\"	$NetBSD: nfssvc.2,v 1.12 2000/11/07 06:43:24 lukem Exp $
 .\"
 .\" Copyright (c) 1989, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -62,7 +62,7 @@ flags.
 On the client side,
 .Fn nfssvc
 is only used for
-.Nm NQNFS .
+.Li NQNFS .
 .Xr mount_nfs 8
 calls
 .Fn nfssvc
@@ -196,7 +196,7 @@ socket into the kernel for servicing by the
 daemons.
 .Sh RETURN VALUES
 Normally
-.Nm nfssvc
+.Nm
 does not return unless the server
 is terminated by a signal when a value of 0 is returned.
 Otherwise, -1 is returned and the global variable
@@ -217,12 +217,12 @@ The caller is not the super-user.
 .Xr nfsiod 8
 .Sh HISTORY
 The
-.Nm nfssvc
+.Nm
 function first appeared in
 .Bx 4.4 .
 .Sh BUGS
 The
-.Nm nfssvc
+.Nm
 system call is designed specifically for the
 .Tn NFS
 support daemons and as such is specific to their requirements.
