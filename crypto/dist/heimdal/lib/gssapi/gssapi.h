@@ -31,7 +31,8 @@
  * SUCH DAMAGE. 
  */
 
-/* $Id: gssapi.h,v 1.5 2001/06/19 22:39:57 assar Exp $ */
+/* $Heimdal: gssapi.h,v 1.21 2001/05/04 13:52:02 assar Exp $
+   $NetBSD: gssapi.h,v 1.6 2002/09/12 13:19:08 joda Exp $ */
 
 #ifndef GSSAPI_H_
 #define GSSAPI_H_
@@ -41,7 +42,11 @@
  */
 #include <stddef.h>
 
-#include <krb5-types.h>
+#include <sys/types.h>
+#include <inttypes.h>
+#include <sys/socket.h>
+typedef socklen_t krb5_socklen_t;
+typedef ssize_t krb5_ssize_t;
 
 /*
  * Now define the three implementation-dependent types.

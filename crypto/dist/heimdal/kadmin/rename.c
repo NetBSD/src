@@ -33,7 +33,8 @@
 
 #include "kadmin_locl.h"
 
-RCSID("$Id: rename.c,v 1.2 2001/05/04 13:09:43 joda Exp $");
+__RCSID("$Heimdal: rename.c,v 1.4 2001/05/04 13:07:03 joda Exp $"
+        "$NetBSD: rename.c,v 1.3 2002/09/12 13:19:00 joda Exp $");
 
 static struct getargs args[] = {
     { "help", 'h', arg_flag, NULL }

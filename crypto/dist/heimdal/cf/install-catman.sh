@@ -1,6 +1,7 @@
 #!/bin/sh
 #
-# $Id: install-catman.sh,v 1.2 2001/09/17 12:32:35 assar Exp $
+# $Heimdal: install-catman.sh,v 1.3 2001/09/29 16:05:38 assar Exp $
+# $NetBSD: install-catman.sh,v 1.3 2002/09/12 13:18:56 joda Exp $
 #
 # install preformatted manual pages
 
@@ -24,7 +25,7 @@ for f in "$@"; do
 		eval "echo $INSTALL_DATA $srcdir/$c $catdir/$base.$suffix"
 		eval "$INSTALL_DATA $srcdir/$c $catdir/$base.$suffix"
 	fi
-	for link in `sed -n -e '/SYNOPSIS/q;s/^\.Nm \([^ ]*\).*/\1/p' $srcdir/$f`; do
+	for link in `sed -n -e '/SYNOPSIS/q;/DESCRIPTION/q;s/^\.Nm \([^ ]*\).*/\1/p' $srcdir/$f`; do
 		if [ "$link" != "$base" ]; then
 			target="$mandir/$link.$section"
 			for cmd in "ln -f $mandir/$base.$section $target" \

@@ -33,7 +33,8 @@
 
 #ifdef HAVE_CONFIG_H
 #include<config.h>
-RCSID("$Id: pam.c,v 1.4 2001/06/19 22:39:56 assar Exp $");
+__RCSID("$Heimdal: pam.c,v 1.28 2002/09/09 15:57:24 joda Exp $"
+        "$NetBSD: pam.c,v 1.5 2002/09/12 13:19:06 joda Exp $");
 #endif
 
 #include <stdio.h>
@@ -128,7 +129,7 @@ pdeb(const char *format, ...)
   if (ctrl_off(KRB4_DEBUG))
     return;
   va_start(args, format);
-  openlog("pam_krb4", LOG_CONS|LOG_PID, LOG_AUTH);
+  openlog("pam_krb4", LOG_PID, LOG_AUTH);
   vsyslog(LOG_DEBUG, format, args);
   va_end(args);
   closelog();
