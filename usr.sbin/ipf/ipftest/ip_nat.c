@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_nat.c,v 1.1.1.1 1997/03/29 02:49:52 darrenr Exp $	*/
+/*	$NetBSD: ip_nat.c,v 1.2 1997/03/29 19:49:04 thorpej Exp $	*/
 
 /*
  * (C)opyright 1995-1996 by Darren Reed.
@@ -11,7 +11,7 @@
  */
 #if !defined(lint) && defined(LIBC_SCCS)
 static	char	sccsid[] = "@(#)ip_nat.c	1.11 6/5/96 (C) 1995 Darren Reed";
-static	char	rcsid[] = "$Id: ip_nat.c,v 1.1.1.1 1997/03/29 02:49:52 darrenr Exp $";
+static	char	rcsid[] = "$Id: ip_nat.c,v 1.2 1997/03/29 19:49:04 thorpej Exp $";
 #endif
 
 #if !defined(_KERNEL) && !defined(KERNEL)
@@ -156,7 +156,12 @@ u_long n;
  */
 int nat_ioctl(data, cmd, mode)
 caddr_t data;
-int cmd, mode;
+#if defined(__NetBSD__)
+u_long cmd;
+#else
+int cmd;
+#endif
+int mode;
 {
 	register ipnat_t *nat, *n = NULL, **np = NULL;
 	ipnat_t natd;
@@ -423,7 +428,11 @@ int direction;
 				struct ifaddr *ifa;
 				struct sockaddr_in *sin;
 
+#if defined(__NetBSD__)
+				ifa = ifp->if_addrlist.tqh_first;
+#else
 				ifa = ifp->if_addrlist;
+#endif
 # if	BSD < 199306
 				sin = (struct sockaddr_in *)&ifa->ifa_addr;
 # else
