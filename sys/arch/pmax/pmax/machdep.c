@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.169 2000/04/11 02:43:56 nisimura Exp $	*/
+/*	$NetBSD: machdep.c,v 1.170 2000/04/12 03:05:08 nisimura Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.169 2000/04/11 02:43:56 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.170 2000/04/12 03:05:08 nisimura Exp $");
 
 #include "fs_mfs.h"
 #include "opt_ddb.h"
@@ -141,8 +141,8 @@ extern struct consdev promcd;		/* XXX */
 
 /*
  * Do all the stuff that locore normally does before calling main().
- * Process arguments passed to us by the prom monitor.
- * Return the first page address following the system.
+ * The first 4 argments are passed by PROM monitor, and remaining two
+ * are built on temporary stack by our boot loader.
  */
 void
 mach_init(argc, argv, code, cv, bim, bip)
@@ -165,7 +165,13 @@ mach_init(argc, argv, code, cv, bim, bip)
 #endif
 	extern char edata[], end[];	/* XXX */
 
-	/* Set up bootinfo structure.  Note that we can't print messages yet! */
+	/* Initialize callv so we can do PROM output... */
+	callv = (code == DEC_PROM_MAGIC) ? (void *)cv : &callvec;
+
+	/* Use PROM console output until we initialize a console driver. */
+	cn_tab = &promcd;
+
+	/* Set up bootinfo structure looking at stack. */
 	if (bim == BOOTINFO_MAGIC) {
 		struct btinfo_magic *bi_magic;
 
@@ -179,13 +185,17 @@ mach_init(argc, argv, code, cv, bim, bip)
 	}
 	else
 		bootinfo_msg = "invalid bootinfo pointer (old bootblocks?)\n";
+#if 0
+	if (bootinfo_msg != NULL)
+		printf(bootinfo_msg);
+#endif
 
 	/* clear the BSS segment */
 #ifdef DDB
 	bi_syms = lookup_bootinfo(BTINFO_SYMTAB);
 	aout = (struct exec *)edata;
 
-	/* Valid bootinfo symtab info? */
+	/* Was it a valid bootinfo symtab info? */
 	if (bi_syms != NULL) {
 		nsym = bi_syms->nsym;
 		ssym = (caddr_t)bi_syms->ssym;
@@ -211,24 +221,6 @@ mach_init(argc, argv, code, cv, bim, bip)
 		memset(edata, 0, kernend - edata);
 	}
 
-	/* Initialize callv so we can do PROM output... */
-	callv = (code == DEC_PROM_MAGIC) ? (void *)cv : &callvec;
-
-	/* Use PROM console output until we initialize a console driver. */
-	cn_tab = &promcd;
-
-#if 0
-	/* Print out bootinfo messages now that the console is initialised. */
-	if (bootinfo_msg != NULL)
-		printf(bootinfo_msg);
-#endif
-
-	/* check for direct boot from DS5000 PROM */
-	if (argc > 0 && strcmp(argv[0], "boot") == 0) {
-		argc--;
-		argv++;
-	}
-
 	/*
 	 * Set the VM page size.
 	 */
@@ -241,7 +233,13 @@ mach_init(argc, argv, code, cv, bim, bip)
 	 */
 	mips_vector_init();
 
-	/* look at argv[0] and compute bootdev */
+	/* Check for direct boot from DS5000 REX monitor */
+	if (argc > 0 && strcmp(argv[0], "boot") == 0) {
+		argc--;
+		argv++;
+	}
+
+	/* Look at argv[0] and compute bootdev */
 	makebootdev(argv[0]);
 
 	/*
@@ -298,6 +296,7 @@ mach_init(argc, argv, code, cv, bim, bip)
 	if (boothowto & RB_KDB)
 		Debugger();
 #endif
+
 	/*
 	 * Alloc u pages for proc0 stealing KSEG0 memory.
 	 */
@@ -310,34 +309,23 @@ mach_init(argc, argv, code, cv, bim, bip)
 	kernend += USPACE;
 
 	/*
-	 * Determine what model of computer we are running on.
-	 */
-	i = prom_systype();
-
-	/* Check for MIPS based platform */
-	/* 0x82 -> MIPS1, 0x84 -> MIPS3 */
-	if (((i >> 24) & 0xFF) != 0x82 && ((i >> 24) & 0xff) != 0x84) {
-		printf("Unknown system type '%08x'\n", i);
-		cpu_reboot(RB_HALT | RB_NOSYNC, NULL);
-	}
-
-	/*
 	 * Initialize physmem_boardmax; assume no SIMM-bank limits.
 	 * Adjust later in model-specific code if necessary.
 	 */
 	physmem_boardmax = MIPS_MAX_MEM_ADDR;
 
 	/*
-	 * Find out what hardware we're on, and do basic initialization.
+	 * Determine what model of computer we are running on.
 	 */
-	systype = ((i >> 16) & 0xff);
+	systype = ((prom_systype() >> 16) & 0xff);
 	if (systype >= nsysinit) {
 		platform_not_supported();
 		/* NOTREACHED */
 	}
 
-	/* Machine specific initialisation */
+	/* Machine specific initialization. */
 	(*sysinit[systype].init)();
+
 	/* Find out how much memory is available. */
 	physmem = (*platform.memsize)(kernend);
 
@@ -375,9 +363,9 @@ mach_init(argc, argv, code, cv, bim, bip)
 
 	/*
 	 * Allocate space for system data structures.  These data structures
-	 * are allocated here instead of cpu_startup() because physical
-	 * memory is directly addressable.  We don't have to map these into
-	 * virtual address space.
+	 * are allocated here instead of cpu_startup() because physical memory
+	 * is directly addressable.  We don't have to map these into virtual
+	 * address space.
 	 */
 	size = (unsigned)allocsys(NULL, NULL);
 	v = (caddr_t)pmap_steal_memory(size, NULL, NULL);
@@ -398,8 +386,8 @@ consinit()
 }
 
 /*
- * Machine-dependent startup code: allocate memory for variable-sized tables, 
- * initialize cpu.
+ * Machine-dependent startup code: allocate memory for variable-sized
+ * tables.
  */
 void
 cpu_startup()
