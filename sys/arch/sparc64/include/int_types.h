@@ -1,4 +1,4 @@
-/*	$NetBSD: int_types.h,v 1.4 2001/01/03 10:09:05 takemura Exp $	*/
+/*	$NetBSD: int_types.h,v 1.5 2001/04/12 22:01:20 kleink Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -61,13 +61,13 @@ typedef	int			__int32_t;
 typedef	unsigned int	       __uint32_t;
 
 #ifdef __COMPILER_INT64__
-typedef	__COMPILER_INT64__		__int64_t;
-typedef	unsigned __COMPILER_INT64__	__uint64_t;
+typedef	__COMPILER_INT64__	__int64_t;
+typedef	__COMPILER_UINT64__    __uint64_t;
 #else
 #ifdef __arch64__
 /* 64-bit compiler */
 typedef	long int		__int64_t;
-typedef	unsigned long int       __uint64_t;
+typedef	unsigned long int      __uint64_t;
 #else
 /* 32-bit compiler */
 /* LONGLONG */
