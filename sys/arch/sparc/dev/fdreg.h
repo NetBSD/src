@@ -1,4 +1,4 @@
-/*	$NetBSD: fdreg.h,v 1.2 1995/02/22 21:37:17 pk Exp $	*/
+/*	$NetBSD: fdreg.h,v 1.3 1995/05/20 19:59:52 pk Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -43,7 +43,7 @@
 #include <dev/ic/nec765.h>
 
 #ifndef LOCORE
-struct fdreg_sun4m {
+struct fdreg_77 {
 	u_int8_t	fd_statusA;
 	u_int8_t	fd_statusB;
 	u_int8_t	fd_dor;		/* Digital Output Register (R/W) */
@@ -56,7 +56,7 @@ struct fdreg_sun4m {
 #define fd_ccr		fd_dir		/* Configuration Control (W) */
 };
 
-struct fdreg_sun4c {
+struct fdreg_72 {
 	u_int8_t	fd_msr;		/* Main Status Register (R) */
 #if already_a_define
 #define fd_drs	fd_msr			/* Data Rate Select Register (W) */
@@ -65,8 +65,8 @@ struct fdreg_sun4c {
 };
 
 union fdreg {
-	struct fdreg_sun4c funreg4c;
-	struct fdreg_sun4m funreg4m;
+	struct fdreg_72 fun72;
+	struct fdreg_77 fun77;
 };
 #endif
 
