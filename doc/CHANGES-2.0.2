@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0.2,v 1.1.2.8 2005/03/16 15:23:11 he Exp $
+#	$NetBSD: CHANGES-2.0.2,v 1.1.2.9 2005/03/16 16:48:19 tron Exp $
 
 A complete list of changes from the NetBSD 2.0.1 release to the NetBSD 2.0.2
 release.
@@ -127,3 +127,10 @@ sys/arch/xen/i386/locore.S			1.10
 	Check the passed in address as well as determining the maximum length
 	using VM_MAXUSER_ADDRESS in copyinstr and copyoutstr.
 	[bouyer, ticket #1321]
+
+distrib/notes/sparc64/install			1.24-1.25
+
+	Add description for Solaris 10 dual boot installation from Ben Collver
+	in PR port-sparc64/29703.
+	[martin, ticket #1322]
+
