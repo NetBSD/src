@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide.c,v 1.6.2.4 1998/06/06 12:50:47 bouyer Exp $	*/
+/*	$NetBSD: pciide.c,v 1.6.2.5 1998/06/09 12:57:40 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1996, 1998 Christopher G. Demetriou.  All rights reserved.
@@ -203,11 +203,7 @@ const struct pciide_vendor_desc pciide_vendors[] = {
 
 #define	PCIIDE_CHANNEL_NAME(chan)	((chan) == 0 ? "primary" : "secondary")
 
-#ifdef __BROKEN_INDIRECT_CONFIG
-int	pciide_match __P((struct device *, void *, void *));
-#else
 int	pciide_match __P((struct device *, struct cfdata *, void *));
-#endif
 void	pciide_attach __P((struct device *, struct device *, void *));
 
 struct cfattach pciide_ca = {
@@ -251,11 +247,7 @@ pciide_lookup_product(id)
 int
 pciide_match(parent, match, aux)
 	struct device *parent;
-#ifdef __BROKEN_INDIRECT_CONFIG
-	void *match;
-#else
 	struct cfdata *match;
-#endif
 	void *aux;
 {
 	struct pci_attach_args *pa = aux;
@@ -816,6 +808,9 @@ end:		/*
 		 * it per-drive
 		 */
 		for (drive = 0; drive < 2; drive++) {
+			/* If no drive, skip */
+			if ((drvp[drive].drive_flags & DRIVE) == 0)
+				continue;
 			if (drvp[drive].drive_flags & DRIVE_DMA) {
 				idetim = PIIX_IDETIM_SET(idetim,
 				    PIIX_IDETIM_DTE(drive), channel);
@@ -920,7 +915,7 @@ piix3_4_setup_chip(sc, pc, tag)
 			continue;
 		
 pio:			/* use PIO mode */
-			drvp->drive_flags &= ~DRIVE_DMA | DRIVE_UDMA;
+			drvp->drive_flags &= ~(DRIVE_DMA | DRIVE_UDMA);
 			if (drive == 0) {
 				idetim |= piix_setup_idetim_timings(
 				    drvp->PIO_mode, 0, channel);
