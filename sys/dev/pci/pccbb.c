@@ -1,4 +1,4 @@
-/*	$NetBSD: pccbb.c,v 1.60 2001/02/21 21:39:58 jdolecek Exp $	*/
+/*	$NetBSD: pccbb.c,v 1.61 2001/02/22 10:39:31 enami Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 and 2000
@@ -3098,10 +3098,9 @@ pccbb_winset(align, sc, bst)
 	struct pccbb_win_chain *chainp;
 	int offs;
 
-	win[0].win_start = 0xffffffff;
-	win[0].win_limit = 0;
-	win[1].win_start = 0xffffffff;
-	win[1].win_limit = 0;
+	win[0].win_start = win[1].win_start = 0xffffffff;
+	win[0].win_limit = win[1].win_limit = 0;
+	win[0].win_flags = win[1].win_flags = 0;
 
 	chainp = TAILQ_FIRST(&sc->sc_iowindow);
 	offs = 0x2c;
@@ -3195,16 +3194,14 @@ pccbb_winset(align, sc, bst)
 	    pci_conf_read(pc, tag, offs + 12) + align));
 
 	if (bst == sc->sc_memt) {
-		if (win[0].win_flags & PCCBB_MEM_CACHABLE) {
-			pcireg_t bcr = pci_conf_read(pc, tag, PCI_BCR_INTR);
+		pcireg_t bcr = pci_conf_read(pc, tag, PCI_BCR_INTR);
+
+		bcr &= ~(CB_BCR_PREFETCH_MEMWIN0 | CB_BCR_PREFETCH_MEMWIN1);
+		if (win[0].win_flags & PCCBB_MEM_CACHABLE)
 			bcr |= CB_BCR_PREFETCH_MEMWIN0;
-			pci_conf_write(pc, tag, PCI_BCR_INTR, bcr);
-		}
-		if (win[1].win_flags & PCCBB_MEM_CACHABLE) {
-			pcireg_t bcr = pci_conf_read(pc, tag, PCI_BCR_INTR);
+		if (win[1].win_flags & PCCBB_MEM_CACHABLE)
 			bcr |= CB_BCR_PREFETCH_MEMWIN1;
-			pci_conf_write(pc, tag, PCI_BCR_INTR, bcr);
-		}
+		pci_conf_write(pc, tag, PCI_BCR_INTR, bcr);
 	}
 }
 
