@@ -42,7 +42,7 @@
  *	@(#)locore.s	8.4 (Berkeley) 12/10/93
  *
  * from: Header: locore.s,v 1.51 93/04/21 06:19:37 torek Exp
- * $Id: locore.s,v 1.20 1994/10/02 22:00:48 deraadt Exp $
+ * $Id: locore.s,v 1.21 1994/11/02 04:57:02 deraadt Exp $
  */
 
 #define	LOCORE
@@ -1124,7 +1124,7 @@ xnormal_mem_fault:
 	set	AC_BUS_ERR, %o0		! bus error register
 	cmp	%l3, T_TEXTFAULT	! text fault always on PC
 	beq	normal_mem_fault	! go
-	 lduba	[%o0]ASI_CONTROL, %o1	! get its value
+	 lduba	[%o0] ASI_CONTROL, %o1	! get its value
 
 #define STORE_BIT 21 /* bit that indicates a store instruction for sparc */
 	ld	[%l1], %o3		! offending instruction in %o3 [l1=pc]
@@ -3607,7 +3607,7 @@ Lfserr:
 	st	%g0, [%o2 + PCB_ONFAULT]! error in r/w, clear pcb_onfault
 Lfsbadaddr:
 	retl				! and return error indicator
-	mov	-1, %o0
+	 mov	-1, %o0
 
 	/*
 	 * This is just like Lfserr, but it's a global label that allows
@@ -3618,7 +3618,7 @@ Lfsbadaddr:
 _Lfsbail:
 	st	%g0, [%o2 + PCB_ONFAULT]! error in r/w, clear pcb_onfault
 	retl				! and return error indicator
-	mov	-1, %o0
+	 mov	-1, %o0
 
 	/*
 	 * Like fusword but callable from interrupt context.
@@ -3784,6 +3784,20 @@ ENTRY(probeset)
 	 st	%o2, [%o0]		!	*(int *)addr = value;
 0:	clr	%o0			! made it, clear onfault and return 0
 	retl
+	 st	%g0, [%o2 + PCB_ONFAULT]
+
+/*
+ * int ldcontrolb(caddr_t)
+ *
+ * read a byte from the specified address in ASI_CONTROL space.
+ */
+ENTRY(ldcontrolb)
+	sethi	%hi(_cpcb), %o2
+	ld	[%o2 + %lo(_cpcb)], %o2	! cpcb->pcb_onfault = Lfsbail;
+	set	_Lfsbail, %o5
+	st	%o5, [%o2 + PCB_ONFAULT]
+	lduba	[%o0] ASI_CONTROL, %o0	! read
+0:	retl
 	 st	%g0, [%o2 + PCB_ONFAULT]
 
 /*
