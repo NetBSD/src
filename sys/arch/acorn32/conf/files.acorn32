@@ -1,4 +1,4 @@
-#	$NetBSD: files.acorn32,v 1.21 2004/01/20 19:58:00 jdolecek Exp $
+#	$NetBSD: files.acorn32,v 1.22 2004/01/22 13:25:51 bjh21 Exp $
 #
 # First try for arm-specific configuration info
 #
@@ -33,7 +33,11 @@ file	arch/acorn32/mainbus/wdc_pioc.c		wdc_pioc
 
 # Standard parallel driver
 attach	lpt at pioc with lpt_pioc
-file	arch/acorn32/mainbus/lpt_pioc.c		lpt_pioc	needs-flag
+file	arch/acorn32/mainbus/lpt_pioc.c		lpt_pioc & !ppbus needs-flag
+
+# New parallel driver
+attach	atppc at pioc with atppc_pioc
+file	arch/acorn32/mainbus/atppc_pioc.c	atppc_pioc
 
 # Standard NetBSD fd driver
 device	fdc {drive = -1}
