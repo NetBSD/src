@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.107 2001/12/10 02:46:05 augustss Exp $	*/
+/*	$NetBSD: machdep.c,v 1.108 2002/01/06 00:35:12 dbj Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -33,9 +33,11 @@
 
 #include "opt_compat_netbsd.h"
 #include "opt_ddb.h"
+#include "opt_kgdb.h"
 #include "opt_ipkdb.h"
 #include "opt_multiprocessor.h"
 #include "adb.h"
+#include "zsc.h"
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -58,8 +60,18 @@
 
 #include <net/netisr.h>
 
+#ifdef DDB
 #include <machine/db_machdep.h>
 #include <ddb/db_extern.h>
+#endif
+
+#ifdef KGDB
+#include <sys/kgdb.h>
+#endif
+ 
+#ifdef IPKDB
+#include <ipkdb/ipkdb.h>
+#endif
 
 #include <machine/autoconf.h>
 #include <machine/bat.h>
@@ -77,6 +89,10 @@
 #include <dev/usb/ukbdvar.h>
 
 #include <macppc/dev/adbvar.h>
+
+#if NZSC > 0
+#include <machine/z8530var.h>
+#endif
 
 struct vm_map *exec_map = NULL;
 struct vm_map *mb_map = NULL;
@@ -134,7 +150,7 @@ initppc(startkernel, endkernel, args)
 	extern int tlbimiss, tlbimsize;
 	extern int tlbdlmiss, tlbdlmsize;
 	extern int tlbdsmiss, tlbdsmsize;
-#ifdef DDB
+#if defined(DDB) || defined(KGDB)
 	extern int ddblow, ddbsize;
 #endif
 #ifdef IPKDB
@@ -273,17 +289,20 @@ initppc(startkernel, endkernel, args)
 		case EXC_DSMISS:
 			memcpy((void *)EXC_DSMISS, &tlbdsmiss, (size_t)&tlbdsmsize);
 			break;
-#if defined(DDB) || defined(IPKDB)
+#if defined(DDB) || defined(IPKDB) || defined(KGDB)
 		case EXC_PGM:
 		case EXC_TRC:
 		case EXC_BPT:
-#if defined(DDB)
+#if defined(DDB) || defined(KGDB)
 			memcpy((void *)exc, &ddblow, (size_t)&ddbsize);
+#if defined(IPKDB)
+#error "cannot enable IPKDB with DDB or KGDB"
+#endif
 #else
 			memcpy((void *)exc, &ipkdblow, (size_t)&ipkdbsize);
 #endif
 			break;
-#endif /* DDB || IPKDB */
+#endif /* DDB || IPKDB || KGDB */
 		}
 
 	/*
@@ -300,13 +319,6 @@ initppc(startkernel, endkernel, args)
 		      : "=r"(scratch) : "K"(PSL_IR|PSL_DR|PSL_ME|PSL_RI));
 
 	ofmsr &= ~PSL_IP;
-
-	/*
-	 * i386 port says, that this shouldn't be here,
-	 * but I really think the console should be initialized
-	 * as early as possible.
-	 */
-	consinit();
 
 	/*
 	 * Parse arg string.
@@ -364,19 +376,12 @@ initppc(startkernel, endkernel, args)
 		}
 	}
 
-#ifdef DDB
-	ddb_init((int)((u_int)endsym - (u_int)startsym), startsym, endsym);
-	if (boothowto & RB_KDB)
-		Debugger();
-#endif
-#ifdef IPKDB
 	/*
-	 * Now trap to IPKDB
+	 * i386 port says, that this shouldn't be here,
+	 * but I really think the console should be initialized
+	 * as early as possible.
 	 */
-	ipkdb_init();
-	if (boothowto & RB_KDB)
-		ipkdb_connect(0);
-#endif
+	consinit();
 
 	/*
 	 * Set the page size.
@@ -589,6 +594,26 @@ consinit()
 		return;
 	initted = 1;
 	cninit();
+
+#ifdef DDB
+	ddb_init((int)((u_int)endsym - (u_int)startsym), startsym, endsym);
+	if (boothowto & RB_KDB)
+		Debugger();
+#endif
+
+#ifdef IPKDB
+	ipkdb_init();
+	if (boothowto & RB_KDB)
+		ipkdb_connect(0);
+#endif
+
+#ifdef KGDB
+#if NZSC > 0
+	zs_kgdb_init();
+#endif
+	if (boothowto & RB_KDB)
+		kgdb_connect(1);
+#endif
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: kgdb_machdep.c,v 1.2 2001/12/30 20:50:53 dbj Exp $	*/
+/*	$NetBSD: kgdb_machdep.c,v 1.3 2002/01/06 00:35:13 dbj Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -51,6 +51,7 @@
 
 #include <uvm/uvm_extern.h>
 
+#include <machine/bat.h>
 #include <machine/reg.h>
 #include <machine/trap.h>
 #include <machine/pmap.h>
@@ -63,6 +64,40 @@ kgdb_acc(vaddr_t va, size_t len)
 {
 	vaddr_t   last_va;
 	paddr_t   pa;
+	u_int msr;
+	u_int batu;
+
+	/* If translation is off, everything is fair game */
+	asm volatile ("mfmsr %0" : "=r"(msr));
+	if ((msr & PSL_DR) == 0) {
+		return 1;
+	}
+
+	/* Now check battable registers */
+	asm volatile ("mfdbatu %0,0" : "=r"(batu));
+	if (BAT_VALID_P(batu,msr) &&
+			BAT_VA_MATCH_P(batu,va) &&
+			(batu & BAT_PP) != BAT_PP_NONE) {
+		return 1;
+	}
+	asm volatile ("mfdbatu %0,1" : "=r"(batu));
+	if (BAT_VALID_P(batu,msr) &&
+			BAT_VA_MATCH_P(batu,va) &&
+			(batu & BAT_PP) != BAT_PP_NONE) {
+		return 1;
+	}
+	asm volatile ("mfdbatu %0,2" : "=r"(batu));
+	if (BAT_VALID_P(batu,msr) &&
+			BAT_VA_MATCH_P(batu,va) &&
+			(batu & BAT_PP) != BAT_PP_NONE) {
+		return 1;
+	}
+	asm volatile ("mfdbatu %0,3" : "=r"(batu));
+	if (BAT_VALID_P(batu,msr) &&
+			BAT_VA_MATCH_P(batu,va) &&
+			(batu & BAT_PP) != BAT_PP_NONE) {
+		return 1;
+	}
 
 	last_va = va + len;
 	va  &= ~PGOFSET;
@@ -136,6 +171,7 @@ kgdb_signal(type)
 	case EXC_ALI:		/* Alignment */
 		return SIGILL;
 
+  case T_BREAKPOINT:
 	case EXC_MCHK:		/* Machine check */
 	case EXC_TRC:		/* Trace */
 		return SIGTRAP;
@@ -208,10 +244,11 @@ kgdb_connect(verbose)
 	if (verbose)
 		printf("kgdb waiting...");
 
-	__asm __volatile("tweq 1,1");
+	asm volatile(BKPT_ASM);
 
-	if (verbose)
-		printf("connected.\n");
+	if (verbose && kgdb_active) {
+		printf("kgdb connected.\n");
+	}
 
 	kgdb_debug_panic = 1;
 }
