@@ -1,4 +1,4 @@
-/*	$NetBSD: modload.h,v 1.3 2002/10/06 13:23:00 simonb Exp $	*/
+/*	$NetBSD: modload.h,v 1.4 2002/10/07 02:33:55 simonb Exp $	*/
 
 /*
  * Copyright (c) 1993 Terrence R. Lambert.
@@ -37,15 +37,15 @@
 
 int	elf_mod_sizes(int, size_t *, int *, struct lmc_resrv *, struct stat *);
 void	*elf_mod_load(int);
-void	elf_linkcmd(char*, size_t, const char*, const char*, const char*,
-		    const void*, const char*);
+void	elf_linkcmd(char *, size_t, const char *, const char *, const char *,
+		    const void *, const char *);
 void	elf_mod_symload(int);
 
 int	a_out_mod_sizes(int, size_t *, int *, struct lmc_resrv *,
 			struct stat *);
 void	*a_out_mod_load(int);
-void	a_out_linkcmd(char*, size_t, const char*, const char*, const char*,
-		      const void*, const char*);
+void	a_out_linkcmd(char *, size_t, const char *, const char *, const char *,
+		      const void *, const char *);
 void	a_out_mod_symload(int);
 
 #ifndef USE_AOUT
@@ -60,9 +60,9 @@ void	a_out_mod_symload(int);
 #define	linkcmd a_out_linkcmd
 #endif
 
-void loadbuf(void*, size_t);
+void loadbuf(void *, size_t);
 void loadspace(size_t);
-void loadsym(void*, size_t);
+void loadsym(void *, size_t);
 
 extern int debug;
 extern int devfd;
