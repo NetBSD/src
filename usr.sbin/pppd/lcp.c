@@ -18,7 +18,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: lcp.c,v 1.8 1994/06/28 04:38:40 paulus Exp $";
+static char rcsid[] = "$Id: lcp.c,v 1.9 1995/03/21 19:32:13 mycroft Exp $";
 #endif
 
 /*
@@ -278,8 +278,8 @@ lcp_extcode(f, code, id, inp, len)
 	LCPDEBUG((LOG_INFO, "lcp: Echo-Request, Rcvd id %d", id));
 	magp = inp;
 	PUTLONG(lcp_gotoptions[f->unit].magicnumber, magp);
-	if (len < CILEN_LONG)
-	    len = CILEN_LONG;
+	if (len < CILEN_LONG - CILEN_VOID)
+	    len = CILEN_LONG - CILEN_VOID;
 	fsm_sdata(f, ECHOREP, id, inp, len);
 	break;
     
@@ -1525,7 +1525,7 @@ lcp_received_echo_reply (f, id, inp, len)
     u_long magic;
 
     /* Check the magic number - don't count replies from ourselves. */
-    if (len < CILEN_LONG)
+    if (len < CILEN_LONG - CILEN_VOID)
 	return;
     GETLONG(magic, inp);
     if (lcp_gotoptions[f->unit].neg_magicnumber
