@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.21 2001/09/13 22:45:23 chris Exp $	*/
+/*	$NetBSD: pmap.c,v 1.22 2001/09/13 23:56:01 chris Exp $	*/
 
 /*
  * Copyright (c) 2001 Richard Earnshaw
@@ -142,7 +142,7 @@
 #include <machine/param.h>
 #include <machine/katelib.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.21 2001/09/13 22:45:23 chris Exp $");        
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.22 2001/09/13 23:56:01 chris Exp $");        
 #ifdef PMAP_DEBUG
 #define	PDEBUG(_lev_,_stat_) \
 	if (pmap_debug_level >= (_lev_)) \
@@ -258,6 +258,8 @@ vsize_t npages;
 
 static struct vm_page	*pmap_alloc_ptp __P((struct pmap *, vaddr_t, boolean_t));
 static struct vm_page	*pmap_get_ptp __P((struct pmap *, vaddr_t, boolean_t));
+__inline static void pmap_clearbit __P((paddr_t, unsigned int));
+__inline static boolean_t pmap_testbit __P((paddr_t, unsigned int));
 
 extern paddr_t physical_start;
 extern paddr_t physical_freestart;
@@ -369,7 +371,7 @@ pmap_debug(level)
 }
 #endif	/* PMAP_DEBUG */
 
-__inline boolean_t
+__inline static boolean_t
 pmap_is_curpmap(struct pmap *pmap)
 {
     if ((curproc && curproc->p_vmspace->vm_map.pmap == pmap)
@@ -3069,10 +3071,10 @@ pmap_dump_pvlist(phys, m)
 
 #endif	/* PMAP_DEBUG */
 
-boolean_t
+__inline static boolean_t
 pmap_testbit(pa, setbits)
 	paddr_t pa;
-	int setbits;
+	unsigned int setbits;
 {
 	int bank, off;
 
@@ -3153,10 +3155,10 @@ pmap_unmap_ptes(pmap)
  * constants and the latter would require an extra inversion at run-time.
  */
 
-void
+static void
 pmap_clearbit(pa, maskbits)
 	paddr_t pa;
-	int maskbits;
+	unsigned int maskbits;
 {
 	struct pv_entry *pv;
 	struct pv_head *pvh;
