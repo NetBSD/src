@@ -57,7 +57,7 @@
  * from: Utah $Hdr: cpu.h 1.16 91/03/25$
  *
  *	from: @(#)cpu.h	7.7 (Berkeley) 6/27/91
- *	$Id: cpu.h,v 1.10 1994/05/06 17:39:19 briggs Exp $
+ *	$Id: cpu.h,v 1.11 1994/06/26 13:25:16 briggs Exp $
  */
 
 /*
@@ -77,18 +77,11 @@
  */
 #define	COPY_SIGCODE		/* copy sigcode above user stack in exec */
 
-/*
- * function vs. inline configuration;
- * these are defined to get generic functions
- * rather than inline or machine-dependent implementations
- */
-#define	NEED_MINMAX		/* need {,i,l,ul}{min,max} functions */
-#undef	NEED_FFS		/* don't need ffs function */
-#undef	NEED_BCMP		/* don't need bcmp function */
-#undef	NEED_STRLEN		/* don't need strlen function */
-
-#define	cpu_exec(p)	/* nothing */
-#define	cpu_wait(p)	/* nothing */
+#define	cpu_swapin(p)			/* nothing */
+#define	cpu_exec(p)			/* nothing */
+#define	cpu_wait(p)			/* nothing */
+#define cpu_setstack(p, ap)		(p)->p_md.md_regs[SP] = ap
+#define cpu_set_init_frame(p, fp)	(p)->p_md.md_regs = fp
 
 /*
  * Arguments to hardclock, softclock and gatherstats
@@ -98,14 +91,15 @@
  */
 
 struct clockframe {
-	int	ps;
-	int	pc;
+	u_short	sr;
+	u_long	pc;
+	u_short	vo;
 };
 
-#define	CLKF_USERMODE(framep)	(((framep)->ps & PSL_S) == 0)
-#define	CLKF_BASEPRI(framep)	(((framep)->ps & PSL_IPL7) == 0)
+#define	CLKF_USERMODE(framep)	(((framep)->sr & PSL_S) == 0)
+#define	CLKF_BASEPRI(framep)	(((framep)->sr & PSL_IPL) == 0)
 #define	CLKF_PC(framep)		((framep)->pc)
-#define	CLKF_INTR(framep)	(0) /* XXX should have an interrupt stack? */
+#define	CLKF_INTR(framep)	(0) /* XXX should use PSL_M (see hp300) */
 
 /*
  * Preempt the current process if in interrupt from user mode,
@@ -146,6 +140,13 @@ extern unsigned char ssir;
 #define setsoftclock()	ssir |= SIR_CLOCK
 #define setsoftserial()	ssir |= SIR_SERIAL
 
+#define CPU_CONSDEV	1
+#define CPU_MAXID	2
+
+#define CTL_MACHDEP_NAMES { \
+	{ 0, 0 }, \
+	{ "console_device", CTLTYPE_STRUCT }, \
+}
 
 /* values for machineid --
  * 	These are equivalent to the MacOS Gestalt values. */
@@ -213,23 +214,23 @@ extern unsigned char ssir;
 #define	MHZ_40		5
 
 #ifdef KERNEL
-extern	int	machineid,  ectype;
-extern	char	*intiobase, *intiolimit;
-extern	char	*extiobase, *extiolimit;
+extern	unsigned long	IOBase, NuBusBase;
+extern	int		machineid;
 
-extern	int	mach_processor, mach_memsize;
-extern	int	do_graybars,    serial_boot_echo;
-extern	int	booter_version;
-extern	int	mmutype,	cpu040;
+extern	int		mach_processor, mach_memsize;
+extern	int		do_graybars,    serial_boot_echo;
+extern	int		booter_version;
+extern	int		mmutype,	cpu040;
+extern	unsigned long	load_addr;
 #endif
 
 /* physical memory sections */
 #define	ROMBASE		(0x40000000)
-#define INTIOBASE	(0x50000000)
+#define INTIOBASE	(0x50f00000)
 #define INTIOTOP	(0x51000000)	/* ~ 128 K */
 #define IIOMAPSIZE	btoc(INTIOTOP - INTIOBASE)
 
-/* ALICE 05/23/92 BG -- These need to be changed. */
+/* XXX -- Need to do something about superspace. */
 #ifdef NO_SUPER_SPACE_YET
 #define	NBSBASE		0x60000000	/* NUBUS Super space */
 #define	NBSTOP		0xF0000000
@@ -239,26 +240,6 @@ extern	int	mmutype,	cpu040;
 #define NBMAPSIZE	btoc(NBTOP-NBBASE)	/* ~ 96 megs */
 #define NBMEMSIZE	0x01000000	/* 16 megs per card */
 #define NBROMOFFSET	0x00FF0000	/* Last 64K == ROM */
-
-/*
- * IO space:
- *
- * Internal IO space is mapped in the kernel from ``intiobase'' to
- * ``intiolimit'' (defined in locore.s).  Since it is always mapped,
- * conversion between physical and kernel virtual addresses is easy.
- */
-#define	ISIIOVA(va) \
-	((char *)(va) >= intiobase && (char *)(va) < intiolimit)
-#define	IIOV(pa)	((int)(pa)-INTIOBASE+(int)intiobase)
-#define	IIOP(va)	((int)(va)-(int)intiobase+INTIOBASE)
-#define	IIOPOFF(pa)	((int)(pa)-INTIOBASE)
-
-/*
-   ALICE 05/24/92,13:25:19 BG -- We need to make sure to map NuBus memory in
-    the kernel, too.
-   ALICE 06/29/92,20:40:00 LK -- I did that, thank you very much.  Been there.
- */
-
 
 /*
  * 68851 and 68030 MMU
