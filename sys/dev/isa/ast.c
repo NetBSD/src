@@ -1,4 +1,4 @@
-/*	$NetBSD: ast.c,v 1.9 1994/10/27 04:16:50 cgd Exp $	*/
+/*	$NetBSD: ast.c,v 1.10 1994/11/07 09:03:48 mycroft Exp $	*/
 
 /*
  * Multi-port serial card interrupt demuxing support.
@@ -13,9 +13,6 @@
 
 #include <machine/pio.h>
 
-#ifndef NEWCONFIG
-#include <i386/isa/isa_device.h>
-#endif
 #include <i386/isa/isavar.h>
 
 struct ast_softc {
@@ -32,7 +29,7 @@ void astattach();
 int astintr __P((struct ast_softc *));
 
 struct cfdriver astcd = {
-	NULL, "ast", astprobe, astattach, DV_TTY, sizeof(struct ast_softc)
+	NULL, "ast", astprobe, astattach, DV_TTY, sizeof(struct ast_softc), 1
 };
 
 int
@@ -48,61 +45,38 @@ astprobe(parent, self, aux)
 	 * XXX Needs more robustness.
 	 */
 	ia->ia_iosize = 4 * 8;
-	return comprobe1(ia->ia_iobase);
+	return (comprobe1(ia->ia_iobase));
 }
 
 struct ast_attach_args {
-	u_short aa_iobase;
 	int aa_slave;
 };
 
 int
-astsubmatch(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+astsubmatch(parent, match, aux)
+	struct device *parent;
+	void *match, *aux;
 {
 	struct ast_softc *sc = (void *)parent;
-	struct ast_attach_args *aa = aux;
+	struct device *self = match;
+	struct isa_attach_args *ia = aux;
+	struct ast_attach_args *aa = ia->ia_aux;
 	struct cfdata *cf = self->dv_cfdata;
-	int found, frobbed = 0;
-#ifdef NEWCONFIG
 
-#define cf_slave cf_loc[6]
-	if (cf->cf_slave != -1 && cf->cf_slave != aa->aa_slave)
-		return 0;
-	if (cf->cf_iobase == IOBASEUNK) {
-		frobbed = 1;
-		cf->cf_iobase = aa->aa_iobase;
-	}
-#undef cf_slave
-#else
-	struct isa_device *id = (void *)cf->cf_loc;
+	if (cf->cf_loc[0] != -1 && cf->cf_loc[0] != aa->aa_slave)
+		return (0);
+	return ((*cf->cf_driver->cd_match)(parent, match, ia));
+}
 
-	if (id->id_physid != -1 && id->id_physid != aa->aa_slave)
-		return 0;
-	if (id->id_iobase == 0) {
-		frobbed = 1;
-		id->id_iobase = aa->aa_iobase;
-	}
-#endif
-	found = isasubmatch(parent, self, aux);
-	if (found) {
-		sc->sc_slaves[aa->aa_slave] = self;
-		sc->sc_alive |= 1 << aa->aa_slave;
-	}
-	/*
-	 * If we changed the iobase, we have to set it back now, because it
-	 * might be a clone device, and the iobase wouldn't get set properly on
-	 * the next iteration.
-	 */
-#ifdef NEWCONFIG
-	if (frobbed)
-		cf->cf_iobase = IOBASEUNK;
-#else
-	if (frobbed)
-		id->id_iobase = 0;
-#endif
-	return found;
+int
+astprint(aux, ast)
+	void *aux;
+	char *ast;
+{
+	struct isa_attach_args *ia = aux;
+	struct ast_attach_args *aa = ia->ia_aux;
+
+	printf(" slave %d", aa->aa_slave);
 }
 
 void
@@ -113,18 +87,31 @@ astattach(parent, self, aux)
 	struct ast_softc *sc = (void *)self;
 	struct isa_attach_args *ia = aux;
 	struct ast_attach_args aa;
+	struct isa_attach_args isa;
+
+	sc->sc_iobase = ia->ia_iobase;
 
 	/*
 	 * Enable the master interrupt.
 	 */
-	sc->sc_iobase = ia->ia_iobase;
 	outb(sc->sc_iobase | 0x1f, 0x80);
+
 	printf("\n");
 
-	for (aa.aa_slave = 0, aa.aa_iobase = sc->sc_iobase;
-	    aa.aa_slave < 4;
-	    aa.aa_slave++, aa.aa_iobase += 8)
-		config_search(astsubmatch, self, &aa);
+	isa.ia_aux = &aa;
+	for (aa.aa_slave = 0; aa.aa_slave < 4; aa.aa_slave++) {
+		void *match;
+		isa.ia_iobase = sc->sc_iobase + 8 * aa.aa_slave;
+		isa.ia_iosize = 0x666;
+		isa.ia_irq = IRQUNK;
+		isa.ia_drq = DRQUNK;
+		isa.ia_msize = 0;
+		if ((match = config_search(astsubmatch, self, &isa)) != 0) {
+			sc->sc_slaves[aa.aa_slave] = match;
+			sc->sc_alive |= 1 << aa.aa_slave;
+			config_attach(self, match, &isa, astprint);
+		}
+	}
 
 	sc->sc_ih.ih_fun = astintr;
 	sc->sc_ih.ih_arg = sc;
@@ -140,9 +127,9 @@ astintr(sc)
 	int alive = sc->sc_alive;
 	int bits;
 
-	bits = ~(inb(iobase | 0x1f)) & alive;
+	bits = ~inb(iobase | 0x1f) & alive;
 	if (bits == 0)
-		return 0;
+		return (0);
 
 	for (;;) {
 #define	TRY(n) \
@@ -153,8 +140,8 @@ astintr(sc)
 		TRY(2);
 		TRY(3);
 #undef TRY
-		bits = ~(inb(iobase | 0x1f)) & alive;
+		bits = ~inb(iobase | 0x1f) & alive;
 		if (bits == 0)
-			return 1;
+			return (1);
  	}
 }
