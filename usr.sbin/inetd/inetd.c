@@ -1,4 +1,4 @@
-/*	$NetBSD: inetd.c,v 1.51 1999/07/19 15:49:39 ghudson Exp $	*/
+/*	$NetBSD: inetd.c,v 1.52 1999/07/28 10:58:31 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1991, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)inetd.c	8.4 (Berkeley) 4/13/94";
 #else
-__RCSID("$NetBSD: inetd.c,v 1.51 1999/07/19 15:49:39 ghudson Exp $");
+__RCSID("$NetBSD: inetd.c,v 1.52 1999/07/28 10:58:31 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -660,14 +660,14 @@ run_service(ctrl, sep)
 		fromhost(&req);
 		denied = !hosts_access(&req);
 		if (denied || lflag) {
-			sp = getservbyport(sep->se_ctrladdr_in.sin_port,
-			    sep->se_proto);
-			if (sp == NULL) {
+			if (getnameinfo(&sep->se_ctrladdr,
+					sep->se_ctrladdr.sa_len, NULL, 0,
+					buf, sizeof(buf), 0) != 0) {
+				/* shouldn't happen */
 				(void)snprintf(buf, sizeof buf, "%d",
 				    ntohs(sep->se_ctrladdr_in.sin_port));
-				service = buf;
-			} else
-				service = sp->s_name;
+			}
+			service = buf;
 		}
 		if (denied) {
 			syslog(deny_severity,
