@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_subr.c,v 1.23 1998/03/01 02:21:16 fvdl Exp $	*/
+/*	$NetBSD: procfs_subr.c,v 1.24 1998/08/09 20:51:10 perry Exp $	*/
 
 /*
  * Copyright (c) 1994 Christopher G. Demetriou.  All rights reserved.
@@ -320,7 +320,7 @@ vfs_findname(nm, buf, buflen)
 {
 
 	for (; nm->nm_name; nm++)
-		if (bcmp(buf, nm->nm_name, buflen+1) == 0)
+		if (memcmp(buf, nm->nm_name, buflen+1) == 0)
 			return (nm);
 
 	return (0);

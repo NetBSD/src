@@ -1,4 +1,4 @@
-/*	$NetBSD: fdesc_vnops.c,v 1.45 1998/08/03 14:19:59 kleink Exp $	*/
+/*	$NetBSD: fdesc_vnops.c,v 1.46 1998/08/09 20:51:08 perry Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -292,7 +292,7 @@ fdesc_lookup(v)
 		goto bad;
 
 	case Froot:
-		if (cnp->cn_namelen == 2 && bcmp(pname, "fd", 2) == 0) {
+		if (cnp->cn_namelen == 2 && memcmp(pname, "fd", 2) == 0) {
 			error = fdesc_allocvp(Fdevfd, FD_DEVFD, dvp->v_mount, &fvp);
 			if (error)
 				goto bad;
@@ -302,7 +302,7 @@ fdesc_lookup(v)
 			return (0);
 		}
 
-		if (cnp->cn_namelen == 3 && bcmp(pname, "tty", 3) == 0) {
+		if (cnp->cn_namelen == 3 && memcmp(pname, "tty", 3) == 0) {
 			struct vnode *ttyvp = cttyvp(p);
 			if (ttyvp == NULL) {
 				error = ENXIO;
@@ -320,17 +320,17 @@ fdesc_lookup(v)
 		ln = 0;
 		switch (cnp->cn_namelen) {
 		case 5:
-			if (bcmp(pname, "stdin", 5) == 0) {
+			if (memcmp(pname, "stdin", 5) == 0) {
 				ln = "fd/0";
 				fd = FD_STDIN;
 			}
 			break;
 		case 6:
-			if (bcmp(pname, "stdout", 6) == 0) {
+			if (memcmp(pname, "stdout", 6) == 0) {
 				ln = "fd/1";
 				fd = FD_STDOUT;
 			} else
-			if (bcmp(pname, "stderr", 6) == 0) {
+			if (memcmp(pname, "stderr", 6) == 0) {
 				ln = "fd/2";
 				fd = FD_STDERR;
 			}
@@ -354,7 +354,7 @@ fdesc_lookup(v)
 		/* FALL THROUGH */
 
 	case Fdevfd:
-		if (cnp->cn_namelen == 2 && bcmp(pname, "..", 2) == 0) {
+		if (cnp->cn_namelen == 2 && memcmp(pname, "..", 2) == 0) {
 			error = fdesc_root(dvp->v_mount, vpp);
 			if (error)
 				goto bad;
@@ -681,7 +681,7 @@ fdesc_readdir(v)
 
 	error = 0;
 	i = uio->uio_offset;
-	bzero((caddr_t)&d, UIO_MX);
+	memset((caddr_t)&d, 0, UIO_MX);
 	d.d_reclen = UIO_MX;
 	if (ap->a_ncookies)
 		ncookies = (uio->uio_resid / UIO_MX);
@@ -717,7 +717,7 @@ fdesc_readdir(v)
 
 			d.d_fileno = ft->ft_fileno;
 			d.d_namlen = ft->ft_namlen;
-			bcopy(ft->ft_name, d.d_name, ft->ft_namlen + 1);
+			memcpy(d.d_name, ft->ft_name, ft->ft_namlen + 1);
 			d.d_type = ft->ft_type;
 
 			if ((error = uiomove((caddr_t)&d, UIO_MX, uio)) != 0)
@@ -739,7 +739,7 @@ fdesc_readdir(v)
 			case 1:
 				d.d_fileno = FD_ROOT;		/* XXX */
 				d.d_namlen = i + 1;
-				bcopy("..", d.d_name, d.d_namlen);
+				memcpy(d.d_name, "..", d.d_namlen);
 				d.d_name[i + 1] = '\0';
 				d.d_type = DT_DIR;
 				break;

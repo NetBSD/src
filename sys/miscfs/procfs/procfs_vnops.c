@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_vnops.c,v 1.55 1998/08/03 14:20:00 kleink Exp $	*/
+/*	$NetBSD: procfs_vnops.c,v 1.56 1998/08/09 20:51:10 perry Exp $	*/
 
 /*
  * Copyright (c) 1993 Jan-Simon Pendry
@@ -730,7 +730,7 @@ procfs_lookup(v)
 
 		for (pt = proc_targets, i = 0; i < nproc_targets; pt++, i++) {
 			if (cnp->cn_namelen == pt->pt_namlen &&
-			    bcmp(pt->pt_name, pname, cnp->cn_namelen) == 0 &&
+			    memcmp(pt->pt_name, pname, cnp->cn_namelen) == 0 &&
 			    (pt->pt_valid == NULL || (*pt->pt_valid)(p)))
 				goto found;
 		}
@@ -805,7 +805,7 @@ procfs_readdir(v)
 
 	error = 0;
 	i = uio->uio_offset;
-	bzero((caddr_t)&d, UIO_MX);
+	memset((caddr_t)&d, 0, UIO_MX);
 	d.d_reclen = UIO_MX;
 	ncookies = uio->uio_resid / UIO_MX;
 
@@ -837,7 +837,7 @@ procfs_readdir(v)
 			
 			d.d_fileno = PROCFS_FILENO(pfs->pfs_pid, pt->pt_pfstype);
 			d.d_namlen = pt->pt_namlen;
-			bcopy(pt->pt_name, d.d_name, pt->pt_namlen + 1);
+			memcpy(d.d_name, pt->pt_name, pt->pt_namlen + 1);
 			d.d_type = pt->pt_type;
 
 			if ((error = uiomove((caddr_t)&d, UIO_MX, uio)) != 0)
@@ -885,7 +885,7 @@ procfs_readdir(v)
 			case 1:		/* `..' */
 				d.d_fileno = PROCFS_FILENO(0, Proot);
 				d.d_namlen = i + 1;
-				bcopy("..", d.d_name, d.d_namlen);
+				memcpy(d.d_name, "..", d.d_namlen);
 				d.d_name[i + 1] = '\0';
 				d.d_type = DT_DIR;
 				break;
@@ -893,7 +893,7 @@ procfs_readdir(v)
 			case 2:
 				d.d_fileno = PROCFS_FILENO(0, Pcurproc);
 				d.d_namlen = 7;
-				bcopy("curproc", d.d_name, 8);
+				memcpy(d.d_name, "curproc", 8);
 				d.d_type = DT_LNK;
 				break;
 

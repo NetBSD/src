@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_boot.c,v 1.47 1998/06/13 14:13:25 drochner Exp $	*/
+/*	$NetBSD: nfs_boot.c,v 1.48 1998/08/09 21:19:50 perry Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1997 The NetBSD Foundation, Inc.
@@ -322,18 +322,18 @@ nfs_boot_defrt(gw_ip)
 	int error;
 
 	/* Destination: (default) */
-	bzero((caddr_t)&dst, sizeof(dst));
+	memset((caddr_t)&dst, 0, sizeof(dst));
 	dst.sa_len = sizeof(dst);
 	dst.sa_family = AF_INET;
 	/* Gateway: */
-	bzero((caddr_t)&gw, sizeof(gw));
+	memset((caddr_t)&gw, 0, sizeof(gw));
 	sin = (struct sockaddr_in *)&gw;
 	sin->sin_len = sizeof(*sin);
 	sin->sin_family = AF_INET;
 	sin->sin_addr.s_addr = gw_ip->s_addr;
 	/* Mask: (zero length) */
 	/* XXX - Just pass a null pointer? */
-	bzero(&mask, sizeof(mask));
+	memset(&mask, 0, sizeof(mask));
 
 	/* add, dest, gw, mask, flags, 0 */
 	error = rtrequest(RTM_ADD, &dst, &gw, &mask,
@@ -362,7 +362,7 @@ nfs_boot_getfh(ndm)
 	args = &ndm->ndm_args;
 
 	/* Initialize mount args. */
-	bzero((caddr_t) args, sizeof(*args));
+	memset((caddr_t) args, 0, sizeof(*args));
 	args->addr     = &ndm->ndm_saddr;
 	args->addrlen  = args->addr->sa_len;
 #ifdef NFS_BOOT_TCP
@@ -521,7 +521,7 @@ md_mount(mdsin, path, argp)
 
 	fh = (mntver == 3) ?
 		rdata->fh.v3fh.fh : rdata->fh.v2fh;
-	bcopy(fh, argp->fh, argp->fhsize);
+	memcpy(argp->fh, fh, argp->fhsize);
 
 	goto out;
 

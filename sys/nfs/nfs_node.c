@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_node.c,v 1.26 1998/03/01 02:24:27 fvdl Exp $	*/
+/*	$NetBSD: nfs_node.c,v 1.27 1998/08/09 21:19:50 perry Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -119,7 +119,7 @@ nfs_nget(mntp, fhp, fhsize, npp)
 loop:
 	for (np = nhpp->lh_first; np != 0; np = np->n_hash.le_next) {
 		if (mntp != NFSTOV(np)->v_mount || np->n_fhsize != fhsize ||
-		    bcmp((caddr_t)fhp, (caddr_t)np->n_fhp, fhsize))
+		    memcmp((caddr_t)fhp, (caddr_t)np->n_fhp, fhsize))
 			continue;
 		vp = NFSTOV(np);
 		if (vget(vp, LK_EXCLUSIVE))
@@ -137,7 +137,7 @@ loop:
 	}
 	vp = nvp;
 	MALLOC(np, struct nfsnode *, sizeof *np, M_NFSNODE, M_WAITOK);
-	bzero((caddr_t)np, sizeof *np);
+	memset((caddr_t)np, 0, sizeof *np);
 	vp->v_data = np;
 	np->n_vnode = vp;
 	/*
@@ -148,11 +148,11 @@ loop:
 		MALLOC(np->n_fhp, nfsfh_t *, fhsize, M_NFSBIGFH, M_WAITOK);
 	} else
 		np->n_fhp = &np->n_fh;
-	bcopy((caddr_t)fhp, (caddr_t)np->n_fhp, fhsize);
+	memcpy((caddr_t)np->n_fhp, (caddr_t)fhp, fhsize);
 	np->n_fhsize = fhsize;
 	MALLOC(np->n_vattr, struct vattr *, sizeof (struct vattr),
 	    M_NFSNODE, M_WAITOK);
-	bzero(np->n_vattr, sizeof (struct vattr));
+	memset(np->n_vattr, 0, sizeof (struct vattr));
 	lockmgr(&nfs_hashlock, LK_RELEASE, 0);
 	*npp = np;
 	return (0);

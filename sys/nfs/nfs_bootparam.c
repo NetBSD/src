@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_bootparam.c,v 1.8 1998/06/13 04:33:40 tv Exp $	*/
+/*	$NetBSD: nfs_bootparam.c,v 1.9 1998/08/09 21:19:50 perry Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1997 The NetBSD Foundation, Inc.
@@ -125,8 +125,8 @@ nfs_bootparam(ifp, nd, procp)
 	int error;
 
 	gw_ndm = 0;
-	bzero(&ireq, sizeof(ireq));
-	bcopy(ifp->if_xname, ireq.ifr_name, IFNAMSIZ);
+	memset(&ireq, 0, sizeof(ireq));
+	memcpy(ireq.ifr_name, ifp->if_xname, IFNAMSIZ);
 
 	/*
 	 * Get a socket to use for various things in here.
@@ -196,7 +196,7 @@ nfs_bootparam(ifp, nd, procp)
 	 * is used for all subsequent booptaram RPCs.
 	 */
 	sin = &bp_sin;
-	bzero((caddr_t)sin, sizeof(*sin));
+	memset((caddr_t)sin, 0, sizeof(*sin));
 	sin->sin_len = sizeof(*sin);
 	sin->sin_family = AF_INET;
 	sin->sin_addr.s_addr = INADDR_BROADCAST;
@@ -248,7 +248,7 @@ nfs_bootparam(ifp, nd, procp)
 #endif
 #if 0	/* XXX - not yet */
 	gw_ndm = malloc(sizeof(*gw_ndm), M_NFSMNT, M_WAITOK);
-	bzero((caddr_t)gw_ndm, sizeof(*gw_ndm));
+	memset((caddr_t)gw_ndm, 0, sizeof(*gw_ndm));
 	error = bp_getfile(sin, "gateway", gw_ndm);
 	if (error) {
 		/* Ignore the error.  No gateway supplied. */
@@ -474,7 +474,7 @@ bp_getfile(bpsin, key, ndm)
 	 * The strings become "server:pathname"
 	 */
 	sin = (struct sockaddr_in *) &ndm->ndm_saddr;
-	bzero((caddr_t)sin, sizeof(*sin));
+	memset((caddr_t)sin, 0, sizeof(*sin));
 	sin->sin_len = sizeof(*sin);
 	sin->sin_family = AF_INET;
 	sin->sin_addr = inaddr;
@@ -484,7 +484,7 @@ bp_getfile(bpsin, key, ndm)
 		goto out;
 	}
 	ndm->ndm_host[sn_len] = ':';
-	bcopy(pathname, ndm->ndm_host + sn_len + 1, path_len + 1);
+	memcpy(ndm->ndm_host + sn_len + 1, pathname, path_len + 1);
 
 	/* success */
 	goto out;

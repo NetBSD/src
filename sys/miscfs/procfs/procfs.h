@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs.h,v 1.21 1998/03/01 02:21:16 fvdl Exp $	*/
+/*	$NetBSD: procfs.h,v 1.22 1998/08/09 20:51:09 perry Exp $	*/
 
 /*
  * Copyright (c) 1993 Jan-Simon Pendry
@@ -78,7 +78,7 @@ struct pfsnode {
 #ifdef _KERNEL
 #define CNEQ(cnp, s, len) \
 	 ((cnp)->cn_namelen == (len) && \
-	  (bcmp((s), (cnp)->cn_nameptr, (len)) == 0))
+	  (memcmp((s), (cnp)->cn_nameptr, (len)) == 0))
 
 #define UIO_MX 32
 
