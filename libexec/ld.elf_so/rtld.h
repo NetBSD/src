@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld.h,v 1.62 2002/10/03 20:35:20 mycroft Exp $	 */
+/*	$NetBSD: rtld.h,v 1.63 2002/10/04 18:50:44 mycroft Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -134,8 +134,8 @@ typedef struct Struct_Obj_Entry {
 	caddr_t         relocbase;	/* Reloc const = mapbase - *vaddrbase */
 	Elf_Dyn        *dynamic;	/* Dynamic section */
 	caddr_t         entry;		/* Entry point */
-	const Elf_Phdr *phdr;		/* Program header if mapped, ow NULL */
-	size_t          phsize;		/* Size of program header in bytes */
+	const Elf_Phdr *__junk001;
+	size_t          __junk002;
 
 	/* Items from the dynamic section. */
 	Elf_Addr       *pltgot;		/* PLTGOT table */
