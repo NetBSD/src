@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.159 2002/10/23 09:14:15 jdolecek Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.160 2002/10/29 12:31:23 blymn Exp $	*/
 
 /*-
  * Copyright (C) 1993, 1994, 1996 Christopher G. Demetriou
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.159 2002/10/23 09:14:15 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.160 2002/10/29 12:31:23 blymn Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_syscall_debug.h"
@@ -175,6 +175,8 @@ static void link_es(struct execsw_entry **, const struct execsw *);
  * ON ENTRY:
  *	exec package with appropriate namei info
  *	proc pointer of exec'ing proc
+ *      iff verified exec enabled then flag indicating a direct exec or
+ *        an indirect exec (i.e. for a shell script interpreter)
  *	NO SELF-LOCKED VNODES
  *
  * ON EXIT:
@@ -193,7 +195,11 @@ static void link_es(struct execsw_entry **, const struct execsw *);
  *			exec header unmodified.
  */
 int
+#ifdef VERIFIED_EXEC
+check_exec(struct proc *p, struct exec_package *epp, int direct_exec)
+#else 
 check_exec(struct proc *p, struct exec_package *epp)
+#endif
 {
 	int		error, i;
 	struct vnode	*vp;
@@ -234,6 +240,13 @@ check_exec(struct proc *p, struct exec_package *epp)
 
 	/* unlock vp, since we need it unlocked from here on out. */
 	VOP_UNLOCK(vp, 0);
+
+   
+#ifdef VERIFIED_EXEC
+        /* Evaluate signature for file... */
+        if ((error = check_veriexec(p, vp, epp, direct_exec)) != 0)
+                goto bad2;
+#endif
 
 	/* now we have the file, get the exec header */
 	uvn_attach(vp, VM_PROT_READ);
@@ -383,7 +396,12 @@ sys_execve(struct proc *p, void *v, register_t *retval)
 #endif
 
 	/* see if we can run it. */
-	if ((error = check_exec(p, &pack)) != 0)
+#ifdef VERIFIED_EXEC
+        if ((error = check_exec(p, &pack, 1)) != 0)
+        //if ((error = check_exec(p, &pack, 0)) != 0)
+#else 
+        if ((error = check_exec(p, &pack)) != 0)
+#endif
 		goto freehdr;
 
 	/* XXX -- THE FOLLOWING SECTION NEEDS MAJOR CLEANUP */

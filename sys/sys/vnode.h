@@ -1,4 +1,4 @@
-/*	$NetBSD: vnode.h,v 1.99 2002/10/23 09:15:02 jdolecek Exp $	*/
+/*	$NetBSD: vnode.h,v 1.100 2002/10/29 12:31:26 blymn Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -113,6 +113,10 @@ struct vnode {
 	struct lock	*v_vnlock;		/* pointer to lock */
 	void 		*v_data;		/* private data for fs */
 	struct klist	v_klist;		/* knotes attached to vnode */
+#ifdef VERIFIED_EXEC
+	char fp_status;				/* fingerprint status
+						   (see below) */
+#endif
 };
 #define	v_mountedhere	v_un.vu_mountedhere
 #define	v_socket	v_un.vu_socket
@@ -151,6 +155,19 @@ struct vnode {
 #define	VDIRTY		0x8000	/* vnode possibly has dirty pages */
 
 #define	VSIZENOTSET	((voff_t)-1)
+
+/*
+ * Valid states for the fingerprint flag - if signed exec is being used
+ */
+#ifdef VERIFIED_EXEC
+#define FINGERPRINT_INVALID  0  /* fingerprint has not been evaluated */
+#define FINGERPRINT_VALID    1  /* fingerprint evaluated and matches list */
+#define FINGERPRINT_INDIRECT 2  /* fingerprint eval'd/matched but only
+                                   indirect execs allowed */
+#define FINGERPRINT_NOMATCH  3  /* fingerprint evaluated but does not match */
+#define FINGERPRINT_NOENTRY  4  /* fingerprint evaluated but no list entry */
+#define FINGERPRINT_NODEV    5  /* fingerprint evaluated but no dev list */
+#endif
 
 /*
  * Vnode attributes.  A field value of VNOVAL represents a field whose value
