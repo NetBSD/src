@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.18 1997/03/18 20:04:11 cgd Exp $
+# $NetBSD: Makefile,v 1.19 1997/04/18 18:05:24 cgd Exp $
 
 # Make a distribution for the alpha, on a spare disk.
 # This creates a large, gzipped disk image in ${.OBJDIR}
