@@ -1,4 +1,4 @@
-/*	$NetBSD: grfioctl.h,v 1.2 2003/08/07 16:28:24 agc Exp $	*/
+/*	$NetBSD: grfioctl.h,v 1.3 2004/04/25 21:57:51 fair Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -76,6 +76,9 @@
  *	@(#)grfioctl.h	7.2 (Berkeley) 11/4/90
  */
 
+#ifndef _MACPPC_GRFIOCTL_H_
+#define _MACPPC_GRFIOCTL_H_
+
 struct	grfinfo {
 	caddr_t	gd_regaddr;		/* control registers physaddr */
 	int	gd_regsize;		/* control registers size */
@@ -99,3 +102,5 @@ struct	grfinfo {
 #define	GRFIOCGINFO	_IOR('G', 0, struct grfinfo) /* get info on device */
 #define	GRFIOCON	_IO('G', 1)		/* turn graphics on */
 #define	GRFIOCOFF	_IO('G', 2)		/* turn graphics off */
+
+#endif /* _MACPPC_GRFIOCTL_H_ */
