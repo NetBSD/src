@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_disk.c,v 1.50 2003/04/03 22:20:24 fvdl Exp $	*/
+/*	$NetBSD: subr_disk.c,v 1.51 2003/04/13 07:51:30 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1999, 2000 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_disk.c,v 1.50 2003/04/03 22:20:24 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_disk.c,v 1.51 2003/04/13 07:51:30 dsl Exp $");
 
 #include "opt_compat_netbsd.h"
 
@@ -130,6 +130,9 @@ hp0g: hard error reading fsbn 12345 of 12344-12347 (hp0 bn %d cn %d tn %d sn %d)
  * The message should be completed (with at least a newline) with printf
  * or addlog, respectively.  There is no trailing space.
  */
+#ifndef PRIdaddr
+#define PRIdaddr PRId64
+#endif
 void
 diskerr(const struct buf *bp, const char *dname, const char *what, int pri,
     int blkdone, const struct disklabel *lp)
@@ -137,7 +140,11 @@ diskerr(const struct buf *bp, const char *dname, const char *what, int pri,
 	int unit = DISKUNIT(bp->b_dev), part = DISKPART(bp->b_dev);
 	void (*pr)(const char *, ...);
 	char partname = 'a' + part;
-	int sn;
+	daddr_t sn;
+
+	if (/*CONSTCONT*/0)
+		/* Compiler will error this is the format is wrong... */
+		printf("%" PRIdaddr, bp->b_blkno);
 
 	if (pri != LOG_PRINTF) {
 		static const char fmt[] = "";
@@ -149,22 +156,22 @@ diskerr(const struct buf *bp, const char *dname, const char *what, int pri,
 	    bp->b_flags & B_READ ? "read" : "writ");
 	sn = bp->b_blkno;
 	if (bp->b_bcount <= DEV_BSIZE)
-		(*pr)("%d", sn);
+		(*pr)("%" PRIdaddr, sn);
 	else {
 		if (blkdone >= 0) {
 			sn += blkdone;
-			(*pr)("%d of ", sn);
+			(*pr)("%" PRIdaddr " of ", sn);
 		}
-		(*pr)("%d-%d", bp->b_blkno,
+		(*pr)("%" PRIdaddr "-%" PRIdaddr "", bp->b_blkno,
 		    bp->b_blkno + (bp->b_bcount - 1) / DEV_BSIZE);
 	}
 	if (lp && (blkdone >= 0 || bp->b_bcount <= lp->d_secsize)) {
 		sn += lp->d_partitions[part].p_offset;
-		(*pr)(" (%s%d bn %d; cn %d", dname, unit, sn,
-		    sn / lp->d_secpercyl);
+		(*pr)(" (%s%d bn %" PRIdaddr "; cn %" PRIdaddr "",
+		    dname, unit, sn, sn / lp->d_secpercyl);
 		sn %= lp->d_secpercyl;
-		(*pr)(" tn %d sn %d)", sn / lp->d_nsectors,
-		    sn % lp->d_nsectors);
+		(*pr)(" tn %" PRIdaddr " sn %" PRIdaddr ")",
+		    sn / lp->d_nsectors, sn % lp->d_nsectors);
 	}
 }
 
