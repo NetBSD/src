@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.14 1996/03/27 10:23:54 leo Exp $	*/
+/*	$NetBSD: conf.c,v 1.15 1996/09/05 15:46:32 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1991 The Regents of the University of California.
@@ -46,14 +46,6 @@
 
 #ifdef BANKEDDEVPAGER
 #include <sys/bankeddev.h>
-#endif
-
-int	ttselect	__P((dev_t, int, struct proc *));
-
-#ifndef LKM
-#define	lkmenodev	enodev
-#else
-int	lkmenodev();
 #endif
 
 #define	bdev_rd_init(c,n) { \
@@ -159,12 +151,6 @@ dev_decl(filedesc,open);
 cdev_decl(bpf);
 #include "tun.h"
 cdev_decl(tun);
-#ifdef LKM
-#define NLKM 1
-#else
-#define NLKM 0
-#endif
-cdev_decl(lkm);
 cdev_decl(lpt);
 
 struct cdevsw	cdevsw[] =

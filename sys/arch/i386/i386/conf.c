@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.76 1996/08/25 23:39:37 jtk Exp $	*/
+/*	$NetBSD: conf.c,v 1.77 1996/09/05 15:46:37 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -36,12 +36,6 @@
 #include <sys/tty.h>
 #include <sys/conf.h>
 #include <sys/vnode.h>
-
-#ifndef LKM
-#define	lkmenodev	enodev
-#else
-int	lkmenodev __P((void));
-#endif
 
 #include "wdc.h"
 bdev_decl(wd);
@@ -110,12 +104,11 @@ int	nblkdev = sizeof(bdevsw) / sizeof(bdevsw[0]);
 	0, seltrue, (dev_type_mmap((*))) enodev }
 
 /* open, close, read, ioctl */
-#define cdev_ss_init(c,n) { \
+#define cdev_joy_init(c,n) { \
 	dev_init(c,n,open), dev_init(c,n,close), dev_init(c,n,read), \
 	(dev_type_write((*))) enodev, dev_init(c,n,ioctl), \
 	(dev_type_stop((*))) enodev, 0, seltrue, \
 	(dev_type_mmap((*))) enodev }
-#define cdev_joy_init cdev_ss_init
 
 /* open, close, ioctl, select -- XXX should be a generic device */
 #define cdev_ocis_init(c,n) { \
@@ -162,12 +155,6 @@ dev_decl(filedesc,open);
 cdev_decl(bpf);
 #include "spkr.h"
 cdev_decl(spkr);
-#ifdef LKM
-#define	NLKM	1
-#else
-#define	NLKM	0
-#endif
-cdev_decl(lkm);
 #include "mms.h"
 cdev_decl(mms);
 #include "lms.h"
@@ -210,7 +197,7 @@ struct cdevsw	cdevsw[] =
 	cdev_lpt_init(NLPT,lpt),	/* 16: parallel printer */
 	cdev_ch_init(NCH,ch),		/* 17: SCSI autochanger */
 	cdev_disk_init(NCCD,ccd),	/* 18: concatenated disk driver */
-	cdev_ss_init(NSS,ss),		/* 19: SCSI scanner */
+	cdev_scanner_init(NSS,ss),	/* 19: SCSI scanner */
 	cdev_notdef(),			/* 20 */
 	cdev_apm_init(NAPM,apm),	/* 21: Advancded Power Management */
 	cdev_fd_init(1,filedesc),	/* 22: file descriptor pseudo-device */

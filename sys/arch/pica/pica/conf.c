@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.4 1996/07/16 23:24:39 thorpej Exp $	*/
+/*	$NetBSD: conf.c,v 1.5 1996/09/05 15:46:50 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -46,8 +46,6 @@
 #include <sys/vnode.h>
 #include <sys/tty.h>
 #include <sys/conf.h>
-
-int	ttselect	__P((dev_t, int, struct proc *));
 
 /*
  *	Block devices.
