@@ -1,4 +1,4 @@
-/*	$NetBSD: elink3.c,v 1.32.4.5 1997/09/29 07:47:06 thorpej Exp $	*/
+/*	$NetBSD: elink3.c,v 1.32.4.6 1997/09/29 20:34:00 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997 Jonathan Stone <jonathan@NetBSD.org>
@@ -168,6 +168,9 @@ void	epmbuffill __P((void *));
 void	epmbufempty __P((struct ep_softc *));
 void	epsetfilter __P((struct ep_softc *));
 int	epsetmedia __P((struct ep_softc *, int epmedium));
+
+int	epenable __P((struct ep_softc *));
+void	epdisable __P((struct ep_softc *));
 
 /* ifmedia callbacks */
 int	ep_media_change __P((struct ifnet *ifp));
@@ -1086,8 +1089,8 @@ epintr(arg)
 	u_int16_t status;
 	int ret = 0;
 
-	if (!sc->enabled)
-		return(0);
+	if (sc->enabled == 0)
+		return (0);
 
 	for (;;) {
 		bus_space_write_2(iot, ioh, EP_COMMAND, C_INTR_LATCH);
@@ -1432,15 +1435,8 @@ epioctl(ifp, cmd, data)
 	switch (cmd) {
 
 	case SIOCSIFADDR:
-		if (sc->enable && !sc->enabled) {
-			if ((*sc->enable)(sc)) {
-				printf("%s: device enable failed\n",
-				       sc->sc_dev.dv_xname);
-				error = EIO;
-				break;
-			}
-			sc->enabled = 1;
-		}
+		if ((error = epenable(sc)) != 0)
+			break;
 		/* epinit is called just below */
 		ifp->if_flags |= IFF_UP;
 		switch (ifa->ifa_addr->sa_family) {
@@ -1475,7 +1471,10 @@ epioctl(ifp, cmd, data)
 
 	case SIOCSIFMEDIA:
 	case SIOCGIFMEDIA:
-		error = ifmedia_ioctl(ifp, ifr, &sc->sc_media, cmd);
+		if (sc->enabled)
+			error = ifmedia_ioctl(ifp, ifr, &sc->sc_media, cmd);
+		else
+			error = EIO;
 		break;
 
 	case SIOCSIFFLAGS:
@@ -1487,27 +1486,17 @@ epioctl(ifp, cmd, data)
 			 */
 			epstop(sc);
 			ifp->if_flags &= ~IFF_RUNNING;
-			if (sc->disable && sc->enabled) {
-			    sc->enabled = 0;
-			    (*sc->disable)(sc);
-			}
+			epdisable(sc);
 		} else if ((ifp->if_flags & IFF_UP) != 0 &&
 			   (ifp->if_flags & IFF_RUNNING) == 0) {
 			/*
 			 * If interface is marked up and it is stopped, then
 			 * start it.
 			 */
-			if (sc->enable && !sc->enabled) {
-				if ((*sc->enable)(sc)) {
-					printf("%s: device enable failed\n",
-					       sc->sc_dev.dv_xname);
-					error = EIO;
-					break;
-				}
-				sc->enabled = 1;
-			}
+			if ((error = epenable(sc)) != 0)
+				break;
 			epinit(sc);
-		} else {
+		} else if (sc->enabled) {
 			/*
 			 * deal with flags changes:
 			 * IFF_MULTICAST, IFF_PROMISC.
@@ -1518,6 +1507,11 @@ epioctl(ifp, cmd, data)
 
 	case SIOCADDMULTI:
 	case SIOCDELMULTI:
+		if (sc->enabled == 0) {
+			error = EIO;
+			break;
+		}
+
 		error = (cmd == SIOCADDMULTI) ?
 		    ether_addmulti(ifr, &sc->sc_ethercom) :
 		    ether_delmulti(ifr, &sc->sc_ethercom);
@@ -1711,4 +1705,32 @@ epmbufempty(sc)
 	sc->last_mb = sc->next_mb = 0;
 	untimeout(epmbuffill, sc);
 	splx(s);
+}
+
+int
+epenable(sc)
+	struct ep_softc *sc;
+{
+
+	if (sc->enabled == 0 && sc->enable != NULL) {
+		if ((*sc->enable)(sc) != 0) {
+			printf("%s: device enable failed\n",
+			    sc->sc_dev.dv_xname);
+			return (EIO);
+		}
+	}
+
+	sc->enabled = 1;
+	return (0);
+}
+
+void
+epdisable(sc)
+	struct ep_softc *sc;
+{
+
+	if (sc->enabled != 0 && sc->disable != NULL)
+		(*sc->disable)(sc);
+
+	sc->enabled = 0;
 }
