@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.4 2000/01/19 02:52:17 msaitoh Exp $	*/
+/*	$NetBSD: clock.c,v 1.5 2000/12/12 06:06:06 mycroft Exp $	*/
 
 /*
  * Copyright 1997
@@ -664,12 +664,6 @@ microtime(tvp)
 	    
 	oldtv = *tvp;
 	(void)splx(s);		
-}
-
-void
-need_proftick(p)
-	struct proc *p;
-{
 }
 
 /* End of clock.c */
