@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.58 2000/12/07 01:05:55 eeh Exp $ */
+/*	$NetBSD: trap.c,v 1.59 2000/12/10 19:52:17 eeh Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -49,7 +49,6 @@
  */
 
 #define NEW_FPSTATE
-#define	TRAPWIN
 
 #include "opt_ddb.h"
 #include "opt_syscall_debug.h"
@@ -883,9 +882,6 @@ rwindow_save(p)
 	register struct rwindow64 *rw = &pcb->pcb_rw[0];
 	register u_int64_t rwdest;
 	register int i, j;
-#ifndef TRAPWIN
-	register struct trapframe64 *tf = p->p_md.md_tf;
-#endif
 
 	i = pcb->pcb_nsaved;
 #ifdef DEBUG
@@ -902,17 +898,13 @@ rwindow_save(p)
 		rwdest = rw[i--].rw_in[6];
 #ifdef DEBUG
 		if (rwindow_debug&RW_FOLLOW)
-			printf("window %d at %lx\n", i, rwdest);
+			printf("window %d at %lx\n", i, (long)rwdest);
 #endif
 		if (rwdest & 1) {
-#ifndef TRAPWIN
-			struct rwindow64 *rwstack;
-			/* 64-bit window */
-#endif
 #ifdef DEBUG
 			if (rwindow_debug&RW_64) {
 				printf("rwindow_save: 64-bit tf to %p+BIAS or %p\n", 
-				       (void *)rwdest, (void *)(rwdest+BIAS));
+				       (void *)(long)rwdest, (void *)(long)(rwdest+BIAS));
 				Debugger();
 			}
 #endif
@@ -921,30 +913,17 @@ rwindow_save(p)
 				    sizeof(*rw))) {
 #ifdef DEBUG
 			if (rwindow_debug&(RW_ERR|RW_64))
-				printf("rwindow_save: 64-bit pcb copyout to %p failed\n", (void *)rwdest);
+				printf("rwindow_save: 64-bit pcb copyout to %p failed\n", 
+				       (void *)(long)rwdest);
 #endif
 				return (-1);
 			}
 #ifdef DEBUG
 			if (rwindow_debug&RW_64) {
 				printf("Finished copyout(%p, %p, %lx)\n",
-					(caddr_t)&rw[i], (caddr_t)(u_long)rwdest,
+					(caddr_t)&rw[i], (caddr_t)(long)rwdest,
                                 	sizeof(*rw));
 				Debugger();
-			}
-#endif
-#ifndef TRAPWIN
-			rwstack = (struct rwindow64 *)rwdest;
-			for (j=0; j<8; j++) { 
-				if (copyout((void *)(&rwstack->rw_local[j]), &tf->tf_local[j], 
-					    sizeof (tf->tf_local[j]))) {
-#ifdef DEBUG
-					if (rwindow_debug&(RW_64|RW_ERR))
-						printf("rwindow_save: 64-bit tf suword to %p failed\n", 
-						       &rwstack->rw_local[j]);
-#endif
-					return (-1);
-				}
 			}
 #endif
 		} else {
@@ -958,7 +937,8 @@ rwindow_save(p)
 			if (copyout(&rwstack, (caddr_t)(u_long)rwdest, sizeof(rwstack))) {
 #ifdef DEBUG
 				if (rwindow_debug&RW_ERR)
-					printf("rwindow_save: 32-bit pcb copyout to %p failed\n", (void *)rwdest);
+					printf("rwindow_save: 32-bit pcb copyout to %p failed\n", 
+					       (void *)(long)rwdest);
 #endif
 				return (-1);
 			}
@@ -1010,7 +990,8 @@ data_access_fault(type, addr, pc, tf)
 
 #ifdef DEBUG
 	if (tf->tf_pc == tf->tf_npc) {
-		printf("data_access_fault: tpc %lx == tnpc %lx\n", tf->tf_pc, tf->tf_npc);
+		printf("data_access_fault: tpc %lx == tnpc %lx\n", 
+		       (long)tf->tf_pc, (long)tf->tf_npc);
 		Debugger();
 	}
 	if (protmmu || missmmu) {
@@ -1022,9 +1003,9 @@ data_access_fault(type, addr, pc, tf)
 		Debugger();
 	}
 	write_user_windows();
-/*	if (cpcb->pcb_nsaved > 6) trapdebug |= TDB_NSAVED; */
-	if ((trapdebug&TDB_NSAVED && cpcb->pcb_nsaved) || 
-	    trapdebug&(TDB_ADDFLT|TDB_FOLLOW)) {
+	if ((cpcb->pcb_nsaved > 8) ||
+	    (trapdebug&TDB_NSAVED && cpcb->pcb_nsaved) ||
+	    (trapdebug&(TDB_ADDFLT|TDB_FOLLOW))) {
 		printf("%ld: data_access_fault(%lx, %p, %p, %p) nsaved=%d\n",
 		       (long)(curproc?curproc->p_pid:-1), (long)type, (void*)addr, 
 		       (void*)pc, (void*)tf, (int)cpcb->pcb_nsaved);
@@ -1234,7 +1215,8 @@ data_access_error(type, sfva, sfsr, afva, afsr, tf)
 
 #ifdef DEBUG
 	if (tf->tf_pc == tf->tf_npc) {
-		printf("data_access_error: tpc %lx == tnpc %lx\n", tf->tf_pc, tf->tf_npc);
+		printf("data_access_error: tpc %lx == tnpc %lx\n", 
+		       (long)tf->tf_pc, (long)tf->tf_npc);
 		Debugger();
 	}
 	if (protmmu || missmmu) {
@@ -2124,7 +2106,7 @@ syscall(code, tf, pc)
 		if (trapdebug&(TDB_SYSCALL|TDB_FOLLOW)) 
 			printf("syscall: return tstate=%llx fail %d to %p\n", 
 			       (unsigned long long)tf->tf_tstate, error,
-			       (void *)(unsigned long long)dest);
+			       (void *)(long)dest);
 #endif
 		break;
 	}
