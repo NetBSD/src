@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.59 2000/06/11 14:20:46 minoura Exp $	*/
+/*	$NetBSD: locore.s,v 1.60 2000/08/20 21:50:11 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -47,6 +47,7 @@
 #include "opt_compat_sunos.h"
 #include "opt_ddb.h"
 #include "opt_fpsp.h"
+#include "opt_lockdebug.h"
 
 #include "ite.h"
 #include "fd.h"
@@ -1013,6 +1014,8 @@ ASBSS(nullpcb,SIZEOF_PCB)
  * At exit of a process, do a switch for the last time.
  * Switch to a safe stack and PCB, and select a new process to run.  The
  * old stack and u-area will be freed by the reaper.
+ *
+ * MUST BE CALLED AT SPLHIGH!
  */
 ENTRY(switch_exit)
 	movl	sp@(4),a0
@@ -1025,6 +1028,11 @@ ENTRY(switch_exit)
 	jbsr	_C_LABEL(exit2)
 	lea	sp@(4),sp		| pop args
 
+#if defined(LOCKDEBUG)
+	/* Acquire sched_lock */ 
+	jbsr	_C_LABEL(sched_lock_idle)
+#endif
+
 	jra	_C_LABEL(cpu_switch)
 
 /*
@@ -1032,19 +1040,27 @@ ENTRY(switch_exit)
  * to wait for something to come ready.
  */
 ASENTRY_NOPROFILE(Idle)
-	movw	#PSL_HIGHIPL,%sr
-	movl	_C_LABEL(sched_whichqs),%d0
-	jne	Lsw1
+#if defined(LOCKDEBUG)
+	/* Release sched_lock */
+	jbsr	 _C_LABEL(sched_unlock_idle)
+#endif
 	movw	#PSL_LOWIPL,%sr
 
 	/* Try to zero some pages. */
 	movl	_C_LABEL(uvm)+UVM_PAGE_IDLE_ZERO,%d0
 	jeq	1f
 	jbsr	_C_LABEL(uvm_pageidlezero)
-	jra	_ASM_LABEL(Idle)
+	jra	2f
 1:
 	stop	#PSL_LOWIPL
-	jra	_ASM_LABEL(Idle)
+2:	movw	#PSL_HIGHIPL,sr
+#if defined(LOCKDEBUG)
+	/* Acquire sched_lock */
+	jbsr	_C_LABEL(sched_lock_idle)
+#endif
+	movl	_C_LABEL(sched_whichqs),%d0
+	jeq	_ASM_LABEL(Idle)
+	jra	Lsw1
 
 Lbadsw:
 	PANIC("switch")
@@ -1073,10 +1089,14 @@ ENTRY(cpu_switch)
 	 * Find the highest-priority queue that isn't empty,
 	 * then take the first proc from that queue.
 	 */
-	movw	#PSL_HIGHIPL,sr		| lock out interrupts
 	movl	_C_LABEL(sched_whichqs),d0
 	jeq	_ASM_LABEL(Idle)
 Lsw1:
+	/*
+	 * Interrupts are blocked, sched_lock is held.  If
+	 * we come here via Idle, %d0 contains the contents
+	 * of a non-zero sched_whichqs.
+	 */
 	movl	d0,d1
 	negl	d0
 	andl	d1,d0
@@ -1154,6 +1174,18 @@ Lswnofpsave:
 	movb	a0@(P_MD_FLAGS+3),mdpflag | low byte of p_md.md_flags
 	movl	a0@(P_ADDR),a1		| get p_addr
 	movl	a1,_C_LABEL(curpcb)
+
+#if defined(LOCKDEBUG)
+	/*
+	 * Done mucking with the run queues, release the
+	 * scheduler lock, but keep interrupts out.
+	 */
+	movl	%a0,sp@-		| not args...
+	movl	%a1,sp@-		| ...just saving
+	jbsr	_C_LABEL(sched_unlock_idle)
+	movl	sp@+,%a1
+	movl	sp@+,%a0
+#endif
 
 	/*
 	 * Activate process's address space.
