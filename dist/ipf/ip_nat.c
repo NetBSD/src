@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_nat.c,v 1.1.1.1 1999/12/11 22:23:58 veego Exp $	*/
+/*	$NetBSD: ip_nat.c,v 1.1.1.2 1999/12/28 07:21:59 darrenr Exp $	*/
 
 /*
  * Copyright (C) 1995-1998 by Darren Reed.
@@ -328,6 +328,14 @@ int mode;
 
 	switch (cmd)
 	{
+#ifdef  IPFILTER_LOG
+	case SIOCIPFFB :
+		if (!(mode & FWRITE))
+			error = EPERM;
+		else
+			*(int *)data = ipflog_clear(IPL_LOGNAT);
+		break;
+#endif
 	case SIOCADNAT :
 		if (!(mode & FWRITE)) {
 			error = EPERM;

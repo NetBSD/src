@@ -22,6 +22,13 @@ if [ $rev = 5 ] ; then
 	ln -s `pwd`/SunOS5/Makefile.ipsend SunOS5/${cpudir}/Makefile.ipsend
 	ARCHINC=
 	XARCH=
+	/bin/optisa sparcv9 >/dev/null 2>&1
+	if [ $? -eq 0 ] ; then
+		if [ ! -d /opt/SUNWspro/bin ] ; then
+			echo "You must have SUNWspro to build a 64bit ipf"
+			exit 1
+		fi
+	fi
 	if [ -d /opt/SUNWspro/bin ] ; then
 		CC="/opt/SUNWspro/bin/cc  ${CFL}"
 		export CC

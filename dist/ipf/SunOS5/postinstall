@@ -16,7 +16,7 @@ fi
 if [ x"`grep minor=ipauth ${DEVLINK}`" = x ] ; then
 	echo "type=ddi_pseudo;name=ipf;minor=ipauth	\M0" >> ${DEVLINK}
 fi
-if [ x${BASEDIR} = x ] ; then
+if [ x${BASEDIR} = x -o x${BASEDIR} = x/ ] ; then
 	add_drv -m '* 0600 root root' ipf
 else
 	add_drv -m '* 0600 root root' -b ${BASEDIR:-/} ipf
