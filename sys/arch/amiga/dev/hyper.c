@@ -1,4 +1,4 @@
-/*	$NetBSD: hyper.c,v 1.2 1998/01/12 10:39:45 thorpej Exp $ */
+/*	$NetBSD: hyper.c,v 1.3 1998/08/09 22:25:18 is Exp $ */
 
 /*
  * Copyright (c) 1997 Ignatios Souvatzis
@@ -129,7 +129,7 @@ hyperattach(parent, self, auxp)
 		hprsd = hyper4devs;
 	} else { /* prodid == 3 */
 		if (parent)
-			printf(": HyperCom 3\n");
+			printf(": HyperCom 3Z\n");
 		hprsc->sc_bst.base = (u_long)zap->va + 0;
 		hprsc->sc_bst.stride = 2;
 		hprsd = hyper3devs;
