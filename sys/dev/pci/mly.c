@@ -1,4 +1,4 @@
-/*	$NetBSD: mly.c,v 1.15 2002/10/23 09:13:32 jdolecek Exp $	*/
+/*	$NetBSD: mly.c,v 1.16 2002/11/25 07:48:28 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mly.c,v 1.15 2002/10/23 09:13:32 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mly.c,v 1.16 2002/11/25 07:48:28 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -827,7 +827,7 @@ mly_get_eventstatus(struct mly_softc *mly)
 	mh = NULL;
 	mci.sub_ioctl = MDACIOCTL_GETHEALTHSTATUS;
 
-	rv = mly_ioctl(mly, &mci, (void **)&mh, sizeof(*mh), NULL, NULL);
+	rv = mly_ioctl(mly, &mci, (void *)&mh, sizeof(*mh), NULL, NULL);
 	if (rv)
 		return (rv);
 
