@@ -1,4 +1,4 @@
-/*	$NetBSD: nlist.c,v 1.14 1996/09/30 18:27:02 thorpej Exp $	*/
+/*	$NetBSD: nlist.c,v 1.15 1996/10/03 23:06:43 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "from: @(#)nlist.c	8.1 (Berkeley) 6/6/93";
 #else
-static char *rcsid = "$NetBSD: nlist.c,v 1.14 1996/09/30 18:27:02 thorpej Exp $";
+static char *rcsid = "$NetBSD: nlist.c,v 1.15 1996/10/03 23:06:43 cgd Exp $";
 #endif
 #endif /* not lint */
 
@@ -87,32 +87,4 @@ create_knlist(name, db)
                         return;
 	warnx("%s: file format not recognized", name);
 	punt();
-}
-
-/*
- * XXX: Using this value from machine/param.h introduces a
- * XXX: machine dependency on this program, so /usr can not
- * XXX: be shared between (i.e.) several m68k machines.
- * Instead of compiling in KERNTEXTOFF or KERNBASE, try to
- * determine the text start address from a standard symbol.
- * For backward compatibility, use the old compiled-in way
- * when the standard symbol name is not found.
- */
-#ifndef KERNTEXTOFF
-#define KERNTEXTOFF KERNBASE
-#endif
-
-u_long
-get_kerntext(name)
-	const char *name;
-{
-	struct nlist nl[2];
-
-	bzero((caddr_t)nl, sizeof(nl));
-	nl[0].n_un.n_name = "_kernel_text";
-
-	if (nlist(name, nl) != 0)
-		return (KERNTEXTOFF);
-
-	return (nl[0].n_value);
 }
