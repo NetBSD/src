@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_driver.c,v 1.47 2002/07/13 19:35:34 oster Exp $	*/
+/*	$NetBSD: rf_driver.c,v 1.48 2002/07/13 20:51:54 oster Exp $	*/
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -73,7 +73,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_driver.c,v 1.47 2002/07/13 19:35:34 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_driver.c,v 1.48 2002/07/13 20:51:54 oster Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -345,14 +345,6 @@ rf_Configure(raidPtr, cfgPtr, ac)
 	RF_RowCol_t row, col;
 	int     i, rc;
 
-	/* XXX This check can probably be removed now, since 
-	   RAIDFRAME_CONFIGURRE now checks to make sure that the
-	   RAID set is not already valid
-	*/
-	if (raidPtr->valid) {
-		RF_ERRORMSG("RAIDframe configuration not shut down.  Aborting configure.\n");
-		return (EINVAL);
-	}
 	RF_LOCK_MUTEX(configureMutex);
 	configureCount++;
 	if (isconfigged == 0) {
