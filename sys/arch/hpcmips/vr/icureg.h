@@ -1,8 +1,8 @@
-/*	$NetBSD: icureg.h,v 1.2 1999/12/28 03:15:17 takemura Exp $	*/
+/*	$NetBSD: icureg.h,v 1.3 2001/04/16 09:55:56 sato Exp $	*/
 
 /*-
  * Copyright (c) 1999 Shin Takemura. All rights reserved.
- * Copyright (c) 1999 SATO Kazumi. All rights reserved.
+ * Copyright (c) 1999-2001 SATO Kazumi. All rights reserved.
  * Copyright (c) 1999 PocketBSD Project. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -37,26 +37,40 @@
 
 /*
  *	ICU (Interrupt Control UNIT) Registers definitions
- *		start 0x0B000080
+ *		start 0x0B000080 (vr4102/4111/4121)
+ *		start 0x0F000080 (vr4122)
  */
 #define SYSINT1_REG_W		0x000	/* Level1 System intr reg 1 */
 #define MSYSINT1_REG_W		0x00c	/* Level1 Mask System intr reg 1 */
 
 #define SYSINT1_INT15			(1<<15)
 #define SYSINT1_INT14			(1<<14)
+#define SYSINT1_INT13			(1<<13)
 #define SYSINT1_DOZEPIU			(1<<13)	/* PIU intr during Suspend */
 #define SYSINT1_INT12			(1<<12)
+#define SYSINT1_CLKRUN			(1<<12) /* CLKRUN intr (=vr4122) */
+#define SYSINT1_INT11			(1<<11)
 #define SYSINT1_SOFT			(1<<11)	/* Software intr */
-#define SYSINT1_WRBERR			(1<<10)	/* Bus error intr */
+#define SYSINT1_INT10			(1<<10)
+#define SYSINT1_WRBERR			(1<<10)	/* Bus error intr (4102 <=,<= 4121)*/
+#define SYSINT1_INT9			(1<<9)
 #define SYSINT1_SIU			(1<<9)	/* SIU intr */
+#define SYSINT1_INT8			(1<<8)
 #define SYSINT1_GIU			(1<<8)	/* GIU intr */
-#define SYSINT1_KIU			(1<<7)	/* KIU intr */
-#define SYSINT1_AIU			(1<<6)	/* AIU intr */
-#define SYSINT1_PIU			(1<<5)	/* PIU intr */
+#define SYSINT1_INT7			(1<<7)
+#define SYSINT1_KIU			(1<<7)	/* KIU intr (4102 <=,<= 4121)*/
+#define SYSINT1_INT6			(1<<6)
+#define SYSINT1_AIU			(1<<6)	/* AIU intr (4102 <=,<= 4121)*/
+#define SYSINT1_INT5			(1<<5)
+#define SYSINT1_PIU			(1<<5)	/* PIU intr (4102 <=,<= 4121)*/
 #define SYSINT1_INT4			(1<<4)
+#define SYSINT1_INT3			(1<<3)
 #define SYSINT1_ETIMER			(1<<3)	/* ETIMER intr */
+#define SYSINT1_INT2			(1<<2)
 #define SYSINT1_RTCL1			(1<<2)	/* RTClong1 intr */
+#define SYSINT1_INT1			(1<<1)
 #define SYSINT1_POWER			(1<<1)	/* PowerSW intr */
+#define SYSINT1_INT0			(1<<0)
 #define SYSINT1_BAT			(1<<0)	/* Battery intr */
 
 
@@ -147,6 +161,10 @@
 
 #define SYSINT2_REG_W		0x180	/* Level1 System intr reg 2 */
 #define MSYSINT2_REG_W		0x186	/* Level1 Mask System intr reg 2 */
+#define VR4102_SYSINT2_REG_W	0x180	/* Level1 System intr reg 2 */
+#define VR4102_MSYSINT2_REG_W	0x186	/* Level1 Mask System intr reg 2 */
+#define VR4122_SYSINT2_REG_W	0x020	/* Level1 System intr reg 2 */
+#define VR4122_MSYSINT2_REG_W	0x026	/* Level1 Mask System intr reg 2 */
 
 #define SYSINT2_INT31			(1<<15)
 #define SYSINT2_INT30			(1<<14)
@@ -155,19 +173,27 @@
 #define SYSINT2_INT27			(1<<11)
 #define SYSINT2_INT26			(1<<10)
 #define SYSINT2_INT25			(1<<9)
+#define SYSINT2_BCU			(1<<9)  /* BCU intr (=vr4122) */
 #define SYSINT2_INT24			(1<<8)
+#define SYSINT2_CSI			(1<<8)  /* CSI intr (=vr4122) */
 #define SYSINT2_INT23			(1<<7)
+#define SYSINT2_SCU			(1<<7)	/* SCU intr (=vr4122) */
 #define SYSINT2_INT22			(1<<6)
+#define SYSINT2_PCI			(1<<6)	/* PCI intr (=vr4122) */
 #define SYSINT2_DSIU			(1<<5)	/* DSUI intr */
 #define SYSINT2_FIR			(1<<4)	/* FIR intr */
 #define SYSINT2_TCLK			(1<<3)	/* TClock Counter intr */
-#define SYSINT2_HSP			(1<<2)	/* HSP intr */
+#define SYSINT2_HSP			(1<<2)	/* HSP intr (4122>=4102)*/
 #define SYSINT2_LED			(1<<1)	/* LED intr */
 #define SYSINT2_RTCL2			(1<<0)	/* RTCLong2 intr */
 
 
 #define GIUINT_H_REG_W		0x182	/* Level2 GIU intr reg High */
 #define MGIUINT_H_REG_W		0x188	/* Level2 Mask GIU intr reg High */
+#define VR4102_GIUINT_H_REG_W	0x182	/* Level2 GIU intr reg High */
+#define VR4102_MGIUINT_H_REG_W	0x188	/* Level2 Mask GIU intr reg High */
+#define VR4122_GIUINT_H_REG_W	0x022	/* Level2 GIU intr reg High */
+#define VR4122_MGIUINT_H_REG_W	0x028	/* Level2 Mask GIU intr reg High */
 
 #define		GIUINT_GPIO31		(1<<15)	/* GPIO 31 */
 #define		GIUINT_GPIO30		(1<<14)	/* GPIO 30 */
@@ -189,11 +215,45 @@
 
 #define FIRINT_REG_W		0x184	/* Level2 FIR intr reg */
 #define MFIRINT_REG_W		0x18a	/* Level2 Mask FIR intr reg */
+#define VR4102_FIRINT_REG_W	0x184	/* Level2 FIR intr reg */
+#define VR4102_MFIRINT_REG_W	0x18a	/* Level2 Mask FIR intr reg */
+#define VR4122_FIRINT_REG_W	0x024	/* Level2 FIR intr reg */
+#define VR4122_MFIRINT_REG_W	0x02a	/* Level2 Mask FIR intr reg */
 
 #define		FIRINT_FIR		(1<<4)	/* FIR intr */
 #define		FIRINT_RECV2		(1<<3)	/* FIR DMA buf recv buffer2 */
 #define		FIRINT_TRNS2		(1<<2)	/* FIR DMA buf transmit buffer2 */
 #define		FIRINT_RECV1		(1<<1)	/* FIR DMA buf recv buffer1 */
 #define		FIRINT_TRNS1		(1)	/* FIR DMA buf transmit buffer1 */
+
+#define PCIINT_REG_W		0x2c	/* Level2 PCI intr reg */
+#define MPCIINT_REG_W		0x32	/* Level2 PCI intr mask */
+#define VR4122_PCIINT_REG_W	0x2c	/* Level2 PCI intr reg */
+#define VR4122_MPCIINT_REG_W	0x32	/* Level2 PCI intr mask */
+#define		PCIINT_INT0		(1)	/* PCI INT 0 */
+
+#define SCUINT_REG_W		0x2e	/* Level2 SCU intr reg */
+#define MSCUINT_REG_W		0x34	/* Level2 SCU intr mask */
+#define VR4122_SCUINT_REG_W	0x2e	/* Level2 SCU intr reg */
+#define VR4122_MSCUINT_REG_W	0x34	/* Level2 SCU intr mask */
+#define		SCUINT_INT0		(1)	/* SCU INT 0 */
+
+#define CSIINT_REG_W		0x30	/* Level2 CSI intr reg */
+#define MCSIINT_REG_W		0x36	/* Level2 CSI intr mask */
+#define VR4122_CSIINT_REG_W	0x30	/* Level2 CSI intr reg */
+#define VR4122_MCSIINT_REG_W	0x36	/* Level2 CSI intr mask */
+#define		CSIINT_TRPAGE2		(1<<6)	/* DMA send page 2 intr */
+#define		CSIINT_TRPAGE1		(1<<5)	/* DMA send page 1 intr */
+#define		CSIINT_TREND		(1<<4)	/* send every data intr */
+#define		CSIINT_TREMPTY		(1<<3)	/* send FIFO empty intr */
+#define		CSIINT_RCPAGE2		(1<<2)	/* DMA recv page 2 intr */
+#define		CSIINT_RCPAGE1		(1<<1)	/* DMA recv page 1 intr */
+#define		CSIINT_RCOVER		(1)	/* recv FIFO overrun intr */
+
+#define BCUINT_REG_W		0x38	/* Level2 BCU intr reg */
+#define MBCUINT_REG_W		0x3a	/* Level2 BCU intr mask */
+#define VR4122_BCUINT_REG_W	0x38	/* Level2 BCU intr reg */
+#define VR4122_MBCUINT_REG_W	0x3a	/* Level2 BCU intr mask */
+#define		BCUINT_INT		(1)	/* BCU INT */
 
 /* END icureg.h */
