@@ -1,9 +1,7 @@
-/*	$NetBSD: nlist_ecoff.c,v 1.2 1996/09/30 23:49:29 cgd Exp $	*/
+/*	$NetBSD: nlist_ecoff.c,v 1.3 1996/10/01 13:37:05 cgd Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
- * Copyright (c) 1989, 1993
- *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -15,31 +13,25 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
- *    may be used to endorse or promote products derived from this software
- *    without specific prior written permission.
+ *      This product includes software developed by Christopher G. Demetriou
+ *	for the NetBSD Project.
+ * 4. The name of the author may not be used to endorse or promote products
+ *    derived from this software without specific prior written permission
  *
- * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
- * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
- * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
- * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
- * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
- * SUCH DAMAGE.
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+ * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+ * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ * IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+ * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+ * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+ * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+ * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-#if 0
-static char sccsid[] = "@(#)nlist.c	8.1 (Berkeley) 6/4/93";
-#else
-static char rcsid[] = "$NetBSD: nlist_ecoff.c,v 1.2 1996/09/30 23:49:29 cgd Exp $";
-#endif
+static char rcsid[] = "$NetBSD: nlist_ecoff.c,v 1.3 1996/10/01 13:37:05 cgd Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
@@ -80,10 +72,17 @@ __fdnlist_ecoff(fd, list)
 	int rv, nent;
 	long i, nesyms;
 
-	rv = -3;
+	rv = -1;
 
+	/*
+	 * If we can't fstat() the file, something bad is going on.
+	 */
 	if (fstat(fd, &st) < 0)
 		BAD;
+
+	/*
+	 * Map the file in its entirety.
+	 */
 	if (st.st_size > SIZE_T_MAX) {
 		errno = EFBIG;
 		BAD;
@@ -93,6 +92,11 @@ __fdnlist_ecoff(fd, list)
 	if (mappedfile == (char *)-1)
 		BAD;
 
+	/*
+	 * Make sure we can access the executable's header
+	 * directly, and make sure the recognize the executable
+	 * as an ECOFF binary.
+	 */
 	if (check(0, sizeof *exechdrp))
 		BADUNMAP;
 	exechdrp = (struct ecoff_exechdr *)&mappedfile[0];
@@ -100,6 +104,9 @@ __fdnlist_ecoff(fd, list)
 	if (ECOFF_BADMAG(exechdrp))
 		BADUNMAP;
 
+	/*
+	 * Find the symbol list.
+	 */
 	symhdroff = exechdrp->f.f_symptr;
 	symhdrsize = exechdrp->f.f_nsyms;
 
@@ -115,11 +122,11 @@ __fdnlist_ecoff(fd, list)
 	extstroff = symhdrp->cbSsExtOffset;
 
 	/*
-	 * clean out any left-over information for all valid entries.
-	 * Type and value defined to be 0 if not found; historical
+	 * Clean out any left-over information for all valid entries.
+	 * Type and value are defined to be 0 if not found; historical
 	 * versions cleared other and desc as well.
 	 *
-	 * XXX clearing anything other than n_type and n_value violates
+	 * XXX Clearing anything other than n_type and n_value violates
 	 * the semantics given in the man page.
 	 */
 	nent = 0;
@@ -145,17 +152,23 @@ __fdnlist_ecoff(fd, list)
 			    &mappedfile[extstroff + esyms[i].es_strindex];
 
 			if (!strcmp(symtabname, nlistname)) {
+				/*
+				 * Translate (roughly) from ECOFF to nlist
+				 */
 				p->n_value = esyms[i].es_value;
 				p->n_type = N_EXT;		/* XXX */
 				p->n_desc = 0;			/* XXX */
 				p->n_other = 0;			/* XXX */
+
 				if (--nent <= 0)
-					break;
+					goto done;
+				break;	/* into next run of outer loop */
 			}
 		}
 	}
-	rv = nent;
 
+done:
+	rv = nent;
 unmap:
 	munmap(mappedfile, mappedsize);
 out:
