@@ -1,4 +1,4 @@
-/*	$NetBSD: netgroup_mkdb.c,v 1.5 1996/10/04 05:15:29 christos Exp $	*/
+/*	$NetBSD: netgroup_mkdb.c,v 1.5.2.1 1996/11/06 00:17:57 lukem Exp $	*/
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  */
 #ifndef lint
-static char *rcsid = "$NetBSD: netgroup_mkdb.c,v 1.5 1996/10/04 05:15:29 christos Exp $";
+static char *rcsid = "$NetBSD: netgroup_mkdb.c,v 1.5.2.1 1996/11/06 00:17:57 lukem Exp $";
 #endif
 
 #include <sys/types.h>
@@ -49,6 +49,7 @@ static char *rcsid = "$NetBSD: netgroup_mkdb.c,v 1.5 1996/10/04 05:15:29 christo
 #define _NETGROUP_PRIVATE
 #include <netgroup.h>
 #include <assert.h>
+#include <stringlist.h>
 
 #include "str.h"
 #include "util.h"
@@ -369,11 +370,11 @@ ng_reventry(db, udb, fe, name, s, ss)
 	char           *p;
 	DB             *xdb;
 
-	if (_ng_sl_find(ss, name) != NULL) {
+	if (_sl_find(ss, name) != NULL) {
 		warnx("Cycle in netgroup `%s'", name);
 		return;
 	}
-	_ng_sl_add(ss, name);
+	_sl_add(ss, name);
 
 	for (e = fe->n_next; e != NULL; e = e->n_next)
 		switch (e->n_type) {
@@ -452,10 +453,10 @@ ng_reverse(db, s)
 	for (pos = R_FIRST;; pos = R_NEXT)
 		switch ((db->seq)(db, &key, &data, pos)) {
 		case 0:
-			sl = _ng_sl_init();
+			sl = _sl_init();
 			memcpy(&fe, data.data, sizeof(fe));
 			ng_reventry(db, udb, fe, (char *) key.data, s, sl);
-			_ng_sl_free(sl, 0);
+			_sl_free(sl, 0);
 			break;
 
 		case 1:

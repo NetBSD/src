@@ -1,5 +1,3 @@
-/*	$NetBSD: netgroup.h,v 1.3.2.1 1996/11/06 00:14:11 lukem Exp $	*/
-
 /*
  * Copyright (c) 1994 Christos Zoulas
  * All rights reserved.
@@ -30,46 +28,24 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#ifndef _NETGROUP_H_
-#define	_NETGROUP_H_
-
-#define	_PATH_NETGROUP		"/etc/netgroup"
-
-#define	_PATH_NETGROUP_DB	"/etc/netgroup.db"
-
-#define	_PATH_NETGROUP_MKDB	"/usr/sbin/netgroup_mkdb"
-
-#define	_NG_KEYBYNAME		'1'	/* stored by name */
-#define	_NG_KEYBYUSER		'2'	/* stored by user */
-#define	_NG_KEYBYHOST		'3'	/* stored by host */
-
-#define _NG_ERROR	-1
-#define _NG_NONE	 0
-#define _NG_NAME	 1
-#define _NG_GROUP	 2
-
-struct netgroup {
-	char		*ng_host;	/* host name */
-	char		*ng_user;	/* user name */
-	char		*ng_domain;	/* domain name */
-	struct netgroup	*ng_next;	/* thread */
+#ifndef _STRINGLIST_H
+#define _STRINGLIST_H 
+/*
+ * Simple string list
+ */
+struct stringlist {
+	char		**sl_str;
+	size_t		  sl_max;
+	size_t		  sl_cur;
 };
 
 #include <sys/cdefs.h>
 
 __BEGIN_DECLS
-void	setnetgrent	__P((const char *));
-int	getnetgrent	__P((const char **, const char **, const char **));
-void	endnetgrent	__P((void));
-int	innetgr		__P((const char *, const char *, const char *,
-			     const char *));
-#ifdef _NETGROUP_PRIVATE
-char    *_ng_makekey __P((const char *, const char *, size_t));
-int	_ng_parse __P((char **, char **, struct netgroup **));
-void	_ng_print __P((char *, size_t, const struct netgroup *));
-#endif /* _NETGROUP_PRIVATE */
-
+struct stringlist *_sl_init	__P((void));
+void		 _sl_add	__P((struct stringlist *, char *));
+void		 _sl_free	__P((struct stringlist *, int));
+char		*_sl_find	__P((struct stringlist *, char *));
 __END_DECLS
 
-#endif /* !_NETGROUP_H_ */
+#endif /* _STRINGLIST_H */

@@ -1,4 +1,0 @@
-#	$NetBSD: std.sparc,v 1.7 1996/10/02 07:11:45 mrg Exp $
-
-options		EXEC_AOUT
-options		EXEC_SCRIPT
