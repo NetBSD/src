@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysctl.3,v 1.137 2004/07/05 11:45:12 cube Exp $
+.\"	$NetBSD: sysctl.3,v 1.138 2004/08/27 04:58:10 itojun Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -1435,7 +1435,6 @@ The currently defined variable and names are:
 .It spi_try	integer	yes
 .It spi_min_value	integer	yes
 .It spi_max_value	integer	yes
-.It random_int	integer	yes
 .It larval_lifetime	integer	yes
 .It blockacq_count	integer	yes
 .It blockacq_lifetime	integer	yes
@@ -1456,14 +1455,6 @@ when it generates it from random number generator.
 Minimum SPI value when generating it within the kernel.
 .It Li spi_max_value
 Maximum SPI value when generating it within the kernel.
-.It Li random_int
-Interval to stir pseudo-random number generator, in seconds.
-Pseudo-random number generator is used only as a last resort when
-random number source
-.Pq Pa /dev/urandom
-is not available.
-It should not really be used, and if it were used,
-kernel will warn about it.
 .It Li larval_lifetime
 Lifetime for LARVAL SAD entries, in seconds.
 .It Li blockacq_count
