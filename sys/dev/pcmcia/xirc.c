@@ -1,4 +1,4 @@
-/*	$NetBSD: xirc.c,v 1.1 2004/08/08 05:56:08 mycroft Exp $	*/
+/*	$NetBSD: xirc.c,v 1.2 2004/08/08 07:25:20 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2004 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xirc.c,v 1.1 2004/08/08 05:56:08 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xirc.c,v 1.2 2004/08/08 07:25:20 mycroft Exp $");
 
 #include "opt_inet.h" 
 #include "opt_ns.h"
@@ -517,12 +517,12 @@ xirc_enable(sc, flag)
 	if (sc->sc_ih == NULL) {
 		printf("%s: unable to establish interrupt\n",
 		    sc->sc_dev.dv_xname);
-		return (1);
+		return (EIO);
 	}
 
 	if (pcmcia_function_enable(sc->sc_pf)) {
 		pcmcia_intr_disestablish(sc->sc_pf, sc->sc_ih);
-		return (1);
+		return (EIO);
 	}
 
 	sc->sc_flags |= flag;

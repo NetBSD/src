@@ -1,4 +1,4 @@
-/*	$NetBSD: if_xi.c,v 1.41 2004/08/08 06:37:17 mycroft Exp $ */
+/*	$NetBSD: if_xi.c,v 1.42 2004/08/08 07:25:20 mycroft Exp $ */
 /*	OpenBSD: if_xe.c,v 1.9 1999/09/16 11:28:42 niklas Exp 	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_xi.c,v 1.41 2004/08/08 06:37:17 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_xi.c,v 1.42 2004/08/08 07:25:20 mycroft Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipx.h"
@@ -151,6 +151,8 @@ int xidebug = 0;
 
 #define STATIC
 
+STATIC int xi_enable __P((struct xi_softc *));
+STATIC void xi_disable __P((struct xi_softc *));
 STATIC void xi_cycle_power __P((struct xi_softc *));
 STATIC int xi_ether_ioctl __P((struct ifnet *, u_long cmd, caddr_t));
 STATIC void xi_full_reset __P((struct xi_softc *));
@@ -275,8 +277,7 @@ xi_detach(self, flags)
 
 	DPRINTF(XID_CONFIG, ("xi_detach()\n"));
 
-	if (sc->sc_enabled)
-		(*sc->sc_disable)(sc);
+	xi_disable(sc);
 
 #if NRND > 0
 	rnd_detach_source(&sc->sc_rnd_source);
@@ -699,10 +700,15 @@ STATIC int
 xi_mediachange(ifp)
 	struct ifnet *ifp;
 {
+	int s;
+
 	DPRINTF(XID_CONFIG, ("xi_mediachange()\n"));
 
-	if (ifp->if_flags & IFF_UP)
+	if (ifp->if_flags & IFF_UP) {
+		s = splnet();
 		xi_init(ifp->if_softc);
+		splx(s);
+	}
 	return (0);
 }
 
@@ -770,6 +776,33 @@ xi_stop(sc)
 	sc->sc_ethercom.ec_if.if_timer = 0;
 }
 
+STATIC int
+xi_enable(sc)
+	struct xi_softc *sc;
+{
+	int error;
+
+	if (!sc->sc_enabled) {
+		error = (*sc->sc_enable)(sc);
+		if (error)
+			return (error);
+		sc->sc_enabled = 1;
+		xi_full_reset(sc);
+	}
+	return (0);
+}
+
+STATIC void
+xi_disable(sc)
+	struct xi_softc *sc;
+{
+
+	if (sc->sc_enabled) {
+		sc->sc_enabled = 0;
+		(*sc->sc_disable)(sc);
+	}
+}
+
 STATIC void
 xi_init(sc)
 	struct xi_softc *sc;
@@ -778,17 +811,8 @@ xi_init(sc)
 	bus_space_tag_t bst = sc->sc_bst;
 	bus_space_handle_t bsh = sc->sc_bsh;
 	bus_size_t offset = sc->sc_offset;
-	int s;
 
 	DPRINTF(XID_CONFIG, ("xi_init()\n"));
-
-	if (!sc->sc_enabled) {
-		sc->sc_enabled = 1;
-		(*sc->sc_enable)(sc);
-		xi_full_reset(sc);
-	}
-
-	s = splnet();
 
 	xi_set_address(sc);
 
@@ -813,7 +837,7 @@ xi_init(sc)
 	ifp->if_flags |= IFF_RUNNING;
 	ifp->if_flags &= ~IFF_OACTIVE;
 
-	splx(s);
+	xi_start(ifp);
 }
 
 /*
@@ -920,12 +944,15 @@ xi_ether_ioctl(ifp, cmd, data)
 {
 	struct ifaddr *ifa = (struct ifaddr *)data;
 	struct xi_softc *sc = ifp->if_softc;
-
+	int error;
 
 	DPRINTF(XID_CONFIG, ("xi_ether_ioctl()\n"));
 
 	switch (cmd) {
 	case SIOCSIFADDR:
+		if ((error = xi_enable(sc)) != 0)
+			break;
+
 		ifp->if_flags |= IFF_UP;
 
 		switch (ifa->ifa_addr->sa_family) {
@@ -994,21 +1021,22 @@ xi_ioctl(ifp, cmd, data)
 			 */
 			xi_stop(sc);
 			ifp->if_flags &= ~IFF_RUNNING;
-			(*sc->sc_disable)(sc);
-			sc->sc_enabled = 0;
+			xi_disable(sc);
 		} else if ((ifp->if_flags & IFF_UP) != 0 &&
 			   (ifp->if_flags & IFF_RUNNING) == 0) {
 			/*
 			 * If interface is marked up and it is stopped,
 			 * start it.
 			 */
+			if ((error = xi_enable(sc)) != 0)
+				break;
 			xi_init(sc);
 		} else if ((ifp->if_flags & IFF_UP) != 0) {
 			/*
 			 * Reset the interface to pick up changes in any
 			 * other flags that affect hardware registers.
 			 */
-			xi_reset(sc);
+			xi_set_address(sc);
 		}
 		break;
 
