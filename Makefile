@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.158 2001/11/20 17:05:02 tv Exp $
+#	$NetBSD: Makefile,v 1.159 2001/11/24 21:53:16 perry Exp $
 
 # This is the top-level makefile for building NetBSD. For an outline of
 # how to build a snapshot or release, as well as other release engineering
@@ -94,11 +94,20 @@ regression-tests:
 	@(cd ${.CURDIR}/regress && ${MAKE} regress)
 .endif
 
-.if ${MKMAN} != "no"
-afterinstall: whatis.db
 whatis.db:
+.if ${MKMAN} != "no"
 	(cd ${.CURDIR}/share/man && ${MAKE} makedb)
 .endif
+
+# XXX I wish there was a more rational place to do this, but I can't
+# think of one. There is no one place the info/dir file gets generated.
+infodir-meta:
+.if defined(UNPRIVED) && (${MKINFO} != "no")
+	echo "${DESTDIR}/usr/share/info/dir type=file mode=0644 uname=root gname=wheel" | \
+		sed -e 's|^/|./|g' -e 's|//|/|g' >>${METALOG}
+.endif
+
+afterinstall: whatis.db infodir-meta
 
 # Targets (in order!) called by "make build".
 
