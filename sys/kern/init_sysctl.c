@@ -1,4 +1,4 @@
-/*	$NetBSD: init_sysctl.c,v 1.21 2004/02/19 03:57:56 atatat Exp $ */
+/*	$NetBSD: init_sysctl.c,v 1.22 2004/02/21 03:27:57 atatat Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.21 2004/02/19 03:57:56 atatat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.22 2004/02/21 03:27:57 atatat Exp $");
 
 #include "opt_sysv.h"
 #include "opt_multiprocessor.h"
@@ -1505,7 +1505,7 @@ sysctl_kern_lwp(SYSCTLFN_ARGS)
 		if (needed > *oldlenp)
 			return (ENOMEM);
 	} else {
-		needed += KERN_PROCSLOP;
+		needed += KERN_LWPSLOP;
 		*oldlenp = needed;
 	}
 	return (0);
@@ -1799,7 +1799,7 @@ again:
 		if (needed > *oldlenp)
 			return (ENOMEM);
 	} else {
-		needed += KERN_LWPSLOP;
+		needed += KERN_PROCSLOP;
 		*oldlenp = needed;
 	}
 	return (0);
