@@ -1,4 +1,4 @@
-/*	$NetBSD: soundcard.h,v 1.4 1997/10/29 20:23:27 augustss Exp $	*/
+/*	$NetBSD: soundcard.h,v 1.5 1998/06/19 15:05:09 augustss Exp $	*/
 
 /*
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -276,8 +276,12 @@ typedef struct buffmem_desc {
 	int size;
 } buffmem_desc;
 
-#define ioctl(fd, com, argp) _oss_ioctl(fd, com, argp)
+#define ioctl _oss_ioctl
 
-int _oss_ioctl(int fd, unsigned long com, void *argp);
+#include <sys/cdefs.h>
+
+__BEGIN_DECLS
+int _oss_ioctl __P((int fd, unsigned long com, void *argp));
+__END_DECLS
 
 #endif
