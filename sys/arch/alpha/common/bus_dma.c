@@ -1,4 +1,4 @@
-/* $NetBSD: bus_dma.c,v 1.11 1998/02/04 01:57:27 thorpej Exp $ */
+/* $NetBSD: bus_dma.c,v 1.12 1998/02/04 05:12:46 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.11 1998/02/04 01:57:27 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.12 1998/02/04 05:12:46 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -346,9 +346,11 @@ _bus_dmamap_unload(t, map)
  * by chipset-specific DMA map synchronization functions.
  */
 void
-_bus_dmamap_sync(t, map, ops)
+_bus_dmamap_sync(t, map, offset, len, ops)
 	bus_dma_tag_t t;
 	bus_dmamap_t map;
+	bus_addr_t offset;
+	bus_size_t len;
 	int ops;
 {
 
