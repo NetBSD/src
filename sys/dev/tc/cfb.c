@@ -1,4 +1,4 @@
-/* $NetBSD: cfb.c,v 1.26 2001/01/16 05:32:16 nisimura Exp $ */
+/* $NetBSD: cfb.c,v 1.27 2001/04/20 11:53:06 reinoud Exp $ */
 
 /*
  * Copyright (c) 1998, 1999 Tohru Nishimura.  All rights reserved.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: cfb.c,v 1.26 2001/01/16 05:32:16 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cfb.c,v 1.27 2001/04/20 11:53:06 reinoud Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -415,7 +415,7 @@ cfbioctl(v, cmd, data, flag, p)
 
 	case WSDISPLAYIO_SCURPOS:
 		set_curpos(sc, (struct wsdisplay_curpos *)data);
-		sc->sc_changed = WSDISPLAY_CURSOR_DOPOS;
+		sc->sc_changed |= WSDISPLAY_CURSOR_DOPOS;
 		return (0);
 
 	case WSDISPLAYIO_GCURMAX:
@@ -761,7 +761,7 @@ set_cursor(sc, p)
 		copyin(p->image, cc->cc_image, icount);
 		copyin(p->mask, cc->cc_image+CURSOR_MAX_SIZE, icount);
 	}
-	sc->sc_changed = v;
+	sc->sc_changed |= v;
 
 	return (0);
 #undef cc

@@ -1,4 +1,4 @@
-/* $NetBSD: sfb.c,v 1.44 2001/02/19 09:11:11 nisimura Exp $ */
+/* $NetBSD: sfb.c,v 1.45 2001/04/20 11:53:06 reinoud Exp $ */
 
 /*
  * Copyright (c) 1998, 1999 Tohru Nishimura.  All rights reserved.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: sfb.c,v 1.44 2001/02/19 09:11:11 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sfb.c,v 1.45 2001/04/20 11:53:06 reinoud Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -447,7 +447,7 @@ sfbioctl(v, cmd, data, flag, p)
 
 	case WSDISPLAYIO_SCURPOS:
 		set_curpos(sc, (struct wsdisplay_curpos *)data);
-		sc->sc_changed = WSDISPLAY_CURSOR_DOPOS;
+		sc->sc_changed |= WSDISPLAY_CURSOR_DOPOS;
 		return (0);
 
 	case WSDISPLAYIO_GCURMAX:
@@ -797,7 +797,7 @@ set_cursor(sc, p)
 		copyin(p->image, cc->cc_image, icount);
 		copyin(p->mask, cc->cc_image+CURSOR_MAX_SIZE, icount);
 	}
-	sc->sc_changed = v;
+	sc->sc_changed |= v;
 
 	return (0);
 #undef cc
