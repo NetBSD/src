@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.343 2001/07/23 20:14:36 bouyer Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.344 2001/07/25 01:45:55 thorpej Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.337 2001/07/23 20:13:26 bouyer Exp 
+ *	NetBSD: pcidevs,v 1.338 2001/07/25 01:44:59 thorpej Exp 
  */
 
 /*
@@ -546,6 +546,7 @@
 #define	PCI_VENDOR_GEOCAST	0x15a1		/* Geocast Network Systems */
 #define	PCI_VENDOR_NETSEC	0x1660		/* NetSec */
 #define	PCI_VENDOR_SIBYTE	0x166d		/* SiByte, Inc. */
+#define	PCI_VENDOR_ANTARES	0x1754		/* Antares Microsystems, Inc. */
 #define	PCI_VENDOR_SYMPHONY2	0x1c1c		/* Symphony Labs (2nd PCI Vendor ID) */
 #define	PCI_VENDOR_TEKRAM2	0x1de1		/* Tekram Technology (2nd PCI Vendor ID) */
 #define	PCI_VENDOR_LAVA	0x1407		/* Lava Semiconductor Manufacturing, Inc. */
@@ -744,6 +745,9 @@
 #define	PCI_PRODUCT_AMI_MEGARAID	0x9010		/* MegaRAID */
 #define	PCI_PRODUCT_AMI_MEGARAID2	0x9060		/* MegaRAID 2 */
 #define	PCI_PRODUCT_AMI_MEGARAID3	0x1960		/* MegaRAID 3 */
+
+/* Antares Microsystems, Inc. products */
+#define	PCI_PRODUCT_ANTARES_TC9021	0x1021		/* Antares Gigabit Ethernet */
 
 /* Apple products */
 #define	PCI_PRODUCT_APPLE_BANDIT	0x0001		/* Bandit Host-PCI Bridge */
