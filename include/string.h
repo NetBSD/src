@@ -1,4 +1,4 @@
-/*	$NetBSD: string.h,v 1.16 1998/07/26 13:34:18 mycroft Exp $	*/
+/*	$NetBSD: string.h,v 1.17 1998/07/26 19:20:55 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -63,7 +63,7 @@ int	 strcmp __P((const char *, const char *));
 int	 strcoll __P((const char *, const char *));
 char	*strcpy __P((char *, const char *));
 size_t	 strcspn __P((const char *, const char *));
-const char *strerror __P((int));
+const	 char *strerror __P((int));
 size_t	 strlen __P((const char *));
 char	*strncat __P((char *, const char *, size_t));
 int	 strncmp __P((const char *, const char *, size_t));
