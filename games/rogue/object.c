@@ -1,4 +1,4 @@
-/*	$NetBSD: object.c,v 1.6 1997/10/15 12:43:35 mycroft Exp $	*/
+/*	$NetBSD: object.c,v 1.7 1998/09/11 14:09:27 hubertf Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)object.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: object.c,v 1.6 1997/10/15 12:43:35 mycroft Exp $");
+__RCSID("$NetBSD: object.c,v 1.7 1998/09/11 14:09:27 hubertf Exp $");
 #endif
 #endif /* not lint */
 
@@ -239,6 +239,7 @@ plant_gold(row, col, is_maze)
 void
 place_at(obj, row, col)
 	object *obj;
+	int row, col;
 {
 	obj->row = row;
 	obj->col = col;
@@ -268,6 +269,7 @@ object_at(pack, row, col)
 
 object *
 get_letter_object(ch)
+	int ch;
 {
 	object *obj;
 
