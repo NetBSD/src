@@ -1,4 +1,4 @@
-/*	$NetBSD: proxy.c,v 1.5 1998/07/15 07:31:57 msaitoh Exp $	*/
+/*	$NetBSD: proxy.c,v 1.6 2001/02/04 22:10:11 christos Exp $	*/
 
 /*
 ** proxy.c                         This file implements the proxy() call.
@@ -19,12 +19,6 @@
 #include <netinet/in.h>
 
 #include "identd.h"
-
-#ifdef INCLUDE_PROXY
-int proxy __P((struct in_addr *, struct in_addr *, int, int, struct timeval *));
-#else
-int proxy __P((void *, void *, int, int, void *));
-#endif
 
 /*
 ** This function should establish a connection to a remote IDENT
