@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.82 1998/03/12 05:45:06 thorpej Exp $	*/
+/*	$NetBSD: trap.c,v 1.83 1998/03/26 09:21:05 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.82 1998/03/12 05:45:06 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.83 1998/03/26 09:21:05 jonathan Exp $");
 
 #include "opt_uvm.h"
 
@@ -1030,7 +1030,9 @@ interrupt(status, cause, pc, frame)
 	/* Device interrupt */
 	if (mips_hardware_intr)
 		splx((*mips_hardware_intr)(mask, pc, status, cause));
-	if (mask & MIPS_INT_MASK_5) {
+
+#ifdef MIPS_INT_MASK_FPU
+	if (mask & MIPS_INT_MASK_FPU) {
 		intrcnt[FPU_INTR]++;
 		if (USERMODE(status))
 			MachFPInterrupt(status, cause, pc, frame->f_regs);
@@ -1039,6 +1041,7 @@ interrupt(status, cause, pc, frame)
 				pc, cause, status);
 		}
 	}
+#endif /* MIPS_INT_MASK_FPU */
 
 	/* Network software interrupt */
 	if ((mask & MIPS_SOFT_INT_MASK_1)
