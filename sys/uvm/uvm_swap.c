@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_swap.c,v 1.80 2003/06/29 22:32:51 fvdl Exp $	*/
+/*	$NetBSD: uvm_swap.c,v 1.81 2003/08/11 16:33:30 pk Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997 Matthew R. Green
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_swap.c,v 1.80 2003/06/29 22:32:51 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_swap.c,v 1.81 2003/08/11 16:33:30 pk Exp $");
 
 #include "fs_nfs.h"
 #include "opt_uvmhist.h"
@@ -978,6 +978,7 @@ swap_on(p, sdp)
 	sdp->swd_flags &= ~SWF_FAKE;	/* going live */
 	sdp->swd_flags |= (SWF_INUSE|SWF_ENABLE);
 	uvmexp.swpages += size;
+	uvmexp.swpgavail += size;
 	simple_unlock(&uvm.swap_data_lock);
 	return (0);
 
@@ -1005,11 +1006,14 @@ swap_off(p, sdp)
 	struct proc *p;
 	struct swapdev *sdp;
 {
+	int npages =  sdp->swd_npages;
+
 	UVMHIST_FUNC("swap_off"); UVMHIST_CALLED(pdhist);
-	UVMHIST_LOG(pdhist, "  dev=%x", sdp->swd_dev,0,0,0);
+	UVMHIST_LOG(pdhist, "  dev=%x, npages=%d", sdp->swd_dev,npages,0,0);
 
 	/* disable the swap area being removed */
 	sdp->swd_flags &= ~SWF_ENABLE;
+	uvmexp.swpgavail -= npages;
 	simple_unlock(&uvm.swap_data_lock);
 
 	/*
@@ -1026,6 +1030,7 @@ swap_off(p, sdp)
 
 		simple_lock(&uvm.swap_data_lock);
 		sdp->swd_flags |= SWF_ENABLE;
+		uvmexp.swpgavail += npages;
 		simple_unlock(&uvm.swap_data_lock);
 		return ENOMEM;
 	}
@@ -1042,10 +1047,10 @@ swap_off(p, sdp)
 	}
 
 	/* remove anons from the system */
-	uvm_anon_remove(sdp->swd_npages);
+	uvm_anon_remove(npages);
 
 	simple_lock(&uvm.swap_data_lock);
-	uvmexp.swpages -= sdp->swd_npages;
+	uvmexp.swpages -= npages;
 
 	if (swaplist_find(sdp->swd_vp, 1) == NULL)
 		panic("swap_off: swapdev not in list");
@@ -1520,6 +1525,19 @@ ReTry:	/* XXXMRG */
 	return 0;
 }
 
+boolean_t
+uvm_swapisfull(void)
+{
+	boolean_t rv;
+
+	simple_lock(&uvm.swap_data_lock);
+	KASSERT(uvmexp.swpgonly <= uvmexp.swpages);
+	rv = (uvmexp.swpgonly >= uvmexp.swpgavail);
+	simple_unlock(&uvm.swap_data_lock);
+
+	return (rv);
+}
+
 /*
  * uvm_swap_markbad: keep track of swap ranges where we've had i/o errors
  *
@@ -1632,6 +1650,7 @@ uvm_swap_get(page, swslot, flags)
 	if (swslot == SWSLOT_BAD) {
 		return EIO;
 	}
+
 	error = uvm_swap_io(&page, swslot, 1, B_READ |
 	    ((flags & PGO_SYNCIO) ? 0 : B_ASYNC));
 	if (error == 0) {
