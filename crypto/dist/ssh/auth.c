@@ -1,4 +1,4 @@
-/*	$NetBSD: auth.c,v 1.12.2.3 2003/06/15 12:44:25 tron Exp $	*/
+/*	$NetBSD: auth.c,v 1.12.2.4 2003/06/15 12:45:56 tron Exp $	*/
 /*
  * Copyright (c) 2000 Markus Friedl.  All rights reserved.
  *
