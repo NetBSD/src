@@ -1,4 +1,4 @@
-/*	$NetBSD: scm.c,v 1.16 2003/04/03 17:14:25 christos Exp $	*/
+/*	$NetBSD: scm.c,v 1.17 2003/04/03 17:15:22 christos Exp $	*/
 
 /*
  * Copyright (c) 1992 Carnegie Mellon University
@@ -175,6 +175,8 @@
 #include <stdarg.h>
 #ifndef __linux__
 #include <ifaddrs.h>
+#else
+#include <sys/ioctl.h>
 #endif
 #include "supcdefs.h"
 #include "supextern.h"
