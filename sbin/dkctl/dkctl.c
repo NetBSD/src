@@ -1,4 +1,4 @@
-/*	$NetBSD: dkctl.c,v 1.10 2004/09/28 10:01:42 martin Exp $	*/
+/*	$NetBSD: dkctl.c,v 1.11 2005/01/20 15:53:35 xtraeme Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -41,7 +41,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: dkctl.c,v 1.10 2004/09/28 10:01:42 martin Exp $");
+__RCSID("$NetBSD: dkctl.c,v 1.11 2005/01/20 15:53:35 xtraeme Exp $");
 #endif
 
 
@@ -78,7 +78,6 @@ struct command {
 	int open_flags;
 };
 
-int	main(int, char *[]);
 void	usage(void);
 
 int	fd;				/* file descriptor for device */
@@ -189,7 +188,7 @@ main(int argc, char *argv[])
 }
 
 void
-usage()
+usage(void)
 {
 	int i;
 
