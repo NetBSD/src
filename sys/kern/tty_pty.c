@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_pty.c,v 1.52 2000/11/19 22:34:56 jdolecek Exp $	*/
+/*	$NetBSD: tty_pty.c,v 1.53 2000/11/20 06:36:02 veego Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -135,7 +135,9 @@ check_pty(dev)
 		if (minor(dev) >= maxptys) {
 	    limit_reached:
 			tablefull("pty", "increase kern.maxptys");
+#if defined(LOCKDEBUG)
 			if (simple_lock_held(&pt_softc_mutex))
+#endif
 				simple_unlock(&pt_softc_mutex);
 			return (ENXIO);
 		}
