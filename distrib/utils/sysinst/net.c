@@ -1,4 +1,4 @@
-/*	$NetBSD: net.c,v 1.33 1998/09/17 16:45:36 phil Exp $	*/
+/*	$NetBSD: net.c,v 1.34 1998/10/14 05:27:52 phil Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -157,9 +157,8 @@ config_network()
 	strsep(&tp, " ");
 	net_dev[strlen(net_dev)+1] = 0;
 	net_dev[strlen(net_dev)] = ' ';
-	while ((strlen(net_dev) != 4 && strlen(net_dev) != 5) ||
-	    strstr(net_devices, net_dev) == NULL) {
-		msg_prompt(MSG_badnet, defname,  net_dev, 10, net_devices);
+	while (strstr(net_devices, net_dev) == NULL) {
+		msg_prompt(MSG_badnet, defname,  net_dev, 255, net_devices);
 		tp = net_dev;
 		strsep(&tp, " ");
 		net_dev[strlen(net_dev)+1] = 0;
