@@ -1,4 +1,4 @@
-/*	$NetBSD: OsdHardware.c,v 1.7 2004/03/23 19:00:03 drochner Exp $	*/
+/*	$NetBSD: OsdHardware.c,v 1.8 2004/03/30 11:12:32 kochi Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: OsdHardware.c,v 1.7 2004/03/23 19:00:03 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: OsdHardware.c,v 1.8 2004/03/30 11:12:32 kochi Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -216,7 +216,7 @@ AcpiOsReadPciConfiguration(ACPI_PCI_ID *PciId, UINT32 Register, void *Value,
 		break;
 
 	case 16:
-		*(uint16_t *) Value = (tmp >> ((Register & 1) * 8)) & 0xffff;
+		*(uint16_t *) Value = (tmp >> ((Register & 3) * 8)) & 0xffff;
 		break;
 
 	case 32:
@@ -255,9 +255,9 @@ AcpiOsWritePciConfiguration(ACPI_PCI_ID *PciId, UINT32 Register,
 		break;
 
 	case 16:
-		tmp = pci_conf_read(acpi_softc->sc_pc, tag, Register & ~1);
-		tmp &= ~(0xffff << ((Register & 1) * 8));
-		tmp |= (Value << ((Register & 1) * 8));
+		tmp = pci_conf_read(acpi_softc->sc_pc, tag, Register & ~3);
+		tmp &= ~(0xffff << ((Register & 3) * 8));
+		tmp |= (Value << ((Register & 3) * 8));
 		break;
 
 	case 32:
