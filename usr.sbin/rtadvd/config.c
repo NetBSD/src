@@ -1,4 +1,4 @@
-/*	$NetBSD: config.c,v 1.19 2002/07/10 21:13:35 itojun Exp $	*/
+/*	$NetBSD: config.c,v 1.20 2003/05/17 18:51:13 itojun Exp $	*/
 /*	$KAME: config.c,v 1.62 2002/05/29 10:13:10 itojun Exp $	*/
 
 /*
@@ -138,7 +138,7 @@ getconfig(intface)
 		tmp->ifindex = tmp->sdl->sdl_index;
 	} else
 		tmp->ifindex = if_nametoindex(intface);
-	strncpy(tmp->ifname, intface, sizeof(tmp->ifname));
+	strlcpy(tmp->ifname, intface, sizeof(tmp->ifname));
 	if ((tmp->phymtu = if_getmtu(intface)) == 0) {
 		tmp->phymtu = IPV6_MMTU;
 		syslog(LOG_WARNING,
