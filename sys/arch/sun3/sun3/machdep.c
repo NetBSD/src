@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.116 1998/07/04 22:18:43 jonathan Exp $	*/
+/*	$NetBSD: machdep.c,v 1.117 1998/10/01 19:08:05 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Gordon W. Ross
@@ -304,7 +304,7 @@ cpu_startup()
 	initfpu();	/* also prints FPU type */
 
 	size = ptoa(physmem);
-	printf("real  mem = %dK (0x%lx)\n", (size >> 10), size);
+	printf("real  mem = %ldK (0x%lx)\n", (size >> 10), size);
 
 	/*
 	 * Get scratch page for dumpsys().
@@ -438,7 +438,7 @@ cpu_startup()
 #else
 	size = ptoa(cnt.v_free_count);
 #endif
-	printf("avail mem = %dK (0x%lx)\n", (size >> 10), size);
+	printf("avail mem = %ldK (0x%lx)\n", (size >> 10), size);
 	printf("using %d buffers containing %d bytes of memory\n",
 		   nbuf, bufpages * CLBYTES);
 
