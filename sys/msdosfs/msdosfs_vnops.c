@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vnops.c,v 1.82 1999/07/08 01:06:02 wrstuden Exp $	*/
+/*	$NetBSD: msdosfs_vnops.c,v 1.83 1999/07/26 00:14:27 cgd Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -373,7 +373,7 @@ msdosfs_setattr(v)
 		printf("    va_type %d, va_nlink %x, va_fsid %lx, va_fileid %lx\n",
 		    vap->va_type, vap->va_nlink, vap->va_fsid, vap->va_fileid);
 		printf("    va_blocksize %lx, va_rdev %x, va_bytes %qx, va_gen %lx\n",
-		    vap->va_blocksize, vap->va_rdev, vap->va_bytes, vap->va_gen);
+		    vap->va_blocksize, vap->va_rdev, (long long)vap->va_bytes, vap->va_gen);
 		printf("    va_uid %x, va_gid %x\n",
 		    vap->va_uid, vap->va_gid);
 #endif
