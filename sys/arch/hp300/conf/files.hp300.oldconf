@@ -1,4 +1,4 @@
-# $Id: files.hp300.oldconf,v 1.5 1993/07/07 06:36:30 cgd Exp $
+# $Id: files.hp300.oldconf,v 1.6 1993/12/21 05:28:31 brezak Exp $
 #
 arch/hp300/hp300/autoconf.c		standard
 arch/hp300/hp300/clock.c		standard clock needs-count # XXX? split?
@@ -19,7 +19,6 @@ arch/hp300/hp300/vm_machdep.c		standard
 arch/hp300/hp300/disksubr.c		standard
 arch/hp300/dev/dma.c			standard
 arch/hp300/dev/cd.c			optional cd needs-count # XXX? d-d?
-arch/hp300/dev/vn.c			optional vn needs-count # XXX? d-d?
 arch/hp300/dev/ite.c			optional ite needs-count # XXX? d-d?
 arch/hp300/dev/ite_subr.c		optional ite needs-count # XXX? d-d?
 arch/hp300/dev/ite_tc.c			optional ite needs-count # XXX? d-d?
