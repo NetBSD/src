@@ -1,4 +1,4 @@
-/* $NetBSD: dec_3max.c,v 1.18 1999/12/03 03:06:11 nisimura Exp $ */
+/* $NetBSD: dec_3max.c,v 1.19 1999/12/03 03:34:36 simonb Exp $ */
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -73,7 +73,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_3max.c,v 1.18 1999/12/03 03:06:11 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_3max.c,v 1.19 1999/12/03 03:34:36 simonb Exp $");
 
 #include <sys/types.h>
 #include <sys/systm.h>
@@ -199,8 +199,8 @@ dec_3max_enable_intr(slotno, handler, sc, on)
 	int s;
 
 #if 0
-	printf("3MAX enable_intr: imask %x, %sabling slot %d, sc %p\n",
-	       kn03_tc3_imask, (on? "en" : "dis"), slotno, sc);
+	printf("3MAX enable_intr: %sabling slot %d, sc %p\n",
+	       (on? "en" : "dis"), slotno, sc);
 #endif
 
 	if (slotno > TC_MAX_LOGICAL_SLOTS)
