@@ -1,4 +1,4 @@
-/*	$NetBSD: iq80321_machdep.c,v 1.17 2003/04/26 11:05:10 ragge Exp $	*/
+/*	$NetBSD: iq80321_machdep.c,v 1.18 2003/04/28 01:56:44 briggs Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003 Wasabi Systems, Inc.
@@ -73,6 +73,7 @@
  */
 
 #include "opt_ddb.h"
+#include "opt_kgdb.h"
 #include "opt_pmap_debug.h"
 
 #include <sys/param.h>
@@ -215,6 +216,28 @@ void	consinit(void);
 int comcnspeed = CONSPEED;
 int comcnmode = CONMODE;
 int comcnunit = CONUNIT;
+
+#if KGDB
+#ifndef KGDB_DEVNAME
+#error Must define KGDB_DEVNAME
+#endif
+const char kgdb_devname[] = KGDB_DEVNAME;
+
+#ifndef KGDB_DEVADDR
+#error Must define KGDB_DEVADDR
+#endif
+unsigned long kgdb_devaddr = KGDB_DEVADDR;
+
+#ifndef KGDB_DEVRATE
+#define KGDB_DEVRATE	CONSPEED
+#endif
+int kgdb_devrate = KGDB_DEVRATE;
+
+#ifndef KGDB_DEVMODE
+#define KGDB_DEVMODE	CONMODE
+#endif
+int kgdb_devmode = KGDB_DEVMODE;
+#endif /* KGDB */
 
 /*
  * void cpu_reboot(int howto, char *bootstr)
@@ -874,4 +897,12 @@ consinit(void)
 #else
 	panic("serial console @%lx not configured", comcnaddrs[comcnunit]);
 #endif
+#if KGDB
+#if NCOM > 0
+	if (strcmp(kgdb_devname, "com") == 0) {
+		com_kgdb_attach(&obio_bs_tag, kgdb_devaddr, kgdb_devrate,
+				COM_FREQ, kgdb_devmode);
+	}
+#endif	/* NCOM > 0 */
+#endif	/* KGDB */
 }
