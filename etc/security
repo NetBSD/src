@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: security,v 1.53 2001/05/10 14:10:15 atatat Exp $
+#	$NetBSD: security,v 1.54 2001/05/10 14:19:27 atatat Exp $
 #	from: @(#)security	8.1 (Berkeley) 6/9/93
 #
 
@@ -677,8 +677,26 @@ fi
 
 if [ -n "$CHANGELIST" ]; then
 	for file in `egrep -hv "^#|$MP" $CHANGELIST`; do
-		CUR=$backup_dir/${file##*/}.current
-		BACK=$backup_dir/${file##*/}.backup
+		# old changelist backup names
+		OCUR=$backup_dir/${file##*/}.current
+		OBACK=$backup_dir/${file##*/}.backup
+		# new changelist backup names
+		CUR=$backup_dir$file.current
+		BACK=$backup_dir$file.backup
+		# roll over old backups
+		if [ ! -d ${CUR%/*} ]; then
+			mkdir -p ${CUR%/*}
+		fi
+		if [ -f $OCUR -a ! -f $CUR ]; then
+			mv $OCUR $CUR
+		fi
+		if [ -f $OCUR,v -a ! -f $CUR,v ]; then
+			mv $OCUR,v $CUR,v
+		fi
+		if [ -f $OBACK -a ! -f $BACK ]; then
+			mv $OBACK $BACK
+		fi
+		# and down to work
 		if [ -f $file ]; then
 			if [ -f $CUR ] ; then
 				diff $CUR $file > $OUTPUT
