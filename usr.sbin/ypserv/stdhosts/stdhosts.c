@@ -1,4 +1,4 @@
-/*	$NetBSD: stdhosts.c,v 1.13 2001/02/19 23:22:52 cgd Exp $	 */
+/*	$NetBSD: stdhosts.c,v 1.14 2001/08/18 17:10:05 ad Exp $	 */
 
 /*
  * Copyright (c) 1994 Mats O Jansson <moj@stacken.kth.se>
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: stdhosts.c,v 1.13 2001/02/19 23:22:52 cgd Exp $");
+__RCSID("$NetBSD: stdhosts.c,v 1.14 2001/08/18 17:10:05 ad Exp $");
 #endif
 
 #include <sys/types.h>
@@ -71,7 +71,7 @@ main(argc, argv)
 
 	addr_string = NULL;		/* XXX gcc -Wuninitialized */
 
-	while ((ch = getopt(argc, argv, "n")) != EOF) {
+	while ((ch = getopt(argc, argv, "n")) != -1) {
 		switch (ch) {
 		case 'n':
 			af |= 1 << 6;	/*IPv6*/

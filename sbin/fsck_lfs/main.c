@@ -1,4 +1,4 @@
-/* $NetBSD: main.c,v 1.9 2001/02/19 22:56:19 cgd Exp $	 */
+/* $NetBSD: main.c,v 1.10 2001/08/18 17:10:06 ad Exp $	 */
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -75,7 +75,7 @@ main(int argc, char **argv)
 	skipclean = 1;
 	exitonfail = 0;
 	idaddr = 0x0;
-	while ((ch = getopt(argc, argv, optstring)) != EOF) {
+	while ((ch = getopt(argc, argv, optstring)) != -1) {
 		switch (ch) {
 		case 'b':
 			skipclean = 0;
