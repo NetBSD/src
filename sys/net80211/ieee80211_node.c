@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_node.c,v 1.18 2004/07/23 06:44:55 mycroft Exp $	*/
+/*	$NetBSD: ieee80211_node.c,v 1.19 2004/07/23 06:57:33 dyoung Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002, 2003 Sam Leffler, Errno Consulting
@@ -35,7 +35,7 @@
 #ifdef __FreeBSD__
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211_node.c,v 1.22 2004/04/05 04:15:55 sam Exp $");
 #else
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_node.c,v 1.18 2004/07/23 06:44:55 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_node.c,v 1.19 2004/07/23 06:57:33 dyoung Exp $");
 #endif
 
 #include "opt_inet.h"
@@ -655,23 +655,28 @@ ieee80211_needs_rxnode(struct ieee80211com *ic, struct ieee80211_frame *wh,
     u_int8_t **bssid)
 {
 	struct ieee80211_node *bss = ic->ic_bss;
-	int needsnode, rc = 0;
+	int monitor, rc = 0;
 
-	if (ic->ic_opmode == IEEE80211_M_STA)
-		return 0;
-
-	needsnode = (ic->ic_opmode == IEEE80211_M_MONITOR);
+	monitor = (ic->ic_opmode == IEEE80211_M_MONITOR);
 
 	*bssid = NULL;
 
 	switch (wh->i_fc[0] & IEEE80211_FC0_TYPE_MASK) {
 	case IEEE80211_FC0_TYPE_CTL:
+		if (!monitor)
+			break;
 		return (wh->i_fc[0] & IEEE80211_FC0_SUBTYPE_MASK) ==
 		    IEEE80211_FC0_SUBTYPE_RTS;
-
 	case IEEE80211_FC0_TYPE_MGT:
 		*bssid = wh->i_addr3;
-		rc = IEEE80211_ADDR_EQ(*bssid, bss->ni_bssid);
+		switch (wh->i_fc[0] & IEEE80211_FC0_SUBTYPE_MASK) {
+		case IEEE80211_FC0_SUBTYPE_BEACON:
+		case IEEE80211_FC0_SUBTYPE_PROBE_RESP:
+			rc = 1;
+			break;
+		default:
+			break;
+		}
 		break;
 	case IEEE80211_FC0_TYPE_DATA:
 		switch (wh->i_fc[1] & IEEE80211_FC1_DIR_MASK) {
@@ -694,7 +699,7 @@ ieee80211_needs_rxnode(struct ieee80211com *ic, struct ieee80211_frame *wh,
 		}
 		break;
 	}
-	return needsnode || rc;
+	return monitor || rc;
 }
 
 struct ieee80211_node *
