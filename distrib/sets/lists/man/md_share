@@ -1,4 +1,4 @@
-# $NetBSD: md_share,v 1.69 1999/09/27 00:14:53 perry Exp $
+# $NetBSD: md_share,v 1.70 1999/11/24 13:03:43 jdc Exp $
 ./usr/share/man/cat1/atari/edahdi.0
 ./usr/share/man/cat1/atari/msconfig.0
 ./usr/share/man/cat1/grfinfo.0
@@ -397,6 +397,7 @@
 ./usr/share/man/man4/atari/floppy.4
 ./usr/share/man/man4/atari/intro.4
 ./usr/share/man/man4/atari/ms.4
+./usr/share/man/man4/atari/rtc.4
 ./usr/share/man/man4/hp300/autoconf.4
 ./usr/share/man/man4/hp300/cons.4
 ./usr/share/man/man4/hp300/ct.4
