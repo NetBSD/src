@@ -1,4 +1,4 @@
-/*	$NetBSD: st.c,v 1.110 1999/02/28 17:14:57 explorer Exp $ */
+/*	$NetBSD: st.c,v 1.111 1999/04/05 19:19:34 mycroft Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -1069,7 +1069,7 @@ ststart(v)
 	struct scsipi_link *sc_link = st->sc_link;
 	register struct buf *bp, *dp;
 	struct scsi_rw_tape cmd;
-	int flags;
+	int flags, error;
 
 	SC_DEBUG(sc_link, SDEV_DB2, ("ststart "));
 	/*
@@ -1180,11 +1180,14 @@ ststart(v)
 		/*
 		 * go ask the adapter to do all this for us
 		 */
-		if (scsipi_command(sc_link,
+		error = scsipi_command(sc_link,
 		    (struct scsipi_generic *)&cmd, sizeof(cmd),
 		    (u_char *)bp->b_data, bp->b_bcount,
-		    0, ST_IO_TIME, bp, flags | SCSI_NOSLEEP))
-			printf("%s: not queued\n", st->sc_dev.dv_xname);
+		    0, ST_IO_TIME, bp, flags | SCSI_NOSLEEP);
+		if (error) {
+			printf("%s: not queued, error %d\n",
+			    st->sc_dev.dv_xname, error);
+		}
 	} /* go back and see if we can cram more work in.. */
 }
 
