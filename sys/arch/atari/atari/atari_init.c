@@ -1,4 +1,4 @@
-/*	$NetBSD: atari_init.c,v 1.35 1998/02/19 16:16:51 leo Exp $	*/
+/*	$NetBSD: atari_init.c,v 1.36 1998/02/24 13:02:06 leo Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman
@@ -68,6 +68,8 @@
 #include <atari/atari/intr.h>
 #include <atari/atari/stalloc.h>
 #include <atari/dev/ym2149reg.h>
+
+#include "pci.h"
 
 void start_c __P((int, u_int, u_int, u_int, char *));
 static void atari_hwinit __P((void));
@@ -614,10 +616,16 @@ atari_hwinit()
 		SCU->sys_mask |= SCU_IRQ7;
 #endif
 	}
-	/*
-	 * Configure PCI-bus
-	 */
- 	init_pci_bus();
+
+#if NPCI > 0
+	if(machineid & ATARI_HADES) {
+		/*
+		 * Configure PCI-bus
+		 */
+		init_pci_bus();
+	}
+#endif
+
 }
 
 /*
