@@ -1,4 +1,4 @@
-/*	$NetBSD: netdb.h,v 1.22 2002/05/10 22:02:11 kleink Exp $	*/
+/*	$NetBSD: netdb.h,v 1.23 2002/05/14 13:45:13 kleink Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -89,8 +89,17 @@
 #define _NETDB_H_
 
 #include <machine/ansi.h>
+#include <sys/ansi.h>
 #include <sys/cdefs.h>
 #include <inttypes.h>
+
+/*
+ * Data types
+ */
+#ifndef socklen_t
+typedef __socklen_t	socklen_t;
+#define socklen_t	__socklen_t
+#endif
 
 #ifdef  _BSD_SIZE_T_
 typedef _BSD_SIZE_T_	size_t;
@@ -145,13 +154,30 @@ struct	protoent {
 	int	p_proto;	/* protocol # */
 };
 
+/*
+ * Note: ai_addrlen used to be a size_t, per RFC 2553.
+ * In XNS5.2, and subsequently in POSIX-2001 and
+ * draft-ietf-ipngwg-rfc2553bis-02.txt it was changed to a socklen_t.
+ * To accomodate for this while preserving binary compatibility with the
+ * old interface, we prepend or append 32 bits of padding, depending on
+ * the (LP64) architecture's endianness.
+ *
+ * This should be deleted the next time the libc major number is
+ * incremented.
+ */
 #if !defined(_XOPEN_SOURCE) || (_XOPEN_SOURCE - 0) >= 520
 struct addrinfo {
 	int	ai_flags;	/* AI_PASSIVE, AI_CANONNAME, AI_NUMERICHOST */
 	int	ai_family;	/* PF_xxx */
 	int	ai_socktype;	/* SOCK_xxx */
 	int	ai_protocol;	/* 0 or IPPROTO_xxx for IPv4 and IPv6 */
-	size_t	ai_addrlen;	/* length of ai_addr */
+#if defined(__sparc64__)
+	int	__ai_pad0;
+#endif
+	socklen_t ai_addrlen;	/* length of ai_addr */
+#if defined(__alpha__) || (defined(__i386__) && defined(_LP64))
+	int	__ai_pad0;
+#endif
 	char	*ai_canonname;	/* canonical name for hostname */
 	struct sockaddr *ai_addr;	/* binary address */
 	struct addrinfo *ai_next;	/* next structure in linked list */
@@ -249,15 +275,6 @@ struct addrinfo {
 #define	SCOPE_DELIMITER '%'		/*KAME extension*/
 #endif
 #endif /* !_XOPEN_SOURCE || (_XOPEN_SOURCE - 0) >= 520 */
-
-/*
- * Data types
- */
-#include <sys/ansi.h>
-#ifndef socklen_t
-typedef __socklen_t	socklen_t;
-#define socklen_t	__socklen_t
-#endif
 
 __BEGIN_DECLS
 void		endhostent __P((void));
