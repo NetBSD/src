@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.154 2003/09/14 23:45:53 christos Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.155 2003/09/16 12:07:11 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.154 2003/09/14 23:45:53 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.155 2003/09/16 12:07:11 christos Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_compat_sunos.h"
@@ -83,8 +83,6 @@ static void	child_psignal(struct proc *, int);
 static void	proc_stop(struct proc *);
 static int	build_corename(struct proc *, char [MAXPATHLEN]);
 static void	ksiginfo_exithook(struct proc *, void *);
-static void	ksiginfo_save(struct proc *, ksiginfo_t *);
-static void	ksiginfo_del(struct proc *, ksiginfo_t *);
 static void	ksiginfo_put(struct proc *, ksiginfo_t *);
 static ksiginfo_t *ksiginfo_get(struct proc *, int);
 
@@ -106,72 +104,61 @@ struct pool	ksiginfo_pool;	/* memory pool for ksiginfo structures */
 	    ((signum) == SIGCONT && (q)->p_session == (p)->p_session))
 
 /*
- * return the first ksiginfo struct from our hash table
+ * Remove and return the first ksiginfo element that matches our requested
+ * signal, or return NULL if one not found.
  */
 static ksiginfo_t *
 ksiginfo_get(struct proc *p, int signo)
 {
-	ksiginfo_t *ksi, *hp = p->p_sigctx.ps_siginfo;
+	ksiginfo_t *ksi;
 
-	if ((ksi = hp) == NULL)
-		return NULL;
-
-	for (;;) {
-		if (ksi->ksi_signo == signo)
+	simple_lock(&p->p_sigctx.ps_silock);
+	CIRCLEQ_FOREACH(ksi, &p->p_sigctx.ps_siginfo, ksi_list) {
+		if (ksi->ksi_signo == signo) {
+			CIRCLEQ_REMOVE(&p->p_sigctx.ps_siginfo, ksi, ksi_list);
+			simple_unlock(&p->p_sigctx.ps_silock);
 			return ksi;
-		if ((ksi = ksi->ksi_next) == hp)
-			return NULL;
+		}
 	}
+	simple_unlock(&p->p_sigctx.ps_silock);
+	return NULL;
 }
 
+/*
+ * Append a new ksiginfo element to the list of pending ksiginfo's, if
+ * we need to (SA_SIGINFO was requested). We replace non RT signals if
+ * they already existed in the queue and we add new entries for RT signals,
+ * or for non RT signals with non-existing entries.
+ */
 static void
 ksiginfo_put(struct proc *p, ksiginfo_t *ksi)
 {
-	ksiginfo_t *hp = p->p_sigctx.ps_siginfo;
+	ksiginfo_t *kp;
+	struct sigaction *sa = &SIGACTION_PS(p->p_sigacts, ksi->ksi_signo);
 
-	if (hp == NULL)
-		p->p_sigctx.ps_siginfo = ksi->ksi_next = ksi->ksi_prev = ksi;
-	else {
-		ksi->ksi_prev = hp->ksi_prev;
-		hp->ksi_prev->ksi_next = ksi;
-		hp->ksi_prev = ksi;
-		ksi->ksi_next = hp;
-	}
-}
-
-static void
-ksiginfo_del(struct proc *p, ksiginfo_t *ksi)
-{
-	if (ksi->ksi_next == ksi)
-		p->p_sigctx.ps_siginfo = NULL;
-	else {
-		ksi->ksi_prev->ksi_next = ksi->ksi_next;
-		ksi->ksi_next->ksi_prev = ksi->ksi_prev;
-	}
-}
-
-static void
-ksiginfo_save(struct proc *p, ksiginfo_t *ksi)
-{
-	ksiginfo_t *kpool = NULL;
-	if ((SIGACTION_PS(p->p_sigacts, ksi->ksi_signo).sa_flags & SA_SIGINFO)
-	    == 0)
+	if ((sa->sa_flags & SA_SIGINFO) == 0)
 		return;
-	if (
+
+	simple_lock(&p->p_sigctx.ps_silock);
 #ifdef notyet	/* XXX: QUEUING */
-	    ksi->ksi_signo >= SIGRTMIN ||
+	if (ksi->ksi_signo < SIGRTMIN)
 #endif
-	    (kpool = ksiginfo_get(p, ksi->ksi_signo)) == NULL) {
-		if ((kpool = pool_get(&ksiginfo_pool, PR_NOWAIT)) == NULL)
-			return;
-		*kpool = *ksi;
-		ksiginfo_put(p, kpool);
-	} else {
-		ksiginfo_t *next = ksi->ksi_next, *prev = ksi->ksi_prev;
-		*kpool = *ksi;
-		kpool->ksi_next = next;
-		kpool->ksi_prev = prev;
+	{
+		CIRCLEQ_FOREACH(kp, &p->p_sigctx.ps_siginfo, ksi_list) {
+			if (kp->ksi_signo == ksi->ksi_signo) {
+				CIRCLEQ_ENTRY(ksiginfo) sv;
+				(void)memcpy(&sv, &kp->ksi_list, sizeof(sv));
+				*kp = *ksi;
+				(void)memcpy(&kp->ksi_list, &sv, sizeof(sv));
+				simple_unlock(&p->p_sigctx.ps_silock);
+				return;
+			}
+		}
 	}
+	kp = pool_get(&ksiginfo_pool, PR_NOWAIT);
+	*kp = *ksi;
+	CIRCLEQ_INSERT_TAIL(&p->p_sigctx.ps_siginfo, kp, ksi_list);
+	simple_unlock(&p->p_sigctx.ps_silock);
 }
 
 /*
@@ -180,15 +167,14 @@ ksiginfo_save(struct proc *p, ksiginfo_t *ksi)
 static void
 ksiginfo_exithook(struct proc *p, void *v)
 {
-	ksiginfo_t *ksi, *hp = p->p_sigctx.ps_siginfo;
 
-	if ((ksi = hp) == NULL)
-		return;
-	for (;;) {
+	simple_lock(&p->p_sigctx.ps_silock);
+	while (!CIRCLEQ_EMPTY(&p->p_sigctx.ps_siginfo)) {
+		ksiginfo_t *ksi = CIRCLEQ_FIRST(&p->p_sigctx.ps_siginfo);
+		CIRCLEQ_REMOVE(&p->p_sigctx.ps_siginfo, ksi, ksi_list);
 		pool_put(&ksiginfo_pool, ksi);
-		if ((ksi = ksi->ksi_next) == hp)
-			break;
 	}
+	simple_unlock(&p->p_sigctx.ps_silock);
 }
 
 /*
@@ -886,15 +872,9 @@ trapsignal(struct lwp *l, ksiginfo_t *ksi)
 	    !sigismember(&p->p_sigctx.ps_sigmask, signum)) {
 		p->p_stats->p_ru.ru_nsignals++;
 #ifdef KTRACE
-#ifdef notyet
-		if (KTRPOINT(p, KTR_PSIGINFO))
-			ktrpsiginfo(p, ksi, SIGACTION_PS(ps, signum).sa_handler,
-			    &p->p_sigctx.ps_sigmask);
-#else
 		if (KTRPOINT(p, KTR_PSIG))
 			ktrpsig(p, signum, SIGACTION_PS(ps, signum).sa_handler,
-			    &p->p_sigctx.ps_sigmask, 0);
-#endif
+			    &p->p_sigctx.ps_sigmask, ktr->ktr_trap);
 #endif
 		kpsendsig(l, ksi, &p->p_sigctx.ps_sigmask);
 		(void) splsched();	/* XXXSMP */
@@ -1060,7 +1040,7 @@ kpsignal1(struct proc *p, ksiginfo_t *ksi, void *data,
 	    && sigismember(&p->p_sigctx.ps_sigwait, signum)
 	    && p->p_stat != SSTOP) {
 		if (action == SIG_CATCH)
-			ksiginfo_save(p, ksi);
+			ksiginfo_put(p, ksi);
 		sigdelset(&p->p_sigctx.ps_siglist, signum);
 		p->p_sigctx.ps_sigwaited = signum;
 		sigemptyset(&p->p_sigctx.ps_sigwait);
@@ -1077,7 +1057,7 @@ kpsignal1(struct proc *p, ksiginfo_t *ksi, void *data,
 	 */
 	if (action == SIG_HOLD &&
 	    ((prop & SA_CONT) == 0 || p->p_stat != SSTOP)) {
-		ksiginfo_save(p, ksi);
+		ksiginfo_put(p, ksi);
 		return;
 	}
 	/* XXXSMP: works, but icky */
@@ -1261,7 +1241,7 @@ kpsignal1(struct proc *p, ksiginfo_t *ksi, void *data,
 
  runfast:
 	if (action == SIG_CATCH) {
-		ksiginfo_save(p, ksi);
+		ksiginfo_put(p, ksi);
 		action = SIG_HOLD;
 	}
 	/*
@@ -1271,14 +1251,14 @@ kpsignal1(struct proc *p, ksiginfo_t *ksi, void *data,
 		l->l_priority = PUSER;
  run:
 	if (action == SIG_CATCH) {
-		ksiginfo_save(p, ksi);
+		ksiginfo_put(p, ksi);
 		action = SIG_HOLD;
 	}
 	
 	setrunnable(l);		/* XXXSMP: recurse? */
  out:
 	if (action == SIG_CATCH)
-		ksiginfo_save(p, ksi);
+		ksiginfo_put(p, ksi);
  done:
 	/* XXXSMP: works, but icky */
 	if (dolock)
@@ -1757,7 +1737,6 @@ postsig(int signum)
 			kpsendsig(l, &ksi1, returnmask);
 		} else {
 			kpsendsig(l, ksi, returnmask);
-			ksiginfo_del(p, ksi);
 			pool_put(&ksiginfo_pool, ksi);
 		}
 		p->p_sigctx.ps_lwp = 0;
