@@ -1,5 +1,13 @@
-#	$NetBSD: CHANGES-3.0,v 1.1.2.1 2005/03/17 00:23:56 jmc Exp $
+#	$NetBSD: CHANGES-3.0,v 1.1.2.2 2005/03/17 00:26:49 jmc Exp $
 
 A complete list of changes from the initial NetBSD 3.0 branch on 16 March 2005
 until the 3.0 release:
 
+doc/LAST_MINUTE					patched by hand
+
+	Null out in preparation for 3.0
+
+gnu/usr.bin/groff/tmac/mdoc.local		patched by hand
+sys/sys/param.h					patched by hand
+
+	Update to 3.0_BETA
