@@ -1,4 +1,4 @@
-/*	$NetBSD: kdump.c,v 1.40 2002/08/04 14:26:21 jdolecek Exp $	*/
+/*	$NetBSD: kdump.c,v 1.41 2002/09/27 20:31:44 atatat Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993\n\
 #if 0
 static char sccsid[] = "@(#)kdump.c	8.4 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: kdump.c,v 1.40 2002/08/04 14:26:21 jdolecek Exp $");
+__RCSID("$NetBSD: kdump.c,v 1.41 2002/09/27 20:31:44 atatat Exp $");
 #endif
 #endif /* not lint */
 
@@ -72,7 +72,7 @@ __RCSID("$NetBSD: kdump.c,v 1.40 2002/08/04 14:26:21 jdolecek Exp $");
 
 int timestamp, decimal, plain, tail, maxdata;
 pid_t do_pid = -1;
-const char *tracefile = DEF_TRACEFILE;
+const char *tracefile = NULL;
 struct ktr_header ktr_header;
 int emul_changed = 0;
 
@@ -162,7 +162,17 @@ main(argc, argv)
 	argv += optind;
 	argc -= optind;
 
-	if (argc > 1)
+	if (tracefile == NULL) {
+		if (argc == 1) {
+			tracefile = argv[0];
+			argv++;
+			argc--;
+		}
+		else
+			tracefile = DEF_TRACEFILE;
+	}
+
+	if (argc > 0)
 		usage();
 
 	setemul(emul_name, 0, 0);
@@ -637,6 +647,7 @@ usage()
 {
 
 	(void)fprintf(stderr,
-"usage: kdump [-dnlRT] [-e emulation] [-f trfile] [-m maxdata] [-t [cnis]]\n");
+"usage: kdump [-dnlRT] [-e emulation] [-f trfile] [-m maxdata] [-p pid]\n"
+"             [-t [cnis]] [trfile]\n");
 	exit(1);
 }
