@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.lib.mk,v 1.216 2003/04/22 12:55:26 christos Exp $
+#	$NetBSD: bsd.lib.mk,v 1.217 2003/05/26 12:38:59 wiz Exp $
 #	@(#)bsd.lib.mk	8.3 (Berkeley) 4/22/94
 
 .include <bsd.init.mk>
@@ -259,7 +259,7 @@ FFLAGS+=	${FOPTS}
 .endif
 
 .f.ln:
-	${ECHO} Skipping lint for Fortran libraries.
+	@echo Skipping lint for Fortran libraries.
 
 .m.o:
 .if defined(OBJCFLAGS) && !empty(OBJCFLAGS:M*-g*)
