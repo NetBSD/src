@@ -1,4 +1,4 @@
-/*	$NetBSD: pool.h,v 1.39 2003/04/09 18:22:13 thorpej Exp $	*/
+/*	$NetBSD: pool.h,v 1.40 2003/09/07 11:37:13 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -251,8 +251,8 @@ int		pool_chk(struct pool *, const char *);
  * Pool cache routines.
  */
 void		pool_cache_init(struct pool_cache *, struct pool *,
-		    int (*ctor)(void *, void *, int),
-		    void (*dtor)(void *, void *),
+		    int (*)(void *, void *, int),
+		    void (*)(void *, void *),
 		    void *);
 void		pool_cache_destroy(struct pool_cache *);
 void		*pool_cache_get_paddr(struct pool_cache *, int, paddr_t *);
