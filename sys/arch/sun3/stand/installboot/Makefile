@@ -1,9 +1,10 @@
-#	$NetBSD: Makefile,v 1.15 2001/12/12 01:49:52 tv Exp $
+#	$NetBSD: Makefile,v 1.16 2001/12/12 12:24:25 lukem Exp $
+
+NOMAN= # defined
 
 .include <bsd.own.mk>
 
 PROG=	installboot
-NOMAN= # defined
 BINDIR=/usr/mdec
 S= ${.CURDIR}/../../../..
 LIBSA=${S}/lib/libsa
