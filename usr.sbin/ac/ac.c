@@ -1,4 +1,4 @@
-/*	$NetBSD: ac.c,v 1.6 1997/10/16 23:39:23 lukem Exp $	*/
+/*	$NetBSD: ac.c,v 1.7 1997/10/17 00:12:51 lukem Exp $	*/
 
 /*
  *      Copyright (c) 1994 Christopher G. Demetriou.
@@ -17,7 +17,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ac.c,v 1.6 1997/10/16 23:39:23 lukem Exp $");
+__RCSID("$NetBSD: ac.c,v 1.7 1997/10/17 00:12:51 lukem Exp $");
 #endif
 
 #include <sys/types.h>
@@ -128,7 +128,7 @@ add_tty(name)
 	char *name;
 {
 	struct tty_list *tp;
-	register char *rcp;
+	char *rcp;
 
 	Flags |= AC_T;
 	
@@ -270,7 +270,7 @@ main(argc, argv)
 	int c;
 
 	fp = NULL;
-	while ((c = getopt(argc, argv, "Dc:dpt:w:")) != EOF) {
+	while ((c = getopt(argc, argv, "Dc:dpt:w:")) != -1) {
 		switch (c) {
 #ifdef DEBUG
 		case 'D':
