@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.1 1997/07/13 20:28:49 christos Exp $	*/
+/*	$NetBSD: extern.h,v 1.2 1997/10/16 23:08:21 christos Exp $	*/
 
 /*
  * Copyright (c) 1997 Christos Zoulas.  All rights reserved.
@@ -30,7 +30,6 @@
  */
 
 __BEGIN_DECLS
-char *_tztab __P((int, int));
 int __getlogin __P((char *, size_t));
 char *__strerror __P((int , char *, int));
 char *__strsignal __P((int , char *, int));
