@@ -1,4 +1,4 @@
-/*	$NetBSD: in_proto.c,v 1.23 1998/07/05 06:49:17 jonathan Exp $	*/
+/*	$NetBSD: in_proto.c,v 1.24 1998/07/15 17:39:20 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -162,47 +162,6 @@ struct domain inetdomain =
     { AF_INET, "internet", 0, 0, 0, 
       inetsw, &inetsw[sizeof(inetsw)/sizeof(inetsw[0])], 0,
       rn_inithead, 32, sizeof(struct sockaddr_in) };
-
-#ifdef notyet /* XXXX */
-#include "imp.h"
-#if NIMP > 0
-extern	struct domain impdomain;
-int	rimp_output(), hostslowtimo();
-
-struct protosw impsw[] = {
-{ SOCK_RAW,	&impdomain,	0,		PR_ATOMIC|PR_ADDR,
-  0,		rimp_output,	0,		0,
-  rip_usrreq,
-  0,		0,		hostslowtimo,	0,
-},
-};
-
-struct domain impdomain =
-    { AF_IMPLINK, "imp", 0, 0, 0,
-      impsw, &impsw[sizeof (impsw)/sizeof(impsw[0])] };
-#endif
-
-#include "hy.h"
-#if NHY > 0
-/*
- * HYPERchannel protocol family: raw interface.
- */
-int	rhy_output();
-extern	struct domain hydomain;
-
-struct protosw hysw[] = {
-{ SOCK_RAW,	&hydomain,	0,		PR_ATOMIC|PR_ADDR,
-  0,		rhy_output,	0,		0,
-  rip_usrreq,
-  0,		0,		0,		0,
-},
-};
-
-struct domain hydomain =
-    { AF_HYLINK, "hy", 0, 0, 0, hysw, &hysw[sizeof (hysw)/sizeof(hysw[0])] };
-#endif
-#endif
-
 
 #define	TCP_SYN_HASH_SIZE	293
 #define	TCP_SYN_BUCKET_SIZE	35
