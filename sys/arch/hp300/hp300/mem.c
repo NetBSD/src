@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.9 1995/04/10 00:59:33 mycroft Exp $	*/
+/*	$NetBSD: mem.c,v 1.10 1995/04/10 01:23:19 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -59,6 +59,26 @@
 
 extern u_int lowram;
 caddr_t zeropage;
+
+/*ARGSUSED*/
+int
+mmopen(dev, flag, mode)
+	dev_t dev;
+	int flag, mode;
+{
+
+	return (0);
+}
+
+/*ARGSUSED*/
+int
+mmclose(dev, flag, mode)
+	dev_t dev;
+	int flag, mode;
+{
+
+	return (0);
+}
 
 /*ARGSUSED*/
 mmrw(dev, uio, flags)
