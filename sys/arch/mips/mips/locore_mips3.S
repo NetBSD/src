@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_mips3.S,v 1.34 2000/06/09 06:07:01 soda Exp $	*/
+/*	$NetBSD: locore_mips3.S,v 1.35 2000/06/17 01:35:28 cgd Exp $	*/
 
 /*
  * Copyright (c) 1997 Jonathan Stone (hereinafter referred to as the author)
@@ -112,6 +112,30 @@
  *	tlbp		-- one integer op afterwards
  * Obvious solution is to take least common denominator.
  */
+
+/*
+ * XXX mips/include
+ */
+#define	C_IINV_I	0x00
+#define	C_IWBINV_D	0x01
+#define	C_IINV_SI	0x02
+#define	C_IWBINV_SD	0x03
+
+#define	C_ILDTAG_I	0x04
+#define	C_ILDTAG_D	0x05
+#define	C_ILDTAG_SI	0x06
+#define	C_ILDTAG_SD	0x07
+
+#define	C_HINV_I	0x10
+#define	C_HINV_D	0x11
+#define	C_HINV_SI	0x12
+#define	C_HINV_SD	0x13
+
+#define	C_HWBINV_D	0x15
+#define	C_HWBINV_SD	0x17
+
+#define	C_HSETV_SI	0x1e
+#define	C_HSETV_SD	0x1f
 
 /*
  *============================================================================
@@ -1473,14 +1497,14 @@ LEAF(mips3_FlushCache)
 	addu	t1, t0, t1		# End address
 	subu	t1, t1, 128
 1:
-	cache	0, 0(t0)
-	cache	0, 16(t0)
-	cache	0, 32(t0)
-	cache	0, 48(t0)
-	cache	0, 64(t0)
-	cache	0, 80(t0)
-	cache	0, 96(t0)
-	cache	0, 112(t0)
+	cache	C_IINV_I, 0(t0)
+	cache	C_IINV_I, 16(t0)
+	cache	C_IINV_I, 32(t0)
+	cache	C_IINV_I, 48(t0)
+	cache	C_IINV_I, 64(t0)
+	cache	C_IINV_I, 80(t0)
+	cache	C_IINV_I, 96(t0)
+	cache	C_IINV_I, 112(t0)
 	bne	t0, t1, 1b
 	addu	t0, t0, 128
 
@@ -1491,14 +1515,14 @@ LEAF(mips3_FlushCache)
 	addu	t1, t0, t2		# End address
 	subu	t1, t1, 128
 1:
-	cache	1, 0(t0)
-	cache	1, 16(t0)
-	cache	1, 32(t0)
-	cache	1, 48(t0)
-	cache	1, 64(t0)
-	cache	1, 80(t0)
-	cache	1, 96(t0)
-	cache	1, 112(t0)
+	cache	C_IWBINV_D, 0(t0)
+	cache	C_IWBINV_D, 16(t0)
+	cache	C_IWBINV_D, 32(t0)
+	cache	C_IWBINV_D, 48(t0)
+	cache	C_IWBINV_D, 64(t0)
+	cache	C_IWBINV_D, 80(t0)
+	cache	C_IWBINV_D, 96(t0)
+	cache	C_IWBINV_D, 112(t0)
 	bne	t0, t1, 1b
 	addu	t0, t0, 128
 
@@ -1509,10 +1533,10 @@ LEAF(mips3_FlushCache)
 	addu	t1, t0, t2
 	subu	t1, t1, 128
 1:
-	cache	3, 0(t0)
-	cache	3, 32(t0)
-	cache	3, 64(t0)
-	cache	3, 96(t0)
+	cache	C_IWBINV_SD, 0(t0)
+	cache	C_IWBINV_SD, 32(t0)
+	cache	C_IWBINV_SD, 64(t0)
+	cache	C_IWBINV_SD, 96(t0)
 	bne	t0, t1, 1b
 	addu	t0, t0, 128
 2:
@@ -1544,14 +1568,14 @@ LEAF(mips3_FlushICache)
 	addu	a1, 127		# Align
 	srl	a1, a1, 7	# Number of unrolled loops
 1:
-	cache	0, 0(a0)
-	cache	0, 16(a0)
-	cache	0, 32(a0)
-	cache	0, 48(a0)
-	cache	0, 64(a0)
-	cache	0, 80(a0)
-	cache	0, 96(a0)
-	cache	0, 112(a0)
+	cache	C_IINV_I, 0(a0)
+	cache	C_IINV_I, 16(a0)
+	cache	C_IINV_I, 32(a0)
+	cache	C_IINV_I, 48(a0)
+	cache	C_IINV_I, 64(a0)
+	cache	C_IINV_I, 80(a0)
+	cache	C_IINV_I, 96(a0)
+	cache	C_IINV_I, 112(a0)
 	addu	a1, -1
 	bne	a1, zero, 1b
 	addu	a0, 128
@@ -1593,14 +1617,14 @@ LEAF(mips3_FlushDCache)
 	srl	a1, a1, 7	# Compute number of cache lines
 	move	t1, a1		# copy length
 1:
-	cache	1, 0(a0)
-	cache	1, 16(a0)
-	cache	1, 32(a0)
-	cache	1, 48(a0)
-	cache	1, 64(a0)
-	cache	1, 80(a0)
-	cache	1, 96(a0)
-	cache	1, 112(a0)
+	cache	C_IWBINV_D, 0(a0)
+	cache	C_IWBINV_D, 16(a0)
+	cache	C_IWBINV_D, 32(a0)
+	cache	C_IWBINV_D, 48(a0)
+	cache	C_IWBINV_D, 64(a0)
+	cache	C_IWBINV_D, 80(a0)
+	cache	C_IWBINV_D, 96(a0)
+	cache	C_IWBINV_D, 112(a0)
 	addu	a1, -1
 	bne	a1, zero, 1b
 	addu	a0, 128
@@ -1612,10 +1636,10 @@ LEAF(mips3_FlushDCache)
 	li	a0, MIPS_KSEG0_START
 	addu	a0, a0, t0	# reduce to kseg0 address
 1:
-	cache	3, 0(a0)
-	cache	3, 32(a0)
-	cache	3, 64(a0)
-	cache	3, 96(a0)
+	cache	C_IWBINV_SD, 0(a0)
+	cache	C_IWBINV_SD, 32(a0)
+	cache	C_IWBINV_SD, 64(a0)
+	cache	C_IWBINV_SD, 96(a0)
 	addu	t1, -1
 	bne	t1, zero, 1b
 	addu	a0, 128
@@ -1654,19 +1678,19 @@ LEAF(mips3_HitFlushDCache)
 	subu	a1, a1, a0
 	srl	a1, a1, 7	# Compute number of cache lines
 1:
-	cache	0x15, 0(a0)
-	cache	0x15, 16(a0)
-	cache	0x15, 32(a0)
-	cache	0x15, 48(a0)
-	cache	0x15, 64(a0)
-	cache	0x15, 80(a0)
-	cache	0x15, 96(a0)
-	cache	0x15, 112(a0)
+	cache	C_HWBINV_D, 0(a0)
+	cache	C_HWBINV_D, 16(a0)
+	cache	C_HWBINV_D, 32(a0)
+	cache	C_HWBINV_D, 48(a0)
+	cache	C_HWBINV_D, 64(a0)
+	cache	C_HWBINV_D, 80(a0)
+	cache	C_HWBINV_D, 96(a0)
+	cache	C_HWBINV_D, 112(a0)
 #if 1
-	cache	0x17, 0(a0)
-	cache	0x17, 32(a0)
-	cache	0x17, 64(a0)
-	cache	0x17, 96(a0)
+	cache	C_HWBINV_SD, 0(a0)
+	cache	C_HWBINV_SD, 32(a0)
+	cache	C_HWBINV_SD, 64(a0)
+	cache	C_HWBINV_SD, 96(a0)
 #endif
 	addu	a1, -1
 	bne	a1, zero, 1b
@@ -1698,26 +1722,14 @@ END(mips3_HitFlushDCache)
 LEAF(mips3_InvalidateDCache)
 	addu	a1, a1, a0			# compute ending address
 1:
-	cache	0x13, 0(a0)
+	cache	C_HINV_SD, 0(a0)
 	addu	a0, a0, 4
 	bne	a0, a1, 1b
-	cache	0x11,-4(a0)
+	cache	C_HINV_D,-4(a0)
 
 	j	ra
 	nop
 END(mips3_InvalidateDCache)
-
-/*
- * XXX mips/include
- */
-#define C_ICACHE	0
-#define C_DCACHE	1
-
-#define C_IINV		(0 << 2)
-#define C_IWBINV	(0 << 2)
-#define C_HINV		(4 << 2)
-#define C_HWBINV	(5 << 2)
-#define C_HWB		(6 << 2)
 
 /*----------------------------------------------------------------------------
  *
@@ -1745,15 +1757,15 @@ LEAF(mips3_FlushCache_2way)
 	or	t3, t1, t0		# Second way address
 	addu	t1, t0, t1		# End address
 1:
-	cache	C_ICACHE|C_IINV,  0(t0)
-	cache	C_ICACHE|C_IINV,  0(t3)
-	cache	C_ICACHE|C_IINV, 32(t0)
-	cache	C_ICACHE|C_IINV, 32(t3)
-	cache	C_ICACHE|C_IINV, 64(t0)
-	cache	C_ICACHE|C_IINV, 64(t3)
-	cache	C_ICACHE|C_IINV, 96(t0)
+	cache	C_IINV_I,  0(t0)
+	cache	C_IINV_I,  0(t3)
+	cache	C_IINV_I, 32(t0)
+	cache	C_IINV_I, 32(t3)
+	cache	C_IINV_I, 64(t0)
+	cache	C_IINV_I, 64(t3)
+	cache	C_IINV_I, 96(t0)
 	addu	t0, t0, 128
-	cache	C_ICACHE|C_IINV, 96(t3)
+	cache	C_IINV_I, 96(t3)
 	bne	t0, t1, 1b
 	addu	t3, t3, 128		# Branch delay slot
 
@@ -1765,15 +1777,15 @@ LEAF(mips3_FlushCache_2way)
 	or	t3, t2, t0		# Second way address
 	addu	t1, t0, t2		# End address
 1:
-	cache	C_DCACHE|C_IWBINV,  0(t0)
-	cache	C_DCACHE|C_IWBINV,  0(t3)
-	cache	C_DCACHE|C_IWBINV, 32(t0)
-	cache	C_DCACHE|C_IWBINV, 32(t3)
-	cache	C_DCACHE|C_IWBINV, 64(t0)
-	cache	C_DCACHE|C_IWBINV, 64(t3)
-	cache	C_DCACHE|C_IWBINV, 96(t0)
+	cache	C_IWBINV_D,  0(t0)
+	cache	C_IWBINV_D,  0(t3)
+	cache	C_IWBINV_D, 32(t0)
+	cache	C_IWBINV_D, 32(t3)
+	cache	C_IWBINV_D, 64(t0)
+	cache	C_IWBINV_D, 64(t3)
+	cache	C_IWBINV_D, 96(t0)
 	addu	t0, t0, 128
-	cache	C_DCACHE|C_IWBINV, 96(t3)
+	cache	C_IWBINV_D, 96(t3)
 	bne	t0, t1, 1b
 	addu	t3, t3, 128		# Branch delay slot
 
@@ -1785,10 +1797,10 @@ LEAF(mips3_FlushCache_2way)
         addu    t1, t0, t2
         subu    t1, t1, 128
 1:
-        cache   3, 0(t0)
-        cache   3, 32(t0)
-        cache   3, 64(t0)
-        cache   3, 96(t0)
+        cache   C_IWBINV_SD, 0(t0)
+        cache   C_IWBINV_SD, 32(t0)
+        cache   C_IWBINV_SD, 64(t0)
+        cache   C_IWBINV_SD, 96(t0)
         bne     t0, t1, 1b
         addu    t0, t0, 128
 2:      
@@ -1834,16 +1846,16 @@ LEAF(mips3_FlushICache_2way)
 	srl	a1, a1, 7	# Number of unrolled loops
 	or	t0, t0, a0	# Way 1 index offset.
 1:
-	cache	C_ICACHE|C_IINV,  0(a0)
-	cache	C_ICACHE|C_IINV,  0(t0)		# other way
-	cache	C_ICACHE|C_IINV, 32(a0)
-	cache	C_ICACHE|C_IINV, 32(t0)		# other way
+	cache	C_IINV_I,  0(a0)
+	cache	C_IINV_I,  0(t0)	# other way
+	cache	C_IINV_I, 32(a0)
+	cache	C_IINV_I, 32(t0)	# other way
 	addu	a1, -1
-	cache	C_ICACHE|C_IINV, 64(a0)
-	cache	C_ICACHE|C_IINV, 64(t0)		# other way
-	cache	C_ICACHE|C_IINV, 96(a0)
+	cache	C_IINV_I, 64(a0)
+	cache	C_IINV_I, 64(t0)	# other way
+	cache	C_IINV_I, 96(a0)
 	addu	a0, 128
-	cache	C_ICACHE|C_IINV, 96(t0)		# other way
+	cache	C_IINV_I, 96(t0)	# other way
 	bgt	a1, zero, 1b
 	addu	t0, 128		# Branch delay slot
 
@@ -1883,15 +1895,15 @@ LEAF(mips3_FlushDCache_2way)
 	addu	a3, a0, a3	# second set of two way cache
 	srl	a1, a1, 7	# Compute number of cache blocks
 1:
-	cache	C_DCACHE|C_IWBINV, 0(a0)
-	cache	C_DCACHE|C_IWBINV, 0(a3)	# second way
-	cache	C_DCACHE|C_IWBINV, 32(a0)
-	cache	C_DCACHE|C_IWBINV, 32(a3)
+	cache	C_IWBINV_D, 0(a0)
+	cache	C_IWBINV_D, 0(a3)	# second way
+	cache	C_IWBINV_D, 32(a0)
+	cache	C_IWBINV_D, 32(a3)
 	addu	a1, -1
-	cache	C_DCACHE|C_IWBINV, 64(a0)
-	cache	C_DCACHE|C_IWBINV, 64(a3)
-	cache	C_DCACHE|C_IWBINV, 96(a0)
-	cache	C_DCACHE|C_IWBINV, 96(a3)
+	cache	C_IWBINV_D, 64(a0)
+	cache	C_IWBINV_D, 64(a3)
+	cache	C_IWBINV_D, 96(a0)
+	cache	C_IWBINV_D, 96(a3)
 	addu	a0, 128
 	bgtz	a1, 1b
 	addu	a3, 128		# Branch delay slot
@@ -1935,7 +1947,7 @@ LEAF(mips3_HitFlushDCache_2way)
 	srl	a1, a1, 5	# Compute number of cache lines
 1:
 	addu	a1, -1
-	cache	C_DCACHE|C_HWBINV,0(a0)
+	cache	C_HWBINV_D,0(a0)
 	bne	a1, zero, 1b
 	addu	a0, 32		# Branch delay slot
 2:
@@ -1970,7 +1982,7 @@ END(mips3_HitFlushDCache_2way)
 LEAF(mips3_InvalidateDCache_2way)
 	addu	a1, a1, a0		# compute ending address
 1:
-	cache	C_DCACHE|C_HINV,0(a0)
+	cache	C_HINV_D,0(a0)
 	addu	a0, a0, 32
 	bltu	a0, a1, 1b
 	nop				# Branch delay slot
@@ -2009,10 +2021,10 @@ XLEAF(mips3_VCEI)	/* XXXX */
 	nop
 	and	k0, -16
 	sw	k0, vce_savek0			# save virtual address
-	cache	1, 0(k0)			# writeback primary line
+	cache	C_IWBINV_D, 0(k0)		# writeback primary line
 	nop
 	nop
-	cache	7, 0(k0)			# read L2Cache tag
+	cache	C_ILDTAG_SD, 0(k0)		# read L2Cache tag
 	and	k0, PGOFSET
 	mfc0	k1, MIPS_COP_0_TAG_LO
 	and	k1, 0x00000380			# VIndex[9..7]
@@ -2024,14 +2036,14 @@ XLEAF(mips3_VCEI)	/* XXXX */
 	subu	k1, zero, k1
 	and	k0, k0, k1			# align to L2CacheLSize
 1:
-	cache	1, 0(k0)			# flush 32 bytes
-	cache	1, 16(k0)
+	cache	C_IWBINV_D, 0(k0)		# flush 32 bytes
+	cache	C_IWBINV_D, 16(k0)
 	addu	k1, 32
 	bltz	k1, 1b
 	addu	k0, 32
 2:
 	lw	k0, vce_savek0			# get original address
-	cache	31, 0(k0)
+	cache	C_HSETV_SD, 0(k0)
 	nop
 #ifdef DEBUG
 	mfc0	k1, MIPS_COP_0_EXC_PC
@@ -2555,7 +2567,7 @@ LEAF(mips3_FetchIcache)
 	li	t0, MIPS_KSEG0_START
 	addu	t3, t1, t0
 1:
-	cache	4, 0(t0)
+	cache	C_ILDTAG_I, 0(t0)
 	mfc0	t4, MIPS_COP_0_TAG_LO
 	sw	t4, 0(a0)
 	addu	a0, 4
@@ -2574,7 +2586,7 @@ LEAF(mips3_FetchDcache)
 	li	t0, MIPS_KSEG0_START
 	addu	t3, t1, t0
 1:
-	cache	5, 0(t0)
+	cache	C_ILDTAG_D, 0(t0)
 	mfc0	t4, MIPS_COP_0_TAG_LO
 	sw	t4, 0(a0)
 	addu	a0, 4
