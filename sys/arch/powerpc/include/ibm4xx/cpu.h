@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.3 2002/05/13 07:04:24 matt Exp $	*/
+/*	$NetBSD: cpu.h,v 1.4 2002/08/11 13:32:20 simonb Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -50,6 +50,10 @@
 #define	PVR_403			0x00200000
 
 #define PVR_405GP      		0x40110000 
+#define PVR_405GP_PASS1 	0x40110000	/* RevA */ 
+#define PVR_405GP_PASS2 	0x40110040	/* RevB */ 
+#define PVR_405GP_PASS2_1 	0x40110082	/* RevC */ 
+#define PVR_405GP_PASS3 	0x401100c4	/* RevD */ 
 
 #if defined(_KERNEL)
 extern char bootpath[];
