@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.30.2.1 1999/04/05 17:27:58 scw Exp $        */
+/*	$NetBSD: pmap.c,v 1.30.2.2 1999/04/26 14:47:21 perry Exp $        */
 
 /* 
  * Copyright (c) 1991, 1993
@@ -1685,20 +1685,15 @@ pmap_pageable(pmap, sva, eva, pageable)
 		}
 #endif
 		/*
-		 * Mark it unmodified to avoid pageout
+		 * page is unused, free it now!
 		 */
-		pmap_changebit(pa, 0, ~PG_M);
+		pmap_remove_mapping(pv->pv_pmap, pv->pv_va,
+				    NULL, PRM_TFLUSH|PRM_CFLUSH);
+		uvm_pagefree(PHYS_TO_VM_PAGE(pa));
 #ifdef DEBUG
-		if ((PHYS_TO_VM_PAGE(pa)->flags & PG_CLEAN) == 0) {
-			printf("pa %lx: flags=%x: not clean\n",
-			       pa, PHYS_TO_VM_PAGE(pa)->flags);
-			PHYS_TO_VM_PAGE(pa)->flags |= PG_CLEAN;
-		}
 		if (pmapdebug & PDB_PTPAGE)
-			printf("pmap_pageable: PT page %lx(%x) unmodified\n",
+			printf("pmap_pageable: PT page %lx(%x) freed\n",
 			       sva, *pmap_pte(pmap, sva));
-		if (pmapdebug & PDB_WIRING)
-			pmap_check_wiring("pageable", sva);
 #endif
 	}
 }
