@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_var.h,v 1.10 2000/02/26 08:39:20 itojun Exp $	*/
+/*	$NetBSD: ip6_var.h,v 1.11 2000/02/26 09:09:18 itojun Exp $	*/
 /*	$KAME: ip6_var.h,v 1.27 2000/02/22 14:04:22 itojun Exp $	*/
 
 /*
@@ -280,6 +280,7 @@ void	frag6_drain __P((void));
 
 void	rip6_init __P((void));
 int	rip6_input __P((struct mbuf **mp, int *offp, int proto));
+void	rip6_ctlinput __P((int, struct sockaddr *, void *));
 int	rip6_ctloutput __P((int, struct socket *, int, int, struct mbuf **));
 int	rip6_output __P((struct mbuf *, ...));
 int	rip6_usrreq __P((struct socket *,
