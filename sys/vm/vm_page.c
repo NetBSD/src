@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_page.c,v 1.32 1997/09/16 00:08:09 thorpej Exp $	*/
+/*	$NetBSD: vm_page.c,v 1.32.2.1 1998/02/08 06:52:13 mellon Exp $	*/
 
 #define	VM_PAGE_ALLOC_MEMORY_STATS
 
@@ -117,6 +117,11 @@
 #include <vm/vm_pageout.h>
 
 #include <machine/cpu.h>
+
+#define VERY_LOW_MEM()   (cnt.v_free_count <= vm_page_free_reserved)
+#define KERN_OBJ(object) ((object) == kernel_object || (object) == kmem_object)
+
+int	vm_page_free_reserved = 10;
 
 #ifdef MACHINE_NONCONTIG
 /*
@@ -782,6 +787,7 @@ vm_page_rename(mem, new_object, new_offset)
  *
  *	Object must be locked.
  */
+
 vm_page_t
 vm_page_alloc(object, offset)
 	vm_object_t	object;
@@ -792,13 +798,20 @@ vm_page_alloc(object, offset)
 
 	spl = splimp();				/* XXX */
 	simple_lock(&vm_page_queue_free_lock);
-	if (vm_page_queue_free.tqh_first == NULL) {
-		simple_unlock(&vm_page_queue_free_lock);
-		splx(spl);
-		return(NULL);
-	}
-
 	mem = vm_page_queue_free.tqh_first;
+
+	if (VERY_LOW_MEM()) {
+		if ((!KERN_OBJ(object) && curproc != pageout_daemon)
+		   || mem == NULL) {
+			simple_unlock(&vm_page_queue_free_lock);
+			splx(spl);
+			return(NULL);
+		}
+	}
+#ifdef DIAGNOSTIC
+	if (mem == NULL) /* because we now depend on VERY_LOW_MEM() */
+		panic("vm_page_alloc");
+#endif
 	TAILQ_REMOVE(&vm_page_queue_free, mem, pageq);
 
 	cnt.v_free_count--;
