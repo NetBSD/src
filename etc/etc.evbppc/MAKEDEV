@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.1 2002/12/09 12:37:10 scw Exp $
+#	$NetBSD: MAKEDEV,v 1.2 2003/03/13 14:56:58 hannken Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -54,6 +54,13 @@
 #	com*	standard PC COM ports			(XXX)
 #	tty*	alias for PC COM ports, this is what the system really wants
 #	ttyCY*	Cyclom-Y multiport serial boards. Each "unit" makes 32 ports.
+#	ttyE*	wscons
+#
+# Pointing devices:
+#	wsmouse* wscons mouse events
+#
+# Keyboard devices:
+#	wskbd*	wscons keyboard events
 #
 # Pseudo terminals:
 #	pty*	set of 62 master and slave pseudo terminals
@@ -87,6 +94,8 @@
 #	systrace syscall tracer
 #	kttcp	kernel ttcp helper
 #	sysmon	System Monitoring hardware
+#	wsfont*	console font control
+#	wsmux*	wscons event multiplexor
 #
 
 dialin=0
@@ -113,7 +122,7 @@ do
 case $i in
 
 all)
-	makedev std fd wd0 wd1 wd2 wd3 sd0 sd1 sd2 sd3 sd4
+	makedev std wscons fd wd0 wd1 wd2 wd3 sd0 sd1 sd2 sd3 sd4
 	makedev tty0 tty1 pty0
 	makedev raid0 raid1 raid2 raid3 raid4 raid5 raid6 raid7
 	makedev st0 st1 ch0 cd0 cd1 vnd0 vnd1 lpa0 lpa1 lpa2
@@ -157,72 +166,84 @@ std)
 	fi
 	;;
 
-# Wscons commented out for now until it is supported for real.
-# Note that the major numbers will need to be revised at that time.
-#wscons)
-#	makedev ttyE0 ttyE1 ttyE2 ttyE3 ttyE4 ttyE5 ttyE6 ttyE7
-#	makedev wsmouse0 wsmouse1 wsmouse2 wsmouse3
-#	makedev wskbd0 wskbd1 wskbd2 wskbd3
-#	makedev wsmux0 wsmux1 wsmux2 wsmux3
-#	makedev wsmouse wskbd
-#	makedev ttyEcfg
-#	;;
+wscons)
+	makedev ttyE0 ttyE1 ttyE2 ttyE3 ttyE4 ttyE5 ttyE6 ttyE7
+	makedev wsmouse0 wsmouse1 wsmouse2 wsmouse3
+	makedev wskbd0 wskbd1 wskbd2 wskbd3
+	makedev wsmux0 wsmux1 wsmux2 wsmux3
+	makedev wsmouse wskbd
+	makedev ttyEcfg ttyEstat
+	makedev wsfont
+	;;
 
-#wsmouse)
-#	rm -f wsmouse
-#	mknod wsmouse c 52 0
-#	chmod 600 wsmouse
-#	;;
+wsmouse)
+	rm -f wsmouse
+	mknod wsmouse c 68 0
+	chmod 600 wsmouse
+	;;
 
-#wskbd)
-#	rm -f wskbd
-#	mknod wskbd c 52 1
-#	chmod 600 wskbd
-#	;;
+wskbd)
+	rm -f wskbd
+	mknod wskbd c 68 1
+	chmod 600 wskbd
+	;;
 
-#wsmux*)
-#	unit=${i#wsmux}
-#	unitctl=$(($unit + 128))
-#	wsmux=wsmux$unit
-#	wsmuxctl=wsmuxctl$unit
-#	major=52
-#	rm -f $wsmux $wsmuxctl
-#	mknod $wsmux c $major $unit
-#	chmod 600 $wsmux
-#	mknod $wsmuxctl c $major $unitctl
-#	chmod 200 $wsmuxctl
-#	;;
+wsmux*)
+	unit=${i#wsmux}
+	unitctl=$(($unit + 128))
+	wsmux=wsmux$unit
+	wsmuxctl=wsmuxctl$unit
+	major=65
+	rm -f $wsmux $wsmuxctl
+	mknod $wsmux c $major $unit
+	chmod 600 $wsmux
+	mknod $wsmuxctl c $major $unitctl
+	chmod 200 $wsmuxctl
+	;;
 
-#ttyEcfg)
-#	chr=47
-#	rm -f ttyEcfg
-#	mknod ttyEcfg c $chr 255
-#	chmod 600 ttyEcfg
-#	;;
+wsfont)
+	rm -f wsfont
+	mknod wsfont c 69 0
+	chmod 600 wsfont
+	;;
 
-#ttyE*)
-#	chr=47; unit=${i#ttyE}
-#	rm -f ttyE$unit
-#	mknod ttyE$unit c $chr $unit
-#	;;
+ttyEstat)
+	chr=65
+	rm -f ttyEcfg
+	mknod ttyEcfg c $chr 254
+	chmod 600 ttyEcfg
+	;;
 
-#wsmouse*)
-#	unit=${i#wsmouse}
-#	wsmouse=wsmouse$unit
-#	major=49
-#	rm -f $wsmouse
-#	mknod $wsmouse c $major $unit
-#	chmod 600 $wsmouse
-#	;;
+ttyEcfg)
+	chr=65
+	rm -f ttyEcfg
+	mknod ttyEcfg c $chr 255
+	chmod 600 ttyEcfg
+	;;
 
-#wskbd*)
-#	unit=${i#wskbd}
-#	wskbd=wskbd$unit
-#	major=48
-#	rm -f $wskbd
-#	mknod $wskbd c $major $unit
-#	chmod 600 $wskbd
-#	;;
+ttyE*)
+	chr=65; unit=${i#ttyE}
+	rm -f ttyE$unit
+	mknod ttyE$unit c $chr $unit
+	;;
+
+wsmouse*)
+	unit=${i#wsmouse}
+	wsmouse=wsmouse$unit
+	major=67
+	rm -f $wsmouse
+	mknod $wsmouse c $major $unit
+	chmod 600 $wsmouse
+	;;
+
+wskbd*)
+	unit=${i#wskbd}
+	wskbd=wskbd$unit
+	major=66
+	rm -f $wskbd
+	mknod $wskbd c $major $unit
+	chmod 600 $wskbd
+	;;
 
 fd)
 	if $nofdesc; then
