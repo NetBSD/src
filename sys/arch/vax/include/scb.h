@@ -1,4 +1,4 @@
-/*	$NetBSD: scb.h,v 1.10 2000/06/05 00:09:19 matt Exp $	*/
+/*	$NetBSD: scb.h,v 1.10.2.1 2000/07/27 16:58:41 matt Exp $	*/
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -107,7 +107,7 @@ struct scb {
 #define	SCB_KSTACK	0
 #define	SCB_ISTACK	1
 
-#define vecnum(bus, ipl, tr) (256+(ipl-14)*64+tr*4+bus*256)
+#define vecnum(bus, ipl, tr) (256+(ipl-0x14)*64+tr*4+bus*256)
 
 /*
  * This struct is used when setting up interrupt vectors dynamically.
