@@ -1,4 +1,4 @@
-/*	$NetBSD: namei.h,v 1.15 1999/03/22 17:01:55 sommerfe Exp $	*/
+/*	$NetBSD: namei.h,v 1.16 1999/07/07 22:58:45 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1985, 1989, 1991, 1993
@@ -126,19 +126,20 @@ struct nameidata {
  * name being sought. The caller is responsible for releasing the
  * buffer and for vrele'ing ni_startdir.
  */
-#define	NOCROSSMOUNT	0x00100	/* do not cross mount points */
-#define	RDONLY		0x00200	/* lookup with read-only semantics */
-#define	HASBUF		0x00400	/* has allocated pathname buffer */
-#define	SAVENAME	0x00800	/* save pathanme buffer */
-#define	SAVESTART	0x01000	/* save starting directory */
-#define ISDOTDOT	0x02000	/* current component name is .. */
-#define MAKEENTRY	0x04000	/* entry is to be added to name cache */
-#define ISLASTCN	0x08000	/* this is last component of pathname */
-#define ISSYMLINK	0x10000	/* symlink needs interpretation */
-#define	ISWHITEOUT	0x20000	/* found whiteout */
-#define	DOWHITEOUT	0x40000	/* do whiteouts */
-#define	REQUIREDIR	0x80000	/* must be a directory */
-#define PARAMASK	0xfff00	/* mask of parameter descriptors */
+#define	NOCROSSMOUNT	0x0000100	/* do not cross mount points */
+#define	RDONLY		0x0000200	/* lookup with read-only semantics */
+#define	HASBUF		0x0000400	/* has allocated pathname buffer */
+#define	SAVENAME	0x0000800	/* save pathanme buffer */
+#define	SAVESTART	0x0001000	/* save starting directory */
+#define ISDOTDOT	0x0002000	/* current component name is .. */
+#define MAKEENTRY	0x0004000	/* entry is to be added to name cache */
+#define ISLASTCN	0x0008000	/* this is last component of pathname */
+#define ISSYMLINK	0x0010000	/* symlink needs interpretation */
+#define	ISWHITEOUT	0x0020000	/* found whiteout */
+#define	DOWHITEOUT	0x0040000	/* do whiteouts */
+#define	REQUIREDIR	0x0080000	/* must be a directory */
+#define PDIRUNLOCK	0x0100000	/* vfs_lookup() unlocked parent dir */
+#define PARAMASK	0x01fff00	/* mask of parameter descriptors */
 /*
  * Initialization of an nameidata structure.
  */
