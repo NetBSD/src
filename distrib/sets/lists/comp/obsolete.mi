@@ -1,4 +1,4 @@
-# $NetBSD: obsolete.mi,v 1.88 2003/04/06 18:14:21 perry Exp $
+# $NetBSD: obsolete.mi,v 1.89 2003/05/12 15:22:53 kleink Exp $
 ./usr/bin/genclass
 ./usr/bin/gettextize
 ./usr/include/bfd
@@ -552,6 +552,7 @@
 ./usr/include/sys/bootinfo.h
 ./usr/include/sys/clist.h
 ./usr/include/sys/dmap.h
+./usr/include/sys/float_ieee.h
 ./usr/include/sys/fnv_hash.h
 ./usr/include/sys/map.h
 ./usr/include/sys/vcmd.h
