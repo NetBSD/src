@@ -1,13 +1,13 @@
-/*	$NetBSD: zic.c,v 1.22 2003/12/20 00:21:00 kleink Exp $	*/
+/*	$NetBSD: zic.c,v 1.22.2.1 2004/06/15 22:02:14 he Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #ifndef NOID
-__RCSID("$NetBSD: zic.c,v 1.22 2003/12/20 00:21:00 kleink Exp $");
+__RCSID("$NetBSD: zic.c,v 1.22.2.1 2004/06/15 22:02:14 he Exp $");
 #endif /* !defined NOID */
 #endif /* !defined lint */
 
-static char	elsieid[] = "@(#)zic.c	7.115";
+static char	elsieid[] = "@(#)zic.c	7.116";
 
 #include "private.h"
 #include "locale.h"
@@ -2158,8 +2158,8 @@ register const int			wantedy;
 				--i;
 			}
 		if (i < 0 || i >= len_months[isleap(y)][m]) {
-			error(_("no day in month matches rule"));
-			(void) exit(EXIT_FAILURE);
+			if (noise)
+				warning(_("rule goes past start/end of month--will not work with pre-2004 versions of zic"));
 		}
 	}
 	if (dayoff < 0 && !TYPE_SIGNED(time_t))
