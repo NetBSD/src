@@ -1,4 +1,4 @@
-/*	$NetBSD: ypserv_proc.c,v 1.1.1.1 1996/08/09 10:15:04 thorpej Exp $	*/
+/*	$NetBSD: ypserv_proc.c,v 1.2 1996/08/15 21:47:53 chuck Exp $	*/
 
 /*
  * Copyright (c) 1994 Mats O Jansson <moj@stacken.kth.se>
@@ -254,10 +254,10 @@ ypproc_xfr_2_svc(argp, rqstp)
 
 	memset(&res, 0, sizeof(res));
 
-	YPLOG("xfr_2: caller=[%s].%d, auth_ok=%s, domain=%s, tid=%s, prog=%s",
+	YPLOG("xfr_2: caller=[%s].%d, auth_ok=%s, domain=%s, tid=%d, prog=%d",
 	  inet_ntoa(caller->sin_addr), ntohs(caller->sin_port), TORF(ok), 
 	  ypx->map_parms.domain, ypx->transid, ypx->proto);
-	YPLOG("       ipadd=%s, port=%s, map=%s", inet_ntoa(caller->sin_addr),
+	YPLOG("       ipadd=%s, port=%d, map=%s", inet_ntoa(caller->sin_addr),
 	  ypx->port, ypx->map_parms.map);
 
 	if (!ok) {
