@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.42 1995/07/17 01:31:14 briggs Exp $	*/
+/*	$NetBSD: locore.s,v 1.43 1995/08/09 03:21:59 briggs Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -70,19 +70,6 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  */
-
-/* Allen and Mike here..
-	Help me, Obi Wan Kenobi! You're our only hope. 
-	And Use the Source, Luke.
-   there are a couple of "LAK the hp300 didn't do this for a 68851"
-   these are a damn good reason why Daystar caches don't work
-   the other is pmap.c: EXTERNAL_CACHE
-
-   Sprinkle gratuitously with pflusha and code this up next week.
-   
-
-   Party on...
-*/
 
 /*
  * from: Utah $Hdr: locore.s 1.58 91/04/22$
@@ -1716,9 +1703,6 @@ ENTRY(probeva)
  * Load a new user segment table pointer.
  */
 ENTRY(loadustp)
-	pflusha				| ALICE: LAK 10/11/92 68040 says to
-					| do this before loading the crp.
-					| Not in original code.
 	movl	sp@(4),d0		| new USTP
 	moveq	#PGSHIFT,d1
 	lsll	d1,d0			| convert to addr
@@ -1958,6 +1942,9 @@ _doboot:
 	movw	#PSL_HIGHIPL,sr		| no interrupts
 	movl	#CACHE_OFF,d0
 	movc	d0,cacr			| disable on-chip cache(s)
+
+	cmpl	#MMU_68040, _mmutype
+	jeq	Lreboot			| go ahead and reboot if '040
 
 	cmpl	#MMU_68030, _mmutype
 	jeq	Lmap030rom		| don't turn off MMU if '030
@@ -2293,5 +2280,11 @@ _eintrnames:
 _intrcnt:
 	.long	0,0,0,0,0,0
 _eintrcnt:
+	.long	0
+	.globl	_mac68k_vrsrc_cnt, _mac68k_vrsrc_vec
+_mac68k_vrsrc_cnt:
+	.long	0
+_mac68k_vrsrc_vec:
+	.word	0, 0, 0, 0, 0, 0
 _locore_dodebugmarks:
 	.long	0
