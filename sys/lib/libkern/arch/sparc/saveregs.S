@@ -1,3 +1,5 @@
+/*	$NetBSD: saveregs.S,v 1.5 1999/03/05 09:18:33 pk Exp $	*/
+
 /*
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -35,8 +37,12 @@
  * SUCH DAMAGE.
  *
  * from: Header: saveregs.s,v 1.1 91/07/06 17:22:33 torek Exp
- * $NetBSD: saveregs.S,v 1.4 1997/10/13 11:58:16 lukem Exp $
  */
+
+#include <machine/asm.h>
+#if defined(LIBC_SCCS) && !defined(lint)
+	RCSID("$NetBSD: saveregs.S,v 1.5 1999/03/05 09:18:33 pk Exp $")
+#endif /* LIBC_SCCS and not lint */
 
 /*
  * Save register arguments in caller's `arg dump' area, so that
@@ -48,7 +54,6 @@
  *
  * We assume the caller has executed a `save' instruction.
  */
-#include <machine/asm.h>
 
 ENTRY(__builtin_saveregs)
 	st	%i0, [%fp + 0x44]	! fr->fr_argd[0]
