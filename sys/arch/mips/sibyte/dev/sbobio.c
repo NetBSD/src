@@ -1,4 +1,4 @@
-/* $NetBSD: sbobio.c,v 1.9 2003/02/07 17:38:49 cgd Exp $ */
+/* $NetBSD: sbobio.c,v 1.10 2003/06/29 12:20:19 simonb Exp $ */
 
 /*
  * Copyright 2000, 2001
@@ -119,10 +119,10 @@ sbobio_match(struct device *parent, struct cfdata *match, void *aux)
 		break;
 
 	default:
-		return 0;
+		return (0);
 	}
 
-	return 1;
+	return (1);
 }
 
 static void
