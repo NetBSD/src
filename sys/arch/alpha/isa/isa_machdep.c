@@ -1,4 +1,4 @@
-/* $NetBSD: isa_machdep.c,v 1.11 1998/05/28 16:59:31 drochner Exp $ */
+/* $NetBSD: isa_machdep.c,v 1.12 1998/08/07 10:26:39 drochner Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: isa_machdep.c,v 1.11 1998/05/28 16:59:31 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isa_machdep.c,v 1.12 1998/08/07 10:26:39 drochner Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -52,6 +52,21 @@ __KERNEL_RCSID(0, "$NetBSD: isa_machdep.c,v 1.11 1998/05/28 16:59:31 drochner Ex
 #include <dev/isa/vga_isavar.h>
 #endif
 
+#include "pcppi.h"
+#if (NPCPPI > 0)
+#include <dev/isa/pcppivar.h>
+
+int isabeepmatch __P((struct device *, struct cfdata *, void *));
+void isabeepattach __P((struct device *, struct device *, void *));
+
+struct cfattach isabeep_ca = {
+	sizeof(struct device), isabeepmatch, isabeepattach
+};
+
+static int ppi_attached;
+static pcppi_tag_t ppicookie;
+#endif /* PCPPI */
+
 int
 isa_display_console(iot, memt)
 	bus_space_tag_t iot, memt;
@@ -63,4 +78,36 @@ isa_display_console(iot, memt)
 		return(0);
 #endif
 	return(res);
+}
+
+#if (NPCPPI > 0)
+int
+isabeepmatch(parent, match, aux)
+	struct device *parent;
+	struct cfdata *match;
+	void *aux;
+{
+	return (!ppi_attached);
+}
+
+void
+isabeepattach(parent, self, aux)
+	struct device *parent, *self;
+	void *aux;
+{
+	printf("\n");
+
+	ppicookie = ((struct pcppi_attach_args *)aux)->pa_cookie;
+	ppi_attached = 1;
+}
+#endif
+
+void
+isabeep(pitch, period)
+	int pitch, period;
+{
+#if (NPCPPI > 0)
+	if (ppi_attached)
+		pcppi_bell(ppicookie, pitch, period, 0);
+#endif
 }

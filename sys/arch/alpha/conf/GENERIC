@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.97 1998/07/27 18:27:08 thorpej Exp $
+# $NetBSD: GENERIC,v 1.98 1998/08/07 10:26:38 drochner Exp $
 #
 # Generic Alpha kernel.  Enough to get booted, etc., but not much more.
 
@@ -177,6 +177,7 @@ pckbd*	at	pckbc?				# PC keyboard (kbd port)
 psm*	at	pckbc?				# PS/2-style mouse (aux port)
 pcppi*	at	isa?				# PC prog. periph. interface
 spkr0	at	pcppi?				# IBM BASIC emulation
+isabeep0 at	pcppi?				# "keyboard" beep
 com*	at	isa? port 0x3f8 irq 4		# standard serial ports
 com*	at	isa? port 0x2f8 irq 3
 cs*	at	isa? port 0x300 iomem ? irq ? drq ? # CS8900 Ethernet
