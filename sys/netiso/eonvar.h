@@ -1,4 +1,4 @@
-/*	$NetBSD: eonvar.h,v 1.7 1996/09/08 14:28:10 mycroft Exp $	*/
+/*	$NetBSD: eonvar.h,v 1.8 2000/06/26 16:18:36 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -62,6 +62,13 @@ SOFTWARE.
  * ARGO Project, Computer Sciences Dept., University of Wisconsin - Madison
  */
 
+#include <sys/ansi.h>
+
+#ifndef sa_family_t
+typedef __sa_family_t	sa_family_t;
+#define sa_family_t	sa_family_t
+#endif
+
 #define EON_986_VERSION 0x3
 #define EON_VERSION 0x1
 
@@ -79,7 +86,7 @@ SOFTWARE.
 
 struct sockaddr_eon {
 	u_char          seon_len;	/* Length */
-	u_char          seon_family;	/* AF_ISO */
+	sa_family_t     seon_family;	/* AF_ISO */
 	u_char          seon_status;	/* overlays session suffixlen */
 #define EON_ESLINK_UP		0x1
 #define EON_ESLINK_DOWN		0x2
