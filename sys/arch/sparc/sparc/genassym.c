@@ -42,7 +42,7 @@
  *	@(#)genassym.c	8.1 (Berkeley) 6/11/93
  *
  * from: Header: genassym.c,v 1.15 93/04/21 06:09:30 torek Exp  (LBL)
- * $Id: genassym.c,v 1.5 1994/05/21 08:22:58 deraadt Exp $
+ * $Id: genassym.c,v 1.6 1994/08/20 01:36:36 deraadt Exp $
  */
 
 #include <sys/param.h>
@@ -98,9 +98,15 @@ main()
 	/* general constants */
 	def("BSD", BSD);
 	def("UPAGES", UPAGES);
-	def("NBPG", NBPG);
+	def("USPACE", USPACE);
+	def("SUN4_PGSHIFT", SUN4_PGSHIFT);
+	def("SUN4CM_PGSHIFT", SUN4CM_PGSHIFT);
 	def("KERNBASE", KERNBASE);
 	def("USRSTACK", USRSTACK);
+
+	def("CPU_SUN4", CPU_SUN4);
+	def("CPU_SUN4C", CPU_SUN4C);
+	def("CPU_SUN4M", CPU_SUN4M);
 
 	/* proc fields and values */
 	off("P_ADDR", struct proc, p_addr);
@@ -153,8 +159,7 @@ main()
 	off("PCB_WIM", struct pcb, pcb_wim);
 
 	/* interrupt enable register PTE */
-	def("IE_REG_PTE", PG_V | PG_W | PG_S | PG_NC | PG_OBIO |
-	    ((u_int)INT_ENABLE_REG_PHYSADR >> PGSHIFT));
+	def("IE_REG_PTE_PG", PG_V | PG_W | PG_S | PG_NC | PG_OBIO);
 
 #ifdef notyet
 	/* ZSCC interrupt fields */
