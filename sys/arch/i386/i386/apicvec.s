@@ -1,4 +1,4 @@
-/* $NetBSD: apicvec.s,v 1.1.2.3 2000/08/18 13:50:22 sommerfeld Exp $ */	
+/* $NetBSD: apicvec.s,v 1.1.2.4 2000/11/18 23:17:34 sommerfeld Exp $ */	
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -150,6 +150,9 @@ XINTR(softser):
 	 *
 	 * XXX no stray interrupt mangling stuff..
 	 * XXX use cmove when appropriate.
+	 * XXX need to sort out these handlers better..
+	 * (need a third flavor, for handling shared interrupts 
+	 * at differing IPL's)
 	 */
 	
 #define APICINTR(minor)							\
