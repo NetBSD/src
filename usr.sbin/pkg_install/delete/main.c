@@ -1,11 +1,11 @@
-/*	$NetBSD: main.c,v 1.11.2.2 1999/09/13 22:06:59 he Exp $	*/
+/*	$NetBSD: main.c,v 1.11.2.3 1999/12/20 15:40:56 he Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char *rcsid = "from FreeBSD Id: main.c,v 1.11 1997/10/08 07:46:48 charnier Exp";
 #else
-__RCSID("$NetBSD: main.c,v 1.11.2.2 1999/09/13 22:06:59 he Exp $");
+__RCSID("$NetBSD: main.c,v 1.11.2.3 1999/12/20 15:40:56 he Exp $");
 #endif
 #endif
 
@@ -181,6 +181,8 @@ main(int argc, char **argv)
 		error = 0;
 		while ((key = pkgdb_iter())) {
 			val = pkgdb_retrieve(key);
+			if (val == NULL || *val == '\0')
+				continue;
 
 			lpp = TAILQ_FIRST(&pkgs);
 			if (lpp != NULL) {
