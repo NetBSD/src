@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.18 2000/02/21 20:38:47 erh Exp $	*/
+/*	$NetBSD: intr.c,v 1.19 2000/06/29 08:52:58 mrg Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -48,7 +48,6 @@
 #include <sys/syslog.h>
 #include <sys/malloc.h>
 #include <sys/socket.h>
-#include <vm/vm.h>
 
 #include <uvm/uvm_extern.h>
 

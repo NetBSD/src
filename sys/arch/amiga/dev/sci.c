@@ -1,4 +1,4 @@
-/*	$NetBSD: sci.c,v 1.23 2000/06/26 14:20:31 mrg Exp $	*/
+/*	$NetBSD: sci.c,v 1.24 2000/06/29 08:44:05 mrg Exp $	*/
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -52,7 +52,6 @@
 #include <dev/scsipi/scsi_all.h>
 #include <dev/scsipi/scsipi_all.h>
 #include <dev/scsipi/scsiconf.h>
-#include <vm/vm.h>
 #include <uvm/uvm_extern.h>
 #include <machine/pmap.h>
 #include <machine/cpu.h>

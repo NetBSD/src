@@ -1,4 +1,4 @@
-/*	$NetBSD: ast.c,v 1.18 2000/05/26 21:19:31 thorpej Exp $	*/
+/*	$NetBSD: ast.c,v 1.19 2000/06/29 08:52:57 mrg Exp $	*/
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe
@@ -55,8 +55,6 @@
 #include <machine/cpu.h>
 #include <machine/cpufunc.h>
 #include <machine/psl.h>
-
-#include <vm/vm.h>
 
 #include <uvm/uvm_extern.h>
 
