@@ -1,4 +1,4 @@
-/*	$NetBSD: getextmemx.c,v 1.3 2003/01/23 21:22:25 jdolecek Exp $	*/
+/*	$NetBSD: getextmemx.c,v 1.4 2003/04/16 15:03:59 dsl Exp $	*/
 
 /*
  * Copyright (c) 1997, 1999
@@ -59,10 +59,16 @@ getextmemx()
 	} __attribute__((__packed__)) bufps2;
 #endif
 
+#ifdef DEBUG_MEMSIZE
+	printf("extmem1: %x\n", extmem);
+#endif
 	if (!getextmem2(buf) && buf[0] <= 15 * 1024) {
 		int help = buf[0];
 		if (help == 15 * 1024)
 			help += buf[1] * 64;
+#ifdef DEBUG_MEMSIZE
+		printf("extmem2: %x\n", help);
+#endif
 		if (extmem < help)
 			extmem = help;
 	}
@@ -71,6 +77,10 @@ getextmemx()
 	do {
 		if (getmementry(&i, buf))
 			break;
+#ifdef DEBUG_MEMSIZE
+		printf("mementry: (%d) %x %x %x %x %x\n",
+			i, buf[0], buf[1], buf[2], buf[3], buf[4]);
+#endif
 		if ((buf[4] == 1 && buf[0] == 0x100000)
 		    && extmem < buf[2] / 1024)
 			extmem = buf[2] / 1024;
