@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.110 2000/09/07 03:59:55 augustss Exp $
+$NetBSD: usbdevs,v 1.111 2000/09/14 00:02:56 hubertf Exp $
 
 /*
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -230,6 +230,7 @@ vendor AKAI		0x09e8	AKAI professional M.I. Corp.
 vendor ARESCOM		0x09f5	ARESCOM
 vendor BAY		0x09f9	Bay Associates
 vendor ALTERA		0x09fb	Altera
+vendor TREK		0x0a16	Trek Technology
 vendor ASAHIOPTICAL	0x0a17	Asahi Optical Co., Ltd.
 vendor BOCASYSTEMS	0x0a43	Boca Systems, Inc.
 vendor BROADCOM		0x0a5c	Broadcom Corp.
@@ -684,6 +685,9 @@ product TI UTUSB41		0x1446	UT-USB41 hub
 
 /* Thrustmaster products */
 product THRUST FUSION_PAD	0xa0a3	Fusion Digital Gamepad
+
+/* Trek Technology products */
+product TREK THUMBDRIVE		0x1111	ThumbDrive	/* 128MB */
 
 /* UMAX products */
 product UMAX ASTRA1236U		0x0002	Astra 1236U Scanner
