@@ -1,5 +1,5 @@
 #	from: @(#)Makefile	5.11 (Berkeley) 5/21/91
-#	$Id: Makefile,v 1.43 1994/04/18 05:15:36 glass Exp $
+#	$Id: Makefile,v 1.44 1994/05/24 06:09:47 deraadt Exp $
 
 TZDIR=		/usr/share/zoneinfo
 LOCALTIME=	US/Pacific
@@ -65,6 +65,8 @@ distribution: distrib-dirs
 	ln -s ${TZDIR}/${LOCALTIME} ${DESTDIR}/etc/localtime
 	install -c -o ${BINOWN} -g operator -m 664 /dev/null \
 		${DESTDIR}/etc/dumpdates
+	install -c -o ${BINOWN} -g operator -m 644 /dev/null \
+		${DESTDIR}/etc/skeykeys
 	install -c -o root -g wheel -m 600 /dev/null \
 		${DESTDIR}/var/cron/log
 	install -c -o nobody -g ${BINGRP} -m 664 /dev/null \
