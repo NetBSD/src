@@ -59,7 +59,10 @@ extern int h_errno;
 #define _PATH_DHCPD_PID	"/etc/dhcpd.pid"
 #endif
 #ifndef _PATH_DHCLIENT_PID
-#define _PATH_DHCLIENT_PID "/etc/dhcpd.pid"
+#define _PATH_DHCLIENT_PID "/etc/dhclient.pid"
+#endif
+#ifndef _PATH_DHCRELAY_PID
+#define _PATH_DHCRELAY_PID "/etc/dhcrelay.pid"
 #endif
 
 #include <varargs.h>
