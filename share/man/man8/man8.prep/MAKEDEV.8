@@ -6,7 +6,7 @@
 .\" *** DO NOT EDIT - any changes will be lost!!!
 .\" *** ------------------------------------------------------------------
 .\"
-.\" $NetBSD: MAKEDEV.8,v 1.6 2001/09/10 22:17:36 augustss Exp $
+.\" $NetBSD: MAKEDEV.8,v 1.7 2001/12/12 12:57:48 wiz Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -218,9 +218,14 @@ SCSI changer, see
 .Xr \&ch 4
 . It Ar cfs#
 Coda file system device
+. It Ar wsfont
+Console font control
 . It Ar wsmux#
 Wscons event multiplexor, see
 .Xr \&wsmux 4
+. It Ar pci#
+PCI bus access devices, see
+.Xr \&pci 4
 . El
 .El
 .Sh FILES
