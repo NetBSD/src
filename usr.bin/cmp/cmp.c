@@ -1,4 +1,4 @@
-/*	$NetBSD: cmp.c,v 1.10 1997/10/18 12:52:11 lukem Exp $	*/
+/*	$NetBSD: cmp.c,v 1.11 1997/10/18 12:55:49 lukem Exp $	*/
 
 /*
  * Copyright (c) 1987, 1990, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1990, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)cmp.c	8.3 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: cmp.c,v 1.10 1997/10/18 12:52:11 lukem Exp $");
+__RCSID("$NetBSD: cmp.c,v 1.11 1997/10/18 12:55:49 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -77,7 +77,7 @@ main(argc, argv)
 
 	setlocale(LC_ALL, "");
 
-	while ((ch = getopt(argc, argv, "ls")) != EOF)
+	while ((ch = getopt(argc, argv, "ls")) != -1)
 		switch (ch) {
 		case 'l':		/* print all differences */
 			lflag = 1;
