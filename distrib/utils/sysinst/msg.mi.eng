@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.eng,v 1.7.2.15 1998/05/29 20:48:51 mycroft Exp $	*/
+/*	$NetBSD: msg.mi.eng,v 1.7.2.16 1998/11/16 07:07:42 cgd Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -214,13 +214,15 @@ Standard with X requires at least %.2f Megabytes.
 }
 
 message sizechoice
-{You have elected to choose your partition sizes.  You need to specify
-the units of size you will use for your choices.  Choosing megabytes
-will make partition sizes close to your choice, but keep partitions
-to an integral number of cylinders.   Choosing sectors will allow you
-to most acurately specify the sizes, but remember, it is most efficient
-to choose partition sizes that are exact multiples of your cylinder
-size, which is %d sectors.
+{You have elected to specify partition sizes (either for the BSD
+disklabel, or on some ports, for MBR slices). You must first choose a
+size unit to use.  Choosing megabytes will give partition sizes close
+to your choice, but aligned to cylinder boundaries. Choosing sectors
+will allow you to more acurately specify the sizes.  On modern ZBR disks,
+acutal cylinder size varies across the disk and there is littte real
+gain from cylinder alignment. On older disks, it is most efficient to
+choose partition sizes that are exact multiples of your actual
+cylinder size, which is %d sectors.
 }
 
 message fspart
