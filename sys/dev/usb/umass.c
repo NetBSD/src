@@ -1,4 +1,4 @@
-/*	$NetBSD: umass.c,v 1.23 1999/11/17 23:00:50 augustss Exp $	*/
+/*	$NetBSD: umass.c,v 1.24 2000/02/02 13:18:47 augustss Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -131,6 +131,7 @@ int umassdebug = /* UDMASS_SCSI|UDMASS_BULK|UDMASS_USB */ 0;
 
 typedef struct umass_softc {
 	USBBASEDEVICE		sc_dev;		/* base device */
+	usbd_device_handle	sc_udev;
 	usbd_interface_handle	sc_iface;	/* the interface we use */
 
 	u_int8_t		sc_subclass;	/* our USB subclass */
@@ -251,6 +252,7 @@ USB_ATTACH(umass)
 	u_int8_t maxlun;
 	const char *subclass, *protocol;
 
+	sc->sc_udev = uaa->device;
 	sc->sc_iface = uaa->iface;
 	sc->sc_bulkout_pipe = NULL;
 	sc->sc_bulkin_pipe = NULL;
@@ -367,6 +369,9 @@ USB_ATTACH(umass)
 		USB_ATTACH_ERROR_RETURN;
 	}
 
+	usbd_add_drv_event(USB_EVENT_DRIVER_ATTACH, sc->sc_udev,
+			   USBDEV(sc->sc_dev));
+
 	USB_ATTACH_SUCCESS_RETURN;
 }
 
@@ -436,6 +441,9 @@ USB_DETACH(umass)
 		usbd_close_pipe(sc->sc_bulkout_pipe);
 		sc->sc_bulkout_pipe = NULL;
 	}
+
+	usbd_add_drv_event(USB_EVENT_DRIVER_DETACH, sc->sc_udev,
+			   USBDEV(sc->sc_dev));
 
 	return (rv);
 }
