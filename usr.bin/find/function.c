@@ -1,4 +1,6 @@
-/*	$NetBSD: function.c,v 1.18 1997/01/09 20:19:12 tls Exp $	*/
+/*	$NetBSD: function.c,v 1.19 1997/01/30 09:17:27 matthias Exp $	*/
+
+/*	$NetBSD: function.c,v 1.19 1997/01/30 09:17:27 matthias Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -38,7 +40,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)function.c	8.1 (Berkeley) 6/6/93";*/
-static char rcsid[] = "$NetBSD: function.c,v 1.18 1997/01/09 20:19:12 tls Exp $";
+static char rcsid[] = "$NetBSD: function.c,v 1.19 1997/01/30 09:17:27 matthias Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -879,6 +881,9 @@ c_type(typestring)
 	switch (typestring[0]) {
 #ifdef S_IFWHT
       case 'W':
+#ifdef FTS_WHITEOUT
+	      ftsoptions |= FTS_WHITEOUT;
+#endif
               mask = S_IFWHT;
               break;
 #endif
