@@ -1,4 +1,4 @@
-#	$NetBSD: SUN4,v 1.11 1995/03/02 20:53:11 pk Exp $
+#	$NetBSD: SUN4,v 1.12 1995/06/02 17:53:57 pk Exp $
 
 machine		sparc
 options		"SUN4"
@@ -82,9 +82,9 @@ ie4	at vmes0 addr 0xff2dff02 level 5 vect 0x7c
 
 scsibus* at esp?
 
-sd*	at scsibus? target ? drive ?
-st*	at scsibus? target ? drive ?
-cd*	at scsibus? target ? drive ?
+sd*	at scsibus? target ? lun ?
+st*	at scsibus? target ? lun ?
+cd*	at scsibus? target ? lun ?
 
 pseudo-device	loop
 pseudo-device	pty	32
