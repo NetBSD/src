@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.45 1999/06/22 06:57:00 cgd Exp $	*/
+/*	$NetBSD: defs.h,v 1.46 1999/07/04 21:32:48 cgd Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -42,6 +42,8 @@
 #include <sys/types.h>
 #define FSTYPENAMES
 #include <sys/disklabel.h>
+
+#include "msg_defs.h"
 
 /* Define for external varible use */ 
 #ifdef MAIN
@@ -95,8 +97,8 @@ EXTERN int ttysig_ignore;
 EXTERN pid_t ttysig_forward;
 EXTERN int layoutkind;
 EXTERN int sizemult INIT(1);
-EXTERN char *multname; 
-EXTERN char *doingwhat;
+EXTERN const char *multname; 
+EXTERN const char *doingwhat;
 
 /* loging variables */
 
@@ -248,8 +250,8 @@ int	savenewlabel __P((partinfo *lp, int nparts));
 int	incorelabel __P((const char *dkname, partinfo *lp));
 int	edit_and_check_label __P((partinfo *lp, int nparts,
 				  int rawpart, int bsdpart));
-int	getpartoff __P((int msg_no, int partstart));
-int	getpartsize __P((int msg_no, int partstart, int defpartsize));
+int	getpartoff __P((msg msg_no, int partstart));
+int	getpartsize __P((msg msg_no, int partstart, int defpartsize));
 
 /* from install.c */
 void	do_install __P((void));
@@ -272,7 +274,7 @@ void	mnt_net_config __P((void));
 
 /* From run.c */
 int	collect __P((int kind, char **buffer, const char *name, ...));
-int	run_prog __P((int, int, char *, char *, ...));
+int	run_prog __P((int, int, const char *, const char *, ...));
 void	do_logging __P((void));
 int	do_system __P((const char *));
 
@@ -298,7 +300,7 @@ void	toggle_getit __P((int));
 void	show_cur_distsets __P((void));
 void	make_ramdisk_dir __P((const char *path));
 void	ask_verbose_dist __P((void));
-int 	get_and_unpack_sets(int success_msg, int failure_msg);
+int 	get_and_unpack_sets(msg success_msg, msg failure_msg);
 int	sanity_check __P((void));
 
 /* from target.c */
