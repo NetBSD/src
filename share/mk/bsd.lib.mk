@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.lib.mk,v 1.169.2.4 2000/08/11 10:39:57 kleink Exp $
+#	$NetBSD: bsd.lib.mk,v 1.169.2.5 2000/08/22 06:27:13 mrg Exp $
 #	@(#)bsd.lib.mk	8.3 (Berkeley) 4/22/94
 
 .if !target(__initialized__)
@@ -102,7 +102,8 @@ AINC+=-DABICALLS
 AFLAGS+= -fPIC
 AS+=	-KPIC
 
-.elif ${MACHINE_ARCH} == "sparc" && ${OBJECT_FMT} == "ELF"
+.elif (${MACHINE_ARCH} == "sparc" || ${MACHINE_ARCH} == "sparc64") && \
+       ${OBJECT_FMT} == "ELF"
 
 CPICFLAGS ?= -fPIC -DPIC
 CPPPICFLAGS?= -DPIC 
