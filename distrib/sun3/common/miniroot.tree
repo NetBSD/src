@@ -1,0 +1,91 @@
+#
+#	$NetBSD: miniroot.tree,v 1.2.2.2 1995/11/21 21:19:08 gwr Exp $
+#
+
+/set type=dir uname=root gname=wheel mode=0755
+# .
+.
+
+# ./bin
+bin
+# ./bin
+..
+
+# ./dev
+dev
+# ./dev
+..
+
+# ./etc
+etc
+# ./etc
+..
+
+# ./mnt
+mnt
+# ./mnt
+..
+
+# ./mnt2
+mnt2
+# ./mnt2
+..
+
+# ./sbin
+sbin
+# ./sbin
+..
+
+# ./tmp
+tmp
+# ./tmp
+..
+
+# ./usr
+usr
+
+# ./usr/bin
+bin
+# ./usr/bin
+..
+
+# ./usr/mdec
+mdec
+# ./usr/mdec
+..
+
+# ./usr/sbin
+sbin
+# ./usr/sbin
+..
+
+# ./usr/share
+share
+
+# ./usr/share/misc
+misc
+# ./usr/share/misc
+..
+
+# ./usr/share
+..
+
+# ./usr
+..
+
+# ./var
+var
+
+# ./var/tmp
+tmp        mode=01777
+
+# ./var/tmp/vi.recover
+vi.recover	 mode=01777
+# ./var/tmp/vi.recover
+..
+
+# ./var/tmp
+..
+
+# ./var
+..
