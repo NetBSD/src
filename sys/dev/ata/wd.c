@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)wd.c	7.2 (Berkeley) 5/9/91
- *	$Id: wd.c,v 1.65 1994/03/10 19:57:20 mycroft Exp $
+ *	$Id: wd.c,v 1.66 1994/03/10 20:05:32 mycroft Exp $
  */
 
 #define	INSTRUMENT	/* instrumentation stuff by Brad Parker */
@@ -140,10 +140,10 @@ struct wdc_softc {
 	int	sc_timeout;	/* timeout counter */
 } wdc_softc[NWDC];
 
-int wdprobe(), wdattach(), wdintr();
+int wdcprobe(), wdcattach(), wdprobe(), wdattach(), wdintr();
 
 struct	isa_driver wdcdriver = {
-	wdprobe, wdattach, "wdc",
+	wdcprobe, wdcattach, "wdc",
 };
 
 struct	isa_driver wddriver = {
@@ -173,7 +173,7 @@ int wdcwait __P((struct wdc_softc *, int));
  * Probe for controller.
  */
 int
-wdprobe(dev)
+wdcprobe(dev)
 	struct isa_device *dev;
 {
 	struct wd_softc *wd;
@@ -224,6 +224,18 @@ wdprobe(dev)
 lose:
 	free(wd, M_TEMP);
 	return 0;
+}
+
+int
+wdcattach(dev)
+	struct isa_device *dev;
+{
+}
+
+int
+wdprobe(dev)
+	struct isa_device *dev;
+{
 }
 
 /*
