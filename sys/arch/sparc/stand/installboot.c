@@ -1,4 +1,4 @@
-/*	$NetBSD: installboot.c,v 1.7 1995/09/16 23:20:32 pk Exp $ */
+/*	$NetBSD: installboot.c,v 1.8 1995/09/18 22:36:19 pk Exp $ */
 
 /*
  * Copyright (c) 1994 Paul Kranenburg
@@ -143,6 +143,9 @@ main(argc, argv)
 
 	if (lseek(devfd, DEV_BSIZE, SEEK_SET) != DEV_BSIZE)
 		err(1, "lseek bootstrap");
+
+	/* Sync filesystems (to clean in-memory superblock?) */
+	sync();
 
 	if (write(devfd, protostore, protosize) != protosize)
 		err(1, "write bootstrap");
