@@ -1,4 +1,4 @@
-#	$NetBSD: P4032,v 1.9 2002/04/25 15:06:21 atatat Exp $
+#	$NetBSD: P4032,v 1.10 2002/06/17 05:14:03 lukem Exp $
 #
 # Algorithmics P-4032 kernel.
 #
@@ -7,7 +7,7 @@ include	"arch/algor/conf/std.algor"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"P4032-$Revision: 1.9 $"
+#ident 		"P4032-$Revision: 1.10 $"
 
 maxusers 32
 
@@ -298,3 +298,4 @@ pseudo-device	vlan			# IEEE 802.1q encapsulation
 pseudo-device	sequencer	1	# MIDI sequencer
 pseudo-device	rnd			# /dev/random and in-kernel generator
 #options 	RND_COM			# use "com" randomness too
+pseudo-device	clockctl		# user control of clock subsystem

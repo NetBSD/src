@@ -1,4 +1,4 @@
-#	$NetBSD: FOUR_TTYS,v 1.31 2002/04/25 15:06:38 atatat Exp $
+#	$NetBSD: FOUR_TTYS,v 1.32 2002/06/17 05:14:27 lukem Exp $
 
 # FOUR_TTYS Sun3 (3/50, 3/60, 3/110, 3/160, 3/260)
 # like GENERIC but both zs chips are used as ttys
@@ -194,3 +194,4 @@ pseudo-device	pty			# pseudo-terminals
 #pseudo-device	vnd		4	# paging to files
 #pseudo-device	ccd		4	# concatenated disks
 #pseudo-device	raid		4	# RAIDframe disk driver
+pseudo-device	clockctl		# user control of clock subsystem

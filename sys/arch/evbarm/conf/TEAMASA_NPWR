@@ -1,4 +1,4 @@
-#	$NetBSD: TEAMASA_NPWR,v 1.15 2002/05/03 19:35:53 thorpej Exp $
+#	$NetBSD: TEAMASA_NPWR,v 1.16 2002/06/17 05:14:08 lukem Exp $
 #
 #	TEAMASA_NPWR -- Team ASA, Inc. Npwr -- XScale/IOP310-based
 #	server appliance.
@@ -197,3 +197,4 @@ pseudo-device	loop			# network loopback
 # miscellaneous pseudo-devices
 pseudo-device	pty			# pseudo-terminals
 pseudo-device	rnd			# /dev/random and in-kernel generator
+pseudo-device	clockctl		# user control of clock subsystem

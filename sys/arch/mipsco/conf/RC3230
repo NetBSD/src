@@ -1,5 +1,5 @@
 #
-# 	$NetBSD: RC3230,v 1.10 2002/04/25 15:06:31 atatat Exp $
+# 	$NetBSD: RC3230,v 1.11 2002/06/17 05:14:16 lukem Exp $
 #
 include		"arch/mipsco/conf/std.mipsco"
 
@@ -141,6 +141,7 @@ pseudo-device	ccd		4	# concatenated and striped disks
 #pseudo-device	raid		4	# RAIDframe disk driver
 #pseudo-device	strip		1	# radio clock
 #pseudo-device	ipfilter		# ip filter
+pseudo-device	clockctl		# user control of clock subsystem
 
 pseudo-device	gif		4	# IPv[46] over IPv[46] tunnel (RFC1933)
 pseudo-device	faith		1	# IPv[46] tcp relay translation i/f

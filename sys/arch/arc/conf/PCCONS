@@ -1,4 +1,4 @@
-#	$NetBSD: PCCONS,v 1.21 2002/04/25 15:06:23 atatat Exp $
+#	$NetBSD: PCCONS,v 1.22 2002/06/17 05:14:06 lukem Exp $
 #	$OpenBSD: GENERIC,v 1.29 1999/08/29 12:14:03 niklas Exp $
 #
 #	PCCONS -- generic but pccons rather than wscons
@@ -358,6 +358,7 @@ pseudo-device	tb		1	# tablet line discipline
 # rnd works; RND_COM does not on port arc yet.
 pseudo-device	rnd			# /dev/random and in-kernel generator
 #options 	RND_COM			# use "com" randomness as well (BROKEN)
+pseudo-device	clockctl		# user control of clock subsystem
 
 # a pseudo device needed for Coda	# also needs CODA (above)
 #pseudo-device	vcoda		4	# coda minicache <-> venus comm.

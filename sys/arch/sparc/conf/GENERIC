@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.134 2002/05/14 14:27:33 lukem Exp $
+# $NetBSD: GENERIC,v 1.135 2002/06/17 05:14:25 lukem Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/sparc/conf/std.sparc"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.134 $"
+#ident 		"GENERIC-$Revision: 1.135 $"
 
 maxusers	32
 
@@ -619,3 +619,5 @@ pseudo-device	rnd
 
 # a pseudo device needed for Coda	# also needs CODA (above)
 pseudo-device	vcoda		4	# coda minicache <-> venus comm.
+
+pseudo-device	clockctl		# user control of clock subsystem

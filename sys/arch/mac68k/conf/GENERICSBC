@@ -1,4 +1,4 @@
-#	$NetBSD: GENERICSBC,v 1.17 2002/04/27 19:29:08 shiba Exp $
+#	$NetBSD: GENERICSBC,v 1.18 2002/06/17 05:14:15 lukem Exp $
 #
 # GENERICSBC
 
@@ -6,7 +6,7 @@ include	"arch/mac68k/conf/std.mac68k"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERICSBC-$Revision: 1.17 $"
+#ident 		"GENERICSBC-$Revision: 1.18 $"
 
 maxusers	16		# estimated number of users
 
@@ -286,6 +286,7 @@ pseudo-device	grf		2	# grf emulation for wscons
 pseudo-device	ite		1	# ite emulation for wscons
 pseudo-device	pty			# pseudo-terminals
 #pseudo-device	tb		1	# tablet line discipline
+pseudo-device	clockctl		# user control of clock subsystem
 
 # random number generator pseudo-device
 pseudo-device	rnd			# /dev/random and in-kernel generator

@@ -1,4 +1,4 @@
-# 	$NetBSD: DEJIKO,v 1.6 2002/04/25 15:06:34 atatat Exp $
+# 	$NetBSD: DEJIKO,v 1.7 2002/06/17 05:14:19 lukem Exp $
 #
 #	Dejiko's sekai-seifuku NEWS5000 nyo.
 
@@ -75,3 +75,4 @@ pseudo-device	bpfilter	16	# Berkeley Packet Filter
 pseudo-device	vnd		4	# disk-like interface to files
 pseudo-device	pty			# pseudo-terminals
 pseudo-device	rnd			# /dev/random and in-kernel generator
+pseudo-device	clockctl		# user control of clock subsystem
