@@ -1,4 +1,4 @@
-.\"	$NetBSD: options.4,v 1.256 2005/01/09 06:58:13 snj Exp $
+.\"	$NetBSD: options.4,v 1.257 2005/01/16 14:51:17 tsutsui Exp $
 .\"
 .\" Copyright (c) 1996
 .\" 	Perry E. Metzger.  All rights reserved.
@@ -312,6 +312,16 @@ Enable binary compatibility with
 This allows the use of old signal trampoline code which has been deprecated
 with the addition of
 .Xr siginfo 5 .
+.It Cd options COMPAT_20
+Enable binary compatibility with
+.Nx 2.0 .
+This allows the use of old syscalls for
+.Fn statfs
+and
+.Fn fstatfs ,
+which has been deprecated with the addition of
+.Xr statvfs 2
+family of system calls.
 .It Cd options COMPAT_43
 Enables compatibility with
 .Bx 4.3 .
