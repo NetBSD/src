@@ -1,4 +1,4 @@
-/* $NetBSD: mcpciareg.h,v 1.1 1998/04/15 00:50:14 mjacob Exp $ */
+/* $NetBSD: mcpciareg.h,v 1.2 1998/07/08 00:40:18 mjacob Exp $ */
 
 /*
  * Copyright (c) 1998 by Matthew Jacob
@@ -265,6 +265,36 @@
 #define	MCPCIA_W_DAC(sc)	(_SYBRIDGE(sc) | _MCPCIA_W_DAC)
 
 /*
+ * This is here for what error handling will get as a collected subpacket.
+ */
+
+struct mcpcia_iodsnap {
+	u_int64_t	base_addr;
+	u_int32_t	whami; 
+	u_int32_t	rsvd0;
+	u_int32_t	pci_rev;
+	u_int32_t	cap_ctrl;
+	u_int32_t	hae_mem;
+	u_int32_t	hae_io;
+	u_int32_t	int_ctl;
+	u_int32_t	int_reg;
+	u_int32_t	int_mask0; 
+	u_int32_t	int_mask1;
+	u_int32_t	mc_err0;
+	u_int32_t	mc_err1;
+	u_int32_t	cap_err;
+	u_int32_t	sys_env;
+	u_int32_t	pci_err1;
+	u_int32_t	mdpa_stat;
+	u_int32_t	mdpa_syn; 
+	u_int32_t	mdpb_stat;
+	u_int32_t	mdpb_syn;
+	u_int32_t	rsvd2;
+	u_int32_t	rsvd3;
+	u_int32_t	rsvd4;
+};
+
+/*
  * PCI_REV Register definitions
  */
 #define	CAP_REV(reg)		((reg) & 0xf)
@@ -272,6 +302,7 @@
 #define	SADDLE_REV(reg)		(((reg) >> 8) & 0xf)
 #define	SADDLE_TYPE(reg)	(((reg) >> 12) & 0x3)
 #define	EISA_PRESENT(reg)	((reg) & (1 << 15))
+#define	IS_MCPCIA_MAGIC(reg)	(((reg) & 0xffff0000) == 0x6000000)
 
 
 /*
@@ -322,6 +353,31 @@
 #define	CAP_ARB_BPRI	0x00000000	/* Bridge Priority Arb */
 #define	CAP_ARB_RROBIN	0x40000000	/* "" Round Robin */
 #define	CAP_ARB_RROBIN1	0x80000000	/* "" Round Robin #1 */
+
+/*
+ * Diagnostic Register Bits
+ */
+/* CAP_DIAG register */
+#define	CAP_DIAG_PCIRESET	0x1	/*
+					 * WriteOnly. Assert 1 for 100usec min.,
+					 * then write zero. NOTE: deadlocks
+					 * exist in h/w if anything but this
+					 * register is accessed while reset
+					 * is asserted.
+					 */
+#define	CAP_DIAG_MC_ADRPE	(1<<30)	/* Invert MC Bus Address/Parity */
+#define	CAP_DIAG_PCI_ADRPE	(1<<31)	/* Force bad PCI parity (low 32) */
+
+/* MDPA_DIAG or MDPB_DIAG registers */
+#define	MDPX_ECC_ENA		(1<<28)	/* Enable ECC on MC Bus (default 1) */
+#define	MDPX_PAR_ENA		(1<<29)	/* Enable Parity on PCI (default 0) */
+#define	MDPX_DIAG_FPE_PCI	(1<<30)	/* Force PCI parity error */
+#define	MDPX_DIAG_USE_CHK	(1<<31)	/*
+					 * When set, DMA write cycles use the
+					 * value in the low 8 bits of this
+					 * register (MDPA or MDPB) as ECC
+					 * sent onto main memory.
+					 */
 
 /*
  * Interrupt Specific bits...
