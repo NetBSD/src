@@ -1,4 +1,4 @@
-/*	$NetBSD: qe.c,v 1.16 2001/03/30 17:30:18 christos Exp $	*/
+/*	$NetBSD: qe.c,v 1.17 2001/09/12 20:09:53 eeh Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -242,6 +242,8 @@ qeattach(parent, self, aux)
 	sc->sc_rev = getpropint(node, "mace-version", -1);
 	printf(" rev %x", sc->sc_rev);
 
+	sc->sc_bustag = sa->sa_bustag;
+	sc->sc_dmatag = sa->sa_dmatag;
 	sc->sc_qec = qec;
 	sc->sc_qr = qec->sc_regs;
 
