@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.17 1996/02/16 02:25:43 mycroft Exp $	*/
+/*	$NetBSD: audio.c,v 1.18 1996/02/17 02:29:10 jtk Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -625,7 +625,7 @@ audio_init_play(sc)
 	int s = splaudio();
 
 	sc->sc_mode |= AUMODE_PLAY;
-	sc->sc_rblks = 0;
+	sc->sc_rblks = sc->sc_wblks = 0;
 	if (sc->hw_if->speaker_ctl)
 		sc->hw_if->speaker_ctl(sc->hw_hdl, SPKR_ON);
 	splx(s);
@@ -746,7 +746,9 @@ audio_read(dev, uio, ioflag)
 			error = audio_silence_copyout(sc, blocksize, uio);
 			if (error)
 				break;
+			s = splaudio();
 			--sc->sc_rblks;
+			splx(s);
 		} while (uio->uio_resid >= blocksize);
 		return (error);
 	}
@@ -795,6 +797,7 @@ audio_clear(sc)
 	}
 	AU_RING_INIT(&sc->rr);
 	AU_RING_INIT(&sc->pr);
+	sc->sc_rblks = sc->sc_wblks = 0;
 
 	splx(s);
 }
@@ -1027,16 +1030,26 @@ audio_write(dev, uio, ioflag)
 
 		/* wrap the ring buffer if at end */
 		s = splaudio();
-		if (tp >= cb->ep)
-			tp = cb->bp;
-		cb->tp = tp;
-		++cb->nblk;	/* account for buffer filled */
+		if ((sc->sc_mode & AUMODE_PLAY_ALL) == 0 && sc->sc_wblks)
+			/*
+			 * discard the block if we sent out a silence
+			 * packet that hasn't yet been countered
+			 * by user data.  (They must supply enough
+			 * data to catch up to "real time").
+			 */
+			sc->sc_wblks--;
+		else {
+			if (tp >= cb->ep)
+				tp = cb->bp;
+			cb->tp = tp;
+			++cb->nblk;	/* account for buffer filled */
 
-		/*
-		 * If output isn't active, start it up.
-		 */
-		if (sc->sc_pbus == 0)
-			audiostartp(sc);
+			/*
+			 * If output isn't active, start it up.
+			 */
+			if (sc->sc_pbus == 0)
+				audiostartp(sc);
+		}
 		splx(s);
 	}
 	return (error);
@@ -1074,11 +1087,15 @@ audio_ioctl(dev, cmd, addr, flag, p)
 		break;
 
 	/*
-	 * Number of read samples dropped.  We don't know where or
+	 * Number of read (write) samples dropped.  We don't know where or
 	 * when they were dropped.
 	 */
 	case AUDIO_RERROR:
-		*(int *)addr = sc->rr.cb_drops != 0;
+		*(int *)addr = sc->rr.cb_drops;
+		break;
+
+	case AUDIO_PERROR:
+		*(int *)addr = sc->pr.cb_drops;
 		break;
 
 	/*
@@ -1309,7 +1326,8 @@ audio_pint(sc)
 					   audio_pint, (void *)sc)) {
 			DPRINTF(("audio_pint zero failed: %d\n", err));
 			audio_clear(sc);
-		}
+		} else
+			++sc->sc_wblks;
 	}
 
 #ifdef AUDIO_DEBUG
