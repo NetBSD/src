@@ -1,4 +1,4 @@
-/*	$NetBSD: c++rt0.c,v 1.6 1997/12/29 15:36:50 pk Exp $	*/
+/*	$NetBSD: c++rt0.c,v 1.6.2.1 1998/06/10 22:26:28 tv Exp $	*/
 
 /*
  * Copyright (c) 1993 Paul Kranenburg
@@ -52,36 +52,73 @@ static void dummy __P((void)) { return; }
 __asm(".stabs \"___CTOR_LIST__\",22,0,0,_dummy");
 __asm(".stabs \"___DTOR_LIST__\",22,0,0,_dummy");
 
+#ifdef __arm32__			/* XXX ARM32_BROKEN_RELOCATIONS */
+#define ARM32_BROKEN_RELOCATIONS	/* XXX ARM32_BROKEN_RELOCATIONS */
+#endif					/* XXX ARM32_BROKEN_RELOCATIONS */
+
 void (*__CTOR_LIST__[0]) __P((void));
 void (*__DTOR_LIST__[0]) __P((void));
 
+#ifdef ARM32_BROKEN_RELOCATIONS		/* XXX ARM32_BROKEN_RELOCATIONS */
+static void	__dtors __P((long));	/* XXX ARM32_BROKEN_RELOCATIONS */
+static void	__ctors __P((long));	/* XXX ARM32_BROKEN_RELOCATIONS */
+#else					/* XXX ARM32_BROKEN_RELOCATIONS */
 static void	__dtors __P((void));
 static void	__ctors __P((void));
+#endif					/* XXX ARM32_BROKEN_RELOCATIONS */
 
 static void
+#ifdef ARM32_BROKEN_RELOCATIONS		/* XXX ARM32_BROKEN_RELOCATIONS */
+__dtors(base)				/* XXX ARM32_BROKEN_RELOCATIONS */
+	long base;			/* XXX ARM32_BROKEN_RELOCATIONS */
+#else					/* XXX ARM32_BROKEN_RELOCATIONS */
 __dtors()
+#endif					/* XXX ARM32_BROKEN_RELOCATIONS */
 {
 	unsigned long i = (unsigned long) __DTOR_LIST__[0];
 	void (**p)(void) = __DTOR_LIST__ + i;
  
 	while (i--)
+#ifdef ARM32_BROKEN_RELOCATIONS		/* XXX ARM32_BROKEN_RELOCATIONS */
+		(*(void (*)(void))((char *)(*p--) + base))(); /* XXX ... */
+#else					/* XXX ARM32_BROKEN_RELOCATIONS */
 		(**p--)();
+#endif					/* XXX ARM32_BROKEN_RELOCATIONS */
 }
 
 static void
+#ifdef ARM32_BROKEN_RELOCATIONS		/* XXX ARM32_BROKEN_RELOCATIONS */
+__ctors(base)				/* XXX ARM32_BROKEN_RELOCATIONS */
+	long base;			/* XXX ARM32_BROKEN_RELOCATIONS */
+#else					/* XXX ARM32_BROKEN_RELOCATIONS */
 __ctors()
+#endif					/* XXX ARM32_BROKEN_RELOCATIONS */
 {
 	void (**p)(void) = __CTOR_LIST__ + 1;
 
 	while (*p)
+#ifdef ARM32_BROKEN_RELOCATIONS		/* XXX ARM32_BROKEN_RELOCATIONS */
+		(*(void (*)(void))((char *)(*p++) + base))(); /* XXX ... */
+#else					/* XXX ARM32_BROKEN_RELOCATIONS */
 		(**p++)();
+#endif					/* XXX ARM32_BROKEN_RELOCATIONS */
 }
 
+#ifdef ARM32_BROKEN_RELOCATIONS		/* XXX ARM32_BROKEN_RELOCATIONS */
+extern void __init __P((long)) asm(".init"); /* XXX ARM32_BROKEN_RELOCATIONS */
+extern void __fini __P((long)) asm(".fini"); /* XXX ARM32_BROKEN_RELOCATIONS */
+#else					/* XXX ARM32_BROKEN_RELOCATIONS */
 extern void __init __P((void)) asm(".init");
 extern void __fini __P((void)) asm(".fini");
+#endif					/* XXX ARM32_BROKEN_RELOCATIONS */
 
 void
+#ifdef ARM32_BROKEN_RELOCATIONS		/* XXX ARM32_BROKEN_RELOCATIONS */
+__init(base)				/* XXX ARM32_BROKEN_RELOCATIONS */
+	long base;			/* XXX ARM32_BROKEN_RELOCATIONS */
+#else					/* XXX ARM32_BROKEN_RELOCATIONS */
 __init()
+#endif					/* XXX ARM32_BROKEN_RELOCATIONS */
 {
 	static int initialized = 0;
 
@@ -91,16 +128,29 @@ __init()
 	 */
 	if (!initialized) {
 		initialized = 1;
+#ifdef ARM32_BROKEN_RELOCATIONS		/* XXX ARM32_BROKEN_RELOCATIONS */
+		__ctors(base);		/* XXX ARM32_BROKEN_RELOCATIONS */
+#else					/* XXX ARM32_BROKEN_RELOCATIONS */
 		__ctors();
+#endif					/* XXX ARM32_BROKEN_RELOCATIONS */
 	}
 
 }
 
 void
+#ifdef ARM32_BROKEN_RELOCATIONS		/* XXX ARM32_BROKEN_RELOCATIONS */
+__fini(base)				/* XXX ARM32_BROKEN_RELOCATIONS */
+	long base;			/* XXX ARM32_BROKEN_RELOCATIONS */
+#else					/* XXX ARM32_BROKEN_RELOCATIONS */
 __fini()
+#endif					/* XXX ARM32_BROKEN_RELOCATIONS */
 {
 	/*
 	 * Call global destructors.
 	 */
+#ifdef ARM32_BROKEN_RELOCATIONS		/* XXX ARM32_BROKEN_RELOCATIONS */
+	__dtors(base);			/* XXX ARM32_BROKEN_RELOCATIONS */
+#else					/* XXX ARM32_BROKEN_RELOCATIONS */
 	__dtors();
+#endif					/* XXX ARM32_BROKEN_RELOCATIONS */
 }
