@@ -1,4 +1,4 @@
-/*	$NetBSD: skeylogin.c,v 1.17 2002/06/22 11:59:12 itojun Exp $	*/
+/*	$NetBSD: skeylogin.c,v 1.18 2003/03/09 00:46:07 lukem Exp $	*/
 
 /* S/KEY v1.1b (skeylogin.c)
  *
@@ -14,6 +14,9 @@
  *
  * S/KEY verification check, lookups, and authentication.
  */
+
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: skeylogin.c,v 1.18 2003/03/09 00:46:07 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/stat.h>
