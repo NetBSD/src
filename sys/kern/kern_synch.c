@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_synch.c,v 1.104 2001/05/28 22:20:03 chs Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.105 2001/09/25 01:38:38 chs Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -390,6 +390,7 @@ ltsleep(void *ident, int priority, const char *wmesg, int timo,
 	}
 
 	KASSERT(p != NULL);
+	LOCK_ASSERT(interlock == NULL || simple_lock_held(interlock));
 
 #ifdef KTRACE
 	if (KTRPOINT(p, KTR_CSW))
