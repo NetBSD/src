@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.2 1999/04/14 16:19:03 ragge Exp $ */
+/*	$NetBSD: autoconf.c,v 1.3 1999/05/23 21:58:19 ragge Exp $ */
 /*
  * Copyright (c) 1994, 1998 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -36,15 +36,11 @@
 #include "sys/param.h"
 #include "../include/mtpr.h"
 #include "../include/sid.h"
-#include "../include/clock.h"
 #include "vaxstand.h"
 
 int	nmba=0, nuba=0, nbi=0,nsbi=0,nuda=0;
 int	*mbaaddr, *ubaaddr, *biaddr;
 int	*udaaddr, *uioaddr, tmsaddr, *bioaddr;
-static	int clk_adrshift, clk_tweak, use_todr;
-static	u_short *use_diagtime;
-volatile short *clk_page = (void *)0x200b0000;
 
 static int mba750[]={0xf28000,0xf2a000,0xf2c000};
 static int uba750[]={0xf30000,0xf32000};
@@ -85,15 +81,19 @@ autoconf()
 {
 	extern int memsz;
 
-	switch (vax_cputype) {
+	findcpu(); /* Configures CPU variables */
+	consinit(); /* Allow us to print out things */
+	scbinit(); /* Fix interval clock etc */
+
+	switch (vax_boardtype) {
 
 	default:
-		printf("CPU type %d not supported by boot\n",vax_cputype);
+		printf("\nCPU type %d not supported by boot\n",vax_cputype);
 		printf("trying anyway...\n");
 		break;
 
-	case VAX_8600:
-		use_todr = 1;
+	case VAX_BTYP_780:
+	case VAX_BTYP_790:
 		memsz = 0;
 		nmba = 8;
 		nuba = 32; /* XXX */
@@ -105,21 +105,7 @@ autoconf()
 		tmsaddr = 0774500;
 		break;
 
-	case VAX_780:
-		use_todr = 1;
-		memsz = 0;
-		nmba = 4;
-		nuba = 4;
-		nuda = 1;
-		mbaaddr = mba780;
-		ubaaddr = uba780;
-		udaaddr = uda750;
-		uioaddr = uio780;
-		tmsaddr = 0774500;
-		break;
-
-	case VAX_750:
-		use_todr = 1;
+	case VAX_BTYP_750:
 		memsz = 0;
 		nmba = 3;
 		nuba = 2;
@@ -131,109 +117,81 @@ autoconf()
 		tmsaddr = 0774500;
 		break;
 
-	case VAX_TYP_CVAX:	/* the same for uvaxIII */
-	case VAX_TYP_UV2:
+	case VAX_BTYP_630:	/* the same for uvaxIII */
+	case VAX_BTYP_650:
+	case VAX_BTYP_670:
 		nuba = 1;
 		nuda = 2;
 		ubaaddr = uba630;
 		udaaddr = uda630;
 		uioaddr = uio630;
 		tmsaddr = qbdev(0774500);
-		switch (vax_boardtype) {
-		case VAX_BTYP_650:
-			use_todr = 1;
-			break;
-		case VAX_BTYP_630:
-			clk_page = (void *)0x200b8000;
-			clk_adrshift = 0;
-			clk_tweak = 0;
-			break;
-		case VAX_BTYP_410:
-			clk_adrshift = 1;
-			clk_tweak = 2;
-			break;
-		case VAX_BTYP_420:
-			use_diagtime = (void *)0x2008001e;
-			*use_diagtime = 0;
-			break;
-		}
 		break;
 
-	case VAX_8200:
-		clk_page = (void *)0x200b8000;
-		clk_adrshift = 0;
-		clk_tweak = 1;
+	case VAX_BTYP_8000:
 		memsz = 0;
 		nbi = 1;
 		biaddr = bi8200;
 		bioaddr = bio8200;
                 break;
 
-        case VAX_TYP_RIGEL:     /* we'll assume all Rigels are KA670s for now */
-		clk_adrshift = 1;
-		clk_tweak = 2;
-                nuba = 1;
-                nuda = 2;
-                ubaaddr = uba670;
-                udaaddr = uda670;
-                uioaddr = uio670;
-                tmsaddr = qb670dev(0774500);
-                break;
+	case VAX_BTYP_46:
+	case VAX_BTYP_48:
+		{int *map, i;
 
-	case VAX_TYP_MARIAH:
-		switch (vax_boardtype) {
-		case VAX_BTYP_46: {
-			int *map, i;
+		/* Map all 16MB of I/O space to low 16MB of memory */
+		map = (int *)0x700000; /* XXX */
+		*(int *)0x20080008 = (int)map; /* XXX */
+		for (i = 0; i < 0x8000; i++)
+			map[i] = 0x80000000 | i;
+		}break;
 
-			/* Map all 16MB of I/O space to low 16MB of memory */
-			map = (int *)0x700000; /* XXX */
-			*(int *)0x20080008 = (int)map; /* XXX */
-			for (i = 0; i < 0x8000; i++)
-				map[i] = 0x80000000 | i;
-			}
-			clk_adrshift = 1;
-			clk_tweak = 2;
-			break;
-		}
-		break;
-
-	case VAX_TYP_SOC:
-		switch (vax_boardtype) {
-		case VAX_BTYP_48: {
-			int *map, i;
-
-			/* Map all 16MB of I/O space to low 16MB of memory */
-			map = (int *)0x700000; /* XXX */
-			*(int *)0x20080008 = (int)map; /* XXX */
-			for (i = 0; i < 0x8000; i++)
-				map[i] = 0x80000000 | i;
-			}
-			clk_adrshift = 1;
-			clk_tweak = 2;
-			break;
-		}
-		break;
-
+	case VAX_BTYP_410:
+	case VAX_BTYP_420:
+	case VAX_BTYP_43:
 	}
 }
 
 /*
  * Clock handling routines, needed to do timing in standalone programs.
  */
-#define	REGPEEK(off)	(clk_page[off << clk_adrshift] >> clk_tweak)
+
+volatile int tickcnt;
 
 getsecs()
 {
 	volatile int loop;
 	int todr;
 
-	if (use_diagtime)
-		return *use_diagtime/100;
-	if (use_todr)
-		return mfpr(PR_TODR)/100;
-
-	while (REGPEEK(CSRA_OFF) & CSRA_UIP)
-		;
-	return REGPEEK(SEC_OFF) + REGPEEK(MIN_OFF) * SEC_PER_MIN;
-
+	return tickcnt/100;
 }
+
+int *scb;
+
+scbinit()
+{
+	extern int timer;
+	int i;
+
+	/* The SCB must be on a page boundary. */
+	i = alloc(1024) + VAX_NBPG;
+	i &= ~VAX_PGOFSET;
+
+	mtpr(i, PR_SCBB);
+	scb = (int *)i;
+
+	scb[0xc0/4] =(int)&timer + 1;
+
+	mtpr(-10000, PR_NICR);		/* Load in count register */
+	mtpr(0x800000d1, PR_ICCS);	/* Start clock and enable interrupt */
+
+	mtpr(0x14,PR_IPL);
+}
+
+asm("
+	.align 2
+_timer:	.globl _timer
+	mtpr	$0xc1,$0x18
+	incl	_tickcnt
+	rei
+");
