@@ -1,4 +1,4 @@
-/*	$NetBSD: bootbus.c,v 1.9 2003/01/01 02:20:47 thorpej Exp $	*/
+/*	$NetBSD: bootbus.c,v 1.10 2003/07/15 00:04:51 lukem Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -39,6 +39,9 @@
 /*
  * Autoconfiguration support for Sun4d "bootbus".
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: bootbus.c,v 1.10 2003/07/15 00:04:51 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>

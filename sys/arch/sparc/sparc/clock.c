@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.92 2003/02/26 17:39:07 pk Exp $ */
+/*	$NetBSD: clock.c,v 1.93 2003/07/15 00:05:02 lukem Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -86,6 +86,9 @@
  * statclock() (except on sun4/100 and sun4/200 machines, which don't
  * have a spare timer device).
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.93 2003/07/15 00:05:02 lukem Exp $");
 
 #include "opt_sparc_arch.h"
 

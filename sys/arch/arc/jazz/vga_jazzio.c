@@ -1,4 +1,4 @@
-/* $NetBSD: vga_jazzio.c,v 1.9 2002/10/02 04:59:49 thorpej Exp $ */
+/* $NetBSD: vga_jazzio.c,v 1.10 2003/07/15 00:04:50 lukem Exp $ */
 /* NetBSD: vga_isa.c,v 1.3 1998/06/12 18:45:48 drochner Exp  */
 
 /*
@@ -27,6 +27,9 @@
  * any improvements or extensions that they make and grant Carnegie the
  * rights to redistribute these changes.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: vga_jazzio.c,v 1.10 2003/07/15 00:04:50 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

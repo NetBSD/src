@@ -1,4 +1,4 @@
-/*	$NetBSD: p_nec_rax94.c,v 1.1 2001/06/13 15:36:04 soda Exp $	*/
+/*	$NetBSD: p_nec_rax94.c,v 1.2 2003/07/15 00:04:43 lukem Exp $	*/
 
 /*-
  * Copyright (C) 2000 Shuichiro URATA.  All rights reserved.
@@ -25,6 +25,9 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: p_nec_rax94.c,v 1.2 2003/07/15 00:04:43 lukem Exp $");
 
 #include <sys/param.h>
 

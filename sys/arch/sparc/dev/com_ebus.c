@@ -1,4 +1,4 @@
-/*	$NetBSD: com_ebus.c,v 1.10 2003/06/14 17:01:15 thorpej Exp $ */
+/*	$NetBSD: com_ebus.c,v 1.11 2003/07/15 00:04:53 lukem Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -35,6 +35,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: com_ebus.c,v 1.11 2003/07/15 00:04:53 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

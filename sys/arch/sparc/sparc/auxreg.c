@@ -1,4 +1,4 @@
-/*	$NetBSD: auxreg.c,v 1.32 2002/10/02 16:02:09 thorpej Exp $ */
+/*	$NetBSD: auxreg.c,v 1.33 2003/07/15 00:05:01 lukem Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -43,6 +43,9 @@
  *
  *	@(#)auxreg.c	8.1 (Berkeley) 6/11/93
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: auxreg.c,v 1.33 2003/07/15 00:05:01 lukem Exp $");
 
 #include "opt_blink.h"
 

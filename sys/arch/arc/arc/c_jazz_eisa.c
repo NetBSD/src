@@ -1,4 +1,4 @@
-/*	$NetBSD: c_jazz_eisa.c,v 1.6 2003/06/14 17:01:09 thorpej Exp $	*/
+/*	$NetBSD: c_jazz_eisa.c,v 1.7 2003/07/15 00:04:41 lukem Exp $	*/
 
 /*
  * Copyright (c) 1998
@@ -30,6 +30,9 @@
  * for Magnum derived machines like Microsoft-Jazz and PICA-61,
  * and NEC EISA generation machines.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: c_jazz_eisa.c,v 1.7 2003/07/15 00:04:41 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

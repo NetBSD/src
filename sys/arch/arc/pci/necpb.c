@@ -1,4 +1,4 @@
-/*	$NetBSD: necpb.c,v 1.15 2003/06/15 23:08:56 fvdl Exp $	*/
+/*	$NetBSD: necpb.c,v 1.16 2003/07/15 00:04:50 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -66,6 +66,9 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: necpb.c,v 1.16 2003/07/15 00:04:50 lukem Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>

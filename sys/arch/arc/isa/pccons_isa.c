@@ -1,4 +1,4 @@
-/* $NetBSD: pccons_isa.c,v 1.4 2002/10/02 04:59:48 thorpej Exp $ */
+/* $NetBSD: pccons_isa.c,v 1.5 2003/07/15 00:04:47 lukem Exp $ */
 /* NetBSD: vga_isa.c,v 1.4 2000/08/14 20:14:51 thorpej Exp  */
 
 /*
@@ -27,6 +27,9 @@
  * any improvements or extensions that they make and grant Carnegie the
  * rights to redistribute these changes.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: pccons_isa.c,v 1.5 2003/07/15 00:04:47 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
