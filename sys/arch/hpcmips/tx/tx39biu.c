@@ -1,4 +1,4 @@
-/*	$NetBSD: tx39biu.c,v 1.1 1999/11/20 19:56:32 uch Exp $ */
+/*	$NetBSD: tx39biu.c,v 1.2 1999/12/12 17:05:38 uch Exp $ */
 
 /*
  * Copyright (c) 1999, by UCHIYAMA Yasushi
@@ -163,7 +163,7 @@ tx39biu_intr(arg)
 }
 
 void
-tx39biu_dump(tc) /* XXX 3912 only. 3922 has something different register map.*/
+tx39biu_dump(tc)
 	tx_chipset_tag_t tc;	
 {
 	char *rowsel[] = {"18,17:9", "22,18,20,19,17:9", "20,22,21,19,17:9", "22,23,21,19,17:9"};
