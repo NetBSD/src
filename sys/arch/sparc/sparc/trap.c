@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.102 2001/03/18 17:11:22 chs Exp $ */
+/*	$NetBSD: trap.c,v 1.103 2001/03/21 09:01:16 mrg Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -106,7 +106,8 @@ int	rwindow_debug = 0;
  */
 struct	fpstate initfpstate = {
 	{ ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0,
-	  ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0 }
+	  ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0 },
+	0, 0,
 };
 
 /*
@@ -410,7 +411,6 @@ badtrap:
 		if (fs == NULL) {
 			fs = malloc(sizeof *fs, M_SUBPROC, M_WAITOK);
 			*fs = initfpstate;
-			fs->fs_qsize = 0;
 			p->p_md.md_fpstate = fs;
 		}
 		/*
@@ -1285,7 +1285,11 @@ syscall(code, tf, pc)
 #ifdef SYSCALL_DEBUG
 	scdebug_call(p, code, args.i);
 #endif /* SYSCALL_DEBUG */
-	KERNEL_PROC_LOCK(p);
+
+	/* Lock the kernel if the syscall isn't MP-safe. */
+	if ((callp->sy_flags & SYCALL_MPSAFE) == 0)
+		KERNEL_PROC_LOCK(p);
+
 #ifdef KTRACE
 	if (KTRPOINT(p, KTR_SYSCALL))
 		ktrsyscall(p, code, callp->sy_argsize, args.i);
@@ -1293,7 +1297,9 @@ syscall(code, tf, pc)
 	rval[0] = 0;
 	rval[1] = tf->tf_out[1];
 	error = (*callp->sy_call)(p, &args, rval);
-	KERNEL_PROC_UNLOCK(p);
+
+	if ((callp->sy_flags & SYCALL_MPSAFE) == 0)
+		KERNEL_PROC_UNLOCK(p);
 
 	switch (error) {
 	case 0:
