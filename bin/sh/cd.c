@@ -36,8 +36,13 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)cd.c	8.1 (Berkeley) 5/31/93";*/
-static char *rcsid = "$Id: cd.c,v 1.8 1994/06/11 16:11:44 mycroft Exp $";
+static char *rcsid = "$Id: cd.c,v 1.9 1994/12/04 07:12:07 cgd Exp $";
 #endif /* not lint */
+
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <unistd.h>
+#include <errno.h>
 
 /*
  * The cd and pwd commands.
@@ -52,10 +57,7 @@ static char *rcsid = "$Id: cd.c,v 1.8 1994/06/11 16:11:44 mycroft Exp $";
 #include "memalloc.h"
 #include "error.h"
 #include "mystring.h"
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <unistd.h>
-#include <errno.h>
+#include "extern.h"
 
 
 #ifdef __STDC__

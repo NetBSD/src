@@ -39,7 +39,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)rcp.c	5.32 (Berkeley) 2/25/91";*/
-static char rcsid[] = "$Id: rcp.c,v 1.5 1994/03/27 10:28:21 cgd Exp $";
+static char rcsid[] = "$Id: rcp.c,v 1.6 1994/12/04 07:12:00 cgd Exp $";
 #endif /* not lint */
 
 /*
@@ -101,13 +101,27 @@ typedef struct _buf {
 } BUF;
 
 void lostconn();
+void nospace();
+int okname __P((char *));
+int response();
+void rsource __P((char *, struct stat *));
+void source __P((int, char **));
+void sink __P((int, char **));
+int susystem __P((char *));
+void tolocal __P((int, char **));
+void toremote __P((char *, int, char **));
+void usage();
+void verifydir __P((char *));
 
+int
 main(argc, argv)
 	int argc;
 	char **argv;
 {
 	extern int optind;
+#ifdef KERBEROS
 	extern char *optarg;
+#endif
 	struct servent *sp;
 	int ch, fflag, tflag;
 	char *targ, *shell, *colon();
@@ -232,6 +246,7 @@ main(argc, argv)
 	exit(errs);
 }
 
+void
 toremote(targ, argc, argv)
 	char *targ;
 	int argc;
@@ -323,6 +338,7 @@ toremote(targ, argc, argv)
 	}
 }
 
+void
 tolocal(argc, argv)
 	int argc;
 	char **argv;
@@ -384,6 +400,7 @@ tolocal(argc, argv)
 	}
 }
 
+void
 verifydir(cp)
 	char *cp;
 {
@@ -411,6 +428,7 @@ colon(cp)
 	return(0);
 }
 
+int
 okname(cp0)
 	char *cp0;
 {
@@ -430,6 +448,8 @@ bad:
 	return(0);
 }
 
+
+int
 susystem(s)
 	char *s;
 {
@@ -452,6 +472,7 @@ susystem(s)
 	return(status);
 }
 
+void
 source(argc, argv)
 	int argc;
 	char **argv;
@@ -536,6 +557,7 @@ notreg:			(void)close(f);
 	}
 }
 
+void
 rsource(name, statp)
 	char *name;
 	struct stat *statp;
@@ -587,6 +609,7 @@ rsource(name, statp)
 	(void)response();
 }
 
+int
 response()
 {
 	register char *cp;
@@ -628,6 +651,7 @@ lostconn()
 	exit(1);
 }
 
+void
 sink(argc, argv)
 	int argc;
 	char **argv;
@@ -892,6 +916,7 @@ error(fmt, a1, a2, a3)
 		(void)fprintf(stderr, fmt, a1, a2, a3);
 }
 
+void
 nospace()
 {
 	(void)fprintf(stderr, "rcp: out of memory.\n");
@@ -899,6 +924,7 @@ nospace()
 }
 
 
+void
 usage()
 {
 #ifdef KERBEROS

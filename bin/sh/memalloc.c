@@ -36,7 +36,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)memalloc.c	8.1 (Berkeley) 5/31/93";*/
-static char *rcsid = "$Id: memalloc.c,v 1.9 1994/09/23 11:28:43 mycroft Exp $";
+static char *rcsid = "$Id: memalloc.c,v 1.10 1994/12/04 07:12:19 cgd Exp $";
 #endif /* not lint */
 
 #include "shell.h"
@@ -53,7 +53,9 @@ static char *rcsid = "$Id: memalloc.c,v 1.9 1994/09/23 11:28:43 mycroft Exp $";
  */
 
 pointer
-ckmalloc(nbytes) {
+ckmalloc(nbytes) 
+	int nbytes;
+{
 	register pointer p;
 
 	if ((p = malloc(nbytes)) == NULL)
@@ -69,7 +71,8 @@ ckmalloc(nbytes) {
 pointer
 ckrealloc(p, nbytes)
 	register pointer p;
-	{
+	int nbytes;
+{
 
 	if ((p = realloc(p, nbytes)) == NULL)
 		error("Out of space");
@@ -120,7 +123,9 @@ int herefd = -1;
 
 
 pointer
-stalloc(nbytes) {
+stalloc(nbytes) 
+	int nbytes;
+{
 	register char *p;
 
 	nbytes = ALIGN(nbytes);
@@ -227,7 +232,9 @@ growstackblock() {
 
 
 void
-grabstackblock(len) {
+grabstackblock(len) 
+	int len;
+{
 	len = ALIGN(len);
 	stacknxt += len;
 	stacknleft -= len;
