@@ -13,7 +13,7 @@
  * on the understanding that TFS is not responsible for the correct
  * functioning of this software in any circumstances.
  *
- *	$Id: cd.c,v 1.14 1993/06/27 07:01:17 andrew Exp $
+ *	$Id: cd.c,v 1.15 1993/07/19 11:30:49 cgd Exp $
  */
 
 #define SPLCD splbio
@@ -98,7 +98,7 @@ cdattach(int masunit, struct scsi_switch *sw, int physid, int *unit)
 
 	if(*unit == -1) {
 		for(i=0; i<NCD && *unit==-1; i++)
-			if(cd_data[*unit]==NULL)
+			if(cd_data[i]==NULL)
 				*unit = i;
 	}
 	if(*unit >= NCD || *unit == -1)

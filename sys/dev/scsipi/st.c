@@ -13,7 +13,7 @@
  * on the understanding that TFS is not responsible for the correct
  * functioning of this software in any circumstances.
  *
- *	$Id: st.c,v 1.13 1993/07/09 04:28:55 cgd Exp $
+ *	$Id: st.c,v 1.14 1993/07/19 11:30:54 cgd Exp $
  */
 
 /*
@@ -88,7 +88,7 @@ stattach(int masunit, struct scsi_switch *sw, int physid, int *unit)
 
 	if(*unit==-1) {
 		for(i=0; i<NST && *unit==-1; i++)
-			if(st_data[*unit]==NULL)
+			if(st_data[i]==NULL)
 				*unit = i;
 	}
 	if(*unit >= NST || *unit==-1)
