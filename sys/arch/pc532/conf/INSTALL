@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.18 1999/03/23 23:02:14 jonb Exp $
+#	$NetBSD: INSTALL,v 1.19 1999/03/24 03:48:05 jonb Exp $
 #
 # INSTALL -- install kernel
 #
@@ -30,8 +30,8 @@ options 	INET				# IP + ICMP + TCP + UDP
 
 # pc532 special options
 options 	CPU30MHZ			# necessary for fast machines
-options 	CONSOLE_SPEED=B9600		# default console baud rate
-options 	SCNDEF_CFLAG="CREAD+CS8+HUPCL"	# use the monitor's setting
+#options 	CONSOLE_SPEED=B9600		# default console baud rate
+#options 	SCNDEF_CFLAG="CREAD|CS8|HUPCL"	# use the monitor's setting
 options 	NO_INLINE_SPLX			# go for space, not for speed
 
 # Kernel root file system and dump configuration.
