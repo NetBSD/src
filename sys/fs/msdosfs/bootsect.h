@@ -1,4 +1,4 @@
-/*	$NetBSD: bootsect.h,v 1.10 2001/07/22 13:34:11 wiz Exp $	*/
+/*	$NetBSD: bootsect.h,v 1.1 2002/12/26 12:31:32 jdolecek Exp $	*/
 
 /*
  * Written by Paul Popelka (paulp@uts.amdahl.com)

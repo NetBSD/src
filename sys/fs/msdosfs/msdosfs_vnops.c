@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vnops.c,v 1.123 2002/10/23 09:14:39 jdolecek Exp $	*/
+/*	$NetBSD: msdosfs_vnops.c,v 1.1 2002/12/26 12:31:35 jdolecek Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_vnops.c,v 1.123 2002/10/23 09:14:39 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_vnops.c,v 1.1 2002/12/26 12:31:35 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -71,11 +71,11 @@ __KERNEL_RCSID(0, "$NetBSD: msdosfs_vnops.c,v 1.123 2002/10/23 09:14:39 jdolecek
 
 #include <uvm/uvm_extern.h>
 
-#include <msdosfs/bpb.h>
-#include <msdosfs/direntry.h>
-#include <msdosfs/denode.h>
-#include <msdosfs/msdosfsmount.h>
-#include <msdosfs/fat.h>
+#include <fs/msdosfs/bpb.h>
+#include <fs/msdosfs/direntry.h>
+#include <fs/msdosfs/denode.h>
+#include <fs/msdosfs/msdosfsmount.h>
+#include <fs/msdosfs/fat.h>
 
 /*
  * Some general notes:

@@ -1,4 +1,4 @@
-/*	$NetBSD: direntry.h,v 1.14 1997/11/17 15:36:32 ws Exp $	*/
+/*	$NetBSD: direntry.h,v 1.1 2002/12/26 12:31:33 jdolecek Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
