@@ -1,4 +1,4 @@
-/*	$NetBSD: msiiep.c,v 1.7 2002/04/04 18:47:23 uwe Exp $ */
+/*	$NetBSD: msiiep.c,v 1.8 2002/05/08 16:51:39 uwe Exp $ */
 
 /*
  * Copyright (c) 2001 Valeriy E. Ushakov
@@ -26,6 +26,8 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: msiiep.c,v 1.8 2002/05/08 16:51:39 uwe Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -564,10 +566,12 @@ mspcic_bus_mmap(t, ba, off, prot, flags)
 	struct mspcic_cookie *c = t->cookie;
 	bus_addr_t paddr;
 
+	/* verify that phys to pci mapping for the target page exists */
 	paddr = mspcic_pci_map_find(c->map, c->nmaps, ba + off, PAGE_SIZE);
 	if (paddr == 0)
 		return (-1);
-	return (bus_space_mmap(t->parent, paddr, off, prot, flags));
+
+	return (bus_space_mmap(t->parent, paddr - off, off, prot, flags));
 }
 
 
