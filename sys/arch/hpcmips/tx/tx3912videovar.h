@@ -1,4 +1,4 @@
-/*	$NetBSD: tx3912videovar.h,v 1.1 1999/11/20 19:56:31 uch Exp $ */
+/*	$NetBSD: tx3912videovar.h,v 1.2 1999/12/12 17:04:55 uch Exp $ */
 
 /*
  * Copyright (c) 1999, by UCHIYAMA Yasushi
@@ -26,4 +26,5 @@
  *
  */
 
-int tx3912video_init __P((tx_chipset_tag_t, u_int32_t, int, int, u_int32_t*, u_int32_t*, int*));
+int tx3912video_init __P((tx_chipset_tag_t, u_int32_t, int, int, 
+			  u_int32_t*, u_int32_t*, int*));
