@@ -1,4 +1,4 @@
-/*	$NetBSD: process.c,v 1.10 2000/11/19 16:40:16 bouyer Exp $	*/
+/*	$NetBSD: process.c,v 1.11 2002/02/18 22:00:37 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1993-95 Mats O Jansson.  All rights reserved.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: process.c,v 1.10 2000/11/19 16:40:16 bouyer Exp $");
+__RCSID("$NetBSD: process.c,v 1.11 2002/02/18 22:00:37 thorpej Exp $");
 #endif
 
 #include "os.h"
@@ -269,13 +269,7 @@ mopStartLoad(dst, src, dl_rpr, trans)
 	
 	/* Get Load and Transfer Address. */
 
-	GetFileInfo(dle->ldfd,
-		    &dle->loadaddr,
-		    &dle->xferaddr,
-		    &dle->aout,
-		    &dle->a_text, &dle->a_text_fill,
-		    &dle->a_data, &dle->a_data_fill,
-		    &dle->a_bss,  &dle->a_bss_fill);
+	GetFileInfo(dle);
 
 	dle->nloadaddr = dle->loadaddr;
 	dle->lseek     = lseek(dle->ldfd, 0L, SEEK_CUR);
