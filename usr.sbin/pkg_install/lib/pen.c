@@ -1,11 +1,11 @@
-/*	$NetBSD: pen.c,v 1.19.2.3 2003/02/08 07:53:36 jmc Exp $	*/
+/*	$NetBSD: pen.c,v 1.19.2.4 2003/09/21 10:32:47 tron Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: pen.c,v 1.25 1997/10/08 07:48:12 charnier Exp";
 #else
-__RCSID("$NetBSD: pen.c,v 1.19.2.3 2003/02/08 07:53:36 jmc Exp $");
+__RCSID("$NetBSD: pen.c,v 1.19.2.4 2003/09/21 10:32:47 tron Exp $");
 #endif
 #endif
 
@@ -38,7 +38,7 @@ __RCSID("$NetBSD: pen.c,v 1.19.2.3 2003/02/08 07:53:36 jmc Exp $");
 /* For keeping track of where we are */
 static char Current[FILENAME_MAX];
 static char Previous[FILENAME_MAX];
-static int CurrentSet;		/* rm -rf Current only if it's really set! */
+static int CurrentSet;		/* rm -fr Current only if it's really set! */
                                 /* CurrentSet is set to 0 before strcpy()s
 				 * to prevent rm'ing of a partial string
 				 * when interrupted by ^C */
@@ -65,11 +65,11 @@ void
 restore_dirs(char *c, char *p)
 {
 	CurrentSet = 0;		/* prevent from deleting */
-	strcpy(Current, c);
+	strlcpy(Current, c, sizeof(Current));
 	CurrentSet = 1;		/* rm -fr Current is safe now */
 	free(c);
 	
-	strcpy(Previous, p);
+	strlcpy(Previous, p, sizeof(Previous));
 	free(p);
 }
 #endif
@@ -96,11 +96,11 @@ find_play_pen(char *pen, size_t pensize, size_t sz)
 	else if ((cp = getenv("TMPDIR")) != NULL && stat(cp, &sb) != FAIL && (min_free(cp) >= sz))
 		(void) snprintf(pen, pensize, "%s/instmp.XXXXXX", cp);
 	else if (stat("/var/tmp", &sb) != FAIL && min_free("/var/tmp") >= sz)
-		strcpy(pen, "/var/tmp/instmp.XXXXXX");
+		strlcpy(pen, "/var/tmp/instmp.XXXXXX", pensize);
 	else if (stat("/tmp", &sb) != FAIL && min_free("/tmp") >= sz)
-		strcpy(pen, "/tmp/instmp.XXXXXX");
+		strlcpy(pen, "/tmp/instmp.XXXXXX", pensize);
 	else if (stat("/usr/tmp", &sb) != FAIL && min_free("/usr/tmp") >= sz)
-		strcpy(pen, "/usr/tmp/instmp.XXXXXX");
+		strlcpy(pen, "/usr/tmp/instmp.XXXXXX", pensize);
 	else {
 		cleanup(0);
 		errx(2,
@@ -122,23 +122,10 @@ make_playpen(char *pen, size_t pensize, size_t sz)
 	if (!find_play_pen(pen, pensize, sz))
 		return NULL;
 
-#if (defined(NetBSD1_3) || (NetBSD <= 199713)) && (NetBSD1_3 <9)
-	/* values from 1.3.2/1.3I */
-	/* mkdtemp(3) is not present on 1.3.3 and below */
-	if (!mktemp(pen)) {
-		cleanup(0);
-		errx(2, "can't mktemp '%s'", pen);
-	}
-	if (mkdir(pen, 0755) == FAIL) {
-		cleanup(0);
-		errx(2, "can't mkdir '%s'", pen);
-	}
-#else
 	if (!mkdtemp(pen)) {
 		cleanup(0);
 		errx(2, "can't mkdtemp '%s'", pen);
 	}
-#endif
 	if (Verbose) {
 		if (sz)
 			fprintf(stderr,
@@ -153,7 +140,7 @@ make_playpen(char *pen, size_t pensize, size_t sz)
 		    "with more space and\ntry the command again", pen);
 	}
 	if (Current[0])
-		strcpy(Previous, Current);
+		strlcpy(Previous, Current, sizeof(Previous));
 	else if (!getcwd(Previous, FILENAME_MAX)) {
 		cleanup(0);
 		err(EXIT_FAILURE, "fatal error during execution: getcwd");
@@ -162,7 +149,7 @@ make_playpen(char *pen, size_t pensize, size_t sz)
 		cleanup(0);
 		errx(2, "can't chdir to '%s'", pen);
 	}
-	strcpy(Current, pen); CurrentSet = 1;
+	CurrentSet = 0; strlcpy(Current, pen, sizeof(Current)); CurrentSet = 1;
 	
 	return Previous;
 }
@@ -182,24 +169,26 @@ leave_playpen(char *save)
 		errx(2, "can't chdir back to '%s'", Previous);
 	} else if (CurrentSet && Current[0] && strcmp(Current, Previous)) {
 		if (strcmp(Current, "/") == 0) {
-			fprintf(stderr, "PANIC: About to rm -rf / (not doing so, aborting)\n");
+			fprintf(stderr, "PANIC: About to rm -fr / (not doing so, aborting)\n");
 			abort();
 		}
-		if (vsystem("rm -rf %s", Current))
+		if (fexec("rm", "-fr", Current, NULL))
 			warnx("couldn't remove temporary dir '%s'", Current);
-		strcpy(Current, Previous);
+		strlcpy(Current, Previous, sizeof(Current));
 	}
 	if (save)
-		strcpy(Previous, save);
+		strlcpy(Previous, save, sizeof(Previous));
 	else
 		Previous[0] = '\0';
 	signal(SIGINT, oldsig);
 }
 
 /*
- * Return free disk space (in bytes) on given file system
+ * Return free disk space (in bytes) on given file system.
+ * Returns size in a uint64_t since off_t isn't 64 bits on all
+ * operating systems.
  */
-off_t
+uint64_t
 min_free(char *tmpdir)
 {
 	struct statfs buf;
@@ -208,5 +197,5 @@ min_free(char *tmpdir)
 		warn("statfs");
 		return -1;
 	}
-	return (off_t) buf.f_bavail * (off_t) buf.f_bsize;
+	return (uint64_t) buf.f_bavail * (uint64_t) buf.f_bsize;
 }

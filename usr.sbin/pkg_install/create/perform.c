@@ -1,11 +1,11 @@
-/*	$NetBSD: perform.c,v 1.30.2.4 2003/02/08 07:48:48 jmc Exp $	*/
+/*	$NetBSD: perform.c,v 1.30.2.5 2003/09/21 10:32:44 tron Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: perform.c,v 1.38 1997/10/13 15:03:51 jkh Exp";
 #else
-__RCSID("$NetBSD: perform.c,v 1.30.2.4 2003/02/08 07:48:48 jmc Exp $");
+__RCSID("$NetBSD: perform.c,v 1.30.2.5 2003/09/21 10:32:44 tron Exp $");
 #endif
 #endif
 
@@ -79,9 +79,6 @@ make_dist(const char *home, const char *pkg, const char *suffix, const package_t
 	args[nargs++] = "-";	/* Use stdin for the file. */
 	args[nargs] = NULL;
 
-	if (Verbose)
-		printf("Creating gzip'd %s ball in '%s'\n", TAR_CMD, tball);
-
 	/* Set up a pipe for passing the filenames, and fork off a tar process. */
 	if (pipe(pipefds) == -1) {
 		cleanup(0);
@@ -140,6 +137,9 @@ make_dist(const char *home, const char *pkg, const char *suffix, const package_t
 	}
 	if (Preserve) {
 		(void) fprintf(totar, "%s\n", PRESERVE_FNAME);
+	}
+	if (create_views) {
+		(void) fprintf(totar, "%s\n", VIEWS_FNAME);
 	}
 
 	for (p = plist->head; p; p = p->next) {
@@ -389,6 +389,11 @@ pkg_perform(lpkg_head_t *pkgs)
 		copy_file(Home, Preserve, PRESERVE_FNAME);
 		add_plist(&plist, PLIST_IGNORE, NULL);
 		add_plist(&plist, PLIST_FILE, PRESERVE_FNAME);
+	}
+	if (create_views) {
+		write_file(VIEWS_FNAME, "");
+		add_plist(&plist, PLIST_IGNORE, NULL);
+		add_plist(&plist, PLIST_FILE, VIEWS_FNAME);
 	}
 
 	/* Finally, write out the packing list */

@@ -1,8 +1,8 @@
-/*	$NetBSD: ftpio.c,v 1.35.2.11 2003/02/08 07:52:23 jmc Exp $	*/
+/*	$NetBSD: ftpio.c,v 1.35.2.12 2003/09/21 10:32:47 tron Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ftpio.c,v 1.35.2.11 2003/02/08 07:52:23 jmc Exp $");
+__RCSID("$NetBSD: ftpio.c,v 1.35.2.12 2003/09/21 10:32:47 tron Exp $");
 #endif
 
 /*
@@ -139,12 +139,12 @@ expect(int fd, const char *str, int *ftprc)
 	case -1:
 	    if (errno == EINTR)
 		break;
-	    warn("expect: select() failed (probably ftp died because of bad args)");
+	    warn("expect: poll() failed (probably ftp died because of bad args)");
 	    done = 1;
 	    retval = -1;
 	    break;
 	case 0:
-	    warnx("expect: select() timeout");
+	    warnx("expect: poll() timeout");
 	    /* need to send ftp coprocess SIGINT to make it stop
 	     * downloading into dir that we'll blow away in a second */
 	    kill(ftp_pid, SIGINT);
@@ -171,7 +171,12 @@ expect(int fd, const char *str, int *ftprc)
 		break;
 	    }
 
-	    rc=read(fd,&buf[sizeof(buf)-1],1);
+	    rc = read(fd, &buf[sizeof(buf) - 1], 1);
+	    if (rc <= 0) {
+		done = 1;
+		retval = -1;
+		break;
+	    }
 
 	    if (verbose_expect)
 		putchar(buf[sizeof(buf)-1]);
@@ -420,12 +425,12 @@ ftp_start(char *base)
 	int urllen;
 
 	/* talk to termcap for bold on/off escape sequences */
-	if (tgetent(term, getenv("TERM")) < 0) {
-		bold_on[0]  = '\0';
-		bold_off[0] = '\0';
-	} else {
+	if (getenv("TERM") != NULL && tgetent(term, getenv("TERM")) > 0) {
 		p = bold_on;  tgetstr("md", &p);
 		p = bold_off; tgetstr("me", &p);
+	} else {
+		bold_on[0]  = '\0';
+		bold_off[0] = '\0';
 	}
 	
 	fileURLHost(base, newHost, sizeof(newHost));
@@ -528,7 +533,7 @@ expandURL(char *expandedurl, const char *wildcardurl)
 
     pkg=strrchr(wildcardurl, '/');
     if (pkg == NULL){
-	warnx("expandURL: no '/' in url %s?!", wildcardurl);
+	warnx("expandURL: no '/' in URL %s?!", wildcardurl);
 	return -1;
     }
     (void) snprintf(base, sizeof(base), "%*.*s/", (int)(pkg-wildcardurl),
@@ -548,7 +553,7 @@ expandURL(char *expandedurl, const char *wildcardurl)
 	char best[FILENAME_MAX];
 	int tfd;
 
-	strcpy(tmpname, "/var/tmp/pkg.XXXXXX");
+	strlcpy(tmpname, "/var/tmp/pkg.XXXXXX", sizeof(tmpname));
 	tfd=mkstemp(tmpname);
 	if (tfd == -1) {
 		warnx("Cannot generate temp file for ftp(1)'s nlist output");
@@ -660,7 +665,7 @@ unpackURL(const char *url, const char *dir)
 	char pkg_path[FILENAME_MAX];
 
 	{
-		/* Verify if the url is really ok */
+		/* Verify if the URL is really ok */
 		char expnd[FILENAME_MAX];
 
 		rc=expandURL(expnd, url);
@@ -677,7 +682,7 @@ unpackURL(const char *url, const char *dir)
 	
 	pkg=strrchr(url, '/');
 	if (pkg == NULL){
-		warnx("unpackURL: no '/' in url %s?!", url);
+		warnx("unpackURL: no '/' in URL %s?!", url);
 		return -1;
 	}
 	(void) snprintf(base, sizeof(base), "%*.*s/", (int)(pkg-url),
@@ -733,7 +738,7 @@ miscstuff(const char *url)
 
     pkg=strrchr(url, '/');
     if (pkg == NULL){
-	warnx("miscstuff: no '/' in url %s?!", url);
+	warnx("miscstuff: no '/' in URL %s?!", url);
 	return -1;
     }
     (void) snprintf(base, sizeof(base), "%*.*s/", (int)(pkg-url), (int)(pkg-url),

@@ -1,11 +1,11 @@
-/*	$NetBSD: show.c,v 1.21.2.3 2002/07/21 05:00:08 lukem Exp $	*/
+/*	$NetBSD: show.c,v 1.21.2.4 2003/09/21 10:32:46 tron Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: show.c,v 1.11 1997/10/08 07:47:38 charnier Exp";
 #else
-__RCSID("$NetBSD: show.c,v 1.21.2.3 2002/07/21 05:00:08 lukem Exp $");
+__RCSID("$NetBSD: show.c,v 1.21.2.4 2003/09/21 10:32:46 tron Exp $");
 #endif
 #endif
 
@@ -228,7 +228,8 @@ show_files(char *title, package_t *plist)
 		switch (p->type) {
 		case PLIST_FILE:
 			if (!ign) {
-				printf("%s/%s\n", dir, p->name);
+				printf("%s%s%s\n", dir,
+					(strcmp(dir, "/") == 0) ? "" : "/", p->name);
 			}
 			ign = FALSE;
 			break;
@@ -272,6 +273,44 @@ show_depends(char *title, package_t *plist)
 	for (p = plist->head; p; p = p->next) {
 		switch (p->type) {
 		case PLIST_PKGDEP:
+			printf("%s\n", p->name);
+			break;
+		default:
+			break;
+		}
+	}
+
+	printf("\n");
+}
+
+/*
+ * Show exact dependencies (packages this pkg was built with)
+ */
+void
+show_bld_depends(char *title, package_t *plist)
+{
+	plist_t *p;
+	int     nodepends;
+
+	nodepends = 1;
+	for (p = plist->head; p && nodepends; p = p->next) {
+		switch (p->type) {
+		case PLIST_BLDDEP:
+			nodepends = 0;
+			break;
+		default:
+			break;
+		}
+	}
+	if (nodepends)
+		return;
+
+	if (!Quiet) {
+		printf("%s%s", InfoPrefix, title);
+	}
+	for (p = plist->head; p; p = p->next) {
+		switch (p->type) {
+		case PLIST_BLDDEP:
 			printf("%s\n", p->name);
 			break;
 		default:

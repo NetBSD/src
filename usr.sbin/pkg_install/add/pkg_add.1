@@ -1,4 +1,4 @@
-.\" $NetBSD: pkg_add.1,v 1.33.2.5 2002/11/24 22:32:21 tron Exp $
+.\" $NetBSD: pkg_add.1,v 1.33.2.6 2003/09/21 10:32:43 tron Exp $
 .\"
 .\" FreeBSD install - a package for the installation and maintenance
 .\" of non-core utilities.
@@ -17,15 +17,21 @@
 .\"
 .\"     @(#)pkg_add.1
 .\"
-.Dd August 15, 2002
+.Dd September 8, 2003
 .Dt PKG_ADD 1
 .Os
 .Sh NAME
 .Nm pkg_add
 .Nd a utility for installing and upgrading software package distributions
 .Sh SYNOPSIS
-.Nm ""
-.Op Fl fIMnRSuVv
+.Nm
+.Op Fl fILMnRSuVv
+.Bk -words
+.Op Fl K Ar pkg_dbdir
+.Ek
+.Bk -words
+.Op Fl p Ar prefix
+.Ek
 .Bk -words
 .Op Fl s Ar verification-type
 .Ek
@@ -33,7 +39,10 @@
 .Op Fl t Ar template
 .Ek
 .Bk -words
-.Op Fl p Ar prefix
+.Op Fl W Ar viewbase
+.Ek
+.Bk -words
+.Op Fl w Ar view
 .Ek
 .Ar \fR[ftp://[\fIuser\fR[:\fIpassword]\fR@]\fIhost\fR[:\fIport\fR]][/\fIpath/\fR]pkg-name ...
 .Sh DESCRIPTION
@@ -105,6 +114,17 @@ will still try to find and auto-install missing prerequisite packages,
 a failure to find one will not be fatal.
 .It Fl I
 If an installation script exists for a given package, do not execute it.
+.It Fl K Ar pkg_dbdir
+Set
+.Ar pkg_dbdir
+as the package database directory.
+If this option isn't specified, then the package database directory is
+taken from the value of the environment variable
+.Ev PKG_DBDIR
+if it's set, otherwise it defaults to
+.Pa /var/db/pkg .
+.It Fl L
+Don't add the package to any views after installation.
 .It Fl M
 Run in
 .Cm MASTER
@@ -223,6 +243,28 @@ See below for a more detailed description of the process.
 Print version number and exit.
 .It Fl v
 Turn on verbose output.
+.It Fl W Ar viewbase
+Set
+.Ar viewbase
+as the base directory for the managed views.
+The default
+.Ar viewbase
+directory is set by
+.Xr pkg_view 1 .
+This value also may be set from the
+.Ev LOCALBASE
+environment variable.
+.It Fl w Ar view
+Set the
+.Ar view
+to which packages should be added after installation.
+The default
+.Ar view
+is set by
+.Xr pkg_view 1 .
+This value also may be set from the
+.Ev PKG_VIEW
+environment variable.
 .El
 .Pp
 One or more
@@ -233,7 +275,7 @@ URL pointing at a file available on an ftp or web site.
 Thus you may extract files directly from their anonymous ftp or WWW
 locations (e.g.
 .Nm
-ftp://ftp.netbsd.org/pub/NetBSD/packages/1.5/i386/shells/bash-2.04.tgz).
+ftp://ftp.NetBSD.org/pub/NetBSD/packages/1.5/i386/shells/bash-2.04.tgz).
 Note:  If you wish to use
 .Bf -emphasis
 passive mode
@@ -270,10 +312,12 @@ option is not given.
 .Pp
 If the
 .Fl u
-option is given, it's assumed the package should be upgraded instead.
-This is prepared by moving an existing
+option is given, it's assumed the package should be replaced by the
+new version instead.  Before doing so, all packages that depend on the
+pkg being upgraded are checked if they also work with the new version.
+If that test is successful, replacing is prepared by moving an existing
 .Pa +REQUIRED_BY
-file aside (if it exists), and by running
+file aside (if it exists), and running
 .Xr pkg_delete 1
 on the installed package.
 Installation then proceeds as if the package
@@ -396,9 +440,12 @@ for subsequent possible use by
 Any package dependencies are recorded in the other packages'
 .Pa /var/db/pkg/\*[Lt]other-pkg\*[Gt]/+REQUIRED_BY
 file
-(if the environment variable PKG_DBDIR is set, this overrides the
-.Pa /var/db/pkg/
+(if an alternate package database directory is specified, then it
+overrides the
+.Pa /var/db/pkg
 path shown above).
+.It
+If the package is a depoted package, then add it to the default view.
 .It
 The staging area is deleted and the program terminates.
 .It
@@ -424,7 +471,24 @@ is installed, even if the user might change it with the
 flag to
 .Cm pkg_add .
 .Sh ENVIRONMENT
-.Ss PKG_PATH
+.Bl -tag -width PKG_TMPDIR
+.It Ev LOCALBASE
+This is the location of the
+.Ar viewbase
+directory in which all the views are managed.
+The default
+.Ar viewbase
+directory is
+.Pa /usr/pkg .
+.It Ev PKG_DBDIR
+If the
+.Fl K
+flag isn't given, then
+.Ev PKG_DBDIR
+is the location of the package database directory.
+The default package database directory is
+.Pa /var/db/pkg .
+.It Ev PKG_PATH
 The value of the
 .Ev PKG_PATH
 is used if a given package can't be found, it's usually set to
@@ -435,13 +499,15 @@ Each entry consists of a directory name or URL.
 The current directory may be indicated implicitly by an empty directory
 name, or explicitly by a single period.
 FTP URLs may not end with a slash.
-.Ss PKG_DBDIR
-Where to register packages instead of
-.Pa /var/db/pkg .
-.Ss PKG_TMPDIR
+.It Ev PKG_TMPDIR
 Staging directory for installing packages, defaults to /var/tmp.
 Set to directory with lots of free disk if you run out of
 space when installing a binary package.
+.It Ev PKG_VIEW
+The default view can be specified in the
+.Ev PKG_VIEW
+environment variable.
+.El
 .Sh EXAMPLES
 In all cases,
 .Nm
@@ -468,9 +534,9 @@ a URL.
 The URL can be put into an environment variable,
 .Ev PKG_PATH .
 .Bd -literal
-# pkg_add -v ftp://ftp.netbsd.org/pub/NetBSD/packages/1.5/i386/All/mozilla-0.8.1.tgz
+# pkg_add -v ftp://ftp.NetBSD.org/pub/NetBSD/packages/1.5/i386/All/mozilla-0.8.1.tgz
 
-# export PKG_PATH=ftp://ftp.netbsd.org/pub/NetBSD/packages/1.5/i386/All
+# export PKG_PATH=ftp://ftp.NetBSD.org/pub/NetBSD/packages/1.5/i386/All
 # pkg_add -v mozilla
 .Ed
 .Sh SEE ALSO

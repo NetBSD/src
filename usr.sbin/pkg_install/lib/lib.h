@@ -1,4 +1,4 @@
-/* $NetBSD: lib.h,v 1.38.2.4 2003/02/08 07:52:42 jmc Exp $ */
+/* $NetBSD: lib.h,v 1.38.2.5 2003/09/21 10:32:47 tron Exp $ */
 
 /* from FreeBSD Id: lib.h,v 1.25 1997/10/08 07:48:03 charnier Exp */
 
@@ -63,6 +63,15 @@
 #define TAR_CMD	"tar"
 #endif
 
+/* Define gzip and bzip2, used to unpack binary packages */
+#ifndef GZIP_CMD
+#define GZIP_CMD "gzip"
+#endif
+
+#ifndef BZIP2_CMD
+#define BZIP2_CMD "bzip2"
+#endif
+
 /* Define ftp as a string, in case the ftp client is called something else */
 #ifndef FTP_CMD
 #define FTP_CMD "ftp"
@@ -80,14 +89,6 @@
 #define CHGRP_CMD "chgrp"
 #endif
 
-/* Where we put logging information by default, else ${PKG_DBDIR} if set */
-#ifndef DEF_LOG_DIR
-#define DEF_LOG_DIR		"/var/db/pkg"
-#endif
-
-/* just in case we change the environment variable name */
-#define PKG_DBDIR		"PKG_DBDIR"
-
 /* The names of our "special" files */
 #define CONTENTS_FNAME		"+CONTENTS"
 #define COMMENT_FNAME		"+COMMENT"
@@ -103,6 +104,8 @@
 #define SIZE_PKG_FNAME		"+SIZE_PKG"
 #define SIZE_ALL_FNAME		"+SIZE_ALL"
 #define PRESERVE_FNAME		"+PRESERVE"
+#define VIEWS_FNAME		"+VIEWS"
+#define DEPOT_FNAME		"+DEPOT"
 
 #define CMD_CHAR		'@'	/* prefix for extended PLIST cmd */
 
@@ -111,12 +114,6 @@
 
 #define	PKG_PATTERN_MAX	FILENAME_MAX	/* max length of pattern, including nul */
 #define	PKG_SUFFIX_MAX	10	/* max length of suffix, including nul */
-
-/* This should only happen on 1.3 and 1.3.1, not 1.3.2 and up */
-#ifndef TAILQ_FIRST
-#define TAILQ_FIRST(head)               ((head)->tqh_first)
-#define TAILQ_NEXT(elm, field)          ((elm)->field.tqe_next)
-#endif
 
 enum {
 	ReadWrite,
@@ -201,10 +198,12 @@ void    cleanup(int);
 char   *make_playpen(char *, size_t, size_t);
 char   *where_playpen(void);
 void    leave_playpen(char *);
-off_t   min_free(char *);
-void    save_dirs(char **c, char **p);
-void    restore_dirs(char *c, char *p);
+uint64_t min_free(char *);
+void    save_dirs(char **, char **);
+void    restore_dirs(char *, char *);
 void    show_version(void);
+int	fexec(const char *, ...);
+int	fcexec(const char *, const char *, ...);
 
 /* String */
 char   *get_dash_string(char **);
@@ -216,8 +215,8 @@ int     pmatch(const char *, const char *);
 int     findmatchingname(const char *, const char *, matchfn, void *); /* doesn't really belong to "strings" */
 char   *findbestmatchingname(const char *, const char *);	/* neither */
 int     ispkgpattern(const char *);
-char   *strnncpy(char *to, size_t tosize, char *from, size_t cc);
-void	strip_txz(char *buf, char *sfx, const char *fname);
+char   *strnncpy(char *, size_t, char *, size_t);
+void	strip_txz(char *, char *, const char *);
 
 /* callback functions for findmatchingname */
 int     findbestmatchingname_fn(const char *, void *);	/* neither */
@@ -248,24 +247,24 @@ int     unpack(const char *, const char *);
 void    format_cmd(char *, size_t, char *, char *, char *);
 
 /* ftpio.c: FTP handling */
-int	expandURL(char *expandedurl, const char *wildcardurl);
-int	unpackURL(const char *url, const char *dir);
-int	ftp_cmd(const char *cmd, const char *expectstr);
-int	ftp_start(char *base);
+int	expandURL(char *, const char *);
+int	unpackURL(const char *, const char *);
+int	ftp_cmd(const char *, const char *);
+int	ftp_start(char *);
 void	ftp_stop(void);
 
 /* Packing list */
 plist_t *new_plist_entry(void);
 plist_t *last_plist(package_t *);
 plist_t *find_plist(package_t *, pl_ent_t);
-char   *find_plist_option(package_t *, char *name);
+char   *find_plist_option(package_t *, char *);
 void    plist_delete(package_t *, Boolean, pl_ent_t, char *);
 void    free_plist(package_t *);
 void    mark_plist(package_t *);
 void    csum_plist_entry(char *, plist_t *);
 void    add_plist(package_t *, pl_ent_t, const char *);
 void    add_plist_top(package_t *, pl_ent_t, const char *);
-void    delete_plist(package_t *pkg, Boolean all, pl_ent_t type, char *name);
+void    delete_plist(package_t *, Boolean, pl_ent_t, char *);
 void    write_plist(package_t *, FILE *, char *);
 void    read_plist(package_t *, FILE *);
 int     plist_cmd(char *, char **);
@@ -276,11 +275,12 @@ int     pkgdb_open(int);
 void    pkgdb_close(void);
 int     pkgdb_store(const char *, const char *);
 char   *pkgdb_retrieve(const char *);
+void	pkgdb_dump(void);
 int     pkgdb_remove(const char *);
 int	pkgdb_remove_pkg(const char *);
-char   *pkgdb_iter(void);
 char   *_pkgdb_getPKGDB_FILE(char *, unsigned);
 char   *_pkgdb_getPKGDB_DIR(void);
+void	_pkgdb_setPKGDB_DIR(const char *);
 
 /* List of packages functions */
 lpkg_t *alloc_lpkg(const char *);
@@ -294,6 +294,6 @@ int     pkg_perform(lpkg_head_t *);
 extern Boolean Verbose;
 extern Boolean Fake;
 extern Boolean Force;
-extern int upgrade;
+extern Boolean Replace;
 
 #endif				/* _INST_LIB_LIB_H_ */
