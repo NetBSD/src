@@ -1,4 +1,4 @@
-/*	$NetBSD: room.c,v 1.6 1997/10/11 02:07:35 lukem Exp $	*/
+/*	$NetBSD: room.c,v 1.7 1999/02/10 01:36:50 hubertf Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)room.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: room.c,v 1.6 1997/10/11 02:07:35 lukem Exp $");
+__RCSID("$NetBSD: room.c,v 1.7 1999/02/10 01:36:50 hubertf Exp $");
 #endif
 #endif				/* not lint */
 
@@ -48,7 +48,7 @@ void
 writedes()
 {
 	int     compass;
-	char   *p;
+	const char   *p;
 	int     c;
 
 	printf("\n\t%s\n", location[position].name);
@@ -114,7 +114,7 @@ whichway(here)
 	}
 }
 
-char   *
+const char   *
 truedirec(way, option)
 	int     way;
 	char    option;

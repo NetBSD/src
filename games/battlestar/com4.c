@@ -1,4 +1,4 @@
-/*	$NetBSD: com4.c,v 1.6 1997/10/11 02:07:04 lukem Exp $	*/
+/*	$NetBSD: com4.c,v 1.7 1999/02/10 01:36:50 hubertf Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)com4.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: com4.c,v 1.6 1997/10/11 02:07:04 lukem Exp $");
+__RCSID("$NetBSD: com4.c,v 1.7 1999/02/10 01:36:50 hubertf Exp $");
 #endif
 #endif				/* not lint */
 
@@ -192,7 +192,7 @@ take(from)
 
 int
 throw(name)
-	char   *name;
+	const char   *name;
 {
 	int     n;
 	int     deposit = 0;
@@ -273,7 +273,7 @@ throw(name)
 
 int
 drop(name)
-	char   *name;
+	const char   *name;
 {
 
 	int     firstnumber, value;

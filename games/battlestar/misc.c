@@ -1,4 +1,4 @@
-/*	$NetBSD: misc.c,v 1.6 1997/10/11 02:07:27 lukem Exp $	*/
+/*	$NetBSD: misc.c,v 1.7 1999/02/10 01:36:50 hubertf Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)misc.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: misc.c,v 1.6 1997/10/11 02:07:27 lukem Exp $");
+__RCSID("$NetBSD: misc.c,v 1.7 1999/02/10 01:36:50 hubertf Exp $");
 #endif
 #endif				/* not lint */
 
@@ -46,10 +46,10 @@ __RCSID("$NetBSD: misc.c,v 1.6 1997/10/11 02:07:27 lukem Exp $");
 
 int
 card(array, size)		/* for beenthere, injuries */
-	char   *array;
+	const char   *array;
 	int     size;
 {
-	char   *end = array + size;
+	const char   *end = array + size;
 	int     i = 0;
 
 	while (array < end)
@@ -60,7 +60,7 @@ card(array, size)		/* for beenthere, injuries */
 
 int
 ucard(array)
-	unsigned int *array;
+	const unsigned int *array;
 {
 	int     j = 0, n;
 
