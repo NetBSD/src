@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.17 2003/01/18 21:36:47 christos Exp $
+#	$NetBSD: Makefile,v 1.18 2003/03/01 13:09:27 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -44,6 +44,10 @@ PSIMOBJ!=	cd ${TOP}/usr.bin/sim/ppc && ${PRINTOBJDIR}
 LDADD+=		-L${PSIMOBJ} -lsim
 DPADD+=		${PSIMOBJ}/libsim.a
 .endif
+
+OPCODESOBJ!=	cd ${TOP}/lib/libopcodes && ${PRINTOBJDIR}
+LDADD+=		-L${OPCODESOBJ} -lopcodes
+DPADD+=		${OPCODESOBJ}/libopcodes_pic.a
 
 BFDOBJ!=	cd ${TOP}/lib/libbfd && ${PRINTOBJDIR}
 LDADD+=		-L${BFDOBJ} -lbfd
