@@ -1,4 +1,4 @@
-/*	$NetBSD: awi_wicfg.c,v 1.2 2000/07/04 14:27:57 onoe Exp $	*/
+/*	$NetBSD: awi_wicfg.c,v 1.3 2000/07/06 17:22:25 onoe Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -270,6 +270,17 @@ awi_cfgget(ifp, cmd, data)
 		break;
 	case WI_RID_DEFLT_CRYPT_KEYS:
 		keys = (struct wi_ltv_keys *)&wreq;
+		/* do not show keys to non-root user */
+#ifdef __FreeBSD__
+		error = suser(curproc);
+#else
+		error = suser(curproc->p_ucred, &curproc->p_acflag);
+#endif
+		if (error) {
+			memset(keys, 0, sizeof(*keys));
+			error = 0;
+			break;
+		}
 		for (i = 0; i < IEEE80211_WEP_NKID; i++) {
 			k = &keys->wi_keys[i];
 			keylen = sizeof(k->wi_keydat);
