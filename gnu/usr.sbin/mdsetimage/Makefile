@@ -1,8 +1,32 @@
-#	$NetBSD: Makefile,v 1.2 2001/10/22 03:31:41 simonb Exp $
+#	$NetBSD: Makefile,v 1.3 2001/10/24 23:56:38 thorpej Exp $
 
 PROG=	mdsetimage
-MAN=	mdsetimage.8
 
+.if defined(MDSETIMAGE_TARGET_PREFIX)
+PROGNAME= ${MDSETIMAGE_TARGET_PREFIX}${PROG}
+MAN=	${MDSETIMAGE_TARGET_PREFIX}mdsetimage.8
+.else
+MAN=	mdsetimage.8
+.endif
+
+.if defined(MDSETIMAGE_TARGET_PREFIX)
+${MDSETIMAGE_TARGET_PREFIX}mdsetimage.8: ${.CURDIR}/mdsetimage.8
+	cp ${.IMPSRC} ${.TARGET}
+.endif
+
+.ifdef HOSTPROG
+# BFDDIR and IBERTYDIR must already be set
+TOP=		${.CURDIR}/../..
+DIST=		${TOP}/dist/toolchain
+
+CPPFLAGS+=	-I${BFDDIR} -I${DIST}/include
+
+DPADD+=	${BFDDIR}/libbfd.a
+LDADD+=	-L${BFDDIR} -lbfd
+
+DPADD+=	${IBERTYDIR}/libiberty.a
+LDADD+=	-L${IBERTYDIR} -liberty
+.else
 # XXX in an ideal world...
 # LDADD+= -lbfd
 # DPADD+= ${LIBBFD}
@@ -39,3 +63,4 @@ LDADD+=		-L${BFDOBJ} -lbfd
 .endif # !USE_NEW_TOOLCHAIN
 
 .include <bsd.prog.mk>
+.endif # HOSTPROG
