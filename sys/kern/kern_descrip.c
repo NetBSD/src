@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_descrip.c,v 1.123.2.1 2004/07/10 14:21:25 tron Exp $	*/
+/*	$NetBSD: kern_descrip.c,v 1.123.2.2 2005/03/16 11:38:28 tron Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.123.2.1 2004/07/10 14:21:25 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.123.2.2 2005/03/16 11:38:28 tron Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -138,7 +138,7 @@ find_last_set(struct filedesc *fd, int last)
 		off--;
 
 	if (off < 0)
-		return (0);
+		return (-1);
        
 	i = ((off + 1) << NDENTRYSHIFT) - 1;
 	if (i >= last)
@@ -1068,6 +1068,7 @@ fdinit1(struct filedesc0 *newfdp)
 	newfdp->fd_fd.fd_knlistsize = -1;
 	newfdp->fd_fd.fd_himap = newfdp->fd_dhimap;
 	newfdp->fd_fd.fd_lomap = newfdp->fd_dlomap;
+	newfdp->fd_fd.fd_lastfile = -1;
 }
 
 /*
