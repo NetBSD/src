@@ -1,7 +1,7 @@
-/*	$NetBSD: util.c,v 1.105 2001/02/19 23:03:46 cgd Exp $	*/
+/*	$NetBSD: util.c,v 1.106 2001/12/26 09:40:16 lukem Exp $	*/
 
 /*-
- * Copyright (c) 1997-2000 The NetBSD Foundation, Inc.
+ * Copyright (c) 1997-2001 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -75,7 +75,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: util.c,v 1.105 2001/02/19 23:03:46 cgd Exp $");
+__RCSID("$NetBSD: util.c,v 1.106 2001/12/26 09:40:16 lukem Exp $");
 #endif /* not lint */
 
 /*

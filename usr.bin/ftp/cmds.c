@@ -1,7 +1,7 @@
-/*	$NetBSD: cmds.c,v 1.94 2001/02/19 18:15:28 lukem Exp $	*/
+/*	$NetBSD: cmds.c,v 1.95 2001/12/26 09:40:15 lukem Exp $	*/
 
 /*-
- * Copyright (c) 1996-2000 The NetBSD Foundation, Inc.
+ * Copyright (c) 1996-2001 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -107,7 +107,7 @@
 #if 0
 static char sccsid[] = "@(#)cmds.c	8.6 (Berkeley) 10/9/94";
 #else
-__RCSID("$NetBSD: cmds.c,v 1.94 2001/02/19 18:15:28 lukem Exp $");
+__RCSID("$NetBSD: cmds.c,v 1.95 2001/12/26 09:40:15 lukem Exp $");
 #endif
 #endif /* not lint */
 

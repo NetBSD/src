@@ -1,6 +1,6 @@
-/*	$NetBSD: version.h,v 1.26 2001/12/23 12:23:02 lukem Exp $	*/
+/*	$NetBSD: version.h,v 1.27 2001/12/26 09:40:16 lukem Exp $	*/
 /*-
- * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
+ * Copyright (c) 1999-2001 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
