@@ -1,10 +1,10 @@
-/*	$NetBSD: pcmciadevs.h,v 1.19 1998/10/07 01:08:57 jtk Exp $	*/
+/*	$NetBSD: pcmciadevs.h,v 1.20 1998/10/08 20:12:52 thorpej Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcmciadevs,v 1.17 1998/10/07 01:08:37 jtk Exp 
+ *	NetBSD: pcmciadevs,v 1.18 1998/10/08 20:11:59 thorpej Exp 
  */
 
 /*-
@@ -136,6 +136,9 @@
 #define	PCMCIA_CIS_MEGAHERTZ_XJ4288	{ NULL, NULL, NULL, NULL }
 #define	PCMCIA_PRODUCT_MEGAHERTZ_XJ4288	0x0023
 #define	PCMCIA_STR_MEGAHERTZ_XJ4288	"Megahertz XJ4288 Modem"
+#define	PCMCIA_CIS_MEGAHERTZ_XJ5560	{ NULL, NULL, NULL, NULL }
+#define	PCMCIA_PRODUCT_MEGAHERTZ_XJ5560	0x0034
+#define	PCMCIA_STR_MEGAHERTZ_XJ5560	"Megahertz X-JACK 56kbps Modem"
 #define	PCMCIA_CIS_MEGAHERTZ2_XJACK	{ NULL, NULL, NULL, NULL }
 #define	PCMCIA_PRODUCT_MEGAHERTZ2_XJACK	0x0103
 #define	PCMCIA_STR_MEGAHERTZ2_XJACK	"Megahertz X-JACK Ethernet"
