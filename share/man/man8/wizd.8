@@ -1,4 +1,4 @@
-.\"	$NetBSD: wizd.8,v 1.1 2003/04/17 20:48:34 tron Exp $
+.\"	$NetBSD: wizd.8,v 1.2 2003/04/17 21:23:45 perry Exp $
 .\"
 .\" Copyright (c) 2003 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -36,22 +36,30 @@
 .Os
 .Sh NAME
 .Nm wizd
-.Nd fix typos and correct man pages
+.Nd automatically correct typographical errors in man pages
 .Sh SYNOPSIS
 .Nm
 .Sh DESCRIPTION
 .Nm
-automatically checks commit messages on man pages about correct usage of
+automatically checks and corrects spelling errors, usage problems
+with
 .Xr mdoc 7
-macros and typos.
+macros, and other typographical errors in man pages.
 .Pp
+.Nm
+is invoked by any
+.Xr cvs 1
+commit to a man page.
 A standalone mode is also available by sending mail to
 .Aq wiz@netbsd.org .
 .Sh CAVEATS
 .Nm
 is not only copyrighted, but also registered.
 .Sh SEE ALSO
-.Xr intro 1
+.Xr cvs 1 ,
+.Xr intro 1 ,
+.Xr man 1 ,
+.Xr mdoc 7
 .Sh HISTORY
 .Nm
 appeared in
