@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.16 2001/02/21 09:10:42 wdk Exp $	*/
+/*	$NetBSD: machdep.c,v 1.17 2001/02/21 09:46:54 wdk Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.16 2001/02/21 09:10:42 wdk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.17 2001/02/21 09:46:54 wdk Exp $");
 
 /* from: Utah Hdr: machdep.c 1.63 91/04/24 */
 
@@ -673,7 +673,7 @@ caddr_t first;
 static unsigned
 unimpl_clkread()
 {
-	panic("sysconf.init didn't set clkread");
+	return 0;	/* No microtime available */
 }
 
 static void
