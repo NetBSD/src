@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.28 2003/06/13 11:57:33 dsl Exp $	*/
+/*	$NetBSD: md.c,v 1.29 2003/07/11 14:48:43 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -57,38 +57,8 @@
 int
 md_get_info(void)
 {
-	struct disklabel disklabel;
-	int fd;
-	char devname[100];
-
-	snprintf (devname, 100, "/dev/r%s%c", diskdev, 'a' + getrawpartition());
-
-	fd = open (devname, O_RDONLY, 0);
-	if (fd < 0) {
-		endwin();
-		fprintf (stderr, "Can't open %s\n", devname);
-		exit(1);
-	}
-	if (ioctl(fd, DIOCGDINFO, &disklabel) == -1) {
-		endwin();
-		fprintf (stderr, "Can't read disklabel on %s.\n", devname);
-		close(fd);
-		exit(1);
-	}
-	close(fd);
-
-	dlcyl = disklabel.d_ncylinders;
-	dlhead = disklabel.d_ntracks;
-	dlsec = disklabel.d_nsectors;
-	sectorsize = disklabel.d_secsize;
-	dlcylsize = disklabel.d_secpercyl;
 
 	disktype = "SCSI";
-	dlcyl  = disk->dd_cyl;
-	dlhead = disk->dd_head;
-	dlsec  = disk->dd_sec;
-	dlsize = dlcyl*dlhead*dlsec;
-
 	return 1;
 }
 
