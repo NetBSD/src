@@ -24,6 +24,8 @@ _rtld_relocate_nonplt_objects(obj, dodebug)
 
 	for (rel = obj->rel; rel < obj->rellim; rel++) {
 		Elf_Addr        *where;
+		const Elf_Sym   *def;
+		const Obj_Entry *defobj;
 		Elf_Addr         tmp;
 		unsigned long	 symnum;
 
@@ -37,11 +39,8 @@ _rtld_relocate_nonplt_objects(obj, dodebug)
 #if 1 /* XXX should not occur */
 		case R_TYPE(PC32):
 #ifdef COMBRELOC
-			if (symnum != lastsym)
+			if (symnum != lastsym) {
 #endif
-			{
-				const Elf_Sym   *def;
-				const Obj_Entry *defobj;
 				def = _rtld_find_symdef(symnum, obj, &defobj,
 				    false);
 				if (def == NULL)
@@ -50,13 +49,13 @@ _rtld_relocate_nonplt_objects(obj, dodebug)
 				    def->st_value);
 #ifdef COMBRELOC
 				lastsym = symnum;
-#endif
 			}
+#endif
 
 			*where += target - (Elf_Addr)where;
 			rdbg(dodebug, ("PC32 %s in %s --> %p in %s",
-			    defobj->strtab + def->st_name, obj->path,
-			    (void *)*where, defobj->path));
+			    obj->strtab + obj->symtab[symnum].st_name,
+			    obj->path, (void *)*where, defobj->path));
 			break;
 
 		case R_TYPE(GOT32):
@@ -64,11 +63,8 @@ _rtld_relocate_nonplt_objects(obj, dodebug)
 		case R_TYPE(32):
 		case R_TYPE(GLOB_DAT):
 #ifdef COMBRELOC
-			if (symnum != lastsym)
+			if (symnum != lastsym) {
 #endif
-			{
-				const Elf_Sym   *def;
-				const Obj_Entry *defobj;
 				def = _rtld_find_symdef(symnum, obj, &defobj,
 				    false);
 				if (def == NULL)
@@ -77,15 +73,15 @@ _rtld_relocate_nonplt_objects(obj, dodebug)
 				    def->st_value);
 #ifdef COMBRELOC
 				lastsym = symnum;
-#endif
 			}
+#endif
 
 			tmp = target + *where;
 			if (*where != tmp)
 				*where = tmp;
 			rdbg(dodebug, ("32/GLOB_DAT %s in %s --> %p in %s",
-			    defobj->strtab + def->st_name, obj->path,
-			    (void *)*where, defobj->path));
+			    obj->strtab + obj->symtab[symnum].st_name,
+			    obj->path, (void *)*where, defobj->path));
 			break;
 
 		case R_TYPE(RELATIVE):
