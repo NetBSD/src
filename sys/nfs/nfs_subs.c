@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_subs.c,v 1.110 2003/03/28 13:05:48 yamt Exp $	*/
+/*	$NetBSD: nfs_subs.c,v 1.111 2003/03/31 14:47:03 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_subs.c,v 1.110 2003/03/28 13:05:48 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_subs.c,v 1.111 2003/03/31 14:47:03 yamt Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -2493,7 +2493,7 @@ nfs_merge_commit_ranges(vp)
 	np->n_pushlo = np->n_pushhi = 0;
 	np->n_commitflags &= ~NFS_COMMIT_PUSH_VALID;
 
-#ifdef fvdl_debug
+#ifdef NFS_DEBUG_COMMIT
 	printf("merge: committed: %u - %u\n", (unsigned)np->n_pushedlo,
 	    (unsigned)np->n_pushedhi);
 #endif
@@ -2552,7 +2552,7 @@ nfs_add_committed_range(vp, off, len)
 		if (lo < np->n_pushedlo)
 			np->n_pushedlo = lo;
 	}
-#ifdef fvdl_debug
+#ifdef NFS_DEBUG_COMMIT
 	printf("add: committed: %u - %u\n", (unsigned)np->n_pushedlo,
 	    (unsigned)np->n_pushedhi);
 #endif
@@ -2589,7 +2589,7 @@ nfs_del_committed_range(vp, off, len)
 		else
 			np->n_pushedlo = hi;
 	}
-#ifdef fvdl_debug
+#ifdef NFS_DEBUG_COMMIT
 	printf("del: committed: %u - %u\n", (unsigned)np->n_pushedlo,
 	    (unsigned)np->n_pushedhi);
 #endif
@@ -2616,7 +2616,7 @@ nfs_add_tobecommitted_range(vp, off, len)
 		if (hi > np->n_pushhi)
 			np->n_pushhi = hi;
 	}
-#ifdef fvdl_debug
+#ifdef NFS_DEBUG_COMMIT
 	printf("add: tobecommitted: %u - %u\n", (unsigned)np->n_pushlo,
 	    (unsigned)np->n_pushhi);
 #endif
@@ -2654,7 +2654,7 @@ nfs_del_tobecommitted_range(vp, off, len)
 		else
 			np->n_pushlo = hi;
 	}
-#ifdef fvdl_debug
+#ifdef NFS_DEBUG_COMMIT
 	printf("del: tobecommitted: %u - %u\n", (unsigned)np->n_pushlo,
 	    (unsigned)np->n_pushhi);
 #endif
