@@ -1,4 +1,4 @@
-#	$NetBSD: ARMADA,v 1.4 2001/08/22 15:39:05 hubertf Exp $
+#	$NetBSD: ARMADA,v 1.5 2001/08/28 09:25:52 ad Exp $
 #
 #	CARDBUS: GENERIC + CardBus support.  Additionally, some
 #	things typically not found on laptops have been commented out.
@@ -8,7 +8,7 @@
 
 include "arch/i386/conf/std.i386"
 
-#ident		"CARDBUS-$Revision: 1.4 $"
+#ident		"CARDBUS-$Revision: 1.5 $"
 
 maxusers	32		# estimated number of users
 
@@ -284,6 +284,8 @@ cardslot*	at cbb?
 # CardBus bus support
 # following makes ARMADA M700's happy
 options         RBUS_MIN_START=0x20000000 
+options		RBUS_IO_BASE=0x600
+options		RBUS_IO_SIZE=0x100
 cardbus*	at cardslot?
 pcmcia*		at cardslot?
 
