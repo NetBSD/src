@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_run.c,v 1.1.2.15 2002/10/22 01:28:21 nathanw Exp $	*/
+/*	$NetBSD: pthread_run.c,v 1.1.2.16 2002/10/28 17:41:15 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -58,12 +58,37 @@ struct pthread_queue_t idlequeue;
 extern pthread_spin_t deadqueue_lock;
 extern struct pthread_queue_t reidlequeue;
 
+
+int
+sched_yield(void)
+{
+	pthread_t self, next;
+	extern int pthread__started;
+
+	if (pthread__started) {
+		self = pthread__self();
+		pthread_spinlock(self, &runqueue_lock);
+		PTQ_INSERT_TAIL(&runqueue, self, pt_runq);
+		/*
+		 * There will always be at least one thread on the runqueue,
+		 * because we just put ourselves there.
+		 */
+	        next = PTQ_FIRST(&runqueue);
+		PTQ_REMOVE(&runqueue, next, pt_runq);
+		next->pt_state = PT_STATE_RUNNING;
+		pthread__locked_switch(self, next, &runqueue_lock);
+	}
+
+	return 0;
+}
+
+
 /* Go do another thread, without putting us on the run queue. */
 void
 pthread__block(pthread_t self, pthread_spin_t *queuelock)
 {
 	pthread_t next;
-	
+
 	next = pthread__next(self);
 	next->pt_state = PT_STATE_RUNNING;
 	SDPRINTF(("(calling locked_switch %p, %p) spinlock %d, %d\n",
@@ -71,7 +96,6 @@ pthread__block(pthread_t self, pthread_spin_t *queuelock)
 	pthread__locked_switch(self, next, queuelock);
 	SDPRINTF(("(back from locked_switch %p, %p) spinlock %d, %d\n",
  		self, next, self->pt_spinlocks, next->pt_spinlocks));
-  
 }
 
 
@@ -134,11 +158,12 @@ pthread__sched_idle(pthread_t self, pthread_t thread)
 	pthread_spinunlock(self, &runqueue_lock);
 }
 
+
 void
 pthread__sched_idle2(pthread_t self)
 {
 	pthread_t idlethread, qhead;
-	
+
 	qhead = NULL;
 	pthread_spinlock(self, &deadqueue_lock);
 	while (!PTQ_EMPTY(&reidlequeue)) {
@@ -155,7 +180,7 @@ pthread__sched_idle2(pthread_t self)
 
 /*
  * Put a series of threads, linked by their pt_next fields, onto the
- * run queue. 
+ * run queue.
  */
 void
 pthread__sched_bulk(pthread_t self, pthread_t qhead)

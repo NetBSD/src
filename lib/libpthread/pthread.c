@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread.c,v 1.1.2.31 2002/10/28 16:23:46 nathanw Exp $	*/
+/*	$NetBSD: pthread.c,v 1.1.2.32 2002/10/28 17:41:15 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -98,7 +98,7 @@ pthread_ops_t pthread_ops = {
 
 	pthread_once,
 
-	pthread_self, 
+	pthread_self,
 
 	pthread_sigmask,
 
@@ -106,9 +106,9 @@ pthread_ops_t pthread_ops = {
 };
 
 /*
- * This needs to be started by the library loading code, before main() 
+ * This needs to be started by the library loading code, before main()
  * gets to run, for various things that use the state of the initial thread
- * to work properly (thread-specific data is an application-visible example; 
+ * to work properly (thread-specific data is an application-visible example;
  * spinlock counts for mutexes is an internal example).
  */
 void pthread_init(void)
@@ -127,7 +127,7 @@ void pthread_init(void)
 	PTQ_INIT(&reidlequeue);
 	PTQ_INIT(&runqueue);
 	PTQ_INIT(&idlequeue);
-	
+
 	/* Create the thread structure corresponding to main() */
 	pthread__initmain(&first);
 	pthread__initthread(first, first);
@@ -211,7 +211,7 @@ pthread__initthread(pthread_t self, pthread_t t)
 }
 
 int
-pthread_create(pthread_t *thread, const pthread_attr_t *attr, 
+pthread_create(pthread_t *thread, const pthread_attr_t *attr,
 	    void *(*startfunc)(void *), void *arg)
 {
 	pthread_t self, newthread;
@@ -236,7 +236,7 @@ pthread_create(pthread_t *thread, const pthread_attr_t *attr,
 		nattr = *attr;
 	else
 		return EINVAL;
-		
+
 
 	self = pthread__self();
 
@@ -244,7 +244,7 @@ pthread_create(pthread_t *thread, const pthread_attr_t *attr,
 	if (!PTQ_EMPTY(&deadqueue)) {
 		newthread= PTQ_FIRST(&deadqueue);
 		PTQ_REMOVE(&deadqueue, newthread, pt_allq);
-		pthread_spinunlock(self, &deadqueue_lock);		
+		pthread_spinunlock(self, &deadqueue_lock);
 	} else {
 		pthread_spinunlock(self, &deadqueue_lock);
 		/* Set up a stack and allocate space for a pthread_st. */
@@ -252,12 +252,12 @@ pthread_create(pthread_t *thread, const pthread_attr_t *attr,
 		if (ret != 0)
 			return ret;
 	}
-		
+
 	/* 2. Set up state. */
 	pthread__initthread(self, newthread);
 	newthread->pt_flags = nattr.pta_flags;
 	newthread->pt_sigmask = self->pt_sigmask;
-	
+
 	/*
 	 * 3. Set up context.
 	 *
@@ -275,10 +275,10 @@ pthread_create(pthread_t *thread, const pthread_attr_t *attr,
 	PTQ_INSERT_HEAD(&allqueue, newthread, pt_allq);
 	nthreads++;
 	pthread_spinunlock(self, &allqueue_lock);
-	
+
 	/* 5. Put on run queue. */
 	pthread__sched(self, newthread);
-	
+
 	*thread = newthread;
 
 	return 0;
@@ -310,9 +310,9 @@ pthread__idle(void)
 	self = pthread__self();
 
 	/*
-	 * The drill here is that we want to yield the processor, 
+	 * The drill here is that we want to yield the processor,
 	 * but for the thread itself to be recovered, we need to be on
-	 * a list somewhere for the thread system to know about us. 
+	 * a list somewhere for the thread system to know about us.
 	 */
 	pthread_spinlock(self, &deadqueue_lock);
 	PTQ_INSERT_TAIL(&reidlequeue, self, pt_runq);
@@ -349,7 +349,7 @@ pthread_exit(void *retval)
 
 	/* Perform cleanup of thread-specific data */
 	pthread__destroy_tsd(self);
-	
+
 	self->pt_exitval = retval;
 
 	pthread_spinlock(self, &self->pt_join_lock);
@@ -360,7 +360,7 @@ pthread_exit(void *retval)
 		PTQ_REMOVE(&allqueue, self, pt_allq);
 		nthreads--;
 		nt = nthreads;
-		pthread_spinunlock(self, &allqueue_lock); 
+		pthread_spinunlock(self, &allqueue_lock);
 
 		self->pt_state = PT_STATE_DEAD;
 		if (nt == 0) {
@@ -377,7 +377,7 @@ pthread_exit(void *retval)
 		nthreads--;
 		nt = nthreads;
 		self->pt_state = PT_STATE_ZOMBIE;
-		pthread_spinunlock(self, &allqueue_lock); 
+		pthread_spinunlock(self, &allqueue_lock);
 		if (nt == 0) {
 			/* Whoah, we're the last one. Time to go. */
 			exit(0);
@@ -385,7 +385,7 @@ pthread_exit(void *retval)
 		/* Wake up all the potential joiners. Only one can win.
 		 * (Can you say "Thundering Herd"? I knew you could.)
 		 */
-		PTQ_FOREACH(joiner, &self->pt_joiners, pt_sleep) 
+		PTQ_FOREACH(joiner, &self->pt_joiners, pt_sleep)
 		    pthread__sched(self, joiner);
 		pthread__block(self, &self->pt_join_lock);
 	}
@@ -409,10 +409,10 @@ pthread_join(pthread_t thread, void **valptr)
 
 	if (thread->pt_magic != PT_MAGIC)
 		return EINVAL;
-	
+
 	if (thread == self)
 		return EDEADLK;
-		
+
 	pthread_spinlock(self, &thread->pt_join_lock);
 
 	if (thread->pt_flags & PT_FLAG_DETACHED) {
@@ -442,7 +442,7 @@ pthread_join(pthread_t thread, void **valptr)
 		pthread__block(self, &thread->pt_join_lock);
 		pthread_spinlock(self, &thread->pt_join_lock);
 	}
-	
+
 	if ((thread->pt_state == PT_STATE_DEAD) ||
 	    (thread->pt_flags & PT_FLAG_DETACHED)) {
 		/* Someone beat us to the join, or called pthread_detach(). */
@@ -491,7 +491,7 @@ pthread_detach(pthread_t thread)
 		return EINVAL;
 
 	pthread_spinlock(self, &thread->pt_join_lock);
-	
+
 	if (thread->pt_flags & PT_FLAG_DETACHED) {
 		pthread_spinunlock(self, &thread->pt_join_lock);
 		return EINVAL;
@@ -500,22 +500,13 @@ pthread_detach(pthread_t thread)
 	thread->pt_flags |= PT_FLAG_DETACHED;
 
 	/* Any joiners have to be punted now. */
-	PTQ_FOREACH(joiner, &thread->pt_joiners, pt_sleep) 
+	PTQ_FOREACH(joiner, &thread->pt_joiners, pt_sleep)
 	    pthread__sched(self, joiner);
 
 	pthread_spinunlock(self, &thread->pt_join_lock);
 
 	return 0;
 }
-
-int
-sched_yield(void)
-{
-	/* XXX implement me */
-	return 0;
-}
-
-
 
 int
 pthread_attr_init(pthread_attr_t *attr)
@@ -554,7 +545,7 @@ pthread_attr_setdetachstate(pthread_attr_t *attr, int detachstate)
 {
 	if ((attr == NULL) || (attr->pta_magic != PT_ATTR_MAGIC))
 		return EINVAL;
-	
+
 	switch (detachstate) {
 	case PTHREAD_CREATE_JOINABLE:
 		attr->pta_flags &= ~PT_FLAG_DETACHED;
@@ -571,13 +562,13 @@ pthread_attr_setdetachstate(pthread_attr_t *attr, int detachstate)
 
 
 int
-pthread_attr_setschedparam(pthread_attr_t *attr, 
+pthread_attr_setschedparam(pthread_attr_t *attr,
     const struct sched_param *param)
 {
 
 	if ((attr == NULL) || (attr->pta_magic != PT_ATTR_MAGIC))
 		return EINVAL;
-	
+
 	if (param == NULL)
 		return EINVAL;
 
@@ -594,10 +585,10 @@ pthread_attr_getschedparam(pthread_attr_t *attr, struct sched_param *param)
 
 	if ((attr == NULL) || (attr->pta_magic != PT_ATTR_MAGIC))
 		return EINVAL;
-	
+
 	if (param == NULL)
 		return EINVAL;
-	
+
 	param->sched_priority = 0;
 
 	return 0;
@@ -605,7 +596,7 @@ pthread_attr_getschedparam(pthread_attr_t *attr, struct sched_param *param)
 
 /*
  * XXX There should be a way for applications to use the efficent
- *  inline version, but there are opacity/namespace issues. 
+ *  inline version, but there are opacity/namespace issues.
  */
 
 pthread_t
@@ -622,7 +613,7 @@ pthread_cancel(pthread_t thread)
 	int flags;
 
 	if (!(thread->pt_state == PT_STATE_RUNNING ||
-	    thread->pt_state == PT_STATE_RUNNABLE || 
+	    thread->pt_state == PT_STATE_RUNNABLE ||
 	    thread->pt_state == PT_STATE_BLOCKED_QUEUE ||
 	    thread->pt_state == PT_STATE_BLOCKED_SYS))
 		return ESRCH;
@@ -641,7 +632,7 @@ pthread_cancel(pthread_t thread)
 			 * it returns. If it doesn't wake up when we
 			 * make this call, then it's blocked
 			 * uninterruptably in the kernel, and there's
-			 * not much to be done about it.  
+			 * not much to be done about it.
 			 */
 			_lwp_wakeup(thread->pt_blockedlwp);
 		} else if (thread->pt_state == PT_STATE_BLOCKED_QUEUE) {
@@ -651,7 +642,7 @@ pthread_cancel(pthread_t thread)
 			 * caller will check for the cancellation.
 			 */
 			pthread_spinlock(self, thread->pt_sleeplock);
-			PTQ_REMOVE(thread->pt_sleepq, thread, 
+			PTQ_REMOVE(thread->pt_sleepq, thread,
 			    pt_sleep);
 			pthread_spinunlock(self, thread->pt_sleeplock);
 			pthread__sched(self, thread);
@@ -676,7 +667,7 @@ pthread_setcancelstate(int state, int *oldstate)
 {
 	pthread_t self;
 	int flags;
-	
+
 	self = pthread__self();
 	flags = self->pt_flags;
 
@@ -704,7 +695,7 @@ pthread_setcancelstate(int state, int *oldstate)
 		}
 	} else
 		return EINVAL;
-	
+
 	self->pt_flags = flags;
 
 	return 0;
@@ -716,7 +707,7 @@ pthread_setcanceltype(int type, int *oldtype)
 {
 	pthread_t self;
 	int flags;
-	
+
 	self = pthread__self();
 	flags = self->pt_flags;
 
@@ -746,7 +737,7 @@ void
 pthread_testcancel()
 {
 	pthread_t self;
-	
+
 	self = pthread__self();
 	if (self->pt_cancel)
 		pthread_exit(PTHREAD_CANCELED);
@@ -790,13 +781,13 @@ pthread__cleanup_push(void (*cleanup)(void *), void *arg, void *store)
 {
 	pthread_t self;
 	struct pt_clean_t *entry;
-	
+
 	self = pthread__self();
 	entry = store;
 	entry->ptc_cleanup = cleanup;
 	entry->ptc_arg = arg;
 	PTQ_INSERT_HEAD(&self->pt_cleanup_stack, entry, ptc_next);
-	
+
 }
 
 void
@@ -804,14 +795,14 @@ pthread__cleanup_pop(int ex, void *store)
 {
 	pthread_t self;
 	struct pt_clean_t *entry;
-	
+
 	self = pthread__self();
 	entry = store;
-	
+
 	PTQ_REMOVE(&self->pt_cleanup_stack, entry, ptc_next);
 	if (ex)
 		(*entry->ptc_cleanup)(entry->ptc_arg);
-	
+
 }
 
 
@@ -819,7 +810,7 @@ int *
 pthread__errno(void)
 {
 	pthread_t self;
-	
+
 	self = pthread__self();
 
 	return &(self->pt_errno);
