@@ -1,4 +1,4 @@
-/*	$NetBSD: record.c,v 1.15 2001/05/02 12:49:42 minoura Exp $	*/
+/*	$NetBSD: record.c,v 1.16 2001/06/07 12:50:29 mrg Exp $	*/
 
 /*
  * Copyright (c) 1999 Matthew R. Green
@@ -306,6 +306,7 @@ cleanup(signo)
 void
 write_header()
 {
+	static int warned = 0;
 	sun_audioheader auh;
 	struct iovec iv[3];
 	int veclen = 0, left, tlen = 0;
@@ -313,9 +314,10 @@ write_header()
 
 	/* if we can't express this as a Sun header, don't write any */
 	if (audio_encoding_to_sun(encoding, precision, &sunenc) != 0) {
-		if (!qflag)
+		if (!qflag && !warned)
 			warnx("failed to convert to sun encoding; "
 			      "Sun audio header not written");
+		warned = 1;
 		return;
 	}
 
