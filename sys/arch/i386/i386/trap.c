@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)trap.c	7.4 (Berkeley) 5/13/91
- *	$Id: trap.c,v 1.53 1994/10/20 04:43:26 cgd Exp $
+ *	$Id: trap.c,v 1.54 1994/10/26 01:32:51 mycroft Exp $
  */
 
 /*
@@ -140,6 +140,7 @@ char	*trap_type[] = {
 	"invalid TSS fault",			/* 15 T_TSSFLT */
 	"segment not present fault",		/* 16 T_SEGNPFLT */
 	"stack fault",				/* 17 T_STKFLT */
+	"reserved trap",			/* 18 T_RESERVED */
 };
 int	trap_types = sizeof trap_type / sizeof trap_type[0];
 
