@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sysctl.c,v 1.15 1996/02/27 04:20:40 jonathan Exp $	*/
+/*	$NetBSD: kern_sysctl.c,v 1.16 1996/04/12 23:21:37 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -164,8 +164,7 @@ sys___sysctl(p, v, retval)
 		return (error);
 	if (SCARG(uap, oldlenp))
 		error = copyout(&oldlen, SCARG(uap, oldlenp), sizeof(oldlen));
-	*retval = oldlen;
-	return (0);
+	return (error);
 }
 
 /*
