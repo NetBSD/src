@@ -1,4 +1,4 @@
-.\"	$NetBSD: pkg_admin.1,v 1.25 2003/09/13 05:48:50 jlam Exp $
+.\"	$NetBSD: pkg_admin.1,v 1.26 2003/09/18 09:56:22 agc Exp $
 .\"
 .\" Copyright (c) 1999-2002 Hubert Feyrer.  All rights reserved.
 .\"
@@ -72,6 +72,14 @@ taken from the value of the environment variable
 .Ev PKG_DBDIR
 if it's set, otherwise it defaults to
 .Pa /var/db/pkg .
+.It Fl S
+Set the shell glob pattern for package suffices when matching package
+names for
+.Cm lsall
+and
+.Cm lsbest
+to be the null suffix.
+The default pattern is ".t[bg]z".
 .It Fl s Ar sfx_pattern
 Set the shell glob pattern for package suffices when matching package
 names for
