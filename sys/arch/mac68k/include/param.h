@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.15 1995/03/18 07:23:33 cgd Exp $	*/
+/*	$NetBSD: param.h,v 1.16 1995/03/29 07:35:35 briggs Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -209,7 +209,6 @@
 })
 
 /* spl0 requires checking for software interrupts */
-#if defined(BARF_BARF_BARF)
 #define spl1()  _spl(PSL_S|PSL_IPL1)
 #define spl2()  _spl(PSL_S|PSL_IPL2)
 #define spl3()  _spl(PSL_S|PSL_IPL3)
@@ -217,33 +216,21 @@
 #define spl5()  _spl(PSL_S|PSL_IPL5)
 #define spl6()  _spl(PSL_S|PSL_IPL6)
 #define spl7()  _spl(PSL_S|PSL_IPL7)
-#else /* not BARF_BARF_BARF */
-#define spl1()  _spl(PSL_S|PSL_IPL3)
-#define spl2()  _spl(PSL_S|PSL_IPL3)
-#define spl3()  _spl(PSL_S|PSL_IPL3)
-#define spl4()  _spl(PSL_S|PSL_IPL3)
-#define spl5()  _spl(PSL_S|PSL_IPL3)
-#define spl6()  _spl(PSL_S|PSL_IPL3)
-#define spl7()  _spl(PSL_S|PSL_IPL7)	/* spl7() always excludes everything */
-#endif /* BARF_BARF_BARF */
 
-/* ALICE 06/03/92,14:08:28 BG I guess we could put in some spl's for various */
-/*  devices like VIA1 interrupt, and so on. */
-/* BARF -- These should be used for:
+/* These should be used for:
    1) ensuring mutual exclusion (why use processor level?)
    2) allowing faster devices to take priority
  */
 #define splsoftclock()  spl1()	/* disallow softclock */
-#define splnet()        spl1()	/* disallow network */
-#define splbio()        spl5()	/* disallow block I/O */
-#define splimp()        spl5()	/* disallow imput */
-#define spltty()        spl5()	/* disallow tty interrupts */
-#define splclock()      spl6()	/* disallow clock interrupt */
-#define splvm()         spl6()	/* disallow virtual memory operations */
+#define splnet()        spl2()	/* disallow network */
+#define splbio()        spl2()	/* disallow block I/O */
+#define splimp()        spl2()	/* disallow imput */
+#define spltty()        spl4()	/* disallow tty interrupts */
+#define splclock()      spl1()	/* disallow clock interrupt */
 #define splhigh()       spl7()	/* disallow everything */
 #define splsched()      spl7()	/* disallow scheduling */
 
-#define splstatclock()  spl7()	/* This should be splclock... */
+#define splstatclock()  spl2()	/* This should be splclock... */
 
 /* watch out for side effects */
 #define splx(s)         ((s) & PSL_IPL ? _spl(s) : spl0())
