@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.20 1997/10/17 06:41:35 mark Exp $	*/
+/*	$NetBSD: wd.c,v 1.21 1998/01/13 02:10:10 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -99,9 +99,7 @@ struct cfattach wd_ca = {
 	sizeof(struct wd_softc), wdprobe, wdattach
 };
 
-struct cfdriver wd_cd = {
-	NULL, "wd", DV_DISK
-};
+extern struct cfdriver wd_cd;
 
 void	wdgetdefaultlabel __P((struct wd_softc *, struct disklabel *));
 void	wdgetdisklabel	__P((struct wd_softc *));

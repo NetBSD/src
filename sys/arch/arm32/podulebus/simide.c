@@ -1,4 +1,4 @@
-/*	$NetBSD: simide.c,v 1.3 1997/11/06 01:52:43 mark Exp $	*/
+/*	$NetBSD: simide.c,v 1.4 1998/01/13 02:10:39 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe
@@ -101,10 +101,6 @@ void	simide_shutdown	__P((void *arg));
 
 struct cfattach simide_ca = {
 	sizeof(struct simide_softc), simide_probe, simide_attach
-};
-
-struct cfdriver simide_cd = {
-	NULL, "simide", DV_DULL, NULL, 0
 };
 
 /*
@@ -310,8 +306,6 @@ extern int wdcintr __P((void *));
 struct cfattach wdc_sim_ca = {
 	sizeof(struct simwdc_softc), wdc_simide_probe, wdc_simide_attach
 };
-
-extern struct cfdriver wdc_cd;
 
 /*
  * Create an array of address structures. These define the addresses and

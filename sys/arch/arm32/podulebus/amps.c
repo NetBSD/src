@@ -1,4 +1,4 @@
-/*	$NetBSD: amps.c,v 1.1 1997/11/06 02:08:51 mark Exp $	*/
+/*	$NetBSD: amps.c,v 1.2 1998/01/13 02:10:24 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -96,10 +96,6 @@ void	amps_shutdown	__P((void *arg));
 
 struct cfattach amps_ca = {
 	sizeof(struct amps_softc), amps_probe, amps_attach
-};
-
-struct cfdriver amps_cd = {
-	NULL, "amps", DV_DULL, NULL, 0
 };
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: pms.c,v 1.12 1997/10/14 19:35:34 mark Exp $	*/
+/*	$NetBSD: pms.c,v 1.13 1998/01/13 02:10:05 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 D.C. Tsen
@@ -79,11 +79,9 @@ void pmswatchdog	__P((void *));
 void pmsputbuffer	__P((struct pms_softc *sc, struct mousebufrec *buf));
 static __inline void pms_flush __P((struct pms_softc *sc));
 
-/* pms device driver structure */
+extern struct cfdriver pms_cd;
 
-struct cfdriver	pms_cd = {
-	NULL, "pms", DV_DULL
-};
+/* pms device driver structure */
 
 #define PMS_DATA	0
 #define PMS_CR		1
