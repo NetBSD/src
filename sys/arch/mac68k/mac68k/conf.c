@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.25 1995/04/12 14:59:19 briggs Exp $	*/
+/*	$NetBSD: conf.c,v 1.26 1995/04/20 15:30:22 briggs Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -126,7 +126,7 @@ int	nblkdev = sizeof(bdevsw) / sizeof(bdevsw[0]);
 #define	cdev_grf_init(c,n) { \
 	dev_init(c,n,open), dev_init(c,n,close), (dev_type_read((*))) nullop, \
 	(dev_type_write((*))) nullop, dev_init(c,n,ioctl), \
-	(dev_type_stop((*))) enodev, (dev_type_reset((*))) nullop, 0, \
+	(dev_type_stop((*))) enodev, 0, \
 	dev_init(c,n,select), dev_init(c,n,mmap), 0 }
 
 cdev_decl(cn);
@@ -138,10 +138,10 @@ cdev_decl(ite);
 #define mmwrite	mmrw
 cdev_decl(mm);
 #include "pty.h"
-#define	pts_tty		pt_tty
+#define	ptstty		ptytty
 #define	ptsioctl	ptyioctl
 cdev_decl(pts);
-#define	ptc_tty		pt_tty
+#define	ptctty		ptytty
 #define	ptcioctl	ptyioctl
 cdev_decl(ptc);
 cdev_decl(log);
