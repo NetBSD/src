@@ -1,4 +1,4 @@
-/*	$NetBSD: inet_net_ntop.c,v 1.13 2001/12/08 12:06:12 lukem Exp $	*/
+/*	$NetBSD: inet_net_ntop.c,v 1.14 2001/12/09 01:17:36 lukem Exp $	*/
 
 /*
  * Copyright (c) 1996,1999 by Internet Software Consortium.
@@ -22,7 +22,7 @@
 #if 0
 static const char rcsid[] = "Id: inet_net_ntop.c,v 1.8 2001/09/27 15:08:36 marka Exp ";
 #else
-__RCSID("$NetBSD: inet_net_ntop.c,v 1.13 2001/12/08 12:06:12 lukem Exp $");
+__RCSID("$NetBSD: inet_net_ntop.c,v 1.14 2001/12/09 01:17:36 lukem Exp $");
 #endif
 #endif
 
@@ -172,13 +172,14 @@ inet_net_ntop_ipv4(const u_char *src, int bits, char *dst, size_t size)
 static char *
 inet_net_ntop_ipv6(const u_char *src, int bits, char *dst, size_t size)
 {
+	size_t	bytes;
 	u_int	m;
 	int	b;
 	int	p;
 	int	zero_s, zero_l, tmp_zero_s, tmp_zero_l;
 	int	i;
 	int	is_ipv4 = 0;
-	unsigned char inbuf[16];
+	u_char inbuf[16];
 	char outbuf[sizeof("xxxx:xxxx:xxxx:xxxx:xxxx:xxxx:255.255.255.255/128")];
 	char	*cp;
 	int	words;
@@ -200,13 +201,13 @@ inet_net_ntop_ipv6(const u_char *src, int bits, char *dst, size_t size)
 		*cp = '\0';
 	} else {
 		/* Copy src to private buffer.  Zero host part. */	
-		p = (bits + 7) / 8;
-		memcpy(inbuf, src, p);
-		memset(inbuf + p, 0, 16 - p);
+		bytes = (bits + 7) / 8;
+		memcpy(inbuf, src, bytes);
+		memset(inbuf + bytes, 0, 16 - bytes);
 		b = bits % 8;
 		if (b != 0) {
 			m = ~0 << (8 - b);
-			inbuf[p-1] &= m;
+			inbuf[bytes-1] &= m;
 		}
 
 		s = inbuf;
@@ -272,6 +273,7 @@ inet_net_ntop_ipv6(const u_char *src, int bits, char *dst, size_t size)
 		}
 	}
 	/* Format CIDR /width. */
+	/* LINTED */
 	SPRINTF((cp, "/%u", bits));
 	if (strlen(outbuf) + 1 > size)
 		goto emsgsize;
