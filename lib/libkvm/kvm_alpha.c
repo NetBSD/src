@@ -1,4 +1,4 @@
-/*	$NetBSD: kvm_alpha.c,v 1.13 1998/08/01 21:17:12 thorpej Exp $	*/
+/*	$NetBSD: kvm_alpha.c,v 1.14 1998/08/17 20:11:32 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -49,7 +49,7 @@
 #include "kvm_private.h"
 
 struct vmstate {
-	vm_size_t	page_shift;
+	vsize_t		page_shift;
 };
 
 void
