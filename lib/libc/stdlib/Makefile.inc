@@ -1,28 +1,28 @@
 #	from: @(#)Makefile.inc	5.6 (Berkeley) 6/4/91
-#	$Id: Makefile.inc,v 1.17 1994/01/03 22:58:35 jtc Exp $
+#	$Id: Makefile.inc,v 1.18 1994/03/17 01:58:55 jtc Exp $
 
 # stdlib sources
 .PATH: ${.CURDIR}/arch/${MACHINE_ARCH}/stdlib ${.CURDIR}/stdlib
 
-SRCS+=	a64l.c abort.c atexit.c atoi.c atol.c bsearch.c calloc.c cfree.c \
-	exit.c getenv.c getopt.c heapsort.c l64a.c malloc.c multibyte.c \
-	putenv.c qsort.c radixsort.c rand.c random.c setenv.c strtod.c \
-	strtol.c strtoq.c strtoul.c strtouq.c system.c \
+SRCS+=	a64l.c abort.c atexit.c atoi.c atof.c atol.c bsearch.c calloc.c \
+	cfree.c exit.c getenv.c getopt.c heapsort.c l64a.c malloc.c \
+	multibyte.c putenv.c qsort.c radixsort.c rand.c random.c setenv.c \
+	strtod.c strtol.c strtoq.c strtoul.c strtouq.c system.c \
 	_rand48.c drand48.c erand48.c jrand48.c lcong48.c lrand48.c \
 	mrand48.c nrand48.c seed48.c srand48.c
 
 .if   (${MACHINE_ARCH} == "m68k")
-SRCS+=	abs.S div.c labs.c ldiv.c atof.c
+SRCS+=	abs.S div.c labs.c ldiv.c
 .elif (${MACHINE_ARCH} == "i386")
-SRCS+=	abs.S div.S labs.S ldiv.S atof.c
+SRCS+=	abs.S div.S labs.S ldiv.S
 .elif (${MACHINE_ARCH} == "ns32k")
-SRCS+=	abs.S div.c labs.c ldiv.c atof.c
+SRCS+=	abs.S div.c labs.c ldiv.c
 .elif (${MACHINE_ARCH} == "tahoe")
-SRCS+=	abs.S div.c labs.c ldiv.c atof.S
+SRCS+=	abs.S div.c labs.c ldiv.c
 .elif (${MACHINE_ARCH} == "vax")
-SRCS+=	abs.S div.c labs.c ldiv.c atof.S
+SRCS+=	abs.S div.c labs.c ldiv.c
 .else
-SRCS+=	abs.c div.c labs.c ldiv.c atof.c
+SRCS+=	abs.c div.c labs.c ldiv.c
 .endif
 
 MAN3+=	abort.0 abs.0 alloca.0 atexit.0 atof.0 atoi.0 atol.0 bsearch.0 \
