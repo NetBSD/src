@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel.c,v 1.42 1997/09/25 05:13:02 lukem Exp $	*/
+/*	$NetBSD: disklabel.c,v 1.43 1997/09/30 16:54:31 phil Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -47,7 +47,7 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1993\n\
 static char sccsid[] = "@(#)disklabel.c	8.4 (Berkeley) 5/4/95";
 /* from static char sccsid[] = "@(#)disklabel.c	1.2 (Symmetric) 11/28/85"; */
 #else
-__RCSID("$NetBSD: disklabel.c,v 1.42 1997/09/25 05:13:02 lukem Exp $");
+__RCSID("$NetBSD: disklabel.c,v 1.43 1997/09/30 16:54:31 phil Exp $");
 #endif
 #endif /* not lint */
 
@@ -138,6 +138,8 @@ static int	debug;
 static struct dos_partition *dosdp;	/* i386 DOS partition, if found */
 static struct dos_partition *readmbr __P((int));
 #endif
+
+int	opendisk __P((const char *, int, char *, size_t, int));
 
 int main __P((int, char *[]));
 
