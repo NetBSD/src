@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.165 1998/07/27 13:39:51 bouyer Exp $
+#	$NetBSD: GENERIC,v 1.166 1998/07/27 18:38:08 bouyer Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -200,6 +200,7 @@ pc0	at isa? port 0x60 irq 1		# pccons generic PC console driver
 
 # Keyboard layout configuration for pccons
 #options        FRENCH_KBD
+#options 	FINNISH_KBD
 #options        GERMAN_KBD
 #options        NORVEGIAN_KBD
 
