@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.109 2002/03/10 07:24:53 takemura Exp $
+# $NetBSD: GENERIC,v 1.110 2002/03/10 10:13:31 takemura Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include		"arch/hpcmips/conf/std.hpcmips"
 include		"arch/hpcmips/conf/std.hpcmips.vr41"
 include		"arch/hpcmips/conf/std.hpcmips.tx39"
 
-#ident 		"GENERIC-$Revision: 1.109 $"
+#ident 		"GENERIC-$Revision: 1.110 $"
 
 maxusers	16
 
@@ -412,7 +412,7 @@ pci*	at vrpciu?
 # VRC4173
 vrc4173bcu* at pci? dev ? function ?	# VRC4173 BCU
 vrkiu* at vrc4173bcu? addr 0x100 size 0x20 unit VRKIU	# VRC4173 KIU
-#vrpiu* at vrc4173bcu? addr 0x0a0 size 0x40 unit VRPIU	# VRC4173 PIU
+vrpiu* at vrc4173bcu? addr 0x0a0 size 0x20 addr2 0x0c0 size2 0x20 unit VRPIU	# VRC4173 PIU
 
 #vrc4173cardu* at pci? dev ? function ?	# VRC4173 CARDU
 #pcmcia*	at vrc4173cardu?

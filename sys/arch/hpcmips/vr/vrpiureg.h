@@ -1,4 +1,4 @@
-/*	$NetBSD: vrpiureg.h,v 1.2 2000/10/27 08:13:54 sato Exp $	*/
+/*	$NetBSD: vrpiureg.h,v 1.3 2002/03/10 10:13:32 takemura Exp $	*/
 
 /*
  * Copyright (c) 1999 Shin Takemura All rights reserved.
@@ -131,27 +131,30 @@
 #define	PIUCIVL_REG_W	0x01E	/* PIU Check interval register		*/
 #define		PIUCIVL_CHKINTVAL_MASK	0x7FF
 
-#define	PIUPB00_REG_W	0x180	/* PIU Page 0 Buffer 0 register		*/
-#define	PIUPB01_REG_W	0x182	/* PIU Page 0 Buffer 1 register		*/
-#define	PIUPB02_REG_W	0x184	/* PIU Page 0 Buffer 2 register		*/
-#define	PIUPB03_REG_W	0x186	/* PIU Page 0 Buffer 3 register		*/
-#define	PIUPB04_REG_W	0x19C	/* PIU Page 0 Buffer 4 register		*/
-#define	PIUPB10_REG_W	0x188	/* PIU Page 1 Buffer 0 register		*/
-#define	PIUPB11_REG_W	0x18A	/* PIU Page 1 Buffer 1 register		*/
-#define	PIUPB12_REG_W	0x18C	/* PIU Page 1 Buffer 2 register		*/
-#define	PIUPB13_REG_W	0x18E	/* PIU Page 1 Buffer 3 register		*/
-#define	PIUPB14_REG_W	0x19E	/* PIU Page 1 Buffer 4 register		*/
+#ifndef PIUB_REG_OFFSSET
+#define	PIUB_REG_OFFSSET	0x180
+#endif
+#define	PIUPB00_REG_W	(PIUB_REG_OFFSSET+0x00)	/* PIU Page 0 Buffer 0 reg */
+#define	PIUPB01_REG_W	(PIUB_REG_OFFSSET+0x02)	/* PIU Page 0 Buffer 1 reg */
+#define	PIUPB02_REG_W	(PIUB_REG_OFFSSET+0x04)	/* PIU Page 0 Buffer 2 reg */
+#define	PIUPB03_REG_W	(PIUB_REG_OFFSSET+0x06)	/* PIU Page 0 Buffer 3 reg */
+#define	PIUPB04_REG_W	(PIUB_REG_OFFSSET+0x1C)	/* PIU Page 0 Buffer 4 reg */
+#define	PIUPB10_REG_W	(PIUB_REG_OFFSSET+0x08)	/* PIU Page 1 Buffer 0 reg */
+#define	PIUPB11_REG_W	(PIUB_REG_OFFSSET+0x0A)	/* PIU Page 1 Buffer 1 reg */
+#define	PIUPB12_REG_W	(PIUB_REG_OFFSSET+0x0C)	/* PIU Page 1 Buffer 2 reg */
+#define	PIUPB13_REG_W	(PIUB_REG_OFFSSET+0x0E)	/* PIU Page 1 Buffer 3 reg */
+#define	PIUPB14_REG_W	(PIUB_REG_OFFSSET+0x1E)	/* PIU Page 1 Buffer 4 reg */
 #define PIUPB(page, n)	(((n)<4) ? \
-			 (0x180 + (page) * 8 + (n) * 2) : \
-			 (0x19C + (page) * 2))
+			 (PIUPB00_REG_W + (page) * 8 + (n) * 2) : \
+			 (PIUPB04_REG_W + (page) * 2))
 #define PIUPB_VALID		(1<<15)
 #define PIUPB_PADDATA_MASK	0x3FF
 #define PIUPB_PADDATA_MAX	0x3FF
 
-#define	PIUAB0_REG_W	0x190	/* PIU A/D scan Buffer 0 register	*/
-#define	PIUAB1_REG_W	0x192	/* PIU A/D scan Buffer 1 register	*/
-#define	PIUAB2_REG_W	0x194	/* PIU A/D scan Buffer 2 register	*/
-#define	PIUAB3_REG_W	0x196	/* PIU A/D scan Buffer 3 register	*/
-#define PIUAB(n)	(0x190+(n)*2)
+#define	PIUAB0_REG_W	(PIUB_REG_OFFSSET+0x10)	/* PIU A/D scan Buffer 0 reg */
+#define	PIUAB1_REG_W	(PIUB_REG_OFFSSET+0x12)	/* PIU A/D scan Buffer 1 reg */
+#define	PIUAB2_REG_W	(PIUB_REG_OFFSSET+0x14)	/* PIU A/D scan Buffer 2 reg */
+#define	PIUAB3_REG_W	(PIUB_REG_OFFSSET+0x16)	/* PIU A/D scan Buffer 3 reg */
+#define PIUAB(n)	(PIUAB0_REG_W+(n)*2)
 #define PIUAB_VALID		(1<<15)
 #define PIUAB_PADDATA_MASK	0x3FF

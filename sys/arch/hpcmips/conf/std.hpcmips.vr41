@@ -1,5 +1,5 @@
 #
-#	$NetBSD: std.hpcmips.vr41,v 1.6 2002/02/11 11:44:36 takemura Exp $
+#	$NetBSD: std.hpcmips.vr41,v 1.7 2002/03/10 10:13:31 takemura Exp $
 #	VR41XX common configuration.
 #
 options 	MIPS3			# R4000/R4400/R4600 CPUs
@@ -22,7 +22,7 @@ com*	at vr4102ip? addr 0x0c000000 size 0x20 unit VRSIU pwctl PWCTL_COM0
 vrgiu*	at vr4102ip? addr 0x0b000100 size 0x20 unit VRGIU
 vrpmu*	at vr4102ip? addr 0x0b0000a0 size 0x20 unit VRPMU # power switch
 vrdsu*	at vr4102ip? addr 0x0b0000e0 size 0x08
-vrpiu*	at vr4102ip? addr 0x0b000120 size 0x1a0 unit VRPIU
+vrpiu*	at vr4102ip? addr 0x0b000120 size 0x20 addr2 0x0b0002a0 size2 0x20 unit VRPIU
 vrled*	at vr4102ip? addr 0x0b000240 size 0x10 unit VRLED
 vrdmaau* at vr4102ip? addr 0x0b000020 size 0x18 unit VRDMAAU
 vrdcu*	at vr4102ip? addr 0x0b000040 size 0x0c unit VRDCU
