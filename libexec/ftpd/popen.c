@@ -1,7 +1,7 @@
-/*	$NetBSD: popen.c,v 1.25 2001/03/18 22:42:22 christos Exp $	*/
+/*	$NetBSD: popen.c,v 1.26 2001/04/25 01:46:26 lukem Exp $	*/
 
 /*-
- * Copyright (c) 1999 The NetBSD Foundation, Inc.
+ * Copyright (c) 1999-2001 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -78,7 +78,7 @@
 #if 0
 static char sccsid[] = "@(#)popen.c	8.3 (Berkeley) 4/6/94";
 #else
-__RCSID("$NetBSD: popen.c,v 1.25 2001/03/18 22:42:22 christos Exp $");
+__RCSID("$NetBSD: popen.c,v 1.26 2001/04/25 01:46:26 lukem Exp $");
 #endif
 #endif /* not lint */
 

@@ -1,7 +1,7 @@
-/*	$NetBSD: conf.c,v 1.40 2001/03/18 22:42:22 christos Exp $	*/
+/*	$NetBSD: conf.c,v 1.41 2001/04/25 01:46:25 lukem Exp $	*/
 
 /*-
- * Copyright (c) 1997-2000 The NetBSD Foundation, Inc.
+ * Copyright (c) 1997-2001 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: conf.c,v 1.40 2001/03/18 22:42:22 christos Exp $");
+__RCSID("$NetBSD: conf.c,v 1.41 2001/04/25 01:46:25 lukem Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
