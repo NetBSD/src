@@ -1,4 +1,4 @@
-/*	$NetBSD: library.c,v 1.26 2002/05/03 04:43:57 yamt Exp $	*/
+/*	$NetBSD: library.c,v 1.27 2002/06/06 00:56:50 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)library.c	8.3 (Berkeley) 5/24/95";
 #else
-__RCSID("$NetBSD: library.c,v 1.26 2002/05/03 04:43:57 yamt Exp $");
+__RCSID("$NetBSD: library.c,v 1.27 2002/06/06 00:56:50 perseant Exp $");
 #endif
 #endif /* not lint */
 
@@ -156,6 +156,72 @@ reread_fs_info(FS_INFO *fsp, int use_mmap)
                 exit(1);
         }
 	get_ifile (fsp, use_mmap);
+}
+
+/*
+ * Read a block from disk.
+ */
+int
+get_rawblock(FS_INFO *fsp, char *buf, size_t size, ufs_daddr_t daddr)
+{
+	char rdev[MNAMELEN];
+
+	if (dev_fd <= 0) {
+		strcpy(rdev, "/dev/r"); /* XXX */
+		strcat(rdev + 6, fsp->fi_statfsp->f_mntfromname + 5);
+		dev_fd = open(rdev, O_RDONLY);
+	}
+	if (dev_fd < 0) {
+		syslog(LOG_ERR, "%s", rdev);
+		exit(1);
+	}
+	return pread(dev_fd, buf, size, fsbtob(&fsp->fi_lfs, daddr));
+}
+
+/*
+ * Read an inode from disk.
+ */
+struct dinode *
+get_dinode (FS_INFO *fsp, ino_t ino)
+{
+        static struct dinode dino;
+        struct dinode *dip, *dib;
+        struct lfs *lfsp;
+	char rdev[MNAMELEN];
+        IFILE *ifp;
+
+        lfsp = &fsp->fi_lfs;
+
+	/*
+	 * Locate the inode block and find the inode.
+	 * Use this to know how large the file is.
+	 */
+	ifp = IFILE_ENTRY(lfsp, fsp->fi_ifilep, ino);
+
+	if (dev_fd <= 0) {
+		strcpy(rdev, "/dev/r"); /* XXX */
+		strcat(rdev + 6, fsp->fi_statfsp->f_mntfromname + 5);
+		dev_fd = open(rdev, O_RDONLY);
+	}
+	if (dev_fd < 0) {
+		syslog(LOG_ERR, "%s", rdev);
+		exit(1);
+	}
+
+	dib = (struct dinode *)malloc(lfsp->lfs_ibsize);
+	pread(dev_fd, dib, lfsp->lfs_ibsize,
+					fsbtob(lfsp, ifp->if_daddr));
+	for (dip = dib; dip != dib + lfsp->lfs_inopb; ++dip)
+		if (dip->di_u.inumber == ino)
+			break;
+	if (dip == dib + lfsp->lfs_inopb) {
+		free(dib);
+		return NULL;
+	}
+        dino = *dip; /* structure copy */
+
+        free(dib);
+        return &dino;
 }
 
 /*
