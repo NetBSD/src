@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.27 2002/05/06 22:18:51 eeh Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.28 2002/05/15 17:40:11 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Matthew R. Green
@@ -330,6 +330,21 @@ pci_make_tag(pc, b, d, f)
 	}
 	/* No device found -- return a dead tag */
 	return (tag);
+}
+
+void
+pci_decompose_tag(pc, tag, bp, dp, fp)
+	pci_chipset_tag_t pc;
+	pcitag_t tag;
+	int *bp, *dp, *fp;
+{
+
+	if (bp != NULL)
+		*bp = PCITAG_BUS(tag);
+	if (dp != NULL)
+		*dp = PCITAG_DEV(tag);
+	if (fp != NULL)
+		*fp = PCITAG_FUN(tag);
 }
 
 pcitag_t

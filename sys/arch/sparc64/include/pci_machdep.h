@@ -1,4 +1,4 @@
-/* $NetBSD: pci_machdep.h,v 1.9 2002/02/26 22:39:14 eeh Exp $ */
+/* $NetBSD: pci_machdep.h,v 1.10 2002/05/15 17:40:12 thorpej Exp $ */
 
 /*
  * Copyright (c) 1999 Matthew R. Green
@@ -66,6 +66,9 @@ struct sparc_pci_chipset {
 
 #define	PCITAG_NODE(x)		(int)(((x)>>32)&0xffffffff)
 #define	PCITAG_OFFSET(x)	((x)&0xffffffff)
+#define	PCITAG_BUS(t)		((PCITAG_OFFSET(t)>>16)&0xff)
+#define	PCITAG_DEV(t)		((PCITAG_OFFSET(t)>>11)&0x1f)
+#define	PCITAG_FUN(t)		((PCITAG_OFFSET(t)>>8)&0x7)
 #define	PCITAG_CREATE(n,b,d,f)	(((u_int64_t)(n)<<32)|((b)<<16)|((d)<<11)|((f)<<8))
 #define	PCITAG_SETNODE(t,n)	((t)&0xffffffff)|(((n)<<32)
 typedef u_int64_t pcitag_t; 
@@ -81,6 +84,8 @@ int		pci_dev_funcorder(pci_chipset_tag_t, int, int, char *);
 #endif
 int		pci_bus_maxdevs(pci_chipset_tag_t, int);
 pcitag_t	pci_make_tag(pci_chipset_tag_t, int, int, int);
+void		pci_decompose_tag(pci_chipset_tag_t, pcitag_t, int *, int *,
+		    int *);
 pcireg_t	pci_conf_read(pci_chipset_tag_t, pcitag_t, int);
 void		pci_conf_write(pci_chipset_tag_t, pcitag_t, int,
 				    pcireg_t);
