@@ -1,4 +1,4 @@
-.\"	$NetBSD: window.1,v 1.13 2003/02/25 10:36:01 wiz Exp $
+.\"	$NetBSD: window.1,v 1.14 2003/06/30 19:17:01 wiz Exp $
 .\"
 .\" Copyright (c) 1985, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -222,7 +222,7 @@ is any character.
 In particular,
 .Ic ^^
 is
-.Li control\-^.
+.Li control\-^ .
 .Ar Escape
 is the escape key, or
 .Ic ^\&[ .
@@ -254,7 +254,7 @@ escape is changed to some other character, that
 character takes the place of
 .Ic ^P
 here.
-.It Ic ?
+.It Ic \&?
 List a short summary of commands.
 .It Ic ^L
 Refresh the screen.
@@ -490,7 +490,7 @@ Returns the value of
 .Aq Va expr2 .
 .It Xo
 .Aq Va expr1
-.Ic ?
+.Ic \&?
 .Aq Va expr2
 .Ic :
 .Aq Va expr3
