@@ -1,5 +1,5 @@
-#	from: @(#)bsd.prog.mk	5.26 (Berkeley) 6/25/91
-#	$Id: bsd.prog.mk,v 1.43 1994/06/30 05:21:32 cgd Exp $
+#	$NetBSD: bsd.prog.mk,v 1.44 1994/06/30 05:31:21 cgd Exp $
+#	@(#)bsd.prog.mk	5.26 (Berkeley) 6/25/91
 
 .if exists(${.CURDIR}/../Makefile.inc)
 .include "${.CURDIR}/../Makefile.inc"

@@ -1,4 +1,4 @@
-#	$Id: bsd.obj.mk,v 1.5 1994/06/30 05:21:31 cgd Exp $
+#	$NetBSD: bsd.obj.mk,v 1.6 1994/06/30 05:31:16 cgd Exp $
 
 .if !target(obj)
 .if defined(NOOBJ)

@@ -1,4 +1,4 @@
-#	$Id: bsd.own.mk,v 1.11 1994/03/27 02:30:42 cgd Exp $
+#	$NetBSD: bsd.own.mk,v 1.12 1994/06/30 05:31:18 cgd Exp $
 
 # where the system object and source trees are kept; can be configurable
 # by the user in case they want them in ~/foosrc and ~/fooobj, for example
@@ -36,6 +36,7 @@ STRIP?=		-s
 
 # don't try to generate PIC versions of libraries on machines
 # which don't support PIC.
-.if (${MACHINE_ARCH} == "ns32k")
+.if (${MACHINE_ARCH} == "ns32k") || (${MACHINE_ARCH} == "mips") || \
+	(${MACHINE_ARCH} == "alpha")
 NOPIC=
 .endif
