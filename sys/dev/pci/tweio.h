@@ -1,4 +1,5 @@
-/*	$NetBSD: tweio.h,v 1.3 2003/09/25 01:35:25 thorpej Exp $	*/
+/*	$NetBSD: tweio.h,v 1.4 2003/09/25 18:05:40 thorpej Exp $	*/
+
 /*-
  * Copyright (c) 2000 Michael Smith
  * Copyright (c) 2000 BSDi
@@ -28,7 +29,11 @@
  * from FreeBSD: tweio.h,v 1.1 2000/10/25 06:59:05 msmith Exp
  */
 
+#ifndef _DEV_PCI_TWEIO_H_
+#define	_DEV_PCI_TWEIO_H_
+
 #include <sys/ioccom.h>
+#include <dev/pci/twereg.h>
 
 /*
  * User-space command
@@ -101,3 +106,5 @@ struct twe_drivecommand {
 };
 #define	TWEIO_ADD_UNIT	_IOW('U', 107, struct twe_drivecommand)
 #define	TWEIO_DEL_UNIT	_IOW('U', 108, struct twe_drivecommand)
+
+#endif /* _DEV_PCI_TWEIO_H_ */
