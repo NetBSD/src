@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 1995/03/21 01:36:12 cgd Exp $
+#	$NetBSD: Makefile,v 1.2 1995/09/27 14:43:38 cgd Exp $
 
 # Make a distribution for the alpha, on a spare disk.
 # This creates a large, gzipped disk image in ${.OBJDIR}
@@ -28,7 +28,8 @@ ${TARGET}:
 	mkdir ${DESTDIR}/usr
 	mount /dev/${DESTDISK}d ${DESTDIR}/usr
 	cd ${.CURDIR}/../../../etc && make distribution
-	cd ${.CURDIR}/../../../devo && make prefix=${DESTDIR}/usr/local install
+	cd ${.CURDIR}/../../../cygnus && \
+	    make prefix=${DESTDIR}/usr/local install
 	cd ${DESTDIR}/dev && sh MAKEDEV all
 	cp ${.CURDIR}/../../../sys/arch/alpha/compile/GENERIC/netbsd ${DESTDIR}
 	ln -s gcc ${DESTDIR}/usr/local/bin/cc
