@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.c,v 1.53 2001/04/24 04:31:18 thorpej Exp $	*/
+/*	$NetBSD: uvm_page.c,v 1.54 2001/04/29 04:23:21 thorpej Exp $	*/
 
 /* 
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -214,7 +214,7 @@ uvm_page_init(kvm_startp, kvm_endp)
 {
 	vsize_t freepages, pagecount, n;
 	vm_page_t pagearray;
-	int lcv, i;  
+	int lcv, color, i;
 	paddr_t paddr;
 
 	/*
@@ -222,8 +222,12 @@ uvm_page_init(kvm_startp, kvm_endp)
 	 */
 
 	for (lcv = 0; lcv < VM_NFREELIST; lcv++) {
-		for (i = 0; i < PGFL_NQUEUES; i++)
-			TAILQ_INIT(&uvm.page_free[lcv].pgfl_queues[i]);
+		for (color = 0; color < VM_PGCOLOR_BUCKETS; color++) {
+			for (i = 0; i < PGFL_NQUEUES; i++) {
+				TAILQ_INIT(&uvm.page_free[lcv].pgfl_buckets[
+				color].pgfl_queues[i]);
+			}
+		}
 	}
 	TAILQ_INIT(&uvm.page_active);
 	TAILQ_INIT(&uvm.page_inactive_swp);
@@ -864,6 +868,49 @@ uvm_page_physdump()
 #endif
 
 /*
+ * uvm_pagealloc_pgfl: helper routine for uvm_pagealloc_strat
+ */
+
+static __inline struct vm_page *
+uvm_pagealloc_pgfl(struct pgfreelist *pgfl, int try1, int try2,
+    unsigned int *trycolorp)
+{
+	struct pglist *freeq;
+	struct vm_page *pg;
+	int color, first, trycolor = *trycolorp;
+
+	for (color = trycolor, first = 1;
+	     color != trycolor || first != 0;
+	     color = ((color + 1) & VM_PGCOLOR_MASK), first = 0) {
+		if ((pg = TAILQ_FIRST((freeq =
+		    &pgfl->pgfl_buckets[color].pgfl_queues[try1]))) != NULL)
+			goto gotit;
+		if ((pg = TAILQ_FIRST((freeq =
+		    &pgfl->pgfl_buckets[color].pgfl_queues[try2]))) != NULL)
+			goto gotit;
+	}
+
+	return (NULL);
+
+ gotit:
+	TAILQ_REMOVE(freeq, pg, pageq);
+	uvmexp.free--;
+
+	/* update zero'd page count */
+	if (pg->flags & PG_ZERO)
+		uvmexp.zeropages--;
+
+	if (color == trycolor)
+		uvmexp.colorhit++;
+	else {
+		uvmexp.colormiss++;
+		*trycolorp = color;
+	}
+
+	return (pg);
+}
+
+/*
  * uvm_pagealloc_strat: allocate vm_page from a particular free list.
  *
  * => return null if no pages free
@@ -889,10 +936,8 @@ uvm_pagealloc_strat(obj, off, anon, flags, strat, free_list)
 	struct vm_anon *anon;
 	int strat, free_list;
 {
-	int lcv, try1, try2, s, zeroit = 0;
+	int lcv, try1, try2, s, zeroit = 0, color;
 	struct vm_page *pg;
-	struct pglist *freeq;
-	struct pgfreelist *pgfl;
 	boolean_t use_reserve;
 
 	KASSERT(obj == NULL || anon == NULL);
@@ -902,6 +947,15 @@ uvm_pagealloc_strat(obj, off, anon, flags, strat, free_list)
 	LOCK_ASSERT(anon == NULL || simple_lock_held(&anon->an_lock));
 
 	s = uvm_lock_fpageq();
+
+	/*
+	 * This implements a global round-robin page coloring
+	 * algorithm.
+	 *
+	 * XXXJRT: Should we make the `nextcolor' per-cpu?
+	 * XXXJRT: What about virtually-indexed caches?
+	 */
+	color = uvm.page_free_nextcolor;
 
 	/*
 	 * check to see if we need to generate some free pages waking
@@ -951,11 +1005,9 @@ uvm_pagealloc_strat(obj, off, anon, flags, strat, free_list)
 	case UVM_PGA_STRAT_NORMAL:
 		/* Check all freelists in descending priority order. */
 		for (lcv = 0; lcv < VM_NFREELIST; lcv++) {
-			pgfl = &uvm.page_free[lcv];
-			if ((pg = TAILQ_FIRST((freeq =
-			      &pgfl->pgfl_queues[try1]))) != NULL ||
-			    (pg = TAILQ_FIRST((freeq =
-			      &pgfl->pgfl_queues[try2]))) != NULL)
+			pg = uvm_pagealloc_pgfl(&uvm.page_free[lcv],
+			    try1, try2, &color);
+			if (pg != NULL)
 				goto gotit;
 		}
 
@@ -966,11 +1018,9 @@ uvm_pagealloc_strat(obj, off, anon, flags, strat, free_list)
 	case UVM_PGA_STRAT_FALLBACK:
 		/* Attempt to allocate from the specified free list. */
 		KASSERT(free_list >= 0 && free_list < VM_NFREELIST);
-		pgfl = &uvm.page_free[free_list];
-		if ((pg = TAILQ_FIRST((freeq =
-		      &pgfl->pgfl_queues[try1]))) != NULL ||
-		    (pg = TAILQ_FIRST((freeq =
-		      &pgfl->pgfl_queues[try2]))) != NULL)
+		pg = uvm_pagealloc_pgfl(&uvm.page_free[free_list],
+		    try1, try2, &color);
+		if (pg != NULL)
 			goto gotit;
 
 		/* Fall back, if possible. */
@@ -988,12 +1038,11 @@ uvm_pagealloc_strat(obj, off, anon, flags, strat, free_list)
 	}
 
  gotit:
-	TAILQ_REMOVE(freeq, pg, pageq);
-	uvmexp.free--;
-
-	/* update zero'd page count */
-	if (pg->flags & PG_ZERO)
-		uvmexp.zeropages--;
+	/*
+	 * We now know which color we actually allocated from; set
+	 * the next color accordingly.
+	 */
+	uvm.page_free_nextcolor = (color + 1) & VM_PGCOLOR_MASK;
 
 	/*
 	 * update allocation statistics and remember if we have to
@@ -1188,7 +1237,8 @@ uvm_pagefree(pg)
 
 	s = uvm_lock_fpageq();
 	TAILQ_INSERT_TAIL(&uvm.page_free[
-	    uvm_page_lookup_freelist(pg)].pgfl_queues[PGFL_UNKNOWN], pg, pageq);
+	    uvm_page_lookup_freelist(pg)].pgfl_buckets[
+	    VM_PGCOLOR_BUCKET(pg)].pgfl_queues[PGFL_UNKNOWN], pg, pageq);
 	pg->pqflags = PQ_FREE;
 #ifdef DEBUG
 	pg->uobject = (void *)0xdeadbeef;
@@ -1292,7 +1342,8 @@ uvm_page_own(pg, tag)
 /*
  * uvm_pageidlezero: zero free pages while the system is idle.
  *
- * => we do at least one iteration per call, if we are below the target.
+ * => try to complete one color bucket at a time, to reduce our impact
+ *	on the CPU cache.
  * => we loop until we either reach the target or whichqs indicates that
  *	there is a process ready to run.
  */
@@ -1301,10 +1352,20 @@ uvm_pageidlezero()
 {
 	struct vm_page *pg;
 	struct pgfreelist *pgfl;
-	int free_list, s;
+	int free_list, s, bucket, firstbucket = -1;
+	static int nextbucket;
 
-	do {
-		s = uvm_lock_fpageq();
+	s = uvm_lock_fpageq();
+
+	for (bucket = nextbucket; nextbucket != firstbucket;
+	     nextbucket = (nextbucket + 1) & VM_PGCOLOR_MASK) {
+		if (firstbucket == -1)
+			firstbucket = nextbucket;
+
+		if (sched_whichqs != 0) {
+			uvm_unlock_fpageq(s);
+			return;
+		}
 
 		if (uvmexp.zeropages >= UVM_PAGEZERO_TARGET) {
 			uvm.page_idle_zero = FALSE;
@@ -1314,54 +1375,50 @@ uvm_pageidlezero()
 
 		for (free_list = 0; free_list < VM_NFREELIST; free_list++) {
 			pgfl = &uvm.page_free[free_list];
-			if ((pg = TAILQ_FIRST(&pgfl->pgfl_queues[
-			    PGFL_UNKNOWN])) != NULL)
-				break;
-		}
+			while ((pg = TAILQ_FIRST(&pgfl->pgfl_buckets[
+			    nextbucket].pgfl_queues[PGFL_UNKNOWN])) != NULL) {
+				if (sched_whichqs != 0) {
+					uvm_unlock_fpageq(s);
+					return;
+				}
 
-		if (pg == NULL) {
-			/*
-			 * No non-zero'd pages; don't bother trying again
-			 * until we know we have non-zero'd pages free.
-			 */
-			uvm.page_idle_zero = FALSE;
-			uvm_unlock_fpageq(s);
-			return;
-		}
-
-		TAILQ_REMOVE(&pgfl->pgfl_queues[PGFL_UNKNOWN], pg, pageq);
-		uvmexp.free--;
-		uvm_unlock_fpageq(s);
-
+				TAILQ_REMOVE(&pgfl->pgfl_buckets[
+				    nextbucket].pgfl_queues[PGFL_UNKNOWN],
+				    pg, pageq);
+				uvmexp.free--;
+				uvm_unlock_fpageq(s);
 #ifdef PMAP_PAGEIDLEZERO
-		if (PMAP_PAGEIDLEZERO(VM_PAGE_TO_PHYS(pg)) == FALSE) {
-			/*
-			 * The machine-dependent code detected some
-			 * reason for us to abort zeroing pages,
-			 * probably because there is a process now
-			 * ready to run.
-			 */
-			s = uvm_lock_fpageq();
-			TAILQ_INSERT_HEAD(&pgfl->pgfl_queues[PGFL_UNKNOWN],
-			    pg, pageq);
-			uvmexp.free++;
-			uvmexp.zeroaborts++;
-			uvm_unlock_fpageq(s);
-			return;
-		}
+				if (PMAP_PAGEIDLEZERO(VM_PAGE_TO_PHYS(pg)) ==
+				    FALSE) {
+					/*
+					 * The machine-dependent code detected
+					 * some reason for us to abort zeroing
+					 * pages, probably because there is a
+					 * process now ready to run.
+					 */
+					s = uvm_lock_fpageq();
+					TAILQ_INSERT_HEAD(&pgfl->pgfl_buckets[
+					    nextbucket].pgfl_queues[
+					    PGFL_UNKNOWN], pg, pageq);
+					uvmexp.free++;
+					uvmexp.zeroaborts++;
+					uvm_unlock_fpageq(s);
+					return;
+				}
 #else
-		/*
-		 * XXX This will toast the cache unless the pmap_zero_page()
-		 * XXX implementation does uncached access.
-		 */
-		pmap_zero_page(VM_PAGE_TO_PHYS(pg));
-#endif
-		pg->flags |= PG_ZERO;
+				pmap_zero_page(VM_PAGE_TO_PHYS(pg));
+#endif /* PMAP_PAGEIDLEZERO */
+				pg->flags |= PG_ZERO;
 
-		s = uvm_lock_fpageq();
-		TAILQ_INSERT_HEAD(&pgfl->pgfl_queues[PGFL_ZEROS], pg, pageq);
-		uvmexp.free++;
-		uvmexp.zeropages++;
-		uvm_unlock_fpageq(s);
-	} while (sched_whichqs == 0);
+				s = uvm_lock_fpageq();
+				TAILQ_INSERT_HEAD(&pgfl->pgfl_buckets[
+				    nextbucket].pgfl_queues[PGFL_ZEROS],
+				    pg, pageq);
+				uvmexp.free++;
+				uvmexp.zeropages++;
+			}
+		}
+	}
+
+	uvm_unlock_fpageq(s);
 }
