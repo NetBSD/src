@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_amiga.c,v 1.4 2000/02/19 17:16:20 aymeric Exp $	*/
+/*	$NetBSD: wdc_amiga.c,v 1.5 2000/02/21 18:27:49 aymeric Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -143,7 +143,7 @@ wdc_amiga_attach(parent, self, aux)
 	add_isr (&sc->sc_isr);
 
 	if (is_a1200())
-		gayle.intena |= GAYLE_INT_IREQ | GAYLE_INT_IDE;
+		gayle.intena |= GAYLE_INT_IDE;
 
 	wdcattach(&sc->wdc_channel);
 }
