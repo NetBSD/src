@@ -1,4 +1,4 @@
-/*	$NetBSD: ast.c,v 1.2.2.5 2002/04/01 07:39:05 nathanw Exp $	*/
+/*	$NetBSD: ast.c,v 1.2.2.6 2002/04/11 06:52:39 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe
@@ -49,6 +49,7 @@
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/signal.h>
+#include <sys/savar.h>
 #include <sys/vmmeter.h>
 #include <machine/cpu.h>
 #include <machine/frame.h>
@@ -77,7 +78,7 @@ userret(struct lwp *l)
 	int sig;
 
 	/* Take pending signals. */
-	while ((sig = (CURSIG(p))) != 0)
+	while ((sig = (CURSIG(l))) != 0)
 		postsig(sig);
 
 	/* Invoke per-process kernel-exit handling, if any */
@@ -88,7 +89,7 @@ userret(struct lwp *l)
 	if (l->l_flag & L_SA_UPCALL)
 		sa_upcall_userret(l);
 
-	curcpu()->ci_schedstate.spc_curpriority = p->p_priority = p->p_usrpri;
+	curcpu()->ci_schedstate.spc_curpriority = l->l_priority = l->l_usrpri;
 }
 
 
@@ -101,7 +102,8 @@ userret(struct lwp *l)
 void
 ast(struct trapframe *tf)
 {
-	struct proc *p = curproc;
+	struct lwp *l = curproc;
+	struct proc *p;
 
 #ifdef acorn26
 	/* Enable interrupts if they were enabled before the trap. */
@@ -115,11 +117,13 @@ ast(struct trapframe *tf)
 	uvmexp.softs++;
 
 #ifdef DEBUG
-	if (p == NULL)
+	if (l == NULL)
 		panic("ast: no curproc!");
-	if (&p->p_addr->u_pcb == 0)
+	if (&l->l_addr->u_pcb == 0)
 		panic("ast: no pcb!");
 #endif	
+
+	p = l->l_proc;
 
 	if (p->p_flag & P_OWEUPC) {
 		p->p_flag &= ~P_OWEUPC;
@@ -130,7 +134,7 @@ ast(struct trapframe *tf)
 	if (want_resched)
 		preempt(NULL);
 
-	userret(p);
+	userret(l);
 }
 
 /* End of ast.c */
