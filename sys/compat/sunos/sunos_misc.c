@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos_misc.c,v 1.83 1997/10/10 22:16:15 fvdl Exp $	*/
+/*	$NetBSD: sunos_misc.c,v 1.84 1997/10/19 12:52:19 carrel Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -567,7 +567,7 @@ sunos_sys_mmap(p, v, retval)
 
 	if ((SCARG(&ouap, flags) & MAP_FIXED) == 0 &&
 	    SCARG(&ouap, addr) != 0 &&
-	    SCARG(&ouap, addr) < (caddr_t)round_page(p->p_vmspace->vm_daddr+MAXDSIZ))
+	    SCARG(&ouap, addr) < (void *)round_page(p->p_vmspace->vm_daddr+MAXDSIZ))
 		SCARG(&ouap, addr) = (caddr_t)round_page(p->p_vmspace->vm_daddr+MAXDSIZ);
 
 	SCARG(&ouap, len) = SCARG(uap, len);
