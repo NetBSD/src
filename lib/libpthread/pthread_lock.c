@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_lock.c,v 1.1.2.10 2002/10/22 01:38:17 nathanw Exp $	*/
+/*	$NetBSD: pthread_lock.c,v 1.1.2.11 2002/11/03 12:29:03 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -249,4 +249,3 @@ pthread_spin_unlock(pthread_spinlock_t *lock)
 
 	return 0;
 }
-

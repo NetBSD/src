@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_int.h,v 1.1.2.34 2002/10/28 16:23:47 nathanw Exp $	*/
+/*	$NetBSD: pthread_int.h,v 1.1.2.35 2002/11/03 12:29:03 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -48,7 +48,8 @@
 #include "pthread_types.h"
 #include "pthread_queue.h"
 
-/* The size of this structure needs to be no larger than struct
+/*
+ * The size of this structure needs to be no larger than struct
  * __pthread_cleanup_store, defined in pthread.h.
  */
 struct pt_clean_t {
