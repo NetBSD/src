@@ -1,4 +1,4 @@
-/* $NetBSD: bt485.c,v 1.2 2000/04/02 18:55:01 nathanw Exp $ */
+/* $NetBSD: bt485.c,v 1.3 2000/06/28 17:12:56 mrg Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -37,7 +37,8 @@
 #include <sys/buf.h>
 #include <sys/kernel.h>
 #include <sys/malloc.h>
-#include <vm/vm.h>
+
+#include <uvm/uvm_extern.h>
 
 #include <dev/pci/pcivar.h>
 #include <dev/ic/bt485reg.h>

@@ -1,4 +1,4 @@
-/* $NetBSD: isp_netbsd.h,v 1.24 2000/06/26 14:38:50 mrg Exp $ */
+/* $NetBSD: isp_netbsd.h,v 1.25 2000/06/28 17:12:58 mrg Exp $ */
 /*
  * NetBSD Specific definitions for the Qlogic ISP Host Adapter
  * Matthew Jacob <mjacob@nas.nasa.gov>
@@ -51,8 +51,6 @@
 
 #include <dev/scsipi/scsi_message.h>
 #include <dev/scsipi/scsipi_debug.h>
-
-#include <vm/vm.h>
 
 #include "opt_isp.h"
 
