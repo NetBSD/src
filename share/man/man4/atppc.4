@@ -1,4 +1,4 @@
-.\"	$NetBSD: atppc.4,v 1.8 2004/01/28 18:48:33 jdolecek Exp $
+.\"	$NetBSD: atppc.4,v 1.9 2004/01/28 19:35:24 jdolecek Exp $
 .\"
 .\" Copyright (C) Gary Thorpe 2003
 .\" All rights reserved.
@@ -10,8 +10,9 @@
 .Nm atppc
 .Nd driver for AT-style parallel port chip sets
 .Sh SYNOPSIS
-.Cd "atppc* at isa? port 0x378 irq 7 drq 3 flags 0x00"
 .Cd "atppc* at acpi?"
+.Cd "atppc* at isa? port 0x378 irq 7 drq 3 flags 0x00"
+.Cd "atppc* at isapnp?"
 .Cd "atppc* at ofisa?"
 .Cd "atppc* at pnpbios? index ?"
 .Cd "atppc* at puc? port ?"
