@@ -1,4 +1,4 @@
-.\"	$NetBSD: install,v 1.10 2001/07/24 18:27:09 nra Exp $
+.\"	$NetBSD: install,v 1.11 2002/01/02 21:12:19 he Exp $
 .\"
 .\" Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -68,7 +68,7 @@ The built-in console monitor understands a bunch of commands, dependent
 of which VAX you have. To just boot from a device, type
 .Sq Ic B
 at the
-.Li >>>
+.Li \*>\*>\*>
 prompt. Device naming in the console monitor differs a lot from the
 .Ux
 counterparts. A device looks like

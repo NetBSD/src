@@ -1,4 +1,4 @@
-.\"	$NetBSD: install,v 1.21 2001/07/24 16:31:39 nra Exp $
+.\"	$NetBSD: install,v 1.22 2002/01/02 21:12:15 he Exp $
 .\"
 .\" Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -661,11 +661,11 @@ A typical session might be:
 .Dl # Ic mkdir /mnt/usr/release
 .Dl # Ic cd /mnt/usr/release
 .Dl # Ic ftp ftp.netbsd.org
-.D1 Em "the following commands are given to the" Ic ftp Em "program after logging in"
-.Dl ftp> Ic "prompt"
-.Dl ftp> Ic "cd /pub/NetBSD/NetBSD-\*V/\*M/binary/sets"
-.Dl ftp> Ic "mget *"
-.Dl ftp> Ic "quit"
+.D1 Em "the following commands are given to the " Ic ftp Em "program after logging in"
+.Dl ftp\*> Ic "prompt"
+.Dl ftp\*> Ic "cd /pub/NetBSD/NetBSD-\*V/\*M/binary/sets"
+.Dl ftp\*> Ic "mget *"
+.Dl ftp\*> Ic "quit"
 .Pp
 Feel free, of course, to leave off the sets that you don't need
 if you don't plan to install everything.
