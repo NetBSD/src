@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.670 2004/03/26 08:52:26 mrg Exp $
+# $NetBSD: mi,v 1.671 2004/03/27 01:47:39 uwe Exp $
 ./etc/mtree/set.man				man-sys-root
 ./usr/share/info/am-utils.info			man-amd-info		info
 ./usr/share/info/as.info			man-computil-info	bfd,info
@@ -1087,6 +1087,7 @@
 ./usr/share/man/cat4/sgimips/newport.0		man-sys-catman		.cat
 ./usr/share/man/cat4/sgimips/pic.0		man-sys-catman		.cat
 ./usr/share/man/cat4/sgimips/wdsc.0		man-sys-catman		.cat
+./usr/share/man/cat4/shb.0			man-sys-catman		.cat
 ./usr/share/man/cat4/si.0			man-sys-catman		.cat
 ./usr/share/man/cat4/siop.0			man-sys-catman		.cat
 ./usr/share/man/cat4/sip.0			man-sys-catman		.cat
@@ -3153,6 +3154,7 @@
 ./usr/share/man/man4/sgimips/newport.4		man-sys-man		.man
 ./usr/share/man/man4/sgimips/pic.4		man-sys-man		.man
 ./usr/share/man/man4/sgimips/wdsc.4		man-sys-man		.man
+./usr/share/man/man4/shb.4			man-sys-man		.man
 ./usr/share/man/man4/si.4			man-sys-man		.man
 ./usr/share/man/man4/siop.4			man-sys-man		.man
 ./usr/share/man/man4/sip.4			man-sys-man		.man
