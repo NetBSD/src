@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.410 2004/02/13 05:13:37 lukem Exp $
+#	$NetBSD: bsd.own.mk,v 1.411 2004/02/22 01:41:39 uwe Exp $
 
 .if !defined(_BSD_OWN_MK_)
 _BSD_OWN_MK_=1
@@ -31,9 +31,7 @@ TOOLCHAIN_MISSING=	no
 #
 # not working:
 #
-.if ${MACHINE_ARCH} == "sh3el" || \
-    ${MACHINE_ARCH} == "sh3eb" || \
-    ${MACHINE_ARCH} == "vax"
+.if ${MACHINE_ARCH} == "vax"
 HAVE_GCC3?=	no
 .else
 HAVE_GCC3?=	yes
