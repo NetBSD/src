@@ -1,4 +1,5 @@
-/*	$NetBSD: kb.c,v 1.3 1999/02/15 04:36:34 hubertf Exp $	*/
+/*	$NetBSD: kb.c,v 1.4 1999/12/18 06:54:05 tsubai Exp $	*/
+
 /*
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -39,10 +40,6 @@
  *	@(#)kb.c	8.1 (Berkeley) 6/11/93
  */
 
-#include "kb.h"
-
-#if NKB > 0
-
 #include <sys/param.h>
 #include <sys/proc.h>
 #include <sys/ioctl.h>
@@ -50,8 +47,8 @@
 #include <sys/uio.h>
 #include <sys/device.h>
 
-#include <machine/keyboard.h>
 #include <machine/autoconf.h>
+#include <machine/keyboard.h>
 
 #include <newsmips/dev/kbreg.h>
 
@@ -60,6 +57,11 @@
 #else
 #include "../iop/iopvar.h"
 #endif
+
+struct kb_softc {
+	struct device sc_dev;
+	int sc_busy;
+};
 
 extern Key_table key_table[];
 extern Key_table default_table[];
@@ -73,6 +75,7 @@ extern void init_key_table(void);
 static int	kbmatch __P((struct device *, struct cfdata *, void *));
 static void	kbattach __P((struct device *, struct device *, void *));
 
+static int kbintr __P((void *));
 extern int kbopen(dev_t, int, int, struct proc *);
 extern int kbclose(dev_t, int, int, struct proc *);
 #ifdef KBDEBUG
@@ -92,7 +95,7 @@ static int kb_write(struct uio *);
 static int kb_ctrl(int, void *);
 
 struct cfattach kb_ca = {
-	sizeof(struct device), kbmatch, kbattach
+	sizeof(struct kb_softc), kbmatch, kbattach
 };
 
 extern struct cfdriver kb_cd;
@@ -100,8 +103,6 @@ extern struct cfdriver kb_cd;
 #ifdef CPU_SINGLE
 extern	Key_table *key_table_addr;
 #endif
-
-static int kb_busy;
 
 int
 kbmatch(parent, cf, aux)
@@ -122,10 +123,24 @@ kbattach(parent, self, aux)
 	struct device *parent, *self;
 	void *aux;
 {
+	int intr = self->dv_cfdata->cf_level;
+
 	kb_attach();
 	init_key_table();
 
-	printf("\n");
+	if (intr == -1)
+		intr = 2;	/* XXX */
+
+	hb_intr_establish(intr, IPL_TTY, kbintr, self);
+	printf(" level %d\n", intr);
+}
+
+int
+kbintr(v)
+	void *v;
+{
+	kbm_rint(SCC_KEYBOARD);
+	return 1;
 }
 
 int
@@ -135,14 +150,19 @@ kbopen(dev, flags, mode, p)
 	struct proc *p;
 
 {
+	struct kb_softc *sc;
 	int unit = minor(dev);
 
-	if (unit >= NKB)
+	if (unit >= kb_cd.cd_ndevs)
 		return ENXIO;
-	if (kb_busy)
+	sc = kb_cd.cd_devs[unit];
+	if (sc == NULL)
+		return ENXIO;
+
+	if (sc->sc_busy)
 		return EBUSY;
 	/* need spl? */
-	kb_busy = 1;
+	sc->sc_busy = 1;
 	return kb_open();
 }
 
@@ -152,8 +172,10 @@ kbclose(dev, flags, mode, p)
 	int flags, mode;
 	struct proc *p;
 {
+	struct kb_softc *sc = kb_cd.cd_devs[minor(dev)];
+
 	kb_close();
-	kb_busy = 0;
+	sc->sc_busy = 0;
 	return 0;
 }
 
@@ -438,4 +460,3 @@ kb_ctrl(func, arg)
 	return (0);
 }
 #endif /* IPC_MRX */
-#endif /* NKB > 0 */
