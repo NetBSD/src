@@ -33,7 +33,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char *sccsid = "from: @(#)gethostnamadr.c	6.45 (Berkeley) 2/24/91";*/
-static char *rcsid = "$Id: gethostnamadr.c,v 1.8 1994/10/15 07:58:54 deraadt Exp $";
+static char *rcsid = "$Id: gethostnamadr.c,v 1.9 1994/11/02 07:19:51 deraadt Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
@@ -502,7 +502,7 @@ struct hostent *
 _yphostent(line)
 	char *line;
 {
-	static u_long host_addrs[MAXADDRS];
+	static u_int32_t host_addrs[MAXADDRS];
 	char *p = line;
 	char *cp, **q;
 	char **hap;
