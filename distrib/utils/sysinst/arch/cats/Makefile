@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2003/05/30 22:17:03 dsl Exp $
+#	$NetBSD: Makefile,v 1.5 2003/06/12 11:20:05 dsl Exp $
 #
 # Makefile for cats
 #
@@ -12,6 +12,6 @@ SRCS=	menu_defs.c msg_defs.c main.c install.c upgrade.c \
 
 SRCS+=	aout2elf.c
 
-md.o:	menu_defs.h msg_defs.h
+MD_OPTIONS=	AOUT2ELF
 
 .include "../../Makefile.inc"
