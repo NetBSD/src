@@ -1,4 +1,4 @@
-/* $NetBSD: setup.c,v 1.9 2001/07/13 20:30:19 perseant Exp $	 */
+/* $NetBSD: setup.c,v 1.10 2001/09/25 00:03:03 wiz Exp $ */
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -246,7 +246,7 @@ setup(const char *dev)
 						    LFS_LABELPAD / dev_bsize))
 		{
 			if (debug)
-				pwarn("Getting 'real' prinary superblock from 0x%x\n",
+				pwarn("Getting 'real' primary superblock from 0x%x\n",
 				      fsbtodb(&sblock, sblock.lfs_sboffs[0]));
 			bflag = fsbtodb(&sblock, sblock.lfs_sboffs[0]);
 			readsb(1);
@@ -499,7 +499,7 @@ readsb(int listerr)
 	/* checksum */
 	checksum = lfs_sb_cksum(&(sblock.lfs_dlfs));
 	if (sblock.lfs_cksum != checksum) {
-		printf("Superblock checksum (%lu)does not match computed checksum %lu\n",
+		printf("Superblock checksum (%lu) does not match computed checksum (%lu)\n",
 		(unsigned long)sblock.lfs_cksum, (unsigned long) checksum);
 	}
 #if 0				/* XXX - replace these checks with
