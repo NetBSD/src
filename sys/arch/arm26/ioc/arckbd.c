@@ -1,4 +1,4 @@
-/* $NetBSD: arckbd.c,v 1.5 2000/12/23 21:49:14 bjh21 Exp $ */
+/* $NetBSD: arckbd.c,v 1.6 2001/01/07 15:00:02 bjh21 Exp $ */
 /*-
  * Copyright (c) 1998, 1999, 2000 Ben Harris
  * All rights reserved.
@@ -43,7 +43,7 @@
 
 #include <sys/param.h>
 
-__RCSID("$NetBSD: arckbd.c,v 1.5 2000/12/23 21:49:14 bjh21 Exp $");
+__RCSID("$NetBSD: arckbd.c,v 1.6 2001/01/07 15:00:02 bjh21 Exp $");
 
 #include <sys/device.h>
 #include <sys/errno.h>
@@ -81,30 +81,37 @@ static const char *arckbd_statenames[] = {
 	"hrst", "rak1", "rak2", "idle", "kdda", "kuda", "mdat"
 };
 
-static int arckbd_match __P((struct device *parent, struct cfdata *cf, void *aux));
-static void arckbd_attach __P((struct device *parent, struct device *self, void *aux));
-static kbd_t arckbd_pick_layout __P((int kbid));
-static int arcwskbd_match __P((struct device *parent, struct cfdata *cf, void *aux));
-static void arcwskbd_attach __P((struct device *parent, struct device *self, void *aux));
-static int arcwsmouse_match __P((struct device *parent, struct cfdata *cf, void *aux));
-static void arcwsmouse_attach __P((struct device *parent, struct device *self, void *aux));
+static int arckbd_match(struct device *parent, struct cfdata *cf, void *aux);
+static void arckbd_attach(struct device *parent, struct device *self,
+    void *aux);
+static kbd_t arckbd_pick_layout(int kbid);
+static int arcwskbd_match(struct device *parent, struct cfdata *cf, void *aux);
+static void arcwskbd_attach(struct device *parent, struct device *self,
+    void *aux);
+static int arcwsmouse_match(struct device *parent, struct cfdata *cf,
+    void *aux);
+static void arcwsmouse_attach(struct device *parent, struct device *self,
+    void *aux);
 
-static int arckbd_rint __P((void *self));
-static int arckbd_xint __P((void *self));
-static void arckbd_mousemoved __P((struct device *self, int byte1, int byte2));
-static void arckbd_keyupdown __P((struct device *self, int byte1, int byte2));
-static int arckbd_send __P((struct device *self, int data, enum arckbd_state newstate, int waitok));
+static int arckbd_rint(void *self);
+static int arckbd_xint(void *self);
+static void arckbd_mousemoved(struct device *self, int byte1, int byte2);
+static void arckbd_keyupdown(struct device *self, int byte1, int byte2);
+static int arckbd_send(struct device *self, int data,
+    enum arckbd_state newstate, int waitok);
 
-static int arckbd_enable __P((void *cookie, int on));
-static int arckbd_led_encode __P((int));
-static int arckbd_led_decode __P((int));
-static void arckbd_set_leds __P((void *cookie, int new_state));
-static int arckbd_ioctl __P((void *cookie, u_long cmd, caddr_t data, int flag, struct proc *p));
-static void arckbd_getc __P((void *cookie, u_int *typep, int *valuep));
-static void arckbd_pollc __P((void *cookie, int poll));
-static int arcmouse_enable __P((void *cookie));
-static int arcmouse_ioctl __P((void *cookie, u_long cmd, caddr_t data, int flag, struct proc *p));
-static void arcmouse_disable __P((void *cookie));
+static int arckbd_enable(void *cookie, int on);
+static int arckbd_led_encode(int);
+static int arckbd_led_decode(int);
+static void arckbd_set_leds(void *cookie, int new_state);
+static int arckbd_ioctl(void *cookie, u_long cmd, caddr_t data, int flag,
+    struct proc *p);
+static void arckbd_getc(void *cookie, u_int *typep, int *valuep);
+static void arckbd_pollc(void *cookie, int poll);
+static int arcmouse_enable(void *cookie);
+static int arcmouse_ioctl(void *cookie, u_long cmd, caddr_t data, int flag,
+    struct proc *p);
+static void arcmouse_disable(void *cookie);
 
 struct arckbd_softc {
 	struct device		sc_dev;
@@ -177,10 +184,7 @@ static struct wsmouse_accessops arcmouse_accessops = {
 
 /* ARGSUSED */
 static int
-arckbd_match(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+arckbd_match(struct device *parent, struct cfdata *cf, void *aux)
 {
 
 	/* Assume presence for now */
@@ -188,9 +192,7 @@ arckbd_match(parent, cf, aux)
 }
 
 static void
-arckbd_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+arckbd_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct arckbd_softc *sc = (void *)self;
 	struct ioc_attach_args *ioc = aux;
@@ -248,8 +250,7 @@ arckbd_attach(parent, self, aux)
 }
 
 static kbd_t
-arckbd_pick_layout(kbid)
-	int kbid;
+arckbd_pick_layout(int kbid)
 {
 	int i;
 
@@ -263,10 +264,7 @@ arckbd_pick_layout(kbid)
 
 /* ARGSUSED */
 static int
-arcwskbd_match(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+arcwskbd_match(struct device *parent, struct cfdata *cf, void *aux)
 {
 	struct arckbd_attach_args *aka = aux;
 
@@ -277,10 +275,7 @@ arcwskbd_match(parent, cf, aux)
 
 /* ARGSUSED */
 static int
-arcwsmouse_match(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+arcwsmouse_match(struct device *parent, struct cfdata *cf, void *aux)
 {
 	struct arckbd_attach_args *aka = aux;
 
@@ -290,9 +285,7 @@ arcwsmouse_match(parent, cf, aux)
 }
 
 static void
-arcwskbd_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+arcwskbd_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct arckbd_attach_args *aka = aux;
 	struct arckbd_softc *sc = (void *)parent;
@@ -304,9 +297,7 @@ arcwskbd_attach(parent, self, aux)
 }
 
 static void
-arcwsmouse_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+arcwsmouse_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct arckbd_attach_args *aka = aux;
 	struct arckbd_softc *sc = (void *)parent;
@@ -327,8 +318,7 @@ arcwsmouse_attach(parent, self, aux)
  */
 
 void
-arckbd_cnattach(self)
-	struct device *self;
+arckbd_cnattach(struct device *self)
 {
 	struct arckbd_softc *sc = (void*)self;
 
@@ -336,10 +326,7 @@ arckbd_cnattach(self)
 }
 
 static void
-arckbd_getc(cookie, typep, valuep)
-	void *cookie;
-	u_int *typep;
-	int *valuep;
+arckbd_getc(void *cookie, u_int *typep, int *valuep)
 {
  	struct arckbd_softc *sc = cookie;
 	int s;
@@ -362,9 +349,7 @@ arckbd_getc(cookie, typep, valuep)
 }
 
 static void
-arckbd_pollc(cookie, poll)
-	void *cookie;
-	int poll;
+arckbd_pollc(void *cookie, int poll)
 {
 	struct arckbd_softc *sc = cookie;
 	int s;
@@ -383,10 +368,8 @@ arckbd_pollc(cookie, poll)
 }
 
 static int
-arckbd_send(self, data, newstate, waitok)
-	struct device *self;
-	int data, waitok;
-	enum arckbd_state newstate;
+arckbd_send(struct device *self, int data, enum arckbd_state newstate,
+    int waitok)
 {
 	struct arckbd_softc *sc = (void *)self;
 	int s, res;
@@ -427,8 +410,7 @@ arckbd_send(self, data, newstate, waitok)
 }
 
 static int
-arckbd_xint(cookie)
-	void *cookie;
+arckbd_xint(void *cookie)
 {
 	struct arckbd_softc *sc = cookie;
 
@@ -457,8 +439,7 @@ arckbd_xint(cookie)
 }
 
 static int
-arckbd_rint(cookie)
-	void *cookie;
+arckbd_rint(void *cookie)
 {
 	struct device *self = cookie;
 	struct arckbd_softc *sc = (void *)self;
@@ -541,9 +522,7 @@ arckbd_rint(cookie)
 }
 
 static void
-arckbd_mousemoved(self, byte1, byte2)
-	struct device *self;
-	int byte1, byte2;
+arckbd_mousemoved(struct device *self, int byte1, int byte2)
 {
 	struct arckbd_softc *sc = (void *)self;
 	int dx, dy;
@@ -559,9 +538,7 @@ arckbd_mousemoved(self, byte1, byte2)
 }
 
 static void
-arckbd_keyupdown(self, byte1, byte2)
-	struct device *self;
-	int byte1, byte2;
+arckbd_keyupdown(struct device *self, int byte1, int byte2)
 {
 	struct arckbd_softc *sc = (void *)self;
 	u_int type;
@@ -601,9 +578,7 @@ arckbd_keyupdown(self, byte1, byte2)
  */
 
 static int
-arckbd_enable(cookie, on)
-	void *cookie;
-	int on;
+arckbd_enable(void *cookie, int on)
 {
 	struct arckbd_softc *sc = cookie;
 
@@ -616,8 +591,7 @@ arckbd_enable(cookie, on)
 }
 
 static int
-arckbd_led_encode(wsleds)
-	int wsleds;
+arckbd_led_encode(int wsleds)
 {
 	int arcleds;
 
@@ -633,8 +607,7 @@ arckbd_led_encode(wsleds)
 }
 
 static int
-arckbd_led_decode(arcleds)
-	int arcleds;
+arckbd_led_decode(int arcleds)
 {
 	int wsleds;
 
@@ -655,9 +628,7 @@ arckbd_led_decode(arcleds)
  * Be warned: This function gets called from interrupts.
  */
 static void
-arckbd_set_leds(cookie, new_state)
-	void *cookie;
-	int new_state;
+arckbd_set_leds(void *cookie, int new_state)
 {
 	struct arckbd_softc *sc = cookie;
 	int s;
@@ -671,12 +642,7 @@ arckbd_set_leds(cookie, new_state)
 
 /* ARGSUSED */
 static int
-arckbd_ioctl(cookie, cmd, data, flag, p)
-	void *cookie;
-	u_long cmd;
-	caddr_t data;
-	int flag;
-	struct proc *p;
+arckbd_ioctl(void *cookie, u_long cmd, caddr_t data, int flag, struct proc *p)
 {
  	struct arckbd_softc *sc = cookie;
 
@@ -699,8 +665,7 @@ arckbd_ioctl(cookie, cmd, data, flag, p)
  */
 
 static int
-arcmouse_enable(cookie)
-	void *cookie;
+arcmouse_enable(void *cookie)
 {
 	struct arckbd_softc *sc = cookie;
 
@@ -711,12 +676,8 @@ arcmouse_enable(cookie)
 
 /* ARGSUSED */
 static int
-arcmouse_ioctl(cookie, cmd, data, flag, p)
-	void *cookie;
-	u_long cmd;
-	caddr_t data;
-	int flag;
-	struct proc *p;
+arcmouse_ioctl(void *cookie, u_long cmd, caddr_t data, int flag,
+    struct proc *p)
 {
 /*	struct arckbd_softc *sc = cookie; */
 
@@ -729,8 +690,7 @@ arcmouse_ioctl(cookie, cmd, data, flag, p)
 }
 
 static void
-arcmouse_disable(cookie)
-	void *cookie;
+arcmouse_disable(void *cookie)
 {
 	struct arckbd_softc *sc = cookie;
 
