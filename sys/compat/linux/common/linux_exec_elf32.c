@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_exec_elf32.c,v 1.41 1999/02/09 20:37:19 christos Exp $	*/
+/*	$NetBSD: linux_exec_elf32.c,v 1.42 1999/04/30 23:07:01 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -82,7 +82,7 @@ static int ELFNAME2(linux,gcc_signature) __P((struct proc *p,
 	struct exec_package *, Elf_Ehdr *));
 #endif
 
-#define LINUX_ELF_AUX_ARGSIZ (sizeof(AuxInfo) * 8 / sizeof(char *))
+#define LINUX_ELF_AUX_ARGSIZ howmany(sizeof(AuxInfo) * 8, sizeof(char *))
 
 
 extern char linux_sigcode[], linux_esigcode[];
