@@ -1,4 +1,4 @@
-/*	$NetBSD: wss.c,v 1.29 1997/07/28 20:56:24 augustss Exp $	*/
+/*	$NetBSD: wss.c,v 1.30 1997/07/31 22:33:41 augustss Exp $	*/
 
 /*
  * Copyright (c) 1994 John Brezak
@@ -137,7 +137,6 @@ struct audio_device wss_device = {
 	"WSS"
 };
 
-int	wssopen __P((dev_t, int));
 int	wss_getdev __P((void *, struct audio_device *));
 
 int	wss_set_out_port __P((void *, int));
@@ -159,7 +158,7 @@ static void	madprobedone __P((struct wss_softc *));
  */
 
 struct audio_hw_if wss_hw_if = {
-	wssopen,
+	ad1848_open,
 	ad1848_close,
 	NULL,
 	ad1848_query_encoding,
@@ -188,7 +187,7 @@ struct audio_hw_if wss_hw_if = {
 	ad1848_free,
 	ad1848_round,
         ad1848_mappage,
-	AUDIO_PROP_MMAP
+	ad1848_get_props,
 };
 
 int	wssprobe __P((struct device *, void *, void *));
@@ -319,7 +318,7 @@ wssattach(parent, self, aux)
 
     sc->sc_ad1848.parent = sc;
 
-    if ((err = audio_hardware_attach(&wss_hw_if, &sc->sc_ad1848)) != 0)
+    if ((err = audio_hardware_attach(&wss_hw_if, &sc->sc_ad1848, &sc->sc_dev)) != 0)
 	printf("wss: could not attach to audio pseudo-device driver (%d)\n", err);
 }
 
@@ -355,24 +354,6 @@ wss_from_vol(cp, vol)
 	return(1);
     }
     return(0);
-}
-
-int
-wssopen(dev, flags)
-    dev_t dev;
-    int flags;
-{
-    struct wss_softc *sc;
-    int unit = AUDIOUNIT(dev);
-    
-    if (unit >= wss_cd.cd_ndevs)
-	return ENODEV;
-    
-    sc = wss_cd.cd_devs[unit];
-    if (!sc)
-	return ENXIO;
-    
-    return ad1848_open(&sc->sc_ad1848, dev, flags);
 }
 
 int
@@ -863,9 +844,15 @@ madprobe(sc, iobase)
         { M_WSS_PORT0, M_WSS_PORT1, M_WSS_PORT2, M_WSS_PORT3 };
     int i;
     int chip_type;
+    bus_space_handle_t hdl1, hdl2, hdl3;
 
     if (bus_space_map(sc->sc_iot, MAD_BASE, MAD_NPORT, 0, &sc->sc_mad_ioh))
 	return MAD_NONE;
+
+    /* Allocate bus space that the MAD chip wants */
+    if (bus_space_map(sc->sc_iot, MAD_REG1, MAD_LEN1, 0, &hdl1)) goto bad1;
+    if (bus_space_map(sc->sc_iot, MAD_REG2, MAD_LEN2, 0, &hdl2)) goto bad2;
+    if (bus_space_map(sc->sc_iot, MAD_REG3, MAD_LEN3, 0, &hdl3)) goto bad3;
 
     DPRINTF(("mad: Detect using password = 0xE2\n"));
     if (!detect_mad16(sc, MAD_82C928)) {
@@ -892,21 +879,27 @@ madprobe(sc, iobase)
 #endif
 
     /* Set the WSS address. */
-    for (i = 0; i < 4; i++)
+    for (i = 0; i < M_WSS_NPORTS; i++)
 	if (valid_ports[i] == iobase)
 	    break;
-    if (i > 3) {		/* Not a valid port */
+    if (i >= M_WSS_NPORTS) {		/* Not a valid port */
 	printf("mad: Bad WSS base address 0x%x\n", iobase);
 	goto bad;
     }
-    /* enable WSS emulation at the I/O port, keep joystck */
-    mad_write(sc, chip_type, MC1_PORT, M_WSS_PORT_SELECT(i));
+    /* enable WSS emulation at the I/O port, no joystick */
+    mad_write(sc, chip_type, MC1_PORT, M_WSS_PORT_SELECT(i) | MC1_JOYDISABLE);
 
     mad_write(sc, chip_type, MC2_PORT, 0x03); /* ? */
     mad_write(sc, chip_type, MC3_PORT, 0xf0); /* Disable SB */
 
     return chip_type;
 bad:
+    bus_space_unmap(sc->sc_iot, hdl3, MAD_LEN3);
+bad3:
+    bus_space_unmap(sc->sc_iot, hdl2, MAD_LEN2);
+bad2:
+    bus_space_unmap(sc->sc_iot, hdl1, MAD_LEN1);
+bad1:
     bus_space_unmap(sc->sc_iot, sc->sc_mad_ioh, MAD_NPORT);
     return MAD_NONE;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: audiovar.h,v 1.12 1997/07/27 23:06:05 augustss Exp $	*/
+/*	$NetBSD: audiovar.h,v 1.13 1997/07/31 22:33:20 augustss Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -76,6 +76,7 @@ struct audio_ringbuffer {
 struct audio_softc {
 	void	*hw_hdl;	/* Hardware driver handle */
 	struct	audio_hw_if *hw_if; /* Hardware interface */
+	struct	device *sc_dev;	/* Hardware device struct */
 	u_char	sc_open;	/* single use device */
 #define AUOPEN_READ	0x01
 #define AUOPEN_WRITE	0x02

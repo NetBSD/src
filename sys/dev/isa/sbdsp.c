@@ -1,4 +1,4 @@
-/*	$NetBSD: sbdsp.c,v 1.63 1997/07/28 20:56:22 augustss Exp $	*/
+/*	$NetBSD: sbdsp.c,v 1.64 1997/07/31 22:33:36 augustss Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -61,6 +61,7 @@
 #include <sys/audioio.h>
 #include <dev/audio_if.h>
 #include <dev/mulaw.h>
+#include <dev/auconv.h>
 
 #include <dev/isa/isavar.h>
 #include <dev/isa/isadmavar.h>
@@ -141,6 +142,7 @@ static struct sbmode sbpmodes[] = {
  { SB_JAZZ, 2, 16, 11025, 22727, SB_DSP_HS_OUTPUT, JAZZ16_RECORD_STEREO },
  { SB_16,   1,  8,  5000, 45000, SB_DSP16_WDMA_8  },
  { SB_16,   2,  8,  5000, 45000, SB_DSP16_WDMA_8  },
+#define PLAY16 15 /* must be the index of the next entry in the table */
  { SB_16,   1, 16,  5000, 45000, SB_DSP16_WDMA_16 },
  { SB_16,   2, 16,  5000, 45000, SB_DSP16_WDMA_16 },
  { -1 }
@@ -366,7 +368,7 @@ sbdsp_attach(sc)
 		sc->in_filter = 0;	/* no filters turned on, please */
 	}
 
-	printf(" drq16 %d", sc->sc_drq16);
+	DPRINTF((" drq16 %d", sc->sc_drq16));
 	printf(": dsp v%d.%02d%s\n",
 	       SBVER_MAJOR(sc->sc_version), SBVER_MINOR(sc->sc_version),
 	       sc->sc_model == SB_JAZZ ? ": <Jazz16>" : "");
@@ -493,10 +495,15 @@ sbdsp_set_params(addr, mode, p, q)
 	struct sbmode *m;
 	u_int rate, tc = 1, bmode = -1;
 	void (*swcode) __P((void *, u_char *buf, int cnt));
+	int factor = 1;
+	int model;
 
+	model = sc->sc_model;
+	if (model > SB_16) 
+		model = SB_16;	/* later models work like SB16 */
 	for(m = mode == AUMODE_PLAY ? sbpmodes : sbrmodes; 
 	    m->model != -1; m++) {
-		if (sc->sc_model == m->model &&
+		if (model == m->model &&
 		    p->channels == m->channels &&
 		    p->precision == m->precision &&
 		    p->sample_rate >= m->lowrate && 
@@ -507,37 +514,53 @@ sbdsp_set_params(addr, mode, p, q)
 		return EINVAL;
 	rate = p->sample_rate;
 	swcode = 0;
-	if (m->model == SB_16) {
+	if (model == SB_16) {
 		switch (p->encoding) {
 		case AUDIO_ENCODING_SLINEAR_BE:
 			if (p->precision == 16)
 				swcode = swap_bytes;
 			/* fall into */
 		case AUDIO_ENCODING_SLINEAR_LE:
-			bmode = 0x10;
+			bmode = SB_BMODE_SIGNED;
 			break;
 		case AUDIO_ENCODING_ULINEAR_BE:
 			if (p->precision == 16)
 				swcode = swap_bytes;
 			/* fall into */
 		case AUDIO_ENCODING_ULINEAR_LE:
-			bmode = 0;
+			bmode = SB_BMODE_UNSIGNED;
 			break;
 		case AUDIO_ENCODING_ULAW:
-			swcode = mode == AUMODE_PLAY ? 
-				mulaw_to_ulinear8 : ulinear8_to_mulaw;
-			bmode = 0;
+			if (mode == AUMODE_PLAY) {
+#if 0
+				swcode = mulaw_to_ulinear16;
+				factor = 2;
+				m = &sbpmodes[PLAY16];
+#else
+				swcode = mulaw_to_ulinear8;
+#endif
+			} else
+				swcode = ulinear8_to_mulaw;
+			bmode = SB_BMODE_UNSIGNED;
 			break;
 		case AUDIO_ENCODING_ALAW:
-			swcode = mode == AUMODE_PLAY ? 
-				alaw_to_ulinear8 : ulinear8_to_alaw;
-			bmode = 0;
+			if (mode == AUMODE_PLAY) {
+#if 0
+				swcode = alaw_to_ulinear16;
+				factor = 2;
+				m = &sbpmodes[PLAY16];
+#else
+				swcode = alaw_to_ulinear8;
+#endif
+			} else
+				swcode = ulinear8_to_alaw;
+			bmode = SB_BMODE_UNSIGNED;
 			break;
 		default:
 			return EINVAL;
 		}
 		if (p->channels == 2)
-			bmode |= 0x20;
+			bmode |= SB_BMODE_STEREO;
 	} else if (m->model == SB_JAZZ && m->precision == 16) {
 		switch (p->encoding) {
 		case AUDIO_ENCODING_SLINEAR_LE:
@@ -602,6 +625,7 @@ sbdsp_set_params(addr, mode, p, q)
 	}
 
 	p->sw_code = swcode;
+	p->factor = factor;
 
 	/* Update setting for the other mode. */
 	q->encoding = p->encoding;
@@ -804,11 +828,12 @@ sbdsp_round_blocksize(addr, blk)
 }
 
 int
-sbdsp_open(sc, dev, flags)
-	struct sbdsp_softc *sc;
-	dev_t dev;
+sbdsp_open(addr, flags)
+	void *addr;
 	int flags;
 {
+	struct sbdsp_softc *sc = addr;
+
         DPRINTF(("sbdsp_open: sc=%p\n", sc));
 
 	if (sc->sc_open != 0 || sbdsp_reset(sc) != 0)
@@ -1055,7 +1080,11 @@ sbversion(sc)
 		break;
 	case 4:
 		sc->sc_mixer_model = SBM_CT1745;
-		sc->sc_model = SB_16;
+		/* XXX what about SB_32 */
+		if (SBVER_MINOR(v) == 16)
+			sc->sc_model = SB_64;
+		else
+			sc->sc_model = SB_16;
 		break;
 	}
 }
@@ -2059,4 +2088,11 @@ sb_mappage(addr, mem, off, prot)
 	int prot;
 {
 	return isa_mappage(mem, off, prot);
+}
+
+int
+sbdsp_get_props(addr)
+	void *addr;
+{
+	return AUDIO_PROP_MMAP;
 }
