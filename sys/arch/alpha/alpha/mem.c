@@ -1,4 +1,4 @@
-/* $NetBSD: mem.c,v 1.25 1999/12/04 21:19:56 ragge Exp $ */
+/* $NetBSD: mem.c,v 1.26 2000/03/29 03:48:20 simonb Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -46,7 +46,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.25 1999/12/04 21:19:56 ragge Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.26 2000/03/29 03:48:20 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -122,7 +122,6 @@ mmrw(dev, uio, flags)
 			v = uio->uio_offset;
 kmemphys:
 			if (v >= ALPHA_K0SEG_TO_PHYS((vaddr_t)msgbufaddr)) {
-				extern int msgbufmapped;
 				if (msgbufmapped == 0) {
 					printf("Message Buf not Mapped\n");
 					error = EFAULT;
