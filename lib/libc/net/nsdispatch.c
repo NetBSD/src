@@ -1,4 +1,4 @@
-/*	$NetBSD: nsdispatch.c,v 1.12 1999/09/16 11:45:16 lukem Exp $	*/
+/*	$NetBSD: nsdispatch.c,v 1.13 1999/09/16 23:43:52 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: nsdispatch.c,v 1.12 1999/09/16 11:45:16 lukem Exp $");
+__RCSID("$NetBSD: nsdispatch.c,v 1.13 1999/09/16 23:43:52 lukem Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -276,10 +276,8 @@ nsdispatch(retval, disp_tab, database, method, defaults, va_alist)
 
 	_DIAGASSERT(database != NULL);
 	_DIAGASSERT(method != NULL);
-#ifdef _DIAGNOSTIC
 	if (database == NULL || method == NULL)
 		return (NS_UNAVAIL);
-#endif
 
 	dbt = _nsdbtget(database);
 	if (dbt != NULL) {
