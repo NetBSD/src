@@ -1,4 +1,4 @@
-/*	$NetBSD: wump.c,v 1.10 1999/09/09 17:30:20 jsm Exp $	*/
+/*	$NetBSD: wump.c,v 1.11 1999/09/10 10:47:56 kleink Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -47,7 +47,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\n\
 #if 0
 static char sccsid[] = "@(#)wump.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: wump.c,v 1.10 1999/09/09 17:30:20 jsm Exp $");
+__RCSID("$NetBSD: wump.c,v 1.11 1999/09/10 10:47:56 kleink Exp $");
 #endif
 #endif /* not lint */
 
@@ -746,7 +746,7 @@ puff of greasy black smoke! (poof)\n");
 		return;
 	}
 
-	if (!isatty(1))
+	if (!isatty(STDOUT_FILENO))
 		pager = "cat";
 	else {
 		if (!(pager = getenv("PAGER")) || (*pager == 0))
@@ -756,7 +756,7 @@ puff of greasy black smoke! (poof)\n");
 	case 0: /* child */
 		if ((fd = open(_PATH_WUMPINFO, O_RDONLY)) == -1)
 			err(1, "open %s", _PATH_WUMPINFO);
-		if (dup2(fd, 0) == -1)
+		if (dup2(fd, STDIN_FILENO) == -1)
 			err(1, "dup2");
 		(void)execl("/bin/sh", "sh", "-c", pager, NULL);
 		err(1, "exec sh -c %s", pager);
