@@ -1,11 +1,12 @@
-#	$NetBSD: bsd.doc.mk,v 1.28 1997/05/07 15:53:28 mycroft Exp $
+#	$NetBSD: bsd.doc.mk,v 1.29 1997/05/07 16:35:44 mycroft Exp $
 #	@(#)bsd.doc.mk	8.1 (Berkeley) 8/14/93
 
 .include <bsd.own.mk>
 
 .MAIN:		all
-.PHONY:		print docinstall spell
+.PHONY:		cleandoc docinstall print spell
 install:	docinstall
+clean:		cleandoc
 
 BIB?=		bib
 EQN?=		eqn
@@ -37,7 +38,7 @@ print: paper.ps
 	lpr -P${PRINTER} paper.ps
 .endif
 
-clean cleandir:
+cleandoc:
 	rm -f paper.* [eE]rrs mklog ${CLEANFILES}
 
 .if !defined(NODOC)
