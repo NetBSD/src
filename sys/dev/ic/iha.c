@@ -1,4 +1,4 @@
-/*	$NetBSD: iha.c,v 1.2 2001/06/05 12:42:44 tsutsui Exp $ */
+/*	$NetBSD: iha.c,v 1.3 2001/06/07 03:44:00 thorpej Exp $ */
 /*
  * Initio INI-9xxxU/UW SCSI Device Driver
  *
@@ -528,9 +528,6 @@ tul_append_free_scb(sc, scb)
 	int s;
 
 	s = splbio();
-
-	if (scb->xs != NULL)
-		callout_stop(&scb->xs->xs_callout);
 
 	if (scb == sc->sc_actscb)
 		sc->sc_actscb = NULL;
@@ -2422,6 +2419,9 @@ tul_done_scb(sc, scb)
 	struct scsipi_xfer *xs = scb->xs;
 
 	if (xs != NULL) {
+		/* Cancel the timeout. */
+		callout_stop(&xs->xs_callout);
+
 		if (xs->datalen > 0) {
 			bus_dmamap_sync(sc->sc_dmat, scb->dmap,
 			    0, scb->dmap->dm_mapsize,
