@@ -1,4 +1,4 @@
-/*	$NetBSD: ipmon.c,v 1.1.1.1 2004/03/28 08:56:34 martti Exp $	*/
+/*	$NetBSD: ipmon.c,v 1.2 2004/03/28 14:33:35 he Exp $	*/
 
 /*
  * Copyright (C) 1993-2001, 2003 by Darren Reed.
@@ -875,7 +875,14 @@ int	blen;
 	if (sl->isl_type != ISL_NEW) {
 		sprintf(t,
 #ifdef	USE_QUAD_T
+#ifdef  PRId64
+			" Forward: Pkts in %" PRId64 " Bytes in %" PRId64 
+			" Pkts out %" PRId64 " Bytes out %" PRId64 
+			" Backward: Pkts in %" PRId64 " Bytes in %" PRId64
+			" Pkts out %" PRId64 " Bytes out %" PRId64,
+#else
 			" Forward: Pkts in %qd Bytes in %qd Pkts out %qd Bytes out %qd Backward: Pkts in %qd Bytes in %qd Pkts out %qd Bytes out %qd",
+#endif /* PRId64 */
 #else
 			" Forward: Pkts in %ld Bytes in %ld Pkts out %ld Bytes out %ld Backward: Pkts in %ld Bytes in %ld Pkts out %ld Bytes out %ld",
 #endif
