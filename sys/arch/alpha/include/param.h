@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.6 1995/06/28 02:43:36 cgd Exp $	*/
+/*	$NetBSD: param.h,v 1.7 1995/08/03 00:51:00 cgd Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -111,7 +111,7 @@
  * Size of kernel malloc arena in CLBYTES-sized logical pages
  */ 
 #ifndef NKMEMCLUSTERS
-#define	NKMEMCLUSTERS	(1024*1024/CLBYTES)	/* XXX? */
+#define	NKMEMCLUSTERS	(4096*1024/CLBYTES)	/* XXX? */
 #endif
 
 /* pages ("clicks") to disk blocks */
