@@ -1,4 +1,4 @@
-/*	$NetBSD: savecore.c,v 1.48 2001/01/02 00:29:37 lukem Exp $	*/
+/*	$NetBSD: savecore.c,v 1.49 2001/01/02 21:39:37 joda Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1992, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1986, 1992, 1993\n\
 #if 0
 static char sccsid[] = "@(#)savecore.c	8.5 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: savecore.c,v 1.48 2001/01/02 00:29:37 lukem Exp $");
+__RCSID("$NetBSD: savecore.c,v 1.49 2001/01/02 21:39:37 joda Exp $");
 #endif
 #endif /* not lint */
 
@@ -67,7 +67,7 @@ __RCSID("$NetBSD: savecore.c,v 1.48 2001/01/02 00:29:37 lukem Exp $");
 #include <limits.h>
 #include <kvm.h>
 
-extern FILE *zopen(const char *fname, const char *mode, int bits);
+extern FILE *zopen(const char *fname, const char *mode);
 
 #define KREAD(kd, addr, p)\
 	(kvm_read(kd, addr, (char *)(p), sizeof(*(p))) != sizeof(*(p)))
@@ -427,9 +427,9 @@ err1:			syslog(LOG_WARNING, "%s: %m", path);
 
 	/* Create the core file. */
 	(void)snprintf(path, sizeof(path), "%s/netbsd.%d.core%s",
-	    dirname, bounds, compress ? ".Z" : "");
+	    dirname, bounds, compress ? ".gz" : "");
 	if (compress) {
-		if ((fp = zopen(path, "w", 0)) == NULL) {
+		if ((fp = zopen(path, "w")) == NULL) {
 			syslog(LOG_ERR, "%s: %m", path);
 			exit(1);
 		}
@@ -489,9 +489,9 @@ err2:			syslog(LOG_WARNING,
 	/* Copy the kernel. */
 	ifd = Open(kernel ? kernel : _PATH_UNIX, O_RDONLY);
 	(void)snprintf(path, sizeof(path), "%s/netbsd.%d%s",
-	    dirname, bounds, compress ? ".Z" : "");
+	    dirname, bounds, compress ? ".gz" : "");
 	if (compress) {
-		if ((fp = zopen(path, "w", 0)) == NULL) {
+		if ((fp = zopen(path, "w")) == NULL) {
 			syslog(LOG_ERR, "%s: %m", path);
 			exit(1);
 		}
