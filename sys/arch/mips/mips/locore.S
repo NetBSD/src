@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.143 2002/08/28 08:34:07 gmcgarry Exp $	*/
+/*	$NetBSD: locore.S,v 1.144 2002/09/09 02:32:38 simonb Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -288,6 +288,11 @@ END(remrunqueue)
  * profiling.
  */
 LEAF(mips_idle)
+	sw	zero, _C_LABEL(curproc)		# set curproc NULL for stats
+#if defined(LOCKDEBUG)
+	jal	_C_LABEL(sched_unlock_idle)	# release sched_lock
+	nop
+#endif
 #ifdef 	IPL_ICU_MASK
 	# all interrupts enable.
 	sw	zero, _C_LABEL(md_imask)	
@@ -299,11 +304,6 @@ LEAF(mips_idle)
 	mtc0	t0, MIPS_COP_0_STATUS		# enable all interrupts
 	COP0_SYNC
 	nop
-	sw	zero, _C_LABEL(curproc)		# set curproc NULL for stats
-#if defined(LOCKDEBUG)
-	jal	_C_LABEL(sched_unlock_idle)	# release sched_lock
-	nop
-#endif
 
 	/* Try to zero some free pages. */
 	lw	t0, _C_LABEL(uvm) + UVM_PAGE_IDLE_ZERO
@@ -325,28 +325,19 @@ LEAF(mips_idle)
 	nop
 	beq	t0, zero, 1b
 	nop
-#if defined(LOCKDEBUG)
 	mtc0	zero, MIPS_COP_0_STATUS		# disable all interrupts
 	COP0_SYNC
 	nop
 	nop
 	nop
+#if defined(LOCKDEBUG)
 	nop
 	jal	_C_LABEL(sched_lock_idle)	# acquire sched_lock
 	nop
-	la	ra, cpu_switch_queuescan
-	j	ra
-	nop
-#else
-	mtc0	zero, MIPS_COP_0_STATUS		# disable all interrupts
-	COP0_SYNC
-	nop
-	nop
-	nop
-	la	ra, cpu_switch_queuescan
-	j	ra
-	nop
 #endif
+	la	ra, cpu_switch_queuescan
+	j	ra
+	nop
 END(mips_idle)
 
 /*
