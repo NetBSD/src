@@ -1,4 +1,4 @@
-/*	$NetBSD: supcparse.c,v 1.9 1999/04/12 20:48:07 pk Exp $	*/
+/*	$NetBSD: supcparse.c,v 1.10 2002/07/10 18:54:00 wiz Exp $	*/
 
 /*
  * Copyright (c) 1992 Carnegie Mellon University
@@ -99,7 +99,7 @@ struct option {
  	{ "compress", 	OCOMPRESS }
 };
 
-static void passdelim __P((char **, int ));
+static void passdelim(char **, int );
 
 static void passdelim (ptr,delim)		/* skip over delimiter */
 char **ptr,delim;

@@ -1,4 +1,4 @@
-/*	$NetBSD: run.c,v 1.9 2001/09/24 13:22:38 wiz Exp $	*/
+/*	$NetBSD: run.c,v 1.10 2002/07/10 18:53:58 wiz Exp $	*/
 
 /*
  * Copyright (c) 1991 Carnegie Mellon University
@@ -95,14 +95,8 @@
 #include "supcdefs.h"
 #include "supextern.h"
 
-#ifndef __STDC__
-#ifndef const
-#define const
-#endif
-#endif
-
-static int dorun __P((char *, char **, int));
-static char **makearglist __P((va_list));
+static int dorun(char *, char **, int);
+static char **makearglist(va_list);
 
 static char **
 makearglist(ap)
@@ -125,25 +119,13 @@ makearglist(ap)
 }
 
 int
-#ifdef __STDC__
 run(char *name, ...)
-#else
-run(va_alist)
-va_dcl
-#endif
 {
 	int val;
 	va_list ap;
 	char **argv;
-#ifdef __STDC__
+
 	va_start(ap, name);
-#else
-	char *name;
-
-	va_start(ap);
-	name = va_arg(ap, char *);
-#endif
-
 	if ((argv = makearglist(ap)) == NULL) {
 		va_end(ap);
 		return -1;
@@ -160,27 +142,17 @@ char *name,**argv;
 }
 
 int
-#ifdef __STDC__
 runp(char *name, ...)
-#else
-runp (va_alist)
-va_dcl
-#endif
 {
 	int val;
 	va_list ap;
 	char **argv;
-#ifdef __STDC__
+
 	va_start(ap, name);
-#else
-	char *name;
-
-	va_start(ap);
-	name = va_arg(ap, char *);
-#endif
-
-	if ((argv = makearglist(ap)) == NULL)
+	if ((argv = makearglist(ap)) == NULL) {
+		va_end(ap);
 		return -1;
+	}
 	val = runvp (name, argv);
 	va_end(ap);
 	return (val);

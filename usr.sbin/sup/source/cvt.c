@@ -1,4 +1,4 @@
-/*	$NetBSD: cvt.c,v 1.2 1997/06/17 18:56:10 christos Exp $	*/
+/*	$NetBSD: cvt.c,v 1.3 2002/07/10 18:53:57 wiz Exp $	*/
 
 /*
  * Quick hack to convert old binary sup when.collection files into 
@@ -10,9 +10,7 @@
 #include <fcntl.h>
 
 int
-main(argc, argv)
-	int argc;
-	char *argv[];
+main(int argc, char **argv)
 {
 	long b;
 	FILE *fp;
