@@ -70,11 +70,13 @@
 #define	SVR4_SYS_setgroups	92
 #define	SVR4_SYS_fchmod	93
 #define	SVR4_SYS_fchown	94
-#define	SVR4_SYS_sigprocmask	95
+#define	SVR4_SYS_svr4_sigprocmask	95
 #define	SVR4_SYS_sigaltstack	96
 #define	SVR4_SYS_sigsuspend	97
 #define	SVR4_SYS_sigaction	98
 #define	SVR4_SYS_svr4_sigpending	99
+#define	SVR4_SYS_svr4_waitsys	107
+#define	SVR4_SYS_svr4_hrtsys	109
 #define	SVR4_SYS_svr4_mmap	115
 #define	SVR4_SYS_mprotect	116
 #define	SVR4_SYS_munmap	117

@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_types.h,v 1.3 1994/10/29 00:43:29 christos Exp $	 */
+/*	$NetBSD: svr4_types.h,v 1.4 1994/11/18 02:54:27 christos Exp $	 */
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -50,6 +50,7 @@ typedef u_short svr4_o_mode_t;
 typedef short   svr4_o_nlink_t;
 typedef u_short svr4_o_uid_t;
 typedef u_short svr4_o_gid_t;
+typedef long	svr4_clock_t;
 
 typedef struct timespec svr4_timestruc_t;
 

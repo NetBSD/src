@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_error.c,v 1.1 1994/11/14 06:13:12 christos Exp $	 */
+/*	$NetBSD: svr4_error.c,v 1.2 1994/11/18 02:53:41 christos Exp $	 */
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -31,29 +31,6 @@
  * Translate error codes.
  */
 
-#include <sys/param.h>
-#include <sys/kernel.h>
-#include <sys/systm.h>
-#include <sys/buf.h>
-#include <sys/malloc.h>
-#include <sys/ioctl.h>
-#include <sys/tty.h>
-#include <sys/file.h>
-#include <sys/filedesc.h>
-#include <sys/select.h>
-#include <sys/socket.h>
-#include <sys/socketvar.h>
-#include <net/if.h>
-#include <netinet/in.h>
-#include <sys/proc.h>
-#include <sys/vnode.h>
-#include <sys/device.h>
-#include <sys/errno.h>
-
-
-#include <compat/svr4/svr4_types.h>
-#include <compat/svr4/svr4_util.h>
-#include <compat/svr4/svr4_syscallargs.h>
 #include <compat/svr4/svr4_errno.h>
 
 

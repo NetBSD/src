@@ -113,7 +113,7 @@ char *svr4_syscallnames[] = {
 	"setgroups",			/* 92 = setgroups */
 	"fchmod",			/* 93 = fchmod */
 	"fchown",			/* 94 = fchown */
-	"sigprocmask",			/* 95 = sigprocmask */
+	"svr4_sigprocmask",			/* 95 = svr4_sigprocmask */
 	"sigaltstack",			/* 96 = sigaltstack */
 	"sigsuspend",			/* 97 = sigsuspend */
 	"sigaction",			/* 98 = sigaction */
@@ -129,9 +129,9 @@ char *svr4_syscallnames[] = {
 #else
 	"#106 (unimplemented nosys)",		/* 106 = unimplemented nosys */
 #endif
-	"#107 (unimplemented svr4_waitsys)",		/* 107 = unimplemented svr4_waitsys */
+	"svr4_waitsys",			/* 107 = svr4_waitsys */
 	"#108 (unimplemented svr4_sigsendsys)",		/* 108 = unimplemented svr4_sigsendsys */
-	"#109 (unimplemented svr4_hrtsys)",		/* 109 = unimplemented svr4_hrtsys */
+	"svr4_hrtsys",			/* 109 = svr4_hrtsys */
 	"#110 (unimplemented svr4_acancel)",		/* 110 = unimplemented svr4_acancel */
 	"#111 (unimplemented svr4_async)",		/* 111 = unimplemented svr4_async */
 	"#112 (unimplemented svr4_priocntlsys)",		/* 112 = unimplemented svr4_priocntlsys */

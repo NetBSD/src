@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_stat.c,v 1.5 1994/11/14 06:10:42 christos Exp $	 */
+/*	$NetBSD: svr4_stat.c,v 1.6 1994/11/18 02:54:02 christos Exp $	 */
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -47,6 +47,7 @@
 #include <sys/syscallargs.h>
 
 #include <compat/svr4/svr4_types.h>
+#include <compat/svr4/svr4_signal.h>
 #include <compat/svr4/svr4_syscallargs.h>
 #include <compat/svr4/svr4_util.h>
 #include <compat/svr4/svr4_stat.h>
