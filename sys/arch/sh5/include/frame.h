@@ -1,4 +1,4 @@
-/*	$NetBSD: frame.h,v 1.6 2002/09/28 11:03:08 scw Exp $	*/
+/*	$NetBSD: frame.h,v 1.7 2003/10/05 09:57:47 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -205,6 +205,14 @@ struct tlb_scratch_frame {
 	register_t	ts_r[7];	/* Saved r0 - r6 */
 	register_t	ts_tr[2];	/* Saved tr0 - tr1 */
 	char		ts_stack[1024];	/* TLB Stack */
+};
+
+/*
+ * Signal frame
+ */
+struct sigframe_siginfo {
+	siginfo_t	sf_si;		/* Saved siginfo */
+	ucontext_t	sf_uc;		/* Saved ucontext */
 };
 
 #endif /* _SH5_FRAME_H_ */

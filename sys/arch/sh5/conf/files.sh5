@@ -1,4 +1,4 @@
-#	$NetBSD: files.sh5,v 1.12 2003/07/27 01:19:35 thorpej Exp $
+#	$NetBSD: files.sh5,v 1.13 2003/10/05 09:57:47 scw Exp $
 
 
 #
@@ -139,6 +139,9 @@ file	arch/sh5/sh5/softintr.c
 file	arch/sh5/sh5/syscall.c
 file	arch/sh5/sh5/trap.c
 file	arch/sh5/sh5/vm_machdep.c
+
+file	arch/sh5/sh5/compat_16_machdep.c	compat_16
+
 file	dev/cons.c
 file	dev/cninit.c
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.h,v 1.9 2003/03/13 13:44:18 scw Exp $	*/
+/*	$NetBSD: trap.h,v 1.10 2003/10/05 09:57:47 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -89,6 +89,7 @@
 /* Software Exception Types */
 #define	T_AST		0x0002	/* Asynchronous System Trap */
 #define	T_NMI		0x0004	/* NMI trap */
+#define	T_DIVZERO	0x0006	/* Integer divide by zero trap */
 
 /* Bit 0 set == trap came from user mode */
 #define	T_USER		0x0001
@@ -97,6 +98,7 @@
 /*
  * TRAPA codes
  */
+#define	TRAPA_DIVZERO	0x00	/* Simulated Divide by zero trap */
 #define	TRAPA_SYSCALL	0x80	/* NetBSD/sh5 native system call */
 
 
