@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.c,v 1.30 2002/01/07 07:17:17 thorpej Exp $	*/
+/*	$NetBSD: bus.c,v 1.31 2002/01/09 20:54:14 leo Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -154,7 +154,6 @@ bus_size_t		size;
 int			flags;
 bus_space_handle_t	*mhp;
 {
-	paddr_t	pa, endpa;
 	int	error;
 
 	/*
@@ -166,9 +165,6 @@ bus_space_handle_t	*mhp;
 
 	if (error)
 		return (error);
-
-	pa    = m68k_trunc_page(bpa + t->base);
-	endpa = m68k_round_page((bpa + t->base + size) - 1);
 
 	error = bus_mem_add_mapping(t, bpa, size, flags, mhp);
 	if (error) {
