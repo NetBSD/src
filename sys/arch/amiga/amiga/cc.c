@@ -1,4 +1,4 @@
-/*	$NetBSD: cc.c,v 1.16 2003/01/06 13:04:56 wiz Exp $	*/
+/*	$NetBSD: cc.c,v 1.17 2003/04/01 21:26:26 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -31,11 +31,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cc.c,v 1.16 2003/01/06 13:04:56 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cc.c,v 1.17 2003/04/01 21:26:26 thorpej Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/queue.h>
+
+#include <uvm/uvm_extern.h>
 
 #include <amiga/amiga/custom.h>
 #include <amiga/amiga/cc.h>
@@ -486,7 +488,7 @@ cc_init_chipmem()
 	int s = splhigh ();
 	struct mem_node *mem;
 
-	chip_size = chipmem_end - (chipmem_start + NBPG);
+	chip_size = chipmem_end - (chipmem_start + PAGE_SIZE);
 	chip_total = chip_size - sizeof(*mem);
 
 	mem = (struct mem_node *)chipmem_steal(chip_size);
