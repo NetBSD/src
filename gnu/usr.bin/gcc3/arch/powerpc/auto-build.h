@@ -110,7 +110,7 @@
 #define HAVE_CLOCK 1
 
 /* Define if you have the dcgettext function.  */
-/* #undef HAVE_DCGETTEXT */
+#define HAVE_DCGETTEXT 1
 
 /* Define if you have the dup2 function.  */
 #define HAVE_DUP2 1
@@ -302,7 +302,7 @@
 /* #undef HAVE___INT64 */
 
 /* Define if the `_Bool' type is built-in. */
-#define HAVE__BOOL 1
+/* #undef HAVE__BOOL */
 
 /* The number of bytes in type short */
 #define SIZEOF_SHORT 2
@@ -368,7 +368,7 @@
 /* #undef _GNU_SOURCE */
 
 /* Define if you have a working <stdbool.h> header file. */
-#define HAVE_STDBOOL_H 1
+/* #undef HAVE_STDBOOL_H */
 
 /* Define if you can safely include both <string.h> and <strings.h>. */
 #define STRING_WITH_STRINGS 1
@@ -378,7 +378,7 @@
 
 /* Define if the host machine stores words of multi-word integers in
    big-endian order. */
-#define HOST_WORDS_BIG_ENDIAN 1
+/* #undef HOST_WORDS_BIG_ENDIAN */
 
 /* Define to the floating point format of the host machine, if not IEEE. */
 /* #undef HOST_FLOAT_FORMAT */
@@ -407,10 +407,10 @@
 #define HAVE_MMAP_ANON 1
 
 /* Define if you have the iconv() function. */
-#define HAVE_ICONV 1
+/* #undef HAVE_ICONV */
 
 /* Define as const if the declaration of iconv() needs const. */
-#define ICONV_CONST const
+/* #undef ICONV_CONST */
 
 /* Define to 1 if we found this declaration otherwise define to 0. */
 #define HAVE_DECL_GETENV 1
@@ -507,17 +507,17 @@
 
 /* Define to the name of a file containing a list of extra machine modes
    for this architecture. */
-#define EXTRA_MODES_FILE "sparc/sparc-modes.def"
+#define EXTRA_MODES_FILE "rs6000/rs6000-modes.def"
 
 /* Define if the target architecture needs extra machine modes to represent
    the results of comparisons. */
 #define EXTRA_CC_MODES 1
 
 /* Define if you have the iconv() function. */
-#define HAVE_ICONV 1
+/* #undef HAVE_ICONV */
 
 /* Define as const if the declaration of iconv() needs const. */
-#define ICONV_CONST const
+/* #undef ICONV_CONST */
 
 /* Define if you have <langinfo.h> and nl_langinfo(CODESET). */
 #define HAVE_LANGINFO_CODESET 1
@@ -527,13 +527,13 @@
 
 /* Define to 1 if translation of program messages to the user's native language
    is requested. */
-/* #undef ENABLE_NLS */
+#define ENABLE_NLS 1
 
 /* Define if you have the <libintl.h> header file. */
-/* #undef HAVE_LIBINTL_H */
+#define HAVE_LIBINTL_H 1
 
 /* Define if the GNU gettext() function is already present or preinstalled. */
-/* #undef HAVE_GETTEXT */
+#define HAVE_GETTEXT 1
 
 /* Define to use the libintl included with this package instead of any
    version in the system libraries. */
