@@ -6,7 +6,7 @@
 .\" *** DO NOT EDIT - any changes will be lost!!!
 .\" *** ------------------------------------------------------------------
 .\"
-.\" $NetBSD: MAKEDEV.8,v 1.23 2003/04/14 05:48:55 wiz Exp $
+.\" $NetBSD: MAKEDEV.8,v 1.24 2003/04/24 12:16:05 wiz Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -42,7 +42,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd March 30, 2003
+.Dd April 24, 2003
 .Dt MAKEDEV 8 vax
 .Os
 .Sh NAME
@@ -87,6 +87,8 @@ Standard devices
 Configuration specific devices
 .It Ar all
 Create a reasonable amount of all files
+.It Ar init
+A set of devices that is used for MFS /dev by init. May be equal to ``all''.
 .El
 .Pp
 Please note that any hash marks
@@ -100,22 +102,22 @@ digits when calling
 .It Tapes :
 . Bl -tag -width 0123456789 -compact
 . It Ar ht#
-Massbus tm03 and tu??, see
+MASSBUS TM03 and TU??, see
 .Xr \&ht 4
 . It Ar tm#
-Unibus tm11 and te10 emulations (e.g. Emulex tc-11), see
+UNIBUS TM11 and TE10 emulations (e.g. Emulex TC-11), see
 .Xr \&tm 4
 . It Ar mt#
 MSCP tapes (e.g. TU81, TK50), see
 .Xr \&mt 4
 . It Ar ts#
-Unibus ts11, see
+UNIBUS TS11, see
 .Xr \&ts 4
 . It Ar ut#
-Unibus tu45 emulations (e.g.si 9700), see
+UNIBUS TU45 emulations (e.g. si 9700), see
 .Xr \&ut 4
 . It Ar uu#
-Tu58 cassettes on dl11 controller, see
+TU58 cassettes on DL11 controller, see
 .Xr \&uu 4
 . It Ar st#
 SCSI tapes, see
@@ -124,23 +126,23 @@ SCSI tapes, see
 .It Disks :
 . Bl -tag -width 0123456789 -compact
 . It Ar hp#
-Massbus rm??, see
+MASSBUS RM??, see
 .Xr \&hp 4
 . It Ar hk#
-Unibus rk06 and rk07, see
+UNIBUS RK06 and RK07, see
 .Xr \&hk 4
 . It Ar up#
-Other unibus devices (e.g. on Emulex sc-21v controller), see
+Other UNIBUS devices (e.g. on Emulex SC-21V controller), see
 .Xr \&up 4
 . It Ar ra#
-MSCP disks (ra??, rd??)
+MSCP disks (RA??, RD??)
 . It Ar rx#
-MSCP floppy disk (rx33/50/...)
+MSCP floppy disk (RX33/50/...)
 . It Ar rl#
-Unibus rl02, see
+UNIBUS RL02, see
 .Xr \&rl 4
 . It Ar rb#
-730 idc w/ rb80 and/or rb02
+730 IDC w/ RB80 and/or RB02
 . It Ar ccd#
 ``concatenated'' pseudo-disks, see
 .Xr \&ccd 4
@@ -154,7 +156,7 @@ RAIDframe disk driver, see
 ``file'' pseudo-disks, see
 .Xr \&vnd 4
 . It Ar rd#
-HDC9224 rd disks on VS2000
+HDC9224 RD disks on VS2000
 . It Ar sd#
 SCSI disks, see
 .Xr \&sd 4
@@ -168,22 +170,22 @@ Memory pseudo-disk devices, see
 .It Terminal multiplexors :
 . Bl -tag -width 0123456789 -compact
 . It Ar dz#
-Unibus dz11 and dz32, see
+UNIBUS DZ11 and DZ32, see
 .Xr \&dz 4
 . It Ar dh#
-Unibus dh11 and emulations (e.g. Able dmax, Emulex cs-11), see
+UNIBUS DH11 and emulations (e.g. Able DMAX, Emulex CS-11), see
 .Xr \&dh 4
 . It Ar dmf#
-Unibus dmf32, see
+UNIBUS DMF32, see
 .Xr \&dmf 4
 . It Ar dhu#
-Unibus dhu11, see
+UNIBUS DHU11, see
 .Xr \&dhu 4
 . It Ar dmz#
-Unibus dmz32, see
+UNIBUS DMZ32, see
 .Xr \&dmz 4
 . It Ar dl#
-Unibus dl11, see
+UNIBUS DL11, see
 .Xr \&dl 4
 . El
 .It Pseudo terminals :
@@ -197,22 +199,22 @@ First 16 ptys, to save inodes on install media
 .It Printers :
 . Bl -tag -width 0123456789 -compact
 . It Ar ct#
-Unibus parallel interface to CAT typesetter, see
+UNIBUS parallel interface to CAT typesetter, see
 .Xr \&ct 4
 . It Ar lp#
-Unibus lp11 parallel interface, see
+UNIBUS LP11 parallel interface, see
 .Xr \&lp 4
 . It Ar va#
-Unibus varian parallel interface, see
+UNIBUS Varian parallel interface, see
 .Xr \&va 4
 . It Ar vp#
-Unibus versatec parallel interface, see
+UNIBUS Versatec parallel interface, see
 .Xr \&vp 4
 . El
 .It Call units :
 . Bl -tag -width 0123456789 -compact
 . It Ar dn#
-Unibus dn11 and emulations (e.g. Able Quadracall), see
+UNIBUS DN11 and emulations (e.g. Able Quadracall), see
 .Xr \&dn 4
 . El
 .It Special purpose devices :
@@ -221,19 +223,19 @@ Unibus dn11 and emulations (e.g. Able Quadracall), see
 Clock control for non root users, see
 .Xr \&clockctl 4
 . It Ar ik#
-Unibus interface to ikonas frame buffer, see
+UNIBUS interface to Ikonas frame buffer, see
 .Xr \&ik 4
 . It Ar ps#
-Unibus interface to picture system 2, see
+UNIBUS interface to Picture System 2, see
 .Xr \&ps 4
 . It Ar ad#
-Unibus interface to data translation a/d converter, see
+UNIBUS interface to Data Translation A/D converter, see
 .Xr \&ad 4
 . It Ar np#
-Unibus ethernet co-processor interface, for downloading., see
+UNIBUS Ethernet co-processor interface, for downloading., see
 .Xr \&np 4
 . It Ar qv#
-Qvss (MicroVAX) display
+QVSS (MicroVAX) display
 . It Ar lkm
 Loadable kernel modules, see
 .Xr \&lkm 4
