@@ -1,4 +1,4 @@
-/*      $NetBSD: ukbd.c,v 1.57 2000/03/23 07:01:46 thorpej Exp $        */
+/*      $NetBSD: ukbd.c,v 1.58 2000/03/27 12:33:56 augustss Exp $        */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -106,7 +106,7 @@ struct ukbd_data {
 
 /* Translate USB bitmap to USB keycode. */
 #define NMOD 8
-static struct {
+Static struct {
 	int mask, key;
 } ukbd_mods[NMOD] = {
 	{ MOD_CONTROL_L, 224 },
@@ -125,7 +125,7 @@ static struct {
  * Translate USB keycodes to US keyboard XT scancodes.
  * Scancodes >= 128 represent EXTENDED keycodes.
  */
-static u_int8_t ukbd_trtab[256] = {
+Static u_int8_t ukbd_trtab[256] = {
 	  NN,  NN,  NN,  NN,  30,  48,  46,  32, /* 00 - 07 */
 	  18,  33,  34,  35,  23,  36,  37,  38, /* 08 - 0F */
 	  50,  49,  24,  25,  16,  19,  31,  20, /* 10 - 17 */
@@ -204,10 +204,10 @@ struct ukbd_softc {
 #define	UKBD_CHUNK	128	/* chunk size for read */
 #define	UKBD_BSIZE	1020	/* buffer size */
 
-static int	ukbd_is_console;
+Static int	ukbd_is_console;
 
-static void	ukbd_cngetc __P((void *, u_int *, int *));
-static void	ukbd_cnpollc __P((void *, int));
+Static void	ukbd_cngetc __P((void *, u_int *, int *));
+Static void	ukbd_cnpollc __P((void *, int));
 
 #if defined(__NetBSD__)
 const struct wskbd_consops ukbd_consops = {
@@ -216,16 +216,16 @@ const struct wskbd_consops ukbd_consops = {
 };
 #endif
 
-static void	ukbd_intr __P((usbd_xfer_handle, usbd_private_handle,
+Static void	ukbd_intr __P((usbd_xfer_handle, usbd_private_handle,
 			       usbd_status));
 
-static int	ukbd_enable __P((void *, int));
-static void	ukbd_set_leds __P((void *, int));
+Static int	ukbd_enable __P((void *, int));
+Static void	ukbd_set_leds __P((void *, int));
 
 #if defined(__NetBSD__)
-static int	ukbd_ioctl __P((void *, u_long, caddr_t, int, struct proc *));
+Static int	ukbd_ioctl __P((void *, u_long, caddr_t, int, struct proc *));
 #ifdef WSDISPLAY_COMPAT_RAWKBD
-static void	ukbd_rawrepeat __P((void *v));
+Static void	ukbd_rawrepeat __P((void *v));
 #endif
 
 const struct wskbd_accessops ukbd_accessops = {

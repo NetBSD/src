@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi_util.c,v 1.28 2000/02/22 11:25:06 augustss Exp $	*/
+/*	$NetBSD: usbdi_util.c,v 1.29 2000/03/27 12:33:59 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usbdi_util.c,v 1.14 1999/11/17 22:33:50 n_hibma Exp $	*/
 
 /*
@@ -484,9 +484,9 @@ usbd_get_config(dev, conf)
 	return (usbd_do_request(dev, &req, conf));
 }
 
-static void usbd_bulk_transfer_cb __P((usbd_xfer_handle xfer, 
+Static void usbd_bulk_transfer_cb __P((usbd_xfer_handle xfer, 
 		usbd_private_handle priv, usbd_status status));
-static void
+Static void
 usbd_bulk_transfer_cb(xfer, priv, status)
 	usbd_xfer_handle xfer;
 	usbd_private_handle priv;
