@@ -1,4 +1,4 @@
-/* $NetBSD: bootxx.c,v 1.5 2000/04/22 16:50:44 ragge Exp $ */
+/* $NetBSD: bootxx.c,v 1.6 2000/05/20 13:21:29 ragge Exp $ */
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
  * All rights reserved.
@@ -40,6 +40,9 @@
 
 #include "lib/libsa/stand.h"
 #include "lib/libsa/ufs.h"
+#include "lib/libsa/cd9660.h"
+
+#include "lib/libkern/libkern.h"
 
 #include "../include/pte.h"
 #include "../include/sid.h"
@@ -56,139 +59,71 @@
 #include "dev/mscp/mscp.h"
 #include "dev/mscp/mscpreg.h"
 
-int	command(int, int);
+#include "../boot/data.h"
 
-/*
- * Boot program... argume passed in r10 and r11 determine whether boot
- * stops to ask for system name and which device boot comes from.
- */
-
-volatile u_int  devtype, bootdev;
-unsigned        opendev, boothowto, bootset, memsz;
+void	Xmain(void);
+void	hoppabort(int);
+void	romread_uvax(int lbn, int size, void *buf, struct rpb *rpb);
+int	hpread(int block, int size, char *buf);
+int	read750(int block, int *regs);
+int	unit_init(int, struct rpb *, int);
 
 struct open_file file;
 
 unsigned *bootregs;
 struct	rpb *rpb;
+struct	bqo *bqo;
 int	vax_cputype;
+struct udadevice {u_short udaip;u_short udasa;};
+volatile struct udadevice *csr;
+
+extern int from;
+#define	FROM750	1
+#define	FROMMV	2
+#define	FROMVMB	4
 
 /*
  * The boot block are used by 11/750, 8200, MicroVAX II/III, VS2000,
  * VS3100/??, VS4000 and VAX6000/???, and only when booting from disk.
  */
+void
 Xmain()
 {
 	int io;
-	char *scbb;
-	char *new, *bqo;
 	char *hej = "/boot";
 
 	vax_cputype = (mfpr(PR_SID) >> 24) & 0xFF;
 
 	/*
 	 */ 
-        switch (vax_cputype) {
-
-        case VAX_TYP_UV2:
-        case VAX_TYP_CVAX:
-	case VAX_TYP_RIGEL:
-	case VAX_TYP_SOC:
-	case VAX_TYP_MARIAH:
-	case VAX_TYP_NVAX:
+	rpb = (void *)0xf0000; /* Safe address right now */
+	bqo = (void *)0xf1000;
+        if (from == FROMMV) {
 		/*
 		 * now relocate rpb/bqo (which are used by ROM-routines)
 		 */
-		rpb = (void*)XXRPB;
-		bcopy ((void*)bootregs[11], rpb, 512);
-		rpb->rpb_base = rpb;
-		bqo = (void*)(512+(int)rpb);
+		bcopy ((void *)bootregs[11], rpb, sizeof(struct rpb));
 		bcopy ((void*)rpb->iovec, bqo, rpb->iovecsz);
-		rpb->iovec = (int)bqo;
-		bootregs[11] = (int)rpb;
 		if (rpb->devtyp == BDEV_SDN)
 			rpb->devtyp = BDEV_SD;	/* XXX until driver fixed */
-		bootdev = rpb->devtyp;
-		memsz = rpb->pfncnt << 9;
-
-                break;
-	case VAX_8200:
-        case VAX_750:
-		bootdev = bootregs[10];
-		memsz = 0;
-
-                break;
-	default:
-		asm("halt");
+	} else {
+		bzero(rpb, sizeof(struct rpb));
+		rpb->devtyp = bootregs[0];
+		rpb->unit = bootregs[3];
+		rpb->rpb_bootr5 = bootregs[5];
+		rpb->csrphy = bootregs[2];
+		rpb->adpphy = bootregs[1];	/* BI node on 8200 */
         }
-
-	bootset = getbootdev();
+	rpb->rpb_base = rpb;
+	rpb->iovec = (int)bqo;
 
 	io = open(hej, 0);
 
 	read(io, (void *)0x10000, 0x10000);
 	bcopy((void *) 0x10000, 0, 0xffff);
-	hoppabort(32, boothowto, bootset);
+	hoppabort(32);
 	asm("halt");
 }
-
-getbootdev()
-{
-	int i, adaptor, controller, unit, partition, retval;
-
-	adaptor = controller = unit = partition = 0;
-
-	switch (vax_cputype) {
-	case VAX_TYP_UV2:
-	case VAX_TYP_CVAX:
-	case VAX_TYP_RIGEL:
-	case VAX_TYP_SOC:
-	case VAX_TYP_MARIAH:
-	case VAX_TYP_NVAX:
-		if (rpb->devtyp == BDEV_SD) {
-			unit = rpb->unit / 100;
-			controller = (rpb->csrphy & 0x100 ? 1 : 0);
-		} else {
-			controller = ((rpb->csrphy & 017777) == 0xDC)?1:0;
-			unit = rpb->unit;			/* DUC, DUD? */
-		}
-		break;
-
-	case VAX_TYP_8SS:
-	case VAX_TYP_750:
-		controller = bootregs[1];
-		unit = bootregs[3];
-		break;
-	}
-
-	switch (B_TYPE(bootdev)) {
-	case BDEV_HP:			/* massbuss boot */
-		adaptor = (bootregs[1] & 0x6000) >> 17;
-		break;
-
-	case BDEV_UDA:		/* UDA50 boot */
-		if (vax_cputype == VAX_750)
-			adaptor = (bootregs[1] & 0x40000 ? 0 : 1);
-		break;
-
-	case BDEV_RL:		/* RL01/02 */
-	case BDEV_TK:		/* TK50 boot */
-	case BDEV_CNSL:		/* Console storage boot */
-	case BDEV_RD:		/* RD/RX on HDC9224 (MV2000) */
-	case BDEV_ST:		/* SCSI-tape on NCR53xx (MV2000) */
-	case BDEV_SD:		/* SCSI-disk on NCR53xx (3100/76, 4000) */
-		break;
-
-	case BDEV_KDB:		/* DSA disk on KDB50 (VAXBI VAXen) */
-		bootdev = (bootdev & ~B_TYPEMASK) | BDEV_UDA;
-		break;
-
-	default:
-		boothowto |= (RB_SINGLE | RB_ASKNAME);
-	}
-	return MAKEBOOTDEV(bootdev, adaptor, controller, unit, partition);
-}
-
-int     romstrategy __P((void *, int, daddr_t, size_t, void *, size_t *));
 
 /*
  * Write an extremely limited version of a (us)tar filesystem, suitable
@@ -196,6 +131,17 @@ int     romstrategy __P((void *, int, daddr_t, size_t, void *, size_t *));
  * - Can only load file "boot".
  * - Must be the first file on tape.
  */
+struct fs_ops file_system[] = {
+	{ ufs_open, 0, ufs_read, 0, 0, ufs_stat },
+	{ cd9660_open, 0, cd9660_read, 0, 0, cd9660_stat },
+#if 0
+	{ ustarfs_open, 0, ustarfs_read, 0, 0, ustarfs_stat },
+#endif
+};
+
+int nfsys = (sizeof(file_system) / sizeof(struct fs_ops));
+
+#if 0
 int tar_open(char *path, struct open_file *f);
 ssize_t tar_read(struct open_file *f, void *buf, size_t size, size_t *resid);
 
@@ -222,90 +168,47 @@ tar_read(f, buf, size, resid)
 {
 	romstrategy(0, 0, (8192+512), size, buf, 0);
 	*resid = size;
+	return 0; /* XXX */
 }
+#endif
 
-struct disklabel lp;
-int part_off = 0;		/* offset into partition holding /boot */
-char io_buf[MAXBSIZE];
 volatile struct uda {
 	struct  mscp_1ca uda_ca;           /* communications area */
 	struct  mscp uda_rsp;     /* response packets */
 	struct  mscp uda_cmd;     /* command packets */
 } uda;
-struct udadevice {u_short udaip;u_short udasa;};
-volatile struct udadevice *csr;
 
+int
 devopen(f, fname, file)
 	struct open_file *f;
 	const char    *fname;
 	char          **file;
 {
-	extern char	start;
-	char           *msg;
-	int		i, err, off;
-	char		line[64];
-
 	*file = (char *)fname;
 
+	if (from == FROM750)
+		return 0;
 	/*
-	 * On uVAX we need to init [T]MSCP ctlr to be able to use it.
+	 * Reinit the VMB boot device.
 	 */
-	if (vax_cputype == VAX_TYP_UV2 || vax_cputype == VAX_TYP_CVAX) {
-		switch (bootdev) {
-		case BDEV_UDA:	/* MSCP */
-		case BDEV_TK:	/* TMSCP */
+	if (bqo->unit_init) {
+		int initfn;
+
+		initfn = rpb->iovec + bqo->unit_init;
+		if (rpb->devtyp == BDEV_UDA || rpb->devtyp == BDEV_TK) {
 			csr = (struct udadevice *)rpb->csrphy;
-
-			csr->udaip = 0; /* Start init */
-			while((csr->udasa & MP_STEP1) == 0);
-			csr->udasa = 0x8000;
-			while((csr->udasa & MP_STEP2) == 0);
-			csr->udasa = (short)(((u_int)&uda)&0xffff) + 8;
-			while((csr->udasa & MP_STEP3) == 0);
-			csr->udasa = 0x10;
-			while((csr->udasa & MP_STEP4) == 0);
-			csr->udasa = 0x0001;
-
-			uda.uda_ca.ca_rspdsc =
-			    (int) &uda.uda_rsp.mscp_cmdref;
-			uda.uda_ca.ca_cmddsc =
-			    (int) &uda.uda_cmd.mscp_cmdref;
-			if (bootdev == BDEV_TK)
-				uda.uda_cmd.mscp_vcid = 1;
-			command(M_OP_SETCTLRC, 0);
-			uda.uda_cmd.mscp_unit = rpb->unit;
-			command(M_OP_ONLINE, 0);
+			csr->udaip = 0;
+			while ((csr->udasa & MP_STEP1) == 0)
+				;
 		}
+		unit_init(initfn, rpb, bootregs[12]);
 	}
-
-	/* 
-	 * the disklabel _shall_ be at address LABELOFFSET + RELOC in
-	 * phys memory now, no need at all to reread it again.
-	 * Actually disklabel is only needed when using hp disks,
-	 * but it doesn't hurt to always get it.
-	 */
-	getdisklabel(LABELOFFSET + &start, &lp);
 	return 0;
-}
-
-command(cmd, arg)
-{
-	volatile int hej;
-
-	uda.uda_cmd.mscp_opcode = cmd;
-	uda.uda_cmd.mscp_modifier = arg;
-
-	uda.uda_cmd.mscp_msglen = MSCP_MSGLEN;
-	uda.uda_rsp.mscp_msglen = MSCP_MSGLEN;
-	uda.uda_ca.ca_rspdsc |= MSCP_OWN|MSCP_INT;
-	uda.uda_ca.ca_cmddsc |= MSCP_OWN|MSCP_INT;
-	hej = csr->udaip;
-	while (uda.uda_ca.ca_rspdsc < 0);
-
 }
 
 int curblock = 0;
 
+int
 romstrategy(sc, func, dblk, size, buf, rsize)
 	void    *sc;
 	int     func;
@@ -314,73 +217,23 @@ romstrategy(sc, func, dblk, size, buf, rsize)
 	void    *buf;
 	size_t	*rsize;
 {
-	int i;
 	int	block = dblk;
 	int     nsize = size;
 
-	switch (vax_cputype) {
-	/*
-	 * case VAX_TYP_UV2:
-	 * case VAX_TYP_CVAX:
-	 * case VAX_TYP_RIGEL:
-	 */
-	default:
-		switch (bootdev) {
-
-		case BDEV_UDA: /* MSCP */
-			uda.uda_cmd.mscp_seq.seq_lbn = dblk;
-			uda.uda_cmd.mscp_seq.seq_bytecount = size;
-			uda.uda_cmd.mscp_seq.seq_buffer = (int)buf;
-			uda.uda_cmd.mscp_unit = rpb->unit;
-			command(M_OP_READ, 0);
-			break;
-
-		case BDEV_TK: /* TMSCP */
-			if (dblk < curblock) {
-				uda.uda_cmd.mscp_seq.seq_bytecount =
-				    curblock - dblk;
-				command(M_OP_POS, 12);
-			} else {
-				uda.uda_cmd.mscp_seq.seq_bytecount =
-				    dblk - curblock;
-				command(M_OP_POS, 4);
-			}
-			curblock = size/512 + dblk;
-			for (i = 0 ; i < size/512 ; i++) {
-				uda.uda_cmd.mscp_seq.seq_lbn = 1;
-				uda.uda_cmd.mscp_seq.seq_bytecount = 512;
-				uda.uda_cmd.mscp_seq.seq_buffer =
-				    (int)buf + i * 512;
-				uda.uda_cmd.mscp_unit = rpb->unit;
-				command(M_OP_READ, 0);
-			}
-			break;
-		case BDEV_RD:
-		case BDEV_ST:
-		case BDEV_SD:
-		case BDEV_RL:
-
-		default:
-			romread_uvax(block, size, buf, bootregs);
-			break;
-
-		}
-		break;
-
-	case VAX_8200:
-	case VAX_750:
-		if (bootdev != BDEV_HP) {
+	if (from == FROMMV) {
+		romread_uvax(block, size, buf, rpb);
+	} else /* if (from == FROM750) */ {
+		if (rpb->devtyp == BDEV_HP) {
+			hpread(block, size, buf);
+		} else 
 			while (size > 0) {
 				while ((read750(block, bootregs) & 0x01) == 0){
 				}
 				bcopy(0, buf, 512);
 				size -= 512;
-				buf += 512;
+				(char *)buf += 512;
 				block++;
 			}
-		} else
-			hpread(block, size, buf);
-		break;
 	}
 
 	if (rsize)
@@ -388,14 +241,16 @@ romstrategy(sc, func, dblk, size, buf, rsize)
 	return 0;
 }
 
-hpread(block, size, buf)
-	char           *buf;
+int
+hpread(int block, int size, char *buf)
 {
 	volatile struct mba_regs *mr = (void *) bootregs[1];
 	volatile struct hp_drv *hd = (void*)&mr->mba_md[bootregs[3]];
-	struct disklabel *dp = &lp;
-	u_int           pfnum, nsize, mapnr, bn, cn, sn, tn;
+	u_int pfnum, nsize, mapnr, bn, cn, sn, tn;
+	struct disklabel *dp;
+	extern char start;
 
+	dp = (struct disklabel *)(LABELOFFSET + &start);
 	pfnum = (u_int) buf >> PGSHIFT;
 
 	for (mapnr = 0, nsize = size; (nsize + NBPG) > 0; nsize -= NBPG)
