@@ -1,4 +1,4 @@
-/*	$NetBSD: mb86960.c,v 1.45 2001/01/20 07:31:00 lukem Exp $	*/
+/*	$NetBSD: mb86960.c,v 1.46 2001/06/12 14:59:28 wiz Exp $	*/
 
 /*
  * All Rights Reserved, Copyright (C) Fujitsu Limited 1995
@@ -1316,7 +1316,7 @@ mb86960_ioctl(ifp, cmd, data)
 }
 
 /*
- * Retreive packet from receive buffer and send to the next level up via
+ * Retrieve packet from receive buffer and send to the next level up via
  * ether_input(). If there is a BPF listener, give a copy to BPF, too.
  * Returns 0 if success, -1 if error (i.e., mbuf allocation failure).
  */

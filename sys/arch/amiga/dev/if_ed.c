@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ed.c,v 1.35 2000/11/15 01:02:11 thorpej Exp $	*/
+/*	$NetBSD: if_ed.c,v 1.36 2001/06/12 14:59:27 wiz Exp $	*/
 
 /*
  * Device driver for National Semiconductor DS8390/WD83C690 based ethernet
@@ -954,7 +954,7 @@ ed_ioctl(ifp, command, data)
 }
 
 /*
- * Retreive packet from shared memory and send to the next level up via
+ * Retrieve packet from shared memory and send to the next level up via
  * ether_input().  If there is a BPF listener, give a copy to BPF, too.
  */
 void
