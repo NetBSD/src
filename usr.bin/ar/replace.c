@@ -36,7 +36,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)replace.c	5.8 (Berkeley) 3/15/91";*/
-static char rcsid[] = "$Id: replace.c,v 1.2 1993/08/01 18:18:29 mycroft Exp $";
+static char rcsid[] = "$Id: replace.c,v 1.3 1994/03/01 11:37:49 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -108,8 +108,10 @@ replace(argv)
 				goto useold;
 			}
 			(void)fstat(sfd, &sb);
-			if (options & AR_U && sb.st_mtime <= chdr.date)
+			if (options & AR_U && sb.st_mtime <= chdr.date) {
+				close(sfd);
 				goto useold;
+			}
 
 			if (options & AR_V)
 			     (void)printf("r - %s\n", file);
