@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.fr,v 1.46 2003/01/22 05:59:07 jhawk Exp $	*/
+/*	$NetBSD: msg.mi.fr,v 1.47 2003/05/16 16:28:10 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -64,6 +64,8 @@ NetBSD sur votre disque dur avec un minimum de travail.
 Dans les menus suivants, vous pourrez changer de sélection soit en tapant la
 lettre en référence (a, b, c, d,...) ou en utilisant les flèches.
 La sélection courante est activée en appuyant sur entrée.
+
+}
 
 message thanks
 {Merci d'utiliser NetBSD !
