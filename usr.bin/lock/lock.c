@@ -1,4 +1,4 @@
-/*	$NetBSD: lock.c,v 1.9 1997/05/17 19:49:02 pk Exp $	*/
+/*	$NetBSD: lock.c,v 1.10 1997/10/19 04:15:40 lukem Exp $	*/
 
 /*
  * Copyright (c) 1980, 1987, 1993
@@ -36,17 +36,17 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
-static char copyright[] =
-"@(#) Copyright (c) 1980, 1987, 1993\n\
-	The Regents of the University of California.  All rights reserved.\n";
+__COPYRIGHT("@(#) Copyright (c) 1980, 1987, 1993\n\
+	The Regents of the University of California.  All rights reserved.\n");
 #endif /* not lint */
 
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)lock.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$NetBSD: lock.c,v 1.9 1997/05/17 19:49:02 pk Exp $";
+__RCSID("$NetBSD: lock.c,v 1.10 1997/10/19 04:15:40 lukem Exp $");
 #endif /* not lint */
 
 /*
@@ -70,17 +70,26 @@ static char rcsid[] = "$NetBSD: lock.c,v 1.9 1997/05/17 19:49:02 pk Exp $";
 #include <string.h>
 #include <termios.h>
 #include <unistd.h>
+#ifdef SKEY
+#include <skey.h>
+#endif
 
 #define	TIMEOUT	15
 
-void quit(), bye(), hi();
+void	bye __P((int));
+void	hi __P((int));
+int	main __P((int, char **));
+void	quit __P((int));
+#ifdef SKEY
+int	skey_auth __P((char *));
+#endif
 
 struct timeval	timeout;
 struct timeval	zerotime;
 struct termios	tty, ntty;
 long	nexttime;			/* keep the timeout time */
 
-/*ARGSUSED*/
+int
 main(argc, argv)
 	int argc;
 	char **argv;
@@ -94,7 +103,6 @@ main(argc, argv)
 	int ch, sectimeout, usemine;
 	char *ap, *mypw, *ttynam, *tzn;
 	char hostname[MAXHOSTNAMELEN], s[BUFSIZ], s1[BUFSIZ];
-	char *crypt();
 
 	sectimeout = TIMEOUT;
 	mypw = NULL;
@@ -103,7 +111,7 @@ main(argc, argv)
 	if (!(pw = getpwuid(getuid())))
 		errx(1, "unknown uid %d.", getuid());
 
-	while ((ch = getopt(argc, argv, "pt:")) != EOF)
+	while ((ch = getopt(argc, argv, "pt:")) != -1)
 		switch((char)ch) {
 		case 't':
 			if ((sectimeout = atoi(optarg)) <= 0)
@@ -145,7 +153,7 @@ main(argc, argv)
 		/* get key and check again */
 		(void)printf("Key: ");
 		if (!fgets(s, sizeof(s), stdin) || *s == '\n')
-			quit();
+			quit(0);
 		(void)printf("\nAgain: ");
 		/*
 		 * Don't need EOF test here, if we get EOF, then s1 != s
@@ -180,7 +188,7 @@ main(argc, argv)
 		(void)printf("Key: ");
 		if (!fgets(s, sizeof(s), stdin)) {
 			clearerr(stdin);
-			hi();
+			hi(0);
 			continue;
 		}
 		if (usemine) {
@@ -200,7 +208,9 @@ main(argc, argv)
 		if (tcsetattr(0, TCSADRAIN, &ntty) < 0)
 			exit(1);
 	}
-	quit();
+	quit(0);
+	/* NOTREACHED */
+	return (0);
 }
 
 #ifdef SKEY
@@ -231,7 +241,8 @@ skey_auth(char *user)
 #endif
 
 void
-hi()
+hi(dummy)
+	int dummy;
 {
 	struct timeval timval;
 
@@ -241,7 +252,8 @@ hi()
 }
 
 void
-quit()
+quit(dummy)
+	int dummy;
 {
 	(void)putchar('\n');
 	(void)tcsetattr(0, TCSADRAIN, &tty);
@@ -249,7 +261,8 @@ quit()
 }
 
 void
-bye()
+bye(dummy)
+	int dummy;
 {
 	(void)tcsetattr(0, TCSADRAIN, &tty);
 	(void)printf("lock: timeout\n");
