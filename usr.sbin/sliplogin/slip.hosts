@@ -1,4 +1,4 @@
-#	$NetBSD
+#	$NetBSD: slip.hosts,v 1.5 2001/02/27 19:07:53 cgd Exp $
 #	@(#)slip.hosts	8.1 (Berkeley) 6/6/93
 #
 # login		local-addr	remote-addr	mask		opt1	opt2
