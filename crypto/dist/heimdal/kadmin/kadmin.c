@@ -34,7 +34,7 @@
 #include "kadmin_locl.h"
 #include <sl.h>
 
-RCSID("$Id: kadmin.c,v 1.1.1.2 2000/08/02 19:58:51 assar Exp $");
+RCSID("$Id: kadmin.c,v 1.2 2000/12/19 21:31:11 nathanw Exp $");
 
 static char *config_file;
 static char *keyfile;
@@ -205,7 +205,9 @@ main(int argc, char **argv)
 
     set_progname(argv[0]);
 
-    krb5_init_context(&context);
+    ret = krb5_init_context(&context);
+    if (ret)
+	errx(1, "krb5_init_context failed: %u", ret);
 
     while((e = getarg(args, num_args, argc, argv, &optind)))
 	errx(1, "error at argument `%s'", argv[optind]);
