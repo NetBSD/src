@@ -1,4 +1,4 @@
-/*	$NetBSD: ulpt.c,v 1.56 2003/01/01 16:32:58 augustss Exp $	*/
+/*	$NetBSD: ulpt.c,v 1.57 2003/01/05 10:19:42 scw Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ulpt.c,v 1.24 1999/11/17 22:33:44 n_hibma Exp $	*/
 
 /*
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ulpt.c,v 1.56 2003/01/01 16:32:58 augustss Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ulpt.c,v 1.57 2003/01/05 10:19:42 scw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -413,6 +413,7 @@ USB_DETACH(ulpt)
 	/* Nuke the vnodes for any open instances (calls close). */
 	mn = self->dv_unit;
 	vdevgone(maj, mn, mn, VCHR);
+	vdevgone(maj, mn | ULPT_NOPRIME , mn | ULPT_NOPRIME, VCHR);
 #elif defined(__FreeBSD__)
 	vp = SLIST_FIRST(&sc->dev->si_hlist);
 	if (vp)
