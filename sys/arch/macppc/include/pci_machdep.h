@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.h,v 1.9 2000/02/01 04:04:17 danw Exp $	*/
+/*	$NetBSD: pci_machdep.h,v 1.10 2000/02/03 19:27:45 tsubai Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -47,24 +47,20 @@
 /*
  * Types provided to machine-independent PCI code
  */
-typedef int pci_chipset_tag_t;
+typedef struct pci_bridge *pci_chipset_tag_t;
 typedef int pcitag_t;
 typedef int pci_intr_handle_t;
 
 struct pci_bridge {
+	int node;
 	u_int *addr;
 	u_int *data;
 	int bus;
-	bus_space_tag_t iot;
 	bus_space_tag_t memt;
-	pci_chipset_tag_t pc;
-	u_int reg[2];
-	int present;
+	bus_space_tag_t iot;
+	pcireg_t (*conf_read)();
+	void (*conf_write)();
 };
-struct pci_bridge pci_bridges[2];
-
-#define PCI_CHIPSET_BANDIT 0x00
-#define PCI_CHIPSET_MPC106 0x10
 
 extern struct macppc_bus_dma_tag pci_bus_dma_tag;
 

@@ -1,4 +1,4 @@
-#	$NetBSD: POWERMAC,v 1.19 1999/07/29 10:37:19 augustss Exp $
+#	$NetBSD: POWERMAC,v 1.20 2000/02/03 19:27:44 tsubai Exp $
 #
 # POWERMAC config file
 #
@@ -58,7 +58,9 @@ config	netbsd	root on ? type ?
 mainbus* at root
 
 cpu*	at mainbus?
-pci*	at mainbus? bus ?
+bandit*	at mainbus?
+
+pci*	at bandit? bus ?
 pci*	at ppb? bus ?
 
 pchb*	at pci? dev ? function ?	# PCI-Host bridges

@@ -1,4 +1,4 @@
-/*	$NetBSD: rbus_machdep.c,v 1.3 1999/12/18 01:37:00 thorpej Exp $	*/
+/*	$NetBSD: rbus_machdep.c,v 1.4 2000/02/03 19:27:45 tsubai Exp $	*/
 
 /*
  * Copyright (c) 1999
@@ -41,6 +41,7 @@
 #include <machine/bus.h>
 
 #include <dev/pci/pcivar.h>
+#include <dev/pci/pcidevs.h>
 #include <dev/cardbus/rbus.h>
 
 static void macppc_cardbus_init __P((pci_chipset_tag_t, pcitag_t));
@@ -133,7 +134,11 @@ macppc_cardbus_init(pc, tag)
 		return;
 	initted = 1;
 
-	if (pc == PCI_CHIPSET_MPC106) {
+	/* XXX What about other bridges? */
+
+	x = pci_conf_read(pc, tag, PCI_ID_REG);
+	if (PCI_VENDOR(x) == PCI_VENDOR_TI &&
+	    PCI_PRODUCT(x) == PCI_PRODUCT_TI_PCI1211) {
 		/* For CardBus card. */
 		pci_conf_write(pc, tag, 0x18, 0x10010100);
 

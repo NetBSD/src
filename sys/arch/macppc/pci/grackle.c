@@ -1,4 +1,4 @@
-/*	$NetBSD: bandit.c,v 1.13 2000/02/03 19:27:45 tsubai Exp $	*/
+/*	$NetBSD: grackle.c,v 1.1 2000/02/03 19:27:45 tsubai Exp $	*/
 
 /*-
  * Copyright (c) 2000 Tsubai Masanari.  All rights reserved.
@@ -36,26 +36,24 @@
 
 #include <machine/autoconf.h>
 
-struct bandit_softc {
+struct grackle_softc {
 	struct device sc_dev;
 	struct pci_bridge sc_pc;
 };
 
-void bandit_attach __P((struct device *, struct device *, void *));
-int bandit_match __P((struct device *, struct cfdata *, void *));
-int bandit_print __P((void *, const char *));
+void grackle_attach __P((struct device *, struct device *, void *));
+int grackle_match __P((struct device *, struct cfdata *, void *));
+int grackle_print __P((void *, const char *));
 
-pcireg_t bandit_conf_read __P((pci_chipset_tag_t, pcitag_t, int));
-void bandit_conf_write __P((pci_chipset_tag_t, pcitag_t, int, pcireg_t));
+pcireg_t grackle_conf_read __P((pci_chipset_tag_t, pcitag_t, int));
+void grackle_conf_write __P((pci_chipset_tag_t, pcitag_t, int, pcireg_t));
 
-static void bandit_init __P((struct bandit_softc *));
-
-struct cfattach bandit_ca = {
-	sizeof(struct bandit_softc), bandit_match, bandit_attach
+struct cfattach grackle_ca = {
+	sizeof(struct grackle_softc), grackle_match, grackle_attach
 };
 
 int
-bandit_match(parent, cf, aux)
+grackle_match(parent, cf, aux)
 	struct device *parent;
 	struct cfdata *cf;
 	void *aux;
@@ -63,23 +61,31 @@ bandit_match(parent, cf, aux)
 	struct confargs *ca = aux;
 	char compat[32];
 
-	if (strcmp(ca->ca_name, "bandit") == 0)
-		return 1;
+	if (strcmp(ca->ca_name, "pci") != 0)
+		return 0;
 
-	return 0;
+	bzero(compat, sizeof(compat));
+	OF_getprop(ca->ca_node, "compatible", compat, sizeof(compat));
+	if (strcmp(compat, "grackle") != 0)
+		return 0;
+
+	return 1;
 }
 
+#define GRACKLE_ADDR 0xfec00000
+#define GRACKLE_DATA 0xfee00000
+
 void
-bandit_attach(parent, self, aux)
+grackle_attach(parent, self, aux)
 	struct device *parent, *self;
 	void *aux;
 {
-	struct bandit_softc *sc = (void *)self;
+	struct grackle_softc *sc = (void *)self;
 	pci_chipset_tag_t pc = &sc->sc_pc;
 	struct confargs *ca = aux;
 	struct pcibus_attach_args pba;
 	int len, node = ca->ca_node;
-	u_int32_t reg[2], busrange[2];
+	u_int32_t busrange[2];
 	struct ranges {
 		u_int32_t pci_hi, pci_mid, pci_lo;
 		u_int32_t host;
@@ -88,20 +94,16 @@ bandit_attach(parent, self, aux)
 
 	printf("\n");
 
-	/* Bandit address */
-	if (OF_getprop(node, "reg", reg, sizeof(reg)) < 8)
-		return;
-
 	/* PCI bus number */
 	if (OF_getprop(node, "bus-range", busrange, sizeof(busrange)) != 8)
 		return;
 
 	pc->node = node;
-	pc->addr = mapiodev(reg[0] + 0x800000, 4);
-	pc->data = mapiodev(reg[0] + 0xc00000, 8);
+	pc->addr = mapiodev(GRACKLE_ADDR, 4);
+	pc->data = mapiodev(GRACKLE_DATA, 4);
 	pc->bus = busrange[0];
-	pc->conf_read = bandit_conf_read;
-	pc->conf_write = bandit_conf_write;
+	pc->conf_read = grackle_conf_read;
+	pc->conf_write = grackle_conf_write;
 	pc->memt = (bus_space_tag_t)0;
 
 	/* find i/o tag */
@@ -116,8 +118,6 @@ bandit_attach(parent, self, aux)
 		rp++;
 	}
 
-	bandit_init(sc);
-
 	bzero(&pba, sizeof(pba));
 	pba.pba_busname = "pci";
 	pba.pba_memt = pc->memt;
@@ -127,11 +127,11 @@ bandit_attach(parent, self, aux)
 	pba.pba_pc = pc;
 	pba.pba_flags = PCI_FLAGS_IO_ENABLED | PCI_FLAGS_MEM_ENABLED;
 
-	config_found(self, &pba, bandit_print);
+	config_found(self, &pba, grackle_print);
 }
 
 int
-bandit_print(aux, pnp)
+grackle_print(aux, pnp)
 	void *aux;
 	const char *pnp;
 {
@@ -144,45 +144,21 @@ bandit_print(aux, pnp)
 }
 
 pcireg_t
-bandit_conf_read(pc, tag, reg)
+grackle_conf_read(pc, tag, reg)
 	pci_chipset_tag_t pc;
 	pcitag_t tag;
 	int reg;
 {
 	pcireg_t data;
-	int bus, dev, func, s;
-	u_int32_t x;
-
-	pci_decompose_tag(pc, tag, &bus, &dev, &func);
-
-	/*
-	 * bandit's minimum device number of the first bus is 11.
-	 * So we behave as if there is no device when dev < 11.
-	 */
-	if (func > 7)
-		panic("pci_conf_read: func > 7");
-
-	if (bus == pc->bus) {
-		if (dev < 11) {
-			if (reg == PCI_ID_REG)
-				return 0xffffffff;
-			else
-				panic("pci_conf_read: dev < 11");
-		}
-		x = (1 << dev) | (func << 8) | reg;
-	} else
-		x = tag | reg | 1;
+	int s;
 
 	s = splhigh();
 
-	out32rb(pc->addr, x);
-	DELAY(10);
+	out32rb(pc->addr, tag | reg);
 	data = 0xffffffff;
 	if (!badaddr(pc->data, 4))
 		data = in32rb(pc->data);
-	DELAY(10);
 	out32rb(pc->addr, 0);
-	DELAY(10);
 
 	splx(s);
 
@@ -190,61 +166,19 @@ bandit_conf_read(pc, tag, reg)
 }
 
 void
-bandit_conf_write(pc, tag, reg, data)
+grackle_conf_write(pc, tag, reg, data)
 	pci_chipset_tag_t pc;
 	pcitag_t tag;
 	int reg;
 	pcireg_t data;
 {
-	int bus, dev, func, s;
-	u_int32_t x;
-
-	pci_decompose_tag(pc, tag, &bus, &dev, &func);
-
-	if (func > 7)
-		panic("pci_conf_write: func > 7");
-
-	if (bus == pc->bus) {
-		if (dev < 11)
-			panic("pci_conf_write: dev < 11");
-		x = (1 << dev) | (func << 8) | reg;
-	} else
-		x = tag | reg | 1;
+	int s;
 
 	s = splhigh();
 
-	out32rb(pc->addr, x);
-	DELAY(10);
+	out32rb(pc->addr, tag | reg);
 	out32rb(pc->data, data);
-	DELAY(10);
 	out32rb(pc->addr, 0);
-	DELAY(10);
 
 	splx(s);
-}
-
-#define	PCI_BANDIT		11
-
-#define	PCI_REG_MODE_SELECT	0x50
-
-#define	PCI_MODE_IO_COHERENT	0x040	/* I/O coherent */
-
-void
-bandit_init(sc)
-	struct bandit_softc *sc;
-{
-	pci_chipset_tag_t pc = &sc->sc_pc;
-	pcitag_t tag;
-	u_int mode;
-
-	tag = pci_make_tag(pc, pc->bus, PCI_BANDIT, 0);
-	if ((pci_conf_read(pc, tag, PCI_ID_REG) & 0xffff) == 0xffff)
-		return;
-
-	mode = pci_conf_read(pc, tag, PCI_REG_MODE_SELECT);
-
-	if ((mode & PCI_MODE_IO_COHERENT) == 0) {
-		mode |= PCI_MODE_IO_COHERENT;
-		pci_conf_write(pc, tag, PCI_REG_MODE_SELECT, mode);
-	}
 }
