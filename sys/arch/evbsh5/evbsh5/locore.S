@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.4 2002/08/30 11:06:03 scw Exp $	*/
+/*	$NetBSD: locore.S,v 1.5 2002/09/10 11:53:14 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -111,6 +111,15 @@ Lmapped_start:
 	ptabs/l	r0, tr0
 	blink	tr0, r18
 
+	/*
+	 * Arrange to catch panic traps with the mmu off.
+	 */
+	LEA(_C_LABEL(sh5_resvec_vector_table), r0)
+	LEA(0x40000000, r1)
+	sub	r0, r1, r0
+	ori	r0, 1, r0
+	putcon  r0, resvec
+
 	/* Now safe to call C code */
 
 	/*
@@ -184,6 +193,167 @@ Lmapped_start:
 #include <sh5/sh5/stb1_locore.S>
 #include <sh5/sh5/sigcode.S>
 #include <sh5/sh5/bus_subr.S>
+
+
+/*===================== Start of RESVEC Vector Table =========================*/
+
+	_TEXT_SECTION
+	.balign	0x10
+
+GLOBAL(sh5_resvec_vector_table)
+
+/******************************************************************************
+ * Reset/Panic Exception Vector.
+ *
+ * RESVEC Offset: 0x0
+ *        Length: 0x100
+ */
+Lsh5_resvec_vector_panic:
+	getcon	usr, r24
+	putcon	r15, kcr1
+	LEA(_C_LABEL(sh5_panic_stack) - (0x40000000-(USPACE-SZ_TRAPFRAME)), r15)
+	st.q	r15, SFO(SF_USR,SZ_TRAPFRAME), r24	/* Save USR */
+	st.q	r15, IFO(IF_R0,SZ_TRAPFRAME), r0	/* Save r0 */
+	st.q	r15, IFO(IF_R1,SZ_TRAPFRAME), r1	/* Save r1 */
+	st.q	r15, IFO(IF_R2,SZ_TRAPFRAME), r2	/* Save r2 */
+	getcon	sr, r1
+	movi	-32768, r0
+	shori	0, r0
+	st.q	r0, 0, r15
+	st.q	r0, 8, r1
+	getcon	kcr1, r0
+	st.q	r15, IFO(IF_R15,SZ_TRAPFRAME), r0	/* Save r15 */
+	gettr	tr0, r0
+	st.q	r15, IFO(IF_TR0,SZ_TRAPFRAME), r0	/* Save tr0 */
+	getcon	pssr, r0
+	st.q	r15, SFO(SF_SSR,SZ_TRAPFRAME), r0	/* Save PSSR */
+	getcon	pspc, r0
+	st.q	r15, SFO(SF_SPC,SZ_TRAPFRAME), r0	/* Save PSPC */
+	getcon	pexpevt, r0
+	st.q	r15, SFO(SF_EXPEVT, SZ_TRAPFRAME), r0	/* Save PEXPEVT */
+	getcon	intevt, r0
+	st.q	r15, SFO(SF_INTEVT, SZ_TRAPFRAME), r0	/* Save INTEVT */
+	getcon	tea, r0
+	st.q	r15, SFO(SF_TEA, SZ_TRAPFRAME), r0	/* Save TEA */
+	getcon	tra, r0
+	st.q	r15, SFO(SF_TRA, SZ_TRAPFRAME), r0	/* Save TRA */
+	movi	0, r2
+	pta/l	Lsh5_event_panic, tr0
+	blink	tr0, r63
+
+	.space	(0x100 - (. - Lsh5_resvec_vector_panic))
+
+
+/******************************************************************************
+ * Debug Synchronous Exception Handler
+ *
+ * RESVEC Offset: 0x100
+ *        Length: 0x100
+ */
+Lsh5_resvec_vector_dbg_general:
+	getcon	usr, r24		/* Stash USR somewhere safe for now */
+	putcon	r15, kcr1
+	LEA(_C_LABEL(sh5_panic_stack) - (0x40000000-(USPACE-SZ_TRAPFRAME)), r15)
+	st.q	r15, SFO(SF_USR,SZ_TRAPFRAME), r24	/* Save USR */
+	st.q	r15, IFO(IF_R0,SZ_TRAPFRAME), r0	/* Save r0 */
+	st.q	r15, IFO(IF_R1,SZ_TRAPFRAME), r1	/* Save r1 */
+	st.q	r15, IFO(IF_R2,SZ_TRAPFRAME), r2	/* Save r2 */
+	getcon	kcr1, r0
+	st.q	r15, IFO(IF_R15,SZ_TRAPFRAME), r0	/* Save r15 */
+	gettr	tr0, r0
+	st.q	r15, IFO(IF_TR0,SZ_TRAPFRAME), r0	/* Save tr0 */
+	getcon	ssr, r0
+	st.q	r15, SFO(SF_SSR,SZ_TRAPFRAME), r0	/* Save SSR */
+	getcon	spc, r0
+	st.q	r15, SFO(SF_SPC,SZ_TRAPFRAME), r0	/* Save SPC */
+	getcon	expevt, r0
+	st.q	r15, SFO(SF_EXPEVT, SZ_TRAPFRAME), r0	/* Save EXPEVT */
+	getcon	intevt, r0
+	st.q	r15, SFO(SF_INTEVT, SZ_TRAPFRAME), r0	/* Save INTEVT */
+	getcon	tea, r0
+	st.q	r15, SFO(SF_TEA, SZ_TRAPFRAME), r0	/* Save TEA */
+	getcon	tra, r0
+	st.q	r15, SFO(SF_TRA, SZ_TRAPFRAME), r0	/* Save TRA */
+	movi	1, r2
+	pta/l	Lsh5_event_panic, tr0
+	blink	tr0, r63
+
+	.space	(0x100 - (. - Lsh5_resvec_vector_dbg_general))
+
+
+/******************************************************************************
+ * Debug Interrupt Handler.
+ *
+ * RESVEC Offset: 0x200
+ *        Length: 0x200
+ */
+Lsh5_resvec_vector_debugint:
+	getcon	usr, r24		/* Stash USR somewhere safe for now */
+	putcon	r15, kcr1
+	LEA(_C_LABEL(sh5_panic_stack) - (0x40000000-(USPACE-SZ_TRAPFRAME)), r15)
+	st.q	r15, SFO(SF_USR,SZ_TRAPFRAME), r24	/* Save USR */
+	st.q	r15, IFO(IF_R0,SZ_TRAPFRAME), r0	/* Save r0 */
+	st.q	r15, IFO(IF_R1,SZ_TRAPFRAME), r1	/* Save r1 */
+	st.q	r15, IFO(IF_R2,SZ_TRAPFRAME), r2	/* Save r2 */
+	getcon	kcr1, r0
+	st.q	r15, IFO(IF_R15,SZ_TRAPFRAME), r0	/* Save r15 */
+	gettr	tr0, r0
+	st.q	r15, IFO(IF_TR0,SZ_TRAPFRAME), r0	/* Save tr0 */
+	getcon	ssr, r0
+	st.q	r15, SFO(SF_SSR,SZ_TRAPFRAME), r0	/* Save SSR */
+	getcon	spc, r0
+	st.q	r15, SFO(SF_SPC,SZ_TRAPFRAME), r0	/* Save SPC */
+	getcon	expevt, r0
+	st.q	r15, SFO(SF_EXPEVT, SZ_TRAPFRAME), r0	/* Save EXPEVT */
+	getcon	intevt, r0
+	st.q	r15, SFO(SF_INTEVT, SZ_TRAPFRAME), r0	/* Save INTEVT */
+	getcon	tea, r0
+	st.q	r15, SFO(SF_TEA, SZ_TRAPFRAME), r0	/* Save TEA */
+	getcon	tra, r0
+	st.q	r15, SFO(SF_TRA, SZ_TRAPFRAME), r0	/* Save TRA */
+	movi	2, r2
+
+
+/******************************************************************************
+ * Continuation of Panic Event.
+ *
+ * Save the remainder of the machine state, re-enable the MMU and head off
+ * into C code to report the problem on the console (if possible), never
+ * to return.
+ */
+Lsh5_event_panic:
+	_INTR_FRAME_SAVE(SZ_TRAPFRAME)
+	_TRAP_FRAME_SAVE(SZ_TRAPFRAME)
+	getcon	ssr, r3		/* Parameters for panic_trap() */
+	getcon	spc, r4
+	getcon	expevt, r5
+	or	r2, r63, r6
+	LDC32(0x01600000, r0)	/* Disable (freeze) the caches */
+	putcfg	r0, 0, r63
+	LDC32(0x01e00000, r0)
+	putcfg	r0, 0, r63
+	LEAF(1f, r0)
+	putcon	r0, spc
+	LDUC32(SH5_CONREG_SR_MD|SH5_CONREG_SR_MMU|SH5_CONREG_SR_IMASK_ALL, r0)
+	putcon	r0, ssr
+	LEA(_C_LABEL(sh5_panic_stack), r15)
+	movi	(USPACE - SZ_TRAPFRAME), r0
+	add	r15, r0, r15
+	synco
+	rte			/* Re-enable the MMU */
+	nop
+	nop
+	nop
+	nop
+	nop
+1:	LEAF(_C_LABEL(panic_trap), r0)
+	ptabs/l	r0, tr0
+	or	r15, r63, r2
+	blink	tr0, r63
+	/*NOTREACHED*/
+
+	.comm	_C_LABEL(sh5_panic_stack),USPACE,16
+
 
 #include "dtfcons.h"
 
