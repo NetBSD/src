@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fxp_pci.c,v 1.6 2000/05/12 03:37:40 jhawk Exp $	*/
+/*	$NetBSD: if_fxp_pci.c,v 1.7 2000/05/12 13:46:32 jhawk Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -94,7 +94,15 @@
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcidevs.h>
 
-#include <dev/pci/if_fxp_pcivar.h>
+struct fxp_pci_softc {
+	struct fxp_softc psc_fxp;
+
+	pci_chipset_tag_t psc_pc;	/* pci chipset tag */
+	pcireg_t psc_regs[0x20>>2];	/* saved PCI config regs (sparse) */
+	pcitag_t psc_tag;		/* pci register tag */
+	void *psc_ih;			/* interrupt handler cookie */
+	void *psc_powerhook;		/* power hook */
+};
 
 int	fxp_pci_match __P((struct device *, struct cfdata *, void *));
 void	fxp_pci_attach __P((struct device *, struct device *, void *));
