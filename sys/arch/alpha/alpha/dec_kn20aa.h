@@ -1,4 +1,4 @@
-/*	$NetBSD: dec_kn20aa.h,v 1.1 1995/11/23 02:34:03 cgd Exp $	*/
+/*	$NetBSD: dec_kn20aa.h,v 1.1.4.1 1996/06/13 18:00:06 cgd Exp $	*/
 
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
@@ -28,5 +28,5 @@
  */
 
 char	*dec_kn20aa_modelname __P((void));
-void	dec_kn20aa_consinit __P((char *));
-dev_t	dec_kn20aa_bootdev __P((char *));
+void	dec_kn20aa_consinit __P((void));
+void	dec_kn20aa_device_register __P((struct device *, void *));
