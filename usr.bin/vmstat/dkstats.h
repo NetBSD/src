@@ -1,4 +1,4 @@
-/*	$NetBSD: dkstats.h,v 1.2 2000/05/29 11:36:43 simonb Exp $	*/
+/*	$NetBSD: dkstats.h,v 1.3 2000/12/01 02:08:26 simonb Exp $	*/
 
 /*
  * Copyright (c) 1996 John M. Vinopal
@@ -33,6 +33,7 @@
  */
 
 #include <sys/time.h>
+#include <sys/sched.h>
 #include <unistd.h>
 
 /* poseur disk entry to hold the information we're interested in. */
@@ -47,3 +48,11 @@ struct _disk {
 	u_int64_t	  tk_nout;	/* TTY Chars out. */
 	u_int64_t	  cp_time[CPUSTATES];	/* System timer ticks. */
 };
+
+extern struct _disk	cur;
+extern char		**dr_name;
+extern int		*dk_select, dk_ndrive;
+
+int	dkinit(int, gid_t);
+void	dkswap(void);
+void	dkreadstats(void);

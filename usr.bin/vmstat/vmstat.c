@@ -1,4 +1,4 @@
-/* $NetBSD: vmstat.c,v 1.73 2000/11/30 23:59:04 simonb Exp $ */
+/* $NetBSD: vmstat.c,v 1.74 2000/12/01 02:08:26 simonb Exp $ */
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1986, 1991, 1993\n\
 #if 0
 static char sccsid[] = "@(#)vmstat.c	8.2 (Berkeley) 3/1/95";
 #else
-__RCSID("$NetBSD: vmstat.c,v 1.73 2000/11/30 23:59:04 simonb Exp $");
+__RCSID("$NetBSD: vmstat.c,v 1.74 2000/12/01 02:08:26 simonb Exp $");
 #endif
 #endif /* not lint */
 
@@ -154,11 +154,6 @@ struct nlist namelist[] = {
 	{ "" },
 };
 
-/* Objects defined in dkstats.c */
-extern struct _disk	cur;
-extern char	**dr_name;
-extern int	*dk_select, dk_ndrive;
-
 struct	uvmexp uvmexp, ouvmexp;
 int	ndrives;
 
@@ -196,10 +191,6 @@ void	hist_dodump(struct uvm_history *);
 
 int	main(int, char **);
 char	**choosedrives(char **);
-
-extern int dkinit(int, gid_t);
-extern void dkreadstats(void);
-extern void dkswap(void);
 
 /* Namelist and memory file names. */
 char	*nlistf, *memf;
