@@ -1,5 +1,3 @@
-/*	$NetBSD: htonl.S,v 1.2 1994/10/26 06:39:08 cgd Exp $	*/
-
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
@@ -35,21 +33,20 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)htonl.s	5.3 (Berkeley) 12/17/90
+ *	from: @(#)htonl.s	5.3 (Berkeley) 12/17/90
+ *	$Id: htonl.S,v 1.3 1995/02/05 15:06:47 mycroft Exp $
  */
 
+#include <machine/asm.h>
+
 #if defined(LIBC_SCCS)
-	.text
-	.asciz "$NetBSD: htonl.S,v 1.2 1994/10/26 06:39:08 cgd Exp $"
+RCSID("$Id: htonl.S,v 1.3 1995/02/05 15:06:47 mycroft Exp $")
 #endif
 
 /* netorder = htonl(hostorder) */
-
-#include "DEFS.h"
-
 ENTRY(htonl)
 	movl	4(%esp),%eax
-	xchgb	%al,%ah
+	rorw	$8,%ax
 	roll	$16,%eax
-	xchgb	%al,%ah
+	rorw	$8,%ax
 	ret
