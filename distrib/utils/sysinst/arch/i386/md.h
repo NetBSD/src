@@ -1,4 +1,4 @@
-/*	$NetBSD: md.h,v 1.39 2003/05/21 10:05:25 dsl Exp $	*/
+/*	$NetBSD: md.h,v 1.40 2003/05/30 11:56:26 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -99,11 +99,7 @@ EXTERN distinfo dist_list[]
  * On i386, we allow "wd"  ST-506/IDE disks,  "sd" scsi disks, "ld" logical
  * disks, "ed" IBM ESDI disks
  */
-EXTERN	char *disk_names[]
-#ifdef MAIN
-= {"wd", "sd", "ld", "ed", NULL}
-#endif
-;
+#define DISK_NAMES "wd", "sd", "ld", "ed"
 
 /* Bootblock type */
 EXTERN char *boottype INIT("");
