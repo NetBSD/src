@@ -1,4 +1,4 @@
-# $NetBSD: INSTALL,v 1.69 2002/11/30 07:06:42 itohy Exp $
+# $NetBSD: INSTALL,v 1.70 2003/02/10 08:04:40 grant Exp $
 #
 # Alpha INSTALL kernel.
 
@@ -210,6 +210,7 @@ tl*	at	pci? dev ? function ?		# TI ThunderLAN Ethernet
 tlp*	at	pci? dev ? function ?		# DECchip 21x4x and clones
 vga*	at	pci? dev ? function ?		# PCI VGA Graphics
 vr*	at	pci? dev ? function ?		# VIA Rhine Fast Ethernet
+wi*	at	pci? dev ? function ?		# Lucent/Intersil WaveLAN/IEEE
 
 # MII/PHY support
 exphy*	at mii? phy ?			# 3Com internal PHYs
