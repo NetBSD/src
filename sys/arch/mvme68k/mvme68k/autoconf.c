@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.6.4.1 1996/05/27 21:22:03 chuck Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.6.4.2 1996/05/29 05:19:08 chuck Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -61,6 +61,8 @@
 #include <sys/device.h>
 
 #include <machine/vmparam.h>
+#include <machine/autoconf.h>
+#include <machine/disklabel.h>
 #include <machine/cpu.h>
 #include <machine/pte.h>
 
@@ -179,6 +181,9 @@ mainbus_print(aux, cp)
  */
 configure()
 {
+
+	bootdv = NULL;	/* set by device drivers (if found) */
+
 	init_sir();
 	isrinit();
 
@@ -213,11 +218,6 @@ swapconf()
  * the rest of this file was adapted from Theo de Raadt's code in the 
  * sparc port to nuke the "options GENERIC" stuff.
  */
-
-dev_t	bootdev;
-
-#define	PARTITIONMASK	0x7
-#define	PARTITIONSHIFT	3
 
 struct nam2blk {
 	char *name;
@@ -326,7 +326,6 @@ setroot()
 	char buf[128];
 	extern int (*mountroot) __P((void *));
 	dev_t temp;
-	struct device *bootdv;
 #if defined(NFSCLIENT)
 	extern char *nfsbootdevname;
 	extern int nfs_mountroot __P((void *));
@@ -335,7 +334,8 @@ setroot()
 	extern int ffs_mountroot __P((void *));
 #endif
 
-	bootdv = NULL;
+	printf("boot device: %s\n",
+		(bootdv) ? bootdv->dv_xname : "<unknown>");
 
 	if (boothowto & RB_ASKNAME) {
 		for (;;) {
@@ -420,7 +420,6 @@ gotswap:
 		if (bootdv == NULL)
 			panic("boot device not known");
 
-#if 0 /* XXXCDC: fix me */
 		majdev = findblkmajor(bootdv);
 		if (majdev >= 0) {
 			/*
@@ -428,7 +427,7 @@ gotswap:
 			 * val[2] of the boot device is the partition number.
 			 * Assume swap is on partition b.
 			 */
-			int part = bp->val[2];
+			int part = bootpart;
 			mindev = (bootdv->dv_unit << PARTITIONSHIFT) + part;
 			rootdev = makedev(majdev, mindev);
 			nswapdev = dumpdev = makedev(major(rootdev),
@@ -441,7 +440,6 @@ gotswap:
 		}
 		swdevt[0].sw_dev = nswapdev;
 		swdevt[1].sw_dev = NODEV;
-#endif
 
 	} else {
 

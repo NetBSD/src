@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.9 1996/05/20 00:40:16 chuck Exp $	*/
+/*	$NetBSD: locore.s,v 1.9.4.1 1996/05/29 05:19:11 chuck Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -76,12 +76,19 @@ tmpstk:
 _kernel_text:
 start:					| start of kernel and .text!
 	movw	#PSL_HIGHIPL,sr		| no interrupts
-	movl	#0,d6			| get bootdev
-	movl	sp@(4),d7		| get boothowto
+	movl	#0,a5			| RAM starts at 0 (a5)
+	movl	sp@(4), d7		| get boothowto
+	movl	sp@(8), d6		| get bootaddr
+	movl	sp@(12),d5		| get bootctrllun
+	movl	sp@(16),d4		| get bootdevlun
+	movl	sp@(20),d3		| get bootpart
+	movl	sp@(24),d2		| get esyms
+	/* note: d2-d7 in use */
+
 	RELOC(tmpstk, a0)
 	movl	a0,sp			| give ourselves a temporary stack
 
-	lea	_edata,a0		| clear out BSS
+	RELOC(_edata,a0)		| clear out BSS
 	movl	#_end-4,d0		| (must be <= 256 kB)
 	subl	#_edata,d0
 	lsrl	#2,d0
@@ -89,14 +96,11 @@ start:					| start of kernel and .text!
 	dbra	d0,1b
 
 	RELOC(_esym, a0)
-#if 1
-	movl	a4,a0@			| store end of symbol table
-#else
-	clrl	a0@			| no symbol table, yet
-#endif
-	movl	#0,a5			| RAM starts at 0
+	movl	d2,a0@			| store end of symbol table
+	/* d2 now free, d3-d7 still in use */
 	RELOC(_lowram, a0)
 	movl	a5,a0@			| store start of physical memory
+
 	movl	#CACHE_OFF,d0
 	movc	d0,cacr			| clear and disable on-chip cache(s)
 
@@ -150,14 +154,14 @@ Lstart1:
 	.globl	_Sysseg, _pmap_bootstrap, _avail_start
 #ifdef DDB
 	RELOC(_esym,a0)			| end of static kernel test/data/syms
-	movl	a0@,d5
+	movl	a0@,d2
 	jne	Lstart2
 #endif
-	movl	#_end,d5		| end of static kernel text/data
+	movl	#_end,d2		| end of static kernel text/data
 Lstart2:
-	addl	#NBPG-1,d5
-	andl	#PG_FRAME,d5		| round to a page
-	movl	d5,a4
+	addl	#NBPG-1,d2
+	andl	#PG_FRAME,d2		| round to a page
+	movl	d2,a4
 	addl	a5,a4			| convert to PA
 	movl	#0, sp@-		| firstpa
 	pea	a4@			| nextpa
@@ -235,8 +239,12 @@ Lnocache0:
 	jbsr	_isrinit		| be ready for stray ints
 	jbsr	_mvme68k_init		| early model-dependent init
 	movw	#PSL_LOWIPL,sr		| lower SPL
-	movl	d7,_boothowto		| save reboot flags
-	movl	d6,_bootdev		|   and boot device
+	movl	d3, _bootpart		| save bootpart
+	movl	d4, _bootdevlun		| save bootdevlun
+	movl	d5, _bootctrllun	| save booctrllun
+	movl	d6, _bootaddr		| save bootaddr
+	movl	d7, _boothowto		| save boothowto
+	/* d3-d7 now free */
 
 /*
  * Create a fake exception frame so that cpu_fork() can copy it.
@@ -1633,7 +1641,7 @@ _doboot:
 	movc	d0,cacr			| disable on-chip cache(s)
 Lnocache5:
 	movl	_boothowto,d0		| load howto
-	movl	_bootdev,d1		| and devtype
+					| (used to load bootdev in d1 here)
 	movl	sp@(4),d2		| arg
 	lea	tmpstk,sp		| physical SP in case of NMI
 	movl	#0,a7@-			| value for pmove to TC (turn off MMU)
