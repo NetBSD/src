@@ -1,4 +1,4 @@
-/*	$NetBSD: ethfoo_lkm.c,v 1.14 2004/12/13 19:40:56 cube Exp $	*/
+/*	$NetBSD: ethfoo_lkm.c,v 1.15 2004/12/17 12:17:09 cube Exp $	*/
 
 /*
  *  Copyright (c) 2003, 2004 The NetBSD Foundation.
@@ -901,8 +901,6 @@ ethfoo_dev_close(struct ethfoo_softc *sc)
 	struct ifnet *ifp;
 	int s;
 
-	sc->sc_flags = 0;	/* Remove ASYNCIO flag, too */
-
 	s = splnet();
 	/* Let ethfoo_start handle packets again */
 	ifp = &sc->sc_ec.ec_if;
@@ -923,6 +921,8 @@ ethfoo_dev_close(struct ethfoo_softc *sc)
 		}
 	}
 	splx(s);
+
+	sc->sc_flags &= ~(ETHFOO_INUSE | ETHFOO_ASYNCIO);
 
 	return (0);
 }
