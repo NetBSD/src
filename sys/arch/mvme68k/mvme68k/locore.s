@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.71 2000/11/29 09:09:39 scw Exp $	*/
+/*	$NetBSD: locore.s,v 1.72 2000/11/29 09:11:53 scw Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -706,7 +706,7 @@ ENTRY_NOPROFILE(buserr60)
 	jeq	_ASM_LABEL(faultstkadjnotrap2)
 Lnobpe:
 | we need to adjust for misaligned addresses
-	movl	sp@(FR_HW+8),%d1	| grab VA
+	movl	%sp@(FR_HW+8),%d1	| grab VA
 	btst	#27,%d0			| check for mis-aligned access
 	jeq	Lberr3			| no, skip
 	addl	#28,%d1			| yes, get into next page
@@ -1532,7 +1532,7 @@ ENTRY(suline)
 	movl	%a1@+,%d0		| get lword
 	movsl	%d0,%a0@+		| put lword
 	nop				| sync
-	moveq	#0%,d0			| indicate no fault
+	moveq	#0,%d0			| indicate no fault
 	jra	Lsldone
 Lslerr:
 	moveq	#-1,%d0
