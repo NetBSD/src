@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.45.2.4 2004/09/21 13:29:43 skrll Exp $	*/
+/*	$NetBSD: fd.c,v 1.45.2.5 2004/09/24 10:53:27 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003 The NetBSD Foundation, Inc.
@@ -88,7 +88,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.45.2.4 2004/09/21 13:29:43 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.45.2.5 2004/09/24 10:53:27 skrll Exp $");
 
 #include "rnd.h"
 #include "opt_ddb.h"
@@ -1549,7 +1549,7 @@ fdformat(dev, finfo, l)
 	bp->b_data = (caddr_t)finfo;
 
 #ifdef DEBUG
-	printf("fdformat: blkno %" PRIx64 " count %lx\n",
+	printf("fdformat: blkno %" PRIx64 " count %x\n",
 	    bp->b_blkno, bp->b_bcount);
 #endif
 

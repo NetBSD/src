@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_vnops.c,v 1.106.2.5 2004/09/21 13:36:32 skrll Exp $	*/
+/*	$NetBSD: procfs_vnops.c,v 1.106.2.6 2004/09/24 10:53:43 skrll Exp $	*/
 
 /*
  * Copyright (c) 1993, 1995
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_vnops.c,v 1.106.2.5 2004/09/21 13:36:32 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_vnops.c,v 1.106.2.6 2004/09/24 10:53:43 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -155,6 +155,7 @@ static const struct proc_target proc_root_targets[] = {
 	{ DT_REG, N("meminfo"),     PFSmeminfo,        procfs_validfile_linux },
 	{ DT_REG, N("cpuinfo"),     PFScpuinfo,        procfs_validfile_linux },
 	{ DT_REG, N("uptime"),      PFSuptime,         procfs_validfile_linux },
+	{ DT_REG, N("mounts"),	    PFSmounts,	       procfs_validfile_linux },
 #undef N
 };
 static const int nproc_root_targets =
@@ -579,6 +580,7 @@ procfs_getattr(v)
 	case PFSmeminfo:
 	case PFScpuinfo:
 	case PFSuptime:
+	case PFSmounts:
 		vap->va_nlink = 1;
 		vap->va_uid = vap->va_gid = 0;
 		break;
@@ -688,6 +690,7 @@ procfs_getattr(v)
 	case PFSmeminfo:
 	case PFScpuinfo:
 	case PFSuptime:
+	case PFSmounts:
 		vap->va_bytes = vap->va_size = 0;
 		break;
 	case PFSmap:

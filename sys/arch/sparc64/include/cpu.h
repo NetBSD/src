@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.35.2.3 2004/09/21 13:22:55 skrll Exp $ */
+/*	$NetBSD: cpu.h,v 1.35.2.4 2004/09/24 10:53:17 skrll Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -76,7 +76,8 @@
 #include <machine/cpuset.h>
 #include <sparc64/sparc64/intreg.h>
 
-#include <sys/sched.h>
+#include <sys/cpu_data.h>
+#include <sys/cc_microtime.h>
 /*
  * The cpu_info structure is part of a 64KB structure mapped both the kernel
  * pmap and a single locked TTE a CPUINFO_VA for that particular processor.
@@ -108,6 +109,7 @@ struct cpu_info {
 
 	/* Most important fields first */
 	struct lwp		*ci_curlwp;
+	struct cpu_data		ci_data;	/* MI per-cpu data */
 	struct pcb		*ci_cpcb;
 	struct cpu_info		*ci_next;
 
@@ -115,19 +117,11 @@ struct cpu_info {
 	int			ci_number;
 	int			ci_upaid;
 	int			ci_cpuid;
-	struct schedstate_percpu ci_schedstate;
 
 	/*
 	 * Variables used by cc_microtime().
 	 */
-	struct timeval ci_cc_time;
-	int64_t ci_cc_cc;
-	int64_t ci_cc_ms_delta;
-	int64_t ci_cc_denom;
-
-	/* DEBUG/DIAGNOSTIC stuff */
-	u_long			ci_spin_locks;
-	u_long			ci_simple_locks;
+	struct cc_microtime_state ci_cc;
 
 	/* Spinning up the CPU */
 	void			(*ci_spinup) __P((void));
@@ -206,10 +200,7 @@ void	cpu_boot_secondary_processors __P((void));
 /*
  * definitions for MI microtime().
  */
-extern struct timeval cc_microset_time;
 #define microtime(tv)	cc_microtime(tv)
-void	cc_microtime __P((struct timeval *));
-void	cc_microset __P((struct cpu_info *));
 
 extern uint64_t cpu_clockrate[];
 

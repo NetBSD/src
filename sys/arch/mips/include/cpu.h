@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.70.2.3 2004/09/21 13:18:39 skrll Exp $	*/
+/*	$NetBSD: cpu.h,v 1.70.2.4 2004/09/24 10:53:17 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -45,23 +45,19 @@
 
 #ifdef _KERNEL
 #ifndef _LOCORE
-#include <sys/sched.h>
+#include <sys/cpu_data.h>
 
 #if defined(_KERNEL_OPT)
 #include "opt_lockdebug.h"
 #endif
 
 struct cpu_info {
-	struct schedstate_percpu ci_schedstate; /* scheduler state */
+	struct cpu_data ci_data;	/* MI per-cpu data */
 	u_long ci_cpu_freq;		/* CPU frequency */
 	u_long ci_cycles_per_hz;	/* CPU freq / hz */
 	u_long ci_divisor_delay;	/* for delay/DELAY */
 	u_long ci_divisor_recip;	/* scaled reciprocal of previous;
 					   see below */
-#if defined(DIAGNOSTIC) || defined(LOCKDEBUG)
-	u_long ci_spin_locks;		/* # of spin locks held */
-	u_long ci_simple_locks;		/* # of simple locks held */
-#endif
 };
 
 /*

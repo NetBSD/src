@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cs_ofisa_machdep.c,v 1.2.2.3 2004/09/21 13:21:48 skrll Exp $	*/
+/*	$NetBSD: if_cs_ofisa_machdep.c,v 1.2.2.4 2004/09/24 10:53:17 skrll Exp $	*/
 
 /*
  * Copyright 1998
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_cs_ofisa_machdep.c,v 1.2.2.3 2004/09/21 13:21:48 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_cs_ofisa_machdep.c,v 1.2.2.4 2004/09/24 10:53:17 skrll Exp $");
 
 #include "opt_compat_old_ofw.h"
 
@@ -174,7 +174,7 @@ cs_ofisa_md_dma_fixup(parent, self, aux, descp, ndescs, ndescsfilled)
 
 	if (ndescs > 0 && ndescsfilled > 0) {
 		if (OF_getproplen(aa->oba.oba_phandle, "no-dma") >= 0)
-			descp[0].drq = ISACF_DRQ_DEFAULT;
+			descp[0].drq = -1;
 	}
 	return (ndescsfilled);
 }

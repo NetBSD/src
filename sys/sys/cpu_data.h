@@ -1,11 +1,8 @@
-/*	$NetBSD: linux_types.h,v 1.1.46.1 2004/09/24 10:53:18 skrll Exp $	*/
+/*	$NetBSD: cpu_data.h,v 1.1.2.2 2004/09/24 10:53:43 skrll Exp $	*/
 
 /*-
- * Copyright (c) 1998 The NetBSD Foundation, Inc.
+ * Copyright (c) 2004 The NetBSD Foundation, Inc.
  * All rights reserved.
- *
- * This code is derived from software contributed to The NetBSD Foundation
- * by Eric Haszlakiewicz.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -17,8 +14,8 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *	This product includes software developed by the NetBSD
- *	Foundation, Inc. and its contributors.
+ *        This product includes software developed by the NetBSD
+ *        Foundation, Inc. and its contributors.
  * 4. Neither the name of The NetBSD Foundation nor the names of its
  *    contributors may be used to endorse or promote products derived
  *    from this software without specific prior written permission.
@@ -36,41 +33,50 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _ALPHA_LINUX_TYPES_H
-#define _ALPAH_LINUX_TYPES_H
+/*
+ * based on arch/i386/include/cpu.h:
+ *	NetBSD: cpu.h,v 1.115 2004/05/16 12:32:53 yamt Exp
+ */
 
-typedef unsigned int linux_uid_t;
-typedef unsigned int linux_gid_t;
-typedef unsigned int linux_dev_t;
-typedef unsigned int linux_ino_t;
-typedef unsigned int linux_mode_t;
-typedef unsigned int linux_nlink_t;
-typedef long linux_time_t;
-typedef long linux_clock_t;
-typedef long linux_off_t;
-typedef int linux_pid_t;
+#ifndef _CPU_DATA_H_
+#define	_CPU_DATA_H_
 
-/* From linux_termios.h */
-typedef unsigned char linux_cc_t;
-typedef	unsigned int  linux_speed_t;
-typedef unsigned int  linux_tcflag_t;
+#if defined(_KERNEL_OPT)
+#include "opt_multiprocessor.h"
+#endif
 
-struct linux_stat {
-	linux_dev_t		lst_dev;
-	linux_ino_t		lst_ino;
-	linux_mode_t		lst_mode;
-	linux_nlink_t		lst_nlink;
-	linux_uid_t		lst_uid;
-	linux_gid_t		lst_gid;
-	linux_dev_t		lst_rdev;
-	linux_off_t		lst_size;
-	linux_time_t		lst_atime;	/* Note: Linux uses	*/
-	linux_time_t		lst_mtime;	/*       unsigned long	*/
-	linux_time_t		lst_ctime;	/*       for these	*/
-	unsigned int		lst_blksize;
-	int			lst_blocks;
-	unsigned int		lst_flags;	/* unused */
-	unsigned int		lst_gen;	/* unused */
+struct lwp;
+#include <sys/sched.h>	/* for schedstate_percpu */
+
+/*
+ * MI per-cpu data
+ *
+ * this structure is intended to be included in MD cpu_info structure.
+ *	struct cpu_info {
+ *		struct cpu_data ci_data;
+ *	}
+ *
+ * note that cpu_data is not expected to contain much data,
+ * as cpu_info is size-limited on most ports.
+ */
+
+struct cpu_data {
+	struct schedstate_percpu cpu_schedstate; /* scheduler state */
+
+	/*
+	 * for LOCKDEBUG
+	 */
+#if defined(DIAGNOSTIC) || defined(LOCKDEBUG)
+	u_long cpu_spin_locks;		/* # of spin locks held */
+	u_long cpu_simple_locks;	/* # of simple locks held */
+#endif /* defined(DIAGNOSTIC) || defined(LOCKDEBUG) */
 };
 
-#endif /* !_ALPHA_LINUX_TYPES_H */
+/* compat definitions */
+#define	ci_schedstate	ci_data.cpu_schedstate
+#if defined(DIAGNOSTIC) || defined(LOCKDEBUG)
+#define	ci_spin_locks	ci_data.cpu_spin_locks
+#define	ci_simple_locks	ci_data.cpu_simple_locks
+#endif /* defined(DIAGNOSTIC) || defined(LOCKDEBUG) */
+
+#endif /* _CPU_DATA_H_ */

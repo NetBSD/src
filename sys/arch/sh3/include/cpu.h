@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.31.2.3 2004/09/21 13:21:25 skrll Exp $	*/
+/*	$NetBSD: cpu.h,v 1.31.2.4 2004/09/24 10:53:17 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc. All rights reserved.
@@ -48,17 +48,13 @@
 #include "opt_lockdebug.h"
 #endif
 
-#include <sys/sched.h>
+#include <sys/cpu_data.h>
 #include <sh3/psl.h>
 #include <sh3/frame.h>
 
 #ifdef _KERNEL
 struct cpu_info {
-	struct schedstate_percpu ci_schedstate; /* scheduler state */
-#if defined(DIAGNOSTIC) || defined(LOCKDEBUG)
-	u_long ci_spin_locks;		/* # of spin locks held */
-	u_long ci_simple_locks;		/* # of simple locks held */
-#endif
+	struct cpu_data ci_data;	/* MI per-cpu data */
 };
 
 extern struct cpu_info cpu_info_store;

@@ -1,4 +1,4 @@
-/*	$NetBSD: repulse.c,v 1.8 2003/04/06 18:20:10 wiz Exp $ */
+/*	$NetBSD: repulse.c,v 1.8.2.1 2004/09/24 10:53:16 skrll Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: repulse.c,v 1.8 2003/04/06 18:20:10 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: repulse.c,v 1.8.2.1 2004/09/24 10:53:16 skrll Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -75,7 +75,7 @@ __KERNEL_RCSID(0, "$NetBSD: repulse.c,v 1.8 2003/04/06 18:20:10 wiz Exp $");
 int repac_attach(void *, struct ac97_codec_if *);
 int repac_read(void *, u_int8_t, u_int16_t *);
 int repac_write(void *, u_int8_t, u_int16_t);
-void repac_reset(void *);
+int repac_reset(void *);
 enum ac97_host_flag repac_flags(void *);
 
 /* audio attachment functions */
@@ -381,7 +381,7 @@ Initerr:
 
 }
 
-void repac_reset(void *arg) {
+int repac_reset(void *arg) {
 	struct repulse_softc *sc = arg;
 	struct repulse_hw *bp = sc->sc_boardp;
 
@@ -403,6 +403,7 @@ void repac_reset(void *arg) {
 	a = bp->rhw_status;
 	a &= ~REPSTATUS_CODECRESET;
 	bp->rhw_status = a;
+	return 0;
 }
 
 int repac_read(void *arg, u_int8_t reg, u_int16_t *valuep) {

@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.h,v 1.60.2.3 2004/09/21 13:11:48 skrll Exp $ */
+/* $NetBSD: cpu.h,v 1.60.2.4 2004/09/24 10:53:16 skrll Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -128,7 +128,8 @@
 #include <machine/alpha_cpu.h>
 
 #ifdef _KERNEL
-#include <sys/sched.h>
+#include <sys/cpu_data.h>
+#include <sys/cc_microtime.h>
 #include <machine/frame.h>
 
 /*
@@ -143,12 +144,9 @@ struct cpu_info {
 	/*
 	 * Public members.
 	 */
-	struct schedstate_percpu ci_schedstate; /* scheduler state */
-#if defined(DIAGNOSTIC) || defined(LOCKDEBUG)
-	u_long ci_spin_locks;		/* # of spin locks held */
-	u_long ci_simple_locks;		/* # of simple locks held */
-#endif
 	struct lwp *ci_curlwp;		/* current owner of the processor */
+	struct cpu_data ci_data;	/* MI per-cpu data */
+	struct cc_microtime_state ci_cc;/* cc_microtime state */
 	struct cpu_info *ci_next;	/* next cpu_info structure */
 
 	/*
@@ -164,14 +162,6 @@ struct cpu_info {
 	u_long ci_want_resched;		/* preempt current process */
 	u_long ci_intrdepth;		/* interrupt trap depth */
 	struct trapframe *ci_db_regs;	/* registers for debuggers */
-
-	/*
-	 * Variables used by cc_microtime().
-	 */
-	struct timeval ci_cc_time;
-	long ci_cc_cc;
-	long ci_cc_ms_delta;
-	long ci_cc_denom;
 
 #if defined(MULTIPROCESSOR)
 	__volatile u_long ci_flags;	/* flags; see below */
@@ -314,12 +304,8 @@ struct reg;
 struct rpb;
 struct trapframe;
 
-extern struct timeval cc_microset_time;
-
 int	badaddr(void *, size_t);
 #define microtime(tv)	cc_microtime(tv)
-void	cc_microtime __P((struct timeval *));
-void	cc_microset(struct cpu_info *);
 
 #endif /* _KERNEL */
 #endif /* _ALPHA_CPU_H_ */
