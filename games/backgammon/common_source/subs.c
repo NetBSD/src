@@ -1,4 +1,4 @@
-/*	$NetBSD: subs.c,v 1.11 1999/07/26 20:50:44 hubertf Exp $	*/
+/*	$NetBSD: subs.c,v 1.12 1999/09/08 21:45:25 jsm Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)subs.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: subs.c,v 1.11 1999/07/26 20:50:44 hubertf Exp $");
+__RCSID("$NetBSD: subs.c,v 1.12 1999/09/08 21:45:25 jsm Exp $");
 #endif
 #endif /* not lint */
 
@@ -446,7 +446,7 @@ fixtty(t)
 
 void
 getout(dummy)
-	int     dummy;
+	int     dummy __attribute__((__unused__));
 {
 	/* go to bottom of screen */
 	if (tflag) {
