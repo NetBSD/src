@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.8 2000/05/31 05:06:53 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.8.2.1 2000/12/24 07:20:12 jhawk Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -148,11 +148,14 @@ ASENTRY_NOPROFILE(start)
 	movl	#CACHE_OFF,%d0
 	movc	%d0,%cacr		| clear and disable on-chip cache(s)
 
-	movl	#0x200,%d0		| data freeze bit
+	movl	#DC_FREEZE,%d0		| data freeze bit
 	movc	%d0,%cacr		|  only exists on 68030
 	movc	%cacr,%d0		| read it back
 	tstl	%d0			| zero?
 	jeq	Lnot68030		| yes, we have 68020/68040
+
+	movl	#CACHE_OFF,%d0
+	movc	%d0,%cacr		| clear data freeze bit
 
 	RELOC(mmutype,%a0)
 	movl	#MMU_68030,%a0@
@@ -199,10 +202,10 @@ ASENTRY_NOPROFILE(start)
 	jra	Lcom030
 
 Lnot1200:
-	tstl	%d0			| news1700?
+	tstl	%d0			| news1400/1500/1600/1700?
 	jne	Lnotyet			| no, then skip
 
-	/* news1700 */
+	/* news1400/1500/1600/1700 */
 	/* XXX Are these needed?*/
 	sf	0xe1280000		| AST disable (???)
 	sf	0xe1180000		| level2 interrupt disable (???)
@@ -212,12 +215,20 @@ Lnot1200:
 	moveb	#0x36,0xe0c80000	| XXX reset FDC for PWS-1560
 	/* XXX */
 
-	/* news1700 - 68030 CPU/MMU, 68882 FPU */
+	/* news1400/1500/1600/1700 - 68030 CPU/MMU, 68882 FPU */
 	RELOC(systype,%a0)
 	movl	#NEWS1700,%a0@
-	RELOC(ectype, %a0)
-	movl	#EC_PHYS,%a0@		| news1700 have a phisical address cache
 
+	cmpb	#0xf2,0xe1c00000	| read model id from idrom
+	jle	1f			|  news1600/1700 ?
+
+	RELOC(ectype, %a0)		| no, we are news1400/1500
+	movl	#EC_NONE,%a0		|  and do not have L2 cache
+	jra	2f
+1:
+	RELOC(ectype, %a0)		| yes, we are news1600/1700
+	movl	#EC_PHYS,%a0@		|  and have a phisical address cache
+2:
 	/*
 	 * Fix up the physical addresses of the news1700's onboard
 	 * I/O registers.
@@ -360,7 +371,7 @@ Lstploaddone:
 	.word	0xf518			| pflusha
 	movl	#0x8000,%d0
 	.long	0x4e7b0003		| movc %d0,%tc
-	movl	#0x80008000,%d0
+	movl	#CACHE40_ON,%d0
 	movc	%d0,%cacr		| turn on both caches
 	jmp	Lenab1
 Lmotommu2:
@@ -403,7 +414,11 @@ Lenab2:
 	tstl	_C_LABEL(mmutype)
 	jpl	Lenab3			| 68851 implies no d-cache
 	movl	#CACHE_ON,%d0
-	movc	%d0,%cacr		| clear cache(s)
+	tstl	_C_LABEL(ectype)	| have external cache?
+	jne	1f			| Yes, skip
+	orl	#CACHE_BE,%d0		| set cache burst enable
+1:
+	movc	%d0,%cacr		| clear cache
 	tstl	_C_LABEL(ectype)	| have external cache?
 	jeq	Lenab3			| No, skip
 	movl	_C_LABEL(cache_clr),%a0
@@ -922,6 +937,12 @@ Laststkadj:
  * Use common m68k sigcode.
  */
 #include <m68k/m68k/sigcode.s>
+#ifdef COMPAT_SUNOS
+#include <m68k/m68k/sunos_sigcode.s>
+#endif
+#ifdef COMPAT_SVR4
+#include <m68k/m68k/svr4_sigcode.s>
+#endif
 
 /*
  * Primitives
@@ -1130,7 +1151,8 @@ _C_LABEL(_TBIA):
 	tstl	_C_LABEL(mmutype)	| MMU type?
 	pflusha				| flush entire TLB
 	jpl	Lmc68851a		| 68851 implies no d-cache
-	movl	#DC_CLEAR,%d0
+	movc	%cacr,%d0
+	orl	#DC_CLR,%d0
 	movc	%d0,%cacr		| invalidate on-chip d-cache
 #if 0
 	jmp	_C_LABEL(_DCIA)
@@ -1146,7 +1168,8 @@ ENTRY(TBIS)
 	movl	%sp@(4),%a0		| get addr to flush
 	jpl	Lmc68851b		| is 68851?
 	pflush	#0,#0,%a0@		| flush address from both sides
-	movl	#DC_CLEAR,%d0
+	movc	%cacr,%d0
+	orl	#DC_CLR,%d0
 	movc	%d0,%cacr		| invalidate on-chip data cache
 	rts
 Lmc68851b:
@@ -1160,7 +1183,8 @@ ENTRY(TBIAS)
 	tstl	_C_LABEL(mmutype)	| MMU type?
 	jpl	Lmc68851c		| 68851?
 	pflush #4,#4			| flush supervisor TLB entries
-	movl	#DC_CLEAR,%d0
+	movc	%cacr,%d0
+	orl	#DC_CLR,%d0
 	movc	%d0,%cacr		| invalidate on-chip d-cache
 	rts
 Lmc68851c:
@@ -1177,7 +1201,8 @@ ENTRY(TBIAU)
 	tstl	_C_LABEL(mmutype)	| MMU type?
 	jpl	Lmc68851d		| 68851?
 	pflush	#0,#4			| flush user TLB entries
-	movl	#DC_CLEAR,%d0
+	movc	%cacr,%d0
+	orl	#DC_CLR,%d0
 	movc	%d0,%cacr		| invalidate on-chip d-cache
 	rts
 Lmc68851d:
@@ -1191,7 +1216,8 @@ Lmc68851d:
  * Invalidate instruction cache
  */
 ENTRY(ICIA)
-	movl	#IC_CLEAR,%d0
+	movc	%cacr,%d0
+	orl	#IC_CLR,%d0
 	movc	%d0,%cacr		| invalidate i-cache
 #if 0
 	tstl	_C_LABEL(ectype)	| got external PAC?
@@ -1222,7 +1248,8 @@ _C_LABEL(_DCIA):
 _C_LABEL(_DCIS):
 _C_LABEL(_DCIU):
 #if 0
-	movl	#DC_CLEAR,%d0
+	movc	%cacr,%d0
+	orl	#DC_CLR,%d0
 	movc	%d0,%cacr
 #endif
 	tstl	_C_LABEL(ectype)	| got external VAC?
@@ -1235,7 +1262,8 @@ Lnocache2:
 
 ENTRY(PCIA)
 #if 0
-	movl	#DC_CLEAR,%d0
+	movc	%cacr,%d0
+	orl	#DC_CLR,%d0
 	movc	%d0,%cacr		| invalidate on-chip d-cache
 #endif
 	tstl	_C_LABEL(ectype)	| got external PAC?
@@ -1292,7 +1320,8 @@ ENTRY(loadustp)
 	lea	_C_LABEL(protorp),%a0	| CRP prototype
 	movl	%d0,%a0@(4)		| stash USTP
 	pmove	%a0@,%crp		| load root pointer
-	movl	#CACHE_CLR,%d0
+	movc	%cacr,%d0
+	orl	#DCIC_CLR,%d0
 	movc	%d0,%cacr		| invalidate cache(s)
 	rts
 
