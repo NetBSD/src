@@ -1,4 +1,4 @@
-/*	$NetBSD: iq80310reg.h,v 1.3 2001/11/08 03:28:53 thorpej Exp $	*/
+/*	$NetBSD: iq80310reg.h,v 1.4 2001/12/01 02:02:46 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -133,14 +133,14 @@
 	 * Setting a bit clears the corresponding segment on the
 	 * display.
 	 */
-#define	SEG_A			(1U << 0)
-#define	SEG_B			(1U << 1)
-#define	SEG_C			(1U << 2)
-#define	SEG_D			(1U << 3)
-#define	SEG_E			(1U << 4)
-#define	SEG_F			(1U << 5)
-#define	SEG_G			(1U << 6)
-#define	SEG_DP			(1U << 7)
+#define	SEG_A			(1 << 0)
+#define	SEG_B			(1 << 1)
+#define	SEG_C			(1 << 2)
+#define	SEG_D			(1 << 3)
+#define	SEG_E			(1 << 4)
+#define	SEG_F			(1 << 5)
+#define	SEG_G			(1 << 6)
+#define	SEG_DP			(1 << 7)
 
 #define	IQ80310_XINT0_STATUS	0xfe850000UL	/* rev F and later */
 #define	XINT0_SINTA		0		/* INTA# */
