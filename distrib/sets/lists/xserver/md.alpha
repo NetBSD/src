@@ -1,10 +1,7 @@
-# $NetBSD: md.alpha,v 1.7 2004/02/08 11:25:11 matt Exp $
+# $NetBSD: md.alpha,v 1.8 2004/03/28 06:48:43 jmc Exp $
 ./usr/X11R6/bin/X
 ./usr/X11R6/bin/XalphaNetBSD
 ./usr/X11R6/bin/XdecNetBSD
-./usr/X11R6/bin/Xnest
 ./usr/X11R6/bin/Xvfb
-./usr/X11R6/man/cat1/Xnest.0			-unknown-		.cat
 ./usr/X11R6/man/cat1/Xvfb.0			-unknown-		.cat
-./usr/X11R6/man/man1/Xnest.1			-unknown-		.man
 ./usr/X11R6/man/man1/Xvfb.1			-unknown-		.man
