@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.236.2.20 2001/06/18 16:48:57 jhawk Exp $
+$NetBSD: pcidevs,v 1.236.2.21 2001/10/25 17:57:28 he Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -597,7 +597,8 @@ product 3DLABS 500MX	0x0006	GLINT 500MX
 product 3DLABS PERMEDI2	0x0007	GLINT Permedia 2
 
 /* 3ware products */
-product	3WARE ESCALADE	0x1000	Escalade IDE RAID
+product	3WARE ESCALADE		0x1000	Escalade IDE RAID
+product 3WARE ESCALADE_ASIC	0x1001	Escalade IDE RAID (ASIC)
 
 /* ACC Products */
 product ACC 2188	0x0000	ACCM 2188 VL-PCI Bridge
@@ -930,6 +931,7 @@ product DEC 21152	0x0024	DECchip 21152 PCI-PCI Bridge
 product DEC 21153	0x0025	DECchip 21153 PCI-PCI Bridge
 product DEC 21154	0x0026	DECchip 21154 PCI-PCI Bridge
 product DEC CPQ42XX	0x0046	Compaq SMART RAID 42xx
+product DEC SWXCR	0x1065	SWXCR RAID
 
 /* Delta products */
 product DELTA 8139	0x1360	8139 Ethernet
@@ -1193,7 +1195,10 @@ product MOT MPC105	0x0001	MPC105 \"Eagle\" Host Bridge
 product MOT MPC106	0x0002	MPC106 \"Grackle\" Host Bridge
 
 /* Mylex products */
-product MYLEX 960P	0x0001	DAC960P RAID controller
+product MYLEX RAID_V2	0x0001	DAC960 RAID (v2 interface)
+product MYLEX RAID_V3	0x0002	DAC960 RAID (v3 interface)
+product MYLEX RAID_V4	0x0010	DAC960 RAID (v4 interface)
+product MYLEX RAID_V5	0x0020	DAC960 RAID (v5 interface)
 
 /* Mutech products */
 product MUTECH MV1000	0x0001	MV1000
