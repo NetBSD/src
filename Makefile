@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.216 2003/07/20 13:08:43 lukem Exp $
+#	$NetBSD: Makefile,v 1.217 2003/07/21 02:01:42 lukem Exp $
 
 #
 # This is the top-level makefile for building NetBSD. For an outline of
@@ -224,7 +224,7 @@ distribution buildworld:
 	(cd ${.CURDIR} && ${MAKE} NOPOSTINSTALL=1 build)
 	(cd ${.CURDIR}/etc && ${MAKE} INSTALL_DONE=1 distribution)
 .if defined(DESTDIR) && ${DESTDIR} != "" && ${DESTDIR} != "/"
-	${MAKE} postinstall-fix-obsolete
+	(cd ${.CURDIR} && ${MAKE} postinstall-fix-obsolete)
 	(cd ${.CURDIR}/distrib/sets && ${MAKE} checkflist)
 .endif
 	@echo   "make ${.TARGET} started at:  ${START_TIME}"
