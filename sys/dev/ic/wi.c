@@ -1,4 +1,4 @@
-/*	$NetBSD: wi.c,v 1.74 2002/08/10 23:16:14 thorpej Exp $	*/
+/*	$NetBSD: wi.c,v 1.75 2002/08/11 00:00:41 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.74 2002/08/10 23:16:14 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.75 2002/08/11 00:00:41 thorpej Exp $");
 
 #define WI_HERMES_AUTOINC_WAR	/* Work around data write autoinc bug. */
 #define WI_HERMES_STATS_WAR	/* Work around stats counter bug. */
@@ -181,6 +181,7 @@ wi_attach(sc)
 	struct wi_softc *sc;
 {
 	struct ifnet *ifp = sc->sc_ifp;
+	const char *sep = "";
 	struct wi_ltv_macaddr   mac;
 	struct wi_ltv_gen       gen;
 	static const u_int8_t empty_macaddr[ETHER_ADDR_LEN] = {
@@ -282,25 +283,53 @@ wi_attach(sc)
 	wi_read_record(sc, &gen);
 	sc->wi_has_wep = le16toh(gen.wi_val);
 
+	/* Find supported rates. */
+	gen.wi_type = WI_RID_SUPPORT_RATE;
+	gen.wi_len = 2;
+	if (wi_read_record(sc, &gen))
+		sc->wi_supprates = WI_SUPPRATES_1M | WI_SUPPRATES_2M |
+		    WI_SUPPRATES_5M | WI_SUPPRATES_11M;
+	else
+		sc->wi_supprates = le16toh(gen.wi_val);
+
 	ifmedia_init(&sc->sc_media, 0, wi_media_change, wi_media_status);
+	if (sc->wi_supprates != 0)
+		printf("%s: supported rates: ", sc->sc_dev.dv_xname);
 #define	ADD(m, c)	ifmedia_add(&sc->sc_media, (m), (c), NULL)
+#define	PRINT(n)	printf("%s%s", sep, (n)); sep = ", "
 	ADD(IFM_MAKEWORD(IFM_IEEE80211, IFM_AUTO, 0, 0), 0);
 	ADD(IFM_MAKEWORD(IFM_IEEE80211, IFM_AUTO, IFM_IEEE80211_ADHOC, 0), 0);
-	ADD(IFM_MAKEWORD(IFM_IEEE80211, IFM_IEEE80211_DS1, 0, 0), 0);
-	ADD(IFM_MAKEWORD(IFM_IEEE80211, IFM_IEEE80211_DS1,
-	    IFM_IEEE80211_ADHOC, 0), 0);
-	ADD(IFM_MAKEWORD(IFM_IEEE80211, IFM_IEEE80211_DS2, 0, 0), 0);
-	ADD(IFM_MAKEWORD(IFM_IEEE80211, IFM_IEEE80211_DS2,
-	    IFM_IEEE80211_ADHOC, 0), 0);
-	ADD(IFM_MAKEWORD(IFM_IEEE80211, IFM_IEEE80211_DS5, 0, 0), 0);
-	ADD(IFM_MAKEWORD(IFM_IEEE80211, IFM_IEEE80211_DS5,
-	    IFM_IEEE80211_ADHOC, 0), 0);
-	ADD(IFM_MAKEWORD(IFM_IEEE80211, IFM_IEEE80211_DS11, 0, 0), 0);
-	ADD(IFM_MAKEWORD(IFM_IEEE80211, IFM_IEEE80211_DS11,
-	    IFM_IEEE80211_ADHOC, 0), 0);
-	ADD(IFM_MAKEWORD(IFM_IEEE80211, IFM_MANUAL, 0, 0), 0);
+	if (sc->wi_supprates & WI_SUPPRATES_1M) {
+		PRINT("1Mbps");
+		ADD(IFM_MAKEWORD(IFM_IEEE80211, IFM_IEEE80211_DS1, 0, 0), 0);
+		ADD(IFM_MAKEWORD(IFM_IEEE80211, IFM_IEEE80211_DS1,
+		    IFM_IEEE80211_ADHOC, 0), 0);
+	}
+	if (sc->wi_supprates & WI_SUPPRATES_2M) {
+		PRINT("2Mbps");
+		ADD(IFM_MAKEWORD(IFM_IEEE80211, IFM_IEEE80211_DS2, 0, 0), 0);
+		ADD(IFM_MAKEWORD(IFM_IEEE80211, IFM_IEEE80211_DS2,
+		    IFM_IEEE80211_ADHOC, 0), 0);
+	}
+	if (sc->wi_supprates & WI_SUPPRATES_5M) {
+		PRINT("5.5Mbps");
+		ADD(IFM_MAKEWORD(IFM_IEEE80211, IFM_IEEE80211_DS5, 0, 0), 0);
+		ADD(IFM_MAKEWORD(IFM_IEEE80211, IFM_IEEE80211_DS5,
+		    IFM_IEEE80211_ADHOC, 0), 0);
+	}
+	if (sc->wi_supprates & WI_SUPPRATES_11M) {
+		PRINT("11Mbps");
+		ADD(IFM_MAKEWORD(IFM_IEEE80211, IFM_IEEE80211_DS11, 0, 0), 0);
+		ADD(IFM_MAKEWORD(IFM_IEEE80211, IFM_IEEE80211_DS11,
+		    IFM_IEEE80211_ADHOC, 0), 0);
+		ADD(IFM_MAKEWORD(IFM_IEEE80211, IFM_MANUAL, 0, 0), 0);
+	}
+	if (sc->wi_supprates != 0)
+		printf("\n");
+	ifmedia_set(&sc->sc_media,
+	    IFM_MAKEWORD(IFM_IEEE80211, IFM_AUTO, 0, 0));
 #undef ADD
-	ifmedia_set(&sc->sc_media, IFM_MAKEWORD(IFM_IEEE80211, IFM_AUTO, 0, 0));
+#undef PRINT
 
 	/*
 	 * Call MI attach routines.

@@ -1,4 +1,4 @@
-/*	$NetBSD: wireg.h,v 1.35 2002/08/10 23:29:53 thorpej Exp $	*/
+/*	$NetBSD: wireg.h,v 1.36 2002/08/11 00:00:41 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -609,6 +609,14 @@ struct wi_ltv_mcast {
 };
 
 /*
+ * Supported rates.
+ */
+#define	WI_SUPPRATES_1M		0x0001
+#define	WI_SUPPRATES_2M		0x0002
+#define	WI_SUPPRATES_5M		0x0004
+#define	WI_SUPPRATES_11M	0x0008
+
+/*
  * Information frame types.
  */
 #define WI_INFO_NOTIFY		0xF000	/* Handover address */
@@ -688,8 +696,9 @@ struct wi_frame {
 	u_int16_t		wi_rsvd0;	/* 0x02 */ /* 0 */
 	u_int16_t		wi_rsvd1;	/* 0x04 */ /* 0 */
 	u_int16_t		wi_q_info;	/* 0x06 */
-	u_int16_t		wi_txrate;	/* 0x08 */ /* (Prism2 Only) */
-	u_int16_t		wi_retcount;	/* 0x0A */ /* (Prism2 Only) */
+	u_int16_t		wi_rsvd2;	/* 0x08 */
+	u_int8_t		wi_tx_rtry;	/* 0x0A */ /* (Prism2 Only) */
+	u_int8_t		wi_tx_rate;	/* 0x0B */ /* (Prism2 Only) */
 	u_int16_t		wi_tx_ctl;	/* 0x0C */
 	u_int16_t		wi_frame_ctl;	/* 0x0E */
 	u_int16_t		wi_id;		/* 0x10 */
