@@ -1,4 +1,4 @@
-/*	$NetBSD: hpux_compat.c,v 1.20 1995/11/28 08:39:48 thorpej Exp $	*/
+/*	$NetBSD: hpux_compat.c,v 1.21 1995/12/08 07:54:46 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -120,15 +120,6 @@ int bsdtohpuxerrnomap[NERR] = {
 extern char sigcode[], esigcode[];
 extern struct sysent hpux_sysent[];
 extern char *hpux_syscallnames[];
-
-/* XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX */
-/*
- * XXX extensions to the fd_ofileflags flags.
- * Hate to put this there, but they do need to be per-file.
- */
-#define UF_NONBLOCK_ON          0x10
-#define UF_FNDELAY_ON           0x20 
-#define UF_FIONBIO_ON           0x40
 
 static	int hpux_scale __P((struct timeval *));
 
@@ -307,10 +298,10 @@ hpux_sys_read(p, v, retval)
 	if (error == EWOULDBLOCK) {
 		char *fp = &p->p_fd->fd_ofileflags[SCARG(uap, fd)];
 
-		if (*fp & UF_NONBLOCK_ON) {
+		if (*fp & HPUX_UF_NONBLOCK_ON) {
 			*retval = -1;
 			error = OEAGAIN;
-		} else if (*fp & UF_FNDELAY_ON) {
+		} else if (*fp & HPUX_UF_FNDELAY_ON) {
 			*retval = 0;
 			error = 0;
 		}
@@ -331,10 +322,10 @@ hpux_sys_write(p, v, retval)
 	if (error == EWOULDBLOCK) {
 		char *fp = &p->p_fd->fd_ofileflags[SCARG(uap, fd)];
 
-		if (*fp & UF_NONBLOCK_ON) {
+		if (*fp & HPUX_UF_NONBLOCK_ON) {
 			*retval = -1;
 			error = OEAGAIN;
-		} else if (*fp & UF_FNDELAY_ON) {
+		} else if (*fp & HPUX_UF_FNDELAY_ON) {
 			*retval = 0;
 			error = 0;
 		}
@@ -355,10 +346,10 @@ hpux_sys_readv(p, v, retval)
 	if (error == EWOULDBLOCK) {
 		char *fp = &p->p_fd->fd_ofileflags[SCARG(uap, fd)];
 
-		if (*fp & UF_NONBLOCK_ON) {
+		if (*fp & HPUX_UF_NONBLOCK_ON) {
 			*retval = -1;
 			error = OEAGAIN;
-		} else if (*fp & UF_FNDELAY_ON) {
+		} else if (*fp & HPUX_UF_FNDELAY_ON) {
 			*retval = 0;
 			error = 0;
 		}
@@ -379,10 +370,10 @@ hpux_sys_writev(p, v, retval)
 	if (error == EWOULDBLOCK) {
 		char *fp = &p->p_fd->fd_ofileflags[SCARG(uap, fd)];
 
-		if (*fp & UF_NONBLOCK_ON) {
+		if (*fp & HPUX_UF_NONBLOCK_ON) {
 			*retval = -1;
 			error = OEAGAIN;
-		} else if (*fp & UF_FNDELAY_ON) {
+		} else if (*fp & HPUX_UF_FNDELAY_ON) {
 			*retval = 0;
 			error = 0;
 		}
@@ -1002,14 +993,14 @@ hpux_sys_ioctl(p, v, retval)
 		int tmp;
 
 		if (*(int *)dt)
-			*ofp |= UF_FIONBIO_ON;
+			*ofp |= HPUX_UF_FIONBIO_ON;
 		else
-			*ofp &= ~UF_FIONBIO_ON;
+			*ofp &= ~HPUX_UF_FIONBIO_ON;
 		/*
 		 * Only set/clear if O_NONBLOCK/FNDELAY not in effect
 		 */
-		if ((*ofp & (UF_NONBLOCK_ON|UF_FNDELAY_ON)) == 0) {
-			tmp = *ofp & UF_FIONBIO_ON;
+		if ((*ofp & (HPUX_UF_NONBLOCK_ON|HPUX_UF_FNDELAY_ON)) == 0) {
+			tmp = *ofp & HPUX_UF_FIONBIO_ON;
 			error = (*fp->f_ops->fo_ioctl)(fp, FIONBIO,
 						       (caddr_t)&tmp, p);
 		}

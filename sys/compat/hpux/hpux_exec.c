@@ -1,4 +1,4 @@
-/*	$NetBSD: hpux_exec.c,v 1.1 1995/11/28 08:39:57 thorpej Exp $	*/
+/*	$NetBSD: hpux_exec.c,v 1.2 1995/12/08 07:54:50 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Jason R. Thorpe.  All rights reserved.
@@ -171,7 +171,8 @@ exec_hpux_prep_zmagic(p, epp)
 	struct exec_package *epp;
 {
 	struct hpux_exec *execp = epp->ep_hdr;
-	long bsize, baddr, nontext;
+	long bsize, baddr;
+	long nontext;
 	int (*vm_func) __P((struct proc *, struct exec_vmcmd *));
 
 	/*
