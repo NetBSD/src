@@ -524,26 +524,45 @@ i386_align_code (fragP, count)
     f32_15, f32_15, f32_15, f32_15, f32_15, f32_15, f32_15
   };
 
-  /* ??? We can't use these fillers for x86_64, since they often kills the
-     upper halves.  Solve later.  */
-  if (flag_code == CODE_64BIT)
-    count = 1;
+  if (count <= 0 || count > 15)
+    return;
 
-  if (count > 0 && count <= 15)
+  /* The recommended way to pad 64bit code is to use NOPs preceded by
+     maximally four 0x66 prefixes.  Balance the size of nops.  */
+  if (flag_code == CODE_64BIT)
     {
-      if (flag_code == CODE_16BIT)
+      int i;
+      int nnops = (count + 3) / 4;
+      int len = count / nnops;
+      int remains = count - nnops * len;
+      int pos = 0;
+
+      for (i = 0; i < remains; i++)
 	{
-	  memcpy (fragP->fr_literal + fragP->fr_fix,
-		  f16_patt[count - 1], count);
-	  if (count > 8)
-	    /* Adjust jump offset.  */
-	    fragP->fr_literal[fragP->fr_fix + 1] = count - 2;
+	  memset (fragP->fr_literal + fragP->fr_fix + pos, 0x66, len);
+	  fragP->fr_literal[fragP->fr_fix + pos + len] = 0x90;
+	  pos += len + 1;
 	}
-      else
-	memcpy (fragP->fr_literal + fragP->fr_fix,
-		f32_patt[count - 1], count);
-      fragP->fr_var = count;
+      for (; i < nnops; i++)
+	{
+	  memset (fragP->fr_literal + fragP->fr_fix + pos, 0x66, len - 1);
+	  fragP->fr_literal[fragP->fr_fix + pos + len - 1] = 0x90;
+	  pos += len;
+	}
     }
+  else
+    if (flag_code == CODE_16BIT)
+      {
+	memcpy (fragP->fr_literal + fragP->fr_fix,
+		f16_patt[count - 1], count);
+	if (count > 8)
+	  /* Adjust jump offset.  */
+	  fragP->fr_literal[fragP->fr_fix + 1] = count - 2;
+      }
+    else
+      memcpy (fragP->fr_literal + fragP->fr_fix,
+	      f32_patt[count - 1], count);
+  fragP->fr_var = count;
 }
 
 static INLINE unsigned int
