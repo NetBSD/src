@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_port.c,v 1.37 2003/04/05 19:27:52 manu Exp $ */
+/*	$NetBSD: mach_port.c,v 1.38 2003/08/05 21:12:53 christos Exp $ */
 
 /*-
  * Copyright (c) 2002-2003 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 #include "opt_compat_darwin.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_port.c,v 1.37 2003/04/05 19:27:52 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_port.c,v 1.38 2003/08/05 21:12:53 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -451,7 +451,7 @@ mach_port_request_notification(args)
 #ifdef DEBUG_MACH
 	if (nmr->mr_port == NULL) {
 		printf("Notification right without a port\n");
-		printf("### mr->mr_port = %p, mr = %08x\n", nmr->mr_port, nmr->mr_name);
+		printf("mr->mr_port = %p, mr = %08x\n", nmr->mr_port, nmr->mr_name);
 		return mach_msg_error(args, EINVAL);
 	}
 #endif
@@ -487,8 +487,8 @@ mach_port_request_notification(args)
 #ifdef DEBUG_MACH
 		printf("unsupported notify request %d\n", req->req_msgid);
 		return mach_msg_error(args, EINVAL);
-		break;
 #endif
+		break;
 	}
 
 	if (oldnmr != NULL) {
