@@ -1,4 +1,4 @@
-/* $Id: param.h,v 1.1 2000/01/05 08:49:01 nisimura Exp $ */
+/* $Id: param.h,v 1.2 2000/02/11 19:25:15 thorpej Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -65,9 +65,12 @@
 #define MSGBUFSIZE	NBPG		/* default message buffer size */
 #endif
 
-#ifndef NKMEMCLUSTERS
-# define NKMEMCLUSTERS	(2048 * 1024 / NBPG)
-#endif
+/*
+ * Minimum and maximum sizes of the kernel malloc arena in PAGE_SIZE-sized
+ * logical pages.
+ */
+#define	NKMEMPAGES_MIN_DEFAULT	((3 * 1024 * 1024) >> PAGE_SHIFT)
+#define	NKMEMPAGES_MAX_DEFAULT	((3 * 1024 * 1024) >> PAGE_SHIFT)
 
 #include <machine/intr.h>
 
