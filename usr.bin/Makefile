@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.65 1996/12/16 20:00:26 cgd Exp $
+#	$NetBSD: Makefile,v 1.66 1996/12/17 05:39:35 jonathan Exp $
 #	from: @(#)Makefile	5.8.1.1 (Berkeley) 5/8/91
 
 .include <bsd.own.mk>			# for EXPORTABLE_SYSTEM definition
@@ -28,18 +28,21 @@ SUBDIR=	apply apropos asa at banner basename bdes biff cal calendar cap_mkdb \
 SUBDIR+=telnet
 .endif
 
-# Don't use the standard tool chain on the alpha.
+# Don't use the standard a.out tool chain on non-aout (ELF) platforms.
+# On ELF platforms, build the  ELF ldd.
 .if (${MACHINE_ARCH} != "alpha" && ${MACHINE_ARCH} != "mips")
 SUBDIR+= ar gprof nm ranlib size strip
+.else
+SUBDIR+= ldd
 .endif
 
 .if (${MACHINE_ARCH} == "i386")
 SUBDIR+= fdformat
 .endif
 
-# Always build (ELF) ldd on the alpha, to be ready for ELF
-.if (${MACHINE_ARCH} == "alpha")
-SUBDIR+= ldd
+# Build ELF to {ecoff, aout} tools on mips, for old bootblocks/PROMs.
+.if (${MACHINE_ARCH} == "mips")
+SUBDIR+= elf2aout elf2ecoff elfstrip
 .endif
 
 .include <bsd.subdir.mk>
