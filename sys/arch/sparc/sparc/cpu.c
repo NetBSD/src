@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.114 2001/03/05 16:45:22 pk Exp $ */
+/*	$NetBSD: cpu.c,v 1.115 2001/03/06 13:39:22 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -86,9 +86,10 @@ char	machine[] = MACHINE;		/* from <machine/param.h> */
 char	machine_arch[] = MACHINE_ARCH;	/* from <machine/param.h> */
 char	cpu_model[100];
 
-int	ncpu;
+int	ncpu;				/* # of CPUs detected by PROM */
 struct	cpu_info **cpus;
 #define CPU_MID2CPUNO(mid) ((mid) - 8)
+static	int cpu_instance;		/* current # of CPUs wired by us */
 
 
 /* The CPU configuration driver. */
@@ -269,7 +270,6 @@ cpu_attach(parent, self, aux)
 	void *aux;
 {
 static	struct cpu_softc *bootcpu;
-static	int cpu_instance;
 	struct mainbus_attach_args *ma = aux;
 	struct cpu_softc *sc = (struct cpu_softc *)self;
 	struct cpu_info *cpi;
@@ -367,21 +367,24 @@ static	int cpu_instance;
 
 	cache_print(sc);
 
-	if (cpu_instance == ncpu) {
+	if (ncpu > 1 && cpu_instance == ncpu) {
+		int n;
 		/*
-		 * Install MP cache flush functions on boot cpu, unless
-		 * the single-processor versions are no-ops.
+		 * Install MP cache flush functions, unless the
+		 * single-processor versions are no-ops.
 		 */
-		if (cpuinfo.cache_flush != noop_cache_flush)
-			cpuinfo.cache_flush = smp_cache_flush;
-		if (cpuinfo.vcache_flush_page != noop_vcache_flush_page)
-			cpuinfo.vcache_flush_page = smp_vcache_flush_page;
-		if (cpuinfo.vcache_flush_segment != noop_vcache_flush_segment)
-			cpuinfo.vcache_flush_segment = smp_vcache_flush_segment;
-		if (cpuinfo.vcache_flush_region != noop_vcache_flush_region)
-			cpuinfo.vcache_flush_region = smp_vcache_flush_region;
-		if (cpuinfo.vcache_flush_context != noop_vcache_flush_context)
-			cpuinfo.vcache_flush_context = smp_vcache_flush_context;
+		for (n = 0; n < ncpu; n++) {
+			struct cpu_info *cpi = cpus[n];
+			if (cpi == NULL)
+				continue;
+#define SET_CACHE_FUNC(x) \
+	if (cpi->x != __CONCAT(noop_,x)) cpi->x = __CONCAT(smp_,x)
+			SET_CACHE_FUNC(cache_flush);
+			SET_CACHE_FUNC(vcache_flush_page);
+			SET_CACHE_FUNC(vcache_flush_segment);
+			SET_CACHE_FUNC(vcache_flush_region);
+			SET_CACHE_FUNC(vcache_flush_context);
+		}
 	}
 #endif /* MULTIPROCESSOR */
 }
@@ -400,6 +403,12 @@ cpu_boot_secondary_processors()
 	 * XXX semaphore that all those secondary processors are anxiously
 	 * XXX waiting on.
 	 */
+
+	if (cpu_instance != ncpu) {
+		printf("NOTICE: only %d out of %d CPUs were configured\n",
+			cpu_instance, ncpu);
+		return;
+	}
 }
 #endif /* MULTIPROCESSOR */
 
@@ -440,10 +449,10 @@ void
 cpu_spinup(sc)
 	struct cpu_softc *sc;
 {
-#if defined(SUN4M)
+#if defined(MULTIPROCESSOR)
 	struct cpu_info *cpi = sc->sc_cpuinfo;
 	int n;
-extern void cpu_hatch __P((void));
+extern void cpu_hatch __P((void));	/* in locore.s */
 	caddr_t pc = (caddr_t)cpu_hatch;
 	struct openprom_addr oa;
 
@@ -486,7 +495,7 @@ extern void cpu_hatch __P((void));
 void
 mp_pause_cpus()
 {
-#ifdef SUN4M
+#if defined(MULTIPROCESSOR)
 	int n;
 
 	if (cpus == NULL)
@@ -506,7 +515,7 @@ mp_pause_cpus()
 void
 mp_resume_cpus()
 {
-#ifdef SUN4M
+#if defined(MULTIPROCESSOR)
 	int n;
 
 	if (cpus == NULL)
@@ -1523,24 +1532,14 @@ getcpuinfo(sc, node)
 		MPCOPY(copy_page);
 #undef MPCOPY
 		/*
-		 * On the boot cpu we use the single-processor cache flush
-		 * functions until all CPUs are initialized.
+		 * Use the single-processor cache flush functions until
+		 * all CPUs are initialized.
 		 */
-		if (sc->master) {
-			sc->cache_flush = sc->sp_cache_flush;
-			sc->vcache_flush_page = sc->sp_vcache_flush_page;
-			sc->vcache_flush_segment = sc->sp_vcache_flush_segment;
-			sc->vcache_flush_region = sc->sp_vcache_flush_region;
-			sc->vcache_flush_context = sc->sp_vcache_flush_context;
-		} else {
-#if defined(MULTIPROCESSOR)
-			sc->cache_flush = smp_cache_flush;
-			sc->vcache_flush_page = smp_vcache_flush_page;
-			sc->vcache_flush_segment = smp_vcache_flush_segment;
-			sc->vcache_flush_region = smp_vcache_flush_region;
-			sc->vcache_flush_context = smp_vcache_flush_context;
-#endif
-		}
+		sc->cache_flush = sc->sp_cache_flush;
+		sc->vcache_flush_page = sc->sp_vcache_flush_page;
+		sc->vcache_flush_segment = sc->sp_vcache_flush_segment;
+		sc->vcache_flush_region = sc->sp_vcache_flush_region;
+		sc->vcache_flush_context = sc->sp_vcache_flush_context;
 		return;
 	}
 	panic("Out of CPUs");
