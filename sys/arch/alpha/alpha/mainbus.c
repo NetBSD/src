@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.12 1996/10/13 02:59:40 christos Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.13 1996/11/12 05:14:38 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -34,6 +34,7 @@
 
 #include <machine/autoconf.h>
 #include <machine/rpb.h>
+#include <machine/cpuconf.h>
 
 struct mainbus_softc {
 	struct	device sc_dv;
@@ -89,7 +90,7 @@ mbattach(parent, self, aux)
 	struct pcs *pcsp;
 	int i, cpuattachcnt;
 	extern int cputype, ncpus;
-	extern char *cpu_iobus;
+	extern const struct cpusw *cpu_fn_switch;
 
 	printf("\n");
 
@@ -123,8 +124,11 @@ mbattach(parent, self, aux)
 		printf("WARNING: %d cpus in machine, %d attached\n",
 			ncpus, cpuattachcnt);
 
-	if (cpu_iobus != NULL) {
-		nca.ca_name = cpu_iobus;
+	if ((*cpu_fn_switch->iobus_name)() != NULL) {
+		char iobus_name[16];
+
+		strncpy(iobus_name, (*cpu_fn_switch->iobus_name)(), 16);
+		nca.ca_name = iobus_name;
 		nca.ca_slot = 0;
 		nca.ca_offset = 0;
 		nca.ca_bus = &sc->sc_bus;

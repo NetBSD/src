@@ -1,4 +1,4 @@
-/*	$NetBSD: dec_3000_500.c,v 1.8 1996/10/13 02:59:31 christos Exp $	*/
+/*	$NetBSD: dec_3000_500.c,v 1.9 1996/11/12 05:14:31 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -33,6 +33,7 @@
 #include <machine/rpb.h>
 
 #include <machine/autoconf.h>
+#include <machine/cpuconf.h>
 
 #include <dev/tc/tcvar.h>
 
@@ -41,8 +42,10 @@
 #include <scsi/scsi_all.h>
 #include <scsi/scsiconf.h>
 
-char *
-dec_3000_500_modelname()
+cpu_decl(dec_3000_500);
+
+const char *
+dec_3000_500_model_name()
 {
 
 	switch (hwrpb->rpb_variation & SV_ST_MASK) {
@@ -84,9 +87,16 @@ systype_flamingo:
 }
 
 void
-dec_3000_500_consinit()
+dec_3000_500_cons_init()
 {
 
+}
+
+const char *
+dec_3000_500_iobus_name()
+{
+
+	return ("tcasic");
 }
 
 void
