@@ -1,6 +1,8 @@
+/*	$NetBSD: isatty.c,v 1.4 1995/02/27 04:34:33 cgd Exp $	*/
+
 /*
- * Copyright (c) 1988 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1988, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,8 +34,11 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-/*static char *sccsid = "from: @(#)isatty.c	5.6 (Berkeley) 2/23/91";*/
-static char *rcsid = "$Id: isatty.c,v 1.3 1993/08/26 00:44:49 jtc Exp $";
+#if 0
+static char sccsid[] = "@(#)isatty.c	8.1 (Berkeley) 6/4/93";
+#else
+static char rcsid[] = "$NetBSD: isatty.c,v 1.4 1995/02/27 04:34:33 cgd Exp $";
+#endif
 #endif /* LIBC_SCCS and not lint */
 
 #include <termios.h>
