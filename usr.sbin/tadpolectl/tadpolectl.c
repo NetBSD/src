@@ -1,4 +1,4 @@
-/* $NetBSD: tadpolectl.c,v 1.3 2000/02/23 11:33:58 jdc Exp $ */
+/* $NetBSD: tadpolectl.c,v 1.4 2000/03/14 21:27:41 jdc Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -86,8 +86,9 @@ PROTO(hw_kbd_click)
 PROTO(hw_mouse_intclick)
 PROTO(hw_mouse_extclick)
 PROTO(hw_mouse_sensitivity)
+PROTO(hw_serial_power)
 
-#define NUM_MIBS 28
+#define NUM_MIBS 29
 #define TABLE(n) { __STRING(n), 0, n }
 
 struct {
@@ -123,6 +124,7 @@ struct {
 	TABLE(hw_mouse_intclick),
 	TABLE(hw_mouse_extclick),
 	TABLE(hw_mouse_sensitivity),
+	TABLE(hw_serial_power),
 };
 
 #define FUNC(x) \
@@ -650,6 +652,21 @@ FUNC(hw_version)
 	bufp = buf;
 	sprintf(bufp, "%d%d", req.rspbuf[0]*1000, req.rspbuf[1]*10);
 	table[num].value = atoi(strdup(bufp));
+	return(1);
+}
+
+FUNC(hw_serial_power)
+{
+	struct tctrl_pwr pwrreq;
+
+	if (!read) {
+		pwrreq.rw = 0x00;
+		pwrreq.state = new;
+		ioctl(dev, TCTRL_SERIAL_PWR, &pwrreq);
+	}
+	pwrreq.rw = 0x01;
+	ioctl(dev, TCTRL_SERIAL_PWR, &pwrreq);
+	table[num].value = pwrreq.state;
 	return(1);
 }
 
