@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *      @(#)conf.c	7.9 (Berkeley) 5/28/91
- *	$Id: conf.c,v 1.14 1994/05/28 07:52:19 cgd Exp $
+ *	$Id: conf.c,v 1.15 1994/05/28 07:53:03 cgd Exp $
  */
 
 #include <sys/param.h>
@@ -40,6 +40,7 @@
 #include <sys/ioctl.h>
 #include <sys/tty.h>
 #include <sys/conf.h>
+#include <sys/vnode.h>
 #include <dev/cons.h>
 
 #ifdef BANKEDDEVPAGER
@@ -74,38 +75,31 @@ int	ttselect	__P((dev_t, int, struct proc *));
 
 
 #include "vn.h"
-bdev_decl(vn);
-#define bdev_vn_init(c) { \
-	dev_init(c,vn,open), \
-	(dev_type_close((*))) nullop, \
-	dev_init(c,vn,strategy), \
-	dev_init(c,vn,ioctl), \
-	dev_init(c,vn,dump), \
-	dev_size_init(c,vn), \
-	0 \
-}
-
 #include "sd.h"
+#include "cd.h"
+bdev_decl(vn);
 bdev_decl(sd);
-#define	bdev_sd_init(c) { \
-	dev_init(c,sd,open), \
-	dev_init(c,sd,close), \
-	dev_init(c,sd,strategy), \
-	dev_init(c,sd,ioctl), \
-	(dev_type_dump((*))) enxio, \
-	dev_size_init(c,sd), \
+bdev_decl(cd);
+#define	bdev_disk_init(c,n) { \
+	dev_init(c,n,open), \
+	dev_init(c,n,close), \
+	dev_init(c,n,strategy), \
+	dev_init(c,n,ioctl), \
+	dev_init(c,n,dump), \
+	dev_size_init(c,n), \
 	0 \
 }
 
-#include "cd.h"
-bdev_decl(cd);
-#define	bdev_cd_init(c) { \
-	dev_init(c,cd,open), dev_init(c,cd,close), \
-	dev_init(c,cd,strategy), \
-	dev_init(c,cd,ioctl), \
-	(dev_type_dump((*))) enxio, \
-	dev_size_init(c,cd), \
-	0 \
+#include "st.h"
+bdev_decl(st);
+#define bdev_tape_init(c,n) { \
+	dev_init(c,n,open), \
+	dev_init(c,n,close), \
+	dev_init(c,n,strategy), \
+	dev_init(c,n,ioctl), \
+	dev_init(c,n,dump), \
+	0, \
+	B_TAPE \
 }
 
 #include "ch.h"
@@ -133,18 +127,6 @@ dev_decl(Fd,open);
 	0 \
 }
 
-#include "st.h"
-bdev_decl(st);
-#define	bdev_st_init(c) { \
-	dev_init(c,st,open), \
-	dev_init(c,st,close), \
-	dev_init(c,st,strategy), \
-	dev_init(c,st,ioctl), \
-	(dev_type_dump((*))) enxio, \
-	(dev_type_size((*))) NULL, \
-	0 \
-}
-
 #define	bdev_swap_init() { \
 	(dev_type_open((*))) enodev, \
 	(dev_type_close((*))) enodev, \
@@ -153,15 +135,6 @@ bdev_decl(st);
 	(dev_type_dump((*))) enodev, \
 	0, \
 	0 \
-}
-#define bdev_tape_init(c,n) { \
-	dev_init(c,n,open), \
-	dev_init(c,n,close), \
-	dev_init(c,n,strategy), \
-	dev_init(c,n,ioctl), \
-	dev_init(c,n,dump), \
-	0, \
-	B_TAPE \
 }
 
 #define	bdev_notdef()	bdev_tape_init(0,no)
@@ -184,10 +157,10 @@ struct bdevsw	bdevsw[] =
 	bdev_notdef(),		/* 1: */
 	bdev_floppy_init(NFD),	/* 2: floppy */
 	bdev_swap_init(),	/* 3: swap pseudo-device */
-	bdev_sd_init(NSD),	/* 4: scsi disk */
-	bdev_st_init(NST),	/* 5: exabyte tape */
-	bdev_vn_init(NVN),	/* 6: vnode disk driver (swap to files) */
-	bdev_cd_init(NCD),	/* 7: scsi cd.*/
+	bdev_disk_init(NSD,sd),	/* 4: scsi disk */
+	bdev_tape_init(NST,st),	/* 5: exabyte tape */
+	bdev_disk_init(NVN,vn),	/* 6: vnode disk driver (swap to files) */
+	bdev_disk_init(NCD,cd),	/* 7: scsi cd.*/
 	bdev_notdef(),		/* 8: */
 	LKM_BDEV(),		/* 9: Empty slot for LKM */
 	LKM_BDEV(),		/* 10: Empty slot for LKM */
@@ -246,20 +219,21 @@ cdev_decl(no);			/* dummy declarations */
 	0 \
 }
 
-/* scsi disk */
+/* disks */
+cdev_decl(vn);
 cdev_decl(sd);
-#define	cdev_sd_init(c) { \
-	dev_init(c,sd,open), \
-	dev_init(c,sd,close), \
-	(dev_type_read((*))) rawread, \
-	(dev_type_write((*))) rawwrite, \
-	dev_init(c,sd,ioctl), \
+#define	cdev_disk_init(c,n) { \
+	dev_init(c,n,open), \
+	dev_init(c,n,close), \
+	rawread, \
+	rawwrite, \
+	dev_init(c,n,ioctl), \
 	(dev_type_stop((*))) enodev, \
 	(dev_type_reset((*))) nullop, \
 	0, \
 	(dev_type_select((*))) seltrue, \
 	(dev_type_map((*))) enodev, \
-	dev_init(c,sd,strategy) \
+	dev_init(c,n,strategy) \
 }
 
 /* scsi tape */
@@ -501,21 +475,6 @@ cdev_decl(ms);
 	(dev_type_strategy((*))) NULL \
 }
 
-cdev_decl(vn);
-/* open, read, write, ioctl -- XXX should be a disk */
-#define	cdev_vn_init(c) { \
-	dev_init(c,vn,open), \
-	(dev_type_close((*))) nullop, \
-	dev_init(c,vn,read), \
-	dev_init(c,vn,write), \
-	dev_init(c,vn,ioctl), \
-	(dev_type_stop((*))) enodev, \
-	(dev_type_reset((*))) nullop, \
-	(struct tty **) NULL, \
-	(dev_type_select((*))) seltrue, \
-	(dev_type_map((*))) enodev, \
-	(dev_type_strategy((*))) NULL \
-}
 
 dev_type_open(fdopen);
 /* open */
@@ -602,8 +561,8 @@ struct cdevsw	cdevsw[] =
 	cdev_ptc_init(NPTY),		/* 5: pseudo-tty master */
 	cdev_log_init(1),		/* 6: /dev/klog */
 	cdev_notdef(),			/* 7: */
-	cdev_sd_init(NSD),		/* 8: scsi disk */
-	cdev_notdef(),			/* 9: */
+	cdev_disk_init(NSD,sd),		/* 8: scsi disk */
+	cdev_disk_init(NCD,cd),		/* 9: scsi cdrom */
 	cdev_grf_init(NGRF),		/* 10: frame buffer */
 	cdev_par_init(NPAR),		/* 11: parallel interface */
 	cdev_tty_init(NSER,ser),	/* 12: built-in single-port serial */
@@ -613,7 +572,7 @@ struct cdevsw	cdevsw[] =
 	cdev_view_init(NVIEW),		/* 16: /dev/view00 /dev/view01 ... */
 	cdev_notdef(),			/* 17: */
 	cdev_floppy_init(NFD),		/* 18: floppy */
-	cdev_vn_init(NVN),		/* 19: vnode disk */
+	cdev_disk_init(NVN,vn),		/* 19: vnode disk */
 	cdev_st_init(NST),		/* 20: scsi tape */
 	cdev_fd_init(1),		/* 21: file descriptor pseudo-dev */
 	cdev_bpf_init(NBPFILTER),	/* 22: berkeley packet filter */
@@ -663,6 +622,96 @@ int	mem_no = 2; 	/* major device number of memory special file */
  */
 dev_t	swapdev = makedev(3, 0);
 
+/*
+ * return true if memory device (kmem or mem)
+ */
+int
+iskmemdev(dev)
+	dev_t dev;
+{
+	if (major(dev) == mem_no && minor(dev) < 2)
+		return(1);
+	return(0);
+}
+
+/*
+ * return true if /dev/zero
+ */
+int
+iszerodev(dev)
+	dev_t dev;
+{
+	if (major(dev) == mem_no && minor(dev) == 12)
+		return(1);
+	return(0);
+}
+
+/*
+ * return true if a disk
+ */
+int
+isdisk(dev, type)
+	dev_t dev;
+	int type;
+{
+	switch (major(dev)) {
+	case 2:	/* fd: floppy */
+	case 4:	/* sd: scsi disk */
+	case 7:	/* cd: scsi cd-rom */
+		if (type == VBLK)
+			return(1);
+		break;
+	case 8:	 /* sd: scsi disk */
+	case 9:  /* cd: scsi cdrom */
+	case 18: /* fd: floppy */
+		if (type == VCHR)
+			return(1);
+		break;
+	}
+	return(0);
+}
+
+static int chrtoblktab[] = {
+	/* CHR*/	/* BLK*/	/* CHR*/	/* BLK*/
+	/*  0 */	NODEV,		/*  1 */	NODEV,
+	/*  2 */	NODEV,		/*  3 */	3,
+	/*  4 */	NODEV,		/*  5 */	NODEV,
+	/*  6 */	NODEV,		/*  7 */	NODEV,
+	/*  8 */	4,		/*  9 */	7,
+	/* 10 */	NODEV,		/* 11 */	NODEV,
+	/* 12 */	NODEV,		/* 13 */	NODEV,
+	/* 14 */	NODEV,		/* 15 */	NODEV,
+	/* 16 */	NODEV,		/* 17 */	NODEV,
+	/* 18 */	2,		/* 19 */	6,
+	/* 20 */	5,		/* 21 */	NODEV,
+	/* 22 */	NODEV,		/* 23 */	NODEV,
+	/* 24 */	NODEV,		/* 25 */	NODEV,
+	/* 26 */	NODEV,		/* 27 */	NODEV,
+	/* 28 */	NODEV,		/* 29 */	NODEV,
+	/* 30 */	NODEV,
+};
+
+/*
+ * convert chr dev to blk dev
+ */
+dev_t
+chrtoblk(dev)
+	dev_t dev;
+{
+	int blkmaj;
+
+	if (major(dev) >= nchrdev)
+		return(NODEV);
+	blkmaj = chrtoblktab[major(dev)];
+	if (blkmaj == NODEV)
+		return(NODEV);
+	return(makedev(blkmaj, minor(dev)));
+}
+
+
+/*
+ * console capable devices entry points.
+ */
 int sercnprobe(), sercninit(), sercngetc(), sercnputc();
 int ite_cnprobe(), ite_cninit(), ite_cngetc(), ite_cnputc();
 
