@@ -1,4 +1,4 @@
-/*	$NetBSD: vmstat.c,v 1.26 2000/06/04 01:53:51 perry Exp $	*/
+/*	$NetBSD: vmstat.c,v 1.27 2000/06/04 16:06:26 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1983, 1989, 1992, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)vmstat.c	8.2 (Berkeley) 1/12/94";
 #endif
-__RCSID("$NetBSD: vmstat.c,v 1.26 2000/06/04 01:53:51 perry Exp $");
+__RCSID("$NetBSD: vmstat.c,v 1.27 2000/06/04 16:06:26 thorpej Exp $");
 #endif /* not lint */
 
 /*
@@ -139,19 +139,17 @@ closekre(w)
 
 
 static struct nlist namelist[] = {
-#define X_CPTIME	0
-	{ "_cp_time" },
-#define X_TOTAL		1
+#define X_TOTAL		0
 	{ "_total" },
-#define	X_NCHSTATS	2
+#define	X_NCHSTATS	1
 	{ "_nchstats" },
-#define	X_INTRNAMES	3
+#define	X_INTRNAMES	2
 	{ "_intrnames" },
-#define	X_EINTRNAMES	4
+#define	X_EINTRNAMES	3
 	{ "_eintrnames" },
-#define	X_INTRCNT	5
+#define	X_INTRCNT	4
 	{ "_intrcnt" },
-#define	X_EINTRCNT	6
+#define	X_EINTRCNT	5
 	{ "_eintrcnt" },
 	{ "" },
 };
@@ -610,7 +608,7 @@ getinfo(s, st)
 	size_t size;
 
 	dkreadstats();
-	NREAD(X_CPTIME, s->time, sizeof s->time);
+	(void) fetch_cptime(s->time);
 	NREAD(X_NCHSTATS, &s->nchstats, sizeof s->nchstats);
 	NREAD(X_INTRCNT, s->intrcnt, nintr * LONG);
 	size = sizeof(s->uvmexp);
