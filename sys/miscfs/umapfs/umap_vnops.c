@@ -1,4 +1,4 @@
-/*	$NetBSD: umap_vnops.c,v 1.15 1999/07/08 01:19:07 wrstuden Exp $	*/
+/*	$NetBSD: umap_vnops.c,v 1.16 1999/08/16 21:24:53 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -363,6 +363,7 @@ umap_lookup(v)
 
 	ap->a_dvp = ldvp;
 	error = VCALL(ldvp, ap->a_desc->vdesc_offset, ap);
+	vp = *ap->a_vpp;
 
 	if (error == EJUSTRETURN && (cnf & ISLASTCN) &&
 	    (dvp->v_mount->mnt_flag & MNT_RDONLY) &&
