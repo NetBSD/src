@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld_start.S,v 1.5 2002/11/24 18:16:45 fvdl Exp $	*/
+/*	$NetBSD: rtld_start.S,v 1.6 2003/02/28 22:37:35 mycroft Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -46,18 +46,16 @@
 	movq	%rsp,%r12		# stack pointer arg to _rtld
 	pushq	%rbx			# save ps_strings
 
-	leaq	_GLOBAL_OFFSET_TABLE_(%rip),%rbx
-	movq	_GLOBAL_OFFSET_TABLE_@GOTPCREL(%rip),%rdx
-	subq	%rdx,%rbx		# %rbx = relocbase
+	leaq	_GLOBAL_OFFSET_TABLE_(%rip),%rax
+	leaq	_DYNAMIC(%rip),%rdi	# &_DYNAMIC
+	movq	%rdi,%rbx
+	subq	(%rax),%rbx		# relocbase
 
-	movq	_DYNAMIC@GOTPCREL(%rip),%rdi
-	addq	%rbx,%rdi
 	movq	%rbx,%rsi
 	call	_rtld_relocate_nonplt_self@PLT
 
 	movq	%r12,%rdi
 	movq	%rbx,%rsi
-
 	call	_rtld@PLT		# _rtld(sp, relocbase)
 
 	popq	%rbx			# %rbx = ps_strings
