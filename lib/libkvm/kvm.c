@@ -1,4 +1,4 @@
-/*	$NetBSD: kvm.c,v 1.55 1998/02/03 19:12:42 perry Exp $	*/
+/*	$NetBSD: kvm.c,v 1.56 1998/06/29 20:36:30 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1992, 1993
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)kvm.c	8.2 (Berkeley) 2/13/94";
 #else
-__RCSID("$NetBSD: kvm.c,v 1.55 1998/02/03 19:12:42 perry Exp $");
+__RCSID("$NetBSD: kvm.c,v 1.56 1998/06/29 20:36:30 msaitoh Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -878,19 +878,19 @@ kvm_read(kd, kva, buf, len)
 		if (lseek(kd->vmfd, (off_t)kva, SEEK_SET) == -1
 			&& errno != 0) {
 			_kvm_err(kd, 0, "invalid address (%x)", kva);
-			return (0);
+			return (-1);
 		}
 		cc = read(kd->vmfd, buf, len);
 		if (cc < 0) {
 			_kvm_syserr(kd, 0, "kvm_read");
-			return (0);
+			return (-1);
 		} else if (cc < len)
 			_kvm_err(kd, kd->program, "short read");
 		return (cc);
 	} else {
 		if ((kd->kcore_hdr == NULL) || (kd->cpu_data == NULL)) {
 			_kvm_err(kd, kd->program, "no valid dump header");
-			return (0);
+			return (-1);
 		}
 		cp = buf;
 		while (len > 0) {
@@ -899,7 +899,7 @@ kvm_read(kd, kva, buf, len)
 		
 			cc = _kvm_kvatop(kd, kva, &pa);
 			if (cc == 0)
-				return (0);
+				return (-1);
 			if (cc > len)
 				cc = len;
 			foff = _kvm_pa2off(kd, pa);
@@ -948,19 +948,19 @@ kvm_write(kd, kva, buf, len)
 		if (lseek(kd->vmfd, (off_t)kva, SEEK_SET) == -1
 			&& errno != 0) {
 			_kvm_err(kd, 0, "invalid address (%x)", kva);
-			return (0);
+			return (-1);
 		}
 		cc = write(kd->vmfd, buf, len);
 		if (cc < 0) {
 			_kvm_syserr(kd, 0, "kvm_write");
-			return (0);
+			return (-1);
 		} else if (cc < len)
 			_kvm_err(kd, kd->program, "short write");
 		return (cc);
 	} else {
 		_kvm_err(kd, kd->program,
 		    "kvm_write not implemented for dead kernels");
-		return (0);
+		return (-1);
 	}
 	/* NOTREACHED */
 }
