@@ -1,4 +1,4 @@
-/*	$NetBSD: wall.c,v 1.19 2002/08/02 01:52:13 christos Exp $	*/
+/*	$NetBSD: wall.c,v 1.20 2002/08/16 20:21:49 itojun Exp $	*/
 
 /*
  * Copyright (c) 1988, 1990, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1990, 1993\n\
 #if 0
 static char sccsid[] = "@(#)wall.c	8.2 (Berkeley) 11/16/93";
 #endif
-__RCSID("$NetBSD: wall.c,v 1.19 2002/08/02 01:52:13 christos Exp $");
+__RCSID("$NetBSD: wall.c,v 1.20 2002/08/16 20:21:49 itojun Exp $");
 #endif /* not lint */
 
 /*
@@ -57,6 +57,7 @@ __RCSID("$NetBSD: wall.c,v 1.19 2002/08/02 01:52:13 christos Exp $");
 #include <sys/uio.h>
 
 #include <err.h>
+#include <errno.h>
 #include <paths.h>
 #include <pwd.h>
 #include <stdio.h>
@@ -71,7 +72,7 @@ void	makemsg(const char *);
 int	main(int, char **);
 
 int nobanner;
-int mbufsize;
+size_t mbufsize;
 char *mbuf;
 
 /* ARGSUSED */
@@ -81,8 +82,14 @@ main(int argc, char **argv)
 	int ch;
 	struct iovec iov;
 	char *p;
-	struct passwd *pep = getpwnam("nobody");
+	struct passwd *pep;
 	struct utmpentry *ep;
+	gid_t egid;
+
+	egid = getegid();
+	if (setegid(getgid()) == -1)
+		err(1, "setegid");
+	pep = getpwnam("nobody");
 
 	while ((ch = getopt(argc, argv, "n")) != -1)
 		switch (ch) {
@@ -107,6 +114,7 @@ usage:
 	iov.iov_base = mbuf;
 	iov.iov_len = mbufsize;
 	(void)getutentries(NULL, &ep);
+	(void)setegid(egid);
 	for (; ep; ep = ep->next)
 		if ((p = ttymsg(&iov, 1, ep->line, 60*5)) != NULL)
 			warnx("%s", p);
@@ -116,7 +124,7 @@ usage:
 void
 makemsg(const char *fname)
 {
-	register int ch, cnt;
+	int ch, cnt;
 	struct tm *lt;
 	struct passwd *pw;
 	struct stat sbuf;
@@ -127,9 +135,11 @@ makemsg(const char *fname)
 	char *p, *tty, tmpname[32], lbuf[100], hostname[MAXHOSTNAMELEN+1];
 
 	(void)snprintf(tmpname, sizeof tmpname, "%s/wall.XXXXXX", _PATH_TMP);
-	if ((fd = mkstemp(tmpname)) == -1 || !(fp = fdopen(fd, "r+")))
+	if ((fd = mkstemp(tmpname)) == -1)
 		err(1, "can't open temporary file");
 	(void)unlink(tmpname);
+	if (!(fp = fdopen(fd, "r+")))
+		err(1, "can't open temporary file");
 
 	if (!nobanner) {
 		if (!(whom = getlogin()))
@@ -179,10 +189,12 @@ makemsg(const char *fname)
 
 	if (fstat(fd, &sbuf))
 		err(1, "can't stat temporary file");
+	if (sbuf.st_size > SIZE_T_MAX)
+		errx(1, "file too big");
 	mbufsize = sbuf.st_size;
-	if (!(mbuf = malloc((u_int)mbufsize)))
+	if (!(mbuf = malloc(mbufsize)))
 		err(1, "malloc");
-	if (fread(mbuf, sizeof(*mbuf), mbufsize, fp) != mbufsize)
+	if (fread(mbuf, 1, mbufsize, fp) != mbufsize)
 		err(1, "can't read temporary file");
-	(void)close(fd);
+	(void)fclose(fp);
 }
