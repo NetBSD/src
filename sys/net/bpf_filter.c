@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf_filter.c,v 1.12 1996/02/13 22:00:00 christos Exp $	*/
+/*	$NetBSD: bpf_filter.c,v 1.13 1997/07/07 18:18:28 phil Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1992, 1993
@@ -499,7 +499,9 @@ bpf_validate(f, len)
 			register int from = i + 1;
 
 			if (BPF_OP(p->code) == BPF_JA) {
-				if (from + p->k >= len)
+				if ((p->k < 0) ||
+				    (from + p->k >= len) ||
+				    (from + p->k < 0))
 					return 0;
 			}
 			else if (from + p->jt >= len || from + p->jf >= len)
