@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.26 2001/02/22 07:11:10 chs Exp $
+#	$NetBSD: Makefile,v 1.27 2001/02/26 01:42:51 chs Exp $
 
 LIB=sa
 
@@ -30,7 +30,7 @@ DEFS= -Dsun3 -D_STANDALONE
 INCL= -I. -I${.CURDIR} -I${S}/lib/libsa -I${S}
 CFLAGS= -O2 -msoft-float -fno-defer-pop
 CPPFLAGS= ${DEFS} ${DBG} ${INCL}
-CLEANFILES= SRT0.o SRT1.o machine m68k
+CLEANFILES= SRT0.o SRT1.o machine m68k vers.c
 
 SRC_net= net.c ether.c arp.c in_cksum.c rarp.c
 
