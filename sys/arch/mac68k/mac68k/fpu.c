@@ -32,19 +32,21 @@
  *
  */
 
-#include "param.h"
-#include "systm.h"
-#include "proc.h"
-/*#include "seg.h"*/
-#include "acct.h"
-#include "kernel.h"
-#include "signalvar.h"
-#include "resourcevar.h"
-#include "syslog.h"
-#include "user.h"
+#include <sys/param.h>
+#include <sys/systm.h>
+#include <sys/proc.h>
+/*#include <sys/seg.h>*/
+#include <sys/acct.h>
+#include <sys/kernel.h>
+#include <sys/signalvar.h>
+#include <sys/resourcevar.h>
+#include <sys/syslog.h>
+#include <sys/user.h>
 #ifdef KTRACE
-#include "ktrace.h"
+#include <sys/ktrace.h>
 #endif
+
+#define PRINTF(x)
 
 int fancy (unsigned short buf[])
 {
@@ -129,12 +131,12 @@ FPUemul(frame)
 
   advance = 0;
 
-  printf ("FPUemul() - ");
+  PRINTF ( ("FPUemul() - "));
 
   copyin ((char *)frame.f_pc, buf, sizeof (buf));
 
-  printf ("Word 0: %x, ", (int)buf[0]);
-  printf ("Word 1: %x, ", (int)buf[1]);
+  PRINTF ( ("Word 0: %x, ", (int)buf[0]));
+  PRINTF ( ("Word 1: %x, ", (int)buf[1]));
 
   /* Check co-processor ID.  FPU is 1.  (MMU is 0.) */
   id = (int)((buf[0] >> 9) & 0x7);
@@ -156,49 +158,49 @@ FPUemul(frame)
     case 0:
       if ((buf[1] & 0x8000) == 0) {
         if (mode == 0 && reg == 0 && source == 7 && rm == 1 && misc == 0) {
-          printf ("FMOVECR (constant %d)\n", inst);
+          PRINTF (("FMOVECR (constant %d)\n", inst));
           advance = 4;
         } else if (rm == 1 && misc == 1) {
-          printf ("FMOVE from FPn\n");
+          PRINTF (("FMOVE from FPn\n"));
           advance = 4 + opsize (rm, mode, reg, source, buf);
         } else {
           /* Most instructions fall in this category... */
           switch (inst) {
-            case 0: printf ("FMOVE to FPn\n"); break;
-            case 1: printf ("FINT\n"); break;
-            case 2: printf ("FSINH\n"); break;
-            case 3: printf ("FINTRZ\n"); break;
-            case 4: printf ("FSQRT\n"); break;
-            case 6: printf ("FLOGNP1\n"); break;
-            case 8: printf ("FETOXM1\n"); break;
-            case 9: printf ("FTANH\n"); break;
-            case 10: printf ("FATAN\n"); break;
-            case 12: printf ("FASIN\n"); break;
-            case 13: printf ("FATANH\n"); break;
-            case 14: printf ("FSIN\n"); break;
-            case 15: printf ("FTAN\n"); break;
-            case 16: printf ("FETOX\n"); break;
-            case 17: printf ("FTWOTOX\n"); break;
-            case 18: printf ("FTENTOX\n"); break;
-            case 20: printf ("FLOGN\n"); break;
-            case 21: printf ("FLOG10\n"); break;
-            case 22: printf ("FLOG2\n"); break;
-            case 24: printf ("FABS\n"); break;
-            case 25: printf ("FCOSH\n"); break;
-            case 26: printf ("FNEG\n"); break;
-            case 28: printf ("FACOS\n"); break;
-            case 29: printf ("FCOS\n"); break;
-            case 30: printf ("FGETEXP\n"); break;
-            case 31: printf ("FGETMAN\n"); break;
-            case 32: printf ("FDIV\n"); break;
-            case 33: printf ("FMOD\n"); break;
-            case 34: printf ("FADD\n"); break;
-            case 35: printf ("FMUL\n"); break;
-            case 36: printf ("FSGLDIV\n"); break;
-            case 37: printf ("FREM\n"); break;
-            case 38: printf ("FSCALE\n"); break;
-            case 39: printf ("FSGLMUL\n"); break;
-            case 40: printf ("FSUB\n"); break;
+            case 0: PRINTF ( ("FMOVE to FPn\n")); break;
+            case 1: PRINTF ( ("FINT\n")); break;
+            case 2: PRINTF ( ("FSINH\n")); break;
+            case 3: PRINTF ( ("FINTRZ\n")); break;
+            case 4: PRINTF ( ("FSQRT\n")); break;
+            case 6: PRINTF ( ("FLOGNP1\n")); break;
+            case 8: PRINTF ( ("FETOXM1\n")); break;
+            case 9: PRINTF ( ("FTANH\n")); break;
+            case 10: PRINTF ( ("FATAN\n")); break;
+            case 12: PRINTF ( ("FASIN\n")); break;
+            case 13: PRINTF ( ("FATANH\n")); break;
+            case 14: PRINTF ( ("FSIN\n")); break;
+            case 15: PRINTF ( ("FTAN\n")); break;
+            case 16: PRINTF ( ("FETOX\n")); break;
+            case 17: PRINTF ( ("FTWOTOX\n")); break;
+            case 18: PRINTF ( ("FTENTOX\n")); break;
+            case 20: PRINTF ( ("FLOGN\n")); break;
+            case 21: PRINTF ( ("FLOG10\n")); break;
+            case 22: PRINTF ( ("FLOG2\n")); break;
+            case 24: PRINTF ( ("FABS\n")); break;
+            case 25: PRINTF ( ("FCOSH\n")); break;
+            case 26: PRINTF ( ("FNEG\n")); break;
+            case 28: PRINTF ( ("FACOS\n")); break;
+            case 29: PRINTF ( ("FCOS\n")); break;
+            case 30: PRINTF ( ("FGETEXP\n")); break;
+            case 31: PRINTF ( ("FGETMAN\n")); break;
+            case 32: PRINTF ( ("FDIV\n")); break;
+            case 33: PRINTF ( ("FMOD\n")); break;
+            case 34: PRINTF ( ("FADD\n")); break;
+            case 35: PRINTF ( ("FMUL\n")); break;
+            case 36: PRINTF ( ("FSGLDIV\n")); break;
+            case 37: PRINTF ( ("FREM\n")); break;
+            case 38: PRINTF ( ("FSCALE\n")); break;
+            case 39: PRINTF ( ("FSGLMUL\n")); break;
+            case 40: PRINTF ( ("FSUB\n")); break;
             case 48:
             case 49:
             case 50:
@@ -206,30 +208,30 @@ FPUemul(frame)
             case 52:
             case 53:
             case 54:
-            case 55: printf ("FSINCOS\n"); break;
-            case 56: printf ("FCMP\n"); break;
-            case 58: printf ("FTST\n"); break;
-            default: printf ("Unknown instruction %d.\n", inst); break;
+            case 55: PRINTF ( ("FSINCOS\n")); break;
+            case 56: PRINTF ( ("FCMP\n")); break;
+            case 58: PRINTF ( ("FTST\n")); break;
+            default: PRINTF ( ("Unknown instruction %d.\n", inst)); break;
           }
           advance = 4 + opsize (rm, mode, reg, source, buf);
         }
       } else {
         if (rm) {
-          printf ("FMOVE[M] FPn\n");
+          PRINTF ( ("FMOVE[M] FPn\n"));
           advance = 4 + opsize (rm, mode, reg, source, buf);
         } else {
-          printf ("FMOVE[M] FPcm\n");
+          PRINTF ( ("FMOVE[M] FPcm\n"));
           advance = 4 + opsize (rm, mode, reg, source, buf);
         }
       }
       break;
     case 1:
       if (mode == 1) {
-        printf ("FDBcc\n");
+        PRINTF ( ("FDBcc\n"));
         advance = 6;
       } else {
         if (mode == 7 && reg > 1) {
-          printf ("FTRAPcc\n");
+          PRINTF ( ("FTRAPcc\n"));
           switch (reg) {
             case 2: advance = 6; break;
             case 3: advance = 8; break;
@@ -237,7 +239,7 @@ FPUemul(frame)
             default: printf ("Unknown reg: %d\n", reg); break;
           }
         } else {
-          printf ("FScc\n");
+          PRINTF ( ("FScc\n"));
           advance = 4 + opsize (rm, mode, reg, source, buf);
         }
       }
@@ -245,10 +247,10 @@ FPUemul(frame)
     case 2:
     case 3:
       if (mode == 0 && reg == 0 && source == 0 && dest == 0) {
-        printf ("FNOP\n");
+        PRINTF ( ("FNOP\n"));
         advance = 4;
       } else {
-        printf ("FBcc\n");
+        PRINTF ( ("FBcc\n"));
         if (type == 2) {
           advance = 4;
         } else {
@@ -257,11 +259,11 @@ FPUemul(frame)
       }
       break;
     case 4:
-      printf ("FSAVE\n");
+      PRINTF ( ("FSAVE\n"));
       advance = 2 + opsize (rm, mode, reg, source, buf);
       break;
     case 5:
-      printf ("FRESTORE\n");
+      PRINTF ( ("FRESTORE\n"));
       advance = 2 + opsize (rm, mode, reg, source, buf);
       break;
     case 6:
@@ -271,6 +273,6 @@ FPUemul(frame)
       break;
   }
 
-  printf ("Exiting FPUemul() (%d)\n", advance);
+  PRINTF ( ("Exiting FPUemul() (%d)\n", advance));
   frame.f_pc += advance;
 }
