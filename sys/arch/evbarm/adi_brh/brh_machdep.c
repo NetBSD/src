@@ -1,4 +1,4 @@
-/*	$NetBSD: brh_machdep.c,v 1.11 2003/05/17 23:46:59 thorpej Exp $	*/
+/*	$NetBSD: brh_machdep.c,v 1.12 2003/05/21 02:38:29 briggs Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003 Wasabi Systems, Inc.
@@ -409,7 +409,6 @@ initarm(void *arg)
 #endif
 
 	/* Calibrate the delay loop. */
-	becc_calibrate_delay();
 	becc_hardclock_hook = brh_hardclock_hook;
 
 	/*
@@ -710,6 +709,11 @@ initarm(void *arg)
 	 * Inform the BECC code where the BECC is mapped.
 	 */
 	becc_vaddr = BRH_BECC_VBASE;
+
+	/*
+	 * Now that we have becc_vaddr set, calibrate delay.
+	 */
+	becc_calibrate_delay();
 
 	/*
 	 * BECC <= Rev7 can only address 64M through the inbound
