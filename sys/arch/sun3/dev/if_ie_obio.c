@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ie_obio.c,v 1.10 1997/04/28 21:59:19 gwr Exp $	*/
+/*	$NetBSD: if_ie_obio.c,v 1.11 1997/10/07 18:17:19 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -130,7 +130,7 @@ ie_obio_attach(parent, self, args)
 	sc->sc_msize = 0x8000; /* MEMSIZE 32K */
 
 	/* Map in the control registers. */
-	sc->sc_reg = obio_mapin(ca->ca_paddr, OBIO_INTEL_ETHER_SIZE);
+	sc->sc_reg = obio_mapin(ca->ca_paddr, sizeof(struct ieob));
 
 	/* Allocate "shared" memory (in DVMA space). */
 	sc->sc_maddr = dvma_malloc(sc->sc_msize);
