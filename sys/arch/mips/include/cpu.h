@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.10 1995/04/22 20:27:59 christos Exp $	*/
+/*	$NetBSD: cpu.h,v 1.11 1995/05/05 03:42:09 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -52,8 +52,10 @@
  * referenced in generic code
  */
 #define	cpu_exec(p)		(p->p_md.md_ss_addr = 0) /* init single step */
-#define	cpu_wait(p)		/* nothing */
-#define cpu_set_init_frame(p, fp) /* nothing */
+#define	cpu_wait(p)			/* nothing */
+#define cpu_set_init_frame(p, fp)	/* nothing */
+#define	BROKEN_SWAP
+#define	cpu_swapout(p)			panic("cpu_swapout: can't get here");
 
 /*
  * Arguments to hardclock and gatherstats encapsulate the previous
