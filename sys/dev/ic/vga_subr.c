@@ -1,4 +1,4 @@
-/* $NetBSD: vga_subr.c,v 1.18 2004/07/29 22:29:37 jmmv Exp $ */
+/* $NetBSD: vga_subr.c,v 1.19 2004/12/27 14:20:43 tsutsui Exp $ */
 
 /*
  * Copyright (c) 1998
@@ -30,7 +30,7 @@
 #include "opt_wsdisplay_border.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vga_subr.c,v 1.18 2004/07/29 22:29:37 jmmv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vga_subr.c,v 1.19 2004/12/27 14:20:43 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -294,7 +294,7 @@ static const u_int8_t vga_crtc[] = {
 	0x82,	/* 03: display skew control / end horizontal blanking */
 	0x55,	/* 04: start horizontal retrace pulse */
 	0x81,	/* 05: horizontal retrace delay / end horizontal retrace */
-	0xbf,	/* 06: vetical total */
+	0xbf,	/* 06: vertical total */
 	0x1f,	/* 07: overflow register */
 	0x00,	/* 08: preset row scan */
 	0x4f,	/* 09: overflow / maximum scan line */
