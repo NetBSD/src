@@ -1,4 +1,4 @@
-/*	$NetBSD: sort.h,v 1.10 2001/01/16 12:06:19 shin Exp $	*/
+/*	$NetBSD: sort.h,v 1.11 2001/01/19 10:14:31 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -49,8 +49,8 @@
 #include <stdlib.h>
 #include <string.h>
 
-#define NBINS 256
-#define MAXMERGE 16
+#define NBINS		256
+#define MAXMERGE	16
 
 /* values for masks, weights, and other flags. */
 #define I 1		/* mask out non-printable characters */
