@@ -21,7 +21,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: if_ep.c,v 1.38 1994/05/21 05:34:02 deraadt Exp $
+ *	$Id: if_ep.c,v 1.39 1994/05/24 07:31:14 mycroft Exp $
  */
 
 #include "bpfilter.h"
@@ -599,7 +599,7 @@ epintr(sc)
 					printf("%s: fifo underrun (%x %x), correcting\n",
 					    sc->sc_dev.dv_xname, status, i);
 					if (sc->tx_succ_ok < 100)
-						sc->tx_start_thresh = MIN(ETHER_MAX_LEN,
+						sc->tx_start_thresh = min(ETHER_MAX_LEN,
 						    sc->tx_start_thresh + 20);
 					sc->tx_succ_ok = 0;
 					epreset(sc);

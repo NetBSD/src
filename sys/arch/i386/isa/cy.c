@@ -27,7 +27,7 @@
  * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: cy.c,v 1.6 1994/03/08 12:21:16 mycroft Exp $
+ *	$Id: cy.c,v 1.7 1994/05/24 07:31:12 mycroft Exp $
  */
 
 /*
@@ -916,7 +916,7 @@ service_tx(int cd, caddr_t base)
 
 	if (txq->used > 0) {
 		cy_addr	base = ip->base_addr;
-		int	count = MIN(CD1400_FIFOSIZE, txq->used);
+		int	count = min(CD1400_FIFOSIZE, txq->used);
 		int	chars_done = count;
 		u_char	*cp = txq->head;
 		u_char	*buf_end = txq->endish;
@@ -946,7 +946,7 @@ service_tx(int cd, caddr_t base)
 
 	if (!(tp->t_state & TS_TTSTOP) && (tp->t_outq.c_cc > 0)) {
 		cy_addr	base = ip->base_addr;
-		int	count = MIN(CD1400_FIFOSIZE, tp->t_outq.c_cc);
+		int	count = min(CD1400_FIFOSIZE, tp->t_outq.c_cc);
 
 		ip->xmit += count;
 		tp->t_state |= TS_BUSY;
