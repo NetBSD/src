@@ -1,4 +1,4 @@
-/*	$NetBSD: xform_ipip.c,v 1.7 2003/11/17 21:34:27 jonathan Exp $	*/
+/*	$NetBSD: xform_ipip.c,v 1.8 2004/01/16 11:06:27 scw Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/xform_ipip.c,v 1.3.2.1 2003/01/24 05:11:36 sam Exp $	*/
 /*	$OpenBSD: ip_ipip.c,v 1.25 2002/06/10 18:04:55 itojun Exp $ */
 
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xform_ipip.c,v 1.7 2003/11/17 21:34:27 jonathan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xform_ipip.c,v 1.8 2004/01/16 11:06:27 scw Exp $");
 
 /*
  * IP-inside-IP processing
@@ -560,7 +560,6 @@ ipip_output(
 		if (m == 0) {
 			DPRINTF(("ipip_output: M_PREPEND failed\n"));
 			ipipstat.ipips_hdrops++;
-			*mp = NULL;
 			error = ENOBUFS;
 			goto bad;
 		}
@@ -644,7 +643,8 @@ nofamily:
 	return 0;
 bad:
 	if (m)
-		m_freem(m), *mp = NULL;
+		m_freem(m);
+	*mp = NULL;
 	return (error);
 }
 
