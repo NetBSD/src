@@ -1,4 +1,4 @@
-# $NetBSD: md.amd64,v 1.16 2004/08/12 16:07:07 lukem Exp $
+# $NetBSD: md.amd64,v 1.17 2005/01/21 04:47:23 dyoung Exp $
 ./usr/include/amd64				comp-c-include
 ./usr/include/amd64/ansi.h			comp-c-include
 ./usr/include/amd64/aout_machdep.h		comp-c-include
@@ -62,8 +62,8 @@
 ./usr/include/amd64/vmparam.h			comp-c-include
 ./usr/include/amd64/wchar_limits.h		comp-c-include
 ./usr/include/ieeefp.h				comp-c-include
-./usr/include/emmintrin.h			comp-c-include
-./usr/include/mmintrin.h			comp-c-include
+./usr/include/emmintrin.h			comp-c-include		gcccmds
+./usr/include/mmintrin.h			comp-c-include		gcccmds
 ./usr/include/x64_64				comp-obsolete		obsolete
 ./usr/include/x64_64/ansi.h			comp-obsolete		obsolete
 ./usr/include/x64_64/aout_machdep.h		comp-obsolete		obsolete
@@ -141,7 +141,7 @@
 ./usr/include/x86/psl.h				comp-c-include
 ./usr/include/x86/specialreg.h			comp-c-include
 ./usr/include/x86/trap.h			comp-c-include
-./usr/include/xmmintrin.h			comp-c-include
+./usr/include/xmmintrin.h			comp-c-include		gcccmds
 ./usr/lib/libx86_64.a				comp-c-lib
 ./usr/lib/libx86_64_p.a				comp-c-piclib		profile
 ./usr/lib/libx86_64_pic.a			comp-c-proflib
