@@ -1,4 +1,4 @@
-.\"	$NetBSD: afterboot.8,v 1.6 2003/03/21 16:49:18 jmmv Exp $
+.\"	$NetBSD: afterboot.8,v 1.7 2003/05/14 07:40:27 wiz Exp $
 .\"
 .\" Copyright (c) 2002-2003 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -147,7 +147,7 @@ Set the current date to May 10th, 2002 6:20pm.
 Set the time zone to Eastern Europe Summer Time.
 .El
 .Ss Console settings
-One of the first things you will likely need to do is to setup your
+One of the first things you will likely need to do is to set up your
 keyboard map (and maybe some other aspects about the system console).
 To change your keyboard encoding, edit the
 .Va Dq encoding
@@ -170,8 +170,8 @@ variable in
 or edit the
 .Pa /etc/myname
 file
-to have it stick around for the next reboot. Note that
-hostname is supposed to be FQDN commonly and should
+to have it stick around for the next reboot.
+Note that hostname is supposed to be FQDN commonly and should
 not be confused with YP
 .Xr domainname 1 .
 .Ss Verify network interface configuration
@@ -195,7 +195,7 @@ man page for more information on the format of
 files.
 The loopback interface will look something like:
 .Bd -literal -offset indent
-lo0: flags=8009<UP,LOOPBACK,MULTICAST> mtu 32972
+lo0: flags=8009\*[Lt]UP,LOOPBACK,MULTICAST\*[Gt] mtu 32972
 	inet 127.0.0.1 netmask 0xff000000
 	inet6 fe80::1%lo0 prefixlen 64 scopeid 0x3
 	inet6 ::1 prefixlen 128
@@ -203,15 +203,15 @@ lo0: flags=8009<UP,LOOPBACK,MULTICAST> mtu 32972
 .Pp
 an Ethernet interface something like:
 .Bd -literal -offset indent
-le0: flags=9863<UP,BROADCAST,NOTRAILERS,RUNNING,SIMPLEX,MULTICAST>
+le0: flags=9863\*[Lt]UP,BROADCAST,NOTRAILERS,RUNNING,SIMPLEX,MULTICAST\*[Gt]
 	inet 192.168.4.52 netmask 0xffffff00 broadcast 192.168.4.255
 	inet6 fe80::5ef0:f0f0%le0 prefixlen 64 scopeid 0x1
 .Ed
 .Pp
 and, a PPP interface something like:
 .Bd -literal -offset indent
-ppp0: flags=8051<UP,POINTOPOINT,RUNNING,MULTICAST>
-        inet 203.3.131.108 --> 198.181.0.253 netmask 0xffff0000
+ppp0: flags=8051\*[Lt]UP,POINTOPOINT,RUNNING,MULTICAST\*[Gt]
+        inet 203.3.131.108 --\*[Gt] 198.181.0.253 netmask 0xffff0000
 .Ed
 .Pp
 See
@@ -240,7 +240,7 @@ default        192.168.4.254     UGS      0 11098028    -  le0
 
 Internet6:
 Destination        Gateway       Flags  Refs  Use     Mtu  Interface
-::/96              ::1           UGRS     0     0   32972  lo0 =>
+::/96              ::1           UGRS     0     0   32972  lo0 =\*[Gt]
 ::1                ::1           UH       4     0   32972  lo0
 ::ffff:0.0.0.0/96  ::1           UGRS     0     0   32972  lo0
 fc80::/10          ::1           UGRS     0     0   32972  lo0
@@ -297,8 +297,8 @@ You can add new
 by adding the required entries to
 .Pa /etc/ifconfig.if .
 .Ss Secure Shell (ssh)
-By default, all services are disabled (and ssh is no exception). You
-may wish to enable it so you can remotely control your system.
+By default, all services are disabled (and ssh is no exception).
+You may wish to enable it so you can remotely control your system.
 Set "sshd=yes" in
 .Pa /etc/rc.conf
 and then starting the server with the command
@@ -373,15 +373,16 @@ to include
 .Dq nis
 for the
 .Dq passwd
-entry. A traditional way to accomplish the same thing is to
+entry.
+A traditional way to accomplish the same thing is to
 add following entry to local passwd database via
 .Xr vipw 8 :
 .Bd -literal -offset indent
 .Li +:*::::::::
 .Pp
 .Ed
-Note this entry has to be the very last one. This traditional way
-works with the default
+Note this entry has to be the very last one.
+This traditional way works with the default
 .Xr nsswitch.conf 5
 setting of
 .Dq passwd ,
@@ -481,8 +482,9 @@ Since
 a new tool for configuring the system has been
 included, called
 .Xr sushi 8 .
-It will allow you to setup many aspects of the
-system from interactive menus. You can launch it typing:
+It will allow you to set up many aspects of the
+system from interactive menus.
+You can launch it typing:
 .Bd -literal -offset indent
 .Ic sushi
 .Ed
@@ -552,7 +554,7 @@ contains a serie of scripts used at startup/shutdown, called by
 If you've installed X, you may want to turn on
 .Xr xdm 1 ,
 the X Display Manager.
-To do this, set the variable xdm to yes, i.e. "xdm=yes", in
+To do this, set the variable xdm to yes, i.e., "xdm=yes", in
 .Pa /etc/rc.conf .
 .Ss Printers
 Edit
@@ -569,8 +571,8 @@ if needed.
 In
 .Pa /etc/inetd.conf
 comment out any extra entries you do not need, and only add things
-that are really needed. Note that by default all services are disabled
-for security reasons.
+that are really needed.
+Note that by default all services are disabled for security reasons.
 .Ss Kerberos
 If you are going to use
 .Xr kerberos 8
@@ -610,8 +612,9 @@ for information on generating your own sendmail configuration files.
 is configured to use Sendmail binaries by default.
 .Ss Postfix
 .Nx
-comes also with Postfix in the base system. You may wish to
-setup it in favor of sendmail. Take a look to
+comes also with Postfix in the base system.
+You may wish to set it up in favor of sendmail.
+Take a look to
 .Pa /etc/postfix/main.cf
 and enable the daemon in
 .Pa /etc/rc.conf
@@ -654,7 +657,8 @@ rpcbind=yes
 .Pp
 Edit
 .Pa /etc/exports
-and get it correct. After this, you can start the server by issuing:
+and get it correct.
+After this, you can start the server by issuing:
 .Bd -literal -offset indent
 .Ic /etc/rc.d/nfsd start
 .Ed
@@ -669,7 +673,8 @@ Look at and possibly edit the
 .Pa /etc/daily.conf , /etc/weekly.conf ,
 and
 .Pa /etc/monthly.conf
-configuration files. You can check which values you can set by looking
+configuration files.
+You can check which values you can set by looking
 to their matching files in
 .Pa /etc/defaults .
 Your site specific things should go into
@@ -706,9 +711,9 @@ the security scripts that are mailed internally, you can type
 .Ic crontab -e
 and change some of the lines to read:
 .Bd -literal -offset indent
-30  1  *  *  *   /bin/sh /etc/daily 2>&1 > /var/log/daily.out
-30  3  *  *  6   /bin/sh /etc/weekly 2>&1 > /var/log/weekly.out
-30  5  1  *  *   /bin/sh /etc/monthly 2>&1 > /var/log/monthly.out
+30  1  *  *  *   /bin/sh /etc/daily 2\*[Gt]\*[Am]1 \*[Gt] /var/log/daily.out
+30  3  *  *  6   /bin/sh /etc/weekly 2\*[Gt]\*[Am]1 \*[Gt] /var/log/weekly.out
+30  5  1  *  *   /bin/sh /etc/monthly 2\*[Gt]\*[Am]1 \*[Gt] /var/log/monthly.out
 .Ed
 .Pp
 See
@@ -716,7 +721,7 @@ See
 .Ss Next day cleanup
 After the first night's security run, change ownerships and permissions
 on files, directories, and devices; root should have received mail
-with subject: "<hostname> daily insecurity output.".
+with subject: "\*[Lt]hostname\*[Gt] daily insecurity output.".
 This mail contains
 a set of security recommendations, presented as a list looking like this:
 .Bd -literal -offset indent
@@ -743,9 +748,8 @@ as needed.
 Install your own packages.
 The
 .Nx
-package collection includes a large set of Third-Party
-software. A lot of it is available as binary packages that you can
-download from
+package collection includes a large set of Third-Party software.
+A lot of it is available as binary packages that you can download from
 .Pa ftp://ftp.netbsd.org
 or a mirror, and install using
 .Xr pkg_add 1 .
@@ -766,7 +770,8 @@ in source form only, either because it has not been ported to
 .Nx
 yet, because licensing restrictions make binary redistribution
 impossible, or simply because you want to build your own binaries.
-This group is called pkgsrc. Sometimes checking the mailing lists for
+This group is called pkgsrc.
+Sometimes checking the mailing lists for
 past problems that people have encountered will result in a fix posted.
 .Ss COMPILING A KERNEL
 First, review the system message buffer using the
@@ -777,52 +782,26 @@ In particular, note which devices were not configured.
 This information will prove useful when editing kernel configuration files.
 .Pp
 To compile a kernel inside a writable source tree, do the following:
-.Sm off
 .Bd -literal -offset indent
-.Li #\  Xo
-.Ic cd\ /usr/src/sys/arch/
-.Ar somearch
-.Ic /conf
-.Xc
-.Li #\  Xo
-.Ic vi\ \&
-.Ar SOMEFILE
-.No \ \ \ (to\ make\ any\ changes)
-.Xc
-.Li #\  Xo
-.Ic config\ \&
-.Ar SOMEFILE
-.Xc
-.Li #\  Xo
-.Ic cd\ ../compile/
-.Ar SOMEFILE
-.Xc
-.Li #\  Xo
-.Ic make
-.Xc
+# cd /usr/src/sys/arch/SOMEARCH/conf
+# cp GENERIC SOMEFILE (only the first time)
+# vi SOMEFILE (adapt to your needs)
+# config SOMEFILE
+# cd ../compile/SOMEFILE
+# make depend
+# make
 .Ed
-.Sm on
 .Pp
 where
-.Ar somedir
-is a writable directory,
-.Ar somearch
-is the architecture (e.g.
-.Ic i386 ) ,
-and
+.Ar SOMEARCH
+is the architecture (e.g., i386), and
 .Ar SOMEFILE
 should be a name indicative of a particular configuration (often
 that of the hostname).
-You can also do a
-.Ic make depend
-so that you will have dependencies there the next time you do a compile.
 .Pp
 If you are building your kernel again, before you do a
 .Ic make
 you should do a
-.Ic make depend
-after making changes (including updates or patches) to your kernel source,
-or a
 .Ic make clean
 after making changes to your kernel options.
 .Pp
@@ -830,7 +809,7 @@ After either of these two methods, you can place the new kernel (called
 .Pa netbsd )
 in
 .Pa /
-(i.e.
+(i.e.,
 .Pa /netbsd )
 by issuing
 .Ic make install
@@ -840,7 +819,8 @@ The old kernel is stored as
 so you can boot it in case of failure.
 .Pp
 If you are using toolchain to build your kernel, you will also need to
-build a new set of toolchain binaries. You can do it by entering
+build a new set of toolchain binaries.
+You can do it by entering
 .Pa /usr/src
 and issuing
 .Ic ./build.sh tools
