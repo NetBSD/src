@@ -35,6 +35,8 @@
 .Op Fl m Ar makefile-name
 .Op Fl c Ar c-file-name
 .Op Fl e Ar exec-file-name
+.Op Fl D Ar src-root
+.Op Fl L Ar lib-dir
 .Op Ar conf-file
 .Sh DESCRIPTION
 
@@ -92,6 +94,12 @@ Set output Makefile name to
 The default name is ``<conf-name>.mk''.
 .It Fl q
 Quiet operation.  Status messages are suppressed.
+.It Fl D Ar src-root
+Assume that relative source directory specifications begin with
+.Ar srt-root .
+.It Fl L Ar lib-dir
+Try to obtain libraries from
+.Ar lib-dir .
 .El
 .Sh CRUNCHGEN CONFIGURATION FILE COMMANDS
 
