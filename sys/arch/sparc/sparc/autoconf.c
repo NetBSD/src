@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.76 1997/09/22 15:03:58 leo Exp $ */
+/*	$NetBSD: autoconf.c,v 1.77 1997/09/22 20:35:51 christos Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -187,7 +187,6 @@ bootstrap()
 #if defined(SUN4)
 	if (CPU_ISSUN4) {
 		extern void oldmon_w_cmd __P((u_long, char *));
-		extern caddr_t	msgbufaddr;
 		/*
 		 * XXX
 		 * Some boot programs mess up physical page 0, which
