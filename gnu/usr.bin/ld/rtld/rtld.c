@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld.c,v 1.64 1998/08/06 00:03:28 mycroft Exp $	*/
+/*	$NetBSD: rtld.c,v 1.65 1998/08/13 07:34:06 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1993 Paul Kranenburg
@@ -945,11 +945,11 @@ call_map(smp, sym)
 	np = lookup(sym, smp, &src_map, 1);
 	if (np) {
 #if DEBUG
-xprintf("call_map: %s in %#x enter\n", sym, smp);
+xprintf("call_map: %s at %#x+%#x enter\n", sym, src_map->som_addr, np->nz_value);
 #endif
 		(*(void (*) __P((void)))(src_map->som_addr + np->nz_value))();
 #if DEBUG
-xprintf("call_map: %s in %#x exit\n", sym, smp);
+xprintf("call_map: %s at %#x+%#x exit\n", sym, src_map->som_addr, np->nz_value);
 #endif
 	}
 }

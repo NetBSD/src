@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.24 1998/07/25 12:37:27 mycroft Exp $
+#	$NetBSD: Makefile,v 1.25 1998/08/13 07:34:06 mycroft Exp $
 
 .if	(${MACHINE_ARCH} == "i386") || \
 	(${MACHINE_ARCH} == "m68k") || \
@@ -13,6 +13,9 @@ CLIBOBJ!=cd ${CLIB}; \
 	 printf "xxx: .MAKE\n\t@echo \$${.OBJDIR}\n" | ${MAKE} -s -f-
 PICFLAG=-fpic -fno-function-cse
 CPPFLAGS+=$(PICFLAG) -DRTLD -DLIBC_SCCS -I${CLIB}/include
+.if defined(DEBUG)
+CPPFLAGS+=-DDEBUG
+.endif
 ASFLAGS+=-k
 LDFLAGS+=-Bshareable -Bsymbolic -assert nosymbolic -L${CLIBOBJ}
 .if defined(DESTDIR)
