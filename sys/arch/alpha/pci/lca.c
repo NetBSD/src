@@ -1,4 +1,4 @@
-/* $NetBSD: lca.c,v 1.20 1997/06/06 23:54:30 thorpej Exp $ */
+/* $NetBSD: lca.c,v 1.21 1997/09/02 12:40:21 thorpej Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -30,7 +30,7 @@
 #include <machine/options.h>		/* Config options headers */
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: lca.c,v 1.20 1997/06/06 23:54:30 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lca.c,v 1.21 1997/09/02 12:40:21 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -107,8 +107,8 @@ lca_init(lcp, mallocsafe)
 
 	if (!lcp->lc_initted) {
 		/* don't do these twice since they set up extents */
-		lcp->lc_iot = lca_bus_io_init(lcp);
-		lcp->lc_memt = lca_bus_mem_init(lcp);
+		lca_bus_io_init(&lcp->lc_iot, lcp);
+		lca_bus_mem_init(&lcp->lc_memt, lcp);
 	}
 	lcp->lc_mallocsafe = mallocsafe;
 

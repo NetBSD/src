@@ -1,4 +1,4 @@
-/* $NetBSD: ciavar.h,v 1.8 1997/06/06 23:54:27 thorpej Exp $ */
+/* $NetBSD: ciavar.h,v 1.9 1997/09/02 12:40:20 thorpej Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -40,7 +40,7 @@
 struct cia_config {
 	int	cc_initted;
 
-	bus_space_tag_t cc_iot, cc_memt;
+	struct alpha_bus_space cc_iot, cc_memt;
 	struct alpha_pci_chipset cc_pc;
 
 	struct alpha_bus_dma_tag cc_dmat_direct;
@@ -65,5 +65,5 @@ void	cia_init __P((struct cia_config *, int));
 void	cia_pci_init __P((pci_chipset_tag_t, void *));
 void	cia_dma_init __P((struct cia_config *));
 
-bus_space_tag_t	cia_bus_io_init __P((void *));
-bus_space_tag_t	cia_bus_mem_init __P((void *));
+void	cia_bus_io_init __P((bus_space_tag_t, void *));
+void	cia_bus_mem_init __P((bus_space_tag_t, void *));
