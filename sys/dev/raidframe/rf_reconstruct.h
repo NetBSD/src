@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_reconstruct.h,v 1.13 2004/01/01 19:32:55 oster Exp $	*/
+/*	$NetBSD: rf_reconstruct.h,v 1.14 2004/03/03 16:59:54 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -86,7 +86,10 @@ typedef enum RF_Revent_e {
 	RF_REVENT_BUFCLEAR,
 	RF_REVENT_HEADSEPCLEAR,
 	RF_REVENT_SKIP,
-	RF_REVENT_FORCEDREADDONE
+	RF_REVENT_FORCEDREADDONE,
+	RF_REVENT_READ_FAILED,
+	RF_REVENT_WRITE_FAILED,
+	RF_REVENT_FORCEDREAD_FAILED
 }       RF_Revent_t;
 
 struct RF_ReconEvent_s {
