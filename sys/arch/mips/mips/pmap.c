@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.45 1998/12/05 07:50:12 jonathan Exp $	*/
+/*	$NetBSD: pmap.c,v 1.46 1998/12/05 09:13:09 jonathan Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.45 1998/12/05 07:50:12 jonathan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.46 1998/12/05 09:13:09 jonathan Exp $");
 
 /*
  *	Manages physical address maps.
@@ -743,10 +743,10 @@ pmap_remove(pmap, sva, eva)
 #endif /* mips3 */
 			}
 
-#ifdef notanymore
+#if !defined(UVM)
 			if (PAGE_IS_MANAGED(pfn_to_vad(entry)))
 				*pa_to_attribute(pfn_to_vad(entry)) &=
-				    ~PV_MODIFIED;
+				    ~(PV_MODIFIED|PV_REFERENCED);
 #endif
 
 
@@ -802,10 +802,10 @@ pmap_remove(pmap, sva, eva)
 #endif /* mips3 */
 			}
 
-#ifdef notanymore
+#if !defined(UVM)
 			if (PAGE_IS_MANAGED(pfn_to_vad(entry)))
 				*pa_to_attribute(pfn_to_vad(entry)) &=
-				    ~PV_MODIFIED;
+				    ~(PV_MODIFIED|PV_REFERENCED);
 #endif
 			pte->pt_entry = mips_pg_nv_bit();
 			/*
@@ -1677,14 +1677,12 @@ void
 pmap_clear_reference(pa)
 	vm_offset_t pa;
 {
-
 #ifdef DEBUG
 	if (pmapdebug & PDB_FOLLOW)
 		printf("pmap_clear_reference(%lx)\n", pa);
 #endif
-#ifdef PMAP_REFERENCE
-	*pa_to_attribute(pa) &= ~PMAP_ATTR_REF;
-#endif
+	if (PAGE_IS_MANAGED(pa))
+		*pa_to_attribute(pa) &= ~PV_REFERENCED;
 }
 
 /*
@@ -1697,10 +1695,26 @@ boolean_t
 pmap_is_referenced(pa)
 	vm_offset_t pa;
 {
-#ifdef PMAP_REFERENCE
-	return (*pa_to_attribute(pa) & PMAP_ATTR_REF);
-#else
+#if defined(UVM)
+	if (PAGE_IS_MANAGED(pa))
+		return (*pa_to_attribute(pa)  & PV_REFERENCED);
+#ifdef DEBUG
+	else
+		printf("pmap_is_referenced: pa %lx\n", pa);
+#endif
+#endif
 	return (FALSE);
+}
+
+void
+pmap_set_referenced(pa)
+	vm_offset_t pa;
+{
+	if (PAGE_IS_MANAGED(pa))
+		*pa_to_attribute(pa) |= PV_MODIFIED;
+#ifdef DEBUG
+	else
+		printf("pmap_set_referenced(%lx)\n", pa);
 #endif
 }
 
