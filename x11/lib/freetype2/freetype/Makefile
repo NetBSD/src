@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2004/02/09 05:58:25 lukem Exp $
+#	$NetBSD: Makefile,v 1.5 2004/03/06 03:05:40 rtr Exp $
 
 .include <bsd.own.mk>
 
@@ -8,11 +8,12 @@ SUBDIR=	cache config internal
 
 INCSDIR=${X11INCDIR}/freetype2/freetype
 
-INCS=	ftbdf.h fterrdef.h ftsysio.h ftsysmem.h ftxf86.h freetype.h \
-	ftbbox.h ftcache.h ftchapters.h fterrors.h ftglyph.h \
-	ftimage.h ftlist.h ftmac.h ftmm.h ftmoderr.h ftmodule.h \
-	ftoutln.h ftrender.h ftsizes.h ftsnames.h ftsynth.h ftsystem.h \
-	fttrigon.h fttypes.h t1tables.h ttnameid.h tttables.h tttags.h
+INCS=	freetype.h ftbbox.h ftbdf.h ftcache.h ftchapters.h fterrdef.h \
+	fterrors.h ftglyph.h ftgzip.h ftimage.h ftincrem.h ftlist.h \
+	ftmac.h ftmm.h ftmoderr.h ftmodule.h ftoutln.h ftpfr.h \
+	ftrender.h ftsizes.h ftsnames.h ftstroker.h ftsynth.h ftsysio.h \
+	ftsysmem.h ftsystem.h fttrigon.h fttypes.h ftwinfnt.h ftxf86.h \
+	t1tables.h ttnameid.h tttables.h tttags.h
 
 SCRIPTS=	freetype-config
 

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2004/02/09 05:58:25 lukem Exp $
+#	$NetBSD: Makefile,v 1.6 2004/03/06 03:05:39 rtr Exp $
 
 .include <bsd.own.mk>
 
@@ -12,7 +12,7 @@ SCRIPTS=	fontconfig-config
 CLEANFILES+= ${FILES} ${SCRIPTS}
 realall: ${FILES}
 
-FONTCONFIGDIR=	${X11SRCDIR.xc}/lib/fontconfig
+FONTCONFIGDIR=	${X11SRCDIR.xc}/extras/fontconfig
 CONFIG_SUBST=	${HOST_SH} ${FONTCONFIGDIR}/config/config-subst \
 		prefix="${X11ROOTDIR}" \
 		exec_prefix="${X11BINDIR}" \
