@@ -1,4 +1,4 @@
-/*	$NetBSD: cgsix_sbus.c,v 1.12 2002/10/02 16:52:33 thorpej Exp $ */
+/*	$NetBSD: cgsix_sbus.c,v 1.13 2004/03/17 17:04:58 pk Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cgsix_sbus.c,v 1.12 2002/10/02 16:52:33 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cgsix_sbus.c,v 1.13 2004/03/17 17:04:58 pk Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -183,7 +183,7 @@ cgsixattach(parent, self, aux)
 	sc->sc_fbc = (struct cg6_fbc *)bus_space_vaddr(sa->sa_bustag, bh);
 
 	sbus_establish(sd, &sc->sc_dev);
-	name = PROM_getpropstring(node, "model");
+	name = prom_getpropstring(node, "model");
 
 	isconsole = fb_is_console(node);
 	if (isconsole && cgsix_use_rasterconsole) {

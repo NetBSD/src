@@ -1,4 +1,4 @@
-/*	$NetBSD: msiiep.c,v 1.19 2003/06/15 23:09:06 fvdl Exp $ */
+/*	$NetBSD: msiiep.c,v 1.20 2004/03/17 17:04:59 pk Exp $ */
 
 /*
  * Copyright (c) 2001 Valeriy E. Ushakov
@@ -27,7 +27,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msiiep.c,v 1.19 2003/06/15 23:09:06 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msiiep.c,v 1.20 2004/03/17 17:04:59 pk Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -330,7 +330,7 @@ mspcic_attach(parent, self, aux)
 	struct pcibus_attach_args pba;
 
 	sc->sc_node = node;
-	sc->sc_clockfreq = PROM_getpropint(node, "clock-frequency", 33333333);
+	sc->sc_clockfreq = prom_getpropint(node, "clock-frequency", 33333333);
 
 	/* copy parent tags */
 	sc->sc_bustag = ma->ma_bustag;

@@ -1,4 +1,4 @@
-/*	$NetBSD: magma.c,v 1.27 2003/06/29 22:30:35 fvdl Exp $	*/
+/*	$NetBSD: magma.c,v 1.28 2004/03/17 17:04:58 pk Exp $	*/
 /*
  * magma.c
  *
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: magma.c,v 1.27 2003/06/29 22:30:35 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: magma.c,v 1.28 2004/03/17 17:04:58 pk Exp $");
 
 #if 0
 #define MAGMA_DEBUG
@@ -339,13 +339,13 @@ magma_match(parent, cf, aux)
 
 	dprintf(("magma: matched `%s'\n", sa->sa_name));
 	dprintf(("magma: magma_prom `%s'\n",
-		PROM_getpropstring(sa->sa_node, "magma_prom")));
+		prom_getpropstring(sa->sa_node, "magma_prom")));
 	dprintf(("magma: intlevels `%s'\n",
-		PROM_getpropstring(sa->sa_node, "intlevels")));
+		prom_getpropstring(sa->sa_node, "intlevels")));
 	dprintf(("magma: chiprev `%s'\n",
-		PROM_getpropstring(sa->sa_node, "chiprev")));
+		prom_getpropstring(sa->sa_node, "chiprev")));
 	dprintf(("magma: clock `%s'\n",
-		PROM_getpropstring(sa->sa_node, "clock")));
+		prom_getpropstring(sa->sa_node, "clock")));
 
 	return (1);
 }
@@ -372,7 +372,7 @@ magma_attach(parent, self, aux)
 	 * `supported_cards[]' above), and must be distinguished
 	 * by the `magma_prom' property.
 	 */
-	magma_prom = PROM_getpropstring(node, "magma_prom");
+	magma_prom = prom_getpropstring(node, "magma_prom");
 
 	for (card = supported_cards; card->mb_name != NULL; card++) {
 		if (strcmp(sa->sa_name, card->mb_sbusname) != 0)
@@ -414,7 +414,7 @@ magma_attach(parent, self, aux)
 	 * Find the clock speed; it's the same for all CD1400 chips
 	 * on the board.
 	 */
-	clockstr = PROM_getpropstring(node, "clock");
+	clockstr = prom_getpropstring(node, "clock");
 	if (*clockstr == '\0')
 		/* Default to 25MHz */
 		cd_clock = 25;
@@ -431,7 +431,7 @@ magma_attach(parent, self, aux)
 		cd->cd_clock = cd_clock;
 		cd->cd_reg = (caddr_t)bh + card->mb_cd1400[chip];
 
-		/* PROM_getpropstring(node, "chiprev"); */
+		/* prom_getpropstring(node, "chiprev"); */
 		/* seemingly the Magma drivers just ignore the propstring */
 		cd->cd_chiprev = cd1400_read_reg(cd, CD1400_GFRCR);
 

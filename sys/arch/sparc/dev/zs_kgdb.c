@@ -1,4 +1,4 @@
-/*	$NetBSD: zs_kgdb.c,v 1.13 2003/08/27 15:59:50 mrg Exp $	*/
+/*	$NetBSD: zs_kgdb.c,v 1.14 2004/03/17 17:04:59 pk Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zs_kgdb.c,v 1.13 2003/08/27 15:59:50 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zs_kgdb.c,v 1.14 2004/03/17 17:04:59 pk Exp $");
 
 #include "opt_kgdb.h"
 
@@ -372,7 +372,7 @@ findzs(zs)
 		while ((node = findnode(node, "zs")) != 0) {
 			int nvaddrs, *vaddrs, vstore[10];
 
-			if (PROM_getpropint(node, "slave", -1) != zs) {
+			if (prom_getpropint(node, "slave", -1) != zs) {
 				node = nextsibling(node);
 				continue;
 			}
@@ -383,7 +383,7 @@ findzs(zs)
 			 */
 			vaddrs = vstore;
 			nvaddrs = sizeof(vstore)/sizeof(vstore[0]);
-			if (PROM_getprop(node, "address", sizeof(int),
+			if (prom_getprop(node, "address", sizeof(int),
 				    &nvaddrs, &vaddrs) != 0)
 				return (NULL);
 
