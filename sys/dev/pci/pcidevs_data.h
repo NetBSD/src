@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.285 2000/12/31 14:04:27 ad Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.286 2001/01/03 23:15:15 mycroft Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.282 2000/12/31 14:03:24 ad Exp 
+ *	NetBSD: pcidevs,v 1.283 2001/01/03 23:14:39 mycroft Exp 
  */
 
 /*
@@ -1424,6 +1424,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Chips and Technologies",
 	    "65554",
+	},
+	{
+	    PCI_VENDOR_CHRYSALIS, PCI_PRODUCT_CHRYSALIS_LUNAVPN,
+	    0,
+	    "Chrysalis-ITS",
+	    "LunaVPN",
 	},
 	{
 	    PCI_VENDOR_CIRRUS, PCI_PRODUCT_CIRRUS_CL_GD7548,
@@ -8659,6 +8665,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    PCI_VENDOR_ATRONICS, 0,
 	    PCI_KNOWNDEV_NOPROD,
 	    "Atronics",
+	    NULL,
+	},
+	{
+	    PCI_VENDOR_CHRYSALIS, 0,
+	    PCI_KNOWNDEV_NOPROD,
+	    "Chrysalis-ITS",
 	    NULL,
 	},
 	{
