@@ -1,4 +1,4 @@
-/*	$NetBSD: ah_input.c,v 1.32 2002/03/18 15:30:03 itojun Exp $	*/
+/*	$NetBSD: ah_input.c,v 1.32.6.1 2003/09/05 21:48:15 tron Exp $	*/
 /*	$KAME: ah_input.c,v 1.64 2001/09/04 08:43:19 itojun Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ah_input.c,v 1.32 2002/03/18 15:30:03 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ah_input.c,v 1.32.6.1 2003/09/05 21:48:15 tron Exp $");
 
 #include "opt_inet.h"
 
@@ -506,9 +506,9 @@ ah4_input(m, va_alist)
 				goto fail;
 			}
 			m_adj(n, stripsiz);
-			m_cat(m, n);
 			/* m_cat does not update m_pkthdr.len */
 			m->m_pkthdr.len += n->m_pkthdr.len;
+			m_cat(m, n);
 		}
 #endif
 
@@ -971,9 +971,9 @@ ah6_input(mp, offp, proto)
 				goto fail;
 			}
 			m_adj(n, stripsiz);
-			m_cat(m, n);
 			/* m_cat does not update m_pkthdr.len */
 			m->m_pkthdr.len += n->m_pkthdr.len;
+			m_cat(m, n);
 		}
 #endif
 		ip6 = mtod(m, struct ip6_hdr *);
