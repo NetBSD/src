@@ -1,4 +1,4 @@
-# $NetBSD: rc.subr,v 1.54 2003/01/05 11:40:29 lukem Exp $
+# $NetBSD: rc.subr,v 1.55 2003/01/05 22:59:35 lukem Exp $
 #
 # Copyright (c) 1997-2002 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -98,6 +98,8 @@ mount_critical_filesystems()
 				fi
 			done
 			if $_ismounted; then
+				:
+			else
 				mount $_fs >/dev/null 2>&1
 			fi
 		)
