@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.15 1997/08/18 21:23:15 augustss Exp $
+#	$NetBSD: MAKEDEV,v 1.16 1997/08/22 10:41:17 lukem Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -241,7 +241,7 @@ st*)
 	mknod enr$name$unit	c $chr $(($unit * 16 + 3))
 	chgrp operator $name$unit n$name$unit e$name$unit en$name$unit \
 		r$name$unit nr$name$unit er$name$unit enr$name$unit 
-	chmod 640 $name$unit n$name$unit e$name$unit en$name$unit \
+	chmod 660 $name$unit n$name$unit e$name$unit en$name$unit \
 		r$name$unit nr$name$unit er$name$unit enr$name$unit 
 	;;
 
@@ -263,8 +263,9 @@ ss*)
 	rm -f $name$unit n$name$unit
 	mknod $name$unit	c $chr $(($unit * 16 + 0))
 	mknod n$name$unit	c $chr $(($unit * 16 + 1))
-	chgrp operator $name$unit n$name$unit
-	chmod 640 $name$unit n$name$unit
+	mknod en$name$unit	c $chr $(($unit * 16 + 3))
+	chgrp operator $name$unit n$name$unit en$name$unit
+	chmod 640 $name$unit n$name$unit en$name$unit
 	;;
 
 cd*|acd*)
@@ -287,8 +288,8 @@ md*)
 	rm -f md${unit}c
 	mknod md${unit} b 18 ${unit}
 	mknod md${unit}c c 18 $((($unit + 16) * 8))
-	chown root.wheel md${unit}
-	chown root.wheel md${unit}c
+	chgrp operator md${unit} md${unit}c
+	chmod 640 md${unit} md${unit}c
 	;;
 
 lpt*|lpa*)
@@ -347,7 +348,7 @@ mouse-*)
 	;;
 
 cpu*)
-	unit=`expr $i : 'cpu\(.*\)'`
+	unit=${i#cpu}
 	rm -f cpu$unit
 	mknod cpu$unit c 38 $unit
 	chown root.wheel cpu$unit
@@ -372,7 +373,12 @@ audio*)
 
 local)
 	umask 0
-	sh MAKEDEV.local all
+	sh $0.local all
+	umask 77
+	;;
+
+*)
+	echo $i: unknown device
 	;;
 
 esac
