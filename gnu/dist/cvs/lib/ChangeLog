@@ -1,3 +1,31 @@
+2000-07-10  Larry Jones  <larry.jones@sdrc.com>
+
+	* savecwd.c: #include <sys/types.h> before <fcntl.h>.
+
+2000-07-04  Karl Fogel  <kfogel@red-bean.com>
+
+	* getline.h, getline.c (getstr): take new limit arg.
+	(GETLINE_NO_LIMIT): new #define.
+	(getline_safe): new function, takes limit arg and passes it on.
+	(getline): pass GETLINE_NO_LIMIT to getstr().
+	
+	See related change of same date in ../src/ChangeLog.
+
+2000-06-19  Larry Jones  <larry.jones@sdrc.com>
+
+	* regex.c, regex.h: Version from emacs 20.7 to plug memory leaks
+	and avoid potential portability problems.
+
+2000-03-22  Larry Jones  <larry.jones@sdrc.com>
+
+	* getdate.y: Add logic to allow yyyy/mm/dd in addition to mm/dd/yy
+	(since that is the format CVS frequently uses).
+	* getdate.c: Regenerated.
+
+2000-02-16  Jim Meyering  <meyering@lucent.com>
+
+	* sighandle.c (SIG_inCrSect): New function.
+
 2000-01-03  Larry Jones  <larry.jones@sdrc.com>
 
 	* getdate.y (Convert): Add window to determine whether 2-digit dates

@@ -281,9 +281,15 @@ date	: tUNUMBER '/' tUNUMBER {
 	    yyDay = $3;
 	}
 	| tUNUMBER '/' tUNUMBER '/' tUNUMBER {
-	    yyMonth = $1;
-	    yyDay = $3;
-	    yyYear = $5;
+	    if ($1 >= 100) {
+		yyYear = $1;
+		yyMonth = $3;
+		yyDay = $5;
+	    } else {
+		yyMonth = $1;
+		yyDay = $3;
+		yyYear = $5;
+	    }
 	}
 	| tUNUMBER tSNUMBER tSNUMBER {
 	    /* ISO 8601 format.  yyyy-mm-dd.  */

@@ -12,6 +12,12 @@
 
 #ifdef AUTH_CLIENT_SUPPORT   /* This covers the rest of the file. */
 
+#ifdef HAVE_GETPASSPHRASE
+#define GETPASS getpassphrase
+#else
+#define GETPASS getpass
+#endif
+
 /* There seems to be very little agreement on which system header
    getpass is declared in.  With a lot of fancy autoconfiscation,
    we could perhaps detect this, but for now we'll just rely on
@@ -20,7 +26,7 @@
    varadic, believe it or not).  On Cray, getpass will be declared
    in either stdlib.h or unistd.h.  */
 #ifndef _CRAY
-extern char *getpass ();
+extern char *GETPASS ();
 #endif
 
 #ifndef CVS_PASSWORD_FILE 
@@ -142,7 +148,7 @@ login (argc, argv)
     fflush (stdout);
 
     passfile = construct_cvspass_filename ();
-    typed_password = getpass ("CVS password: ");
+    typed_password = GETPASS ("CVS password: ");
     typed_password = scramble (typed_password);
 
     /* Force get_cvs_password() to use this one (when the client
@@ -370,6 +376,8 @@ get_cvs_password ()
 
 	strtok (linebuf, " ");
 	tmp = strtok (NULL, "\n");
+	if (tmp == NULL)
+	    error (1, 0, "bad entry in %s for %s", passfile, CVSroot_original);
 
 	/* Give it permanent storage. */
 	password = xstrdup (tmp);
