@@ -1,4 +1,4 @@
-/*	$NetBSD: vnconfig.c,v 1.27 2003/04/11 16:15:28 drochner Exp $	*/
+/*	$NetBSD: vnconfig.c,v 1.28 2003/04/16 10:29:05 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -341,9 +341,9 @@ usage()
 {
 
 	(void)fprintf(stderr, "%s%s",
-	    "usage: vnconfig [-c] [-f disktab] [-t typename] [-vr] special-file"
+	    "usage: vnconfig [-crv] [-f disktab] [-t typename] vnode_disk"
 		" regular-file [geomspec]\n",
-	    "       vnconfig -u [-v] special-file\n"
-	    "       vnconfig -l [special-file]\n");
+	    "       vnconfig -u [-Fv] vnode_disk\n"
+	    "       vnconfig -l [vnode_disk]\n");
 	exit(1);
 }
