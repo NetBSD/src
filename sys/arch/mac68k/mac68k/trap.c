@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.42 1996/10/21 05:42:29 scottr Exp $	*/
+/*	$NetBSD: trap.c,v 1.43 1996/11/09 15:36:14 briggs Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -261,7 +261,8 @@ trap(type, code, v, frame)
 		p = &proc0;
 #ifdef DIAGNOSTIC
 	if (p->p_addr == NULL)
-		panic("trap: no pcb");
+		panic("trap: type 0x%x, code 0x%x, v 0x%x--no pcb\n",
+			type, code, v);
 #endif
 
 	switch (type) {
