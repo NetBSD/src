@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm.h,v 1.15.4.5 1999/07/31 18:53:59 chs Exp $	*/
+/*	$NetBSD: uvm.h,v 1.15.4.6 1999/08/02 23:16:13 thorpej Exp $	*/
 
 /*
  *
@@ -156,16 +156,16 @@ UVMHIST_DECL(ubchist);
 
 /*
  * UVM_UNLOCK_AND_WAIT: atomic unlock+wait... front end for the 
- * (poorly named) thread_sleep_msg function.
+ * uvm_sleep() function.
  */
 
 #if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)
-#define UVM_UNLOCK_AND_WAIT(event,lock,intr,msg, timo) \
-	thread_sleep_msg(event,lock,intr,msg, timo)
+#define UVM_UNLOCK_AND_WAIT(event, lock, intr ,msg, timo) \
+	uvm_sleep(event, lock, intr, msg, timo)
 
 #else
-#define UVM_UNLOCK_AND_WAIT(event,lock,intr,msg, timo) \
-	thread_sleep_msg(event,NULL,intr,msg, timo)
+#define UVM_UNLOCK_AND_WAIT(event, lock, intr, msg, timo) \
+	uvm_sleep(event, NULL, intr, msg, timo)
 #endif /* MULTIPROCESSOR || LOCKDEBUG */
 
 /*

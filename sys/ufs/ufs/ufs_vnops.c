@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_vnops.c,v 1.57.4.2 1999/07/11 05:44:00 chs Exp $	*/
+/*	$NetBSD: ufs_vnops.c,v 1.57.4.3 1999/08/02 22:58:22 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993, 1995
@@ -1562,55 +1562,6 @@ ufs_readlink(v)
 }
 
 /*
- * Lock an inode. If its already locked, set the WANT bit and sleep.
- */
-int
-ufs_lock(v)
-	void *v;
-{
-	struct vop_lock_args /* {
-		struct vnode *a_vp;
-		int a_flags;
-		struct proc *a_p;
-	} */ *ap = v;
-	struct vnode *vp = ap->a_vp;
-
-	return (lockmgr(&VTOI(vp)->i_lock, ap->a_flags, &vp->v_interlock));
-}
-
-/*
- * Unlock an inode.  If WANT bit is on, wakeup.
- */
-int
-ufs_unlock(v)
-	void *v;
-{
-	struct vop_unlock_args /* {
-		struct vnode *a_vp;
-		int a_flags;
-		struct proc *a_p;
-	} */ *ap = v;
-	register struct vnode *vp = ap->a_vp;
-
-	return (lockmgr(&VTOI(vp)->i_lock, ap->a_flags | LK_RELEASE,
-		&vp->v_interlock));
-}
-
-/*
- * Check for a locked inode.
- */
-int
-ufs_islocked(v)
-	void *v;
-{
-	struct vop_islocked_args /* {
-		struct vnode *a_vp;
-	} */ *ap = v;
-
-	return (lockstatus(&VTOI(ap->a_vp)->i_lock));
-}
-
-/*
  * Calculate the logical to physical mapping if not done already,
  * then call the device strategy routine.
  */
@@ -1670,7 +1621,7 @@ ufs_print(v)
 	    major(ip->i_dev), minor(ip->i_dev));
 	if (vp->v_type == VFIFO)
 		fifo_printinfo(vp);
-	lockmgr_printinfo(&ip->i_lock);
+	lockmgr_printinfo(&vp->v_lock);
 	printf("\n");
 	return (0);
 }
@@ -1909,14 +1860,13 @@ ufs_vinit(mntp, specops, fifoops, vpp)
 		    mntp)) != NULL) {
 			/*
 			 * Discard unneeded vnode, but save its inode.
-			 * Note that the lock is carried over in the inode
-			 * to the replacement vnode.
 			 */
 			nvp->v_data = vp->v_data;
 			vp->v_data = NULL;
 			vp->v_op = spec_vnodeop_p;
-			vrele(vp);
+			vput(vp);
 			vgone(vp);
+			lockmgr(&nvp->v_lock, LK_EXCLUSIVE, &nvp->v_interlock);
 			/*
 			 * Reinitialize aliased inode.
 			 */

@@ -1,4 +1,4 @@
-/*	$NetBSD: inode.h,v 1.12 1999/03/09 23:57:14 perseant Exp $	*/
+/*	$NetBSD: inode.h,v 1.12.4.1 1999/08/02 22:58:22 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1989, 1993
@@ -81,7 +81,6 @@ struct inode {
 	struct	 dquot *i_dquot[MAXQUOTAS]; /* Dquot structures. */
 	u_quad_t i_modrev;	/* Revision level for NFS lease. */
 	struct	 lockf *i_lockf;/* Head of byte-level lock list. */
-	struct   lock i_lock;	/* Inode lock. */
 	/*
 	 * Side effects; used during directory lookup.
 	 */

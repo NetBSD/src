@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_vfsops.c,v 1.24.4.1 1999/06/21 01:30:52 thorpej Exp $	*/
+/*	$NetBSD: ext2fs_vfsops.c,v 1.24.4.2 1999/08/02 22:56:41 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.
@@ -149,13 +149,16 @@ ext2fs_mountroot()
 	if (bdevvp(rootdev, &rootvp))
 		panic("ext2fs_mountroot: can't setup bdevvp's");
 
-	if ((error = vfs_rootmountalloc(MOUNT_EXT2FS, "root_device", &mp)))
+	if ((error = vfs_rootmountalloc(MOUNT_EXT2FS, "root_device", &mp))) {
+		vrele(rootvp);
 		return (error);
+	}
 
 	if ((error = ext2fs_mountfs(rootvp, mp, p)) != 0) {
 		mp->mnt_op->vfs_refcount--;
 		vfs_unbusy(mp);
 		free(mp, M_MOUNT);
+		vrele(rootvp);
 		return (error);
 	}
 	simple_lock(&mountlist_slock);
@@ -843,7 +846,6 @@ ext2fs_vget(mp, ino, vpp)
 	}
 	ip = pool_get(&ext2fs_inode_pool, PR_WAITOK);
 	memset((caddr_t)ip, 0, sizeof(struct inode));
-	lockinit(&ip->i_lock, PINOD, "inode", 0, 0);
 	vp->v_data = ip;
 	ip->i_vnode = vp;
 	ip->i_e2fs = fs = ump->um_e2fs;

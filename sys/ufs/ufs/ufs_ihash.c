@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_ihash.c,v 1.7 1998/03/01 02:23:37 fvdl Exp $	*/
+/*	$NetBSD: ufs_ihash.c,v 1.7.10.1 1999/08/02 22:58:22 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -127,7 +127,7 @@ ufs_ihashins(ip)
 	struct ihashhead *ipp;
 
 	/* lock the inode, then put it on the appropriate hash list */
-	lockmgr(&ip->i_lock, LK_EXCLUSIVE, (struct simplelock *)0);
+	lockmgr(&ip->i_vnode->v_lock, LK_EXCLUSIVE, (struct simplelock *)0);
 
 	simple_lock(&ufs_ihash_slock);
 	ipp = INOHASH(ip->i_dev, ip->i_number);

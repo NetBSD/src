@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_syscalls.c,v 1.26.2.2.2.1 1999/06/21 01:31:12 thorpej Exp $	*/
+/*	$NetBSD: lfs_syscalls.c,v 1.26.2.2.2.2 1999/08/02 22:57:34 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -917,7 +917,7 @@ lfs_fastvget(mp, ino, daddr, vpp, dinp, need_unlock)
 			lfs_vref(*vpp);
 			if (VOP_ISLOCKED(*vpp)) {
 				printf("lfs_fastvget: ino %d inlocked by pid %d\n",ip->i_number,
-				       ip->i_lock.lk_lockholder);
+				       vp->v_lock.lk_lockholder);
 				clean_inlocked++;
 #ifdef LFS_EAGAIN_FAIL
 				lfs_vunref(*vpp);
@@ -963,7 +963,7 @@ lfs_fastvget(mp, ino, daddr, vpp, dinp, need_unlock)
 			ufs_ihashrem(ip);
 
 			/* Unlock and discard unneeded inode. */
-			lockmgr(&ip->i_lock, LK_RELEASE, &vp->v_interlock);
+			lockmgr(&vp->v_lock, LK_RELEASE, &vp->v_interlock);
 			lfs_vunref(vp);
 			*vpp = NULL;
 			return (error);
@@ -983,7 +983,7 @@ lfs_fastvget(mp, ino, daddr, vpp, dinp, need_unlock)
 			ufs_ihashrem(ip);
 			
 			/* Unlock and discard unneeded inode. */
-			lockmgr(&ip->i_lock, LK_RELEASE, &vp->v_interlock);
+			lockmgr(&vp->v_lock, LK_RELEASE, &vp->v_interlock);
 			lfs_vunref(vp);
 			brelse(bp);
 			*vpp = NULL;
@@ -1002,7 +1002,7 @@ lfs_fastvget(mp, ino, daddr, vpp, dinp, need_unlock)
 	if (error) {
 		/* This CANNOT happen (see ufs_vinit) */
 		printf("lfs_fastvget: ufs_vinit returned %d for ino %d\n", error, ino);
-		lockmgr(&ip->i_lock, LK_RELEASE, &vp->v_interlock);
+		lockmgr(&vp->v_lock, LK_RELEASE, &vp->v_interlock);
 		lfs_vunref(vp);
 		*vpp = NULL;
 		return (error);

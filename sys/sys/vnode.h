@@ -1,4 +1,4 @@
-/*	$NetBSD: vnode.h,v 1.59.4.2 1999/06/21 01:30:27 thorpej Exp $	*/
+/*	$NetBSD: vnode.h,v 1.59.4.3 1999/08/02 22:56:00 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -116,8 +116,8 @@ struct vnode {
 	int	v_ralen;			/* Read-ahead length */
 	daddr_t	v_maxra;			/* last readahead block */
 #define v_interlock v_uvm.u_obj.vmobjlock
-	/* v_vnlock is not used yet */
-	struct	lock *v_vnlock;			/* used for non-locking fs's */
+	struct	lock	v_lock;			/* lock for this vnode */
+	struct	lock *v_vnlock;			/* pointer to vnode lock */
 	enum	vtagtype v_tag;			/* type of underlying data */
 	void 	*v_data;			/* private data for fs */
 };
@@ -125,6 +125,18 @@ struct vnode {
 #define	v_socket	v_un.vu_socket
 #define	v_specinfo	v_un.vu_specinfo
 #define	v_fifoinfo	v_un.vu_fifoinfo
+/*
+ * All vnode locking operations should use vp->v_vnlock. For leaf filesystems
+ * (such as ffs, lfs, msdosfs, etc), vp->v_vnlock = &vp->v_lock. For
+ * stacked filesystems, vp->v_vnlock may equal lowervp->v_vnlock.
+ *
+ * vp->v_vnlock may also be NULL, which indicates that a leaf node does not
+ * export a struct lock for vnode locking. Stacked filesystems (such as
+ * nullfs) must call the underlying fs for locking. See layerfs_ routines
+ * for examples.
+ *
+ * All filesystems must (pretend to) understand lockmanager flags.
+ */
 
 /*
  * Vnode flags.
@@ -140,6 +152,7 @@ struct vnode {
 #define	VBWAIT		0x0400	/* waiting for output to complete */
 #define	VALIASED	0x0800	/* vnode has an alias */
 #define	VDIROP		0x1000	/* LFS: vnode is involved in a directory op */
+#define VLAYER		0x2000	/* vnode is on a layer filesystem */
 #define VDIRTY		0x4000	/* vnode possibly has dirty pages */
 
 #define VSIZENOTSET	((vsize_t)-1)
@@ -310,12 +323,20 @@ extern	struct vattr va_null;		/* predefined null vattr structure */
 /*
  * Flags for vdesc_flags:
  */
-#define VDESC_MAX_VPS		16
+#define VDESC_MAX_VPS		8
 /* Low order 16 flag bits are reserved for willrele flags for vp arguments. */
 #define VDESC_VP0_WILLRELE	0x0001
 #define VDESC_VP1_WILLRELE	0x0002
 #define VDESC_VP2_WILLRELE	0x0004
 #define VDESC_VP3_WILLRELE	0x0008
+#define VDESC_VP0_WILLUNLOCK	0x0100
+#define VDESC_VP1_WILLUNLOCK	0x0200
+#define VDESC_VP2_WILLUNLOCK	0x0400
+#define VDESC_VP3_WILLUNLOCK	0x0800
+#define VDESC_VP0_WILLPUT	0x0101
+#define VDESC_VP1_WILLPUT	0x0202
+#define VDESC_VP2_WILLPUT	0x0404
+#define VDESC_VP3_WILLPUT	0x0808
 #define VDESC_NOMAP_VPP		0x0100
 #define VDESC_VPP_WILLRELE	0x0200
 

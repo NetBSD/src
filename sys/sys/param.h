@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.56.2.2.2.1 1999/06/21 01:30:20 thorpej Exp $	*/
+/*	$NetBSD: param.h,v 1.56.2.2.2.2 1999/08/02 22:56:00 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -65,7 +65,7 @@
  *
  */
 
-#define __NetBSD_Version__  104040000	/* NetBSD 1.4D */
+#define __NetBSD_Version__  104090000	/* NetBSD 1.4I */
 
 /*
  * Historical NetBSD #define
@@ -86,6 +86,7 @@
 #endif
 
 #ifndef _LOCORE
+#include <sys/inttypes.h>
 #include <sys/types.h>
 #endif
 

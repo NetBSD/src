@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.74.4.1 1999/06/21 01:30:21 thorpej Exp $	*/
+/*	$NetBSD: proc.h,v 1.74.4.2 1999/08/02 22:56:00 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1989, 1991, 1993
@@ -44,6 +44,7 @@
 #define	_SYS_PROC_H_
 
 #include <machine/proc.h>		/* Machine-dependent proc substruct. */
+#include <sys/lock.h>
 #include <sys/queue.h>
 
 /*
@@ -210,6 +211,9 @@ struct	proc {
 #define	SSLEEP	3		/* Sleeping on an address. */
 #define	SSTOP	4		/* Process debugging or suspension. */
 #define	SZOMB	5		/* Awaiting collection by parent. */
+#define	SDEAD	6		/* Process is almost a zombie. */
+
+#define	P_ZOMBIE(p)	((p)->p_stat == SZOMB || (p)->p_stat == SDEAD)
 
 /* These flags are kept in p_flag. */
 #define	P_ADVLOCK	0x00001	/* Process may hold a POSIX advisory lock. */
@@ -232,11 +236,10 @@ struct	proc {
 #define	P_NOCLDWAIT	0x20000	/* No zombies if child dies */
 
 /*
- * Macro to compute the exit signal.
+ * Macro to compute the exit signal to be delivered.
  */
-#define	P_EXITSIG(p)	((((p)->p_flag & (P_TRACED|P_FSTRACE)) ||	\
-			  (p)->p_pptr == initproc) ?			\
-			 SIGCHLD : p->p_exitsig)
+#define	P_EXITSIG(p)	(((p)->p_flag & (P_TRACED|P_FSTRACE)) ? SIGCHLD : \
+			 p->p_exitsig)
 
 /*
  * MOVE TO ucred.h?
@@ -314,9 +317,14 @@ extern struct proc *curproc;		/* Current running proc. */
 extern struct proc proc0;		/* Process slot for swapper. */
 extern int nprocs, maxproc;		/* Current and max number of procs. */
 
+/* Process list lock; see kern_proc.c for locking protocol details. */
+extern struct lock proclist_lock;
+
 extern struct proclist allproc;		/* List of all processes. */
-extern struct proclist deadproc;	/* List of dead processes. */
 extern struct proclist zombproc;	/* List of zombie processes. */
+
+extern struct proclist deadproc;	/* List of dead processes. */
+extern struct simplelock deadproc_slock;
 
 struct proc *initproc;			/* Process slots for init, pager. */
 
@@ -354,6 +362,7 @@ void	uvm_swapin __P((struct proc *));  /* XXX: uvm_extern.h? */
 int	tsleep __P((void *chan, int pri, const char *wmesg, int timo));
 void	unsleep __P((struct proc *));
 void	wakeup __P((void *chan));
+void	wakeup_one __P((void *chan));
 void	reaper __P((void));
 void	exit1 __P((struct proc *, int));
 void	exit2 __P((struct proc *));
@@ -366,5 +375,10 @@ void	cpu_switch __P((struct proc *));
 void	cpu_wait __P((struct proc *));
 void	cpu_exit __P((struct proc *));
 int	proc_isunder __P((struct proc *, struct proc*));
+
+void	proclist_lock_read __P((void));
+void	proclist_unlock_read __P((void));
+int	proclist_lock_write __P((void));
+void	proclist_unlock_write __P((int));
 #endif	/* _KERNEL */
 #endif	/* !_SYS_PROC_H_ */

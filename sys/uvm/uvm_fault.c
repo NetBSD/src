@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_fault.c,v 1.27.2.1.2.3 1999/07/04 02:00:33 chs Exp $	*/
+/*	$NetBSD: uvm_fault.c,v 1.27.2.1.2.4 1999/08/02 23:16:14 thorpej Exp $	*/
 
 /*
  *
@@ -731,7 +731,7 @@ ReFault:
 		npages = nback + nforw + 1;
 		centeridx = nback;
 
-		narrow = FALSE;	/* ensure only once per-fault */
+		narrow = TRUE;	/* ensure only once per-fault */
 
 	} else {
 		
@@ -810,11 +810,10 @@ ReFault:
 		/*
 		 * dont play with VAs that are already mapped
 		 * except for center)
-		 * XXX: return value of pmap_extract disallows PA 0
 		 */
 		if (lcv != centeridx) {
-			pa = pmap_extract(ufi.orig_map->pmap, currva);
-			if (pa != NULL) {
+			if (pmap_extract(ufi.orig_map->pmap, currva, &pa) ==
+			    TRUE) {
 				pages[lcv] = PGO_DONTCARE;
 				continue;
 			}
@@ -1602,6 +1601,7 @@ Case2:
 						   SLOCK_LOCKED);
 
 				if (uobjpage->flags & PG_WANTED)
+					/* still holding object lock */
 					wakeup(uobjpage);
 
 				uvm_lock_pageq();
@@ -1661,6 +1661,7 @@ Case2:
 			 */
 
 			if (uobjpage->flags & PG_WANTED)
+				/* still have the obj lock */
 				wakeup(uobjpage);
 			uobjpage->flags &= ~(PG_BUSY|PG_WANTED);
 			UVM_PAGE_OWN(uobjpage, NULL);
@@ -1726,9 +1727,8 @@ Case2:
 	}
 	uvm_unlock_pageq();
 
-	if (pg->flags & PG_WANTED) {
-		wakeup(pg);
-	}
+	if (pg->flags & PG_WANTED)
+		wakeup(pg);		/* lock still held */
 
 	/* 
 	 * note that pg can't be PG_RELEASED since we did not drop the object 
@@ -1840,13 +1840,9 @@ uvm_fault_unwire_locked(map, start, end)
 		panic("uvm_fault_unwire_locked: address not in map");
 
 	for (va = start; va < end ; va += PAGE_SIZE) {
-		pa = pmap_extract(pmap, va);
-
-		/* XXX: assumes PA 0 cannot be in map */
-		if (pa == (paddr_t) 0) {
+		if (pmap_extract(pmap, va, &pa) == FALSE)
 			panic("uvm_fault_unwire_locked: unwiring "
 			    "non-wired memory");
-		}
 
 		/*
 		 * make sure the current entry is for the address we're
