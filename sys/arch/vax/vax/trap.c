@@ -1,4 +1,4 @@
-/*      $NetBSD: trap.c,v 1.11 1995/06/05 16:27:20 ragge Exp $     */
+/*      $NetBSD: trap.c,v 1.12 1995/06/16 15:36:53 ragge Exp $     */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -100,7 +100,13 @@ char *traptypes[]={
 	"trace trap",
 	"compatibility mode fault",
 	"access violation fault",
+	"",
+	"",
+	"KSP invalid",
+	"",
+	"kernel debugger trap"
 };
+int no_traps = 18;
 
 arithflt(frame)
 	struct trapframe *frame;
@@ -125,29 +131,13 @@ fram:
 
 	default:
 faulter:
-		if(frame->trap<12)
-			printf("\nKernel fault: %s. Stack dump:\n\n",
-				traptypes[frame->trap]);
-		else
-			printf("\nKernel fault: %d. Stack dump:\n\n",
-				frame->trap);
-		printf("FP %8x AP %8x R0 %8x R1 %8x\n",frame->fp,
-			frame->ap, frame->r0, frame->r1);
-		printf("R2 %8x R3 %8x R4 %8x R5 %8x\n",frame->r2,frame->r3,
-			frame->r4,frame->r5);
-		printf("TRAP %2x CODE %6x PC %8x PSL %8x\n",frame->trap,
-			frame->code, frame->pc, frame->psl);
-			i=(u_int*)&(frame->psl);
-		printf("(RET PC) %8x, (RET PSL) %8x\n",i[1],i[2]);
-		for(j=3;j<15;j+=4)
-			printf("%8x %8x %8x %8x\n",i[j],i[j+1],i[j+2],
-				i[j+3]);
-		asm("halt");
-		printf("trap type %x, code %x, pc %x, psl %x\n",
-			frame->trap, frame->code, frame->pc, frame->psl);
-		showstate(curproc);
-		asm("halt");
+#ifdef DDB
+		if (kdb_trap(frame))
+			return;
+#endif
 		panic("trap");
+	case T_KSPNOTVAL:
+		goto faulter;
 
 	case T_TRANSFLT|T_USER:
 	case T_TRANSFLT: /* Translation invalid - may be simul page ref */
@@ -451,29 +441,6 @@ printstack(loaddr, highaddr)
 	for (;tmp < highaddr;tmp += 4)
 		printf("%8x:  %8x  %8x  %8x  %8x\n",
 		    tmp, *tmp, *(tmp + 1), *(tmp + 2), *(tmp + 3));
-}
-
-invkstk(frame)
-	struct trapframe *frame;
-{
-	struct proc *p;
-	extern u_int scratch;
-
-
-	p = curproc;
-
-	printf("Kernel stack invalid: pid %d, name %s\n\n",
-	    p->p_pid, p->p_comm);
-	printf("Register state:\n\n\n");
-	showregs(frame);
-	printf("\n\nProcess state:\n\n");
-	showstate(p);
-	asm("halt");
-	printf("\n\nKernel stack:\n\n");
-	printstack(mfpr(PR_KSP), (u_int)p->p_addr + USPACE);
-	printf("\n\nInterrupt stack:\n\n");
-	printstack(mfpr(PR_ISP), scratch);
-	panic("Invalid kernel stack");
 }
 
 showregs(frame)

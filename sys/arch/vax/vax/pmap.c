@@ -1,4 +1,4 @@
-/*      $NetBSD: pmap.c,v 1.13 1995/06/05 16:27:07 ragge Exp $     */
+/*      $NetBSD: pmap.c,v 1.14 1995/06/16 15:36:47 ragge Exp $     */
 #define DEBUG
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -76,6 +76,7 @@ extern uint etext;
 extern u_int *pte_cmap;
 extern int  maxproc;
 extern struct vmspace vmspace0;
+extern int edata, end;
 uint*  UMEMmap;
 void*  Numem;
 void  *scratch;
@@ -91,12 +92,8 @@ vm_map_t	pte_map;
 vm_offset_t     avail_start, avail_end;
 vm_offset_t   virtual_avail, virtual_end; /* Available virtual memory   */
 
-/******************************************************************************
- *
- * pmap_bootstrap()
- *
- ******************************************************************************
- *
+/*
+ * pmap_bootstrap().
  * Called as part of vm bootstrap, allocates internal pmap structures.
  * Assumes that nothing is mapped, and that kernel stack is located
  * immediately after end.
@@ -107,6 +104,7 @@ pmap_bootstrap()
 {
 	uint	i;
 	extern	u_int sigcode, esigcode, proc0paddr;
+	extern char *esym;
 	struct pmap *p0pmap=&vmspace0.vm_pmap;
 	vm_offset_t	pend=0;
 #define	ROUND_PAGE(x)	(((uint)(x) + PAGE_SIZE-1)& ~(PAGE_SIZE - 1))
@@ -140,6 +138,8 @@ pmap_bootstrap()
 	virtual_end=SYSPTSIZE*NBPG+KERNBASE;
 #ifdef DEBUG
 	printf("Sysmap %x, istack %x, scratch %x\n",Sysmap,istack,scratch);
+	printf("etext %x, edata %x, end %x, esym %x\n",
+	    &etext,&edata, &end, esym);
 	printf("SYSPTSIZE %x, USRPTSIZE %x\n",SYSPTSIZE,USRPTSIZE);
 	printf("pv_table %x, vmmap %x, Numem %x, pte_cmap %x\n",
 		pv_table,vmmap,Numem,pte_cmap);

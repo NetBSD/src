@@ -1,4 +1,4 @@
-/*      $NetBSD: subr.s,v 1.10 1995/06/05 16:27:13 ragge Exp $     */
+/*      $NetBSD: subr.s,v 1.11 1995/06/16 15:36:50 ragge Exp $     */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -254,3 +254,26 @@ _pte_cmap:	.long 0 ; .globl _pte_cmap	/* Address of PTE
 						   corresponding to cmap    */
 
 _memtest:	.long 0 ; .globl _memtest	# Memory test in progress.
+
+#ifdef DDB
+/*
+ * DDB is the only routine that uses setjmp/longjmp.
+ */
+	.globl	_setjmp, _longjmp
+_setjmp:.word	0
+	movl	4(ap), r0
+	movl	8(fp), (r0)
+	movl	12(fp),	4(r0)
+	movl	16(fp), 8(r0)
+	addl3	fp,$28,12(r0)
+	clrl	r0
+	ret
+
+_longjmp:.word	0
+	movl	4(ap), r1
+	movl	8(ap), r0
+	movl	(r1), ap
+	movl	4(r1), fp
+	movl	12(r1), sp
+	jmp	*8(r1)
+#endif 

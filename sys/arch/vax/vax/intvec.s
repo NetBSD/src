@@ -1,4 +1,4 @@
-/*	$NetBSD: intvec.s,v 1.10 1995/06/05 16:26:43 ragge Exp $   */
+/*	$NetBSD: intvec.s,v 1.11 1995/06/16 15:36:40 ragge Exp $   */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -114,7 +114,7 @@ _rpb:
 	INTVEC(netint,   ISTACK)	# Network interrupt
 	INTVEC(strayB4, ISTACK)	# Unused, B4
 	INTVEC(strayB8, ISTACK)	# Unused, B8
-	INTVEC(strayBC, ISTACK)	# Unused, BC
+	INTVEC(ddbtrap, ISTACK)	# Kernel debugger trap, BC
 	INTVEC(hardclock,ISTACK)	# Interval Timer
 	INTVEC(strayC4, ISTACK)	# Unused, C4
 	INTVEC(emulate, KSTACK) # Subset instruction emulation
@@ -170,14 +170,11 @@ L4:	addl2	(sp)+,sp	# remove info pushed on stack
 	movl	_memtest,(sp)	# REI to new adress
 	rei
 
-	.align 2
-	STRAY(0, 08)
+	TRAPCALL(invkstk, T_KSPNOTVAL)
 	STRAY(0, 0C)
 
 	TRAPCALL(privinflt, T_PRIVINFLT)
-
 	STRAY(0, 14)
-
 	TRAPCALL(resopflt, T_RESOPFLT)
 	TRAPCALL(resadflt, T_RESADFLT)
 
@@ -231,24 +228,6 @@ syscall:
 	mtpr	$0x1f,$PR_IPL	# Be sure we can REI
 	rei
 
-        .align 2                # Main system call
-        .globl  invkstk
-invkstk:
-        pushl   $0
-        pushl   $0
-        pushr   $0xfff
-        pushl   ap
-        pushl   fp
-        pushl   sp              # pointer to syscall frame; defined in trap.h
-        calls   $1,_invkstk
-        movl    (sp)+,fp
-        movl    (sp)+,ap
-        popr    $0xfff
-        addl2   $8,sp
-        mtpr    $0x1f,$PR_IPL   # Be sure we can REI
-        rei
-
-
 	STRAY(0, 44)
 	STRAY(0, 48)
 	STRAY(0, 4C)
@@ -285,7 +264,7 @@ invkstk:
 
 	STRAY(0, B4)
 	STRAY(0, B8)
-	STRAY(0, BC)
+	TRAPCALL(ddbtrap,T_KDBTRAP)
 
 		.align	2
 		.globl	hardclock
