@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.10 2000/08/23 19:15:26 wrstuden Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.11 2000/11/20 08:24:16 chs Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -310,7 +310,7 @@ read_mac_label(dev, strat, lp, osdep)
 	/* read partition map */
 	bp->b_blkno = 1;	/* partition map starts at blk 1 */
 	bp->b_bcount = lp->d_secsize * NUM_PARTS;
-	bp->b_flags = B_BUSY | B_READ;
+	bp->b_flags |= B_READ;
 	bp->b_cylinder = 1 / lp->d_secpercyl;
 	(*strat)(bp);
 
@@ -365,9 +365,7 @@ read_mac_label(dev, strat, lp, osdep)
 	lp->d_npartitions = ((maxslot >= RAW_PART) ? maxslot : RAW_PART) + 1;
 
 done:
-	bp->b_flags |= B_INVAL;
 	brelse(bp);
-
 	return msg;
 }
 
@@ -399,7 +397,7 @@ read_dos_label(dev, strat, lp, osdep)
 	/* read master boot record */
 	bp->b_blkno = MBR_BBSECTOR;
 	bp->b_bcount = lp->d_secsize;
-	bp->b_flags = B_BUSY | B_READ;
+	bp->b_flags |= B_READ;
 	bp->b_cylinder = MBR_BBSECTOR / lp->d_secpercyl;
 	(*strat)(bp);
 
@@ -433,7 +431,6 @@ read_dos_label(dev, strat, lp, osdep)
 	lp->d_npartitions = ((maxslot >= RAW_PART) ? maxslot : RAW_PART) + 1;
 
  done:
-	bp->b_flags |= B_INVAL;
 	brelse(bp);
 	return (msg);
 }
@@ -444,7 +441,7 @@ read_dos_label(dev, strat, lp, osdep)
 static int
 get_netbsd_label(dev, strat, lp, bno)
 	dev_t dev;
-	void (*strat)();
+	void (*strat)(struct buf *);
 	struct disklabel *lp;
 	daddr_t bno;
 {
@@ -458,7 +455,7 @@ get_netbsd_label(dev, strat, lp, bno)
 	/* Now get the label block */
 	bp->b_blkno = bno + LABELSECTOR;
 	bp->b_bcount = lp->d_secsize;
-	bp->b_flags = B_BUSY | B_READ;
+	bp->b_flags |= B_READ;
 	bp->b_cylinder = bp->b_blkno / (lp->d_secsize / DEV_BSIZE) / lp->d_secpercyl;
 	(*strat)(bp);
 
@@ -478,7 +475,6 @@ get_netbsd_label(dev, strat, lp, bno)
 		}
 	}
 done:
-	bp->b_flags |= B_INVAL;
 	brelse(bp);
 	return 0;
 }
@@ -518,7 +514,7 @@ readdisklabel(dev, strat, lp, osdep)
 	bp->b_blkno = 0;
 	bp->b_resid = 0;
 	bp->b_bcount = lp->d_secsize;
-	bp->b_flags = B_BUSY | B_READ;
+	bp->b_flags |= B_READ;
 	bp->b_cylinder = 1 / lp->d_secpercyl;
 	(*strat)(bp);
 
@@ -543,7 +539,6 @@ readdisklabel(dev, strat, lp, osdep)
 		}
 	}
 
-	bp->b_flags |= B_INVAL;
 	brelse(bp);
 	return (msg);
 }
@@ -608,13 +603,14 @@ writedisklabel(dev, strat, lp, osdep)
 	bp->b_cylinder = bp->b_blkno / (lp->d_secsize / DEV_BSIZE) / lp->d_secpercyl;
 	bp->b_bcount = lp->d_secsize;
 
-	bp->b_flags = B_BUSY | B_READ;
+	bp->b_flags |= B_READ;
 	(*strat)(bp);
 	error = biowait(bp);
 	if (error != 0)
 		goto done;
 
-	bp->b_flags = B_BUSY | B_WRITE;
+	bp->b_flags &= ~(B_READ|B_DONE);
+	bp->b_flags |= B_WRITE;
 
 	bcopy((caddr_t)lp, (caddr_t)bp->b_data + LABELOFFSET, sizeof *lp);
 
@@ -622,7 +618,6 @@ writedisklabel(dev, strat, lp, osdep)
 	error = biowait(bp);
 
 done:
-	bp->b_flags |= B_INVAL;
 	brelse(bp);
 
 	return error;
