@@ -1,4 +1,4 @@
-/*	$NetBSD: uaudio.c,v 1.61 2002/10/06 10:01:08 kristerw Exp $	*/
+/*	$NetBSD: uaudio.c,v 1.62 2002/12/02 02:36:14 toshii Exp $	*/
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uaudio.c,v 1.61 2002/10/06 10:01:08 kristerw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uaudio.c,v 1.62 2002/12/02 02:36:14 toshii Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -145,6 +145,7 @@ struct chan {
 		usbd_xfer_handle xfer;
 		u_char		*buffer;
 		u_int16_t	sizes[UAUDIO_NFRAMES];
+		u_int16_t	offsets[UAUDIO_NFRAMES];
 		u_int16_t	size;
 	} chanbufs[UAUDIO_NCHANBUFS];
 
@@ -2076,6 +2077,7 @@ uaudio_chan_rtransfer(struct chan *ch)
 			residue -= USB_FRAMES_PER_SECOND;
 		}
 		cb->sizes[i] = size;
+		cb->offsets[i] = total;
 		total += size;
 	}
 	ch->residue = residue;
@@ -2107,7 +2109,7 @@ uaudio_chan_rintr(usbd_xfer_handle xfer, usbd_private_handle priv,
 	struct chanbuf *cb = priv;
 	struct chan *ch = cb->chan;
 	u_int32_t count;
-	int s, n;
+	int s, i, n, frsize;
 
 	/* Return if we are aborting. */
 	if (status == USBD_CANCELLED)
@@ -2117,16 +2119,10 @@ uaudio_chan_rintr(usbd_xfer_handle xfer, usbd_private_handle priv,
 	DPRINTFN(5,("uaudio_chan_rintr: count=%d, transferred=%d\n",
 		    count, ch->transferred));
 
-	if (count < cb->size) {
-		/* if the device fails to keep up, copy last byte */
-		u_char b = count ? cb->buffer[count-1] : 0;
-		while (count < cb->size)
-			cb->buffer[count++] = b;
-	}
-
+	/* count < cb->size is normal for asynchronous source */
 #ifdef DIAGNOSTIC
-	if (count != cb->size) {
-		printf("uaudio_chan_rintr: count(%d) != size(%d)\n",
+	if (count > cb->size) {
+		printf("uaudio_chan_rintr: count(%d) > size(%d)\n",
 		       count, cb->size);
 	}
 #endif
@@ -2135,18 +2131,22 @@ uaudio_chan_rintr(usbd_xfer_handle xfer, usbd_private_handle priv,
 	 * Transfer data from channel buffer to upper layer buffer, taking
 	 * care of wrapping the upper layer buffer.
 	 */
-	n = min(count, ch->end - ch->cur);
-	memcpy(ch->cur, cb->buffer, n);
-	ch->cur += n;
-	if (ch->cur >= ch->end)
-		ch->cur = ch->start;
-	if (count > n) {
-		memcpy(ch->cur, cb->buffer + n, count - n);
-		ch->cur += count - n;
+	for(i = 0; i < UAUDIO_NFRAMES; i++) {
+		frsize = cb->sizes[i];
+		n = min(frsize, ch->end - ch->cur);
+		memcpy(ch->cur, cb->buffer + cb->offsets[i], n);
+		ch->cur += n;
+		if (ch->cur >= ch->end)
+			ch->cur = ch->start;
+		if (frsize > n) {
+			memcpy(ch->cur, cb->buffer + cb->offsets[i] + n,
+			    frsize - n);
+			ch->cur += frsize - n;
+		}
 	}
 
 	/* Call back to upper layer */
-	ch->transferred += cb->size;
+	ch->transferred += count;
 	s = splaudio();
 	while (ch->transferred >= ch->blksize) {
 		ch->transferred -= ch->blksize;
