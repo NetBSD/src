@@ -3650,12 +3650,12 @@ do_spec_1 (spec, inswitch, soft_matched_part)
 
 		if (p[0] == '%' && p[1] == 'O')
 		  {
+		    p += 2;
 		    /* We don't support extra suffix characters after %O.  */
 		    if (*p == '.' || ISALPHA (*p))
 		      abort ();
 		    suffix = OBJECT_SUFFIX;
 		    suffix_length = strlen (OBJECT_SUFFIX);
-		    p += 2;
 		  }
 		else
 		  {
@@ -4947,7 +4947,7 @@ main (argc, argv)
 
       if (! verbose_flag)
 	{
-	  printf ("\nReport bugs to egcs-bugs@cygnus.com.\n");
+	  printf ("\nReport bugs to egcs-bugs@egcs.cygnus.com.\n");
 	  printf ("Please see the file BUGS (included with the sources) first.\n");
 	  
 	  exit (0);
@@ -5137,7 +5137,7 @@ main (argc, argv)
 
   if (print_help_list)
     {
-      printf ("\nReport bugs to egcs-bugs@cygnus.com.\n");
+      printf ("\nReport bugs to egcs-bugs@egcs.cygnus.com.\n");
       printf ("Please see the file BUGS (included with the sources) first.\n");
     }
   

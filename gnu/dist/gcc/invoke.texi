@@ -158,6 +158,7 @@ in the following sections.
 -fschedule-insns2  -fstrength-reduce  -fthread-jumps
 -funroll-all-loops  -funroll-loops
 -fmove-all-movables  -freduce-all-givs -fstrict-aliasing
+-fstructure-noalias
 -O  -O0  -O1  -O2  -O3 -Os
 @end smallexample
 
@@ -2425,7 +2426,7 @@ These two options are intended to be removed someday, once
 they have helped determine the efficacy of various
 approaches to improving loop optimizations.
 
-Please let us (@code{egcs@@cygnus.com} and @code{fortran@@gnu.org})
+Please let us (@code{egcs@@egcs.cygnus.com} and @code{fortran@@gnu.org})
 know how use of these options affects
 the performance of your production code.
 We're very interested in code that runs @emph{slower}
@@ -2501,6 +2502,17 @@ allowed to alias.  For an example, see the C front-end function
 @code{c_get_alias_set}.
 @end ifset
 
+@item -fstructure-noalias
+Allows the compiler to assume that structure / varying array references
+do not alias fixed scalars.
+
+Although this optimization is safe, GCC can occasionally lose track
+of which references refer to scalars and which to structures,
+leading it to perform unsafe transformations.  Release 1.2 of EGCS
+will incorporate changes which allow GCC to track the
+scalar/structure distinction safely.  Thus, the optimization will
+always be same, and this option will likely be removed or will have
+no effect.
 @end table
 
 @node Preprocessor Options
@@ -5008,7 +5020,7 @@ there.
 You can specify that an individual function is called with this calling
 sequence with the function attribute @samp{stdcall}.  You can also
 override the @samp{-mrtd} option by using the function attribute
-@samp{cdecl}. @xref{Function Attributes}
+@samp{cdecl}.  @xref{Function Attributes}.
 
 @strong{Warning:} this calling convention is incompatible with the one
 normally used on Unix, so you cannot use it if you need to call
@@ -5034,7 +5046,8 @@ supported letters are: @code{a} allocate EAX; @code{b} allocate EBX;
 Control how many registers are used to pass integer arguments.  By
 default, no registers are used to pass arguments, and at most 3
 registers can be used.  You can control this behavior for a specific
-function by using the function attribute @samp{regparm}.   @xref{Function Attributes}
+function by using the function attribute @samp{regparm}.
+@xref{Function Attributes}.
 
 @strong{Warning:} if you use this switch, and
 @var{num} is nonzero, then you must build all modules with the same
@@ -5670,7 +5683,7 @@ All variants support @samp{-mcpu=base}, this is the default.
 Put functions, data, and readonly data in @var{text section},
 @var{data section}, and @var{readonly data section} respectively
 by default.  This can be overridden with the @code{section} attribute.
-@xref{Variable Attributes}
+@xref{Variable Attributes}.
 
 @end table
 
