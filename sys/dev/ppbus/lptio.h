@@ -1,16 +1,22 @@
-/* $NetBSD: lptio.h,v 1.2 2004/01/21 00:33:37 bjh21 Exp $ */
+/* $NetBSD: lptio.h,v 1.3 2004/01/28 09:29:06 jdolecek Exp $ */
 
 #ifndef __DEV_PPBUS_LPTIO_H_
 #define __DEV_PPBUS_LPTIO_H_
 
 /* Definitions for get status command */
-enum boolean_t { false, true};
-enum mode_t { standard, nibble, ps2, fast, ecp, epp };
+enum lpt_mode_t {
+	standard = 1,
+	nibble = 2,
+	ps2 = 3,
+	fast = 4,
+	ecp = 5,
+	epp = 6
+};
 
 typedef struct {
-	enum boolean_t dma_status;
-	enum boolean_t ieee_status;
-	enum mode_t mode_status;
+	u_int16_t mode_status;
+	u_int8_t dma_status;
+	u_int8_t ieee_status;
 } LPT_INFO_T;
 
 /* LPT ioctl commands */
