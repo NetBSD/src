@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs.h,v 1.14.2.3 1999/12/17 23:53:17 he Exp $	*/
+/*	$NetBSD: lfs.h,v 1.14.2.4 2000/01/20 21:00:49 he Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -315,6 +315,7 @@ struct lfs {
 #endif
 	struct vnode *lfs_flushvp;      /* vnode being flushed */
 	u_int32_t lfs_diropwait;	/* # procs waiting on dirop flush */
+	struct lock lfs_freelock;
 };
 
 /*
