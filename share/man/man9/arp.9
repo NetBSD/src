@@ -1,4 +1,4 @@
-.\"	$NetBSD: arp.9,v 1.5 1997/03/16 20:24:08 is Exp $
+.\"	$NetBSD: arp.9,v 1.6 1997/03/17 14:06:50 is Exp $
 .\"
 .\" Copyright (c) 1997 Ignatios Souvatzis.
 .\" All rights reserved.
@@ -41,6 +41,10 @@
 .Fd #include <netinet/if_inarp.h>
 .Ft void
 .Fn arp_ifinit "struct ifnet *ifp" "struct ifaddr *ifa"
+.Ft int
+.Fn arpresolve "struct ifnet *ifp" "struct rtentry *rt" "struct mbuf *m" "struct sockaddr *dst" "u_char *desten"
+.Ft void
+.Fn arpintr
 .Sh DESCRIPTION
 The
 .Nm 
@@ -48,22 +52,68 @@ functions provide the interface between the
 .Nm 
 module and the network drivers which need
 .Nm 
-functionality.
+functionality. Such drivers must request the 
+arp
+attribute in their "files" declaration.
+
 
 .Bl -tag -width "arp_ifinit()"
+
 .It Fn arp_ifinit
 Sets up the 
 .Nm
 specific fields in 
 .Fa ifa .
-Additionally, it sends out a gratitious ARP request on 
+Additionally, it sends out a gratitious
+.Nm
+request on 
 .Fa ifp ,
-so that other machines are warned that we have a new address and
+so that other machines are warned that we have a (new) address and
 duplicate addresses can be detected.
+
+.It Fn arpresolve
+is called by network output functions to resolve an IPv4 address.
+If no 
+.Fa rt
+is given, a new one is looked up or created. If the passed or found
+.Fa rt
+does not contain a valid gateway link level address, a pointer to the packet
+in 
+.Fa m
+is stored in the route entry, possibly replacing older stored packets, and an 
+.Nm
+request is sent instead. When an 
+.Nm 
+reply is received, the last held packet is send.
+Otherwise, the looked up address is returned and written into the storage
+.Fa desten
+points to.
+.Fn arpresolve
+returns 1, if a valid address was stored to
+.Fa desten ,
+and the packet can be sent immediately. Else a 0 is returned.
+
+.It Fn arpintr
+When an 
+.Nm
+packet is received, the network driver (class) input interupt handler queues 
+the packet on the arpintrq queue, and requests an
+.Fn arpintr
+soft interupt callback. 
+.Fn arpintr 
+dequeues the packets, performs sanity checks and calls (for IPv4 
+.Nm 
+packes, which are the only ones supported currently) the 
+.Fn in_arpinput 
+function.
+.Fn in_arpinput 
+either generates a reply to request packets, and adds the sender address
+translation to to the routing table, if a matching route entry is found. 
+If the route entry contained a pointer to a held packet, that packet is 
+sent.
+
 .El
 
-.Sh RETURN VALUES
-None.
 
 .\" .Sh ERRORS
 
