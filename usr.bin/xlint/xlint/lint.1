@@ -1,4 +1,4 @@
-.\" $NetBSD: lint.1,v 1.23 2002/09/26 01:09:46 wiz Exp $
+.\" $NetBSD: lint.1,v 1.24 2002/10/21 21:16:12 christos Exp $
 .\"
 .\" Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
 .\" Copyright (c) 1994, 1995 Jochen Pohl
@@ -76,7 +76,7 @@
 .Nm lint
 .Op Fl abceghprvwzHFV
 .Bk -words
-.Op Fl s | Fl t
+.Op Fl s | Fl t | Fl S
 .Ek
 .Bk -words
 .Fl C Ar library
@@ -295,6 +295,8 @@ With the
 flag,
 .Li __STRICT_ANSI__
 is a predefined preprocessor macro.
+.It Fl S
+C9X mode. Currently not fully implemented.
 .It Fl t
 Traditional C mode.
 .Li __STDC__
