@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.c,v 1.86.2.6 2004/04/08 20:26:06 jdc Exp $ */
+/*	$NetBSD: sysctl.c,v 1.86.2.7 2004/04/16 07:54:34 tron Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)sysctl.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: sysctl.c,v 1.86.2.6 2004/04/08 20:26:06 jdc Exp $");
+__RCSID("$NetBSD: sysctl.c,v 1.86.2.7 2004/04/16 07:54:34 tron Exp $");
 #endif
 #endif /* not lint */
 
@@ -547,7 +547,7 @@ print_tree(int *name, u_int namelen, struct sysctlnode *pnode, u_int type,
 		if (Aflag || type != CTLTYPE_NODE) {
 			if (pnode->sysctl_desc == NULL)
 				getdesc1(name, namelen, pnode);
-			if (Aflag ||
+			if (Aflag || !add ||
 			    (pnode->sysctl_desc != NULL &&
 			     pnode->sysctl_desc != (const char*)-1)) {
 				if (!nflag)
