@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.58 2000/11/18 19:25:35 thorpej Exp $ */
+/* $NetBSD: cpu.c,v 1.59 2000/11/19 19:18:19 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.58 2000/11/18 19:25:35 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.59 2000/11/19 19:18:19 thorpej Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -557,9 +557,12 @@ cpu_hatch(ci)
 	trap_init();
 
 	/* Yahoo!  We're running kernel code!  Announce it! */
-	printf("%s: processor ID %lu running\n",
+	printf("%s: CPU %lu running\n",
 	    ci->ci_softc->sc_dev.dv_xname, cpu_number());
 	atomic_setbits_ulong(&cpus_running, cpumask);
+	
+	/* Initialize our base "runtime". */
+	microtime(&ci->ci_schedstate.spc_runtime);
 }
 
 int
