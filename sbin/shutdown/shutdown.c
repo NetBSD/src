@@ -1,4 +1,4 @@
-/*	$NetBSD: shutdown.c,v 1.9 1995/03/18 15:01:09 cgd Exp $	*/
+/*	$NetBSD: shutdown.c,v 1.10 1996/12/11 04:05:21 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988, 1990, 1993
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)shutdown.c	8.2 (Berkeley) 2/16/94";
 #else
-static char rcsid[] = "$NetBSD: shutdown.c,v 1.9 1995/03/18 15:01:09 cgd Exp $";
+static char rcsid[] = "$NetBSD: shutdown.c,v 1.10 1996/12/11 04:05:21 thorpej Exp $";
 #endif
 #endif /* not lint */
 
@@ -352,12 +352,14 @@ die_you_gravy_sucking_pig_dog()
 	(void)printf("\nkill -HUP 1\n");
 #else
 	if (doreboot) {
-		execle(_PATH_REBOOT, "reboot", "-l", nosync, 0);
+		execle(_PATH_REBOOT, "reboot", "-l", nosync, (char *)0,
+		    (char **)0);
 		syslog(LOG_ERR, "shutdown: can't exec %s: %m.", _PATH_REBOOT);
 		perror("shutdown");
 	}
 	else if (dohalt) {
-		execle(_PATH_HALT, "halt", "-l", nosync, 0);
+		execle(_PATH_HALT, "halt", "-l", nosync, (char *)0,
+		    (char **)0);
 		syslog(LOG_ERR, "shutdown: can't exec %s: %m.", _PATH_HALT);
 		perror("shutdown");
 	}
