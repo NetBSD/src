@@ -33,7 +33,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char *sccsid = "from: @(#)strftime.c	5.11 (Berkeley) 2/24/91";*/
-static char *rcsid = "$Id: strftime.c,v 1.4 1993/08/26 00:51:52 jtc Exp $";
+static char *rcsid = "$Id: strftime.c,v 1.5 1994/04/07 06:52:14 deraadt Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -197,6 +197,7 @@ _fmt(format, t)
 			case 'R':
 				if (!_fmt("%H:%M", t))
 					return(0);
+				continue;
 			case 'r':
 				if (!_fmt(t_fmt_ampm, t))
 					return(0);
