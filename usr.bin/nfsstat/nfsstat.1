@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)nfsstat.1	8.1 (Berkeley) 6/6/93
-.\"	$Id: nfsstat.1,v 1.5 1994/06/13 21:02:18 mycroft Exp $
+.\"	$Id: nfsstat.1,v 1.5.2.1 1994/08/06 06:33:08 mycroft Exp $
 .\"
 .Dd June 6, 1993
 .Dt NFSSTAT 1
@@ -59,7 +59,7 @@ instead of the default
 .Pa /dev/kmem .
 .It Fl N
 Extract the name list from the specified system instead of the default
-.Pa /vmunix .
+.Pa /netbsd .
 .It Fl w
 Display a shorter summary of
 .Tn NFS
@@ -69,7 +69,7 @@ second intervals.
 .El
 .Sh FILES
 .Bl -tag -width /dev/kmem -compact
-.It Pa /vmunix
+.It Pa /netbsd
 default kernel namelist
 .It Pa /dev/kmem
 default memory file
