@@ -1,13 +1,18 @@
-/*	$NetBSD: localtime.c,v 1.10 1997/06/18 01:12:45 jtc Exp $	*/
+/*	$NetBSD: localtime.c,v 1.11 1997/07/13 20:26:50 christos Exp $	*/
 
 /*
 ** This file is in the public domain, so clarified as of
 ** 1996-06-05 by Arthur David Olson (arthur_david_olson@nih.gov).
 */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #ifndef NOID
+#if 0
 static char	elsieid[] = "@(#)localtime.c	7.61";
+#else
+__RCSID("$NetBSD: localtime.c,v 1.11 1997/07/13 20:26:50 christos Exp $");
+#endif
 #endif /* !defined NOID */
 #endif /* !defined lint */
 
@@ -145,6 +150,9 @@ static time_t		transtime P((time_t janfirst, int year,
 static int		tzload P((const char * name, struct state * sp));
 static int		tzparse P((const char * name, struct state * sp,
 				int lastditch));
+#ifdef STD_INSPIRED
+static long		leapcorr P((time_t * timep));
+#endif
 
 #ifdef ALL_STATE
 static struct state *	lclptr;

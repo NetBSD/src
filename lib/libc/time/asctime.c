@@ -1,13 +1,18 @@
-/*	$NetBSD: asctime.c,v 1.5 1997/06/18 01:12:40 jtc Exp $	*/
+/*	$NetBSD: asctime.c,v 1.6 1997/07/13 20:26:47 christos Exp $	*/
 
 /*
 ** This file is in the public domain, so clarified as of
 ** 1996-06-05 by Arthur David Olson (arthur_david_olson@nih.gov).
 */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #ifndef NOID
+#if 0
 static char	elsieid[] = "@(#)asctime.c	7.8";
+#else
+__RCSID("$NetBSD: asctime.c,v 1.6 1997/07/13 20:26:47 christos Exp $");
+#endif
 #endif /* !defined NOID */
 #endif /* !defined lint */
 
