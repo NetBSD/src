@@ -1,4 +1,4 @@
-#	$NetBSD: ALL,v 1.12 1997/02/18 21:07:36 mrg Exp $
+#	$NetBSD: ALL,v 1.13 1997/02/25 17:49:46 oki Exp $
 
 #
 #	ALL -- everything that's currently supported
@@ -144,4 +144,4 @@ pseudo-device	loop			# loopback; recommended
 pseudo-device	vnd		10	# vn virtual filesystem device
 pseudo-device	ccd		4	# concatenating disk driver
 pseudo-device	md		1	# memory disk
-pseudo-device	ipilfter		# ip filter
+pseudo-device	ipfilter		# ip filter
