@@ -1,4 +1,4 @@
-/*	$NetBSD: job.c,v 1.65 2002/03/15 15:54:41 pk Exp $	*/
+/*	$NetBSD: job.c,v 1.66 2002/03/18 07:54:33 pk Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -39,14 +39,14 @@
  */
 
 #ifdef MAKE_BOOTSTRAP
-static char rcsid[] = "$NetBSD: job.c,v 1.65 2002/03/15 15:54:41 pk Exp $";
+static char rcsid[] = "$NetBSD: job.c,v 1.66 2002/03/18 07:54:33 pk Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)job.c	8.2 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: job.c,v 1.65 2002/03/15 15:54:41 pk Exp $");
+__RCSID("$NetBSD: job.c,v 1.66 2002/03/18 07:54:33 pk Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -2668,7 +2668,7 @@ Job_Empty()
 /*-
  *-----------------------------------------------------------------------
  * JobMatchShell --
- *	Find a matching shell in 'shells' given its final component.
+ *	Find a shell in 'shells' given its name.
  *
  * Results:
  *	A pointer to the Shell structure.
@@ -2680,31 +2680,15 @@ Job_Empty()
  */
 static Shell *
 JobMatchShell(name)
-    char	  *name;      /* Final component of shell path */
+    char	*name;
 {
-    register Shell *sh;	      /* Pointer into shells table */
-    Shell	   *match;    /* Longest-matching shell */
-    register char *cp1,
-		  *cp2;
-    char	  *eoname;
-
-    eoname = name + strlen(name);
-
-    match = NULL;
+    Shell	*sh;
 
     for (sh = shells; sh->name != NULL; sh++) {
-	for (cp1 = eoname - strlen(sh->name), cp2 = sh->name;
-	     *cp1 != '\0' && *cp1 == *cp2;
-	     cp1++, cp2++) {
-		 continue;
-	}
-	if (*cp1 != *cp2) {
-	    continue;
-	} else if (match == NULL || strlen(match->name) < strlen(sh->name)) {
-	   match = sh;
-	}
+	if (strcmp(name, sh->name) == 0)
+		return (sh);
     }
-    return(match == NULL ? sh : match);
+    return (NULL);
 }
 
 /*-
@@ -2731,7 +2715,7 @@ JobMatchShell(name)
  *	keyword and value separated by an equal sign. There should be no
  *	unnecessary spaces in the word. The keywords are as follows:
  *	    name  	    Name of shell.
- *	    path  	    Location of shell. Overrides "name" if given
+ *	    path  	    Location of shell.
  *	    quiet 	    Command to turn off echoing.
  *	    echo  	    Command to turn echoing on
  *	    filter	    Result of turning off echoing that shouldn't be
@@ -2760,6 +2744,7 @@ Job_ParseShell(line)
     char	*path;
     Shell	newShell;
     Boolean	fullSpec = FALSE;
+    Shell	*sh;
 
     while (isspace((unsigned char)*line)) {
 	line++;
@@ -2819,9 +2804,16 @@ Job_ParseShell(line)
 	 */
 	if (newShell.name == NULL) {
 	    Parse_Error(PARSE_FATAL, "Neither path nor name specified");
+	    free(words);
 	    return(FAILURE);
 	} else {
-	    commandShell = JobMatchShell(newShell.name);
+	    if ((sh = JobMatchShell(newShell.name)) == NULL) {
+		    Parse_Error(PARSE_WARNING, "%s: No matching shell",
+				newShell.name);
+		    free(words);
+		    return(FAILURE);
+	    }
+	    commandShell = sh;
 	    shellName = newShell.name;
 	}
     } else {
@@ -2845,7 +2837,13 @@ Job_ParseShell(line)
 	    shellName = path;
 	}
 	if (!fullSpec) {
-	    commandShell = JobMatchShell(shellName);
+	    if ((sh = JobMatchShell(shellName)) == NULL) {
+		    Parse_Error(PARSE_WARNING, "%s: No matching shell",
+				shellName);
+		    free(words);
+		    return(FAILURE);
+	    }
+	    commandShell = sh;
 	} else {
 	    commandShell = (Shell *) emalloc(sizeof(Shell));
 	    *commandShell = newShell;
