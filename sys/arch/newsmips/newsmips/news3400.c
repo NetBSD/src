@@ -1,4 +1,4 @@
-/*	$NetBSD: news3400.c,v 1.5 2002/07/07 00:22:19 gmcgarry Exp $	*/
+/*	$NetBSD: news3400.c,v 1.6 2003/01/19 16:38:43 thorpej Exp $	*/
 
 /*-
  * Copyright (C) 1999 Tsubai Masanari.  All rights reserved.
@@ -121,7 +121,7 @@ news3400_intr(status, cause, pc, ipending)
 
 		intrcnt[FPU_INTR]++;
 #if !defined(SOFTFLOAT)
-		MachFPInterrupt(status, cause, pc, curproc->p_md.md_regs);
+		MachFPInterrupt(status, cause, pc, curlwp->l_md.md_regs);
 #endif
 	}
 }

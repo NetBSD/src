@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.8 2002/09/29 23:23:58 wiz Exp $	*/
+/*	$NetBSD: cpu.h,v 1.9 2003/01/19 16:36:29 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -168,6 +168,8 @@
  * From m68k/syscall.c
  */
 /* extern void syscall(register_t, struct frame); Only called from locore.s */
+
+#define LWP_PC(l)	(((struct trapframe *)((l)->l_md.md_regs))->tf_pc)
 #endif /* _KERNEL */
 
 #endif /* _M68K_CPU_H_ */
