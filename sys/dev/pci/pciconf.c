@@ -1,4 +1,4 @@
-/*	$NetBSD: pciconf.c,v 1.5 2001/06/14 01:06:56 thorpej Exp $	*/
+/*	$NetBSD: pciconf.c,v 1.6 2001/08/28 15:09:10 thorpej Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -246,7 +246,14 @@ probe_bus(pciconf_bus_t *pb)
 				if (confmode == 0)
 					continue;
 #else
-				confmode = PCI_CONF_ALL;
+				/*
+				 * Don't enable expansion ROMS -- some cards
+				 * share address decoders between the EXPROM
+				 * and PCI memory space, and enabling the ROM
+				 * when not needed will cause all sorts of
+				 * lossage.
+				 */
+				confmode = PCI_CONF_ALL & ~PCI_CONF_MAP_ROM;
 #endif
 				if (pci_do_device_query(pb, tag, device,
 				    function, confmode))
