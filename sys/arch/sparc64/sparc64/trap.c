@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.43 2000/06/18 08:13:45 mrg Exp $ */
+/*	$NetBSD: trap.c,v 1.44 2000/06/19 23:30:36 eeh Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -49,6 +49,7 @@
  */
 
 #define NEW_FPSTATE
+#define	TRAPWIN
 
 #include "opt_ddb.h"
 #include "opt_syscall_debug.h"
@@ -501,7 +502,7 @@ trap(type, tstate, pc, tf)
 		int* sp;
 
 		__asm("mov %%sp, %0" : "=r" (sp) :);
-		if (sp < eintstack) {
+		if (sp < EINTSTACK) {
 			printf("trap: We're on the interrupt stack!\ntype=0x%x tf=%p %s\n", 
 			       type, tf, type < N_TRAP_TYPES ? trap_type[type] : 
 			       ((type == T_AST) ? "ast" : 
@@ -1457,7 +1458,7 @@ out:
 void
 text_access_fault(type, pc, tf)
 	register unsigned type;
-	register u_long pc;
+	register vaddr_t pc;
 	register struct trapframe64 *tf;
 {
 	register u_int64_t tstate;
@@ -1515,7 +1516,7 @@ text_access_fault(type, pc, tf)
 		extern int trap_trace_dis;
 		trap_trace_dis = 1; /* Disable traptrace for printf */
 		(void) splhigh();
-		printf("text_access_fault: pc=%x\n", pc);
+		printf("text_access_fault: pc=%lx\n", pc);
 		DEBUGGER(type, tf);
 		panic("kernel fault");
 		/* NOTREACHED */

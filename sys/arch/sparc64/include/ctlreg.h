@@ -1,4 +1,4 @@
-/*	$NetBSD: ctlreg.h,v 1.17 2000/06/10 20:51:43 eeh Exp $ */
+/*	$NetBSD: ctlreg.h,v 1.18 2000/06/19 23:30:34 eeh Exp $ */
 
 /*
  * Copyright (c) 1996-1999 Eduardo Horvath
@@ -170,6 +170,11 @@
 /* 
  * The following are 4u control registers
  */
+
+
+/* Get the CPU's UPAID */
+#define	UPA_CR_MID(x)	(((x)>>17)&0x1f)	
+#define	CPU_UPAID	UPA_CR_MID(ldxa(0, ASI_MID_REG))
 
 /*
  * [4u] MMU and Cache Control Register (MCCR)
