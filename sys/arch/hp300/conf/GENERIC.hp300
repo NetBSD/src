@@ -75,3 +75,5 @@ pseudo-device	ite
 pseudo-device	pty
 pseudo-device	loop
 pseudo-device	ether
+
+pseudo-device	vnodepager
