@@ -1,5 +1,5 @@
-#	$NetBSD: Makefile,v 1.1 2000/08/10 14:38:51 mrg Exp $
+#	$NetBSD: Makefile,v 1.2 2001/01/07 09:33:16 mrg Exp $
 
-SUBDIR=	ramdisk
+SUBDIR=	xminiroot
 
 .include <bsd.subdir.mk>
