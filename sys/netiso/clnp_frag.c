@@ -1,4 +1,4 @@
-/*	$NetBSD: clnp_frag.c,v 1.5 1994/06/29 06:39:10 cgd Exp $	*/
+/*	$NetBSD: clnp_frag.c,v 1.6 1995/03/08 02:16:07 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -584,7 +584,7 @@ struct clnp_segment	*seg;	/* segment part of fragment header */
 		u_int	bytes;
 
 		/* determine if header is not word aligned */
-		pad = (int)clnp % 4;
+		pad = (long)clnp % 4;
 		if (pad < 0)
 			pad = -pad;
 
