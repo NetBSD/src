@@ -1,4 +1,4 @@
-/*      $NetBSD: ftp.c,v 1.17 1996/12/06 04:33:45 lukem Exp $      */
+/*      $NetBSD: ftp.c,v 1.18 1996/12/25 16:02:06 christos Exp $      */
 
 /*
  * Copyright (c) 1985, 1989, 1993, 1994
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)ftp.c	8.6 (Berkeley) 10/27/94";
 #else
-static char rcsid[] = "$NetBSD: ftp.c,v 1.17 1996/12/06 04:33:45 lukem Exp $";
+static char rcsid[] = "$NetBSD: ftp.c,v 1.18 1996/12/25 16:02:06 christos Exp $";
 #endif
 #endif /* not lint */
 
@@ -441,9 +441,15 @@ getreply(expecteof)
 			(void) putchar(c);
 			(void) fflush (stdout);
 		}
-		if (line == 0)
-			strncpy(reply_string, current_line,
-			    sizeof(reply_string));
+		if (line == 0) {
+			size_t len = cp - current_line;
+
+			if (len > sizeof(reply_string))
+				len = sizeof(reply_string);
+
+			(void) strncpy(reply_string, current_line, len);
+			reply_string[len] = '\0';
+		}
 		if (continuation && code != originalcode) {
 			if (originalcode == 0)
 				originalcode = code;
