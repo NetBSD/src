@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.19 1998/11/11 06:43:51 thorpej Exp $ */
+/*	$NetBSD: trap.c,v 1.20 1998/11/24 12:55:56 mrg Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -371,7 +371,6 @@ const char *trap_type[] = {
 static __inline void userret __P((struct proc *, int,  u_quad_t));
 void trap __P((unsigned, long, long, struct trapframe *));
 static __inline void share_fpu __P((struct proc *, struct trapframe *));
-static int fixalign __P((struct proc *, struct trapframe *));
 void mem_access_fault __P((unsigned, int, u_long, int, int, struct trapframe *));
 void data_access_fault __P((unsigned type, u_long va, u_long pc, struct trapframe *));
 void data_access_error __P((unsigned, u_long, u_long, u_long, u_long, struct trapframe *));
@@ -1881,8 +1880,10 @@ syscall(code, tf, pc)
 			       callp->sy_narg, callp->sy_argsize, callp->sy_call, (long)callp->sy_argsize / sizeof(register64_t));
 #endif
 		if (i > nap) {	/* usually false */
+#if 0
 			register64_t temp[6];
 			int j = 0;
+#endif
 #ifdef DEBUG
 			if (trapdebug&(TDB_SYSCALL|TDB_FOLLOW) || i>8) {
 				printf("Args64 %d>%d -- need to copyin\n", i , nap);
