@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gif.c,v 1.34 2001/08/20 02:18:58 itojun Exp $	*/
+/*	$NetBSD: if_gif.c,v 1.35 2001/09/26 07:54:19 itojun Exp $	*/
 /*	$KAME: if_gif.c,v 1.76 2001/08/20 02:01:02 kjc Exp $	*/
 
 /*
@@ -909,8 +909,10 @@ gif_set_tunnel(ifp, src, dst)
 
  bad:
 #ifdef __HAVE_GENERIC_SOFT_INTERRUPTS
-	if (sc->gif_si)
+	if (sc->gif_si) {
 		softintr_disestablish(sc->gif_si);
+		sc->gif_si = NULL;
+	}
 #endif
 	if (sc->gif_psrc && sc->gif_pdst)
 		ifp->if_flags |= IFF_RUNNING;
@@ -931,8 +933,10 @@ gif_delete_tunnel(ifp)
 	s = splsoftnet();
 
 #ifdef __HAVE_GENERIC_SOFT_INTERRUPTS
-	if (sc->gif_si)
+	if (sc->gif_si) {
 		softintr_disestablish(sc->gif_si);
+		sc->gif_si = NULL;
+	}
 #endif
 	if (sc->gif_psrc) {
 		free((caddr_t)sc->gif_psrc, M_IFADDR);
