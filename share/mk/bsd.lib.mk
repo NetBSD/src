@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.lib.mk,v 1.112 1997/05/28 11:16:19 veego Exp $
+#	$NetBSD: bsd.lib.mk,v 1.113 1997/05/29 15:37:11 veego Exp $
 #	@(#)bsd.lib.mk	8.3 (Berkeley) 4/22/94
 
 .if exists(${.CURDIR}/../Makefile.inc)
@@ -221,7 +221,7 @@ lib${LIB}.so.${SHLIB_MAJOR}.${SHLIB_MINOR}: lib${LIB}_pic.a ${DPADD} \
 .elif (${SHLIB_TYPE} == "ELF")
 	$(LD) -x -shared -o ${.TARGET} \
 	    -soname lib${LIB}.so.${SHLIB_SOVERSION}  ${SHLIB_LDSTARTFILE} \
-	    --whole-archive lib${LIB}_pic.a --no-whole-archive -nostdlib \
+	    --whole-archive lib${LIB}_pic.a --no-whole-archive \
 	    -L${BUILDDIR}/usr/lib ${LDADD} ${SHLIB_LDENDFILE}
 .endif
 .if defined(OBJDIR)
