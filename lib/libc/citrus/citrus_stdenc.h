@@ -1,4 +1,4 @@
-/*	$NetBSD: citrus_stdenc.h,v 1.1 2003/06/25 09:51:40 tshiozak Exp $	*/
+/*	$NetBSD: citrus_stdenc.h,v 1.2 2003/06/26 12:09:56 tshiozak Exp $	*/
 
 /*-
  * Copyright (c)2003 Citrus Project,
@@ -89,6 +89,16 @@ _citrus_stdenc_wctomb(struct _citrus_stdenc * __restrict ce,
 {
 	_DIAGASSERT(ce && ce->ce_ops && ce->ce_ops->eo_cstomb);
 	return (*ce->ce_ops->eo_wctomb)(ce, s, n, wc, ps, nresult);
+}
+
+static __inline int
+_citrus_stdenc_put_state_reset(struct _citrus_stdenc * __restrict ce,
+			       char * __restrict s, size_t n,
+			       void * __restrict ps,
+			       size_t * __restrict nresult)
+{
+	_DIAGASSERT(ce && ce->ce_ops && ce->ce_ops->eo_put_state_reset);
+	return (*ce->ce_ops->eo_put_state_reset)(ce, s, n, ps, nresult);
 }
 
 static __inline size_t

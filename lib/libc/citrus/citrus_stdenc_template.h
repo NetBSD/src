@@ -1,4 +1,4 @@
-/*	$NetBSD: citrus_stdenc_template.h,v 1.1 2003/06/25 09:51:41 tshiozak Exp $	*/
+/*	$NetBSD: citrus_stdenc_template.h,v 1.2 2003/06/26 12:09:57 tshiozak Exp $	*/
 
 /*-
  * Copyright (c)2003 Citrus Project,
@@ -168,4 +168,19 @@ _FUNCNAME(stdenc_wctomb)(struct _citrus_stdenc * __restrict ce,
 {
 	return _FUNCNAME(wcrtomb_priv)(_CE_TO_EI(ce), s, n, wc, _TO_STATE(ps),
 				       nresult);
+}
+
+static int
+_FUNCNAME(stdenc_put_state_reset)(struct _citrus_stdenc * __restrict ce,
+				  char * __restrict s, size_t n,
+				  void * __restrict ps,
+				  size_t * __restrict nresult)
+{
+#if _ENCODING_IS_STATE_DEPENDENT
+	return _FUNCNAME(put_state_reset)(_CE_TO_EI(ce), s, n, _TO_STATE(ps),
+					  nresult);
+#else
+	*nresult = 0;
+	return 0;
+#endif
 }
