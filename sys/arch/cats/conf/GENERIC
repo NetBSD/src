@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.22 2002/04/02 05:30:39 lukem Exp $
+# $NetBSD: GENERIC,v 1.23 2002/04/10 20:13:54 thorpej Exp $
 #
 # GENERIC machine description file
 # 
@@ -37,9 +37,6 @@ options 	NTP		# NTP phase/frequency locked loop
 # For StrongARM systems
 options 	CPU_SA110	# Support the SA110 core
 makeoptions	COPTS="-O2 -march=armv4 -mtune=strongarm"
-
-# Architecture options
-options 	FOOTBRIDGE	# We have DC21285 'Footbridge' core logic
 
 # FPA options
 
