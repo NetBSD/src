@@ -34,7 +34,7 @@
 #ifndef RPC_HDR
 %#ifndef lint
 %/*static char sccsid[] = "from: @(#)yp.x	2.1 88/08/01 4.0 RPCSRC";*/
-%static char rcsid[] = "$Id: yp.x,v 1.1 1995/01/12 19:40:00 jtc Exp $";
+%static char rcsid[] = "$NetBSD: yp.x,v 1.2 1996/09/26 23:45:30 thorpej Exp $";
 %#endif /* not lint */
 #endif
 
