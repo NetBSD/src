@@ -1,4 +1,4 @@
-/*	$NetBSD: wall.c,v 1.7 1997/02/11 08:42:04 mrg Exp $	*/
+/*	$NetBSD: wall.c,v 1.8 1997/06/29 18:28:20 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1990, 1993
@@ -33,17 +33,17 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
-static char copyright[] =
-"@(#) Copyright (c) 1988, 1990, 1993\n\
-	The Regents of the University of California.  All rights reserved.\n";
+__COPYRIGHT("@(#) Copyright (c) 1988, 1990, 1993\n\
+	The Regents of the University of California.  All rights reserved.\n");
 #endif /* not lint */
 
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)wall.c	8.2 (Berkeley) 11/16/93";
 #endif
-static char rcsid[] = "$NetBSD: wall.c,v 1.7 1997/02/11 08:42:04 mrg Exp $";
+__RCSID("$NetBSD: wall.c,v 1.8 1997/06/29 18:28:20 christos Exp $");
 #endif /* not lint */
 
 /*
@@ -63,8 +63,10 @@ static char rcsid[] = "$NetBSD: wall.c,v 1.7 1997/02/11 08:42:04 mrg Exp $";
 #include <string.h>
 #include <unistd.h>
 #include <utmp.h>
+#include <util.h>
 
 void	makemsg __P((char *));
+int	main __P((int, char *[]));
 
 #define	IGNOREUSER	"sleeper"
 
@@ -83,7 +85,7 @@ main(argc, argv)
 	struct iovec iov;
 	struct utmp utmp;
 	FILE *fp;
-	char *p, *ttymsg();
+	char *p;
 	struct passwd *pep = getpwnam("nobody");
 	char line[sizeof(utmp.ut_line) + 1];
 
@@ -134,7 +136,7 @@ makemsg(fname)
 	struct tm *lt;
 	struct passwd *pw;
 	struct stat sbuf;
-	time_t now, time();
+	time_t now;
 	FILE *fp;
 	int fd;
 	char *p, *whom, hostname[MAXHOSTNAMELEN], lbuf[100], tmpname[15];
