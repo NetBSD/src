@@ -1,5 +1,5 @@
-/*	$NetBSD: ping6.c,v 1.50 2002/09/23 12:52:30 itojun Exp $	*/
-/*	$KAME: ping6.c,v 1.160 2002/09/08 14:28:18 itojun Exp $	*/
+/*	$NetBSD: ping6.c,v 1.51 2002/10/25 02:20:37 itojun Exp $	*/
+/*	$KAME: ping6.c,v 1.163 2002/10/25 02:19:06 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -81,7 +81,7 @@ static char sccsid[] = "@(#)ping.c	8.1 (Berkeley) 6/5/93";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ping6.c,v 1.50 2002/09/23 12:52:30 itojun Exp $");
+__RCSID("$NetBSD: ping6.c,v 1.51 2002/10/25 02:20:37 itojun Exp $");
 #endif
 #endif
 
@@ -300,7 +300,10 @@ main(argc, argv)
 	char *e, *target, *ifname = NULL, *gateway = NULL;
 	int ip6optlen = 0;
 	struct cmsghdr *scmsgp = NULL;
+#if defined(SO_SNDBUF) && defined(SO_RCVBUF)
+	u_long lsockbufsize;
 	int sockbufsize = 0;
+#endif
 	int usepktinfo = 0;
 	struct in6_pktinfo *pktinfo = NULL;
 #ifdef USE_RFC2292BIS
@@ -380,7 +383,13 @@ main(argc, argv)
 		}
 		case 'b':
 #if defined(SO_SNDBUF) && defined(SO_RCVBUF)
-			sockbufsize = atoi(optarg);
+			errno = 0;
+			e = NULL;
+			lsockbufsize = strtoul(optarg, &e, 10);
+			sockbufsize = lsockbufsize;
+			if (errno || !*optarg || *e ||
+			    sockbufsize != lsockbufsize)
+				errx(1, "invalid socket buffer size");
 #else
 			errx(1,
 "-b option ignored: SO_SNDBUF/SO_RCVBUF socket options not supported");
