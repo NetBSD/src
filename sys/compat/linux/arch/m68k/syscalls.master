@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.1 1998/12/15 19:25:41 itohy Exp $
+	$NetBSD: syscalls.master,v 1.2 1999/02/10 10:36:26 itohy Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -55,21 +55,24 @@
 2	NOARGS		{ int sys_fork(void); }
 3	NOARGS		{ int sys_read(int fd, char *buf, u_int nbyte); }
 4	NOARGS		{ int sys_write(int fd, char *buf, u_int nbyte); }
-5	STD		{ int linux_sys_open(char *path, int flags, int mode); }
+5	STD		{ int linux_sys_open(const char *path, int flags, \
+			    int mode); }
 6	NOARGS		{ int sys_close(int fd); }
 7	STD		{ int linux_sys_waitpid(int pid, int *status, \
 			    int options);}
-8	STD		{ int linux_sys_creat(char *path, int mode); }
-9	NOARGS		{ int sys_link(char *path, char *link); }
-10	STD		{ int linux_sys_unlink(char *path); }
-11	STD		{ int linux_sys_execve(char *path, char **argp, \
+8	STD		{ int linux_sys_creat(const char *path, int mode); }
+9	NOARGS		{ int sys_link(const char *path, const char *link); }
+10	STD		{ int linux_sys_unlink(const char *path); }
+11	STD		{ int linux_sys_execve(const char *path, char **argp, \
 			    char **envp); }
-12	STD		{ int linux_sys_chdir(char *path); }
+12	STD		{ int linux_sys_chdir(const char *path); }
 13	STD		{ int linux_sys_time(linux_time_t *t); }
-14	STD		{ int linux_sys_mknod(char *path, int mode, int dev); }
-15	STD		{ int linux_sys_chmod(char *path, int mode); }
+14	STD		{ int linux_sys_mknod(const char *path, int mode, \
+			    int dev); }
+15	STD		{ int linux_sys_chmod(const char *path, int mode); }
 ;16 lchown on i386; chown on m68k.
-16	STD		{ int linux_sys_chown(char *path, int uid, int gid); }
+16	STD		{ int linux_sys_chown(const char *path, \
+			    int uid, int gid); }
 17	OBSOL		break
 18	OBSOL		ostat
 #if !defined(_KERNEL) || defined(COMPAT_43)
@@ -88,18 +91,19 @@
 27	STD		{ int linux_sys_alarm(unsigned int secs); }
 28	OBSOL		ofstat
 29	STD		{ int linux_sys_pause(void); }
-30	STD		{ int linux_sys_utime(char *path, \
+30	STD		{ int linux_sys_utime(const char *path, \
 			    struct linux_utimbuf *times); }
 31	OBSOL		stty
 32	OBSOL		gtty
-33	STD		{ int linux_sys_access(char *path, int flags); }
+33	STD		{ int linux_sys_access(const char *path, int flags); }
 34	STD		{ int linux_sys_nice(int incr); }
 35	OBSOL		ftime
 36	NOARGS		{ int sys_sync(void); }
 37	STD		{ int linux_sys_kill(int pid, int signum); }
-38	STD		{ int linux_sys_rename(char *from, char *to); }
-39	STD		{ int linux_sys_mkdir(char *path, int mode); }
-40	STD		{ int linux_sys_rmdir(char *path); }
+38	STD		{ int linux_sys_rename(const char *from, \
+			    const char *to); }
+39	STD		{ int linux_sys_mkdir(const char *path, int mode); }
+40	STD		{ int linux_sys_rmdir(const char *path); }
 41	NOARGS		{ int sys_dup(u_int fd); }
 42	STD		{ int linux_sys_pipe(int *pfds); }
 43	STD		{ int linux_sys_times(struct times *tms); }
@@ -158,16 +162,17 @@
 80	NOARGS		{ int sys_getgroups(u_int gidsetsize, gid_t *gidset); }
 81	NOARGS		{ int sys_setgroups(u_int gidsetsize, gid_t *gidset); }
 82	STD		{ int linux_sys_oldselect(struct linux_oldselect *lsp); }
-83	STD		{ int linux_sys_symlink(char *path, char *to); }
+83	STD		{ int linux_sys_symlink(const char *path, \
+			    const char *to); }
 #if !defined(_KERNEL) || defined(COMPAT_43)
-84	NOARGS		{ int compat_43_sys_lstat(char *path, \
+84	NOARGS		{ int compat_43_sys_lstat(const char *path, \
 			    struct stat43 *up); } oolstat
 #else
 84	UNIMPL		compat_43_sys_lstat
 #endif
-85	STD		{ int linux_sys_readlink(char *name, char *buf, \
+85	STD		{ int linux_sys_readlink(const char *name, char *buf, \
 			    int count); }
-86	STD		{ int linux_sys_uselib(char *path); }
+86	STD		{ int linux_sys_uselib(const char *path); }
 #if !defined(_KERNEL) || defined(COMPAT_12)
 87	NOARGS		{ int compat_12_sys_swapon(char *name); }
 #else
@@ -178,7 +183,8 @@
 			    unsigned int count); }
 90	STD		{ int linux_sys_old_mmap(struct linux_oldmmap *lmp); }
 91	NOARGS		{ int sys_munmap(caddr_t addr, int len); }
-92	STD		{ int linux_sys_truncate(char *path, long length); }
+92	STD		{ int linux_sys_truncate(const char *path, \
+			    long length); }
 #if !defined(_KERNEL) || defined(COMPAT_43)
 93	NOARGS		{ int compat_43_sys_ftruncate(int fd, long length); }
 #else
@@ -190,7 +196,7 @@
 97	NOARGS		{ int sys_setpriority(int which, int who, int prio); }
 98	NOARGS		{ int sys_profil(caddr_t samples, u_int size, \
 			    u_int offset, u_int scale); }
-99	STD		{ int linux_sys_statfs(char *path, \
+99	STD		{ int linux_sys_statfs(const char *path, \
 			    struct linux_statfs *sp); }
 100	STD		{ int linux_sys_fstatfs(int fd, \
 			    struct linux_statfs *sp); }
@@ -201,9 +207,9 @@
 			    struct itimerval *itv, struct itimerval *oitv); }
 105	NOARGS		{ int sys_getitimer(u_int which, \
 			    struct itimerval *itv); }
-106	STD		{ int linux_sys_stat(char *path, \
+106	STD		{ int linux_sys_stat(const char *path, \
 			    struct linux_stat *sp); }
-107	STD		{ int linux_sys_lstat(char *path, \
+107	STD		{ int linux_sys_lstat(const char *path, \
 			    struct linux_stat *sp); }
 108	STD		{ int linux_sys_fstat(int fd, struct linux_stat *sp); }
 109	UNIMPL		olduname
@@ -309,7 +315,8 @@
 180	UNIMPL		pread
 181	UNIMPL		pwrite
 ;182 chown on i386; lchown on m68k.
-182	STD		{ int linux_sys_lchown(char *path, int uid, int gid); }
+182	STD		{ int linux_sys_lchown(const char *path, int uid, \
+			    int gid); }
 183	UNIMPL		getcwd
 184	UNIMPL		capget
 185	UNIMPL		capset
