@@ -38,7 +38,7 @@
  *
  *	from: Utah Hdr: machparam.h 1.16 92/12/20
  *	from: @(#)param.h	8.1 (Berkeley) 6/10/93
- *	$Id: param3.h,v 1.15 1994/05/27 14:55:22 gwr Exp $
+ *	$Id: param3.h,v 1.16 1994/08/23 21:11:37 gwr Exp $
  */
 
 /*
@@ -80,6 +80,7 @@
 #define	SINCR		1		/* increment of stack/NBPG */
 
 #define	UPAGES		3		/* pages of u-area */
+#define	USPACE		(UPAGES * NBPG)
 
 #define CLOCK_VA            (0x0FFE0000+(UPAGES*NBPG*2))
 #define INTERREG_VA         (0x0FFE0000+(UPAGES*NBPG*2)+NBPG)
