@@ -1,4 +1,4 @@
-/*	$NetBSD: if_rl_cardbus.c,v 1.6 2000/04/28 03:48:56 tsutsui Exp $	*/
+/*	$NetBSD: if_rl_cardbus.c,v 1.7 2000/04/30 12:00:41 tsutsui Exp $	*/
 /*
  * Copyright (c) 2000 Masanori Kanaoka
  * All rights reserved.
@@ -164,9 +164,10 @@ rl_cardbus_attach(parent, self, aux)
 	struct device *parent, *self;
 	void *aux;
 {
-	int			s, pmreg;
-	u_char			eaddr[ETHER_ADDR_LEN];
-	pcireg_t		command;
+	int addr_len, s, pmreg;
+	u_int16_t val;
+	u_char eaddr[ETHER_ADDR_LEN];
+	pcireg_t command;
 	struct rl_cardbus_softc *csc = (struct rl_cardbus_softc *)self;
 	struct rl_softc *sc = &csc->sc_rl;
 	struct cardbus_attach_args *ca = aux;
@@ -286,27 +287,22 @@ rl_cardbus_attach(parent, self, aux)
 		sc->rl_type = RL_8139;
 
 		/*
-		 * LD-10/100CBA (ACCTON_MPX5030):
-		 * LPC3-TX-CB   (REALTEK_RT8138):
-		 *     rl_read_eeprom() can't get MAC address 
-		 *     from EEPROM(serial access). Lift MAC address
-		 *     from RL-IDR0 -Rl_IDR5 register.
-		 *
-		 *  RTL8139B(L) datasheet rev 2.4.
-		 *                                 
-		 *    o REGSTER RL_IDR0 - RL_IDR5 address
-		 *                                 
-		 *    o "After the vaild duration of the RSTB pin or
-		 *     autoload command in 9346CR,RTL8139B(L) performs
-		 *     a series of EEPROM read operation from 93C46(93C56)
-		 *     address 00H to 31H."  from 6. EEPROM Contents
+		 * Check EEPROM type 9346 or 9356
 		 */
-		eaddr[0] = CSR_READ_1(sc, RL_IDR0);
-		eaddr[1] = CSR_READ_1(sc, RL_IDR1);
-		eaddr[2] = CSR_READ_1(sc, RL_IDR2);
-		eaddr[3] = CSR_READ_1(sc, RL_IDR3);
-		eaddr[4] = CSR_READ_1(sc, RL_IDR4);
-		eaddr[5] = CSR_READ_1(sc, RL_IDR5);
+		if (rl_read_eeprom(sc, RL_EE_ID, RL_EEADDR_LEN1) == 0x8129)
+			addr_len = RL_EEADDR_LEN1;
+		else
+			addr_len = RL_EEADDR_LEN0;
+
+		val = rl_read_eeprom(sc, RL_EE_EADDR0, addr_len);
+		eaddr[0] = val & 0xff;
+		eaddr[1] = val >> 8;
+		val = rl_read_eeprom(sc, RL_EE_EADDR1, addr_len);
+		eaddr[2] = val & 0xff;
+		eaddr[3] = val >> 8;
+		val = rl_read_eeprom(sc, RL_EE_EADDR2, addr_len);
+		eaddr[4] = val & 0xff;
+		eaddr[5] = val >> 8;
 	} else {
 		printf(": unknown device ID: 0x%x\n", t->rl_did);
 		goto fail;
