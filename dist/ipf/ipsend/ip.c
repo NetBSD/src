@@ -1,4 +1,4 @@
-/*	$NetBSD: ip.c,v 1.1.1.2 2001/03/26 03:54:48 mike Exp $	*/
+/*	$NetBSD: ip.c,v 1.2 2001/03/26 06:11:47 mike Exp $	*/
 
 /*
  * ip.c (C) 1995-1998 Darren Reed
