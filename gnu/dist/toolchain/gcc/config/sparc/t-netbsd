@@ -1,2 +1,0 @@
-# The NetBSD libc has all the needed libgcc1 stubs.
-LIBGCC1_TEST=

@@ -1,5 +1,0 @@
-@set UPDATED 9 April 2004
-@c $NetBSD: version.texi,v 1.1.1.5 2004/07/12 23:26:41 wiz Exp $
-@set UPDATED-MONTH April 2004
-@set EDITION 4.7
-@set VERSION 4.7
