@@ -1,4 +1,4 @@
-/*	$NetBSD: memcpy.S,v 1.4 1998/04/03 22:58:09 matthias Exp $	*/
+/*	$NetBSD: memcpy.S,v 1.5 1998/05/27 20:05:43 matthias Exp $	*/
 
 /* 
  * Written by Matthias Pfaller, 1996
@@ -8,7 +8,7 @@
 #include <machine/asm.h>
 
 #if defined(LIBC_SCCS)
-	RCSID("$NetBSD: memcpy.S,v 1.4 1998/04/03 22:58:09 matthias Exp $")
+	RCSID("$NetBSD: memcpy.S,v 1.5 1998/05/27 20:05:43 matthias Exp $")
 # if defined(BCOPY)
 	RCSID("$Masqueraded: as bcopy $")
 # endif
@@ -73,7 +73,7 @@ KENTRY(memmove, 12)
 	 */
 	movd	3,r3
 	andd	r2,r3
-	movd	0(r1),0(r2)
+	movd	0(r1),tos	/* Delay write in case src-dst < 4 */
 	negd	r3,r3
 	addqd	4,r3
 	addd	r3,r1
@@ -89,6 +89,9 @@ KENTRY(memmove, 12)
 1:	movsb
 #if !defined(BCOPY)
 	movd	B_ARG0,r0
+	movd	tos,0(r0)
+#else
+	movd	tos,0(B_ARG0)
 #endif
 	exit	[r3]
 	ret	ARGS
