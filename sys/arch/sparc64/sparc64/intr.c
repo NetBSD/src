@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.21 2000/03/16 02:36:58 eeh Exp $ */
+/*	$NetBSD: intr.c,v 1.22 2000/03/19 14:41:49 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -155,7 +155,6 @@ strayintr(fp, vectored)
 /*
  * Level 1 software interrupt (could also be Sbus level 1 interrupt).
  * Three possible reasons:
- *	ROM console input needed
  *	Network software interrupt
  *	Soft clock interrupt
  */
@@ -163,10 +162,7 @@ int
 softintr(fp)
 	void *fp;
 {
-	extern int rom_console_input;
 
-	if (rom_console_input && cnrom())
-		cnrint();
 	return (1);
 }
 
