@@ -1,4 +1,4 @@
-/*	$NetBSD: udivsi3.S,v 1.6 2003/08/27 15:03:06 uwe Exp $	*/
+/*	$NetBSD: udivsi3.S,v 1.7 2004/03/27 03:48:23 uwe Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -36,7 +36,7 @@
 
 #include <machine/asm.h>
 #if defined(LIBC_SCCS)
-	RCSID("$NetBSD: udivsi3.S,v 1.6 2003/08/27 15:03:06 uwe Exp $")
+	RCSID("$NetBSD: udivsi3.S,v 1.7 2004/03/27 03:48:23 uwe Exp $")
 #endif
 
 /*
@@ -58,6 +58,10 @@
  * . this function cannot be called via PLT
  */
 
+#ifdef PIC	/* XXX: uwe */
+	.hidden __udivsi3
+#endif
+
 /* r0 <= r4 / r5 */
 NENTRY(__udivsi3)
 	tst	r5, r5
@@ -75,12 +79,12 @@ NENTRY(__udivsi3)
 	rotcl	r4
 
 	rts
-	mov	r4, r0		/* delay slot */
+	 mov	r4, r0
 
 div_by_zero:
 #ifdef _KERNEL
 	rts
-	mov	#0, r0		/* delay slot */
+	 mov	#0, r0
 #else
 	mov.l	r14, @-r15
 	sts.l	pr, @-r15
@@ -92,12 +96,12 @@ div_by_zero:
 #else
 	jsr	@r1
 #endif
-	mov	#8, r4		/* delay slot */
+	 mov	#8, r4		/* delay slot.  8 <- SIGFPE. */
 	mov	#0, r0
 
 	lds.l	@r15+, pr
 	rts
-	mov.l	@r15+, r14	/* delay slot */
+	 mov.l	@r15+, r14
 
 	.align	2
 L_raise:
