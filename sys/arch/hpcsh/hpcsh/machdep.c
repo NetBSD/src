@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.42 2003/07/15 02:29:39 lukem Exp $	*/
+/*	$NetBSD: machdep.c,v 1.43 2003/08/02 22:33:36 uwe Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.42 2003/07/15 02:29:39 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.43 2003/08/02 22:33:36 uwe Exp $");
 
 #include "opt_md.h"
 #include "opt_ddb.h"
@@ -331,6 +331,7 @@ cpu_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp,
 		return (sysctl_rdstruct(oldp, oldlenp, newp, &cn_tab->cn_dev,
 		    sizeof cn_tab->cn_dev));
 	default:
+		break;
 	}
 
 	return (EOPNOTSUPP);
