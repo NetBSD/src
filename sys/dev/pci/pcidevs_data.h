@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.332 2001/06/13 06:04:26 simonb Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.333 2001/06/17 19:51:27 tsubai Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.328 2001/06/13 06:01:45 simonb Exp 
+ *	NetBSD: pcidevs,v 1.329 2001/06/17 19:50:33 tsubai Exp 
  */
 
 /*
@@ -884,6 +884,36 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Apple Computer",
 	    "MAC-IO I/O Controller (KeyLargo)",
+	},
+	{
+	    PCI_VENDOR_APPLE, PCI_PRODUCT_APPLE_GMAC2,
+	    0,
+	    "Apple Computer",
+	    "GMAC Ethernet",
+	},
+	{
+	    PCI_VENDOR_APPLE, PCI_PRODUCT_APPLE_PANGEA_MACIO,
+	    0,
+	    "Apple Computer",
+	    "MAC-IO I/O Controller (Pangea)",
+	},
+	{
+	    PCI_VENDOR_APPLE, PCI_PRODUCT_APPLE_PANGEA_AGP,
+	    0,
+	    "Apple Computer",
+	    "Pangea AGP Interface",
+	},
+	{
+	    PCI_VENDOR_APPLE, PCI_PRODUCT_APPLE_PANGEA_PCI1,
+	    0,
+	    "Apple Computer",
+	    "Pangea Host-PCI Bridge",
+	},
+	{
+	    PCI_VENDOR_APPLE, PCI_PRODUCT_APPLE_PANGEA_PCI2,
+	    0,
+	    "Apple Computer",
+	    "Pangea Host-PCI Bridge",
 	},
 	{
 	    PCI_VENDOR_ARC, PCI_PRODUCT_ARC_1000PV,
