@@ -1,4 +1,4 @@
-/*	$NetBSD: ka820.c,v 1.18 2000/01/24 02:40:34 matt Exp $	*/
+/*	$NetBSD: ka820.c,v 1.19 2000/03/26 11:40:31 ragge Exp $	*/
 /*
  * Copyright (c) 1988 Regents of the University of California.
  * All rights reserved.
@@ -73,14 +73,16 @@ struct rx50device *rx50device_ptr;
 static int ka820_match __P((struct device *, struct cfdata *, void *));
 static void ka820_attach __P((struct device *, struct device *, void*));
 static void ka820_memerr __P((void));
+static void ka820_conf __P((void));
 static int ka820_mchk __P((caddr_t));
 static void rxcdintr __P((void *));
+static void vaxbierr(void *);
 
 struct	cpu_dep ka820_calls = {
 	0,
 	ka820_mchk,
 	ka820_memerr,
-	NULL,
+	ka820_conf,
 	chip_clkread,
 	chip_clkwrite,
 	3,      /* ~VUPS */
@@ -137,6 +139,7 @@ ka820_attach(parent, self, aux)
 	    ((rev >> 11) & 15), ((rev >> 1) &1023), rev & 1);
 
 	/* reset the console and enable the RX50 */
+	ka820port_ptr = (void *)vax_map_physmem(KA820_PORTADDR, 1);
 	csr = ka820port_ptr->csr;
 	csr &= ~KA820PORT_RSTHALT;	/* ??? */
 	csr |= KA820PORT_CONSCLR | KA820PORT_CRDCLR | KA820PORT_CONSEN |
@@ -147,19 +150,32 @@ ka820_attach(parent, self, aux)
 	bus_space_write_4(ba->ba_iot, ba->ba_ioh, BIREG_VAXBICSR,
 	    bus_space_read_4(ba->ba_iot, ba->ba_ioh, BIREG_VAXBICSR) |
 	    BICSR_SEIE | BICSR_HEIE);
+}
 
-	/* XXX - should be done somewhere else */
-	scb_vecalloc(SCB_RX50, crxintr, NULL, SCB_ISTACK);
-
-	clk_adrshift = 0;	/* clk regs are addressed at short's */
-	clk_tweak = 1; 		/* ...but not exactly in each short */
-	clk_page = (short *)vax_map_physmem((paddr_t)KA820_CLOCKADDR, 1);
+void
+ka820_conf()
+{
+	/*
+	 * Setup parameters necessary to read time from clock chip.
+	 */
+	clk_adrshift = 0;       /* Addressed at short's... */
+	clk_tweak = 1;          /* ...and shift one */
+	clk_page = (short *)vax_map_physmem(KA820_CLOCKADDR, 1);
 
 	/* Steal the interrupt vectors that are unique for us */
 	scb_vecalloc(KA820_INT_RXCD, rxcdintr, NULL, SCB_ISTACK);
+	scb_vecalloc(0x50, vaxbierr, NULL, SCB_ISTACK);
 
+	/* XXX - should be done somewhere else */
+	scb_vecalloc(SCB_RX50, crxintr, NULL, SCB_ISTACK);
 	rx50device_ptr = (void *)vax_map_physmem(KA820_RX50ADDR, 1);
-	ka820port_ptr = (void *)vax_map_physmem(KA820_PORTADDR, 1);
+}
+
+void
+vaxbierr(void *arg)
+{
+	if (cold == 0)
+		panic("vaxbierr");
 }
 
 #ifdef notdef
