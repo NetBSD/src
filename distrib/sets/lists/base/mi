@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.173 2000/07/13 00:35:22 thorpej Exp $
+# $NetBSD: mi,v 1.174 2000/07/13 14:31:13 lukem Exp $
 .
 ./altroot
 ./bin
@@ -844,6 +844,7 @@
 ./usr/share/examples/openssl
 ./usr/share/examples/postfix
 ./usr/share/examples/supfiles
+./usr/share/examples/syslogd
 ./usr/share/examples/usermgmt
 ./usr/share/games
 ./usr/share/games/atc
