@@ -1,4 +1,4 @@
-/* $NetBSD: cia.c,v 1.20 1997/04/10 23:12:17 cgd Exp $ */
+/* $NetBSD: cia.c,v 1.21 1997/06/06 23:54:25 thorpej Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -30,7 +30,7 @@
 #include <machine/options.h>		/* Config options headers */
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: cia.c,v 1.20 1997/04/10 23:12:17 cgd Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cia.c,v 1.21 1997/06/06 23:54:25 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -100,11 +100,6 @@ cia_init(ccp, mallocsafe)
 	int mallocsafe;
 {
 
-	/*
-	 * Can't set up SGMAP data here; can be called before malloc().
-	 * XXX THIS COMMENT NO LONGER MAKES SENSE.
-	 */
-
 	ccp->cc_hae_mem = REGVAL(CIA_CSR_HAE_MEM);
 	ccp->cc_hae_io = REGVAL(CIA_CSR_HAE_IO);
 
@@ -117,12 +112,7 @@ cia_init(ccp, mallocsafe)
 
 	cia_pci_init(&ccp->cc_pc, ccp);
 
-	/* XXX XXX BEGIN XXX XXX */
-	{							/* XXX */
-		extern vm_offset_t alpha_XXX_dmamap_or;		/* XXX */
-		alpha_XXX_dmamap_or = 0x40000000;		/* XXX */
-	}							/* XXX */
-	/* XXX XXX END XXX XXX */
+	cia_dma_init(ccp);
 
 	ccp->cc_initted = 1;
 }
@@ -141,7 +131,8 @@ ciaattach(parent, self, aux)
 
 	/*
 	 * set up the chipset's info; done once at console init time
-	 * (maybe), but doesn't hurt to do twice.
+	 * (maybe), but we must do it here as well to take care of things
+	 * that need to use memory allocation.
 	 */
 	ccp = sc->sc_ccp = &cia_configuration;
 	cia_init(ccp, 1);
@@ -175,6 +166,7 @@ ciaattach(parent, self, aux)
 	pba.pba_busname = "pci";
 	pba.pba_iot = ccp->cc_iot;
 	pba.pba_memt = ccp->cc_memt;
+	pba.pba_dmat = &ccp->cc_dmat_direct;
 	pba.pba_pc = &ccp->cc_pc;
 	pba.pba_bus = 0;
 	pba.pba_flags = PCI_FLAGS_IO_ENABLED | PCI_FLAGS_MEM_ENABLED;
