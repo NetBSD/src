@@ -1,11 +1,11 @@
-/*	$NetBSD: perform.c,v 1.70.2.1 2003/07/13 09:45:21 jlam Exp $	*/
+/*	$NetBSD: perform.c,v 1.70.2.2 2003/07/23 20:48:00 jlam Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: perform.c,v 1.44 1997/10/13 15:03:46 jkh Exp";
 #else
-__RCSID("$NetBSD: perform.c,v 1.70.2.1 2003/07/13 09:45:21 jlam Exp $");
+__RCSID("$NetBSD: perform.c,v 1.70.2.2 2003/07/23 20:48:00 jlam Exp $");
 #endif
 #endif
 
@@ -118,7 +118,7 @@ pkg_do(const char *pkg)
 	errc = 0;
 	zapLogDir = 0;
 	LogDir[0] = '\0';
-	strcpy(playpen, FirstPen);
+	strlcpy(playpen, FirstPen, sizeof(playpen));
 	inPlace = 0;
 	dbdir = (tmp = getenv(PKG_DBDIR)) ? tmp : DEF_LOG_DIR;
 
@@ -374,7 +374,7 @@ pkg_do(const char *pkg)
 								 *  to see if we want to compare against that
 								 *  one at all. 
 								 */
-								strcpy(base_new, PkgName);
+								strlcpy(base_new, PkgName, sizeof(base_new));
 								s2 = strpbrk(base_new, "<>[]?*{");
 								if (s2)
 									*s2 = '\0';
@@ -383,7 +383,7 @@ pkg_do(const char *pkg)
 									if (s2)
 										*s2 = '\0';
 								}
-								strcpy(base_exist, depp->name);
+								strlcpy(base_exist, depp->name, sizeof(base_exist));
 								s2 = strpbrk(base_exist, "<>[]?*{");
 								if (s2)
 									*s2 = '\0';
@@ -708,8 +708,8 @@ ignore_replace_depends_check:
 					/* this shouldn't happen... X-) */
 				}
 			}
-			strcat(contents, "/");
-			strcat(contents, REQUIRED_BY_FNAME);
+			strlcat(contents, "/", sizeof(contents));
+			strlcat(contents, REQUIRED_BY_FNAME, sizeof(contents));
 
 			cfile = fopen(contents, "a");
 			if (!cfile)

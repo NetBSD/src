@@ -1,11 +1,11 @@
-/*	$NetBSD: file.c,v 1.55.2.1 2003/07/13 09:45:26 jlam Exp $	*/
+/*	$NetBSD: file.c,v 1.55.2.2 2003/07/23 20:48:02 jlam Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: file.c,v 1.29 1997/10/08 07:47:54 charnier Exp";
 #else
-__RCSID("$NetBSD: file.c,v 1.55.2.1 2003/07/13 09:45:26 jlam Exp $");
+__RCSID("$NetBSD: file.c,v 1.55.2.2 2003/07/23 20:48:02 jlam Exp $");
 #endif
 #endif
 
@@ -541,7 +541,7 @@ unpack(const char *pkg, const char *flist)
 			errx(EXIT_FAILURE, "don't know how to decompress %s, sorry", pkg);
 	} else
 		decompress_cmd = GZIP_CMD " -c -d";
-	strcat(args, "xpf -");
+	strlcat(args, "xpf -", sizeof(args));
 	if (vsystem("%s %s | %s %s %s", decompress_cmd, pkg, TAR_CMD, args, flist ? flist : "")) {
 		warnx("%s extract of %s failed!", TAR_CMD, pkg);
 		return 1;
