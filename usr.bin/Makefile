@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.114 2000/12/22 01:31:48 itojun Exp $
+#	$NetBSD: Makefile,v 1.115 2000/12/30 13:07:48 augustss Exp $
 #	from: @(#)Makefile	8.3 (Berkeley) 1/7/94
 
 .include <bsd.own.mk>
@@ -21,7 +21,7 @@ SUBDIR=	apply apropos asa at audio banner basename biff \
 	showmount shuffle skey skeyinfo skeyinit soelim split \
 	su systat tail talk tcopy tee telnet tftp time \
 	tip tn3270 top touch tput tr true tset tsort tty ul \
-	uname unexpand unifdef uniq units unvis usbhidctl users \
+	uname unexpand unifdef uniq units unvis usbhidaction usbhidctl users \
 	uudecode uuencode vacation vgrind vi vis vmstat w \
 	wall wc what whatis whereis which who whois window \
 	write xargs xinstall xlint xstr yacc yes ypcat \
