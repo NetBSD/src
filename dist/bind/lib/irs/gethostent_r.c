@@ -1,4 +1,4 @@
-/*	$NetBSD: gethostent_r.c,v 1.1.1.1 1999/11/20 18:54:09 veego Exp $	*/
+/*	$NetBSD: gethostent_r.c,v 1.1.1.2 2001/01/27 06:19:34 itojun Exp $	*/
 
 /*
  * Copyright (c) 1998-1999 by Internet Software Consortium.
@@ -18,7 +18,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static const char rcsid[] = "Id: gethostent_r.c,v 8.4 1999/01/18 07:46:52 vixie Exp";
+static const char rcsid[] = "Id: gethostent_r.c,v 8.5 2000/07/11 05:46:35 vixie Exp";
 #endif /* LIBC_SCCS and not lint */
 
 #include <port_before.h>
@@ -145,7 +145,6 @@ copy_hostent(struct hostent *he, struct hostent *hptr, HOST_R_COPY_ARGS) {
 		memcpy(cp, he->h_addr_list[i], n);
 		hptr->h_addr_list[i] = cp;
 		cp += n;
-		i++;
 	}
 	hptr->h_addr_list[i] = NULL;
 	ptr++;
