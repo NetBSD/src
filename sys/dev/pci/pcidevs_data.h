@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.118.2.5 1999/10/05 22:11:32 he Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.118.2.6 1999/10/20 23:38:35 he Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.113.2.4 1999/10/05 22:10:04 he Exp 
+ *	NetBSD: pcidevs,v 1.113.2.5 1999/10/20 23:37:08 he Exp 
  */
 
 /*
@@ -232,6 +232,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    "AEC6712SUW SCSI",
 	},
 	{
+	    PCI_VENDOR_ACCTON, PCI_PRODUCT_ACCTON_MPX5030,
+	    0,
+	    "Accton Technology",
+	    "MPX 5030/5038 Ethernet",
+	},
+	{
 	    PCI_VENDOR_ACER, PCI_PRODUCT_ACER_M1435,
 	    0,
 	    "Acer",
@@ -416,6 +422,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Adaptec (2nd PCI Vendor ID)",
 	    "AIC-7896/7",
+	},
+	{
+	    PCI_VENDOR_ADDTRON, PCI_PRODUCT_ADDTRON_8139,
+	    0,
+	    "Addtron Technology",
+	    "8139 Ethernet",
 	},
 	{
 	    PCI_VENDOR_ADVSYS, PCI_PRODUCT_ADVSYS_1200A,
@@ -1064,6 +1076,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Digital Equipment",
 	    "DECchip 21154 PCI-PCI Bridge",
+	},
+	{
+	    PCI_VENDOR_DELTA, PCI_PRODUCT_DELTA_8139,
+	    0,
+	    "Delta Electronics",
+	    "8139 Ethernet",
 	},
 	{
 	    PCI_VENDOR_DIAMOND, PCI_PRODUCT_DIAMOND_VIPER,
@@ -5614,6 +5632,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    NULL,
 	},
 	{
+	    PCI_VENDOR_DELTA, 0,
+	    PCI_KNOWNDEV_NOPROD,
+	    "Delta Electronics",
+	    NULL,
+	},
+	{
 	    PCI_VENDOR_SYMPHONY2, 0,
 	    PCI_KNOWNDEV_NOPROD,
 	    "Symphony Labs (2nd PCI Vendor ID)",
@@ -5635,6 +5659,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    PCI_VENDOR_AVANCE2, 0,
 	    PCI_KNOWNDEV_NOPROD,
 	    "Avance Logic (2nd PCI Vendor ID)",
+	    NULL,
+	},
+	{
+	    PCI_VENDOR_ADDTRON, 0,
+	    PCI_KNOWNDEV_NOPROD,
+	    "Addtron Technology",
 	    NULL,
 	},
 	{
