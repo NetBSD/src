@@ -1,4 +1,4 @@
-/*	$NetBSD: com.c,v 1.186 2001/06/20 03:07:25 uwe Exp $	*/
+/*	$NetBSD: com.c,v 1.187 2001/08/22 12:44:10 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -129,8 +129,6 @@
 #define	com_lcr	com_cfcr
 #include <dev/cons.h>
 
-#include "com.h"
-
 #ifdef COM_HAYESP
 int comprobeHAYESP __P((bus_space_handle_t hayespioh, struct com_softc *sc));
 #endif
@@ -143,7 +141,6 @@ int	comspeed	__P((long, long));
 static	u_char	cflag2lcr __P((tcflag_t));
 int	comparam	__P((struct tty *, struct termios *));
 void	comstart	__P((struct tty *));
-void	comstop		__P((struct tty *, int));
 int	comhwiflow	__P((struct tty *, int));
 
 void	com_loadchannelregs __P((struct com_softc *));
@@ -157,9 +154,11 @@ void	com_iflush	__P((struct com_softc *));
 int	com_common_getc	__P((dev_t, bus_space_tag_t, bus_space_handle_t));
 void	com_common_putc	__P((dev_t, bus_space_tag_t, bus_space_handle_t, int));
 
-/* XXX: These belong elsewhere */
+int cominit		__P((bus_space_tag_t, bus_addr_t, int, int, tcflag_t,
+			     bus_space_handle_t *));
+
+/* XXX: This belongs elsewhere */
 cdev_decl(com);
-bdev_decl(com);
 
 int	comcngetc	__P((dev_t));
 void	comcnputc	__P((dev_t, int));
