@@ -1,7 +1,11 @@
-/*	$NetBSD: eject.c,v 1.7 1999/02/08 16:35:33 bouyer Exp $	*/
-/*
- * Copyright (c) 1995
- *	Matthieu Herrb.  All rights reserved.
+/*	$NetBSD: eject.c,v 1.8 1999/02/17 22:59:14 tron Exp $	*/
+
+/*-
+ * Copyright (c) 1999 The NetBSD Foundation, Inc.
+ * All rights reserved.
+ *
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by Chris Jones.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -13,438 +17,607 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *	This product includes software developed for the NetBSD Project
- *	by Matthieu Herrb.
- * 4. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission.
+ *	This product includes software developed by the NetBSD
+ *	Foundation, Inc. and its contributors.
+ * 4. Neither the name of The NetBSD Foundation nor the names of its
+ *    contributors may be used to endorse or promote products derived
+ *    from this software without specific prior written permission.
  *
- * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
- * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
- * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
- * IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
- * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
- * BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
- * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED
- * AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
- * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
- * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
- * SUCH DAMAGE.
+ * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+ * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS 
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
  */
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: eject.c,v 1.7 1999/02/08 16:35:33 bouyer Exp $");
-#endif
+__COPYRIGHT("@(#) Copyright (c) 1999 The NetBSD Foundation, Inc.\n\
+	All rights reserved.\n");
+#endif /* not lint */
 
-/*
- * Eject command
- *
- * It knows to eject floppies, CD-ROMS and tapes
- * and tries to unmount file systems first
- */
+#ifndef lint
+__RCSID("$NetBSD: eject.c,v 1.8 1999/02/17 22:59:14 tron Exp $");
+#endif /* not lint */
 
 #include <sys/param.h>
-#include <sys/ioctl.h>
-#include <sys/cdio.h>
-#include <sys/mtio.h>
-#include <sys/disklabel.h>
-#include <sys/ucred.h>
-#include <sys/mount.h>
-#include <sys/cdefs.h>
+#include <sys/wait.h>
 
+#include <ctype.h>
+#include <err.h>
+#include <locale.h>
+#include <paths.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <unistd.h>
-#include <fcntl.h>
-#include <err.h>
 #include <string.h>
+#include <unistd.h>
 
-typedef struct DEVTAB {
-	char   *name;
-	char   *device;
-	char   qualifier;
-	u_int   type;
-} DEVTAB;
+#define DEFAULT_CC		"cc"
+#define DEFAULT_PATH		_PATH_DEFPATH
+#define DEFAULT_FILENAME	".depend"
 
-/*
- * known device nicknames and types
- * (used for selecting the proper ioctl to eject them)
- */
-#define DISK   0x00000002
-#define CDROM  0x00000003
-#define TAPE   0x00010000
+void	usage __P((void));
+char   *findcc __P((const char *));
+int	main __P((int, char **));
 
-#define MOUNTABLE(x) ((x) & 0x0000ffff)
-
-#define RPART ('a' + RAW_PART)
-
-static DEVTAB devtab[] = {
-	{ "diskette", "/dev/rfd0", 'a', DISK },
-	{ "diskette0", "/dev/rfd0", 'a', DISK },
-	{ "diskette1", "/dev/rfd1", 'a', DISK },
-	{ "floppy", "/dev/rfd0", 'a', DISK },
-	{ "floppy0", "/dev/rfd0", 'a', DISK },
-	{ "floppy1", "/dev/rfd1", 'a', DISK },
-	{ "fd", "/dev/rfd0", 'a', DISK },
-	{ "fd0", "/dev/rfd0", 'a', DISK },
-	{ "fd1", "/dev/rfd1", RPART, DISK },
-	{ "sd0", "/dev/rsd0", RPART, DISK },
-	{ "sd1", "/dev/rsd1", RPART, DISK },
-	{ "sd2", "/dev/rsd2", RPART, DISK },
-	{ "cdrom", "/dev/rcd0", RPART, CDROM },
-	{ "cdrom0", "/dev/rcd0", RPART, CDROM },
-	{ "cdrom1", "/dev/rcd1", RPART, CDROM },
-	{ "cd", "/dev/rcd0", RPART, CDROM },
-	{ "cd0", "/dev/rcd0", RPART, CDROM },
-	{ "cd1", "/dev/rcd1", RPART, CDROM },
-	{ "mcd", "/dev/rmcd0", RPART, CDROM },
-	{ "mcd0", "/dev/rmcd0", RPART, CDROM },
-	{ "mcd1", "/dev/rmcd1", RPART, CDROM },
-	{ "tape", "/dev/rst0", '\0', TAPE },
-	{ "tape0", "/dev/rst0", '\0', TAPE },
-	{ "tape1", "/dev/rst1", '\0', TAPE },
-	{ "st", "/dev/rst0", '\0', TAPE },
-	{ "st0", "/dev/rst0", '\0', TAPE },
-	{ "st1", "/dev/rst1", '\0', TAPE },
-	{ "dat", "/dev/rst0", '\0', TAPE },
-	{ "dat0", "/dev/rst0", '\0', TAPE },
-	{ "dat1", "/dev/rst1", '\0', TAPE },
-	{ "exabyte", "/dev/rst0", '\0', TAPE },
-	{ "exabyte0", "/dev/rst0", '\0', TAPE },
-	{ "exabyte1", "/dev/rst1", '\0', TAPE },
-	{ NULL, NULL }
-};
-
-struct types {
-	char	*str;
-	int	type;
-} types[] = {
-	{ "diskette", DISK },
-	{ "floppy", DISK },
-	{ "cdrom", CDROM },
-	{ "disk", DISK },
-	{ "tape", TAPE },
-	{ NULL, 0 }
-};
-
-int verbose;
-
-static	void	usage __P((void));
-static	char   *device_by_name __P((char *, int *, char *));
-static	char   *device_by_nickname __P((char *, int *, char *));
-static	void	load_cdrom __P((char *));
-static	void	eject_disk __P((char *, int));
-static	void	eject_tape __P((char *));
-	int	main __P((int, char **));
-static	void	umount_mounted __P((char *));
-
-/*
- * remind the syntax of the command to the user
- */
-static void
+void
 usage()
 {
-	fprintf(stderr,
-	    "usage: eject [-n][-f][-l][-t devtype][[-d] raw device | "
-	    "nickname ]\n");
-	exit(1);
-	/*NOTREACHED*/
+	(void)fprintf(stderr,
+	    "usage: mkdep [-a] [-p] [-f file ...] flags file ...\n");
+	exit(EXIT_FAILURE);
 }
 
-
-/*
- * given a device nick name, find its associated raw device and type
- */
-static char *
-device_by_nickname(name, pdevtype, pqualifier)
-	char	*name;
-	int	*pdevtype;
-	char	*pqualifier;
+char *
+findcc(progname)
+	const char	*progname;
 {
-	int     i;
+	char   *path, *dir, *next;
+	char   buffer[MAXPATHLEN];
 
-	for (i = 0; devtab[i].name != NULL; i++) {
-		if (strcmp(name, devtab[i].name) == 0) {
-			*pdevtype = devtab[i].type;
-			*pqualifier = devtab[i].qualifier;
-			return devtab[i].device;
-		}
-	}
-	*pdevtype = -1;
-	return NULL;
-}
+	if (strchr(progname, '/') != NULL)
+		return access(progname, X_OK) ? NULL : strdup(progname);
 
-/*
- * Given a raw device name, find its type and partition tag
- * from the name.
- */
-static char *
-device_by_name(device, pdevtype, pqualifier)
-	char	*device;
-	int	*pdevtype;
-	char	*pqualifier;
-{
-	int     i;
+	if (((path = getenv("PATH")) == NULL) ||
+	    ((path = strdup(path)) == NULL))
+		return NULL;
 
-	for (i = 0; devtab[i].name != NULL; i++) {
-		if (strncmp(devtab[i].device, device,
-			    strlen(devtab[i].device)) == 0) {
-			*pdevtype = devtab[i].type;
-			*pqualifier = devtab[i].qualifier;
-			return devtab[i].device;
-		}
-	}
-	*pdevtype = -1;
-	return NULL;
-}
+	dir = path;
+	while (dir != NULL) {
+		if ((next = strchr(dir, ':')) != NULL)
+			*next++ = '\0';
 
-/*
- * load a disk (cdrom only)
- */
-static void
-load_cdrom(device)
-	char   *device;
-{
-	int     fd;
-
-	fd = open(device, O_RDONLY);
-	if (fd < 0) {
-		err(1, "%s: open", device);
-	}
-
-	if (ioctl(fd, CDIOCCLOSE, NULL) < 0) {
-		err(1, "%s: DIOCEJECT", device);
-	}
-	if (close(fd) != 0)
-		err(1, "%s: close", device);
-}
-
-/*
- * eject a disk (including floppy and cdrom)
- */
-static void
-eject_disk(device, umount_flag)
-	char   *device;
-	int    umount_flag;
-{
-	int     fd, arg = 0;
-
-	fd = open(device, O_RDONLY);
-	if (fd < 0) {
-		err(1, "%s: open", device);
-	}
-	if (umount_flag == 0) {
-		if (ioctl(fd, DIOCLOCK, (char *)&arg) < 0) {
-			err(1, "%s: DIOCLOCK", device);
-		}
-		arg = 1; /* eject without device busy check */
-	}
-	if (ioctl(fd, DIOCEJECT, (char *)&arg) < 0) {
-		err(1, "%s: DIOCEJECT", device);
-	}
-	if (close(fd) != 0)
-		err(1, "%s: close", device);
-} /* eject_disk */
-
-/*
- * eject a tape
- */
-static void
-eject_tape(device)
-	char   *device;
-{
-	int     fd;
-	struct mtop mt_com;
-
-	fd = open(device, O_RDONLY);
-	if (fd < 0) {
-		err(1, "open %s", device);
-	}
-	mt_com.mt_op = MTOFFL;
-
-	if (ioctl(fd, MTIOCTOP, &mt_com) < 0) {
-		err(1, "%s:  MTOFFL", device);
-	}
-	close(fd);
-} /* eject_tape */
-
-/*
- * test if partitions of a device are mounted
- * and unmount them
- */
-static void
-umount_mounted(device)
-	char   *device;
-{
-	struct statfs *mntbuf;
-	int     i, n, l;
-	static char blkdev[32];
-	struct stat stb;
-	const char *dp;
-
-	/* convert path to block device if needed, remove partition letter */
-	if (stat(device, &stb) < 0)
-		return;
-	if (S_ISBLK(stb.st_mode)) {
-		strncpy(blkdev, device, 32);
-	} else if ((dp = strrchr(device, '/')) != 0 && dp[1] == 'r') {
-		snprintf(blkdev, 32, "%.*s/%s", (int)(dp - device),
-		    device, dp + 2);
-	} else
-		return;
-	blkdev[strlen(blkdev) - 1] = '\0';
-			
-	n = getmntinfo(&mntbuf, MNT_NOWAIT);
-	if (n == 0) {
-		err(1, "getmntinfo");
-	}
-	l = strlen(blkdev);
-	for (i = 0; i < n; i++) {
-		if (strncmp(blkdev, mntbuf[i].f_mntfromname, l) == 0) {
-			if (verbose)
-				printf("Unmounting: %s\n",
-					mntbuf[i].f_mntonname);
-			if (unmount(mntbuf[i].f_mntonname, 0) < 0) {
-				err(1, "umount %s from %s",
-					mntbuf[i].f_mntfromname,
-					mntbuf[i].f_mntonname);
+		if (snprintf(buffer, sizeof(buffer),
+			     "%s/%s", dir, progname) < sizeof(buffer)) {
+			if (!access(buffer, X_OK)) {
+				free(path);
+				return strdup(buffer);
 			}
 		}
+		dir = next;
 	}
 
+	free(path);
+	return NULL;
 }
 
-/*
- * Eject - ejects various removable devices, including cdrom, tapes,
- * diskettes, and other removable disks (like ZIP drives)
- */
 int
 main(argc, argv)
 	int     argc;
-	char   *argv[];
+	char  **argv;
 {
-	char    device[MAXPATHLEN];
-	char	*devpath;
-	char	qualifier;
-	int     umount_flag, load_flag, devtype;
-	int     i, ch;
+	int 	aflag, pflag, index, tmpfd, status;
+	pid_t	cpid, pid;
+	char   *filename, *CC, *pathname, tmpfilename[MAXPATHLEN], **args;
+	FILE   *tmpfile, *dependfile;
+	char	buffer[32768];
 
-	/* Default options values */
-	devpath = NULL;
-	devtype = -1;
-	umount_flag = 1;
-	load_flag = 0;
+	setlocale(LC_ALL, "");
 
-	while ((ch = getopt(argc, argv, "d:flnt:v")) != -1) {
-		switch (ch) {
-		case 'd':
-			devpath = optarg;
-			break;
-		case 'f':
-			umount_flag = 0;
-			break;
-		case 'l':
-			load_flag = 1;
-			break;
-		case 'n':
-			for (i = 0; devtab[i].name != NULL; i++) {
-				if (devtab[i].qualifier != '\0') {
-					printf("%9s => %s%c\n", devtab[i].name,
-					       devtab[i].device,
-					       devtab[i].qualifier);
-				} else {
-					printf("%9s => %s\n", devtab[i].name,
-					       devtab[i].device);
-				}
-			}
-			return 0;
-		case 't':
-			for (i = 0; types[i].str != NULL; i++) {
-				if (strcasecmp(optarg, types[i].str) == 0) {	
-					devtype = types[i].type;
-					break;
-				}
-			}
-			if (devtype == -1)
-				errx(1, "%s: unknown device type", optarg);
-			break;
-		case 'v':
-			verbose = 1;
-			break;
-		case '?':
-		default:
-			usage();
-			/*NOTREACHED*/
-		}
-	}
-
-	argc -= optind;
-	argv += optind;
-
-	if (devpath != NULL) {
-		/* device specified with 'd' option */
-		if (devtype == -1)
-			device_by_name(devpath, &devtype, &qualifier);
+	aflag = 0;
+	pflag = 0;
+	filename = DEFAULT_FILENAME;
+	for (index=1; index< argc; index++)
+		if (strcmp(argv[index], "-a") == 0)
+			aflag = 1;
 		else
-			qualifier = '\0';
-	} else {
-		if (argc <= 0) {
-			errx(1, "No device specified");
-			/* NOTREACHED */
-		}
-		if (strncmp(argv[0], "/dev/", 5) == 0) {
-			/*
-			 * If argument begins with "/dev/", assume
-			 * a device name.
-			 */
-			if (devtype == -1) {
-				devpath = device_by_name(argv[0],
-							 &devtype, &qualifier);
-			} else {
-				/* Device type specified; use literally */
-				devpath = argv[0];
-				qualifier = '\0';
+			if (strcmp(argv[index], "-f") == 0) {
+				if (++index < argc)
+					filename = argv[index];
 			}
-		} else {
-			/* assume a nickname */
-			devpath = device_by_nickname(argv[0],
-						     &devtype, &qualifier);
+			else
+				if (strcmp(argv[index], "-p") == 0)
+					pflag = 1;
+				else
+					break;
+
+	argc -= index;
+	argv += index;
+	if (argc == 0)
+		usage();
+
+	if ((CC = getenv("CC")) == NULL)
+		CC = DEFAULT_CC;
+	if ((pathname = findcc(CC)) == NULL)
+		if (!setenv("PATH", DEFAULT_PATH, 1))
+			pathname = findcc(CC);
+	if (pathname == NULL) {
+		(void)fprintf(stderr, "mkdep: %s: not found\n", CC);
+		return EXIT_FAILURE;
+	}
+
+	if ((args = malloc((argc + 3) * sizeof(char *))) == NULL) {
+		perror("mkdep");
+		exit(EXIT_FAILURE);
+	}
+	args[0] = CC;
+	args[1] = "-M";
+	(void)memcpy(&args[2], argv, (argc + 1) * sizeof(char *));
+
+	(void)strcpy(tmpfilename, _PATH_TMP "mkdepXXXXXX");
+	if ((tmpfd = mkstemp (tmpfilename)) < 0) {
+		warn("unable to create temporary file %s", tmpfilename);
+		return EXIT_FAILURE;
+	}
+
+#ifdef __GNUC__			/* to shut up gcc warnings */
+	(void)&aflag;
+	(void)&pflag;
+	(void)&filename;
+	(void)&pathname;
+#endif
+
+	switch (cpid = vfork()) {
+	case 0:
+	    (void)dup2(tmpfd, STDOUT_FILENO);
+	    (void)close(tmpfd);
+
+	    (void)execv(pathname, args);
+	    _exit(EXIT_FAILURE);
+
+	case -1:
+	    (void)fputs("mkdep: unable to fork.\n", stderr);
+	    (void)close(tmpfd);
+	    (void)unlink(tmpfilename);
+	    return EXIT_FAILURE;
+	}
+
+	while (((pid = wait(&status)) != cpid) && (pid >= 0));
+
+	if (status) {
+	    (void)fputs("mkdep: compile failed.\n", stderr);
+	    (void)close(tmpfd);
+	    (void)unlink(tmpfilename);
+	    return EXIT_FAILURE;
+	}
+
+	(void)lseek(tmpfd, 0, SEEK_SET);
+	if ((tmpfile = fdopen(tmpfd, "r")) == NULL) {
+	    (void)fprintf(stderr,
+			  "mkdep: unable to read temporary file %s\n",
+			  tmpfilename);
+	    (void)close(tmpfd);
+	    (void)unlink(tmpfilename);
+	    return EXIT_FAILURE;
+	}
+
+	if ((dependfile = fopen(filename, aflag ? "a" : "w")) == NULL) {
+		(void)fprintf(stderr,
+			      "mkdep: unable to %s to file %s\n",
+			      aflag ? "append" : "write", filename);
+		(void)fclose(tmpfile);
+		(void)unlink(tmpfilename);
+		return EXIT_FAILURE;
+	}
+
+	while (fgets(buffer, sizeof(buffer), tmpfile) != NULL) {
+		char   *ptr;
+
+		if (pflag && ((ptr = strstr(buffer, ".o")) != NULL)) {
+			char   *colon;
+
+			colon = ptr + 2;
+			while (isspace(*colon)) colon++;
+			if (*colon == ':')
+				(void)strcpy(ptr, colon);
 		}
+
+		ptr = buffer;
+		while (*ptr)
+			if (isspace(*ptr++))
+				if ((ptr[0] == '.') && (ptr[1] == '/'))
+					(void)strcpy(ptr, ptr + 2);
+
+		(void)fputs(buffer, dependfile);
 	}
 
-	if (devpath == NULL) {
-		errx(1, "%s: unknown device", argv[0]);
-		/*NOTREACHED*/
-	}
+	(void)fclose(dependfile);
+	(void)fclose(tmpfile);
+	(void)unlink(tmpfilename);
 
-	snprintf(device, sizeof(device), "%s%c", devpath, qualifier);
+	return EXIT_SUCCESS;
+}
 
-	if (load_flag) {
-		if (devtype != CDROM)
-			errx(1, "Can only load CDROM device type\n");
-		if (verbose)
-			printf("Loading device `%s'\n", device);
-		load_cdrom(device);
-		exit(0);
-	}
+/*
+ * Eject program.  Deals with floppies, cdroms, and tapes.  We could
+ * really use a generic GDIOCEJECT ioctl, that would work with
+ * everything.  This eject also knows how to load media into cdrom
+ * drives, and it will attempt to extrapolate a device name from a
+ * nickname and number.
+ */
 
-	if (umount_flag && MOUNTABLE(devtype)) {
-		umount_mounted(device);
-	}
+#include <sys/cdefs.h>
+#ifndef lint
+__RCSID("$NetBSD: eject.c,v 1.8 1999/02/17 22:59:14 tron Exp $");
+#endif
 
-	if (verbose)
-		printf("Ejecting device `%s'\n", device);
-	switch (devtype) {
-	case DISK:
-	case CDROM:
-		eject_disk(device, umount_flag);
-		break;
-	case TAPE:
-		eject_tape(device);
-		break;
+#include <ctype.h>
+#include <err.h>
+#include <fcntl.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
+#include <sys/cdio.h>
+#include <sys/disklabel.h>
+#include <sys/ioctl.h>
+#include <sys/param.h>
+#include <sys/ucred.h>
+#include <sys/mount.h>
+#include <sys/mtio.h>
+
+struct nicknames_s {
+    char *name;			/* The name given on the command line. */
+    char *devname;		/* The base name of the device */
+    int type;			/* The type of device, for determining
+				   what ioctl to use. */
+#define TAPE 0x10
+#define DISK 0x20
+    /* OR one of the above with one of the below: */
+#define NOTLOADABLE 0x00
+#define LOADABLE 0x01
+#define TYPEMASK ((int)~0x01)
+} nicknames[] = {
+    { "diskette", "fd", DISK | NOTLOADABLE },
+    { "floppy", "fd", DISK | NOTLOADABLE },
+    { "fd", "fd", DISK | NOTLOADABLE },
+    { "cdrom", "cd", DISK | LOADABLE },
+    { "cd", "cd", DISK | LOADABLE },
+    { "mcd", "mcd", DISK | LOADABLE }, /* XXX Is this true? */
+    { "tape", "st", TAPE | NOTLOADABLE },
+    { "st", "st", TAPE | NOTLOADABLE },
+    { "dat", "st", TAPE | NOTLOADABLE },
+    { "exabyte", "st", TAPE | NOTLOADABLE },
+};
+#define MAXNICKLEN 12		/* at least enough room for the
+				   longest nickname */
+#define MAXDEVLEN (MAXNICKLEN + 7) /* "/dev/r" ... "a" */
+
+struct devtypes_s {
+    char *name;
+    int type;
+} devtypes[] = {
+    { "diskette", DISK | NOTLOADABLE },
+    { "floppy", DISK | NOTLOADABLE },
+    { "cdrom", DISK | LOADABLE },
+    { "disk", DISK | NOTLOADABLE },
+    { "tape", TAPE | NOTLOADABLE },
+};
+
+int verbose_f = 0;
+int umount_f = 1;
+int load_f = 0;
+
+int main __P((int, char *[]));
+void usage __P((void));
+char *nick2dev __P((char *));
+char *nick2rdev __P((char *));
+int guess_devtype __P((char *));
+char *guess_nickname __P((char *));
+void eject_tape __P((char *));
+void eject_disk __P((char *));
+void unmount_dev __P((char *));
+
+int
+main(int argc,
+     char *argv[])
+{
+    int ch;
+    int devtype = -1;
+    int n, i;
+    char *devname = NULL;
+
+    while((ch = getopt(argc, argv, "d:flnt:v")) != -1) {
+	switch(ch) {
+	case 'd':
+	    devname = optarg;
+	    break;
+	case 'f':
+	    umount_f = 0;
+	    break;
+	case 'l':
+	    load_f = 1;
+	    break;
+	case 'n':
+	    for(n = 0; n < sizeof(nicknames) / sizeof(nicknames[0]);
+		n++) {
+		struct nicknames_s *np = &nicknames[n];
+
+		printf("%s -> %s\n", np->name, nick2dev(np->name));
+	    }
+	    return(0);
+	case 't':
+	    for(i = 0; i < sizeof(devtypes) / sizeof(devtypes[0]);
+		i++) {
+		if(strcasecmp(devtypes[i].name, optarg) == 0) {
+		    devtype = devtypes[i].type;
+		    break;
+		}
+	    }
+	    if(devtype == -1) {
+		errx(1, "%s: unknown device type\n", optarg);
+	    }
+	    break;
+	case 'v':
+	    verbose_f = 1;
+	    break;
 	default:
-		errx(1, "impossible... devtype = %d", devtype);
+	    warnx("-%c: unknown switch", ch);
+	    usage();
+	    /* NOTREACHED */
 	}
+    }
+    argc -= optind;
+    argv += optind;
 
-	exit(0);
+    if(devname == NULL) {
+	if(argc == 0) {
+	    usage();
+	    /* NOTREACHED */
+	} else
+	    devname = argv[0];
+    }
+
+
+    if(devtype == -1) {
+	devtype = guess_devtype(devname);
+    }
+    if(devtype == -1) {
+	errx(1, "%s: unable to determine type of device",
+	     devname);
+    }
+    if(verbose_f) {
+	printf("device type == ");
+	if((devtype & TYPEMASK) == TAPE)
+	    printf("tape\n");
+	else
+	    printf("disk, floppy, or cdrom\n");
+    }
+
+    if(umount_f)
+	unmount_dev(devname);
+
+    /* XXX Tapes and disks have different ioctl's: */
+    if((devtype & TYPEMASK) == TAPE)
+	eject_tape(devname);
+    else
+	eject_disk(devname);
+
+    if(verbose_f)
+	printf("done.\n");
+
+    return(0);
+}
+
+void
+usage(void)
+{
+    errx(1, "Usage: eject [-n][-f][-v][-l][-t type][-d] device | nickname");
+}
+
+int
+guess_devtype(char *devname)
+{
+    int n;
+
+    /* Nickname match: */
+    for(n = 0; n < sizeof(nicknames) / sizeof(nicknames[0]);
+	n++) {
+	if(strncasecmp(nicknames[n].name, devname,
+		       strlen(nicknames[n].name)) == 0)
+	    return(nicknames[n].type);
+    }
+
+    /*
+     * If we still don't know it, then try to compare vs. dev
+     * and rdev names that we know.
+     */
+    /* dev first: */
+    for(n = 0; n < sizeof(nicknames) / sizeof(nicknames[0]); n++) {
+	char *name;
+	name = nick2dev(nicknames[n].name);
+	/*
+	 * Assume that the part of the name that distinguishes the
+	 * instance of this device begins with a 0.
+	 */
+	*(strchr(name, '0')) = '\0';
+	if(strncmp(name, devname, strlen(name)) == 0)
+	    return(nicknames[n].type);
+    }
+
+    /* Now rdev: */
+    for(n = 0; n < sizeof(nicknames) / sizeof(nicknames[0]); n++) {
+	char *name = nick2rdev(nicknames[n].name);
+	*(strchr(name, '0')) = '\0';
+	if(strncmp(name, devname, strlen(name)) == 0)
+	    return(nicknames[n].type);
+    }
+
+    /* Not found. */
+    return(-1);
+}
+
+/* "floppy5" -> "/dev/fd5a".  Yep, this uses a static buffer. */
+char *
+nick2dev(char *nn)
+{
+    int n;
+    static char devname[MAXDEVLEN];
+    int devnum = 0;
+
+    for(n = 0; n < sizeof(nicknames) / sizeof(nicknames[0]); n++) {
+	if(strncasecmp(nicknames[n].name, nn,
+		       strlen(nicknames[n].name)) == 0) {
+	    sscanf(nn, "%*[^0-9]%d", &devnum);
+	    sprintf(devname, "/dev/%s%d", nicknames[n].devname,
+		    devnum);
+	    if((nicknames[n].type & TYPEMASK) != TAPE)
+		strcat(devname, "a");
+	    return(devname);
+	}
+    }
+
+    return(NULL);
+}
+
+/* "floppy5" -> "/dev/rfd5c".  Static buffer. */
+char *
+nick2rdev(char *nn)
+{
+    int n;
+    static char devname[MAXDEVLEN];
+    int devnum = 0;
+
+    for(n = 0; n < sizeof(nicknames) / sizeof(nicknames[0]); n++) {
+	if(strncasecmp(nicknames[n].name, nn,
+		       strlen(nicknames[n].name)) == 0) {
+	    sscanf(nn, "%*[^0-9]%d", &devnum);
+	    sprintf(devname, "/dev/r%s%d", nicknames[n].devname,
+		    devnum);
+	    if((nicknames[n].type & TYPEMASK) != TAPE) {
+		strcat(devname, "a");
+		devname[strlen(devname) - 1] += RAW_PART;
+	    }
+	    return(devname);
+	}
+    }
+
+    return(NULL);
+}
+
+/* Unmount all filesystems attached to dev. */
+void
+unmount_dev(char *name)
+{
+    struct statfs *mounts;
+    int i, nmnts, len;
+    char *dn;
+
+    nmnts = getmntinfo(&mounts, MNT_NOWAIT);
+    if(nmnts == 0) {
+	err(1, "getmntinfo");
+    }
+
+    /* Make sure we have a device name: */
+    dn = nick2dev(name);
+    if(dn == NULL)
+	dn = name;
+
+    /* Set len to strip off the partition name: */
+    len = strlen(dn);
+    if(!isdigit(dn[len - 1]))
+	len--;
+    if(!isdigit(dn[len - 1])) {
+	errx(1, "Can't figure out base name for dev name %s", dn);
+    }
+
+    for(i = 0; i < nmnts; i++) {
+	if(strncmp(mounts[i].f_mntfromname, dn, len) == 0) {
+	    if(verbose_f)
+		printf("Unmounting %s from %s...\n",
+		       mounts[i].f_mntfromname,
+		       mounts[i].f_mntonname);
+
+	    if(unmount(mounts[i].f_mntonname, 0) == -1) {
+		err(1, "unmount: %s", mounts[i].f_mntonname);
+	    }
+	}
+    }
+
+    return;
+}
+
+void
+eject_tape(char *name)
+{
+    struct mtop m;
+    int fd;
+    char *dn;
+
+    dn = nick2rdev(name);
+    if(dn == NULL) {
+	dn = name;		/* Hope for the best. */
+    }
+
+    fd = open(dn, O_RDONLY);
+    if(fd == -1) {
+	err(1, "open: %s", dn);
+    }
+
+    if(verbose_f)
+	printf("Ejecting %s...\n", dn);
+
+    m.mt_op = MTOFFL;
+    m.mt_count = 0;
+    if(ioctl(fd, MTIOCTOP, &m) == -1) {
+	err(1, "ioctl: MTIOCTOP: %s", dn);
+    }
+
+    close(fd);
+    return;
+}
+
+void
+eject_disk(char *name)
+{
+    int fd;
+    char *dn;
+    int arg;
+
+    dn = nick2rdev(name);
+    if(dn == NULL) {
+	dn = name;		/* Hope for the best. */
+    }
+
+    fd = open(dn, O_RDONLY);
+    if(fd == -1) {
+	err(1, "open: %s", dn);
+    }
+
+    if(load_f) {
+	if(verbose_f)
+	    printf("Closing %s...\n", dn);
+
+	if(ioctl(fd, CDIOCCLOSE, NULL) == -1) {
+	    err(1, "ioctl: CDIOCCLOSE: %s", dn);
+	}
+    } else {
+	if(verbose_f)
+	    printf("Ejecting %s...\n", dn);
+
+	arg = 0;
+	if(ioctl(fd, DIOCLOCK, (char *)&arg) == -1)
+	    err(1, "ioctl: DIOCLOCK: %s", dn);
+	if(ioctl(fd, DIOCEJECT, &arg) == -1)
+	    err(1, "ioctl: DIOCEJECT: %s", dn);
+    }
+
+    close(fd);
+    return;
 }
