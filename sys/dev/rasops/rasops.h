@@ -1,4 +1,4 @@
-/* $NetBSD: rasops.h,v 1.2 1999/04/13 00:40:08 ad Exp $ */
+/* $NetBSD: rasops.h,v 1.3 1999/04/13 03:02:40 ad Exp $ */
 
 /*
  * Copyright (c) 1999 Andy Doran <ad@NetBSD.org>
@@ -41,11 +41,11 @@ struct rasops_info {
 	int	ri_height;	/* height (pels) */
 	int	ri_stride;	/* stride in bytes */
 
-	/* These can optionally be left NULL */
-	struct	wsdisplay_font *ri_font;/* font to use */
-	void	*ri_priv;		/* driver private data */
-	u_char	ri_forcemono;		/* force monochrome operation */
-	u_char	__pad0;	
+	/* These can optionally be left empty */
+	struct	wsdisplay_font *ri_font;
+	void	*ri_priv;	/* driver private data */
+	u_char	ri_forcemono;	/* force monochrome operation */
+	u_char	ri_swab;	/* swap bytes for 15/16/32 bit depths? */
 	
 	/* 
 	 * These are optional and will default if zero. Meaningless 
