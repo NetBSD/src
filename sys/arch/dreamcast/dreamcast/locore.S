@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.5 2002/05/09 12:32:55 uch Exp $	*/
+/*	$NetBSD: locore.S,v 1.5.14.1 2004/04/11 04:02:30 jmc Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -47,6 +47,7 @@
  *	Kernel entry point.
  */	
 NENTRY(start)
+ALTENTRY(kernel_text)
 	/* Set bootstrap stack pointer */
 	mov.l	_L.bootstrap_stack, r15
 
