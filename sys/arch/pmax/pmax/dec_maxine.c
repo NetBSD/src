@@ -1,4 +1,4 @@
-/*	$NetBSD: dec_maxine.c,v 1.6.4.11 1999/05/26 05:24:54 nisimura Exp $ */
+/*	$NetBSD: dec_maxine.c,v 1.6.4.12 1999/06/11 00:53:35 nisimura Exp $ */
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
  *
@@ -72,7 +72,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_maxine.c,v 1.6.4.11 1999/05/26 05:24:54 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_maxine.c,v 1.6.4.12 1999/06/11 00:53:35 nisimura Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -259,6 +259,14 @@ dec_maxine_device_register(dev, aux)
 	panic("dec_maxine_device_register unimplemented");
 }
 
+
+#define	CHECKINTR(slot, bits)					\
+	if (can_serve & (bits)) {				\
+		ifound = 1;					\
+		intrcnt[slot] += 1;				\
+		(*intrtab[slot].ih_func)(intrtab[slot].ih_arg);	\
+	}
+
 /*
  * Handle MAXINE interrupts.
  */
@@ -272,7 +280,6 @@ dec_maxine_intr(cpumask, pc, status, cause)
 	if (cpumask & MIPS_INT_MASK_4)
 		prom_haltbutton();
 
-	/* handle clock interrupts ASAP */
 	if (cpumask & MIPS_INT_MASK_1) {
 		struct clockframe cf;
 
@@ -284,11 +291,12 @@ dec_maxine_intr(cpumask, pc, status, cause)
 		cf.sr = status;
 		hardclock(&cf);
 		intrcnt[HARDCLOCK]++;
-		/* re-enable clock interrupt */
-		_splset(MIPS_SR_INT_IE | MIPS_INT_MASK_1);
+
 		/* keep clock interrupts enabled when we return */
 		cause &= ~MIPS_INT_MASK_1;
 	}
+	/* allow clock interrupt posted when enabled */
+	_splset(MIPS_SR_INT_IE | (status & MIPS_INT_MASK_1));
 
 	if (cpumask & MIPS_INT_MASK_3) {
 		int ifound;
@@ -299,13 +307,6 @@ dec_maxine_intr(cpumask, pc, status, cause)
 			intr = *(u_int32_t *)(ioasic_base + IOASIC_INTR);
 			imsk = *(u_int32_t *)(ioasic_base + IOASIC_IMSK);
 			can_serve = intr & imsk;
-
-#define	CHECKINTR(slot, bits)					\
-	if (can_serve & (bits)) {				\
-		ifound = 1;					\
-		intrcnt[slot] += 1;				\
-		(*intrtab[slot].ih_func)(intrtab[slot].ih_arg);	\
-	}
 
 			CHECKINTR(SYS_DEV_DTOP, XINE_INTR_DTOP);
 			CHECKINTR(SYS_DEV_SCC0, IOASIC_INTR_SCC_0);
@@ -347,18 +348,14 @@ dec_maxine_intr(cpumask, pc, status, cause)
 	if (cpumask & MIPS_INT_MASK_2)
 		kn02ba_memerr();
 
-#if 0
-	_splset(MIPS_SR_INT_IE | (status & ~cause & MIPS_HARD_INT_MASK));
-#else
 	return (MIPS_SR_INT_IE | (status & ~cause & MIPS_HARD_INT_MASK));
-#endif
 }
 
 void
 kn02ca_wbflush()
 {
-	/* read once IOASIC_INTR */
-	__asm __volatile("lw $0,0xbc040120");
+	/* read once IOASIC_IMSK */
+	__asm __volatile("lw $0,%0" :: "i"(0xbc040120));
 }
 
 unsigned
@@ -392,5 +389,25 @@ struct tcbus_attach_args xine_tc_desc = {
 	2, tc_ioasic_builtins,
 	ioasic_intr_establish, ioasic_intr_disestablish
 };
+
+/* XXX XXX XXX */
+#undef	IOASIC_INTR_SCSI
+#define IOASIC_INTR_SCSI      0x000e0200
+/* XXX XXX XXX */
+
+struct ioasic_dev xine_ioasic_devs[] = {
+	{ "lance",	0x0c0000, C(SYS_DEV_LANCE), IOASIC_INTR_LANCE,	},
+	{ "z8530   ",	0x100000, C(SYS_DEV_SCC0),  IOASIC_INTR_SCC_0,	},
+	{ "mc146818",	0x200000, C(SYS_DEV_BOGUS), 0,			},
+	{ "isdn",	0x240000, C(SYS_DEV_ISDN),  0 /* not yet */,	},
+	{ "dtop",	0x280000, C(SYS_DEV_DTOP),  XINE_INTR_DTOP,	},
+	{ "fdc",	0x2c0000, C(SYS_DEV_FDC),   0 /* not yet */,	},
+	{ "asc",	0x300000, C(SYS_DEV_SCSI),  IOASIC_INTR_SCSI	},
+	{ "(TC0)",	0x0,	  C(SYS_DEV_OPT0),  XINE_INTR_TC_0	},
+	{ "(TC1)",	0x0,	  C(SYS_DEV_OPT1),  XINE_INTR_TC_1	},
+	{ "(TC2)",	0x0,	  C(SYS_DEV_OPT2),  XINE_INTR_VINT	},
+};
+int xine_builtin_ndevs = 7;
+int xine_ioasic_ndevs = sizeof(xine_ioasic_devs)/sizeof(xine_ioasic_devs[0]);
 
 void dtop_cnattach(addr) tc_addr_t addr; { };	/* XXX XXX XXX */

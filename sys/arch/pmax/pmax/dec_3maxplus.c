@@ -1,4 +1,4 @@
-/*	$NetBSD: dec_3maxplus.c,v 1.9.2.11 1999/05/26 05:24:54 nisimura Exp $ */
+/*	$NetBSD: dec_3maxplus.c,v 1.9.2.12 1999/06/11 00:53:35 nisimura Exp $ */
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -73,7 +73,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_3maxplus.c,v 1.9.2.11 1999/05/26 05:24:54 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_3maxplus.c,v 1.9.2.12 1999/06/11 00:53:35 nisimura Exp $");
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>	
@@ -142,8 +142,9 @@ dec_3maxplus_init()
 {
 	u_int32_t prodtype;
 
-	prodtype = *(u_int32_t *)(ioasic_base + IOASIC_INTR);
+	prodtype = *(u_int32_t *)MIPS_PHYS_TO_KSEG1(KN03_REG_INTR);
 	prodtype &= KN03_INTR_PROD_JUMPER;
+	/* the bit is persist even if INTR register is assigned value 0 */
 
 	platform.iobus = "tc3maxplus";
 	platform.bus_reset = dec_3maxplus_bus_reset;
@@ -264,6 +265,14 @@ dec_3maxplus_device_register(dev, aux)
 	panic("dec_3maxplus_device_register unimplemented");
 }
 
+
+#define	CHECKINTR(slot, bits)					\
+	if (can_serve & (bits)) {				\
+		ifound = 1;					\
+		intrcnt[slot] += 1;				\
+		(*intrtab[slot].ih_func)(intrtab[slot].ih_arg);	\
+	}
+
 /*
  * Handle 3MAX+ interrupts.
  */
@@ -280,7 +289,6 @@ dec_3maxplus_intr(cpumask, pc, status, cause)
 	if (cpumask & MIPS_INT_MASK_4)
 		prom_haltbutton();
 
-	/* handle clock interrupts ASAP */
 	if (cpumask & MIPS_INT_MASK_1) {
 		struct clockframe cf;
 
@@ -292,26 +300,28 @@ dec_3maxplus_intr(cpumask, pc, status, cause)
 		hardclock(&cf);
 		intrcnt[HARDCLOCK]++;
 		old_buscycle = latched_cycle_cnt - old_buscycle;
-		/* re-enable clock interrupt ASAP. */
-		_splset(MIPS_SR_INT_IE | MIPS_INT_MASK_1);
+
 		/* keep clock interrupts enabled when we return */
 		cause &= ~MIPS_INT_MASK_1;
 	}
+	/* allow clock interrupt posted when enabled */
+	_splset(MIPS_SR_INT_IE | (status & MIPS_INT_MASK_1));
 
+#ifdef notdef
 	/*
 	 * Check for late clock interrupts (allow 10% slop). Be careful
 	 * to do so only after calling hardclock(), due to logging cost.
 	 * Even then, logging dropped ticks just causes more clock
 	 * ticks to be missed.
 	 */
-#ifdef notdef
-	if ((mask & MIPS_INT_MASK_1) && old_buscycle > (tick+49) * 25) {
+	if ((cpumask & MIPS_INT_MASK_1) && old_buscycle > (tick+49) * 25) {
 		extern int msgbufmapped;
   		if(msgbufmapped && 0)
 			 addlog("kn03: clock intr %d usec late\n",
 				 old_buscycle/25);
 	}
 #endif
+
 	if (cpumask & MIPS_INT_MASK_0) {
 		int ifound;
 		u_int32_t imsk, intr, can_serve, xxxintr;
@@ -321,13 +331,6 @@ dec_3maxplus_intr(cpumask, pc, status, cause)
 			imsk = *(u_int32_t *)(ioasic_base + IOASIC_IMSK);
 			intr = *(u_int32_t *)(ioasic_base + IOASIC_INTR);
 			can_serve = intr & imsk;
-
-#define	CHECKINTR(slot, bits)					\
-	if (can_serve & (bits)) {				\
-		ifound = 1;					\
-		intrcnt[slot] += 1;				\
-		(*intrtab[slot].ih_func)(intrtab[slot].ih_arg);	\
-	}
 
 			CHECKINTR(SYS_DEV_SCC0, IOASIC_INTR_SCC_0);
 			CHECKINTR(SYS_DEV_SCC1, IOASIC_INTR_SCC_1);
@@ -376,7 +379,7 @@ dec_3maxplus_intr(cpumask, pc, status, cause)
 	if (cpumask & MIPS_INT_MASK_3)
 		dec_3maxplus_memerr();
 
-	return ((status & ~cause & MIPS_HARD_INT_MASK) | MIPS_SR_INT_ENA_CUR);
+	return (MIPS_SR_INT_IE | (status & ~cause & MIPS_HARD_INT_MASK));
 }
 
 /*
@@ -402,8 +405,8 @@ dec_3maxplus_memerr()
 void
 kn03_wbflush()
 {
-	/* read once IOASIC_INTR */
-	__asm __volatile("lw $0,0xbf840000");
+	/* read once IOASIC SLOT 0 */
+	__asm __volatile("lw $0,%0" :: "i"(0xbf840000));
 }
 
 /*
@@ -439,3 +442,21 @@ struct tcbus_attach_args kn03_tc_desc = {
 	1, tc_ioasic_builtins,
 	ioasic_intr_establish, ioasic_intr_disestablish
 };
+
+/* XXX XXX XXX */
+#undef	IOASIC_INTR_SCSI
+#define IOASIC_INTR_SCSI 0x000e0200
+/* XXX XXX XXX */
+
+struct ioasic_dev kn03_ioasic_devs[] = {
+	{ "lance",	0x0c0000, C(SYS_DEV_LANCE), IOASIC_INTR_LANCE,	},
+	{ "z8530   ",	0x100000, C(SYS_DEV_SCC0),  IOASIC_INTR_SCC_0,	},
+	{ "z8530   ",	0x180000, C(SYS_DEV_SCC1),  IOASIC_INTR_SCC_1,	},
+	{ "mc146818",	0x200000, C(SYS_DEV_BOGUS), 0,			},
+	{ "asc",	0x300000, C(SYS_DEV_SCSI),  IOASIC_INTR_SCSI	},
+	{ "(TC0)",	0x0,	  C(SYS_DEV_OPT0),  KN03_INTR_TC_0	},
+	{ "(TC1)",	0x0,	  C(SYS_DEV_OPT1),  KN03_INTR_TC_1	},
+	{ "(TC2)",	0x0,	  C(SYS_DEV_OPT2),  KN03_INTR_TC_2	},
+};
+int kn03_builtin_ndevs = 5;
+int kn03_ioasic_ndevs = sizeof(kn03_ioasic_devs)/sizeof(kn03_ioasic_devs[0]);
