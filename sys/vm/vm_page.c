@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_page.c,v 1.26 1995/06/26 14:40:11 leo Exp $	*/
+/*	$NetBSD: vm_page.c,v 1.27 1996/01/31 03:11:16 mycroft Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -195,9 +195,8 @@ vm_page_bootstrap(startp, endp)
 	 *	map (they should use their own maps).
 	 */
 
-	kentry_data_size = MAX_KMAP * sizeof(struct vm_map) +
-			   MAX_KMAPENT * sizeof(struct vm_map_entry);
-	kentry_data_size = round_page(kentry_data_size);
+	kentry_data_size = round_page(MAX_KMAP*sizeof(struct vm_map) +
+				      MAX_KMAPENT*sizeof(struct vm_map_entry));
 	kentry_data = (vm_offset_t) pmap_steal_memory(kentry_data_size);
 	
 	/*
