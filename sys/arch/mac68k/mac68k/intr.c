@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.9 1999/11/06 23:05:41 scottr Exp $	*/
+/*	$NetBSD: intr.c,v 1.10 2000/02/21 01:48:49 scottr Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -59,6 +59,10 @@
 
 #include <machine/cpu.h>
 #include <machine/intr.h>
+
+#include <machine/iopreg.h>
+#include <machine/psc.h>
+#include <machine/viareg.h>
 
 #define	NISR	8
 #define	ISRLOC	0x18
@@ -162,6 +166,15 @@ intr_init()
 	memcpy(g_inames, inames, MAX_INAME_LENGTH);
 
 	intr_computeipl();
+
+	/* Initialize the VIAs */
+	via_init();
+
+	/* Initialize the IOPs (if present) */
+	iop_init(1);
+
+	/* Initialize the PSC (if present) */
+	psc_init();
 }
 
 
