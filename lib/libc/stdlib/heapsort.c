@@ -1,4 +1,4 @@
-/*	$NetBSD: heapsort.c,v 1.13 2003/08/07 16:43:40 agc Exp $	*/
+/*	$NetBSD: heapsort.c,v 1.14 2003/09/07 19:06:50 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "from: @(#)heapsort.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: heapsort.c,v 1.13 2003/08/07 16:43:40 agc Exp $");
+__RCSID("$NetBSD: heapsort.c,v 1.14 2003/09/07 19:06:50 wiz Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -82,7 +82,7 @@ __weak_alias(heapsort,_heapsort)
  * Build the list into a heap, where a heap is defined such that for
  * the records K1 ... KN, Kj/2 >= Kj for 1 <= j/2 <= j <= N.
  *
- * There two cases.  If j == nmemb, select largest of Ki and Kj.  If
+ * There are two cases.  If j == nmemb, select largest of Ki and Kj.  If
  * j < nmemb, select largest of Ki, Kj and Kj+1.
  */
 #define CREATE(initval, nmemb, par_i, child_i, par, child, size, count, tmp) { \
@@ -104,12 +104,12 @@ __weak_alias(heapsort,_heapsort)
  * Select the top of the heap and 'heapify'.  Since by far the most expensive
  * action is the call to the compar function, a considerable optimization
  * in the average case can be achieved due to the fact that k, the displaced
- * elememt, is ususally quite small, so it would be preferable to first
+ * element, is usually quite small, so it would be preferable to first
  * heapify, always maintaining the invariant that the larger child is copied
  * over its parent's record.
  *
  * Then, starting from the *bottom* of the heap, finding k's correct place,
- * again maintianing the invariant.  As a result of the invariant no element
+ * again maintaining the invariant.  As a result of the invariant no element
  * is 'lost' when k is assigned its correct place in the heap.
  *
  * The time savings from this optimization are on the order of 15-20% for the
