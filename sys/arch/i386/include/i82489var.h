@@ -1,4 +1,4 @@
-/*	$NetBSD: i82489var.h,v 1.2.2.3 2002/11/11 21:59:15 nathanw Exp $	*/
+/*	$NetBSD: i82489var.h,v 1.2.2.4 2002/12/11 06:01:00 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -48,6 +48,7 @@ static __inline__ void i82489_writereg __P((int, u_int32_t));
 
 #ifdef _KERNEL
 extern volatile u_int32_t local_apic[];
+extern volatile u_int32_t lapic_tpr;
 #endif
 
 static __inline__ u_int32_t
@@ -81,17 +82,35 @@ extern void Xintrspurious(void);
 /*
  * Vector used for inter-processor interrupts.
  */
-extern void Xintripi(void);
+extern void Xintr_lapic_ipi(void);
+extern void Xrecurse_lapic_ipi(void);
+extern void Xresume_lapic_ipi(void);
 #define LAPIC_IPI_VECTOR			0xe0
 
 /*
  * Vector used for local apic timer interrupts.
  */
 
-extern void Xintrltimer(void);
+extern void Xintr_lapic_ltimer(void);
+extern void Xresume_lapic_ltimer(void);
+extern void Xrecurse_lapic_ltimer(void);
 #define LAPIC_TIMER_VECTOR		0xc0
 
-extern void (*apichandler[]) __P((void));
+/*
+ * 'pin numbers' for local APIC
+ */
+#define LAPIC_PIN_TIMER		0
+#define LAPIC_PIN_PCINT		2
+#define LAPIC_PIN_LVINT0	3
+#define LAPIC_PIN_LVINT1	4
+#define LAPIC_PIN_LVERR		5
+
+extern void Xintr_lapic0(void);
+extern void Xintr_lapic2(void);
+extern void Xintr_lapic3(void);
+extern void Xintr_lapic4(void);
+extern void Xintr_lapic5(void);
+
 
 struct cpu_info;
 
@@ -102,4 +121,3 @@ extern void lapic_calibrate_timer __P((struct cpu_info *ci));
 extern void lapic_initclocks __P((void));
 
 #endif
-

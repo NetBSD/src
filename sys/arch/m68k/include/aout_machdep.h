@@ -1,4 +1,4 @@
-/*	$NetBSD: aout_machdep.h,v 1.6.42.1 2002/12/11 06:00:59 thorpej Exp $	*/
+/*	$NetBSD: aout_machdep.h,v 1.3.8.2 2002/12/11 06:10:40 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1993 Christopher G. Demetriou
@@ -27,13 +27,22 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _I386_EXEC_H_
-#define _I386_EXEC_H_
+#ifndef _M68K_EXEC_H_
+#define _M68K_EXEC_H_
 
-#define AOUT_LDPGSZ	4096
+#ifndef	AOUT_LDPGSZ
+#define AOUT_LDPGSZ	8192
+#endif
+
+/*
+ * Override the N_PAGSIZ() macro.
+ * XXX Nicer way to do this?
+ */
+#undef N_PAGSIZ
+#define	N_PAGSIZ(ex)	(N_GETMID((ex)) == MID_M68K4K ? 4096 : AOUT_LDPGSZ)
 
 /* Relocation format. */
-struct relocation_info_i386 {
+struct relocation_info_m68k {
 	int r_address;			/* offset in text or data segment */
 	unsigned int r_symbolnum : 24,	/* ordinal number of add symbol */
 			 r_pcrel :  1,	/* 1 if value should be pc-relative */
@@ -44,6 +53,6 @@ struct relocation_info_i386 {
 		      r_relative :  1,	/* load address relative */
 			  r_copy :  1;	/* run time copy */
 };
-#define relocation_info	relocation_info_i386
+#define relocation_info	relocation_info_m68k
 
-#endif  /* _I386_EXEC_H_ */
+#endif  /* _M68K_EXEC_H_ */

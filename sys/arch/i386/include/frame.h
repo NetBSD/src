@@ -1,4 +1,4 @@
-/*	$NetBSD: frame.h,v 1.15.2.8 2002/10/18 02:37:54 nathanw Exp $	*/
+/*	$NetBSD: frame.h,v 1.15.2.9 2002/12/11 06:01:00 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -131,8 +131,8 @@ struct intrframe {
 	int	if_edx;
 	int	if_ecx;
 	int	if_eax;
-	u_int32_t __if_trapno:32; /* for compat with trap frame - trapno */
-	u_int32_t __if_err:32;	/* for compat with trap frame - err */
+	u_int32_t __if_trapno; /* for compat with trap frame - trapno */
+	u_int32_t __if_err;	/* for compat with trap frame - err */
 	/* below portion defined in 386 hardware */
 	int	if_eip;
 	int	if_cs;

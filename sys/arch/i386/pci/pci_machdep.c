@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.40.2.7 2002/10/18 02:38:05 nathanw Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.40.2.8 2002/12/11 06:01:04 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.40.2.7 2002/10/18 02:38:05 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.40.2.8 2002/12/11 06:01:04 thorpej Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -96,8 +96,8 @@ __KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.40.2.7 2002/10/18 02:38:05 nathanw
 #include <machine/bus.h>
 
 #include <machine/pio.h>
+#include <machine/intr.h>
 
-#include <i386/isa/icu.h>
 #include <dev/isa/isavar.h>
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcireg.h>
@@ -483,7 +483,6 @@ pci_intr_map(pa, ihp)
 #if NIOAPIC > 0
 	int rawpin = pa->pa_rawintrpin;
 	pci_chipset_tag_t pc = pa->pa_pc;
-	struct mp_intr_map *mip;
 	int bus, dev, func;
 #endif
 
@@ -496,6 +495,20 @@ pci_intr_map(pa, ihp)
 		printf("pci_intr_map: bad interrupt pin %d\n", pin);
 		goto bad;
 	}
+
+#if NIOAPIC > 0
+	pci_decompose_tag(pc, pa->pa_tag, &bus, &dev, &func);
+	if (mp_busses != NULL) {
+		if (intr_find_mpmapping(bus, (dev<<2)|(rawpin-1), ihp) == 0) {
+			*ihp |= line;
+			return 0;
+		}
+		/*
+		 * No explicit PCI mapping found. This is not fatal,
+		 * we'll try the ISA (or possibly EISA) mappings next.
+		 */
+	}
+#endif
 
 	/*
 	 * Section 6.2.4, `Miscellaneous Functions', says that 255 means
@@ -516,7 +529,7 @@ pci_intr_map(pa, ihp)
 		       '@' + pin, line);
 		goto bad;
 	} else {
-		if (line >= ICU_LEN) {
+		if (line >= NUM_LEGACY_IRQS) {
 			printf("pci_intr_map: bad interrupt line %d\n", line);
 			goto bad;
 		}
@@ -526,26 +539,20 @@ pci_intr_map(pa, ihp)
 		}
 	}
 #if NIOAPIC > 0
-	pci_decompose_tag (pc, pa->pa_tag, &bus, &dev, &func);
-	if ((mp_busses != NULL) && (mp_busses[bus].mb_intrs != NULL)) {
-		/*
-		 * Note: assumes 1:1 mapping between PCI bus numbers and
-		 * the numbers given by the MP bios.
-		 */
-		int mpspec_pin = (dev<<2)|(rawpin-1);
-
-		for (mip = mp_busses[bus].mb_intrs; mip != NULL; mip=mip->next) {
-			if (mip->bus_pin == mpspec_pin) {
-				*ihp = mip->ioapic_ih | line;
-				return 0;
-			}
+	if (mp_busses != NULL) {
+		if (intr_find_mpmapping(mp_isa_bus, line, ihp) == 0) {
+			*ihp |= line;
+			return 0;
 		}
-		if (mip == NULL) {
-			printf("pci_intr_map: bus %d dev %d func %d pin %d; line %d\n",
-			    bus, dev, func, pin, line);
-
-			printf("pci_intr_map: no MP mapping found\n");
+#if NEISA > 0
+		if (intr_find_mpmapping(mp_eisa_bus, line, ihp) == 0) {
+			*ihp |= line;
+			return 0;
 		}
+#endif
+		printf("pci_intr_map: bus %d dev %d func %d pin %d; line %d\n",
+		    bus, dev, func, pin, line);
+		printf("pci_intr_map: no MP mapping found\n");
 	}
 #endif
 
@@ -564,7 +571,7 @@ pci_intr_string(pc, ih)
 {
 	static char irqstr[64];
 
-	if (ih == 0 || (ih & 0xff) >= ICU_LEN || ih == 2)
+	if (ih == 0)
 		panic("pci_intr_string: bogus handle 0x%x", ih);
 
 
@@ -601,19 +608,28 @@ pci_intr_establish(pc, ih, level, func, arg)
 	int level, (*func) __P((void *));
 	void *arg;
 {
-	if (ih != -1) {
+	int pin, irq;
+	struct pic *pic;
+
+	pic = &i8259_pic;
+	pin = irq = ih;
+
 #if NIOAPIC > 0
-		if (ih & APIC_INT_VIA_APIC) {
-			return apic_intr_establish(ih, IST_LEVEL, level,
-			    func, arg);
+	if (ih & APIC_INT_VIA_APIC) {
+		pic = (struct pic *)ioapic_find(APIC_IRQ_APIC(ih));
+		if (pic == NULL) {
+			printf("pci_intr_establish: bad ioapic %d\n",
+			    APIC_IRQ_APIC(ih));
+			return NULL;
 		}
-#endif
+		pin = APIC_IRQ_PIN(ih);
+		irq = APIC_IRQ_LEGACY_IRQ(ih);
+		if (irq < 0 || irq >= NUM_LEGACY_IRQS)
+			irq = -1;
 	}
+#endif
 
-	if (ih == 0 || ih >= ICU_LEN || ih == 2)
-		panic("pci_intr_establish: bogus handle 0x%x", ih);
-
-	return isa_intr_establish(NULL, ih, IST_LEVEL, level, func, arg);
+	return intr_establish(irq, pic, pin, IST_LEVEL, level, func, arg);
 }
 
 void
@@ -622,7 +638,7 @@ pci_intr_disestablish(pc, cookie)
 	void *cookie;
 {
 
-	isa_intr_disestablish(NULL, cookie);
+	intr_disestablish(cookie);
 }
 
 /*

@@ -1,4 +1,4 @@
-#	$NetBSD: majors.macppc,v 1.2.2.3 2002/10/18 02:38:32 nathanw Exp $
+#	$NetBSD: majors.macppc,v 1.2.2.4 2002/12/11 06:10:48 thorpej Exp $
 #
 # Device majors for macppc
 #
@@ -67,3 +67,4 @@ device-major	systrace	char 63			systrace
 device-major	apm		char 64			apm
 device-major	kttcp		char 65			kttcp
 device-major	cgd		char 66  block 14	cgd
+device-major	fwiso		char 67			fwiso

@@ -1,4 +1,4 @@
-/*	$NetBSD: omms.c,v 1.1.22.7 2002/11/11 21:59:22 nathanw Exp $	*/
+/*	$NetBSD: omms.c,v 1.1.22.8 2002/12/11 06:01:03 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994 Charles M. Hannum.
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: omms.c,v 1.1.22.7 2002/11/11 21:59:22 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: omms.c,v 1.1.22.8 2002/12/11 06:01:03 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -417,7 +417,7 @@ filt_mmsrdetach(struct knote *kn)
 	int s;
 
 	s = spltty();
-	SLIST_REMOVE(&sc->sc_rsel.si_klist, kn, knote, kn_selnext);
+	SLIST_REMOVE(&sc->sc_rsel.sel_klist, kn, knote, kn_selnext);
 	splx(s);
 }
 
@@ -442,7 +442,7 @@ mmskqfilter(dev_t dev, struct knote *kn)
 
 	switch (kn->kn_filter) {
 	case EVFILT_READ:
-		klist = &sc->sc_rsel.si_klist;
+		klist = &sc->sc_rsel.sel_klist;
 		kn->kn_fop = &mmsread_filtops;
 		break;
 

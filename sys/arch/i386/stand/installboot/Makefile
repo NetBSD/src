@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.16.8.6 2002/08/27 23:44:40 nathanw Exp $
+#	$NetBSD: Makefile,v 1.16.8.7 2002/12/11 06:01:05 thorpej Exp $
 
 NOMAN=	# defined
 
@@ -12,6 +12,10 @@ LIBSA=${.CURDIR}/../../../../lib/libsa
 
 SRCS=	installboot.c bootblks.c getmount.c byteorder.c loadfile.c \
 	loadfile_aout.c loadfile_elf32.c
+
+.if ${MACHINE_ARCH} == "x86_64"
+SRCS+=	loadfile_elf64.c
+.endif
 
 CPPFLAGS+= -I${.CURDIR}/../lib/crt/bootsect
 CPPFLAGS+= -I${LIBSA} -I.

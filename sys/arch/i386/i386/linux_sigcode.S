@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_sigcode.s,v 1.1.6.6 2002/11/11 21:59:05 nathanw Exp $	*/
+/*	$NetBSD: linux_sigcode.S,v 1.2.2.2 2002/12/11 06:00:55 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -80,111 +80,36 @@
 
 #include "assym.h"
 
-#include <machine/psl.h>
-#include <machine/segments.h>
-#include <machine/trap.h>
-#include <compat/mach/mach_syscall.h>
-
-/*
- * override user-land alignment before including asm.h
- */
-#ifdef __ELF__
-#define	ALIGN_DATA	.align	4
-#define	ALIGN_TEXT	.align	4,0x90	/* 4-byte boundaries, NOP-filled */
-#define	SUPERALIGN_TEXT	.align	16,0x90	/* 16-byte boundaries better for 486 */
-#else
-#define	ALIGN_DATA	.align	2
-#define	ALIGN_TEXT	.align	2,0x90	/* 4-byte boundaries, NOP-filled */
-#define	SUPERALIGN_TEXT	.align	4,0x90	/* 16-byte boundaries better for 486 */
-#endif
-#define _ALIGN_TEXT	ALIGN_TEXT
 #include <machine/asm.h>
+#include <machine/psl.h>
 
-/*
- * These are used on interrupt or trap entry or exit.
- */
-#define	INTRENTRY \
-	pushl	%eax		; \
-	pushl	%ecx		; \
-	pushl	%edx		; \
-	pushl	%ebx		; \
-	movl	$GSEL(GDATA_SEL, SEL_KPL),%eax	; \
-	pushl	%ebp		; \
-	pushl	%esi		; \
-	pushl	%edi		; \
-	pushl	%ds		; \
-	pushl	%es		; \
-	movl	%eax,%ds	; \
-	movl	%eax,%es	; \
-	pushl	%fs		; \
-	pushl	%gs		; \
-	movl	%eax,%gs	; \
-	movl	$GSEL(GCPU_SEL, SEL_KPL),%eax	; \
-	movl	%eax,%fs		
+#include <compat/linux/linux_syscall.h>
 
-#define	INTRFASTEXIT \
-	popl	%gs		; \
-	popl	%fs		; \
-	popl	%es		; \
-	popl	%ds		; \
-	popl	%edi		; \
-	popl	%esi		; \
-	popl	%ebp		; \
-	popl	%ebx		; \
-	popl	%edx		; \
-	popl	%ecx		; \
-	popl	%eax		; \
-	addl	$8,%esp		; \
-	iret
-
-#define _CONCAT(a,b) a/**/b
-
-#if defined(MULTIPROCESSOR)
-#define CPUVAR(off) %fs:_CONCAT(CPU_INFO_,off)
-#else
-#define CPUVAR(off) _C_LABEL(cpu_info_primary)+_CONCAT(CPU_INFO_,off)
-#endif
-#define CHECK_ASTPENDING()		cmpl $0,CPUVAR(ASTPENDING)
-#define CLEAR_ASTPENDING()		movl $0,CPUVAR(ASTPENDING)
+/*****************************************************************************/
 
 /*
  * Signal trampoline; copied to top of user stack.
  */
-/* LINTSTUB: Var: char mach_sigcode[1], mach_esigcode[1]; */
-NENTRY(mach_sigcode)
-/*
-	call	MACH_SIGF_HANDLER(%esp)
-	leal	MACH_SIGF_UC(%esp),%eax	# ucp (the call may have clobbered the
-					# copy at SIGF_UCP(%esp))
-	pushl	%eax
-	pushl	$1			# setcontext(p) == syscontext(1, p) 
+/* LINTSTUB: Var: char linux_sigcode[1], linux_esigcode[1]; */
+NENTRY(linux_sigcode)
+	call	*LINUX_SIGF_HANDLER(%esp)
+	leal	LINUX_SIGF_SC(%esp),%ebx # scp (the call may have clobbered the
+					# copy at SIGF_SCP(%esp))
 	pushl	%eax			# junk to fake return address
-	movl	$MACH_SYS_context,%eax
+	movl	$LINUX_SYS_sigreturn,%eax
 	int	$0x80	 		# enter kernel with args on stack
-	movl	$MACH_SYS_exit,%eax
+	movl	$LINUX_SYS_exit,%eax
 	int	$0x80			# exit if sigreturn fails
-*/
-	.globl	_C_LABEL(mach_esigcode)
-_C_LABEL(mach_esigcode):
 
-IDTVEC(mach_trap)
-	/* Set eflags in trap frame. */
-	pushfl
-	popl	8(%esp)
-	pushl	$7		# size of instruction for restart
-	pushl	$T_ASTFLT	# trap # for doing ASTs
-	INTRENTRY
-	movl	CPUVAR(CURLWP),%edx
-	movl	%esp,P_MD_REGS(%edx)	# save pointer to frame
-	call	_C_LABEL(mach_trap)
-2:	/* Check for ASTs on exit to user mode. */
-	cli
-	CHECK_ASTPENDING()
-	je	1f
-	/* Always returning to user mode here. */
-	CLEAR_ASTPENDING()
-	sti
-	/* Pushed T_ASTFLT into tf_trapno on entry. */
-	call	_C_LABEL(trap)
-	jmp	2b
-1:	INTRFASTEXIT
+/* LINTSTUB: Var: char linux_rt_sigcode[1], linux_rt_esigcode[1]; */
+NENTRY(linux_rt_sigcode)
+	call	*LINUX_RT_SIGF_HANDLER(%esp)
+	leal	LINUX_RT_SIGF_SC(%esp),%ebx # scp (the call may have clobbered the
+					# copy at SIGF_SCP(%esp))
+	pushl	%eax			# junk to fake return address
+	movl	$LINUX_SYS_sigreturn,%eax
+	int	$0x80	 		# enter kernel with args on stack
+	movl	$LINUX_SYS_exit,%eax
+	int	$0x80			# exit if sigreturn fails
+	.globl	_C_LABEL(linux_esigcode)
+_C_LABEL(linux_esigcode):

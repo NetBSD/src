@@ -1,4 +1,4 @@
-/*	$NetBSD: apm.c,v 1.59.2.9 2002/11/11 21:58:57 nathanw Exp $ */
+/*	$NetBSD: apm.c,v 1.59.2.10 2002/12/11 06:00:51 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: apm.c,v 1.59.2.9 2002/11/11 21:58:57 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: apm.c,v 1.59.2.10 2002/12/11 06:00:51 thorpej Exp $");
 
 #include "apm.h"
 #if NAPM > 1
@@ -1824,7 +1824,7 @@ filt_apmrdetach(struct knote *kn)
 	struct apm_softc *sc = kn->kn_hook;
 
 	APM_LOCK(sc);
-	SLIST_REMOVE(&sc->sc_rsel.si_klist, kn, knote, kn_selnext);
+	SLIST_REMOVE(&sc->sc_rsel.sel_klist, kn, knote, kn_selnext);
 	APM_UNLOCK(sc);
 }
 
@@ -1848,7 +1848,7 @@ apmkqfilter(dev_t dev, struct knote *kn)
 
 	switch (kn->kn_filter) {
 	case EVFILT_READ:
-		klist = &sc->sc_rsel.si_klist;
+		klist = &sc->sc_rsel.sel_klist;
 		kn->kn_fop = &apmread_filtops;
 		break;
 

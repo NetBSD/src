@@ -1,4 +1,4 @@
-/* $NetBSD: kvm86call.s,v 1.1.4.3 2002/10/18 02:37:42 nathanw Exp $ */
+/* $NetBSD: kvm86call.S,v 1.1.2.2 2002/12/11 06:00:54 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998 Jonathan Lemon
@@ -35,7 +35,7 @@
 
 #include "assym.h"
 
-__KERNEL_RCSID(0, "$NetBSD: kvm86call.s,v 1.1.4.3 2002/10/18 02:37:42 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kvm86call.S,v 1.1.2.2 2002/12/11 06:00:54 thorpej Exp $");
 
 	.data
 	.align 4

@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_sigcode.s,v 1.1.6.2 2001/09/26 19:54:44 nathanw Exp $	*/
+/*	$NetBSD: ibcs2_sigcode.S,v 1.1.2.2 2002/12/11 06:00:53 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -81,37 +81,20 @@
 #include "assym.h"
 
 #include <machine/asm.h>
-#include <machine/psl.h>
+#include <compat/ibcs2/ibcs2_syscall.h>
 
-#include <compat/linux/linux_syscall.h>
-
-/*****************************************************************************/
-
-/*
- * Signal trampoline; copied to top of user stack.
- */
-/* LINTSTUB: Var: char linux_sigcode[1], linux_esigcode[1]; */
-NENTRY(linux_sigcode)
-	call	*LINUX_SIGF_HANDLER(%esp)
-	leal	LINUX_SIGF_SC(%esp),%ebx # scp (the call may have clobbered the
-					# copy at SIGF_SCP(%esp))
-	pushl	%eax			# junk to fake return address
-	movl	$LINUX_SYS_sigreturn,%eax
-	int	$0x80	 		# enter kernel with args on stack
-	movl	$LINUX_SYS_exit,%eax
+/* LINTSTUB: Var: char ibcs2_sigcode[1], ibcs2_esigcode[1]; */
+NENTRY(ibcs2_sigcode)
+	/*
+	 * Handler has returned here as if we called it.  The sigcontext
+	 * is on the stack after the 3 args "we" pushed.
+	 */
+	leal	12(%esp),%eax		# get pointer to sigcontext
+	movl	%eax,4(%esp)		# put it in the argument slot
+					# fake return address already there
+	movl	$IBCS2_SYS_sigreturn,%eax
+	int	$0x80			# enter kernel with args on stack
+	movl	$IBCS2_SYS_exit,%eax
 	int	$0x80			# exit if sigreturn fails
-	.globl	_C_LABEL(linux_esigcode)
-_C_LABEL(linux_esigcode):
-
-/* LINTSTUB: Var: char linux_rt_sigcode[1], linux_rt_esigcode[1]; */
-NENTRY(linux_rt_sigcode)
-	call	*LINUX_SIGF_HANDLER(%esp)
-	leal	LINUX_SIGF_SC(%esp),%ebx # scp (the call may have clobbered the
-					# copy at SIGF_SCP(%esp))
-	pushl	%eax			# junk to fake return address
-	movl	$LINUX_SYS_rt_sigreturn,%eax
-	int	$0x80	 		# enter kernel with args on stack
-	movl	$LINUX_SYS_exit,%eax
-	int	$0x80			# exit if sigreturn fails
-	.globl	_C_LABEL(linux_rt_esigcode)
-_C_LABEL(linux_rt_esigcode):
+	.globl	_C_LABEL(ibcs2_esigcode)
+_C_LABEL(ibcs2_esigcode):

@@ -1,13 +1,11 @@
-/* $NetBSD: apic.c,v 1.2.2.3 2002/12/11 06:00:51 thorpej Exp $ */
+/*	$NetBSD: bioscall.S,v 1.1.2.2 2002/12/11 06:00:52 thorpej Exp $ */
 
 /*-
- * Copyright (c) 2000 The NetBSD Foundation, Inc.
+ * Copyright (c) 1997 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by RedBack Networks Inc.
- *
- * Author: Bill Sommerfeld
+ * by John Kohl.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -37,47 +35,56 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+#include <machine/param.h>
+#include <machine/bioscall.h>
 
-#include <sys/types.h>
-#include <sys/param.h>
-#include <sys/systm.h>
-#include <sys/lock.h>		/* XXX */
+#include <machine/asm.h>
 
-#include <machine/i82489reg.h>
-#include <machine/i82489var.h>
-#include <machine/apicvar.h>
+/* LINTSTUB: include <sys/types.h> */
+/* LINTSTUB: include <machine/bioscall.h> */
 
+	.globl	_C_LABEL(PTDpaddr)	/* from locore.s */
+	
+_C_LABEL(biostramp_image):
+	.globl	_C_LABEL(biostramp_image)
 
-const char redirlofmt[] = "\177\20"
-	"f\0\10vector\0"
-	"f\10\3delmode\0"
-	"b\13logical\0"
-	"b\14pending\0"
-	"b\15actlo\0"
-	"b\16irrpending\0"
-	"b\17level\0"
-	"b\20masked\0"
-	"f\22\1dest\0" "=\1self" "=\2all" "=\3all-others";
+8:
+#include "i386/bioscall/biostramp.inc"
+9:
 
-const char redirhifmt[] = "\177\20"
-	"f\30\10target\0";
+	.globl	_C_LABEL(biostramp_image_size)
+_C_LABEL(biostramp_image_size):
+	.long	9b - 8b
 
-void apic_format_redir (where1, where2, idx, redirhi, redirlo)
-	char *where1;
-	char *where2;
-	int idx;
-	u_int32_t redirhi;
-	u_int32_t redirlo;
-{
-	char buf[256];
+/*
+ * void bioscall(int function, struct bioscallregs *regs):
+ * 	call the BIOS interrupt "function" from real mode with
+ *	registers as specified in "regs"
+ *	for the flags, though, only these flags are passed to the BIOS--
+ *	the remainder come from the flags register at the time of the call:
+ *	(PSL_C|PSL_PF|PSL_AF|PSL_Z|PSL_N|PSL_D|PSL_V)
+ *
+ *	Fills in *regs with registers as returned by BIOS.
+ */
+/* LINTSTUB: Func: void bioscall(int function, struct bioscallregs *regs) */
+NENTRY(bioscall)
+	pushl	%ebp
+	movl	%esp,%ebp		/* set up frame ptr */
 
-	printf("%s: %s%d %s",
-	    where1, where2, idx,
-	    bitmask_snprintf(redirlo, redirlofmt, buf, sizeof(buf)));
+	movl	%cr3,%eax		/* save PTDB register */
+	pushl	%eax
 
-	if ((redirlo & LAPIC_DEST_MASK) == 0)
-		printf(" %s",
-		    bitmask_snprintf(redirhi, redirhifmt, buf, sizeof(buf)));
+	movl	_C_LABEL(PTDpaddr),%eax	/* install proc0 PTD */
+	movl	%eax,%cr3
 
-	printf("\n");
-}
+	movl	$(BIOSTRAMP_BASE),%eax	/* address of trampoline area */
+	pushl	12(%ebp)
+	pushl	8(%ebp)
+	call	*%eax			/* machdep.c initializes it */
+	addl	$8,%esp			/* clear args from stack */
+
+	popl	%eax
+	movl	%eax,%cr3			/* restore PTDB register */
+
+	leave
+	ret

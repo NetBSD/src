@@ -1,4 +1,4 @@
-/*	$NetBSD: in_cksum.s,v 1.9.24.4 2002/11/11 21:59:01 nathanw Exp $	*/
+/*	$NetBSD: in_cksum.S,v 1.1.2.2 2002/12/11 06:00:53 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.

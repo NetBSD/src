@@ -1,4 +1,4 @@
-/*	$NetBSD: freebsd_sigcode.s,v 1.1.6.2 2001/09/26 19:54:44 nathanw Exp $	*/
+/*	$NetBSD: freebsd_sigcode.S,v 1.1.2.2 2002/12/11 06:00:53 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
