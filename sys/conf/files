@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.271 1999/02/07 09:34:58 jonathan Exp $
+#	$NetBSD: files,v 1.272 1999/02/09 02:15:45 kml Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -69,6 +69,8 @@ defopt	TCP_COMPAT_42
 
 defopt	TCP_RECVSPACE
 defopt	TCP_SENDSPACE
+
+defopt	SB_MAX
 
 # these are not together so that turning on UVMHIST only affects files that
 # use it, not most of the kernel

@@ -1,4 +1,4 @@
-/*	$NetBSD: socketvar.h,v 1.33 1999/01/20 09:15:42 mycroft Exp $	*/
+/*	$NetBSD: socketvar.h,v 1.34 1999/02/09 02:15:45 kml Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -43,6 +43,8 @@
 
 #ifndef _KERNEL
 struct uio;
+
+#include "opt_sb_max.h"
 #endif
 
 TAILQ_HEAD(soqhead, socket);
@@ -97,7 +99,11 @@ struct socket {
 		short	sb_flags;	/* flags, see below */
 		short	sb_timeo;	/* timeout for read/write */
 	} so_rcv, so_snd;
+
+#ifndef SB_MAX
 #define	SB_MAX		(256*1024)	/* default for max chars in sockbuf */
+#endif
+
 #define	SB_LOCK		0x01		/* lock on data queue */
 #define	SB_WANT		0x02		/* someone is waiting to lock */
 #define	SB_WAIT		0x04		/* someone is waiting for data/space */
