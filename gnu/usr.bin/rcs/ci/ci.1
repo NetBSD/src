@@ -1,4 +1,4 @@
-.\"	$NetBSD: ci.1,v 1.5 2002/02/08 01:26:50 ross Exp $
+.\"	$NetBSD: ci.1,v 1.6 2003/01/18 18:54:14 grant Exp $
 .\"
 .de Id
 .ds Rv \\$3
@@ -483,7 +483,7 @@ The default for
 .IR suffixes
 is installation-dependent; normally it is
 .B ,v/
-for hosts like Unix that permit commas in filenames,
+for hosts like UNIX that permit commas in filenames,
 and is empty (i.e. just the empty suffix) for other hosts.
 .TP
 .BI \-z zone
@@ -708,14 +708,14 @@ Check that the host supports \*r setuid use.
 Consult a trustworthy expert if there are any doubts.
 It is best if the
 .B seteuid
-system call works as described in Posix 1003.1a Draft 5,
+system call works as described in POSIX 1003.1a Draft 5,
 because \*r can switch back and forth easily
 between real and effective users, even if the real user is
 .BR root .
 If not, the second best is if the
 .B setuid
 system call supports saved setuid
-(the {\s-1_POSIX_SAVED_IDS\s0} behavior of Posix 1003.1-1990);
+(the {\s-1_POSIX_SAVED_IDS\s0} behavior of POSIX 1003.1-1990);
 this fails only if the real or effective user is
 .BR root .
 If \*r detects any failure in setuid, it quits immediately.
