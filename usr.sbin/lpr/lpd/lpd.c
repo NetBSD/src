@@ -1,4 +1,4 @@
-/*	$NetBSD: lpd.c,v 1.21 2000/02/24 06:33:48 itojun Exp $	*/
+/*	$NetBSD: lpd.c,v 1.22 2000/04/10 08:09:33 mrg Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993, 1994
@@ -45,7 +45,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)lpd.c	8.7 (Berkeley) 5/10/95";
 #else
-__RCSID("$NetBSD: lpd.c,v 1.21 2000/02/24 06:33:48 itojun Exp $");
+__RCSID("$NetBSD: lpd.c,v 1.22 2000/04/10 08:09:33 mrg Exp $");
 #endif
 #endif /* not lint */
 
@@ -133,16 +133,17 @@ main(argc, argv)
 	int argc;
 	char **argv;
 {
-	int f, funix, *finet, options, fromlen;
 	fd_set defreadfds;
 	struct sockaddr_un un, fromunix;
 	struct sockaddr_storage frominet;
-	int omask, lfd, errs, i;
+	sigset_t nmask, omask;
+	int lfd, errs, i, f, funix, *finet;
 	int child_max = 32;	/* more then enough to hose the system */
+	int options = 0;
+	struct servent *sp, serv;
 
 	euid = geteuid();	/* these shouldn't be different */
 	uid = getuid();
-	options = 0;
 	gethostname(host, sizeof(host));
 	host[sizeof(host) - 1] = '\0';
 	name = argv[0];
@@ -181,8 +182,27 @@ main(argc, argv)
 		}
 	argc -= optind;
 	argv += optind;
-	if (errs || argc != 0)
+	if (errs)
 		usage();
+
+	switch (argc) {
+	case 1:
+		if ((i = atoi(argv[0])) == 0)
+			usage();
+		if (i < 0 || i > USHRT_MAX)
+			errx(1, "port # %d is invalid", i);
+
+		serv.s_port = htons(i);
+		sp = &serv;
+		break;
+	case 0:
+		sp = getservbyname("printer", "tcp");
+		if (sp == NULL)
+			errx(1, "printer/tcp: unknown service");
+		break;
+	default:
+		usage();
+	}
 
 #ifndef DEBUG
 	/*
@@ -226,8 +246,15 @@ main(argc, argv)
 		syslog(LOG_ERR, "socket: %m");
 		exit(1);
 	}
-#define	mask(s)	(1 << ((s) - 1))
-	omask = sigblock(mask(SIGHUP)|mask(SIGINT)|mask(SIGQUIT)|mask(SIGTERM));
+
+	sigemptyset(&nmask);
+	sigaddset(&nmask, SIGHUP);
+	sigaddset(&nmask, SIGINT);
+	sigaddset(&nmask, SIGQUIT);
+	sigaddset(&nmask, SIGTERM);
+	sigprocmask(SIG_BLOCK, &nmask, &omask);
+
+	(void) umask(07);
 	signal(SIGHUP, mcleanup);
 	signal(SIGINT, mcleanup);
 	signal(SIGQUIT, mcleanup);
@@ -242,7 +269,8 @@ main(argc, argv)
 		syslog(LOG_ERR, "ubind: %m");
 		exit(1);
 	}
-	sigsetmask(omask);
+	(void) umask(0);
+	sigprocmask(SIG_SETMASK, &omask, (sigset_t *)0);
 	FD_ZERO(&defreadfds);
 	FD_SET(funix, &defreadfds);
 	listen(funix, 5);
@@ -263,7 +291,7 @@ main(argc, argv)
 	memset(&frominet, 0, sizeof(frominet));
 	memset(&fromunix, 0, sizeof(fromunix));
 	for (;;) {
-		int domain, nfds, s;
+		int domain, nfds, s, fromlen;
 		fd_set readfds;
 		/* "short" so it overflows in about 2 hours */
 		short sleeptime = 10;
@@ -288,7 +316,8 @@ main(argc, argv)
 			continue;
 		}
 		if (FD_ISSET(funix, &readfds)) {
-			domain = AF_LOCAL, fromlen = sizeof(fromunix);
+			domain = AF_LOCAL;
+			fromlen = sizeof(fromunix);
 			s = accept(funix,
 			    (struct sockaddr *)&fromunix, &fromlen);
 		} else {
@@ -637,7 +666,8 @@ usage()
 {
 	extern char *__progname;	/* XXX */
 
-	fprintf(stderr, "usage: %s [-d] [-l]\n", __progname);
+	fprintf(stderr, "usage: %s [-dlrs] [-n maxchild] [-w maxwait] [port]\n",
+	    __progname);
 	exit(1);
 }
 
