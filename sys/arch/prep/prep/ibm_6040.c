@@ -1,4 +1,4 @@
-/*	$NetBSD: platform.h,v 1.7 2003/01/16 02:18:22 matt Exp $	*/
+/*	$NetBSD: ibm_6040.c,v 1.1 2003/01/16 02:18:23 matt Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -36,52 +36,24 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef	_PREP_PLATFORM_H_
-#define	_PREP_PLATFORM_H_
-
 #include <sys/param.h>
-#include <sys/device.h>
 
-#include <dev/pci/pcivar.h>
+#include <machine/intr.h>
+#include <machine/platform.h>
 
-struct platform {
-	const char	*model;
-	int		(*match)(struct platform *);
-	void		(*pci_get_chipset_tag)(pci_chipset_tag_t);
-	void		(*pci_intr_fixup)(int, int, int *);
-	void		(*init_intr)(void);
-	void		(*cpu_setup)(struct device *);
-	void		(*reset)(void);
-	const char	**obiodevs;
+static void pci_intr_fixup_ibm_6040(int, int, int *);
+
+static const char *obiodevs_ibm_6040[] = {
+	NULL
 };
 
-struct plattab {
-	struct platform **platform;
-	int num;
+struct platform platform_ibm_6040 = {
+	"IBM PPS Model 6040 (E)",		/* model */
+	platform_generic_match,			/* match */
+	prep_pci_get_chipset_tag_indirect,	/* pci_get_chipset_tag */
+	pci_intr_nofixup,		/* pci_intr_fixup */
+	init_intr_ivr,				/* init_intr */
+	cpu_setup_ibm_generic,			/* cpu_setup */
+	reset_prep_generic,			/* reset */
+	obiodevs_ibm_6040,			/* obiodevs */
 };
-
-extern struct platform *platform;
-extern const char *obiodevs_nodev[];
-
-int ident_platform(void);
-int platform_generic_match(struct platform *);
-void pci_intr_nofixup(int, int, int *);
-void cpu_setup_unknown(struct device *);
-void reset_unknown(void);
-void reset_prep_generic(void);
-
-/* IBM */
-extern struct plattab plattab_ibm;
-extern struct platform platform_ibm_6040;
-extern struct platform platform_ibm_6050;
-extern struct platform platform_ibm_7248;
-extern struct platform platform_ibm_7043_140;
-
-void cpu_setup_ibm_generic(struct device *);
-
-/* Motorola */
-extern struct plattab plattab_mot;
-
-extern struct platform platform_mot_ulmb60xa;
-
-#endif /* !_PREP_PLATFORM_H_ */
