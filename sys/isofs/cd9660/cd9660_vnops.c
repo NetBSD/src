@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_vnops.c,v 1.22 1994/12/27 19:05:12 mycroft Exp $	*/
+/*	$NetBSD: cd9660_vnops.c,v 1.23 1995/06/28 05:10:45 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -98,8 +98,9 @@ cd9660_mknod(ndp, vap, cred, p)
 	dp = iso_dmap(ip->i_dev,ip->i_number,1);
 	if (ip->inode.iso_rdev == vap->va_rdev || vap->va_rdev == VNOVAL) {
 		/* same as the unmapped one, delete the mapping */
-		remque(dp);
-		FREE(dp,M_CACHE);
+		dp->d_next->d_prev = dp->d_prev;
+		*dp->d_prev = dp->d_next;
+		FREE(dp, M_CACHE);
 	} else
 		/* enter new mapping */
 		dp->d_dev = vap->va_rdev;
