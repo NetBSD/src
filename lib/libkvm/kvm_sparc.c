@@ -166,6 +166,7 @@ _kvm_uvatop(kd, p, va, pa)
 	int kva, pte;
 	register int off, frame;
 	register struct vmspace *vms = p->p_vmspace;
+	struct usegmap *usp;
 
 	if ((u_long)vms < KERNBASE) {
 		_kvm_err(kd, kd->program, "_kvm_uvatop: corrupt proc");
@@ -179,10 +180,13 @@ _kvm_uvatop(kd, p, va, pa)
 	 * Note that the index pte table is indexed by
 	 * virtual segment rather than physical segment.
 	 */
-	kva = (u_long)&vms->vm_pmap.pm_rpte[VA_VSEG(va)];
+	kva = (u_long)&vms->vm_pmap.pm_segstore;
+	if (kvm_read(kd, kva, (char *)&usp, 4) != 4)
+		goto invalid;
+	kva = (u_long)&usp->us_pte[VA_VSEG(va)];
 	if (kvm_read(kd, kva, (char *)&kva, 4) != 4 || kva == 0)
 		goto invalid;
-	kva += sizeof(vms->vm_pmap.pm_rpte[0]) * VA_VPG(va);
+	kva += sizeof(usp->us_pte[0]) * VA_VPG(va);
 	if (kvm_read(kd, kva, (char *)&pte, 4) == 4 && (pte & PG_V)) {
 		off = VA_OFF(va);
 		/*
