@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.13 1994/12/12 18:59:27 gwr Exp $	*/
+/*	$NetBSD: zs.c,v 1.14 1994/12/13 18:31:54 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -205,7 +205,8 @@ zs_match(struct device *parent, void *vcf, void *args)
 		ca->ca_intpri = ZSHARD_PRI;
 
 	/* The peek returns non-zero on error. */
-	return !bus_peek(ca, 0, 1, &x);
+	x = bus_peek(ca->ca_bustype, ca->ca_paddr, 1);
+	return (x != -1);
 }
 
 /*

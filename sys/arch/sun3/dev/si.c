@@ -1,4 +1,4 @@
-/*	$NetBSD: si.c,v 1.10 1994/12/12 18:59:25 gwr Exp $	*/
+/*	$NetBSD: si.c,v 1.11 1994/12/13 18:31:52 gwr Exp $	*/
 
 /*
  * Copyright (C) 1994 Adam Glass, Gordon W. Ross
@@ -193,7 +193,8 @@ si_match(parent, vcf, args)
 		ca->ca_intpri = 2;
 
 	/* The peek returns non-zero on error. */
-    return !bus_peek(ca, 0, 1, &x);
+	x = bus_peek(ca->ca_bustype, ca->ca_paddr, 1);
+    return (x != -1);
 }
 
 static void
