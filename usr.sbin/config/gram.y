@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: gram.y,v 1.32 2002/01/29 10:20:37 tv Exp $	*/
+/*	$NetBSD: gram.y,v 1.33 2002/06/05 10:56:18 lukem Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -105,7 +105,7 @@ static	struct nvlist *mk_ns(const char *, struct nvlist *);
 %token	DEFPARAM DEFFLAG DEFPSEUDO DEVICE DEVCLASS DUMPS ENDFILE XFILE XOBJECT
 %token	FILE_SYSTEM FLAGS IDENT INCLUDE XMACHINE MAJOR MAKEOPTIONS
 %token	MAXUSERS MAXPARTITIONS MINOR ON OPTIONS PREFIX PSEUDO_DEVICE ROOT
-%token	SOURCE TYPE WITH NEEDS_COUNT NEEDS_FLAG
+%token	SOURCE TYPE WITH NEEDS_COUNT NEEDS_FLAG NO
 %token	<val> NUMBER
 %token	<str> PATHNAME WORD EMPTY
 %token	ENDDEFS
@@ -388,16 +388,36 @@ spec:
 
 config_spec:
 	one_def |
+	NO FILE_SYSTEM no_fs_list |
 	FILE_SYSTEM fs_list |
-	OPTIONS opt_list |
+	NO MAKEOPTIONS no_mkopt_list |
 	MAKEOPTIONS mkopt_list |
+	NO OPTIONS no_opt_list |
+	OPTIONS opt_list |
 	MAXUSERS NUMBER			{ setmaxusers($2); } |
 	IDENT WORD			{ setident($2); } |
 	CONFIG conf root_spec sysparam_list
 					{ addconf(&conf); } |
+	NO PSEUDO_DEVICE WORD		{ delpseudo($3); } |
 	PSEUDO_DEVICE WORD npseudo	{ addpseudo($2, $3); } |
+	NO device_instance AT attachment
+					{ deldev($2, $4); } |
 	device_instance AT attachment locators flags_opt
 					{ adddev($1, $3, $4, $5); };
+
+fs_list:
+	fs_list ',' fsoption |
+	fsoption;
+
+fsoption:
+	WORD				{ addfsoption($1); };
+
+no_fs_list:
+	no_fs_list ',' no_fsoption |
+	no_fsoption;
+
+no_fsoption:
+	WORD				{ delfsoption($1); };
 
 mkopt_list:
 	mkopt_list ',' mkoption |
@@ -405,6 +425,13 @@ mkopt_list:
 
 mkoption:
 	WORD '=' value			{ addmkoption($1, $3); }
+
+no_mkopt_list:
+	no_mkopt_list ',' no_mkoption |
+	no_mkoption;
+
+no_mkoption:
+	WORD				{ delmkoption($1); }
 
 opt_list:
 	opt_list ',' option |
@@ -414,12 +441,12 @@ option:
 	WORD				{ addoption($1, NULL); } |
 	WORD '=' value			{ addoption($1, $3); };
 
-fs_list:
-	fs_list ',' fsoption |
-	fsoption;
+no_opt_list:
+	no_opt_list ',' no_option |
+	no_option;
 
-fsoption:
-	WORD				{ addfsoption($1); };
+no_option:
+	WORD				{ deloption($1); };
 
 conf:
 	WORD				{ conf.cf_name = $1;

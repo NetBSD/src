@@ -1,4 +1,4 @@
-/*	$NetBSD: sem.c,v 1.29 2002/01/29 10:20:37 tv Exp $	*/
+/*	$NetBSD: sem.c,v 1.30 2002/06/05 10:56:19 lukem Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -68,11 +68,6 @@ static struct hashtab *devitab;		/* etc */
 static struct attr errattr;
 static struct devbase errdev;
 static struct deva errdeva;
-static struct devbase **nextbase;
-static struct deva **nextdeva;
-static struct config **nextcf;
-static struct devi **nextdevi;
-static struct devi **nextpseudo;
 
 static int has_errobj(struct nvlist *, void *);
 static struct nvlist *addtoattr(struct nvlist *, struct devbase *);
@@ -95,23 +90,18 @@ initsem(void)
 	attrtab = ht_new();
 	errattr.a_name = "<internal>";
 
-	allbases = NULL;
-	nextbase = &allbases;
+	TAILQ_INIT(&allbases);
 
-	alldevas = NULL;
-	nextdeva = &alldevas;
+	TAILQ_INIT(&alldevas);
 
 	cfhashtab = ht_new();
-	allcf = NULL;
-	nextcf = &allcf;
+	TAILQ_INIT(&allcf);
 
 	devitab = ht_new();
-	alldevi = NULL;
-	nextdevi = &alldevi;
+	TAILQ_INIT(&alldevi);
 	errdev.d_name = "<internal>";
 
-	allpseudo = NULL;
-	nextpseudo = &allpseudo;
+	TAILQ_INIT(&allpseudo);
 
 	s_ifnet = intern("ifnet");
 	s_qmark = intern("?");
@@ -126,7 +116,7 @@ enddefs(void)
 {
 	struct devbase *dev;
 
-	for (dev = allbases; dev != NULL; dev = dev->d_next) {
+	TAILQ_FOREACH(dev, &allbases, d_next) {
 		if (!dev->d_isdef) {
 			(void)fprintf(stderr,
 			    "%s: device `%s' used but not defined\n",
@@ -164,7 +154,7 @@ setmaxusers(int n)
 	}
 	maxusers = n;
 	if (n < minmaxusers) {
-		error("warning: minimum of %d maxusers assumed\n", minmaxusers);
+		error("warning: minimum of %d maxusers assumed", minmaxusers);
 		errors--;	/* take it away */
 		maxusers = minmaxusers;
 	} else if (n > maxmaxusers) {
@@ -350,7 +340,7 @@ defdev(struct devbase *dev, struct nvlist *loclist, struct nvlist *attrs,
 		}
 	}
 	return;
-bad:
+ bad:
 	nvfreel(loclist);
 	nvfreel(attrs);
 }
@@ -373,7 +363,7 @@ getdevbase(const char *name)
 			goto badname;
 	}
 	if (isdigit(*--p)) {
-badname:
+ badname:
 		error("bad device base name `%s'", name);
 		return (&errdev);
 	}
@@ -381,7 +371,6 @@ badname:
 	if (dev == NULL) {
 		dev = emalloc(sizeof *dev);
 		dev->d_name = name;
-		dev->d_next = NULL;
 		dev->d_isdef = 0;
 		dev->d_major = NODEV;
 		dev->d_attrs = NULL;
@@ -390,8 +379,7 @@ badname:
 		dev->d_ahead = NULL;
 		dev->d_app = &dev->d_ahead;
 		dev->d_umax = 0;
-		*nextbase = dev;
-		nextbase = &dev->d_next;
+		TAILQ_INSERT_TAIL(&allbases, dev, d_next);
 		if (ht_insert(devbasetab, name, dev))
 			panic("getdevbase(%s)", name);
 	}
@@ -482,7 +470,7 @@ defdevattach(struct deva *deva, struct devbase *dev, struct nvlist *atlist,
 	*dev->d_app = deva;
 	dev->d_app = &deva->d_bsame;
 	return;
-bad:
+ bad:
 	nvfreel(atlist);
 	nvfreel(attrs);
 }
@@ -505,7 +493,7 @@ getdevattach(const char *name)
 			goto badname;
 	}
 	if (isdigit(*--p)) {
-badname:
+ badname:
 		error("bad device attachment name `%s'", name);
 		return (&errdeva);
 	}
@@ -513,7 +501,6 @@ badname:
 	if (deva == NULL) {
 		deva = emalloc(sizeof *deva);
 		deva->d_name = name;
-		deva->d_next = NULL;
 		deva->d_bsame = NULL;
 		deva->d_isdef = 0;
 		deva->d_devbase = NULL;
@@ -521,8 +508,7 @@ badname:
 		deva->d_attrs = NULL;
 		deva->d_ihead = NULL;
 		deva->d_ipp = &deva->d_ihead;
-		*nextdeva = deva;
-		nextdeva = &deva->d_next;
+		TAILQ_INSERT_TAIL(&alldevas, deva, d_next);
 		if (ht_insert(devatab, name, deva))
 			panic("getdeva(%s)", name);
 	}
@@ -568,9 +554,10 @@ makedevstr(int maj, int min)
 	struct devbase *dev;
 	char buf[32];
 
-	for (dev = allbases; dev != NULL; dev = dev->d_next)
+	TAILQ_FOREACH(dev, &allbases, d_next) {
 		if (dev->d_major == maj)
 			break;
+	}
 	if (dev == NULL)
 		(void)sprintf(buf, "<%d/%d>", maj, min);
 	else
@@ -729,10 +716,9 @@ addconf(struct config *cf0)
 	if (cf->cf_fstype == s_qmark)
 		cf->cf_fstype = NULL;
 
-	*nextcf = cf;
-	nextcf = &cf->cf_next;
+	TAILQ_INSERT_TAIL(&allcf, cf, cf_next);
 	return;
-bad:
+ bad:
 	nvfreel(cf0->cf_root);
 	nvfreel(cf0->cf_dump);
 }
@@ -774,7 +760,6 @@ newdevi(const char *name, int unit, struct devbase *d)
 	i->i_name = name;
 	i->i_unit = unit;
 	i->i_base = d;
-	i->i_next = NULL;
 	i->i_bsame = NULL;
 	i->i_asame = NULL;
 	i->i_alias = NULL;
@@ -898,7 +883,7 @@ adddev(const char *name, const char *at, struct nvlist *loclist, int flags)
 		error("A %s cannot attach to a %s", ib->d_name, atbuf);
 		goto bad;
 
-findattachment:
+ findattachment:
 		/* find out which attachment it uses */
 		hit = 0;
 		for (iba = ib->d_ahead; iba != NULL; iba = iba->d_bsame)
@@ -921,11 +906,55 @@ findattachment:
 	*iba->d_ipp = i;
 	iba->d_ipp = &i->i_asame;
 
-	selectbase(ib, iba);
 	/* all done, fall into ... */
-bad:
+ bad:
 	nvfreel(loclist);
 	return;
+}
+
+void
+deldev(const char *name, const char *at)
+{
+	struct devi *firsti, *i, *match;
+	struct devbase *d;
+	int unit;
+	char base[NAMESIZE];
+
+	if (split(name, strlen(name), base, sizeof base, &unit)) {
+		error("invalid device name `%s'", name);
+		return;
+	}
+	d = ht_lookup(devbasetab, intern(base));
+	if (d == NULL) {
+		error("%s: unknown device `%s'", name, base);
+		return;
+	}
+	if (d->d_ispseudo) {
+		error("%s: %s is a pseudo-device", name, base);
+		return;
+	}
+	if ((firsti = ht_lookup(devitab, name)) == NULL) {
+		error("`%s' not defined", name);
+		return;
+	}
+	match = NULL;
+	if (strcmp(at, firsti->i_at) == 0) {
+		match = firsti;
+	} else {
+		for (i = firsti; i->i_alias; i = i->i_alias) {
+			if (strcmp(at, i->i_at) == 0) {
+				match = i;
+				break;
+			}
+		}
+	}
+	if (match == NULL) {
+		error("`%s' at `%s' not found", name, at);
+		return;
+	}
+
+		// XXXLUKEM: actually implement...
+	error("`%s' at `%s': device deletion not implemented", name, at);
 }
 
 void
@@ -950,10 +979,44 @@ addpseudo(const char *name, int number)
 	i = newdevi(name, number - 1, d);	/* foo 16 => "foo0..foo15" */
 	if (ht_insert(devitab, name, i))
 		panic("addpseudo(%s)", name);
-	selectbase(d, NULL);
-	*nextpseudo = i;
-	nextpseudo = &i->i_next;
-	npseudo++;
+	TAILQ_INSERT_TAIL(&allpseudo, i, i_next);
+}
+
+void
+delpseudo(const char *name)
+{
+	struct devbase *d;
+	struct devi *i;
+
+	d = ht_lookup(devbasetab, name);
+	if (d == NULL) {
+		error("undefined pseudo-device %s", name);
+		return;
+	}
+	if (!d->d_ispseudo) {
+		error("%s is a real device, not a pseudo-device", name);
+		return;
+	}
+	if ((i = ht_lookup(devitab, name)) == NULL) {
+		error("`%s' not defined", name);
+		return;
+	}
+	d->d_umax = 0;		/* clear neads-count entries */
+	TAILQ_REMOVE(&allpseudo, i, i_next);
+	if (ht_remove(devitab, name))
+		panic("delpseudo(%s) - can't remove from devitab", name);
+}
+
+void
+fixdevis(void)
+{
+	struct devi *i;
+
+	TAILQ_FOREACH(i, &alldevi, i_next)
+		selectbase(i->i_base, i->i_atdeva);
+
+	TAILQ_FOREACH(i, &allpseudo, i_next)
+		selectbase(i->i_base, NULL);
 }
 
 /*
@@ -992,8 +1055,7 @@ getdevi(const char *name)
 			firsti = firsti->i_alias;
 		firsti->i_alias = i;
 	}
-	*nextdevi = i;
-	nextdevi = &i->i_next;
+	TAILQ_INSERT_TAIL(&alldevi, i, i_next);
 	ndevi++;
 	return (i);
 }

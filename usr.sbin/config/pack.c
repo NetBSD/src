@@ -1,4 +1,4 @@
-/*	$NetBSD: pack.c,v 1.11 2002/01/29 10:20:37 tv Exp $	*/
+/*	$NetBSD: pack.c,v 1.12 2002/06/05 10:56:19 lukem Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -134,7 +134,7 @@ pack(void)
 	 * what we would get if no packing occurred.
 	 */
 	locspace = pvecspace = 0;
-	for (i = alldevi; i != NULL; i = i->i_next) {
+	TAILQ_FOREACH(i, &alldevi, i_next) {
 		if (i->i_collapsed)
 			continue;
 		locspace += i->i_atattr->a_loclen;
@@ -178,7 +178,7 @@ packdevi(void)
 	 * are no cloning units on the list), moving starred units to the
 	 * end of the list.
 	 */
-	for (d = allbases; d != NULL; d = d->d_next) {
+	TAILQ_FOREACH(d, &allbases, d_next) {
 		ip = &d->d_ihead;
 		firststar = NULL;
 
@@ -203,7 +203,7 @@ packdevi(void)
 
 	packed = emalloc((ndevi + 1) * sizeof *packed);
 	n = 0;
-	for (d = allbases; d != NULL; d = d->d_next) {
+	TAILQ_FOREACH(d, &allbases, d_next) {
 		/*
 		 * For each instance of each device, add or collapse
 		 * all its aliases.
@@ -229,14 +229,15 @@ packdevi(void)
 				l->i_parents = emalloc(sizeof(*l->i_parents));
 				l->i_parents[0] = NULL;
 				packed[n++] = l;
-			nextalias:;
+ nextalias:;
 			}
 		}
 	}
 	npacked = n;
 	packed[n] = NULL;
-	for (i = alldevi; i != NULL; i = i->i_next)
+	TAILQ_FOREACH(i, &alldevi, i_next) {
 		addparents(i, packed[i->i_cfindex]);
+	}
 }
 
 /*
