@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_lockf.c,v 1.35 2004/04/25 16:42:41 simonb Exp $	*/
+/*	$NetBSD: vfs_lockf.c,v 1.36 2004/11/19 14:18:53 peter Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_lockf.c,v 1.35 2004/04/25 16:42:41 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_lockf.c,v 1.36 2004/11/19 14:18:53 peter Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -309,7 +309,7 @@ lf_setlock(struct lockf *lock, struct lockf **sparelock,
 				}
 			}
 			/*
-			 * If we're still following a dependancy chain
+			 * If we're still following a dependency chain
 			 * after maxlockdepth iterations, assume we're in
 			 * a cycle to be safe.
 			 */
