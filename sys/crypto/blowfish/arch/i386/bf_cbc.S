@@ -1,4 +1,4 @@
-/* $NetBSD: bf_cbc.S,v 1.2.6.1 2004/08/03 10:44:45 skrll Exp $ */
+/* $NetBSD: bf_cbc.S,v 1.2.6.2 2004/09/18 14:44:26 skrll Exp $ */
 
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.

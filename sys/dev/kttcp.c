@@ -1,4 +1,4 @@
-/*	$NetBSD: kttcp.c,v 1.13.2.3 2004/08/03 10:44:54 skrll Exp $	*/
+/*	$NetBSD: kttcp.c,v 1.13.2.4 2004/09/18 14:44:28 skrll Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kttcp.c,v 1.13.2.3 2004/08/03 10:44:54 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kttcp.c,v 1.13.2.4 2004/09/18 14:44:28 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -86,12 +86,12 @@ __KERNEL_RCSID(0, "$NetBSD: kttcp.c,v 1.13.2.3 2004/08/03 10:44:54 skrll Exp $")
 
 #include <dev/kttcpio.h>
 
-static int kttcp_send(struct lwp *l, struct kttcp_io_args *);
-static int kttcp_recv(struct lwp *l, struct kttcp_io_args *);
+static int kttcp_send(struct proc *p, struct kttcp_io_args *);
+static int kttcp_recv(struct proc *p, struct kttcp_io_args *);
 static int kttcp_sosend(struct socket *, unsigned long long,
-			unsigned long long *, struct lwp *, int);
+			unsigned long long *, struct proc *, int);
 static int kttcp_soreceive(struct socket *, unsigned long long,
-			   unsigned long long *, struct lwp *, int *);
+			   unsigned long long *, struct proc *, int *);
 
 void	kttcpattach(int);
 
@@ -109,7 +109,7 @@ kttcpattach(int count)
 }
 
 int
-kttcpioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
+kttcpioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 {
 	int error;
 
@@ -118,11 +118,11 @@ kttcpioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 
 	switch (cmd) {
 	case KTTCP_IO_SEND:
-		error = kttcp_send(l, (struct kttcp_io_args *) data);
+		error = kttcp_send(p, (struct kttcp_io_args *) data);
 		break;
 
 	case KTTCP_IO_RECV:
-		error = kttcp_recv(l, (struct kttcp_io_args *) data);
+		error = kttcp_recv(p, (struct kttcp_io_args *) data);
 		break;
 
 	default:
@@ -133,7 +133,7 @@ kttcpioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 }
 
 static int
-kttcp_send(struct lwp *l, struct kttcp_io_args *kio)
+kttcp_send(struct proc *p, struct kttcp_io_args *kio)
 {
 	struct file *fp;
 	int error;
@@ -143,12 +143,12 @@ kttcp_send(struct lwp *l, struct kttcp_io_args *kio)
 	if (kio->kio_totalsize >= KTTCP_MAX_XMIT)
 		return EINVAL;
 
-	fp = fd_getfile(l->l_proc->p_fd, kio->kio_socket);
+	fp = fd_getfile(p->p_fd, kio->kio_socket);
 	if (fp == NULL)
 		return EBADF;
 	FILE_USE(fp);
 	if (fp->f_type != DTYPE_SOCKET) {
-		FILE_UNUSE(fp, l);
+		FILE_UNUSE(fp, p);
 		return EFTYPE;
 	}
 
@@ -156,11 +156,11 @@ kttcp_send(struct lwp *l, struct kttcp_io_args *kio)
 	microtime(&t0);
 	do {
 		error = kttcp_sosend((struct socket *)fp->f_data, len,
-		    &done, l, 0);
+		    &done, p, 0);
 		len -= done;
 	} while (error == 0 && len > 0);
 
-	FILE_UNUSE(fp, l);
+	FILE_UNUSE(fp, p);
 
 	microtime(&t1);
 	if (error != 0)
@@ -173,7 +173,7 @@ kttcp_send(struct lwp *l, struct kttcp_io_args *kio)
 }
 
 static int
-kttcp_recv(struct lwp *l, struct kttcp_io_args *kio)
+kttcp_recv(struct proc *p, struct kttcp_io_args *kio)
 {
 	struct file *fp;
 	int error;
@@ -183,23 +183,23 @@ kttcp_recv(struct lwp *l, struct kttcp_io_args *kio)
 	if (kio->kio_totalsize > KTTCP_MAX_XMIT)
 		return EINVAL;
 
-	fp = fd_getfile(l->l_proc->p_fd, kio->kio_socket);
+	fp = fd_getfile(p->p_fd, kio->kio_socket);
 	if (fp == NULL)
 		return EBADF;
 	FILE_USE(fp);
 	if (fp->f_type != DTYPE_SOCKET) {
-		FILE_UNUSE(fp, l);
+		FILE_UNUSE(fp, p);
 		return EBADF;
 	}
 	len = kio->kio_totalsize;
 	microtime(&t0);
 	do {
 		error = kttcp_soreceive((struct socket *)fp->f_data,
-		    len, &done, l, NULL);
+		    len, &done, p, NULL);
 		len -= done;
 	} while (error == 0 && len > 0 && done > 0);
 
-	FILE_UNUSE(fp, l);
+	FILE_UNUSE(fp, p);
 
 	microtime(&t1);
 	if (error == EPIPE)
@@ -220,7 +220,7 @@ kttcp_recv(struct lwp *l, struct kttcp_io_args *kio)
  */
 static int
 kttcp_sosend(struct socket *so, unsigned long long slen,
-	     unsigned long long *done, struct lwp *l, int flags)
+	     unsigned long long *done, struct proc *p, int flags)
 {
 	struct mbuf **mp, *m, *top;
 	long space, len, mlen;
@@ -244,8 +244,7 @@ kttcp_sosend(struct socket *so, unsigned long long slen,
 	dontroute =
 	    (flags & MSG_DONTROUTE) && (so->so_options & SO_DONTROUTE) == 0 &&
 	    (so->so_proto->pr_flags & PR_ATOMIC);
-	/* WRS XXX - are we doing per-lwp or per-proc stats? */
-	l->l_proc->p_stats->p_ru.ru_msgsnd++;
+	p->p_stats->p_ru.ru_msgsnd++;
 #define	snderr(errno)	{ error = errno; splx(s); goto release; }
 
  restart:
@@ -352,7 +351,7 @@ nopages:
 				so->so_state |= SS_MORETOCOME;
 			error = (*so->so_proto->pr_usrreq)(so,
 			    (flags & MSG_OOB) ? PRU_SENDOOB : PRU_SEND,
-			    top, NULL, NULL, l);
+			    top, NULL, NULL, p);
 			if (dontroute)
 				so->so_options &= ~SO_DONTROUTE;
 			if (resid > 0)
@@ -380,7 +379,7 @@ nopages:
 
 static int
 kttcp_soreceive(struct socket *so, unsigned long long slen,
-		unsigned long long *done, struct lwp *l, int *flagsp)
+		unsigned long long *done, struct proc *p, int *flagsp)
 {
 	struct mbuf *m, **mp;
 	int flags, len, error, s, offset, moff, type;
@@ -486,8 +485,8 @@ kttcp_soreceive(struct socket *so, unsigned long long slen,
 	 * info, we save a copy of m->m_nextpkt into nextrecord.
 	 */
 #ifdef notyet /* XXXX */
-	if (uio->uio_lwp)
-		uio->uio_lwp->l_proc->p_stats->p_ru.ru_msgrcv++;
+	if (uio->uio_procp)
+		uio->uio_procp->p_stats->p_ru.ru_msgrcv++;
 #endif
 	KASSERT(m == so->so_rcv.sb_mb);
 	SBLASTRECORDCHK(&so->so_rcv, "kttcp_soreceive 1");

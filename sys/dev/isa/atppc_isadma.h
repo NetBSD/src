@@ -1,4 +1,4 @@
-/* $NetBSD: atppc_isadma.h,v 1.2.4.2 2004/08/03 10:47:57 skrll Exp $ */
+/* $NetBSD: atppc_isadma.h,v 1.2.4.3 2004/09/18 14:47:45 skrll Exp $ */
 
 /*-
  * Copyright (c) 2003 Bruce J.A. Nourish 

@@ -1,4 +1,4 @@
-/*	$NetBSD: event.c,v 1.7.6.1 2004/08/03 10:42:46 skrll Exp $ */
+/*	$NetBSD: event.c,v 1.7.6.2 2004/09/18 14:42:24 skrll Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: event.c,v 1.7.6.1 2004/08/03 10:42:46 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: event.c,v 1.7.6.2 2004/09/18 14:42:24 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/fcntl.h>

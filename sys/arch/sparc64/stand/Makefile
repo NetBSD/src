@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5.10.1 2004/08/03 10:41:48 skrll Exp $
+#	$NetBSD: Makefile,v 1.5.10.2 2004/09/18 14:41:28 skrll Exp $
 
 .if ${MACHINE} == sparc64
 SUBDIR=	../../sparc/stand/ofwboot

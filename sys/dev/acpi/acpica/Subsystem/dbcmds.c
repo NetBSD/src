@@ -116,7 +116,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dbcmds.c,v 1.8.2.1 2004/08/03 10:45:05 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dbcmds.c,v 1.8.2.2 2004/09/18 14:44:43 skrll Exp $");
 
 #include "acpi.h"
 #include "acdispat.h"

@@ -1,4 +1,4 @@
-/*	$NetBSD: hpux_tty.c,v 1.24.2.1 2004/08/03 10:43:46 skrll Exp $	*/
+/*	$NetBSD: hpux_tty.c,v 1.24.2.2 2004/09/18 14:43:15 skrll Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpux_tty.c,v 1.24.2.1 2004/08/03 10:43:46 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpux_tty.c,v 1.24.2.2 2004/09/18 14:43:15 skrll Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_43.h"

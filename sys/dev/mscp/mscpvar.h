@@ -1,4 +1,4 @@
-/*	$NetBSD: mscpvar.h,v 1.9.6.1 2004/08/03 10:48:50 skrll Exp $	*/
+/*	$NetBSD: mscpvar.h,v 1.9.6.2 2004/09/18 14:49:02 skrll Exp $	*/
 /*
  * Copyright (c) 1988 Regents of the University of California.
  * All rights reserved.

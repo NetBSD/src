@@ -1,4 +1,4 @@
-/*	$NetBSD: mpu.c,v 1.5.16.1 2004/08/03 10:46:17 skrll Exp $	*/
+/*	$NetBSD: mpu.c,v 1.5.16.2 2004/09/18 14:45:59 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mpu.c,v 1.5.16.1 2004/08/03 10:46:17 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mpu.c,v 1.5.16.2 2004/09/18 14:45:59 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

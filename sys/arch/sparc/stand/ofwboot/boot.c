@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.5.6.1 2004/08/03 10:41:22 skrll Exp $	*/
+/*	$NetBSD: boot.c,v 1.5.6.2 2004/09/18 14:41:04 skrll Exp $	*/
 #define DEBUG
 /*
  * Copyright (c) 1997, 1999 Eduardo E. Horvath.  All rights reserved.

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ate.c,v 1.39 2002/11/30 14:15:11 tsutsui Exp $	*/
+/*	$NetBSD: if_ate.c,v 1.39.6.1 2004/09/18 14:47:46 skrll Exp $	*/
 
 /*
  * All Rights Reserved, Copyright (C) Fujitsu Limited 1995
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ate.c,v 1.39 2002/11/30 14:15:11 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ate.c,v 1.39.6.1 2004/09/18 14:47:46 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -112,7 +112,7 @@ ate_match(parent, match, aux)
 		return (0);
 
 	/* Disallow wildcarded values. */
-	if (ia->ia_io[0].ir_addr == ISACF_PORT_DEFAULT)
+	if (ia->ia_io[0].ir_addr == ISA_UNKNOWN_PORT)
 		return (0);
 
 	/*
@@ -159,7 +159,7 @@ ate_match(parent, match, aux)
 		goto out;
 	}
 
-	if (ia->ia_irq[0].ir_irq != ISACF_IRQ_DEFAULT) {
+	if (ia->ia_irq[0].ir_irq != ISA_UNKNOWN_IRQ) {
 		if (ia->ia_irq[0].ir_irq != irq) {
 			printf("ate_match: irq mismatch; "
 			    "kernel configured %d != board configured %d\n",

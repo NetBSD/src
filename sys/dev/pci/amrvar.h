@@ -1,4 +1,4 @@
-/*	$NetBSD: amrvar.h,v 1.3 2003/05/14 11:22:55 ad Exp $	*/
+/*	$NetBSD: amrvar.h,v 1.3.2.1 2004/09/18 14:49:02 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -38,8 +38,6 @@
 
 #ifndef	_PCI_AMRVAR_H_
 #define	_PCI_AMRVAR_H_
-
-#include "locators.h"
 
 #define	AMR_MAX_UNITS		16
 #define	AMR_WDOG_TICKS		(hz * 5)
@@ -141,8 +139,6 @@ struct amr_ccb {
 struct amr_attach_args {
 	int		amra_unit;
 };
-
-#define	amracf_unit	cf_loc[AMRCF_UNIT]
 
 int	amr_ccb_alloc(struct amr_softc *, struct amr_ccb **);
 void	amr_ccb_enqueue(struct amr_softc *, struct amr_ccb *);

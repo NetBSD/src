@@ -1,4 +1,4 @@
-/*	$NetBSD: gdt.c,v 1.1.4.2 2004/08/03 10:43:10 skrll Exp $	*/
+/*	$NetBSD: gdt.c,v 1.1.4.3 2004/09/18 14:42:43 skrll Exp $	*/
 /*	NetBSD: gdt.c,v 1.32 2004/02/13 11:36:13 wiz Exp 	*/
 
 /*-
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gdt.c,v 1.1.4.2 2004/08/03 10:43:10 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gdt.c,v 1.1.4.3 2004/09/18 14:42:43 skrll Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_xen.h"

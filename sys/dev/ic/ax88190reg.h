@@ -1,4 +1,4 @@
-/*	$NetBSD: ax88190reg.h,v 1.1.24.1 2004/08/03 10:46:11 skrll Exp $	*/
+/*	$NetBSD: ax88190reg.h,v 1.1.24.2 2004/09/18 14:45:56 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.

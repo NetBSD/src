@@ -1,4 +1,4 @@
-/*	$NetBSD: itevar.h,v 1.8.6.1 2004/08/03 10:42:47 skrll Exp $	*/
+/*	$NetBSD: itevar.h,v 1.8.6.2 2004/09/18 14:42:25 skrll Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.

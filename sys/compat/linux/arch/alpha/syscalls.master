@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.42.2.1 2004/08/03 10:43:53 skrll Exp $
+	$NetBSD: syscalls.master,v 1.42.2.2 2004/09/18 14:43:27 skrll Exp $
 ;
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -631,7 +631,7 @@
 402	UNIMPL		io_cancel
 403	UNIMPL		/* unused */
 404	UNIMPL		/* unused */
-405	UNIMPL		exit_group
+405	STD		{ int linux_sys_exit_group(int error_code); }
 406	UNIMPL		lookup_dcookie
 407	UNIMPL		sys_epoll_create
 408	UNIMPL		sys_epoll_ctl

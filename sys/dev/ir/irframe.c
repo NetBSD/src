@@ -1,4 +1,4 @@
-/*	$NetBSD: irframe.c,v 1.26.2.2 2004/08/03 10:47:57 skrll Exp $	*/
+/*	$NetBSD: irframe.c,v 1.26.2.3 2004/09/18 14:47:45 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irframe.c,v 1.26.2.2 2004/08/03 10:47:57 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irframe.c,v 1.26.2.3 2004/09/18 14:47:45 skrll Exp $");
 
 #include "irframe.h"
 
@@ -184,7 +184,7 @@ irframe_detach(struct device *self, int flags)
 }
 
 int
-irframeopen(dev_t dev, int flag, int mode, struct lwp *l)
+irframeopen(dev_t dev, int flag, int mode, struct proc *p)
 {
 	struct irframe_softc *sc;
 	int error;
@@ -197,7 +197,7 @@ irframeopen(dev_t dev, int flag, int mode, struct lwp *l)
 	if (sc->sc_open)
 		return (EBUSY);
 	if (sc->sc_methods->im_open != NULL) {
-		error = sc->sc_methods->im_open(sc->sc_handle, flag, mode, l);
+		error = sc->sc_methods->im_open(sc->sc_handle, flag, mode, p);
 		if (error)
 			return (error);
 	}
@@ -210,7 +210,7 @@ irframeopen(dev_t dev, int flag, int mode, struct lwp *l)
 }
 
 int
-irframeclose(dev_t dev, int flag, int mode, struct lwp *l)
+irframeclose(dev_t dev, int flag, int mode, struct proc *p)
 {
 	struct irframe_softc *sc;
 	int error;
@@ -220,7 +220,7 @@ irframeclose(dev_t dev, int flag, int mode, struct lwp *l)
 		return (ENXIO);
 	sc->sc_open = 0;
 	if (sc->sc_methods->im_close != NULL)
-		error = sc->sc_methods->im_close(sc->sc_handle, flag, mode, l);
+		error = sc->sc_methods->im_close(sc->sc_handle, flag, mode, p);
 	else
 		error = 0;
 	return (error);
@@ -338,7 +338,7 @@ irf_reset_params(struct irframe_softc *sc)
 }
 
 int
-irframeioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct lwp *l)
+irframeioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
 {
 	struct irframe_softc *sc;
 	void *vaddr = addr;
@@ -380,7 +380,7 @@ irframeioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct lwp *l)
 }
 
 int
-irframepoll(dev_t dev, int events, struct lwp *l)
+irframepoll(dev_t dev, int events, struct proc *p)
 {
 	struct irframe_softc *sc;
 
@@ -390,7 +390,7 @@ irframepoll(dev_t dev, int events, struct lwp *l)
 	if ((sc->sc_dev.dv_flags & DVF_ACTIVE) == 0 || !sc->sc_open)
 		return (EIO);
 
-	return (sc->sc_methods->im_poll(sc->sc_handle, events, l));
+	return (sc->sc_methods->im_poll(sc->sc_handle, events, p));
 }
 
 int

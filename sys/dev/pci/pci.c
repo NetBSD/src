@@ -1,4 +1,4 @@
-/*	$NetBSD: pci.c,v 1.80.2.3 2004/09/03 12:45:28 skrll Exp $	*/
+/*	$NetBSD: pci.c,v 1.80.2.4 2004/09/18 14:49:04 skrll Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997, 1998
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci.c,v 1.80.2.3 2004/09/03 12:45:28 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci.c,v 1.80.2.4 2004/09/18 14:49:04 skrll Exp $");
 
 #include "opt_pci.h"
 
@@ -112,8 +112,8 @@ pcimatch(parent, cf, aux)
 	struct pcibus_attach_args *pba = aux;
 
 	/* Check the locators */
-	if (cf->pcibuscf_bus != PCIBUS_UNK_BUS &&
-	    cf->pcibuscf_bus != pba->pba_bus)
+	if (cf->cf_loc[PCIBUSCF_BUS] != PCIBUSCF_BUS_DEFAULT &&
+	    cf->cf_loc[PCIBUSCF_BUS] != pba->pba_bus)
 		return (0);
 
 	/* sanity */
@@ -263,11 +263,11 @@ pcisubmatch(struct device *parent, struct cfdata *cf,
 	    const locdesc_t *ldesc, void *aux)
 {
 
-	if (cf->pcicf_dev != PCI_UNK_DEV &&
-	    cf->pcicf_dev != ldesc->locs[PCICF_DEV])
+	if (cf->cf_loc[PCICF_DEV] != PCICF_DEV_DEFAULT &&
+	    cf->cf_loc[PCICF_DEV] != ldesc->locs[PCICF_DEV])
 		return (0);
-	if (cf->pcicf_function != PCI_UNK_FUNCTION &&
-	    cf->pcicf_function != ldesc->locs[PCICF_FUNCTION])
+	if (cf->cf_loc[PCICF_FUNCTION] != PCICF_FUNCTION_DEFAULT &&
+	    cf->cf_loc[PCICF_FUNCTION] != ldesc->locs[PCICF_FUNCTION])
 		return (0);
 	return (config_match(parent, cf, aux));
 }

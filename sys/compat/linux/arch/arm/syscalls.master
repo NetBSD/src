@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.14.2.1 2004/08/03 10:43:53 skrll Exp $
+	$NetBSD: syscalls.master,v 1.14.2.2 2004/09/18 14:43:29 skrll Exp $
 
 ; Derived from sys/compat/linux/arch/*/syscalls.master
 ; and from Linux 2.4.12 arch/arm/kernel/calls.S
@@ -402,7 +402,7 @@
 245	UNIMPL		io_getevents
 246	UNIMPL		io_submit
 247	UNIMPL		io_cancel
-248	UNIMPL		exit_group
+248	STD		{ int linux_sys_exit_group(int error_code); }
 249	UNIMPL		lookup_dcookie
 250	UNIMPL		epoll_create
 251	UNIMPL		epoll_ctl

@@ -1,4 +1,4 @@
-/*	$NetBSD: hpux.h,v 1.17.6.1 2004/08/03 10:43:44 skrll Exp $	*/
+/*	$NetBSD: hpux.h,v 1.17.6.2 2004/09/18 14:43:15 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.

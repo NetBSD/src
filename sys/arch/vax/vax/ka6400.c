@@ -1,4 +1,4 @@
-/*	$NetBSD: ka6400.c,v 1.4.6.1 2004/08/03 10:42:36 skrll Exp $	*/
+/*	$NetBSD: ka6400.c,v 1.4.6.2 2004/09/18 14:42:13 skrll Exp $	*/
 
 /*
  * Copyright (c) 2000 Ludd, University of Lule}, Sweden. All rights reserved.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ka6400.c,v 1.4.6.1 2004/08/03 10:42:36 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ka6400.c,v 1.4.6.2 2004/09/18 14:42:13 skrll Exp $");
 
 #include "opt_multiprocessor.h"
 

@@ -1,4 +1,4 @@
-#	$NetBSD: files.x86,v 1.8.2.2 2004/09/03 12:45:08 skrll Exp $
+#	$NetBSD: files.x86,v 1.8.2.3 2004/09/18 14:42:37 skrll Exp $
 
 # options for MP configuration through the MP spec
 defflag opt_mpbios.h MPBIOS MPVERBOSE MPDEBUG MPBIOS_SCANPCI

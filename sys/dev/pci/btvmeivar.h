@@ -1,4 +1,4 @@
-/* $NetBSD: btvmeivar.h,v 1.1.38.1 2004/08/03 10:49:06 skrll Exp $ */
+/* $NetBSD: btvmeivar.h,v 1.1.38.2 2004/09/18 14:49:02 skrll Exp $ */
 
 /*
  * Copyright (c) 1999

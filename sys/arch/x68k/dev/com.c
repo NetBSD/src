@@ -1,4 +1,4 @@
-/*	$NetBSD: com.c,v 1.30.6.1 2004/08/03 10:42:46 skrll Exp $	*/
+/*	$NetBSD: com.c,v 1.30.6.2 2004/09/18 14:42:23 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.30.6.1 2004/08/03 10:42:46 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.30.6.2 2004/09/18 14:42:23 skrll Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"

@@ -1,4 +1,4 @@
-/*	$NetBSD: aic6360reg.h,v 1.1.52.1 2004/08/03 10:46:07 skrll Exp $	*/
+/*	$NetBSD: aic6360reg.h,v 1.1.52.2 2004/09/18 14:45:55 skrll Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1996 Charles M. Hannum.  All rights reserved.

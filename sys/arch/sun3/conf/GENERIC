@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.100.2.1 2004/08/03 10:42:02 skrll Exp $
+# $NetBSD: GENERIC,v 1.100.2.2 2004/09/18 14:41:39 skrll Exp $
 #
 # GENERIC machine description file
 # 
@@ -25,7 +25,7 @@ include 	"arch/sun3/conf/std.sun3"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.100.2.1 $"
+#ident 		"GENERIC-$Revision: 1.100.2.2 $"
 
 # Machines to be supported by this kernel
 options 	FPU_EMULATE

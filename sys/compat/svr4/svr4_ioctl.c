@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_ioctl.c,v 1.24.2.1 2004/08/03 10:44:32 skrll Exp $	 */
+/*	$NetBSD: svr4_ioctl.c,v 1.24.2.2 2004/09/18 14:44:05 skrll Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_ioctl.c,v 1.24.2.1 2004/08/03 10:44:32 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_ioctl.c,v 1.24.2.2 2004/09/18 14:44:05 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -169,6 +169,6 @@ svr4_sys_ioctl(l, v, retval)
 
 	error = (*fun)(fp, l, retval, SCARG(uap, fd), cmd, SCARG(uap, data));
 out:
-	FILE_UNUSE(fp, l);
+	FILE_UNUSE(fp, p);
 	return (error);
 }

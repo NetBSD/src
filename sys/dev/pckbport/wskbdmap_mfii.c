@@ -1,4 +1,4 @@
-/*	$NetBSD: wskbdmap_mfii.c,v 1.2.4.4 2004/08/25 06:58:42 skrll Exp $	*/
+/*	$NetBSD: wskbdmap_mfii.c,v 1.2.4.5 2004/09/18 14:50:23 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wskbdmap_mfii.c,v 1.2.4.4 2004/08/25 06:58:42 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wskbdmap_mfii.c,v 1.2.4.5 2004/09/18 14:50:23 skrll Exp $");
 
 #include <sys/types.h>
 #include <dev/wscons/wsksymdef.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_sched.c,v 1.12 2003/01/18 21:21:30 thorpej Exp $	*/
+/*	$NetBSD: linux_sched.c,v 1.12.2.1 2004/09/18 14:43:43 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_sched.c,v 1.12 2003/01/18 21:21:30 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_sched.c,v 1.12.2.1 2004/09/18 14:43:43 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/mount.h>
@@ -50,6 +50,7 @@ __KERNEL_RCSID(0, "$NetBSD: linux_sched.c,v 1.12 2003/01/18 21:21:30 thorpej Exp
 #include <sys/systm.h>
 #include <sys/sa.h>
 #include <sys/syscallargs.h>
+#include <sys/wait.h>
 
 #include <machine/cpu.h>
 
@@ -76,6 +77,17 @@ linux_sys_clone(l, v, retval)
 	 * We don't support the Linux CLONE_PID or CLONE_PTRACE flags.
 	 */
 	if (SCARG(uap, flags) & (LINUX_CLONE_PID|LINUX_CLONE_PTRACE))
+		return (EINVAL);
+
+	/*
+	 * Thread group implies shared signals. Shared signals
+	 * imply shared VM. This matches what Linux kernel does.
+	 */
+	if (SCARG(uap, flags) & LINUX_CLONE_THREAD
+	    && (SCARG(uap, flags) & LINUX_CLONE_SIGHAND) == 0)
+		return (EINVAL);
+	if (SCARG(uap, flags) & LINUX_CLONE_SIGHAND
+	    && (SCARG(uap, flags) & LINUX_CLONE_VM) == 0)
 		return (EINVAL);
 
 	flags = 0;
@@ -329,3 +341,29 @@ linux_sys_sched_get_priority_min(cl, v, retval)
 	*retval = 0;
 	return 0;
 }
+
+#ifndef __m68k__
+/* Present on everything but m68k */
+int
+linux_sys_exit_group(l, v, retval)
+	struct lwp *l;
+	void *v;
+	register_t *retval;
+{
+	struct linux_sys_exit_group_args /* {
+		syscallarg(int) error_code;
+	} */ *uap = v;
+
+	/*
+	 * XXX The calling thread is supposed to kill all threads
+	 * in the same thread group (i.e. all threads created
+	 * via clone(2) with CLONE_THREAD flag set). This appears
+	 * to not be used yet, so the thread group handling
+	 * is currently not implemented.
+	 */
+
+	exit1(l, W_EXITCODE(SCARG(uap, error_code), 0));
+	/* NOTREACHED */
+	return 0;
+}
+#endif /* !__m68k__ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_notify.c,v 1.2.2.2 2004/08/03 10:44:06 skrll Exp $ */
+/*	$NetBSD: mach_notify.c,v 1.2.2.3 2004/09/18 14:43:46 skrll Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_notify.c,v 1.2.2.2 2004/08/03 10:44:06 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_notify.c,v 1.2.2.3 2004/09/18 14:43:46 skrll Exp $");
 
 #include "opt_ktrace.h"
 

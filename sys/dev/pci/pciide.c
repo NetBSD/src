@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide.c,v 1.194.2.1 2004/08/03 10:49:11 skrll Exp $	*/
+/*	$NetBSD: pciide.c,v 1.194.2.2 2004/09/18 14:49:05 skrll Exp $	*/
 
 
 /*
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pciide.c,v 1.194.2.1 2004/08/03 10:49:11 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pciide.c,v 1.194.2.2 2004/09/18 14:49:05 skrll Exp $");
 
 #include <sys/param.h>
 
@@ -117,6 +117,6 @@ pciide_attach(parent, self, aux)
 {
 	struct pci_attach_args *pa = aux;
 	struct pciide_softc *sc = (struct pciide_softc *)self;
-	pciide_common_attach(sc, pa, NULL);
 
+	pciide_common_attach(sc, pa, NULL);
 }

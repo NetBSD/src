@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu_subr.c,v 1.3.64.1 2004/08/03 10:40:55 skrll Exp $ */
+/*	$NetBSD: fpu_subr.c,v 1.3.64.2 2004/09/18 14:40:38 skrll Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu_subr.c,v 1.3.64.1 2004/08/03 10:40:55 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu_subr.c,v 1.3.64.2 2004/09/18 14:40:38 skrll Exp $");
 
 #include <sys/types.h>
 #ifdef DIAGNOSTIC

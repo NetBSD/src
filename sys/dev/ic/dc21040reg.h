@@ -1,4 +1,4 @@
-/*	$NetBSD: dc21040reg.h,v 1.16.22.1 2004/08/03 10:46:13 skrll Exp $	*/
+/*	$NetBSD: dc21040reg.h,v 1.16.22.2 2004/09/18 14:45:57 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1994, 1995, 1996 Matt Thomas <matt@3am-software.com>

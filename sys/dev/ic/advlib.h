@@ -1,4 +1,4 @@
-/*      $NetBSD: advlib.h,v 1.13.22.1 2004/08/03 10:46:06 skrll Exp $        */
+/*      $NetBSD: advlib.h,v 1.13.22.2 2004/09/18 14:45:55 skrll Exp $        */
 
 /*
  * Definitions for low level routines and data structures

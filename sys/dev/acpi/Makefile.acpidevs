@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.acpidevs,v 1.1.4.1 2004/08/03 10:45:03 skrll Exp $
+#	$NetBSD: Makefile.acpidevs,v 1.1.4.2 2004/09/18 14:44:42 skrll Exp $
 #
 # As per tron@NetBSD.org, the proper procedure is
 #

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ix.c,v 1.17.6.1 2004/08/03 10:47:58 skrll Exp $	*/
+/*	$NetBSD: if_ix.c,v 1.17.6.2 2004/09/18 14:47:46 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ix.c,v 1.17.6.1 2004/08/03 10:47:58 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ix.c,v 1.17.6.2 2004/09/18 14:47:46 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -543,7 +543,7 @@ ix_match(parent, cf, aux)
 
 	iot = ia->ia_iot;
 
-	if (ia->ia_io[0].ir_addr == ISACF_PORT_DEFAULT)
+	if (ia->ia_io[0].ir_addr == ISA_UNKNOWN_PORT)
 		return (0);
 
 	if (bus_space_map(iot, ia->ia_io[0].ir_addr,
@@ -624,7 +624,7 @@ ix_match(parent, cf, aux)
 		goto out;
 	}
 
-	if (ia->ia_iomem[0].ir_addr != ISACF_IOMEM_DEFAULT &&
+	if (ia->ia_iomem[0].ir_addr != ISA_UNKNOWN_IOMEM &&
 	    ia->ia_iomem[0].ir_addr != maddr) {
 		DPRINTF((
 		  "ix_match: memaddr of board @ 0x%x doesn't match config\n",
@@ -632,7 +632,7 @@ ix_match(parent, cf, aux)
 		goto out;
 	}
 
-	if (ia->ia_iomem[0].ir_size != ISACF_IOSIZ_DEFAULT &&
+	if (ia->ia_iomem[0].ir_size != ISA_UNKNOWN_IOSIZ &&
 	    ia->ia_iomem[0].ir_size != msize) {
 		DPRINTF((
 		   "ix_match: memsize of board @ 0x%x doesn't match config\n",
@@ -676,13 +676,13 @@ ix_match(parent, cf, aux)
 	/*
 	 * Get the encoded interrupt number from the EEPROM, check it
 	 * against the passed in IRQ.  Issue a warning if they do not
-	 * match, and fail the probe.  If irq is 'ISACF_IRQ_DEFAULT' then we
+	 * match, and fail the probe.  If irq is 'ISA_UNKNOWN_IRQ' then we
 	 * use the EEPROM irq, and continue.
 	 */
 	irq_encoded = ix_read_eeprom(iot, ioh, IX_EEPROM_CONFIG1);
 	irq_encoded = (irq_encoded & IX_EEPROM_IRQ) >> IX_EEPROM_IRQ_SHIFT;
 	irq = irq_translate[irq_encoded];
-	if (ia->ia_irq[0].ir_irq != ISACF_IRQ_DEFAULT &&
+	if (ia->ia_irq[0].ir_irq != ISA_UNKNOWN_IRQ &&
 	    irq != ia->ia_irq[0].ir_irq) {
 		DPRINTF(("board IRQ %d does not match config\n", irq));
 		goto out;

@@ -1,4 +1,4 @@
-/* $NetBSD: linux_exec_powerpc.c,v 1.12.2.1 2004/08/03 10:44:03 skrll Exp $ */
+/* $NetBSD: linux_exec_powerpc.c,v 1.12.2.2 2004/09/18 14:43:41 skrll Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_exec_powerpc.c,v 1.12.2.1 2004/08/03 10:44:03 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_exec_powerpc.c,v 1.12.2.2 2004/09/18 14:43:41 skrll Exp $");
 
 #if defined (__alpha__)
 #define ELFSIZE 64

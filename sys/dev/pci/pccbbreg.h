@@ -1,4 +1,4 @@
-/*	$NetBSD: pccbbreg.h,v 1.7.20.1 2004/08/03 10:49:10 skrll Exp $	*/
+/*	$NetBSD: pccbbreg.h,v 1.7.20.2 2004/09/18 14:49:04 skrll Exp $	*/
 /*
  * Copyright (c) 1999 HAYAKAWA Koichi.  All rights reserved.
  *

@@ -1,4 +1,4 @@
-/* $NetBSD: osf1_exec_ecoff.c,v 1.8.2.2 2004/08/03 10:44:24 skrll Exp $ */
+/* $NetBSD: osf1_exec_ecoff.c,v 1.8.2.3 2004/09/18 14:43:58 skrll Exp $ */
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: osf1_exec_ecoff.c,v 1.8.2.2 2004/08/03 10:44:24 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: osf1_exec_ecoff.c,v 1.8.2.3 2004/09/18 14:43:58 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -185,17 +185,14 @@ out:
 }
 
 static int
-osf1_exec_ecoff_dynamic(struct lwp *l, struct exec_package *epp)
+osf1_exec_ecoff_dynamic(struct proc *p, struct exec_package *epp)
 {
 	struct osf1_exec_emul_arg *emul_arg = epp->ep_emul_arg;
 	struct ecoff_exechdr ldr_exechdr;
 	struct nameidata nd;
 	struct vnode *ldr_vp;
-	struct proc *p;
         size_t resid;  
 	int error;
-
-	p = l->l_proc;
 
 	strncpy(emul_arg->loader_name, OSF1_LDR_EXEC_DEFAULT_LOADER,
 		MAXPATHLEN + 1);
@@ -204,8 +201,8 @@ osf1_exec_ecoff_dynamic(struct lwp *l, struct exec_package *epp)
 	 * locate the loader
 	 * includes /emul/osf1 if appropriate
 	 */
-	error = emul_find_interp(LIST_FIRST(&p->p_lwps),
-	    epp->ep_esch->es_emul->e_path, emul_arg->loader_name);
+	error = emul_find_interp(p, epp->ep_esch->es_emul->e_path,
+	    emul_arg->loader_name);
 	if (error)
 		return error;
 
@@ -221,7 +218,7 @@ osf1_exec_ecoff_dynamic(struct lwp *l, struct exec_package *epp)
 	 * load it up.
 	 */
 	NDINIT(&nd, LOOKUP, FOLLOW | LOCKLEAF, UIO_SYSSPACE,
-	    emul_arg->loader_name, l);
+	    emul_arg->loader_name, p);
 	if ((error = namei(&nd)) != 0)
 		goto bad_no_vp;
 	ldr_vp = nd.ni_vp;
@@ -259,7 +256,7 @@ osf1_exec_ecoff_dynamic(struct lwp *l, struct exec_package *epp)
 	 */
         if ((error = vn_rdwr(UIO_READ, ldr_vp, (caddr_t)&ldr_exechdr,
 	    sizeof ldr_exechdr, 0, UIO_SYSSPACE, 0, p->p_ucred,
-	    &resid, p)) != 0)
+	    &resid, NULL)) != 0)
                 goto bad;
         if (resid != 0) {
                 error = ENOEXEC;

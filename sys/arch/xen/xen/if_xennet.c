@@ -1,4 +1,4 @@
-/*	$NetBSD: if_xennet.c,v 1.10.2.2 2004/08/03 10:43:19 skrll Exp $	*/
+/*	$NetBSD: if_xennet.c,v 1.10.2.3 2004/09/18 14:42:53 skrll Exp $	*/
 
 /*
  *
@@ -33,9 +33,10 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_xennet.c,v 1.10.2.2 2004/08/03 10:43:19 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_xennet.c,v 1.10.2.3 2004/09/18 14:42:53 skrll Exp $");
 
 #include "opt_inet.h"
+#include "rnd.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -257,7 +258,7 @@ xennet_attach(struct device *parent, struct device *self, void *aux)
             ether_sprintf(sc->sc_enaddr));
 
 #if NRND > 0
-	rnd_attach_source(&sc->rnd_source, sc->sc_dev.dv_xname,
+	rnd_attach_source(&sc->sc_rnd_source, sc->sc_dev.dv_xname,
 	    RND_TYPE_NET, 0);
 #endif
 
@@ -332,6 +333,10 @@ xen_network_handler(void *arg)
 	struct mbuf *m;
 
 	network_tx_buf_gc(sc);
+
+#if NRND > 0
+	rnd_add_uint32(&sc->sc_rnd_source, sc->sc_rx_resp_cons);
+#endif
 
  again:
 	for (ringidx = sc->sc_rx_resp_cons;
@@ -590,6 +595,9 @@ xennet_start(struct ifnet *ifp)
 		panic("%s: No packet to start", sc->sc_dev.dv_xname);
 #endif
 
+#if NRND > 0
+	rnd_add_uint32(&sc->sc_rnd_source, sc->sc_net_idx->tx_req_prod);
+#endif
 	if ((ifp->if_flags & (IFF_RUNNING | IFF_OACTIVE)) != IFF_RUNNING)
 		return;
 

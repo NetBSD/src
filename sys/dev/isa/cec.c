@@ -1,4 +1,4 @@
-/*	$NetBSD: cec.c,v 1.1 2003/06/02 03:57:15 gmcgarry Exp $	*/
+/*	$NetBSD: cec.c,v 1.1.2.1 2004/09/18 14:47:45 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cec.c,v 1.1 2003/06/02 03:57:15 gmcgarry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cec.c,v 1.1.2.1 2004/09/18 14:47:45 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -161,10 +161,10 @@ cecprobe(struct device *parent, struct cfdata *match, void *aux)
 	if (ISA_DIRECT_CONFIG(ia))
 		return (0);
 
-	if (ia->ia_io[0].ir_addr == ISACF_PORT_DEFAULT)
+	if (ia->ia_io[0].ir_addr == ISA_UNKNOWN_PORT)
 		return (0);
 
-	if (ia->ia_ndrq > 0 && ia->ia_drq[0].ir_drq == ISACF_DRQ_DEFAULT)
+	if (ia->ia_ndrq > 0 && ia->ia_drq[0].ir_drq == ISA_UNKNOWN_DRQ)
 		ia->ia_ndrq = 0;
 
 	if (bus_space_map(iot, ia->ia_io[0].ir_addr, CEC_IOSIZE, 0, &ioh))

@@ -1,4 +1,4 @@
-/*	$NetBSD: eisavar.h,v 1.17.24.1 2004/09/03 12:45:18 skrll Exp $	*/
+/*	$NetBSD: eisavar.h,v 1.17.24.2 2004/09/18 14:45:39 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.

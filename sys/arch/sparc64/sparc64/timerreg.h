@@ -1,4 +1,4 @@
-/*	$NetBSD: timerreg.h,v 1.3.36.1 2004/08/03 10:41:39 skrll Exp $ */
+/*	$NetBSD: timerreg.h,v 1.3.36.2 2004/09/18 14:41:18 skrll Exp $ */
 
 /*
  * Copyright (c) 1992, 1993

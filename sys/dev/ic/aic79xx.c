@@ -1,4 +1,4 @@
-/*	$NetBSD: aic79xx.c,v 1.5.2.1 2004/08/03 10:46:07 skrll Exp $	*/
+/*	$NetBSD: aic79xx.c,v 1.5.2.2 2004/09/18 14:45:55 skrll Exp $	*/
 
 /*
  * Core routines and tables shareable across OS platforms.
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aic79xx.c,v 1.5.2.1 2004/08/03 10:46:07 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aic79xx.c,v 1.5.2.2 2004/09/18 14:45:55 skrll Exp $");
 
 #include <dev/ic/aic79xx_osm.h>
 #include <dev/ic/aic79xx_inline.h>

@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.14.2.2 2004/08/03 10:43:10 skrll Exp $
+# $NetBSD: GENERIC,v 1.14.2.3 2004/09/18 14:42:43 skrll Exp $
 # NetBSD: GENERIC,v 1.596 2004/04/07 13:13:59 augustss Exp 
 #
 # GENERIC machine description file
@@ -23,7 +23,7 @@ include 	"arch/xen/conf/std.xen"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.14.2.2 $"
+#ident 		"GENERIC-$Revision: 1.14.2.3 $"
 
 maxusers	32		# estimated number of users
 
@@ -160,6 +160,7 @@ options 	INET6		# IPV6
 #options 	IPSEC_ESP	# IP security (encryption part; define w/IPSEC)
 #options 	IPSEC_DEBUG	# debug for IP security
 #options 	MROUTING	# IP multicast routing
+#options 	PIM		# Protocol Independent Multicast
 options 	NS		# XNS
 #options 	NSIP		# XNS tunneling over IP
 options 	ISO,TPIP	# OSI

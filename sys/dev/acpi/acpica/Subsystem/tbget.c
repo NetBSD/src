@@ -115,7 +115,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tbget.c,v 1.7.2.1 2004/08/03 10:45:13 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tbget.c,v 1.7.2.2 2004/09/18 14:44:45 skrll Exp $");
 
 #define __TBGET_C__
 

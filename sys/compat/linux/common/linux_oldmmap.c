@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_oldmmap.c,v 1.61.2.1 2004/08/25 06:57:33 skrll Exp $	*/
+/*	$NetBSD: linux_oldmmap.c,v 1.61.2.2 2004/09/18 14:43:43 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_oldmmap.c,v 1.61.2.1 2004/08/25 06:57:33 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_oldmmap.c,v 1.61.2.2 2004/09/18 14:43:43 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

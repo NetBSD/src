@@ -1,4 +1,4 @@
-/*	$NetBSD: bootmain.c,v 1.5.2.1 2004/08/03 10:42:56 skrll Exp $	*/
+/*	$NetBSD: bootmain.c,v 1.5.2.2 2004/09/18 14:42:36 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994 Takumi Nakamura.

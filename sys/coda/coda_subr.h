@@ -1,4 +1,4 @@
-/*	$NetBSD: coda_subr.h,v 1.5.46.1 2004/08/03 10:43:19 skrll Exp $	*/
+/*	$NetBSD: coda_subr.h,v 1.5.46.2 2004/09/18 14:43:02 skrll Exp $	*/
 
 /*
  * 

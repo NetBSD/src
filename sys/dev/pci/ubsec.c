@@ -1,4 +1,4 @@
-/*	$NetBSD: ubsec.c,v 1.4.4.2 2004/08/03 10:49:12 skrll Exp $	*/
+/*	$NetBSD: ubsec.c,v 1.4.4.3 2004/09/18 14:49:06 skrll Exp $	*/
 /* $FreeBSD: src/sys/dev/ubsec/ubsec.c,v 1.6.2.6 2003/01/23 21:06:43 sam Exp $ */
 /*	$OpenBSD: ubsec.c,v 1.127 2003/06/04 14:04:58 jason Exp $	*/
 

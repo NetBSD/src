@@ -1,4 +1,4 @@
-/*	$NetBSD: esovar.h,v 1.4.28.1 2004/08/03 10:49:07 skrll Exp $	*/
+/*	$NetBSD: esovar.h,v 1.4.28.2 2004/09/18 14:49:03 skrll Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2004 Klaus J. Klein

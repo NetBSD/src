@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.1.4.2 2004/08/03 10:43:11 skrll Exp $	*/
+/*	$NetBSD: intr.h,v 1.1.4.3 2004/09/18 14:42:53 skrll Exp $	*/
 
 
 #ifndef _XEN_INTR_H_

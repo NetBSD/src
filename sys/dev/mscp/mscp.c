@@ -1,4 +1,4 @@
-/*	$NetBSD: mscp.c,v 1.19.2.1 2004/08/03 10:48:49 skrll Exp $	*/
+/*	$NetBSD: mscp.c,v 1.19.2.2 2004/09/18 14:49:02 skrll Exp $	*/
 
 /*
  * Copyright (c) 1988 Regents of the University of California.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mscp.c,v 1.19.2.1 2004/08/03 10:48:49 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mscp.c,v 1.19.2.2 2004/09/18 14:49:02 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: vsvar.h,v 1.2.26.1 2004/08/03 10:42:48 skrll Exp $	*/
+/*	$NetBSD: vsvar.h,v 1.2.26.2 2004/09/18 14:42:27 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001 Tetsuya Isaki. All rights reserved.

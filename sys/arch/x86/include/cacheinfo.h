@@ -1,4 +1,4 @@
-/*	$NetBSD: cacheinfo.h,v 1.1.2.2 2004/08/25 06:57:20 skrll Exp $	*/
+/*	$NetBSD: cacheinfo.h,v 1.1.2.3 2004/09/18 14:42:37 skrll Exp $	*/
 
 #ifndef _X86_CACHEINFO_H
 #define _X86_CACHEINFO_H

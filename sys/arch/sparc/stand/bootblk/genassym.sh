@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.sh,v 1.1.28.1 2004/08/03 10:41:22 skrll Exp $
+#	$NetBSD: genassym.sh,v 1.1.28.2 2004/09/18 14:41:03 skrll Exp $
 
 #
 # Copyright (c) 1998 Eduardo E. Horvath.

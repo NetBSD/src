@@ -1,4 +1,4 @@
-/*	$NetBSD: hpux_sig.h,v 1.2.46.1 2004/08/03 10:43:46 skrll Exp $	*/
+/*	$NetBSD: hpux_sig.h,v 1.2.46.2 2004/09/18 14:43:15 skrll Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993

@@ -1,4 +1,4 @@
-/*	$NetBSD: bf_skey.c,v 1.4.16.1 2004/08/03 10:44:45 skrll Exp $	*/
+/*	$NetBSD: bf_skey.c,v 1.4.16.2 2004/09/18 14:44:25 skrll Exp $	*/
 /*	$KAME: bf_skey.c,v 1.5 2000/11/06 13:58:08 itojun Exp $	*/
 
 /* crypto/bf/bf_skey.c */
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bf_skey.c,v 1.4.16.1 2004/08/03 10:44:45 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bf_skey.c,v 1.4.16.2 2004/09/18 14:44:25 skrll Exp $");
 
 #include <sys/types.h>
 #include <sys/time.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: com_multi.h,v 1.1 1997/04/04 20:56:38 mycroft Exp $	*/
+/*	$NetBSD: com_multi.h,v 1.1.56.1 2004/09/18 14:47:46 skrll Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -38,3 +38,5 @@ struct commulti_attach_args {
 	int		ca_iobase;
 	int		ca_noien;
 };
+
+int commultiprint(void *, const char *);

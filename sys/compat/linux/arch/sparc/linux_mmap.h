@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_mmap.h,v 1.1.46.1 2004/09/03 12:45:16 skrll Exp $	*/
+/*	$NetBSD: linux_mmap.h,v 1.1.46.2 2004/09/18 14:43:41 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.

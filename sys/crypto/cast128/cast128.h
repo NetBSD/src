@@ -1,4 +1,4 @@
-/*	$NetBSD: cast128.h,v 1.4.16.1 2004/08/03 10:44:45 skrll Exp $ */
+/*	$NetBSD: cast128.h,v 1.4.16.2 2004/09/18 14:44:26 skrll Exp $ */
 /*      $OpenBSD: cast.h,v 1.2 2002/03/14 01:26:51 millert Exp $       */
 
 /*

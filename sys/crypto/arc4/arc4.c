@@ -1,4 +1,4 @@
-/*	$NetBSD: arc4.c,v 1.4.6.1 2004/08/03 10:44:45 skrll Exp $	*/
+/*	$NetBSD: arc4.c,v 1.4.6.2 2004/09/18 14:44:25 skrll Exp $	*/
 
 /*
  * ARC4 implementation
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arc4.c,v 1.4.6.1 2004/08/03 10:44:45 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arc4.c,v 1.4.6.2 2004/09/18 14:44:25 skrll Exp $");
 
 #include <sys/types.h>
 

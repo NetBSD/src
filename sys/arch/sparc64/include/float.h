@@ -1,4 +1,4 @@
-/*	$NetBSD: float.h,v 1.5.2.1 2004/08/03 10:41:34 skrll Exp $ */
+/*	$NetBSD: float.h,v 1.5.2.2 2004/09/18 14:41:17 skrll Exp $ */
 
 #ifndef _SPARC64_FLOAT_H_
 #define _SPARC64_FLOAT_H_

@@ -1,4 +1,4 @@
-/* $NetBSD: pckbport.c,v 1.3.4.2 2004/08/03 10:50:14 skrll Exp $ */
+/* $NetBSD: pckbport.c,v 1.3.4.3 2004/09/18 14:50:23 skrll Exp $ */
 
 /*
  * Copyright (c) 2004 Ben Harris
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pckbport.c,v 1.3.4.2 2004/08/03 10:50:14 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pckbport.c,v 1.3.4.3 2004/09/18 14:50:23 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -77,7 +77,8 @@ struct pckbport_slotdata {
 #define CMD_IN_QUEUE(q) (TAILQ_FIRST(&(q)->cmdqueue) != NULL)
 
 static void pckbport_init_slotdata(struct pckbport_slotdata *);
-static int pckbport_submatch(struct device *, struct cfdata *, void *);
+static int pckbport_submatch(struct device *, struct cfdata *,
+			     const locdesc_t *, void *);
 static int pckbportprint(void *, const char *);
 
 static struct pckbport_slotdata pckbport_cons_slotdata;
@@ -118,12 +119,12 @@ pckbport_send_devcmd(struct pckbport_tag *t, pckbport_slot_t slot, u_char val)
 }
 
 static int
-pckbport_submatch(struct device *parent, struct cfdata *cf, void *aux)
+pckbport_submatch(struct device *parent, struct cfdata *cf,
+		  const locdesc_t *ldesc, void *aux)
 {
-	struct pckbport_attach_args *pa = aux;
 
 	if (cf->cf_loc[PCKBPORTCF_SLOT] != PCKBPORTCF_SLOT_DEFAULT &&
-	    cf->cf_loc[PCKBPORTCF_SLOT] != pa->pa_slot)
+	    cf->cf_loc[PCKBPORTCF_SLOT] != ldesc->locs[PCKBPORTCF_SLOT])
 		return 0;
 	return config_match(parent, cf, aux);
 }
@@ -151,6 +152,8 @@ pckbport_attach_slot(struct device *dev, pckbport_tag_t t,
 	void *sdata;
 	struct device *found;
 	int alloced = 0;
+	int help[2];
+	locdesc_t *ldesc = (void *)help; /* XXX */
 
 	pa.pa_tag = t;
 	pa.pa_slot = slot;
@@ -167,7 +170,11 @@ pckbport_attach_slot(struct device *dev, pckbport_tag_t t,
 		alloced++;
 	}
 
-	found = config_found_sm(dev, &pa, pckbportprint, pckbport_submatch);
+	ldesc->len = 1;
+	ldesc->locs[PCKBPORTCF_SLOT] = slot;
+
+	found = config_found_sm_loc(dev, "pckbport", ldesc, &pa,
+				    pckbportprint, pckbport_submatch);
 
 	if (found == NULL && alloced) {
 		free(t->t_slotdata[slot], M_DEVBUF);

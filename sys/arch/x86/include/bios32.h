@@ -1,4 +1,4 @@
-/*	$NetBSD: bios32.h,v 1.1.2.1 2004/08/03 10:43:04 skrll Exp $	*/
+/*	$NetBSD: bios32.h,v 1.1.2.2 2004/09/18 14:42:37 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.

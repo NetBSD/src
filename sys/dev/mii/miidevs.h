@@ -1,4 +1,4 @@
-/*	$NetBSD: miidevs.h,v 1.48.2.1 2004/08/03 10:48:49 skrll Exp $	*/
+/*	$NetBSD: miidevs.h,v 1.48.2.2 2004/09/18 14:48:44 skrll Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.

@@ -1,4 +1,4 @@
-/*	$NetBSD: fwohcivar.h,v 1.20.6.1 2004/08/03 10:47:56 skrll Exp $	*/
+/*	$NetBSD: fwohcivar.h,v 1.20.6.2 2004/09/18 14:47:45 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.

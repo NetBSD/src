@@ -1,4 +1,4 @@
-/*	$NetBSD: in_cksum.c,v 1.12.10.1 2004/08/03 10:41:07 skrll Exp $ */
+/*	$NetBSD: in_cksum.c,v 1.12.10.2 2004/09/18 14:40:48 skrll Exp $ */
 
 /*
  * Copyright (c) 1995 Matthew R. Green.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in_cksum.c,v 1.12.10.1 2004/08/03 10:41:07 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in_cksum.c,v 1.12.10.2 2004/09/18 14:40:48 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

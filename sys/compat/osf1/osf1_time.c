@@ -1,4 +1,4 @@
-/* $NetBSD: osf1_time.c,v 1.6.2.1 2004/08/03 10:44:24 skrll Exp $ */
+/* $NetBSD: osf1_time.c,v 1.6.2.2 2004/09/18 14:43:58 skrll Exp $ */
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: osf1_time.c,v 1.6.2.1 2004/08/03 10:44:24 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: osf1_time.c,v 1.6.2.2 2004/09/18 14:43:58 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: dvma.c,v 1.9.24.1 2004/08/03 10:41:22 skrll Exp $	*/
+/*	$NetBSD: dvma.c,v 1.9.24.2 2004/09/18 14:41:04 skrll Exp $	*/
 /*
  * Copyright (c) 1995 Gordon W. Ross
  * All rights reserved.

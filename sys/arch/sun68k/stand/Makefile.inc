@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.6.6.1 2004/08/03 10:42:21 skrll Exp $
+#	$NetBSD: Makefile.inc,v 1.6.6.2 2004/09/18 14:41:57 skrll Exp $
 
 # Must have S=/usr/src/sys (or equivalent)
 # But note: this is w.r.t. a subdirectory

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ai.c,v 1.17.6.1 2004/08/03 10:47:58 skrll Exp $	*/
+/*	$NetBSD: if_ai.c,v 1.17.6.2 2004/09/18 14:47:46 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ai.c,v 1.17.6.1 2004/08/03 10:47:58 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ai.c,v 1.17.6.2 2004/09/18 14:47:46 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -256,9 +256,9 @@ ai_match(parent, cf, aux)
 		return (0);
 
 	/* Punt if wildcarded port, IRQ or memory address */
-	if (ia->ia_io[0].ir_addr == ISACF_PORT_DEFAULT ||
-	    ia->ia_iomem[0].ir_addr == ISACF_IRQ_DEFAULT ||
-	    ia->ia_irq[0].ir_irq == ISACF_IRQ_DEFAULT) {
+	if (ia->ia_io[0].ir_addr == ISA_UNKNOWN_PORT ||
+	    ia->ia_iomem[0].ir_addr == ISA_UNKNOWN_IOMEM ||
+	    ia->ia_irq[0].ir_irq == ISA_UNKNOWN_IRQ) {
 		DPRINTF((
 		 "ai_match: wildcarded IRQ, IOAddr, or memAddr, skipping\n"));
 		return (0);

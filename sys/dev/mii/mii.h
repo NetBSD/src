@@ -1,4 +1,4 @@
-/*	$NetBSD: mii.h,v 1.10.20.1 2004/08/03 10:48:49 skrll Exp $	*/
+/*	$NetBSD: mii.h,v 1.10.20.2 2004/09/18 14:48:44 skrll Exp $	*/
  
 /*
  * Copyright (c) 1997 Manuel Bouyer.  All rights reserved.

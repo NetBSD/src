@@ -1,4 +1,4 @@
-/*	$NetBSD: cs80bus.c,v 1.1 2003/06/02 03:51:04 gmcgarry Exp $	*/
+/*	$NetBSD: cs80bus.c,v 1.1.2.1 2004/09/18 14:45:39 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cs80bus.c,v 1.1 2003/06/02 03:51:04 gmcgarry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cs80bus.c,v 1.1.2.1 2004/09/18 14:45:39 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -71,7 +71,8 @@ CFATTACH_DECL(cs80bus, sizeof(struct cs80bus_softc),
 	cs80busmatch, cs80busattach, NULL, NULL);
 
 static int	cs80bus_alloc(struct cs80bus_softc *, int, int);
-static int	cs80bussearch(struct device *, struct cfdata *, void *);
+static int	cs80bussearch(struct device *, struct cfdata *,
+			      const locdesc_t *, void *);
 static int	cs80busprint(void *, const char *);
 
 /*
@@ -141,7 +142,7 @@ cs80busattach(parent, self, aux)
 		ca.ca_slave = slave;
 		ca.ca_id = id;
 
-		(void)config_search(cs80bussearch, &sc->sc_dev, &ca);
+		(void)config_search_ia(cs80bussearch, &sc->sc_dev, "cs80bus", &ca);
 	}
 }
 
@@ -149,6 +150,7 @@ int
 cs80bussearch(parent, cf, aux)
 	struct device *parent;
 	struct cfdata *cf;
+	const locdesc_t *ldesc;
 	void *aux;
 {
 	struct cs80bus_softc *sc = (struct cs80bus_softc *)parent;

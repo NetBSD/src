@@ -1,4 +1,4 @@
-#	$NetBSD: files.mii,v 1.33.10.1 2004/08/03 10:48:49 skrll Exp $
+#	$NetBSD: files.mii,v 1.33.10.2 2004/09/18 14:48:44 skrll Exp $
 
 defflag	opt_mii.h	MIIVERBOSE
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.h,v 1.7.6.1 2004/08/03 10:44:04 skrll Exp $	*/
+/*	$NetBSD: linux_machdep.h,v 1.7.6.2 2004/09/18 14:43:43 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.

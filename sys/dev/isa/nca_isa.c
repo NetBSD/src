@@ -1,4 +1,4 @@
-/*	$NetBSD: nca_isa.c,v 1.12 2002/10/02 03:10:49 thorpej Exp $	*/
+/*	$NetBSD: nca_isa.c,v 1.12.6.1 2004/09/18 14:47:46 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nca_isa.c,v 1.12 2002/10/02 03:10:49 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nca_isa.c,v 1.12.6.1 2004/09/18 14:47:46 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -268,7 +268,7 @@ nca_isa_match(parent, match, aux)
 		return (0);
 
 	/* See if we are looking for a port- or memory-mapped adapter */
-	if (ia->ia_nio > 0 || ia->ia_io[0].ir_addr != ISACF_PORT_DEFAULT) {
+	if (ia->ia_nio > 0 || ia->ia_io[0].ir_addr != ISA_UNKNOWN_PORT) {
 		/* Port-mapped card */
 		if (bus_space_map(iot, ia->ia_io[0].ir_addr, NCA_ISA_IOSIZE,
 		    0, &ioh))
@@ -398,7 +398,7 @@ nca_isa_attach(parent, self, aux)
 	sc->sc_intr_on   = NULL;
 	sc->sc_intr_off  = NULL;
 
-	if (ia->ia_nirq > 0 && ia->ia_irq[0].ir_irq != ISACF_IRQ_DEFAULT) {
+	if (ia->ia_nirq > 0 && ia->ia_irq[0].ir_irq != ISA_UNKNOWN_IRQ) {
 		esc->sc_ih = isa_intr_establish(ic, ia->ia_irq[0].ir_irq,
 		    IST_EDGE, IPL_BIO, ncr5380_intr, esc);
 		if (esc->sc_ih == NULL) {

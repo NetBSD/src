@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.257.2.5 2004/09/03 12:45:17 skrll Exp $ */
+/*	$NetBSD: wd.c,v 1.257.2.6 2004/09/18 14:45:25 skrll Exp $ */
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.257.2.5 2004/09/03 12:45:17 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.257.2.6 2004/09/18 14:45:25 skrll Exp $");
 
 #ifndef ATADEBUG
 #define ATADEBUG
@@ -761,7 +761,7 @@ wddone(void *v)
 		errmsg = "error";
 		do_perror = 1;
 retry:		/* Just reset and retry. Can we do more ? */
-		(*wd->atabus->ata_reset_drive)(wd->drvp, 0);
+		(*wd->atabus->ata_reset_drive)(wd->drvp, AT_RST_NOCMD);
 retry2:
 		diskerr(bp, "wd", errmsg, LOG_PRINTF,
 		    wd->sc_wdc_bio.blkdone, wd->sc_dk.dk_label);
@@ -857,7 +857,7 @@ wdwrite(dev_t dev, struct uio *uio, int flags)
 }
 
 int
-wdopen(dev_t dev, int flag, int fmt, struct lwp *l)
+wdopen(dev_t dev, int flag, int fmt, struct proc *p)
 {
 	struct wd_softc *wd;
 	int part, error;
@@ -940,7 +940,7 @@ bad4:
 }
 
 int
-wdclose(dev_t dev, int flag, int fmt, struct lwp *l)
+wdclose(dev_t dev, int flag, int fmt, struct proc *p)
 {
 	struct wd_softc *wd = device_lookup(&wd_cd, WDUNIT(dev));
 	int part = WDPART(dev);
@@ -1111,7 +1111,7 @@ wdperror(const struct wd_softc *wd)
 }
 
 int
-wdioctl(dev_t dev, u_long xfer, caddr_t addr, int flag, struct lwp *l)
+wdioctl(dev_t dev, u_long xfer, caddr_t addr, int flag, struct proc *p)
 {
 	struct wd_softc *wd = device_lookup(&wd_cd, WDUNIT(dev));
 	int error = 0, s;
@@ -1365,7 +1365,7 @@ bad:
 			wi->wi_uio.uio_segflg = UIO_USERSPACE;
 			wi->wi_uio.uio_rw =
 			    (atareq->flags & ATACMD_READ) ? B_READ : B_WRITE;
-			wi->wi_uio.uio_lwp = l;
+			wi->wi_uio.uio_procp = p;
 			error = physio(wdioctlstrategy, &wi->wi_bp, dev,
 			    (atareq->flags & ATACMD_READ) ? B_READ : B_WRITE,
 			    minphys, &wi->wi_uio);
@@ -1376,7 +1376,7 @@ bad:
 			wi->wi_bp.b_data = 0;
 			wi->wi_bp.b_bcount = 0;
 			wi->wi_bp.b_dev = 0;
-			wi->wi_bp.b_proc = l->l_proc;
+			wi->wi_bp.b_proc = p;
 			wdioctlstrategy(&wi->wi_bp);
 			error = wi->wi_bp.b_error;
 		}
