@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_message.c,v 1.21 2003/01/21 04:06:07 matt Exp $ */
+/*	$NetBSD: mach_message.c,v 1.22 2003/01/24 21:37:03 manu Exp $ */
 
 /*-
  * Copyright (c) 2002-2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_message.c,v 1.21 2003/01/21 04:06:07 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_message.c,v 1.22 2003/01/24 21:37:03 manu Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_compat_mach.h" /* For COMPAT_MACH in <sys/ktrace.h> */
@@ -794,7 +794,7 @@ mach_debug_message(void)
 	struct mach_port *mp;
 	struct mach_message *mm;
 
-	LIST_FOREACH(l, &alllwp, p_list) {
+	LIST_FOREACH(l, &alllwp, l_list) {
 		if ((l->l_proc->p_emul != &emul_mach) &&
 #ifdef COMPAT_DARWIN
 		    (l->l_proc->p_emul != &emul_darwin) &&
@@ -802,7 +802,7 @@ mach_debug_message(void)
 		    1)
 			continue;
 
-		med = l->l_emuldata;
+		med = l->l_proc->p_emuldata;
 		LIST_FOREACH(mr, &med->med_right, mr_list)
 			if ((mr->mr_type & MACH_PORT_TYPE_PORT_SET) == 0) {
 				mp = mr->mr_port;
