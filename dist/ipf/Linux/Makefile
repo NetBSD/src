@@ -8,7 +8,7 @@
 #-malign-jumps=2 -malign-functions=2 -DCPU=586  -c -o ip_input.o ip_input.c
 
 SPECFILE=ipfilter.spec
-ROOTDIR=/tmp/ipfilter-root/
+ROOTDIR=/usr/src/redhat/BUILD/ipfilter/
 BINDEST=/usr/bin
 SBINDEST=/sbin
 MANDIR=/usr/share/man
@@ -26,6 +26,7 @@ CPU:=`uname -i`
 MODDIR=/lib/modules/`uname -r`/kernel/net/ipv4/
 CPUDIR=`uname -s|sed -e 's@/@@g'`-`uname -r`-`uname -m`
 HERE=Linux
+#LEXLIB=-ll
 DEST=$(OBJ)
 DEBUG=-g
 GENSRC=../$(HERE)/$(OBJ)
@@ -34,7 +35,7 @@ LIBS=-L$(OBJ) -lipf $(LIBBPF)
 INC=-nostdinc -I$(TOP) -I$(LINUXKERNEL)/include/
 DEF=-D$(CPU) -D__$(CPU)__ -DINET -D__KERNEL__ -DCONFIG_NETFILTER -DMODULE
 KCFLAGS=-Wall -Wstrict-prototypes -O2 -fomit-frame-pointer  -Wno-trigraphs \
-	-fno-strict-aliasing -fno-common
+	-fno-strict-aliasing -fno-common -DLINUX=$(LINUX) -I/usr/src/linux/asm/${mcore}
 IPDEF=$(DEF) -DGATEWAY -DDIRECTED_BROADCAST
 IPFILC=ip_lfil.c
 MFLAGS="BINDEST=$(BINDEST)" "SBINDEST=$(SBINDEST)" "MANDIR=$(MANDIR)" \
@@ -75,7 +76,7 @@ IPPOOL=$(OBJ)/ippool_y.o $(OBJ)/ippool_l.o $(OBJ)/kmem.o $(OBJ)/ippool.o
 IPTRAFCON=$(OBJ)/iptrafcon.o
 FILS=$(OBJ)/ipfstat.o
 #
-CCARGS=-I. $(DEBUG) $(CFLAGS) -D_BSD_SOURCE=1 $(LOOKUP) $(IPFLOG)
+CCARGS=-I. -I$(CPUDIR) $(DEBUG) $(CFLAGS) -D_BSD_SOURCE=1 $(LOOKUP) $(IPFLOG)
 EXTRA=-DIPFILTER_LOG -DIPFILTER_LOOKUP
 
 include $(TOP)/lib/Makefile
@@ -102,10 +103,10 @@ $(OBJ)/ipfstat: $(FILS) $(OBJ)/libipf.a $(TOP)/ip_fil.h $(TOP)/ipf.h \
 	$(CC) $(CCARGS) $(FILS) -o $@ -lelf $(LIBS) $(STATETOP_LIB)
 
 $(OBJ)/ipf: $(IPF) $(OBJ)/libipf.a
-	$(CC) $(CCARGS) $(IPF) -o $@ $(LIBS) -ll $(LIBBPF)
+	$(CC) $(CCARGS) $(IPF) -o $@ $(LIBS) $(LEXLIB) $(LIBBPF)
 
 $(OBJ)/ipftest: $(IPT) $(OBJ)/libipf.a
-	$(CC) $(CCARGS) $(IPT) -o $@ $(LIBS) -ll $(LIBBPF)
+	$(CC) $(CCARGS) $(IPT) -o $@ $(LIBS) $(LEXLIB) $(LIBBPF)
 	/bin/rm -f $(TOP)/ipftest
 	ln -s `pwd`/ipftest $(TOP)
 
@@ -114,7 +115,7 @@ $(OBJ)/ipnat: $(IPNAT) $(OBJ)/libipf.a
 		(cd /usr/lib; a=`echo libelf.so.*|head -1`; \
 		 if [ "$$a" != "" ] ; then ln -s $$a libelf.so; fi) \
 	fi
-	$(CC) $(CCARGS) $(IPNAT) -o $@ $(LIBS) -lelf -ll
+	$(CC) $(CCARGS) $(IPNAT) -o $@ $(LIBS) -lelf $(LEXLIB)
 
 $(OBJ)/ipfs: $(OBJ)/ipfs.o $(OBJ)/libipf.a
 	$(CC) $(CCARGS) $(OBJ)/ipfs.o -o $@ $(LIBS)
@@ -197,7 +198,7 @@ $(OBJ)/ippool.o: $(TOOL)/ippool.c $(TOP)/ip_fil.h $(TOP)/ipf.h $(TOP)/ip_pool.h
 	$(CC) $(CCARGS) -c $(TOOL)/ippool.c -o $@
 
 $(OBJ)/ippool: $(IPPOOL)
-	$(CC) $(CCARGS) $(IPPOOL) -o $@ $(LIBS) -lelf -ll
+	$(CC) $(CCARGS) $(IPPOOL) -o $@ $(LIBS) -lelf $(LEXLIB)
 
 $(OBJ)/ipnat_y.o: $(OBJ)/ipnat_y.c $(TOP)/ip_fil.h $(TOP)/ipf.h \
 	    $(OBJ)/ipnat_y.h $(OBJ)/ipnat_l.h
@@ -388,6 +389,16 @@ radix.c: $(TOP)/radix.c Makefile
 	echo '#include "ipf-linux.h"' >> $@
 	sed -ne '/END OF INCLUDES/,$$p' $< >> $@
 
+ip_rules.c: $(TOP)/rules/ip_rules $(TOP)/tools/ipfcomp.o $(OBJ)/ipf
+	$(OBJ)/ipf -cc -nf $(TOP)/rules/ip_rules
+
+$(TOP)/ip_rules.h: ip_rules.c
+	if [ ! -f $(TOP)/ip_rules.h ] ; then \
+		/bin/mv -f ip_rules.h $(TOP); \
+	else \
+		touch $(TOP)/ip_rules.h; \
+	fi
+
 $(OBJ)/linux.o: $(TOP)/linux.c $(TOP)/radix_ipf.h ipf-linux.h
 	$(CC) $(KCCARGS) -DMODVERSIONS -D__GENKSYMS__ -DEXPORT_SYMTAB -c $(TOP)/linux.c -o $@
 
@@ -396,7 +407,7 @@ $(OBJ)/ip_fil.o: $(TOP)/ip_fil_linux.c $(TOP)/ip_compat.h $(TOP)/ip_fil.h \
 	$(CC) $(KCCARGS) -c $(TOP)/ip_fil_linux.c -o $@
 
 $(OBJ)/ipmon: $(IPMON) $(OBJ)/libipf.a
-	$(CC) $(CCARGS) $(IPMON) -o $@ $(LIBS) -ll
+	$(CC) $(CCARGS) $(IPMON) -o $@ $(LIBS) $(LEXLIB)
 
 $(OBJ)/ipmon.o: $(TOOL)/ipmon.c $(TOP)/ipmon.h
 	$(CC) $(CCARGS) $(LOGFAC) -c $(TOOL)/ipmon.c -o $@
@@ -425,11 +436,11 @@ $(OBJ)/ipmon_l.h: $(TOOL)/lexer.h
 clean:
 	${RM} -f $(TOP)/ipf $(TOP)/ipnat $(TOP)/ipmon $(TOP)/ippool
 	${RM} -f $(TOP)/ipftest $(TOP)/ipscan $(TOP)/ipsyncm $(TOP)/ipsyncs
-	${RM} -f *.core *.o ipt fils ipf ipfstat ipftest ipmon ipfilter ipnat \
+	${RM} -f *.core *.o ipt fils ipf ipfstat ipftest ipmon ippool ipnat \
 		ipfilter.o
 	${RM} -f fil.c ip_auth.c ip_frag.c ip_htable.c ip_lookup.c ip_log.c
 	${RM} -f ip_lookup.c ip_nat.c ip_pool.c ip_proxy.c ip_scan.c 
-	${RM} -f ip_state.c ip_sync.c radix.c
+	${RM} -f ip_state.c ip_sync.c radix.c ip_rules.c ip_rules.h
 	${MAKE} -f Makefile.ipsend ${MFLAGS} clean
 	-(for i in Linux*; do \
 		if [ -d $${i} ] ; then \
@@ -437,7 +448,7 @@ clean:
 		fi \
 	done)
 
-install: ipfilter.spec
+install: $(SPECFILE) ipfilter
 	mkdir -p $(ROOTDIR) $(ROOTDIR)/usr/include/netinet
 	mkdir -p $(ROOTDIR)$(SBINDEST) $(ROOTDIR)$(BINDEST)
 	mkdir -p $(ROOTDIR)$(MODDIR)
@@ -463,7 +474,7 @@ install: ipfilter.spec
 	(for i in ipmon ipftest; do \
 		$(INSTALL) -c -s -g wheel -m 755 -o root $$i $(ROOTDIR)$(BINDEST); \
 	 done;)
-	(cd ..; ../bsdinstall -c -g wheel -m 755 -o root ipfboot $(ROOTDIR)/etc/init.d)
+	(../../bsdinstall -c -g wheel -m 755 -o root ipfilter $(ROOTDIR)/etc/init.d)
 	(cd $(TOP)/man; make INSTALL=../bsdinstall MANDIR=$(ROOTDIR)$(MANDIR) install; cd $(TOP))
 	for i in BASIC_1.FW BASIC_2.FW BASIC.NAT example.1 example.2 \
 		 example.3 example.4 example.5 example.6 example.7 \
@@ -474,9 +485,13 @@ install: ipfilter.spec
 		$(CHMOD) 444 $(ROOTDIR)/usr/share/ipfilter/examples/$$i; \
 		chown root:root $(ROOTDIR)/usr/share/ipfilter/examples/$$i; \
 	done
-	sed -e "s/KERNELBUILD/`uname -r`/" ../$(SPECFILE).dist > $(SPECFILE)
 	rpmbuild -bb $(SPECFILE)
 	rpm -i ipfilter
 
 $(SPECFILE): ../$(SPECFILE).dist
-	sed -e "s/KERNELBUILD/`uname -r`/" $< > $@
+	sed -e "s/KERNELBUILD/`uname -r`/" \
+	    -e "s/TURNONIPFILTER/`../howchkconfig`/" \
+	    $< > $@
+
+ipfilter:
+	../mkinit

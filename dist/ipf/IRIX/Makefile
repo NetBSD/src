@@ -41,7 +41,7 @@ TOOL=$(TOP)/tools
 LIBS=-L. -lipf
 #CC=cc -Wall -Wuninitialized -Wstrict-prototypes -Werror -O
 CC=cc -common
-CFLAGS=-g -I$(TOP)
+CFLAGS=-g -I$(TOP) -I.
 #
 ML=mli_ipl.c
 MLD=$(ML)

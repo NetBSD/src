@@ -1,4 +1,4 @@
-/*	$NetBSD: ipf-linux.h,v 1.1.1.1 2004/03/28 08:56:03 martti Exp $	*/
+/*	$NetBSD: ipf-linux.h,v 1.1.1.2 2004/07/23 05:34:17 martti Exp $	*/
 
 #ifndef __IPF_LINUX_H__
 #define __IPF_LINUX_H__
@@ -7,8 +7,13 @@
 #ifndef CONFIG_NETFILTER
 # define CONFIG_NETFILTER
 #endif
-#include <linux/compatmac.h>
-#include <linux/version.h>
+#if LINUX >= 020600
+# define __irq_h	1	/* stop it being included! */
+# include <linux/mtd/compatmac.h>
+#else
+# include <linux/compatmac.h>
+# include <linux/version.h>
+#endif
 #include <linux/kernel.h>
 #include <linux/module.h>
 #include <linux/types.h>
@@ -25,8 +30,14 @@
 #include <linux/netfilter.h>
 #include <linux/netfilter_ipv4.h>
 #include <linux/netfilter_ipv6.h>
+#if LINUX >= 020600
+# include <asm/ioctls.h>
+#else
+# define	ipftcphdr	tcphdr
+# define	ipfudphdr	udphdr
+#endif
 
-struct	tcphdr	{
+struct	ipftcphdr	{
 	__u16	th_sport;
 	__u16	th_dport;
 	__u32	th_seq;
@@ -47,7 +58,7 @@ struct	tcphdr	{
 
 typedef	__u32	tcp_seq;
 
-struct	udphdr	{
+struct	ipfudphdr	{
 	__u16	uh_sport;
 	__u16	uh_dport;
 	__u16	uh_ulen;
@@ -133,6 +144,11 @@ struct	ether_header	{
 	__u8	ether_shost[6];
 	__u16	ether_type;
 };
+
+#if LINUX >= 020600
+typedef	struct	ipftcphdr	tcphdr_t;
+typedef	struct	ipfudphdr	udphdr_t;
+#endif
 
 #include "ip_compat.h"
 #include "ip_fil.h"

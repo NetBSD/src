@@ -5,7 +5,7 @@ tested.
 
         1. do a "make tru64" (or "make osf") in this directory
 
-        2. change directory to OSF and run "make install"
+        2. run "make install-osf", in the same directory, to install
 
 To enable IPFilter, you then need to do:
 sysconfig -c ipfilter

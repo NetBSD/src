@@ -1,4 +1,4 @@
-/*	$NetBSD: kmem.c,v 1.1.1.1 2004/03/28 08:56:19 martti Exp $	*/
+/*	$NetBSD: kmem.c,v 1.1.1.2 2004/07/23 05:34:35 martti Exp $	*/
 
 /*
  * Copyright (C) 1993-2001 by Darren Reed.
@@ -44,7 +44,7 @@
 
 #if !defined(lint)
 static const char sccsid[] = "@(#)kmem.c	1.4 1/12/96 (C) 1992 Darren Reed";
-static const char rcsid[] = "@(#)Id: kmem.c,v 1.16 2004/01/08 13:34:32 darrenr Exp";
+static const char rcsid[] = "@(#)Id: kmem.c,v 1.16.2.1 2004/06/20 10:25:58 darrenr Exp";
 #endif
 
 
@@ -134,7 +134,7 @@ char	*kern, *core;
 		perror("openkmem:open");
 		return -1;
 	    }
-	return (int)kvm_f;
+	return kvm_f != NULL;
 }
 
 int	kmemcpy(buf, pos, n)

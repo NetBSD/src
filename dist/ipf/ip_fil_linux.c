@@ -1,12 +1,17 @@
-/*	$NetBSD: ip_fil_linux.c,v 1.1.1.1 2004/03/28 08:55:34 martti Exp $	*/
+/*	$NetBSD: ip_fil_linux.c,v 1.1.1.2 2004/07/23 05:33:50 martti Exp $	*/
 
-#define _LINUX_TCP_H
+#if LINUX >= 020600
+# define __irq_h        1       /* stop it being included! */
+#else
+# define _LINUX_TCP_H
+#endif
 #include <net/checksum.h>
 
 #include "ipf-linux.h"
 
 #include <net/route.h>
 #include <linux/random.h>
+#include <asm/ioctls.h>
 
 extern int sysctl_ip_default_ttl;
 
@@ -20,6 +25,40 @@ ipfrwlock_t	ipf_frag, ipf_state, ipf_nat, ipf_natfrag, ipf_auth;
 
 static u_int ipf_linux_inout __P((u_int, struct sk_buff **, const struct net_device *, const struct net_device *, int (*okfn)(struct sk_buff *)));
 
+#if LINUX >= 020600
+static struct nf_hook_ops ipf_hooks[] = {
+	{
+		.hook		= ipf_linux_inout,
+		.owner		= THIS_MODULE,
+		.pf		= PF_INET,
+		.hooknum	= NF_IP_PRE_ROUTING,
+		.priority	= 200,
+	},
+	{
+		.hook		= ipf_linux_inout,
+		.owner		= THIS_MODULE,
+		.pf		= PF_INET,
+		.hooknum	= NF_IP_POST_ROUTING,
+		.priority	= 200,
+	},
+# ifdef USE_INET6
+	{
+		.hook		= ipf_linux_inout,
+		.owner		= THIS_MODULE,
+		.pf		= PF_INET6,
+		.hooknum	= NF_IP_PRE_ROUTING,
+		.priority	= 200,
+	},
+	{
+		.hook		= ipf_linux_inout,
+		.owner		= THIS_MODULE,
+		.pf		= PF_INET6,
+		.hooknum	= NF_IP_POST_ROUTING,
+		.priority	= 200,
+	}
+# endif
+};
+#else
 static struct	nf_hook_ops	ipf_hooks[] = {
 	{
 		{ NULL, NULL },		/* list */
@@ -35,7 +74,7 @@ static struct	nf_hook_ops	ipf_hooks[] = {
 		NF_IP_POST_ROUTING,	/* hooknum */
 		200			/* priority */
 	},
-#ifdef USE_INET6
+# ifdef USE_INET6
 	{
 		{ NULL, NULL },		/* list */
 		ipf_linux_inout,	/* hook */
@@ -50,8 +89,9 @@ static struct	nf_hook_ops	ipf_hooks[] = {
 		NF_IP_POST_ROUTING,	/* hooknum */
 		200			/* priority */
 	}
-#endif
+# endif
 };
+#endif
 
 
 /*
@@ -181,10 +221,21 @@ int ipf_ioctl(struct inode *in, struct file *fp, u_int cmd, u_long arg)
 			error = EPERM;
 		else {
 			bcopy(data, &tmp, sizeof(tmp));
-			tmp = frflush(unit, tmp);
+			tmp = frflush(unit, 4, tmp);
 			bcopy(&tmp, data, sizeof(tmp));
 		}
 		break;
+#ifdef USE_INET6
+	case	SIOCIPFL6 :
+		if (!(mode & FWRITE))
+			error = EPERM;
+		else {
+			bcopy(data, &tmp, sizeof(tmp));
+			tmp = frflush(unit, 6, tmp);
+			bcopy(&tmp, data, sizeof(tmp));
+		}
+		break;
+#endif
 	case SIOCSTLCK :
 		error = COPYIN(data, &tmp, sizeof(tmp));
 		if (error == 0) {
@@ -269,7 +320,9 @@ fr_info_t *fin;
 	skb_trim(m, hlen);
 
 	bzero(MTOD(m, char *), hlen);
-	tcp2 = (struct tcphdr *)(MTOD(m, char *) + hlen - sizeof(*tcp2));
+	ip = MTOD(m, ip_t *);
+	ip->ip_v = fin->fin_v;
+	tcp2 = (tcphdr_t *)((char *)ip + hlen - sizeof(*tcp2));
 	tcp2->th_dport = tcp->th_sport;
 	tcp2->th_sport = tcp->th_dport;
 	if (tcp->th_flags & TH_ACK) {
@@ -285,7 +338,7 @@ fr_info_t *fin;
 
 #ifdef	USE_INET6
 	if (fin->fin_v == 6) {
-		ip6 = MTOD(m, ip6_t *);
+		ip6 = (ip6_t *)ip;
 		ip6->ip6_src = fin->fin_dst6;
 		ip6->ip6_dst = fin->fin_src6;
 		ip6->ip6_plen = htons(sizeof(*tcp));
@@ -293,7 +346,6 @@ fr_info_t *fin;
 	} else
 #endif
 	{
-		ip = MTOD(m, ip_t *);
 		ip->ip_hl = sizeof(*ip) >> 2;
 		ip->ip_src.s_addr = fin->fin_daddr;
 		ip->ip_dst.s_addr = fin->fin_saddr;
@@ -314,7 +366,6 @@ struct sk_buff *sk, **skp;
 	ip = MTOD(sk, ip_t *);
 	oip = fin->fin_ip;
 
-	ip->ip_v = fin->fin_v;
 	switch (fin->fin_v)
 	{
 	case 4 :
@@ -409,6 +460,7 @@ int isdst;
 
 	m->nh.iph = (struct iphdr *)skb_put(m, hlen);
 	ip = (ip_t *)m->nh.iph;
+	ip->ip_v = fin->fin_v;
 
 	m->h.icmph = (struct icmphdr *)skb_put(m, hlen + 4 + dlen);
 	icmp = (icmphdr_t *)m->h.icmph;
@@ -518,23 +570,22 @@ mb_t *min, **mp;
 fr_info_t *fin;
 frdest_t *fdp;
 {
-	struct net_device *ifp;
+	struct net_device *ifp, *sifp;
 	struct in_addr dip;
 	struct rtable *rt;
 	frentry_t *fr;
+	int err, sout;
 	ip_t *ip;
-	int err;
 
 	rt = NULL;
 	fr = fin->fin_fr;
 	ip = MTOD(min, ip_t *);
+	dip = ip->ip_dst;
 
-	if (fdp != NULL) {
+	if (fdp != NULL)
 		ifp = fdp->fd_ifp;
-	} else {
+	else
 		ifp = fin->fin_ifp;
-		dip = ip->ip_dst;
-	}
 
 	if ((ifp == NULL) && ((fr == NULL) || !(fr->fr_flags & FR_FASTROUTE))) {
 		err = ENETUNREACH;
@@ -546,23 +597,22 @@ frdest_t *fdp;
 	 * check that we're going in the correct direction.
 	 */
 	if ((fr != NULL) && (fin->fin_rev != 0)) {
-		if ((ifp != NULL) && (fdp == &fr->fr_tif)) {
+		if ((ifp != NULL) && (fdp == &fr->fr_tif))
 			return -1;
-}
-			dip = ip->ip_dst;
 	} else if (fdp) {
-		if (fdp->fd_ip.s_addr) {
+		if (fdp->fd_ip.s_addr)
 			dip = fdp->fd_ip;
-			ip->ip_dst = fdp->fd_ip;
-		} else
-			dip = ip->ip_dst;
 	}
 
 	switch (fin->fin_v)
 	{
 	case 4 :
+#if LINUX < 020600
 		err = ip_route_output(&rt, dip.s_addr, 0,
 				       RT_TOS(ip->ip_tos) | RTO_CONN, 0);
+#else
+		err = 1;
+#endif
 		if (err != 0 || rt == NULL)
 			goto bad;
 
@@ -576,8 +626,10 @@ frdest_t *fdp;
 		goto bad;
 	}
 
-	fin->fin_ifp = ifp;
 	if (fin->fin_out == 0) {
+		sifp = fin->fin_ifp;
+		sout = fin->fin_out;
+		fin->fin_ifp = ifp;
 		fin->fin_out = 1;
 		(void) fr_acctpkt(fin, NULL);
 		fin->fin_fr = NULL;
@@ -586,7 +638,22 @@ frdest_t *fdp;
 
 			(void) fr_checkstate(fin, &pass);
 		}
-		(void) fr_checknatout(fin, NULL);
+
+		switch (fr_checknatout(fin, NULL))
+		{
+		case 0 :
+			break;
+		case 1 :
+			ip->ip_sum = 0;
+			break;
+		case -1 :
+			err = EINVAL;
+			goto bad;
+			break;
+		}
+
+		fin->fin_ifp = sifp;
+		fin->fin_out = sout;
 	}
 	ip->ip_sum = 0;
 
@@ -597,10 +664,12 @@ frdest_t *fdp;
 	}
 
 	min->dst = &rt->u.dst;
+#if LINUX < 020421
 	if (min->len > min->dst->pmtu) {
 		err = EMSGSIZE;
 		goto bad;
 	}
+#endif
 
 	switch (fin->fin_v)
 	{
@@ -638,6 +707,9 @@ struct in_addr *inp, *inpmask;
 	struct in_ifaddr *ifa;
 	struct net_device *dev;
 	struct in_device *ifp;
+
+	if ((ifptr == NULL) || (ifptr == (void *)-1))
+		return -1;
 
 	dev = ifptr;
 	ifp = __in_dev_get(dev);
@@ -759,8 +831,8 @@ int ipldetach()
 
 	fr_deinitialise();
 
-	(void) frflush(IPL_LOGIPF, FR_INQUE|FR_OUTQUE|FR_INACTIVE);
-	(void) frflush(IPL_LOGIPF, FR_INQUE|FR_OUTQUE);
+	(void) frflush(IPL_LOGIPF, 0, FR_INQUE|FR_OUTQUE|FR_INACTIVE);
+	(void) frflush(IPL_LOGIPF, 0, FR_INQUE|FR_OUTQUE);
 
 	MUTEX_DESTROY(&ipf_timeoutlock);
 	MUTEX_DESTROY(&ipl_mutex);
@@ -891,7 +963,7 @@ INLINE void ipf_rw_downgrade(rwlk)
 ipfrwlock_t *rwlk;
 {
 	ipf_rw_exit(rwlk);
-	ipf_write_enter(rwlk);
+	ipf_read_enter(rwlk);
 }
 
 
@@ -935,3 +1007,14 @@ struct sk_buff *sk;
 	}
 }
 #endif
+
+
+mb_t *m_pullup(m, len)
+mb_t *m;
+int len;
+{
+	if (len <= M_LEN(m))
+		return m;
+	kfree_skb(m);
+	return NULL;
+}

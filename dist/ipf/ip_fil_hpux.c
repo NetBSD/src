@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_fil_hpux.c,v 1.1.1.1 2004/03/28 08:55:32 martti Exp $	*/
+/*	$NetBSD: ip_fil_hpux.c,v 1.1.1.2 2004/07/23 05:33:50 martti Exp $	*/
 
 /*
  * Copyright (C) 1993-2001 by Darren Reed.
@@ -7,7 +7,7 @@
  */
 #if !defined(lint)
 static const char sccsid[] = "%W% %G% (C) 1993-2000 Darren Reed";
-static const char rcsid[] = "@(#)Id: ip_fil_hpux.c,v 2.45.2.2 2004/03/22 12:18:07 darrenr Exp";
+static const char rcsid[] = "@(#)Id: ip_fil_hpux.c,v 2.45.2.5 2004/05/10 12:42:04 darrenr Exp";
 #endif
 
 #include <sys/types.h>
@@ -77,8 +77,8 @@ int ipldetach()
 #endif
 	fr_deinitialise();
 
-	(void) frflush(IPL_LOGIPF, FR_INQUE|FR_OUTQUE|FR_INACTIVE);
-	(void) frflush(IPL_LOGIPF, FR_INQUE|FR_OUTQUE);
+	(void) frflush(IPL_LOGIPF, 0, FR_INQUE|FR_OUTQUE|FR_INACTIVE);
+	(void) frflush(IPL_LOGIPF, 0, FR_INQUE|FR_OUTQUE);
 
 	RW_DESTROY(&ipf_ipidfrag);
 	RW_DESTROY(&ipf_mutex);
@@ -279,11 +279,24 @@ int flags;
 		else {
 			error = BCOPYIN(data, &tmp, sizeof(tmp));
 			if (!error) {
-				tmp = frflush(unit, tmp);
+				tmp = frflush(unit, 4, tmp);
 				error = BCOPYOUT(&tmp, data, sizeof(tmp));
 			}
 		}
 		break;
+#ifdef USE_INET6
+	case	SIOCIPFL6 :
+		if (!(flags & FWRITE))
+			error = EPERM;
+		else {
+			error = COPYIN(data, &tmp, sizeof(tmp));
+			if (!error) {
+				tmp = frflush(unit, 6, tmp);
+				error = COPYOUT(&tmp, data, sizeof(tmp));
+			}
+		}
+		break;
+#endif
 	case SIOCSTLCK :
 		error = BCOPYIN(data, &tmp, sizeof(tmp));
 		if (error == 0) {
@@ -462,6 +475,8 @@ fr_info_t *fin;
 	MTYPE(m) = M_DATA;
 	m->b_wptr = m->b_rptr + hlen;
 	bzero((char *)m->b_rptr, hlen);
+	ip = (ip_t *)m->b_rptr;
+	ip->ip_v = fin->fin_v;
 	tcp2 = (struct tcphdr *)(m->b_rptr + hlen - sizeof(*tcp2));
 	tcp2->th_dport = tcp->th_sport;
 	tcp2->th_sport = tcp->th_dport;
@@ -490,7 +505,6 @@ fr_info_t *fin;
 	} else
 #endif
 	{
-		ip = (ip_t *)m->b_rptr;
 		ip->ip_src.s_addr = fin->fin_daddr;
 		ip->ip_dst.s_addr = fin->fin_saddr;
 		ip->ip_id = fr_nextipid(fin);
@@ -603,6 +617,8 @@ int dst;
 	m->b_rptr += 16;
 	m->b_wptr = m->b_rptr + sz;
 	bzero((char *)m->b_rptr, (size_t)sz);
+	ip = (ip_t *)m->b_rptr;
+	ip->ip_v = fin->fin_v;
 	icmp = (struct icmp *)(m->b_rptr + hlen);
 	icmp->icmp_type = type;
 	icmp->icmp_code = code;
@@ -634,7 +650,6 @@ int dst;
 	} else
 #endif
 	{
-		ip = (ip_t *)m->b_rptr;
 		ip->ip_hl = sizeof(*ip) >> 2;
 		ip->ip_p = IPPROTO_ICMP;
 		ip->ip_id = fin->fin_ip->ip_id;
@@ -679,6 +694,9 @@ struct in_addr *inp, *inpmask;
 #endif
 	struct sockaddr_in sin, mask;
 	qif_t *qif = qifptr;
+
+	if ((qifptr == NULL) || (qifptr == (void *)-1))
+		return -1;
 
 #ifdef	USE_INET6
 	if (v == 6) {
@@ -831,7 +849,7 @@ INLINE void fr_checkv6sum(fin)
 fr_info_t *fin;
 {
 # ifdef IPFILTER_CKSUM
-	if (fr_checkl6sum(fin) == -1)
+	if (fr_checkl4sum(fin) == -1)
 		fin->fin_flx |= FI_BAD;
 # endif
 }

@@ -1,6 +1,6 @@
 Summary: IP Filter Software
 Name: ipfilter
-Version: 4.1.1
+Version: 4.1.3
 Release: 1
 Copyright: Copyright 2004 Darren Reed
 Group: System Environment/Base
@@ -88,7 +88,7 @@ fi
 
 %post
 /sbin/chkconfig --add ipfilter
-/sbin/chkconfig --level 2345 ipfilter on
+/sbin/chkconfig TURNONIPFILTER
 
 %preun
 /etc/init.d/ipfilter stop

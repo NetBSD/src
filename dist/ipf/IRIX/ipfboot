@@ -27,6 +27,7 @@ case "$1" in
 			/sbin/ml ld -v -c /var/sysgen/boot/ipflkm.o -p ipl -s $C_IPL
 		fi
 		(cd /dev && rm -f ipf ipl ipnat ipstate ipauth)
+		(cd /dev && rm -f ipsync ipscan iplookup)
 		mknod /dev/ipf c $C_IPL 0
 		mknod /dev/ipl c $C_IPL 0
 		mknod /dev/ipnat c $C_IPL 1

@@ -51,7 +51,8 @@ checkpfil()
 
 getids()
 {
-	id=`modinfo 2>&1 | awk '/ipf/ { print $1 } ' - 2>/dev/null`
+	ipfid=`modinfo 2>&1 | awk '/ipf / { print $1 } ' - 2>/dev/null`
+	ipfruleid=`modinfo 2>&1 | awk '/ipfrule/ { print $1 } ' - 2>/dev/null`
 	if [ -f $PIDFILE ] ; then
 		pid=`cat $PIDFILE 2>/dev/null`
 	else
@@ -145,8 +146,12 @@ case "$1" in
 	start)
 		getids
 		[ -n "$pid" ] && kill -TERM $pid 2>/dev/null
-		[ -n "$id" ] && modunload -i $id 2>/dev/null
+		[ -n "$ipfruleid" ] && modunload -i $ipfruleid 2>/dev/null
+		[ -n "$ipfid" ] && modunload -i $ipfid 2>/dev/null
 		modload /usr/kernel/drv/ipf
+		if [ -f /usr/kernel/drv/ipfrule ] ; then
+			modload /usr/kernel/drv/ipfrule
+		fi
 		load_ippool_config
 		load_ipf_config
 		load_ipnat_config
@@ -157,7 +162,8 @@ case "$1" in
 		getids
 		[ -n "$pid" ] && kill -TERM $pid
 		/bin/rm -f $PIDFILE
-		[ -n "$id" ] && modunload -i $id
+		[ -n "$ipfruleid" ] && modunload -i $ipfruleid 2>/dev/null
+		[ -n "$ipfid" ] && modunload -i $ipfid
 		;;
 
 	pause)

@@ -155,11 +155,11 @@ ipfs.o: $(TOOL)/ipfs.c $(TOP)/ip_fil.h $(TOP)/ipf.h $(TOP)/ip_state.h \
 		$(TOP)/ip_nat.h
 	$(CC) $(CCARGS) -c $(TOOL)/ipfs.c -o $@
 
-fil_u.o: $(TOP)/fil.c $(TOP)/ip_fil.h $(TOP)/ipf.h
+fil_u.o: $(TOP)/fil.c $(TOP)/ip_fil.h $(TOP)/ipf.h $(TOP)/ip_rules.h
 	$(CC) $(CCARGS) $(EXTRA) $(FIXRADIX) $(IPFBPF) -c $(TOP)/fil.c -o $@
 
 fil.o: $(TOP)/fil.c $(TOP)/ip_fil.h $(TOP)/ipf.h $(TOP)/ip_compat.h \
-	 $(TOP)/ipl.h
+	 $(TOP)/ipl.h $(TOP)/ip_rules.h
 	$(CC) -I$(TOP) $(POLICY) $(DFLAGS) $(HFLAGS) $(IPFBPF) \
 		$(O2) -c $(TOP)/fil.c -o $@
 
@@ -216,8 +216,18 @@ mod.o:  $(MODOBJS)
 		ld -r $(MODOBJS) -L. -lmilli -o $@; \
 	fi
 
-ip_rules.o: $(TOP)/ip_rules.c $(TOP)/ip_rules.h
-	$(CC) -I$(TOP) $(DFLAGS) $(HFLAGS) $(O3) -c $(TOP)/ip_rules.c -o $@
+ip_rules.c: $(TOP)/rules/ip_rules $(TOP)/tools/ipfcomp.c ipf
+	./ipf -cc -nf $(TOP)/rules/ip_rules
+
+$(TOP)/ip_rules.h: ip_rules.c
+	if [ ! -f $(TOP)/ip_rules.h ] ; then \
+		/bin/mv -f ip_rules.h $(TOP); \
+	else \
+		touch $(TOP)/ip_rules.h; \
+	fi
+
+ip_rules.o: ip_rules.c $(TOP)/ip_rules.h
+	$(CC) -I$(TOP) $(DFLAGS) $(HFLAGS) $(O3) -c ip_rules.c -o $@
 
 ip_nat.o: $(TOP)/ip_nat.c $(TOP)/ip_nat.h $(TOP)/ip_compat.h
 	$(CC) -I$(TOP) $(DFLAGS) $(HFLAGS) $(O3) -c $(TOP)/ip_nat.c -o $@
@@ -292,8 +302,8 @@ ip_scan_u.o: $(TOP)/ip_scan.c $(TOP)/ip_scan.h $(TOP)/ip_compat.h
 ip_sync_u.o: $(TOP)/ip_sync.c $(TOP)/ip_sync.h $(TOP)/ip_compat.h
 	$(CC) $(CCARGS) $(EXTRA) -c $(TOP)/ip_sync.c -o $@
 
-ip_rules_u.o: $(TOP)/ip_rules.c $(TOP)/ip_rules.h $(TOP)/ip_compat.h
-	$(CC) $(CCARGS) $(EXTRA) -c $(TOP)/ip_rules.c -o $@
+ip_rules_u.o: ip_rules.c $(TOP)/ip_rules.h $(TOP)/ip_compat.h
+	$(CC) $(CCARGS) $(EXTRA) -c ip_rules.c -o $@
 
 ip_pool_u.o: $(TOP)/ip_pool.c $(TOP)/ip_pool.h $(TOP)/ip_compat.h
 	$(CC) $(CCARGS) $(EXTRA) -c $(TOP)/ip_pool.c -o $@
@@ -393,7 +403,7 @@ clean:
 	${RM} -f ippool ippool_y.c ippool_y.h ippool_l.c ippool_l.h
 	${RM} -f ipnat_y.c ipnat_y.h ipnat_l.c ipnat_l.h
 	${RM} -f ipmon_y.c ipmon_y.h ipmon_l.c ipmon_l.h
-	${RM} -f ipsyncm ipsyncs ipfs
+	${RM} -f ipsyncm ipsyncs ipfs ip_rules.c ip_rules.h
 	${RM} -f ipnat.5 ipnat.4 ipnat.8 ipfilter.4 ipfilter.5
 	${MAKE} -f Makefile.ipsend clean
 	-(for i in *; do \

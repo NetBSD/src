@@ -1,4 +1,4 @@
-/*	$NetBSD: tru64.c,v 1.1.1.1 2004/03/28 08:55:50 martti Exp $	*/
+/*	$NetBSD: tru64.c,v 1.1.1.2 2004/07/23 05:34:07 martti Exp $	*/
 
 /*
  * Copyright (C) 1993-2001 by Darren Reed.
@@ -6,7 +6,7 @@
  * See the IPFILTER.LICENCE file for details on licencing.
  */
 #if !defined(lint)
-static const char rcsid[] = "@(#)Id: tru64.c,v 2.11.2.1 2004/03/22 12:26:08 darrenr Exp";
+static const char rcsid[] = "@(#)Id: tru64.c,v 2.11.2.2 2004/05/11 19:51:37 darrenr Exp";
 #endif
 #include <sys/types.h>
 #include <sys/conf.h>
@@ -177,14 +177,15 @@ struct firewall_stat {
 struct firewall_stat ipfilter_stat;
 static	int	ipfilter_registered = 0;
 static	int	ipftru64_inited = 0;
+static	char	ipfname[CFG_ATTR_NAME_SZ] = "ipfilter";
 
 
 cfg_subsys_attr_t ipfilter_attributes[] = {
 
 { "Subsystem_Description",CFG_ATTR_STRTYPE, CFG_OP_CONFIGURE | CFG_OP_QUERY,
 				(caddr_t)ipfilter_desc, 2, 300, 0 },
-{ "Module_Config_Name",	CFG_ATTR_STRTYPE, CFG_OP_QUERY,
-				(caddr_t)"ipfilter", 2, CFG_ATTR_NAME_SZ, 0 },
+{ "Module_Config_Name",	CFG_ATTR_STRTYPE, CFG_OP_CONFIGURE,
+				(caddr_t)ipfname, 2, CFG_ATTR_NAME_SZ, 0 },
 { "majnum",		CFG_ATTR_INTTYPE, CFG_OP_QUERY,
 				(caddr_t)&majnum, 0, 512, 0 },
 { "Num_Installed",	CFG_ATTR_INTTYPE, CFG_OP_QUERY,
@@ -195,6 +196,15 @@ cfg_subsys_attr_t ipfilter_attributes[] = {
 { "Module_Type",	CFG_ATTR_STRTYPE, CFG_OP_QUERY | CFG_OP_CONFIGURE,
 				(caddr_t)ipfilter_unused,
 				2, CFG_ATTR_NAME_SZ, 0 },
+{ "Device_User",	CFG_ATTR_STRTYPE, CFG_OP_QUERY | CFG_OP_CONFIGURE,
+				(caddr_t)ipfilter_unused,
+				0, sizeof(ipfilter_unused), 0 },
+{ "Device_Group",	CFG_ATTR_STRTYPE, CFG_OP_QUERY | CFG_OP_CONFIGURE,
+				(caddr_t)ipfilter_unused,
+				0, sizeof(ipfilter_unused), 0 },
+{ "Device_Mode",	CFG_ATTR_STRTYPE, CFG_OP_QUERY | CFG_OP_CONFIGURE,
+				(caddr_t)ipfilter_unused,
+				0, sizeof(ipfilter_unused), 0 },
 { "Device_Major_Req",	CFG_ATTR_STRTYPE, CFG_OP_QUERY | CFG_OP_CONFIGURE,
 				(caddr_t)ipfilter_unused,
 				0, sizeof(ipfilter_unused), 0 },

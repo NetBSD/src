@@ -21,8 +21,12 @@ if [ -d /sys/contrib/ipfilter ] ; then
 	ipfdir=/sys/contrib/ipfilter/netinet
 fi
 confdir="$archdir/conf"
-major=`ls -l /dev/ipnat | sed -e 's/.* \([0-9]*\),.*/\1/'`
-echo "Major number for IP Filter is $major"
+if [ -f /dev/ipnat ] ; then
+	major=`ls -l /dev/ipnat | sed -e 's/.* \([0-9]*\),.*/\1/'`
+	echo "Major number for IP Filter is $major"
+else
+	major=x
+fi
  
 echo -n "Installing "
 for j in auth frag nat proxy scan state sync pool htable lookup rules; do
@@ -58,9 +62,15 @@ SunOS)
 	;;
 esac
 
-echo -n "$filc -> ip_fil.c "
-cp $filc $ipfdir/ip_fil.c
-chmod 644 $ipfdir/ip_fil.c
+if [ -d $ipfdir/$filc ] ; then
+	echo -n "$filc -> $ipfdir/$filc "
+	cp $filc $ipfdir/$filc
+	chmod 644 $ipfdir/$filc
+else
+	echo -n "$filc -> $ipfdir/ip_fil.c "
+	cp $filc $ipfdir/ip_fil.c
+	chmod 644 $ipfdir/ip_fil.c
+fi
 
 for i in ip_fil.h fil.c ip_log.c ip_compat.h ipl.h ip_*_pxy.c; do
 	echo -n " $i"
@@ -92,19 +102,21 @@ if [ -f /sys/netinet/ip_fil_compat.h ] ; then
 	ln -s /sys/netinet/ip_compat.h /sys/netinet/ip_fil_compat.h
 fi
 
-if [ ! -e /dev/ipsync ] ; then
-	echo "Creating /dev/ipsync"
-	mknod /dev/ipsync c $major 4
-fi
+if [ $major != x ] ; then
+	if [ ! -e /dev/ipsync ] ; then
+		echo "Creating /dev/ipsync"
+		mknod /dev/ipsync c $major 4
+	fi
 
-if [ ! -e /dev/ipsync ] ; then
-	echo "Creating /dev/ipscan"
-	mknod /dev/ipsync c $major 5
-fi
+	if [ ! -e /dev/ipsync ] ; then
+		echo "Creating /dev/ipscan"
+		mknod /dev/ipsync c $major 5
+	fi
 
-if [ ! -e /dev/iplookup ] ; then
-	echo "Creating /dev/iplookup"
-	mknod /dev/iplookup c $major 6
+	if [ ! -e /dev/iplookup ] ; then
+		echo "Creating /dev/iplookup"
+		mknod /dev/iplookup c $major 6
+	fi
 fi
 
 set +e

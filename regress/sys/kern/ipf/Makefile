@@ -26,9 +26,9 @@ ftests: f1 f2 f3 f4 f5 f6 f7 f8 f9 f10 f11 f12 f13 f14 f15 f16 f17
 # Rule parsing tests
 ptests: i1 i2 i3 i4 i5 i6 i7 i8 i9 i10 i11 i12 i13 i14
 
-ntests: n1 n2 n3 n4 n5 n6 n7 n8 n9 n10
+ntests: n1 n2 n3 n4 n5 n6 n7 n8 n9 n10 n11
 
-nitests: ni1 ni2 ni3 ni4 ni5 ni6
+nitests: ni1 ni2 ni3 ni4 ni5 ni6 ni7 ni8 ni9 ni10 ni11 ni12
 
 intests: in1 in2 in3 in4 in5
 
@@ -49,10 +49,10 @@ f15 f16 f17:
 i1 i2 i3 i4 i5 i6 i7 i8 i9 i10 i11 i12 i13 i14 bpf1:
 	@/bin/sh ./itest `awk "/^$@ / { print; } " test.format`
 
-n1 n2 n3 n4 n5 n6 n7 n8 n9 n10:
+n1 n2 n3 n4 n5 n6 n7 n8 n9 n10 n11:
 	@/bin/sh ./nattest `awk "/^$@ / { print; } " test.format`
 
-ni1 ni2 ni3 ni4 ni5:
+ni1 ni2 ni3 ni4 ni5 ni7 ni8 ni9 ni10 ni11 ni12:
 	@/bin/sh ./natipftest single `awk "/^$@ / { print; } " test.format`
 
 ni6:
@@ -79,8 +79,8 @@ bpf-f1:
 clean:
 	/bin/rm -f f1 f2 f3 f4 f5 f6 f7 f8 f9 f10 f11 f12 f13 f14 f15 f16 f17
 	/bin/rm -f i1 i2 i3 i4 i5 i6 i7 i8 i9 i10 i11 i12 i13 i14
-	/bin/rm -f n1 n2 n3 n4 n5 n6 n7 n8 n9 n10
-	/bin/rm -f ni1 ni2 ni3 ni4 ni5 ni6
+	/bin/rm -f n1 n2 n3 n4 n5 n6 n7 n8 n9 n10 n11
+	/bin/rm -f ni1 ni2 ni3 ni4 ni5 ni6 ni7 ni8 ni9 ni10 ni11 ni12
 	/bin/rm -f in1 in2 in3 in4 in5
 	/bin/rm -f p1 p2 p3 ip1
 	/bin/rm -f l1

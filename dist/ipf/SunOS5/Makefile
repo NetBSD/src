@@ -196,11 +196,14 @@ ipnat_l.h: $(TOOL)/lexer.h
 $(OBJ)/mlso_rule.o: $(TOP)/mlso_rule.c
 	$(CC) -I$(TOP) $(DFLAGS) -c $(TOP)/mlso_rule.c -o $@
 
-$(OBJ)/ip_rules.o: $(TOP)/ip_rules.c $(TOP)/ip_rules.h
-	$(CC) -I$(TOP) $(DFLAGS) -c $(TOP)/ip_rules.c -o $@
+$(OBJ)/ip_rules.o: $(OBJ)/ip_rules.c $(TOP)/ip_rules.h
+	$(CC) -I$(TOP) $(DFLAGS) -c $(OBJ)/ip_rules.c -o $@
 
-$(OBJ)/ipfrule: $(OBJ)/ip_rules.o $(OBJ)/mlso_rule.o
-	ld -r $(OBJ)/ip_rules.o $(OBJ)/mlso_rule.o -o $@
+$(OBJ)/ip_rulesx.o: $(OBJ)/ip_rules.c $(TOP)/ip_rules.h
+	$(CC) -I$(TOP) -DIPFILTER_COMPILED $(DFLAGS) -c $(OBJ)/ip_rules.c -o $@
+
+$(OBJ)/ipfrule: $(OBJ)/ip_rulesx.o $(OBJ)/mlso_rule.o
+	ld -r $(OBJ)/ip_rulesx.o $(OBJ)/mlso_rule.o -o $@
 
 $(OBJ)/ipf: $(MODOBJS)
 	ld -dy -Ndrv/ip -Ndrv/pfil -Nmisc/md5 -r $(MODOBJS) -o $@
@@ -303,8 +306,17 @@ $(OBJ)/ip_proxy_u.o: $(TOP)/ip_proxy.c $(TOP)/ip_proxy.h $(TOP)/ip_compat.h \
 	$(TOP)/ip_fil.h
 	$(CC) $(CCARGS) $(EXTRA) -c $(TOP)/ip_proxy.c -o $@
 
-$(OBJ)/ip_rules_u.o: $(TOP)/ip_rules.c $(TOP)/ip_fil.h $(TOP)/ip_rules.h
-	$(CC) $(CCARGS) $(EXTRA) -c $(TOP)/ip_rules.c -o $@
+$(OBJ)/ip_rules.c: $(OBJ)/ipf.exe $(TOP)/tools/ipfcomp.c $(TOP)/rules/ip_rules
+	$(OBJ)/ipf.exe -cc -nf $(TOP)/rules/ip_rules
+	-/bin/mv -f ip_rules.c $(OBJ)
+
+$(TOP)/ip_rules.h: $(OBJ)/ip_rules.c
+	if [ -f ip_rules.h ] ; then \
+		/bin/mv -f ip_rules.h $(TOP) ; \
+	fi
+
+$(OBJ)/ip_rules_u.o: $(OBJ)/ip_rules.c $(TOP)/ip_fil.h $(TOP)/ip_rules.h
+	$(CC) $(CCARGS) $(EXTRA) -c $(OBJ)/ip_rules.c -o $@
 
 $(OBJ)/ip_fil_u.o: $(TOP)/ip_fil.c $(TOP)/ip_fil.h
 	$(CC) $(CCARGS) $(EXTRA) -c $(TOP)/ip_fil.c -o $@
@@ -407,7 +419,7 @@ clean:
 		${RM} -f ip_fil.c ipf_l.c ipf_y.c ipf_y.h ipf_l.h; \
 		${RM} -f ipscan ipscan_y.c ipscan_y.h ipscan_l.c; \
 		${RM} -f ippool ippool_y.c ippool_y.h ippool_l.c; \
-		${RM} -f ipscan_l.h ippool_l.h; \
+		${RM} -f ipscan_l.h ippool_l.h ip_rules.c ip_rules.h; \
 		${RM} -f ipnat_y.c ipnat_y.h ipnat_l.c ipnat_l.h; \
 		${RM} -f ipmon_y.c ipmon_y.h ipmon_l.c ipmon_l.h; \
 		${RM} -f ipsyncm ipsyncs ipfs; \
@@ -506,6 +518,7 @@ ipf.pkg.bin:
 
 
 package install: $(CPUDIR)/ipf.pkg
+	/bin/rm -f ipf.pkg
 	ln -s $(CPUDIR)/ipf.pkg ipf.pkg
 	@if [ `id|sed -e 's/^.[^(]*(\([^)]*\)).*/\1/'` != root ] ; then \
 		echo "Can only install if root"; \

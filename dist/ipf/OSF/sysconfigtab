@@ -13,4 +13,3 @@ ipfilter:
 	Device_Char_Files = ipl,ipnat,ipstate,ipauth,ipsync,ipscan,ippool,ipcount
 	Device_Char_Minor = 0,[1-6],7
 	Device_Mode = 600
-	Device_Char_Major = Same

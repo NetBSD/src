@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_fil_solaris.c,v 1.1.1.1 2004/03/28 08:55:35 martti Exp $	*/
+/*	$NetBSD: ip_fil_solaris.c,v 1.1.1.2 2004/07/23 05:33:53 martti Exp $	*/
 
 /*
  * Copyright (C) 1993-2001, 2003 by Darren Reed.
@@ -7,7 +7,7 @@
  */
 #if !defined(lint)
 static const char sccsid[] = "%W% %G% (C) 1993-2000 Darren Reed";
-static const char rcsid[] = "@(#)Id: ip_fil_solaris.c,v 2.62.2.2 2004/03/22 12:18:11 darrenr Exp";
+static const char rcsid[] = "@(#)Id: ip_fil_solaris.c,v 2.62.2.5 2004/05/10 12:42:07 darrenr Exp";
 #endif
 
 #include <sys/types.h>
@@ -116,8 +116,8 @@ int ipldetach()
 
 	fr_deinitialise();
 
-	(void) frflush(IPL_LOGIPF, FR_INQUE|FR_OUTQUE|FR_INACTIVE);
-	(void) frflush(IPL_LOGIPF, FR_INQUE|FR_OUTQUE);
+	(void) frflush(IPL_LOGIPF, 0, FR_INQUE|FR_OUTQUE|FR_INACTIVE);
+	(void) frflush(IPL_LOGIPF, 0, FR_INQUE|FR_OUTQUE);
 
 	if (ipf_locks_done == 1) {
 		MUTEX_DESTROY(&ipf_timeoutlock);
@@ -357,7 +357,7 @@ int *rp;
 			error = COPYIN((caddr_t)data, (caddr_t)&tmp,
 				       sizeof(tmp));
 			if (!error) {
-				tmp = frflush(unit, tmp);
+				tmp = frflush(unit, 4, tmp);
 				error = COPYOUT((caddr_t)&tmp, (caddr_t)data,
 					       sizeof(tmp));
 				if (error != 0)
@@ -366,6 +366,24 @@ int *rp;
 				error = EFAULT;
 		}
 		break;
+#ifdef USE_INET6
+	case	SIOCIPFL6 :
+		if (!(mode & FWRITE))
+			error = EPERM;
+		else {
+			error = COPYIN((caddr_t)data, (caddr_t)&tmp,
+				       sizeof(tmp));
+			if (!error) {
+				tmp = frflush(unit, 6, tmp);
+				error = COPYOUT((caddr_t)&tmp, (caddr_t)data,
+					       sizeof(tmp));
+				if (error != 0)
+					error = EFAULT;
+			} else
+				error = EFAULT;
+		}
+		break;
+#endif
 	case SIOCSTLCK :
 		error = COPYIN((caddr_t)data, (caddr_t)&tmp, sizeof(tmp));
 		if (error == 0) {
@@ -581,10 +599,8 @@ fr_info_t *fin;
 	}
 	tcp2->th_off = sizeof(struct tcphdr) >> 2;
 
-	/*
-	 * This is to get around a bug in the Solaris 2.4/2.5 TCP checksum
-	 * computation that is done by their put routine.
-	 */
+	ip = (ip_t *)m->b_rptr;
+	ip->ip_v = fin->fin_v;
 #ifdef	USE_INET6
 	if (fin->fin_v == 6) {
 		ip6 = (ip6_t *)m->b_rptr;
@@ -595,7 +611,6 @@ fr_info_t *fin;
 	} else
 #endif
 	{
-		ip = (ip_t *)m->b_rptr;
 		ip->ip_src.s_addr = fin->fin_daddr;
 		ip->ip_dst.s_addr = fin->fin_saddr;
 		ip->ip_id = fr_nextipid(fin);
@@ -630,7 +645,6 @@ mblk_t *m;
 		ip_t *ip;
 
 		ip = (ip_t *)m->b_rptr;
-		ip->ip_v = IPVERSION;
 		if (ip_ttl_ptr != NULL)
 			ip->ip_ttl = (u_char)(*ip_ttl_ptr);
 		else
@@ -719,6 +733,8 @@ int dst;
 	m->b_rptr += 64;
 	m->b_wptr = m->b_rptr + sz;
 	bzero((char *)m->b_rptr, (size_t)sz);
+	ip = (ip_t *)m->b_rptr;
+	ip->ip_v = fin->fin_v;
 	icmp = (struct icmp *)(m->b_rptr + hlen);
 	icmp->icmp_type = type & 0xff;
 	icmp->icmp_code = code & 0xff;
@@ -755,7 +771,6 @@ int dst;
 	} else
 #endif
 	{
-		ip = (ip_t *)m->b_rptr;
 		ip->ip_hl = sizeof(*ip) >> 2;
 		ip->ip_p = IPPROTO_ICMP;
 		ip->ip_id = fin->fin_ip->ip_id;
@@ -801,6 +816,9 @@ struct in_addr *inp, *inpmask;
 #endif
 	struct sockaddr_in sin, mask;
 	qif_t *qif;
+
+	if ((qifptr == NULL) || (qifptr == (void *)-1))
+		return -1;
 
 	qif = qifptr;
 
@@ -1188,7 +1206,19 @@ frdest_t *fdp;
 			fin->fin_fr = NULL;
 			if (!fr || !(fr->fr_flags & FR_RETMASK))
 				(void) fr_checkstate(fin, &pass);
-			(void) fr_checknatout(fin, NULL);
+
+			switch (fr_checknatout(fin, NULL))
+			{
+			case 0 :
+				break;
+			case 1 :
+				ip->ip_sum = 0;
+				break;
+			case -1 :
+				goto bad_fastroute;
+				break;
+			}
+
 			fin->fin_out = 0;
 			fin->fin_ifp = saveifp;
 		}

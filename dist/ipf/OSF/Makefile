@@ -13,7 +13,7 @@ CFLAGS=-g -I$(TOP)
 # For Tru64 5.1
 #
 CPU=`uname -m`
-MACHASSERT=`find /usr/sys -name mach_assert.h -print`
+MACHASSERT=`/bin/ls -1 /usr/sys/*/mach_assert.h -print | head -1`
 KDIR=`dirname ${MACHASSERT}`
 INC=-I/usr/include -I$(KDIR) -I/usr/sys/include
 DEFX=-DLANGUAGE_C -DUERF -DOSF -DMACH -DRT_SEM -DKERNEL -D_KERNEL -D_BSD -D_USE_KERNEL_PROTOS -compress -MD -no_excpt -nointrinsics -Wg,-unroll,1 -Wb,-static -Wco,-nofloat -msg_enable cvtdiftypes,warnimplfunc,macroredef,lvaluecast,uselesstyped -msg_inform cvtdiftypes,warnimplfunc,macroredef,lvaluecast,uselesstyped -msg_enable uninit1,falloffend,intrinsicint,outtoomany,outtoofew,questcompare,storclsdcl,tentredef -msg_warn uninit1,falloffend,intrinsicint,outtoomany,outtoofew,questcompare,storclsdcl,tentredef -msg_enable othermember -msg_error othermember -Umips -UMIPS -U__intel__ -D__alpha -D__digital__ -D__arch64__ -DUNIX_LOCKS=1
@@ -152,6 +152,16 @@ ipnat_y.h ipnat_y.c: $(TOOL)/ipnat_y.y $(TOP)/ip_nat.h
 ipnat_l.c ipnat_l.h: $(TOOL)/lexer.c $(TOP)/ip_nat.h
 	(cd $(TOOL); make "DEST=../$(HERE)" ../$(HERE)/$@)
 
+ip_rules.c: $(TOP)/rules/ip_rules $(TOP)/tools/ipfcomp.c ipf
+	./ipf -cc -nf $(TOP)/rules/ip_rules
+
+$(TOP)/ip_rules.h: ip_rules.c
+	if [ ! -f $(TOP)/ip_rules.h ] ; then \
+		/bin/mv -f ip_rules.h $(TOP); \
+	else \
+		touch $(TOP)/ip_rules.h; \
+	fi
+
 ip_nat_u.o: $(TOP)/ip_nat.c $(TOP)/ip_nat.h $(TOP)/ip_compat.h $(TOP)/ip_fil.h
 	$(CC) $(CCARGS) $(EXTRA) -c $(TOP)/ip_nat.c -o $@
 
@@ -184,9 +194,8 @@ ip_sync_u.o: $(TOP)/ip_sync.c $(TOP)/ip_compat.h $(TOP)/ip_fil.h \
 	$(TOP)/ip_sync.h
 	$(CC) $(CCARGS) $(EXTRA) -c $(TOP)/ip_sync.c -o $@
 
-ip_rules_u.o: $(TOP)/ip_rules.c $(TOP)/ip_compat.h $(TOP)/ip_fil.h \
-	$(TOP)/ip_rules.h
-	$(CC) $(CCARGS) $(EXTRA) -c $(TOP)/ip_rules.c -o $@
+ip_rules_u.o: ip_rules.c $(TOP)/ip_compat.h $(TOP)/ip_fil.h $(TOP)/ip_rules.h
+	$(CC) $(CCARGS) $(EXTRA) -c ip_rules.c -o $@
 
 ip_log_u.o: $(TOP)/ip_log.c $(TOP)/ip_compat.h $(TOP)/ip_fil.h
 	$(CC) $(CCARGS) $(EXTRA) -c $(TOP)/ip_log.c -o $@
@@ -266,9 +275,11 @@ ip_lookup.o: $(TOP)/ip_lookup.c $(TOP)/ip_compat.h $(TOP)/ip_fil.h \
 	$(TOP)/ip_lookup.h
 	$(CC) $(DFLAGS) $(FIXRADIX) -c $(TOP)/ip_lookup.c -o $@
 
-ip_rules.o: $(TOP)/ip_rules.c $(TOP)/ip_compat.h $(TOP)/ip_fil.h \
-	$(TOP)/ip_rules.h
-	$(CC) -I. $(DFLAGS) -c $(TOP)/ip_rules.c -o $@
+ip_rules.o: ip_rules.c $(TOP)/ip_compat.h $(TOP)/ip_fil.h $(TOP)/ip_rules.h
+	$(CC) -I. $(DFLAGS) -c ip_rules.c -o $@
+
+ip_rulesx.o: ip_rules.c $(TOP)/ip_compat.h $(TOP)/ip_fil.h $(TOP)/ip_rules.h
+	$(CC) -I. -DIPFILTER_COMPILED $(DFLAGS) -c ip_rules.c -o $@
 
 tru64.o: $(TOP)/tru64.c $(TOP)/ip_compat.h $(TOP)/ip_fil.h
 	$(CC) $(DFLAGS) -c $(TOP)/tru64.c -o $@
@@ -348,7 +359,7 @@ clean:
 	${RM} -f ipnat_y.c ipnat_y.h ipnat_l.c ipnat_l.h
 	${RM} -f ipmon_y.c ipmon_y.h ipmon_l.c ipmon_l.h
 	${RM} -f ipscan ipscan_y.c ipscan_y.h ipscan_l.c y.tab.? lex.yy.c ipfs
-	${RM} -f ipsyncm ipsyncs
+	${RM} -f ipsyncm ipsyncs ip_rules.c ip_rules.h
 
 	${MAKE} -f Makefile.ipsend ${MFLAGS} clean
 	-(for i in *; do \
@@ -369,7 +380,11 @@ install:
 	-$(INSTALL) -c -g system -m 755 -o root if_ipl.o /sys/BINARY/ipfilter.mod
 	/bin/rm -f /var/subsys/ipfilter.mod
 	ln -s ../../../sys/BINARY/ipfilter.mod /var/subsys/ipfilter.mod
-	-$(INSTALL) -c -g system -m 755 -o root ../sysconfigtab /usr/sys/io/ipfilter
+	mkdir -p /usr/sys/io/ipfilter
+	chmod 755 /usr/sys/io/ipfilter
+	/bin/rm -f sysconfigtab
+	/bin/ln -s ../sysconfigtab .
+	-$(INSTALL) -c -g system -m 755 -o root sysconfigtab /usr/sys/io/ipfilter/
 	-for i in ipf ipfs ipnat ipscan ipfstat; do \
 		$(INSTALL) -s -c -g system -m 755 -o root $$i $(SBINDEST); \
 	done

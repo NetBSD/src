@@ -97,9 +97,9 @@ ip_auth_u.o: $(TOP)/ip_auth.c $(TOP)/ip_auth.h $(TOP)/ip_compat.h \
 	$(TOP)/ip_fil.h
 	$(CC) $(CCARGS) $(EXTRA) -c $(TOP)/ip_auth.c -o $@
 
-ip_rules_u.o: $(TOP)/ip_rules.c $(TOP)/ip_rules.h $(TOP)/ip_compat.h \
+ip_rules_u.o: ip_rules.c $(TOP)/ip_rules.h $(TOP)/ip_compat.h \
 	$(TOP)/ip_fil.h
-	$(CC) $(CCARGS) $(EXTRA) -c $(TOP)/ip_rules.c -o $@
+	$(CC) $(CCARGS) $(EXTRA) -c ip_rules.c -o $@
 
 ip_pool_u.o: $(TOP)/ip_pool.c $(TOP)/ip_pool.h $(TOP)/ip_compat.h \
 	$(TOP)/ip_fil.h $(TOP)/ip_lookup.h
@@ -154,6 +154,16 @@ ipsyncs.o: $(TOOL)/ipsyncs.c $(TOP)/ip_sync.h
 
 ip_log_u.o: $(TOP)/ip_log.c $(TOP)/ip_fil.h $(TOP)/ip_compat.h
 	$(CC) $(CCARGS) $(EXTRA) -c $(TOP)/ip_log.c -o $@
+
+ip_rules.c: $(TOP)/rules/ip_rules $(TOP)/tools/ipfcomp.c ipf
+	./ipf -cc -nf $(TOP)/rules/ip_rules
+
+$(TOP)/ip_rules.h: ip_rules.c
+	if [ ! -f $(TOP)/ip_rules.h ] ; then \
+		/bin/mv -f ip_rules.h $(TOP); \
+	else \
+		touch $(TOP)/ip_rules.h; \
+	fi
 
 $(LKM): $(MODOBJS) 
 	ld $(MLFLAGS) -r -d $(MODOBJS) -o $(LKM)
@@ -311,7 +321,7 @@ clean:
 	${RM} -f ippool ippool_y.c ippool_y.h ippool_l.c ippool_l.h
 	${RM} -f ipnat_y.c ipnat_y.h ipnat_l.c ipnat_l.h
 	${RM} -f ipmon_y.c ipmon_y.h ipmon_l.c ipmon_l.h
-	${RM} -f ipsyncm ipsyncs ipfs
+	${RM} -f ipsyncm ipsyncs ipfs ip_rules.c ip_rules.h
 	${MAKE} -f Makefile.ipsend ${MFLAGS} TOP=$(TOP) clean
 	-(for i in *; do \
 		if [ -d $${i} -a -f $${i}/Makefile ] ; then \

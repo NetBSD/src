@@ -15,7 +15,7 @@ CFLAGS=-g -I$(TOP)
 #
 DEVFS!=/usr/bin/lsvfs 2>&1 | sed -n 's/.*devfs.*/-DDEVFS/p'
 CPU!=uname -m
-INC=-I/sys -I/sys/sys -I/sys/arch
+INC=-I/usr/include -I/sys -I/sys/sys -I/sys/arch
 DEF=-D$(CPU) -D__$(CPU)__ -DINET -DKERNEL -D_KERNEL $(INC) $(DEVFS)
 IPDEF=$(DEF) -DGATEWAY -DDIRECTED_BROADCAST
 VNODESHDIR=/sys/kern
@@ -45,7 +45,7 @@ MODOBJS=ip_fil.o fil.o ml_ipl.o ip_nat.o ip_frag.o ip_state.o ip_proxy.o \
 	ip_scan.o ip_sync.o
 #	ip_trafcon.o
 DFLAGS=$(IPFLKM) $(IPFLOG) $(LOOKUP) $(SYNC) $(DEF) $(DLKM) $(IPFBPF)
-IPF=ipf.o ipfcomp.o ipf_y.o ipf_l.o bpf_filter_u.o
+IPF=ipf.o ipfcomp.o ipf_y.o ipf_l.o
 IPT=ipftest.o fil_u.o ip_frag_u.o ip_state_u.o ip_nat_u.o \
     ip_proxy_u.o ip_auth_u.o ip_htable_u.o ip_lookup_u.o ip_pool_u.o \
     ip_scan_u.o ip_sync_u.o ip_rules_u.o ip_fil_u.o ip_log_u.o \
@@ -119,11 +119,13 @@ ipfs.o: $(TOOL)/ipfs.c $(TOP)/ip_fil.h $(TOP)/ipf.h $(TOP)/ip_state.h \
 	$(CC) $(CCARGS) -c $(TOOL)/ipfs.c -o $@
 
 fil_u.o: $(TOP)/fil.c $(TOP)/ip_fil.h $(TOP)/ipf.h $(TOP)/ip_compat.h \
-	    $(TOP)/opts.h
+	    $(TOP)/opts.h $(TOP)/ip_rules.h
 	$(CC) $(CCARGS) $(EXTRA) $(IPFBPF) -D_RADIX_H_ -c $(TOP)/fil.c -o $@
 
-fil.o: $(TOP)/fil.c $(TOP)/ip_fil.h $(TOP)/ip_compat.h $(TOP)/ipl.h
-	$(CC) $(CCARGS) $(POLICY) $(DFLAGS) $(IPFBPF) -c $(TOP)/fil.c -o $@
+fil.o: $(TOP)/fil.c $(TOP)/ip_fil.h $(TOP)/ip_compat.h $(TOP)/ipl.h \
+	    $(TOP)/ip_rules.h
+	$(CC) $(CCARGS) $(POLICY) $(DFLAGS) $(IPFBPF) $(COMPIPF) \
+	    -c $(TOP)/fil.c -o $@
 
 ipf.o: $(TOOL)/ipf.c $(TOP)/ip_fil.h $(TOP)/ipf.h $(TOP)/opts.h
 	$(CC) $(CCARGS) -c $(TOOL)/ipf.c -o $@
@@ -145,8 +147,10 @@ ipnat_y.o: ipnat_y.c ipnat_y.h ipnat_l.h
 ipnat_l.o: ipnat_l.c ipnat_y.h
 	$(CC) $(CCARGS) -I. -c ipnat_l.c -o $@
 
-ipnat_y.h ipnat_y.c: $(TOOL)/ipnat_y.y
+ipnat_y.c: $(TOOL)/ipnat_y.y
 	(cd $(TOOL); make "DEST=$(HERE)" $(HERE)/$@)
+
+ipnat_y.h: ipnat_y.c
 
 ipnat_l.c: $(TOOL)/lexer.c $(TOP)/ip_nat.h
 	(cd $(TOOL); make "DEST=$(HERE)" $(HERE)/$@)
@@ -176,9 +180,9 @@ ip_auth_u.o: $(TOP)/ip_auth.c $(TOP)/ip_auth.h $(TOP)/ip_compat.h \
 ip_fil_u.o: $(TOP)/ip_fil.c $(TOP)/ip_fil.h $(TOP)/ip_compat.h
 	$(CC) $(CCARGS) $(EXTRA) -c $(TOP)/ip_fil.c -o $@
 
-ip_rules_u.o: $(TOP)/ip_rules.c $(TOP)/ip_compat.h $(TOP)/ip_fil.h \
+ip_rules_u.o: ip_rules.c $(TOP)/ip_compat.h $(TOP)/ip_fil.h \
 	$(TOP)/ip_rules.h
-	$(CC) $(CCARGS) $(EXTRA) -c $(TOP)/ip_rules.c -o $@
+	$(CC) $(CCARGS) $(EXTRA) -c ip_rules.c -o $@
 
 ip_scan_u.o: $(TOP)/ip_scan.c $(TOP)/ip_compat.h $(TOP)/ip_fil.h \
 	$(TOP)/ip_scan.h
@@ -220,6 +224,15 @@ if_ipl.o: $(MODOBJS)
 	ld -r $(MODOBJS) -o $(LKM)
 	${RM} -f if_ipl
 
+ipfrule.ko.5: ip_rulesx.o $(MLR)
+	ld -warn-common -r -d -o $(.TARGET:S/.ko/.kld/) ip_rulesx.o $(MLR)
+	ld -Bshareable -d -warn-common -o $(LKMR:S/.5$//) $(.TARGET:S/.ko/.kld/) 
+ipfrule.ko: ip_rulesx.o $(MLR)
+	gensetdefs ip_rulesx.o $(MLR)
+	$(CC) $(CCARGS) -c setdef0.c
+	$(CC) $(CCARGS) -c setdef1.c
+	ld -Bshareable -o $@ setdef0.o ip_rulesx.o $(MLR) setdef1.o
+
 ipf.ko.5 ipl.ko.5: $(MODOBJS)
 	ld -warn-common -r -d -o $(.TARGET:S/.ko/.kld/) $(MODOBJS)
 	ld -Bshareable -d -warn-common -o $(LKM:S/.5$//) $(.TARGET:S/.ko/.kld/)
@@ -228,7 +241,7 @@ ipf.ko ipl.ko: $(MODOBJS)
 	gensetdefs $(MODOBJS)
 	$(CC) $(CCARGS) -c setdef0.c
 	$(CC) $(CCARGS) -c setdef1.c
-	ld -Bshareable -o $(LKM) setdef0.o $(MODOBJS) setdef1.o
+	ld -Bshareable -o $@ setdef0.o $(MODOBJS) setdef1.o
 
 ip_nat.o: $(TOP)/ip_nat.c $(TOP)/ip_nat.h $(TOP)/ip_compat.h $(TOP)/ip_fil.h
 	$(CC) $(CCARGS) $(DFLAGS) -c $(TOP)/ip_nat.c -o $@
@@ -295,8 +308,21 @@ ml_ipl.o: vnode_if.h $(TOP)/$(MLD) $(TOP)/ipl.h
 	-/bin/rm -f vnode_if.c
 	$(CC) -I. $(CFLAGS) $(DFLAGS) -c $(TOP)/$(ML) -o $@
 
-ip_rules.o: $(TOP)/ip_rules.c $(TOP)/ip_rules.h
-	$(CC) -I. $(CFLAGS) $(DFLAGS) -c $(TOP)/ip_rules.c -o $@
+ip_rules.o: ip_rules.c $(TOP)/ip_rules.h
+	$(CC) -I. $(CFLAGS) $(DFLAGS) $(COMPIPF) -c ip_rules.c -o $@
+
+ip_rules.c: $(TOP)/rules/ip_rules $(TOP)/tools/ipfcomp.c ipf
+	./ipf -cc -nf $(TOP)/rules/ip_rules
+
+$(TOP)/ip_rules.h: ip_rules.c
+	if [ ! -f $(TOP)/ip_rules.h ] ; then \
+		/bin/mv -f ip_rules.h $(TOP); \
+	else \
+		touch $(TOP)/ip_rules.h; \
+	fi
+
+ip_rulesx.o: ip_rules.c $(TOP)/ip_rules.h
+	$(CC) -I. $(CFLAGS) $(DFLAGS) -DIPFILTER_COMPILED -c ip_rules.c -o $@
 
 mlf_rule.o: $(TOP)/mlf_rule.c $(TOP)/ip_rules.h
 	$(CC) -I. $(CFLAGS) $(DFLAGS) -c $(TOP)/mlf_rule.c -o $@
@@ -310,17 +336,16 @@ mlo_rule.o: $(TOP)/mlo_rule.c $(TOP)/ip_rules.h
 mlfk_rule.o: $(TOP)/mlfk_rule.c $(TOP)/ip_rules.h
 	$(CC) -I. $(CFLAGS) $(DFLAGS) -c $(TOP)/mlfk_rule.c -o $@
 
-$(LKMR): ip_rules.o $(MLR)
-	ld -r ip_rules.o $(MLR) -o $(LKMR)
-
 ipf_y.o: ipf_y.c ipf_y.h $(TOP)/ipf.h ipf_l.h $(TOP)/opts.h
 	$(CC) $(CCARGS) $(IPFBPF) -c ipf_y.c -o $@
 
 ipf_l.o: ipf_l.c ipf_y.h $(TOP)/ipf.h ipf_l.h $(TOP)/opts.h
 	$(CC) $(CCARGS) -I. -c ipf_l.c -o $@
 
-ipf_y.h ipf_y.c: $(TOOL)/ipf_y.y $(TOP)/ipf.h $(TOP)/opts.h
+ipf_y.c: $(TOOL)/ipf_y.y $(TOP)/ipf.h $(TOP)/opts.h
 	(cd $(TOOL); make "DEST=$(HERE)" $(HERE)/$@)
+
+ipf_y.h: ipf_y.c
 
 ipf_l.c: $(TOOL)/lexer.c $(TOP)/ipf.h $(TOP)/opts.h
 	(cd $(TOOL); make "DEST=$(HERE)" $(HERE)/$@)
@@ -340,8 +365,10 @@ ipmon_y.o: ipmon_y.c ipmon_y.h $(TOP)/ipmon.h ipmon_l.h
 ipmon_l.o: ipmon_l.c ipmon_y.h $(TOP)/ipmon.h
 	$(CC) $(CCARGS) -I. -c ipmon_l.c -o $@
 
-ipmon_y.h ipmon_y.c: $(TOOL)/ipmon_y.y $(TOP)/ipmon.h
+ipmon_y.c: $(TOOL)/ipmon_y.y $(TOP)/ipmon.h
 	(cd $(TOOL); make "DEST=$(HERE)" $(HERE)/$@)
+
+ipmon_y.h: ipmon_y.c
 
 ipmon_l.c: $(TOOL)/lexer.c $(TOP)/ipmon.h
 	(cd $(TOOL); make "DEST=$(HERE)" $(HERE)/$@)
@@ -358,8 +385,10 @@ ipscan_y.o: ipscan_y.c ipscan_y.h $(TOP)/ip_scan.h ipscan_l.h
 ipscan_l.o: ipscan_l.c ipscan_y.h $(TOP)/ip_scan.h
 	$(CC) $(CCARGS) -I. -c ipscan_l.c -o $@
 
-ipscan_y.h ipscan_y.c: $(TOOL)/ipscan_y.y $(TOP)/ip_scan.h
+ipscan_y.c: $(TOOL)/ipscan_y.y $(TOP)/ip_scan.h
 	(cd $(TOOL); make "DEST=$(HERE)" $(HERE)/$@)
+
+ipscan_y.h: ipscan_y.c
 
 ipscan_l.c ipscan_l.h: $(TOOL)/lexer.c $(TOP)/ip_scan.h
 	(cd $(TOOL); make "DEST=$(HERE)" $(HERE)/$@)
@@ -376,8 +405,10 @@ ippool_y.o: ippool_y.c ippool_y.h $(TOP)/ip_pool.h ippool_l.h
 ippool_l.o: ippool_l.c ippool_y.h $(TOP)/ip_pool.h
 	$(CC) $(CCARGS) -I. -c ippool_l.c -o $@
 
-ippool_y.h ippool_y.c: $(TOOL)/ippool_y.y $(TOP)/ip_pool.h ippool_l.h
+ippool_y.c: $(TOOL)/ippool_y.y $(TOP)/ip_pool.h ippool_l.h
 	(cd $(TOOL); make "DEST=$(HERE)" $(HERE)/$@)
+
+ippool_y.h: ippool_y.c
 
 ippool_l.c: $(TOOL)/lexer.c $(TOP)/ip_pool.h
 	(cd $(TOOL); make "DEST=$(HERE)" $(HERE)/$@)
@@ -406,7 +437,7 @@ clean:
 	${RM} -f ippool ippool_y.c ippool_y.h ippool_l.c ippool_l.h
 	${RM} -f ipnat_y.c ipnat_y.h ipnat_l.c ipnat_l.h
 	${RM} -f ipmon_y.c ipmon_y.h ipmon_l.c ipmon_l.h
-	${RM} -f ipsyncm ipsyncs ipfs
+	${RM} -f ipsyncm ipsyncs ipfs ip_rules.c ip_rules.h
 
 	${MAKE} -f Makefile.ipsend ${MFLAGS} clean
 	-(for i in *; do \
@@ -429,8 +460,17 @@ install:
 	-if [ -d /modules -a -f ipf.ko ] ; then \
 		cp ipf.ko /modules; \
 	fi
+	-if [ -d /modules -a -f ipfrule.ko ] ; then \
+		cp ipfrule.ko /modules; \
+	fi
 	-if [ -d /boot/kernel -a -f ipf.ko ] ; then \
 		cp ipf.ko /boot/kernel; \
+	fi
+	-if [ -d /boot/kernel -a -f ipfrule.ko ] ; then \
+		cp ipfrule.ko /boot/kernel; \
+	fi
+	-if [ -d /usr/lkm -a -f if_ipl.o ] ; then \
+		cp if_ipl.o /usr/lkm; \
 	fi
 	-$(INSTALL) -cs -g wheel -m 755 -o root ipscan $(SBINDEST)
 	(cd $(TOP)/man; make INSTALL=$(INSTALL) MANDIR=$(MANDIR) install; cd $(TOP))
