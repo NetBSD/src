@@ -1,4 +1,4 @@
-/*	$NetBSD: rexecd.c,v 1.5 1998/07/04 19:03:20 mrg Exp $	*/
+/*	$NetBSD: rexecd.c,v 1.6 1998/07/26 19:49:03 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -40,7 +40,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "from: @(#)rexecd.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: rexecd.c,v 1.5 1998/07/04 19:03:20 mrg Exp $");
+__RCSID("$NetBSD: rexecd.c,v 1.6 1998/07/26 19:49:03 mycroft Exp $");
 #endif
 #endif /* not lint */
 
@@ -117,7 +117,8 @@ doit(f, fromp)
 	struct sockaddr_in *fromp;
 {
 	struct pollfd fds[2];
-	char cmdbuf[NCARGS+1], *cp, *namep;
+	char cmdbuf[NCARGS+1], *namep;
+	const char *cp;
 	char user[16], pass[16];
 	char buf[BUFSIZ], sig;
 	struct passwd *pwd;
