@@ -1,4 +1,4 @@
-/*	$NetBSD: sb.c,v 1.17 1995/02/21 02:28:06 brezak Exp $	*/
+/*	$NetBSD: sb.c,v 1.18 1995/02/28 21:47:42 brezak Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -32,7 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: sb.c,v 1.17 1995/02/21 02:28:06 brezak Exp $
+ *	$Id: sb.c,v 1.18 1995/02/28 21:47:42 brezak Exp $
  */
 
 #include <sys/param.h>
@@ -201,20 +201,18 @@ sbprobe(parent, self, aux)
 #endif
 	if (ISSBPROCLASS(&sc->sc_sbdsp)) {
 		if (!SBP_IRQ_VALID(ia->ia_irq)) {
-			int irq = ffs(ia->ia_irq) - 1;
-			printf("sb: configured irq %d invalid\n", irq);
+			printf("sb: configured irq %d invalid\n", ia->ia_irq);
 			return 0;
 		}
 	}
 	else {
 		if (!SB_IRQ_VALID(ia->ia_irq)) {
-			int irq = ffs(ia->ia_irq) - 1;
-			printf("sb: configured irq %d invalid\n", irq);
+			printf("sb: configured irq %d invalid\n", ia->ia_irq);
 			return 0;
 		}
 	}
 
-	sc->sc_sbdsp.sc_irq = ffs(ia->ia_irq) - 1;
+	sc->sc_sbdsp.sc_irq = ia->ia_irq;
 	sc->sc_sbdsp.sc_drq = ia->ia_drq;
 	
 	if (ISSBPROCLASS(&sc->sc_sbdsp))
