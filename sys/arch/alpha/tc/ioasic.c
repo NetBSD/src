@@ -1,4 +1,4 @@
-/* $NetBSD: ioasic.c,v 1.22 1999/03/17 17:50:06 ross Exp $ */
+/* $NetBSD: ioasic.c,v 1.23 1999/03/17 18:28:11 ross Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: ioasic.c,v 1.22 1999/03/17 17:50:06 ross Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ioasic.c,v 1.23 1999/03/17 18:28:11 ross Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -90,7 +90,6 @@ __KERNEL_RCSID(0, "$NetBSD: ioasic.c,v 1.22 1999/03/17 17:50:06 ross Exp $");
 /* Definition of the driver for autoconfig. */
 int	ioasicmatch __P((struct device *, struct cfdata *, void *));
 void	ioasicattach __P((struct device *, struct device *, void *));
-int     ioasicprint(void *, const char *);
 
 struct cfattach ioasic_ca = {
 	sizeof(struct ioasic_softc), ioasicmatch, ioasicattach,
