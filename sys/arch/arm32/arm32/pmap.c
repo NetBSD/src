@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.45 1999/03/23 13:52:48 mycroft Exp $	*/
+/*	$NetBSD: pmap.c,v 1.46 1999/03/23 18:39:38 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -1680,8 +1680,6 @@ pmap_remove(pmap, sva, eva)
 
 					flags = pmap_remove_pv(pmap, sva,
 				    	    &vm_physmem[bank].pmseg.pvent[off]);
-					vm_physmem[bank].pmseg.attrs[off]
-					    |= flags & (PT_M | PT_H);
 					if (flags & PT_W)
 						pmap->pm_stats.wired_count--;
 
@@ -2145,8 +2143,7 @@ pmap_enter(pmap, va, pa, prot, wired)
 				flags = pmap_remove_pv(pmap, va,
 				    &vm_physmem[bank].pmseg.pvent[off]);
 				if (flags & PT_W)
-					--pmap->pm_stats.wired_count;
-				vm_physmem[bank].pmseg.attrs[off] |= flags & (PT_M | PT_H);
+					pmap->pm_stats.wired_count--;
 			}
 			/* Update the wiring stats for the new page */
 			if (wired)
