@@ -1,4 +1,4 @@
-/*	$NetBSD: siop_common.c,v 1.10 2000/10/23 14:56:17 bouyer Exp $	*/
+/*	$NetBSD: siop_common.c,v 1.11 2000/10/23 23:18:10 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2000 Manuel Bouyer.
@@ -147,10 +147,11 @@ siop_setuptables(siop_cmd)
 		}
 	} else if (sc->targets[target]->status == TARST_OK &&
 	    (sc->targets[target]->flags & TARF_TAG) &&
-	    (siop_cmd->status == CMDST_SENSE) == 0) {
+	    siop_cmd->status != CMDST_SENSE) {
 		siop_cmd->flags |= CMDFL_TAG;
 	}
-	siop_cmd->siop_tables.status = htole32(0xff); /* set invalid status */
+	siop_cmd->siop_tables.status =
+	    htole32(SCSI_SIOP_NOSTATUS); /* set invalid status */
 
 	siop_cmd->siop_tables.cmd.count =
 	    htole32(siop_cmd->dmamap_cmd->dm_segs[0].ds_len);
