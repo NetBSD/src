@@ -1,4 +1,4 @@
-/*	$NetBSD: db_xxx.c,v 1.12 2001/07/31 04:28:16 atatat Exp $	*/
+/*	$NetBSD: db_xxx.c,v 1.13 2001/09/11 04:32:19 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -201,20 +201,30 @@ db_show_callout(addr, haddr, count, modif)
 {
 	extern struct callout_queue *callwheel;
 	extern int callwheelsize;
+	uint64_t hint;
 	int i;
 
 	for (i = 0; i < callwheelsize; i++) {
 		struct callout_queue *bucket = &callwheel[i];
-		struct callout *c = TAILQ_FIRST(bucket);
+		struct callout *c = TAILQ_FIRST(&bucket->cq_q);
 
-		if (c) db_printf("bucket %d:\n", i);
-		while (c) {
-			db_printf("%p: time %llx arg %p flags %x func %p: ",
-				  c, (long long) c->c_time, c->c_arg,
-				  c->c_flags, c->c_func);
-			db_printsym((u_long)c->c_func, DB_STGY_PROC, db_printf);
-			db_printf("\n");
-			c = TAILQ_NEXT(c, c_link);
+		if (c) {
+			db_printf("bucket %d (hint %llx):\n", i,
+			    (long long) bucket->cq_hint);
+			hint = UQUAD_MAX;
+			while (c) {
+				if (c->c_time < hint)
+					hint = c->c_time;
+				db_printf("%p: time %llx arg %p flags %x "
+				    "func %p: ", c, (long long) c->c_time,
+				    c->c_arg, c->c_flags, c->c_func);
+				db_printsym((u_long)c->c_func, DB_STGY_PROC,
+				    db_printf);
+				db_printf("\n");
+				c = TAILQ_NEXT(c, c_link);
+			}
+			if (bucket->cq_hint < hint)
+				printf("** HINT IS STALE\n");
 		}
 	}
 }
