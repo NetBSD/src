@@ -1,4 +1,4 @@
-/*	$NetBSD: aha.c,v 1.28 2000/03/30 12:45:28 augustss Exp $	*/
+/*	$NetBSD: aha.c,v 1.29 2000/11/14 18:21:00 thorpej Exp $	*/
 
 #include "opt_ddb.h"
 
@@ -73,6 +73,8 @@
 #include <sys/buf.h>
 #include <sys/proc.h>
 #include <sys/user.h>
+
+#include <uvm/uvm_extern.h>
 
 #include <machine/bus.h>
 #include <machine/intr.h>
@@ -998,7 +1000,7 @@ aha_init(sc)
 	 * Allocate the mailbox and control blocks.
 	 */
 	if ((error = bus_dmamem_alloc(sc->sc_dmat, sizeof(struct aha_control),
-	    NBPG, 0, &seg, 1, &rseg, BUS_DMA_NOWAIT)) != 0) {
+	    PAGE_SIZE, 0, &seg, 1, &rseg, BUS_DMA_NOWAIT)) != 0) {
 		printf("%s: unable to allocate control structures, "
 		    "error = %d\n", sc->sc_dev.dv_xname, error);
 		return (error);

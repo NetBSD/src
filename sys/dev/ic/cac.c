@@ -1,4 +1,4 @@
-/*	$NetBSD: cac.c,v 1.14 2000/11/08 19:20:35 ad Exp $	*/
+/*	$NetBSD: cac.c,v 1.15 2000/11/14 18:21:01 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -50,6 +50,8 @@
 #include <sys/endian.h>
 #include <sys/malloc.h>
 #include <sys/pool.h>
+
+#include <uvm/uvm_extern.h>
 
 #include <machine/bswap.h>
 #include <machine/bus.h>
@@ -103,7 +105,7 @@ cac_init(struct cac_softc *sc, const char *intrstr, int startfw)
 
         size = sizeof(struct cac_ccb) * CAC_MAX_CCBS;
 
-	if ((error = bus_dmamem_alloc(sc->sc_dmat, size, NBPG, 0, &seg, 1, 
+	if ((error = bus_dmamem_alloc(sc->sc_dmat, size, PAGE_SIZE, 0, &seg, 1, 
 	    &rseg, BUS_DMA_NOWAIT)) != 0) {
 		printf("%s: unable to allocate CCBs, error = %d\n",
 		    sc->sc_dv.dv_xname, error);
