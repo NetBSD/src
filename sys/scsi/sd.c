@@ -1,4 +1,4 @@
-/*	$NetBSD: sd.c,v 1.108 1997/02/21 21:51:59 thorpej Exp $	*/
+/*	$NetBSD: sd.c,v 1.109 1997/02/21 23:03:38 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -566,6 +566,7 @@ sdstart(v)
 		if ((sc_link->flags & SDEV_MEDIA_LOADED) == 0) {
 			bp->b_error = EIO;
 			bp->b_flags |= B_ERROR;
+			bp->b_resid = bp->b_bcount;
 			biodone(bp);
 			continue;
 		}
