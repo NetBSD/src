@@ -1,4 +1,4 @@
-/*	$NetBSD: specdev.h,v 1.14 1996/09/07 12:41:20 mycroft Exp $	*/
+/*	$NetBSD: specdev.h,v 1.15 1997/04/02 17:09:48 kleink Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -45,14 +45,16 @@ struct specinfo {
 	struct	vnode *si_specnext;
 	long	si_flags;
 	dev_t	si_rdev;
+	struct	lockf *si_lockf;
 };
 /*
  * Exported shorthand
  */
-#define v_rdev v_specinfo->si_rdev
-#define v_hashchain v_specinfo->si_hashchain
-#define v_specnext v_specinfo->si_specnext
-#define v_specflags v_specinfo->si_flags
+#define v_rdev		v_specinfo->si_rdev
+#define v_hashchain	v_specinfo->si_hashchain
+#define v_specnext	v_specinfo->si_specnext
+#define v_specflags	v_specinfo->si_flags
+#define v_speclockf	v_specinfo->si_lockf
 
 /*
  * Flags for specinfo
@@ -116,7 +118,7 @@ int	spec_strategy	__P((void *));
 int	spec_print	__P((void *));
 #define	spec_islocked	genfs_nullop
 int	spec_pathconf	__P((void *));
-#define	spec_advlock	genfs_eopnotsupp
+int	spec_advlock	__P((void *));
 #define	spec_blkatoff	genfs_badop
 #define	spec_valloc	genfs_badop
 #define	spec_reallocblks genfs_badop
