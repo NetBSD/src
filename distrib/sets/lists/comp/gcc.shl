@@ -1,4 +1,5 @@
-#	$NetBSD: gcc.shl,v 1.9 2004/08/13 01:02:24 lukem Exp $
+#	$NetBSD: gcc.shl,v 1.10 2004/09/16 06:50:19 he Exp $
+./usr/lib/crtbeginT.o				comp-c-lib
 ./usr/lib/libbfd.so.6				comp-c-shlib		bfd
 ./usr/lib/libbfd.so.6.0				comp-c-shlib		bfd
 ./usr/lib/libg2c_pic.a				comp-fortran-lib
