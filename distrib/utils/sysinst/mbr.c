@@ -1,4 +1,4 @@
-/*	$NetBSD: mbr.c,v 1.63 2004/07/17 19:36:59 dsl Exp $ */
+/*	$NetBSD: mbr.c,v 1.64 2004/08/14 16:06:36 dsl Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -485,8 +485,8 @@ edit_mbr_type(menudesc *m, void *arg)
 			type_opts[i].opt_action = set_mbr_type;
 		}
 		type_menu = new_menu(NULL, type_opts, nelem(type_opts),
-			15, 12, 0, 30,
-			MC_SCROLL | MC_NOEXITOPT | MC_NOCLEAR,
+			13, 12, 0, 30,
+			MC_SUBMENU | MC_SCROLL | MC_NOEXITOPT | MC_NOCLEAR,
 			NULL, set_type_label, NULL,
 			NULL, NULL);
 	}
@@ -954,7 +954,7 @@ edit_mbr_entry(menudesc *m, void *arg)
 	if (ptn_menu == -1)
 		ptn_menu = new_menu(NULL, ptn_opts, nelem(ptn_opts),
 			15, 6, 0, 50,
-			MC_SCROLL | MC_NOCLEAR,
+			MC_SUBMENU | MC_SCROLL | MC_NOCLEAR,
 			set_ptn_header, set_ptn_label, NULL,
 			NULL, MSG_Partition_OK);
 	if (ptn_menu == -1)
@@ -1270,11 +1270,9 @@ edit_mbr(mbr_info_t *mbri)
 	if (mbr_menu == -1)
 		return 0;
 
-	/* Ask for sizes, which partitions, ... */
+	/* Default to MB, and use bios geometry for cylinder size */
 	set_sizemultname_meg();
-	/* ask_sizemult() is due for the chop, when this will be needed */
-	/* current_cylsize = bhead * bsec; */
-	ask_sizemult(bhead * bsec);
+	current_cylsize = bhead * bsec;
 
 	for (;;) {
 		ptstart = 0;
