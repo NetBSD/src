@@ -1,4 +1,4 @@
-/* $NetBSD: pci_550.c,v 1.6 1998/06/05 21:47:14 thorpej Exp $ */
+/* $NetBSD: pci_550.c,v 1.7 1998/06/06 20:42:36 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pci_550.c,v 1.6 1998/06/05 21:47:14 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_550.c,v 1.7 1998/06/06 20:42:36 thorpej Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -124,8 +124,6 @@ void	dec_550_iointr __P((void *framep, unsigned long vec));
 void	dec_550_intr_enable __P((int irq));
 void	dec_550_intr_disable __P((int irq));
 
-u_int64_t *dec_550_int_mask_reg;
-
 void
 pci_550_pickintr(ccp)
 	struct cia_config *ccp;
@@ -145,10 +143,8 @@ pci_550_pickintr(ccp)
 
 	/*
 	 * DEC 550's interrupts are enabled via the Pyxis interrupt
-	 * mask register.
+	 * mask register.  Nothing to map.
 	 */
-	dec_550_int_mask_reg =
-	    (u_int64_t *)ALPHA_PHYS_TO_K0SEG(PYXIS_INT_MASK);
 
 	for (i = DEC_550_PCI_IRQ_BEGIN; i < DEC_550_MAX_IRQ; i++)
 		dec_550_intr_disable(i);	
@@ -371,9 +367,9 @@ dec_550_intr_enable(irq)
 
 	s = splhigh();
 	alpha_mb();
-	imask = *dec_550_int_mask_reg;
+	imask = REGVAL64(PYXIS_INT_MASK);
 	imask |= (1UL << irq);
-	*dec_550_int_mask_reg = imask;
+	REGVAL64(PYXIS_INT_MASK) = imask;
 	alpha_mb();
 	splx(s);
 }
@@ -391,9 +387,9 @@ dec_550_intr_disable(irq)
 
 	s = splhigh();
 	alpha_mb();
-	imask = *dec_550_int_mask_reg;
+	imask = REGVAL64(PYXIS_INT_MASK);
 	imask &= ~(1UL << irq);
-	*dec_550_int_mask_reg = imask;
+	REGVAL64(PYXIS_INT_MASK) = imask;
 	alpha_mb();
 	splx(s);
 }
