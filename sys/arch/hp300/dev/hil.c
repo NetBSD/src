@@ -1,4 +1,4 @@
-/*	$NetBSD: hil.c,v 1.42.2.7 2002/09/06 08:34:59 jdolecek Exp $	*/
+/*	$NetBSD: hil.c,v 1.42.2.8 2002/10/02 21:51:39 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hil.c,v 1.42.2.7 2002/09/06 08:34:59 jdolecek Exp $");                                                  
+__KERNEL_RCSID(0, "$NetBSD: hil.c,v 1.42.2.8 2002/10/02 21:51:39 jdolecek Exp $");                                                  
 
 #include "opt_compat_hpux.h"
 #include "rnd.h"
@@ -841,7 +841,7 @@ hilpoll(dev, events, p)
 static void
 filt_hilrdetach(struct knote *kn)
 {
-	dev_t dev = (u_long) kn->kn_hook;
+	dev_t dev = (intptr_t) kn->kn_hook;
 	struct hil_softc *hilp = hil_cd.cd_devs[HILLOOP(dev)];
 	struct hilloopdev *dptr = &hilp->hl_device[HILUNIT(dev)];
 	int s;
@@ -854,7 +854,7 @@ filt_hilrdetach(struct knote *kn)
 static int
 filt_hilread(struct knote *kn, long hint)
 {
-	dev_t dev = (u_long) kn->kn_hook;
+	dev_t dev = (intptr_t) kn->kn_hook;
 	int device = HILUNIT(dev);
 	struct hil_softc *hilp = hil_cd.cd_devs[HILLOOP(dev)];
 	struct hilloopdev *dptr = &hilp->hl_device[device];
@@ -932,7 +932,7 @@ hilkqfilter(dev_t dev, struct knote *kn)
 		return (1);
 	}
 
-	kn->kn_hook = (caddr_t)(u_long) dev; /* XXX yuck */
+	kn->kn_hook = (void *)(intptr_t) dev; /* XXX yuck */
 
 	s = splhil();
 	SLIST_INSERT_HEAD(klist, kn, kn_selnext);
