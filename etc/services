@@ -1,4 +1,4 @@
-#	$NetBSD: services,v 1.49 2001/06/01 16:04:32 tshiozak Exp $
+#	$NetBSD: services,v 1.50 2001/07/02 16:07:04 joda Exp $
 #
 # Network services, Internet style
 #
@@ -225,6 +225,37 @@ kpop		1109/tcp		# Kerberos POP server
 eklogin		2105/tcp		# Kerberos encrypted `rlogin'
 ekshell2	2106/tcp		# Encrypted kshell - UColorado, Boulder
 krb524		4444/udp		# krb5 -> krb4 ticket conversion
+
+#
+# AFS services
+#
+# IANA has these registered as both UDP and TCP, but only the UDP
+# ports are used by the protocol
+#
+afs3-fileserver 7000/tcp		# file server itself
+afs3-fileserver 7000/udp		# file server itself
+afs3-callback	7001/tcp		# callbacks to cache managers
+afs3-callback	7001/udp		# callbacks to cache managers
+afs3-prserver	7002/tcp		# users & groups database
+afs3-prserver	7002/udp		# users & groups database
+afs3-vlserver	7003/tcp		# volume location database
+afs3-vlserver	7003/udp		# volume location database
+afs3-kaserver	7004/tcp		# AFS/Kerberos authentication service
+afs3-kaserver	7004/udp		# AFS/Kerberos authentication service
+afs3-volser	7005/tcp		# volume managment server
+afs3-volser	7005/udp		# volume managment server
+afs3-errors	7006/tcp		# error interpretation service
+afs3-errors	7006/udp		# error interpretation service
+afs3-bos	7007/tcp		# basic overseer process
+afs3-bos	7007/udp		# basic overseer process
+afs3-update	7008/tcp		# server-to-server updater
+afs3-update	7008/udp		# server-to-server updater
+afs3-rmtsys	7009/tcp		# remote cache manager service
+afs3-rmtsys	7009/udp		# remote cache manager service
+afs3-resserver	7010/tcp		# MR-AFS residence server
+afs3-resserver	7010/udp		# MR-AFS residence server
+afs3-remio	7011/tcp		# MR-AFS remote IO server
+afs3-remio	7011/udp		# MR-AFS remote IO server
 
 #
 # Unofficial but necessary (for NetBSD) services
