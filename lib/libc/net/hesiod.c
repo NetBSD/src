@@ -1,4 +1,4 @@
-/*	$NetBSD: hesiod.c,v 1.6 1999/01/25 00:17:55 lukem Exp $	*/
+/*	$NetBSD: hesiod.c,v 1.7 1999/01/25 00:33:36 lukem Exp $	*/
 
 /* Copyright (c) 1996 by Internet Software Consortium.
  *
@@ -52,7 +52,7 @@ __IDSTRING(rcsid_hesiod_p_h,
     "#Id: hesiod_p.h,v 1.1 1996/12/08 21:39:37 ghudson Exp #");
 __IDSTRING(rcsid_hescompat_c,
     "#Id: hescompat.c,v 1.1.2.1 1996/12/16 08:37:45 ghudson Exp #");
-__RCSID("$NetBSD: hesiod.c,v 1.6 1999/01/25 00:17:55 lukem Exp $");
+__RCSID("$NetBSD: hesiod.c,v 1.7 1999/01/25 00:33:36 lukem Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -266,6 +266,8 @@ hesiod_free_list(context, list)
 {
 	char  **p;
 
+	if (list == NULL)
+		return;
 	for (p = list; *p; p++)
 		free(*p);
 	free(list);
@@ -288,8 +290,8 @@ read_config_file(ctx, filename)
 	FILE	*fp;
 
 		/* Set default query classes. */
-	ctx->classes[0] = C_IN;
-	ctx->classes[1] = C_HS;
+	ctx->classes[0] = C_HS;
+	ctx->classes[1] = 0;
 
 		/* Try to open the configuration file. */
 	fp = fopen(filename, "r");
@@ -552,12 +554,7 @@ void
 hes_free(hp)
 	char **hp;
 {
-	int i;
-	if (!hp)
-		return;
-	for (i = 0; hp[i]; i++)
-		free(hp[i]);
-	free(hp);
+	hesiod_free_list(context, hp);
 }
 
 static int
