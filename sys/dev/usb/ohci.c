@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci.c,v 1.122 2002/03/17 18:02:52 augustss Exp $	*/
+/*	$NetBSD: ohci.c,v 1.123 2002/05/19 06:24:31 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ohci.c,v 1.22 1999/11/17 22:33:40 n_hibma Exp $	*/
 
 /*
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.122 2002/03/17 18:02:52 augustss Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.123 2002/05/19 06:24:31 augustss Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -405,7 +405,7 @@ ohci_alloc_sed(ohci_softc_t *sc)
 			return (0);
 		for(i = 0; i < OHCI_SED_CHUNK; i++) {
 			offs = i * OHCI_SED_SIZE;
-			sed = (ohci_soft_ed_t *)((char *)KERNADDR(&dma) +offs);
+			sed = KERNADDR(&dma, offs);
 			sed->physaddr = DMAADDR(&dma) + offs;
 			sed->next = sc->sc_freeeds;
 			sc->sc_freeeds = sed;
@@ -443,7 +443,7 @@ ohci_alloc_std(ohci_softc_t *sc)
 		s = splusb();
 		for(i = 0; i < OHCI_STD_CHUNK; i++) {
 			offs = i * OHCI_STD_SIZE;
-			std = (ohci_soft_td_t *)((char *)KERNADDR(&dma) +offs);
+			std = KERNADDR(&dma, offs);
 			std->physaddr = DMAADDR(&dma) + offs;
 			std->nexttd = sc->sc_freetds;
 			sc->sc_freetds = std;
@@ -599,7 +599,7 @@ ohci_alloc_sitd(ohci_softc_t *sc)
 			return (NULL);
 		for(i = 0; i < OHCI_SITD_CHUNK; i++) {
 			offs = i * OHCI_SITD_SIZE;
-			sitd = (ohci_soft_itd_t *)((char *)KERNADDR(&dma)+offs);
+			sitd = KERNADDR(&dma, offs);
 			sitd->physaddr = DMAADDR(&dma) + offs;
 			sitd->nextitd = sc->sc_freeitds;
 			sc->sc_freeitds = sitd;
@@ -682,7 +682,7 @@ ohci_init(ohci_softc_t *sc)
 			 OHCI_HCCA_ALIGN, &sc->sc_hccadma);
 	if (err)
 		return (err);
-	sc->sc_hcca = (struct ohci_hcca *)KERNADDR(&sc->sc_hccadma);
+	sc->sc_hcca = KERNADDR(&sc->sc_hccadma, 0);
 	memset(sc->sc_hcca, 0, OHCI_HCCA_SIZE);
 
 	sc->sc_eintrs = OHCI_NORMAL_INTRS;
@@ -1502,7 +1502,7 @@ ohci_rhsc(ohci_softc_t *sc, usbd_xfer_handle xfer)
 	pipe = xfer->pipe;
 	opipe = (struct ohci_pipe *)pipe;
 
-	p = KERNADDR(&xfer->dmabuf);
+	p = KERNADDR(&xfer->dmabuf, 0);
 	m = min(sc->sc_noport, xfer->length * 8 - 1);
 	memset(p, 0, xfer->length);
 	for (i = 1; i <= m; i++) {
@@ -1648,7 +1648,7 @@ ohci_device_request(usbd_xfer_handle xfer)
 		std->td.td_flags |= htole32(OHCI_TD_TOGGLE_1);
 	}
 
-	memcpy(KERNADDR(&opipe->u.ctl.reqdma), req, sizeof *req);
+	memcpy(KERNADDR(&opipe->u.ctl.reqdma, 0), req, sizeof *req);
 
 	setup->td.td_flags = htole32(OHCI_TD_SETUP | OHCI_TD_NOCC |
 				     OHCI_TD_TOGGLE_0 | OHCI_TD_NOINTR);
@@ -2337,7 +2337,7 @@ ohci_root_ctrl_start(usbd_xfer_handle xfer)
 	index = UGETW(req->wIndex);
 
 	if (len != 0)
-		buf = KERNADDR(&xfer->dmabuf);
+		buf = KERNADDR(&xfer->dmabuf, 0);
 
 #define C(x,y) ((x) | ((y) << 8))
 	switch(C(req->bRequest, req->bmRequestType)) {

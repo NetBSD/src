@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_mem.c,v 1.22 2001/11/13 06:24:56 lukem Exp $	*/
+/*	$NetBSD: usb_mem.c,v 1.23 2002/05/19 06:24:33 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb_mem.c,v 1.22 2001/11/13 06:24:56 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb_mem.c,v 1.23 2002/05/19 06:24:33 augustss Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -272,7 +272,7 @@ usb_freemem(usbd_bus_handle bus, usb_dma_t *p)
 		usb_block_freemem(p->block);
 		return;
 	}
-	f = KERNADDR(p);
+	f = KERNADDR(p, 0);
 	f->block = p->block;
 	f->offs = p->offs;
 	s = splusb();
