@@ -1,4 +1,4 @@
-/*	$NetBSD: options.c,v 1.21 1996/12/15 20:37:09 christos Exp $	*/
+/*	$NetBSD: options.c,v 1.22 1997/01/11 02:04:43 tls Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -40,7 +40,7 @@
 #if 0
 static char sccsid[] = "@(#)options.c	8.2 (Berkeley) 5/4/95";
 #else
-static char rcsid[] = "$NetBSD: options.c,v 1.21 1996/12/15 20:37:09 christos Exp $";
+static char rcsid[] = "$NetBSD: options.c,v 1.22 1997/01/11 02:04:43 tls Exp $";
 #endif
 #endif /* not lint */
 
@@ -146,7 +146,7 @@ STATIC void
 options(cmdline)
 	int cmdline;
 {
-	register char *p;
+	char *p;
 	int val;
 	int c;
 
@@ -406,7 +406,7 @@ getopts(optstr, optvar, optfirst, optnext, optptr)
 	char ***optnext;
 	char **optptr;
 {
-	register char *p, *q;
+	char *p, *q;
 	char c = '?';
 	int done = 0;
 	int ind = 0;
@@ -511,7 +511,7 @@ int
 nextopt(optstring)
 	char *optstring;
 	{
-	register char *p, *q;
+	char *p, *q;
 	char c;
 
 	if ((p = optptr) == NULL || *p == '\0') {

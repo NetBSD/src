@@ -1,4 +1,4 @@
-/*	$NetBSD: miscbltin.c,v 1.16 1996/10/16 15:45:11 christos Exp $	*/
+/*	$NetBSD: miscbltin.c,v 1.17 1997/01/11 02:04:38 tls Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -40,7 +40,7 @@
 #if 0
 static char sccsid[] = "@(#)miscbltin.c	8.4 (Berkeley) 5/4/95";
 #else
-static char rcsid[] = "$NetBSD: miscbltin.c,v 1.16 1996/10/16 15:45:11 christos Exp $";
+static char rcsid[] = "$NetBSD: miscbltin.c,v 1.17 1997/01/11 02:04:38 tls Exp $";
 #endif
 #endif /* not lint */
 
@@ -293,7 +293,7 @@ ulimitcmd(argc, argv)
 	int argc;
 	char **argv;
 {
-	register int	c;
+	int	c;
 	rlim_t val;
 	enum { SOFT = 0x1, HARD = 0x2 }
 			how = SOFT | HARD;

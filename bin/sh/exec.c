@@ -1,4 +1,4 @@
-/*	$NetBSD: exec.c,v 1.20 1996/10/19 02:38:36 abrown Exp $	*/
+/*	$NetBSD: exec.c,v 1.21 1997/01/11 02:04:31 tls Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -40,7 +40,7 @@
 #if 0
 static char sccsid[] = "@(#)exec.c	8.4 (Berkeley) 6/8/95";
 #else
-static char rcsid[] = "$NetBSD: exec.c,v 1.20 1996/10/19 02:38:36 abrown Exp $";
+static char rcsid[] = "$NetBSD: exec.c,v 1.21 1997/01/11 02:04:31 tls Exp $";
 #endif
 #endif /* not lint */
 
@@ -289,7 +289,7 @@ padvance(path, name)
 	char **path;
 	char *name;
 	{
-	register char *p, *q;
+	char *p, *q;
 	char *start;
 	int len;
 
@@ -556,7 +556,7 @@ int
 find_builtin(name)
 	char *name;
 {
-	register const struct builtincmd *bp;
+	const struct builtincmd *bp;
 
 	for (bp = builtincmd ; bp->name ; bp++) {
 		if (*bp->name == *name && equal(bp->name, name))
@@ -719,7 +719,7 @@ cmdlookup(name, add)
 	int add;
 {
 	int hashval;
-	register char *p;
+	char *p;
 	struct tblentry *cmdp;
 	struct tblentry **pp;
 

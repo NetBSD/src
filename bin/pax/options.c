@@ -1,4 +1,4 @@
-/*	$NetBSD: options.c,v 1.6 1996/03/26 23:54:18 mrg Exp $	*/
+/*	$NetBSD: options.c,v 1.7 1997/01/11 02:06:41 tls Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)options.c	8.2 (Berkeley) 4/18/94";
 #else
-static char rcsid[] = "$NetBSD: options.c,v 1.6 1996/03/26 23:54:18 mrg Exp $";
+static char rcsid[] = "$NetBSD: options.c,v 1.7 1997/01/11 02:06:41 tls Exp $";
 #endif
 #endif /* not lint */
 
@@ -74,12 +74,12 @@ static int no_op __P((void));
 static void printflg __P((unsigned int));
 static int c_frmt __P((const void *, const void *));
 static off_t str_offt __P((char *));
-static void pax_options __P((register int, register char **));
+static void pax_options __P((int, char **));
 static void pax_usage __P((void));
-static void tar_options __P((register int, register char **));
+static void tar_options __P((int, char **));
 static void tar_usage __P((void));
 #ifdef notdef
-static void cpio_options __P((register int, register char **));
+static void cpio_options __P((int, char **));
 static void cpio_usage __P((void));
 #endif
 
@@ -144,12 +144,12 @@ int ford[] = {5, 4, 3, 2, 1, 0, -1 };
 
 #if __STDC__
 void
-options(register int argc, register char **argv)
+options(int argc, char **argv)
 #else
 void
 options(argc, argv)
-	register int argc;
-	register char **argv;
+	int argc;
+	char **argv;
 #endif
 {
 
@@ -182,19 +182,19 @@ options(argc, argv)
 
 #if __STDC__
 static void
-pax_options(register int argc, register char **argv)
+pax_options(int argc, char **argv)
 #else
 static void
 pax_options(argc, argv)
-	register int argc;
-	register char **argv;
+	int argc;
+	char **argv;
 #endif
 {
-	register int c;
-	register int i;
+	int c;
+	int i;
 	unsigned int flg = 0;
 	unsigned int bflg = 0;
-	register char *pt;
+	char *pt;
         FSUB tmp;
 	extern char *optarg;
 	extern int optind;
@@ -590,15 +590,15 @@ pax_options(argc, argv)
 
 #if __STDC__
 static void
-tar_options(register int argc, register char **argv)
+tar_options(int argc, char **argv)
 #else
 static void
 tar_options(argc, argv)
-	register int argc;
-	register char **argv;
+	int argc;
+	char **argv;
 #endif
 {
-	register int c;
+	int c;
 	int fstdin = 0;
 
 	/*
@@ -807,12 +807,12 @@ tar_options(argc, argv)
 
 #if __STDC__
 static void
-cpio_options(register int argc, register char **argv)
+cpio_options(int argc, char **argv)
 #else
 static void
 cpio_options(argc, argv)
-	register int argc;
-	register char **argv;
+	int argc;
+	char **argv;
 #endif
 {
 }
@@ -900,7 +900,7 @@ int
 bad_opt()
 #endif
 {
-	register OPLIST *opt;
+	OPLIST *opt;
 
 	if (ophead == NULL)
 		return(0);
@@ -925,17 +925,17 @@ bad_opt()
 
 #if __STDC__
 int
-opt_add(register char *str)
+opt_add(char *str)
 #else
 int
 opt_add(str)
-	register char *str;
+	char *str;
 #endif
 {
-	register OPLIST *opt;
-	register char *frpt;
-	register char *pt;
-	register char *endpt;
+	OPLIST *opt;
+	char *frpt;
+	char *pt;
+	char *endpt;
 
 	if ((str == NULL) || (*str == '\0')) {
 		warn(0, "Invalid option name");

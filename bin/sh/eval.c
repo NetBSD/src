@@ -1,4 +1,4 @@
-/*	$NetBSD: eval.c,v 1.33 1996/11/09 01:04:07 christos Exp $	*/
+/*	$NetBSD: eval.c,v 1.34 1997/01/11 02:04:29 tls Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -40,7 +40,7 @@
 #if 0
 static char sccsid[] = "@(#)eval.c	8.9 (Berkeley) 6/8/95";
 #else
-static char sccsid[] = "$NetBSD: eval.c,v 1.33 1996/11/09 01:04:07 christos Exp $";
+static char sccsid[] = "$NetBSD: eval.c,v 1.34 1997/01/11 02:04:29 tls Exp $";
 #endif
 #endif /* not lint */
 
@@ -427,7 +427,7 @@ STATIC void
 expredir(n)
 	union node *n;
 {
-	register union node *redir;
+	union node *redir;
 
 	for (redir = n ; redir ; redir = redir->nfile.next) {
 		struct arglist fn;

@@ -1,4 +1,4 @@
-/*	$NetBSD: cd.c,v 1.19 1996/12/22 08:34:34 cjs Exp $	*/
+/*	$NetBSD: cd.c,v 1.20 1997/01/11 02:04:28 tls Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -40,7 +40,7 @@
 #if 0
 static char sccsid[] = "@(#)cd.c	8.2 (Berkeley) 5/4/95";
 #else
-static char rcsid[] = "$NetBSD: cd.c,v 1.19 1996/12/22 08:34:34 cjs Exp $";
+static char rcsid[] = "$NetBSD: cd.c,v 1.20 1997/01/11 02:04:28 tls Exp $";
 #endif
 #endif /* not lint */
 
@@ -134,8 +134,8 @@ docd(dest, print)
 	char *dest;
 	int print;
 {
-	register char *p;
-	register char *q;
+	char *p;
+	char *q;
 	char *component;
 	struct stat statb;
 	int first;
@@ -197,7 +197,7 @@ docd(dest, print)
 
 STATIC char *
 getcomponent() {
-	register char *p;
+	char *p;
 	char *start;
 
 	if ((p = cdcomppath) == NULL)

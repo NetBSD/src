@@ -1,4 +1,4 @@
-/*	$NetBSD: file_subs.c,v 1.4 1995/03/21 09:07:18 cgd Exp $	*/
+/*	$NetBSD: file_subs.c,v 1.5 1997/01/11 02:06:38 tls Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)file_subs.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$NetBSD: file_subs.c,v 1.4 1995/03/21 09:07:18 cgd Exp $";
+static char rcsid[] = "$NetBSD: file_subs.c,v 1.5 1997/01/11 02:06:38 tls Exp $";
 #endif
 #endif /* not lint */
 
@@ -61,7 +61,7 @@ static char rcsid[] = "$NetBSD: file_subs.c,v 1.4 1995/03/21 09:07:18 cgd Exp $"
 #include "extern.h"
 
 static int
-mk_link __P((register char *,register struct stat *,register char *, int));
+mk_link __P((char *,struct stat *,char *, int));
 
 /*
  * routines that deal with file operations such as: creating, removing;
@@ -81,11 +81,11 @@ mk_link __P((register char *,register struct stat *,register char *, int));
 
 #if __STDC__
 int
-file_creat(register ARCHD *arcn)
+file_creat(ARCHD *arcn)
 #else
 int
 file_creat(arcn)
-	register ARCHD *arcn;
+	ARCHD *arcn;
 #endif
 {
 	int fd = -1;
@@ -144,11 +144,11 @@ file_creat(arcn)
 
 #if __STDC__
 void
-file_close(register ARCHD *arcn, int fd)
+file_close(ARCHD *arcn, int fd)
 #else
 void
 file_close(arcn, fd)
-	register ARCHD *arcn;
+	ARCHD *arcn;
 	int fd;
 #endif
 {
@@ -191,11 +191,11 @@ file_close(arcn, fd)
 
 #if __STDC__
 int
-lnk_creat(register ARCHD *arcn)
+lnk_creat(ARCHD *arcn)
 #else
 int
 lnk_creat(arcn)
-	register ARCHD *arcn;
+	ARCHD *arcn;
 #endif
 {
 	struct stat sb;
@@ -231,11 +231,11 @@ lnk_creat(arcn)
 
 #if __STDC__
 int
-cross_lnk(register ARCHD *arcn)
+cross_lnk(ARCHD *arcn)
 #else
 int
 cross_lnk(arcn)
-	register ARCHD *arcn;
+	ARCHD *arcn;
 #endif
 {
 	/*
@@ -261,11 +261,11 @@ cross_lnk(arcn)
 
 #if __STDC__
 int
-chk_same(register ARCHD *arcn)
+chk_same(ARCHD *arcn)
 #else
 int
 chk_same(arcn)
-	register ARCHD *arcn;
+	ARCHD *arcn;
 #endif
 {
 	struct stat sb;
@@ -304,14 +304,14 @@ chk_same(arcn)
 
 #if __STDC__
 static int
-mk_link(register char *to, register struct stat *to_sb, register char *from,
+mk_link(char *to, struct stat *to_sb, char *from,
 	int ign)
 #else
 static int
 mk_link(to, to_sb, from, ign)
-	register char *to;
-	register struct stat *to_sb;
-	register char *from;
+	char *to;
+	struct stat *to_sb;
+	char *from;
 	int ign;
 #endif
 {
@@ -386,17 +386,17 @@ mk_link(to, to_sb, from, ign)
 
 #if __STDC__
 int
-node_creat(register ARCHD *arcn)
+node_creat(ARCHD *arcn)
 #else
 int
 node_creat(arcn)
-	register ARCHD *arcn;
+	ARCHD *arcn;
 #endif
 {
-	register int res;
-	register int ign = 0;
-	register int oerrno;
-	register int pass = 0;
+	int res;
+	int ign = 0;
+	int oerrno;
+	int pass = 0;
 	mode_t file_mode;
 	struct stat sb;
 
@@ -549,12 +549,12 @@ node_creat(arcn)
 
 #if __STDC__
 int
-unlnk_exist(register char *name, register int type)
+unlnk_exist(char *name, int type)
 #else
 int
 unlnk_exist(name, type)
-	register char *name;
-	register int type;
+	char *name;
+	int type;
 #endif
 {
 	struct stat sb;
@@ -607,16 +607,16 @@ unlnk_exist(name, type)
 
 #if __STDC__
 int
-chk_path( register char *name, uid_t st_uid, gid_t st_gid)
+chk_path( char *name, uid_t st_uid, gid_t st_gid)
 #else
 int
 chk_path(name, st_uid, st_gid)
-	register char *name;
+	char *name;
 	uid_t st_uid;
 	gid_t st_gid;
 #endif
 {
-	register char *spt = name;
+	char *spt = name;
 	struct stat sb;
 	int retval = -1;
 
@@ -833,24 +833,24 @@ set_pmode(fnm, mode)
 
 #if __STDC__
 int
-file_write(int fd, char *str, register int cnt, int *rem, int *isempt, int sz,
+file_write(int fd, char *str, int cnt, int *rem, int *isempt, int sz,
 	char *name)
 #else
 int
 file_write(fd, str, cnt, rem, isempt, sz, name)
 	int fd;
 	char *str;
-	register int cnt;
+	int cnt;
 	int *rem;
 	int *isempt;
 	int sz;
 	char *name;
 #endif
 {
-	register char *pt;
-	register char *end;
-	register int wcnt;
-	register char *st = str;
+	char *pt;
+	char *end;
+	int wcnt;
+	char *st = str;
 	
 	/*
 	 * while we have data to process
@@ -965,12 +965,12 @@ file_flush(fd, fname, isempt)
 
 #if __STDC__
 void
-rdfile_close(register ARCHD *arcn, register int *fd)
+rdfile_close(ARCHD *arcn, int *fd)
 #else
 void
 rdfile_close(arcn, fd)
-	register ARCHD *arcn;
-	register int *fd;
+	ARCHD *arcn;
+	int *fd;
 #endif
 {
 	/*
@@ -1002,16 +1002,16 @@ rdfile_close(arcn, fd)
 
 #if __STDC__
 int
-set_crc(register ARCHD *arcn, register int fd)
+set_crc(ARCHD *arcn, int fd)
 #else
 int
 set_crc(arcn, fd)
-	register ARCHD *arcn;
-	register int fd;
+	ARCHD *arcn;
+	int fd;
 #endif
 {
-	register int i;
-	register int res;
+	int i;
+	int res;
 	off_t cpcnt = 0L;
 	u_long size;
 	unsigned long crc = 0L;

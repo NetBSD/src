@@ -1,4 +1,4 @@
-/*	$NetBSD: ar_subs.c,v 1.5 1995/03/21 09:07:06 cgd Exp $	*/
+/*	$NetBSD: ar_subs.c,v 1.6 1997/01/11 02:06:34 tls Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)ar_subs.c	8.2 (Berkeley) 4/18/94";
 #else
-static char rcsid[] = "$NetBSD: ar_subs.c,v 1.5 1995/03/21 09:07:06 cgd Exp $";
+static char rcsid[] = "$NetBSD: ar_subs.c,v 1.6 1997/01/11 02:06:34 tls Exp $";
 #endif
 #endif /* not lint */
 
@@ -60,9 +60,9 @@ static char rcsid[] = "$NetBSD: ar_subs.c,v 1.5 1995/03/21 09:07:06 cgd Exp $";
 #include "pax.h"
 #include "extern.h"
 
-static void wr_archive __P((register ARCHD *, int is_app));
+static void wr_archive __P((ARCHD *, int is_app));
 static int get_arc __P((void));
-static int next_head __P((register ARCHD *));
+static int next_head __P((ARCHD *));
 extern sigset_t s_mask;
 
 /*
@@ -87,8 +87,8 @@ void
 list()
 #endif
 {
-	register ARCHD *arcn;
-	register int res;
+	ARCHD *arcn;
+	int res;
 	ARCHD archd;
 	time_t now;
 
@@ -169,8 +169,8 @@ void
 extract()
 #endif
 {
-	register ARCHD *arcn;
-	register int res;
+	ARCHD *arcn;
+	int res;
 	off_t cnt;
 	ARCHD archd;
 	struct stat sb;
@@ -351,17 +351,17 @@ extract()
 
 #if __STDC__
 static void
-wr_archive(register ARCHD *arcn, int is_app)
+wr_archive(ARCHD *arcn, int is_app)
 #else
 static void
 wr_archive(arcn, is_app)
-	register ARCHD *arcn;
+	ARCHD *arcn;
 	int is_app;
 #endif
 {
-	register int res;
-	register int hlk;
-	register int wr_one;
+	int res;
+	int hlk;
+	int wr_one;
 	off_t cnt;
 	int (*wrf)();
 	int fd = -1;
@@ -560,8 +560,8 @@ void
 append()
 #endif
 {
-	register ARCHD *arcn;
-	register int res;
+	ARCHD *arcn;
+	int res;
 	ARCHD archd;
 	FSUB *orgfrmt;
 	int udev;
@@ -732,12 +732,12 @@ void
 copy()
 #endif
 {
-	register ARCHD *arcn;
-	register int res;
-	register int fddest;
-	register char *dest_pt;
-	register int dlen;
-	register int drem;
+	ARCHD *arcn;
+	int res;
+	int fddest;
+	char *dest_pt;
+	int dlen;
+	int drem;
 	int fdsrc = -1;
 	struct stat sb;
 	ARCHD archd;
@@ -978,19 +978,19 @@ copy()
 
 #if __STDC__
 static int
-next_head(register ARCHD *arcn)
+next_head(ARCHD *arcn)
 #else
 static int
 next_head(arcn)
-	register ARCHD *arcn;
+	ARCHD *arcn;
 #endif
 {
-	register int ret;
-	register char *hdend;
-	register int res;
-	register int shftsz;
-	register int hsz;
-	register int in_resync = 0; 	/* set when we are in resync mode */
+	int ret;
+	char *hdend;
+	int res;
+	int shftsz;
+	int hsz;
+	int in_resync = 0; 	/* set when we are in resync mode */
 	int cnt = 0;			/* counter for trailer function */
 	
 	/*
@@ -1130,10 +1130,10 @@ static int
 get_arc()
 #endif
 {
-	register int i;
-	register int hdsz = 0;
-	register int res;
-	register int minhd = BLKMULT;
+	int i;
+	int hdsz = 0;
+	int res;
+	int minhd = BLKMULT;
 	char *hdend;
 	int notice = 0;
 	

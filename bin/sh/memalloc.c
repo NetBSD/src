@@ -1,4 +1,4 @@
-/*	$NetBSD: memalloc.c,v 1.18 1996/10/16 15:45:10 christos Exp $	*/
+/*	$NetBSD: memalloc.c,v 1.19 1997/01/11 02:04:38 tls Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -40,7 +40,7 @@
 #if 0
 static char sccsid[] = "@(#)memalloc.c	8.3 (Berkeley) 5/4/95";
 #else
-static char rcsid[] = "$NetBSD: memalloc.c,v 1.18 1996/10/16 15:45:10 christos Exp $";
+static char rcsid[] = "$NetBSD: memalloc.c,v 1.19 1997/01/11 02:04:38 tls Exp $";
 #endif
 #endif /* not lint */
 
@@ -61,7 +61,7 @@ pointer
 ckmalloc(nbytes)
 	int nbytes;
 {
-	register pointer p;
+	pointer p;
 
 	if ((p = malloc(nbytes)) == NULL)
 		error("Out of space");
@@ -75,7 +75,7 @@ ckmalloc(nbytes)
 
 pointer
 ckrealloc(p, nbytes)
-	register pointer p;
+	pointer p;
 	int nbytes;
 {
 
@@ -93,7 +93,7 @@ char *
 savestr(s)
 	char *s;
 	{
-	register char *p;
+	char *p;
 
 	p = ckmalloc(strlen(s) + 1);
 	scopy(s, p);
@@ -131,7 +131,7 @@ pointer
 stalloc(nbytes)
 	int nbytes;
 {
-	register char *p;
+	char *p;
 
 	nbytes = ALIGN(nbytes);
 	if (nbytes > stacknleft) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: show.c,v 1.12 1996/10/16 15:21:50 christos Exp $	*/
+/*	$NetBSD: show.c,v 1.13 1997/01/11 02:04:47 tls Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -40,7 +40,7 @@
 #if 0
 static char sccsid[] = "@(#)show.c	8.3 (Berkeley) 5/4/95";
 #else
-static char rcsid[] = "$NetBSD: show.c,v 1.12 1996/10/16 15:21:50 christos Exp $";
+static char rcsid[] = "$NetBSD: show.c,v 1.13 1997/01/11 02:04:47 tls Exp $";
 #endif
 #endif /* not lint */
 
@@ -348,7 +348,7 @@ static void
 trstring(s)
 	char *s;
 {
-	register char *p;
+	char *p;
 	char c;
 
 	if (tracefile == NULL)

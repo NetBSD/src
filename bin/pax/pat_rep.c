@@ -1,4 +1,4 @@
-/*	$NetBSD: pat_rep.c,v 1.4 1995/03/21 09:07:33 cgd Exp $	*/
+/*	$NetBSD: pat_rep.c,v 1.5 1997/01/11 02:06:42 tls Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)pat_rep.c	8.2 (Berkeley) 4/18/94";
 #else
-static char rcsid[] = "$NetBSD: pat_rep.c,v 1.4 1995/03/21 09:07:33 cgd Exp $";
+static char rcsid[] = "$NetBSD: pat_rep.c,v 1.5 1997/01/11 02:06:42 tls Exp $";
 #endif
 #endif /* not lint */
 
@@ -77,12 +77,12 @@ static REPLACE *rephead = NULL;		/* replacement string list head */
 static REPLACE *reptail = NULL;		/* replacement string list tail */
 
 static int rep_name __P((char *, int *, int));
-static int tty_rename __P((register ARCHD *));
+static int tty_rename __P((ARCHD *));
 static int fix_path __P((char *, int *, char *, int));
-static int fn_match __P((register char *, register char *, char **));
-static char * range_match __P((register char *, register int));
+static int fn_match __P((char *, char *, char **));
+static char * range_match __P((char *, int));
 #ifdef NET2_REGEX
-static int resub __P((regexp *, char *, char *, register char *));
+static int resub __P((regexp *, char *, char *, char *));
 #else
 static int resub __P((regex_t *, regmatch_t *, char *, char *, char *));
 #endif
@@ -105,18 +105,18 @@ static int resub __P((regex_t *, regmatch_t *, char *, char *, char *));
 
 #if __STDC__
 int
-rep_add(register char *str)
+rep_add(char *str)
 #else
 int
 rep_add(str)
-	register char *str;
+	char *str;
 #endif
 {
-	register char *pt1;
-	register char *pt2;
-	register REPLACE *rep;
+	char *pt1;
+	char *pt2;
+	REPLACE *rep;
 #	ifndef NET2_REGEX
-	register int res;
+	int res;
 	char rebuf[BUFSIZ];
 #	endif
 
@@ -240,7 +240,7 @@ pat_add(str)
 	char *str;
 #endif
 {
-	register PATTERN *pt;
+	PATTERN *pt;
 
 	/*
 	 * throw out the junk
@@ -288,8 +288,8 @@ void
 pat_chk()
 #endif
 {
-	register PATTERN *pt;
-	register int wban = 0;
+	PATTERN *pt;
+	int wban = 0;
 
 	/*
 	 * walk down the list checking the flags to make sure MTCH was set,
@@ -324,16 +324,16 @@ pat_chk()
 
 #if __STDC__
 int
-pat_sel(register ARCHD *arcn)
+pat_sel(ARCHD *arcn)
 #else
 int
 pat_sel(arcn)
-	register ARCHD *arcn;
+	ARCHD *arcn;
 #endif
 {
-	register PATTERN *pt;
-	register PATTERN **ppt;
-	register int len;
+	PATTERN *pt;
+	PATTERN **ppt;
+	int len;
 
 	/*
 	 * if no patterns just return
@@ -449,14 +449,14 @@ pat_sel(arcn)
 
 #if __STDC__
 int
-pat_match(register ARCHD *arcn)
+pat_match(ARCHD *arcn)
 #else
 int
 pat_match(arcn)
-	register ARCHD *arcn;
+	ARCHD *arcn;
 #endif
 {
-	register PATTERN *pt;
+	PATTERN *pt;
 
 	arcn->pat = NULL;
 
@@ -527,16 +527,16 @@ pat_match(arcn)
 
 #if __STDC__
 static int
-fn_match(register char *pattern, register char *string, char **pend)
+fn_match(char *pattern, char *string, char **pend)
 #else
 static int
 fn_match(pattern, string, pend)
-	register char *pattern;
-	register char *string;
+	char *pattern;
+	char *string;
 	char **pend;
 #endif
 {
-	register char c;
+	char c;
 	char test;
 
 	*pend = NULL;
@@ -608,16 +608,16 @@ fn_match(pattern, string, pend)
 
 #ifdef __STDC__
 static char *
-range_match(register char *pattern, register int test)
+range_match(char *pattern, int test)
 #else
 static char *
 range_match(pattern, test)
-	register char *pattern;
-	register int test;
+	char *pattern;
+	int test;
 #endif
 {
-	register char c;
-	register char c2;
+	char c;
+	char c2;
 	int negate;
 	int ok = 0;
 
@@ -658,14 +658,14 @@ range_match(pattern, test)
 
 #if __STDC__
 int
-mod_name(register ARCHD *arcn)
+mod_name(ARCHD *arcn)
 #else
 int
 mod_name(arcn)
-	register ARCHD *arcn;
+	ARCHD *arcn;
 #endif
 {
-	register int res = 0;
+	int res = 0;
 
 	/*
 	 * IMPORTANT: We have a problem. what do we do with symlinks?
@@ -725,11 +725,11 @@ mod_name(arcn)
 
 #if __STDC__
 static int
-tty_rename(register ARCHD *arcn)
+tty_rename(ARCHD *arcn)
 #else
 static int
 tty_rename(arcn)
-	register ARCHD *arcn;
+	ARCHD *arcn;
 #endif
 {
 	char tmpname[PAXPATHLEN+2];
@@ -796,11 +796,11 @@ tty_rename(arcn)
 
 #if __STDC__
 int
-set_dest(register ARCHD *arcn, char *dest_dir, int dir_len)
+set_dest(ARCHD *arcn, char *dest_dir, int dir_len)
 #else
 int
 set_dest(arcn, dest_dir, dir_len)
-	register ARCHD *arcn;
+	ARCHD *arcn;
 	char *dest_dir;
 	int dir_len;
 #endif
@@ -841,9 +841,9 @@ fix_path(or_name, or_len, dir_name, dir_len)
 	int dir_len;
 #endif
 {
-	register char *src;
-	register char *dest;
-	register char *start;
+	char *src;
+	char *dest;
+	char *start;
 	int len;
 
 	/*
@@ -912,13 +912,13 @@ rep_name(name, nlen, prnt)
 	int prnt;
 #endif
 {
-	register REPLACE *pt;
-	register char *inpt;
-	register char *outpt;
-	register char *endpt;
-	register char *rpt;
-	register int found = 0;
-	register int res;
+	REPLACE *pt;
+	char *inpt;
+	char *outpt;
+	char *endpt;
+	char *rpt;
+	int found = 0;
+	int res;
 #	ifndef NET2_REGEX
 	regmatch_t pm[MAXSUBEXP];
 #	endif
@@ -1076,21 +1076,21 @@ rep_name(name, nlen, prnt)
 
 #if __STDC__
 static int
-resub(regexp *prog, char *src, char *dest, register char *destend)
+resub(regexp *prog, char *src, char *dest, char *destend)
 #else
 static int
 resub(prog, src, dest, destend)
 	regexp *prog;
 	char *src;
 	char *dest;
-	register char *destend;
+	char *destend;
 #endif
 {
-	register char *spt;
-	register char *dpt;
-	register char c;
-	register int no;
-	register int len;
+	char *spt;
+	char *dpt;
+	char c;
+	int no;
+	int len;
 
 	spt = src;
 	dpt = dest;
@@ -1134,23 +1134,23 @@ resub(prog, src, dest, destend)
 
 #if __STDC__
 static int
-resub(regex_t *rp, register regmatch_t *pm, char *src, char *dest,
-	register char *destend)
+resub(regex_t *rp, regmatch_t *pm, char *src, char *dest,
+	char *destend)
 #else
 static int
 resub(rp, pm, src, dest, destend)
 	regex_t *rp;
-	register regmatch_t *pm;
+	regmatch_t *pm;
 	char *src;
 	char *dest;
-	register char *destend;
+	char *destend;
 #endif
 {
-	register char *spt;
-	register char *dpt;
-	register char c;
-	register regmatch_t *pmpt;
-	register int len;
+	char *spt;
+	char *dpt;
+	char c;
+	regmatch_t *pmpt;
+	int len;
 	int subexcnt;
 
 	spt =  src;

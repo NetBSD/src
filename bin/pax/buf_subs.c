@@ -1,4 +1,4 @@
-/*	$NetBSD: buf_subs.c,v 1.5 1995/03/21 09:07:08 cgd Exp $	*/
+/*	$NetBSD: buf_subs.c,v 1.6 1997/01/11 02:06:35 tls Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)buf_subs.c	8.2 (Berkeley) 4/18/94";
 #else
-static char rcsid[] = "$NetBSD: buf_subs.c,v 1.5 1995/03/21 09:07:08 cgd Exp $";
+static char rcsid[] = "$NetBSD: buf_subs.c,v 1.6 1997/01/11 02:06:35 tls Exp $";
 #endif
 #endif /* not lint */
 
@@ -233,7 +233,7 @@ appnd_start(skcnt)
 	off_t skcnt;
 #endif
 {
-	register int res;
+	int res;
 	off_t cnt;
 
 	if (exit_val != 0) {
@@ -337,8 +337,8 @@ int
 rd_sync()
 #endif
 {
-	register int errcnt = 0;
-	register int res;
+	int errcnt = 0;
+	int res;
 
 	/*
 	 * if the user says bail out on first fault, we are out of here...
@@ -528,15 +528,15 @@ wr_fin()
 
 #if __STDC__
 int
-wr_rdbuf(register char *out, register int outcnt)
+wr_rdbuf(char *out, int outcnt)
 #else
 int
 wr_rdbuf(out, outcnt)
-	register char *out;
-	register int outcnt;
+	char *out;
+	int outcnt;
 #endif
 {
-	register int cnt;
+	int cnt;
 
 	/*
 	 * while there is data to copy copy into the write buffer. when the
@@ -571,17 +571,17 @@ wr_rdbuf(out, outcnt)
 
 #if __STDC__
 int
-rd_wrbuf(register char *in, register int cpcnt)
+rd_wrbuf(char *in, int cpcnt)
 #else
 int
 rd_wrbuf(in, cpcnt)
-	register char *in;
-	register int cpcnt;
+	char *in;
+	int cpcnt;
 #endif
 {
-	register int res;
-	register int cnt;
-	register int incnt = cpcnt;
+	int res;
+	int cnt;
+	int incnt = cpcnt;
 
 	/*
 	 * loop until we fill the buffer with the requested number of bytes
@@ -633,7 +633,7 @@ wr_skip(skcnt)
 	off_t skcnt;
 #endif
 {
-	register int cnt;
+	int cnt;
 
 	/*
 	 * loop while there is more padding to add
@@ -679,9 +679,9 @@ wr_rdfile(arcn, ifd, left)
 	off_t *left;
 #endif
 {
-	register int cnt;
-	register int res = 0;
-	register off_t size = arcn->sb.st_size;
+	int cnt;
+	int res = 0;
+	off_t size = arcn->sb.st_size;
 	struct stat sb;
 
 	/*
@@ -748,10 +748,10 @@ rd_wrfile(arcn, ofd, left)
 	off_t *left;
 #endif
 {
-	register int cnt = 0;
-	register off_t size = arcn->sb.st_size;
-	register int res = 0;
-	register char *fnm = arcn->name;
+	int cnt = 0;
+	off_t size = arcn->sb.st_size;
+	int res = 0;
+	char *fnm = arcn->name;
 	int isem = 1;
 	int rem;
 	int sz = MINFBSZ;
@@ -844,11 +844,11 @@ cp_file(arcn, fd1, fd2)
 	int fd2;
 #endif
 {
-	register int cnt;
-	register off_t cpcnt = 0L;
-	register int res = 0;
-	register char *fnm = arcn->name;
-	register int no_hole = 0;
+	int cnt;
+	off_t cpcnt = 0L;
+	int res = 0;
+	char *fnm = arcn->name;
+	int no_hole = 0;
 	int isem = 1;
 	int rem;
 	int sz = MINFBSZ;
@@ -930,7 +930,7 @@ int
 buf_fill()
 #endif
 {
-	register int cnt;
+	int cnt;
 	static int fini = 0;
 
 	if (fini)
@@ -974,16 +974,16 @@ buf_fill()
 
 #if __STDC__
 int
-buf_flush(register int bufcnt)
+buf_flush(int bufcnt)
 #else
 int
 buf_flush(bufcnt)
-	register int bufcnt;
+	int bufcnt;
 #endif
 {
-	register int cnt;
-	register int push = 0;
-	register int totcnt = 0;
+	int cnt;
+	int push = 0;
+	int totcnt = 0;
 
 	/*
 	 * if we have reached the user specified byte count for each archive
