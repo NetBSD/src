@@ -1,4 +1,4 @@
-/*	$NetBSD: inet.c,v 1.21 1997/05/22 17:21:28 christos Exp $	*/
+/*	$NetBSD: inet.c,v 1.22 1997/07/23 21:31:27 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "from: @(#)inet.c	8.4 (Berkeley) 4/20/94";
 #else
-static char *rcsid = "$NetBSD: inet.c,v 1.21 1997/05/22 17:21:28 christos Exp $";
+static char *rcsid = "$NetBSD: inet.c,v 1.22 1997/07/23 21:31:27 thorpej Exp $";
 #endif
 #endif /* not lint */
 
@@ -233,6 +233,19 @@ tcp_stats(off, name)
 	p(tcps_preddat, "\t%lu correct data packet header prediction%s\n");
 	p3(tcps_pcbhashmiss, "\t%lu PCB hash miss%s\n");
 	ps(tcps_noport, "\t%lu dropped due to no socket\n");
+
+	p(tcps_badsyn, "\t%lu bad connection attempt%s\n");
+	ps(tcps_sc_added, "\t%lu SYN cache entries added\n");
+	p(tcps_sc_collisions, "\t\t%lu hash collision%s\n");
+	ps(tcps_sc_completed, "\t\t%lu completed\n");
+	ps(tcps_sc_aborted, "\t\t%lu aborted (no space to build PCB)\n");
+	ps(tcps_sc_timed_out, "\t\t%lu timed out\n");
+	ps(tcps_sc_overflowed, "\t\t%lu dropped due to overflow\n");
+	ps(tcps_sc_bucketoverflow, "\t\t%lu dropped due to bucket overflow\n");
+	ps(tcps_sc_reset, "\t\t%lu dropped due to RST\n");
+	ps(tcps_sc_unreach, "\t\t%lu dropped due to ICMP unreachable\n");
+	p(tcps_sc_dupesyn, "\t%lu duplicate SYN%s received for entries already in the cache\n");
+	p(tcps_sc_dropped, "\t%lu SYN%s dropped (no route or no space)\n");
 
 #undef p
 #undef ps
