@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_vnops.c,v 1.7 1994/07/14 01:43:42 mycroft Exp $	*/
+/*	$NetBSD: cd9660_vnops.c,v 1.8 1994/07/18 13:13:46 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -549,8 +549,7 @@ cd9660_readdir(ap)
 			return (error);
 		}
 	}
-
-	endsearch = ip->i_size;
+	endsearch = roundup(ip->i_size, imp->logical_block_size);
 
 	while (idp->curroff < endsearch) {
 		/*
@@ -558,7 +557,6 @@ cd9660_readdir(ap)
 		 * read the next directory block.
 		 * Release previous if it exists.
 		 */
-
 		if (iso_blkoff(imp, idp->curroff) == 0) {
 			if (bp != NULL)
 				brelse(bp);
@@ -569,15 +567,14 @@ cd9660_readdir(ap)
 		/*
 		 * Get pointer to next entry.
 		 */
-
 		ep = (struct iso_directory_record *)
 			(bp->b_data + entryoffsetinblock);
 
 		reclen = isonum_711 (ep->length);
 		if (reclen == 0) {
 			/* skip to next block, if any */
-			idp->curroff = roundup (idp->curroff,
-						imp->logical_block_size);
+			idp->curroff =
+				roundup(idp->curroff, imp->logical_block_size);
 			continue;
 		}
 
@@ -593,12 +590,7 @@ cd9660_readdir(ap)
 			break;
 		}
 
-		idp->current.d_namlen = isonum_711 (ep->name_len);
-		if (isonum_711(ep->flags)&2)
-			isodirino(&idp->current.d_fileno,ep,imp);
-		else
-			idp->current.d_fileno = dbtob(bp->b_blkno) +
-				idp->curroff;
+		idp->current.d_namlen = isonum_711(ep->name_len);
 
 		if (reclen < ISO_DIRECTORY_RECORD_SIZE + idp->current.d_namlen) {
 			error = EINVAL;
@@ -606,10 +598,14 @@ cd9660_readdir(ap)
 			break;
 		}
 
+		if (isonum_711(ep->flags)&2)
+			isodirino(&idp->current.d_fileno,ep,imp);
+		else
+			idp->current.d_fileno = dbtob(bp->b_blkno) +
+				entryoffsetinblock;
+
 		idp->curroff += reclen;
-		/*
-		 *
-		 */
+
 		switch (imp->iso_ftype) {
 		case ISO_FTYPE_RRIP:
 			cd9660_rrip_getname(ep,idp->current.d_name, &elen,
