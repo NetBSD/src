@@ -1,4 +1,4 @@
-/*	$NetBSD: fp.S,v 1.26 2003/08/07 16:28:30 agc Exp $	*/
+/*	$NetBSD: fp.S,v 1.27 2003/10/25 22:06:59 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -107,7 +107,7 @@
 NESTED(MachEmulateFP, CALLFRAME_SIZ, ra)
 	subu	sp, sp, CALLFRAME_SIZ
 	sw	ra, CALLFRAME_RA(sp)
-	sw	a1, CALLFRAME_SIZ + 16(sp)
+	sw	a1, CALLFRAME_SIZ + 4(sp)
 	sw	a2, CALLFRAME_SIZ + 8(sp)
 /*
  * Decode the FMT field (bits 25-21) and FUNCTION field (bits 5-0).
@@ -2560,17 +2560,17 @@ fpe_trap:
 	/*
 	 * ctc1 with fpe bits set causes FPE in kernel mode panic on 5231.
 	 */
-	sw	a2, CALLFRAME_SIZ + 12(sp)
+	sw	a2, CALLFRAME_SIZ + 8(sp)
 	lw	a0, _C_LABEL(fpcurlwp)
 	jal	_C_LABEL(savefpregs)		# on RM5231
 
-	lw	a2, CALLFRAME_SIZ + 12(sp)
+	lw	a2, CALLFRAME_SIZ + 8(sp)
 
 	lw	v0, _C_LABEL(curpcb)		# get pcb of current process
 	#nop
 	sw	a2, U_PCB_FPREGS+FRAME_FSR(v0)
 #endif
-	lw	a1, CALLFRAME_SIZ + 16(sp)	# frame
+	lw	a1, CALLFRAME_SIZ + 4(sp)	# frame
 	lw	a2, CALLFRAME_SIZ + 8(sp)	# cause
 	lw	ra, CALLFRAME_RA(sp)
 	addu	sp, sp, CALLFRAME_SIZ
@@ -2587,7 +2587,7 @@ ill:
 #else
 	ctc1	a2, MIPS_FPU_CSR		# save exceptions
 #endif
-	lw	a1, CALLFRAME_SIZ + 16(sp)	# frame
+	lw	a1, CALLFRAME_SIZ + 4(sp)	# frame
 	lw	a2, CALLFRAME_SIZ + 8(sp)	# cause
 	lw	ra, CALLFRAME_RA(sp)
 	addu	sp, sp, CALLFRAME_SIZ
