@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mc.c,v 1.1.2.2 1997/11/12 02:09:22 mellon Exp $	*/
+/*	$NetBSD: if_mc.c,v 1.1.2.3 1997/12/09 20:07:26 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997 David Huang <khym@bga.com>
@@ -90,6 +90,7 @@ hide void	mcstart __P((struct ifnet *ifp));
 hide void	mcreset __P((struct mc_softc *sc));
 
 integrate u_int	maceput __P((struct mc_softc *sc, struct mbuf *m0));
+integrate void	mc_tint __P((struct mc_softc *sc));
 integrate void	mace_read __P((struct mc_softc *, caddr_t, int));
 integrate struct mbuf *mace_get __P((struct mc_softc *, caddr_t, int));
 static void mace_calcladrf __P((struct ethercom *ac, u_int8_t *af));
