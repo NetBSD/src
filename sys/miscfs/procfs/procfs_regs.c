@@ -37,7 +37,7 @@
  * From:
  *	Id: procfs_regs.c,v 4.1 1993/12/17 10:47:45 jsp Rel
  *
- *	$Id: procfs_regs.c,v 1.1 1994/01/05 07:51:24 cgd Exp $
+ *	$Id: procfs_regs.c,v 1.2 1994/01/08 10:47:06 cgd Exp $
  */
 
 #include <sys/param.h>
@@ -46,6 +46,7 @@
 #include <sys/kernel.h>
 #include <sys/proc.h>
 #include <sys/vnode.h>
+#include <sys/ptrace.h>
 #include <machine/reg.h>
 #include <miscfs/procfs/procfs.h>
 
@@ -71,14 +72,14 @@ pfs_doregs(curp, p, pfs, uio)
 	if (kl < 0)
 		error = EINVAL;
 	else
-		error = procfs_read_regs(p, &r);
+		error = process_read_regs(p, &r);
 	if (error == 0)
 		error = uiomove(kv, kl, uio);
 	if (error == 0 && uio->uio_rw == UIO_WRITE) {
 		if ((p->p_flag & SSTOP) == 0)
 			error = EBUSY;
 		else
-			error = procfs_write_regs(p, &r);
+			error = process_write_regs(p, &r);
 	}
 
 	uio->uio_offset = 0;
