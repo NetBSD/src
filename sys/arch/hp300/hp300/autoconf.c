@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.47 1999/08/23 22:29:38 thorpej Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.48 1999/09/15 18:10:36 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -258,7 +258,7 @@ mainbussearch(parent, cf, aux)
  * Determine the device configuration for the running system.
  */
 void
-configure()
+cpu_configure()
 {
 
 	/*
