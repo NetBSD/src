@@ -1,4 +1,4 @@
-/*	$NetBSD: am7990.c,v 1.11 1996/03/14 19:05:07 christos Exp $	*/
+/*	$NetBSD: am7990.c,v 1.12 1996/03/16 23:19:14 christos Exp $	*/
 
 /*-
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
@@ -482,7 +482,7 @@ lerint(sc)
 				printf("%s: receive buffer error\n",
 				    sc->sc_dev.dv_xname);
 			ifp->if_ierrors++;
-		} else if (rmd.rmd1_bits & (LE_R1_STP | LE_R1_ENP) !=
+		} else if ((rmd.rmd1_bits & (LE_R1_STP | LE_R1_ENP)) !=
 		    (LE_R1_STP | LE_R1_ENP)) {
 			printf("%s: dropping chained buffer\n",
 			    sc->sc_dev.dv_xname);
