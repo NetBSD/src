@@ -1,4 +1,4 @@
-/*	$NetBSD: ls.c,v 1.44 2002/09/14 04:25:55 sommerfeld Exp $	*/
+/*	$NetBSD: ls.c,v 1.45 2002/09/27 12:01:51 simonb Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)ls.c	8.7 (Berkeley) 8/5/94";
 #else
-__RCSID("$NetBSD: ls.c,v 1.44 2002/09/14 04:25:55 sommerfeld Exp $");
+__RCSID("$NetBSD: ls.c,v 1.45 2002/09/27 12:01:51 simonb Exp $");
 #endif
 #endif /* not lint */
 
@@ -268,7 +268,7 @@ ls_main(int argc, char *argv[])
 #endif
 
 	/* If -l or -s, figure out block size. */
-	if (f_longform || f_size) {
+	if (f_inode || f_longform || f_size) {
 		if (!kflag)
 			(void)getbsize(&notused, &blocksize);
 		blocksize /= 512;
