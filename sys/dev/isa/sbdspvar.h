@@ -1,4 +1,4 @@
-/*	$NetBSD: sbdspvar.h,v 1.15 1997/03/13 02:20:12 mycroft Exp $	*/
+/*	$NetBSD: sbdspvar.h,v 1.16 1997/03/20 06:48:59 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -90,8 +90,6 @@ struct sbdsp_softc {
 	u_int	gain[SB_NDEVS];		/* kept in SB levels: right/left each
 					   in a nibble */
 	
-	u_int	encoding;		/* ulaw/linear -- keep track */
-
 	u_int	out_port;		/* output port */
 	u_int	in_port;		/* input port */
 	u_int	in_filter;		/* one of SB_TREBLE_EQ, SB_BASS_EQ, 0 */
@@ -115,8 +113,11 @@ struct sbdsp_softc {
 	caddr_t	dmaaddr;
 	vm_size_t	dmacnt;
 	int	sc_last_hs_size;	/* last HS dma size */
-	int	sc_precision;		/* size of samples */
+
+	u_int	sc_encoding;		/* ulaw/linear -- keep track */
+	u_int	sc_precision;		/* size of samples */
 	int	sc_channels;		/* # of channels */
+
 	int	sc_dmadir;		/* DMA direction */
 #define	SB_DMA_NONE	0
 #define	SB_DMA_IN	1
@@ -164,9 +165,8 @@ int	sbdsp_set_out_sr __P((void *, u_long));
 int	sbdsp_set_out_sr_real __P((void *, u_long));
 u_long	sbdsp_get_out_sr __P((void *));
 int	sbdsp_query_encoding __P((void *, struct audio_encoding *));
-int	sbdsp_set_encoding __P((void *, u_int));
+int	sbdsp_set_format __P((void *, u_int, u_int));
 int	sbdsp_get_encoding __P((void *));
-int	sbdsp_set_precision __P((void *, u_int));
 int	sbdsp_get_precision __P((void *));
 int	sbdsp_set_channels __P((void *, int));
 int	sbdsp_get_channels __P((void *));

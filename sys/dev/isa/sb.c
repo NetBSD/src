@@ -1,4 +1,4 @@
-/*	$NetBSD: sb.c,v 1.41 1997/03/13 02:20:07 mycroft Exp $	*/
+/*	$NetBSD: sb.c,v 1.42 1997/03/20 06:48:57 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -91,9 +91,8 @@ struct audio_hw_if sb_hw_if = {
 	sbdsp_set_out_sr,
 	sbdsp_get_out_sr,
 	sbdsp_query_encoding,
-	sbdsp_set_encoding,
+	sbdsp_set_format,
 	sbdsp_get_encoding,
-	sbdsp_set_precision,
 	sbdsp_get_precision,
 	sbdsp_set_channels,
 	sbdsp_get_channels,

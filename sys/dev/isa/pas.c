@@ -1,4 +1,4 @@
-/*	$NetBSD: pas.c,v 1.21 1997/03/13 02:20:02 mycroft Exp $	*/
+/*	$NetBSD: pas.c,v 1.22 1997/03/20 06:48:55 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -110,9 +110,8 @@ struct audio_hw_if pas_hw_if = {
 	sbdsp_set_out_sr,
 	sbdsp_get_out_sr,
 	sbdsp_query_encoding,
-	sbdsp_set_encoding,
+	sbdsp_set_format,
 	sbdsp_get_encoding,
-	sbdsp_set_precision,
 	sbdsp_get_precision,
 	sbdsp_set_channels,
 	sbdsp_get_channels,
