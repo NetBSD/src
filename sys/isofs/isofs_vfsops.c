@@ -1,5 +1,5 @@
 /*
- *	$Id: isofs_vfsops.c,v 1.8 1993/10/28 17:38:49 ws Exp $
+ *	$Id: isofs_vfsops.c,v 1.9 1993/11/12 05:55:12 cgd Exp $
  */
 
 #include "param.h"
@@ -8,7 +8,7 @@
 #include "proc.h"
 #include "kernel.h"
 #include "vnode.h"
-#include "specdev.h"
+#include "miscfs/specfs/specdev.h" /* XXX */
 #include "mount.h"
 #include "buf.h"
 #include "file.h"

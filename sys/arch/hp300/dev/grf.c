@@ -37,7 +37,7 @@
  *
  *	from: Utah Hdr: grf.c 1.31 91/01/21
  *	from: @(#)grf.c	7.8 (Berkeley) 5/7/91
- *	$Id: grf.c,v 1.3 1993/09/06 02:24:08 mycroft Exp $
+ *	$Id: grf.c,v 1.4 1993/11/12 05:54:12 cgd Exp $
  */
 
 /*
@@ -70,7 +70,7 @@
 #include "vm/vm_page.h"
 #include "vm/vm_pager.h"
 
-#include "specdev.h"
+#include "miscfs/specfs/specdev.h"
 #include "vnode.h"
 #include "mman.h"
 
