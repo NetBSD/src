@@ -1,4 +1,4 @@
-/* $NetBSD: pci_pte32_sgmap.h,v 1.2.2.3 1997/06/04 05:48:07 thorpej Exp $ */
+/* $NetBSD: pci_sgmap_pte32.c,v 1.1.2.1 1997/06/06 00:31:15 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -37,21 +37,22 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#define	SGMAP_TYPE		pci_pte32
-#define	SGMAP_PTE_TYPE		u_int32_t
-#define	SGMAP_PTE_SPACING	1
+#include <machine/options.h>		/* Config options headers */
+#include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-/*
- * A 32-bit PCI SGMAP page table entry looks like this:
- *
- * 31                           n+1 n             1   0
- * |                               | Page address | V |
- *
- * The page address is bits <n:13> of the physical address of the
- * page.  The V bit is set if the PTE holds a valid mapping.
- */
-#define	SGPTE_PGADDR_SHIFT	12
-#define	SGPTE_VALID		0x00000001
+__KERNEL_RCSID(1, "$NetBSD: pci_sgmap_pte32.c,v 1.1.2.1 1997/06/06 00:31:15 thorpej Exp $");
 
-#include <alpha/common/sgmapvar.h>
-#include <alpha/common/sgmap_typedep.h>
+#include <sys/param.h>
+#include <sys/systm.h>
+#include <sys/kernel.h>
+#include <sys/device.h>
+#include <sys/malloc.h>
+#include <sys/proc.h>
+
+#include <vm/vm.h>
+
+#include <machine/bus.h>
+
+#include <alpha/pci/pci_sgmap_pte32.h>
+
+#include <alpha/common/sgmap_typedep.c>

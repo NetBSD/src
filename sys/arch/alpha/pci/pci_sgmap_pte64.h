@@ -1,4 +1,4 @@
-/* $NetBSD: pci_pte64_sgmap.c,v 1.2.2.1 1997/06/03 07:03:24 thorpej Exp $ */
+/* $NetBSD: pci_sgmap_pte64.h,v 1.1.2.1 1997/06/06 00:31:18 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -37,22 +37,21 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <machine/options.h>		/* Config options headers */
-#include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
+#define	SGMAP_TYPE		pci_sgmap_pte64
+#define	SGMAP_PTE_TYPE		u_int64_t
+#define	SGMAP_PTE_SPACING	1
 
-__KERNEL_RCSID(1, "$NetBSD: pci_pte64_sgmap.c,v 1.2.2.1 1997/06/03 07:03:24 thorpej Exp $");
+/*
+ * A 64-bit PCI SGMAP page table entry looks like this:
+ *
+ * 63                           n+1 n             1   0
+ * |                               | Page address | V |
+ *
+ * The page address is bits <n:13> of the physical address of the
+ * page.  The V bit is set if the PTE holds a valid mapping. 
+ */
+#define SGPTE_PGADDR_SHIFT      12
+#define SGPTE_VALID             0x0000000000000001UL
 
-#include <sys/param.h>
-#include <sys/systm.h>
-#include <sys/kernel.h>
-#include <sys/device.h>
-#include <sys/malloc.h>
-#include <sys/proc.h>
-
-#include <vm/vm.h>
-
-#include <machine/bus.h>
-
-#include <alpha/pci/pci_pte64_sgmap.h>
-
-#include <alpha/common/sgmap_typedep.c>
+#include <alpha/common/sgmapvar.h>
+#include <alpha/common/sgmap_typedep.h>
