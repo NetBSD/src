@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.9 1996/05/13 06:02:18 thorpej Exp $
+$NetBSD: pcidevs,v 1.10 1996/05/16 07:04:58 mycroft Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -422,7 +422,8 @@ product ATI MACH64_CX	0x4358	Mach64-CX
 product ATI MACH64_GX	0x4758	Mach64-GX
 
 /* BusLogic products */
-product BUSLOGIC 946C	0x0140	946C
+product BUSLOGIC OLD946C 0x0140	946C
+product BUSLOGIC 946C	0x1040	946C
 
 /* Cirrus Logic products */
 /* product CIRRUS UNK	0x00a4	unknown */
