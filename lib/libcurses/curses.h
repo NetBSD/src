@@ -1,4 +1,4 @@
-/*	$NetBSD: curses.h,v 1.52 2001/01/01 10:36:12 simonb Exp $	*/
+/*	$NetBSD: curses.h,v 1.53 2001/01/05 22:51:21 christos Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -83,7 +83,6 @@ typedef	char	bool;
 #endif /* _CURSES_PRIVATE */
 
 /* Termcap capabilities. */
-extern char	PC;
 extern char	__tc_am, __tc_bs, __tc_cc, __tc_da, __tc_eo,
 		__tc_hc, __tc_hl, __tc_in, __tc_mi, __tc_ms,
 		__tc_nc, __tc_ns, __tc_os, __tc_ul, __tc_ut,
