@@ -1,4 +1,4 @@
-.\"	$NetBSD: symlink.7,v 1.2 2001/09/11 01:02:18 wiz Exp $
+.\"	$NetBSD: symlink.7,v 1.3 2001/09/11 01:25:53 wiz Exp $
 .\"
 .\" Copyright (c) 1992, 1993, 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -97,7 +97,7 @@ Symbolic links encountered by utilities that are traversing a file tree
 (either specified on the command line or encountered as part of the
 file hierarchy walk).
 .El
-.Ss System calls.
+.Ss System calls
 The first area is symbolic links used as file name arguments for
 system calls.
 .Pp
@@ -154,7 +154,7 @@ symbolic link mode bits have no effect on any system calls
 including
 .Xr execve 2
 .Pc .
-.Ss Commands not traversing a file tree.
+.Ss Commands not traversing a file tree
 The second area is symbolic links, specified as command line file
 name arguments, to commands which are not traversing a file tree.
 .Pp
@@ -248,7 +248,7 @@ systems in that the
 and
 .Nm file
 commands follow symbolic links specified on the command line.
-.Ss Commands traversing a file tree.
+.Ss Commands traversing a file tree
 The following commands either optionally or always traverse file trees:
 .Xr chflags 1 ,
 .Xr chgrp 1 ,
@@ -461,4 +461,4 @@ options.
 .Xr fts 3 ,
 .Xr remove 3 ,
 .Xr chown 8 ,
-.Xr mount 8 .
+.Xr mount 8
