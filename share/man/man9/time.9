@@ -1,4 +1,4 @@
-.\" $NetBSD: time.9,v 1.6 2000/06/14 17:25:54 cgd Exp $
+.\" $NetBSD: time.9,v 1.6.2.1 2001/04/26 12:50:45 he Exp $
 .\"
 .\" Copyright (c) 1994 Christopher G. Demetriou
 .\" All rights reserved.
@@ -117,7 +117,7 @@ may be read and written without special precautions.
 .Va runtime
 should not be updated when the system time is
 changed with
-.Xr settimeofday ,
+.Xr settimeofday 2 ,
 because it is used for resource accounting.
 .Pp
 The notion of having a single
