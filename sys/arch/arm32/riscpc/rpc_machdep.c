@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc_machdep.c,v 1.37 2001/02/21 00:51:27 reinoud Exp $	*/
+/*	$NetBSD: rpc_machdep.c,v 1.38 2001/02/24 21:29:39 reinoud Exp $	*/
 
 /*
  * Copyright (c) 2000-2001 Reinoud Zandijk.
@@ -110,6 +110,7 @@ videomemory_t videomemory;	/* Video memory descriptor */
 /* 	static char bootargs[MAX_BOOT_STRING + 1]; */
 char *boot_args = NULL;
 char *boot_file = NULL;
+int   iomd_mapped = NULL;
 
 vm_offset_t physical_start;
 vm_offset_t physical_freestart;
@@ -198,7 +199,7 @@ void rpc_sa110_cc_setup		__P((void));
 extern void parse_mi_bootargs	__P((char *args));
 void parse_rpc_bootargs		__P((char *args));
 
-extern void dumpsys	__P((void));
+extern void dumpsys		__P((void));
 
 
 /*
@@ -827,6 +828,13 @@ initarm_new_bootloader(bootconf)
 	};
 	physcon_display_base(VMEM_VBASE);
 	vidcrender_reinit();
+
+	/*
+	 * flag that the IOMD is mapped ... this allows to use qms slow scrolling
+	 * support wich needs a mapped MEMC
+	 */
+	iomd_mapped = 1;
+
 
 #ifdef VERBOSE_INIT_ARM
 	printf("running on the new L1 page table!\n");
@@ -1869,6 +1877,12 @@ initarm_old_bootloader(bootconf)
 	}
 
 	printf("done.\n");
+
+	/*
+	 * flag that the IOMD is mapped ... this allows to use qms slow scrolling
+	 * support wich needs a mapped MEMC
+	 */
+	iomd_mapped = 1;
 
 	/* Right set up the vectors at the bottom of page 0 */
 	memcpy((char *)0x00000000, page0, page0_end - page0);
