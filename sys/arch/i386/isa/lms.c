@@ -19,7 +19,7 @@
  * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: lms.c,v 1.6.2.1 1993/09/29 05:20:16 mycroft Exp $
+ *	$Id: lms.c,v 1.6.2.2 1993/09/29 08:25:09 mycroft Exp $
  */
 
 #include "param.h"
@@ -59,8 +59,8 @@ struct lms_softc {		/* Driver status information */
 	u_char	sc_flags;	/* Driver flags */
 #define	LMS_BLOCK	0x01
 	u_char	sc_state;	/* Mouse driver state */
-#define OPEN	1		/* Device is open */
-#define ASLP	2		/* Waiting for mouse data */
+#define LMS_OPEN	0x01	/* Device is open */
+#define LMS_ASLP	0x02	/* Waiting for mouse data */
 	u_char	sc_status;	/* Mouse button status */
 	u_char	sc_button;	/* Previous mouse button status bits */
 	int	sc_x, sc_y;	/* accumulated motion in the X,Y axis */
@@ -149,10 +149,10 @@ lmsopen(dev, flag)
 	if (!sc)
 		return ENXIO;
 
-	if (sc->sc_state & OPEN)
+	if (sc->sc_state & LMS_OPEN)
 		return EBUSY;
 
-	sc->sc_state |= OPEN;
+	sc->sc_state |= LMS_OPEN;
 	sc->sc_status = 0;
 	sc->sc_button = 0;
 	sc->sc_x = sc->sc_y = 0;
@@ -175,7 +175,7 @@ lmsclose(dev, flag)
 	/* disable interrupts */
 	outb(sc->sc_iobase + LMS_CNTRL, 0x10);
 
-	sc->sc_state &= ~OPEN;
+	sc->sc_state &= ~LMS_OPEN;
 
 	return 0;
 }
@@ -201,8 +201,9 @@ lmsread(dev, uio, flag)
 			splx(s);
 			return EWOULDBLOCK;
 		}
-		sc->sc_state |= ASLP;
+		sc->sc_state |= LMS_ASLP;
 		if (error = tsleep((caddr_t)sc, PZERO | PCATCH, "lmsrea", 0)) {
+			sc->sc_state &= ~LMS_ASLP;
 			splx(s);
 			return error;
 		}
@@ -303,7 +304,7 @@ lmsintr(arg)
 	u_char	hi, lo, buttons, changed;
 	char	dx, dy;
 
-	if ((sc->sc_state & OPEN) == 0)
+	if ((sc->sc_state & LMS_OPEN) == 0)
 		/* interrupts not expected */
 		return 0;
 
@@ -330,7 +331,7 @@ lmsintr(arg)
 	sc->sc_status = buttons | (sc->sc_status & ~BUTSTATMASK) |
 			(changed << 3);
 
-	if ((sc->sc_state & OPEN) && (dx || dy || changed)) {
+	if ((sc->sc_state & LMS_OPEN) && (dx || dy || changed)) {
 		int	last = sc->sc_q.rb_last;
 		char	*cp = &sc->sc_q.rb_data[last];
 		int	count = sc->sc_q.rb_count;
@@ -361,8 +362,8 @@ lmsintr(arg)
 		next();
 		sc->sc_q.rb_last = last;
 
-		if (sc->sc_state & ASLP) {
-			sc->sc_state &= ~ASLP;
+		if (sc->sc_state & LMS_ASLP) {
+			sc->sc_state &= ~LMS_ASLP;
 			wakeup((caddr_t)sc);
 		}
 		selwakeup(&sc->sc_rsel);
