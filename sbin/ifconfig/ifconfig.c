@@ -1,4 +1,4 @@
-/*	$NetBSD: ifconfig.c,v 1.113 2001/08/09 01:25:35 david Exp $	*/
+/*	$NetBSD: ifconfig.c,v 1.114 2001/08/19 01:27:43 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)ifconfig.c	8.2 (Berkeley) 2/16/94";
 #else
-__RCSID("$NetBSD: ifconfig.c,v 1.113 2001/08/09 01:25:35 david Exp $");
+__RCSID("$NetBSD: ifconfig.c,v 1.114 2001/08/19 01:27:43 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -2840,6 +2840,8 @@ sec2str(total)
 	int days, hours, mins, secs;
 	int first = 1;
 	char *p = result;
+	char *end = &result[sizeof(result)];
+	int n;
 
 	if (0) {	/*XXX*/
 		days = total / 3600 / 24;
@@ -2849,19 +2851,28 @@ sec2str(total)
 
 		if (days) {
 			first = 0;
-			p += sprintf(p, "%dd", days);
+			n = snprintf(p, end - p, "%dd", days);
+			if (n < 0 || n >= end - p)
+				return(result);
+			p += n;
 		}
 		if (!first || hours) {
 			first = 0;
-			p += sprintf(p, "%dh", hours);
+			n = snprintf(p, end - p, "%dh", hours);
+			if (n < 0 || n >= end - p)
+				return(result);
+			p += n;
 		}
 		if (!first || mins) {
 			first = 0;
-			p += sprintf(p, "%dm", mins);
+			n = snprintf(p, end - p, "%dm", mins);
+			if (n < 0 || n >= end - p)
+				return(result);
+			p += n;
 		}
-		sprintf(p, "%ds", secs);
+		snprintf(p, end - p, "%ds", secs);
 	} else
-		sprintf(p, "%lu", (u_long)total);
+		snprintf(p, end - p, "%lu", (u_long)total);
 
 	return(result);
 }
