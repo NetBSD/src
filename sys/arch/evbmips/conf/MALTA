@@ -1,8 +1,9 @@
-#	$NetBSD: MALTA,v 1.2 2002/03/10 19:56:40 lukem Exp $
+#	$NetBSD: MALTA,v 1.3 2002/03/23 14:51:28 simonb Exp $
 
-include 	"arch/evbmips/conf/std.malta"
+#include 	"arch/evbmips/conf/std.malta.eb"	# big-endian mode
+include 	"arch/evbmips/conf/std.malta.el"	# little-endian mode
 
-#ident 		"GENERIC-$Revision: 1.2 $"
+#ident 		"GENERIC-$Revision: 1.3 $"
 
 maxusers	32
 
