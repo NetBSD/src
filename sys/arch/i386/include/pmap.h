@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.43.2.6 2000/09/23 16:05:59 sommerfeld Exp $	*/
+/*	$NetBSD: pmap.h,v 1.43.2.7 2000/12/31 18:01:22 thorpej Exp $	*/
 
 /*
  *
@@ -264,6 +264,9 @@ LIST_HEAD(pmap_head, pmap); /* struct pmap_head: head of a pmap list */
  *
  * note that the pm_obj contains the simple_lock, the reference count,
  * page list, and number of PTPs within the pmap.
+ *
+ * XXX If we ever support processor numbers higher than 31, we'll have
+ * XXX to rethink the CPU mask.
  */
 
 struct pmap {
@@ -280,6 +283,7 @@ struct pmap {
 	union descriptor *pm_ldt;	/* user-set LDT */
 	int pm_ldt_len;			/* number of LDT entries */
 	int pm_ldt_sel;			/* LDT selector */
+	u_int32_t pm_cpus;		/* mask of CPUs using pmap */
 };
 
 /* pm_flags */
@@ -383,8 +387,8 @@ extern int pmap_pg_g;			/* do we support PG_G? */
 #define	pmap_resident_count(pmap)	((pmap)->pm_stats.resident_count)
 #define	pmap_update()			tlbflush()
 
-#define pmap_clear_modify(pg)		pmap_change_attrs(pg, 0, PG_M)
-#define pmap_clear_reference(pg)	pmap_change_attrs(pg, 0, PG_U)
+#define pmap_clear_modify(pg)		pmap_clear_attrs(pg, PG_M)
+#define pmap_clear_reference(pg)	pmap_clear_attrs(pg, PG_U)
 #define pmap_copy(DP,SP,D,L,S)		
 #define pmap_is_modified(pg)		pmap_test_attrs(pg, PG_M)
 #define pmap_is_referenced(pg)		pmap_test_attrs(pg, PG_U)
@@ -399,7 +403,7 @@ extern int pmap_pg_g;			/* do we support PG_G? */
 
 void		pmap_activate __P((struct proc *));
 void		pmap_bootstrap __P((vaddr_t));
-boolean_t	pmap_change_attrs __P((struct vm_page *, int, int));
+boolean_t	pmap_clear_attrs __P((struct vm_page *, int));
 void		pmap_deactivate __P((struct proc *));
 static void	pmap_page_protect __P((struct vm_page *, vm_prot_t));
 void		pmap_page_remove  __P((struct vm_page *));
@@ -474,7 +478,7 @@ pmap_update_2pg(va, vb)
  * pmap_page_protect: change the protection of all recorded mappings
  *	of a managed page
  *
- * => this function is a frontend for pmap_page_remove/pmap_change_attrs
+ * => this function is a frontend for pmap_page_remove/pmap_clear_attrs
  * => we only have to worry about making the page more protected.
  *	unprotecting a page is done on-demand at fault time.
  */
@@ -486,7 +490,7 @@ pmap_page_protect(pg, prot)
 {
 	if ((prot & VM_PROT_WRITE) == 0) {
 		if (prot & (VM_PROT_READ|VM_PROT_EXECUTE)) {
-			(void) pmap_change_attrs(pg, PG_RO, PG_RW);
+			(void) pmap_clear_attrs(pg, PG_RW);
 		} else {
 			pmap_page_remove(pg);
 		}

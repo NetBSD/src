@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.83.2.13 2000/11/18 23:10:52 sommerfeld Exp $	*/
+/*	$NetBSD: pmap.c,v 1.83.2.14 2000/12/31 18:01:21 thorpej Exp $	*/
 
 /*
  *
@@ -73,6 +73,7 @@
 
 #include <uvm/uvm.h>
 
+#include <machine/atomic.h>
 #include <machine/cpu.h>
 #include <machine/specialreg.h>
 #include <machine/gdt.h>
@@ -509,14 +510,16 @@ pmap_is_curpmap(pmap)
 
 /*
  * pmap_is_active: is this pmap loaded into any processor's %cr3?
- *		XXX we assume it is for now.  
  */
 
 __inline static boolean_t
 pmap_is_active(pmap)
 	struct pmap *pmap;
 {
-	return((pmap == pmap_kernel()) || 1);
+	int cpu_id = cpu_number();
+
+	return (pmap == pmap_kernel() ||
+	    (pmap->pm_cpus & (1U << cpu_id)) != 0);
 }
 
 /*
@@ -603,6 +606,37 @@ pmap_tmpunmap_pvepte(pve)
 	pmap_tmpunmap_pa();
 }
 
+__inline static void
+pmap_apte_flush(struct pmap *pmap)
+{
+#if defined(MULTIPROCESSOR)
+	struct pmap_tlb_shootdown_q *pq;
+	struct cpu_info *ci, *self = curcpu();
+	CPU_INFO_ITERATOR cii;
+#endif
+
+	tlbflush();		/* flush TLB on current processor */
+#if defined(MULTIPROCESSOR)
+	/*
+	 * Flush the APTE mapping from all other CPUs that
+	 * are using the pmap we are using (who's APTE space
+	 * is the one we've just modified).
+	 */
+	for (CPU_INFO_FOREACH(cii, ci)) {
+		if (ci == self)
+			continue;
+		if (pmap == pmap_kernel() ||
+		    (pmap->pm_cpus & (1U << ci->ci_cpuid)) != 0) {
+			pq = &pmap_tlb_shootdown_q[ci->ci_cpuid];
+			simple_lock(&pq->pq_slock);
+			pq->pq_flushu++;
+			simple_unlock(&pq->pq_slock);
+			i386_send_ipi(ci, I386_IPI_TLB);
+		}
+	}
+#endif
+}
+
 /*
  * pmap_map_ptes: map a pmap's PTEs into KVM and lock them in
  *
@@ -641,10 +675,8 @@ pmap_map_ptes(pmap)
 	opde = *APDP_PDE;
 	if (!pmap_valid_entry(opde) || (opde & PG_FRAME) != pmap->pm_pdirpa) {
 		*APDP_PDE = (pd_entry_t) (pmap->pm_pdirpa | PG_RW | PG_V);
-		if (pmap_valid_entry(opde)) {
-			pmap_update();
-			/* XXX MP do invalidate on all cpu's touching this pmap */
-		}
+		if (pmap_valid_entry(opde))
+			pmap_apte_flush(curpcb->pcb_pmap);
 	}
 	return(APTE_BASE);
 }
@@ -663,10 +695,9 @@ pmap_unmap_ptes(pmap)
 	if (pmap_is_curpmap(pmap)) {
 		simple_unlock(&pmap->pm_obj.vmobjlock);
 	} else {
-#if 0
+#if defined(MULTIPROCESSOR)
 		*APDP_PDE = 0;
-		pmap_update();
-		/* XXX MP need floosh here? */
+		pmap_apte_flush(curpcb->pcb_pmap);
 #endif
 		COUNT(apdp_pde_unmap);
 		simple_unlock(&pmap->pm_obj.vmobjlock);
@@ -695,12 +726,15 @@ pmap_kenter_pa(va, pa, prot)
 	paddr_t pa;
 	vm_prot_t prot;
 {
-	pt_entry_t *pte, opte;
+	pt_entry_t *pte, opte, npte;
 
 	pte = vtopte(va);
-	opte = *pte;
-	*pte = pa | ((prot & VM_PROT_WRITE)? PG_RW : PG_RO) |
-		PG_V | pmap_pg_g;	/* zap! */
+
+	npte = pa | ((prot & VM_PROT_WRITE)? PG_RW : PG_RO) |
+	     PG_V | pmap_pg_g;
+
+	opte = i386_atomic_testset_ul(pte, npte); /* zap! */
+
 	if (pmap_valid_entry(opte)) {
 		pmap_update_pg(va);
 #ifdef MULTIPROCESSOR
@@ -731,9 +765,7 @@ pmap_kremove(va, len)
 	len >>= PAGE_SHIFT;
 	for ( /* null */ ; len ; len--, va += NBPG) {
 		pte = vtopte(va);
-		/* XXX R/M update goo? */
-		opte = *pte;
-		*pte = 0;		/* zap! */
+		opte = i386_atomic_testset_ul(pte, 0); /* zap! */
 #ifdef DIAGNOSTIC
 		if (opte & PG_PVLIST)
 			panic("pmap_kremove: PG_PVLIST mapping for 0x%lx\n",
@@ -777,7 +809,6 @@ pmap_kenter_pgs(va, pgs, npgs)
 	for (lcv = 0 ; lcv < npgs ; lcv++) {
 		tva = va + lcv * NBPG;
 		pte = vtopte(tva);
-		/* XXX pte update goo? R/M bits? */
 		opte = *pte;
 		*pte = VM_PAGE_TO_PHYS(pgs[lcv]) | PG_RW | PG_V | pmap_pg_g;
 #if defined(I386_CPU)
@@ -2036,7 +2067,10 @@ pmap_release(pmap)
 		uvm_pagefree(pg);
 	}
 
-	/* XXX: need to flush it out of other processor's APTE space? */
+	/*
+	 * MULTIPROCESSOR -- no need to flush out of other processors'
+	 * APTE space because we do that in pmap_unmap_ptes().
+	 */
 	uvm_km_free(kernel_map, (vaddr_t)pmap->pm_pdir, NBPG);
 
 #ifdef USER_LDT
@@ -2153,22 +2187,31 @@ pmap_activate(p)
 	pcb->pcb_pmap = pmap;
 	pcb->pcb_ldt_sel = pmap->pm_ldt_sel;
 	pcb->pcb_cr3 = pmap->pm_pdirpa;
-	if (p == curproc)
+	if (p == curproc) {
 		lcr3(pcb->pcb_cr3);
-	if (pcb == curpcb)
 		lldt(pcb->pcb_ldt_sel);
+
+		/*
+		 * mark the pmap in use by this processor.
+		 */
+		i386_atomic_setbits_l(&pmap->pm_cpus, (1U << cpu_number()));
+	}
 }
 
 /*
  * pmap_deactivate: deactivate a process' pmap
- *
- * => XXX: what should this do, if anything?
  */
 
 void
 pmap_deactivate(p)
 	struct proc *p;
 {
+	struct pmap *pmap = p->p_vmspace->vm_map.pmap;
+
+	/*
+	 * mark the pmap no longer in use by this processor.
+	 */
+	i386_atomic_clearbits_l(&pmap->pm_cpus, (1U << cpu_number()));
 }
 
 /*
@@ -2430,9 +2473,9 @@ pmap_remove_ptes(pmap, pmap_rr, ptp, ptpva, startva, endva)
 		if (!pmap_valid_entry(*pte))
 			continue;			/* VA not mapped */
 
-		/* XXX use lock xchgl here */
-		opte = *pte;		/* save the old PTE */
-		*pte = 0;			/* zap! */
+		/* atomically save the old PTE and zap! it */
+		opte = i386_atomic_testset_ul(pte, 0);
+
 		if (opte & PG_W)
 			pmap->pm_stats.wired_count--;
 		pmap->pm_stats.resident_count--;
@@ -2507,9 +2550,8 @@ pmap_remove_pte(pmap, ptp, pte, va)
 	if (!pmap_valid_entry(*pte))
 		return(FALSE);		/* VA not mapped */
 
-	/* XXX use lock xchgl here */
-	opte = *pte;			/* save the old PTE */
-	*pte = 0;			/* zap! */
+	/* atomically save the old PTE and zap! it */
+	opte = i386_atomic_testset_ul(pte, 0);
 
 	if (opte & PG_W)
 		pmap->pm_stats.wired_count--;
@@ -2796,8 +2838,8 @@ pmap_page_remove(pg)
 		}
 #endif
 
-		opte = ptes[i386_btop(pve->pv_va)];
-		ptes[i386_btop(pve->pv_va)] = 0;		/* zap! */
+		/* atomically save the old PTE and zap! it */
+		opte = i386_atomic_testset_ul(&ptes[i386_btop(pve->pv_va)], 0);
 
 		if (opte & PG_W)
 			pve->pv_pmap->pm_stats.wired_count--;
@@ -2920,22 +2962,22 @@ pmap_test_attrs(pg, testbits)
 }
 
 /*
- * pmap_change_attrs: change a page's attributes
+ * pmap_clear_attrs: clear the specified attribute for a page.
  *
  * => we set pv_head => pmap locking
  * => we return TRUE if we cleared one of the bits we were asked to
  */
 
 boolean_t
-pmap_change_attrs(pg, setbits, clearbits)
+pmap_clear_attrs(pg, clearbits)
 	struct vm_page *pg;
-	int setbits, clearbits;
+	int clearbits;
 {
 	u_int32_t result;
 	int bank, off;
 	struct pv_head *pvh;
 	struct pv_entry *pve;
-	pt_entry_t *ptes, npte, opte;
+	pt_entry_t *ptes, opte;
 	char *myattrs;
 #if defined(I386_CPU)
 	boolean_t needs_update = FALSE;
@@ -2955,7 +2997,7 @@ pmap_change_attrs(pg, setbits, clearbits)
 
 	myattrs = &vm_physmem[bank].pmseg.attrs[off];
 	result = *myattrs & clearbits;
-	*myattrs = (*myattrs | setbits) & ~clearbits;
+	*myattrs &= ~clearbits;
 
 	for (pve = pvh->pvh_list; pve != NULL; pve = pve->pv_next) {
 #ifdef DIAGNOSTIC
@@ -2967,13 +3009,12 @@ pmap_change_attrs(pg, setbits, clearbits)
 			      "detected");
 #endif
 
-		ptes = pmap_map_ptes(pve->pv_pmap);		/* locks pmap */
+		ptes = pmap_map_ptes(pve->pv_pmap);	/* locks pmap */
 		opte = ptes[i386_btop(pve->pv_va)];
-		result |= (opte & clearbits);
-		npte = (opte | setbits) & ~clearbits;
-		if (ptes[i386_btop(pve->pv_va)] != npte) {
-			ptes[i386_btop(pve->pv_va)] = npte;	/* zap! */
-
+		if (opte & clearbits) {
+			result |= (opte & clearbits);
+			i386_atomic_clearbits_l(&ptes[i386_btop(pve->pv_va)],
+			    (opte & clearbits));	/* zap! */
 			if (pmap_is_curpmap(pve->pv_pmap)) {
 #if defined(I386_CPU)
 				if (cpu_class == CPUCLASS_386)
@@ -2983,8 +3024,7 @@ pmap_change_attrs(pg, setbits, clearbits)
 					pmap_update_pg(pve->pv_va);
 			}
 #ifdef MULTIPROCESSOR
-			pmap_tlb_shootdown(pve->pv_pmap,
-			    pve->pv_va, opte|npte);
+			pmap_tlb_shootdown(pve->pv_pmap, pve->pv_va, opte);
 #endif
 		}
 		pmap_unmap_ptes(pve->pv_pmap);		/* unlocks pmap */
@@ -3031,12 +3071,11 @@ pmap_write_protect(pmap, sva, eva, prot)
 	vaddr_t sva, eva;
 	vm_prot_t prot;
 {
-	pt_entry_t *ptes, *spte, *epte, npte;
+	pt_entry_t *ptes, *spte, *epte;
 #if 0
 	struct pmap_remove_record pmap_rr, *prr;
 #endif
-	vaddr_t blockend, va;
-	u_int32_t md_prot;
+	vaddr_t blockend;
 
 	ptes = pmap_map_ptes(pmap);		/* locks pmap */
 
@@ -3077,31 +3116,22 @@ pmap_write_protect(pmap, sva, eva, prot)
 		if (!pmap_valid_entry(pmap->pm_pdir[pdei(sva)]))
 			continue;
 
-		md_prot = protection_codes[prot];
-		if (sva < VM_MAXUSER_ADDRESS)
-			md_prot |= PG_u;
-		else if (sva < VM_MAX_ADDRESS)
-			/* XXX: write-prot our PTES? never! */
-			md_prot |= (PG_u | PG_RW);
+#ifdef DIAGNOSTIC
+		if (sva >= VM_MAXUSER_ADDRESS &&
+		    sva < VM_MAX_ADDRESS)
+			panic("pmap_write_protect: PTE space");
+#endif
 
 		spte = &ptes[i386_btop(sva)];
 		epte = &ptes[i386_btop(blockend)];
 
 		for (/*null */; spte < epte ; spte++) {
-
-			if (!pmap_valid_entry(*spte))	/* no mapping? */
-				continue;
-
-			/* XXX use locking instructions here */
-			npte = (*spte & ~PG_PROT) | md_prot;
-
-			if (npte != *spte) {
-				*spte = npte;		/* zap! */
-
-				va = i386_ptob(spte - ptes);
-				pmap_defer_flush(0, pmap, va, npte);
-			}	/* npte != *spte */
-		}	/* for loop */
+			if ((*spte & (PG_RW|PG_V)) == (PG_RW|PG_V)) {
+				i386_atomic_clearbits_l(spte, PG_RW); /* zap! */
+				pmap_defer_flush(0, pmap,
+				    i386_ptob(spte - ptes), *spte);
+			}
+		}
 	}
 
 	/*
@@ -3827,7 +3857,6 @@ enter_now:
 	if (pmap == pmap_kernel())
 		npte |= pmap_pg_g;
 
-	/* XXX MP: use CMPXCHGL here? */
 	ptes[i386_btop(va)] = npte;		/* zap! */
 
 	/*
