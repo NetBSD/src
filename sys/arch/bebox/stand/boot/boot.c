@@ -1,4 +1,4 @@
-/*	$Id: boot.c,v 1.4 1998/10/26 00:45:47 sakamoto Exp $	*/
+/*	$Id: boot.c,v 1.5 1998/10/28 02:47:35 sakamoto Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -37,6 +37,7 @@
 #include <machine/cpu.h>
 #include <machine/param.h>
 #include <bebox/include/bootinfo.h>
+#include <bebox/include/bus.h>
 
 #ifdef CONS_SERIAL
 # include "ns16550.h"
@@ -107,6 +108,9 @@ main()
 	btinfo_console.common.type = BTINFO_CONSOLE;
 	if (cnname)
 		strcpy(btinfo_console.devname, cnname);
+#if defined(CONS_BE) || defined(CONS_VGA)
+	btinfo_console.addr = BEBOX_BUS_SPACE_MEM;
+#endif
 #ifdef CONS_SERIAL
 	btinfo_console.addr = COMPORT;
 	btinfo_console.speed = COMSPEED;

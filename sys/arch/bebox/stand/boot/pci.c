@@ -1,4 +1,4 @@
-/*	$Id: pci.c,v 1.1 1998/10/26 00:45:47 sakamoto Exp $	*/
+/*	$Id: pci.c,v 1.2 1998/10/28 02:47:35 sakamoto Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -38,6 +38,7 @@
 
 #include <stand.h> 
 #include <dev/pci/pcireg.h>
+#include <dev/pci/pcidevs.h>
 
 #define	PCI_CONF_REG(dev,reg)		\
 	*(u_int32_t *)(0x80800000 | (1 << dev) | reg)
@@ -87,7 +88,7 @@ pci_init()
 	for (dev = 13; dev < 18; dev++) {
 
 		data = pci_conf_read(dev, PCI_CLASS_REG);
-		
+
 		if (PCI_CLASS(data) == PCI_CLASS_DISPLAY) {
 
 			data = pci_conf_read(dev, PCI_COMMAND_STATUS_REG);
@@ -97,7 +98,19 @@ pci_init()
 				/*
 				 * Initialized PCI Video
 				 */
-				pci_conf_write(dev, 0x10, 0x0);
+				data = pci_conf_read(dev, PCI_ID_REG);
+
+				if (PCI_VENDOR(data) == PCI_VENDOR_S3) {
+					pci_conf_write(dev, 0x10, 0x0);
+				} else {
+					data = pci_conf_read(dev, 0x10);
+					pci_conf_write(dev, 0x10,
+						data & 0x0fffffff);
+
+					data = pci_conf_read(dev, 0x14);
+					pci_conf_write(dev, 0x14,
+						data & 0x0fffffff);
+				}
 			}
 		}
 	}

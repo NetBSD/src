@@ -1,4 +1,4 @@
-/*	$NetBSD: cons.c,v 1.2 1998/10/26 00:45:47 sakamoto Exp $	*/
+/*	$NetBSD: cons.c,v 1.3 1998/10/28 02:47:35 sakamoto Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,9 +43,8 @@
  */
 
 #include <sys/param.h>
+#include <bebox/include/bus.h>
 #include "cons.h"
-
-#define	PCI_BASE	0xC0000000
 
 #ifdef CONS_BE
 void becnprobe(), becninit(), becnputchar();
@@ -136,7 +135,7 @@ void
 becninit(cp)
 	struct consdev *cp;
 {
-	unsigned char *display_memory = (unsigned char *)PCI_BASE;
+	unsigned char *display_memory = (unsigned char *)BEBOX_BUS_SPACE_MEM;
 
 	video_init(display_memory);
 	kbdreset();
@@ -178,7 +177,7 @@ void
 vgacninit(cp)
 	struct consdev *cp;
 {
-	unsigned char *display_memory = (unsigned char *)PCI_BASE;
+	unsigned char *display_memory = (unsigned char *)BEBOX_BUS_SPACE_MEM;
 
 	vga_reset(display_memory);
 	vga_init(display_memory);
