@@ -1,4 +1,4 @@
-/*	$NetBSD: if_upl.c,v 1.7 2000/09/23 04:33:04 augustss Exp $	*/
+/*	$NetBSD: if_upl.c,v 1.8 2000/10/01 11:35:29 itojun Exp $	*/
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -74,6 +74,8 @@
 #include <netinet/in.h> 
 #include <netinet/in_var.h> 
 #include <netinet/if_inarp.h>
+#else
+#error upl without INET?
 #endif
 
 #ifdef NS
