@@ -1,4 +1,4 @@
-/*	$NetBSD: walk.c,v 1.11 2003/01/27 01:34:09 uwe Exp $	*/
+/*	$NetBSD: walk.c,v 1.12 2003/03/29 00:12:12 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -77,7 +77,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: walk.c,v 1.11 2003/01/27 01:34:09 uwe Exp $");
+__RCSID("$NetBSD: walk.c,v 1.12 2003/03/29 00:12:12 thorpej Exp $");
 #endif	/* !__lint */
 
 #include <sys/param.h>
@@ -429,6 +429,8 @@ apply_specentry(const char *dir, NODE *specnode, fsnode *dirnode)
 		dirnode->inode->st.st_rdev = specnode->st_rdev;
 	}
 #undef ASEPRINT
+
+	dirnode->flags |= FSNODE_F_HASSPEC;
 }
 
 
