@@ -1,4 +1,4 @@
-/*	$NetBSD: expand.c,v 1.42 1999/01/25 14:20:56 mycroft Exp $	*/
+/*	$NetBSD: expand.c,v 1.43 1999/02/05 07:52:52 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)expand.c	8.5 (Berkeley) 5/15/95";
 #else
-__RCSID("$NetBSD: expand.c,v 1.42 1999/01/25 14:20:56 mycroft Exp $");
+__RCSID("$NetBSD: expand.c,v 1.43 1999/02/05 07:52:52 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -75,7 +75,6 @@ __RCSID("$NetBSD: expand.c,v 1.42 1999/01/25 14:20:56 mycroft Exp $");
 #include "memalloc.h"
 #include "error.h"
 #include "mystring.h"
-#include "arith.h"
 #include "show.h"
 
 /*
