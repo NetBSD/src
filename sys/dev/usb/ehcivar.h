@@ -1,4 +1,4 @@
-/*	$NetBSD: ehcivar.h,v 1.9 2001/11/20 13:49:23 augustss Exp $	*/
+/*	$NetBSD: ehcivar.h,v 1.10 2001/11/21 02:44:31 augustss Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -121,6 +121,13 @@ typedef struct ehci_softc {
 #define EOWRITE1(sc, a, x) bus_space_write_1((sc)->iot, (sc)->ioh, (sc)->sc_offs+(a), (x))
 #define EOWRITE2(sc, a, x) bus_space_write_2((sc)->iot, (sc)->ioh, (sc)->sc_offs+(a), (x))
 #define EOWRITE4(sc, a, x) bus_space_write_4((sc)->iot, (sc)->ioh, (sc)->sc_offs+(a), (x))
+
+struct ehci_xfer {
+	struct usbd_xfer xfer;
+	struct usb_task	abort_task;
+};
+
+#define EXFER(xfer) ((struct ehci_xfer *)(xfer))
 
 usbd_status	ehci_init(ehci_softc_t *);
 int		ehci_intr(void *);
