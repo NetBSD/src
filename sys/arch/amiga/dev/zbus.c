@@ -1,4 +1,4 @@
-/*	$NetBSD: zbus.c,v 1.14 1996/03/02 14:02:59 veego Exp $	*/
+/*	$NetBSD: zbus.c,v 1.15 1996/03/06 20:13:32 is Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -72,6 +72,7 @@ static struct aconfdata aconftab[] = {
 	/* Macrosystems */
 	{ "grfrt",	18260,	6 },
 	{ "grfrh",	18260,	16},	/* Retina BLT Z3 */
+	{ "grfrh",	18260,	19},	/* Altais */
 	/* Greater valley products */
 	{ "gvpbus",	2017,	2 },
 	{ "gvpbus",	2017,	11 },
@@ -134,9 +135,9 @@ static int naconfent = sizeof(aconftab) / sizeof(struct aconfdata);
  * the Zorro III device.
  */
 static struct preconfdata preconftab[] = {
-	{ 18260, 6, 0 },
-	/* Retina BLT Z3 */
-	{ 18260, 16, 0},
+	{18260, 6, 0 },	/* Retina Z2 */
+	{18260, 16, 0}, /* Retina BLT Z3 */
+	{18260, 19, 0}, /* Altais */
 	{2167,	11, 0},	/* Picasso-II mem*/
 	{2167,	12, 0},	/* regs */
 	{2193,	2, 0},	/* Spectrum mem */
