@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_sysctl.c,v 1.10 2003/06/29 22:29:40 fvdl Exp $	*/
+/*	$NetBSD: netbsd32_sysctl.c,v 1.11 2003/10/21 01:38:42 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_sysctl.c,v 1.10 2003/06/29 22:29:40 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_sysctl.c,v 1.11 2003/10/21 01:38:42 fvdl Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ddb.h"
@@ -186,7 +186,7 @@ netbsd32___sysctl(l, v, retval)
  * arguments converted.
  */
 
-	if (SCARG(uap, new) != NULL &&
+	if (SCARG(uap, new) != 0 &&
 	    (error = suser(p->p_ucred, &p->p_acflag)))
 		return (error);
 	/*
@@ -269,7 +269,7 @@ netbsd32___sysctl(l, v, retval)
 	    (error = copyin((caddr_t)NETBSD32PTR64(SCARG(uap, oldlenp)),
 	    &savelen, sizeof(savelen))))
 		return (error);
-	if (SCARG(uap, old) != NULL) {
+	if (SCARG(uap, old) != 0) {
 		error = lockmgr(&sysctl_memlock, LK_EXCLUSIVE, NULL);
 		if (error)
 			return (error);
@@ -284,7 +284,7 @@ netbsd32___sysctl(l, v, retval)
 	error = (*fn)(name + 1, SCARG(uap, namelen) - 1, 
 	    (void *)NETBSD32PTR64(SCARG(uap, old)), &oldlen, 
 	    (void *)NETBSD32PTR64(SCARG(uap, new)), SCARG(uap, newlen), p);
-	if (SCARG(uap, old) != NULL) {
+	if (SCARG(uap, old) != 0) {
 		uvm_vsunlock(p, (void *)NETBSD32PTR64(SCARG(uap, old)),
 		    savelen);
 		(void) lockmgr(&sysctl_memlock, LK_RELEASE, NULL);
