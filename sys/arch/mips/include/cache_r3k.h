@@ -1,4 +1,4 @@
-/*	$NetBSD: cache_r3k.h,v 1.2 2001/11/14 18:26:21 thorpej Exp $	*/
+/*	$NetBSD: cache_r3k.h,v 1.3 2003/02/17 11:35:02 simonb Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -39,8 +39,6 @@
  * Cache definitions/operations for R3000-style caches.
  */
 
-#ifdef _KERNEL
-
 void	r3k_icache_sync_all(void);
 void	r3k_icache_sync_range(vaddr_t, vsize_t);
 
@@ -54,5 +52,3 @@ void	r3k_pdcache_do_inv(vaddr_t, vaddr_t);
 
 int	r3k_picache_size(void);
 int	r3k_pdcache_size(void);
-
-#endif /* _KERNEL */
