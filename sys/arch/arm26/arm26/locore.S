@@ -1,4 +1,4 @@
-/* $NetBSD: locore.S,v 1.11 2001/01/22 22:10:43 bjh21 Exp $ */
+/* $NetBSD: locore.S,v 1.12 2001/01/23 22:41:16 bjh21 Exp $ */
 /*
  * Copyright (c) 1998, 1999, 2000 Ben Harris
  * Copyright (C) 1994-1997 Mark Brinicombe
@@ -42,6 +42,7 @@
 
 #include <sys/syscall.h>
 #include <arm/armreg.h>
+#include <arm/trap.h>
 #include "assym.h"
 
 #include "opt_cputypes.h"
@@ -433,14 +434,7 @@ ENTRY(longjmp)
 /* void cpu_Debugger(void); */
 ENTRY(cpu_Debugger)
 	stmfd	r13!, {r14}
-	sub	sp, sp, #(TF_SIZE - TF_R0)
-	str	r15, [sp, #(TF_R15 - TF_R0)]
-	stmfd	sp!, {r0-r14}		/* Save all SVC-mode regs */
-	sub	sp, sp, #TF_R0
-	mov	r1, sp
-	mov	r0, #0
-	bl	_C_LABEL(kdb_trap)
-	add	sp, sp, #TF_SIZE
+	.word	KERNEL_BREAKPOINT
 	ldmfd	r13!, {pc}^
 #endif
 
@@ -456,4 +450,4 @@ _C_LABEL(intrcnt):
 	.global	_C_LABEL(eintrcnt)
 _C_LABEL(eintrcnt):
 
-RCSID("$NetBSD: locore.S,v 1.11 2001/01/22 22:10:43 bjh21 Exp $")
+RCSID("$NetBSD: locore.S,v 1.12 2001/01/23 22:41:16 bjh21 Exp $")
