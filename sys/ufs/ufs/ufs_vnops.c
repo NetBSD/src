@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_vnops.c,v 1.78.4.4 2001/09/07 22:01:55 thorpej Exp $	*/
+/*	$NetBSD: ufs_vnops.c,v 1.78.4.5 2001/09/08 00:40:27 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993, 1995
@@ -94,8 +94,6 @@ do {									\
 	tmp.val[_QUAD_LOWWORD] = (l);					\
 	(q) = tmp.qcvt;							\
 } while (0)
-
-#define	VN_KNOTE(vp, b)		KNOTE((struct klist *)&vp->v_klist, (b))
 
 /*
  * A virgin directory (no blushing please).
