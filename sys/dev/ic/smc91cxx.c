@@ -1,4 +1,4 @@
-/*	$NetBSD: smc91cxx.c,v 1.17 1999/05/18 23:52:56 thorpej Exp $	*/
+/*	$NetBSD: smc91cxx.c,v 1.18 1999/09/10 00:23:34 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -928,17 +928,34 @@ smc91cxx_read(sc)
 	 * Hand the packet off to bpf listeners.  If there's a bpf listener,
 	 * we need to check if the packet is ours.
 	 */
-	if (ifp->if_bpf) {
+	if (ifp->if_bpf)
 		bpf_mtap(ifp->if_bpf, m);
+#endif
 
-		if ((ifp->if_flags & IFF_PROMISC) &&
-		    (eh->ether_dhost[0] & 1) == 0 &&	/* !mcast and !bcast */
-		    ether_cmp(eh->ether_dhost, LLADDR(ifp->if_sadl))) {
+	if ((ifp->if_flags & IFF_PROMISC) != 0) {
+		/*
+		 * If this is unicast and not for me, drop it.
+		 */
+		if ((eh->ether_dhost[0] & 1) == 0 &&	/* !mcast and !bcast */
+		    ether_cmp(eh->ether_dhost, LLADDR(ifp->if_sadl)) != 0) {
+			m_freem(m);
+			goto out;
+		}
+
+		/*
+		 * Make sure to behave as IFF_SIMPLEX in all cases.
+		 * Drop multicast/broadcast packet looped back from myself.
+		 *
+		 * This is to cope with SMC91C92 (Megahertz XJ10BT), which
+		 * loops back multicast packet to itself on promiscuous mode.
+		 * (should be ensured by chipset configuration)
+		 */
+		if ((eh->ether_dhost[0] & 1) == 1 &&	/* mcast || bcast */
+		    ether_cmp(eh->ether_shost, LLADDR(ifp->if_sadl)) == 0) {
 			m_freem(m);
 			goto out;
 		}
 	}
-#endif
 
 	m->m_pkthdr.len = m->m_len = packetlen;
 	(*ifp->if_input)(ifp, m);
