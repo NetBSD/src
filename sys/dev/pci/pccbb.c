@@ -1,4 +1,4 @@
-/*	$NetBSD: pccbb.c,v 1.14 2000/01/17 12:57:27 joda Exp $	*/
+/*	$NetBSD: pccbb.c,v 1.15 2000/01/23 00:10:03 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 and 1999 HAYAKAWA Koichi.  All rights reserved.
@@ -34,7 +34,7 @@
 #define SHOW_REGS
 #define PCCBB_PCMCIA_POLL
 */
-/* #define CBB_DEBUG */
+//#define CBB_DEBUG
 
 /*
 #define CB_PCMCIA_POLL
@@ -1020,6 +1020,7 @@ pccbb_pcmcia_write(ph, reg, val)
      int reg;
      u_int8_t val;
 {
+printf("pccbb_pcmcia_write t=%x h=%x r=%d v=%x\n", ph->ph_bus_t, (u_int)ph->ph_bus_h,PCCBB_PCMCIA_OFFSET + reg, val);
   bus_space_write_1(ph->ph_bus_t, ph->ph_bus_h, PCCBB_PCMCIA_OFFSET + reg, val);
 
   return;
@@ -2387,7 +2388,7 @@ pccbb_pcmcia_do_mem_map(ph, win)
 
   start_low = (phys_addr >> PCIC_MEMREG_LSB_SHIFT) & 0xff; /* bit 19:12 */
   start_high = ((phys_addr >> PCIC_MEMREG_MSB_SHIFT) & 0x0f) /* bit 23:20 */
-      | mem8 ? 0 : PCIC_SYSMEM_ADDRX_START_MSB_DATASIZE_16BIT; /* bit 7 on */
+      | (mem8 ? 0 : PCIC_SYSMEM_ADDRX_START_MSB_DATASIZE_16BIT); /* bit 7 on */
  /* bit 31:24, for 32-bit address */
   mem_window = (phys_addr >> PCIC_MEMREG_WIN_SHIFT) & 0xff; /* bit 31:24 */
 
