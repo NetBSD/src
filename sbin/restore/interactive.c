@@ -33,7 +33,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)interactive.c	8.3 (Berkeley) 9/13/94";*/
-static char *rcsid = "$Id: interactive.c,v 1.6 1994/12/28 02:21:45 mycroft Exp $";
+static char *rcsid = "$Id: interactive.c,v 1.7 1995/01/30 20:37:25 mycroft Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -744,9 +744,9 @@ glob_stat(name, stp)
 	    (!vflag && dp->d_ino == WINO))
 		return (-1);
 	if (inodetype(dp->d_ino) == NODE)
-		stp->st_mode = IFDIR;
+		stp->st_mode = S_IFDIR;
 	else
-		stp->st_mode = IFREG;
+		stp->st_mode = S_IFREG;
 	return (0);
 }
 
