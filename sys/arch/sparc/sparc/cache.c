@@ -1,4 +1,4 @@
-/*	$NetBSD: cache.c,v 1.41 1998/10/13 13:34:06 pk Exp $ */
+/*	$NetBSD: cache.c,v 1.42 1998/10/13 13:37:14 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -57,6 +57,8 @@
  * TODO:
  *	- rework range flush
  */
+
+#include "opt_multiprocessor.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
