@@ -1,4 +1,4 @@
-/*	$NetBSD: aha1542.c,v 1.49 1995/08/12 23:00:43 mycroft Exp $	*/
+/*	$NetBSD: aha1542.c,v 1.50 1995/09/14 20:43:09 pk Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
@@ -357,8 +357,9 @@ struct scsi_device aha_dev = {
 	NULL,			/* Use default 'done' routine */
 };
 
-int ahaprobe __P((struct device *, void *, void *));
-void ahaattach __P((struct device *, struct device *, void *));
+int	ahaprobe __P((struct device *, void *, void *));
+void	ahaattach __P((struct device *, struct device *, void *));
+int	ahaprint __P((void *, char *));
 
 struct cfdriver ahacd = {
 	NULL, "aha", ahaprobe, ahaattach, DV_DULL, sizeof(struct aha_softc)
@@ -545,9 +546,14 @@ ahaprobe(parent, match, aux)
 	return 1;
 }
 
-ahaprint()
+int
+ahaprint(aux, name)
+	void *aux;
+	char *name;
 {
-
+	if (name != NULL)       
+		printf("%s: scsibus ", name);
+	return UNCONF;
 }
 
 /*
