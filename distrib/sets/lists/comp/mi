@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.446 2002/06/01 23:50:52 lukem Exp $
+#	$NetBSD: mi,v 1.447 2002/06/07 12:11:29 is Exp $
 ./sys				comp-sysutil-root
 ./usr/bin/addr2line		comp-debug-bin
 ./usr/bin/ar			comp-util-bin
@@ -1002,7 +1002,6 @@
 ./usr/libexec/lint2			comp-c-bin
 ./usr/sbin/config			comp-sysutil-sbin
 ./usr/sbin/gspa				comp-util-sbin
-./usr/sbin/gspahextoc			comp-util-sbin
 ./usr/sbin/kgmon			comp-debug-sbin
 ./usr/share/locale/da/LC_MESSAGES/gettext.mo		comp-c_locale-da
 ./usr/share/locale/de/LC_MESSAGES/gettext.mo		comp-c_locale-de
