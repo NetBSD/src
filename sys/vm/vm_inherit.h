@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)vm_inherit.h	7.2 (Berkeley) 4/21/91
- *	$Id: vm_inherit.h,v 1.3 1993/05/20 03:59:23 cgd Exp $
+ *	$Id: vm_inherit.h,v 1.4 1994/03/17 02:52:09 cgd Exp $
  *
  *
  * Copyright (c) 1987, 1990 Carnegie-Mellon University.
@@ -75,8 +75,6 @@
  *
  *	vm_inherit_t	inheritance codes.
  */
-
-typedef int		vm_inherit_t;	/* might want to change this */
 
 /*
  *	Enumeration of valid values for vm_inherit_t.

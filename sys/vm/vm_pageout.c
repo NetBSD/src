@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)vm_pageout.c	7.4 (Berkeley) 5/7/91
- *	$Id: vm_pageout.c,v 1.9 1994/01/07 22:23:31 mycroft Exp $
+ *	$Id: vm_pageout.c,v 1.10 1994/03/17 02:52:36 cgd Exp $
  *
  *
  * Copyright (c) 1987, 1990 Carnegie-Mellon University.
@@ -122,7 +122,7 @@ vm_pageout_scan()
 	 *	Acquire the resident page system lock,
 	 *	as we may be changing what's resident quite a bit.
 	 */
-	VM_PAGE_LOCK_QUEUES();
+	vm_page_lock_queues();
 
 	/*
 	 *	Start scanning the inactive queue for pages we can free.
@@ -220,7 +220,7 @@ vm_pageout_scan()
 				 *	making a pager for it.  We must
 				 *	unlock the page queues first.
 				 */
-				VM_PAGE_UNLOCK_QUEUES();
+				vm_page_unlock_queues();
 
 				vm_object_collapse(object);
 
@@ -257,7 +257,7 @@ vm_pageout_scan()
 					vm_pager_put(pager, m, FALSE) :
 					VM_PAGER_FAIL;
 				vm_object_lock(object);
-				VM_PAGE_LOCK_QUEUES();
+				vm_page_lock_queues();
 				next = (vm_page_t) queue_next(&m->pageq);
 
 				switch (pageout_status) {
@@ -336,7 +336,7 @@ vm_pageout_scan()
 	}
 
 	vm_page_pagesfreed += pages_freed;
-	VM_PAGE_UNLOCK_QUEUES();
+	vm_page_unlock_queues();
 }
 
 /*

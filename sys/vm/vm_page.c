@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)vm_page.c	7.4 (Berkeley) 5/7/91
- *	$Id: vm_page.c,v 1.11 1994/01/08 04:02:36 mycroft Exp $
+ *	$Id: vm_page.c,v 1.12 1994/03/17 02:52:27 cgd Exp $
  *
  *
  * Copyright (c) 1987, 1990 Carnegie-Mellon University.
@@ -714,11 +714,11 @@ vm_page_rename(mem, new_object, new_offset)
 	if (mem->object == new_object)
 		return;
 
-	VM_PAGE_LOCK_QUEUES();	/* keep page from moving out from
+	vm_page_lock_queues();	/* keep page from moving out from
 				   under pageout daemon */
     	vm_page_remove(mem);
 	vm_page_insert(mem, new_object, new_offset);
-	VM_PAGE_UNLOCK_QUEUES();
+	vm_page_unlock_queues();
 }
 
 /*

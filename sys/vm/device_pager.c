@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)device_pager.c	8.1 (Berkeley) 6/11/93
- *	$Id: device_pager.c,v 1.12 1994/01/07 17:12:51 mycroft Exp $
+ *	$Id: device_pager.c,v 1.13 1994/03/17 02:51:57 cgd Exp $
  */
 
 /*
@@ -287,9 +287,9 @@ dev_pager_getpage(pager, m, sync)
 	queue_enter(&((dev_pager_t)pager->pg_data)->devp_pglist,
 		    page, vm_page_t, pageq);
 	vm_object_lock(object);
-	VM_PAGE_LOCK_QUEUES();
+	vm_page_lock_queues();
 	vm_page_free(m);
-	VM_PAGE_UNLOCK_QUEUES();
+	vm_page_unlock_queues();
 	vm_page_insert(page, object, offset);
 	PAGE_WAKEUP(m);
 	if (offset + PAGE_SIZE > object->size)

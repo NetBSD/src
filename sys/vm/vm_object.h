@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)vm_object.h	7.3 (Berkeley) 4/21/91
- *	$Id: vm_object.h,v 1.8 1994/01/08 04:59:11 mycroft Exp $
+ *	$Id: vm_object.h,v 1.9 1994/03/17 02:52:25 cgd Exp $
  *
  *
  * Copyright (c) 1987, 1990 Carnegie-Mellon University.
@@ -102,8 +102,6 @@ struct vm_object {
 /* Object flags */
 #define OBJ_CANPERSIST		0x0001	/* allow to persist */
 #define OBJ_INTERNAL		0x0002	/* internally created object */
-
-typedef struct vm_object	*vm_object_t;
 
 struct vm_object_hash_entry {
 	queue_chain_t		hash_links;	/* hash chain links */

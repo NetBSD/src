@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)vm_object.c	7.4 (Berkeley) 5/7/91
- *	$Id: vm_object.c,v 1.16 1994/01/15 02:39:58 cgd Exp $
+ *	$Id: vm_object.c,v 1.17 1994/03/17 02:52:19 cgd Exp $
  *
  *
  * Copyright (c) 1987, 1990 Carnegie-Mellon University.
@@ -389,7 +389,7 @@ vm_object_terminate(object)
 	while (!queue_end(&object->memq, (queue_entry_t) p)) {
 		VM_PAGE_CHECK(p);
 
-		VM_PAGE_LOCK_QUEUES();
+		vm_page_lock_queues();
 		if (p->flags & PG_ACTIVE) {
 			queue_remove(&vm_page_queue_active, p, vm_page_t,
 						pageq);
@@ -403,7 +403,7 @@ vm_object_terminate(object)
 			p->flags &= ~PG_INACTIVE;
 			vm_page_inactive_count--;
 		}
-		VM_PAGE_UNLOCK_QUEUES();
+		vm_page_unlock_queues();
 		p = (vm_page_t) queue_next(&p->listq);
 	}
 				
@@ -428,9 +428,9 @@ vm_object_terminate(object)
 
 		VM_PAGE_CHECK(p);
 
-		VM_PAGE_LOCK_QUEUES();
+		vm_page_lock_queues();
 		vm_page_free(p);
-		VM_PAGE_UNLOCK_QUEUES();
+		vm_page_unlock_queues();
 	}
 
 	/*
@@ -516,13 +516,13 @@ vm_object_deactivate_pages(object)
 	p = (vm_page_t) queue_first(&object->memq);
 	while (!queue_end(&object->memq, (queue_entry_t) p)) {
 		next = (vm_page_t) queue_next(&p->listq);
-		VM_PAGE_LOCK_QUEUES();
+		vm_page_lock_queues();
 		if (!(p->flags & PG_BUSY))
 			vm_page_deactivate(p);	/* optimisation from mach 3.0 -
 						 * andrew@werple.apana.org.au,
 						 * Feb '93
 						 */
-		VM_PAGE_UNLOCK_QUEUES();
+		vm_page_unlock_queues();
 		p = next;
 	}
 }
@@ -630,7 +630,7 @@ vm_object_pmap_copy(object, start, end)
 	while (!queue_end(&object->memq, (queue_entry_t) p)) {
 		if ((start <= p->offset) && (p->offset < end)) {
 			pmap_page_protect(VM_PAGE_TO_PHYS(p), VM_PROT_READ);
-			p->flags |= PG_COW;
+			p->flags |= PG_COPYONWRITE;
 		}
 		p = (vm_page_t) queue_next(&p->listq);
 	}
@@ -727,7 +727,7 @@ vm_object_copy(src_object, src_offset, size,
 		     p = (vm_page_t) queue_next(&p->listq)) {
 			if (src_offset <= p->offset &&
 			    p->offset < src_offset + size)
-				p->flags |= PG_COW;
+				p->flags |= PG_COPYONWRITE;
 		}
 		vm_object_unlock(src_object);
 
@@ -856,7 +856,7 @@ vm_object_copy(src_object, src_offset, size,
 	p = (vm_page_t) queue_first(&src_object->memq);
 	while (!queue_end(&src_object->memq, (queue_entry_t) p)) {
 		if ((new_start <= p->offset) && (p->offset < new_end))
-			p->flags |= PG_COW;
+			p->flags |= PG_COPYONWRITE;
 		p = (vm_page_t) queue_next(&p->listq);
 	}
 
@@ -1201,15 +1201,15 @@ vm_object_collapse(object)
 
 				if (p->offset < backing_offset ||
 				    new_offset >= size) {
-					VM_PAGE_LOCK_QUEUES();
+					vm_page_lock_queues();
 					vm_page_free(p);
-					VM_PAGE_UNLOCK_QUEUES();
+					vm_page_unlock_queues();
 				} else {
 				    pp = vm_page_lookup(object, new_offset);
 				    if (pp != NULL && !(pp->flags & PG_FAKE)) {
-					VM_PAGE_LOCK_QUEUES();
+					vm_page_lock_queues();
 					vm_page_free(p);
-					VM_PAGE_UNLOCK_QUEUES();
+					vm_page_unlock_queues();
 				    }
 				    else {
 					if (pp) {
@@ -1226,9 +1226,9 @@ vm_object_collapse(object)
 #else
 					    /* may be someone waiting for it */
 					    PAGE_WAKEUP(pp);
-					    VM_PAGE_LOCK_QUEUES();
+					    vm_page_lock_queues();
 					    vm_page_free(pp);
-					    VM_PAGE_UNLOCK_QUEUES();
+					    vm_page_unlock_queues();
 #endif
 					}
 					/*
@@ -1432,9 +1432,9 @@ vm_object_page_remove(object, start, end)
 		next = (vm_page_t) queue_next(&p->listq);
 		if ((start <= p->offset) && (p->offset < end)) {
 			pmap_page_protect(VM_PAGE_TO_PHYS(p), VM_PROT_NONE);
-			VM_PAGE_LOCK_QUEUES();
+			vm_page_lock_queues();
 			vm_page_free(p);
-			VM_PAGE_UNLOCK_QUEUES();
+			vm_page_unlock_queues();
 		}
 		p = next;
 	}
