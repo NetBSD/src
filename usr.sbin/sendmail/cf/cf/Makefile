@@ -23,7 +23,7 @@ RM=	rm -f
 	(cd ${.CURDIR} && $(M4) ${@:R}.mc > ${.OBJDIR}/$@)
 	$(CHMOD) $(ROMODE) $@
 
-ALL=	boat-anchor.cf chimera.cf pain.cf sun-lamp.cf trinity.cf \
+ALL=	boat-anchor.cf chimera.cf sun-lamp.cf trinity.cf \
 	clientproto.cf netbsd-proto.cf tcpproto.cf uucpproto.cf
 
 all: $(ALL)
