@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.84 2003/03/31 03:58:57 perry Exp $
+#	$NetBSD: MAKEDEV,v 1.85 2003/04/14 05:45:40 wiz Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -68,7 +68,7 @@
 #	md*	memory pseudo-disk devices
 #
 # Console ports:
-#	ttye*	ite bitmapped consoles
+#	ttye*	ITE bitmapped consoles
 #	ttyE*	wscons
 #
 # Pointing devices:
