@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.115 1999/03/11 05:17:54 sakamoto Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.116 1999/03/16 21:24:46 mjacob Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.108 1999/03/09 11:48:03 drochner Exp 
+ *	NetBSD: pcidevs,v 1.109 1999/03/11 05:17:24 sakamoto Exp 
  */
 
 /*
@@ -984,6 +984,8 @@
 /* QLogic products */
 #define	PCI_PRODUCT_QLOGIC_ISP1020	0x1020		/* ISP1020 */
 #define	PCI_PRODUCT_QLOGIC_ISP1022	0x1022		/* ISP1022 */
+#define	PCI_PRODUCT_QLOGIC_ISP1080	0x1080		/* ISP1080 */
+#define	PCI_PRODUCT_QLOGIC_ISP1240	0x1240		/* ISP1240 */
 #define	PCI_PRODUCT_QLOGIC_ISP2100	0x2100		/* ISP2100 */
 
 /* Quantum Designs products */
