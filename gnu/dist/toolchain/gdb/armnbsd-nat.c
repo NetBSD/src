@@ -119,6 +119,44 @@ fetch_core_registers (core_reg_sect, core_reg_size, which, ignore)
   /* XXX */
 }
 
+static void
+fetch_elfcore_registers (core_reg_sect, core_reg_size, which, ignore)
+     char *core_reg_sect;
+     unsigned core_reg_size;
+     int which;
+     CORE_ADDR ignore;
+{
+  struct reg intreg;
+  struct fpreg freg;
+
+  switch (which)
+    {
+    case 0:  /* Integer registers */
+      if (core_reg_size != sizeof (intreg))
+        warning ("Wrong size register set in core file.");
+      else
+        {
+          memcpy (&intreg, core_reg_sect, sizeof (intreg));
+          supply_struct_reg (&intreg);
+        }
+      break;
+
+    case 2:  /* Floating point registers */
+      if (core_reg_size != sizeof (freg))
+        warning ("Wrong size FP register set in core file.");
+      else
+        {
+          memcpy (&freg, core_reg_sect, sizeof (freg));
+          /* XXX */
+        }
+      break;
+
+    default:
+      /* Don't know what kind of register request this is; just ignore it.  */
+      break;
+    }
+}
+
 #else
 #error Not FETCH_INFERIOR_REGISTERS 
 #endif /* !FETCH_INFERIOR_REGISTERS */
@@ -141,8 +179,18 @@ static struct core_fns armnbsd_core_fns =
   NULL					/* next */
 };
 
+static struct core_fns armnbsd_elfcore_fns =
+{
+  bfd_target_elf_flavour,		/* core_flavour */
+  default_check_format,			/* check_format */
+  default_core_sniffer,			/* core_sniffer */
+  fetch_elfcore_registers,		/* core_read_registers */
+  NULL					/* next */
+};
+
 void
 _initialize_armnbsd_nat ()
 {
   add_core_fns (&armnbsd_core_fns);
+  add_core_fns (&armnbsd_elfcore_fns);
 }
