@@ -1,4 +1,4 @@
-/*	$NetBSD: icside.c,v 1.2 1997/03/15 18:09:33 is Exp $	*/
+/*	$NetBSD: icside.c,v 1.3 1997/10/14 22:59:08 mark Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe
@@ -33,6 +33,7 @@
  */
 
 /*
+ * Thanks to xxx for loaning an ICS IDE card for the development of this driver
  * Thanks to Ian Copestake and David Basildon for providing interrupt enable
  * information
  */
@@ -63,8 +64,8 @@
 #include <arm32/podulebus/podules.h>
 #include <arm32/podulebus/icsidereg.h>
 
-#include <arm32/mainbus/wdreg.h>
-#include <arm32/mainbus/wdvar.h>
+#include <arm32/dev/wdreg.h>
+#include <arm32/dev/wdcvar.h>
 
 /*
  * ICS IDE podule device.
@@ -86,7 +87,7 @@ struct icside_softc {
 	int 			sc_podule_number;	/* Our podule number */
 };
 
-int	icside_probe	__P((struct device *, void *, void *));
+int	icside_probe	__P((struct device *, struct cfdata *, void *));
 void	icside_attach	__P((struct device *, struct device *, void *));
 
 struct cfattach icside_ca = {
@@ -117,9 +118,10 @@ icside_print(aux, name)
  */
 
 int
-icside_probe(parent, match, aux)
+icside_probe(parent, cf, aux)
 	struct device *parent;
-	void *match, *aux;
+	struct cfdata *cf;
+	void *aux;
 {
 	struct podule_attach_args *pa = (void *)aux;
 
@@ -172,7 +174,7 @@ struct icswdc_softc {
 	bus_space_handle_t	sc_irq_ioh;		/* handle for IRQ */
 };
 
-int	wdc_ics_probe	__P((struct device *, void *, void *));
+int	wdc_ics_probe	__P((struct device *, struct cfdata *, void *));
 void	wdc_ics_attach	__P((struct device *, struct device *, void *));
 int	wdc_ics_intr	__P((void *));
 void	wdc_ics_inten	__P((struct wdc_softc *wdc, int enable));
@@ -197,9 +199,10 @@ static int intr_expected = 0;
  */
 
 int
-wdc_ics_probe(parent, match, aux)
+wdc_ics_probe(parent, cf, aux)
 	struct device *parent;
-	void *match, *aux;
+	struct cfdata *cf;
+	void *aux;
 {
 	struct podule_attach_args *pa = (void *)aux;
 	bus_space_tag_t iot;
@@ -302,8 +305,8 @@ wdc_ics_attach(parent, self, aux)
 	wdc->sc_ih.ih_maskaddr = wdc->sc_podule->irq_addr;
 	wdc->sc_ih.ih_maskbits = wdc->sc_podule->irq_mask;
 
-	if (irq_claim(IRQ_PODULE, &wdc->sc_ih))
-		panic("Cannot claim IRQ %d for %s\n", IRQ_PODULE, self->dv_xname);
+	if (irq_claim(wdc->sc_podule->interrupt, &wdc->sc_ih))
+		panic("%s: Cannot claim interrupt\n", self->dv_xname);
 
 	wdc->sc_wdc.sc_inten = wdc_ics_inten;
 
