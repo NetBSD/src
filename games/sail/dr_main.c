@@ -33,7 +33,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)dr_main.c	5.5 (Berkeley) 6/1/90";*/
-static char rcsid[] = "$Id: dr_main.c,v 1.2 1993/08/01 18:51:48 mycroft Exp $";
+static char rcsid[] = "$Id: dr_main.c,v 1.3 1994/04/08 18:23:31 cgd Exp $";
 #endif /* not lint */
 
 #include "driver.h"
@@ -49,7 +49,7 @@ dr_main()
 	(void) signal(SIGQUIT, SIG_IGN);
 	(void) signal(SIGTSTP, SIG_IGN);
 	if (issetuid)
-		(void) setruid(geteuid());
+		(void) setuid(geteuid());
 	if (game < 0 || game >= NSCENE) {
 		fprintf(stderr, "DRIVER: Bad game number %d\n", game);
 		exit(1);
