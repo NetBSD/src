@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.109 1999/05/18 03:13:37 nisimura Exp $	*/
+/*	$NetBSD: trap.c,v 1.110 1999/05/29 09:38:28 nisimura Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.109 1999/05/18 03:13:37 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.110 1999/05/29 09:38:28 nisimura Exp $");
 
 #include "opt_cputype.h"	/* which mips CPU levels do we support? */
 #include "opt_inet.h"
@@ -451,8 +451,12 @@ trap(status, cause, vaddr, opc, frame)
 			}
 			entry |= mips_pg_m_bit();
 			pte->pt_entry = entry;
+#if defined(MIPS1) && !defined(MIPS3)
+			MachTLBUpdate(~0, entry);	/* use entryhi */
+#else
 			vaddr &= ~PGOFSET;
 			MachTLBUpdate(vaddr, entry);
+#endif
 			pa = pfn_to_vad(entry);
 			if (!IS_VM_PHYSADDR(pa)) {
 				printf("ktlbmod: va %x pa %lx\n", vaddr, pa);
@@ -484,9 +488,13 @@ trap(status, cause, vaddr, opc, frame)
 		}
 		entry |= mips_pg_m_bit();
 		pte->pt_entry = entry;
+#if defined(MIPS1) && !defined(MIPS3)
+		MachTLBUpdate(~0, entry);		/* use entryhi */
+#else
 		vaddr = (vaddr & ~PGOFSET) |
 			(pmap->pm_asid << MIPS_TLB_PID_SHIFT);
 		MachTLBUpdate(vaddr, entry);
+#endif
 		pa = pfn_to_vad(entry);
 		if (!IS_VM_PHYSADDR(pa)) {
 			printf("utlbmod: va %x pa %lx\n", vaddr, pa);
