@@ -1,10 +1,10 @@
-/*	$NetBSD: pcmciadevs.h,v 1.34 1999/02/19 00:44:15 nathanw Exp $	*/
+/*	$NetBSD: pcmciadevs.h,v 1.35 1999/02/19 02:53:06 nathanw Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcmciadevs,v 1.30 1999/01/01 19:30:03 christos Exp 
+ *	NetBSD: pcmciadevs,v 1.31 1999/02/19 00:43:00 nathanw Exp 
  */
 
 /*-
@@ -112,9 +112,9 @@
 #define	PCMCIA_STR_DIGITAL_MOBILE_MEDIA_CDROM	"Digital Mobile Media CD-ROM"
 
 /* Fujutsu Products */
-#define	PCMCIA_CIS_FUJUTSU_SCSI600	{ NULL, NULL, NULL, NULL }
-#define	PCMCIA_PRODUCT_FUJUTSU_SCSI600	0x0401
-#define	PCMCIA_STR_FUJUTSU_SCSI600	"Fujitsu SCSI 600 Interface"
+#define	PCMCIA_CIS_FUJITSU_SCSI600	{ NULL, NULL, NULL, NULL }
+#define	PCMCIA_PRODUCT_FUJITSU_SCSI600	0x0401
+#define	PCMCIA_STR_FUJITSU_SCSI600	"Fujitsu SCSI 600 Interface"
 
 /* Motorola Products */
 #define	PCMCIA_CIS_MOTOROLA_POWER144	{ NULL, NULL, NULL, NULL }
