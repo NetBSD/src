@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.11 1995/07/13 21:36:09 leo Exp $	*/
+/*	$NetBSD: machdep.c,v 1.12 1995/08/28 19:31:07 leo Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -386,49 +386,31 @@ extern char version[];
  
 identifycpu()
 {
-        /* there's alot of XXX in here... */
-	char *mach, *mmu, *fpu, *cpu;
+	extern char	*fpu_describe();
+	extern int	*fpu_probe();
+	       char	*mach, *mmu, *fpu, *cpu;
 
-	if(machineid & ATARI_TT)
+	if (machineid & ATARI_TT)
 		mach = "Atari TT";
-	else if(machineid & ATARI_FALCON)
+	else if (machineid & ATARI_FALCON)
 		mach = "Atari Falcon";
 	else mach = "Atari UNKNOWN";
 
 	cpu     = "m68k";
-	fpu     = NULL;
-	fputype = 0;
+	fputype = fpu_probe();
+	fpu     = fpu_describe(fputype);
+
 	if (machineid & ATARI_68040) {
 		cpu     = "m68040";
 		mmu     = "/MMU";
-		fpu     = "/FPU";
-		fputype = 3;	/* XXX define ??? */
 	} else if (machineid & ATARI_68030) {
-		cpu = "m68030";	/* XXX */
+		cpu = "m68030";
 		mmu = "/MMU";
 	} else {
 		cpu = "m68020";
 		mmu = " m68851 MMU";
 	}
-	if (fpu == NULL) {
-		if (machineid & ATARI_68882) {
-			fpu     = " m68882 FPU";
-			fputype = 2;	/* XXX define ??? */
-		}
-		else if (machineid & ATARI_68881) {
-			fpu     = " m68881 FPU";
-			fputype = 1;	/* XXX define ??? */
-		}
-		else {
-#ifdef FPU_EMULATE
-			fpu     = " FPU emulator";
-#else
-			fpu     = " no FPU";
-#endif
-			fputype = 0;	/* XXX define ??? */
-		}
-	}
-	sprintf(cpu_model, "%s (%s CPU%s%s)", mach, cpu, mmu, fpu);
+	sprintf(cpu_model, "%s (%s CPU%s%s FPU)", mach, cpu, mmu, fpu);
 	printf("%s\n", cpu_model);
 }
 
