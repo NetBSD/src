@@ -1,4 +1,4 @@
-/*	$NetBSD: sysv_msg.c,v 1.10 1994/10/20 04:23:15 cgd Exp $	*/
+/*	$NetBSD: sysv_msg.c,v 1.11 1994/10/23 23:11:27 cgd Exp $	*/
 
 /*
  * Implementation of SVID messages
@@ -990,28 +990,28 @@ compat_10_msgsys(p, uap, retval)
 	} */ *uap;
 	register_t *retval;
 {
-	struct msgctl_args {
+	struct msgctl_args /* {
 		syscallarg(int) msqid;
 		syscallarg(int) cmd;
 		syscallarg(struct msqid_ds *) buf;
-	} msgctl_args;
-	struct msgget_args {
+	} */ msgctl_args;
+	struct msgget_args /* {
 		syscallarg(key_t) key;
 		syscallarg(int) msgflg;
-	} msgget_args;
-	struct msgsnd_args {
+	} */ msgget_args;
+	struct msgsnd_args /* {
 		syscallarg(int) msqid;
 		syscallarg(void *) msgp;
 		syscallarg(size_t) msgsz;
 		syscallarg(int) msgflg;
-	} msgsnd_args;
-	struct msgrcv_args {
+	} */ msgsnd_args;
+	struct msgrcv_args /* {
 		syscallarg(int) msqid;
 		syscallarg(void *) msgp;
 		syscallarg(size_t) msgsz;
 		syscallarg(long) msgtyp;
 		syscallarg(int) msgflg;
-	} msgrcv_args;
+	} */ msgrcv_args;
 
 	switch (SCARG(uap, which)) {
 	case 0:					/* msgctl()*/
@@ -1022,8 +1022,8 @@ compat_10_msgsys(p, uap, retval)
 		return (msgctl(p, &msgctl_args, retval));
 
 	case 1:					/* msgget() */
-		SCARG(&msgctl_args, key) = SCARG(uap, a2);
-		SCARG(&msgctl_args, msgflg) = SCARG(uap, a3);
+		SCARG(&msgget_args, key) = SCARG(uap, a2);
+		SCARG(&msgget_args, msgflg) = SCARG(uap, a3);
 		return (msgget(p, &msgget_args, retval));
 
 	case 2:					/* msgsnd() */
@@ -1031,15 +1031,15 @@ compat_10_msgsys(p, uap, retval)
 		SCARG(&msgsnd_args, msgp) = (void *)SCARG(uap, a3);
 		SCARG(&msgsnd_args, msgsz) = SCARG(uap, a4);
 		SCARG(&msgsnd_args, msgflg) = SCARG(uap, a5);
-		return (msgget(p, &msgget_args, retval));
+		return (msgsnd(p, &msgsnd_args, retval));
 
 	case 3:					/* msgrcv() */
-		SCARG(&msgsnd_args, msqid) = SCARG(uap, a2);
-		SCARG(&msgsnd_args, msgp) = (void *)SCARG(uap, a3);
-		SCARG(&msgsnd_args, msgsz) = SCARG(uap, a4);
-		SCARG(&msgsnd_args, msgtyp) = SCARG(uap, a5);
-		SCARG(&msgsnd_args, msgflg) = SCARG(uap, a6);
-		return (msgget(p, &msgget_args, retval));
+		SCARG(&msgrcv_args, msqid) = SCARG(uap, a2);
+		SCARG(&msgrcv_args, msgp) = (void *)SCARG(uap, a3);
+		SCARG(&msgrcv_args, msgsz) = SCARG(uap, a4);
+		SCARG(&msgrcv_args, msgtyp) = SCARG(uap, a5);
+		SCARG(&msgrcv_args, msgflg) = SCARG(uap, a6);
+		return (msgrcv(p, &msgrcv_args, retval));
 
 	default:
 		return (EINVAL);
