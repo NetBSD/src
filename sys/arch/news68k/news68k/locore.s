@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.38 2005/02/27 07:57:29 tsutsui Exp $	*/
+/*	$NetBSD: locore.s,v 1.39 2005/02/27 07:59:18 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990, 1993
@@ -429,7 +429,7 @@ Lstploaddone:
 	movc	%d0,%cacr		| turn on both caches
 	jmp	Lenab1
 Lmotommu2:
-#if 1 /* XXX use %tt0 register to map I/O space temporary */
+#if 0 /* XXX use %tt0 register to map I/O space temporary */
 	RELOC(protott0, %a0)
 	movl	#0xe01f8550,%a0@	| use %tt0 (0xe0000000-0xffffffff)
 	.long	0xf0100800		| pmove %a0@,%tt0
