@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ade.c,v 1.12 2001/07/12 23:35:42 thorpej Exp $	*/
+/*	$NetBSD: if_ade.c,v 1.13 2002/05/02 16:22:43 thorpej Exp $	*/
 
 /*
  * NOTE: this version of if_de was modified for bounce buffers prior
@@ -234,8 +234,16 @@ static void dumpring(void **);
  * course, they won't be needing de(4) drivers.
  */
 static void
-donothing(caddr_t m, u_int p, void *q)
+donothing(struct mbuf *m, caddr_t buf, u_int size, void *arg)
 {
+	int s;
+
+	if (__predict_true(m != NULL)) {
+		s = splvm();
+		pool_cache_put(&mbpool_cache, m);
+		splx(s);
+	}
+
 }
 static void a12r2pb(void *vsrc, void *vdst, int len) {
 	long	bounce[9];
