@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.162 1995/06/05 03:47:51 mycroft Exp $	*/
+/*	$NetBSD: machdep.c,v 1.163 1995/06/26 05:22:53 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -116,6 +116,8 @@ int	bufpages = 0;
 #endif
 
 int	physmem;
+int	dumpmem_low;
+int	dumpmem_high;
 int	boothowto;
 int	cpu_class;
 
@@ -736,7 +738,7 @@ dumpconf()
 	if (nblks <= ctod(1))
 		return;
 
-	dumpsize = physmem;
+	dumpsize = btoc(IOM_END + ctob(dumpmem_high));
 
 	/* Always skip the first CLBYTES, in case there is a label there. */
 	if (dumplo < ctod(1))
@@ -754,22 +756,96 @@ dumpconf()
  * getting on the dump stack, either when called above, or by
  * the auto-restart code.
  */
+#define BYTES_PER_DUMP  NBPG	/* must be a multiple of pagesize XXX small */
+static vm_offset_t dumpspace;
+
+vm_offset_t
+reserve_dumppages(p)
+	vm_offset_t p;
+{
+
+	dumpspace = p;
+	return (p + BYTES_PER_DUMP);
+}
+
 void
 dumpsys()
 {
+	unsigned bytes, i, n;
+	int maddr, psize;
+	daddr_t blkno;
+	int (*dump) __P((dev_t, daddr_t, caddr_t, size_t));
+	int error = 0;
+	int c;
 
-	msgbufmapped = 0;
+	msgbufmapped = 0;	/* don't record dump msgs in msgbuf */
 	if (dumpdev == NODEV)
 		return;
-	if (dumpsize == 0) {
+
+	/*
+	 * For dumps during autoconfiguration,
+	 * if dump device has already configured...
+	 */
+	if (dumpsize == 0)
 		dumpconf();
-		if (dumpsize == 0)
-			return;
-	}
+	if (dumplo < 0)
+		return;
 	printf("\ndumping to dev %x, offset %d\n", dumpdev, dumplo);
 
+	psize = (*bdevsw[major(dumpdev)].d_psize)(dumpdev);
 	printf("dump ");
-	switch ((*bdevsw[major(dumpdev)].d_dump)(dumpdev)) {
+	if (psize == -1) {
+		printf("area unavailable\n");
+		return;
+	}
+
+#if 0	/* XXX this doesn't work.  grr. */
+        /* toss any characters present prior to dump */
+	while (sget() != NULL); /*syscons and pccons differ */
+#endif
+
+	bytes = ctob(dumpmem_high) + IOM_END;
+	maddr = 0;
+	blkno = dumplo;
+	dump = bdevsw[major(dumpdev)].d_dump;
+	for (i = 0; i < bytes; i += n) {
+		/*
+		 * Avoid dumping the ISA memory hole, and areas that
+		 * BIOS claims aren't in low memory.
+		 */
+		if (i >= ctob(dumpmem_low) && i < IOM_END) {
+			n = IOM_END - i;
+			maddr += n;
+			blkno += btodb(n);
+			continue;
+		}
+
+		/* Print out how many MBs we to go. */
+		n = bytes - i;
+		if (n && (n % (1024*1024)) == 0)
+			printf("%d ", n / (1024 * 1024));
+
+		/* Limit size for next transfer. */
+		if (n > BYTES_PER_DUMP)
+			n =  BYTES_PER_DUMP;
+
+		(void) pmap_map(dumpspace, maddr, maddr + n, VM_PROT_READ);
+		error = (*dump)(dumpdev, blkno, (caddr_t)dumpspace, n);
+		if (error)
+			break;
+		maddr += n;
+		blkno += btodb(n);			/* XXX? */
+
+#if 0	/* XXX this doesn't work.  grr. */
+		/* operator aborting dump? */
+		if (sget() != NULL) {
+			error = EINTR;
+			break;
+		}
+#endif
+	}
+
+	switch (error) {
 
 	case ENXIO:
 		printf("device bad\n");
@@ -791,12 +867,16 @@ dumpsys()
 		printf("aborted from console\n");
 		break;
 
-	default:
+	case 0:
 		printf("succeeded\n");
+		break;
+
+	default:
+		printf("error %d\n", error);
 		break;
 	}
 	printf("\n\n");
-	delay(1000);
+	delay(5000000);		/* 5 seconds */
 }
 
 #ifdef HZ
@@ -1154,6 +1234,8 @@ init386(first_avail)
 
 	/* number of pages of physmem addr space */
 	physmem = btoc((biosbasemem + biosextmem) * 1024);
+	dumpmem_low = btoc(biosbasemem * 1024);
+	dumpmem_high = btoc(biosextmem * 1024);
 
 	/*
 	 * Initialize for pmap_free_pages and pmap_next_page.
