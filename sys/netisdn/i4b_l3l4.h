@@ -27,7 +27,7 @@
  *	i4b_l3l4.h - layer 3 / layer 4 interface
  *	------------------------------------------
  *
- *	$Id: i4b_l3l4.h,v 1.5 2002/03/17 20:54:05 martin Exp $
+ *	$Id: i4b_l3l4.h,v 1.6 2002/03/22 09:54:17 martin Exp $
  *
  * $FreeBSD$
  *
@@ -258,10 +258,8 @@ typedef struct
 	void	(*N_CONNECT_RESPONSE)	(unsigned int, int, int);
 	void	(*N_DISCONNECT_REQUEST)	(unsigned int, int);
 	void	(*N_ALERT_REQUEST)	(unsigned int);
-#if 0
 	int     (*N_DOWNLOAD)		(void*, int numprotos, struct isdn_dr_prot *protocols);
 	int     (*N_DIAGNOSTICS)	(void*, struct isdn_diagnostic_request*);
-#endif
 	void	(*N_MGMT_COMMAND)	(int bri, int cmd, void *);
 } ctrl_desc_t;
 
