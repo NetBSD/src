@@ -1,4 +1,4 @@
-/*	$NetBSD: pmax_trap.c,v 1.12 1995/04/25 05:30:14 mellon Exp $	*/
+/*	$NetBSD: pmax_trap.c,v 1.13 1995/04/25 19:16:43 mellon Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -434,9 +434,7 @@ trap(statusReg, causeReg, vadr, pc, args)
 					locr0[V0] = i;
 					locr0[A3] = 1;
 #ifdef SYSCALL_DEBUG
-					if (p->p_emul == EMUL_NETBSD)
-						scdebug_call(p,
-						        code, args.i);
+					scdebug_call(p, code, args.i);
 #endif
 #ifdef KTRACE
 					if (KTRPOINT(p, KTR_SYSCALL))
@@ -471,9 +469,7 @@ trap(statusReg, causeReg, vadr, pc, args)
 					locr0[V0] = i;
 					locr0[A3] = 1;
 #ifdef SYSCALL_DEBUG
-					if (p->p_emul == EMUL_NETBSD)
-						scdebug_call(p,
-						        code, args.i);
+					scdebug_call(p, code, args.i);
 #endif
 #ifdef KTRACE
 					if (KTRPOINT(p, KTR_SYSCALL))
@@ -505,9 +501,7 @@ trap(statusReg, causeReg, vadr, pc, args)
 					locr0[V0] = i;
 					locr0[A3] = 1;
 #ifdef SYSCALL_DEBUG
-					if (p->p_emul == EMUL_NETBSD)
-						scdebug_call(p,
-						        code, args.i);
+					scdebug_call(p, code, args.i);
 #endif
 #ifdef KTRACE
 					if (KTRPOINT(p, KTR_SYSCALL))
@@ -520,8 +514,7 @@ trap(statusReg, causeReg, vadr, pc, args)
 			}
 		}
 #ifdef SYSCALL_DEBUG
-		if (p->p_emul == EMUL_NETBSD)
-		        scdebug_call(p, code, args.i);
+		scdebug_call(p, code, args.i);
 #endif
 #ifdef KTRACE
 		if (KTRPOINT(p, KTR_SYSCALL))
@@ -576,8 +569,7 @@ trap(statusReg, causeReg, vadr, pc, args)
 		}
 	done:
 #ifdef SYSCALL_DEBUG
-		if (p->p_emul == EMUL_NETBSD)
-	                scdebug_ret(p, code, i, rval);
+		scdebug_ret(p, code, i, rval);
 #endif
 #ifdef KTRACE
 		if (KTRPOINT(p, KTR_SYSRET))
