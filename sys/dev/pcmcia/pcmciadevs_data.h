@@ -1,10 +1,10 @@
-/*	$NetBSD: pcmciadevs_data.h,v 1.199 2004/07/07 05:38:42 mycroft Exp $	*/
+/*	$NetBSD: pcmciadevs_data.h,v 1.200 2004/07/09 03:19:51 enami Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcmciadevs,v 1.197 2004/07/07 05:38:29 mycroft Exp 
+ *	NetBSD: pcmciadevs,v 1.199 2004/07/09 03:19:20 enami Exp 
  */
 /* $FreeBSD: src/sys/dev/pccard/pccarddevs,v 1.20 2001/11/19 05:02:55 imp Exp $*/
 
@@ -253,11 +253,18 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    "BUFFALO AirStation 11Mbps WLAN",	}
 	,
 	{
-	    PCMCIA_VENDOR_BUFFALO, PCMCIA_PRODUCT_BUFFALO_WLI_CF_S11G,
-	    PCMCIA_CIS_BUFFALO_WLI_CF_S11G,
+	    PCMCIA_VENDOR_BUFFALO, PCMCIA_PRODUCT_BUFFALO_LPC_CF_CLT,
+	    PCMCIA_CIS_BUFFALO_LPC_CF_CLT,
 	    0,
 	    "BUFFALO (Melco Corporation)",
-	    "BUFFALO AirStation 11Mbps CF WLAN",	}
+	    "BUFFALO LPC-CF-CLT Ethernet Adapter",	}
+	,
+	{
+	    PCMCIA_VENDOR_BUFFALO, PCMCIA_PRODUCT_BUFFALO_LPC4_CLX,
+	    PCMCIA_CIS_BUFFALO_LPC4_CLX,
+	    0,
+	    "BUFFALO (Melco Corporation)",
+	    "BUFFALO LPC4-CLX Ethernet Adapter",	}
 	,
 	{
 	    PCMCIA_VENDOR_BUFFALO, PCMCIA_PRODUCT_BUFFALO_LPC3_CLT,
@@ -267,11 +274,11 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    "BUFFALO LPC3-CLT Ethernet Adapter",	}
 	,
 	{
-	    PCMCIA_VENDOR_BUFFALO, PCMCIA_PRODUCT_BUFFALO_LPC4_CLX,
-	    PCMCIA_CIS_BUFFALO_LPC4_CLX,
+	    PCMCIA_VENDOR_BUFFALO, PCMCIA_PRODUCT_BUFFALO_WLI_CF_S11G,
+	    PCMCIA_CIS_BUFFALO_WLI_CF_S11G,
 	    0,
 	    "BUFFALO (Melco Corporation)",
-	    "BUFFALO LPC4-CLX Ethernet Adapter",	}
+	    "BUFFALO AirStation 11Mbps CF WLAN",	}
 	,
 	{
 	    PCMCIA_VENDOR_COMPAQ, PCMCIA_PRODUCT_COMPAQ_NC5004,
