@@ -1,4 +1,4 @@
-/* $NetBSD: pte.h,v 1.19 1998/03/17 04:53:43 thorpej Exp $ */
+/* $NetBSD: pte.h,v 1.20 1998/03/25 00:44:34 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -107,6 +107,7 @@ typedef	alpha_pt_entry_t	pt_entry_t;
 #define	PG_SHIFT	32
 #define	PG_PFNUM(x)	ALPHA_PTE_TO_PFN(x)
 
+#if defined(_KERNEL) || defined(__KVM_ALPHA_PRIVATE)
 #define	NPTEPG_SHIFT	(PAGE_SHIFT - PTESHIFT)
 #define	NPTEPG		(1 << NPTEPG_SHIFT)
 
@@ -132,6 +133,7 @@ typedef	alpha_pt_entry_t	pt_entry_t;
 
 #define	alpha_trunc_l1seg(x)	(((u_long)(x)) & ~(ALPHA_L1SEG_SIZE-1))
 #define	alpha_trunc_l2seg(x)	(((u_long)(x)) & ~(ALPHA_L2SEG_SIZE-1))
+#endif /* _KERNEL || __KVM_ALPHA_PRIVATE */
 
 #ifdef _KERNEL
 extern	pt_entry_t *Lev1map;		/* kernel level 1 page table */
