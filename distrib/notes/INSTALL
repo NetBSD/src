@@ -1,4 +1,4 @@
-INSTALLATION NOTES for NetBSD/MACHINE 1.2
+INSTALLATION NOTES for NetBSD/MACHINE 1.2E
 
 
 
@@ -19,7 +19,7 @@ NetBSD is a creation of the members of the Internet community.
 Without the unique cooperation and coordination the net makes
 possible, it's likely that this release wouldn't have come about.
 
-The current release has built upon the successful NetBSD 1.1 release
+The current release has built upon the successful NetBSD 1.2 release
 by integrating many bug fixes, adding new and updated kernel
 subsystems, and adding various userland enhancements.  The results of
 these improvements is a stable operating system fit for production use
