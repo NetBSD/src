@@ -1,4 +1,4 @@
-/*	$NetBSD: target.c,v 1.28 2000/10/19 14:42:57 pk Exp $	*/
+/*	$NetBSD: target.c,v 1.29 2000/12/04 22:47:02 wiz Exp $	*/
 
 /*
  * Copyright 1997 Jonathan Stone
@@ -75,12 +75,12 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: target.c,v 1.28 2000/10/19 14:42:57 pk Exp $");
+__RCSID("$NetBSD: target.c,v 1.29 2000/12/04 22:47:02 wiz Exp $");
 #endif
 
 /*
  * target.c -- path-prefixing routines to access the target installation
- *  filesystems. Makes  the install tools more ndependent of whether
+ *  filesystems. Makes the install tools more independent of whether
  *  we're installing into a separate filesystem hierarchy mounted under /mnt,
  *  or into the currently active root mounted on /.
  */
@@ -241,8 +241,8 @@ must_mount_root()
 }
 
 /*
- * Is the root pattion we're running from the same as the root 
- * which the  user has selected to install/upgrade?
+ * Is the root partition we're running from the same as the root 
+ * which the user has selected to install/upgrade?
  * Uses global variable "diskdev" to find the selected device for
  * install/upgrade.
  * FIXME -- disklabel-editing code assumes that partition 'a' is always root.
@@ -279,11 +279,11 @@ target_already_root()
 
 /*
  * ask the kernel what the current root is.
- * If it's "root_device", we should jsut give up now.
+ * If it's "root_device", we should just give up now.
  * (Why won't the kernel tell us? If we booted with "n",
  * or an explicit bootpath,  the operator told *it* ....)
  *
- * Don't cache the answer in case the user suspnnds and remounts.
+ * Don't cache the answer in case the user suspends and remounts.
  */
 static const char *
 mounted_rootpart()
@@ -428,7 +428,7 @@ make_prefixed_dir(prefix, path)
 	run_prog(0, NULL, "/bin/mkdir -p %s", concat_paths(prefix, path));
 }
 
-/* Make a directory with a pathname relative to the insatllation target. */
+/* Make a directory with a pathname relative to the installation target. */
 void
 make_target_dir(path)
 	const char *path;
@@ -660,7 +660,7 @@ mount_with_unwind(fstype, from, on)
 }
 
 /*
- * unwind the mount stack, umounting mounted filesystems.
+ * unwind the mount stack, unmounting mounted filesystems.
  * For now, ignore any errors in unmount. 
  * (Why would we be unable to unmount?  The user has suspended
  *  us and forked shell sitting somewhere in the target root?)
@@ -694,7 +694,7 @@ unwind_mounts()
 }
 
 /*
- * Do a mount onto a moutpoint in the install target.
+ * Do a mount onto a mountpoint in the install target.
  * NB: does not prefix mount-from, which probably breaks  nullfs mounts.
  */
 int
@@ -706,7 +706,7 @@ target_mount(fstype, from, on)
 	int error;
 	const char *realmount = target_expand(on);
 
-	/* mount and record for unmonting when done.  */
+	/* mount and record for unmounting when done.  */
 	error = mount_with_unwind(fstype, from, realmount);
 
 	return (error);
@@ -892,7 +892,7 @@ loop:
 	(void)strncpy(wbuf, p, (sizeof(wbuf) - 1));
 
 	/*
-	 * Call the inernal internal version of getcwd which
+	 * Call the internal internal version of getcwd which
 	 * does a physical search rather than using the $PWD short-cut
 	 */
 	if (getcwd(resolved, MAXPATHLEN) == 0)
