@@ -1,4 +1,4 @@
-/*	$NetBSD: varargs.h,v 1.7 1994/10/27 04:16:33 cgd Exp $	*/
+/*	$NetBSD: varargs.h,v 1.8 1994/12/28 22:45:43 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -49,6 +49,9 @@ typedef _BSD_VA_LIST_	va_list;
 
 #define	va_dcl	int va_alist;
 
+#define	__va_promote(type) \
+	(((sizeof(type) + sizeof(int) - 1) / sizeof(int)) * sizeof(int))
+
 #define	va_start(ap) \
 	ap = (char *)&va_alist
 
@@ -57,8 +60,7 @@ typedef _BSD_VA_LIST_	va_list;
 	((type *)(ap += sizeof(type)))[-1]
 #else
 #define	va_arg(ap, type) \
-	((type *)(ap += sizeof(type) < sizeof(int) ? \
-		(abort(), 0) : sizeof(type)))[-1]
+	((type *)(ap += __va_promote(type), ap - __va_promote(type)))[0]
 #endif
 
 #define	va_end(ap)
