@@ -1,4 +1,4 @@
-.\"	$NetBSD: boot.8,v 1.6 2001/11/26 00:11:52 wiz Exp $
+.\"	$NetBSD: boot.8,v 1.7 2001/12/17 06:01:23 mhitch Exp $
 .\"
 .\" Copyright (c) 1990, 1991 The Regents of the University of California.
 .\" All rights reserved.
@@ -214,13 +214,17 @@ filesystems such as bffs to access the
 .Nx
 root partition from AmigaOS.
 .Sh FILES
-.Bl -tag -width /usr/mdec/xxboot -compact
+.Bl -tag -width /usr/mdec/bootxx_ffs -compact
 .It Pa /netbsd
 system kernel
-.It Pa /usr/mdec/xxboot
-RDB device boot block
-.It Pa /usr/mdec/fdboot
-floppy disk boot block
+.It Pa /usr/mdec/bootxx_ffs
+RDB device primary boot block
+.It Pa /usr/mdec/bootxx_fd
+floppy disk primary boot block
+.It Pa /usr/mdec/boot.amiga
+secondary bootstrap
+.It Pa /boot.amiga
+secondary bootstrap (installed)
 .El
 .Sh SEE ALSO
 .Xr ddb 4 ,
