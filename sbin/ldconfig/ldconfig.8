@@ -1,4 +1,4 @@
-.\"	$NetBSD: ldconfig.8,v 1.11 2000/10/08 09:33:13 bjh21 Exp $
+.\"	$NetBSD: ldconfig.8,v 1.12 2000/10/08 09:53:00 bjh21 Exp $
 .\"
 .\" Copyright (c) 1998 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -36,7 +36,7 @@
 .\"
 .Dd October 8, 2000
 .Dt LDCONFIG 8
-.Os NetBSD
+.Os
 .Sh NAME
 .Nm ldconfig
 .Nd configure the a.out shared library cache
@@ -111,13 +111,13 @@ Lists the current contents of
 on the standard output.  The hints file will not be modified.
 .It Fl s
 Do not scan the built-in system directory
-.Pq Dq /usr/lib ,
+.Pq Pa /usr/lib ,
 nor any directories listed in
 .Pa /etc/ld.so.conf
 for shared libraries.
 .It Fl S
 Do not scan the built-in system directory
-.Pq Dq /usr/lib ,
+.Pq Pa /usr/lib ,
 for shared libraries.  (Directories listed in
 .Pa /etc/ld.so.conf
 are still scanned.)
@@ -127,7 +127,7 @@ Switch on verbose mode.
 .Sh SECURITY
 Special care must be taken when loading shared libraries into the address
 space of
-.Ev set-user-ID
+.Em set-user-ID
 programs.  Whenever such a program is run,
 .Nm ld.so
 will only load shared libraries from the
@@ -148,7 +148,6 @@ further assists set-user-ID programs by erasing the
 and
 .Ev LD_PRELOAD
 from the environment.
-
 .Sh FILES
 .Pa /var/run/ld.so.hints ,
 .Pa /etc/ld.so.conf
@@ -161,4 +160,5 @@ from the environment.
 A
 .Nm
 utility first appeared in SunOS 4.0, it appeared in its current form
-in NetBSD 0.9a.
+in
+.Nx 0.9a .
