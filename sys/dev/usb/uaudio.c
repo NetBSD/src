@@ -1,4 +1,4 @@
-/*	$NetBSD: uaudio.c,v 1.68 2003/09/29 11:54:26 augustss Exp $	*/
+/*	$NetBSD: uaudio.c,v 1.69 2003/10/14 13:12:19 wiz Exp $	*/
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uaudio.c,v 1.68 2003/09/29 11:54:26 augustss Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uaudio.c,v 1.69 2003/10/14 13:12:19 wiz Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -595,7 +595,7 @@ uaudio_mixer_add_ctl(struct uaudio_softc *sc, struct mixerctl *mc)
 				 mc->wValue[0], mc->wIndex,
 				 MIX_SIZE(mc->type));
 		if (res > 0)
-			mc->delta = (res * 256 + mc->mul/2) / mc->mul;
+			mc->delta = (res * 255 + mc->mul/2) / mc->mul;
 	} else {
 		mc->minval = 0;
 		mc->maxval = 1;
@@ -1676,7 +1676,7 @@ uaudio_value2bsd(struct mixerctl *mc, int val)
 	if (mc->type == MIX_ON_OFF)
 		val = (val != 0);
 	else
-		val = ((uaudio_signext(mc->type, val) - mc->minval) * 256
+		val = ((uaudio_signext(mc->type, val) - mc->minval) * 255
 			+ mc->mul/2) / mc->mul;
 	DPRINTFN(5, ("val'=%d\n", val));
 	return (val);
@@ -1690,7 +1690,7 @@ uaudio_bsd2value(struct mixerctl *mc, int val)
 	if (mc->type == MIX_ON_OFF)
 		val = (val != 0);
 	else
-		val = (val + mc->delta/2) * mc->mul / 256 + mc->minval;
+		val = (val + mc->delta/2) * mc->mul / 255 + mc->minval;
 	DPRINTFN(5, ("val'=%d\n", val));
 	return (val);
 }
