@@ -1,4 +1,4 @@
-/*	$NetBSD: ds1286reg.h,v 1.2 2002/02/25 17:37:47 kleink Exp $ 	*/
+/*	$NetBSD: ds1286reg.h,v 1.3 2003/01/07 16:37:31 rafal Exp $ 	*/
 
 /*
  * Copyright (c) 2001 Rafal K. Boni
@@ -70,7 +70,7 @@
  * and writing the RTC's registers are handled by machine-specific 
  * functions.
  *
- * The Dalla chip always stored time-of-day and alarm data in BCD.
+ * The Dallas chip always stored time-of-day and alarm data in BCD.
  * The "hour" time-of-year and alarm fields can either be expressed in
  * AM/PM format, or in 24-hour format.  If AM/PM format is chosen, the
  * hour fields can have the values: 1-12 and 21-32 (the latter being
