@@ -1,5 +1,5 @@
-.\" Copyright (c) 1989, 1991 The Regents of the University of California.
-.\" All rights reserved.
+.\" Copyright (c) 1989, 1991, 1993
+.\"	The Regents of the University of California.  All rights reserved.
 .\"
 .\" This code is derived from software contributed to Berkeley by
 .\" Paul Vixie.
@@ -31,9 +31,9 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"     @(#)bitstring.3	5.4 (Berkeley) 4/19/91
+.\"     @(#)bitstring.3	8.1 (Berkeley) 7/19/93
 .\"
-.Dd April 19, 1991
+.Dd July 19, 1993
 .Dt BITSTRING 3
 .Os BSD 4
 .Sh NAME
@@ -112,11 +112,11 @@ in the bit string
 The
 .Fn bit_test
 macro
-evaluates to zero if the zero-based numbered bit
+evaluates to non-zero if the zero-based numbered bit
 .Fa bit
 of bit string
 .Fa name
-is set, and non-zero otherwise.
+is set, and zero otherwise.
 .Pp
 The
 .Fn bit_ffs
@@ -175,6 +175,5 @@ make_lpr_available()
 .Xr malloc 3
 .Sh HISTORY
 The
-.Nm
-functions are
-.Ud .
+.Nm bitstring
+functions first appeared in 4.4BSD.
