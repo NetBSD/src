@@ -1,0 +1,30 @@
+2000-02-25  DJ Delorie  <dj@cygnus.com>
+
+	* cesetup.c: add support for CE 3.00 SDK and ARM chips
+
+Wed Sep 22 17:37:31 1999  Christopher Faylor <cgf@cygnus.com>
+
+	* configure.in: Add .exe extension if appropriate.
+	* Makefile.in: Ditto.
+	* configure: Regenerate.
+
+1999-05-29  Gavin Romig-Koch  <gavin@cygnus.com>
+
+	* Makefile.in (LIBIBERTY): Add missing slash; use /include rather 
+	than /libiberty.
+
+1999-05-29  Gavin Romig-Koch  <gavin@cygnus.com>
+
+	* cesetup.c: Removed all the #defines it places at the front of
+	each header.
+	
+1999-05-28  DJ Delorie  <dj@cygnus.com>
+
+	* Makefile.in: fix install target
+
+1999-05-25  DJ Delorie  <dj@cygnus.com>
+
+	* cesetup.c: new
+	* Makefile.in: new
+	* configure.in: new
+	* configure: new
