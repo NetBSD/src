@@ -1,4 +1,4 @@
-/*	$NetBSD: scsi_disk.h,v 1.16 1998/06/09 19:03:24 thorpej Exp $	*/
+/*	$NetBSD: scsi_disk.h,v 1.17 1998/10/30 02:07:15 thorpej Exp $	*/
 
 /*
  * SCSI-specific interface description
@@ -52,6 +52,86 @@
 /*
  * SCSI command format
  */
+
+/*
+ * XXX Is this also used by ATAPI?
+ */
+#define	SCSI_FORMAT_UNIT		0x04
+struct scsi_format_unit {
+	u_int8_t opcode;
+	u_int8_t flags;
+#define	SFU_DLF_MASK	0x07
+#define	SFU_CMPLST	0x08
+#define	SFU_FMTDATA	0x10
+	u_int8_t vendor_specific;
+	u_int8_t interleave[2];
+	u_int8_t control;
+};
+
+/*
+ * If the FmtData bit is set, a FORMAT UNIT parameter list is transfered
+ * to the target during the DATA OUT phase.  The parameter list includes
+ *
+ *	Defect list header
+ *	Initialization pattern descriptor (if any)
+ *	Defect descriptor(s) (if any)
+ */
+
+struct scsi_format_unit_defect_list_header {
+	u_int8_t reserved;
+	u_int8_t flags;
+#define	DLH_VS		0x01		/* vendor specific */
+#define	DLH_IMMED	0x02		/* immediate return */
+#define	DLH_DSP		0x04		/* disable saving parameters */
+#define	DLH_IP		0x08		/* initialization pattern */
+#define	DLH_STPF	0x10		/* stop format */
+#define	DLH_DCRT	0x20		/* disable certification */
+#define	DLH_DPRY	0x40		/* disable primary */
+#define	DLH_FOV		0x80		/* format options valid */
+	u_int8_t defect_lst_len[2];
+};
+
+/*
+ * See Table 117 of the SCSI-2 specification for a description of
+ * the IP modifier.
+ */
+struct scsi_initialization_pattern_descriptor {
+	u_int8_t ip_modifier;
+	u_int8_t pattern_type;
+#define	IP_TYPE_DEFAULT		0x01
+#define	IP_TYPE_REPEAT		0x01
+				/* 0x02 -> 0x7f: reserved */
+				/* 0x80 -> 0xff: vendor-specific */
+	u_int8_t pattern_length[2];
+#if 0
+	u_int8_t pattern[...];
+#endif
+};
+
+/*
+ * Defect desciptors.  These are used as the defect lists in the FORMAT UNIT
+ * and READ DEFECT DATA commands, and as the translate page of the
+ * SEND DIAGNOSTIC and RECEIVE DIAGNOSTIC RESULTS commands.
+ */
+
+/* Block format */
+struct scsi_defect_descriptor_bf {
+	u_int8_t block_address[4];
+};
+
+/* Bytes from index format */
+struct scsi_defect_descriptor_bfif {
+	u_int8_t cylinder[2];
+	u_int8_t head;
+	u_int8_t bytes_from_index[2];
+};
+
+/* Physical sector format */
+struct scsi_defect_descriptor_psf {
+	u_int8_t cylinder[2];
+	u_int8_t head;
+	u_int8_t sector[2];
+};
 
 /*
  * XXX for now this isn't in the ATAPI specs, but if there are on day
