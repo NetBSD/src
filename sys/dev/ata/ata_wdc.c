@@ -1,4 +1,4 @@
-/*	$NetBSD: ata_wdc.c,v 1.55 2004/06/01 19:32:30 mycroft Exp $	*/
+/*	$NetBSD: ata_wdc.c,v 1.56 2004/06/22 19:20:14 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001, 2003 Manuel Bouyer.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ata_wdc.c,v 1.55 2004/06/01 19:32:30 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ata_wdc.c,v 1.56 2004/06/22 19:20:14 mycroft Exp $");
 
 #ifndef WDCDEBUG
 #define WDCDEBUG
@@ -458,7 +458,8 @@ again:
 		} /* else not DMA */
 		ata_bio->nblks = min(nblks, ata_bio->multi);
 		ata_bio->nbytes = ata_bio->nblks * ata_bio->lp->d_secsize;
-		if (ata_bio->nblks > 1 && (ata_bio->flags & ATA_SINGLE) == 0) {
+		KASSERT(nblks == 1 || (ata_bio->flags & ATA_SINGLE) == 0);
+		if (ata_bio->nblks > 1) {
 			cmd = (ata_bio->flags & ATA_READ) ?
 			    WDCC_READMULTI : WDCC_WRITEMULTI;
 		} else {
