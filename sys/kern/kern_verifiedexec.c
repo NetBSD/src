@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_verifiedexec.c,v 1.1 2002/10/29 12:31:23 blymn Exp $	*/
+/*	$NetBSD: kern_verifiedexec.c,v 1.2 2002/11/12 12:54:36 blymn Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -49,9 +49,6 @@
 
 extern LIST_HEAD(veriexec_devhead, veriexec_dev_list) veriexec_dev_head;
 
-void
-print_md5(unsigned char *);
-
 static int
 md5_fingerprint(struct vnode *vp, struct veriexec_inode_list *ip,
 		struct proc *p, u_quad_t file_size, char *fingerprint);
@@ -60,19 +57,6 @@ static int
 sha1_fingerprint(struct vnode *vp, struct veriexec_inode_list *ip,
 		struct proc *p, u_quad_t file_size, char *fingerprint);
 
-
-/*
- * print_md5:
- *   Print the hex representation of the md5 fingerprint.
- */
-void
-print_md5(unsigned char md5digest[MAXFINGERPRINTLEN])
-{
-	int count;
-
-        for (count = 0; count < MD5_FINGERPRINTLEN; count++)
-                printf("%02x", (unsigned char) md5digest[count]);
-}
 
 /*
  * md5_fingerprint:
@@ -267,8 +251,7 @@ check_veriexec(struct proc *p, struct vnode *vp, struct exec_package *epp,
 
 	error = 0;
 	found_dev = 0;
-        if ((vp->fp_status == FINGERPRINT_INVALID) ||
-            (vp->fp_status == FINGERPRINT_NODEV)) {
+        if (vp->fp_status == FINGERPRINT_INVALID) {
 
 #ifdef VERIFIED_EXEC_DEBUG
 		printf("looking for loaded signature\n");
@@ -338,7 +321,7 @@ ectly by pid %u (ppid %u, gppid %u)\n",
                                  epp->ep_name, epp->ep_vap->va_fsid,
                                  epp->ep_vap->va_fileid, p->p_pid,
                                  p->p_pptr->p_pid, p->p_pptr->p_pptr->p_pid);
-                          if (securelevel > 2)
+                          if (securelevel > 1)
                                   error = EPERM;
                   }
                   break;
@@ -348,7 +331,7 @@ ectly by pid %u (ppid %u, gppid %u)\n",
  loaded value\n",
                          epp->ep_name, epp->ep_vap->va_fsid,
                          epp->ep_vap->va_fileid);
-                  if (securelevel > 2)
+                  if (securelevel > 1)
                           error = EPERM;
                   break;
 
@@ -356,7 +339,7 @@ ectly by pid %u (ppid %u, gppid %u)\n",
                   printf("No fingerprint for %s (dev %lu, inode %lu)\n",
                          epp->ep_name, epp->ep_vap->va_fsid,
                          epp->ep_vap->va_fileid);
-                  if (securelevel > 2)
+                  if (securelevel > 1)
                           error = EPERM;
                   break;
 
@@ -365,7 +348,7 @@ ectly by pid %u (ppid %u, gppid %u)\n",
                   printf("No signatures for device %lu\n",
                          epp->ep_vap->va_fsid);
 #endif
-                  if (securelevel > 2)
+                  if (securelevel > 1)
 			  error = EPERM;
                   break;
 
