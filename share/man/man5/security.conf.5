@@ -1,4 +1,4 @@
-.\"	$NetBSD: security.conf.5,v 1.9 2000/05/26 17:08:22 ad Exp $
+.\"	$NetBSD: security.conf.5,v 1.10 2001/01/09 17:30:30 abs Exp $
 .\"
 .\" Copyright (c) 1996 Matthew R. Green
 .\" All rights reserved.
@@ -117,6 +117,9 @@ The variables described below can be set to modify the tests:
 If
 .Sy check_passwd
 is enabled, this determines the maximum permitted length of login names.
+.It Sy backup_dir
+Change the backup directory from
+.Pa /var/backup .
 .El
 .Pp
 .Sh FILES
