@@ -1,4 +1,4 @@
-/*	$NetBSD: strftime.c,v 1.8 1999/02/07 17:33:30 augustss Exp $	*/
+/*	$NetBSD: strftime.c,v 1.8.2.1 2000/09/11 20:13:36 he Exp $	*/
 
 /*
  * Copyright (c) 1989 The Regents of the University of California.
@@ -38,11 +38,12 @@
 #if 0
 static char *sccsid = "@(#)strftime.c	5.11 (Berkeley) 2/24/91";
 #else
-__RCSID("$NetBSD: strftime.c,v 1.8 1999/02/07 17:33:30 augustss Exp $");
+__RCSID("$NetBSD: strftime.c,v 1.8.2.1 2000/09/11 20:13:36 he Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
+#include "private.h"
 #include <sys/localedef.h>
 #include <locale.h>
 #include <string.h>
@@ -344,6 +345,12 @@ _fmt(format, t, pt, ptlim)
 					return (0);
 				continue;
 			case 'Z':
+#ifdef TM_ZONE
+				if (t->TM_ZONE != NULL) {
+					if (!_add(t->TM_ZONE, pt, ptlim))
+						return (0);
+				} else
+#endif /* TM_ZONE */
 				if (tzname[t->tm_isdst ? 1 : 0] &&
 				    !_add(tzname[t->tm_isdst ? 1 : 0], pt,
 				    ptlim))
