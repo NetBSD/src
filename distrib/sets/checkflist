@@ -1,6 +1,6 @@
 #! /bin/sh --
 #
-#	$NetBSD: checkflist,v 1.8 1998/06/30 20:25:14 ross Exp $
+#	$NetBSD: checkflist,v 1.9 1998/07/04 09:27:18 ross Exp $
 #
 # Verify output of makeflist against contents of $DESTDIR.
 
@@ -9,13 +9,19 @@
 	exit 1
 }
 
+origin=.
+tmpname=/tmp/_CHECK.$$
 if [ "$1" = "-x11" ]; then
-	sh makeflist -x > /tmp/_CHECK.$$
+	sh makeflist -x > $tmpname
+	origin=./usr/X11R6
 elif [ "$1" = "-both" ]; then
-	sh makeflist -b > /tmp/_CHECK.$$
+	sh makeflist -b > $tmpname
+elif [ "$1" ]; then
+	echo Usage: checkflist [ -x11 -both ]
+	exit 1
 else
-	sh makeflist > /tmp/_CHECK.$$
+	sh makeflist > $tmpname
 fi
-( cd $DESTDIR ; find . \( -type d -o -type f -o -type l \) ) | sort | \
-    diff /tmp/_CHECK.$$ -
-/bin/rm -f /tmp/_CHECK.$$
+( cd $DESTDIR ; find $origin \( -type d -o -type f -o -type l \) ) | sort | \
+    diff $tmpname -
+/bin/rm -f $tmpname
