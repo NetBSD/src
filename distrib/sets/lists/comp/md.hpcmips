@@ -1,4 +1,4 @@
-# $NetBSD: md.hpcmips,v 1.8 2000/06/26 15:49:51 kleink Exp $
+# $NetBSD: md.hpcmips,v 1.9 2001/02/17 11:40:58 ragge Exp $
 ./usr/include/dev/hpc	comp-c-include
 ./usr/include/dev/hpc/hpcfbio.h	comp-c-include
 ./usr/include/hpcmips	comp-c-include
@@ -52,3 +52,4 @@
 ./usr/include/hpcmips/types.h	comp-c-include
 ./usr/include/hpcmips/varargs.h	comp-c-include
 ./usr/include/hpcmips/vmparam.h	comp-c-include
+./usr/include/ieeefp.h		comp-c-include

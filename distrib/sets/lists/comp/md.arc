@@ -1,4 +1,4 @@
-# $NetBSD: md.arc,v 1.6 2000/06/26 15:49:46 kleink Exp $
+# $NetBSD: md.arc,v 1.7 2001/02/17 11:40:58 ragge Exp $
 ./usr/include/arc			comp-c-include
 ./usr/include/arc/_G_config.h		comp-c-include
 ./usr/include/arc/ansi.h		comp-c-include
@@ -47,3 +47,4 @@
 ./usr/include/arc/types.h		comp-c-include
 ./usr/include/arc/varargs.h		comp-c-include
 ./usr/include/arc/vmparam.h		comp-c-include
+./usr/include/ieeefp.h		comp-c-include

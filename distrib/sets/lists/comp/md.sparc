@@ -1,4 +1,4 @@
-# $NetBSD: md.sparc,v 1.43 2000/06/26 15:50:01 kleink Exp $
+# $NetBSD: md.sparc,v 1.44 2001/02/17 11:40:59 ragge Exp $
 ./usr/include/sparc	comp-c-include
 ./usr/include/sparc/_G_config.h	comp-c-include
 ./usr/include/sparc/ansi.h	comp-c-include
@@ -109,3 +109,4 @@
 ./usr/include/sparc64/vmparam.h	comp-c-include
 ./usr/include/sparc64/vuid_event.h	comp-c-include
 ./usr/include/sparc64/z8530var.h	comp-c-include
+./usr/include/ieeefp.h		comp-c-include
