@@ -33,7 +33,7 @@
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
-RCSID("$Id: getaddrinfo_hostspec.c,v 1.1.1.1 2000/06/16 18:32:37 thorpej Exp $");
+RCSID("$Id: getaddrinfo_hostspec.c,v 1.1.1.1.2.1 2000/08/22 14:54:57 fvdl Exp $");
 #endif
 
 #include "roken.h"
@@ -65,6 +65,8 @@ roken_getaddrinfo_hostspec(const char *hostspec,
     };
 
     memset(&hints, 0, sizeof(hints));
+
+    hints.ai_socktype = SOCK_DGRAM;
 	
     for(hstp = hst; hstp->prefix; hstp++) {
 	if(strncmp(hostspec, hstp->prefix, strlen(hstp->prefix)) == 0) {
