@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.cats.inc,v 1.8 2002/04/11 16:33:58 skrll Exp $
+#	$NetBSD: Makefile.cats.inc,v 1.8.4.1 2003/08/12 18:28:34 tron Exp $
 
 GENASSYM_EXTRAS+=	${ARM}/footbridge/genassym.cf
 LOOSE_PROTOTYPES=	NO
@@ -17,7 +17,7 @@ LOADADDRESS=0xF0000020
 SYSTEM_LD_TAIL_EXTRA+=; \
 	${DBSYM} $@ || true; \
 	echo OBJCOPY=${OBJCOPY:Q} SIZE=${SIZE:Q} \
-	    ${ARM}/conf/elf2aout.sh $@ $@.aout; \
+	    sh ${ARM}/conf/elf2aout.sh $@ $@.aout; \
 	OBJCOPY=${OBJCOPY:Q} SIZE=${SIZE:Q} \
-	    ${ARM}/conf/elf2aout.sh $@ $@.aout
+	    sh ${ARM}/conf/elf2aout.sh $@ $@.aout
 .endif

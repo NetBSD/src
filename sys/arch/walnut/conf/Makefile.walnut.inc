@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.walnut.inc,v 1.3.8.1 2002/05/30 21:01:18 tv Exp $
+#	$NetBSD: Makefile.walnut.inc,v 1.3.8.2 2003/08/12 18:28:35 tron Exp $
 
 MKIMG?=	${THISPPC}/compile/mkimg.sh
 CFLAGS+=-mcpu=403
@@ -8,5 +8,5 @@ SYSTEM_LD_TAIL_EXTRA+=; echo ${DBSYM} $@; ${DBSYM} $@
 .endif
 SYSTEM_LD_TAIL_EXTRA+=; \
 	OBJDUMP=${OBJDUMP}; OBJCOPY=${OBJCOPY}; export OBJDUMP OBJCOPY; \
-		${MKIMG} $@ $@.img
+		sh ${MKIMG} $@ $@.img
 
