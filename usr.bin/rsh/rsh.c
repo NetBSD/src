@@ -1,4 +1,4 @@
-/*	$NetBSD: rsh.c,v 1.8 1997/06/02 11:57:23 mrg Exp $	*/
+/*	$NetBSD: rsh.c,v 1.9 1997/06/05 16:10:50 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1983, 1990, 1993, 1994
@@ -41,7 +41,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)rsh.c	8.4 (Berkeley) 4/29/95";*/
-static char rcsid[] = "$NetBSD: rsh.c,v 1.8 1997/06/02 11:57:23 mrg Exp $";
+static char rcsid[] = "$NetBSD: rsh.c,v 1.9 1997/06/05 16:10:50 mrg Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -102,7 +102,7 @@ main(argc, argv)
 	int argoff, asrsh, ch, dflag, nflag, one, rem;
 	pid_t pid;
 	uid_t uid;
-	char *args, *host, *p, *user;
+	char *args, *host, *p, *user, *name;
 
 	argoff = asrsh = dflag = nflag = 0;
 	one = 1;
@@ -159,6 +159,8 @@ main(argc, argv)
 	if (!(pw = getpwuid(uid = getuid())))
 		errx(1, "unknown user id");
 
+	if ((name = strdup(pw->pw_name)) == NULL)
+		err(1, "malloc");
 	while ((ch = getopt(argc - argoff, argv + argoff, OPTIONS)) != EOF)
 		switch(ch) {
 		case 'K':
@@ -188,8 +190,8 @@ main(argc, argv)
 			break;
 #ifdef IN_RCMD
 		case 'u':
-			if (getuid() != 0 && optarg && pw->pw_name &&
-			    strcmp(pw->pw_name, optarg) != 0)
+			if (getuid() != 0 && optarg && name &&
+			    strcmp(name, optarg) != 0)
 				errx(1,"only super user can use the -u option");
 			locuser = optarg;
 			break;
@@ -238,7 +240,7 @@ main(argc, argv)
 			usage();
 	}
 	if (!user)
-		user = pw->pw_name;
+		user = name;
 
 #ifdef KERBEROS
 #ifdef CRYPT
@@ -310,7 +312,7 @@ try_connect:
 #else
 		rem = rcmd(&host, sp->s_port,
 #endif
-		    pw->pw_name,
+		    name,
 		    user, args, &rfd2);
 	}
 #else /* KERBEROS */
@@ -320,9 +322,9 @@ try_connect:
 #else
 	rem = rcmd(&host, sp->s_port,
 #endif
-	    pw->pw_name, user,
-	    args, &rfd2);
+	    name, user, args, &rfd2);
 #endif /* KERBEROS */
+	(void)free(name);
 
 	if (rem < 0)
 		exit(1);

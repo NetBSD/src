@@ -1,4 +1,4 @@
-/*	$NetBSD: rcp.c,v 1.12 1997/05/27 07:09:51 mrg Exp $	*/
+/*	$NetBSD: rcp.c,v 1.13 1997/06/05 16:10:46 mrg Exp $	*/
 
 /*
  * Copyright (c) 1983, 1990, 1992, 1993
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)rcp.c	8.2 (Berkeley) 4/2/94";
 #else
-static char rcsid[] = "$NetBSD: rcp.c,v 1.12 1997/05/27 07:09:51 mrg Exp $";
+static char rcsid[] = "$NetBSD: rcp.c,v 1.13 1997/06/05 16:10:46 mrg Exp $";
 #endif
 #endif /* not lint */
 
@@ -244,7 +244,7 @@ toremote(targ, argc, argv)
 	int argc;
 {
 	int i, len;
-	char *bp, *host, *src, *suser, *thost, *tuser;
+	char *bp, *host, *src, *suser, *thost, *tuser, *name;
 
 	*targ++ = 0;
 	if (*targ == 0)
@@ -302,21 +302,23 @@ toremote(targ, argc, argv)
 					err(1, NULL);
 				(void)snprintf(bp, len, "%s -t %s", cmd, targ);
 				host = thost;
+				if ((name = strdup(name)) != NULL)
+					err(1, NULL);
 #ifdef KERBEROS
 				if (use_kerberos)
-					rem = kerberos(&host, bp,
-					    pwd->pw_name,
-					    tuser ? tuser : pwd->pw_name);
+					rem = kerberos(&host, bp, name,
+					    tuser ? tuser : name);
 				else
 #endif
-					rem = rcmd(&host, port, pwd->pw_name,
-					    tuser ? tuser : pwd->pw_name,
+					rem = rcmd(&host, port, name,
+					    tuser ? tuser : name,
 					    bp, 0);
 				if (rem < 0)
 					exit(1);
 				if (response() < 0)
 					exit(1);
 				(void)free(bp);
+				(void)free(name);
 			}
 			source(1, argv+i);
 		}
