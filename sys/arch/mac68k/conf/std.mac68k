@@ -1,4 +1,4 @@
-#	$NetBSD: std.mac68k,v 1.10 1996/05/05 06:16:13 briggs Exp $
+#	$NetBSD: std.mac68k,v 1.11 1996/05/06 03:33:11 briggs Exp $
 #
 # standard Macintosh information.
 # roughly copied from std.sparc 14 Oct 1993.
@@ -13,7 +13,6 @@ obio0 at mainbus?
 adb0	at obio?
 asc0	at obio?
 fpu0	at obio?
-grf0	at obio?		# Graphics devices might be internal or NuBUS
 ite0	at obio?
 ser0	at obio?
 
