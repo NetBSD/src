@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist,v 1.252 2003/12/04 18:25:49 drochner Exp $
+#	$NetBSD: NetBSD.dist,v 1.253 2003/12/14 10:14:48 rtr Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 /set type=dir uname=root gname=wheel mode=0755
@@ -184,6 +184,9 @@
 ./usr/X11R6/lib/X11/xsm
 ./usr/X11R6/lib/modules
 ./usr/X11R6/lib/modules/extensions
+./usr/X11R6/lib/modules/fonts
+./usr/X11R6/lib/modules/drivers
+./usr/X11R6/lib/modules/input
 ./usr/X11R6/man
 ./usr/X11R6/man/cat1
 ./usr/X11R6/man/cat3

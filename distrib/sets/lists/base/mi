@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.443 2003/12/11 09:46:26 dyoung Exp $
+# $NetBSD: mi,v 1.444 2003/12/14 10:14:48 rtr Exp $
 .			base-sys-root
 ./altroot		base-sys-root
 ./bin			base-sys-root
@@ -306,7 +306,10 @@
 ./usr/X11R6/lib/X11/xserver			base-x11-root
 ./usr/X11R6/lib/X11/xsm				base-x11-root
 ./usr/X11R6/lib/modules				base-x11-root
+./usr/X11R6/lib/modules/drivers			base-x11-root
 ./usr/X11R6/lib/modules/extensions		base-x11-root
+./usr/X11R6/lib/modules/fonts			base-x11-root
+./usr/X11R6/lib/modules/input			base-x11-root
 ./usr/X11R6/man					base-x11-root
 ./usr/X11R6/man/cat1				base-x11-root
 ./usr/X11R6/man/cat3				base-x11-root
