@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ray.c,v 1.15 2000/02/28 06:44:52 mycroft Exp $	*/
+/*	$NetBSD: if_ray.c,v 1.16 2000/03/10 05:47:42 onoe Exp $	*/
 /* 
  * Copyright (c) 2000 Christian E. Hopps
  * All rights reserved.
@@ -1219,12 +1219,12 @@ ray_intr_start(sc)
 		iframe->i_fc[0] =
 		    (IEEE80211_FC0_VERSION_0 | IEEE80211_FC0_TYPE_DATA);
 		if (sc->sc_mode == SC_MODE_ADHOC) {
-			iframe->i_fc[1] = IEEE80211_FC1_RCVFROM_TERMINAL;
+			iframe->i_fc[1] = IEEE80211_FC1_DIR_NODS;
 			memcpy(iframe->i_addr1, eh->ether_dhost,ETHER_ADDR_LEN);
 			memcpy(iframe->i_addr2, eh->ether_shost,ETHER_ADDR_LEN);
 			memcpy(iframe->i_addr3, sc->sc_bssid, ETHER_ADDR_LEN);
 		} else {
-			iframe->i_fc[1] = IEEE80211_FC1_RCVFROM_AP;
+			iframe->i_fc[1] = IEEE80211_FC1_DIR_TODS;
 			memcpy(iframe->i_addr1, sc->sc_bssid,ETHER_ADDR_LEN);
 			memcpy(iframe->i_addr2, eh->ether_shost,ETHER_ADDR_LEN);
 			memmove(iframe->i_addr3,eh->ether_dhost,ETHER_ADDR_LEN);
@@ -1492,14 +1492,14 @@ done:
 		}
 		issnap = 0;
 	}
-	switch (frame->i_fc[1] & IEEE80211_FC1_RCVFROM_MASK) {
-	case IEEE80211_FC1_RCVFROM_TERMINAL:
+	switch (frame->i_fc[1] & IEEE80211_FC1_DIR_MASK) {
+	case IEEE80211_FC1_DIR_NODS:
 		src = frame->i_addr2;
 		break;
-	case IEEE80211_FC1_RCVFROM_AP:
+	case IEEE80211_FC1_DIR_FROMDS:
 		src = frame->i_addr3;
 		break;
-	case IEEE80211_FC1_RCVFROM_AP2AP:
+	case IEEE80211_FC1_DIR_TODS:
 		RAY_DPRINTF(("%s: pkt ap2ap\n", sc->sc_xname));
 		m_freem(m);
 		return;
