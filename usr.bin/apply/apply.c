@@ -1,4 +1,4 @@
-/*	$NetBSD: apply.c,v 1.6 1997/12/31 05:53:45 thorpej Exp $	*/
+/*	$NetBSD: apply.c,v 1.7 1998/11/06 22:28:15 christos Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)apply.c	8.4 (Berkeley) 4/4/94";
 #else
-__RCSID("$NetBSD: apply.c,v 1.6 1997/12/31 05:53:45 thorpej Exp $");
+__RCSID("$NetBSD: apply.c,v 1.7 1998/11/06 22:28:15 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -104,7 +104,8 @@ main(argc, argv)
 	 * largest one.
 	 */
 	for (n = 0, p = argv[0]; *p != '\0'; ++p)
-		if (p[0] == magic && isdigit(p[1]) && p[1] != '0') {
+		if (p[0] == magic && isdigit((unsigned char)p[1]) &&
+		    p[1] != '0') {
 			++p;
 			if (p[0] - '0' > n)
 				n = p[0] - '0';
@@ -166,7 +167,8 @@ main(argc, argv)
 
 		/* Expand command argv references. */
 		for (p = cmd, q = c; *p != '\0'; ++p)
-			if (p[0] == magic && isdigit(p[1]) && p[1] != '0')
+			if (p[0] == magic && isdigit((unsigned char)p[1]) &&
+			    p[1] != '0')
 				q += sprintf(q, "%s", argv[(++p)[0] - '0']);
 			else
 				*q++ = *p;
@@ -198,7 +200,7 @@ system(command)
 	const char *command;
 {
 	static char *name, *shell;
-	union wait pstat;
+	int status;
 	pid_t pid;
 	int omask;
 	sig_t intsave, quitsave;
@@ -226,18 +228,19 @@ system(command)
 	}
 	intsave = signal(SIGINT, SIG_IGN);
 	quitsave = signal(SIGQUIT, SIG_IGN);
-	pid = waitpid(pid, (int *)&pstat, 0);
+	pid = waitpid(pid, &status, 0);
 	(void)sigsetmask(omask);
 	(void)signal(SIGINT, intsave);
 	(void)signal(SIGQUIT, quitsave);
-	return(pid == -1 ? -1 : pstat.w_status);
+	return(pid == -1 ? -1 : status);
 }
 
 void
 usage()
 {
-
+	extern char *__progname;
 	(void)fprintf(stderr,
-	    "usage: apply [-a magic] [-0123456789] command arguments ...\n");
+	    "Usage: %s [-a magic] [-0123456789] command arguments ...\n",
+	    __progname);
 	exit(1);
 }
