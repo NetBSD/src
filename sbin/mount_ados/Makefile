@@ -1,10 +1,12 @@
-#	$NetBSD: Makefile,v 1.11 2003/03/22 12:43:57 jdolecek Exp $
+#	$NetBSD: Makefile,v 1.12 2005/02/05 14:47:18 xtraeme Exp $
 
 .include <bsd.own.mk>
 
 PROG=	mount_ados
 SRCS=	mount_ados.c fattr.c
 MAN=	mount_ados.8
+
+WARNS=	3
 
 MOUNT=	${NETBSDSRCDIR}/sbin/mount
 CPPFLAGS+= -I${NETBSDSRCDIR}/sys -I${MOUNT}
