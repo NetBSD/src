@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.3 2003/01/31 12:06:27 pk Exp $
+#	$NetBSD: genassym.cf,v 1.4 2003/06/26 01:29:29 nathanw Exp $
 
 
 include <ucontext.h>
@@ -19,6 +19,7 @@ define PT_SLEEPUC       offsetof(struct pthread_st, pt_sleepuc)
 define PT_SPINLOCKS     offsetof(struct pthread_st, pt_spinlocks)
 define PT_HELDLOCK      offsetof(struct pthread_st, pt_heldlock)
 define PT_UC            offsetof(struct pthread_st, pt_uc)
+define PT_TRAPUC            offsetof(struct pthread_st, pt_trapuc)
 define CONTEXTSIZE      sizeof(ucontext_t)
 define UC_FLAGS		offsetof(ucontext_t, uc_flags)
 define UC_GREGS		offsetof(ucontext_t, uc_mcontext.__gregs)
