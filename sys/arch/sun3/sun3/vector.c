@@ -28,7 +28,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Header: /cvsroot/src/sys/arch/sun3/sun3/Attic/vector.c,v 1.4 1993/10/12 05:28:14 glass Exp $
+ * $Header: /cvsroot/src/sys/arch/sun3/sun3/Attic/vector.c,v 1.5 1994/01/23 23:42:49 glass Exp $
  */
 
 #include "sys/systm.h"
@@ -101,7 +101,7 @@ void (*vector_table[NVECTORS])() = {
     illinst,    			/* 41: TRAP instruction vector */   
     illinst,    			/* 42: TRAP instruction vector */   
     illinst,    			/* 43: TRAP instruction vector */   
-    COPY_ENTRY,			        /* 44: TRAP instruction vector */   
+    trap12,			        /* 44: TRAP instruction vector */   
     illinst,    			/* 45: TRAP instruction vector */   
     illinst,    			/* 46: TRAP instruction vector */   
     trap15,    			        /* 47: TRAP instruction vector */   
