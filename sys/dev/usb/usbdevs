@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.105 2000/07/17 13:06:54 augustss Exp $
+$NetBSD: usbdevs,v 1.106 2000/08/04 11:57:34 augustss Exp $
 
 /*
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -298,6 +298,7 @@ product AOX USB101		0x0008	USB ethernet controller engine
 /* ATen products */
 product ATEN UC1284		0x2001	Parallel printer adapter
 product ATEN UC10T		0x2002	10Mbps ethernet adapter
+product ATEN UC232A		0x2008	Serial adapter
 
 /* Belkin products */
 /*product BELKIN F5U111		0x????	F5U111 Ethernet adapter*/
