@@ -24,8 +24,13 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: dbsym.c,v 1.10 1994/06/27 22:21:20 gwr Exp $
+ *	$NetBSD: dbsym.c,v 1.11 1997/10/17 05:47:30 lukem Exp $
  */
+
+#include <sys/cdefs.h>
+#ifndef lint
+__RCSID("$NetBSD: dbsym.c,v 1.11 1997/10/17 05:47:30 lukem Exp $");
+#endif
 
 /* Copy the symbol table into the space reserved for it. */
 
@@ -33,10 +38,10 @@
 #include <sys/file.h>
 #include <sys/mman.h>
 
-#include <stdio.h>
 #include <a.out.h>
-
-extern off_t lseek();
+#include <err.h>
+#include <stdio.h>
+#include <unistd.h>
 
 struct exec head;
 char *file;
@@ -61,36 +66,32 @@ int file_len;
 int data_off;
 int data_pgoff;
 
+void	find_db_symtab __P((const char *));
+int	main __P((int, char **));
+
+int
 main(argc,argv)
+	int argc;
 	char **argv;
 {
 	int fd, n;
 	int *ip;
-	char *cp;
 
-	if (argc < 2) {
-		printf("%s: missing file name\n", argv[0]);
-		exit(1);
-	}
+	if (argc < 2)
+		errx(1, "missing file name");
 	file = argv[1];
 
 	fd = open(file, O_RDWR);
-	if (fd < 0) {
-		perror(file);
-		exit(1);
-	}
+	if (fd < 0)
+		err(1, "open `%s'", file);
 
 	n = read(fd, &head, sizeof(head));
-	if (n < sizeof(head)) {
-		printf("%s: reading header\n", file);
-		exit(1);
-	}
+	if (n < sizeof(head))
+		errx(1, "reading header of `%s'", file);
 	file_len = lseek(fd, (off_t)0, 2);
 
-	if (N_BADMAG(head)) {
-		printf("%s: bad magic number\n");
-		exit(1);
-	}
+	if (N_BADMAG(head))
+		errx(1, "%s: bad magic number", file);
 
 #ifdef	DEBUG
 	printf(" text:  %9d\n", head.a_text);
@@ -106,12 +107,8 @@ main(argc,argv)
 		printf("%s: no symbols\n", file);
 		exit(1);
 	}
-	if (head.a_trsize ||
-		head.a_drsize)
-	{
-		printf("%s: has relocations\n");
-		exit(1);
-	}
+	if (head.a_trsize || head.a_drsize)
+		errx(1, "%s: has relocations", file);
 
 	find_db_symtab(file);
 
@@ -152,16 +149,12 @@ main(argc,argv)
 		   db_symtabsize_val, db_symtabsize_val);
 #endif
 	/* Is there room for the symbols + strings? */
-	if (db_symtabsize_val < (head.a_syms + strtab_len)) {
-		printf("%s: symbol space too small (%d < %d)\n", argv[0],
-			   db_symtabsize_val, (head.a_syms + strtab_len));
-		exit(1);
-	}
-	printf("Symbols use %d of %d bytes available (%d%%)\n",
-		   head.a_syms + strtab_len,
-		   db_symtabsize_val,
-		   (head.a_syms + strtab_len) * 100 /
-		   db_symtabsize_val);
+	if (db_symtabsize_val < (head.a_syms + strtab_len))
+		errx(1, "symbol space too small (%ld < %ld)",
+		   (long)db_symtabsize_val, (long)(head.a_syms + strtab_len));
+	printf("Symbols use %ld of %ld bytes available (%ld%%)\n",
+	   (long)(head.a_syms + strtab_len), (long)db_symtabsize_val,
+	   (long)((head.a_syms + strtab_len) * 100 / db_symtabsize_val));
 
 	/*
 	 * Copy the symbol table and string table.
@@ -192,13 +185,14 @@ main(argc,argv)
  * Find locations of the symbols to patch.
  */
 struct nlist wantsyms[] = {
-	{ "_db_symtabsize", 0 },
-	{ "_db_symtab", 0 },
-	{ NULL, 0 },
+	{ { "_db_symtabsize" }, 0 },
+	{ { "_db_symtab" }, 0 },
+	{ { NULL }, 0 },
 };
 
+void
 find_db_symtab(file)
-	char *file;
+	const char *file;
 {
 	int data_va;
 	int std_entry;
@@ -211,7 +205,7 @@ find_db_symtab(file)
 	    (head.a_entry & (N_PAGSIZ(head)-1));
 	data_va = N_DATADDR(head);
 	if (head.a_entry != std_entry) {
-		printf("%s: warning: non-standard entry point: 0x%08x\n",
+		printf("%s: warning: non-standard entry point: 0x%08lx\n",
 			   file, head.a_entry);
 		printf("\texpecting entry=0x%X\n", std_entry);
 		data_va += (head.a_entry - std_entry);
