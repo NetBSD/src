@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fpa.c,v 1.5 1996/03/11 21:41:38 thorpej Exp $	*/
+/*	$NetBSD: if_fpa.c,v 1.6 1996/03/14 03:04:19 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1995 Matt Thomas (thomas@lkg.dec.com)
@@ -136,6 +136,7 @@
 #include <i386/pci/pdqreg.h>
 #include <i386/pci/pdq_os.h>
 #elif defined(__NetBSD__)
+#include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>
 #include <dev/ic/pdqreg.h>
 #include <dev/ic/pdqvar.h>

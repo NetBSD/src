@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr.c,v 1.27 1996/03/11 23:05:47 cgd Exp $	*/
+/*	$NetBSD: ncr.c,v 1.28 1996/03/14 03:04:22 cgd Exp $	*/
 
 /**************************************************************************
 **
@@ -195,8 +195,8 @@ extern PRINT_ADDR();
 #include <sys/device.h>
 #include <machine/bus.h>
 #include <dev/pci/ncr_reg.h>
-#include <dev/pci/pcivar.h>
 #include <dev/pci/pcireg.h>
+#include <dev/pci/pcivar.h>
 #define DELAY(x)	delay(x)
 #endif /* __NetBSD */
 
@@ -1319,7 +1319,7 @@ static	void	ncr_attach	(pcici_t tag, int unit);
 
 
 static char ident[] =
-	"\n$NetBSD: ncr.c,v 1.27 1996/03/11 23:05:47 cgd Exp $\n";
+	"\n$NetBSD: ncr.c,v 1.28 1996/03/14 03:04:22 cgd Exp $\n";
 
 u_long	ncr_version = NCR_VERSION	* 11
 	+ (u_long) sizeof (struct ncb)	*  7
