@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu.c,v 1.10 2004/03/05 17:20:13 drochner Exp $	*/
+/*	$NetBSD: fpu.c,v 1.11 2004/03/05 21:21:14 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.10 2004/03/05 17:20:13 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.11 2004/03/05 21:21:14 drochner Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -179,7 +179,7 @@ fputrap(frame)
 		cw = sfp->fp_fxsave.fx_fcw;
 		fldcw(&cw);
 		fwait();
-		statbits = sfp->fp_ex_sw;
+		statbits = sfp->fp_fxsave.fx_fsw;
 	}
 	sfp->fp_ex_tw = sfp->fp_fxsave.fx_ftw;
 	sfp->fp_ex_sw = sfp->fp_fxsave.fx_fsw;
@@ -187,7 +187,7 @@ fputrap(frame)
 	ksi.ksi_signo = SIGFPE;
 	ksi.ksi_addr = (void *)frame->tf_rip;
 	ksi.ksi_code = x86fpflags_to_ksiginfo(statbits);
-	ksi.ksi_trap = (int)sfp->fp_ex_sw;
+	ksi.ksi_trap = statbits;
 	KERNEL_PROC_LOCK(l);
 	(*l->l_proc->p_emul->e_trapsignal)(l, &ksi);
 	KERNEL_PROC_UNLOCK(l);
