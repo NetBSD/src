@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.51 1999/08/24 16:02:27 bouyer Exp $	*/
+/*	$NetBSD: if.c,v 1.52 1999/09/29 22:42:02 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -510,7 +510,7 @@ if_slowtimo(arg)
  */
 struct ifnet *
 ifunit(name)
-	register char *name;
+	const char *name;
 {
 	register struct ifnet *ifp;
 
