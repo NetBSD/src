@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.41 1994/12/01 17:24:28 chopps Exp $	*/
+/*	$NetBSD: machdep.c,v 1.42 1994/12/28 08:55:58 chopps Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -91,7 +91,6 @@
 #include <amiga/amiga/cia.h>
 #include <amiga/amiga/cc.h>
 #include <amiga/amiga/memlist.h>
-#include <amiga/dev/ztwobusvar.h>
 /* 
  * most of these can be killed by adding a server chain for 
  * int2 (PORTS)
@@ -99,6 +98,7 @@
 #include "ite.h"
 #include "le.h"
 #include "ed.h"
+#include "ex.h"
 #include "fd.h"
 #include "ahsc.h"
 #include "atzsc.h"
@@ -111,11 +111,13 @@
 #include "ivsc.h"
 #include "ser.h"
 #include "idesc.h"
+#include "flz3sc.h"
 #include "ether.h"
 #include "afsc.h"
 
 /* vm_map_t buffer_map; */
 extern vm_offset_t avail_end;
+extern vm_offset_t avail_start;
 
 /*
  * Declare these as initialized data so we can patch them.
@@ -147,7 +149,6 @@ char *cpu_type = "m68k";
 /* the following is used externally (sysctl_hw) */
 char machine[] = "amiga";
  
-
 #ifdef COMPAT_SUNOS
 void sunos_sendsig ();
 #endif
@@ -204,6 +205,13 @@ cpu_startup()
 #endif
 	vm_offset_t minaddr, maxaddr;
 	vm_size_t size;
+#ifdef MACHINE_NONCONTIG
+	extern struct {
+		vm_offset_t start;
+		vm_offset_t end;
+		int first_page;
+	} phys_segs[16];
+#endif
 
 	/*
 	 * Initialize error message buffer (at end of core).
@@ -387,6 +395,14 @@ again:
 			printf("memory segment %d at %08lx size %08lx\n", i,
 			    memlist->m_seg[i].ms_start, 
 			    memlist->m_seg[i].ms_size);
+#if defined(MACHINE_NONCONTIG) && defined(DEBUG)
+	printf ("Physical memory segments:\n");
+	for (i = 0; phys_segs[i].start; ++i)
+		printf ("Physical segment %d at %08lx size %d pages %d\n", i,
+		    phys_segs[i].start,
+		    (phys_segs[i].end - phys_segs[i].start) / NBPG,
+		    phys_segs[i].first_page);
+#endif
 	/*
 	 * Set up CPU-specific registers, cache, etc.
 	 */
@@ -1183,6 +1199,7 @@ straytrap(pc, evec)
 {
 	printf("unexpected trap (vector offset %x) from %x\n",
 	       evec & 0xFFF, pc);
+/*XXX*/	panic("straytrap");
 }
 
 int	*nofault;
@@ -1270,6 +1287,29 @@ struct si_callback {
 	void *rock1, *rock2;
 };
 static struct si_callback *si_callbacks;
+static struct si_callback *si_free;
+#ifdef DIAGNOSTIC
+static int ncb;		/* number of callback blocks allocated */
+static int ncbd;	/* number of callback blocks dynamically allocated */
+#endif
+
+void
+alloc_sicallback()
+{
+	struct si_callback *si;
+	int s;
+
+	si = (struct si_callback *)malloc(sizeof(*si), M_TEMP, M_NOWAIT);
+	if (si == NULL)
+		return;
+	s = splhigh();
+	si->next = si_free;
+	si_free = si;
+	splx(s);
+#ifdef DIAGNOSTIC
+	++ncb;
+#endif
+}
 
 void
 add_sicallback (function, rock1, rock2)
@@ -1283,10 +1323,22 @@ add_sicallback (function, rock1, rock2)
 	 * this function may be called from high-priority interrupt handlers.
 	 * We may NOT block for  memory-allocation in here!.
 	 */
-	si = (struct si_callback *)malloc(sizeof(*si), M_TEMP, M_NOWAIT);
+	s = splhigh();
+	si = si_free;
+	if (si != NULL)
+		si_free = si->next;
+	splx(s);
 
-	if (!si)
-		return;
+	if (si == NULL) {
+		si = (struct si_callback *)malloc(sizeof(*si), M_TEMP, M_NOWAIT);
+#ifdef DIAGNOSTIC
+		if (si)
+			++ncbd;		/* count # dynamically allocated */
+#endif
+
+		if (!si)
+			return;
+	}
 
 	si->function = function;
 	si->rock1 = rock1;
@@ -1324,7 +1376,9 @@ rem_sicallback(function)
 		if (si->function != function)
 			psi = si;
 		else {
-			free(si, M_TEMP);
+/*			free(si, M_TEMP); */
+			si->next = si_free;
+			si_free = si;
 			if (psi)
 				psi->next = nsi;
 			else
@@ -1341,6 +1395,8 @@ call_sicallbacks()
 {
 	struct si_callback *si;
 	int s;
+	void *rock1, *rock2;
+	void (*function) __P((void *, void *));
 
 	do {
 		s = splhigh ();
@@ -1349,10 +1405,25 @@ call_sicallbacks()
 		splx(s);
 
 		if (si) {
-			si->function(si->rock1, si->rock2);
-			free(si, M_TEMP);
+			function = si->function;
+			rock1 = si->rock1;
+			rock2 = si->rock2;
+/*			si->function(si->rock1, si->rock2); */
+/*			free(si, M_TEMP); */
+			s = splhigh ();
+			si->next = si_free;
+			si_free = si;
+			splx(s);
+			function (rock1, rock2);
 		}
 	} while (si);
+#ifdef DIAGNOSTIC
+	if (ncbd) {
+		printf ("call_sicallback: %d more dynamic structures %d total\n",
+		    ncbd, ncb);
+		ncbd = 0;
+	}
+#endif
 }
 
 intrhand(sr)
@@ -1442,6 +1513,14 @@ intrhand(sr)
 #if NED > 0
 		if (edintr (0))
 			goto intports_done;
+#endif
+#if NEX > 0
+		if (exintr (0))
+			goto intports_done;
+#endif
+#if NFLZ3SC > 0
+		if (flz3sc_intr())
+		  goto intports_done;
 #endif
 #if NIDESC > 0
 		if (idesc_intr ())
