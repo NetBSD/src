@@ -39,7 +39,7 @@
 __FBSDID("$FreeBSD: src/sys/dev/ath/if_ath.c,v 1.14 2003/09/05 22:22:49 sam Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ath.c,v 1.5 2003/10/15 03:04:03 enami Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ath.c,v 1.6 2003/10/15 11:40:07 dyoung Exp $");
 #endif
 
 /*
@@ -2084,6 +2084,10 @@ ath_rx_proc(void *arg, int npending)
 			 * Also trim WEP ICV from the tail.
 			 */
 			m_adj(m, -IEEE80211_WEP_CRCLEN);
+			/*
+			 * The header has probably moved.
+			 */
+			wh = mtod(m, struct ieee80211_frame *);
 		}
 
 		/*
