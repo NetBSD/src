@@ -326,16 +326,20 @@ process again from scratch.
 
 		Interface Type	Connector	Flags
 		--------- ----	---------	-----
-		ed with WD/SMC	BNC		[none necessary]
-		ed with WD/SMC	UTP		[none necessary]
-		ed with WD/SMC	AUI		link0
+		ed with WD/SMC*	BNC		[none necessary]
+		ed with WD/SMC*	UTP		[none necessary]
+		ed with WD/SMC*	AUI		link0
 		ed with 3c503	BNC		[none necessary]
 		ed with 3c503	AUI		link0
 		ep		BNC		[none necessary]
 		ep		AUI		link0
 		ep		UTP		link0 link1
 
-		In other words, if, in the last example, the AUP port
+		* Older WD boards do not support software configuration,
+		  and must be configured via jumpers.  These flags
+		  will have no effect on them.
+
+		In other words, if, in the last example, the AUI port
 		of the board were being used, you would use the
 		command:
 
