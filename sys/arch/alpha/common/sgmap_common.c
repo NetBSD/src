@@ -1,4 +1,4 @@
-/* $NetBSD: sgmap_common.c,v 1.11 1998/08/14 16:50:02 thorpej Exp $ */
+/* $NetBSD: sgmap_common.c,v 1.12 1999/02/18 08:55:16 mycroft Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: sgmap_common.c,v 1.11 1998/08/14 16:50:02 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sgmap_common.c,v 1.12 1999/02/18 08:55:16 mycroft Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -157,7 +157,7 @@ alpha_sgmap_alloc(map, origlen, sgmap, flags)
 	int flags;
 {
 	int error;
-	bus_size_t len = origlen, boundary;
+	bus_size_t len = origlen, boundary, alignment;
 
 #ifdef DIAGNOSTIC
 	if (map->_dm_flags & DMAMAP_HAS_SGMAP)
@@ -181,16 +181,24 @@ alpha_sgmap_alloc(map, origlen, sgmap, flags)
 	 * boundary, we have to 2x the boundary limit.
 	 */
 	boundary = map->_dm_boundary;
-	while (boundary && boundary < map->_dm_sgvalen)
-		boundary <<= 1;
-#if	0
-	printf("len %x -> %x, _dm_sgvalen %x _dm_boundary %x boundary %x\n",
-	origlen, len, map->_dm_sgvalen, map->_dm_boundary, boundary);
+	if (boundary && boundary < map->_dm_sgvalen) {
+		alignment = boundary;
+		do {
+			boundary <<= 1;
+		} while (boundary < map->_dm_sgvalen);
+	} else
+		alignment = NBPG;
+#if 0
+	printf("len %x -> %x, _dm_sgvalen %x _dm_boundary %x boundary %x -> ",
+	    origlen, len, map->_dm_sgvalen, map->_dm_boundary, boundary);
 #endif
 
-	error = extent_alloc(sgmap->aps_ex, map->_dm_sgvalen, NBPG,
-	    boundary, (flags & BUS_DMA_NOWAIT) ? EX_NOWAIT :
-	    EX_WAITOK, &map->_dm_sgva);
+	error = extent_alloc(sgmap->aps_ex, map->_dm_sgvalen, alignment,
+	    boundary, (flags & BUS_DMA_NOWAIT) ? EX_NOWAIT : EX_WAITOK,
+	    &map->_dm_sgva);
+#if 0
+	printf("error %d _dm_sgva %x\n", error, map->_dm_sgva);
+#endif
 
 	if (error == 0)
 		map->_dm_flags |= DMAMAP_HAS_SGMAP;
