@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.73 1998/06/25 21:17:16 thorpej Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.74 1998/06/25 23:41:20 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -42,6 +42,7 @@
 
 #include "opt_ktrace.h"
 #include "opt_uvm.h"
+#include "opt_compat_sunos.h"
 
 #define	SIGPROP		/* include signal properties table */
 #include <sys/param.h>

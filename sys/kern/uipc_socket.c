@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_socket.c,v 1.34 1998/04/27 13:31:45 kleink Exp $	*/
+/*	$NetBSD: uipc_socket.c,v 1.35 1998/06/25 23:41:20 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1990, 1993
@@ -34,6 +34,8 @@
  *
  *	@(#)uipc_socket.c	8.6 (Berkeley) 5/2/95
  */
+
+#include "opt_compat_sunos.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
