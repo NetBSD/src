@@ -1,4 +1,4 @@
-/*	$NetBSD: cpc700.c,v 1.1 2002/05/21 02:58:25 augustss Exp $	*/
+/*	$NetBSD: cpc700.c,v 1.2 2002/06/13 15:27:23 augustss Exp $	*/
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -147,11 +147,11 @@ cpc_attach(struct device *self, pci_chipset_tag_t pc, bus_space_tag_t mem,
 		bus_addr_t addr;
 		int irq;
 	} devs[] = {
-		{ "com", CPC_COM0, CPC_IB_UART_0 },
-		{ "com", CPC_COM1, CPC_IB_UART_1 },
-		{ "timer", CPC_TIMER, CPCBUSCF_IRQ_DEFAULT },
-		{ "iic", CPC_IIC0, CPC_IB_IIC_0 },
-		{ "iic", CPC_IIC1, CPC_IB_IIC_1 },
+		{ "com",    CPC_COM0, CPC_IB_UART_0 },
+		{ "com",    CPC_COM1, CPC_IB_UART_1 },
+		{ "cpctim", CPC_TIMER, CPCBUSCF_IRQ_DEFAULT },
+		{ "cpciic", CPC_IIC0, CPC_IB_IIC_0 },
+		{ "cpciic", CPC_IIC1, CPC_IB_IIC_1 },
 		{ NULL, 0 }
 	};
 #if NPCI > 0 && defined(PCI_NETBSD_CONFIGURE)
