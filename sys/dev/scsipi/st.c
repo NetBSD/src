@@ -1,4 +1,4 @@
-/*	$NetBSD: st.c,v 1.52 1995/08/12 21:36:52 mycroft Exp $	*/
+/*	$NetBSD: st.c,v 1.53 1995/08/12 22:58:04 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
@@ -775,7 +775,7 @@ ststrategy(bp)
 {
 	struct st_softc *st = stcd.cd_devs[STUNIT(bp->b_dev)];
 	struct buf *dp;
-	int opri;
+	int s;
 
 	SC_DEBUG(st->sc_link, SDEV_DB1,
 	    ("ststrategy %d bytes @ blk %d\n", bp->b_bcount, bp->b_blkno));
@@ -805,7 +805,7 @@ ststrategy(bp)
 		bp->b_error = EIO;
 		goto bad;
 	}
-	opri = splbio();
+	s = splbio();
 
 	/*
 	 * Place it in the queue of activities for this tape
@@ -825,7 +825,7 @@ ststrategy(bp)
 	 */
 	ststart(st);
 
-	splx(opri);
+	splx(s);
 	return;
 bad:
 	bp->b_flags |= B_ERROR;

@@ -1,4 +1,4 @@
-/*	$NetBSD: bt742a.c,v 1.45 1995/08/12 20:31:27 mycroft Exp $	*/
+/*	$NetBSD: bt742a.c,v 1.46 1995/08/12 23:00:47 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
@@ -746,9 +746,9 @@ bt_free_ccb(bt, ccb, flags)
 	struct bt_ccb *ccb;
 	int flags;
 {
-	int opri;
+	int s;
 
-	opri = splbio();
+	s = splbio();
 
 	ccb->flags = CCB_FREE;
 	TAILQ_INSERT_HEAD(&bt->free_ccb, ccb, chain);
@@ -760,7 +760,7 @@ bt_free_ccb(bt, ccb, flags)
 	if (!ccb->chain.tqe_next)
 		wakeup(&bt->free_ccb);
 
-	splx(opri);
+	splx(s);
 }
 
 /*
@@ -774,11 +774,11 @@ bt_get_ccb(bt, flags)
 	struct bt_softc *bt;
 	int flags;
 {
-	int opri;
+	int s;
 	struct bt_ccb *ccb;
 	int hashnum;
 
-	opri = splbio();
+	s = splbio();
 
 	/*
 	 * If we can and have to, sleep waiting for one to come free
@@ -814,7 +814,7 @@ bt_get_ccb(bt, flags)
 		tsleep(&bt->free_ccb, PRIBIO, "btccb", 0);
 	}
 
-	splx(opri);
+	splx(s);
 	return ccb;
 }
 
