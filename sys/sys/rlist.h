@@ -14,7 +14,7 @@
  *	Usage:
  *		rlist_free(&swapmap, 100, 200);	add space to swapmap
  *		rlist_alloc(&swapmap, 100, &loc); obtain 100 sectors from swap
- * $Header: /cvsroot/src/sys/sys/Attic/rlist.h,v 1.2 1993/04/19 01:23:08 mycroft Exp $
+ * $Header: /cvsroot/src/sys/sys/Attic/rlist.h,v 1.3 1993/04/28 03:06:15 mycroft Exp $
  */
 
 #ifndef _SYS_RLIST_H_
@@ -34,6 +34,6 @@ extern rlist_destroy __P((struct rlist **));
 
 
 /* heads of lists */
-struct rlist *swapmap;
+extern struct rlist *swapmap;
 
 #endif /* !_SYS_RLIST_H_ */
