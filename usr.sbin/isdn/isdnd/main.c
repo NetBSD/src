@@ -27,7 +27,7 @@
  *	i4b daemon - main program entry
  *	-------------------------------
  *
- *	$Id: main.c,v 1.4 2002/03/30 07:12:41 martin Exp $ 
+ *	$Id: main.c,v 1.5 2002/09/20 15:23:06 mycroft Exp $ 
  *
  * $FreeBSD$
  *
@@ -524,7 +524,7 @@ mloop(
 
 #ifdef USE_CURSES
 		if(do_fullscreen)
-			FD_SET(fileno(stdin), &set);
+			FD_SET(STDIN_FILENO, &set);
 #endif
 
 		FD_SET(isdnfd, &set);
@@ -568,7 +568,7 @@ mloop(
 				isdnrdhdl();
 
 #ifdef USE_CURSES
-			if(FD_ISSET(fileno(stdin), &set))
+			if(FD_ISSET(STDIN_FILENO, &set))
 				kbdrdhdl();
 #endif
 
