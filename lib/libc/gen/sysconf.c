@@ -1,4 +1,4 @@
-/*	$NetBSD: sysconf.c,v 1.16 2002/06/30 09:45:40 bjh21 Exp $	*/
+/*	$NetBSD: sysconf.c,v 1.17 2002/12/19 23:31:54 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)sysconf.c	8.2 (Berkeley) 3/20/94";
 #else
-__RCSID("$NetBSD: sysconf.c,v 1.16 2002/06/30 09:45:40 bjh21 Exp $");
+__RCSID("$NetBSD: sysconf.c,v 1.17 2002/12/19 23:31:54 kleink Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -258,6 +258,14 @@ sysconf(name)
 	case _SC_XOPEN_SHM:
 		mib[0] = CTL_KERN;
 		mib[1] = KERN_SYSVSHM;
+		goto yesno;
+
+/* 1003.1-2001, XSI Option Group */
+	case _SC_ATEXIT_MAX:
+		mib[0] = CTL_USER;
+		mib[1] = USER_ATEXIT_MAX;
+		break;
+
 yesno:		if (sysctl(mib, 2, &value, &len, NULL, 0) == -1)
 			return (-1);
 		if (value == 0)
