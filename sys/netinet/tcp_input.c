@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.65 1998/09/10 10:46:59 mouse Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.66 1998/09/19 04:32:51 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -618,7 +618,14 @@ findpcb:
 						tiwin <<= tp->snd_scale;
 						goto after_listen;
 					}
-  				}
+  				} else {
+					/*
+					 * None of RST, SYN or ACK was set.
+					 * This is an invalid packet for a
+					 * TCB in LISTEN state.  Send a RST.
+					 */
+					goto badsyn;
+				}
   			} else {
 				/*
 				 * Received a SYN.
