@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_compat_12.c,v 1.4 1999/03/25 16:22:49 mrg Exp $	*/
+/*	$NetBSD: netbsd32_compat_12.c,v 1.5 1999/03/25 16:58:39 mrg Exp $	*/
 
 /*
  * Copyright (c) 1998 Matthew R. Green
@@ -82,7 +82,7 @@ compat_12_compat_netbsd32_reboot(p, v, retval)
 	} */ *uap = v;
 	struct compat_12_sys_reboot_args ua;
 
-	SPARC32TO64_UAP(opt);
+	NETBSD32TO64_UAP(opt);
 	return (compat_12_sys_reboot(p, &ua, retval));
 }
 
@@ -98,8 +98,8 @@ compat_12_compat_netbsd32_msync(p, v, retval)
 	} */ *uap = v;
 	struct sys___msync13_args ua;
 
-	SPARC32TOX64_UAP(addr, caddr_t);
-	SPARC32TOX_UAP(len, size_t);
+	NETBSD32TOX64_UAP(addr, caddr_t);
+	NETBSD32TOX_UAP(len, size_t);
 	SCARG(&ua, flags) = MS_SYNC | MS_INVALIDATE;
 	return (sys___msync13(p, &ua, retval));
 }
@@ -138,10 +138,10 @@ compat_12_compat_netbsd32_stat12(p, v, retval)
 	caddr_t sg;
 	int rv;
 
-	SPARC32TOP_UAP(path, const char);
+	NETBSD32TOP_UAP(path, const char);
 	SCARG(&ua, ub) = &sb12;
 	sg = stackgap_init(p->p_emul);
-	SPARC32_CHECK_ALT_EXIST(p, &sg, SCARG(&ua, path));
+	NETBSD32_CHECK_ALT_EXIST(p, &sg, SCARG(&ua, path));
 
 	rv = compat_12_sys_stat(p, &ua, retval);
 
@@ -167,7 +167,7 @@ compat_12_compat_netbsd32_fstat12(p, v, retval)
 	struct compat_12_sys_fstat_args ua;
 	int rv;
 
-	SPARC32TO64_UAP(fd);
+	NETBSD32TO64_UAP(fd);
 	SCARG(&ua, sb) = &sb12;
 	rv = compat_12_sys_fstat(p, &ua, retval);
 
@@ -194,10 +194,10 @@ compat_12_compat_netbsd32_lstat12(p, v, retval)
 	caddr_t sg;
 	int rv;
 
-	SPARC32TOP_UAP(path, const char);
+	NETBSD32TOP_UAP(path, const char);
 	SCARG(&ua, ub) = &sb12;
 	sg = stackgap_init(p->p_emul);
-	SPARC32_CHECK_ALT_EXIST(p, &sg, SCARG(&ua, path));
+	NETBSD32_CHECK_ALT_EXIST(p, &sg, SCARG(&ua, path));
 
 	rv = compat_12_sys_lstat(p, &ua, retval);
 
@@ -221,10 +221,10 @@ compat_12_compat_netbsd32_getdirentries(p, v, retval)
 	} */ *uap = v;
 	struct compat_12_sys_getdirentries_args ua;
 
-	SPARC32TO64_UAP(fd);
-	SPARC32TOP_UAP(buf, char);
-	SPARC32TO64_UAP(count);
-	SPARC32TOP_UAP(basep, long);
+	NETBSD32TO64_UAP(fd);
+	NETBSD32TOP_UAP(buf, char);
+	NETBSD32TO64_UAP(count);
+	NETBSD32TOP_UAP(basep, long);
 
 	return (compat_12_sys_getdirentries(p, &ua, retval));
 }

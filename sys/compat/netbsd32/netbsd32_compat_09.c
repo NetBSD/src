@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_compat_09.c,v 1.2 1999/03/25 16:22:49 mrg Exp $	*/
+/*	$NetBSD: netbsd32_compat_09.c,v 1.3 1999/03/25 16:58:39 mrg Exp $	*/
 
 /*
  * Copyright (c) 1998 Matthew R. Green
@@ -89,6 +89,6 @@ compat_09_compat_netbsd32_ouname(p, v, retval)
 	} */ *uap = v;
 	struct compat_09_sys_uname_args ua;
 
-	SPARC32TOP_UAP(name, struct outsname);
+	NETBSD32TOP_UAP(name, struct outsname);
 	return (compat_09_sys_uname(p, &ua, retval));
 }

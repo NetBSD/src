@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_exec.h,v 1.2 1999/03/25 16:22:49 mrg Exp $	*/
+/*	$NetBSD: netbsd32_exec.h,v 1.3 1999/03/25 16:58:39 mrg Exp $	*/
 
 /*
  * Copyright (c) 1998 Matthew R. Green
@@ -28,8 +28,8 @@
  * SUCH DAMAGE.
  */
 
-#ifndef	_SPARC32_EXEC_H_
-#define	_SPARC32_EXEC_H_
+#ifndef	_NETBSD32_EXEC_H_
+#define	_NETBSD32_EXEC_H_
 
 #include <compat/netbsd32/netbsd32.h>
 
@@ -52,4 +52,4 @@ struct netbsd32_exec {
 
 int exec_netbsd32_makecmds __P((struct proc *, struct exec_package *));
 
-#endif /* !_SPARC32_EXEC_H_ */
+#endif /* !_NETBSD32_EXEC_H_ */
