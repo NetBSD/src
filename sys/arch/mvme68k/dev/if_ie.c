@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ie.c,v 1.11 2001/05/31 18:46:07 scw Exp $ */
+/*	$NetBSD: if_ie.c,v 1.12 2001/07/07 07:51:37 scw Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -192,7 +192,7 @@ ie_copyin(sc, dst, offset, size)
 	bus_space_read_region_1(sc->bt, sc->bh, offset, dst, size);
 #else
 	/* A minor optimisation ;-) */
-	bcopy((void *) ((u_long) sc->bh + (u_long) offset), dst, size);
+	memcpy(dst, (void *) ((u_long) sc->bh + (u_long) offset), size);
 #endif
 }
 
@@ -210,7 +210,7 @@ ie_copyout(sc, src, offset, size)
 	bus_space_write_region_1(sc->bt, sc->bh, offset, src, size);
 #else
 	/* A minor optimisation ;-) */
-	bcopy(src, (void *) ((u_long) sc->bh + (u_long) offset), size);
+	memcpy((void *) ((u_long) sc->bh + (u_long) offset), src, size);
 #endif
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.59 2001/07/06 19:00:14 scw Exp $	*/
+/*	$NetBSD: trap.c,v 1.60 2001/07/07 07:51:39 scw Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -711,7 +711,7 @@ char wberrstr[] =
 #endif
 
 /*
- * Because calling bcopy() for 16 bytes is *way* too much overhead ...
+ * Because calling memcpy() for 16 bytes is *way* too much overhead ...
  */
 static __inline void fastcopy16(u_int *, u_int *);
 static __inline void

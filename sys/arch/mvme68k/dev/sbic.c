@@ -1,4 +1,4 @@
-/*	$NetBSD: sbic.c,v 1.16 2001/04/25 17:53:16 bouyer Exp $	*/
+/*	$NetBSD: sbic.c,v 1.17 2001/07/07 07:51:37 scw Exp $	*/
 
 /*
  * Changes Copyright (c) 1996 Steve Woodford
@@ -413,7 +413,7 @@ sbic_scsi_request(chan, req, arg)
         acb->sc_kv.dc_addr  = xs->data;
         acb->sc_kv.dc_count = xs->datalen;
         acb->pa_addr        = xs->data ? (char *)kvtop((caddr_t)xs->data) : 0;
-        bcopy(xs->cmd, &acb->cmd, xs->cmdlen);
+        memcpy(&acb->cmd, xs->cmd, xs->cmdlen);
 
         if ( flags & XS_CTL_POLL ) {
             /*
@@ -814,14 +814,14 @@ sbicinit(dev)
         dev->sc_xs    = NULL;
 
         acb = dev->sc_acb;
-        bzero(acb, sizeof(dev->sc_acb));
+        memset(acb, 0, sizeof(dev->sc_acb));
 
         for (i = 0; i < sizeof(dev->sc_acb) / sizeof(*acb); i++) {
             TAILQ_INSERT_TAIL(&dev->free_list, acb, chain);
             acb++;
         }
 
-        bzero(dev->sc_tinfo, sizeof(dev->sc_tinfo));
+        memset(dev->sc_tinfo, 0, sizeof(dev->sc_tinfo));
 
 #ifdef DEBUG
         /*

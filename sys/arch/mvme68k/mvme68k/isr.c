@@ -1,4 +1,4 @@
-/*	$NetBSD: isr.c,v 1.23 2001/07/06 19:00:14 scw Exp $	*/
+/*	$NetBSD: isr.c,v 1.24 2001/07/07 07:51:38 scw Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -227,7 +227,7 @@ isrunlink_vectored(vec)
 #endif
 
 	vectab[vec] = badtrap;
-	bzero(&isr_vectored[vec - ISRVECTORED], sizeof(struct isr_vectored));
+	memset(&isr_vectored[vec - ISRVECTORED], 0, sizeof(struct isr_vectored));
 }
 
 /*
