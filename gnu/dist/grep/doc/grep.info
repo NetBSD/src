@@ -173,8 +173,10 @@ GNU Extensions
      `-r' option.
 
 `-H'
+`-o'
 `--with-filename'
-     Print the filename for each match.
+     Print the filename for each match. '-o' has been added to NetBSD's
+     grep for 4.4BSD compatibility.
 
 `-h'
 `--no-filename'
@@ -786,6 +788,7 @@ options, and environment variables.
 * -l:                                    Invoking.
 * -L:                                    Invoking.
 * -n:                                    Invoking.
+* -o:                                    Invoking.
 * -NUM:                                  Invoking.
 * -q:                                    Invoking.
 * -r:                                    Invoking.
