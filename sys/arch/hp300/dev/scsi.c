@@ -1,4 +1,4 @@
-/*	$NetBSD: scsi.c,v 1.9 1996/05/17 15:15:29 thorpej Exp $	*/
+/*	$NetBSD: scsi.c,v 1.10 1996/05/18 23:57:03 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -145,7 +145,7 @@ scsiabort(target, hs, hd, where)
 		while ((hd->scsi_psns & PSNS_REQ) == 0) {
 			if (! (hd->scsi_ssts & SSTS_INITIATOR))
 				goto out;
-			DELAY(5);
+			DELAY(1);
 			if (--maxtries == 0) {
 				printf("-- scsiabort gave up after 1000 tries (startlen = %d len = %d)\n",
 					startlen, len);
@@ -162,7 +162,7 @@ out2:
 			hd->scsi_scmd = SCMD_SET_ACK;
 			if (hd->scsi_tmod == 0)
 				while (hd->scsi_psns & PSNS_REQ)
-					DELAY(5);
+					DELAY(1);
 			junk = hd->scsi_temp;
 		} else {
 			/* one of the output phases - send an abort msg */
@@ -170,7 +170,7 @@ out2:
 			hd->scsi_scmd = SCMD_SET_ACK;
 			if (hd->scsi_tmod == 0)
 				while (hd->scsi_psns & PSNS_REQ)
-					DELAY(5);
+					DELAY(1);
 		}
 		hd->scsi_scmd = SCMD_RST_ACK;
 	}
@@ -186,7 +186,7 @@ out:
 
 	if (! ((junk = hd->scsi_ints) & INTS_RESEL)) {
 		hd->scsi_sctl |= SCTL_CTRLRST;
-		DELAY(5);
+		DELAY(2);
 		hd->scsi_sctl &=~ SCTL_CTRLRST;
 		hd->scsi_hconf = 0;
 		hd->scsi_ints = hd->scsi_ints;
@@ -467,7 +467,7 @@ wait_for_select(hd)
 	u_char ints;
 
 	while ((ints = hd->scsi_ints) == 0)
-		DELAY(5);
+		DELAY(1);
 	hd->scsi_ints = ints;
 	return (!(hd->scsi_ssts & SSTS_INITIATOR));
 }
@@ -498,7 +498,7 @@ ixfer_start(hd, len, phase, wait)
 			HIST(ixstart_wait, wait)
 			return (0);
 		}
-		DELAY(5);
+		DELAY(1);
 	}
 	HIST(ixstart_wait, wait)
 	return (1);
@@ -523,7 +523,7 @@ ixfer_out(hd, len, buf)
 				HIST(ixout_wait, wait)
 				return (len);
 			}
-			DELAY(5);
+			DELAY(1);
 		}
 		hd->scsi_dreg = *buf++;
 	}
@@ -554,7 +554,7 @@ ixfer_in(hd, len, buf)
 				HIST(ixin_wait, wait)
 				return;
 			}
-			DELAY(5);
+			DELAY(1);
 		}
 		*buf++ = hd->scsi_dreg;
 	}
@@ -592,7 +592,7 @@ mxfer_in(hd, len, buf, phase)
 			    (hd->scsi_ssts & SSTS_INITIATOR) == 0)
 				goto out;
 
-			DELAY(5);
+			DELAY(1);
 		}
 		/*
 		 * set ack (which says we're ready for the data, wait for
@@ -606,7 +606,7 @@ mxfer_in(hd, len, buf, phase)
 				HIST(mxin_wait, wait)
 				return (-2);
 			}
-			DELAY(5);
+			DELAY(1);
 		}
 		*buf++ = hd->scsi_temp;
 		hd->scsi_scmd = SCMD_RST_ACK;
@@ -622,7 +622,7 @@ out:
 	while ((hd->scsi_ssts & SSTS_ACTIVE) == SSTS_INITIATOR) {
 		if (--wait < 0)
 			break;
-		DELAY(5);
+		DELAY(1);
 	}
 	HIST(mxin2_wait, wait)
 	return (i);
@@ -729,7 +729,7 @@ scsiicmd(hs, target, cbuf, clen, buf, len, xferphase)
 				HIST(cxin_wait, wait)
 				goto abort;
 			}
-			DELAY(5);
+			DELAY(1);
 		}
 		HIST(cxin_wait, wait)
 		hd->scsi_ints = ints;
@@ -789,7 +789,7 @@ finishxfer(hs, hd, target)
 	}
 	hd->scsi_scmd |= SCMD_PROG_XFR;
 	hd->scsi_sctl |= SCTL_CTRLRST;
-	DELAY(5);
+	DELAY(2);
 	hd->scsi_sctl &=~ SCTL_CTRLRST;
 	hd->scsi_hconf = 0;
 	/*
@@ -1056,7 +1056,7 @@ scsigo(ctlr, slave, unit, bp, cdb, pad)
 				HIST(sgo_wait, wait)
 				goto abort;
 			}
-			DELAY(5);
+			DELAY(1);
 		}
 		HIST(sgo_wait, wait)
 		hd->scsi_ints = ints;
