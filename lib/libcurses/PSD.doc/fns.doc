@@ -427,6 +427,7 @@ it will do the
 otherwise it will not.
 .Ds
 .Fn getattrs "WINDOW *win"
+.De
 Gets the attributes for
 .Vn win .
 .Ds
@@ -463,32 +464,32 @@ for you,
 and then reset to the original mode when finished.
 .Ds
 .Fn getcury "WINDOW *win"
-.Ds
+.De
 Get current y position on
 .Vn win .
 .Ds
 .Fn getcurx "WINDOW *win"
-.Ds
+.De
 Get current x position on
 .Vn win .
 .Ds
 .Fn getbegy "WINDOW *win"
-.Ds
+.De
 Get start y position on
 .Vn win .
 .Ds
 .Fn getbegx "WINDOW *win"
-.Ds
+.De
 Get start x position on
 .Vn win .
 .Ds
 .Fn getmaxy "WINDOW *win"
-.Ds
+.De
 Get maximum y position on
 .Vn win .
 .Ds
 .Fn getmaxx "WINDOW *win"
-.Ds
+.De
 Get maximum x position on
 .Vn win .
 .Ds
