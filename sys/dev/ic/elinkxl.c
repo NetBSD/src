@@ -1,4 +1,4 @@
-/*	$NetBSD: elinkxl.c,v 1.56 2001/09/16 16:34:37 wiz Exp $	*/
+/*	$NetBSD: elinkxl.c,v 1.57 2001/10/01 09:26:29 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -958,8 +958,6 @@ ex_start(ifp)
 		 * Get pointer to next available tx desc.
 		 */
 		txp = sc->tx_free;
-		sc->tx_free = txp->tx_next;
-		txp->tx_next = NULL;
 		dmamap = txp->tx_dmamap;
 
 		/*
@@ -1019,6 +1017,12 @@ ex_start(ifp)
 			m_freem(mb_head);
 			goto out;
 		}
+
+		/*
+		 * remove our tx desc from freelist.
+		 */
+		sc->tx_free = txp->tx_next;
+		txp->tx_next = NULL;
 
 		fr = &txp->tx_dpd->dpd_frags[0];
 		totlen = 0;
