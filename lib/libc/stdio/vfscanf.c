@@ -1,4 +1,4 @@
-/*	$NetBSD: vfscanf.c,v 1.35 2003/08/07 16:43:34 agc Exp $	*/
+/*	$NetBSD: vfscanf.c,v 1.36 2003/12/30 22:10:20 martin Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)vfscanf.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: vfscanf.c,v 1.35 2003/08/07 16:43:34 agc Exp $");
+__RCSID("$NetBSD: vfscanf.c,v 1.36 2003/12/30 22:10:20 martin Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -76,15 +76,16 @@ __weak_alias(vfscanf,__svfscanf)
 #define	LONG		0x0001	/* l: long or double */
 #define	LONGDBL		0x0002	/* L: long double; unimplemented */
 #define	SHORT		0x0004	/* h: short */
-#define	QUAD		0x0008	/* q: quad */
-#define	LONGLONG	0x0010	/* ll: long long */
-#define	MAXINT		0x0020	/* j: intmax_t */
-#define	PTRINT		0x0040	/* t: ptrdiff_t */
-#define	SIZEINT		0x0080	/* z: size_t */
-#define	SUPPRESS	0x0100	/* suppress assignment */
-#define	POINTER		0x0200	/* weird %p pointer (`fake hex') */
-#define	NOSKIP		0x0400	/* do not skip blanks */
-
+#define	SHORTSHORT	0x0008	/* hh: short short */
+#define	QUAD		0x0010	/* q: quad */
+#define	LONGLONG	0x0020	/* ll: long long */
+#define	MAXINT		0x0040	/* j: intmax_t */
+#define	PTRINT		0x0080	/* t: ptrdiff_t */
+#define	SIZEINT		0x0100	/* z: size_t */
+#define	SUPPRESS	0x0200	/* suppress assignment */
+#define	POINTER		0x0400	/* weird %p pointer (`fake hex') */
+#define	NOSKIP		0x0800	/* do not skip blanks */
+ 
 /*
  * The following are used in numeric conversions only:
  * SIGNOK, NDIGITS, DPTOK, and EXPOK are for floating point;
@@ -204,7 +205,12 @@ literal:
 			flags |= LONGDBL;
 			goto again;
 		case 'h':
-			flags |= SHORT;
+			if (*fmt == 'h') {
+				fmt++;
+				flags |= SHORTSHORT;
+			} else {
+				flags |= SHORT;
+			}
 			goto again;
 		case 'j':
 			flags |= MAXINT;
@@ -315,6 +321,8 @@ literal:
 				continue;
 			if (flags & SHORT)
 				*va_arg(ap, short *) = nread;
+			else if (flags & SHORTSHORT)
+				*va_arg(ap, char *) = nread;
 			else if (flags & LONG)
 				*va_arg(ap, long *) = nread;
 			else if (flags & QUAD)
@@ -630,6 +638,8 @@ literal:
 					*va_arg(ap, long *) = (long)res;
 				else if (flags & SHORT)
 					*va_arg(ap, short *) = (short)res;
+				else if (flags & SHORTSHORT)
+					*va_arg(ap, char *) = (char)res;
 				else
 					*va_arg(ap, int *) = (int)res;
 				nassigned++;
