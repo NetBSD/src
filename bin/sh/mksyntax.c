@@ -1,4 +1,4 @@
-/*	$NetBSD: mksyntax.c,v 1.12 1996/10/16 14:46:35 christos Exp $	*/
+/*	$NetBSD: mksyntax.c,v 1.13 1997/07/04 21:02:14 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -36,17 +36,17 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
-static char copyright[] =
-"@(#) Copyright (c) 1991, 1993\n\
-	The Regents of the University of California.  All rights reserved.\n";
+__COPYRIGHT("@(#) Copyright (c) 1991, 1993\n\
+	The Regents of the University of California.  All rights reserved.\n");
 #endif /* not lint */
 
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)mksyntax.c	8.2 (Berkeley) 5/4/95";
 #else
-static char rcsid[] = "$NetBSD: mksyntax.c,v 1.12 1996/10/16 14:46:35 christos Exp $";
+__RCSID("$NetBSD: mksyntax.c,v 1.13 1997/07/04 21:02:14 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -118,6 +118,7 @@ static void add __P((char *, char *));
 static void print __P((char *));
 static void output_type_macros __P((void));
 static void digit_convert __P((void));
+int main __P((int, char **));
 
 int
 main(argc, argv)

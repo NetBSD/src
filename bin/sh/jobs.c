@@ -1,4 +1,4 @@
-/*	$NetBSD: jobs.c,v 1.21 1997/01/11 02:04:36 tls Exp $	*/
+/*	$NetBSD: jobs.c,v 1.22 1997/07/04 21:02:04 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -36,11 +36,12 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)jobs.c	8.5 (Berkeley) 5/4/95";
 #else
-static char rcsid[] = "$NetBSD: jobs.c,v 1.21 1997/01/11 02:04:36 tls Exp $";
+__RCSID("$NetBSD: jobs.c,v 1.22 1997/07/04 21:02:04 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -931,7 +932,6 @@ stoppedjobs()
 
 STATIC char *cmdnextc;
 STATIC int cmdnleft;
-STATIC void cmdtxt(), cmdputs();
 #define MAXCMDTEXT	200
 
 char *

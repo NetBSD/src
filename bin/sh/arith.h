@@ -1,4 +1,4 @@
-/*	$NetBSD: arith.h,v 1.1 1995/05/11 21:28:44 christos Exp $	*/
+/*	$NetBSD: arith.h,v 1.2 1997/07/04 21:01:49 christos Exp $	*/
 
 /*-
  * Copyright (c) 1995
@@ -37,3 +37,5 @@
 
 int arith __P((char *));
 int expcmd __P((int , char **));
+void arith_lex_reset __P((void));
+int yylex __P((void));

@@ -1,4 +1,4 @@
-/*	$NetBSD: exec.c,v 1.22 1997/02/06 23:24:52 christos Exp $	*/
+/*	$NetBSD: exec.c,v 1.23 1997/07/04 21:01:59 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -36,11 +36,12 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)exec.c	8.4 (Berkeley) 6/8/95";
 #else
-static char rcsid[] = "$NetBSD: exec.c,v 1.22 1997/02/06 23:24:52 christos Exp $";
+__RCSID("$NetBSD: exec.c,v 1.23 1997/07/04 21:01:59 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -672,7 +673,7 @@ clearcmdentry(firstchange)
  */
 
 #ifdef mkinit
-MKINIT void deletefuncs();
+MKINIT void deletefuncs __P((void));
 
 SHELLPROC {
 	deletefuncs();

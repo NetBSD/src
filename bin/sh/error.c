@@ -1,4 +1,4 @@
-/*	$NetBSD: error.c,v 1.16 1997/04/11 23:06:51 christos Exp $	*/
+/*	$NetBSD: error.c,v 1.17 1997/07/04 21:01:54 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -36,11 +36,12 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)error.c	8.2 (Berkeley) 5/4/95";
 #else
-static char rcsid[] = "$NetBSD: error.c,v 1.16 1997/04/11 23:06:51 christos Exp $";
+__RCSID("$NetBSD: error.c,v 1.17 1997/07/04 21:01:54 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -70,7 +71,7 @@ volatile int intpending;
 char *commandname;
 
 
-static void exverror __P((int, char *, va_list));
+static void exverror __P((int, char *, va_list)) __attribute__((__noreturn__));
 
 /*
  * Called to raise an exception.  Since C doesn't include exceptions, we
