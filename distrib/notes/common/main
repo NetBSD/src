@@ -1,4 +1,4 @@
-.\" $NetBSD: main,v 1.58 2000/05/11 21:30:07 bjh21 Exp $
+.\" $NetBSD: main,v 1.59 2000/05/14 13:22:17 tsutsui Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -804,6 +804,7 @@ them, and would like to mentioned, tell us!)
 .It Ta Ben Harris Ta Mt bjh21@NetBSD.ORG Ta Sy arm26
 .It Ta Eduardo Horvath Ta Mt eeh@NetBSD.ORG Ta Sy sparc64
 .It Ta Darrin Jewell Ta Mt dbj@NetBSD.ORG Ta Sy next68k
+.It Ta S\(/oren J\(/orvang Ta Mt soren@NetBSD.ORG cobalt
 .It Ta Paul Kranenburg Ta Mt pk@NetBSD.ORG Ta Sy sparc
 .It Ta Anders Magnusson Ta Mt ragge@NetBSD.ORG Ta Sy vax
 .It Ta Minoura Makoto Ta Mt minoura@NetBSD.ORG Ta Sy x68k
@@ -904,7 +905,6 @@ them, and would like to mentioned, tell us!)
 .It Ta Matthew Jacob Ta Mt mjacob@NetBSD.ORG
 .It Ta Lonhyn T. Jasinskyj Ta Mt lonhyn@NetBSD.ORG
 .It Ta Chris Jones Ta Mt cjones@NetBSD.ORG
-.It Ta S\(/oren J\(/orvang Ta Mt soren@NetBSD.ORG
 .It Ta Antti Kantee Ta Mt pooka@NetBSD.ORG
 .It Ta Lawrence Kesteloot Ta Mt kesteloo@cs.unc.edu
 .It Ta Thomas Klausner Ta Mt wiz@NetBSD.ORG
