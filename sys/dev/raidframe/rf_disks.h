@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_disks.h,v 1.4 1999/02/24 00:00:03 oster Exp $	*/
+/*	$NetBSD: rf_disks.h,v 1.5 2000/02/13 04:53:57 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -37,6 +37,7 @@
 
 #include "rf_archs.h"
 #include "rf_types.h"
+#include "rf_netbsd.h"
 
 /*
  * A physical disk can be in one of several states:
@@ -67,16 +68,8 @@ struct RF_RaidDisk_s {
 	RF_SectorCount_t numBlocks;	/* number of blocks, obtained via READ
 					 * CAPACITY */
 	int     blockSize;
-	/* XXX the following is needed since we seem to need SIMULATE defined 
-	 * in order to get user-land stuff to compile, but we *don't* want this
-	 * in the structure for the user-land utilities, as the kernel doesn't
-	 * know about it!! (and it messes up the size of the structure, so
-	 * there is a communication problem between the kernel and the
-	 * userland utils :-(  GO */
-#if RF_KEEP_DISKSTATS > 0
-	RF_uint64 nreads;
-	RF_uint64 nwrites;
-#endif				/* RF_KEEP_DISKSTATS > 0 */
+	RF_SectorCount_t partitionSize; /* The *actual* and *full* size of 
+					   the partition, from the disklabel */
 	dev_t   dev;
 };
 /*
@@ -91,6 +84,7 @@ typedef void RF_DiskOp_t;
 	((_dstat_) == rf_ds_reconstructing) || ((_dstat_) == rf_ds_failed) || \
 	((_dstat_) == rf_ds_dist_spared))
 
+#ifdef _KERNEL
 int 
 rf_ConfigureDisks(RF_ShutdownList_t ** listp, RF_Raid_t * raidPtr,
 		  RF_Config_t * cfgPtr);
@@ -100,4 +94,8 @@ rf_ConfigureSpareDisks(RF_ShutdownList_t ** listp, RF_Raid_t * raidPtr,
 int 
 rf_ConfigureDisk(RF_Raid_t * raidPtr, char *buf, RF_RaidDisk_t * diskPtr,
 		 RF_RowCol_t row, RF_RowCol_t col);
+int
+rf_AutoConfigureDisks(RF_Raid_t *raidPtr, RF_Config_t *cfgPtr,
+		      RF_AutoConfig_t *auto_config);
+#endif /* _KERNEL */
 #endif				/* !_RF__RF_DISKS_H_ */
