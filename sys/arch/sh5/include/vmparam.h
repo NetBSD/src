@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.4 2002/12/10 05:14:33 thorpej Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.5 2003/04/02 02:44:06 thorpej Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -87,6 +87,15 @@
  *
  * User VM space stretches to fill what's left.
  */
+
+/*
+ * We use 4K pages on the sh5.  Override the PAGE_* definitions
+ * to be compile-time constants.
+ */
+#define	PAGE_SHIFT	12
+#define	PAGE_SIZE	(1 << PAGE_SHIFT)
+#define	PAGE_MASK	(PAGE_SIZE - 1)
+
 #ifdef _LP64
 #define	VM_MIN_KERNEL_ADDRESS	(0xffffffffe0000000UL)
 #define	VM_MAX_KERNEL_ADDRESS	(0xfffffffffffff000UL)
