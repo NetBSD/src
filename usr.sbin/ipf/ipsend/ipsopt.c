@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsopt.c,v 1.3 1997/10/30 16:10:37 mrg Exp $	*/
+/*	$NetBSD: ipsopt.c,v 1.4 1997/11/01 09:12:23 enami Exp $	*/
 
 /*
  * Copyright (C) 1995-1997 by Darren Reed.
@@ -24,6 +24,7 @@ static const char rcsid[] = "@(#)Id: ipsopt.c,v 2.0.2.10 1997/09/28 07:13:28 dar
 #include <netinet/ip_var.h>
 #endif
 #include <netinet/tcp.h>
+#include <arpa/inet.h>
 #include "ipsend.h"
 
 
