@@ -1,8 +1,8 @@
 #	from: @(#)Makefile.inc	5.3 (Berkeley) 2/20/91
-#	$Id: Makefile.inc,v 1.3 1993/10/07 00:22:37 cgd Exp $
+#	$Id: Makefile.inc,v 1.4 1993/12/04 02:34:20 cgd Exp $
 
 # compat-43 sources
-.PATH: ${.CURDIR}/arch/${MACHINE}/compat-43 ${.CURDIR}/compat-43
+.PATH: ${.CURDIR}/arch/${MACHINE_ARCH}/compat-43 ${.CURDIR}/compat-43
 
 SRCS+=	creat.c getwd.c killpg.c setpgrp.c sigcompat.c
 
