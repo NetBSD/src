@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_mv.c,v 1.6 1995/07/06 17:13:49 briggs Exp $	*/
+/*	$NetBSD: grf_mv.c,v 1.7 1995/08/24 04:27:16 briggs Exp $	*/
 
 /*
  * Copyright (c) 1995 Allen Briggs.  All rights reserved.
@@ -89,6 +89,20 @@ grfmv_intr(sc, slot)
 	slotbase[0xa0000] = zero;
 }
 
+static int
+get_vrsrcid(slot)
+	nubus_slot	*slot;
+{
+extern	u_short	mac68k_vrsrc_vec[];
+extern	int	mac68k_vrsrc_cnt;
+	int	i;
+
+	for (i = 0 ; i < 6 ; i++)
+		if ((mac68k_vrsrc_vec[i] & 0xff) == slot->slot)
+			return ((mac68k_vrsrc_vec[i] >> 8) & 0xff);
+	return 0x80;
+}
+
 extern int
 grfmv_probe(sc, slot)
 	struct	grf_softc *sc;
@@ -97,19 +111,16 @@ grfmv_probe(sc, slot)
 	nubus_dir	dir, *dirp, dir2, *dirp2;
 	nubus_dirent	dirent, *direntp;
 	nubus_type	slottype;
+	int		vrsrc;
 
 	dirp = &dir;
 	direntp = &dirent;
 	nubus_get_main_dir(slot, dirp);
 
-	/*
-	 * Unfortunately, I think we'll have to load this value from
-	 * the macos.  The alternative is putting in enough hooks to
-	 * be able to call the card's PrimaryInit routine which could
-	 * call just about any part of the ROM, I think.
-	 */
-	if (nubus_find_rsrc(slot, dirp, 128, direntp) <= 0) {
-		if (nubus_find_rsrc(slot, dirp, 129, direntp) <= 0) {
+	vrsrc = get_vrsrcid(slot);
+	if (nubus_find_rsrc(slot, dirp, vrsrc, direntp) <= 0) {
+		if (   (vrsrc != 128)
+		    || (nubus_find_rsrc(slot, dirp, 129, direntp) <= 0)) {
 			return 0;
 		}
 	}
