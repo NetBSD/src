@@ -1,4 +1,4 @@
-/*	$NetBSD: tar.c,v 1.47.2.1 2004/04/19 03:35:55 jmc Exp $	*/
+/*	$NetBSD: tar.c,v 1.47.2.2 2004/04/19 03:39:04 jmc Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)tar.c	8.2 (Berkeley) 4/18/94";
 #else
-__RCSID("$NetBSD: tar.c,v 1.47.2.1 2004/04/19 03:35:55 jmc Exp $");
+__RCSID("$NetBSD: tar.c,v 1.47.2.2 2004/04/19 03:39:04 jmc Exp $");
 #endif
 #endif /* not lint */
 
@@ -1265,14 +1265,16 @@ name_split(char *name, int len)
 static int
 tar_gnutar_exclude_one(const char *line, size_t len)
 {
-	/* 2* buffer len + 5 prefix + 5 postfix + null subst + nul */
-	char sbuf[MAXPATHLEN * 2 + 4 + 4 + 5 + 1];
+	/* 2 * buffer len + nul */
+	char sbuf[MAXPATHLEN * 2 + 1];
+	/* + / + // + .*""/\/ + \/.* */
+	char rabuf[MAXPATHLEN * 2 + 1 + 1 + 2 + 4 + 4];
 	int i, j;
 
 	if (line[len - 1] == '\n')
 		len--;
-	strncpy(sbuf, ".*" "\\/", 4);
-	for (i = 0, j = 4; i < len; i++) {
+	strncpy(sbuf, ".*" "\\/", j = 4);
+	for (i = 0; i < len; i++) {
 		/*
 		 * convert glob to regexp, escaping everything
 		 */
@@ -1285,18 +1287,21 @@ tar_gnutar_exclude_one(const char *line, size_t len)
 			sbuf[j++] = '\\';
 		sbuf[j++] = line[i];
 	}
-	strncpy(&sbuf[j], "$", 2);
-	if (rep_add(sbuf) < 0)
-		return (-1);
-	strncpy(&sbuf[j], "\\/.*", 5);
-	if (rep_add(sbuf) < 0)
-		return (-1);
+	/* don't need the .*\/ ones if we start with /, i guess */
+	if (line[0] != '/') {
+		snprintf(rabuf, sizeof rabuf, "/.*\\/%s$//", sbuf);
+		if (rep_add(rabuf) < 0)
+			return (-1);
+		snprintf(rabuf, sizeof rabuf, "/.*\\/%s\\/.*//", sbuf);
+		if (rep_add(rabuf) < 0)
+			return (-1);
+	}
 
-	sbuf[3] = '^';
-	if (rep_add(sbuf+3) < 0)
+	snprintf(rabuf, sizeof rabuf, "/^%s$//", sbuf);
+	if (rep_add(rabuf) < 0)
 		return (-1);
-	strncpy(&sbuf[j], "$", 2);
-	if (rep_add(sbuf+3) < 0)
+	snprintf(rabuf, sizeof rabuf, "/^%s\\/.*//", sbuf);
+	if (rep_add(rabuf) < 0)
 		return (-1);
 
 	return (0);
