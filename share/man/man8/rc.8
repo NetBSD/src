@@ -1,4 +1,4 @@
-.\" 	$NetBSD: rc.8,v 1.13 2000/11/17 05:00:26 lukem Exp $
+.\" 	$NetBSD: rc.8,v 1.14 2000/12/15 00:57:27 lukem Exp $
 .\"
 .\" Copyright (c) 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -34,7 +34,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd November 17, 2000
+.Dd December 14, 2000
 .Dt RC 8
 .Os
 .Sh NAME
@@ -163,7 +163,7 @@ In order of startup, these are:
 .It NETWORK
 ensure basic network services are running
 .It SERVERS
-ensure basic services exist for services that start early.
+ensure basic services exist for services that start early
 .It DAEMON
 before all general purpose daemons
 .It LOGIN
@@ -195,25 +195,25 @@ Note that this should be used sparingly!
 The scripts are expected to support at least the following arguments:
 .Bl -tag -width restart -offset indent
 .It start
-Start the program.
-This should check that the program is to be started as specified by
+Start the service.
+This should check that the service is to be started as specified by
 .Xr rc.conf 5 .
 If
 .Sq forcestart
 is given, ignore the rc.conf check and start anyway.
 .It stop
-If the program is to be started as specified by
+If the service is to be started as specified by
 .Xr rc.conf 5 ,
-stop the program.
-This should check that the program is running and complain if it's not.
+stop the service.
+This should check that the service is running and complain if it's not.
 If
 .Sq forcestop
 is given, ignore the rc.conf check and attempt to stop.
 .It restart
 Effectively perform a stop then a start.
 .It status
-Show the status of the program.
-Defaults to displaying the process ID of the process (if running).
+Show the status of the service.
+Defaults to displaying the process ID of the program (if running).
 .El
 .Pp
 Other arguments (such as
