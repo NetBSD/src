@@ -1,4 +1,4 @@
-/*	$NetBSD: mii.c,v 1.33 2003/01/01 00:10:21 thorpej Exp $	*/
+/*	$NetBSD: mii.c,v 1.34 2004/08/20 15:21:24 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mii.c,v 1.33 2003/01/01 00:10:21 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mii.c,v 1.34 2004/08/20 15:21:24 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -72,7 +72,7 @@ mii_attach(struct device *parent, struct mii_data *mii, int capmask,
 	int bmsr, offset = 0;
 	int phymin, phymax;
 
-	if (phyloc != MII_PHY_ANY && offloc != MII_PHY_ANY)
+	if (phyloc != MII_PHY_ANY && offloc != MII_OFFSET_ANY)
 		panic("mii_attach: phyloc and offloc specified");
 
 	if (phyloc == MII_PHY_ANY) {
@@ -158,7 +158,7 @@ mii_activate(struct mii_data *mii, enum devact act, int phyloc, int offloc)
 {
 	struct mii_softc *child;
 
-	if (phyloc != MII_PHY_ANY && offloc != MII_PHY_ANY)
+	if (phyloc != MII_PHY_ANY && offloc != MII_OFFSET_ANY)
 		panic("mii_activate: phyloc and offloc specified");
 
 	if ((mii->mii_flags & MIIF_INITDONE) == 0)
