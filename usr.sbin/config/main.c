@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.86 2003/09/14 12:43:04 jmmv Exp $	*/
+/*	$NetBSD: main.c,v 1.87 2003/11/12 01:24:15 matt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -206,7 +206,14 @@ main(int argc, char **argv)
 	}
 
 	if (xflag) {
+#ifdef __NetBSD__
 		conffile = (argc == 1) ? argv[0] : _PATH_UNIX;
+#else
+		if (argc == 0) {
+			(void)fprintf(stderr, "error: no kernel supplied\n");
+			exit(1);
+		}
+#endif
 		if (!is_elf(conffile)) {
 			(void)fprintf(stderr, "%s: not a binary kernel\n",
 			    conffile);
