@@ -1,4 +1,4 @@
-/*	$NetBSD: isadmareg.h,v 1.5 1997/06/06 23:43:56 thorpej Exp $	*/
+/*	$NetBSD: isadmareg.h,v 1.6 1998/01/22 00:57:10 cgd Exp $	*/
 
 #include <dev/ic/i8237reg.h>
 
@@ -10,8 +10,9 @@
 #define	DMA1_SMSK	(1*10)			/* single mask register */
 #define	DMA1_MODE	(1*11)			/* mode register */
 #define	DMA1_FFC	(1*12)			/* clear first/last FF */
+#define	DMA1_MASK	(1*15)			/* mask register */
 
-#define	DMA1_IOSIZE	(1*12)
+#define	DMA1_IOSIZE	(1*16)
 
 /*
  * Register definitions for DMA controller 2 (channels 4..7):
@@ -21,5 +22,6 @@
 #define	DMA2_SMSK	(2*10)			/* single mask register */
 #define	DMA2_MODE	(2*11)			/* mode register */
 #define	DMA2_FFC	(2*12)			/* clear first/last FF */
+#define	DMA2_MASK	(2*15)			/* mask register */
 
-#define	DMA2_IOSIZE	(2*12)
+#define	DMA2_IOSIZE	(2*16)
