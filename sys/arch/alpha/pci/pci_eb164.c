@@ -1,4 +1,4 @@
-/* $NetBSD: pci_eb164.c,v 1.12 1998/04/16 19:24:24 thorpej Exp $ */
+/* $NetBSD: pci_eb164.c,v 1.13 1998/04/16 19:50:55 thorpej Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pci_eb164.c,v 1.12 1998/04/16 19:24:24 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_eb164.c,v 1.13 1998/04/16 19:50:55 thorpej Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -139,7 +139,7 @@ dec_eb164_intr_map(ccv, bustag, buspin, line, ihp)
                 return 1;
         }
         if (buspin > 4) {
-                printf("pci_map_int: bad interrupt pin %d\n", buspin);
+                printf("dec_eb164_intr_map: bad interrupt pin %d\n", buspin);
                 return 1;
         }
 
@@ -193,12 +193,12 @@ dec_eb164_intr_map(ccv, bustag, buspin, line, ihp)
 		eb164_irq = pinoff + pinbase;
 		break;
 	default:
-		panic("pci_eb164_map_int: invalid device number %d\n",
+		panic("dec_eb164_intr_map: invalid device number %d\n",
 		    device);
 	}
 
 	if (eb164_irq > EB164_MAX_IRQ)
-		panic("pci_eb164_map_int: eb164_irq too large (%d)\n",
+		panic("dec_eb164_intr_map: eb164_irq too large (%d)\n",
 		    eb164_irq);
 
 	*ihp = eb164_irq;

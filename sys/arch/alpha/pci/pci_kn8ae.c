@@ -1,4 +1,4 @@
-/* $NetBSD: pci_kn8ae.c,v 1.9 1998/04/15 00:49:58 mjacob Exp $ */
+/* $NetBSD: pci_kn8ae.c,v 1.10 1998/04/16 19:50:55 thorpej Exp $ */
 
 /*
  * Copyright (c) 1997 by Matthew Jacob
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pci_kn8ae.c,v 1.9 1998/04/15 00:49:58 mjacob Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_kn8ae.c,v 1.10 1998/04/16 19:50:55 thorpej Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -134,7 +134,7 @@ dec_kn8ae_intr_map(ccv, bustag, buspin, line, ihp)
                 return 1;
         }
         if (buspin > 4) {
-                printf("pci_map_int: bad interrupt pin %d\n", buspin);
+                printf("dec_kn8ae_intr_map: bad interrupt pin %d\n", buspin);
                 return 1;
         }
 	alpha_pci_decompose_tag(pc, bustag, NULL, &device, NULL);
