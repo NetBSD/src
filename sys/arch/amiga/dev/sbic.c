@@ -1,4 +1,4 @@
-/*	$NetBSD: sbic.c,v 1.23 1996/04/21 21:12:21 veego Exp $	*/
+/*	$NetBSD: sbic.c,v 1.24 1996/05/01 16:58:41 mhitch Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -1812,8 +1812,13 @@ sbicgo(dev, xs)
 	if( data_pointer_debug > 1 )
 		printf("sbicgo dmago:%d(%p:%lx)\n",
 		       dev->target,dev->sc_cur->dc_addr,dev->sc_tcnt);
+#if 0
+	/*
+	 * Hmm - this isn't right:  asr and csr haven't been set yet.
+	 */
 	debug_asr = asr;
 	debug_csr = csr;
+#endif
 #endif
 
 	/*
@@ -2850,7 +2855,7 @@ sbic_dump(dev)
 		GET_SBIC_csr(regs, csr);
 	else
 		csr = 0;
-	printf("%s@%p regs %x asr %x csr %x\n", dev->sc_dev.dv_xname,
+	printf("%s@%p regs %p asr %x csr %x\n", dev->sc_dev.dv_xname,
 	    dev, regs, asr, csr);
 	if ((acb = dev->free_list.tqh_first)) {
 		printf("Free list:\n");
