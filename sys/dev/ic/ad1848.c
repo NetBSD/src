@@ -1,4 +1,4 @@
-/*	$NetBSD: ad1848.c,v 1.2 1998/08/26 15:06:37 pk Exp $	*/
+/*	$NetBSD: ad1848.c,v 1.3 1998/08/27 18:45:12 pk Exp $	*/
 
 /*
  * Copyright (c) 1994 John Brezak
@@ -138,21 +138,12 @@ static int ad1848_init_values[] = {
     0					/* lower record count */
 };
 
-void	ad1848_reset __P((struct ad1848_softc *));
-int	ad1848_set_speed __P((struct ad1848_softc *, u_long *));
-void	ad1848_mute_monitor __P((void *, int));
 
 __inline int ad_read __P((struct ad1848_softc *, int));
 __inline void ad_write __P((struct ad1848_softc *, int, int));
 static void ad_set_MCE __P((struct ad1848_softc *, int));
 static void wait_for_calibration __P((struct ad1848_softc *));
 
-#if 0
-#define ADREAD(sc, addr) \
-	bus_space_read_1((sc)->sc_iot, (sc)->sc_ioh, (sc)->sc_iooffs+(addr))
-#define ADWRITE(sc, addr, data) \
-	bus_space_write_1((sc)->sc_iot, (sc)->sc_ioh, (sc)->sc_iooffs+(addr), (data))
-#endif
 
 int
 ad1848_to_vol(cp, vol)
