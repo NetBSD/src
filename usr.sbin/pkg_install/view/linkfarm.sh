@@ -1,6 +1,6 @@
 #! /bin/sh
 
-# $NetBSD: linkfarm.sh,v 1.1.2.3 2003/07/13 12:25:46 jlam Exp $
+# $NetBSD: linkfarm.sh,v 1.1.2.4 2003/07/13 20:38:55 jlam Exp $
 
 #
 # Copyright (c) 2002 Alistair G. Crooks.  All rights reserved.
@@ -42,6 +42,7 @@ mkdirprog=/bin/mkdir
 rmprog=/bin/rm
 rmdirprog=/bin/rmdir
 sedprog=/usr/bin/sed
+sortprog=/usr/bin/sort
 
 usage() {
 	echo 'Usage: linkfarm [options] package'
@@ -155,7 +156,7 @@ yes)
 			$doit $rmprog $target/$f ;;
 		esac
 	done
-	for d in `$findprog . -type d -print | sort -r`; do
+	for d in `$findprog . -type d -print | $sortprog -r`; do
 		if [ $verbose -gt 0 ]; then
 			echo "$rmdirprog $target/$d"
 		fi
