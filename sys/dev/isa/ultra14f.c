@@ -1,4 +1,4 @@
-/*	$NetBSD: ultra14f.c,v 1.56 1995/10/03 20:59:01 mycroft Exp $	*/
+/*	$NetBSD: ultra14f.c,v 1.57 1995/10/04 00:35:07 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
@@ -820,7 +820,7 @@ uha_init_mscp(uha, mscp)
 	 * Never gets taken out.
 	 */
 	mscp->hashkey = KVTOPHYS(mscp);
-	hashnum = CCB_HASH(mscp->hashkey);
+	hashnum = MSCP_HASH(mscp->hashkey);
 	mscp->nexthash = uha->mscphash[hashnum];
 	uha->mscphash[hashnum] = mscp;
 }
