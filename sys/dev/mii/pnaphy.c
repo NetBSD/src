@@ -1,4 +1,4 @@
-/*	$NetBSD: pnaphy.c,v 1.1 2001/08/25 03:21:38 thorpej Exp $	*/
+/*	$NetBSD: pnaphy.c,v 1.2 2001/08/25 18:04:02 thorpej Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -85,10 +85,7 @@ const struct mii_phydesc pnaphys[] = {
 };
 
 int
-pnaphymatch(parent, match, aux)
-	struct device *parent;
-	struct cfdata *match;
-	void *aux;
+pnaphymatch(struct device *parent, struct cfdata *match, void *aux)
 {
 	struct mii_attach_args *ma = aux;
 
@@ -104,9 +101,7 @@ pnaphymatch(parent, match, aux)
 }
 
 void
-pnaphyattach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+pnaphyattach(struct device *parent, struct device *self, void *aux)
 {
 	struct mii_softc *sc = (struct mii_softc *)self;
 	struct mii_attach_args *ma = aux;
@@ -136,10 +131,7 @@ pnaphyattach(parent, self, aux)
 }
 
 int
-pnaphy_service(sc, mii, cmd)
-	struct mii_softc *sc;
-	struct mii_data *mii;
-	int cmd;
+pnaphy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 {
 	struct ifmedia_entry *ife = mii->mii_media.ifm_cur;
 	int reg;
@@ -198,8 +190,7 @@ pnaphy_service(sc, mii, cmd)
 }
 
 void
-pnaphy_status(sc)
-	struct mii_softc *sc;
+pnaphy_status(struct mii_softc *sc)
 {
 	struct mii_data *mii = sc->mii_pdata;
 	struct ifmedia_entry *ife = mii->mii_media.ifm_cur;
