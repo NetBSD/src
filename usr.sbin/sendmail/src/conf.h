@@ -31,7 +31,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)conf.h	8.96 (Berkeley) 3/11/94
+ *	@(#)conf.h	8.104 (Berkeley) 4/17/94
  */
 
 /*
@@ -182,7 +182,7 @@ extern int	syslog(int, char *, ...);
 */
 
 # ifdef IRIX
-# include <sys/sysmacros.h>
+# define SYSTEM5	1	/* this is a System-V derived system */
 # define HASSETREUID	1	/* has setreuid(2) call */
 # define HASINITGROUPS	1	/* has initgroups(3) call */
 # define HASGETUSERSHELL 0	/* does not have getusershell(3) call */
@@ -191,6 +191,7 @@ extern int	syslog(int, char *, ...);
 # define setpgid	BSDsetpgrp
 # define GIDSET_T	gid_t
 # define SFS_TYPE	SFS_4ARGS	/* four argument statfs() call */
+# define LA_TYPE	LA_INT
 # endif
 
 
@@ -254,6 +255,11 @@ extern int	syslog(int, char *, ...);
 #   define setpgid	setpgrp
 typedef int		pid_t;
 extern char		*getenv();
+
+#  else
+			/* 4.1.x specifics */
+#   define HASSETSID	1	/* has Posix setsid(2) call */
+#   define HASSETVBUF	1	/* we have setvbuf(3) in libc */
 
 #  endif
 # endif
@@ -394,16 +400,21 @@ typedef int		pid_t;
 #ifdef __bsdi__
 # define HASUNSETENV	1	/* has the unsetenv(3) call */
 # define HASSETSID	1	/* has the setsid(2) POSIX syscall */
-# define SFS_TYPE	SFS_MOUNT	/* use <sys/mount.h> statfs() impl */
-# if defined(_BSDI_VERSION) && _BSDI_VERSION >= 199312
-#  define HASSETPROCTITLE 1	/* setproctitle is in libc */
-# else
-#  define SETPROCTITLE	1
-# endif
 # include <sys/cdefs.h>
 # define ERRLIST_PREDEFINED	/* don't declare sys_errlist */
+# define SFS_TYPE	SFS_MOUNT	/* use <sys/mount.h> statfs() impl */
 # ifndef LA_TYPE
 #  define LA_TYPE	LA_SUBR
+# endif
+# if defined(_BSDI_VERSION) && _BSDI_VERSION >= 199312
+			/* version 1.1 or later */
+#  define HASSETPROCTITLE 1	/* setproctitle is in libc */
+#  undef SETPROCTITLE		/* so don't redefine it in conf.c */
+# else
+			/* version 1.0 or earlier */
+#  ifndef OLD_NEWDB
+#   define OLD_NEWDB	1	/* old version of newdb library */
+#  endif
 # endif
 #endif
 
@@ -420,6 +431,9 @@ typedef int		pid_t;
 #if defined(__386BSD__) || defined(__FreeBSD__) || defined(__NetBSD__)
 # define HASUNSETENV	1	/* has unsetenv(3) call */
 # define HASSETSID	1	/* has the setsid(2) POSIX syscall */
+# ifdef __NetBSD__
+#  define HASUNAME	1	/* has uname(2) syscall */
+# endif
 # include <sys/cdefs.h>
 # define ERRLIST_PREDEFINED	/* don't declare sys_errlist */
 # ifndef LA_TYPE
@@ -502,6 +516,7 @@ extern int		errno;
 #ifdef _SCO_unix_4_2
 # define _SCO_unix_
 # define HASSETREUID	1	/* has setreuid(2) call */
+# define NEEDFSYNC	1	/* needs the fsync(2) call stub */
 # define _PATH_UNIX	"/unix"
 # ifndef _PATH_SENDMAILCF
 #  define _PATH_SENDMAILCF	"/usr/lib/sendmail.cf"
@@ -818,6 +833,67 @@ typedef int		pid_t;
 #endif
 
 
+/*
+**  UnixWare
+**
+**	From Evan Champion <evanc@spatial.synapse.org>.
+*/
+
+#ifdef UNIXWARE
+# define SYSTEM5		1
+# ifndef HASGETUSERSHELL
+#  define HASGETUSERSHELL 0	/* does not have getusershell(3) call */
+# endif
+# define GIDSET_T		int
+# define SLEEP_T		int
+# define SFS_TYPE		SFS_STATVFS
+# define LA_TYPE		LA_ZERO
+# undef WIFEXITED
+# undef WEXITSTATUS
+# define _PATH_UNIX		"/unix"
+# ifndef _PATH_SENDMAILCF
+#  define _PATH_SENDMAILCF	"/usr/ucblib/sendmail.cf"
+# endif
+# ifndef _PATH_SENDMAILPID
+#  define _PATH_SENDMAILPID	"/usr/ucblib/sendmail.pid"
+# endif
+# define SYSLOG_BUFSIZE	128
+#endif
+
+
+/*
+**  Intergraph CLIX 3.1
+**
+**	From Paul Southworth <pauls@locust.cic.net>
+*/
+
+#ifdef CLIX
+# define SYSTEM5	1	/* looks like System V */
+# ifndef HASGETUSERSHELL
+#  define HASGETUSERSHELL 0	/* does not have getusershell(3) call */
+# endif
+# define DEV_BSIZE	512	/* device block size not defined */
+# define GIDSET_T	gid_t
+# undef LOG			/* syslog not available */
+# define NEEDFSYNC	1	/* no fsync in system library */
+# define GETSHORT	_getshort
+#endif
+
+
+/*
+**  NCR 3000 Series (SysVr4)
+**
+**	From From: Kevin Darcy <kevin@tech.mis.cfc.com>.
+*/
+
+#ifdef NCR3000
+# define __svr4__
+# undef BSD
+# define LA_AVENRUN	"avenrun"
+#endif
+ 
+
+
 
 
 /**********************************************************************
@@ -925,6 +1001,10 @@ typedef int		pid_t;
 
 #ifndef HASFLOCK
 # define HASFLOCK	0	/* assume no flock(2) support */
+#endif
+
+#ifndef OLD_NEWDB
+# define OLD_NEWDB	0	/* assume newer version of newdb */
 #endif
 
 

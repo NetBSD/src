@@ -33,7 +33,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)conf.c	8.82 (Berkeley) 3/6/94";
+static char sccsid[] = "@(#)conf.c	8.89 (Berkeley) 4/18/94";
 #endif /* not lint */
 
 # include "sendmail.h"
@@ -147,6 +147,7 @@ struct prival PrivacyValues[] =
 	"restrictmailq",	PRIV_RESTRICTMAILQ,
 	"restrictqrun",		PRIV_RESTRICTQRUN,
 	"authwarnings",		PRIV_AUTHWARNINGS,
+	"noreceipts",		PRIV_NORECEIPTS,
 	"goaway",		PRIV_GOAWAY,
 	NULL,			0,
 };
@@ -668,17 +669,17 @@ struct	nlist Nl[] =
 #  define FSHIFT	5
 # endif
 
-# if defined(__alpha)
+# if defined(__alpha) || defined(IRIX)
 #  define FSHIFT	10
-# endif
-
-# if (LA_TYPE == LA_INT) || (LA_TYPE == LA_SHORT)
-#  define FSHIFT	8
 # endif
 #endif
 
-#if ((LA_TYPE == LA_INT) || (LA_TYPE == LA_SHORT)) && !defined(FSCALE)
-#  define FSCALE	(1 << FSHIFT)
+#ifndef FSHIFT
+# define FSHIFT		8
+#endif
+
+#ifndef FSCALE
+# define FSCALE		(1 << FSHIFT)
 #endif
 
 getla()
@@ -721,6 +722,9 @@ getla()
 					_PATH_UNIX, LA_AVENRUN);
 			return (-1);
 		}
+#ifdef IRIX
+		Nl[X_AVENRUN].n_value &= 0x7fffffff;
+#endif
 	}
 	if (tTd(3, 20))
 		printf("getla: symbol address = %#x\n", Nl[X_AVENRUN].n_value);
@@ -913,7 +917,7 @@ getla()
 
 /* Non Apollo stuff removed by Don Lewis 11/15/93 */
 #ifndef lint
-static char  rcsid[] = "@(#)$Id: conf.c,v 1.1.1.3 1994/03/15 05:08:35 glass Exp $";
+static char  rcsid[] = "@(#)$Id: conf.c,v 1.1.1.4 1994/04/20 05:35:07 glass Exp $";
 #endif /* !lint */
 
 #ifdef apollo
@@ -1115,8 +1119,10 @@ reapchild()
 	{
 		if (count++ > 1000)
 		{
+#ifdef LOG
 			syslog(LOG_ALERT, "reapchild: waitpid loop: pid=%d, status=%x",
 				pid, status);
+#endif
 			break;
 		}
 	}
@@ -1308,7 +1314,7 @@ setsid __P ((void))
 #ifdef TIOCNOTTY
 	int fd;
 
-	fd = open("/dev/tty", 2);
+	fd = open("/dev/tty", O_RDWR, 0);
 	if (fd >= 0)
 	{
 		(void) ioctl(fd, (int) TIOCNOTTY, (char *) 0);
@@ -1319,6 +1325,24 @@ setsid __P ((void))
 	return setpgrp();
 # else
 	return setpgid(0, getpid());
+# endif
+}
+
+#endif
+/*
+**  FSYNC -- dummy fsync
+*/
+
+#ifdef NEEDFSYNC
+
+fsync(fd)
+	int fd;
+{
+# ifdef O_SYNC
+	return fcntl(fd, F_SETFL, O_SYNC);
+# else
+	/* nothing we can do */
+	return 0;
 # endif
 }
 
@@ -1591,6 +1615,7 @@ usershellok(shell)
 #define SFS_VFS		3	/* use <sys/vfs.h> implementation */
 #define SFS_MOUNT	4	/* use <sys/mount.h> implementation */
 #define SFS_STATFS	5	/* use <sys/statfs.h> implementation */
+#define SFS_STATVFS	6	/* use <sys/statvfs.h> implementation */
 
 #ifndef SFS_TYPE
 # define SFS_TYPE	SFS_NONE
@@ -1607,6 +1632,9 @@ usershellok(shell)
 #endif
 #if SFS_TYPE == SFS_MOUNT
 # include <sys/mount.h>
+#endif
+#if SFS_TYPE == SFS_STATVFS
+# include <sys/statvfs.h>
 #endif
 
 long
@@ -1626,10 +1654,15 @@ freespace(dir, bsize)
 #   define f_bavail	fd_bfreen
 #   define FSBLOCKSIZE	fs.fd_bsize
 #  else
+#   if SFS_TYPE == SFS_STATVFS
+	struct statvfs fs;
+#    define FSBLOCKSIZE	fs.f_bsize
+#   else
 	struct statfs fs;
-#   define FSBLOCKSIZE	fs.f_bsize
-#   if defined(_SCO_unix_) || defined(IRIX) || defined(apollo)
-#    define f_bavail f_bfree
+#    define FSBLOCKSIZE	fs.f_bsize
+#    if defined(_SCO_unix_) || defined(IRIX) || defined(apollo)
+#     define f_bavail f_bfree
+#    endif
 #   endif
 #  endif
 # endif

@@ -33,7 +33,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)util.c	8.34 (Berkeley) 3/11/94";
+static char sccsid[] = "@(#)util.c	8.39 (Berkeley) 4/14/94";
 #endif /* not lint */
 
 # include "sendmail.h"
@@ -99,6 +99,10 @@ xalloc(sz)
 	register int sz;
 {
 	register char *p;
+
+	/* some systems can't handle size zero mallocs */
+	if (sz <= 0)
+		sz = 1;
 
 	p = malloc((unsigned) sz);
 	if (p == NULL)
@@ -836,6 +840,9 @@ xfclose(fp, a, b)
 
 static jmp_buf	CtxReadTimeout;
 static int	readtimeout();
+static EVENT	*GlobalTimeout = NULL;
+static bool	EnableTimeout = FALSE;
+static int	ReadProgress;
 
 char *
 sfgets(buf, siz, fp, timeout, during)
@@ -873,7 +880,10 @@ sfgets(buf, siz, fp, timeout, during)
 #endif
 			return (NULL);
 		}
-		ev = setevent(timeout, readtimeout, 0);
+		if (GlobalTimeout == NULL)
+			ev = setevent(timeout, readtimeout, 0);
+		else
+			EnableTimeout = TRUE;
 	}
 
 	/* try to read */
@@ -888,7 +898,10 @@ sfgets(buf, siz, fp, timeout, during)
 	}
 
 	/* clear the event if it has not sprung */
-	clrevent(ev);
+	if (GlobalTimeout == NULL)
+		clrevent(ev);
+	else
+		EnableTimeout = FALSE;
 
 	/* clean up the books and exit */
 	LineNumber++;
@@ -907,10 +920,44 @@ sfgets(buf, siz, fp, timeout, during)
 	return (buf);
 }
 
-static
-readtimeout()
+void
+sfgetset(timeout)
+	time_t timeout;
 {
-	longjmp(CtxReadTimeout, 1);
+	/* cancel pending timer */
+	if (GlobalTimeout != NULL)
+	{
+		clrevent(GlobalTimeout);
+		GlobalTimeout = NULL;
+	}
+
+	/* schedule fresh one if so requested */
+	if (timeout != 0)
+	{
+		ReadProgress = LineNumber;
+		GlobalTimeout = setevent(timeout, readtimeout, timeout);
+	}
+}
+
+static
+readtimeout(timeout)
+	time_t timeout;
+{
+	/* terminate if ordinary timeout */
+	if (GlobalTimeout == NULL)
+		longjmp(CtxReadTimeout, 1);
+
+	/* terminate if no progress was made -- reset state */
+	if (EnableTimeout && (LineNumber <= ReadProgress))
+	{
+		EnableTimeout = FALSE;
+		GlobalTimeout = NULL;
+		longjmp(CtxReadTimeout, 2);
+	}
+
+	/* schedule a new timeout */
+	GlobalTimeout = NULL;
+	sfgetset(timeout);
 }
 /*
 **  FGETFOLDED -- like fgets, but know about folded lines.
@@ -1259,6 +1306,7 @@ dumpfd(fd, printclosed, logit)
 {
 	register struct hostent *hp;
 	register char *p;
+	char *fmtstr;
 	struct sockaddr_in sin;
 	auto int slen;
 	struct stat st;
@@ -1350,16 +1398,22 @@ dumpfd(fd, printclosed, logit)
 
 	  default:
 defprint:
-		sprintf(p, "dev=%d/%d, ino=%d, nlink=%d, u/gid=%d/%d, size=%ld",
+		if (sizeof st.st_size > sizeof (long))
+			fmtstr = "dev=%d/%d, ino=%d, nlink=%d, u/gid=%d/%d, size=%qd";
+		else
+			fmtstr = "dev=%d/%d, ino=%d, nlink=%d, u/gid=%d/%d, size=%ld";
+		sprintf(p, fmtstr,
 			major(st.st_dev), minor(st.st_dev), st.st_ino,
 			st.st_nlink, st.st_uid, st.st_gid, st.st_size);
 		break;
 	}
 
 printit:
+#ifdef LOG
 	if (logit)
 		syslog(LOG_DEBUG, "%s", buf);
 	else
+#endif
 		printf("%s\n", buf);
 }
 /*
