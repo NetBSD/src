@@ -1,4 +1,4 @@
-/* $NetBSD: esa.c,v 1.8 2002/01/23 11:27:59 pooka Exp $ */
+/* $NetBSD: esa.c,v 1.9 2002/02/26 11:05:05 joda Exp $ */
 
 /*
  * Copyright (c) 2001, 2002 Jared D. McNeill <jmcneill@invisible.yi.org>
@@ -1481,6 +1481,8 @@ esa_resume(struct esa_softc *sc) {
 	esa_config(sc);
 
 	reset_state = esa_assp_halt(sc);
+
+	esa_codec_reset(sc);
 
 	/* restore ASSP */
 	for (i = ESA_REV_B_CODE_MEMORY_BEGIN; i <= ESA_REV_B_CODE_MEMORY_END;
