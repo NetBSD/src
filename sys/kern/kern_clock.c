@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_clock.c,v 1.74.2.9 2002/08/13 02:20:04 nathanw Exp $	*/
+/*	$NetBSD: kern_clock.c,v 1.74.2.10 2002/10/03 23:49:31 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_clock.c,v 1.74.2.9 2002/08/13 02:20:04 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_clock.c,v 1.74.2.10 2002/10/03 23:49:31 nathanw Exp $");
 
 #include "opt_callout.h"
 #include "opt_ntp.h"
@@ -526,6 +526,7 @@ hardclock(struct clockframe *frame)
 	extern int tickdelta;
 	extern long timedelta;
 	struct cpu_info *ci = curcpu();
+	struct ptimer *pt;
 #ifdef NTP
 	int time_update;
 	int ltemp;
@@ -537,15 +538,14 @@ hardclock(struct clockframe *frame)
 		/*
 		 * Run current process's virtual and profile time, as needed.
 		 */
-		if (CLKF_USERMODE(frame) &&
-		    p->p_timers && p->p_timers[ITIMER_VIRTUAL] &&
-		    timerisset(&p->p_timers[ITIMER_VIRTUAL]->pt_time.it_value) && 
-		    (itimerdecr(&p->p_timers[ITIMER_VIRTUAL]->pt_time, tick) == 0))
-			psignal(p, SIGVTALRM);
-		if (p->p_timers && p->p_timers[ITIMER_PROF] &&
-		    timerisset(&p->p_timers[ITIMER_PROF]->pt_time.it_value) &&
-		    (itimerdecr(&p->p_timers[ITIMER_PROF]->pt_time, tick) == 0))
-			psignal(p, SIGPROF);
+		if (CLKF_USERMODE(frame) && p->p_timers &&
+		    (pt = LIST_FIRST(&p->p_timers->pts_virtual)) != NULL)
+			if (itimerdecr(pt, tick) == 0)
+				itimerfire(pt);
+		if (p->p_timers &&
+		    (pt = LIST_FIRST(&p->p_timers->pts_prof)) != NULL)
+			if (itimerdecr(pt, tick) == 0)
+				itimerfire(pt);
 	}
 
 	/*
