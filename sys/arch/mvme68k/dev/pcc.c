@@ -1,4 +1,4 @@
-/*	$NetBSD: pcc.c,v 1.11 1998/01/12 19:51:08 thorpej Exp $	*/
+/*	$NetBSD: pcc.c,v 1.12 1999/02/14 17:54:28 scw Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -69,6 +69,8 @@
 /*
  * peripheral channel controller
  */
+
+#include "pcc.h"
 
 #include <sys/param.h>
 #include <sys/conf.h>

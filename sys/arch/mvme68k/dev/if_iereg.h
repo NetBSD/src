@@ -1,11 +1,11 @@
-/*	$NetBSD: pccvar.h,v 1.4 1999/02/14 17:54:29 scw Exp $	*/
+/*	$NetBSD: if_iereg.h,v 1.2 1999/02/14 17:54:28 scw Exp $ */
 
 /*-
- * Copyright (c) 1996, 1999 The NetBSD Foundation, Inc.
+ * Copyright (c) 1999 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Jason R. Thorpe and Steve C. Woodford.
+ * by Steve C. Woodford.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -17,8 +17,8 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *        This product includes software developed by the NetBSD
- *        Foundation, Inc. and its contributors.
+ *	This product includes software developed by the NetBSD
+ *	Foundation, Inc. and its contributors.
  * 4. Neither the name of The NetBSD Foundation nor the names of its
  *    contributors may be used to endorse or promote products derived
  *    from this software without specific prior written permission.
@@ -37,37 +37,21 @@
  */
 
 /*
- * Autoconfiguration definitions shared between the MVME-147 Peripheral
- * Channel Controller (PCC) and the MVME-167's PCCchip2.
+ * Definitions for the MPU Port and Channel Attention registers
+ * of the onboard i82596 Ethernet controller on MVME1[67]7 boards.
  */
+#ifndef __mvme68k_if_iereg_h
+#define __mvme68k_if_iereg_h
 
-/*
- * Structure used to describe a device for autoconfiguration purposes.
- */
-struct pcc_device {
-	char	*pcc_name;	/* name of device (e.g. "clock") */
-	u_long	pcc_offset;	/* offset from PCC base */
-	int	pcc_bytes;	/* size of badaddr check */
+struct mpu_regs {
+	volatile u_int16_t mpu_upper;	/* Upper Command Word */
+	volatile u_int16_t mpu_lower;	/* Lower Command Word */
+	volatile u_int32_t mpu_ca;	/* Channel Attention. Dummy Rd or Wr */
 };
 
-/*
- * Structure used to attach PCC devices.
- */
-struct pcc_attach_args {
-	char	*pa_name;	/* name of device */
-	u_long	pa_offset;	/* offset from PCC base */
-	int	pa_ipl;		/* interrupt level */
-};
+#define	IE_MPU_RESET		0x00	/* Software Reset */
+#define	IE_MPU_SELF_TEST	0x01	/* Execute a Self-Test */
+#define	IE_MPU_SCP_ADDRESS	0x02	/* Sys. Configuration Address Pointer */
+#define	IE_MPU_DUMP		0x03	/* Execute a Dump */
 
-/* Shorthand for locators. */
-#include "locators.h"
-#define pcccf_ipl	cf_loc[PCCCF_IPL]
-
-#if NPCC
-void	pccintr_establish __P((int, int (*)(void *), int, void *));
-void	pccintr_disestablish __P((int));
-#endif
-#if NPCCTWO
-void	pcctwointr_establish __P((int, int (*)(void *), int, void *));
-void	pcctwointr_disestablish __P((int));
-#endif
+#endif /* __mvme68k_if_iereg_h */
