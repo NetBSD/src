@@ -1,4 +1,4 @@
-/*	$NetBSD: hpc_machdep.c,v 1.65 2003/05/03 03:49:07 thorpej Exp $	*/
+/*	$NetBSD: hpc_machdep.c,v 1.66 2003/05/03 18:25:34 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -107,6 +107,9 @@
 #include <nfs/nfs.h>
 #include <nfs/nfsmount.h>
 #endif
+
+/* Kernel text starts 256K in from the bottom of the kernel address space. */
+#define	KERNEL_TEXT_BASE	(KERNEL_BASE + 0x00040000)
 
 /*
  * Address to call from cpu_reset() to reset the machine.

@@ -1,4 +1,4 @@
-/*	$NetBSD: ixm1200_machdep.c,v 1.19 2003/05/03 03:49:06 thorpej Exp $ */
+/*	$NetBSD: ixm1200_machdep.c,v 1.20 2003/05/03 18:25:33 thorpej Exp $ */
 #undef DEBUG_BEFOREMMU
 /*
  * Copyright (c) 2002, 2003
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixm1200_machdep.c,v 1.19 2003/05/03 03:49:06 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixm1200_machdep.c,v 1.20 2003/05/03 18:25:33 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_pmap_debug.h"
@@ -123,6 +123,9 @@ __KERNEL_RCSID(0, "$NetBSD: ixm1200_machdep.c,v 1.19 2003/05/03 03:49:06 thorpej
 #include <sys/conf.h>
 
 void ixp12x0_reset(void) __attribute__((noreturn));
+
+/* Kernel text starts 2MB in from the bottom of the kernel address space. */
+#define	KERNEL_TEXT_BASE	(KERNEL_BASE + 0x00200000)
 
 /*
  * Address to call from cpu_reset() to reset the machine.

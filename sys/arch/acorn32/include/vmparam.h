@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.13 2003/04/28 01:34:28 thorpej Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.14 2003/05/03 18:25:29 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 The Regents of the University of California.
@@ -51,7 +51,6 @@
 #define	KERNEL_BASE		0xf0000000
 
 /* Various constants used by the MD code*/
-#define	KERNEL_TEXT_BASE	(KERNEL_BASE + 0x00000000)
 #ifndef ARM32_PMAP_NEW
 #define	APTE_BASE		(KERNEL_BASE + 0x00c00000)
 #endif
