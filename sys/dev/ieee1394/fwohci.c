@@ -78,9 +78,12 @@ static void fwohci_power(int, void *);
 static void fwohci_shutdown(void *);
 
 static int  fwohci_desc_alloc(struct fwohci_softc *);
+static struct fwohci_desc *fwohci_desc_get(struct fwohci_softc *, int);
+static void fwohci_desc_put(struct fwohci_softc *, struct fwohci_desc *, int);
 
 static int  fwohci_ctx_alloc(struct fwohci_softc *, struct fwohci_ctx **,
 		int, int);
+static void fwohci_ctx_free(struct fwohci_softc *, struct fwohci_ctx *);
 static void fwohci_ctx_init(struct fwohci_softc *, struct fwohci_ctx *);
 
 static int  fwohci_buf_alloc(struct fwohci_softc *, struct fwohci_buf *);
@@ -109,7 +112,7 @@ static void fwohci_ir_input(struct fwohci_softc *, struct fwohci_ctx *);
 
 static int  fwohci_at_output(struct fwohci_softc *, struct fwohci_ctx *,
 		struct fwohci_pkt *);
-static void fwohci_at_done(struct fwohci_softc *, struct fwohci_ctx *);
+static void fwohci_at_done(struct fwohci_softc *, struct fwohci_ctx *, int);
 static void fwohci_atrs_output(struct fwohci_softc *, int, struct fwohci_pkt *,
 		struct fwohci_pkt *);
 
@@ -253,15 +256,16 @@ fwohci_init(struct fwohci_softc *sc, const struct evcnt *ev)
 	    OHCI_CTX_ASYNC_RX_REQUEST);
 	fwohci_ctx_alloc(sc, &sc->sc_ctx_arrs, OHCI_BUF_ARRS_CNT,
 	    OHCI_CTX_ASYNC_RX_RESPONSE);
-	fwohci_ctx_alloc(sc, &sc->sc_ctx_atrq, OHCI_BUF_ATRQ_CNT,
-	    OHCI_CTX_ASYNC_TX_REQUEST);
-	fwohci_ctx_alloc(sc, &sc->sc_ctx_atrs, OHCI_BUF_ATRS_CNT,
-	    OHCI_CTX_ASYNC_TX_RESPONSE);
+	fwohci_ctx_alloc(sc, &sc->sc_ctx_atrq, 0, OHCI_CTX_ASYNC_TX_REQUEST);
+	fwohci_ctx_alloc(sc, &sc->sc_ctx_atrs, 0, OHCI_CTX_ASYNC_TX_RESPONSE);
 	sc->sc_ctx_ir = malloc(sizeof(sc->sc_ctx_ir[0]) * sc->sc_isoctx,
 	    M_DEVBUF, M_WAITOK);
 	for (i = 0; i < sc->sc_isoctx; i++) {
+		sc->sc_ctx_ir[i] = NULL;
+#if 0
 		fwohci_ctx_alloc(sc, &sc->sc_ctx_ir[i], OHCI_BUF_IR_CNT, i);
-		sc->sc_ctx_ir[i]->fc_ppbmode = 1;
+		sc->sc_ctx_ir[i]->fc_isoch = 1;
+#endif
 	}
 
 	/*
@@ -381,7 +385,9 @@ fwohci_intr(void *arg)
 			 */
 			OHCI_CSR_WRITE(sc, OHCI_REG_IntMaskClear,
 			    OHCI_Int_BusReset);
+			intmask &= OHCI_Int_SelfIDComplete;
 			fwohci_buf_stop(sc);
+			fwohci_buf_init(sc);
 			if (sc->sc_uidtbl != NULL) {
 				free(sc->sc_uidtbl, M_DEVBUF);
 				sc->sc_uidtbl = NULL;
@@ -389,14 +395,27 @@ fwohci_intr(void *arg)
 			callout_reset(&sc->sc_selfid_callout,
 			    OHCI_SELFID_TIMEOUT,
 			    (void (*)(void *))fwohci_phy_busreset, sc);
+			sc->sc_nodeid = 0xffff;		/* indicate invalid */
 			sc->sc_rootid = 0;
 			sc->sc_irmid = IEEE1394_BCAST_PHY_ID;
 		}
 
+		if (intmask & OHCI_Int_SelfIDComplete) {
+			OHCI_CSR_WRITE(sc, OHCI_REG_IntEventClear,
+			    OHCI_Int_BusReset);
+			OHCI_CSR_WRITE(sc, OHCI_REG_IntMaskSet,
+			    OHCI_Int_BusReset);
+			callout_stop(&sc->sc_selfid_callout);
+			if (fwohci_selfid_input(sc) == 0) {
+				fwohci_buf_start(sc);
+				fwohci_uid_collect(sc);
+			}
+		}
+
 		if (intmask & OHCI_Int_ReqTxComplete)
-			fwohci_at_done(sc, sc->sc_ctx_atrq);
+			fwohci_at_done(sc, sc->sc_ctx_atrq, 0);
 		if (intmask & OHCI_Int_RespTxComplete)
-			fwohci_at_done(sc, sc->sc_ctx_atrs);
+			fwohci_at_done(sc, sc->sc_ctx_atrs, 0);
 		if (intmask & OHCI_Int_RQPkt)
 			fwohci_arrq_input(sc, sc->sc_ctx_arrq);
 		if (intmask & OHCI_Int_RSPkt)
@@ -410,21 +429,8 @@ fwohci_intr(void *arg)
 			iso = OHCI_CSR_READ(sc, OHCI_REG_IsoRecvIntEventClear);
 			OHCI_CSR_WRITE(sc, OHCI_REG_IsoRecvIntEventClear, iso);
 			for (i = 0; i < sc->sc_isoctx; i++) {
-				if (iso & (1 << i))
+				if ((iso & (1<<i)) && sc->sc_ctx_ir[i] != NULL)
 					fwohci_ir_input(sc, sc->sc_ctx_ir[i]);
-			}
-		}
-
-		if (intmask & OHCI_Int_SelfIDComplete) {
-			if (fwohci_selfid_input(sc) == 0) {
-				callout_stop(&sc->sc_selfid_callout);
-				OHCI_CSR_WRITE(sc, OHCI_REG_IntEventClear,
-				    OHCI_Int_BusReset);
-				OHCI_CSR_WRITE(sc, OHCI_REG_IntMaskSet,
-				    OHCI_Int_BusReset);
-				fwohci_buf_init(sc);
-				fwohci_buf_start(sc);
-				fwohci_uid_collect(sc);
 			}
 		}
 
@@ -744,59 +750,93 @@ fwohci_phy_input(struct fwohci_softc *sc, struct fwohci_pkt *pkt)
 static int
 fwohci_desc_alloc(struct fwohci_softc *sc)
 {
-	int error;
+	int error, mapsize, dsize;
 
 	/*
 	 * allocate descriptor buffer
 	 */
 
-	sc->sc_descsize = sizeof(struct fwohci_desc) *
-	    (OHCI_BUF_ARRQ_CNT + OHCI_BUF_ARRS_CNT +
+	sc->sc_descsize = OHCI_BUF_ARRQ_CNT + OHCI_BUF_ARRS_CNT +
 	    OHCI_BUF_ATRQ_CNT + OHCI_BUF_ATRS_CNT +
-	    OHCI_BUF_IR_CNT * sc->sc_isoctx + 2);
+	    OHCI_BUF_IR_CNT * sc->sc_isoctx + 2;
+	dsize = sizeof(struct fwohci_desc) * sc->sc_descsize;
+	mapsize = howmany(sc->sc_descsize, NBBY);
+	sc->sc_descmap = malloc(mapsize, M_DEVBUF, M_WAITOK);
+	memset(sc->sc_descmap, 0, mapsize);
 
-	if ((error = bus_dmamem_alloc(sc->sc_dmat, sc->sc_descsize,
-	    PAGE_SIZE, 0, &sc->sc_dseg, 1, &sc->sc_dnseg, 0)) != 0) {
+	if ((error = bus_dmamem_alloc(sc->sc_dmat, dsize, PAGE_SIZE, 0,
+	    &sc->sc_dseg, 1, &sc->sc_dnseg, 0)) != 0) {
 		printf("%s: unable to allocate descriptor buffer, error = %d\n",
 		    sc->sc_sc1394.sc1394_dev.dv_xname, error);
 		goto fail_0;
 	}
 
 	if ((error = bus_dmamem_map(sc->sc_dmat, &sc->sc_dseg, sc->sc_dnseg,
-	    sc->sc_descsize, (caddr_t *)&sc->sc_desc,
-	    BUS_DMA_COHERENT|BUS_DMA_WAITOK)) != 0) {
+	    dsize, (caddr_t *)&sc->sc_desc, BUS_DMA_COHERENT | BUS_DMA_WAITOK))
+	    != 0) {
 		printf("%s: unable to map descriptor buffer, error = %d\n",
 		    sc->sc_sc1394.sc1394_dev.dv_xname, error);
 		goto fail_1;
 	}
 
-	if ((error = bus_dmamap_create(sc->sc_dmat, sc->sc_descsize,
-	    sc->sc_dnseg, sc->sc_descsize, 0, BUS_DMA_WAITOK, &sc->sc_ddmamap))
-	    != 0) {
+	if ((error = bus_dmamap_create(sc->sc_dmat, dsize, sc->sc_dnseg,
+	    sc->sc_descsize, 0, BUS_DMA_WAITOK, &sc->sc_ddmamap)) != 0) {
 		printf("%s: unable to create descriptor buffer DMA map, "
 		    "error = %d\n", sc->sc_sc1394.sc1394_dev.dv_xname, error);
 		goto fail_2;
 	}
 
 	if ((error = bus_dmamap_load(sc->sc_dmat, sc->sc_ddmamap, sc->sc_desc,
-	    sc->sc_descsize, NULL, BUS_DMA_WAITOK)) != 0) {
+	    dsize, NULL, BUS_DMA_WAITOK)) != 0) {
 		printf("%s: unable to load descriptor buffer DMA map, "
 		    "error = %d\n", sc->sc_sc1394.sc1394_dev.dv_xname, error);
 		goto fail_3;
 	}
-
-	sc->sc_descfree = sc->sc_desc;
 
 	return 0;
 
   fail_3:
 	bus_dmamap_destroy(sc->sc_dmat, sc->sc_ddmamap);
   fail_2:
-	bus_dmamem_unmap(sc->sc_dmat, (caddr_t)sc->sc_desc, sc->sc_descsize);
+	bus_dmamem_unmap(sc->sc_dmat, (caddr_t)sc->sc_desc, dsize);
   fail_1:
 	bus_dmamem_free(sc->sc_dmat, &sc->sc_dseg, sc->sc_dnseg);
   fail_0:
 	return error;
+}
+
+static struct fwohci_desc *
+fwohci_desc_get(struct fwohci_softc *sc, int ndesc)
+{
+	int i, n;
+
+	for (n = 0; n <= sc->sc_descsize - ndesc; n++) {
+		for (i = 0; ; i++) {
+			if (i == ndesc) {
+				for (i = 0; i < ndesc; i++)
+					setbit(sc->sc_descmap, n + i);
+				return sc->sc_desc + n;
+			}
+			if (isset(sc->sc_descmap, n + i))
+				break;
+		}
+	}
+	return NULL;
+}
+
+static void
+fwohci_desc_put(struct fwohci_softc *sc, struct fwohci_desc *fd, int ndesc)
+{
+	int i, n;
+
+	n = fd - sc->sc_desc;
+	for (i = 0; i < ndesc; i++, n++) {
+#ifdef DIAGNOSTICS
+		if (isclr(sc->sc_descmap, n))
+			panic("fwohci_desc_put: duplicated free");
+#endif
+		clrbit(sc->sc_descmap, n);
+	}
 }
 
 /*
@@ -815,20 +855,16 @@ fwohci_ctx_alloc(struct fwohci_softc *sc, struct fwohci_ctx **fcp,
 	memset(fc, 0, sizeof(*fc) + sizeof(*fb) * bufcnt);
 	LIST_INIT(&fc->fc_handler);
 	TAILQ_INIT(&fc->fc_buf);
-	TAILQ_INIT(&fc->fc_busy);
 	fc->fc_ctx = ctx;
 	fc->fc_bufcnt = bufcnt;
 	fb = (struct fwohci_buf *)&fc[1];
 	for (i = 0; i < bufcnt; i++, fb++) {
 		if ((error = fwohci_buf_alloc(sc, fb)) != 0)
 			goto fail;
-#ifdef DIAGNOSTICS
-		if ((caddr_t)sc->sc_descfree >=
-		    (caddr_t)sc->sc_desc + sc->sc_descsize)
-			panic("fwohci_ctx_alloc: descriptor exhausted: %d\n",
-			    sc->sc_descfree - sc->sc_desc);
-#endif
-		fd = sc->sc_descfree++;
+		if ((fd = fwohci_desc_get(sc, 1)) == NULL) {
+			error = ENOBUFS;
+			goto fail;
+		}
 		fb->fb_desc = fd;
 		fb->fb_daddr = sc->sc_ddmamap->dm_segs[0].ds_addr +
 		    ((caddr_t)fd - (caddr_t)sc->sc_desc);
@@ -849,10 +885,27 @@ fwohci_ctx_alloc(struct fwohci_softc *sc, struct fwohci_ctx **fcp,
 }
 
 static void
+fwohci_ctx_free(struct fwohci_softc *sc, struct fwohci_ctx *fc)
+{
+	struct fwohci_buf *fb;
+	struct fwohci_handler *fh;
+
+	while ((fh = LIST_FIRST(&fc->fc_handler)) != NULL)
+		fwohci_handler_set(sc, fh->fh_tcode, fh->fh_key1, fh->fh_key2,
+		    NULL, NULL);
+	while ((fb = TAILQ_FIRST(&fc->fc_buf)) != NULL) {
+		TAILQ_REMOVE(&fc->fc_buf, fb, fb_list);
+		fwohci_buf_free(sc, fb);
+	}
+	free(fc, M_DEVBUF);
+}
+
+static void
 fwohci_ctx_init(struct fwohci_softc *sc, struct fwohci_ctx *fc)
 {
 	struct fwohci_buf *fb, *nfb;
 	struct fwohci_desc *fd;
+	int n;
 
 	for (fb = TAILQ_FIRST(&fc->fc_buf); fb != NULL; fb = nfb) {
 		nfb = TAILQ_NEXT(fb, fb_list);
@@ -860,6 +913,23 @@ fwohci_ctx_init(struct fwohci_softc *sc, struct fwohci_ctx *fc)
 		fd = fb->fb_desc;
 		fd->fd_branch = (nfb != NULL) ? (nfb->fb_daddr | 1) : 0;
 		fd->fd_rescount = fd->fd_reqcount;
+	}
+
+	n = fc->fc_ctx;
+	fb = TAILQ_FIRST(&fc->fc_buf);
+	if (fc->fc_isoch) {
+		OHCI_SYNC_RX_DMA_WRITE(sc, n, OHCI_SUBREG_CommandPtr,
+		    fb->fb_daddr | 1);
+		OHCI_SYNC_RX_DMA_WRITE(sc, n, OHCI_SUBREG_ContextControlClear,
+		    OHCI_CTXCTL_RX_BUFFER_FILL |
+		    OHCI_CTXCTL_RX_CYCLE_MATCH_ENABLE |
+		    OHCI_CTXCTL_RX_MULTI_CHAN_MODE |
+		    OHCI_CTXCTL_RX_DUAL_BUFFER_MODE);
+		OHCI_SYNC_RX_DMA_WRITE(sc, n, OHCI_SUBREG_ContextControlSet,
+		    OHCI_CTXCTL_RX_ISOCH_HEADER);
+	} else {
+		OHCI_ASYNC_DMA_WRITE(sc, n, OHCI_SUBREG_CommandPtr,
+		    fb->fb_daddr | 1);
 	}
 }
 
@@ -928,75 +998,25 @@ static void
 fwohci_buf_init(struct fwohci_softc *sc)
 {
 	int i;
-	struct fwohci_buf *fb;
 
 	/*
-	 * Initialize for Asynchronous Transmit Request.
+	 * Initialize for Asynchronous Transmit Queue.
 	 */
-	while ((fb = TAILQ_FIRST(&sc->sc_ctx_atrq->fc_busy)) != NULL) {
-		TAILQ_REMOVE(&sc->sc_ctx_atrq->fc_busy, fb, fb_list);
-		if (fb->fb_m != NULL) {
-			if (fb->fb_callback != NULL) {
-				(*fb->fb_callback)
-				    (sc->sc_sc1394.sc1394_if, fb->fb_m);
-				fb->fb_callback = NULL;
-			} else
-				m_freem(fb->fb_m);
-			fb->fb_m = NULL;
-		}
-		TAILQ_INSERT_TAIL(&sc->sc_ctx_atrq->fc_buf, fb, fb_list);
-	}
-	sc->sc_ctx_atrq->fc_branch = NULL;
+	fwohci_at_done(sc, sc->sc_ctx_atrq, 1);
+	fwohci_at_done(sc, sc->sc_ctx_atrs, 1);
 
 	/*
-	 * Initialize for Asynchronous Transmit Response.
-	 */
-	while ((fb = TAILQ_FIRST(&sc->sc_ctx_atrs->fc_busy)) != NULL) {
-		TAILQ_REMOVE(&sc->sc_ctx_atrs->fc_busy, fb, fb_list);
-		if (fb->fb_m != NULL) {
-			if (fb->fb_callback != NULL) {
-				(*fb->fb_callback)
-				    (sc->sc_sc1394.sc1394_if, fb->fb_m);
-				fb->fb_callback = NULL;
-			} else
-				m_freem(fb->fb_m);
-			fb->fb_m = NULL;
-		}
-		TAILQ_INSERT_TAIL(&sc->sc_ctx_atrs->fc_buf, fb, fb_list);
-	}
-	sc->sc_ctx_atrs->fc_branch = NULL;
-
-	/*
-	 * Initialize for Asynchronous Receive Request.
+	 * Initialize for Asynchronous Receive Queue.
 	 */
 	fwohci_ctx_init(sc, sc->sc_ctx_arrq);
-	fb = TAILQ_FIRST(&sc->sc_ctx_arrq->fc_buf);
-	OHCI_ASYNC_DMA_WRITE(sc, OHCI_CTX_ASYNC_RX_REQUEST,
-	    OHCI_SUBREG_CommandPtr, fb->fb_daddr | 1);
-
-	/*
-	 * Initialize for Asynchronous Receive Response.
-	 */
 	fwohci_ctx_init(sc, sc->sc_ctx_arrs);
-	fb = TAILQ_FIRST(&sc->sc_ctx_arrs->fc_buf);
-	OHCI_ASYNC_DMA_WRITE(sc, OHCI_CTX_ASYNC_RX_RESPONSE,
-	    OHCI_SUBREG_CommandPtr, fb->fb_daddr | 1);
 
 	/*
-	 * Initialize for Isochronous Receive.
+	 * Initialize for Isochronous Receive Queue.
 	 */
 	for (i = 0; i < sc->sc_isoctx; i++) {
-		fwohci_ctx_init(sc, sc->sc_ctx_ir[i]);
-		fb = TAILQ_FIRST(&sc->sc_ctx_ir[i]->fc_buf);
-		OHCI_SYNC_RX_DMA_WRITE(sc, i, OHCI_SUBREG_CommandPtr,
-		    fb->fb_daddr | 1);
-		OHCI_SYNC_RX_DMA_WRITE(sc, i, OHCI_SUBREG_ContextControlClear,
-		    OHCI_CTXCTL_RX_BUFFER_FILL |
-		    OHCI_CTXCTL_RX_CYCLE_MATCH_ENABLE |
-		    OHCI_CTXCTL_RX_MULTI_CHAN_MODE |
-		    OHCI_CTXCTL_RX_DUAL_BUFFER_MODE);
-		OHCI_SYNC_RX_DMA_WRITE(sc, i, OHCI_SUBREG_ContextControlSet,
-		    OHCI_CTXCTL_RX_ISOCH_HEADER);
+		if (sc->sc_ctx_ir[i] != NULL)
+			fwohci_ctx_init(sc, sc->sc_ctx_ir[i]);
 	}
 }
 
@@ -1010,7 +1030,8 @@ fwohci_buf_start(struct fwohci_softc *sc)
 	OHCI_ASYNC_DMA_WRITE(sc, OHCI_CTX_ASYNC_RX_RESPONSE,
 	    OHCI_SUBREG_ContextControlSet, OHCI_CTXCTL_RUN);
 	for (i = 0; i < sc->sc_isoctx; i++) {
-		if (LIST_FIRST(&sc->sc_ctx_ir[i]->fc_handler) != NULL) {
+		if (sc->sc_ctx_ir[i] != NULL &&
+		    LIST_FIRST(&sc->sc_ctx_ir[i]->fc_handler) != NULL) {
 			OHCI_SYNC_RX_DMA_WRITE(sc, i,
 			    OHCI_SUBREG_ContextControlSet, OHCI_CTXCTL_RUN);
 		}
@@ -1081,13 +1102,15 @@ fwohci_buf_pktget(struct fwohci_softc *sc, struct fwohci_ctx *fc, caddr_t *pp,
 	fd = fb->fb_desc;
 #ifdef FW_DEBUG
 	if (fw_verbose)
-		printf("fwohci_buf_pktget: desc %d, off %d, req %d, res %d\n",
+		printf("fwohci_buf_pktget: desc %d, off %d, req %d, res %d,"
+		    " len %d, avail %d\n",
 		    fd - sc->sc_desc, fb->fb_off, fd->fd_reqcount,
-		    fd->fd_rescount);
+		    fd->fd_rescount, len,
+		    fd->fd_reqcount - fd->fd_rescount - fb->fb_off);
 #endif
 	bufend = fd->fd_reqcount - fd->fd_rescount;
 	if (fb->fb_off >= bufend) {
-		if (fc->fc_ppbmode && fb->fb_off > 0) {
+		if (fc->fc_isoch && fb->fb_off > 0) {
 			fb->fb_off = fd->fd_reqcount;
 			fd->fd_rescount = 0;
 		}
@@ -1113,9 +1136,14 @@ fwohci_buf_input(struct fwohci_softc *sc, struct fwohci_ctx *fc,
 	caddr_t p;
 	int len, count, i;
 
+	memset(pkt, 0, sizeof(*pkt));
+	pkt->fp_uio.uio_iov = pkt->fp_iov;
+	pkt->fp_uio.uio_rw = UIO_WRITE;
+	pkt->fp_uio.uio_segflg = UIO_SYSSPACE;
+
 	/* get first quadlet */
 	count = 4;
-	if (fc->fc_ppbmode) {
+	if (fc->fc_isoch) {
 		/*
 		 * get trailer first, may be bogus data unless status update
 		 * in descriptor is set.
@@ -1125,7 +1153,7 @@ fwohci_buf_input(struct fwohci_softc *sc, struct fwohci_ctx *fc,
 		if (len <= 0) {
 #ifdef FW_DEBUG
 			if (fw_verbose)
-				printf("fwohci_buf_input: no input for ppd%d\n",
+				printf("fwohci_buf_input: no input for is#%d\n",
 				    fc->fc_ctx);
 #endif
 			return 0;
@@ -1200,8 +1228,10 @@ fwohci_buf_input(struct fwohci_softc *sc, struct fwohci_ctx *fc,
 		pkt->fp_iov[i++].iov_len = len;
 		count += len;
 	}
+	pkt->fp_uio.uio_iovcnt = i;
+	pkt->fp_uio.uio_resid = count;
 
-	if (!fc->fc_ppbmode) {
+	if (!fc->fc_isoch) {
 		/* get trailer */
 		len = fwohci_buf_pktget(sc, fc, (caddr_t *)&pkt->fp_trail,
 		    sizeof(pkt->fp_trail));
@@ -1222,21 +1252,43 @@ fwohci_handler_set(struct fwohci_softc *sc,
 {
 	struct fwohci_ctx *fc;
 	struct fwohci_handler *fh;
-	int i;
+	int i, j;
 
 	if (tcode == IEEE1394_TCODE_STREAM_DATA) {
-		for (i = 0; ; i++) {
-			if (i == sc->sc_isoctx) {
-				/* no more free ctx */
+		j = sc->sc_isoctx;
+		fh = NULL;
+		for (i = 0; i < sc->sc_isoctx; i++) {
+			if ((fc = sc->sc_ctx_ir[i]) == NULL) {
+				if (j == sc->sc_isoctx)
+					j = i;
+				continue;
+			}
+			fh = LIST_FIRST(&fc->fc_handler);
+			if (fh == NULL) {
+				j = i;
+				break;
+			}
+			if (fh->fh_tcode == tcode &&
+			    fh->fh_key1 == key1 && fh->fh_key2 == key2)
+				break;
+			fh = NULL;
+		}
+		if (fh == NULL) {
+			if (handler == NULL)
+				return 0;
+			if (j == sc->sc_isoctx) {
+#ifdef FW_DEBUG
+				if (fw_verbose)
+					printf("fwohci_handler_set: "
+					    "no more free context\n");
+#endif
 				return ENOMEM;
 			}
-			fc = sc->sc_ctx_ir[i];
-			fh = LIST_FIRST(&fc->fc_handler);
-			if (fh == NULL)
-				break;
-			if (fh->fh_tcode == tcode && fh->fh_key1 == key1 &&
-			    fh->fh_key2 == key2)
-				break;
+			if ((fc = sc->sc_ctx_ir[j]) == NULL) {
+				fwohci_ctx_alloc(sc, &fc, OHCI_BUF_IR_CNT, j);
+				fc->fc_isoch = 1;
+				sc->sc_ctx_ir[j] = fc;
+			}
 		}
 	} else {
 		switch (tcode) {
@@ -1258,14 +1310,20 @@ fwohci_handler_set(struct fwohci_softc *sc,
 		}
 		for (fh = LIST_FIRST(&fc->fc_handler); fh != NULL;
 		    fh = LIST_NEXT(fh, fh_list)) {
-			if (fh->fh_tcode == tcode && fh->fh_key1 == key1 &&
-			    fh->fh_key2 == key2)
+			if (fh->fh_tcode == tcode &&
+			    fh->fh_key1 == key1 && fh->fh_key2 == key2)
 				break;
 		}
 	}
 	if (handler == NULL) {
-		if (fh != NULL)
+		if (fh != NULL) {
 			LIST_REMOVE(fh, fh_list);
+			free(fh, M_DEVBUF);
+		}
+		if (tcode == IEEE1394_TCODE_STREAM_DATA) {
+			sc->sc_ctx_ir[fc->fc_ctx] = NULL;
+			fwohci_ctx_free(sc, fc);
+		}
 		return 0;
 	}
 	if (fh == NULL) {
@@ -1286,24 +1344,12 @@ fwohci_handler_set(struct fwohci_softc *sc,
 #endif
 
 	if (tcode == IEEE1394_TCODE_STREAM_DATA) {
-		struct fwohci_buf *fb;
 		fwohci_ctx_init(sc, fc);
-		fb = TAILQ_FIRST(&fc->fc_buf);
 #ifdef FW_DEBUG
 		if (fw_verbose)
 			printf("fwohci_handler_set: SYNC desc %d\n",
-			    fb->fb_desc - sc->sc_desc);
+			    TAILQ_FIRST(&fc->fc_buf)->fb_desc - sc->sc_desc);
 #endif
-		OHCI_SYNC_RX_DMA_WRITE(sc, fc->fc_ctx, OHCI_SUBREG_CommandPtr,
-		    fb->fb_daddr | 1);
-		OHCI_SYNC_RX_DMA_WRITE(sc, fc->fc_ctx,
-		    OHCI_SUBREG_ContextControlClear,
-		    OHCI_CTXCTL_RX_BUFFER_FILL |
-		    OHCI_CTXCTL_RX_CYCLE_MATCH_ENABLE |
-		    OHCI_CTXCTL_RX_MULTI_CHAN_MODE |
-		    OHCI_CTXCTL_RX_DUAL_BUFFER_MODE);
-		OHCI_SYNC_RX_DMA_WRITE(sc, fc->fc_ctx,
-		    OHCI_SUBREG_ContextControlSet, OHCI_CTXCTL_RX_ISOCH_HEADER);
 		OHCI_SYNC_RX_DMA_WRITE(sc, fc->fc_ctx, OHCI_SUBREG_ContextMatch,
 		    (OHCI_CTXMATCH_TAG0 << key2) | key1);
 		OHCI_SYNC_RX_DMA_WRITE(sc, fc->fc_ctx,
@@ -1331,6 +1377,8 @@ fwohci_arrq_input(struct fwohci_softc *sc, struct fwohci_ctx *fc)
 		key1 = pkt.fp_hdr[1] & 0xffff;
 		key2 = pkt.fp_hdr[2];
 		memset(&res, 0, sizeof(res));
+		res.fp_uio.uio_rw = UIO_WRITE;
+		res.fp_uio.uio_segflg = UIO_SYSSPACE;
 		for (fh = LIST_FIRST(&fc->fc_handler); fh != NULL;
 		    fh = LIST_NEXT(fh, fh_list)) {
 			if (pkt.fp_tcode == fh->fh_tcode &&
@@ -1379,7 +1427,7 @@ fwohci_arrs_input(struct fwohci_softc *sc, struct fwohci_ctx *fc)
 #ifdef FW_DEBUG
 		if (fw_verbose)
 			printf("fwohci_arrs_input: tcode 0x%x, from 0x%04x,"
-			    "tlabel 0x%x, rcode 0x%x, hlen %d, dlen %d\n",
+			    " tlabel 0x%x, rcode 0x%x, hlen %d, dlen %d\n",
 			    pkt.fp_tcode, srcid, tlabel, rcode, pkt.fp_hlen,
 			    pkt.fp_dlen);
 #endif
@@ -1434,9 +1482,8 @@ fwohci_ir_input(struct fwohci_softc *sc, struct fwohci_ctx *fc)
 				continue;
 			iov = pkt.fp_iov;
 			/* assuming pkt per buffer mode */
-			memcpy(pkt.fp_hdr + 1, iov->iov_base, 8);
-			NTOHL(pkt.fp_hdr[1]);
-			NTOHL(pkt.fp_hdr[2]);
+			pkt.fp_hdr[1] = ntohl(((u_int32_t *)iov->iov_base)[0]);
+			pkt.fp_hdr[2] = ntohl(((u_int32_t *)iov->iov_base)[1]);
 			iov->iov_base = (caddr_t)iov->iov_base + 8;
 			iov->iov_len -= 8;
 			pkt.fp_hlen += 8;
@@ -1472,51 +1519,115 @@ static int
 fwohci_at_output(struct fwohci_softc *sc, struct fwohci_ctx *fc,
     struct fwohci_pkt *pkt)
 {
-	struct fwohci_buf *fb, *nfb;
+	struct fwohci_buf *fb;
 	struct fwohci_desc *fd;
-	struct iovec *iov;
-	int i, ndesc;
+	struct mbuf *m, *m0;
+	int i, ndesc, error, off, len;
 	u_int32_t val;
 
+	if ((sc->sc_nodeid & OHCI_NodeId_NodeNumber) > sc->sc_rootid) {
+		/* We can't send anything during selfid duration */
+		return EAGAIN;
+	}
 #ifdef FW_DEBUG
-	if (fw_dump) {
+	if (fw_verbose) {
+		struct iovec *iov;
 		printf("fwohci_at_output: tcode 0x%x, hlen %d, dlen %d",
 		    pkt->fp_tcode, pkt->fp_hlen, pkt->fp_dlen);
-		for (i = 0; i < pkt->fp_hlen/4; i++)
-			printf("%s%08x", i?" ":"\n\t", pkt->fp_hdr[i]);
-		printf("$");
-		for (ndesc = 0, iov = pkt->fp_iov; ndesc < pkt->fp_iovcnt;
-		    ndesc++, iov++) {
-			for (i = 0; i < iov->iov_len; i++)
-				printf("%s%02x", (i%32)?((i%4)?"":" "):"\n\t",
-				    ((u_int8_t *)iov->iov_base)[i]);
+		if (fw_dump) {
+			for (i = 0; i < pkt->fp_hlen/4; i++)
+				printf("%s%08x", i?" ":"\n\t", pkt->fp_hdr[i]);
 			printf("$");
+			for (ndesc = 0, iov = pkt->fp_iov;
+			    ndesc < pkt->fp_uio.uio_iovcnt; ndesc++, iov++) {
+				for (i = 0; i < iov->iov_len; i++)
+					printf("%s%02x",
+					    (i%32)?((i%4)?"":" "):"\n\t",
+					    ((u_int8_t *)iov->iov_base)[i]);
+				printf("$");
+			}
 		}
 		printf("\n");
 	}
 #endif
 
-	ndesc = 2 + pkt->fp_iovcnt;
-	if (ndesc > 8)
+	if ((m = pkt->fp_m) != NULL) {
+		for (ndesc = 2; m != NULL; m = m->m_next)
+			ndesc++;
+		if (ndesc > OHCI_DESC_MAX) {
+			m0 = NULL;
+			ndesc = 2;
+			for (off = 0; off < pkt->fp_dlen; off += len) {
+				if (m0 == NULL) {
+					MGETHDR(m0, M_DONTWAIT, MT_DATA);
+					if (m0 != NULL)
+						M_COPY_PKTHDR(m0, pkt->fp_m);
+					m = m0;
+				} else {
+					MGET(m->m_next, M_DONTWAIT, MT_DATA);
+					m = m->m_next;
+				}
+				if (m != NULL)
+					MCLGET(m, M_DONTWAIT);
+				if (m == NULL || (m->m_flags & M_EXT) == 0) {
+					m_freem(m0);
+					return ENOMEM;
+				}
+				len = pkt->fp_dlen - off;
+				if (len > m->m_ext.ext_size)
+					len = m->m_ext.ext_size;
+				m_copydata(pkt->fp_m, off, len,
+				    mtod(m, caddr_t));
+				ndesc++;
+			}
+			m_freem(pkt->fp_m);
+			pkt->fp_m = m0;
+		}
+	} else
+		ndesc = 2 + pkt->fp_uio.uio_iovcnt;
+
+	if (ndesc > OHCI_DESC_MAX)
 		return ENOBUFS;
 
-	fb = TAILQ_FIRST(&fc->fc_buf);
-	if (fb == NULL)
+	if (fc->fc_bufcnt > 50)			/*XXX*/
 		return ENOBUFS;
-	for (i = 1, fb = TAILQ_FIRST(&fc->fc_buf); i < ndesc; i++, fb = nfb) {
-		nfb = TAILQ_NEXT(fb, fb_list);
-		if (nfb == NULL)
-			return ENOBUFS;
-		if (nfb->fb_desc != fb->fb_desc + 1) {
-			while ((fb = TAILQ_FIRST(&fc->fc_buf)) != nfb) {
-				TAILQ_REMOVE(&fc->fc_buf, fb, fb_list);
-				TAILQ_INSERT_TAIL(&fc->fc_buf, fb, fb_list);
-			}
-			break;
+	if ((fb = malloc(sizeof(*fb), M_DEVBUF, M_NOWAIT)) == NULL)
+		return ENOBUFS;
+	fb->fb_nseg = ndesc;
+	fb->fb_desc = fwohci_desc_get(sc, ndesc);
+	if (fb->fb_desc == NULL) {
+		free(fb, M_DEVBUF);
+		return ENOBUFS;
+	}
+	fb->fb_daddr = sc->sc_ddmamap->dm_segs[0].ds_addr +
+	    ((caddr_t)fb->fb_desc - (caddr_t)sc->sc_desc);
+	fb->fb_m = pkt->fp_m;
+	fb->fb_callback = pkt->fp_callback;
+
+	if (ndesc > 2) {
+		if ((error = bus_dmamap_create(sc->sc_dmat, pkt->fp_dlen, ndesc,
+		    PAGE_SIZE, 0, BUS_DMA_NOWAIT, &fb->fb_dmamap)) != 0) {
+			fwohci_desc_put(sc, fb->fb_desc, ndesc);
+			free(fb, M_DEVBUF);
+			return error;
 		}
+
+		if (pkt->fp_m != NULL)
+			error = bus_dmamap_load_mbuf(sc->sc_dmat, fb->fb_dmamap,
+			    pkt->fp_m, BUS_DMA_NOWAIT);
+		else
+			error = bus_dmamap_load_uio(sc->sc_dmat, fb->fb_dmamap,
+			    &pkt->fp_uio, BUS_DMA_NOWAIT);
+		if (error != 0) {
+			bus_dmamap_destroy(sc->sc_dmat, fb->fb_dmamap);
+			fwohci_desc_put(sc, fb->fb_desc, ndesc);
+			free(fb, M_DEVBUF);
+			return error;
+		}
+		bus_dmamap_sync(sc->sc_dmat, fb->fb_dmamap, 0, pkt->fp_dlen,
+		    BUS_DMASYNC_PREWRITE);
 	}
 
-	fb = TAILQ_FIRST(&fc->fc_buf);
 	fd = fb->fb_desc;
 	fd->fd_flags = OHCI_DESC_IMMED;
 	fd->fd_reqcount = pkt->fp_hlen;
@@ -1530,34 +1641,21 @@ fwohci_at_output(struct fwohci_softc *sc, struct fwohci_ctx *fc,
 		    ((((val >> 25) + i) & 0x7) << 13);
 	} else
 		fd->fd_timestamp = 0;
-	fb = TAILQ_NEXT(fb, fb_list);
-	memcpy(fb->fb_desc, pkt->fp_hdr, pkt->fp_hlen);
-	for (i = 0, iov = pkt->fp_iov; i < pkt->fp_iovcnt; i++, iov++) {
-		fb = TAILQ_NEXT(fb, fb_list);
-		/*
-		 * XXX: should rewrite to map mbuf to io area instead
-		 * of copy.
-		 */
-		memcpy(fb->fb_buf, iov->iov_base, iov->iov_len);
-		fd = fb->fb_desc;
+	memcpy(fd + 1, pkt->fp_hdr, pkt->fp_hlen);
+	for (i = 0; i < ndesc - 2; i++) {
+		fd = fb->fb_desc + 2 + i;
 		fd->fd_flags = 0;
-		fd->fd_reqcount = iov->iov_len;
-		fd->fd_data = fb->fb_dmamap->dm_segs[0].ds_addr;
+		fd->fd_reqcount = fb->fb_dmamap->dm_segs[i].ds_len;
+		fd->fd_data = fb->fb_dmamap->dm_segs[i].ds_addr;
 		fd->fd_branch = 0;
 		fd->fd_status = 0;
 		fd->fd_timestamp = 0;
-		bus_dmamap_sync(sc->sc_dmat, fb->fb_dmamap, 0, iov->iov_len,
-		    BUS_DMASYNC_PREWRITE);
 	}
 	fd->fd_flags |= OHCI_DESC_LAST | OHCI_DESC_BRANCH;
 	fd->fd_flags |= OHCI_DESC_INTR_ALWAYS;
-	/* hang mbuf on the last buffer */
-	fb->fb_m = pkt->fp_m;
-	fb->fb_callback = pkt->fp_callback;
 
-	fb = TAILQ_FIRST(&fc->fc_buf);
 #ifdef FW_DEBUG
-	if (fw_dump) {
+	if (fw_verbose) {
 		printf("fwohci_at_output: desc %d", fb->fb_desc - sc->sc_desc);
 		for (i = 0; i < ndesc * 4; i++)
 			printf("%s%08x", i&7?" ":"\n\t",
@@ -1576,9 +1674,8 @@ fwohci_at_output(struct fwohci_softc *sc, struct fwohci_ctx *fc,
 			goto run;
 		}
 		*fc->fc_branch = fb->fb_daddr | ndesc;
-		if ((val & OHCI_CTXCTL_ACTIVE) == 0)
-			OHCI_ASYNC_DMA_WRITE(sc, fc->fc_ctx,
-			    OHCI_SUBREG_ContextControlSet, OHCI_CTXCTL_WAKE);
+		OHCI_ASYNC_DMA_WRITE(sc, fc->fc_ctx,
+		    OHCI_SUBREG_ContextControlSet, OHCI_CTXCTL_WAKE);
 	} else {
   run:
 		OHCI_ASYNC_DMA_WRITE(sc, fc->fc_ctx,
@@ -1588,58 +1685,57 @@ fwohci_at_output(struct fwohci_softc *sc, struct fwohci_ctx *fc,
 	}
 	fc->fc_branch = &fd->fd_branch;
 
-	for (i = 0; i < ndesc; i++) {
-		fb = TAILQ_FIRST(&fc->fc_buf);
-		TAILQ_REMOVE(&fc->fc_buf, fb, fb_list);
-		TAILQ_INSERT_TAIL(&fc->fc_busy, fb, fb_list);
-	}
+	fc->fc_bufcnt++;
+	TAILQ_INSERT_TAIL(&fc->fc_buf, fb, fb_list);
 	return 0;
 }
 
 static void
-fwohci_at_done(struct fwohci_softc *sc, struct fwohci_ctx *fc)
+fwohci_at_done(struct fwohci_softc *sc, struct fwohci_ctx *fc, int force)
 {
-	struct fwohci_buf *fb, *lfb;
+	struct fwohci_buf *fb;
+	struct fwohci_desc *fd;
+	int i;
 
-	while ((fb = TAILQ_FIRST(&fc->fc_busy)) != NULL) {
-		for (lfb = fb; lfb != NULL; lfb = TAILQ_NEXT(lfb, fb_list)) {
+	while ((fb = TAILQ_FIRST(&fc->fc_buf)) != NULL) {
+		fd = fb->fb_desc;
 #ifdef FW_DEBUG
-			if (fw_dump) {
-				printf("fwohci_at_done:"
-				    " desc %d, %08x %08x %08x %08x\n",
-				    lfb->fb_desc - sc->sc_desc,
-				    ((u_int32_t *)lfb->fb_desc)[0],
-				    ((u_int32_t *)lfb->fb_desc)[1],
-				    ((u_int32_t *)lfb->fb_desc)[2],
-				    ((u_int32_t *)lfb->fb_desc)[3]);
-			}
+		if (fw_verbose) {
+			printf("fwohci_at_done: %sdesc %d (%d)",
+			    force ? "force " : "",
+			    fd - sc->sc_desc, fb->fb_nseg);
+			for (i = 0; i < fb->fb_nseg * 4; i++)
+				printf("%s%08x", i&7?" ":"\n    ",
+				    ((u_int32_t *)fd)[i]);
+			printf("\n");
+		}
 #endif
-			if (lfb->fb_desc->fd_flags & OHCI_DESC_LAST)
-				break;
-		}
-		if (lfb == NULL) {
-			printf("fwohci_at_done: last not found\n");
+		if (fb->fb_nseg > 2)
+			fd += fb->fb_nseg - 1;
+		if (!force && !(fd->fd_status & OHCI_CTXCTL_ACTIVE))
 			break;
-		}
-		if (!(lfb->fb_desc->fd_status & OHCI_CTXCTL_ACTIVE))
-			break;
-		if (lfb->fb_desc->fd_flags & OHCI_DESC_IMMED)
-			lfb = TAILQ_NEXT(lfb, fb_list);
-		do {
-			fb = TAILQ_FIRST(&fc->fc_busy);
-			TAILQ_REMOVE(&fc->fc_busy, fb, fb_list);
-			if (fb->fb_m != NULL) {
-				if (fb->fb_callback != NULL) {
-					(*fb->fb_callback)
-					    (sc->sc_sc1394.sc1394_if, fb->fb_m);
-					fb->fb_callback = NULL;
-				} else {
-					m_freem(fb->fb_m);
-				}
-				fb->fb_m = NULL;
+		TAILQ_REMOVE(&fc->fc_buf, fb, fb_list);
+		if (fc->fc_branch == &fd->fd_branch) {
+			OHCI_ASYNC_DMA_WRITE(sc, fc->fc_ctx,
+			    OHCI_SUBREG_ContextControlClear, OHCI_CTXCTL_RUN);
+			fc->fc_branch = NULL;
+			for (i = 0; i < OHCI_LOOP; i++) {
+				if (!(OHCI_ASYNC_DMA_READ(sc, fc->fc_ctx,
+				    OHCI_SUBREG_ContextControlClear) &
+				    OHCI_CTXCTL_ACTIVE))
+					break;
 			}
-			TAILQ_INSERT_TAIL(&fc->fc_buf, fb, fb_list);
-		} while (fb != lfb);
+		}
+		fwohci_desc_put(sc, fb->fb_desc, fb->fb_nseg);
+		if (fb->fb_nseg > 2)
+			bus_dmamap_destroy(sc->sc_dmat, fb->fb_dmamap);
+		fc->fc_bufcnt--;
+		if (fb->fb_callback != NULL) {
+			(*fb->fb_callback)(sc->sc_sc1394.sc1394_if, fb->fb_m);
+			fb->fb_callback = NULL;
+		} else if (fb->fb_m != NULL)
+			m_freem(fb->fb_m);
+		free(fb, M_DEVBUF);
 	}
 }
 
@@ -1650,7 +1746,6 @@ static void
 fwohci_atrs_output(struct fwohci_softc *sc, int rcode, struct fwohci_pkt *req,
     struct fwohci_pkt *res)
 {
-	int i;
 
 	if (((*req->fp_trail & 0x001f0000) >> 16) !=
 	    OHCI_CTXCTL_EVENT_ACK_PENDING)
@@ -1668,10 +1763,10 @@ fwohci_atrs_output(struct fwohci_softc *sc, int rcode, struct fwohci_pkt *req,
 		res->fp_tcode = IEEE1394_TCODE_READ_RESP_QUAD;
 		res->fp_hlen = 16;
 		res->fp_dlen = 0;
-		if (res->fp_iovcnt == 1 && res->fp_iov[0].iov_len == 4)
+		if (res->fp_uio.uio_iovcnt == 1 && res->fp_iov[0].iov_len == 4)
 			res->fp_hdr[3] =
 			    *(u_int32_t *)res->fp_iov[0].iov_base;
-		res->fp_iovcnt = 0;
+		res->fp_uio.uio_iovcnt = 0;
 		break;
 	case IEEE1394_TCODE_READ_REQ_BLOCK:
 	case IEEE1394_TCODE_LOCK_REQ:
@@ -1680,9 +1775,7 @@ fwohci_atrs_output(struct fwohci_softc *sc, int rcode, struct fwohci_pkt *req,
 		else
 			res->fp_tcode = IEEE1394_TCODE_READ_RESP_BLOCK;
 		res->fp_hlen = 16;
-		res->fp_dlen = 0;
-		for (i = 0; i < res->fp_iovcnt; i++)
-			res->fp_dlen += res->fp_iov[i].iov_len;
+		res->fp_dlen = res->fp_uio.uio_resid;
 		res->fp_hdr[3] = res->fp_dlen << 16;
 		break;
 	}
@@ -1892,7 +1985,7 @@ fwohci_selfid_init(struct fwohci_softc *sc)
 		    (caddr_t)fb->fb_dmamap->dm_segs[0].ds_addr,
 		    fb->fb_dmamap->dm_segs[0].ds_len, fb->fb_buf);
 #endif
-	memset(fb->fb_buf, 0x55, fb->fb_dmamap->dm_segs[0].ds_len);
+	memset(fb->fb_buf, 0, fb->fb_dmamap->dm_segs[0].ds_len);
 	bus_dmamap_sync(sc->sc_dmat, fb->fb_dmamap, 0,
 	    fb->fb_dmamap->dm_segs[0].ds_len, BUS_DMASYNC_PREREAD);
 
@@ -1929,7 +2022,7 @@ fwohci_selfid_input(struct fwohci_softc *sc)
 	}
 
 #ifdef FW_DEBUG
-	if (fw_dump) {
+	if (fw_verbose) {
 		printf("%s: SelfID: 0x%08x", sc->sc_sc1394.sc1394_dev.dv_xname,
 		    val);
 		for (i = 0; i < count; i++)
@@ -1940,7 +2033,7 @@ fwohci_selfid_input(struct fwohci_softc *sc)
 
 	val = OHCI_CSR_READ(sc, OHCI_REG_NodeId);
 	if ((val & OHCI_NodeId_IDValid) == 0) {
-		sc->sc_nodeid = IEEE1394_BCAST_PHY_ID;	/* invalid */
+		sc->sc_nodeid = 0xffff;		/* invalid */
 		printf("%s: nodeid is invalid\n",
 		    sc->sc_sc1394.sc1394_dev.dv_xname);
 		return -1;
@@ -1952,6 +2045,15 @@ fwohci_selfid_input(struct fwohci_softc *sc)
 			printf("%s: SelfID corrupted (%d, 0x%08x, 0x%08x)\n",
 			    sc->sc_sc1394.sc1394_dev.dv_xname, i,
 			    buf[i], buf[i + 1]);
+			if (i == 1 && buf[i] == 0 && buf[i + 1] == 0) {
+				/*
+				 * XXX: CXD3222 sometimes fails to DMA
+				 * selfid packet??
+				 */
+				sc->sc_rootid = (count - 1) / 2 - 1;
+				sc->sc_irmid = sc->sc_rootid;
+				break;
+			}
 			return -1;
 		}
 		if (buf[i] & 0x00000001)
@@ -2021,13 +2123,13 @@ fwohci_csr_input(struct fwohci_softc *sc, void *arg, struct fwohci_pkt *pkt)
 		return IEEE1394_RCODE_ADDRESS_ERROR;
 	}
 #ifdef FW_DEBUG
-	if (fw_dump)
+	if (fw_verbose)
 		printf("fwohci_csr_input: CSR[0x%04x]: 0x%08x",
 		    reg, *(u_int32_t *)(&sc->sc_csr[reg]));
 #endif
 	if (pkt->fp_tcode == IEEE1394_TCODE_WRITE_REQ_QUAD) {
 #ifdef FW_DEBUG
-		if (fw_dump)
+		if (fw_verbose)
 			printf(" -> 0x%08x\n",
 			    ntohl(*(u_int32_t *)pkt->fp_iov[0].iov_base));
 #endif
@@ -2035,13 +2137,14 @@ fwohci_csr_input(struct fwohci_softc *sc, void *arg, struct fwohci_pkt *pkt)
 		    ntohl(*(u_int32_t *)pkt->fp_iov[0].iov_base);
 	} else {
 #ifdef FW_DEBUG
-		if (fw_dump)
+		if (fw_verbose)
 			printf("\n");
 #endif
 		res.fp_hdr[3] = htonl(*(u_int32_t *)&sc->sc_csr[reg]);
 		res.fp_iov[0].iov_base = &res.fp_hdr[3];
 		res.fp_iov[0].iov_len = 4;
-		res.fp_iovcnt = 1;
+		res.fp_uio.uio_resid = 4;
+		res.fp_uio.uio_iovcnt = 1;
 		fwohci_atrs_output(sc, IEEE1394_RCODE_COMPLETE, pkt, &res);
 		return -1;
 	}
@@ -2180,19 +2283,22 @@ fwohci_if_input(struct fwohci_softc *sc, void *arg, struct fwohci_pkt *pkt)
 	void (*handler)(struct device *, struct mbuf *) = arg;
 
 #ifdef FW_DEBUG
-	if (fw_dump) {
+	if (fw_verbose) {
 		int i;
 		printf("fwohci_if_input: tcode=0x%x, dlen=%d",
 		    pkt->fp_tcode, pkt->fp_dlen);
-		for (i = 0; i < pkt->fp_hlen/4; i++)
-			printf("%s%08x", i?" ":"\n\t", pkt->fp_hdr[i]);
-		printf("$");
-		for (n = 0, len = pkt->fp_dlen; len > 0; len -= i, n++) {
-			iov = &pkt->fp_iov[n];
-			for (i = 0; i < iov->iov_len; i++)
-				printf("%s%02x", (i%32)?((i%4)?"":" "):"\n\t",
-				    ((u_int8_t *)iov->iov_base)[i]);
+		if (fw_dump) {
+			for (i = 0; i < pkt->fp_hlen/4; i++)
+				printf("%s%08x", i?" ":"\n\t", pkt->fp_hdr[i]);
 			printf("$");
+			for (n = 0, len = pkt->fp_dlen; len > 0; len -= i, n++){
+				iov = &pkt->fp_iov[n];
+				for (i = 0; i < iov->iov_len; i++)
+					printf("%s%02x",
+					    (i%32)?((i%4)?"":" "):"\n\t",
+					    ((u_int8_t *)iov->iov_base)[i]);
+				printf("$");
+			}
 		}
 		printf("\n");
 	}
@@ -2247,7 +2353,7 @@ fwohci_if_input(struct fwohci_softc *sc, void *arg, struct fwohci_pkt *pkt)
 	 *						-- onoe
 	 */
 	n = 0;
-	iov = pkt->fp_iov;
+	iov = pkt->fp_uio.uio_iov;
 	while (len > 0) {
 		memcpy(mtod(m, caddr_t) + m->m_len, iov->iov_base,
 		    iov->iov_len);
@@ -2264,14 +2370,12 @@ fwohci_if_output(struct device *self, struct mbuf *m0,
     void (*callback)(struct device *, struct mbuf *))
 {
 	struct fwohci_softc *sc = (struct fwohci_softc *)self;
-	struct mbuf *m;
 	struct fwohci_pkt pkt;
-	struct iovec *iov;
 	u_int8_t *p;
 	int s, n, error, spd, hdrlen, maxrec;
 
 	p = mtod(m0, u_int8_t *);
-	if (m0->m_flags & (M_BCAST|M_MCAST)) {
+	if (m0->m_flags & (M_BCAST | M_MCAST)) {
 		spd = IEEE1394_SPD_S100;	/*XXX*/
 		maxrec = 512;			/*XXX*/
 		hdrlen = 8;
@@ -2290,6 +2394,7 @@ fwohci_if_output(struct device *self, struct mbuf *m0,
 			    sc->sc_sc1394.sc1394_dev.dv_xname);
 #ifdef FW_DEBUG
 			if (fw_dump) {
+				struct mbuf *m;
 				printf("packet:");
 				for (m = m0; m != NULL; m = m->m_next) {
 					for (n = 0; n < m->m_len; n++)
@@ -2354,8 +2459,11 @@ fwohci_if_output(struct device *self, struct mbuf *m0,
 	}
 
 	memset(&pkt, 0, sizeof(pkt));
+	pkt.fp_uio.uio_iov = pkt.fp_iov;
+	pkt.fp_uio.uio_segflg = UIO_SYSSPACE;
+	pkt.fp_uio.uio_rw = UIO_WRITE;
 	s = splimp();
-	if (m0->m_flags & (M_BCAST|M_MCAST)) {
+	if (m0->m_flags & (M_BCAST | M_MCAST)) {
 		/* construct GASP header */
 		p = mtod(m0, u_int8_t *);
 		p[0] = sc->sc_nodeid >> 8;
@@ -2382,15 +2490,11 @@ fwohci_if_output(struct device *self, struct mbuf *m0,
 	}
 	pkt.fp_hdr[0] |= (pkt.fp_tcode << 4);
 	pkt.fp_dlen = m0->m_pkthdr.len;
-	for (m = m0; m != NULL; m = m->m_next) {
-		iov = &pkt.fp_iov[pkt.fp_iovcnt++]; 
-		iov->iov_base = mtod(m, caddr_t);
-		iov->iov_len = m->m_len;
-	}
 	pkt.fp_m = m0;
 	pkt.fp_callback = callback;
 	error = fwohci_at_output(sc, sc->sc_ctx_atrq, &pkt);
 	splx(s);
+	m0 = pkt.fp_m;
   end:
 	if (error) {
 		if (callback)
