@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.1 2003/12/22 14:25:33 rtr Exp $
+# $NetBSD: Makefile,v 1.2 2003/12/23 14:28:20 rtr Exp $
 
 XMODULEDIR=	${X11USRLIBDIR}/modules
 
@@ -14,8 +14,8 @@ SRCS=	pci.c xf86int10module.c helper_exec.c helper_mem.c xf86int10.c \
 	xf86x86emu.c generic.c debug.c decode.c fpu.c ops.c ops2.c \
 	prim_ops.c sys.c
 
-CPPFLAGS+=	${X11FLAGS.LOADABLE} -D__DRIVER__ -DFORCE_POST \
-		-D_CEXPORT= -DNO_LONG_LONG -D_X86EMU -D_PC
+CPPFLAGS+=	-D__DRIVER__ -DFORCE_POST -D_CEXPORT= -DNO_LONG_LONG \
+		-D_X86EMU -D_PC
 
 XSERVERINCDIR!= cd ${NETBSDSRCDIR}/x11/Xserver/include && ${PRINTOBJDIR}
 
