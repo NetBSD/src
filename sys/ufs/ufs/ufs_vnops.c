@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_vnops.c,v 1.78.4.7 2002/06/23 17:52:15 jdolecek Exp $	*/
+/*	$NetBSD: ufs_vnops.c,v 1.78.4.8 2002/09/25 21:38:13 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993, 1995
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_vnops.c,v 1.78.4.7 2002/06/23 17:52:15 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_vnops.c,v 1.78.4.8 2002/09/25 21:38:13 jdolecek Exp $");
 
 #include "opt_quota.h"
 #include "fs_lfs.h"
@@ -2062,88 +2062,4 @@ ufs_makeinode(int mode, struct vnode *dvp, struct vnode **vpp,
 	tvp->v_type = VNON;
 	vput(tvp);
 	return (error);
-}
-
-
-static int	filt_ufsread(struct knote *kn, long hint);
-static int	filt_ufsvnode(struct knote *kn, long hint);
-static void	filt_ufsdetach(struct knote *kn);
-
-static const struct filterops ufsread_filtops = 
-	{ 1, NULL, filt_ufsdetach, filt_ufsread };
-static const struct filterops ufsvnode_filtops = 
-	{ 1, NULL, filt_ufsdetach, filt_ufsvnode };
-
-int
-ufs_kqfilter(void *v)
-{
-	struct vop_kqfilter_args /* {
-		struct vnode	*a_vp;
-		struct knote	*a_kn;
-	} */ *ap = v;
-	struct vnode *vp;
-	struct knote *kn;
-
-	vp = ap->a_vp;
-	kn = ap->a_kn;
-	switch (kn->kn_filter) {
-	case EVFILT_READ:
-		kn->kn_fop = &ufsread_filtops;
-		break;
-	case EVFILT_VNODE:
-		kn->kn_fop = &ufsvnode_filtops;
-		break;
-	default:
-		return (1);
-	}
-
-	kn->kn_hook = (caddr_t)vp;
-
-	/* XXXLUKEM lock the struct? */
-	SLIST_INSERT_HEAD(&vp->v_klist, kn, kn_selnext);
-
-	return (0);
-}
-
-static void
-filt_ufsdetach(struct knote *kn)
-{
-	struct vnode *vp = (struct vnode *)kn->kn_hook;
-
-	/* XXXLUKEM lock the struct? */
-	SLIST_REMOVE(&vp->v_klist, kn, knote, kn_selnext);
-}
-
-/*ARGSUSED*/
-static int
-filt_ufsread(struct knote *kn, long hint)
-{
-	struct vnode *vp = (struct vnode *)kn->kn_hook;
-	struct inode *ip = VTOI(vp);
-
-	/*
-	 * filesystem is gone, so set the EOF flag and schedule
-	 * the knote for deletion.
-	 */
-	if (hint == NOTE_REVOKE) {
-		kn->kn_flags |= (EV_EOF | EV_ONESHOT);
-		return (1);
-	}
-
-	/* XXXLUKEM: freebsd uses i_size instead of i_ffs_size */
-        kn->kn_data = ip->i_ffs_size - kn->kn_fp->f_offset;
-        return (kn->kn_data != 0);
-}
-
-static int
-filt_ufsvnode(struct knote *kn, long hint)
-{
-
-	if (kn->kn_sfflags & hint)
-		kn->kn_fflags |= hint;
-	if (hint == NOTE_REVOKE) {
-		kn->kn_flags |= EV_EOF;
-		return (1);
-	}
-	return (kn->kn_fflags != 0);
 }
