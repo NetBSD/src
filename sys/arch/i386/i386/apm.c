@@ -1,4 +1,4 @@
-/*	$NetBSD: apm.c,v 1.10 1996/10/16 01:12:18 jtk Exp $ */
+/*	$NetBSD: apm.c,v 1.11 1996/10/16 22:30:34 jtk Exp $ */
 
 /*-
  * Copyright (c) 1995,1996 John T. Kohl.  All rights reserved.
@@ -145,6 +145,8 @@ cdev_decl(apm);
 
 #if defined(DEBUG) || defined(APMDEBUG)
 int apmcalldebug = 0;
+
+int apm_call_dbg __P((int, int, struct apmregs *));
 
 int
 apm_call_dbg(line, function, regs)
