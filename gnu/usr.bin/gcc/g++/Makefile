@@ -1,5 +1,5 @@
 #	from: @(#)Makefile    6.2 (Berkeley) 3/25/91
-#	$NetBSD: Makefile,v 1.1.1.1 1995/12/01 17:59:58 phil Exp $
+#	$NetBSD: Makefile,v 1.2 1996/01/08 03:42:13 phil Exp $
 
 PROG=           g++
 SRCS=	g++.c obstack.c version.c 
@@ -10,7 +10,7 @@ CFLAGS+=        -I$(.CURDIR) -I$(.CURDIR)/../common \
 LDADD+=		-lgnumalloc
 DPADD+=		/usr/lib/libgnumalloc.a
 
-LINKS+=	${BINDIR}/c++ ${BINDIR}/g++
+LINKS+=	${BINDIR}/g++ ${BINDIR}/c++
 MLINKS=	g++.1 c++.1
 
 .PATH:          $(.CURDIR)/../common 
