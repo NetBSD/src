@@ -1,4 +1,4 @@
-/*	$NetBSD: comm.c,v 1.9 1995/09/02 05:54:48 jtc Exp $	*/
+/*	$NetBSD: comm.c,v 1.10 1995/09/05 19:57:43 jtc Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -46,7 +46,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)comm.c	8.4 (Berkeley) 5/4/95";
 #endif
-static char rcsid[] = "$NetBSD: comm.c,v 1.9 1995/09/02 05:54:48 jtc Exp $";
+static char rcsid[] = "$NetBSD: comm.c,v 1.10 1995/09/05 19:57:43 jtc Exp $";
 #endif /* not lint */
 
 #include <err.h>
@@ -168,7 +168,7 @@ show(fp, offset, buf)
 	FILE *fp;
 	char *offset, *buf;
 {
-	while (printf("%s%s", offset, buf) < 0 && fgets(buf, MAXLINELEN, fp))
+	while (printf("%s%s", offset, buf) >= 0 && fgets(buf, MAXLINELEN, fp))
 		;
 }
 
