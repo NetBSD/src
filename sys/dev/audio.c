@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.184.2.3 2004/12/11 16:30:11 kent Exp $	*/
+/*	$NetBSD: audio.c,v 1.184.2.4 2004/12/12 12:48:10 kent Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.184.2.3 2004/12/11 16:30:11 kent Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.184.2.4 2004/12/12 12:48:10 kent Exp $");
 
 #include "audio.h"
 #if NAUDIO > 0
@@ -183,6 +183,15 @@ int	au_get_lr_value(struct audio_softc *, mixer_ctrl_t *,
 int	au_set_lr_value(struct audio_softc *, mixer_ctrl_t *,
 			     int, int);
 int	au_portof(struct audio_softc *, char *, int);
+
+typedef struct uio_fetcher {
+	stream_fetcher_t base;
+	struct uio *uio;
+} uio_fetcher_t;
+
+static void	uio_fetcher_ctor(uio_fetcher_t *, struct uio *);
+static int	uio_fetcher_fetch_to(stream_fetcher_t *, audio_stream_t *,
+				     int, int*);
 
 dev_type_open(audioopen);
 dev_type_close(audioclose);
@@ -1492,15 +1501,55 @@ audio_silence_copyout(struct audio_softc *sc, int n, struct uio *uio)
 	return (error);
 }
 
+static int
+uio_fetcher_fetch_to(stream_fetcher_t *self, audio_stream_t *p,
+		     int max_written, int *written)
+{
+	uio_fetcher_t *this;
+	int size;
+	int stream_space;
+	int error;
+
+	this = (uio_fetcher_t *)self;
+	size = min(this->uio->uio_resid, max_written);
+	stream_space = audio_stream_get_space(p);
+	if (stream_space < size)
+		size = stream_space;
+	stream_space = p->end - p->inp;
+	if (stream_space >= size) {
+		error = uiomove(p->inp, size, this->uio);
+		if (error)
+			return error;
+		p->inp += size;
+	} else {
+		error = uiomove(p->inp, stream_space, this->uio);
+		if (error)
+			return error;
+		error = uiomove(p->start, size - stream_space, this->uio);
+		if (error)
+			return error;
+		p->inp = p->start + size - stream_space;
+	}
+	*written = size;
+	return 0;
+}
+
+static void
+uio_fetcher_ctor(uio_fetcher_t *this, struct uio *u)
+{
+	this->base.fetch_to = uio_fetcher_fetch_to;
+	this->uio = u;
+}
+
 int
 audio_write(struct audio_softc *sc, struct uio *uio, int ioflag)
 {
 	struct audio_ringbuffer *cb = &sc->sc_pr;
 	uint8_t *inp, *einp;
 	int saveerror, error, s, n, cc, used;
-	struct audio_params *params;
-	int samples, hw_bits_per_sample, user_bits_per_sample;
-	int input_remain, space;
+	stream_fetcher_t *last_fetcher;
+	uio_fetcher_t ufetcher;
+	stream_filter_t *filter;
 
 	DPRINTFN(2,("audio_write: sc=%p count=%lu used=%d(hi=%d)\n",
 		    sc, (unsigned long)uio->uio_resid, sc->sc_pr.used,
@@ -1535,53 +1584,21 @@ audio_write(struct audio_softc *sc, struct uio *uio, int ioflag)
 			return 0;
 	}
 
-	params = &sc->sc_pparams;
-	DPRINTFN(1, ("audio_write: sr=%ld, enc=%d, prec=%d, chan=%d, sw=%p, "
-		     "fact=%d\n",
-		     sc->sc_pparams.sample_rate, sc->sc_pparams.encoding,
-		     sc->sc_pparams.precision, sc->sc_pparams.channels,
-		     sc->sc_pparams.sw_code, sc->sc_pparams.factor));
-
-	/*
-	 * For some encodings, handle data in sample unit.
+	/**
+	 * setup filter pipeline
 	 */
-	switch (params->hw_encoding) {
-	case AUDIO_ENCODING_SLINEAR_LE:
-	case AUDIO_ENCODING_SLINEAR_BE:
-	case AUDIO_ENCODING_ULINEAR_LE:
-	case AUDIO_ENCODING_ULINEAR_BE:
-		hw_bits_per_sample = params->hw_channels * params->precision
-			* params->factor;
-		user_bits_per_sample = params->channels * params->precision;
-		break;
-	default:
-		hw_bits_per_sample = 8 * params->factor / params->factor_denom;
-		user_bits_per_sample = 8;
+	uio_fetcher_ctor(&ufetcher, uio);
+	last_fetcher = &ufetcher.base;
+	if (sc->sc_npfilters > 0) {
+		filter = sc->sc_pfilters[0];
+		filter->set_fetcher(filter, &ufetcher.base);
+		last_fetcher = &sc->sc_pfilters[sc->sc_npfilters - 1]->base;
 	}
-#ifdef DIAGNOSTIC
-	if (hw_bits_per_sample > MAX_SAMPLE_SIZE * 8) {
-		printf("audio_write(): Invalid sample size: cur=%d max=%d\n",
-		       hw_bits_per_sample / 8, MAX_SAMPLE_SIZE);
-	}
-#endif
-	space = ((params->hw_sample_rate / params->sample_rate) + 1)
-		* hw_bits_per_sample / 8;
+
 	error = 0;
-	while ((input_remain = uio->uio_resid + sc->sc_input_fragment_length) > 0
-	       && !error) {
+	while (uio->uio_resid > 0 && !error) {
 		s = splaudio();
-		if (input_remain < user_bits_per_sample / 8) {
-			n = uio->uio_resid;
-			DPRINTF(("audio_write: fragment uiomove length=%d\n", n));
-			error = uiomove(sc->sc_input_fragment
-					+ sc->sc_input_fragment_length,
-					n, uio);
-			if (!error)
-				sc->sc_input_fragment_length += n;
-			splx(s);
-			return (error);
-		}
-		while (cb->used + space >= cb->usedhigh) {
+		while (cb->used >= cb->usedhigh) {
 			DPRINTFN(2, ("audio_write: sleep used=%d lowat=%d "
 				     "hiwat=%d\n",
 				     cb->used, cb->usedlow, cb->usedhigh));
@@ -1606,43 +1623,6 @@ audio_write(struct audio_softc *sc, struct uio *uio, int ioflag)
 		if (cc > cb->s.end - cb->s.start)
 			cc = cb->s.end - cb->s.start;
 
-		/* cc: # of bytes we can write to the ring buffer */
-		samples = cc * 8 / hw_bits_per_sample;
-#ifdef DIAGNOSTIC
-		if (samples == 0)
-			printf("audio_write: samples (cc/hw_bps) == 0\n");
-#endif
-		/* samples: # of samples we can write to the ring buffer */
-		samples = samples * params->sample_rate / params->hw_sample_rate;
-#ifdef DIAGNOSTIC
-		if (samples == 0)
-			printf("audio_write: samples (rate/hw_rate) == 0 "
-			       "usedhigh-used=%d cc/hw_bps=%d/%d "
-			       "rate/hw_rate=%ld/%ld space=%d\n",
-			       cb->usedhigh - cb->used, cc,
-			       hw_bits_per_sample / 8, params->sample_rate,
-			       params->hw_sample_rate, space);
-#endif
-		/* samples: # of samples in source data */
-		cc = samples * user_bits_per_sample / 8;
-		/* cc: # of bytes in source data */
-		if (input_remain < cc)	/* and no more than we have */
-			cc = (input_remain * 8 / user_bits_per_sample)
-				* user_bits_per_sample / 8;
-#ifdef DIAGNOSTIC
-		if (cc == 0)
-			printf("audio_write: cc == 0\n");
-#endif
-		if (cc * params->factor / params->factor_denom
-		    > sc->sc_pconvbuffer_size) {
-			/*
-			 * cc = (pconv / factor / user_bps ) * user_bps
-			 */
-			cc = (sc->sc_pconvbuffer_size * params->factor_denom
-			      * 8 / params->factor / user_bits_per_sample)
-			     * user_bits_per_sample / 8;
-		}
-
 #ifdef DIAGNOSTIC
 		/*
 		 * This should never happen since the block size and and
@@ -1650,86 +1630,29 @@ audio_write(struct audio_softc *sc, struct uio *uio, int ioflag)
 		 */
 		if (cc == 0) {
 			printf("audio_write: cc == 0, swcode=%p, factor=%d "
-			       "remain=%d u_bps=%d hw_bps=%d\n",
+			       "remain=%d\n",
 			       sc->sc_pparams.sw_code, sc->sc_pparams.factor,
-			       input_remain, user_bits_per_sample,
-			       hw_bits_per_sample);
+			       input_remain);
 			cb->copying = FALSE;
 			return EINVAL;
 		}
 #endif
-		DPRINTFN(1, ("audio_write: uiomove cc=%d inp=%p, left=%lu\n",
-			     cc, inp, (unsigned long)uio->uio_resid));
-		memcpy(sc->sc_pconvbuffer, sc->sc_input_fragment,
-		       sc->sc_input_fragment_length);
-		cc -= sc->sc_input_fragment_length;
-		n = uio->uio_resid;
-		error = uiomove(sc->sc_pconvbuffer + sc->sc_input_fragment_length,
-				cc, uio);
-		if (cc != n - uio->uio_resid) {
-			printf("audio_write: uiomove didn't move requested "
-			       "amount: requested=%d, actual=%ld\n",
-			       cc, (long)n - uio->uio_resid);
-		}
-			    /* number of bytes actually moved */
-		cc = sc->sc_input_fragment_length + n - uio->uio_resid;
-		sc->sc_input_fragment_length = 0;
-#ifdef AUDIO_DEBUG
-		if (error)
-			printf("audio_write:(1) uiomove failed %d; cc=%d "
-			       "inp=%p\n", error, cc, inp);
-#endif
-		/*
-		 * Continue even if uiomove() failed because we may have
-		 * gotten a partial block.
-		 */
+		s = splaudio();
+		/* write to the cb as possible */
+		error = last_fetcher->fetch_to(last_fetcher, &cb->s, cc, &cc);
 
-		/*
-		 * The format of data in sc_pconvbuffer is:
-		 * [sample_rate, encoding, precision, channels]
-		 */
-		if (sc->sc_pparams.sw_code) {
-			sc->sc_pparams.sw_code(sc->hw_hdl,
-					       sc->sc_pconvbuffer, cc);
-			/* Adjust count after the expansion. */
-			cc = cc * sc->sc_pparams.factor
-				/ sc->sc_pparams.factor_denom;
-			DPRINTFN(1, ("audio_write: expanded cc=%d\n", cc));
-		}
-		/*
-		 * The format of data in sc_pconvbuffer is:
-		 * [sample_rate, hw_encoding, hw_precision, channels]
-		 */
-#if NAURATECONV > 0
-		cc = auconv_play(&sc->sc_pconv, params, inp,
-				 sc->sc_pconvbuffer, cc);
-#else
-		n = cb->end - inp;
-		if (cc <= n) {
-			memcpy(inp, sc->sc_pconvbuffer, cc);
-		} else {
-			memcpy(inp, sc->sc_pconvbuffer, n);
-			memcpy(cb->start, sc->sc_pconvbuffer + n, cc - n);
-		}
-#endif /* !NAURATECONV */
-		/*
-		 * The format of data in inp is:
-		 * [hw_sample_rate, hw_encoding, hw_precision, hw_channels]
-		 * cc is the size of data actually written to inp.
-		 */
-
+		/* cc is the size of data actually written to inp. */
 		einp = cb->s.inp + cc;
 		if (einp >= cb->s.end)
 			einp -= cb->s.end - cb->s.start; /* not cb->bufsize */
 
-		s = splaudio();
 		/*
 		 * This is a very suboptimal way of keeping track of
 		 * silence in the buffer, but it is simple.
 		 */
 		sc->sc_sil_count = 0;
 
-		cb->s.inp = einp;
+		cb->s.inp = einp; /* XXX need to be enclosed by splaudio()? */
 		cb->used += cc;
 		/*
 		 * If the interrupt routine wants the last block filled AND

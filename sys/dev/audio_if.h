@@ -1,4 +1,4 @@
-/*	$NetBSD: audio_if.h,v 1.54.2.2 2004/12/11 16:27:41 kent Exp $	*/
+/*	$NetBSD: audio_if.h,v 1.54.2.3 2004/12/12 12:48:10 kent Exp $	*/
 
 /*
  * Copyright (c) 1994 Havard Eidnes.
@@ -89,18 +89,28 @@ extern const struct audio_params audio_default;
 typedef struct audio_stream {
 	size_t bufsize;		/* allocated memory */
 	uint8_t *start;		/* start of buffer area */
-	uint8_t *end;		/* == this->start + this->bufsize */
+	uint8_t *end;		/* end of valid buffer area */
 	uint8_t *inp;		/* address to be written next */
 	const uint8_t *outp;	/* address to be read next */
 	audio_params_t param;	/* represents this stream */
 	boolean_t loop;
 } audio_stream_t;
 
+static __inline int
+audio_stream_get_space(const audio_stream_t *p)
+{
+	uint8_t *i;
+	const uint8_t *o;
+	i = p->inp;
+	o = p->outp;
+	return i <= o ? o - i : p->end - i + o - p->start;
+}
+
 /**
  * an interface to fill a audio stream buffer
  */
 typedef struct stream_fetcher {
-	void (*fetch_to)(struct stream_fetcher *, audio_stream_t *, int);
+	int (*fetch_to)(struct stream_fetcher *, audio_stream_t *, int, int *);
 } stream_fetcher_t;
 
 /**
@@ -108,7 +118,7 @@ typedef struct stream_fetcher {
  * This must be an extension of stream_fetcher_t.
  */
 typedef struct stream_filter {
-	void (*fetch_to)(struct stream_fetcher *, audio_stream_t *, int);
+	stream_fetcher_t base;
 	void (*dtor)(struct stream_filter *);
 	void (*set_fetcher)(struct stream_filter *, stream_fetcher_t *);
 	void (*set_inputbuffer)(struct stream_filter *, audio_stream_t *);
