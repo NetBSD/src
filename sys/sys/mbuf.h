@@ -1,4 +1,4 @@
-/*	$NetBSD: mbuf.h,v 1.23 1997/03/27 20:33:07 thorpej Exp $	*/
+/*	$NetBSD: mbuf.h,v 1.24 1997/05/23 19:46:08 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997 Jason R. Thorpe.  All rights reserved.
@@ -245,13 +245,13 @@ union mcluster {
 
 #define	MCLBUFREF(p)
 #define	MCLISREFERENCED(m)	((m)->m_ext.ext_nextref != (m))
-#define	MCLDEREFERENCE(m)	do {					\
+#define	_MCLDEREFERENCE(m)	do {					\
 		(m)->m_ext.ext_nextref->m_ext.ext_prevref =		\
 			(m)->m_ext.ext_prevref;				\
 		(m)->m_ext.ext_prevref->m_ext.ext_nextref =		\
 			(m)->m_ext.ext_nextref;				\
 	} while (0)
-#define	MCLADDREFERENCE(o, n)	do {					\
+#define	_MCLADDREFERENCE(o, n)	do {					\
 		(n)->m_flags |= ((o)->m_flags & (M_EXT|M_CLUSTER));	\
 		(n)->m_ext.ext_nextref = (o)->m_ext.ext_nextref;	\
 		(n)->m_ext.ext_prevref = (o);				\
@@ -265,6 +265,8 @@ union mcluster {
 		MCLREFDEBUGO((m), __FILE__, __LINE__);			\
 		MCLREFDEBUGN((m), NULL, 0);				\
 	} while (0)
+
+#define	MCLADDREFERENCE(o, n)	MBUFLOCK(_MCLADDREFERENCE((o), (n));)
 
 /*
  * Macros for mbuf external storage.
@@ -327,7 +329,7 @@ union mcluster {
 
 #define	_MEXTREMOVE(m) { \
 	if (MCLISREFERENCED(m)) { \
-		MCLDEREFERENCE(m); \
+		_MCLDEREFERENCE(m); \
 	} else if ((m)->m_flags & M_CLUSTER) { \
 		char *p = (m)->m_ext.ext_buf; \
 		((union mcluster *)(p))->mcl_next = mclfree; \
