@@ -1,4 +1,4 @@
-/*	$NetBSD: reloc.c,v 1.78 2002/12/14 09:13:00 junyoung Exp $	 */
+/*	$NetBSD: reloc.c,v 1.79 2003/07/21 15:34:35 skrll Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -187,7 +187,7 @@ _rtld_relocate_objects(first, bind_now)
 		dbg(("doing lazy PLT binding"));
 		if (_rtld_relocate_plt_lazy(obj) < 0)
 			ok = 0;
-#if defined(__i386__)
+#if defined(__i386__) || defined(__arm__)
 		if (bind_now)
 			if (_rtld_relocate_plt_objects(obj) < 0)
 				ok = 0;
