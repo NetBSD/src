@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_pcmcia.c,v 1.69 2004/07/07 06:43:22 mycroft Exp $ */
+/*	$NetBSD: wdc_pcmcia.c,v 1.70 2004/08/08 23:17:13 mycroft Exp $ */
 
 /*-
  * Copyright (c) 1998, 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc_pcmcia.c,v 1.69 2004/07/07 06:43:22 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc_pcmcia.c,v 1.70 2004/08/08 23:17:13 mycroft Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -304,8 +304,8 @@ wdc_pcmcia_attach(parent, self, aux)
 		
 		aprint_normal("%s: memory mapped mode\n", self->dv_xname);
 	} else {
-		if (pcmcia_io_map(pa->pf, PCMCIA_WIDTH_AUTO, 0,
-		    sc->sc_pioh.size, &sc->sc_pioh, &sc->sc_iowindow)) {
+		if (pcmcia_io_map(pa->pf, PCMCIA_WIDTH_AUTO, &sc->sc_pioh,
+		    &sc->sc_iowindow)) {
 			aprint_error("%s: can't map first I/O space\n",
 			     self->dv_xname);
 			goto map_failed;
@@ -314,8 +314,8 @@ wdc_pcmcia_attach(parent, self, aux)
 
 	if (cfe->num_iospace <= 1 || sc->sc_flags & WDC_PCMCIA_MEMMODE)
 		sc->sc_auxiowindow = -1;
-	else if (pcmcia_io_map(pa->pf, PCMCIA_WIDTH_AUTO, 0,
-	    sc->sc_auxpioh.size, &sc->sc_auxpioh, &sc->sc_auxiowindow)) {
+	else if (pcmcia_io_map(pa->pf, PCMCIA_WIDTH_AUTO, &sc->sc_auxpioh,
+	    &sc->sc_auxiowindow)) {
 		aprint_error("%s: can't map second I/O space\n",
 		    self->dv_xname);
 		goto mapaux_failed;

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tr_pcmcia.c,v 1.11 2002/10/02 16:52:16 thorpej Exp $	*/
+/*	$NetBSD: if_tr_pcmcia.c,v 1.12 2004/08/08 23:17:13 mycroft Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang.  All rights reserved.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tr_pcmcia.c,v 1.11 2002/10/02 16:52:16 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tr_pcmcia.c,v 1.12 2004/08/08 23:17:13 mycroft Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -147,8 +147,8 @@ tr_pcmcia_attach(parent, self, aux)
 	if (pcmcia_io_alloc(pa->pf, cfe->iospace[0].start,
 	    cfe->iospace[0].length, cfe->iospace[0].length, &psc->sc_pioh) != 0)
 		printf(": can't allocate pio space\n");
-	if (pcmcia_io_map(psc->sc_pf, PCMCIA_WIDTH_IO8, 0,	/* XXX _AUTO? */
-	    cfe->iospace[0].length, &psc->sc_pioh, &psc->sc_pio_window) != 0) {
+	if (pcmcia_io_map(psc->sc_pf, PCMCIA_WIDTH_IO8,	/* XXX _AUTO? */
+	    &psc->sc_pioh, &psc->sc_pio_window) != 0) {
 		printf(": can't map pio space\n");
 		pcmcia_io_free(psc->sc_pf, &psc->sc_pioh);
 		return;
