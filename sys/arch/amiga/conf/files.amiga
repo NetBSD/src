@@ -1,4 +1,4 @@
-#	$NetBSD: files.amiga,v 1.126 2002/11/02 20:26:37 chs Exp $
+#	$NetBSD: files.amiga,v 1.127 2002/11/03 02:29:38 chs Exp $
 
 # maxpartitions must be first item in files.${ARCH}.newconf
 maxpartitions 16			# NOTE THAT AMIGA IS SPECIAL!
@@ -445,12 +445,12 @@ file	arch/amiga/amiga/machdep.c
 file	arch/amiga/amiga/mem.c
 file	arch/amiga/amiga/pmap.c
 file	arch/amiga/amiga/procfs_machdep.c	procfs
-file	arch/amiga/amiga/sys_machdep.c
 file	arch/amiga/amiga/trap.c
 file	arch/amiga/amiga/cc.c
 file	dev/md_root.c			memory_disk_hooks
 file	arch/m68k/m68k/cacheops.c
 file	arch/m68k/m68k/db_memrw.c	ddb
+file	arch/m68k/m68k/sys_machdep.c
 file	arch/m68k/m68k/vm_machdep.c
 
 define	gayle
