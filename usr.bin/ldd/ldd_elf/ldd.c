@@ -1,4 +1,4 @@
-/*	$NetBSD: ldd.c,v 1.22 2004/05/14 21:56:45 christos Exp $	*/
+/*	$NetBSD: ldd.c,v 1.23 2004/05/14 22:04:01 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -104,7 +104,7 @@ Library_Xform *_rtld_xforms;
 static void fmtprint(const char *, Obj_Entry *, const char *, const char *);
 static void print_needed(Obj_Entry *, const char *, const char *);
 static int ldd_aout(char *, char *, char *, int);
-static void usage(void) __attribute__((__notreached__));
+static void usage(void) __attribute__((__noreturn__));
 static char *main_local;
 static char *main_progname;
 
