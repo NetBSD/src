@@ -1,4 +1,4 @@
-/*	$NetBSD: genassym.c,v 1.1 1996/05/05 12:17:21 oki Exp $	*/
+/*	$NetBSD: genassym.c,v 1.2 1996/12/09 15:29:06 oki Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990, 1993
@@ -191,7 +191,7 @@ main()
 	def("CACHE_CLR", CACHE_CLR);
 	def("IC_CLEAR", IC_CLEAR);
 	def("DC_CLEAR", DC_CLEAR);
-	def("CACHE4_OFF", CACHE4_OFF);
+	def("CACHE40_OFF", CACHE40_OFF);
 
 	/* pte/ste bits */
 	def("PG_V", PG_V);

@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.8 1996/11/06 20:19:59 cgd Exp $	*/
+/*	$NetBSD: locore.s,v 1.9 1996/12/09 15:29:08 oki Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -1843,7 +1843,7 @@ _doboot:
 	jne	Ldoboot0		| no, skip
 	.word	0xf4f8			| cpusha bc - push and invalidate caches
 	nop
-	movl	#CACHE4_OFF,d0
+	movl	#CACHE40_OFF,d0
 Ldoboot0:
 #endif
 	movc	d0,cacr			| disable on-chip cache(s)
