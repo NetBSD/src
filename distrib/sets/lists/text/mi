@@ -329,6 +329,7 @@
 ./usr/share/tmac/tmac.doc-ditroff
 ./usr/share/tmac/tmac.doc-nroff
 ./usr/share/tmac/tmac.doc-syms
+./usr/share/tmac/tmac.doc2html
 ./usr/share/tmac/tmac.dvi
 ./usr/share/tmac/tmac.e
 ./usr/share/tmac/tmac.latin1

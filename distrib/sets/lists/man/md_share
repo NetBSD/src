@@ -12,7 +12,6 @@
 ./usr/share/man/cat1/i386/vttest.0
 ./usr/share/man/cat1/ld.so.0
 ./usr/share/man/cat1/rtld.0
-./usr/share/man/cat1/screenblank.0
 ./usr/share/man/cat1/x68k/bellctrl.0
 ./usr/share/man/cat1/x68k/loadfont.0
 ./usr/share/man/cat1/x68k/loadkmap.0
@@ -310,7 +309,6 @@
 ./usr/share/man/man1/i386/vttest.1
 ./usr/share/man/man1/ld.so.1
 ./usr/share/man/man1/rtld.1
-./usr/share/man/man1/screenblank.1
 ./usr/share/man/man1/x68k/bellctrl.1
 ./usr/share/man/man1/x68k/loadfont.1
 ./usr/share/man/man1/x68k/loadkmap.1
