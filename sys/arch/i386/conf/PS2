@@ -1,8 +1,22 @@
-#	$NetBSD: PS2,v 1.1 2000/05/11 16:38:10 jdolecek Exp $
+#	$NetBSD: PS2,v 1.2 2000/05/26 20:59:07 jdolecek Exp $
 #
 #	Sample kernel config for PS/2 with MCA bus
 #
-#	BEWARE: do NOT use MCA-enabled kernel on non-MCA machine
+#	WARNING: DO NOT USE UNLESS YOU ARE PREPARED TO DEAL WITH PROBLEMS.
+#
+#	BEWARE:
+#	 MCA support in NetBSD is still very experimental at this
+#	 stage and should be used with extreme caution. MCA-enabled
+#	 kernels won't currently work on non-MCA machines and it's
+#	 not wise to try even try it unless you are prepared to deal
+#	 wish strange hardware failures. Please note that MCA
+#	 support doesn't yet reach standard NetBSD quality,
+#	 should be really used only for experimentation and is provided
+#	 specially and only to make access to the code easier for people
+#	 who wish to help with PS/2 development.
+#	 See also sys/dev/mca/TODO for list of problems and current list of
+#	 projects. If you try this out and encounter any problems, please
+#	 let us know via send-pr(1) or ask on port-i386@NetBSD.org.
 
 include "arch/i386/conf/std.i386"
 
@@ -18,21 +32,21 @@ options 	MATH_EMULATE    # floating point emulation
 options 	INSECURE        # disable kernel security levels
 
 options	RTC_OFFSET=-600 # hardware clock is this many mins. west of GMT
-options 	KTRACE          # system call tracing via ktrace(1)
+#options 	KTRACE          # system call tracing via ktrace(1)
 
-options 	SYSVMSG         # System V-like message queues
-options 	SYSVSEM         # System V-like semaphores
-options 	SYSVSHM         # System V-like memory sharing
+#options 	SYSVMSG         # System V-like message queues
+#options 	SYSVSEM         # System V-like semaphores
+#options 	SYSVSHM         # System V-like memory sharing
 #options 	SHMMAXPGS=1024  # 1024 pages is the default
 
 options 	DIAGNOSTIC      # cheap kernel consistency checks
 options 	DEBUG           # expensive debugging checks/support
-options 	KMEMSTATS       # kernel memory statistics (vmstat -m)
+#options 	KMEMSTATS       # kernel memory statistics (vmstat -m)
 options 	DDB             # in-kernel debugger
 
 file-system 	FFS             # UFS
 #file-system 	NFS             # Network File System client
-file-system 	MSDOSFS         # MS-DOS file system
+#file-system 	MSDOSFS         # MS-DOS file system
 #file-system 	FDESC           # /dev/fd
 #file-system 	KERNFS          # /kern
 
@@ -64,15 +78,16 @@ mainbus0 at root
 mca0	at mainbus0
 isa0	at mainbus0
 
-npx0	at isa? port 0xf0 irq 13        # x86 math coprocessor
+#npx0	at isa? port 0xf0 irq 13        # x86 math coprocessor
 
 #pc0	at isa? port 0x60 irq 1   
 
 # wscons
 pckbc0		at isa?			# pc keyboard controller
+options		PCKBCDEBUG
 #pcconskbd*	at pckbc?
-pms*		at pckbc?		# PS/2 mouse for wsmouse
-wsmouse*	at pms?
+#pms*		at pckbc?		# PS/2 mouse for wsmouse
+#wsmouse*	at pms?
 pckbd*		at pckbc?               # PC keyboard
 wskbd*		at pckbd? console ?
 vga0		at isa?
@@ -83,9 +98,14 @@ com0	at isa? port 0x3f8 irq 4	# "SERIAL_!"
 lpt0	at isa? port 0x3bc irq 7	# "PARALLEL_1"
 fdc0	at isa? port 0x3f0 irq 6 drq 2	# standard PC floppy controllers
 fd*	at fdc? drive ?			# the drives themselves
-tr*	at mca? slot ?			# IBM Token Ring adapter
-#ef*	at mca? slot ?			# 3Com 3C523 (not yet)
+#tr*	at mca? slot ?			# IBM Token Ring adapter
 
-pseudo-device	bpfilter	4	# Berkeley packet filter
+# MCA SCSI controllers
+#aha*	at mca? slot ?			# Adaptec AHA-1640
+
+# SCSI bus support
+#scsibus* at aha?
+
+#pseudo-device	bpfilter	4	# Berkeley packet filter
 pseudo-device	loop			# network loopback
 pseudo-device	pty		16	# pseudo-terminals
