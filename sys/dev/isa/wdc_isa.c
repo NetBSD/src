@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_isa.c,v 1.42 2004/08/14 15:08:06 thorpej Exp $ */
+/*	$NetBSD: wdc_isa.c,v 1.43 2004/08/16 14:47:31 mycroft Exp $ */
 
 /*-
  * Copyright (c) 1998, 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc_isa.c,v 1.42 2004/08/14 15:08:06 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc_isa.c,v 1.43 2004/08/16 14:47:31 mycroft Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -186,13 +186,9 @@ wdc_isa_attach(parent, self, aux)
 			return;
 		}
 	}
-	wdc_init_shadow_regs(&sc->ata_channel);
 
 	wdr->data32iot = wdr->cmd_iot;
 	wdr->data32ioh = wdr->cmd_iohs[0];
-
-	sc->sc_ih = isa_intr_establish(ia->ia_ic, ia->ia_irq[0].ir_irq,
-	    IST_EDGE, IPL_BIO, wdcintr, &sc->ata_channel);
 
 #if 0
 	if (ia->ia_ndrq > 0 && ia->ia_drq[0].ir_drq != ISACF_DRQ_DEFAULT) {
@@ -221,8 +217,12 @@ wdc_isa_attach(parent, self, aux)
 	sc->ata_channel.ch_channel = 0;
 	sc->ata_channel.ch_wdc = &sc->sc_wdcdev;
 	sc->ata_channel.ch_queue = &sc->wdc_chqueue;
+	wdc_init_shadow_regs(&sc->ata_channel);
 
 	printf("\n");
+
+	sc->sc_ih = isa_intr_establish(ia->ia_ic, ia->ia_irq[0].ir_irq,
+	    IST_EDGE, IPL_BIO, wdcintr, &sc->ata_channel);
 
 	wdcattach(&sc->ata_channel);
 }
