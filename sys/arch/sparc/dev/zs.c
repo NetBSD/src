@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.19 1994/11/23 07:02:21 deraadt Exp $ */
+/*	$NetBSD: zs.c,v 1.20 1994/11/26 07:36:52 deraadt Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -271,19 +271,21 @@ zsattach(parent, dev, aux)
 	if(!zs_tty[unit+1])
 		zs_tty[unit+1] = ttymalloc();
 
-	if (unit == 0) {
-		/* Get software carrier flags from options node in OPENPROM. */
-		extern int optionsnode;
+	softcar = dev->dv_cfdata->cf_flags;
+#if defined(SUN4C) || defined(SUN4M)
+	if (cputyp == CPU_SUN4C || cputyp == CPU_SUN4M) {
+		if (unit == 0) {
+			/* Get software carrier flags from options node in OPENPROM. */
+			extern int optionsnode;
 
-		softcar = 0;
-#ifdef notdef
-		if (*getpropstring(optionsnode, "ttya-ignore-cd") == 't')
-			softcar |= 1;
-		if (*getpropstring(optionsnode, "ttyb-ignore-cd") == 't')
-			softcar |= 2;
+			softcar = 0;
+			if (*getpropstring(optionsnode, "ttya-ignore-cd") == 't')
+				softcar |= 1;
+			if (*getpropstring(optionsnode, "ttyb-ignore-cd") == 't')
+				softcar |= 2;
+		}
+	}
 #endif
-	} else
-		softcar = dev->dv_cfdata->cf_flags;
 
 	/* link into interrupt list with order (A,B) (B=A+1) */
 	cs[0].cs_next = &cs[1];
