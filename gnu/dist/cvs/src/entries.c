@@ -651,13 +651,10 @@ WriteTag (dir, tag, date, nonbranch, update_dir, repository)
     if (noexec)
 	return;
 
-    tmp = xmalloc ((dir ? strlen (dir) : 0)
-		   + sizeof (CVSADM_TAG)
-		   + 10);
     if (dir == NULL)
-	(void) strcpy (tmp, CVSADM_TAG);
+	tmp = xstrdup(CVSADM_TAG);
     else
-	(void) sprintf (tmp, "%s/%s", dir, CVSADM_TAG);
+	(void) asprintf (&tmp, "%s/%s", dir, CVSADM_TAG);
 
     if (tag || date)
     {
@@ -851,12 +848,7 @@ subdir_record (cmd, parent, dir)
 	if (parent == NULL)
 	    entfilename = (char *)CVSADM_ENTLOG;
 	else
-	{
-	    entfilename = xmalloc (strlen (parent)
-				   + sizeof CVSADM_ENTLOG
-				   + 10);
-	    sprintf (entfilename, "%s/%s", parent, CVSADM_ENTLOG);
-	}
+	    asprintf (&entfilename, "%s/%s", parent, CVSADM_ENTLOG);
 
 	entfile = CVS_FOPEN (entfilename, "a");
 	if (entfile == NULL)
@@ -1023,23 +1015,15 @@ base_walk (code, finfo, rev)
        computation probably should be broken out into a separate function,
        as recurse.c does it too and places like Entries_Open should be
        doing it.  */
-    baserev_fullname = xmalloc (sizeof (CVSADM_BASEREV)
-				+ strlen (finfo->update_dir)
-				+ 2);
-    baserev_fullname[0] = '\0';
-    baserevtmp_fullname = xmalloc (sizeof (CVSADM_BASEREVTMP)
-				   + strlen (finfo->update_dir)
-				   + 2);
-    baserevtmp_fullname[0] = '\0';
     if (finfo->update_dir[0] != '\0')
     {
-	strcat (baserev_fullname, finfo->update_dir);
-	strcat (baserev_fullname, "/");
-	strcat (baserevtmp_fullname, finfo->update_dir);
-	strcat (baserevtmp_fullname, "/");
+	asprintf(&baserev_fullname, "%s/%s", finfo->update_dir, CVSADM_BASEREV);
+	asprintf(&baserevtmp_fullname, "%s/%s",
+	    finfo->update_dir, CVSADM_BASEREVTMP);
+    } else {
+	baserev_fullname = xstrdup(CVSADM_BASEREV);
+	baserevtmp_fullname = xstrdup(CVSADM_BASEREVTMP);
     }
-    strcat (baserev_fullname, CVSADM_BASEREV);
-    strcat (baserevtmp_fullname, CVSADM_BASEREVTMP);
 
     fp = CVS_FOPEN (CVSADM_BASEREV, "r");
     if (fp == NULL)

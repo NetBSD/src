@@ -956,8 +956,8 @@ but CVS uses %s for its own purposes; skipping %s directory",
 	char *cvsadmdir;
 
 	cvsadmdir = xmalloc (strlen (dir)
-			     + sizeof (CVSADM_REP)
-			     + sizeof (CVSADM_ENT)
+			     + strlen (CVSADM_REP)
+			     + strlen (CVSADM_ENT)
 			     + 80);
 
 	strcpy (cvsadmdir, dir);

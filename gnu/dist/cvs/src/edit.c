@@ -334,10 +334,7 @@ edit_fileproc (callerdat, finfo)
        trying to create the output file fails.  But copy_file isn't
        set up to facilitate that.  */
     mkdir_if_needed (CVSADM_BASE);
-    basefilename = xmalloc (10 + sizeof CVSADM_BASE + strlen (finfo->file));
-    strcpy (basefilename, CVSADM_BASE);
-    strcat (basefilename, "/");
-    strcat (basefilename, finfo->file);
+    asprintf(&basefilename, "%s/%s", CVSADM_BASE, finfo->file);
     copy_file (finfo->file, basefilename);
     free (basefilename);
 
@@ -466,10 +463,7 @@ unedit_fileproc (callerdat, finfo)
     if (noexec)
 	return 0;
 
-    basefilename = xmalloc (10 + sizeof CVSADM_BASE + strlen (finfo->file));
-    strcpy (basefilename, CVSADM_BASE);
-    strcat (basefilename, "/");
-    strcat (basefilename, finfo->file);
+    asprintf(&basefilename, "%s/%s", CVSADM_BASE, finfo->file);
     if (!isfile (basefilename))
     {
 	/* This file apparently was never cvs edit'd (e.g. we are uneditting

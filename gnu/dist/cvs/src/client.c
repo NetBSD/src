@@ -2615,8 +2615,7 @@ do_deferred_progs ()
     }
     for (p = checkin_progs; p != NULL; )
     {
-	fname = xmalloc (strlen (p->dir) + sizeof CVSADM_CIPROG + 10);
-	sprintf (fname, "%s/%s", p->dir, CVSADM_CIPROG);
+	asprintf (&fname, "%s/%s", p->dir, CVSADM_CIPROG);
 	f = open_file (fname, "w");
 	if (fprintf (f, "%s\n", p->name) < 0)
 	    error (1, errno, "writing %s", fname);
@@ -2632,8 +2631,7 @@ do_deferred_progs ()
     checkin_progs = NULL;
     for (p = update_progs; p != NULL; )
     {
-	fname = xmalloc (strlen (p->dir) + sizeof CVSADM_UPROG + 10);
-	sprintf (fname, "%s/%s", p->dir, CVSADM_UPROG);
+	asprintf (&fname, "%s/%s", p->dir, CVSADM_UPROG);
 	f = open_file (fname, "w");
 	if (fprintf (f, "%s\n", p->name) < 0)
 	    error (1, errno, "writing %s", fname);
@@ -5373,8 +5371,7 @@ send_dirent_proc (callerdat, dir, repository, update_dir, entries)
      * This case will happen when checking out a module defined as
      * ``-a .''.
      */
-    cvsadm_name = xmalloc (strlen (dir) + sizeof (CVSADM) + 10);
-    sprintf (cvsadm_name, "%s/%s", dir, CVSADM);
+    asprintf (&cvsadm_name, "%s/%s", dir, CVSADM);
     dir_exists = isdir (cvsadm_name);
     free (cvsadm_name);
 
