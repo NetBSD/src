@@ -1,6 +1,7 @@
-/*	$NetBSD: installboot.c,v 1.3 1997/01/16 20:40:07 cgd Exp $ */
+/*	$NetBSD: installboot.c,v 1.4 1997/01/16 20:41:54 cgd Exp $ */
 
 /*
+ * Copyright (c) 1997 Christopher G. Demetriou.  All rights reserved.
  * Copyright (c) 1994 Paul Kranenburg
  * All rights reserved.
  *
