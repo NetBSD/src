@@ -1,4 +1,4 @@
-/*	$NetBSD: netwinder_machdep.c,v 1.54 2003/06/14 17:01:13 thorpej Exp $	*/
+/*	$NetBSD: netwinder_machdep.c,v 1.55 2003/06/14 18:57:38 uwe Exp $	*/
 
 /*
  * Copyright (c) 1997,1998 Mark Brinicombe.
@@ -40,9 +40,8 @@
  */
 
 #include "opt_ddb.h"
+#include "opt_ipkdb.h"
 #include "opt_pmap_debug.h"
-
-#include "isadma.h"
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -77,13 +76,28 @@
 #include <arm/footbridge/dc21285mem.h>
 #include <arm/footbridge/dc21285reg.h>
 
-#include "opt_ipkdb.h"
-
 #include "isa.h"
+#include "isadma.h"
 #if NISA > 0
 #include <dev/isa/isareg.h>
 #include <dev/isa/isavar.h>
 #endif
+
+#include "igsfb.h"
+#if NIGSFB > 0
+#include <dev/pci/pcivar.h>
+#include <dev/pci/igsfb_pcivar.h>
+#endif
+
+#include "pckbc.h"
+#if NPCKBC > 0
+#include <dev/ic/i8042reg.h>
+#include <dev/ic/pckbcvar.h>
+#endif
+
+#include "com.h"
+#include <dev/ic/comreg.h>
+#include <dev/ic/comvar.h>
 
 #include "ksyms.h"
 
@@ -162,7 +176,12 @@ pv_addr_t kernel_pt_table[NUM_KERNEL_PTS];
  * The range 0xf1000000 - 0xfcffffff is available for kernel VM space
  * Footbridge registers and I/O mappings occupy 0xfd000000 - 0xffffffff
  */
+#if NIGSFB > 0
+/* XXX: uwe: map 16 megs at 0xfc000000 for igsfb(4) */
+#define KERNEL_VM_SIZE		0x0B000000
+#else
 #define KERNEL_VM_SIZE		0x0C000000
+#endif
 
 struct user *proc0paddr;
 
@@ -176,37 +195,24 @@ void undefinedinstruction_bounce(trapframe_t *);
 
 
 /* A load of console goo. */
-#include "vga.h"
-#if (NVGA > 0)
-#include <dev/ic/mc6845reg.h>
-#include <dev/ic/pcdisplayvar.h>
-#include <dev/ic/vgareg.h>
-#include <dev/ic/vgavar.h>
-#endif
+#ifndef CONSDEVNAME
+#  if (NIGSFB > 0) && (NPCKBC > 0)
+#    define CONSDEVNAME "igsfb"
+#  elif NCOM > 0
+#    define CONSDEVNAME "com"
+#  else
+#    error CONSDEVNAME not defined and no known console device configured
+#  endif
+#endif /* !CONSDEVNAME */
 
-#include "pckbc.h"
-#if (NPCKBC > 0)
-#include <dev/ic/i8042reg.h>
-#include <dev/ic/pckbcvar.h>
-#endif
-
-#include "com.h"
-#if (NCOM > 0)
-#include <dev/ic/comreg.h>
-#include <dev/ic/comvar.h>
 #ifndef CONCOMADDR
 #define CONCOMADDR 0x3f8
 #endif
-#endif
 
-#ifndef CONSDEVNAME
-#define CONSDEVNAME "com"
-#endif
-
-#define CONSPEED B115200
 #ifndef CONSPEED
-#define CONSPEED B9600	/* TTYDEF_SPEED */
+#define CONSPEED B115200	/* match NeTTrom */
 #endif
+
 #ifndef CONMODE
 #define CONMODE ((TTYDEF_CFLAG & ~(CSIZE | CSTOPB | PARENB)) | CS8) /* 8N1 */
 #endif
@@ -216,6 +222,27 @@ int comcnmode = CONMODE;
 
 extern struct consdev kcomcons;
 static void kcomcnputc(dev_t, int);
+
+#if NIGSFB > 0
+/* XXX: uwe */
+#define IGS_PCI_MEM_VBASE		0xfc000000
+#define IGS_PCI_MEM_VSIZE		0x01000000
+#define IGS_PCI_MEM_BASE		0x08000000
+
+extern struct arm32_pci_chipset footbridge_pci_chipset;
+extern struct bus_space footbridge_pci_io_bs_tag;
+extern struct bus_space footbridge_pci_mem_bs_tag;
+extern void footbridge_pci_bs_tag_init(void);
+
+/* standard methods */
+extern bs_map_proto(footbridge_mem);
+extern bs_unmap_proto(footbridge_mem);
+
+/* our hooks */
+static bs_map_proto(nw_footbridge_mem);
+static bs_unmap_proto(nw_footbridge_mem);
+#endif
+
 
 /*
  * void cpu_reboot(int howto, char *bootstr)
@@ -351,6 +378,13 @@ struct l1_sec_map {
 	{ DC21285_PCI_ISA_MEM_VBASE,		DC21285_PCI_MEM_BASE,
 	    DC21285_PCI_ISA_MEM_VSIZE,		VM_PROT_READ|VM_PROT_WRITE,
 	    PTE_NOCACHE },
+
+#if NIGSFB > 0
+	/* XXX: uwe: Map 16MB of PCI address space for CyberPro as console */
+	{ IGS_PCI_MEM_VBASE,	DC21285_PCI_MEM_BASE + IGS_PCI_MEM_BASE,
+	    IGS_PCI_MEM_VSIZE,			VM_PROT_READ|VM_PROT_WRITE,
+	    PTE_NOCACHE },
+#endif
 
 	{ 0, 0, 0, 0, 0 }
 };
@@ -880,10 +914,6 @@ process_kernel_args(char *args)
 	parse_mi_bootargs(boot_args);
 }
 
-extern struct bus_space footbridge_pci_io_bs_tag;
-extern struct bus_space footbridge_pci_mem_bs_tag;
-extern void footbridge_pci_bs_tag_init(void);
-
 void
 consinit(void)
 {
@@ -895,33 +925,126 @@ consinit(void)
 
 	consinit_called = 1;
 
+#ifdef DIAGNOSTIC
+	printf("consinit(\"%s\")\n", console);
+#endif
+
 #if NISA > 0
 	/* Initialise the ISA subsystem early ... */
 	isa_footbridge_init(DC21285_PCI_IO_VBASE, DC21285_PCI_ISA_MEM_VBASE);
 #endif
 
-	footbridge_pci_bs_tag_init();
+	if (strncmp(console, "igsfb", 5) == 0) {
+#if NIGSFB > 0
+		int res;
 
-	if (strncmp(console, "vga", 3) == 0) {
-#if (NVGA > 0)
-		vga_cnattach(&footbridge_pci_io_bs_tag,
-		    &footbridge_pci_mem_bs_tag, - 1, 0);
-#if (NPCKBC > 0)
-		pckbc_cnattach(&isa_io_bs_tag, IO_KBD, KBCMDP, PCKBC_KBD_SLOT);
-#endif	/* NPCKBC */
+		footbridge_pci_bs_tag_init();
+
+		/*
+		 * XXX: uwe: special case mapping for the igsfb memory space.
+		 * 
+		 * The problem with this is that when footbridge is
+		 * attached during normal autoconfiguration the bus
+		 * space tags will be reinited and these hooks lost.
+		 * However, since igsfb(4) don't unmap memory during
+		 * normal operation, this is ok.  But if the igsfb is
+		 * configured but is not a console, we waste 16M of
+		 * kernel VA space.
+		 */
+		footbridge_pci_mem_bs_tag.bs_map = nw_footbridge_mem_bs_map;
+		footbridge_pci_mem_bs_tag.bs_unmap = nw_footbridge_mem_bs_unmap;
+
+		igsfb_pci_cnattach(&footbridge_pci_io_bs_tag,
+				   &footbridge_pci_mem_bs_tag,
+				   &footbridge_pci_chipset,
+				   0, 8, 0);
+#if NPCKBC > 0
+		res = pckbc_cnattach(&isa_io_bs_tag,
+				     IO_KBD, KBCMDP, PCKBC_KBD_SLOT);
+		if (res)
+			printf("pckbc_cnattach: %d!\n", res);
+#endif
 #else
-		panic("vga console not configured");
-#endif	/* NVGA */
+		panic("igsfb console not configured");
+#endif /* NIGSFB */
 	} else {
-#if (NCOM > 0)
+#ifdef DIAGNOSTIC
+		if (strncmp(console, "com", 3) != 0) {
+			printf("consinit: unknown CONSDEVNAME=\"%s\","
+			       " falling back to \"com\"\n", console);
+		}
+#endif
+#if NCOM > 0
 		if (comcnattach(&isa_io_bs_tag, CONCOMADDR, comcnspeed,
-		    COM_FREQ, COM_TYPE_NORMAL, comcnmode))
+				COM_FREQ, COM_TYPE_NORMAL, comcnmode))
 			panic("can't init serial console @%x", CONCOMADDR);
 #else
-			panic("serial console @%x not configured", CONCOMADDR);
+		panic("serial console @%x not configured", CONCOMADDR);
 #endif
 	}
 }
+
+
+#if NIGSFB > 0
+static int
+nw_footbridge_mem_bs_map(t, bpa, size, cacheable, bshp)
+	void *t;
+	bus_addr_t bpa;
+	bus_size_t size;
+	int cacheable;
+	bus_space_handle_t *bshp;
+{
+	bus_addr_t startpa, endpa;
+
+	/* Round the allocation to page boundries */
+	startpa = trunc_page(bpa);
+	endpa = round_page(bpa + size);
+
+	/*
+	 * Check for mappings of the igsfb(4) memory space as we have
+	 * this space already mapped.
+	 */
+	if (startpa >= IGS_PCI_MEM_BASE
+	    && endpa < (IGS_PCI_MEM_BASE + IGS_PCI_MEM_VSIZE)) {
+		/* Store the bus space handle */
+		*bshp =  IGS_PCI_MEM_VBASE
+			+ (bpa - IGS_PCI_MEM_BASE);
+#ifdef DEBUG
+		printf("nw/mem_bs_map: %08x+%08x: %08x..%08x -> %08x\n",
+		       (u_int32_t)bpa, (u_int32_t)size,
+		       (u_int32_t)startpa, (u_int32_t)endpa,
+		       (u_int32_t)*bshp);
+#endif
+		return 0;
+	}
+
+	return (footbridge_mem_bs_map(t, bpa, size, cacheable, bshp));
+}
+
+
+static void
+nw_footbridge_mem_bs_unmap(t, bsh, size)
+	void *t;
+	bus_space_handle_t bsh;
+	bus_size_t size;
+{
+
+	/*
+	 * Check for mappings of the igsfb(4) memory space as we have
+	 * this space already mapped.
+	 */
+	if (bsh >= IGS_PCI_MEM_VBASE
+	    && bsh < (IGS_PCI_MEM_VBASE + IGS_PCI_MEM_VSIZE)) {
+#ifdef DEBUG
+		printf("nw/bs_unmap: 0x%08x\n", (u_int32_t)bsh);
+#endif
+		return;
+	}
+
+	footbridge_mem_bs_unmap(t, bsh, size);
+}
+#endif /* NIGSFB */
+
 
 static bus_space_handle_t kcom_base = (bus_space_handle_t) (DC21285_PCI_IO_VBASE + CONCOMADDR);
 
