@@ -1,4 +1,4 @@
-/*	$NetBSD: idprom.c,v 1.4 1997/04/28 23:43:56 gwr Exp $	*/
+/*	$NetBSD: idprom.c,v 1.5 1997/10/16 15:56:02 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -56,18 +56,8 @@
  * It is copied from the device early in startup.
  */
 struct idprom identity_prom;
-static u_long idprom_pa;
 
-static int  idprom_match __P((struct device *, struct cfdata *, void *));
-static void idprom_attach __P((struct device *, struct device *, void *));
-
-struct cfattach idprom_ca = {
-	sizeof(struct device), idprom_match, idprom_attach
-};
-
-struct cfdriver idprom_cd = {
-	NULL, "idprom", DV_DULL
-};
+static int idprom_hostid __P((void));
 
 /*
  * Find the IDPROM and copy it to memory.
@@ -78,31 +68,19 @@ struct cfdriver idprom_cd = {
 void
 idprom_init()
 {
-	struct idprom *idp;
 	u_char *src, *dst;
 	caddr_t va;
-	u_long pa;
 	int len, x, xorsum;
-	union {
-		long l;
-		char c[4];
-	} hid;
 
 	/* First, probe for a separate IDPROM (3/470). */
-	pa = OBIO_IDPROM1;
-	va = obio_find_mapping(pa, IDPROM_SIZE);
+	va = obio_find_mapping(OBIO_IDPROM1, IDPROM_SIZE);
 	if (peek_byte(va) == -1) {
 		/* IDPROM is in the EEPROM */
-		pa = OBIO_IDPROM2;
-		va = obio_find_mapping(pa, IDPROM_SIZE);
+		va = obio_find_mapping(OBIO_IDPROM2, IDPROM_SIZE);
 	}
 
-	/* Save the phys. address for idprom_match. */
-	idprom_pa = pa;
-
 	/* Copy the IDPROM contents and do the checksum. */
-	idp = &identity_prom;
-	dst = (u_char *) idp;
+	dst = (u_char *) &identity_prom;
 	src = (u_char *) va;
 	len = IDPROM_SIZE;
 	xorsum = 0;	/* calculated as xor of data */
@@ -114,60 +92,38 @@ idprom_init()
 	} while (--len > 0);
 
 	if (xorsum != 0)
-		printf("idprom: bad checksum=%d\n", xorsum);
-	if (idp->idp_format < 1)
-		printf("idprom: bad version=%d\n", idp->idp_format);
+		printf("idprom: bad checksum\n");
+	if (identity_prom.idp_format < 1)
+		printf("idprom: bad version\n");
+
+	hostid = idprom_hostid();
+}
+
+static int
+idprom_hostid()
+{
+	struct idprom *idp;
+	union {
+		long l;
+		char c[4];
+	} hid;
 
 	/*
 	 * Construct the hostid from the idprom contents.
 	 * This appears to be the way SunOS does it.
 	 */
+	idp = &identity_prom;
 	hid.c[0] = idp->idp_machtype;
 	hid.c[1] = idp->idp_serialnum[0];
 	hid.c[2] = idp->idp_serialnum[1];
 	hid.c[3] = idp->idp_serialnum[2];
-	hostid = hid.l;
-}
-
-static int
-idprom_match(parent, cf, args)
-    struct device *parent;
-	struct cfdata *cf;
-    void *args;
-{
-	struct confargs *ca = args;
-
-	/* This driver only supports one unit. */
-	if (cf->cf_unit != 0)
-		return (0);
-
-	/* Match the address we determined earlier. */
-	if (ca->ca_paddr != idprom_pa)
-		return (0);
-
-	return (1);
-}
-
-static void
-idprom_attach(parent, self, args)
-	struct device *parent;
-	struct device *self;
-	void *args;
-{
-
-	printf("\n");
+	return (hid.l);
 }
 
 void
 idprom_etheraddr(eaddrp)
 	u_char *eaddrp;
 {
-	u_char *src, *dst;
-	int len = 6;
 
-	src = identity_prom.idp_etheraddr;
-	dst = eaddrp;
-
-	do *dst++ = *src++;
-	while (--len > 0);
+	bcopy(identity_prom.idp_etheraddr, eaddrp, 6);
 }
