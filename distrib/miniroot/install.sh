@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$NetBSD: install.sh,v 1.11 1996/08/22 03:24:19 mrg Exp $
+#	$NetBSD: install.sh,v 1.12 1996/08/25 14:59:00 pk Exp $
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -55,6 +55,7 @@ MODE="install"
 #	md_get_ifdevs()		- return available network interfaces
 #	md_get_partition_range() - return range of valid partition letters
 #	md_installboot()	- install boot-blocks on disk
+#	md_labeldisk()		- put label on a disk
 #	md_prep_disklabel()	- label the root disk
 #	md_welcome_banner()	- display friendly message
 #	md_not_going_to_install() - display friendly message
