@@ -27,7 +27,7 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 # THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
-#	$Id: dot.commonutils,v 1.2 1994/09/01 03:31:37 cgd Exp $
+#	$Id: dot.commonutils,v 1.3 1994/10/02 16:07:03 cgd Exp $
 
 # Installation utilites (functions), to get NetBSD installed on
 # the hard disk.  These are meant to be invoked from the shell prompt,
@@ -65,11 +65,14 @@ Load_fd()
 {
 	Tmp_dir
 	which=
+	echo "Don't forget that you can't load from the drive you booted from."
+	echo ""
+
 	while [ "$which" != "0" -a "$which" != "1" ]; do
-		echo -n	"Read from which floppy drive ('0' or '1')? [0] "
+		echo -n	"Read from which floppy drive ('0' or '1')? [1] "
 		read which
 		if [ "X$which" = "X" ]; then
-			which=0
+			which=1
 		fi
 	done
 	echo	""
@@ -79,6 +82,7 @@ Load_fd()
 	while echo -n \
 	    "Insert floppy (hit Control-C to terminate, enter to load): "
 	do
+		read foo
 		mount -t msdos /dev/fd${which}a /mnt2
 		cp -rp /mnt2/* .
 		umount /mnt2
