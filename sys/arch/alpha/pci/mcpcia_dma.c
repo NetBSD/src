@@ -1,4 +1,4 @@
-/* $NetBSD: mcpcia_dma.c,v 1.7 1998/08/15 20:42:25 thorpej Exp $ */
+/* $NetBSD: mcpcia_dma.c,v 1.8 1998/09/01 21:28:04 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mcpcia_dma.c,v 1.7 1998/08/15 20:42:25 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mcpcia_dma.c,v 1.8 1998/09/01 21:28:04 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -237,7 +237,6 @@ mcpcia_dma_get_tag(t, bustype)
 	alpha_bus_t bustype;
 {
 	struct mcpcia_config *ccp = t->_cookie;
-	extern int physmem;
 
 	switch (bustype) {
 	case ALPHA_BUS_PCI:
