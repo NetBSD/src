@@ -1,4 +1,4 @@
-/* $NetBSD: if_ti.c,v 1.47.4.1 2002/07/18 04:27:26 lukem Exp $ */
+/* $NetBSD: if_ti.c,v 1.47.4.2 2004/05/26 14:00:59 tron Exp $ */
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ti.c,v 1.47.4.1 2002/07/18 04:27:26 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ti.c,v 1.47.4.2 2004/05/26 14:00:59 tron Exp $");
 
 #include "bpfilter.h"
 #include "opt_inet.h"
@@ -1294,6 +1294,7 @@ static int ti_chipinit(sc)
 {
 	u_int32_t		cacheline;
 	u_int32_t		pci_writemax = 0;
+	u_int32_t		rev;
 
 	/* Initialize link to down state. */
 	sc->ti_linkstat = TI_EV_CODE_LINK_DOWN;
@@ -1318,7 +1319,8 @@ static int ti_chipinit(sc)
 	TI_SETBIT(sc, TI_CPU_STATE, TI_CPUSTATE_HALT);
 
 	/* Figure out the hardware revision. */
-	switch(CSR_READ_4(sc, TI_MISC_HOST_CTL) & TI_MHC_CHIP_REV_MASK) {
+	rev = CSR_READ_4(sc, TI_MISC_HOST_CTL) & TI_MHC_CHIP_REV_MASK;
+	switch(rev) {
 	case TI_REV_TIGON_I:
 		sc->ti_hwrev = TI_HWREV_TIGON;
 		break;
@@ -1326,7 +1328,8 @@ static int ti_chipinit(sc)
 		sc->ti_hwrev = TI_HWREV_TIGON_II;
 		break;
 	default:
-		printf("%s: unsupported chip revision\n", sc->sc_dev.dv_xname);
+		printf("%s: unsupported chip revision 0x%x\n",
+		    sc->sc_dev.dv_xname, rev);
 		return(ENODEV);
 	}
 
@@ -1959,7 +1962,8 @@ static void ti_rxeof(sc)
 
 		if (cur_rx->ti_flags & TI_BDFLAG_VLAN_TAG) {
 			have_tag = 1;
-			vlan_tag = cur_rx->ti_vlan_tag;
+			/* ti_vlan_tag also has the priority, trim it */
+			vlan_tag = cur_rx->ti_vlan_tag & 4095;
 		}
 
 		if (cur_rx->ti_flags & TI_BDFLAG_JUMBO_RING) {
