@@ -51,7 +51,7 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: socket.c,v 1.5 2003/02/18 17:08:41 drochner Exp $ Copyright (c) 1995-2002 The Internet Software Consortium.  All rights reserved.\n";
+"$Id: socket.c,v 1.6 2003/09/25 01:01:39 mycroft Exp $ Copyright (c) 1995-2002 The Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -111,6 +111,10 @@ int if_register_socket (info)
 	struct sockaddr_in name;
 	int sock;
 	int flag;
+#ifndef SMALL
+	char *buf;
+	char *policy = "out bypass";
+#endif
 
 #if !defined (HAVE_SO_BINDTODEVICE) && !defined (USE_FALLBACK)
 	/* Make sure only one interface is registered. */
@@ -136,6 +140,15 @@ int if_register_socket (info)
 	if (setsockopt (sock, SOL_SOCKET, SO_REUSEADDR,
 			(char *)&flag, sizeof flag) < 0)
 		log_fatal ("Can't set SO_REUSEADDR option on dhcp socket: %m");
+
+#ifndef SMALL
+	/* Set a per-socket IPsec policy to prevent encryption. */
+	buf = ipsec_set_policy(policy, strlen(policy));
+	if (setsockopt (sock, IPPROTO_IP, IP_IPSEC_POLICY, buf,
+	    ipsec_get_policylen(buf)) < 0 && errno != ENOPROTOOPT)
+		log_fatal ("Can't set IPsec policy on dhcp socket: %m");
+	free (buf);
+#endif
 
 	/* Set the BROADCAST option so that we can broadcast DHCP responses.
 	   We shouldn't do this for fallback devices, and we can detect that
