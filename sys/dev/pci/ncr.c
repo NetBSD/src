@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr.c,v 1.91 1999/12/05 19:40:18 thorpej Exp $	*/
+/*	$NetBSD: ncr.c,v 1.92 1999/12/20 03:37:06 tsutsui Exp $	*/
 
 /**************************************************************************
 **
@@ -1524,7 +1524,7 @@ static	int	read_tekram_eeprom
 
 #if 0
 static char ident[] =
-	"\n$NetBSD: ncr.c,v 1.91 1999/12/05 19:40:18 thorpej Exp $\n";
+	"\n$NetBSD: ncr.c,v 1.92 1999/12/20 03:37:06 tsutsui Exp $\n";
 #endif
 
 static const u_long	ncr_version = NCR_VERSION	* 11
@@ -6669,10 +6669,10 @@ static void ncr_int_ma (ncb_p np, u_char dstat)
 		PRINT_ADDR(cp->xfer);
 		printf ("newcmd[%ld] %x %x %x %x.\n",
 			(long)(newcmd - cp->patch),
-			(unsigned)newcmd[0],
-			(unsigned)newcmd[1],
-			(unsigned)newcmd[2],
-			(unsigned)newcmd[3]);
+			(unsigned)SCR_BO(newcmd[0]),
+			(unsigned)SCR_BO(newcmd[1]),
+			(unsigned)SCR_BO(newcmd[2]),
+			(unsigned)SCR_BO(newcmd[3]));
 	}
 	/*
 	**	fake the return address (to the patch).
@@ -7660,9 +7660,9 @@ static	int	ncr_scatter
 
 	for (segment = 0; segment < cp->xfer_dmamap->dm_nsegs; segment++) {
 		phys->data[segment].addr =
-		    cp->xfer_dmamap->dm_segs[segment].ds_addr;
+		    SCR_BO(cp->xfer_dmamap->dm_segs[segment].ds_addr);
 		phys->data[segment].size =
-		    cp->xfer_dmamap->dm_segs[segment].ds_len;
+		    SCR_BO(cp->xfer_dmamap->dm_segs[segment].ds_len);
 	}
 	return (segment);
 #else
