@@ -33,7 +33,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"	from: @(#)a.out.5	6.3 (Berkeley) 4/29/91
-.\"	$Id: a.out.5,v 1.2 1993/08/01 07:35:36 mycroft Exp $
+.\"	$Id: a.out.5,v 1.3 1993/11/09 00:25:03 pk Exp $
 .\"
 .Dd April 29, 1991
 .Dt A.OUT 5
@@ -195,7 +195,10 @@ struct relocation_info {
 			r_pcrel : 1,
 			r_length : 2,
 			r_extern : 1,
-			: 4;
+			r_baserel : 1,
+			r_jmptable : 1,
+			r_relative : 1,
+			r_copy : 1;
 };
 .Ed
 .Pp
@@ -238,7 +241,9 @@ bit is clear, the relocation is
 .Sq local ;
 the link editor updates the pointer to reflect
 changes in the load addresses of the various segments,
-rather than changes in the value of a symbol.
+rather than changes in the value of a symbol (except when
+.Fa r_baserel
+is also set (see below).
 In this case, the content of the
 .Fa r_symbolnum
 field is an
@@ -246,6 +251,26 @@ field is an
 value (see below);
 this type field tells the link editor
 what segment the relocated pointer points into.
+.It Fa r_baserel
+If set, the symbol, as identified by the
+.Fa r_symbolnum
+field, is to be relocated to an offset into the Global Offset Table.
+At run-time, the entry in the Global Offset Table at this offset is set to
+be the address of the symbol.
+.It Fa r_jmptable
+If set, the symbol, as identified by the
+.Fa r_symbolnum
+field, is to be relocated to an offset into the Procedure Linkage Table.
+.It Fa r_relative
+If set, this relocation is relative to the (run-time) load address of the
+image this object file is going to be a part of. This type of relocation
+only occurs in shared objects.
+.It Fa r_copy
+If set, this relocation record identifies a symbol whose contents should
+be copied to the location given in
+.Fa r_address.
+The copying is done by the run-time link-editor from a suitable data
+item in a shared object.
 .El
 .Pp
 Symbols map names to addresses (or more generally, strings to values).
@@ -370,7 +395,8 @@ is always 4 on 32-bit machines.
 .Xr nlist 3 ,
 .Xr core 5 ,
 .Xr dbx 5 ,
-.Xr stab 5
+.Xr stab 5 ,
+.Xr link 5
 .Sh HISTORY
 The
 .Pa a.out.h
