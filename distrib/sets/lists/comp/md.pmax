@@ -1,4 +1,4 @@
-# $NetBSD: md.pmax,v 1.47 2002/06/10 06:41:56 grant Exp $
+# $NetBSD: md.pmax,v 1.48 2002/08/07 21:21:00 briggs Exp $
 ./usr/include/pmax	comp-c-include
 ./usr/include/pmax/_G_config.h	comp-c-include
 ./usr/include/pmax/ansi.h	comp-c-include
@@ -38,6 +38,7 @@
 ./usr/include/pmax/param.h	comp-c-include
 ./usr/include/pmax/pcb.h	comp-c-include
 ./usr/include/pmax/pmap.h	comp-c-include
+./usr/include/pmax/pmc.h	comp-c-include
 ./usr/include/pmax/pmioctl.h	comp-c-include
 ./usr/include/pmax/proc.h	comp-c-include
 ./usr/include/pmax/profile.h	comp-c-include

@@ -1,4 +1,4 @@
-# $NetBSD: md.newsmips,v 1.15 2002/04/19 18:30:58 tsutsui Exp $
+# $NetBSD: md.newsmips,v 1.16 2002/08/07 21:20:59 briggs Exp $
 ./usr/include/newsmips	comp-c-include
 ./usr/include/newsmips/_G_config.h	comp-c-include
 ./usr/include/newsmips/adrsmap.h	comp-c-include
@@ -37,6 +37,7 @@
 ./usr/include/newsmips/param.h	comp-c-include
 ./usr/include/newsmips/pcb.h	comp-c-include
 ./usr/include/newsmips/pmap.h	comp-c-include
+./usr/include/newsmips/pmc.h	comp-c-include
 ./usr/include/newsmips/proc.h	comp-c-include
 ./usr/include/newsmips/profile.h	comp-c-include
 ./usr/include/newsmips/psl.h	comp-c-include

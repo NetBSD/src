@@ -1,4 +1,4 @@
-# $NetBSD: ad.sh3,v 1.15 2002/06/05 14:37:07 itojun Exp $
+# $NetBSD: ad.sh3,v 1.16 2002/08/07 21:20:51 briggs Exp $
 ./usr/include/ieeefp.h	comp-c-include
 ./usr/include/sh3	comp-c-include
 ./usr/include/sh3/ansi.h	comp-c-include
@@ -31,6 +31,7 @@
 ./usr/include/sh3/param.h	comp-c-include
 ./usr/include/sh3/pcb.h	comp-c-include
 ./usr/include/sh3/pmap.h	comp-c-include
+./usr/include/sh3/pmc.h	comp-c-include
 ./usr/include/sh3/proc.h	comp-c-include
 ./usr/include/sh3/profile.h	comp-c-include
 ./usr/include/sh3/psl.h	comp-c-include

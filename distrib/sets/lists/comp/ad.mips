@@ -1,4 +1,4 @@
-# $NetBSD: ad.mips,v 1.24 2001/04/15 17:14:25 kleink Exp $
+# $NetBSD: ad.mips,v 1.25 2002/08/07 21:20:50 briggs Exp $
 ./usr/bin/elf2aout	comp-sysutil-bin
 ./usr/bin/elf2ecoff	comp-sysutil-bin
 ./usr/include/mips			comp-c-include
@@ -36,6 +36,7 @@
 ./usr/include/mips/mips_param.h		comp-c-include
 ./usr/include/mips/pcb.h		comp-c-include
 ./usr/include/mips/pmap.h		comp-c-include
+./usr/include/mips/pmc.h		comp-c-include
 ./usr/include/mips/proc.h		comp-c-include
 ./usr/include/mips/profile.h		comp-c-include
 ./usr/include/mips/psl.h		comp-c-include
