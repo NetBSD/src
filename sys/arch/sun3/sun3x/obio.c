@@ -1,4 +1,4 @@
-/*	$NetBSD: obio.c,v 1.13 2001/09/05 12:37:25 tsutsui Exp $	*/
+/*	$NetBSD: obio.c,v 1.14 2001/09/05 14:26:08 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -240,9 +240,10 @@ static struct prom_map {
  * a mapping will have to be created.
  */
 caddr_t
-obio_find_mapping(int pa, int sz)
+obio_find_mapping(paddr_t pa, psize_t sz)
 {
-	int i, off;
+	int i;
+	vsize_t off;
 
 	off = pa & PGOFSET;
 	pa -= off;
