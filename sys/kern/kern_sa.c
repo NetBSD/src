@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sa.c,v 1.55 2004/10/23 21:27:34 yamt Exp $	*/
+/*	$NetBSD: kern_sa.c,v 1.56 2005/01/06 19:26:41 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sa.c,v 1.55 2004/10/23 21:27:34 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sa.c,v 1.56 2005/01/06 19:26:41 mycroft Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -773,9 +773,7 @@ sa_upcall0(struct lwp *l, int type, struct lwp *event, struct lwp *interrupted,
 	KDASSERT((event == NULL) || (event != interrupted));
 
 	sau->sau_flags = 0;
-	sau->sau_type = type & SA_UPCALL_TYPE_MASK;
-	sau->sau_argsize = argsize;
-	sau->sau_arg = arg;
+	sau->sau_arg = 0;
 
 	if (type & SA_UPCALL_DEFER_EVENT) {
 		sau->sau_event.ss_deferred.ss_lwp = event;
@@ -787,6 +785,10 @@ sa_upcall0(struct lwp *l, int type, struct lwp *event, struct lwp *interrupted,
 		sau->sau_flags |= SAU_FLAG_DEFERRED_INTERRUPTED;
 	} else
 		sa_upcall_getstate(&sau->sau_interrupted, interrupted);
+
+	sau->sau_type = type & SA_UPCALL_TYPE_MASK;
+	sau->sau_argsize = argsize;
+	sau->sau_arg = arg;
 
 	return (0);
 }
