@@ -1,4 +1,4 @@
-/*	$NetBSD: hpc.c,v 1.14 2003/09/25 16:35:50 lonewolf Exp $	*/
+/*	$NetBSD: hpc.c,v 1.15 2003/09/26 16:58:06 lonewolf Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpc.c,v 1.14 2003/09/25 16:35:50 lonewolf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpc.c,v 1.15 2003/09/26 16:58:06 lonewolf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -91,7 +91,7 @@ const struct hpc_device {
 	{ "haltwo",
 	  HPC_PBUS_CH0_DEVREGS, HPC_PBUS_DMAREGS,
 	  8 + 4, /* XXX IRQ_LOCAL1 + 4 */
-	  HPCDEV_IP24 },
+	  HPCDEV_IP22 | HPCDEV_IP24 },
 
 	{ NULL,
 	  0, 0,
