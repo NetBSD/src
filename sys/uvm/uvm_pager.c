@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pager.c,v 1.23 1999/09/12 01:17:41 chs Exp $	*/
+/*	$NetBSD: uvm_pager.c,v 1.24 1999/11/13 00:24:38 thorpej Exp $	*/
 
 /*
  *
@@ -180,8 +180,7 @@ ReStart:
 		 * XXX instruction cache flushes.
 		 */
 		pmap_enter(vm_map_pmap(pager_map), cva, VM_PAGE_TO_PHYS(pp),
-		    VM_PROT_DEFAULT, TRUE,
-		    VM_PROT_READ | VM_PROT_WRITE);
+		    VM_PROT_DEFAULT, PMAP_WIRED | VM_PROT_READ | VM_PROT_WRITE);
 	}
 
 	UVMHIST_LOG(maphist, "<- done (KVA=0x%x)", kva,0,0,0);
