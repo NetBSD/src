@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.106 1997/06/06 23:28:40 thorpej Exp $	*/
+/*	$NetBSD: fd.c,v 1.107 1997/06/23 23:46:40 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1996
@@ -267,9 +267,9 @@ fdcprobe(parent, match, aux)
 		return 0;
 
 	/* reset */
-	bus_space_write_2(iot, ioh, fdout, 0);
+	bus_space_write_1(iot, ioh, fdout, 0);
 	delay(100);
-	bus_space_write_2(iot, ioh, fdout, FDO_FRST);
+	bus_space_write_1(iot, ioh, fdout, FDO_FRST);
 
 	/* see if it can handle a command */
 	if (out_fdc(iot, ioh, NE7CMD_SPECIFY) < 0)
@@ -287,9 +287,9 @@ fdcprobe(parent, match, aux)
 			goto out;
 
 		/* reset it again */
-		bus_space_write_2(iot, ioh, fdout, 0);
+		bus_space_write_1(iot, ioh, fdout, 0);
 		delay(100);
-		bus_space_write_2(iot, ioh, fdout, FDO_FRST);
+		bus_space_write_1(iot, ioh, fdout, FDO_FRST);
 	}
 #endif
 
@@ -435,7 +435,7 @@ fdprobe(parent, match, aux)
 		return 0;
 
 	/* select drive and turn on motor */
-	bus_space_write_2(iot, ioh, fdout, drive | FDO_FRST | FDO_MOEN(drive));
+	bus_space_write_1(iot, ioh, fdout, drive | FDO_FRST | FDO_MOEN(drive));
 	/* wait for motor to spin up */
 	delay(250000);
 	out_fdc(iot, ioh, NE7CMD_RECAL);
@@ -709,7 +709,7 @@ fd_set_motor(fdc, reset)
 	for (n = 0; n < 4; n++)
 		if ((fd = fdc->sc_fd[n]) && (fd->sc_flags & FD_MOTOR))
 			status |= FDO_MOEN(n);
-	bus_space_write_2(fdc->sc_iot, fdc->sc_ioh, fdout, status);
+	bus_space_write_1(fdc->sc_iot, fdc->sc_ioh, fdout, status);
 }
 
 void
@@ -783,7 +783,7 @@ out_fdc(iot, ioh, x)
 	while ((bus_space_read_1(iot, ioh, fdsts) & NE7_RQM) == 0 && i-- > 0);
 	if (i <= 0)
 		return -1;
-	bus_space_write_2(iot, ioh, fddata, x);
+	bus_space_write_1(iot, ioh, fddata, x);
 	return 0;
 }
 
@@ -1049,7 +1049,7 @@ loop:
 		    bp->b_data + fd->sc_skip, fd->sc_nbytes,
 		    NULL, read, BUS_DMA_NOWAIT);
 #endif
-		bus_space_write_2(iot, ioh, fdctl, type->rate);
+		bus_space_write_1(iot, ioh, fdctl, type->rate);
 #ifdef FD_DEBUG
 		printf("fdcintr: %s drive %d track %d head %d sec %d nblks %d\n",
 			read ? "read" : "write", fd->sc_drive, fd->sc_cylin,
