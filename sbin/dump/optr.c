@@ -1,4 +1,4 @@
-/*	$NetBSD: optr.c,v 1.19 2001/10/15 13:25:34 blymn Exp $	*/
+/*	$NetBSD: optr.c,v 1.20 2001/10/25 08:04:27 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1988, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)optr.c	8.2 (Berkeley) 1/6/94";
 #else
-__RCSID("$NetBSD: optr.c,v 1.19 2001/10/15 13:25:34 blymn Exp $");
+__RCSID("$NetBSD: optr.c,v 1.20 2001/10/25 08:04:27 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -139,7 +139,7 @@ query(char *question)
 	return(back);
 }
 
-char lastmsg[100];
+char lastmsg[200];
 
 /*
  *	Alert the console operator, and enable the alarm clock to
@@ -379,10 +379,10 @@ msg(const char *fmt, ...)
 	(void) fprintf(stderr, "pid=%d ", getpid());
 #endif
 	va_start(ap, fmt);
-	(void) vfprintf(stderr, fmt, ap);
+	(void) vsnprintf(lastmsg, sizeof lastmsg, fmt, ap);
+	fputs(lastmsg, stderr);
 	(void) fflush(stdout);
 	(void) fflush(stderr);
-	(void) vsnprintf(lastmsg, sizeof lastmsg, fmt, ap);
 	va_end(ap);
 }
 
