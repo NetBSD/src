@@ -1,4 +1,4 @@
-/*	$NetBSD: route6d.c,v 1.40 2002/09/20 22:04:32 itojun Exp $	*/
+/*	$NetBSD: route6d.c,v 1.41 2002/09/23 12:48:08 mycroft Exp $	*/
 /*	$KAME: route6d.c,v 1.88 2002/08/21 16:24:25 itojun Exp $	*/
 
 /*
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifndef	lint
-__RCSID("$NetBSD: route6d.c,v 1.40 2002/09/20 22:04:32 itojun Exp $");
+__RCSID("$NetBSD: route6d.c,v 1.41 2002/09/23 12:48:08 mycroft Exp $");
 #endif
 
 #include <stdio.h>

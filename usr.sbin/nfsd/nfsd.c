@@ -1,4 +1,4 @@
-/*	$NetBSD: nfsd.c,v 1.39 2002/09/23 03:36:05 itojun Exp $	*/
+/*	$NetBSD: nfsd.c,v 1.40 2002/09/23 12:48:07 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)nfsd.c	8.9 (Berkeley) 3/29/95";
 #else
-__RCSID("$NetBSD: nfsd.c,v 1.39 2002/09/23 03:36:05 itojun Exp $");
+__RCSID("$NetBSD: nfsd.c,v 1.40 2002/09/23 12:48:07 mycroft Exp $");
 #endif
 #endif /* not lint */
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: apmd.c,v 1.24 2002/09/23 03:36:03 itojun Exp $	*/
+/*	$NetBSD: apmd.c,v 1.25 2002/09/23 12:44:34 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1996, 2000 The NetBSD Foundation, Inc.

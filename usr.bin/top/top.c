@@ -1,4 +1,4 @@
-/*	$NetBSD: top.c,v 1.14 2002/09/23 03:30:19 itojun Exp $	*/
+/*	$NetBSD: top.c,v 1.15 2002/09/23 12:48:05 mycroft Exp $	*/
 
 const char copyright[] = "Copyright (c) 1984 through 1996, William LeFebvre";
 

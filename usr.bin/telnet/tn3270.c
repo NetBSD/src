@@ -1,4 +1,4 @@
-/*	$NetBSD: tn3270.c,v 1.13 2002/09/23 03:29:11 itojun Exp $	*/
+/*	$NetBSD: tn3270.c,v 1.14 2002/09/23 12:48:04 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)tn3270.c	8.2 (Berkeley) 5/30/95";
 #else
-__RCSID("$NetBSD: tn3270.c,v 1.13 2002/09/23 03:29:11 itojun Exp $");
+__RCSID("$NetBSD: tn3270.c,v 1.14 2002/09/23 12:48:04 mycroft Exp $");
 #endif
 #endif /* not lint */
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: rbootd.c,v 1.17 2002/09/23 03:36:05 itojun Exp $	*/
+/*	$NetBSD: rbootd.c,v 1.18 2002/09/23 12:48:07 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1988, 1992 The University of Utah and the Center
@@ -57,7 +57,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)rbootd.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: rbootd.c,v 1.17 2002/09/23 03:36:05 itojun Exp $");
+__RCSID("$NetBSD: rbootd.c,v 1.18 2002/09/23 12:48:07 mycroft Exp $");
 #endif
 #endif /* not lint */
 

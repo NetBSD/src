@@ -1,4 +1,4 @@
-/*	$NetBSD: identd.c,v 1.15 2002/09/23 03:32:35 itojun Exp $	*/
+/*	$NetBSD: identd.c,v 1.16 2002/09/23 12:48:02 mycroft Exp $	*/
 
 /*
 ** identd.c                       A TCP/IP link identification protocol server
