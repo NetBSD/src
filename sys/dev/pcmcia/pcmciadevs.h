@@ -1,10 +1,10 @@
-/*	$NetBSD: pcmciadevs.h,v 1.43 1999/07/22 20:58:18 hwr Exp $	*/
+/*	$NetBSD: pcmciadevs.h,v 1.44 1999/08/06 06:39:57 cgd Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcmciadevs,v 1.40 1999/07/22 20:56:38 hwr Exp 
+ *	NetBSD: pcmciadevs,v 1.41 1999/08/06 06:39:29 cgd Exp 
  */
 
 /*-
@@ -149,6 +149,9 @@
 #define	PCMCIA_CIS_IBM_PORTABLE_CDROM_DRIVE	{ NULL, NULL, NULL, NULL }
 #define	PCMCIA_PRODUCT_IBM_PORTABLE_CDROM_DRIVE	0x002d
 #define	PCMCIA_STR_IBM_PORTABLE_CDROM_DRIVE	"PCMCIA Portable CD-ROM Drive"
+#define	PCMCIA_CIS_IBM_ETHERJET_PCCARD	{ NULL, NULL, NULL, NULL }
+#define	PCMCIA_PRODUCT_IBM_ETHERJET_PCCARD	0x003f
+#define	PCMCIA_STR_IBM_ETHERJET_PCCARD	"IBM EtherJet Ethernet PC Card"
 
 /* I-O DATA */
 #define	PCMCIA_CIS_IODATA_PCLAT	{ NULL, NULL, NULL, NULL }

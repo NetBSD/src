@@ -1,10 +1,10 @@
-/*	$NetBSD: pcmciadevs_data.h,v 1.43 1999/07/22 20:58:18 hwr Exp $	*/
+/*	$NetBSD: pcmciadevs_data.h,v 1.44 1999/08/06 06:39:57 cgd Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcmciadevs,v 1.40 1999/07/22 20:56:38 hwr Exp 
+ *	NetBSD: pcmciadevs,v 1.41 1999/08/06 06:39:29 cgd Exp 
  */
 
 /*-
@@ -176,6 +176,13 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    0,
 	    "IBM Corporation",
 	    "PCMCIA Portable CD-ROM Drive"	},
+	},
+	{
+	    PCMCIA_VENDOR_IBM, PCMCIA_PRODUCT_IBM_ETHERJET_PCCARD,
+	    PCMCIA_CIS_IBM_ETHERJET_PCCARD,
+	    0,
+	    "IBM Corporation",
+	    "IBM EtherJet Ethernet PC Card"	},
 	},
 	{
 	    PCMCIA_VENDOR_IODATA, PCMCIA_PRODUCT_IODATA_PCLAT,
