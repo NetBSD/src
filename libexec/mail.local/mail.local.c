@@ -1,4 +1,4 @@
-/*	$NetBSD: mail.local.c,v 1.13 1997/10/08 01:02:00 enami Exp $	*/
+/*	$NetBSD: mail.local.c,v 1.14 1997/10/08 01:03:00 enami Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -40,7 +40,7 @@ __COPYRIGHT("@(#) Copyright (c) 1990, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)mail.local.c	8.22 (Berkeley) 6/21/95";
 #else
-__RCSID("$NetBSD: mail.local.c,v 1.13 1997/10/08 01:02:00 enami Exp $");
+__RCSID("$NetBSD: mail.local.c,v 1.14 1997/10/08 01:03:00 enami Exp $");
 #endif
 #endif /* not lint */
 
@@ -90,7 +90,7 @@ main(argc, argv)
 
 	from = NULL;
 	while ((ch = getopt(argc, argv, "ldf:r:")) != -1)
-		switch(ch) {
+		switch (ch) {
 		case 'd':		/* backward compatible */
 			break;
 		case 'f':
