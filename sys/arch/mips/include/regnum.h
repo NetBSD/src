@@ -1,4 +1,4 @@
-/*	$NetBSD: regnum.h,v 1.4 2002/11/02 02:00:17 thorpej Exp $	*/
+/*	$NetBSD: regnum.h,v 1.5 2002/11/04 04:24:48 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -94,6 +94,19 @@
 #ifndef _KERNEL		/* clashes with netccitt/pk.h */
 #define	PS	SR	/* alias for SR */
 #endif
+
+/* See <mips/regdef.h> for an explanation. */
+#if defined(__mips_n32) || defined(__mips_n64)
+#define	TA0	8
+#define	TA1	9
+#define	TA2	10
+#define	TA3	11
+#else
+#define	TA0	12
+#define	TA1	13
+#define	TA2	14
+#define	TA3	15
+#endif /* __mips_n32 || __mips_n64 */
 
 #define MULLO	33
 #define MULHI	34
