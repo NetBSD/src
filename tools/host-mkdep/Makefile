@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2002/04/03 15:41:19 christos Exp $
+#	$NetBSD: Makefile,v 1.5 2002/04/03 15:56:32 tv Exp $
 
 TIMESTAMP=	${TOOLDIR}/bin/nbhost-mkdep
 
@@ -15,9 +15,8 @@ host-mkdep: configure host-mkdep.in
 # This is the only program that comes before binstall.
 install: ${TIMESTAMP}
 ${TIMESTAMP}: host-mkdep
-	if [ ! -d ${TOOLDIR}/bin ]; then \
-		mkdir -p ${TOOLDIR}/bin; \
-	fi; cp host-mkdep $@
+	mkdir -p ${TOOLDIR}/bin
+	cp host-mkdep $@
 	chmod +x $@
 
 # Run by hand, then "configure" script committed:
