@@ -1,4 +1,4 @@
-# $NetBSD: shl.elf,v 1.42 2003/07/16 06:18:35 itojun Exp $
+# $NetBSD: shl.elf,v 1.43 2003/07/16 19:03:13 he Exp $
 ./lib/libc.so			comp-c-lib
 ./lib/libcrypt.so		comp-c-lib
 ./lib/libcrypto.so		comp-c-lib
@@ -73,6 +73,7 @@
 ./usr/lib/libsl.so		comp-c-lib
 ./usr/lib/libss.so		comp-c-lib
 ./usr/lib/libssl.so		comp-c-lib
+./usr/lib/libtelnet.so		comp-c-lib
 ./usr/lib/libtermcap.so		comp-c-lib
 ./usr/lib/libtermlib.so		comp-c-lib
 ./usr/lib/libusbhid.so		comp-c-lib
