@@ -1,4 +1,4 @@
-/*	$NetBSD: esp_isa.c,v 1.19 2000/03/19 21:27:01 mycroft Exp $	*/
+/*	$NetBSD: esp_isa.c,v 1.20 2000/03/20 03:49:22 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -537,7 +537,7 @@ esp_isa_dma_intr(sc)
 		}
 
 		if (esc->sc_active) {
-			while (!(NCR_READ_REG(sc, NCR_STAT) & 0x80));
+			while (!(NCR_READ_REG(sc, NCR_STAT) & NCRSTAT_INT));
 			espstat = NCR_READ_REG(sc, NCR_STAT);
 			espintr = NCR_READ_REG(sc, NCR_INTR);
 			espphase = (espintr & NCRINTR_DIS)
