@@ -1,4 +1,4 @@
-/*	$NetBSD: pte.h,v 1.15 1996/03/31 22:06:55 pk Exp $ */
+/*	$NetBSD: pte.h,v 1.16 1996/05/15 02:13:50 mrg Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -46,8 +46,6 @@
  * SUCH DAMAGE.
  *
  *	@(#)pte.h	8.1 (Berkeley) 6/11/93
- *
- * $Id: pte.h,v 1.15 1996/03/31 22:06:55 pk Exp $
  */
 
 /*
