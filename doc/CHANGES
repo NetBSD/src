@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.211 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.212 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -504,4 +504,5 @@ Changes from NetBSD 1.6 to NetBSD 2.0:
 		messages into "last message repeated N times".
 		[lukem 20031017]
 	ccdconfig(8): add CCDF_NOLABEL to ignore the on-disk (raw) disklabel
-		when creating a ccd.  [lukem 20031017].
+		when creating a ccd.  [lukem 20031017]
+	GCC: Update to GCC 3.3.2.  [mrg 20031018]
