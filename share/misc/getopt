@@ -1,0 +1,38 @@
+/*
+ * Main/getopt(3) fragment.
+ *
+ *	from: @(#)getopt	5.2 (Berkeley) 3/17/94
+ *	$Id: getopt,v 1.1 1994/03/26 03:24:53 cgd Exp $
+ */
+
+#include <sys/types.h>
+
+#include <stdlib.h>
+
+void usage __P((void));
+
+int
+main(argc, argv)
+	int argc;
+	char *argv[];
+{
+	int ch;
+
+	while ((ch = getopt(argc, argv, "")) != EOF)
+		switch (ch) {
+		case '':
+			break;
+		case '?':
+		default:
+			usage();
+		}
+	argc -= optind;
+	argv += optind;
+}
+
+void
+usage()
+{
+	(void)fprintf(stderr, "usage: program:\n");
+	exit(1);
+}
