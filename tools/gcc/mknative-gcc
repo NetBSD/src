@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$NetBSD: mknative-gcc,v 1.4 2003/07/30 05:06:28 mrg Exp $
+#	$NetBSD: mknative-gcc,v 1.5 2003/07/30 05:10:06 mrg Exp $
 #
 # Shell script for generating all the constants needed for a native
 # platform build of src/gnu/dist/toolchain.
@@ -105,7 +105,7 @@ get_gcc3_libiberty () {
 		ALLOCA EXTRA_OFILES LIBOBJS REQUIRED_OFILES \
 		| write_mk gnu/usr.bin/gcc3/libiberty/defs.mk
 
-	write_c gnu/usr.bin/gcc3/libiberty/arch/$MACHNIE_ARCH/config.h \
+	write_c gnu/usr.bin/gcc3/libiberty/arch/$MACHINE_ARCH/config.h \
 		<$_TMPDIR/libiberty/config.h
 }
 
