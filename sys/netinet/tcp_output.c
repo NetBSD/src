@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)tcp_output.c	7.22 (Berkeley) 8/31/90
- *	$Id: tcp_output.c,v 1.4 1993/12/18 00:42:05 mycroft Exp $
+ *	$Id: tcp_output.c,v 1.5 1994/01/08 21:22:00 mycroft Exp $
  */
 
 #include <sys/param.h>
@@ -340,7 +340,7 @@ send:
 	 * window for use in delaying messages about window sizes.
 	 * If resending a FIN, be sure not to use a new sequence number.
 	 */
-	if (flags & TH_FIN && tp->t_flags & TF_SENTFIN && 
+	if (flags & TH_FIN && tp->t_flags & TF_SENTFIN &&
 	    tp->snd_nxt == tp->snd_max)
 		tp->snd_nxt--;
 	ti->ti_seq = htonl(tp->snd_nxt);
@@ -454,7 +454,7 @@ send:
 	error = ip_output(m, tp->t_inpcb->inp_options, &tp->t_inpcb->inp_route,
 	    so->so_options & SO_DONTROUTE);
 #else
-	error = ip_output(m, (struct mbuf *)0, &tp->t_inpcb->inp_route, 
+	error = ip_output(m, (struct mbuf *)0, &tp->t_inpcb->inp_route,
 	    so->so_options & SO_DONTROUTE);
 #endif
 	if (error) {

@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)raw_ip.c	7.8 (Berkeley) 7/25/90
- *	$Id: raw_ip.c,v 1.7 1993/12/18 00:42:00 mycroft Exp $
+ *	$Id: raw_ip.c,v 1.8 1994/01/08 21:21:55 mycroft Exp $
  */
 
 #include <sys/param.h>
@@ -118,7 +118,7 @@ rip_output(m, so)
 	}
 	return (ip_output(m,
 	   (rp->rinp_flags & RINPF_HDRINCL)? (struct mbuf *)0: rp->rinp_options,
-	    &rp->rinp_route, 
+	    &rp->rinp_route,
 	   (so->so_options & SO_DONTROUTE) | IP_ALLOWBROADCAST
 #ifdef MULTICAST
 		| IP_MULTICASTOPTS, rp->rinp_rcb.rcb_moptions
@@ -205,9 +205,9 @@ rip_ctloutput(op, so, level, optname, m)
 		case IP_MULTICAST_LOOP:
 		case IP_ADD_MEMBERSHIP:
 		case IP_DROP_MEMBERSHIP:
-			error = ip_getmoptions(optname, 
-						rp->rinp_rcb.rcb_moptions, m);
-                      break;
+			error = ip_getmoptions(optname,
+			    rp->rinp_rcb.rcb_moptions, m);
+			break;
 #endif
 		default:
 			error = EINVAL;

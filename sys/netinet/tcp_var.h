@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)tcp_var.h	7.10 (Berkeley) 6/28/90
- *	$Id: tcp_var.h,v 1.3 1993/05/20 03:50:42 cgd Exp $
+ *	$Id: tcp_var.h,v 1.4 1994/01/08 21:22:04 mycroft Exp $
  */
 
 #ifndef _NETINET_TCP_VAR_H_
@@ -155,7 +155,7 @@ struct tcpcb {
  * port numbers (which are no longer needed once we've located the
  * tcpcb) are overlayed with an mbuf pointer.
  */
-#define REASS_MBUF(ti) (*(struct mbuf **)&((ti)->ti_t))
+#define	REASS_MBUF(ti) (*(struct mbuf **)&((ti)->ti_t))
 
 /*
  * TCP statistics.

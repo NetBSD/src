@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)if_ether.c	7.13 (Berkeley) 10/31/90
- *	$Id: if_ether.c,v 1.5 1993/12/18 00:41:48 mycroft Exp $
+ *	$Id: if_ether.c,v 1.6 1994/01/08 21:21:29 mycroft Exp $
  */
 
 /*
@@ -76,7 +76,7 @@ int	arptab_size = ARPTAB_SIZE;	/* for arp command */
  * ARP trailer negotiation.  Trailer protocol is not IP specific,
  * but ARP request/response use IP addresses.
  */
-#define ETHERTYPE_IPTRAILERS ETHERTYPE_TRAIL
+#define	ETHERTYPE_IPTRAILERS ETHERTYPE_TRAIL
 
 #define	ARPTAB_HASH(a) \
 	((u_long)(a) % ARPTAB_NB)
@@ -162,7 +162,7 @@ arpwhohas(ac, addr)
 int	useloopback = 1;	/* use loopback interface for local traffic */
 
 /*
- * Resolve an IP address into an ethernet address.  If success, 
+ * Resolve an IP address into an ethernet address.  If success,
  * desten is filled in.  If there is no entry in arptab,
  * set one up and broadcast a request for the IP address.
  * Hold onto this mbuf and resend it once the address
@@ -441,7 +441,7 @@ reply:
 	    sizeof(ea->arp_spa));
 	bcopy((caddr_t)&itaddr, (caddr_t)ea->arp_spa,
 	    sizeof(ea->arp_spa));
-	ea->arp_op = htons(ARPOP_REPLY); 
+	ea->arp_op = htons(ARPOP_REPLY);
 	/*
 	 * If incoming packet was an IP reply,
 	 * we are sending a reply for type IPTRAILERS.
@@ -490,7 +490,7 @@ arptfree(at)
 }
 
 /*
- * Enter a new address in arptab, pushing out the oldest entry 
+ * Enter a new address in arptab, pushing out the oldest entry
  * from the bucket if there is no room.
  * This always succeeds since no bucket can be completely filled
  * with permanent entries (except from arpioctl when testing whether
@@ -579,7 +579,7 @@ arpioctl(cmd, data)
 			if (ar->arp_flags & ATF_PERM) {
 			/* never make all entries in a bucket permanent */
 				register struct arptab *tat;
-				
+
 				/* try to re-allocate */
 				tat = arptnew(&sin->sin_addr);
 				if (tat == NULL) {

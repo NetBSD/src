@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)in_pcb.c	7.14 (Berkeley) 4/20/91
- *	$Id: in_pcb.c,v 1.7 1993/12/18 00:41:53 mycroft Exp $
+ *	$Id: in_pcb.c,v 1.8 1994/01/08 21:21:40 mycroft Exp $
  */
 
 #include <sys/param.h>
@@ -74,7 +74,7 @@ in_pcballoc(so, head)
 	so->so_pcb = (caddr_t)inp;
 	return (0);
 }
-	
+
 in_pcbbind(inp, nam)
 	register struct inpcb *inp;
 	struct mbuf *nam;
@@ -89,7 +89,7 @@ in_pcbbind(inp, nam)
 		return (EADDRNOTAVAIL);
 	if (inp->inp_lport || inp->inp_laddr.s_addr != INADDR_ANY)
 		return (EINVAL);
-	
+
 	if ((so->so_options & SO_REUSEADDR) == 0 &&
 	    ((so->so_proto->pr_flags & PR_CONNREQUIRED) == 0 ||
 	     (so->so_options & SO_ACCEPTCONN) == 0))
@@ -173,14 +173,14 @@ in_pcbconnect(inp, nam)
 		struct ifnet *ifp;
 
 		ia = (struct in_ifaddr *)0;
-		/* 
+		/*
 		 * If route is known or can be allocated now,
 		 * our src addr is taken from the i/f, else punt.
 		 */
 		ro = &inp->inp_route;
 		if (ro->ro_rt &&
 		    (satosin(&ro->ro_dst)->sin_addr.s_addr !=
-			sin->sin_addr.s_addr || 
+			sin->sin_addr.s_addr ||
 		    inp->inp_socket->so_options & SO_DONTROUTE)) {
 			RTFREE(ro->ro_rt);
 			ro->ro_rt = (struct rtentry *)0;
@@ -230,7 +230,7 @@ in_pcbconnect(inp, nam)
 		    inp->inp_moptions != NULL) {
 			struct ip_moptions *imo;
 			struct ifnet *ifp;
-			
+
 			imo = inp->inp_moptions;
 			if (imo->imo_multicast_ifp != NULL) {
 				ifp = imo->imo_multicast_ifp;
@@ -294,7 +294,7 @@ in_setsockaddr(inp, nam)
 	struct mbuf *nam;
 {
 	register struct sockaddr_in *sin;
-	
+
 	nam->m_len = sizeof (*sin);
 	sin = mtod(nam, struct sockaddr_in *);
 	bzero((caddr_t)sin, sizeof (*sin));
@@ -309,7 +309,7 @@ in_setpeeraddr(inp, nam)
 	struct mbuf *nam;
 {
 	register struct sockaddr_in *sin;
-	
+
 	nam->m_len = sizeof (*sin);
 	sin = mtod(nam, struct sockaddr_in *);
 	bzero((caddr_t)sin, sizeof (*sin));
@@ -397,7 +397,7 @@ in_losing(inp)
 			    (struct sockaddr *)0, rt->rt_flags, 0);
 		if (rt->rt_flags & RTF_DYNAMIC)
 			(void) rtrequest(RTM_DELETE, rt_key(rt),
-				rt->rt_gateway, rt_mask(rt), rt->rt_flags, 
+				rt->rt_gateway, rt_mask(rt), rt->rt_flags,
 				(struct rtentry **)0);
 		inp->inp_route.ro_rt = 0;
 		rtfree(rt);

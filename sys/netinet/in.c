@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)in.c	7.17 (Berkeley) 4/20/91
- *	$Id: in.c,v 1.6 1993/12/18 00:41:50 mycroft Exp $
+ *	$Id: in.c,v 1.7 1994/01/08 21:21:36 mycroft Exp $
  */
 
 #include <sys/param.h>
@@ -180,7 +180,7 @@ in_lnaof(in)
 	} else if (IN_CLASSD(i)) {
 		net = i & IN_CLASSD_NET;
 		host = i & IN_CLASSD_HOST;
-#endif	
+#endif
 	} else
 		return (i);
 
@@ -547,7 +547,7 @@ in_ifinit(ifp, ia, sin, scrub)
 	 * Add route for the network.
 	 */
 	if (ifp->if_flags & IFF_BROADCAST) {
-		ia->ia_broadaddr.sin_addr = 
+		ia->ia_broadaddr.sin_addr =
 			in_makeaddr(ia->ia_subnet, INADDR_BROADCAST);
 		ia->ia_netbroadcast.s_addr =
 		    htonl(ia->ia_net | (INADDR_BROADCAST &~ ia->ia_netmask));

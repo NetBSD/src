@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)if_ether.h	7.5 (Berkeley) 6/28/90
- *	$Id: if_inarp.h,v 1.6 1993/12/30 04:17:40 deraadt Exp $
+ *	$Id: if_inarp.h,v 1.7 1994/01/08 21:21:31 mycroft Exp $
  */
 
 #ifndef _NETINET_IF_ETHER_H_
@@ -56,8 +56,8 @@ struct	ether_header {
 
 #define	ETHERTYPE_PUP		0x0200	/* PUP protocol */
 #define	ETHERTYPE_IP		0x0800	/* IP protocol */
-#define ETHERTYPE_ARP		0x0806	/* address resolution protocol */
-#define ETHERTYPE_REVARP	0x8035	/* reverse addr resolution protocol */
+#define	ETHERTYPE_ARP		0x0806	/* address resolution protocol */
+#define	ETHERTYPE_REVARP	0x8035	/* reverse addr resolution protocol */
 
 /*
  * The ETHERTYPE_NTRAILER packet types starting at ETHERTYPE_TRAIL have
@@ -76,7 +76,7 @@ struct	ether_header {
  * The high-order 25 bits of the Ethernet address are statically assigned,
  * and the low-order 23 bits are taken from the low end of the IP address.
  */
-#define ETHER_MAP_IP_MULTICAST(ipaddr, enaddr) \
+#define	ETHER_MAP_IP_MULTICAST(ipaddr, enaddr) \
 	/* struct in_addr *ipaddr; */ \
 	/* u_char enaddr[6];       */ \
 { \
@@ -88,7 +88,7 @@ struct	ether_header {
 	(enaddr)[5] = ((u_char *)ipaddr)[3]; \
 }
 #endif
- 
+
 
 /*
  * Ethernet Address Resolution Protocol.
@@ -180,7 +180,7 @@ struct ether_multistep {
  * multicast addresses connected to a given arpcom structure.  If no matching
  * record is found, "enm" returns NULL.
  */
-#define ETHER_LOOKUP_MULTI(addrlo, addrhi, ac, enm) \
+#define	ETHER_LOOKUP_MULTI(addrlo, addrhi, ac, enm) \
 	/* u_char addrlo[6]; */ \
 	/* u_char addrhi[6]; */ \
 	/* struct arpcom *ac; */ \
@@ -200,7 +200,7 @@ struct ether_multistep {
  * and get the first record.  Both macros return a NULL "enm" when there
  * are no remaining records.
  */
-#define ETHER_NEXT_MULTI(step, enm) \
+#define	ETHER_NEXT_MULTI(step, enm) \
 	/* struct ether_multistep step; */  \
 	/* struct ether_multi *enm; */  \
 { \
@@ -208,7 +208,7 @@ struct ether_multistep {
 		(step).e_enm = (enm)->enm_next; \
 }
 
-#define ETHER_FIRST_MULTI(step, ac, enm) \
+#define	ETHER_FIRST_MULTI(step, ac, enm) \
 	/* struct ether_multistep step; */ \
 	/* struct arpcom *ac; */ \
 	/* struct ether_multi *enm; */ \
