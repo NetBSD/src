@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 2002/10/17 01:49:18 lukem Exp $
+#	$NetBSD: Makefile,v 1.7 2003/01/29 11:32:45 simonb Exp $
 
 .include <bsd.own.mk>
 .include "${NETBSDSRCDIR}/distrib/common/Makefile.distrib"
@@ -30,20 +30,9 @@ PARSELISTENV+=	LDD_CMD=ldd_aout
 
 .include "${DISTRIBDIR}/common/Makefile.crunch"
 
-# XXX Make sure to update distrib/sets/makeflist when this conditional
-# XXX is changed or removed.
-.if ${MACHINE_CPU} == "mips"						# {
-
-realall install:
-	@echo "WARNING: src/rescue not built on ${MACHINE_ARCH} due to broken crunchgen"
-
-.else									# } {
-
 realall: ${CRUNCHBIN}
 
 install: ${CRUNCHBIN}
 	${PARSELIST} -v mode=install ${LISTS} | ${MAKE} -f - install
-
-.endif									# }
 
 .include <bsd.prog.mk>
