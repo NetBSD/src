@@ -1,4 +1,4 @@
-/* $NetBSD: ipifuncs.c,v 1.24 2001/01/19 18:51:17 thorpej Exp $ */
+/* $NetBSD: ipifuncs.c,v 1.25 2001/04/20 00:10:17 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: ipifuncs.c,v 1.24 2001/01/19 18:51:17 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipifuncs.c,v 1.25 2001/04/20 00:10:17 thorpej Exp $");
 
 /*
  * Interprocessor interrupt handlers.
@@ -293,6 +293,8 @@ void
 alpha_ipi_synch_fpu(struct cpu_info *ci, struct trapframe *framep)
 {
 
+	if (ci->ci_flags & CPUF_FPUSAVE)
+		return;
 	fpusave_cpu(ci, 1);
 }
 
@@ -300,6 +302,8 @@ void
 alpha_ipi_discard_fpu(struct cpu_info *ci, struct trapframe *framep)
 {
 
+	if (ci->ci_flags & CPUF_FPUSAVE)
+		return;
 	fpusave_cpu(ci, 0);
 }
 
