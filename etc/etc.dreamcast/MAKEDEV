@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.37 2003/05/15 13:18:07 wiz Exp $
+#	$NetBSD: MAKEDEV,v 1.38 2003/07/04 16:34:41 marcus Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -35,13 +35,8 @@
 #		Tries to make the 'standard' number of each type.
 #	init	A set of devices that is used for MFS /dev by init.
 #		May be equal to "all".
-#	floppy	devices to be put on install floppies
 #	std	standard devices
 #	local	configuration specific devices
-#
-# Tapes:
-#	wt*	QIC-interfaced (e.g. not SCSI) 3M cartridge tape
-#	st*	SCSI tapes
 #
 # Disks:
 #	gdrom*	Dreamcast "gigadisc" CD-ROM drive
@@ -83,9 +78,7 @@
 #	fd	file descriptors
 #	bpf*	packet filter
 #	ipl	IP Filter
-#	cbq	Alternate Queueing (ALTQ)
 #	random	Random number generator
-#	speaker	PC speaker				(XXX - installed)
 #	lkm	loadable kernel modules interface
 #	audio	audio device
 #	tun*	network tunnel driver

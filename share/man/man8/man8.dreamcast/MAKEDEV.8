@@ -6,7 +6,7 @@
 .\" *** DO NOT EDIT - any changes will be lost!!!
 .\" *** ------------------------------------------------------------------
 .\"
-.\" $NetBSD: MAKEDEV.8,v 1.15 2003/04/24 12:16:00 wiz Exp $
+.\" $NetBSD: MAKEDEV.8,v 1.16 2003/07/04 16:34:42 marcus Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -85,8 +85,6 @@ are:
 Makes all known devices, including local devices. Tries to make the 'standard' number of each type.
 .It Ar init
 A set of devices that is used for MFS /dev by init. May be equal to ``all''.
-.It Ar floppy
-Devices to be put on install floppies
 .It Ar std
 Standard devices
 .It Ar local
@@ -101,15 +99,6 @@ digits when calling
 .Pp
 .\" @@@DEVICES@@@
 .Bl -tag -width 01
-.It Tapes :
-. Bl -tag -width 0123456789 -compact
-. It Ar wt#
-QIC-interfaced (e.g. not SCSI) 3M cartridge tape, see
-.Xr \&wt 4
-. It Ar st#
-SCSI tapes, see
-.Xr \&st 4
-. El
 .It Disks :
 . Bl -tag -width 0123456789 -compact
 . It Ar gdrom#
@@ -203,13 +192,8 @@ Packet filter, see
 .Xr \&bpf 4
 . It Ar ipl
 IP Filter
-. It Ar cbq
-Alternate Queueing (ALTQ)
 . It Ar random
 Random number generator
-. It Ar speaker
-PC speaker, see
-.Xr \&speaker 4
 . It Ar lkm
 Loadable kernel modules interface, see
 .Xr \&lkm 4
