@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.58 2002/09/25 19:30:22 thorpej Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.59 2002/09/27 03:17:51 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 2002 The NetBSD Foundation, Inc.
@@ -99,7 +99,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.58 2002/09/25 19:30:22 thorpej Exp $");                                                  
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.59 2002/09/27 03:17:51 thorpej Exp $");                                                  
 
 #include "hil.h"
 #include "dvbox.h"
@@ -282,7 +282,7 @@ mainbussearch(parent, cf, aux)
 	void *aux;
 {
 
-	if ((*cf->cf_attach->ca_match)(parent, cf, NULL) > 0)
+	if (config_match(parent, cf, NULL) > 0)
 		config_attach(parent, cf, NULL, NULL);
 	return (0);
 }

@@ -1,4 +1,4 @@
-/* $NetBSD: device.h,v 1.52 2002/09/27 02:24:34 thorpej Exp $ */
+/* $NetBSD: device.h,v 1.53 2002/09/27 03:18:23 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -282,6 +282,8 @@ struct device *config_found_sm(struct device *, void *, cfprint_t, cfmatch_t);
 struct device *config_rootfound(const char *, void *);
 struct device *config_attach(struct device *, struct cfdata *, void *,
     cfprint_t);
+int config_match(struct device *, struct cfdata *, void *);
+
 void config_makeroom(int n, struct cfdriver *cd);
 int config_detach(struct device *, int);
 int config_activate(struct device *);

@@ -1,4 +1,4 @@
-/* $NetBSD: tcds.c,v 1.3 2001/11/13 06:26:10 lukem Exp $ */
+/* $NetBSD: tcds.c,v 1.4 2002/09/27 03:18:21 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcds.c,v 1.3 2001/11/13 06:26:10 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcds.c,v 1.4 2002/09/27 03:18:21 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -331,7 +331,7 @@ tcdssubmatch(parent, cf, aux)
 	    cf->cf_loc[TCDSCF_CHIP] != tcdsdev->tcdsda_chip)
 		return (0);
 
-	return ((*cf->cf_attach->ca_match)(parent, cf, aux));
+	return (config_match(parent, cf, aux));
 }
 
 int

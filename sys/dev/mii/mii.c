@@ -1,4 +1,4 @@
-/*	$NetBSD: mii.c,v 1.29 2002/03/25 20:51:25 thorpej Exp $	*/
+/*	$NetBSD: mii.c,v 1.30 2002/09/27 03:18:16 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mii.c,v 1.29 2002/03/25 20:51:25 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mii.c,v 1.30 2002/09/27 03:18:16 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -237,7 +237,7 @@ mii_submatch(struct device *parent, struct cfdata *cf, void *aux)
 	    cf->cf_loc[MIICF_PHY] != MIICF_PHY_DEFAULT)
 		return (0);
 
-	return ((*cf->cf_attach->ca_match)(parent, cf, aux));
+	return (config_match(parent, cf, aux));
 }
 
 /*

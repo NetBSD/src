@@ -1,4 +1,4 @@
-/* $NetBSD: zbbus.c,v 1.1 2002/03/06 02:13:52 simonb Exp $ */
+/* $NetBSD: zbbus.c,v 1.2 2002/09/27 03:18:04 thorpej Exp $ */
 
 /*
  * Copyright 2000, 2001
@@ -114,7 +114,7 @@ zbbus_submatch(struct device *parent, struct cfdata *cf, void *aux)
 	    cf->cf_loc[ZBBUSCF_BUSID] != zap->za_locs.za_busid)
 		return (0);
 
-	return ((*cf->cf_attach->ca_match)(parent, cf, aux));
+	return (config_match(parent, cf, aux));
 }
 
 static const char *

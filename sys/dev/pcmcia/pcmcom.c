@@ -1,4 +1,4 @@
-/*	$NetBSD: pcmcom.c,v 1.9 2002/06/01 23:51:02 lukem Exp $	*/
+/*	$NetBSD: pcmcom.c,v 1.10 2002/09/27 03:18:18 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcmcom.c,v 1.9 2002/06/01 23:51:02 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcmcom.c,v 1.10 2002/09/27 03:18:18 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -365,7 +365,7 @@ pcmcom_submatch(parent, cf, aux)
 	    cf->cf_loc[PCMCOMCF_SLAVE] != PCMCOMCF_SLAVE_DEFAULT)
 		return (0);
 
-	return ((*cf->cf_attach->ca_match)(parent, cf, aux));
+	return (config_match(parent, cf, aux));
 }
 
 int

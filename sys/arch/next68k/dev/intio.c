@@ -1,4 +1,4 @@
-/*	$NetBSD: intio.c,v 1.3 2002/09/11 01:46:31 mycroft Exp $	*/
+/*	$NetBSD: intio.c,v 1.4 2002/09/27 03:18:01 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -120,7 +120,7 @@ intiosearch(parent, cf, aux)
 		ia.ia_bst = NEXT68K_INTIO_BUS_SPACE;
 		ia.ia_dmat = mba->mba_dmat;
 		
-		if ((*cf->cf_attach->ca_match)(parent, cf, &ia) == 0)
+		if (config_match(parent, cf, &ia) == 0)
 			break;
 		config_attach(parent, cf, &ia, intioprint);
 	} while (cf->cf_fstate == FSTATE_STAR);

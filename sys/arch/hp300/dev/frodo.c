@@ -1,4 +1,4 @@
-/*	$NetBSD: frodo.c,v 1.10 2002/03/17 05:44:48 gmcgarry Exp $	*/
+/*	$NetBSD: frodo.c,v 1.11 2002/09/27 03:17:50 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: frodo.c,v 1.10 2002/03/17 05:44:48 gmcgarry Exp $");                                                  
+__KERNEL_RCSID(0, "$NetBSD: frodo.c,v 1.11 2002/09/27 03:17:50 thorpej Exp $");                                                  
 
 #define	_HP300_INTR_H_PRIVATE
 
@@ -218,7 +218,7 @@ frodosubmatch(parent, cf, aux)
 	    cf->frodocf_offset != fa->fa_offset)
 		return (0);
 
-	return ((*cf->cf_attach->ca_match)(parent, cf, aux));
+	return (config_match(parent, cf, aux));
 }
 
 int

@@ -1,4 +1,4 @@
-/* $NetBSD: mcbus.c,v 1.9 2002/09/26 20:02:47 thorpej Exp $ */
+/* $NetBSD: mcbus.c,v 1.10 2002/09/27 03:17:43 thorpej Exp $ */
 
 /*
  * Copyright (c) 1998 by Matthew Jacob
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mcbus.c,v 1.9 2002/09/26 20:02:47 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mcbus.c,v 1.10 2002/09/27 03:17:43 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -113,7 +113,7 @@ mcbussbm(parent, cf, aux)
 	if (cf->cf_loc[MCBUSCF_MID] != MCBUSCF_MID_DEFAULT &&
 	    cf->cf_loc[MCBUSCF_MID] != tap->ma_mid)
 		return (0);
-	return ((*cf->cf_attach->ca_match)(parent, cf, aux));
+	return (config_match(parent, cf, aux));
 }
 
 static int

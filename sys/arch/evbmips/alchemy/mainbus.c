@@ -1,4 +1,4 @@
-/* $NetBSD: mainbus.c,v 1.2 2002/08/28 02:27:11 simonb Exp $ */
+/* $NetBSD: mainbus.c,v 1.3 2002/09/27 03:17:49 thorpej Exp $ */
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -100,7 +100,7 @@ static int
 mainbus_submatch(struct device *parent, struct cfdata *cf, void *aux)
 {
 
-	return ((*cf->cf_attach->ca_match)(parent, cf, aux));
+	return (config_match(parent, cf, aux));
 }
 
 static int

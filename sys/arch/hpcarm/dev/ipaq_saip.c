@@ -1,4 +1,4 @@
-/*	$NetBSD: ipaq_saip.c,v 1.9 2002/07/20 01:36:56 ichiro Exp $	*/
+/*	$NetBSD: ipaq_saip.c,v 1.10 2002/09/27 03:17:53 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001, The NetBSD Foundation, Inc.  All rights reserved.
@@ -115,7 +115,7 @@ ipaq_search(parent, cf, aux)
 	struct cfdata *cf;
 	void *aux;
 {
-	if ((*cf->cf_attach->ca_match)(parent, cf, NULL) > 0)
+	if (config_match(parent, cf, NULL) > 0)
 		config_attach(parent, cf, NULL, ipaq_print);
 
         return 0;

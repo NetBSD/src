@@ -1,4 +1,4 @@
-/*	$NetBSD: uda1341.c,v 1.1 2001/07/15 20:19:31 ichiro Exp $	*/
+/*	$NetBSD: uda1341.c,v 1.2 2002/09/27 03:17:53 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.  All rights reserved.
@@ -159,7 +159,7 @@ uda1341_search(parent, cf, aux)
 	struct cfdata *cf;
 	void *aux;
 {
-	if ((*cf->cf_attach->ca_match)(parent, cf, NULL) > 0)
+	if (config_match(parent, cf, NULL) > 0)
 		config_attach(parent, cf, NULL, uda1341_print);
 	return 0;
 }

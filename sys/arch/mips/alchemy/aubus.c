@@ -1,4 +1,4 @@
-/* $NetBSD: aubus.c,v 1.1 2002/07/29 15:39:12 simonb Exp $ */
+/* $NetBSD: aubus.c,v 1.2 2002/09/27 03:17:58 thorpej Exp $ */
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -182,7 +182,7 @@ aubus_submatch(struct device *parent, struct cfdata *cf, void *aux)
 	    cf->cf_loc[AUBUSCF_ADDR] != aa->aa_addr)
 		return (0);
 
-	return ((*cf->cf_attach->ca_match)(parent, cf, aux));
+	return (config_match(parent, cf, aux));
 }
 
 /*

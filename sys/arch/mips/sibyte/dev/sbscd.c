@@ -1,4 +1,4 @@
-/* $NetBSD: sbscd.c,v 1.1 2002/03/05 23:46:42 simonb Exp $ */
+/* $NetBSD: sbscd.c,v 1.2 2002/09/27 03:17:59 thorpej Exp $ */
 
 /*
  * Copyright 2000, 2001
@@ -131,7 +131,7 @@ sbscd_submatch(struct device *parent, struct cfdata *cf, void *aux)
 			return (0);
 	}
 
-	return ((*cf->cf_attach->ca_match)(parent, cf, aux));
+	return (config_match(parent, cf, aux));
 }
 
 static const char *

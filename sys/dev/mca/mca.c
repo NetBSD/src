@@ -1,4 +1,4 @@
-/*	$NetBSD: mca.c,v 1.8 2002/09/27 02:24:30 thorpej Exp $	*/
+/*	$NetBSD: mca.c,v 1.9 2002/09/27 03:18:15 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mca.c,v 1.8 2002/09/27 02:24:30 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mca.c,v 1.9 2002/09/27 03:18:15 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -129,7 +129,7 @@ mca_submatch(parent, cf, aux)
 	if (cf->mcacf_slot != MCA_UNKNOWN_SLOT &&
 	    cf->mcacf_slot != ma->ma_slot)
 		return 0;
-	return ((*cf->cf_attach->ca_match)(parent, cf, aux));
+	return (config_match(parent, cf, aux));
 }
 
 void

@@ -1,4 +1,4 @@
-/* $NetBSD: ioc.c,v 1.2 2002/03/24 23:37:44 bjh21 Exp $ */
+/* $NetBSD: ioc.c,v 1.3 2002/09/27 03:17:41 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000 Ben Harris
@@ -32,7 +32,7 @@
 
 #include <sys/param.h>
 
-__RCSID("$NetBSD: ioc.c,v 1.2 2002/03/24 23:37:44 bjh21 Exp $");
+__RCSID("$NetBSD: ioc.c,v 1.3 2002/09/27 03:17:41 thorpej Exp $");
 
 #include <sys/device.h>
 #include <sys/kernel.h>
@@ -152,7 +152,7 @@ ioc_search(struct device *parent, struct cfdata *cf, void *aux)
 			    + (IOC_TYPE_SYNC << IOC_TYPE_SHIFT)
 			    + (ioc.ioc_offset >> 2),
 			    1 << IOC_BANK_SHIFT, &ioc.ioc_sync_h);
-	if ((cf->cf_attach->ca_match)(parent, cf, &ioc) > 0)
+	if (config_match(parent, cf, &ioc) > 0)
 		config_attach(parent, cf, &ioc, ioc_print);
 
 	return 0;

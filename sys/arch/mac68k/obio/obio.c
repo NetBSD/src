@@ -1,4 +1,4 @@
-/*	$NetBSD: obio.c,v 1.11 2002/04/10 05:13:09 briggs Exp $	*/
+/*	$NetBSD: obio.c,v 1.12 2002/09/27 03:17:58 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -109,7 +109,7 @@ obio_search(parent, cf, aux)
 	oa.oa_tag = mba->mba_bst;
 	oa.oa_dmat = mba->mba_dmat;
 
-	if ((*cf->cf_attach->ca_match)(parent, cf, &oa) > 0)
+	if (config_match(parent, cf, &oa) > 0)
 		config_attach(parent, cf, &oa, obio_print);
 
 	return (0);

@@ -1,4 +1,4 @@
-/*	$NetBSD: cardslot.c,v 1.17 2002/06/01 23:50:57 lukem Exp $	*/
+/*	$NetBSD: cardslot.c,v 1.18 2002/09/27 03:18:10 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1999 and 2000
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cardslot.c,v 1.17 2002/06/01 23:50:57 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cardslot.c,v 1.18 2002/09/27 03:18:10 thorpej Exp $");
 
 #include "opt_cardslot.h"
 
@@ -191,7 +191,7 @@ cardslot_16_submatch(parent, cf, aux)
 	}
 
 	if ((cf->cf_loc[PCMCIABUSCF_CONTROLLER] == PCMCIABUSCF_CONTROLLER_DEFAULT)) {
-		return ((*cf->cf_attach->ca_match)(parent, cf, aux));
+		return (config_match(parent, cf, aux));
 	}
 
 	return 0;

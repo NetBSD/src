@@ -1,4 +1,4 @@
-/*	$NetBSD: plum.c,v 1.3 2002/01/29 18:53:10 uch Exp $ */
+/*	$NetBSD: plum.c,v 1.4 2002/09/27 03:17:53 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -165,7 +165,7 @@ plum_search(struct device *parent, struct cfdata *cf, void *aux)
 	pa.pa_memt	= sc->sc_csmemt;
 	pa.pa_irq	= sc->sc_irq;
 
-	if ((*cf->cf_attach->ca_match)(parent, cf, &pa) == sc->sc_pri) {
+	if (config_match(parent, cf, &pa) == sc->sc_pri) {
 		config_attach(parent, cf, &pa, plum_print);
 	}
 

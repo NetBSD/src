@@ -1,4 +1,4 @@
-/*	$NetBSD: gio.c,v 1.3 2002/09/27 02:24:22 thorpej Exp $	*/
+/*	$NetBSD: gio.c,v 1.4 2002/09/27 03:18:05 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -114,7 +114,7 @@ gio_search(parent, cf, aux)
 		ga->ga_addr = cf->cf_loc[GIOCF_ADDR];
 		ga->ga_iot = 0;
 		ga->ga_ioh = MIPS_PHYS_TO_KSEG1(ga->ga_addr);
-		if ((*cf->cf_attach->ca_match)(parent, cf, ga) > 0)
+		if (config_match(parent, cf, ga) > 0)
 			config_attach(parent, cf, ga, gio_print);
 	} while (cf->cf_fstate == FSTATE_STAR);
 

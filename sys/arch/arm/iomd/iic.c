@@ -1,4 +1,4 @@
-/*	$NetBSD: iic.c,v 1.4 2002/09/06 13:18:43 gehenna Exp $	*/
+/*	$NetBSD: iic.c,v 1.5 2002/09/27 03:17:44 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -283,7 +283,7 @@ iicsearch(parent, cf, aux)
 		iba.ib_aux = NULL;
 
 		tryagain = 0;
-		if ((*cf->cf_attach->ca_match)(parent, cf, &iba) > 0) {
+		if (config_match(parent, cf, &iba) > 0) {
 			config_attach(parent, cf, &iba, iicprint);
 /*			tryagain = (cf->cf_fstate == FSTATE_STAR);*/
 		}

@@ -1,4 +1,4 @@
-/*	$NetBSD: iic.c,v 1.1 2002/03/24 15:47:17 bjh21 Exp $	*/
+/*	$NetBSD: iic.c,v 1.2 2002/09/27 03:17:41 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -47,7 +47,7 @@
 
 #include <sys/param.h>
 
-__RCSID("$NetBSD: iic.c,v 1.1 2002/03/24 15:47:17 bjh21 Exp $");
+__RCSID("$NetBSD: iic.c,v 1.2 2002/09/27 03:17:41 thorpej Exp $");
 
 #include <sys/systm.h>
 #include <sys/kernel.h>
@@ -340,7 +340,7 @@ iicsearch(struct device *parent, struct cfdata *cf, void *aux)
 		iba.ib_aux = NULL;
 
 		tryagain = 0;
-		if ((*cf->cf_attach->ca_match)(parent, cf, &iba) > 0) {
+		if (config_match(parent, cf, &iba) > 0) {
 			config_attach(parent, cf, &iba, iicprint);
 /*			tryagain = (cf->cf_fstate == FSTATE_STAR);*/
 		}

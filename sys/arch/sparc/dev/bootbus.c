@@ -1,4 +1,4 @@
-/*	$NetBSD: bootbus.c,v 1.4 2002/09/27 02:24:23 thorpej Exp $	*/
+/*	$NetBSD: bootbus.c,v 1.5 2002/09/27 03:18:06 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -148,7 +148,7 @@ bootbus_submatch(struct device *parent, struct cfdata *cf, void *aux)
 	    cf->cf_loc[BOOTBUSCF_OFFSET] != baa->ba_offset)
 		return (0);
 
-	return ((*cf->cf_attach->ca_match)(parent, cf, aux));
+	return (config_match(parent, cf, aux));
 }
 
 static int

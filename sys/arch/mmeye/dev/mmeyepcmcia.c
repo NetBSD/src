@@ -1,4 +1,4 @@
-/*	$NetBSD: mmeyepcmcia.c,v 1.2 2002/06/01 23:50:55 lukem Exp $	*/
+/*	$NetBSD: mmeyepcmcia.c,v 1.3 2002/09/27 03:18:00 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Marc Horowitz.  All rights reserved.
@@ -510,7 +510,7 @@ int
 mmeyepcmcia_submatch(struct device *parent, struct cfdata *cf, void *aux)
 {
 
-	return ((*cf->cf_attach->ca_match)(parent, cf, aux));
+	return (config_match(parent, cf, aux));
 }
 
 int

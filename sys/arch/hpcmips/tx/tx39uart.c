@@ -1,4 +1,4 @@
-/*	$NetBSD: tx39uart.c,v 1.5 2002/01/29 18:53:18 uch Exp $ */
+/*	$NetBSD: tx39uart.c,v 1.6 2002/09/27 03:17:55 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -99,7 +99,7 @@ tx39uart_search(struct device *parent, struct cfdata *cf, void *aux)
 	}
 	
 	if (!(sc->sc_enabled & (1 << ua.ua_slot)) && /* not attached slot */
-	    (*cf->cf_attach->ca_match)(parent, cf, &ua)) {
+	    config_match(parent, cf, &ua)) {
 		config_attach(parent, cf, &ua, tx39uart_print);
 		sc->sc_enabled |= (1 << ua.ua_slot);
 	}

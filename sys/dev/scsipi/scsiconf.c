@@ -1,4 +1,4 @@
-/*	$NetBSD: scsiconf.c,v 1.188 2002/09/19 08:31:06 jmc Exp $	*/
+/*	$NetBSD: scsiconf.c,v 1.189 2002/09/27 03:18:20 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scsiconf.c,v 1.188 2002/09/19 08:31:06 jmc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scsiconf.c,v 1.189 2002/09/27 03:18:20 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -258,7 +258,7 @@ scsibussubmatch(parent, cf, aux)
 	if (cf->cf_loc[SCSIBUSCF_LUN] != SCSIBUSCF_LUN_DEFAULT &&
 	    cf->cf_loc[SCSIBUSCF_LUN] != periph->periph_lun)
 		return (0);
-	return ((*cf->cf_attach->ca_match)(parent, cf, aux));
+	return (config_match(parent, cf, aux));
 }
 
 int

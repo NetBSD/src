@@ -1,4 +1,4 @@
-/*	$NetBSD: sbus.c,v 1.1 2001/10/16 15:38:34 uch Exp $	*/
+/*	$NetBSD: sbus.c,v 1.2 2002/09/27 03:18:02 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -123,7 +123,7 @@ sbus_search(struct device *parent, struct cfdata *cf, void *aux)
 {
 	struct sbus_attach_args sa;
 
-	if ((*cf->cf_attach->ca_match)(parent, cf, &sa))
+	if (config_match(parent, cf, &sa))
 		config_attach(parent, cf, &sa, sbus_print);
 	
 	return (0);

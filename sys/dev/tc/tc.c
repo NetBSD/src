@@ -1,4 +1,4 @@
-/*	$NetBSD: tc.c,v 1.30 2002/09/27 02:24:33 thorpej Exp $	*/
+/*	$NetBSD: tc.c,v 1.31 2002/09/27 03:18:21 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tc.c,v 1.30 2002/09/27 02:24:33 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tc.c,v 1.31 2002/09/27 03:18:21 thorpej Exp $");
 
 #include "opt_tcverbose.h"
 
@@ -213,7 +213,7 @@ tcsubmatch(parent, cf, aux)
 	    (cf->tccf_offset != d->ta_offset))
 		return 0;
 
-	return ((*cf->cf_attach->ca_match)(parent, cf, aux));
+	return (config_match(parent, cf, aux));
 }
 
 

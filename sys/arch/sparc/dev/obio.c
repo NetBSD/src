@@ -1,4 +1,4 @@
-/*	$NetBSD: obio.c,v 1.54 2002/09/27 02:24:24 thorpej Exp $	*/
+/*	$NetBSD: obio.c,v 1.55 2002/09/27 03:18:06 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997,1998 The NetBSD Foundation, Inc.
@@ -296,7 +296,7 @@ obiosearch(parent, cf, aux)
 	oba->oba_paddr = BUS_ADDR(PMAP_OBIO, cf->cf_loc[0]);
 	oba->oba_pri = cf->cf_loc[1];
 
-	if ((*cf->cf_attach->ca_match)(parent, cf, &uoba) == 0)
+	if (config_match(parent, cf, &uoba) == 0)
 		return (0);
 
 	config_attach(parent, cf, &uoba, obioprint);

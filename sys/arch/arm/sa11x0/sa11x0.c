@@ -1,4 +1,4 @@
-/*	$NetBSD: sa11x0.c,v 1.5 2002/07/19 18:26:56 ichiro Exp $	*/
+/*	$NetBSD: sa11x0.c,v 1.6 2002/09/27 03:17:45 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001, The NetBSD Foundation, Inc.  All rights reserved.
@@ -222,7 +222,7 @@ sa11x0_search(parent, cf, aux)
         sa.sa_intr = cf->cf_loc[SAIPCF_INTR];
 	sa.sa_gpio = cf->cf_loc[SAIPCF_GPIO];
 
-        if ((*cf->cf_attach->ca_match)(parent, cf, &sa) > 0)
+        if (config_match(parent, cf, &sa) > 0)
                 config_attach(parent, cf, &sa, sa11x0_print);
 
         return 0;

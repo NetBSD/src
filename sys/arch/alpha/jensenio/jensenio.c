@@ -1,4 +1,4 @@
-/* $NetBSD: jensenio.c,v 1.4 2002/09/27 02:24:08 thorpej Exp $ */
+/* $NetBSD: jensenio.c,v 1.5 2002/09/27 03:17:43 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -50,7 +50,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: jensenio.c,v 1.4 2002/09/27 02:24:08 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: jensenio.c,v 1.5 2002/09/27 03:17:43 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -230,13 +230,13 @@ jensenio_submatch(struct device *parent, struct cfdata *cf, void *aux)
 	 */
 	if (strcmp(ja->ja_name, "eisa") == 0 ||
 	    strcmp(ja->ja_name, "isa") == 0)
-		return ((*cf->cf_attach->ca_match)(parent, cf, aux));
+		return (config_match(parent, cf, aux));
 
 	if (cf->cf_loc[JENSENIOCF_PORT] != JENSENIOCF_PORT_DEFAULT &&
 	    cf->cf_loc[JENSENIOCF_PORT] != ja->ja_ioaddr)
 		return (0);
 
-	return ((*cf->cf_attach->ca_match)(parent, cf, aux));
+	return (config_match(parent, cf, aux));
 }
 
 int

@@ -1,4 +1,4 @@
-/*      $NetBSD: sa1111.c,v 1.5 2002/08/12 22:26:41 rjs Exp $	*/
+/*      $NetBSD: sa1111.c,v 1.6 2002/09/27 03:17:45 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -185,7 +185,7 @@ sa1111_search(parent, cf, aux)
 	struct cfdata *cf;
 	void *aux;
 {
-        if ((*cf->cf_attach->ca_match)(parent, cf, NULL) > 0)
+        if (config_match(parent, cf, NULL) > 0)
                 config_attach(parent, cf, NULL, sa1111_print);
 
         return 0;

@@ -1,4 +1,4 @@
-/*	$NetBSD: pci.c,v 1.69 2002/09/27 02:24:30 thorpej Exp $	*/
+/*	$NetBSD: pci.c,v 1.70 2002/09/27 03:18:16 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997, 1998
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci.c,v 1.69 2002/09/27 02:24:30 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci.c,v 1.70 2002/09/27 03:18:16 thorpej Exp $");
 
 #include "opt_pci.h"
 
@@ -238,7 +238,7 @@ pcisubmatch(parent, cf, aux)
 	if (cf->pcicf_function != PCI_UNK_FUNCTION &&
 	    cf->pcicf_function != pa->pa_function)
 		return (0);
-	return ((*cf->cf_attach->ca_match)(parent, cf, aux));
+	return (config_match(parent, cf, aux));
 }
 
 int

@@ -1,4 +1,4 @@
-/* $NetBSD: tlsb.c,v 1.22 2001/07/12 23:25:41 thorpej Exp $ */
+/* $NetBSD: tlsb.c,v 1.23 2002/09/27 03:17:44 thorpej Exp $ */
 /*
  * Copyright (c) 1997 by Matthew Jacob
  * NASA AMES Research Center.
@@ -39,7 +39,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: tlsb.c,v 1.22 2001/07/12 23:25:41 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tlsb.c,v 1.23 2002/09/27 03:17:44 thorpej Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -115,7 +115,7 @@ tlsbsubmatch(parent, cf, aux)
 	    cf->cf_loc[TLSBCF_NODE] != tap->ta_node)
 		return (0);
 
-	return ((*cf->cf_attach->ca_match)(parent, cf, aux));
+	return (config_match(parent, cf, aux));
 }
 
 static int

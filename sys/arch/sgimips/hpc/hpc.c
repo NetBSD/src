@@ -1,4 +1,4 @@
-/*	$NetBSD: hpc.c,v 1.7 2002/03/13 13:12:27 simonb Exp $	*/
+/*	$NetBSD: hpc.c,v 1.8 2002/09/27 03:18:05 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -203,7 +203,7 @@ hpc_submatch(struct device *parent, struct cfdata *cf, void *aux)
 	    cf->cf_loc[HPCCF_OFFSET] != ha->ha_devoff)
 		return (0);
 
-	return ((*cf->cf_attach->ca_match)(parent, cf, aux));
+	return (config_match(parent, cf, aux));
 }
 
 int

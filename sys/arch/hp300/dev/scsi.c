@@ -1,4 +1,4 @@
-/*	$NetBSD: scsi.c,v 1.30 2002/03/15 05:55:37 gmcgarry Exp $	*/
+/*	$NetBSD: scsi.c,v 1.31 2002/09/27 03:17:50 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scsi.c,v 1.30 2002/03/15 05:55:37 gmcgarry Exp $");                                                  
+__KERNEL_RCSID(0, "$NetBSD: scsi.c,v 1.31 2002/09/27 03:17:50 thorpej Exp $");                                                  
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -468,7 +468,7 @@ scsisubmatch(parent, match, aux)
 	    match->cf_loc[OSCSICF_LUN] != osa->osa_lun)
 		return (0);
 
-	return ((*match->cf_attach->ca_match)(parent, match, aux));
+	return (config_match(parent, match, aux));
 }
 
 int

@@ -1,4 +1,4 @@
-/*	$NetBSD: ucom.c,v 1.45 2002/09/23 05:51:20 simonb Exp $	*/
+/*	$NetBSD: ucom.c,v 1.46 2002/09/27 03:18:21 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ucom.c,v 1.45 2002/09/23 05:51:20 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ucom.c,v 1.46 2002/09/27 03:18:21 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1145,5 +1145,5 @@ ucomsubmatch(struct device *parent, struct cfdata *cf, void *aux)
 	    cf->ucomcf_portno != UCOM_UNK_PORTNO &&
 	    cf->ucomcf_portno != uca->portno)
 		return (0);
-	return ((*cf->cf_attach->ca_match)(parent, cf, aux));
+	return (config_match(parent, cf, aux));
 }

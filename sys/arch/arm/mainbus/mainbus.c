@@ -1,4 +1,4 @@
-/* $NetBSD: mainbus.c,v 1.3 2001/06/13 17:52:43 nathanw Exp $ */
+/* $NetBSD: mainbus.c,v 1.4 2002/09/27 03:17:45 thorpej Exp $ */
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe.
@@ -150,7 +150,7 @@ mainbussearch(parent, cf, aux)
 		mb.mb_iot = &mainbus_bs_tag;
 
 		tryagain = 0;
-		if ((*cf->cf_attach->ca_match)(parent, cf, &mb) > 0) {
+		if (config_match(parent, cf, &mb) > 0) {
 			config_attach(parent, cf, &mb, mainbusprint);
 /*			tryagain = (cf->cf_fstate == FSTATE_STAR);*/
 		}

@@ -1,4 +1,4 @@
-/*	$NetBSD: aac.c,v 1.3 2002/06/01 23:50:57 lukem Exp $	*/
+/*	$NetBSD: aac.c,v 1.4 2002/09/27 03:18:11 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aac.c,v 1.3 2002/06/01 23:50:57 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aac.c,v 1.4 2002/09/27 03:18:11 thorpej Exp $");
 
 #include "locators.h"
 
@@ -310,7 +310,7 @@ aac_submatch(struct device *parent, struct cfdata *cf, void *aux)
 	    cf->aaccf_unit != aaca->aaca_unit)
 		return (0);
 
-	return ((*cf->cf_attach->ca_match)(parent, cf, aux));
+	return (config_match(parent, cf, aux));
 }
 
 /*

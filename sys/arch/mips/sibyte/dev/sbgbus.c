@@ -1,4 +1,4 @@
-/* $NetBSD: sbgbus.c,v 1.1 2002/03/05 23:46:42 simonb Exp $ */
+/* $NetBSD: sbgbus.c,v 1.2 2002/09/27 03:17:59 thorpej Exp $ */
 
 /*
  * Copyright 2000, 2001
@@ -150,7 +150,7 @@ sbgbussearch(struct device *parent, struct cfdata *cf, void *aux)
 		}
 
 		tryagain = 0;
-		if ((*cf->cf_attach->ca_match)(parent, cf, &sga) > 0) {
+		if (config_match(parent, cf, &sga) > 0) {
 			config_attach(parent, cf, &sga, sbgbusprint);
 			tryagain = (cf->cf_fstate == FSTATE_STAR);
 		}

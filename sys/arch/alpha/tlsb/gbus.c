@@ -1,4 +1,4 @@
-/* $NetBSD: gbus.c,v 1.10 2001/07/19 20:34:08 thorpej Exp $ */
+/* $NetBSD: gbus.c,v 1.11 2002/09/27 03:17:44 thorpej Exp $ */
 
 /*
  * Copyright (c) 1997 by Matthew Jacob
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: gbus.c,v 1.10 2001/07/19 20:34:08 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gbus.c,v 1.11 2002/09/27 03:17:44 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -145,5 +145,5 @@ gbussubmatch(parent, cf, aux)
 	    cf->cf_loc[GBUSCF_OFFSET] != ga->ga_offset)
 		return (0);
 
-	return ((*cf->cf_attach->ca_match)(parent, cf, aux));
+	return (config_match(parent, cf, aux));
 }

@@ -1,4 +1,4 @@
-/* $NetBSD: sbobio.c,v 1.2 2002/06/01 13:56:56 simonb Exp $ */
+/* $NetBSD: sbobio.c,v 1.3 2002/09/27 03:17:59 thorpej Exp $ */
 
 /*
  * Copyright 2000, 2001
@@ -132,7 +132,7 @@ sbobio_submatch(struct device *parent, struct cfdata *cf, void *aux)
 			return (0);
 	}
 
-	return ((*cf->cf_attach->ca_match)(parent, cf, aux));
+	return (config_match(parent, cf, aux));
 }
 
 static const char *

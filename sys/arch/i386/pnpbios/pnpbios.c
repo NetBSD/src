@@ -1,4 +1,4 @@
-/* $NetBSD: pnpbios.c,v 1.26 2001/11/15 07:03:35 lukem Exp $ */
+/* $NetBSD: pnpbios.c,v 1.27 2002/09/27 03:17:57 thorpej Exp $ */
 
 /*
  * Copyright (c) 2000 Jason R. Thorpe.  All rights reserved.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pnpbios.c,v 1.26 2001/11/15 07:03:35 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pnpbios.c,v 1.27 2002/09/27 03:17:57 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -813,7 +813,7 @@ pnpbios_submatch(parent, match, aux)
 	    match->cf_loc[PNPBIOSCF_INDEX] != aa->idx)
 		return (0);
 
-	return ((*match->cf_attach->ca_match)(parent, match, aux));
+	return (config_match(parent, match, aux));
 }
 
 static int

@@ -1,4 +1,4 @@
-/*	$NetBSD: plumiobus.c,v 1.5 2002/01/29 18:53:11 uch Exp $ */
+/*	$NetBSD: plumiobus.c,v 1.6 2002/09/27 03:17:54 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -209,7 +209,7 @@ plumiobus_search(struct device *parent, struct cfdata *cf, void *aux)
 	pba.pba_busname	= "plumisab";
 	
 	if (!(sc->sc_isa[slot].pr_enabled) && /* not attached slot */
-	    (*cf->cf_attach->ca_match)(parent, cf, &pba)) {
+	    config_match(parent, cf, &pba)) {
 		config_attach(parent, cf, &pba, plumiobus_print);
 		sc->sc_isa[slot].pr_enabled = 1;
 	}

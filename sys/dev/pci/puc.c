@@ -1,4 +1,4 @@
-/*	$NetBSD: puc.c,v 1.12 2001/11/13 07:48:48 lukem Exp $	*/
+/*	$NetBSD: puc.c,v 1.13 2002/09/27 03:18:17 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996, 1998, 1999
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puc.c,v 1.12 2001/11/13 07:48:48 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puc.c,v 1.13 2002/09/27 03:18:17 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -338,7 +338,7 @@ puc_submatch(parent, cf, aux)
 	if (cf->cf_loc[PUCCF_PORT] != PUCCF_PORT_DEFAULT &&
 	    cf->cf_loc[PUCCF_PORT] != aa->port)
 		return 0;
-	return ((*cf->cf_attach->ca_match)(parent, cf, aux));
+	return (config_match(parent, cf, aux));
 }
 
 const struct puc_device_description *

@@ -1,4 +1,4 @@
-/*	$NetBSD: icp.c,v 1.2 2002/06/01 23:50:58 lukem Exp $	*/
+/*	$NetBSD: icp.c,v 1.3 2002/09/27 03:18:12 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: icp.c,v 1.2 2002/06/01 23:50:58 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: icp.c,v 1.3 2002/09/27 03:18:12 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -446,7 +446,7 @@ icp_submatch(struct device *parent, struct cfdata *cf, void *aux)
 	    cf->icpacf_unit != icpa->icpa_unit)
 		return (0);
 
-	return ((*cf->cf_attach->ca_match)(parent, cf, aux));
+	return (config_match(parent, cf, aux));
 }
 
 int

@@ -1,4 +1,4 @@
-/*	$NetBSD: ifpga.c,v 1.10 2002/07/31 17:34:25 thorpej Exp $ */
+/*	$NetBSD: ifpga.c,v 1.11 2002/09/27 03:17:47 thorpej Exp $ */
 
 /*
  * Copyright (c) 2001 ARM Ltd
@@ -143,7 +143,7 @@ ifpga_search(struct device *parent, struct cfdata *cf, void *aux)
 		ifa.ifa_sc_ioh = sc->sc_sc_ioh;
 
 		tryagain = 0;
-		if ((*cf->cf_attach->ca_match)(parent, cf, &ifa) > 0) {
+		if (config_match(parent, cf, &ifa) > 0) {
 			config_attach(parent, cf, &ifa, ifpga_print);
 			tryagain = (cf->cf_fstate == FSTATE_STAR);
 		}

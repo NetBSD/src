@@ -1,4 +1,4 @@
-/*	$NetBSD: fwohci.c,v 1.55 2002/06/24 00:42:27 itojun Exp $	*/
+/*	$NetBSD: fwohci.c,v 1.56 2002/09/27 03:18:14 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fwohci.c,v 1.55 2002/06/24 00:42:27 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fwohci.c,v 1.56 2002/09/27 03:18:14 thorpej Exp $");
 
 #define DOUBLEBUF 1
 #define NO_THREAD 1
@@ -3700,7 +3700,7 @@ fwohci_submatch(struct device *parent, struct cfdata *cf, void *aux)
 	    cf->fwbuscf_idlo == FWBUS_UNK_IDLO) ||
 	    (cf->fwbuscf_idhi == ntohl(*((u_int32_t *)&fwa->uid[0])) &&
 	    cf->fwbuscf_idlo == ntohl(*((u_int32_t *)&fwa->uid[4]))))
-		return ((*cf->cf_attach->ca_match)(parent, cf, aux));
+		return (config_match(parent, cf, aux));
 	return 0;
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: pioc.c,v 1.1 2001/10/05 22:27:53 reinoud Exp $	*/     
+/*	$NetBSD: pioc.c,v 1.2 2002/09/27 03:17:42 thorpej Exp $	*/     
 
 /*
  * Copyright (c) 1997 Mark Brinicombe.
@@ -243,7 +243,7 @@ piocsearch(parent, cf, aux)
 		}
 
 		tryagain = 0;
-		if ((*cf->cf_attach->ca_match)(parent, cf, &pa) > 0) {
+		if (config_match(parent, cf, &pa) > 0) {
 			config_attach(parent, cf, &pa, piocprint);
 /*			tryagain = (cf->cf_fstate == FSTATE_STAR);*/
 		}
@@ -279,7 +279,7 @@ piocsubmatch(parent, cf, aux)
 		if (pa->pa_irq == -1)
 			pa->pa_irq = cf->cf_loc[2];
 		tryagain = 0;
-		if ((*cf->cf_attach->ca_match)(parent, cf, pa) > 0) {
+		if (config_match(parent, cf, pa) > 0) {
 			config_attach(parent, cf, pa, piocprint);
 /*			tryagain = (cf->cf_fstate == FSTATE_STAR);*/
 		}

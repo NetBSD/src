@@ -1,4 +1,4 @@
-/*	$NetBSD: femi.c,v 1.2 2002/08/26 10:43:44 scw Exp $	*/
+/*	$NetBSD: femi.c,v 1.3 2002/09/27 03:18:06 thorpej Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -151,7 +151,7 @@ femisubmatch(struct device *dev, struct cfdata *cf, void *arg)
 	fa.fa_offset += sc->sc_base;
 	fa._fa_base = sc->sc_base;
 
-	if ((cf->cf_attach->ca_match)(dev, cf, &fa)) {
+	if (config_match(dev, cf, &fa)) {
 		config_attach(dev, cf, &fa, femiprint);
 		return (1);
 	}

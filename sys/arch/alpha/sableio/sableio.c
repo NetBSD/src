@@ -1,4 +1,4 @@
-/* $NetBSD: sableio.c,v 1.2 2002/09/27 02:24:09 thorpej Exp $ */
+/* $NetBSD: sableio.c,v 1.3 2002/09/27 03:17:43 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -55,7 +55,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: sableio.c,v 1.2 2002/09/27 02:24:09 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sableio.c,v 1.3 2002/09/27 03:17:43 thorpej Exp $");
 
 #include "isadma.h"
 
@@ -189,7 +189,7 @@ sableio_submatch(struct device *parent, struct cfdata *cf, void *aux)
 	    cf->cf_loc[SABLEIOCF_PORT] != sa->sa_ioaddr)
 		return (0);
 
-	return ((*cf->cf_attach->ca_match)(parent, cf, aux));
+	return (config_match(parent, cf, aux));
 }
 
 int

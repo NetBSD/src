@@ -1,4 +1,4 @@
-/* $NetBSD: sbsmbus.c,v 1.1 2002/06/04 08:32:41 simonb Exp $ */
+/* $NetBSD: sbsmbus.c,v 1.2 2002/09/27 03:17:59 thorpej Exp $ */
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -117,5 +117,5 @@ smbus_submatch(struct device *parent, struct cfdata *cf, void *aux)
 	    cf->cf_loc[SMBUSCF_DEV] != sa->sa_device)
 		return (0);
 
-	return ((*cf->cf_attach->ca_match)(parent, cf, aux));
+	return (config_match(parent, cf, aux));
 }

@@ -1,4 +1,4 @@
-/* $NetBSD: pbus.c,v 1.4 2002/09/27 02:24:27 thorpej Exp $ */
+/* $NetBSD: pbus.c,v 1.5 2002/09/27 03:18:08 thorpej Exp $ */
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -127,7 +127,7 @@ pbus_submatch(struct device *parent, struct cfdata *cf, void *aux)
 	    cf->cf_loc[PBUSCF_ADDR] != pba->pb_addr)
 		return (0);
 
-	return ((*cf->cf_attach->ca_match)(parent, cf, aux));
+	return (config_match(parent, cf, aux));
 }
 
 /*

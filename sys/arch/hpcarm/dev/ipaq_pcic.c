@@ -1,4 +1,4 @@
-/*      $NetBSD: ipaq_pcic.c,v 1.7 2002/07/20 01:36:56 ichiro Exp $        */
+/*      $NetBSD: ipaq_pcic.c,v 1.8 2002/09/27 03:17:52 thorpej Exp $        */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -172,7 +172,7 @@ ipaqpcic_submatch(parent, cf, aux)
 	struct cfdata *cf;
 	void *aux;
 {
-	return (*cf->cf_attach->ca_match)(parent, cf, aux);
+	return config_match(parent, cf, aux);
 }
 
 static void

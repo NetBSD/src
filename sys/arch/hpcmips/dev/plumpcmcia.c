@@ -1,4 +1,4 @@
-/*	$NetBSD: plumpcmcia.c,v 1.11 2002/06/01 23:50:54 lukem Exp $ */
+/*	$NetBSD: plumpcmcia.c,v 1.12 2002/09/27 03:17:54 thorpej Exp $ */
 
 /*
  * Copyright (c) 1999, 2000 UCHIYAMA Yasushi. All rights reserved.
@@ -296,7 +296,7 @@ plumpcmcia_print(void *arg, const char *pnp)
 int
 plumpcmcia_submatch(struct device *parent, struct cfdata *cf, void *aux)
 {
-	return ((*cf->cf_attach->ca_match)(parent, cf, aux));
+	return (config_match(parent, cf, aux));
 }
 
 static void

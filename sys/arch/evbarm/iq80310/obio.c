@@ -1,4 +1,4 @@
-/*	$NetBSD: obio.c,v 1.7 2002/09/27 02:24:11 thorpej Exp $	*/
+/*	$NetBSD: obio.c,v 1.8 2002/09/27 03:17:48 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -179,5 +179,5 @@ obio_submatch(struct device *parent, struct cfdata *cf, void *aux)
 	    cf->cf_loc[OBIOCF_ADDR] != oba->oba_addr)
 		return (0);
 
-	return ((*cf->cf_attach->ca_match)(parent, cf, aux));
+	return (config_match(parent, cf, aux));
 }

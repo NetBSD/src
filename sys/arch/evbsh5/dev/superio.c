@@ -1,4 +1,4 @@
-/*	$NetBSD: superio.c,v 1.5 2002/09/27 02:24:13 thorpej Exp $	*/
+/*	$NetBSD: superio.c,v 1.6 2002/09/27 03:17:49 thorpej Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -210,7 +210,7 @@ superiosubmatch(struct device *parent, struct cfdata *cf, void *args)
 	 * a "char *name" as the first member.
 	 */
 	if (strcmp(cf->cf_name, saa->saa_name) == 0)
-		return ((*cf->cf_attach->ca_match)(parent, cf, args));
+		return (config_match(parent, cf, args));
 
 	return (0);
 }

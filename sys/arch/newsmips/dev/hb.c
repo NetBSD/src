@@ -1,4 +1,4 @@
-/*	$NetBSD: hb.c,v 1.6 2002/09/27 02:24:19 thorpej Exp $	*/
+/*	$NetBSD: hb.c,v 1.7 2002/09/27 03:18:01 thorpej Exp $	*/
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -63,7 +63,7 @@ hb_search(parent, cf, aux)
 	ca->ca_addr = cf->cf_addr;
 	ca->ca_name = cf->cf_name;
 
-	if ((*cf->cf_attach->ca_match)(parent, cf, ca) > 0)
+	if (config_match(parent, cf, ca) > 0)
 		config_attach(parent, cf, ca, hb_print);
 
 	return 0;

@@ -1,4 +1,4 @@
-/* $NetBSD: subr_autoconf.c,v 1.67 2002/09/27 02:24:33 thorpej Exp $ */
+/* $NetBSD: subr_autoconf.c,v 1.68 2002/09/27 03:18:23 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.67 2002/09/27 02:24:33 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.68 2002/09/27 03:18:23 thorpej Exp $");
 
 #include "opt_ddb.h"
 
@@ -345,6 +345,17 @@ cfparent_match(struct device *parent, const struct cfparent *cfp)
 
 	/* Unit numbers don't match. */
 	return (0);
+}
+
+/*
+ * Invoke the "match" routine for a cfdata entry on behalf of
+ * an external caller, usually a "submatch" routine.
+ */
+int
+config_match(struct device *parent, struct cfdata *cf, void *aux)
+{
+
+	return ((*cf->cf_attach->ca_match)(parent, cf, aux));
 }
 
 /*
