@@ -1,4 +1,4 @@
-/*	$NetBSD: freebsd_syscallargs.h,v 1.31 1999/08/25 04:48:48 thorpej Exp $	*/
+/*	$NetBSD: freebsd_syscallargs.h,v 1.32 2000/04/21 16:18:54 minoura Exp $	*/
 
 /*
  * System call argument lists.
@@ -488,7 +488,7 @@ int	sys_clock_gettime	__P((struct proc *, void *, register_t *));
 int	sys_clock_settime	__P((struct proc *, void *, register_t *));
 int	sys_clock_getres	__P((struct proc *, void *, register_t *));
 int	sys_nanosleep	__P((struct proc *, void *, register_t *));
-int	freebsd_sys_issetugid	__P((struct proc *, void *, register_t *));
+int	sys_issetugid	__P((struct proc *, void *, register_t *));
 int	freebsd_sys_lchown	__P((struct proc *, void *, register_t *));
 int	sys_getdents	__P((struct proc *, void *, register_t *));
 int	sys_lchmod	__P((struct proc *, void *, register_t *));

@@ -1,4 +1,4 @@
-/*	$NetBSD: freebsd_sysent.c,v 1.32 1999/08/25 04:48:48 thorpej Exp $	*/
+/*	$NetBSD: freebsd_sysent.c,v 1.33 2000/04/21 16:18:54 minoura Exp $	*/
 
 /*
  * System call switch table.
@@ -620,7 +620,7 @@ struct sysent freebsd_sysent[] = {
 	{ 0, 0,
 	    sys_nosys },			/* 252 = unimplemented openbsd_poll */
 	{ 0, 0,
-	    freebsd_sys_issetugid },		/* 253 = issetugid */
+	    sys_issetugid },			/* 253 = issetugid */
 	{ 3, s(struct freebsd_sys_lchown_args),
 	    freebsd_sys_lchown },		/* 254 = lchown */
 	{ 0, 0,
