@@ -1,4 +1,4 @@
-/*	$NetBSD: if_de.c,v 1.77 1998/09/15 02:39:03 matt Exp $	*/
+/*	$NetBSD: if_de.c,v 1.78 1998/09/15 17:26:46 matt Exp $	*/
 
 /*-
  * Copyright (c) 1994-1997 Matt Thomas (matt@3am-software.com)
@@ -4224,10 +4224,14 @@ tulip_txput(
     /*
      * Reclaim some dma maps from if we are out.
      */
-    if (sc->tulip_txmaps_free == 0)
+    if (sc->tulip_txmaps_free == 0) {
+#if defined(TULIP_DEBUG)
+	sc->tulip_dbg.dbg_no_txmaps++;
+#endif
 	free += tulip_tx_intr(sc);
+    }
     if (sc->tulip_txmaps_free > 0) {
-	map = sc->tulip_txmaps[--sc->tulip_txmaps_free];
+	map = sc->tulip_txmaps[sc->tulip_txmaps_free-1];
     } else {
 	sc->tulip_flags |= TULIP_WANTTXSTART;
 #if defined(TULIP_DEBUG)
@@ -4276,6 +4280,7 @@ tulip_txput(
 #if defined(TULIP_DEBUG)
 	sc->tulip_dbg.dbg_txput_finishes[4]++;
 #endif
+	bus_dmamap_unload(sc->tulip_dmatag, map);
 	goto finish;
     }
     for (; map->dm_nsegs - segcnt > 1; segcnt += 2) {
@@ -4304,6 +4309,7 @@ tulip_txput(
     TULIP_TXMAP_PRESYNC(sc, map);
     M_SETCTX(m, map);
     map = NULL;
+    --sc->tulip_txmaps_free;		/* commit to using the dmamap */
 
 #else /* !TULIP_BUS_DMA */
 
@@ -4476,13 +4482,11 @@ tulip_txput(
 	    sc->tulip_intrmask |= TULIP_STS_TXINTR;
 	    TULIP_CSR_WRITE(sc, csr_intr, sc->tulip_intrmask);
 	}
-#if 1 /* this isn't working right yet */
     } else if ((sc->tulip_flags & TULIP_PROMISC) == 0) {
 	if (sc->tulip_intrmask & TULIP_STS_TXINTR) {
 	    sc->tulip_intrmask &= ~TULIP_STS_TXINTR;
 	    TULIP_CSR_WRITE(sc, csr_intr, sc->tulip_intrmask);
 	}
-#endif
     }
     TULIP_PERFEND(txput);
     return m;
