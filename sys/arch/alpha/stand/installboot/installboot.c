@@ -1,4 +1,4 @@
-/* $NetBSD: installboot.c,v 1.6 1998/09/22 05:03:36 ross Exp $ */
+/* $NetBSD: installboot.c,v 1.7 1998/10/15 01:05:20 ross Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -596,7 +596,7 @@ loadblocknums_passthru(boot, devfd, partoffset)
 
 	if (stat(boot, &sb))
 		err(1, "stat: %s", boot);
-	setup_contig_blks(conblockstart, sb.st_size, 512, 16*1024, boot);
+	setup_contig_blks(conblockstart, sb.st_size, 512, 512, boot);
 	return 0;
 }
 
