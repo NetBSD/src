@@ -1,4 +1,4 @@
-/*	$NetBSD: zs_pcc.c,v 1.2 1996/12/09 17:42:20 thorpej Exp $	*/
+/*	$NetBSD: zs_pcc.c,v 1.3 1996/12/17 22:30:17 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
 /*
  * PCC offsets.
  */
-static int zs_pcc_offsets[NZS] = { PCC_ZS0_OFF, PCC_ZS1_OFF };
+static int zs_pcc_offsets[NZSC] = { PCC_ZS0_OFF, PCC_ZS1_OFF };
 
 struct zschan *
 zs_pcc_get_chan_addr(zsc_unit, channel)
@@ -79,7 +79,7 @@ zs_pcc_get_chan_addr(zsc_unit, channel)
 	struct zsdevice *addr;
 	struct zschan *zc;
 
-	if (zsc_unit >= NZS)
+	if (zsc_unit >= NZSC)
 		return NULL;
 	addr = (struct zsdevice *)PCC_VADDR(zs_pcc_offsets[zsc_unit]);
 	if (addr == NULL)
@@ -119,7 +119,7 @@ zsc_pcc_match(parent, vcf, aux)
 
 	/* XXX This is bogus; should fix this. */
 	unit = cf->cf_unit;
-	if (unit < 0 || unit >= NZS)
+	if (unit < 0 || unit >= NZSC)
 		return (0);
 
 	if (strcmp(pa->pa_name, zsc_cd.cd_name))
@@ -174,7 +174,7 @@ zsc_pcc_attach(parent, self, aux)
 	 * the SCC by the PCC.
 	 */
 	sys_pcc->zs_int = zs_level | PCC_IENABLE | PCC_ZSEXTERN;
-	zs_write_reg(&zsc->zsc_cs[0], 9, zs_init_reg[9]);
+	zs_write_reg(zsc->zsc_cs[0], 9, zs_init_reg[9]);
 }
 
 /****************************************************************
@@ -196,10 +196,8 @@ zsc_pcccnprobe(cp)
 	}
 #endif
 
-	/* XXX Shouldn't hardcode the minor number... */
-
 	/* Initialize required fields. */
-	cp->cn_dev = makedev(ZSTTY_MAJOR, 0);
+	cp->cn_dev = makedev(zs_major, 0);
 	cp->cn_pri = CN_NORMAL;
 }
 

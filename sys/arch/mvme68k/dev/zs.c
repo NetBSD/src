@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.10 1996/12/09 17:42:19 thorpej Exp $	*/
+/*	$NetBSD: zs.c,v 1.11 1996/12/17 22:30:13 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -47,14 +47,14 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/proc.h>
-#include <sys/device.h>
 #include <sys/conf.h>
+#include <sys/device.h>
 #include <sys/file.h>
 #include <sys/ioctl.h>
+#include <sys/kernel.h>
+#include <sys/proc.h>
 #include <sys/tty.h>
 #include <sys/time.h>
-#include <sys/kernel.h>
 #include <sys/syslog.h>
 
 #include <dev/cons.h>
@@ -65,13 +65,22 @@
 
 #include <mvme68k/dev/zsvar.h>
 
+/*
+ * Some warts needed by z8530tty.c -
+ * The default parity REALLY needs to be the same as the PROM uses,
+ * or you can not see messages done with printf during boot-up...
+ */
+int zs_def_cflag = (CREAD | CS8 | HUPCL);
+/* XXX Shouldn't hardcode the minor number... */
+int zs_major = 12;
+
 static u_long zs_sir;	/* software interrupt cookie */
 
 /* Flags from zscnprobe() */
-static int zs_hwflags[NZS][2];
+static int zs_hwflags[NZSC][2];
 
 /* Default speed for each channel */
-static int zs_defspeed[NZS][2] = {
+static int zs_defspeed[NZSC][2] = {
 	{ 9600, 	/* port 1 */
 	  9600 },	/* port 2 */
 	{ 9600, 	/* port 3 */
@@ -83,7 +92,7 @@ static struct zs_chanstate *zs_conschan;
 
 u_char zs_init_reg[16] = {
 	0,	/* 0: CMD (reset, etc.) */
-	ZSWR1_RIE | ZSWR1_TIE | ZSWR1_SIE,
+	0,	/* 1: No interrupts yet. */
 	0x18 + ZSHARD_PRI,	/* IVECT */
 	ZSWR3_RX_8 | ZSWR3_RX_ENABLE,
 	ZSWR4_CLK_X16 | ZSWR4_ONESB | ZSWR4_EVENP,
@@ -96,7 +105,7 @@ u_char zs_init_reg[16] = {
 	ZSWR11_TXCLK_BAUD | ZSWR11_RXCLK_BAUD,
 	14,	/*12: BAUDLO (default=9600) */
 	0,	/*13: BAUDHI (default=9600) */
-	ZSWR14_BAUD_FROM_PCLK | ZSWR14_BAUD_ENA,
+	ZSWR14_BAUD_ENA | ZSWR14_BAUD_FROM_PCLK,
 	ZSWR15_BREAK_IE | ZSWR15_DCD_IE,
 };
 
@@ -112,6 +121,8 @@ struct cfdriver zsc_cd = {
 	NULL, "zsc", DV_DULL
 };
 
+static int zs_get_speed __P((struct zs_chanstate *));
+
 
 /*
  * Configure children of an SCC.
@@ -125,7 +136,6 @@ zs_config(zsc, chan_addr)
 	volatile struct zschan *zc;
 	struct zs_chanstate *cs;
 	int zsc_unit, channel, s;
-	u_char reset;
 
 	zsc_unit = zsc->zsc_dev.dv_unit;
 	printf(": Zilog 8530 SCC\n");
@@ -134,32 +144,32 @@ zs_config(zsc, chan_addr)
 	 * Initialize software state for each channel.
 	 */
 	for (channel = 0; channel < 2; channel++) {
-		cs = &zsc->zsc_cs[channel];
+		zsc_args.channel = channel;
+		zsc_args.hwflags = zs_hwflags[zsc_unit][channel];
+		cs = &zsc->zsc_cs_store[channel];
+		zsc->zsc_cs[channel] = cs;
 
 		/*
 		 * If we're the console, copy the channel state, and
 		 * adjust the console channel pointer.
 		 */
-		if (zs_hwflags[zsc_unit][channel] & ZS_HWFLAG_CONSOLE) {
+		if (zsc_args.hwflags & ZS_HWFLAG_CONSOLE) {
 			bcopy(zs_conschan, cs, sizeof(struct zs_chanstate));
 			zs_conschan = cs;
 		} else {
 			zc = (*chan_addr)(zsc_unit, channel);
 			cs->cs_reg_csr  = &zc->zc_csr;
 			cs->cs_reg_data = &zc->zc_data;
-
-			/* Define BAUD rate clock for the MI code. */
-			cs->cs_brg_clk = PCLK / 16;
-
-			cs->cs_defspeed = zs_defspeed[zsc_unit][channel];
-
 			bcopy(zs_init_reg, cs->cs_creg, 16);
 			bcopy(zs_init_reg, cs->cs_preg, 16);
+			cs->cs_defspeed = zs_defspeed[zsc_unit][channel];
 		}
+		cs->cs_defcflag = zs_def_cflag;
 
 		cs->cs_channel = channel;
 		cs->cs_private = NULL;
 		cs->cs_ops = &zsops_null;
+		cs->cs_brg_clk = PCLK / 16;
 
 		/*
 		 * Clear the master interrupt enable.
@@ -174,12 +184,9 @@ zs_config(zsc, chan_addr)
 		 * Look for a child driver for this channel.
 		 * The child attach will setup the hardware.
 		 */
-		zsc_args.channel = channel;
-		zsc_args.hwflags = zs_hwflags[zsc_unit][channel];
-		if (config_found(&zsc->zsc_dev, (void *)&zsc_args,
-		    zsc_print) == NULL) {
+		if (!config_found(&zsc->zsc_dev, (void *)&zsc_args, zsc_print)) {
 			/* No sub-driver.  Just reset it. */
-			reset = (channel == 0) ?
+			u_char reset = (channel == 0) ?
 				ZSWR9_A_RESET : ZSWR9_B_RESET;
 			s = splzs();
 			zs_write_reg(cs,  9, reset);
@@ -212,42 +219,48 @@ zsc_print(aux, name)
 	return UNCONF;
 }
 
+static int zssoftpending;
+
+/*
+ * Our ZS chips all share a common, autovectored interrupt,
+ * so we have to look at all of them on each interrupt.
+ */
 int
 zshard(arg)
 	void *arg;
 {
-	struct zsc_softc *zsc;
-	int unit, rval;
+	register struct zsc_softc *zsc;
+	register int unit, rval;
 
 	rval = 0;
-	for (unit = 0; unit < zsc_cd.cd_ndevs; ++unit) {
+	for (unit = 0; unit < zsc_cd.cd_ndevs; unit++) {
 		zsc = zsc_cd.cd_devs[unit];
-		if (zsc != NULL) {
-			rval |= zsc_intr_hard(zsc);
+		if (zsc == NULL)
+			continue;
+		rval |= zsc_intr_hard(zsc);
+		if ((zsc->zsc_cs[0]->cs_softreq) ||
+			(zsc->zsc_cs[1]->cs_softreq))
+		{
+			/* zsc_req_softint(zsc); */
+			/* We are at splzs here, so no need to lock. */
+			if (zssoftpending == 0) {
+				zssoftpending = zs_sir;
+				setsoftint(zs_sir);
+			}
 		}
 	}
 	return (rval);
 }
 
-int zssoftpending;
-
-void
-zsc_req_softint(zsc)
-	struct zsc_softc *zsc;
-{	
-	if (zssoftpending == 0) {
-		/* We are at splzs here, so no need to lock. */
-		zssoftpending = 1;
-		setsoftint(zs_sir);
-	}
-}
-
+/*
+ * Similar scheme as for zshard (look at all of them)
+ */
 int
 zssoft(arg)
 	void *arg;
 {
-	struct zsc_softc *zsc;
-	int unit;
+	register struct zsc_softc *zsc;
+	register int unit;
 
 	/* This is not the only ISR on this IPL. */
 	if (zssoftpending == 0)
@@ -261,11 +274,101 @@ zssoft(arg)
 
 	for (unit = 0; unit < zsc_cd.cd_ndevs; ++unit) {
 		zsc = zsc_cd.cd_devs[unit];
-		if (zsc != NULL) {
-			(void) zsc_intr_soft(zsc);
-		}
+		if (zsc == NULL)
+			continue;
+		(void) zsc_intr_soft(zsc);
 	}
 	return (1);
+}
+
+
+/*
+ * Compute the current baud rate given a ZSCC channel.
+ */
+static int
+zs_get_speed(cs)
+	struct zs_chanstate *cs;
+{
+	int tconst;
+
+	tconst = zs_read_reg(cs, 12);
+	tconst |= zs_read_reg(cs, 13) << 8;
+	return (TCONST_TO_BPS(cs->cs_brg_clk, tconst));
+}
+
+/*
+ * MD functions for setting the baud rate and control modes.
+ */
+int
+zs_set_speed(cs, bps)
+	struct zs_chanstate *cs;
+	int bps;	/* bits per second */
+{
+	int tconst, real_bps;
+
+	if (bps == 0)
+		return (0);
+
+#ifdef	DIAGNOSTIC
+	if (cs->cs_brg_clk == 0)
+		panic("zs_set_speed");
+#endif
+
+	tconst = BPS_TO_TCONST(cs->cs_brg_clk, bps);
+	if (tconst < 0)
+		return (EINVAL);
+
+	/* Convert back to make sure we can do it. */
+	real_bps = TCONST_TO_BPS(cs->cs_brg_clk, tconst);
+
+	/* XXX - Allow some tolerance here? */
+	if (real_bps != bps)
+		return (EINVAL);
+
+	cs->cs_preg[12] = tconst;
+	cs->cs_preg[13] = tconst >> 8;
+
+	/* Caller will stuff the pending registers. */
+	return (0);
+}
+
+int
+zs_set_modes(cs, cflag)
+	struct zs_chanstate *cs;
+	int cflag;	/* bits per second */
+{
+	int s;
+
+	/*
+	 * Output hardware flow control on the chip is horrendous:
+	 * if carrier detect drops, the receiver is disabled, and if
+	 * CTS drops, the transmitter is stoped IN MID CHARACTER!
+	 * Therefore, NEVER set the HFC bit, and instead use the
+	 * status interrupt to detect CTS changes.
+	 */
+	s = splzs();
+	if (cflag & CLOCAL) {
+		cs->cs_rr0_dcd = 0;
+		cs->cs_preg[15] &= ~ZSWR15_DCD_IE;
+	} else {
+		cs->cs_rr0_dcd = ZSRR0_DCD;
+		cs->cs_preg[15] |= ZSWR15_DCD_IE;
+	}
+	if (cflag & CRTSCTS) {
+		cs->cs_wr5_dtr = ZSWR5_DTR;
+		cs->cs_wr5_rts = ZSWR5_RTS;
+		cs->cs_rr0_cts = ZSRR0_CTS;
+		cs->cs_preg[15] |= ZSWR15_CTS_IE;
+	} else {
+		cs->cs_wr5_dtr = ZSWR5_DTR | ZSWR5_RTS;
+		cs->cs_wr5_rts = 0;
+		cs->cs_rr0_cts = 0;
+		cs->cs_preg[15] &= ~ZSWR15_CTS_IE;
+	}
+	splx(s);
+
+	/* Caller will stuff the pending registers. */
+	return (0);
 }
 
 
@@ -301,21 +404,11 @@ zs_write_reg(cs, reg, val)
 u_char zs_read_csr(cs)
 	struct zs_chanstate *cs;
 {
-	register u_char v;
+	register u_char val;
 
-	v = *cs->cs_reg_csr;
+	val = *cs->cs_reg_csr;
 	ZS_DELAY();
-	return v;
-}
-
-u_char zs_read_data(cs)
-	struct zs_chanstate *cs;
-{
-	register u_char v;
-
-	v = *cs->cs_reg_data;
-	ZS_DELAY();
-	return v;
+	return val;
 }
 
 void  zs_write_csr(cs, val)
@@ -324,6 +417,16 @@ void  zs_write_csr(cs, val)
 {
 	*cs->cs_reg_csr = val;
 	ZS_DELAY();
+}
+
+u_char zs_read_data(cs)
+	struct zs_chanstate *cs;
+{
+	register u_char val;
+
+	val = *cs->cs_reg_data;
+	ZS_DELAY();
+	return val;
 }
 
 void  zs_write_data(cs, val)
@@ -398,11 +501,10 @@ zs_putc(arg, c)
  * Common parts of console init.
  */
 void
-zs_cnconfig(zsc_unit, channel, zcp)
+zs_cnconfig(zsc_unit, channel, zc)
 	int zsc_unit, channel;
-	struct zschan *zcp;
+	struct zschan *zc;
 {
-	volatile struct zschan *zc = (volatile struct zschan *)zcp;
 	struct zs_chanstate *cs;
 
 	/*
@@ -411,45 +513,29 @@ zs_cnconfig(zsc_unit, channel, zcp)
 	 * pointer adjusted to point to the new copy.
 	 */
 	zs_conschan = cs = &zs_conschan_store;
-
 	zs_hwflags[zsc_unit][channel] = ZS_HWFLAG_CONSOLE;
 
+	/* Setup temporary chanstate. */
 	cs->cs_reg_csr  = &zc->zc_csr;
 	cs->cs_reg_data = &zc->zc_data;
 
-	cs->cs_channel = channel;
-	cs->cs_private = NULL;
-	cs->cs_ops = &zsops_null;
-
-	/* Define BAUD rate clock for the MI code. */
-	cs->cs_brg_clk = PCLK / 16;
-
-	cs->cs_defspeed = zs_defspeed[zsc_unit][channel];
-
-	bcopy(zs_init_reg, cs->cs_creg, 16);
+	/* Initialize the pending registers. */
 	bcopy(zs_init_reg, cs->cs_preg, 16);
+	cs->cs_preg[5] |= (ZSWR5_DTR | ZSWR5_RTS);
 
-	/*
-	 * Clear the master interrupt enable.
-	 * The INTENA is common to both channels,
-	 * so just do it on the A channel.
-	 */
-	if (channel == 0) {
-		zs_write_reg(cs, 9, 0);
-	}
+	/* XXX: Preserve BAUD rate from boot loader. */
+	/* XXX: Also, why reset the chip here? -gwr */
+	/* cs->cs_defspeed = zs_get_speed(cs); */
+	cs->cs_defspeed = 9600;	/* XXX */
 
-	/* Reset the SCC chip. */
+	/* Clear the master interrupt enable. */
+	zs_write_reg(cs, 9, 0);
+
+	/* Reset the whole SCC chip. */
 	zs_write_reg(cs, 9, ZSWR9_HARD_RESET);
 
-	/* Initialize a few important registers. */
-	zs_write_reg(cs, 10, cs->cs_creg[10]);
-	zs_write_reg(cs, 11, cs->cs_creg[11]);
-	zs_write_reg(cs, 14, cs->cs_creg[14]);
-
-	/* Assert DTR and RTS. */
-	cs->cs_creg[5] |= (ZSWR5_DTR | ZSWR5_RTS);
-	cs->cs_preg[5] |= (ZSWR5_DTR | ZSWR5_RTS);
-	zs_write_reg(cs, 5, cs->cs_creg[5]);
+	/* Copy "pending" to "current" and H/W. */
+	zs_loadchannelregs(cs);
 }
 
 /*
@@ -459,7 +545,7 @@ int
 zscngetc(dev)
 	dev_t dev;
 {
-	register volatile struct zs_chanstate *cs = zs_conschan;
+	register struct zs_chanstate *cs = zs_conschan;
 	register int c;
 
 	c = zs_getc(cs);
@@ -474,7 +560,7 @@ zscnputc(dev, c)
 	dev_t dev;
 	int c;
 {
-	register volatile struct zs_chanstate *cs = zs_conschan;
+	register struct zs_chanstate *cs = zs_conschan;
 
 	zs_putc(cs, c);
 }
@@ -483,9 +569,9 @@ zscnputc(dev, c)
  * Handle user request to enter kernel debugger.
  */
 void
-zs_abort()
+zs_abort(cs)
+	struct zs_chanstate *cs;
 {
-	register volatile struct zs_chanstate *cs = zs_conschan;
 	int rr0;
 
 	/* Wait for end of break to avoid PROM abort. */
