@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.73 1997/07/29 06:41:35 fair Exp $	*/
+/*	$NetBSD: pmap.c,v 1.74 1997/10/05 20:53:56 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -76,20 +76,21 @@
 #include <sys/malloc.h>
 #include <sys/user.h>
 #include <sys/queue.h>
+#include <sys/kcore.h>
 
 #include <vm/vm.h>
 #include <vm/vm_kern.h>
 #include <vm/vm_page.h>
 
-#include <machine/pte.h>
-#include <machine/control.h>
-
 #include <machine/cpu.h>
-#include <machine/mon.h>
-#include <machine/vmparam.h>
+#include <machine/control.h>
 #include <machine/dvma.h>
-#include <machine/pmap.h>
+#include <machine/kcore.h>
 #include <machine/machdep.h>
+#include <machine/mon.h>
+#include <machine/pmap.h>
+#include <machine/pte.h>
+#include <machine/vmparam.h>
 
 extern void copypage __P((const void*, void*));
 extern void zeropage __P((void*));
@@ -3310,20 +3311,29 @@ pmap_prefer(fo, va)
 }
 
 /*
- * Copy the kernel segmap into the passed buffer (256 bytes).
+ * Fill in the sun3x-specific part of the kernel core header
+ * for dumpsys().  (See machdep.c for the rest.)
  */
 void
-pmap_get_ksegmap(cp)
-	u_char *cp;
+pmap_kcore_hdr(sh)
+	struct sun3_kcore_hdr *sh;
 {
 	vm_offset_t va;
+	u_char *cp, *ep;
 
+	sh->segshift = SEGSHIFT;
+	sh->pg_frame = PG_FRAME;
+	sh->pg_valid = PG_VALID;
+
+	/* Copy the kernel segmap (256 bytes). */
 	va = KERNBASE;
+	cp = sh->ksegmap;
+	ep = cp + sizeof(sh->ksegmap);
 	do {
 		*cp = get_segmap(va);
-		cp++;
 		va += NBSG;
-	} while (va < 0x10000000);
+		cp++;
+	} while (cp < ep);
 }
 
 /*

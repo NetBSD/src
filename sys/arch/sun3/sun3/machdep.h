@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.h,v 1.10 1997/05/29 21:17:38 gwr Exp $	*/
+/*	$NetBSD: machdep.h,v 1.11 1997/10/05 20:53:41 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -77,6 +77,7 @@ struct fpframe;
 struct pcb;
 struct proc;
 struct reg;
+struct sun3_kcore_hdr;
 struct trapframe;
 struct uio;
 
@@ -141,7 +142,7 @@ void	netintr __P((void));
 void	proc_trampoline __P((void));
 
 void	pmap_bootstrap __P((void));
-void	pmap_get_ksegmap __P((u_char *));
+void	pmap_kcore_hdr __P((struct sun3_kcore_hdr *));
 void	pmap_get_pagemap __P((int *pt, int off));
 
 void	savectx __P((struct pcb *));

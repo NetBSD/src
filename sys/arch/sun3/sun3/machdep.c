@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.102 1997/10/04 19:39:22 gwr Exp $	*/
+/*	$NetBSD: machdep.c,v 1.103 1997/10/05 20:53:51 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Gordon W. Ross
@@ -148,6 +148,7 @@ static void initcpu __P((void));
 void
 consinit()
 {
+	/* Note: cninit() done earlier.  (See _startup.c) */
 
 #ifdef KGDB
 	/* XXX - Ask on console for kgdb_dev? */
@@ -428,7 +429,7 @@ setregs(p, pack, stack)
 /*
  * Info for CTL_HW
  */
-char	machine[] = MACHINE;	/* from <machine/param.h> */
+char	machine[16] = MACHINE;	/* from <machine/param.h> */
 char	cpu_model[120];
 
 /*
@@ -528,6 +529,9 @@ cpu_reboot(howto, user_boot_string)
 	/* If system is cold, just halt. (early panic?) */
 	if (cold)
 		goto haltsys;
+
+	/* Un-blank the screen if appropriate. */
+	cnpollc(1);
 
 	if ((howto & RB_NOSYNC) == 0) {
 		reboot_sync();
@@ -698,21 +702,24 @@ dumpsys()
 	vaddr = (char*)dumppage;
 	bzero(vaddr, NBPG);
 
-	/* kcore header */
+	/* Set pointers to all three parts. */
 	kseg_p = (kcore_seg_t *)vaddr;
-	CORE_SETMAGIC(*kseg_p, KCORE_MAGIC, MID_MACHINE, CORE_CPU);
-	kseg_p->c_size = (ctob(DUMP_EXTRA) - sizeof(kcore_seg_t));
-
-	/* MMU state and dispatch info */
 	chdr_p = (cpu_kcore_hdr_t *) (kseg_p + 1);
 	sh = &chdr_p->un._sun3;
-	strcpy(chdr_p->name, machine);
+
+	/* Fill in kcore_seg_t part. */
+	CORE_SETMAGIC(*kseg_p, KCORE_MAGIC, MID_MACHINE, CORE_CPU);
+	kseg_p->c_size = (ctob(DUMP_EXTRA) - sizeof(*kseg_p));
+
+	/* Fill in cpu_kcore_hdr_t part. */
+	bcopy(machine, chdr_p->name, sizeof(chdr_p->name));
 	chdr_p->page_size = NBPG;
 	chdr_p->kernbase = KERNBASE;
-	sh->segshift = SEGSHIFT;
-	sh->pg_frame = PG_FRAME;
-	sh->pg_valid = PG_VALID;
-	pmap_get_ksegmap(sh->ksegmap);
+
+	/* Fill in the sun3_kcore_hdr part (MMU state). */
+	pmap_kcore_hdr(sh);
+
+	/* Write out the dump header. */
 	error = (*dsw->d_dump)(dumpdev, blkno, vaddr, NBPG);
 	if (error)
 		goto fail;
