@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.3,v 1.1.2.73 2004/04/07 06:59:56 jmc Exp $
+#	$NetBSD: CHANGES-1.6.3,v 1.1.2.74 2004/04/09 10:41:26 tron Exp $
 
 A complete list of changes from NetBSD 1.6.2 to NetBSD 1.6.3:
 
@@ -502,3 +502,17 @@ bin/pax/tty_subs.c				1.12-1.16
 
 	Pullup pax to current version on trunk. Includes many fixes.
 	[rafal, ticket #1021]
+
+etc/rc.d/ipmon					1.10
+
+	ipmon -D writes a pidfile; use it
+	[mrg, ticket #1662]
+
+etc/defaults/rc.conf				1.57
+etc/rc.d/ipmon					1.11
+
+	Move ipmon's "-D" argument from "command_args" to "ipmon_flags" so
+	that passing an (optional) filename argument (that must come last)
+	works fine from $ipmon_flags. From PR#25006.
+	[mrg, ticket #1663]
+
