@@ -1,4 +1,4 @@
-/*	$NetBSD: ite_rt.c,v 1.18 2002/01/28 09:57:00 aymeric Exp $ */
+/*	$NetBSD: ite_rt.c,v 1.18.8.1 2002/05/16 16:20:15 gehenna Exp $ */
 
 /*
  * Copyright (c) 1993 Markus Wild
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ite_rt.c,v 1.18 2002/01/28 09:57:00 aymeric Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ite_rt.c,v 1.18.8.1 2002/05/16 16:20:15 gehenna Exp $");
 
 #include "grfrt.h"
 #if NGRFRT > 0
@@ -148,9 +148,6 @@ screen_up(struct ite_softc *ip, int top, int bottom, int lines)
 	volatile caddr_t ba = ip->grf->g_regkva;
 	volatile caddr_t fb = ip->grf->g_fbkva;
 	const struct MonDef * md = (struct MonDef *) ip->priv;
-#ifdef BANKEDDEVPAGER
-	int bank;
-#endif
 
 	/* do some bounds-checking here.. */
 	if (top >= bottom)
@@ -161,14 +158,6 @@ screen_up(struct ite_softc *ip, int top, int bottom, int lines)
 	    retina_clear (ip, top, 0, bottom - top, ip->cols);
 	    return;
 	  }
-
-
-#ifdef BANKEDDEVPAGER
-	/* make sure to save/restore active bank (and if it's only
-	   for tests of the feature in text-mode..) */
-	bank = (RSeq (ba, SEQ_ID_PRIM_HOST_OFF_LO)
-		| (RSeq (ba, SEQ_ID_PRIM_HOST_OFF_HI) << 8));
-#endif
 
 	/* the trick here is to use a feature of the NCR chip. It can
 	   optimize data access in various read/write modes. One of
@@ -278,13 +267,6 @@ screen_up(struct ite_softc *ip, int top, int bottom, int lines)
 	WGfx (ba, GCT_ID_GRAPHICS_MODE, (RGfx(ba, GCT_ID_GRAPHICS_MODE) & 0xfc) | 0);
 	   /* extended chain4 enable */
 	WSeq (ba, SEQ_ID_EXT_VIDEO_ADDR , RSeq(ba, SEQ_ID_EXT_VIDEO_ADDR) | 0x02);
-
-#ifdef BANKEDDEVPAGER
-	/* restore former bank */
-	WSeq (ba, SEQ_ID_PRIM_HOST_OFF_LO, (unsigned char) bank);
-	bank >>= 8;
-	WSeq (ba, SEQ_ID_PRIM_HOST_OFF_HI, (unsigned char) bank);
-#endif
 };
 
 
@@ -294,9 +276,6 @@ screen_down(struct ite_softc *ip, int top, int bottom, int lines)
 	volatile caddr_t ba = ip->grf->g_regkva;
 	volatile caddr_t fb = ip->grf->g_fbkva;
 	const struct MonDef * md = (struct MonDef *) ip->priv;
-#ifdef BANKEDDEVPAGER
-	int bank;
-#endif
 
 	/* do some bounds-checking here.. */
 	if (top >= bottom)
@@ -308,12 +287,6 @@ screen_down(struct ite_softc *ip, int top, int bottom, int lines)
 	    return;
 	  }
 
-#ifdef BANKEDDEVPAGER
-	/* make sure to save/restore active bank (and if it's only
-	   for tests of the feature in text-mode..) */
-	bank = (RSeq (ba, SEQ_ID_PRIM_HOST_OFF_LO)
-		| (RSeq (ba, SEQ_ID_PRIM_HOST_OFF_HI) << 8));
-#endif
 	/* see screen_up() for explanation of chip-tricks */
 
 		/* write to primary, read from secondary */
@@ -411,13 +384,6 @@ screen_down(struct ite_softc *ip, int top, int bottom, int lines)
 	WGfx (ba, GCT_ID_GRAPHICS_MODE, (RGfx(ba, GCT_ID_GRAPHICS_MODE) & 0xfc) | 0);
 	   /* extended chain4 enable */
 	WSeq (ba, SEQ_ID_EXT_VIDEO_ADDR , RSeq(ba, SEQ_ID_EXT_VIDEO_ADDR) | 0x02);
-
-#ifdef BANKEDDEVPAGER
-	/* restore former bank */
-	WSeq (ba, SEQ_ID_PRIM_HOST_OFF_LO, (unsigned char) bank);
-	bank >>= 8;
-	WSeq (ba, SEQ_ID_PRIM_HOST_OFF_HI, (unsigned char) bank);
-#endif
 };
 #endif	/* RETINA_SPEED_HACK */
 
