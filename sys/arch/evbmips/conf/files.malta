@@ -1,4 +1,4 @@
-#	$NetBSD: files.malta,v 1.1 2002/03/07 14:43:57 simonb Exp $
+#	$NetBSD: files.malta,v 1.2 2002/03/18 02:33:19 simonb Exp $
 
 file	arch/evbmips/malta/malta_bus_io.c
 file	arch/evbmips/malta/malta_bus_mem.c
@@ -11,7 +11,7 @@ file	arch/evbmips/malta/disksubr.c
 file	arch/evbmips/malta/leds.c
 file	arch/evbmips/malta/machdep.c
 
-file	arch/evbmips/evbmips/bus_dma.c
+file	arch/mips/mips/bus_dma.c
 file	arch/evbmips/evbmips/clock.c
 file	arch/evbmips/evbmips/interrupt.c
 file	arch/evbmips/evbmips/yamon.c			# XXX should be in arch/mips/yamon ?
