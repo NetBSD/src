@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *      from: @(#)conf.c	7.9 (Berkeley) 5/28/91
- *	$Id: conf.c,v 1.5 1994/02/06 00:44:39 mycroft Exp $
+ *	$Id: conf.c,v 1.6 1994/02/15 16:25:04 mycroft Exp $
  */
 
 #include <sys/param.h>
@@ -53,7 +53,7 @@ int	ttselect	__P((dev_t, int, struct proc *));
 	int n __P((dev_t, int, caddr_t, int, struct proc *))
 
 /* bdevsw-specific types */
-#define	dev_type_dump(n)	int n __P((dev_t))
+#define	dev_type_dump(n)	int n()
 #define	dev_type_size(n)	int n __P((dev_t))
 
 #define	dev_decl(n,t)	__CONCAT(dev_type_,t)(__CONCAT(n,t))
