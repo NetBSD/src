@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_subr.c,v 1.34 2003/02/20 22:16:07 atatat Exp $	*/
+/*	$NetBSD: exec_subr.c,v 1.35 2003/02/26 21:18:23 matt Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1996 Christopher G. Demetriou
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exec_subr.c,v 1.34 2003/02/20 22:16:07 atatat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exec_subr.c,v 1.35 2003/02/26 21:18:23 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -78,20 +78,6 @@ new_vmcmd(struct exec_vmcmd_set *evsp,
 	vcp->ev_offset = offset;
 	vcp->ev_prot = prot;
 	vcp->ev_flags = flags;
-	if ((flags & (VMCMD_TOPDOWN|VMCMD_RELATIVE)) ==
-	    (VMCMD_TOPDOWN|VMCMD_RELATIVE)) {
-		int i = evsp->evs_used - 2;
-		while (i >= 0) {
-			vcp = &evsp->evs_cmds[i--];
-			if (vcp->ev_flags & VMCMD_BASE) {
-				if ((vcp->ev_flags &
-				    (VMCMD_TOPDOWN|VMCMD_FIXED)) ==
-				    (VMCMD_TOPDOWN))
-					vcp->ev_addr -= round_page(len);
-				break;
-			}
-		}
-	}
 }
 #endif /* DEBUG */
 
