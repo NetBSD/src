@@ -1,5 +1,5 @@
 #!/bin/sh
-# $NetBSD: install.sh,v 1.1 2002/05/02 18:02:21 lukem Exp $
+# $NetBSD: install.sh,v 1.2 2002/05/07 14:47:45 lukem Exp $
 #
 # Copyright (c) 1997 Perry E. Metzger
 # Copyright (c) 1994 Christopher G. Demetriou
@@ -503,7 +503,7 @@ echo	""
 echo -n	"Installing boot blocks on $drivename..."
 $DONTDOIT rm -f /mnt/boot
 $DONTDOIT cp /usr/mdec/boot /mnt/boot
-$DONTDOIT /usr/mdec/installboot /dev/r${drivename}c /usr/mdec/bootxx_ffs
+$DONTDOIT /usr/sbin/installboot /dev/r${drivename}c /usr/mdec/bootxx_ffs
 echo	" done."
 
 
