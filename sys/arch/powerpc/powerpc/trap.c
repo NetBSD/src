@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.45 2001/06/10 15:54:05 tsubai Exp $	*/
+/*	$NetBSD: trap.c,v 1.46 2001/06/10 16:31:59 tsubai Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -122,10 +122,13 @@ trap(frame)
 			KERNEL_UNLOCK();
 			if (rv == 0)
 				return;
+			if (rv == EACCES)
+				rv = EFAULT;
 			if ((fb = p->p_addr->u_pcb.pcb_onfault) != NULL) {
 				frame->srr0 = (*fb)[0];
 				frame->fixreg[1] = (*fb)[1];
 				frame->fixreg[2] = (*fb)[2];
+				frame->fixreg[3] = rv;
 				frame->cr = (*fb)[3];
 				bcopy(&(*fb)[4], &frame->fixreg[13],
 				      19 * sizeof(register_t));
@@ -334,6 +337,7 @@ syscall_bad:
 				frame->srr0 = (*fb)[0];
 				frame->fixreg[1] = (*fb)[1];
 				frame->fixreg[2] = (*fb)[2];
+				frame->fixreg[3] = EFAULT;
 				frame->cr = (*fb)[3];
 				bcopy(&(*fb)[4], &frame->fixreg[13],
 				      19 * sizeof(register_t));
@@ -422,12 +426,13 @@ copyin(udaddr, kaddr, len)
 	const char *up = udaddr;
 	char *kp = kaddr;
 	char *p;
+	int rv;
 	size_t l;
 	faultbuf env;
 
-	if (setfault(env)) {
+	if ((rv = setfault(env)) != 0) {
 		curpcb->pcb_onfault = 0;
-		return EFAULT;
+		return rv;
 	}
 	while (len > 0) {
 		p = (char *)USER_ADDR + ((u_int)up & ~SEGMENT_MASK);
@@ -453,12 +458,13 @@ copyout(kaddr, udaddr, len)
 	const char *kp = kaddr;
 	char *up = udaddr;
 	char *p;
+	int rv;
 	size_t l;
 	faultbuf env;
 
-	if (setfault(env)) {
+	if ((rv = setfault(env)) != 0) {
 		curpcb->pcb_onfault = 0;
-		return EFAULT;
+		return rv;
 	}
 	while (len > 0) {
 		p = (char *)USER_ADDR + ((u_int)up & ~SEGMENT_MASK);
@@ -492,11 +498,12 @@ kcopy(src, dst, len)
 	size_t len;
 {
 	faultbuf env, *oldfault;
+	int rv;
 
 	oldfault = curpcb->pcb_onfault;
-	if (setfault(env)) {
+	if ((rv = setfault(env)) != 0) {
 		curpcb->pcb_onfault = oldfault;
-		return EFAULT;
+		return rv;
 	}
 
 	bcopy(src, dst, len);
