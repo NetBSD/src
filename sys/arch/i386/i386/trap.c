@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)trap.c	7.4 (Berkeley) 5/13/91
- *	$Id: trap.c,v 1.55 1994/10/26 17:38:44 mycroft Exp $
+ *	$Id: trap.c,v 1.56 1994/10/26 17:52:22 mycroft Exp $
  */
 
 /*
@@ -275,6 +275,10 @@ trap(frame)
 		break;
 
 	case T_PAGEFLT:			/* allow page faults in kernel mode */
+		/*
+		 * fusubail is used by [fs]uswintr() to prevent page faulting
+		 * from inside the profiling interrupt.
+		 */
 		if (pcb->pcb_onfault == fusubail)
 			goto copyfault;
 #if 0
