@@ -1,10 +1,10 @@
-/*	$NetBSD: pcmciadevs.h,v 1.9 1998/08/15 18:58:32 thorpej Exp $	*/
+/*	$NetBSD: pcmciadevs.h,v 1.10 1998/08/15 20:08:37 thorpej Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcmciadevs,v 1.8 1998/08/15 18:58:05 thorpej Exp 
+ *	NetBSD: pcmciadevs,v 1.9 1998/08/15 20:08:07 thorpej Exp 
  */
 
 /*
@@ -57,6 +57,7 @@
 #define	PCMCIA_VENDOR_IODATA	0x01bf	/* I-O DATA */
 #define	PCMCIA_VENDOR_NEWMEDIA	0x0057	/* NewMedia Corporation */
 #define	PCMCIA_VENDOR_SOCKET	0x0104	/* Socket Communications */
+#define	PCMCIA_VENDOR_SMC	0x0108	/* Standard Microsystems Corporation */
 
 /*
  * List of known products.  Grouped by vendor.
@@ -154,6 +155,11 @@
 #define	PCMCIA_CIS_SOCKET_DUAL_RS232	{ NULL, NULL, NULL, NULL }
 #define	PCMCIA_PRODUCT_SOCKET_DUAL_RS232	0x0012
 #define	PCMCIA_STR_SOCKET_DUAL_RS232	"Socket Communications Dual RS232"
+
+/* Standard Microsystems Corporation Products */
+#define	PCMCIA_CIS_SMC_8020BT	{ NULL, NULL, NULL, NULL }
+#define	PCMCIA_PRODUCT_SMC_8020BT	0x0105
+#define	PCMCIA_STR_SMC_8020BT	"SMC 8020BT EtherEZ"
 
 /* Cards we know only by their cis */
 #define	PCMCIA_VENDOR_PREMAX	-1	/* Premax */
