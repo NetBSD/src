@@ -1,4 +1,4 @@
-/*	$NetBSD: biosdisk.c,v 1.5 1997/09/17 18:08:13 drochner Exp $	*/
+/*	$NetBSD: biosdisk.c,v 1.6 1997/09/20 12:17:41 drochner Exp $	*/
 
 /*
  * Copyright (c) 1996
@@ -205,6 +205,7 @@ biosdiskopen(struct open_file *f, ...)
 #ifdef NO_DISKLABEL
 	d->boff = sector;
 	(void)va_arg(ap, int); /* throw away partition */
+	bi_disk.partition = 0;
 #else
 	/* find partition in NetBSD disklabel */
 	if (readsects(&d->ll, sector + LABELSECTOR, 1, d->buf, 0)) {
@@ -216,7 +217,7 @@ biosdiskopen(struct open_file *f, ...)
 	}
 
 	lp = (struct disklabel *) (d->buf + LABELOFFSET);
-	partition = va_arg(ap, int);
+	bi_disk.partition = partition = va_arg(ap, int);
 	if (lp->d_magic != DISKMAGIC) {
 #ifdef DISK_DEBUG
 		printf("warning: no disklabel\n");
