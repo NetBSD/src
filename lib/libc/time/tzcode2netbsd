@@ -1,11 +1,11 @@
 #! /bin/sh
 
 #
-# $NetBSD: tzcode2netbsd,v 1.3 2003/12/19 22:25:42 kleink Exp $
+# $NetBSD: tzcode2netbsd,v 1.4 2003/12/19 23:52:44 kleink Exp $
 #
 # Convert an extracted tzcode distribution into the format suitable
 # for importing it into the NetBSD source tree.
-# Last updated for: tzcode2003d.
+# Last updated for: tzcode2003e.
 # 
 
 NOIMPORT="Makefile
