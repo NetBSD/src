@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_segment.c,v 1.138 2003/10/14 12:51:31 yamt Exp $	*/
+/*	$NetBSD: lfs_segment.c,v 1.139 2003/10/17 14:20:12 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.138 2003/10/14 12:51:31 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.139 2003/10/17 14:20:12 yamt Exp $");
 
 #define ivndebug(vp,str) printf("ino %d: %s\n",VTOI(vp)->i_number,(str))
 
@@ -1417,23 +1417,24 @@ lfs_updatemeta(struct segment *sp)
 }
 
 /*
- * Start a new segment.
+ * Start a new partial segment.
+ *
+ * Return 1 when we entered to a new segment.
+ * Otherwise, return 0.
  */
 int
 lfs_initseg(struct lfs *fs)
 {
-	struct segment *sp;
-	SEGUSE *sup;
+	struct segment *sp = fs->lfs_sp;
 	SEGSUM *ssp;
-	struct buf *bp, *sbp;
-	int repeat;
-	
-	sp = fs->lfs_sp;
-
-	repeat = 0;
+	struct buf *sbp;	/* buffer for SEGSUM */
+	int repeat = 0;		/* return value */
 
 	/* Advance to the next segment. */
 	if (!LFS_PARTIAL_FITS(fs)) {
+		SEGUSE *sup;
+		struct buf *bp;
+
 		/* lfs_avail eats the remaining space */
 		fs->lfs_avail -= fs->lfs_fsbpseg - (fs->lfs_offset -
 						   fs->lfs_curseg);
@@ -1491,17 +1492,22 @@ lfs_initseg(struct lfs *fs)
 	sp->ninodes = 0;
 	sp->ndupino = 0;
 
-	/* Get a new buffer for SEGSUM and enter it into the buffer list. */
 	sp->cbpp = sp->bpp;
+
+	/* Get a new buffer for SEGSUM */
 	sbp = *sp->cbpp = lfs_newbuf(fs, VTOI(fs->lfs_ivnode)->i_devvp,
 	    fsbtodb(fs, fs->lfs_offset), fs->lfs_sumsize, LFS_NB_SUMMARY);
-	sp->segsum = (*sp->cbpp)->b_data;
-	memset(sp->segsum, 0, fs->lfs_sumsize);
-	sp->start_bpp = ++sp->cbpp;
+
+	/* ... and enter it into the buffer list. */
+	*sp->cbpp = sbp;
+	sp->cbpp++;
 	fs->lfs_offset += btofsb(fs, fs->lfs_sumsize);
+
+	sp->start_bpp = sp->cbpp;
 	
 	/* Set point to SEGSUM, initialize it. */
-	ssp = sp->segsum;
+	ssp = sp->segsum = sbp->b_data;
+	memset(ssp, 0, fs->lfs_sumsize);
 	ssp->ss_next = fs->lfs_nextseg;
 	ssp->ss_nfinfo = ssp->ss_ninos = 0;
 	ssp->ss_magic = SS_MAGIC;
