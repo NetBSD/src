@@ -1,4 +1,4 @@
-/*	$NetBSD: lpt_isa.c,v 1.45 1997/10/14 15:50:21 is Exp $	*/
+/*	$NetBSD: lpt_isa.c,v 1.46 1997/10/19 18:57:09 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Charles Hannum.
@@ -172,6 +172,10 @@ lpt_isa_probe(parent, match, aux)
 #else
 #define	ABORT	goto out
 #endif
+
+	/* Disallow wildcarded i/o address. */
+	if (ia->ia_iobase == ISACF_PORT_DEFAULT)
+		return (0);
 
 	iot = ia->ia_iot;
 	base = ia->ia_iobase;

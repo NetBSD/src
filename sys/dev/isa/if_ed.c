@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ed.c,v 1.116 1997/10/15 05:58:59 explorer Exp $	*/
+/*	$NetBSD: if_ed.c,v 1.117 1997/10/19 18:57:00 thorpej Exp $	*/
 
 /*
  * Device driver for National Semiconductor DS8390/WD83C690 based ethernet
@@ -268,6 +268,14 @@ ed_find_WD80x3(sc, cf, ia)
 	/* Set initial values for width/size. */
 	memsize = 8192;
 	isa16bit = 0;
+
+	/* Disallow wildcarded i/o address. */
+	if (ia->ia_iobase == ISACF_PORT_DEFAULT)
+		return (0);
+
+	/* Disallow wildcarded mem address. */
+	if (ia->ia_maddr == ISACF_IOMEM_DEFAULT)
+		return (0);
 
 	if (bus_space_map(iot, ia->ia_iobase, ED_WD_IO_PORTS, 0, &ioh))
 		return (0);
@@ -708,6 +716,14 @@ ed_find_3Com(sc, cf, ia)
 
 	iot = ia->ia_iot;
 	memt = ia->ia_memt;
+
+	/* Disallow wildcarded i/o address. */
+	if (ia->ia_iobase == ISACF_PORT_DEFAULT)
+		return (0);
+
+	/* Disallow wildcarded mem address. */
+	if (ia->ia_maddr == ISACF_IOMEM_DEFAULT)
+		return (0);
 
 	if (bus_space_map(iot, ia->ia_iobase, ED_3COM_IO_PORTS, 0, &ioh))
 		return (0);

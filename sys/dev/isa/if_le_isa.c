@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le_isa.c,v 1.13 1997/09/10 03:31:31 mycroft Exp $	*/
+/*	$NetBSD: if_le_isa.c,v 1.14 1997/10/19 18:57:06 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -170,6 +170,10 @@ le_isa_probe(parent, match, aux)
 {
 	struct le_softc *lesc = match;
 	struct isa_attach_args *ia = aux;
+
+	/* Disallow wildcarded i/o address. */
+	if (ia->ia_iobase == ISACF_PORT_DEFAULT)
+		return (0);
 
 	if (bicc_isa_probe(lesc, ia))
 		return (1);

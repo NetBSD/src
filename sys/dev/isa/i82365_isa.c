@@ -1,4 +1,4 @@
-/*	$NetBSD: i82365_isa.c,v 1.2 1997/10/16 23:21:41 thorpej Exp $	*/
+/*	$NetBSD: i82365_isa.c,v 1.3 1997/10/19 18:56:55 thorpej Exp $	*/
 
 #define	PCICISADEBUG
 
@@ -98,6 +98,10 @@ pcic_isa_probe(parent, match, aux)
 	bus_space_tag_t iot = ia->ia_iot;
 	bus_space_handle_t ioh, memh;
 	int val, found;
+
+	/* Disallow wildcarded i/o address. */
+	if (ia->ia_iobase == ISACF_PORT_DEFAULT)
+		return (0);
 
 	if (bus_space_map(iot, ia->ia_iobase, PCIC_IOSIZE, 0, &ioh))
 		return (0);

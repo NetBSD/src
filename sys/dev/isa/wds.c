@@ -1,4 +1,4 @@
-/*	$NetBSD: wds.c,v 1.21 1997/09/26 04:00:09 mycroft Exp $	*/
+/*	$NetBSD: wds.c,v 1.22 1997/10/19 18:57:19 thorpej Exp $	*/
 
 #undef WDSDIAG
 #ifdef DDB
@@ -280,6 +280,10 @@ wdsprobe(parent, match, aux)
 	bus_space_handle_t ioh;
 	struct wds_probe_data wpd;
 	int rv;
+
+	/* Disallow wildcarded i/o address. */
+	if (ia->ia_iobase == ISACF_PORT_DEFAULT)
+		return (0);
 
 	if (bus_space_map(iot, ia->ia_iobase, WDS_ISA_IOSIZE, 0, &ioh))
 		return (0);

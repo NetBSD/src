@@ -1,4 +1,4 @@
-/*	$NetBSD: wt.c,v 1.39 1997/08/08 09:38:18 jonathan Exp $	*/
+/*	$NetBSD: wt.c,v 1.40 1997/10/19 18:57:22 thorpej Exp $	*/
 
 /*
  * Streamer tape driver.
@@ -199,6 +199,10 @@ wtprobe(parent, match, aux)
 	bus_space_handle_t ioh;
 	int rv = 0;
 
+
+	/* Disallow wildcarded i/o address. */
+	if (ia->ia_iobase == ISACF_PORT_DEFAULT)
+		return (0);
 
 	/* Map i/o space */
 	if (bus_space_map(iot, ia->ia_iobase, AV_NPORT, 0, &ioh))

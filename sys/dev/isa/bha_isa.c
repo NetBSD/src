@@ -1,4 +1,4 @@
-/*	$NetBSD: bha_isa.c,v 1.8 1997/08/27 11:25:07 bouyer Exp $	*/
+/*	$NetBSD: bha_isa.c,v 1.9 1997/10/19 18:56:48 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994, 1996, 1997 Charles M. Hannum.  All rights reserved.
@@ -80,6 +80,10 @@ bha_isa_probe(parent, match, aux)
 	bus_space_handle_t ioh;
 	struct bha_probe_data bpd;
 	int rv;
+
+	/* Disallow wildcarded i/o address. */
+	if (ia->ia_iobase == ISACF_PORT_DEFAULT)
+		return (0);
 
 	if (bus_space_map(iot, ia->ia_iobase, BHA_ISA_IOSIZE, 0, &ioh))
 		return (0);

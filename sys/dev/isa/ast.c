@@ -1,4 +1,4 @@
-/*	$NetBSD: ast.c,v 1.39 1997/10/16 00:29:28 thorpej Exp $	*/
+/*	$NetBSD: ast.c,v 1.40 1997/10/19 18:56:46 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -100,6 +100,10 @@ astprobe(parent, self, aux)
 	 * means there is a multiport board there.
 	 * XXX Needs more robustness.
 	 */
+
+	/* Disallow wildcarded i/o address. */
+	if (ia->ia_iobase == ISACF_PORT_DEFAULT)
+		return (0);
 
 	/* if the first port is in use as console, then it. */
 	if (com_is_console(iot, iobase, 0))

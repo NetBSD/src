@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.111 1997/10/13 00:46:34 explorer Exp $	*/
+/*	$NetBSD: fd.c,v 1.112 1997/10/19 19:00:20 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1996
@@ -270,6 +270,10 @@ fdcprobe(parent, match, aux)
 
 	iot = ia->ia_iot;
 	rv = 0;
+
+	/* Disallow wildcarded i/o address. */
+	if (ia->ia_iobase == IOBASEUNK)
+		return 0;
 
 	/* Map the i/o space. */
 	if (bus_space_map(iot, ia->ia_iobase, FDC_NPORT, 0, &ioh))

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_eg.c,v 1.37 1997/10/15 05:59:16 explorer Exp $	*/
+/*	$NetBSD: if_eg.c,v 1.38 1997/10/19 18:57:04 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1993 Dean Huxley <dean@fsa.ca>
@@ -342,6 +342,10 @@ egprobe(parent, match, aux)
 		DPRINTF(("Weird iobase %x\n", ia->ia_iobase));
 		return 0;
 	}
+
+	/* Disallow wildcarded i/o address. */
+	if (ia->ia_iobase == ISACF_PORT_DEFAULT)
+		return (0);
 
 	/* Map i/o space. */
 	if (bus_space_map(iot, ia->ia_iobase, 0x08, 0, &ioh)) {
