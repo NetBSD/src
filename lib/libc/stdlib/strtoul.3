@@ -1,5 +1,5 @@
-.\" Copyright (c) 1990, 1991 The Regents of the University of California.
-.\" All rights reserved.
+.\" Copyright (c) 1990, 1991, 1993
+.\"	The Regents of the University of California.  All rights reserved.
 .\"
 .\" This code is derived from software contributed to Berkeley by
 .\" Chris Torek and the American National Standards Committee X3,
@@ -33,18 +33,25 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"     @(#)strtoul.3	5.3 (Berkeley) 6/29/91
+.\"     @(#)strtoul.3	8.1 (Berkeley) 6/4/93
 .\"
-.Dd June 29, 1991
+.Dd June 4, 1993
 .Dt STRTOUL 3
 .Os
 .Sh NAME
-.Nm strtoul
-.Nd convert a string to an unsigned long integer
+.Nm strtoul, strtouq
+.Nd convert a string to an unsigned long or uquad_t integer
 .Sh SYNOPSIS
 .Fd #include <stdlib.h>
 .Fd #include <limits.h>
+.Ft unsigned long
 .Fn strtoul "const char *nptr" "char **endptr" "int base"
+
+.Fd #include <sys/types.h>
+.Fd #include <stdlib.h>
+.Fd #include <limits.h>
+.Ft u_quad_t
+.Fn strtouq "const char *nptr" "char **endptr" "int base"
 .Sh DESCRIPTION
 The
 .Fn strtoul
@@ -53,7 +60,16 @@ converts the string in
 .Fa nptr
 to an
 .Em unsigned long
-value according to the given
+value.
+The
+.Fn strtouq
+function
+converts the string in
+.Fa nptr
+to a
+.Em u_quad_t
+value.
+The conversion is done according to the given
 .Fa base ,
 which must be between 2 and 36 inclusive,
 or be the special value 0.

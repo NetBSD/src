@@ -1,6 +1,6 @@
 /*-
- * Copyright (c) 1990 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1990, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -30,7 +30,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)atexit.h	5.1 (Berkeley) 5/15/90
+ *	@(#)atexit.h	8.2 (Berkeley) 7/3/94
  */
 
 /* must be at least 32 to guarantee ANSI conformance */
@@ -42,4 +42,4 @@ struct atexit {
 	void (*fns[ATEXIT_SIZE])();	/* the table itself */
 };
 
-struct atexit *__atexit;	/* points to head of LIFO stack */
+extern struct atexit *__atexit;	/* points to head of LIFO stack */

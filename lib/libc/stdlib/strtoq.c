@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 1990, 1993
+ * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -32,46 +32,51 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char sccsid[] = "@(#)strtol.c	8.1 (Berkeley) 6/4/93";
+static char sccsid[] = "@(#)strtoq.c	8.1 (Berkeley) 6/4/93";
 #endif /* LIBC_SCCS and not lint */
 
+#include <sys/types.h>
+
 #include <limits.h>
-#include <ctype.h>
 #include <errno.h>
+#include <ctype.h>
 #include <stdlib.h>
 
-
 /*
- * Convert a string to a long integer.
+ * Convert a string to a quad integer.
  *
  * Ignores `locale' stuff.  Assumes that the upper and lower case
  * alphabets and digits are each contiguous.
  */
-long
-strtol(nptr, endptr, base)
+quad_t
+strtoq(nptr, endptr, base)
 	const char *nptr;
 	char **endptr;
 	register int base;
 {
-	register const char *s = nptr;
-	register unsigned long acc;
+	register const char *s;
+	register u_quad_t acc;
 	register int c;
-	register unsigned long cutoff;
-	register int neg = 0, any, cutlim;
+	register u_quad_t qbase, cutoff;
+	register int neg, any, cutlim;
 
 	/*
 	 * Skip white space and pick up leading +/- sign if any.
 	 * If base is 0, allow 0x for hex and 0 for octal, else
 	 * assume decimal; if base is already 16, allow 0x.
 	 */
+	s = nptr;
 	do {
 		c = *s++;
 	} while (isspace(c));
 	if (c == '-') {
 		neg = 1;
 		c = *s++;
-	} else if (c == '+')
-		c = *s++;
+	} else {
+		neg = 0;
+		if (c == '+')
+			c = *s++;
+	}
 	if ((base == 0 || base == 16) &&
 	    c == '0' && (*s == 'x' || *s == 'X')) {
 		c = s[1];
@@ -88,19 +93,21 @@ strtol(nptr, endptr, base)
 	 * followed by a legal input character, is too big.  One that
 	 * is equal to this value may be valid or not; the limit
 	 * between valid and invalid numbers is then based on the last
-	 * digit.  For instance, if the range for longs is
-	 * [-2147483648..2147483647] and the input base is 10,
-	 * cutoff will be set to 214748364 and cutlim to either
-	 * 7 (neg==0) or 8 (neg==1), meaning that if we have accumulated
-	 * a value > 214748364, or equal but the next digit is > 7 (or 8),
-	 * the number is too big, and we will return a range error.
+	 * digit.  For instance, if the range for quads is
+	 * [-9223372036854775808..9223372036854775807] and the input base
+	 * is 10, cutoff will be set to 922337203685477580 and cutlim to
+	 * either 7 (neg==0) or 8 (neg==1), meaning that if we have
+	 * accumulated a value > 922337203685477580, or equal but the
+	 * next digit is > 7 (or 8), the number is too big, and we will
+	 * return a range error.
 	 *
 	 * Set any if any `digits' consumed; make it negative to indicate
 	 * overflow.
 	 */
-	cutoff = neg ? -(unsigned long)LONG_MIN : LONG_MAX;
-	cutlim = cutoff % (unsigned long)base;
-	cutoff /= (unsigned long)base;
+	qbase = (unsigned)base;
+	cutoff = neg ? -(u_quad_t)QUAD_MIN : QUAD_MAX;
+	cutlim = cutoff % qbase;
+	cutoff /= qbase;
 	for (acc = 0, any = 0;; c = *s++) {
 		if (isdigit(c))
 			c -= '0';
@@ -114,12 +121,12 @@ strtol(nptr, endptr, base)
 			any = -1;
 		else {
 			any = 1;
-			acc *= base;
+			acc *= qbase;
 			acc += c;
 		}
 	}
 	if (any < 0) {
-		acc = neg ? LONG_MIN : LONG_MAX;
+		acc = neg ? QUAD_MIN : QUAD_MAX;
 		errno = ERANGE;
 	} else if (neg)
 		acc = -acc;
