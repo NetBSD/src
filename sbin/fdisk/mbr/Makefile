@@ -1,14 +1,11 @@
-#	$NetBSD: Makefile,v 1.3.2.1 1999/04/18 00:18:49 fvdl Exp $
+#	$NetBSD: Makefile,v 1.3.2.2 1999/05/02 21:29:41 perry Exp $
+
+MAN=	mbr.8
 
 BINDIR=	/usr/mdec
 BINMODE=444
 
 STRIPFLAG=
-
-PROG=	mbr
-SRCS=	mbr.S
-
-MAN=	mbr.8
 
 .include <bsd.own.mk>
 
@@ -18,10 +15,15 @@ LDFLAGS+= -e start
 LDFLAGS+= -e _start -N
 .endif
 
+.if ${MACHINE} == "i386"
+PROG=	mbr
+SRCS=	mbr.S
+
 ${PROG}: ${OBJS}
 	${LD} -o ${PROG}.tmp ${LDFLAGS} -Ttext 0x600 ${OBJS}
 	${STRIPPROG} ${PROG}.tmp
 	objcopy -O binary ${PROG}.tmp ${PROG}
 	rm -f ${PROG}.tmp
+.endif
 
 .include <bsd.prog.mk>
