@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysctl.8,v 1.22 1998/04/30 21:46:00 thorpej Exp $
+.\"	$NetBSD: sysctl.8,v 1.23 1998/05/02 04:20:18 thorpej Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -162,7 +162,8 @@ privilege can change the value.
 .It net.inet.tcp.timestamps	integer	yes
 .It net.inet.tcp.compat_42	integer	yes
 .It net.inet.tcp.cwm	integer	yes
-.It net.inet.tcp.cwm_burstsize	integet	yes
+.It net.inet.tcp.cwm_burstsize	integer	yes
+.It net.inet.tcp.ack_on_push	integer	yes
 .It net.inet.udp.checksum	integer	yes
 .It net.inet.udp.sendspace	integer	yes
 .It net.inet.udp.recvspace	integer	yes
