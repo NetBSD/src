@@ -1,4 +1,4 @@
-#	$NetBSD: std.pmppc,v 1.1 2002/05/30 08:51:10 augustss Exp $
+#	$NetBSD: std.pmppc,v 1.2 2003/01/01 16:18:03 augustss Exp $
 #
 # standard, required NetBSD/pmppc 'options'
 
@@ -13,4 +13,5 @@ options 	EXEC_SCRIPT	# exec #! scripts
 
 makeoptions	TEXTADDR=0x40000
 
+makeoptions 	NEED_SYMTAB=1
 makeoptions 	NEED_BINARY=1
