@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.167 2003/05/17 17:16:20 itojun Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.168 2003/05/30 01:15:04 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -152,7 +152,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.167 2003/05/17 17:16:20 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.168 2003/05/30 01:15:04 itojun Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -3140,6 +3140,10 @@ syn_cache_get(src, dst, th, hlen, tlen, so, m)
 				sizeof(((struct sockaddr_in *)dst)->sin_addr));
 			in6p->in6p_lport = ((struct sockaddr_in *)dst)->sin_port;
 			in6totcpcb(in6p)->t_family = AF_INET;
+			if (sotoin6pcb(oso)->in6p_flags & IN6P_IPV6_V6ONLY)
+				in6p->in6p_flags |= IN6P_IPV6_V6ONLY;
+			else
+				in6p->in6p_flags &= ~IN6P_IPV6_V6ONLY;
 		}
 #endif
 		break;
