@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.21 1999/01/03 02:17:46 lukem Exp $	*/
+/*	$NetBSD: main.c,v 1.22 1999/03/23 14:22:59 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1991, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.6 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: main.c,v 1.21 1999/01/03 02:17:46 lukem Exp $");
+__RCSID("$NetBSD: main.c,v 1.22 1999/03/23 14:22:59 bouyer Exp $");
 #endif
 #endif /* not lint */
 
@@ -93,6 +93,8 @@ int	cartridge = 0;		/* Assume non-cartridge tape */
 long	dev_bsize = 1;		/* recalculated below */
 long	blocksperfile = 0;	/* output blocks per file */
 char	*host = NULL;		/* remote host (if any) */
+int	readcache = -1;		/* read cache size (in readblksize blks) */
+int	readblksize = 32 * 1024; /* read block size */
 
 int	main __P((int, char *[]));
 static long numarg __P((char *, long, long));
@@ -136,7 +138,7 @@ main(argc, argv)
 
 	obsolete(&argc, &argv);
 	while ((ch = getopt(argc, argv,
-	    "0123456789B:b:cd:f:h:L:ns:ST:uWw")) != -1)
+	    "0123456789B:b:cd:f:h:k:L:nr:s:ST:uWw")) != -1)
 		switch (ch) {
 		/* dump level */
 		case '0': case '1': case '2': case '3': case '4':
@@ -171,6 +173,10 @@ main(argc, argv)
 			honorlevel = numarg("honor level", 0L, 10L);
 			break;
 
+		case 'k':
+			readblksize = numarg("read block size", 0, 64) * 1024;
+			break;
+
 		case 'L':
 			/*
 			 * Note that although there are LBLSIZE characters,
@@ -191,6 +197,10 @@ main(argc, argv)
 			notify = 1;
 			break;
 
+		case 'r':		/* read cache size */
+			readcache = numarg("read cache size", 0, 512);
+			break;
+		
 		case 's':		/* tape size, feet */
 			tsize = numarg("tape size", 1L, 0L) * 12 * 10;
 			break;
@@ -379,7 +389,7 @@ main(argc, argv)
 	}
 	sync();
 	sblock = (struct fs *)sblock_buf;
-	bread(SBOFF, (char *) sblock, SBSIZE);
+	rawread(SBOFF, (char *) sblock, SBSIZE);
 	if (sblock->fs_magic != FS_MAGIC) {
 		if (sblock->fs_magic == bswap32(FS_MAGIC)) {
 			ffs_sb_swap(sblock, sblock, 0);
@@ -442,6 +452,8 @@ main(argc, argv)
 
 	nonodump = iswap32(spcl.c_level) < honorlevel;
 
+	initcache(readcache, readblksize);
+	
 	(void)signal(SIGINFO, statussig);
 
 	msg("mapping (Pass I) [regular files]\n");
@@ -582,9 +594,10 @@ static void
 usage()
 {
 
-	(void)fprintf(stderr, "%s\n%s\n%s\n",
+	(void)fprintf(stderr, "%s\n%s\n%s\n%s\n",
 "usage: dump [-0123456789cnu] [-B records] [-b blocksize] [-d density]",
-"            [-f file] [-h level] [-L label] [-s feet] [-T date] filesystem",
+"            [-f file] [-h level] [-k read block size] [-L label]",
+"            [-r read cache size] [-s feet] [-T date] filesystem",
 "       dump [-W | -w]");
 	exit(1);
 }
