@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.46 1996/04/04 06:37:05 phil Exp $	*/
+/*	$NetBSD: machdep.c,v 1.47 1996/05/03 23:22:54 phil Exp $	*/
 
 /*-
  * Copyright (c) 1996 Matthias Pfaller.
@@ -499,7 +499,6 @@ void
 boot(howto)
 	int howto;
 {
-	int s;
 	extern int cold;
 	extern const char *panicstr;
 
@@ -522,7 +521,7 @@ boot(howto)
 	}
 
 	/* Disable interrupts. */
-	s = splhigh();
+	splhigh();
 
 	/* If rebooting and a dump is requested do it. */
 	if ((howto & (RB_DUMP | RB_HALT)) == RB_DUMP) {
@@ -570,13 +569,14 @@ haltsys:
 
 	if (howto & RB_HALT) {
 		printf("\n");
-		printf ("The operating system has halted.\n");
+		printf("The operating system has halted.\n");
 		printf("Please press any key to reboot.\n\n");
 		cngetc();
 	}
 
 	printf("rebooting...\n");
 	cpu_reset();
+	for(;;) ;
 	/*NOTREACHED*/
 }
 
