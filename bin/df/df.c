@@ -44,7 +44,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)df.c	8.7 (Berkeley) 4/2/94";*/
-static char rcsid[] = "$Id: df.c,v 1.16 1995/01/13 23:23:43 mycroft Exp $";
+static char rcsid[] = "$Id: df.c,v 1.17 1995/01/30 18:10:51 mycroft Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -62,22 +62,15 @@ static char rcsid[] = "$Id: df.c,v 1.16 1995/01/13 23:23:43 mycroft Exp $";
 int	 bread __P((off_t, void *, int));
 char	*getmntpt __P((char *));
 void	 prtstat __P((struct statfs *, int));
-void	 ufs_df __P((char *, int));
-void	 add_fsmask __P((char *));
+int	 ufs_df __P((char *, struct statfs *));
+int	 selected __P((const char *));
+void	 maketypelist __P((char *));
+long	 regetmntinfo __P((struct statfs **, long));
 void	 usage __P((void));
 
-struct fstype {
-	char *fs_name;
-	int fs_no;
-};
-
-int	iflag, kflag, nflag, tflag;
-long	blocksize, mntsize;
-struct	statfs *mntbuf;
+int	iflag, kflag, lflag, nflag;
+char	**typelist = NULL;
 struct	ufs_args mdev;
-struct	fstype *fstypes;
-int	numfstypes, defmatch = 1;
-int	posflags, negflags;
 
 int
 main(argc, argv)
@@ -85,9 +78,9 @@ main(argc, argv)
 	char *argv[];
 {
 	struct stat stbuf;
-	struct statfs statfsbuf;
-	long width, maxwidth;
-	int ch, i;
+	struct statfs statfsbuf, *mntbuf;
+	long mntsize;
+	int ch, i, maxwidth, width;
 	char *mntpt;
 
 	while ((ch = getopt(argc, argv, "iklnt:")) != -1)
@@ -96,19 +89,18 @@ main(argc, argv)
 			iflag = 1;
 			break;
 		case 'k':
-			blocksize = 1024;
 			kflag = 1;
 			break;
 		case 'l':
-			add_fsmask("local");
-			tflag = 1;
+			lflag = 1;
 			break;
 		case 'n':
 			nflag = 1;
 			break;
 		case 't':
-			add_fsmask(optarg);
-			tflag = 1;
+			if (typelist != NULL)
+				errx(1, "only one -t option may be specified.");
+			maketypelist(optarg);
 			break;
 		case '?':
 		default:
@@ -117,79 +109,83 @@ main(argc, argv)
 	argc -= optind;
 	argv += optind;
 
-	if (*argv && tflag)
+	if (*argv && (lflag || typelist != NULL))
 		errx(1, "-l or -t does not make sense with list of mount points");
 
-	mntsize = getmntinfo(&mntbuf, (nflag ? MNT_NOWAIT : MNT_WAIT));
+	mntsize = getmntinfo(&mntbuf, MNT_NOWAIT);
 	if (mntsize == 0)
 	        err(1, "retrieving information on mounted file systems");
+
+	if (!*argv) {
+		mntsize = regetmntinfo(&mntbuf, mntsize);
+	} else {
+		mntbuf = malloc(argc * sizeof(struct statfs));
+		mntsize = 0;
+		for (; *argv; argv++) {
+			if (stat(*argv, &stbuf) < 0) {
+				if ((mntpt = getmntpt(*argv)) == 0) {
+					warn("%s", *argv);
+					continue;
+				}
+			} else if ((stbuf.st_mode & S_IFMT) == S_IFCHR) {
+				if (!ufs_df(*argv, &mntbuf[mntsize]))
+					++mntsize;
+				continue;
+			} else if ((stbuf.st_mode & S_IFMT) == S_IFBLK) {
+				if ((mntpt = getmntpt(*argv)) == 0) {
+					mntpt = mktemp(strdup("/tmp/df.XXXXXX"));
+					mdev.fspec = *argv;
+					if (mkdir(mntpt, DEFFILEMODE) != 0) {
+						warn("%s", mntpt);
+						continue;
+					}
+					if (mount(MOUNT_UFS, mntpt, MNT_RDONLY,
+					    &mdev) != 0) {
+						(void)rmdir(mntpt);
+						if (!ufs_df(*argv, &mntbuf[mntsize]))
+							++mntsize;
+						continue;
+					} else if (!statfs(mntpt, &mntbuf[mntsize])) {
+						mntbuf[mntsize].f_mntonname[0] = '\0';
+						++mntsize;
+					} else
+						warn("%s", *argv);
+					(void)unmount(mntpt, 0);
+					(void)rmdir(mntpt);
+					continue;
+				}
+			} else
+				mntpt = *argv;
+			/*
+			 * Statfs does not take a `wait' flag, so we cannot
+			 * implement nflag here.
+			 */
+			if (!statfs(mntpt, &mntbuf[mntsize]))
+				++mntsize;
+			else
+				warn("%s", *argv);
+		}
+	}
+
 	maxwidth = 0;
 	for (i = 0; i < mntsize; i++) {
 		width = strlen(mntbuf[i].f_mntfromname);
 		if (width > maxwidth)
 			maxwidth = width;
 	}
-
-	if (!*argv) {
-		for (i = 0; i < mntsize; i++)
-			prtstat(&mntbuf[i], maxwidth);
-		exit(0);
-	}
-
-	for (; *argv; argv++) {
-		if (stat(*argv, &stbuf) < 0) {
-			if ((mntpt = getmntpt(*argv)) == 0) {
-				warn("%s", *argv);
-				continue;
-			}
-		} else if ((stbuf.st_mode & S_IFMT) == S_IFCHR) {
-			ufs_df(*argv, maxwidth);
-			continue;
-		} else if ((stbuf.st_mode & S_IFMT) == S_IFBLK) {
-			if ((mntpt = getmntpt(*argv)) == 0) {
-				mntpt = mktemp(strdup("/tmp/df.XXXXXX"));
-				mdev.fspec = *argv;
-				if (mkdir(mntpt, DEFFILEMODE) != 0) {
-					warn("%s", mntpt);
-					continue;
-				}
-				if (mount(MOUNT_UFS, mntpt, MNT_RDONLY,
-				    &mdev) != 0) {
-					ufs_df(*argv, maxwidth);
-					(void)rmdir(mntpt);
-					continue;
-				} else if (statfs(mntpt, &statfsbuf)) {
-					statfsbuf.f_mntonname[0] = '\0';
-					prtstat(&statfsbuf, maxwidth);
-				} else
-					warn("%s", *argv);
-				(void)unmount(mntpt, 0);
-				(void)rmdir(mntpt);
-				continue;
-			}
-		} else
-			mntpt = *argv;
-		/*
-		 * Statfs does not take a `wait' flag, so we cannot
-		 * implement nflag here.
-		 */
-		if (statfs(mntpt, &statfsbuf) < 0) {
-			warn("%s", mntpt);
-			continue;
-		}
-		if (argc == 1)
-			maxwidth = strlen(statfsbuf.f_mntfromname) + 1;
-		prtstat(&statfsbuf, maxwidth);
-	}
-	return (0);
+	for (i = 0; i < mntsize; i++)
+		prtstat(&mntbuf[i], maxwidth);
+	exit(0);
 }
 
 char *
 getmntpt(name)
 	char *name;
 {
-	long i;
+	long mntsize, i;
+	struct statfs *mntbuf;
 
+	mntsize = getmntinfo(&mntbuf, MNT_NOWAIT);
 	for (i = 0; i < mntsize; i++) {
 		if (!strcmp(mntbuf[i].f_mntfromname, name))
 			return (mntbuf[i].f_mntonname);
@@ -197,72 +193,90 @@ getmntpt(name)
 	return (0);
 }
 
-struct fsflags {
-	char	*ff_name;
-	int	ff_pos;
-	int	ff_neg;
-} fsflags[] = {
-	{"local",	MNT_LOCAL,	0},
-	{"ro",		MNT_RDONLY,	0},
-	{"rw",		0,		MNT_RDONLY},
-};
+static enum { IN_LIST, NOT_IN_LIST } which;
+
+int
+selected(type)
+	const char *type;
+{
+	char **av;
+
+	/* If no type specified, it's always selected. */
+	if (typelist == NULL)
+		return (1);
+	for (av = typelist; *av != NULL; ++av)
+		if (!strcmp(type, *av))
+			return (which == IN_LIST ? 1 : 0);
+	return (which == IN_LIST ? 0 : 1);
+}
 
 void
-add_fsmask(fstype)
-	char *fstype;
+maketypelist(fslist)
+	char *fslist;
 {
-	int len, no, n;
+	int i;
+	char *nextcp, **av;
 
-	len = strlen(fstype);
+	if ((fslist == NULL) || (fslist[0] == '\0'))
+		errx(1, "empty type list");
 
-	if (!bcmp(fstype, "no", 2)) {
-		no = 1;
-		defmatch = 1;
-		len -= 2;
-		fstype += 2;
-	} else {
-		no = 0;
-		defmatch = 0;
+	/*
+	 * XXX
+	 * Note: the syntax is "noxxx,yyy" for no xxx's and
+	 * no yyy's, not the more intuitive "noyyy,noyyy".
+	 */
+	if (fslist[0] == 'n' && fslist[1] == 'o') {
+		fslist += 2;
+		which = NOT_IN_LIST;
+	} else
+		which = IN_LIST;
+
+	/* Count the number of types. */
+	for (i = 1, nextcp = fslist; nextcp = strchr(nextcp, ','); i++)
+		++nextcp;
+
+	/* Build an array of that many types. */
+	if ((av = typelist = malloc((i + 1) * sizeof(char *))) == NULL)
+		err(1, NULL);
+	av[0] = fslist;
+	for (i = 1, nextcp = fslist; nextcp = strchr(nextcp, ','); i++) {
+		*nextcp = '\0';
+		av[i] = ++nextcp;
 	}
+	/* Terminate the array. */
+	av[i] = NULL;
+}
 
-	for (n = 0; n < sizeof(fsflags) / sizeof(fsflags[0]); n++) {
-		if (!bcmp(fstype, fsflags[n].ff_name, len+1)) {
-			if (!no) {
-				posflags |= fsflags[n].ff_pos;
-				posflags &= ~fsflags[n].ff_neg;
-				negflags |= fsflags[n].ff_neg;
-				negflags &= !fsflags[n].ff_pos;
-			} else {
-				posflags |= fsflags[n].ff_neg;
-				posflags &= ~fsflags[n].ff_pos;
-				negflags |= fsflags[n].ff_pos;
-				negflags &= ~fsflags[n].ff_neg;
-			}
-			return;
-		}
+/*
+ * Make a pass over the filesystem info in ``mntbuf'' filtering out
+ * filesystem types not in ``fsmask'' and possibly re-stating to get
+ * current (not cached) info.  Returns the new count of valid statfs bufs.
+ */
+long
+regetmntinfo(mntbufp, mntsize)
+	struct statfs **mntbufp;
+	long mntsize;
+{
+	int i, j;
+	struct statfs *mntbuf;
+
+	if (!lflag && typelist == NULL)
+		return (nflag ? mntsize : getmntinfo(mntbufp, MNT_WAIT));
+
+	mntbuf = *mntbufp;
+	j = 0;
+	for (i = 0; i < mntsize; i++) {
+		if (lflag && (mntbuf[i].f_flags & MNT_LOCAL) == 0)
+			continue;
+		if (!selected(mntbuf[i].f_fstypename))
+			continue;
+		if (nflag)
+			mntbuf[j] = mntbuf[i];
+		else
+			(void)statfs(mntbuf[i].f_mntonname, &mntbuf[j]);
+		j++;
 	}
-
-	if (!bcmp(fstype, "all", len+1)) {
-		if (no) {
-			(void)fprintf(stderr, "I'm sorry.  I can't do that, Dave.\n");
-			exit(1);
-		} else {
-			fstypes = NULL;
-			posflags = negflags = 0;
-		}
-	}
-
-	for (n = 0; n < numfstypes; n++) {
-		if (!bcmp(fstype, fstypes[n].fs_name, len+1)) {
-			fstypes[n].fs_no = no;
-			return;
-		}
-	}
-
-	numfstypes++;
-	fstypes = (struct fstype *) realloc(fstypes, sizeof(struct fstype) * numfstypes);
-	fstypes[numfstypes - 1].fs_name = strdup(fstype);
-	fstypes[numfstypes - 1].fs_no = no;
+	return (j);
 }
 
 /*
@@ -281,30 +295,16 @@ prtstat(sfsp, maxwidth)
 	struct statfs *sfsp;
 	int maxwidth;
 {
+	static long blocksize;
 	static int headerlen, timesthrough;
 	static char *header;
 	long used, availblks, inodes;
-	int i, gotmatch = defmatch;
 
-	if ((sfsp->f_flags & posflags) != posflags)
-		return;
-	if ((sfsp->f_flags & negflags) != 0)
-		return;
-	if (numfstypes) {
-		for (i = 0; i < numfstypes; i++)
-			if (!strcmp(sfsp->f_fstypename, fstypes[i].fs_name)) {
-				if (fstypes[i].fs_no)
-					return;
-				gotmatch = 1;
-				break;
-			}
-		if (!gotmatch)
-			return;
-	}
 	if (maxwidth < 11)
 		maxwidth = 11;
 	if (++timesthrough == 1) {
 		if (kflag) {
+			blocksize = 1024;
 			header = "1K-blocks";
 			headerlen = strlen(header);
 		} else
@@ -350,13 +350,11 @@ union {
 
 int	rfd;
 
-void
-ufs_df(file, maxwidth)
+int
+ufs_df(file, sfsp)
 	char *file;
-	int maxwidth;
-{
-	struct statfs statfsbuf;
 	struct statfs *sfsp;
+{
 	char *mntpt;
 	static int synced;
 
@@ -365,13 +363,12 @@ ufs_df(file, maxwidth)
 
 	if ((rfd = open(file, O_RDONLY)) < 0) {
 		warn("%s", file);
-		return;
+		return (-1);
 	}
 	if (bread((off_t)SBOFF, &sblock, SBSIZE) == 0) {
 		(void)close(rfd);
-		return;
+		return (-1);
 	}
-	sfsp = &statfsbuf;
 	sfsp->f_type = 0;
 	sfsp->f_flags = 0;
 	sfsp->f_bsize = sblock.fs_fsize;
@@ -393,8 +390,8 @@ ufs_df(file, maxwidth)
 	memmove(&sfsp->f_mntfromname[0], file, MNAMELEN);
 	strncpy(sfsp->f_fstypename, MOUNT_UFS, MFSNAMELEN);
 	sfsp->f_fstypename[MFSNAMELEN] = '\0';
-	prtstat(sfsp, maxwidth);
 	(void)close(rfd);
+	return (0);
 }
 
 int
