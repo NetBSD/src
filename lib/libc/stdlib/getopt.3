@@ -1,4 +1,4 @@
-.\"	$NetBSD: getopt.3,v 1.26 2003/08/07 16:43:39 agc Exp $
+.\"	$NetBSD: getopt.3,v 1.27 2003/09/09 19:31:53 wiz Exp $
 .\"
 .\" Copyright (c) 1988, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -127,7 +127,7 @@ by the option
 .Ql --
 (double dash) which causes
 .Fn getopt
-to signal the end of argument processing and returns \-1.
+to signal the end of argument processing and return \-1.
 When all options have been processed (i.e., up to the first non-option
 argument),
 .Fn getopt
@@ -242,14 +242,14 @@ It is provided for backward compatibility
 The following code fragment works in most cases.
 .Bd -literal -offset indent
 int length;
-char *p;
+char *p,c;
 
 while ((c = getopt(argc, argv, "0123456789")) != -1) {
 	switch (c) {
 	case '0': case '1': case '2': case '3': case '4':
 	case '5': case '6': case '7': case '8': case '9':
 		p = argv[optind - 1];
-		if (p[0] == '-' \*[Am]\*[Am] p[1] == ch \*[Am]\*[Am] !p[2])
+		if (p[0] == '-' \*[Am]\*[Am] p[1] == c \*[Am]\*[Am] !p[2])
 			length = atoi(++p);
 		else
 			length = atoi(argv[optind] + 1);
