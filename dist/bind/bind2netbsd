@@ -1,6 +1,6 @@
 #! /bin/sh
 #
-#	$NetBSD: bind2netbsd,v 1.7 1999/11/19 22:49:37 veego Exp $
+#	$NetBSD: bind2netbsd,v 1.8 1999/11/20 18:05:24 veego Exp $
 #
 # Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -72,7 +72,7 @@ pax -rvw port_after.h port_before.h prand_conf.h $d/include
 cd bin
 pax -rvw probe_ipv6 $d/bin
 cd $r/doc/man
-pax -rvw dig.1 dnskeygen.1 dnsquery.1 host.1 named-bootconf.8 named-xfer.8 named.8 named.conf.5 ndc.8 nslookup.8 $d/man
+pax -rvw dig.1 dnskeygen.1 dnsquery.1 host.1 named-bootconf.8 named-xfer.8 named.8 named.conf.5 ndc.8 nslookup.8 nsupdate.8 $d/man
 
 ### Remove lib/bsd, lib/cylink and lib/dnssafe
 cd $d/lib
