@@ -1,4 +1,4 @@
-/* $NetBSD: apecsvar.h,v 1.6.2.1 1997/05/23 21:35:02 thorpej Exp $ */
+/* $NetBSD: apecsvar.h,v 1.6.2.2 1997/06/03 07:07:36 thorpej Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
 
 #include <dev/isa/isavar.h>
 #include <dev/pci/pcivar.h>
-#include <alpha/pci/pci_dma_sgmap.h>
+#include <alpha/pci/pci_pte64_sgmap.h>
 
 /*
  * An APECS chipset's configuration.
@@ -50,7 +50,7 @@ struct apecs_config {
 	struct alpha_bus_dma_tag ac_dmat_direct;
 	struct alpha_bus_dma_tag ac_dmat_sgmap;
 
-	struct alpha_pci_sgmap ac_sgmap;
+	struct alpha_sgmap ac_sgmap;
 
 	u_int32_t ac_haxr1, ac_haxr2;
 

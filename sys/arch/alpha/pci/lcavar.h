@@ -1,4 +1,4 @@
-/* $NetBSD: lcavar.h,v 1.6.2.1 1997/05/23 21:35:08 thorpej Exp $ */
+/* $NetBSD: lcavar.h,v 1.6.2.2 1997/06/03 07:07:40 thorpej Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
 
 #include <dev/isa/isavar.h>
 #include <dev/pci/pcivar.h>
-#include <alpha/pci/pci_dma_sgmap.h>
+#include <alpha/pci/pci_pte64_sgmap.h>
 
 /*
  * LCA chipset's configuration.
@@ -46,7 +46,7 @@ struct lca_config {
 	struct alpha_bus_dma_tag lc_dmat_direct;
 	struct alpha_bus_dma_tag lc_dmat_sgmap;
 
-	struct alpha_pci_sgmap lc_sgmap;
+	struct alpha_sgmap lc_sgmap;
 
 	bus_addr_t lc_s_mem_w2_masked_base;
 
