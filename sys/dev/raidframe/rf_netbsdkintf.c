@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.123 2002/07/13 17:24:41 oster Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.124 2002/07/13 17:47:44 oster Exp $	*/
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -114,7 +114,7 @@
  ***********************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.123 2002/07/13 17:24:41 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.124 2002/07/13 17:47:44 oster Exp $");
 
 #include <sys/param.h>
 #include <sys/errno.h>
@@ -1658,10 +1658,8 @@ raidstart(raidPtr)
 					   RF_NORMAL_COMPONENT_UPDATE);
 		raidPtr->numNewFailures--;
 	}
-	RF_UNLOCK_MUTEX(raidPtr->mutex);
 
 	/* Check to see if we're at the limit... */
-	RF_LOCK_MUTEX(raidPtr->mutex);
 	while (raidPtr->openings > 0) {
 		RF_UNLOCK_MUTEX(raidPtr->mutex);
 
