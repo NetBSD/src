@@ -1,0 +1,2 @@
+# $NetBSD: md.hpcmips,v 1.1 1999/10/07 13:00:10 shin Exp $
+./sbin/fdisk
