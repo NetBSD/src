@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.4 1998/01/12 04:57:13 sakamoto Exp $	*/
+/*	$NetBSD: intr.h,v 1.5 1998/07/18 21:27:27 is Exp $	*/
 /*	$OpenBSD: intr.h,v 1.1 1997/10/13 10:53:45 pefo Exp $ */
 
 /*
@@ -169,6 +169,8 @@ set_sint(pending)
 #define	splsoftclock()	spllower(SINT_CLOCK)
 #define	splsoftnet()	splraise(SINT_NET)
 #define	splsoftserial()	splraise(SINT_SERIAL)
+
+#define spllpt()	spltty()
 
 #define	setsoftclock()	set_sint(SINT_CLOCK);
 #define	setsoftnet()	set_sint(SINT_NET);
