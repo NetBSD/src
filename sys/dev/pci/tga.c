@@ -1,4 +1,4 @@
-/* $NetBSD: tga.c,v 1.1 1998/04/15 20:16:31 drochner Exp $ */
+/* $NetBSD: tga.c,v 1.2 1998/04/16 12:52:42 drochner Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -444,6 +444,7 @@ tga_alloc_screen(v, type, cookiep, curxp, curyp)
 	*cookiep = &sc->sc_dc->dc_rcons; /* one and only for now */
 	*curxp = 0;
 	*curyp = 0;
+	sc->nscreens++;
 	return (0);
 }
 
