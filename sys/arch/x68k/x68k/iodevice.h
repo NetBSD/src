@@ -1,4 +1,4 @@
-/*	$NetBSD: iodevice.h,v 1.6 1999/03/16 16:30:23 minoura Exp $	*/
+/*	$NetBSD: iodevice.h,v 1.7 2002/05/14 02:03:03 matt Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1995 Masaru Oki
@@ -358,7 +358,7 @@ struct IODEVICE
 
 #ifdef _KERNEL
 #ifndef LOCORE
-volatile struct IODEVICE *IODEVbase;
+extern volatile struct IODEVICE *IODEVbase;
 #endif
 
 #define mfp     (IODEVbase->io_mfp)

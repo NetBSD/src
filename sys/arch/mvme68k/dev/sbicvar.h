@@ -1,4 +1,4 @@
-/*	$NetBSD: sbicvar.h,v 1.8 2001/04/25 17:53:17 bouyer Exp $	*/
+/*	$NetBSD: sbicvar.h,v 1.9 2002/05/14 02:03:01 matt Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -87,7 +87,7 @@ struct sbic_tinfo {
     int                     cmds;       /* #commands processed */
     int                     dconns;     /* #disconnects */
     int                     lubusy;     /* What local units/subr. are busy? */
-} tinfo_t;
+};
 
 struct  sbic_softc {
     struct  device          sc_dev;
