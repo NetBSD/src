@@ -1,4 +1,4 @@
-/*	$NetBSD: readelf.c,v 1.16 2002/07/09 14:59:55 pooka Exp $	*/
+/*	$NetBSD: readelf.c,v 1.17 2003/02/26 18:36:24 christos Exp $	*/
 
 #include "file.h"
 
@@ -17,7 +17,7 @@
 #if 0
 FILE_RCSID("@(#)Id: readelf.c,v 1.22 2002/07/03 18:26:38 christos Exp ")
 #else
-__RCSID("$NetBSD: readelf.c,v 1.16 2002/07/09 14:59:55 pooka Exp $");
+__RCSID("$NetBSD: readelf.c,v 1.17 2003/02/26 18:36:24 christos Exp $");
 #endif
 #endif
 
@@ -99,12 +99,18 @@ getu64(int swap, uint64_t value)
 #define sh_addr		(class == ELFCLASS32		\
 			 ? (void *) &sh32		\
 			 : (void *) &sh64)
+#define sh_size		(class == ELFCLASS32		\
+			 ? sizeof sh32			\
+			 : sizeof sh64)
 #define shs_type	(class == ELFCLASS32		\
 			 ? getu32(swap, sh32.sh_type)	\
 			 : getu32(swap, sh64.sh_type))
 #define ph_addr		(class == ELFCLASS32		\
 			 ? (void *) &ph32		\
 			 : (void *) &ph64)
+#define ph_size		(class == ELFCLASS32		\
+			 ? sizeof ph32			\
+			 : sizeof ph64)
 #define ph_type		(class == ELFCLASS32		\
 			 ? getu32(swap, ph32.p_type)	\
 			 : getu32(swap, ph64.p_type))
@@ -133,11 +139,14 @@ doshn(int class, int swap, int fd, off_t off, int num, size_t size)
 	Elf32_Shdr sh32;
 	Elf64_Shdr sh64;
 
+	if (size != sh_size)
+		error("corrupted section header size.\n");
+
 	if (lseek(fd, off, SEEK_SET) == -1)
 		error("lseek failed (%s).\n", strerror(errno));
 
 	for ( ; num; num--) {
-		if (read(fd, sh_addr, size) == -1)
+		if (read(fd, sh_addr, sh_size) == -1)
 			error("read failed (%s).\n", strerror(errno));
 		if (shs_type == SHT_SYMTAB /* || shs_type == SHT_DYNSYM */) {
 			(void) printf (", not stripped");
@@ -165,11 +174,13 @@ dophn_exec(int class, int swap, int fd, off_t off, int num, size_t size)
 	int bufsize;
 	size_t offset, nameoffset;
 
+	if (size != ph_size)
+		error("corrupted program header size.\n");
 	if (lseek(fd, off, SEEK_SET) == -1)
 		error("lseek failed (%s).\n", strerror(errno));
 
   	for ( ; num; num--) {
-  		if (read(fd, ph_addr, size) == -1)
+  		if (read(fd, ph_addr, ph_size) == -1)
   			error("read failed (%s).\n", strerror(errno));
 
 		switch (ph_type) {
@@ -352,13 +363,15 @@ dophn_core(int class, int swap, int fd, off_t off, int num, size_t size)
 	int bufsize;
 	int os_style = -1;
 
+	if (size != ph_size)
+		error("corrupted program header size.\n");
 	/*
 	 * Loop through all the program headers.
 	 */
 	for ( ; num; num--) {
 		if (lseek(fd, off, SEEK_SET) == -1)
 			error("lseek failed (%s).\n", strerror(errno));
-		if (read(fd, ph_addr, size) == -1)
+		if (read(fd, ph_addr, ph_size) == -1)
 			error("read failed (%s).\n", strerror(errno));
 		off += size;
 		if (ph_type != PT_NOTE)
