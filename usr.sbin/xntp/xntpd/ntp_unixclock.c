@@ -59,6 +59,12 @@
 # undef hz
 #endif /* hz */
 
+#ifdef HAVE_SYSCTL_CLOCKRATE
+#include <sys/param.h>
+#include <sys/sysctl.h>
+#include <sys/time.h>
+#endif
+
 extern int debug;
 /*
  * These routines (init_systime, get_systime, step_systime, adj_systime)
@@ -267,6 +273,32 @@ init_systime()
  * clock_parms - return the local clock tickadj and tick parameters
  *
  */
+
+#ifdef HAVE_SYSCTL_CLOCKRATE
+static void
+clock_parms(ptickadj, ptick)
+    u_long *ptickadj;
+    u_long *ptick;
+{
+    int mib[2];
+    size_t len;
+    struct clockinfo c;
+    int e;
+
+    mib[0] = CTL_KERN;
+    mib[1] = KERN_CLOCKRATE;
+    len = sizeof(c);
+    e = sysctl(mib,2,&c,&len,NULL,0);
+    if (e != 0) {
+	NLOG(NLOG_SYSINFO) /* conditional if clause for conditional syslog */
+	syslog(LOG_NOTICE, "Could not find clockrate with sysctl\n");
+	exit(1);
+    }
+    *ptickadj = c.tickadj;
+    *ptick = c.tick;
+}
+#else
+
 static void
 clock_parms(ptickadj, ptick)
      u_long *ptickadj;
@@ -704,4 +736,5 @@ clock_parms(ptickadj, ptick)
     printf("tick = %ld, tickadj = %ld, hz = %d\n", *ptick, *ptickadj, hz);
 #endif
 }
+#endif
 #endif /* not VMS */
