@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sppp.h,v 1.12 2002/01/04 12:21:25 martin Exp $	*/
+/*	$NetBSD: if_sppp.h,v 1.13 2002/01/06 20:14:29 martin Exp $	*/
 
 /*
  * Copyright (c) 2002 Martin Husemann. All rights reserved.
@@ -80,3 +80,12 @@ struct spppstatus {
 };
 
 #define	SPPPGETSTATUS	_IOWR('i', 124, struct spppstatus)
+
+struct spppidletimeout {
+	char	ifname[IFNAMSIZ];	/* pppoe interface name */
+	time_t	idle_seconds;		/* number of seconds idle before
+					 * disconnect, 0 to disable idle-timeout */
+};
+
+#define	SPPPGETIDLETO	_IOWR('i', 125, struct spppstatus)
+#define	SPPPSETIDLETO	_IOW('i', 126, struct spppstatus)

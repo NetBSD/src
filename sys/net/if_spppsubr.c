@@ -1,4 +1,4 @@
-/*	$NetBSD: if_spppsubr.c,v 1.37 2002/01/05 19:26:44 thorpej Exp $	 */
+/*	$NetBSD: if_spppsubr.c,v 1.38 2002/01/06 20:14:29 martin Exp $	 */
 
 /*
  * Synchronous PPP/Cisco link level subroutines.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.37 2002/01/05 19:26:44 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.38 2002/01/06 20:14:29 martin Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipx.h"
@@ -596,6 +596,7 @@ sppp_input(struct ifnet *ifp, struct mbuf *m)
 		if (sp->state[IDX_IPCP] == STATE_OPENED) {
 			schednetisr (NETISR_IP);
 			inq = &ipintrq;
+			sp->pp_last_activity = time.tv_sec;
 		}
 		break;
 #endif
@@ -610,6 +611,7 @@ sppp_input(struct ifnet *ifp, struct mbuf *m)
 		if (sp->state[IDX_IPV6CP] == STATE_OPENED) {
 			schednetisr (NETISR_IPV6);
 			inq = &ip6intrq;
+			sp->pp_last_activity = time.tv_sec;
 		}
 		break;
 #endif
@@ -676,6 +678,8 @@ sppp_output(struct ifnet *ifp, struct mbuf *m,
 	ALTQ_DECL(struct altq_pktattr pktattr;)
 
 	s = splnet();
+
+	sp->pp_last_activity = time.tv_sec;
 
 	if ((ifp->if_flags & IFF_UP) == 0 ||
 	    (ifp->if_flags & (IFF_RUNNING | IFF_AUTO)) == 0) {
@@ -919,6 +923,8 @@ sppp_attach(struct ifnet *ifp)
 	sp->pp_cpq.ifq_maxlen = 20;
 	sp->pp_loopcnt = 0;
 	sp->pp_alivecnt = 0;
+	sp->pp_last_activity = 0;
+	sp->pp_idle_timeout = 0;
 	memset(&sp->pp_seq[0], 0, sizeof(sp->pp_seq));
 	memset(&sp->pp_rseq[0], 0, sizeof(sp->pp_rseq));
 	sp->pp_phase = SPPP_PHASE_DEAD;
@@ -1127,6 +1133,7 @@ sppp_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 
 	case SPPPSETAUTHCFG:
 	case SPPPSETLCPCFG:
+	case SPPPSETIDLETO:
 	{
 		struct proc *p = curproc;		/* XXX */
 
@@ -1137,6 +1144,7 @@ sppp_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 	case SPPPGETAUTHCFG:
 	case SPPPGETLCPCFG:
 	case SPPPGETSTATUS:
+	case SPPPGETIDLETO:
 		rv = sppp_params(sp, cmd, data);
 		break;
 
@@ -4519,10 +4527,25 @@ sppp_keepalive(void *dummy)
 {
 	struct sppp *sp;
 	int s;
+	time_t now;
 
 	s = splnet();
+	now = time.tv_sec;
 	for (sp=spppq; sp; sp=sp->pp_next) {
 		struct ifnet *ifp = &sp->pp_if;
+
+		/* check idle timeout */
+		if ((sp->pp_idle_timeout != 0) && (ifp->if_flags & IFF_RUNNING)) {
+		    /* idle timeout is enabled for this interface */
+		    if ((now-sp->pp_last_activity) >= sp->pp_idle_timeout) {
+		    	if (ifp->if_flags & IFF_DEBUG)
+			    printf("%s: no activitiy for %lu seconds\n",
+				sp->pp_if.if_xname,
+				(unsigned long)(now-sp->pp_last_activity));
+			lcp.Close(sp);
+			continue;
+		    }
+		}
 
 		/* Keepalive mode disabled or channel down? */
 		if (! (sp->pp_flags & PP_KEEPALIVE) ||
@@ -4952,6 +4975,18 @@ sppp_params(struct sppp *sp, int cmd, void *data)
 	    {
 		struct spppstatus * status = (struct spppstatus*)data;
 		status->phase = sp->pp_phase;
+	    }
+	    break;
+	case SPPPGETIDLETO:
+	    {
+	    	struct spppidletimeout * to = (struct spppidletimeout*)data;
+		to->idle_seconds = sp->pp_idle_timeout;
+	    }
+	    break;
+	case SPPPSETIDLETO:
+	    {
+	    	struct spppidletimeout * to = (struct spppidletimeout*)data;
+	    	sp->pp_idle_timeout = to->idle_seconds;
 	    }
 	    break;
 	default:
