@@ -27,7 +27,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: rusers.c,v 1.8 1993/11/21 20:02:28 mycroft Exp $";
+static char rcsid[] = "$Id: rusers.c,v 1.9 1993/12/03 23:39:15 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -43,7 +43,7 @@ static char rcsid[] = "$Id: rusers.c,v 1.8 1993/11/21 20:02:28 mycroft Exp $";
 
 /*
  * For now we only try version 2 of the protocol. The current
- * version is 3 (rusers.h), but only Solairis and NetBSD seem
+ * version is 3 (rusers.h), but only Solaris and NetBSD seem
  * to support it currently.
  */
 #include <rpcsvc/rnusers.h>	/* Old version */
@@ -94,7 +94,7 @@ int
 rusers_reply(char *replyp, struct sockaddr_in *raddrp)
 {
 	int x, idle;
-	char date[32], idle_time[64], remote[64];
+	char date[32], idle_time[64], remote[64], local[64];
 	struct hostent *hp;
 	struct utmpidlearr *up = (struct utmpidlearr *)replyp;
 	char *host;
@@ -152,16 +152,20 @@ rusers_reply(char *replyp, struct sockaddr_in *raddrp)
 			sprintf(remote, "(%.16s)",
 			    up->uia_arr[x]->ui_utmp.ut_host);
 
-		if (longopt)
-			printf("%-8.8s %-*.*s:%-*.*s %-12.12s %8s %.18s\n",
+		if (longopt) {
+			strncpy(local, host, sizeof(local));
+			local[HOST_WIDTH + LINE_WIDTH + 1 -
+			    strlen(up->uia_arr[x]->ui_utmp.ut_line) - 1] = 0;
+			strcat(local, ":");
+			strcat(local, up->uia_arr[x]->ui_utmp.ut_line);
+
+			printf("%-8.8s %-*.*s %-12.12s %8s %.18s\n",
 			    up->uia_arr[x]->ui_utmp.ut_name,
-			    HOST_WIDTH, HOST_WIDTH, host,
-			    LINE_WIDTH, LINE_WIDTH,
-			    up->uia_arr[x]->ui_utmp.ut_line,
+			    HOST_WIDTH+LINE_WIDTH+1, HOST_WIDTH+LINE_WIDTH+1, local,
 			    date,
 			    idle_time,
 			    remote);
-		else
+		} else
 			printf("%0.8s ",
 			    up->uia_arr[x]->ui_utmp.ut_name);
 	}
