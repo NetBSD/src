@@ -1,4 +1,4 @@
-/*	$NetBSD: psl.h,v 1.4 1994/11/20 20:53:25 deraadt Exp $ */
+/*	$NetBSD: psl.h,v 1.5 1995/02/23 19:58:16 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -147,9 +147,16 @@ SPL(splimp, 7)
 #define	PIL_AUSOFT	4
 SPL(splausoft, PIL_AUSOFT)
 
+/* floppy software interrupts are at software level 4 too */
+#define PIL_FDSOFT	4
+SPL(splfdsoft, PIL_FDSOFT)
+
 SPL(splbio, 9)
 
 SPL(splclock, PIL_CLOCK)
+
+/* fd hardware interrupts are at level 11 */
+SPL(splfd, 11)
 
 /* zs hardware interrupts are at level 12 */
 SPL(splzs, 12)
