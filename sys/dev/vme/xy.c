@@ -1,4 +1,4 @@
-/*	$NetBSD: xy.c,v 1.9 1998/06/20 13:12:55 mrg Exp $	*/
+/*	$NetBSD: xy.c,v 1.10 1998/08/22 11:47:45 pk Exp $	*/
 
 /*
  *
@@ -400,6 +400,7 @@ xycattach(parent, self, aux)
 	for (lcv = 0; lcv < XYC_MAXIOPB; lcv++) {
 		xyc->xy_chain[lcv] = NULL;
 		xyc->reqs[lcv].iopb = &xyc->iopbase[lcv];
+		xyc->reqs[lcv].dmaiopb = &xyc->dvmaiopb[lcv];
 		xyc->iopbase[lcv].asr = 1;	/* always the same */
 		xyc->iopbase[lcv].eef = 1;	/* always the same */
 		xyc->iopbase[lcv].ecm = XY_ECM;	/* always the same */
@@ -1323,7 +1324,7 @@ xyc_startbuf(xycsc, xysc, bp)
 
 	error = bus_dmamap_load(xycsc->dmatag, iorq->dmamap,
 			bp->b_data, bp->b_bcount, 0, BUS_DMA_NOWAIT);
-	if (error) {
+	if (error != 0) {
 		printf("%s: warning: cannot load DMA map\n",
 			xycsc->sc_dev.dv_xname);
 		return (XY_ERR_FAIL);	/* XXX: need some sort of
@@ -1391,8 +1392,7 @@ xyc_submit_iorq(xycsc, iorq, type)
 	int     type;
 
 {
-	struct xy_iopb *iopb;
-	u_long  iopbaddr;
+	struct xy_iopb *dmaiopb;
 
 #ifdef XYC_DEBUG
 	printf("xyc_submit_iorq(%s, addr=0x%x, type=%d)\n",
@@ -1415,7 +1415,7 @@ xyc_submit_iorq(xycsc, iorq, type)
 			}
 			return (iorq->errno);
 		case XY_SUB_POLL:		/* steal controller */
-			iopbaddr = xycsc->xyc->xyc_rsetup; /* RESET */
+			(void)xycsc->xyc->xyc_rsetup; /* RESET */
 			if (xyc_unbusy(xycsc->xyc,XYC_RESETUSEC) == XY_ERR_FAIL)
 				panic("xyc_submit_iorq: stuck xyc");
 			printf("%s: stole controller\n",
@@ -1426,15 +1426,14 @@ xyc_submit_iorq(xycsc, iorq, type)
 		}
 	}
 
-	iopb = xyc_chain(xycsc, iorq);	 /* build chain */
-	if (iopb == NULL) { /* nothing doing? */
+	dmaiopb = xyc_chain(xycsc, iorq);	 /* build chain */
+	if (dmaiopb == NULL) { /* nothing doing? */
 		if (type == XY_SUB_NORM || type == XY_SUB_NOQ)
 			return(XY_ERR_AOK);
 		panic("xyc_submit_iorq: xyc_chain failed!\n");
 	}
-	iopbaddr = (u_long) iopb - DVMA_BASE;
 
-	XYC_GO(xycsc->xyc, iopbaddr);
+	XYC_GO(xycsc->xyc, (u_long)dmaiopb);
 
 	/* command now running, wrap it up */
 	switch (type) {
@@ -1463,62 +1462,70 @@ xyc_submit_iorq(xycsc, iorq, type)
 
 struct xy_iopb *
 xyc_chain(xycsc, iorq)
-
-struct xyc_softc *xycsc;
-struct xy_iorq *iorq;
+	struct xyc_softc *xycsc;
+	struct xy_iorq *iorq;
 
 {
-  int togo, chain, hand;
-  struct xy_iopb *iopb, *prev_iopb;
-  bzero(xycsc->xy_chain, sizeof(xycsc->xy_chain));
+	int togo, chain, hand;
 
-  /*
-   * promote control IOPB to the top
-   */
-  if (iorq == NULL) {
-    if ((XY_STATE(xycsc->reqs[XYC_CTLIOPB].mode) == XY_SUB_POLL ||
-        XY_STATE(xycsc->reqs[XYC_CTLIOPB].mode) == XY_SUB_WAIT) &&
-		xycsc->iopbase[XYC_CTLIOPB].done == 0)
-    iorq = &xycsc->reqs[XYC_CTLIOPB];
-  }
-  /*
-   * special case: if iorq != NULL then we have a POLL or WAIT request.
-   * we let these take priority and do them first.
-   */
-  if (iorq) {
-    xycsc->xy_chain[0] = iorq;
-    iorq->iopb->chen = 0;
-    return(iorq->iopb);
-  }
+	bzero(xycsc->xy_chain, sizeof(xycsc->xy_chain));
 
-  /*
-   * NORM case: do round robin and maybe chain (if allowed and possible)
-   */
+	/*
+	 * promote control IOPB to the top
+	 */
+	if (iorq == NULL) {
+		if ((XY_STATE(xycsc->reqs[XYC_CTLIOPB].mode) == XY_SUB_POLL ||
+		     XY_STATE(xycsc->reqs[XYC_CTLIOPB].mode) == XY_SUB_WAIT) &&
+		     xycsc->iopbase[XYC_CTLIOPB].done == 0)
+			iorq = &xycsc->reqs[XYC_CTLIOPB];
+	}
 
-  chain = 0;
-  hand = xycsc->xy_hand;
-  xycsc->xy_hand = (xycsc->xy_hand + 1) % XYC_MAXIOPB;
+	/*
+	 * special case: if iorq != NULL then we have a POLL or WAIT request.
+	 * we let these take priority and do them first.
+	 */
+	if (iorq) {
+		xycsc->xy_chain[0] = iorq;
+		iorq->iopb->chen = 0;
+		return(iorq->dmaiopb);
+	}
 
-  for (togo = XYC_MAXIOPB ; togo > 0 ; togo--, hand = (hand + 1) % XYC_MAXIOPB){
+	/*
+	 * NORM case: do round robin and maybe chain (if allowed and possible)
+	 */
+	chain = 0;
+	hand = xycsc->xy_hand;
+	xycsc->xy_hand = (xycsc->xy_hand + 1) % XYC_MAXIOPB;
 
-    if (XY_STATE(xycsc->reqs[hand].mode) != XY_SUB_NORM ||
-		xycsc->iopbase[hand].done)
-      continue;   /* not ready-for-i/o */
+	for (togo = XYC_MAXIOPB; togo > 0;
+	     togo--, hand = (hand + 1) % XYC_MAXIOPB) {
+		struct xy_iopb *iopb, *prev_iopb, *dmaiopb;
 
-    xycsc->xy_chain[chain] = &xycsc->reqs[hand];
-    iopb = xycsc->xy_chain[chain]->iopb;
-    iopb->chen = 0;
-    if (chain != 0) {   /* adding a link to a chain? */
-      prev_iopb = xycsc->xy_chain[chain-1]->iopb;
-      prev_iopb->chen = 1;
-      prev_iopb->nxtiopb = ((u_long) iopb - DVMA_BASE) & 0xffff;
-    } else {            /* head of chain */
-      iorq = xycsc->xy_chain[chain];
-    }
-    chain++;
-    if (xycsc->no_ols) break;   /* quit if chaining dis-allowed */
-  }
-  return(iorq ? iorq->iopb : NULL);
+		if (XY_STATE(xycsc->reqs[hand].mode) != XY_SUB_NORM ||
+		    xycsc->iopbase[hand].done)
+			continue;   /* not ready-for-i/o */
+
+		xycsc->xy_chain[chain] = &xycsc->reqs[hand];
+		iopb = xycsc->xy_chain[chain]->iopb;
+		iopb->chen = 0;
+		if (chain != 0) {
+			/* adding a link to a chain */
+			prev_iopb = xycsc->xy_chain[chain-1]->iopb;
+			prev_iopb->chen = 1;
+			dmaiopb = xycsc->xy_chain[chain]->dmaiopb;
+			prev_iopb->nxtiopb = ((u_long)dmaiopb) & 0xffff;
+		} else {
+			/* head of chain */
+			iorq = xycsc->xy_chain[chain];
+		}
+		chain++;
+
+		/* quit if chaining dis-allowed */
+		if (xycsc->no_ols)
+			break;
+	}
+
+	return(iorq ? iorq->dmaiopb : NULL);
 }
 
 /*
@@ -1596,34 +1603,41 @@ xyc_xyreset(xycsc, xysc)
 
 {
 	struct xy_iopb tmpiopb;
-	u_long  addr;
+	struct xy_iopb *iopb;
 	int     del;
-	bcopy(xycsc->ciopb, &tmpiopb, sizeof(tmpiopb));
-	xycsc->ciopb->chen = xycsc->ciopb->done = xycsc->ciopb->errs = 0;
-	xycsc->ciopb->ien = 0;
-	xycsc->ciopb->com = XYCMD_RST;
-	xycsc->ciopb->unit = xysc->xy_drive;
-	addr = (u_long) xycsc->ciopb - DVMA_BASE;
 
-	XYC_GO(xycsc->xyc, addr);
+	iopb = xycsc->ciopb;
+
+	/* Save contents */
+	bcopy(iopb, &tmpiopb, sizeof(struct xy_iopb));
+
+	iopb->chen = iopb->done = iopb->errs = 0;
+	iopb->ien = 0;
+	iopb->com = XYCMD_RST;
+	iopb->unit = xysc->xy_drive;
+
+	XYC_GO(xycsc->xyc, (u_long)xycsc->ciorq->dmaiopb);
 
 	del = XYC_RESETUSEC;
 	while (del > 0) {
-		if ((xycsc->xyc->xyc_csr & XYC_GBSY) == 0) break;
+		if ((xycsc->xyc->xyc_csr & XYC_GBSY) == 0)
+			break;
 		DELAY(1);
 		del--;
 	}
 
-	if (del <= 0 || xycsc->ciopb->errs) {
+	if (del <= 0 || iopb->errs) {
 		printf("%s: off-line: %s\n", xycsc->sc_dev.dv_xname,
-		    xyc_e2str(xycsc->ciopb->errno));
+		    xyc_e2str(iopb->errno));
 		del = xycsc->xyc->xyc_rsetup;
 		if (xyc_unbusy(xycsc->xyc, XYC_RESETUSEC) == XY_ERR_FAIL)
 			panic("xyc_reset");
 	} else {
 		xycsc->xyc->xyc_csr = XYC_IPND;	/* clear IPND */
 	}
-	bcopy(&tmpiopb, xycsc->ciopb, sizeof(tmpiopb));
+
+	/* Restore contents */
+	bcopy(&tmpiopb, iopb, sizeof(struct xy_iopb));
 }
 
 
