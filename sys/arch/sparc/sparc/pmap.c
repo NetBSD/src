@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.238 2003/02/15 13:17:41 pk Exp $ */
+/*	$NetBSD: pmap.c,v 1.239 2003/02/15 13:30:11 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -2878,7 +2878,7 @@ pmap_bootstrap4_4c(nctx, nregion, nsegment)
 	 * the pages at KERNBASE might not be mapped.
 	 */
 	va2pa_offset = (vaddr_t)kernel_text -
-			((getpte4(KERNBASE) & PG_PFNUM) << PGSHIFT);
+			((getpte4(kernel_text) & PG_PFNUM) << PGSHIFT);
 
 	ncontext = nctx;
 
