@@ -1,5 +1,5 @@
-.\"	$NetBSD: ipsec.4,v 1.14 2001/06/12 12:00:20 wiz Exp $
-.\"	$KAME: ipsec.4,v 1.14 2001/01/22 07:29:45 itojun Exp $
+.\"	$NetBSD: ipsec.4,v 1.15 2001/06/27 15:27:00 itojun Exp $
+.\"	$KAME: ipsec.4,v 1.17 2001/06/27 15:25:10 itojun Exp $
 .\"
 .\" Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
 .\" All rights reserved.
@@ -266,8 +266,8 @@ routines from looking into IP payload.
 .Xr intro 4 ,
 .Xr ip6 4 ,
 .Xr setkey 8 ,
-.Xr sysctl 8
-.\".Xr racoon 8
+.Xr sysctl 8 ,
+.Xr racoon 8
 .Pp
 .Sh STANDARDS
 .Rs
@@ -294,15 +294,26 @@ The IPsec support is subject to change as the IPsec protocols develop.
 There is no single standard for policy engine API,
 so the policy engine API described herein is just for KAME implementation.
 .Pp
-AH tunnel may not work as you might expect.
-If you configure
+AH and tunnel mode encapsulation may not work as you might expect.
+If you configure inbound
 .Dq require
-policy against AH tunnel for inbound, tunnelled packets will be rejected.
-This is because AH authenticates encapsulating
+policy against AH tunnel or any IPsec encapsulating policy with AH
+.Po
+like
+.Dq Li esp/tunnel/A-B/use ah/transport/A-B/require
+.Pc ,
+tunnelled packets will be rejected.
+This is because we enforce policy check on inner packet on reception,
+and AH authenticates encapsulating
 .Pq outer
 packet, not the encapsulated
 .Pq inner
-packet.
+packet
+.Po
+so for the receiving kernel there's no sign of authenticity
+.Pc .
+The issue will be solved when we revamp our policy engine to keep all the
+packet decapsulation history.
 .Pp
 Under certain condition,
 truncated result may be raised from the kernel
