@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.223 2000/08/16 04:44:35 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.224 2000/08/20 21:50:08 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -86,6 +86,7 @@
 #include "opt_compat_svr4.h"
 #include "opt_compat_oldboot.h"
 #include "opt_multiprocessor.h"
+#include "opt_lockdebug.h"
 
 #include "npx.h"
 #include "assym.h"
@@ -1836,10 +1837,16 @@ NENTRY(remrunqueue)
  * something to come ready.
  */
 ENTRY(idle)
-	cli
+	/*
+	 * When we get here, interrupts are off (via cli) and
+	 * sched_lock is held.
+	 */
 	movl	_C_LABEL(sched_whichqs),%ecx
 	testl	%ecx,%ecx
 	jnz	sw1
+#if defined(LOCKDEBUG)
+	call	_C_LABEL(sched_unlock_idle)
+#endif
 	sti
 
 	/* Try to zero some pages. */
@@ -1854,6 +1861,10 @@ ENTRY(idle)
 	hlt
 #if NAPM > 0
 	call	_C_LABEL(apm_cpu_busy)
+#endif
+	cli
+#if defined(LOCKDEBUG)
+	call	_C_LABEL(sched_lock_idle)
 #endif
 	jmp	_C_LABEL(idle)
 
@@ -1888,6 +1899,11 @@ ENTRY(cpu_switch)
 	 */
 	movl	$0,_C_LABEL(curproc)
 
+#if defined(LOCKDEBUG)
+	/* Release the sched_lock before processing interrupts. */
+	call	_C_LABEL(sched_unlock_idle)
+#endif
+
 	movl	$0,_C_LABEL(cpl)	# spl0()
 	call	_C_LABEL(Xspllower)	# process pending interrupts
 
@@ -1904,8 +1920,13 @@ switch_search:
 	 *   %edi - new process
 	 */
 
-	/* Wait for new process. */
+	/* Lock the scheduler. */
 	cli				# splhigh doesn't do a cli
+#if defined(LOCKDEBUG)
+	call	_C_LABEL(sched_lock_idle)
+#endif
+
+	/* Wait for new process. */
 	movl	_C_LABEL(sched_whichqs),%ecx
 
 sw1:	bsfl	%ecx,%ebx		# find a full q
@@ -1941,6 +1962,13 @@ sw1:	bsfl	%ecx,%ebx		# find a full q
 
 	/* Isolate process.  XXX Is this necessary? */
 	movl	%eax,P_BACK(%edi)
+
+#if defined(LOCKDEBUG)
+	/*
+	 * Unlock the sched_lock, but leave interrupts off, for now.
+	 */
+	call	_C_LABEL(sched_unlock_idle)
+#endif
 
 #if defined(MULTIPROCESSOR)
 	/*

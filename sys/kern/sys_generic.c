@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_generic.c,v 1.50 2000/08/02 20:48:37 thorpej Exp $	*/
+/*	$NetBSD: sys_generic.c,v 1.51 2000/08/20 21:50:11 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -976,7 +976,7 @@ selwakeup(sip)
 	p = pfind(sip->si_pid);
 	sip->si_pid = 0;
 	if (p != NULL) {
-		s = splhigh();
+		SCHED_LOCK(s);
 		if (p->p_wchan == (caddr_t)&selwait) {
 			if (p->p_stat == SSLEEP)
 				setrunnable(p);
@@ -984,6 +984,6 @@ selwakeup(sip)
 				unsleep(p);
 		} else if (p->p_flag & P_SELECT)
 			p->p_flag &= ~P_SELECT;
-		splx(s);
+		SCHED_UNLOCK(s);
 	}
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.112 2000/08/09 23:03:24 jeffs Exp $	*/
+/*	$NetBSD: locore.S,v 1.113 2000/08/20 21:50:09 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -59,6 +59,7 @@
 #include "opt_ns.h"
 #include "opt_ccitt.h"
 #include "opt_iso.h"
+#include "opt_lockdebug.h"
 #include "fs_coda.h"
 
 #include <machine/cdefs.h>
@@ -283,6 +284,10 @@ LEAF(mips_idle)
 	mtc0	t0, MIPS_COP_0_STATUS		# enable all interrupts
 	nop
 	sw	zero, _C_LABEL(curproc)		# set curproc NULL for stats
+#if defined(LOCKDEBUG)
+	jal	_C_LABEL(sched_unlock_idle)	# release sched_lock
+	nop
+#endif
 
 	/* Try to zero some free pages. */
 	lw	t0, _C_LABEL(uvm) + UVM_PAGE_IDLE_ZERO
@@ -296,9 +301,26 @@ LEAF(mips_idle)
 	nop
 	beq	t0, zero, 1b
 	nop
+#if defined(LOCKDEBUG)
+	mtc0	zero, MIPS_COP_0_STATUS		# disable all interrupts
+	nop
+	nop
+	nop
+	nop
+	jal	_C_LABEL(sched_lock_idle)	# acquire sched_lock
+	nop
 	la	ra, cpu_switch_queuescan
 	j	ra
+	nop
+#else
 	mtc0	zero, MIPS_COP_0_STATUS		# disable all interrupts
+	nop
+	nop
+	nop
+	la	ra, cpu_switch_queuescan
+	j	ra
+	nop
+#endif
 END(mips_idle)
 
 /*
@@ -325,27 +347,12 @@ NESTED(cpu_switch, CALLFRAME_SIZ, ra)
 	subu	sp, sp, CALLFRAME_SIZ
 	sw	ra, CALLFRAME_RA(sp)
 	.mask	0x80000000, -4
-	lw	t0, uvmexp+UVMEXP_SWTCH
-	lw	t1, _C_LABEL(sched_whichqs)
-	addu	t0, t0, 1
-	sw	t0, uvmexp+UVMEXP_SWTCH
-	bne	t1, zero, 1f
-	lw	t2, _C_LABEL(mips_locoresw) + MIPSX_CPU_IDLE
-	nop					# for r2000/r3000
-	jal	ra, t2
-	nop
-1:
-	mtc0	zero, MIPS_COP_0_STATUS
 /*
- * Entered here from idle() and switch_exit().
+ * Entered here from idle() and switch_exit().  Interrupts are
+ * blocked, and sched_lock is held.
  */
 	.globl	cpu_switch_queuescan
 cpu_switch_queuescan:
-	nop					# wait for intrs disabled
-	nop
-	nop					# extra cycles on r4000
-	nop					# extra cycles on r4000
-
 	lw	t0, _C_LABEL(sched_whichqs)	# look for non-empty queue
 	li	t2, -1				# t2 = lowest bit set
 	bne	t0, zero, 1f
@@ -381,6 +388,18 @@ cpu_switch_queuescan:
 	xor	t3, t3, v1			# clear bit in 'whichqs'
 	sw	t3, _C_LABEL(sched_whichqs)
 3:
+	/* Squirrel away proc pointer. */
+	move	s7, a0
+#if defined(LOCKDEBUG)
+	/*
+	 * Done mucking with the run queues, release the
+	 * scheduler lock, but keep interrupts out.
+	 */
+	jal	_C_LABEL(sched_unlock_idle)
+	nop
+	move	a0, s7				# restore proc
+#endif
+
 /*
  * Switch to new context.
  */
@@ -395,7 +414,7 @@ cpu_switch_queuescan:
 	lw	t2, _C_LABEL(mips_locoresw) + MIPSX_CPU_SWITCH_RESUME
 	sw	a0, _C_LABEL(curproc)
 	jal	ra, t2
-	move	s7, a0				# -BDSLOT-
+	nop
 
 #if 1	/* XXX XXX XXX */
 	REG_PROLOGUE
@@ -447,6 +466,10 @@ LEAF(switch_exit)
 	REG_PROLOGUE
 	REG_L	sp, U_PCB_CONTEXT+SF_REG_SP(v0)	# restore stack pointer
 	REG_EPILOGUE
+#if defined(LOCKDEBUG)
+	jal	_C_LABEL(sched_lock_idle)	# acquire sched_lock
+	nop
+#endif
 	la	ra, cpu_switch_queuescan	# rathole to cpu_switch()
 	j	_C_LABEL(exit2)			# proc already in a0
 	sub	sp, sp, CALLFRAME_SIZ		#BDSlot: set stack call frame
