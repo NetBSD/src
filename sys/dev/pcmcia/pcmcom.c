@@ -1,4 +1,4 @@
-/*	$NetBSD: pcmcom.c,v 1.5 2000/02/04 01:27:14 cgd Exp $	*/
+/*	$NetBSD: pcmcom.c,v 1.6 2000/05/24 03:44:46 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -288,7 +288,7 @@ pcmcom_detach(self, flags)
 			continue;
 
 		/* Detach the child. */
-		if ((error = config_detach(self, flags)) != 0)
+		if ((error = config_detach(psi->psi_child, flags)) != 0)
 			return (error);
 		psi->psi_child = NULL;
 
