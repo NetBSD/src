@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.12 1999/03/23 18:07:19 wrstuden Exp $	*/
+/*	$NetBSD: zs.c,v 1.13 2000/02/27 20:31:57 tsubai Exp $	*/
 
 /*
  * Copyright (c) 1996, 1998 Bill Studenmund
@@ -133,9 +133,8 @@ int	zs_cons_canabort = 0;
 /* device to which the console is attached--if serial. */
 /* Mac stuff */
 
-static struct zschan	*zs_get_chan_addr __P((int zsc_unit, int channel));
-void			zs_init __P((void));
-int			zs_cn_check_speed __P((int bps));
+static struct zschan *zs_get_chan_addr __P((int zsc_unit, int channel));
+static int zs_get_speed __P((struct zs_chanstate *));
 
 /*
  * Even though zsparam will set up the clock multiples, etc., we
@@ -322,7 +321,10 @@ zsc_attach(parent, self, aux)
 
 		/* Current BAUD rate generator clock. */
 		cs->cs_brg_clk = PCLK / 16;	/* RTxC is 230400*16, so use 230400 */
-		cs->cs_defspeed = zs_defspeed[zsc_unit][channel];
+		if (zsc_args.hwflags & ZS_HWFLAG_CONSOLE)
+			cs->cs_defspeed = zs_get_speed(cs);
+		else
+			cs->cs_defspeed = zs_defspeed[zsc_unit][channel];
 		cs->cs_defcflag = zs_def_cflag;
 
 		/* Make these correspond to cs_defcflag (-crtscts) */
@@ -599,34 +601,25 @@ zs_dma_setup(cs, pa, len)
 }
 #endif
 
+/*
+ * Compute the current baud rate given a ZS channel.
+ * XXX Assume internal BRG.
+ */
+int
+zs_get_speed(cs)
+	struct zs_chanstate *cs;
+{
+	int tconst;
+
+	tconst = zs_read_reg(cs, 12);
+	tconst |= zs_read_reg(cs, 13) << 8;
+	return TCONST_TO_BPS(cs->cs_brg_clk, tconst);
+}
+
 #ifndef ZS_TOLERANCE
 #define ZS_TOLERANCE 51
 /* 5% in tenths of a %, plus 1 so that exactly 5% will be ok. */
 #endif
-
-/*
- * check out a rate for acceptability from the internal clock
- * source. Used in console config to validate a requested
- * default speed. Placed here so that all the speed checking code is
- * in one place.
- *
- * != 0 means ok.
- */
-int
-zs_cn_check_speed(bps)
-	int bps;	/* target rate */
-{
-	int tc, rate;
-
-	tc = BPS_TO_TCONST(PCLK / 16, bps);
-	if (tc < 0)
-		return 0;
-	rate = TCONST_TO_BPS(PCLK / 16, tc);
-	if (ZS_TOLERANCE > abs(((rate - bps)*1000)/bps)) 
-		return 1;
-	else
-		return 0;
-}
 
 /*
  * Search through the signal sources in the channel, and
