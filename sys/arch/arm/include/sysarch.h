@@ -1,4 +1,4 @@
-/*	$NetBSD: sysarch.h,v 1.3 2001/07/29 08:37:56 chris Exp $	*/
+/*	$NetBSD: sysarch.h,v 1.4 2002/03/30 06:23:39 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996-1997 Mark Brinicombe.
@@ -41,21 +41,21 @@
 #include <sys/stdint.h>
 
 /*
- * Architecture specific syscalls (arm32)
+ * Architecture specific syscalls (arm)
  */
 
-#define ARM32_SYNC_ICACHE	0
-#define ARM32_DRAIN_WRITEBUF	1
+#define ARM_SYNC_ICACHE		0
+#define ARM_DRAIN_WRITEBUF	1
 
-struct arm32_sync_icache_args {
+struct arm_sync_icache_args {
 	uintptr_t	addr;		/* Virtual start address */
 	size_t		len;		/* Region size */
 };
 
 #ifndef _KERNEL
-int arm32_sync_icache		__P((u_int addr, int len));
-int arm32_drain_writebuf	__P((void));
-int sysarch			__P((int, void *));
+int	arm_sync_icache __P((u_int addr, int len));
+int	arm_drain_writebuf __P((void));
+int	sysarch __P((int, void *));
 #endif
 
 #endif /* !_ARM_SYSARCH_H_ */
