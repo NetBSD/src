@@ -1,4 +1,4 @@
-/*	$NetBSD: userptr.c,v 1.6 2000/03/05 04:09:53 blymn Exp $	*/
+/*	$NetBSD: userptr.c,v 1.7 2000/04/20 12:17:57 blymn Exp $	*/
 
 /*-
  * Copyright (c) 1998-1999 Brett Lymn (blymn@baea.com.au, brett_lymn@yahoo.com.au)
@@ -40,9 +40,7 @@ extern ITEM _menui_default_item;
  * Set the item user pointer data
  */
 int
-set_item_userptr(param_item, userptr)
-        ITEM *param_item;
-        char *userptr;
+set_item_userptr(ITEM *param_item, char *userptr)
 {
 	ITEM *item = (param_item != NULL) ? param_item : &_menui_default_item;
 	
@@ -55,8 +53,7 @@ set_item_userptr(param_item, userptr)
  * Return the item user pointer
  */
 char *
-item_userptr(item)
-        ITEM *item;
+item_userptr(ITEM *item)
 {
 	if (item == NULL)
 		return _menui_default_item.userptr;
@@ -68,8 +65,7 @@ item_userptr(item)
  * Return the user pointer for the given menu
  */
 char *
-menu_userptr(menu)
-        MENU *menu;
+menu_userptr(MENU *menu)
 {
 	if (menu == NULL)
 		return _menui_default_menu.userptr;
@@ -81,9 +77,7 @@ menu_userptr(menu)
  * Set the user pointer for the given menu
  */
 int
-set_menu_userptr(param_menu, userptr)
-        MENU *param_menu;
-        char *userptr;
+set_menu_userptr(MENU *param_menu, char *userptr)
 {
 	MENU *menu = (param_menu != NULL) ? param_menu : &_menui_default_menu;
 

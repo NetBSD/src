@@ -1,4 +1,4 @@
-/*	$NetBSD: driver.c,v 1.4 1999/12/22 14:38:12 kleink Exp $	*/
+/*	$NetBSD: driver.c,v 1.5 2000/04/20 12:17:57 blymn Exp $	*/
 
 /*-
  * Copyright (c) 1998-1999 Brett Lymn (blymn@baea.com.au, brett_lymn@yahoo.com.au)
@@ -40,9 +40,7 @@
  * request and is not printable then it assumed to be a user defined command.
  */
 int
-menu_driver(menu, c)
-	MENU *menu;
-	int c;
+menu_driver(MENU *menu, int c)
 {
 	int drv_top_row, drv_scroll, it, status = E_OK;
 	ITEM *drv_new_item;

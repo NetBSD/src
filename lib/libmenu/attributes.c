@@ -1,4 +1,4 @@
-/*	$NetBSD: attributes.c,v 1.4 1999/12/22 14:38:12 kleink Exp $	*/
+/*	$NetBSD: attributes.c,v 1.5 2000/04/20 12:17:57 blymn Exp $	*/
 
 /*-
  * Copyright (c) 1998-1999 Brett Lymn (blymn@baea.com.au, brett_lymn@yahoo.com.au)
@@ -35,9 +35,7 @@ extern MENU _menui_default_menu;
  * Set the menu foreground attribute
  */
 int
-set_menu_fore(menu, attr)
-        MENU *menu;
-        attr_t attr;
+set_menu_fore(MENU *menu, attr_t attr)
 {
 	if (menu == NULL)
 		_menui_default_menu.fore = attr;
@@ -50,8 +48,7 @@ set_menu_fore(menu, attr)
  * Return the menu foreground attribute
  */
 char
-menu_fore(menu)
-        MENU *menu;
+menu_fore(MENU *menu)
 {
 	if (menu == NULL)
 		return _menui_default_menu.fore;
@@ -63,9 +60,7 @@ menu_fore(menu)
  * Set the menu background attribute
  */
 int
-set_menu_back(menu, attr)
-        MENU *menu;
-        attr_t attr;
+set_menu_back(MENU *menu, attr_t attr)
 {
 	if (menu == NULL)
 		_menui_default_menu.back = attr;
@@ -78,8 +73,7 @@ set_menu_back(menu, attr)
  * Return the menu background attribute
  */
 char
-menu_back(menu)
-        MENU *menu;
+menu_back(MENU *menu)
 {
 	if (menu == NULL)
 		return _menui_default_menu.back;
@@ -91,9 +85,7 @@ menu_back(menu)
  * Set the menu greyed out attribute
  */
 int
-set_menu_grey(menu, attr)
-        MENU *menu;
-        attr_t attr;
+set_menu_grey(MENU *menu, attr_t attr)
 {
 	if (menu == NULL)
 		_menui_default_menu.grey = attr;
@@ -106,8 +98,7 @@ set_menu_grey(menu, attr)
  * Return the menu greyed out attribute
  */
 char
-menu_grey(menu)
-        MENU *menu;
+menu_grey(MENU *menu)
 {
 	if (menu == NULL)
 		return _menui_default_menu.grey;
@@ -119,9 +110,7 @@ menu_grey(menu)
  * Set the menu pad character - the filler char between name and description
  */
 int
-set_menu_pad(menu, pad)
-        MENU *menu;
-        int pad;
+set_menu_pad(MENU *menu, int pad)
 {
 	if (menu == NULL)
 		_menui_default_menu.pad = pad;
@@ -134,8 +123,7 @@ set_menu_pad(menu, pad)
  * Return the menu pad character
  */
 int
-menu_pad(menu)
-        MENU *menu;
+menu_pad(MENU *menu)
 {
 	if (menu == NULL)
 		return _menui_default_menu.pad;

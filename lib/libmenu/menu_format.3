@@ -1,4 +1,4 @@
-.\"	$NetBSD: menu_format.3,v 1.2 1999/11/24 12:43:17 kleink Exp $
+.\"	$NetBSD: menu_format.3,v 1.3 2000/04/20 12:17:57 blymn Exp $
 .\"
 .\" Copyright (c) 1999
 .\"	Brett Lymn - blymn@baea.com.au, brett_lymn@yahoo.com.au
@@ -42,6 +42,8 @@
 .Fd #include <menu.h>
 .Ft void
 .Fn menu_format "MENU *menu" "int *rows" "int *cols"
+.Ft int
+.Fn set_menu_format "MENU *" "int rows" "int cols"
 .Sh DESCRIPTION
 The
 .Fn menu_format
