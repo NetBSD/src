@@ -1,4 +1,4 @@
-/*	$NetBSD: globalcmds.c,v 1.5 1999/12/20 21:49:11 lukem Exp $ */
+/*	$NetBSD: globalcmds.c,v 1.6 2000/01/08 23:12:37 itojun Exp $ */
 
 /*-
  * Copyright (c) 1999
@@ -40,23 +40,69 @@
 #include "extern.h"
 
 
+static char *shortname __P((const char *, const char *));
+
+static char *
+shortname(key, s)
+	const char *key;
+	const char *s;
+{
+	char *p, *q;
+	size_t l;
+
+	if (key == NULL) {
+		if ((p = strdup(s)) == NULL)
+			return NULL;
+		q = strchr(p, '.');
+		if (q && strlen(q) > 1) {
+			q[1] = '*';
+			q[2] = '\0';
+		}
+		return p;
+	} else if (strncmp(key, s, l = strlen(key)) == 0 && s[l] == '.') {
+		p = strdup(s + l + 1);
+		return p;
+	} else
+		return NULL;
+}
+
 void
 global_help(args)
 	char *args;
 {
 	int col, len;
 	struct mode *p;
+	char *cur, *prev;
 
 	move(CMDLINE, col = 0);
+	cur = prev = NULL;
 	for (p = modes; p->c_name; p++) {
-		len = strlen(p->c_name);
+		if ((cur = shortname(args, p->c_name)) == NULL)
+			continue;
+		if (cur && prev && strcmp(cur, prev) == 0) {
+			free(cur);
+			continue;
+		}
+		len = strlen(cur);
 		if (col + len > COLS)
 			break;
-		addstr(p->c_name); col += len;
+		addstr(cur); col += len;
 		if (col + 1 < COLS)
 			addch(' ');
+		if (prev)
+			free(prev);
+		prev = cur;
+	}
+	if (col == 0 && args) {
+		standout();
+		addstr("help: no matches");
+		standend();
 	}
 	clrtoeol();
+	if (cur)
+		free(cur);
+	if (prev)
+		free(prev);
 }
 
 void
