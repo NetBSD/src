@@ -1,7 +1,6 @@
-#	$NetBSD: Makefile,v 1.13 1997/06/30 22:20:30 christos Exp $
+#	$NetBSD: Makefile,v 1.14 1997/09/15 12:45:54 lukem Exp $
 #	@(#)Makefile	8.2 (Berkeley) 3/27/94
 
-WARNS=	1
 PROG=	newfs
 SRCS=	dkcksum.c getmntopts.c newfs.c mkfs.c
 MAN=	newfs.8
