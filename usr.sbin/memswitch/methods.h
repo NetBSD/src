@@ -1,4 +1,4 @@
-/*	$NetBSD: methods.h,v 1.2 1999/06/25 14:27:55 minoura Exp $	*/
+/*	$NetBSD: methods.h,v 1.3 1999/06/28 08:49:15 minoura Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -55,6 +55,8 @@ int parse_ulong __P((struct property*, const char*));
 int parse_byte __P((struct property*, const char*));
 int parse_time __P((struct property*, const char*));
 int parse_bootdev __P((struct property*, const char*));
+int parse_serial __P((struct property*, const char*));
+int parse_srammode __P((struct property*, const char*));
 
 int print_uchar __P((struct property*, char*));
 int print_ucharh __P((struct property*, char*));
@@ -64,3 +66,5 @@ int print_ulongh __P((struct property*, char*));
 int print_magic __P((struct property*, char*));
 int print_timesec __P((struct property*, char*));
 int print_bootdev __P((struct property*, char*));
+int print_serial __P((struct property*, char*));
+int print_srammode __P((struct property*, char*));

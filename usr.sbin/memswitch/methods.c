@@ -1,4 +1,4 @@
-/*	$NetBSD: methods.c,v 1.2 1999/06/25 14:27:55 minoura Exp $	*/
+/*	$NetBSD: methods.c,v 1.3 1999/06/28 08:49:15 minoura Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@ atoi_ (p)
 		return 0;
 	}
 
-	while (*p1 == ' ' || *p1 == '\t');
+	while (*p1 == ' ' || *p1 == '\t') p1++;
 	*p = p1;
 	return v;
 }
@@ -346,7 +346,7 @@ parse_time (prop, value)
 	const char *p = value;
 	int v;
 
-	while (*p == ' ' || *p == '\t');
+	while (*p == ' ' || *p == '\t') p++;
 	if (*p == '-') {
 		p++;
 		v = -atoi_ (&p);
@@ -391,7 +391,7 @@ parse_bootdev (prop, value)
 	const char *p = value;
 	int v;
 
-	while (*p == ' ' || *p == '\t');
+	while (*p == ' ' || *p == '\t') p++;
 
 	if (strcasecmp ("STD", p) == 0)
 		v = 0;
@@ -424,6 +424,130 @@ parse_bootdev (prop, value)
 
 	prop->modified = 1;
 	prop->modified_value.word[0] = v;
+
+	return 0;
+}
+
+int
+parse_serial (prop, value)
+	struct property *prop;
+	const char *value;
+#define NEXTSPEC	while (*p == ' ' || *p == '\t') p++;		\
+			if (*p++ != ',') {				\
+				warnx ("%s: Invalid value", value);	\
+				return -1;				\
+			}						\
+			while (*p == ' ' || *p == '\t') p++;
+{
+	const char *p = value;
+	const char *q;
+	int baud, bit, parity, stop, flow;
+	int bauds[] = {75, 150, 300, 600, 1200, 2400, 4800, 9600, 17361, 0};
+	const char parities[] = "noe";
+	int i;
+
+	while (*p == ' ' || *p == '\t') p++;
+
+	/* speed */
+	baud = atoi_ (&p);
+	if (p == 0) {
+		warnx ("%s: Invalid value", value);
+		return -1;
+	}
+	for (i = 0; bauds[i]; i++)
+		if (baud == bauds[i])
+			break;
+	if (bauds[i] == 0) {
+		warnx ("%d: Invalid speed", baud);
+		return -1;
+	}
+	baud = i;
+
+	NEXTSPEC;
+
+	/* bit size */
+	if (*p < '5' || *p > '8') {
+		warnx ("%c: Invalid bit size", *p);
+		return -1;
+	}
+	bit = *p++ - '5';
+
+	NEXTSPEC;
+
+	/* parity */
+	q = strchr(parities, *p++);
+	if (q == 0) {
+		warnx ("%c: Invalid parity spec", *p);
+		return -1;
+	}
+	parity = q - parities;
+
+	NEXTSPEC;
+
+	/* stop bit */
+	if (strncmp (p, "1.5", 3) == 0) {
+		stop = 2;
+		p += 3;
+	} else if (strncmp (p, "2", 1) == 0) {
+		stop = 0;
+		p++;
+	} else if (strncmp (p, "1", 1) == 0) {
+		stop = 1;
+		p++;
+	} else {
+		warnx ("%s: Invalid value", value);
+		return -1;
+	}
+
+	NEXTSPEC;
+
+	/* flow */
+	if (*p == '-')
+		flow = 0;
+	else if (*p == 's')
+		flow = 1;
+	else {
+		warnx ("%s: Invalid value", value);
+		return -1;
+	}
+
+	p++;
+	while (*p == ' ' || *p == '\t') p++;
+	if (*p != 0) {
+		warnx ("%s: Invalid value", value);
+		return -1;
+	}
+
+	prop->modified = 1;
+	prop->modified_value.word[0] = ((stop << 14) +
+					(parity << 12) +
+					(bit << 10) +
+					(flow << 9) +
+					baud);
+
+	return 0;
+}
+#undef NEXTSPEC
+
+int
+parse_srammode (prop, value)
+	struct property *prop;
+	const char *value;
+{
+	const char *sramstrs[] = {"unused", "SRAMDISK", "program"};
+	int i;
+
+	for (i = 0; i <= 2; i++) {
+		if (strcasecmp (value, sramstrs[i]) == 0)
+			break;
+	}
+	if (i > 2) {
+		warnx ("%s: Invalid value", value);
+		return -1;
+	}
+
+	prop->modified = 1;
+	prop->modified_value.byte[0] = i;
 
 	return 0;
 }
@@ -579,6 +703,62 @@ print_bootdev (prop, str)
 		snprintf (str, MAXVALUELEN, "FD%d", (v & 0x0f00) >> 8);
 	else
 		snprintf (str, MAXVALUELEN, "%8.8x", v);
+
+	return 0;
+}
+
+int
+print_serial (prop, str)
+	struct property *prop;
+	char *str;
+{
+	unsigned int v;
+	char *baud, bit, parity, *stop, flow;
+	char *bauds[] = {"75", "150", "300", "600", "1200",
+			 "2400", "4800", "9600", "17361"};
+	const char bits[] = "5678";
+	const char parities[] = "noen";
+	char *stops[] = {"2", "1", "1.5", "2"};
+	const char flows[] = "-s";
+
+	if (prop->modified)
+		v = prop->modified_value.word[0];
+	else {
+		if (!prop->value_valid)
+			prop->fill (prop);
+		v = prop->current_value.word[0];
+	}
+
+	baud = bauds[v & 0x000f];
+	bit = bits[(v & 0x0c00) >> 10];
+	parity = parities[(v & 0x3000) >> 12];
+	stop = stops[(v & 0xe000) >> 14];
+	flow = flows[(v & 0x0200) >> 9];
+	sprintf (str, "%s,%c,%c,%s,%c", baud, bit, parity, stop, flow);
+
+	return 0;
+}
+
+int
+print_srammode (prop, str)
+	struct property *prop;
+	char *str;
+{
+	int v;
+	const char *sramstrs[] = {"unused", "SRAMDISK", "program"};
+
+	if (prop->modified)
+		v = prop->modified_value.byte[0];
+	else {
+		if (!prop->value_valid)
+			prop->fill (prop);
+		v = prop->current_value.byte[0];
+	}
+
+	if (v < 0 || v > 2)
+		strcpy (str, "INVALID");
+	else
+		strcpy (str, sramstrs[v]);
 
 	return 0;
 }
