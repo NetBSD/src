@@ -21,7 +21,7 @@ O=	-O
 DBMDEF=	-DNDBM
 
 # environment definitions (e.g., -D_AIX3)
-ENVDEF=	-D__USE_BSD -U__USE_POSIX2
+ENVDEF=	-D__USE_BSD
 
 # see also conf.h for additional compilation flags
 
@@ -47,7 +47,7 @@ HFDIR=	${DESTDIR}/usr/lib
 OBJADD=
 
 # additional pseudo-sources needed
-BEFORE=
+BEFORE=	features.h
 
 ###################  end of user configuration flags  ######################
 
@@ -59,7 +59,7 @@ OBJS=	alias.o arpadate.o clock.o collect.o conf.o convtime.o daemon.o \
 	savemail.o srvrsmtp.o stab.o stats.o sysexits.o \
 	trace.o udb.o usersmtp.o util.o version.o ${OBJADD}
 
-LINKS=	${DESTDIR}/usr/ucb/newaliases ${DESTDIR}/usr/ucb/mailq
+LINKS=	${DESTDIR}/usr/bin/newaliases ${DESTDIR}/usr/bin/mailq
 BINOWN=	root
 BINGRP=	kmem
 BINMODE=6555
@@ -78,6 +78,9 @@ dirent.h:
 	echo "#include <sys/dir.h>" > dirent.h
 	echo "#define dirent	direct" >> dirent.h
 
+features.h:
+	ln features.linux.h $@
+
 NROFF=	nroff
 
 aliases.0: aliases.5
@@ -94,7 +97,7 @@ install: install-sendmail install-docs
 install-sendmail: sendmail
 	install -o ${BINOWN} -g ${BINGRP} -m ${BINMODE} sendmail ${BINDIR}
 	for i in ${LINKS}; do rm -f $$i; ln -s ${BINDIR}/sendmail $$i; done
-	install -c -o ${BINOWN} -g ${BINGRP} -m 666 /dev/null \
+	install -c -o ${BINOWN} -g ${BINGRP} -m 644 /dev/null \
 	    ${STDIR}/sendmail.st
 	install -c -o ${BINOWN} -g ${BINGRP} -m 444 sendmail.hf ${HFDIR}
 

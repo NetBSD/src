@@ -5,7 +5,7 @@
 #  old make program (I recommend that you get and port the new make if you
 #  are going to be doing any signficant work on sendmail).
 #
-#  This has been tested on AIX 3.1.5.
+#  This has been tested on AIX 3.1.5 and 3.2.3e.
 #
 
 # use O=-O (usual) or O=-g (debugging)
@@ -19,6 +19,9 @@ O=	-g
 # See READ_ME for a description of how these flags interact.
 #
 DBMDEF=	-DNDBM -DNEWDB
+#
+#  If you did not install the NEWDB on your AIX platform, use:
+#DBMDEF=-DNDBM
 
 # environment definitions (e.g., -D_AIX3)
 ENVDEF=	-D_AIX3
@@ -33,6 +36,9 @@ ENVDEF=	-D_AIX3
 
 # libraries required on your system
 LIBS=	-ldbm -ldb
+#
+#  If you did not install the NEWDB on your AIX platform, use:
+#LIBS=	-ldbm
 
 # location of sendmail binary (usually /usr/sbin or /usr/lib)
 BINDIR=	${DESTDIR}/usr/sbin
@@ -41,10 +47,12 @@ BINDIR=	${DESTDIR}/usr/sbin
 STDIR=	${DESTDIR}/var/log
 
 # location of sendmail.hf file (usually /usr/share/misc or /usr/lib)
-HFDIR=	${DESTDIR}/usr/share/misc
+HFDIR=	${DESTDIR}/usr/lib
 
 # additional .o files needed
 OBJADD=
+
+INSTALL=/usr/ucb/install
 
 ###################  end of user configuration flags  ######################
 
@@ -80,11 +88,11 @@ sendmail.0: sendmail.8
 install: install-sendmail install-docs
 
 install-sendmail: sendmail
-	install -o ${BINOWN} -g ${BINGRP} -m ${BINMODE} sendmail ${BINDIR}
+	${INSTALL} -O ${BINOWN} -G ${BINGRP} -M ${BINMODE} sendmail ${BINDIR}
 	for i in ${LINKS}; do rm -f $$i; ln -s ${BINDIR}/sendmail $$i; done
-	install -c -o ${BINOWN} -g ${BINGRP} -m 666 /dev/null \
+	${INSTALL} -c -O ${BINOWN} -G ${BINGRP} -M 644 /dev/null \
 	    ${STDIR}/sendmail.st
-	install -c -o ${BINOWN} -g ${BINGRP} -m 444 sendmail.hf ${HFDIR}
+	${INSTALL} -c -O ${BINOWN} -G ${BINGRP} -M 444 sendmail.hf ${HFDIR}
 
 # doesn't actually install them -- you may want to install pre-nroff versions
 install-docs: aliases.0 newaliases.0 sendmail.0

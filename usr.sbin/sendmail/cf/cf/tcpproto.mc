@@ -44,9 +44,7 @@ divert(-1)
 include(`../m4/cf.m4')
 VERSIONID(`@(#)tcpproto.mc	8.2 (Berkeley) 8/21/93')
 
-OSTYPE(bsd4.4)dnl
+FEATURE(nouucp)
 
-FEATURE(nouucp)dnl
-
-MAILER(local)dnl
-MAILER(smtp)dnl
+MAILER(local)
+MAILER(smtp)

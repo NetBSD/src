@@ -6,6 +6,9 @@
 #  are going to be doing any signficant work on sendmail).
 #
 #	This has been tested on SunOS 4.1.[12].
+#	For SunOS 4.0.3, add -DSUNOS403 to the ENVDEF macro, and
+#		create empty files stdlib.h and stddef.h in your
+#		compile directory.
 #
 
 # use O=-O (usual) or O=-g (debugging)
@@ -21,6 +24,7 @@ O=	-O
 DBMDEF=	-DNDBM -DNEWDB -DNIS
 
 # environment definitions (e.g., -D_AIX3)
+# need to add -DSUNOS403 if you are on a SunOS 4.0.3 system
 ENVDEF=
 
 # see also conf.h for additional compilation flags
@@ -85,7 +89,7 @@ install: install-sendmail install-docs
 install-sendmail: sendmail
 	install -o ${BINOWN} -g ${BINGRP} -m ${BINMODE} sendmail ${BINDIR}
 	for i in ${LINKS}; do rm -f $$i; ln -s ${BINDIR}/sendmail $$i; done
-	install -c -o ${BINOWN} -g ${BINGRP} -m 666 /dev/null \
+	install -c -o ${BINOWN} -g ${BINGRP} -m 644 /dev/null \
 	    ${STDIR}/sendmail.st
 	install -c -o ${BINOWN} -g ${BINGRP} -m 444 sendmail.hf ${HFDIR}
 
