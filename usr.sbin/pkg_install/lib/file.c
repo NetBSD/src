@@ -1,11 +1,11 @@
-/*	$NetBSD: file.c,v 1.8 1997/10/19 09:39:48 mrg Exp $	*/
+/*	$NetBSD: file.c,v 1.8.2.1 1998/05/05 08:54:57 mycroft Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: file.c,v 1.29 1997/10/08 07:47:54 charnier Exp";
 #else
-__RCSID("$NetBSD: file.c,v 1.8 1997/10/19 09:39:48 mrg Exp $");
+__RCSID("$NetBSD: file.c,v 1.8.2.1 1998/05/05 08:54:57 mycroft Exp $");
 #endif
 #endif
 
@@ -53,7 +53,7 @@ isdir(char *fname)
 {
     struct stat sb;
 
-    if (stat(fname, &sb) != FAIL && S_ISDIR(sb.st_mode))
+    if (lstat(fname, &sb) != FAIL && S_ISDIR(sb.st_mode))
 	return TRUE;
     else
 	return FALSE;
@@ -333,16 +333,22 @@ fileGetContents(char *fname)
     struct stat sb;
     int fd;
 
-    if (stat(fname, &sb) == FAIL)
-	cleanup(0), errx(2, "can't stat '%s'", fname);
+    if (stat(fname, &sb) == FAIL) {
+	cleanup(0);
+	errx(2, "can't stat '%s'", fname);
+    }
 
     contents = (char *)malloc(sb.st_size + 1);
     fd = open(fname, O_RDONLY, 0);
-    if (fd == FAIL)
-	cleanup(0), errx(2, "unable to open '%s' for reading", fname);
-    if (read(fd, contents, sb.st_size) != sb.st_size)
-	cleanup(0), errx(2, "short read on '%s' - did not get %qd bytes",
+    if (fd == FAIL) {
+	cleanup(0);
+	errx(2, "unable to open '%s' for reading", fname);
+    }
+    if (read(fd, contents, sb.st_size) != sb.st_size) {
+	cleanup(0);
+	errx(2, "short read on '%s' - did not get %qd bytes",
 			fname, (long long)sb.st_size);
+    }
     close(fd);
     contents[sb.st_size] = '\0';
     return contents;
@@ -390,14 +396,20 @@ write_file(char *name, char *str)
     int len;
 
     fp = fopen(name, "w");
-    if (!fp)
-	cleanup(0), errx(2, "cannot fopen '%s' for writing", name);
+    if (!fp) {
+	cleanup(0);
+	errx(2, "cannot fopen '%s' for writing", name);
+    }
     len = strlen(str);
-    if (fwrite(str, 1, len, fp) != len)
-	cleanup(0), errx(2, "short fwrite on '%s', tried to write %d bytes",
+    if (fwrite(str, 1, len, fp) != len) {
+	cleanup(0);
+	errx(2, "short fwrite on '%s', tried to write %d bytes",
 			name, len);
-    if (fclose(fp))
-	cleanup(0), errx(2, "failure to fclose '%s'", name);
+    }
+    if (fclose(fp)) {
+	cleanup(0);
+	errx(2, "failure to fclose '%s'", name);
+    }
 }
 
 void
@@ -409,8 +421,10 @@ copy_file(char *dir, char *fname, char *to)
 	snprintf(cmd, FILENAME_MAX, "cp -p -r %s %s", fname, to);
     else
 	snprintf(cmd, FILENAME_MAX, "cp -p -r %s/%s %s", dir, fname, to);
-    if (vsystem(cmd))
-	cleanup(0), errx(2, "could not perform '%s'", cmd);
+    if (vsystem(cmd)) {
+	cleanup(0);
+	errx(2, "could not perform '%s'", cmd);
+    }
 }
 
 void
@@ -422,8 +436,10 @@ move_file(char *dir, char *fname, char *to)
 	snprintf(cmd, FILENAME_MAX, "mv %s %s", fname, to);
     else
 	snprintf(cmd, FILENAME_MAX, "mv %s/%s %s", dir, fname, to);
-    if (vsystem(cmd))
-	cleanup(0), errx(2, "could not perform '%s'", cmd);
+    if (vsystem(cmd)) {
+	cleanup(0);
+	errx(2, "could not perform '%s'", cmd);
+    }
 }
 
 /*
@@ -452,8 +468,10 @@ copy_hierarchy(char *dir, char *fname, Boolean to)
 #ifdef DEBUG
     printf("Using '%s' to copy trees.\n", cmd);
 #endif
-    if (system(cmd))
-	cleanup(0), errx(2, "copy_file: could not perform '%s'", cmd);
+    if (system(cmd)) {
+	cleanup(0);
+	errx(2, "copy_file: could not perform '%s'", cmd);
+    }
 }
 
 /* Unpack a tar file */

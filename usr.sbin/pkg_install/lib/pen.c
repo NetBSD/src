@@ -1,11 +1,11 @@
-/*	$NetBSD: pen.c,v 1.5 1997/10/19 09:39:53 mrg Exp $	*/
+/*	$NetBSD: pen.c,v 1.5.2.1 1998/05/05 08:54:57 mycroft Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: pen.c,v 1.25 1997/10/08 07:48:12 charnier Exp";
 #else
-__RCSID("$NetBSD: pen.c,v 1.5 1997/10/19 09:39:53 mrg Exp $");
+__RCSID("$NetBSD: pen.c,v 1.5.2.1 1998/05/05 08:54:57 mycroft Exp $");
 #endif
 #endif
 
@@ -110,8 +110,10 @@ make_playpen(char *pen, size_t sz)
 	upchuck("getcwd");
 	return NULL;
     }
-    if (chdir(pen) == FAIL)
-	cleanup(0), errx(2, "can't chdir to '%s'", pen);
+    if (chdir(pen) == FAIL) {
+	cleanup(0);
+	errx(2, "can't chdir to '%s'", pen);
+    }
     strcpy(Current, pen);
     return Previous;
 }
@@ -124,9 +126,10 @@ leave_playpen(char *save)
 
     /* Don't interrupt while we're cleaning up */
     oldsig = signal(SIGINT, SIG_IGN);
-    if (Previous[0] && chdir(Previous) == FAIL)
-	cleanup(0), errx(2, "can't chdir back to '%s'", Previous);
-    else if (Current[0] && strcmp(Current, Previous)) {
+    if (Previous[0] && chdir(Previous) == FAIL) {
+	cleanup(0);
+	errx(2, "can't chdir back to '%s'", Previous);
+    } else if (Current[0] && strcmp(Current, Previous)) {
 	if (vsystem("rm -rf %s", Current))
 	    warnx("couldn't remove temporary dir '%s'", Current);
 	strcpy(Current, Previous);

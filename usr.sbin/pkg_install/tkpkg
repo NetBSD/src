@@ -29,7 +29,7 @@ scrollbar .f.s -relief sunken -command ".f.t yview"
 pack append .f .f.s {right filly} .f.t {left expand fill}
 
 bind .frame.list <Double-Button-1> \
-    {foreach i [selection get] {do_description $i}}
+    { do_description [selection get] }
 pack append .  .menu {top fill} \
    .f {bottom expand fill} \
    .frame {bottom expand fill}
