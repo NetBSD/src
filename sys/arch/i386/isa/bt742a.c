@@ -1,4 +1,4 @@
-/*	$NetBSD: bt742a.c,v 1.31 1994/10/27 04:16:55 cgd Exp $	*/
+/*	$NetBSD: bt742a.c,v 1.32 1994/11/03 23:08:33 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
@@ -405,8 +405,8 @@ struct scsi_device bt_dev = {
 	0
 };
 
-int btprobe();
-void btattach();
+int btprobe __P((struct device *, void *, void *));
+void btattach __P((struct device *, struct device *, void *));
 
 struct cfdriver btcd = {
 	NULL, "bt", btprobe, btattach, DV_DULL, sizeof(struct bt_softc)
@@ -546,11 +546,11 @@ bt_cmd(bt, icnt, ocnt, wait, retval, opcode, args)
  * autoconf.c
  */
 int
-btprobe(parent, self, aux)
-        struct device *parent, *self;
-        void *aux;
+btprobe(parent, match, aux)
+        struct device *parent;
+        void *match, *aux;
 {
-	struct bt_softc *bt = (void *)self;
+	struct bt_softc *bt = match;
         register struct isa_attach_args *ia = aux;
 
 #ifdef NEWCONFIG
