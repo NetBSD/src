@@ -1,9 +1,11 @@
-#	$NetBSD: Makefile,v 1.3 2001/10/01 17:03:38 minoura Exp $
+#	$NetBSD: Makefile,v 1.4 2001/10/15 16:23:01 minoura Exp $
 
 .include <bsd.own.mk>
 
 BOOT=	boot_ustar
-VERSION=1.0
+VERSIONFILE=	${.CURDIR}/version
+VERSION!=	awk -F: '$$1 ~ /^[0-9.]*$$/ { it = $$1; } END { print it }' ${VERSIONFILE}
+NEWVERSWHAT=	"${BOOT}"
 
 # text and bss addresses in hex
 TEXT=		002000		# Primary (me)
@@ -17,11 +19,16 @@ MKMAN=		no
 
 OBJCOPY?=	objcopy
 
-COMMONDIR=	${.CURDIR}/../common
-LIBIOCS=	${.CURDIR}/../libiocs
-#.PATH:		${COMMONDIR}
-#SRCS=	boot_ustar.S exec_image.S
+S=		${.CURDIR}/../../../..
+M=		$S/arch/x68k
+COMMONDIR=	$M/stand/common
+LIBIOCS=	$M/stand/libiocs
 SRCS=	boot_ustar.S
+
+SRCS+=		vers.c
+CLEANFILES+=	vers.c
+vers.c:	${VERSIONFILE}
+	sh ${S}/conf/newvers_stand.sh -DM ${.ALLSRC} ${MACHINE} ${NEWVERSWHAT}
 
 CPPFLAGS+= -DTEXTADDR="0x$(TEXT)" -DBOOT_TEXTADDR="0x$(BOOT_TEXT)"
 CPPFLAGS+= -DBOOT=\"$(BOOT)\" -DBOOT_VERS=\"$(VERSION)\"
