@@ -1,5 +1,6 @@
 /*
- *	$Id: types.h,v 1.3 1994/01/10 23:55:45 briggs Exp $
+ *	$Id: types.h,v 1.4 1994/03/14 02:11:09 cgd Exp $
  */
 
+/* Just use the common m68k definition */
 #include <m68k/types.h>
