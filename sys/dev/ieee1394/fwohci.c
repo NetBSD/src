@@ -1,4 +1,4 @@
-/*	$NetBSD: fwohci.c,v 1.73 2003/01/31 02:17:13 thorpej Exp $	*/
+/*	$NetBSD: fwohci.c,v 1.74 2003/04/02 21:53:15 christos Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fwohci.c,v 1.73 2003/01/31 02:17:13 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fwohci.c,v 1.74 2003/04/02 21:53:15 christos Exp $");
 
 #define FWOHCI_WAIT_DEBUG 1
 
@@ -4759,7 +4759,7 @@ fwohci_ir_buf_setup(struct fwohci_ir_ctx *irc)
 	--fd;
 	fd->fd_branch = irc->irc_desc_dmamap->dm_segs[0].ds_addr | 1;
 	DPRINTF(("fwohci_ir_buf_setup: desc %d %p buf %08x size %d branch %08x\n",
-	    fd - irc->irc_desc_map, fd, fd->fd_data, fd->fd_reqcount,
+	    (int)(fd - irc->irc_desc_map), fd, fd->fd_data, fd->fd_reqcount,
 	    fd->fd_branch));
 
 	return 0;
@@ -5028,8 +5028,8 @@ fwohci_ir_read(struct device *dev, ieee1394_ir_tag_t tag, struct uio *uio,
 
 	packetnum = fwohci_ir_ctx_packetnum(irc);
 
-	DPRINTF(("fwohci_ir_read resid %d DMA buf %d\n",
-	    uio->uio_resid, packetnum));
+	DPRINTF(("fwohci_ir_read resid %lu DMA buf %d\n",
+	    (unsigned long)uio->uio_resid, packetnum));
 
 	if (packetnum == 0) {
 		return EAGAIN;
@@ -5258,8 +5258,8 @@ fwohci_ir_wait(struct device *dev, ieee1394_ir_tag_t tag, void *wchan, char *nam
 	if ((irc->irc_flags & IEEE1394_IR_SHORTDELAY) == 0) {
 		fd->fd_flags |= OHCI_DESC_INTR_ALWAYS;
 		DPRINTF(("fwohci_ir_wait stops %d set intr %d\n",
-		    irc->irc_readtop - irc->irc_desc_map,
-		    fd - irc->irc_desc_map));
+		    (int)(irc->irc_readtop - irc->irc_desc_map),
+		    (int)(fd - irc->irc_desc_map)));
 		/* XXX SYNC */
 	}
 
