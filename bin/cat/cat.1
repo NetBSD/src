@@ -1,4 +1,4 @@
-.\"	$NetBSD: cat.1,v 1.17 2000/01/09 15:56:37 abs Exp $
+.\"	$NetBSD: cat.1,v 1.18 2000/01/15 01:13:15 christos Exp $
 .\"
 .\" Copyright (c) 1989, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -44,7 +44,7 @@
 .Nd concatenate and print files
 .Sh SYNOPSIS
 .Nm
-.Op Fl benstuv
+.Op Fl befnstuv
 .Op Fl
 .Op Ar
 .Sh DESCRIPTION
@@ -77,6 +77,8 @@ option, and displays a dollar sign
 .Pq Ql \&$
 at the end of each line
 as well.
+.It Fl f
+Only attempt to display plain files.
 .It Fl n
 Number the output lines, starting at 1.
 .It Fl s
