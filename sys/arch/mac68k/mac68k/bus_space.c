@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_space.c,v 1.22 2002/10/28 00:55:14 chs Exp $	*/
+/*	$NetBSD: bus_space.c,v 1.23 2003/04/02 00:44:24 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -124,7 +124,7 @@ bus_mem_add_mapping(bus_addr_t bpa, bus_size_t size, int flags,
 	hp->bssr2 = mac68k_bssr2;
 	hp->bssr4 = mac68k_bssr4;
 
-	for (; pa < endpa; pa += NBPG, va += NBPG) {
+	for (; pa < endpa; pa += PAGE_SIZE, va += PAGE_SIZE) {
 		pmap_enter(pmap_kernel(), va, pa,
 		    VM_PROT_READ | VM_PROT_WRITE, PMAP_WIRED);
 		pte = kvtopte(va);
