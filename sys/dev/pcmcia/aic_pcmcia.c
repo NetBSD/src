@@ -1,4 +1,4 @@
-/*	$NetBSD: aic_pcmcia.c,v 1.1.2.10 1997/10/16 09:30:45 enami Exp $	*/
+/*	$NetBSD: aic_pcmcia.c,v 1.1.2.11 1997/10/16 09:34:38 enami Exp $	*/
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -35,6 +35,7 @@ struct aic_pcmcia_softc {
 	struct pcmcia_io_handle sc_pcioh;	/* PCMCIA i/o space info */
 	int sc_io_window;			/* our i/o window */
 	struct pcmcia_function *sc_pf;		/* our PCMCIA function */
+	void *sc_ih;				/* interrupt handler */
 };
 
 struct cfattach aic_pcmcia_ca = {
@@ -66,7 +67,7 @@ aic_pcmcia_attach(parent, self, aux)
 	struct device *parent, *self;
 	void *aux;
 {
-	struct aic_pcmcia_softc *psc = (void *) self;
+	struct aic_pcmcia_softc *psc = (void *)self;
 	struct aic_softc *sc = &psc->sc_aic;
 	struct pcmcia_attach_args *pa = aux;
 	struct pcmcia_config_entry *cfe;
@@ -99,7 +100,7 @@ aic_pcmcia_attach(parent, self, aux)
 		return;
 	}
 
-	/* map in the io space */
+	/* Map in the io space */
 	if (pcmcia_io_map(pa->pf, PCMCIA_WIDTH_AUTO, 0, psc->sc_pcioh.size,
 	    &psc->sc_pcioh, &psc->sc_io_window)) {
 		printf(": can't map i/o space\n");
@@ -113,9 +114,9 @@ aic_pcmcia_attach(parent, self, aux)
 
 	aicattach(sc);
 
-	/* establish the interrupt handler. */
-	sc->sc_ih = pcmcia_intr_establish(pa->pf, IPL_BIO, aicintr, sc);
-	if (sc->sc_ih == NULL)
+	/* Establish the interrupt handler. */
+	psc->sc_ih = pcmcia_intr_establish(pa->pf, IPL_BIO, aicintr, sc);
+	if (psc->sc_ih == NULL)
 		printf("%s: couldn't establish interrupt\n",
 		    sc->sc_dev.dv_xname);
 }
