@@ -1,4 +1,4 @@
-/*	$NetBSD: zsvar.h,v 1.5 2000/03/18 22:33:05 scw Exp $	*/
+/*	$NetBSD: zsvar.h,v 1.6 2000/07/20 20:40:37 scw Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -82,4 +82,3 @@ extern	u_char zs_init_reg[];
 void	zs_config __P((struct zsc_softc *, bus_space_tag_t,bus_space_handle_t));
 void	zs_cnconfig __P((int, int, bus_space_tag_t, bus_space_handle_t));
 int	zshard __P((void *));
-void	zssoft __P((void *));

@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.42 2000/06/29 08:04:05 mrg Exp $	*/
+/*	$NetBSD: trap.c,v 1.43 2000/07/20 20:40:40 scw Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -188,11 +188,6 @@ int mmupid = -1;
 #endif
 
 
-#define NSIR	8
-void (*sir_routines[NSIR])(void *);
-void *sir_args[NSIR];
-int next_sir;
-
 /*
  * trap and syscall both need the following work done before returning
  * to user mode.
@@ -280,7 +275,6 @@ trap(type, code, v, frame)
 	int i, s;
 	u_int ucode;
 	u_quad_t sticks = 0 /* XXX initialiser works around compiler bug */;
-	int bit;
 
 	uvmexp.traps++;
 	p = curproc;
@@ -527,13 +521,8 @@ trap(type, code, v, frame)
 
 	case T_SSIR:		/* software interrupt */
 	case T_SSIR|T_USER:
-		while ((bit = ffs(ssir))) {
-			--bit;
-			ssir &= ~(1 << bit);
-			uvmexp.softs++;
-			if (sir_routines[bit])
-				sir_routines[bit](sir_args[bit]);
-		}
+		softintr_dispatch();
+
 		/*
 		 * If this was not an AST trap, we are all done.
 		 */
@@ -1188,32 +1177,4 @@ child_return(arg)
 	if (KTRPOINT(p, KTR_SYSRET))
 		ktrsysret(p, SYS_fork, 0, 0);
 #endif
-}
-
-/*
- * Allocation routines for software interrupts.
- */
-u_long
-allocate_sir(proc, arg)
-	void (*proc)(void *);
-	void *arg;
-{
-	int bit;
-
-	if( next_sir >= NSIR )
-		panic("allocate_sir: none left");
-	bit = next_sir++;
-	sir_routines[bit] = proc;
-	sir_args[bit] = arg;
-	return (1 << bit);
-}
-
-void
-init_sir()
-{
-	extern void netintr __P((void));
-
-	sir_routines[0] = (void (*)(void *))netintr;
-	sir_routines[1] = (void (*)(void *))softclock;
-	next_sir = 2;
 }

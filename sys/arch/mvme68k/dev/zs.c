@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.19 2000/03/18 22:33:05 scw Exp $	*/
+/*	$NetBSD: zs.c,v 1.20 2000/07/20 20:40:37 scw Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -63,6 +63,7 @@
 
 #include <machine/cpu.h>
 #include <machine/bus.h>
+#include <machine/intr.h>
 
 #include <mvme68k/dev/zsvar.h>
 
@@ -74,8 +75,6 @@
 int zs_def_cflag = (CREAD | CS8 | HUPCL);
 /* XXX Shouldn't hardcode the minor number... */
 int zs_major = 12;
-
-static u_long zs_sir;	/* software interrupt cookie */
 
 /* Flags from zscnprobe() */
 static int zs_hwflags[NZSC][2];
@@ -210,12 +209,11 @@ zs_config(zsc, bust, bush)
 	}
 
 	/*
-	 * Allocate a software interrupt cookie.  Note that the argument
-	 * "zsc" is never actually used in the software interrupt
-	 * handler.
+	 * Allocate a software interrupt cookie.
 	 */
-	if (zs_sir == 0)
-		zs_sir = allocate_sir(zssoft, zsc);
+	zsc->zsc_softintr_cookie = softintr_establish(IPL_SOFTSERIAL,
+	    (void (*)(void *)) zsc_intr_soft, zsc);
+	assert(zsc->zsc_softintr_cookie);
 }
 
 static int
@@ -233,8 +231,6 @@ zsc_print(aux, name)
 
 	return UNCONF;
 }
-
-static int zssoftpending;
 
 /*
  * Our ZS chips all share a common, autovectored interrupt,
@@ -254,46 +250,12 @@ zshard(arg)
 			continue;
 		rval |= zsc_intr_hard(zsc);
 		if ((zsc->zsc_cs[0]->cs_softreq) ||
-			(zsc->zsc_cs[1]->cs_softreq))
-		{
-			/* zsc_req_softint(zsc); */
-			/* We are at splzs here, so no need to lock. */
-			if (zssoftpending == 0) {
-				zssoftpending = zs_sir;
-				setsoftint(zs_sir);
-			}
-		}
+		    (zsc->zsc_cs[1]->cs_softreq))
+			softintr_schedule(zsc);
 	}
 	return (rval);
 }
 
-/*
- * Similar scheme as for zshard (look at all of them)
- */
-void
-zssoft(arg)
-	void *arg;
-{
-	struct zsc_softc *zsc;
-	int unit;
-
-	/* This is not the only ISR on this IPL. */
-	if (zssoftpending == 0)
-		return;
-
-	/*
-	 * The soft intr. bit will be set by zshard only if
-	 * the variable zssoftpending is zero.
-	 */
-	zssoftpending = 0;
-
-	for (unit = 0; unit < zsc_cd.cd_ndevs; ++unit) {
-		zsc = zsc_cd.cd_devs[unit];
-		if (zsc == NULL)
-			continue;
-		(void) zsc_intr_soft(zsc);
-	}
-}
 
 #if 0
 /*
