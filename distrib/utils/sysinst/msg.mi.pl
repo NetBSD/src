@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.pl,v 1.23 2003/07/07 21:26:33 dsl Exp $	*/
+/*	$NetBSD: msg.mi.pl,v 1.24 2003/07/08 17:38:58 dsl Exp $	*/
 /*	Based on english version: */
 /*	NetBSD: msg.mi.en,v 1.86 2002/04/04 14:26:44 ad Exp 	*/
 
@@ -840,6 +840,9 @@ pewne pliki nie zostaly prawidlowo rozpakowane i twoj system
 nie bedzie kompletny.
 
 Kontynuowac rozpakowywanie pakietow?}
+
+message must_be_one_root	/* XXX translate */
+{There must be a single partition marked to be mounted on '/'.}
 
 message partitions_overlap
 {partycje %c i %c pokrycia.}

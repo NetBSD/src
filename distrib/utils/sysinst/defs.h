@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.94 2003/07/07 12:30:19 dsl Exp $	*/
+/*	$NetBSD: defs.h,v 1.95 2003/07/08 17:38:54 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -200,12 +200,10 @@ EXTERN int sectorsize;
 
 /* Actual name of the disk. */
 EXTERN char diskdev[SSTRSIZE] INIT("");
+EXTERN int rootpart;				/* partition we install into */
 EXTERN char disknames[STRSIZE];
 EXTERN int  numdisks;
-EXTERN char *disktype;		/* ST506, SCSI, ... */
-
-/* Used in editing partitions ... BSD disklabel and others */
-EXTERN int editpart;
+EXTERN char *disktype INIT("unknown");		/* ST506, SCSI, ... */
 
 /* Area of disk we can allocate, start and size in disk sectors. */
 EXTERN int ptstart, ptsize;	

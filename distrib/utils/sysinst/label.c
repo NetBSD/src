@@ -1,4 +1,4 @@
-/*	$NetBSD: label.c,v 1.34 2003/07/07 12:30:20 dsl Exp $	*/
+/*	$NetBSD: label.c,v 1.35 2003/07/08 17:38:56 dsl Exp $	*/
 
 /*
  * Copyright 1997 Jonathan Stone
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: label.c,v 1.34 2003/07/07 12:30:20 dsl Exp $");
+__RCSID("$NetBSD: label.c,v 1.35 2003/07/08 17:38:56 dsl Exp $");
 #endif
 
 #include <sys/types.h>
@@ -137,6 +137,28 @@ checklabel(partinfo *lp, int nparts, int rawpart, int bsdpart,
 	}
 
 	return (0);
+}
+
+static int
+check_one_root(partinfo *lp, int nparts)
+{
+	int part;
+	int foundroot = 0;
+	
+	for (part = 0; part < nparts; lp++, part++) {
+		if (!PI_ISBSDFS(lp))
+			continue;
+		if (!(lp->pi_flags & PIF_MOUNT))
+			continue;
+		if (strcmp(lp->pi_mount, "/") != 0)
+			continue;
+		if (foundroot)
+			return 0;
+		foundroot = 1;
+		/* Save partition number, a few things need to know it */
+		rootpart = part;
+	}
+	return foundroot;
 }
 
 static int
@@ -471,15 +493,19 @@ edit_and_check_label(partinfo *lp, int nparts, int rawpart, int bsdpart)
 		/* first give the user the option to edit the label... */
 		process_menu(menu_no, &pi);
 
-		/* User thinks the label is OK. check for overlaps */
-		if (checklabel(lp, nparts, rawpart, bsdpart, &i, &j) == 0) {
-			/* partitions are OK */
-			return (1);
-		}
+		/* User thinks the label is OK. */
+		/* check we have a single root fs */
+		if (check_one_root(lp, nparts) == 0)
+			msg_display(MSG_must_be_one_root);
+		else 
+			/* Check for overlaps */
+			if (checklabel(lp, nparts, rawpart, bsdpart, &i, &j))
+				/* partitions overlap */
+				msg_display(MSG_partitions_overlap,'a'+i,'a'+j);
+			else
+				return 1;
 		 
-		/* partitions overlap */
-		msg_display(MSG_partitions_overlap, 'a' + i, 'a' + j);
-		/*XXX*/
+		/*XXX ???*/
 		msg_display_add(MSG_edit_partitions_again);
 		process_menu(MENU_yesno, NULL);
 		if (!yesno)
