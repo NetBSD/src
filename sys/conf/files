@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.679 2004/07/07 08:41:35 mycroft Exp $
+#	$NetBSD: files,v 1.680 2004/08/12 04:23:02 thorpej Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -767,11 +767,12 @@ device	re: ether, ifnet, arp, mii
 
 # Common code for ESDI/IDE/etc. controllers
 #
-device	wdc: ata
+define	wdc_common
+device	wdc: ata, wdc_common
 
 device	atabus: atapi,ata_hl
 attach	atabus at ata
-file	dev/ic/wdc.c			atabus
+file	dev/ic/wdc.c			atabus & wdc_common
 
 # CHIPS and Technologies 82C7[12][01] Universal Peripheral Controller
 #
