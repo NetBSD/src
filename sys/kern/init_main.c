@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.140 1999/01/21 14:50:41 christos Exp $	*/
+/*	$NetBSD: init_main.c,v 1.141 1999/02/22 00:12:36 cjs Exp $	*/
 
 /*
  * Copyright (c) 1995 Christopher G. Demetriou.  All rights reserved.
@@ -197,7 +197,7 @@ main()
 	 * in case of early panic or other messages.
 	 */
 	consinit();
-	printf(copyright);
+	printf("%s", copyright);
 
 #if defined(UVM)
 	uvm_init();
