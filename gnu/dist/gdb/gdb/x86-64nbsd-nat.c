@@ -34,6 +34,7 @@
 #include <sys/syscall.h>
 #include <machine/reg.h>
 #include <machine/frame.h>
+#include <machine/pcb.h>
 
 /* Mapping between the general-purpose registers in `struct user'
    format and GDB's register array layout.  */
@@ -313,6 +314,47 @@ fetch_core_registers (char *core_reg_sect, unsigned core_reg_size,
 }
 
 void
+fetch_kcore_registers (pcb)
+     struct pcb *pcb;
+{
+  int regno;
+  uint64_t zero;
+  struct switchframe sf;
+
+  /*
+   * get the register values out of the sys pcb and
+   * store them where `read_register' will find them.
+   */
+  if (target_read_memory(pcb->pcb_rsp, (char *)&sf, sizeof(sf)))
+    error("Cannot switch frame.");
+
+  zero = 0;
+
+  supply_register(0, (char *)&zero);
+  supply_register(1, (char *)&sf.sf_rbx);
+  supply_register(2, (char *)&zero);
+  supply_register(3, (char *)&zero);
+  supply_register(4, (char *)&zero);
+  supply_register(5, (char *)&zero);
+  supply_register(6, (char *)&sf.sf_rbp);
+  supply_register(7, (char *)&pcb->pcb_rsp);
+  supply_register(8, (char *)&zero);
+  supply_register(9, (char *)&zero);
+  supply_register(10, (char *)&zero);
+  supply_register(11, (char *)&zero);
+  supply_register(12, (char *)&sf.sf_r12);
+  supply_register(13, (char *)&sf.sf_r13);
+  supply_register(14, (char *)&sf.sf_r14);
+  supply_register(15, (char *)&sf.sf_r15);
+  supply_register(16, (char *)&sf.sf_rip);
+  supply_register(17, (char *)&zero);
+  supply_register(18, (char *)&zero);
+  supply_register(19, (char *)&zero);
+  supply_register(20, (char *)&zero);
+  supply_register(21, (char *)&zero);
+}
+
+void
 nbsd_reg_to_internal(regs)
      char *regs;
 {
@@ -348,22 +390,7 @@ static struct core_fns nbsd_elf_core_fns = {
   fetch_core_registers,		/* core_read_registers */
   NULL				/* next */
 };
-
 
-#if !defined (offsetof)
-#define offsetof(TYPE, MEMBER) ((unsigned long) &((TYPE *)0)->MEMBER)
-#endif
-
-#if 0
-/* Return the address of register REGNUM.  BLOCKEND is the value of
-   u.u_ar0, which should point to the registers.  */
-CORE_ADDR
-x86_64_register_u_addr (CORE_ADDR blockend, int regnum)
-{
-	/* XXX implement */
-	return 0;
-}
-#endif
 
 void
 _initialize_x86_64nbsd_nat (void)

@@ -902,6 +902,12 @@ x86_64_skip_prologue (CORE_ADDR pc)
   return pc;
 }
 
+CORE_ADDR
+x86_64_saved_pc_after_call (struct frame_info *frame)
+{
+  return read_memory_integer (read_register (SP_REGNUM), 8);
+}
+
 /* Sequence of bytes for breakpoint instruction.  */
 static unsigned char *
 x86_64_breakpoint_from_pc (CORE_ADDR * pc, int *lenptr)
@@ -1121,6 +1127,11 @@ x86_64_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
 /* Use dwarf2 debug frame informations.  */
   set_gdbarch_dwarf2_build_frame_info (gdbarch, dwarf2_build_frame_info);
   set_gdbarch_dwarf2_reg_to_regnum (gdbarch, x86_64_dwarf2_reg_to_regnum);
+
+  set_gdbarch_frame_chain (gdbarch, cfi_frame_chain);
+  set_gdbarch_frame_chain_valid (gdbarch, func_frame_chain_valid);
+  set_gdbarch_frame_saved_pc (gdbarch, cfi_get_ra);
+  set_gdbarch_saved_pc_after_call (gdbarch, x86_64_saved_pc_after_call);
 
   gdbarch_init_osabi (info, gdbarch, osabi);
 
