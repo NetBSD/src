@@ -27,13 +27,18 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: search.h,v 1.1 1993/10/21 20:53:14 jtc Exp $
+ *	$Id: search.h,v 1.2 1993/10/21 21:03:33 jtc Exp $
  */
 
 #ifndef _SEARCH_H_
 #define _SEARCH_H_
-
 #include <sys/cdefs.h>
+#include <machine/ansi.h>
+
+#ifdef	_SIZE_T_
+typedef	_SIZE_T_	size_t;
+#undef	_SIZE_T_
+#endif
 
 __BEGIN_DECLS
 extern void	*bsearch __P((const void *, const void *, size_t, size_t,
