@@ -1,4 +1,4 @@
-/*	$NetBSD: igmp.c,v 1.19 1999/01/19 23:03:20 mycroft Exp $	*/
+/*	$NetBSD: igmp.c,v 1.20 1999/04/25 10:26:29 hwr Exp $	*/
 
 /*
  * Internet Group Management Protocol (IGMP) routines.
@@ -199,6 +199,8 @@ igmp_input(m, va_alist)
 			}
 
 			timer = igmp->igmp_code * PR_FASTHZ / IGMP_TIMER_SCALE;
+			if (timer == 0)
+				timer =1;
 
 			/*
 			 * Start the timers in all of our membership records
