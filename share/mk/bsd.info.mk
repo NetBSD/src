@@ -1,9 +1,8 @@
-#	$NetBSD: bsd.info.mk,v 1.36 2003/10/21 10:01:21 lukem Exp $
+#	$NetBSD: bsd.info.mk,v 1.37 2004/01/29 01:48:45 lukem Exp $
 
 .include <bsd.init.mk>
 
 ##### Basic targets
-.PHONY:		infoinstall cleaninfo
 cleandir:	cleaninfo
 realinstall:	infoinstall
 
@@ -30,6 +29,8 @@ realall:	${INFOFILES}
 
 ##### Install rules
 infoinstall::	# ensure existence
+.PHONY:		infoinstall
+
 .if ${MKINFO} != "no"
 
 INFODIRFILE=${DESTDIR}${INFODIR}/dir
@@ -79,7 +80,7 @@ infoinstall::	${_F}
 ##### Clean rules
 CLEANFILES+=	${INFOFILES}
 
-cleaninfo:
+cleaninfo: .PHONY
 .if !empty(CLEANFILES)
 	rm -f ${CLEANFILES}
 .endif

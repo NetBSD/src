@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.prog.mk,v 1.196 2004/01/27 03:31:48 lukem Exp $
+#	$NetBSD: bsd.prog.mk,v 1.197 2004/01/29 01:48:45 lukem Exp $
 #	@(#)bsd.prog.mk	8.2 (Berkeley) 4/2/94
 
 .ifndef HOSTPROG
@@ -12,7 +12,6 @@ PROG=	${PROG_CXX}
 .endif
 
 ##### Basic targets
-.PHONY:		cleanextra cleanobjs cleanprog proginstall scriptsinstall
 realinstall:	proginstall scriptsinstall
 clean:		cleanprog
 
@@ -193,15 +192,15 @@ MAN=	${PROG}.1
 
 realall: ${PROG} ${SCRIPTS}
 
-cleanprog: cleanobjs cleanextra
+cleanprog: .PHONY cleanobjs cleanextra
 	rm -f a.out [Ee]rrs mklog core *.core .gdbinit ${PROG}
 
-cleanobjs:
+cleanobjs: .PHONY
 .if defined(OBJS) && !empty(OBJS)
 	rm -f ${OBJS} ${LOBJS}
 .endif
 
-cleanextra:
+cleanextra: .PHONY
 .if defined(CLEANFILES) && !empty(CLEANFILES)
 	rm -f ${CLEANFILES}
 .endif
@@ -233,6 +232,7 @@ ${DESTDIR}${BINDIR}/${PROGNAME}: .MADE
 .if !target(proginstall)
 proginstall::
 .endif
+.PHONY:		proginstall
 
 .if defined(SCRIPTS) && !target(scriptsinstall)
 SCRIPTSDIR?=${BINDIR}
@@ -269,6 +269,7 @@ ${DESTDIR}${SCRIPTSDIR_${S}:U${SCRIPTSDIR}}/${SCRIPTSNAME_${S}:U${SCRIPTSNAME:U$
 .if !target(scriptsinstall)
 scriptsinstall::
 .endif
+.PHONY:		scriptsinstall
 
 lint: ${LOBJS}
 .if defined(LOBJS) && !empty(LOBJS)

@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.kinc.mk,v 1.34 2004/01/27 02:52:19 lukem Exp $
+#	$NetBSD: bsd.kinc.mk,v 1.35 2004/01/29 01:48:45 lukem Exp $
 
 # Variables:
 #
@@ -20,17 +20,16 @@
 .include <bsd.init.mk>
 
 ##### Basic targets
-.PHONY:		incinstall
-.PHONY:		${DESTDIR}${INCSDIR}
 .PRECIOUS:	${DESTDIR}${INCSDIR}
 includes:	${DESTDIR}${INCSDIR} .WAIT ${INCS} incinstall
 
 ##### Install rules
 incinstall::	# ensure existence
+.PHONY:		incinstall
 
 # make sure the directory is OK, and install includes.
 
-${DESTDIR}${INCSDIR}:
+${DESTDIR}${INCSDIR}: .EXEC
 	@if [ ! -d ${.TARGET} ] || [ -h ${.TARGET} ] ; then \
 		${_MKSHMSG_CREATE} ${.TARGET}; \
 		/bin/rm -rf ${.TARGET}; \

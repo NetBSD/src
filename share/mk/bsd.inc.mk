@@ -1,9 +1,8 @@
-#	$NetBSD: bsd.inc.mk,v 1.29 2004/01/27 02:52:19 lukem Exp $
+#	$NetBSD: bsd.inc.mk,v 1.30 2004/01/29 01:48:45 lukem Exp $
 
 .include <bsd.init.mk>
 
 ##### Basic targets
-.PHONY:		incinstall
 includes:	${INCS} incinstall inclinkinstall
 
 ##### Default values
@@ -11,6 +10,7 @@ INCSYMLINKS?=
 
 ##### Install rules
 incinstall::	# ensure existence
+.PHONY:		incinstall
 
 # -c is forced on here, in order to preserve modtimes for "make depend"
 __incinstall: .USE

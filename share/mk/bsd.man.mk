@@ -1,11 +1,10 @@
-#	$NetBSD: bsd.man.mk,v 1.90 2003/11/07 00:05:24 lukem Exp $
+#	$NetBSD: bsd.man.mk,v 1.91 2004/01/29 01:48:45 lukem Exp $
 #	@(#)bsd.man.mk	8.1 (Berkeley) 6/8/93
 
 .include <bsd.init.mk>
 
 ##### Basic targets
-.PHONY:		catinstall maninstall catpages manpages catlinks manlinks \
-		cleanman html installhtml cleanhtml
+.PHONY:		catinstall maninstall catpages manpages
 realinstall:	${MANINSTALL}
 
 ##### Default values
@@ -86,7 +85,7 @@ manpages::	${_F}
 .PRECIOUS:	${_F}					# keep if install fails
 .endfor
 
-manlinks: manpages					# symlink install
+manlinks: .PHONY manpages				# symlink install
 .if !empty(MLINKS)
 	@set ${MLINKS}; \
 	while test $$# -ge 2; do \
@@ -147,7 +146,7 @@ catpages::	${_F}
 .PRECIOUS:	${_F}					# keep if install fails
 .endfor
 
-catlinks: catpages					# symlink install
+catlinks: .PHONY catpages				# symlink install
 .if !empty(MLINKS)
 	@set ${MLINKS}; \
 	while test $$# -ge 2; do \
@@ -169,11 +168,11 @@ catlinks: catpages					# symlink install
 ##### Build and install rules (HTML pages)
 
 .if ${MKHTML} != "no"					# {
-installhtml:	htmlpages
+installhtml:	.PHONY htmlpages
 htmlpages::	# ensure target exists
 HTMLPAGES=	${MAN:C/\.([1-9])$/.html\1/}
 
-html:		${HTMLPAGES}
+html:		.PHONY ${HTMLPAGES}
 .NOPATH:	${HTMLPAGES}
 .SUFFIXES:	${_MNUMBERS:@N@.html$N@}
 
@@ -202,7 +201,8 @@ htmlpages::	${_F}
 .PRECIOUS:	${_F}					# keep if install fails
 .endfor
 
-cleanhtml:
+cleandir: cleanhtml
+cleanhtml: .PHONY
 	rm -f ${HTMLPAGES}
 .endif							# }
 
@@ -210,7 +210,7 @@ cleanhtml:
 .undef _F
 
 cleandir: cleanman
-cleanman:
+cleanman: .PHONY
 .if !empty(MAN) && (${MKMAN} != "no")
 .if (${MKCATPAGES} != "no")
 	rm -f ${CATPAGES}

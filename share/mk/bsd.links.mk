@@ -1,9 +1,8 @@
-#	$NetBSD: bsd.links.mk,v 1.25 2003/11/07 00:05:24 lukem Exp $
+#	$NetBSD: bsd.links.mk,v 1.26 2004/01/29 01:48:45 lukem Exp $
 
 .include <bsd.init.mk>
 
 ##### Basic targets
-.PHONY:		linksinstall
 install:	linksinstall
 
 ##### Default values
@@ -11,6 +10,7 @@ LINKS?=
 SYMLINKS?=
 
 ##### Install rules
+.PHONY:		linksinstall
 linksinstall::	realinstall
 .if !empty(SYMLINKS)
 	@(set ${SYMLINKS}; \

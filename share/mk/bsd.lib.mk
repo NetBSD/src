@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.lib.mk,v 1.245 2004/01/27 03:31:48 lukem Exp $
+#	$NetBSD: bsd.lib.mk,v 1.246 2004/01/29 01:48:45 lukem Exp $
 #	@(#)bsd.lib.mk	8.3 (Berkeley) 4/22/94
 
 .include <bsd.init.mk>
@@ -8,7 +8,7 @@
 .include <bsd.sys.mk>
 
 ##### Basic targets
-.PHONY:		checkver cleanlib libinstall
+.PHONY:		checkver libinstall
 realinstall:	checkver libinstall
 clean:		cleanlib
 
@@ -474,7 +474,7 @@ llib-l${LIB}.ln: ${LOBJS}
 .endif
 .endif
 
-cleanlib:
+cleanlib: .PHONY
 	rm -f a.out [Ee]rrs mklog core *.core ${CLEANFILES}
 	rm -f lib${LIB}.a ${OBJS}
 	rm -f lib${LIB}_p.a ${POBJS}

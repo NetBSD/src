@@ -1,10 +1,9 @@
-#	$NetBSD: bsd.hostlib.mk,v 1.12 2004/01/02 16:12:36 lukem Exp $
+#	$NetBSD: bsd.hostlib.mk,v 1.13 2004/01/29 01:48:45 lukem Exp $
 
 .include <bsd.init.mk>
 .include <bsd.sys.mk>
 
 ##### Basic targets
-.PHONY:		cleanlib
 clean:		cleanlib
 
 ##### Default values
@@ -45,7 +44,7 @@ lib${HOSTLIB}.a: ${OBJS} ${DPADD}
 
 realall: lib${HOSTLIB}.a
 
-cleanlib:
+cleanlib: .PHONY
 	rm -f a.out [Ee]rrs mklog core *.core \
 	    lib${HOSTLIB}.a ${OBJS} ${CLEANFILES}
 

@@ -1,11 +1,10 @@
-#	$NetBSD: bsd.hostprog.mk,v 1.40 2004/01/27 03:31:48 lukem Exp $
+#	$NetBSD: bsd.hostprog.mk,v 1.41 2004/01/29 01:48:45 lukem Exp $
 #	@(#)bsd.prog.mk	8.2 (Berkeley) 4/2/94
 
 .include <bsd.init.mk>
 .include <bsd.sys.mk>
 
 ##### Basic targets
-.PHONY:		cleanprog
 clean:		cleanprog
 
 ##### Default values
@@ -90,7 +89,7 @@ MAN=	${HOSTPROG}.1
 
 realall: ${HOSTPROG}
 
-cleanprog:
+cleanprog: .PHONY
 	rm -f a.out [Ee]rrs mklog core *.core \
 	    ${HOSTPROG} ${OBJS} ${LOBJS} ${CLEANFILES}
 

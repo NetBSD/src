@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.files.mk,v 1.28 2003/10/21 10:01:21 lukem Exp $
+#	$NetBSD: bsd.files.mk,v 1.29 2004/01/29 01:48:45 lukem Exp $
 
 .if !defined(_BSD_FILES_MK_)
 _BSD_FILES_MK_=1
@@ -7,7 +7,6 @@ _BSD_FILES_MK_=1
 
 .if !target(__fileinstall)
 ##### Basic targets
-.PHONY:		filesinstall
 realinstall:	filesinstall
 
 ##### Default values
@@ -18,6 +17,7 @@ FILESMODE?=	${NONBINMODE}
 
 ##### Install rules
 filesinstall::	# ensure existence
+.PHONY:		filesinstall
 
 __fileinstall: .USE
 	${_MKTARGET_INSTALL}
@@ -71,9 +71,8 @@ ${_TL}: ${_SL}
 
 realall: ${BUILDSYMLINKS.t}
 
-.PHONY:   cleanbuildsymlinks
 cleandir: cleanbuildsymlinks
-cleanbuildsymlinks:
+cleanbuildsymlinks: .PHONY
 	rm -f ${BUILDSYMLINKS.t}
 
 .endif								# }
