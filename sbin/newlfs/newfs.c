@@ -1,4 +1,4 @@
-/*	$NetBSD: newfs.c,v 1.3 1995/03/18 14:58:53 cgd Exp $	*/
+/*	$NetBSD: newfs.c,v 1.4 1995/06/28 02:21:32 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1992, 1993
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)newfs.c	8.3 (Berkeley) 4/22/94";
 #else
-static char rcsid[] = "$NetBSD: newfs.c,v 1.3 1995/03/18 14:58:53 cgd Exp $";
+static char rcsid[] = "$NetBSD: newfs.c,v 1.4 1995/06/28 02:21:32 thorpej Exp $";
 #endif
 #endif /* not lint */
 
@@ -57,6 +57,7 @@ static char rcsid[] = "$NetBSD: newfs.c,v 1.3 1995/03/18 14:58:53 cgd Exp $";
 #include <sys/disklabel.h>
 #include <sys/file.h>
 #include <sys/mount.h>
+#include <sys/sysctl.h>
 
 #include <ufs/ufs/dir.h>
 #include <ufs/ufs/dinode.h>
@@ -118,6 +119,7 @@ char	*progname, *special;
 static struct disklabel *getdisklabel __P((char *, int));
 static struct disklabel *debug_readlabel __P((int));
 static void rewritelabel __P((char *, int, struct disklabel *));
+static int getmaxpartitions __P((void));
 static void usage __P((void));
 
 int
@@ -130,7 +132,7 @@ main(argc, argv)
 	register struct disklabel *lp;
 	struct partition oldpartition;
 	struct stat st;
-	int debug, lfs, fsi, fso, segsize;
+	int debug, lfs, fsi, fso, segsize, maxpartitions;
 	char *cp, *opstring;
 
 	if (progname = strrchr(*argv, '/'))
@@ -142,6 +144,10 @@ main(argc, argv)
 		mfs = 1;
 		Nflag++;
 	}
+
+	maxpartitions = getmaxpartitions();
+	if (maxpartitions > 26)
+		fatal("insane maxpartitions value %d", maxpartitions);
 
 	/* -F is mfs only and MUST come first! */
 	opstring = "F:B:DLNS:T:a:b:c:d:e:f:i:k:l:m:n:o:p:r:s:t:u:x:";
@@ -300,7 +306,8 @@ main(argc, argv)
 		(void)printf("%s: %s: not a character-special device\n",
 		    progname, special);
 	cp = strchr(argv[0], '\0') - 1;
-	if (!debug && (cp == 0 || (*cp < 'a' || *cp > 'h') && !isdigit(*cp)))
+	if (!debug && (cp == 0 || (*cp < 'a' || *cp > ('a' + maxpartitions - 1))
+	    && !isdigit(*cp)))
 		fatal("%s: can't figure out file system partition", argv[0]);
 
 #ifdef COMPAT
@@ -423,6 +430,21 @@ rewritelabel(s, fd, lp)
 		close(cfd);
 	}
 #endif
+}
+
+static int
+getmaxpartitions()
+{
+	int maxpart, mib[2];
+	size_t varlen;
+
+	mib[0] = CTL_KERN;
+	mib[1] = KERN_MAXPARTITIONS;
+	varlen = sizeof(maxpart);
+	if (sysctl(mib, 2, &maxpart, &varlen, NULL, 0) < 0)
+		fatal("getmaxpartitions: %s", strerror(errno));
+
+	return (maxpart);
 }
 
 void
