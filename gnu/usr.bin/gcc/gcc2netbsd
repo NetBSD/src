@@ -1,6 +1,6 @@
 #!/usr/gnu/bin/perl
 #
-#	$NetBSD: gcc2netbsd,v 1.15 1997/03/24 22:06:16 christos Exp $
+#	$NetBSD: gcc2netbsd,v 1.16 1997/03/27 05:13:53 mikel Exp $
 #
 #  Perl script to convert a standard distribution directory for gcc into
 #	a NetBSD source tree.
@@ -447,8 +447,8 @@ YFLAGS=
 LIBCC1!= cd $(.CURDIR)/../common; \
 	printf "xxx:\n\techo \$${.OBJDIR}/libcc1.a\n" | ${MAKE} -r -s -f - xxx
 
-LDADD+=${LIBCC1} -lgnumalloc
-DPADD+= /usr/lib/libgnumalloc.a
+LDADD+=	${LIBCC1} -lgnumalloc
+DPADD+=	${LIBGNUMALLOC}
 
 ${PROG}: ${LIBCC1}
 
@@ -514,7 +514,7 @@ CFLAGS+=-I${.CURDIR} -I${.CURDIR}/../common -I${.CURDIR}/../arch \
 	-DMD_STARTFILE_PREFIX=\"/usr/lib/\"
 
 LDADD+=		-lgnumalloc
-DPADD+=		/usr/lib/libgnumalloc.a
+DPADD+=		${LIBGNUMALLOC}
 
 LINKS+=		${BINDIR}/gcc ${BINDIR}/cc 
 MLINKS=		gcc.1 cc.1
@@ -579,7 +579,7 @@ CFLAGS+=	-I. -I$(.CURDIR) -I$(.CURDIR)/../common -I$(.CURDIR)/../arch \
 		-DTOOL_INCLUDE_DIR=\"\" \
 		-DGPLUSPLUS_INCLUDE_DIR=\"/usr/include/g++\"
 LDADD+=		-lgnumalloc
-DPADD+=		/usr/lib/libgnumalloc.a
+DPADD+=		${LIBGNUMALLOC}
 YFLAGS=
 
 MLINKS=	cpp.1 cccp.1 cpp.1 gcpp.1
@@ -607,7 +607,7 @@ CFLAGS+=	-I$(.CURDIR) -I$(.CURDIR)/../common \
 		-I$(.CURDIR)/../arch -I$(.CURDIR)/../arch/$(MACHINE_ARCH) \
 		-DGCC_NAME=\"/usr/bin/cc\"
 LDADD+=		-lgnumalloc
-DPADD+=		/usr/lib/libgnumalloc.a
+DPADD+=		${LIBGNUMALLOC}
 
 LINKS+=	${BINDIR}/g++ ${BINDIR}/c++
 MLINKS=	g++.1 c++.1

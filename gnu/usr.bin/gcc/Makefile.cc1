@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.cc1,v 1.3 1996/04/03 08:15:38 phil Exp $
+#	$NetBSD: Makefile.cc1,v 1.4 1997/03/27 05:13:52 mikel Exp $
 
 NOMAN=
 
@@ -15,9 +15,7 @@ YFLAGS=
 LIBCC1!= cd $(.CURDIR)/../common; \
 	printf "xxx:\n\techo \$${.OBJDIR}/libcc1.a\n" | ${MAKE} -r -s -f - xxx
 
-LDADD+=${LIBCC1} -lgnumalloc
-DPADD+= /usr/lib/libgnumalloc.a
-
-${PROG}: ${LIBCC1}
+LDADD+=	${LIBCC1} -lgnumalloc
+DPADD+=	${LIBCC1} ${LIBGNUMALLOC}
 
 .include <bsd.prog.mk>
