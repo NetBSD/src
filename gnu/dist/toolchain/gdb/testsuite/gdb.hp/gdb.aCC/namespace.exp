@@ -1,0 +1,193 @@
+# Copyright (C) 1997, 1998 Free Software Foundation, Inc.
+
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
+# 
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+# 
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  
+
+# Please email any bugs, comments, and/or additions to this file to:
+# bug-gdb@prep.ai.mit.edu
+
+# tests for namespaces
+# Written by Satish Pai <pai@apollo.hp.com> 1997-07-23
+
+# This file is part of the gdb testsuite
+
+# Note: These tests are geared to the HP aCC compiler,
+# which has an idiosyncratic way of emitting debug info
+# for namespaces.
+
+
+if $tracelevel then {
+        strace $tracelevel
+        }
+
+set prms_id 0
+set bug_id 0
+
+if { [skip_hp_tests] } then { continue }
+
+set testfile "namespace"
+set srcfile ${testfile}.cc
+set binfile ${objdir}/${subdir}/${testfile}
+
+if [get_compiler_info ${binfile}] {
+    return -1;
+}
+
+if { $gcc_compiled } then { continue }
+if {[skip_hp_tests]} then { continue }
+
+
+if  { [gdb_compile "${srcdir}/${subdir}/${srcfile}" "${binfile}" executable {debug c++}] != "" } {
+     gdb_suppress_entire_file "Testcase compile failed, so all tests in this file will a
+utomatically fail."
+}
+
+
+
+gdb_exit
+gdb_start
+gdb_reinitialize_dir $srcdir/$subdir
+gdb_load ${binfile}
+
+
+#
+# set it up at a breakpoint so we can play with the variable values
+#
+if ![runto_main] then {
+    perror "couldn't run to breakpoint"
+    continue
+}
+
+send_gdb "break marker1\n" ; gdb_expect -re ".*$gdb_prompt $"
+    send_gdb "cont\n"
+    gdb_expect {
+        -re "Break.* marker1 \\(\\) at .*:$decimal.*$gdb_prompt $" {
+            send_gdb "up\n"
+            gdb_expect {
+                -re ".*$gdb_prompt $" { pass "up from marker1" }
+                timeout { fail "up from marker1" }
+            }
+        }
+        -re "$gdb_prompt $" { fail "continue to marker1"  }
+        timeout { fail "(timeout) continue to marker1"  }
+    }
+
+# Access a data item inside a namespace using colons and
+# single quotes :-(
+
+send_gdb "print 'AAA::c'\n"
+gdb_expect {
+   -re "\\$\[0-9\]* = 0 '\\\\000'\r\n$gdb_prompt $" { pass "print 'AAA::c'" }
+   -re ".*$gdb_prompt $" { fail "print 'AAA::c'" }
+   timeout { fail "(timeout) print 'AAA::c'" }
+}
+
+# An object declared using "using".
+
+send_gdb "print ina\n"
+gdb_expect {
+   -re "\\$\[0-9\]+ = {xx = 33}.*$gdb_prompt $" {
+      pass "print ina"
+   }
+   -re ".*$gdb_prompt $" { fail "print ina" }
+   timeout { fail "(timeout) print ina" }
+}
+
+send_gdb "ptype ina\n"
+gdb_expect {
+   -re "type = class AAA::inA \{\r\n\[ \]*public:\r\n\[ \]*int xx;\r\n\[ \]*\r\n\[ \]*int fum\\(int\\);\r\n\}\r\n$gdb_prompt $" {
+       pass "ptype ina"
+   }
+   -re ".*$gdb_prompt $" { fail "ptype ina" }
+   timeout { fail "(timeout) ptype ina" }
+}
+
+# Check all functions are known to GDB
+
+setup_xfail hppa*-*-*11* CLLbs14869
+send_gdb "info func xyzq\n"
+gdb_expect {
+   -re "All functions.*File.*namespace.cc:\r\nint AAA::A_xyzq\\(int\\);\r\nint BBB::B_xyzq\\(int\\);\r\nchar AAA::xyzq\\(char\\);\r\nchar BBB::xyzq\\(char\\);\r\nchar BBB::CCC::xyzq\\(char\\);\r\nchar BBB::Class::xyzq\\(char\\);\r\n$gdb_prompt $" {
+       pass "info func xyzq"
+   }    
+   -re ".*$gdb_prompt $" { fail "info func xyzq" }
+   timeout { fail "(timeout) info func xyzq" }
+}
+
+# Call a function in a namespace
+
+send_gdb "print 'AAA::xyzq'('x')\n"
+gdb_expect {
+   -re "\\$\[0-9\]* = 97 'a'\r\n$gdb_prompt $" {
+       pass "print 'AAA::xyzq'('x')"
+   }
+   -re ".*$gdb_prompt $" { fail "print 'AAA::xyzq'('x')" }
+   timeout { fail "(timeout) print 'AAA::xyzq'('x')" }
+}
+       
+# Break on a function in a namespace
+
+send_gdb "break AAA::xyzq\n"
+gdb_expect {
+    -re "Breakpoint.*at $hex: file.*namespace.cc, line 42\\.\r\n$gdb_prompt $" {
+         pass "break AAA::xyzq"
+    }    
+   -re ".*$gdb_prompt $" { fail "break AAA::xyzq" }
+   timeout { fail "(timeout) break AAA::xyzq" }
+}
+
+# Call a function in a nested namespace
+
+send_gdb "print 'BBB::CCC::xyzq'('x')\n"
+gdb_expect {
+   -re "\\$\[0-9\]* = 122 'z'\r\n$gdb_prompt $" {
+       pass "print 'BBB::CCC::xyzq'('x')"
+   }
+   -re ".*$gdb_prompt $" { fail "print 'BBB::CCC::xyzq'('x')" }
+   timeout { fail "(timeout) print 'BBB::CCC::xyzq'('x')" }
+}
+       
+# Break on a function in a nested namespace
+
+send_gdb "break BBB::CCC::xyzq\n"
+gdb_expect {
+    -re "Breakpoint.*at $hex: file.*namespace.cc, line 58\\.\r\n$gdb_prompt $" {
+         pass "break BBB::CCC::xyzq"
+    }    
+   -re ".*$gdb_prompt $" { fail "break BBB::CCC::xyzq" }
+   timeout { fail "(timeout) break BBB::CCC::xyzq" }
+}
+
+# Print address of a function in a class in a namespace
+
+send_gdb "print 'BBB::Class'::xyzq\n"
+gdb_expect {
+   -re "\\$\[0-9\]* = \{char \\(BBB::Class \\*, char\\)\} $hex <BBB::Class::xyzq\\(char\\)>\r\n$gdb_prompt $" {
+       pass "print 'BBB::Class'::xyzq"
+   }
+   -re ".*$gdb_prompt $" { fail "print 'BBB::Class'::xyzq" }
+   timeout { fail "(timeout) print 'BBB::Class'::xyzq" }
+}
+
+# Break on a function in a class in a namespace
+
+send_gdb "break BBB::Class::xyzq\n"
+gdb_expect {
+    -re "Breakpoint.*at $hex: file.*namespace.cc, line 63\\.\r\n$gdb_prompt $" {
+         pass "break BBB::Class::xyzq"
+    }    
+   -re ".*$gdb_prompt $" { fail "break BBB::Class::xyzq" }
+   timeout { fail "(timeout) break BBB::Class::xyzq" }
+}
+

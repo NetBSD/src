@@ -1,0 +1,17 @@
+# Host: Intel IA-64 running GNU/Linux
+
+XM_FILE= xm-linux.h
+XDEPFILES= ser-tcp.o
+
+NAT_FILE= nm-linux.h
+NATDEPFILES= infptrace.o solib.o inftarg.o fork-child.o corelow.o \
+	core-aout.o core-regset.o ia64-linux-nat.o linux-thread.o lin-thread.o
+
+LOADLIBES = -ldl -rdynamic
+
+# Don't use gnu-regex.c; it interferes with some stuff in libc.
+REGEX=
+
+# NAT_CLIBS is a hack to be sure; I expect we'll be able to remove this
+# line in the near future
+NAT_CLIBS= -lc -lnss_dns -lnss_files -lresolv -lc

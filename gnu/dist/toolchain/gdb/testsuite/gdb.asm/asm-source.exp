@@ -1,0 +1,99 @@
+#   Copyright (C) 1998 Free Software Foundation, Inc.
+# 
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
+# 
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+# 
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  
+# 
+# Please email any bugs, comments, and/or additions to this file to:
+# bug-gdb@prep.ai.mit.edu
+#
+# This file was written by Kendra.
+
+if $tracelevel then {
+    strace $tracelevel
+}
+
+#
+# Test debugging assembly level programs.
+# This file uses asmsrc[12].s for input.
+#
+
+set prms_id 0
+set bug_id 0
+
+if [istarget "d10v-*-*"] then {
+    set asm-arch d10v
+} else {
+    verbose "Skipping assembly source test -- not implemented for this target."
+    return 
+}
+
+set testfile "asm-source"
+set binfile ${objdir}/${subdir}/${testfile}
+set src1 ${srcdir}/${subdir}/asmsrc1.s
+set src2 ${srcdir}/${subdir}/asmsrc2.s
+
+set asm-flags "-Wa,-gstabs,-I${srcdir}/${subdir},-I${objdir}/${subdir}"
+
+if {[gdb_compile ${src1} asmsrc1.o object "additional_flags=${asm-flags}"] != ""} then {
+     gdb_suppress_entire_file "Testcase compile failed, so all tests in this file will automatically fail."
+}
+if {[gdb_compile ${src2} asmsrc2.o object "additional_flags=${asm-flags}"] != ""} then {
+     gdb_suppress_entire_file "Testcase compile failed, so all tests in this file will automatically fail."
+}
+
+if  { [gdb_compile "asmsrc1.o asmsrc2.o" ${binfile} executable "ldflags=-nodefaultlibs"] != "" } {
+     gdb_suppress_entire_file "Testcase compile failed, so all tests in this file will automatically fail."
+}
+
+remote_exec build "mv asmsrc1.o asmsrc2.o ${objdir}/${subdir}"
+
+
+gdb_start
+gdb_reinitialize_dir $srcdir/$subdir
+gdb_load ${binfile}
+
+#
+# Run to `main' where we begin our tests.
+#
+
+if ![runto_main] then {
+    gdb_suppress_tests
+}
+
+# Execute the `f' command and see if the result includes source info.
+gdb_test "f" "asmsrc1\[.\]s:18.*several_nops" "f at main"
+
+# See if we properly `next' over a macro with several insns.
+gdb_test "n" "22\[ 	\]*.*foo2" "next over macro"
+
+# See if we can properly `step' into a subroutine call.
+gdb_test "s" "8\[ 	\]*.*" "step into foo2"
+
+# See if `f' prints the right source file.
+gdb_test "f" ".*asmsrc2\[.\]s:8.*" "f in foo2"
+
+# `next' one insn (or macro) to set up our stackframe (for the following bt).
+gdb_test "n" "12\[ 	\]*.*foo3" "n in foo2"
+
+# See if `bt' prints the right source files.
+gdb_test "bt" "\#0.*foo2.*asmsrc2\[.\]s:12.*\#1.*main.*asmsrc1\[.\]s:22" "bt in foo2"
+
+# Step into another subroutine which lives back in the first source file.
+gdb_test "s" "" "s 2"
+
+# Next over insns to set up the stack frame.
+gdb_test "n" "" "n 2"
+
+# Now see if `bt' is correct.
+gdb_test "bt" "\#0.*foo3.*asmsrc1\[.\]s:33.*\#1.*foo2.*asmsrc2\[.\]s:12.*\#2.*main.*asmsrc1\[.\]s:22" "bt in foo3"

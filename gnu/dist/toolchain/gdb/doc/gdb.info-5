@@ -1,0 +1,1301 @@
+This is ./gdb.info, produced by Makeinfo version 3.12f from gdb.texinfo.
+
+INFO-DIR-SECTION Programming & development tools.
+START-INFO-DIR-ENTRY
+* Gdb: (gdb).                     The GNU debugger.
+END-INFO-DIR-ENTRY
+
+   This file documents the GNU debugger GDB.
+
+   This is the Eighth Edition, March 2000, of `Debugging with GDB: the
+GNU Source-Level Debugger' for GDB Version 5.0.
+
+   Copyright (C) 1988-2000 Free Software Foundation, Inc.
+
+   Permission is granted to make and distribute verbatim copies of this
+manual provided the copyright notice and this permission notice are
+preserved on all copies.
+
+   Permission is granted to copy and distribute modified versions of
+this manual under the conditions for verbatim copying, provided also
+that the entire resulting derived work is distributed under the terms
+of a permission notice identical to this one.
+
+   Permission is granted to copy and distribute translations of this
+manual into another language, under the above conditions for modified
+versions.
+
+
+File: gdb.info,  Node: Range Checking,  Prev: Type Checking,  Up: Checks
+
+An overview of range checking
+-----------------------------
+
+   In some languages (such as Modula-2), it is an error to exceed the
+bounds of a type; this is enforced with run-time checks.  Such range
+checking is meant to ensure program correctness by making sure
+computations do not overflow, or indices on an array element access do
+not exceed the bounds of the array.
+
+   For expressions you use in GDB commands, you can tell GDB to treat
+range errors in one of three ways: ignore them, always treat them as
+errors and abandon the expression, or issue warnings but evaluate the
+expression anyway.
+
+   A range error can result from numerical overflow, from exceeding an
+array index bound, or when you type a constant that is not a member of
+any type.  Some languages, however, do not treat overflows as an error.
+In many implementations of C, mathematical overflow causes the result
+to "wrap around" to lower values--for example, if M is the largest
+integer value, and S is the smallest, then
+
+     M + 1 => S
+
+   This, too, is specific to individual languages, and in some cases
+specific to individual compilers or machines.  *Note Supported
+languages: Support, for further details on specific languages.
+
+   GDB provides some additional commands for controlling the range
+checker:
+
+`set check range auto'
+     Set range checking on or off based on the current working language.
+     *Note Supported languages: Support, for the default settings for
+     each language.
+
+`set check range on'
+`set check range off'
+     Set range checking on or off, overriding the default setting for
+     the current working language.  A warning is issued if the setting
+     does not match the language default.  If a range error occurs and
+     range checking is on, then a message is printed and evaluation of
+     the expression is aborted.
+
+`set check range warn'
+     Output messages when the GDB range checker detects a range error,
+     but attempt to evaluate the expression anyway.  Evaluating the
+     expression may still be impossible for other reasons, such as
+     accessing memory that the process does not own (a typical example
+     from many Unix systems).
+
+`show range'
+     Show the current setting of the range checker, and whether or not
+     it is being set automatically by GDB.
+
+
+File: gdb.info,  Node: Support,  Prev: Checks,  Up: Languages
+
+Supported languages
+===================
+
+   GDB supports C, C++, Fortran, Java, Chill, assembly, and Modula-2.
+Some GDB features may be used in expressions regardless of the language
+you use: the GDB `@' and `::' operators, and the `{type}addr' construct
+(*note Expressions: Expressions.) can be used with the constructs of
+any supported language.
+
+   The following sections detail to what degree each source language is
+supported by GDB.  These sections are not meant to be language
+tutorials or references, but serve only as a reference guide to what the
+GDB expression parser accepts, and what input and output formats should
+look like for different languages.  There are many good books written
+on each of these languages; please look to these for a language
+reference or tutorial.
+
+* Menu:
+
+* C::           C and C++
+* Modula-2::    Modula-2
+* Chill::        Chill
+
+
+File: gdb.info,  Node: C,  Next: Modula-2,  Up: Support
+
+C and C++
+---------
+
+   Since C and C++ are so closely related, many features of GDB apply
+to both languages.  Whenever this is the case, we discuss those
+languages together.
+
+   The C++ debugging facilities are jointly implemented by the C++
+compiler and GDB.  Therefore, to debug your C++ code effectively, you
+must compile your C++ programs with a supported C++ compiler, such as
+GNU `g++', or the HP ANSI C++ compiler (`aCC').
+
+   For best results when using GNU C++, use the stabs debugging format.
+You can select that format explicitly with the `g++' command-line
+options `-gstabs' or `-gstabs+'.  See *Note Options for Debugging Your
+Program or GNU CC: (gcc.info)Debugging Options, for more information.
+
+* Menu:
+
+* C Operators::                 C and C++ operators
+* C Constants::                 C and C++ constants
+* C plus plus expressions::     C++ expressions
+* C Defaults::                  Default settings for C and C++
+* C Checks::                    C and C++ type and range checks
+* Debugging C::                 GDB and C
+* Debugging C plus plus::       GDB features for C++
+
+
+File: gdb.info,  Node: C Operators,  Next: C Constants,  Up: C
+
+C and C++ operators
+...................
+
+   Operators must be defined on values of specific types.  For instance,
+`+' is defined on numbers, but not on structures.  Operators are often
+defined on groups of types.
+
+   For the purposes of C and C++, the following definitions hold:
+
+   * _Integral types_ include `int' with any of its storage-class
+     specifiers; `char'; `enum'; and, for C++, `bool'.
+
+   * _Floating-point types_ include `float', `double', and `long
+     double' (if supported by the target platform).
+
+   * _Pointer types_ include all types defined as `(TYPE *)'.
+
+   * _Scalar types_ include all of the above.
+
+
+The following operators are supported.  They are listed here in order
+of increasing precedence:
+
+`,'
+     The comma or sequencing operator.  Expressions in a
+     comma-separated list are evaluated from left to right, with the
+     result of the entire expression being the last expression
+     evaluated.
+
+`='
+     Assignment.  The value of an assignment expression is the value
+     assigned.  Defined on scalar types.
+
+`OP='
+     Used in an expression of the form `A OP= B', and translated to
+     `A = A OP B'.  `OP=' and `=' have the same precedence.  OP is any
+     one of the operators `|', `^', `&', `<<', `>>', `+', `-', `*',
+     `/', `%'.
+
+`?:'
+     The ternary operator.  `A ? B : C' can be thought of as:  if A
+     then B else C.  A should be of an integral type.
+
+`||'
+     Logical OR.  Defined on integral types.
+
+`&&'
+     Logical AND.  Defined on integral types.
+
+`|'
+     Bitwise OR.  Defined on integral types.
+
+`^'
+     Bitwise exclusive-OR.  Defined on integral types.
+
+`&'
+     Bitwise AND.  Defined on integral types.
+
+`==, !='
+     Equality and inequality.  Defined on scalar types.  The value of
+     these expressions is 0 for false and non-zero for true.
+
+`<, >, <=, >='
+     Less than, greater than, less than or equal, greater than or equal.
+     Defined on scalar types.  The value of these expressions is 0 for
+     false and non-zero for true.
+
+`<<, >>'
+     left shift, and right shift.  Defined on integral types.
+
+`@'
+     The GDB "artificial array" operator (*note Expressions:
+     Expressions.).
+
+`+, -'
+     Addition and subtraction.  Defined on integral types,
+     floating-point types and pointer types.
+
+`*, /, %'
+     Multiplication, division, and modulus.  Multiplication and
+     division are defined on integral and floating-point types.
+     Modulus is defined on integral types.
+
+`++, --'
+     Increment and decrement.  When appearing before a variable, the
+     operation is performed before the variable is used in an
+     expression; when appearing after it, the variable's value is used
+     before the operation takes place.
+
+`*'
+     Pointer dereferencing.  Defined on pointer types.  Same precedence
+     as `++'.
+
+`&'
+     Address operator.  Defined on variables.  Same precedence as `++'.
+
+     For debugging C++, GDB implements a use of `&' beyond what is
+     allowed in the C++ language itself: you can use `&(&REF)' (or, if
+     you prefer, simply `&&REF') to examine the address where a C++
+     reference variable (declared with `&REF') is stored.
+
+`-'
+     Negative.  Defined on integral and floating-point types.  Same
+     precedence as `++'.
+
+`!'
+     Logical negation.  Defined on integral types.  Same precedence as
+     `++'.
+
+`~'
+     Bitwise complement operator.  Defined on integral types.  Same
+     precedence as `++'.
+
+`., ->'
+     Structure member, and pointer-to-structure member.  For
+     convenience, GDB regards the two as equivalent, choosing whether
+     to dereference a pointer based on the stored type information.
+     Defined on `struct' and `union' data.
+
+`.*, ->*'
+     Dereferences of pointers to members.
+
+`[]'
+     Array indexing.  `A[I]' is defined as `*(A+I)'.  Same precedence
+     as `->'.
+
+`()'
+     Function parameter list.  Same precedence as `->'.
+
+`::'
+     C++ scope resolution operator.  Defined on `struct', `union', and
+     `class' types.
+
+`::'
+     Doubled colons also represent the GDB scope operator (*note
+     Expressions: Expressions.).  Same precedence as `::', above.
+
+   If an operator is redefined in the user code, GDB usually attempts
+to invoke the redefined version instead of using the operator's
+predefined meaning.
+
+* Menu:
+
+* C Constants::
+
+
+File: gdb.info,  Node: C Constants,  Next: C plus plus expressions,  Prev: C Operators,  Up: C
+
+C and C++ constants
+...................
+
+   GDB allows you to express the constants of C and C++ in the
+following ways:
+
+   * Integer constants are a sequence of digits.  Octal constants are
+     specified by a leading `0' (i.e. zero), and hexadecimal constants
+     by a leading `0x' or `0X'.  Constants may also end with a letter
+     `l', specifying that the constant should be treated as a `long'
+     value.
+
+   * Floating point constants are a sequence of digits, followed by a
+     decimal point, followed by a sequence of digits, and optionally
+     followed by an exponent.  An exponent is of the form:
+     `e[[+]|-]NNN', where NNN is another sequence of digits.  The `+'
+     is optional for positive exponents.  A floating-point constant may
+     also end with a letter `f' or `F', specifying that the constant
+     should be treated as being of the `float' (as opposed to the
+     default `double') type; or with a letter `l' or `L', which
+     specifies a `long double' constant.
+
+   * Enumerated constants consist of enumerated identifiers, or their
+     integral equivalents.
+
+   * Character constants are a single character surrounded by single
+     quotes (`''), or a number--the ordinal value of the corresponding
+     character (usually its ASCII value).  Within quotes, the single
+     character may be represented by a letter or by "escape sequences",
+     which are of the form `\NNN', where NNN is the octal representation
+     of the character's ordinal value; or of the form `\X', where `X'
+     is a predefined special character--for example, `\n' for newline.
+
+   * String constants are a sequence of character constants surrounded
+     by double quotes (`"').  Any valid character constant (as described
+     above) may appear.  Double quotes within the string must be
+     preceded by a backslash, so for instance `"a\"b'c"' is a string of
+     five characters.
+
+   * Pointer constants are an integral value.  You can also write
+     pointers to constants using the C operator `&'.
+
+   * Array constants are comma-separated lists surrounded by braces `{'
+     and `}'; for example, `{1,2,3}' is a three-element array of
+     integers, `{{1,2}, {3,4}, {5,6}}' is a three-by-two array, and
+     `{&"hi", &"there", &"fred"}' is a three-element array of pointers.
+
+* Menu:
+
+* C plus plus expressions::
+* C Defaults::
+* C Checks::
+
+* Debugging C::
+
+
+File: gdb.info,  Node: C plus plus expressions,  Next: C Defaults,  Prev: C Constants,  Up: C
+
+C++ expressions
+...............
+
+   GDB expression handling can interpret most C++ expressions.
+
+     _Warning:_ GDB can only debug C++ code if you use the proper
+     compiler.  Typically, C++ debugging depends on the use of
+     additional debugging information in the symbol table, and thus
+     requires special support.  In particular, if your compiler
+     generates a.out, MIPS ECOFF, RS/6000 XCOFF, or ELF with stabs
+     extensions to the symbol table, these facilities are all
+     available.  (With GNU CC, you can use the `-gstabs' option to
+     request stabs debugging extensions explicitly.)  Where the object
+     code format is standard COFF or DWARF in ELF, on the other hand,
+     most of the C++ support in GDB does _not_ work.
+
+  1. Member function calls are allowed; you can use expressions like
+
+          count = aml->GetOriginal(x, y)
+
+  2. While a member function is active (in the selected stack frame),
+     your expressions have the same namespace available as the member
+     function; that is, GDB allows implicit references to the class
+     instance pointer `this' following the same rules as C++.
+
+  3. You can call overloaded functions; GDB resolves the function call
+     to the right definition, with some restrictions.  GDB does not
+     perform overload resolution involving user-defined type
+     conversions, calls to constructors, or instantiations of templates
+     that do not exist in the program.  It also cannot handle ellipsis
+     argument lists or default arguments.
+
+     It does perform integral conversions and promotions, floating-point
+     promotions, arithmetic conversions, pointer conversions,
+     conversions of class objects to base classes, and standard
+     conversions such as those of functions or arrays to pointers; it
+     requires an exact match on the number of function arguments.
+
+     Overload resolution is always performed, unless you have specified
+     `set overload-resolution off'.  *Note GDB features for C++:
+     Debugging C plus plus.
+
+     You must specify `set overload-resolution off' in order to use an
+     explicit function signature to call an overloaded function, as in
+          p 'foo(char,int)'('x', 13)
+
+     The GDB command-completion facility can simplify this; see *Note
+     Command completion: Completion.
+
+  4. GDB understands variables declared as C++ references; you can use
+     them in expressions just as you do in C++ source--they are
+     automatically dereferenced.
+
+     In the parameter list shown when GDB displays a frame, the values
+     of reference variables are not displayed (unlike other variables);
+     this avoids clutter, since references are often used for large
+     structures.  The _address_ of a reference variable is always
+     shown, unless you have specified `set print address off'.
+
+  5. GDB supports the C++ name resolution operator `::'--your
+     expressions can use it just as expressions in your program do.
+     Since one scope may be defined in another, you can use `::'
+     repeatedly if necessary, for example in an expression like
+     `SCOPE1::SCOPE2::NAME'.  GDB also allows resolving name scope by
+     reference to source files, in both C and C++ debugging (*note
+     Program variables: Variables.).
+
+   In addition, when used with HP's C++ compiler, GDB supports calling
+virtual functions correctly, printing out virtual bases of objects,
+calling functions in a base subobject, casting objects, and invoking
+user-defined operators.
+
+
+File: gdb.info,  Node: C Defaults,  Next: C Checks,  Prev: C plus plus expressions,  Up: C
+
+C and C++ defaults
+..................
+
+   If you allow GDB to set type and range checking automatically, they
+both default to `off' whenever the working language changes to C or
+C++.  This happens regardless of whether you or GDB selects the working
+language.
+
+   If you allow GDB to set the language automatically, it recognizes
+source files whose names end with `.c', `.C', or `.cc', etc, and when
+GDB enters code compiled from one of these files, it sets the working
+language to C or C++.  *Note Having GDB infer the source language:
+Automatically, for further details.
+
+
+File: gdb.info,  Node: C Checks,  Next: Debugging C,  Prev: C Defaults,  Up: C
+
+C and C++ type and range checks
+...............................
+
+   By default, when GDB parses C or C++ expressions, type checking is
+not used.  However, if you turn type checking on, GDB considers two
+variables type equivalent if:
+
+   * The two variables are structured and have the same structure,
+     union, or enumerated tag.
+
+   * The two variables have the same type name, or types that have been
+     declared equivalent through `typedef'.
+
+
+   Range checking, if turned on, is done on mathematical operations.
+Array indices are not checked, since they are often used to index a
+pointer that is not itself an array.
+
+
+File: gdb.info,  Node: Debugging C,  Next: Debugging C plus plus,  Prev: C Checks,  Up: C
+
+GDB and C
+.........
+
+   The `set print union' and `show print union' commands apply to the
+`union' type.  When set to `on', any `union' that is inside a `struct'
+or `class' is also printed.  Otherwise, it appears as `{...}'.
+
+   The `@' operator aids in the debugging of dynamic arrays, formed
+with pointers and a memory allocation function.  *Note Expressions:
+Expressions.
+
+* Menu:
+
+* Debugging C plus plus::
+
+
+File: gdb.info,  Node: Debugging C plus plus,  Prev: Debugging C,  Up: C
+
+GDB features for C++
+....................
+
+   Some GDB commands are particularly useful with C++, and some are
+designed specifically for use with C++.  Here is a summary:
+
+`breakpoint menus'
+     When you want a breakpoint in a function whose name is overloaded,
+     GDB breakpoint menus help you specify which function definition
+     you want.  *Note Breakpoint menus: Breakpoint Menus.
+
+`rbreak REGEX'
+     Setting breakpoints using regular expressions is helpful for
+     setting breakpoints on overloaded functions that are not members
+     of any special classes.  *Note Setting breakpoints: Set Breaks.
+
+`catch throw'
+`catch catch'
+     Debug C++ exception handling using these commands.  *Note Setting
+     catchpoints: Set Catchpoints.
+
+`ptype TYPENAME'
+     Print inheritance relationships as well as other information for
+     type TYPENAME.  *Note Examining the Symbol Table: Symbols.
+
+`set print demangle'
+`show print demangle'
+`set print asm-demangle'
+`show print asm-demangle'
+     Control whether C++ symbols display in their source form, both when
+     displaying code as C++ source and when displaying disassemblies.
+     *Note Print settings: Print Settings.
+
+`set print object'
+`show print object'
+     Choose whether to print derived (actual) or declared types of
+     objects.  *Note Print settings: Print Settings.
+
+`set print vtbl'
+`show print vtbl'
+     Control the format for printing virtual function tables.  *Note
+     Print settings: Print Settings.  (The `vtbl' commands do not work
+     on programs compiled with the HP ANSI C++ compiler (`aCC').)
+
+`set overload-resolution on'
+     Enable overload resolution for C++ expression evaluation.  The
+     default is on.  For overloaded functions, GDB evaluates the
+     arguments and searches for a function whose signature matches the
+     argument types, using the standard C++ conversion rules (see *Note
+     C++ expressions: C plus plus expressions, for details).  If it
+     cannot find a match, it emits a message.
+
+`set overload-resolution off'
+     Disable overload resolution for C++ expression evaluation.  For
+     overloaded functions that are not class member functions, GDB
+     chooses the first function of the specified name that it finds in
+     the symbol table, whether or not its arguments are of the correct
+     type.  For overloaded functions that are class member functions,
+     GDB searches for a function whose signature _exactly_ matches the
+     argument types.
+
+`Overloaded symbol names'
+     You can specify a particular definition of an overloaded symbol,
+     using the same notation that is used to declare such symbols in
+     C++: type `SYMBOL(TYPES)' rather than just SYMBOL.  You can also
+     use the GDB command-line word completion facilities to list the
+     available choices, or to finish the type list for you.  *Note
+     Command completion: Completion, for details on how to do this.
+
+
+File: gdb.info,  Node: Modula-2,  Next: Chill,  Prev: C,  Up: Support
+
+Modula-2
+--------
+
+   The extensions made to GDB to support Modula-2 only support output
+from the GNU Modula-2 compiler (which is currently being developed).
+Other Modula-2 compilers are not currently supported, and attempting to
+debug executables produced by them is most likely to give an error as
+GDB reads in the executable's symbol table.
+
+* Menu:
+
+* M2 Operators::                Built-in operators
+* Built-In Func/Proc::          Built-in functions and procedures
+* M2 Constants::                Modula-2 constants
+* M2 Defaults::                 Default settings for Modula-2
+* Deviations::                  Deviations from standard Modula-2
+* M2 Checks::                   Modula-2 type and range checks
+* M2 Scope::                    The scope operators `::' and `.'
+* GDB/M2::                      GDB and Modula-2
+
+
+File: gdb.info,  Node: M2 Operators,  Next: Built-In Func/Proc,  Up: Modula-2
+
+Operators
+.........
+
+   Operators must be defined on values of specific types.  For instance,
+`+' is defined on numbers, but not on structures.  Operators are often
+defined on groups of types.  For the purposes of Modula-2, the
+following definitions hold:
+
+   * _Integral types_ consist of `INTEGER', `CARDINAL', and their
+     subranges.
+
+   * _Character types_ consist of `CHAR' and its subranges.
+
+   * _Floating-point types_ consist of `REAL'.
+
+   * _Pointer types_ consist of anything declared as `POINTER TO TYPE'.
+
+   * _Scalar types_ consist of all of the above.
+
+   * _Set types_ consist of `SET' and `BITSET' types.
+
+   * _Boolean types_ consist of `BOOLEAN'.
+
+The following operators are supported, and appear in order of
+increasing precedence:
+
+`,'
+     Function argument or array index separator.
+
+`:='
+     Assignment.  The value of VAR `:=' VALUE is VALUE.
+
+`<, >'
+     Less than, greater than on integral, floating-point, or enumerated
+     types.
+
+`<=, >='
+     Less than or equal to, greater than or equal to on integral,
+     floating-point and enumerated types, or set inclusion on set
+     types.  Same precedence as `<'.
+
+`=, <>, #'
+     Equality and two ways of expressing inequality, valid on scalar
+     types.  Same precedence as `<'.  In GDB scripts, only `<>' is
+     available for inequality, since `#' conflicts with the script
+     comment character.
+
+`IN'
+     Set membership.  Defined on set types and the types of their
+     members.  Same precedence as `<'.
+
+`OR'
+     Boolean disjunction.  Defined on boolean types.
+
+`AND, &'
+     Boolean conjunction.  Defined on boolean types.
+
+`@'
+     The GDB "artificial array" operator (*note Expressions:
+     Expressions.).
+
+`+, -'
+     Addition and subtraction on integral and floating-point types, or
+     union and difference on set types.
+
+`*'
+     Multiplication on integral and floating-point types, or set
+     intersection on set types.
+
+`/'
+     Division on floating-point types, or symmetric set difference on
+     set types.  Same precedence as `*'.
+
+`DIV, MOD'
+     Integer division and remainder.  Defined on integral types.  Same
+     precedence as `*'.
+
+`-'
+     Negative. Defined on `INTEGER' and `REAL' data.
+
+`^'
+     Pointer dereferencing.  Defined on pointer types.
+
+`NOT'
+     Boolean negation.  Defined on boolean types.  Same precedence as
+     `^'.
+
+`.'
+     `RECORD' field selector.  Defined on `RECORD' data.  Same
+     precedence as `^'.
+
+`[]'
+     Array indexing.  Defined on `ARRAY' data.  Same precedence as `^'.
+
+`()'
+     Procedure argument list.  Defined on `PROCEDURE' objects.  Same
+     precedence as `^'.
+
+`::, .'
+     GDB and Modula-2 scope operators.
+
+     _Warning:_ Sets and their operations are not yet supported, so GDB
+     treats the use of the operator `IN', or the use of operators `+',
+     `-', `*', `/', `=', , `<>', `#', `<=', and `>=' on sets as an
+     error.
+
+
+File: gdb.info,  Node: Built-In Func/Proc,  Next: M2 Constants,  Prev: M2 Operators,  Up: Modula-2
+
+Built-in functions and procedures
+.................................
+
+   Modula-2 also makes available several built-in procedures and
+functions.  In describing these, the following metavariables are used:
+
+A
+     represents an `ARRAY' variable.
+
+C
+     represents a `CHAR' constant or variable.
+
+I
+     represents a variable or constant of integral type.
+
+M
+     represents an identifier that belongs to a set.  Generally used in
+     the same function with the metavariable S.  The type of S should
+     be `SET OF MTYPE' (where MTYPE is the type of M).
+
+N
+     represents a variable or constant of integral or floating-point
+     type.
+
+R
+     represents a variable or constant of floating-point type.
+
+T
+     represents a type.
+
+V
+     represents a variable.
+
+X
+     represents a variable or constant of one of many types.  See the
+     explanation of the function for details.
+
+   All Modula-2 built-in procedures also return a result, described
+below.
+
+`ABS(N)'
+     Returns the absolute value of N.
+
+`CAP(C)'
+     If C is a lower case letter, it returns its upper case equivalent,
+     otherwise it returns its argument.
+
+`CHR(I)'
+     Returns the character whose ordinal value is I.
+
+`DEC(V)'
+     Decrements the value in the variable V by one.  Returns the new
+     value.
+
+`DEC(V,I)'
+     Decrements the value in the variable V by I.  Returns the new
+     value.
+
+`EXCL(M,S)'
+     Removes the element M from the set S.  Returns the new set.
+
+`FLOAT(I)'
+     Returns the floating point equivalent of the integer I.
+
+`HIGH(A)'
+     Returns the index of the last member of A.
+
+`INC(V)'
+     Increments the value in the variable V by one.  Returns the new
+     value.
+
+`INC(V,I)'
+     Increments the value in the variable V by I.  Returns the new
+     value.
+
+`INCL(M,S)'
+     Adds the element M to the set S if it is not already there.
+     Returns the new set.
+
+`MAX(T)'
+     Returns the maximum value of the type T.
+
+`MIN(T)'
+     Returns the minimum value of the type T.
+
+`ODD(I)'
+     Returns boolean TRUE if I is an odd number.
+
+`ORD(X)'
+     Returns the ordinal value of its argument.  For example, the
+     ordinal value of a character is its ASCII value (on machines
+     supporting the ASCII character set).  X must be of an ordered
+     type, which include integral, character and enumerated types.
+
+`SIZE(X)'
+     Returns the size of its argument.  X can be a variable or a type.
+
+`TRUNC(R)'
+     Returns the integral part of R.
+
+`VAL(T,I)'
+     Returns the member of the type T whose ordinal value is I.
+
+     _Warning:_  Sets and their operations are not yet supported, so
+     GDB treats the use of procedures `INCL' and `EXCL' as an error.
+
+
+File: gdb.info,  Node: M2 Constants,  Next: M2 Defaults,  Prev: Built-In Func/Proc,  Up: Modula-2
+
+Constants
+.........
+
+   GDB allows you to express the constants of Modula-2 in the following
+ways:
+
+   * Integer constants are simply a sequence of digits.  When used in an
+     expression, a constant is interpreted to be type-compatible with
+     the rest of the expression.  Hexadecimal integers are specified by
+     a trailing `H', and octal integers by a trailing `B'.
+
+   * Floating point constants appear as a sequence of digits, followed
+     by a decimal point and another sequence of digits.  An optional
+     exponent can then be specified, in the form `E[+|-]NNN', where
+     `[+|-]NNN' is the desired exponent.  All of the digits of the
+     floating point constant must be valid decimal (base 10) digits.
+
+   * Character constants consist of a single character enclosed by a
+     pair of like quotes, either single (`'') or double (`"').  They may
+     also be expressed by their ordinal value (their ASCII value,
+     usually) followed by a `C'.
+
+   * String constants consist of a sequence of characters enclosed by a
+     pair of like quotes, either single (`'') or double (`"').  Escape
+     sequences in the style of C are also allowed.  *Note C and C++
+     constants: C Constants, for a brief explanation of escape
+     sequences.
+
+   * Enumerated constants consist of an enumerated identifier.
+
+   * Boolean constants consist of the identifiers `TRUE' and `FALSE'.
+
+   * Pointer constants consist of integral values only.
+
+   * Set constants are not yet supported.
+
+
+File: gdb.info,  Node: M2 Defaults,  Next: Deviations,  Prev: M2 Constants,  Up: Modula-2
+
+Modula-2 defaults
+.................
+
+   If type and range checking are set automatically by GDB, they both
+default to `on' whenever the working language changes to Modula-2.
+This happens regardless of whether you or GDB selected the working
+language.
+
+   If you allow GDB to set the language automatically, then entering
+code compiled from a file whose name ends with `.mod' sets the working
+language to Modula-2.  *Note Having GDB set the language automatically:
+Automatically, for further details.
+
+
+File: gdb.info,  Node: Deviations,  Next: M2 Checks,  Prev: M2 Defaults,  Up: Modula-2
+
+Deviations from standard Modula-2
+.................................
+
+   A few changes have been made to make Modula-2 programs easier to
+debug.  This is done primarily via loosening its type strictness:
+
+   * Unlike in standard Modula-2, pointer constants can be formed by
+     integers.  This allows you to modify pointer variables during
+     debugging.  (In standard Modula-2, the actual address contained in
+     a pointer variable is hidden from you; it can only be modified
+     through direct assignment to another pointer variable or
+     expression that returned a pointer.)
+
+   * C escape sequences can be used in strings and characters to
+     represent non-printable characters.  GDB prints out strings with
+     these escape sequences embedded.  Single non-printable characters
+     are printed using the `CHR(NNN)' format.
+
+   * The assignment operator (`:=') returns the value of its right-hand
+     argument.
+
+   * All built-in procedures both modify _and_ return their argument.
+
+
+File: gdb.info,  Node: M2 Checks,  Next: M2 Scope,  Prev: Deviations,  Up: Modula-2
+
+Modula-2 type and range checks
+..............................
+
+     _Warning:_ in this release, GDB does not yet perform type or range
+     checking.
+
+   GDB considers two Modula-2 variables type equivalent if:
+
+   * They are of types that have been declared equivalent via a `TYPE
+     T1 = T2' statement
+
+   * They have been declared on the same line.  (Note:  This is true of
+     the GNU Modula-2 compiler, but it may not be true of other
+     compilers.)
+
+   As long as type checking is enabled, any attempt to combine variables
+whose types are not equivalent is an error.
+
+   Range checking is done on all mathematical operations, assignment,
+array index bounds, and all built-in functions and procedures.
+
+
+File: gdb.info,  Node: M2 Scope,  Next: GDB/M2,  Prev: M2 Checks,  Up: Modula-2
+
+The scope operators `::' and `.'
+................................
+
+   There are a few subtle differences between the Modula-2 scope
+operator (`.') and the GDB scope operator (`::').  The two have similar
+syntax:
+
+
+     MODULE . ID
+     SCOPE :: ID
+
+where SCOPE is the name of a module or a procedure, MODULE the name of
+a module, and ID is any declared identifier within your program, except
+another module.
+
+   Using the `::' operator makes GDB search the scope specified by
+SCOPE for the identifier ID.  If it is not found in the specified
+scope, then GDB searches all scopes enclosing the one specified by
+SCOPE.
+
+   Using the `.' operator makes GDB search the current scope for the
+identifier specified by ID that was imported from the definition module
+specified by MODULE.  With this operator, it is an error if the
+identifier ID was not imported from definition module MODULE, or if ID
+is not an identifier in MODULE.
+
+
+File: gdb.info,  Node: GDB/M2,  Prev: M2 Scope,  Up: Modula-2
+
+GDB and Modula-2
+................
+
+   Some GDB commands have little use when debugging Modula-2 programs.
+Five subcommands of `set print' and `show print' apply specifically to
+C and C++: `vtbl', `demangle', `asm-demangle', `object', and `union'.
+The first four apply to C++, and the last to the C `union' type, which
+has no direct analogue in Modula-2.
+
+   The `@' operator (*note Expressions: Expressions.), while available
+with any language, is not useful with Modula-2.  Its intent is to aid
+the debugging of "dynamic arrays", which cannot be created in Modula-2
+as they can in C or C++.  However, because an address can be specified
+by an integral constant, the construct `{TYPE}ADREXP' is still useful.
+
+   In GDB scripts, the Modula-2 inequality operator `#' is interpreted
+as the beginning of a comment.  Use `<>' instead.
+
+
+File: gdb.info,  Node: Chill,  Prev: Modula-2,  Up: Support
+
+Chill
+-----
+
+   The extensions made to GDB to support Chill only support output from
+the GNU Chill compiler.  Other Chill compilers are not currently
+supported, and attempting to debug executables produced by them is most
+likely to give an error as GDB reads in the executable's symbol table.
+
+   This section covers the Chill related topics and the features of GDB
+which support these topics.
+
+* Menu:
+
+* How modes are displayed::        How modes are displayed
+* Locations::                        Locations and their accesses
+* Values and their Operations:: Values and their Operations
+* Chill type and range checks::
+* Chill defaults::
+
+
+File: gdb.info,  Node: How modes are displayed,  Next: Locations,  Up: Chill
+
+How modes are displayed
+.......................
+
+   The Chill Datatype- (Mode) support of GDB is directly related with
+the functionality of the GNU Chill compiler, and therefore deviates
+slightly from the standard specification of the Chill language. The
+provided modes are:
+
+`_Discrete modes:_'
+        * _Integer Modes_ which are predefined by `BYTE, UBYTE, INT,
+          UINT, LONG, ULONG',
+
+        * _Boolean Mode_ which is predefined by `BOOL',
+
+        * _Character Mode_ which is predefined by `CHAR',
+
+        * _Set Mode_ which is displayed by the keyword `SET'.
+               (gdb) ptype x
+               type = SET (karli = 10, susi = 20, fritzi = 100)
+          If the type is an unnumbered set the set element values are
+          omitted.
+
+        * _Range Mode_ which is displayed by
+               `type = <basemode>(<lower bound> : <upper bound>)'
+          where `<lower bound>, <upper bound>' can be of any discrete
+          literal expression (e.g. set element names).
+
+`_Powerset Mode:_'
+     A Powerset Mode is displayed by the keyword `POWERSET' followed by
+     the member mode of the powerset.  The member mode can be any
+     discrete mode.
+          (gdb) ptype x
+          type = POWERSET SET (egon, hugo, otto)
+
+`_Reference Modes:_'
+        * _Bound Reference Mode_ which is displayed by the keyword `REF'
+          followed by the mode name to which the reference is bound.
+
+        * _Free Reference Mode_ which is displayed by the keyword `PTR'.
+
+`_Procedure mode_'
+     The procedure mode is displayed by `type = PROC(<parameter list>)
+     <return mode> EXCEPTIONS (<exception list>)'. The `<parameter
+     list>' is a list of the parameter modes.  `<return mode>' indicates
+     the mode of the result of the procedure if any.  The exceptionlist
+     lists all possible exceptions which can be raised by the procedure.
+
+`_Synchronization Modes:_'
+        * _Event Mode_ which is displayed by
+               `EVENT (<event length>)'
+          where `(<event length>)' is optional.
+
+        * _Buffer Mode_ which is displayed by
+               `BUFFER (<buffer length>)<buffer element mode>'
+          where `(<buffer length>)' is optional.
+
+`_Timing Modes:_'
+        * _Duration Mode_ which is predefined by `DURATION'
+
+        * _Absolute Time Mode_ which is predefined by `TIME'
+
+`_Real Modes:_'
+     Real Modes are predefined with `REAL' and `LONG_REAL'.
+
+`_String Modes:_'
+        * _Character String Mode_ which is displayed by
+               `CHARS(<string length>)'
+          followed by the keyword `VARYING' if the String Mode is a
+          varying mode
+
+        * _Bit String Mode_ which is displayed by
+               `BOOLS(<string
+               length>)'
+
+`_Array Mode:_'
+     The Array Mode is displayed by the keyword `ARRAY(<range>)'
+     followed by the element mode (which may in turn be an array mode).
+          (gdb) ptype x
+          type = ARRAY (1:42)
+                    ARRAY (1:20)
+                       SET (karli = 10, susi = 20, fritzi = 100)
+
+`_Structure Mode_'
+     The Structure mode is displayed by the keyword `STRUCT(<field
+     list>)'.  The `<field list>' consists of names and modes of fields
+     of the structure.  Variant structures have the keyword `CASE
+     <field> OF <variant fields> ESAC' in their field list.  Since the
+     current version of the GNU Chill compiler doesn't implement tag
+     processing (no runtime checks of variant fields, and therefore no
+     debugging info), the output always displays all variant fields.
+          (gdb) ptype str
+          type = STRUCT (
+              as x,
+              bs x,
+              CASE bs OF
+              (karli):
+                  cs a
+              (ott):
+                  ds x
+              ESAC
+          )
+
+
+File: gdb.info,  Node: Locations,  Next: Values and their Operations,  Prev: How modes are displayed,  Up: Chill
+
+Locations and their accesses
+............................
+
+   A location in Chill is an object which can contain values.
+
+   A value of a location is generally accessed by the (declared) name of
+the location.  The output conforms to the specification of values in
+Chill programs.  How values are specified is the topic of the next
+section, *Note Values and their Operations::.
+
+   The pseudo-location `RESULT' (or `result') can be used to display or
+change the result of a currently-active procedure:
+
+     set result := EXPR
+
+This does the same as the Chill action `RESULT EXPR' (which is not
+available in GDB).
+
+   Values of reference mode locations are printed by `PTR(<hex value>)'
+in case of a free reference mode, and by `(REF <reference mode>)
+(<hex-value>)' in case of a bound reference.  `<hex value>' represents
+the address where the reference points to.  To access the value of the
+location referenced by the pointer, use the dereference operator `->'.
+
+   Values of procedure mode locations are displayed by
+     `{ PROC
+     (<argument modes> ) <return mode> } <address> <name of procedure
+     location>'
+   `<argument modes>' is a list of modes according to the parameter
+specification of the procedure and `<address>' shows the address of the
+entry point.
+
+   Substructures of string mode-, array mode- or structure mode-values
+(e.g. array slices, fields of structure locations) are accessed using
+certain operations which are described in the next section, *Note
+Values and their Operations::.
+
+   A location value may be interpreted as having a different mode using
+the location conversion.  This mode conversion is written as `<mode
+name>(<location>)'.  The user has to consider that the sizes of the
+modes have to be equal otherwise an error occurs.  Furthermore, no range
+checking of the location against the destination mode is performed, and
+therefore the result can be quite confusing.
+
+     (gdb) print int (s(3 up 4)) XXX TO be filled in !! XXX
+
+
+File: gdb.info,  Node: Values and their Operations,  Next: Chill type and range checks,  Prev: Locations,  Up: Chill
+
+Values and their Operations
+...........................
+
+   Values are used to alter locations, to investigate complex
+structures in more detail or to filter relevant information out of a
+large amount of data.  There are several (mode dependent) operations
+defined which enable such investigations.  These operations are not
+only applicable to constant values but also to locations, which can
+become quite useful when debugging complex structures.  During parsing
+the command line (e.g. evaluating an expression) GDB treats location
+names as the values behind these locations.
+
+   This section describes how values have to be specified and which
+operations are legal to be used with such values.
+
+`Literal Values'
+     Literal values are specified in the same manner as in GNU Chill
+     programs.  For detailed specification refer to the GNU Chill
+     implementation Manual chapter 1.5.
+
+`Tuple Values'
+     A tuple is specified by `<mode name>[<tuple>]', where `<mode
+     name>' can be omitted if the mode of the tuple is unambiguous.
+     This unambiguity is derived from the context of a evaluated
+     expression.  `<tuple>' can be one of the following:
+
+        * _Powerset Tuple_
+
+        * _Array Tuple_
+
+        * _Structure Tuple_ Powerset tuples, array tuples and structure
+          tuples are specified in the same manner as in Chill programs
+          refer to z200/88 chpt 5.2.5.
+
+`String Element Value'
+     A string element value is specified by
+          `<string value>(<index>)'
+     where `<index>' is a integer expression.  It delivers a character
+     value which is equivalent to the character indexed by `<index>' in
+     the string.
+
+`String Slice Value'
+     A string slice value is specified by `<string value>(<slice
+     spec>)', where `<slice spec>' can be either a range of integer
+     expressions or specified by `<start expr> up <size>'.  `<size>'
+     denotes the number of elements which the slice contains.  The
+     delivered value is a string value, which is part of the specified
+     string.
+
+`Array Element Values'
+     An array element value is specified by `<array value>(<expr>)' and
+     delivers a array element value of the mode of the specified array.
+
+`Array Slice Values'
+     An array slice is specified by `<array value>(<slice spec>)', where
+     `<slice spec>' can be either a range specified by expressions or by
+     `<start expr> up <size>'.  `<size>' denotes the number of
+     arrayelements the slice contains.  The delivered value is an array
+     value which is part of the specified array.
+
+`Structure Field Values'
+     A structure field value is derived by `<structure value>.<field
+     name>', where `<field name>' indicates the name of a field
+     specified in the mode definition of the structure.  The mode of
+     the delivered value corresponds to this mode definition in the
+     structure definition.
+
+`Procedure Call Value'
+     The procedure call value is derived from the return value of the
+     procedure(1).
+
+     Values of duration mode locations are represented by `ULONG'
+     literals.
+
+     Values of time mode locations appear as
+          `TIME(<secs>:<nsecs>)'
+
+`Zero-adic Operator Value'
+     The zero-adic operator value is derived from the instance value
+     for the current active process.
+
+`Expression Values'
+     The value delivered by an expression is the result of the
+     evaluation of the specified expression.  If there are error
+     conditions (mode incompatibility, etc.) the evaluation of
+     expressions is aborted with a corresponding error message.
+     Expressions may be parenthesised which causes the evaluation of
+     this expression before any other expression which uses the result
+     of the parenthesised expression.  The following operators are
+     supported by GDB:
+
+    ``OR, ORIF, XOR''
+    ``AND, ANDIF''
+    ``NOT''
+          Logical operators defined over operands of boolean mode.
+
+    ``=, /=''
+          Equality and inequality operators defined over all modes.
+
+    ``>, >=''
+    ``<, <=''
+          Relational operators defined over predefined modes.
+
+    ``+, -''
+    ``*, /, MOD, REM''
+          Arithmetic operators defined over predefined modes.
+
+    ``-''
+          Change sign operator.
+
+    ``//''
+          String concatenation operator.
+
+    ``()''
+          String repetition operator.
+
+    ``->''
+          Referenced location operator which can be used either to take
+          the address of a location (`->loc'), or to dereference a
+          reference location (`loc->').
+
+    ``OR, XOR''
+    ``AND''
+    ``NOT''
+          Powerset and bitstring operators.
+
+    ``>, >=''
+    ``<, <=''
+          Powerset inclusion operators.
+
+    ``IN''
+          Membership operator.
+
+   ---------- Footnotes ----------
+
+   (1) If a procedure call is used for instance in an expression, then
+this procedure is called with all its side effects.  This can lead to
+confusing results if used carelessly.
+
+
+File: gdb.info,  Node: Chill type and range checks,  Next: Chill defaults,  Prev: Values and their Operations,  Up: Chill
+
+Chill type and range checks
+...........................
+
+   GDB considers two Chill variables mode equivalent if the sizes of
+the two modes are equal.  This rule applies recursively to more complex
+datatypes which means that complex modes are treated equivalent if all
+element modes (which also can be complex modes like structures, arrays,
+etc.) have the same size.
+
+   Range checking is done on all mathematical operations, assignment,
+array index bounds and all built in procedures.
+
+   Strong type checks are forced using the GDB command `set check
+strong'.  This enforces strong type and range checks on all operations
+where Chill constructs are used (expressions, built in functions, etc.)
+in respect to the semantics as defined in the z.200 language
+specification.
+
+   All checks can be disabled by the GDB command `set check off'.
+
+
+File: gdb.info,  Node: Chill defaults,  Prev: Chill type and range checks,  Up: Chill
+
+Chill defaults
+..............
+
+   If type and range checking are set automatically by GDB, they both
+default to `on' whenever the working language changes to Chill.  This
+happens regardless of whether you or GDB selected the working language.
+
+   If you allow GDB to set the language automatically, then entering
+code compiled from a file whose name ends with `.ch' sets the working
+language to Chill.  *Note Having GDB set the language automatically:
+Automatically, for further details.
+

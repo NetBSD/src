@@ -1,0 +1,232 @@
+# Copyright (C) 1998 Free Software Foundation, Inc.
+
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
+# 
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+# 
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  
+
+# Please email any bugs, comments, and/or additions to this file to:
+# bug-gdb@prep.ai.mit.edu
+
+# This file was written by Elena Zannoni (ezannoni@cygnus.com)
+
+# this file tests command line calls with functions returning structures
+# corresponding source file: call_return_struct.c
+
+
+
+if $tracelevel then {
+        strace $tracelevel
+}
+
+set prms_id 0
+set bug_id 0
+
+set testfile "call-rt-st"
+set srcfile ${testfile}.c
+set binfile ${objdir}/${subdir}/${testfile}
+
+
+if  { [gdb_compile "${srcdir}/${subdir}/${srcfile}" "${binfile}" executable {debug additional_flags=-w}] != "" } {
+     gdb_suppress_entire_file "Testcase compile failed, so all tests in this file will automatically fail."
+    }
+
+
+
+# Create and source the file that provides information about the compiler
+# used to compile the test case.
+
+if [get_compiler_info ${binfile}] {
+    return -1;
+}
+
+# The a29k can't call functions, so don't even bother with this test.
+if [target_info exists gdb,cannot_call_functions] {
+    setup_xfail "*-*-*" 2416
+    fail "This target can not call functions"
+    continue
+}
+
+# Set the current language to C.  This counts as a test.  If it
+# fails, then we skip the other tests.
+
+proc set_lang_c {} {
+    global gdb_prompt
+
+    send_gdb "set language c\n"
+    gdb_expect {
+	-re ".*$gdb_prompt $" {}
+	timeout { fail "set language c (timeout)" ; return 0; }
+    }
+
+    send_gdb "show language\n"
+    gdb_expect {
+	-re ".* source language is \"c\".*$gdb_prompt $" {
+	    pass "set language to \"c\""
+	    return 1
+	}
+	-re ".*$gdb_prompt $" {
+	    fail "setting language to \"c\""
+	    return 0
+	}
+	timeout {
+	    fail "can't show language (timeout)"
+	    return 0
+	}
+    }
+}
+
+
+
+source ${binfile}.ci
+
+
+# Start with a fresh gdb.
+
+gdb_exit
+gdb_start
+gdb_reinitialize_dir $srcdir/$subdir
+gdb_load ${binfile}
+send_gdb "set print sevenbit-strings\n" ; gdb_expect -re "$gdb_prompt $"
+send_gdb "set print address off\n" ; gdb_expect -re "$gdb_prompt $"
+send_gdb "set width 0\n" ; gdb_expect -re "$gdb_prompt $"
+
+
+if ![runto_main] then {
+    perror "couldn't run to breakpoint"
+    continue
+}
+
+
+gdb_test "break loop_count" \
+    "Breakpoint.* file .*call-rt-st.c, line 106\\." \
+    "breakpoint loop_count"
+
+
+send_gdb "continue\n"
+gdb_expect {
+ -re  "Continuing\\..*Breakpoint.*loop_count \\(\\) at.*call-rt-st.c:106\[ \t\r\n\]+106\[\t \]+for \\(index=0; index.4; index..\\);\[\r\n \]+$gdb_prompt $" {
+                 pass "continue to loop_count"}
+      -re ".*$gdb_prompt $" { fail "continue to loop_count"}           
+      timeout           { fail "(timeout) continue to loop_count"}
+}
+
+send_gdb "finish\n"
+gdb_expect {
+ -re  "Run till exit from .0  loop_count \\(\\) at.*call-rt-st.c:106\[ \t\r\n\]+main \\(\\) at.*call-rt-st.c:617\[ \t\r\n\]+617\[\t \]+return 0;.*$gdb_prompt $" {
+                 pass "finish out from  loop_count (line 617)"}
+ -re  "Run till exit from .0  loop_count \\(\\) at.*call-rt-st.c:106\[ \t\r\n\]+main \\(\\) at.*call-rt-st.c:615\[ \t\r\n\]+615\[\t \]+loop_count.*$gdb_prompt $" {
+                 pass "finish out from  loop_count (line 615)"}
+      -re ".*$gdb_prompt $" { fail "finish out from loop_count"}           
+      timeout           { fail "(timeout)finish out from loop_count"}
+}
+
+
+send_gdb "print print_struct_rep(*struct1)\n"
+gdb_expect {
+    -re ".*Contents of struct1:\[ \t\n\r\]+22\[ \t\]+0\[ \t\n\r\]+.\[0-9\]+ = \{value = 5, head = 0\}.*$gdb_prompt $" {
+        pass "print print_struct_rep(*struct1, *struct2, *struct3)"
+      }
+    -re ".*$gdb_prompt $" { fail "print print_struct_rep(*struct1, *struct2, *struct3)" }
+    timeout           { fail "(timeout) print_struct_rep(*struct1, *struct2, *struct3)" }
+  }
+
+send_gdb "print print_one_large_struct(*list1)\n"
+gdb_expect {
+    -re ".*\[ \t\]+4\[ \t\]+1\[ \r\n\]+.\[0-9\]+ = \{next_index = \{1, 2, 3, 4, 5, 6, 7, 8, 9, 10\}, values = \{4, 6, 8, 10, 12, 14, 16, 18, 20, 22\}, head = 0\}.*$gdb_prompt $" {
+        pass "print print_one_large_struct(*list1)"
+      }
+    -re ".*$gdb_prompt $" { fail "print print_one_large_struct(*list1)" }
+    timeout           { fail "(timeout) print_one_large_struct(*list1)" }
+  }
+
+if {![target_info exists gdb,skip_float_tests]} {
+  send_gdb "print print_one_double(*d1)\n"
+  gdb_expect {
+    -re ".*Contents of one_double_t:\[ \r\n\]+1\\.111110\[ \r\n\]+.\[0-9\]+ = \{double1 = 1\\.11111\}.*$gdb_prompt $" {
+      pass "print print_one_double(*d1)"
+    }
+    -re ".*$gdb_prompt $" { fail "print print_one_double(*d1)" }
+    timeout           { fail "(timeout) print_one_double(*d1)" }
+  }
+
+  send_gdb "print print_two_floats(*f3)\n"
+  gdb_expect {
+    -re ".*Contents of two_floats_t:\[ \r\n\]+-2\\.345000\[ \t]+1\\.000000\[ \r\n\]+.\[0-9\]+ = \{float1 = -2\\.34500003, float2 = 1\}.*$gdb_prompt $" {
+      pass "print print_two_floats(*f3)"
+    }
+    -re ".*$gdb_prompt $" { fail "print print_two_floats(*f3)" }
+    timeout           { fail "(timeout) print_two_floats(*f3)" }
+  }
+}
+
+send_gdb "print print_bit_flags(*flags)\n"
+gdb_expect {
+    -re ".*alpha\[ \r\n\]+gamma\[ \r\n\]+epsilon\[ \r\n\]+.\[0-9\]+ = \{alpha = 1, beta = 0, gamma = 1, delta = 0, epsilon = 1, omega = 0\}\[ \r\n\]+$gdb_prompt $" {
+        pass "print print_bit_flags(*flags)"
+      }
+    -re ".*$gdb_prompt $" { fail "print print_bit_flags(*flags)" }
+    timeout           { fail "(timeout) print_bit_flags(*flags)" }
+  }
+
+send_gdb "print print_bit_flags_combo(*flags_combo)\n"
+gdb_expect {
+    -re ".*alpha\[ \r\n\]+gamma\[ \r\n\]+epsilon\[ \r\n\]+ch1: y\[ \t\]+ch2: n\[ \r\n\]+.\[0-9\]+ = \{alpha = 1, beta = 0, ch1 = 121 'y', gamma = 1, delta = 0, ch2 = 110 'n', epsilon = 1, omega = 0\}\[ \r\n\]+$gdb_prompt $" {
+        pass "print print_bit_flags_combo(*flags_combo)"
+      }
+    -re ".*$gdb_prompt $" { fail "print print_bit_flags_combo(*flags_combo)" }
+    timeout           { fail "(timeout) print_bit_flags_combo(*flags_combo)" }
+  }
+
+send_gdb "print print_three_chars(*three_char)\n"
+gdb_expect {
+    -re ".*Contents of three_char_t:\[ \r\n\]+x\[ \t\]+y\[ \t\]+z\[ \r\n\]+.\[0-9\]+ = \{ch1 = 120 'x', ch2 = 121 'y', ch3 = 122 'z'\}\[ \r\n\]+$gdb_prompt $" {
+        pass "print print_three_chars(*three_char)"
+      }
+    -re ".*$gdb_prompt $" { fail "print print_three_chars(*three_char)" }
+    timeout           { fail "(timeout) print_three_chars(*three_char)" }
+  }
+
+send_gdb "print print_five_chars(*five_char)\n"
+gdb_expect {
+    -re ".*Contents of five_char_t:\[ \r\n\]+h\[ \t\]+e\[ \t\]+l\[ \t\]+l\[ \t\]+o\[ \r\n\]+.\[0-9\]+ = \{ch1 = 104 'h', ch2 = 101 'e', ch3 = 108 'l', ch4 = 108 'l', ch5 = 111 'o'\}\[ \r\n\]+$gdb_prompt $" {
+        pass "print print_five_chars(*five_char)"
+      }
+    -re ".*$gdb_prompt $" { fail "print print_five_chars(*five_char)" }
+    timeout           { fail "(timeout) print_five_chars(*five_char)" }
+  }
+
+send_gdb "print print_int_char_combo(*int_char_combo)\n"
+gdb_expect {
+    -re ".*Contents of int_char_combo_t:\[ \r\n\]+13\[ \t\]+!\[ \r\n\]+.\[0-9\]+ = \{int1 = 13, ch1 = 33 '!'\}\[ \r\n\]+$gdb_prompt $" {
+        pass "print print_int_char_combo(*int_char_combo)"
+      }
+    -re ".*$gdb_prompt $" { fail "print print_int_char_combo(*int_char_combo)" }
+    timeout           { fail "(timeout) print_int_char_combo(*int_char_combo)" }
+  }
+
+return
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

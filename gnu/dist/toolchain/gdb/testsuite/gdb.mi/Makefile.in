@@ -1,0 +1,24 @@
+VPATH = @srcdir@
+srcdir = @srcdir@
+
+PROGS = basics c_variable cpp_variable var-cmd
+
+MISCELLANEOUS = testcmds
+
+all: 
+	@echo "Nothing to be done for all..."
+
+#### host, target, and site specific Makefile frags come in here.
+
+clean mostlyclean:
+	-rm -f *.ci *.o $(OBJS) $(PROGS) *~ core
+
+distclean maintainer-clean realclean: clean
+	-rm -f Makefile config.status config.log
+
+Makefile: $(srcdir)/Makefile.in $(srcdir)/configure.in
+	$(SHELL) ./config.status --recheck
+
+# Local variables: 
+# change-log-default-name: "ChangeLog-mi"
+# End: 

@@ -1,0 +1,421 @@
+# Copyright (C) 1998, 1999 Free Software Foundation, Inc.
+
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
+# 
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+# 
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  
+
+# Please email any bugs, comments, and/or additions to this file to:
+# bug-gdb@prep.ai.mit.edu
+
+# written by Elena Zannoni (ezannoni@cygnus.com)
+
+# This file is part of the gdb testsuite
+#
+# tests for overloaded member functions. Command Line calls
+#
+
+
+if $tracelevel then {
+        strace $tracelevel
+        }
+
+#
+# test running programs
+#
+set prms_id 0
+set bug_id 0
+
+if { [skip_cplus_tests] } { continue }
+
+set testfile "overload"
+set srcfile ${testfile}.cc
+set binfile ${objdir}/${subdir}/${testfile}
+
+if  { [gdb_compile "${srcdir}/${subdir}/${srcfile}" "${binfile}" executable {debug c++}] != "" } {
+     gdb_suppress_entire_file "Testcase compile failed, so all tests in this file will automatically fail."
+}
+
+if [get_compiler_info ${binfile} "c++"] {
+    return -1
+}
+
+gdb_exit
+gdb_start
+gdb_reinitialize_dir $srcdir/$subdir
+gdb_load ${binfile}
+
+# set it up at a breakpoint so we can play with the variable values
+#
+if ![runto_main] then {
+    perror "couldn't run to breakpoint"
+    continue
+}
+
+send_gdb "break marker1\n" ; gdb_expect -re ".*$gdb_prompt $"
+
+    send_gdb "cont\n"
+    gdb_expect {
+        -re "Break.* marker1 \\(\\) at .*:$decimal.*$gdb_prompt $" {
+            send_gdb "up\n"
+            gdb_expect {
+                -re ".*$gdb_prompt $" {}
+                timeout { fail "up from marker1" }
+            }
+        }
+        -re "$gdb_prompt $" { fail "continue to marker1"  }
+        timeout { fail "(timeout) continue to marker1"  }
+    }
+
+
+send_gdb "print foo_instance1\n"
+gdb_expect {
+    -re ".\[0-9\]* = \{ifoo = 111, ccpfoo = 0x0\}\r\n$gdb_prompt $" {
+        pass "print foo_instance1"
+      }
+    -re ".*$gdb_prompt $" { fail "print foo_instance1" }
+    timeout           { fail "(timeout) print foo_instance1" }
+  }
+
+
+setup_xfail "hppa*-*-*" CLLbs16901
+send_gdb "ptype foo_instance1\n"
+gdb_expect {
+  -re "type = class foo \{.*public:.*int ifoo;.*const char \\*ccpfoo;.*foo\\(int\\);.*foo\\(int, (const char|char const) \\*\\);.*foo\\(foo &\\);.*~foo\\(void\\);.*void foofunc\\(int\\);.*void foofunc\\(int, signed char \\*\\);.*int overload1arg\\(void\\);.*int overload1arg\\(char\\);.*int overload1arg\\(signed char\\);.*int overload1arg\\(unsigned char\\);.*int overload1arg\\(short\\);.*int overload1arg\\(unsigned short\\);.*int overload1arg\\(int\\);.*int overload1arg\\(unsigned int\\);.*int overload1arg\\(long\\);.*int overload1arg\\(unsigned long\\);.*int overload1arg\\(float\\);.*int overload1arg\\(double\\);.*int overloadargs\\(int\\);.*int overloadargs\\(int, int\\);.*int overloadargs\\(int, int, int\\);.*int overloadargs\\(int, int, int, int\\);.*int overloadargs\\(int, int, int, int, int\\);.*int overloadargs\\(int, int, int, int, int, int\\);.*int overloadargs\\(int, int, int, int, int, int, int\\);.*int overloadargs\\(int, int, int, int, int, int, int, int\\);.*int overloadargs\\(int, int, int, int, int, int, int, int, int\\);.*int overloadargs\\(int, int, int, int, int, int, int, int, int, int\\);.*int overloadargs\\(int, int, int, int, int, int, int, int, int, int, int\\);\r\n\}\r\n$gdb_prompt $" {
+        pass "ptype foo_instance1 (HP aCC -- known quirk with ~foo parameter list)"
+      }
+    -re "type = class foo .*int overloadargs\\(int, int, int, int, int, int, int, int, int, int, int\\);\r\n\}\r\n$gdb_prompt $" {
+	pass "ptype foo_instance1 (shorter match)"
+    }
+    -re ".*$gdb_prompt $" { fail "ptype foo_instance1" }
+    timeout           { fail "(timeout) ptype foo_instance1" }
+  }
+
+send_gdb "print foo_instance2\n"
+gdb_expect {
+    -re ".\[0-9\]* = \{ifoo = 222, ccpfoo = $hex \"A\"\}\r\n$gdb_prompt $" {
+        pass "print foo_instance2"
+      }
+    -re ".*$gdb_prompt $" { fail "print foo_instance2" }
+    timeout           { fail "(timeout) print foo_instance2" }
+  }
+
+send_gdb "print foo_instance3\n"
+gdb_expect {
+    -re ".\[0-9\]* = \{ifoo = 222, ccpfoo = $hex \"A\"\}\r\n$gdb_prompt $" {
+        pass "print foo_instance3"
+      }
+    -re ".*$gdb_prompt $" { fail "print foo_instance3" }
+    timeout           { fail "(timeout) print foo_instance3" }
+  }
+
+
+# The overload resolver added by HP (valops.c:find_overload_match) doesn't
+# work right for G++ output, since the list of parameters seems not to
+# be filled in correctly.  Until this gets fixed, don't expect to pass
+# these tests.
+
+setup_xfail "*-*-*" CLLbs16901
+send_gdb "print foo_instance1.overloadargs(1)\n"
+gdb_expect {
+    -re ".\[0-9\]* = 1\r\n$gdb_prompt $" {
+        pass "print call overloaded func 1 arg"
+      }
+    -re ".*$gdb_prompt $" { fail "print call overloaded func 1 arg" }
+    timeout           { fail "(timeout) print call overloaded func 1 arg" }
+  }
+
+
+setup_xfail "*-*-*" CLLbs16901
+
+send_gdb "print foo_instance1.overloadargs(1, 2)\n"
+gdb_expect {
+    -re ".\[0-9\]* = 2\r\n$gdb_prompt $" {
+        pass "print call overloaded func 2 args"
+      }
+    -re ".*$gdb_prompt $" { fail "print call overloaded func 2 args" }
+    timeout           { fail "(timeout) print call overloaded func 2  args" }
+  }
+
+
+setup_xfail "*-*-*" CLLbs16901
+
+send_gdb "print foo_instance1.overloadargs(1, 2, 3)\n"
+gdb_expect {
+    -re ".\[0-9\]* = 3\r\n$gdb_prompt $" {
+        pass "print call overloaded func 3 args"
+      }
+    -re ".*$gdb_prompt $" { fail "print call overloaded func 3 args" }
+    timeout           { fail "(timeout) print call overloaded func 3 args" }
+  }
+
+
+setup_xfail "*-*-*" CLLbs16901
+
+send_gdb "print foo_instance1.overloadargs(1, 2, 3, 4)\n"
+gdb_expect {
+    -re ".\[0-9\]* = 4\r\n$gdb_prompt $" {
+        pass "print call overloaded func 4 args"
+      }
+    -re ".*$gdb_prompt $" { fail "print call overloaded func 4 args" }
+    timeout           { fail "(timeout) print call overloaded func 4 args" }
+  }
+
+
+setup_xfail "*-*-*" CLLbs16901
+
+send_gdb "print foo_instance1.overloadargs(1, 2, 3, 4, 5)\n"
+gdb_expect {
+    -re ".\[0-9\]* = 5\r\n$gdb_prompt $" {
+        pass "print call overloaded func 5 args"
+      }
+    -re ".*$gdb_prompt $" { fail "print call overloaded func 5 args" }
+    timeout           { fail "(timeout) print call overloaded func 5 args" }
+  }
+
+
+setup_xfail "*-*-*" CLLbs16901
+
+send_gdb "print foo_instance1.overloadargs(1, 2, 3, 4, 5, 6)\n"
+gdb_expect {
+    -re ".\[0-9\]* = 6\r\n$gdb_prompt $" {
+        pass "print call overloaded func 6 args"
+      }
+    -re ".*$gdb_prompt $" { fail "print call overloaded func 6 args" }
+    timeout           { fail "(timeout) print call overloaded func 6 args" }
+  }
+
+
+setup_xfail "*-*-*" CLLbs16901
+
+send_gdb "print foo_instance1.overloadargs(1, 2, 3, 4, 5, 6, 7)\n"
+gdb_expect {
+    -re ".\[0-9\]* = 7\r\n$gdb_prompt $" {
+        pass "print call overloaded func 7 args"
+      }
+    -re ".*$gdb_prompt $" { fail "print call overloaded func 7 args" }
+    timeout           { fail "(timeout) print call overloaded func 7 args" }
+  }
+
+
+setup_xfail "*-*-*" CLLbs16901
+
+send_gdb "print foo_instance1.overloadargs(1, 2, 3, 4, 5, 6, 7, 8)\n"
+gdb_expect {
+    -re ".\[0-9\]* = 8\r\n$gdb_prompt $" {
+        pass "print call overloaded func 8 args"
+      }
+    -re ".*$gdb_prompt $" { fail "print call overloaded func 8 args" }
+    timeout           { fail "(timeout) print call overloaded func 8 args" }
+  }
+
+
+setup_xfail "*-*-*" CLLbs16901
+
+send_gdb "print foo_instance1.overloadargs(1, 2, 3, 4, 5, 6, 7, 8, 9)\n"
+gdb_expect {
+    -re ".\[0-9\]* = 9\r\n$gdb_prompt $" {
+        pass "print call overloaded func 9 args"
+      }
+    -re ".*$gdb_prompt $" { fail "print call overloaded func 9 args" }
+    timeout           { fail "(timeout) print call overloaded func 9 args" }
+  }
+
+
+setup_xfail "*-*-*" CLLbs16901
+
+send_gdb "print foo_instance1.overloadargs(1, 2, 3, 4, 5, 6, 7, 8, 9, 10)\n"
+gdb_expect {
+    -re ".\[0-9\]* = 10\r\n$gdb_prompt $" {
+        pass "print call overloaded func 10 args"
+      }
+    -re ".*$gdb_prompt $" { fail "print call overloaded func 10 args" }
+    timeout           { fail "(timeout) print call overloaded func 10 args" }
+  }
+
+
+setup_xfail "*-*-*" CLLbs16901
+
+send_gdb "print foo_instance1.overloadargs(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11)\n"
+gdb_expect {
+    -re ".\[0-9\]* = 11\r\n$gdb_prompt $" {
+        pass "print call overloaded func 11 args"
+      }
+    -re ".*$gdb_prompt $" { fail "print call overloaded func 11 args" }
+    timeout           { fail "(timeout) print call overloaded func 11 args" }
+  }
+
+
+setup_xfail "*-*-*" CLLbs16901
+
+send_gdb "print foo_instance1.overload1arg()\n"
+gdb_expect {
+    -re ".\[0-9\]* = 1\r\n$gdb_prompt $" {
+        pass "print call overloaded func void arg"
+      }
+    -re ".*$gdb_prompt $" { fail "print call overloaded func void arg" }
+    timeout           { fail "(timeout) print call overloaded func void arg" }
+  }
+
+
+setup_xfail "*-*-*" CLLbs16901
+
+send_gdb "print foo_instance1.overload1arg((char)arg2)\n"
+gdb_expect {
+    -re ".\[0-9\]* = 2\r\n$gdb_prompt $" {
+        pass "print call overloaded func char arg"
+      }
+    -re ".*$gdb_prompt $" { fail "print call overloaded func char arg" }
+    timeout           { fail "(timeout) print call overloaded func char arg" }
+  }
+
+
+setup_xfail "*-*-*" CLLbs16901
+
+send_gdb "print foo_instance1.overload1arg((signed char)arg3)\n"
+gdb_expect {
+    -re ".\[0-9\]* = 3\r\n$gdb_prompt $" {
+        pass "print call overloaded func signed char arg"
+      }
+    -re ".*$gdb_prompt $" { fail "print call overloaded func signed char arg" }
+    timeout           { fail "(timeout) print call overloaded func signed char arg" }
+  }
+
+
+setup_xfail "*-*-*" CLLbs16901
+
+send_gdb "print foo_instance1.overload1arg((unsigned char)arg4)\n"
+gdb_expect {
+    -re ".\[0-9\]* = 4\r\n$gdb_prompt $" {
+        pass "print call overloaded func unsigned char arg"
+      }
+    -re ".*$gdb_prompt $" { fail "print call overloaded func unsigned char arg" }
+    timeout           { fail "(timeout) print call overloaded func unsigned char arg" }
+  }
+
+
+setup_xfail "*-*-*" CLLbs16901
+
+send_gdb "print foo_instance1.overload1arg((short)arg5)\n"
+gdb_expect {
+    -re ".\[0-9\]* = 5\r\n$gdb_prompt $" {
+        pass "print call overloaded func short arg"
+      }
+    -re ".*$gdb_prompt $" { fail "print call overloaded func short arg" }
+    timeout           { fail "(timeout) print call overloaded func short arg" }
+  }
+
+
+setup_xfail "*-*-*" CLLbs16901
+
+send_gdb "print foo_instance1.overload1arg((unsigned short)arg6)\n"
+gdb_expect {
+    -re ".\[0-9\]* = 6\r\n$gdb_prompt $" {
+        pass "print call overloaded func unsigned short arg"
+      }
+    -re ".*$gdb_prompt $" { fail "print call overloaded func unsigned short  arg" }
+    timeout           { fail "(timeout) print call overloaded func unsigned short arg" }
+  }
+
+
+setup_xfail "*-*-*" CLLbs16901
+
+send_gdb "print foo_instance1.overload1arg((int)arg7)\n"
+gdb_expect {
+    -re ".\[0-9\]* = 7\r\n$gdb_prompt $" {
+        pass "print call overloaded func int arg"
+      }
+    -re ".*$gdb_prompt $" { fail "print call overloaded func int arg" }
+    timeout           { fail "(timeout) print call overloaded func int arg" }
+  }
+
+
+setup_xfail "*-*-*" CLLbs16901
+
+send_gdb "print foo_instance1.overload1arg((unsigned int)arg8)\n"
+gdb_expect {
+    -re ".\[0-9\]* = 8\r\n$gdb_prompt $" {
+        pass "print call overloaded func unsigned int arg"
+      }
+    -re ".*$gdb_prompt $" { fail "print call overloaded func unsigned int arg" }
+    timeout           { fail "(timeout) print call overloaded func unsigned int arg" }
+  }
+
+
+setup_xfail "*-*-*" CLLbs16901
+
+send_gdb "print foo_instance1.overload1arg((long)arg9)\n"
+gdb_expect {
+    -re ".\[0-9\]* = 9\r\n$gdb_prompt $" {
+        pass "print call overloaded func long arg"
+      }
+    -re ".*$gdb_prompt $" { fail "print call overloaded func long arg" }
+    timeout           { fail "(timeout) print call overloaded func long arg" }
+  }
+
+
+setup_xfail "*-*-*" CLLbs16901
+
+send_gdb "print foo_instance1.overload1arg((unsigned long)arg10)\n"
+gdb_expect {
+    -re ".\[0-9\]* = 10\r\n$gdb_prompt $" {
+        pass "print call overloaded func unsigned long arg"
+      }
+    -re ".*$gdb_prompt $" { fail "print call overloaded func unsigned long arg" }
+    timeout           { fail "(timeout) print call overloaded func unsigned long arg" }
+  }
+
+
+setup_xfail "*-*-*" CLLbs16901
+
+send_gdb "print foo_instance1.overload1arg((float)arg11)\n"
+gdb_expect {
+    -re ".\[0-9\]* = 11\r\n$gdb_prompt $" {
+        pass "print call overloaded func float arg"
+      }
+    -re ".*$gdb_prompt $" { fail "print call overloaded func float arg" }
+    timeout           { fail "(timeout) print call overloaded func float arg" }
+  }
+
+
+setup_xfail "*-*-*" CLLbs16901
+
+send_gdb "print foo_instance1.overload1arg((double)arg12)\n"
+gdb_expect {
+    -re ".\[0-9\]* = 12\r\n$gdb_prompt $" {
+        pass "print call overloaded func double arg"
+      }
+    -re ".*$gdb_prompt $" { fail "print call overloaded func double arg" }
+    timeout           { fail "(timeout) print call overloaded func double arg" }
+  }
+
+# Now some tests to see if we can list overloaded functions properly:
+
+send_gdb "set listsize 1\n"
+gdb_expect -re ".*$gdb_prompt $"
+
+gdb_test "list foo::overloadfnarg(void)"\
+   ".*int foo::overloadfnarg.*\\(void\\).*" \
+   "print overloaded function with no args"
+
+gdb_test "list foo::overloadfnarg(int)"\
+    "int foo::overloadfnarg.*\\(int arg\\).*" \
+   "print overloaded function with int arg"
+
+gdb_test "list foo::overloadfnarg(int, int (*)(int))" \
+   "int foo::overloadfnarg.*\\(int arg, int \\(\\*foo\\) \\(int\\)\\).*" \
+   "print overloaded function with function ptr args"
+
+# This one crashes GDB.  Don't know why yet.
+gdb_test "list \"foo::overloadfnarg(int, int (*)(int))\"" \
+   "int foo::overloadfnarg.*\\(int arg, int \\(\\*foo\\) \\(int\\)\\).*" \
+   "print overloaded function with function ptr args - quotes around argument"
