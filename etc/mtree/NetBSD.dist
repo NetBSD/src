@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist,v 1.44 1997/06/24 04:23:32 mrg Exp $
+#	$NetBSD: NetBSD.dist,v 1.45 1997/06/26 21:20:19 kleink Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 /set type=dir uname=root gname=wheel mode=0755
@@ -917,6 +917,12 @@ cat2
 
 # ./usr/share/man/cat3
 cat3
+
+# ./usr/share/man/cat3/i386
+i386
+# ./usr/share/man/cat3/i386
+..
+
 # ./usr/share/man/cat3
 ..
 
@@ -1197,6 +1203,12 @@ man2
 
 # ./usr/share/man/man3
 man3
+
+# ./usr/share/man/man3/i386
+i386
+# ./usr/share/man/man3/i386
+..
+
 # ./usr/share/man/man3
 ..
 
