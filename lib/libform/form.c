@@ -1,4 +1,4 @@
-/*	$NetBSD: form.c,v 1.6 2001/04/06 05:24:59 blymn Exp $	*/
+/*	$NetBSD: form.c,v 1.7 2001/05/11 14:04:48 blymn Exp $	*/
 
 /*-
  * Copyright (c) 1998-1999 Brett Lymn
@@ -536,17 +536,14 @@ int
 data_ahead(FORM *form)
 {
 	FIELD *cur;
-	int end;
 	
 	if ((form == NULL) || (form->fields == NULL)
 	    || (form->fields[0] == NULL))
 		return FALSE;
 
 	cur = form->fields[form->cur_field];
-	end = _formi_find_eol(cur->buffers[0].string,
-			      cur->start_char + cur->cursor_xpos);
-	if ((end - cur->start_char - cur->cursor_xpos)
-	    > cur->cols)
+	
+	if (cur->lines[cur->start_line + cur->cursor_ypos].length > cur->cols)
 		return TRUE;
 
 	return FALSE;
