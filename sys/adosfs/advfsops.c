@@ -1,4 +1,4 @@
-/*	$NetBSD: advfsops.c,v 1.8 1994/12/28 08:52:04 chopps Exp $	*/
+/*	$NetBSD: advfsops.c,v 1.9 1995/01/18 09:16:37 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -53,77 +53,102 @@ adosfs_mount(mp, path, data, ndp, p)
 	struct nameidata *ndp;
 	struct proc *p;
 {
+	struct vnode *devvp;
 	struct adosfs_args args;
-	struct vnode *bdvp;
+	struct adosfsmount *amp;
+	u_int size;
 	int error;
-
-#ifdef ADOSFS_DIAGNOSTIC
-	printf("ad_mount(%x, %x, %x, %x, %x)\n", mp, path, data, ndp, p);
-#endif
-	/*
-	 * normally either updatefs or grab a blk vnode from namei to mount
-	 */
+	mode_t accessmode;
 
 	if (error = copyin(data, (caddr_t)&args, sizeof(struct adosfs_args)))
 		return(error);
 	
 	if (mp->mnt_flag & MNT_UPDATE)
-		return(EOPNOTSUPP);
-
-	/* 
-	 * lookup blkdev name and validate.
+		return (EOPNOTSUPP);
+	if ((mp->mnt_flag & MNT_RDONLY) == 0)
+		return (EROFS);
+	/*
+	 * Not an update, or updating the name: look up the name
+	 * and verify that it refers to a sensible block device.
 	 */
 	NDINIT(ndp, LOOKUP, FOLLOW, UIO_USERSPACE, args.fspec, p);
 	if (error = namei(ndp))
 		return (error);
+	devvp = ndp->ni_vp;
 
-	bdvp = ndp->ni_vp;
-	if (bdvp->v_type != VBLK) {
-		vrele(bdvp);
+	if (devvp->v_type != VBLK) {
+		vrele(devvp);
 		return (ENOTBLK);
 	}
-	if (major(bdvp->v_rdev) >= nblkdev) {
-		vrele(bdvp);
+	if (major(devvp->v_rdev) >= nblkdev) {
+		vrele(devvp);
 		return (ENXIO);
 	}
-	if (error = adosfs_mountfs(mp, path, bdvp, &args, p))
-		vrele(bdvp);
-	return(error);
+	/*
+	 * If mount by non-root, then verify that user has necessary
+	 * permissions on the device.
+	 */
+	if (p->p_ucred->cr_uid != 0) {
+		accessmode = VREAD;
+		if ((mp->mnt_flag & MNT_RDONLY) == 0)
+			accessmode |= VWRITE;
+		VOP_LOCK(devvp);
+		if (error = VOP_ACCESS(devvp, accessmode, p->p_ucred, p)) {
+			vput(devvp);
+			return (error);
+		}
+		VOP_UNLOCK(devvp);
+	}
+	if (error = adosfs_mountfs(devvp, mp, p)) {
+		vrele(devvp);
+		return (error);
+	}
+	amp = VFSTOADOSFS(mp);
+	amp->uid = args.uid;
+	amp->gid = args.gid;
+	amp->mask = args.mask;
+	(void) copyinstr(path, mp->mnt_stat.f_mntonname, MNAMELEN - 1, &size);
+	bzero(mp->mnt_stat.f_mntonname + size, MNAMELEN - size);
+	(void) copyinstr(args.fspec, mp->mnt_stat.f_mntfromname, MNAMELEN - 1,
+	    &size);
+	bzero(mp->mnt_stat.f_mntfromname + size, MNAMELEN - size);
+	return (0);
 }
 
 int
-adosfs_mountfs(mp, path, bdvp, args, p)
+adosfs_mountfs(devvp, mp, p)
+	struct vnode *devvp;
 	struct mount *mp;
-	char *path;
-	struct vnode *bdvp;
-	struct adosfs_args *args;
 	struct proc *p;
 {
 	struct disklabel dl;
 	struct partition *parp;
 	struct amount *amp;
-	struct statfs *sfp;	
 	struct vnode *rvp;
 	int error, nl, part, i;
 
-	part = DISKPART(bdvp->v_rdev);
+	part = DISKPART(devvp->v_rdev);
 	amp = NULL;
+
 	/*
-	 * anything mounted on blkdev?
+	 * Disallow multiple mounts of the same device.
+	 * Disallow mounting of a device that is currently in use
+	 * (except for root, which might share swap device for miniroot).
+	 * Flush out any old buffers remaining from a previous use.
 	 */
-	if (error = vfs_mountedon(bdvp))
+	if (error = vfs_mountedon(devvp))
 		return (error);
-	if (vcount(bdvp) > 1 && bdvp != rootvp)
+	if (vcount(devvp) > 1 && devvp != rootvp)
 		return (EBUSY);
-	if (error = vinvalbuf(bdvp, V_SAVE, p->p_ucred, p, 0, 0))
+	if (error = vinvalbuf(devvp, V_SAVE, p->p_ucred, p, 0, 0))
 		return (error);
 
 	/* 
 	 * open blkdev and read root block
 	 */
-	if (error = VOP_OPEN(bdvp, FREAD, NOCRED, p))
+	if (error = VOP_OPEN(devvp, FREAD, NOCRED, p))
 		return (error);
-	if (error = VOP_IOCTL(bdvp, DIOCGDINFO,(caddr_t)&dl, FREAD, NOCRED, p))
+	if (error = VOP_IOCTL(devvp, DIOCGDINFO,(caddr_t)&dl, FREAD, NOCRED, p))
 		goto fail;
 
 	parp = &dl.d_partitions[part];
@@ -133,32 +158,15 @@ adosfs_mountfs(mp, path, bdvp, args, p)
 	amp->endb = parp->p_offset + parp->p_size;
 	amp->bsize = dl.d_secsize;
 	amp->nwords = amp->bsize >> 2;
-	amp->devvp = bdvp;
+	amp->devvp = devvp;
 /*	amp->rootb = (parp->p_size - 1 + 2) >> 1;*/
 	amp->rootb = (parp->p_size - 1 + parp->p_cpg) >> 1;
-	amp->uid = args->uid;	/* XXX check? */
-	amp->gid = args->gid;	/* XXX check? */
-	amp->mask = args->mask;
-	/*
-	 * copy in stat information
-	 */
-	sfp = &mp->mnt_stat;
-	error = copyinstr(path, sfp->f_mntonname,sizeof(sfp->f_mntonname),&nl);
-	if (error) {
-#ifdef ADOSFS_DIAGNOSTIC
-		printf("mountadosfs: copyinstr() failed\n");
-#endif
-		goto fail;
-	}
-	bzero(&sfp->f_mntonname[nl], sizeof(sfp->f_mntonname) - nl);
-	bzero(sfp->f_mntfromname, sizeof(sfp->f_mntfromname));
-	bcopy("adosfs", sfp->f_mntfromname, strlen("adosfs"));
 	
-	bdvp->v_specflags |= SI_MOUNTEDON;
 	mp->mnt_data = (qaddr_t)amp;
-	mp->mnt_flag |= MNT_LOCAL | MNT_RDONLY;
-        mp->mnt_stat.f_fsid.val[0] = (long)bdvp->v_rdev;
+        mp->mnt_stat.f_fsid.val[0] = (long)devvp->v_rdev;
         mp->mnt_stat.f_fsid.val[1] = makefstype(MOUNT_ADOSFS);
+	mp->mnt_flag |= MNT_LOCAL;
+	devvp->v_specflags |= SI_MOUNTEDON;
 
 	/*
 	 * init anode table.
@@ -174,11 +182,12 @@ adosfs_mountfs(mp, path, bdvp, args, p)
 	vput(rvp);
 
 	return(0);
+
 fail:
-	VOP_CLOSE(bdvp, FREAD, NOCRED, p);
+	(void) VOP_CLOSE(devvp, FREAD, NOCRED, p);
 	if (amp)
 		free(amp, M_ADOSFSMNT);
-	return(error);
+	return (error);
 }
 
 int
@@ -187,48 +196,30 @@ adosfs_start(mp, flags, p)
 	int flags;
 	struct proc *p;
 {
-	return(0);
+
+	return (0);
 }
 
 int
-adosfs_unmount(mp, flags, p)
+adosfs_unmount(mp, mntflags, p)
 	struct mount *mp;
-	int flags;
+	int mntflags;
 	struct proc *p;
 {
-	extern int doforce;
 	struct amount *amp;
-	struct vnode *bdvp, *rvp;
-	int error;
+	int error, flags;
 
-#ifdef ADOSFS_DIAGNOSTIC
-	printf("adumount(%x, %x, %x)\n", mp, flags, p);
-#endif
-	amp = VFSTOADOSFS(mp);
-	bdvp = amp->devvp;
-
-	if (flags & MNT_FORCE) {
-		if (mp->mnt_flag & MNT_ROOTFS)
-			return(EINVAL);	/*XXX*/
-		if (doforce)
-			flags |= FORCECLOSE;
-		else
-			flags &= ~FORCECLOSE;
-	}
-
-	/*
-	 * clean out cached stuff 
-	 */
-	if (error = vflush(mp, rvp, flags))
+	flags = 0;
+	if (mntflags & MNT_FORCE)
+		flags |= FORCECLOSE;
+	if (error = vflush(mp, NULLVP, flags))
 		return (error);
-	/* 
-	 * release block device we are mounted on.
-	 */
-	bdvp->v_specflags &= ~SI_MOUNTEDON;
-	error = VOP_CLOSE(bdvp, FREAD, NOCRED, p);
+	amp = VFSTOADOSFS(mp);
+	amp->devvp->v_specflags &= ~SI_MOUNTEDON;
+	error = VOP_CLOSE(amp->devvp, FREAD, NOCRED, p);
 	vrele(amp->devvp);
 	free(amp, M_ADOSFSMNT);
-	mp->mnt_data = 0;
+	mp->mnt_data = (qaddr_t)0;
 	mp->mnt_flag &= ~MNT_LOCAL;
 	return (error);
 }
@@ -254,9 +245,7 @@ adosfs_statfs(mp, sbp, p)
 	struct proc *p;
 {
 	struct amount *amp;
-#ifdef ADOSFS_DIAGNOSTIC
-	printf("adstatfs(%x)\n", mp);
-#endif
+
 	amp = VFSTOADOSFS(mp);
 	sbp->f_type = 0;
 	sbp->f_bsize = amp->bsize;
@@ -267,14 +256,12 @@ adosfs_statfs(mp, sbp, p)
 	sbp->f_files = 0;		/* who knows */
 	sbp->f_ffree = 0;		/* " " */
 	if (sbp != &mp->mnt_stat) {
-		bcopy(&mp->mnt_stat.f_mntonname, sbp->f_mntonname, 
-		    sizeof(sbp->f_mntonname));
-		bcopy(&mp->mnt_stat.f_mntfromname, sbp->f_mntfromname, 
-		    sizeof(sbp->f_mntfromname));
+		bcopy(mp->mnt_stat.f_mntonname, sbp->f_mntonname, MNAMELEN);
+		bcopy(mp->mnt_stat.f_mntfromname, sbp->f_mntfromname, MNAMELEN);
 	}
 	strncpy(sbp->f_fstypename, mp->mnt_op->vfs_name, MFSNAMELEN);
 	sbp->f_fstypename[MFSNAMELEN] = 0;
-	return(0);
+	return (0);
 }
 
 /* 
