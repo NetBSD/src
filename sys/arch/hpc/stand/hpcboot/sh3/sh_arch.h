@@ -1,4 +1,4 @@
-/* -*-C++-*-	$NetBSD: sh_arch.h,v 1.3 2001/03/15 17:24:47 uch Exp $	*/
+/* -*-C++-*-	$NetBSD: sh_arch.h,v 1.4 2001/03/22 18:27:51 uch Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -68,6 +68,8 @@ protected:
 	void hd64461_dump(platid_t &);
 	void bsc_dump(void);
 	void pfc_dump(void);
+	void tmu_dump(void);
+	void tmu_channel_dump(int, paddr_t, paddr_t, paddr_t);
 	void icu_dump(void);
 	void icu_priority(void);
 	void icu_control(void);

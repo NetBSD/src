@@ -1,4 +1,4 @@
-/* -*-C++-*-	$NetBSD: sh3.h,v 1.3 2001/03/13 16:31:31 uch Exp $	*/
+/* -*-C++-*-	$NetBSD: sh3.h,v 1.4 2001/03/22 18:27:51 uch Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -219,6 +219,40 @@
 #define SH3_PLDR_REG8			0xa4000134
 #define SH3_SCPDR_REG8			0xa4000136
 
+/*
+ * TMU
+ */
+#define SH3_TOCR_REG8			0xfffffe90
+#define TOCR_TCOE		0x01
+#define SH3_TSTR_REG8			0xfffffe92
+#define TSTR_STR2		0x04
+#define TSTR_STR1		0x02
+#define TSTR_STR0		0x01
+#define SH3_TCOR0_REG			0xfffffe94
+#define SH3_TCNT0_REG			0xfffffe98
+#define SH3_TCR0_REG16			0xfffffe9c
+#define SH3_TCOR1_REG			0xfffffea0
+#define SH3_TCNT1_REG			0xfffffea4
+#define SH3_TCR1_REG16			0xfffffea8
+#define SH3_TCOR2_REG			0xfffffeac
+#define SH3_TCNT2_REG			0xfffffeb0
+#define SH3_TCR2_REG16			0xfffffeb4
+#define SH3_TCPR2_REG			0xfffffeb8
+#define TCR_ICPF	0x0200
+#define TCR_UNF		0x0100
+#define TCR_ICPE1	0x0080
+#define TCR_ICPE0	0x0040
+#define TCR_UNIE	0x0020
+#define TCR_CKEG1	0x0010
+#define TCR_CKEG0	0x0008
+#define TCR_TPSC2	0x0004
+#define TCR_TPSC1	0x0002
+#define TCR_TPSC0	0x0001
+
+#define TCR_TPSC_P4	0x0000
+#define TCR_TPSC_P16	0x0001
+#define TCR_TPSC_P64	0x0002
+#define TCR_TPSC_P256	0x0003
 
 /*   suspend/resume external Interrupt. 
  *  (don't block) use under privilege mode.
@@ -227,6 +261,43 @@ __BEGIN_DECLS
 u_int32_t suspendIntr(void);
 void resumeIntr(u_int32_t);
 __END_DECLS
+
+/*
+ * SCI
+ */
+#define SCI_SCRSR_REG8			/* can't access from CPU */
+#define SCI_SCTSR_REG8			/* can't access from CPU */
+#define SCI_SCSMR_REG8			0xfffffe80
+#define SCI_SCBRR_REG8			0xfffffe82
+#define SCI_SCSCR_REG8			0xfffffe84
+#define SCI_SCTDR_REG8			0xfffffe86
+#define SCI_SCSSR_REG8			0xfffffe88
+#define SCI_SCSSR_TDRE			0x80
+#define SCI_SCRDR_REG8			0xfffffe8a
+#define SCI_SCPCR_REG16			0xa4000116
+#define SCI_SCPDR_REG16			0xa4000136
+
+#define SCI_TX_BUSY()							\
+	while ((VOLATILE_REF8(SCI_SCSSR_REG8) & SCI_SCSSR_TDRE) == 0)
+
+#define SCI_PUTC(c)							\
+__BEGIN_MACRO								\
+	SCI_TX_BUSY();							\
+	VOLATILE_REF8(SCI_SCTDR_REG8) = (c);				\
+	VOLATILE_REF8(SCI_SCSSR_REG8) &= ~SCI_SCSSR_TDRE;		\
+__END_MACRO
+
+#define SCI_PRINT(s)							\
+__BEGIN_MACRO								\
+	char *__s =(char *)(s);						\
+	int __i;							\
+	for (__i = 0; __s[__i] != '\0'; __i++) {			\
+		char __c = __s[__i];					\
+		if (__c == '\n')					\
+			SCI_PUTC('\r');					\
+		SCI_PUTC(__c);						\
+	}								\
+__END_MACRO
 
 /* 
  * SCIF
@@ -247,13 +318,13 @@ __END_DECLS
 
 /* simple serial console macros. */
 #define SCIF_TX_BUSY()							\
-  while ((VOLATILE_REF16(SCIF_SCSSR2_REG16) & SCIF_SCSSR2_TDFE) == 0)
+	while ((VOLATILE_REF16(SCIF_SCSSR2_REG16) & SCIF_SCSSR2_TDFE) == 0)
 
 #define SCIF_PUTC(c)							\
 __BEGIN_MACRO								\
 	SCIF_TX_BUSY();							\
 	/*  wait until previous transmit done. */			\
-	VOLATILE_REF8(SCIF_SCFTDR2_REG8) =(c);				\
+	VOLATILE_REF8(SCIF_SCFTDR2_REG8) = (c);				\
 	/* Clear transmit FIFO empty flag */				\
 	VOLATILE_REF16(SCIF_SCSSR2_REG16) &=				\
 	~(SCIF_SCSSR2_TDFE | SCIF_SCSSR2_TEND);				\
