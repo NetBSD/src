@@ -1,15 +1,12 @@
-# $NetBSD: Makefile.inc,v 1.4 1997/07/15 08:42:21 leo Exp $
-MAN=
-INSTDIR=/usr/share/keymaps/atari
-BINDIR=${.CURDIR}
+# $NetBSD: Makefile.inc,v 1.5 2002/04/15 17:27:33 bjh21 Exp $
 
-all: ${PROG} ${MAP}
+realall: ${MAP}
 
-${MAP}: ${PROG}
+${MAP}: ${HOSTPROG}
+	./${HOSTPROG} > ${MAP}
 
-proginstall:
+CLEANFILES+=${MAP}
+FILES=${MAP}
+FILESDIR=/usr/share/keymaps/atari
 
-realinstall: ${MAP}
-	./${PROG} > ${DESTDIR}${INSTDIR}/${MAP}
-	chmod 444 ${DESTDIR}${INSTDIR}/${MAP}
-	chown ${BINOWN}.${BINGRP} ${DESTDIR}${INSTDIR}/${MAP}
+.include <bsd.files.mk>
