@@ -1,4 +1,4 @@
-/*	$NetBSD: ccd.c,v 1.38 1997/01/30 04:00:52 thorpej Exp $	*/
+/*	$NetBSD: ccd.c,v 1.39 1997/03/12 22:31:37 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -1060,7 +1060,7 @@ ccdioctl(dev, cmd, data, flag, p)
 {
 	int unit = ccdunit(dev);
 	int i, j, lookedup = 0, error = 0;
-	int part, pmask, s;
+	int part, pmask;
 	struct ccd_softc *cs;
 	struct ccd_ioctl *ccio = (struct ccd_ioctl *)data;
 	struct ccddevice ccd;
@@ -1241,11 +1241,7 @@ ccdioctl(dev, cmd, data, flag, p)
 		/* Detatch the disk. */
 		disk_detach(&cs->sc_dkdev);
 
-		/* This must be atomic. */
-		s = splhigh();
 		ccdunlock(cs);
-		bzero(cs, sizeof(struct ccd_softc));
-		splx(s);
 
 		break;
 
