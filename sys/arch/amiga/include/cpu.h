@@ -68,10 +68,13 @@
  * encapsulate the previous machine state in an opaque
  * clockframe; for hp300, use just what the hardware
  * leaves on the stack.
+ *
+ * which is now in this format.  note if m68k/frame.h
+ * changes this may need too also.
  */
 typedef struct intrframe {
-	int	pc;
 	int	ps;
+	int	pc;
 } clockframe;
 
 #define	CLKF_USERMODE(framep)	(((framep)->ps & PSL_S) == 0)
