@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)wd.c	7.2 (Berkeley) 5/9/91
- *	$Id: wd.c,v 1.17 1993/06/18 20:45:35 cgd Exp $
+ *	$Id: wd.c,v 1.18 1993/07/05 00:08:27 deraadt Exp $
  */
 
 /* Note: This code heavily modified by tih@barsoom.nhh.no; use at own risk! */
@@ -1033,7 +1033,7 @@ badopen:
 static int
 wdcommand(struct disk *du, int cmd)
 {
-	int timeout = 1000000, stat, wdc;
+	int timeout = 10000000, stat, wdc;
     
 	DELAY(2000);
 	/* controller ready for command? */
