@@ -1,4 +1,4 @@
-.\"	$NetBSD: ipf.4,v 1.2 2001/01/25 11:16:16 itojun Exp $
+.\"	$NetBSD: ipf.4,v 1.3 2001/01/25 11:59:27 simonb Exp $
 .\"
 .TH IPF 4
 .SH NAME
@@ -263,8 +263,8 @@ wire-format packet on inbound and outbound.
 ipf(4) will not look at decapsulated packets on inbound,
 nor packets prior to encapsulation on outbound.
 .PP
-When tunneled packets arrive the node and are handled by
+When tunneled packets arrive at the node and are handled by a
 tunnelling pseudo interface like gif(4) or ipip(4),
 the packets may go through ipf(4) twice, before and after decapsulation.
-In some cases, it may be necessary to check, in the ipf(4) rules,
+In some cases it may be necessary to check, in the ipf(4) rules,
 if the inbound interface is a tunnelling pseudo interface or not.
