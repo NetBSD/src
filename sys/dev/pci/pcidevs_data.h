@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.61 1998/04/16 19:48:15 drochner Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.62 1998/04/30 06:18:46 mycroft Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.56 1998/04/16 19:46:03 drochner Exp 
+ *	NetBSD: pcidevs,v 1.57 1998/04/30 06:18:11 mycroft Exp 
  */
 
 /*
@@ -266,6 +266,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Advanced Micro Devices",
 	    "79C974 PCnet-PCI Ethernet & SCSI",
+	},
+	{
+	    PCI_VENDOR_APPLE, PCI_PRODUCT_APPLE_BANDIT,
+	    0,
+	    "Apple Computer",
+	    "PCI Controller",
 	},
 	{
 	    PCI_VENDOR_ARC, PCI_PRODUCT_ARC_1000PV,
