@@ -12,7 +12,7 @@
  * on the understanding that TFS is not responsible for the correct
  * functioning of this software in any circumstances.
  *
- *	$Id: aha1542.c,v 1.21 1994/03/12 03:34:02 mycroft Exp $
+ *	$Id: aha1542.c,v 1.22 1994/03/12 04:10:03 mycroft Exp $
  */
 
 /*
@@ -483,11 +483,12 @@ ahaattach(struct isa_device *dev)
 	static int firsttime;
 	static int firstswitch[NAHA];
 	static u_long speedprint;	/* max 32 aha controllers */
-	int masunit = dev->id_parent->id_unit;
+	int masunit;
 	int r;
 
 	if (!dev->id_parent)
 		return 1;
+	masunit = dev->id_parent->id_unit;
 
 	if (!firstswitch[masunit]) {
 		firstswitch[masunit] = 1;

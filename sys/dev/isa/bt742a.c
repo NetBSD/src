@@ -12,7 +12,7 @@
  * on the understanding that TFS is not responsible for the correct
  * functioning of this software in any circumstances.
  *
- *	$Id: bt742a.c,v 1.18 1994/03/12 03:34:06 mycroft Exp $
+ *	$Id: bt742a.c,v 1.19 1994/03/12 04:10:18 mycroft Exp $
  */
 
 /*
@@ -495,11 +495,12 @@ btattach(dev)
 {
 	static int firsttime;
 	static int firstswitch[NBT];
-	int     masunit = dev->id_parent->id_unit;
+	int     masunit;
 	int     r;
 
 	if (!dev->id_parent)
 		return 1;
+	masunit = dev->id_parent->id_unit;
 
 	if (!firstswitch[masunit]) {
 		firstswitch[masunit] = 1;
