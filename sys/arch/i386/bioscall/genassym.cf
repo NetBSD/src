@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.1 1998/08/31 23:53:30 jtk Exp $
+#	$NetBSD: genassym.cf,v 1.2 2001/05/02 13:12:45 jdolecek Exp $
 
 #
 # Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -99,3 +99,4 @@ define	BIOSCALLREG_EDX		offsetof(struct bioscallregs, EDX)
 define	BIOSCALLREG_ESI		offsetof(struct bioscallregs, ESI)
 define	BIOSCALLREG_EDI		offsetof(struct bioscallregs, EDI)
 define	BIOSCALLREG_EFLAGS	offsetof(struct bioscallregs, EFLAGS)
+define	BIOSCALLREG_ES		offsetof(struct bioscallregs, ES)
