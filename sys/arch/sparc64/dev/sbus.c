@@ -1,4 +1,4 @@
-/*	$NetBSD: sbus.c,v 1.36 2000/10/19 12:25:04 mrg Exp $ */
+/*	$NetBSD: sbus.c,v 1.37 2000/11/01 06:19:59 eeh Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -366,6 +366,7 @@ sbus_setup_attach_args(sc, bustag, dmatag, node, sa)
 	sa->sa_bustag = bustag;
 	sa->sa_dmatag = dmatag;
 	sa->sa_node = node;
+	sa->sa_frequency = sc->sc_clockfreq;
 
 	error = getprop(node, "reg", sizeof(struct sbus_reg),
 			 &sa->sa_nreg, (void **)&sa->sa_reg);
@@ -461,7 +462,7 @@ sbus_bus_mmap(t, btype, paddr, flags, hp)
 	bus_space_handle_t *hp;
 {
 	bus_addr_t offset = paddr;
-	int slot = (paddr>>32);
+	int slot = btype;
 	struct sbus_softc *sc = t->cookie;
 	int i;
 
