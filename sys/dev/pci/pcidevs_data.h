@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.685 2005/01/18 06:24:18 tsubai Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.686 2005/01/23 03:07:05 fredb Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.686 2005/01/18 06:23:01 tsubai Exp 
+ *	NetBSD: pcidevs,v 1.687 2005/01/23 03:06:07 fredb Exp 
  */
 
 /*
@@ -5056,6 +5056,10 @@ const struct pci_product pci_products[] = {
 	    "GT-64120 System Controller",
 	},
 	{
+	    PCI_VENDOR_GALILEO, PCI_PRODUCT_GALILEO_BELKIN,
+	    "Belkin Gigabit Ethernet",
+	},
+	{
 	    PCI_VENDOR_GALILEO, PCI_PRODUCT_GALILEO_GT64130,
 	    "GT-64130 System Controller",
 	},
@@ -9992,4 +9996,4 @@ const struct pci_product pci_products[] = {
 	    "Video Controller",
 	},
 };
-const int pci_nproducts = 1919;
+const int pci_nproducts = 1920;
