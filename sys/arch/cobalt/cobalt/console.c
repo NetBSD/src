@@ -1,4 +1,4 @@
-/*	$NetBSD: console.c,v 1.3 2003/06/14 17:01:09 thorpej Exp $	*/
+/*	$NetBSD: console.c,v 1.4 2003/07/15 01:29:22 lukem Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang.  All rights reserved.
@@ -25,6 +25,8 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: console.c,v 1.4 2003/07/15 01:29:22 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/user.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: grfabs_et.c,v 1.21 2003/02/02 18:12:25 thomas Exp $	*/
+/*	$NetBSD: grfabs_et.c,v 1.22 2003/07/15 01:19:49 lukem Exp $	*/
 
 /*
  * Copyright (c) 1996 Leo Weppelman.
@@ -44,6 +44,10 @@
  * Thanks guys!
  *
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: grfabs_et.c,v 1.22 2003/07/15 01:19:49 lukem Exp $");
+
 #include <sys/param.h>
 #include <sys/queue.h>
 #include <sys/malloc.h>

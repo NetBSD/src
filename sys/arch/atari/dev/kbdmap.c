@@ -1,4 +1,4 @@
-/*	$NetBSD: kbdmap.c,v 1.3 1996/05/15 07:29:07 leo Exp $	*/
+/*	$NetBSD: kbdmap.c,v 1.4 2003/07/15 01:19:51 lukem Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -29,6 +29,9 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: kbdmap.c,v 1.4 2003/07/15 01:19:51 lukem Exp $");
 
 #include <atari/dev/kbdmap.h>
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: le_bus.c,v 1.6 2002/05/30 22:25:51 thorpej Exp $	*/
+/*	$NetBSD: le_bus.c,v 1.7 2003/07/15 01:19:44 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -35,6 +35,10 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: le_bus.c,v 1.7 2003/07/15 01:19:44 lukem Exp $");
+
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/systm.h>

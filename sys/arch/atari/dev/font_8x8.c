@@ -1,4 +1,4 @@
-/*	$NetBSD: font_8x8.c,v 1.2 1995/09/23 20:25:36 leo Exp $	*/
+/*	$NetBSD: font_8x8.c,v 1.3 2003/07/15 01:19:49 lukem Exp $	*/
 
 /*
  *  Copyright (c) 1992, 1993, 1994 Hellmuth Michaelis and Joerg Wunsch
@@ -39,6 +39,10 @@
  * Reorganized and edited some chars to fit the iso-8859-1 fontset
  * by Thomas Gerner
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: font_8x8.c,v 1.3 2003/07/15 01:19:49 lukem Exp $");
+
 #include <atari/dev/font.h>
 
 char fontname_8x8[64] = "vt220iso.808";
