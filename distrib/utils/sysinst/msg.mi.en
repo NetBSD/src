@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.en,v 1.62.2.11 2000/11/15 20:09:53 tv Exp $	*/
+/*	$NetBSD: msg.mi.en,v 1.62.2.12 2000/12/26 06:36:07 jhawk Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -457,7 +457,7 @@ message badlocalsetdir
 {%s is not a directory}
 
 message badsetdir
-{%s does not contain the mandatory installation sets
+{%s does not contain the mandatory installation sets etc.tgz, 
 base.tgz and kern.tgz.  Are you sure you've got the right directory?}
 
 message nonet
