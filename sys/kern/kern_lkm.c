@@ -36,7 +36,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: kern_lkm.c,v 1.9 1994/01/09 16:47:40 ws Exp $
+ *	$Id: kern_lkm.c,v 1.10 1994/01/09 18:46:17 ws Exp $
  */
 
 #include <sys/param.h>
@@ -257,7 +257,7 @@ int		flag;
 			printf( "LKM: LMLOADBUF (loaded)\n");
 #endif	/* DEBUG*/
 		}
-		curp->offset += i
+		curp->offset += i;
 		break;
 
 	case LMUNRESRV:		/* discard reserved pages for a module*/
