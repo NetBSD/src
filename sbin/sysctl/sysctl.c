@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.c,v 1.32 2000/05/27 15:05:14 simonb Exp $	*/
+/*	$NetBSD: sysctl.c,v 1.33 2000/05/27 15:11:05 simonb Exp $	*/
 
 /*
  * Copyright (c) 1993
@@ -44,7 +44,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)sysctl.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: sysctl.c,v 1.32 2000/05/27 15:05:14 simonb Exp $");
+__RCSID("$NetBSD: sysctl.c,v 1.33 2000/05/27 15:11:05 simonb Exp $");
 #endif
 #endif /* not lint */
 
@@ -346,12 +346,12 @@ parse(string, flags)
 				if (flags == 0)
 					return;
 				if (!nflag)
-					fprintf(stdout, "%s: ", string);
+					printf("%s: ", string);
 				warnx("Kernel is not compiled for profiling");
 				return;
 			}
 			if (!nflag)
-				fprintf(stdout, "%s: %s\n", string,
+				printf("%s: %s\n", string,
 				    state == GMON_PROF_OFF ? "off" : "running");
 			return;
 		case KERN_VNODE:
@@ -398,9 +398,9 @@ parse(string, flags)
 
 			getloadavg(loads, 3);
 			if (!nflag)
-				fprintf(stdout, "%s: ", string);
-			fprintf(stdout, "%.2f %.2f %.2f\n", 
-			    loads[0], loads[1], loads[2]);
+				printf("%s: ", string);
+			printf("%.2f %.2f %.2f\n", loads[0], loads[1],
+			    loads[2]);
 			return;
 		}
 		if (mib[1] == VM_NKMEMPAGES) {
@@ -415,8 +415,8 @@ parse(string, flags)
 				return;
 			}
 			if (!nflag)
-				fprintf(stdout, "%s: ", string);
-			fprintf(stdout, "%d\n", nkmempages);
+				printf("%s: ", string);
+			printf("%d\n", nkmempages);
 		}
 		if (flags == 0)
 			return;
@@ -549,8 +549,8 @@ parse(string, flags)
 		struct clockinfo *clkp = (struct clockinfo *)buf;
 
 		if (!nflag)
-			fprintf(stdout, "%s: ", string);
-		fprintf(stdout,
+			printf("%s: ", string);
+		printf(
 		    "tick = %d, tickadj = %d, hz = %d, profhz = %d, stathz = %d\n",
 		    clkp->tick, clkp->tickadj, clkp->hz, clkp->profhz, clkp->stathz);
 		return;
@@ -562,19 +562,18 @@ parse(string, flags)
 		if (!nflag) {
 			boottime = btp->tv_sec;
 			/* ctime() provides the trailing newline */
-			fprintf(stdout, "%s = %s", string, ctime(&boottime));
+			printf("%s = %s", string, ctime(&boottime));
 		} else
-			fprintf(stdout, "%ld\n", (long) btp->tv_sec);
+			printf("%ld\n", (long) btp->tv_sec);
 		return;
 	}
 	if (special & CONSDEV) {
 		dev_t dev = *(dev_t *)buf;
 
 		if (!nflag)
-			fprintf(stdout, "%s = %s\n", string,
-			    devname(dev, S_IFCHR));
+			printf("%s = %s\n", string, devname(dev, S_IFCHR));
 		else
-			fprintf(stdout, "0x%x\n", dev);
+			printf("0x%x\n", dev);
 		return;
 	}
 	if (special & DISKINFO) {
@@ -585,8 +584,8 @@ parse(string, flags)
 		long *cp_time = (long *)buf;
 
 		if (!nflag)
-			fprintf(stdout, "%s: ", string);
-		fprintf(stdout,
+			printf("%s: ", string);
+		printf(
 		    "user = %ld, nice = %ld, sys = %ld, intr = %ld, idle = %ld\n",
 		    cp_time[0], cp_time[1], cp_time[2], cp_time[3], cp_time[4]);
 		return;
@@ -596,63 +595,61 @@ parse(string, flags)
 	case CTLTYPE_INT:
 		if (newsize == 0) {
 			if (!nflag)
-				fprintf(stdout, "%s = ", string);
-			fprintf(stdout, "%d\n", *(int *)buf);
+				printf("%s = ", string);
+			printf("%d\n", *(int *)buf);
 		} else {
 			if (!nflag)
-				fprintf(stdout, "%s: %d -> ", string,
-				    *(int *)buf);
-			fprintf(stdout, "%d\n", *(int *)newval);
+				printf("%s: %d -> ", string, *(int *)buf);
+			printf("%d\n", *(int *)newval);
 		}
 		return;
 
 	case CTLTYPE_STRING:
 		if (newsize == 0) {
 			if (!nflag)
-				fprintf(stdout, "%s = ", string);
-			fprintf(stdout, "%s\n", buf);
+				printf("%s = ", string);
+			printf("%s\n", buf);
 		} else {
 			if (!nflag)
-				fprintf(stdout, "%s: %s -> ", string, buf);
-			fprintf(stdout, "%s\n", (char *) newval);
+				printf("%s: %s -> ", string, buf);
+			printf("%s\n", (char *) newval);
 		}
 		return;
 
 	case CTLTYPE_LIMIT:
 #define PRINTF_LIMIT(lim) { \
 if ((lim) == RLIM_INFINITY) \
-	fprintf(stdout, "unlimited");\
+	printf("unlimited");\
 else \
-	fprintf(stdout, "%qd", (lim)); \
+	printf("%qd", (lim)); \
 }
 
 		if (newsize == 0) {
 			if (!nflag)
-				fprintf(stdout, "%s = ", string);
+				printf("%s = ", string);
 			PRINTF_LIMIT((long long)(*(quad_t *)buf));
 		} else {
 			if (!nflag) {
-				fprintf(stdout, "%s: ", string);
+				printf("%s: ", string);
 				PRINTF_LIMIT((long long)(*(quad_t *)buf));
-				fprintf(stdout, " -> ");
+				printf(" -> ");
 			}
 			PRINTF_LIMIT((long long)(*(quad_t *)newval));
 		}
-		fprintf(stdout, "\n");
+		printf("\n");
 		return;
 #undef PRINTF_LIMIT
 
 	case CTLTYPE_QUAD:
 		if (newsize == 0) {
 			if (!nflag)
-				fprintf(stdout, "%s = ", string);
-			fprintf(stdout, "%qd\n", (long long)(*(quad_t *)buf));
+				printf("%s = ", string);
+			printf("%qd\n", (long long)(*(quad_t *)buf));
 		} else {
 			if (!nflag)
-				fprintf(stdout, "%s: %qd -> ", string,
+				printf("%s: %qd -> ", string,
 				    (long long)(*(quad_t *)buf));
-			fprintf(stdout, "%qd\n",
-			    (long long)(*(quad_t *)newval));
+			printf("%qd\n", (long long)(*(quad_t *)newval));
 		}
 		return;
 
