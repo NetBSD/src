@@ -1,3 +1,5 @@
+/*	$NetBSD: syslogd.c,v 1.32 1999/12/07 11:30:28 ad Exp $	*/
+
 /*
  * Copyright (c) 1983, 1988, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -41,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1988, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)syslogd.c	8.3 (Berkeley) 4/4/94";
 #else
-__RCSID("$NetBSD: syslogd.c,v 1.31 1999/12/06 01:26:26 itojun Exp $");
+__RCSID("$NetBSD: syslogd.c,v 1.32 1999/12/07 11:30:28 ad Exp $");
 #endif
 #endif /* not lint */
 
