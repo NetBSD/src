@@ -36,7 +36,9 @@
 #endif
 #include "roken.h"
 
-RCSID("$Id: strlcpy.c,v 1.2 2000/08/02 02:44:06 garbled Exp $");
+RCSID("$Id: strlcpy.c,v 1.3 2001/04/07 21:29:25 thorpej Exp $");
+
+#ifndef HAVE_STRLCPY
 
 size_t
 strlcpy (char *dst, const char *src, size_t dst_sz)
@@ -54,3 +56,5 @@ strlcpy (char *dst, const char *src, size_t dst_sz)
     else
 	return n + strlen (src);
 }
+
+#endif

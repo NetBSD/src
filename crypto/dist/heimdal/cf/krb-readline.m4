@@ -1,4 +1,4 @@
-dnl $Id: krb-readline.m4,v 1.1.1.2 2001/02/11 13:51:51 assar Exp $
+dnl $Id: krb-readline.m4,v 1.2 2001/04/07 21:29:22 thorpej Exp $
 dnl
 dnl Tests for readline functions
 dnl

@@ -1,5 +1,5 @@
 dnl
-dnl $Id: aix.m4,v 1.1.1.2 2001/02/11 13:51:51 assar Exp $
+dnl $Id: aix.m4,v 1.2 2001/04/07 21:29:21 thorpej Exp $
 dnl
 
 AC_DEFUN(KRB_AIX,[

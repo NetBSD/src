@@ -33,7 +33,7 @@
 
 #include "kpasswd_locl.h"
 
-RCSID("$Id: kpasswd-generator.c,v 1.1.1.2 2001/02/11 13:51:34 assar Exp $");
+RCSID("$Id: kpasswd-generator.c,v 1.2 2001/04/07 21:29:23 thorpej Exp $");
 
 static unsigned
 read_words (const char *filename, char ***ret_w)
