@@ -1,3 +1,3 @@
-/*	$NetBSD: endian_machdep.h,v 1.1 2001/02/23 03:48:15 ichiro Exp $	*/
+/*	$NetBSD: endian_machdep.h,v 1.2 2001/02/23 21:23:52 reinoud Exp $	*/
 
-#define _BYTE_ORDER _LITTLE_ENDIAN
+#include <arm/endian_machdep.h>
