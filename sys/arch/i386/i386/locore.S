@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.30 2004/08/22 06:46:34 junyoung Exp $	*/
+/*	$NetBSD: locore.S,v 1.31 2004/08/26 10:12:33 junyoung Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -153,26 +153,8 @@
 #include <machine/i82489reg.h>
 #endif
 
-/*
- * PTmap is recursive pagemap at top of virtual address space.
- * Within PTmap, the page directory can be found (third indirection).
- *
- * XXX 4 == sizeof pde
- */
-	.set	_C_LABEL(PTmap),(PDSLOT_PTE << PDSHIFT)
-	.set	_C_LABEL(PTD),(_C_LABEL(PTmap) + PDSLOT_PTE * PAGE_SIZE)
-	.set	_C_LABEL(PTDpde),(_C_LABEL(PTD) + PDSLOT_PTE * 4)
-
-/*
- * APTmap, APTD is the alternate recursive pagemap.
- * It's used when modifying another process's page tables.
- *
- * XXX 4 == sizeof pde
- */
-	.set	_C_LABEL(APTmap),(PDSLOT_APTE << PDSHIFT)
-	.set	_C_LABEL(APTD),(_C_LABEL(APTmap) + PDSLOT_APTE * PAGE_SIZE)
-	.set	_C_LABEL(APTDpde),(_C_LABEL(PTD) + PDSLOT_APTE * 4)
-
+/* This shouldn't conflict with a macro of the same name defined in pmap.h */
+#define PTE_BASE	(PDSLOT_PTE << PDSHIFT)
 
 /*
  * Initialization
@@ -185,7 +167,7 @@
 #ifdef COMPAT_OLDBOOT
 	.globl	_C_LABEL(bootdev)
 #endif
-	.globl	_C_LABEL(proc0paddr),_C_LABEL(PTDpaddr)
+	.globl	_C_LABEL(proc0paddr),_C_LABEL(PDPpaddr)
 	.globl	_C_LABEL(biosbasemem),_C_LABEL(biosextmem)
 	.globl	_C_LABEL(gdt)
 #ifdef I586_CPU
@@ -222,7 +204,7 @@ _C_LABEL(cpu):		.long	0	# are we 386, 386sx, or 486,
 _C_LABEL(esym):		.long	0	# ptr to end of syms
 _C_LABEL(atdevbase):	.long	0	# location of start of iomem in virtual
 _C_LABEL(proc0paddr):	.long	0
-_C_LABEL(PTDpaddr):	.long	0	# paddr of PTD, for libkvm
+_C_LABEL(PDPpaddr):	.long	0	# paddr of PDP, for libkvm
 #ifndef REALBASEMEM
 _C_LABEL(biosbasemem):	.long	0	# base memory reported by BIOS
 #else
@@ -620,8 +602,8 @@ try586:	/* Use the `cpuid' instruction. */
 	leal	(PROC0PDIR+PG_V|PG_KW)(%esi),%eax	# pte for ptd
 	movl	%eax,(PROC0PDIR+PDSLOT_PTE*4)(%esi)	# recursive PD slot
 
-	/* Save phys. addr of PTD, for libkvm. */
-	movl	%esi,RELOC(PTDpaddr)
+	/* Save phys. addr of PDP, for libkvm. */
+	movl	%esi,RELOC(PDPpaddr)
 
 	/* Load base of page directory and enable mapping. */
 	movl	%esi,%eax		# phys address of ptd in proc 0
@@ -922,7 +904,7 @@ ENTRY(i386_copyout)
 	movl	$2f,PCB_ONFAULT(%edx)
 
 1:	/* Check PTE for each page. */
-	testb	$PG_RW,_C_LABEL(PTmap)(,%edi,4)
+	testb	$PG_RW,PTE_BASE(,%edi,4)
 	jz	2f
 
 4:	incl	%edi
@@ -1132,7 +1114,7 @@ ENTRY(copyoutstr)
 	movl	%edi,%eax
 	shrl	$PGSHIFT,%eax		# calculate pte address
 
-	testb	$PG_RW,_C_LABEL(PTmap)(,%eax,4)
+	testb	$PG_RW,PTE_BASE(,%eax,4)
 	jnz	2f
 
 6:	/* Simulate a trap. */
@@ -1448,7 +1430,7 @@ ENTRY(suword)
 
 	movl	%edx,%eax
 	shrl	$PGSHIFT,%eax		# calculate pte address
-	testb	$PG_RW,_C_LABEL(PTmap)(,%eax,4)
+	testb	$PG_RW,PTE_BASE(,%eax,4)
 	jnz	1f
 
 3:	/* Simulate a trap. */
@@ -1496,7 +1478,7 @@ ENTRY(susword)
 
 	movl	%edx,%eax
 	shrl	$PGSHIFT,%eax		# calculate pte address
-	testb	$PG_RW,_C_LABEL(PTmap)(,%eax,4)
+	testb	$PG_RW,PTE_BASE(,%eax,4)
 	jnz	1f
 
 3:	/* Simulate a trap. */
@@ -1546,7 +1528,7 @@ ENTRY(suswintr)
 
 	movl	%edx,%eax
 	shrl	$PGSHIFT,%eax		# calculate pte address
-	testb	$PG_RW,_C_LABEL(PTmap)(,%eax,4)
+	testb	$PG_RW,PTE_BASE(,%eax,4)
 	jnz	1f
 
 	/* Simulate a trap. */
@@ -1584,7 +1566,7 @@ ENTRY(subyte)
 
 	movl	%edx,%eax
 	shrl	$PGSHIFT,%eax		# calculate pte address
-	testb	$PG_RW,_C_LABEL(PTmap)(,%eax,4)
+	testb	$PG_RW,PTE_BASE(,%eax,4)
 	jnz	1f
 
 3:	/* Simulate a trap. */

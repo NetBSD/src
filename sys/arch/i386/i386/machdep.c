@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.557 2004/08/05 18:04:35 dbj Exp $	*/
+/*	$NetBSD: machdep.c,v 1.558 2004/08/26 10:12:33 junyoung Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.557 2004/08/05 18:04:35 dbj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.558 2004/08/26 10:12:33 junyoung Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_ibcs2.h"
@@ -888,7 +888,7 @@ cpu_dump()
 	/*
 	 * Add the machine-dependent header info.
 	 */
-	cpuhdrp->ptdpaddr = PTDpaddr;
+	cpuhdrp->pdppaddr = PDPpaddr;
 	cpuhdrp->nmemsegs = mem_cluster_cnt;
 
 	/*

@@ -1,4 +1,4 @@
-/* $NetBSD: kvm86call.S,v 1.3 2003/08/11 16:56:46 drochner Exp $ */
+/* $NetBSD: kvm86call.S,v 1.4 2004/08/26 10:12:33 junyoung Exp $ */
 
 /*-
  * Copyright (c) 1998 Jonathan Lemon
@@ -35,7 +35,7 @@
 
 #include "assym.h"
 
-__KERNEL_RCSID(0, "$NetBSD: kvm86call.S,v 1.3 2003/08/11 16:56:46 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kvm86call.S,v 1.4 2004/08/26 10:12:33 junyoung Exp $");
 
 	.data
 	.align 4
@@ -106,9 +106,9 @@ ENTRY(kvm86_call)
 
 	movl	%cr3,%eax
 	pushl	%eax			/* save address space */
-	movl	PTDpaddr,%ecx
+	movl	PDPpaddr,%ecx
 	movl	%ecx,%ebx
-	addl	$KERNBASE_LOCORE,%ebx	/* va of Idle PTD */
+	addl	$KERNBASE_LOCORE,%ebx	/* va of Idle PDP */
 	movl	0(%ebx),%eax
 	pushl	%eax			/* old pde */
 	pushl	%ebx			/* keep address for reuse */
@@ -116,7 +116,7 @@ ENTRY(kvm86_call)
 	movl	%esp,SCRSTACK		/* save current stack location */
 
 	movl	vm86newptd,%eax		/* mapping for vm86 page table */
-	movl	%eax,0(%ebx)		/* ... install as PTD entry 0 */
+	movl	%eax,0(%ebx)		/* ... install as PDP entry 0 */
 
 	movl	%ecx,%cr3		/* new page tables */
 	movl	vm86frame,%esp		/* switch to new stack */
@@ -152,7 +152,7 @@ ENTRY(kvm86_ret)
 	movsl				/* copy frame to original frame */
 
 	movl	SCRSTACK,%esp		/* back to old stack */
-	popl	%ebx			/* saved va of Idle PTD */
+	popl	%ebx			/* saved va of Idle PDP */
 	popl	%eax
 	movl	%eax,0(%ebx)		/* restore old pde */
 	popl	%eax
