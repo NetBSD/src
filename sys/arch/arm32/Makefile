@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 1997/05/07 17:28:52 mycroft Exp $
+#	$NetBSD: Makefile,v 1.3 1997/07/16 02:46:37 mark Exp $
 #	@(#)Makefile	7.3 (Berkeley) 6/9/91
 
 # Makefile for arm32 tags file and boot blocks
@@ -6,7 +6,7 @@
 NOPROG=	noprog
 NOMAN=	noman
 
-SUBDIR=
+#SUBDIR=
 
 TARM32=	../arm32/tags
 SARM32=	../arm32/arm32/*.[ch] ../arm32/include/*.h ../arm32/dev/*.[ch] \
