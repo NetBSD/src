@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ep_pcmcia.c,v 1.42 2004/07/07 18:57:00 mycroft Exp $	*/
+/*	$NetBSD: if_ep_pcmcia.c,v 1.43 2004/08/08 23:17:13 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ep_pcmcia.c,v 1.42 2004/07/07 18:57:00 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ep_pcmcia.c,v 1.43 2004/08/08 23:17:13 mycroft Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -329,8 +329,8 @@ ep_pcmcia_attach(parent, self, aux)
 	sc->sc_ioh = psc->sc_pcioh.ioh;
 
 	if (pcmcia_io_map(pa->pf, ((cfe->flags & PCMCIA_CFE_IO16) ?
-	    PCMCIA_WIDTH_IO16 : PCMCIA_WIDTH_IO8), 0, cfe->iospace[0].length,
-	    &psc->sc_pcioh, &psc->sc_io_window)) {
+	    PCMCIA_WIDTH_IO16 : PCMCIA_WIDTH_IO8), &psc->sc_pcioh,
+	    &psc->sc_io_window)) {
 		aprint_error("%s: can't map i/o space\n", self->dv_xname);
 		goto iomap_failed;
 	}

@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isic_pcmcia_elsa_isdnmc.c,v 1.6 2003/12/04 13:57:31 keihan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isic_pcmcia_elsa_isdnmc.c,v 1.7 2004/08/08 23:17:13 mycroft Exp $");
 
 #include "opt_isicpcmcia.h"
 #ifdef ISICPCMCIA_ELSA_ISDNMC
@@ -275,8 +275,8 @@ isic_attach_elsaisdnmc(struct pcmcia_isic_softc *psc, struct pcmcia_config_entry
 
 	/* map them */
 	if (pcmcia_io_map(pa->pf, ((cfe->flags & PCMCIA_CFE_IO16) ?
-	    PCMCIA_WIDTH_IO16 : PCMCIA_WIDTH_IO8), 0,
-	    cfe->iospace[0].length, &psc->sc_pcioh, &psc->sc_io_window)) {
+	    PCMCIA_WIDTH_IO16 : PCMCIA_WIDTH_IO8), &psc->sc_pcioh,
+	    &psc->sc_io_window)) {
 		printf(": can't map i/o space\n");
 		return 0;
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cnw.c,v 1.25 2003/11/10 08:55:41 wiz Exp $	*/
+/*	$NetBSD: if_cnw.c,v 1.26 2004/08/08 23:17:12 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -112,7 +112,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_cnw.c,v 1.25 2003/11/10 08:55:41 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_cnw.c,v 1.26 2004/08/08 23:17:12 mycroft Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -528,8 +528,8 @@ cnw_attach(parent, self, aux)
 		printf(": can't allocate i/o space\n");
 		goto fail;
 	}
-	if (pcmcia_io_map(sc->sc_pf, PCMCIA_WIDTH_IO16, 0,
-	    CNW_IO_SIZE, &sc->sc_pcioh, &sc->sc_iowin) != 0) {
+	if (pcmcia_io_map(sc->sc_pf, PCMCIA_WIDTH_IO16, &sc->sc_pcioh,
+	    &sc->sc_iowin) != 0) {
 		printf(": can't map i/o space\n");
 		pcmcia_io_free(sc->sc_pf, &sc->sc_pcioh);
 		goto fail;

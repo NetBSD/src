@@ -1,4 +1,4 @@
-/*	$NetBSD: aic_pcmcia.c,v 1.22 2002/10/02 16:52:04 thorpej Exp $	*/
+/*	$NetBSD: aic_pcmcia.c,v 1.23 2004/08/08 23:17:12 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1997 Marc Horowitz.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aic_pcmcia.c,v 1.22 2002/10/02 16:52:04 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aic_pcmcia.c,v 1.23 2004/08/08 23:17:12 mycroft Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -148,8 +148,8 @@ aic_pcmcia_attach(parent, self, aux)
 	}
 
 	/* Map in the io space */
-	if (pcmcia_io_map(pa->pf, PCMCIA_WIDTH_AUTO, 0, psc->sc_pcioh.size,
-	    &psc->sc_pcioh, &psc->sc_io_window)) {
+	if (pcmcia_io_map(pa->pf, PCMCIA_WIDTH_AUTO, &psc->sc_pcioh,
+	    &psc->sc_io_window)) {
 		printf(": can't map i/o space\n");
 		goto iomap_failed;
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: esl_pcmcia.c,v 1.8 2002/10/02 16:52:06 thorpej Exp $	*/
+/*	$NetBSD: esl_pcmcia.c,v 1.9 2004/08/08 23:17:12 mycroft Exp $	*/
 
 /*
  * Copyright (c) 2000 Jared D. McNeill <jmcneill@invisible.yi.org>
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esl_pcmcia.c,v 1.8 2002/10/02 16:52:06 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esl_pcmcia.c,v 1.9 2004/08/08 23:17:12 mycroft Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -144,8 +144,8 @@ esl_pcmcia_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	/* Map in the I/O space */
-	if (pcmcia_io_map(pa->pf, PCMCIA_WIDTH_AUTO, 0, esc->sc_pcioh.size,
-	    &esc->sc_pcioh, &esc->sc_io_window)) {
+	if (pcmcia_io_map(pa->pf, PCMCIA_WIDTH_AUTO, &esc->sc_pcioh,
+	    &esc->sc_io_window)) {
 		printf(": can't map i/o space\n");
 		goto iomap_failed;
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: pcmciavar.h,v 1.20 2004/08/08 05:33:04 mycroft Exp $	*/
+/*	$NetBSD: pcmciavar.h,v 1.21 2004/08/08 23:17:13 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1997 Marc Horowitz.  All rights reserved.
@@ -139,8 +139,9 @@ struct pcmcia_function {
 #define	pf_ccr_realsize	pf_pcmh.realsize
 	bus_size_t	pf_ccr_offset;
 	int		pf_ccr_window;
-	long		pf_mfc_iobase;
-	long		pf_mfc_iomax;
+	bus_addr_t	pf_mfc_iobase[2];
+	bus_size_t	pf_mfc_iomask;
+	int		pf_mfc_windows;
 	int		(*ih_fct) __P((void *));
 	void		*ih_arg;
 	int		ih_ipl;
@@ -296,8 +297,8 @@ void	pcmcia_function_disable __P((struct pcmcia_function *));
 #define	pcmcia_io_free(pf, pciohp)					\
 	(pcmcia_chip_io_free((pf)->sc->pct, (pf)->sc->pch, (pciohp)))
 
-int	pcmcia_io_map __P((struct pcmcia_function *, int, bus_addr_t,
-	    bus_size_t, struct pcmcia_io_handle *, int *));
+int	pcmcia_io_map __P((struct pcmcia_function *, int,
+	    struct pcmcia_io_handle *, int *));
 void	pcmcia_io_unmap __P((struct pcmcia_function *, int));
 
 void	pcmcia_free_pf __P((struct pcmcia_function_head *));

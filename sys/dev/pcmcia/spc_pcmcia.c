@@ -1,4 +1,4 @@
-/*	$NetBSD: spc_pcmcia.c,v 1.1 2004/07/07 08:47:22 mycroft Exp $	*/
+/*	$NetBSD: spc_pcmcia.c,v 1.2 2004/08/08 23:17:13 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2004 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spc_pcmcia.c,v 1.1 2004/07/07 08:47:22 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spc_pcmcia.c,v 1.2 2004/08/08 23:17:13 mycroft Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -172,8 +172,8 @@ spc_pcmcia_attach(parent, self, aux)
 	}
 
 	/* Map in the I/O space */
-	if (pcmcia_io_map(pf, PCMCIA_WIDTH_AUTO, 0, sc->sc_pcioh.size,
-	    &sc->sc_pcioh, &sc->sc_io_window)) {
+	if (pcmcia_io_map(pf, PCMCIA_WIDTH_AUTO, &sc->sc_pcioh,
+	    &sc->sc_io_window)) {
 		printf("%s: can't map i/o space\n", self->dv_xname);
 		goto iomap_failed;
 	}

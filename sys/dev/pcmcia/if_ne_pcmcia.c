@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ne_pcmcia.c,v 1.125 2004/08/07 05:27:39 mycroft Exp $	*/
+/*	$NetBSD: if_ne_pcmcia.c,v 1.126 2004/08/08 23:17:13 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1997 Marc Horowitz.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ne_pcmcia.c,v 1.125 2004/08/07 05:27:39 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ne_pcmcia.c,v 1.126 2004/08/08 23:17:13 mycroft Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -76,8 +76,7 @@ struct ne_pcmcia_softc {
 
 	/* PCMCIA-specific goo */
 	struct pcmcia_io_handle sc_pcioh;	/* PCMCIA i/o information */
-	int sc_asic_io_window;			/* i/o window for ASIC */
-	int sc_nic_io_window;			/* i/o window for NIC */
+	int sc_io_window;			/* i/o window */
 	struct pcmcia_function *sc_pf;		/* our PCMCIA function */
 	void *sc_ih;				/* interrupt handle */
 };
@@ -634,19 +633,10 @@ ne_pcmcia_attach(parent, self, aux)
 		goto fail_2;
 	}
 
-	/* some cards claim to be io16, but they're lying. */
-	if (pcmcia_io_map(pa->pf, PCMCIA_WIDTH_IO8,
-	    NE2000_NIC_OFFSET, NE2000_NIC_NPORTS,
-	    &psc->sc_pcioh, &psc->sc_nic_io_window)) {
+	if (pcmcia_io_map(pa->pf, PCMCIA_WIDTH_IO16, &psc->sc_pcioh,
+	    &psc->sc_io_window)) {
 		aprint_error("%s: can't map NIC i/o space\n", self->dv_xname);
 		goto fail_3;
-	}
-
-	if (pcmcia_io_map(pa->pf, PCMCIA_WIDTH_IO16,
-	    NE2000_ASIC_OFFSET, NE2000_ASIC_NPORTS,
-	    &psc->sc_pcioh, &psc->sc_asic_io_window)) {
-		aprint_error("%s: can't map ASIC i/o space\n", self->dv_xname);
-		goto fail_4;
 	}
 
 	/*
@@ -672,7 +662,7 @@ again:
 	if (enaddr != NULL)
 		aprint_error("%s: ethernet vendor code %02x:%02x:%02x\n",
 	            self->dv_xname, enaddr[0], enaddr[1], enaddr[2]);
-	goto fail_5;
+	goto fail_4;
 
 found:
 	if ((ne_dev->flags & NE2000DVF_DL10019) != 0) {
@@ -759,28 +749,24 @@ found:
 	}
 
 	if (ne2000_attach(nsc, enaddr))
-		goto fail_5;
+		goto fail_4;
 
 	pcmcia_function_disable(pa->pf);
 	return;
 
- fail_5:
-	/* Unmap ASIC i/o windows. */
-	pcmcia_io_unmap(psc->sc_pf, psc->sc_asic_io_window);
-
- fail_4:
+fail_4:
 	/* Unmap NIC i/o windows. */
-	pcmcia_io_unmap(psc->sc_pf, psc->sc_nic_io_window);
+	pcmcia_io_unmap(psc->sc_pf, psc->sc_io_window);
 
- fail_3:
+fail_3:
 	pcmcia_function_disable(pa->pf);
 
- fail_2:
+fail_2:
 	/* Free our i/o space. */
 	pcmcia_io_free(psc->sc_pf, &psc->sc_pcioh);
 
- fail_1:
-	psc->sc_nic_io_window = -1;
+fail_1:
+	psc->sc_io_window = -1;
 }
 
 int
@@ -791,7 +777,7 @@ ne_pcmcia_detach(self, flags)
 	struct ne_pcmcia_softc *psc = (struct ne_pcmcia_softc *)self;
 	int error;
 
-	if (psc->sc_nic_io_window == -1)
+	if (psc->sc_io_window == -1)
 		/* Nothing to detach. */
 		return (0);
 
@@ -800,8 +786,7 @@ ne_pcmcia_detach(self, flags)
 		return (error);
 
 	/* Unmap our i/o windows. */
-	pcmcia_io_unmap(psc->sc_pf, psc->sc_asic_io_window);
-	pcmcia_io_unmap(psc->sc_pf, psc->sc_nic_io_window);
+	pcmcia_io_unmap(psc->sc_pf, psc->sc_io_window);
 
 	/* Free our i/o space. */
 	pcmcia_io_free(psc->sc_pf, &psc->sc_pcioh);

@@ -1,4 +1,4 @@
-/* $NetBSD: if_cs_pcmcia.c,v 1.6 2004/07/07 06:43:22 mycroft Exp $ */
+/* $NetBSD: if_cs_pcmcia.c,v 1.7 2004/08/08 23:17:12 mycroft Exp $ */
 
 /*-
  * Copyright (c)2001 YAMAMOTO Takashi,
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_cs_pcmcia.c,v 1.6 2004/07/07 06:43:22 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_cs_pcmcia.c,v 1.7 2004/08/08 23:17:12 mycroft Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -192,8 +192,8 @@ cs_pcmcia_enable(struct cs_softc *sc)
 	struct cs_pcmcia_softc *psc = (void *)sc;
 	struct pcmcia_function *pf = psc->sc_pf;
 
-	if (pcmcia_io_map(pf, PCMCIA_WIDTH_AUTO, 0, psc->sc_pcioh.size,
-		&psc->sc_pcioh, &psc->sc_io_window) != 0) {
+	if (pcmcia_io_map(pf, PCMCIA_WIDTH_AUTO, &psc->sc_pcioh,
+	    &psc->sc_io_window) != 0) {
 		printf("%s: can't map i/o space\n", DEVNAME(sc));
 		goto fail;
 	}

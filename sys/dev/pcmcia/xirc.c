@@ -1,4 +1,4 @@
-/*	$NetBSD: xirc.c,v 1.2 2004/08/08 07:25:20 mycroft Exp $	*/
+/*	$NetBSD: xirc.c,v 1.3 2004/08/08 23:17:13 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2004 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xirc.c,v 1.2 2004/08/08 07:25:20 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xirc.c,v 1.3 2004/08/08 23:17:13 mycroft Exp $");
 
 #include "opt_inet.h" 
 #include "opt_ns.h"
@@ -588,8 +588,7 @@ com_xirc_attach(parent, self, aux)
 
 	aprint_normal("\n");
 
-	if (pcmcia_io_map(msc->sc_pf, PCMCIA_WIDTH_IO8, 0,
-	    msc->sc_modem_pcioh.size, &msc->sc_modem_pcioh,
+	if (pcmcia_io_map(msc->sc_pf, PCMCIA_WIDTH_IO8, &msc->sc_modem_pcioh,
 	    &msc->sc_modem_io_window)) {
 		aprint_error("%s: unable to map I/O space\n", self->dv_xname);
 		return;
@@ -674,8 +673,7 @@ xi_xirc_attach(parent, self, aux)
 
 	aprint_normal("\n");
 
-	if (pcmcia_io_map(msc->sc_pf, PCMCIA_WIDTH_AUTO, 0,
-	    msc->sc_ethernet_pcioh.size, &msc->sc_ethernet_pcioh,
+	if (pcmcia_io_map(msc->sc_pf, PCMCIA_WIDTH_AUTO, &msc->sc_ethernet_pcioh,
 	    &msc->sc_ethernet_io_window)) {
 		aprint_error("%s: unable to map I/O space\n", self->dv_xname);
 		return;

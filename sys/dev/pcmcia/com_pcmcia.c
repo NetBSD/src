@@ -1,4 +1,4 @@
-/*	$NetBSD: com_pcmcia.c,v 1.39 2004/08/07 05:27:39 mycroft Exp $	 */
+/*	$NetBSD: com_pcmcia.c,v 1.40 2004/08/08 23:17:12 mycroft Exp $	 */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com_pcmcia.c,v 1.39 2004/08/07 05:27:39 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com_pcmcia.c,v 1.40 2004/08/08 23:17:12 mycroft Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -272,8 +272,8 @@ found:
 	/* map in the io space */
 
 	if (pcmcia_io_map(pa->pf, ((cfe->flags & PCMCIA_CFE_IO16) ?
-	    PCMCIA_WIDTH_IO16 : PCMCIA_WIDTH_IO8), 0, psc->sc_pcioh.size,
-	    &psc->sc_pcioh, &psc->sc_io_window)) {
+	    PCMCIA_WIDTH_IO16 : PCMCIA_WIDTH_IO8), &psc->sc_pcioh,
+	    &psc->sc_io_window)) {
 		aprint_error("%s: can't map i/o space\n", self->dv_xname);
 		return;
 	}

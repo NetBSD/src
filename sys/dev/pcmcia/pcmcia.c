@@ -1,4 +1,4 @@
-/*	$NetBSD: pcmcia.c,v 1.40 2004/08/08 05:33:04 mycroft Exp $	*/
+/*	$NetBSD: pcmcia.c,v 1.41 2004/08/08 23:17:13 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1997 Marc Horowitz.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcmcia.c,v 1.40 2004/08/08 05:33:04 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcmcia.c,v 1.41 2004/08/08 23:17:13 mycroft Exp $");
 
 #include "opt_pcmciaverbose.h"
 
@@ -484,6 +484,18 @@ pcmcia_function_enable(pf)
 		}
 	}
 
+	if (pcmcia_mfc(pf->sc)) {
+		pcmcia_ccr_write(pf, PCMCIA_CCR_IOBASE0,
+				 (pf->pf_mfc_iobase[0] >> 0) & 0xff);
+		pcmcia_ccr_write(pf, PCMCIA_CCR_IOBASE1,
+				 (pf->pf_mfc_iobase[0] >> 8) & 0xff);
+		pcmcia_ccr_write(pf, PCMCIA_CCR_IOBASE2,
+				 (pf->pf_mfc_iobase[1] >> 0) & 0xff);
+		pcmcia_ccr_write(pf, PCMCIA_CCR_IOBASE3,
+				 (pf->pf_mfc_iobase[1] >> 8) & 0xff);
+		pcmcia_ccr_write(pf, PCMCIA_CCR_IOSIZE, pf->pf_mfc_iomask);
+	}
+
 	reg = (pf->cfe->number & PCMCIA_CCR_OPTION_CFINDEX);
 	reg |= PCMCIA_CCR_OPTION_LEVIREQ;
 	if (pcmcia_mfc(pf->sc)) {
@@ -496,7 +508,6 @@ pcmcia_function_enable(pf)
 	pcmcia_ccr_write(pf, PCMCIA_CCR_OPTION, reg);
 
 	reg = 0;
-
 	if ((pf->cfe->flags & PCMCIA_CFE_IO16) == 0)
 		reg |= PCMCIA_CCR_STATUS_IOIS8;
 	if (pf->cfe->flags & PCMCIA_CFE_AUDIO)
@@ -504,25 +515,6 @@ pcmcia_function_enable(pf)
 	pcmcia_ccr_write(pf, PCMCIA_CCR_STATUS, reg);
 
 	pcmcia_ccr_write(pf, PCMCIA_CCR_SOCKETCOPY, 0);
-
-	if (pcmcia_mfc(pf->sc)) {
-		long tmp, iosize;
-
-		tmp = pf->pf_mfc_iomax - pf->pf_mfc_iobase;
-		/* round up to nearest (2^n)-1 */
-		for (iosize = 1; iosize < tmp; iosize <<= 1)
-			;
-		iosize--;
-
-		pcmcia_ccr_write(pf, PCMCIA_CCR_IOBASE0,
-				 pf->pf_mfc_iobase & 0xff);
-		pcmcia_ccr_write(pf, PCMCIA_CCR_IOBASE1,
-				 (pf->pf_mfc_iobase >> 8) & 0xff);
-		pcmcia_ccr_write(pf, PCMCIA_CCR_IOBASE2, 0);
-		pcmcia_ccr_write(pf, PCMCIA_CCR_IOBASE3, 0);
-
-		pcmcia_ccr_write(pf, PCMCIA_CCR_IOSIZE, iosize);
-	}
 
 #ifdef PCMCIADEBUG
 	if (pcmcia_debug) {
@@ -618,18 +610,16 @@ out:
 }
 
 int
-pcmcia_io_map(pf, width, offset, size, pcihp, windowp)
+pcmcia_io_map(pf, width, pcihp, windowp)
 	struct pcmcia_function *pf;
 	int width;
-	bus_addr_t offset;
-	bus_size_t size;
 	struct pcmcia_io_handle *pcihp;
 	int *windowp;
 {
 	int reg;
 
 	if (pcmcia_chip_io_map(pf->sc->pct, pf->sc->pch,
-	    width, offset, size, pcihp, windowp))
+	    width, 0, pcihp->size, pcihp, windowp))
 		return (1);
 
 	/*
@@ -639,38 +629,31 @@ pcmcia_io_map(pf, width, offset, size, pcihp, windowp)
 	 */
 
 	if (pcmcia_mfc(pf->sc)) {
-		long tmp, iosize;
+		int win;
+		long iomask;
 
-		if (pf->pf_mfc_iomax == 0) {
-			pf->pf_mfc_iobase = pcihp->addr + offset;
-			pf->pf_mfc_iomax = pf->pf_mfc_iobase + size;
-		} else {
-			/* this makes the assumption that nothing overlaps */
-			if (pf->pf_mfc_iobase > pcihp->addr + offset)
-				pf->pf_mfc_iobase = pcihp->addr + offset;
-			if (pf->pf_mfc_iomax < pcihp->addr + offset + size)
-				pf->pf_mfc_iomax = pcihp->addr + offset + size;
-		}
-
-		tmp = pf->pf_mfc_iomax - pf->pf_mfc_iobase;
 		/* round up to nearest (2^n)-1 */
-		for (iosize = 1; iosize >= tmp; iosize <<= 1)
+		for (iomask = 1; iomask < pcihp->size; iomask <<= 1)
 			;
-		iosize--;
+		iomask--;
 
-		pcmcia_ccr_write(pf, PCMCIA_CCR_IOBASE0,
-				 pf->pf_mfc_iobase & 0xff);
-		pcmcia_ccr_write(pf, PCMCIA_CCR_IOBASE1,
-				 (pf->pf_mfc_iobase >> 8) & 0xff);
-		pcmcia_ccr_write(pf, PCMCIA_CCR_IOBASE2, 0);
-		pcmcia_ccr_write(pf, PCMCIA_CCR_IOBASE3, 0);
+		win = pf->pf_mfc_windows;
+		KASSERT(win < 2);
+printf("win %d = addr %lx size %lx iomask %lx\n", win, (long)pcihp->addr, (long)pcihp->size, (long)iomask);
+		pf->pf_mfc_iobase[win] = pcihp->addr;
+		pf->pf_mfc_iomask = iomask;
 
-		pcmcia_ccr_write(pf, PCMCIA_CCR_IOSIZE, iosize);
+		pcmcia_ccr_write(pf, PCMCIA_CCR_IOBASE0 + 2 * win,
+				 (pcihp->addr >> 0) & 0xff);
+		pcmcia_ccr_write(pf, PCMCIA_CCR_IOBASE1 + 2 * win,
+				 (pcihp->addr >> 8) & 0xff);
+		pcmcia_ccr_write(pf, PCMCIA_CCR_IOSIZE, iomask);
 
 		reg = pcmcia_ccr_read(pf, PCMCIA_CCR_OPTION);
 		reg |= PCMCIA_CCR_OPTION_ADDR_DECODE;
 		pcmcia_ccr_write(pf, PCMCIA_CCR_OPTION, reg);
 	}
+
 	return (0);
 }
 
@@ -680,9 +663,16 @@ pcmcia_io_unmap(pf, window)
 	int window;
 {
 
-	pcmcia_chip_io_unmap(pf->sc->pct, pf->sc->pch, window);
+	if (pcmcia_mfc(pf->sc)) {
+		/*
+		 * Don't bother trying to unmap windows in the CCR here,
+		 * because we generally get called when a card has been
+		 * ejected, and the CCR isn't there any more.
+		 */
+		--pf->pf_mfc_windows;
+	}
 
-	/* XXX Anything for multi-function cards? */
+	pcmcia_chip_io_unmap(pf->sc->pct, pf->sc->pch, window);
 }
 
 void *
