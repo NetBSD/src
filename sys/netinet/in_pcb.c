@@ -1,4 +1,4 @@
-/*	$NetBSD: in_pcb.c,v 1.39.2.3 1998/10/01 17:56:58 cgd Exp $	*/
+/*	$NetBSD: in_pcb.c,v 1.39.2.4 1999/01/18 03:22:58 cgd Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -269,7 +269,7 @@ in_pcbconnect(v, nam)
 		 */
 
 		if (in_nullhost(sin->sin_addr))
-		    sin->sin_addr = in_ifaddr.tqh_first->ia_broadaddr.sin_addr;
+			sin->sin_addr = in_ifaddr.tqh_first->ia_addr.sin_addr;
 		else if (sin->sin_addr.s_addr == INADDR_BROADCAST)
 		    for (ia = in_ifaddr.tqh_first; ia != NULL;
 		      ia = ia->ia_list.tqe_next)
