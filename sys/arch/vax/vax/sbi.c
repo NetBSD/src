@@ -1,4 +1,4 @@
-/*	$NetBSD: sbi.c,v 1.27 2003/01/01 00:16:47 thorpej Exp $ */
+/*	$NetBSD: sbi.c,v 1.28 2003/01/19 22:29:24 ragge Exp $ */
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -76,11 +76,7 @@ sbi_print(void *aux, const char *name)
 int
 sbi_match_abus(struct device *parent, struct cfdata *cf, void *aux)
 {
-	struct bp_conf *bp = aux;
-
-	if (bp->num == 0) /* XXX - only one SBI */
-		return 1;
-	return 0;
+	return 1;	/* We've already done the matching... */
 }
 
 int
