@@ -3,7 +3,7 @@
  * For conditions of distribution and use, see copyright notice in zlib.h
  */
 
-/* $Id: gzio.c,v 1.1.1.1 1996/09/12 15:33:09 gwr Exp $ */
+/* $Id: gzio.c,v 1.2 1996/09/12 19:09:00 gwr Exp $ */
 
 #include <stdio.h>
 
@@ -370,7 +370,7 @@ int gzwrite (file, buf, len)
 
     if (s == NULL || s->mode != 'w') return Z_STREAM_ERROR;
 
-    s->stream.next_in = buf;
+    s->stream.next_in = (Byte*)buf;
     s->stream.avail_in = len;
 
     while (s->stream.avail_in != 0) {
