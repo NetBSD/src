@@ -1,4 +1,4 @@
-/*	$NetBSD: signalvar.h,v 1.43 2003/09/14 07:00:46 christos Exp $	*/
+/*	$NetBSD: signalvar.h,v 1.44 2003/09/16 12:04:58 christos Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -34,6 +34,8 @@
 #ifndef	_SYS_SIGNALVAR_H_		/* tmp for user.h */
 #define	_SYS_SIGNALVAR_H_
 
+#include <sys/lock.h>
+#include <sys/queue.h>
 /*
  * Kernel signal definitions and data structures,
  * not exported to user programs.
@@ -61,7 +63,8 @@ struct sigctx {
 	char	ps_sigcheck;		/* May have deliverable signals. */
 	int	ps_sigwaited;		/* Delivered signal from wait set */
 	sigset_t ps_sigwait;		/* Signals being waited for */
-	struct ksiginfo *ps_siginfo;	/* for SA_SIGINFO */
+	struct simplelock ps_silock;	/* Lock for ps_siginfo */
+	CIRCLEQ_HEAD(, ksiginfo) ps_siginfo;/* for SA_SIGINFO */
 
 	/* This should be copied on fork */
 #define	ps_startcopy	ps_sigstk
