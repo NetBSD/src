@@ -1,4 +1,4 @@
-/* 	$NetBSD: rasops_bitops.h,v 1.1 1999/04/26 04:27:48 ad Exp $ */
+/* 	$NetBSD: rasops_bitops.h,v 1.2 1999/04/29 03:38:39 ad Exp $ */
 
 /*
  * Copyright (c) 1999 Andy Doran <ad@NetBSD.org>
@@ -188,6 +188,9 @@ NAME(copycols)(cookie, row, src, dst, num)
 	if (num <= 0)
 		return;
 #endif
+	
+	/* XXX pacify gcc until this is fixed XXX */
+	db = 0;
 	
 	cnt = ri->ri_font->fontwidth << PIXEL_SHIFT;
 	src *= cnt;
