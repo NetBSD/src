@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)pccons.c	5.11 (Berkeley) 5/21/91
- *	$Id: pccons.c,v 1.31.2.32 1994/02/01 06:32:23 mycroft Exp $
+ *	$Id: pccons.c,v 1.31.2.33 1994/02/01 18:28:49 mycroft Exp $
  */
 
 /*
@@ -155,7 +155,7 @@ int pcopen __P((dev_t, int, int, struct proc *));
 int pcclose __P((dev_t, int));
 
 static void sput __P((struct pc_state *, u_char *, int));
-static char *sget __P((struct pc_state *, int));
+static char *sget __P((struct pc_state *));
 static void pc_xmode_on __P((struct pc_state *));
 static void pc_xmode_off __P((struct pc_state *));
 static void pcstart __P((struct tty *));
