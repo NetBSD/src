@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.7 1999/03/30 14:46:23 mrg Exp $	*/
+/*	$NetBSD: audio.c,v 1.7.2.1 1999/09/27 05:26:24 cgd Exp $	*/
 
 /*
  * Copyright (c) 1999 Matthew R. Green
@@ -115,6 +115,11 @@ struct {
 	{ AUDIO_FILE_ENCODING_LINEAR_24,	AUDIO_ENCODING_ULINEAR_BE, 24 },
 	{ AUDIO_FILE_ENCODING_LINEAR_32,	AUDIO_ENCODING_ULINEAR_BE, 32 },
 #if 0
+	/*
+	 * we should make some of these available.  the, eg ultrasparc, port
+	 * can use the VIS instructions (if available) do do some of these
+	 * mpeg ones.
+	 */
 	{ AUDIO_FILE_ENCODING_FLOAT,		AUDIO_ENCODING_ULAW,	32 },
 	{ AUDIO_FILE_ENCODING_DOUBLE,		AUDIO_ENCODING_ULAW,	64 },
 	{ AUDIO_FILE_ENCODING_ADPCM_G721,	AUDIO_ENCODING_ULAW,	4 },
@@ -351,11 +356,12 @@ decode_encoding(arg, encp)
 }
 
 const char *const audio_errlist[] = {
-	"no audio entry",
-	"short header",
-	"unsupported WAV format",
-	"bad (unsupported) WAV PCM format",
-	"no WAV audio data",
+	"error zero",				/* nothing? */
+	"no audio entry",			/* AUDIO_ENOENT */
+	"short header",				/* AUDIO_ESHORTHDR */
+	"unsupported WAV format",		/* AUDIO_EWAVUNSUPP */
+	"bad (unsupported) WAV PCM format",	/* AUDIO_EWAVBADPCM */
+	"no WAV audio data",			/* AUDIO_EWAVNODATA */
 };
 
 const char *
