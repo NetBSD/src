@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 1983 Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1983, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,7 +32,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)io.c	5.6 (Berkeley) 3/1/91";
+static char sccsid[] = "@(#)io.c	8.1 (Berkeley) 6/6/93";
 #endif /* not lint */
 
 /*
@@ -41,11 +41,12 @@ static char sccsid[] = "@(#)io.c	5.6 (Berkeley) 3/1/91";
  * ctl.c
  */
 
+#include <sys/ioctl.h>
 #include <sys/time.h>
-#include "talk.h"
 #include <stdio.h>
 #include <errno.h>
 #include <string.h>
+#include "talk.h"
 
 #define A_LONG_TIME 10000000
 #define STDIN_MASK (1<<fileno(stdin))	/* the bit mask for standard
@@ -132,8 +133,10 @@ p_error(string)
 message(string)
 	char *string;
 {
-
-	wmove(my_win.x_win, current_line%my_win.x_nlines, 0);
-	wprintw(my_win.x_win, "[%s]\n", string);
+	wmove(my_win.x_win, current_line % my_win.x_nlines, 0);
+	wprintw(my_win.x_win, "[%s]", string);
+	wclrtoeol(my_win.x_win);
+	current_line++;
+	wmove(my_win.x_win, current_line % my_win.x_nlines, 0);
 	wrefresh(my_win.x_win);
 }
