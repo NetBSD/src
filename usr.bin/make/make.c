@@ -1,4 +1,4 @@
-/*	$NetBSD: make.c,v 1.30 2000/06/10 22:28:33 mycroft Exp $	*/
+/*	$NetBSD: make.c,v 1.31 2000/06/11 07:39:52 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -39,14 +39,14 @@
  */
 
 #ifdef MAKE_BOOTSTRAP
-static char rcsid[] = "$NetBSD: make.c,v 1.30 2000/06/10 22:28:33 mycroft Exp $";
+static char rcsid[] = "$NetBSD: make.c,v 1.31 2000/06/11 07:39:52 mycroft Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)make.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: make.c,v 1.30 2000/06/10 22:28:33 mycroft Exp $");
+__RCSID("$NetBSD: make.c,v 1.31 2000/06/11 07:39:52 mycroft Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -102,6 +102,7 @@ static int  	numNodes;   	/* Number of nodes to be processed. If this
 
 static int MakeAddChild __P((ClientData, ClientData));
 static int MakeFindChild __P((ClientData, ClientData));
+static int MakeUnmark __P((ClientData, ClientData));
 static int MakeAddAllSrc __P((ClientData, ClientData));
 static int MakeTimeStamp __P((ClientData, ClientData));
 static int MakeHandleUse __P((ClientData, ClientData));
@@ -410,11 +411,9 @@ Make_HandleUse (cgn, pgn)
 			gn = tgn;
 		}
 
-		if (Lst_Member (pgn->children, gn) == NILLNODE) {
-		    (void) Lst_AtEnd (pgn->children, gn);
-		    (void) Lst_AtEnd (gn->parents, pgn);
-		    pgn->unmade += 1;
-		}
+		(void) Lst_AtEnd (pgn->children, gn);
+		(void) Lst_AtEnd (gn->parents, pgn);
+		pgn->unmade += 1;
 	    }
 	    Lst_Close (cgn->children);
 	}
@@ -436,12 +435,20 @@ Make_HandleUse (cgn, pgn)
     }
     return (0);
 }
+
 static int
-MakeHandleUse (pgn, cgn)
-    ClientData pgn;	/* the current parent */
-    ClientData cgn;	/* the child we've just examined */
+MakeHandleUse (cgnp, pgnp)
+    ClientData	cgnp;	/* the child we've just examined */
+    ClientData	pgnp;	/* the current parent */
 {
-    return Make_HandleUse((GNode *) pgn, (GNode *) cgn);
+    GNode	*cgn = (GNode *) cgnp;
+    GNode	*pgn = (GNode *) pgnp;
+
+    if (cgn->type & OP_MARK)
+	return (0);
+    cgn->type |= OP_MARK;
+
+    return Make_HandleUse(cgn, pgn);
 }
 
 
@@ -669,6 +676,17 @@ Make_Update (cgn)
  *-----------------------------------------------------------------------
  */
 static int
+MakeUnmark (cgnp, pgnp)
+    ClientData	cgnp;
+    ClientData	pgnp;
+{
+    GNode	*cgn = (GNode *) cgnp;
+
+    cgn->type &= ~OP_MARK;
+    return (0);
+}
+
+static int
 MakeAddAllSrc (cgnp, pgnp)
     ClientData	cgnp;	/* The child to add */
     ClientData	pgnp;	/* The parent to whose ALLSRC variable it should be */
@@ -676,6 +694,11 @@ MakeAddAllSrc (cgnp, pgnp)
 {
     GNode	*cgn = (GNode *) cgnp;
     GNode	*pgn = (GNode *) pgnp;
+
+    if (cgn->type & OP_MARK)
+	return (0);
+    cgn->type |= OP_MARK;
+
     if ((cgn->type & (OP_EXEC|OP_USE|OP_INVISIBLE)) == 0) {
 	char *child;
 	char *p1 = NULL;
@@ -742,6 +765,7 @@ void
 Make_DoAllVar (gn)
     GNode	*gn;
 {
+    Lst_ForEach (gn->children, MakeUnmark, (ClientData) gn);
     Lst_ForEach (gn->children, MakeAddAllSrc, (ClientData) gn);
 
     if (!Var_Exists (OODATE, gn)) {
@@ -968,6 +992,7 @@ Make_ExpandUse (targs)
 
 	    (void)Dir_MTime(gn);
 	    Var_Set (TARGET, gn->path ? gn->path : gn->name, gn);
+	    Lst_ForEach (gn->children, MakeUnmark, (ClientData)gn);
 	    Lst_ForEach (gn->children, MakeHandleUse, (ClientData)gn);
 	    Suff_FindDeps (gn);
 
