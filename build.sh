@@ -1,5 +1,5 @@
 #! /usr/bin/env sh
-#	$NetBSD: build.sh,v 1.107 2003/07/16 13:21:47 lukem Exp $
+#	$NetBSD: build.sh,v 1.108 2003/07/18 08:30:07 lukem Exp $
 #
 # Copyright (c) 2001-2003 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -368,8 +368,8 @@ Usage: ${progname} [-EnorUu] [-a arch] [-B buildid] [-D dest] [-j njob] [-M obj]
     -r          Remove contents of TOOLDIR and DESTDIR before building
     -T tools    Set TOOLDIR to tools.  If unset, and TOOLDIR is not set in
                 the environment, ${toolprefix}make will be (re)built unconditionally
-    -U          Set UNPRIVED (build without requiring root privileges)
-    -u          Set UPDATE (do not run "make clean" first).
+    -U          Set MKUNPRIVED=yes (build without requiring root privileges)
+    -u          Set MKUPDATE=yes (do not run "make clean" first).
 		Without this, everything is rebuilt, including the tools.
     -V v=[val]  Set variable \`v' to \`val'
     -w wrapper  Create ${toolprefix}make script as wrapper
@@ -507,15 +507,15 @@ parseoptions()
 			;;
 
 		-U)
-			UNPRIVED=yes
-			export UNPRIVED
-			makeenv="${makeenv} UNPRIVED"
+			MKUNPRIVED=yes
+			export MKUNPRIVED
+			makeenv="${makeenv} MKUNPRIVED"
 			;;
 
 		-u)
-			UPDATE=yes
-			export UPDATE
-			makeenv="${makeenv} UPDATE"
+			MKUPDATE=yes
+			export MKUPDATE
+			makeenv="${makeenv} MKUPDATE"
 			;;
 
 		-V)
@@ -736,8 +736,8 @@ validatemakeparams()
 	fi
 	if ${do_build} || ${do_distribution} || ${do_release}; then
 		if ! ${do_expertmode} && \
-		    [ $(id -u 2>/dev/null) -ne 0 ] &&\
-		    [ -z "${UNPRIVED}" ] ; then
+		    [ $(id -u 2>/dev/null) -ne 0 ] && \
+		    [ -z "${MKUNPRIVED}" ] ; then
 			bomb "-U or -E must be set for build as an unprivileged user."
 		fi
         fi
@@ -792,7 +792,7 @@ createmakewrapper()
 	eval cat <<EOF ${makewrapout}
 #! /bin/sh
 # Set proper variables to allow easy "make" building of a NetBSD subtree.
-# Generated from:  \$NetBSD: build.sh,v 1.107 2003/07/16 13:21:47 lukem Exp $
+# Generated from:  \$NetBSD: build.sh,v 1.108 2003/07/18 08:30:07 lukem Exp $
 #
 
 EOF
@@ -818,7 +818,7 @@ buildtools()
 		    bomb "Failed to make obj-tools"
 	fi
 	${runcmd} cd tools
-	if [ -z "${UPDATE}" ]; then
+	if [ -z "${MKUPDATE}" ]; then
 		cleandir=cleandir
 	else
 		cleandir=
@@ -875,7 +875,7 @@ buildkernel()
 	statusmsg "Build directory:  ${kernelbuildpath}"
 	${runcmd} mkdir -p "${kernelbuildpath}" ||
 	    bomb "Cannot mkdir: ${kernelbuildpath}"
-	if [ -z "${UPDATE}" ]; then
+	if [ -z "${MKUPDATE}" ]; then
 		${runcmd} cd "${kernelbuildpath}"
 		${runcmd} "${makewrapper}" cleandir ||
 		    bomb "Failed to make cleandir in ${kernelbuildpath}"
