@@ -1,4 +1,4 @@
-/*	$NetBSD: tulipreg.h,v 1.28 2002/04/05 04:48:40 mycroft Exp $	*/
+/*	$NetBSD: tulipreg.h,v 1.29 2002/11/07 07:55:53 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -368,7 +368,8 @@ struct tulip_desc {
 #define	TULIP_ROM_MB_21143_SYM		4	/* 21143 SYM block */
 #define	TULIP_ROM_MB_21143_RESET	5	/* 21143 reset block */
 
-#define	TULIP_ROM_GETW(data, off) ((data)[(off)] | ((data)[(off) + 1]) << 8)
+#define	TULIP_ROM_GETW(data, off) ((uint32_t)(data)[(off)] |		\
+				   (uint32_t)((data)[(off) + 1]) << 8)
 
 /*
  * Tulip control registers.
