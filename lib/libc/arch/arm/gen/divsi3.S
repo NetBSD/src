@@ -1,4 +1,4 @@
-/*	$NetBSD: divsi3.S,v 1.5 2003/04/05 23:08:51 bjh21 Exp $	*/
+/*	$NetBSD: divsi3.S,v 1.6 2004/08/21 11:20:10 rearnsha Exp $	*/
 
 /*
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
@@ -46,7 +46,7 @@ ENTRY(__modsi3)
 	/* XXX should cause a fatal error */
 	mvn	r0, #0
 #endif
-	mov	pc, lr
+	RET
 
 ENTRY(__udivsi3)
 .L_udivide:				/* r0 = r0 / r1; r1 = r0 % r1 */
@@ -68,7 +68,7 @@ ENTRY(__udivsi3)
 .L_divide_l0:				/* r0 == 1 */
 	mov	r0, r1
 	mov	r1, #0
-	mov	pc, lr
+	RET
 
 ENTRY(__divsi3)
 .L_divide:				/* r0 = r0 / r1; r1 = r0 % r1 */
@@ -372,7 +372,7 @@ ENTRY(__divsi3)
 	movs	ip, ip, lsl #1
 	bicmi	r0, r0, #0x80000000	/* Fix incase we divided 0x80000000 */
 	rsbmi	r0, r0, #0
-	mov	pc, lr
+	RET
 
 .L_udivide_l1:
 	tst	ip, #0x10000000
@@ -383,4 +383,4 @@ ENTRY(__divsi3)
 	subhs	r1, r1, r0
 	addhs	r3, r3, r2
 	mov	r0, r3
-	mov	pc, lr
+	RET
