@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_pcmcia.c,v 1.10 1998/09/18 14:43:58 enami Exp $ */
+/*	$NetBSD: wdc_pcmcia.c,v 1.11 1998/10/10 22:01:24 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -200,8 +200,7 @@ wdc_pcmcia_attach(parent, self, aux)
 			    WDC_PCMCIA_AUXREG_NPORTS, &sc->sc_auxpioh.ioh))
 				break;
 		}
-		pcmcia_chip_io_free(pa->pf->sc->pct, pa->pf->sc->pch,
-		    &sc->sc_pioh);
+		pcmcia_io_free(pa->pf, &sc->sc_pioh);
 	}
 
 	if (cfe == NULL) {
