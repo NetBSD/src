@@ -42,7 +42,7 @@
  *	%W% (Berkeley) %G%
  *
  * from: Header: cgsix.c,v 1.2 93/10/18 00:01:51 torek Exp 
- * $Id: cgsix.c,v 1.3 1994/05/07 01:14:39 deraadt Exp $
+ * $Id: cgsix.c,v 1.4 1994/07/04 21:37:22 deraadt Exp $
  */
 
 /*
@@ -66,6 +66,8 @@
 #include <sys/proc.h>
 #include <sys/syslog.h>
 #endif
+
+#include <vm/vm.h>
 
 #include <machine/autoconf.h>
 #include <machine/pmap.h>
