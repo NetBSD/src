@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.133 1995/06/02 18:14:04 mycroft Exp $	*/
+/*	$NetBSD: locore.s,v 1.134 1995/06/26 13:26:26 cgd Exp $	*/
 
 #undef DIAGNOSTIC
 #define DIAGNOSTIC
@@ -149,7 +149,7 @@
 	.data
 
 	.globl	_cpu,_cpu_vendor,_cold,_esym,_boothowto,_bootdev,_atdevbase
-	.globl	_cyloffset,_proc0paddr,_curpcb
+	.globl	_cyloffset,_proc0paddr,_curpcb,_PTDpaddr
 _cpu:		.long	0	# are we 386, 386sx, or 486
 _cpu_vendor:	.space	16	# vendor string returned by `cpuid' instruction
 _cold:		.long	1	# cold till we are not
@@ -157,6 +157,7 @@ _esym:		.long	0	# ptr to end of syms
 _atdevbase:	.long	0	# location of start of iomem in virtual
 _cyloffset:	.long	0
 _proc0paddr:	.long	0
+_PTDpaddr:	.long	0	# paddr of PTD, for libkvm
 
 	.space 512
 tmpstk:
@@ -458,6 +459,9 @@ try586:	/* Use the `cpuid' instruction. */
 	/* Install a PDE to map kernel stack for proc 0. */
 	leal	(PROC0STACKMAP+PG_V|PG_KW)(%esi),%eax	# pte for pt in proc 0
 	movl	%eax,(PROC0PDIR+UPTDI*4)(%esi)		# which is where kernel stack maps!
+
+	/* Save phys. addr of PTD, for libkvm. */
+	movl	%esi,RELOC(_PTDpaddr)
 
 	/* Load base of page directory and enable mapping. */
 	movl	%esi,%eax		# phys address of ptd in proc 0
