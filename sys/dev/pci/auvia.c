@@ -1,4 +1,4 @@
-/*	$NetBSD: auvia.c,v 1.25 2002/10/07 16:28:24 kent Exp $	*/
+/*	$NetBSD: auvia.c,v 1.26 2002/10/08 13:10:24 kent Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auvia.c,v 1.25 2002/10/07 16:28:24 kent Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auvia.c,v 1.26 2002/10/08 13:10:24 kent Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -85,9 +85,6 @@ struct auvia_dma_op {
 #define AUVIA_DMAOP_STOP	0x20000000
 #define AUVIA_DMAOP_COUNT(x)	((x)&0x00FFFFFF)
 };
-
-/* rev. H and later seem to support only fixed rate 48 kHz */
-#define	AUVIA_FIXED_RATE	48000
 
 int	auvia_match(struct device *, struct cfdata *, void *);
 void	auvia_attach(struct device *, struct device *, void *);
@@ -237,7 +234,6 @@ auvia_attach(struct device *parent, struct device *self, void *aux)
 	pci_intr_handle_t ih;
 	bus_size_t iosize;
 	pcireg_t pr;
-	u_int16_t v;
 	int r, i;
 
 	if (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_VIATECH_VT8233_AC97)
@@ -321,22 +317,6 @@ auvia_attach(struct device *parent, struct device *self, void *aux)
 		pci_intr_disestablish(pc, sc->sc_ih);
 		bus_space_unmap(sc->sc_iot, sc->sc_ioh, iosize);
 		return;
-	}
-
-	/*
-	 * Print a warning if the codec doesn't support hardware variable
-	 * rate audio.
-	 */
-	if (auvia_read_codec(sc, AC97_REG_EXT_AUDIO_ID, &v)
-		|| !(v & AC97_EXT_AUDIO_VRA)) {
-		printf("%s: warning: codec doesn't support hardware AC'97 2.0 Variable Rate Audio\n",
-			sc->sc_dev.dv_xname);
-		sc->sc_fixed_rate = AUVIA_FIXED_RATE; /* XXX wrong value */
-	} else {
-		/* enable VRA */
-		auvia_write_codec(sc, AC97_REG_EXT_AUDIO_CTRL,
-				  AC97_EXT_AUDIO_VRA | AC97_EXT_AUDIO_VRM);
-		sc->sc_fixed_rate = 0;
 	}
 
 	/* disable mutes */
@@ -589,8 +569,8 @@ auvia_set_params(void *addr, int setmode, int usemode,
 				base + VIA8233_RP_RATEFMT) & ~(VIA8233_RATEFMT_48K
 				| VIA8233_RATEFMT_STEREO | VIA8233_RATEFMT_16BIT);
 
-			v |= VIA8233_RATEFMT_48K *
-				(p->sample_rate / 20) / (48000 / 20);
+			v |= VIA8233_RATEFMT_48K * (p->sample_rate / 20)
+				/ (48000 / 20);
 
 			if (p->channels == 2)
 				v |= VIA8233_RATEFMT_STEREO;
@@ -609,12 +589,14 @@ auvia_set_params(void *addr, int setmode, int usemode,
 		reg = mode == AUMODE_PLAY ?
 			AC97_REG_PCM_FRONT_DAC_RATE : AC97_REG_PCM_LR_ADC_RATE;
 
-		if (!sc->sc_fixed_rate) {
-			auvia_write_codec(sc, reg, (u_int16_t) p->sample_rate);
-			auvia_read_codec(sc, reg, &regval);
-			p->sample_rate = regval;
-		} else
-			p->sample_rate = sc->sc_fixed_rate;
+		if (IS_FIXED_RATE(sc->codec_if)) {
+			/* Enable aurateconv */
+			p->hw_sample_rate = AC97_SINGLE_RATE;
+		} else {
+			if (sc->codec_if->vtbl->set_rate(sc->codec_if, reg,
+							 &p->sample_rate))
+				return (EINVAL);
+		}
 
 		p->factor = 1;
 		p->sw_code = 0;
@@ -714,7 +696,7 @@ auvia_getdev(void *addr, struct audio_device *retp)
 
 	if (retp) {
 		if (sc->sc_flags & AUVIA_FLAGS_VT8233) {
-			strncpy(retp->name, "VIA VT8233/VT8235",
+			strncpy(retp->name, "VIA VT8233/8235",
 				sizeof(retp->name));
 		} else {
 			strncpy(retp->name, "VIA VT82C686A",
@@ -866,8 +848,18 @@ auvia_mappage(void *addr, void *mem, off_t off, int prot)
 int
 auvia_get_props(void *addr)
 {
-	return AUDIO_PROP_MMAP |  AUDIO_PROP_INDEPENDENT
-		| AUDIO_PROP_FULLDUPLEX;
+	struct auvia_softc *sc = addr;
+	int props;
+
+	props = AUDIO_PROP_INDEPENDENT | AUDIO_PROP_FULLDUPLEX;
+	/*
+	 * Even if the codec is fixed-rate, set_param() succeeds for any sample
+	 * rate because of aurateconv.  Applications can't know what rate the
+	 * device can process in the case of mmap().
+	 */
+	if (!IS_FIXED_RATE(sc->codec_if))
+		props |= AUDIO_PROP_MMAP;
+	return props;
 }
 
 
