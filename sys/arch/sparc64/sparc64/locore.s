@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.94 2000/08/23 21:35:57 eeh Exp $	*/
+/*	$NetBSD: locore.s,v 1.95 2000/08/31 20:14:55 eeh Exp $	*/
 /*
  * Copyright (c) 1996-1999 Eduardo Horvath
  * Copyright (c) 1996 Paul Kranenburg
@@ -2173,12 +2173,13 @@ dmmu_write_fault:
 	 brz,pn	%g4, winfix				! NULL entry? check somewhere else
 	add	%g5, %g4, %g6
 	DLFLUSH(%g6,%g5)
+1:	
 	ldxa	[%g6] ASI_PHYS_CACHED, %g4
 	DLFLUSH2(%g5)
 	brgez,pn %g4, winfix				! Entry invalid?  Punt
 	 btst	TTE_REAL_W|TTE_W, %g4			! Is it a ref fault?
 	bz,pn	%xcc, winfix				! No -- really fault
-	 or	%g4, TTE_MODIFY|TTE_ACCESS|TTE_W, %g4	! Update the modified bit
+	 or	%g4, TTE_MODIFY|TTE_ACCESS|TTE_W, %g7	! Update the modified bit
 
 #ifdef DEBUG
 	/* Make sure we don't try to replace a kernel translation */
@@ -2198,7 +2199,10 @@ dmmu_write_fault:
 
 	 ldxa	[%g0] ASI_DMMU_8KPTR, %g2		! Load DMMU 8K TSB pointer
 	ldxa	[%g0] ASI_DMMU, %g1			! Hard coded for unified 8K TSB		Load DMMU tag target register
-	stxa	%g4, [%g6] ASI_PHYS_CACHED		!  and write it out
+	casxa	[%g6] ASI_PHYS_CACHED, %g4, %g7		!  and write it out
+	cmp	%g4, %g7
+	bne,pn	%xcc, 1b
+	 or	%g4, TTE_MODIFY|TTE_ACCESS|TTE_W, %g4	! Update the modified bit
 	DLFLUSH(%g6, %g6)
 	stx	%g1, [%g2]				! Update TSB entry tag
 	stx	%g4, [%g2+8]				! Update TSB entry data
@@ -2322,11 +2326,15 @@ Ludata_miss:
 	brz,pn	%g4, winfix				! NULL entry? check somewhere else
 	 add	%g5, %g4, %g6
 	DLFLUSH(%g6,%g5)
+1:	
 	ldxa	[%g6] ASI_PHYS_CACHED, %g4
 	DLFLUSH2(%g5)
 	brgez,pn %g4, winfix				! Entry invalid?  Punt
-	 bset	TTE_ACCESS, %g4				! Update the modified bit
-	stxa	%g4, [%g6] ASI_PHYS_CACHED		!  and write it out
+	 or	%g4, TTE_ACCESS, %g7				! Update the modified bit
+	casxa	[%g6] ASI_PHYS_CACHED, %g4, %g7		!  and write it out
+	cmp	%g4, %g7
+	bne,pn	%xcc, 1b
+	 or	%g4, TTE_ACCESS, %g4				! Update the modified bit
 	DLFLUSH(%g6, %g5)
 	stx	%g1, [%g2]				! Update TSB entry tag
 	stx	%g4, [%g2+8]				! Update TSB entry data
@@ -3266,11 +3274,15 @@ Lutext_miss:
 	brz,pn	%g4, textfault				! NULL entry? check somewhere else
 	 add	%g5, %g4, %g6
 	DLFLUSH(%g6,%g5)
+1:	
 	ldxa	[%g6] ASI_PHYS_CACHED, %g4
 	DLFLUSH2(%g5)
 	brgez,pn %g4, textfault
-	 bset	TTE_ACCESS, %g4				! Update accessed bit
-	stxa	%g4, [%g6] ASI_PHYS_CACHED		!  and store it
+	 or	%g4, TTE_ACCESS, %g7				! Update accessed bit
+	casxa	[%g6] ASI_PHYS_CACHED, %g4, %g7		!  and store it
+	cmp	%g4, %g7
+	bne,pn	%xcc, 1b
+	 or	%g4, TTE_ACCESS, %g7				! Update accessed bit
 	DLFLUSH(%g6,%g5)
 	stx	%g1, [%g2]				! Update TSB entry tag
 	stx	%g4, [%g2+8]				! Update TSB entry data
@@ -8486,7 +8498,11 @@ ENTRY(probeget)
 	! %o0 = addr, %o1 = asi, %o4 = (1,2,4)
 	sethi	%hi(CPCB), %o2
 	LDPTR	[%o2 + %lo(CPCB)], %o2	! cpcb->pcb_onfault = Lfserr;
+#ifdef _LP64
+	set	_C_LABEL(Lfsbail), %o5
+#else
 	set	_C_LABEL(Lfsprobe), %o5
+#endif
 	STPTR	%o5, [%o2 + PCB_ONFAULT]
 	or	%o0, 0x9, %o3		! if (PHYS_ASI(asi)) {
 	sub	%o3, 0x1d, %o3
@@ -9341,11 +9357,13 @@ ENTRY(pseg_get)
 /*
  * In 32-bit mode:
  *
- * extern void pseg_set(struct pmap* %o0, vaddr_t addr %o1, int64_t tte %o2:%o3, paddr_t spare %o4:%o5);
+ * extern void pseg_set(struct pmap* %o0, vaddr_t addr %o1, int64_t tte %o2:%o3,
+ *			 paddr_t spare %o4:%o5);
  *
  * In 64-bit mode:
  *
- * extern void pseg_set(struct pmap* %o0, vaddr_t addr %o1, int64_t tte %o2, paddr_t spare %o3);
+ * extern void pseg_set(struct pmap* %o0, vaddr_t addr %o1, int64_t tte %o2, 
+ *			paddr_t spare %o3);
  *
  * Set a pseg entry to a particular TTE value.  Returns 0 on success, 1 if it needs to fill
  * a pseg, and -1 if the address is in the virtual hole.  (NB: nobody in pmap checks for the
@@ -9403,6 +9421,7 @@ ENTRY(pseg_set)
 	and	%o5, STMASK, %o5
 	sll	%o5, 3, %o5
 	add	%o4, %o5, %o4
+2:	
 	DLFLUSH(%o4,%g1)
 	ldxa	[%o4] ASI_PHYS_CACHED, %o5		! Load page directory pointer
 	DLFLUSH2(%g1)
@@ -9410,9 +9429,10 @@ ENTRY(pseg_set)
 	brnz,a,pt	%o5, 0f				! Null pointer?
 	 mov	%o5, %o4
 	brz,pn	%o3, 1f					! Have a spare?
-	 nop
-	stxa	%o3, [%o4] ASI_PHYS_CACHED
-	DLFLUSH(%o4, %o4)
+	 mov	%o3, %o5
+	casxa	[%o4] ASI_PHYS_CACHED, %g0, %o5
+	brnz,pn	%o5, 2b					! Something changed?
+	DLFLUSH(%o4, %o5)
 	mov	%o3, %o4
 	clr	%o3					! Mark spare as used
 0:
@@ -9420,6 +9440,7 @@ ENTRY(pseg_set)
 	and	%o5, PDMASK, %o5
 	sll	%o5, 3, %o5
 	add	%o4, %o5, %o4
+2:	
 	DLFLUSH(%o4,%g1)
 	ldxa	[%o4] ASI_PHYS_CACHED, %o5		! Load table directory pointer
 	DLFLUSH2(%g1)
@@ -9427,8 +9448,9 @@ ENTRY(pseg_set)
 	brnz,a,pt	%o5, 0f				! Null pointer?
 	 mov	%o5, %o4
 	brz,pn	%o3, 1f					! Have a spare?
-	 nop
-	stxa	%o3, [%o4] ASI_PHYS_CACHED
+	 mov	%o3, %o5
+	casxa	[%o4] ASI_PHYS_CACHED, %g0, %o5
+	brnz,pn	%o5, 2b					! Something changed?
 	DLFLUSH(%o4, %o4)
 	mov	%o3, %o4
 	clr	%o3					! Mark spare as used
@@ -9456,6 +9478,120 @@ ENTRY(pseg_set)
 1:
 	retl
 	 mov	1, %o0
+
+/*
+ * In 32-bit mode:
+ *
+ * extern void pseg_find(struct pmap* %o0, vaddr_t addr %o1,
+ *			 paddr_t spare %o2:%o3);
+ *
+ * In 64-bit mode:
+ *
+ * extern void pseg_find(struct pmap* %o0, vaddr_t addr %o1, paddr_t spare %o2);
+ *
+ * Get the paddr for a particular TTE entry.  Returns the TTE's PA on success,
+ * 1 if it needs to fill a pseg, and -1 if the address is in the virtual hole.
+ * (NB: nobody in pmap checks for the virtual hole, so the system will hang.)
+ *  Allocate a page, pass the phys addr in as the spare, and try again.  
+ * If spare is not NULL it is assumed to be the address of a zeroed physical 
+ * page that can be used to generate a directory table or page table if needed.
+ *
+ */
+ENTRY(pseg_find)
+#ifndef _LP64
+	btst	1, %sp					! 64-bit mode?
+	bnz,pt	%icc, 0f
+	 sllx	%o2, 32, %o2				! Shift to high 32-bits
+	sll	%o3, 0, %o3				! Zero extend
+	sll	%o1, 0, %o1
+	or	%o2, %o3, %o2
+0:
+#endif
+#ifdef NOT_DEBUG
+	!! Trap any changes to pmap_kernel below 0xf0000000
+	set	_C_LABEL(kernel_pmap_), %o5
+	cmp	%o0, %o5
+	bne	0f
+	 sethi	%hi(0xf0000000), %o5
+	cmp	%o1, %o5
+	tlu	1
+0:
+#endif
+	!!
+	!! However we managed to get here we now have:
+	!!
+	!! %o0 = *pmap
+	!! %o1 = addr
+	!! %o2 = spare
+	!!
+	srax	%o1, HOLESHIFT, %o4			! Check for valid address
+	brz,pt	%o4, 0f					! Should be zero or -1
+	 inc	%o4					! Make -1 -> 0
+	brz,pt	%o4, 0f
+	 nop
+#ifdef DEBUG
+	ta	1					! Break into debugger
+#endif
+	mov	-1, %o0					! Error -- in hole!
+	retl
+	 mov	-1, %o1
+0:
+	ldx	[%o0 + PM_PHYS], %o4			! pmap->pm_segs
+	srlx	%o1, STSHIFT, %o5
+	and	%o5, STMASK, %o5
+	sll	%o5, 3, %o5
+	add	%o4, %o5, %o4
+2:	
+	DLFLUSH(%o4,%o3)
+	ldxa	[%o4] ASI_PHYS_CACHED, %o5		! Load page directory pointer
+	DLFLUSH2(%o3)
+
+	brnz,a,pt	%o5, 0f				! Null pointer?
+	 mov	%o5, %o4
+	brz,pn	%o2, 1f					! Have a spare?
+	 mov	%o2, %o5
+	casxa	[%o4] ASI_PHYS_CACHED, %g0, %o5
+	brnz,pn	%o5, 2b					! Something changed?
+	DLFLUSH(%o4, %o5)
+	mov	%o2, %o4
+	clr	%o2					! Mark spare as used
+0:
+	srlx	%o1, PDSHIFT, %o5
+	and	%o5, PDMASK, %o5
+	sll	%o5, 3, %o5
+	add	%o4, %o5, %o4
+2:	
+	DLFLUSH(%o4,%o3)
+	ldxa	[%o4] ASI_PHYS_CACHED, %o5		! Load table directory pointer
+	DLFLUSH2(%o3)
+
+	brnz,a,pt	%o5, 0f				! Null pointer?
+	 mov	%o5, %o4
+	brz,pn	%o2, 1f					! Have a spare?
+	 mov	%o2, %o5
+	casxa	[%o4] ASI_PHYS_CACHED, %g0, %o5
+	brnz,pn	%o5, 2b					! Something changed?
+	DLFLUSH(%o4, %o4)
+	mov	%o2, %o4
+	clr	%o2					! Mark spare as used
+0:
+	srlx	%o1, PTSHIFT, %o5			! Convert to ptab offset
+	btst	1, %sp
+	and	%o5, PTMASK, %o5
+	sll	%o5, 3, %o5
+	bz,pn	%icc, 0f				! 64-bit mode?
+	 add	%o5, %o4, %o0
+	retl
+	 clr	%o0
+0:
+	srl	%o0, 0, %o1
+	retl						! No, generate a %o0:%o1 double
+	 srlx	%o0, 32, %o0
+	
+1:
+	retl
+	 mov	1, %o0
+
 
 /*
  * copywords(src, dst, nbytes)
