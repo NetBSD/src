@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.27 2004/05/13 12:27:38 yamt Exp $	*/
+/*	$NetBSD: asm.h,v 1.28 2004/05/13 20:30:39 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -139,6 +139,8 @@
 #else /* __ELF__ */
 #define	MCOUNT_ASM	call	_C_LABEL(mcount)
 #endif /* __ELF__ */
+#else /* GPROF */
+#define	MCOUNT_ASM	/* nothing */
 #endif /* GPROF */
 
 #endif /* _KERNEL */
