@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_exec.c,v 1.1 2002/11/12 23:40:22 manu Exp $ */
+/*	$NetBSD: darwin_exec.c,v 1.2 2002/11/20 23:54:39 manu Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_exec.c,v 1.1 2002/11/12 23:40:22 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_exec.c,v 1.2 2002/11/20 23:54:39 manu Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -45,6 +45,7 @@ __KERNEL_RCSID(0, "$NetBSD: darwin_exec.c,v 1.1 2002/11/12 23:40:22 manu Exp $")
 #include <sys/exec.h>
 #include <sys/malloc.h>
 #include <sys/syscall.h>
+#include <sys/exec_macho.h>
 
 #include <uvm/uvm_extern.h>
 #include <uvm/uvm_param.h>
@@ -106,23 +107,60 @@ int
 exec_darwin_copyargs(struct proc *p, struct exec_package *pack,
     struct ps_strings *arginfo, char **stackp, void *argp)
 {
+	struct exec_macho_object_header *macho_hdr;
+	char **cpp, *dp, *sp, *progname;
 	size_t len;
-	size_t zero = 0;
-	int pagelen = PAGE_SIZE;
+	void *nullp = NULL;
+	long argc, envc;
 	int error;
 
 	*stackp -= 16;
 
-	if ((error = copyout(&pagelen, *stackp, sizeof(pagelen))) != 0)
+	macho_hdr = (struct exec_macho_object_header *)0x1000; /* XXX */
+	if ((error = copyout(&macho_hdr, *stackp, sizeof(macho_hdr))) != 0)
 		return error;
-	*stackp += sizeof(pagelen);
+	*stackp += sizeof(macho_hdr);
 
-	if ((error = copyargs(p, pack, arginfo, stackp, argp)) != 0)
+	cpp = (char **)*stackp;
+	argc = arginfo->ps_nargvstr;
+	envc = arginfo->ps_nenvstr;
+	if ((error = copyout(&argc, cpp++, sizeof(argc))) != 0)
 		return error;
 
-	if ((error = copyout(&zero, *stackp, sizeof(zero))) != 0)
+	dp = (char *) (cpp + argc + envc + 4 + pack->ep_es->es_arglen);
+	sp = argp;
+
+	progname = dp;
+	if ((error = copyoutstr(sp, dp, ARG_MAX, &len)) != 0)
 		return error;
-	*stackp += sizeof(zero);
+	dp += len;
+
+
+	arginfo->ps_argvstr = cpp; /* remember location of argv for later */
+	for (; --argc >= 0; sp += len, dp += len)
+		if ((error = copyout(&dp, cpp++, sizeof(dp))) != 0 ||
+		    (error = copyoutstr(sp, dp, ARG_MAX, &len)) != 0)
+			return error;
+
+	if ((error = copyout(&nullp, cpp++, sizeof(nullp))) != 0)
+		return error;
+
+	arginfo->ps_envstr = cpp; /* remember location of envp for later */
+	for (; --envc >= 0; sp += len, dp += len)
+		if ((error = copyout(&dp, cpp++, sizeof(dp))) != 0 ||
+		    (error = copyoutstr(sp, dp, ARG_MAX, &len)) != 0)
+			return error;
+
+	if ((error = copyout(&nullp, cpp++, sizeof(nullp))) != 0)
+		return error;
+
+	if ((error = copyout(&progname, cpp++, sizeof(progname))) != 0)
+		return error;
+
+	if ((error = copyout(&nullp, cpp++, sizeof(nullp))) != 0)
+		return error;
+
+	*stackp = (char *)cpp;
 
 	if ((error = copyoutstr(pack->ep_emul_arg, 
 	    *stackp, MAXPATHLEN, &len)) != 0)
@@ -133,16 +171,16 @@ exec_darwin_copyargs(struct proc *p, struct exec_package *pack,
 	free(pack->ep_emul_arg, MAXPATHLEN);
 	pack->ep_emul_arg = NULL;
 
-	len = len % sizeof(zero);
+	len = len % sizeof(nullp);
 	if (len) {
-		if ((error = copyout(&zero, *stackp, len)) != 0)
+		if ((error = copyout(&nullp, *stackp, len)) != 0)
 			return error;
 		*stackp += len;
 	}
 
-	if ((error = copyout(&zero, *stackp, sizeof(zero))) != 0) 
+	if ((error = copyout(&nullp, *stackp, sizeof(nullp))) != 0) 
 		return error;
-	*stackp += sizeof(zero);
+	*stackp += sizeof(nullp);
 
 	return 0;
 }
