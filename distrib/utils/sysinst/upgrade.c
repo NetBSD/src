@@ -1,4 +1,4 @@
-/*	$NetBSD: upgrade.c,v 1.24 2000/10/11 23:47:57 fvdl Exp $	*/
+/*	$NetBSD: upgrade.c,v 1.25 2000/12/04 22:47:02 wiz Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -239,7 +239,7 @@ merge_X()
 }
 
 /*
- * Unpacks sets,  clobbering existintg contents.
+ * Unpacks sets,  clobbering existing contents.
  */
 void
 do_reinstall_sets()

@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.57 2000/11/26 01:11:26 simonb Exp $	*/
+/*	$NetBSD: util.c,v 1.58 2000/12/04 22:47:02 wiz Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -554,7 +554,7 @@ extract_dist()
  * files to kill from the target. For each file, test if it is present on
  * the target. Then display the list of files which will be removed,
  * ask user for confirmation, and process.
- * Non-empty directories will be renaned to <directory.old>.
+ * Non-empty directories will be renamed to <directory.old>.
  */
 
 /* definition for a list of files. */
