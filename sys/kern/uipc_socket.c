@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_socket.c,v 1.47 1999/05/15 22:37:22 sommerfeld Exp $	*/
+/*	$NetBSD: uipc_socket.c,v 1.48 1999/06/08 02:39:57 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1990, 1993
@@ -404,8 +404,12 @@ restart:
 		s = splsoftnet();
 		if (so->so_state & SS_CANTSENDMORE)
 			snderr(EPIPE);
-		if (so->so_error)
-			snderr(so->so_error);
+		if (so->so_error) {
+			error = so->so_error;
+			so->so_error = 0;
+			splx(s);
+			goto release;
+		}
 		if ((so->so_state & SS_ISCONNECTED) == 0) {
 			if (so->so_proto->pr_flags & PR_CONNREQUIRED) {
 				if ((so->so_state & SS_ISCONFIRMING) == 0 &&
