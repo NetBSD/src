@@ -1,4 +1,4 @@
-/* $NetBSD: atomic.h,v 1.1 1999/12/02 01:09:13 thorpej Exp $ */
+/* $NetBSD: atomic.h,v 1.2 1999/12/03 01:13:17 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -43,8 +43,6 @@
 
 #ifndef _ALPHA_ATOMIC_H_
 #define	_ALPHA_ATOMIC_H_
-
-int		alpha_atomic_testset_l __P((unsigned int *, unsigned int));
 
 static __inline void alpha_atomic_setbits_q __P((__volatile unsigned long *,
 	unsigned long)) __attribute__((__unused__));
