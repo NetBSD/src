@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_node.c,v 1.25 2004/07/24 04:44:51 dyoung Exp $	*/
+/*	$NetBSD: ieee80211_node.c,v 1.26 2004/07/25 05:08:33 dyoung Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002-2004 Sam Leffler, Errno Consulting
@@ -35,7 +35,7 @@
 #ifdef __FreeBSD__
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211_node.c,v 1.22 2004/04/05 04:15:55 sam Exp $");
 #else
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_node.c,v 1.25 2004/07/24 04:44:51 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_node.c,v 1.26 2004/07/25 05:08:33 dyoung Exp $");
 #endif
 
 #include "opt_inet.h"
@@ -927,12 +927,15 @@ ieee80211_node_join(struct ieee80211com *ic, struct ieee80211_node *ni, int resp
 }
 
 /*
- * Handle bookkeeping for station timeout/deauthentication/disassociation
- * in all modes.
+ * Handle bookkeeping for station deauthentication/disassociation
+ * when operating as an ap.
  */
 void
 ieee80211_node_leave(struct ieee80211com *ic, struct ieee80211_node *ni)
 {
+
+	IASSERT(ic->ic_opmode == IEEE80211_M_HOSTAP,
+		("not in ap mode, mode %u", ic->ic_opmode));
 	/*
 	 * If node wasn't previously associated all
 	 * we need to do is reclaim the reference.
