@@ -21,7 +21,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: if_ep.c,v 1.3 1993/12/16 04:29:07 hpeyerl Exp $
+ *	$Id: if_ep.c,v 1.4 1993/12/16 20:14:10 hpeyerl Exp $
  */
 /*
  * TODO: 
@@ -287,11 +287,11 @@ epinit(unit)
 	outw(BASE+EP_COMMAND, SET_RX_FILTER | FIL_INDIVIDUAL | 
 		FIL_GROUP | FIL_BRDCST);
 
-	if (!(ifp->if_flags & IFF_LLC0) && (sc->ep_connectors & BNC)) {	/* Want BNC? */
+	if (!(ifp->if_flags & IFF_LINK0) && (sc->ep_connectors & BNC)) {	/* Want BNC? */
 		outw(BASE+EP_COMMAND, START_TRANSCEIVER);
 		DELAY(1000);
 	}
-	if ((sc->ep_connectors & UTP) & !(ifp->if_flags & IFF_LLC0)) {    /* Want UTP? */
+	if ((sc->ep_connectors & UTP) & !(ifp->if_flags & IFF_LINK0)) {    /* Want UTP? */
 		GO_WINDOW(4);
 		outw(BASE+EP_W4_MEDIA_TYPE, ENABLE_UTP);
 		GO_WINDOW(1);
