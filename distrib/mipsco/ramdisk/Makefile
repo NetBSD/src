@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.13 2002/05/02 18:02:42 lukem Exp $
+#	$NetBSD: Makefile,v 1.14 2003/02/01 05:03:42 tsutsui Exp $
 
 .include <bsd.own.mk>
 .include "${NETBSDSRCDIR}/distrib/common/Makefile.distrib"
@@ -9,7 +9,7 @@ IMAGESIZE=	3m
 MAKEFS_FLAGS=	-f 15
 
 WARNS=		1
-DBG=		-Os -Wa,-xgot # XXX -xgot workaround for objcopy-crunchide
+DBG=		-Os
 
 CRUNCHBIN=	ramdiskbin
 CRUNCHGEN_FLAGS= -d "${DBG}"
