@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.104 1998/10/19 11:56:43 pk Exp $	*/
+/*	$NetBSD: locore.s,v 1.105 1998/10/24 08:04:07 pk Exp $	*/
 
 /*
  * Copyright (c) 1996 Paul Kranenburg
@@ -2696,11 +2696,14 @@ nmi_sun4m:
 	ld	[%l6 + %lo(CPUINFO_VA+CPUINFO_INTREG)], %l6
 	ld	[%l6 + ICR_PI_PEND_OFFSET], %l5	! get pending interrupts
 
-	set	PINTR_IC, %o1
-	sethi	%hi(PINTR_SINTRLEV(15)), %o0
+	set	_nmi_soft, %o3		! assume a softint
+	set	PINTR_IC, %o1			! hard lvl 15 bit
+	sethi	%hi(PINTR_SINTRLEV(15)), %o0	! soft lvl 15 bit
 	btst	%o0, %l5		! soft level 15?
 	bnz,a	1f			!
-	 sll	%o1, 16, %o1		! shift int clear bit to SOFTINT 15
+	 mov	%o0, %o1		! shift int clear bit to SOFTINT 15
+
+	set	_nmi_hard, %o3		! it's a hardint; switch handler
 
 	/*
 	 * Level 15 interrupts are nonmaskable, so with traps off,
@@ -2711,8 +2714,14 @@ nmi_sun4m:
 	st	%o2, [%o0 + %lo(ICR_SI_SET)]
 
 1:
-	/* Now clear the NMI */
+	/*
+	 * Now clear the NMI. Apparently, we must allow some time
+	 * to let the bits sink in..
+	 */
 	st	%o1, [%l6 + ICR_PI_CLR_OFFSET]
+	 nop; nop; nop;
+	ld	[%l6 + ICR_PI_PEND_OFFSET], %g0	! drain register!?
+	 nop; nop; nop;
 
 	wr	%l0, PSR_ET, %psr	! okay, turn traps on again
 
@@ -2725,17 +2734,9 @@ nmi_sun4m:
 	mov	%g6, %l6
 	mov	%g7, %l7
 
-	bnz,a	2f			! cond code still indicates softint
-	 nop
-	call	_nmi_hard
+	jmpl	%o3, %o7		! handler(0);
 	 clr	%o0
-	mov	1, %o0
-	ba,a	3f
-2:
-	call	_nmi_soft
-	 clr	%o0
-	clr	%o0
-3:
+
 	mov	%l5, %g1		! restore g1 through g7
 	ldd	[%sp + CCFSZ + 0], %g2
 	ldd	[%sp + CCFSZ + 8], %g4
@@ -2743,8 +2744,9 @@ nmi_sun4m:
 	mov	%l6, %g6
 	mov	%l7, %g7
 
-	cmp	%o0, 0			! was this a soft nmi
-	be	4f
+	!cmp	%o0, 0			! was this a soft nmi
+	!be	4f
+	!XXX - we need to unblock `mask all ints' only on a hard nmi
 
 	! enable interrupts again (safe, we disabled traps again above)
 	sethi	%hi(ICR_SI_CLR), %o0
