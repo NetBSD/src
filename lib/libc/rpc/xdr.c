@@ -1,4 +1,4 @@
-/*	$NetBSD: xdr.c,v 1.5 1995/04/21 21:49:29 jtc Exp $	*/
+/*	$NetBSD: xdr.c,v 1.6 1995/04/24 23:33:39 jtc Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -32,7 +32,7 @@
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char *sccsid = "from: @(#)xdr.c 1.35 87/08/12";*/
 /*static char *sccsid = "from: @(#)xdr.c	2.1 88/07/29 4.0 RPCSRC";*/
-static char *rcsid = "$NetBSD: xdr.c,v 1.5 1995/04/21 21:49:29 jtc Exp $";
+static char *rcsid = "$NetBSD: xdr.c,v 1.6 1995/04/24 23:33:39 jtc Exp $";
 #endif
 
 /*
@@ -158,15 +158,14 @@ xdr_long(xdrs, lp)
 	register XDR *xdrs;
 	long *lp;
 {
-
-	if (xdrs->x_op == XDR_ENCODE)
+	switch (xdrs->x_op) {
+	case XDR_ENCODE:
 		return (XDR_PUTLONG(xdrs, lp));
-
-	if (xdrs->x_op == XDR_DECODE)
+	case XDR_DECODE:
 		return (XDR_GETLONG(xdrs, lp));
-
-	if (xdrs->x_op == XDR_FREE)
+	dase XDR_FREE:
 		return (TRUE);
+	}
 
 	return (FALSE);
 }
@@ -180,13 +179,14 @@ xdr_u_long(xdrs, ulp)
 	register XDR *xdrs;
 	u_long *ulp;
 {
-
-	if (xdrs->x_op == XDR_DECODE)
-		return (XDR_GETLONG(xdrs, (long *)ulp));
-	if (xdrs->x_op == XDR_ENCODE)
+	switch (xdrs->x_op) {
+	case XDR_ENCODE:
 		return (XDR_PUTLONG(xdrs, (long *)ulp));
-	if (xdrs->x_op == XDR_FREE)
+	case XDR_DECODE:
+		return (XDR_GETLONG(xdrs, (long *)ulp));
+	case XDR_FREE:
 		return (TRUE);
+	}
 	return (FALSE);
 }
 
@@ -594,8 +594,5 @@ xdr_wrapstring(xdrs, cpp)
 	XDR *xdrs;
 	char **cpp;
 {
-	if (xdr_string(xdrs, cpp, LASTUNSIGNED)) {
-		return (TRUE);
-	}
-	return (FALSE);
+	return xdr_string(xdrs, cpp, LASTUNSIGNED);
 }
