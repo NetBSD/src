@@ -1,4 +1,4 @@
-/* $NetBSD: style,v 1.24 2003/03/10 03:50:38 lukem Exp $ */
+/* $NetBSD: style,v 1.25 2003/04/17 02:59:29 lukem Exp $ */
 
 /*
  * The revision control tag appears first, with a blank line after it.
@@ -29,7 +29,7 @@
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2000\n\
 	The NetBSD Foundation, inc. All rights reserved.\n");
-__RCSID("$NetBSD: style,v 1.24 2003/03/10 03:50:38 lukem Exp $");
+__RCSID("$NetBSD: style,v 1.25 2003/04/17 02:59:29 lukem Exp $");
 
 /*
  * VERY important single-line comments look like this.
@@ -83,6 +83,7 @@ __RCSID("$NetBSD: style,v 1.24 2003/03/10 03:50:38 lukem Exp $");
  * The /usr include files should be sorted!
  */
 #include <assert.h>
+#include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -205,8 +206,10 @@ main(int argc, char *argv[])
 			bflag = 1;
 			break;
 		case 'n':
+			errno = 0;
 			num = strtol(optarg, &ep, 10);
-			if (num <= 0 || *ep != '\0')
+			if (num <= 0 || *ep != '\0' || (errno == ERANGE &&
+			    (num == LONG_MAX || num == LONG_MIN)) )
 				errx(1, "illegal number -- %s", optarg);
 			break;
 		case '?':
