@@ -1,4 +1,4 @@
-/*	$NetBSD: scsiconf.c,v 1.156.2.10 2002/04/17 00:06:12 nathanw Exp $	*/
+/*	$NetBSD: scsiconf.c,v 1.156.2.11 2002/06/20 03:46:37 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scsiconf.c,v 1.156.2.10 2002/04/17 00:06:12 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scsiconf.c,v 1.156.2.11 2002/06/20 03:46:37 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -508,6 +508,10 @@ const struct scsi_quirk_inquiry_pattern scsi_quirk_patterns[] = {
 	{{T_DIRECT, T_FIXED,
 	 "IBM",	     "0664",		 ""},     PQUIRK_AUTOSAVE},
 	{{T_DIRECT, T_FIXED,
+	/* improperly report DT-only sync mode */
+	 "IBM     ", "DXHS36D",		 ""},
+				PQUIRK_CAP_SYNC|PQUIRK_CAP_WIDE16},
+	{{T_DIRECT, T_FIXED,
 	 "IBM     ", "H3171-S2",	 ""},
 				PQUIRK_NOLUNS|PQUIRK_AUTOSAVE},
 	{{T_DIRECT, T_FIXED,
@@ -844,10 +848,36 @@ scsi_probe_device(sc, target, lun)
 			periph->periph_cap |= PERIPH_CAP_SFTRESET;
 		if ((inqbuf.flags3 & SID_RelAdr) != 0)
 			periph->periph_cap |= PERIPH_CAP_RELADR;
-	} else {
-		if (quirks & PQUIRK_CAP_SYNC)
-			periph->periph_cap |= PERIPH_CAP_SYNC;
+		if (periph->periph_version >= 3) { /* SPC-2 */
+			/*
+			 * Report ST clocking though CAP_WIDExx/CAP_SYNC.
+			 * If the device only supports DT, clear these
+			 * flags (DT implies SYNC and WIDE)
+			 */
+			switch (inqbuf.flags4 & SID_Clocking) {
+			case SID_CLOCKING_DT_ONLY:
+				periph->periph_cap &=
+				    ~(PERIPH_CAP_SYNC |
+				      PERIPH_CAP_WIDE16 |
+				      PERIPH_CAP_WIDE32);
+				/* FALLTHOUGH */
+			case SID_CLOCKING_SD_DT:
+				periph->periph_cap |= PERIPH_CAP_DT;
+				break;
+			default: /* ST only or invalid */
+				/* nothing to do */
+				break;
+			}
+			if (inqbuf.flags4 & SID_IUS)
+				periph->periph_cap |= PERIPH_CAP_IUS;
+			if (inqbuf.flags4 & SID_QAS)
+				periph->periph_cap |= PERIPH_CAP_QAS;
+		}
 	}
+	if (quirks & PQUIRK_CAP_SYNC)
+		periph->periph_cap |= PERIPH_CAP_SYNC;
+	if (quirks & PQUIRK_CAP_WIDE16)
+		periph->periph_cap |= PERIPH_CAP_WIDE16;
 
 	/*
 	 * Now apply any quirks from the table.

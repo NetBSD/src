@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide_acer_reg.h,v 1.3.6.2 2001/10/22 20:41:28 nathanw Exp $	*/
+/*	$NetBSD: pciide_acer_reg.h,v 1.3.6.3 2002/06/20 03:45:50 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1999 Manuel Bouyer.
@@ -13,8 +13,7 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
+ *	This product includes software developed by Manuel Bouyer.
  * 4. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.

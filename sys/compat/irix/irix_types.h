@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_types.h,v 1.9.2.3 2002/04/01 07:44:02 nathanw Exp $ */
+/*	$NetBSD: irix_types.h,v 1.9.2.4 2002/06/20 03:42:55 nathanw Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -61,6 +61,7 @@ typedef __int64_t irix_app32_long_long_t;
 typedef __uint32_t irix_ino_t;
 typedef __int32_t irix_off_t;
 typedef __uint32_t irix_app32_ptr_t;
+typedef __uint64_t irix_k_sigset_t;
 
 #if 1 /* _MIPS_SZLONG == 32 */
 typedef unsigned long irix_mode_t;

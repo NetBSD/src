@@ -1,4 +1,4 @@
-# $NetBSD: files.alpha,v 1.142.2.6 2002/04/01 07:38:51 nathanw Exp $
+# $NetBSD: files.alpha,v 1.142.2.7 2002/06/20 03:37:36 nathanw Exp $
 #
 # alpha-specific configuration info
 
@@ -58,12 +58,6 @@ attach	mainbus at root
 device	cpu { }				# not really optional
 attach	cpu at mainbus
 file	arch/alpha/alpha/cpu.c		cpu
-
-#
-# Machine-independent MII/PHY drivers.
-#
-
-include "dev/mii/files.mii"
 
 #
 # Machine-independent I2O drivers.
@@ -440,6 +434,14 @@ device	pceb: isabus, eisabus, cy82c693
 attach	pceb at pci
 file	arch/alpha/pci/sio.c		sio | pceb	needs-flag
 file	arch/alpha/pci/sio_pic.c	sio | pceb
+
+# XXX THE FOLLOWING BLOCK SHOULD GO INTO dev/pci/files.pci, BUT CANNOT
+# XXX BECAUSE NOT 'lpt' IS DEFINED IN files.isa, RATHER THAN files.
+# XXX (when the conf/files and files.isa bogons are fixed, this can
+# XXX be fixed as well.)
+
+attach	lpt at puc with lpt_puc
+file	dev/pci/lpt_puc.c		lpt_puc
 
 
 #

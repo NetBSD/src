@@ -1,4 +1,4 @@
-/*	$NetBSD: sb_ofisa.c,v 1.5.20.1 2001/11/14 19:15:05 nathanw Exp $	*/
+/*	$NetBSD: sb_ofisa.c,v 1.5.20.2 2002/06/20 03:45:18 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sb_ofisa.c,v 1.5.20.1 2001/11/14 19:15:05 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sb_ofisa.c,v 1.5.20.2 2002/06/20 03:45:18 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -74,7 +74,7 @@ sb_ofisa_match(parent, cf, aux)
 	void *aux;
 {
 	struct ofisa_attach_args *aa = aux;
-	const char *compatible_strings[] = {
+	static const char *const compatible_strings[] = {
 		"pnpPNP,b000",			/* generic SB 1.5 */
 		"pnpPNP,b001",			/* generic SB 2.0 */
 		"pnpPNP,b002",			/* generic SB Pro */

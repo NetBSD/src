@@ -1,7 +1,0 @@
-|
-| $NetBSD: !Boot,v 1.1.4.2 2002/02/28 04:06:00 nathanw Exp $
-| boot file for !BtNetBSD application
-|
-IconSprites <Obey$Dir>.!Sprites
-Set File$Type_fe6 Unix
-Set BtNetBSD$Dir <Obey$Dir>

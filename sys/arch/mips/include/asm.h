@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.29.8.1 2002/04/01 07:40:56 nathanw Exp $	*/
+/*	$NetBSD: asm.h,v 1.29.8.2 2002/06/20 03:39:44 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -105,17 +105,16 @@
 #define AENT(x)
 #endif
 
-#ifdef __ELF__
+/*
+ * WEAK_ALIAS: create a weak alias.
+ */
 #define	WEAK_ALIAS(alias,sym)						\
 	.weak alias;							\
 	alias = sym
-#endif
 
 /*
- * WARN_REFERENCES: create a warning if the specified symbol is referenced
- * (ELF only, and thus, no leading underscores).
+ * WARN_REFERENCES: create a warning if the specified symbol is referenced.
  */
-#ifdef __ELF__
 #ifdef __STDC__
 #define	WARN_REFERENCES(_sym,_msg)				\
 	.section .gnu.warning. ## _sym ; .ascii _msg ; .text
@@ -123,7 +122,6 @@
 #define	WARN_REFERENCES(_sym,_msg)				\
 	.section .gnu.warning./**/_sym ; .ascii _msg ; .text
 #endif /* __STDC__ */
-#endif /* __ELF__ */
 
 /*
  * LEAF

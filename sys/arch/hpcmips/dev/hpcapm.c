@@ -1,4 +1,4 @@
-/*	$NetBSD: hpcapm.c,v 1.8.4.3 2002/02/28 04:09:54 nathanw Exp $	*/
+/*	$NetBSD: hpcapm.c,v 1.8.4.4 2002/06/20 03:38:47 nathanw Exp $	*/
 
 /*
  * Copyright (c) 2000 Takemura Shin
@@ -365,7 +365,7 @@ hpcapm_set_powstate(void *scx, u_int devid, u_int powstat)
 			delay(1000); /* 1msec */
 		}
 #endif
-		config_hook_call(CONFIG_HOOK_PMEVENT, 
+		config_hook_call_reverse(CONFIG_HOOK_PMEVENT, 
 				 CONFIG_HOOK_PMEVENT_HARDPOWER,
 				 (void *)PWR_RESUME);
 		DPRINTF(("hpcapm: resume\n"));
@@ -410,7 +410,7 @@ hpcapm_set_powstate(void *scx, u_int devid, u_int powstat)
 			tx39power_suspend_cpu();
 		}
 #endif
-		config_hook_call(CONFIG_HOOK_PMEVENT, 
+		config_hook_call_reverse(CONFIG_HOOK_PMEVENT, 
 				 CONFIG_HOOK_PMEVENT_HARDPOWER,
 				 (void *)PWR_RESUME);
 		DPRINTF(("hpcapm: resume\n"));

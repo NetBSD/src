@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_sigcode.s,v 1.1.6.3 2001/11/14 19:12:46 nathanw Exp $	*/
+/*	$NetBSD: svr4_sigcode.s,v 1.1.6.4 2002/06/20 03:39:13 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -99,16 +99,6 @@
 #endif
 #define _ALIGN_TEXT	ALIGN_TEXT
 #include <machine/asm.h>
-
-/*
- * XXX traditional CPP's evaluation semantics make this necessary.
- * XXX (__CONCAT() would be evaluated incorrectly)
- */
-#ifdef __ELF__
-#define	IDTVEC(name)	ALIGN_TEXT; .globl X/**/name; X/**/name:
-#else
-#define	IDTVEC(name)	ALIGN_TEXT; .globl _X/**/name; _X/**/name:
-#endif
 
 /*
  * These are used on interrupt or trap entry or exit.

@@ -1,4 +1,4 @@
-/*	$NetBSD: ldscript,v 1.3.2.3 2002/04/01 07:39:48 nathanw Exp $	*/
+/*	$NetBSD: ldscript,v 1.3.2.4 2002/06/20 03:38:35 nathanw Exp $	*/
 
 OUTPUT_FORMAT("elf32-littlearm", "elf32-bigarm",
 	      "elf32-littlearm")
@@ -32,14 +32,14 @@ SECTIONS
   PROVIDE (etext = .);
   __data_store = FLASH + SIZEOF(.text);
   .data    :
-  AT (FLASH + SIZEOF(.text))
+  AT (LOADADDR(.text) + SIZEOF(.text))
   {
     __data_start = . ;
     *(.data)
     *(.data.*)
   } > sdram
   .sdata     : 
-  AT (FLASH + SIZEOF(.text) + SIZEOF(.data))
+  AT (LOADADDR(.data) + SIZEOF(.data))
   {
     *(.sdata) 
     *(.sdata.*)
@@ -75,7 +75,7 @@ SECTIONS
   _bss_end__ = . ; __bss_end__ = . ; __end__ = . ;
   PROVIDE (end = .);
   .image   (FLASH + SIZEOF(.text) + SIZEOF(.data) + SIZEOF(.sdata)) :
-  AT (FLASH + SIZEOF(.text) + SIZEOF(.data) + SIZEOF(.sdata))
+  AT (LOADADDR(.sdata) + SIZEOF(.sdata))
   {
     *(.image)
   }

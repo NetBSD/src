@@ -1,6 +1,8 @@
-#	$NetBSD: VME147,v 1.36.8.4 2002/04/17 00:03:51 nathanw Exp $
+#	$NetBSD: VME147,v 1.36.8.5 2002/06/20 03:39:58 nathanw Exp $
 
 include		"arch/mvme68k/conf/std.mvme68k"
+
+#options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
 # Boards this kernel supports; need at lest the correct one
 options 	MVME147
@@ -60,6 +62,7 @@ pseudo-device	bpfilter
 pseudo-device	pty
 pseudo-device	vnd 2
 pseudo-device	rnd
+pseudo-device	clockctl		# user control of clock subsystem
 
 mainbus0	at root
 

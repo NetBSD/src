@@ -1,4 +1,4 @@
-/* $NetBSD: sunos32_sysent.c,v 1.4.4.5 2002/05/29 21:48:56 nathanw Exp $ */
+/* $NetBSD: sunos32_sysent.c,v 1.4.4.6 2002/06/20 03:43:16 nathanw Exp $ */
 
 /*
  * System call switch table.
@@ -8,7 +8,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunos32_sysent.c,v 1.4.4.5 2002/05/29 21:48:56 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunos32_sysent.c,v 1.4.4.6 2002/06/20 03:43:16 nathanw Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_nfsserver.h"
@@ -383,22 +383,22 @@ struct sysent sunos32_sysent[] = {
 	{ 2, s(struct sunos32_sys_ustat_args), 0,
 	    sunos32_sys_ustat },		/* 168 = ustat */
 #ifdef SYSVSEM
-	{ 5, s(struct netbsd32_compat_10_sys_semsys_args), 0,
-	    netbsd32_compat_10_sys_semsys },	/* 169 = osemsys */
+	{ 5, s(struct compat_10_netbsd32_sys_semsys_args), 0,
+	    compat_10_netbsd32_sys_semsys },	/* 169 = osemsys */
 #else
 	{ 0, 0, 0,
 	    sys_nosys },			/* 169 = unimplemented semsys */
 #endif
 #ifdef SYSVMSG
-	{ 6, s(struct netbsd32_compat_10_sys_msgsys_args), 0,
-	    netbsd32_compat_10_sys_msgsys },	/* 170 = omsgsys */
+	{ 6, s(struct compat_10_netbsd32_sys_msgsys_args), 0,
+	    compat_10_netbsd32_sys_msgsys },	/* 170 = omsgsys */
 #else
 	{ 0, 0, 0,
 	    sys_nosys },			/* 170 = unimplemented msgsys */
 #endif
 #ifdef SYSVSHM
-	{ 4, s(struct netbsd32_compat_10_sys_shmsys_args), 0,
-	    netbsd32_compat_10_sys_shmsys },	/* 171 = oshmsys */
+	{ 4, s(struct compat_10_netbsd32_sys_shmsys_args), 0,
+	    compat_10_netbsd32_sys_shmsys },	/* 171 = oshmsys */
 #else
 	{ 0, 0, 0,
 	    sys_nosys },			/* 171 = unimplemented shmsys */

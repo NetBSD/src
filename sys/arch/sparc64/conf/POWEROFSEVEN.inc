@@ -1,10 +1,12 @@
-# 	$NetBSD: POWEROFSEVEN.inc,v 1.4.2.5 2002/04/17 00:04:29 nathanw Exp $
+# 	$NetBSD: POWEROFSEVEN.inc,v 1.4.2.6 2002/06/20 03:41:18 nathanw Exp $
 #
 # from: NetBSD: GENERIC32,v 1.13 2001/02/28 00:08:18 mjacob Exp
 #
 # Configuration for Ultra5/Ultra10
 
 include "arch/sparc64/conf/std.sparc64"
+
+#options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
 maxusers	64
 
@@ -366,10 +368,6 @@ hme*		at pci?	dev ? function ?		# network "hme" compatible
 
 # DEC Tulip
 tlp*		at pci? dev ? function ?
-options 	TLP_MATCH_21040
-options 	TLP_MATCH_21041
-options 	TLP_MATCH_21140
-options 	TLP_MATCH_21142
 
 # MII/PHY support
 #exphy*	at mii? phy ?			# 3Com internal PHYs
@@ -455,3 +453,5 @@ pseudo-device	pty			# pseudo-ttys (for network, etc.)
 ## and generate randomness for some kernel formulae.
 
 pseudo-device	rnd
+
+pseudo-device	clockctl		# user control of clock subsystem

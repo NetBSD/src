@@ -1,9 +1,11 @@
-#	$NetBSD: INSTALL,v 1.2.2.4 2002/04/17 00:04:19 nathanw Exp $
+#	$NetBSD: INSTALL,v 1.2.2.5 2002/06/20 03:40:56 nathanw Exp $
 #
 #	Shark installation kernel
 #
 
 include	"arch/shark/conf/std.shark"
+
+#options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
 # estimated number of users
 

@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.44.4.5 2002/04/17 00:02:48 nathanw Exp $
+# $NetBSD: GENERIC,v 1.44.4.6 2002/06/20 03:38:22 nathanw Exp $
 #
 # GENERIC machine description file
 # 
@@ -20,7 +20,9 @@
 
 include 	"arch/bebox/conf/std.bebox"
 
-#ident 		"GENERIC-$Revision: 1.44.4.5 $"
+options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
+
+#ident 		"GENERIC-$Revision: 1.44.4.6 $"
 
 maxusers	32
 
@@ -102,6 +104,7 @@ options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
 # options	RF_INCLUDE_PARITY_DECLUSTERING_DS=1
 #pseudo-device	gre		2	# generic L3 over IP tunnel
 pseudo-device	wsmux
+pseudo-device	clockctl		# user control of clock subsystem
 
 # random number generator pseudo-device
 pseudo-device	rnd			# /dev/random and in-kernel generator
@@ -143,7 +146,6 @@ lpt0	at isa? port 0x378 irq 7	# standard PC parallel ports
 #lms1	at isa? port 0x238 irq 5
 #mms0	at isa? port 0x23c irq 5	# Microsoft InPort mouse
 #mms1	at isa? port 0x238 irq 5
-#pms0	at pckbd? irq 12		# PS/2 auxiliary port mouse
 
 pckbc0	at isa?
 pckbd*	at pckbc?

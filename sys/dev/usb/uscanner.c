@@ -1,4 +1,4 @@
-/*	$NetBSD: uscanner.c,v 1.12.2.6 2002/02/28 04:14:37 nathanw Exp $	*/
+/*	$NetBSD: uscanner.c,v 1.12.2.7 2002/06/20 03:47:03 nathanw Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uscanner.c,v 1.12.2.6 2002/02/28 04:14:37 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uscanner.c,v 1.12.2.7 2002/06/20 03:47:03 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -117,6 +117,7 @@ static const struct uscan_info uscanner_devs[] = {
  {{ USB_VENDOR_KYE, USB_PRODUCT_KYE_VIVIDPRO }, 0 },
 
   /* HP */
+ {{ USB_VENDOR_HP, USB_PRODUCT_HP_2200C }, 0 },
  {{ USB_VENDOR_HP, USB_PRODUCT_HP_3300C }, 0 },
  {{ USB_VENDOR_HP, USB_PRODUCT_HP_3400CSE }, 0 },
  {{ USB_VENDOR_HP, USB_PRODUCT_HP_4100C }, 0 },
@@ -191,6 +192,7 @@ static const struct uscan_info uscanner_devs[] = {
  {{ USB_VENDOR_UMAX, USB_PRODUCT_UMAX_ASTRA3400 }, 0 },
 
   /* Visioneer */
+ {{ USB_VENDOR_VISIONEER, USB_PRODUCT_VISIONEER_3000 }, 0 },
  {{ USB_VENDOR_VISIONEER, USB_PRODUCT_VISIONEER_5300 }, 0 },
  {{ USB_VENDOR_VISIONEER, USB_PRODUCT_VISIONEER_7600 }, 0 },
  {{ USB_VENDOR_VISIONEER, USB_PRODUCT_VISIONEER_6100 }, 0 },

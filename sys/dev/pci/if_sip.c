@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sip.c,v 1.24.2.7 2002/04/01 07:46:22 nathanw Exp $	*/
+/*	$NetBSD: if_sip.c,v 1.24.2.8 2002/06/20 03:45:27 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sip.c,v 1.24.2.7 2002/04/01 07:46:22 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sip.c,v 1.24.2.8 2002/06/20 03:45:27 nathanw Exp $");
 
 #include "bpfilter.h"
 
@@ -138,10 +138,11 @@ __KERNEL_RCSID(0, "$NetBSD: if_sip.c,v 1.24.2.7 2002/04/01 07:46:22 nathanw Exp 
  * enough descriptors for 128 pending transmissions, and 8 segments
  * per packet.  This MUST work out to a power of 2.
  */
-#define	SIP_NTXSEGS		8
+#define	SIP_NTXSEGS		16
+#define	SIP_NTXSEGS_ALLOC	8
 
 #define	SIP_TXQUEUELEN		256
-#define	SIP_NTXDESC		(SIP_TXQUEUELEN * SIP_NTXSEGS)
+#define	SIP_NTXDESC		(SIP_TXQUEUELEN * SIP_NTXSEGS_ALLOC)
 #define	SIP_NTXDESC_MASK	(SIP_NTXDESC - 1)
 #define	SIP_NEXTTX(x)		(((x) + 1) & SIP_NTXDESC_MASK)
 
@@ -909,7 +910,7 @@ SIP_DECL(attach)(struct device *parent, struct device *self, void *aux)
 	 * may trash the first few outgoing packets if the
 	 * PCI bus is saturated.
 	 */
-	sc->sc_tx_drain_thresh = 512 / 32;
+	sc->sc_tx_drain_thresh = 1504 / 32;
 
 	/*
 	 * Initialize the Rx FIFO drain threshold.
@@ -1246,7 +1247,7 @@ SIP_DECL(start)(struct ifnet *ifp)
 		sc->sc_txfree -= dmamap->dm_nsegs;
 		sc->sc_txnext = nexttx;
 
-		SIMPLEQ_REMOVE_HEAD(&sc->sc_txfreeq, txs, txs_q);
+		SIMPLEQ_REMOVE_HEAD(&sc->sc_txfreeq, txs_q);
 		SIMPLEQ_INSERT_TAIL(&sc->sc_txdirtyq, txs, txs_q);
 
 #if NBPFILTER > 0
@@ -1517,7 +1518,7 @@ SIP_DECL(txintr)(struct sip_softc *sc)
 		if (cmdsts & CMDSTS_OWN)
 			break;
 
-		SIMPLEQ_REMOVE_HEAD(&sc->sc_txdirtyq, txs, txs_q);
+		SIMPLEQ_REMOVE_HEAD(&sc->sc_txdirtyq, txs_q);
 
 		sc->sc_txfree += txs->txs_dmamap->dm_nsegs;
 
@@ -2320,7 +2321,7 @@ SIP_DECL(stop)(struct ifnet *ifp, int disable)
 		     CMDSTS_INTR) == 0)
 			printf("%s: sip_stop: last descriptor does not "
 			    "have INTR bit set\n", sc->sc_dev.dv_xname);
-		SIMPLEQ_REMOVE_HEAD(&sc->sc_txdirtyq, txs, txs_q);
+		SIMPLEQ_REMOVE_HEAD(&sc->sc_txdirtyq, txs_q);
 #ifdef DIAGNOSTIC
 		if (txs->txs_mbuf == NULL) {
 			printf("%s: dirty txsoft with no mbuf chain\n",

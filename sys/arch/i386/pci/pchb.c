@@ -1,4 +1,4 @@
-/*	$NetBSD: pchb.c,v 1.23.4.4 2002/04/01 07:40:43 nathanw Exp $	*/
+/*	$NetBSD: pchb.c,v 1.23.4.5 2002/06/20 03:39:16 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1998, 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pchb.c,v 1.23.4.4 2002/04/01 07:40:43 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pchb.c,v 1.23.4.5 2002/06/20 03:39:16 nathanw Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -303,6 +303,7 @@ pchbattach(struct device *parent, struct device *self, void *aux)
 		pba.pba_memt = pa->pa_memt;
 		pba.pba_dmat = pa->pa_dmat;
 		pba.pba_bus = pbnum;
+		pba.pba_bridgetag = NULL;
 		pba.pba_flags = attachflags;
 		pba.pba_pc = pa->pa_pc;
 		config_found(self, &pba, pchb_print);

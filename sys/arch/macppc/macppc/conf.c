@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.36.2.2 2002/04/01 07:40:55 nathanw Exp $	*/
+/*	$NetBSD: conf.c,v 1.36.2.3 2002/06/20 03:39:36 nathanw Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -30,6 +30,8 @@
  * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include "opt_systrace.h"
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -125,6 +127,7 @@ cdev_decl(ccd);
 cdev_decl(aed);
 cdev_decl(wd);
 cdev_decl(ofc);
+#include "nvram.h"
 cdev_decl(nvram);
 #include "cz.h"
 cdev_decl(cztty);
@@ -140,6 +143,9 @@ cdev_decl(wskbd);
 cdev_decl(wsmouse);
 #include "wsmux.h"
 cdev_decl(wsmux);
+
+#include "apm.h"
+cdev_decl(apm);
 
 #include "usb.h"
 cdev_decl(usb);
@@ -213,7 +219,7 @@ struct cdevsw cdevsw[] = {
 	cdev_disk_init(NWD,wd),		/* 30: IDE disk driver */
 	cdev_lkm_init(NLKM,lkm),	/* 31: loadable module driver */
 	cdev_fd_init(1,filedesc),	/* 32: file descriptor pseudo-device */
-	cdev_mm_init(1,nvram),		/* 33: nvram device */
+	cdev_mm_init(NNVRAM,nvram),	/* 33: nvram device */
 	cdev_scsibus_init(NSCSIBUS,scsibus), /* 34: SCSI bus */
 	cdev_wsdisplay_init(NWSDISPLAY,wsdisplay), /* 35: wsdisplay */
 	cdev_mouse_init(NWSKBD,wskbd),	/* 36: wskbd */
@@ -243,6 +249,12 @@ struct cdevsw cdevsw[] = {
 	cdev_pci_init(NPCI,pci),	/* 60: PCI bus access device */
 	cdev_clockctl_init(NCLOCKCTL, clockctl),/* 61: settimeofday driver */
 	cdev_sysmon_init(NSYSMON, sysmon),	/* 62: System Monitor */
+#ifdef SYSTRACE
+	cdev_systrace_init(1, systrace),/* 63: system call tracing */
+#else
+	cdev_notdef(),			/* 63: system call tracing */
+#endif
+	cdev_apm_init(NAPM,apm),	/* 64: Advanced Power Management */
 };
 int nchrdev = sizeof cdevsw / sizeof cdevsw[0];
 
@@ -338,6 +350,8 @@ static int chrtoblktbl[] = {
 	/* 59 */	NODEV,
 	/* 60 */	NODEV,
 	/* 61 */	NODEV,
+	/* 62 */	NODEV,
+	/* 63 */	NODEV,
 };
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: pccbb.c,v 1.61.2.10 2002/04/01 07:46:32 nathanw Exp $	*/
+/*	$NetBSD: pccbb.c,v 1.61.2.11 2002/06/20 03:45:37 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 and 2000
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pccbb.c,v 1.61.2.10 2002/04/01 07:46:32 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pccbb.c,v 1.61.2.11 2002/06/20 03:45:37 nathanw Exp $");
 
 /*
 #define CBB_DEBUG
@@ -1245,7 +1245,7 @@ pccbb_power(ct, command)
 {
 	struct pccbb_softc *sc = (struct pccbb_softc *)ct;
 
-	u_int32_t status, sock_ctrl;
+	u_int32_t status, sock_ctrl, reg_ctrl;
 	bus_space_tag_t memt = sc->sc_base_memt;
 	bus_space_handle_t memh = sc->sc_base_memh;
 
@@ -1355,6 +1355,16 @@ pccbb_power(ct, command)
 		}
 #endif
 		return 0;
+	}
+
+	if (sc->sc_chipset == CB_TOPIC97) {
+		reg_ctrl = pci_conf_read(sc->sc_pc, sc->sc_tag, TOPIC_REG_CTRL);
+		reg_ctrl &= ~TOPIC97_REG_CTRL_TESTMODE;
+		if ((command & CARDBUS_VCCMASK) == CARDBUS_VCC_0V)
+			reg_ctrl &= ~TOPIC97_REG_CTRL_CLKRUN_ENA;
+		else
+			reg_ctrl |= TOPIC97_REG_CTRL_CLKRUN_ENA;
+		pci_conf_write(sc->sc_pc, sc->sc_tag, TOPIC_REG_CTRL, reg_ctrl);
 	}
 
 	/*
@@ -2969,6 +2979,17 @@ pccbb_rbus_cb_space_alloc(ct, rb, addr, size, mask, align, flags, addrp, bshp)
 		if (align < 16) {
 			return 1;
 		}
+		/*
+		 * XXX: align more than 0x1000 to avoid overwrapping
+		 * memory windows for two or more devices.  0x1000
+		 * means memory window's granularity.
+		 *
+		 * Two or more devices should be able to share same
+		 * memory window region.  However, overrapping memory
+		 * window is not good because some devices, such as
+		 * 3Com 3C575[BC], have a broken address decoder and
+		 * intrude other's memory region.
+		 */
 		if (align < 0x1000) {
 			align = 0x1000;
 		}

@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Name: acexcep.h - Exception codes returned by the ACPI subsystem
- *       xRevision: 50 $
+ *       $Revision: 1.1.1.1.4.3 $
  *
  *****************************************************************************/
 
@@ -9,7 +9,7 @@
  *
  * 1. Copyright Notice
  *
- * Some or all of this work - Copyright (c) 1999, 2000, 2001, Intel Corp.
+ * Some or all of this work - Copyright (c) 1999 - 2002, Intel Corp.
  * All rights reserved.
  *
  * 2. License
@@ -145,7 +145,7 @@
 #define AE_NO_MEMORY                    (ACPI_STATUS) (0x0004 | AE_CODE_ENVIRONMENTAL)
 #define AE_NOT_FOUND                    (ACPI_STATUS) (0x0005 | AE_CODE_ENVIRONMENTAL)
 #define AE_NOT_EXIST                    (ACPI_STATUS) (0x0006 | AE_CODE_ENVIRONMENTAL)
-#define AE_EXIST                        (ACPI_STATUS) (0x0007 | AE_CODE_ENVIRONMENTAL)
+#define AE_ALREADY_EXISTS               (ACPI_STATUS) (0x0007 | AE_CODE_ENVIRONMENTAL)
 #define AE_TYPE                         (ACPI_STATUS) (0x0008 | AE_CODE_ENVIRONMENTAL)
 #define AE_NULL_OBJECT                  (ACPI_STATUS) (0x0009 | AE_CODE_ENVIRONMENTAL)
 #define AE_NULL_ENTRY                   (ACPI_STATUS) (0x000A | AE_CODE_ENVIRONMENTAL)
@@ -165,8 +165,9 @@
 #define AE_ALREADY_ACQUIRED             (ACPI_STATUS) (0x0018 | AE_CODE_ENVIRONMENTAL)
 #define AE_NO_HARDWARE_RESPONSE         (ACPI_STATUS) (0x0019 | AE_CODE_ENVIRONMENTAL)
 #define AE_NO_GLOBAL_LOCK               (ACPI_STATUS) (0x001A | AE_CODE_ENVIRONMENTAL)
+#define AE_LOGICAL_ADDRESS              (ACPI_STATUS) (0x001B | AE_CODE_ENVIRONMENTAL)
 
-#define AE_CODE_ENV_MAX                 0x001A
+#define AE_CODE_ENV_MAX                 0x001B
 
 /*
  * Programmer exceptions
@@ -176,8 +177,12 @@
 #define AE_BAD_PATHNAME                 (ACPI_STATUS) (0x0003 | AE_CODE_PROGRAMMER)
 #define AE_BAD_DATA                     (ACPI_STATUS) (0x0004 | AE_CODE_PROGRAMMER)
 #define AE_BAD_ADDRESS                  (ACPI_STATUS) (0x0005 | AE_CODE_PROGRAMMER)
+#define AE_ALIGNMENT                    (ACPI_STATUS) (0x0006 | AE_CODE_PROGRAMMER)
+#define AE_BAD_HEX_CONSTANT             (ACPI_STATUS) (0x0007 | AE_CODE_PROGRAMMER)
+#define AE_BAD_OCTAL_CONSTANT           (ACPI_STATUS) (0x0008 | AE_CODE_PROGRAMMER)
+#define AE_BAD_DECIMAL_CONSTANT         (ACPI_STATUS) (0x0009 | AE_CODE_PROGRAMMER)
 
-#define AE_CODE_PGM_MAX                 0x0005
+#define AE_CODE_PGM_MAX                 0x0009
 
 
 /*
@@ -187,8 +192,10 @@
 #define AE_BAD_HEADER                   (ACPI_STATUS) (0x0002 | AE_CODE_ACPI_TABLES)
 #define AE_BAD_CHECKSUM                 (ACPI_STATUS) (0x0003 | AE_CODE_ACPI_TABLES)
 #define AE_BAD_VALUE                    (ACPI_STATUS) (0x0004 | AE_CODE_ACPI_TABLES)
+#define AE_TABLE_NOT_SUPPORTED          (ACPI_STATUS) (0x0005 | AE_CODE_ACPI_TABLES)
+#define AE_INVALID_TABLE_LENGTH         (ACPI_STATUS) (0x0006 | AE_CODE_ACPI_TABLES)
 
-#define AE_CODE_TBL_MAX                 0x0003
+#define AE_CODE_TBL_MAX                 0x0006
 
 
 /*
@@ -220,8 +227,14 @@
 #define AE_AML_MUTEX_ORDER              (ACPI_STATUS) (0x0017 | AE_CODE_AML)
 #define AE_AML_MUTEX_NOT_ACQUIRED       (ACPI_STATUS) (0x0018 | AE_CODE_AML)
 #define AE_AML_INVALID_RESOURCE_TYPE    (ACPI_STATUS) (0x0019 | AE_CODE_AML)
+#define AE_AML_INVALID_INDEX            (ACPI_STATUS) (0x001A | AE_CODE_AML)
+#define AE_AML_REGISTER_LIMIT           (ACPI_STATUS) (0x001B | AE_CODE_AML)
+#define AE_AML_NO_WHILE                 (ACPI_STATUS) (0x001C | AE_CODE_AML)
+#define AE_AML_ALIGNMENT                (ACPI_STATUS) (0x001D | AE_CODE_AML)
+#define AE_AML_NO_RESOURCE_END_TAG      (ACPI_STATUS) (0x001E | AE_CODE_AML)
+#define AE_AML_BAD_RESOURCE_VALUE       (ACPI_STATUS) (0x001F | AE_CODE_AML)
 
-#define AE_CODE_AML_MAX                 0x0019
+#define AE_CODE_AML_MAX                 0x001F
 
 /*
  * Internal exceptions used for control
@@ -234,8 +247,10 @@
 #define AE_CTRL_DEPTH                   (ACPI_STATUS) (0x0006 | AE_CODE_CONTROL)
 #define AE_CTRL_END                     (ACPI_STATUS) (0x0007 | AE_CODE_CONTROL)
 #define AE_CTRL_TRANSFER                (ACPI_STATUS) (0x0008 | AE_CODE_CONTROL)
+#define AE_CTRL_BREAK                   (ACPI_STATUS) (0x0009 | AE_CODE_CONTROL)
+#define AE_CTRL_CONTINUE                (ACPI_STATUS) (0x000A | AE_CODE_CONTROL)
 
-#define AE_CODE_CTRL_MAX                0x0008
+#define AE_CODE_CTRL_MAX                0x000A
 
 
 #ifdef DEFINE_ACPI_GLOBALS
@@ -253,7 +268,7 @@ NATIVE_CHAR const   *AcpiGbl_ExceptionNames_Env[] =
     "AE_NO_MEMORY",
     "AE_NOT_FOUND",
     "AE_NOT_EXIST",
-    "AE_EXIST",
+    "AE_ALREADY_EXISTS",
     "AE_TYPE",
     "AE_NULL_OBJECT",
     "AE_NULL_ENTRY",
@@ -273,6 +288,7 @@ NATIVE_CHAR const   *AcpiGbl_ExceptionNames_Env[] =
     "AE_ALREADY_ACQUIRED",
     "AE_NO_HARDWARE_RESPONSE",
     "AE_NO_GLOBAL_LOCK",
+    "AE_LOGICAL_ADDRESS"
 };
 
 NATIVE_CHAR const   *AcpiGbl_ExceptionNames_Pgm[] =
@@ -282,6 +298,10 @@ NATIVE_CHAR const   *AcpiGbl_ExceptionNames_Pgm[] =
     "AE_BAD_PATHNAME",
     "AE_BAD_DATA",
     "AE_BAD_ADDRESS",
+    "AE_ALIGNMENT",
+    "AE_BAD_HEX_CONSTANT",
+    "AE_BAD_OCTAL_CONSTANT",
+    "AE_BAD_DECIMAL_CONSTANT"
 };
 
 NATIVE_CHAR const   *AcpiGbl_ExceptionNames_Tbl[] =
@@ -290,6 +310,8 @@ NATIVE_CHAR const   *AcpiGbl_ExceptionNames_Tbl[] =
     "AE_BAD_HEADER",
     "AE_BAD_CHECKSUM",
     "AE_BAD_VALUE",
+    "AE_TABLE_NOT_SUPPORTED",
+    "AE_INVALID_TABLE_LENGTH"
 };
 
 NATIVE_CHAR const   *AcpiGbl_ExceptionNames_Aml[] =
@@ -319,6 +341,12 @@ NATIVE_CHAR const   *AcpiGbl_ExceptionNames_Aml[] =
     "AE_AML_MUTEX_ORDER",
     "AE_AML_MUTEX_NOT_ACQUIRED",
     "AE_AML_INVALID_RESOURCE_TYPE",
+    "AE_AML_INVALID_INDEX",
+    "AE_AML_REGISTER_LIMIT",
+    "AE_AML_NO_WHILE",
+    "AE_AML_ALIGNMENT",
+    "AE_AML_NO_RESOURCE_END_TAG",
+    "AE_AML_BAD_RESOURCE_VALUE"
 };
 
 NATIVE_CHAR const   *AcpiGbl_ExceptionNames_Ctrl[] =
@@ -331,6 +359,8 @@ NATIVE_CHAR const   *AcpiGbl_ExceptionNames_Ctrl[] =
     "AE_CTRL_DEPTH",
     "AE_CTRL_END",
     "AE_CTRL_TRANSFER",
+    "AE_CTRL_BREAK",
+    "AE_CTRL_CONTINUE"
 };
 
 #endif /* ACPI GLOBALS */

@@ -1,4 +1,4 @@
-/*	$NetBSD: undefined.c,v 1.9.4.6 2002/04/17 00:02:24 nathanw Exp $	*/
+/*	$NetBSD: undefined.c,v 1.9.4.7 2002/06/20 03:38:01 nathanw Exp $	*/
 
 /*
  * Copyright (c) 2001 Ben Harris.
@@ -50,7 +50,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: undefined.c,v 1.9.4.6 2002/04/17 00:02:24 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: undefined.c,v 1.9.4.7 2002/06/20 03:38:01 nathanw Exp $");
 
 #include <sys/malloc.h>
 #include <sys/queue.h>
@@ -159,6 +159,9 @@ undefinedinstruction(trapframe_t *frame)
 	int fault_code;
 	int coprocessor;
 	struct undefined_handler *uh;
+#ifdef VERBOSE_ARM32
+	int s;
+#endif
 
 	/* Enable interrupts if they were enabled before the exception. */
 #ifdef acorn26

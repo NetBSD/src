@@ -1,4 +1,4 @@
-/*	$NetBSD: bootxx.c,v 1.2 2000/10/12 05:34:29 onoe Exp $	*/
+/*	$NetBSD: bootxx.c,v 1.2.8.1 2002/06/20 03:40:20 nathanw Exp $	*/
 
 /*-
  * Copyright (C) 1999 Tsubai Masanari.  All rights reserved.
@@ -31,17 +31,26 @@
 #include <machine/apcall.h>
 #include <machine/romcall.h>
 
-#define MAXBLOCKNUM 64
+#include <sys/bootblock.h>
 
-void (*entry_point)() = (void *)0;
-int block_size = 8192;
-int block_count = MAXBLOCKNUM;
-int block_table[MAXBLOCKNUM] = { 0 };
+struct shared_bbinfo bbinfo = {
+	{ NEWSMIPS_BBINFO_MAGIC },	/* bbi_magic[] */
+	0,				/* bbi_block_size */
+	SHARED_BBINFO_MAXBLOCKS,	/* bbi_block_count */
+	{ 0 }				/* bbi_block_tagle[] */
+};
+
+#ifndef DEFAULT_ENTRY_POINT
+#define DEFAULT_ENTRY_POINT	0xa0700000
+#endif
+
+void (*entry_point)(u_int32_t, u_int32_t, u_int32_t, u_int32_t, void *) =
+    (void *)DEFAULT_ENTRY_POINT;
 
 #ifdef BOOTXX_DEBUG
-# define DPRINTF printf
+# define DPRINTF(x) printf x
 #else
-# define DPRINTF while (0) printf
+# define DPRINTF(x)
 #endif
 
 char *devs[] = { "sd", "fh", "fd", NULL, NULL, "rd", "st" };
@@ -50,7 +59,7 @@ int apbus = 0;
 
 void
 bootxx(a0, a1, a2, a3, a4, a5)
-	u_int a0, a1, a2, a3, a4, a5;
+	u_int32_t a0, a1, a2, a3, a4, a5;
 {
 	int fd, blk, bs;
 	int ctlr, unit, part, type;
@@ -71,17 +80,17 @@ bootxx(a0, a1, a2, a3, a4, a5)
 
 	printf("NetBSD/newsmips Primary Boot\n");
 
-	DPRINTF("\n");
-	DPRINTF("a0 %x\n", a0);
-	DPRINTF("a1 %x\n", a1);
-	DPRINTF("a2 %x (%s)\n", a2, (char *)a2);
-	DPRINTF("a3 %x\n", a3);
-	DPRINTF("a4 %x\n", a4);
-	DPRINTF("a5 %x\n", a5);
+	DPRINTF(("\n"));
+	DPRINTF(("a0 %x\n", a0));
+	DPRINTF(("a1 %x\n", a1));
+	DPRINTF(("a2 %x (%s)\n", a2, (char *)a2));
+	DPRINTF(("a3 %x\n", a3));
+	DPRINTF(("a4 %x\n", a4));
+	DPRINTF(("a5 %x\n", a5));
 
-	DPRINTF("block_size  = %d\n", block_size);
-	DPRINTF("block_count = %d\n", block_count);
-	DPRINTF("entry_point = %x\n", (int)entry_point);
+	DPRINTF(("block_size  = %d\n", bbinfo.bbi_block_size));
+	DPRINTF(("block_count = %d\n", bbinfo.bbi_block_count));
+	DPRINTF(("entry_point = %p\n", entry_point));
 
 	if (apbus) {
 		strcpy(devname, (char *)a1);
@@ -108,12 +117,12 @@ bootxx(a0, a1, a2, a3, a4, a5)
 	}
 
 	addr = (char *)entry_point;
-	bs = block_size;
-	DPRINTF("reading block:");
-	for (i = 0; i < block_count; i++) {
-		blk = block_table[i];
+	bs = bbinfo.bbi_block_size;
+	DPRINTF(("reading block:"));
+	for (i = 0; i < bbinfo.bbi_block_count; i++) {
+		blk = bbinfo.bbi_block_table[i];
 
-		DPRINTF(" %d", blk);
+		DPRINTF((" %d", blk));
 
 		if (apbus) {
 			apcall_lseek(fd, blk * 512, 0);
@@ -124,7 +133,7 @@ bootxx(a0, a1, a2, a3, a4, a5)
 		}
 		addr += bs;
 	}
-	DPRINTF(" done\n");
+	DPRINTF((" done\n"));
 	if (apbus)
 		apcall_close(fd);
 	else

@@ -1,4 +1,4 @@
-/*	$NetBSD: iomd_clock.c,v 1.2.4.3 2002/02/28 04:07:36 nathanw Exp $	*/
+/*	$NetBSD: iomd_clock.c,v 1.2.4.4 2002/06/20 03:38:10 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1994-1997 Mark Brinicombe.
@@ -352,7 +352,7 @@ delay(n)
 	u_int i;
 
 	if (n == 0) return;
-	while (--n > 0) {
+	while (n-- > 0) {
 		if (cputype == CPU_ID_SA110)	/* XXX - Seriously gross hack */
 			for (i = delaycount; --i;);
 		else

@@ -1,4 +1,4 @@
-/* $NetBSD: pecoff_sysent.c,v 1.2.2.5 2002/05/29 21:48:54 nathanw Exp $ */
+/* $NetBSD: pecoff_sysent.c,v 1.2.2.6 2002/06/20 03:43:14 nathanw Exp $ */
 
 /*
  * System call switch table.
@@ -8,7 +8,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pecoff_sysent.c,v 1.2.2.5 2002/05/29 21:48:54 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pecoff_sysent.c,v 1.2.2.6 2002/06/20 03:43:14 nathanw Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ktrace.h"
@@ -394,21 +394,21 @@ struct sysent pecoff_sysent[] = {
 	    sys_nosys },			/* 167 = unimplemented */
 	{ 0, 0, 0,
 	    sys_nosys },			/* 168 = unimplemented */
-#if (defined(SYSVSEM) || !defined(_KERNEL)) && !defined(alpha)
+#if (defined(SYSVSEM) || !defined(_KERNEL)) && !defined(_LP64)
 	{ 0, 0, 0,
 	    sys_nosys },			/* 169 = excluded { int sys_semsys ( int which , int a2 , int a3 , int a4 , int a5 ) ; } osemsys */
 #else
 	{ 0, 0, 0,
 	    sys_nosys },			/* 169 = excluded 1.0 semsys */
 #endif
-#if (defined(SYSVMSG) || !defined(_KERNEL)) && !defined(alpha)
+#if (defined(SYSVMSG) || !defined(_KERNEL)) && !defined(_LP64)
 	{ 0, 0, 0,
 	    sys_nosys },			/* 170 = excluded { int sys_msgsys ( int which , int a2 , int a3 , int a4 , int a5 , int a6 ) ; } omsgsys */
 #else
 	{ 0, 0, 0,
 	    sys_nosys },			/* 170 = excluded 1.0 msgsys */
 #endif
-#if (defined(SYSVSHM) || !defined(_KERNEL)) && !defined(alpha)
+#if (defined(SYSVSHM) || !defined(_KERNEL)) && !defined(_LP64)
 	{ 0, 0, 0,
 	    sys_nosys },			/* 171 = excluded { int sys_shmsys ( int which , int a2 , int a3 , int a4 ) ; } oshmsys */
 #else

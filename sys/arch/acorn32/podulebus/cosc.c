@@ -1,4 +1,4 @@
-/*	$NetBSD: cosc.c,v 1.1.4.2 2002/01/08 00:22:46 nathanw Exp $	*/
+/*	$NetBSD: cosc.c,v 1.1.4.3 2002/06/20 03:37:20 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1996 Mark Brinicombe
@@ -92,18 +92,15 @@ coscmatch(pdp, cf, auxp)
 
 	/* Look for the card */
 
-	if (matchpodule(pa, MANUFACTURER_MCS, PODULE_MCS_SCSI, -1) != 0)
+	if (pa->pa_product == PODULE_CONNECT32)
 		return(1);
 
 	/* Old versions of the ROM on this card could have the wrong ID */
 
-	if (matchpodule(pa, MANUFACTURER_ACORN, PODULE_ACORN_SCSI, -1) == 0)
-		return(0);
-
-	if (strncmp(pa->pa_podule->description, "MCS", 3) != 0)
-		return(0);
-
-	return(1);
+	if (pa ->pa_product == PODULE_ACORN_SCSI &&
+	    strncmp(pa->pa_podule->description, "MCS", 3) == 0)
+		return(1);
+	return(0);
 }
 
 static int dummy[6];

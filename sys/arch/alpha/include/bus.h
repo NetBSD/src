@@ -1,4 +1,4 @@
-/* $NetBSD: bus.h,v 1.45.2.2 2001/09/21 22:34:57 nathanw Exp $ */
+/* $NetBSD: bus.h,v 1.45.2.3 2002/06/20 03:37:37 nathanw Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998, 2000, 2001 The NetBSD Foundation, Inc.
@@ -669,9 +669,11 @@ struct alpha_bus_dma_tag {
 #define	bus_dmamap_load_raw(t, m, sg, n, s, f)			\
 	(*(t)->_dmamap_load_raw)((t), (m), (sg), (n), (s), (f))
 #define	bus_dmamap_unload(t, p)					\
-	(*(t)->_dmamap_unload)((t), (p))
+	(void)(t),						\
+	(*(p)->_dm_window->_dmamap_unload)((p)->_dm_window, (p))
 #define	bus_dmamap_sync(t, p, o, l, ops)			\
-	(*(t)->_dmamap_sync)((t), (p), (o), (l), (ops))
+	(void)(t), 						\
+	(*(p)->_dm_window->_dmamap_sync)((p)->_dm_window, (p), (o), (l), (ops))
 #define	bus_dmamem_alloc(t, s, a, b, sg, n, r, f)		\
 	(*(t)->_dmamem_alloc)((t), (s), (a), (b), (sg), (n), (r), (f))
 #define	bus_dmamem_free(t, sg, n)				\
@@ -702,6 +704,11 @@ struct alpha_bus_dmamap {
 	 * Private cookie to be used by the DMA back-end.
 	 */
 	void		*_dm_cookie;
+
+	/*
+	 * The DMA window that we ended up being mapped in.
+	 */
+	bus_dma_tag_t	_dm_window;
 
 	/*
 	 * PUBLIC MEMBERS: these are used by machine-independent code.

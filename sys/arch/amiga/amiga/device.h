@@ -1,4 +1,4 @@
-/*	$NetBSD: device.h,v 1.6.46.1 2002/02/28 04:06:20 nathanw Exp $	*/
+/*	$NetBSD: device.h,v 1.6.46.2 2002/06/20 03:37:49 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -44,7 +44,7 @@ int matchname(char *, char *);
 /*
  * false when initing for the console.
  */
-int amiga_realconfig;
+extern int amiga_realconfig;
 
 
 #define getsoftc(cdnam, unit) \

@@ -1,4 +1,4 @@
-/*	$NetBSD: cardbus.c,v 1.28.2.5 2002/01/08 00:29:23 nathanw Exp $	*/
+/*	$NetBSD: cardbus.c,v 1.28.2.6 2002/06/20 03:44:21 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999 and 2000
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cardbus.c,v 1.28.2.5 2002/01/08 00:29:23 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cardbus.c,v 1.28.2.6 2002/06/20 03:44:21 nathanw Exp $");
 
 #include "opt_cardbus.h"
 
@@ -235,8 +235,7 @@ cardbus_read_tuples(struct cardbus_attach_args *ca, cardbusreg_t cis_ptr,
 			    &rom_image))
 				goto out;
 
-			for (p = SIMPLEQ_FIRST(&rom_image); p != NULL;
-			    p = SIMPLEQ_NEXT(p, next)) {
+			SIMPLEQ_FOREACH(p, &rom_image, next) {
 				if (p->rom_image ==
 				    CARDBUS_CIS_ASI_ROM_IMAGE(cis_ptr)) {
 					bus_space_read_region_1(p->romt,
@@ -247,7 +246,7 @@ cardbus_read_tuples(struct cardbus_attach_args *ca, cardbusreg_t cis_ptr,
 				break;
 			}
 			while ((p = SIMPLEQ_FIRST(&rom_image)) != NULL) {
-				SIMPLEQ_REMOVE_HEAD(&rom_image, p, next);
+				SIMPLEQ_REMOVE_HEAD(&rom_image, next);
 				free(p, M_DEVBUF);
 			}
 		out:

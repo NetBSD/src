@@ -1,4 +1,4 @@
-/* $NetBSD: netbsd32_syscallargs.h,v 1.22.2.3 2002/05/29 21:48:51 nathanw Exp $ */
+/* $NetBSD: netbsd32_syscallargs.h,v 1.22.2.4 2002/06/20 03:43:09 nathanw Exp $ */
 
 /*
  * System call argument lists.
@@ -732,7 +732,7 @@ struct netbsd32_sysarch_args {
 	syscallarg(netbsd32_voidp) parms;
 };
 
-struct netbsd32_compat_10_sys_semsys_args {
+struct compat_10_netbsd32_sys_semsys_args {
 	syscallarg(int) which;
 	syscallarg(int) a2;
 	syscallarg(int) a3;
@@ -740,7 +740,7 @@ struct netbsd32_compat_10_sys_semsys_args {
 	syscallarg(int) a5;
 };
 
-struct netbsd32_compat_10_sys_msgsys_args {
+struct compat_10_netbsd32_sys_msgsys_args {
 	syscallarg(int) which;
 	syscallarg(int) a2;
 	syscallarg(int) a3;
@@ -749,7 +749,7 @@ struct netbsd32_compat_10_sys_msgsys_args {
 	syscallarg(int) a6;
 };
 
-struct netbsd32_compat_10_sys_shmsys_args {
+struct compat_10_netbsd32_sys_shmsys_args {
 	syscallarg(int) which;
 	syscallarg(int) a2;
 	syscallarg(int) a3;
@@ -1271,10 +1271,7 @@ int	netbsd32_acct(struct lwp *, void *, register_t *);
 int	compat_13_sys_sigpending(struct lwp *, void *, register_t *);
 int	compat_13_netbsd32_sigaltstack13(struct lwp *, void *, register_t *);
 int	netbsd32_ioctl(struct lwp *, void *, register_t *);
-#ifdef COMPAT_12
 int	compat_12_netbsd32_reboot(struct lwp *, void *, register_t *);
-#else
-#endif
 int	netbsd32_revoke(struct lwp *, void *, register_t *);
 int	netbsd32_symlink(struct lwp *, void *, register_t *);
 int	netbsd32_readlink(struct lwp *, void *, register_t *);
@@ -1384,16 +1381,16 @@ int	compat_09_netbsd32_ogetdomainname(struct lwp *, void *, register_t *);
 int	compat_09_netbsd32_osetdomainname(struct lwp *, void *, register_t *);
 int	compat_09_netbsd32_uname(struct lwp *, void *, register_t *);
 int	netbsd32_sysarch(struct lwp *, void *, register_t *);
-#if (defined(SYSVSEM) || !defined(_KERNEL)) && !defined(alpha) && defined(COMPAT_10)
-int	netbsd32_compat_10_sys_semsys(struct lwp *, void *, register_t *);
+#if defined(SYSVSEM) || !defined(_KERNEL)
+int	compat_10_netbsd32_sys_semsys(struct lwp *, void *, register_t *);
 #else
 #endif
-#if (defined(SYSVMSG) || !defined(_KERNEL)) && !defined(alpha) && defined(COMPAT_10)
-int	netbsd32_compat_10_sys_msgsys(struct lwp *, void *, register_t *);
+#if defined(SYSVMSG) || !defined(_KERNEL)
+int	compat_10_netbsd32_sys_msgsys(struct lwp *, void *, register_t *);
 #else
 #endif
-#if (defined(SYSVSHM) || !defined(_KERNEL)) && !defined(alpha) && defined(COMPAT_10)
-int	netbsd32_compat_10_sys_shmsys(struct lwp *, void *, register_t *);
+#if defined(SYSVSHM) || !defined(_KERNEL)
+int	compat_10_netbsd32_sys_shmsys(struct lwp *, void *, register_t *);
 #else
 #endif
 int	netbsd32_pread(struct lwp *, void *, register_t *);

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1.12.1 2002/01/08 00:27:55 nathanw Exp $
+#	$NetBSD: Makefile,v 1.1.12.2 2002/06/20 03:41:13 nathanw Exp $
 
 CURDIR=	${.CURDIR}
 S=	${CURDIR}/../../../..
@@ -51,7 +51,7 @@ bootblk.text: bootblk.fth assym.fth.h
 	    mv -f bootblk.text.tmp bootblk.text
 
 bootblk: bootblk.fth assym.fth.h
-	fgen -o bootblk ${.CURDIR}/bootblk.fth
+	${FGEN} -o bootblk ${.CURDIR}/bootblk.fth
 
 beforedepend:
 	@touch .depend

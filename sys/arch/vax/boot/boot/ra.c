@@ -1,4 +1,4 @@
-/*	$NetBSD: ra.c,v 1.9 2000/07/19 00:58:25 matt Exp $ */
+/*	$NetBSD: ra.c,v 1.9.8.1 2002/06/20 03:42:08 nathanw Exp $ */
 /*
  * Copyright (c) 1995 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -242,7 +242,7 @@ igen:	uda.uda_cmd.mscp_opcode = cmd;
 	printf("sending cmd %x...", cmd);
 #endif
 	hej = *ra_ip;
-	to = 1000000;
+	to = 10000000;
 	while (uda.uda_ca.ca_rspdsc < 0) {
 //		if (uda.uda_ca.ca_cmdint)
 //			uda.uda_ca.ca_cmdint = 0;
@@ -312,7 +312,7 @@ rastrategy(void *f, int func, daddr_t dblk,
 		uda.uda_cmd.mscp_seq.seq_bytecount = size;
 		uda.uda_cmd.mscp_unit = dunit;
 #ifdef DEV_DEBUG
-		printf("rastrategy: blk 0x%lx count %x unit %x\n", 
+		printf("rastrategy: blk 0x%lx count %lx unit %x\n", 
 		    uda.uda_cmd.mscp_seq.seq_lbn, size, dunit);
 #endif
 #ifdef notdef

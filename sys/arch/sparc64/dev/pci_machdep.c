@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.25.4.2 2002/04/01 07:43:03 nathanw Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.25.4.3 2002/06/20 03:41:21 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Matthew R. Green
@@ -72,6 +72,20 @@ struct sparc_pci_chipset _sparc_pci_chipset = {
 	NULL,
 };
 
+static pcitag_t
+ofpci_make_tag(pci_chipset_tag_t pc, int node, int b, int d, int f)
+{
+	pcitag_t tag;
+
+	tag = PCITAG_CREATE(node, b, d, f);
+
+	/* Enable all the different spaces for this device */
+	pci_conf_write(pc, tag, PCI_COMMAND_STATUS_REG,
+		PCI_COMMAND_MEM_ENABLE|PCI_COMMAND_MASTER_ENABLE|
+		PCI_COMMAND_IO_ENABLE);
+	return (tag);
+}
+
 /*
  * functions provided to the MI code.
  */
@@ -82,7 +96,6 @@ pci_attach_hook(parent, self, pba)
 	struct device *self;
 	struct pcibus_attach_args *pba;
 {
-	/* Don't do nothing */
 }
 
 int
@@ -93,117 +106,6 @@ pci_bus_maxdevs(pc, busno)
 
 	return 32;
 }
-
-#ifdef __PCI_BUS_DEVORDER
-int
-pci_bus_devorder(pc, busno, devs)
-	pci_chipset_tag_t pc;
-	int busno;
-	char *devs;
-{
-	struct ofw_pci_register reg;
-	int node, len, device, i = 0;
-	u_int32_t done = 0;
-#ifdef DEBUG
-	char name[80];
-#endif
-
-	node = pc->curnode;
-#ifdef DEBUG
-	if (sparc_pci_debug & SPDB_PROBE) {
-		OF_getprop(node, "name", &name, sizeof(name));
-		printf("pci_bus_devorder: curnode %x %s\n", node, name);
-	}
-#endif
-	/*
-	 * Initially, curnode is the root of the pci tree.  As we
-	 * attach bridges, curnode should be set to that of the bridge.
-	 */
-	for (node = OF_child(node); node; node = OF_peer(node)) {
-		len = OF_getproplen(node, "reg");
-		if (len < sizeof(reg))
-			continue;
-		if (OF_getprop(node, "reg", (void *)&reg, sizeof(reg)) != len)
-			panic("pci_probe_bus: OF_getprop len botch");
-
-		device = OFW_PCI_PHYS_HI_DEVICE(reg.phys_hi);
-
-		if (done & (1 << device))
-			continue;
-
-		devs[i++] = device;
-		done |= 1 << device;
-#ifdef DEBUG
-	if (sparc_pci_debug & SPDB_PROBE) {
-		OF_getprop(node, "name", &name, sizeof(name));
-		printf("pci_bus_devorder: adding %x %s\n", node, name);
-	}
-#endif
-		if (i == 32)
-			break;
-	}
-	if (i < 32)
-		devs[i] = -1;
-
-	return i;
-}
-#endif
-
-#ifdef __PCI_DEV_FUNCORDER
-int
-pci_dev_funcorder(pc, busno, device, funcs)
-	pci_chipset_tag_t pc;
-	int busno;
-	int device;
-	char *funcs;
-{
-	struct ofw_pci_register reg;
-	int node, len, i = 0;
-#ifdef DEBUG
-	char name[80];
-#endif
-
-	node = pc->curnode;
-#ifdef DEBUG
-	if (sparc_pci_debug & SPDB_PROBE) {
-		OF_getprop(node, "name", &name, sizeof(name));
-		printf("pci_bus_funcorder: curnode %x %s\n", node, name);
-	}
-#endif
-	/*
-	 * Initially, curnode is the root of the pci tree.  As we
-	 * attach bridges, curnode should be set to that of the bridge.
-	 *
-	 * Note this search is almost exactly the same as pci_bus_devorder()'s,
-	 * except that we limit the search to only those with a matching
-	 * "device" number.
-	 */
-	for (node = OF_child(node); node; node = OF_peer(node)) {
-		len = OF_getproplen(node, "reg");
-		if (len < sizeof(reg))
-			continue;
-		if (OF_getprop(node, "reg", (void *)&reg, sizeof(reg)) != len)
-			panic("pci_probe_bus: OF_getprop len botch");
-
-		if (device != OFW_PCI_PHYS_HI_DEVICE(reg.phys_hi))
-			continue;
-
-		funcs[i++] = OFW_PCI_PHYS_HI_FUNCTION(reg.phys_hi);
-#ifdef DEBUG
-	if (sparc_pci_debug & SPDB_PROBE) {
-		OF_getprop(node, "name", &name, sizeof(name));
-		printf("pci_bus_funcorder: adding %x %s\n", node, name);
-	}
-#endif
-		if (i == 8)
-			break;
-	}
-	if (i < 8)
-		funcs[i] = -1;
-
-	return i;
-}
-#endif
 
 pcitag_t
 pci_make_tag(pc, b, d, f)
@@ -315,25 +217,72 @@ pci_make_tag(pc, b, d, f)
 			continue;
 
 		/* Got a match */
-		tag = PCITAG_CREATE(node, b, d, f);
+		tag = ofpci_make_tag(pc, node, b, d, f);
 
-		/*
-		 * Record the node.  This has two effects:
-		 *
-		 * 1) We don't have to search as far.
-		 * 2) pci_bus_devorder will scan the right bus.
-		 */
-		pc->curnode = node;
-
-		/* Enable all the different spaces for this device */
-		pci_conf_write(pc, tag, PCI_COMMAND_STATUS_REG,
-			PCI_COMMAND_MEM_ENABLE|PCI_COMMAND_MASTER_ENABLE|
-			PCI_COMMAND_IO_ENABLE);
-		DPRINTF(SPDB_PROBE, ("found node %x %s\n", node, name));
 		return (tag);
 	}
 	/* No device found -- return a dead tag */
 	return (tag);
+}
+
+void
+pci_decompose_tag(pc, tag, bp, dp, fp)
+	pci_chipset_tag_t pc;
+	pcitag_t tag;
+	int *bp, *dp, *fp;
+{
+
+	if (bp != NULL)
+		*bp = PCITAG_BUS(tag);
+	if (dp != NULL)
+		*dp = PCITAG_DEV(tag);
+	if (fp != NULL)
+		*fp = PCITAG_FUN(tag);
+}
+
+int
+pci_enumerate_bus(struct pci_softc *sc,
+    int (*match)(struct pci_attach_args *), struct pci_attach_args *pap)
+{
+	struct ofw_pci_register reg;
+	pci_chipset_tag_t pc = sc->sc_pc;
+	pcitag_t tag;
+	pcireg_t class;
+	int node, b, d, f, ret;
+	char name[30];
+
+	if (sc->sc_bridgetag)
+		node = PCITAG_NODE(*sc->sc_bridgetag);
+	else
+		node = pc->rootnode;
+
+	for (node = OF_child(node); node != 0 && node != -1;
+	     node = OF_peer(node)) {
+		name[0] = name[29] = 0;
+		OF_getprop(node, "name", name, sizeof(name));
+
+		if (OF_getprop(node, "class-code", &class, sizeof(class)) != 
+		    sizeof(class))
+			continue;
+		if (OF_getprop(node, "reg", &reg, sizeof(reg)) < sizeof(reg))
+			panic("pci_enumerate_bus: \"%s\" regs too small", name);
+
+		b = OFW_PCI_PHYS_HI_BUS(reg.phys_hi);
+		d = OFW_PCI_PHYS_HI_DEVICE(reg.phys_hi);
+		f = OFW_PCI_PHYS_HI_FUNCTION(reg.phys_hi);
+
+		if (sc->sc_bus != b) {
+			printf("%s: WARNING: incorrect bus # for \"%s\" "
+			"(%d/%d/%d)\n", sc->sc_dev.dv_xname, name, b, d, f);
+			continue;
+		}
+
+		tag = ofpci_make_tag(pc, node, b, d, f);
+		ret = pci_probe_device(sc, tag, match, pap);
+		if (match != NULL && ret != 0)
+			return (ret);
+	}
+	return (0);
 }
 
 /* assume we are mapped little-endian/side-effect */

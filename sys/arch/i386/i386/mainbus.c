@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.31.6.5 2002/04/01 07:40:40 nathanw Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.31.6.6 2002/06/20 03:39:12 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.31.6.5 2002/04/01 07:40:40 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.31.6.6 2002/06/20 03:39:12 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -199,6 +199,7 @@ mainbus_attach(parent, self, aux)
 		mba.mba_pba.pba_pc = NULL;
 		mba.mba_pba.pba_flags = pci_bus_flags();
 		mba.mba_pba.pba_bus = 0;
+		mba.mba_pba.pba_bridgetag = NULL;
 		config_found(self, &mba.mba_pba, mainbus_print);
 	}
 #endif

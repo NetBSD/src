@@ -1,11 +1,13 @@
-# $NetBSD: DISKLESS,v 1.4.8.4 2002/04/17 00:04:31 nathanw Exp $
+# $NetBSD: DISKLESS,v 1.4.8.5 2002/06/20 03:41:36 nathanw Exp $
 
 # DISKLESS Sun2 (2/120, 2/170, 2/50, ...)
 # Supports root on: ie0, ec0
 
 include "arch/sun2/conf/std.sun2"
 
-#ident 		"DISKLESS-$Revision: 1.4.8.4 $"
+#options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
+
+#ident 		"DISKLESS-$Revision: 1.4.8.5 $"
 
 # Machines to be supported by this kernel
 #options 	FPU_EMULATE
@@ -225,3 +227,5 @@ pseudo-device	pty		32	# pseudo-terminals
 #pseudo-device	ccd		4	# concatenated disks
 #pseudo-device	raid		4	# RAIDframe disk driver
 #options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
+
+pseudo-device	clockctl		# user control of clock subsystem

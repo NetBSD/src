@@ -1,7 +1,8 @@
-/*	$NetBSD: machdep.c,v 1.30.2.5 2002/05/29 21:31:56 nathanw Exp $	*/
+/*	$NetBSD: machdep.c,v 1.30.2.6 2002/06/20 03:40:51 nathanw Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
+ * Copyright (c) 2001, 2002 Rafal K. Boni
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -35,6 +36,7 @@
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
 #include "opt_execfmt.h"
+#include "opt_cputype.h"
 #include "opt_machtypes.h"
 
 #include <sys/param.h>
@@ -97,8 +99,6 @@ struct sgimips_intrhand intrtab[NINTR];
 
 /* Our exported CPU info; we can have only one. */
 struct cpu_info cpu_info_store;
-
-unsigned long cpuspeed;	/* Approximate number of instructions per usec */
 
 /* Maps for VM objects. */
 struct vm_map *exec_map = NULL;
@@ -251,10 +251,11 @@ mach_init(argc, argv, magic, btinfo)
 	if (cpufreq == 0)
 		panic("no $cpufreq");
 
-	cpuspeed = strtoul(cpufreq, NULL, 10) / 2;	/* XXX MIPS3 only */
-#if 0	/* XXX create new mips/mips interface */
-	... something ... = strtoul(cpufreq, NULL, 10) * 5000000;
-#endif
+	/* 
+	 * Note initial estimate of CPU speed... If we care enough, we'll
+	 * use the RTC to get a better estimate later.
+	 */
+	curcpu()->ci_cpu_freq = strtoul(cpufreq, NULL, 10) * 1000000;
 
 	/*
 	 * argv[0] can be either the bootloader loaded by the PROM, or a
@@ -764,9 +765,12 @@ __inline void
 delay(n)
 	unsigned long n;
 {
-	register long N = cpuspeed * n;
+	u_long i;
+	long divisor = curcpu()->ci_divisor_delay;
 
-	while (--N > 0);
+	while (n-- > 0)
+		for (i = divisor; i > 0; i--)
+			;
 }
 
 /*
@@ -837,9 +841,18 @@ cpu_intr(status, cause, pc, ipending)
 	if (ipending & MIPS_HARD_INT_MASK)
 		(*platform.iointr)(status, cause, pc, ipending);
 
+	/*
+	 * Service pending soft interrupts -- make sure to re-enable
+	 * only those hardware interrupts that are not masked and 
+	 * that weren't pending on the current invocation of the
+	 * interrupt handler, else we risk infinite stack growth
+	 * due to nested interrupts.
+	 */
 	/* software simulated interrupt */
-	if ((ipending & MIPS_SOFT_INT_MASK_1)
-		    || (ssir && (status & MIPS_SOFT_INT_MASK_1))) {
+	if ((ipending & MIPS_SOFT_INT_MASK_1) || 
+	    (ssir && (status & MIPS_SOFT_INT_MASK_1))) {
+		_splset(MIPS_SR_INT_IE |
+			    (status & ~ipending & MIPS_HARD_INT_MASK));
 		_clrsoftintr(MIPS_SOFT_INT_MASK_1);
 		softintr_dispatch();
 	}

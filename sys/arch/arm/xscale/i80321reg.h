@@ -1,4 +1,4 @@
-/*	$NetBSD: i80321reg.h,v 1.1.2.3 2002/04/17 00:02:37 nathanw Exp $	*/
+/*	$NetBSD: i80321reg.h,v 1.1.2.4 2002/06/20 03:38:15 nathanw Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -81,6 +81,9 @@
 
 #define	VERDE_MCU_BASE			0x0500
 #define	VERDE_MCU_SIZE			0x0100
+
+#define	VERDE_AAU_BASE			0x0800
+#define	VERDE_AAU_SIZE			0x0100
 
 /*
  * Address Translation Unit
@@ -388,5 +391,84 @@ struct dma_chain_desc {
 #define	DMA_DCR_TTYPE_MRM	0x0c	/* Memory Read Multiple */
 #define	DMA_DCR_TTYPE_MRL	0x0e	/* Memory Read Line */
 #define	DMA_DCR_TTYPE_MW2	0x0f	/* Memory Write */
+
+/*
+ * Application Accelerator Unit
+ */
+
+struct aau_chain_princ {
+	uint32_t	acd_nda;	/* next descriptor address */
+	uint32_t	acd_sar[4];	/* source address 0..3 */
+	uint32_t	acd_dar;	/* destination address */
+	uint32_t	acd_bc;		/* byte count */
+	uint32_t	acd_dc;		/* descriptor control */
+} __attribute__((__packed__));
+
+struct aau_chain_mini {
+	uint32_t	acd_sar[4];	/* source address 4..7 */
+} __attribute__((__packed__));
+
+struct aau_chain_ext {
+	uint32_t	acd_edc;	/* extended descriptor control */
+	uint32_t	acd_sar[8];	/* source address n..n+7 */
+} __attribute__((__packed__));
+
+struct aau_chain_desc8 {
+	struct aau_chain_princ acd8_princ;	/* 0..3 */
+	struct aau_chain_mini acd8_mini;	/* 4..7 */
+} __attribute__((__packed__));
+
+struct aau_chain_desc16 {
+	struct aau_chain_princ acd16_princ;	/* 0..3 */
+	struct aau_chain_mini acd16_mini;	/* 4..7 */
+	struct aau_chain_ext acd16_ext0;	/* 8..15 */
+} __attribute__((__packed__));
+
+struct aau_chain_desc32 {
+	struct aau_chain_princ acd32_princ;	/* 0..3 */
+	struct aau_chain_mini acd32_mini;	/* 4..7 */
+	struct aau_chain_ext acd32_ext0;	/* 8..15 */
+	struct aau_chain_ext acd32_ext1;	/* 16..23 */
+	struct aau_chain_ext acd32_ext2;	/* 24..31 */
+} __attribute__((__packed__));
+
+#define	AAU_ACR		0x00		/* accelerator control */
+#define	AAU_ASR		0x04		/* accelerator status */
+#define	AAU_ADAR	0x08		/* descriptor address */
+#define	AAU_ANDAR	0x0c		/* next descriptor address */
+#define	AAU_DAR		0x20		/* destination address */
+#define	AAU_ABCR	0x24		/* byte count */
+#define	AAU_ADCR	0x28		/* descriptor control */
+#define	AAU_EDCR0	0x3c		/* extended descriptor control 0 */
+#define	AAU_EDCR1	0x60		/* extended descriptor control 1 */
+#define	AAU_EDCR2	0x84		/* extended descriptor control 2 */
+
+#define	AAU_ACR_AAE	(1U << 0)	/* accelerator enable */
+#define	AAU_ACR_CR	(1U << 1)	/* chain resume */
+#define	AAU_ACR_512	(1U << 2)	/* 512-byte buffer enable */
+
+#define	AAU_ASR_MA	(1U << 5)	/* master abort */
+#define	AAU_ASR_ECIF	(1U << 8)	/* end of chain interrupt */
+#define	AAU_ASR_ETIF	(1U << 9)	/* end of transfer interrupt */
+#define	AAU_ASR_AAF	(1U << 10)	/* acellerator active */
+
+#define	AAU_ABCR_MASK	0x00ffffff	/* 24-bit count */
+
+#define	AAU_CMD_NULL	0		/* disregard this block */
+#define	AAU_CMD_XOR	1		/* XOR */
+#define	AAU_CMD_FILL	7		/* block fill */
+
+#define	AAU_ADCR_IE	(1U << 0)	/* interrupt enable */
+#define	AAU_ADCR_BxCMD(b, x) ((x) << (((b) * 3) + 1)) /* block 0..7 command */
+#define	AAU_ADCR_SBCI_0	0		/* no supplemental blocks */
+#define	AAU_ADCR_SBCI_4	(1U << 25)	/* 4 supplemental blocks */
+#define	AAU_ADCR_SBCI_12 (2U << 25)	/* 12 supplemental blocks */
+#define	AAU_ADCR_SBCI_28 (3U << 25)	/* 28 supplemental blocks */
+#define	AAU_ADCR_TC	(1U << 28)	/* transfer complete */
+#define	AAU_ADCR_PBAD	(1U << 29)	/* computed parity bad */
+#define	AAU_ADCR_PE	(1U << 30)	/* parity computation enable */
+#define	AAU_ADCR_DWE	(1U << 31)	/* destination write enable */
+
+#define	AAU_EDCR_BxCMD(b, x) ((x) << (((b) * 3) + 1))
 
 #endif /* _ARM_XSCALE_I80321REG_H_ */

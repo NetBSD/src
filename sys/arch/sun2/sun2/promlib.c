@@ -1,4 +1,4 @@
-/*	$NetBSD: promlib.c,v 1.7.4.2 2002/01/08 00:28:13 nathanw Exp $	*/
+/*	$NetBSD: promlib.c,v 1.7.4.3 2002/06/20 03:41:39 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -296,11 +296,13 @@ prom_abort()
 	*(store++) = *vec;
 	*(vec++) = BRAW;
 	*(store++) = *vec;
-	*(vec++) = ((u_long) g0_entry) - ((u_long) vec);
+	*vec = ((u_long) g0_entry) - ((u_long) vec);
+	vec++;
 	*(store++) = *vec;
 	*(vec++) = BRAW;
 	*(store++) = *vec;
-	*(vec++) = ((u_long) g4_entry) - ((u_long) vec);
+	*vec = ((u_long) g4_entry) - ((u_long) vec);
+	vec++;
 #undef	BRAW
 
 	delay(100000);

@@ -1,4 +1,4 @@
-/*	$NetBSD: sbic.c,v 1.44.6.2 2002/02/28 04:06:58 nathanw Exp $ */
+/*	$NetBSD: sbic.c,v 1.44.6.3 2002/06/20 03:37:54 nathanw Exp $ */
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -46,7 +46,7 @@
 #include "opt_ddb.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbic.c,v 1.44.6.2 2002/02/28 04:06:58 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbic.c,v 1.44.6.3 2002/06/20 03:37:54 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1336,7 +1336,7 @@ sbicicmd(struct sbic_softc *dev, int target, int lun, void *cbuf, int clen,
 
 		wait = sbic_cmd_wait;
 
-		asr = GET_SBIC_asr (regs, asr);
+		GET_SBIC_asr (regs, asr);
 		GET_SBIC_csr (regs, csr);
 		CSR_TRACE('I',csr,asr,target);
 		QPRINTF((">ASR:%02xCSR:%02x<", asr, csr));
@@ -1737,7 +1737,7 @@ sbicgo(struct sbic_softc *dev, struct scsipi_xfer *xs)
 	 * Lets cycle a while then let the interrupt handler take over
 	 */
 
-	asr = GET_SBIC_asr(regs, asr);
+	GET_SBIC_asr(regs, asr);
 	do {
 		GET_SBIC_csr(regs, csr);
 		CSR_TRACE('g',csr,asr,dev->target);
@@ -1906,7 +1906,7 @@ sbicmsgin(struct sbic_softc *dev)
 	recvlen = 1;
 	do {
 		while( recvlen-- ) {
-			asr = GET_SBIC_asr(regs, asr);
+			GET_SBIC_asr(regs, asr);
 			GET_SBIC_csr(regs, csr);
 			QPRINTF(("sbicmsgin ready to go (csr,asr)=(%02x,%02x)\n",
 				 csr, asr));
@@ -2601,7 +2601,7 @@ sbictimeout(struct sbic_softc *dev)
 			GET_SBIC_asr(dev->sc_sbic, asr);
 			if( asr & SBIC_ASR_INT ) {
 				/* We need to service a missed IRQ */
-				printf("Servicing a missed int:(%02x,%02x)->(%02x,??)\n",
+				printf("Servicing a missed int:(%02x,%02x)->(%02x,?)\n",
 				    debug_asr, debug_csr, asr);
 				sbicintr(dev);
 			}

@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.9.2.5 2002/04/17 00:02:25 nathanw Exp $	*/
+/*	$NetBSD: cpu.c,v 1.9.2.6 2002/06/20 03:38:03 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1995 Mark Brinicombe.
@@ -45,7 +45,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.9.2.5 2002/04/17 00:02:25 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.9.2.6 2002/06/20 03:38:03 nathanw Exp $");
 
 #include <sys/systm.h>
 #include <sys/malloc.h>
@@ -199,8 +199,24 @@ static const char *sa1110_steppings[16] = {
 	"rev 12",	"rev 13",	"rev 14",	"rev 15",
 };
 
+static const char *ixp12x0_steppings[16] = {
+	"(IXP1200 step A)",		"(IXP1200 step B)",
+	"rev 2",			"(IXP1200 step C)",
+	"(IXP1200 step D)",		"(IXP1240/1250 step A)",
+	"(IXP1240 step B)",		"(IXP1250 step B)",
+	"rev 8",	"rev 9",	"rev 10",	"rev 11",
+	"rev 12",	"rev 13",	"rev 14",	"rev 15",
+};
+
 static const char *xscale_steppings[16] = {
 	"step A-0",	"step A-1",	"step B-0",	"step C-0",
+	"rev 4",	"rev 5",	"rev 6",	"rev 7",
+	"rev 8",	"rev 9",	"rev 10",	"rev 11",
+	"rev 12",	"rev 13",	"rev 14",	"rev 15",
+};
+
+static const char *pxa2x0_steppings[16] = {
+	"step A-0",	"step A-1",	"step B-0",	"step B-1",
 	"rev 4",	"rev 5",	"rev 6",	"rev 7",
 	"rev 8",	"rev 9",	"rev 10",	"rev 11",
 	"rev 12",	"rev 13",	"rev 14",	"rev 15",
@@ -271,11 +287,21 @@ const struct cpuidtab cpuids[] = {
 	{ CPU_ID_SA1110,	CPU_CLASS_SA1,		"SA-1110",
 	  sa1110_steppings },
 
+	{ CPU_ID_IXP1200,	CPU_CLASS_SA1,		"IXP1200",
+	  ixp12x0_steppings },
+
 	{ CPU_ID_80200,		CPU_CLASS_XSCALE,	"i80200",
 	  xscale_steppings },
 
-	{ CPU_ID_80321,		CPU_CLASS_XSCALE,	"i80321",
+	{ CPU_ID_80321_400,	CPU_CLASS_XSCALE,	"i80321 400MHz",
 	  xscale_steppings },
+	{ CPU_ID_80321_600,	CPU_CLASS_XSCALE,	"i80321 600MHz",
+	  xscale_steppings },
+
+	{ CPU_ID_PXA250,	CPU_CLASS_XSCALE,	"PXA250",
+	  pxa2x0_steppings },
+	{ CPU_ID_PXA210,	CPU_CLASS_XSCALE,	"PXA210",
+	  pxa2x0_steppings },	/* XXX */
 
 	{ CPU_ID_ARM1022ES,	CPU_CLASS_ARM10E,	"ARM1022ES",
 	  generic_steppings },
@@ -447,10 +473,12 @@ identify_arm_cpu(struct device *dv, struct cpu_info *ci)
 #ifdef CPU_ARM9
 	case CPU_CLASS_ARM9TDMI:
 #endif
-#ifdef CPU_SA110
+#if defined(CPU_SA110) || defined(CPU_SA1100) || \
+    defined(CPU_SA1110) || defined(CPU_IXP12X0)
 	case CPU_CLASS_SA1:
 #endif
-#if defined(CPU_XSCALE_80200) || defined(CPU_XSCALE_80321)
+#if defined(CPU_XSCALE_80200) || defined(CPU_XSCALE_80321) || \
+    defined(CPU_XSCALE_PXA2X0)
 	case CPU_CLASS_XSCALE:
 #endif
 		break;

@@ -1,13 +1,24 @@
-#	$NetBSD: NATSUMI,v 1.6.8.5 2002/04/17 00:04:16 nathanw Exp $
+#	$NetBSD: NATSUMI,v 1.6.8.6 2002/06/20 03:40:37 nathanw Exp $
 #
 #	for development
 #
 
 include "arch/prep/conf/std.prep"
 
+#options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
+
 maxusers	32
 
+# Platform support
+options 	PLATFORM_IBM_6050		# IBM Personal Power Series 830
+options 	PLATFORM_IBM_7248		# IBM RS/6000 7248-100/120/133
+options 	PLATFORM_IBM_7043_140		# IBM RS/6000 43P 7043-140
+
+options 	OPENPIC				# OpenPIC support (7043-140)
+
 makeoptions	COPTS="-O2 -pipe"
+
+options 	INSECURE	# disable kernel security levels
 
 # Standard system options
 
@@ -21,15 +32,12 @@ options 	SYSVSEM		# System V-like semaphores
 options 	SYSVSHM		# System V-like memory sharing
 options 	SHMMAXPGS=8192
 
-#options 	LKM		# loadable kernel modules
-
 #options 	USERCONF	# userconf(4) support
 #options	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
 
 # Diagnostic/debugging support options
 #options 	DIAGNOSTIC	# cheap kernel consistency checks
 #options 	DEBUG		# expensive debugging checks/support
-#options 	KMEMSTATS	# kernel memory statistics (vmstat -m)
 options 	DDB		# in-kernel debugger
 options 	DDB_HISTORY_SIZE=100	# Enable history editing in DDB
 #makeoptions	DEBUG="-g"
@@ -37,6 +45,7 @@ options 	DDB_HISTORY_SIZE=100	# Enable history editing in DDB
 # Compatibility options
 options 	COMPAT_13	# NetBSD 1.3,
 options 	COMPAT_14	# NetBSD 1.4,
+options 	COMPAT_15	# NetBSD 1.5,
 options 	COMPAT_43	# and 4.3BSD
 
 options 	COMPAT_LINUX	# binary compatibility with Linux
@@ -58,20 +67,18 @@ file-system	OVERLAY		# overlay file system
 file-system 	PROCFS		# /proc
 #file-system 	UMAPFS		# NULLFS + uid and gid remapping
 #file-system 	UNION		# union file system
-#file-system	CODA		# Coda File System; also needs vcoda (below)
 
 # File system options
-#options 	QUOTA		# UFS quotas
-#options 	FFS_EI		# FFS Endian Independant support
+options 	FFS_EI		# FFS Endian Independant support
 options 	SOFTDEP		# FFS soft updates support.
-#options 	NFSSERVER	# Network File System server
+options 	NFSSERVER	# Network File System server
 #options 	EXT2FS_SYSTEM_FLAGS # makes ext2fs file flags (append and
  				# immutable) behave as system flags.
 
 # Networking options
 #options 	GATEWAY		# packet forwarding
 options 	INET		# IP + ICMP + TCP + UDP
-#options 	INET6		# IPv6
+options 	INET6		# IPv6
 #options 	IPSEC		# IP security
 #options 	IPSEC_ESP	# IP security (encryption part; define w/IPSEC)
 #options 	IPSEC_DEBUG	# debug for IP security
@@ -80,8 +87,8 @@ options 	INET		# IP + ICMP + TCP + UDP
 #options 	PPP_BSDCOMP	# BSD-Compress compression support for PPP
 #options 	PPP_DEFLATE	# Deflate compression support for PPP
 #options 	PPP_FILTER	# Active filter support for PPP (requires bpf)
-#options 	PFIL_HOOKS	# pfil(9) packet filter hooks
-#options 	IPFILTER_LOG	# ipmon(8) log support
+options 	PFIL_HOOKS	# pfil(9) packet filter hooks
+options 	IPFILTER_LOG	# ipmon(8) log support
 
 # These options enable verbose messages for several subsystems.
 # Warning, these may compile large string tables into the kernel!
@@ -90,10 +97,9 @@ options 	PCIVERBOSE	# verbose PCI device autoconfig messages
 #options 	PCI_CONFIG_DUMP	# verbosely dump PCI config space
 options 	PCMCIAVERBOSE	# verbose PCMCIA configuration messages
 #options 	SCSIVERBOSE	# human readable SCSI error messages
-options 	USBVERBOSE	# verbose USB device autoconfig messages
+#options 	USBVERBOSE	# verbose USB device autoconfig messages
+#options 	RESIDUAL_DATA_DUMP	# verbosely dump residual data
 
-options 	NFS_BOOT_BOOTP
-options 	NFS_BOOT_BOOTPARAM
 options 	NFS_BOOT_DHCP
 
 #
@@ -114,8 +120,8 @@ options 	PCDISPLAY_SOFTCURSOR
 
 # Kernel root file system and dump configuration.
 config	netbsd	root on ? type ?
-#config	netbsd	root on de0 type nfs
-#config	netbsd	root on le0 type nfs
+#config	netbsd	root on tlp0 type nfs
+#config	netbsd	root on pcn0 type nfs
 
 #
 # Device configuration
@@ -129,12 +135,14 @@ cpu0	at mainbus0
 # PCI bus support
 pci0	at mainbus0 bus ?
 pci*	at pchb? bus ?
+pci*	at ppb? bus ?
 
 options 	PCI_NETBSD_CONFIGURE
 
 # PCI bridges
 pchb*	at pci? dev ? function ?	# PCI-Host bridges
 pcib*	at pci? dev ? function ?	# PCI-ISA bridges
+ppb*	at pci? dev ? function ?	# PCI-PCI bridges
 
 # ISA bus support
 isa*	at pcib?			# ISA on PCI-ISA bridge
@@ -150,10 +158,10 @@ options 	PCIC_ISA_ALLOC_IOBASE=0x0400
 options 	PCIC_ISA_ALLOC_IOSIZE=0x0100
 
 # ISA Plug-and-Play bus support
-#isapnp0 at isa?
+isapnp0 at isa?
 
-# on-board I/O for IBM 6050/6070 on-board IDE controller
-#obio0	at mainbus0
+# on-board I/O for IBM Personal Power Series 830 on-board IDE controller
+obio0	at mainbus0
 
 # Console Devices
 
@@ -170,6 +178,7 @@ pcppi0	at isa?				# PC prog. periph. interface
 isabeep0 at pcppi?			# "keyboard" beep
 
 mcclock0 at isa? port 0x70		# mc146818 and compatible
+mkclock0 at isa? port 0x74		# mk48t18 and compatible
 
 # Serial Devices
 
@@ -189,30 +198,33 @@ lpt0	at isa? port 0x3bc irq 7	# standard PC parallel ports
 
 # PCI SCSI controllers
 #ahc*	at pci? dev ? function ?	# Adaptec [23]94x, aic78x0 SCSI
+esiop*	at pci? dev ? function ?	# Symbios 53c825/875 and newer chips
 #pcscp*	at pci? dev ? function ?	# AMD 53c974 PCscsi-PCI SCSI
-#siop*	at pci? dev ? function ?	# Symbios 53c8xx SCSI chips
+siop*	at pci? dev ? function ?	# Symbios 53c8xx SCSI chips
 
 # PCMCIA SCSI controllers
 #aic*	at pcmcia? function ?		# Adaptec APA-1460 SCSI
 
 # SCSI bus support
 #scsibus* at ahc?
+scsibus* at esiop?
 #scsibus* at aic?
 #scsibus* at pcscp?
-#scsibus* at siop?
+scsibus* at siop?
 
 # SCSI devices
-#sd*	at scsibus? target ? lun ?	# SCSI disk drives
-#st*	at scsibus? target ? lun ?	# SCSI tape drives
-#cd*	at scsibus? target ? lun ?	# SCSI CD-ROM drives
+sd*	at scsibus? target ? lun ?	# SCSI disk drives
+st*	at scsibus? target ? lun ?	# SCSI tape drives
+cd*	at scsibus? target ? lun ?	# SCSI CD-ROM drives
 #ch*	at scsibus? target ? lun ?	# SCSI autochangers
 #ss*	at scsibus? target ? lun ?	# SCSI scanners
 #uk*	at scsibus? target ? lun ?	# SCSI unknown
 
 # IDE and related devices
-# IBM 6050/6070 on-board IDE controller
-#wdc0	at obio? port 0x1f0 irq 13 flags 0x00
-#wdc1	at obio? port 0x170 irq 13 flags 0x00
+
+# IBM Personal Power Series 830 on-board IDE controller
+wdc0	at obio? port 0x1f0 irq 13
+wdc1	at obio? port 0x170 irq 13
 
 # PCMCIA IDE controllers
 wdc*	at pcmcia? function ?
@@ -237,38 +249,24 @@ atapibus* at wdc? channel ?
 # flags have the same meaning as for IDE drives.
 cd*	at atapibus? drive ? flags 0x0000	# ATAPI CD-ROM drives
 sd*	at atapibus? drive ? flags 0x0000	# ATAPI disk drives
-#uk*	at atapibus? drive ? flags 0x0000	# ATAPI unknown
+uk*	at atapibus? drive ? flags 0x0000	# ATAPI unknown
 
 # Miscellaneous mass storage devices
 
 # ISA floppy
-fdc0	at isa? port 0x3f0 irq 6 drq 2	# standard PC floppy controllers
-fd*	at fdc? drive ?
+#fdc0	at isa? port 0x3f0 irq 6 drq 2	# standard PC floppy controllers
+#fd*	at fdc? drive ?
 
 # Network Interfaces
 
 # PCI network interfaces
-#de*	at pci? dev ? function ?	# DEC 21x4x-based Ethernet
-#ep*	at pci? dev ? function ?	# 3Com 3c59x
-#fxp*	at pci? dev ? function ?	# Intel EtherExpress PRO 10+/100B
-le*	at pci? dev ? function ?	# PCnet-PCI Ethernet
-#ne*	at pci? dev ? function ?	# NE2000-compatible Ethernet
-#rtk*	at pci? dev ? function ?	# Realtek 8129/8139
-#tlp*	at pci? dev ? function ?	# DECchip 21x4x (and clones) Ethernet
-#options 	TLP_MATCH_21040
-#options 	TLP_MATCH_21041
-#options 	TLP_MATCH_21140
-#options 	TLP_MATCH_21142
-#vr*	at pci? dev ? function ?	# VIA Rhine Fast Ethernet
-
-# ISA Plug-and-Play network intefaces
-#ep*	at isapnp?			# 3Com 3c509 Ethernet
-
-# PCMCIA network interfaces
-ep*	at pcmcia? function ?		# 3Com 3c589 and 3c562 Ethernet
-ne*	at pcmcia? function ?		# NE2000-compatible Ethernet
+ex*	at pci? dev ? function ?	# 3Com 3c90x[BC]
+pcn*	at pci? dev ? function ?	# PCnet-PCI Ethernet
+tlp*	at pci? dev ? function ?	# DECchip 21x4x and clones
 
 # MII/PHY support
+ukphy*  at mii? phy ?                   # generic unknown PHYs
+
 
 # USB Controller and Devices
 
@@ -311,7 +309,7 @@ scsibus* at umass? channel ?
 atapibus* at umass? channel ?
 
 # USB audio
-#uaudio* at uhub? port ? configuration ?
+uaudio* at uhub? port ? configuration ?
 
 # USB Ethernet adapters
 #aue*	at uhub? port ?		# ADMtek AN986 Pegasus based adapters
@@ -322,9 +320,17 @@ atapibus* at umass? channel ?
 #upl*	at uhub? port ?
 
 # Serial adapters
-# FTDI FT8U100AX serial adapter
-#uftdi*	at uhub? port ?
+#uftdi*	at uhub? port ?		# FTDI FT8U100AX serial adapter
 #ucom*	at uftdi? portno ?
+
+#umct*	at uhub? port ?		# MCT USB-RS232 serial adapter
+#ucom*	at umct? portno ?
+
+uplcom* at uhub? port ?		# I/O DATA USB-RSAQ2 serial adapter
+ucom*	at uplcom? portno ?
+
+#uvscom* at uhub? port ?	# SUNTAC Slipper U VS-10U serial adapter
+#ucom*	at uvscom? portno ?
 
 # Diamond Multimedia Rio 500
 #urio*	at uhub? port ?
@@ -333,20 +339,27 @@ atapibus* at umass? channel ?
 #uvisor* at uhub? port ?
 #ucom*	at uvisor?
 
+# Y@P firmware loader
+#uyap* at uhub? port ?
+
 # USB Generic driver
 ugen*	at uhub? port ?
 
+# USB scanners
+#uscanner* at uhub? port ?
+
+
 # Audio device
 
-# ISA audio devices
-#wss0	at isa? port 0x530 irq 5 drq 1 #drq2 0	# CS4232
+# ISA Plug-and-Play audio devices
+#wss*	at isapnp?			# CS4232
 
 # OPL[23] FM syntheziers
 #opl*	at wss?
 
 # Audio support
+audio*	at uaudio?
 #audio*	at wss?
-#audio*	at uaudio?
 
 # MIDI support
 #midi*	at opl?			# OPL FM synth
@@ -355,10 +368,12 @@ midi*	at pcppi?		# MIDI interface to the PC speaker
 # The spkr driver provides a simple tone interface to the built in speaker.
 spkr0	at pcppi?		# PC speaker
 
+
 # Joysticks
 
-# ISA joysticks. Probe is a little strange; add only if you have one.
-joy0	at isa? port 0x201
+# ISA Plug-and-Play joysticks
+joy*	at isapnp?			# Game ports (usually on audio cards)
+
 
 # Pseudo-Devices
 
@@ -377,20 +392,18 @@ pseudo-device	ipfilter		# IP filter (firewall) and NAT
 #pseudo-device	sl		2	# Serial Line IP
 #pseudo-device	strip		2	# Starmode Radio IP (Metricom)
 #pseudo-device	tun		2	# network tunneling over tty
-#pseudo-device	gre		2	# generic L3 over IP tunnel
-#pseudo-device	gif		4	# IPv[46] over IPv[46] tunnel (RFC1933)
+pseudo-device	gre		2	# generic L3 over IP tunnel
+pseudo-device	gif		4	# IPv[46] over IPv[46] tunnel (RFC1933)
 #pseudo-device	faith		2	# IPv[46] tcp relay translation i/f
 #pseudo-device	stf		2	# 6to4 IPv6 over IPv4 encapsulation
 
 # miscellaneous pseudo-devices
 pseudo-device	pty			# pseudo-terminals
-#pseudo-device	tb		1	# tablet line discipline
 pseudo-device	sequencer	1	# MIDI sequencer
 pseudo-device	rnd			# /dev/random and in-kernel generator
 #options 	RND_COM			# use "com" randomness as well
-
-# a pseudo device needed for Coda	# also needs CODA (above)
-#pseudo-device	vcoda		4	# coda minicache <-> venus comm.
+pseudo-device	clockctl		# user control of clock subsystem
 
 # mouse & keyboard multiplexor pseudo-devices
 pseudo-device	wsmux
+pseudo-device	wsfont

@@ -1,11 +1,13 @@
-#	$NetBSD: BRIQ,v 1.2.4.5 2002/04/17 00:04:07 nathanw Exp $
+#	$NetBSD: BRIQ,v 1.2.4.6 2002/06/20 03:40:25 nathanw Exp $
 #
 #	BRIQ -- Total Impact briQ -- http://www.totalimpact.com
 #
 
 include "arch/ofppc/conf/std.ofppc"
 
-#ident 		"GENERIC-$Revision: 1.2.4.5 $"
+#options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
+
+#ident 		"GENERIC-$Revision: 1.2.4.6 $"
 
 maxusers	32
 
@@ -154,3 +156,4 @@ pseudo-device	vlan			# IEEE 802.1q encapsulation
 #pseudo-device	bridge			# simple inter-network bridging
 pseudo-device	pty			# pseudo-terminals
 pseudo-device	rnd			# /dev/random and in-kernel generator
+pseudo-device	clockctl		# user control of clock subsystem

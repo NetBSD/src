@@ -1,4 +1,4 @@
-#	$NetBSD: SWINGER,v 1.14.6.8 2002/04/17 00:03:19 nathanw Exp $
+#	$NetBSD: SWINGER,v 1.14.6.9 2002/06/20 03:39:07 nathanw Exp $
 #	from NetBSD: GENERIC,v 1.325 2000/04/14 14:53:32 augustss Exp
 #
 #	SWINGER -- thorpej's Abit BP6+dual Celeron
@@ -6,7 +6,9 @@
 
 include "arch/i386/conf/std.i386"
 
-#ident 		"SWINGER-$Revision: 1.14.6.8 $"
+#options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
+
+#ident 		"SWINGER-$Revision: 1.14.6.9 $"
 
 maxusers	64		# estimated number of users
 
@@ -270,9 +272,7 @@ npx0	at isa? port 0xf0 irq 13	# x86 math coprocessor
 # wscons
 pckbc0		at isa?			# pc keyboard controller
 pckbd*		at pckbc?		# PC keyboard
-# "opms" should not be enabled together with "pms"
 pms*		at pckbc?		# PS/2 mouse for wsmouse
-#opms*		at pckbc?		# backwards compatible PS/2 mouse
 #vga0		at isa?
 vga*		at pci? dev ? function ?
 #pcdisplay0	at isa?			# CGA, MDA, EGA, HGA
@@ -481,7 +481,6 @@ fd*	at fdc? drive ?			# the drives themselves
 # Network Interfaces
 
 # PCI network interfaces
-#de*	at pci? dev ? function ?	# DEC 21x4x-based Ethernet
 #en*	at pci? dev ? function ?	# ENI/Adaptec ATM
 #ep*	at pci? dev ? function ?	# 3Com 3c59x
 ex*	at pci? dev ? function ?	# 3Com 90x[BC]
@@ -494,11 +493,7 @@ ne*	at pci? dev ? function ?	# NE2000-compatible Ethernet
 #ntwoc*	at pci? dev ? function ?	# Riscom/N2 PCI Sync Serial
 sip*	at pci? dev ? function ?	# SiS 900 Ethernet
 #tl*	at pci? dev ? function ?	# ThunderLAN-based Ethernet
-tlp*	at pci? dev ? function ?	# DECchip 21x4x (and clones) Ethernet
-options 	TLP_MATCH_21040
-options 	TLP_MATCH_21041
-options 	TLP_MATCH_21140
-options 	TLP_MATCH_21142
+tlp*	at pci? dev ? function ?	# DECchip 21x4x and clones
 vr*	at pci? dev ? function ?	# VIA Rhine Fast Ethernet
 #lmc*	at pci? dev ? function ?	# Lan Media Corp SSI/HSSI/DS3
 rtk*	at pci? dev ? function ?	# Realtek 8129/8139
@@ -760,7 +755,6 @@ bktr* at pci? dev ? function ?
 #olms1	at isa? port 0x238 irq 5
 #omms0	at isa? port 0x23c irq 5	# Microsoft InPort mouse
 #omms1	at isa? port 0x238 irq 5
-#opms0	at pc? irq 12		# PS/2 auxiliary port mouse
 
 
 # Joysticks
@@ -813,6 +807,7 @@ pseudo-device	sequencer	1	# MIDI sequencer
 # rnd works; RND_COM does not on port i386 yet.
 pseudo-device	rnd			# /dev/random and in-kernel generator
 #options 	RND_COM			# use "com" randomness as well (BROKEN)
+pseudo-device	clockctl		# user control of clock subsystem
 
 # a pseudo device needed for Coda	# also needs CODA (above)
 #pseudo-device	vcoda		4	# coda minicache <-> venus comm.

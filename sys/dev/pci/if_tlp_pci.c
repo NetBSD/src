@@ -1,12 +1,12 @@
-/*	$NetBSD: if_tlp_pci.c,v 1.51.2.7 2002/04/17 00:06:01 nathanw Exp $	*/
+/*	$NetBSD: if_tlp_pci.c,v 1.51.2.8 2002/06/20 03:45:31 nathanw Exp $	*/
 
 /*-
- * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
+ * Copyright (c) 1998, 1999, 2000, 2002 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
  * by Jason R. Thorpe of the Numerical Aerospace Simulation Facility,
- * NASA Ames Research Center.
+ * NASA Ames Research Center; and Charles M. Hannum.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -43,9 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tlp_pci.c,v 1.51.2.7 2002/04/17 00:06:01 nathanw Exp $");
-
-#include "opt_tlp.h"
+__KERNEL_RCSID(0, "$NetBSD: if_tlp_pci.c,v 1.51.2.8 2002/06/20 03:45:31 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h> 
@@ -123,22 +121,14 @@ const struct tulip_pci_product {
 	u_int32_t	tpp_product;	/* PCI product ID */
 	tulip_chip_t	tpp_chip;	/* base Tulip chip type */
 } tlp_pci_products[] = {
-#ifdef TLP_MATCH_21040
 	{ PCI_VENDOR_DEC,		PCI_PRODUCT_DEC_21040,
 	  TULIP_CHIP_21040 },
-#endif
-#ifdef TLP_MATCH_21041
 	{ PCI_VENDOR_DEC,		PCI_PRODUCT_DEC_21041,
 	  TULIP_CHIP_21041 },
-#endif
-#ifdef TLP_MATCH_21140
 	{ PCI_VENDOR_DEC,		PCI_PRODUCT_DEC_21140,
 	  TULIP_CHIP_21140 },
-#endif
-#ifdef TLP_MATCH_21142
 	{ PCI_VENDOR_DEC,		PCI_PRODUCT_DEC_21142,
 	  TULIP_CHIP_21142 },
-#endif
 
 	{ PCI_VENDOR_LITEON,		PCI_PRODUCT_LITEON_82C168,
 	  TULIP_CHIP_82C168 },

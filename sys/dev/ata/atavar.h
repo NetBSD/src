@@ -1,4 +1,4 @@
-/*	$NetBSD: atavar.h,v 1.18.6.3 2002/04/17 00:05:24 nathanw Exp $	*/
+/*	$NetBSD: atavar.h,v 1.18.6.4 2002/06/20 03:44:20 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.
@@ -13,8 +13,7 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
+ *	This product includes software developed by Manuel Bouyer.
  * 4. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.

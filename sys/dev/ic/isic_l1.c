@@ -1,4 +1,4 @@
-/* $NetBSD: isic_l1.c,v 1.1.2.4 2002/04/17 00:05:41 nathanw Exp $ */
+/* $NetBSD: isic_l1.c,v 1.1.2.5 2002/06/20 03:44:43 nathanw Exp $ */
 
 /*
  * Copyright (c) 1997, 2000 Hellmuth Michaelis. All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isic_l1.c,v 1.1.2.4 2002/04/17 00:05:41 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isic_l1.c,v 1.1.2.5 2002/06/20 03:44:43 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -62,7 +62,7 @@ unsigned int i4b_l1_debug = L1_DEBUG_DEFAULT;
 static int isic_std_ph_data_req(isdn_layer1token, struct mbuf *, int);
 static int isic_std_ph_activate_req(isdn_layer1token);
 static int isic_std_mph_command_req(isdn_layer1token, int, void*);
-static void isic_enable_intr(struct isic_softc *sc, int enabled);
+static void isic_enable_intr(struct isic_softc *sc, int enable);
 
 const struct isdn_layer1_bri_driver isic_std_driver = {
 	isic_std_ph_data_req,
@@ -126,7 +126,7 @@ isic_std_ph_data_req(isdn_layer1token token, struct mbuf *m, int freeflag)
 				hdr.type = TRC_CH_D;
 				hdr.dir = FROM_TE;
 				hdr.count = ++sc->sc_trace_dcount;
-				isdn_layer2_trace_ind(&sc->sc_l2, &hdr, m->m_len, m->m_data);
+				isdn_layer2_trace_ind(&sc->sc_l2, sc->sc_l3token, &hdr, m->m_len, m->m_data);
 			}
 			splx(s);
 			return(1);
@@ -147,7 +147,7 @@ isic_std_ph_data_req(isdn_layer1token token, struct mbuf *m, int freeflag)
 		hdr.type = TRC_CH_D;
 		hdr.dir = FROM_TE;
 		hdr.count = ++sc->sc_trace_dcount;
-		isdn_layer2_trace_ind(&sc->sc_l2, &hdr, m->m_len, m->m_data);
+		isdn_layer2_trace_ind(&sc->sc_l2, sc->sc_l3token, &hdr, m->m_len, m->m_data);
 	}
 	
 	sc->sc_state |= ISAC_TX_ACTIVE;	/* set transmitter busy flag */
@@ -263,17 +263,16 @@ isic_std_mph_command_req(isdn_layer1token token, int command, void *parm)
 }
 
 static void
-isic_enable_intr(struct isic_softc *sc, int enabled)
+isic_enable_intr(struct isic_softc *sc, int enable)
 {
-	if (sc->sc_ipac) {
-		if (enabled) {
-			isic_isac_init(sc);
-		} else {
-			IPAC_WRITE(IPAC_MASK, 0xff);
-		}
+	if (enable) {
+		isic_isac_init(sc);
 	} else {
-		if (enabled) {
-			isic_isac_init(sc);
+		/* disable receiver */
+		ISAC_WRITE(I_MODE, ISAC_MODE_MDS2|ISAC_MODE_MDS1|ISAC_MODE_DIM0);
+		/* mask interrupts */
+		if (sc->sc_ipac) {
+			IPAC_WRITE(IPAC_MASK, 0xff);
 		} else {
 			ISAC_WRITE(I_MASK, 0xff);
 		}

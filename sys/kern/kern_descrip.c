@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_descrip.c,v 1.72.2.9 2002/05/29 21:33:09 nathanw Exp $	*/
+/*	$NetBSD: kern_descrip.c,v 1.72.2.10 2002/06/20 03:47:10 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.72.2.9 2002/05/29 21:33:09 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.72.2.10 2002/06/20 03:47:10 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -51,6 +51,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.72.2.9 2002/05/29 21:33:09 nathan
 #include <sys/lwp.h>
 #include <sys/proc.h>
 #include <sys/file.h>
+#include <sys/namei.h>
 #include <sys/socket.h>
 #include <sys/socketvar.h>
 #include <sys/stat.h>
@@ -600,7 +601,8 @@ sys_fpathconf(struct lwp *l, void *v, register_t *retval)
 		break;
 
 	default:
-		panic("fpathconf");
+		error = EOPNOTSUPP;
+		break;
 	}
 
 	FILE_UNUSE(fp, p);
@@ -626,27 +628,25 @@ fdalloc(struct proc *p, int want, int *result)
 	 * expanding the ofile array.
 	 */
 	lim = min((int)p->p_rlimit[RLIMIT_NOFILE].rlim_cur, maxfiles);
-	for (;;) {
-		last = min(fdp->fd_nfiles, lim);
-		if ((i = want) < fdp->fd_freefile)
-			i = fdp->fd_freefile;
-		for (; i < last; i++) {
-			if (fdp->fd_ofiles[i] == NULL) {
-				fd_used(fdp, i);
-				if (want <= fdp->fd_freefile)
-					fdp->fd_freefile = i;
-				*result = i;
-				return (0);
-			}
+	last = min(fdp->fd_nfiles, lim);
+	if ((i = want) < fdp->fd_freefile)
+		i = fdp->fd_freefile;
+	for (; i < last; i++) {
+		if (fdp->fd_ofiles[i] == NULL) {
+			fd_used(fdp, i);
+			if (want <= fdp->fd_freefile)
+				fdp->fd_freefile = i;
+			*result = i;
+			return (0);
 		}
-
-		/* No space in current array.  Expand? */
-		if (fdp->fd_nfiles >= lim)
-			return (EMFILE);
-
-		/* Let the caller do it. */
-		return (ENOSPC);
 	}
+
+	/* No space in current array.  Expand? */
+	if (fdp->fd_nfiles >= lim)
+		return (EMFILE);
+
+	/* Let the caller do it. */
+	return (ENOSPC);
 }
 
 void
@@ -670,7 +670,7 @@ fdexpand(struct proc *p)
 	 * and zero the new portion of each array.
 	 */
 	memcpy(newofile, fdp->fd_ofiles,
-		(i = sizeof(struct file *) * fdp->fd_nfiles));
+	    (i = sizeof(struct file *) * fdp->fd_nfiles));
 	memset((char *)newofile + i, 0,
 	    nfiles * sizeof(struct file *) - i);
 	memcpy(newofileflags, fdp->fd_ofileflags,
@@ -1216,7 +1216,7 @@ filedescopen(dev_t dev, int mode, int type, struct proc *p)
 
 	/*
 	 * XXX Kludge: set p->p_dupfd to contain the value of the
-	 * the file descriptor being sought for duplication. The error 
+	 * the file descriptor being sought for duplication. The error
 	 * return ensures that the vnode for this device will be released
 	 * by vn_open. Open will detect this special error and take the
 	 * actions in dupfdopen below. Other callers of vn_open or VOP_OPEN
@@ -1390,3 +1390,80 @@ fdcloseexec(struct proc *p)
 		if (fdp->fd_ofileflags[fd] & UF_EXCLOSE)
 			(void) fdrelease(p, fd);
 }
+
+/*
+ * It is unsafe for set[ug]id processes to be started with file
+ * descriptors 0..2 closed, as these descriptors are given implicit
+ * significance in the Standard C library.  fdcheckstd() will create a
+ * descriptor referencing /dev/null for each of stdin, stdout, and
+ * stderr that is not already open.
+ */
+#define CHECK_UPTO 3
+int
+fdcheckstd(p)
+	struct proc *p;
+{
+	struct nameidata nd;
+	struct filedesc *fdp;
+	struct file *fp;
+	struct file *devnullfp;
+	struct proc *pp;
+	register_t retval;
+	int fd, i, error, flags = FREAD|FWRITE, devnull = -1;
+	char closed[CHECK_UPTO * 3 + 1], which[3 + 1];
+
+	closed[0] = '\0';
+	if ((fdp = p->p_fd) == NULL)
+		return (0);
+	for (i = 0; i < CHECK_UPTO; i++) {
+		if (fdp->fd_ofiles[i] != NULL)
+			continue;
+		snprintf(which, sizeof(which), ",%d", i);
+		strcat(closed, which);
+		if (devnull < 0) {
+			if ((error = falloc(p, &fp, &fd)) != 0)
+				return (error);
+			NDINIT(&nd, LOOKUP, FOLLOW, UIO_SYSSPACE, "/dev/null",
+			    p);
+			if ((error = vn_open(&nd, flags, 0)) != 0) {
+				FILE_UNUSE(fp, p);
+				ffree(fp);
+				fdremove(p->p_fd, fd);
+				return (error);
+			}
+			fp->f_data = (caddr_t)nd.ni_vp;
+			fp->f_flag = flags;
+			fp->f_ops = &vnops;
+			fp->f_type = DTYPE_VNODE;
+			VOP_UNLOCK(nd.ni_vp, 0);
+			devnull = fd;
+			devnullfp = fp;
+			FILE_SET_MATURE(fp);
+			FILE_UNUSE(fp, p);
+		} else {
+restart:
+			if ((error = fdalloc(p, 0, &fd)) != 0) {
+				if (error == ENOSPC) {
+					fdexpand(p);
+					goto restart;
+				}
+				return (error);
+			}
+
+			FILE_USE(devnullfp);
+			/* finishdup() will unuse the descriptors for us */
+			if ((error = finishdup(p, devnull, fd, &retval)) != 0)
+				return (error);
+		}
+	}
+	if (closed[0] != '\0') {
+		pp = p->p_pptr;
+		log(LOG_WARNING, "set{u,g}id pid %d (%s) "
+		    "was invoked by uid %d ppid %d (%s) "
+		    "with fd %s closed\n",
+		    p->p_pid, p->p_comm, pp->p_ucred->cr_uid,
+		    pp->p_pid, pp->p_comm, &closed[1]);
+	}
+	return (0);
+}
+#undef CHECK_UPTO

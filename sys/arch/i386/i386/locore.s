@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.233.2.10 2002/04/17 02:08:18 nathanw Exp $	*/
+/*	$NetBSD: locore.s,v 1.233.2.11 2002/06/20 03:39:10 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -2367,16 +2367,6 @@ ENTRY(savectx)
  * and only enable them again on the final `iret' or before calling the AST
  * handler.
  */ 
-
-/*
- * XXX traditional CPP's evaluation semantics make this necessary.
- * XXX (__CONCAT() would be evaluated incorrectly)
- */
-#ifdef __ELF__
-#define	IDTVEC(name)	ALIGN_TEXT; .globl X/**/name; X/**/name:
-#else
-#define	IDTVEC(name)	ALIGN_TEXT; .globl _X/**/name; _X/**/name:
-#endif
 
 #define	TRAP(a)		pushl $(a) ; jmp _C_LABEL(alltraps)
 #define	ZTRAP(a)	pushl $0 ; TRAP(a)

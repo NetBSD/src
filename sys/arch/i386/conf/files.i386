@@ -1,4 +1,4 @@
-#	$NetBSD: files.i386,v 1.182.2.7 2002/02/28 04:10:15 nathanw Exp $
+#	$NetBSD: files.i386,v 1.182.2.8 2002/06/20 03:39:08 nathanw Exp $
 #
 # new style config file for i386 architecture
 #
@@ -248,10 +248,6 @@ file	arch/i386/isa/omms.c		omms needs-flag
 device	mms: wsmousedev
 attach	mms at isa
 file	arch/i386/isa/mms.c		mms
-device	opms
-attach	opms at pckbcport with opms_hack
-attach	opms at pckbc with opms_pckbc
-file	arch/i386/isa/pms.c		opms | opms_hack | opms_pckbc needs-flag
 
 include	"dev/wscons/files.wscons"
 include	"dev/wsfont/files.wsfont"
@@ -363,9 +359,6 @@ include	"compat/pecoff/files.pecoff"
 # OSS audio driver compatibility
 include	"compat/ossaudio/files.ossaudio"
 
-# network devices MII bus
-include	"dev/mii/files.mii"
-
 #
 # CARDBUS
 #
@@ -438,3 +431,13 @@ include	"arch/i386/pnpbios/files.pnpbios"
 
 include "dev/acpi/files.acpi"
 file	arch/i386/i386/acpi_machdep.c	acpi
+file	arch/i386/acpi/acpi_wakeup.c	acpi
+
+# Toshiba VALD 
+device	vald
+attach	vald at acpi with vald_acpi
+file	arch/i386/acpi/vald_acpi.c		vald_acpi
+
+# Sony SPIC (jog dial etc.)
+attach	spic at acpi with spic_acpi
+file	arch/i386/acpi/spic_acpi.c		spic_acpi

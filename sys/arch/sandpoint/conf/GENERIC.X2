@@ -1,0 +1,3 @@
+# $NetBSD: GENERIC.X2,v 1.1.6.2 2002/06/20 03:40:43 nathanw Exp $
+
+include		"arch/sandpoint/conf/GENERIC.sandpoint"

@@ -27,14 +27,14 @@
  *	i4b_bchan.c - B channel handling L1 procedures
  *	----------------------------------------------
  *
- *	$Id: isic_bchan.c,v 1.1.2.3 2002/04/01 07:45:27 nathanw Exp $
+ *	$Id: isic_bchan.c,v 1.1.2.4 2002/06/20 03:44:43 nathanw Exp $
  *
  *      last edit-date: [Fri Jan  5 11:36:11 2001]
  *
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isic_bchan.c,v 1.1.2.3 2002/04/01 07:45:27 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isic_bchan.c,v 1.1.2.4 2002/06/20 03:44:43 nathanw Exp $");
 
 #include <sys/param.h>
 #if defined(__FreeBSD__) && __FreeBSD__ >= 3
@@ -207,7 +207,7 @@ isic_bchannel_start(isdn_layer1token t, int h_chan)
 		hdr.type = (h_chan == HSCX_CH_A ? TRC_CH_B1 : TRC_CH_B2);
 		hdr.dir = FROM_TE;
 		hdr.count = ++sc->sc_trace_bcount;
-		isdn_layer2_trace_ind(&sc->sc_l2, &hdr,
+		isdn_layer2_trace_ind(&sc->sc_l2, sc->sc_l3token, &hdr,
 			chan->out_mbuf_cur->m_len, chan->out_mbuf_cur->m_data);
 	}			
 
@@ -277,7 +277,8 @@ isic_bchannel_start(isdn_layer1token t, int h_chan)
 					TRC_CH_B1 : TRC_CH_B2);
 				hdr.dir = FROM_TE;
 				hdr.count = ++sc->sc_trace_bcount;
-				isdn_layer2_trace_ind(&sc->sc_l2, &hdr,
+				isdn_layer2_trace_ind(&sc->sc_l2, sc->sc_l3token, 
+					&hdr,
 					chan->out_mbuf_cur->m_len,
 					chan->out_mbuf_cur->m_data);
 			}			

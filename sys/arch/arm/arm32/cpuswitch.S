@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuswitch.S,v 1.3.2.6 2002/04/11 07:00:15 thorpej Exp $	*/
+/*	$NetBSD: cpuswitch.S,v 1.3.2.7 2002/06/20 03:38:04 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -231,30 +231,35 @@ Lblock_userspace_access:
 /*
  * Idle loop, exercised while waiting for a process to wake up.
  */
+/* LINTSTUB: Ignore */
 ASENTRY_NP(idle)
+
+#if defined(LOCKDEBUG)
+	bl	_C_LABEL(sched_unlock_idle)
+#endif
 	/* Enable interrupts */
 	IRQenable
 
-	/* XXX - r1 needs to be preserved for cpu_switch */
-	mov	r7, r1
 	ldr	r3, Lcpufuncs
 	mov	r0, #0
 	add	lr, pc, #Lidle_slept - . - 8
 	ldr	pc, [r3, #CF_SLEEP]
 
+	/* should also call the uvm pageidlezero stuff */
+
 Lidle_slept:
-	mov	r1, r7
 
 	/* Disable interrupts while we check for an active queue */
 	IRQdisable
+#if defined(LOCKDEBUG)
+	bl	_C_LABEL(sched_lock_idle)
+#endif
 	ldr	r7, Lwhichqs
 	ldr	r3, [r7]
 	teq	r3, #0x00000000
-	bne	sw1
 
-	/* All processes are still asleep so idle a while longer */
-	b	_ASM_LABEL(idle)
-
+	beq	_ASM_LABEL(idle)
+	b	Lidle_ret
 
 /*
  * Find a new lwp to run, save the current context and
@@ -290,9 +295,15 @@ ENTRY(cpu_switch)
 	ldr	r7, Lcurpcb
 	str	r0, [r7]
 
-	/* Lower the spl level to spl0 and get the current spl level. */
+	/* stash the old proc */
 	mov	r7, r1
 
+#if defined(LOCKDEBUG)
+	/* release the sched_lock before handling interrupts */
+	bl	_C_LABEL(sched_unlock_idle)
+#endif
+
+	/* Lower the spl level to spl0 and get the current spl level. */
 #ifdef __NEWINTR
 	mov	r0, #(IPL_NONE)
 	bl	_C_LABEL(_spllower)
@@ -308,14 +319,19 @@ ENTRY(cpu_switch)
 	/* Push the old spl level onto the stack */
 	str	r0, [sp, #-0x0004]!
 
-	mov	r1, r7
+	mov	r5, r7
 
 	/* First phase : find a new lwp */
 
-	/* rem: r1 = old proc */
+	/* rem: r5 = old lwp */
 
-switch_search:
+
+Lswitch_search:
 	IRQdisable
+#if defined(LOCKDEBUG)
+	bl	_C_LABEL(sched_lock_idle)
+#endif
+
 
 	/* Do we have any active queues  */
 	ldr	r7, Lwhichqs
@@ -324,8 +340,11 @@ switch_search:
 	/* If not we must idle until we do. */
 	teq	r3, #0x00000000
 	beq	_ASM_LABEL(idle)
+Lidle_ret:
 
-sw1:
+	/* restore old proc */
+	mov	r1, r5
+
 	/* rem: r1 = old lwp */
 	/* rem: r3 = whichqs */
 	/* rem: interrupts are disabled */
@@ -411,6 +430,15 @@ sw1:
 	str	r0, [r6, #(L_BACK)]
 
 switch_resume:
+#if defined(LOCKDEBUG)
+	/*
+	 * unlock the sched_lock, but leave interrupts off, for now.
+	 */
+	mov	r7, r1
+	bl	_C_LABEL(sched_unlock_idle)
+	mov	r1, r7
+#endif
+
 	/* l->l_cpu initialized in fork1() for single-processor */
 
 	/* Process is now on a processor. */
@@ -588,16 +616,26 @@ switch_return:
 ENTRY(cpu_preempt)
 	stmfd	sp!, {r4-r7, lr}
 
-	/* Lower the spl level to spl0 and get the current spl level. */
+	/* stash the lwp parameters */
 	mov	r6, r0		/* save old lwp */
 	mov	r7, r1		/* save new lwp */
 
+#if defined(LOCKDEBUG)
+	bl	_C_LABEL(sched_unlock_idle)
+#endif
+
+ 	/* Lower the spl level to spl0 and get the current spl level. */
+#ifdef __NEWINTR
+  	mov	r0, #(IPL_NONE)
+  	bl	_C_LABEL(_spllower)
+#else	
 #ifdef spl0
 	mov	r0, #(_SPL_0)
 	bl	_C_LABEL(splx)
 #else
 	bl	_C_LABEL(spl0)
-#endif
+#endif /* spl0 */
+#endif /* __NEWINTR */
 
 	/* Push the old spl level onto the stack */
 	str	r0, [sp, #-0x0004]!
@@ -608,6 +646,9 @@ ENTRY(cpu_preempt)
 	/* rem: r1 = new lwp */
 
 	IRQdisable
+#if defined(LOCKDEBUG)
+	bl	_C_LABEL(sched_lock_idle)
+#endif
 
 	/* Do we have any active queues? */
 	ldr	r7, Lwhichqs
@@ -677,7 +718,13 @@ Llwp0:
 Lkernel_map:
 	.word	_C_LABEL(kernel_map)
 
+/*
+ * void switch_exit(struct proc *p);
+ * Switch to proc0's saved context and deallocate the address space and kernel
+ * stack for p.  Then jump into cpu_switch(), as if we were in proc0 all along.
+ */
 
+/* LINTSTUB: Func: void switch_exit(struct proc *p) */
 ENTRY(switch_exit)
 	/*
 	 * r0 = lwp
@@ -807,9 +854,10 @@ Lsle_context_switched:
 	mov	r0, #0x00000000
 	str	r0, [r1]
 
-        ldr     r1, Llwp0
-	b	switch_search
+	ldr	r5, Llwp0
+	b	Lswitch_search
 
+/* LINTSTUB: Func: void savectx(struct pcb *pcb) */
 ENTRY(savectx)
 	/*
 	 * r0 = pcb

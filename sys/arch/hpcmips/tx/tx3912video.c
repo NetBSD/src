@@ -1,4 +1,4 @@
-/*	$NetBSD: tx3912video.c,v 1.23.8.4 2002/04/17 00:03:10 nathanw Exp $ */
+/*	$NetBSD: tx3912video.c,v 1.23.8.5 2002/06/20 03:38:53 nathanw Exp $ */
 
 /*-
  * Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
@@ -136,7 +136,7 @@ tx3912video_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct tx3912video_softc *sc = (void *)self;
 	struct video_chip *chip;
-	const char *depth_print[] = { 
+	static const char *const depth_print[] = { 
 		[TX3912_VIDEOCTRL1_BITSEL_MONOCHROME] = "monochrome",
 		[TX3912_VIDEOCTRL1_BITSEL_2BITGREYSCALE] = "2bit greyscale",
 		[TX3912_VIDEOCTRL1_BITSEL_4BITGREYSCALE] = "4bit greyscale",
@@ -703,7 +703,7 @@ void
 tx3912video_clut_install(void *ctx, struct rasops_info *ri)
 {
 	struct tx3912video_softc *sc = ctx;
-	const int system_cmap[0x10] = {
+	static const int system_cmap[0x10] = {
 		TX3912VIDEO_BLACK,
 		TX3912VIDEO_RED,
 		TX3912VIDEO_GREEN,

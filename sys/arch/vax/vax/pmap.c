@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.108.4.4 2002/04/17 00:04:42 nathanw Exp $	   */
+/*	$NetBSD: pmap.c,v 1.108.4.5 2002/06/20 03:42:22 nathanw Exp $	   */
 /*
  * Copyright (c) 1994, 1998, 1999 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -33,6 +33,7 @@
 #include "opt_cputype.h"
 #include "opt_multiprocessor.h"
 #include "opt_lockdebug.h"
+#include "opt_pipe.h"
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -197,6 +198,17 @@ calc_kvmsize(vsize_t usrptsize)
 	/* LKMs are allocated out of kernel_map */
 #define MAXLKMSIZ	0x100000	/* XXX */
 	kvmsize += MAXLKMSIZ;
+#endif
+
+	/* The swapper uses many anon's, set an arbitrary size */
+#ifndef SWAPSIZE
+#define	SWAPSIZE (200*1024*1024)	/* Assume 200MB swap */
+#endif
+	kvmsize += ((SWAPSIZE/PAGE_SIZE)*sizeof(struct vm_anon));
+
+	/* New pipes may steal some amount of memory. Calculate 10 pipes */
+#ifndef PIPE_SOCKETPAIR
+	kvmsize += PIPE_DIRECT_CHUNK*10;
 #endif
 	return kvmsize;
 }
@@ -770,7 +782,7 @@ grow_p1(struct pmap *pm, int len)
 	bzero(kvtopte(nptespc), vax_btop(nlen-olen) * PPTESZ);
 	if (optespc)
 		bcopy(kvtopte(optespc), kvtopte(nptespc+nlen-olen),
-		    vax_btop(olen));
+		    vax_btop(olen) * PPTESZ);
 
 	pm->pm_p1ap = (struct pte *)nptespc;
 	pm->pm_p1br = (struct pte *)(nptespc+nlen-0x800000);

@@ -1,4 +1,4 @@
-# $NetBSD: INSTALL,v 1.2.2.4 2002/04/17 00:02:59 nathanw Exp $
+# $NetBSD: INSTALL,v 1.2.2.5 2002/06/20 03:38:36 nathanw Exp $
 #
 # INSTALL machine description file
 #
@@ -6,6 +6,8 @@
 # for the installation media.
 
 include 	"arch/hp300/conf/std.hp300"
+
+#options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
 # optimise for smaller kernels
 makeoptions 	COPTS="-Os"
@@ -33,6 +35,7 @@ options 	HP385
 options 	HP400
 options 	HP425
 options 	HP433
+options 	FPSP		# floating point interface for 68040
 
 # Need to set locally
 maxusers	32
@@ -87,13 +90,10 @@ options 	INET		# Internet protocols
 #options 	TCP_DEBUG	# Record last TCP_NDEBUG packets with SO_DEBUG
 
 # Options for HP hardware
-#options 	FPSP		# floating point interface for 68040
 #options 	USELEDS		# make the lights twinkle
 options 	COMPAT_NOLABEL	# defaults for unlabeled disks
 #options 	PANICBUTTON	# two fast <reset>s on HIL dump kernel
 #options 	CONSCODE=9	# force console at this select code
-#options 	UK_KEYBOARD	# include United Kingdom HIL keymap
-#options 	SE_KEYBOARD	# include Swedish HIL keymap
 
 # This option enables a different copyin/copyout that uses page
 # mapping for large copies.
@@ -122,6 +122,8 @@ rtc*		at intio?
 
 # Human Interface Loop
 hil*		at intio?
+#options 	UK_KEYBOARD	# include United Kingdom HIL keymap
+#options 	SE_KEYBOARD	# include Swedish HIL keymap
 
 # Frodo utility chip found on 4xx's
 frodo*		at intio?

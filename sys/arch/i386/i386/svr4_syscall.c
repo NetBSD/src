@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_syscall.c,v 1.13.6.4 2002/01/08 00:25:29 nathanw Exp $	*/
+/*	$NetBSD: svr4_syscall.c,v 1.13.6.5 2002/06/20 03:39:13 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -37,12 +37,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_syscall.c,v 1.13.6.4 2002/01/08 00:25:29 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_syscall.c,v 1.13.6.5 2002/06/20 03:39:13 nathanw Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_syscall_debug.h"
 #include "opt_vm86.h"
 #include "opt_ktrace.h"
+#include "opt_systrace.h"
 #endif
 
 #include <sys/param.h>
@@ -53,6 +54,9 @@ __KERNEL_RCSID(0, "$NetBSD: svr4_syscall.c,v 1.13.6.4 2002/01/08 00:25:29 nathan
 #include <sys/signal.h>
 #ifdef KTRACE
 #include <sys/ktrace.h>
+#endif
+#ifdef SYSTRACE
+#include <sys/systrace.h>
 #endif
 #include <sys/syscall.h>
 
@@ -74,13 +78,19 @@ void
 svr4_syscall_intern(p)
 	struct proc *p;
 {
-
 #ifdef KTRACE
-	if (p->p_traceflag & (KTRFAC_SYSCALL | KTRFAC_SYSRET))
+	if (p->p_traceflag & (KTRFAC_SYSCALL | KTRFAC_SYSRET)) {
 		p->p_md.md_syscall = svr4_syscall_fancy;
-	else
+		return;
+	}
 #endif
-		p->p_md.md_syscall = svr4_syscall_plain;
+#ifdef SYSTRACE
+	if (ISSET(p->p_flag, P_SYSTRACE)) {
+		p->p_md.md_syscall = svr4_syscall_fancy;
+		return;
+	} 
+#endif
+	p->p_md.md_syscall = svr4_syscall_plain;
 }
 
 /*
@@ -211,13 +221,8 @@ svr4_syscall_fancy(frame)
 			goto bad;
 	}
 
-#ifdef SYSCALL_DEBUG
-	scdebug_call(l, code, args);
-#endif /* SYSCALL_DEBUG */
-#ifdef KTRACE
-	if (KTRPOINT(p, KTR_SYSCALL))
-		ktrsyscall(p, code, argsize, args);
-#endif /* KTRACE */
+	if ((error = trace_enter(l, code, args, rval)) != 0)
+		goto bad;
 
 	rval[0] = 0;
 	rval[1] = 0;
@@ -247,12 +252,7 @@ svr4_syscall_fancy(frame)
 		break;
 	}
 
-#ifdef SYSCALL_DEBUG
-	scdebug_ret(l, code, error, rval);
-#endif /* SYSCALL_DEBUG */
+	trace_exit(l, code, args, rval, error);
+
 	userret(l);
-#ifdef KTRACE
-	if (KTRPOINT(p, KTR_SYSRET))
-		ktrsysret(p, code, error, rval[0]);
-#endif /* KTRACE */
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.148.4.8 2002/02/28 04:12:07 nathanw Exp $	*/
+/*	$NetBSD: locore.s,v 1.148.4.9 2002/06/20 03:41:06 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1996 Paul Kranenburg
@@ -1686,7 +1686,7 @@ ctw_user:
 	bl,a	ctw_merge		! all ok if only 1
 	 std	%l0, [%sp]
 	add	%sp, 7*8, %g5		! check last addr too
-	add	%g6, 62, %g6		! restore %g6 to `pgofset'
+	add	%g6, 62, %g6		/* restore %g6 to `pgofset' */
 	PTE_OF_ADDR(%g5, %g7, ctw_invalid, %g6, NOP_ON_4M_3)
 	CMP_PTE_USER_WRITE(%g7, %g6, NOP_ON_4M_4)
 	be,a	ctw_merge		! all ok: store <l0,l1> and merge
@@ -2612,7 +2612,7 @@ nmi_sun4:
 	 */
 	sethi	%hi(INTRREG_VA), %o0
 	ldub	[%o0 + %lo(INTRREG_VA)], %o1
-	andn	%o0, IE_ALLIE, %o1
+	andn	%o1, IE_ALLIE, %o1
 	stb	%o1, [%o0 + %lo(INTRREG_VA)]
 	wr	%l0, PSR_ET, %psr	! okay, turn traps on again
 
@@ -2638,7 +2638,7 @@ nmi_sun4c:
 	 */
 	sethi	%hi(INTRREG_VA), %o0
 	ldub	[%o0 + %lo(INTRREG_VA)], %o1
-	andn	%o0, IE_ALLIE, %o1
+	andn	%o1, IE_ALLIE, %o1
 	stb	%o1, [%o0 + %lo(INTRREG_VA)]
 	wr	%l0, PSR_ET, %psr	! okay, turn traps on again
 
@@ -2700,7 +2700,7 @@ nmi_sun4m:
 	bnz,a	1f			!
 	 mov	%o0, %o1		! shift int clear bit to SOFTINT 15
 
-	set	_C_LABEL(nmi_hard), %o3	! it's a hardint; switch handler
+	set	_C_LABEL(nmi_hard), %o3	/* it's a hardint; switch handler */
 
 	/*
 	 * Level 15 interrupts are nonmaskable, so with traps off,
@@ -2767,7 +2767,7 @@ nmi_sun4m:
 
 	!cmp	%o0, 0			! was this a soft nmi
 	!be	4f
-	!XXX - we need to unblock `mask all ints' only on a hard nmi
+	/* XXX - we need to unblock `mask all ints' only on a hard nmi */
 
 	! enable interrupts again (safe, we disabled traps again above)
 	sethi	%hi(ICR_SI_CLR), %o0
@@ -3461,7 +3461,7 @@ dostart:
 
 	set	0x44444230, %l3		! Is it DDB_MAGIC0?
 	cmp	%o5, %l3		! if so, need to relocate %o4
-	bne	3f			! if not, there's no bootloader info
+	bne	3f			/* if not, there's no bootloader info */
 
 					! note: %l4 set to KERNBASE above.
 	set	0xf8000000, %l5		! compute correction term:
@@ -4511,7 +4511,7 @@ idle_enter_no_schedlock:
 #if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)
 idle_leave:
 	/* Before we leave the idle loop, detain the scheduler lock */
-	nop;nop;nop;	! just wrote to %psr; delay before doing a `save'
+	nop;nop;nop;	/* just wrote to %psr; delay before doing a `save' */
 	SAVE_GLOBALS_AND_CALL(sched_lock_idle)
 	b,a	Lsw_scan
 #endif
@@ -6086,10 +6086,10 @@ NOP_ON_4_4C_1:
 	set	1000000, %g5			! normalize usec value
 	cmp	%o3, %g5
 	bl,a	4f
-	 st	%o2, [%o0]			! (should be able to std here)
+	 st	%o2, [%o0]
 	add	%o2, 1, %o2			! overflow
 	sub	%o3, %g5, %o3
-	st	%o2, [%o0]			! (should be able to std here)
+	st	%o2, [%o0]
 4:
 	retl
 	 st	%o3, [%o0+4]
@@ -6125,17 +6125,16 @@ ENTRY(microtime)
 	bpos	3f				! if limit not reached yet
 	 clr	%g4				!  then use timer as is
 
-	sethi	%hi(0x80000000), %g5
+	set	0x80000000, %g5
 	sethi	%hi(_C_LABEL(tick)), %g4
-	andn	%o4, %g5, %o4			! cleat limit reached flag
+	bclr	%g5, %o4			! cleat limit reached flag
 	ld	[%g4+%lo(_C_LABEL(tick))], %g4
 
 	!! %g4 - either 0 or tick (if timer has hit the limit)
 3:
 	inc	-1, %o4				! timer is 1-based, adjust
-	!! divide by 25 magic stollen from a gcc output
-	sethi	%hi(1374389535), %g5
-	or	%g5, %lo(1374389535), %g5
+	!! divide by 25 magic stolen from a gcc output
+	set	1374389535, %g5
 	umul	%o4, %g5, %g0
 	rd	%y, %o4
 	srl	%o4, 3, %o4
@@ -6145,13 +6144,13 @@ ENTRY(microtime)
 	add	%o3, %o4, %o3			! add timer to time.tv_usec
 	set	1000000, %g5			! normalize usec value
 	cmp	%o3, %g5
-	bl	4f
-	 nop
+	bl,a	4f
+	 st	%o2, [%o0]
 	inc	%o2				! overflow into tv_sec
 	sub	%o3, %g5, %o3
-4:
-	retl
-	 std	%o2, [%o0]
+	st	%o2, [%o0]
+4:	retl
+	 st	%o3, [%o0 + 4]
 #endif /* MSIIEP */
 
 /*

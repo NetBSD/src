@@ -2,7 +2,7 @@
  *
  * Module Name: evsci - System Control Interrupt configuration and
  *                      legacy to ACPI mode state transition functions
- *              xRevision: 74 $
+ *              $Revision: 1.1.1.1.4.4 $
  *
  ******************************************************************************/
 
@@ -10,7 +10,7 @@
  *
  * 1. Copyright Notice
  *
- * Some or all of this work - Copyright (c) 1999, 2000, 2001, Intel Corp.
+ * Some or all of this work - Copyright (c) 1999 - 2002, Intel Corp.
  * All rights reserved.
  *
  * 2. License
@@ -117,26 +117,14 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: evsci.c,v 1.1.1.1.4.3 2001/11/14 19:13:47 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: evsci.c,v 1.1.1.1.4.4 2002/06/20 03:43:52 nathanw Exp $");
 
 #include "acpi.h"
-#include "acnamesp.h"
-#include "achware.h"
 #include "acevents.h"
 
 
 #define _COMPONENT          ACPI_EVENTS
-        MODULE_NAME         ("evsci")
-
-
-/*
- * Elements correspond to counts for TMR, NOT_USED, GBL, PWR_BTN, SLP_BTN, RTC,
- * and GENERAL respectively.  These counts are modified by the ACPI interrupt
- * handler.
- *
- * TBD: [Investigate] Note that GENERAL should probably be split out into
- * one element for each bit in the GPE registers
- */
+        ACPI_MODULE_NAME    ("evsci")
 
 
 /*******************************************************************************
@@ -153,24 +141,33 @@ __KERNEL_RCSID(0, "$NetBSD: evsci.c,v 1.1.1.1.4.3 2001/11/14 19:13:47 nathanw Ex
  *
  ******************************************************************************/
 
-static UINT32
-AcpiEvSciHandler (void *Context)
+static UINT32 ACPI_SYSTEM_XFACE
+AcpiEvSciHandler (
+    void                    *Context)
 {
-    UINT32                  InterruptHandled = INTERRUPT_NOT_HANDLED;
+    UINT32                  InterruptHandled = ACPI_INTERRUPT_NOT_HANDLED;
+    UINT32                  Value;
+    ACPI_STATUS             Status;
 
 
-    FUNCTION_TRACE("EvSciHandler");
+    ACPI_FUNCTION_TRACE("EvSciHandler");
 
 
     /*
      * Make sure that ACPI is enabled by checking SCI_EN.  Note that we are
      * required to treat the SCI interrupt as sharable, level, active low.
      */
-    if (!AcpiHwRegisterBitAccess (ACPI_READ, ACPI_MTX_DO_NOT_LOCK, SCI_EN))
+    Status = AcpiGetRegister (ACPI_BITREG_SCI_ENABLE, &Value, ACPI_MTX_DO_NOT_LOCK);
+    if (ACPI_FAILURE (Status))
+    {
+        return (ACPI_INTERRUPT_NOT_HANDLED);
+    }
+
+    if (!Value)
     {
         /* ACPI is not enabled;  this interrupt cannot be for us */
 
-        return_VALUE (INTERRUPT_NOT_HANDLED);
+        return_VALUE (ACPI_INTERRUPT_NOT_HANDLED);
     }
 
     /*
@@ -209,7 +206,7 @@ AcpiEvInstallSciHandler (void)
     UINT32                  Status = AE_OK;
 
 
-    FUNCTION_TRACE ("EvInstallSciHandler");
+    ACPI_FUNCTION_TRACE ("EvInstallSciHandler");
 
 
     Status = AcpiOsInstallInterruptHandler ((UINT32) AcpiGbl_FADT->SciInt,
@@ -219,7 +216,6 @@ AcpiEvInstallSciHandler (void)
 
 
 /******************************************************************************
-
  *
  * FUNCTION:    AcpiEvRemoveSciHandler
  *
@@ -228,166 +224,31 @@ AcpiEvInstallSciHandler (void)
  * RETURN:      E_OK if handler uninstalled OK, E_ERROR if handler was not
  *              installed to begin with
  *
- * DESCRIPTION: Restores original status of all fixed event enable bits and
- *              removes SCI handler.
+ * DESCRIPTION: Remove the SCI interrupt handler.  No further SCIs will be
+ *              taken.
+ *
+ * Note:  It doesn't seem important to disable all events or set the event
+ *        enable registers to their original values.  The OS should disable
+ *        the SCI interrupt level when the handler is removed, so no more
+ *        events will come in.
  *
  ******************************************************************************/
 
 ACPI_STATUS
 AcpiEvRemoveSciHandler (void)
 {
-    FUNCTION_TRACE ("EvRemoveSciHandler");
+    ACPI_STATUS             Status;
 
 
-#if 0
-    /* TBD:[Investigate] Figure this out!!  Disable all events first ???  */
+    ACPI_FUNCTION_TRACE ("EvRemoveSciHandler");
 
-    if (OriginalFixedEnableBitStatus ^ 1 << AcpiEventIndex (TMR_FIXED_EVENT))
-    {
-        AcpiEventDisableEvent (TMR_FIXED_EVENT);
-    }
 
-    if (OriginalFixedEnableBitStatus ^ 1 << AcpiEventIndex (GBL_FIXED_EVENT))
-    {
-        AcpiEventDisableEvent (GBL_FIXED_EVENT);
-    }
+    /* Just let the OS remove the handler and disable the level */
 
-    if (OriginalFixedEnableBitStatus ^ 1 << AcpiEventIndex (PWR_BTN_FIXED_EVENT))
-    {
-        AcpiEventDisableEvent (PWR_BTN_FIXED_EVENT);
-    }
-
-    if (OriginalFixedEnableBitStatus ^ 1 << AcpiEventIndex (SLP_BTN_FIXED_EVENT))
-    {
-        AcpiEventDisableEvent (SLP_BTN_FIXED_EVENT);
-    }
-
-    if (OriginalFixedEnableBitStatus ^ 1 << AcpiEventIndex (RTC_FIXED_EVENT))
-    {
-        AcpiEventDisableEvent (RTC_FIXED_EVENT);
-    }
-
-    OriginalFixedEnableBitStatus = 0;
-
-#endif
-
-    AcpiOsRemoveInterruptHandler ((UINT32) AcpiGbl_FADT->SciInt,
+    Status = AcpiOsRemoveInterruptHandler ((UINT32) AcpiGbl_FADT->SciInt,
                                     AcpiEvSciHandler);
 
-    return_ACPI_STATUS (AE_OK);
-}
-
-
-/*******************************************************************************
- *
- * FUNCTION:    AcpiEvRestoreAcpiState
- *
- * PARAMETERS:  none
- *
- * RETURN:      none
- *
- * DESCRIPTION: Restore the original ACPI state of the machine
- *
- ******************************************************************************/
-
-void
-AcpiEvRestoreAcpiState (void)
-{
-    UINT32                  Index;
-
-
-    FUNCTION_TRACE ("EvRestoreAcpiState");
-
-
-    /* Restore the state of the chipset enable bits. */
-
-    if (AcpiGbl_RestoreAcpiChipset == TRUE)
-    {
-        /* Restore the fixed events */
-
-        if (AcpiHwRegisterRead (ACPI_MTX_LOCK, PM1_EN) !=
-                AcpiGbl_Pm1EnableRegisterSave)
-        {
-            AcpiHwRegisterWrite (ACPI_MTX_LOCK, PM1_EN,
-                AcpiGbl_Pm1EnableRegisterSave);
-        }
-
-
-        /* Ensure that all status bits are clear */
-
-        AcpiHwClearAcpiStatus ();
-
-
-        /* Now restore the GPEs */
-
-        for (Index = 0; Index < DIV_2 (AcpiGbl_FADT->Gpe0BlkLen); Index++)
-        {
-            if (AcpiHwRegisterRead (ACPI_MTX_LOCK, GPE0_EN_BLOCK | Index) !=
-                    AcpiGbl_Gpe0EnableRegisterSave[Index])
-            {
-                AcpiHwRegisterWrite (ACPI_MTX_LOCK, GPE0_EN_BLOCK | Index,
-                    AcpiGbl_Gpe0EnableRegisterSave[Index]);
-            }
-        }
-
-        /* GPE 1 present? */
-
-        if (AcpiGbl_FADT->Gpe1BlkLen)
-        {
-            for (Index = 0; Index < DIV_2 (AcpiGbl_FADT->Gpe1BlkLen); Index++)
-            {
-                if (AcpiHwRegisterRead (ACPI_MTX_LOCK, GPE1_EN_BLOCK | Index) !=
-                    AcpiGbl_Gpe1EnableRegisterSave[Index])
-                {
-                    AcpiHwRegisterWrite (ACPI_MTX_LOCK, GPE1_EN_BLOCK | Index,
-                        AcpiGbl_Gpe1EnableRegisterSave[Index]);
-                }
-            }
-        }
-
-        if (AcpiHwGetMode() != AcpiGbl_OriginalMode)
-        {
-            AcpiHwSetMode (AcpiGbl_OriginalMode);
-        }
-    }
-
-    return_VOID;
-}
-
-
-/******************************************************************************
- *
- * FUNCTION:    AcpiEvTerminate
- *
- * PARAMETERS:  none
- *
- * RETURN:      none
- *
- * DESCRIPTION: free memory allocated for table storage.
- *
- ******************************************************************************/
-
-void
-AcpiEvTerminate (void)
-{
-
-    FUNCTION_TRACE ("EvTerminate");
-
-
-    /*
-     * Free global tables, etc.
-     */
-    if (AcpiGbl_GpeRegisters)
-    {
-        ACPI_MEM_FREE (AcpiGbl_GpeRegisters);
-    }
-
-    if (AcpiGbl_GpeInfo)
-    {
-        ACPI_MEM_FREE (AcpiGbl_GpeInfo);
-    }
-
-    return_VOID;
+    return_ACPI_STATUS (Status);
 }
 
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: aic6915reg.h,v 1.1.2.2 2001/06/21 20:02:04 nathanw Exp $	*/
+/*	$NetBSD: aic6915reg.h,v 1.1.2.3 2002/06/20 03:44:27 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -144,13 +144,13 @@ struct sf_rcd_full {
  * Number of transmit buffer fragments we use.  This is arbitrary, but
  * we choose it carefully; see blow.
  */
-#define	SF_NTXFRAGS		7
+#define	SF_NTXFRAGS		15
 
 /*
  * Type 0, 32-bit addressing mode (Frame Descriptor) Transmit Descriptor
  *
- * NOTE: The total length of this structure is: 8 + (7 * 8) == 64
- * This means 8 Tx indices per Type 0 descriptor.  This is important later
+ * NOTE: The total length of this structure is: 8 + (15 * 8) == 128
+ * This means 16 Tx indices per Type 0 descriptor.  This is important later
  * on; see below.
  */
 struct sf_txdesc0 {
@@ -223,19 +223,19 @@ struct sf_tcd {
 
 /*
  * The Tx indices are in units of 8 bytes, and since we are using
- * Tx descriptors that are 64 bytes long, we need to divide by 8
+ * Tx descriptors that are 128 bytes long, we need to divide by 16
  * to get the actual index that we care about.
  */
-#define	SF_TXDINDEX_TO_HOST(x)		((x) >> 3)
-#define	SF_TXDINDEX_TO_CHIP(x)		((x) << 3)
+#define	SF_TXDINDEX_TO_HOST(x)		((x) >> 4)
+#define	SF_TXDINDEX_TO_CHIP(x)		((x) << 4)
 
 /*
  * To make matters worse, the manual lies about the indices in the
  * completion queue entires.  It claims they are in 8-byte units,
  * but they're actually *BYTES*, which means we need to divide by
- * 64 to get the actual index.
+ * 128 to get the actual index.
  */
-#define	SF_TCD_INDEX_TO_HOST(x)		((x) >> 6)
+#define	SF_TCD_INDEX_TO_HOST(x)		((x) >> 7)
 
 /*
  * PCI configuration space addresses.

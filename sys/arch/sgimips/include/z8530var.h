@@ -1,4 +1,4 @@
-/*	$NetBSD: z8530var.h,v 1.2.8.2 2002/04/01 07:42:26 nathanw Exp $	*/
+/*	$NetBSD: z8530var.h,v 1.2.8.3 2002/06/20 03:40:50 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -61,6 +61,7 @@ struct zsc_softc {
 	/* Machine-dependent part follows... */
 	bus_space_tag_t		zsc_bustag;	/* Bus type */
 	bus_space_handle_t	zsc_base; 	/* Device base address */
+	struct evcnt		zsc_intrcnt;	/* count interrupts */
 	void		       *sc_si;		/* Softinterrupt handle */
 };
 

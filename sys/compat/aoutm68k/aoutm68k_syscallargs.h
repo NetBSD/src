@@ -1,4 +1,4 @@
-/* $NetBSD: aoutm68k_syscallargs.h,v 1.5.2.5 2002/05/29 21:48:41 nathanw Exp $ */
+/* $NetBSD: aoutm68k_syscallargs.h,v 1.5.2.6 2002/06/20 03:42:44 nathanw Exp $ */
 
 /*
  * System call argument lists.
@@ -516,15 +516,15 @@ int	compat_09_sys_uname(struct lwp *, void *, register_t *);
 #else
 #endif
 int	sys_sysarch(struct lwp *, void *, register_t *);
-#if (defined(SYSVSEM) || !defined(_KERNEL)) && !defined(alpha) && defined(COMPAT_10)
+#if (defined(SYSVSEM) || !defined(_KERNEL)) && !defined(_LP64) && defined(COMPAT_10)
 int	compat_10_sys_semsys(struct lwp *, void *, register_t *);
 #else
 #endif
-#if (defined(SYSVMSG) || !defined(_KERNEL)) && !defined(alpha) && defined(COMPAT_10)
+#if (defined(SYSVMSG) || !defined(_KERNEL)) && !defined(_LP64) && defined(COMPAT_10)
 int	compat_10_sys_msgsys(struct lwp *, void *, register_t *);
 #else
 #endif
-#if (defined(SYSVSHM) || !defined(_KERNEL)) && !defined(alpha) && defined(COMPAT_10)
+#if (defined(SYSVSHM) || !defined(_KERNEL)) && !defined(_LP64) && defined(COMPAT_10)
 int	compat_10_sys_shmsys(struct lwp *, void *, register_t *);
 #else
 #endif

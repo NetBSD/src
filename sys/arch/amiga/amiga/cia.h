@@ -1,4 +1,4 @@
-/*	$NetBSD: cia.h,v 1.11.6.2 2002/02/28 04:06:19 nathanw Exp $	*/
+/*	$NetBSD: cia.h,v 1.11.6.3 2002/06/20 03:37:48 nathanw Exp $	*/
 
 /*
  * Mach Operating System
@@ -55,7 +55,7 @@ struct CIA {
 
 #ifdef _KERNEL
 #ifndef _LOCORE
-vaddr_t CIAAbase, CIABbase, CIAADDR;
+extern vaddr_t CIAAbase, CIABbase, CIAADDR;
 #define CIABASE		(0x00BFC000)
 #define CIATOP		(0x00C00000)
 #define NCIAPG		btoc(CIATOP - CIABASE)

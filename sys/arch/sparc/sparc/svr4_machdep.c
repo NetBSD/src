@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_machdep.c,v 1.43.8.4 2002/05/29 21:31:58 nathanw Exp $	 */
+/*	$NetBSD: svr4_machdep.c,v 1.43.8.5 2002/06/20 03:41:10 nathanw Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -541,9 +541,7 @@ svr4_trap(type, l)
 	struct lwp *l;
 {
 	int n;
-	struct proc *p = l->l_proc;
 	struct trapframe *tf = l->l_md.md_tf;
-	extern struct emul emul_svr4;
 
 	if (p->p_emul != &emul_svr4)
 		return 0;

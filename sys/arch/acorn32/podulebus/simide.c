@@ -1,4 +1,4 @@
-/*	$NetBSD: simide.c,v 1.1.4.2 2002/01/08 00:22:47 nathanw Exp $	*/
+/*	$NetBSD: simide.c,v 1.1.4.3 2002/06/20 03:37:21 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1997-1998 Mark Brinicombe
@@ -139,9 +139,7 @@ simide_probe(parent, cf, aux)
 {
 	struct podule_attach_args *pa = (void *)aux;
 
-	if (matchpodule(pa, MANUFACTURER_SIMTEC, PODULE_SIMTEC_IDE, -1) == 0)
-		return(0);
-	return(1);
+	return (pa->pa_product == PODULE_SIMTEC_IDE);
 }
 
 /*

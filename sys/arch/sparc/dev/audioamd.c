@@ -1,4 +1,4 @@
-/*	$NetBSD: audioamd.c,v 1.7.4.2 2002/04/01 07:42:38 nathanw Exp $	*/
+/*	$NetBSD: audioamd.c,v 1.7.4.3 2002/06/20 03:41:04 nathanw Exp $	*/
 /*	NetBSD: am7930_sparc.c,v 1.44 1999/03/14 22:29:00 jonathan Exp 	*/
 
 /*
@@ -391,9 +391,10 @@ audioamd_start_input(addr, p, cc, intr, arg)
 
 #ifdef AUDIO_C_HANDLER
 int
-am7930hwintr(sc)
-	struct audioamd_softc *au0;
+am7930hwintr(v)
+	void *v;
 {
+	struct audioamd_softc *sc = v;
 	struct auio *au = &sc->sc_au;
 	u_int8_t *d, *e;
 	int k;
@@ -425,7 +426,7 @@ am7930hwintr(sc)
 		}
 	}
 
-	*(au->au_intrcnt)++;
+	au->au_intrcnt.ev_count++;
 	return (1);
 }
 #endif /* AUDIO_C_HANDLER */

@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.30.4.2 2002/01/08 00:25:20 nathanw Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.30.4.3 2002/06/20 03:39:09 nathanw Exp $	*/
 
 /* 
  * Mach Operating System
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.30.4.2 2002/01/08 00:25:20 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.30.4.3 2002/06/20 03:39:09 nathanw Exp $");
 
 #include "opt_ddb.h"
 
@@ -56,11 +56,11 @@ __KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.30.4.2 2002/01/08 00:25:20 nathan
 #include <ddb/db_output.h>
 #include <ddb/ddbvar.h>
 
-extern label_t	*db_recover;
 extern char *trap_type[];
 extern int trap_types;
 
 int	db_active = 0;
+db_regs_t ddb_regs;	/* register state */
 
 void kdbprinttrap __P((int, int));
 

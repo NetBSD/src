@@ -1,4 +1,4 @@
-/*	$NetBSD: fault.c,v 1.4.2.8 2002/04/17 00:02:26 nathanw Exp $	*/
+/*	$NetBSD: fault.c,v 1.4.2.9 2002/06/20 03:38:04 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1994-1997 Mark Brinicombe.
@@ -629,7 +629,7 @@ prefetch_abort_handler(frame)
 	/* Ok validate the address, can only execute in USER space */
 	if (fault_pc < VM_MIN_ADDRESS || fault_pc >= VM_MAXUSER_ADDRESS) {
 #ifdef DEBUG
-		printf("prefetch: pc (%08x) not in user process space\n",
+		printf("prefetch: pc (%08lx) not in user process space\n",
 		    fault_pc);
 #endif
 		trapsignal(l, SIGSEGV, fault_pc);

@@ -1,4 +1,4 @@
-/*	$NetBSD: OsdHardware.c,v 1.1.4.3 2001/11/14 19:13:43 nathanw Exp $	*/
+/*	$NetBSD: OsdHardware.c,v 1.1.4.4 2002/06/20 03:43:29 nathanw Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: OsdHardware.c,v 1.1.4.3 2001/11/14 19:13:43 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: OsdHardware.c,v 1.1.4.4 2002/06/20 03:43:29 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -95,7 +95,7 @@ AcpiOsReadPort(ACPI_IO_ADDRESS Address, void *Value, UINT32 Width)
  *	Write a value to an output port.
  */
 ACPI_STATUS
-AcpiOsWritePort(ACPI_IO_ADDRESS Address, NATIVE_UINT Value, UINT32 Width)
+AcpiOsWritePort(ACPI_IO_ADDRESS Address, ACPI_INTEGER Value, UINT32 Width)
 {
 
 	switch (Width) {
@@ -161,7 +161,7 @@ AcpiOsReadMemory(ACPI_PHYSICAL_ADDRESS Address, void *Value, UINT32 Width)
  *	Write a value to a memory location.
  */
 ACPI_STATUS
-AcpiOsWriteMemory(ACPI_PHYSICAL_ADDRESS Address, NATIVE_UINT Value,
+AcpiOsWriteMemory(ACPI_PHYSICAL_ADDRESS Address, ACPI_INTEGER Value,
     UINT32 Width)
 {
 	void *LogicalAddress;
@@ -238,7 +238,7 @@ AcpiOsReadPciConfiguration(ACPI_PCI_ID *PciId, UINT32 Register, void *Value,
  */
 ACPI_STATUS
 AcpiOsWritePciConfiguration(ACPI_PCI_ID *PciId, UINT32 Register,
-    NATIVE_UINT Value, UINT32 Width)
+    ACPI_INTEGER Value, UINT32 Width)
 {
 	pcitag_t tag;
 	pcireg_t tmp;

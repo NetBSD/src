@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc_machdep.c,v 1.4.2.6 2002/04/17 00:02:02 nathanw Exp $	*/
+/*	$NetBSD: rpc_machdep.c,v 1.4.2.7 2002/06/20 03:37:18 nathanw Exp $	*/
 
 /*
  * Copyright (c) 2000-2001 Reinoud Zandijk.
@@ -55,7 +55,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: rpc_machdep.c,v 1.4.2.6 2002/04/17 00:02:02 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rpc_machdep.c,v 1.4.2.7 2002/06/20 03:37:18 nathanw Exp $");
 
 #include <sys/systm.h>
 #include <sys/kernel.h>
@@ -1078,8 +1078,8 @@ parse_rpc_bootargs(args)
  * on total size boundry so the banks can be alternated by
  * eorring the size bit (assumes the bank size is a power of 2)
  */
-extern unsigned int sa110_cache_clean_addr;
-extern unsigned int sa110_cache_clean_size;
+extern unsigned int sa1_cache_clean_addr;
+extern unsigned int sa1_cache_clean_size;
 void
 rpc_sa110_cc_setup(void)
 {
@@ -1093,8 +1093,8 @@ rpc_sa110_cc_setup(void)
 		*pte = L2_S_PROTO | kaddr |
 		    L2_S_PROT(PTE_KERNEL, VM_PROT_READ) | pte_l2_s_cache_mode;
 	}
-	sa110_cache_clean_addr = sa110_cc_base;
-	sa110_cache_clean_size = CPU_SA110_CACHE_CLEAN_SIZE / 2;
+	sa1_cache_clean_addr = sa110_cc_base;
+	sa1_cache_clean_size = CPU_SA110_CACHE_CLEAN_SIZE / 2;
 }
 #endif	/* CPU_SA110 */
 

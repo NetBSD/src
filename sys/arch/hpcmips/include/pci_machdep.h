@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.h,v 1.1.10.2 2002/02/28 04:09:58 nathanw Exp $	*/
+/*	$NetBSD: pci_machdep.h,v 1.1.10.3 2002/06/20 03:38:52 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 Enami Tsugutomo.
@@ -101,3 +101,6 @@ struct hpcmips_pci_chipset {
     (*(c)->pc_intr_establish)((c), (ih), (l), (h), (a))
 #define	pci_intr_disestablish(c, iv)					\
     (*(c)->pc_intr_disestablish)((c), (iv))
+
+#define	pci_enumerate_bus(sc, m, p)					\
+	pci_enumerate_bus_generic((sc), (m), (p))

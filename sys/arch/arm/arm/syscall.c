@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.6.4.4 2002/04/11 06:52:39 thorpej Exp $	*/
+/*	$NetBSD: syscall.c,v 1.6.4.5 2002/06/20 03:38:00 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -77,11 +77,12 @@
  */
 
 #include "opt_ktrace.h"
+#include "opt_systrace.h"
 #include "opt_syscall_debug.h"
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.6.4.4 2002/04/11 06:52:39 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.6.4.5 2002/06/20 03:38:00 nathanw Exp $");
 
 #include <sys/device.h>
 #include <sys/errno.h>
@@ -93,6 +94,9 @@ __KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.6.4.4 2002/04/11 06:52:39 thorpej Exp 
 #include <sys/user.h>
 #ifdef KTRACE
 #include <sys/ktrace.h>
+#endif
+#ifdef SYSTRACE
+#include <sys/systrace.h>
 #endif
 
 #include <uvm/uvm_extern.h>
@@ -246,13 +250,8 @@ syscall(struct trapframe *frame, struct lwp *l, u_int32_t insn)
 		args = copyargs;
 	}
 
-#ifdef SYSCALL_DEBUG
-	scdebug_call(p, code, args);
-#endif
-#ifdef KTRACE
-	if (KTRPOINT(p, KTR_SYSCALL))
-		ktrsyscall(p, code, nargs * sizeof(register_t), args);
-#endif
+	if ((error = trace_enter(l, code, args, rval)) != 0)
+		goto bad;
 
 	rval[0] = 0;
 	rval[1] = 0;
@@ -292,14 +291,9 @@ syscall(struct trapframe *frame, struct lwp *l, u_int32_t insn)
 		break;
 	}
 
-#ifdef SYSCALL_DEBUG
-	scdebug_ret(p, code, error, rval);
-#endif
+	trace_exit(l, code, args, rval, error);
+
 	userret(l);
-#ifdef KTRACE
-	if (KTRPOINT(p, KTR_SYSRET))
-		ktrsysret(p, code, error, rval[0]);
-#endif
 }
 
 void

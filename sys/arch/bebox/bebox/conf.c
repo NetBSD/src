@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.15.8.3 2002/04/01 07:39:37 nathanw Exp $	*/
+/*	$NetBSD: conf.c,v 1.15.8.4 2002/06/20 03:38:21 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,6 +37,7 @@
  */
 
 #include "opt_compat_svr4.h"
+#include "opt_systrace.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -150,8 +151,6 @@ cdev_decl(spkr);
 cdev_decl(mms);
 #include "lms.h"
 cdev_decl(lms);
-#include "pms.h"
-cdev_decl(pms);
 #include "cy.h"
 cdev_decl(cy);
 cdev_decl(mcd);
@@ -226,7 +225,7 @@ struct cdevsw	cdevsw[] =
 	cdev_lkm_dummy(),		/* 34 */
 	cdev_mouse_init(NMMS,mms),	/* 35: Microsoft mouse */
 	cdev_mouse_init(NLMS,lms),	/* 36: Logitech mouse */
-	cdev_mouse_init(NPMS,pms),	/* 37: PS/2 mouse */
+	cdev_notdef(),			/* 37: was: opms (PS/2 mouse) */
 	cdev_tty_init(NCY,cy),		/* 38: Cyclom serial port */
 	cdev_disk_init(NMCD,mcd),	/* 39: Mitsumi CD-ROM */
 	cdev_bpftun_init(NTUN,tun),	/* 40: network tunnel */
@@ -256,7 +255,11 @@ struct cdevsw	cdevsw[] =
 	cdev_isdntrc_init(NISDNTRC, isdntrc),	/* 56: isdn trace device */
 	cdev_isdntel_init(NISDNTEL, isdntel),	/* 57: isdn phone device */
 	cdev_clockctl_init(NCLOCKCTL, clockctl),/* 58: clockctl pseudo device */
-
+#ifdef SYSTRACE
+	cdev_systrace_init(1, systrace),/* 59: system call tracing */
+#else
+	cdev_notdef(),			/* 59: system call tracing */
+#endif
 };
 int	nchrdev = sizeof(cdevsw) / sizeof(cdevsw[0]);
 
@@ -357,6 +360,7 @@ static int chrtoblktbl[] = {
 	/* 56 */	NODEV,
 	/* 57 */	NODEV,
 	/* 58 */	NODEV,
+	/* 59 */	NODEV,
 };
 
 /*

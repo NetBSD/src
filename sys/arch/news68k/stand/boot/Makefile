@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.11.4.2 2002/01/08 00:26:54 nathanw Exp $
+#	$NetBSD: Makefile,v 1.11.4.3 2002/06/20 03:40:10 nathanw Exp $
 
 NOMAN= # defined
 
@@ -11,7 +11,7 @@ COMMONOBJ!=	cd ${COMMON} && ${PRINTOBJDIR}
 
 PROG= boot
 SRCS= locore.S boot.c devopen.c
-SRCS+= romcalls.S putchar.c
+SRCS+= romcalls.S getchar.c putchar.c
 STRIPFLAG=
 BINMODE= 444
 
@@ -27,7 +27,7 @@ CPPFLAGS+= -D_STANDALONE # -DBOOT_DEBUG
 CPPFLAGS+= -nostdinc -I${.OBJDIR} -I${S}
 AFLAGS= -D_LOCORE
 
-CLEANFILES+= ${PROG}.tmp machine m68k
+CLEANFILES+= ${PROG}.sym machine m68k
 
 L= ${COMMONOBJ}/lib
 LIBS= ${L}/sa/libsa.a ${L}/kern/libkern.a ${L}/z/libz.a
@@ -45,10 +45,8 @@ m68k::
 	ln -s ${S}/arch/m68k/include $@
 
 ${PROG}: ${OBJS} machine m68k
-	${LD} ${LDFLAGS} -o ${PROG} ${OBJS} ${LIBS}
-	-${SIZE} ${PROG}
-	${STRIP} ${PROG}
-	${OBJCOPY} -O binary ${PROG} ${PROG}.tmp
-	mv ${PROG}.tmp ${PROG}
+	${LD} ${LDFLAGS} -o ${.TARGET}.sym ${OBJS} ${LIBS}
+	-${SIZE} ${.TARGET}.sym
+	${OBJCOPY} -O binary ${.TARGET}.sym ${.TARGET}
 
 .include <bsd.prog.mk>

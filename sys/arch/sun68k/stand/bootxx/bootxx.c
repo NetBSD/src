@@ -1,4 +1,4 @@
-/*	$NetBSD: bootxx.c,v 1.1.8.2 2002/01/08 00:28:22 nathanw Exp $ */
+/*	$NetBSD: bootxx.c,v 1.1.8.3 2002/06/20 03:41:56 nathanw Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -47,11 +47,11 @@
  */
 
 #include <sys/param.h>
+#include <sys/bootblock.h>
 #include <machine/mon.h>
 
 #include <stand.h>
 #include "libsa.h"
-#include "bbinfo.h"
 
 /*
  * This is the address where we load the second-stage boot loader.
@@ -59,15 +59,15 @@
 #define LOADADDR	0x4000
 
 /*
- * The contents of the bbinfo below are set by installboot(8)
+ * The contents of the sun68k_bbinfo below are set by installboot(8)
  * to hold the filesystem data of the second-stage boot program
  * (typically `/ufsboot'): filesystem block size, # of filesystem
  * blocks and the block numbers themselves.
  */
-struct bbinfo bbinfo = {
-	{ BBINFO_MAGIC },
+struct shared_bbinfo bbinfo = {
+	{ SUN68K_BBINFO_MAGIC },
 	0,
-	MAXBLOCKNUM,
+	SHARED_BBINFO_MAXBLOCKS,
 	{ 0 }
 };
 
@@ -84,7 +84,7 @@ main()
 #endif
 	f.f_flags = F_RAW;
 	if (devopen(&f, 0, &addr)) {
-		printf("bootxx: devopen failed\n");
+		putstr("bootxx: devopen failed\n");
 		return;
 	}
 
@@ -126,11 +126,11 @@ copyboot(fp, addr)
 		if ((fp->f_dev->dv_strategy)(fp->f_devdata, F_READ, blknum,
 					   bbinfo.bbi_block_size, buf, &n))
 		{
-			printf("bootxx: read failed\n");
+			putstr("bootxx: read failed\n");
 			return -1;
 		}
 		if (n != bbinfo.bbi_block_size) {
-			printf("bootxx: short read\n");
+			putstr("bootxx: short read\n");
 			return -1;
 		}
 		bcopy(buf, addr, bbinfo.bbi_block_size);

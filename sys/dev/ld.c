@@ -1,4 +1,4 @@
-/*	$NetBSD: ld.c,v 1.7.2.4 2001/11/14 19:13:41 nathanw Exp $	*/
+/*	$NetBSD: ld.c,v 1.7.2.5 2002/06/20 03:43:24 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld.c,v 1.7.2.4 2001/11/14 19:13:41 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld.c,v 1.7.2.5 2002/06/20 03:43:24 nathanw Exp $");
 
 #include "rnd.h"
 
@@ -174,7 +174,7 @@ void
 ldenddetach(struct ld_softc *sc)
 {
 	struct buf *bp;
-	int s, bmaj, cmaj, mn;
+	int s, bmaj, cmaj, i, mn;
 
 	if ((sc->sc_flags & LDF_ENABLED) == 0)
 		return;
@@ -204,10 +204,12 @@ ldenddetach(struct ld_softc *sc)
 	splx(s);
 
 	/* Nuke the vnodes for any open instances. */
-	mn = DISKUNIT(sc->sc_dv.dv_unit);
-	vdevgone(bmaj, mn, mn + (MAXPARTITIONS - 1), VBLK);
-	vdevgone(cmaj, mn, mn + (MAXPARTITIONS - 1), VCHR);
-	
+	for (i = 0; i < MAXPARTITIONS; i++) {
+		mn = DISKMINOR(sc->sc_dv.dv_unit, i);
+		vdevgone(bmaj, mn, mn, VBLK);
+		vdevgone(cmaj, mn, mn, VCHR);
+	}
+
 	/* Detach from the disk list. */
 	disk_detach(&sc->sc_dk);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.1.4.2 2002/02/28 04:11:20 nathanw Exp $	*/
+/*	$NetBSD: conf.c,v 1.1.4.3 2002/06/20 03:40:28 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -32,6 +32,8 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include "opt_systrace.h"
 
 #include <sys/param.h>
 #include <sys/tty.h>
@@ -198,6 +200,11 @@ struct cdevsw cdevsw[] =
 	cdev_ugen_init(NUSCANNER,
 	    uscanner),			/* 37: USB scanner */
 	cdev_clockctl_init(NCLOCKCTL, clockctl),/* 38: clockctl pseudo device */
+#ifdef SYSTRACE
+	cdev_systrace_init(1, systrace),/* 39: system call tracing */
+#else
+	cdev_notdef(),			/* 39: system call tracing */
+#endif
 };
 
 static int chrtoblktbl[] =  {
@@ -242,6 +249,7 @@ static int chrtoblktbl[] =  {
 	/* 36 */	NODEV,
 	/* 37 */	NODEV,
 	/* 38 */	NODEV,
+	/* 39 */	NODEV,
 };
 
 /*

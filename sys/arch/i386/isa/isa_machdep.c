@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_machdep.c,v 1.51.2.1 2002/01/08 00:25:35 nathanw Exp $	*/
+/*	$NetBSD: isa_machdep.c,v 1.51.2.2 2002/06/20 03:39:15 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isa_machdep.c,v 1.51.2.1 2002/01/08 00:25:35 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isa_machdep.c,v 1.51.2.2 2002/06/20 03:39:15 nathanw Exp $");
 
 #define ISA_DMA_STATS
 
@@ -159,6 +159,8 @@ struct i386_isa_dma_cookie {
 #define	ID_BUFTYPE_UIO		3
 #define	ID_BUFTYPE_RAW		4
 
+static	void init_i8259 __P((void));
+
 int	_isa_bus_dmamap_create __P((bus_dma_tag_t, bus_size_t, int,
 	    bus_size_t, bus_size_t, int, bus_dmamap_t *));
 void	_isa_bus_dmamap_destroy __P((bus_dma_tag_t, bus_dmamap_t));
@@ -216,7 +218,21 @@ isa_defaultirq()
 	for (i = 0; i < ICU_LEN; i++)
 		setgate(&idt[ICU_OFFSET + i].gd, IDTVEC(intr)[i], 0,
 		    SDT_SYS386IGT, SEL_KPL);
-  
+	init_i8259();
+}
+
+void
+isa_reinit_irq()
+{
+	init_i8259();
+	SET_ICUS();
+}
+
+/* initialize i8259s */
+
+static void
+init_i8259(void)
+{
 	/* initialize 8259's */
 #if NMCA > 0
 	/* level-triggered interrupts on MCA PS/2s */

@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_dirent.h,v 1.6.24.1 2002/04/17 00:05:06 nathanw Exp $	*/
+/*	$NetBSD: linux_dirent.h,v 1.6.24.2 2002/06/20 03:43:04 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@ struct linux_dirent64 {
 };
 
 
-#define LINUX_NAMEOFF(dp)       ((char *)&(dp)->d_name - (char *)dp)
+#define LINUX_NAMEOFF(dp)       ((char *)&(dp)->d_name - (char *)(dp))
 #define LINUX_RECLEN(de,namlen) ALIGN((LINUX_NAMEOFF(de) + (namlen) + 1))
 
 #endif /* !_LINUX_DIRENT_H */

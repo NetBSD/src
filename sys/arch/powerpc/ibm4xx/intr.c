@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.1.6.2 2002/04/01 07:42:01 nathanw Exp $	*/
+/*	$NetBSD: intr.c,v 1.1.6.3 2002/06/20 03:40:31 nathanw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -56,7 +56,7 @@ static int fakeintr(void *);
 static inline int cntlzw(int);
 
 
-volatile int cpl, ipending, astpending;
+volatile int cpl, ipending;
 u_long imask[NIPL];
 
 static int intrtype[ICU_LEN], intrmask[ICU_LEN], intrlevel[ICU_LEN];

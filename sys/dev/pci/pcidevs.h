@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.312.2.15 2002/04/17 00:06:03 nathanw Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.312.2.16 2002/06/20 03:45:42 nathanw Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD
+ *	NetBSD: pcidevs,v 1.306.2.13 2002/04/17 00:06:02 nathanw Exp 
  */
 
 /*
@@ -499,6 +499,7 @@
 #define	PCI_VENDOR_O2MICRO	0x1217		/* O2 Micro Inc */
 #define	PCI_VENDOR_3DFX	0x121a		/* 3Dfx Interactive */
 #define	PCI_VENDOR_ARIEL	0x1220		/* Ariel */
+#define	PCI_VENDOR_HEURICON	0x1223		/* Heurikon/Computer Products */
 #define	PCI_VENDOR_AZTECH	0x122d		/* Aztech */
 #define	PCI_VENDOR_3DO	0x1239		/* The 3D0 Company */
 #define	PCI_VENDOR_CCUBE	0x123f		/* C-Cube Microsystems */
@@ -560,8 +561,10 @@
 #define	PCI_VENDOR_SYMPHONY2	0x1c1c		/* Symphony Labs (2nd PCI Vendor ID) */
 #define	PCI_VENDOR_TEKRAM2	0x1de1		/* Tekram Technology (2nd PCI Vendor ID) */
 #define	PCI_VENDOR_COREGA	0x15e8		/* Corega */
+#define	PCI_VENDOR_ACTIONTEC	0x1668		/* Action Tec Electronics, Inc. */
 #define	PCI_VENDOR_GLOBALSUN	0x16ab		/* Global Sun Tech */
 #define	PCI_VENDOR_FZJZEL	0x1796		/* FZ Juelich / ZEL */
+#define	PCI_VENDOR_SANDBURST	0x17ba		/* Sandburst, Inc. */
 #define	PCI_VENDOR_HINT	0x3388		/* HiNT */
 #define	PCI_VENDOR_3DLABS	0x3d3d		/* 3D Labs */
 #define	PCI_VENDOR_AVANCE2	0x4005		/* Avance Logic (2nd PCI Vendor ID) */
@@ -574,6 +577,7 @@
 #define	PCI_VENDOR_S3	0x5333		/* S3 */
 #define	PCI_VENDOR_NETPOWER2	0x5700		/* NetPower (2nd PCI Vendor ID) */
 #define	PCI_VENDOR_C4T	0x6374		/* c't Magazin */
+#define	PCI_VENDOR_KURUSUGAWA	0x6809		/* Kurusugawa Electronics, Inc. */
 #define	PCI_VENDOR_QUANCM	0x8008		/* Quancm Electronic GmbH */
 #define	PCI_VENDOR_INTEL	0x8086		/* Intel */
 #define	PCI_VENDOR_TRIGEM2	0x8800		/* Trigem Computer (2nd PCI Vendor ID) */
@@ -726,8 +730,10 @@
 #define	PCI_PRODUCT_ADP2_AIC7899F	0x00c5		/* AIC-7899F RAID */
 #define	PCI_PRODUCT_ADP2_AIC7899P	0x00cf		/* AIC-7899P U160 */
 #define	PCI_PRODUCT_ADP2_AAC2622	0x0282		/* AAC-2622 */
+#define	PCI_PRODUCT_ADP2_ASR2200S	0x0285		/* ASR-2200S */
+#define	PCI_PRODUCT_ADP2_ASR2120S	0x0286		/* ASR-2120S */
 #define	PCI_PRODUCT_ADP2_AAC364	0x0364		/* AAC-364 */
-#define	PCI_PRODUCT_ADP2_AAC3642	0x0365		/* AAC-3642 */
+#define	PCI_PRODUCT_ADP2_ASR5400S	0x0365		/* ASR-5400S */
 #define	PCI_PRODUCT_ADP2_PERC_2QC	0x1364		/* Dell PERC 2/QC */
 /* XXX guess */
 #define	PCI_PRODUCT_ADP2_PERC_3QC	0x1365		/* Dell PERC 3/QC */
@@ -788,6 +794,7 @@
 #define	PCI_PRODUCT_AMD_PBC768_MD	0x7446		/* AMD768 AC97 Modem */
 #define	PCI_PRODUCT_AMD_PBC768_PPB	0x7448		/* AMD768 PCI to PCI Bridge */
 #define	PCI_PRODUCT_AMD_PBC768_USB	0x7449		/* AMD768 USB Controller */
+#define	PCI_PRODUCT_AMD_PBC8111_IDE	0x7469		/* AMD8111 IDE Controller */
 
 /* American Megatrends products */
 #define	PCI_PRODUCT_AMI_MEGARAID	0x9010		/* MegaRAID */
@@ -1115,7 +1122,7 @@
 #define	PCI_PRODUCT_DEC_21152	0x0024		/* DECchip 21152 PCI-PCI Bridge */
 #define	PCI_PRODUCT_DEC_21153	0x0025		/* DECchip 21153 PCI-PCI Bridge */
 #define	PCI_PRODUCT_DEC_21154	0x0026		/* DECchip 21154 PCI-PCI Bridge */
-#define	PCI_PRODUCT_DEC_CPQ42XX	0x0046		/* Compaq SMART RAID 42xx */
+#define	PCI_PRODUCT_DEC_21554	0x0046		/* DECchip 21554 PCI-PCI Bridge */
 #define	PCI_PRODUCT_DEC_SWXCR	0x1065		/* SWXCR RAID */
 
 /* Dell Computer products */
@@ -1207,6 +1214,7 @@
 /* FZ Juelich / ZEL products */
 #define	PCI_PRODUCT_FZJZEL_GIGALINK	0x0001		/* Gigabit link / STR1100 */
 #define	PCI_PRODUCT_FZJZEL_PLXHOTLINK	0x0002		/* HOTlink interface */
+#define	PCI_PRODUCT_FZJZEL_COUNTTIME	0x0003		/* Counter / Timer */
 #define	PCI_PRODUCT_FZJZEL_PLXCAMAC	0x0004		/* CAMAC controller */
 #define	PCI_PRODUCT_FZJZEL_PROFIBUS	0x0005		/* PROFIBUS interface */
 #define	PCI_PRODUCT_FZJZEL_AMCCHOTLINK	0x0006		/* old HOTlink interface */
@@ -1231,6 +1239,9 @@
 
 /* Guillemot products */
 #define	PCI_PRODUCT_GUILLEMOT_MAXIRADIO	0x1001		/* MAXIRADIO */
+
+/* Heuricon products */
+#define	PCI_PRODUCT_HEURICON_PMPPC	0x000e		/* PM/PPC */
 
 /* Hewlett-Packard products */
 #define	PCI_PRODUCT_HP_A4977A	0x1005		/* A4977A Visualize EG */
@@ -1262,7 +1273,9 @@
 #define	PCI_PRODUCT_IBM_OLYMPIC	0x003e		/* Token Ring */
 #define	PCI_PRODUCT_IBM_MIAMI	0x0036		/* Miami/PCI */
 #define	PCI_PRODUCT_IBM_82660	0x0037		/* 82660 PowerPC to PCI Bridge and Memory Controller */
+#define	PCI_PRODUCT_IBM_MPIC	0x0046		/* MPIC */
 #define	PCI_PRODUCT_IBM_TURBOWAYS25	0x0053		/* Turboways 25 ATM */
+#define	PCI_PRODUCT_IBM_GXT800P	0x005e		/* GXT-800P */
 #define	PCI_PRODUCT_IBM_405GP	0x0156		/* PPC 405GP PCI Bridge */
 #define	PCI_PRODUCT_IBM_MPIC2	0xffff		/* MPIC-II */
 
@@ -1346,6 +1359,9 @@
 #define	PCI_PRODUCT_INTEL_82380AB	0x123c		/* 82380AB Mobile PCI-to-ISA Bridge (MISA) */
 #define	PCI_PRODUCT_INTEL_82380FB	0x124b		/* 82380FB Mobile PCI-to-PCI Bridge (MPCI2) */
 #define	PCI_PRODUCT_INTEL_82439HX	0x1250		/* 82439HX System Controller (TXC) */
+#define	PCI_PRODUCT_INTEL_82870P2_PPB	0x1460		/* 82870P2 P64H2 PCI-to-PCI Bridge */
+#define	PCI_PRODUCT_INTEL_82870P2_IOxAPIC	0x1461		/* 82870P2 P64H2 IOxAPIC */
+#define	PCI_PRODUCT_INTEL_82870P2_HPLUG	0x1462		/* 82870P2 P64H2 Hot Plug Controller */
 #define	PCI_PRODUCT_INTEL_80960_RP	0x1960		/* ROB-in i960RP Microprocessor */
 #define	PCI_PRODUCT_INTEL_82840_HB	0x1a21		/* 82840 Host */
 #define	PCI_PRODUCT_INTEL_82840_AGP	0x1a23		/* 82840 AGP */
@@ -1390,6 +1406,22 @@
 #define	PCI_PRODUCT_INTEL_82801CAM_LPC	0x248C		/* 82801CAM LPC Interface */
 #define	PCI_PRODUCT_INTEL_82820_MCH	0x2501		/* 82820 MCH (Camino) */
 #define	PCI_PRODUCT_INTEL_82820_AGP	0x250f		/* 82820 AGP */
+#define	PCI_PRODUCT_INTEL_82850_HB	0x2530		/* 82850 Host */
+#define	PCI_PRODUCT_INTEL_82850_AGP	0x2532		/* 82850/82860 AGP */
+#define	PCI_PRODUCT_INTEL_82860_HB	0x2531		/* 82860 Host */
+#define	PCI_PRODUCT_INTEL_82850_AGP	0x2532		/* 82850/82860 AGP */
+#define	PCI_PRODUCT_INTEL_82860_PCI1	0x2533		/* 82860 PCI-PCI */
+#define	PCI_PRODUCT_INTEL_82860_PCI2	0x2534		/* 82860 PCI-PCI */
+#define	PCI_PRODUCT_INTEL_82860_PCI3	0x2535		/* 82860 PCI-PCI */
+#define	PCI_PRODUCT_INTEL_82860_PCI4	0x2536		/* 82860 PCI-PCI */
+#define	PCI_PRODUCT_INTEL_E7500_HB	0x2540		/* E7500 MCH Host */
+#define	PCI_PRODUCT_INTEL_E7500_DRAM	0x2541		/* E7500 MCH DRAM Controller */
+#define	PCI_PRODUCT_INTEL_E7500_HI_B1	0x2543		/* E7500 MCH HI_B vppb 1 */
+#define	PCI_PRODUCT_INTEL_E7500_HI_B2	0x2544		/* E7500 MCH HI_B vppb 2 */
+#define	PCI_PRODUCT_INTEL_E7500_HI_C1	0x2545		/* E7500 MCH HI_C vppb 1 */
+#define	PCI_PRODUCT_INTEL_E7500_HI_C2	0x2546		/* E7500 MCH HI_C vppb 2 */
+#define	PCI_PRODUCT_INTEL_E7500_HI_D1	0x2547		/* E7500 MCH HI_C vppb 1 */
+#define	PCI_PRODUCT_INTEL_E7500_HI_D2	0x2548		/* E7500 MCH HI_C vppb 2 */
 #define	PCI_PRODUCT_INTEL_82830MP_IO_1	0x3575		/* 82830MP CPU to I/O Bridge 1 */
 #define	PCI_PRODUCT_INTEL_82830MP_AGP	0x3576		/* 82830MP CPU to AGP Bridge */
 #define	PCI_PRODUCT_INTEL_82830MP_IV	0x3577		/* 82830MP Integrated Video */
@@ -1429,6 +1461,7 @@
 #define	PCI_PRODUCT_INTEL_PCI450_MC	0x84c5		/* 82451KX/GX Memory Controller (MC) */
 #define	PCI_PRODUCT_INTEL_82451NX_MIOC	0x84ca		/* 82451NX Memory & I/O Controller (MIOC) */
 #define	PCI_PRODUCT_INTEL_82451NX_PXB	0x84cb		/* 82451NX PCI Expander Bridge (PXB) */
+#define	PCI_PRODUCT_INTEL_21555	0xb555		/* 21555 Non-Transparent PCI-PCI Bridge */
 
 /* Intergraph products */
 #define	PCI_PRODUCT_INTERGRAPH_4D50T	0x00e4		/* Powerstorm 4D50T */
@@ -1531,6 +1564,7 @@
 #define	PCI_PRODUCT_MOT_MPC106	0x0002		/* MPC106 \"Grackle\" Host Bridge */
 #define	PCI_PRODUCT_MOT_MPC8240	0x0003		/* MPC8240 \"Kahlua\" Host Bridge */
 #define	PCI_PRODUCT_MOT_MPC107	0x0004		/* MPC107 \"Chaparral\" Host Bridge */
+#define	PCI_PRODUCT_MOT_MPC8245	0x0006		/* MPC8245 \"Kahlua II\" Host Bridge */
 #define	PCI_PRODUCT_MOT_RAVEN	0x4801		/* Raven Host Bridge & Multi-Processor Interrupt Controller */
 #define	PCI_PRODUCT_MOT_FALCON	0x4802		/* Falcon ECC Memory Controller Chip Set */
 #define	PCI_PRODUCT_MOT_HAWK	0x4803		/* Hawk System Memory Controller & PCI Host Bridge */
@@ -1582,10 +1616,16 @@
 #define	PCI_PRODUCT_SYMBIOS_875	0x000f		/* 53c875/876 */
 #define	PCI_PRODUCT_SYMBIOS_1510	0x0010		/* 53c1510 */
 #define	PCI_PRODUCT_SYMBIOS_895A	0x0012		/* 53c895A */
+#define	PCI_PRODUCT_SYMBIOS_875A	0x0013		/* 53c875A */
 #define	PCI_PRODUCT_SYMBIOS_1010	0x0020		/* 53c1010 */
 #define	PCI_PRODUCT_SYMBIOS_1010_2	0x0021		/* 53c1010 (66MHz) */
+#define	PCI_PRODUCT_SYMBIOS_1030R	0x1030		/* 53c1030R */
 #define	PCI_PRODUCT_SYMBIOS_875J	0x008f		/* 53c875J */
 #define	PCI_PRODUCT_SYMBIOS_FC909	0x0621		/* FC909 */
+#define	PCI_PRODUCT_SYMBIOS_FC929	0x0622		/* FC929 */
+#define	PCI_PRODUCT_SYMBIOS_FC929_1	0x0623		/* FC929 */
+#define	PCI_PRODUCT_SYMBIOS_FC919	0x0624		/* FC919 */
+#define	PCI_PRODUCT_SYMBIOS_FC919_1	0x0625		/* FC919 */
 
 /* Packet Engines products */
 #define	PCI_PRODUCT_SYMBIOS_PE_GNIC	0x0702		/* Packet Engines G-NIC Ethernet */
@@ -1621,6 +1661,7 @@
 
 /* Netmos products */
 #define	PCI_PRODUCT_NETMOS_NM9835	0x9835		/* Dual UART and 1284 Printer port */
+#define	PCI_PRODUCT_NETMOS_NM9845	0x9845		/* Quad UART and 1284 Printer port */
 
 /* Network Security Technologies, Inc. */
 #define	PCI_PRODUCT_NETSEC_7751	0x7751		/* 7751 */
@@ -1933,6 +1974,7 @@
 #define	PCI_PRODUCT_TI_PCI2040	0xac60		/* PCI2040 PCI-to-DSP Bridge */
 
 /* Titan Electronics products */
+#define	PCI_PRODUCT_TITAN_PCI800L	0x8080		/* PCI-800L */
 #define	PCI_PRODUCT_TITAN_PCI800H	0xa003		/* PCI-800H */
 #define	PCI_PRODUCT_TITAN_PCI100H	0xa001		/* PCI-100H */
 
@@ -1977,6 +2019,8 @@
 /* Triones Technologies products */
 /* The 366 and 370 controllers have the same product ID */
 #define	PCI_PRODUCT_TRIONES_HPT366	0x0004		/* HPT366/370 IDE Controller */
+#define	PCI_PRODUCT_TRIONES_HPT372	0x0005		/* HPT372 IDE Controller */
+#define	PCI_PRODUCT_TRIONES_HPT374	0x0008		/* HPT374 IDE Controller */
 
 /* TriTech Microelectronics products*/
 #define	PCI_PRODUCT_TRITECH_TR25202	0xfc02		/* Pyramid3D TR25202 */
@@ -2050,16 +2094,20 @@
 #define	PCI_PRODUCT_VIATECH_VT82C686A_AC97	0x3058		/* VT82C686A AC-97 Audio Controller */
 #define	PCI_PRODUCT_VIATECH_VT8233_AC97	0x3059		/* VT8233 AC-97 Audio Controller */
 #define	PCI_PRODUCT_VIATECH_VT6102	0x3065		/* VT6102 (Rhine II) 10/100 Ethernet */
+#define	PCI_PRODUCT_VIATECH_VT82C686A_MC97	0x3068		/* VT82C686A MC-97 Modem Controller */
 #define	PCI_PRODUCT_VIATECH_VT8233	0x3074		/* VT8233 PCI-ISA Bridge */
 #define	PCI_PRODUCT_VIATECH_VT8366	0x3099		/* VT8366 (Apollo KT266) CPU-PCI Bridge */
-#define	PCI_PRODUCT_VIATECH_VT82C686A_MC97	0x3068		/* VT82C686A MC-97 Modem Controller */
+#define	PCI_PRODUCT_VIATECH_VT8653	0x3101		/* VT8653 (Apollo Pro 266T) CPU-PCI Bridge */
+#define	PCI_PRODUCT_VIATECH_VT8233A	0x3147		/* VT8233A PCI-ISA Bridge */
 #define	PCI_PRODUCT_VIATECH_VT86C100A	0x6100		/* VT86C100A (Rhine-II) 10/100 Ethernet */
+#define	PCI_PRODUCT_VIATECH_VT8231	0x8231		/* VT8231 IDE Controller */
 #define	PCI_PRODUCT_VIATECH_VT8363_PPB	0x8305		/* VT8363 KT133 PCI to AGP Bridge */
 #define	PCI_PRODUCT_VIATECH_VT8371_PPB	0x8391		/* VT8371 (Apollo KX133) PCI-PCI Bridge */
 #define	PCI_PRODUCT_VIATECH_VT8501AGP	0x8501		/* VT8501 CPU-AGP Bridge */
 #define	PCI_PRODUCT_VIATECH_VT82C597AGP	0x8597		/* VT82C597 (Apollo VP3) CPU-AGP Bridge */
 #define	PCI_PRODUCT_VIATECH_VT82C598AGP	0x8598		/* VT82C598 (Apollo MVP3) CPU-AGP Bridge */
 #define	PCI_PRODUCT_VIATECH_VT8605AGP	0x8605		/* VT8605 (Apollo ProMedia 133) Host-AGP Bridge */
+#define	PCI_PRODUCT_VIATECH_VT8633AGP	0xb091		/* VT8633 (Apollo Pro 266) CPU-AGP Bridge */
 #define	PCI_PRODUCT_VIATECH_VT8366AGP	0xb099		/* VT8366 CPU-AGP Bridge */
 
 /* Vortex Computer Systems products */

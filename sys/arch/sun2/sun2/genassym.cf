@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.1.2.2 2002/01/08 00:28:10 nathanw Exp $
+#	$NetBSD: genassym.cf,v 1.1.2.3 2002/06/20 03:41:38 nathanw Exp $
 
 #
 # Copyright (c) 1994, 1995 Gordon W. Ross
@@ -37,7 +37,7 @@
 #	from: @(#)genassym.c	8.3 (Berkeley) 1/4/94
 #
 
-if defined(_KERNEL) && !defined(_LKM)
+if defined(_KERNEL_OPT)
 include "opt_compat_svr4.h"
 endif
 

@@ -1,3 +1,5 @@
+/* $NetBSD: isic_pci.c,v 1.2.2.7 2002/06/20 03:45:33 nathanw Exp $ */
+
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -35,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isic_pci.c,v 1.2.2.6 2002/04/17 00:06:02 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isic_pci.c,v 1.2.2.7 2002/06/20 03:45:33 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/errno.h>
@@ -45,6 +47,7 @@ __KERNEL_RCSID(0, "$NetBSD: isic_pci.c,v 1.2.2.6 2002/04/17 00:06:02 nathanw Exp
 #include <net/if.h>
 #include <sys/systm.h>
 #include <sys/malloc.h>
+#include <sys/callout.h>
 
 #include <machine/cpu.h>
 #include <machine/intr.h>
@@ -57,16 +60,7 @@ __KERNEL_RCSID(0, "$NetBSD: isic_pci.c,v 1.2.2.6 2002/04/17 00:06:02 nathanw Exp
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcidevs.h>
 
-#if defined(__NetBSD__) && __NetBSD_Version__ >= 104230000
-#include <sys/callout.h>
-#endif
-
-#ifdef __FreeBSD__
-#include <machine/i4b_ioctl.h>
-#else
 #include <netisdn/i4b_ioctl.h>
-#endif
-
 #include <netisdn/i4b_global.h>
 #include <netisdn/i4b_debug.h>
 #include <netisdn/i4b_trace.h>
@@ -161,10 +155,8 @@ isic_pci_attach(parent, self, aux)
 
 	printf(": %s\n", prod->name);
 
-#if defined(__NetBSD__) && __NetBSD_Version__ >= 104230000
 	callout_init(&sc->sc_T3_callout);
 	callout_init(&sc->sc_T4_callout);
-#endif
 
 	/* card initilization and sc setup */
 	prod->attach(psc, pa);
@@ -219,7 +211,7 @@ isic_pci_isdn_attach(psc, pa, cardname)
 				break;
 
 			case 0x02:
-				printf("%s: IPAC PSB2115 Version 2\n", sc->sc_dev.dv_xname);
+				printf("%s: IPAC PSB2115 Version 1.2\n", sc->sc_dev.dv_xname);
 				break;
 	
 			default:
@@ -276,7 +268,7 @@ isic_pci_isdn_attach(psc, pa, cardname)
 		return;
 	}
 	intrstr = pci_intr_string(pc, ih);
-	psc->sc_ih = pci_intr_establish(pc, ih, IPL_NET, isicintr, sc);
+	psc->sc_ih = pci_intr_establish(pc, ih, IPL_NET, isic_intr_qs1p, psc);
 	if (psc->sc_ih == NULL) {
 		printf("%s: couldn't establish interrupt",
 		    sc->sc_dev.dv_xname);
@@ -318,11 +310,6 @@ isic_pci_isdn_attach(psc, pa, cardname)
 	sc->sc_obuf2 = NULL;
 	sc->sc_freeflag2 = 0;
 
-#if defined(__FreeBSD__) && __FreeBSD__ >=3
-	callout_handle_init(&sc->sc_T3_callout);
-	callout_handle_init(&sc->sc_T4_callout);	
-#endif
-	
 	/* init higher protocol layers */
 	isic_attach_bri(sc, cardname, &isic_std_driver);
 }
@@ -364,4 +351,3 @@ isic_pci_activate(self, act)
 	splx(s);
 	return (error);
 }
-

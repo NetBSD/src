@@ -1,4 +1,4 @@
-/*	$NetBSD: iommu.c,v 1.44.4.3 2002/04/01 07:43:01 nathanw Exp $	*/
+/*	$NetBSD: iommu.c,v 1.44.4.4 2002/06/20 03:41:20 nathanw Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Eduardo Horvath
@@ -125,7 +125,6 @@ iommu_init(name, is, tsbsize, iovabase)
 	 */
 
 	size = NBPG<<(is->is_tsbsize);
-	TAILQ_INIT(&mlist);
 	if (uvm_pglistalloc((psize_t)size, (paddr_t)0, (paddr_t)-1,
 		(paddr_t)NBPG, (paddr_t)0, &mlist, 1, 0) != 0)
 		panic("iommu_init: no memory");
@@ -179,7 +178,7 @@ iommu_init(name, is, tsbsize, iovabase)
 	 */
 	if (is->is_sbvalid[0] || is->is_sbvalid[1])
 		(void)pmap_extract(pmap_kernel(), (vaddr_t)&is->is_flush[0],
-		    (paddr_t *)&is->is_flushpa);
+		    &is->is_flushpa);
 
 	/*
 	 * now actually start up the IOMMU
@@ -251,8 +250,8 @@ iommu_enter(is, va, pa, flags)
 		panic("iommu_enter: va %#lx not in DVMA space", va);
 #endif
 
-	tte = MAKEIOTTE(pa, !(flags&BUS_DMA_NOWRITE), !(flags&BUS_DMA_NOCACHE), 
-			(flags&BUS_DMA_STREAMING));
+	tte = MAKEIOTTE(pa, !(flags & BUS_DMA_NOWRITE), 
+		!(flags & BUS_DMA_NOCACHE), (flags & BUS_DMA_STREAMING));
 #ifdef DEBUG
 	tte |= (flags & 0xff000LL)<<(4*8);
 #endif
@@ -287,9 +286,9 @@ iommu_extract(is, dva)
 	if (dva >= is->is_dvmabase && dva < is->is_dvmaend)
 		tte = is->is_tsb[IOTSBSLOT(dva,is->is_tsbsize)];
 
-	if ((tte&IOTTE_V) == 0)
+	if ((tte & IOTTE_V) == 0)
 		return ((paddr_t)-1L);
-	return (tte&IOTTE_PAMASK);
+	return (tte & IOTTE_PAMASK);
 }
 
 /*
@@ -496,7 +495,7 @@ iommu_dvmamap_load(t, is, map, buf, buflen, p, flags)
 	 */
 	err = extent_alloc(is->is_dvmamap, sgsize, align, 
 		(sgsize > boundary) ? 0 : boundary, 
-		EX_NOWAIT|EX_BOUNDZERO, (u_long *)&dvmaddr);
+		EX_NOWAIT|EX_BOUNDZERO, &dvmaddr);
 	splx(s);
 
 #ifdef DEBUG
@@ -537,7 +536,7 @@ iommu_dvmamap_load(t, is, map, buf, buflen, p, flags)
 			map->dm_segs[seg].ds_len));
 		map->dm_segs[seg].ds_len =
 		    boundary - (sgstart & (boundary - 1));
-		if (++seg > map->_dm_segcnt) {
+		if (++seg >= map->_dm_segcnt) {
 			/* Too many segments.  Fail the operation. */
 			DPRINTF(IDB_INFO, ("iommu_dvmamap_load: "
 				"too many segments %d\n", seg));
@@ -585,7 +584,7 @@ iommu_dvmamap_load(t, is, map, buf, buflen, p, flags)
 		    ("iommu_dvmamap_load: map %p loading va %p "
 			    "dva %lx at pa %lx\n",
 			    map, (void *)vaddr, (long)dvmaddr,
-			    (long)(curaddr&~(NBPG-1))));
+			    (long)(curaddr & ~(NBPG-1))));
 		iommu_enter(is, trunc_page(dvmaddr), trunc_page(curaddr),
 		    flags|0x4000);
 			
@@ -712,7 +711,7 @@ iommu_dvmamap_load_raw(t, is, map, segs, nsegs, flags, size)
 	err = extent_alloc(is->is_dvmamap, sgsize, align,
 		(sgsize > boundary) ? 0 : boundary,
 		((flags & BUS_DMA_NOWAIT) == 0 ? EX_WAITOK : EX_NOWAIT) |
-		EX_BOUNDZERO, (u_long *)&dvmaddr);
+		EX_BOUNDZERO, &dvmaddr);
 	splx(s);
 
 	if (err != 0)
@@ -762,10 +761,6 @@ iommu_dvmamap_load_raw(t, is, map, segs, nsegs, flags, size)
 			if ((pa == prev_pa) && 
 				((offset != 0) || (end != offset))) {
 				/* We can re-use this mapping */
-#ifdef DEBUG
-if (iommudebug & 0x10) printf("reusing dva %lx prev %lx pa %lx prev %lx\n",
-	dvmaddr, prev_va, pa, prev_pa);
-#endif
 				dvmaddr = prev_va;
 			}
 
@@ -776,19 +771,16 @@ if (iommudebug & 0x10) printf("reusing dva %lx prev %lx pa %lx prev %lx\n",
 			if ((j > 0) && (end == offset) && 
 				((offset == 0) || (pa == prev_pa))) {
 				/* Just append to the previous segment. */
-#ifdef DEBUG
-if (iommudebug & 0x10) {
-printf("appending: offset %x pa %lx prev %lx dva %lx prev %lx\n",
-	offset, pa, prev_pa, dvmaddr, prev_va);
-}
-#endif
-
 				map->dm_segs[--j].ds_len += left;
 				DPRINTF(IDB_INFO, ("iommu_dvmamap_load_raw: "
 					"appending seg %d start %lx size %lx\n", j,
 					(long)map->dm_segs[j].ds_addr, 
 					map->dm_segs[j].ds_len));
 			} else {
+				if (j >= map->_dm_segcnt) {
+					iommu_dvmamap_unload(t, is, map);
+					return (E2BIG);
+				}
 				map->dm_segs[j].ds_addr = sgstart;
 				map->dm_segs[j].ds_len = left;
 				DPRINTF(IDB_INFO, ("iommu_dvmamap_load_raw: "
@@ -803,12 +795,12 @@ printf("appending: offset %x pa %lx prev %lx dva %lx prev %lx\n",
 				(sgend & ~(boundary - 1))) {
 				/* Need a new segment. */
 				map->dm_segs[j].ds_len =
-					sgstart & (boundary - 1);
+					boundary - (sgstart & (boundary - 1));
 				DPRINTF(IDB_INFO, ("iommu_dvmamap_load_raw: "
 					"seg %d start %lx size %lx\n", j,
 					(long)map->dm_segs[j].ds_addr, 
 					map->dm_segs[j].ds_len));
-				if (++j > map->_dm_segcnt) {
+				if (++j >= map->_dm_segcnt) {
 					iommu_dvmamap_unload(t, is, map);
 					return (E2BIG);
 				}
@@ -821,7 +813,7 @@ printf("appending: offset %x pa %lx prev %lx dva %lx prev %lx\n",
 				panic("iommu_dmamap_load_raw: size botch");
 
 			/* Now map a series of pages. */
-			while (dvmaddr < sgend) {
+			while (dvmaddr <= sgend) {
 				DPRINTF(IDB_BUSDMA,
 					("iommu_dvmamap_load_raw: map %p "
 						"loading va %lx at pa %lx\n",
@@ -829,16 +821,9 @@ printf("appending: offset %x pa %lx prev %lx dva %lx prev %lx\n",
 						(long)(pa)));
 				/* Enter it if we haven't before. */
 				if (prev_va != dvmaddr)
-#ifdef DEBUG
-{ if (iommudebug & 0x10) printf("seg %d:%d entering dvma %lx, prev %lx pa %lx\n", i,j, dvmaddr, prev_va, pa);
-#endif
 					iommu_enter(is, prev_va = dvmaddr,
 						prev_pa = pa,
 						flags|(++npg<<12));
-#ifdef DEBUG
-} else if (iommudebug & 0x10) printf("seg %d:%d skipping dvma %lx, prev %lx\n", i,j, dvmaddr, prev_va);
-#endif
-
 				dvmaddr += pagesz;
 				pa += pagesz;
 			}
@@ -874,12 +859,12 @@ printf("appending: offset %x pa %lx prev %lx dva %lx prev %lx\n",
 	map->dm_segs[i].ds_addr = sgstart;
 	while ((sgstart & ~(boundary - 1)) != (sgend & ~(boundary - 1))) {
 		/* Oops.  We crossed a boundary.  Split the xfer. */
-		map->dm_segs[i].ds_len = sgstart & (boundary - 1);
+		map->dm_segs[i].ds_len = boundary - (sgstart & (boundary - 1));
 		DPRINTF(IDB_INFO, ("iommu_dvmamap_load_raw: "
 			"seg %d start %lx size %lx\n", i,
 			(long)map->dm_segs[i].ds_addr,
 			map->dm_segs[i].ds_len));
-		if (++i > map->_dm_segcnt) {
+		if (++i >= map->_dm_segcnt) {
 			/* Too many segments.  Fail the operation. */
 			s = splhigh();
 			/* How can this fail?  And if it does what can we do? */

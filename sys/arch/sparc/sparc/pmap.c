@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.199.4.6 2002/04/17 00:04:26 nathanw Exp $ */
+/*	$NetBSD: pmap.c,v 1.199.4.7 2002/06/20 03:41:09 nathanw Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -3672,7 +3672,6 @@ pmap_alloc_cpu(sc)
 	/* The region, segment and page table we need fit in one page */
 	size = ctxsize + pagesz;
 
-	TAILQ_INIT(&mlist);
 	if (uvm_pglistalloc(size, vm_first_phys, vm_first_phys+vm_num_phys,
 			    alignment, 0, &mlist, 1, 0) != 0)
 		panic("pmap_alloc_cpu: no memory");

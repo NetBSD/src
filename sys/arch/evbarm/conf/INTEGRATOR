@@ -1,9 +1,11 @@
-#	$NetBSD: INTEGRATOR,v 1.3.4.5 2002/04/17 00:02:54 nathanw Exp $
+#	$NetBSD: INTEGRATOR,v 1.3.4.6 2002/06/20 03:38:29 nathanw Exp $
 #
 #	GENERIC -- ARM Integrator board Generic kernel
 #
 
 include	"arch/evbarm/conf/std.integrator"
+
+#options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
 # estimated number of users
 
@@ -188,10 +190,8 @@ cd*		at scsibus? target ? lun ?	# SCSI CD-ROM drives
 
 # PCI network interfaces
 fxp*		at pci? dev ? function ?	# I82557/I82558 ethernet cards
-#de*		at pci? dev ? function ?	# DC21X4X-based ethernet cards
 #ne*		at pci? dev ? function ?	# NE2000 compat ethernet
-#tlp*		at pci? dev ? function ?	# DECchip 21x4x (and clones) Ethernet
-#options 	TLP_MATCH_21142
+#tlp*		at pci? dev ? function ?	# DECchip 21x4x and clones
 
 # MII/PHY support
 inphy*		at mii? phy ?			# Intel 82555 PHYs
@@ -224,3 +224,4 @@ pseudo-device	loop			# network loopback
 # miscellaneous pseudo-devices
 pseudo-device	pty			# pseudo-terminals
 pseudo-device	rnd			# /dev/random and in-kernel generator
+pseudo-device	clockctl		# user control of clock subsystem

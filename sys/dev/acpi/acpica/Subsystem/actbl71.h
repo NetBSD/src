@@ -3,7 +3,7 @@
  * Name: actbl71.h - IA-64 Extensions to the ACPI Spec Rev. 0.71
  *                   This file includes tables specific to this
  *                   specification revision.
- *       xRevision: 11 $
+ *       $Revision: 1.1.1.1.4.3 $
  *
  *****************************************************************************/
 
@@ -11,7 +11,7 @@
  *
  * 1. Copyright Notice
  *
- * Some or all of this work - Copyright (c) 1999, 2000, 2001, Intel Corp.
+ * Some or all of this work - Copyright (c) 1999 - 2002, Intel Corp.
  * All rights reserved.
  *
  * 2. License

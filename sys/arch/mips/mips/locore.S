@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.126.2.9 2002/04/17 00:03:47 nathanw Exp $	*/
+/*	$NetBSD: locore.S,v 1.126.2.10 2002/06/20 03:39:48 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -95,7 +95,7 @@ _C_LABEL(kernel_text):
 #if defined(MIPS3_PLUS) && !defined(MIPS1)
 	/* keep firmware exception handler until we hook. */
 	mfc0	v0, MIPS_COP_0_STATUS
-	and	v0, MIPS3_SR_DIAG_BEV
+	and	v0, MIPS_SR_BEV
 	mtc0	v0, MIPS_COP_0_STATUS		# Disable interrupts
 	COP0_SYNC
 #else
@@ -696,6 +696,8 @@ LEAF(switch_exit)
 	REG_PROLOGUE
 	REG_L	sp, U_PCB_CONTEXT+SF_REG_SP(v0)	# restore stack pointer
 	REG_EPILOGUE
+	jal	_C_LABEL(exit2)			# proc already in a0
+	nop
 #if defined(LOCKDEBUG)
 	jal	_C_LABEL(sched_lock_idle)	# acquire sched_lock
 	nop
@@ -709,7 +711,7 @@ LEAF(switch_exit)
 	li	s0, 0
 	
 	la	ra, cpu_switch_queuescan	# rathole to cpu_switch()
-	j	_C_LABEL(exit2)			# proc already in a0
+	j	ra
 	sub	sp, sp, CALLFRAME_SIZ		#BDSlot: set stack call frame
 END(switch_exit)
 

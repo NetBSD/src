@@ -1,4 +1,4 @@
-/*	$NetBSD: audio_if.h,v 1.35.2.3 2002/04/01 07:45:01 nathanw Exp $	*/
+/*	$NetBSD: audio_if.h,v 1.35.2.4 2002/06/20 03:43:22 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1994 Havard Eidnes.
@@ -51,7 +51,7 @@ struct audio_params {
 	/* Software en/decode functions, set if SW coding required by HW */
 	void	(*sw_code)(void *, u_char *, int);
 	int	factor;				/* coding space change */
-	int	factor_denom;		/* coding space change smaller */
+	int	factor_denom;			/* denominator of factor */
 	/*
 	 * The following four members represent what format is used in a
 	 * hardware.  If hw_sample_rate != sample_rate || hw_channels !=
@@ -147,6 +147,7 @@ struct audio_attach_args {
 #define	AUDIODEV_TYPE_MIDI	1
 #define AUDIODEV_TYPE_OPL	2
 #define AUDIODEV_TYPE_MPU	3
+#define AUDIODEV_TYPE_AUX	4
 
 /* Attach the MI driver(s) to the MD driver. */
 struct device *audio_attach_mi(struct audio_hw_if *, void *, struct device *);

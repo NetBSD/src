@@ -3,7 +3,7 @@
 |         Yasha(itohy@netbsd.org)
 |	  minoura@netbsd.org
 |
-| $NetBSD: boot_ustar.S,v 1.2.4.2 2002/01/08 00:28:46 nathanw Exp $
+| $NetBSD: boot_ustar.S,v 1.2.4.3 2002/06/20 03:42:33 nathanw Exp $
 
 | supports floppy only
 
@@ -109,7 +109,7 @@ boot_read_done:
 		bne	error_invalidname
 		cmpl	#0x00757374,%a1@(256)	| magic `\0ust'
 		bne	error_invalidfs
-		cmpl	#0x61722020,%a1@(260)	| magic `ar  '
+		cmpw	#0x6172,%a1@(260)	| magic `ar'
 		bne	error_invalidfs
 
 		lea	%a1@(0x200),%a2		| a.out header

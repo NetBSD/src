@@ -1,4 +1,4 @@
-/*	$NetBSD: miivar.h,v 1.19.2.5 2002/04/01 07:46:12 nathanw Exp $	*/
+/*	$NetBSD: miivar.h,v 1.19.2.6 2002/06/20 03:45:17 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -251,7 +251,7 @@ int	mii_phy_tick __P((struct mii_softc *));
 
 void	mii_phy_status __P((struct mii_softc *));
 void	mii_phy_update __P((struct mii_softc *, int));
-void	mii_phy_statusmsg __P((struct mii_softc *));
+int	mii_phy_statusmsg __P((struct mii_softc *));
 
 void	ukphy_status __P((struct mii_softc *));
 

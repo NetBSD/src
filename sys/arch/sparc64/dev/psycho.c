@@ -1,6 +1,7 @@
-/*	$NetBSD: psycho.c,v 1.39.4.3 2002/04/01 07:43:04 nathanw Exp $	*/
+/*	$NetBSD: psycho.c,v 1.39.4.4 2002/06/20 03:41:22 nathanw Exp $	*/
 
 /*
+ * Copyright (c) 2001, 2002 Eduardo E. Horvath
  * Copyright (c) 1999, 2000 Matthew R. Green
  * All rights reserved.
  *
@@ -397,6 +398,7 @@ found:
 	psycho_get_bus_range(sc->sc_node, psycho_br);
 
 	pba.pba_bus = psycho_br[0];
+	pba.pba_bridgetag = NULL;
 
 	printf("bus range %u to %u", psycho_br[0], psycho_br[1]);
 	printf("; PCI bus %d", psycho_br[0]);
@@ -488,7 +490,7 @@ found:
 
 
 		if (PROM_getproplen(sc->sc_node, "no-streaming-cache") < 0) {
-			bus_space_subregion(sc->sc_bustag, sc->sc_bh,
+			bus_space_subregion(sc->sc_bustag, pci_ctl,
 				offsetof(struct pci_ctl, pci_strbuf),
 				sizeof (struct iommu_strbuf), 
 				&sc->sc_is->is_sb[0]);
@@ -517,7 +519,7 @@ found:
 		sc->sc_configaddr = osc->sc_configaddr;
 
 		if (PROM_getproplen(sc->sc_node, "no-streaming-cache") < 0) {
-			bus_space_subregion(sc->sc_bustag, sc->sc_bh,
+			bus_space_subregion(sc->sc_bustag, pci_ctl,
 				offsetof(struct pci_ctl, pci_strbuf),
 				sizeof (struct iommu_strbuf), 
 				&sc->sc_is->is_sb[1]);
@@ -592,7 +594,6 @@ psycho_alloc_chipset(pp, node, pc)
 	memcpy(npc, pc, sizeof *pc);
 	npc->cookie = pp;
 	npc->rootnode = node;
-	npc->curnode = node;
 
 	return (npc);
 }
@@ -645,7 +646,7 @@ psycho_ue(arg)
 	/*
 	 * It's uncorrectable.  Dump the regs and panic.
 	 */
-	printf("%s: uncorrectable DMA error AFAR %llx pa %llx AFSR %llx:\n%s",
+	printf("%s: uncorrectable DMA error AFAR %llx pa %llx AFSR %llx:\n%s\n",
 		sc->sc_dev.dv_xname, afar, 
 		(long long)iommu_extract(is, (vaddr_t)afar), afsr,
 		bitmask_snprintf(afsr, PSYCHO_UE_AFSR_BITS,

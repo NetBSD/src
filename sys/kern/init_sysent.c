@@ -1,4 +1,4 @@
-/* $NetBSD: init_sysent.c,v 1.124.2.8 2002/05/29 21:48:39 nathanw Exp $ */
+/* $NetBSD: init_sysent.c,v 1.124.2.9 2002/06/20 03:47:09 nathanw Exp $ */
 
 /*
  * System call switch table.
@@ -8,7 +8,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_sysent.c,v 1.124.2.8 2002/05/29 21:48:39 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_sysent.c,v 1.124.2.9 2002/06/20 03:47:09 nathanw Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_nfsserver.h"
@@ -433,21 +433,21 @@ struct sysent sysent[] = {
 	    sys_nosys },			/* 167 = unimplemented */
 	{ 0, 0, 0,
 	    sys_nosys },			/* 168 = unimplemented */
-#if (defined(SYSVSEM) || !defined(_KERNEL)) && !defined(alpha)
+#if (defined(SYSVSEM) || !defined(_KERNEL)) && !defined(_LP64)
 	{ 5, s(struct compat_10_sys_semsys_args), 0,
 	    compat_10(sys_semsys) },		/* 169 = compat_10 osemsys */
 #else
 	{ 0, 0, 0,
 	    sys_nosys },			/* 169 = excluded 1.0 semsys */
 #endif
-#if (defined(SYSVMSG) || !defined(_KERNEL)) && !defined(alpha)
+#if (defined(SYSVMSG) || !defined(_KERNEL)) && !defined(_LP64)
 	{ 6, s(struct compat_10_sys_msgsys_args), 0,
 	    compat_10(sys_msgsys) },		/* 170 = compat_10 omsgsys */
 #else
 	{ 0, 0, 0,
 	    sys_nosys },			/* 170 = excluded 1.0 msgsys */
 #endif
-#if (defined(SYSVSHM) || !defined(_KERNEL)) && !defined(alpha)
+#if (defined(SYSVSHM) || !defined(_KERNEL)) && !defined(_LP64)
 	{ 4, s(struct compat_10_sys_shmsys_args), 0,
 	    compat_10(sys_shmsys) },		/* 171 = compat_10 oshmsys */
 #else

@@ -1,4 +1,4 @@
-#	$NetBSD: files.prep,v 1.20.8.3 2002/02/28 04:11:28 nathanw Exp $
+#	$NetBSD: files.prep,v 1.20.8.4 2002/06/20 03:40:38 nathanw Exp $
 #
 # prep-specific configuration info
 #
@@ -6,14 +6,22 @@ maxpartitions 8
 
 maxusers 2 8 64
 
+defflag	opt_residual.h	RESIDUAL_DATA_DUMP
+
+defflag	opt_platform.h	PLATFORM_IBM_6050
+			PLATFORM_IBM_7248
+			PLATFORM_IBM_7043_140
+			PLATFORM_MOTOROLA_ULMB60XA
+
 # IBM
 file	arch/prep/prep/ibm_machdep.c
-file	arch/prep/prep/ibm_6050.c
-file	arch/prep/prep/ibm_7248.c
+file	arch/prep/prep/ibm_6050.c	platform_ibm_6050
+file	arch/prep/prep/ibm_7248.c	platform_ibm_7248
+file	arch/prep/prep/ibm_7043_140.c	platform_ibm_7043_140
 
 # Motorola
 file	arch/prep/prep/mot_machdep.c
-file	arch/prep/prep/mot_ulmb60xa.c
+file	arch/prep/prep/mot_ulmb60xa.c	platform_motorola_ulmb60xa
 
 file	arch/prep/prep/platform.c
 
@@ -21,10 +29,12 @@ file	arch/prep/prep/autoconf.c
 file	arch/prep/prep/bus_space.c
 file	arch/prep/prep/clock.c
 file	arch/prep/prep/conf.c
+file	arch/prep/prep/consinit.c
 file	arch/prep/prep/disksubr.c		disk
 file	arch/prep/prep/extintr.c
 file	arch/prep/prep/machdep.c
 file	arch/prep/prep/procfs_machdep.c		procfs
+file	arch/prep/prep/residual.c		residual_data_dump
 
 file	arch/powerpc/powerpc/bus_dma.c
 
@@ -174,12 +184,9 @@ major	{fd = 2}
 # Game adapter (joystick)
 file	arch/prep/isa/joy_timer.c	joy
 
-device	paud { }: audio, isadma, ad1848, auconv
+device	paud { }: audiobus, isadma, ad1848, auconv
 attach	paud at isa with paud_isa
 file	arch/prep/isa/paud_isa.c	paud_isa
-
-# network devices MII bus
-include	"dev/mii/files.mii"
 
 # USB drivers
 include "dev/usb/files.usb"
@@ -196,3 +203,12 @@ file	dev/isa/i82365_isa.c		pcic_isa
 file	dev/isa/i82365_isasubr.c	pcic_isa
 
 include "dev/pcmcia/files.pcmcia"
+
+# on-board I/O
+define obio {[port = -1], [size = 0], [iomem = -1], [iosiz = 0], [irq = -1]}
+device obio: obio
+attach obio at mainbus
+file arch/prep/dev/obio.c		obio needs-flag
+
+attach wdc at obio with wdc_obio
+file arch/prep/dev/wdc_obio.c		wdc_obio needs-flag

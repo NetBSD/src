@@ -1,4 +1,4 @@
-/* $NetBSD: irix_syscallargs.h,v 1.18.2.5 2002/05/29 21:48:45 nathanw Exp $ */
+/* $NetBSD: irix_syscallargs.h,v 1.18.2.6 2002/06/20 03:42:53 nathanw Exp $ */
 
 /*
  * System call argument lists.
@@ -27,6 +27,16 @@
 		} be;							\
 	}
 
+struct irix_sys_open_args {
+	syscallarg(const char *) path;
+	syscallarg(int) flags;
+	syscallarg(int) mode;
+};
+
+struct irix_sys_break_args {
+	syscallarg(caddr_t) nsize;
+};
+
 struct irix_sys_syssgi_args {
 	syscallarg(int) request;
 	syscallarg(void *) arg1;
@@ -34,6 +44,13 @@ struct irix_sys_syssgi_args {
 	syscallarg(void *) arg3;
 	syscallarg(void *) arg4;
 	syscallarg(void *) arg5;
+};
+
+struct irix_sys_shmsys_args {
+	syscallarg(int) what;
+	syscallarg(int) a2;
+	syscallarg(int) a3;
+	syscallarg(int) a4;
 };
 
 struct irix_sys_ioctl_args {
@@ -54,6 +71,16 @@ struct irix_sys_fcntl_args {
 	syscallarg(int) fd;
 	syscallarg(int) cmd;
 	syscallarg(char *) arg;
+};
+
+struct irix_sys_getrlimit64_args {
+	syscallarg(int) resource;
+	syscallarg(struct irix_rlimit64 *) rlp;
+};
+
+struct irix_sys_setrlimit64_args {
+	syscallarg(int) resource;
+	syscallarg(const struct irix_rlimit64 *) rlp;
 };
 
 struct irix_sys_lseek64_args {
@@ -82,9 +109,64 @@ struct irix_sys_sigreturn_args {
 	syscallarg(int) signo;
 };
 
+struct irix_sys_sproc_args {
+	syscallarg(void *) entry;
+	syscallarg(unsigned int) inh;
+	syscallarg(void *) arg;
+};
+
 struct irix_sys_prctl_args {
 	syscallarg(unsigned int) option;
 	syscallarg(void *) arg1;
+};
+
+struct irix_sys_procblk_args {
+	syscallarg(int) cmd;
+	syscallarg(pid_t) pid;
+	syscallarg(int) count;
+};
+
+struct irix_sys_sprocsp_args {
+	syscallarg(void *) entry;
+	syscallarg(unsigned int) inh;
+	syscallarg(void *) arg;
+	syscallarg(caddr_t) sp;
+	syscallarg(irix_size_t) len;
+};
+
+struct irix_sys_mmap_args {
+	syscallarg(void *) addr;
+	syscallarg(irix_size_t) len;
+	syscallarg(int) prot;
+	syscallarg(int) flags;
+	syscallarg(int) fd;
+	syscallarg(irix_off_t) pos;
+};
+
+struct irix_sys_munmap_args {
+	syscallarg(void *) addr;
+	syscallarg(int) len;
+};
+
+struct irix_sys_mprotect_args {
+	syscallarg(void *) addr;
+	syscallarg(int) len;
+	syscallarg(int) prot;
+};
+
+struct irix_sys_setpgrp_args {
+	syscallarg(int) pid;
+	syscallarg(int) pgid;
+};
+
+struct irix_sys_getrlimit_args {
+	syscallarg(int) resource;
+	syscallarg(struct irix_rlimit *) rlp;
+};
+
+struct irix_sys_setrlimit_args {
+	syscallarg(int) resource;
+	syscallarg(const struct irix_rlimit *) rlp;
 };
 
 struct irix_sys_systeminfo_args {
@@ -145,6 +227,16 @@ struct irix_sys_waitsys_args {
 	syscallarg(struct rusage *) ru;
 };
 
+struct irix_sys_mmap64_args {
+	syscallarg(void *) addr;
+	syscallarg(irix_size_t) len;
+	syscallarg(int) prot;
+	syscallarg(int) flags;
+	syscallarg(int) fd;
+	syscallarg(int) pad1;
+	syscallarg(irix_off_t) pos;
+};
+
 struct irix_sys_getmountid_args {
 	syscallarg(const char *) path;
 	syscallarg(irix_mountid_t *) buf;
@@ -170,6 +262,20 @@ struct irix_sys_ngetdents64_args {
 	syscallarg(int *) eof;
 };
 
+struct irix_sys_pidsprocsp_args {
+	syscallarg(void *) entry;
+	syscallarg(unsigned int) inh;
+	syscallarg(void *) arg;
+	syscallarg(caddr_t) sp;
+	syscallarg(irix_size_t) len;
+	syscallarg(irix_pid_t) pid;
+};
+
+struct irix_sys_usync_cntl_args {
+	syscallarg(int) cmd;
+	syscallarg(void *) arg;
+};
+
 /*
  * System call prototypes.
  */
@@ -179,7 +285,7 @@ int	sys_exit(struct lwp *, void *, register_t *);
 int	sys_fork(struct lwp *, void *, register_t *);
 int	sys_read(struct lwp *, void *, register_t *);
 int	sys_write(struct lwp *, void *, register_t *);
-int	svr4_sys_open(struct lwp *, void *, register_t *);
+int	irix_sys_open(struct lwp *, void *, register_t *);
 int	sys_close(struct lwp *, void *, register_t *);
 int	svr4_sys_creat(struct lwp *, void *, register_t *);
 int	sys_link(struct lwp *, void *, register_t *);
@@ -189,7 +295,7 @@ int	sys_chdir(struct lwp *, void *, register_t *);
 int	svr4_sys_time(struct lwp *, void *, register_t *);
 int	sys_chmod(struct lwp *, void *, register_t *);
 int	sys___posix_chown(struct lwp *, void *, register_t *);
-int	svr4_sys_break(struct lwp *, void *, register_t *);
+int	irix_sys_break(struct lwp *, void *, register_t *);
 int	compat_43_sys_lseek(struct lwp *, void *, register_t *);
 int	sys_getpid(struct lwp *, void *, register_t *);
 int	sys_setuid(struct lwp *, void *, register_t *);
@@ -214,7 +320,7 @@ int	svr4_sys_msgsys(struct lwp *, void *, register_t *);
 #else
 #endif
 #ifdef SYSVSHM
-int	svr4_sys_shmsys(struct lwp *, void *, register_t *);
+int	irix_sys_shmsys(struct lwp *, void *, register_t *);
 #else
 #endif
 #ifdef SYSVSEM
@@ -229,6 +335,9 @@ int	sys_umask(struct lwp *, void *, register_t *);
 int	sys_chroot(struct lwp *, void *, register_t *);
 int	irix_sys_fcntl(struct lwp *, void *, register_t *);
 int	svr4_sys_ulimit(struct lwp *, void *, register_t *);
+int	irix_sys_getrlimit64(struct lwp *, void *, register_t *);
+int	irix_sys_setrlimit64(struct lwp *, void *, register_t *);
+int	sys_nanosleep(struct lwp *, void *, register_t *);
 int	irix_sys_lseek64(struct lwp *, void *, register_t *);
 int	sys_rmdir(struct lwp *, void *, register_t *);
 int	sys_mkdir(struct lwp *, void *, register_t *);
@@ -272,11 +381,22 @@ int	sys_getitimer(struct lwp *, void *, register_t *);
 int	sys_setitimer(struct lwp *, void *, register_t *);
 int	sys_adjtime(struct lwp *, void *, register_t *);
 int	svr4_sys_gettimeofday(struct lwp *, void *, register_t *);
+int	irix_sys_sproc(struct lwp *, void *, register_t *);
 int	irix_sys_prctl(struct lwp *, void *, register_t *);
-int	svr4_sys_mmap(struct lwp *, void *, register_t *);
-int	sys_munmap(struct lwp *, void *, register_t *);
-int	sys_mprotect(struct lwp *, void *, register_t *);
+int	irix_sys_procblk(struct lwp *, void *, register_t *);
+int	irix_sys_sprocsp(struct lwp *, void *, register_t *);
+int	irix_sys_mmap(struct lwp *, void *, register_t *);
+int	irix_sys_munmap(struct lwp *, void *, register_t *);
+int	irix_sys_mprotect(struct lwp *, void *, register_t *);
+int	sys___msync13(struct lwp *, void *, register_t *);
+int	sys_getpgrp(struct lwp *, void *, register_t *);
+int	irix_sys_setpgrp(struct lwp *, void *, register_t *);
 int	sys_fsync(struct lwp *, void *, register_t *);
+int	sys_fchdir(struct lwp *, void *, register_t *);
+int	irix_sys_getrlimit(struct lwp *, void *, register_t *);
+int	irix_sys_setrlimit(struct lwp *, void *, register_t *);
+int	sys___posix_fchown(struct lwp *, void *, register_t *);
+int	sys_fchmod(struct lwp *, void *, register_t *);
 int	irix_sys_systeminfo(struct lwp *, void *, register_t *);
 int	irix_sys_xstat(struct lwp *, void *, register_t *);
 int	irix_sys_lxstat(struct lwp *, void *, register_t *);
@@ -295,8 +415,13 @@ int	sys_readv(struct lwp *, void *, register_t *);
 int	sys_writev(struct lwp *, void *, register_t *);
 int	sys_truncate(struct lwp *, void *, register_t *);
 int	sys_ftruncate(struct lwp *, void *, register_t *);
+int	irix_sys_mmap64(struct lwp *, void *, register_t *);
+int	svr4_sys_pread(struct lwp *, void *, register_t *);
+int	svr4_sys_pwrite(struct lwp *, void *, register_t *);
 int	irix_sys_getmountid(struct lwp *, void *, register_t *);
 int	irix_sys_getdents64(struct lwp *, void *, register_t *);
 int	irix_sys_ngetdents(struct lwp *, void *, register_t *);
 int	irix_sys_ngetdents64(struct lwp *, void *, register_t *);
+int	irix_sys_pidsprocsp(struct lwp *, void *, register_t *);
+int	irix_sys_usync_cntl(struct lwp *, void *, register_t *);
 #endif /* _IRIX_SYS__SYSCALLARGS_H_ */

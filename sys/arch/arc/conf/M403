@@ -1,9 +1,11 @@
-#	$NetBSD: M403,v 1.15.2.5 2002/04/17 00:02:20 nathanw Exp $
+#	$NetBSD: M403,v 1.15.2.6 2002/06/20 03:37:58 nathanw Exp $
 #
 #	configuration file for MIPS Magnum 4000 system
 #
 
 include		"arch/arc/conf/std.arc"
+
+#options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
 maxusers	32		# estimated number of users
 
@@ -205,6 +207,7 @@ pseudo-device	pty			# pseudo-terminals
 # rnd works; RND_COM does not on port arc yet.
 pseudo-device	rnd			# /dev/random and in-kernel generator
 #options 	RND_COM			# use "com" randomness as well (BROKEN)
+pseudo-device	clockctl		# user control of clock subsystem
 
 # a pseudo device needed for Coda	# also needs CODA (above)
 #pseudo-device	vcoda		4	# coda minicache <-> venus comm.

@@ -1,10 +1,12 @@
-# $NetBSD: INSTALL,v 1.4.8.4 2002/04/17 00:04:31 nathanw Exp $
+# $NetBSD: INSTALL,v 1.4.8.5 2002/06/20 03:41:37 nathanw Exp $
 
 # INSTALL Sun2 (2/120, 2/170, 2/50, ...)
 
 include "arch/sun2/conf/std.sun2"
 
-#ident 		"INSTALL-$Revision: 1.4.8.4 $"
+#options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
+
+#ident 		"INSTALL-$Revision: 1.4.8.5 $"
 
 # Machines to be supported by this kernel
 #options 	FPU_EMULATE

@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.82.6.4 2002/04/17 00:04:33 nathanw Exp $
+# $NetBSD: GENERIC,v 1.82.6.5 2002/06/20 03:41:40 nathanw Exp $
 #
 # GENERIC machine description file
 # 
@@ -23,7 +23,9 @@
 
 include 	"arch/sun3/conf/std.sun3"
 
-#ident 		"GENERIC-$Revision: 1.82.6.4 $"
+options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
+
+#ident 		"GENERIC-$Revision: 1.82.6.5 $"
 
 # Machines to be supported by this kernel
 options 	FPU_EMULATE
@@ -255,3 +257,4 @@ pseudo-device	vnd		4	# paging to files
 # options	RF_INCLUDE_INTERDECLUSTER=1
 # options 	RF_INCLUDE_PARITY_DECLUSTERING=1
 # options	RF_INCLUDE_PARITY_DECLUSTERING_DS=1
+pseudo-device	clockctl		# user control of clock subsystem

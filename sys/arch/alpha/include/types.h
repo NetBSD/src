@@ -1,4 +1,4 @@
-/* $NetBSD: types.h,v 1.21.4.2 2002/04/01 07:38:51 nathanw Exp $ */
+/* $NetBSD: types.h,v 1.21.4.3 2002/06/20 03:37:38 nathanw Exp $ */
 
 /*-
  * Copyright (c) 1990, 1993

@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isic_pcmcia.c,v 1.2.2.5 2002/04/17 00:06:08 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isic_pcmcia.c,v 1.2.2.6 2002/06/20 03:46:11 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/errno.h>
@@ -209,7 +209,7 @@ isic_pcmcia_attach(parent, self, aux)
 	int s;
 
 	psc->sc_pf = pa->pf;
-	cfe = pa->pf->cfe_head.sqh_first;
+	cfe = SIMPLEQ_FIRST(&pa->pf->cfe_head);
 	psc->sc_ih = NULL;
 
 	/* Which card is it? */

@@ -1,4 +1,4 @@
-/* $NetBSD: ispmbox.h,v 1.31.2.8 2002/04/17 00:05:47 nathanw Exp $ */
+/* $NetBSD: ispmbox.h,v 1.31.2.9 2002/06/20 03:44:51 nathanw Exp $ */
 /*
  * This driver, which is contained in NetBSD in the files:
  *
@@ -171,6 +171,9 @@
 #define	MBOX_SEND_CHANGE_REQUEST	0x0070
 #define	MBOX_FABRIC_LOGOUT		0x0071
 #define	MBOX_INIT_LIP_LOGIN		0x0072
+
+#define	MBOX_DRIVER_HEARTBEAT		0x005B
+#define	MBOX_FW_HEARTBEAT		0x005C
 
 #define	MBOX_GET_SET_DATA_RATE		0x005D	/* 23XX only */
 #define		MBGSD_GET_RATE	0

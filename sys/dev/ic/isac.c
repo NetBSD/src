@@ -27,14 +27,14 @@
  *	i4b_isac.c - i4b siemens isdn chipset driver ISAC handler
  *	---------------------------------------------------------
  *
- *	$Id: isac.c,v 1.1.2.4 2002/04/17 00:05:40 nathanw Exp $ 
+ *	$Id: isac.c,v 1.1.2.5 2002/06/20 03:44:42 nathanw Exp $ 
  *
  *      last edit-date: [Fri Jan  5 11:36:10 2001]
  *
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isac.c,v 1.1.2.4 2002/04/17 00:05:40 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isac.c,v 1.1.2.5 2002/06/20 03:44:42 nathanw Exp $");
 
 #ifdef __FreeBSD__
 #include "opt_i4b.h"
@@ -84,6 +84,7 @@ __KERNEL_RCSID(0, "$NetBSD: isac.c,v 1.1.2.4 2002/04/17 00:05:40 nathanw Exp $")
 
 #include <dev/ic/isic_l1.h>
 #include <dev/ic/isac.h>
+#include <dev/ic/ipac.h>
 #include <dev/ic/hscx.h>
 
 static u_char isic_isac_exir_hdlr(register struct isic_softc *sc, u_char exir);
@@ -101,7 +102,8 @@ isic_isac_irq(struct isic_softc *sc, int ista)
 	if(ista & ISAC_ISTA_EXI)	/* extended interrupt */
 	{
 		u_int8_t exirstat = ISAC_READ(I_EXIR);
-		c |= isic_isac_exir_hdlr(sc, exirstat);
+		if (sc->sc_intr_valid == ISIC_INTR_VALID)
+			c |= isic_isac_exir_hdlr(sc, exirstat);
 	}
 	
 	if(ista & ISAC_ISTA_RME)	/* receive message end */
@@ -183,7 +185,7 @@ isic_isac_irq(struct isic_softc *sc, int ista)
 				hdr.type = TRC_CH_D;
 				hdr.dir = FROM_NT;
 				hdr.count = ++sc->sc_trace_dcount;
-				isdn_layer2_trace_ind(&sc->sc_l2, &hdr, sc->sc_ibuf->m_len, sc->sc_ibuf->m_data);
+				isdn_layer2_trace_ind(&sc->sc_l2, sc->sc_l3token, &hdr, sc->sc_ibuf->m_len, sc->sc_ibuf->m_data);
 			}
 
 			c |= ISAC_CMDR_RMC;
@@ -191,7 +193,7 @@ isic_isac_irq(struct isic_softc *sc, int ista)
 			if(sc->sc_intr_valid == ISIC_INTR_VALID &&
 			   (((struct isdn_l3_driver*)sc->sc_l3token)->protocol != PROTOCOL_D64S))
 			{
-				isdn_layer2_data_ind(&sc->sc_l2, sc->sc_ibuf);
+				isdn_layer2_data_ind(&sc->sc_l2, sc->sc_l3token, sc->sc_ibuf);
 			}
 			else
 			{
@@ -399,7 +401,7 @@ isic_isac_ind_hdlr(register struct isic_softc *sc, int ind)
 			if(sc->sc_bustyp == BUS_TYPE_IOM2)
 				isic_isac_l1_cmd(sc, CMD_AR8);
 			event = EV_INFO48;
-			isdn_layer2_status_ind(&sc->sc_l2, STI_L1STAT, LAYER_ACTIVE);
+			isdn_layer2_status_ind(&sc->sc_l2, sc->sc_l3token, STI_L1STAT, LAYER_ACTIVE);
 			break;
 			
 		case ISAC_CIRR_IAI10:
@@ -407,7 +409,7 @@ isic_isac_ind_hdlr(register struct isic_softc *sc, int ind)
 			if(sc->sc_bustyp == BUS_TYPE_IOM2)
 				isic_isac_l1_cmd(sc, CMD_AR10);
 			event = EV_INFO410;
-			isdn_layer2_status_ind(&sc->sc_l2, STI_L1STAT, LAYER_ACTIVE);
+			isdn_layer2_status_ind(&sc->sc_l2, sc->sc_l3token, STI_L1STAT, LAYER_ACTIVE);
 			break;
 
 		case ISAC_CIRR_IRSY:
@@ -429,7 +431,7 @@ isic_isac_ind_hdlr(register struct isic_softc *sc, int ind)
 		case ISAC_CIRR_IDID:
 			NDBGL1(L1_I_CICO, "rx DID in state %s", isic_printstate(sc));
 			event = EV_INFO0;
-			isdn_layer2_status_ind(&sc->sc_l2, STI_L1STAT, LAYER_IDLE);
+			isdn_layer2_status_ind(&sc->sc_l2, sc->sc_l3token, STI_L1STAT, LAYER_IDLE);
 			break;
 
 		case ISAC_CIRR_IDIS:
@@ -551,8 +553,6 @@ isic_isac_l1_cmd(struct isic_softc *sc, int command)
 int
 isic_isac_init(struct isic_softc *sc)
 {
-	u_int8_t v;
-
 	ISAC_IMASK = 0xff;		/* disable all irqs */
 
 	ISAC_WRITE(I_MASK, ISAC_IMASK);
@@ -595,14 +595,6 @@ isic_isac_init(struct isic_softc *sc)
 		 *	STx/SCx = 0
 		 */
 		ISAC_WRITE(I_STCR, ISAC_STCR_TBA2|ISAC_STCR_TBA1|ISAC_STCR_TBA0);
-
-		/* MODE: Mode Register:
-		 *	MDSx - transparent mode 2
-		 *	TMD  - timer mode = external
-		 *	RAC  - Receiver enabled
-		 *	DIMx - digital i/f mode
-		 */
-		ISAC_WRITE(I_MODE, ISAC_MODE_MDS2|ISAC_MODE_MDS1|ISAC_MODE_RAC|ISAC_MODE_DIM0);
 	}
 	else
 	{
@@ -643,16 +635,17 @@ isic_isac_init(struct isic_softc *sc)
 		 *	STx/SCx = 0
 		 */
 		ISAC_WRITE(I_STCR, ISAC_STCR_TBA2|ISAC_STCR_TBA1|ISAC_STCR_TBA0);
-
-		/* MODE: Mode Register:
-		 *	MDSx - transparent mode 2
-		 *	TMD  - timer mode = external
-		 *	RAC  - Receiver enabled
-		 *	DIMx - digital i/f mode
-		 */
-		ISAC_WRITE(I_MODE, ISAC_MODE_MDS2|ISAC_MODE_MDS1|ISAC_MODE_RAC|ISAC_MODE_DIM0);
 	}
 	
+
+	/* MODE: Mode Register:
+	 *	MDSx - transparent mode 2
+	 *	TMD  - timer mode = external
+	 *	RAC  - Receiver enabled
+	 *	DIMx - digital i/f mode
+	 */
+	ISAC_WRITE(I_MODE, ISAC_MODE_MDS2|ISAC_MODE_MDS1|ISAC_MODE_RAC|ISAC_MODE_DIM0);
+
 	/* enabled interrupts:
 	 * ===================
 	 * RME  - receive message end
@@ -667,21 +660,6 @@ isic_isac_init(struct isic_softc *sc)
 		     ISAC_MASK_SIN;	/* sync xfer irq	*/
 
 	ISAC_WRITE(I_MASK, ISAC_IMASK);
-
-	/*
-	 * Even if interrupts are masked, the EXI bit may get set
-	 * (but does not cause an interrupt).
-	 * Clear the extended interrupts, and reset receiver and
-	 * transmitter.
-	 */
-	v = ISAC_READ(I_ISTA);
-	if (v & ISAC_ISTA_EXI)
-		v = ISAC_READ(I_EXIR);
-
-	/* if we've just removed an interrupt status, make sure to cover
-	 * all traces of it */
-	if (sc->clearirq)
-		sc->clearirq(sc);
 
 	ISAC_WRITE(I_CMDR, ISAC_CMDR_RRES|ISAC_CMDR_XRES);
 	ISACCMDRWRDELAY();

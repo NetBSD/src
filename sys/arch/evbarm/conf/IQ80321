@@ -1,9 +1,11 @@
-#	$NetBSD: IQ80321,v 1.2.2.3 2002/04/17 00:02:54 nathanw Exp $
+#	$NetBSD: IQ80321,v 1.2.2.4 2002/06/20 03:38:29 nathanw Exp $
 #
 #	IQ80321 -- Intel IQ80321 Evaluation Board Kernel
 #
 
 include	"arch/evbarm/conf/std.iq80321"
+
+#options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
 # estimated number of users
 
@@ -174,3 +176,4 @@ pseudo-device	loop			# network loopback
 # miscellaneous pseudo-devices
 pseudo-device	pty			# pseudo-terminals
 pseudo-device	rnd			# /dev/random and in-kernel generator
+pseudo-device	clockctl		# user control of clock subsystem

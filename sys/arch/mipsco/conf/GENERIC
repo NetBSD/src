@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.9.6.4 2002/04/17 00:03:50 nathanw Exp $
+# $NetBSD: GENERIC,v 1.9.6.5 2002/06/20 03:39:53 nathanw Exp $
 #
 # GENERIC machine description file
 # 
@@ -19,6 +19,8 @@
 # device.
 
 include		"arch/mipsco/conf/std.mipsco"
+
+options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
 maxusers	16
 
@@ -155,6 +157,7 @@ pseudo-device	bpfilter	16	# Berkeley Packet Filter
 #pseudo-device	ipfilter		# ip filter
 pseudo-device	vlan			# IEEE 802.1q encapsulation
 pseudo-device	bridge			# simple inter-network bridging
+pseudo-device	clockctl		# user control of clock subsystem
 
 # random number generator pseudo-device
 pseudo-device	rnd			# /dev/random and in-kernel generator

@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.1.4.2 2002/01/08 00:27:01 nathanw Exp $
+# $NetBSD: GENERIC,v 1.1.4.3 2002/06/20 03:40:27 nathanw Exp $
 #
 # GENERIC machine description file
 # 
@@ -20,6 +20,8 @@
 
 include 	"arch/playstation2/conf/std.playstation2"
 include 	"arch/playstation2/conf/config.playstation2"
+
+options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
 config		netbsd		root on ? type ?
 

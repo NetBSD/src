@@ -1,10 +1,10 @@
-/*	$NetBSD: podule_data.h,v 1.4.8.3 2002/04/17 00:06:10 nathanw Exp $	*/
+/*	$NetBSD: podule_data.h,v 1.4.8.4 2002/06/20 03:46:21 nathanw Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: podules,v 1.8 2002/03/29 00:16:51 bjh21 Exp 
+ *	NetBSD: podules,v 1.13 2002/05/23 22:00:49 bjh21 Exp 
  */
 
 /*
@@ -38,237 +38,304 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-static struct podule_description podules_acorn[] = {
-	{ PODULE_ACORN_ETHER3XXX,	"Ether3 (NOROM)" },
-	{ PODULE_ACORN_SCSI,	"SCSI 1 interface" },
-	{ PODULE_ACORN_ETHER1,	"ether 1 interface" },
-	{ PODULE_ACORN_ROMRAM,	"ROM/RAM podule" },
-	{ PODULE_ACORN_BBCIO,	"BBC IO interface" },
-	{ PODULE_ACORN_ST506,	"ST506 HD interface" },
+static struct podule_description known_podules[] = {
+	{ PODULE_HOSTTUBE,	"Host TUBE (to BBC)" },
+	{ PODULE_PARASITETUBE,	"Parastite TUBE (to 2nd processor)" },
+	{ PODULE_ACORN_SCSI,	"Acorn SCSI interface" },
+	{ PODULE_ETHER1,	"Ether1 interface" },
+	{ PODULE_IBMDISC,	"IBM disc" },
+	{ PODULE_ROMRAM,	"ROM/RAM podule" },
+	{ PODULE_BBCIO,	"BBC I/O podule" },
+	{ PODULE_FAXPACK,	"FaxPack modem" },
+	{ PODULE_TELETEXT,	"Teletext" },
+	{ PODULE_CDROM,	"CD-ROM" },
+	{ PODULE_IEEE488,	"IEEE 488 interface" },
+	{ PODULE_ST506,	"ST506 HD interface" },
+	{ PODULE_ESDI,	"ESDI interface" },
+	{ PODULE_SMD,	"SMD interface" },
+	{ PODULE_LASERPRINTER,	"laser printer" },
+	{ PODULE_SCANNER,	"scanner" },
+	{ PODULE_FASTRING,	"Fast Ring interface" },
+	{ PODULE_FASTRING2,	"Fast Ring II interface" },
+	{ PODULE_PROMPROGRAMMER,	"PROM programmer" },
 	{ PODULE_ACORN_MIDI,	"MIDI interface" },
+	{ PODULE_LASERDIRECT,	"LaserDirect (Canon LBP-4)" },
+	{ PODULE_FRAMEGRABBER,	"frame grabber" },
+	{ PODULE_A448,	"A448 sound sampler" },
+	{ PODULE_VIDEODIGITISER,	"video digitiser" },
+	{ PODULE_GENLOCK,	"genlock" },
+	{ PODULE_CODECSAMPLER,	"codec sampler" },
+	{ PODULE_IMAGEANALYSER,	"image analyser" },
+	{ PODULE_ANALOGUEINPUT,	"analogue input" },
+	{ PODULE_CDSOUNDSAMPLER,	"CD sound sampler" },
+	{ PODULE_6MIPSSIGPROC,	"6 MIPS signal processor" },
+	{ PODULE_12MIPSSIGPROC,	"12 MIPS signal processor" },
+	{ PODULE_33MIPSSIGPROC,	"33 MIPS signal processor" },
+	{ PODULE_TOUCHSCREEN,	"touch screen" },
+	{ PODULE_TRANSPUTERLINK,	"Transputer link" },
+	{ PODULE_HCCS_IDESCSI,	"HCCS IDE or SCSI interface" },
+	{ PODULE_LASERSCANNER,	"laser scanner" },
+	{ PODULE_GNOME_TRANSPUTERLINK,	"Transputer link" },
+	{ PODULE_VMEBUS,	"VME bus interface" },
+	{ PODULE_TAPESTREAMER,	"tape streamer" },
+	{ PODULE_LASERTEST,	"laser test" },
+	{ PODULE_COLOURDIGITISER,	"colour digitiser" },
+	{ PODULE_WEATHERSATELLITE,	"weather satellite" },
+	{ PODULE_AUTOCUE,	"autocue" },
+	{ PODULE_PARALLELIO16BIT,	"16-bit parallel I/O" },
+	{ PODULE_12BITATOD,	"12-bit ADC" },
+	{ PODULE_SERIALPORTSRS423,	"RS423 serial ports" },
+	{ PODULE_MINI,	"mini" },
+	{ PODULE_FRAMEGRABBER2,	"frame grabber II" },
+	{ PODULE_INTERACTIVEVIDEO2,	"interactive video II" },
+	{ PODULE_WILDVISION_ATOD,	"ADC" },
+	{ PODULE_WILDVISION_DTOA,	"DAC" },
+	{ PODULE_EMR_MIDI4,	"MIDI 4" },
+	{ PODULE_FPCP,	"floating-point co-processor" },
+	{ PODULE_PRISMA3,	"Prisma 3" },
+	{ PODULE_ARVIS,	"ARVIS" },
+	{ PODULE_4BY4MIDI,	"4x4 MIDI" },
+	{ PODULE_BISERIALPARALLEL,	"Bi-directional serial/parallel" },
+	{ PODULE_CHROMA300,	"Chroma 300 genlock" },
+	{ PODULE_CUMANA_SCSI2,	"SCSI II interface" },
+	{ PODULE_COLOURCONVERTER,	"Colour Converter" },
+	{ PODULE_8BITSAMPLER,	"8-bit sampler" },
+	{ PODULE_PLUTO,	"Pluto interface" },
+	{ PODULE_LOGICANALYSER,	"Logic Analyser" },
 	{ PODULE_ACORN_USERMIDI,	"User Port/MIDI interface" },
-	{ PODULE_ACORN_ETHER2,	"ether 2 interface" },
-	{ PODULE_ACORN_ETHERI,	"EtherI interface" },
-	{ 0x0000, NULL }
-};
-
-static struct podule_description podules_olivetti[] = {
-	{ 0x0000, NULL }
-};
-
-static struct podule_description podules_watford[] = {
-	{ 0x0000, NULL }
-};
-
-static struct podule_description podules_cconcepts[] = {
-	{ PODULE_CCONCEPTS_ROMRAM,	"ROM/RAM podule" },
-	{ PODULE_CCONCEPTS_LASERDIRECT,	"laser direct (Canon LBP-4)" },
-	{ 0x0000, NULL }
-};
-
-static struct podule_description podules_armadillo[] = {
-	{ PODULE_ARMADILLO_A448,	"A448 sound sampler" },
-	{ 0x0000, NULL }
-};
-
-static struct podule_description podules_wildvision[] = {
-	{ PODULE_WILDVISION_COLOURCARD,	"ColourCard" },
-	{ PODULE_WILDVISION_HAWKV9,	"hawk v9 mark2" },
-	{ PODULE_WILDVISION_SOUNDSAMPLER,	"Sound Sampler" },
+	{ PODULE_LINGENUITY_SCSI8,	"8 bit SCSI interface" },
+	{ PODULE_ARXE_SCSI,	"16 bit SCSI interface" },
+	{ PODULE_DUALUSERPORT,	"dual User Port" },
+	{ PODULE_EMR_SAMPLER8,	"Sampler8" },
+	{ PODULE_EMR_SMTP,	"SMTP" },
+	{ PODULE_EMR_MIDI2,	"MIDI2" },
+	{ PODULE_PINEAPPLE_DIGITISER,	"digitiser" },
+	{ PODULE_VIDEOFRAMECAPTURE,	"video frame capture" },
+	{ PODULE_MONOOVERLAYFRSTORE,	"mono overlay frame store" },
+	{ PODULE_MARKETBUFFER,	"market buffer" },
+	{ PODULE_PAGESTORE,	"page store" },
+	{ PODULE_TRAMMOTHERBOARD,	"TRAM motherboard" },
+	{ PODULE_TRANSPUTER,	"Transputer" },
+	{ PODULE_OPTICALSCANNER,	"optical scanner" },
+	{ PODULE_DIGITISINGTABLET,	"digitising tablet" },
+	{ PODULE_200DPISCANNER,	"200-dpi scanner" },
+	{ PODULE_COLOURCARD,	"ColourCard" },
+	{ PODULE_PRESENTERGENLOCK,	"Presenter Genlock" },
+	{ PODULE_HAWKV9,	"Hawk v9 mark2" },
+	{ PODULE_CROMA200,	"Chroma 200 genlock" },
+	{ PODULE_WILDVISION_SOUNDSAMPLER,	"Wild Vision Sound Sampler" },
+	{ PODULE_DTSOFT_IDE,	"IDE interface" },
+	{ PODULE_8BITATOD,	"8-bit ADC" },
+	{ PODULE_MFMHDCONTROLLER,	"MFM hard disc controller" },
+	{ PODULE_OAK_SCSI,	"16 bit SCSI interface" },
+	{ PODULE_QUADSERIAL,	"quad serial" },
+	{ PODULE_PALPROGRAMMER,	"PAL programmer" },
+	{ PODULE_I2CBUS,	"I^2C bus" },
+	{ PODULE_BEEBUG_SCANNER,	"scanner interface" },
+	{ PODULE_PANDORA_QUADMIDI,	"quad MIDI" },
+	{ PODULE_PRES_DISCBUFFER,	"disc buffer" },
+	{ PODULE_PRES_USERPORT,	"User Port" },
+	{ PODULE_MICROYEAI,	"Micro YEAI" },
+	{ PODULE_ETHER2,	"Ether2 interface" },
+	{ PODULE_SGB_EXPANSIONBOX,	"SGB expansion box" },
+	{ PODULE_ULTIMATE,	"Ultimate micropodule carrier" },
+	{ PODULE_NEXUS,	"Nexus interface (Podule)" },
+	{ PODULE_PHOBOX_USERANALOGUE,	"User and Analogue ports" },
+	{ PODULE_MORLEY_STATICRAM,	"static RAM" },
+	{ PODULE_MORLEY_SCSI,	"SCSI interface" },
+	{ PODULE_MORLEY_TELETEXT,	"teletext interface" },
+	{ PODULE_TECHNOMATIC_SCANNER,	"scanner" },
+	{ PODULE_BEEBUG_QUADRANT,	"Quadrant" },
+	{ PODULE_RCC_VOICEPROCESSOR,	"voice processor" },
+	{ PODULE_RCC_UHFLINK,	"UHF link" },
+	{ PODULE_MORLEY_USERANALOGUE,	"User and Analogue ports" },
+	{ PODULE_HCCS_USERANALOGUE,	"User and Analogue ports" },
 	{ PODULE_WILDVISION_CENTRONICS,	"Bi-directional Centronics" },
-	{ PODULE_WILDVISION_SCANLIGHTV256,	"scanlight video 256" },
-	{ PODULE_WILDVISION_EAGLEM2,	"eagle M2" },
-	{ PODULE_WILDVISION_LARKA16,	"lark A16" },
-	{ PODULE_WILDVISION_MIDIMAX,	"MIDI max" },
-	{ 0x0000, NULL }
-};
-
-static struct podule_description podules_hccs[] = {
-	{ PODULE_HCCS_IDESCSI,	"IDE or SCSI interface" },
-	{ PODULE_HCCS_ULTIMATE,	"Ultimate micropodule carrier" },
-	{ 0x0000, NULL }
-};
-
-static struct podule_description podules_atomwide[] = {
-	{ PODULE_ATOMWIDE_ETHER3,	"ether 3/5 interface" },
-	{ 0x0000, NULL }
-};
-
-static struct podule_description podules_atomwide2[] = {
-	{ PODULE_ATOMWIDE2_SERIAL,	"multiport serial interface" },
-	{ 0x0000, NULL }
-};
-
-static struct podule_description podules_lingenuity[] = {
+	{ PODULE_HCCS_A3000SCSI,	"A3000 SCSI interface" },
+	{ PODULE_LINDIS_DIGITISER,	"digitiser" },
+	{ PODULE_CCC_PEAKPROGMETER,	"peak prog. meter" },
+	{ PODULE_LASERLIGHTCONTROL,	"laser light control" },
+	{ PODULE_HARDDISCINTERFACE,	"hard disc interface" },
+	{ PODULE_EXTRAMOUSE,	"extra mouse" },
+	{ PODULE_STEBUSINTERFACE,	"STE bus interface" },
+	{ PODULE_MORLEY_ST506,	"ST506 disc interface" },
+	{ PODULE_BRAINSOFT_MULTI1,	"Multi_1" },
+	{ PODULE_BRAINSOFT_MULTI2,	"Multi_2" },
+	{ PODULE_BRAINSOFT_24DIGITISER,	"24-bit digitiser" },
+	{ PODULE_BRAINSOFT_24GRAPHICS,	"24-bit graphics" },
+	{ PODULE_SYNTEC_SPECTRON,	"Spectron" },
+	{ PODULE_SYNTEC_QUAD16DTOA,	"Quad 16-bit DAC" },
+	{ PODULE_ROMBO_4BITDIGIISER,	"4-bit digitiser" },
+	{ PODULE_DONGLEANDKEYPAD,	"dongle and keypad" },
+	{ PODULE_3SL_SCSI,	"SCSI interface" },
+	{ PODULE_ARMADILLO_BTM1,	"BTM1" },
+	{ PODULE_ARMADILLO_DSO1,	"DSO1" },
+	{ PODULE_DELTRONICS_USER,	"User Port" },
+	{ PODULE_JPEGCOMPRESSOR,	"JPEG compressor" },
+	{ PODULE_BEEBUG_A3000SCSI,	"A3000 SCSI" },
+	{ PODULE_BEEBUG_COLOURSCAN,	"colour scanner interface" },
+	{ PODULE_EXTENSIONROM,	"extension ROM" },
+	{ PODULE_GRAPHICSENHANCER,	"Graphics Enhancer" },
+	{ PODULE_SIMIS_AFB300,	"AFB300" },
+	{ PODULE_FAXPACKSENIOR,	"FaxPack Senior" },
+	{ PODULE_FAXPACKJUNIOR,	"FaxPack Junior" },
+	{ PODULE_LINGENUITY_SCSI8SHARE,	"8 bit SCSIShare interface" },
+	{ PODULE_VTI_SCSI,	"SCSI interface" },
+	{ PODULE_ATOMWIDE_PIA,	"PIA" },
+	{ PODULE_NEXUSNS,	"Nexus interface (A3020 netslot)" },
+	{ PODULE_ATOMWIDE_SERIAL,	"multiport serial interface" },
+	{ PODULE_WATFORD_IDE,	"IDE interface" },
+	{ PODULE_ATOMWIDE_IDE,	"IDE interface" },
+	{ PODULE_ARMADILLO_RSI,	"RSI" },
+	{ PODULE_ARMADILLO_TCR,	"TCR" },
 	{ PODULE_LINGENUITY_SCSI,	"16 bit SCSI interface" },
 	{ PODULE_LINGENUITY_SCSISHARE,	"16 bit SCSIShare interface" },
-	{ PODULE_LINGENUITY_SCSI8,	"8 bit SCSI interface" },
-	{ PODULE_LINGENUITY_SCSI8SHARE,	"8 bit SCSIShare interface" },
-	{ 0x0000, NULL }
-};
-
-static struct podule_description podules_irlam[] = {
-	{ PODULE_IRLAM_24I16,	"24i16 digitiser" },
-	{ PODULE_IRLAM_MMETHERV,	"Multi-media/EtherV" },
-	{ PODULE_IRLAM_ETHERN,	"EtherN interface" },
-	{ 0x0000, NULL }
-};
-
-static struct podule_description podules_oak[] = {
-	{ PODULE_OAK_SCSI,	"16 bit SCSI interface" },
-	{ 0x0000, NULL }
-};
-
-static struct podule_description podules_sj[] = {
-	{ PODULE_SJ_NEXUS,	"Nexus interface (Podule)" },
-	{ PODULE_SJ_NEXUSNS,	"Nexus interface (A3020 netslot)" },
-	{ 0x0000, NULL }
-};
-
-static struct podule_description podules_morley[] = {
-	{ PODULE_MORLEY_SCSI,	"SCSI interface" },
-	{ PODULE_MORLEY_USERANALOGUE,	"User and Analogue ports" },
-	{ 0x0000, NULL }
-};
-
-static struct podule_description podules_hccs2[] = {
-	{ PODULE_HCCS2_USERANALOGUE,	"User and Analogue ports" },
-	{ 0x0000, NULL }
-};
-
-static struct podule_description podules_vti[] = {
-	{ PODULE_VTI_SCSI,	"SCSI interface" },
-	{ 0x0000, NULL }
-};
-
-static struct podule_description podules_dtsoft[] = {
-	{ PODULE_DTSOFT_IDE,	"IDE interface" },
-	{ 0x0000, NULL }
-};
-
-static struct podule_description podules_cumana[] = {
-	{ PODULE_CUMANA_SCSI2,	"SCSI II interface" },
+	{ PODULE_BEEBUG_IDE,	"IDE interface" },
+	{ PODULE_WATFORD_PRISMRT,	"Prism RT" },
+	{ PODULE_HCCS_VIDEODIGITISER,	"video digitiser" },
+	{ PODULE_DTSOFT_SCANPORT,	"ScanPort" },
+	{ PODULE_DTSOFT_PACCEL,	"Paccel" },
+	{ PODULE_DTSOFT_CANONION,	"Canon ION interface" },
+	{ PODULE_BIA_AUDIO,	"BIA audio" },
+	{ PODULE_IRLAM_FAXIM,	"FaxIm" },
+	{ PODULE_IRLAM_MOVINGIMAGE,	"Moving Image" },
 	{ PODULE_CUMANA_SCSI1,	"SCSI I interface" },
-	{ PODULE_CUMANA_SLCD,	"CDFS & SLCD expansion card" },
-	{ 0x0000, NULL }
-};
-
-static struct podule_description podules_ics[] = {
+	{ PODULE_NEXUS_A3000ETHERNET,	"A3000 Ethernet" },
+	{ PODULE_NEXUS_PCEMACCELL,	"PC Emulator accelerator" },
+	{ PODULE_NEXUS_64CANSERIAL,	"64-channel serial" },
+	{ PODULE_ETHER3,	"Ether3/Ether5 interface" },
+	{ PODULE_IOTA_SCANNER,	"scanner interface" },
+	{ PODULE_NEXUS_I860MATHACCELL,	"i860 floating-point accelerator" },
+	{ PODULE_II_QUADSERIAL,	"quad serial port" },
+	{ PODULE_WATFORD_SCANNERGREY,	"grey-scale scanner" },
+	{ PODULE_WATFORD_SCANNERRGB,	"RGB scanner" },
+	{ PODULE_WATFORD_PRISMCOLOUR,	"Prism Colour" },
+	{ PODULE_WATFORD_USERANALOGUE,	"Analogue and User Ports" },
+	{ PODULE_BAILDON_DISCBUFFER,	"disc buffer" },
+	{ PODULE_BAILDON_A3000UPBUS,	"A3000 UP bus" },
 	{ PODULE_ICS_IDE,	"IDE Interface" },
-	{ 0x0000, NULL }
-};
-
-static struct podule_description podules_serialport[] = {
+	{ PODULE_HCCS_BWDIGITISER,	"b/w digitiser" },
+	{ PODULE_CSD_IDE8,	"8-bit IDE interface" },
+	{ PODULE_CSD_IDE16,	"16-bit IDE interface" },
+	{ PODULE_SERIALPORT_IDE,	"IDE interface" },
+	{ PODULE_SERIALPORT_4MFLOPPY,	"4 MB floppy" },
+	{ PODULE_CADSOFT_MAESTROINTER,	"Maestro Inter" },
+	{ PODULE_ARXE_QUADFS,	"Quad-density floppy interface" },
 	{ PODULE_SERIALPORT_DUALSERIAL,	"Serial interface" },
-	{ 0x0000, NULL }
-};
-
-static struct podule_description podules_arxe[] = {
-	{ PODULE_ARXE_SCSI,	"16 bit SCSI interface" },
-	{ 0x0000, NULL }
-};
-
-static struct podule_description podules_aleph1[] = {
-	{ PODULE_ALEPH1_PCCARD,	"PC card" },
-	{ 0x0000, NULL }
-};
-
-static struct podule_description podules_icubed[] = {
-	{ PODULE_ICUBED_ETHERLAN100,	"EtherLan 100-series" },
-	{ PODULE_ICUBED_ETHERLAN200,	"EtherLan 200-series" },
-	{ PODULE_ICUBED_ETHERLAN500,	"EtherLan 500-series" },
-	{ PODULE_ICUBED_ETHERLAN600,	"EtherLan 600-series" },
-	{ PODULE_ICUBED_ETHERLAN700,	"EtherLan 700-series" },
-	{ PODULE_ICUBED_ETHERLAN100AEH,	"AEH77 (EtherLan 102)" },
-	{ PODULE_ICUBED_ETHERLAN200AEH,	"AEH79 (EtherLan 210)" },
-	{ PODULE_ICUBED_ETHERLAN600AEH,	"AEH62/78/99 (EtherLan 602)" },
-	{ PODULE_ICUBED_ETHERLAN500AEH,	"AEH75 (EtherLan 512)" },
-	{ PODULE_ICUBED_ETHERLAN700AEH,	"AEH98 (EtherLan 700-series)" },
-	{ PODULE_ICUBED_ETHERLAN100XXX,	"EtherLan 100???" },
-	{ 0x0000, NULL }
-};
-
-static struct podule_description podules_brini[] = {
-	{ PODULE_BRINI_PORT,	"BriniPort intelligent I/O interface" },
-	{ PODULE_BRINI_LINK,	"BriniLink transputer link adapter" },
-	{ 0x0000, NULL }
-};
-
-static struct podule_description podules_ant[] = {
-	{ PODULE_ANT_ETHER3,	"ether 3/5 interface" },
-	{ PODULE_ANT_ETHERB,	"ether B network slot interface" },
-	{ PODULE_ANT_ETHERM,	"ether M dual interface NIC" },
-	{ 0x0000, NULL }
-};
-
-static struct podule_description podules_castle[] = {
-	{ PODULE_CASTLE_SCSI16,	"8 or 16 bit SCSI2 interface" },
+	{ PODULE_ETHERLAN200,	"EtherLan 200-series" },
+	{ PODULE_SCANLIGHTV256,	"ScanLight Video 256" },
+	{ PODULE_EAGLEM2,	"Eagle M2" },
+	{ PODULE_LARKA16,	"Lark A16" },
+	{ PODULE_ETHERLAN100,	"EtherLan 100-series" },
+	{ PODULE_ETHERLAN500,	"EtherLan 500-series" },
+	{ PODULE_ETHERM,	"EtherM dual interface NIC" },
+	{ PODULE_CUMANA_SLCD,	"CDFS & SLCD expansion card" },
+	{ PODULE_BRINILINK,	"BriniLink transputer link adapter" },
+	{ PODULE_ETHERB,	"EtherB network slot interface" },
+	{ PODULE_24I16,	"24i16 digitiser" },
+	{ PODULE_PCCARD,	"PC card" },
+	{ PODULE_ETHERLAN600,	"EtherLan 600-series" },
 	{ PODULE_CASTLE_SCSI16SHARE,	"8 or 16 bit SCSI2Share interface" },
-	{ PODULE_CASTLE_ETHERSCSI,	"EtherSCSI" },
 	{ PODULE_CASTLE_ETHERSCSISHARE,	"8 or 16 bit SCSI2Share interface, possibly with Ethernet" },
-	{ PODULE_CASTLE_SCSI32,	"32 bit SCSI2 + DMA interface" },
-	{ 0x0000, NULL }
-};
-
-static struct podule_description podules_alsystems[] = {
+	{ PODULE_CASTLE_ETHERSCSI,	"EtherSCSI" },
+	{ PODULE_CASTLE_SCSI16,	"8 or 16 bit SCSI2 interface" },
 	{ PODULE_ALSYSTEMS_SCSI,	"SCSI II host adapter" },
-	{ 0x0000, NULL }
-};
-
-static struct podule_description podules_simtec[] = {
+	{ PODULE_RAPIDE,	"RapIDE32 interface" },
+	{ PODULE_ETHERLAN100AEH,	"AEH77 (EtherLan 102)" },
+	{ PODULE_ETHERLAN200AEH,	"AEH79 (EtherLan 210)" },
+	{ PODULE_ETHERLAN600AEH,	"AEH62/78/99 (EtherLan 602)" },
+	{ PODULE_ETHERLAN500AEH,	"AEH75 (EtherLan 512)" },
+	{ PODULE_CONNECT32,	"Connect32 SCSI II interface" },
+	{ PODULE_CASTLE_SCSI32,	"32 bit SCSI2 + DMA interface" },
+	{ PODULE_ETHERLAN700AEH,	"AEH98 (EtherLan 700-series)" },
+	{ PODULE_ETHERLAN700,	"EtherLan 700-series" },
 	{ PODULE_SIMTEC_IDE8,	"8 bit IDE interface" },
 	{ PODULE_SIMTEC_IDE,	"16 bit IDE interface" },
-	{ 0x0000, NULL }
-};
-
-static struct podule_description podules_yes[] = {
-	{ PODULE_YES_RAPIDE,	"RapIDE32 interface" },
-	{ 0x0000, NULL }
-};
-
-static struct podule_description podules_mcs[] = {
-	{ PODULE_MCS_SCSI,	"Connect32 SCSI II interface" },
-	{ PODULE_MCS_MIDICONNECT,	"Midi-Connect" },
-	{ 0x0000, NULL }
-};
-
-static struct podule_description podules_eesox[] = {
-	{ PODULE_EESOX_SCSI,	"EESOX SCSI II interface" },
+	{ PODULE_MIDICONNECT,	"Midi-Connect" },
+	{ PODULE_ETHERI,	"EtherI interface" },
+	{ PODULE_MIDIMAX,	"MIDI max" },
+	{ PODULE_MMETHERV,	"Multi-media/EtherV" },
+	{ PODULE_ETHERN,	"EtherN interface" },
 	{ 0x0000, NULL }
 };
 
 
-struct podule_list known_podules[] = {
-	{ MANUFACTURER_ACORN, 		"Acorn Computers", 	podules_acorn },
-	{ MANUFACTURER_OLIVETTI, 	"Olivetti", 	podules_olivetti },
-	{ MANUFACTURER_WATFORD, 	"Watford Electronics", 	podules_watford },
-	{ MANUFACTURER_CCONCEPTS, 	"Computer Concepts", 	podules_cconcepts },
-	{ MANUFACTURER_ARMADILLO, 	"Armadillo Systems", 	podules_armadillo },
-	{ MANUFACTURER_WILDVISION, 	"Wild Vision", 	podules_wildvision },
-	{ MANUFACTURER_HCCS, 		"HCCS", 	podules_hccs },
-	{ MANUFACTURER_ATOMWIDE, 	"Atomwide", 	podules_atomwide },
-	{ MANUFACTURER_ATOMWIDE2, 	"Atomwide", 	podules_atomwide2 },
-	{ MANUFACTURER_LINGENUITY, 	"Lingenuity", 	podules_lingenuity },
-	{ MANUFACTURER_IRLAM, 		"Irlam Instruments", 	podules_irlam },
-	{ MANUFACTURER_OAK, 		"Oak Solutions", 	podules_oak },
-	{ MANUFACTURER_SJ, 		"SJ Research", 	podules_sj },
-	{ MANUFACTURER_MORLEY, 		"Morley", 	podules_morley },
-	{ MANUFACTURER_HCCS2, 		"HCCS", 	podules_hccs2 },
-	{ MANUFACTURER_VTI, 		"Vertical Twist", 	podules_vti },
-	{ MANUFACTURER_DTSOFT, 		"D.T. Software", 	podules_dtsoft },
-	{ MANUFACTURER_CUMANA, 		"Cumana", 	podules_cumana },
-	{ MANUFACTURER_ICS, 		"ICS", 	podules_ics },
-	{ MANUFACTURER_SERIALPORT, 	"Serial Port", 	podules_serialport },
-	{ MANUFACTURER_ARXE, 		"ARXE", 	podules_arxe },
-	{ MANUFACTURER_ALEPH1, 		"Aleph 1", 	podules_aleph1 },
-	{ MANUFACTURER_ICUBED, 		"I-Cubed", 	podules_icubed },
-	{ MANUFACTURER_BRINI, 		"Brini", 	podules_brini },
-	{ MANUFACTURER_ANT, 		"ANT", 	podules_ant },
-	{ MANUFACTURER_CASTLE, 		"Castle Technology", 	podules_castle },
-	{ MANUFACTURER_ALSYSTEMS, 	"Alsystems", 	podules_alsystems },
-	{ MANUFACTURER_SIMTEC, 		"Simtec Electronics", 	podules_simtec },
-	{ MANUFACTURER_YES, 		"Yellowstone Educational Solutions", 	podules_yes },
-	{ MANUFACTURER_MCS, 		"MCS", 	podules_mcs },
-	{ MANUFACTURER_EESOX, 		"EESOX", 	podules_eesox },
-	{ 0, NULL, NULL }
+struct manufacturer_description known_manufacturers[] = {
+	{ MANUFACTURER_ACORN, 		"Acorn Computers" },
+	{ MANUFACTURER_ACORNUSA, 	"Acorn Computers (USA)" },
+	{ MANUFACTURER_OLIVETTI, 	"Olivetti" },
+	{ MANUFACTURER_WATFORD, 	"Watford Electronics" },
+	{ MANUFACTURER_CCONCEPTS, 	"Computer Concepts" },
+	{ MANUFACTURER_IINTERFACES, 	"Intelligent Interfaces" },
+	{ MANUFACTURER_CAMAN, 		"Caman" },
+	{ MANUFACTURER_ARMADILLO, 	"Armadillo Systems" },
+	{ MANUFACTURER_SOFTOPTION, 	"Soft Option" },
+	{ MANUFACTURER_WILDVISION, 	"Wild Vision" },
+	{ MANUFACTURER_ANGLOCOMPUTERS, 	"Anglo Computers" },
+	{ MANUFACTURER_RESOURCE, 	"Resource" },
+	{ MANUFACTURER_HCCS, 		"HCCS" },
+	{ MANUFACTURER_MUSBURYCONSULT, 	"Musbury Consultants" },
+	{ MANUFACTURER_GNOME, 		"Gnome" },
+	{ MANUFACTURER_AANDGELEC, 	"A and G Electronics" },
+	{ MANUFACTURER_SPACETECH, 	"Spacetech" },
+	{ MANUFACTURER_ATOMWIDE, 	"Atomwide" },
+	{ MANUFACTURER_SYNTEC, 		"Syntec" },
+	{ MANUFACTURER_EMR, 		"ElectroMusic Research" },
+	{ MANUFACTURER_MILLIPEDE, 	"Millipede" },
+	{ MANUFACTURER_VIDEOELEC, 	"Video Electronics" },
+	{ MANUFACTURER_BRAINSOFT, 	"Brainsoft" },
+	{ MANUFACTURER_ATOMWIDE2, 	"Atomwide" },
+	{ MANUFACTURER_LENDAC, 		"Lendac Data Systems" },
+	{ MANUFACTURER_CAMMICROSYS, 	"Cambridge Micro Systems" },
+	{ MANUFACTURER_LINGENUITY, 	"Lingenuity" },
+	{ MANUFACTURER_SIPLAN, 		"Siplan Electronics Research" },
+	{ MANUFACTURER_SCIFRONTIERS, 	"Science Frontiers" },
+	{ MANUFACTURER_PINEAPPLE, 	"Pineapple Software" },
+	{ MANUFACTURER_TECHNOMATIC, 	"Technomatic" },
+	{ MANUFACTURER_IRLAM, 		"Irlam Instruments" },
+	{ MANUFACTURER_NEXUS, 		"Nexus Electronics" },
+	{ MANUFACTURER_OAK, 		"Oak Solutions" },
+	{ MANUFACTURER_HUGHSYMONS, 	"Hugh Symons" },
+	{ MANUFACTURER_BEEBUG, 		"BEEBUG (RISC Developments)" },
+	{ MANUFACTURER_TEKNOMUSIK, 	"Teknomusik" },
+	{ MANUFACTURER_REELTIME, 	"Reel Time" },
+	{ MANUFACTURER_PRES, 		"PRES" },
+	{ MANUFACTURER_DIGIHURST, 	"Digihurst" },
+	{ MANUFACTURER_SGBCOMPSERV, 	"SGB Computer Services" },
+	{ MANUFACTURER_SJ, 		"SJ Research" },
+	{ MANUFACTURER_PHOBOX, 		"Phobox Electronics" },
+	{ MANUFACTURER_MORLEY, 		"Morley Electronics" },
+	{ MANUFACTURER_RACINGCAR, 	"Raching Car Computers" },
+	{ MANUFACTURER_HCCS2, 		"HCCS" },
+	{ MANUFACTURER_LINDIS, 		"Lindis International" },
+	{ MANUFACTURER_CCC, 		"Computer Control Consultants" },
+	{ MANUFACTURER_UNILAB, 		"Unilab" },
+	{ MANUFACTURER_SEFANFROHLING, 	"Sefan Frohling" },
+	{ MANUFACTURER_ROMBO, 		"Rombo Productions" },
+	{ MANUFACTURER_3SL, 		"3SL" },
+	{ MANUFACTURER_DELTRONICS, 	"Deltronics" },
+	{ MANUFACTURER_VTI, 		"Vertical Twist" },
+	{ MANUFACTURER_SIMIS, 		"Simis" },
+	{ MANUFACTURER_DTSOFT, 		"D.T. Software" },
+	{ MANUFACTURER_ARMINTERFACES, 	"ARM Interfaces" },
+	{ MANUFACTURER_BIA, 		"BIA" },
+	{ MANUFACTURER_CUMANA, 		"Cumana" },
+	{ MANUFACTURER_IOTA, 		"Iota" },
+	{ MANUFACTURER_ICS, 		"Ian Copestake Software" },
+	{ MANUFACTURER_BAILDON, 	"Baildon Electronics" },
+	{ MANUFACTURER_CSD, 		"CSD" },
+	{ MANUFACTURER_SERIALPORT, 	"Serial Port" },
+	{ MANUFACTURER_CADSOFT, 	"CADsoft" },
+	{ MANUFACTURER_ARXE, 		"ARXE" },
+	{ MANUFACTURER_ALEPH1, 		"Aleph 1" },
+	{ MANUFACTURER_ICUBED, 		"I-Cubed" },
+	{ MANUFACTURER_BRINI, 		"Brini" },
+	{ MANUFACTURER_ANT, 		"ANT" },
+	{ MANUFACTURER_CASTLE, 		"Castle Technology" },
+	{ MANUFACTURER_ALSYSTEMS, 	"Alsystems" },
+	{ MANUFACTURER_SIMTEC, 		"Simtec Electronics" },
+	{ MANUFACTURER_YES, 		"Yellowstone Educational Solutions" },
+	{ MANUFACTURER_MCS, 		"MCS" },
+	{ MANUFACTURER_EESOX, 		"EESOX" },
+	{ 0, NULL }
 };

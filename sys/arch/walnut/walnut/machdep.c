@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.4.6.4 2002/05/29 21:32:07 nathanw Exp $	*/
+/*	$NetBSD: machdep.c,v 1.4.6.5 2002/06/20 03:42:27 nathanw Exp $	*/
 
 /*
  * Copyright 2001, 2002 Wasabi Systems, Inc.
@@ -122,9 +122,6 @@ char cpu_model[80];
 char machine[] = MACHINE;		/* from <machine/param.h> */
 char machine_arch[] = MACHINE_ARCH;	/* from <machine/param.h> */
 
-/* Our exported CPU info; we have only one right now. */  
-struct cpu_info cpu_info_store;
-
 struct pcb *curpcb;
 struct pmap *curpm;
 struct lwp *fpuproc;		/* XXX - shouldn't need this on fpu-less CPUs */
@@ -134,8 +131,6 @@ extern struct user *proc0paddr;
 char bootpath[256];
 paddr_t msgbuf_paddr;
 vaddr_t msgbuf_vaddr;
-
-int msgbufmapped = 0;
 
 #ifdef DDB
 void *startsym, *endsym;

@@ -1,9 +1,11 @@
 #
 # Distribution kernel (TOSHIBA TX3922 based model) kernel config file
 #
-#	$NetBSD: TX3922,v 1.34.2.5 2002/04/17 00:03:06 nathanw Exp $
+#	$NetBSD: TX3922,v 1.34.2.6 2002/06/20 03:38:46 nathanw Exp $
 #
 include		"arch/hpcmips/conf/std.hpcmips"
+
+#options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
 maxusers	16
 
@@ -328,6 +330,7 @@ pseudo-device	wsmux
 # miscellaneous pseudo-devices
 pseudo-device	rnd			# /dev/random and in-kernel generator
 pseudo-device	pty			# pseudo-terminals
+pseudo-device	clockctl		# user control of clock subsystem
 
 # a pseudo device needed for Coda	# also needs CODA (above)
 #pseudo-device	vcoda		4	# coda minicache <-> venus comm.

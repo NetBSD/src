@@ -1,4 +1,4 @@
-/*	$NetBSD: frame.h,v 1.2.26.2 2001/11/13 20:00:30 briggs Exp $	*/
+/*	$NetBSD: frame.h,v 1.2.26.3 2002/06/20 03:40:32 nathanw Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -89,10 +89,59 @@ struct callframe {
 	register_t r31;
 };
 
+
 struct saframe {
 	register_t r1;		/* stack pointer */
 	register_t lr;		/* Callee lr save area */
 	register_t fill[2];	/* Pad to multiple of 16 bytes */
 };
+
+
+#define	IFRAMELEN	sizeof(struct intrframe)
+struct intrframe {
+	register_t r1;			/*  0 */
+	register_t _pad4;		/*  4 */
+	/*
+	 * The next 4 fields are "clockframe"
+	 */
+	register_t srr1;		/*  8 */
+	register_t srr0;		/* 12 */
+	int pri;			/* 16 */
+	int intr_depth;			/* 20 */
+	register_t vrsave;		/* 24 */
+	register_t ctr;			/* 28 */
+	register_t xer;			/* 32 */
+	register_t cr;			/* 36 */
+	register_t lr;			/* 40 */
+	register_t r12;			/* 44 */
+	register_t r11;			/* 48 */
+	register_t r10;			/* 52 */
+	register_t r9;			/* 56 */
+	register_t r8;			/* 60 */
+	register_t r7;			/* 64 */
+	register_t r6;			/* 68 */
+	register_t r5;			/* 72 */
+	register_t r4;			/* 76 */
+	register_t r3;			/* 80 */
+	register_t r0;			/* 84 */
+};
+
+#define	SPFRAMELEN	sizeof(struct spillframe)
+struct spillframe {
+	register_t	r1;		/*  0 */
+	register_t	_pad4;		/*  4 */
+	register_t	r12;		/*  8 */
+	register_t	r11;		/* 12 */
+	register_t	r10;		/* 16 */
+	register_t	r9;		/* 20 */
+	register_t	r8;		/* 24 */
+	register_t	r7;		/* 28 */
+	register_t	r6;		/* 32 */
+	register_t	r5;		/* 36 */
+	register_t	r4;		/* 40 */
+	register_t	r3;		/* 44 */
+	register_t	r0;		/* 48 */
+};
+
 
 #endif	/* _MACHINE_FRAME_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.h,v 1.2.8.2 2002/02/28 04:11:32 nathanw Exp $	*/
+/*	$NetBSD: conf.h,v 1.2.8.3 2002/06/20 03:40:44 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -38,8 +38,6 @@
 
 #include <sys/conf.h>
 
-cdev_decl(pms);
-
 bdev_decl(fd);
 cdev_decl(fd);
 
@@ -48,7 +46,5 @@ cdev_decl(pc);
 cdev_decl(mms);
 
 cdev_decl(lms);
-
-cdev_decl(pms);
 
 cdev_decl(joy);

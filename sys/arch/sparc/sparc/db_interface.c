@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.43.8.2 2001/11/29 13:25:22 pk Exp $ */
+/*	$NetBSD: db_interface.c,v 1.43.8.3 2002/06/20 03:41:06 nathanw Exp $ */
 
 /*
  * Mach Operating System
@@ -187,8 +187,6 @@ db_sparc_regop (const struct db_variable *vp, db_expr_t *val, int opcode)
 	}
 	return 0;
 }
-
-extern label_t	*db_recover;
 
 int	db_active = 0;
 

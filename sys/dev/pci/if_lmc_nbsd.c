@@ -1,4 +1,4 @@
-/*	$NetBSD: if_lmc_nbsd.c,v 1.7.2.6 2002/02/28 04:14:01 nathanw Exp $	*/
+/*	$NetBSD: if_lmc_nbsd.c,v 1.7.2.7 2002/06/20 03:45:25 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1997-1999 LAN Media Corporation (LMC)
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_lmc_nbsd.c,v 1.7.2.6 2002/02/28 04:14:01 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_lmc_nbsd.c,v 1.7.2.7 2002/06/20 03:45:25 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -368,6 +368,7 @@ lmc_pci_attach(struct device * const parent,
 		printf("\n");
 		return;
 	}
+	printf("%s: interrupting at %s\n", sc->lmc_dev.dv_xname, intrstr);
 
 	printf("%s: pass %d.%d, serial " LMC_EADDR_FMT ", %s\n",
 	       sc->lmc_dev.dv_xname,

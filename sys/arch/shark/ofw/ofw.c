@@ -1,4 +1,4 @@
-/*	$NetBSD: ofw.c,v 1.7.2.4 2002/04/17 00:04:20 nathanw Exp $	*/
+/*	$NetBSD: ofw.c,v 1.7.2.5 2002/06/20 03:40:58 nathanw Exp $	*/
 
 /*
  * Copyright 1997
@@ -1065,7 +1065,7 @@ ofw_callbackhandler(args)
 			args->nreturns = 4;
 		}
 	} else if (strcmp(name, "claim-phys") == 0) {
-		struct pglist alloclist = TAILQ_HEAD_INITIALIZER(alloclist);
+		struct pglist alloclist;
 		vm_offset_t low, high;
 		vm_size_t align, size;
 

@@ -1,4 +1,4 @@
-# $NetBSD: VR41XX,v 1.1.4.4 2002/04/17 00:03:07 nathanw Exp $
+# $NetBSD: VR41XX,v 1.1.4.5 2002/06/20 03:38:47 nathanw Exp $
 #
 # GENERIC machine description file
 # 
@@ -20,7 +20,9 @@
 
 include		"arch/hpcmips/conf/std.hpcmips"
 include		"arch/hpcmips/conf/std.hpcmips.vr41"
-#ident 		"GENERIC-$Revision: 1.1.4.4 $"
+#ident 		"GENERIC-$Revision: 1.1.4.5 $"
+
+#options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
 maxusers	16
 
@@ -490,6 +492,7 @@ pseudo-device	ipfilter		# IP filter, NAT
 pseudo-device	vnd		4	# virtual disk ick
 #pseudo-device	ccd		4	# concatenated disks
 pseudo-device	rnd			# /dev/random and in-kernel generator
+pseudo-device	clockctl		# user control of clock subsystem
 
 pseudo-device	biconsdev	1	# build-in console device
 pseudo-device	wsmux			# mouse & keyboard multiplexor

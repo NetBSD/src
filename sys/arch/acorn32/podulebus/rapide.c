@@ -1,4 +1,4 @@
-/*	$NetBSD: rapide.c,v 1.1.4.2 2002/01/08 00:22:47 nathanw Exp $	*/
+/*	$NetBSD: rapide.c,v 1.1.4.3 2002/06/20 03:37:21 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1997-1998 Mark Brinicombe
@@ -174,9 +174,7 @@ rapide_probe(parent, cf, aux)
 {
 	struct podule_attach_args *pa = (void *)aux;
 
-	if (matchpodule(pa, MANUFACTURER_YES, PODULE_YES_RAPIDE, -1) == 0)
-		return(0);
-	return(1);
+	return (pa->pa_product == PODULE_RAPIDE);
 }
 
 /*

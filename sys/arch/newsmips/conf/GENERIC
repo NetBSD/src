@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.38.6.4 2002/04/17 00:04:01 nathanw Exp $
+# $NetBSD: GENERIC,v 1.38.6.5 2002/06/20 03:40:12 nathanw Exp $
 #
 # GENERIC machine description file
 # 
@@ -20,7 +20,9 @@
 
 include		"arch/newsmips/conf/std.newsmips"
 
-#ident 		"GENERIC-$Revision: 1.38.6.4 $"
+options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
+
+#ident 		"GENERIC-$Revision: 1.38.6.5 $"
 
 maxusers	16
 
@@ -195,3 +197,4 @@ pseudo-device	ccd		4	# concatenated and striped disks
 #pseudo-device	strip		1	# radio clock
 #pseudo-device	ipfilter		# ip filter
 pseudo-device	rnd			# /dev/random and in-kernel generator
+pseudo-device	clockctl		# user control of clock subsystem

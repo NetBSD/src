@@ -1,7 +1,7 @@
 /*******************************************************************************
  *
  * Module Name: dbdisasm - parser op tree display routines
- *              xRevision: 48 $
+ *              $Revision: 1.2.4.4 $
  *
  ******************************************************************************/
 
@@ -9,7 +9,7 @@
  *
  * 1. Copyright Notice
  *
- * Some or all of this work - Copyright (c) 1999, 2000, 2001, Intel Corp.
+ * Some or all of this work - Copyright (c) 1999 - 2002, Intel Corp.
  * All rights reserved.
  *
  * 2. License
@@ -115,7 +115,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dbdisasm.c,v 1.2.4.3 2001/11/14 19:13:44 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dbdisasm.c,v 1.2.4.4 2002/06/20 03:43:45 nathanw Exp $");
 
 #include "acpi.h"
 #include "acparser.h"
@@ -127,14 +127,13 @@ __KERNEL_RCSID(0, "$NetBSD: dbdisasm.c,v 1.2.4.3 2001/11/14 19:13:44 nathanw Exp
 #ifdef ENABLE_DEBUGGER
 
 #define _COMPONENT          ACPI_DEBUGGER
-        MODULE_NAME         ("dbdisasm")
+        ACPI_MODULE_NAME    ("dbdisasm")
 
 
-#define MAX_SHOW_ENTRY      128
 #define BLOCK_PAREN         1
 #define BLOCK_BRACE         2
 #define DB_NO_OP_INFO       "            [%2.2d]  "
-#define DB_FULL_OP_INFO     "%5.5X #%4.4X [%2.2d]  "
+#define DB_FULL_OP_INFO     "%5.5X #%4.4hX [%2.2d]  "
 
 
 NATIVE_CHAR                 *AcpiGbl_DbDisasmIndent = "....";
@@ -152,23 +151,21 @@ NATIVE_CHAR                 *AcpiGbl_DbDisasmIndent = "....";
  *
  ******************************************************************************/
 
-static UINT32
+UINT32
 AcpiDbBlockType (
     ACPI_PARSE_OBJECT       *Op)
 {
 
-    switch (Op->Opcode)
+    switch (Op->Common.AmlOpcode)
     {
     case AML_METHOD_OP:
         return (BLOCK_BRACE);
-        break;
 
     default:
         break;
     }
 
     return (BLOCK_PAREN);
-
 }
 
 
@@ -191,14 +188,30 @@ AcpiDbBlockType (
 
 ACPI_STATUS
 AcpiPsDisplayObjectPathname (
+    ACPI_WALK_STATE         *WalkState,
     ACPI_PARSE_OBJECT       *Op)
 {
     ACPI_PARSE_OBJECT       *TargetOp;
+    char                    *Name;
 
+
+    if (Op->Common.Flags & ACPI_PARSEOP_GENERIC)
+    {
+        Name = Op->Common.Value.Name;
+        if (Name[0] == '\\')
+        {
+            AcpiOsPrintf ("  (Fully Qualified Pathname)");
+            return (AE_OK);
+        }
+    }
+    else
+    {
+        Name = (char *) &Op->Named.Name;
+    }
 
     /* Search parent tree up to the root if necessary */
 
-    TargetOp = AcpiPsFind (Op, Op->Value.Name, 0, 0);
+    TargetOp = AcpiPsFind (Op, Name, 0, 0);
     if (!TargetOp)
     {
         /*
@@ -209,7 +222,6 @@ AcpiPsDisplayObjectPathname (
          */
         AcpiOsPrintf ("  **** Path not found in parse tree");
     }
-
     else
     {
         /* The target was found, print the name and complete path */
@@ -224,42 +236,67 @@ AcpiPsDisplayObjectPathname (
 
 #else
 
-static ACPI_STATUS
+ACPI_STATUS
 AcpiPsDisplayObjectPathname (
+    ACPI_WALK_STATE         *WalkState,
     ACPI_PARSE_OBJECT       *Op)
 {
     ACPI_STATUS             Status;
     ACPI_NAMESPACE_NODE     *Node;
-    NATIVE_CHAR             Buffer[MAX_SHOW_ENTRY];
-    UINT32                  BufferSize = MAX_SHOW_ENTRY;
+    ACPI_BUFFER             Buffer;
+    UINT32                  DebugLevel;
 
 
-    AcpiOsPrintf ("  (Path ");
+    /* Save current debug level so we don't get extraneous debug output */
+
+    DebugLevel = AcpiDbgLevel;
+    AcpiDbgLevel = 0;
 
     /* Just get the Node out of the Op object */
 
-    Node = Op->Node;
+    Node = Op->Common.Node;
     if (!Node)
     {
-        /*
-         * No Named obj,  so we can't get the pathname since the object
-         * is not in the namespace.  This can happen during single
-         * stepping where a dynamic named object is *about* to be created.
-         */
-        return (AE_OK);
+        /* Node not defined in this scope, look it up */
+
+        Status = AcpiNsLookup (WalkState->ScopeInfo, Op->Common.Value.String, ACPI_TYPE_ANY,
+                        ACPI_IMODE_EXECUTE, ACPI_NS_SEARCH_PARENT, WalkState, &(Node));
+
+        if (ACPI_FAILURE (Status))
+        {
+            /*
+             * We can't get the pathname since the object
+             * is not in the namespace.  This can happen during single
+             * stepping where a dynamic named object is *about* to be created.
+             */
+            AcpiOsPrintf ("  [Path not found]");
+            goto Exit;
+        }
+
+        /* Save it for next time. */
+
+        Op->Common.Node = Node;
     }
 
     /* Convert NamedDesc/handle to a full pathname */
 
-    Status = AcpiNsHandleToPathname (Node, &BufferSize, Buffer);
+    Buffer.Length = ACPI_ALLOCATE_LOCAL_BUFFER;
+    Status = AcpiNsHandleToPathname (Node, &Buffer);
     if (ACPI_FAILURE (Status))
     {
         AcpiOsPrintf ("****Could not get pathname****)");
-        return (Status);
+        goto Exit;
     }
 
-    AcpiOsPrintf ("%s)", Buffer);
-    return (AE_OK);
+    AcpiOsPrintf ("  (Path %s)", Buffer.Pointer);
+    ACPI_MEM_FREE (Buffer.Pointer);
+
+
+Exit:
+    /* Restore the debug level */
+
+    AcpiDbgLevel = DebugLevel;
+    return (Status);
 }
 
 #endif
@@ -293,139 +330,136 @@ AcpiDbDisplayOp (
     UINT32                  j;
 
 
-    if (Op)
+    if (!Op)
     {
-        while (Op)
+        AcpiDbDisplayOpcode (WalkState, Op);
+        return;
+    }
+
+
+    while (Op)
+    {
+        /* Indentation */
+
+        DepthCount = 0;
+        if (!AcpiGbl_DbOpt_verbose)
         {
-            /* indentation */
+            DepthCount++;
+        }
 
-            DepthCount = 0;
-            if (!AcpiGbl_DbOpt_verbose)
+        /* Determine the nesting depth of this argument */
+
+        for (depth = Op->Common.Parent; depth; depth = depth->Common.Parent)
+        {
+            arg = AcpiPsGetArg (depth, 0);
+            while (arg && arg != Origin)
             {
-                DepthCount++;
+                arg = arg->Common.Next;
             }
 
-            /* Determine the nesting depth of this argument */
-
-            for (depth = Op->Parent; depth; depth = depth->Parent)
+            if (arg)
             {
-                arg = AcpiPsGetArg (depth, 0);
-                while (arg && arg != Origin)
-                {
-                    arg = arg->Next;
-                }
-
-                if (arg)
-                {
-                    break;
-                }
-
-                DepthCount++;
+                break;
             }
 
+            DepthCount++;
+        }
 
-            /* Open a new block if we are nested further than last time */
+        /* Open a new block if we are nested further than last time */
 
-            if (DepthCount > LastDepth)
+        if (DepthCount > LastDepth)
+        {
+            VERBOSE_PRINT ((DB_NO_OP_INFO, LastDepth));
+            for (i = 0; i < LastDepth; i++)
             {
-                VERBOSE_PRINT ((DB_NO_OP_INFO, LastDepth));
-                for (i = 0; i < LastDepth; i++)
+                AcpiOsPrintf ("%s", AcpiGbl_DbDisasmIndent);
+            }
+
+            if (AcpiDbBlockType (Op) == BLOCK_PAREN)
+            {
+                AcpiOsPrintf ("(\n");
+            }
+            else
+            {
+                AcpiOsPrintf ("{\n");
+            }
+        }
+
+        /* Close a block if we are nested less than last time */
+
+        else if (DepthCount < LastDepth)
+        {
+            for (j = LastDepth; j >= (DepthCount + 1); j--)
+            {
+                VERBOSE_PRINT ((DB_NO_OP_INFO, (j - 1)));
+                for (i = 1; i < j; i++)
                 {
                     AcpiOsPrintf ("%s", AcpiGbl_DbDisasmIndent);
                 }
 
                 if (AcpiDbBlockType (Op) == BLOCK_PAREN)
                 {
-                    AcpiOsPrintf ("(\n");
+                    AcpiOsPrintf (")\n");
                 }
                 else
                 {
-                    AcpiOsPrintf ("{\n");
+                    AcpiOsPrintf ("}\n");
                 }
-            }
-
-            /* Close a block if we are nested less than last time */
-
-            else if (DepthCount < LastDepth)
-            {
-                for (j = 0; j < (LastDepth - DepthCount); j++)
-                {
-                    VERBOSE_PRINT ((DB_NO_OP_INFO, LastDepth - j));
-                    for (i = 0; i < (LastDepth - j - 1); i++)
-                    {
-                        AcpiOsPrintf ("%s", AcpiGbl_DbDisasmIndent);
-                    }
-
-                    if (AcpiDbBlockType (Op) == BLOCK_PAREN)
-                    {
-                        AcpiOsPrintf (")\n");
-                    }
-                    else
-                    {
-                        AcpiOsPrintf ("}\n");
-                    }
-                }
-            }
-
-            /* In verbose mode, print the AML offset, opcode and depth count */
-
-            VERBOSE_PRINT ((DB_FULL_OP_INFO, (unsigned) Op->AmlOffset, Op->Opcode, DepthCount));
-
-
-            /* Indent the output according to the depth count */
-
-            for (i = 0; i < DepthCount; i++)
-            {
-                AcpiOsPrintf ("%s", AcpiGbl_DbDisasmIndent);
-            }
-
-
-            /* Now print the opcode */
-
-            AcpiDbDisplayOpcode (WalkState, Op);
-
-            /* Resolve a name reference */
-
-            if ((Op->Opcode == AML_INT_NAMEPATH_OP && Op->Value.Name)  &&
-                (Op->Parent) &&
-                (AcpiGbl_DbOpt_verbose))
-            {
-                AcpiPsDisplayObjectPathname (Op);
-            }
-
-            AcpiOsPrintf ("\n");
-
-            /* Get the next node in the tree */
-
-            Op = AcpiPsGetDepthNext (Origin, Op);
-            LastDepth = DepthCount;
-
-            NumOpcodes--;
-            if (!NumOpcodes)
-            {
-                Op = NULL;
             }
         }
 
-        /* Close the last block(s) */
+        /* In verbose mode, print the AML offset, opcode and depth count */
 
-        DepthCount = LastDepth -1;
-        for (i = 0; i < LastDepth; i++)
+        VERBOSE_PRINT ((DB_FULL_OP_INFO, (UINT32) Op->Common.AmlOffset, 
+                Op->Common.AmlOpcode, DepthCount));
+
+
+        /* Indent the output according to the depth count */
+
+        for (i = 0; i < DepthCount; i++)
         {
-            VERBOSE_PRINT ((DB_NO_OP_INFO, LastDepth - i));
-            for (j = 0; j < DepthCount; j++)
-            {
-                AcpiOsPrintf ("%s", AcpiGbl_DbDisasmIndent);
-            }
-            AcpiOsPrintf ("}\n");
-            DepthCount--;
+            AcpiOsPrintf ("%s", AcpiGbl_DbDisasmIndent);
         }
 
+        /* Now print the opcode */
+
+        AcpiDbDisplayOpcode (WalkState, Op);
+
+        /* Resolve a name reference */
+
+        if ((Op->Common.AmlOpcode == AML_INT_NAMEPATH_OP && Op->Common.Value.Name)  &&
+            (Op->Common.Parent) &&
+            (AcpiGbl_DbOpt_verbose))
+        {
+            (void) AcpiPsDisplayObjectPathname (WalkState, Op);
+        }
+
+        AcpiOsPrintf ("\n");
+
+        /* Get the next node in the tree */
+
+        Op = AcpiPsGetDepthNext (Origin, Op);
+        LastDepth = DepthCount;
+
+        NumOpcodes--;
+        if (!NumOpcodes)
+        {
+            Op = NULL;
+        }
     }
 
-    else
+    /* Close the last block(s) */
+
+    DepthCount = LastDepth -1;
+    for (i = 0; i < LastDepth; i++)
     {
-        AcpiDbDisplayOpcode (WalkState, Op);
+        VERBOSE_PRINT ((DB_NO_OP_INFO, LastDepth - i));
+        for (j = 0; j < DepthCount; j++)
+        {
+            AcpiOsPrintf ("%s", AcpiGbl_DbDisasmIndent);
+        }
+        AcpiOsPrintf ("}\n");
+        DepthCount--;
     }
 }
 
@@ -447,7 +481,6 @@ AcpiDbDisplayNamestring (
     NATIVE_CHAR             *Name)
 {
     UINT32                  SegCount;
-    BOOLEAN                 DoDot = FALSE;
 
 
     if (!Name)
@@ -456,23 +489,29 @@ AcpiDbDisplayNamestring (
         return;
     }
 
-    if (AcpiPsIsPrefixChar (GET8 (Name)))
-    {
-        /* append prefix character */
+    /* Handle all Scope Prefix operators */
 
-        AcpiOsPrintf ("%1c", GET8 (Name));
+    while (AcpiPsIsPrefixChar (ACPI_GET8 (Name)))
+    {
+        /* Append prefix character */
+
+        AcpiOsPrintf ("%1c", ACPI_GET8 (Name));
         Name++;
     }
 
-    switch (GET8 (Name))
+    switch (ACPI_GET8 (Name))
     {
+    case 0:
+        SegCount = 0;
+        break;
+
     case AML_DUAL_NAME_PREFIX:
         SegCount = 2;
         Name++;
         break;
 
     case AML_MULTI_NAME_PREFIX_OP:
-        SegCount = (UINT32) GET8 (Name + 1);
+        SegCount = (UINT32) ACPI_GET8 (Name + 1);
         Name += 2;
         break;
 
@@ -481,21 +520,20 @@ AcpiDbDisplayNamestring (
         break;
     }
 
-    while (SegCount--)
+    while (SegCount)
     {
-        /* append Name segment */
+        /* Append Name segment */
 
-        if (DoDot)
+        AcpiOsPrintf ("%4.4s", Name);
+
+        SegCount--;
+        if (SegCount)
         {
-            /* append dot */
+            /* Not last name, append dot separator */
 
             AcpiOsPrintf (".");
         }
-
-        AcpiOsPrintf ("%4.4s", Name);
-        DoDot = TRUE;
-
-        Name += 4;
+        Name += ACPI_NAME_SIZE;
     }
 }
 
@@ -528,18 +566,17 @@ AcpiDbDisplayPath (
 
     /* We are only interested in named objects */
 
-    OpInfo = AcpiPsGetOpcodeInfo (Op->Opcode);
+    OpInfo = AcpiPsGetOpcodeInfo (Op->Common.AmlOpcode);
     if (!(OpInfo->Flags & AML_NSNODE))
     {
         return;
     }
 
-
     if (OpInfo->Flags & AML_CREATE)
     {
         /* Field creation - check for a fully qualified namepath */
 
-        if (Op->Opcode == AML_CREATE_FIELD_OP)
+        if (Op->Common.AmlOpcode == AML_CREATE_FIELD_OP)
         {
             NamePath = AcpiPsGetArg (Op, 3);
         }
@@ -549,10 +586,10 @@ AcpiDbDisplayPath (
         }
 
         if ((NamePath) &&
-            (NamePath->Value.String) &&
-            (NamePath->Value.String[0] == '\\'))
+            (NamePath->Common.Value.String) &&
+            (NamePath->Common.Value.String[0] == '\\'))
         {
-            AcpiDbDisplayNamestring (NamePath->Value.String);
+            AcpiDbDisplayNamestring (NamePath->Common.Value.String);
             return;
         }
     }
@@ -566,19 +603,19 @@ AcpiDbDisplayPath (
         Search = Op;
         for (; ;)
         {
-            if (Search->Parent == Prev)
+            if (Search->Common.Parent == Prev)
             {
                 break;
             }
 
             /* Go up one level */
 
-            Search = Search->Parent;
+            Search = Search->Common.Parent;
         }
 
         if (Prev)
         {
-            OpInfo = AcpiPsGetOpcodeInfo (Search->Opcode);
+            OpInfo = AcpiPsGetOpcodeInfo (Search->Common.AmlOpcode);
             if (!(OpInfo->Flags & AML_FIELD))
             {
                 /* below root scope, append scope name */
@@ -592,7 +629,7 @@ AcpiDbDisplayPath (
 
                 if (OpInfo->Flags & AML_CREATE)
                 {
-                    if (Op->Opcode == AML_CREATE_FIELD_OP)
+                    if (Op->Common.AmlOpcode == AML_CREATE_FIELD_OP)
                     {
                         NamePath = AcpiPsGetArg (Op, 3);
                     }
@@ -602,12 +639,11 @@ AcpiDbDisplayPath (
                     }
 
                     if ((NamePath) &&
-                        (NamePath->Value.String))
+                        (NamePath->Common.Value.String))
                     {
-                        AcpiOsPrintf ("%4.4s", NamePath->Value.String);
+                        AcpiOsPrintf ("%4.4s", NamePath->Common.Value.String);
                     }
                 }
-
                 else
                 {
                     Name = AcpiPsGetName (Search);
@@ -653,26 +689,23 @@ AcpiDbDisplayOpcode (
     if (!Op)
     {
         AcpiOsPrintf ("<NULL OP PTR>");
+        return;
     }
-
 
     /* op and arguments */
 
-    switch (Op->Opcode)
+    switch (Op->Common.AmlOpcode)
     {
-
     case AML_BYTE_OP:
 
         if (AcpiGbl_DbOpt_verbose)
         {
-            AcpiOsPrintf ("(UINT8)  0x%2.2X", Op->Value.Integer8);
+            AcpiOsPrintf ("(UINT8)  0x%2.2hX", Op->Common.Value.Integer8);
         }
-
         else
         {
-            AcpiOsPrintf ("0x%2.2X", Op->Value.Integer8);
+            AcpiOsPrintf ("0x%2.2hX", Op->Common.Value.Integer8);
         }
-
         break;
 
 
@@ -680,14 +713,12 @@ AcpiDbDisplayOpcode (
 
         if (AcpiGbl_DbOpt_verbose)
         {
-            AcpiOsPrintf ("(UINT16) 0x%4.4X", Op->Value.Integer16);
+            AcpiOsPrintf ("(UINT16) 0x%4.4hX", Op->Common.Value.Integer16);
         }
-
         else
         {
-            AcpiOsPrintf ("0x%4.4X", Op->Value.Integer16);
+            AcpiOsPrintf ("0x%4.4hX", Op->Common.Value.Integer16);
         }
-
         break;
 
 
@@ -695,14 +726,12 @@ AcpiDbDisplayOpcode (
 
         if (AcpiGbl_DbOpt_verbose)
         {
-            AcpiOsPrintf ("(UINT32) 0x%8.8X", Op->Value.Integer32);
+            AcpiOsPrintf ("(UINT32) 0x%8.8X", Op->Common.Value.Integer32);
         }
-
         else
         {
-            AcpiOsPrintf ("0x%8.8X", Op->Value.Integer32);
+            AcpiOsPrintf ("0x%8.8X", Op->Common.Value.Integer32);
         }
-
         break;
 
 
@@ -710,70 +739,64 @@ AcpiDbDisplayOpcode (
 
         if (AcpiGbl_DbOpt_verbose)
         {
-            AcpiOsPrintf ("(UINT64) 0x%8.8X%8.8X", Op->Value.Integer64.Hi,
-                                                   Op->Value.Integer64.Lo);
+            AcpiOsPrintf ("(UINT64) 0x%8.8X%8.8X", Op->Common.Value.Integer64.Hi,
+                                                   Op->Common.Value.Integer64.Lo);
         }
-
         else
         {
-            AcpiOsPrintf ("0x%8.8X%8.8X", Op->Value.Integer64.Hi,
-                                          Op->Value.Integer64.Lo);
+            AcpiOsPrintf ("0x%8.8X%8.8X", Op->Common.Value.Integer64.Hi,
+                                          Op->Common.Value.Integer64.Lo);
         }
-
         break;
 
 
     case AML_STRING_OP:
 
-        if (Op->Value.String)
+        if (Op->Common.Value.String)
         {
-            AcpiOsPrintf ("\"%s\"", Op->Value.String);
+            AcpiOsPrintf ("\"%s\"", Op->Common.Value.String);
         }
-
         else
         {
             AcpiOsPrintf ("<\"NULL STRING PTR\">");
         }
-
         break;
 
 
     case AML_INT_STATICSTRING_OP:
 
-        if (Op->Value.String)
+        if (Op->Common.Value.String)
         {
-            AcpiOsPrintf ("\"%s\"", Op->Value.String);
+            AcpiOsPrintf ("\"%s\"", Op->Common.Value.String);
         }
-
         else
         {
             AcpiOsPrintf ("\"<NULL STATIC STRING PTR>\"");
         }
-
         break;
 
 
     case AML_INT_NAMEPATH_OP:
 
-        AcpiDbDisplayNamestring (Op->Value.Name);
+        AcpiDbDisplayNamestring (Op->Common.Value.Name);
         break;
 
 
     case AML_INT_NAMEDFIELD_OP:
 
-        AcpiOsPrintf ("NamedField    (Length 0x%8.8X)  ", Op->Value.Integer32);
+        AcpiOsPrintf ("NamedField    (Length 0x%8.8X)  ", Op->Common.Value.Integer32);
         break;
 
 
     case AML_INT_RESERVEDFIELD_OP:
 
-        AcpiOsPrintf ("ReservedField (Length 0x%8.8X)  ", Op->Value.Integer32);
+        AcpiOsPrintf ("ReservedField (Length 0x%8.8X)  ", Op->Common.Value.Integer32);
         break;
 
 
     case AML_INT_ACCESSFIELD_OP:
 
-        AcpiOsPrintf ("AccessField   (Length 0x%8.8X)  ", Op->Value.Integer32);
+        AcpiOsPrintf ("AccessField   (Length 0x%8.8X)  ", Op->Common.Value.Integer32);
         break;
 
 
@@ -781,22 +804,20 @@ AcpiDbDisplayOpcode (
 
         if (AcpiGbl_DbOpt_verbose)
         {
-            AcpiOsPrintf ("ByteList      (Length 0x%8.8X)  ", Op->Value.Integer32);
+            AcpiOsPrintf ("ByteList      (Length 0x%8.8X)  ", Op->Common.Value.Integer32);
         }
-
         else
         {
-            AcpiOsPrintf ("0x%2.2X", Op->Value.Integer32);
+            AcpiOsPrintf ("0x%2.2X", Op->Common.Value.Integer32);
 
-            ByteCount = Op->Value.Integer32;
-            ByteData = ((ACPI_PARSE2_OBJECT *) Op)->Data;
+            ByteCount = Op->Common.Value.Integer32;
+            ByteData = Op->Named.Data;
 
             for (i = 0; i < ByteCount; i++)
             {
                 AcpiOsPrintf (", 0x%2.2X", ByteData[i]);
             }
         }
-
         break;
 
 
@@ -804,19 +825,19 @@ AcpiDbDisplayOpcode (
 
         /* Just get the opcode name and print it */
 
-        OpInfo = AcpiPsGetOpcodeInfo (Op->Opcode);
+        OpInfo = AcpiPsGetOpcodeInfo (Op->Common.AmlOpcode);
         AcpiOsPrintf ("%s", OpInfo->Name);
 
 
 #ifndef PARSER_ONLY
-        if ((Op->Opcode == AML_INT_RETURN_VALUE_OP) &&
+        if ((Op->Common.AmlOpcode == AML_INT_RETURN_VALUE_OP) &&
+            (WalkState) &&
             (WalkState->Results) &&
             (WalkState->Results->Results.NumResults))
         {
             AcpiDbDecodeInternalObject (WalkState->Results->Results.ObjDesc [WalkState->Results->Results.NumResults-1]);
         }
 #endif
-
         break;
     }
 
@@ -824,7 +845,7 @@ AcpiDbDisplayOpcode (
     {
         /* If there is another element in the list, add a comma */
 
-        if (Op->Next)
+        if (Op->Common.Next)
         {
             AcpiOsPrintf (",");
         }
@@ -833,21 +854,18 @@ AcpiDbDisplayOpcode (
     /*
      * If this is a named opcode, print the associated name value
      */
-    OpInfo = AcpiPsGetOpcodeInfo (Op->Opcode);
+    OpInfo = AcpiPsGetOpcodeInfo (Op->Common.AmlOpcode);
     if (Op && (OpInfo->Flags & AML_NAMED))
     {
         Name = AcpiPsGetName (Op);
         AcpiOsPrintf (" %4.4s", &Name);
 
-        if (AcpiGbl_DbOpt_verbose)
+        if ((AcpiGbl_DbOpt_verbose) && (Op->Common.AmlOpcode != AML_INT_NAMEDFIELD_OP))
         {
-            AcpiOsPrintf ("  (Path \\");
-            AcpiDbDisplayPath (Op);
-            AcpiOsPrintf (")");
+            (void) AcpiPsDisplayObjectPathname (WalkState, Op);
         }
     }
 }
-
 
 #endif  /* ENABLE_DEBUGGER */
 

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.powerpc,v 1.19.2.4 2002/02/28 04:11:24 nathanw Exp $
+#	$NetBSD: Makefile.powerpc,v 1.19.2.5 2002/06/20 03:40:31 nathanw Exp $
 #
 # Makefile for NetBSD
 #
@@ -27,7 +27,11 @@ NEED_OWN_INSTALL_TARGET?=no
 ##
 THISPPC=	$S/arch/${MACHINE}
 POWERPC=	$S/arch/powerpc
+.if exists(${THISPPC}/${MACHINE}/genassym.cf)
 GENASSYM=	${THISPPC}/${MACHINE}/genassym.cf
+.else
+GENASSYM=	${POWERPC}/${PPCDIR}/genassym.cf
+.endif
 .-include "${THISPPC}/conf/Makefile.${MACHINE}.inc"
 
 ##
@@ -62,6 +66,11 @@ ENTRYPOINT=	__start
 .if defined(NEED_SREC)
 SYSTEM_LD_TAIL_EXTRA=; \
 		${OBJCOPY} -v -O srec $@ $@.srec
+.endif
+
+.if defined(NEED_BINARY)
+SYSTEM_LD_TAIL_EXTRA=; \
+		${OBJCOPY} -v -O binary $@ $@.bin
 .endif
 
 ##

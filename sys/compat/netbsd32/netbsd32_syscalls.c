@@ -1,4 +1,4 @@
-/* $NetBSD: netbsd32_syscalls.c,v 1.22.2.3 2002/05/29 21:48:52 nathanw Exp $ */
+/* $NetBSD: netbsd32_syscalls.c,v 1.22.2.4 2002/06/20 03:43:10 nathanw Exp $ */
 
 /*
  * System call names.
@@ -8,7 +8,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_syscalls.c,v 1.22.2.3 2002/05/29 21:48:52 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_syscalls.c,v 1.22.2.4 2002/06/20 03:43:10 nathanw Exp $");
 
 #if defined(_KERNEL_OPT)
 #if defined(_KERNEL_OPT)
@@ -91,11 +91,7 @@ const char *const netbsd32_syscallnames[] = {
 	"compat_13_sigpending13",	/* 52 = compat_13 sigpending13 */
 	"compat_13_netbsd32_sigaltstack13",	/* 53 = compat_13 netbsd32_sigaltstack13 */
 	"netbsd32_ioctl",			/* 54 = netbsd32_ioctl */
-#ifdef COMPAT_12
 	"compat_12_netbsd32_reboot",	/* 55 = compat_12 netbsd32_reboot */
-#else
-	"#55 (obsolete oreboot)",		/* 55 = obsolete oreboot */
-#endif
 	"netbsd32_revoke",			/* 56 = netbsd32_revoke */
 	"netbsd32_symlink",			/* 57 = netbsd32_symlink */
 	"netbsd32_readlink",			/* 58 = netbsd32_readlink */
@@ -230,20 +226,20 @@ const char *const netbsd32_syscallnames[] = {
 	"#166 (unimplemented)",		/* 166 = unimplemented */
 	"#167 (unimplemented)",		/* 167 = unimplemented */
 	"#168 (unimplemented)",		/* 168 = unimplemented */
-#if (defined(SYSVSEM) || !defined(_KERNEL)) && !defined(alpha) && defined(COMPAT_10)
-	"osemsys",			/* 169 = osemsys */
+#if defined(SYSVSEM) || !defined(_KERNEL)
+	"compat_10_osemsys",	/* 169 = compat_10 osemsys */
 #else
-	"#169 (excluded 1.0 semsys)",		/* 169 = excluded 1.0 semsys */
+	"#169 (excluded netbsd32_sys_semsys)",		/* 169 = excluded netbsd32_sys_semsys */
 #endif
-#if (defined(SYSVMSG) || !defined(_KERNEL)) && !defined(alpha) && defined(COMPAT_10)
-	"omsgsys",			/* 170 = omsgsys */
+#if defined(SYSVMSG) || !defined(_KERNEL)
+	"compat_10_omsgsys",	/* 170 = compat_10 omsgsys */
 #else
-	"#170 (excluded 1.0 msgsys)",		/* 170 = excluded 1.0 msgsys */
+	"#170 (excluded netbsd32_sys_msgsys)",		/* 170 = excluded netbsd32_sys_msgsys */
 #endif
-#if (defined(SYSVSHM) || !defined(_KERNEL)) && !defined(alpha) && defined(COMPAT_10)
-	"oshmsys",			/* 171 = oshmsys */
+#if defined(SYSVSHM) || !defined(_KERNEL)
+	"compat_10_oshmsys",	/* 171 = compat_10 oshmsys */
 #else
-	"#171 (excluded 1.0 shmsys)",		/* 171 = excluded 1.0 shmsys */
+	"#171 (excluded netbsd32_sys_shmsys)",		/* 171 = excluded netbsd32_sys_shmsys */
 #endif
 	"#172 (unimplemented)",		/* 172 = unimplemented */
 	"netbsd32_pread",			/* 173 = netbsd32_pread */

@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.54.12.1 2002/02/28 04:10:36 nathanw Exp $	*/
+/*	$NetBSD: conf.c,v 1.54.12.2 2002/06/20 03:39:28 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -38,6 +38,7 @@
  */
 
 #include "opt_compat_svr4.h"
+#include "opt_systrace.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -58,6 +59,7 @@
 #include "st.h"
 #include "vcoda.h"
 #include "vnd.h"
+#include "wd.h"
 
 /* No cdev for md */
 
@@ -71,6 +73,7 @@ bdev_decl(sd);
 bdev_decl(st);
 bdev_decl(sw);
 bdev_decl(vnd);
+bdev_decl(wd);
 
 struct bdevsw	bdevsw[] =
 {
@@ -96,6 +99,7 @@ struct bdevsw	bdevsw[] =
 	bdev_lkm_dummy(),		/* 19 */
 	bdev_disk_init(NRAID,raid),	/* 20: RAIDframe disk driver */
 	bdev_disk_init(NFD, fd),	/* 21: Sony floppy disk */
+	bdev_disk_init(NWD, wd),	/* 22: IDE disk */
 };
 int	nblkdev = sizeof(bdevsw) / sizeof(bdevsw[0]);
 
@@ -163,6 +167,7 @@ cdev_decl(zsc);
 cdev_decl(scsibus);
 cdev_decl(vc_nb_);
 cdev_decl(clockctl);
+cdev_decl(wd);
 
 dev_decl(filedesc,open);
 
@@ -217,6 +222,12 @@ struct cdevsw	cdevsw[] =
 	cdev_wsdisplay_init(NWSDISPLAY,wsdisplay), /* 46: frame buffers, etc. */
 	cdev_vc_nb_init(NVCODA,vc_nb_),	/* 47: Venus cache driver (Coda) */
 	cdev_clockctl_init(NCLOCKCTL, clockctl),/* 48: clockctl pseudo device */
+	cdev_disk_init(NWD, wd),	/* 49: IDE disk */
+#ifdef SYSTRACE
+	cdev_systrace_init(1, systrace),/* 50: system call tracing */
+#else
+	cdev_notdef(),			/* 50: system call tracing */
+#endif
 };
 int	nchrdev = sizeof(cdevsw) / sizeof(cdevsw[0]);
 
@@ -307,6 +318,8 @@ static int chrtoblktab[] = {
 	/* 46 */	NODEV,
 	/* 47 */	NODEV,
 	/* 48 */	NODEV,
+	/* 49 */	22,
+	/* 50 */	NODEV,
 };
 
 dev_t

@@ -1,4 +1,4 @@
-/*	$NetBSD: msiiep.c,v 1.2.2.4 2002/04/17 00:04:26 nathanw Exp $ */
+/*	$NetBSD: msiiep.c,v 1.2.2.5 2002/06/20 03:41:08 nathanw Exp $ */
 
 /*
  * Copyright (c) 2001 Valeriy E. Ushakov
@@ -26,6 +26,8 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: msiiep.c,v 1.2.2.5 2002/06/20 03:41:08 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -120,7 +122,7 @@ static struct mspcic_pci_map mspcic_pci_iomap[2] = {
 
 /* fixed mem and two sets of mem cycle translation registers */
 static struct mspcic_pci_map mspcic_pci_memmap[3] = {
-	{ 0x30100000, 0x30100000, 0x00f00000 }	/* fixed mem (pass through) */
+	{ 0x30100000, 0x00100000, 0x00f00000 }	/* fixed mem (pass through) */
 };
 
 struct mspcic_cookie {
@@ -374,6 +376,7 @@ mspcic_attach(parent, self, aux)
 	 */
 	pba.pba_busname = "pci";
 	pba.pba_bus = 0;
+	pba.pba_bridgetag = NULL;
 	pba.pba_iot = sc->sc_iot;
 	pba.pba_memt = sc->sc_memt;
 	pba.pba_dmat = sc->sc_dmat;
@@ -564,10 +567,12 @@ mspcic_bus_mmap(t, ba, off, prot, flags)
 	struct mspcic_cookie *c = t->cookie;
 	bus_addr_t paddr;
 
+	/* verify that phys to pci mapping for the target page exists */
 	paddr = mspcic_pci_map_find(c->map, c->nmaps, ba + off, PAGE_SIZE);
 	if (paddr == 0)
 		return (-1);
-	return (bus_space_mmap(t->parent, paddr, off, prot, flags));
+
+	return (bus_space_mmap(t->parent, paddr - off, off, prot, flags));
 }
 
 
@@ -575,7 +580,7 @@ mspcic_bus_mmap(t, ba, off, prot, flags)
  * Install an interrupt handler.
  *
  * Bus-specific interrupt argument is 'line', an interrupt input line
- * for ms-IIep.  The PIL for is programmable via pcic interrupt
+ * for ms-IIep.  The PIL for each line is programmable via pcic interrupt
  * assignment select registers (but we use existing assignments).
  */
 static void *

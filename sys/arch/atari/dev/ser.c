@@ -1,4 +1,4 @@
-/*	$NetBSD: ser.c,v 1.14.8.2 2002/04/01 07:39:33 nathanw Exp $	*/
+/*	$NetBSD: ser.c,v 1.14.8.3 2002/06/20 03:38:18 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -1403,7 +1403,7 @@ serspeed(speed)
 	}
 	return (-1);
 
-#undef	divrnd(n, q)
+#undef	divrnd
 }
 
 /*

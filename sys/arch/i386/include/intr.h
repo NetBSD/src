@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.17.2.3 2002/01/08 00:25:32 nathanw Exp $	*/
+/*	$NetBSD: intr.h,v 1.17.2.4 2002/06/20 03:39:14 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -70,8 +70,8 @@
 
 #ifndef _LOCORE
 
-volatile int cpl, ipending, astpending;
-int imask[NIPL];
+extern volatile int cpl, ipending, astpending;
+extern int imask[NIPL];
 
 void Xspllower __P((void));
 

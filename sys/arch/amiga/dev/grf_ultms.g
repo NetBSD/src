@@ -1,4 +1,4 @@
-; $NetBSD: grf_ultms.g,v 1.5.8.2 2002/02/28 04:06:42 nathanw Exp $
+; $NetBSD: grf_ultms.g,v 1.5.8.3 2002/06/20 03:37:53 nathanw Exp $
 ;
 ; ite support for A2410.
 
@@ -32,14 +32,13 @@
 ; (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 ; THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-; This file contains the source code for grf_ultmscode.h. It is
+; This file contains the source code for grf_ultmscode.c. It is
 ; assembler code for the TMS34010 CPU/graphics processor.
 ;
 ; Use Paul Mackerras' gspa assembler to transfer it to hex format, then
-; Ignatios Souvatzis' gpsahextoc utility to convert it to grf_ultmscode.h.
+; Ignatios Souvatzis' gpsahextoc utility to convert it to grf_ultmscode.c.
 ;
-; This has been integrated into the NetBSD/Amiga kernel build procedure.
-;
+; Use 'make grf_ultms.c' to generate the .c file.
 
 ; memory map:
 ; FF800000 .. FF9FFFFF	overlay planes

@@ -1,10 +1,12 @@
-# $NetBSD: SLAB,v 1.6.8.4 2002/04/17 00:04:06 nathanw Exp $
+# $NetBSD: SLAB,v 1.6.8.5 2002/06/20 03:40:21 nathanw Exp $
 #
 # deberg's development machine
 #
 #
 
 include "arch/next68k/conf/std.next68k"
+
+#options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
 # Needs to be set per system.  i.e change these as you see fit
 maxusers	16
@@ -197,3 +199,4 @@ pseudo-device	vnd		4	# paging to files
 #pseudo-device	raid		4	# RAIDframe disk driver
 #options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
 pseudo-device	ccd		4	# concatenated disks
+pseudo-device	clockctl		# user control of clock subsystem

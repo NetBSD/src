@@ -1,4 +1,4 @@
-# $NetBSD: DISKLESS3X,v 1.20.8.4 2002/04/17 00:04:33 nathanw Exp $
+# $NetBSD: DISKLESS3X,v 1.20.8.5 2002/06/20 03:41:40 nathanw Exp $
 
 # DISKLESS - Root and swap on NFS
 # Desktop machines only (3/80)
@@ -6,6 +6,8 @@
 # Includes devices needed to run as an X-terminal
 
 include "arch/sun3/conf/std.sun3x"
+
+#options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
 # Machines to be supported by this kernel
 # options 	FPU_EMULATE	# XXX - Ever needed?
@@ -145,3 +147,4 @@ pseudo-device	tun		2	# network tunneling over tty
 #pseudo-device	ipfilter		# ip filter
 
 pseudo-device	pty			# pseudo-terminals
+pseudo-device	clockctl		# user control of clock subsystem

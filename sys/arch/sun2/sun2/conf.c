@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.3.6.2 2002/02/28 04:12:21 nathanw Exp $	*/
+/*	$NetBSD: conf.c,v 1.3.6.3 2002/06/20 03:41:38 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1994 Adam Glass, Gordon W. Ross
@@ -37,6 +37,7 @@
  */
 
 #include "opt_compat_svr4.h"
+#include "opt_systrace.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -270,6 +271,11 @@ struct cdevsw	cdevsw[] =
 	cdev_notdef(),			/* 87 */
 	cdev_tty_init(NPCONS,pcons),	/* 88: PROM console */
 	cdev_clockctl_init(NCLOCKCTL, clockctl),/* 89: clockctl pseudo device */
+#ifdef SYSTRACE
+	cdev_systrace_init(1, systrace),/* 90: system call tracing */
+#else
+	cdev_notdef(),			/* 90: system call tracing */
+#endif
 
 };
 int	nchrdev = sizeof(cdevsw) / sizeof(cdevsw[0]);
@@ -402,6 +408,7 @@ static int chrtoblktbl[] = {
 	/* 87 */	NODEV,
 	/* 88 */	NODEV,
 	/* 89 */	NODEV,
+	/* 90 */	NODEV,
 };
 
 /*

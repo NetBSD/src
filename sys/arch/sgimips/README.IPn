@@ -1,7 +1,7 @@
-$NetBSD: README.IPn,v 1.2.14.1 2002/04/01 07:42:16 nathanw Exp $
+$NetBSD: README.IPn,v 1.2.14.2 2002/06/20 03:40:45 nathanw Exp $
 
-Arch (kernel)	Models
--------------	------
+Arch (kernel)	Models				Codename
+-------------	------				--------
 IP2		IRIS 3000
 IP4		4D/50, 4D/70
 IP4.5		4D/60, 4D/80, 4D/85
@@ -14,15 +14,16 @@ IP13 (IP7)	4D/3x0
 IP15 (IP7)	4D/4x0
 IP12		4D/30, 4D/35, Indigo R3K
 IP17		Crimson
-IP19		Onyx, Challenge M/L(/XL?)
+IP19		Onyx, Challenge M/L(/XL?)	Everest
 IP20		Indigo R4K
-IP21		Power Challenge, Power Onyx
-IP22		Indigo2 ("Fullhouse")
-IP24 (IP22)	Indy ("Guiness"), Challenge S
-IP25		Power Challenge R10K
-IP26		Power Indigo2 R8K ("Teton")
+IP21		Power Challenge, Power Onyx 	Everest
+IP22		Indigo2				Fullhouse
+IP24 (IP22)	Indy, Challenge S 		Guiness
+IP25		Power Challenge R10K		Everest
+IP26		Power Indigo2 R8K		Teuton
 IP27		Origin 200, Origin 2000, Onyx2
-IP28		Power Indigo2 R10K ("Pacecar")
-IP30		Octane
-IP32		O2 ("Moosehead")
+IP28		Power Indigo2 R10K		Pacecar
+IP30		Octane				Speedracer
+IP32		O2				Moosehead
+IP33		SN1 (?)
 IP35		SN1 (?)

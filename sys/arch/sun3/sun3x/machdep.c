@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.76.4.5 2002/05/29 21:32:04 nathanw Exp $	*/
+/*	$NetBSD: machdep.c,v 1.76.4.6 2002/06/20 03:41:54 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -113,6 +113,8 @@ caddr_t	msgbufaddr;
 
 /* Virtual page frame for /dev/mem (see mem.c) */
 vaddr_t vmmap;
+
+union sun3sir sun3sir;
 
 /*
  * safepri is a safe priority for sleep to set for a spin-wait

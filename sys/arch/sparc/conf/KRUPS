@@ -1,5 +1,5 @@
-# $NetBSD: KRUPS,v 1.2.4.4 2002/04/17 00:04:23 nathanw Exp $
-# From: NetBSD: GENERIC,v 1.131 2002/02/10 17:37:02 wiz Exp
+# $NetBSD: KRUPS,v 1.2.4.5 2002/06/20 03:41:02 nathanw Exp $
+# From: NetBSD: GENERIC,v 1.133 2002/04/25 15:06:37 atatat Exp
 #
 # Krups (JavaStation 10, aka JavaStation NC) machine description file
 #
@@ -8,7 +8,9 @@
 
 include 	"arch/sparc/conf/std.sparc"
 
-#ident 		"KRUPS-$Revision: 1.2.4.4 $"
+#options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
+
+#ident 		"KRUPS-$Revision: 1.2.4.5 $"
 
 maxusers	32
 
@@ -68,10 +70,10 @@ options 	KTRACE
 #options 	USERCONF	# userconf(4) support
 #options 	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
 
-## NFS boot options; default on sparc is the bootparam protocol
+## NFS boot options; tries DHCP/BOOTP then BOOTPARAM
 options 	NFS_BOOT_BOOTPARAM
 #options 	NFS_BOOT_BOOTP
-#options 	NFS_BOOT_DHCP
+options 	NFS_BOOT_DHCP
 
 #### Debugging options
 
@@ -299,3 +301,5 @@ pseudo-device	rnd
 
 # a pseudo device needed for Coda	# also needs CODA (above)
 #pseudo-device	vcoda		4	# coda minicache <-> venus comm.
+
+pseudo-device	clockctl		# user control of clock subsystem

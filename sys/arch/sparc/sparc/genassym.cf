@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.32.8.4 2002/01/08 00:27:44 nathanw Exp $
+#	$NetBSD: genassym.cf,v 1.32.8.5 2002/06/20 03:41:06 nathanw Exp $
 
 #
 # Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -113,8 +113,6 @@ include <sparc/dev/fdvar.h>
 
 # general constants
 define	BSD		BSD
-define	SUN4_PGSHIFT	SUN4_PGSHIFT
-define	SUN4CM_PGSHIFT	SUN4CM_PGSHIFT
 define	USRSTACK	USRSTACK
 
 # proc fields and values

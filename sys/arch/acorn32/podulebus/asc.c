@@ -1,4 +1,4 @@
-/*	$NetBSD: asc.c,v 1.1.4.4 2002/04/01 07:38:46 nathanw Exp $	*/
+/*	$NetBSD: asc.c,v 1.1.4.5 2002/06/20 03:37:20 nathanw Exp $	*/
 
 /*
  * Copyright (c) 2001 Richard Earnshaw
@@ -74,7 +74,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: asc.c,v 1.1.4.4 2002/04/01 07:38:46 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: asc.c,v 1.1.4.5 2002/06/20 03:37:20 nathanw Exp $");
 
 #include <sys/systm.h>
 #include <sys/kernel.h>
@@ -146,7 +146,7 @@ ascmatch(struct device *pdp, struct cfdata *cf, void *auxp)
 	/* Look for the card */
 
 	/* Standard ROM, skipping the MCS card that used the same ID. */
-	if (matchpodule(pa, MANUFACTURER_ACORN, PODULE_ACORN_SCSI, -1) &&
+	if (pa->pa_product == PODULE_ACORN_SCSI &&
 	    strncmp(pa->pa_podule->description, "MCS", 3) != 0)
 		return 1;
 

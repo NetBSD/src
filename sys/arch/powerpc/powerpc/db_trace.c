@@ -1,4 +1,4 @@
-/*	$NetBSD: db_trace.c,v 1.14.6.6 2002/04/01 07:42:08 nathanw Exp $	*/
+/*	$NetBSD: db_trace.c,v 1.14.6.7 2002/06/20 03:40:34 nathanw Exp $	*/
 /*	$OpenBSD: db_trace.c,v 1.3 1997/03/21 02:10:48 niklas Exp $	*/
 
 /* 
@@ -90,8 +90,6 @@ const struct db_variable db_regs[] = {
 #endif
 };
 const struct db_variable * const db_eregs = db_regs + sizeof (db_regs)/sizeof (db_regs[0]);
-
-extern label_t	*db_recover;
 
 /*
  *	Frame tracing.

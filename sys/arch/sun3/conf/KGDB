@@ -1,4 +1,4 @@
-#	$NetBSD: KGDB,v 1.26.8.4 2002/04/17 00:04:34 nathanw Exp $
+#	$NetBSD: KGDB,v 1.26.8.5 2002/06/20 03:41:41 nathanw Exp $
 
 # KGDB Sun3 (3/50, 3/60, 3/110, 3/160, 3/260, 3/E)
 # like GENERIC but supports gdb on other machine, i.e.:
@@ -7,6 +7,8 @@
 #	(gdb) target remote /dev/ttyb
 
 include "arch/sun3/conf/std.sun3"
+
+#options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
 # Machines to be supported by this kernel
 options 	FPU_EMULATE
@@ -203,3 +205,4 @@ pseudo-device	pty			# pseudo-terminals
 #pseudo-device	vnd		4	# paging to files
 #pseudo-device	ccd		4	# concatenated disks
 #pseudo-device	raid		4	# RAIDframe disk driver
+pseudo-device	clockctl		# user control of clock subsystem

@@ -1,4 +1,4 @@
-/*	$NetBSD: stp4020.c,v 1.11.2.3 2002/04/01 07:47:16 nathanw Exp $ */
+/*	$NetBSD: stp4020.c,v 1.11.2.4 2002/06/20 03:46:31 nathanw Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: stp4020.c,v 1.11.2.3 2002/04/01 07:47:16 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: stp4020.c,v 1.11.2.4 2002/06/20 03:46:31 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -479,7 +479,7 @@ stp4020_event_thread(arg)
 			(void)tsleep(&sc->events, PWAIT, "pcicev", 0);
 			continue;
 		}
-		SIMPLEQ_REMOVE_HEAD(&sc->events, e, se_q);
+		SIMPLEQ_REMOVE_HEAD(&sc->events, se_q);
 		splx(s);
 
 		n = e->se_sock;

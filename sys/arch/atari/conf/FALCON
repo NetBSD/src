@@ -1,12 +1,12 @@
 #
-# $NetBSD: FALCON,v 1.40.8.4 2002/04/17 00:02:39 nathanw Exp $
+# $NetBSD: FALCON,v 1.40.8.5 2002/06/20 03:38:17 nathanw Exp $
 #
 # This file was automatically created. Changes will be
 # lost when running makeconf in this directory.
 #
 # Created from:
 #		NetBSD: FALCON.in,v 1.5 2001/11/20 11:29:41 lukem Exp $
-#		NetBSD: GENERIC.in,v 1.17 2002/04/12 22:34:13 leo Exp $
+#		NetBSD: GENERIC.in,v 1.21 2002/06/17 05:14:06 lukem Exp $
 
 #This configuration file is for a generic ATARI-Falcon
 
@@ -16,6 +16,8 @@
 #Generic atari
 
 include "arch/atari/conf/std.atari"
+
+options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
 #Add support for about 16 users. This variable is used to size
 #various kernel structures.
@@ -91,7 +93,7 @@ options 	QUOTA		# Disk quotas for local disks
 options 	SOFTDEP		# FFS soft updates support.
 options 	NFSSERVER	# Network File System server side code
 #options 	EXT2FS_SYSTEM_FLAGS	# makes ext2fs file flags (append and
-				# immutable) behave as system flags.
+				#immutable) behave as system flags.
 
 #Misc. debugging options
 
@@ -166,7 +168,7 @@ config		netbsd root on ? type ?
 
 pseudo-device	sl			# Slip
 pseudo-device	ppp			# ppp
-pseudo-device	pppoe			# PPP over Ethernet (RFC 2516)
+
 pseudo-device	pty			# pseudo-terminals
 pseudo-device	loop			# Loopback network
 pseudo-device	vnd		3	# 3 pseudo disks (see vnconfig)
@@ -193,6 +195,7 @@ options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
 #options	RF_INCLUDE_PARITY_DECLUSTERING_DS=1
 pseudo-device	ipfilter		# IP filtering device
 pseudo-device	rnd			# /dev/random and in-kernel generator
+pseudo-device	clockctl		# user control of clock subsystem
 
 #Hardware options for GENERIC are in the various machine type specific files
 
@@ -220,7 +223,7 @@ ser0		at mainbus0	# UART on first 68901 (ttyB0)
 wdc0		at mainbus0	# IDE-bus
 wd*		at wdc? channel ? drive ?
 
- # ATAPI bus support
+ #ATAPI bus support
 atapibus* at wdc? channel ?
 
 #ATAPI devices

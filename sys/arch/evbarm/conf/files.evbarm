@@ -1,4 +1,4 @@
-#	$NetBSD: files.evbarm,v 1.4.2.4 2002/02/28 04:09:07 nathanw Exp $
+#	$NetBSD: files.evbarm,v 1.4.2.5 2002/06/20 03:38:29 nathanw Exp $
 #
 # First try for arm-specific configuration info
 #
@@ -58,7 +58,6 @@ include "dev/isa/files.isa"			# ISA devices
 # Include PCI config
 #
 
-include "dev/mii/files.mii"			# network devices MII bus
 include "dev/i2o/files.i2o"			# I2O drivers.
 include "dev/pci/files.pci"			# PCI devices
 include "dev/usb/files.usb"			# USB device

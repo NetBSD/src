@@ -1,4 +1,4 @@
-/* $NetBSD: scc.c,v 1.54.4.5 2002/04/01 07:38:52 nathanw Exp $ */
+/* $NetBSD: scc.c,v 1.54.4.6 2002/06/20 03:37:47 nathanw Exp $ */
 
 /*
  * Copyright (c) 1991,1990,1989,1994,1995,1996 Carnegie Mellon University
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: scc.c,v 1.54.4.5 2002/04/01 07:38:52 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scc.c,v 1.54.4.6 2002/06/20 03:37:47 nathanw Exp $");
 
 #include "opt_ddb.h"
 #include "opt_dec_3000_300.h"
@@ -218,6 +218,8 @@ scc_regmap_t *scc_cons_addr = 0;
 static struct consdev scccons = {
 	NULL, NULL, sccGetc, sccPutc, sccPollc, NULL, NODEV, 0
 };
+
+int	alpha_donot_kludge_scc;
 
 /*
  * Test to see if device is present.

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.3.8.5 2002/05/29 21:31:40 nathanw Exp $	*/
+/*	$NetBSD: machdep.c,v 1.3.8.6 2002/06/20 03:38:25 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -122,7 +122,6 @@ extern vaddr_t virtual_avail;
  * Declare these as initialized data so we can patch them.
  */
 caddr_t	msgbufaddr;
-int	msgbufmapped;		/* set when safe to use msgbuf */
 /*int	maxmem;*/			/* max memory per process */
 int	physmem = MAXMEM;	/* max supported memory, changes to actual */
 /*

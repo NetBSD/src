@@ -9,7 +9,7 @@
  *
  * 1. Copyright Notice
  *
- * Some or all of this work - Copyright (c) 1999, 2000, 2001, Intel Corp.
+ * Some or all of this work - Copyright (c) 1999 - 2002, Intel Corp.
  * All rights reserved.
  *
  * 2. License
@@ -158,6 +158,14 @@ const char *
 AcpiFormatException (
     ACPI_STATUS             Exception);
 
+ACPI_STATUS
+AcpiPurgeCachedObjects (
+    void);
+
+ACPI_STATUS
+AcpiInstallInitializationHandler (
+    ACPI_INIT_HANDLER       Handler,
+    UINT32                  Function);
 
 /*
  * ACPI Memory manager
@@ -183,7 +191,7 @@ AcpiFree (
 ACPI_STATUS
 AcpiFindRootPointer (
     UINT32                  Flags,
-    ACPI_PHYSICAL_ADDRESS   *RsdpPhysicalAddress);
+    ACPI_POINTER            *RsdpAddress);
 
 ACPI_STATUS
 AcpiLoadTables (
@@ -249,6 +257,23 @@ AcpiGetHandle (
     ACPI_STRING             Pathname,
     ACPI_HANDLE             *RetHandle);
 
+ACPI_STATUS
+AcpiAttachData (
+    ACPI_HANDLE             ObjHandle,
+    ACPI_OBJECT_HANDLER     Handler,
+    void                    *Data);
+
+ACPI_STATUS
+AcpiDetachData (
+    ACPI_HANDLE             ObjHandle,
+    ACPI_OBJECT_HANDLER     Handler);
+
+ACPI_STATUS
+AcpiGetData (
+    ACPI_HANDLE             ObjHandle,
+    ACPI_OBJECT_HANDLER     Handler,
+    void                    **Data);
+
 
 /*
  * Object manipulation and enumeration
@@ -260,6 +285,14 @@ AcpiEvaluateObject (
     ACPI_STRING             Pathname,
     ACPI_OBJECT_LIST        *ParameterObjects,
     ACPI_BUFFER             *ReturnObjectBuffer);
+
+ACPI_STATUS
+AcpiEvaluateObjectTyped (
+    ACPI_HANDLE             Object,
+    ACPI_STRING             Pathname,
+    ACPI_OBJECT_LIST        *ExternalParams,
+    ACPI_BUFFER             *ReturnBuffer,
+    ACPI_OBJECT_TYPE        ReturnType);
 
 ACPI_STATUS
 AcpiGetObjectInfo (
@@ -335,11 +368,12 @@ AcpiInstallGpeHandler (
 
 ACPI_STATUS
 AcpiAcquireGlobalLock (
-    void);
+    UINT32                  Timeout,
+    UINT32                  *Handle);
 
 ACPI_STATUS
 AcpiReleaseGlobalLock (
-    void);
+    UINT32                  Handle);
 
 ACPI_STATUS
 AcpiRemoveGpeHandler (
@@ -349,12 +383,14 @@ AcpiRemoveGpeHandler (
 ACPI_STATUS
 AcpiEnableEvent (
     UINT32                  AcpiEvent,
-    UINT32                  Type);
+    UINT32                  Type,
+    UINT32                  Flags);
 
 ACPI_STATUS
 AcpiDisableEvent (
     UINT32                  AcpiEvent,
-    UINT32                  Type);
+    UINT32                  Type,
+    UINT32                  Flags);
 
 ACPI_STATUS
 AcpiClearEvent (
@@ -397,6 +433,18 @@ AcpiGetIrqRoutingTable  (
  */
 
 ACPI_STATUS
+AcpiGetRegister (
+    UINT32                  RegisterId,
+    UINT32                  *ReturnValue,
+    UINT32                  Flags);
+
+ACPI_STATUS
+AcpiSetRegister (
+    UINT32                  RegisterId,
+    UINT32                  Value,
+    UINT32                  Flags);
+
+ACPI_STATUS
 AcpiSetFirmwareWakingVector (
     ACPI_PHYSICAL_ADDRESS   PhysicalAddress);
 
@@ -405,11 +453,22 @@ AcpiGetFirmwareWakingVector (
     ACPI_PHYSICAL_ADDRESS   *PhysicalAddress);
 
 ACPI_STATUS
+AcpiGetSleepTypeData (
+    UINT8                   SleepState,
+    UINT8                   *Slp_TypA,
+    UINT8                   *Slp_TypB);
+
+ACPI_STATUS
+AcpiEnterSleepStatePrep (
+    UINT8                   SleepState);
+
+ACPI_STATUS
 AcpiEnterSleepState (
-    UINT8 SleepState);
+    UINT8                   SleepState);
 
 ACPI_STATUS
 AcpiLeaveSleepState (
-    UINT8 SleepState);
+    UINT8                   SleepState);
+
 
 #endif /* __ACXFACE_H__ */

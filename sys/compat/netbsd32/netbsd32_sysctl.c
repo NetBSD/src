@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_sysctl.c,v 1.1.4.5 2002/05/29 21:32:50 nathanw Exp $	*/
+/*	$NetBSD: netbsd32_sysctl.c,v 1.1.4.6 2002/06/20 03:43:11 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_sysctl.c,v 1.1.4.5 2002/05/29 21:32:50 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_sysctl.c,v 1.1.4.6 2002/06/20 03:43:11 nathanw Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ddb.h"
@@ -62,6 +62,7 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_sysctl.c,v 1.1.4.5 2002/05/29 21:32:50 nath
 
 int uvm_sysctl32(int *, u_int, void *, size_t *, void *, size_t, struct proc *);
 int kern_sysctl32(int *, u_int, void *, size_t *, void *, size_t, struct proc *);
+int hw_sysctl32(int *, u_int, void *, size_t *, void *, size_t, struct proc *);
 
 /*
  * uvm_sysctl32: sysctl hook into UVM system, handling special 32-bit
@@ -140,6 +141,24 @@ kern_sysctl32(name, namelen, oldp, oldlenp, newp, newlen, p)
 	/* NOTREACHED */
 }
 
+/*
+ * hardware related system variables.
+ */
+int
+hw_sysctl32(int *name, u_int namelen, void *oldp, size_t *oldlenp,
+    void *newp, size_t newlen, struct proc *p)
+{
+	extern char machine_arch32[];
+
+	switch (name[0]) {
+	case HW_MACHINE_ARCH:
+		return (sysctl_rdstring(oldp, oldlenp, newp, machine_arch32));
+	default:
+		return (EOPNOTSUPP);
+	}
+	/* NOTREACHED */
+}
+
 int
 netbsd32___sysctl(p, v, retval)
 	struct proc *p;
@@ -196,7 +215,14 @@ netbsd32___sysctl(p, v, retval)
 		}
 		break;
 	case CTL_HW:
-		fn = hw_sysctl;
+		switch (name[1]) {
+		case HW_MACHINE_ARCH:
+			fn = hw_sysctl32;
+			break;
+		default:
+			fn = hw_sysctl;
+			break;
+		}
 		break;
 	case CTL_VM:
 		switch (name[1]) {

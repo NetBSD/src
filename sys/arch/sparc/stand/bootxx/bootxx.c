@@ -1,4 +1,4 @@
-/*	$NetBSD: bootxx.c,v 1.8.12.1 2002/01/08 00:27:55 nathanw Exp $ */
+/*	$NetBSD: bootxx.c,v 1.8.12.2 2002/06/20 03:41:14 nathanw Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -39,11 +39,11 @@
 #include <sys/param.h>
 #include <sys/time.h>
 #include <sys/exec.h>
+#include <sys/bootblock.h>
 
 #include <lib/libsa/stand.h>
 
 #include <machine/promlib.h>
-#include <sparc/stand/common/bbinfo.h>
 #include <sparc/stand/common/promdev.h>
 
 int debug;
@@ -61,10 +61,10 @@ struct open_file	io;
  * (typically `/boot'): filesystem block size, # of filesystem
  * blocks and the block numbers themselves.
  */
-struct bbinfo bbinfo = {
-	{ BBINFO_MAGIC },
+struct shared_bbinfo bbinfo = {
+	{ SPARC_BBINFO_MAGIC },
 	0,
-	MAXBLOCKNUM,
+	SHARED_BBINFO_MAXBLOCKS,
 	{ 0 }
 };
 

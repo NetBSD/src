@@ -1,7 +1,7 @@
-/*	$NetBSD: i82557.c,v 1.44.2.5 2002/04/17 00:05:37 nathanw Exp $	*/
+/*	$NetBSD: i82557.c,v 1.44.2.6 2002/06/20 03:44:38 nathanw Exp $	*/
 
 /*-
- * Copyright (c) 1997, 1998, 1999, 2001 The NetBSD Foundation, Inc.
+ * Copyright (c) 1997, 1998, 1999, 2001, 2002 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i82557.c,v 1.44.2.5 2002/04/17 00:05:37 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i82557.c,v 1.44.2.6 2002/06/20 03:44:38 nathanw Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -252,11 +252,6 @@ static __inline void
 fxp_scb_cmd(struct fxp_softc *sc, u_int8_t cmd)
 {
 
-	if (cmd == FXP_SCB_COMMAND_CU_RESUME &&
-	    (sc->sc_flags & FXPF_FIX_RESUME_BUG) != 0) {
-		CSR_WRITE_1(sc, FXP_CSR_SCB_COMMAND, FXP_SCB_COMMAND_CU_NOP);
-		fxp_scb_wait(sc);
-	}
 	CSR_WRITE_1(sc, FXP_CSR_SCB_COMMAND, cmd);
 }
 
@@ -608,23 +603,14 @@ fxp_get_info(struct fxp_softc *sc, u_int8_t *enaddr)
 	if (sc->sc_flags & FXPF_HAS_RESUME_BUG) {
 		fxp_read_eeprom(sc, &data, 10, 1);
 		if (data & 0x02) {		/* STB enable */
-			printf("%s: disabling Dynamic Standby Mode in EEPROM\n",
-			    sc->sc_dev.dv_xname);
+			printf("%s: WARNING: Disabling dynamic standby mode in EEPROM to work around a\n", sc->sc_dev.dv_xname);
+			printf("%s: WARNING: hardware bug.  You must reset the system before using this\n", sc->sc_dev.dv_xname);
+			printf("%s: WARNING: interface.\n", sc->sc_dev.dv_xname);
 			data &= ~0x02;
 			fxp_write_eeprom(sc, &data, 10, 1);
 			printf("%s: new EEPROM ID: 0x%04x\n",
 			    sc->sc_dev.dv_xname, data);
 			fxp_eeprom_update_cksum(sc);
-			printf("%s: PLEASE RESET YOUR SYSTEM FOR CHANGE TO "
-			    "TAKE EFFECT!\n", sc->sc_dev.dv_xname);
-		} else {
-#if 1
-			/*
-			 * If Dynamic Standby Mode is disabled, we don't
-			 * need to work around the Resume bug anymore.
-			 */
-			sc->sc_flags &= ~FXPF_HAS_RESUME_BUG;
-#endif
 		}
 	}
 }
@@ -1883,18 +1869,8 @@ fxp_mdi_read(struct device *self, int phy, int reg)
 void
 fxp_statchg(struct device *self)
 {
-	struct fxp_softc *sc = (void *) self;
 
-	/*
-	 * Determine whether or not we have to work-around the
-	 * Resume Bug.
-	 */
-	if (sc->sc_flags & FXPF_HAS_RESUME_BUG) {
-		if (IFM_TYPE(sc->sc_mii.mii_media_active) == IFM_10_T)
-			sc->sc_flags |= FXPF_FIX_RESUME_BUG;
-		else
-			sc->sc_flags &= ~FXPF_FIX_RESUME_BUG;
-	}
+	/* Nothing to do. */
 }
 
 void

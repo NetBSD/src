@@ -1,4 +1,4 @@
-/*	$NetBSD: pcmcom.c,v 1.6.6.2 2002/02/28 04:14:16 nathanw Exp $	*/
+/*	$NetBSD: pcmcom.c,v 1.6.6.3 2002/06/20 03:46:18 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcmcom.c,v 1.6.6.2 2002/02/28 04:14:16 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcmcom.c,v 1.6.6.3 2002/06/20 03:46:18 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -185,8 +185,7 @@ pcmcom_attach(parent, self, aux)
 	 * regions they request in order for the card to differentiate
 	 * between serial ports.
 	 */
-	for (cfe = pa->pf->cfe_head.sqh_first; cfe != NULL;
-	     cfe = cfe->cfe_list.sqe_next) {
+	SIMPLEQ_FOREACH(cfe, &pa->pf->cfe_head, cfe_list) {
 		if (pcmcom_check_cfe(sc, cfe)) {
 			/* Found one! */
 			break;

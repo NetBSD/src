@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_ioctl.h,v 1.1.8.2 2002/04/01 07:43:57 nathanw Exp $ */
+/*	$NetBSD: irix_ioctl.h,v 1.1.8.3 2002/06/20 03:42:50 nathanw Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -40,6 +40,11 @@
 #define	_IRIX_IOCTL_H_
 
 #include <compat/svr4/svr4_ioctl.h>
+
+struct irix_ioctl_usrdata {
+	caddr_t iiu_data;
+	register_t *iiu_retval;
+};
 
 /* From IRIX's <net/raw.h> */
 #define IRIX_SIOCNREAD	SVR4_IOR('s', 10, int) 

@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.14.4.3 2002/04/01 07:40:25 nathanw Exp $	*/
+/*	$NetBSD: conf.c,v 1.14.4.4 2002/06/20 03:38:51 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -38,6 +38,7 @@
  *	@(#)conf.c	8.2 (Berkeley) 11/14/93
  */
 
+#include "opt_systrace.h"
 #include <sys/param.h>
 #include <sys/tty.h>
 #include <sys/conf.h>
@@ -252,6 +253,11 @@ struct cdevsw	cdevsw[] =
 	cdev_clockctl_init(NCLOCKCTL, clockctl),/* 46: clockctl pseudo device */
 	cdev_lkm_init(NLKM,lkm),	/* 47: loadable module driver */
 	cdev_audio_init(NAUDIO,audio),		/* 48: VR4121 audio interface */
+#ifdef SYSTRACE
+	cdev_systrace_init(1, systrace),/* 49: system call tracing */
+#else
+	cdev_notdef(),			/* 49: system call tracing */
+#endif
 };
 
 int	nchrdev = sizeof(cdevsw) / sizeof(cdevsw[0]);
@@ -330,6 +336,7 @@ static int chrtoblktbl[] =  {
 	/* 46 */	NODEV,
 	/* 47 */	NODEV,
 	/* 48 */	NODEV,
+	/* 49 */	NODEV,
 };
 
 /*

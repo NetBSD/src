@@ -1,4 +1,4 @@
-/* $NetBSD: freebsd_syscalls.c,v 1.42.2.5 2002/05/29 21:48:42 nathanw Exp $ */
+/* $NetBSD: freebsd_syscalls.c,v 1.42.2.6 2002/06/20 03:42:47 nathanw Exp $ */
 
 /*
  * System call names.
@@ -8,7 +8,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: freebsd_syscalls.c,v 1.42.2.5 2002/05/29 21:48:42 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: freebsd_syscalls.c,v 1.42.2.6 2002/06/20 03:42:47 nathanw Exp $");
 
 #if defined(_KERNEL_OPT)
 #if defined(_KERNEL_OPT)
@@ -216,17 +216,17 @@ const char *const freebsd_syscallnames[] = {
 	"rtprio",			/* 166 = rtprio */
 	"#167 (unimplemented)",		/* 167 = unimplemented */
 	"#168 (unimplemented)",		/* 168 = unimplemented */
-#if defined(SYSVSEM) && !defined(alpha)
+#if defined(SYSVSEM) && !defined(_LP64)
 	"semsys",			/* 169 = semsys */
 #else
 	"#169 (unimplemented 1.0 semsys)",		/* 169 = unimplemented 1.0 semsys */
 #endif
-#if defined(SYSVMSG) && !defined(alpha)
+#if defined(SYSVMSG) && !defined(_LP64)
 	"msgsys",			/* 170 = msgsys */
 #else
 	"#170 (unimplemented 1.0 msgsys)",		/* 170 = unimplemented 1.0 msgsys */
 #endif
-#if defined(SYSVSHM) && !defined(alpha)
+#if defined(SYSVSHM) && !defined(_LP64)
 	"shmsys",			/* 171 = shmsys */
 #else
 	"#171 (unimplemented 1.0 shmsys)",		/* 171 = unimplemented 1.0 shmsys */

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.92.4.5 2002/02/28 04:06:25 nathanw Exp $	*/
+/*	$NetBSD: pmap.c,v 1.92.4.6 2002/06/20 03:37:50 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -112,7 +112,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.92.4.5 2002/02/28 04:06:25 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.92.4.6 2002/06/20 03:37:50 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -280,6 +280,8 @@ u_int	*Sysseg, *Sysseg_pa;
 u_int	*Sysmap, *Sysptmap;
 u_int	*Segtabzero, *Segtabzeropa;
 vsize_t	Sysptsize = VM_KERNEL_PT_PAGES;
+
+pv_entry_t	pv_table;	/* array of entries, one per page */
 
 struct pmap	kernel_pmap_store;
 struct vm_map	*pt_map;
@@ -904,8 +906,10 @@ pmap_release(pmap)
 	if (pmap->pm_ptab) {
 		pmap_remove(pmap_kernel(), (vaddr_t)pmap->pm_ptab,
 		    (vaddr_t)pmap->pm_ptab + AMIGA_UPTSIZE);
-		uvm_km_pgremove(uvm.kernel_object, (vaddr_t)pmap->pm_ptab,
-		    (vaddr_t)pmap->pm_ptab + AMIGA_UPTSIZE);
+		uvm_km_pgremove(uvm.kernel_object,
+		    (vaddr_t)pmap->pm_ptab - vm_map_min(kernel_map),
+		    (vaddr_t)pmap->pm_ptab + AMIGA_UPTSIZE
+				- vm_map_min(kernel_map));
 		uvm_km_free_wakeup(pt_map, (vaddr_t)pmap->pm_ptab,
 				   AMIGA_UPTSIZE);
 	}
@@ -2604,8 +2608,9 @@ pmap_enter_ptpage(pmap, va)
 		if (pmapdebug & (PDB_ENTER|PDB_PTPAGE))
 			printf("enter_pt: about to alloc UPT pg at %lx\n", va);
 #endif
-		while ((pg = uvm_pagealloc(uvm.kernel_object, va, NULL,
-					   UVM_PGA_ZERO)) == NULL) {
+		while ((pg = uvm_pagealloc(uvm.kernel_object,
+					   va - vm_map_min(kernel_map),
+					   NULL, UVM_PGA_ZERO)) == NULL) {
 			uvm_wait("ptpage");
 		}
 		pg->flags &= ~(PG_BUSY|PG_FAKE);

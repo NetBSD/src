@@ -1,4 +1,4 @@
-#	$NetBSD: files.sparc,v 1.102.8.4 2002/04/01 07:42:38 nathanw Exp $
+#	$NetBSD: files.sparc,v 1.102.8.5 2002/06/20 03:41:03 nathanw Exp $
 
 # @(#)files.sparc	8.1 (Berkeley) 7/19/93
 # sparc-specific configuration info
@@ -133,9 +133,6 @@ device tpcic: pcmciabus
 attach tpcic at sbus
 file	arch/sparc/dev/ts102.c			tpcic
 
-# network devices MII bus
-include "dev/mii/files.mii"
-
 # PCMCIA bus
 include "dev/pcmcia/files.pcmcia"
 include "dev/ata/files.ata"
@@ -187,7 +184,7 @@ file	arch/sparc/dev/dma_obio.c	dma_obio
 attach esp at obio with esp_obio
 file	arch/sparc/dev/esp_obio.c	esp_obio
 
-device	audioamd: audio, am7930
+device	audioamd: audiobus, am7930
 attach	audioamd at mainbus with audioamd_mainbus
 attach	audioamd at sbus with audioamd_sbus
 file	arch/sparc/dev/audioamd.c		audioamd

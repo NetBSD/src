@@ -1,4 +1,4 @@
-/*	$NetBSD: vsbus.c,v 1.32.8.2 2002/03/29 23:32:16 ragge Exp $ */
+/*	$NetBSD: vsbus.c,v 1.32.8.3 2002/06/20 03:42:24 nathanw Exp $ */
 /*
  * Copyright (c) 1996, 1999 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -396,7 +396,7 @@ vsbus_dma_intr(void)
 		return;
 	}
 	vsbus_active = 1;
-	SIMPLEQ_REMOVE_HEAD(&vsbus_dma, vd, vd_q);
+	SIMPLEQ_REMOVE_HEAD(&vsbus_dma, vd_q);
 	(*vd->vd_go)(vd->vd_arg);
 }
 

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.8.4.2 2002/01/08 00:28:49 nathanw Exp $
+#	$NetBSD: Makefile,v 1.8.4.3 2002/06/20 03:42:36 nathanw Exp $
 
 BOOT=		mboot
 VERSION=	0.1
@@ -26,15 +26,7 @@ CFLAGS=		-Wno-main -Os -m68000
 
 LDFLAGS=	-N -static -Ttext ${TEXT}
 
-.PHONY:	machine-links
-beforedepend: machine-links
-machine-links:
-	echo ${.CURDIR}
-	-rm -f machine && \
-	    ln -s ${KERN}/arch/${MACHINE}/include machine
-	-rm -f ${MACHINE_ARCH} && \
-	    ln -s ${KERN}/arch/${MACHINE_ARCH}/include ${MACHINE_ARCH}
-CLEANFILES+=	machine ${MACHINE_ARCH}
+.include "../Makefile.booters"
 
 realall: machine-links ${PROG}
 ${BOOT}:	${OBJS}

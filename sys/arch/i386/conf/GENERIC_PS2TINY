@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC_PS2TINY,v 1.2.4.7 2002/04/17 00:03:15 nathanw Exp $
+#	$NetBSD: GENERIC_PS2TINY,v 1.2.4.8 2002/06/20 03:39:04 nathanw Exp $
 #
 #	GENERIC-style kernel config for IBM PS/2 with MCA bus. It only contains
 #	IBM PS/2 related stuff and has been generally trimmed down somewhat,
@@ -10,6 +10,8 @@
 #	 stage and should be used with caution.
 
 include "arch/i386/conf/std.i386"
+
+#options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
 maxusers	16		# estimated number of users
 
@@ -224,3 +226,4 @@ pseudo-device	md		1	# memory disk device (ramdisk)
 # rnd works; RND_COM does not on port i386 yet.
 pseudo-device	rnd			# /dev/random and in-kernel generator
 #options 	RND_COM			# use "com" randomness as well (BROKEN)
+pseudo-device	clockctl		# user control of clock subsystem

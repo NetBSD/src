@@ -1,4 +1,4 @@
-/*	$NetBSD: adb_direct.c,v 1.44.8.2 2002/04/01 07:40:48 nathanw Exp $	*/
+/*	$NetBSD: adb_direct.c,v 1.44.8.3 2002/06/20 03:39:24 nathanw Exp $	*/
 
 /* From: adb_direct.c 2.02 4/18/97 jpw */
 
@@ -597,6 +597,7 @@ switch_start:
 		if (adb_debug)
 			printf_intr("intr: unknown ADB state\n");
 #endif
+		break;
 	}
 
 	ADB_VIA_INTR_ENABLE();	/* enable ADB interrupt on IIs. */
@@ -1040,6 +1041,7 @@ switch_start:
 		if (adb_debug)
 			printf_intr("adb: unknown ADB state (during intr)\n");
 #endif
+		break;
 	}
 
 	ADB_VIA_INTR_ENABLE();	/* enable ADB interrupt on IIs. */
@@ -1412,6 +1414,7 @@ switch_start:
 		if (adb_debug)
 			printf_intr("intr: unknown ADB state\n");
 #endif
+		break;
 	}
 
 	ADB_VIA_INTR_ENABLE();	/* enable ADB interrupt on IIs. */
@@ -1782,13 +1785,14 @@ adb_soft_intr(void)
 		/* call default completion routine if it's valid */
 		if (comprout) {
 #ifdef __NetBSD__
-			asm("	movml #0xffff,%%sp@-	| save all registers
-				movl %0,%%a2 		| compdata
-				movl %1,%%a1 		| comprout
-				movl %2,%%a0 		| buffer
-				movl %3,%%d0 		| cmd
-				jbsr %%a1@ 		| go call the routine
-				movml %%sp@+,#0xffff	| restore all registers"
+			__asm __volatile (
+			"	movml #0xffff,%%sp@- \n" /* save all regs */
+			"	movl %0,%%a2	\n" 	/* compdata */
+			"	movl %1,%%a1	\n" 	/* comprout */
+			"	movl %2,%%a0 	\n"	/* buffer */
+			"	movl %3,%%d0 	\n"	/* cmd */
+			"	jbsr %%a1@ 	\n"	/* go call routine */
+			"	movml %%sp@+,#0xffff"	/* restore all regs */
 			    :
 			    : "g"(compdata), "g"(comprout),
 				"g"(buffer), "g"(cmd)
@@ -2355,13 +2359,14 @@ adb_comp_exec(void)
 {
 	if ((long)0 != adbCompRout) /* don't call if empty return location */
 #ifdef __NetBSD__
-		asm("	movml #0xffff,%%sp@-	| save all registers
-			movl %0,%%a2		| adbCompData
-			movl %1,%%a1		| adbCompRout
-			movl %2,%%a0		| adbBuffer
-			movl %3,%%d0		| adbWaitingCmd
-			jbsr %%a1@		| go call the routine
-			movml %%sp@+,#0xffff	| restore all registers"
+		__asm __volatile(
+		"	movml #0xffff,%%sp@- \n" /* save all registers */
+		"	movl %0,%%a2 \n"	/* adbCompData */
+		"	movl %1,%%a1 \n"	/* adbCompRout */
+		"	movl %2,%%a0 \n"	/* adbBuffer */
+		"	movl %3,%%d0 \n"	/* adbWaitingCmd */
+		"	jbsr %%a1@ \n"		/* go call the routine */
+		"	movml %%sp@+,#0xffff"	/* restore all registers */
 		    :
 		    : "g"(adbCompData), "g"(adbCompRout),
 			"g"(adbBuffer), "g"(adbWaitingCmd)

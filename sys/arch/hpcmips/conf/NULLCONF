@@ -1,7 +1,9 @@
 #
-# 	$NetBSD: NULLCONF,v 1.9.8.4 2002/02/28 04:09:53 nathanw Exp $
+# 	$NetBSD: NULLCONF,v 1.9.8.5 2002/06/20 03:38:46 nathanw Exp $
 #
 include		"arch/hpcmips/conf/std.hpcmips"
+
+#options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
 maxusers	8
 
@@ -37,3 +39,4 @@ wskbd*		at	hpckbd? mux 1
 wsmouse*	at	vrpiu? mux 0
 
 pseudo-device	biconsdev	1	# build-in console device
+pseudo-device	clockctl		# user control of clock subsystem

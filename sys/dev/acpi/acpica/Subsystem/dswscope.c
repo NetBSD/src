@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Module Name: dswscope - Scope stack manipulation
- *              xRevision: 48 $
+ *              $Revision: 1.1.1.1.4.4 $
  *
  *****************************************************************************/
 
@@ -9,7 +9,7 @@
  *
  * 1. Copyright Notice
  *
- * Some or all of this work - Copyright (c) 1999, 2000, 2001, Intel Corp.
+ * Some or all of this work - Copyright (c) 1999 - 2002, Intel Corp.
  * All rights reserved.
  *
  * 2. License
@@ -115,7 +115,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dswscope.c,v 1.1.1.1.4.3 2001/11/14 19:13:47 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dswscope.c,v 1.1.1.1.4.4 2002/06/20 03:43:50 nathanw Exp $");
 
 #define __DSWSCOPE_C__
 
@@ -125,7 +125,7 @@ __KERNEL_RCSID(0, "$NetBSD: dswscope.c,v 1.1.1.1.4.3 2001/11/14 19:13:47 nathanw
 
 
 #define _COMPONENT          ACPI_DISPATCHER
-        MODULE_NAME         ("dswscope")
+        ACPI_MODULE_NAME    ("dswscope")
 
 
 #define STACK_POP(head) head
@@ -148,7 +148,7 @@ AcpiDsScopeStackClear (
 {
     ACPI_GENERIC_STATE      *ScopeInfo;
 
-    PROC_NAME ("DsScopeStackClear");
+    ACPI_FUNCTION_NAME ("DsScopeStackClear");
 
 
     while (WalkState->ScopeInfo)
@@ -180,20 +180,20 @@ AcpiDsScopeStackClear (
 ACPI_STATUS
 AcpiDsScopeStackPush (
     ACPI_NAMESPACE_NODE     *Node,
-    ACPI_OBJECT_TYPE8       Type,
+    ACPI_OBJECT_TYPE        Type,
     ACPI_WALK_STATE         *WalkState)
 {
     ACPI_GENERIC_STATE      *ScopeInfo;
 
 
-    FUNCTION_TRACE ("DsScopeStackPush");
+    ACPI_FUNCTION_TRACE ("DsScopeStackPush");
 
 
     if (!Node)
     {
         /* Invalid scope   */
 
-        REPORT_ERROR (("DsScopeStackPush: null scope passed\n"));
+        ACPI_REPORT_ERROR (("DsScopeStackPush: null scope passed\n"));
         return_ACPI_STATUS (AE_BAD_PARAMETER);
     }
 
@@ -201,7 +201,7 @@ AcpiDsScopeStackPush (
 
     if (!AcpiExValidateObjectType (Type))
     {
-        REPORT_WARNING (("DsScopeStackPush: type code out of range\n"));
+        ACPI_REPORT_WARNING (("DsScopeStackPush: type code out of range\n"));
     }
 
 
@@ -215,8 +215,9 @@ AcpiDsScopeStackPush (
 
     /* Init new scope object */
 
-    ScopeInfo->Scope.Node  = Node;
-    ScopeInfo->Common.Value = (UINT16) Type;
+    ScopeInfo->Common.DataType  = ACPI_DESC_TYPE_STATE_WSCOPE;
+    ScopeInfo->Scope.Node       = Node;
+    ScopeInfo->Common.Value     = (UINT16) Type;
 
     /* Push new scope object onto stack */
 
@@ -250,7 +251,7 @@ AcpiDsScopeStackPop (
     ACPI_GENERIC_STATE      *ScopeInfo;
 
 
-    FUNCTION_TRACE ("DsScopeStackPop");
+    ACPI_FUNCTION_TRACE ("DsScopeStackPop");
 
 
     /*

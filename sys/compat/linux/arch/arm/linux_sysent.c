@@ -1,4 +1,4 @@
-/* $NetBSD: linux_sysent.c,v 1.8.2.6 2002/05/29 21:48:47 nathanw Exp $ */
+/* $NetBSD: linux_sysent.c,v 1.8.2.7 2002/06/20 03:42:58 nathanw Exp $ */
 
 /*
  * System call switch table.
@@ -8,7 +8,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_sysent.c,v 1.8.2.6 2002/05/29 21:48:47 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_sysent.c,v 1.8.2.7 2002/06/20 03:42:58 nathanw Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_43.h"
@@ -476,8 +476,8 @@ struct sysent linux_sysent[] = {
 	    linux_sys_nosys },			/* 219 = unimplemented mincore */
 	{ 0, 0, 0,
 	    linux_sys_nosys },			/* 220 = unimplemented madvise */
-	{ 0, 0, 0,
-	    linux_sys_nosys },			/* 221 = unimplemented fcntl64 */
+	{ 3, s(struct linux_sys_fcntl64_args), 0,
+	    linux_sys_fcntl64 },		/* 221 = fcntl64 */
 	{ 0, 0, 0,
 	    linux_sys_nosys },			/* 222 = unimplemented */
 	{ 0, 0, 0,

@@ -1,3 +1,5 @@
+/* $NetBSD: isic_pci.h,v 1.1.2.3 2002/06/20 03:45:33 nathanw Exp $ */
+
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -35,15 +37,22 @@
  */
 
 struct pci_isic_softc {
-	struct isic_softc sc_isic;	/* parent class */
+	struct isic_softc sc_isic; /* parent class, must be first */
 
 	/* PCI-specific goo */
 	void *sc_ih;				/* interrupt handler */
 	bus_addr_t sc_base;
 	bus_size_t sc_size;
 	pci_chipset_tag_t sc_pc;
+	int flags;
+#define PCIISIC_LCROK 0x01
+
+	/* status LED handling */
+	struct callout ledcallout;
+	u_int8_t ledstat, ledblinkmask;
+	int ledblinkfreq;
 };
 
 extern void isic_attach_Eqs1pp __P((struct pci_isic_softc *psc, struct pci_attach_args *pa));
 extern void isic_attach_fritzPci __P((struct pci_isic_softc *psc, struct pci_attach_args *pa));
-
+extern int isic_intr_qs1p(void *);

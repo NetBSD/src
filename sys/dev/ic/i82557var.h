@@ -1,4 +1,4 @@
-/*	$NetBSD: i82557var.h,v 1.16.4.2 2002/04/17 00:05:38 nathanw Exp $	*/
+/*	$NetBSD: i82557var.h,v 1.16.4.3 2002/06/20 03:44:38 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2001 The NetBSD Foundation, Inc.
@@ -79,7 +79,7 @@
 #define	FXP_NTXCB		256
 #define	FXP_NTXCB_MASK		(FXP_NTXCB - 1)
 #define	FXP_NEXTTX(x)		((x + 1) & FXP_NTXCB_MASK)
-#define	FXP_NTXSEG		8
+#define	FXP_NTXSEG		16
 
 /*
  * Number of receive frame area buffers.  These are large, so
@@ -210,13 +210,11 @@ struct fxp_softc {
 #define	FXPF_ATTACHED		0x0002	/* attach has succeeded */
 #define	FXPF_WANTINIT		0x0004	/* want a re-init */
 #define	FXPF_HAS_RESUME_BUG	0x0008	/* has the resume bug */
-#define	FXPF_FIX_RESUME_BUG	0x0010	/* currently need to work-around
-					   the resume bug */
-#define	FXPF_MWI		0x0020	/* enable PCI MWI */
-#define	FXPF_READ_ALIGN		0x0040	/* align read access w/ cacheline */
-#define	FXPF_WRITE_ALIGN	0x0080	/* end write on cacheline */
-#define	FXPF_EXT_TXCB		0x0100	/* enable extended TxCB */
-#define	FXPF_UCODE_LOADED	0x0200	/* microcode is loaded */
+#define	FXPF_MWI		0x0010	/* enable PCI MWI */
+#define	FXPF_READ_ALIGN		0x0020	/* align read access w/ cacheline */
+#define	FXPF_WRITE_ALIGN	0x0040	/* end write on cacheline */
+#define	FXPF_EXT_TXCB		0x0080	/* enable extended TxCB */
+#define	FXPF_UCODE_LOADED	0x0100	/* microcode is loaded */
 
 	int	sc_int_delay;		/* interrupt delay */
 	int	sc_bundle_max;		/* max packet bundle */

@@ -1,4 +1,4 @@
-/*	$NetBSD: neo.c,v 1.7.2.5 2002/04/17 00:06:02 nathanw Exp $	*/
+/*	$NetBSD: neo.c,v 1.7.2.6 2002/06/20 03:45:36 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1999 Cameron Grant <gandalf@vilnya.demon.co.uk>
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: neo.c,v 1.7.2.5 2002/04/17 00:06:02 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: neo.c,v 1.7.2.6 2002/06/20 03:45:36 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -570,8 +570,8 @@ neo_attach(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 
-	if (pci_mapreg_map(pa, PCI_MAPREG_START + 4, PCI_MAPREG_TYPE_MEM, 0,
-			   &sc->regiot, &sc->regioh, NULL, NULL)) {
+	if (pci_mapreg_map(pa, PCI_MAPREG_START + 4, PCI_MAPREG_TYPE_MEM,
+	    BUS_SPACE_MAP_LINEAR, &sc->regiot, &sc->regioh, NULL, NULL)) {
 		printf("%s: can't map registers\n", sc->dev.dv_xname);
 		return;
 	}

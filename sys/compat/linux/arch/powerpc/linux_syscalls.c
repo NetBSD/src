@@ -1,4 +1,4 @@
-/* $NetBSD: linux_syscalls.c,v 1.4.4.8 2002/05/29 21:48:50 nathanw Exp $ */
+/* $NetBSD: linux_syscalls.c,v 1.4.4.9 2002/06/20 03:43:03 nathanw Exp $ */
 
 /*
  * System call names.
@@ -8,7 +8,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_syscalls.c,v 1.4.4.8 2002/05/29 21:48:50 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_syscalls.c,v 1.4.4.9 2002/06/20 03:43:03 nathanw Exp $");
 
 #if defined(_KERNEL_OPT)
 #if defined(_KERNEL_OPT)
@@ -224,18 +224,18 @@ const char *const linux_syscallnames[] = {
 	"ugetrlimit",			/* 190 = ugetrlimit */
 	"#191 (unimplemented / * unused * /)",		/* 191 = unimplemented / * unused * / */
 	"#192 (unimplemented mmap2)",		/* 192 = unimplemented mmap2 */
-	"#193 (unimplemented truncate64)",		/* 193 = unimplemented truncate64 */
-	"#194 (unimplemented ftruncate64)",		/* 194 = unimplemented ftruncate64 */
-	"#195 (unimplemented stat64)",		/* 195 = unimplemented stat64 */
-	"#196 (unimplemented lstat64)",		/* 196 = unimplemented lstat64 */
-	"#197 (unimplemented fstat64)",		/* 197 = unimplemented fstat64 */
+	"truncate64",			/* 193 = truncate64 */
+	"linux_ftruncate64",			/* 194 = linux_ftruncate64 */
+	"stat64",			/* 195 = stat64 */
+	"lstat64",			/* 196 = lstat64 */
+	"fstat64",			/* 197 = fstat64 */
 	"#198 (unimplemented sys_pciconfig_read)",		/* 198 = unimplemented sys_pciconfig_read */
 	"#199 (unimplemented sys_pciconfig_write)",		/* 199 = unimplemented sys_pciconfig_write */
 	"#200 (unimplemented sys_pciconfig_iobase)",		/* 200 = unimplemented sys_pciconfig_iobase */
 	"#201 (unimplemented / * Unused ( MacOnLinux project ) * /)",		/* 201 = unimplemented / * Unused ( MacOnLinux project ) * / */
 	"getdents64",			/* 202 = getdents64 */
 	"#203 (unimplemented pivot_root)",		/* 203 = unimplemented pivot_root */
-	"#204 (unimplemented fcntl64)",		/* 204 = unimplemented fcntl64 */
+	"fcntl64",			/* 204 = fcntl64 */
 	"#205 (unimplemented madvise)",		/* 205 = unimplemented madvise */
 	"#206 (unimplemented mincore)",		/* 206 = unimplemented mincore */
 };

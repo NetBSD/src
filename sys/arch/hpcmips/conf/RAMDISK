@@ -1,10 +1,12 @@
 #
 # kernel config file for memory(RAM) disk
 #
-# 	$NetBSD: RAMDISK,v 1.14.8.3 2002/04/17 00:03:06 nathanw Exp $
+# 	$NetBSD: RAMDISK,v 1.14.8.4 2002/06/20 03:38:46 nathanw Exp $
 #
 
 include		"arch/hpcmips/conf/GENERIC"
+
+options 	KLOADER_KERNEL_PATH="\"/mnt/netbsd\""
 
 pseudo-device	md		1	# memory disk
 pseudo-device	sl		2	# Serial Line IP

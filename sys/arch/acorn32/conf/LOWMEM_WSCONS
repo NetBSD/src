@@ -1,9 +1,11 @@
-#	$NetBSD: LOWMEM_WSCONS,v 1.2.2.5 2002/04/17 00:02:04 nathanw Exp $
+#	$NetBSD: LOWMEM_WSCONS,v 1.2.2.6 2002/06/20 03:37:18 nathanw Exp $
 #
 #	LOWMEM_WSCONS -- RiscPC config with wscons for SMALL machines
 #
 
 include	"arch/acorn32/conf/std.acorn32"
+
+#options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
 # estimated number of users
 
@@ -298,6 +300,7 @@ pseudo-device	vnd	4		# disk-like interface to files
 #pseudo-device	ccd	2		# concatenated disk devices
 pseudo-device	md	1		# Ramdisk driver
 pseudo-device	rnd			# /dev/random and /dev/urandom
+pseudo-device	clockctl		# user control of clock subsystem
 
 makeoptions	MONITOR="Taxan875+LR"
 #makeoptions	MONITOR="AKF60"

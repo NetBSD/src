@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf_common.c,v 1.13.2.1 2001/11/14 19:16:32 nathanw Exp $	*/
+/*	$NetBSD: exec_elf_common.c,v 1.13.2.2 2002/06/20 03:47:08 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exec_elf_common.c,v 1.13.2.1 2001/11/14 19:16:32 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exec_elf_common.c,v 1.13.2.2 2002/06/20 03:47:08 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -47,7 +47,7 @@ __KERNEL_RCSID(0, "$NetBSD: exec_elf_common.c,v 1.13.2.1 2001/11/14 19:16:32 nat
 #include <sys/resourcevar.h>
 
 /*
- * exec_elf_setup_stack(): Set up the stack segment for an a.out
+ * exec_elf_setup_stack(): Set up the stack segment for an elf
  * executable.
  *
  * Note that the ep_ssize parameter must be set to be the current stack

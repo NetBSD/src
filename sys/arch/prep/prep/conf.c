@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.5.8.4 2002/04/01 07:42:13 nathanw Exp $	*/
+/*	$NetBSD: conf.c,v 1.5.8.5 2002/06/20 03:40:40 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -35,6 +35,8 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include "opt_systrace.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -267,6 +269,11 @@ struct cdevsw cdevsw[] =
 	cdev__oci_init(NWSFONT,wsfont),	/* 71: wsfont pseudo-device */
 	cdev_pci_init(NPCI,pci),	/* 72: PCI bus access device */
 	cdev_clockctl_init(NCLOCKCTL, clockctl),/* 73: clockctl pseudo device */
+#ifdef SYSTRACE
+	cdev_systrace_init(1, systrace),/* 74: system call tracing */
+#else
+	cdev_notdef(),			/* 74: system call tracing */
+#endif
 };
 int	nchrdev = sizeof(cdevsw) / sizeof(cdevsw[0]);
 
@@ -381,6 +388,8 @@ static int chrtoblktbl[] = {
 	/* 70 */	NODEV,
 	/* 71 */	NODEV,
 	/* 72 */	NODEV,
+	/* 73 */	NODEV,
+	/* 74 */	NODEV,
 };
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ray.c,v 1.27.2.4 2002/04/01 07:46:51 nathanw Exp $	*/
+/*	$NetBSD: if_ray.c,v 1.27.2.5 2002/06/20 03:46:08 nathanw Exp $	*/
 /* 
  * Copyright (c) 2000 Christian E. Hopps
  * All rights reserved.
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ray.c,v 1.27.2.4 2002/04/01 07:46:51 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ray.c,v 1.27.2.5 2002/06/20 03:46:08 nathanw Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -518,7 +518,7 @@ ray_attach(parent, self, aux)
 	printf(": %s\n", devinfo);
 
 	/* enable the card */
-	pcmcia_function_init(sc->sc_pf, sc->sc_pf->cfe_head.sqh_first);
+	pcmcia_function_init(sc->sc_pf, SIMPLEQ_FIRST(&sc->sc_pf->cfe_head));
 	if (pcmcia_function_enable(sc->sc_pf)) {
 		printf(": failed to enable the card");
 		return;

@@ -1,4 +1,4 @@
-/*	$NetBSD: cd.c,v 1.144.2.6 2002/01/08 00:31:46 nathanw Exp $	*/
+/*	$NetBSD: cd.c,v 1.144.2.7 2002/06/20 03:46:33 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd.c,v 1.144.2.6 2002/01/08 00:31:46 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd.c,v 1.144.2.7 2002/06/20 03:46:33 nathanw Exp $");
 
 #include "rnd.h"
 
@@ -129,6 +129,7 @@ int	cd_read_subchannel __P((struct cd_softc *, int, int, int,
 int	cd_read_toc __P((struct cd_softc *, int, int, void *, int, int, int));
 int	cd_get_parms __P((struct cd_softc *, int));
 int	cd_load_toc __P((struct cd_softc *, struct cd_toc *, int));
+int	cdreadmsaddr __P((struct cd_softc *, int *));
 int	dvd_auth __P((struct cd_softc *, dvd_authinfo *));
 int	dvd_read_physical __P((struct cd_softc *, dvd_struct *));
 int	dvd_read_copyright __P((struct cd_softc *, dvd_struct *));
@@ -959,7 +960,8 @@ int cd_interpret_sense(xs)
 
 		SC_DEBUG(periph, SCSIPI_DB1, ("Waiting 5 sec for CD "
 						"spinup\n"));
-		scsipi_periph_freeze(periph, 1);
+		if (!callout_active(&periph->periph_callout))
+			scsipi_periph_freeze(periph, 1);
 		callout_reset(&periph->periph_callout,
 		    5 * hz, scsipi_periph_timed_thaw, periph);
 		retval = ERESTART;
@@ -1042,6 +1044,37 @@ msf2lba (m, s, f)
 	return ((((m * CD_SECS) + s) * CD_FRAMES + f) - CD_BLOCK_OFFSET);
 }
 
+int
+cdreadmsaddr(cd, addr)
+	struct cd_softc *cd;
+	int *addr;
+{
+	struct scsipi_periph *periph = cd->sc_periph;
+	int error;
+	struct cd_toc toc;
+	struct cd_toc_entry *cte;
+
+	error = cd_read_toc(cd, 0, 0, &toc,
+	    sizeof(struct ioc_toc_header) + sizeof(struct cd_toc_entry),
+	    XS_CTL_DATA_ONSTACK,
+	    0x40 /* control word for "get MS info" */);
+
+	if (error)
+		return (error);
+
+	cte = &toc.entries[0];
+	if (periph->periph_quirks & PQUIRK_LITTLETOC) {
+		cte->addr.lba = le32toh(cte->addr.lba);
+		toc.header.len = le16toh(toc.header.len);
+	} else {
+		cte->addr.lba = be32toh(cte->addr.lba);
+		toc.header.len = be16toh(toc.header.len);
+	}
+
+	*addr = (toc.header.len >= 10 && cte->track > 1) ?
+		cte->addr.lba : 0;
+	return 0;
+}
 
 /*
  * Perform special action on behalf of the user.
@@ -1273,33 +1306,12 @@ cdioctl(dev, cmd, addr, flag, p)
 		return (copyout(toc.entries, te->data, len));
 	}
 	case CDIOREADMSADDR: {
-		struct cd_toc toc;
 		int sessno = *(int*)addr;
-		struct cd_toc_entry *cte;
 
 		if (sessno != 0)
 			return (EINVAL);
 
-		error = cd_read_toc(cd, 0, 0, &toc,
-		  sizeof(struct ioc_toc_header) + sizeof(struct cd_toc_entry),
-		  XS_CTL_DATA_ONSTACK,
-		  0x40 /* control word for "get MS info" */);
-
-		if (error)
-			return (error);
-
-		cte = &toc.entries[0];
-		if (periph->periph_quirks & PQUIRK_LITTLETOC) {
-			cte->addr.lba = le32toh(cte->addr.lba);
-			toc.header.len = le16toh(toc.header.len);
-		} else {
-			cte->addr.lba = be32toh(cte->addr.lba);
-			toc.header.len = be16toh(toc.header.len);
-		}
-
-		*(int*)addr = (toc.header.len >= 10 && cte->track > 1) ?
-			cte->addr.lba : 0;
-		return 0;
+		return (cdreadmsaddr(cd, (int*)addr));
 	}
 	case CDIOCSETPATCH: {
 		struct ioc_patch *arg = (struct ioc_patch *)addr;
@@ -1413,6 +1425,7 @@ cdgetdefaultlabel(cd, lp)
 	struct cd_softc *cd;
 	struct disklabel *lp;
 {
+	int lastsession;
 
 	memset(lp, 0, sizeof(struct disklabel));
 
@@ -1441,13 +1454,25 @@ cdgetdefaultlabel(cd, lp)
 	lp->d_interleave = 1;
 	lp->d_flags = D_REMOVABLE;
 
+	if (cdreadmsaddr(cd, &lastsession) != 0)
+		lastsession = 0;
+
 	lp->d_partitions[0].p_offset = 0;
+#ifdef notyet /* have to fix bounds_check_with_label() first */
+	lp->d_partitions[0].p_size = lp->d_secperunit;
+#else
 	lp->d_partitions[0].p_size =
 	    lp->d_secperunit * (lp->d_secsize / DEV_BSIZE);
+#endif
+	lp->d_partitions[0].p_cdsession = lastsession;
 	lp->d_partitions[0].p_fstype = FS_ISO9660;
 	lp->d_partitions[RAW_PART].p_offset = 0;
+#ifdef notyet
+	lp->d_partitions[RAW_PART].p_size = lp->d_secperunit;
+#else
 	lp->d_partitions[RAW_PART].p_size =
 	    lp->d_secperunit * (lp->d_secsize / DEV_BSIZE);
+#endif
 	lp->d_partitions[RAW_PART].p_fstype = FS_ISO9660;
 	lp->d_npartitions = RAW_PART + 1;
 

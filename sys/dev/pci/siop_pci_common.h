@@ -1,4 +1,4 @@
-/*	$NetBSD: siop_pci_common.h,v 1.2 2000/10/23 14:57:23 bouyer Exp $	*/
+/*	$NetBSD: siop_pci_common.h,v 1.2.4.1 2002/06/20 03:45:55 nathanw Exp $	*/
 
 /*
  * Copyright (c) 2000 Manuel Bouyer.
@@ -13,7 +13,7 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *	This product includes software developed by Manuel Bouyer
+ *	This product includes software developed by Manuel Bouyer.
  * 4. The name of the author may not be used to endorse or promote products
  *    derived from this software without specific prior written permission.
  *
@@ -47,14 +47,14 @@ struct siop_product_desc {
 const struct siop_product_desc * siop_lookup_product __P((u_int32_t, int));
 
 /* Driver internal state */
-struct siop_pci_softc {
-	struct siop_softc siop;
+struct siop_pci_common_softc {
 	pci_chipset_tag_t	sc_pc;	/* PCI registers info */
 	pcitag_t		sc_tag;
 	void			*sc_ih;	/* PCI interrupt handle */
 	const struct siop_product_desc *sc_pp; /* Adapter description */
 };
 
-int siop_pci_attach_common __P((struct siop_pci_softc *,
-	struct pci_attach_args *));
-void siop_pci_reset __P((struct siop_softc *));
+int siop_pci_attach_common __P((struct siop_pci_common_softc *,
+	struct siop_common_softc *, struct pci_attach_args *,
+	int (*) __P((void *))));
+void siop_pci_reset __P((struct siop_common_softc *));

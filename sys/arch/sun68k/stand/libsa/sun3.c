@@ -1,4 +1,4 @@
-/*	$NetBSD: sun3.c,v 1.1.8.2 2002/01/08 00:28:25 nathanw Exp $	*/
+/*	$NetBSD: sun3.c,v 1.1.8.3 2002/06/20 03:42:02 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -47,6 +47,12 @@
 #define set_pte sun3_set_pte
 #define get_segmap sun3_get_segmap
 #define set_segmap sun3_set_segmap
+
+/* 
+ * We need to get the sun3 NBSG definition, even if we're
+ * building this with a different sun68k target.
+ */
+#include <arch/sun3/include/param.h>
 
 #include <sys/param.h>
 #include <machine/idprom.h>

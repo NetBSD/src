@@ -1,4 +1,4 @@
-/*	$NetBSD: qe.c,v 1.14.2.5 2002/04/01 07:47:15 nathanw Exp $	*/
+/*	$NetBSD: qe.c,v 1.14.2.6 2002/06/20 03:46:31 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: qe.c,v 1.14.2.5 2002/04/01 07:47:15 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: qe.c,v 1.14.2.6 2002/06/20 03:46:31 nathanw Exp $");
 
 #define QEDEBUG
 
@@ -1173,7 +1173,7 @@ qe_mcreset(sc)
 
 	ETHER_FIRST_MULTI(step, ec, enm);
 	while (enm != NULL) {
-		if (bcmp(enm->enm_addrlo, enm->enm_addrhi,
+		if (memcmp(enm->enm_addrlo, enm->enm_addrhi,
 			 ETHER_ADDR_LEN) != 0) {
 			/*
 			 * We must listen to a range of multicast

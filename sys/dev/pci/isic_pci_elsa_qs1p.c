@@ -1,3 +1,5 @@
+/* $NetBSD: isic_pci_elsa_qs1p.c,v 1.2.2.3 2002/06/20 03:45:34 nathanw Exp $ */
+
 /*
  * Copyright (c) 1997, 1999 Hellmuth Michaelis. All rights reserved.
  *
@@ -27,14 +29,10 @@
  *	isic - I4B Siemens ISDN Chipset Driver for ELSA Quickstep 1000pro PCI
  *	=====================================================================
  *
- *	$Id: isic_pci_elsa_qs1p.c,v 1.2.2.2 2002/04/01 07:46:31 nathanw Exp $
- *
- *      last edit-date: [Fri Jan  5 11:38:58 2001]
- *
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isic_pci_elsa_qs1p.c,v 1.2.2.2 2002/04/01 07:46:31 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isic_pci_elsa_qs1p.c,v 1.2.2.3 2002/06/20 03:45:34 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -42,28 +40,10 @@ __KERNEL_RCSID(0, "$NetBSD: isic_pci_elsa_qs1p.c,v 1.2.2.2 2002/04/01 07:46:31 n
 #include <sys/mbuf.h>
 #include <sys/socket.h>
 #include <net/if.h>
-
-#if defined(__NetBSD__) && __NetBSD_Version__ >= 104230000
 #include <sys/callout.h>
-#endif
 
-#ifdef __FreeBSD__
-#if __FreeBSD__ >= 3
-#include <sys/ioccom.h>
-#else
-#include <sys/ioctl.h>
-#endif
-#include <machine/clock.h>
-#include <i386/isa/isa_device.h>
-#else
 #include <machine/bus.h>
 #include <sys/device.h>
-#endif
-
-#ifdef __FreeBSD__
-#include <machine/i4b_debug.h>
-#include <machine/i4b_ioctl.h>
-#else
 
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>
@@ -71,8 +51,6 @@ __KERNEL_RCSID(0, "$NetBSD: isic_pci_elsa_qs1p.c,v 1.2.2.2 2002/04/01 07:46:31 n
 
 #include <netisdn/i4b_debug.h>
 #include <netisdn/i4b_ioctl.h>
-#endif
-
 #include <netisdn/i4b_global.h>
 #include <netisdn/i4b_debug.h>
 #include <netisdn/i4b_l2.h>
@@ -83,10 +61,7 @@ __KERNEL_RCSID(0, "$NetBSD: isic_pci_elsa_qs1p.c,v 1.2.2.2 2002/04/01 07:46:31 n
 #include <dev/ic/isac.h>
 #include <dev/ic/hscx.h>
 #include <dev/ic/ipac.h>
-
-#ifndef __FreeBSD__
 #include <dev/pci/isic_pci.h>
-#endif
 
 /* masks for register encoded in base addr */
 
@@ -105,36 +80,22 @@ __KERNEL_RCSID(0, "$NetBSD: isic_pci_elsa_qs1p.c,v 1.2.2.2 2002/04/01 07:46:31 n
 #define ELSA_OFF_ALE		0x00
 #define ELSA_OFF_RW		0x01
 
+/* LED values */
+#define	ELSA_NO_LED		0xff
+#define	ELSA_GREEN_LED		0x40
+#define	ELSA_YELLOW_LED		0x80
+
 #define ELSA_PORT0_MEM_MAPOFF	PCI_MAPREG_START
 #define ELSA_PORT0_IO_MAPOFF	PCI_MAPREG_START+4
 #define ELSA_PORT1_MAPOFF	PCI_MAPREG_START+12
 
+
+static void elsa_cmd_req(struct isic_softc *sc, int cmd, void *data);
+static void elsa_led_handler(void *token);
+
 /*---------------------------------------------------------------------------*
  *      ELSA QuickStep 1000pro/PCI ISAC get fifo routine
  *---------------------------------------------------------------------------*/
-#ifdef __FreeBSD__
-
-static void             
-eqs1pp_read_fifo(void *buf, const void *base, size_t len)
-{
-	if(((u_int)base & ELSA_OFF_MASK) == ELSA_IDHSCXB)
-	{
-	        outb((u_int)((u_int)base & ELSA_BASE_MASK) + ELSA_OFF_ALE, IPAC_HSCXB_OFF);
-		insb((((u_int)base & ELSA_BASE_MASK) + ELSA_OFF_RW), (u_char *)buf, (u_int)len);
-	}
-	else if(((u_int)base & ELSA_OFF_MASK) == ELSA_IDHSCXA)
-	{
-	        outb((u_int)((u_int)base & ELSA_BASE_MASK) + ELSA_OFF_ALE, IPAC_HSCXA_OFF);
-		insb((((u_int)base & ELSA_BASE_MASK) + ELSA_OFF_RW), (u_char *)buf, (u_int)len);
-	}		
-	else /* if(((u_int)base & ELSA_OFF_MASK) == ELSA_IDISAC) */
-	{
-	        outb((u_int)((u_int)base & ELSA_BASE_MASK) + ELSA_OFF_ALE, IPAC_ISAC_OFF);
-		insb((((u_int)base & ELSA_BASE_MASK) + ELSA_OFF_RW), (u_char *)buf, (u_int)len);
-	}		
-}
-
-#else
 
 static void
 eqs1pp_read_fifo(struct isic_softc *sc, int what, void *buf, size_t size)
@@ -157,34 +118,9 @@ eqs1pp_read_fifo(struct isic_softc *sc, int what, void *buf, size_t size)
 	}
 }
 
-#endif
-
 /*---------------------------------------------------------------------------*
  *      ELSA QuickStep 1000pro/PCI ISAC put fifo routine
  *---------------------------------------------------------------------------*/
-#ifdef __FreeBSD__
-
-static void
-eqs1pp_write_fifo(void *base, const void *buf, size_t len)
-{
-	if(((u_int)base & ELSA_OFF_MASK) == ELSA_IDHSCXB)
-	{
-	        outb((u_int)((u_int)base & ELSA_BASE_MASK) + ELSA_OFF_ALE, IPAC_HSCXB_OFF);
-		outsb((((u_int)base & ELSA_BASE_MASK) + ELSA_OFF_RW), (u_char *)buf, (u_int)len);
-	}
-	else if(((u_int)base & ELSA_OFF_MASK) == ELSA_IDHSCXA)
-	{
-	        outb((u_int)((u_int)base & ELSA_BASE_MASK) + ELSA_OFF_ALE, IPAC_HSCXA_OFF);
-		outsb((((u_int)base & ELSA_BASE_MASK) + ELSA_OFF_RW), (u_char *)buf, (u_int)len);
-	}		
-	else /* if(((u_int)base & ELSA_OFF_MASK) == ELSA_IDISAC) */
-	{
-	        outb((u_int)((u_int)base & ELSA_BASE_MASK) + ELSA_OFF_ALE, IPAC_ISAC_OFF);
-		outsb((((u_int)base & ELSA_BASE_MASK) + ELSA_OFF_RW), (u_char *)buf, (u_int)len);
-	}
-}
-
-#else
 
 static void
 eqs1pp_write_fifo(struct isic_softc *sc, int what, const void *buf, size_t size)
@@ -206,39 +142,10 @@ eqs1pp_write_fifo(struct isic_softc *sc, int what, const void *buf, size_t size)
 			break;
 	}
 }
-#endif
 
 /*---------------------------------------------------------------------------*
  *      ELSA QuickStep 1000pro/PCI ISAC put register routine
  *---------------------------------------------------------------------------*/
-#ifdef __FreeBSD__
-
-static void
-eqs1pp_write_reg(u_char *base, u_int offset, u_int v)
-{
-	if(((u_int)base & ELSA_OFF_MASK) == ELSA_IDHSCXB)
-	{
-	        outb(((u_int)base & ELSA_BASE_MASK) + ELSA_OFF_ALE, (u_char)(offset+IPAC_HSCXB_OFF));
-	        outb(((u_int)base & ELSA_BASE_MASK) + ELSA_OFF_RW, (u_char)v);
-	}		
-	else if(((u_int)base & ELSA_OFF_MASK) == ELSA_IDHSCXA)
-	{
-	        outb(((u_int)base & ELSA_BASE_MASK) + ELSA_OFF_ALE, (u_char)(offset+IPAC_HSCXA_OFF));
-	        outb(((u_int)base & ELSA_BASE_MASK) + ELSA_OFF_RW, (u_char)v);
-	}		
-	else if(((u_int)base & ELSA_OFF_MASK) == ELSA_IDISAC)
-	{
-	        outb(((u_int)base & ELSA_BASE_MASK) + ELSA_OFF_ALE, (u_char)(offset+IPAC_ISAC_OFF));
-	        outb(((u_int)base & ELSA_BASE_MASK) + ELSA_OFF_RW, (u_char)v);
-	}		
-	else /* IPAC */
-	{
-	        outb(((u_int)base & ELSA_BASE_MASK) + ELSA_OFF_ALE, (u_char)(offset+IPAC_IPAC_OFF));
-	        outb(((u_int)base & ELSA_BASE_MASK) + ELSA_OFF_RW, (u_char)v);
-	}		
-}
-
-#else
 
 static void
 eqs1pp_write_reg(struct isic_softc *sc, int what, bus_size_t offs, u_int8_t data)
@@ -264,39 +171,10 @@ eqs1pp_write_reg(struct isic_softc *sc, int what, bus_size_t offs, u_int8_t data
 			break;
 	}
 }
-#endif
 
 /*---------------------------------------------------------------------------*
  *	ELSA QuickStep 1000pro/PCI ISAC get register routine
  *---------------------------------------------------------------------------*/
-#ifdef __FreeBSD__
-
-static u_char
-eqs1pp_read_reg(u_char *base, u_int offset)
-{
-	if(((u_int)base & ELSA_OFF_MASK) == ELSA_IDHSCXB)
-	{
-	        outb((u_int)((u_int)base & ELSA_BASE_MASK) + ELSA_OFF_ALE, (u_char)(offset+IPAC_HSCXB_OFF));
-		return(inb(((u_int)base & ELSA_BASE_MASK) + ELSA_OFF_RW));
-	}
-	else if(((u_int)base & ELSA_OFF_MASK) == ELSA_IDHSCXA)
-	{
-	        outb((u_int)((u_int)base & ELSA_BASE_MASK) + ELSA_OFF_ALE, (u_char)(offset+IPAC_HSCXA_OFF));
-		return(inb(((u_int)base & ELSA_BASE_MASK) + ELSA_OFF_RW));
-	}		
-	else if(((u_int)base & ELSA_OFF_MASK) == ELSA_IDISAC)
-	{
-	        outb((u_int)((u_int)base & ELSA_BASE_MASK) + ELSA_OFF_ALE, (u_char)(offset+IPAC_ISAC_OFF));
-		return(inb(((u_int)base & ELSA_BASE_MASK) + ELSA_OFF_RW));
-	}		
-	else /* IPAC */
-	{
-	        outb((u_int)((u_int)base & ELSA_BASE_MASK) + ELSA_OFF_ALE, (u_char)(offset+IPAC_IPAC_OFF));
-		return(inb(((u_int)base & ELSA_BASE_MASK) + ELSA_OFF_RW));
-	}		
-}
-
-#else
 
 static u_int8_t
 eqs1pp_read_reg(struct isic_softc *sc, int what, bus_size_t offs)
@@ -323,80 +201,9 @@ eqs1pp_read_reg(struct isic_softc *sc, int what, bus_size_t offs)
 	return 0;
 }
 
-#endif
-
 /*---------------------------------------------------------------------------*
  *	isic_attach_Eqs1pp - attach for ELSA QuickStep 1000pro/PCI
  *---------------------------------------------------------------------------*/
-#ifdef __FreeBSD__
-int
-isic_attach_Eqs1pp(int unit, unsigned int iobase1, unsigned int iobase2)
-{
-	struct isic_softc *sc = &l1_sc[unit];
-	
-	/* check max unit range */
-	
-	if(unit >= ISIC_MAXUNIT)
-	{
-		printf("isic%d: Error, unit %d >= ISIC_MAXUNIT for ELSA QuickStep 1000pro/PCI!\n",
-				unit, unit);
-		return(0);	
-	}	
-	sc->sc_unit = unit;
-
-	/* setup iobase */
-
-	if((iobase2 <= 0) || (iobase2 > 0xffff))
-	{
-		printf("isic%d: Error, invalid iobase 0x%x specified for ELSA QuickStep 1000pro/PCI!\n",
-			unit, iobase2);
-		return(0);
-	}
-	sc->sc_port = iobase2;
-
-	/* setup access routines */
-
-	sc->clearirq = NULL;
-	sc->readreg = eqs1pp_read_reg;
-	sc->writereg = eqs1pp_write_reg;
-
-	sc->readfifo = eqs1pp_read_fifo;
-	sc->writefifo = eqs1pp_write_fifo;
-
-	/* setup card type */
-	
-	sc->sc_cardtyp = CARD_TYPEP_ELSAQS1PCI;
-
-	/* setup IOM bus type */
-	
-	sc->sc_bustyp = BUS_TYPE_IOM2;
-
-	/* setup chip type = IPAC ! */
-	
-	sc->sc_ipac = 1;
-	sc->sc_bfifolen = IPAC_BFIFO_LEN;
-	
-	/* setup ISAC and HSCX base addr */
-	
-	ISAC_BASE   = (caddr_t) ((u_int)iobase2 | ELSA_IDISAC);
-	HSCX_A_BASE = (caddr_t) ((u_int)iobase2 | ELSA_IDHSCXA);
-	HSCX_B_BASE = (caddr_t) ((u_int)iobase2 | ELSA_IDHSCXB);
-	IPAC_BASE   = (caddr_t) ((u_int)iobase2 | ELSA_IDIPAC);
-
-	/* enable hscx/isac irq's */
-	IPAC_WRITE(IPAC_MASK, (IPAC_MASK_INT1 | IPAC_MASK_INT0));
-
-	IPAC_WRITE(IPAC_ACFG, 0);	/* outputs are open drain */
-	IPAC_WRITE(IPAC_AOE,		/* aux 5..2 are inputs, 7, 6 outputs */
-		(IPAC_AOE_OE5 | IPAC_AOE_OE4 | IPAC_AOE_OE3 | IPAC_AOE_OE2));
-	IPAC_WRITE(IPAC_ATX, 0xff);	/* set all output lines high */
-
-        outb(iobase1 + 0x4c, 0x41);	/* enable card interrupt */
-        
-	return (1);
-}
-
-#else	/* !FreeBSD */
 
 void
 isic_attach_Eqs1pp(psc, pa)
@@ -416,6 +223,15 @@ isic_attach_Eqs1pp(psc, pa)
 		printf("%s: can't map card registers\n", sc->sc_dev.dv_xname);
 		return;
 	}
+
+	/* PLX9050 Errata #1 */
+	if (PCI_REVISION(pa->pa_class) == 1 && psc->sc_base & 0x00000080) {
+#ifdef DEBUG
+		printf("%s: no LCR access\n", sc->sc_dev.dv_xname);
+#endif
+	} else
+		psc->flags |= PCIISIC_LCROK;
+
 	sc->sc_maps[1].size = 0;
 	if (pci_mapreg_map(pa, ELSA_PORT1_MAPOFF, PCI_MAPREG_TYPE_IO, 0,
 	    &sc->sc_maps[1].t, &sc->sc_maps[1].h, NULL, NULL)) {
@@ -432,6 +248,8 @@ isic_attach_Eqs1pp(psc, pa)
 	sc->readfifo = eqs1pp_read_fifo;
 	sc->writefifo = eqs1pp_write_fifo;
 
+	sc->drv_command = elsa_cmd_req;
+
 	/* setup card type */
 	
 	sc->sc_cardtyp = CARD_TYPEP_ELSAQS1PCI;
@@ -444,16 +262,104 @@ isic_attach_Eqs1pp(psc, pa)
 	
 	sc->sc_ipac = 1;
 	sc->sc_bfifolen = IPAC_BFIFO_LEN;
-	
-	/* enable hscx/isac irq's */
-	IPAC_WRITE(IPAC_MASK, (IPAC_MASK_INT1 | IPAC_MASK_INT0));
 
 	IPAC_WRITE(IPAC_ACFG, 0);	/* outputs are open drain */
 	IPAC_WRITE(IPAC_AOE,		/* aux 5..2 are inputs, 7, 6 outputs */
 		(IPAC_AOE_OE5 | IPAC_AOE_OE4 | IPAC_AOE_OE3 | IPAC_AOE_OE2));
-	IPAC_WRITE(IPAC_ATX, 0xff);	/* set all output lines high */
+	IPAC_WRITE(IPAC_ATX, ELSA_NO_LED);	/* set all output lines high */
+	callout_init(&((struct pci_isic_softc *)sc)->ledcallout);
 
-        bus_space_write_1(sc->sc_maps[0].t, sc->sc_maps[0].h, 0x4c, 0x41);	/* enable card interrupt */
+	/* disable any interrupts */
+	IPAC_WRITE(IPAC_MASK, 0xff);
+        bus_space_write_1(sc->sc_maps[0].t, sc->sc_maps[0].h, 0x4c, 0x01);
 }
 
-#endif
+int
+isic_intr_qs1p(vsc)
+	void *vsc;
+{
+	struct pci_isic_softc *psc = vsc;
+	struct isic_softc *sc = &psc->sc_isic;
+	u_int32_t intcsr;
+
+	/*
+	 * if we are not hit by the PLX bug we can try a shortcut
+	 * (should improve speed for shared IRQs)
+	 */
+	if (psc->flags & PCIISIC_LCROK) {
+		intcsr = bus_space_read_4(sc->sc_maps[0].t, sc->sc_maps[0].h,
+					  0x4c /* INTCSR */);
+		if (!(intcsr & 0x4 /* LINTi1STAT */))
+			return (0);
+	}
+
+	return (isicintr(sc));
+}
+
+static void
+elsa_cmd_req(struct isic_softc *sc, int cmd, void *data)
+{
+	int s, v;
+	struct pci_isic_softc *psc = (struct pci_isic_softc *)sc;
+
+	switch (cmd) {
+	case CMR_DOPEN:
+		s = splnet();
+		/* enable hscx/isac irq's */
+		IPAC_WRITE(IPAC_MASK, (IPAC_MASK_INT1 | IPAC_MASK_INT0));
+		/* enable card interrupt */
+	        bus_space_write_1(sc->sc_maps[0].t, sc->sc_maps[0].h, 0x4c, 0x41);
+		splx(s);
+		break;
+	case CMR_DCLOSE:
+		s = splnet();
+		callout_stop(&psc->ledcallout);
+		IPAC_WRITE(IPAC_ATX, ELSA_NO_LED);
+		IPAC_WRITE(IPAC_MASK, 0xff);
+	        bus_space_write_1(sc->sc_maps[0].t, sc->sc_maps[0].h, 0x4c, 0x01);
+		splx(s);
+		break;
+	case CMR_SETLEDS:
+		v = (int)data;
+		callout_stop(&psc->ledcallout);
+
+		/* the magic value and keep reset off */
+		psc->ledstat = ELSA_NO_LED;
+		psc->ledblinkmask = 0;
+		psc->ledblinkfreq = 0;
+
+		/* now see what LEDs we want to add */
+		if (v & CMRLEDS_TEI)
+			psc->ledstat &= ~ELSA_GREEN_LED;
+
+		if (v & (CMRLEDS_B0|CMRLEDS_B1)) {
+			psc->ledstat &= ~ELSA_YELLOW_LED;
+			psc->ledblinkmask |= ELSA_YELLOW_LED;
+			if ((v & (CMRLEDS_B0|CMRLEDS_B1))
+			    == (CMRLEDS_B0|CMRLEDS_B1))
+				psc->ledblinkfreq = hz/4;
+			else
+				psc->ledblinkfreq = hz;
+		}
+
+		elsa_led_handler(psc);
+		break;
+	}
+}
+
+static void
+elsa_led_handler(void *token)
+{
+	struct pci_isic_softc *psc = token;
+	struct isic_softc *sc = token; /* XXX */
+	int s;
+
+	s = splnet();
+	IPAC_WRITE(IPAC_ATX, psc->ledstat);
+	splx(s);
+	if (psc->ledblinkfreq) {
+		psc->ledstat ^= psc->ledblinkmask;
+		callout_reset(&psc->ledcallout, psc->ledblinkfreq,
+		    elsa_led_handler, psc);
+	}
+}

@@ -1,4 +1,4 @@
-/*	$NetBSD: csa.c,v 1.1.4.2 2002/01/08 00:22:46 nathanw Exp $	*/
+/*	$NetBSD: csa.c,v 1.1.4.3 2002/06/20 03:37:20 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -117,7 +117,7 @@ csa_match(parent, cf, aux)
 {
 	struct podule_attach_args *pa = aux;
 
-	if (matchpodule(pa, MANUFACTURER_CUMANA, PODULE_CUMANA_SCSI1, -1))
+	if (pa->pa_product == PODULE_CUMANA_SCSI1)
 		return(1);
 
 	/* PowerROM */

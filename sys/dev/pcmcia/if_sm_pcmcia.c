@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sm_pcmcia.c,v 1.23.2.3 2001/11/14 19:15:38 nathanw Exp $	*/
+/*	$NetBSD: if_sm_pcmcia.c,v 1.23.2.4 2002/06/20 03:46:09 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sm_pcmcia.c,v 1.23.2.3 2001/11/14 19:15:38 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sm_pcmcia.c,v 1.23.2.4 2002/06/20 03:46:09 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -139,7 +139,7 @@ sm_pcmcia_attach(parent, self, aux)
 	const struct pcmcia_product *pp;
 
 	psc->sc_pf = pa->pf;
-	cfe = pa->pf->cfe_head.sqh_first;
+	cfe = SIMPLEQ_FIRST(&pa->pf->cfe_head);
 
 	/* Enable the card. */
 	pcmcia_function_init(pa->pf, cfe);

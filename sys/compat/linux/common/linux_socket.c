@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_socket.c,v 1.28.2.10 2002/05/29 21:32:45 nathanw Exp $	*/
+/*	$NetBSD: linux_socket.c,v 1.28.2.11 2002/06/20 03:43:06 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_socket.c,v 1.28.2.10 2002/05/29 21:32:45 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_socket.c,v 1.28.2.11 2002/06/20 03:43:06 nathanw Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -444,7 +444,14 @@ linux_to_bsd_so_sockopt(lopt)
 	case LINUX_SO_DEBUG:
 		return SO_DEBUG;
 	case LINUX_SO_REUSEADDR:
-		return SO_REUSEADDR;
+		/* 
+		 * Linux does not implement SO_REUSEPORT, but allows reuse of a
+		 * host:port pair through SO_REUSEADDR even if the address is not a
+		 * multicast-address.  Effectively, this means that we should use
+		 * SO_REUSEPORT to allow Linux applications to not exit with
+		 * EADDRINUSE
+		 */
+		return SO_REUSEPORT;
 	case LINUX_SO_TYPE:
 		return SO_TYPE;
 	case LINUX_SO_ERROR:

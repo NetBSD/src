@@ -1,11 +1,13 @@
-# $NetBSD: FRAU-FARBISSINA,v 1.9.2.4 2002/04/17 00:02:09 nathanw Exp $
+# $NetBSD: FRAU-FARBISSINA,v 1.9.2.5 2002/06/20 03:37:34 nathanw Exp $
 #
 # frau-farbissina.shagadelic.org -- thorpej's AlphaServer 1200 MP hacking
 # box
 
 include	"arch/alpha/conf/std.alpha"
 
-#ident 		"FRAU-FARBISSINA-$Revision: 1.9.2.4 $"
+#options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
+
+#ident 		"FRAU-FARBISSINA-$Revision: 1.9.2.5 $"
 
 maxusers 64
 
@@ -185,7 +187,6 @@ adw*	at	pci? dev ? function ?		# AdvanSys Wide SCSI
 #bha*	at	pci? dev ? function ?		# BusLogic 9xx SCSI (untested)
 #cac*	at	pci? dev ? function ?		# Compaq array controller (untested)
 #cy*	at	pci? dev ? function ?		# Cyclades Cyclom-Y (untested)
-#de*	at	pci? dev ? function ?		# 21x4x-based Ethernet
 #dpt*	at	pci? dev ? function ?		# DPT SmartCache/SmartRAID
 #eap*	at	pci? dev ? function ?		# Ensoniq AudioPCI
 #en*	at	pci? dev ? function ?		# ENI PCI ATM (untested)
@@ -212,10 +213,6 @@ sip*	at	pci? dev ? function ?		# SiS 900 Ethernet
 #ti*	at	pci? dev ? function ?		# Alteon Tigon Gig-E
 #tl*	at	pci? dev ? function ?		# TI ThunderLAN Ethernet
 tlp*	at	pci? dev ? function ?		# DECchip 21x4x and clones
-options 	TLP_MATCH_21040
-options 	TLP_MATCH_21041
-options 	TLP_MATCH_21140
-options 	TLP_MATCH_21142
 #uhci*	at	pci? dev ? function ?		# USB Univ. Host Controller
 vga*	at	pci? dev ? function ?		# PCI VGA Graphics
 #vr*	at	pci? dev ? function ?		# VIA Rhine Fast Ethernet
@@ -415,6 +412,7 @@ pseudo-device	gif		4	# IPv[46] over IPv[46] tunnel (RFC1933)
 pseudo-device	faith		1	# IPv[46] tcp relay translation i/f
 #pseudo-device	stf		1	# 6to4 IPv6 over IPv4 encapsulation
 #pseudo-device	sequencer	1	# MIDI sequencer
+pseudo-device	clockctl		# user control of clock subsystem
 
 # rnd is EXPERIMENTAL
 pseudo-device	rnd			# /dev/random and in-kernel generator

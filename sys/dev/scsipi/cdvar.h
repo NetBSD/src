@@ -1,4 +1,4 @@
-/*	$NetBSD: cdvar.h,v 1.12.6.1 2001/06/21 20:05:45 nathanw Exp $	*/
+/*	$NetBSD: cdvar.h,v 1.12.6.2 2002/06/20 03:46:35 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.  All rights reserved.
@@ -13,7 +13,7 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *	This product includes software developed by Charles M. Hannum.
+ *	This product includes software developed by Manuel Bouyer.
  * 4. The name of the author may not be used to endorse or promote products
  *    derived from this software without specific prior written permission.
  *

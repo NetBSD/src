@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.30.4.5 2002/04/17 00:04:15 nathanw Exp $
+# $NetBSD: GENERIC,v 1.30.4.6 2002/06/20 03:40:36 nathanw Exp $
 #
 # GENERIC machine description file
 # 
@@ -20,9 +20,19 @@
 
 include 	"arch/prep/conf/std.prep"
 
-#ident		"GENERIC-$Revision: 1.30.4.5 $"
+options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
+
+#ident		"GENERIC-$Revision: 1.30.4.6 $"
 
 maxusers	32
+
+# Platform support
+options 	PLATFORM_IBM_6050		# IBM Personal Power Series 830
+options 	PLATFORM_IBM_7248		# IBM RS/6000 7248-100/120/133
+options 	PLATFORM_IBM_7043_140		# IBM RS/6000 43P 7043-140
+options 	PLATFORM_MOTOROLA_ULMB60XA	# Motorola ULMB60xA (?)
+
+options 	OPENPIC				# OpenPIC support (7043-140)
 
 # Standard system options
 
@@ -56,6 +66,7 @@ options 	DDB		# in-kernel debugger
 # Compatibility options
 options 	COMPAT_13	# NetBSD 1.3,
 options 	COMPAT_14	# NetBSD 1.4,
+options 	COMPAT_15	# NetBSD 1.5,
 options 	COMPAT_43	# and 4.3BSD
 #options 	COMPAT_LINUX	# Linux binary compatibility
 #options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
@@ -111,6 +122,7 @@ options 	PCIVERBOSE	# verbose PCI device autoconfig messages
 options 	PCMCIAVERBOSE	# verbose PCMCIA configuration messages
 options 	SCSIVERBOSE	# human readable SCSI error messages
 #options 	USBVERBOSE	# verbose USB device autoconfig messages
+#options 	RESIDUAL_DATA_DUMP	# verbosely dump residual data
 
 options 	NFS_BOOT_BOOTP
 options 	NFS_BOOT_BOOTPARAM
@@ -133,7 +145,7 @@ options 	PCDISPLAY_SOFTCURSOR
 
 # Kernel root file system and dump configuration.
 config	netbsd	root on ? type ?
-#config	netbsd	root on de0 type nfs
+#config	netbsd	root on tlp0 type nfs
 #config	netbsd	root on le0 type nfs
 
 
@@ -174,6 +186,10 @@ pcic0	at isa? port 0x3e0 iomem 0xd0000 iosiz 0x10000
 
 # ISA Plug-and-Play bus support
 isapnp0	at isa?
+
+# on-board I/O for IBM Personal Power Series 830 IDE controller
+obio0	at mainbus0
+
 
 # Console Devices
 
@@ -243,6 +259,13 @@ uk*	at scsibus? target ? lun ?	# SCSI unknown
 
 # IDE and related devices
 
+# IBM Personal Power Series 830 IDE controller
+wdc0	at obio? port 0x1f0 irq 13
+wdc1	at obio? port 0x170 irq 13
+
+# ISA Plug-and-Play IDE controllers
+wdc*	at isapnp?
+
 # PCMCIA IDE controllers
 wdc*	at pcmcia? function ?
 
@@ -272,18 +295,14 @@ uk*	at atapibus? drive ? flags 0x0000	# ATAPI unknown
 # Network Interfaces
 
 # PCI network interfaces
-de*	at pci? dev ? function ?	# DEC 21x4x-based Ethernet
 ep*	at pci? dev ? function ?	# 3Com 3c59x
+ex*	at pci? dev ? function ?	# 3Com 3c90x[BC]
 fxp*	at pci? dev ? function ?	# Intel EtherExpress PRO 10+/100B
 ne*	at pci? dev ? function ?	# NE2000-compatible Ethernet
 pcn*	at pci? dev ? function ?	# AMD PCnet-PCI Ethernet
 rtk*	at pci? dev ? function ?	# Realtek 8129/8139
 sip*	at pci? dev ? function ?	# SiS 900/DP83815 Ethernet
-tlp*	at pci? dev ? function ?	# DECchip 21x4x (and clones) Ethernet
-#options 	TLP_MATCH_21040
-#options 	TLP_MATCH_21041
-#options 	TLP_MATCH_21140
-#options 	TLP_MATCH_21142
+tlp*	at pci? dev ? function ?	# DECchip 21x4x and clones
 vr*	at pci? dev ? function ?	# VIA Rhine Fast Ethernet
 
 # ISA network interfaces
@@ -299,10 +318,6 @@ ne*	at isapnp?			# NE2000-compatible Ethernet
 # PCMCIA network interfaces
 ep*	at pcmcia? function ?		# 3Com 3c589 and 3c562 Ethernet
 ne*	at pcmcia? function ?		# NE2000-compatible Ethernet
-
-mhzc*	at pcmcia? function ?		# Megahertz Ethernet/Modem combo cards
-com*	at mhzc?
-sm*	at mhzc?
 
 # MII/PHY support
 dmphy*	at mii? phy ?			# Davicom DM9101 PHYs
@@ -372,9 +387,17 @@ ukphy*	at mii? phy ?			# generic unknown PHYs
 #upl*	at uhub? port ?
 
 # Serial adapters
-# FTDI FT8U100AX serial adapter
-#uftdi*	at uhub? port ?
+#uftdi*	at uhub? port ?		# FTDI FT8U100AX serial adapter
 #ucom*	at uftdi? portno ?
+
+#umct*	at uhub? port ?		# MCT USB-RS232 serial adapter
+#ucom*	at umct? portno ?
+
+#uplcom* at uhub? port ?	# I/O DATA USB-RSAQ2 serial adapter
+#ucom*	at uplcom? portno ?
+
+#uvscom* at uhub? port ?	# SUNTAC Slipper U VS-10U serial adapter
+#ucom*	at uvscom? portno ?
 
 # Diamond Multimedia Rio 500
 #urio*	at uhub? port ?
@@ -408,10 +431,14 @@ midi*	at pcppi?		# MIDI interface to the PC speaker
 # The spkr driver provides a simple tone interface to the built in speaker.
 spkr0	at pcppi?		# PC speaker
 
+
 # Joysticks
 
+# ISA Plug-and-Play joysticks
+joy*	at isapnp?			# Game ports (usually on audio cards)
+
 # ISA joysticks. Probe is a little strange; add only if you have one.
-joy0	at isa? port 0x201
+#joy0	at isa? port 0x201
 
 
 # Pseudo-Devices
@@ -453,6 +480,7 @@ pseudo-device	tb		1	# tablet line discipline
 pseudo-device	sequencer	1	# MIDI sequencer
 pseudo-device	rnd			# /dev/random and in-kernel generator
 #options 	RND_COM			# use "com" randomness as well
+pseudo-device	clockctl		# user control of clock subsystem
 
 # a pseudo device needed for Coda	# also needs CODA (above)
 #pseudo-device	vcoda		4	# coda minicache <-> venus comm.

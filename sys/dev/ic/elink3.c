@@ -1,4 +1,4 @@
-/*	$NetBSD: elink3.c,v 1.87.2.6 2002/01/08 00:29:42 nathanw Exp $	*/
+/*	$NetBSD: elink3.c,v 1.87.2.7 2002/06/20 03:44:32 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: elink3.c,v 1.87.2.6 2002/01/08 00:29:42 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: elink3.c,v 1.87.2.7 2002/06/20 03:44:32 nathanw Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"
@@ -551,7 +551,7 @@ ep_internalconfig(sc)
 	 * NVRAM buffer Rx:Tx config names for busmastering cards
 	 * (Demon, Vortex, and later).
 	 */
-	const char *onboard_ram_config[] = {
+	const char *const onboard_ram_config[] = {
 		"5:3", "3:1", "1:1", "3:5" };
 
 	GO_WINDOW(3);

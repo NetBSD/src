@@ -1,4 +1,4 @@
-/*	$NetBSD: cc.h,v 1.11.8.3 2002/02/28 04:06:19 nathanw Exp $	*/
+/*	$NetBSD: cc.h,v 1.11.8.4 2002/06/20 03:37:48 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -167,9 +167,9 @@ struct mem_node {
 #define MNODES_MEM(mn) ((u_char *)(&mn[1]))
 #define PREP_DMA_MEM(mem) (void *)((caddr_t)mem - CHIPMEMADDR)
 
-vaddr_t CHIPMEMADDR;
-vaddr_t chipmem_start;
-vaddr_t chipmem_end;
+extern vaddr_t CHIPMEMADDR;
+extern vaddr_t chipmem_start;
+extern vaddr_t chipmem_end;
 #define CHIPMEMBASE	(0x00000000)
 #define CHIPMEMTOP	(0x00200000)
 #define NCHIPMEMPG	btoc(CHIPMEMTOP - CHIPMEMBASE)
@@ -216,4 +216,3 @@ void vbl_handler(void);
 void *chipmem_steal(long);
 
 #endif /* _CC_H */
-

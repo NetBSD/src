@@ -1,4 +1,4 @@
-/*	$NetBSD: screg_1185.h,v 1.2 1999/02/15 04:36:34 hubertf Exp $	*/
+/*	$NetBSD: screg_1185.h,v 1.2.26.1 2002/06/20 03:40:14 nathanw Exp $	*/
 /*
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -51,14 +51,14 @@
 /*
  *		SCSI I/F Chip CXD1185Q Register address assignment
  */
-#ifdef mips
+#ifdef __mips__
 # define	SCSI_BASE	0xbfe00100
 #else
 # define	SCSI_BASE	0xe1900000
 #endif
 
 #ifndef U_CHAR
-#ifdef mips
+#ifdef __mips__
 #define U_CHAR volatile u_char
 #else
 #define U_CHAR u_char

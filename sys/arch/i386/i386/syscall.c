@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.10.4.6 2002/04/17 01:55:48 nathanw Exp $	*/
+/*	$NetBSD: syscall.c,v 1.10.4.7 2002/06/20 03:39:13 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -37,11 +37,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.10.4.6 2002/04/17 01:55:48 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.10.4.7 2002/06/20 03:39:13 nathanw Exp $");
 
 #include "opt_syscall_debug.h"
 #include "opt_vm86.h"
 #include "opt_ktrace.h"
+#include "opt_systrace.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -53,7 +54,11 @@ __KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.10.4.6 2002/04/17 01:55:48 nathanw Exp
 #ifdef KTRACE
 #include <sys/ktrace.h>
 #endif
+#ifdef SYSTRACE
+#include <sys/systrace.h>
+#endif
 #include <sys/syscall.h>
+
 
 #include <uvm/uvm_extern.h>
 
@@ -72,13 +77,19 @@ void
 syscall_intern(p)
 	struct proc *p;
 {
-
 #ifdef KTRACE
-	if (p->p_traceflag & (KTRFAC_SYSCALL | KTRFAC_SYSRET))
+	if (p->p_traceflag & (KTRFAC_SYSCALL | KTRFAC_SYSRET)) {
 		p->p_md.md_syscall = syscall_fancy;
-	else
+		return;
+	}
 #endif
-		p->p_md.md_syscall = syscall_plain;
+#ifdef SYSTRACE
+	if (ISSET(p->p_flag, P_SYSTRACE)) {
+		p->p_md.md_syscall = syscall_fancy;
+		return;
+	} 
+#endif
+	p->p_md.md_syscall = syscall_plain;
 }
 
 /*
@@ -221,13 +232,8 @@ syscall_fancy(frame)
 			goto bad;
 	}
 
-#ifdef SYSCALL_DEBUG
-	scdebug_call(l, code, args);
-#endif /* SYSCALL_DEBUG */
-#ifdef KTRACE
-	if (KTRPOINT(p, KTR_SYSCALL))
-		ktrsyscall(p, code, argsize, args);
-#endif /* KTRACE */
+	if ((error = trace_enter(l, code, args, rval)) != 0)
+		goto bad;
 
 	rval[0] = 0;
 	rval[1] = 0;
@@ -256,14 +262,9 @@ syscall_fancy(frame)
 		break;
 	}
 
-#ifdef SYSCALL_DEBUG
-	scdebug_ret(l, code, error, rval);
-#endif /* SYSCALL_DEBUG */
+	trace_exit(l, code, args, rval, error);
+
 	userret(l);
-#ifdef KTRACE
-	if (KTRPOINT(p, KTR_SYSRET))
-		ktrsysret(p, code, error, rval[0]);
-#endif /* KTRACE */
 }
 
 #ifdef VM86

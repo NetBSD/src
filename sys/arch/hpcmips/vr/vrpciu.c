@@ -1,4 +1,4 @@
-/*	$NetBSD: vrpciu.c,v 1.1.10.5 2002/04/17 00:03:10 nathanw Exp $	*/
+/*	$NetBSD: vrpciu.c,v 1.1.10.6 2002/06/20 03:38:57 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 Enami Tsugutomo.
@@ -299,6 +299,7 @@ vrpciu_attach(struct device *parent, struct device *self, void *aux)
 	pba.pba_memt = sc->sc_iot;
 	pba.pba_dmat = &hpcmips_default_bus_dma_tag.bdt;
 	pba.pba_bus = 0;
+	pba.pba_bridgetag = NULL;
 
 	if (platid_match(&platid, &platid_mask_MACH_LASER5_L_BOARD)) {
 		/*

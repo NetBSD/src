@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_syscall.c,v 1.3.2.4 2002/05/04 04:16:17 thorpej Exp $	*/
+/*	$NetBSD: linux_syscall.c,v 1.3.2.5 2002/06/20 03:38:00 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -75,11 +75,12 @@
  */
 
 #include "opt_ktrace.h"
+#include "opt_systrace.h"
 #include "opt_syscall_debug.h"
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: linux_syscall.c,v 1.3.2.4 2002/05/04 04:16:17 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_syscall.c,v 1.3.2.5 2002/06/20 03:38:00 nathanw Exp $");
 
 #include <sys/device.h>
 #include <sys/errno.h>
@@ -90,6 +91,9 @@ __KERNEL_RCSID(0, "$NetBSD: linux_syscall.c,v 1.3.2.4 2002/05/04 04:16:17 thorpe
 #include <sys/user.h>
 #ifdef KTRACE
 #include <sys/ktrace.h>
+#endif
+#ifdef SYSTRACE
+#include <sys/systrace.h>
 #endif
 
 #include <uvm/uvm_extern.h>
@@ -129,13 +133,8 @@ linux_syscall(trapframe_t *frame, struct lwp *l, u_int32_t insn)
 	callp = p->p_emul->e_sysent + code;
 	nargs = callp->sy_argsize / sizeof(register_t);
 
-#ifdef SYSCALL_DEBUG
-	scdebug_call(p, code, args);
-#endif
-#ifdef KTRACE
-	if (KTRPOINT(p, KTR_SYSCALL))
-		ktrsyscall(p, code, nargs * sizeof(register_t), args);
-#endif
+	if ((error = trace_enter(l, code, args, rval)) != 0)
+		goto bad;
 
 	rval[0] = 0;
 	rval[1] = 0;
@@ -156,17 +155,13 @@ linux_syscall(trapframe_t *frame, struct lwp *l, u_int32_t insn)
 		break;
 
 	default:
+	bad:
 		error = native_to_linux_errno[error];
 		frame->tf_r0 = error;
 		break;
 	}
 
-#ifdef SYSCALL_DEBUG
-	scdebug_ret(p, code, error, rval);
-#endif
+	trace_exit(l, code, args, rval, error);
+
 	userret(l);
-#ifdef KTRACE
-	if (KTRPOINT(p, KTR_SYSRET))
-		ktrsysret(p, code, error, rval[0]);
-#endif
 }

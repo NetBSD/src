@@ -1,4 +1,4 @@
-/* $NetBSD: linux_syscalls.c,v 1.32.2.7 2002/05/29 21:48:48 nathanw Exp $ */
+/* $NetBSD: linux_syscalls.c,v 1.32.2.8 2002/06/20 03:43:00 nathanw Exp $ */
 
 /*
  * System call names.
@@ -8,7 +8,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_syscalls.c,v 1.32.2.7 2002/05/29 21:48:48 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_syscalls.c,v 1.32.2.8 2002/06/20 03:43:00 nathanw Exp $");
 
 #if defined(_KERNEL_OPT)
 #if defined(_KERNEL_OPT)
@@ -263,8 +263,10 @@ const char *const linux_syscallnames[] = {
 	"setgid",			/* 214 = setgid */
 	"setfsuid",			/* 215 = setfsuid */
 	"getfsuid",			/* 216 = getfsuid */
-	"#217 (unimplemented pivot_root)",		/* 217 = unimplemented pivot_root */
-	"#218 (unimplemented / * unused ? * /)",		/* 218 = unimplemented / * unused ? * / */
-	"#219 (unimplemented / * unused ? * /)",		/* 219 = unimplemented / * unused ? * / */
+	"#217 (unimplemented / * unused * /)",		/* 217 = unimplemented / * unused * / */
+	"#218 (unimplemented / * unused * /)",		/* 218 = unimplemented / * unused * / */
+	"#219 (unimplemented / * unused * /)",		/* 219 = unimplemented / * unused * / */
 	"getdents64",			/* 220 = getdents64 */
+	"#221 (unimplemented gettid)",		/* 221 = unimplemented gettid */
+	"#222 (unimplemented tkill)",		/* 222 = unimplemented tkill */
 };

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.7.8.1 2002/01/08 00:26:54 nathanw Exp $
+#	$NetBSD: Makefile,v 1.7.8.2 2002/06/20 03:40:10 nathanw Exp $
 
 NOMAN= # defined
 
@@ -16,6 +16,7 @@ STRIPFLAG=
 BINMODE= 444
 
 SIZE?= size
+OBJCOPY?= objcopy
 
 S= ${.CURDIR}/../../../..
 
@@ -26,7 +27,7 @@ CPPFLAGS+= -D_STANDALONE # -DBOOTXX_DEBUG
 CPPFLAGS+= -nostdinc -I${.OBJDIR} -I${S}
 AFLAGS= -D_LOCORE
 
-CLEANFILES+= machine m68k
+CLEANFILES+= machine m68k ${PROG}.sym
 
 L= ${COMMONOBJ}/lib
 LIBS= ${L}/sa/libsa.a ${L}/kern/libkern.a
@@ -44,7 +45,8 @@ m68k::
 	ln -s ${S}/arch/m68k/include $@
 
 ${PROG}: ${OBJS} machine m68k
-	${LD} ${LDFLAGS} -o ${PROG} ${OBJS} ${LIBS}
-	${SIZE} ${PROG}
+	${LD} ${LDFLAGS} -o ${.TARGET}.sym ${OBJS} ${LIBS}
+	${SIZE} ${.TARGET}.sym
+	${OBJCOPY} -O binary ${.TARGET}.sym ${.TARGET}
 
 .include <bsd.prog.mk>

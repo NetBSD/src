@@ -1,6 +1,7 @@
-/*	$NetBSD: trap.c,v 1.74.4.8 2002/03/01 08:38:27 petrov Exp $ */
+/*	$NetBSD: trap.c,v 1.74.4.9 2002/06/20 03:41:35 nathanw Exp $ */
 
 /*
+ * Copyright (c) 1996-2002 Eduardo Horvath.  All rights reserved.
  * Copyright (c) 1996
  *	The President and Fellows of Harvard College. All rights reserved.
  * Copyright (c) 1992, 1993
@@ -53,6 +54,7 @@
 #include "opt_ddb.h"
 #include "opt_syscall_debug.h"
 #include "opt_ktrace.h"
+#include "opt_systrace.h"
 #include "opt_compat_svr4.h"
 #include "opt_compat_netbsd32.h"
 
@@ -72,6 +74,9 @@
 #include <sys/syslog.h>
 #ifdef KTRACE
 #include <sys/ktrace.h>
+#endif
+#ifdef SYSTRACE
+#include <sys/systrace.h>
 #endif
 
 #include <uvm/uvm_extern.h>
@@ -392,9 +397,8 @@ print_trapframe(tf)
 
 	printf("Trapframe %p:\ttstate: %lx\tpc: %lx\tnpc: %lx\n",
 	       tf, (u_long)tf->tf_tstate, (u_long)tf->tf_pc, (u_long)tf->tf_npc);
-	printf("fault: %p\tkstack: %p\ty: %x\t", 
-	       (void *)(u_long)tf->tf_fault, (void *)(u_long)tf->tf_kstack,
-	       (int)tf->tf_y);
+	printf("fault: %p\ty: %x\t", 
+	       (void *)(u_long)tf->tf_fault, (int)tf->tf_y);
 	printf("pil: %d\toldpil: %d\ttt: %x\tGlobals:\n", 
 	       (int)tf->tf_pil, (int)tf->tf_oldpil, (int)tf->tf_tt);
 	printf("%08x%08x %08x%08x %08x%08x %08x%08x\n",
@@ -407,6 +411,7 @@ print_trapframe(tf)
 	       (u_int)(tf->tf_global[5]>>32), (u_int)tf->tf_global[5],
 	       (u_int)(tf->tf_global[6]>>32), (u_int)tf->tf_global[6],
 	       (u_int)(tf->tf_global[7]>>32), (u_int)tf->tf_global[7]);
+#ifdef DEBUG
 	printf("%08x%08x %08x%08x %08x%08x %08x%08x\n",
 	       (u_int)(tf->tf_out[0]>>32), (u_int)tf->tf_out[0],
 	       (u_int)(tf->tf_out[1]>>32), (u_int)tf->tf_out[1],
@@ -417,6 +422,7 @@ print_trapframe(tf)
 	       (u_int)(tf->tf_out[5]>>32), (u_int)tf->tf_out[5],
 	       (u_int)(tf->tf_out[6]>>32), (u_int)tf->tf_out[6],
 	       (u_int)(tf->tf_out[7]>>32), (u_int)tf->tf_out[7]);
+#endif
 
 }
 #endif
@@ -1909,11 +1915,6 @@ syscall(tf, code, pc)
 		for (argp = &args.l[0]; i--;) 
 			*argp++ = *ap++;
 		
-#ifdef KTRACE
-		if (KTRPOINT(p, KTR_SYSCALL))
-			ktrsyscall(p, code,
-				   callp->sy_argsize, (register_t*)args.l);
-#endif
 		if (error) goto bad;
 #ifdef DEBUG
 		if (trapdebug&(TDB_SYSCALL|TDB_FOLLOW)) {
@@ -1974,8 +1975,8 @@ syscall(tf, code, pc)
 		}
 		/* Need to convert from int64 to int32 or we lose */
 		for (argp = &args.i[0]; i--;) 
-				*argp++ = *ap++;
-#ifdef KTRACE
+			*argp++ = *ap++;
+#ifdef notdef
 		if (KTRPOINT(p, KTR_SYSCALL)) {
 #if defined(__arch64__)
 			register_t temp[8];
@@ -1993,6 +1994,7 @@ syscall(tf, code, pc)
 #endif
 		}
 #endif
+#endif
 		if (error) {
 			goto bad;
 		}
@@ -2008,9 +2010,10 @@ syscall(tf, code, pc)
 		}
 #endif
 	}
-#ifdef SYSCALL_DEBUG
-	scdebug_call(l, code, (register_t *)&args);
-#endif
+
+	if ((error = trace_enter(l, code, &args, rval)) != 0)
+		goto bad;
+
 	rval[0] = 0;
 	rval[1] = tf->tf_out[1];
 #ifdef DEBUG
@@ -2088,19 +2091,15 @@ syscall(tf, code, pc)
 		break;
 	}
 
-#ifdef SYSCALL_DEBUG
-	scdebug_ret(l, code, error, rval);
-#endif
+
+	trace_exit(l, code, &args, rval, error);
+
 	userret(l, pc, sticks);
 #ifdef NOTDEF_DEBUG
 	if ( code == 202) {
 		/* Trap on __sysctl */
 		Debugger();
 	}
-#endif
-#ifdef KTRACE
-	if (KTRPOINT(p, KTR_SYSRET))
-		ktrsysret(p, code, error, rval[0]);
 #endif
 	share_fpu(l, tf);
 #ifdef DEBUG

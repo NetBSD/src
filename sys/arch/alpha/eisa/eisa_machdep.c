@@ -1,4 +1,4 @@
-/* $NetBSD: eisa_machdep.c,v 1.4 2000/08/11 01:02:39 thorpej Exp $ */
+/* $NetBSD: eisa_machdep.c,v 1.4.6.1 2002/06/20 03:37:37 nathanw Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: eisa_machdep.c,v 1.4 2000/08/11 01:02:39 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: eisa_machdep.c,v 1.4.6.1 2002/06/20 03:37:37 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -381,8 +381,7 @@ eisa_init()
 	cdata = malloc(512, M_TEMP, M_WAITOK);
 	data = malloc(512, M_TEMP, M_WAITOK);
 
-	for (ecud = SIMPLEQ_FIRST(&ecu_data_list); ecud != NULL;
-	     ecud = SIMPLEQ_NEXT(ecud, ecud_list)) {
+	SIMPLEQ_FOREACH(ecud, &ecu_data_list, ecud_list) {
 		cfgaddr = eisa_config_addr + ecud->ecud_offset;
 		eisa_read_config_bytes(cfgaddr, &cdata[0], 1);
 		cfgaddr += eisa_config_stride;
@@ -534,8 +533,7 @@ eisa_lookup_data(int slot)
 {
 	struct ecu_data *ecud;
 
-	for (ecud = SIMPLEQ_FIRST(&ecu_data_list); ecud != NULL;
-	     ecud = SIMPLEQ_NEXT(ecud, ecud_list)) {
+	SIMPLEQ_FOREACH(ecud, &ecu_data_list, ecud_list) {
 		if (ecud->ecud_slot == slot)
 			return (ecud);
 	}
@@ -552,8 +550,7 @@ eisa_lookup_func(int slot, int func)
 	if (ecud == NULL)
 		return (NULL);
 
-	for (ecuf = SIMPLEQ_FIRST(&ecud->ecud_funcs); ecuf != NULL;
-	     ecuf = SIMPLEQ_NEXT(ecuf, ecuf_list)) {
+	SIMPLEQ_FOREACH(ecuf, &ecud->ecud_funcs, ecuf_list) {
 		if (ecuf->ecuf_funcno == func)
 			return (ecuf);
 	}
@@ -571,8 +568,7 @@ eisa_conf_read_mem(eisa_chipset_tag_t ec, int slot, int func, int entry,
 	if (ecuf == NULL)
 		return (ENOENT);
 
-	for (ecum = SIMPLEQ_FIRST(&ecuf->ecuf_mem); ecum != NULL;
-	     ecum = SIMPLEQ_NEXT(ecum, ecum_list)) {
+	SIMPLEQ_FOREACH(ecum, &ecuf->ecuf_mem, ecum_list) {
 		if (entry-- == 0)
 			break;
 	}
@@ -594,8 +590,7 @@ eisa_conf_read_irq(eisa_chipset_tag_t ec, int slot, int func, int entry,
 	if (ecuf == NULL)
 		return (ENOENT);
 
-	for (ecui = SIMPLEQ_FIRST(&ecuf->ecuf_irq); ecui != NULL;
-	     ecui = SIMPLEQ_NEXT(ecui, ecui_list)) {
+	SIMPLEQ_FOREACH(ecui, &ecuf->ecuf_irq, ecui_list) {
 		if (entry-- == 0)
 			break;
 	}
@@ -617,8 +612,7 @@ eisa_conf_read_dma(eisa_chipset_tag_t ec, int slot, int func, int entry,
 	if (ecuf == NULL)
 		return (ENOENT);
 
-	for (ecud = SIMPLEQ_FIRST(&ecuf->ecuf_dma); ecud != NULL;
-	     ecud = SIMPLEQ_NEXT(ecud, ecud_list)) {
+	SIMPLEQ_FOREACH(ecud, &ecuf->ecuf_dma, ecud_list) {
 		if (entry-- == 0)
 			break;
 	}
@@ -640,8 +634,7 @@ eisa_conf_read_io(eisa_chipset_tag_t ec, int slot, int func, int entry,
 	if (ecuf == NULL)
 		return (ENOENT);
 
-	for (ecuio = SIMPLEQ_FIRST(&ecuf->ecuf_io); ecuio != NULL;
-	     ecuio = SIMPLEQ_NEXT(ecuio, ecuio_list)) {
+	SIMPLEQ_FOREACH(ecuio, &ecuf->ecuf_io, ecuio_list) {
 		if (entry-- == 0)
 			break;
 	}

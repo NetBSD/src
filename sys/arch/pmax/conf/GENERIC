@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.90.6.4 2002/04/17 00:04:08 nathanw Exp $
+# $NetBSD: GENERIC,v 1.90.6.5 2002/06/20 03:40:29 nathanw Exp $
 #
 # GENERIC machine description file
 # 
@@ -20,7 +20,9 @@
 
 include		"arch/pmax/conf/std.pmax"
 
-#ident		"GENERIC-$Revision: 1.90.6.4 $"
+options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
+
+#ident		"GENERIC-$Revision: 1.90.6.5 $"
 
 maxusers	64
 
@@ -239,3 +241,4 @@ pseudo-device	rasterconsole	 1 	# NB: raster console requires "fb"
 pseudo-device	fb		 3	# up to 3 framebuffers
 
 pseudo-device	rnd			# /dev/random and in-kernel generator
+pseudo-device	clockctl		# user control of clock subsystem

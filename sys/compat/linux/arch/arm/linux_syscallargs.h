@@ -1,4 +1,4 @@
-/* $NetBSD: linux_syscallargs.h,v 1.8.2.6 2002/05/29 21:48:47 nathanw Exp $ */
+/* $NetBSD: linux_syscallargs.h,v 1.8.2.7 2002/06/20 03:42:57 nathanw Exp $ */
 
 /*
  * System call argument lists.
@@ -548,6 +548,12 @@ struct linux_sys_getdents64_args {
 	syscallarg(unsigned int) count;
 };
 
+struct linux_sys_fcntl64_args {
+	syscallarg(int) fd;
+	syscallarg(int) cmd;
+	syscallarg(void *) arg;
+};
+
 struct linux_sys_cacheflush_args {
 	syscallarg(uintptr_t) from;
 	syscallarg(intptr_t) to;
@@ -735,6 +741,7 @@ int	sys_setgid(struct lwp *, void *, register_t *);
 int	linux_sys_setfsuid(struct lwp *, void *, register_t *);
 int	linux_sys_getfsuid(struct lwp *, void *, register_t *);
 int	linux_sys_getdents64(struct lwp *, void *, register_t *);
+int	linux_sys_fcntl64(struct lwp *, void *, register_t *);
 int	linux_sys_breakpoint(struct lwp *, void *, register_t *);
 int	linux_sys_cacheflush(struct lwp *, void *, register_t *);
 #endif /* _LINUX_SYS__SYSCALLARGS_H_ */

@@ -2,9 +2,11 @@
 # Distribution kernel (TOSHIBA TX3912 based model) kernel config file
 
 #
-#	$NetBSD: TX3912,v 1.31.2.6 2002/04/17 00:03:06 nathanw Exp $
+#	$NetBSD: TX3912,v 1.31.2.7 2002/06/20 03:38:46 nathanw Exp $
 #
 include		"arch/hpcmips/conf/std.hpcmips"
+
+#options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
 maxusers	16
 
@@ -266,6 +268,7 @@ pseudo-device	wsmux
 # miscellaneous pseudo-devices
 pseudo-device	rnd			# /dev/random and in-kernel generator
 pseudo-device	pty			# pseudo-terminals
+pseudo-device	clockctl		# user control of clock subsystem
 
 # for IPv6
 pseudo-device	gif		4	# IPv[46] over IPv[46] tunnel (RFC1933)

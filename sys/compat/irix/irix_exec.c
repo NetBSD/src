@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_exec.c,v 1.10.2.3 2002/04/17 00:04:49 nathanw Exp $ */
+/*	$NetBSD: irix_exec.c,v 1.10.2.4 2002/06/20 03:42:49 nathanw Exp $ */
 
 /*-
  * Copyright (c) 2001-2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_exec.c,v 1.10.2.3 2002/04/17 00:04:49 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_exec.c,v 1.10.2.4 2002/06/20 03:42:49 nathanw Exp $");
 
 #ifndef ELFSIZE
 #define ELFSIZE		32	/* XXX should die */
@@ -50,6 +50,8 @@ __KERNEL_RCSID(0, "$NetBSD: irix_exec.c,v 1.10.2.3 2002/04/17 00:04:49 nathanw E
 #include <sys/exec_elf.h>
 #include <sys/malloc.h>
 
+#include <uvm/uvm_extern.h>
+
 #include <machine/regnum.h>
 
 #include <compat/common/compat_util.h>
@@ -57,8 +59,11 @@ __KERNEL_RCSID(0, "$NetBSD: irix_exec.c,v 1.10.2.3 2002/04/17 00:04:49 nathanw E
 #include <compat/irix/irix_syscall.h>
 #include <compat/irix/irix_types.h>
 #include <compat/irix/irix_exec.h>
+#include <compat/irix/irix_prctl.h>
 #include <compat/irix/irix_signal.h>
 #include <compat/irix/irix_errno.h>
+
+extern const int native_to_svr4_signo[];
 
 static void setregs_n32 __P((struct proc *, struct exec_package *, u_long));
 static void irix_e_proc_exec __P((struct proc *, struct exec_package *));
@@ -262,7 +267,16 @@ irix_e_proc_exec(p, epp)
 	struct proc *p;
 	struct exec_package *epp;
 {
+	int error;
+
 	irix_e_proc_init(p, p->p_vmspace);
+
+	/* Initialize the process private area (PRDA) */
+	error = irix_prda_init(p);
+#ifdef DEBUG_IRIX
+	if (error != 0)
+		printf("irix_e_proc_init(): PRDA map failed ");
+#endif
 }
 
 /*
@@ -272,6 +286,19 @@ static void
 irix_e_proc_exit(p)
 	struct proc *p;
 {
+	struct proc *pp;
+	struct irix_emuldata *ied;
+
+	LIST_FOREACH(pp, &allproc, p_list) {
+		/* Select IRIX processes */
+		if (irix_check_exec(pp) == 0)
+			continue;
+
+		ied = (struct irix_emuldata *)(pp->p_emuldata);
+		if (ied->ied_pptr == p)
+			psignal(pp, native_to_svr4_signo[SIGHUP]);
+	}
+
 	FREE(p->p_emuldata, M_EMULDATA);
 	p->p_emuldata = NULL;
 }
@@ -283,8 +310,30 @@ static void
 irix_e_proc_fork(p, parent)
         struct proc *p, *parent;
 {
+	struct irix_emuldata *ied1;
+	struct irix_emuldata *ied2;
+
         p->p_emuldata = NULL;
 
-	/* Use parent's vmspace beacause our vmspace may not be setup yet) */
+	/* Use parent's vmspace because our vmspace may not be setup yet */
         irix_e_proc_init(p, parent->p_vmspace);
+
+	ied1 = p->p_emuldata;
+	ied2 = parent->p_emuldata;
+
+	(void) memcpy(ied1, ied2, (unsigned)
+	    ((caddr_t)&ied1->ied_endcopy - (caddr_t)&ied1->ied_startcopy));
+}
+
+/*
+ * Return true if the given process is an IRIX process 
+ */
+int
+irix_check_exec(p)
+	struct proc *p;
+{
+	if (p->p_emul == &emul_irix_n32 ||
+	    p->p_emul == &emul_irix_o32)
+		return 1;
+	return 0;
 }
