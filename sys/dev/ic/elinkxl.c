@@ -1,4 +1,4 @@
-/*	$NetBSD: elinkxl.c,v 1.77 2005/02/06 03:15:14 kim Exp $	*/
+/*	$NetBSD: elinkxl.c,v 1.78 2005/02/06 09:33:23 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: elinkxl.c,v 1.77 2005/02/06 03:15:14 kim Exp $");
+__KERNEL_RCSID(0, "$NetBSD: elinkxl.c,v 1.78 2005/02/06 09:33:23 skrll Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -1395,6 +1395,7 @@ ex_ioctl(ifp, cmd, data)
 		    && ((ifp->if_flags & (~RESETIGN))
 		    == (sc->sc_if_flags & (~RESETIGN)))) {
 			ex_set_mc(sc);
+			error = 0;
 			break;
 #undef RESETIGN
 		}
