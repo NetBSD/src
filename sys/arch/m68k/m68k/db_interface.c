@@ -71,8 +71,7 @@ kdb_trap(type, regs)
 	default:
 		kdbprinttrap(type, 0);
 		if (db_recover != 0) {
-			db_printf("Caught exception in ddb.\n");
-			db_error(NULL);
+			db_error("Caught exception in ddb.\n");
 			/*NOTREACHED*/
 		}
 	}
