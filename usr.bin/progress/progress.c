@@ -1,4 +1,4 @@
-/*	$NetBSD: progress.c,v 1.1 2003/01/22 00:14:12 jhawk Exp $ */
+/*	$NetBSD: progress.c,v 1.2 2003/01/22 03:13:32 enami Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: progress.c,v 1.1 2003/01/22 00:14:12 jhawk Exp $");
+__RCSID("$NetBSD: progress.c,v 1.2 2003/01/22 03:13:32 enami Exp $");
 #endif				/* not lint */
 
 #include <sys/types.h>
@@ -199,9 +199,10 @@ main(int argc, char *argv[])
 
 	progressmeter(-1);
 	while ((nr = read(fd, fb_buf, BUFSIZ)) > 0)
-	    for (off = 0; nr; nr -= nw, off += nw, bytes += nw)
-		if ((nw = write(outpipe[1], &fb_buf + off, (size_t) nr)) < 0)
-		    err(1, "writing %d bytes to output pipe", nr);
+		for (off = 0; nr; nr -= nw, off += nw, bytes += nw)
+			if ((nw = write(outpipe[1], fb_buf + off,
+			    (size_t) nr)) < 0)
+				err(1, "writing %d bytes to output pipe", nr);
 	close(outpipe[1]);
 
 	wait(&waitstat);
