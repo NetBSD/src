@@ -1,4 +1,4 @@
-/* $NetBSD: interrupt.c,v 1.53 2000/11/20 19:24:36 thorpej Exp $ */
+/* $NetBSD: interrupt.c,v 1.54 2000/11/22 08:39:48 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.53 2000/11/20 19:24:36 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.54 2000/11/22 08:39:48 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -116,7 +116,7 @@ interrupt(unsigned long a0, unsigned long a1, unsigned long a2,
 #if defined(MULTIPROCESSOR)
 		atomic_add_ulong(&ci->ci_intrdepth, 1);
 
-		alpha_ipi_process(ci);
+		alpha_ipi_process(ci, framep);
 
 		/*
 		 * Handle inter-console messages if we're the primary
