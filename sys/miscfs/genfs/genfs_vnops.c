@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_vnops.c,v 1.11.4.2 1999/07/11 05:56:38 chs Exp $	*/
+/*	$NetBSD: genfs_vnops.c,v 1.11.4.3 1999/07/12 02:40:30 chs Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -479,6 +479,7 @@ genfs_getpages(v)
 		}
 
 		simple_unlock(&uobj->vmobjlock);
+		pgs[0] = pg;
 		goto out;
 	}
 
@@ -489,12 +490,11 @@ genfs_getpages(v)
 	if ((pg->flags & PG_FAKE) == 0 &&
 	    !((ap->a_access_type & VM_PROT_WRITE) &&
 	      (pg->flags & PG_RDONLY))) {
-
 		UVMHIST_LOG(ubchist, "returning cached pg %p", pg,0,0,0);
-		uvm_pageactivate(pg);
-		ap->a_m[ap->a_centeridx] = pg;
+
 		simple_unlock(&uobj->vmobjlock);
-		return 0;
+		pgs[0] = pg;
+		goto out;
 	}
 
 	/*
@@ -581,7 +581,7 @@ genfs_getpages(v)
 		if (error) {
 			UVMHIST_LOG(ubchist, "VOP_BMAP lbn 0x%x -> %d\n",
 				    lbn, error,0,0);
-			goto errout;
+			goto looperr;
 		}
 
 		/*
@@ -663,7 +663,7 @@ loopdone:
 		memset(kva + (offset - origoffset), 0, tailbytes);
 	}
 
-errout:
+looperr:
 	if ((flags & PGO_SYNCIO) == 0) {
 		UVMHIST_LOG(ubchist, "returning PEND",0,0,0,0);
 		return EINPROGRESS;
@@ -741,7 +741,6 @@ out:
 			pgs[i]->flags &= ~(PG_FAKE);
 			pmap_clear_modify(PMAP_PGARG(pgs[i]));
 			pmap_clear_reference(PMAP_PGARG(pgs[i]));
-			uvm_pageactivate(pgs[i]);
 		}
 		if (pgs[i] != pg) {
 			UVMHIST_LOG(ubchist, "unbusy pg %p offset 0x%x",
