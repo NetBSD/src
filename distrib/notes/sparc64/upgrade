@@ -1,4 +1,4 @@
-.\"	$NetBSD: upgrade,v 1.4 2002/06/30 12:48:46 lukem Exp $
+.\"	$NetBSD: upgrade,v 1.5 2004/06/12 07:18:28 mbw Exp $
 .\"
 .\" Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -32,16 +32,5 @@
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
 .
-To upgrade to
-.Nx \*V
-from a previous version follow the instructions in the section
-.Sx Installing NetBSD ,
-but run
-.Ic sysinst
-and choose the upgrade option rather than the install option.
-.Pp
-The upgrade option will use the existing disk partitions to install the
-new system in, and also preserves the files in
-.Pa /etc
-by moving them to
-.Pa /etc.old .
+.so ../common/upgrade
+
