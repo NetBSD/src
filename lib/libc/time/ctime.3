@@ -1,4 +1,4 @@
-.\"	$NetBSD: ctime.3,v 1.12 1997/06/18 01:12:42 jtc Exp $
+.\"	$NetBSD: ctime.3,v 1.13 1997/07/14 23:35:02 kleink Exp $
 .TH CTIME 3
 .SH NAME
 asctime, ctime, difftime, gmtime, localtime, mktime \- convert date and time to ASCII
@@ -196,6 +196,21 @@ strftime(3),
 tzset(3),
 time(3),
 tzfile(5)
+.SH STANDARDS
+The
+ctime(),
+difftime(),
+asctime(),
+localtime(),
+gmtime()
+and
+mktime()
+functions conform to
+ANSI X3.159-1989 (``ANSI C'').
+The
+tzset()
+function conforms to
+IEEE Std1003.1-1988 (``POSIX'').
 .SH NOTES
 The return values point to static data;
 the data is overwritten by each call.
