@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.36 1999/03/26 22:00:25 mycroft Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.37 1999/03/28 06:35:38 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -338,10 +338,12 @@ vmapbuf(bp, len)
 	if ((bp->b_flags & B_PHYS) == 0)
 		panic("vmapbuf");
 
-	faddr = trunc_page(bp->b_saveaddr = bp->b_data);
+	taddr = uvm_km_valloc_wait(phys_map, len);
+
+	faddr = trunc_page(bp->b_data);
 	off = (vm_offset_t)bp->b_data - faddr;
 	len = round_page(off + len);
-	taddr = uvm_km_valloc_wait(phys_map, len);
+	bp->b_saveaddr = bp->b_data;
 	bp->b_data = (caddr_t)(taddr + off);
 
 	/*
@@ -362,11 +364,14 @@ vmapbuf(bp, len)
 		cpu_cache_purgeID();
 
 	do {
-		*fpte = (*fpte) & ~(PT_C | PT_B);
 		*tpte++ = *fpte++;
 		len -= PAGE_SIZE;
 	} while (len > 0);
-	cpu_tlb_flushID();
+
+	if (len <= 0x1000)
+		cpu_tlb_flushID_SE(taddr);
+	else
+		cpu_tlb_flushID();
 }
 
 /*
@@ -380,6 +385,7 @@ vunmapbuf(bp, len)
 	vm_size_t len;
 {
 	vm_offset_t addr, off;
+	pt_entry_t *pte;
 
 #ifdef PMAP_DEBUG
 	if (pmap_debug_level >= 0)
@@ -397,13 +403,27 @@ vunmapbuf(bp, len)
 	addr = trunc_page(bp->b_data);
 	off = (vm_offset_t)bp->b_data - addr;
 	len = round_page(off + len);
-	uvm_km_free_wakeup(phys_map, addr, len);
 	bp->b_data = bp->b_saveaddr;
 	bp->b_saveaddr = 0;
 
-	cpu_cache_purgeID_rng(addr, len);
+	pte = pmap_pte(vm_map_pmap(phys_map), addr);
 
-	cpu_tlb_flushID();
+	if (len <= 0x2000)
+		cpu_cache_purgeID_rng(addr, len);
+	else
+		cpu_cache_purgeID();
+
+	do {
+		*pte++ = 0;
+		len -= PAGE_SIZE;
+	} while (len > 0);
+
+	if (len <= 0x1000)
+		cpu_tlb_flushID_SE(addr);
+	else
+		cpu_tlb_flushID();
+
+	uvm_km_free_wakeup(phys_map, addr, len);
 }
 
 /*
