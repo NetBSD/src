@@ -1,4 +1,4 @@
-	$NetBSD: INSTALL,v 1.49 1998/01/09 18:45:24 perry Exp $
+	$NetBSD: INSTALL,v 1.50 1998/01/09 22:55:01 perry Exp $
 
 INSTALLATION NOTES for NetBSD/_MACH _VER
 
@@ -279,12 +279,6 @@ are as follows:
 		This set contains all of the NetBSD _VER sources which
 		are not mentioned above.
 		[ 13.9M gzipped, 60.7M uncompressed ]
-
-It is worth noting that unless all of the source distribution sets
-are installed (except the domestic set), you can't rebuild and install
-the system from scratch, straight out of the box.  However, all that is
-required to rebuild the system in that case is a trivial modification 
-to one Makefile.
 
 Most of the above source sets are located in the source/sets
 subdirectory of the distribution tree. The secrsrc.tgz set is
