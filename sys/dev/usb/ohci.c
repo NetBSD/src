@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci.c,v 1.92 2000/08/08 19:51:46 tv Exp $	*/
+/*	$NetBSD: ohci.c,v 1.93 2000/08/17 23:18:56 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ohci.c,v 1.22 1999/11/17 22:33:40 n_hibma Exp $	*/
 
 /*
@@ -2395,7 +2395,7 @@ ohci_root_ctrl_start(usbd_xfer_handle xfer)
 				    index));
 			OWRITE4(sc, port, UPS_RESET);
 			for (i = 0; i < 10; i++) {
-				usb_delay_ms(&sc->sc_bus, 10);
+				usb_delay_ms(&sc->sc_bus, 10); /* XXX */
 				if ((OREAD4(sc, port) & UPS_RESET) == 0)
 					break;
 			}
