@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tlp_pci.c,v 1.4 1999/09/08 22:29:47 thorpej Exp $	*/
+/*	$NetBSD: if_tlp_pci.c,v 1.5 1999/09/14 00:55:39 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -112,13 +112,19 @@ const struct tulip_pci_product {
 	u_int32_t	tpp_product;	/* PCI product ID */
 	tulip_chip_t	tpp_chip;	/* base Tulip chip type */
 } tlp_pci_products[] = {
-#if 0
+#ifdef TLP_MATCH_21040
 	{ PCI_VENDOR_DEC,		PCI_PRODUCT_DEC_21040,
 	  TULIP_CHIP_21040 },
+#endif
+#ifdef TLP_MATCH_21041
 	{ PCI_VENDOR_DEC,		PCI_PRODUCT_DEC_21041,
 	  TULIP_CHIP_21041 },
+#endif
+#ifdef TLP_MATCH_21140
 	{ PCI_VENDOR_DEC,		PCI_PRODUCT_DEC_21140,
 	  TULIP_CHIP_21140 },
+#endif
+#ifdef TLP_MATCH_21142
 	{ PCI_VENDOR_DEC,		PCI_PRODUCT_DEC_21142,
 	  TULIP_CHIP_21142 },
 #endif
@@ -215,8 +221,7 @@ tlp_pci_attach(parent, self, aux)
 	bus_space_handle_t ioh, memh;
 	int ioh_valid, memh_valid, i, j;
 	const struct tulip_pci_product *tpp;
-	u_int8_t enaddr[ETHER_ADDR_LEN], *romdata;
-	u_int16_t rombuf[TULIP_MAX_ROM_SIZE >> 1];
+	u_int8_t enaddr[ETHER_ADDR_LEN];
 	u_int32_t val;
 	const char *name = NULL;
 
@@ -314,23 +319,25 @@ tlp_pci_attach(parent, self, aux)
 	/*
 	 * Read the contents of the Ethernet Address ROM/SROM.
 	 */
-	memset(rombuf, 0, sizeof(rombuf));
-	romdata = (u_int8_t *) rombuf;
+	memset(sc->sc_srom, 0, sizeof(sc->sc_srom));
 	switch (sc->sc_chip) {
 	case TULIP_CHIP_21040:
 		TULIP_WRITE(sc, CSR_MIIROM, MIIROM_SROMCS);
-		for (i = 0; i < sizeof(rombuf); i++) {
+		for (i = 0; i < sizeof(sc->sc_srom); i++) {
 			for (j = 0; j < 10000; j++) {
 				val = TULIP_READ(sc, CSR_MIIROM);
 				if ((val & MIIROM_DN) == 0)
 					break;
 			}
-			romdata[i] = val & MIIROM_DATA;
+			sc->sc_srom[i] = val & MIIROM_DATA;
 		}
 		break;
 
 	case TULIP_CHIP_82C168:
 	case TULIP_CHIP_82C169:
+	    {
+		u_int16_t *rombuf = (u_int16_t *)sc->sc_srom;
+
 		/*
 		 * The Lite-On PNIC stores the Ethernet address in
 		 * the first 3 words of the EEPROM.  EEPROM access
@@ -353,9 +360,11 @@ tlp_pci_attach(parent, self, aux)
 			rombuf[i] = bswap16(val & PNIC_MIIROM_DATA);
 		}
 		break;
+	    }
 
 	default:
-		tlp_read_srom(sc, 0, sizeof(rombuf) >> 1, rombuf);
+		tlp_read_srom(sc, 0, sizeof(sc->sc_srom) >> 2,
+		    (u_int16_t *)sc->sc_srom);
 	}
 
 	/*
@@ -367,13 +376,35 @@ tlp_pci_attach(parent, self, aux)
 	 * XXX multi-port boards which require that.
 	 */
 	switch (sc->sc_chip) {
+	case TULIP_CHIP_21040:
+		/*
+		 * None of the 21040 boards have the new-style SROMs.
+		 */
+		if (tlp_parse_old_srom(sc, enaddr) == 0) {
+			printf("%s: unable to decode old-style SROM\n",
+			    sc->sc_dev.dv_xname);
+			return;
+		}
+
+		/*
+		 * All 21040 boards start out with the same
+		 * media switch.
+		 */
+		sc->sc_mediasw = &tlp_21040_mediasw;
+
+		/*
+		 * XXX Eventually we should attempt to identify
+		 * XXX other boards, and set the media appropriately.
+		 */
+		break;
+
 	case TULIP_CHIP_82C168:
 	case TULIP_CHIP_82C169:
 		/*
 		 * Lite-On PNIC's Ethernet address is the first 6
 		 * bytes of its EEPROM.
 		 */
-		memcpy(enaddr, romdata, ETHER_ADDR_LEN);
+		memcpy(enaddr, sc->sc_srom, ETHER_ADDR_LEN);
 
 		/*
 		 * Lite-On PNICs always use the same mediasw; we
@@ -387,7 +418,7 @@ tlp_pci_attach(parent, self, aux)
 		 * Winbond 89C840F's Ethernet address is the first
 		 * 6 bytes of its EEPROM.
 		 */
-		memcpy(enaddr, romdata, ETHER_ADDR_LEN);
+		memcpy(enaddr, sc->sc_srom, ETHER_ADDR_LEN);
 
 		/*
 		 * Winbond 89C840F has an MII attached to the SIO.
