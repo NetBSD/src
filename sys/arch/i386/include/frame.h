@@ -1,4 +1,4 @@
-/*	$NetBSD: frame.h,v 1.15.2.4 2001/11/17 00:52:04 nathanw Exp $	*/
+/*	$NetBSD: frame.h,v 1.15.2.5 2002/07/02 21:06:12 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -177,4 +177,3 @@ struct saframe {
 };
 
 #endif  /* _I386_FRAME_H_ */
-
