@@ -1,4 +1,4 @@
-/*	$NetBSD: si.c,v 1.60 2000/06/18 19:19:53 pk Exp $	*/
+/*	$NetBSD: si.c,v 1.61 2000/06/25 13:09:52 pk Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -115,6 +115,7 @@
 #include <sparc/sparc/vaddrs.h>
 #include <sparc/sparc/cpuvar.h>
 
+#include <dev/vme/vmereg.h>
 #include <dev/vme/vmevar.h>
 
 #include <dev/scsipi/scsi_all.h>
@@ -176,11 +177,14 @@ struct si_dma_handle {
  */
 struct si_softc {
 	struct ncr5380_softc	ncr_sc;
-	bus_space_tag_t	sc_bustag;		/* bus tags */
-	bus_dma_tag_t	sc_dmatag;
+	bus_space_tag_t		sc_bustag;	/* bus tags */
+	bus_dma_tag_t		sc_dmatag;
+	vme_chipset_tag_t	sc_vctag;
+
 	int		sc_adapter_type;
 #define BOARD_ID_SI	0
 #define BOARD_ID_SW	1
+
 	int		sc_adapter_iv_am; /* int. vec + address modifier */
 	struct si_dma_handle *sc_dma;
 	int		sc_xlen;	/* length of current DMA segment. */
@@ -300,13 +304,8 @@ si_match(parent, cf, aux)
         vme_am_t		mod; 
         vme_addr_t		vme_addr;
 
-
-	/* Nothing but a Sun 4 is going to have these devices. */
-	if (!CPU_ISSUN4 || cpuinfo.cpu_type == CPUTYP_4_100)
-		return (0);
-
 	/* Make sure there is something there... */
-	mod = 0x3d; /* VME_AM_A24 | VME_AM_MBO | VME_AM_SUPER | VME_AM_DATA */
+	mod = VME_AM_A24 | VME_AM_MBO | VME_AM_SUPER | VME_AM_DATA;
 	vme_addr = va->r[0].offset;
 
 	if (vme_probe(ct, vme_addr, 1, mod, VME_D8, NULL, 0) != 0)
@@ -337,8 +336,9 @@ si_attach(parent, self, aux)
 	vme_am_t		mod;
 
 	sc->sc_dmatag = va->va_bdt;
+	sc->sc_vctag = ct;
 
-	mod = 0x3d; /* VME_AM_A24 | VME_AM_MBO | VME_AM_SUPER | VME_AM_DATA */
+	mod = VME_AM_A24 | VME_AM_MBO | VME_AM_SUPER | VME_AM_DATA;
 
 	if (vme_space_map(ct, va->r[0].offset, SIREG_BANK_SZ,
 			  mod, VME_D8, 0, &bt, &bh, &resc) != 0)
@@ -434,7 +434,7 @@ si_attach_common(parent, sc)
 	struct device	*parent;
 	struct si_softc *sc;
 {
-	struct ncr5380_softc *ncr_sc = (struct ncr5380_softc *)sc;
+	struct ncr5380_softc *ncr_sc = &sc->ncr_sc;
 	char bits[64];
 	int i;
 
@@ -490,9 +490,12 @@ si_attach_common(parent, sc)
 		sc->sc_dma[i].dh_flags = 0;
 
 		/* Allocate a DMA handle */
-		if (bus_dmamap_create(
-				sc->sc_dmatag,
+		if (vme_dmamap_create(
+				sc->sc_vctag,	/* VME chip tag */
 				MAXPHYS,	/* size */
+				VME_AM_A24,	/* address modifier */
+				VME_D16,	/* data size */
+				0,		/* swap */
 				1,		/* nsegments */
 				MAXPHYS,	/* maxsegsz */
 				0,		/* boundary */
