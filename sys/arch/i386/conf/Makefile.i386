@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.i386,v 1.113 2001/05/15 22:34:36 perry Exp $
+#	$NetBSD: Makefile.i386,v 1.114 2001/05/16 03:48:45 lukem Exp $
 
 # Makefile for NetBSD
 #
@@ -161,11 +161,9 @@ LintStub_${_sfile:T:R}.c: ${_sfile} assym.h
 	      awk -f $S/kern/genlintstub.awk >${.TARGET}
 .endfor
 
-lint: ${LINTSTUBS} ${CFILES} ioconf.c param.c
-	@lint -hbxncez -Dvolatile= ${CPPFLAGS} -UKGDB \
-	    ${LINTSTUBS} ${CFILES} \
-	    ioconf.c param.c | \
-	    grep -v 'static function .* unused'
+lint: ${CFILES} ${LINTSTUBS} ioconf.c param.c
+	@lint -bceghnxzF ${CPPFLAGS} -UKGDB \
+	    ${CFILES} ${LINTSTUBS} ioconf.c param.c
 
 tags:
 	@echo "see $S/kern/Makefile for tags"
