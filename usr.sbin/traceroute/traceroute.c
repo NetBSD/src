@@ -1,4 +1,4 @@
-/*	$NetBSD: traceroute.c,v 1.14 1996/09/11 23:53:38 explorer Exp $	*/
+/*	$NetBSD: traceroute.c,v 1.15 1996/09/27 01:34:51 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -46,7 +46,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)traceroute.c	8.1 (Berkeley) 6/6/93";*/
 #else
-static char rcsid[] = "$NetBSD: traceroute.c,v 1.14 1996/09/11 23:53:38 explorer Exp $";
+static char rcsid[] = "$NetBSD: traceroute.c,v 1.15 1996/09/27 01:34:51 thorpej Exp $";
 #endif
 #endif /* not lint */
 
@@ -301,13 +301,14 @@ main(argc, argv)
 	struct hostent *hp;
 	struct protoent *pe;
 	struct sockaddr_in from, to;
-	int ch, i, lsrr, on, probe, seq, tos, ttl;
+	int ch, i, lsrr, on, probe, seq, tos, ttl, ttl_flag;
 	struct ip *ip;
 
 	lsrr = 0;
 	on = 1;
 	seq = tos = 0;
-	while ((ch = getopt(argc, argv, "dDg:m:np:q:rs:t:w:v")) != -1)
+	ttl_flag = 0;
+	while ((ch = getopt(argc, argv, "dDg:lm:np:q:rs:t:w:v")) != -1)
 		switch (ch) {
 		case 'd':
 			options |= SO_DEBUG;
@@ -327,6 +328,9 @@ main(argc, argv)
 			if (++lsrr == 1)
 				lsrrlen = 4;
 			lsrrlen += 4;
+			break;
+		case 'l':
+			ttl_flag = 1;
 			break;
 		case 'm':
 			max_ttl = atoi(optarg);
@@ -509,7 +513,11 @@ main(argc, argv)
 						print(packet, cc, &from);
 						lastaddr = from.sin_addr.s_addr;
 					}
+					ip = (struct ip *)packet;
 					Printf("  %g ms", deltaT(&t1, &t2));
+					if (ttl_flag)
+						Printf(" (ttl = %d)",
+						    ip->ip_ttl);
 					switch(i - 1) {
 					case ICMP_UNREACH_PORT:
 #ifndef ARCHAIC
