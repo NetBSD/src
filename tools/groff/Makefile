@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2001/11/13 04:28:28 tv Exp $
+#	$NetBSD: Makefile,v 1.3 2001/11/13 14:21:03 tv Exp $
 
 MODULE=		groff
 
@@ -13,10 +13,9 @@ build/Makefile: .configure_done
 .include "${.CURDIR}/../Makefile.gnuhost"
 
 .PATH:		${.CURDIR}/../../share/tmac
-TMACDIR=	${TOOLDIR}/share/groff/tmac
 
 .for F in andoc doc doc-ditroff doc-common doc-nroff doc-syms doc2html
-install.files:	${TMACDIR}/tmac.${F}
+afterinstall:	${TMACDIR}/tmac.${F}
 .PHONY:		${TMACDIR}/tmac.${F}
 ${TMACDIR}/tmac.${F}: ${F}
 .if defined(UPDATE)
