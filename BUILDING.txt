@@ -194,8 +194,9 @@ CONFIGURATION
      TOOLDIR     Directory to hold the host tools, once built.  This directory
                  should be unique to a given host system and NetBSD source
                  tree.  (However, multiple targets may share the same TOOLDIR;
-                 the target-dependent files have unique names.)  Must be set
-                 if USETOOLS is ``yes''.
+                 the target-dependent files have unique names.)  If unset, a
+                 default based on the uname(1) information of the host plat-
+                 form will be created in the .OBJDIR of src/tools.
 
                  Default: Unset.
 
@@ -230,11 +231,6 @@ CONFIGURATION
                  preserve traditional semantics of the <bsd.*.mk> make(1) in-
                  clude files).
 
-                 Note: Currently, the ``no'' option functions similarly to the
-                 ``never'' option.  Proper checks will be added in the near
-                 future to add the described functionality for version-specif-
-                 ic tool components.
-
    "make" variables for full builds
      These variables only affect the top level ``Makefile'' and do not manual-
      ly building subtrees of the NetBSD source code.
@@ -260,7 +256,7 @@ CONFIGURATION
                            NetBSD source tree build method, but is not typi-
                            cally required for host tools.
 
-                    Default: ``no''
+                    Default: ``yes''
 
      NBUILDJOBS     If set, specifies the number of parallel make(1) processes
                     that should be run simultaneously.  This can speed up
@@ -395,21 +391,17 @@ BUILDING
      tem has an older or incompatible ``make'' program.
 
      When compiling the entire system via build.sh, many make(1) variables are
-     set for you in order to help encapsulate the build process.  In particu-
-     lar, both USETOOLS and MKTOOLS are set to ``yes'', and MACHINE_ARCH (if
-     unset) is deduced from the value of MACHINE.
-
-     The variables DESTDIR, MACHINE, MACHINE_ARCH, and TOOLDIR are required in
-     order for build.sh to function, and thus they cannot be set in the con-
-     figuration file specified by MAKECONF.  They may be set either in the
-     process environment, or via command line options to build.sh.
+     set for you in order to help encapsulate the build process.  In the list
+     of options below, variables that are automatically set by build.sh are
+     noted where applicable.
 
      The following are available command line options that may be supplied to
      build.sh:
 
      -a arch   Set the value of MACHINE_ARCH to arch.
 
-     -D dest   Set the value of DESTDIR to dest.
+     -b        Bootstrap ``make'' and create a nbmake-MACHINE script (see be-
+               low).
 
      -j njob   Set the value of NBUILDJOBS to njob.  This provides similar
                functionality to the familiar ``make -j'', but preserves the
@@ -417,15 +409,42 @@ BUILDING
 
      -m mach   Set the value of MACHINE to mach.  This will also override any
                value of MACHINE_ARCH in the process environment with a value
-               deduced from mach, unless -a is specified.
+               deduced from mach, unless -a is specified.  All cross builds
+               require -m, but if unset on a NetBSD host, the host's value of
+               MACHINE will be detected and used automatically.
 
-     -R rel    Set the value of RELEASEDIR to rel.  Setting this option will
-               make build.sh run ``make release'' instead of ``make build''.
+     -n        Show the commands that would be executed by build.sh, but do
+               not make any changes.  This is similar in concept to ``make
+               -n''.
+
+     -o        Set the value of MKOBJDIRS to ``no''.
 
      -r        Remove the contents of DESTDIR and TOOLDIR before building
-               (provides a clean starting point).
+               (provides a clean starting point).  This will skip deleting
+               DESTDIR if building on a native system to the root directory.
 
-     -T tools  Set the value of TOOLDIR to tools.
+     -u        Set the UPDATE variable.
+
+     -w wrapper
+               Create the nbmake wrapper script (see below) in a custom loca-
+               tion, specified by wrapper.  This allows, for instance, to
+               place the wrapper in PATH automatically.  Note that wrapper is
+               the full name of the file, not just a directory name.
+
+     -D dest   Set the value of DESTDIR to dest.
+
+     -O obj    Create an appropriate transform macro for MAKEOBJDIR that will
+               place the built object files under obj.  For instance, a set-
+               ting of /usr/obj will place build-time files files under
+               /usr/obj/bin, /usr/obj/lib, and so forth.
+
+     -R rel    Set the value of RELEASEDIR to rel.  Setting this option will
+               cause build.sh to run ``make release'' instead of ``make
+               build''.
+
+     -T tools  Set the value of TOOLDIR to tools.  If set, the bootstrap
+               ``make'' will only be rebuilt as needed (when the source files
+               for make(1) change).
 
    The "nbmake-MACHINE" wrapper script
      If using the build.sh script to build NetBSD, a nbmake-MACHINE script
@@ -448,4 +467,4 @@ HISTORY
 BUGS
      Many platforms are not yet using the USE_NEW_TOOLCHAIN system.
 
-NetBSD                         October 29, 2001                              7
+NetBSD                         October 29, 2001                              8
