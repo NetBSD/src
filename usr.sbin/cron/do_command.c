@@ -1,4 +1,4 @@
-/*	$NetBSD: do_command.c,v 1.6 1998/07/06 06:57:18 mrg Exp $	*/
+/*	$NetBSD: do_command.c,v 1.7 2001/03/13 17:51:50 wiz Exp $	*/
 
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * All rights reserved
@@ -22,7 +22,7 @@
 #if 0
 static char rcsid[] = "Id: do_command.c,v 2.12 1994/01/15 20:43:43 vixie Exp ";
 #else
-__RCSID("$NetBSD: do_command.c,v 1.6 1998/07/06 06:57:18 mrg Exp $");
+__RCSID("$NetBSD: do_command.c,v 1.7 2001/03/13 17:51:50 wiz Exp $");
 #endif
 #endif
 
@@ -224,6 +224,15 @@ child_process(e, u)
 # endif
 		setuid(e->uid);		/* we aren't root after this... */
 		chdir(env_get("HOME", e->envp));
+
+#ifdef USE_SIGCHLD
+		/* our grandparent is watching for our death by catching
+		 * SIGCHLD.  the parent is ignoring SIGCHLD's; we want
+		 * to restore default behaviour.
+		 */
+		(void) signal(SIGCHLD, SIG_DFL);
+#endif
+		(void) signal(SIGHUP, SIG_DFL);
 
 		/* exec the command.
 		 */
