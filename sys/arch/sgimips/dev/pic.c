@@ -1,4 +1,4 @@
-/*	$NetBSD: pic.c,v 1.7 2004/04/11 00:44:47 pooka Exp $	 */
+/*	$NetBSD: pic.c,v 1.8 2004/06/13 18:28:35 rumble Exp $	 */
 
 /*
  * Copyright (c) 2002 Steve Rumble
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pic.c,v 1.7 2004/04/11 00:44:47 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pic.c,v 1.8 2004/06/13 18:28:35 rumble Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -46,29 +46,29 @@ __KERNEL_RCSID(0, "$NetBSD: pic.c,v 1.7 2004/04/11 00:44:47 pooka Exp $");
 #include "locators.h"
 
 struct pic_softc {
-	struct device   sc_dev;
+	struct device   	sc_dev;
 
-	bus_space_tag_t iot;
-	bus_space_handle_t ioh;
+	bus_space_tag_t		iot;
+	bus_space_handle_t	ioh;
 
 };
 
 static int      pic_match(struct device *, struct cfdata *, void *);
 static void     pic_attach(struct device *, struct device *, void *);
 static int      pic_print(void *, const char *);
-void		pic_bus_reset(void);
-void		pic_watchdog_enable(void);
-void		pic_watchdog_disable(void);
-void		pic_watchdog_tickle(void);
+static void	pic_bus_reset(void);
+static void	pic_watchdog_enable(void);
+static void	pic_watchdog_disable(void);
+static void	pic_watchdog_tickle(void);
 
 CFATTACH_DECL(pic, sizeof(struct pic_softc),
 	      pic_match, pic_attach, NULL, NULL);
 
 struct pic_attach_args {
-	const char     *iaa_name;
+	const char	       *iaa_name;
 
-	bus_space_tag_t iaa_st;
-	bus_space_handle_t iaa_sh;
+	bus_space_tag_t		iaa_st;
+	bus_space_handle_t	iaa_sh;
 };
 
 static struct pic_softc psc;
@@ -89,8 +89,7 @@ pic_match(struct device * parent, struct cfdata * match, void *aux)
 static void
 pic_attach(struct device * parent, struct device * self, void *aux)
 {
-	u_int32_t       reg;
-	char            picstr[80] = "";
+	u_int32_t reg;
 	struct pic_attach_args iaa;
 	struct mainbus_attach_args *ma = aux;
 
@@ -119,21 +118,21 @@ pic_attach(struct device * parent, struct device * self, void *aux)
 	printf(": dblk (0x%x), iblk (0x%x)\n", reg & PIC_MODE_DBSIZ,
 	       reg & PIC_MODE_IBSIZ);
 
+	printf("pic0: ");
+
 	if (reg & PIC_MODE_NOCACHE)
-		strcat(picstr, "cache disabled");
+		printf("cache disabled");
 	else
-		strcat(picstr, "cache enabled");
+		printf("cache enabled");
 
 	if (reg & PIC_MODE_ISTREAM)
-		strcat(picstr, ", instr streaming");
+		printf(", instr streaming");
 
 	if (reg & PIC_MODE_STOREPARTIAL)
-		strcat(picstr, ", store partial");
+		printf(", store partial");
 
 	if (reg & PIC_MODE_BUSDRIVE)
-		strcat(picstr, ", bus drive");
-
-	printf("pic0: %s", picstr);
+		printf(", bus drive");
 
 	/* gio32 allow master, real time devices */
 	reg = bus_space_read_4(psc.iot, psc.ioh, PIC_GIO32ARB_SLOT0);
@@ -154,14 +153,14 @@ pic_attach(struct device * parent, struct device * self, void *aux)
 
 	printf("\n");
 
-	/* XXX gio only on IP12 Indigo (?). does pic exist anywhere else? */
+	/*
+	 * A GIO bus exists on all IP12's. However, Personal Iris
+	 * machines use VME for their expansion bus.
+	 */
 	iaa.iaa_name = "gio";
 	(void) config_found(self, (void *) &iaa, pic_print);
 
-	/* Enable watchdog, reset it */
-	reg = bus_space_read_4(psc.iot, psc.ioh, PIC_CPUCTRL)
-		| (PIC_CPUCTRL_WDOG);
-	bus_space_write_4(psc.iot, psc.ioh, PIC_CPUCTRL, reg);
+	pic_watchdog_enable();
 }
 
 
@@ -173,17 +172,17 @@ pic_print(void *aux, const char *name)
 	if (name)
 		aprint_normal("%s at %s", iaa->iaa_name, name);
 
-	return UNCONF;
+	return (UNCONF);
 }
 
-void
+static void
 pic_bus_reset(void)
 {
 	bus_space_write_4(psc.iot, psc.ioh, PIC_PARITY_ERROR, 0);
 }
 
-void
-pic_watchdog_enable()
+static void
+pic_watchdog_enable(void)
 {
 	uint32_t reg;
 
@@ -192,8 +191,8 @@ pic_watchdog_enable()
 	bus_space_write_4(psc.iot, psc.ioh, PIC_CPUCTRL, reg);
 }
 
-void
-pic_watchdog_disable()
+static void
+pic_watchdog_disable(void)
 {
 	uint32_t reg;
 
@@ -202,15 +201,10 @@ pic_watchdog_disable()
 	bus_space_write_4(psc.iot, psc.ioh, PIC_CPUCTRL, reg);
 }
 
-void
-pic_watchdog_tickle()
+static void
+pic_watchdog_tickle(void)
 {
-	uint32_t reg;
 
-	reg = bus_space_read_4(psc.iot, psc.ioh, PIC_CPUCTRL);
-	reg &= ~(PIC_CPUCTRL_WDOG);
-	bus_space_write_4(psc.iot, psc.ioh, PIC_CPUCTRL, reg);
-	reg = bus_space_read_4(psc.iot, psc.ioh, PIC_CPUCTRL);
-	reg |= (PIC_CPUCTRL_WDOG);
-	bus_space_write_4(psc.iot, psc.ioh, PIC_CPUCTRL, reg);
+	pic_watchdog_disable();
+	pic_watchdog_enable();
 }
