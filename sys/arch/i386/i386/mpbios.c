@@ -95,7 +95,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: mpbios.c,v 1.1.2.3 2000/02/27 21:47:05 sommerfeld Exp $
+ *	$Id: mpbios.c,v 1.1.2.4 2000/02/29 13:20:07 sommerfeld Exp $
  */
 
 /*
@@ -134,6 +134,9 @@
 #include <dev/ic/mc146818reg.h>		/* for NVRAM POST */
 #include <i386/isa/nvram.h>		/* for NVRAM POST */
 
+#include <dev/eisa/eisavar.h>	/* for ELCR* def'ns */
+
+
 static struct mpbios_ioapic default_ioapic = {
     2,0,1,IOAPICENTRY_FLAG_EN,(caddr_t)IOAPIC_BASE_DEFAULT
 };
@@ -168,11 +171,13 @@ static const void *mpbios_search __P((struct device *, paddr_t, int,
     struct mp_map *));
 static inline int mpbios_cksum __P((const void *,int));
 
-static void mp_cfg_special_intr (int mpstype, int mpsflags, u_int32_t *redir);
-static void mp_cfg_pci_intr (int mpstype, int mpsflags, u_int32_t *redir);
-static void mp_cfg_isa_intr (int mpstype, int mpsflags, u_int32_t *redir);
+static void mp_cfg_special_intr __P((const struct mpbios_int *, u_int32_t *));
+static void mp_cfg_pci_intr __P((const struct mpbios_int *, u_int32_t *));
+static void mp_cfg_eisa_intr __P((const struct mpbios_int *, u_int32_t *));
+static void mp_cfg_isa_intr __P((const struct mpbios_int *, u_int32_t *));
 static void mp_print_special_intr (int intr);
 static void mp_print_pci_intr (int intr);
+static void mp_print_eisa_intr (int intr);
 static void mp_print_isa_intr (int intr);
 
 static void mpbios_cpu __P((const u_int8_t *, struct device *));
@@ -695,8 +700,11 @@ mpbios_cpu(ent, self)
  *
  * Fill in: trigger mode, polarity, and possibly delivery mode.
  */
-static void mp_cfg_special_intr (int mpstype, int mpsflags, u_int32_t *redir)
+static void mp_cfg_special_intr (entry, redir)
+	const struct mpbios_int *entry;
+	u_int32_t *redir;
 {
+
 	/*
 	 * All of these require edge triggered, zero vector,
 	 * appropriate delivery mode.
@@ -706,7 +714,7 @@ static void mp_cfg_special_intr (int mpstype, int mpsflags, u_int32_t *redir)
 	*redir &= ~IOAPIC_REDLO_VECTOR_MASK;
 	*redir &= ~IOAPIC_REDLO_LEVEL;
 
-	switch (mpstype) {
+	switch (entry->int_type) {
 	case MPS_INTTYPE_NMI:
 		*redir |= (IOAPIC_REDLO_DEL_NMI<<IOAPIC_REDLO_DEL_SHIFT);
 		break;
@@ -724,16 +732,18 @@ static void mp_cfg_special_intr (int mpstype, int mpsflags, u_int32_t *redir)
 		*redir |= (IOAPIC_REDLO_MASK);
 		break;
 	default:
-		panic("unknown MPS interrupt type %d", mpstype);
+		panic("unknown MPS interrupt type %d", entry->int_type);
 	}
 }
 
 /* XXX too much duplicated code here. */
 
-static void mp_cfg_pci_intr (int mpstype, int mpsflags, u_int32_t *redir)
+static void mp_cfg_pci_intr (entry, redir)
+	const struct mpbios_int *entry;
+	u_int32_t *redir;
 {
-	int mpspo = mpsflags & 0x03; /* XXX magic */
-	int mpstrig = (mpsflags >> 2) & 0x03; /* XXX magic */
+	int mpspo = entry->int_flags & 0x03; /* XXX magic */
+	int mpstrig = (entry->int_flags >> 2) & 0x03; /* XXX magic */
 
 	*redir &= ~IOAPIC_REDLO_DEL_MASK;
 	switch (mpspo) {
@@ -748,8 +758,8 @@ static void mp_cfg_pci_intr (int mpstype, int mpsflags, u_int32_t *redir)
 		panic("unknown MPS interrupt polarity %d", mpspo);
 	}
 	
-	if (mpstype != MPS_INTTYPE_INT) {
-		mp_cfg_special_intr(mpstype, mpsflags, redir);
+	if (entry->int_type != MPS_INTTYPE_INT) {
+		mp_cfg_special_intr(entry, redir);
 		return;
 	}
 	*redir |= (IOAPIC_REDLO_DEL_LOPRI<<IOAPIC_REDLO_DEL_SHIFT);
@@ -767,10 +777,12 @@ static void mp_cfg_pci_intr (int mpstype, int mpsflags, u_int32_t *redir)
 	}
 }
 
-static void mp_cfg_isa_intr (int mpstype, int mpsflags, u_int32_t *redir)
+static void mp_cfg_eisa_intr (entry, redir)
+	const struct mpbios_int *entry;
+	u_int32_t *redir;
 {
-	int mpspo = mpsflags & 0x03; /* XXX magic */
-	int mpstrig = (mpsflags >> 2) & 0x03; /* XXX magic */
+	int mpspo = entry->int_flags & 0x03; /* XXX magic */
+	int mpstrig = (entry->int_flags >> 2) & 0x03; /* XXX magic */
 
 	*redir &= ~IOAPIC_REDLO_DEL_MASK;
 	switch (mpspo) {
@@ -785,8 +797,59 @@ static void mp_cfg_isa_intr (int mpstype, int mpsflags, u_int32_t *redir)
 		panic("unknown MPS interrupt polarity %d", mpspo);
 	}
 	
-	if (mpstype != MPS_INTTYPE_INT) {
-		mp_cfg_special_intr(mpstype, mpsflags, redir);
+	if (entry->int_type != MPS_INTTYPE_INT) {
+		mp_cfg_special_intr(entry, redir);
+		return;
+	}
+	*redir |= (IOAPIC_REDLO_DEL_LOPRI<<IOAPIC_REDLO_DEL_SHIFT);
+	
+	switch (mpstrig) {
+	case MPS_INTTR_LEVEL:
+		*redir |= IOAPIC_REDLO_LEVEL;
+		break;
+	case MPS_INTTR_EDGE:
+		*redir &= ~IOAPIC_REDLO_LEVEL;
+		break;
+	case MPS_INTTR_DEF:
+		/*
+		 * Set "default" setting based on ELCR value snagged
+		 * earlier.
+		 */
+		if (mp_busses[entry->src_bus_id].mb_data &
+		    (1<<entry->src_bus_irq)) {
+			*redir |= IOAPIC_REDLO_LEVEL;			
+		} else {
+			*redir &= ~IOAPIC_REDLO_LEVEL;
+		}
+		break;
+	default:
+		panic("unknown MPS interrupt trigger %d", mpstrig);	
+	}
+}
+
+
+static void mp_cfg_isa_intr (entry, redir)
+	const struct mpbios_int *entry;
+	u_int32_t *redir;
+{
+	int mpspo = entry->int_flags & 0x03; /* XXX magic */
+	int mpstrig = (entry->int_flags >> 2) & 0x03; /* XXX magic */
+
+	*redir &= ~IOAPIC_REDLO_DEL_MASK;
+	switch (mpspo) {
+	case MPS_INTPO_DEF:
+	case MPS_INTPO_ACTHI:
+		*redir &= ~IOAPIC_REDLO_ACTLO;
+		break;
+	case MPS_INTPO_ACTLO:
+		*redir |= IOAPIC_REDLO_ACTLO;
+		break;
+	default:
+		panic("unknown MPS interrupt polarity %d", mpspo);
+	}
+	
+	if (entry->int_type != MPS_INTTYPE_INT) {
+		mp_cfg_special_intr(entry, redir);
 		return;
 	}
 	*redir |= (IOAPIC_REDLO_DEL_LOPRI<<IOAPIC_REDLO_DEL_SHIFT);
@@ -805,18 +868,27 @@ static void mp_cfg_isa_intr (int mpstype, int mpsflags, u_int32_t *redir)
 }
 
 
-static void mp_print_special_intr (int intr)
+static void mp_print_special_intr (intr)
+	int intr;
 {
 }
 
-static void mp_print_pci_intr (int intr)
+static void mp_print_pci_intr (intr)
+	int intr;
 {
 	printf(" device %d INT_%c", (intr>>2)&0x1f, 'A' + (intr & 0x3));
 }
 
-static void mp_print_isa_intr (int intr)
+static void mp_print_isa_intr (intr)
+	int intr;
 {
 	printf(" irq %d", intr);
+}
+
+static void mp_print_eisa_intr (intr)
+	int intr;
+{
+	printf(" EISA irq %d", intr);
 }
 
 
@@ -841,6 +913,15 @@ mpbios_bus(ent, self)
 		mp_busses[entry->bus_id].mb_idx = entry->bus_id;
 		mp_busses[entry->bus_id].mb_intr_print = mp_print_pci_intr;
 		mp_busses[entry->bus_id].mb_intr_cfg = mp_cfg_pci_intr;
+	} else if (memcmp(entry->bus_type, "EISA  ", 6) == 0) {
+		mp_busses[entry->bus_id].mb_name = "eisa";
+		mp_busses[entry->bus_id].mb_idx = entry->bus_id;
+		mp_busses[entry->bus_id].mb_intr_print = mp_print_eisa_intr;
+		mp_busses[entry->bus_id].mb_intr_cfg = mp_cfg_eisa_intr;
+
+		mp_busses[entry->bus_id].mb_data =
+		    inb(ELCR0) | (inb(ELCR1) << 8);
+		
 	} else if (memcmp(entry->bus_type, "ISA   ", 6) == 0) {
 		mp_busses[entry->bus_id].mb_name = "isa";
 		mp_busses[entry->bus_id].mb_idx = 0; /* XXX */
@@ -935,7 +1016,7 @@ mpbios_int(ent, enttype, mpi)
 		return;
 	}
 	
-	(mpb->mb_intr_cfg)(type, flags, &mpi->redir);
+	(*mpb->mb_intr_cfg)(entry, &mpi->redir);
 
 	if (enttype == MPS_MCT_IOINT) {
 		/* XXX */
