@@ -27,7 +27,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: ldd.c,v 1.2 1993/10/31 14:41:46 pk Exp $
+ *	$Id: ldd.c,v 1.3 1993/10/31 14:54:29 pk Exp $
  */
 
 #include <sys/param.h>
@@ -99,10 +99,12 @@ char	*argv[];
 					!(N_GETFLAG(hdr) & EX_DYNAMIC)) {
 			fprintf(stderr, "%s: not a dynamic executable\n",
 						*argv);
+			(void)close(fd);
 			rval |= 1;
 			argv++;
 			continue;
 		}
+		(void)close(fd);
 
 		printf("%s:\n", *argv);
 
