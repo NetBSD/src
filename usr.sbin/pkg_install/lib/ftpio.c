@@ -1,8 +1,8 @@
-/*	$NetBSD: ftpio.c,v 1.56 2003/09/25 22:14:16 wiz Exp $	*/
+/*	$NetBSD: ftpio.c,v 1.57 2003/09/25 22:31:35 wiz Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ftpio.c,v 1.56 2003/09/25 22:14:16 wiz Exp $");
+__RCSID("$NetBSD: ftpio.c,v 1.57 2003/09/25 22:31:35 wiz Exp $");
 #endif
 
 /*
@@ -78,9 +78,6 @@ typedef struct {
 #if EXPECT_DEBUG
 static int	 expect_debug = 1;
 #endif /* EXPECT_DEBUG */
-#ifdef STANDALONE
-int		Verbose=1;
-#endif
 static int	 needclose=0;
 static int	 ftp_started=0;
 static fds	 ftpio;
@@ -906,5 +903,10 @@ main(int argc, char *argv[])
     ftp_stop();
 
     return 0;
+}
+
+void
+cleanup(int i)
+{
 }
 #endif /* STANDALONE */
