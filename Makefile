@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.126 2001/08/02 06:13:33 enami Exp $
+#	$NetBSD: Makefile,v 1.127 2001/08/14 14:04:35 tv Exp $
 
 # This is the top-level makefile for building NetBSD. For an outline of
 # how to build a snapshot or release, as well as other release engineering
@@ -24,7 +24,7 @@
 #   MKSHARE, if set to `no', will prevent building and installing
 #	anything in /usr/share.
 #   NBUILDJOBS is the number of jobs to start in parallel during a
-#	'make build'. It defaults to 1.
+#	`make build'. It defaults to 1.
 #   UPDATE, if defined, will avoid a `make cleandir' at the start of
 #     `make build', as well as having the effects listed in
 #     /usr/share/mk/bsd.README.
@@ -46,9 +46,9 @@
 #   beforeinstall: creates the distribution directories.
 #   do-force-domestic: check's that FORCE_DOMESTIC isn't set (deprecated.)
 #   do-share-mk: installs /usr/share/mk files.
-#   do-cleandir: clean's the tree.
-#   do-make-obj: create's object directories if required.
-#   do-check-egcs: check's that we have a modern enough compiler (deprecated.)
+#   do-cleandir: cleans the tree.
+#   do-make-obj: creates object directories if required.
+#   do-make-tools: builds host toolchain.
 #   do-make-includes: install include files.
 #   do-lib-csu: build & install startup object files.
 #   do-lib: build & install system libraries.
@@ -60,8 +60,11 @@
 
 .include <bsd.own.mk>
 
+.if defined(USE_NEW_TOOLCHAIN)
+.include "${.CURDIR}/tools/Makefile.tools"
+.endif
+
 MKOBJDIRS ?= no
-HAVE_EGCS!=	${CXX} --version | egrep "^(2\.[89]|egcs)" ; echo
 
 .if defined(NBUILDJOBS)
 _J= -j${NBUILDJOBS}
@@ -149,7 +152,7 @@ build:
 	@${MAKE} ${_M} do-share-mk
 	@${MAKE} ${_M} do-cleandir
 	@${MAKE} ${_M} do-make-obj
-	@${MAKE} ${_M} do-check-egcs
+	@${MAKE} ${_M} do-make-tools
 	@${MAKE} ${_M} do-make-includes
 	@${MAKE} ${_M} do-lib-csu
 	@${MAKE} ${_M} do-lib
@@ -181,20 +184,14 @@ do-cleandir:
 do-make-obj:
 .if ${MKOBJDIRS} != "no"
 	${MAKE} ${_J} ${_M} obj
+.if defined(USE_NEW_TOOLCHAIN)
+	cd ${.CURDIR}/tools && ${MAKE} ${_M} obj
+.endif
 .endif
 
-do-check-egcs:
-.if empty(HAVE_EGCS)
-.if defined(DESTDIR)
-	@echo "*** CAPUTE!"
-	@echo "    You attempted to compile the world without egcs.  You must"
-	@echo "    first install a native egcs compiler."
-	@false
-.else
-	(cd ${.CURDIR}/gnu/usr.bin/egcs && \
-	    ${MAKE} ${_M} ${_J} dependall MKMAN=no && \
-	    ${MAKE} ${_M} MKMAN=no install && ${MAKE} ${_M} cleandir)
-.endif
+do-make-tools:
+.if defined(USE_NEW_TOOLCHAIN)
+	cd ${.CURDIR}/tools && ${MAKE} ${_M} build
 .endif
 
 do-make-includes:
