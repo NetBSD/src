@@ -1,4 +1,4 @@
-/* $NetBSD: genassym.c,v 1.22 1999/04/20 21:08:23 thorpej Exp $ */
+/* $NetBSD: genassym.c,v 1.23 1999/07/01 20:11:39 thorpej Exp $ */
 
 /*
  * Copyright (c) 1994, 1995 Gordon W. Ross
@@ -62,7 +62,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__RCSID("$NetBSD: genassym.c,v 1.22 1999/04/20 21:08:23 thorpej Exp $");
+__RCSID("$NetBSD: genassym.c,v 1.23 1999/07/01 20:11:39 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -85,7 +85,7 @@ __RCSID("$NetBSD: genassym.c,v 1.22 1999/04/20 21:08:23 thorpej Exp $");
 #include <vm/vm.h>
 
 /* Note: Avoid /usr/include for cross compilation! */
-extern void printf __P((char *fmt, ...));
+extern void printf __P((const char *fmt, ...));
 extern void exit __P((int));
 
 #define	offsetof(type, member) ((size_t)(&((type *)0)->member))
