@@ -1,4 +1,4 @@
-/*	$NetBSD: wi.c,v 1.183 2004/08/05 22:57:32 mycroft Exp $	*/
+/*	$NetBSD: wi.c,v 1.184 2004/08/06 02:31:25 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -106,7 +106,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.183 2004/08/05 22:57:32 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.184 2004/08/06 02:31:25 mycroft Exp $");
 
 #define WI_HERMES_AUTOINC_WAR	/* Work around data write autoinc bug. */
 #define WI_HERMES_STATS_WAR	/* Work around stats counter bug. */
@@ -1099,8 +1099,6 @@ wi_start(struct ifnet *ifp)
 
 #if NBPFILTER > 0
 		if (sc->sc_drvbpf) {
-			struct mbuf mb;
-
 			struct wi_tx_radiotap_header *tap = &sc->sc_txtap;
 
 			tap->wt_rate = rs->rs_rates[rateidx];
@@ -1108,15 +1106,9 @@ wi_start(struct ifnet *ifp)
 			    htole16(ic->ic_bss->ni_chan->ic_freq);
 			tap->wt_chan_flags =
 			    htole16(ic->ic_bss->ni_chan->ic_flags);
-
 			/* TBD tap->wt_flags */
 
-			M_COPY_PKTHDR(&mb, m0);
-			mb.m_data = (caddr_t)tap;
-			mb.m_len = tap->wt_ihdr.it_len;
-			mb.m_next = m0;
-			mb.m_pkthdr.len += mb.m_len;
-			bpf_mtap(sc->sc_drvbpf, &mb);
+			bpf_mtap2(sc->sc_drvbpf, tap, tap->wt_ihdr.it_len, m0);
 		}
 #endif
 
@@ -1558,24 +1550,17 @@ wi_rx_intr(struct wi_softc *sc)
 
 #if NBPFILTER > 0
 	if (sc->sc_drvbpf) {
-		struct mbuf mb;
 		struct wi_rx_radiotap_header *tap = &sc->sc_rxtap;
 
 		tap->wr_rate = frmhdr.wi_rx_rate / 5;
 		tap->wr_antsignal = frmhdr.wi_rx_signal;
 		tap->wr_antnoise = frmhdr.wi_rx_silence;
-
 		tap->wr_chan_freq = htole16(ic->ic_bss->ni_chan->ic_freq);
 		tap->wr_chan_flags = htole16(ic->ic_bss->ni_chan->ic_flags);
 		if (frmhdr.wi_status & WI_STAT_PCF)
 			tap->wr_flags |= IEEE80211_RADIOTAP_F_CFP;
 
-		M_COPY_PKTHDR(&mb, m);
-		mb.m_data = (caddr_t)tap;
-		mb.m_len = tap->wr_ihdr.it_len;
-		mb.m_next = m;
-		mb.m_pkthdr.len += mb.m_len;
-		bpf_mtap(sc->sc_drvbpf, &mb);
+		bpf_mtap2(sc->sc_drvbpf, tap, tap->wr_ihdr.it_len, m);
 	}
 #endif
 	wh = mtod(m, struct ieee80211_frame *);
