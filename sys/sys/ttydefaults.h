@@ -1,4 +1,4 @@
-/*	$NetBSD: ttydefaults.h,v 1.10 2000/08/05 01:27:12 chuck Exp $	*/
+/*	$NetBSD: ttydefaults.h,v 1.11 2002/12/01 21:24:28 matt Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1993
@@ -95,4 +95,6 @@ cc_t	ttydefchars[NCCS] = {
 	CDISCARD, CMIN,	CTIME,  CSTATUS, _POSIX_VDISABLE
 };
 #undef TTYDEFCHARS
+#else
+extern cc_t ttydefchars[NCCS];
 #endif
