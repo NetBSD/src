@@ -33,10 +33,18 @@ divert(-1)
 # SUCH DAMAGE.
 #
 
-divert(0)
-VERSIONID(`@(#)notsticky.m4	8.3 (Berkeley) 5/29/95')
 #
-#  This is now the default.  Use ``FEATURE(stickyhost)'' if you want
-#  the old default behaviour.
+#  This is a Berkeley-specific configuration file for Solaris 2.x.
+#  It applies only the the Computer Science Division at Berkeley,
+#  and should not be used elsewhere.   It is provided on the sendmail
+#  distribution as a sample only.  To create your own configuration
+#  file, create an appropriate domain file in ../domain, change the
+#  `DOMAIN' macro below to reference that file, and copy the result
+#  to a name of your own choosing.
 #
-divert(-1)
+
+VERSIONID(`@(#)cs-solaris2.mc	8.2 (Berkeley) 8/6/95')
+OSTYPE(solaris2)dnl
+DOMAIN(CS.Berkeley.EDU)dnl
+MAILER(local)dnl
+MAILER(smtp)dnl

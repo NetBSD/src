@@ -1,6 +1,6 @@
 divert(-1)
 #
-# Copyright (c) 1983 Eric P. Allman
+# Copyright (c) 1994 Eric P. Allman
 # Copyright (c) 1988, 1993
 #	The Regents of the University of California.  All rights reserved.
 #
@@ -34,9 +34,11 @@ divert(-1)
 #
 
 divert(0)
-VERSIONID(`@(#)notsticky.m4	8.3 (Berkeley) 5/29/95')
-#
-#  This is now the default.  Use ``FEATURE(stickyhost)'' if you want
-#  the old default behaviour.
-#
+VERSIONID(`@(#)local_procmail.m4	8.3 (Berkeley) 10/29/95')
 divert(-1)
+
+define(`PROCMAIL_PATH',
+	ifelse(_ARG_, `', `/usr/local/bin/procmail', `_ARG_'))
+define(`LOCAL_MAILER_FLAGS', `SPfhn')
+define(`LOCAL_MAILER_PATH', PROCMAIL_PATH)
+define(`LOCAL_MAILER_ARGS', `procmail -Y -a $h -d $u')

@@ -34,9 +34,25 @@ divert(-1)
 #
 
 divert(0)
-VERSIONID(`@(#)notsticky.m4	8.3 (Berkeley) 5/29/95')
-#
-#  This is now the default.  Use ``FEATURE(stickyhost)'' if you want
-#  the old default behaviour.
-#
+VERSIONID(`@(#)bestmx_is_local.m4	8.2 (Berkeley) 10/29/95')
 divert(-1)
+
+LOCAL_CONFIG
+Kbestmx bestmx
+
+LOCAL_NET_CONFIG
+
+# If we are the best MX for a site, then we want to accept
+# its mail as local.  We assume we've already weeded out mail to
+# UUCP sites which are connected to us, which should also have
+# listed us as their best MX.
+#
+# Warning: this may generate a lot of extra DNS traffic -- a
+# lower cost method is to list all the expected best MX hosts
+# in $=w.  This should be fine (and easier to administer) for
+# low to medium traffic hosts.
+
+R$* < @ $* > $*			$: $1 < @ $2 @@ $(bestmx $2 $) > $3
+R$* $=O $* < @ $* @@ $=w . > $*	$@ $>97 $1 $2 $3
+R$* < @ $* @@ $=w . > $*	$#local $: $1
+R$* < @ $* @@ $* > $*		$: $1 < @ $2 > $4

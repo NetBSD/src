@@ -34,9 +34,7 @@ divert(-1)
 #
 
 divert(0)
-VERSIONID(`@(#)notsticky.m4	8.3 (Berkeley) 5/29/95')
-#
-#  This is now the default.  Use ``FEATURE(stickyhost)'' if you want
-#  the old default behaviour.
-#
+VERSIONID(`@(#)masquerade_envelope.m4	8.1 (Berkeley) 7/9/95')
 divert(-1)
+
+define(`_MASQUERADE_ENVELOPE_', 1)
