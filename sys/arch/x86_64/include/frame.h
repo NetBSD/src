@@ -1,4 +1,4 @@
-/*	$NetBSD: frame.h,v 1.2 2002/05/28 23:11:38 fvdl Exp $	*/
+/*	$NetBSD: frame.h,v 1.3 2002/06/12 19:13:27 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -172,7 +172,6 @@ struct sigframe {
 	struct	sigcontext *sf_scp;
 	sig_t	sf_handler;
 	struct	sigcontext sf_sc;
-	struct	fxsave64 *sf_fpp;
 	struct	fxsave64 sf_fp;
 };
 

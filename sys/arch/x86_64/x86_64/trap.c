@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.6 2002/06/03 18:23:17 fvdl Exp $	*/
+/*	$NetBSD: trap.c,v 1.7 2002/06/12 19:13:28 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -133,7 +133,9 @@ const char *trap_type[] = {
 	"invalid TSS fault",			/* 15 T_TSSFLT */
 	"segment not present fault",		/* 16 T_SEGNPFLT */
 	"stack fault",				/* 17 T_STKFLT */
-	"reserved trap",			/* 18 T_RESERVED */
+	"machine check",			/* 18 T_MCA */
+	"SSE FP exception",			/* 19 T_XMM */
+	"reserved trap",			/* 20 T_RESERVED */
 };
 int	trap_types = sizeof trap_type / sizeof trap_type[0];
 
@@ -289,6 +291,8 @@ copyfault:
 	case T_STKFLT|T_USER:
 	case T_ALIGNFLT|T_USER:
 	case T_NMI|T_USER:
+		printf("pid %d (%s): BUS at rip %lx addr %lx\n",
+		    p->p_pid, p->p_comm, frame.tf_rip, rcr2());
 		trapsignal(p, SIGBUS, type &~ T_USER);
 		goto out;
 
@@ -322,6 +326,7 @@ copyfault:
 		goto out;
 
 	case T_ARITHTRAP|T_USER:
+	case T_XMM|T_USER:
 		fputrap(&frame);
 		goto out;
 
@@ -422,7 +427,7 @@ copyfault:
 			       p->p_ucred->cr_uid : -1);
 			trapsignal(p, SIGKILL, T_PAGEFLT);
 		} else {
-#ifdef fvdl_debug
+#if 1
 			printf("pid %d (%s): SEGV at rip %lx addr %lx\n",
 			    p->p_pid, p->p_comm, frame.tf_rip, va);
 #endif
