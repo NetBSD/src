@@ -1,4 +1,4 @@
-/*	$NetBSD: pmc.h,v 1.4 2002/08/08 18:37:39 thorpej Exp $	*/
+/*	$NetBSD: pmc.h,v 1.5 2002/08/08 20:40:49 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000 Zembu Labs, Inc.
@@ -47,6 +47,17 @@
 #define	PMC_TYPE_K7		0x30000		/* K7-compatible */
 #define	PMC_TYPE_K7_TSC		0x30001		/* cycle counter */
 #define	PMC_TYPE_K7_PMCx	0x30002		/* performance counter */
+
+/*
+ * Each PMC event on the x86 is associated with a processor unit.  We
+ * encode the unit in the upper 16 bits of the event ID.
+ */
+#define	__PMC_EVID_EVENT_MASK	0x0000ffff
+#define	__PMC_EVID_UNIT_MASK	0xffff0000
+
+#define	__PMC_UNIT(x)		((x) << 16)
+#define	__PMC_GET_UNIT(x)	(((x) & __PMC_EVID_UNIT_MASK) >> 16)
+#define	__PMC_GET_EVENT(x)	((x) & __PMC_EVID_EVENT_MASK)
 
 #if defined(_KERNEL)
 /*
