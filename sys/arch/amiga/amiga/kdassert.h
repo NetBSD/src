@@ -1,4 +1,4 @@
-/*	$NetBSD: kdassert.h,v 1.3 1995/02/11 21:22:17 chopps Exp $	*/
+/*	$NetBSD: kdassert.h,v 1.4 1995/04/17 11:50:36 chopps Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -52,4 +52,4 @@
 #else /* !DEBUG */
 #define KDASSERT(x)
 #endif /* !DEBUG */
-#endif /* _KDASSERT_H
+#endif /* _KDASSERT_H */
