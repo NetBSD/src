@@ -1,4 +1,4 @@
-/*	$NetBSD: mount_nfs.c,v 1.25 2000/06/09 00:06:36 fvdl Exp $	*/
+/*	$NetBSD: mount_nfs.c,v 1.26 2000/06/19 23:19:20 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1992, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)mount_nfs.c	8.11 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: mount_nfs.c,v 1.25 2000/06/09 00:06:36 fvdl Exp $");
+__RCSID("$NetBSD: mount_nfs.c,v 1.26 2000/06/19 23:19:20 fvdl Exp $");
 #endif
 #endif /* not lint */
 
@@ -681,6 +681,14 @@ tryagain:
 		nfs_nb.buf = &nfs_ss;
 		nfs_nb.maxlen = sizeof nfs_ss;
 		if (!rpcb_getaddr(RPCPROG_NFS, nfsvers, nconf, &nfs_nb, hostp)){
+			if (rpc_createerr.cf_stat == RPC_SYSTEMERROR) {
+				nfhret.stat = rpc_createerr.cf_error.re_errno;
+				break;
+			}
+			if (rpc_createerr.cf_stat == RPC_UNKNOWNPROTO) {
+				nfhret.stat = EPROTONOSUPPORT;
+				break;
+			}
 			if ((opflags & ISBGRND) == 0)
 				clnt_pcreateerror(
 				    "mount_nfs: rpcbind on server:");
