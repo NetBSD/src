@@ -1,4 +1,4 @@
-/*	$NetBSD: cmd1.c,v 1.7 1997/05/13 06:15:53 mikel Exp $	*/
+/*	$NetBSD: cmd1.c,v 1.8 1997/05/17 19:49:36 pk Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)cmd1.c	8.2 (Berkeley) 4/20/95";
 #else
-static char rcsid[] = "$NetBSD: cmd1.c,v 1.7 1997/05/13 06:15:53 mikel Exp $";
+static char rcsid[] = "$NetBSD: cmd1.c,v 1.8 1997/05/17 19:49:36 pk Exp $";
 #endif
 #endif /* not lint */
 
@@ -161,7 +161,7 @@ from(v)
 	int *msgvec = v;
 	register int *ip;
 
-	for (ip = msgvec; *ip != NULL; ip++)
+	for (ip = msgvec; *ip != 0; ip++)
 		printhead(*ip);
 	if (--ip >= msgvec)
 		dot = &message[*ip - 1];

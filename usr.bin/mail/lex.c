@@ -1,4 +1,4 @@
-/*	$NetBSD: lex.c,v 1.9 1997/05/13 06:15:55 mikel Exp $	*/
+/*	$NetBSD: lex.c,v 1.10 1997/05/17 19:55:13 pk Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)lex.c	8.2 (Berkeley) 4/20/95";
 #else
-static char rcsid[] = "$NetBSD: lex.c,v 1.9 1997/05/13 06:15:55 mikel Exp $";
+static char rcsid[] = "$NetBSD: lex.c,v 1.10 1997/05/17 19:55:13 pk Exp $";
 #endif
 #endif /* not lint */
 
@@ -389,9 +389,9 @@ execute(linebuf, contxt)
 		if (c  == 0) {
 			*msgvec = first(com->c_msgflag,
 				com->c_msgmask);
-			msgvec[1] = NULL;
+			msgvec[1] = 0;
 		}
-		if (*msgvec == NULL) {
+		if (*msgvec == 0) {
 			printf("No applicable messages\n");
 			break;
 		}
