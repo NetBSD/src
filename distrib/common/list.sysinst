@@ -1,0 +1,27 @@
+#	$NetBSD: list.sysinst,v 1.1 2002/02/07 11:40:48 lukem Exp $
+#
+
+PROG	sysinst
+
+SPECIAL	sysinst	srcdir	distrib/utils/sysinst/arch/@MACHINE@
+
+# the lists of obsolete files used by sysinst
+#
+# dummy copies for the mtree specfile so the files get the correct perms
+#
+COPY	${_SRC_TOP_}/distrib/common/dist/base_obsolete	dist/base_obsolete	644
+COPY	${_SRC_TOP_}/distrib/common/dist/comp_obsolete	dist/comp_obsolete	644
+COPY	${_SRC_TOP_}/distrib/common/dist/etc_obsolete	dist/etc_obsolete	644
+COPY	${_SRC_TOP_}/distrib/common/dist/games_obsolete	dist/games_obsolete	644
+COPY	${_SRC_TOP_}/distrib/common/dist/man_obsolete	dist/man_obsolete	644
+COPY	${_SRC_TOP_}/distrib/common/dist/misc_obsolete	dist/misc_obsolete	644
+COPY	${_SRC_TOP_}/distrib/common/dist/text_obsolete	dist/text_obsolete	644
+COPY	${_SRC_TOP_}/distrib/common/dist/xbase_obsolete	dist/xbase_obsolete	644
+COPY	${_SRC_TOP_}/distrib/common/dist/xcomp_obsolete	dist/xcomp_obsolete	644
+COPY	${_SRC_TOP_}/distrib/common/dist/xcontrib_obsolete	dist/xcontrib_obsolete	644
+COPY	${_SRC_TOP_}/distrib/common/dist/xfont_obsolete	dist/xfont_obsolete	644
+COPY	${_SRC_TOP_}/distrib/common/dist/xserver_obsolete	dist/xserver_obsolete	644
+COPY	${_SRC_TOP_}/distrib/common/dist/xmisc_obsolete	dist/xmisc_obsolete	644
+
+# generate the real lists
+CMD	sh ${_SRC_TOP_}/distrib/sets/makeobsolete -b -s ${_SRC_TOP_}/distrib/sets -t ./dist
