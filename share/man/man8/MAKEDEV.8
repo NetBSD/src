@@ -6,7 +6,7 @@
 .\" *** DO NOT EDIT - any changes will be lost!!!
 .\" *** ------------------------------------------------------------------
 .\"
-.\" $NetBSD: MAKEDEV.8,v 1.2 2003/10/24 23:44:15 jdolecek Exp $
+.\" $NetBSD: MAKEDEV.8,v 1.3 2003/10/26 21:34:49 jdolecek Exp $
 .\"
 .\" Copyright (c) 2001, 2003 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -42,7 +42,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd October 25, 2003
+.Dd October 26, 2003
 .Dt MAKEDEV 8
 .Os
 .Sh NAME
@@ -161,7 +161,7 @@ Nereid bank memory disks, see
 IBM PS/2 ESDI disk devices, see
 .Xr \&edc 4
 . It Ar fd#
-``floppy'' disk drives (3 1/2``, 5 1/4''), see
+``floppy'' disk drives (3 1/2", 5 1/4"), see
 .Xr \&amiga/fdc 4 ,
 .Xr \&i386/fdc 4
 . It Ar gdrom#
@@ -223,7 +223,8 @@ Microsoft bus mouse, see
 ``quadrature mouse'', see
 .Xr \&acorn32/qms 4
 . It Ar pms#
-PS/2 mouse
+PS/2 mouse, see
+.Xr \&acorn32/opms 4
 . It Ar mouse
 Mouse (provides events, for X11)
 . El
@@ -637,8 +638,7 @@ RealTimeClock, see
 PlanetConnect satellite receiver driver
 . It Ar scsibus#
 SCSI busses, see
-.Xr \&scsi 4 ,
-.Xr \&scsictl 8
+.Xr \&scsi 4
 . It Ar se#
 SCSI Ethernet, see
 .Xr \&se 4
