@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.147 2002/02/09 05:01:39 eeh Exp $	*/
+/*	$NetBSD: locore.s,v 1.147.4.1 2002/03/19 02:30:59 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996-2001 Eduardo Horvath
@@ -231,6 +231,15 @@
 	srl	r0, 0, r1;	\
 	srlx	r0, 32, r0
 
+/*
+ * Storage for proc0.  This must be aligned to a 16-byte boundary.
+ */
+	.section .bss
+	.align	16
+	.globl	_C_LABEL(proc0)
+OTYPE(_C_LABEL(proc0))
+_C_LABEL(proc0):
+	.space	PROC_SIZEOF
 
 /*
  * A handy macro for maintaining instrumentation counters.
@@ -371,7 +380,7 @@
 	call	_C_LABEL(loadfpstate);		/* Re-load orig fpstate */   \
 	 mov	%l3, %o0;						     \
 1:
-	
+
 
 	.data
 	.globl	_C_LABEL(data_start)
