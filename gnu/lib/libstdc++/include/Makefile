@@ -1,10 +1,8 @@
-#	$NetBSD: Makefile,v 1.4 2003/07/22 02:52:37 lukem Exp $
+#	$NetBSD: Makefile,v 1.5 2003/10/28 08:13:39 lukem Exp $
 
 .include <bsd.own.mk>
 
 .include "${.CURDIR}/../arch/${MACHINE_ARCH}/defs.mk"
-
-.cc: # disable .cc->NULL transform
 
 DIST=		${NETBSDSRCDIR}/gnu/dist/toolchain
 
@@ -15,3 +13,5 @@ INCSDIR=	/usr/include/g++
 
 # Get default targets including <bsd.inc.mk>.
 .include <bsd.prog.mk>
+
+.cc: # disable .cc->NULL transform
