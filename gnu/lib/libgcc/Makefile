@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.34 2001/12/12 09:30:55 lukem Exp $
+#	$NetBSD: Makefile,v 1.35 2001/12/12 17:27:50 thorpej Exp $
 
 REQUIRETOOLS=	yes
 
@@ -26,9 +26,12 @@ CFLAGS+=        -msoft-quad-float
 .endif
 
 LIB2FUNCS=	${G_LIB2FUNCS:=.c}
+.if defined(G_LIB2FUNCS_EH)
+LIB2FUNCS_EH=	${G_LIB2FUNCS_EH:=.c}
+.endif
 CXX_LIB2FUNCS=	${G_CXX_LIB2FUNCS:Mop*:S/opdel.o/opdelete.o/:.o=.cc}
 
-SRCS+=		${LIB2FUNCS} ${CXX_LIB2FUNCS} \
+SRCS+=		${LIB2FUNCS} ${LIB2FUNCS_EH} ${CXX_LIB2FUNCS} \
 		${G_CXX_LIB2FUNCS:Nop*:.o=.cc} ${G_LIB2ADD:M*.c:T}
 OBJS+=		${G_LIB2FUNCS_EH:=.o}
 
@@ -38,14 +41,19 @@ CLEANFILES+=	${LIB2FUNCS} ${CXX_LIB2FUNCS} dp-bit.c fp-bit.c
 ${LIB2FUNCS}: ${.CURDIR}/Makefile
 	printf '#define L${.PREFIX}\n#include <libgcc2.c>\n' >${.TARGET}
 
-${G_LIB2FUNCS_EH:=.o}: libgcc2.c
-	${COMPILE.c} -fexceptions -o $@ ${>:M*.c}
+.if defined(G_LIB2FUNCS_EH)
+${LIB2FUNCS_EH}: ${.CURDIR}/Makefile
+	printf '#define L${.PREFIX}\n#include <libgcc2.c>\n' >${.TARGET}
 
-${G_LIB2FUNCS_EH:=.po}: libgcc2.c
-	${COMPILE.c} -pg -fexceptions -o $@ ${>:M*.c}
+${G_LIB2FUNCS_EH:=.o}:
+	${COMPILE.c} -fexceptions -o ${.TARGET} ${.IMPSRC}
 
-${G_LIB2FUNCS_EH:=.so}: libgcc2.c
-	${COMPILE.c} ${CPICFLAGS} -fexceptions -o $@ ${>:M*.c}
+${G_LIB2FUNCS_EH:=.po}:
+	${COMPILE.c} -pg -fexceptions -o ${.TARGET} ${.IMPSRC}
+
+${G_LIB2FUNCS_EH:=.so}:
+	${COMPILE.c} ${CPICFLAGS} -fexceptions -o ${.TARGET} ${.IMPSRC}
+.endif	# G_LIB2FUNCS_EH
 
 ${CXX_LIB2FUNCS}: ${.CURDIR}/Makefile
 	printf '#define L_op_${.PREFIX:S/^op//}\n#include <new1.cc>\n#include <new2.cc>\n' >${.TARGET}
