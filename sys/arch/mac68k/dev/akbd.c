@@ -1,4 +1,4 @@
-/*	$NetBSD: akbd.c,v 1.3.2.2 1999/03/08 02:06:13 scottr Exp $	*/
+/*	$NetBSD: akbd.c,v 1.3.2.3 1999/03/10 16:00:15 scottr Exp $	*/
 
 /*
  * Copyright (C) 1998	Colin Wood
@@ -51,6 +51,7 @@
 #include <machine/cpu.h>
 #define KEYBOARD_ARRAY
 #include <machine/keyboard.h>
+#include <machine/viareg.h>
 
 #include <mac68k/mac68k/macrom.h>
 #include <mac68k/dev/adbvar.h>
@@ -551,8 +552,7 @@ akbd_cngetc(v, type, data)
 	u_int *type;
 	int *data;
 {
-	extern void adb_intr __P((void));
-	int key, press, val;
+	int intbits, key, press, val;
 	int s;
 
 	s = splhigh();
@@ -561,8 +561,16 @@ akbd_cngetc(v, type, data)
 	adb_polling = 1;
 
 	while (polledkey == -1) {
-		adb_intr();
-		DELAY(10000);				/* XXX */
+		intbits = via_reg(VIA1, vIFR);
+
+		if (intbits & V1IF_ADBRDY) {
+			mrg_adbintr();
+			via_reg(VIA1, vIFR) = V1IF_ADBRDY;
+		}
+		if (intbits & 0x10) {
+			mrg_pmintr();
+			via_reg(VIA1, vIFR) = 0x10;
+		}
 	}
 
 	adb_polling = 0;
