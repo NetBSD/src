@@ -1,4 +1,4 @@
-/* $NetBSD: isp_netbsd.c,v 1.47 2001/09/01 07:12:24 mjacob Exp $ */
+/* $NetBSD: isp_netbsd.c,v 1.48 2001/09/05 23:08:23 mjacob Exp $ */
 /*
  * This driver, which is contained in NetBSD in the files:
  *
@@ -178,14 +178,23 @@ isp_attach(struct ispsoftc *isp)
 static void
 isp_config_interrupts(struct device *self)
 {
+#if	0
         struct ispsoftc *isp = (struct ispsoftc *) self;
 
 	/*
 	 * After this point, we'll be doing the new configuration
-	 * schema which allows interrups, so we can do tsleep/wakeup
+	 * schema which allows interrupts, so we can do tsleep/wakeup
 	 * for mailbox stuff at that point.
 	 */
+
+	/*
+	 * Argh. We cannot use this until we know whether isprequest
+	 * was *not* called via a hardclock (timed thaw). So- we'll
+	 * only allow a window of the FC kernel thread doing this
+	 * when calling isp_fc_runstate.
+	 */
 	isp->isp_osinfo.no_mbox_ints = 0;
+#endif
 }
 
 
@@ -673,8 +682,13 @@ isp_fc_worker(void *arg)
 		 */
 		s = splbio();
 		while (isp->isp_osinfo.threadwork) {
+			int omb, r;
 			isp->isp_osinfo.threadwork = 0;
-			if (isp_fc_runstate(isp, 10 * 1000000) == 0) {
+			omb = isp->isp_osinfo.no_mbox_ints;
+			isp->isp_osinfo.no_mbox_ints = 0;
+			r = isp_fc_runstate(isp, 10 * 1000000);
+			isp->isp_osinfo.no_mbox_ints = omb;
+			if (r) {
 				break;
 			}
 			if  (isp->isp_osinfo.loop_checked &&
@@ -998,7 +1012,7 @@ isp_async(struct ispsoftc *isp, ispasync_t cmd, void *arg)
 			mbox6 = 0;
 		}
                 isp_prt(isp, ISP_LOGERR,
-                    "Internal Firmware on bus %d Error @ RISC Address 0x%x",
+                    "Internal Firmware Error on bus %d @ RISC Address 0x%x",
                     mbox6, mbox1);
 		isp_reinit(isp);
 		break;
