@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.14 1999/09/14 18:08:46 jsm Exp $ */
+/*	$NetBSD: extern.h,v 1.15 1999/09/14 19:54:47 jsm Exp $ */
 
 /*
  * Copyright (c) 1983, 1993
@@ -237,52 +237,52 @@ struct room {
 };
 extern struct room dayfile[];
 extern struct room nightfile[];
-struct room *location;
+extern struct room *location;
 
  /* object characteristics */
-const char   *const objdes[NUMOFOBJECTS];
-const char   *const objsht[NUMOFOBJECTS];
-const char   *const ouch[NUMOFINJURIES];
-const int     objwt[NUMOFOBJECTS];
-const int     objcumber[NUMOFOBJECTS];
+extern const char   *const objdes[NUMOFOBJECTS];
+extern const char   *const objsht[NUMOFOBJECTS];
+extern const char   *const ouch[NUMOFINJURIES];
+extern const int     objwt[NUMOFOBJECTS];
+extern const int     objcumber[NUMOFOBJECTS];
 
  /* current input line */
 #define NWORD	20		/* words per line */
-char    words[NWORD][15];
-int     wordvalue[NWORD];
-int     wordtype[NWORD];
-int     wordcount, wordnumber;
+extern char    words[NWORD][15];
+extern int     wordvalue[NWORD];
+extern int     wordtype[NWORD];
+extern int     wordcount, wordnumber;
 
  /* state of the game */
-int     ourtime;
-int     position;
-int     direction;
-int     left, right, ahead, back;
-int     ourclock, fuel, torps;
-int     carrying, encumber;
-int     rythmn;
-int     followfight;
-int     ate;
-int     snooze;
-int     meetgirl;
-int     followgod;
-int     godready;
-int     win;
-int     wintime;
-int     wiz;
-int     tempwiz;
-int     matchlight, matchcount;
-int     loved;
-int     pleasure, power, ego;
-int     WEIGHT;
-int     CUMBER;
-int     notes[NUMOFNOTES];
-unsigned int inven[NUMOFWORDS];
-unsigned int wear[NUMOFWORDS];
-char    beenthere[NUMOFROOMS + 1];
-char    injuries[NUMOFINJURIES];
+extern int     ourtime;
+extern int     position;
+extern int     direction;
+extern int     left, right, ahead, back;
+extern int     ourclock, fuel, torps;
+extern int     carrying, encumber;
+extern int     rythmn;
+extern int     followfight;
+extern int     ate;
+extern int     snooze;
+extern int     meetgirl;
+extern int     followgod;
+extern int     godready;
+extern int     win;
+extern int     wintime;
+extern int     wiz;
+extern int     tempwiz;
+extern int     matchlight, matchcount;
+extern int     loved;
+extern int     pleasure, power, ego;
+extern int     WEIGHT;
+extern int     CUMBER;
+extern int     notes[NUMOFNOTES];
+extern unsigned int inven[NUMOFWORDS];
+extern unsigned int wear[NUMOFWORDS];
+extern char    beenthere[NUMOFROOMS + 1];
+extern char    injuries[NUMOFINJURIES];
 
-char    username[9];
+extern char    username[9];
 
 struct wlist {
 	const char   *string;
@@ -292,7 +292,7 @@ struct wlist {
 #define HASHSIZE	256
 #define HASHMUL		81
 #define HASHMASK	(HASHSIZE - 1)
-struct wlist *hashtab[HASHSIZE];
+extern struct wlist *hashtab[HASHSIZE];
 extern struct wlist wlist[];
 
 struct objs {

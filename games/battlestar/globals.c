@@ -1,4 +1,4 @@
-/*	$NetBSD: globals.c,v 1.8 1999/07/14 17:42:13 hubertf Exp $	*/
+/*	$NetBSD: globals.c,v 1.9 1999/09/14 19:54:47 jsm Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)globals.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: globals.c,v 1.8 1999/07/14 17:42:13 hubertf Exp $");
+__RCSID("$NetBSD: globals.c,v 1.9 1999/09/14 19:54:47 jsm Exp $");
 #endif
 #endif				/* not lint */
 
@@ -224,3 +224,39 @@ int     win = 1;
 int     matchcount = 20;
 int     followgod = -1;
 int     followfight = -1;
+
+struct room *location;
+
+ /* current input line */
+char    words[NWORD][15];
+int     wordvalue[NWORD];
+int     wordtype[NWORD];
+int     wordcount, wordnumber;
+
+ /* state of the game */
+int     ourtime;
+int     position;
+int     direction;
+int     left, right, ahead, back;
+int     fuel, torps;
+int     carrying, encumber;
+int     rythmn;
+int     ate;
+int     snooze;
+int     meetgirl;
+int     godready;
+int     wintime;
+int     wiz;
+int     tempwiz;
+int     matchlight;
+int     loved;
+int     pleasure, power, ego;
+int     notes[NUMOFNOTES];
+unsigned int inven[NUMOFWORDS];
+unsigned int wear[NUMOFWORDS];
+char    beenthere[NUMOFROOMS + 1];
+char    injuries[NUMOFINJURIES];
+
+char    username[9];
+
+struct wlist *hashtab[HASHSIZE];
