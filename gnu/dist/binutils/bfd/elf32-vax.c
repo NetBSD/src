@@ -504,7 +504,7 @@ elf32_vax_set_private_flags (abfd, flags)
 }
 
 /* Copy vax-specific data from one module to another */
-static boolean
+static bfd_boolean
 elf32_vax_copy_private_bfd_data (ibfd, obfd)
      bfd *ibfd;
      bfd *obfd;
@@ -513,14 +513,14 @@ elf32_vax_copy_private_bfd_data (ibfd, obfd)
 
   if (bfd_get_flavour (ibfd) != bfd_target_elf_flavour
       || bfd_get_flavour (obfd) != bfd_target_elf_flavour)
-    return true;
+    return TRUE;
  
   in_flags = elf_elfheader (ibfd)->e_flags;
  
   elf_elfheader (obfd)->e_flags = in_flags;
-  elf_flags_init (obfd) = true;
+  elf_flags_init (obfd) = TRUE;
  
-  return true;
+  return TRUE;
 }
 
 /* Merge backend specific data from an object file to the output
