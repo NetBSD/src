@@ -1,7 +1,7 @@
-/*	$NetBSD: rtld_start.S,v 1.6 2002/09/12 17:07:26 mycroft Exp $	*/
+/*	$NetBSD: rtld_start.S,v 1.7 2002/09/12 17:18:39 mycroft Exp $	*/
 
 /*-
- * Copyright (c) 1998 The NetBSD Foundation, Inc.
+ * Copyright (c) 1998, 2002 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
