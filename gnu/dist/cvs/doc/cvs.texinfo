@@ -12633,6 +12633,11 @@ Default of @samp{TOFEWGCMAR} (or simply @samp{all}) will log
 all transactions.  Any subset of the default is
 legal.  (For example, to only log transactions that modify the
 @file{*,v} files, use @samp{LogHistory=TMAR}.)
+
+@cindex tag, in CVSROOT/config
+@item tag=@var{value}
+Enable an additional keyword that gets expanded on checkout;
+any string is legal.
 @end table
 
 @c ---------------------------------------------------------------------
