@@ -1,0 +1,333 @@
+/*	$NetBSD: menu_sys.def,v 1.1.1.1 1997/09/26 17:54:09 phil Exp $	*/
+
+/*
+ * Copyright 1997 Piermont Information Systems Inc.
+ * All rights reserved.
+ *
+ * Written by Philip A. Nelson for Piermont Information Systems Inc.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *      This product includes software develooped for the NetBSD Project by
+ *      Piermont Information Systems Inc.
+ * 4. The name of Piermont Information Systems Inc. may not be used to endorse
+ *    or promote products derived from this software without specific prior
+ *    written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY PIERMONT INFORMATION SYSTEMS INC. ``AS IS''
+ * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED. IN NO EVENT SHALL PIERMONT INFORMATION SYSTEMS INC. BE 
+ * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR 
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF 
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF 
+ * THE POSSIBILITY OF SUCH DAMAGE.
+ *
+ */
+
+/* menu_sys.defs -- Menu system standard routines. */
+
+#include <string.h>
+#include <ctype.h>
+
+#define REQ_EXECUTE   1000
+#define REQ_NEXT_ITEM 1001
+#define REQ_PREV_ITEM 1002
+
+#define KEYPAD_DOWN_ARROW 256
+#define KEYPAD_UP_ARROW   257
+
+#define MAX(x,y) ((x)>(y)?(x):(y))
+
+/* Initialization state. */
+static int __menu_init = 0;
+int __m_endwin = 0;
+
+/* prototypes for in here! */
+
+static void init_menu (struct menudesc *m);
+static void post_menu (struct menudesc *m);
+static void process_req (struct menudesc *m, int req);
+static void mbeep (void);
+static int menucmd (WINDOW *w);
+
+#ifndef NULL
+#define NULL (void *)0
+#endif
+
+/* menu system processing routines */
+
+static void mbeep (void)
+{
+	fprintf (stderr,"\a");
+}
+
+static int mgetch(WINDOW *w)
+{
+	static char buf[20];
+	static int  num = 0;
+
+	int i, ret;
+
+	for (i=0; i< strlen(KD); i++) {
+		if (i >= num)
+			buf[num++] = wgetch(w);
+		if (buf[i] != KD[i])
+			break;
+	}
+	if (i == strlen(KD)) {
+		num = 0;
+		return KEYPAD_DOWN_ARROW;
+	}		
+
+	for (i=0; i< strlen(KU); i++) {
+		if (i >= num)
+			buf[num++] = wgetch(w);
+		if (buf[i] != KU[i])
+			break;
+	}
+	if (i == strlen(KU)) {
+		num = 0;
+		return KEYPAD_UP_ARROW;
+	}		
+
+	ret = buf[0];
+	for (i = 0; i < strlen(buf); i++)
+		buf[i] = buf[i+1];
+	num--;
+	return ret;
+}
+
+static int menucmd (WINDOW *w)
+{
+	int ch;
+
+	while (TRUE) {
+		ch = mgetch(w);
+		
+		switch (ch) {
+		case '\n':
+			return REQ_EXECUTE;
+		case '\016':
+		case KEYPAD_DOWN_ARROW:
+			return REQ_NEXT_ITEM;
+		case '\020':
+		case KEYPAD_UP_ARROW:
+			return REQ_PREV_ITEM;
+		}
+		
+		if (isalpha(ch))
+			return (ch);
+
+		mbeep();
+		wrefresh(w);
+	}
+}
+
+static void init_menu (struct menudesc *m)
+{
+	int max;
+	char **p;
+	int add=4;
+
+	if (m->mopt & NOBOX)
+		add = 2;
+
+	max = strlen(m->title);
+
+	/* Calculate h? */
+	if (m->h == 0) {
+		m->h = m->numopts + ((m->mopt & NOEXITOPT) ? 0 : 1)
+			- (max ? 0 : 2);
+	}
+	
+
+	/* Calculate w? */
+	if (m->w == 0) {
+		p = m->opts;
+		while (*p) {
+			max = MAX(max,strlen(*p));
+			p++;
+		}
+		m->w = max;
+	}
+
+	/* Get the windows. */
+	m->mw = newwin(m->h+add, m->w+add, m->y, m->x);
+
+	if (m->mw == NULL) {
+		endwin();
+		(void) fprintf (stderr,
+			"Could not create window for window with title "
+			" \"%s\"\n", m->title);
+		exit(1);
+	} 
+}
+
+static void post_menu (struct menudesc *m)
+{
+	int i;
+	int hasbox, cury;
+	int tadd;
+	
+	if (m->mopt & NOBOX) {
+		cury = 0;
+		hasbox = 0;
+	} else {
+		cury = 1;
+		hasbox = 1;
+	}
+
+	tadd = strlen(m->title) ? 2 : 0;
+
+	if (tadd) {
+		mvwaddstr(m->mw, cury, cury, m->title);
+		cury += 2;
+	}
+
+	for (i=0; i<m->numopts; i++, cury++) {
+		if (m->cursel == i) {
+			mvwaddstr (m->mw, cury, hasbox, ">");
+			wstandout(m->mw);
+		} else
+			mvwaddstr (m->mw, cury, hasbox, " ");
+		waddstr (m->mw, m->opts[i]);
+		if (m->cursel == i)
+			wstandend(m->mw);
+	}
+	if (!(m->mopt & NOEXITOPT))
+		mvwaddstr (m->mw, cury, hasbox, " x: Exit");
+	
+	if (!(m->mopt & NOBOX))
+		box(m->mw, '*', '*');
+
+	wmove(m->mw,tadd+hasbox+m->cursel, hasbox);
+}
+
+static void process_req (struct menudesc *m, int req)
+{
+	int ch;
+	int lastsel = m->cursel;
+	int hasexit = (m->mopt & NOEXITOPT ? 0 : 1 );
+	int hasbox = (m->mopt & NOBOX ? 0 : 1);
+	int tadd = strlen(m->title) ? 2 : 0;
+
+	if (req == REQ_EXECUTE)
+		return;
+	else if (req == REQ_NEXT_ITEM) {
+		if (m->cursel < m->numopts + hasexit - 1)
+			m->cursel++;
+		else
+			mbeep();
+	} else if (req == REQ_PREV_ITEM) {
+		if (m->cursel > 0)
+			m->cursel--;
+		else
+			mbeep();
+	} else {
+		ch = tolower (req);
+		if (ch == 'x' && hasexit)
+			m->cursel = m->numopts;
+		else {
+			ch = ch - 'a';
+			if (ch < 0 || ch >= m->numopts)
+				mbeep();
+			else
+				m->cursel = ch;
+		}
+	}
+	if (m->cursel != lastsel) {
+		mvwaddstr (m->mw, lastsel+tadd+hasbox, hasbox, " ");
+		if (lastsel < m->numopts)
+			waddstr (m->mw, m->opts[lastsel]);
+		else
+			waddstr (m->mw, "x: Exit");
+		mvwaddstr (m->mw, m->cursel+tadd+hasbox, hasbox, ">");
+		wstandout(m->mw);
+		if (m->cursel < m->numopts)
+			waddstr (m->mw, m->opts[m->cursel]);
+		else
+			waddstr (m->mw, "x: Exit");
+		wstandend(m->mw);
+		wmove(m->mw,tadd+hasbox+m->cursel, hasbox);
+		wrefresh(m->mw);
+	}
+}
+
+void process_menu (int num)
+{
+	int sel = 0;
+	int req, done;
+	int last_num;
+
+	struct menudesc *m = &menus[num];
+
+	done = FALSE;
+
+	/* Initialize? */
+	if (!__menu_init) {
+		initscr();
+		cbreak();
+		noecho();
+		__menu_init = 1;
+	}
+	if (__m_endwin) {
+     	        wclear(stdscr);
+		wrefresh(stdscr);
+		__m_endwin = 0;
+	}
+	if (m->mw == NULL)
+		init_menu (m);
+
+	/* Always preselect 0! */
+	m->cursel = 0;
+
+	while (!done) {
+		last_num = num;
+		if (__m_endwin) {
+			wclear(stdscr);
+			wrefresh(stdscr);
+			__m_endwin = 0;
+		}
+		/* Process the display action */
+		process_item (&num, -2);
+		post_menu (m);
+		wrefresh (m->mw);
+
+		while ((req = menucmd (m->mw)) != REQ_EXECUTE)
+			process_req (m, req);
+
+		sel = m->cursel;
+		wclear (m->mw);
+		wrefresh (m->mw);
+
+		/* Process the items */
+		if (sel < m->numopts)
+			done = process_item (&num, sel);
+		else
+			done = TRUE;
+
+		/* Reselect m just in case */
+		if (num != last_num) {
+			m = &menus[num];
+			/* Initialize? */
+			if (m->mw == NULL)
+				init_menu (m);
+			process_item (&num, -2);
+		}
+	}
+
+	/* Process the exit action */
+	process_item (&num, -1);
+}
