@@ -1,4 +1,4 @@
-#	$NetBSD: TOKOCHAN,v 1.19 2001/07/08 16:32:26 abs Exp $
+#	$NetBSD: TOKOCHAN,v 1.20 2001/11/20 08:43:42 lukem Exp $
 
 #
 #	TOKOCHAN -- Believe in the BSD power; Toko to issyo-ni make all!
@@ -6,7 +6,7 @@
 
 include "arch/x68k/conf/std.x68k"
 
-#ident 		"TOKOCHAN-$Revision: 1.19 $"
+#ident 		"TOKOCHAN-$Revision: 1.20 $"
 
 maxusers	10
 
@@ -81,12 +81,12 @@ options 	DDB_ONPANIC=0		# see also sysctl(8): `ddb.onpanic'
 options 	PANICBUTTON		# interrupt switch invokes DDB
 
 ## You may also use gdb, on another computer connected to this machine over
-## a serial port.  Both KGDBDEV and KGDBRATE should be specified; KGDBDEV is
-## a dev_t encoded device number of the serial port to use.
+## a serial port.  Both KGDB_DEV and KGDB_DEVRATE should be specified;
+## KGDB_DEV is a dev_t encoded device number of the serial port to use.
 ## KGDB is not supported for now.
-#options 	KGDB		# support for kernel gdb
-#options 	KGDBDEV=0xc00	# kgdb device number
-#options 	KGDBRATE=9600	# baud rate
+#options 	KGDB			# support for kernel gdb
+#options 	KGDB_DEV=0xc00		# kgdb device number
+#options 	KGDB_DEVRATE=9600	# baud rate
 
 ## Compile the kernel with debugging symbols (`netbsd.gdb' is the debug file),
 ## such that gdb(1) can be used on a kernel coredump.

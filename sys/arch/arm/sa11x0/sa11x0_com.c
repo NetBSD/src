@@ -1,4 +1,4 @@
-/*      $NetBSD: sa11x0_com.c,v 1.1 2001/07/08 23:37:52 rjs Exp $        */
+/*      $NetBSD: sa11x0_com.c,v 1.2 2001/11/20 08:43:22 lukem Exp $        */
 
 /*-
  * Copyright (c) 1998, 1999, 2001 The NetBSD Foundation, Inc.
@@ -76,7 +76,6 @@
 
 #include "opt_com.h"
 #include "opt_ddb.h"
-#include "opt_ddbparam.h"
 #include "opt_kgdb.h"
 
 #include "rnd.h"

@@ -1,11 +1,11 @@
-# $NetBSD: FOURMEG,v 1.5 2001/07/08 16:32:25 abs Exp $
+# $NetBSD: FOURMEG,v 1.6 2001/11/20 08:43:38 lukem Exp $
 
 # FOURMEG Sun2 (2/120, 2/170, 2/50, ...)
 # Supports root on: ie0, sd*, ...
 
 include "arch/sun2/conf/std.sun2"
 
-#ident 		"FOURMEG-$Revision: 1.5 $"
+#ident 		"FOURMEG-$Revision: 1.6 $"
 
 # Machines to be supported by this kernel
 #options 	FPU_EMULATE
@@ -28,7 +28,7 @@ options 	KTRACE		# system call tracing
 # ... or these for KGDB (gdb remote target)
 #makeoptions DEBUG="-g"		# debugging symbols for gdb
 #options 	KGDB
-#options 	KGDBDEV=0x0C00	# ttya=0C00 ttyb=0C01
+#options 	KGDB_DEV=0x0C00	# ttya=0C00 ttyb=0C01
 
 # Other debugging options
 #options 	DDB_HISTORY_SIZE=100	# enable history editing in DDB

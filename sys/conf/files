@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.468 2001/11/02 18:39:06 atatat Exp $
+#	$NetBSD: files,v 1.469 2001/11/20 08:43:43 lukem Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -139,10 +139,11 @@ defopt opt_userconf.h	USERCONF
 defopt	opt_mbr.h	COMPAT_386BSD_MBRPART
 
 # debugging options
-defopt	DDB
-defopt	opt_ddbparam.h	DDB_FROMCONSOLE DDB_ONPANIC DDB_HISTORY_SIZE
-defopt	opt_ddbparam.h	DDB_BREAK_CHAR SYMTAB_SPACE
-defopt	KGDB
+defopt	opt_ddb.h	DDB DDB_FROMCONSOLE DDB_ONPANIC DDB_HISTORY_SIZE
+			DDB_BREAK_CHAR SYMTAB_SPACE
+defopt	opt_kgdb.h 	KGDB
+defparam opt_kgdb.h	KGDB_DEV KGDB_DEVNAME
+			KGDB_DEVADDR KGDB_DEVRATE KGDB_DEVMODE
 defopt	LOCKDEBUG
 defopt	SYSCALL_DEBUG
 
