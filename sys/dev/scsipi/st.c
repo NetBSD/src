@@ -1,4 +1,4 @@
-/*	$NetBSD: st.c,v 1.118 2000/01/22 04:29:58 mjacob Exp $ */
+/*	$NetBSD: st.c,v 1.119 2000/02/20 07:38:48 mjacob Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -1184,8 +1184,8 @@ ststart(v)
 		BUFQ_REMOVE(&st->buf_queue, bp);
 
 		/*
-		 * if the device has been unmounted bye the user
-		 * then throw away all requests until done
+		 * If the device has been unmounted by the user
+		 * then throw away all requests until done.
 		 */
 		if (!(st->flags & ST_MOUNTED) ||
 		    !(sc_link->flags & SDEV_MEDIA_LOADED)) {
