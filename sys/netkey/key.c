@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.103 2003/10/25 08:27:12 christos Exp $	*/
+/*	$NetBSD: key.c,v 1.104 2003/11/04 05:50:54 itojun Exp $	*/
 /*	$KAME: key.c,v 1.310 2003/09/08 02:23:44 itojun Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.103 2003/10/25 08:27:12 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.104 2003/11/04 05:50:54 itojun Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -1551,7 +1551,7 @@ key_spdadd(so, m, mhp)
 	struct mbuf *m;
 	const struct sadb_msghdr *mhp;
 {
-	struct sadb_address *src0, *dst0;
+	struct sadb_address *src0 = NULL, *dst0 = NULL;
 	struct sadb_x_policy *xpl0, *xpl;
 	struct sadb_lifetime *lft = NULL;
 #ifdef SADB_X_EXT_TAG
@@ -1562,7 +1562,7 @@ key_spdadd(so, m, mhp)
 	struct ipsecrequest *isr;
 	int error;
 #ifdef SADB_X_EXT_TAG
-	u_int16_t tagvalue;
+	u_int16_t tagvalue = 0;
 #endif
 	int spidxmode;
 
