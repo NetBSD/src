@@ -1,4 +1,4 @@
-.\"	$NetBSD: ed.1,v 1.26 2003/09/08 12:58:41 wiz Exp $
+.\"	$NetBSD: ed.1,v 1.27 2003/09/08 13:02:59 wiz Exp $
 .\"	$OpenBSD: ed.1,v 1.42 2003/07/27 13:25:43 jmc Exp $
 .\"
 .\" Copyright (c) 1993 Andrew Moore, Talke Studio.
@@ -200,7 +200,7 @@ then the second address is set to the given address.
 If an
 .Em n Ns No -tuple
 of addresses is given where
-.Em n > 2 ,
+.Em n \*[Gt] 2 ,
 then the corresponding range is determined by the last two addresses in the
 .Em n Ns No -tuple.
 If only one address is expected, then the last address is used.
@@ -353,11 +353,11 @@ If
 is the last character of a regular expression,
 it anchors the regular expression to the end of a line.
 Otherwise, it matches itself.
-.It Em \e<
+.It Em \e\*[Lt]
 Anchors the single character regular expression or subexpression
 immediately following it to the beginning of a word.
 (This may not be available.)
-.It Em \e>
+.It Em \e\*[Gt]
 Anchors the single character regular expression or subexpression
 immediately following it to the end of a word.
 (This may not be available.)
@@ -608,7 +608,7 @@ is the same as that of the
 command.
 A newline alone acts as a null command list.
 A single
-.Sq &
+.Sq \*[Am]
 repeats the last non-null command list.
 .It Ic H
 Toggles the printing of error explanations.
@@ -731,7 +731,7 @@ affected is printed as though the print suffix
 were specified.
 .Pp
 An unescaped
-.Ql &
+.Ql \*[Am]
 in
 .Ar replacement
 is replaced by the currently matched text.
@@ -904,6 +904,11 @@ appends one on reading/writing it.
 In the case of a binary file,
 .Nm
 does not append a newline on reading/writing.
+.Sh ENVIRONMENT
+.Bl -tag -width iTMPDIR
+.It Ev TMPDIR
+The location used to store temporary files.
+.El
 .Sh FILES
 .Bl -tag -width /tmp/ed.* -compact
 .It Pa /tmp/ed.*
@@ -946,11 +951,6 @@ If diagnostics are not disabled, attempting to quit
 or edit another file before writing a modified buffer results in an error.
 If the command is entered a second time, it succeeds,
 but any changes to the buffer are lost.
-.Sh ENVIRONMENT
-.Bl -tag -width iTMPDIR
-.It Ev TMPDIR
-The location used to store temporary files.
-.El
 .Sh SEE ALSO
 .Xr bdes 1 ,
 .Xr sed 1 ,
