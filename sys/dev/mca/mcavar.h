@@ -1,4 +1,4 @@
-/*	$NetBSD: mcavar.h,v 1.6 2004/08/30 15:05:19 drochner Exp $	*/
+/*	$NetBSD: mcavar.h,v 1.7 2004/08/30 18:27:21 drochner Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -72,9 +72,6 @@ struct mca_attach_args {
 	int ma_pos[8];			/* MCA POS register values */
 	int ma_id;			/* MCA device ID (POS1 + POS2<<8) */
 };
-
-#define mcacf_slot		cf_loc[0]
-#define MCA_UNKNOWN_SLOT	-1		/* wildcarded 'slot' */
 
 int	mcabusprint(void *, const char *);
 
