@@ -1,4 +1,4 @@
-/*	$NetBSD: kvm_m68k_cmn.c,v 1.7 1997/10/12 11:01:23 briggs Exp $	*/
+/*	$NetBSD: kvm_m68k_cmn.c,v 1.8 1998/06/30 20:29:39 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997 Jason R. Thorpe.  All rights reserved.
@@ -43,7 +43,7 @@
 #if 0
 static char sccsid[] = "@(#)kvm_hp300.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: kvm_m68k_cmn.c,v 1.7 1997/10/12 11:01:23 briggs Exp $");
+__RCSID("$NetBSD: kvm_m68k_cmn.c,v 1.8 1998/06/30 20:29:39 thorpej Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -195,8 +195,8 @@ vatop_030(kd, stpa, va, pa)
 	 * Fortunately it is 1-to-1 mapped so we don't have to. 
 	 */
 	if (stpa == m->sysseg_pa) {
-		if (lseek(kd->pmfd, _kvm_cmn_pa2off(kd, addr), 0) == -1 ||
-			read(kd->pmfd, (char *)&ste, sizeof(ste)) < 0)
+		if (pread(kd->pmfd, &ste, sizeof(ste),
+		    _kvm_cmn_pa2off(kd, addr)) != sizeof(ste))
 			goto invalid;
 	} else if (KREAD(kd, addr, &ste))
 		goto invalid;
@@ -210,8 +210,8 @@ vatop_030(kd, stpa, va, pa)
 	/*
 	 * Address from STE is a physical address so don't use kvm_read.
 	 */
-	if (lseek(kd->pmfd, _kvm_cmn_pa2off(kd, addr), 0) == -1 || 
-	    read(kd->pmfd, (char *)&pte, sizeof(pte)) < 0)
+	if (pread(kd->pmfd, &pte, sizeof(pte), _kvm_cmn_pa2off(kd, addr)) !=
+	    sizeof(pte))
 		goto invalid;
 	addr = pte & m->pg_frame;
 	if ((pte & m->pg_v) == 0) {
@@ -261,8 +261,8 @@ vatop_040(kd, stpa, va, pa)
 	 * Fortunately it is 1-to-1 mapped so we don't have to. 
 	 */
 	if (stpa == m->sysseg_pa) {
-		if (lseek(kd->pmfd, _kvm_cmn_pa2off(kd, addr), 0) == -1 ||
-			read(kd->pmfd, (char *)&ste, sizeof(ste)) < 0)
+		if (pread(kd->pmfd, &ste, sizeof(ste),
+		    _kvm_cmn_pa2off(kd, addr)) != sizeof(ste))
 			goto invalid;
 	} else if (KREAD(kd, addr, &ste))
 		goto invalid;
@@ -279,8 +279,8 @@ vatop_040(kd, stpa, va, pa)
 	 * Address from level 1 STE is a physical address,
 	 * so don't use kvm_read.
 	 */
-	if (lseek(kd->pmfd, _kvm_cmn_pa2off(kd, addr), 0) == -1 || 
-		read(kd->pmfd, (char *)&ste, sizeof(ste)) < 0)
+	if (pread(kd->pmfd, &ste, sizeof(ste), _kvm_cmn_pa2off(kd, addr)) !=
+	    sizeof(ste))
 		goto invalid;
 	if ((ste & m->sg_v) == 0) {
 		_kvm_err(kd, 0, "invalid level 2 descriptor (%x)",
@@ -294,8 +294,8 @@ vatop_040(kd, stpa, va, pa)
 	/*
 	 * Address from STE is a physical address so don't use kvm_read.
 	 */
-	if (lseek(kd->pmfd, _kvm_cmn_pa2off(kd, addr), 0) == -1 || 
-	    read(kd->pmfd, (char *)&pte, sizeof(pte)) < 0)
+	if (pread(kd->pmfd, &pte, sizeof(pte), _kvm_cmn_pa2off(kd, addr)) !=
+	    sizeof(pte))
 		goto invalid;
 	addr = pte & m->pg_frame;
 	if ((pte & m->pg_v) == 0) {
