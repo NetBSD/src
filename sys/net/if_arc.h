@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arc.h,v 1.7 1998/02/09 17:43:45 perry Exp $	*/
+/*	$NetBSD: if_arc.h,v 1.8 1999/01/16 13:01:20 is Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -74,6 +74,8 @@ struct	arc_header {
 
 #define	ARC_HDRLEN		3
 #define	ARC_HDRNEWLEN		6
+#define	ARC_HDRNEWLEN_EXC_1201	10	/* RFC 1201, Novell PHDS */
+#define	ARC_HDRNEWLEN_EXC_8782	9	/* ATA 878.2 */
 
 /* these lengths are data link layer length - 2*ARC_ADDR_LEN */
 #define	ARC_MIN_LEN		1
@@ -94,6 +96,9 @@ struct	arc_header {
 #define	ARCTYPE_ATALK		221	/* Appletalk */
 #define	ARCTYPE_BANIAN		247	/* Banyan Vines */
 #define	ARCTYPE_IPX		250	/* Novell IPX */
+
+#define ARCTYPE_INET6		0xc4	/* IPng */
+#define ARCTYPE_DIAGNOSE	0x80	/* as per ANSI/ATA 878.1 */
 
 #define	ARCMTU			507
 #define	ARCMIN			0
