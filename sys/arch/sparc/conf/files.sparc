@@ -1,4 +1,4 @@
-#	$NetBSD: files.sparc,v 1.10 1995/09/17 21:03:36 pk Exp $
+#	$NetBSD: files.sparc,v 1.11 1995/09/25 20:20:29 chuck Exp $
 
 # @(#)files.sparc	8.1 (Berkeley) 7/19/93
 # sparc-specific configuration info
@@ -85,6 +85,11 @@ device	xdc at vmel {drive = -1}
 device	xd at xdc: disk
 file	arch/sparc/dev/xd.c		xd needs-flag
 major	{xd = 10}
+
+device	xyc at vmes {drive = -1}
+device	xy at xyc: disk
+file	arch/sparc/dev/xy.c		xy needs-flag
+major	{xy = 3}
 
 device	si at vmes: scsi
 device	sw at obio: scsi
