@@ -1,3 +1,4 @@
+admin
 bin
 install
 kern
@@ -13,12 +14,14 @@ port-amiga
 port-amigappc
 port-arc
 port-arm
+port-arm32
 port-atari
 port-bebox
 port-cats
 port-cesfic
 port-cobalt
 port-dreamcast
+port-evbarm
 port-evbmips
 port-evbppc
 port-evbsh3
@@ -47,9 +50,10 @@ port-ofppc
 port-pc532
 port-playstation2
 port-pmax
-port-powerpc
 port-pmppc
+port-powerpc
 port-prep
+port-sandpoint
 port-sbmips
 port-sgimips
 port-sh3
