@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.14 2002/03/08 13:22:12 uch Exp $	*/
+/*	$NetBSD: machdep.c,v 1.15 2002/03/10 07:46:12 uch Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -85,13 +85,10 @@
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/user.h>
-
-#include <sys/reboot.h>
 #include <sys/mount.h>
+#include <sys/reboot.h>
 #include <sys/sysctl.h>
-#include <sys/kcore.h>
 #include <sys/msgbuf.h>
-#include <sys/boot_flag.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -105,20 +102,16 @@
 #endif
 
 #include <sh3/cpu.h>
-#include <sh3/mmu.h>
 #include <dev/cons.h>
 
 /* the following is used externally (sysctl_hw) */
-char machine[] = MACHINE;		/* cpu "architecture" */
-char machine_arch[] = MACHINE_ARCH;	/* machine_arch = "sh3" */
+char machine[] = MACHINE;		/* dreamcast */
+char machine_arch[] = MACHINE_ARCH;	/* sh3el */
 
-int physmem;
 paddr_t msgbuf_paddr;
-struct user *proc0paddr;
 
 extern paddr_t avail_start, avail_end;
-extern int nkpde;
-extern char start[], _etext[], _edata[], _end[];
+extern char start[], etext[], edata[], end[];
 
 #define IOM_RAM_END	((paddr_t)IOM_RAM_BEGIN + IOM_RAM_SIZE - 1)
 
@@ -136,10 +129,6 @@ cpu_startup()
 
 	sh3_startup();
 	printf("%s\n", cpu_model);
-
-#ifdef FORCE_RB_SINGLE
-	boothowto |= RB_SINGLE;
-#endif
 }
 
 /*
@@ -164,9 +153,7 @@ cpu_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp,
 }
 
 void
-cpu_reboot(howto, bootstr)
-	int howto;
-	char *bootstr;
+cpu_reboot(int howto, char *bootstr)
 {
 	static int waittime = -1;
 
@@ -213,118 +200,36 @@ haltsys:
 void
 dreamcast_startup()
 {
-	paddr_t avail;
-	pd_entry_t *pagedir;
-	pt_entry_t *pagetab, pte;
-	u_int sp;
-	int x;
-	char *p;
+	vaddr_t kernend;
+	vsize_t sz;
 
-	avail = sh3_round_page(_end);
+	/* Clear bss */
+	memset(edata, 0, end - edata);
 
-	/* XXX nkpde = kernel page dir area (IOM_RAM_SIZE*2 Mbyte (why?)) */
-	nkpde = IOM_RAM_SIZE >> (PDSHIFT - 1);
-
-	/*
-	 * clear .bss, .common area, page dir area,
-	 *	process0 stack, page table area
-	 */
-	p = (char *)avail + (1 + UPAGES) * NBPG + NBPG * (1 + nkpde); /* XXX */
-	memset(_edata, 0, p - _edata);
-
+	/* Initialize CPU ops. */
 	sh_cpu_init(CPU_ARCH_SH4, CPU_PRODUCT_7750);
-/*
- *                          edata  end
- *	+-------------+------+-----+----------+-------------+------------+
- *	| kernel text | data | bss | Page Dir | Proc0 Stack | Page Table |
- *	+-------------+------+-----+----------+-------------+------------+
- *                                     NBPG       USPACE    (1+nkpde)*NBPG
- *                                                (= 4*NBPG)
- *	Build initial page tables
- */
-	pagedir = (void *)avail;
-	pagetab = (void *)(avail + SYSMAP);
 
-	/*
-	 * Construct a page table directory
-	 * In SH3 H/W does not support PTD,
-	 * these structures are used by S/W.
-	 */
-	pte = (pt_entry_t)pagetab;
-	pte |= PG_KW | PG_V | PG_4K | PG_M | PG_N;
-	pagedir[KERNTEXTOFF >> PDSHIFT] = pte;
+	/* Initialize proc0 and enable MMU. */
+	kernend = sh3_round_page(end);
+	sz = sh_proc0_init(kernend, IOM_RAM_BEGIN, IOM_RAM_END);
 
-	/* make pde for 0xd0000000, 0xd0400000, 0xd0800000,0xd0c00000,
-		0xd1000000, 0xd1400000, 0xd1800000, 0xd1c00000 */
-	pte += NBPG;
-	for (x = 0; x < nkpde; x++) {
-		pagedir[(VM_MIN_KERNEL_ADDRESS >> PDSHIFT) + x] = pte;
-		pte += NBPG;
-	}
-
-	/* Install a PDE recursively mapping page directory as a page table! */
-	pte = (u_int)pagedir;
-	pte |= PG_V | PG_4K | PG_KW | PG_M | PG_N;
-	pagedir[PDSLOT_PTE] = pte;
-
-	/* set PageDirReg */
-	SH_MMU_TTB_WRITE((u_int32_t)pagedir);
-
-	/*
-	 * Activate MMU
-	 */
-	sh_mmu_start();
-
-	/*
-	 * Now here is virtual address
-	 */
-
-	/* Set proc0paddr */
-	proc0paddr = (void *)(avail + NBPG);
-
-	/* Set pcb->PageDirReg of proc0 */
-	proc0paddr->u_pcb.pageDirReg = (int)pagedir;
+	/* Number of pages of physmem addr space */
+	physmem = atop(IOM_RAM_END - IOM_RAM_BEGIN + 1);
 
 	/* avail_start is first available physical memory address */
-	avail_start = avail + NBPG + USPACE + NBPG + NBPG * nkpde;
-
-	proc0.p_addr = proc0paddr; /* page dir address */
-
-	/* XXX: PMAP_NEW requires valid curpcb.   also init'd in cpu_startup */
-	curpcb = &proc0.p_addr->u_pcb;
+	avail_start = kernend + sz;
+	avail_end = IOM_RAM_END + 1;
 
 	consinit();
-
-	splraise(-1);
-	_cpu_exception_resume(0);	/* SR.BL = 0 */
-
+#ifdef DDB
+	ddb_init(0, NULL, NULL);
+#endif
 #if defined(KGDB) && NSCIF > 0
 	if (scif_kgdb_init() == 0) {
 		kgdb_debug_init = 1;
 		kgdb_connect(1);
 	}
 #endif /* KGDB && NSCIF > 0 */
-
-	avail_end = sh3_trunc_page(IOM_RAM_END + 1);
-
-	/*
-	 * Calculate check sum
-	 */
-	{
-		u_short *p, sum;
-		int size;
-		
-		size = _etext - start;
-		p = (u_short *)start;
-		sum = 0;
-		size >>= 1;
-		while (size--)
-			sum += *p++;
-		printf("Check Sum = 0x%x\r\n", sum);
-	}
-
-	/* number of pages of physmem addr space */
-	physmem = btoc(IOM_RAM_END - IOM_RAM_BEGIN +1);
 
 	/* Call pmap initialization to make new kernel address space */
 	pmap_bootstrap(VM_MIN_KERNEL_ADDRESS);
@@ -334,13 +239,10 @@ dreamcast_startup()
 	 */
 	initmsgbuf((caddr_t)msgbuf_paddr, round_page(MSGBUFSIZE));
 
-	/* setup proc0 stack */
-	sp = avail + NBPG + USPACE - 16 - sizeof(struct trapframe);
-
 	/* jump to main */
 	__asm__ __volatile__(
 		"jmp	@%0;"
-		"mov	%1, sp" :: "r"(main), "r"(sp));
+		"mov	%1, sp" :: "r"(main), "r"(proc0.p_addr->u_pcb.kr15));
 	/* NOTREACHED */
 	while (1)
 		;
@@ -356,8 +258,4 @@ consinit()
 	initted = 1;
 
 	cninit();
-
-#ifdef DDB
-	ddb_init(0, NULL, NULL);
-#endif
 }
