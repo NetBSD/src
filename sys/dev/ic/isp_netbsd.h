@@ -1,5 +1,5 @@
-/* $NetBSD: isp_netbsd.h,v 1.2 1998/07/18 21:04:46 mjacob Exp $	*/
-/* $Id: isp_netbsd.h,v 1.2 1998/07/18 21:04:46 mjacob Exp $ */
+/* $NetBSD: isp_netbsd.h,v 1.3 1998/09/08 07:18:56 mjacob Exp $	*/
+/* $Id: isp_netbsd.h,v 1.3 1998/09/08 07:18:56 mjacob Exp $ */
 /*
  * NetBSD Specific definitions for the Qlogic ISP Host Adapter
  *
@@ -63,7 +63,7 @@
 #include <vm/pmap.h>
 
 #define	ISP_PLATFORM_VERSION_MAJOR	0
-#define	ISP_PLATFORM_VERSION_MINOR	95
+#define	ISP_PLATFORM_VERSION_MINOR	98
 
 #define	ISP_SCSI_XFER_T		struct scsipi_xfer
 struct isposinfo {
@@ -78,10 +78,15 @@ struct isposinfo {
 
 #define	PRINTF			printf
 #define	IDPRINTF(lev, x)	if (isp->isp_dblev >= lev) printf x
-#ifdef	SCSIDEBUG
+
+#if	defined(SCSIDEBUG)
+#define	DFLT_DBLEVEL		3
+#else
+#if	defined(DEBUG)
 #define	DFLT_DBLEVEL		2
 #else
 #define	DFLT_DBLEVEL		1
+#endif
 #endif
 
 #define	ISP_LOCKVAL_DECL	int isp_spl_save
@@ -110,7 +115,11 @@ struct isposinfo {
 #define	HBA_CMDTIMEOUT		XS_TIMEOUT
 #define	HBA_SELTIMEOUT		XS_SELTIMEOUT
 #define	HBA_TGTBSY		XS_BUSY
+#ifdef	XS_RESET
+#define	HBA_BUSRESET		XS_RESET
+#else
 #define	HBA_BUSRESET		XS_DRIVER_STUFFUP
+#endif
 #define	HBA_ABORTED		XS_DRIVER_STUFFUP
 #define	HBA_DATAOVR		XS_DRIVER_STUFFUP
 #define	HBA_ARQFAIL		XS_DRIVER_STUFFUP
@@ -135,7 +144,7 @@ struct isposinfo {
  * This is our default tag (ordered).
  */
 #define	XS_KINDOF_TAG(xs)	\
-	(((xs)->flags & SCSI_URGENT)? REQFLAG_HTAG : REQFLAG_OTAG)
+	(((xs)->flags & SCSI_URGENT)? REQFLAG_HTAG : REQFLAG_STAG)
 
 #define	CMD_COMPLETE		COMPLETE
 #define	CMD_EAGAIN		TRY_AGAIN_LATER
