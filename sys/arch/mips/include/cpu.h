@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.25 1998/09/11 16:46:31 jonathan Exp $	*/
+/*	$NetBSD: cpu.h,v 1.26 1998/10/28 04:26:52 jonathan Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -170,6 +170,7 @@ extern u_int32_t mips3_timer_delta;
  */
 
 struct user;
+struct proc;
 
 caddr_t	allocsys __P((caddr_t));
 void	dumpsys __P((void));
