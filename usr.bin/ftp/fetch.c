@@ -1,4 +1,4 @@
-/*	$NetBSD: fetch.c,v 1.89 1999/10/10 22:33:55 lukem Exp $	*/
+/*	$NetBSD: fetch.c,v 1.90 1999/10/12 06:05:00 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1997-1999 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: fetch.c,v 1.89 1999/10/10 22:33:55 lukem Exp $");
+__RCSID("$NetBSD: fetch.c,v 1.90 1999/10/12 06:05:00 lukem Exp $");
 #endif /* not lint */
 
 /*
@@ -162,8 +162,10 @@ auth_url(challenge, response, guser, gpass)
 	else {
 		fprintf(ttyout, "Username for `%s': ", realm);
 		(void)fflush(ttyout);
-		if (fgets(user, sizeof(user) - 1, stdin) == NULL)
+		if (fgets(user, sizeof(user) - 1, stdin) == NULL) {
+			clearerr(stdin);
 			goto cleanup_auth_url;
+		}
 		user[strlen(user) - 1] = '\0';
 	}
 	if (gpass != NULL)
@@ -996,9 +998,14 @@ fetch_url(url, proxyenv, proxyauth, wwwauth)
 
 				fprintf(ttyout,
 				    "Authorization failed. Retry (y/n)? ");
-				if (fgets(reply, sizeof(reply), stdin) != NULL
-				    && tolower(reply[0]) != 'y')
+				if (fgets(reply, sizeof(reply), stdin)
+				    == NULL) {
+					clearerr(stdin);
 					goto cleanup_fetch_url;
+				} else {
+					if (tolower(reply[0]) != 'y')
+						goto cleanup_fetch_url;
+				}
 				auser = NULL;
 				apass = NULL;
 			}
@@ -1637,7 +1644,8 @@ auto_fetch(argc, argv)
 		if (strchr(argv[argpos], ':') == NULL)
 			break;
 		redirect_loop = 0;
-		anonftp = 1;		/* Handle "automatic" transfers. */
+		if (!anonftp)
+			anonftp = 2;	/* Handle "automatic" transfers. */
 		rval = go_fetch(argv[argpos]);
 		if (outfile != NULL && strcmp(outfile, "-") != 0
 		    && outfile[0] != '|')

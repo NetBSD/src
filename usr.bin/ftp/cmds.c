@@ -1,4 +1,4 @@
-/*	$NetBSD: cmds.c,v 1.73 1999/10/10 22:33:54 lukem Exp $	*/
+/*	$NetBSD: cmds.c,v 1.74 1999/10/12 06:04:59 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1996-1999 The NetBSD Foundation, Inc.
@@ -107,7 +107,7 @@
 #if 0
 static char sccsid[] = "@(#)cmds.c	8.6 (Berkeley) 10/9/94";
 #else
-__RCSID("$NetBSD: cmds.c,v 1.73 1999/10/10 22:33:54 lukem Exp $");
+__RCSID("$NetBSD: cmds.c,v 1.74 1999/10/12 06:04:59 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -134,9 +134,6 @@ __RCSID("$NetBSD: cmds.c,v 1.73 1999/10/10 22:33:54 lukem Exp $");
 
 #include "ftp_var.h"
 
-sigjmp_buf	 jabort;
-char		*mname;
-
 struct	types {
 	char	*t_name;
 	char	*t_mode;
@@ -150,6 +147,63 @@ struct	types {
 	{ "tenex",	"L",	TYPE_L,	bytename },
 	{ NULL }
 };
+
+sigjmp_buf	 jabort;
+char		*mname;
+
+static int	confirm __P((const char *, const char *));
+
+static int
+confirm(cmd, file)
+	const char *cmd, *file;
+{
+	char line[BUFSIZ];
+
+	if (!interactive || confirmrest)
+		return (1);
+	while (1) {
+		fprintf(ttyout, "%s %s [anpqy?]? ", cmd, file);
+		(void)fflush(ttyout);
+		if (fgets(line, sizeof(line), stdin) == NULL) {
+			mflag = 0;
+			fprintf(ttyout, "\nEOF received; %s aborted\n", mname);
+			clearerr(stdin);
+			return (0);
+		}
+		switch (tolower(*line)) {
+			case 'a':
+				confirmrest = 1;
+				fprintf(ttyout,
+				    "Prompting off for duration of %s.\n", cmd);
+				break;
+			case 'n':
+				return (0);
+			case 'p':
+				interactive = 0;
+				fputs("Interactive mode: off.\n", ttyout);
+				break;
+			case 'q':
+				mflag = 0;
+				fprintf(ttyout, "%s aborted\n", mname);
+				return (0);
+			case 'y':
+			default:
+				return (1);
+			case '?':
+				fprintf(ttyout,
+				    " confirmation options:\n"
+				    "\ta  answer `yes' for the duration of %s\n"
+				    "\tn  answer `no' for this file\n"
+				    "\tp  turn off `prompt' mode\n"
+				    "\tq  stop the current %s\n"
+				    "\ty  answer `yes' for this file\n"
+				    "\t?  this help list\n",
+				    cmd, cmd);
+				break;
+		}
+	}
+	/* NOTREACHED */
+}
 
 /*
  * Set transfer type.
@@ -570,7 +624,8 @@ mintr(signo)
 {
 
 	alarmtimer(0);
-	write(fileno(ttyout), "\n", 1);
+	if (fromatty)
+		write(fileno(ttyout), "\n", 1);
 	siglongjmp(jabort, 1);
 }
 
@@ -1375,6 +1430,7 @@ user(argc, argv)
 			if (fgets(acct, sizeof(acct) - 1, stdin) == NULL) {
 				fprintf(ttyout,
 				    "\nEOF received; login aborted.\n");
+				clearerr(stdin);
 				code = -1;
 				return;
 			}
@@ -1632,6 +1688,13 @@ disconnect(argc, argv)
 	}
 	cout = NULL;
 	connected = 0;
+			/*
+			 * determine if anonftp was specifically set with -a
+			 * (1), or implicitly set by auto_fetch() (2). in the
+			 * latter case, disable after the current xfer
+			 */
+	if (anonftp == 2)
+		anonftp = 0;
 	data = -1;
 	epsv4bad = 0;
 	if (!proxy) {

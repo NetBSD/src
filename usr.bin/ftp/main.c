@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.62 1999/10/11 12:34:17 lukem Exp $	*/
+/*	$NetBSD: main.c,v 1.63 1999/10/12 06:05:01 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1996-1999 The NetBSD Foundation, Inc.
@@ -108,7 +108,7 @@ __COPYRIGHT("@(#) Copyright (c) 1985, 1989, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.6 (Berkeley) 10/9/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.62 1999/10/11 12:34:17 lukem Exp $");
+__RCSID("$NetBSD: main.c,v 1.63 1999/10/12 06:05:01 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -537,8 +537,11 @@ cmdscanner(top)
 				fputs(prompt(), ttyout);
 				(void)fflush(ttyout);
 			}
-			if (fgets(line, sizeof(line), stdin) == NULL)
+			if (fgets(line, sizeof(line), stdin) == NULL) {
+				if (fromatty)
+					putc('\n', ttyout);
 				quit(0, 0);
+			}
 			num = strlen(line);
 			if (num == 0)
 				break;
@@ -558,8 +561,11 @@ cmdscanner(top)
 			HistEvent ev;
 			cursor_pos = NULL;
 
-			if ((buf = el_gets(el, &num)) == NULL || num == 0)
+			if ((buf = el_gets(el, &num)) == NULL || num == 0) {
+				if (fromatty)
+					putc('\n', ttyout);
 				quit(0, 0);
+			}
 			if (buf[--num] == '\n') {
 				if (num == 0)
 					break;

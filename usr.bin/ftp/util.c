@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.76 1999/10/11 12:35:42 lukem Exp $	*/
+/*	$NetBSD: util.c,v 1.77 1999/10/12 06:05:01 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1997-1999 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: util.c,v 1.76 1999/10/11 12:35:42 lukem Exp $");
+__RCSID("$NetBSD: util.c,v 1.77 1999/10/12 06:05:01 lukem Exp $");
 #endif /* not lint */
 
 /*
@@ -296,6 +296,7 @@ ftp_login(host, user, pass)
 		*tmp = '\0';
 		if (fgets(tmp, sizeof(tmp) - 1, stdin) == NULL) {
 			fprintf(ttyout, "\nEOF received; login aborted.\n");
+			clearerr(stdin);
 			code = -1;
 			goto cleanup_ftp_login;
 		}
@@ -388,8 +389,10 @@ another(pargc, pargv, prompt)
 	}
 	fprintf(ttyout, "(%s) ", prompt);
 	line[len++] = ' ';
-	if (fgets(&line[len], sizeof(line) - len, stdin) == NULL)
+	if (fgets(&line[len], sizeof(line) - len, stdin) == NULL) {
+		clearerr(stdin);
 		intr(0);
+	}
 	len += strlen(&line[len]);
 	if (len > 0 && line[len - 1] == '\n')
 		line[len - 1] = '\0';
@@ -483,34 +486,6 @@ remglob(argv, doswitch, errbuf)
         if ((cp = strchr(buf, '\n')) != NULL)
                 *cp = '\0';
         return (buf);
-}
-
-int
-confirm(cmd, file)
-	const char *cmd, *file;
-{
-	char line[BUFSIZ];
-
-	if (!interactive || confirmrest)
-		return (1);
-	fprintf(ttyout, "%s %s? ", cmd, file);
-	(void)fflush(ttyout);
-	if (fgets(line, sizeof(line), stdin) == NULL)
-		return (0);
-	switch (tolower(*line)) {
-		case 'n':
-			return (0);
-		case 'p':
-			interactive = 0;
-			fputs("Interactive mode: off.\n", ttyout);
-			break;
-		case 'a':
-			confirmrest = 1;
-			fprintf(ttyout, "Prompting off for duration of %s.\n",
-			    cmd);
-			break;
-	}
-	return (1);
 }
 
 /*
@@ -910,7 +885,8 @@ psummary(notused)
 	int oerrno = errno;
 
 	if (bytes > 0) {
-		write(fileno(ttyout), "\n", 1);
+		if (fromatty)
+			write(fileno(ttyout), "\n", 1);
 		ptransfer(1);
 	}
 	errno = oerrno;
