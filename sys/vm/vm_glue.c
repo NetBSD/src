@@ -308,7 +308,7 @@ int	swapdebug = 0;
  *	   clear some space.
  */
 void
-sched()
+scheduler()
 {
 	register struct proc *p;
 	register int pri;
@@ -336,14 +336,14 @@ loop:
 		}
 #ifdef DEBUG
 	if (swapdebug & SDB_FOLLOW)
-		printf("sched: running, procp %x pri %d\n", pp, ppri);
+		printf("scheduler: running, procp %x pri %d\n", pp, ppri);
 noswap:
 #endif
 	/*
 	 * Nothing to do, back to sleep
 	 */
 	if ((p = pp) == NULL) {
-		tsleep((caddr_t)&proc0, PVM, "sched", 0);
+		tsleep((caddr_t)&proc0, PVM, "scheduler", 0);
 		goto loop;
 	}
 
@@ -364,7 +364,7 @@ noswap:
 		vm_map_pageable(kernel_map, addr, addr+size, FALSE);
 		(void) splclock();
 		if (p->p_stat == SRUN)
-			setrq(p);
+			setrunqueue(p);
 		p->p_flag |= P_INMEM;
 		(void) spl0();
 		p->p_swtime = 0;
@@ -376,7 +376,7 @@ noswap:
 	 */
 #ifdef DEBUG
 	if (swapdebug & SDB_FOLLOW)
-		printf("sched: no room for pid %d(%s), free %d\n",
+		printf("scheduler: no room for pid %d(%s), free %d\n",
 		       p->p_pid, p->p_comm, cnt.v_free_count);
 #endif
 	(void) splhigh();
@@ -384,7 +384,7 @@ noswap:
 	(void) spl0();
 #ifdef DEBUG
 	if (swapdebug & SDB_FOLLOW)
-		printf("sched: room again, free %d\n", cnt.v_free_count);
+		printf("scheduler: room again, free %d\n", cnt.v_free_count);
 #endif
 	goto loop;
 }
