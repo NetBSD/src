@@ -1,4 +1,4 @@
-/*	$NetBSD: color.c,v 1.13 2000/12/19 21:34:24 jdc Exp $	*/
+/*	$NetBSD: color.c,v 1.14 2001/01/05 22:57:56 christos Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: color.c,v 1.13 2000/12/19 21:34:24 jdc Exp $");
+__RCSID("$NetBSD: color.c,v 1.14 2001/01/05 22:57:56 christos Exp $");
 #endif				/* not lint */
 
 #include "curses.h"
@@ -343,7 +343,7 @@ __set_color(attr_t attr)
 {
 	short	pair;
 
-	pair = PAIR_NUMBER(attr);
+	pair = PAIR_NUMBER((u_int32_t)attr);
 #ifdef DEBUG
 	__CTRACE("__set_color: %d, %d, %d\n", pair, pairs[pair].fore,
 	    pairs[pair].back);

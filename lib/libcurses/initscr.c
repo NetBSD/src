@@ -1,4 +1,4 @@
-/*	$NetBSD: initscr.c,v 1.20 2000/12/19 21:34:24 jdc Exp $	*/
+/*	$NetBSD: initscr.c,v 1.21 2001/01/05 22:57:56 christos Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)initscr.c	8.2 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: initscr.c,v 1.20 2000/12/19 21:34:24 jdc Exp $");
+__RCSID("$NetBSD: initscr.c,v 1.21 2001/01/05 22:57:56 christos Exp $");
 #endif
 #endif	/* not lint */
 
@@ -58,7 +58,7 @@ struct __winlist	*__winlistp;
 WINDOW *
 initscr(void)
 {
-	char *sp;
+	const char *sp;
 
 #ifdef DEBUG
 	__CTRACE("initscr\n");
@@ -75,8 +75,9 @@ initscr(void)
 	 * use Def_term.
 	 */
 	if (My_term || (sp = getenv("TERM")) == NULL)
-		sp = (char *)Def_term;
-	if (setterm(sp) == ERR)
+		sp = Def_term;
+	/* LINTED const castaway; setterm does not modify sp! */
+	if (setterm((char *)sp) == ERR)
 		return (NULL);
 
 	/* Need either homing or cursor motion for refreshes */
