@@ -1,4 +1,4 @@
-/*	$NetBSD: pcmcia.c,v 1.60 2004/08/11 00:18:20 mycroft Exp $	*/
+/*	$NetBSD: pcmcia.c,v 1.61 2004/08/11 00:32:44 mycroft Exp $	*/
 
 /*
  * Copyright (c) 2004 Charles M. Hannum.  All rights reserved.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcmcia.c,v 1.60 2004/08/11 00:18:20 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcmcia.c,v 1.61 2004/08/11 00:32:44 mycroft Exp $");
 
 #include "opt_pcmciaverbose.h"
 
@@ -752,7 +752,7 @@ pcmcia_config_alloc(pf, cfe)
 	struct pcmcia_function *pf;
 	struct pcmcia_config_entry *cfe;
 {
-	int error;
+	int error = 0;
 	int n, m;
 
 	for (n = 0; n < cfe->num_iospace; n++) {
@@ -801,7 +801,7 @@ pcmcia_config_alloc(pf, cfe)
 	}
 
 	/* This one's good! */
-	return (0);
+	return (error);
 }
 
 void
@@ -822,7 +822,7 @@ pcmcia_config_map(pf)
 	struct pcmcia_function *pf;
 {
 	struct pcmcia_config_entry *cfe = pf->cfe;
-	int error;
+	int error = 0;
 	int n, m;
 
 	for (n = 0; n < cfe->num_iospace; n++) {
@@ -875,7 +875,7 @@ pcmcia_config_map(pf)
 	}
 
 	/* This one's good! */
-	return (0);
+	return (error);
 }
 
 void
