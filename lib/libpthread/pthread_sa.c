@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_sa.c,v 1.13 2003/07/21 22:24:09 nathanw Exp $	*/
+/*	$NetBSD: pthread_sa.c,v 1.14 2003/09/07 14:47:45 cl Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_sa.c,v 1.13 2003/07/21 22:24:09 nathanw Exp $");
+__RCSID("$NetBSD: pthread_sa.c,v 1.14 2003/09/07 14:47:45 cl Exp $");
 
 #include <err.h>
 #include <errno.h>
@@ -418,7 +418,7 @@ pthread__resolve_locks(pthread_t self, pthread_t *intqueuep)
 			} else if (victim->pt_type == PT_THREAD_UPCALL) {
 				SDPRINTF((" upcall"));
 				/* Okay, an upcall. */
-				if (victim->pt_state == PT_STATE_RECYCLABLE) {
+				if (victim->pt_switchto) {
 					/* We're done with you. */
 					SDPRINTF((" recyclable"));
 					if (prev)
