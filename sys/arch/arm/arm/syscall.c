@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.3 2002/01/13 15:04:09 bjh21 Exp $	*/
+/*	$NetBSD: syscall.c,v 1.4 2002/01/14 23:14:33 bjh21 Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -76,12 +76,13 @@
  * Created      : 09/11/94
  */
 
+#include "opt_compat_linux.h"
 #include "opt_ktrace.h"
 #include "opt_syscall_debug.h"
 
 #include <sys/param.h>
 
-__RCSID("$NetBSD: syscall.c,v 1.3 2002/01/13 15:04:09 bjh21 Exp $");
+__RCSID("$NetBSD: syscall.c,v 1.4 2002/01/14 23:14:33 bjh21 Exp $");
 
 #include <sys/device.h>
 #include <sys/errno.h>
@@ -111,6 +112,8 @@ struct evcnt arm700bugcount =
     EVCNT_INITIALIZER(EVCNT_TYPE_MISC, NULL, "cpu", "arm700swibug");
 #endif
 
+#define MAXARGS 8
+
 void
 syscall(trapframe_t *frame)
 {
@@ -119,7 +122,7 @@ syscall(trapframe_t *frame)
 	u_int32_t insn;
 	int code, error;
 	u_int nap, nargs;
-	register_t *ap, *args, copyargs[8], rval[2];
+	register_t *ap, *args, copyargs[MAXARGS], rval[2];
 
 	/*
 	 * Enable interrupts if they were enabled before the exception.
@@ -200,7 +203,13 @@ syscall(trapframe_t *frame)
 		return;
 	case 0x000000: /* Old unofficial NetBSD range. */
 	case SWI_OS_NETBSD: /* New official NetBSD range. */
+		nap = 4;
 		break;
+#ifdef COMPAT_LINUX
+	case SWI_OS_LINUX:
+		nap = 8;
+		break;
+#endif
 	default:
 		/* Undefined so illegal instruction */
 		trapsignal(p, SIGILL, insn);
@@ -211,7 +220,6 @@ syscall(trapframe_t *frame)
 	code = insn & 0x000fffff;
 
 	ap = &frame->tf_r0;
-	nap = 4;
 	callp = p->p_emul->e_sysent;
 
 	switch (code) {	
@@ -237,6 +245,7 @@ syscall(trapframe_t *frame)
 	if (nargs <= nap)
 		args = ap;
 	else {
+		KASSERT(nargs <= MAXARGS);
 		memcpy(copyargs, ap, nap * sizeof(register_t));
 		error = copyin((void *)frame->tf_usr_sp, copyargs + nap,
 		    (nargs - nap) * sizeof(register_t));

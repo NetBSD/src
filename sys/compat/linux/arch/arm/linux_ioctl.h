@@ -1,11 +1,11 @@
-/*	$NetBSD: linux_syscall.h,v 1.40 2002/01/14 23:14:34 bjh21 Exp $	*/
+/*	$NetBSD: linux_ioctl.h,v 1.1 2002/01/14 23:14:37 bjh21 Exp $	*/
 
 /*-
- * Copyright (c) 1998 The NetBSD Foundation, Inc.
+ * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Eric Haszlakiewicz.
+ * by Frank van der Linden and Eric Haszlakiewicz.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -36,23 +36,18 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _LINUX_SYSCALL_H
-#define _LINUX_SYSCALL_H
+#ifndef _ARM_LINUX_IOCTL_H
+#define _ARM_LINUX_IOCTL_H
 
-#if defined(__i386__)
-#include <compat/linux/arch/i386/linux_syscall.h>
-#elif defined(__m68k__)
-#include <compat/linux/arch/m68k/linux_syscall.h>
-#elif defined(__alpha__)
-#include <compat/linux/arch/alpha/linux_syscall.h>
-#elif defined(__powerpc__)
-#include <compat/linux/arch/powerpc/linux_syscall.h>
-#elif defined(__mips__)
-#include <compat/linux/arch/mips/linux_syscall.h>
-#elif defined(__arm__)
-#include <compat/linux/arch/arm/linux_syscall.h>
-#else
-#define	LINUX_SYS_MAXSYSCALL	0
-#endif
+#define _LINUX_IOC_NRBITS	 8
+#define _LINUX_IOC_TYPEBITS	 8
+#define _LINUX_IOC_SIZEBITS	14
+#define _LINUX_IOC_DIRBITS	 2
 
-#endif /* !_LINUX_SYSCALL_H */
+#define _LINUX_IOC_NRSHIFT	 0
+
+#define _LINUX_IOC_NONE		0U
+#define _LINUX_IOC_WRITE	1U
+#define _LINUX_IOC_READ		2U
+
+#endif /* !_ARM_LINUX_IOCTL_H */

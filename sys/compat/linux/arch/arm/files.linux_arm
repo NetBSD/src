@@ -1,0 +1,10 @@
+#	$NetBSD: files.linux_arm,v 1.1 2002/01/14 23:14:35 bjh21 Exp $
+#
+# Config file description for arm-dependent Linux compat code.
+
+file	compat/linux/arch/arm/linux_machdep.c		compat_linux
+file	compat/linux/arch/arm/linux_ptrace.c		compat_linux
+file	compat/linux/arch/arm/linux_syscalls.c		compat_linux
+file	compat/linux/arch/arm/linux_sysent.c		compat_linux
+file	compat/linux/arch/arm/linux_sigarray.c		compat_linux
+file	compat/linux/arch/arm/linux_commons.c		compat_linux

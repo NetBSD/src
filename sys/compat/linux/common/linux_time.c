@@ -1,4 +1,4 @@
-/* $NetBSD: linux_time.c,v 1.5 2001/11/15 09:48:01 lukem Exp $ */
+/* $NetBSD: linux_time.c,v 1.6 2002/01/14 23:14:43 bjh21 Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_time.c,v 1.5 2001/11/15 09:48:01 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_time.c,v 1.6 2002/01/14 23:14:43 bjh21 Exp $");
 
 #include <sys/param.h>
 #include <sys/ucred.h>
@@ -57,7 +57,7 @@ __KERNEL_RCSID(0, "$NetBSD: linux_time.c,v 1.5 2001/11/15 09:48:01 lukem Exp $")
  * This is not implemented for alpha yet
  */
 #if defined (__i386__) || defined (__m68k__) || \
-    defined (__powerpc__) || defined (__mips__)
+    defined (__powerpc__) || defined (__mips__) || defined(__arm__)
 
 /* 
  * Linux keeps track of a system timezone in the kernel. It is readen
