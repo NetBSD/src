@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.50 2002/05/18 05:59:23 lukem Exp $
+#	$NetBSD: Makefile,v 1.50.2.1 2002/06/11 15:56:29 lukem Exp $
 
 .include <bsd.own.mk>
 
@@ -18,7 +18,7 @@ SUBDIR=	host-mkdep .WAIT compat .WAIT \
 	yacc .WAIT \
 	lex .WAIT \
 	${TOOLCHAIN_BITS} \
-		asn1_compile cksum compile_et config installboot lint1 \
+		asn1_compile cat cksum compile_et config installboot lint1 \
 		makefs menuc mklocale msgc pax pwd_mkdb zic
 
 .if ${MKMAN} != "no"
