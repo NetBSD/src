@@ -33,7 +33,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char *sccsid = "from: @(#)rand.c	5.6 (Berkeley) 6/24/91";*/
-static char *rcsid = "$Id: rand.c,v 1.3 1993/08/26 00:48:09 jtc Exp $";
+static char *rcsid = "$Id: rand.c,v 1.4 1994/10/19 03:06:51 cgd Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -44,7 +44,7 @@ static u_long next = 1;
 int
 rand()
 {
-	return ((next = next * 1103515245 + 12345) % (RAND_MAX + 1));
+	return ((next = next * 1103515245 + 12345) % ((u_int)RAND_MAX + 1));
 }
 
 void
