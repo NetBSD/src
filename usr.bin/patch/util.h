@@ -1,4 +1,4 @@
-/*	$NetBSD: util.h,v 1.4 1998/02/22 13:33:50 christos Exp $	*/
+/*	$NetBSD: util.h,v 1.4.10.1 2000/10/18 01:32:49 tv Exp $	*/
 
 /* and for those machine that can't handle a variable argument list */
 
@@ -71,10 +71,14 @@ EXT char serrbuf[BUFSIZ];		/* buffer for stderr */
 int move_file __P((char *, char *));
 void copy_file __P((char *, char *));
 char *savestr __P((Reg1 char *));
-void say __P((const char *, ...));
-void fatal __P((const char *, ...));
-void pfatal __P((const char *, ...));
-void ask __P((const char *, ...));
+void say __P((const char *, ...))
+     __attribute__((__format__(__printf__, 1, 2)));
+void fatal __P((const char *, ...))
+     __attribute__((__format__(__printf__, 1, 2)));
+void pfatal __P((const char *, ...))
+     __attribute__((__format__(__printf__, 1, 2)));
+void ask __P((const char *, ...))
+     __attribute__((__format__(__printf__, 1, 2)));
 void set_signals __P((int));
 void ignore_signals __P((void));
 void makedirs __P((Reg1 char *, bool));

@@ -26,7 +26,7 @@
  * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  */
 
-/* $NetBSD: misc.c,v 1.10 2000/03/13 23:22:51 soren Exp $ */
+/* $NetBSD: misc.c,v 1.10.4.1 2000/10/18 01:32:46 tv Exp $ */
 
 #include "flexdef.h"
 
@@ -387,7 +387,7 @@ int do_infile;
 	{
 	char directive[MAXLINE], filename[MAXLINE];
 	char *s1, *s2, *s3;
-	static char line_fmt[] = "#line %d \"%s\"\n";
+	static const char line_fmt[] = "#line %d \"%s\"\n";
 
 	if ( ! gen_line_dirs )
 		return;

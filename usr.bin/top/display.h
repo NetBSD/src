@@ -1,4 +1,4 @@
-/*	$NetBSD: display.h,v 1.3 1999/04/12 06:02:26 ross Exp $	*/
+/*	$NetBSD: display.h,v 1.3.8.1 2000/10/18 01:32:52 tv Exp $	*/
 
 /* constants needed for display.c */
 
@@ -29,7 +29,8 @@ void i_process __P((int, char *));
 void u_process __P((int, char *));
 void u_endscreen __P((int));
 void display_header __P((int));
-void new_message __P((int, const char *, ...));
+void new_message __P((int, const char *, ...))
+     __attribute__((__format__(__printf__, 2, 3)));
 void clear_message __P((void));
 int readline __P((char *, int, int));
 char *printable __P((char *));

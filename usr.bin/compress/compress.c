@@ -1,4 +1,4 @@
-/*	$NetBSD: compress.c,v 1.17 1998/10/08 01:56:28 wsanchez Exp $	*/
+/*	$NetBSD: compress.c,v 1.17.10.1 2000/10/18 01:32:41 tv Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1992, 1993\n\
 #if 0
 static char sccsid[] = "@(#)compress.c	8.2 (Berkeley) 1/7/94";
 #else
-__RCSID("$NetBSD: compress.c,v 1.17 1998/10/08 01:56:28 wsanchez Exp $");
+__RCSID("$NetBSD: compress.c,v 1.17.10.1 2000/10/18 01:32:41 tv Exp $");
 #endif
 #endif /* not lint */
 
@@ -65,8 +65,8 @@ __RCSID("$NetBSD: compress.c,v 1.17 1998/10/08 01:56:28 wsanchez Exp $");
 #endif
 
 void	compress __P((char *, char *, int));
-void	cwarn __P((const char *, ...));
-void	cwarnx __P((const char *, ...));
+void	cwarn __P((const char *, ...)) __attribute__((__format__(__printf__,1,2)));
+void	cwarnx __P((const char *, ...)) __attribute__((__format__(__printf__,1,2)));
 void	decompress __P((char *, char *, int));
 int	permission __P((char *));
 void	setfile __P((char *, struct stat *));

@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc_hout.c,v 1.13 2000/06/07 13:53:07 lukem Exp $	*/
+/*	$NetBSD: rpc_hout.c,v 1.13.2.1 2000/10/18 01:32:50 tv Exp $	*/
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
  * unrestricted use provided that this legend is included on all tape
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)rpc_hout.c 1.12 89/02/22 (C) 1987 SMI";
 #else
-__RCSID("$NetBSD: rpc_hout.c,v 1.13 2000/06/07 13:53:07 lukem Exp $");
+__RCSID("$NetBSD: rpc_hout.c,v 1.13.2.1 2000/10/18 01:32:50 tv Exp $");
 #endif
 #endif
 
@@ -508,7 +508,7 @@ pdeclaration(name, dec, tab, separator)
 			break;
 		}
 	}
-	f_print(fout, separator);
+	f_print(fout, "%s", separator);
 }
 
 static int
