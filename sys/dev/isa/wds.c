@@ -1,4 +1,4 @@
-/*	$NetBSD: wds.c,v 1.19 1997/09/04 03:39:09 thorpej Exp $	*/
+/*	$NetBSD: wds.c,v 1.20 1997/09/26 02:50:18 mycroft Exp $	*/
 
 #undef WDSDIAG
 #ifdef DDB
@@ -330,6 +330,7 @@ wdsattach(parent, self, aux)
 
 	sc->sc_iot = iot;
 	sc->sc_ioh = ioh;
+	sc->sc_dmat = ia->ia_dmat;
 	if (!wds_find(iot, ioh, &wpd))
 		panic("wdsattach: wds_find failed");
 
