@@ -1,3 +1,4 @@
+/*	$NetBSD: ttymodes.h,v 1.1.1.4 2001/04/10 07:14:23 itojun Exp $	*/
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * 	SGTTY stuff contributed by Janne Snabb <snabb@niksula.hut.fi>
