@@ -1,8 +1,8 @@
-/*	$NetBSD: main.c,v 1.43 2004/01/15 09:33:38 agc Exp $	*/
+/*	$NetBSD: main.c,v 1.44 2004/05/10 19:59:59 kleink Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: main.c,v 1.43 2004/01/15 09:33:38 agc Exp $");
+__RCSID("$NetBSD: main.c,v 1.44 2004/05/10 19:59:59 kleink Exp $");
 #endif
 
 /*
@@ -132,7 +132,7 @@ check1pkg(const char *pkgdir)
 
 						(void) strlcpy(buf, SYMLINK_HEADER, sizeof(buf));
 						if ((cc = readlink(file, &buf[SymlinkHeaderLen],
-							  sizeof(buf) - SymlinkHeaderLen)) < 0) {
+							  sizeof(buf) - SymlinkHeaderLen - 1)) < 0) {
 							warnx("can't readlink `%s'", file);
 						} else {
 							buf[SymlinkHeaderLen + cc] = 0x0;
