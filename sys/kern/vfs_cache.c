@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_cache.c,v 1.6 1994/06/29 06:33:47 cgd Exp $	*/
+/*	$NetBSD: vfs_cache.c,v 1.7 1994/07/02 20:26:19 chopps Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -71,7 +71,7 @@ long	numcache;			/* number of cache entries allocated */
 struct	namecache *nchhead, **nchtail;	/* LRU chain pointers */
 struct	nchstats nchstats;		/* cache effectiveness statistics */
 
-int doingcache = 0;			/* 1 => enable the cache */
+int doingcache = 1;			/* 1 => enable the cache */
 
 /*
  * Look for a the name in the cache. We don't do this
