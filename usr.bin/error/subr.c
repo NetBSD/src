@@ -1,4 +1,4 @@
-/*	$NetBSD: subr.c,v 1.9 2000/01/14 06:53:48 mjl Exp $	*/
+/*	$NetBSD: subr.c,v 1.10 2000/11/15 19:54:12 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)subr.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: subr.c,v 1.9 2000/01/14 06:53:48 mjl Exp $");
+__RCSID("$NetBSD: subr.c,v 1.10 2000/11/15 19:54:12 christos Exp $");
 #endif /* not lint */
 
 #include <ctype.h>
@@ -388,7 +388,7 @@ wordvcmp(wordv1, wordc, wordv2)
 	for (i = 0; i < wordc; i++){
 		if (wordv1[i] == NULL || wordv2[i] == NULL)
 			return(-1);
-		if ((back = strcmp(wordv1[i], wordv2[i])) != NULL)
+		if ((back = strcmp(wordv1[i], wordv2[i])) != 0)
 			return(back);
 	}
 	return(0);	/* they are equal */
