@@ -42,7 +42,7 @@
  *	@(#)ms.c	8.1 (Berkeley) 6/11/93
  *
  * from: Header: ms.c,v 1.5 92/11/26 01:28:47 torek Exp  (LBL)
- * $Id: ms.c,v 1.1 1993/10/02 10:22:43 deraadt Exp $
+ * $Id: ms.c,v 1.1.2.1 1994/07/22 01:24:29 cgd Exp $
  */
 
 /*
@@ -58,7 +58,7 @@
 #include <sys/systm.h>
 #include <sys/tty.h>
 
-#include <sparc/dev/vuid_event.h>
+#include <machine/vuid_event.h>
 #include <sparc/dev/event_var.h>
 
 /*

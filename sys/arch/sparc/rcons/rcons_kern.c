@@ -42,7 +42,7 @@
  *	@(#)rcons_kern.c	8.1 (Berkeley) 6/11/93
  *
  * from: Header: rcons_kern.c,v 1.28 93/04/20 11:15:38 torek Exp 
- * $Id: rcons_kern.c,v 1.4 1994/05/05 09:55:46 deraadt Exp $
+ * $Id: rcons_kern.c,v 1.4.2.1 1994/07/22 01:24:42 cgd Exp $
  */
 
 #include <sys/param.h>
@@ -56,7 +56,7 @@
 #include <machine/fbvar.h>
 #include <machine/autoconf.h>
 
-#include <sparc/dev/kbd.h>
+#include <machine/kbd.h>
 
 #include <sparc/rcons/raster.h>
 
