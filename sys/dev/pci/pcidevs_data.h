@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.189 2000/01/12 09:11:42 haya Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.190 2000/01/23 09:55:40 tsubai Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.184 2000/01/12 09:08:36 haya Exp 
+ *	NetBSD: pcidevs,v 1.185 2000/01/23 09:54:28 tsubai Exp 
  */
 
 /*
@@ -620,6 +620,42 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Apple Computer",
 	    "MAC-IO I/O Controller (Paddington)",
+	},
+	{
+	    PCI_VENDOR_APPLE, PCI_PRODUCT_APPLE_KEYLARGO_USB,
+	    0,
+	    "Apple Computer",
+	    "KeyLargo USB Controller",
+	},
+	{
+	    PCI_VENDOR_APPLE, PCI_PRODUCT_APPLE_UNINORTH1,
+	    0,
+	    "Apple Computer",
+	    "UniNorth Host-PCI Bridge",
+	},
+	{
+	    PCI_VENDOR_APPLE, PCI_PRODUCT_APPLE_UNINORTH2,
+	    0,
+	    "Apple Computer",
+	    "UniNorth Host-PCI Bridge",
+	},
+	{
+	    PCI_VENDOR_APPLE, PCI_PRODUCT_APPLE_UNINORTH_AGP,
+	    0,
+	    "Apple Computer",
+	    "UniNorth AGP Interface",
+	},
+	{
+	    PCI_VENDOR_APPLE, PCI_PRODUCT_APPLE_GMAC,
+	    0,
+	    "Apple Computer",
+	    "GMAC Ethernet",
+	},
+	{
+	    PCI_VENDOR_APPLE, PCI_PRODUCT_APPLE_KEYLARGO,
+	    0,
+	    "Apple Computer",
+	    "MAC-IO I/O Controller (KeyLargo)",
 	},
 	{
 	    PCI_VENDOR_ARC, PCI_PRODUCT_ARC_1000PV,
