@@ -1,4 +1,4 @@
-/*	$NetBSD: wi.c,v 1.189 2004/11/26 17:55:41 mycroft Exp $	*/
+/*	$NetBSD: wi.c,v 1.190 2004/12/13 17:21:35 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -106,7 +106,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.189 2004/11/26 17:55:41 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.190 2004/12/13 17:21:35 dyoung Exp $");
 
 #define WI_HERMES_AUTOINC_WAR	/* Work around data write autoinc bug. */
 #define WI_HERMES_STATS_WAR	/* Work around stats counter bug. */
@@ -269,6 +269,25 @@ wi_card_ident[] = {
 	{ 0,	NULL,	0 },
 };
 
+STATIC int
+wi_read_xrid(struct wi_softc *sc, int rid, void *buf, int ebuflen)
+{
+	int buflen, rc;
+
+	buflen = ebuflen;
+	if ((rc = wi_read_rid(sc, rid, buf, &buflen)) != 0)
+		return rc;
+
+	if (buflen < ebuflen) {
+#ifdef WI_DEBUG
+		printf("%s: rid=%#04x read %d, expected %d\n", __func__,
+		    rid, buflen, ebuflen);
+#endif
+		return -1;
+	}
+	return 0;
+}
+
 int
 wi_attach(struct wi_softc *sc, const u_int8_t *macaddr)
 {
@@ -300,10 +319,9 @@ wi_attach(struct wi_softc *sc, const u_int8_t *macaddr)
 		return 1;
 	}
 
-	buflen = IEEE80211_ADDR_LEN;
 	if (!macaddr) {
-		if (wi_read_rid(sc, WI_RID_MAC_NODE, ic->ic_myaddr, &buflen) != 0 ||
-		    buflen < IEEE80211_ADDR_LEN ||
+		if (wi_read_xrid(sc, WI_RID_MAC_NODE, ic->ic_myaddr,
+		                 IEEE80211_ADDR_LEN) != 0 ||
 		    IEEE80211_ADDR_EQ(ic->ic_myaddr, empty_macaddr)) {
 			printf(" could not get mac address, attach failed\n");
 			splx(s);
@@ -335,9 +353,8 @@ wi_attach(struct wi_softc *sc, const u_int8_t *macaddr)
 	ic->ic_max_aid = WI_MAX_AID;
 
 	/* Find available channel */
-	buflen = sizeof(chanavail);
-	if (wi_read_rid(sc, WI_RID_CHANNEL_LIST, &chanavail, &buflen) != 0 &&
-	    buflen == sizeof(chanavail)) {
+	if (wi_read_xrid(sc, WI_RID_CHANNEL_LIST, &chanavail,
+	                 sizeof(chanavail)) != 0) {
 		aprint_normal("%s: using default channel list\n", sc->sc_dev.dv_xname);
 		chanavail = htole16(0x1fff);	/* assume 1-13 */
 	}
@@ -351,9 +368,7 @@ wi_attach(struct wi_softc *sc, const u_int8_t *macaddr)
 	}
 
 	/* Find default IBSS channel */
-	buflen = sizeof(val);
-	if (wi_read_rid(sc, WI_RID_OWN_CHNL, &val, &buflen) == 0 &&
-	    buflen == sizeof(val)) {
+	if (wi_read_xrid(sc, WI_RID_OWN_CHNL, &val, sizeof(val)) == 0) {
 		chan = le16toh(val);
 		if (isset((u_int8_t*)&chanavail, chan - 1))
 			ic->ic_ibss_chan = &ic->ic_channels[chan];
@@ -366,10 +381,8 @@ wi_attach(struct wi_softc *sc, const u_int8_t *macaddr)
 	if (sc->sc_firmware_type == WI_LUCENT) {
 		sc->sc_dbm_offset = WI_LUCENT_DBM_OFFSET;
 	} else {
-		buflen = sizeof(val);
 		if ((sc->sc_flags & WI_FLAGS_HAS_DBMADJUST) &&
-		    wi_read_rid(sc, WI_RID_DBM_ADJUST, &val, &buflen) == 0 &&
-		    buflen == sizeof(val))
+		    wi_read_xrid(sc, WI_RID_DBM_ADJUST, &val, sizeof(val)) == 0)
 			sc->sc_dbm_offset = le16toh(val);
 		else
 			sc->sc_dbm_offset = WI_PRISM_DBM_OFFSET;
@@ -427,9 +440,8 @@ wi_attach(struct wi_softc *sc, const u_int8_t *macaddr)
 	/*
 	 * Find out if we support WEP on this card.
 	 */
-	buflen = sizeof(val);
-	if (wi_read_rid(sc, WI_RID_WEP_AVAIL, &val, &buflen) == 0 &&
-	    buflen == sizeof(val) && val != htole16(0))
+	if (wi_read_xrid(sc, WI_RID_WEP_AVAIL, &val, sizeof(val)) == 0 &&
+	    val != htole16(0))
 		ic->ic_caps |= IEEE80211_C_WEP;
 
 	/* Find supported rates. */
@@ -1352,7 +1364,7 @@ wi_media_status(struct ifnet *ifp, struct ifmediareq *imr)
 	struct wi_softc *sc = ifp->if_softc;
 	struct ieee80211com *ic = &sc->sc_ic;
 	u_int16_t val;
-	int rate, len;
+	int rate;
 
 	if (sc->sc_enabled == 0) {
 		imr->ifm_active = IFM_IEEE80211 | IFM_NONE;
@@ -1365,9 +1377,7 @@ wi_media_status(struct ifnet *ifp, struct ifmediareq *imr)
 	if (ic->ic_state == IEEE80211_S_RUN &&
 	    (sc->sc_flags & WI_FLAGS_OUTRANGE) == 0)
 		imr->ifm_status |= IFM_ACTIVE;
-	len = sizeof(val);
-	if (wi_read_rid(sc, WI_RID_CUR_TX_RATE, &val, &len) == 0 &&
-	    len == sizeof(val)) {
+	if (wi_read_xrid(sc, WI_RID_CUR_TX_RATE, &val, sizeof(val)) == 0) {
 		/* convert to 802.11 rate */
 		val = le16toh(val);
 		rate = val * 2;
@@ -2840,7 +2850,7 @@ wi_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 	struct ifnet *ifp = &ic->ic_if;
 	struct wi_softc *sc = ic->ic_softc;
 	struct ieee80211_node *ni = ic->ic_bss;
-	int buflen, linkstate = LINK_STATE_DOWN, s;
+	int linkstate = LINK_STATE_DOWN, s;
 	u_int16_t val;
 	struct wi_ssid ssid;
 	struct wi_macaddr bssid, old_bssid;
@@ -2864,13 +2874,12 @@ wi_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 	case IEEE80211_S_RUN:
 		linkstate = LINK_STATE_UP;
 		sc->sc_flags &= ~WI_FLAGS_OUTRANGE;
-		buflen = IEEE80211_ADDR_LEN;
 		IEEE80211_ADDR_COPY(old_bssid.wi_mac_addr, ni->ni_bssid);
-		wi_read_rid(sc, WI_RID_CURRENT_BSSID, &bssid, &buflen);
+		wi_read_xrid(sc, WI_RID_CURRENT_BSSID, &bssid,
+		    IEEE80211_ADDR_LEN);
 		IEEE80211_ADDR_COPY(ni->ni_bssid, &bssid);
 		IEEE80211_ADDR_COPY(ni->ni_macaddr, &bssid);
-		buflen = sizeof(val);
-		wi_read_rid(sc, WI_RID_CURRENT_CHAN, &val, &buflen);
+		wi_read_xrid(sc, WI_RID_CURRENT_CHAN, &val, sizeof(val));
 		if (!isset(ic->ic_chan_avail, le16toh(val)))
 			panic("%s: invalid channel %d\n", sc->sc_dev.dv_xname,
 			    le16toh(val));
@@ -2890,8 +2899,8 @@ wi_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 			if (ic->ic_flags & IEEE80211_F_PRIVACY)
 				ni->ni_capinfo |= IEEE80211_CAPINFO_PRIVACY;
 		} else {
-			buflen = sizeof(ssid);
-			wi_read_rid(sc, WI_RID_CURRENT_SSID, &ssid, &buflen);
+			wi_read_xrid(sc, WI_RID_CURRENT_SSID, &ssid,
+			    sizeof(ssid));
 			ni->ni_esslen = le16toh(ssid.wi_len);
 			if (ni->ni_esslen > IEEE80211_NWID_LEN)
 				ni->ni_esslen = IEEE80211_NWID_LEN;	/*XXX*/
