@@ -1,4 +1,4 @@
-/*	$NetBSD: hpux_machdep.c,v 1.33 2003/06/28 14:20:51 darrenr Exp $	*/
+/*	$NetBSD: hpux_machdep.c,v 1.34 2003/06/29 15:58:20 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpux_machdep.c,v 1.33 2003/06/28 14:20:51 darrenr Exp $");                                                  
+__KERNEL_RCSID(0, "$NetBSD: hpux_machdep.c,v 1.34 2003/06/29 15:58:20 thorpej Exp $");                                                  
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -189,8 +189,8 @@ hpux_cpu_makecmds(l, epp)
  * in ev->ev_len.
  */
 int
-hpux_cpu_vmcmd(p, ev)
-	struct proc *p;
+hpux_cpu_vmcmd(l, ev)
+	struct lwp *l;
 	struct exec_vmcmd *ev;
 {
 	struct hpux_exec *execp = (struct hpux_exec *)ev->ev_addr;
@@ -205,10 +205,10 @@ hpux_cpu_vmcmd(p, ev)
 	/* Deal with misc. HP-UX process attributes. */
 	if (execp->ha_trsize & HPUXM_VALID) {
 		if (execp->ha_trsize & HPUXM_DATAWT)
-			p->p_md.mdp_flags &= ~MDP_CCBDATA;
+			l->l_proc->p_md.mdp_flags &= ~MDP_CCBDATA;
 
 		if (execp->ha_trsize & HPUXM_STKWT)
-			p->p_md.mdp_flags &= ~MDP_CCBSTACK;
+			l->l_proc->p_md.mdp_flags &= ~MDP_CCBSTACK;
 	}
 
 	return (0);

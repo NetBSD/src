@@ -1,4 +1,4 @@
-/*	$NetBSD: hpux_compat.c,v 1.63 2003/06/28 14:21:18 darrenr Exp $	*/
+/*	$NetBSD: hpux_compat.c,v 1.64 2003/06/29 15:54:32 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpux_compat.c,v 1.63 2003/06/28 14:21:18 darrenr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpux_compat.c,v 1.64 2003/06/29 15:54:32 thorpej Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_sysv.h"
@@ -795,14 +795,14 @@ hpux_sys_ioctl(l, v, retval)
 		if ((*ofp & (HPUX_UF_NONBLOCK_ON|HPUX_UF_FNDELAY_ON)) == 0) {
 			tmp = *ofp & HPUX_UF_FIONBIO_ON;
 			error = (*fp->f_ops->fo_ioctl)(fp, FIONBIO,
-						       (caddr_t)&tmp, p);
+						       (caddr_t)&tmp, l);
 		}
 		break;
 	}
 
 	case HPUXTIOCCONS:
 		*(int *)dt = 1;
-		error = (*fp->f_ops->fo_ioctl)(fp, TIOCCONS, dt, p);
+		error = (*fp->f_ops->fo_ioctl)(fp, TIOCCONS, dt, l);
 		break;
 
 	/* BSD-style job control ioctls */
@@ -823,7 +823,7 @@ hpux_sys_ioctl(l, v, retval)
 	case HPUXTIOCGWINSZ:
 	case HPUXTIOCSWINSZ:
 		error = (*fp->f_ops->fo_ioctl)
-			(fp, hpuxtobsdioctl(com), dt, p);
+			(fp, hpuxtobsdioctl(com), dt, l);
 		if (error == 0 && com == HPUXTIOCLGET) {
 			*(int *)dt &= LTOSTOP;
 			if (*(int *)dt & LTOSTOP)
@@ -844,7 +844,7 @@ hpux_sys_ioctl(l, v, retval)
 		break;
 
 	default:
-		error = (*fp->f_ops->fo_ioctl)(fp, com, dt, p);
+		error = (*fp->f_ops->fo_ioctl)(fp, com, dt, l);
 		break;
 	}
 	/*
@@ -1073,11 +1073,11 @@ hpux_sys_getaccess(l, v, retval)
 	 */
 	vp = nd.ni_vp;
 	*retval = 0;
-	if (VOP_ACCESS(vp, VREAD, cred, p) == 0)
+	if (VOP_ACCESS(vp, VREAD, cred, l) == 0)
 		*retval |= R_OK;
-	if (vn_writechk(vp) == 0 && VOP_ACCESS(vp, VWRITE, cred, p) == 0)
+	if (vn_writechk(vp) == 0 && VOP_ACCESS(vp, VWRITE, cred, l) == 0)
 		*retval |= W_OK;
-	if (VOP_ACCESS(vp, VEXEC, cred, p) == 0)
+	if (VOP_ACCESS(vp, VEXEC, cred, l) == 0)
 		*retval |= X_OK;
 	vput(vp);
 	crfree(cred);
@@ -1339,7 +1339,6 @@ hpux_sys_utime_6x(l, v, retval)
 		syscallarg(char *) fname;
 		syscallarg(time_t *) tptr;
 	} */ *uap = v;
-	struct proc *p = l->l_proc;
 	struct vnode *vp;
 	struct vattr vattr;
 	time_t tv[2];
@@ -1366,7 +1365,7 @@ hpux_sys_utime_6x(l, v, retval)
 	if (vp->v_mount->mnt_flag & MNT_RDONLY)
 		error = EROFS;
 	else
-		error = VOP_SETATTR(vp, &vattr, nd.ni_cnd.cn_cred, p);
+		error = VOP_SETATTR(vp, &vattr, nd.ni_cnd.cn_cred, l);
 	vput(vp);
 	return (error);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: grf.c,v 1.51 2003/02/23 19:08:18 he Exp $	*/
+/*	$NetBSD: grf.c,v 1.52 2003/06/29 15:58:19 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grf.c,v 1.51 2003/02/23 19:08:18 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: grf.c,v 1.52 2003/06/29 15:58:19 thorpej Exp $");
 
 #include "opt_compat_hpux.h"
 
@@ -165,10 +165,10 @@ grfprint(aux, pnp)
 
 /*ARGSUSED*/
 int
-grfopen(dev, flags, mode, p)
+grfopen(dev, flags, mode, l)
 	dev_t dev;
 	int flags, mode;
-	struct proc *p;
+	struct lwp *l;
 {
 	int unit = GRFUNIT(dev);
 	struct grf_softc *sc;
@@ -190,7 +190,7 @@ grfopen(dev, flags, mode, p)
 	/*
 	 * XXX: cannot handle both HPUX and BSD processes at the same time
 	 */
-	if (p->p_emul == &emul_hpux)
+	if (l->l_proc->p_emul == &emul_hpux)
 		if (gp->g_flags & GF_BSDOPEN)
 			return(EBUSY);
 		else
@@ -215,10 +215,10 @@ grfopen(dev, flags, mode, p)
 
 /*ARGSUSED*/
 int
-grfclose(dev, flags, mode, p)
+grfclose(dev, flags, mode, l)
 	dev_t dev;
 	int flags, mode;
-	struct proc *p;
+	struct lwp *l;
 {
 	int unit = GRFUNIT(dev);
 	struct grf_softc *sc;
@@ -241,12 +241,12 @@ grfclose(dev, flags, mode, p)
 
 /*ARGSUSED*/
 int
-grfioctl(dev, cmd, data, flag, p)
+grfioctl(dev, cmd, data, flag, l)
 	dev_t dev;
 	u_long cmd;
 	int flag;
 	caddr_t data;
-	struct proc *p;
+	struct lwp *l;
 {
 	struct grf_softc *sc;
 	struct grf_data *gp;
@@ -260,8 +260,8 @@ grfioctl(dev, cmd, data, flag, p)
 		return (ENXIO);
 
 #ifdef COMPAT_HPUX
-	if (p->p_emul == &emul_hpux)
-		return(hpuxgrfioctl(dev, cmd, data, flag, p));
+	if (l->l_proc->p_emul == &emul_hpux)
+		return(hpuxgrfioctl(dev, cmd, data, flag, l));
 #endif
 	error = 0;
 	switch (cmd) {
@@ -279,11 +279,11 @@ grfioctl(dev, cmd, data, flag, p)
 		break;
 
 	case GRFIOCMAP:
-		error = grfmap(dev, (caddr_t *)data, p);
+		error = grfmap(dev, (caddr_t *)data, l->l_proc);
 		break;
 
 	case GRFIOCUNMAP:
-		error = grfunmap(dev, *(caddr_t *)data, p);
+		error = grfunmap(dev, *(caddr_t *)data, l->l_proc);
 		break;
 
 	default:
@@ -377,11 +377,11 @@ grfaddr(sc, off)
 
 /*ARGSUSED*/
 int
-hpuxgrfioctl(dev, cmd, data, flag, p)
+hpuxgrfioctl(dev, cmd, data, flag, l)
 	dev_t dev;
 	int cmd, flag;
 	caddr_t data;
-	struct proc *p;
+	struct lwp *l;
 {
 	struct grf_softc *sc = grf_cd.cd_devs[GRFUNIT(dev)];
 	struct grf_data *gp = sc->sc_data;
@@ -421,11 +421,11 @@ hpuxgrfioctl(dev, cmd, data, flag, p)
 
 	/* map in control regs and frame buffer */
 	case GCMAP:
-		error = grfmap(dev, (caddr_t *)data, p);
+		error = grfmap(dev, (caddr_t *)data, l->l_proc);
 		break;
 
 	case GCUNMAP:
-		error = grfunmap(dev, *(caddr_t *)data, p);
+		error = grfunmap(dev, *(caddr_t *)data, l->l_proc);
 		/* XXX: HP-UX uses GCUNMAP to get rid of GCSLOT memory */
 		if (error)
 			error = grflckunmmap(dev, *(caddr_t *)data);

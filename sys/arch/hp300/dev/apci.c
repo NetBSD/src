@@ -1,4 +1,4 @@
-/*	$NetBSD: apci.c,v 1.22 2003/03/06 18:24:52 thorpej Exp $	*/
+/*	$NetBSD: apci.c,v 1.23 2003/06/29 15:58:19 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1999 The NetBSD Foundation, Inc.
@@ -93,7 +93,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: apci.c,v 1.22 2003/03/06 18:24:52 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: apci.c,v 1.23 2003/06/29 15:58:19 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -302,10 +302,10 @@ apciattach(parent, self, aux)
 
 /* ARGSUSED */
 int
-apciopen(dev, flag, mode, p)
+apciopen(dev, flag, mode, l)
 	dev_t dev;
 	int flag, mode;
-	struct proc *p;
+	struct lwp *l;
 {
 	int unit = APCIUNIT(dev);
 	struct apci_softc *sc;
@@ -331,7 +331,7 @@ apciopen(dev, flag, mode, p)
 
 	if ((tp->t_state & TS_ISOPEN) &&
 	    (tp->t_state & TS_XCLUDE) &&
-	    p->p_ucred->cr_uid != 0)
+	    l->l_proc->p_ucred->cr_uid != 0)
 		return (EBUSY);
 
 	s = spltty();
@@ -394,10 +394,10 @@ apciopen(dev, flag, mode, p)
 
 /* ARGSUSED */
 int
-apciclose(dev, flag, mode, p)
+apciclose(dev, flag, mode, l)
 	dev_t dev;
 	int flag, mode;
-	struct proc *p;
+	struct lwp *l;
 {
 	struct apci_softc *sc;
 	struct tty *tp;
@@ -455,15 +455,15 @@ apciwrite(dev, uio, flag)
 }
 
 int
-apcipoll(dev, events, p)
+apcipoll(dev, events, l)
 	dev_t dev;
 	int events;
-	struct proc *p;
+	struct lwp *l;
 {
 	struct apci_softc *sc = apci_cd.cd_devs[APCIUNIT(dev)];
 	struct tty *tp = sc->sc_tty;
  
-	return ((*tp->t_linesw->l_poll)(tp, events, p));
+	return ((*tp->t_linesw->l_poll)(tp, events, l));
 }
 
 struct tty *
@@ -595,23 +595,23 @@ apcimint(sc, stat)
 }
 
 int
-apciioctl(dev, cmd, data, flag, p)
+apciioctl(dev, cmd, data, flag, l)
 	dev_t dev;
 	u_long cmd;
 	caddr_t data;
 	int flag;
-	struct proc *p;
+	struct lwp *l;
 {
 	struct apci_softc *sc = apci_cd.cd_devs[APCIUNIT(dev)];
 	struct tty *tp = sc->sc_tty;
 	struct apciregs *apci = sc->sc_apci;
 	int error;
 
-	error = (*tp->t_linesw->l_ioctl)(tp, cmd, data, flag, p);
+	error = (*tp->t_linesw->l_ioctl)(tp, cmd, data, flag, l);
 	if (error != EPASSTHROUGH)
 		return (error);
 
-	error = ttioctl(tp, cmd, data, flag, p);
+	error = ttioctl(tp, cmd, data, flag, l);
 	if (error != EPASSTHROUGH)
 		return (error);
 
@@ -664,7 +664,7 @@ apciioctl(dev, cmd, data, flag, p)
 	case TIOCSFLAGS: {
 		int userbits;
 
-		error = suser(p->p_ucred, &p->p_acflag);
+		error = suser(l->l_proc->p_ucred, &l->l_proc->p_acflag);
 		if (error)
 			return (EPERM);
 

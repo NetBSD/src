@@ -1,4 +1,4 @@
-/*	$NetBSD: st.c,v 1.37 2003/05/03 18:10:48 wiz Exp $	*/
+/*	$NetBSD: st.c,v 1.38 2003/06/29 15:58:20 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -111,7 +111,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: st.c,v 1.37 2003/05/03 18:10:48 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: st.c,v 1.38 2003/06/29 15:58:20 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -360,10 +360,10 @@ stattach(parent, self, aux)
 }
 
 int
-stopen(dev, flag, type, p)
+stopen(dev, flag, type, l)
 	dev_t dev;
 	int flag, type;
-	struct proc *p;
+	struct lwp *l;
 {
 	struct st_softc *sc;
 	struct st_xsense *xsense;
@@ -399,7 +399,7 @@ stopen(dev, flag, type, p)
 	/*
 	 * Be prepared to print error messages
 	 */
-	sc->sc_ctty = tprintf_open(p);
+	sc->sc_ctty = tprintf_open(l->l_proc);
 
 	/* do a mode sense to get current */
 	modlen = sc->sc_datalen[CMD_MODE_SENSE];
@@ -658,10 +658,10 @@ retryselect:
 
 /*ARGSUSED*/
 int
-stclose(dev, flag, mode, p)
+stclose(dev, flag, mode, l)
 	dev_t dev;
 	int flag, mode;
-	struct proc *p;
+	struct lwp *l;
 {
 	struct st_softc *sc = st_cd.cd_devs[UNIT(dev)];
 	int hit = 0;
@@ -856,12 +856,12 @@ stwrite(dev, uio, flags)
 
 /*ARGSUSED*/
 int
-stioctl(dev, cmd, data, flag, p)
+stioctl(dev, cmd, data, flag, l)
 	dev_t dev;
 	u_long cmd;
 	caddr_t data; 
 	int flag;
-	struct proc *p;
+	struct lwp *l;
 {
 	struct st_softc *sc = st_cd.cd_devs[UNIT(dev)];
 	int cnt;

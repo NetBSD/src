@@ -1,4 +1,4 @@
-/*	$NetBSD: hpux_net.c,v 1.27 2003/01/21 03:16:06 jdolecek Exp $	*/
+/*	$NetBSD: hpux_net.c,v 1.28 2003/06/29 15:54:32 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpux_net.c,v 1.27 2003/01/21 03:16:06 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpux_net.c,v 1.28 2003/06/29 15:54:32 thorpej Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ktrace.h"
@@ -168,14 +168,14 @@ hpux_sys_netioctl(l, v, retval)
 	    (error = copyin((caddr_t)args, (caddr_t)uap, (u_int)i))) {
 #ifdef KTRACE
 		if (KTRPOINT(p, KTR_SYSCALL))
-			ktrsyscall(p, code + MINBSDIPCCODE,
+			ktrsyscall(l, code + MINBSDIPCCODE,
 			    code + MINBSDIPCCODE, NULL, (register_t *)uap);
 #endif
 		return (error);
 	}
 #ifdef KTRACE
 	if (KTRPOINT(p, KTR_SYSCALL))
-		ktrsyscall(p, code + MINBSDIPCCODE,
+		ktrsyscall(l, code + MINBSDIPCCODE,
 		    code + MINBSDIPCCODE, NULL, (register_t *)uap);
 #endif
 	return ((*hpuxtobsdipc[code].rout)(l, uap, retval));
@@ -252,7 +252,7 @@ hpux_sys_setsockopt(l, v, retval)
 	error = sosetopt((struct socket *)fp->f_data, SCARG(uap, level),
 	    SCARG(uap, name), m);
  out:
-	FILE_UNUSE(fp, p);
+	FILE_UNUSE(fp, l);
 	return (error);
 }
 
@@ -289,7 +289,7 @@ hpux_sys_setsockopt2(l, v, retval)
 	error = sosetopt((struct socket *)fp->f_data, SCARG(uap, level),
 	    SCARG(uap, name), m);
  out:
-	FILE_UNUSE(fp, p);
+	FILE_UNUSE(fp, l);
 	return (error);
 }
 
@@ -338,6 +338,6 @@ hpux_sys_getsockopt(l, v, retval)
 	if (m != NULL)
 		(void) m_free(m);
  out:
-	FILE_UNUSE(fp, p);
+	FILE_UNUSE(fp, l);
 	return (error);
 }
