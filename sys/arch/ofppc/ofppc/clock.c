@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.3 2000/01/19 02:52:20 msaitoh Exp $	*/
+/*	$NetBSD: clock.c,v 1.4 2001/06/19 08:34:50 simonb Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -177,7 +177,7 @@ microtime(tvp)
  */
 void
 delay(n)
-	unsigned n;
+	unsigned int n;
 {
 	u_quad_t tb;
 	u_long tbh, tbl, scratch;
@@ -186,8 +186,9 @@ delay(n)
 	tb += (n * 1000 + ns_per_tick - 1) / ns_per_tick;
 	tbh = tb >> 32;
 	tbl = tb;
-	asm ("1: mftbu %0; cmpw %0,%1; blt 1b; bgt 2f; mftb %0; cmpw %0,%2; blt 1b; 2:"
-	     :: "r"(scratch), "r"(tbh), "r"(tbl));
+	asm volatile ("1: mftbu %0; cmplw %0,%1; blt 1b; bgt 2f;"
+		      "mftb %0; cmplw %0,%2; blt 1b; 2:"
+		      : "=r"(scratch) : "r"(tbh), "r"(tbl));
 }
 
 /*

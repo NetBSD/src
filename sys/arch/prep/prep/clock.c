@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.1 2000/02/29 15:21:47 nonaka Exp $	*/
+/*	$NetBSD: clock.c,v 1.2 2001/06/19 08:34:50 simonb Exp $	*/
 /*      $OpenBSD: clock.c,v 1.3 1997/10/13 13:42:53 pefo Exp $	*/
 
 /*
@@ -320,7 +320,7 @@ delay(n)
 	tb += (n * 1000 + ns_per_tick - 1) / ns_per_tick;
 	tbh = tb >> 32;
 	tbl = tb;
-	asm ("1: mftbu %0; cmpw %0,%1; blt 1b; bgt 2f; mftb %0; cmpw %0,%2; blt 1b; 2:"
-	     :: "r"(scratch), "r"(tbh), "r"(tbl));
+	asm volatile ("1: mftbu %0; cmplw %0,%1; blt 1b; bgt 2f;"
+		      "mftb %0; cmplw %0,%2; blt 1b; 2:"
+		      : "=r"(scratch) : "r"(tbh), "r"(tbl));
 }
-
