@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysinst,v 1.10 2000/10/10 12:14:49 lukem Exp $
+.\"	$NetBSD: sysinst,v 1.11 2000/10/11 11:46:02 tsutsui Exp $
 .\"
 .\" Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -57,7 +57,7 @@ for the installation and as such covers many details to be completed.
 Do not let this discourage you, the install program is not hard
 to use.
 .
-.if !\n[pmax]:\n[x68k] \{\
+.if !\n[news68k]:\n[pmax]:\n[x68k] \{\
 .It
 .Em Possible Tn PCMCIA Em issues
 .Pp
@@ -224,7 +224,7 @@ We hope to provide a more elegant solution to this problem in a future
 .Nx
 release.
 .\} \" r_i386
-.\} \" ! \n[pmax]:\n[x68k]
+.\} \" ! \[news68k]:\n[pmax]:\n[x68k]
 .It
 .Em General
 .Pp
@@ -266,15 +266,20 @@ The distribution sets (in this example, they are on CD).
 A PC with a 386 or newer processor.
 .\} \" r_i386
 .It
-A CD-ROM drive (SCSI or ATAPI), a harddisk and a minimum of
+A CD-ROM drive
+.ie \n[alpha]:\n[i386] (SCSI or ATAPI),
+.el (SCSI),
+a harddisk and a minimum of
 .if r_alpha 32 MB
 .if r_i386 4 MB
+.if r_news68k 4 MB
 .if r_pmax 8 MB
 of memory installed.
 .It
 The harddisk should have at least
 .if r_alpha 200
 .if r_i386 70
+.if r_news68k 100
 .if r_pmax 200
 +
 .Em n
@@ -286,7 +291,7 @@ main memory in your system. If you wish to install
 the X window system as well, you will need at least
 60 MB more.
 .bullet)
-.if r_i386 \{\
+.if \n[alpha]:\n[i386]:\n[news68k] \{\
 .It
 Creating the boot floppies.
 You can create the floppies needed for installation
@@ -294,12 +299,13 @@ under DOS or Windows. Supposing your 1.44 MB floppy
 drive is drive A:, and your CD is drive E: do the
 following from an MS-DOS command prompt:
 .D1 Ic "\&e:
-.D1 Ic "\&cd \eNetBSD-\*V\einstallation\emisc
+.D1 Ic "\&cd \eNetBSD-\*V\ei386\einstallation\emisc
 .D1 Ic "\&rawrite
 When asked for a source filename, answer
 .if r_i386 .D1 Ic \&..\efloppy\eboot1.fs for the first diskette and
 .if r_i386 .D1 Ic \&..\efloppy\eboot2.fs for the second diskette
 .if r_alpha .D1 Em \&(...alpha installation root) Ns Ic \efloppy\edisk1of2
+.if r_news68k .D1 Ic \eNetBSD-\*V\e\*M\einstallation\efloppy\eboot.fs
 When asked for a destination drive answer
 .D1 Ic a
 .It
@@ -308,7 +314,7 @@ To create a bootfloppy under
 or other UNIX-like system, you
 would type something like:
 .D1 Ic "dd if=.../boot1.fs bs=18k of=/dev/rfd0a
-.\} \" r_i386
+.\} \" \n[alpha]:\n[i386]:\[news68k]
 .It
 The Quick Installation
 .(bullet
@@ -329,6 +335,8 @@ the computer.
 .if r_alpha Type
 .if r_alpha .Dl \&\*>\*>\*> Ic "B DVA0
 .if r_i386 When prompted, insert the second boot floppy.
+.if r_news68k Type
+.if r_news68k .Dl \&NEWS\*> Ic "bo fh
 The main menu will be displayed.
 .\} \" ! r_pmax
 .It
@@ -381,12 +389,14 @@ Further information can be found on
 Boot the system as desribed in the previous section.
 .\}
 .el \{\
+.if !\n[news68k]:\n[x68k] \{\
 .(pcmcia
 Unplug your
 .Tn PCMCIA
 devices, so that they won't be found by
 .Nx .
 .pcmcia)
+.\} \" !\n[news68k]:\n[x68k]
 .
 .
 .Pp
@@ -464,12 +474,12 @@ you will be presented with a welcome message and a main menu.
 It will also include instructions for using the menus.
 .It
 .Em Network configuration
-.if !r_pmax \{\
+.if !\n[news68k]:\n[pmax]:\n[x68k] \{\
 .(pcmcia
 You can skip this section, as you will only get data
 from floppy in the first part of the install.
 .pcmcia)
-.\}
+.\} \" ! \n[news68k]:\n[pmax]:\n[x68k]
 .Pp
 If you will not use network operation during the installation,
 but you do want your machine to be configured for networking once
@@ -501,9 +511,11 @@ or
 .Li rz1
 .\}
 .el \{\
+.if \n[alpha]:\n[i386] \{\
 .Li wd0 ,
 .Li wd1 ,
-.Li sd0 ,
+.\}
+.Li sd0
 or
 .Li sd1 .
 .if r_i386 \{\
@@ -851,7 +863,7 @@ and the directory name on the CD-ROM where the distribution files are.
 will then check if the files are indeed available
 in the specified location, and proceed to the actual
 extraction of the sets.
-.if !ralpha \{\
+.if r_i386 \{\
 .It
 .Em Installation from a floppy set
 .Pp
