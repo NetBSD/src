@@ -1,4 +1,4 @@
-/* $NetBSD: fdc_acpi.c,v 1.4 2003/01/09 01:25:13 jmcneill Exp $ */
+/* $NetBSD: fdc_acpi.c,v 1.5 2003/01/09 12:18:38 jdolecek Exp $ */
 
 /*
  * Copyright (c) 2002 Jared D. McNeill <jmcneill@invisible.ca>
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdc_acpi.c,v 1.4 2003/01/09 01:25:13 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdc_acpi.c,v 1.5 2003/01/09 12:18:38 jdolecek Exp $");
 
 #include "rnd.h"
 
@@ -228,8 +228,10 @@ fdc_acpi_attach(struct device *parent, struct device *self, void *aux)
 		 * XXX if there is no _FDE control method, attempt to
 		 * probe without pnp
 		 */
+#ifdef ACPI_FDC_DEBUG
 		printf("%s: unable to enumerate, attempting normal probe\n",
 		    sc->sc_dev.dv_xname);
+#endif
 	}
 
 	fdcattach(sc);
@@ -242,13 +244,15 @@ fdc_acpi_enumerate(struct fdc_acpi_softc *asc)
 	ACPI_OBJECT *fde;
 	ACPI_BUFFER buf;
 	ACPI_STATUS rv;
-	UINT8 *p;
+	UINT32 *p;
 	int i, drives = -1;
 
 	rv = acpi_eval_struct(asc->sc_node->ad_handle, "_FDE", &buf);
 	if (rv != AE_OK) {
+#ifdef ACPI_FDC_DEBUG
 		printf("%s: failed to evalulate _FDE: %x\n",
 		    sc->sc_dev.dv_xname, rv);
+#endif
 		return drives;
 	}
 	fde = (ACPI_OBJECT *)buf.Pointer;
@@ -257,13 +261,15 @@ fdc_acpi_enumerate(struct fdc_acpi_softc *asc)
 		    fde->Type);
 		goto out;
 	}
-	if (fde->Buffer.Length < 14) {
-		printf("%s: expected buffer len of 14, got %d\n",
-		    sc->sc_dev.dv_xname, fde->Buffer.Length);
+	if (fde->Buffer.Length < 5 * sizeof(UINT32)) {
+		printf("%s: expected buffer len of %d, got %d\n",
+		    sc->sc_dev.dv_xname,
+		    5 * sizeof(UINT32), fde->Buffer.Length);
 		goto out;
 	}
 
-	p = fde->Buffer.Pointer;
+	p = (UINT32 *) fde->Buffer.Pointer;
+
 	/*
 	 * Indexes 0 through 3 are each UINT32 booleans. True if a drive
 	 * is present.
@@ -278,12 +284,13 @@ fdc_acpi_enumerate(struct fdc_acpi_softc *asc)
 	}
 
 	/*
-	 * XXX p[4] reports tape presence. Possible values:
+	 * p[4] reports tape presence. Possible values:
 	 * 	0	- Unknown if device is present
 	 *	1	- Device is present
 	 *	2	- Device is never present
 	 *	>2	- Reserved
-	 * How should we handle this?
+	 *
+	 * we don't currently use this.
 	 */
 
 out:
@@ -322,7 +329,11 @@ fdc_acpi_getknownfds(struct fdc_acpi_softc *asc)
 		e = fdi->Package.Elements;
 		sc->sc_knownfds[i] = fdc_acpi_nvtotype(sc->sc_dev.dv_xname,
 		    e[1].Integer.Value, e[0].Integer.Value); 
-		/* XXX What to do if fdc_acpi_nvtotype returns NULL? */
+
+		/* if fdc_acpi_nvtotype returns NULL, don't attach drive */
+		if (!sc->sc_knownfds[i])
+			sc->sc_present &= ~(1 << i);
+
 out:
 		AcpiOsFree(buf.Pointer);
 	}
