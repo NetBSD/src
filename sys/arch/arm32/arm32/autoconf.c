@@ -1,7 +1,7 @@
-/*	$NetBSD: autoconf.c,v 1.22 1998/08/08 23:39:38 mycroft Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.23 1998/09/05 03:58:31 mark Exp $	*/
 
 /*
- * Copyright (c) 1994-1997 Mark Brinicombe.
+ * Copyright (c) 1994-1998 Mark Brinicombe.
  * Copyright (c) 1994 Brini.
  * All rights reserved.
  *
@@ -77,7 +77,6 @@ static	int booted_partition;
 extern dev_t dumpdev;
 
 void	dumpconf __P(());
-extern void dump_spl_masks	__P((void));
 
 /* Table major numbers for the device names, NULL terminated */
 
@@ -146,12 +145,13 @@ set_root_device()
 {
 	char *ptr;
             
+	if (boot_file)
+		get_device(boot_file, &booted_device, &booted_partition);
 	if (boot_args) {
 		ptr = strstr(boot_args, "root=");
 		if (ptr) {
 			ptr += 5;
 			get_device(ptr, &booted_device, &booted_partition);
-
 		}
 	}
 }
@@ -202,19 +202,17 @@ configure()
 	ofrootfound();
 #endif
 
-#ifdef DEBUG
 	/* Debugging information */
+#ifndef TERSE
 	printf("ipl_bio=%08x ipl_net=%08x ipl_tty=%08x ipl_imp=%08x\n",
 	    irqmasks[IPL_BIO], irqmasks[IPL_NET], irqmasks[IPL_TTY],
 	    irqmasks[IPL_IMP]);
-	printf("ipl_audio=%08x ipl_clock=%08x ipl_none=%08x\n",
-	    irqmasks[IPL_AUDIO], irqmasks[IPL_CLOCK], irqmasks[IPL_NONE]);
-
-	dump_spl_masks();
+	printf("ipl_audio=%08x ipl_imp=%08x ipl_high=%08x ipl_serial=%08x\n",
+	    irqmasks[IPL_AUDIO], irqmasks[IPL_CLOCK], irqmasks[IPL_HIGH],
+	    irqmasks[IPL_SERIAL]);
 #endif
 
 	/* Time to start taking interrupts so lets open the flood gates .... */
-         
 	(void)spl0();
 }
 
