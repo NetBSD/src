@@ -1,4 +1,4 @@
-/*	$NetBSD: dirs.c,v 1.39 2003/08/07 10:04:37 agc Exp $	*/
+/*	$NetBSD: dirs.c,v 1.40 2003/11/05 22:27:16 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -39,7 +39,7 @@
 #if 0
 static char sccsid[] = "@(#)dirs.c	8.7 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: dirs.c,v 1.39 2003/08/07 10:04:37 agc Exp $");
+__RCSID("$NetBSD: dirs.c,v 1.40 2003/11/05 22:27:16 fvdl Exp $");
 #endif
 #endif /* not lint */
 
@@ -366,7 +366,7 @@ putdir(buf, size)
 			dp = (struct direct *)(buf + loc);
 			if (Bcvt) {
 				dp->d_ino = bswap32(dp->d_ino);
-				dp->d_reclen = bswap16(dp->d_ino);
+				dp->d_reclen = bswap16(dp->d_reclen);
 			}
 			if (oldinofmt && dp->d_ino != 0) {
 #				if BYTE_ORDER == BIG_ENDIAN
