@@ -1,4 +1,4 @@
-/*	$NetBSD: supscan.c,v 1.10 2002/07/10 20:19:47 wiz Exp $	*/
+/*	$NetBSD: supscan.c,v 1.11 2002/07/10 21:28:13 wiz Exp $	*/
 
 /*
  * Copyright (c) 1992 Carnegie Mellon University
@@ -205,7 +205,7 @@ main(int argc, char **argv)
 		free(c->Cbase);
 		if (c->Cprefix)
 			free(c->Cprefix);
-		free((char *) c);
+		free(c);
 	}
 	exit(0);
 }
@@ -397,8 +397,8 @@ int
 localhost(char *host)
 {
 	static char myhost[MAXHOSTNAMELEN + 1];
-	static int myhostlen;
-	int hostlen;
+	static unsigned int myhostlen;
+	unsigned int hostlen;
 
 	if (*myhost == '\0') {
 		/*
