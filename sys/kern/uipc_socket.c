@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_socket.c,v 1.48.2.1 2000/11/20 18:09:14 bouyer Exp $	*/
+/*	$NetBSD: uipc_socket.c,v 1.48.2.2 2000/12/13 15:50:23 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1990, 1993
@@ -126,11 +126,11 @@ socreate(dom, aso, type, proto)
 }
 
 int
-sobind(so, nam)
+sobind(so, nam, p)
 	struct socket *so;
 	struct mbuf *nam;
+	struct proc *p;
 {
-	struct proc *p = curproc;		/* XXX */
 	int s = splsoftnet();
 	int error;
 

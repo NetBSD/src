@@ -1,4 +1,4 @@
-/*	$NetBSD: if_faith.c,v 1.4.2.1 2000/11/20 18:10:00 bouyer Exp $	*/
+/*	$NetBSD: if_faith.c,v 1.4.2.2 2000/12/13 15:50:30 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -137,11 +137,7 @@ faith_clone_create(ifc, unit)
 	sc->sc_if.if_addrlen = 0;
 	if_attach(&sc->sc_if);
 #if NBPFILTER > 0
-#ifdef HAVE_OLD_BPF
 	bpfattach(&sc->sc_if, DLT_NULL, sizeof(u_int));
-#else
-	bpfattach(&sc->sc_if.if_bpf, &sc->sc_if, DLT_NULL, sizeof(u_int));
-#endif
 #endif
 	LIST_INSERT_HEAD(&faith_softc_list, sc, sc_list);
 	return (0);

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gre.h,v 1.4.8.1 2000/11/20 18:10:02 bouyer Exp $ */
+/*	$NetBSD: if_gre.h,v 1.4.8.2 2000/12/13 15:50:31 bouyer Exp $ */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -48,7 +48,6 @@ struct gre_softc {
 	int gre_flags;
 	struct    in_addr g_src;  /* source address of gre packets */
 	struct    in_addr g_dst;  /* destination address of gre packets */
-	caddr_t	gre_bpf;
 	struct route route;	/* routing entry that determines, where a
                                    encapsulated packet should go */
 	u_char g_proto;		/* protocol of encapsulator */

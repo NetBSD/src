@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_commons.c,v 1.1 1999/01/03 05:29:31 erh Exp $	*/
+/*	$NetBSD: linux_commons.c,v 1.1.8.1 2000/12/13 15:49:46 bouyer Exp $	*/
 
 /*
  * This file includes C files from the common
@@ -25,6 +25,7 @@
 #include <sys/syscallargs.h>
 
 #include "../../common/linux_pipe.c"
+#include "../../common/linux_file64.c"
 #include "../../common/linux_ipccall.c"
 #include "../../common/linux_misc_notalpha.c"
 #include "../../common/linux_sig_notalpha.c"

@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_uselib.c,v 1.1.2.2 2000/12/08 09:08:31 bouyer Exp $	*/
+/*	$NetBSD: linux_uselib.c,v 1.1.2.3 2000/12/13 15:49:50 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -58,6 +58,11 @@
 #include <compat/linux/common/linux_util.h>
 #include <compat/linux/common/linux_exec.h>
 #include <compat/linux/common/linux_machdep.h>
+
+#ifndef EXEC_AOUT
+/* define EXEC_AOUT to get prototype from linux_syscall.h */
+#define EXEC_AOUT
+#endif
 
 #include <compat/linux/linux_syscallargs.h>
 #include <compat/linux/linux_syscall.h>

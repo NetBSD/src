@@ -1,4 +1,4 @@
-/* $NetBSD: ioeb.c,v 1.2.2.3 2000/12/13 14:49:44 bouyer Exp $ */
+/* $NetBSD: ioeb.c,v 1.2.2.4 2000/12/13 15:49:19 bouyer Exp $ */
 
 /*-
  * Copyright (c) 2000 Ben Harris
@@ -30,7 +30,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: ioeb.c,v 1.2.2.3 2000/12/13 14:49:44 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ioeb.c,v 1.2.2.4 2000/12/13 15:49:19 bouyer Exp $");
 
 #include <sys/device.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdivar.h,v 1.37.2.1 2000/11/20 11:43:32 bouyer Exp $	*/
+/*	$NetBSD: usbdivar.h,v 1.37.2.2 2000/12/13 15:50:18 bouyer Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usbdivar.h,v 1.11 1999/11/17 22:33:51 n_hibma Exp $	*/
 
 /*
@@ -219,7 +219,6 @@ void usbd_finish(void);
 /* Routines from usb_subr.c */
 int		usbctlprint(void *, const char *);
 void		usb_delay_ms(usbd_bus_handle, u_int);
-void		usbd_devinfo_vp(usbd_device_handle, char *, char *);
 usbd_status	usbd_reset_port(usbd_device_handle dev,
 				int port, usb_port_status_t *ps);
 usbd_status	usbd_setup_pipe(usbd_device_handle dev,

@@ -1,4 +1,4 @@
-/* $NetBSD: proc.h,v 1.5.2.1 2000/12/13 14:49:19 bouyer Exp $ */
+/* $NetBSD: proc.h,v 1.5.2.2 2000/12/13 15:49:18 bouyer Exp $ */
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.

@@ -1,10 +1,10 @@
-/*	$NetBSD: pcmciadevs_data.h,v 1.52.2.2 2000/11/22 16:04:39 bouyer Exp $	*/
+/*	$NetBSD: pcmciadevs_data.h,v 1.52.2.3 2000/12/13 15:50:12 bouyer Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcmciadevs,v 1.102 2000/11/21 00:25:35 soren Exp 
+ *	NetBSD: pcmciadevs,v 1.103 2000/12/08 18:37:24 drochner Exp 
  */
 
 /*-
@@ -211,6 +211,13 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    0,
 	    "Fujitsu Corporation",
 	    "Fujitsu Compact Flash Ethernet"	},
+	},
+	{
+	    PCMCIA_VENDOR_IBM, PCMCIA_PRODUCT_IBM_MICRODRIVE,
+	    PCMCIA_CIS_IBM_MICRODRIVE,
+	    0,
+	    "IBM Corporation",
+	    "IBM Microdrive"	},
 	},
 	{
 	    PCMCIA_VENDOR_IBM, PCMCIA_PRODUCT_IBM_3270,

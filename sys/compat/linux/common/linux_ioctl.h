@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_ioctl.h,v 1.11 1998/12/15 19:31:39 itohy Exp $	*/
+/*	$NetBSD: linux_ioctl.h,v 1.11.8.1 2000/12/13 15:49:50 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -50,6 +50,10 @@ int linux_ioctl_termios __P((struct proc *, struct linux_sys_ioctl_args *,
     register_t *));
 int linux_ioctl_socket __P((struct proc *, struct linux_sys_ioctl_args *,
     register_t *));
+int linux_ioctl_hdio __P((struct proc *, struct linux_sys_ioctl_args *,
+    register_t *));
+int linux_ioctl_fdio __P((struct proc *p, struct linux_sys_ioctl_args *uap, 
+                 register_t *retval));
 __END_DECLS
 #endif	/* !_KERNEL */
 
@@ -62,5 +66,40 @@ __END_DECLS
 #else
 #error Undefined linux_ioctl.h machine type.
 #endif
+
+#define	_LINUX_IOC_NRMASK	((1 << _LINUX_IOC_NRBITS) - 1)
+#define	_LINUX_IOC_TYPEMASK	((1 << _LINUX_IOC_TYPEBITS) - 1)
+#define	_LINUX_IOC_SIZEMAEK	((1 << _LINUX_IOC_SIZEBITS) - 1)
+#define _LINUX_IOC_DIRMASK	((1 << _LINUX_IOC_DIRBITS) - 1)
+
+#define	_LINUX_IOC_TYPESHIFT	(_LINUX_IOC_NRSHIFT + _LINUX_IOC_NRBITS)
+#define	_LINUX_IOC_SIZESHIFT	(_LINUX_IOC_TYPESHIFT + _LINUX_IOC_TYPEBITS)
+#define	_LINUX_IOC_DIRSHIFT	(_LINUX_IOC_SIZESHIFT + _LINUX_IOC_SIZEBITS)
+
+#define	_LINUX_IOC(dir,type,nr,size)		\
+	(((nr)   << _LINUX_IOC_NRSHIFT) |	\
+	 ((type) << _LINUX_IOC_TYPESHIFT) |	\
+	 ((size) << _LINUX_IOC_SIZESHIFT) |	\
+	 ((dir)  << _LINUX_IOC_DIRSHIFT))
+
+#define _LINUX_IO(type,nr)		\
+	_LINUX_IOC(_LINUX_IOC_NONE,(type),(nr),0)
+#define	_LINUX_IOR(type,nr,size)	\
+	_LINUX_IOC(_LINUX_IOC_READ,(type),(nr),sizeof(size))
+#define	_LINUX_IOW(type,nr,size)	\
+	_LINUX_IOC(_LINUX_IOC_WRITE,(type),(nr),sizeof(size))
+#define	_LINUX_IOWR(type,nr,size)	\
+	_LINUX_IOC(_LINUX_IOC_READ|_LINUX_IOC_WRITE,(type),(nr),sizeof(size))
+
+#define _LINUX_IOC_DIR(nr)	\
+	(((nr) >> _LINUX_IOC_DIRSHIFT) & _LINUX_IOC_DIRMASK)
+#define _LINUX_IOC_TYPE(nr)	\
+	(((nr) >> _LINUX_IOC_TYPESHIFT) & _LINUX_IOC_TYPEMASK)
+#define _LINUX_IOC_NR(nr)	\
+	(((nr) >> _LINUX_IOC_NRSHIFT) & _LINUX_IOC_NRMASK)
+#define _LINUX_IOC_SIZE(nr)	\
+	(((nr) >> _LINUX_IOC_SIZESHIFT) & _LINUX_IOC_SIZEMASK)
+
+#define LINUX_IOCGROUP(x)	_LINUX_IOC_TYPE(x)
 
 #endif /* !_LINUX_IOCTL_H */

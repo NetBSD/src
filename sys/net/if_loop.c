@@ -1,4 +1,4 @@
-/*	$NetBSD: if_loop.c,v 1.26.2.1 2000/11/20 18:10:03 bouyer Exp $	*/
+/*	$NetBSD: if_loop.c,v 1.26.2.2 2000/12/13 15:50:31 bouyer Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -159,7 +159,7 @@ loopattach(n)
 		ifp->if_addrlen = 0;
 		if_attach(ifp);
 #if NBPFILTER > 0
-		bpfattach(&ifp->if_bpf, ifp, DLT_NULL, sizeof(u_int));
+		bpfattach(ifp, DLT_NULL, sizeof(u_int));
 #endif
 	}
 }

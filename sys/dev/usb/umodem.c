@@ -1,4 +1,4 @@
-/*	$NetBSD: umodem.c,v 1.15.2.2 2000/11/22 16:05:06 bouyer Exp $	*/
+/*	$NetBSD: umodem.c,v 1.15.2.3 2000/12/13 15:50:15 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -258,22 +258,18 @@ USB_ATTACH(umodem)
 		goto bad;
 	}
 
-	if (usbd_get_quirks(sc->sc_udev)->uq_flags & UQ_ASSUME_CM_OVER_DATA) {
-		sc->sc_cm_over_data = 1;
-	} else {
-		if (sc->sc_cm_cap & USB_CDC_CM_OVER_DATA) {
-			if (sc->sc_acm_cap & USB_CDC_ACM_HAS_FEATURE)
-				err = umodem_set_comm_feature(sc,
-				    UCDC_ABSTRACT_STATE, UCDC_DATA_MULTIPLEXED);
-			else
-				err = 0;
-			if (err) {
-				printf("%s: could not set data multiplex mode\n",
-				       USBDEVNAME(sc->sc_dev));
-				goto bad;
-			}
-			sc->sc_cm_over_data = 1;
+	if (sc->sc_cm_cap & USB_CDC_CM_OVER_DATA) {
+		if (sc->sc_acm_cap & USB_CDC_ACM_HAS_FEATURE)
+			err = umodem_set_comm_feature(sc,
+			    UCDC_ABSTRACT_STATE, UCDC_DATA_MULTIPLEXED);
+		else
+			err = 0;
+		if (err) {
+			printf("%s: could not set data multiplex mode\n",
+			       USBDEVNAME(sc->sc_dev));
+			goto bad;
 		}
+		sc->sc_cm_over_data = 1;
 	}
 	sc->sc_dtr = -1;
 

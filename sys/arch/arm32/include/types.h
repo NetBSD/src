@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.8.12.2 2000/12/13 14:50:09 bouyer Exp $	*/
+/*	$NetBSD: types.h,v 1.8.12.3 2000/12/13 15:49:22 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.

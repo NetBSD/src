@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_nubus.c,v 1.55.2.1 2000/11/20 20:12:25 bouyer Exp $	*/
+/*	$NetBSD: grf_nubus.c,v 1.55.2.2 2000/12/13 15:49:32 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1995 Allen Briggs.  All rights reserved.
@@ -271,6 +271,7 @@ bad:
 		add_nubus_intr(na->slot, grfmv_intr_radius, sc);
 		break;
 	case NUBUS_DRHW_RPC24X:
+	case NUBUS_DRHW_BOOGIE:
 		sc->cli_value = 0x64;
 		add_nubus_intr(na->slot, grfmv_intr_radius, sc);
 		break;

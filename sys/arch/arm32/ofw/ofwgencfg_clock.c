@@ -1,4 +1,4 @@
-/*	$NetBSD: ofwgencfg_clock.c,v 1.6.14.2 2000/12/13 14:50:14 bouyer Exp $	*/
+/*	$NetBSD: ofwgencfg_clock.c,v 1.6.14.3 2000/12/13 15:49:22 bouyer Exp $	*/
 
 /*
  * Copyright 1997

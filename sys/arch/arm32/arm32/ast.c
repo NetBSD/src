@@ -1,4 +1,4 @@
-/*	$NetBSD: ast.c,v 1.16.8.2 2000/12/13 14:49:49 bouyer Exp $	*/
+/*	$NetBSD: ast.c,v 1.16.8.3 2000/12/13 15:49:20 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe

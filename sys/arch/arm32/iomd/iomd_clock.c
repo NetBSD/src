@@ -1,4 +1,4 @@
-/*	$NetBSD: iomd_clock.c,v 1.19.2.2 2000/12/13 14:50:11 bouyer Exp $	*/
+/*	$NetBSD: iomd_clock.c,v 1.19.2.3 2000/12/13 15:49:22 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1994-1997 Mark Brinicombe.

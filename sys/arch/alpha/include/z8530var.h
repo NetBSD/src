@@ -1,4 +1,4 @@
-/* $NetBSD: z8530var.h,v 1.1.14.2 2000/12/13 14:49:21 bouyer Exp $ */
+/* $NetBSD: z8530var.h,v 1.1.14.3 2000/12/13 15:49:18 bouyer Exp $ */
 
 /*
  * Copyright (c) 1994 Gordon W. Ross

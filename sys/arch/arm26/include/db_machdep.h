@@ -1,4 +1,4 @@
-/* $NetBSD: db_machdep.h,v 1.2.2.3 2000/12/13 14:49:40 bouyer Exp $ */
+/* $NetBSD: db_machdep.h,v 1.2.2.4 2000/12/13 15:49:19 bouyer Exp $ */
 
 /*
  * Copyright (c) 1996 Scott K Stevens

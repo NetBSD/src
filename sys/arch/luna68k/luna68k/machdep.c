@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.12.2.2 2000/11/20 20:10:35 bouyer Exp $ */
+/* $NetBSD: machdep.c,v 1.12.2.3 2000/12/13 15:49:31 bouyer Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.12.2.2 2000/11/20 20:10:35 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.12.2.3 2000/12/13 15:49:31 bouyer Exp $");
 
 #include "opt_ddb.h"
 
@@ -154,7 +154,10 @@ int	delay_divisor = 300;	/* for delay() loop count */
 void
 luna68k_init()
 {
-	int i;
+	volatile unsigned char *pio0 = (void *)0x49000000;
+	int sw1, i;
+	char *cp;
+	extern char bootarg[64];
 
 	extern paddr_t avail_start, avail_end;
 
@@ -174,22 +177,10 @@ luna68k_init()
 		    avail_end + i * NBPG, VM_PROT_READ|VM_PROT_WRITE,
 		    VM_PROT_READ|VM_PROT_WRITE|PMAP_WIRED);
 	initmsgbuf(msgbufaddr, m68k_round_page(MSGBUFSIZE));
-}
 
-/*
- * Console initialization: called early on from main,
- */
-void
-consinit()
-{
-	volatile unsigned char *pio0 = (void *)0x49000000;
-	int sw1, i;
-	char *cp;
-	extern char bootarg[64];
 
 	pio0[3] = 0xb6;
 	pio0[2] = 1 << 6;		/* enable parity check */
-
 	pio0[3] = 0xb6;
 	sw1 = pio0[0];			/* dipssw1 value */
 	sw1 ^= 0xff;
@@ -215,7 +206,14 @@ consinit()
 	if (boothowto == 0)
 		boothowto = (sw1 & 0x1) ? RB_SINGLE : 0;
 #endif
+}
 
+/*
+ * Console initialization: called early on from main,
+ */
+void
+consinit()
+{
 	if (sysconsole == 0)
 		syscnattach(0);
 	else {
@@ -423,7 +421,7 @@ identifycpu()
 		cpuspeed = 20; delay_divisor = 102;	/* 20MHz 68030 */
 		hz = 60;
 		break;
-#ifdef M68040
+#if defined(M68040)
 	case CPU_68040:
 		cpu = "MC68040 CPU+MMU+FPU, 4k on-chip physical I/D caches";
 		machtype = LUNA_II;

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gre.c,v 1.8.2.2 2000/11/22 16:05:52 bouyer Exp $ */
+/*	$NetBSD: if_gre.c,v 1.8.2.3 2000/12/13 15:50:30 bouyer Exp $ */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -155,7 +155,7 @@ gre_clone_create(ifc, unit)
 	sc->g_proto = IPPROTO_GRE;
 	if_attach(&sc->sc_if);
 #if NBPFILTER > 0
-	bpfattach(&sc->gre_bpf, &sc->sc_if, DLT_NULL, sizeof(u_int32_t));
+	bpfattach(&sc->sc_if, DLT_NULL, sizeof(u_int32_t));
 #endif
 	LIST_INSERT_HEAD(&gre_softc_list, sc, sc_list);
 	return (0);
@@ -202,7 +202,7 @@ gre_output(struct ifnet *ifp, struct mbuf *m, struct sockaddr *dst,
 	osrc = 0;
 
 #if NBPFILTER >0
-	if (sc->gre_bpf) {
+	if (ifp->if_bpf) {
 		/* see comment of other if_foo.c files */
 		struct mbuf m0;
 		u_int af = dst->sa_family;
@@ -211,7 +211,7 @@ gre_output(struct ifnet *ifp, struct mbuf *m, struct sockaddr *dst,
 		m0.m_len = 4;
 		m0.m_data = (char *)&af;
 		
-		bpf_mtap(sc->gre_bpf, &m0);
+		bpf_mtap(ifp->if_bpf, &m0);
 	}
 #endif
 

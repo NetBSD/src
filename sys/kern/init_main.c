@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.157.2.3 2000/12/08 09:13:53 bouyer Exp $	*/
+/*	$NetBSD: init_main.c,v 1.157.2.4 2000/12/13 15:50:18 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1995 Christopher G. Demetriou.  All rights reserved.
@@ -70,6 +70,7 @@
 #include <sys/disklabel.h>
 #include <sys/buf.h>
 #include <sys/device.h>
+#include <sys/exec.h>
 #include <sys/socketvar.h>
 #include <sys/protosw.h>
 #include <sys/reboot.h>
@@ -245,6 +246,9 @@ main(void)
 	p->p_stat = SONPROC;
 	p->p_nice = NZERO;
 	p->p_emul = &emul_netbsd;
+#ifdef __HAVE_SYSCALL_INTERN
+	(*p->p_emul->e_syscall_intern)(p);
+#endif
 	strncpy(p->p_comm, "swapper", MAXCOMLEN);
 
 	callout_init(&p->p_realit_ch);
@@ -482,6 +486,9 @@ main(void)
 	/* Boot the secondary processors. */
 	cpu_boot_secondary_processors();
 #endif
+
+	/* Initialize exec structures */
+	exec_init(1);
 
 	/*
 	 * Okay, now we can let init(8) exec!  It's off to userland!

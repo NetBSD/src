@@ -1,4 +1,4 @@
-/*	$NetBSD: ah_input.c,v 1.5.2.1 2000/11/20 18:10:41 bouyer Exp $	*/
+/*	$NetBSD: ah_input.c,v 1.5.2.2 2000/12/13 15:50:36 bouyer Exp $	*/
 /*	$KAME: ah_input.c,v 1.37 2000/10/19 00:37:50 itojun Exp $	*/
 
 /*
@@ -1080,23 +1080,22 @@ ah6_ctlinput(cmd, sa, d)
 			ahp = (struct newah *)(mtod(m, caddr_t) + off);
 
 		if (cmd == PRC_MSGSIZE) {
+			int valid = 0;
+
 			/*
 			 * Check to see if we have a valid SA corresponding to
 			 * the address in the ICMP message payload.
 			 */
 			sav = key_allocsa(AF_INET6, (caddr_t)&s,
 			    (caddr_t)&finaldst, IPPROTO_AH, ahp->ah_spi);
-			if (sav == NULL)
-				return;
-			if (sav->state != SADB_SASTATE_MATURE &&
-			    sav->state != SADB_SASTATE_DYING) {
+			if (sav) {
+				if (sav->state == SADB_SASTATE_MATURE ||
+				    sav->state == SADB_SASTATE_DYING)
+					valid++;
 				key_freesav(sav);
-				return;
 			}
 
 			/* XXX Further validation? */
-
-			key_freesav(sav);
 
 			/*
 			 * Now that we've validated that we are actually
@@ -1104,7 +1103,7 @@ ah6_ctlinput(cmd, sa, d)
 			 * message, recalculate the new MTU, and create the
 			 * corresponding routing entry.
 			 */
-			icmp6_mtudisc_update((struct ip6ctlparam *)d);
+			icmp6_mtudisc_update((struct ip6ctlparam *)d, valid);
 
 			return;
 		}

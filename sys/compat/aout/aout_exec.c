@@ -1,7 +1,7 @@
-/*	$NetBSD: aout_exec.c,v 1.1.8.3 2000/12/08 09:08:07 bouyer Exp $	*/
+/*	$NetBSD: aout_exec.c,v 1.1.8.4 2000/12/13 15:49:40 bouyer Exp $	*/
 
 /*-
- * Copyright (c) 1998 The NetBSD Foundation, Inc.
+ * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -53,25 +53,36 @@ extern struct sysent aout_sysent[];
 extern const char * const aout_syscallnames[];
 #endif
 extern char sigcode[], esigcode[];
-
+#ifdef __HAVE_SYSCALL_INTERN
+void syscall_intern __P((struct proc *));
+#else
+void syscall __P((void));
+#endif
 
 struct emul emul_netbsd_aout = {
 	"netbsd",
 	"/emul/aout",
+#ifndef __HAVE_MINIMAL_EMUL
+	EMUL_HAS_SYS___syscall,
 	NULL,
-	sendsig,
 	AOUT_SYS_syscall,
 	AOUT_SYS_MAXSYSCALL,
+#endif
 	aout_sysent,
 #ifdef SYSCALL_DEBUG
 	aout_syscallnames,
 #else
 	NULL,
 #endif
+	sendsig,
 	sigcode,
 	esigcode,
 	NULL,
 	NULL,
 	NULL,
-	EMUL_HAS_SYS___syscall,
+#ifdef __HAVE_SYSCALL_INTERN
+	syscall_intern,
+#else
+	syscall,
+#endif
 };

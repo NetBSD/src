@@ -1,4 +1,4 @@
-/* $NetBSD: bus.h,v 1.2.4.3 2000/12/13 14:49:40 bouyer Exp $ */
+/* $NetBSD: bus.h,v 1.2.4.4 2000/12/13 15:49:19 bouyer Exp $ */
 
 /*-
  * Copyright (c) 2000 Ben Harris

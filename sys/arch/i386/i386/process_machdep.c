@@ -1,7 +1,7 @@
-/*	$NetBSD: process_machdep.c,v 1.30.2.1 2000/11/20 20:09:24 bouyer Exp $	*/
+/*	$NetBSD: process_machdep.c,v 1.30.2.2 2000/12/13 15:49:27 bouyer Exp $	*/
 
 /*-
- * Copyright (c) 1998 The NetBSD Foundation, Inc.
+ * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -182,12 +182,15 @@ process_write_regs(p, regs)
 	pmap_t pmap = p->p_vmspace->vm_map.pmap;
 
 #ifdef VM86
-	if (tf->tf_eflags & PSL_VM) {
+	if (regs->r_eflags & PSL_VM) {
+		void syscall_vm86 __P((struct trapframe));
+
 		tf->tf_vm86_gs = regs->r_gs;
 		tf->tf_vm86_fs = regs->r_fs;
 		tf->tf_vm86_es = regs->r_es;
 		tf->tf_vm86_ds = regs->r_ds;
 		set_vflags(p, regs->r_eflags);
+		p->p_md.md_syscall = syscall_vm86;
 	} else
 #endif
 	{
@@ -225,6 +228,10 @@ process_write_regs(p, regs)
 		pcb->pcb_fs = regs->r_fs;
 		tf->tf_es = regs->r_es;
 		tf->tf_ds = regs->r_ds;
+#ifdef VM86
+		if (tf->tf_eflags & PSL_VM)
+			(*p->p_emul->e_syscall_intern)(p);
+#endif
 		tf->tf_eflags = regs->r_eflags;
 	}
 	tf->tf_edi = regs->r_edi;

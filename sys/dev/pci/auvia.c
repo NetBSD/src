@@ -1,4 +1,4 @@
-/*	$NetBSD: auvia.c,v 1.7.2.3 2000/11/22 16:04:00 bouyer Exp $	*/
+/*	$NetBSD: auvia.c,v 1.7.2.4 2000/12/13 15:50:08 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -81,6 +81,9 @@ struct auvia_dma_op {
 #define AUVIA_DMAOP_STOP	0x20000000
 #define AUVIA_DMAOP_COUNT(x)	((x)&0x00FFFFFF)
 };
+
+/* rev. H and later seem to support only fixed rate 44.1 kHz */
+#define	AUVIA_FIXED_RATE	44100	
 
 int	auvia_match(struct device *, struct cfdata *, void *);
 void	auvia_attach(struct device *, struct device *, void *);
@@ -294,14 +297,14 @@ auvia_attach(struct device *parent, struct device *self, void *aux)
 	 */
 	if (auvia_read_codec(sc, AC97_REG_EXT_AUDIO_ID, &v)
 		|| !(v & AC97_CODEC_DOES_VRA)) {
-		/* XXX */
-
 		printf("%s: warning: codec doesn't support hardware AC'97 2.0 Variable Rate Audio\n",
 			sc->sc_dev.dv_xname);
+		sc->sc_fixed_rate = AUVIA_FIXED_RATE;
 	} else {
 		/* enable VRA */
 		auvia_write_codec(sc, AC97_REG_EXT_AUDIO_STAT,
 			AC97_ENAB_VRA | AC97_ENAB_MICVRA);
+		sc->sc_fixed_rate = 0;
 	}
 
 	/* disable mutes */
@@ -550,9 +553,12 @@ auvia_set_params(void *addr, int setmode, int usemode,
 		reg = mode == AUMODE_PLAY ?
 			AC97_REG_EXT_DAC_RATE : AC97_REG_EXT_ADC_RATE;
 
-		auvia_write_codec(sc, reg, (u_int16_t) p->sample_rate);
-		auvia_read_codec(sc, reg, &regval);
-		p->sample_rate = regval;
+		if (!sc->sc_fixed_rate) {
+			auvia_write_codec(sc, reg, (u_int16_t) p->sample_rate);
+			auvia_read_codec(sc, reg, &regval);
+			p->sample_rate = regval;
+		} else
+			p->sample_rate = sc->sc_fixed_rate;
 
 		p->factor = 1;
 		p->sw_code = 0;

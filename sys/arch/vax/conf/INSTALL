@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.2.2.2 2000/12/08 09:30:50 bouyer Exp $
+#	$NetBSD: INSTALL,v 1.2.2.3 2000/12/13 15:49:39 bouyer Exp $
 #
 # INSTALL kernel; all supported devices but nothing fancy.
 #
@@ -14,6 +14,7 @@ options 	"VAX780"
 options 	"VAX750"
 options 	"VAX630"	# MV II
 options 	"VAX650"	# MV III, 3600, 3800, 3900
+options 	"VAX660"	# VAX 4000/200
 options 	"VAX670"	# VAX 4000/300
 options 	"VAX410"	# VS 2000
 options 	"VAX43"		# VS 3100/76

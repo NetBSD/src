@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ethersubr.c,v 1.50.2.2 2000/11/22 16:05:50 bouyer Exp $	*/
+/*	$NetBSD: if_ethersubr.c,v 1.50.2.3 2000/12/13 15:50:30 bouyer Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -831,7 +831,7 @@ ether_ifattach(struct ifnet *ifp, const u_int8_t *lla)
 	LIST_INIT(&((struct ethercom *)ifp)->ec_multiaddrs);
 	ifp->if_broadcastaddr = etherbroadcastaddr;
 #if NBPFILTER > 0
-	bpfattach(&ifp->if_bpf, ifp, DLT_EN10MB, sizeof(struct ether_header));
+	bpfattach(ifp, DLT_EN10MB, sizeof(struct ether_header));
 #endif
 }
 

@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.h,v 1.35.2.4 2000/12/13 14:49:18 bouyer Exp $ */
+/* $NetBSD: cpu.h,v 1.35.2.5 2000/12/13 15:49:18 bouyer Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.

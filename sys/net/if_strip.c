@@ -1,4 +1,4 @@
-/*	$NetBSD: if_strip.c,v 1.16.14.2 2000/11/22 16:05:55 bouyer Exp $	*/
+/*	$NetBSD: if_strip.c,v 1.16.14.3 2000/12/13 15:50:32 bouyer Exp $	*/
 /*	from: NetBSD: if_sl.c,v 1.38 1996/02/13 22:00:23 christos Exp $	*/
 
 /*
@@ -366,7 +366,7 @@ stripattach(n)
 		sc->sc_if.if_watchdog = strip_watchdog;
 		if_attach(&sc->sc_if);
 #if NBPFILTER > 0
-		bpfattach(&sc->sc_bpf, &sc->sc_if, DLT_SLIP, SLIP_HDRLEN);
+		bpfattach(&sc->sc_if, DLT_SLIP, SLIP_HDRLEN);
 #endif
 	}
 }
@@ -964,7 +964,7 @@ stripstart(tp)
 		 * munged when this happens.
 		 */
 #if NBPFILTER > 0
-		if (sc->sc_bpf) {
+		if (sc->sc_if.if_bpf) {
 			/*
 			 * We need to save the TCP/IP header before it's
 			 * compressed.  To avoid complicated code, we just
@@ -992,7 +992,7 @@ stripstart(tp)
 				    &sc->sc_comp, 1);
 		}
 #if NBPFILTER > 0
-		if (sc->sc_bpf) {
+		if (sc->sc_if.if_bpf) {
 			u_char *cp = bpfbuf + STRIP_HDRLEN;
 			/*
 			 * Put the SLIP pseudo-"link header" in place.  The
@@ -1002,7 +1002,7 @@ stripstart(tp)
 			cp[SLX_DIR] = SLIPDIR_OUT;
 
 			bcopy(mtod(m, caddr_t)+STRIP_HDRLEN, &cp[SLX_CHDR], CHDR_LEN);
-			bpf_tap(sc->sc_bpf, cp, len + SLIP_HDRLEN);
+			bpf_tap(sc->sc_if.if_bpf, cp, len + SLIP_HDRLEN);
 		}
 #endif
 		sc->sc_if.if_lastchange = time;
@@ -1207,7 +1207,7 @@ stripinput(c, tp)
 
 
 #if NBPFILTER > 0
-	if (sc->sc_bpf) {
+	if (sc->sc_if.if_bpf) {
 		/*
 		 * Save the compressed header, so we
 		 * can tack it on later.  Note that we
@@ -1249,7 +1249,7 @@ stripinput(c, tp)
 	}
 
 #if NBPFILTER > 0
-	if (sc->sc_bpf) {
+	if (sc->sc_if.if_bpf) {
 		/*
 		 * Put the SLIP pseudo-"link header" in place.
 		 * We couldn't do this any earlier since
@@ -1260,7 +1260,7 @@ stripinput(c, tp)
 
 		hp[SLX_DIR] = SLIPDIR_IN;
 		bcopy(chdr, &hp[SLX_CHDR], CHDR_LEN);
-		bpf_tap(sc->sc_bpf, hp, len + SLIP_HDRLEN);
+		bpf_tap(sc->sc_if.if_bpf, hp, len + SLIP_HDRLEN);
 	}
 #endif
 	m = strip_btom(sc, len);

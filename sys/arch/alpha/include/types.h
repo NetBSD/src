@@ -1,4 +1,4 @@
-/* $NetBSD: types.h,v 1.12.12.2 2000/12/13 14:49:19 bouyer Exp $ */
+/* $NetBSD: types.h,v 1.12.12.3 2000/12/13 15:49:18 bouyer Exp $ */
 
 /*-
  * Copyright (c) 1990, 1993

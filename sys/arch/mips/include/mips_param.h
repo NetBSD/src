@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_param.h,v 1.14.2.1 2000/11/20 20:13:31 bouyer Exp $	*/
+/*	$NetBSD: mips_param.h,v 1.14.2.2 2000/12/13 15:49:33 bouyer Exp $	*/
 
 #ifdef _KERNEL
 #include <machine/cpu.h>
@@ -13,7 +13,7 @@
 #define	SINCR		1		/* increment of stack/NBPG */
 
 #define	UPAGES		2		/* pages of u-area */
-#define USPACE          (UPAGES*NBPG)   /* size of u-area in bytes */
+#define	USPACE		(UPAGES*NBPG)	/* size of u-area in bytes */
 
 #ifndef MSGBUFSIZE
 #define MSGBUFSIZE	NBPG		/* default message buffer size */

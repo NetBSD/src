@@ -1,4 +1,4 @@
-/*	$NetBSD: fault.c,v 1.43.2.3 2000/12/13 14:49:51 bouyer Exp $	*/
+/*	$NetBSD: fault.c,v 1.43.2.4 2000/12/13 15:49:20 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1994-1997 Mark Brinicombe.

@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.c,v 1.69.2.2 2000/12/08 09:20:54 bouyer Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.69.2.3 2000/12/13 15:50:43 bouyer Exp $	*/
 
 /* 
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -95,6 +95,7 @@
 
 struct uvm_cnt uvm_map_call, map_backmerge, map_forwmerge;
 struct uvm_cnt uvm_mlk_call, uvm_mlk_hint;
+const char vmmapbsy[] = "vmmapbsy";
 
 /*
  * pool for vmspace structures.

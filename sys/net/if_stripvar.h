@@ -1,4 +1,4 @@
-/*	$NetBSD: if_stripvar.h,v 1.6.14.1 2000/11/20 18:10:07 bouyer Exp $	*/
+/*	$NetBSD: if_stripvar.h,v 1.6.14.2 2000/12/13 15:50:33 bouyer Exp $	*/
 
 #ifndef _NET_IF_STRIPVAR_H_
 #define _NET_IF_STRIPVAR_H_
@@ -36,8 +36,6 @@ struct strip_softc {
 #define ST_DEAD		0x2		/*    no answer to probe; do reset */
 
 	long sc_statetimo;		/* When (secs) current state ends */
-
-	caddr_t	sc_bpf;			/* BPF data */
 };
 
 

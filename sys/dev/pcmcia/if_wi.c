@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wi.c,v 1.3.2.2 2000/11/22 16:04:37 bouyer Exp $	*/
+/*	$NetBSD: if_wi.c,v 1.3.2.3 2000/12/13 15:50:11 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -177,6 +177,8 @@ static int wi_write_ssid __P((struct wi_softc *, int, struct wi_req *,
 static int wi_set_nwkey __P((struct wi_softc *, struct ieee80211_nwkey *));
 static int wi_get_nwkey __P((struct wi_softc *, struct ieee80211_nwkey *));
 static int wi_sync_media __P((struct wi_softc *, int, int));
+static int wi_set_pm(struct wi_softc *, struct ieee80211_power *);
+static int wi_get_pm(struct wi_softc *, struct ieee80211_power *);
 
 struct cfattach wi_ca = {
 	sizeof(struct wi_softc), wi_match, wi_attach, wi_detach, wi_activate
@@ -1422,6 +1424,13 @@ static int wi_ioctl(ifp, command, data)
 	case SIOCG80211NWKEY:
 		error = wi_get_nwkey(sc, (struct ieee80211_nwkey *)data);
 		break;
+	case SIOCS80211POWER:
+		error = wi_set_pm(sc, (struct ieee80211_power *)data);
+		break;
+	case SIOCG80211POWER:
+		error = wi_get_pm(sc, (struct ieee80211_power *)data);
+		break;
+
 	default:
 		error = ether_ioctl(ifp, command, data);
 		if (error == ENETRESET) {
@@ -2017,4 +2026,27 @@ wi_get_nwkey(sc, nwkey)
 			return error;
 	}
 	return 0;
+}
+
+static int
+wi_set_pm(struct wi_softc *sc, struct ieee80211_power *power)
+{
+
+	sc->wi_pm_enabled = power->i_enabled;
+	sc->wi_max_sleep = power->i_maxsleep;
+
+	if (sc->sc_enabled)
+		return (wi_init(&sc->sc_ethercom.ec_if));
+
+	return (0);
+}
+
+static int
+wi_get_pm(struct wi_softc *sc, struct ieee80211_power *power)
+{
+
+	power->i_enabled = sc->wi_pm_enabled;
+	power->i_maxsleep = sc->wi_max_sleep;
+
+	return (0);
 }

@@ -1,4 +1,4 @@
-#	$NetBSD: files.sbus,v 1.13.2.1 2000/11/20 11:43:05 bouyer Exp $
+#	$NetBSD: files.sbus,v 1.13.2.2 2000/12/13 15:50:12 bouyer Exp $
 #
 # Config file and device description for machine-independent SBUS code.
 # Included by ports that need it.
@@ -38,7 +38,7 @@ file	dev/sbus/if_le_ledma.c		le_ledma
 
 attach	esp at sbus with esp_sbus
 attach	esp at dma with esp_dma
-file	dev/sbus/esp_sbus.c		esp_sbus | esp_dma
+file	dev/sbus/esp_sbus.c		esp_sbus | esp_dma	needs-flag
 
 # LSI64854 based bi-directional parallel port
 device	bpp {}: lsi64854

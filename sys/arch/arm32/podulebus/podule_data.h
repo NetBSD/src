@@ -1,4 +1,4 @@
-/*	$NetBSD: podule_data.h,v 1.12.12.3 2000/12/13 14:50:17 bouyer Exp $	*/
+/*	$NetBSD: podule_data.h,v 1.12.12.4 2000/12/13 15:49:23 bouyer Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.

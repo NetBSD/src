@@ -1,4 +1,4 @@
-/* $NetBSD: alpha.h,v 1.6.2.3 2000/12/13 14:49:17 bouyer Exp $ */
+/* $NetBSD: alpha.h,v 1.6.2.4 2000/12/13 15:49:17 bouyer Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.

@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vfsops.c,v 1.63.2.3 2000/12/08 09:22:09 bouyer Exp $	*/
+/*	$NetBSD: msdosfs_vfsops.c,v 1.63.2.4 2000/12/13 15:50:26 bouyer Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -896,10 +896,11 @@ loop:
 		simple_lock(&vp->v_interlock);
 		nvp = vp->v_mntvnodes.le_next;
 		dep = VTODE(vp);
-		if (vp->v_type == VNON || (((dep->de_flag &
+		if (waitfor == MNT_LAZY || vp->v_type == VNON ||
+		    (((dep->de_flag &
 		    (DE_ACCESS | DE_CREATE | DE_UPDATE | DE_MODIFIED)) == 0) &&
-		    (vp->v_dirtyblkhd.lh_first == NULL ||
-		     waitfor == MNT_LAZY))) {
+		     (LIST_EMPTY(&vp->v_dirtyblkhd) &&
+		      vp->v_uvm.u_obj.uo_npages == 0))) {
 			simple_unlock(&vp->v_interlock);
 			continue;
 		}

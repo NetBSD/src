@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_ipip.c,v 1.7.2.1 2000/11/20 18:10:30 bouyer Exp $	*/
+/*	$NetBSD: ip_ipip.c,v 1.7.2.2 2000/12/13 15:50:34 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -210,8 +210,7 @@ ipipattach(count)
 
 		if_attach(&sc->sc_if);
 #if NBPFILTER > 0
-		bpfattach(&sc->sc_bpf, &sc->sc_if, DLT_NULL,
-		    sc->sc_if.if_hdrlen);
+		bpfattach(&sc->sc_if, DLT_NULL, sc->sc_if.if_hdrlen);
 #endif
 	}
 }

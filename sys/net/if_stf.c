@@ -1,4 +1,4 @@
-/*	$NetBSD: if_stf.c,v 1.5.2.2 2000/11/20 18:10:06 bouyer Exp $	*/
+/*	$NetBSD: if_stf.c,v 1.5.2.3 2000/12/13 15:50:32 bouyer Exp $	*/
 /*	$KAME: if_stf.c,v 1.39 2000/06/07 23:35:18 itojun Exp $	*/
 
 /*
@@ -242,11 +242,7 @@ stf_clone_create(ifc, unit)
 #endif
 	if_attach(&sc->sc_if);
 #if NBPFILTER > 0
-#ifdef HAVE_OLD_BPF
 	bpfattach(&sc->sc_if, DLT_NULL, sizeof(u_int));
-#else
-	bpfattach(&sc->sc_if.if_bpf, &sc->sc_if, DLT_NULL, sizeof(u_int));
-#endif
 #endif
 	LIST_INSERT_HEAD(&stf_softc_list, sc, sc_list);
 	return (0);

@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_softdep.c,v 1.7.2.4 2000/12/08 09:20:11 bouyer Exp $	*/
+/*	$NetBSD: ffs_softdep.c,v 1.7.2.5 2000/12/13 15:50:42 bouyer Exp $	*/
 
 /*
  * Copyright 1998 Marshall Kirk McKusick. All Rights Reserved.
@@ -4221,6 +4221,11 @@ flush_inodedep_deps(fs, ino)
 	int error, waitfor;
 	struct buf *bp;
 	struct vnode *vp;
+	struct uvm_object *uobj;
+
+	vp = softdep_lookupvp(fs, ino);
+	KASSERT(vp != NULL);
+	uobj = &vp->v_uvm.u_obj;
 
 	/*
 	 * This work is done in two passes. The first pass grabs most
@@ -4250,16 +4255,15 @@ flush_inodedep_deps(fs, ino)
 		 * let's just do it here.
 		 */
 
-		vp = softdep_lookupvp(fs, ino);
-		if (vp) {
-			struct uvm_object *uobj = &vp->v_uvm.u_obj;
-
-			simple_lock(&uobj->vmobjlock);
-			(uobj->pgops->pgo_flush)(uobj, 0, 0,
-			    PGO_ALLPAGES|PGO_CLEANIT|
-			    (waitfor == MNT_NOWAIT ? 0: PGO_SYNCIO));
-			simple_unlock(&uobj->vmobjlock);
+		FREE_LOCK(&lk);
+		simple_lock(&uobj->vmobjlock);
+		(uobj->pgops->pgo_flush)(uobj, 0, 0, PGO_ALLPAGES|PGO_CLEANIT|
+		    (waitfor == MNT_NOWAIT ? 0: PGO_SYNCIO));
+		simple_unlock(&uobj->vmobjlock);
+		if (waitfor == MNT_WAIT) {
+			drain_output(vp, 0);
 		}
+		ACQUIRE_LOCK(&lk);
 
 		for (adp = TAILQ_FIRST(&inodedep->id_inoupdt); adp;
 		     adp = TAILQ_NEXT(adp, ad_next)) {

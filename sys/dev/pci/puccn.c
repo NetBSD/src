@@ -1,4 +1,4 @@
-/* $Id: */
+/*	$NetBSD: puccn.c,v 1.1.2.3 2000/12/13 15:50:10 bouyer Exp $ */
 
 /*
  * Derived from  pci.c

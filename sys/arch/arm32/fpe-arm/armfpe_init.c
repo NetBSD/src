@@ -1,4 +1,4 @@
-/* $NetBSD: armfpe_init.c,v 1.16.14.2 2000/12/13 14:50:05 bouyer Exp $ */
+/* $NetBSD: armfpe_init.c,v 1.16.14.3 2000/12/13 15:49:21 bouyer Exp $ */
 
 /*
  * Copyright (C) 1996 Mark Brinicombe

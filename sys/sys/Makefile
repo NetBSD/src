@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.13.2.2 2000/11/22 16:06:36 bouyer Exp $
+#	$NetBSD: Makefile,v 1.13.2.3 2000/12/13 15:50:40 bouyer Exp $
 
 KDIR=	/sys/sys
 INCSDIR= /usr/include/sys
@@ -12,7 +12,7 @@ INCS=	acct.h ansi.h ataio.h audioio.h buf.h bswap.h callout.h cdefs.h \
 	fdio.h \
 	featuretest.h file.h filedesc.h filio.h gmon.h inttypes.h ioccom.h \
 	ioctl.h ioctl_compat.h ipc.h kcore.h kernel.h kgdb.h ktrace.h lkm.h \
-	localedef.h lock.h lockf.h malloc.h map.h mbuf.h md5.h midiio.h \
+	localedef.h lock.h lockf.h malloc.h map.h mbuf.h md4.h md5.h midiio.h \
 	mman.h mount.h msg.h msgbuf.h mtio.h namei.h null.h param.h poll.h \
 	pool.h proc.h protosw.h ptrace.h queue.h reboot.h resource.h \
 	resourcevar.h rnd.h scanio.h sched.h scsiio.h select.h sem.h sha1.h \
@@ -26,7 +26,6 @@ INCS=	acct.h ansi.h ataio.h audioio.h buf.h bswap.h callout.h cdefs.h \
 SYMLINKS= sys/exec_elf.h /usr/include/elf.h \
 	sys/fcntl.h /usr/include/fcntl.h \
 	sys/inttypes.h /usr/include/inttypes.h \
-	sys/md5.h /usr/include/md5.h \
 	sys/poll.h /usr/include/poll.h \
 	sys/sha1.h /usr/include/sha1.h \
 	sys/syslog.h /usr/include/syslog.h \

@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf.h,v 1.24.2.2 2000/11/22 16:05:49 bouyer Exp $	*/
+/*	$NetBSD: bpf.h,v 1.24.2.3 2000/12/13 15:50:27 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993
@@ -171,30 +171,8 @@ struct bpf_hdr {
 #endif
 #endif
 
-/*
- * Data-link level type codes.
- */
-#define DLT_NULL	0	/* no link-layer encapsulation */
-#define DLT_EN10MB	1	/* Ethernet (10Mb) */
-#define DLT_EN3MB	2	/* Experimental Ethernet (3Mb) */
-#define DLT_AX25	3	/* Amateur Radio AX.25 */
-#define DLT_PRONET	4	/* Proteon ProNET Token Ring */
-#define DLT_CHAOS	5	/* Chaos */
-#define DLT_IEEE802	6	/* IEEE 802 Networks */
-#define DLT_ARCNET	7	/* ARCNET */
-#define DLT_SLIP	8	/* Serial Line IP */
-#define DLT_PPP		9	/* Point-to-point Protocol */
-#define DLT_FDDI	10	/* FDDI */
-#define DLT_ATM_RFC1483	11	/* LLC/SNAP encapsulated atm */
-#define DLT_RAW		12	/* raw IP */
-#define DLT_SLIP_BSDOS	13	/* BSD/OS Serial Line IP */
-#define DLT_PPP_BSDOS	14	/* BSD/OS Point-to-point Protocol */
-#define DLT_HIPPI	15	/* HIPPI */
-#define DLT_HDLC	16	/* HDLC framing */
-
-/* NetBSD-specific types */
-#define	DLT_PPP_SERIAL	50	/* PPP over serial (async and sync) */
-#define	DLT_PPP_ETHER	51	/* PPP over Ethernet */
+/* Pull in data-link level type codes. */
+#include <net/dlt.h>
 
 /*
  * The instruction encondings.
@@ -272,9 +250,9 @@ struct bpf_insn {
 int	 bpf_validate __P((struct bpf_insn *, int));
 void	 bpf_tap __P((caddr_t, u_char *, u_int));
 void	 bpf_mtap __P((caddr_t, struct mbuf *));
-void	 bpfattach __P((caddr_t *, struct ifnet *, u_int, u_int));
+void	 bpfattach __P((struct ifnet *, u_int, u_int));
 void	 bpfdetach __P((struct ifnet *));
-void	 bpf_change_type __P((caddr_t *, u_int, u_int));
+void	 bpf_change_type __P((struct ifnet *, u_int, u_int));
 void	 bpfilterattach __P((int));
 #endif
 

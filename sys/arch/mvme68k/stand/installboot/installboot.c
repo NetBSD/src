@@ -1,4 +1,4 @@
-/*	$NetBSD: installboot.c,v 1.4.14.2 2000/12/08 09:28:42 bouyer Exp $ */
+/*	$NetBSD: installboot.c,v 1.4.14.3 2000/12/13 15:49:35 bouyer Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -62,9 +62,15 @@ struct nlist nl[] = {
 #define X_BLOCK_SIZE	0
 #define X_BLOCK_COUNT	1
 #define X_BLOCK_TABLE	2
+#ifdef __ELF__
 	{ "block_size" },
 	{ "block_count" },
 	{ "block_table" },
+#else
+	{ "_block_size" },
+	{ "_block_count" },
+	{ "_block_table" },
+#endif
 	{ NULL }
 };
 

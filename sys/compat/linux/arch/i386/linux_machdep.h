@@ -1,7 +1,7 @@
-/*	$NetBSD: linux_machdep.h,v 1.10.2.2 2000/12/08 09:08:23 bouyer Exp $	*/
+/*	$NetBSD: linux_machdep.h,v 1.10.2.3 2000/12/13 15:49:46 bouyer Exp $	*/
 
 /*-
- * Copyright (c) 1995 The NetBSD Foundation, Inc.
+ * Copyright (c) 1995, 2000 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -125,11 +125,21 @@ __END_DECLS
 #define LINUX_VT_RELDISP    0x5605
 #define LINUX_VT_ACTIVATE   0x5606
 #define LINUX_VT_WAITACTIVE 0x5607
+#define LINUX_VT_DISALLOCATE	0x5608
 
 /*
- * Does the port have separated linux_syscall() ?
+ * This range used by VMWare (XXX)
  */
-#define	LINUX_MACHDEP_HAS_SEPARATED_SYSCALL
-void linux_syscall __P((struct trapframe *));
+#define LINUX_VMWARE_NONE 200
+#define LINUX_VMWARE_LAST 237
+
+/*
+ * Range of ioctls to just pass on, so that LKMs (like VMWare) can
+ * handle them.
+ */
+#define LINUX_IOCTL_MIN_PASS	LINUX_VMWARE_NONE
+#define LINUX_IOCTL_MAX_PASS	(LINUX_VMWARE_LAST+8)
+
+void linux_syscall_intern __P((struct proc *));
 
 #endif /* _I386_LINUX_MACHDEP_H */

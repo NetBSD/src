@@ -1,4 +1,4 @@
-/*	$NetBSD: exec.h,v 1.67.14.3 2000/12/08 09:19:42 bouyer Exp $	*/
+/*	$NetBSD: exec.h,v 1.67.14.4 2000/12/13 15:50:40 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -77,7 +77,7 @@ struct ps_strings {
  * Below the PS_STRINGS and sigtramp, we may require a gap on the stack
  * (used to copyin/copyout various emulation data structures).
  */
-#define	STACKGAPLEN	400	/* plenty enough for now */
+#define	STACKGAPLEN	512	/* plenty enough for now */
 /*
  * XXXX The following are deprecated.  Use p->p_psstr instead of PS_STRINGS.
  */
@@ -201,6 +201,15 @@ void	*copyargs		__P((struct exec_package *, struct ps_strings *,
 void	setregs			__P((struct proc *, struct exec_package *,
 				     u_long));
 int	check_exec		__P((struct proc *, struct exec_package *));
+int	exec_init		__P((int));
+
+#ifdef LKM
+int	emul_register		__P((const struct emul *, int));
+int	emul_unregister		__P((const char *));
+
+int	exec_add		__P((struct execsw *, const char *));
+int	exec_remove		__P((const struct execsw *));
+#endif /* LKM */
 
 #ifdef DEBUG
 void	new_vmcmd __P((struct exec_vmcmd_set *evsp,
@@ -229,20 +238,6 @@ void	new_vmcmd __P((struct exec_vmcmd_set *evsp,
 	vcp->ev_flags = (flags); \
 } while (0)
 #endif /* EXEC_DEBUG */
-
-/*
- * Exec function switch:
- *
- * Note that each makecmds function is responsible for loading the
- * exec package with the necessary functions for any exec-type-specific
- * handling.
- *
- * Functions for specific exec types should be defined in their own
- * header file.
- */
-extern const struct	execsw execsw[];
-extern int	nexecs;
-extern int	exec_maxhdrsz;
 
 #endif /* _KERNEL */
 

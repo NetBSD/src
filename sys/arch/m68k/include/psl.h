@@ -1,4 +1,4 @@
-/*	$NetBSD: psl.h,v 1.6.2.1 2000/11/20 20:11:40 bouyer Exp $	*/
+/*	$NetBSD: psl.h,v 1.6.2.2 2000/12/13 15:49:31 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -74,38 +74,32 @@
 #if defined(_KERNEL) && !defined(_LOCORE)
 
 /*
- * spl functions; platform-specific code must define spl0.
+ * spl functions; platform-specific code must define spl0 and splx().
  */
 
-#define	_spl(s)								\
-({									\
-	register int _spl_r;						\
-									\
-	__asm __volatile ("clrl %0; movew %%sr,%0; movew %1,%%sr" :	\
-	    "&=d" (_spl_r) : "di" (s));					\
-	_spl_r;								\
-})
+static __inline int
+_spl(int s)
+{
+	int sr;
 
-#define	_splraise(s)							\
-({									\
-	int _spl_r;							\
-									\
-	__asm __volatile ("						\
-		clrl	%%d0					;	\
-		movw	%%sr,%%d0				;	\
-		movl	%%d0,%0					;	\
-		andw	#0x700,%%d0				;	\
-		movw	%1,%%d1					;	\
-		andw	#0x700,%%d1				;	\
-		cmpw	%%d0,%%d1				;	\
-		jle	1f					;	\
-		movw	%1,%%sr					;	\
-	    1:"							:	\
-		    "&=d" (_spl_r)				:	\
-		    "di" (s)					:	\
-		    "d0", "d1");					\
-	_spl_r;								\
-})
+	__asm __volatile ("movew %%sr,%0; movew %1,%%sr" :
+	    "&=d" (sr) : "di" (s));
+
+	return sr;
+}
+
+static __inline int
+_splraise(int level)
+{
+	int sr;
+
+	__asm __volatile("movw %%sr,%0" : "=d" (sr));
+
+	if ((u_int16_t)level >= PSL_HIGHIPL || (u_int16_t)level > (u_int16_t)sr)
+		__asm __volatile("movw %0,%%sr" :: "di" (level));
+
+	return sr;
+}
 
 /* spl0 may require checking for software interrupts */
 #define	_spl0()		_spl(PSL_S|PSL_IPL0)

@@ -1,7 +1,7 @@
-/*	$NetBSD: locore.s,v 1.213.2.3 2000/12/08 09:26:36 bouyer Exp $	*/
+/*	$NetBSD: locore.s,v 1.213.2.4 2000/12/13 15:49:25 bouyer Exp $	*/
 
 /*-
- * Copyright (c) 1998 The NetBSD Foundation, Inc.
+ * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -151,12 +151,12 @@
 	pushl	%ecx		; \
 	pushl	%edx		; \
 	pushl	%ebx		; \
+	movl	$GSEL(GDATA_SEL, SEL_KPL),%eax	; \
 	pushl	%ebp		; \
 	pushl	%esi		; \
 	pushl	%edi		; \
 	pushl	%ds		; \
 	pushl	%es		; \
-	movl	$GSEL(GDATA_SEL, SEL_KPL),%eax	; \
 	movl	%ax,%ds		; \
 	movl	%ax,%es
 #define	INTRFASTEXIT \
@@ -2346,10 +2346,6 @@ IDTVEC(osyscall)
 	/* Set eflags in trap frame. */
 	pushfl
 	popl	8(%esp)
-	/* Turn off trace flag and nested task. */
-	pushfl
-	andb	$~((PSL_T|PSL_NT)>>8),1(%esp)
-	popfl
 	pushl	$7		# size of instruction for restart
 	jmp	syscall1
 
@@ -2361,10 +2357,12 @@ IDTVEC(syscall)
 syscall1:
 	pushl	$T_ASTFLT	# trap # for doing ASTs
 	INTRENTRY
+	movl	_C_LABEL(curproc),%edx	# get pointer to curproc
 #ifdef DIAGNOSTIC
 	movl	_C_LABEL(cpl),%ebx
 #endif /* DIAGNOSTIC */
-	call	_C_LABEL(syscall)
+	movl	%esp,P_MD_REGS(%edx)	# save pointer to frame
+	call	P_MD_SYSCALL(%edx)	# get pointer to syscall() function
 2:	/* Check for ASTs on exit to user mode. */
 	cli
 	cmpb	$0,_C_LABEL(astpending)

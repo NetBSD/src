@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.20.2.2 2000/12/08 09:30:44 bouyer Exp $ */
+/*	$NetBSD: vm_machdep.c,v 1.20.2.3 2000/12/13 15:49:37 bouyer Exp $ */
 #define DEBUG
 
 /*
@@ -252,7 +252,6 @@ cpu_fork(p1, p2, stack, stacksize, func, arg)
 #endif
 	if (p1 == curproc) {
 		write_user_windows();
-		rwindow_save(p1);
 
 		/*
 		 * We're in the kernel, so we don't really care about
@@ -268,7 +267,6 @@ cpu_fork(p1, p2, stack, stacksize, func, arg)
 #ifdef DEBUG
 	/* prevent us from having NULL lastcall */
 	opcb->lastcall = cpu_forkname;
-	if (opcb->pcb_nsaved) printf("cpu_fork: nsaved %d\n", opcb->pcb_nsaved);
 #else
 	opcb->lastcall = NULL;
 #endif

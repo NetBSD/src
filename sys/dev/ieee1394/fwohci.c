@@ -1,3 +1,5 @@
+/*	$NetBSD: fwohci.c,v 1.8.2.5 2000/12/13 15:50:07 bouyer Exp $	*/
+
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
  * All rights reserved.

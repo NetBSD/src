@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.15.2.2 2000/11/22 16:00:43 bouyer Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.15.2.3 2000/12/13 15:49:33 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -67,6 +67,9 @@
  */
 #define	USRTEXT		0x00001000		/* Start of user text */
 #define	USRSTACK	0x7ffff000		/* Start of user stack */
+
+/* alignment requirement for u-area space in bytes */
+#define	USPACE_ALIGN	USPACE
 
 /*
  * Virtual memory related constants, all in bytes

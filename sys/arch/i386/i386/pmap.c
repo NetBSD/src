@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.79.2.3 2000/12/08 09:26:37 bouyer Exp $	*/
+/*	$NetBSD: pmap.c,v 1.79.2.4 2000/12/13 15:49:27 bouyer Exp $	*/
 
 /*
  *
@@ -69,6 +69,7 @@
 #include <sys/malloc.h>
 #include <sys/pool.h>
 #include <sys/user.h>
+#include <sys/kernel.h>
 
 #include <uvm/uvm.h>
 
@@ -134,7 +135,7 @@
  *  - there are three data structures that we must dynamically allocate:
  *
  * [A] new process' page directory page (PDP)
- *	- plan 1: done at pmap_pinit() we use
+ *	- plan 1: done at pmap_create() we use
  *	  uvm_km_alloc(kernel_map, PAGE_SIZE)  [fka kmem_alloc] to do this
  *	  allocation.
  *
@@ -358,6 +359,15 @@ static struct pmap *pmaps_hand = NULL;	/* used by pmap_steal_ptp */
 struct pool pmap_pmap_pool;
 
 /*
+ * pool and cache that PDPs are allocated from
+ */
+
+struct pool pmap_pdp_pool;
+struct pool_cache pmap_pdp_cache;
+
+int	pmap_pdp_ctor(void *, void *, int);
+
+/*
  * special VAs and the PTEs that map them
  */
 
@@ -427,9 +437,6 @@ static boolean_t	 pmap_try_steal_pv __P((struct pv_head *,
 						struct pv_entry *,
 						struct pv_entry *));
 static void		pmap_unmap_ptes __P((struct pmap *));
-
-void			pmap_pinit __P((pmap_t));
-void			pmap_release __P((pmap_t));
 
 /*
  * p m a p   i n l i n e   h e l p e r   f u n c t i o n s
@@ -917,6 +924,15 @@ pmap_bootstrap(kva_start)
 
 	pool_init(&pmap_pmap_pool, sizeof(struct pmap), 0, 0, 0, "pmappl",
 		  0, pool_page_alloc_nointr, pool_page_free_nointr, M_VMPMAP);
+
+	/*
+	 * initialize the PDE pool and cache.
+	 */
+
+	pool_init(&pmap_pdp_pool, PAGE_SIZE, 0, 0, 0, "pdppl",
+		  0, pool_page_alloc_nointr, pool_page_free_nointr, M_VMPMAP);
+	pool_cache_init(&pmap_pdp_cache, &pmap_pdp_pool,
+			pmap_pdp_ctor, NULL, NULL);
 
 	/*
 	 * ensure the TLB is sync'd with reality by flushing it...
@@ -1715,6 +1731,41 @@ pmap_get_ptp(pmap, pde_index, just_try)
  */
 
 /*
+ * pmap_pdp_ctor: constructor for the PDP cache.
+ */
+
+int
+pmap_pdp_ctor(void *arg, void *object, int flags)
+{
+	pd_entry_t *pdir = object;
+	paddr_t pdirpa;
+
+	/*
+	 * NOTE: The `pmap_lock' is held when the PDP is allocated.
+	 * WE MUST NOT BLOCK!
+	 */
+
+	/* fetch the physical address of the page directory. */
+	(void) pmap_extract(pmap_kernel(), (vaddr_t) pdir, &pdirpa);
+
+	/* zero init area */
+	memset(pdir, 0, PDSLOT_PTE * sizeof(pd_entry_t));
+
+	/* put in recursibve PDE to map the PTEs */
+	pdir[PDSLOT_PTE] = pdirpa | PG_V | PG_KW;
+
+	/* put in kernel VM PDEs */
+	memcpy(&pdir[PDSLOT_KERN], &PDP_BASE[PDSLOT_KERN],
+	    nkpde * sizeof(pd_entry_t));
+
+	/* zero the rest */
+	memset(&pdir[PDSLOT_KERN + nkpde], 0,
+	    PAGE_SIZE - ((PDSLOT_KERN + nkpde) * sizeof(pd_entry_t)));
+
+	return (0);
+}
+
+/*
  * pmap_create: create a pmap
  *
  * => note: old pmap interface took a "size" args which allowed for
@@ -1727,18 +1778,7 @@ pmap_create()
 	struct pmap *pmap;
 
 	pmap = pool_get(&pmap_pmap_pool, PR_WAITOK);
-	pmap_pinit(pmap);
-	return(pmap);
-}
 
-/*
- * pmap_pinit: given a zero'd pmap structure, init it.
- */
-
-void
-pmap_pinit(pmap)
-	struct pmap *pmap;
-{
 	/* init uvm_object */
 	simple_lock_init(&pmap->pm_obj.vmobjlock);
 	pmap->pm_obj.pgops = NULL;	/* currently not a mappable object */
@@ -1750,39 +1790,36 @@ pmap_pinit(pmap)
 	pmap->pm_ptphint = NULL;
 	pmap->pm_flags = 0;
 
-	/* allocate PDP */
-	pmap->pm_pdir = (pd_entry_t *) uvm_km_alloc(kernel_map, PAGE_SIZE);
-	if (pmap->pm_pdir == NULL)
-		panic("pmap_pinit: kernel_map out of virtual space!");
-	(void) pmap_extract(pmap_kernel(), (vaddr_t)pmap->pm_pdir,
-			    (paddr_t *)&pmap->pm_pdirpa);
-
-	/* init PDP */
-	/* zero init area */
-	memset(pmap->pm_pdir, 0, PDSLOT_PTE * sizeof(pd_entry_t));
-	/* put in recursive PDE to map the PTEs */
-	pmap->pm_pdir[PDSLOT_PTE] = pmap->pm_pdirpa | PG_V | PG_KW;
-
 	/* init the LDT */
 	pmap->pm_ldt = NULL;
 	pmap->pm_ldt_len = 0;
 	pmap->pm_ldt_sel = GSEL(GLDT_SEL, SEL_KPL);
 
+	/* allocate PDP */
+
 	/*
 	 * we need to lock pmaps_lock to prevent nkpde from changing on
-	 * us.   note that there is no need to splimp to protect us from
-	 * malloc since malloc allocates out of a submap and we should have
-	 * already allocated kernel PTPs to cover the range...
+	 * us.  note that there is no need to splimp to protect us from
+	 * malloc since malloc allocates out of a submap and we should
+	 * have already allocated kernel PTPs to cover the range...
+	 *
+	 * NOTE: WE MUST NOT BLOCK WHILE HOLDING THE `pmap_lock'!
 	 */
+
 	simple_lock(&pmaps_lock);
-	/* put in kernel VM PDEs */
-	memcpy(&pmap->pm_pdir[PDSLOT_KERN], &PDP_BASE[PDSLOT_KERN],
-	       nkpde * sizeof(pd_entry_t));
-	/* zero the rest */
-	memset(&pmap->pm_pdir[PDSLOT_KERN + nkpde], 0,
-	       PAGE_SIZE - ((PDSLOT_KERN + nkpde) * sizeof(pd_entry_t)));
+
+	/* XXX Need a generic "I want memory" wchan */
+	while ((pmap->pm_pdir =
+	    pool_cache_get(&pmap_pdp_cache, PR_NOWAIT)) == NULL)
+		(void) ltsleep(&lbolt, PVM, "pmapcr", hz >> 3, &pmaps_lock);
+
+	pmap->pm_pdirpa = pmap->pm_pdir[PDSLOT_PTE] & PG_FRAME;
+
 	LIST_INSERT_HEAD(&pmaps, pmap, pm_list);
+
 	simple_unlock(&pmaps_lock);
+
+	return (pmap);
 }
 
 /*
@@ -1794,6 +1831,7 @@ void
 pmap_destroy(pmap)
 	struct pmap *pmap;
 {
+	struct vm_page *pg;
 	int refs;
 
 	/*
@@ -1810,25 +1848,6 @@ pmap_destroy(pmap)
 	/*
 	 * reference count is zero, free pmap resources and then free pmap.
 	 */
-
-	pmap_release(pmap);
-	pool_put(&pmap_pmap_pool, pmap);
-}
-
-/*
- * pmap_release: release all resources held by a pmap
- *
- * => if pmap is still referenced it should be locked
- * => XXX: we currently don't expect any busy PTPs because we don't
- *    allow anything to map them (except for the kernel's private
- *    recursive mapping) or make them busy.
- */
-
-void
-pmap_release(pmap)
-	struct pmap *pmap;
-{
-	struct vm_page *pg;
 
 	/*
 	 * remove it from global list of pmaps
@@ -1857,7 +1876,7 @@ pmap_release(pmap)
 	}
 
 	/* XXX: need to flush it out of other processor's APTE space? */
-	uvm_km_free(kernel_map, (vaddr_t)pmap->pm_pdir, PAGE_SIZE);
+	pool_cache_put(&pmap_pdp_cache, pmap->pm_pdir);
 
 #ifdef USER_LDT
 	if (pmap->pm_flags & PMF_USER_LDT) {
@@ -1870,6 +1889,8 @@ pmap_release(pmap)
 			    pmap->pm_ldt_len * sizeof(union descriptor));
 	}
 #endif
+
+	pool_put(&pmap_pmap_pool, pmap);
 }
 
 /*
@@ -3752,6 +3773,10 @@ pmap_growkernel(maxkvaddr)
 			pm->pm_pdir[PDSLOT_KERN + nkpde] =
 				kpm->pm_pdir[PDSLOT_KERN + nkpde];
 		}
+
+		/* Invalidate the PDP cache. */
+		pool_cache_invalidate(&pmap_pdp_cache);
+
 		simple_unlock(&pmaps_lock);
 	}
 

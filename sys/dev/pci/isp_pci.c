@@ -1,4 +1,4 @@
-/* $NetBSD: isp_pci.c,v 1.45.2.4 2000/12/08 09:12:32 bouyer Exp $ */
+/* $NetBSD: isp_pci.c,v 1.45.2.5 2000/12/13 15:50:09 bouyer Exp $ */
 /*
  * This driver, which is contained in NetBSD in the files:
  *
@@ -891,15 +891,29 @@ isp_pci_dmasetup(isp, xs, rq, iptrp, optr)
 	    seg++, rq->req_seg_count++) {
 		if (IS_FC(isp)) {
 			ispreqt2_t *rq2 = (ispreqt2_t *)rq;
+#if	_BYTE_ORDER == _BIG_ENDIAN
+			rq2->req_dataseg[rq2->req_seg_count].ds_count =
+			    bswap32(dmap->dm_segs[seg].ds_len);
+			rq2->req_dataseg[rq2->req_seg_count].ds_base =
+			    bswap32(dmap->dm_segs[seg].ds_addr);
+#else
 			rq2->req_dataseg[rq2->req_seg_count].ds_count =
 			    dmap->dm_segs[seg].ds_len;
 			rq2->req_dataseg[rq2->req_seg_count].ds_base =
 			    dmap->dm_segs[seg].ds_addr;
+#endif
 		} else {
+#if	_BYTE_ORDER == _BIG_ENDIAN
+			rq->req_dataseg[rq->req_seg_count].ds_count =
+			    bswap32(dmap->dm_segs[seg].ds_len);
+			rq->req_dataseg[rq->req_seg_count].ds_base =
+			    bswap32(dmap->dm_segs[seg].ds_addr);
+#else
 			rq->req_dataseg[rq->req_seg_count].ds_count =
 			    dmap->dm_segs[seg].ds_len;
 			rq->req_dataseg[rq->req_seg_count].ds_base =
 			    dmap->dm_segs[seg].ds_addr;
+#endif
 		}
 		isp_prt(isp, ISP_LOGDEBUG2, "seg0.[%d]={0x%x,%d}",
 		    rq->req_seg_count, dmap->dm_segs[seg].ds_addr,
@@ -925,10 +939,17 @@ isp_pci_dmasetup(isp, xs, rq, iptrp, optr)
 
 		for (ovseg = 0; seg < segcnt && ovseg < ISP_CDSEG;
 		    rq->req_seg_count++, seg++, ovseg++) {
+#if	_BYTE_ORDER == _BIG_ENDIAN
+			crq->req_dataseg[ovseg].ds_count =
+			    bswap32(dmap->dm_segs[seg].ds_len);
+			crq->req_dataseg[ovseg].ds_base =
+			    bswap32(dmap->dm_segs[seg].ds_addr);
+#else
 			crq->req_dataseg[ovseg].ds_count =
 			    dmap->dm_segs[seg].ds_len;
 			crq->req_dataseg[ovseg].ds_base =
 			    dmap->dm_segs[seg].ds_addr;
+#endif
 			isp_prt(isp, ISP_LOGDEBUG2, "seg%d.[%d]={0x%x,%d}",
 			    rq->req_header.rqs_entry_count - 1,
 			    rq->req_seg_count, dmap->dm_segs[seg].ds_addr,

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_fork.c,v 1.61.2.3 2000/12/08 09:13:53 bouyer Exp $	*/
+/*	$NetBSD: kern_fork.c,v 1.61.2.4 2000/12/13 15:50:20 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -145,7 +145,12 @@ fork1(struct proc *p1, int flags, int exitsig, void *stack, size_t stacksize,
 	 * kernel virtual address space.  The actual U-area pages will
 	 * be allocated and wired in vm_fork().
 	 */
-	uaddr = uvm_km_valloc_align(kernel_map, USPACE, USPACE);
+
+#ifndef USPACE_ALIGN
+#define USPACE_ALIGN	0
+#endif
+
+	uaddr = uvm_km_valloc_align(kernel_map, USPACE, USPACE_ALIGN);
 	if (__predict_false(uaddr == 0)) {
 		(void)chgproccnt(uid, -1);
 		nprocs--;
@@ -193,6 +198,9 @@ fork1(struct proc *p1, int flags, int exitsig, void *stack, size_t stacksize,
 	 */
 	p2->p_flag = P_INMEM | (p1->p_flag & P_SUGID);
 	p2->p_emul = p1->p_emul;
+#ifdef __HAVE_SYSCALL_INTERN
+	(*p2->p_emul->e_syscall_intern)(p2);
+#endif
 	if (p1->p_flag & P_PROFIL)
 		startprofclock(p2);
 	p2->p_cred = pool_get(&pcred_pool, PR_WAITOK);
@@ -396,6 +404,11 @@ again:
 	if (rnewprocp != NULL)
 		*rnewprocp = p2;
 
+#ifdef KTRACE
+	if (KTRPOINT(p2, KTR_EMUL))
+		ktremul(p2);
+#endif
+
 	/*
 	 * Preserve synchronization semantics of vfork.  If waiting for
 	 * child to exec or exit, set P_PPWAIT on child, and sleep on our
@@ -413,11 +426,6 @@ again:
 		retval[0] = p2->p_pid;
 		retval[1] = 0;
 	}
-
-#ifdef KTRACE
-	if (KTRPOINT(p2, KTR_EMUL))
-		ktremul(p2);
-#endif
 
 	return (0);
 }
