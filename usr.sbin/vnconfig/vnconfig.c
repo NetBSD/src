@@ -119,14 +119,9 @@ config(dev, file, action)
 	 */
 	if (action == VN_UNCONFIG) {
 		rv = ioctl(fileno(f), VNIOCCLR, &vnio);
-		if (rv) {
-			if (errno == ENODEV) {
-				if (verbose)
-					printf("%s: not configured\n", dev);
-				rv = 0;
-			} else
-				warn("VNIOCCLR");
-		} else if (verbose)
+		if (rv)
+			warn("VNIOCCLR");
+		else if (verbose)
 			printf("%s: cleared\n", dev);
 	}
 	/*
