@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.32 1998/01/22 22:00:25 gwr Exp $	*/
+/*	$NetBSD: pmap.c,v 1.33 1998/02/05 04:58:02 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -125,10 +125,12 @@
 
 #include <machine/cpu.h>
 #include <machine/kcore.h>
+#include <machine/mon.h>
 #include <machine/pmap.h>
 #include <machine/pte.h>
-#include <machine/machdep.h>
-#include <machine/mon.h>
+
+#include <sun3/sun3/cache.h>
+#include <sun3/sun3/machdep.h>
 
 #include "pmap_pvt.h"
 
@@ -592,8 +594,8 @@ u_int  pmap_free_pages __P((void));
 
 /* pmap_bootstrap			INTERNAL
  **
- * Initializes the pmap system.  Called at boot time from _vm_init()
- * in _startup.c.
+ * Initializes the pmap system.  Called at boot time from
+ * locore2.c:_vm_init()
  *
  * Reminder: having a pmap_bootstrap_alloc() and also having the VM
  *           system implement pmap_steal_memory() is redundant.
@@ -996,7 +998,7 @@ pmap_alloc_usertmgr()
 void
 pmap_bootstrap_copyprom()
 {
-	MachMonRomVector *romp;
+	struct sunromvec *romp;
 	int *mon_ctbl;
 	mmu_short_pte_t *kpte;
 	int i, len;
@@ -1004,13 +1006,13 @@ pmap_bootstrap_copyprom()
 	romp = romVectorPtr;
 
 	/*
-	 * Copy the mappings in MON_KDB_START...MONEND
-	 * Note: mon_ctbl[0] maps MON_KDB_START
+	 * Copy the mappings in SUN3X_MON_KDB_BASE...SUN3X_MONEND
+	 * Note: mon_ctbl[0] maps SUN3X_MON_KDB_BASE
 	 */
 	mon_ctbl = *romp->monptaddr;
-	i = m68k_btop(MON_KDB_START - KERNBASE);
+	i = m68k_btop(SUN3X_MON_KDB_BASE - KERNBASE);
 	kpte = &kernCbase[i];
-	len = m68k_btop(MONEND - MON_KDB_START);
+	len = m68k_btop(SUN3X_MONEND - SUN3X_MON_KDB_BASE);
 
 	for (i = 0; i < len; i++) {
 		kpte[i].attr.raw = mon_ctbl[i];
@@ -1027,9 +1029,9 @@ pmap_bootstrap_copyprom()
 	 * not recorded in our PV lists...
 	 */
 	mon_ctbl = *romp->shadowpteaddr;
-	i = m68k_btop(MON_DVMA_BASE - KERNBASE);
+	i = m68k_btop(SUN3X_MON_DVMA_BASE - KERNBASE);
 	kpte = &kernCbase[i];
-	len = m68k_btop(MON_DVMA_SIZE);
+	len = m68k_btop(SUN3X_MON_DVMA_SIZE);
 	for (i = (len-1); i < len; i++) {
 		kpte[i].attr.raw = mon_ctbl[i];
 	}
@@ -3786,7 +3788,7 @@ pmap_count(pmap, type)
  * of the given virtual address.
  */
 extern u_long ptest_addr __P((u_long));	/* XXX: locore.s */
-u_long
+u_int
 get_pte(va)
 	vm_offset_t va;
 {
@@ -3817,7 +3819,7 @@ get_pte(va)
 void
 set_pte(va, pte)
 	vm_offset_t va;
-	vm_offset_t pte;
+	u_int pte;
 {
 	u_long idx;
 
@@ -3826,6 +3828,7 @@ set_pte(va, pte)
 
 	idx = (unsigned long) m68k_btop(va - KERNBASE);
 	kernCbase[idx].attr.raw = pte;
+	TBIS(va);
 }
 
 #ifdef	PMAP_DEBUG

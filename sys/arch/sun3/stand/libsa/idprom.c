@@ -1,7 +1,7 @@
-/*	$NetBSD: idprom.c,v 1.1 1997/10/17 04:06:23 gwr Exp $	*/
+/*	$NetBSD: idprom.c,v 1.2 1998/02/05 04:57:11 gwr Exp $	*/
 
 /*-
- * Copyright (c) 1996 The NetBSD Foundation, Inc.
+ * Copyright (c) 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -44,46 +44,127 @@
 #include <machine/control.h>
 #include <machine/idprom.h>
 #include <machine/mon.h>
-#include "stand.h"
+
+#include "libsa.h"
 
 /*
- * This structure is what this driver is all about.
+ * This driver provides a soft copy of the IDPROM.
  * It is copied from the device early in startup.
+ * Allow these to be patched (helps with poor old
+ * Sun3/80 boxes with dead NVRAM).
  */
-struct idprom identity_prom;
+u_char cpu_machine_id = 0;
+struct idprom identity_prom = { 0 };
 
-void
-idprom_init()
+int idprom_cksum __P((u_char *));
+void idprom_init3 __P((void));
+void idprom_init3x __P((void));
+
+int
+idprom_cksum(p)
+	u_char *p;
 {
-	u_char *dst;
-	vm_offset_t src;
-	int len, x, xorsum;
+	int len, x;
 
-	/* Copy the IDPROM contents and do the checksum. */
-	dst = (u_char *) &identity_prom;
-	src = IDPROM_BASE;
-	len = IDPROM_SIZE;
-	xorsum = 0;	/* calculated as xor of data */
-
-	do {
-		x = get_control_byte(src++);
-		*dst++ = x;
-		xorsum ^= x;
-	} while (--len > 0);
-
-	if (xorsum != 0)
-		mon_printf("idprom: bad checksum\n");
-	if (identity_prom.idp_format < 1)
-		mon_printf("idprom: bad version\n");
+	len = sizeof(struct idprom);
+	x = 0;	/* xor of data */
+	do x ^= *p++;
+	while (--len > 0);
+	return (x);
 }
 
+/* Copy the ethernet address into the passed space. */
 void
 idprom_etheraddr(eaddrp)
 	u_char *eaddrp;
 {
 
-	if (identity_prom.idp_format == 0)
-		idprom_init();
-
+	idprom_init();
 	bcopy(identity_prom.idp_etheraddr, eaddrp, 6);
+}
+
+/* Fetch a copy of the idprom. */
+void
+idprom_init()
+{
+
+	if (identity_prom.idp_format == 1)
+		return;
+
+	/* Copy the IDPROM contents and do the checksum. */
+	if (_is3x)
+		idprom_init3x();
+	else
+		idprom_init3();
+
+	if (identity_prom.idp_format != 1)
+		panic("idprom: bad version\n");
+	cpu_machine_id = identity_prom.idp_machtype;
+}
+
+/*
+ * Sun3 version:
+ * Just copy it from control space.
+ */
+void
+idprom_init3()
+{
+	u_char *dst;
+	vm_offset_t src;	/* control space address */
+	int len, x, xorsum;
+
+	/* Copy the IDPROM contents and do the checksum. */
+	dst = (u_char *) &identity_prom;
+	src = 0;	/* XXX */
+	len = sizeof(struct idprom);
+	do {
+		x = get_control_byte(src++);
+		*dst++ = x;
+	} while (--len > 0);
+
+	x = idprom_cksum((char *) &identity_prom);
+	if (x != 0)
+		mon_printf("idprom: bad checksum\n");
+}
+
+
+
+/*
+ * Sun3X version:
+ * Rather than do all the map-in/probe work to find the idprom,
+ * we can cheat!  We _know_ the monitor already made of copy of
+ * the IDPROM in its data page.  All we have to do is find it.
+ *
+ * Yeah, this is sorta gross...  This is not needed any longer
+ * because netif_sun.c now can use the "advertised" function
+ * in 3.x PROMs to get the ethernet address.  Let's keep this
+ * bit of trickery around for a while anyway, just in case...
+ */
+void
+idprom_init3x()
+{
+	u_short *p;
+	int x;
+
+	/* Search for it.  Range determined empirically. */
+	for (p = (u_short *)(SUN3X_MONDATA + 0x0400);
+	     p < (u_short *)(SUN3X_MONDATA + 0x1c00); p++)
+	{
+		/* first some quick checks */
+		if ((p[0] & 0xfffc) != 0x140)
+			continue;
+		if (p[1] != 0x0800)
+			continue;
+		/* Looks plausible.  Try the checksum. */
+		x = idprom_cksum((u_char *) p);
+		if (x == 0)
+			goto found;
+	}
+	panic("idprom: not found in monitor data\n");
+
+found:
+#ifdef	DEBUG
+	printf("idprom: copy found at 0x%x\n", (int)p);
+#endif
+	bcopy(p, &identity_prom, sizeof(struct idprom));
 }

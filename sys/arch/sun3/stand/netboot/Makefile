@@ -1,7 +1,7 @@
-#	$NetBSD: Makefile,v 1.8 1997/09/05 04:31:54 gwr Exp $
+#	$NetBSD: Makefile,v 1.9 1998/02/05 04:57:18 gwr Exp $
 
 SA_PROG= netboot
-SRC1=   boot.c conf.c version.c
+SRC1=   boot.c conf.c
 OBJS+= ${SRC1:.c=.o}
 
 # Using local rule for this

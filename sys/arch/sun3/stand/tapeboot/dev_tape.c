@@ -1,4 +1,4 @@
-/*	$NetBSD: dev_tape.c,v 1.3 1997/02/05 17:39:29 gwr Exp $	*/
+/*	$NetBSD: dev_tape.c,v 1.4 1998/02/05 04:57:21 gwr Exp $	*/
 
 /*
  * Copyright (c) 1993 Paul Kranenburg
@@ -44,10 +44,10 @@
 #include <machine/mon.h>
 #include <machine/saio.h>
 
-#include "stand.h"
+#include <stand.h>
 
+#include "libsa.h"
 #include "dvma.h"
-#include "promdev.h"
 /* #include "dev_tape.h" XXX - needs stdarg.h */
 
 extern int debug;

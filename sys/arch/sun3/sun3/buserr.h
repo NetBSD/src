@@ -1,4 +1,4 @@
-/*	$NetBSD: buserr.h,v 1.7 1997/01/27 19:41:11 gwr Exp $	*/
+/*	$NetBSD: buserr.h,v 1.8 1998/02/05 04:57:26 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -42,7 +42,9 @@
 #define BUSERR_FPABERR   0x08		/* FPA Bus error */
 #define BUSERR_VMEBERR   0x10		/* VME Bus error */
 #define BUSERR_TIMEOUT   0x20		/* Timeout error */
+
+#ifdef	_SUN3_
 #define BUSERR_PROTERR   0x40		/* MMU protection error */
 #define BUSERR_INVALID   0x80		/* MMU invalid page error */
 #define BUSERR_MMU	(BUSERR_INVALID|BUSERR_PROTERR)
-
+#endif	/* SUN3 */

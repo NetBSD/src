@@ -1,11 +1,11 @@
-/*	$NetBSD: db_memrw.c,v 1.18 1997/06/10 19:16:13 veego Exp $	*/
+/*	$NetBSD: db_memrw.c,v 1.19 1998/02/05 04:57:31 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Gordon W. Ross.
+ * by Gordon W. Ross and Jeremy Cooper.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -58,10 +58,10 @@
 
 #include <vm/vm.h>
 
-#include <machine/control.h>
-#include <machine/pte.h>
 #include <machine/db_machdep.h>
-#include <machine/machdep.h>
+#include <machine/pte.h>
+
+#include <sun3/sun3/machdep.h>
 
 #include <ddb/db_access.h>
 
@@ -149,9 +149,20 @@ db_write_text(dst, size, data)
 				printf(" address %p not a valid page\n", dst);
 				return;
 			}
-			tmppte = oldpte | PG_WRITE | PG_NC;
-			set_pte(pgva, tmppte);
 
+			/*
+			 * Make the pte writable and non-cached.
+			 */
+			tmppte = oldpte;
+#ifdef	_SUN3_
+			tmppte |= (PG_WRITE | PG_NC);
+#endif
+#ifdef	_SUN3X_
+			tmppte &= ~MMU_SHORT_PTE_WP;
+			tmppte |= MMU_SHORT_PTE_CI;
+#endif
+
+			set_pte(pgva, tmppte);
 			prevpg = pgva;
 		}
 

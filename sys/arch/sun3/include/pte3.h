@@ -1,4 +1,4 @@
-/*	$NetBSD: pte3.h,v 1.15 1997/06/10 19:35:56 veego Exp $	*/
+/*	$NetBSD: pte3.h,v 1.16 1998/02/05 04:57:00 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -36,11 +36,12 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _MACHINE_PTE_H
-#define _MACHINE_PTE_H
+#ifndef _MACHINE_PTE3_H
+#define _MACHINE_PTE3_H
 
 #define NCONTEXT 8
-#define SEGINV 255
+#define NPMEG	256
+#define SEGINV	(NPMEG-1)
 #define NPAGSEG 16
 #define NSEGMAP 2048
 
@@ -69,8 +70,8 @@
 #define PG_INVAL   0x0
 
 #define MAKE_PGTYPE(x) ((x) << PG_TYPE_SHIFT)
-#define PG_PGNUM(pte) (pte & PG_FRAME)
-#define PG_PA(pte) ((pte & PG_FRAME) <<PGSHIFT)
+#define PG_PFNUM(pte) (pte & PG_FRAME)
+#define PG_PA(pte) (PG_PFNUM(pte) << PGSHIFT)
 
 #define	PGT_MASK	MAKE_PGTYPE(3)
 #define	PGT_OBMEM	MAKE_PGTYPE(OBMEM)		/* onboard memory */
@@ -86,4 +87,4 @@
 
 #define PA_PGNUM(pa) ((unsigned)pa >> PGSHIFT)
 
-#endif /* !_MACHINE_PTE_H*/
+#endif /* _MACHINE_PTE3_H */

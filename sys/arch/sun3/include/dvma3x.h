@@ -1,4 +1,4 @@
-/*	$NetBSD: dvma3x.h,v 1.4 1998/01/22 22:20:35 gwr Exp $	*/
+/*	$NetBSD: dvma3x.h,v 1.5 1998/02/05 04:56:51 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -37,10 +37,10 @@
  */
 
 /*
- * DVMA (Direct Virtual Memory Access - like DMA)
+ * DVMA (SUN3X specific)
  *
  * (Most of the comments pertaining to the sun3x DVMA are now
- *  in dvma.c)
+ *  in sun3x/dvma.c)
  *
  * Note that while the DVMA harware makes the last 1MB visible
  * for secondary masters, the PROM "owns" the last page of it.
@@ -62,17 +62,3 @@
 
 #define DVMA_VME_SLAVE_BASE 	0xFFF00000
 #define DVMA_VME_SLAVE_MASK 	0x000Fffff	/*  1MB */
-
-void dvma_init __P((void));
-
-/* Allocate/free actual pages of DVMA space. */
-void * dvma_malloc __P((size_t bytes));
-void dvma_free(void *addr, size_t bytes);
-
-/* Remap/unmap kernel memory in DVMA space. */
-void * dvma_mapin __P((void *kva, int len, int canwait));
-void dvma_mapout __P((void *dvma_addr, int len));
-
-/* Convert a kernel DVMA pointer to a slave address. */
-u_long dvma_kvtopa __P((void *kva, int bus));
-

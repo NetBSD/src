@@ -1,4 +1,4 @@
-/*	$NetBSD: idprom.h,v 1.16 1997/10/17 03:19:20 gwr Exp $	*/
+/*	$NetBSD: idprom.h,v 1.17 1998/02/05 04:56:52 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -55,15 +55,28 @@ struct idprom {
 
 /* values for cpu_machine_id */
 
-#define CPU_ARCH_MASK  0xf0
-#define SUN3_ARCH      0x10
-#define SUN3_IMPL_MASK 0x0f
-#define SUN3_MACH_160  0x01
-#define SUN3_MACH_50   0x02
-#define SUN3_MACH_260  0x03
-#define SUN3_MACH_110  0x04
-#define SUN3_MACH_60   0x07
-#define SUN3_MACH_E    0x08
+/* High nibble identifies the architecture. */
+#define IDM_ARCH_MASK	0xf0
+#define IDM_ARCH_SUN2	0x00
+#define IDM_ARCH_SUN3	0x10
+#define IDM_ARCH_SUN4   0x20
+#define IDM_ARCH_SUN3X	0x40
+#define IDM_ARCH_SUN4C	0x50
+#define IDM_ARCH_SUN4M	0x70
+
+/* Low nibble identifies the implementation. */
+#define IDM_IMPL_MASK 0x0f
+
+/* Values of idp_machtype we might see (m68k only). */
+#define SUN3_MACH_160  0x11 	/* Carrera */
+#define SUN3_MACH_50   0x12 	/* M25 */
+#define SUN3_MACH_260  0x13 	/* Sirius */
+#define SUN3_MACH_110  0x14 	/* Prism */
+#define SUN3_MACH_60   0x17 	/* Sun3F */
+#define SUN3_MACH_E    0x18 	/* Sun3E */
+
+#define SUN3X_MACH_470  0x41	/* Pegasus */
+#define SUN3X_MACH_80   0x42	/* Hydra */
 
 #if defined(_KERNEL) || defined(_STANDALONE)
 
