@@ -1,4 +1,4 @@
-/*	$NetBSD: netwinder_machdep.c,v 1.50 2003/05/21 22:48:24 thorpej Exp $	*/
+/*	$NetBSD: netwinder_machdep.c,v 1.51 2003/05/22 05:47:12 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997,1998 Mark Brinicombe.
@@ -158,6 +158,11 @@ extern int pmap_debug_level;
 pv_addr_t kernel_pt_table[NUM_KERNEL_PTS];
 
 #define	KERNEL_VM_BASE		(KERNEL_BASE + 0x01000000)
+/*
+ * The range 0xf1000000 - 0xfcffffff is available for kernel VM space
+ * Footbridge registers and I/O mappings occupy 0xfd000000 - 0xffffffff
+ */
+#define KERNEL_VM_SIZE		0x0C000000
 
 struct user *proc0paddr;
 

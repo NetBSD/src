@@ -1,4 +1,4 @@
-/*	$NetBSD: cats_machdep.c,v 1.46 2003/05/21 22:48:21 thorpej Exp $	*/
+/*	$NetBSD: cats_machdep.c,v 1.47 2003/05/22 05:47:06 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997,1998 Mark Brinicombe.
@@ -86,6 +86,16 @@
 /* Kernel text starts at the base of the kernel address space. */
 #define	KERNEL_TEXT_BASE	(KERNEL_BASE + 0x00000000)
 #define	KERNEL_VM_BASE		(KERNEL_BASE + 0x01000000)
+
+/*
+ * The range 0xf1000000 - 0xfcffffff is available for kernel VM space
+ * Footbridge registers and I/O mappings occupy 0xfd000000 - 0xffffffff
+ */
+
+/*
+ * Size of available KVM space, note that growkernel will grow into this.
+ */
+#define KERNEL_VM_SIZE	0x0C000000
 
 /*
  * Address to call from cpu_reset() to reset the machine.
