@@ -1,4 +1,4 @@
-/*	$NetBSD: gencode.c,v 1.8 1997/10/03 15:53:05 christos Exp $	*/
+/*	$NetBSD: gencode.c,v 1.9 1998/07/26 07:23:53 explorer Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -26,7 +26,7 @@
 static const char rcsid[] =
     "@(#) Header: gencode.c,v 1.93 97/06/12 14:22:47 leres Exp  (LBL)";
 #else
-__RCSID("$NetBSD: gencode.c,v 1.8 1997/10/03 15:53:05 christos Exp $");
+__RCSID("$NetBSD: gencode.c,v 1.9 1998/07/26 07:23:53 explorer Exp $");
 #endif
 #endif
 
@@ -536,6 +536,11 @@ init_linktype(type)
 		 */
 		off_linktype = 6;
 		off_nl = 8;
+		return;
+
+	case DLT_HDLC:
+		off_linktype = 2;
+		off_nl = 4;
 		return;
 
 	case DLT_RAW:
