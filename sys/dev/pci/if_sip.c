@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sip.c,v 1.86 2003/12/05 22:34:44 cube Exp $	*/
+/*	$NetBSD: if_sip.c,v 1.87 2004/01/11 09:07:56 cube Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sip.c,v 1.86 2003/12/05 22:34:44 cube Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sip.c,v 1.87 2004/01/11 09:07:56 cube Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -2280,6 +2280,7 @@ SIP_DECL(init)(struct ifnet *ifp)
 	sc->sc_rxcfg = RXCFG_MXDMA_512;
 #else
 	if ((SIP_SIS900_REV(sc, SIS_REV_635) ||
+	     SIP_SIS900_REV(sc, SIS_REV_960) ||
 	     SIP_SIS900_REV(sc, SIS_REV_900B)) &&
 	    (bus_space_read_4(sc->sc_st, sc->sc_sh, SIP_CFG) & CFG_EDBMASTEN)) {
 		sc->sc_txcfg = TXCFG_MXDMA_64;
