@@ -1,5 +1,5 @@
-#	from: @(#)Makefile	5.3 (Berkeley) 1/17/91
-#	$Id: Makefile,v 1.3 1994/12/22 10:27:22 cgd Exp $
+#	$NetBSD: Makefile,v 1.4 1997/04/21 11:29:26 mrg Exp $
+# from: @(#)Makefile	5.3 (Berkeley) 1/17/91
 
 PROG=	mail.local
 MAN=	mail.local.8
