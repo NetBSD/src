@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee.h,v 1.4 2003/10/23 16:57:20 kleink Exp $ */
+/*	$NetBSD: ieee.h,v 1.5 2003/10/26 10:08:02 kleink Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -80,8 +80,10 @@
 #define	DBL_EXPBITS	11
 #define	DBL_FRACBITS	52
 
+#ifndef __mc68010__
 #define	EXT_EXPBITS	15
 #define	EXT_FRACBITS	64
+#endif
 
 struct ieee_single {
 	u_int	sng_sign:1;
@@ -96,6 +98,7 @@ struct ieee_double {
 	u_int	dbl_fracl;
 };
 
+#ifndef __mc68010__
 struct ieee_ext {
 	u_int	ext_sign:1;
 	u_int	ext_exp:15;
@@ -104,6 +107,7 @@ struct ieee_ext {
 	u_int	ext_frach:31;
 	u_int	ext_fracl;
 };
+#endif
 
 /*
  * Floats whose exponent is in [1..INFNAN) (of whatever type) are
@@ -116,12 +120,16 @@ struct ieee_ext {
  */
 #define	SNG_EXP_INFNAN	255
 #define	DBL_EXP_INFNAN	2047
+#ifndef __mc68010__
 #define	EXT_EXP_INFNAN	32767
+#endif
 
 #if 0
 #define	SNG_QUIETNAN	(1 << 22)
 #define	DBL_QUIETNAN	(1 << 19)
+#ifndef __mc68010__
 #define	EXT_QUIETNAN	(1 << 15)
+#endif
 #endif
 
 /*
@@ -129,4 +137,6 @@ struct ieee_ext {
  */
 #define	SNG_EXP_BIAS	127
 #define	DBL_EXP_BIAS	1023
+#ifndef __mc68010__
 #define	EXT_EXP_BIAS	16383
+#endif
