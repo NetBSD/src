@@ -1,4 +1,4 @@
-/*	$NetBSD: ccd.c,v 1.13 1995/08/29 23:13:44 thorpej Exp $	*/
+/*	$NetBSD: ccd.c,v 1.14 1995/09/06 04:15:59 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Jason R. Thorpe.
@@ -787,13 +787,13 @@ ccdintr(cs, bp)
 	/*
 	 * Request is done for better or worse, wakeup the top half.
 	 */
+#ifdef WORKING_DISK_STATISTICS		/* XXX !! */
 	--cs->sc_nactive;
 #ifdef DIAGNOSTIC
 	if (cs->sc_nactive < 0)
 		panic("ccdintr: ccd%d: sc_nactive < 0", cs->sc_unit);
 #endif
 
-#ifdef WORKING_DISK_STATISTICS		/* XXX !! */
 	if (cs->sc_nactive == 0 && cs->sc_dk >= 0)
 		dk_busy &= ~(1 << cs->sc_dk);
 #endif
