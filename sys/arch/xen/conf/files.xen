@@ -1,8 +1,8 @@
-#	$NetBSD: files.xen,v 1.1 2004/03/11 21:44:08 cl Exp $
+#	$NetBSD: files.xen,v 1.2 2004/03/25 12:41:54 wiz Exp $
 #	NetBSD: files.x86,v 1.10 2003/10/08 17:30:00 bouyer Exp 
 #	NetBSD: files.i386,v 1.249 2004/02/16 17:11:27 wiz Exp 
 
-maxpartitions 8
+maxpartitions 16
 
 maxusers 2 16 128
 
