@@ -30,7 +30,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)subr_xxx.c	7.10 (Berkeley) 4/20/91
+ *	from: @(#)subr_xxx.c	7.10 (Berkeley) 4/20/91
+ *	$Id: subr_xxx.c,v 1.3 1993/05/20 02:55:05 cgd Exp $
  */
 
 /*

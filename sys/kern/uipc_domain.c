@@ -30,7 +30,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)uipc_domain.c	7.9 (Berkeley) 3/4/91
+ *	from: @(#)uipc_domain.c	7.9 (Berkeley) 3/4/91
+ *	$Id: uipc_domain.c,v 1.3 1993/05/20 02:55:21 cgd Exp $
  */
 
 #include <sys/cdefs.h>

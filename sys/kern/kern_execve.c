@@ -50,16 +50,7 @@
  * Significant limitations and lack of compatiblity with POSIX are
  * present with this version, to make its basic operation more clear.
  *
- * PATCHES MAGIC                LEVEL   PATCH THAT GOT US HERE
- * --------------------         -----   ----------------------
- * CURRENT PATCH LEVEL:         3       00069
- * --------------------         -----   ----------------------
- *
- * 05 Aug 92	Paul Kranenburg		Fixed #! as a magic number
- * 29 Jul 92	Mark Tinguely		Fixed execute permission enforcement
- * 15 Aug 92    Terry Lambert           Fixed CMOS RAM size bug
- * 12 Dec 92	Julians Elischer	Place argc into user address space
- *					correctly
+ *	$Id: kern_execve.c,v 1.11 1993/05/20 02:54:21 cgd Exp $
  */
 
 #include "param.h"
