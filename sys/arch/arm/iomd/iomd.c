@@ -1,4 +1,4 @@
-/*	$NetBSD: iomd.c,v 1.3 2002/04/19 01:04:39 wiz Exp $	*/
+/*	$NetBSD: iomd.c,v 1.4 2002/06/19 23:49:14 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1996-1997 Mark Brinicombe.
@@ -305,9 +305,6 @@ iomdattach(parent, self, aux)
 		ia.ia_qms.qa_name = "qms";
 		ia.ia_qms.qa_iot = iot;
 		ia.ia_qms.qa_irq = IRQ_VSYNC;
-		config_found(self, &ia, iomdprint);
-
-		ia.ia_qms.qa_name = "wsqms";
 		config_found(self, &ia, iomdprint);
 		break;
 	}
