@@ -1,4 +1,4 @@
-/*	$NetBSD: exception.S,v 1.21 2003/03/13 13:44:18 scw Exp $	*/
+/*	$NetBSD: exception.S,v 1.22 2003/03/19 11:31:55 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -570,9 +570,6 @@ Lsh5_vector_general:
  * KSEG0, free up some registers and deal with the miss.
  *
  * It is *not* safe to unblock exceptions in this code.
- *
- * Note: Byte counts assume LP64. ILP32 will be slightly smaller.
- *       Addendum: bytes counts somewhat out of date ...
  */
 #define	TS(o)		((o)+CI_TSCRATCH)
 
