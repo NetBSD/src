@@ -1,4 +1,4 @@
-.\"	$NetBSD: options.4,v 1.80 1999/06/12 21:22:11 tron Exp $
+.\"	$NetBSD: options.4,v 1.81 1999/06/26 06:26:13 sommerfeld Exp $
 .\"
 .\" Copyright (c) 1996
 .\" 	Perry E. Metzger.  All rights reserved.
@@ -934,6 +934,19 @@ See
 .Xr inet 4
 for details.
 This option is currently required.
+.It Cd options SUBNETSARELOCAL
+Sets default value for net.inet.ip.subnetsarelocal variable, which
+controls whether non-directly-connected subnets of connected networks
+are considered "local" for purposes of choosing the MSS for a TCP
+connection.  This is mostly present for historic reasons and
+completely irrelevant if you enable Path MTU discovery.
+.It Cd options HOSTZEROBROADCAST
+Sets default value for net.inet.ip.hostzerobroadcast variable, which
+controls whether the zeroth host address of each connected subnet is
+also considered a broadcast address.  Default value is "1", for
+compatibility with old systems; if this is set to zero on all hosts on
+a subnet, you should be able to fit an extra host per subnet on the
+".0" address.
 .It Cd options MCLSHIFT=value
 This option is the base-2 logarithm of the size of mbuf clusters.
 The
