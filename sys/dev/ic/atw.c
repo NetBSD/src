@@ -1,4 +1,4 @@
-/*	$NetBSD: atw.c,v 1.46 2004/07/15 06:33:43 dyoung Exp $	*/
+/*	$NetBSD: atw.c,v 1.47 2004/07/15 06:34:24 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002, 2003, 2004 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atw.c,v 1.46 2004/07/15 06:33:43 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atw.c,v 1.47 2004/07/15 06:34:24 dyoung Exp $");
 
 #include "bpfilter.h"
 
@@ -2784,7 +2784,6 @@ atw_idle(struct atw_softc *sc, u_int32_t bits)
 	u_int32_t ackmask = 0, opmode, stsr, test0;
 	int i, s;
 
-	/* without this, somehow we run concurrently w/ interrupt handler */
 	s = splnet(); 
 
 	opmode = sc->sc_opmode & ~bits;
