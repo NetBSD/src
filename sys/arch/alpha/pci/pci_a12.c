@@ -1,4 +1,4 @@
-/* $NetBSD: pci_a12.c,v 1.2 1998/03/02 07:03:20 ross Exp $ */
+/* $NetBSD: pci_a12.c,v 1.3 1998/04/18 01:12:24 thorpej Exp $ */
 
 /* [Notice revision 2.0]
  * Copyright (c) 1997, 1998 Avalon Computer Systems, Inc.
@@ -38,7 +38,7 @@
 #include "opt_avalon_a12.h"		/* Config options headers */
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pci_a12.c,v 1.2 1998/03/02 07:03:20 ross Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_a12.c,v 1.3 1998/04/18 01:12:24 thorpej Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -130,6 +130,9 @@ pci_a12_pickintr(ccp)
         pc->pc_intr_string = avalon_a12_intr_string;
         pc->pc_intr_establish = avalon_a12_intr_establish;
         pc->pc_intr_disestablish = avalon_a12_intr_disestablish;
+
+	/* Not supoprted on A12. */
+	pc->pc_pciide_compat_intr_establish = NULL;
 
 	set_iointr(a12_iointr);
 }

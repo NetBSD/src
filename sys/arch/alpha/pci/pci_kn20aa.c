@@ -1,4 +1,4 @@
-/* $NetBSD: pci_kn20aa.c,v 1.28 1998/04/16 19:50:55 thorpej Exp $ */
+/* $NetBSD: pci_kn20aa.c,v 1.29 1998/04/18 01:12:24 thorpej Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pci_kn20aa.c,v 1.28 1998/04/16 19:50:55 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_kn20aa.c,v 1.29 1998/04/18 01:12:24 thorpej Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -94,6 +94,9 @@ pci_kn20aa_pickintr(ccp)
         pc->pc_intr_string = dec_kn20aa_intr_string;
         pc->pc_intr_establish = dec_kn20aa_intr_establish;
         pc->pc_intr_disestablish = dec_kn20aa_intr_disestablish;
+
+	/* Not supoprted on KN20AA. */
+	pc->pc_pciide_compat_intr_establish = NULL;
 
 	kn20aa_pci_intr = alpha_shared_intr_alloc(KN20AA_MAX_IRQ);
 	for (i = 0; i < KN20AA_MAX_IRQ; i++)
