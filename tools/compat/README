@@ -1,4 +1,4 @@
-$NetBSD: README,v 1.1 2002/02/01 04:43:39 tv Exp $
+$NetBSD: README,v 1.2 2002/04/24 16:28:55 bjh21 Exp $
 
 Special notes for cross-hosting a NetBSD build on certain platforms.  
 Only those platforms which have been tested to complete a "build.sh" run
@@ -17,10 +17,6 @@ LINUX:
 
 * The zlib and zlib-devel packages must be installed.  This will be
   fixed in the future to include zlib in libnbcompat.
-
-* src/tools/dbsym will not build on this platform yet.  NO_DBSYM=1 may be set in
-  mk.conf or the environment to cause this to be skipped during the build
-  (harmless to non-embedded platforms).
 
 =====
 
@@ -61,7 +57,3 @@ SOLARIS:
 * Needs the "mktemp" script from src/tools/compat/scripts, made
   executable, available somewhere in $PATH.  (Solaris has no
   command-line mktemp(1).)  This may be worked around in the future.
-
-* src/tools/dbsym will not build on this platform yet.  NO_DBSYM=1 may be set in
-  mk.conf or the environment to cause this to be skipped during the build
-  (harmless to non-embedded platforms).
