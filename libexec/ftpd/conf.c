@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.28 2000/01/12 22:39:27 lukem Exp $	*/
+/*	$NetBSD: conf.c,v 1.29 2000/01/13 00:04:31 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1997-2000 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: conf.c,v 1.28 2000/01/12 22:39:27 lukem Exp $");
+__RCSID("$NetBSD: conf.c,v 1.29 2000/01/13 00:04:31 lukem Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -472,6 +472,9 @@ show_chdir_messages(code)
 	char	 cwd[MAXPATHLEN];
 	char	*cp, **rlist;
 
+	if (quietmessages)
+		return;
+
 		/* Setup list for directory cache */
 	if (slist == NULL)
 		slist = sl_init();
@@ -533,6 +536,9 @@ format_file(file, code)
 	size_t	len;
 	off_t	b;
 	time_t	now;
+
+	if (quietmessages)
+		return (0);
 
 #define PUTC(x)	putchar(x), b++
 
