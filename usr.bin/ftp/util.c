@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.50 1999/06/20 22:07:29 cgd Exp $	*/
+/*	$NetBSD: util.c,v 1.51 1999/06/24 23:21:02 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: util.c,v 1.50 1999/06/20 22:07:29 cgd Exp $");
+__RCSID("$NetBSD: util.c,v 1.51 1999/06/24 23:21:02 christos Exp $");
 #endif /* not lint */
 
 /*
@@ -312,6 +312,7 @@ ftp_login(host, user, pass)
 			goto cleanup_ftp_login;
 		}
 		tmp[strlen(tmp) - 1] = '\0';
+		freeuser = 0;
 		if (*tmp == '\0')
 			user = myname;
 		else
@@ -325,21 +326,23 @@ ftp_login(host, user, pass)
 		len = strlen(user) + 1 + strlen(host) + 1;
 		nuser = xmalloc(len);
 		snprintf(nuser, len, "%s@%s", user, host);
-		user = nuser;
 		freeuser = 1;
+		user = nuser;
 	}
 
 	n = command("USER %s", user);
 	if (n == CONTINUE) {
-		if (pass == NULL)
+		if (pass == NULL) {
+			freepass = 0;
 			pass = getpass("Password:");
+		}
 		n = command("PASS %s", pass);
 	}
 	if (n == CONTINUE) {
 		aflag++;
 		if (acct == NULL) {
-			acct = getpass("Account:");
 			freeacct = 0;
+			acct = getpass("Account:");
 		}
 		if (acct[0] == '\0') {
 			warnx("Login failed.");
