@@ -1,4 +1,4 @@
-/*	$NetBSD: npx.c,v 1.99 2003/12/05 21:24:57 jdolecek Exp $	*/
+/*	$NetBSD: npx.c,v 1.100 2004/01/26 19:43:25 scw Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npx.c,v 1.99 2003/12/05 21:24:57 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npx.c,v 1.100 2004/01/26 19:43:25 scw Exp $");
 
 #if 0
 #define IPRINTF(x)	printf x
@@ -767,7 +767,7 @@ npxsave_lwp(struct lwp *l, int save)
 			}
 		}
 #else
-		__splbarrier();		/* XXX replace by generic barrier */
+		__insn_barrier();
 		;
 #endif
 	}
