@@ -1,4 +1,4 @@
-/*	$NetBSD: mount.c,v 1.26 1997/03/10 03:59:54 mikel Exp $	*/
+/*	$NetBSD: mount.c,v 1.27 1997/05/17 19:36:35 pk Exp $	*/
 
 /*
  * Copyright (c) 1980, 1989, 1993, 1994
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)mount.c	8.19 (Berkeley) 4/19/94";
 #else
-static char rcsid[] = "$NetBSD: mount.c,v 1.26 1997/03/10 03:59:54 mikel Exp $";
+static char rcsid[] = "$NetBSD: mount.c,v 1.27 1997/05/17 19:36:35 pk Exp $";
 #endif
 #endif /* not lint */
 
@@ -100,7 +100,7 @@ static struct opt {
 	{ MNT_ROOTFS,		1,	"root file system" },
 	{ MNT_SYNCHRONOUS,	0,	"synchronous" },
 	{ MNT_UNION,		0,	"union" },
-	{ NULL }
+	{ 0 }
 };
 
 int
@@ -429,7 +429,7 @@ prmount(sf)
 			flags &= ~o->o_opt;
 		}
 	if (flags)
-		(void)printf("%sunknown flag%s %#x", !f++ ? " (" : ", ", 
+		(void)printf("%sunknown flag%s %#x", !f++ ? " (" : ", ",
 		    flags & (flags - 1) ? "s" : "", flags);
 	(void)printf(f ? ")\n" : "\n");
 }
