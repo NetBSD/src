@@ -1,4 +1,4 @@
-/*	$NetBSD: inode.h,v 1.15 1999/11/18 08:23:22 enami Exp $	*/
+/*	$NetBSD: inode.h,v 1.16 1999/11/18 08:26:21 enami Exp $	*/
 
 /*
  * Copyright (c) 1982, 1989, 1993
@@ -111,7 +111,8 @@ struct inode {
 	 */
 	union {
 		struct	dinode ffs_din;	/* 128 bytes of the on-disk dinode. */
-		struct	ext2fs_dinode e2fs_din; /* 128 bytes of the on-disk dinode. */
+		struct	ext2fs_dinode e2fs_din; /* 128 bytes of the on-disk
+						   dinode. */
 	} i_din;
 };
 
@@ -152,6 +153,7 @@ struct inode {
 #define	i_e2fs_faddr		i_din.e2fs_din.e2di_faddr
 #define	i_e2fs_nfrag		i_din.e2fs_din.e2di_nfrag
 #define	i_e2fs_fsize		i_din.e2fs_din.e2di_fsize
+#define	i_e2fs_rdev		i_din.e2fs_din.e2di_rdev
 
 /* These flags are kept in i_flag. */
 #define	IN_ACCESS	0x0001		/* Access time update request. */
