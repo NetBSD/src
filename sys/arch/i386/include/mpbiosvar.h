@@ -1,4 +1,4 @@
-/* $NetBSD: mpbiosvar.h,v 1.1.2.4 2000/08/21 02:25:17 sommerfeld Exp $ */
+/* $NetBSD: mpbiosvar.h,v 1.1.2.5 2002/06/25 15:44:54 sommerfeld Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -42,13 +42,13 @@
 #ifndef _I386_MPBIOSVAR_H_
 #define _I386_MPBIOSVAR_H_
 
-#define MP_TRAMPOLINE  (3 * NBPG)
+#define MP_TRAMPOLINE  (2 * NBPG)
 
 #if !defined(_LOCORE)
 
 #include <machine/mpbiosreg.h>
 
-struct mp_bus 
+struct mp_bus
 {
 	char *mb_name;		/* XXX bus name */
 	int mb_idx;		/* XXX bus index */

@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.300.2.29 2002/05/03 19:12:54 sommerfeld Exp $
+# $NetBSD: GENERIC,v 1.300.2.30 2002/06/25 15:44:45 sommerfeld Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.300.2.29 $"
+#ident 		"GENERIC-$Revision: 1.300.2.30 $"
 
 maxusers	32		# estimated number of users
 
@@ -40,6 +40,8 @@ options 	USER_LDT	# user-settable LDT; used by WINE
 #options 	DUMMY_NOPS
 
 options 	MTRR		# memory-type range register syscall support
+# doesn't work with MP just yet..
+#options 	PERFCTRS	# performance-monitoring counters support
 
 # delay between "rebooting ..." message and hardware reset, in milliseconds
 #options 	CPURESET_DELAY=2000
@@ -68,6 +70,7 @@ options 	RTC_OFFSET=0	# hardware clock is this many mins. west of GMT
 options 	NTP		# NTP phase/frequency locked loop
 
 options 	KTRACE		# system call tracing via ktrace(1)
+options 	SYSTRACE	# system call vetting via systrace(1)
 
 options 	SYSVMSG		# System V-like message queues
 options 	SYSVSEM		# System V-like semaphores
@@ -281,6 +284,11 @@ puc*	at pci? dev ? function ?	# PCI "universal" comm. cards
 
 agp* 	at pchb?
 
+#
+
+p64h2apic* at pci? dev? function?	# P64H2 IOxAPIC
+
+
 # EISA bus support
 eisa0	at mainbus?
 eisa0	at pceb?
@@ -344,7 +352,7 @@ npx0	at isa? port 0xf0 irq 13	# x86 math coprocessor
 pckbc0		at isa?			# pc keyboard controller
 pckbd*		at pckbc?		# PC keyboard
 pms*		at pckbc?		# PS/2 mouse for wsmouse
-#options 	PMS_DISABLE_POWERHOOK
+#options 	PMS_DISABLE_POWERHOOK	# Disable PS/2 reset on resume
 vga0		at isa?
 vga*		at pci? dev ? function ?
 pcdisplay0	at isa?			# CGA, MDA, EGA, HGA
@@ -484,26 +492,7 @@ wds1	at isa? port 0x358 irq 11 drq 5
 aha*	at mca? slot ?			# Adaptec AHA-1640
 
 # SCSI bus support
-scsibus* at adv?
-scsibus* at adw?
-scsibus* at aha?
-scsibus* at ahb?
-scsibus* at ahc?
-scsibus* at aic?
-scsibus* at bha?
-scsibus* at dpt?
-scsibus* at esp?
-scsibus* at iha?
-scsibus* at iopsp?
-scsibus* at isp?
-scsibus* at mly?
-#scsibus* at nca?
-scsibus* at pcscp?
-scsibus* at sea?
-scsibus* at siop?
-scsibus* at trm?
-scsibus* at uha?
-scsibus* at wds?
+scsibus* at scsi?
 
 # SCSI devices
 sd*	at scsibus? target ? lun ?	# SCSI disk drives
@@ -531,7 +520,6 @@ ld*	at twe? unit ?
 ld*	at mlx? unit ?
 
 icpsp*	at icp? unit ?			# SCSI pass-through
-scsibus* at icpsp?
 
 # IDE and related devices
 # PCI IDE controllers - see pciide(4) for supported hardware.
@@ -568,8 +556,7 @@ wd*	at wdc? channel ? drive ? flags 0x0000
 wd*	at pciide? channel ? drive ? flags 0x0000
 
 # ATAPI bus support
-atapibus* at wdc? channel ?
-atapibus* at pciide? channel ?
+atapibus* at atapi?
 
 # ATAPI devices
 # flags have the same meaning as for IDE drives.
@@ -606,6 +593,7 @@ ed*	at edc?
 
 # PCI network interfaces
 an*	at pci? dev ? function ?	# Aironet PC4500/PC4800 (802.11)
+bge* 	at pci? dev ? function ?	# Broadcom 570x gigabit Ethernet
 en*	at pci? dev ? function ?	# ENI/Adaptec ATM
 ep*	at pci? dev ? function ?	# 3Com 3c59x
 epic*	at pci? dev ? function ?	# SMC EPIC/100 Ethernet
@@ -774,8 +762,6 @@ ucom*	at umodem?
 
 # USB Mass Storage
 umass*	at uhub? port ? configuration ? interface ?
-atapibus* at umass? channel ?
-scsibus* at umass? channel ?
 #wd* at umass?
 
 # USB audio
@@ -827,7 +813,6 @@ uscanner* at uhub? port ?
 
 # USB scanners that use SCSI emulation, e.g., HP5300
 usscanner* at uhub? port ?
-scsibus* at usscanner? channel ?
 
 # Y@P firmware loader
 uyap* at uhub? port ?
@@ -903,32 +888,7 @@ opl*	at yds?
 opl*	at ym?
 
 # Audio support
-#audio*	at aria?
-audio*	at auich?
-audio*	at autri?
-audio*	at auvia?
-audio*	at clcs?
-audio*	at clct?
-audio*	at cmpci?
-audio*	at eap?
-audio*	at emuxki?
-audio*	at esa?
-#audio*	at esl?
-audio*	at esm?
-audio*	at eso?
-audio*	at ess?
-audio*	at fms?
-audio*	at gus?
-audio*	at guspnp?
-audio*	at neo?
-audio*	at pas?
-audio*	at sb?
-#audio*	at sp?
-audio*	at sv?
-audio*	at uaudio?
-audio*	at wss?
-audio*	at yds?
-audio*	at ym?
+audio*	at audiobus?
 
 # MPU 401 UARTs
 #mpu*	at isa? port 0x330 irq 9	# MPU401 or compatible card
@@ -940,16 +900,8 @@ mpu*	at yds?
 mpu*	at ym?
 
 # MIDI support
-midi*	at autri?		# Trident 4DWAVE MIDI port
-midi*	at clcs?		# Cirrus Logic CS4280 MIDI port
-#midi*	at clct?		# Cirrus Logic CS4281 MIDI port
-#midi*	at cms?			# Creative Music System
-midi*	at eap?			# 137[01] MIDI port
-midi*	at mpu?			# MPU 401
-midi*	at opl?			# OPL FM synth
+midi*	at midibus?
 midi*	at pcppi?		# MIDI interface to the PC speaker
-midi*	at sb?			# SB1 MIDI port
-midi*	at umidi?		# USB MIDI
 
 # The spkr driver provides a simple tone interface to the built in speaker.
 #spkr0	at pcppi?		# PC speaker
@@ -1072,6 +1024,7 @@ pseudo-device	sequencer	1	# MIDI sequencer
 # rnd works; RND_COM does not on port i386 yet.
 pseudo-device	rnd			# /dev/random and in-kernel generator
 #options 	RND_COM			# use "com" randomness as well (BROKEN)
+pseudo-device	clockctl		# user control of clock subsystem
 
 # a pseudo device needed for Coda	# also needs CODA (above)
 pseudo-device	vcoda		4	# coda minicache <-> venus comm.

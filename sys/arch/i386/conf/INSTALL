@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.135.2.20 2002/05/03 19:12:55 sommerfeld Exp $
+#	$NetBSD: INSTALL,v 1.135.2.21 2002/06/25 15:44:47 sommerfeld Exp $
 #
 #	INSTALL - Installation kernel.
 #
@@ -73,7 +73,7 @@ options 	RTC_OFFSET=0	# hardware clock is this many mins. west of GMT
 #options 	LKM		# loadable kernel modules
 
 #options 	USERCONF	# userconf(4) support
-options		PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
+options 	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
 
 # Diagnostic/debugging support options
 #options 	DIAGNOSTIC	# expensive kernel consistency checks
@@ -155,6 +155,29 @@ options 	INET6		# IPv6
 #options 	SCSIVERBOSE	# human readable SCSI error messages
 #options 	I2OVERBOSE	# verbose I2O driver messages
 
+#
+# wscons options
+#
+# builtin terminal emulations 
+#options 	WSEMUL_SUN		# sun terminal emulation
+options 	WSEMUL_VT100		# VT100 / VT220 emulation
+# different kernel output - see dev/wscons/wsdisplayvar.h
+options 	WS_KERNEL_FG=WSCOL_WHITE
+#options 	WS_KERNEL_BG=WSCOL_BLACK
+# compatibility to other console drivers
+#options 	WSDISPLAY_COMPAT_PCVT           # emulate some ioctls
+#options 	WSDISPLAY_COMPAT_SYSCONS        # emulate some ioctls
+#options 	WSDISPLAY_COMPAT_USL            # VT handling
+#options 	WSDISPLAY_COMPAT_RAWKBD         # can get raw scancodes
+# see dev/pckbc/wskbdmap_mfii.c for implemented layouts
+#options 	PCKBD_LAYOUT="(KB_DE | KB_NODEAD)"
+# allocate a number of virtual screens at autoconfiguration time
+#options 	WSDISPLAY_DEFAULTSCREENS=4
+# use a large software cursor that doesn't blink
+options 	PCDISPLAY_SOFTCURSOR
+# modify the screen type of the console; defaults to "80x25"
+#options 	VGA_CONSOLE_SCREENTYPE="\"80x24\""
+
 # Kernel root file system and dump configuration.
 config		netbsd	root on ? type ?
 #config		netbsd	root on sd0a type ffs
@@ -223,7 +246,7 @@ npx0	at isa? port 0xf0 irq 13	# x86 math coprocessor
 # Console Devices
 
 # ISA console
-pc0	at isa? port 0x60 irq 1		# pccons generic PC console driver
+#pc0	at isa? port 0x60 irq 1		# pccons generic PC console driver
 
 # Keyboard layout configuration for pccons
 #options 	FRENCH_KBD
@@ -232,19 +255,19 @@ pc0	at isa? port 0x60 irq 1		# pccons generic PC console driver
 #options 	NORWEGIAN_KBD
 
 # wscons
-#pckbc0	at isa?			# pc keyboard controller
-#pckbd*	at pckbc?		# PC keyboard
+pckbc0		at isa?			# pc keyboard controller
+pckbd*		at pckbc?		# PC keyboard
 #pms*		at pckbc?		# PS/2 mouse for wsmouse
-#vga0		at isa?
-#vga*		at pci?
-#pcdisplay0	at isa?			# CGA, MDA, EGA, HGA
-#wsdisplay*	at vga? console ?
-#wsdisplay*	at pcdisplay? console ?
-#wskbd*	at pckbd? console ?
-#wsmouse*	at pms?
+vga0		at isa?
+vga*		at pci? dev ? function ?
+pcdisplay0	at isa?			# CGA, MDA, EGA, HGA
+wsdisplay*	at vga? console ?
+wsdisplay*	at pcdisplay? console ?
+wskbd*		at pckbd? console ?
+#wsmouse*	at pms? mux 0
 
-#pcppi0	at isa?
-#sysbeep0	at pcppi?
+pcppi0		at isa?
+sysbeep0	at pcppi?
 
 # Serial Devices
 
@@ -342,25 +365,7 @@ wds0	at isa? port 0x350 irq 15 drq 6	# WD7000 and TMC-7000 controllers
 wds1	at isa? port 0x358 irq 11 drq 5
 
 # SCSI bus support
-scsibus* at adv?
-scsibus* at adw?
-scsibus* at aha?
-scsibus* at ahb?
-scsibus* at ahc?
-scsibus* at aic?
-scsibus* at bha?
-scsibus* at dpt?
-scsibus* at iha?
-scsibus* at iopsp?
-scsibus* at isp?
-#scsibus* at nca?
-scsibus* at mly?
-scsibus* at pcscp?
-scsibus* at sea?
-scsibus* at siop?
-scsibus* at trm?
-scsibus* at uha?
-scsibus* at wds?
+scsibus* at scsi?
 
 # SCSI devices
 sd*	at scsibus? target ? lun ?	# SCSI disk drives
@@ -387,7 +392,6 @@ ld*	at twe? unit ?
 ld*	at mlx? unit ?
 
 icpsp*	at icp? unit ?			# SCSI pass-through
-scsibus* at icpsp?
 
 # IDE and related devices
 # PCI IDE controllers - see pciide(4) for supported hardware.
@@ -424,8 +428,7 @@ wd*	at wdc? channel ? drive ? flags 0x0000
 wd*	at pciide? channel ? drive ? flags 0x0000
 
 # ATAPI bus support
-atapibus* at wdc? channel ?
-atapibus* at pciide? channel ?
+atapibus* at atapi?
 
 # ATAPI devices
 # flags have the same meaning as for IDE drives.
@@ -458,6 +461,7 @@ fd*	at fdc? drive ?			# the drives themselves
 
 # PCI network interfaces
 an*	at pci? dev ? function ?	# Aironet PC4500/PC4800 (802.11)
+bge* 	at pci? dev ? function ?	# Broadcom 570x Gigabit Ethernet
 #en*	at pci? dev ? function ?	# ENI/Adaptec ATM
 ep*	at pci? dev ? function ?	# 3Com 3c59x
 ex*	at pci? dev ? function ?	# 3Com 90x[BC]
@@ -595,8 +599,6 @@ wskbd*	at ukbd? console ?
 
 # USB Mass Storage
 umass*	at uhub? port ? configuration ? interface ?
-atapibus* at umass? channel ?
-scsibus* at umass? channel ?
 
 # Y@P firmware loader
 #uyap* at uhub? port ?
@@ -639,21 +641,11 @@ url*	at uhub? port ?		# Realtek RTL8150L based adapters
 #opl*	at sv?
 
 # Audio support
-#audio*	at aria?
-#audio*	at eap?
-#audio*	at eso?
-#audio*	at gus?
-#audio*	at guspnp?
-#audio*	at pas?
-#audio*	at sb?
-#audio*	at sp?
-#audio*	at sv?
-#audio*	at wss?
+#audio*	at audiobus?
 
 # MIDI support
+#midi*	at midibus?
 #midi*	at pcppi?		# MIDI interface to the PC speaker
-#midi*	at sb?			# SB MPU401 port
-#midi*	at opl?			# OPL FM synth
 
 # The spkr driver provides a simple tone interface to the built in speaker.
 #spkr0	at pcppi?		# PC speaker
@@ -721,3 +713,8 @@ pseudo-device	pty		2	# pseudo-terminals (Sysinst needs two)
 
 # a pseudo device needed for Coda	# also needs CODA (above)
 #pseudo-device	vcoda		4	# coda minicache <-> venus comm.
+
+# wscons pseudo-devices
+pseudo-device	wsmux			# mouse & keyboard multiplexor
+#pseudo-device	wsfont
+

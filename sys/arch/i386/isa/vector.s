@@ -1,4 +1,4 @@
-/*	$NetBSD: vector.s,v 1.46.2.3 2001/09/22 23:01:21 sommerfeld Exp $	*/
+/*	$NetBSD: vector.s,v 1.46.2.4 2002/06/25 15:44:54 sommerfeld Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -159,17 +159,75 @@
 
 /* XXX See comment in locore.s */
 #ifdef __ELF__
+
+#ifdef __STDC__
+#define	XINTR(irq_num)		Xintr ## irq_num
+#define	XHOLD(irq_num)		Xhold ## irq_num
+#define	XSTRAY(irq_num)		Xstray ## irq_num
+#else
 #define	XINTR(irq_num)		Xintr/**/irq_num
 #define	XHOLD(irq_num)		Xhold/**/irq_num
 #define	XSTRAY(irq_num)		Xstray/**/irq_num
+#endif /* __STDC__ */
+
+/* XXX Duplicates of IDTVEC() from locore.s */
+#ifdef __STDC__
+#define	XRESUME_VEC(irq_num)						\
+	ALIGN_TEXT; .globl Xresume ## irq_num; Xresume ## irq_num:
+#define	XRECURSE_VEC(irq_num)						\
+	ALIGN_TEXT; .globl Xrecurse ## irq_num; Xrecurse ## irq_num:
+#define	XSTRAY_VEC(irq_num)						\
+	ALIGN_TEXT; .globl Xstray ## irq_num; Xstray ## irq_num:
+#define	XHOLD_VEC(irq_num)						\
+	ALIGN_TEXT; .globl Xhold ## irq_num; Xhold ## irq_num:
+#else
+#define	XRESUME_VEC(irq_num)						\
+	ALIGN_TEXT; .globl Xresume/**/irq_num; Xresume/**/irq_num:
+#define	XRECURSE_VEC(irq_num)						\
+	ALIGN_TEXT; .globl Xrecurse/**/irq_num; Xrecurse/**/irq_num:
+#define	XSTRAY_VEC(irq_num)						\
+	ALIGN_TEXT; .globl Xstray/**/irq_num; Xstray/**/irq_num:
+#define	XHOLD_VEC(irq_num)						\
+	ALIGN_TEXT; .globl Xhold/**/irq_num; Xhold/**/irq_num:
+#endif /* __STDC__ */
+
+#else
+
+#ifdef __STDC__
+#define	XINTR(irq_num)		_Xintr ## irq_num
+#define	XHOLD(irq_num)		_Xhold ## irq_num
+#define	XSTRAY(irq_num)		_Xstray ## irq_num
 #else
 #define	XINTR(irq_num)		_Xintr/**/irq_num
 #define	XHOLD(irq_num)		_Xhold/**/irq_num
 #define	XSTRAY(irq_num)		_Xstray/**/irq_num
-#endif
+#endif /* __STDC__ */
+
+/* XXX Duplicates of IDTVEC() from locore.s */
+#ifdef __STDC__
+#define	XRESUME_VEC(irq_num)						\
+	ALIGN_TEXT; .globl _Xresume ## irq_num; _Xresume ## irq_num:
+#define	XRECURSE_VEC(irq_num)						\
+	ALIGN_TEXT; .globl _Xrecurse ## irq_num; _Xrecurse ## irq_num:
+#define	XSTRAY_VEC(irq_num)						\
+	ALIGN_TEXT; .globl _Xstray ## irq_num; _Xstray ## irq_num:
+#define	XHOLD_VEC(irq_num)						\
+	ALIGN_TEXT; .globl _Xhold ## irq_num; _Xhold ## irq_num:
+#else
+#define	XRESUME_VEC(irq_num)						\
+	ALIGN_TEXT; .globl _Xresume/**/irq_num; _Xresume/**/irq_num:
+#define	XRECURSE_VEC(irq_num)						\
+	ALIGN_TEXT; .globl _Xrecurse/**/irq_num; _Xrecurse/**/irq_num:
+#define	XSTRAY_VEC(irq_num)						\
+	ALIGN_TEXT; .globl _Xstray/**/irq_num; _Xstray/**/irq_num:
+#define	XHOLD_VEC(irq_num)						\
+	ALIGN_TEXT; .globl _Xhold/**/irq_num; _Xhold/**/irq_num:
+#endif /* __STDC__ */
+
+#endif /* __ELF__ */
 
 #define	INTR(irq_num, icu, ack) \
-IDTVEC(recurse/**/irq_num)						;\
+XRECURSE_VEC(irq_num)							;\
 	pushfl								;\
 	pushl	%cs							;\
 	pushl	%esi							;\
@@ -186,7 +244,7 @@ XINTR(irq_num):								;\
 	movzbl	CPL,%ebx		/* XXX tuneme */		;\
 	cmpl	%eax,%ebx		/* XXX tuneme */		;\
 	jae	XHOLD(irq_num)		/* currently masked; hold it */	;\
-IDTVEC(resume/**/irq_num)						\
+XRESUME_VEC(irq_num)						\
 	movzbl	CPL,%eax		/* cpl to restore on exit */	;\
 	pushl	%eax			/* XXX tuneme	*/		;\
 	movl	_C_LABEL(ilevel) + (irq_num) * 4, %eax	/* XXXtuneme */	;\
@@ -212,13 +270,13 @@ IDTVEC(resume/**/irq_num)						\
 	STRAY_TEST			/* see if it's a stray */	;\
 5:	UNMASK(irq_num, icu)		/* unmask it in hardware */	;\
 	jmp	_C_LABEL(Xdoreti)	/* lower spl and do ASTs */	;\
-IDTVEC(stray/**/irq_num)						;\
+XSTRAY_VEC(irq_num)							;\
 	pushl	$irq_num						;\
 	call	_C_LABEL(isa_strayintr)					;\
 	addl	$4,%esp							;\
 	incl	_C_LABEL(strayintrcnt) + (4*(irq_num))			;\
 	jmp	5b							;\
-IDTVEC(hold/**/irq_num)							;\
+XHOLD_VEC(irq_num)							;\
 	orb	$IRQ_BIT(irq_num),_C_LABEL(ipending) + IRQ_BYTE(irq_num) ;\
 	INTRFASTEXIT
 

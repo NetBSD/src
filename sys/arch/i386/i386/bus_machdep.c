@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_machdep.c,v 1.1.2.11 2002/04/27 20:24:45 sommerfeld Exp $	*/
+/*	$NetBSD: bus_machdep.c,v 1.1.2.12 2002/06/25 15:44:49 sommerfeld Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_machdep.c,v 1.1.2.11 2002/04/27 20:24:45 sommerfeld Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_machdep.c,v 1.1.2.12 2002/06/25 15:44:49 sommerfeld Exp $");
 
 #include "opt_largepages.h"
 
@@ -1025,7 +1025,6 @@ _bus_dmamem_alloc_range(t, size, alignment, boundary, segs, nsegs, rsegs,
 	/*
 	 * Allocate pages from the VM system.
 	 */
-	TAILQ_INIT(&mlist);
 	error = uvm_pglistalloc(size, low, high, alignment, boundary,
 	    &mlist, nsegs, (flags & BUS_DMA_NOWAIT) == 0);
 	if (error)

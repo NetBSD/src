@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL_LAPTOP,v 1.21.2.4 2002/05/03 19:12:56 sommerfeld Exp $
+#	$NetBSD: INSTALL_LAPTOP,v 1.21.2.5 2002/06/25 15:44:47 sommerfeld Exp $
 #
 #	INSTALL - Installation kernel.
 #
@@ -73,7 +73,7 @@ options 	RTC_OFFSET=0	# hardware clock is this many mins. west of GMT
 #options 	LKM		# loadable kernel modules
 
 #options 	USERCONF	# userconf(4) support
-options		PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
+options 	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
 
 # Diagnostic/debugging support options
 #options 	DIAGNOSTIC	# expensive kernel consistency checks
@@ -153,6 +153,29 @@ options 	INET6		# IPv6
 #options 	PCMCIAVERBOSE	# verbose PCMCIA configuration messages
 #options 	SCSIVERBOSE	# human readable SCSI error messages
 
+#
+# wscons options
+#
+# builtin terminal emulations 
+#options 	WSEMUL_SUN		# sun terminal emulation
+options 	WSEMUL_VT100		# VT100 / VT220 emulation
+# different kernel output - see dev/wscons/wsdisplayvar.h
+options 	WS_KERNEL_FG=WSCOL_WHITE
+#options 	WS_KERNEL_BG=WSCOL_BLACK
+# compatibility to other console drivers
+#options 	WSDISPLAY_COMPAT_PCVT           # emulate some ioctls
+#options 	WSDISPLAY_COMPAT_SYSCONS        # emulate some ioctls
+#options 	WSDISPLAY_COMPAT_USL            # VT handling
+#options 	WSDISPLAY_COMPAT_RAWKBD         # can get raw scancodes
+# see dev/pckbc/wskbdmap_mfii.c for implemented layouts
+#options 	PCKBD_LAYOUT="(KB_DE | KB_NODEAD)"
+# allocate a number of virtual screens at autoconfiguration time
+#options 	WSDISPLAY_DEFAULTSCREENS=4
+# use a large software cursor that doesn't blink
+options 	PCDISPLAY_SOFTCURSOR
+# modify the screen type of the console; defaults to "80x25"
+#options 	VGA_CONSOLE_SCREENTYPE="\"80x24\""
+
 # Kernel root file system and dump configuration.
 config		netbsd	root on ? type ?
 #config		netbsd	root on ? type nfs
@@ -230,7 +253,7 @@ npx0	at isa? port 0xf0 irq 13	# x86 math coprocessor
 # Console Devices
 
 # ISA console
-pc0	at isa? port 0x60 irq 1		# pccons generic PC console driver
+#pc0	at isa? port 0x60 irq 1		# pccons generic PC console driver
 
 # Keyboard layout configuration for pccons
 #options 	FRENCH_KBD
@@ -239,19 +262,19 @@ pc0	at isa? port 0x60 irq 1		# pccons generic PC console driver
 #options 	NORWEGIAN_KBD
 
 # wscons
-#pckbc0	at isa?			# pc keyboard controller
-#pckbd*	at pckbc?		# PC keyboard
+pckbc0		at isa?			# pc keyboard controller
+pckbd*		at pckbc?		# PC keyboard
 #pms*		at pckbc?		# PS/2 mouse for wsmouse
-#vga0		at isa?
-#vga*		at pci?
-#pcdisplay0	at isa?			# CGA, MDA, EGA, HGA
-#wsdisplay*	at vga? console ?
-#wsdisplay*	at pcdisplay? console ?
-#wskbd*	at pckbd? console ?
-#wsmouse*	at pms?
+vga0		at isa?
+vga*		at pci? dev ? function ?
+pcdisplay0	at isa?			# CGA, MDA, EGA, HGA
+wsdisplay*	at vga? console ?
+wsdisplay*	at pcdisplay? console ?
+wskbd*		at pckbd? console ?
+#wsmouse*	at pms? mux 0
 
-#pcppi0	at isa?
-#sysbeep0	at pcppi?
+pcppi0		at isa?
+sysbeep0	at pcppi?
 
 # Serial Devices
 
@@ -306,8 +329,7 @@ ahc* 	at cardbus? dev ? function ?	# Adaptec ADP-1480
 adv*	at cardbus? dev ? function ?	# AdvanSys 1200[A,B], 9xx[U,UA] SCSI
 
 # SCSI bus support
-scsibus* at ahc?
-scsibus* at aic?
+scsibus* at scsi?
 
 # SCSI devices
 sd*	at scsibus? target ? lun ?	# SCSI disk drives
@@ -352,8 +374,7 @@ wd*	at wdc? channel ? drive ? flags 0x0000
 wd*	at pciide? channel ? drive ? flags 0x0000
 
 # ATAPI bus support
-atapibus* at wdc? channel ?
-atapibus* at pciide? channel ?
+atapibus* at atapi?
 
 # ATAPI devices
 # flags have the same meaning as for IDE drives.
@@ -379,6 +400,7 @@ ex*	at pci? dev ? function ?	# 3Com 90x[BC]
 fxp*	at pci? dev ? function ?	# Intel EtherExpress PRO 10+/100B
 ne* 	at pci? dev ? function ?	# NE2000-compatible Ethernet
 rtk* 	at pci? dev ? function ? 	# Realtek 8129/8139
+tlp*	at pci? dev ? function ?	# DECchip 21x4x and clones
 
 # PCMCIA network interfaces
 an*	at pcmcia? function ?		# Aironet PC4500/PC4800 (802.11)
@@ -450,8 +472,6 @@ uhid*	at uhidev? reportid ?
 
 # USB Mass Storage
 umass*	at uhub? port ? configuration ? interface ?
-atapibus* at umass? channel ?
-scsibus* at umass? channel ?
 
 # USB Ethernet adapters
 aue* 	at uhub? port ?		# ADMtek AN986 Pegasus based adapters
@@ -493,3 +513,8 @@ pseudo-device	pty		2	# pseudo-terminals (Sysinst needs two)
 
 # a pseudo device needed for Coda	# also needs CODA (above)
 #pseudo-device	vcoda		4	# coda minicache <-> venus comm.
+
+# wscons pseudo-devices
+pseudo-device	wsmux			# mouse & keyboard multiplexor
+#pseudo-device	wsfont
+

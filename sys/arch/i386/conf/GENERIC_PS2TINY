@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC_PS2TINY,v 1.12.2.2 2002/05/03 19:12:55 sommerfeld Exp $
+#	$NetBSD: GENERIC_PS2TINY,v 1.12.2.3 2002/06/25 15:44:46 sommerfeld Exp $
 #
 #	GENERIC-style kernel config for IBM PS/2 with MCA bus. It only contains
 #	IBM PS/2 related stuff and has been generally trimmed down somewhat,
@@ -203,8 +203,7 @@ aha*	at mca? slot ?			# Adaptec AHA-1640
 esp*	at mca? slot ?			# NCR 53C90
 
 # SCSI bus support
-scsibus* at aha?
-scsibus* at esp?
+scsibus* at scsi?
 
 # SCSI devices
 sd*	at scsibus? target ? lun ?	# SCSI disk drives
@@ -227,3 +226,4 @@ pseudo-device	md		1	# memory disk device (ramdisk)
 # rnd works; RND_COM does not on port i386 yet.
 pseudo-device	rnd			# /dev/random and in-kernel generator
 #options 	RND_COM			# use "com" randomness as well (BROKEN)
+pseudo-device	clockctl		# user control of clock subsystem
