@@ -1,4 +1,4 @@
-/*	$NetBSD: disks.c,v 1.37 2000/11/14 13:27:49 fvdl Exp $ */
+/*	$NetBSD: disks.c,v 1.38 2000/12/06 04:53:37 mrg Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -71,7 +71,8 @@ static int target_mount_with_error_menu(const char *opt, char *diskpart,
 					const char *mntpt);
 
 
-static void get_disks(void)
+static void
+get_disks(void)
 {
 	char **xd = disk_names;
 	char d_name[SSTRSIZE];
@@ -101,7 +102,8 @@ static void get_disks(void)
 }
 			
 
-int find_disks(void)
+int
+find_disks(void)
 {
 	char *tp;
 	char defname[STRSIZE];
@@ -173,7 +175,8 @@ int find_disks(void)
 }
 
 
-void disp_cur_fspart(int disp, int showall)
+void
+disp_cur_fspart(int disp, int showall)
 {
 	int i;
 	int start, stop;
@@ -215,7 +218,6 @@ void disp_cur_fspart(int disp, int showall)
 	msg_display_add(MSG_newline);
 }
 
-
 /*
  * Label a disk using an MD-specific string DISKLABEL_CMD for
  * to invoke  disklabel.
@@ -227,7 +229,8 @@ void disp_cur_fspart(int disp, int showall)
  * Sun ports should use  DISKLABEL_CMD "/sbin/disklabel -w"	
  * to get incore  to ondisk inode translation for the Sun proms.
  */
-int write_disklabel (void)
+int
+write_disklabel (void)
 {
 
 #ifdef DISKLABEL_CMD
@@ -238,9 +241,8 @@ int write_disklabel (void)
 	return 0;
 }
 
-
-
-int make_filesystems(void)
+int
+make_filesystems(void)
 {
 	int i;
 	char partname[STRSIZE];
@@ -262,7 +264,6 @@ int make_filesystems(void)
 	}
 	return 0;
 }
-
 
 /* newfs and mount an ffs filesystem. */
 static int 
@@ -290,7 +291,8 @@ do_ffs_newfs(const char *partname, int partno, const char *mountpoint)
 	return error;
 }
 
-int make_fstab(void)
+int
+make_fstab(void)
 {
 	FILE *f;
 	int i;
@@ -501,9 +503,6 @@ int target_mount_with_error_menu(const char *opt,
 
 	return error;
 }
-
-
-
 
 /*
  * fsck and mount the root partition.
