@@ -1,4 +1,4 @@
-/*	$NetBSD: endian.h,v 1.10 2004/09/12 23:17:37 thorpej Exp $	*/
+/*	$NetBSD: endian.h,v 1.11 2004/09/13 01:24:46 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1987, 1991, 1993
@@ -181,7 +181,7 @@ be16enc(void *buf, uint16_t u)
 {
 	uint8_t *p = buf;
 
-	p[0] = (u >> 8) & 0xff;
+	p[0] = ((unsigned)u >> 8) & 0xff;
 	p[1] = u & 0xff;
 }
 
@@ -191,7 +191,7 @@ le16enc(void *buf, uint16_t u)
 	uint8_t *p = buf;
 
 	p[0] = u & 0xff;
-	p[1] = (u >> 8) & 0xff;
+	p[1] = ((unsigned)u >> 8) & 0xff;
 }
 
 static __inline uint16_t __unused
