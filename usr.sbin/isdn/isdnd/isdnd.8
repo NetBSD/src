@@ -1,3 +1,4 @@
+.\" $NetBSD: isdnd.8,v 1.2 2001/04/09 13:23:42 wiz Exp $
 .\"
 .\" Copyright (c) 1997, 2000 Hellmuth Michaelis. All rights reserved.
 .\"
@@ -22,7 +23,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$Id: isdnd.8,v 1.1.1.1 2001/01/06 13:00:15 martin Exp $ 
+.\"	$Id: isdnd.8,v 1.2 2001/04/09 13:23:42 wiz Exp $
 .\"
 .\" $FreeBSD$
 .\"
@@ -49,23 +50,23 @@
 .Op Fl u Ar charging unit length
 .Op Fl m
 .Sh DESCRIPTION
-.Nm Isdnd
+.Nm
 is the isdn4bsd package demon which manages all ISDN related connection
 and disconnection of ISDN devices supported by the package.
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
 .It Fl c
-Use 
+Use
 .Ar configfile
-as the name of the runtime configuration filename for 
-.Nm isdnd
+as the name of the runtime configuration filename for
+.Nm
 instead of the default file
-.Li /etc/isdn/isdnd.rc .
+.Pa /etc/isdn/isdnd.rc .
 .It Fl d
 If debugging support is compiled into
-.Nm isdnd
-this option is used to specify the debugging level, or better which kind 
+.Nm
+this option is used to specify the debugging level, or better which kind
 of debugging messages are displayed. The debugging level is the sum of the
 following values:
 .Pp
@@ -98,12 +99,14 @@ The value can be specified in any number base supported by the
 .Xr sscanf 3
 library routine.
 .Pp
-In addition, this option accepts also the character 'n' as an argument to
+In addition, this option accepts also the character
+.Sq n
+as an argument to
 disable displaying debug messages on the full-screen display.
 .Pp
 .It Fl f
 Specifying this option causes
-.Nm isdnd
+.Nm
 to enter the full-screen mode of operation. When operating in this mode,
 entering the control character
 .Em Control-L
@@ -134,15 +137,15 @@ If this option is set, logging is not done via the
 facility but instead is appended to a file.
 .It Fl L
 Specifies the name of the logfile which is used when the option
-.Em -l
+.Fl l
 is set. See also the keyword
 .Em rotatesuffix
 in the system section of
 .Xr isdnd.rc 5 .
 .It Fl P
 This option prints out the parsed and verified isdnd configuration in the same
-format as the isdnd.rc file. This output can be used as an isdnd.rc file. This 
-feature is especially useful when debugging an isdnd.rc file to see, what the
+format as the isdnd.rc file. This output can be used as an isdnd.rc file. This
+feature is especially useful when debugging an isdnd.rc file to see what the
 default settings of options are when they are not set in the isdnd.rc input
 file.
 .Pp
@@ -151,24 +154,25 @@ The
 exits after the printout is done.
 .It Fl F
 This option prevents
-.Nm isdnd
+.Nm
 to detach from the controlling tty and become a daemon.
 .It Fl r
-In conjunction with the 
+In conjunction with the
 .Fl t
 option,
 .Ar device
 specifies a terminal device which becomes the controlling tty for
-.Nm isdnd
+.Nm
 and on which the full-screen mode output is displayed.
 .It Fl s
 This option may be used to specify the logging facility in case
 .Xr syslog 3
 logging is configured and another facility than the default LOCAL0
 facility shall be used. The facility is to be specified as an integer in
-the range 0-11 or 16-23 (see the file /usr/include/syslog.h). 
+the range 0-11 or 16-23 (see the file
+.Pa /usr/include/syslog.h ) .
 .It Fl t
-In conjunction with the 
+In conjunction with the
 .Fl f
 and
 .Fl r
@@ -176,14 +180,14 @@ options,
 .Ar terminaltype
 specifies a terminal type or termcap entry name (such as vt220) for the device
 used for
-.Nm isdnd
+.Nm
 full-screen output. This is useful if an unused (no getty running) tty line is
-used for full-screen output for which no 
+used for full-screen output for which no
 .Li TERM
 environment variable exists.
 .It Fl u
 Specifies the length of a charging unit in case the config file entry
-keyword 
+keyword
 .Em unitlenghtsrc
 is set to
 .Em cmdl .
@@ -195,13 +199,16 @@ file option
 .El
 .Pp
 .Sh INTERACTION WITH THE KERNEL
-.Nm Isdnd
+.Nm
 communicates with the kernel part of isdn4bsd by receiving status and
-event messages (
+event messages (via
 .Xr read 2
-from device /dev/i4b ) and by transmitting commands and responses (
+from device
+.Pa /dev/i4b )
+and by transmitting commands and responses (via
 .Xr ioctl 2
-from device /dev/i4b ).
+on device
+.Pa /dev/i4b ) .
 .Pp
 The messages and message parameters are documented in the include
 file
@@ -260,8 +267,8 @@ Charging information from the kernel.
 .Ss OUTGOING CALLS
 Currently the only possibility to trigger an outgoing call is that an
 isdn4bsd network driver
-.Em (ipr<n>) 
-sends a 
+.Em ( ipr<n> )
+sends a
 .Em MSG_DIALOUT_IND
 to the
 .Nm
@@ -273,7 +280,7 @@ ioctl message, this CDID is now used in all interactions with the kernel
 to identify this single call until a disconnect occurs.
 .Pp
 After getting the CDID, the daemon looks up several additional information
-in its entry section of the configuration corresponding to that connection 
+in its entry section of the configuration corresponding to that connection
 and issues a
 .Em I4B_CONNECT_REQ
 ioctl message to the kernel. The kernel now dials the remote side and
@@ -291,13 +298,13 @@ by the kernel sending the
 message and the CDID corresponding to the call is no longer valid.
 .Pp
 .Ss INCOMING CALLS
-Incoming calls are signaled to the
+Incoming calls are signaled to
 .Nm
 by the kernel transmitting the
 .Em MSG_CONNECT_IND
-message to the daemon. 
+message to the daemon.
 .Pp
-With the information contained in this message, the
+With the information contained in this message,
 .Nm
 searches the entry section of its configuration database and if a match is
 found, it accepts or rejects the call or, if no match is found, it ignores the
@@ -313,31 +320,27 @@ message to the daemon.
 The call is terminated by either the local site timing out or the remote
 side hanging up the connection or the local side actively sending a
 .Em I4B_DISCONNECT_REQ
-ioctl message, both events are signaled to the
+ioctl message, both events are signaled to
 .Nm
 by the kernel sending the
 .Em I4B_DISCONNECT_IND
 message and the CDID corresponding to the call is no longer valid.
-.Pp
-
 .Sh SIGNALS
-
-Sending a HUP signal to 
+Sending a HUP signal to
 .Nm
 causes all open connections to be terminated and the configuration file is
 reread. In case aliasfile handling was enabled, the aliasfile is also
 reread.
 
-Sending a USR1 signal to 
+Sending a USR1 signal to
 .Nm
-causes the accounting file and the logfile (if logging to a file is used 
-instead of logging via the 
+causes the accounting file and the logfile (if logging to a file is used
+instead of logging via the
 .Xr syslog 3
 facility) to be closed and reopened to make logfile rotation possible.
-
 .Sh ENVIRONMENT
 The following environment variables affect the execution of
-.Nm isdnd :
+.Nm "" :
 .Bl -tag -width Ds
 .It Ev TERM
 The terminal type when running in full-screen display mode.
@@ -345,39 +348,29 @@ See
 .Xr environ 7
 for more information.
 .El
-
 .Sh FILES
 .Bl -tag -width /etc/isdn/isdnd.rates -compact
 .It Pa /dev/i4b
 The device-file used to communicate with the kernel ISDN driver subsystem.
-
 .It Pa /var/log/messages
 A record of the actions in case of syslogd logging support.
-
 .It Pa /var/log/isdnd.acct
 The default accounting information filename (if accounting is configured).
-
 .It Pa /var/log/isdnd.log
 The default logging filename (if logging to a file is configured).
-
 .It Pa /var/run/isdnd.pid
 The process id of the isdn daemon (also known as "lockfile" to isdnd, preventing multiple invocations of it).
-
 .It Pa /usr/local/lib/isdn
 .It Pa /etc/isdn
 The directory where isdnd expects some supplementary data files and programs
 for telephone answering support.
-
 .It Pa /etc/isdn/isdnd.rc
 The default runtime configuration file.
-
 .It Pa /etc/isdn/isdnd.rates
 The default unit charging rates specification file.
-
 .It Pa /etc/isdn/isdntel.alias
 The default table (if aliasing is enabled) to convert phone number to caller's name.
 .El
-
 .Sh EXAMPLES
 For a first try, the following command should be used to start
 .Nm
@@ -388,8 +381,9 @@ isdnd -d0xf9 -F
 .Pp
 This will start isdnd with reasonable debugging settings and produce
 output on the current terminal.
-.Nm Isdnd
-can then be terminated by entering Control-C.
+.Nm
+can then be terminated by entering
+.Em Control-C .
 .Pp
 Another example, the command:
 .Bd -literal -offset indent
@@ -397,30 +391,25 @@ isdnd -d0xf9 -f -r /dev/ttyv3 -t vt100
 .Ed
 .Pp
 will start
-.Nm isdnd
-with reasonable debugging messages enabled, full-screen mode of operation, 
+.Nm
+with reasonable debugging messages enabled, full-screen mode of operation,
 full-screen display redirected to /dev/ttyv03 and using a termcap entry
 for vt100 on this display.
-
 .Sh DIAGNOSTICS
 Exit status is 0 on success, 1 on error.
-.Pp
-
 .Sh SEE ALSO
-.Xr syslogd 8 ,
-.Xr isdntrace 8 ,
-.Xr isdntel 8 ,
-.Xr isdnd.rc 5 ,
-.Xr isdnd.rates 5 ,
+.\" .Xr i4bing 4 ,
+.Xr i4bipr 4 ,
 .Xr i4bisppp 4 ,
-.Xr i4bipr 4
-.Xr i4bing 4
-
+.Xr isdnd.rates 5 ,
+.Xr isdnd.rc 5 ,
+.Xr isdntel 8 ,
+.Xr isdntrace 8 ,
+.Xr syslogd 8
 .Sh BUGS
 Still one or more left.
-
-.Sh AUTHOR
+.Sh AUTHORS
 The
 .Nm
-daemon and this manual page were written by 
+daemon and this manual page were written by
 .An Hellmuth Michaelis Aq hm@kts.org .
