@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.h,v 1.10.2.4 2001/01/05 17:35:24 bouyer Exp $	*/
+/*	$NetBSD: linux_machdep.h,v 1.10.2.5 2001/01/18 09:23:12 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1995, 2000 The NetBSD Foundation, Inc.
@@ -108,8 +108,9 @@ __END_DECLS
 #define LINUX_KDDISABIO   0x4b37
 #define LINUX_KDGETLED    0x4b31
 #define LINUX_KDSETLED    0x4b32
-#define LINUX_KDGKBTYPE   0x4B33
-#define LINUX_KDGKBENT    0x4B46
+#define LINUX_KDGKBTYPE   0x4b33
+#define LINUX_KDGKBENT    0x4b46
+#define LINUX_KIOCSOUND   0x4b2f
 
 /*
  * Mode for KDSKBMODE which we don't have (we just use plain mode for this)

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_xi.c,v 1.6.2.4 2001/01/05 17:36:23 bouyer Exp $	*/
+/*	$NetBSD: if_xi.c,v 1.6.2.5 2001/01/18 09:23:31 bouyer Exp $	*/
 /*	OpenBSD: if_xe.c,v 1.9 1999/09/16 11:28:42 niklas Exp 	*/
 
 /*
@@ -1145,7 +1145,7 @@ xi_init(sc)
 
 	DPRINTF(XID_CONFIG, ("xi_init()\n"));
 
-	s = splimp();
+	s = splnet();
 
 	xi_set_address(sc);
 
@@ -1312,7 +1312,7 @@ xi_ioctl(ifp, command, data)
 
 	DPRINTF(XID_CONFIG, ("xi_ioctl()\n"));
 
-	s = splimp();
+	s = splnet();
 
 	switch (command) {
 	case SIOCSIFADDR:

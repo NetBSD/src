@@ -1,7 +1,7 @@
-/* 	$NetBSD: sticvar.h,v 1.3.2.1 2001/01/05 17:36:28 bouyer Exp $	*/
+/* 	$NetBSD: sticvar.h,v 1.3.2.2 2001/01/18 09:23:37 bouyer Exp $	*/
 
 /*-
- * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
+ * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -70,19 +70,10 @@ struct stic_screen {
 	int	ss_flags;
 	int	ss_curx;
 	int	ss_cury;
-	struct	stic_hwcursor64 ss_cursor;
-	struct	stic_hwcmap256 ss_cmap;
 };
 
-#define	SS_CURENB_CHANGED	0x0001
-#define	SS_CURCMAP_CHANGED	0x0002
-#define	SS_CURSHAPE_CHANGED	0x0004
-#define	SS_CMAP_CHANGED		0x0008
-#define	SS_ALL_CHANGED		0x000f
-
-#define	SS_ALLOCED		0x0010
-#define	SS_ACTIVE		0x0020
-#define	SS_CURENB		0x0040
+#define	SS_ALLOCED		0x01
+#define	SS_ACTIVE		0x02
 
 struct stic_info {
 	u_int32_t	*si_slotkva;
@@ -114,15 +105,22 @@ struct stic_info {
 	paddr_t	si_buf_phys;
 	size_t	si_buf_size;
 
-	int	si_vdacctl;
+	int	si_flags;
+	struct	stic_hwcursor64 si_cursor;
+	struct	stic_hwcmap256 si_cmap;
 
 	struct	callout si_switch_callout;
 	void	(*si_switchcb)(void *, int, int);
 	void	*si_switchcbarg;
 };
 
-#define	STIC_VDAC_BLINK		0x01
-#define	STIC_VDAC_24BIT		0x02
+#define	SI_CURENB_CHANGED	0x0001
+#define	SI_CURCMAP_CHANGED	0x0002
+#define	SI_CURSHAPE_CHANGED	0x0004
+#define	SI_CMAP_CHANGED		0x0008
+#define	SI_ALL_CHANGED		0x000f
+
+#define	SI_CURENB		0x0100
 
 void	stic_init(struct stic_info *);
 void	stic_attach(struct device *, struct stic_info *, int);
@@ -135,7 +133,7 @@ extern struct stic_info stic_consinfo;
 #endif	/* _KERNEL */
 
 #define	STIC_PACKET_SIZE	4096
-#define	STIC_IMGBUF_SIZE	8192
+#define	STIC_IMGBUF_SIZE	1280*4
 
 struct stic_xinfo {
 	int	sxi_stampw;
@@ -144,16 +142,16 @@ struct stic_xinfo {
 	u_long	sxi_buf_phys;
 };
 
-#define	STICIO_GXINFO	_IOR('s', 0, struct stic_xinfo)
-#define	STICIO_SBLINK	_IOW('s', 1, int)
-#define	STICIO_S24BIT	_IOW('s', 2, int)
-#define	STICIO_START860	_IO('s', 3)
-#define	STICIO_RESET860	_IO('s', 4)
+#define	STICIO_GXINFO	_IOR('S', 0, struct stic_xinfo)
+#define	STICIO_RESET	_IO('S', 1)
+#define	STICIO_START860	_IO('S', 2)
+#define	STICIO_RESET860	_IO('S', 3)
+#define	STICIO_RESTORE	_IO('S', 4)
 
 struct stic_xmap {
-	u_int32_t	sxm_stic[PAGE_SIZE];
-	u_int32_t	sxm_poll[0x0c0000 / sizeof(u_int32_t)];
-	u_int32_t	sxm_buf[256 * 1024 / sizeof(u_int32_t)];
+	u_int8_t	sxm_stic[NBPG];
+	u_int8_t	sxm_poll[0x0c0000];
+	u_int8_t	sxm_buf[256 * 1024];
 };
 
 #endif	/* !_TC_STICVAR_H_ */

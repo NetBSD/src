@@ -27,51 +27,26 @@
  *	i4b_isic.c - global isic stuff
  *	==============================
  *
- *	$Id: i4b_isic.c,v 1.1.1.1.2.2 2001/01/05 17:35:38 bouyer Exp $ 
+ *	$Id: i4b_isic.c,v 1.1.1.1.2.3 2001/01/18 09:23:18 bouyer Exp $ 
  *
  *      last edit-date: [Fri Jan  5 11:36:10 2001]
  *
  *---------------------------------------------------------------------------*/
 
 #include <sys/param.h>
-#if defined(__FreeBSD__) && __FreeBSD__ >= 3
 #include <sys/ioccom.h>
-#else
-#include <sys/ioctl.h>
-#endif
 #include <sys/kernel.h>
 #include <sys/systm.h>
 #include <sys/mbuf.h>
 #include <sys/socket.h>
 #include <net/if.h>
-
-#if defined(__NetBSD__) && __NetBSD_Version__ >= 104230000
 #include <sys/callout.h>
-#endif
-
-#ifdef __FreeBSD__
-#include <machine/clock.h>
-#include <i386/isa/isa_device.h>
-#else
 #include <sys/device.h>
-#if defined(__NetBSD__) && defined(amiga)
 #include <machine/bus.h>
-#else
-#ifndef __bsdi__
-#include <dev/isa/isavar.h>
-#endif
-#endif
-#endif
 
-#ifdef __FreeBSD__
-#include <machine/i4b_debug.h>
-#include <machine/i4b_ioctl.h>
-#include <machine/i4b_trace.h>
-#else
 #include <netisdn/i4b_debug.h>
 #include <netisdn/i4b_ioctl.h>
 #include <netisdn/i4b_trace.h>
-#endif
 
 #include <dev/ic/i4b_isicl1.h>
 #include <dev/ic/i4b_ipac.h>
@@ -82,79 +57,16 @@
 #include <netisdn/i4b_mbuf.h>
 #include <netisdn/i4b_global.h>
 
-#ifdef __bsdi__
-static int isicmatch(struct device *parent, struct cfdata *cf, void *aux);
-static void isicattach(struct device *parent, struct device *self, void *aux);
-struct cfdriver isiccd =
-	{ NULL, "isic", isicmatch, isicattach, DV_IFNET,
-	  sizeof(struct l1_softc) };
-
-int isa_isicmatch(struct device *parent, struct cfdata *cf, struct isa_attach_args *);
-int isapnp_isicmatch(struct device *parent, struct cfdata *cf, struct isa_attach_args *);
-int isa_isicattach(struct device *parent, struct device *self, struct isa_attach_args *ia);
-
-static int
-isicmatch(struct device *parent, struct cfdata *cf, void *aux)
-{
-	struct isa_attach_args *ia = (struct isa_attach_args *) aux;
-	if (ia->ia_bustype == BUS_PCMCIA) {
-		ia->ia_irq = IRQNONE;
-		/* return 1;	Not yet */
-		return 0;	/* for now */
-	}
-	if (ia->ia_bustype == BUS_PNP) {
-		return isapnp_isicmatch(parent, cf, ia);
-	}
-	return isa_isicmatch(parent, cf, ia);
-}
-
-static void
-isicattach(struct device *parent, struct device *self, void *aux)
-{
-	struct isa_attach_args *ia = (struct isa_attach_args *) aux;
-	struct l1_softc *sc = (struct l1_softc *)self;
-
-	sc->sc_flags = sc->sc_dev.dv_flags;
-	isa_isicattach(parent, self, ia);
-	isa_establish(&sc->sc_id, &sc->sc_dev);
-	sc->sc_ih.ih_fun = isicintr;
-	sc->sc_ih.ih_arg = (void *)sc;
-	intr_establish(ia->ia_irq, &sc->sc_ih, DV_NET);
-	/* Could add a shutdown hook here... */
-}
-#endif
-
-#ifdef __FreeBSD__
-void isicintr_sc(struct l1_softc *sc);
-#if !(defined(__FreeBSD_version)) || (defined(__FreeBSD_version) && __FreeBSD_version >= 300006)
-void isicintr(int unit);
-#endif
-#else
 /* XXX - hack, going away soon! */
 struct l1_softc *l1_sc[ISIC_MAXUNIT];
-#endif
 
 /*---------------------------------------------------------------------------*
  *	isic - device driver interrupt routine
  *---------------------------------------------------------------------------*/
-#ifdef __FreeBSD__
-
-void
-isicintr_sc(struct l1_softc *sc)
-{
-	isicintr(sc->sc_unit);
-}
-
-void
-isicintr(int unit)
-{
-	register struct l1_softc *sc = &l1_sc[unit];
-#else
 int
 isicintr(void *arg)
 {
 	struct l1_softc *sc = arg;
-#endif
 	
 	if(sc->sc_ipac == 0)	/* HSCX/ISAC interupt routine */
 	{
@@ -217,9 +129,8 @@ isicintr(void *arg)
 		HSCX_WRITE(0, H_MASK, HSCX_A_IMASK);
 		ISAC_WRITE(I_MASK, ISAC_IMASK);
 		HSCX_WRITE(1, H_MASK, HSCX_B_IMASK);
-#ifndef __FreeBSD__
+
 		return(was_hscx_irq || was_isac_irq);
-#endif
 	}
 	else	/* IPAC interrupt routine */
 	{
@@ -267,17 +178,12 @@ isicintr(void *arg)
 			if(!ipac_irq_stat)
 				break;
 		}
-#ifdef NOTDEF
-		if(was_ipac_irq == 0)
-			NDBGL1(L1_ERROR, "WARNING: unit %d, No IRQ from IPAC!", sc->sc_unit);
-#endif
+
 		IPAC_WRITE(IPAC_MASK, 0xff);
 		DELAY(50);
 		IPAC_WRITE(IPAC_MASK, 0xc0);
 
-#ifndef __FreeBSD__
 		return(was_ipac_irq);
-#endif
 	}		
 }
 

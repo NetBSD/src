@@ -1,4 +1,4 @@
-/* $NetBSD: interrupt.c,v 1.40.2.3 2000/12/08 09:23:22 bouyer Exp $ */
+/* $NetBSD: interrupt.c,v 1.40.2.4 2001/01/18 09:22:05 bouyer Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.40.2.3 2000/12/08 09:23:22 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.40.2.4 2001/01/18 09:22:05 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -383,7 +383,7 @@ netintr()
 struct alpha_soft_intr alpha_soft_intrs[IPL_NSOFT];
 
 /* XXX For legacy software interrupts. */
-struct alpha_soft_intrhand *softnet_intrhand, *softclock_intrhand;
+struct alpha_soft_intrhand *softnet_intrhand;
 
 /*
  * softintr_init:
@@ -409,11 +409,8 @@ softintr_init()
 	/* XXX Establish legacy software interrupt handlers. */
 	softnet_intrhand = softintr_establish(IPL_SOFTNET,
 	    (void (*)(void *))netintr, NULL);
-	softclock_intrhand = softintr_establish(IPL_SOFTCLOCK,
-	    (void (*)(void *))softclock, NULL);
 
 	assert(softnet_intrhand != NULL);
-	assert(softclock_intrhand != NULL);
 }
 
 /*

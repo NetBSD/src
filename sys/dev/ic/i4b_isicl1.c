@@ -27,7 +27,7 @@
  *	i4b_l1.c - isdn4bsd layer 1 handler
  *	-----------------------------------
  *
- *	$Id: i4b_isicl1.c,v 1.1.1.1.2.2 2001/01/05 17:35:38 bouyer Exp $ 
+ *	$Id: i4b_isicl1.c,v 1.1.1.1.2.3 2001/01/18 09:23:18 bouyer Exp $ 
  *
  *      last edit-date: [Fri Jan  5 11:36:11 2001]
  *
@@ -303,7 +303,7 @@ i4b_mph_command_req(int unit, int command, void *parm)
 
 		case CMR_SETTRACE:
 			NDBGL1(L1_PRIM, "unit %d, command = CMR_SETTRACE, parm = %p", unit, parm);
-			sc->sc_trace = (unsigned int)parm;
+			sc->sc_trace = (int)(unsigned long)parm;
 			break;
 
 		default:

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.150.2.1 2000/11/20 20:20:37 bouyer Exp $	*/
+/*	$NetBSD: machdep.c,v 1.150.2.2 2001/01/18 09:22:55 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.150.2.1 2000/11/20 20:20:37 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.150.2.2 2001/01/18 09:22:55 bouyer Exp $");
 
 #include "fs_mfs.h"
 #include "opt_ddb.h"
@@ -776,7 +776,7 @@ cpu_intr(status, cause, pc, ipending)
 		_clrsoftintr(MIPS_SOFT_INT_MASK_0);
 		uvmexp.softs++;
 		intrcnt[SOFTCLOCK_INTR]++;
-		softclock();
+		softclock(NULL);
 	}
 	return;
 

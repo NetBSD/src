@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ieee1394arp.c,v 1.1.2.2 2000/11/22 16:06:07 bouyer Exp $	*/
+/*	$NetBSD: if_ieee1394arp.c,v 1.1.2.3 2001/01/18 09:23:56 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -147,7 +147,7 @@ arp_unlock()
  * Parallel to llc_rtrequest.
  */
 void
-ieee1394arp_rtrequest(int req, struct rtentry *rt, struct sockaddr *sa)
+ieee1394arp_rtrequest(int req, struct rtentry *rt, struct rt_addrinfo *info)
 {
 	struct sockaddr *gate = rt->rt_gateway;
 	struct llinfo_arp *la = (struct llinfo_arp *)rt->rt_llinfo;

@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vfsops.c,v 1.53.2.3 2000/12/08 09:20:12 bouyer Exp $	*/
+/*	$NetBSD: ffs_vfsops.c,v 1.53.2.4 2001/01/18 09:24:04 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1994
@@ -213,6 +213,7 @@ ffs_mount(mp, path, data, ndp, p)
 			if (error)
 				return (error);
 			fs->fs_ronly = 1;
+			fs->fs_fmod = 0;
 		}
 
 		/*
@@ -445,6 +446,7 @@ ffs_reload(mountp, cred, p)
 	 */
 	memcpy(&newfs->fs_csp[0], &fs->fs_csp[0], sizeof(fs->fs_csp));
 	newfs->fs_maxcluster = fs->fs_maxcluster;
+	newfs->fs_ronly = fs->fs_ronly;
 	memcpy(fs, newfs, (u_int)fs->fs_sbsize);
 	if (fs->fs_sbsize < SBSIZE)
 		bp->b_flags |= B_INVAL;
@@ -1048,6 +1050,7 @@ ffs_vget(mp, ino, vpp)
 	ip->i_fs = fs = ump->um_fs;
 	ip->i_dev = dev;
 	ip->i_number = ino;
+	LIST_INIT(&ip->i_pcbufhd);
 #ifdef QUOTA
 	{
 		int i;

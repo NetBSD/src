@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_machdep.c,v 1.48.2.2 2000/12/13 15:49:29 bouyer Exp $	*/
+/*	$NetBSD: sys_machdep.c,v 1.48.2.3 2001/01/18 09:22:36 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -222,6 +222,17 @@ i386_set_ldt(p, args, retval)
 			break;
 		case SDT_SYS286CGT:
 		case SDT_SYS386CGT:
+			/*
+			 * Only allow call gates targeting a segment
+			 * in the LDT or a user segment in the fixed
+			 * part of the gdt.  Segments in the LDT are
+			 * constrained (below) to be user segments.
+			 */
+			if (desc.gd.gd_p != 0 && !ISLDT(desc.gd.gd_selector) &&
+			    ((IDXSEL(desc.gd.gd_selector) >= NGDT) ||
+			     (gdt[IDXSEL(desc.gd.gd_selector)].sd.sd_dpl !=
+				 SEL_UPL)))
+				return (EACCES);
 			/* Can't replace in use descriptor with gate. */
 			if (n == fsslot || n == gsslot)
 				return (EBUSY);
@@ -240,6 +251,8 @@ i386_set_ldt(p, args, retval)
 		case SDT_MEMRWA:
 		case SDT_MEMROD:
 		case SDT_MEMRODA:
+		case SDT_MEMRWD:
+		case SDT_MEMRWDA:
 		case SDT_MEME:
 		case SDT_MEMEA:
 		case SDT_MEMER:

@@ -1,14 +1,14 @@
-#	$NetBSD: CARDBUS,v 1.2.2.3 2000/12/08 09:26:33 bouyer Exp $
+#	$NetBSD: CARDBUS,v 1.2.2.4 2001/01/18 09:22:32 bouyer Exp $
 #
 #	CARDBUS: GENERIC + CardBus support.  Additionally, some
 #	things typically not found on laptops have been commented out.
 
-#	from: GENERIC,v 1.377 2000/11/14 19:52:05 augustss Exp
+#	from: GENERIC,v 1.390 2001/01/09 00:40:53 lukem Exp
 #
 
 include "arch/i386/conf/std.i386"
 
-#ident		"CARDBUS-$Revision: 1.2.2.3 $"
+#ident		"CARDBUS-$Revision: 1.2.2.4 $"
 
 maxusers	32		# estimated number of users
 
@@ -361,6 +361,8 @@ com2	at isa? port 0x3e8 irq 5
 #cy0	at isa? iomem 0xd4000 irq 12	# Cyclades serial cards
 #addcom0 at isa? port 0x108 irq 5	# Addonics FlexPort 8S
 #com*	at addcom? slave ?
+#moxa0	at isa?	port 0x100 irq 5	# MOXA C168H serial card (experimental)
+#com*	at moxa? slave ?
 
 
 # Parallel Printer Interfaces
@@ -543,6 +545,7 @@ fd*	at fdc? drive ?			# the drives themselves
 # Network Interfaces
 
 # PCI network interfaces
+#an*	at pci? dev ? function ?	# Aironet PC4500/PC4800 (802.11)
 #de*	at pci? dev ? function ?	# DEC 21x4x-based Ethernet
 #en*	at pci? dev ? function ?	# ENI/Adaptec ATM
 #ep*	at pci? dev ? function ?	# 3Com 3c59x
@@ -572,11 +575,13 @@ fxp*	at pci? dev ? function ?	# Intel EtherExpress PRO 10+/100B
 #tlp*	at eisa? slot ?			# DEC DE-425 Ethernet
 
 # ISA Plug-and-Play network interfaces
+#an*	at isapnp?			# Aironet 802.11
 #ep*	at isapnp?			# 3Com 3c509 Ethernet
 #ne*	at isapnp?			# NE2000-compatible Ethernet
 #tr*	at isapnp?			# IBM/3COM TROPIC Token-Ring
 
 # PCMCIA network interfaces
+an*	at pcmcia? function ?		# Aironet PC4500/PC4800 (802.11)
 awi*	at pcmcia? function ?		# BayStack 650/660 (802.11FH/DS)
 cnw*	at pcmcia? function ?		# Xircom/Netwave AirSurfer
 ep*	at pcmcia? function ?		# 3Com 3c589 and 3c562 Ethernet
@@ -708,6 +713,9 @@ ucom*	at uvisor?
 # USB scanners
 uscanner* at uhub? port ?
 
+# Y@P firmware loader
+uyap* at uhub? port ?
+
 # USB Generic driver
 ugen*	at uhub? port ?
 
@@ -715,12 +723,15 @@ ugen*	at uhub? port ?
 # Audio Devices
 
 # PCI audio devices
+auich*	at pci? dev ? function ?	# Intel ICH integrated AC'97 Audio
 auvia*	at pci? dev ? function ?	# VIA VT82C686A integrated AC'97 Audio
 clcs*	at pci? dev ? function ?	# Cirrus Logic CS4280
 cmpci*	at pci? dev ? function ?	# C-Media CMI8338/8738
 eap*	at pci? dev ? function ?	# Ensoniq AudioPCI
+esm*	at pci? dev ? function ?	# ESS Maestro-1/2/2e PCI Audio Accelerator
 eso*	at pci? dev ? function ?	# ESS Solo-1 PCI AudioDrive
 fms*	at pci? dev ? function ?	# Forte Media FM801
+neo*	at pci? dev ? function ?	# NeoMagic 256 AC'97 Audio
 sv*	at pci? dev ? function ?	# S3 SonicVibes
 
 # ISA Plug-and-Play audio devices
@@ -755,15 +766,18 @@ opl*	at wss?
 
 # Audio support
 #audio*	at aria?
+audio*	at auich?
 audio*	at auvia?
 audio*	at clcs?
 audio*	at cmpci?
 audio*	at eap?
+audio*	at esm?
 audio*	at eso?
 #audio*	at ess?
 audio*	at fms?
 #audio*	at gus?
 #audio*	at guspnp?
+audio*	at neo?
 #audio*	at pas?
 audio*	at sb?
 #audio*	at sp?
@@ -858,6 +872,7 @@ pseudo-device	ipip		2	# IP Encapsulation within IP (RFC 2003)
 pseudo-device	gif		4	# IPv[46] over IPv[46] tunnel (RFC1933)
 #pseudo-device	faith		1	# IPv[46] tcp relay translation i/f
 #pseudo-device	stf		1	# 6to4 IPv6 over IPv4 encapsulation
+pseudo-device	vlan			# IEEE 802.1q encapsulation
 
 # miscellaneous pseudo-devices
 pseudo-device	pty			# pseudo-terminals

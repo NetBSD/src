@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.6.2.2 2000/11/20 20:00:36 bouyer Exp $	*/
+/*	$NetBSD: intr.h,v 1.6.2.3 2001/01/18 09:22:12 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -97,7 +97,7 @@ extern void _clrsoftintr __P((int));
 #define splnet()	(_splraise(splvec.splnet))
 #define spltty()	(_splraise(splvec.spltty))
 #define splimp()	(_splraise(splvec.splimp))
-#define splpmap()	(_splraise(splvec.splimp))
+#define splvm()		(_splraise(splvec.splimp))
 #define splclock()	(_splraise(splvec.splclock))
 #define splstatclock()	(_splraise(splvec.splstatclock))
 #define splhigh()	_splraise(MIPS_INT_MASK_SPLHIGH)

@@ -1,4 +1,4 @@
-#	$NetBSD: files.bebox,v 1.17.2.2 2000/11/22 16:00:06 bouyer Exp $
+#	$NetBSD: files.bebox,v 1.17.2.3 2001/01/18 09:22:25 bouyer Exp $
 #
 # First try for bebox specific configuration info
 #
@@ -13,6 +13,7 @@ file	arch/bebox/bebox/conf.c
 file	arch/bebox/bebox/disksubr.c		disk
 file	arch/bebox/bebox/extintr.c
 file	arch/bebox/bebox/machdep.c
+file	arch/bebox/bebox/procfs_machdep.c	procfs
 
 # General files
 file	dev/cons.c

@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.24.2.1 2000/11/20 20:06:04 bouyer Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.24.2.2 2001/01/18 09:22:25 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -399,9 +399,7 @@ _bus_dmamem_map(t, segs, nsegs, size, kvap, flags)
 	int curseg, s;
 
 	size = round_page(size);
-	s = splimp();
-	va = uvm_km_valloc(kmem_map, size);
-	splx(s);
+	va = uvm_km_valloc(kernel_map, size);
 
 	if (va == 0)
 		return (ENOMEM);
@@ -448,9 +446,7 @@ _bus_dmamem_unmap(t, kva, size)
 #endif
 
 	size = round_page(size);
-	s = splimp();
-	uvm_km_free(kmem_map, (vaddr_t)kva, size);
-	splx(s);
+	uvm_km_free(kernel_map, (vaddr_t)kva, size);
 }
 
 /*

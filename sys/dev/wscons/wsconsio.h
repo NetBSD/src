@@ -1,4 +1,4 @@
-/* $NetBSD: wsconsio.h,v 1.20.2.1 2000/11/20 11:43:36 bouyer Exp $ */
+/* $NetBSD: wsconsio.h,v 1.20.2.2 2001/01/18 09:23:42 bouyer Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -164,16 +164,16 @@ struct wskbd_map_data {
 #define		WSMOUSE_TYPE_ARCHIMEDES	8	/* Archimedes mouse */
 
 /* Set resolution.  Not applicable to all mouse types. */
-#define	WSMOUSEIO_SRES		_IOR('W', 33, u_int)
+#define	WSMOUSEIO_SRES		_IOW('W', 33, u_int)
 #define		WSMOUSE_RES_MIN		0
 #define		WSMOUSE_RES_DEFAULT	75
 #define		WSMOUSE_RES_MAX		100
 
 /* Set scale factor (num / den).  Not applicable to all mouse types. */
-#define	WSMOUSEIO_SSCALE	_IOR('W', 34, u_int[2])
+#define	WSMOUSEIO_SSCALE	_IOW('W', 34, u_int[2])
 
 /* Set sample rate.  Not applicable to all mouse types. */
-#define	WSMOUSEIO_SRATE		_IOR('W', 35, u_int)
+#define	WSMOUSEIO_SRATE		_IOW('W', 35, u_int)
 #define		WSMOUSE_RATE_MIN	0
 #define		WSMOUSE_RATE_DEFAULT	50
 #define		WSMOUSE_RATE_MAX	100

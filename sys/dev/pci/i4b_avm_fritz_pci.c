@@ -35,7 +35,7 @@
  *	Fritz!Card PCI specific routines for isic driver
  *	------------------------------------------------
  *
- *	$Id: i4b_avm_fritz_pci.c,v 1.1.1.1.2.2 2001/01/05 17:36:04 bouyer Exp $
+ *	$Id: i4b_avm_fritz_pci.c,v 1.1.1.1.2.3 2001/01/18 09:23:25 bouyer Exp $
  *
  *      last edit-date: [Fri Jan  5 11:38:58 2001]
  *
@@ -98,7 +98,8 @@
 #include <dev/pci/pci_isic.h>
 
 /* PCI config map to use (only one in this driver) */
-#define FRITZPCI_PORT0_MAPOFF	PCI_MAPREG_START+4
+#define FRITZPCI_PORT0_IO_MAPOFF	PCI_MAPREG_START+4
+#define FRITZPCI_PORT0_MEM_MAPOFF	PCI_MAPREG_START
 
 #endif
 
@@ -811,9 +812,11 @@ isic_attach_fritzPci(struct pci_l1_softc *psc, struct pci_attach_args *pa)
 	sc->sc_num_mappings = 1;
 	MALLOC_MAPS(sc);
 	sc->sc_maps[0].size = 0;
-	if (pci_mapreg_map(pa, FRITZPCI_PORT0_MAPOFF, PCI_MAPREG_TYPE_IO, 0,
-	    &sc->sc_maps[0].t, &sc->sc_maps[0].h, NULL, NULL)) {
-		printf("%s: can't map i/o space\n", sc->sc_dev.dv_xname);
+	if (pci_mapreg_map(pa, FRITZPCI_PORT0_MEM_MAPOFF, PCI_MAPREG_TYPE_MEM, 0,
+	    &sc->sc_maps[0].t, &sc->sc_maps[0].h, NULL, NULL) != 0
+	   && pci_mapreg_map(pa, FRITZPCI_PORT0_IO_MAPOFF, PCI_MAPREG_TYPE_IO, 0,
+	    &sc->sc_maps[0].t, &sc->sc_maps[0].h, NULL, NULL) != 0) {
+		printf("%s: can't map card\n", sc->sc_dev.dv_xname);
 		return;
 	}
 
@@ -838,6 +841,9 @@ isic_attach_fritzPci(struct pci_l1_softc *psc, struct pci_attach_args *pa)
 	/* this is no IPAC based card */
 	sc->sc_ipac = 0;
 	sc->sc_bfifolen = HSCX_FIFO_LEN;
+
+	/* setup interrupt mapping */
+	avma1pp_map_int(psc, pa);
 	
 	/* init the card */
 	/* the Linux driver does this to clear any pending ISAC interrupts */
@@ -934,9 +940,6 @@ isic_attach_fritzPci(struct pci_l1_softc *psc, struct pci_attach_args *pa)
 	/* init higher protocol layers */
 	
 	MPH_Status_Ind(sc->sc_unit, STI_ATTACH, sc->sc_cardtyp);
-
-	/* setup interrupt mapping */
-	avma1pp_map_int(psc, pa);
 }
 
 #endif

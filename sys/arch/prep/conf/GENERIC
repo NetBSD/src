@@ -1,11 +1,11 @@
-#	$NetBSD: GENERIC,v 1.13.2.5 2001/01/05 17:34:58 bouyer Exp $
+#	$NetBSD: GENERIC,v 1.13.2.6 2001/01/18 09:22:56 bouyer Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
 
 include "arch/prep/conf/std.prep"
 
-#ident		"GENERIC-$Revision: 1.13.2.5 $"
+#ident		"GENERIC-$Revision: 1.13.2.6 $"
 
 maxusers	32
 
@@ -148,6 +148,8 @@ pcic0	at isa? port 0x3e0 iomem 0xd0000 iosiz 0x10000
 #options 	PCIC_ISA_ALLOC_IOBASE=0x0400
 #options 	PCIC_ISA_ALLOC_IOSIZE=0x0100
 
+# ISA Plug-and-Play bus support
+isapnp0	at isa?
 
 # Console Devices
 
@@ -254,6 +256,9 @@ ep*	at pci? dev ? function ?	# 3Com 3c59x
 ne*	at pci? dev ? function ?	# NE2000-compatible Ethernet
 vr*	at pci? dev ? function ?	# VIA Rhine Fast Ethernet
 
+# ISA Plug-and-Play network intefaces
+ep*	at isapnp?			# 3Com 3c509 Ethernet
+
 # PCMCIA network interfaces
 ep*	at pcmcia? function ?		# 3Com 3c589 and 3c562 Ethernet
 ne*	at pcmcia? function ?		# NE2000-compatible Ethernet
@@ -338,6 +343,9 @@ ukphy*	at mii? phy ?			# generic unknown PHYs
 #uvisor* at uhub? port ?
 #ucom*	at uvisor?
 
+# Y@P firmware loader
+#uyap* at uhub? port ?
+
 # USB Generic driver
 #ugen*	at uhub? port ?
 
@@ -347,8 +355,12 @@ ukphy*	at mii? phy ?			# generic unknown PHYs
 
 # Audio device
 
+# ISA Plug-and-Play audio devices
+#wss*	at isapnp?		# CS4232
+
 # Audio support
-#audio*  at uaudio?
+#audio*	at wss?
+#audio*	at uaudio?
 
 # MIDI support
 midi*	at pcppi?		# MIDI interface to the PC speaker

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tokensubr.c,v 1.7.2.3 2001/01/05 17:36:53 bouyer Exp $	*/
+/*	$NetBSD: if_tokensubr.c,v 1.7.2.4 2001/01/18 09:23:53 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1997-1999
@@ -694,7 +694,6 @@ token_ifattach(ifp, lla)
 	struct ifnet *ifp;
 	caddr_t	lla;
 {
-	struct sockaddr_dl *sdl;
 
 	ifp->if_type = IFT_ISO88025;
 	ifp->if_addrlen = ISO88025_ADDR_LEN;
@@ -707,11 +706,10 @@ token_ifattach(ifp, lla)
 #ifdef IFF_NOTRAILERS
 	ifp->if_flags |= IFF_NOTRAILERS;
 #endif
-	if ((sdl = ifp->if_sadl) != NULL && sdl->sdl_family == AF_LINK) {
-		sdl->sdl_type = IFT_ISO88025;
-		sdl->sdl_alen = ifp->if_addrlen;
-		bcopy(lla, LLADDR(sdl), ifp->if_addrlen);
-	}
+
+	if_alloc_sadl(ifp);
+	memcpy(LLADDR(ifp->if_sadl), lla, ifp->if_addrlen);
+
 #if NBPFILTER > 0
 	bpfattach(ifp, DLT_IEEE802, sizeof(struct token_header));
 #endif
@@ -725,4 +723,5 @@ token_ifdetach(ifp)
 #if NBPFILTER > 0
 	bpfdetach(ifp);
 #endif
+	if_free_sadl(ifp);
 }

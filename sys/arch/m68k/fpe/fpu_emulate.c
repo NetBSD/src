@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu_emulate.c,v 1.21 1999/05/30 20:17:48 briggs Exp $	*/
+/*	$NetBSD: fpu_emulate.c,v 1.21.2.1 2001/01/18 09:22:39 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon W. Ross
@@ -76,9 +76,6 @@ fpu_emulate(frame, fpf)
 {
     static struct instruction insn;
     static struct fpemu fe;
-#if 0
-    u_int savedpc = 0;	/* XXX work around gcc -O lossage */
-#endif
     int word, optype, sig;
 
 
@@ -107,11 +104,13 @@ fpu_emulate(frame, fpf)
 	 * we expect to be in f_pc.
 	 *
 	 * XXX - This is a hack; it assumes we at least know the
-	 * sizes of all instructions we run across.  This may not
-	 * be true, so we save the PC in order to restore it later.
+	 * sizes of all instructions we run across.
+	 * XXX TODO: This may not be true, so we might want to save the PC
+	 * in order to restore it later.
 	 */
+	/* insn.is_nextpc = frame->f_pc; */
 	insn.is_pc = frame->f_fmt4.f_fslw;
-	insn.is_nextpc = frame->f_pc;
+	frame->f_pc = insn.is_pc;
     }
 
     word = fusword((void *) (insn.is_pc));
@@ -240,9 +239,13 @@ fpu_emulate(frame, fpf)
 	kdb_trap(-1, (db_regs_t *)&frame);
     }
 #endif
-    if (frame->f_format == 4)
+#if 0 /* XXX something is wrong */
+    if (frame->f_format == 4) {
 	/* XXX Restore PC -- 68{EC,LC}040 only */
-	frame->f_pc = insn.is_nextpc;
+	if (insn.is_nextpc)
+		frame->f_pc = insn.is_nextpc;
+    }
+#endif
 
 #if DEBUG_FPE
     printf("EXITING fpu_emulate: w/FPSR=%08x, FPCR=%08x\n",
@@ -1090,6 +1093,7 @@ fpu_emul_type1(fe, insn)
 		    displ |= 0xffff0000;
 		}
 		insn->is_advance += displ;
+		/* XXX insn->is_nextpc = insn->is_pc + insn->is_advance; */
 	    } else {
 		insn->is_advance = 6;
 	    }
@@ -1190,7 +1194,7 @@ fpu_emul_brcc(fe, insn)
     if (sig == -1) {
 	/* branch does take place; 2 is the offset to the 1st disp word */
 	insn->is_advance = displ + 2;
-	insn->is_nextpc = insn->is_pc + insn->is_advance;
+	/* XXX insn->is_nextpc = insn->is_pc + insn->is_advance; */
     } else if (sig) {
 	return SIGILL;		/* got a signal */
     }

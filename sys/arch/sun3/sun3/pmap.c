@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.115.2.3 2000/12/08 09:30:46 bouyer Exp $	*/
+/*	$NetBSD: pmap.c,v 1.115.2.4 2001/01/18 09:23:06 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -271,13 +271,11 @@ struct pmap_stats {
 #define pmap_refcount(pmap) pmap->pm_refcount
 
 /*
- * Note that splpmap() is used in routines called at splnet() and
+ * Note that splvm() is used in routines called at splnet() and
  * MUST NOT lower the priority.  For this reason we arrange that:
  *    splimp = max(splnet,splbio)
  * Would splvm() be more natural here? (same level as splimp).
  */
-
-#define splpmap splimp
 
 #ifdef	PMAP_DEBUG
 #define	CHECK_SPL() do { \
@@ -2029,7 +2027,7 @@ pmap_release(pmap)
 {
 	int s;
 
-	s = splpmap();
+	s = splvm();
 
 	if (pmap == kernel_pmap)
 		panic("pmap_release: kernel_pmap!");
@@ -2147,7 +2145,7 @@ pmap_enter(pmap, va, pa, prot, flags)
 	 *   be in the mmu either.
 	 *
 	 */
-	s = splpmap();
+	s = splvm();
 	if (pmap == kernel_pmap) {
 		new_pte |= PG_SYSTEM;
 		pmap_enter_kernel(va, new_pte, wired);
@@ -2605,7 +2603,7 @@ pmap_fault_reload(pmap, pgva, ftype)
 		chkpte |= PG_WRITE;
 	rv = 0;
 
-	s = splpmap();
+	s = splvm();
 
 	/*
 	 * Given that we faulted on a user-space address, we will
@@ -2675,7 +2673,7 @@ pmap_clear_modify(pg)
 	pv_flags = pa_to_pvflags(pa);
 	head     = pa_to_pvhead(pa);
 
-	s = splpmap();
+	s = splvm();
 	*pv_flags |= pv_syncflags(*head);
 	rv = *pv_flags & PV_MOD;
 	*pv_flags &= ~PV_MOD;
@@ -2705,7 +2703,7 @@ pmap_is_modified(pg)
 	pv_flags = pa_to_pvflags(pa);
 	head     = pa_to_pvhead(pa);
 
-	s = splpmap();
+	s = splvm();
 	if ((*pv_flags & PV_MOD) == 0)
 		*pv_flags |= pv_syncflags(*head);
 	rv = (*pv_flags & PV_MOD);
@@ -2738,7 +2736,7 @@ pmap_clear_reference(pg)
 	pv_flags = pa_to_pvflags(pa);
 	head     = pa_to_pvhead(pa);
 
-	s = splpmap();
+	s = splvm();
 	*pv_flags |= pv_syncflags(*head);
 	rv = *pv_flags & PV_REF;
 	*pv_flags &= ~PV_REF;
@@ -2770,7 +2768,7 @@ pmap_is_referenced(pg)
 	pv_flags = pa_to_pvflags(pa);
 	head     = pa_to_pvhead(pa);
 
-	s = splpmap();
+	s = splvm();
 	if ((*pv_flags & PV_REF) == 0)
 		*pv_flags |= pv_syncflags(*head);
 	rv = (*pv_flags & PV_REF);
@@ -2814,7 +2812,7 @@ pmap_activate(p)
 	int s;
 
 	if (p == curproc) {
-		s = splpmap();
+		s = splvm();
 		_pmap_switch(pmap);
 		splx(s);
 	}
@@ -2872,7 +2870,7 @@ pmap_unwire(pmap, va)
 	ptenum = VA_PTE_NUM(va);
 	wiremask = 1 << ptenum;
 
-	s = splpmap();
+	s = splvm();
 
 	sme = get_segmap(va);
 	if (sme == SEGINV)
@@ -2917,7 +2915,7 @@ pmap_extract(pmap, va, pap)
 	paddr_t pa;
 
 	pte = 0;
-	s = splpmap();
+	s = splvm();
 
 	if (pmap == kernel_pmap) {
 		sme = get_segmap(va);
@@ -2971,7 +2969,7 @@ pmap_page_protect(pg, prot)
 	if (PA_IS_DEV(pa))
 		return;
 
-	s = splpmap();
+	s = splvm();
 
 #ifdef PMAP_DEBUG
 	if (pmap_debug & PMD_PROTECT)
@@ -3093,7 +3091,7 @@ pmap_protect1(pmap, sva, eva)
 	int old_ctx, s, sme;
 	boolean_t in_ctx;
 
-	s = splpmap();
+	s = splvm();
 
 #ifdef	DIAGNOSTIC
 	if (m68k_trunc_seg(sva) != m68k_trunc_seg(eva-1))
@@ -3341,7 +3339,7 @@ pmap_remove1(pmap, sva, eva)
 	int old_ctx, s, sme;
 	boolean_t in_ctx;
 
-	s = splpmap();
+	s = splvm();
 
 #ifdef	DIAGNOSTIC
 	if (m68k_trunc_seg(sva) != m68k_trunc_seg(eva-1))
@@ -3675,7 +3673,7 @@ pmap_copy_page(src, dst)
 	int pte;
 	int s;
 
-	s = splpmap();
+	s = splvm();
 
 #ifdef	PMAP_DEBUG
 	if (pmap_debug & PMD_COW)
@@ -3714,7 +3712,7 @@ pmap_zero_page(pa)
 	int pte;
 	int s;
 
-	s = splpmap();
+	s = splvm();
 
 #ifdef	PMAP_DEBUG
 	if (pmap_debug & PMD_COW)

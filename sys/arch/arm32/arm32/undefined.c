@@ -1,4 +1,4 @@
-/*	$NetBSD: undefined.c,v 1.16.8.3 2000/12/13 15:49:21 bouyer Exp $	*/
+/*	$NetBSD: undefined.c,v 1.16.8.4 2001/01/18 09:22:20 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1995 Mark Brinicombe.
@@ -65,7 +65,7 @@
 #include <machine/undefined.h>
 #include <machine/trap.h>
 
-#include <arm32/arm32/disassem.h>
+#include <arch/arm/arm/disassem.h>
 
 #ifdef FAST_FPE
 extern int want_resched;

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ppp.c,v 1.55.2.4 2001/01/05 17:36:51 bouyer Exp $	*/
+/*	$NetBSD: if_ppp.c,v 1.55.2.5 2001/01/18 09:23:51 bouyer Exp $	*/
 /*	Id: if_ppp.c,v 1.6 1997/03/04 03:33:00 paulus Exp 	*/
 
 /*
@@ -106,6 +106,10 @@
 #include <net/bpf.h>
 #endif
 
+#ifdef __HAVE_GENERIC_SOFT_INTERRUPTS
+#include <machine/intr.h>
+#endif
+
 #include <netinet/in.h>
 #include <netinet/in_systm.h>
 #include <netinet/in_var.h>
@@ -143,6 +147,11 @@ static void	ppp_ccp __P((struct ppp_softc *, struct mbuf *m, int rcvd));
 static void	ppp_ccp_closed __P((struct ppp_softc *));
 static void	ppp_inproc __P((struct ppp_softc *, struct mbuf *));
 static void	pppdumpm __P((struct mbuf *m0));
+
+#ifndef __HAVE_GENERIC_SOFT_INTERRUPTS
+void		pppnetisr(void);
+#endif
+void		pppintr(void *);
 
 /*
  * Some useful mbuf macros not in mbuf.h.
@@ -214,6 +223,7 @@ pppattach()
 	sc->sc_rawq.ifq_maxlen = IFQ_MAXLEN;
 	IFQ_SET_READY(&sc->sc_if.if_snd);
 	if_attach(&sc->sc_if);
+	if_alloc_sadl(&sc->sc_if);
 #if NBPFILTER > 0
 	bpfattach(&sc->sc_if, DLT_NULL, 0);
 #endif
@@ -240,6 +250,14 @@ pppalloc(pid)
 	    break;
     if (nppp >= NPPP)
 	return NULL;
+
+#ifdef __HAVE_GENERIC_SOFT_INTERRUPTS
+    sc->sc_si = softintr_establish(IPL_SOFTNET, pppintr, sc);
+    if (sc->sc_si == NULL) {
+	printf("ppp%d: unable to establish softintr\n", sc->sc_unit);
+	return (NULL);
+    }
+#endif
 
     sc->sc_flags = 0;
     sc->sc_mru = PPP_MRU;
@@ -273,6 +291,9 @@ pppdealloc(sc)
 {
     struct mbuf *m;
 
+#ifdef __HAVE_GENERIC_SOFT_INTERRUPTS
+    softintr_disestablish(sc->sc_si);
+#endif
     if_down(&sc->sc_if);
     sc->sc_if.if_flags &= ~(IFF_UP|IFF_RUNNING);
     sc->sc_devp = NULL;
@@ -990,7 +1011,11 @@ ppp_restart(sc)
     int s = splimp();
 
     sc->sc_flags &= ~SC_TBUSY;
+#ifdef __HAVE_GENERIC_SOFT_INTERRUPTS
+    softintr_schedule(sc->sc_si);
+#else
     schednetisr(NETISR_PPP);
+#endif
     splx(s);
 }
 
@@ -1129,37 +1154,46 @@ ppp_dequeue(sc)
     return m;
 }
 
+#ifndef __HAVE_GENERIC_SOFT_INTERRUPTS
+void
+pppnetisr(void)
+{
+	struct ppp_softc *sc;
+	int i;
+
+	for (i = 0; i < NPPP; i++) {
+		sc = &ppp_softc[i];
+		pppintr(sc);
+	}
+}
+#endif
+
 /*
  * Software interrupt routine, called at splsoftnet.
  */
 void
-pppintr()
+pppintr(void *arg)
 {
-    struct ppp_softc *sc;
-    int i, s, s2;
-    struct mbuf *m;
+	struct ppp_softc *sc = arg;
+	struct mbuf *m;
+	int s;
 
-    sc = ppp_softc;
-    s = splsoftnet();
-    for (i = 0; i < NPPP; ++i, ++sc) {
 	if (!(sc->sc_flags & SC_TBUSY)
 	    && (IFQ_IS_EMPTY(&sc->sc_if.if_snd) == 0 || sc->sc_fastq.ifq_head
 		|| sc->sc_outm)) {
-	    s2 = splimp();
-	    sc->sc_flags |= SC_TBUSY;
-	    splx(s2);
-	    (*sc->sc_start)(sc);
+		s = splimp();
+		sc->sc_flags |= SC_TBUSY;
+		splx(s);
+		(*sc->sc_start)(sc);
 	}
 	for (;;) {
-	    s2 = splimp();
-	    IF_DEQUEUE(&sc->sc_rawq, m);
-	    splx(s2);
-	    if (m == NULL)
-		break;
-	    ppp_inproc(sc, m);
+		s = splimp();
+		IF_DEQUEUE(&sc->sc_rawq, m);
+		splx(s);
+		if (m == NULL)
+			break;
+		ppp_inproc(sc, m);
 	}
-    }
-    splx(s);
 }
 
 #ifdef PPP_COMPRESS
@@ -1296,7 +1330,11 @@ ppppktin(sc, m, lost)
     if (lost)
 	m->m_flags |= M_ERRMARK;
     IF_ENQUEUE(&sc->sc_rawq, m);
+#ifdef __HAVE_GENERIC_SOFT_INTERRUPTS
+    softintr_schedule(sc->sc_si);
+#else
     schednetisr(NETISR_PPP);
+#endif
     splx(s);
 }
 

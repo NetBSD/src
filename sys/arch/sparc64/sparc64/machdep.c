@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.51.2.3 2001/01/05 17:35:09 bouyer Exp $ */
+/*	$NetBSD: machdep.c,v 1.51.2.4 2001/01/18 09:23:04 bouyer Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -1226,8 +1226,48 @@ _bus_dmamap_load_mbuf(t, map, m, flags)
 	struct mbuf *m;
 	int flags;
 {
+#if 1
+	int i;
+	size_t len;
 
-	panic("_bus_dmamap_load: not implemented");
+	i = 0;
+	map->dm_segs[i].ds_addr = NULL;
+	map->dm_segs[i].ds_len = 0;
+	len = 0;
+	while (m) {
+		vaddr_t vaddr = mtod(m, vaddr_t);
+		bus_size_t buflen = m->m_len;
+
+		len += buflen;
+		while (buflen > 0 && i < map->_dm_segcnt) {
+			paddr_t pa;
+
+			(void) pmap_extract(pmap_kernel(), vaddr, &pa);
+			buflen -= NBPG;
+			vaddr += NBPG;
+
+			if (pa == (map->dm_segs[i].ds_addr + map->dm_segs[i].ds_len)
+			    && ((map->dm_segs[i].ds_len + NBPG) < map->_dm_maxsegsz)) {
+				/* Hey, waddyaknow, they're contiguous */
+				map->dm_segs[i].ds_len += NBPG;
+				continue;
+			}
+			map->dm_segs[++i].ds_addr = pa;
+			map->dm_segs[i].ds_len = NBPG;
+		}
+		if (i >= map->_dm_segcnt) 
+			/* Exceeded the size of our dmamap */
+			return E2BIG;
+
+		m = m->m_next;
+	}
+	map->dm_nsegs = i;
+	bus_dmamap_load_raw(t, map, map->dm_segs, map->dm_nsegs, 
+			    (bus_size_t)len, flags);
+#else
+	panic("_bus_dmamap_load_mbuf: not implemented");
+#endif
+	return 0;
 }
 
 /*
@@ -1240,27 +1280,52 @@ _bus_dmamap_load_uio(t, map, uio, flags)
 	struct uio *uio;
 	int flags;
 {
-#if 0
-	int i;
+#if 1
+	int i, j;
+	size_t len;
 	struct proc *p = uio->uio_procp;
 	struct pmap *pm;
 
 	if (uio->uio_segflg == UIO_USERSPACE) 
-		pm = uio->uio_procp->p_vmspace.vm_map.pmap;
+		pm = p->p_vmspace->vm_map.pmap;
 	else
 		pm = pmap_kernel();
 
-	for (i=0; i<uio->uio_iovcnt; i++) {
-		struct iovec *iov = &uio->uio_iov[i];
-		void *buf = iov->iov_base;
+	i = 0;
+	map->dm_segs[i].ds_addr = NULL;
+	map->dm_segs[i].ds_len = 0;
+	len = 0;
+	for (j=0; j<uio->uio_iovcnt; j++) {
+		struct iovec *iov = &uio->uio_iov[j];
+		vaddr_t vaddr = (vaddr_t)iov->iov_base;
 		bus_size_t buflen = iov->iov_len;
 
-		bus_dmamap_load(t, map, buf, buflen, p, flags);
+		len += buflen;
+		while (buflen > 0 && i < map->_dm_segcnt) {
+			paddr_t pa;
+
+			(void) pmap_extract(pm, vaddr, &pa);
+			buflen -= NBPG;
+			vaddr += NBPG;
+
+			if (pa == (map->dm_segs[i].ds_addr + map->dm_segs[i].ds_len)
+			    && ((map->dm_segs[i].ds_len + NBPG) < map->_dm_maxsegsz)) {
+				/* Hey, waddyaknow, they're contiguous */
+				map->dm_segs[i].ds_len += NBPG;
+				continue;
+			}
+			map->dm_segs[++i].ds_addr = pa;
+			map->dm_segs[i].ds_len = NBPG;
+		}
+		if (i >= map->_dm_segcnt) 
+			/* Exceeded the size of our dmamap */
+			return E2BIG;
 	}
-	panic("_bus_dmamap_load_uio: not implemented");
-#else
-	return 0;
+	map->dm_nsegs = i;
+	bus_dmamap_load_raw(t, map, map->dm_segs, map->dm_nsegs, 
+			    (bus_size_t)len, flags);
 #endif
+	return 0;
 }
 
 /*
@@ -1587,6 +1652,9 @@ static int	sparc_bus_map __P(( bus_space_tag_t, bus_type_t, bus_addr_t,
 				    bus_space_handle_t *));
 static int	sparc_bus_unmap __P((bus_space_tag_t, bus_space_handle_t,
 				     bus_size_t));
+static int	sparc_bus_subregion __P((bus_space_tag_t, bus_space_handle_t,
+					 bus_size_t, bus_size_t,
+					 bus_space_handle_t *));
 static int	sparc_bus_mmap __P((bus_space_tag_t, bus_type_t,
 				    bus_addr_t, int, bus_space_handle_t *));
 static void	*sparc_mainbus_intr_establish __P((bus_space_tag_t, int, int,
@@ -1687,6 +1755,18 @@ sparc_bus_map(t, iospace, addr, size, flags, vaddr, hp)
 		v += PAGE_SIZE;
 		pa += PAGE_SIZE;
 	} while ((size -= PAGE_SIZE) > 0);
+	return (0);
+}
+
+int
+sparc_bus_subregion(tag, handle, offset, size, nhandlep)
+	bus_space_tag_t		tag;
+	bus_space_handle_t	handle;
+	bus_size_t		offset;
+	bus_size_t		size;
+	bus_space_handle_t	*nhandlep;
+{
+	*nhandlep = handle + offset;
 	return (0);
 }
 
@@ -1800,7 +1880,7 @@ struct sparc_bus_space_tag mainbus_space_tag = {
 	UPA_BUS_SPACE,			/* type */
 	sparc_bus_map,			/* bus_space_map */
 	sparc_bus_unmap,		/* bus_space_unmap */
-	NULL,				/* bus_space_subregion */
+	sparc_bus_subregion,		/* bus_space_subregion */
 	sparc_bus_barrier,		/* bus_space_barrier */
 	sparc_bus_mmap,			/* bus_space_mmap */
 	sparc_mainbus_intr_establish	/* bus_intr_establish */

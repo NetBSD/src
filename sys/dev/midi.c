@@ -1,4 +1,4 @@
-/*	$NetBSD: midi.c,v 1.12.2.2 2000/11/20 11:39:47 bouyer Exp $	*/
+/*	$NetBSD: midi.c,v 1.12.2.3 2001/01/18 09:23:15 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -85,9 +85,12 @@ void	midi_timeout __P((void *));
 
 int	midiprobe __P((struct device *, struct cfdata *, void *));
 void	midiattach __P((struct device *, struct device *, void *));
+int	mididetach __P((struct device *, int));
+int	midiactivate __P((struct device *, enum devact));
 
 struct cfattach midi_ca = {
-	sizeof(struct midi_softc), midiprobe, midiattach
+	sizeof(struct midi_softc), midiprobe, midiattach,
+	mididetach, midiactivate
 };
 
 #ifdef MIDI_SAVE
@@ -143,7 +146,54 @@ midiattach(parent, self, aux)
 
 	sc->hw_if = hwp;
 	sc->hw_hdl = hdlp;
+	sc->dying = 0;
 	midi_attach(sc, parent);
+}
+
+int
+midiactivate(self, act)
+	struct device *self;
+	enum devact act;
+{
+	struct midi_softc *sc = (struct midi_softc *)self;
+
+	switch (act) {
+	case DVACT_ACTIVATE:
+		return (EOPNOTSUPP);
+		break;
+
+	case DVACT_DEACTIVATE:
+		sc->dying = 1;
+		break;
+	}
+	return (0);
+}
+
+int
+mididetach(self, flags)
+	struct device *self;
+	int flags;
+{
+	struct midi_softc *sc = (struct midi_softc *)self;
+	int maj, mn;
+
+	DPRINTF(("midi_detach: sc=%p flags=%d\n", sc, flags));
+
+	sc->dying = 1;
+
+	wakeup(&sc->wchan);
+	wakeup(&sc->rchan);
+
+	/* locate the major number */
+	for (maj = 0; maj < nchrdev; maj++)
+		if (cdevsw[maj].d_open == midiopen)
+			break;
+
+	/* Nuke the vnodes for any open instances (calls close). */
+	mn = self->dv_unit;
+	vdevgone(maj, mn, mn, VCHR);
+
+	return (0);
 }
 
 void
@@ -351,6 +401,8 @@ midiopen(dev, flags, ifmt, p)
 	sc = device_lookup(&midi_cd, MIDIUNIT(dev));
 	if (sc == NULL)
 		return (ENXIO);
+	if (sc->dying)
+		return (EIO);
 
 	DPRINTF(("midiopen %p\n", sc));
 
@@ -430,6 +482,9 @@ midiread(dev, uio, ioflag)
 	DPRINTF(("midiread: %p, count=%lu\n", sc, 
 		 (unsigned long)uio->uio_resid));
 
+	if (sc->dying)
+		return EIO;
+
 	error = 0;
 	resid = uio->uio_resid;
 	while (uio->uio_resid == resid && !error) {
@@ -448,6 +503,8 @@ midiread(dev, uio, ioflag)
 		used = mb->used;
 		outp = mb->outp;
 		splx(s);
+		if (sc->dying)
+			return EIO;
 		cc = used;	/* maximum to read */
 		n = mb->end - outp;
 		if (n < cc)
@@ -493,6 +550,10 @@ midi_start_output(sc, intr)
 
 	error = 0;
 	mmax = sc->props & MIDI_PROP_OUT_INTR ? 1 : MIDI_MAX_WRITE;
+
+	if (sc->dying)
+		return EIO;
+
 	s = splaudio();
 	if (sc->pbus && !intr) {
 		DPRINTFN(4, ("midi_start_output: busy\n"));
@@ -547,6 +608,9 @@ midiwrite(dev, uio, ioflag)
 	DPRINTFN(2, ("midiwrite: %p, unit=%d, count=%lu\n", sc, unit, 
 		     (unsigned long)uio->uio_resid));
 
+	if (sc->dying)
+		return EIO;
+
 	error = 0;
 	while (uio->uio_resid > 0 && !error) {
 		s = splaudio();
@@ -566,6 +630,8 @@ midiwrite(dev, uio, ioflag)
 		used = mb->used;
 		inp = mb->inp;
 		splx(s);
+		if (sc->dying)
+			return EIO;
 		cc = mb->usedhigh - used; 	/* maximum to write */
 		n = mb->end - inp;
 		if (n < cc)
@@ -610,6 +676,9 @@ midi_writebytes(unit, buf, cc)
 	DPRINTFN(2, ("midi_writebytes: %p, unit=%d, cc=%d\n", sc, unit, cc));
 	DPRINTFN(3, ("midi_writebytes: %x %x %x\n",buf[0],buf[1],buf[2]));
 
+	if (sc->dying)
+		return EIO;
+
 	s = splaudio();
 	if (mb->used + cc >= mb->usedhigh) {
 		splx(s);
@@ -647,6 +716,10 @@ midiioctl(dev, cmd, addr, flag, p)
 	int error;
 
 	DPRINTF(("midiioctl: %p cmd=0x%08lx\n", sc, cmd));
+
+	if (sc->dying)
+		return EIO;
+
 	error = 0;
 	switch (cmd) {
 	case FIONBIO:
@@ -701,6 +774,9 @@ midipoll(dev, events, p)
 
 	DPRINTF(("midipoll: %p events=0x%x\n", sc, events));
 
+	if (sc->dying)
+		return EIO;
+
 	if (events & (POLLIN | POLLRDNORM))
 		if (sc->inbuf.used > 0)
 			revents |= events & (POLLIN | POLLRDNORM);
@@ -730,6 +806,8 @@ midi_getinfo(dev, mi)
 
 	sc = device_lookup(&midi_cd, MIDIUNIT(dev));
 	if (sc == NULL)
+		return;
+	if (sc->dying)
 		return;
 
 	sc->hw_if->getinfo(sc->hw_hdl, mi);

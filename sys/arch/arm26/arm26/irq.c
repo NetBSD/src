@@ -1,7 +1,7 @@
-/* $NetBSD: irq.c,v 1.6.2.4 2000/12/13 15:49:18 bouyer Exp $ */
+/* $NetBSD: irq.c,v 1.6.2.5 2001/01/18 09:22:14 bouyer Exp $ */
 
 /*-
- * Copyright (c) 2000 Ben Harris
+ * Copyright (c) 2000, 2001 Ben Harris
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -33,7 +33,7 @@
 
 #include <sys/param.h>
 
-__RCSID("$NetBSD: irq.c,v 1.6.2.4 2000/12/13 15:49:18 bouyer Exp $");
+__RCSID("$NetBSD: irq.c,v 1.6.2.5 2001/01/18 09:22:14 bouyer Exp $");
 
 #include <sys/device.h>
 #include <sys/kernel.h> /* for cold */
@@ -52,9 +52,13 @@ __RCSID("$NetBSD: irq.c,v 1.6.2.4 2000/12/13 15:49:18 bouyer Exp $");
 #include <arch/arm26/iobus/iocreg.h>
 #include <arch/arm26/iobus/iocvar.h>
 
+#include "opt_ddb.h"
 #include "ioeb.h"
 #include "unixbp.h"
 
+#ifdef DDB
+#include <ddb/db_output.h>
+#endif
 #if NIOEB > 0
 #include <arch/arm26/ioc/ioebvar.h>
 #endif
@@ -91,6 +95,7 @@ struct irq_handler {
 	int	irqnum;
 	int	ipl;
 	int	enabled;
+	struct	evcnt ev;
 };
 
 volatile static int current_spl = IPL_HIGH;
@@ -159,6 +164,7 @@ irq_handler(struct irqframe *irqf)
 				result = (h->func)(h->arg);
 			if (result == IRQ_HANDLED) {
 				stray = 0;
+				h->ev.ev_count++;
 				break; /* XXX handle others? */
 			}
 			if (result == IRQ_MAYBE_HANDLED)
@@ -179,7 +185,8 @@ irq_handler(struct irqframe *irqf)
 }
 
 struct irq_handler *
-irq_establish(int irqnum, int ipl, int (*func)(void *), void *arg)
+irq_establish(int irqnum, int ipl, int (*func)(void *), void *arg,
+    char const *name)
 {
 	struct irq_handler *h, *new;
 
@@ -198,6 +205,7 @@ irq_establish(int irqnum, int ipl, int (*func)(void *), void *arg)
 	new->ipl = ipl;
 	new->func = func;
 	new->arg = arg;
+	evcnt_attach_dynamic(&new->ev, EVCNT_TYPE_INTR, NULL, "irq", name);
 	new->enabled = 1;
 	if (irq_list_head.lh_first == NULL ||
 	    irq_list_head.lh_first->ipl <= ipl)
@@ -223,8 +231,17 @@ irq_establish(int irqnum, int ipl, int (*func)(void *), void *arg)
 char const *
 irq_string(struct irq_handler *h)
 {
+	static char irq_string_store[10];
 
-	return irqnames[h->irqnum];
+#if NUNIXBP > 0
+	if (h->irqnum >= IRQ_UNIXBP_BASE)
+		snprintf(irq_string_store, 9, "IRQ 13.%d",
+		    h->irqnum - IRQ_UNIXBP_BASE);
+	else
+#endif
+		snprintf(irq_string_store, 9, "IRQ %d", h->irqnum);
+	irq_string_store[9] = '\0';
+	return irq_string_store;
 }
 
 void
@@ -316,3 +333,24 @@ hardsplx(int s)
 	current_spl = s;
 	return was; /* Restore interrupt state */
 }
+
+#ifdef DDB
+void
+irq_stat(void (*pr)(const char *, ...))
+{
+	struct irq_handler *h;
+	int i;
+	u_int32_t last;
+
+	for (h = irq_list_head.lh_first; h != NULL; h = h->link.le_next)
+		(*pr)("%12s: ipl %2d, IRQ %2d, mask 0x%05x, count %llu\n",
+		    h->ev.ev_name, h->ipl, h->irqnum, h->mask, h->ev.ev_count);
+	(*pr)("\n");
+	last = -1;
+	for (i = 0; i < NIPL; i++)
+		if (irqmask[i] != last) { 
+			(*pr)("ipl %2d: mask 0x%05x\n", i, irqmask[i]);
+			last = irqmask[i];
+		}
+}
+#endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_loop.c,v 1.26.2.3 2001/01/05 17:36:51 bouyer Exp $	*/
+/*	$NetBSD: if_loop.c,v 1.26.2.4 2001/01/18 09:23:51 bouyer Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -167,6 +167,7 @@ loopattach(n)
 		ifp->if_dlt = DLT_NULL;
 		IFQ_SET_READY(&ifp->if_snd);
 		if_attach(ifp);
+		if_alloc_sadl(ifp);
 #if NBPFILTER > 0
 		bpfattach(ifp, DLT_NULL, sizeof(u_int));
 #endif
@@ -436,10 +437,10 @@ lostart(struct ifnet *ifp)
 
 /* ARGSUSED */
 void
-lortrequest(cmd, rt, sa)
+lortrequest(cmd, rt, info)
 	int cmd;
 	struct rtentry *rt;
-	struct sockaddr *sa;
+	struct rt_addrinfo *info;
 {
 
 	if (rt)

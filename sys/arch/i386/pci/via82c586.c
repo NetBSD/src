@@ -1,4 +1,4 @@
-/*	$NetBSD: via82c586.c,v 1.2.4.2 2000/11/20 20:09:36 bouyer Exp $	*/
+/*	$NetBSD: via82c586.c,v 1.2.4.3 2001/01/18 09:22:38 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -112,7 +112,7 @@ const int vp3_cfg_intr_shift[] = {
 	VP3_CFG_INTR_SHIFT_PIRQD,
 };
 
-#define	VP3_PIRQ(req, pirq)	(((reg) >> vp3_cfg_intr_shift[(pirq)]) & \
+#define	VP3_PIRQ(reg, pirq)	(((reg) >> vp3_cfg_intr_shift[(pirq)]) & \
 				 VP3_CFG_INTR_MASK)
 
 int

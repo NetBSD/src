@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC_ISDN,v 1.1.1.1.2.2 2001/01/05 17:34:28 bouyer Exp $
+# $NetBSD: GENERIC_ISDN,v 1.1.1.1.2.3 2001/01/18 09:22:33 bouyer Exp $
 #
 # GENERIC kernel with all supported ISDN devices and drivers
 
@@ -28,8 +28,9 @@ options ISICISA_USR_STI
 options ISICISA_ITKIX1
 # isic0 at isa? port 0x398 irq 10
 #
+# XXX not ready yet:
 # Active EICON/Diehl Cards: S, SX, SXn, SCOM or QUADRO
-daic0 at isa? iomem 0xd8000 irq 10
+# daic0 at isa? iomem 0xd8000 irq 10
 #
 #---------------------------------------------------------------------
 # Supported ISA Plug & Play cards:
@@ -64,18 +65,12 @@ isic* at pcmcia? function ?
 # ISDN user land devices, drivers and pseudo-devices.
 #---------------------------------------------------------------------
 #
-pseudo-device	"i4b"
-# userland driver to do ISDN tracing
-pseudo-device   "i4btrc"	2
-# userland driver to control the whole thing
-pseudo-device   "i4bctl"
-# userland driver for access to raw B channel
-pseudo-device   "i4brbch"       4
-# userland driver for telephony
-pseudo-device   "i4btel"        2
-# network driver for IP over raw HDLC ISDN
-options IPR_VJ			# compile support for VJ compression
-pseudo-device   "i4bipr"	2
-# synchronous PPP over ISDN
-pseudo-device	i4bisppp	2
+pseudo-device	i4b		  # communication with userland daemon
+pseudo-device	i4btrc		2 # userland driver to do ISDN tracing
+pseudo-device	i4bctl		  # userland driver to control the whole thing
+pseudo-device	i4brbch		4 # userland driver for access to raw B channel
+pseudo-device	i4btel		2 # userland driver for telephony
+options IPR_VJ			  # compile support for VJ compression
+pseudo-device	i4bipr		2 # network driver for IP over raw HDLC ISDN
+pseudo-device	i4bisppp	2 # synchronous PPP over ISDN
 #---------------------------------------------------------------------

@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.7 1998/04/11 17:44:11 matthias Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.7.14.1 2001/01/18 09:22:54 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1997 Matthias Pfaller.
@@ -83,7 +83,7 @@ mbattach(parent, self, aux)
 	intr_init();
 
 	/* Allocate softclock at IPL_NET as splnet() has to block softclock. */
-	clk = intr_establish(SOFTINT, do_softclock, NULL,
+	clk = intr_establish(SOFTINT, softclock, NULL,
 				"softclock", IPL_NET, IPL_NET, 0);
 	net = intr_establish(SOFTINT, softnet, NULL,
 				"softnet", IPL_NET, IPL_NET, 0);

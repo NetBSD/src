@@ -1,4 +1,4 @@
-# $NetBSD: files.alpha,v 1.104.2.6 2001/01/05 17:33:44 bouyer Exp $
+# $NetBSD: files.alpha,v 1.104.2.7 2001/01/18 09:22:06 bouyer Exp $
 #
 # alpha-specific configuration info
 
@@ -470,6 +470,7 @@ file	arch/alpha/alpha/mainbus.c
 file	arch/alpha/alpha/mem.c
 file	arch/alpha/alpha/pmap.c
 file	arch/alpha/alpha/process_machdep.c
+file	arch/alpha/alpha/procfs_machdep.c	procfs
 file	arch/alpha/alpha/prom.c
 file	arch/alpha/alpha/support.c
 file	arch/alpha/alpha/sys_machdep.c

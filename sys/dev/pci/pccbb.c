@@ -1,4 +1,4 @@
-/*	$NetBSD: pccbb.c,v 1.3.2.6 2001/01/05 17:36:11 bouyer Exp $	*/
+/*	$NetBSD: pccbb.c,v 1.3.2.7 2001/01/18 09:23:26 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 and 2000
@@ -2240,7 +2240,7 @@ pccbb_pcmcia_socket_enable(pch)
 		return;
 	}
 
-	/* disable socket i/o: negate output enable bit */
+	/* disable socket: negate output enable bit and power off */
 
 	power = 0;
 	Pcic_write(ph, PCIC_PWRCTL, power);

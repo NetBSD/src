@@ -1,4 +1,4 @@
-/*	$NetBSD: uscanner.c,v 1.9.2.4 2001/01/05 17:36:35 bouyer Exp $	*/
+/*	$NetBSD: uscanner.c,v 1.9.2.5 2001/01/18 09:23:41 bouyer Exp $	*/
 /*	$FreeBSD$	*/
 
 /*
@@ -148,6 +148,7 @@ static const struct scanner_id {
 	{ USB_VENDOR_EPSON, USB_PRODUCT_EPSON_610 },
 	{ USB_VENDOR_EPSON, USB_PRODUCT_EPSON_1200 },
 	{ USB_VENDOR_EPSON, USB_PRODUCT_EPSON_1600 },
+	{ USB_VENDOR_EPSON, USB_PRODUCT_EPSON_1640 },
 
 	/* UMAX */
 	{ USB_VENDOR_UMAX, USB_PRODUCT_UMAX_ASTRA1220U },

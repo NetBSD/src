@@ -1,8 +1,8 @@
-#	$NetBSD: Makefile,v 1.10 1999/03/12 18:47:35 christos Exp $
+#	$NetBSD: Makefile,v 1.10.8.1 2001/01/18 09:23:47 bouyer Exp $
 
 .include "../Makefile.inc"
 
-.PATH:	$S/miscfs/procfs ${.CURDIR}/../..
+.PATH:	$S/miscfs/procfs ${.CURDIR}/../.. $S/arch/${MACHINE}/${MACHINE}
 
 MKMAN=	no
 
@@ -10,6 +10,7 @@ KMOD=	procfs
 
 SRCS=	lkminit_vfs.c
 SRCS+=	procfs_ctl.c procfs_note.c procfs_status.c procfs_subr.c
-SRCS+=  procfs_vfsops.c procfs_vnops.c procfs_cmdline.c
+SRCS+=  procfs_vfsops.c procfs_vnops.c procfs_cmdline.c procfs_linux.c
+SRCS+=	procfs_machdep.c
 
 .include <bsd.kmod.mk>

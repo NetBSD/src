@@ -1,4 +1,4 @@
-#	$NetBSD: files.newsmips,v 1.4.2.2 2000/11/22 16:01:07 bouyer Exp $
+#	$NetBSD: files.newsmips,v 1.4.2.3 2001/01/18 09:22:50 bouyer Exp $
 
 # NEWSMIPS-specific configuration info
 
@@ -96,6 +96,7 @@ file arch/newsmips/newsmips/news5000.c		ap
 file arch/newsmips/newsmips/disksubr.c
 file arch/newsmips/newsmips/mainbus.c
 file arch/newsmips/newsmips/cpu_cons.c
+file arch/newsmips/newsmips/procfs_machdep.c	procfs
 file dev/clock_subr.c
 file dev/cons.c
 

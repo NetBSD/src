@@ -1,4 +1,4 @@
-#	$NetBSD: files.sun3,v 1.55.2.2 2000/11/22 16:02:00 bouyer Exp $
+#	$NetBSD: files.sun3,v 1.55.2.3 2001/01/18 09:23:05 bouyer Exp $
 
 #
 # sun3-specific configuration info
@@ -40,6 +40,7 @@ file arch/sun3/sun3/fpu.c
 file arch/sun3/sun3/isr.c
 file arch/sun3/sun3/kgdb_machdep.c 		kgdb
 file arch/sun3/sun3/leds.c
+file arch/sun3/sun3/procfs_machdep.c		procfs
 file arch/sun3/sun3/stub.c
 file arch/sun3/sun3/sunmon.c
 file arch/sun3/sun3/sys_machdep.c

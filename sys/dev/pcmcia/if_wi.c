@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wi.c,v 1.3.2.4 2001/01/05 17:36:22 bouyer Exp $	*/
+/*	$NetBSD: if_wi.c,v 1.3.2.5 2001/01/18 09:23:31 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -221,6 +221,18 @@ static struct wi_pcmcia_product wi_pcmcia_products[] = {
 	  PCMCIA_STR_SMC_2632W,
 	  1 },
 
+	{ PCMCIA_VENDOR_LUCENT,
+	  PCMCIA_PRODUCT_LUCENT_WAVELAN_IEEE,
+	  PCMCIA_CIS_NANOSPEED_PRISM2,
+	  PCMCIA_STR_NANOSPEED_PRISM2,
+	  1 },
+
+	{ PCMCIA_VENDOR_ELSA,
+	  PCMCIA_PRODUCT_ELSA_XI300_IEEE,
+	  PCMCIA_CIS_ELSA_XI300_IEEE,
+	  PCMCIA_STR_ELSA_XI300_IEEE,
+	  1 },
+
 	{ 0,
 	  0,
 	  { NULL, NULL, NULL, NULL },
@@ -414,7 +426,7 @@ wi_attach(parent, self, aux)
 	    sizeof(WI_DEFAULT_IBSS) - 1);
 
 	sc->wi_portnum = WI_DEFAULT_PORT;
-	sc->wi_ptype = WI_PORTTYPE_ADHOC;
+	sc->wi_ptype = WI_PORTTYPE_BSS;
 	sc->wi_ap_density = WI_DEFAULT_AP_DENSITY;
 	sc->wi_rts_thresh = WI_DEFAULT_RTS_THRESH;
 	sc->wi_tx_rate = WI_DEFAULT_TX_RATE;

@@ -1,4 +1,4 @@
-/*	$NetBSD: psl.h,v 1.12.2.1 2000/11/20 20:04:00 bouyer Exp $	*/
+/*	$NetBSD: psl.h,v 1.12.2.2 2001/01/18 09:22:22 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1995 Mark Brinicombe.
@@ -76,6 +76,7 @@
 #define spltty()	raisespl(_SPL_TTY)
 #define spllpt()	spltty()
 #define splimp()	raisespl(_SPL_IMP)
+#define splvm()		raisespl(_SPL_IMP)
 #define splaudio()	raisespl(_SPL_AUDIO)
 #define splclock()	raisespl(_SPL_CLOCK)
 #define splstatclock()	raisespl(_SPL_CLOCK)

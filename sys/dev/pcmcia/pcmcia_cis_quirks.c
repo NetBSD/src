@@ -1,4 +1,4 @@
-/*	$NetBSD: pcmcia_cis_quirks.c,v 1.5.2.1 2000/11/20 11:42:47 bouyer Exp $	*/
+/*	$NetBSD: pcmcia_cis_quirks.c,v 1.5.2.2 2001/01/18 09:23:32 bouyer Exp $	*/
 
 #define	PCMCIADEBUG
 
@@ -48,7 +48,67 @@
 /* these structures are just static templates which are then copied
    into "live" allocated structures */
 
-struct pcmcia_function pcmcia_3cxem556_func0 = {
+static struct pcmcia_function pcmcia_dlink_de650_func0 = {
+	0,
+	PCMCIA_FUNCTION_NETWORK,
+	0x23,
+	0x400,
+	0x0b,
+};
+
+static struct pcmcia_config_entry pcmcia_dlink_de650_func0_cfe0 = {
+	0x20,
+	PCMCIA_CFE_IO16 | PCMCIA_CFE_IRQLEVEL,
+	PCMCIA_IFTYPE_IO,
+	1,
+	5,
+	{ { 0x20, 0x360 } },
+	0xbe7c,
+	0,
+	{ },
+	0,
+};
+
+static struct pcmcia_config_entry pcmcia_dlink_de650_func0_cfe1 = {
+	0x21,
+	PCMCIA_CFE_IO16 | PCMCIA_CFE_IRQLEVEL,
+	PCMCIA_IFTYPE_IO,
+	1,
+	5,
+	{ { 0x20, 0x340 } },
+	0xbe7c,
+	0,
+	{ },
+	0,
+};
+
+static struct pcmcia_config_entry pcmcia_dlink_de650_func0_cfe2 = {
+	0x22,
+	PCMCIA_CFE_IO16 | PCMCIA_CFE_IRQLEVEL,
+	PCMCIA_IFTYPE_IO,
+	1,
+	5,
+	{ { 0x20, 0x320 } },
+	0xbe7c,
+	0,
+	{ },
+	0,
+};
+
+static struct pcmcia_config_entry pcmcia_dlink_de650_func0_cfe3 = {
+	0x23,
+	PCMCIA_CFE_IO16 | PCMCIA_CFE_IRQLEVEL,
+	PCMCIA_IFTYPE_IO,
+	1,
+	5,
+	{ { 0x20, 0x300 } },
+	0xbe7c,
+	0,
+	{ },
+	0,
+};
+
+static struct pcmcia_function pcmcia_3cxem556_func0 = {
 	0,			/* function number */
 	PCMCIA_FUNCTION_NETWORK,
 	0x07,			/* last cfe number */
@@ -56,7 +116,7 @@ struct pcmcia_function pcmcia_3cxem556_func0 = {
 	0x63,			/* ccr_mask */
 };
 
-struct pcmcia_config_entry pcmcia_3cxem556_func0_cfe0 = {
+static struct pcmcia_config_entry pcmcia_3cxem556_func0_cfe0 = {
 	0x07,			/* cfe number */
 	PCMCIA_CFE_IO8 | PCMCIA_CFE_IO16 | PCMCIA_CFE_IRQLEVEL,
 	PCMCIA_IFTYPE_IO,
@@ -176,6 +236,18 @@ static struct pcmcia_config_entry pcmcia_ndc_nd5100_func0_cfe0 = {
 };
 
 static struct pcmcia_cis_quirk pcmcia_cis_quirks[] = {
+	{ PCMCIA_VENDOR_LINKSYS, PCMCIA_PRODUCT_LINKSYS_ECARD_1,
+	  PCMCIA_CIS_INVALID,
+	  &pcmcia_dlink_de650_func0, &pcmcia_dlink_de650_func0_cfe0 },
+	{ PCMCIA_VENDOR_LINKSYS, PCMCIA_PRODUCT_LINKSYS_ECARD_1,
+	  PCMCIA_CIS_INVALID,
+	  &pcmcia_dlink_de650_func0, &pcmcia_dlink_de650_func0_cfe1 },
+	{ PCMCIA_VENDOR_LINKSYS, PCMCIA_PRODUCT_LINKSYS_ECARD_1,
+	  PCMCIA_CIS_INVALID,
+	  &pcmcia_dlink_de650_func0, &pcmcia_dlink_de650_func0_cfe2 },
+	{ PCMCIA_VENDOR_LINKSYS, PCMCIA_PRODUCT_LINKSYS_ECARD_1,
+	  PCMCIA_CIS_INVALID,
+	  &pcmcia_dlink_de650_func0, &pcmcia_dlink_de650_func0_cfe3 },
 	{ PCMCIA_VENDOR_3COM, PCMCIA_PRODUCT_3COM_3CXEM556, PCMCIA_CIS_INVALID, 
 	  &pcmcia_3cxem556_func0, &pcmcia_3cxem556_func0_cfe0 },
 	{ PCMCIA_VENDOR_3COM, PCMCIA_PRODUCT_3COM_3CXEM556, PCMCIA_CIS_INVALID,

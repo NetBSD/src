@@ -1,4 +1,4 @@
-#	$NetBSD: files.ofppc,v 1.9.14.1 2000/11/20 20:18:39 bouyer Exp $
+#	$NetBSD: files.ofppc,v 1.9.14.2 2001/01/18 09:22:52 bouyer Exp $
 #
 # First try for ofppc-specific configuration info
 #
@@ -11,6 +11,7 @@ file	arch/ofppc/ofppc/clock.c
 file	arch/ofppc/ofppc/conf.c
 file	arch/ofppc/ofppc/disksubr.c		disk
 file	arch/ofppc/ofppc/machdep.c
+file	arch/ofppc/ofppc/procfs_machdep.c	procfs
 file	dev/cons.c
 file	dev/cninit.c
 

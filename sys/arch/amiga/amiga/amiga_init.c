@@ -1,4 +1,4 @@
-/*	$NetBSD: amiga_init.c,v 1.67.2.2 2000/11/20 19:58:17 bouyer Exp $	*/
+/*	$NetBSD: amiga_init.c,v 1.67.2.3 2001/01/18 09:22:07 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -329,13 +329,6 @@ start_c(id, fphystart, fphysize, cphysize, esym_addr, flags, inh_sync, boot_part
 			    ((cd->rom.type - 1) & ERT_MEMMASK);
 		RELOC(ZBUSAVAIL, u_int) += m68k_round_page(cd->size);
 	}
-
-	/*
-	 * update these as soon as possible!
-	 */
-	RELOC(PAGE_SIZE, u_int)  = NBPG;
-	RELOC(PAGE_MASK, u_int)  = NBPG-1;
-	RELOC(PAGE_SHIFT, u_int) = PG_SHIFT;
 
 	/*
 	 * assume KVA_MIN == 0.  We subtract the kernel code (and

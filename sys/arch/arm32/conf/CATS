@@ -1,4 +1,4 @@
-#	$NetBSD: CATS,v 1.16.2.2 2000/11/22 15:59:57 bouyer Exp $
+#	$NetBSD: CATS,v 1.16.2.3 2001/01/18 09:22:20 bouyer Exp $
 #
 #	CATS -- CHALTECH CATS Development kernel
 #
@@ -328,6 +328,9 @@ audio*	at uaudio?
 aue*	at uhub? port ?		# ADMtek AN986 Pegasus based adapters
 cue*	at uhub? port ?		# CATC USB-EL1201A based adapters
 kue*	at uhub? port ?		# Kawasaki LSI KL5KUSB101B based adapters
+
+# Y@P firmware loader
+uyap* at uhub? port ?
 
 # USB Generic driver
 ugen* at uhub? port ?

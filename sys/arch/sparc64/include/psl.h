@@ -1,4 +1,4 @@
-/*	$NetBSD: psl.h,v 1.11.2.2 2001/01/05 17:35:04 bouyer Exp $ */
+/*	$NetBSD: psl.h,v 1.11.2.3 2001/01/18 09:23:04 bouyer Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -388,7 +388,7 @@ SPLHOLD(spllpt, PIL_LPT)
  * Memory allocation (must be as high as highest network, tty, or disk device)
  */
 SPLHOLD(splimp, PIL_IMP)
-SPLHOLD(splpmap, PIL_IMP)
+SPLHOLD(splvm, PIL_IMP)
 
 SPLHOLD(splclock, PIL_CLOCK)
 
@@ -435,7 +435,7 @@ static __inline void splx(newpil)
 #define	spltty()	splttyX(__FILE__, __LINE__)
 #define	spllpt()	spllptX(__FILE__, __LINE__)
 #define	splimp()	splimpX(__FILE__, __LINE__)
-#define	splpmap()	splpmapX(__FILE__, __LINE__)
+#define	splvm()		splvmX(__FILE__, __LINE__)
 #define	splclock()	splclockX(__FILE__, __LINE__)
 #define	splfd()		splfdX(__FILE__, __LINE__)
 #define	splzs()		splzsX(__FILE__, __LINE__)

@@ -1,4 +1,4 @@
-/*	$NetBSD: ess_ofisa.c,v 1.5 1999/03/16 13:07:45 mycroft Exp $	*/
+/*	$NetBSD: ess_ofisa.c,v 1.5.8.1 2001/01/18 09:23:24 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -158,6 +158,13 @@ ess_ofisa_attach(parent, self, aux)
 		return;
 	}
 
+	/* 
+	 * The Shark firmware doesn't program the ESS ISA address registers.
+	 * Do that here instead of inside essmatch() since we want to defer
+	 * to the firmware on other platforms.
+	 */
+	if (ess_config_addr(sc))
+		return;
 	if (essmatch(sc) == 0) {
 		printf(": essmatch failed\n");
 		return;

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.86.2.1 2000/11/20 20:05:23 bouyer Exp $	*/
+/*	$NetBSD: machdep.c,v 1.86.2.2 2001/01/18 09:22:23 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -369,6 +369,9 @@ identifycpu()
 		case ATARI_HADES:
 				mach = "Atari Hades";
 				break;
+		case ATARI_MILAN:
+				mach = "Atari Milan";
+				break;
 		default:
 				mach = "Atari UNKNOWN";
 				break;
@@ -701,12 +704,14 @@ u_short evec;
 {
 	static int	prev_evec;
 
-	printf("unexpected trap (vector offset %x) from %x\n",evec & 0xFFF, pc);
+	printf("unexpected trap (vector offset 0x%x) from 0x%x\n",
+						evec & 0xFFF, pc);
 
 	if(prev_evec == evec) {
 		delay(1000000);
 		prev_evec = 0;
 	}
+	else prev_evec = evec;
 }
 
 void
@@ -714,7 +719,7 @@ straymfpint(pc, evec)
 int		pc;
 u_short	evec;
 {
-	printf("unexpected mfp-interrupt (vector offset %x) from %x\n",
+	printf("unexpected mfp-interrupt (vector offset 0x%x) from 0x%x\n",
 	       evec & 0xFFF, pc);
 }
 
@@ -733,7 +738,7 @@ softint()
 		siroff(SIR_CLOCK);
 		uvmexp.softs++;
 		/* XXXX softclock(&frame.f_stackadj); */
-		softclock();
+		softclock(NULL);
 	}
 	if (ssir & SIR_CBACK) {
 		siroff(SIR_CBACK);

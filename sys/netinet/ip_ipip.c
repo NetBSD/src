@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_ipip.c,v 1.7.2.3 2001/01/05 17:36:55 bouyer Exp $	*/
+/*	$NetBSD: ip_ipip.c,v 1.7.2.4 2001/01/18 09:23:56 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -215,6 +215,7 @@ ipipattach(count)
 		sc->sc_dst.s_addr = INADDR_ANY;
 
 		if_attach(&sc->sc_if);
+		if_alloc_sadl(&sc->sc_if);
 #if NBPFILTER > 0
 		bpfattach(&sc->sc_if, DLT_NULL, sc->sc_if.if_hdrlen);
 #endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.3.4.2 2001/01/05 17:35:03 bouyer Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.3.4.3 2001/01/18 09:23:03 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Matthew R. Green
@@ -323,7 +323,7 @@ pci_conf_read(pc, tag, reg)
 	DPRINTF(SPDB_CONF, ("pci_conf_read: tag %lx; reg %x; ", (long)tag, reg));
 	DPRINTF(SPDB_CONF, ("asi = %x; readaddr = %qx (offset = %x) ...",
 		    bus_type_asi[sc->sc_configtag->type],
-		    sc->sc_configaddr + tag + reg, (int)tag + reg));
+		    (long long)(sc->sc_configaddr + tag + reg), (int)tag + reg));
 
 	if (confaddr_ok(sc, tag) == 0) {
 		val = (pcireg_t)~0;
@@ -351,7 +351,7 @@ pci_conf_write(pc, tag, reg, data)
 	DPRINTF(SPDB_CONF, ("pci_conf_write: tag %lx; reg %x; data %x; ", (long)tag, reg, (int)data));
 	DPRINTF(SPDB_CONF, ("asi = %x; readaddr = %qx (offset = %x)\n",
 		    bus_type_asi[sc->sc_configtag->type],
-		    sc->sc_configaddr + tag + reg, (int)tag + reg));
+		    (long long)(sc->sc_configaddr + tag + reg), (int)tag + reg));
 
 	if (confaddr_ok(sc, tag) == 0)
 		panic("pci_conf_write: bad addr");

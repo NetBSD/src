@@ -1,4 +1,4 @@
-/*	$NetBSD: ahdilabel.h,v 1.1 1996/02/19 09:05:51 leo Exp $	*/
+/*	$NetBSD: ahdilabel.h,v 1.1.30.1 2001/01/18 09:22:24 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -67,7 +67,7 @@ struct ahdi_part {
 	u_int8_t	ap_id[3];	/* id: GEM, BGM, XGM, UNX, MIX     */
 	u_int32_t	ap_st;		/* block where partition starts    */
 	u_int32_t	ap_size;	/* partition size in blocks        */
-};
+} __attribute__((__packed__));
 #define	ap_end	ap_size /* in the in-core copy, store end instead of size  */
 
 struct ahdi_root {
@@ -77,7 +77,7 @@ struct ahdi_root {
 	u_int32_t	 ar_bslst;	/* start of bad-sector list        */
 	u_int32_t	 ar_bslsize;	/* # of blocks in bad-sector list  */
 	u_int16_t	 ar_checksum;
-};
+} __attribute__((__packed__));
 
 /*
  * AHDI partition table.

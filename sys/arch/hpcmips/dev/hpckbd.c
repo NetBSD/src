@@ -1,4 +1,4 @@
-/*	$NetBSD: hpckbd.c,v 1.4.2.2 2000/11/20 20:45:54 bouyer Exp $ */
+/*	$NetBSD: hpckbd.c,v 1.4.2.3 2001/01/18 09:22:31 bouyer Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000 UCHIYAMA Yasushi.  All rights reserved.
@@ -492,6 +492,11 @@ hpckbd_ioctl(arg, cmd, data, flag, p)
 	switch (cmd) {
 	case WSKBDIO_GTYPE:
 		*(int *)data = WSKBD_TYPE_HPC_KBD;
+		return (0);
+	case WSKBDIO_SETLEDS:
+		return 0;
+	case WSKBDIO_GETLEDS:
+		*(int *)data = 0;	/* dummy for wsconsctl(8) */
 		return (0);
 #ifdef WSDISPLAY_COMPAT_RAWKBD
 	case WSKBDIO_SETMODE:

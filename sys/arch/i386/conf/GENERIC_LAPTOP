@@ -1,11 +1,11 @@
-#	$NetBSD: GENERIC_LAPTOP,v 1.5.2.6 2001/01/05 17:34:28 bouyer Exp $
+#	$NetBSD: GENERIC_LAPTOP,v 1.5.2.7 2001/01/18 09:22:33 bouyer Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
 
 include "arch/i386/conf/std.i386"
 
-#ident 		"GENERIC-$Revision: 1.5.2.6 $"
+#ident 		"GENERIC-$Revision: 1.5.2.7 $"
 
 maxusers	32		# estimated number of users
 
@@ -554,6 +554,9 @@ urio*	at uhub? port ?
 # USB Handspring Visor
 uvisor*	at uhub? port ?
 ucom*	at uvisor?
+
+# Y@P firmware loader
+uyap* at uhub? port ?
 
 # USB Generic driver
 ugen*	at uhub? port ?

@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.129.2.3 2000/12/08 09:26:33 bouyer Exp $
+#	$NetBSD: INSTALL,v 1.129.2.4 2001/01/18 09:22:33 bouyer Exp $
 #
 #	INSTALL - Installation kernel.
 #
@@ -558,6 +558,9 @@ uhid*	at uhub? port ? configuration ? interface ?
 umass*	at uhub? port ? configuration ? interface ?
 atapibus* at umass? channel ?
 scsibus* at umass? channel ?
+
+# Y@P firmware loader
+#uyap* at uhub? port ?
 
 # USB Generic driver
 #ugen*	at uhub? port ? configuration ? interface ?

@@ -1,7 +1,7 @@
-/* $NetBSD: sfbplus.c,v 1.6.2.2 2000/11/20 11:43:15 bouyer Exp $ */
+/* $NetBSD: sfbplus.c,v 1.6.2.3 2001/01/18 09:23:36 bouyer Exp $ */
 
 /*
- * Copyright (c) 1999 Tohru Nishimura.  All rights reserved.
+ * Copyright (c) 1999, 2000, 2001 Tohru Nishimura.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: sfbplus.c,v 1.6.2.2 2000/11/20 11:43:15 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sfbplus.c,v 1.6.2.3 2001/01/18 09:23:36 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -64,7 +64,7 @@ __KERNEL_RCSID(0, "$NetBSD: sfbplus.c,v 1.6.2.2 2000/11/20 11:43:15 bouyer Exp $
 #define	MACHINE_KSEG0_TO_PHYS(x) MIPS_KSEG1_TO_PHYS(x)
 #endif
 
-#if defined(__alpha__) || defined(alpha)
+#if defined(alpha)
 #define machine_btop(x) alpha_btop(x)
 #define MACHINE_KSEG0_TO_PHYS(x) ALPHA_K0SEG_TO_PHYS(x)
 #endif
@@ -117,45 +117,39 @@ struct hwops {
 	void (*setlut) __P((void *, struct hwcmap256 *));
 	void (*getlut) __P((void *, struct hwcmap256 *));
 	void (*visible) __P((void *, int));
-	void (*locate) __P((void *, int, int));
+	void (*locate) __P((void *, struct hwcursor64 *));
 	void (*shape) __P((void *, struct wsdisplay_curpos *, u_int64_t *));
 	void (*color) __P((void *, u_int8_t *));
 };
 
-struct sfb_softc {
+struct sfbp_softc {
 	struct device sc_dev;
 	struct fb_devconfig *sc_dc;	/* device configuration */
 	struct hwcmap256 sc_cmap;	/* software copy of colormap */
 	struct hwcursor64 sc_cursor;	/* software copy of cursor */
 	int sc_curenb;			/* cursor sprite enabled */
-	int sc_changed;			/* need update of colormap */
-#define	DATA_ENB_CHANGED	0x01	/* cursor enable changed */
-#define	DATA_CURCMAP_CHANGED	0x02	/* cursor colormap changed */
-#define	DATA_CURSHAPE_CHANGED	0x04	/* cursor size, image, mask changed */
-#define	DATA_CMAP_CHANGED	0x08	/* colormap changed */
-#define	DATA_ALL_CHANGED	0x0f
+	int sc_changed;			/* need update of hardware */
+#define	WSDISPLAY_CMAP_DOLUT	0x20
 	int nscreens;
 	struct hwops sc_hwops;
 	void *sc_hw0, *sc_hw1;
 };
 
-#define	HX_MAGIC_X 368
-#define	HX_MAGIC_Y 38
+#define	HX_MAGIC_X	368
+#define	HX_MAGIC_Y	38
 
 static int  sfbpmatch __P((struct device *, struct cfdata *, void *));
 static void sfbpattach __P((struct device *, struct device *, void *));
 
-struct cfattach sfbp_ca = {
-	sizeof(struct sfb_softc), sfbpmatch, sfbpattach,
+const struct cfattach sfbp_ca = {
+	sizeof(struct sfbp_softc), sfbpmatch, sfbpattach,
 };
 
 static void sfbp_getdevconfig __P((tc_addr_t, struct fb_devconfig *));
 static struct fb_devconfig sfbp_console_dc;
 static tc_addr_t sfbp_consaddr;
 
-extern const struct wsdisplay_emulops sfbp_emulops, sfbp_emulops32;
-
-static struct wsscreen_descr sfb_stdscreen = {
+static struct wsscreen_descr sfbp_stdscreen = {
 	"std", 0, 0,
 	NULL, /* textops */
 	0, 0,
@@ -163,7 +157,7 @@ static struct wsscreen_descr sfb_stdscreen = {
 };
 
 static const struct wsscreen_descr *_sfb_scrlist[] = {
-	&sfb_stdscreen,
+	&sfbp_stdscreen,
 };
 
 static const struct wsscreen_list sfb_screenlist = {
@@ -178,7 +172,10 @@ static int	sfb_alloc_screen __P((void *, const struct wsscreen_descr *,
 static void	sfb_free_screen __P((void *, void *));
 static int	sfb_show_screen __P((void *, void *, int,
 				     void (*) (void *, int, int), void *));
-/* EXPORT */ int  sfb_alloc_attr __P((void *, int, int, int, long *));
+static void sfbp_putchar __P((void *, int, int, u_int, long));
+static void sfbp_erasecols __P((void *, int, int, int, long));
+static void sfbp_eraserows __P((void *, int, int, long));
+static void sfbp_copyrows __P((void *, int, int, int));
 
 static const struct wsdisplay_accessops sfb_accessops = {
 	sfbioctl,
@@ -189,28 +186,29 @@ static const struct wsdisplay_accessops sfb_accessops = {
 	0 /* load_font */
 };
 
+static void bt459init __P((caddr_t));
 static void bt459visible __P((void *, int));
-static void bt459locate __P((void *, int, int));
+static void bt459locate __P((void *, struct hwcursor64 *));
 static void bt459shape __P((void *, struct wsdisplay_curpos *, u_int64_t *));
 static void bt459color __P((void *, u_int8_t *));
 static void bt459setlut __P((void *, struct hwcmap256 *));
 
 static void sfbpvisible __P((void *, int));
-static void sfbplocate __P((void *, int, int));
+static void sfbplocate __P((void *, struct hwcursor64 *));
 static void sfbpshape __P((void *, struct wsdisplay_curpos *, u_int64_t *));
+static void bt463init __P((caddr_t));
 static void bt463color __P((void *, u_int8_t *));
 static void noplut __P((void *, struct hwcmap256 *));
-
 
 /* EXPORT */ int sfbp_cnattach __P((tc_addr_t));
 static int  sfbpintr __P((void *));
 static void sfbpinit __P((struct fb_devconfig *));
 
-static int  get_cmap __P((struct sfb_softc *, struct wsdisplay_cmap *));
-static int  set_cmap __P((struct sfb_softc *, struct wsdisplay_cmap *));
-static int  set_cursor __P((struct sfb_softc *, struct wsdisplay_cursor *));
-static int  get_cursor __P((struct sfb_softc *, struct wsdisplay_cursor *));
-
+static int  get_cmap __P((struct sfbp_softc *, struct wsdisplay_cmap *));
+static int  set_cmap __P((struct sfbp_softc *, struct wsdisplay_cmap *));
+static int  set_cursor __P((struct sfbp_softc *, struct wsdisplay_cursor *));
+static int  get_cursor __P((struct sfbp_softc *, struct wsdisplay_cursor *));
+static void set_curpos __P((struct sfbp_softc *, struct wsdisplay_curpos *));
 
 /*
  * Compose 2 bit/pixel cursor image.  Bit order will be reversed.
@@ -275,6 +273,7 @@ sfbp_getdevconfig(dense_addr, dc)
 {
 	caddr_t sfbasic;
 	int i, hsetup, vsetup, vbase, cookie;
+	struct rasops_info *ri;
 
 	dc->dc_vaddr = dense_addr;
 	dc->dc_paddr = MACHINE_KSEG0_TO_PHYS(dc->dc_vaddr);
@@ -283,14 +282,26 @@ sfbp_getdevconfig(dense_addr, dc)
 	hsetup = *(u_int32_t *)(sfbasic + SFB_ASIC_VIDEO_HSETUP);
 	vsetup = *(u_int32_t *)(sfbasic + SFB_ASIC_VIDEO_VSETUP);
 	i = *(u_int32_t *)(sfbasic + SFB_ASIC_DEEP);
-	*(u_int32_t *)(sfbasic + SFB_ASIC_VIDEO_BASE) = vbase = 1;
 
+	/*
+	 * - neglect 0,1 cases of hsetup register.
+	 * - observed 804x600?, 644x480? values.
+	 */
 	dc->dc_wid = (hsetup & 0x1ff) << 2;
 	dc->dc_ht = (vsetup & 0x7ff);
 	dc->dc_depth = (i & 1) ? 32 : 8;
 	dc->dc_rowbytes = dc->dc_wid * (dc->dc_depth / 8);
-	dc->dc_videobase = dc->dc_vaddr + 0x800000 + vbase * 4096; /* XXX */
 	dc->dc_blanked = 0;
+
+	*(u_int32_t *)(sfbasic + SFB_ASIC_VIDEO_BASE) = vbase = 1;
+	vbase *= (i & 0x20) ? 2048 : 4096;	/* VRAM chip size */
+	if (i & 1) vbase *= 4;			/* bytes per pixel */
+	dc->dc_videobase = dc->dc_vaddr + 0x800000 + vbase;
+
+	*(u_int32_t *)(sfbasic + SFB_ASIC_PLANEMASK) = ~0;
+	*(u_int32_t *)(sfbasic + SFB_ASIC_PIXELMASK) = ~0;
+	*(u_int32_t *)(sfbasic + SFB_ASIC_MODE) = 0;	/* MODE_SIMPLE */
+	*(u_int32_t *)(sfbasic + SFB_ASIC_ROP) = 3;	/* ROP_COPY */
 
 	/* initialize colormap and cursor resource */
 	sfbpinit(dc);
@@ -299,24 +310,35 @@ sfbp_getdevconfig(dense_addr, dc)
 	for (i = 0; i < dc->dc_ht * dc->dc_rowbytes; i += sizeof(u_int32_t))
 		*(u_int32_t *)(dc->dc_videobase + i) = 0x0;
 
-	dc->rinfo.ri_flg = RI_CENTER;
-	dc->rinfo.ri_depth = dc->dc_depth;
-	dc->rinfo.ri_bits = (void *)dc->dc_videobase;
-	dc->rinfo.ri_width = dc->dc_wid;
-	dc->rinfo.ri_height = dc->dc_ht;
-	dc->rinfo.ri_stride = dc->dc_rowbytes;
-	dc->rinfo.ri_hw = sfbasic;
+	ri = &dc->rinfo;
+	ri->ri_flg = RI_CENTER;
+	ri->ri_flg = 0;			/* XXX PATCH HOLES in rasops */
+	ri->ri_depth = dc->dc_depth;
+	ri->ri_bits = (void *)dc->dc_videobase;
+	ri->ri_width = dc->dc_wid;
+	ri->ri_height = dc->dc_ht;
+	ri->ri_stride = dc->dc_rowbytes;
+	ri->ri_hw = sfbasic;
+
+	if (dc->dc_depth == 32) {
+		ri->ri_rnum = 8;
+		ri->ri_gnum = 8;
+		ri->ri_bnum = 8;
+		ri->ri_rpos = 16;
+		ri->ri_gpos = 8;
+		ri->ri_bpos = 0;
+	}
 
 	wsfont_init();
 	/* prefer 8 pixel wide font */
 	if ((cookie = wsfont_find(NULL, 8, 0, 0)) <= 0)
 		cookie = wsfont_find(NULL, 0, 0, 0);
 	if (cookie <= 0) {
-		printf("sfb: font table is empty\n");
+		printf("sfbp: font table is empty\n");
 		return;
 	}
 
-	/* the accelerated sfb_putchar() needs LSbit left */
+	/* the accelerated sfbp_putchar() needs LSbit left */
 	if (wsfont_lock(cookie, &dc->rinfo.ri_font,
 	    WSDISPLAY_FONTORDER_R2L, WSDISPLAY_FONTORDER_L2R) <= 0) {
 		printf("sfb: couldn't lock font\n");
@@ -326,14 +348,19 @@ sfbp_getdevconfig(dense_addr, dc)
 
 	rasops_init(&dc->rinfo, 34, 80);
 
+	/* add our accelerated functions */
+	dc->rinfo.ri_ops.putchar = sfbp_putchar;
+	dc->rinfo.ri_ops.erasecols = sfbp_erasecols;
+	dc->rinfo.ri_ops.copyrows = sfbp_copyrows;
+	dc->rinfo.ri_ops.eraserows = sfbp_eraserows;
+
 	/* XXX shouldn't be global */
-	sfb_stdscreen.nrows = dc->rinfo.ri_rows;
-	sfb_stdscreen.ncols = dc->rinfo.ri_cols;
-	sfb_stdscreen.textops
-	    = (dc->dc_depth == 8) ? &sfbp_emulops : &sfbp_emulops32;
-	sfb_stdscreen.capabilities = dc->rinfo.ri_caps;
+	sfbp_stdscreen.nrows = dc->rinfo.ri_rows;
+	sfbp_stdscreen.ncols = dc->rinfo.ri_cols;
+	sfbp_stdscreen.textops = &dc->rinfo.ri_ops;
+	sfbp_stdscreen.capabilities = dc->rinfo.ri_caps;
 	/* our accelerated putchar can't underline */
-	sfb_stdscreen.capabilities &= ~WSSCREEN_UNDERLINE;
+	sfbp_stdscreen.capabilities &= ~WSSCREEN_UNDERLINE;
 }
 
 static void
@@ -341,10 +368,9 @@ sfbpattach(parent, self, aux)
 	struct device *parent, *self;
 	void *aux;
 {
-	struct sfb_softc *sc = (struct sfb_softc *)self;
+	struct sfbp_softc *sc = (struct sfbp_softc *)self;
 	struct tc_attach_args *ta = aux;
 	struct wsemuldisplaydev_attach_args waa;
-	struct hwcmap256 *cm;
 	caddr_t sfbasic;
 	int console;
 
@@ -359,16 +385,16 @@ sfbpattach(parent, self, aux)
 		sfbp_getdevconfig(ta->ta_addr, sc->sc_dc);
 	}
 	printf(": %d x %d, %dbpp\n", sc->sc_dc->dc_wid, sc->sc_dc->dc_ht,
-	    sc->sc_dc->dc_depth);
-
-	cm = &sc->sc_cmap;
-	memset(cm, 255, sizeof(struct hwcmap256));	/* XXX */
-	cm->r[0] = cm->g[0] = cm->b[0] = 0;		/* XXX */
+	    (sc->sc_dc->dc_depth != 32) ? 8 : 24);
 
 	sc->sc_cursor.cc_magic.x = HX_MAGIC_X;
 	sc->sc_cursor.cc_magic.y = HX_MAGIC_Y;
 
 	if (sc->sc_dc->dc_depth == 8) {
+		struct hwcmap256 *cm;
+		const u_int8_t *p;
+		int index;
+
 		sc->sc_hw0 = (caddr_t)ta->ta_addr + SFB_RAMDAC_OFFSET;
 		sc->sc_hw1 = sc->sc_hw0;
 		sc->sc_hwops.visible = bt459visible;
@@ -377,6 +403,13 @@ sfbpattach(parent, self, aux)
 		sc->sc_hwops.color = bt459color;
 		sc->sc_hwops.setlut = bt459setlut;
 		sc->sc_hwops.getlut = noplut;
+		cm = &sc->sc_cmap;
+		p = rasops_cmap;
+		for (index = 0; index < CMAP_SIZE; index++, p += 3) {
+			cm->r[index] = p[0];
+			cm->g[index] = p[1];
+			cm->b[index] = p[2];
+		}
 	}
 	else {
 		sc->sc_hw0 = (caddr_t)ta->ta_addr + SFB_ASIC_OFFSET;
@@ -411,13 +444,13 @@ sfbioctl(v, cmd, data, flag, p)
 	int flag;
 	struct proc *p;
 {
-	struct sfb_softc *sc = v;
+	struct sfbp_softc *sc = v;
 	struct fb_devconfig *dc = sc->sc_dc;
 	int turnoff;
 
 	switch (cmd) {
 	case WSDISPLAYIO_GTYPE:
-		*(u_int *)data = WSDISPLAY_TYPE_SFB; /* XXX SFBP XXX */
+		*(u_int *)data = WSDISPLAY_TYPE_SFBP;
 		return (0);
 
 	case WSDISPLAYIO_GINFO:
@@ -425,7 +458,7 @@ sfbioctl(v, cmd, data, flag, p)
 		wsd_fbip->height = sc->sc_dc->dc_ht;
 		wsd_fbip->width = sc->sc_dc->dc_wid;
 		wsd_fbip->depth = sc->sc_dc->dc_depth;
-		wsd_fbip->cmsize = CMAP_SIZE;
+		wsd_fbip->cmsize = CMAP_SIZE;	/* XXX */
 #undef fbt
 		return (0);
 
@@ -454,29 +487,10 @@ sfbioctl(v, cmd, data, flag, p)
 		*(struct wsdisplay_curpos *)data = sc->sc_cursor.cc_pos;
 		return (0);
 
-	case WSDISPLAYIO_SCURPOS: {
-		struct wsdisplay_curpos *pos = (void *)data;
-		int x, y;
-
-		x = pos->x;
-		y = pos->y;
-		if (y < 0)
-			y = 0;
-		else if (y > dc->dc_ht)
-			y = dc->dc_ht;
-		if (x < 0)
-			x = 0;
-		else if (x > dc->dc_wid)
-			x = dc->dc_wid;
-		sc->sc_cursor.cc_pos.x = x;
-		sc->sc_cursor.cc_pos.y = y;
-		x -= sc->sc_cursor.cc_hot.x;
-		y -= sc->sc_cursor.cc_hot.y;
-		x += sc->sc_cursor.cc_magic.x;
-		y += sc->sc_cursor.cc_magic.y;
-		(*sc->sc_hwops.locate)(sc->sc_hw0, x, y);
+	case WSDISPLAYIO_SCURPOS:
+		set_curpos(sc, (struct wsdisplay_curpos *)data);
+		sc->sc_changed = WSDISPLAY_CURSOR_DOPOS;
 		return (0);
-		}
 
 	case WSDISPLAYIO_GCURMAX:
 		((struct wsdisplay_curpos *)data)->x =
@@ -489,7 +503,7 @@ sfbioctl(v, cmd, data, flag, p)
 	case WSDISPLAYIO_SCURSOR:
 		return set_cursor(sc, (struct wsdisplay_cursor *)data);
 	}
-	return ENOTTY;
+	return (ENOTTY);
 }
 
 paddr_t
@@ -498,7 +512,7 @@ sfbmmap(v, offset, prot)
 	off_t offset;
 	int prot;
 {
-	struct sfb_softc *sc = v;
+	struct sfbp_softc *sc = v;
 
 	if (offset >= 0x1000000 || offset < 0) /* XXX 16MB XXX */
 		return (-1);
@@ -513,7 +527,7 @@ sfb_alloc_screen(v, type, cookiep, curxp, curyp, attrp)
 	int *curxp, *curyp;
 	long *attrp;
 {
-	struct sfb_softc *sc = v;
+	struct sfbp_softc *sc = v;
 	long defattr;
 
 	if (sc->nscreens > 0)
@@ -533,7 +547,7 @@ sfb_free_screen(v, cookie)
 	void *v;
 	void *cookie;
 {
-	struct sfb_softc *sc = v;
+	struct sfbp_softc *sc = v;
 
 	if (sc->sc_dc == &sfbp_console_dc)
 		panic("sfb_free_screen: console");
@@ -564,7 +578,7 @@ sfbp_cnattach(addr)
 
 	(*dcp->rinfo.ri_ops.alloc_attr)(&dcp->rinfo, 0, 0, 0, &defattr);
 
-	wsdisplay_cnattach(&sfb_stdscreen, &dcp->rinfo, 0, 0, defattr);
+	wsdisplay_cnattach(&sfbp_stdscreen, &dcp->rinfo, 0, 0, defattr);
 	sfbp_consaddr = addr;
 	return(0);
 }
@@ -573,7 +587,7 @@ static int
 sfbpintr(arg)
 	void *arg;
 {
-	struct sfb_softc *sc = arg;
+	struct sfbp_softc *sc = arg;
 	caddr_t sfbasic = (caddr_t)sc->sc_dc->dc_vaddr + SFB_ASIC_OFFSET;
 	int v;
 	u_int32_t sisr;
@@ -587,16 +601,17 @@ sfbpintr(arg)
 		goto finish;
 
 	v = sc->sc_changed;
-	sc->sc_changed = 0;
-
-	if (v & DATA_ENB_CHANGED)
+	if (v & WSDISPLAY_CURSOR_DOCUR)
 		(*sc->sc_hwops.visible)(sc->sc_hw0, sc->sc_curenb);
-	if (v & DATA_CURCMAP_CHANGED)
+	if (v & (WSDISPLAY_CURSOR_DOPOS | WSDISPLAY_CURSOR_DOHOT))
+		(*sc->sc_hwops.locate)(sc->sc_hw0, cc);
+	if (v & WSDISPLAY_CURSOR_DOCMAP)
 		(*sc->sc_hwops.color)(sc->sc_hw1, cc->cc_color);
-	if (v & DATA_CURSHAPE_CHANGED)
+	if (v & WSDISPLAY_CURSOR_DOSHAPE)
 		(*sc->sc_hwops.shape)(sc->sc_hw0, &cc->cc_size, cc->cc_image);
-	if (v & DATA_CMAP_CHANGED)
+	if (v & WSDISPLAY_CMAP_DOLUT)
 		(*sc->sc_hwops.setlut)(sc->sc_hw1, &sc->sc_cmap);
+	sc->sc_changed = 0;
 
 finish:
 	*((u_int32_t *)sfbasic + TGA_REG_SISR) = sisr = 0x00000001; tc_wmb();
@@ -608,17 +623,24 @@ static void
 sfbpinit(dc)
 	struct fb_devconfig *dc;
 {
-	caddr_t sfbasic = (caddr_t)(dc->dc_vaddr + SFB_ASIC_OFFSET);
-	caddr_t vdac = (caddr_t)(dc->dc_vaddr + SFB_RAMDAC_OFFSET);
-	int i;
+	caddr_t sfbasic = (caddr_t)dc->dc_vaddr + SFB_ASIC_OFFSET;
+	caddr_t vdac = (caddr_t)dc->dc_vaddr + SFB_RAMDAC_OFFSET;
 
-	*(u_int32_t *)(sfbasic + SFB_ASIC_PLANEMASK) = ~0;
-	*(u_int32_t *)(sfbasic + SFB_ASIC_PIXELMASK) = ~0;
-	*(u_int32_t *)(sfbasic + SFB_ASIC_MODE) = 0; /* MODE_SIMPLE */
-	*(u_int32_t *)(sfbasic + SFB_ASIC_ROP) = 3;  /* ROP_COPY */
-	
-    if (dc->dc_depth == 8) {
-	*(u_int32_t *)(sfbasic + 0x180000) = 0; /* Bt459 reset */
+	if (dc->dc_depth == 8) {
+		*(u_int32_t *)(sfbasic + 0x180000) = 0; /* Bt459 reset */
+		bt459init(vdac);
+	}
+	else {
+		bt463init(vdac);
+	}
+}
+
+static void
+bt459init(vdac)
+	caddr_t vdac;
+{
+	const u_int8_t *p;
+	int i;
 
 	SELECT(vdac, BT459_IREG_COMMAND_0);
 	REG(vdac, bt_reg) = 0x40; /* CMD0 */	tc_wmb();
@@ -650,13 +672,11 @@ sfbpinit(dc)
 
 	/* build sane colormap */
 	SELECT(vdac, 0);
-	REG(vdac, bt_cmap) = 0;	tc_wmb();
-	REG(vdac, bt_cmap) = 0;	tc_wmb();
-	REG(vdac, bt_cmap) = 0;	tc_wmb();
-	for (i = 1; i < CMAP_SIZE; i++) {
-		REG(vdac, bt_cmap) = 0xff;	tc_wmb();
-		REG(vdac, bt_cmap) = 0xff;	tc_wmb();
-		REG(vdac, bt_cmap) = 0xff;	tc_wmb();
+	p = rasops_cmap;
+	for (i = 0; i < CMAP_SIZE; i++, p += 3) {
+		REG(vdac, bt_cmap) = p[0];	tc_wmb();
+		REG(vdac, bt_cmap) = p[1];	tc_wmb();
+		REG(vdac, bt_cmap) = p[2];	tc_wmb();
 	}
 
 	/* clear out cursor image */
@@ -681,10 +701,17 @@ sfbpinit(dc)
 	REG(vdac, bt_reg) = 0xff;	tc_wmb();
 	REG(vdac, bt_reg) = 0xff;	tc_wmb();
 	REG(vdac, bt_reg) = 0xff;	tc_wmb();
-    } else {
+}
+
+static void
+bt463init(vdac)
+	caddr_t vdac;
+{
+	int i;
+
 	SELECT(vdac, BT463_IREG_COMMAND_0);
 	REG(vdac, bt_reg) = 0x40;	tc_wmb();	/* CMD 0 */
-	REG(vdac, bt_reg) = 0x46;	tc_wmb();	/* CMD 1 */
+	REG(vdac, bt_reg) = 0x48;	tc_wmb();	/* CMD 1 */
 	REG(vdac, bt_reg) = 0xc0;	tc_wmb();	/* CMD 2 */
 	REG(vdac, bt_reg) = 0;		tc_wmb();	/* !? 204 !? */
 	REG(vdac, bt_reg) = 0xff;	tc_wmb();	/* plane  0:7  */
@@ -697,44 +724,17 @@ sfbpinit(dc)
 	REG(vdac, bt_reg) = 0x00;	tc_wmb();	/* blink 24:27 */
 	REG(vdac, bt_reg) = 0x00;	tc_wmb();
 
-#if 0 /* XXX ULTRIX does initialize 16 entry window type here XXX */
-  {
-	static u_int32_t windowtype[BT463_IREG_WINDOW_TYPE_TABLE] = {
-		0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-	};
-
 	SELECT(vdac, BT463_IREG_WINDOW_TYPE_TABLE);
 	for (i = 0; i < BT463_NWTYPE_ENTRIES; i++) {
-		REG(vdac, bt_reg) = windowtype[i];	  /*   0:7  */
-		REG(vdac, bt_reg) = windowtype[i] >> 8;  /*   8:15 */
-		REG(vdac, bt_reg) = windowtype[i] >> 16; /*  16:23 */
+		REG(vdac, bt_reg) = 0x00;	/*   0:7  */
+		REG(vdac, bt_reg) = 0xe1;	/*   8:15 */
+		REG(vdac, bt_reg) = 0x81; 	/*  16:23 */
 	}
-  }
-#endif
-
-	SELECT(vdac, BT463_IREG_CPALETTE_RAM);
-	REG(vdac, bt_cmap) = 0;		tc_wmb();
-	REG(vdac, bt_cmap) = 0;		tc_wmb();
-	REG(vdac, bt_cmap) = 0;		tc_wmb();
-	for (i = 1; i < 256; i++) {
-		REG(vdac, bt_cmap) = 0xff;	tc_wmb();
-		REG(vdac, bt_cmap) = 0xff;	tc_wmb();
-		REG(vdac, bt_cmap) = 0xff;	tc_wmb();
-	}
-
-	/* !? Eeeh !? */
-	SELECT(vdac, 0x0100 /* BT463_IREG_CURSOR_COLOR_0 */);
-	for (i = 0; i < 256; i++) {
-		REG(vdac, bt_cmap) = i;	tc_wmb();
-		REG(vdac, bt_cmap) = i;	tc_wmb();
-		REG(vdac, bt_cmap) = i;	tc_wmb();
-	}
-    } 
 }
 
 static int
 get_cmap(sc, p)
-	struct sfb_softc *sc;
+	struct sfbp_softc *sc;
 	struct wsdisplay_cmap *p;
 {
 	u_int index = p->index, count = p->count;
@@ -756,7 +756,7 @@ get_cmap(sc, p)
 
 static int
 set_cmap(sc, p)
-	struct sfb_softc *sc;
+	struct sfbp_softc *sc;
 	struct wsdisplay_cmap *p;
 {
 	u_int index = p->index, count = p->count;
@@ -772,20 +772,17 @@ set_cmap(sc, p)
 	copyin(p->red, &sc->sc_cmap.r[index], count);
 	copyin(p->green, &sc->sc_cmap.g[index], count);
 	copyin(p->blue, &sc->sc_cmap.b[index], count);
-
-	sc->sc_changed |= DATA_CMAP_CHANGED;
-
+	sc->sc_changed |= WSDISPLAY_CMAP_DOLUT;
 	return (0);
 }
 
-
 static int
 set_cursor(sc, p)
-	struct sfb_softc *sc;
+	struct sfbp_softc *sc;
 	struct wsdisplay_cursor *p;
 {
 #define	cc (&sc->sc_cursor)
-	int v, index, count, icount, x, y;
+	int v, index, count, icount;
 
 	v = p->which;
 	if (v & WSDISPLAY_CURSOR_DOCMAP) {
@@ -806,50 +803,25 @@ set_cursor(sc, p)
 		    !uvm_useracc(p->mask, icount, B_READ))
 			return (EFAULT);
 	}
-	if (v & (WSDISPLAY_CURSOR_DOPOS | WSDISPLAY_CURSOR_DOCUR)) {
-		if (v & WSDISPLAY_CURSOR_DOCUR)
-			cc->cc_hot = p->hot;
-		if (v & WSDISPLAY_CURSOR_DOPOS) {
-			struct fb_devconfig *dc = sc->sc_dc;
 
-			x = p->pos.x;
-			y = p->pos.y;
-			if (y < 0)
-				y = 0;
-			else if (y > dc->dc_ht)
-				y = dc->dc_ht;
-			if (x < 0)
-				x = 0;
-			else if (x > dc->dc_wid)
-				x = dc->dc_wid;
-			sc->sc_cursor.cc_pos.x = x;
-			sc->sc_cursor.cc_pos.y = y;
-		}
-		x = sc->sc_cursor.cc_pos.x - sc->sc_cursor.cc_hot.x;
-		y = sc->sc_cursor.cc_pos.y - sc->sc_cursor.cc_hot.y;
-		x += sc->sc_cursor.cc_magic.x;
-		y += sc->sc_cursor.cc_magic.y;
-		(*sc->sc_hwops.locate)(sc->sc_hw0, x, y);
-	}
-
-	sc->sc_changed = 0;
-	if (v & WSDISPLAY_CURSOR_DOCUR) {
+	if (v & WSDISPLAY_CURSOR_DOCUR)
 		sc->sc_curenb = p->enable;
-		sc->sc_changed |= DATA_ENB_CHANGED;
-	}
+	if (v & WSDISPLAY_CURSOR_DOPOS)
+		set_curpos(sc, &p->pos);
+	if (v & WSDISPLAY_CURSOR_DOHOT)
+		cc->cc_hot = p->hot;
 	if (v & WSDISPLAY_CURSOR_DOCMAP) {
 		copyin(p->cmap.red, &cc->cc_color[index], count);
 		copyin(p->cmap.green, &cc->cc_color[index + 2], count);
 		copyin(p->cmap.blue, &cc->cc_color[index + 4], count);
-		sc->sc_changed |= DATA_CURCMAP_CHANGED;
 	}
 	if (v & WSDISPLAY_CURSOR_DOSHAPE) {
 		cc->cc_size = p->size;
 		memset(cc->cc_image, 0, sizeof cc->cc_image);
 		copyin(p->image, cc->cc_image, icount);
 		copyin(p->mask, cc->cc_image+CURSOR_MAX_SIZE, icount);
-		sc->sc_changed |= DATA_CURSHAPE_CHANGED;
 	}
+	sc->sc_changed = v;
 
 	return (0);
 #undef cc
@@ -857,26 +829,30 @@ set_cursor(sc, p)
 
 static int
 get_cursor(sc, p)
-	struct sfb_softc *sc;
+	struct sfbp_softc *sc;
 	struct wsdisplay_cursor *p;
 {
 	return (ENOTTY); /* XXX */
 }
 
-int
-sfb_alloc_attr(id, fg, bg, flags, attrp)
-	void *id;
-	int fg, bg, flags;
-	long *attrp;
+static void
+set_curpos(sc, curpos)
+	struct sfbp_softc *sc;
+	struct wsdisplay_curpos *curpos;
 {
-	if (flags & (WSATTR_HILIT | WSATTR_BLINK |
-		     WSATTR_UNDERLINE | WSATTR_WSCOLORS))
-		return (EINVAL);
-	if (flags & WSATTR_REVERSE)
-		*attrp = 1;
-	else
-		*attrp = 0;
-	return (0);
+	struct fb_devconfig *dc = sc->sc_dc;
+	int x = curpos->x, y = curpos->y;
+
+	if (y < 0)
+		y = 0;
+	else if (y > dc->dc_ht)
+		y = dc->dc_ht;
+	if (x < 0)
+		x = 0;
+	else if (x > dc->dc_wid)
+		x = dc->dc_wid;
+	sc->sc_cursor.cc_pos.x = x;
+	sc->sc_cursor.cc_pos.y = y;
 }
 
 static void
@@ -894,14 +870,20 @@ sfbpvisible(hw, on)
 	void *hw;
 	int on;
 {
+	/* XXX use SFBplus ASIC XX */
 }
 
 static void
-bt459locate(hw, x, y)
+bt459locate(hw, cc)
 	void *hw;
-	int x, y;
+	struct hwcursor64 *cc;
 {
-	int s;
+	int x, y, s;
+
+	x = cc->cc_pos.x - cc->cc_hot.x;
+	y = cc->cc_pos.y - cc->cc_hot.y;
+	x += cc->cc_magic.x;
+	y += cc->cc_magic.y;
 
 	s = spltty();
 	SELECT(hw, BT459_IREG_CURSOR_X_LOW);
@@ -913,10 +895,14 @@ bt459locate(hw, x, y)
 }
 
 static void
-sfbplocate(hw, x, y)
+sfbplocate(hw, cc)
 	void *hw;
-	int x, y;
+	struct hwcursor64 *cc;
 {
+	int x, y;
+
+	x = cc->cc_pos.x - cc->cc_hot.x;
+	y = cc->cc_pos.y - cc->cc_hot.y;
 	*((u_int32_t *)hw + TGA_REG_CXYR) = ((y & 0xfff) << 12) | (x & 0xfff);
 	tc_wmb();
 }
@@ -990,6 +976,7 @@ sfbpshape(hw, size, image)
 	struct wsdisplay_curpos *size;
 	u_int64_t *image;
 {
+	/* XXX use SFBplus ASIC XXX */
 }
 
 static void
@@ -1012,4 +999,394 @@ noplut(hw, cm)
 	void *hw;
 	struct hwcmap256 *cm;
 {
+}
+
+#define SFBBPP 32
+
+#define	MODE_SIMPLE		0
+#define	MODE_OPAQUESTIPPLE	1
+#define	MODE_OPAQUELINE		2
+#define	MODE_TRANSPARENTSTIPPLE	5
+#define	MODE_TRANSPARENTLINE	6
+#define	MODE_COPY		7
+
+#if SFBBPP == 8
+/* parameters for 8bpp configuration */
+#define	SFBALIGNMASK		0x7
+#define	SFBPIXELBYTES		1
+#define	SFBSTIPPLEALL1		0xffffffff
+#define	SFBSTIPPLEBITS		32
+#define	SFBSTIPPLEBITMASK	0x1f
+#define	SFBSTIPPLEBYTESDONE	32
+#define	SFBCOPYALL1		0xffffffff
+#define	SFBCOPYBITS		32
+#define	SFBCOPYBITMASK		0x1f
+#define	SFBCOPYBYTESDONE	32
+
+#elif SFBBPP == 32
+/* parameters for 32bpp configuration */
+#define	SFBALIGNMASK		0x7
+#define	SFBPIXELBYTES		4
+#define	SFBSTIPPLEALL1		0x0000ffff
+#define	SFBSTIPPLEBITS		16
+#define	SFBSTIPPLEBITMASK	0xf
+#define	SFBSTIPPLEBYTESDONE	32
+#define	SFBCOPYALL1		0x000000ff
+#define	SFBCOPYBITS		8
+#define	SFBCOPYBITMASK		0x3
+#define	SFBCOPYBYTESDONE	32
+#endif
+
+#ifdef pmax
+#define	WRITE_MB()
+#define	BUMP(p) (p)
+#endif
+
+#ifdef alpha
+#define	WRITE_MB() tc_wmb()
+/* registers is replicated in 1KB stride; rap round 4th iteration */
+#define	BUMP(p) ((p) = (caddr_t)(((long)(p) + 0x400) & ~0x1000))
+#endif
+
+#define	SFBMODE(p, v) \
+		(*(u_int32_t *)(BUMP(p) + SFB_ASIC_MODE) = (v))
+#define	SFBROP(p, v) \
+		(*(u_int32_t *)(BUMP(p) + SFB_ASIC_ROP) = (v))
+#define	SFBPLANEMASK(p, v) \
+		(*(u_int32_t *)(BUMP(p) + SFB_ASIC_PLANEMASK) = (v))
+#define	SFBPIXELMASK(p, v) \
+		(*(u_int32_t *)(BUMP(p) + SFB_ASIC_PIXELMASK) = (v))
+#define	SFBADDRESS(p, v) \
+		(*(u_int32_t *)(BUMP(p) + SFB_ASIC_ADDRESS) = (v))
+#define	SFBSTART(p, v) \
+		(*(u_int32_t *)(BUMP(p) + SFB_ASIC_START) = (v))
+#define	SFBPIXELSHIFT(p, v) \
+		(*(u_int32_t *)(BUMP(p) + SFB_ASIC_PIXELSHIFT) = (v))
+#define	SFBFG(p, v) \
+		(*(u_int32_t *)(BUMP(p) + SFB_ASIC_FG) = (v))
+#define	SFBBG(p, v) \
+		(*(u_int32_t *)(BUMP(p) + SFB_ASIC_BG) = (v))
+#define	SFBBCONT(p, v) \
+		(*(u_int32_t *)(BUMP(p) + SFB_ASIC_BCONT) = (v))
+
+#define	SFBDATA(p, v) \
+		(*((u_int32_t *)BUMP(p) + TGA_REG_GDAR) = (v))
+
+#define	SFBCOPY64BYTESDONE	8
+#define	SFBCOPY64BITS		64
+#define	SFBCOPY64SRC(p, v) \
+		(*((u_int32_t *)BUMP(p) + TGA_REG_GCSR) = (long)(v))
+#define	SFBCOPY64DST(p, v) \
+		(*((u_int32_t *)BUMP(p) + TGA_REG_GCDR) = (long)(v))
+
+/*
+ * Actually write a string to the frame buffer.
+ */
+static void
+sfbp_putchar(id, row, col, uc, attr)
+	void *id;
+	int row, col;
+	u_int uc;
+	long attr;
+{
+	struct rasops_info *ri = id;
+	caddr_t sfb, p;
+	int scanspan, height, width, align, x, y;
+	u_int32_t lmask, rmask, glyph;
+	u_int8_t *g;
+
+	x = col * ri->ri_font->fontwidth;
+	y = row * ri->ri_font->fontheight;
+	scanspan = ri->ri_stride;
+	height = ri->ri_font->fontheight;
+	uc -= ri->ri_font->firstchar;
+	g = (u_char *)ri->ri_font->data + uc * ri->ri_fontscale;
+
+	p = ri->ri_bits + y * scanspan + x * SFBPIXELBYTES;
+	align = (long)p & SFBALIGNMASK;
+	p -= align;
+	align /= SFBPIXELBYTES;
+	width = ri->ri_font->fontwidth + align;
+	lmask = SFBSTIPPLEALL1 << align;
+	rmask = SFBSTIPPLEALL1 >> (-width & SFBSTIPPLEBITMASK);
+	sfb = ri->ri_hw;
+
+	SFBMODE(sfb, MODE_OPAQUESTIPPLE);
+	SFBPLANEMASK(sfb, ~0);
+	SFBFG(sfb, ri->ri_devcmap[(attr >> 24) & 15]);
+	SFBBG(sfb, ri->ri_devcmap[(attr >> 16) & 15]);
+	SFBROP(sfb, (3 << 8) | 3); /* ROP_COPY24 */
+	*((u_int32_t *)sfb + TGA_REG_GPXR_P) = lmask & rmask;
+
+	/* XXX 2B stride fonts only XXX */
+	while (height > 0) {
+		glyph = *(u_int16_t *)g;		/* XXX */
+		*(u_int32_t *)p = glyph << align;
+		p += scanspan;
+		g += 2;					/* XXX */
+		height--;
+	}
+	SFBMODE(sfb, MODE_SIMPLE);
+	*((u_int32_t *)sfb + TGA_REG_GPXR_P) = ~0;
+}
+
+#undef	SFBSTIPPLEALL1
+#undef	SFBSTIPPLEBITS
+#undef	SFBSTIPPLEBITMASK
+#define	SFBSTIPPLEALL1		SFBCOPYALL1
+#define	SFBSTIPPLEBITS		SFBCOPYBITS
+#define	SFBSTIPPLEBITMASK	SFBCOPYBITMASK
+
+/*
+ * Clear characters in a line.
+ */
+static void
+sfbp_erasecols(id, row, startcol, ncols, attr)
+	void *id;
+	int row, startcol, ncols;
+	long attr;
+{
+	struct rasops_info *ri = id;
+	caddr_t sfb, p;
+	int scanspan, startx, height, width, align, w, y;
+	u_int32_t lmask, rmask;
+
+	scanspan = ri->ri_stride;
+	y = row * ri->ri_font->fontheight;
+	startx = startcol * ri->ri_font->fontwidth;
+	height = ri->ri_font->fontheight;
+	w = ri->ri_font->fontwidth * ncols;
+
+	p = ri->ri_bits + y * scanspan + startx * SFBPIXELBYTES;
+	align = (long)p & SFBALIGNMASK;
+	align /= SFBPIXELBYTES;
+	p -= align;
+	width = w + align;
+	lmask = SFBSTIPPLEALL1 << align;
+	rmask = SFBSTIPPLEALL1 >> (-width & SFBSTIPPLEBITMASK);
+	sfb = ri->ri_hw;
+
+	SFBMODE(sfb, MODE_TRANSPARENTSTIPPLE);
+	SFBPLANEMASK(sfb, ~0);
+	SFBFG(sfb, ri->ri_devcmap[(attr >> 16) & 15]); /* fill with bg */
+	if (width <= SFBSTIPPLEBITS) {
+		lmask = lmask & rmask;
+		while (height > 0) {
+			*(u_int32_t *)p = lmask;
+			p += scanspan;
+			height--;
+		}
+	}
+	else {
+		caddr_t q = p;
+		while (height > 0) {
+			*(u_int32_t *)p = lmask;
+			WRITE_MB();
+			width -= 2 * SFBSTIPPLEBITS;
+			while (width > 0) {
+				p += SFBSTIPPLEBYTESDONE;
+				*(u_int32_t *)p = SFBSTIPPLEALL1;
+				WRITE_MB();
+				width -= SFBSTIPPLEBITS;
+			}
+			p += SFBSTIPPLEBYTESDONE;
+			*(u_int32_t *)p = rmask;
+			WRITE_MB();
+
+			p = (q += scanspan);
+			width = w + align;
+			height--;
+		}
+	}
+	SFBMODE(sfb, MODE_SIMPLE);
+}
+
+#if 1
+/*
+ * Copy lines.
+ */
+static void
+sfbp_copyrows(id, srcrow, dstrow, nrows)
+	void *id;
+	int srcrow, dstrow, nrows;
+{
+	struct rasops_info *ri = id;
+	caddr_t sfb, p;
+	int scanspan, offset, srcy, height, width, align, w;
+	u_int32_t lmask, rmask;
+
+	scanspan = ri->ri_stride;
+	height = ri->ri_font->fontheight * nrows;
+	offset = (dstrow - srcrow) * ri->ri_yscale;
+	srcy = ri->ri_font->fontheight * srcrow;
+	if (srcrow < dstrow && srcrow + nrows > dstrow) {
+		scanspan = -scanspan;
+		srcy += height;
+	}
+
+	p = ri->ri_bits + srcy * ri->ri_stride;
+	align = (long)p & SFBALIGNMASK;
+	p -= align;
+	align /= SFBPIXELBYTES;
+	w = ri->ri_emuwidth;
+	width = w + align;
+	lmask = SFBCOPYALL1 << align;
+	rmask = SFBCOPYALL1 >> (-width & SFBCOPYBITMASK);
+	sfb = ri->ri_hw;
+
+	SFBMODE(sfb, MODE_COPY);
+	SFBPLANEMASK(sfb, ~0);
+	SFBPIXELSHIFT(sfb, 0);
+	if (width <= SFBCOPYBITS) {
+		/* never happens */;
+	}
+	else {
+		caddr_t q = p;
+		while (height > 0) {
+			*(u_int32_t *)p = lmask;
+			*(u_int32_t *)(p + offset) = lmask;
+			width -= 2 * SFBCOPYBITS;
+			while (width > 0) {
+				p += SFBCOPYBYTESDONE;
+				*(u_int32_t *)p = SFBCOPYALL1;
+				*(u_int32_t *)(p + offset) = SFBCOPYALL1;
+				width -= SFBCOPYBITS;
+			}
+			p += SFBCOPYBYTESDONE;
+			*(u_int32_t *)p = rmask;
+			*(u_int32_t *)(p + offset) = rmask;
+
+			p = (q += scanspan);
+			width = w + align;
+			height--;
+		}
+	}
+	SFBMODE(sfb, MODE_SIMPLE);
+}
+
+#else
+
+
+static void
+sfbp_copyrows(id, srcrow, dstrow, nrows)
+	void *id;
+	int srcrow, dstrow, nrows;
+{
+	struct rasops_info *ri = id;
+	caddr_t sfb, p, q;
+	int scanspan, offset, srcy, height, width, w, align;
+	u_int32_t rmask, lmask;
+
+	scanspan = ri->ri_stride;
+	height = ri->ri_font->fontheight * nrows;
+	offset = (dstrow - srcrow) * ri->ri_yscale;
+	srcy = ri->ri_font->fontheight * srcrow;
+	if (srcrow < dstrow && srcrow + nrows > dstrow) {
+		scanspan = -scanspan;
+		srcy += height;
+	}
+
+	p = ri->ri_bits + srcy * ri->ri_stride;
+	align = (long)p & SFBALIGNMASK;
+	w = ri->ri_emuwidth;
+	width = w + align;
+	lmask = SFBCOPYALL1 << align;
+	rmask = SFBCOPYALL1 >> (-width & SFBCOPYBITMASK);
+	sfb = ri->ri_hw;
+	q = p;
+
+	SFBMODE(sfb, MODE_COPY);
+	SFBPLANEMASK(sfb, ~0);
+	SFBPIXELSHIFT(sfb, 0);
+	
+	if (width <= SFBCOPYBITS)
+		; /* never happens */
+	else if (width < SFBCOPY64BITS) {
+		; /* unlikely happens */
+
+	}
+	else {
+		while (height > 0) {
+			while (width >= SFBCOPY64BITS) {
+				SFBCOPY64SRC(sfb, p);
+				SFBCOPY64DST(sfb, p + offset);
+				p += SFBCOPY64BYTESDONE;
+				width -= SFBCOPY64BITS;
+			}
+			if (width >= SFBCOPYBITS) {
+				*(u_int32_t *)p = SFBCOPYALL1;
+				*(u_int32_t *)(p + offset) = SFBCOPYALL1;
+				p += SFBCOPYBYTESDONE;
+				width -= SFBCOPYBITS;
+			}
+			if (width > 0) {
+				*(u_int32_t *)p = rmask;
+				*(u_int32_t *)(p + offset) = rmask;
+			}
+
+			p = (q += scanspan);
+			width = w;
+			height--;
+		}
+	}
+	SFBMODE(sfb, MODE_SIMPLE);
+}
+#endif
+
+/*
+ * Erase lines.
+ */
+static void
+sfbp_eraserows(id, startrow, nrows, attr)
+	void *id;
+	int startrow, nrows;
+	long attr;
+{
+	struct rasops_info *ri = id;
+	caddr_t sfb, p;
+	int scanspan, starty, height, width, align, w;
+	u_int32_t lmask, rmask;
+
+	scanspan = ri->ri_stride;
+	starty = ri->ri_font->fontheight * startrow;
+	height = ri->ri_font->fontheight * nrows;
+
+	p = ri->ri_bits + starty * scanspan;
+	align = (long)p & SFBALIGNMASK;
+	p -= align;
+	align /= SFBPIXELBYTES;
+	w = ri->ri_emuwidth * SFBPIXELBYTES;
+	width = w + align;
+	lmask = SFBSTIPPLEALL1 << align;
+	rmask = SFBSTIPPLEALL1 >> (-width & SFBSTIPPLEBITMASK);
+	sfb = ri->ri_hw;
+
+	SFBMODE(sfb, MODE_TRANSPARENTSTIPPLE);
+	SFBPLANEMASK(sfb, ~0);
+	SFBFG(sfb, ri->ri_devcmap[(attr >> 16) & 15]);
+	if (width <= SFBSTIPPLEBITS) {
+		/* never happens */;
+	}
+	else {
+		caddr_t q = p;
+		while (height > 0) {
+			*(u_int32_t *)p = lmask;
+			WRITE_MB();
+			width -= 2 * SFBSTIPPLEBITS;
+			while (width > 0) {
+				p += SFBSTIPPLEBYTESDONE;
+				*(u_int32_t *)p = SFBSTIPPLEALL1;
+				WRITE_MB();
+				width -= SFBSTIPPLEBITS;
+			}
+			p += SFBSTIPPLEBYTESDONE;
+			*(u_int32_t *)p = rmask;
+			WRITE_MB();
+
+			p = (q += scanspan);
+			width = w + align;
+			height--;
+		}
+	}
+	SFBMODE(sfb, MODE_SIMPLE);
 }

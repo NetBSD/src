@@ -1,4 +1,4 @@
-/*	$NetBSD: if_spppsubr.c,v 1.5.2.2 2001/01/05 17:36:51 bouyer Exp $	 */
+/*	$NetBSD: if_spppsubr.c,v 1.5.2.3 2001/01/18 09:23:52 bouyer Exp $	 */
 
 /*
  * Synchronous PPP/Cisco link level subroutines.
@@ -408,7 +408,13 @@ static const struct cp lcp = {
 };
 
 static const struct cp ipcp = {
-	PPP_IPCP, IDX_IPCP, CP_NCP, "ipcp",
+	PPP_IPCP, IDX_IPCP,
+#ifdef INET
+	CP_NCP,	/*don't run IPCP if there's no IPv4 support*/
+#else
+	0,
+#endif
+	"ipcp",
 	sppp_ipcp_up, sppp_ipcp_down, sppp_ipcp_open, sppp_ipcp_close,
 	sppp_ipcp_TO, sppp_ipcp_RCR, sppp_ipcp_RCN_rej, sppp_ipcp_RCN_nak,
 	sppp_ipcp_tlu, sppp_ipcp_tld, sppp_ipcp_tls, sppp_ipcp_tlf,
@@ -916,6 +922,8 @@ sppp_attach(struct ifnet *ifp)
 	sp->pp_up = lcp.Up;
 	sp->pp_down = lcp.Down;
 
+	if_alloc_sadl(ifp);
+
 	sppp_lcp_init(sp);
 	sppp_ipcp_init(sp);
 	sppp_ipv6cp_init(sp);
@@ -969,6 +977,8 @@ sppp_detach(struct ifnet *ifp)
 #endif
 	);
 #endif /* __NetBSD__ */
+
+	if_free_sadl(ifp);
 }
 
 /*
@@ -4928,10 +4938,10 @@ sppp_suggest_ip6_addr(struct sppp *sp, struct in6_addr *suggest)
 static int
 sppp_params(struct sppp *sp, int cmd, void *data)
 {
-	int subcmd;
 	struct ifreq *ifr = (struct ifreq *)data;
 	struct spppreq spr;
 
+#if 0
 	/*
 	 * ifr->ifr_data is supposed to point to a struct spppreq.
 	 * Check the cmd word first before attempting to fetch all the
@@ -4939,13 +4949,14 @@ sppp_params(struct sppp *sp, int cmd, void *data)
 	 */
 	if ((subcmd = fuword(ifr->ifr_data)) == -1)
 		return EFAULT;
+#endif
 
 	if (copyin((caddr_t)ifr->ifr_data, &spr, sizeof spr) != 0)
 		return EFAULT;
 
-	switch (subcmd) {
+	switch (spr.cmd) {
 	case SPPPIOGDEFS:
-		if (cmd != SIOCGIFGENERIC)
+		if (cmd != (int)SIOCGIFGENERIC)
 			return EINVAL;
 		/*
 		 * We copy over the entire current state, but clean
@@ -4962,7 +4973,7 @@ sppp_params(struct sppp *sp, int cmd, void *data)
 		return copyout(&spr, (caddr_t)ifr->ifr_data, sizeof spr);
 
 	case SPPPIOSDEFS:
-		if (cmd != SIOCSIFGENERIC)
+		if (cmd != (int)SIOCSIFGENERIC)
 			return EINVAL;
 		/*
 		 * We have a very specific idea of which fields we allow

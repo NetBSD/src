@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_malloc.c,v 1.45.2.2 2000/12/08 09:13:54 bouyer Exp $	*/
+/*	$NetBSD: kern_malloc.c,v 1.45.2.3 2001/01/18 09:23:43 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -233,7 +233,7 @@ malloc(size, type, flags)
 #endif
 	indx = BUCKETINDX(size);
 	kbp = &bucket[indx];
-	s = splmem();
+	s = splvm();
 #ifdef KMEMSTATS
 	while (ksp->ks_memuse >= ksp->ks_limit) {
 		if (flags & M_NOWAIT) {
@@ -447,7 +447,7 @@ free(addr, type)
 	kup = btokup(addr);
 	size = 1 << kup->ku_indx;
 	kbp = &bucket[kup->ku_indx];
-	s = splmem();
+	s = splvm();
 #ifdef MALLOCLOG
 	domlog(addr, 0, type, 2, file, line);
 #endif

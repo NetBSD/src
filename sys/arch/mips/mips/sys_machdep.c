@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_machdep.c,v 1.16.2.2 2001/01/05 17:34:47 bouyer Exp $	*/
+/*	$NetBSD: sys_machdep.c,v 1.16.2.3 2001/01/18 09:22:45 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -55,11 +55,6 @@
 #include <mips/locore.h>
 
 #include <uvm/uvm_extern.h>
-
-int mips_user_cacheflush __P((struct proc *p, vaddr_t va, int nbytes,
-	int whichcache));
-int mips_user_cachectl   __P((struct proc *p, vaddr_t va, int nbytes,
-	int ctl));
 
 int
 sys_sysarch(p, v, retval)

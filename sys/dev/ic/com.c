@@ -1,4 +1,4 @@
-/*	$NetBSD: com.c,v 1.162.2.2 2000/11/22 16:03:15 bouyer Exp $	*/
+/*	$NetBSD: com.c,v 1.162.2.3 2001/01/18 09:23:17 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -158,7 +158,7 @@ void	comcnputc	__P((dev_t, int));
 void	comcnpollc	__P((dev_t, int));
 
 #define	integrate	static inline
-#ifdef __GENERIC_SOFT_INTERRUPTS
+#ifdef __HAVE_GENERIC_SOFT_INTERRUPTS
 void 	comsoft		__P((void *));
 #else
 #ifndef __NO_SOFT_SERIAL_INTERRUPT
@@ -202,7 +202,7 @@ static int ppscap =
 #endif	/* PPS_SYNC */
 	PPS_OFFSETASSERT | PPS_OFFSETCLEAR;
 
-#ifndef __GENERIC_SOFT_INTERRUPTS
+#ifndef __HAVE_GENERIC_SOFT_INTERRUPTS
 #ifdef __NO_SOFT_SERIAL_INTERRUPT
 volatile int	com_softintr_scheduled;
 #endif
@@ -563,7 +563,7 @@ com_attach_subr(sc)
 	}
 #endif
 
-#ifdef __GENERIC_SOFT_INTERRUPTS
+#ifdef __HAVE_GENERIC_SOFT_INTERRUPTS
 	sc->sc_si = softintr_establish(IPL_SOFTSERIAL, comsoft, sc);
 #endif
 
@@ -669,7 +669,7 @@ com_detach(self, flags)
 	tty_detach(sc->sc_tty);
 	ttyfree(sc->sc_tty);
 
-#ifdef __GENERIC_SOFT_INTERRUPTS
+#ifdef __HAVE_GENERIC_SOFT_INTERRUPTS
 	/* Unhook the soft interrupt handler. */
 	softintr_disestablish(sc->sc_si);
 #endif
@@ -1184,7 +1184,7 @@ com_schedrx(sc)
 	sc->sc_rx_ready = 1;
 
 	/* Wake up the poller. */
-#ifdef __GENERIC_SOFT_INTERRUPTS
+#ifdef __HAVE_GENERIC_SOFT_INTERRUPTS
 	softintr_schedule(sc->sc_si);
 #else
 #ifndef __NO_SOFT_SERIAL_INTERRUPT
@@ -1898,7 +1898,7 @@ com_stsoft(sc, tp)
 #endif
 }
 
-#ifdef __GENERIC_SOFT_INTERRUPTS
+#ifdef __HAVE_GENERIC_SOFT_INTERRUPTS
 void
 comsoft(arg)
 	void *arg;
@@ -1961,7 +1961,7 @@ comsoft(arg)
 		}
 	}
 
-#ifndef __GENERIC_SOFT_INTERRUPTS
+#ifndef __HAVE_GENERIC_SOFT_INTERRUPTS
 #ifdef __NO_SOFT_SERIAL_INTERRUPT
 	splx(s);
 #endif
@@ -2200,7 +2200,7 @@ comintr(arg)
 	COM_UNLOCK(sc);
 
 	/* Wake up the poller. */
-#ifdef __GENERIC_SOFT_INTERRUPTS
+#ifdef __HAVE_GENERIC_SOFT_INTERRUPTS
 	softintr_schedule(sc->sc_si);
 #else
 #ifndef __NO_SOFT_SERIAL_INTERRUPT

@@ -1,4 +1,4 @@
-# $NetBSD: msgbuf,v 1.1.6.2 2000/11/20 18:08:51 bouyer Exp $
+# $NetBSD: msgbuf,v 1.1.6.3 2001/01/18 09:23:42 bouyer Exp $
 #
 # Copyright (c) 2000 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -36,9 +36,9 @@
 #
 
 define msgbuf
-  set $bufx=*(long*)(msgbufp+1*sizeof(long))
-  set $bufr=*(long*)(msgbufp+2*sizeof(long))
-  set $bufs=*(long*)(msgbufp+3*sizeof(long))
+  set $bufx=*(long*)((char *)msgbufp+1*sizeof(long))
+  set $bufr=*(long*)((char *)msgbufp+2*sizeof(long))
+  set $bufs=*(long*)((char *)msgbufp+3*sizeof(long))
 
   printf "msgbufp %#x: bufx %d bufr %d bufs %d\n", msgbufp, $bufx, $bufr, $bufs
 

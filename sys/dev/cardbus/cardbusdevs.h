@@ -1,10 +1,10 @@
-/*	$NetBSD: cardbusdevs.h,v 1.1.2.1 2000/11/20 11:39:53 bouyer Exp $	*/
+/*	$NetBSD: cardbusdevs.h,v 1.1.2.2 2001/01/18 09:23:16 bouyer Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: cardbusdevs,v 1.12 2000/08/28 10:33:58 haya Exp 
+ *	NetBSD: cardbusdevs,v 1.13 2001/01/16 18:42:56 thorpej Exp 
  */
 
 /*
@@ -54,6 +54,7 @@
 #define	CARDBUS_VENDOR_OPTI	0x1045		/* Opti */
 #define	CARDBUS_VENDOR_XIRCOM	0x115d		/* Xircom */
 #define	CARDBUS_VENDOR_ACCTON	0x1113		/* Accton Technology */
+#define	CARDBUS_VENDOR_ABOCOM	0x13d1		/* AboCom Systems */
 #define	CARDBUS_VENDOR_REALTEK	0x10ec		/* Realtek Semiconductor */
 #define	CARDBUS_VENDOR_INTEL	0x8086		/* Intel */
 #define	CARDBUS_VENDOR_INVALID	0xffff		/* INVALID VENDOR ID */
@@ -71,11 +72,15 @@
 #define	CARDBUS_PRODUCT_3COM_3C656B_E	0x6562		/* 3CCFEM656B 10/100 Ethernet */
 #define	CARDBUS_PRODUCT_3COM_3C656C_E	0x6564		/* 3CXFEM656C 10/100 Ethernet */
 
+/* AboCom products */
+#define	CARDBUS_PRODUCT_ABOCOM_FE2500	0xab02		/* FE2500 10/100 Ethernet */
+
 /* Adaptec products */
 #define	CARDBUS_PRODUCT_ADP_1480	0x6075		/* APA-1480 */
 
 /* Accton products */
 #define	CARDBUS_PRODUCT_ACCTON_MPX5030	0x1211		/* MPX 5030/5038 Ethernet */
+#define	CARDBUS_PRODUCT_ACCTON_EN2242	0x1216		/* EN2242 10/100 Ethernet */
 
 /* DEC products */
 #define	CARDBUS_PRODUCT_DEC_21142	0x0019		/* DECchip 21142/3 */
@@ -98,4 +103,3 @@
 
 /* Realtek (Creative Labs?) products */
 #define	CARDBUS_PRODUCT_REALTEK_RT8138	0x8138		/* 8138 Ethernet */
-

@@ -1,4 +1,4 @@
-/*      $NetBSD: ac97.c,v 1.15.2.4 2001/01/05 17:35:33 bouyer Exp $ */
+/*      $NetBSD: ac97.c,v 1.15.2.5 2001/01/18 09:23:16 bouyer Exp $ */
 /*	$OpenBSD: ac97.c,v 1.8 2000/07/19 09:01:35 csapuntz Exp $	*/
 
 /*
@@ -730,8 +730,14 @@ ac97_mixer_set_port(codec_if, cp)
 		if (cp->un.value.num_channels == 1) {
 			l = r = cp->un.value.level[AUDIO_MIXER_LEVEL_MONO];
 		} else {
-			l = cp->un.value.level[AUDIO_MIXER_LEVEL_LEFT];
-			r = cp->un.value.level[AUDIO_MIXER_LEVEL_RIGHT];
+			if (!(as->host_flags & AC97_HOST_SWAPPED_CHANNELS)) {
+				l = cp->un.value.level[AUDIO_MIXER_LEVEL_LEFT];
+				r = cp->un.value.level[AUDIO_MIXER_LEVEL_RIGHT];
+			} else {	/* left/right is reversed here */
+				r = cp->un.value.level[AUDIO_MIXER_LEVEL_LEFT];
+				l = cp->un.value.level[AUDIO_MIXER_LEVEL_RIGHT];
+			}
+
 		}
 
 		if (!si->polarity) {
@@ -820,8 +826,13 @@ ac97_mixer_get_port(codec_if, cp)
 		if (value->num_channels == 1) {
 			l = r = (val >> si->ofs) & mask;
 		} else {
-			l = (val >> si->ofs) & mask;
-			r = (val >> (si->ofs + 8)) & mask;
+			if (!(as->host_flags & AC97_HOST_SWAPPED_CHANNELS)) {
+				l = (val >> si->ofs) & mask;
+				r = (val >> (si->ofs + 8)) & mask;
+			} else {	/* host has reversed channels */
+				r = (val >> si->ofs) & mask;
+				l = (val >> (si->ofs + 8)) & mask;
+			}
 		}
 
 		l = (l << (8 - si->bits));

@@ -1,4 +1,4 @@
-#	$NetBSD: DEVNAMES,v 1.20.2.6 2001/01/05 17:35:30 bouyer Exp $
+#	$NetBSD: DEVNAMES,v 1.20.2.7 2001/01/18 09:23:14 bouyer Exp $
 #
 # This file contains all used device names and defined attributes in 
 # alphabetical order. New devices added to the system somewhere should first 
@@ -209,6 +209,7 @@ cue			MI
 cy			MI		
 cy82c693		MI		
 cz			MI		
+daic			MI
 dc			pmax
 dca			hp300
 dcm			hp300
@@ -281,6 +282,7 @@ event			amiga		Attribute
 event			amigappc	Attribute
 event			atari		Attribute
 event			x68k		Attribute
+ezload			MI		Attribute
 ex			MI		
 exphy			MI		
 fb			luna68k
@@ -415,6 +417,13 @@ hyper			amigappc
 hyper			hp300
 i2c			MI		Attribute
 i2c_eeprom		MI		Attribute
+i4b			MI
+i4bctl			MI
+i4bipr			MI
+i4bisppp		MI
+i4brbch			MI
+i4btel			MI
+i4btrc			MI
 i8042			arm32		Attribute
 i82586			MI		Attribute
 ibus			pmax
@@ -462,6 +471,7 @@ isabus			MI		Attribute
 isabus			atari
 isadma			MI		Attribute
 isapnp			MI		
+isic			MI
 isp			MI		
 it8368e			hpcmips
 ite			amiga
@@ -1003,9 +1013,11 @@ urio			MI
 usb			MI		
 usbus			MI		Attribute
 uscanner		MI
+usscanner		MI
 ut			vax
 uu			vax
 uvisor			MI		
+uyap			MI		
 va			vax
 vga			MI		
 viaenv			MI

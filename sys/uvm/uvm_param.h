@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_param.h,v 1.1.2.4 2001/01/05 17:37:03 bouyer Exp $	*/
+/*	$NetBSD: uvm_param.h,v 1.1.2.5 2001/01/18 09:24:07 bouyer Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -141,7 +141,7 @@ typedef int	boolean_t;
  *	No rounding is used.
  */
 #ifdef _KERNEL
-#define	atop(x)		(((unsigned long)(x)) >> PAGE_SHIFT)
+#define	atop(x)		(((paddr_t)(x)) >> PAGE_SHIFT)
 #define	ptoa(x)		((vaddr_t)((vaddr_t)(x) << PAGE_SHIFT))
 
 /*

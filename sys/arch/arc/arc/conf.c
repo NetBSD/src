@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.18.4.2 2000/11/20 20:00:20 bouyer Exp $	*/
+/*	$NetBSD: conf.c,v 1.18.4.3 2001/01/18 09:22:11 bouyer Exp $	*/
 /*	$OpenBSD: conf.c,v 1.27 1999/08/12 13:06:33 niklas Exp $ */
 
 /*
@@ -125,6 +125,52 @@ int	nblkdev = ARRAY_LENGTH(bdevsw);
 	(dev_type_stop((*))) enodev, 0, seltrue, \
 	(dev_type_mmap((*))) enodev }
 
+/* open, close, ioctl */
+#define cdev_i4bctl_init(c,n) { \
+	dev_init(c,n,open), dev_init(c,n,close), (dev_type_read((*))) enodev, \
+	(dev_type_write((*))) enodev, dev_init(c,n,ioctl), \
+	(dev_type_stop((*))) enodev, 0, seltrue, \
+	(dev_type_mmap((*))) enodev }
+
+/* open, close, read, write, poll */
+#define	cdev_i4brbch_init(c,n) { \
+	dev_init(c,n,open), dev_init(c,n,close), dev_init(c,n,read), \
+	dev_init(c,n,write), dev_init(c,n,ioctl), \
+	(dev_type_stop((*))) enodev, \
+	0, dev_init(c,n,poll), (dev_type_mmap((*))) enodev }
+
+/* open, close, read, write, poll */
+#define	cdev_i4btel_init(c,n) { \
+	dev_init(c,n,open), dev_init(c,n,close), dev_init(c,n,read), \
+	dev_init(c,n,write), (dev_type_ioctl((*))) enodev, \
+	(dev_type_stop((*))) enodev, \
+	0, dev_init(c,n,poll), (dev_type_mmap((*))) enodev, D_TTY }
+
+/* open, close, read, ioctl */
+#define cdev_i4btrc_init(c,n) { \
+	dev_init(c,n,open), dev_init(c,n,close), dev_init(c,n,read), \
+	(dev_type_write((*))) enodev, dev_init(c,n,ioctl), \
+	(dev_type_stop((*))) enodev, 0, (dev_type_poll((*))) enodev, \
+	(dev_type_mmap((*))) enodev }
+
+/* open, close, read, ioctl, poll */
+#define cdev_i4b_init(c,n) { \
+	dev_init(c,n,open), dev_init(c,n,close), dev_init(c,n,read), \
+	(dev_type_write((*))) enodev, dev_init(c,n,ioctl), \
+	(dev_type_stop((*))) enodev, 0, dev_init(c,n,poll), \
+	(dev_type_mmap((*))) enodev }	
+
+#include "i4b.h"
+#include "i4bctl.h"
+#include "i4btrc.h"
+#include "i4brbch.h"
+#include "i4btel.h"
+cdev_decl(i4b);
+cdev_decl(i4bctl);
+cdev_decl(i4btrc);
+cdev_decl(i4brbch);
+cdev_decl(i4btel);
+
 cdev_decl(cn);
 cdev_decl(sw);
 cdev_decl(ctty);
@@ -225,11 +271,11 @@ struct cdevsw	cdevsw[] =
 	cdev_scanner_init(NSS,ss),	/* 34: SCSI scanner */
 	cdev_notdef(),			/* 35: OpenBSD Kernel symbols device */
 	cdev_ch_init(NCH,ch),		/* 36: SCSI autochanger */
-	cdev_notdef(),			/* 37: */
-	cdev_notdef(),			/* 38: */
-	cdev_notdef(),			/* 39: */
-	cdev_notdef(),			/* 40: */
-	cdev_notdef(),			/* 41: */
+	cdev_i4b_init(NI4B, i4b),	/* 37: i4b main device */
+	cdev_i4bctl_init(NI4BCTL, i4bctl), /* 38: i4b control device */
+	cdev_i4brbch_init(NI4BRBCH, i4brbch), /* 39: i4b raw b-channel access */
+	cdev_i4btrc_init(NI4BTRC, i4btrc), /* 40: i4b trace device */
+	cdev_i4btel_init(NI4BTEL, i4btel), /* 41: i4b phone device */
 	cdev_notdef(),			/* 42: */
 	cdev_notdef(),			/* 33: */
 	cdev_notdef(),			/* 44: */

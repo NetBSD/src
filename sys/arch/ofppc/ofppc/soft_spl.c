@@ -1,4 +1,4 @@
-/*	$NetBSD: soft_spl.c,v 1.2 1999/08/05 18:08:12 thorpej Exp $	*/
+/*	$NetBSD: soft_spl.c,v 1.2.2.1 2001/01/18 09:22:53 bouyer Exp $	*/
 
 /*
  * Copyright (C) 1997 Wolfgang Solfrank.
@@ -134,7 +134,7 @@ soft_splx(new)
 			cpl |= SPLSOFTCLOCK;
 			softclockpending = 0;
 			asm volatile ("mtmsr %0" :: "r"(emsr));
-			softclock();
+			softclock(NULL);
 			continue;
 		}
 		if (softnetpending && !(cpl & SPLSOFTNET)) {

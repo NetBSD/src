@@ -1,4 +1,4 @@
-/* $NetBSD: if_ti.c,v 1.2.2.3 2001/01/05 17:36:08 bouyer Exp $ */
+/* $NetBSD: if_ti.c,v 1.2.2.4 2001/01/18 09:23:26 bouyer Exp $ */
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -2260,7 +2260,7 @@ static void ti_init(xsc)
 	struct ti_softc		*sc = xsc;
         int			s;
 
-	s = splimp();
+	s = splnet();
 
 	/* Cancel pending I/O and flush buffers. */
 	ti_stop(sc);
@@ -2552,7 +2552,7 @@ static int ti_ioctl(ifp, command, data)
 	int			s, error = 0;
 	struct ti_cmd_desc	cmd;
 
-	s = splimp();
+	s = splnet();
 
 	switch(command) {
 	case SIOCSIFADDR:

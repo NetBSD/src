@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ieee1394arp.h,v 1.1.2.2 2000/11/22 16:06:07 bouyer Exp $	*/
+/*	$NetBSD: if_ieee1394arp.h,v 1.1.2.3 2001/01/18 09:23:56 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@ struct ieee1394_arp {
 	u_int32_t	iar_tip;
 };
 
-void ieee1394arp_rtrequest(int, struct rtentry *, struct sockaddr *);
+void ieee1394arp_rtrequest(int, struct rtentry *, struct rt_addrinfo *);
 int  ieee1394arpresolve(struct ifnet *, struct rtentry *, struct mbuf *,
 	struct sockaddr *, struct ieee1394_hwaddr *);
 void in_ieee1394arpinput(struct mbuf *);

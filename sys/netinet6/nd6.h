@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6.h,v 1.5.2.1 2000/11/20 18:10:57 bouyer Exp $	*/
+/*	$NetBSD: nd6.h,v 1.5.2.2 2001/01/18 09:23:58 bouyer Exp $	*/
 /*	$KAME: nd6.h,v 1.23 2000/06/04 12:54:57 itojun Exp $	*/
 
 /*
@@ -284,8 +284,8 @@ void nd6_free __P((struct rtentry *));
 void nd6_nud_hint __P((struct rtentry *, struct in6_addr *, int));
 int nd6_resolve __P((struct ifnet *, struct rtentry *,
 		     struct mbuf *, struct sockaddr *, u_char *));
-void nd6_rtrequest __P((int, struct rtentry *, struct sockaddr *));
-void nd6_p2p_rtrequest __P((int, struct rtentry *, struct sockaddr *));
+void nd6_rtrequest __P((int, struct rtentry *, struct rt_addrinfo *));
+void nd6_p2p_rtrequest __P((int, struct rtentry *, struct rt_addrinfo *));
 int nd6_ioctl __P((u_long, caddr_t, struct ifnet *));
 struct rtentry *nd6_cache_lladdr __P((struct ifnet *, struct in6_addr *,
 	char *, int, int, int));

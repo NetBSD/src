@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.23.2.3 2000/12/08 09:26:26 bouyer Exp $	*/
+/*	$NetBSD: machdep.c,v 1.23.2.4 2001/01/18 09:22:27 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang.  All rights reserved.
@@ -525,6 +525,6 @@ cpu_intr(status, cause, pc, ipending)
 		clearsoftclock();
 		uvmexp.softs++;
 		intrcnt[SOFTCLOCK_INTR]++;
-		softclock();
+		softclock(NULL);
 	}
 }

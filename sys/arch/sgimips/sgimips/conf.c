@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.2.2.3 2000/12/08 09:30:25 bouyer Exp $	*/
+/*	$NetBSD: conf.c,v 1.2.2.4 2001/01/18 09:22:59 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -71,6 +71,52 @@ cdev_decl(wd);
 cdev_decl(zs);
 #include "com.h"
 cdev_decl(com);
+
+/* open, close, ioctl */
+#define cdev_i4bctl_init(c,n) { \
+	dev_init(c,n,open), dev_init(c,n,close), (dev_type_read((*))) enodev, \
+	(dev_type_write((*))) enodev, dev_init(c,n,ioctl), \
+	(dev_type_stop((*))) enodev, 0, seltrue, \
+	(dev_type_mmap((*))) enodev }
+
+/* open, close, read, write, poll */
+#define	cdev_i4brbch_init(c,n) { \
+	dev_init(c,n,open), dev_init(c,n,close), dev_init(c,n,read), \
+	dev_init(c,n,write), dev_init(c,n,ioctl), \
+	(dev_type_stop((*))) enodev, \
+	0, dev_init(c,n,poll), (dev_type_mmap((*))) enodev }
+
+/* open, close, read, write, poll */
+#define	cdev_i4btel_init(c,n) { \
+	dev_init(c,n,open), dev_init(c,n,close), dev_init(c,n,read), \
+	dev_init(c,n,write), (dev_type_ioctl((*))) enodev, \
+	(dev_type_stop((*))) enodev, \
+	0, dev_init(c,n,poll), (dev_type_mmap((*))) enodev, D_TTY }
+
+/* open, close, read, ioctl */
+#define cdev_i4btrc_init(c,n) { \
+	dev_init(c,n,open), dev_init(c,n,close), dev_init(c,n,read), \
+	(dev_type_write((*))) enodev, dev_init(c,n,ioctl), \
+	(dev_type_stop((*))) enodev, 0, (dev_type_poll((*))) enodev, \
+	(dev_type_mmap((*))) enodev }
+
+/* open, close, read, ioctl, poll */
+#define cdev_i4b_init(c,n) { \
+	dev_init(c,n,open), dev_init(c,n,close), dev_init(c,n,read), \
+	(dev_type_write((*))) enodev, dev_init(c,n,ioctl), \
+	(dev_type_stop((*))) enodev, 0, dev_init(c,n,poll), \
+	(dev_type_mmap((*))) enodev }	
+
+#include "i4b.h"
+#include "i4bctl.h"
+#include "i4btrc.h"
+#include "i4brbch.h"
+#include "i4btel.h"
+cdev_decl(i4b);
+cdev_decl(i4bctl);
+cdev_decl(i4btrc);
+cdev_decl(i4brbch);
+cdev_decl(i4btel);
 
 struct bdevsw bdevsw[] =
 {
@@ -147,8 +193,13 @@ struct cdevsw cdevsw[] =
 	cdev_tty_init(NZSTTY,zs),	/* 35: Zilog 8530 serial port */
 	cdev_tty_init(NCOM,com),	/* 36: com serial port */
 	cdev_tty_init(1,arcs),		/* 37: ARCS PROM console */
-	cdev_notdef(),			/* 38: */
-	cdev_notdef(),			/* 39: */
+	cdev_i4b_init(NI4B, i4b),		/* 38: i4b main device */
+	cdev_i4bctl_init(NI4BCTL, i4bctl),	/* 39: i4b control device */
+	cdev_i4brbch_init(NI4BRBCH, i4brbch),	/* 40: i4b raw b-channel access */
+	cdev_i4btrc_init(NI4BTRC, i4btrc),	/* 41: i4b trace device */
+	cdev_i4btel_init(NI4BTEL, i4btel),	/* 42: i4b phone device */
+	cdev_notdef(),			/* 43: */
+	cdev_notdef(),			/* 44: */
 };
 int	nchrdev = sizeof(cdevsw) / sizeof(cdevsw[0]);
 
@@ -210,6 +261,11 @@ static int chrtoblktbl[] =  {
 	/* 37 */	NODEV,
 	/* 38 */	NODEV,
 	/* 39 */	NODEV,
+	/* 40 */	NODEV,
+	/* 41 */	NODEV,
+	/* 42 */	NODEV,
+	/* 43 */	NODEV,
+	/* 44 */	NODEV,
 };
 
 dev_t

@@ -1,4 +1,4 @@
-/* $NetBSD: if_eh.c,v 1.1.2.3 2001/01/05 17:34:03 bouyer Exp $ */
+/* $NetBSD: if_eh.c,v 1.1.2.4 2001/01/18 09:22:17 bouyer Exp $ */
 
 /*-
  * Copyright (c) 2000 Ben Harris
@@ -53,7 +53,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: if_eh.c,v 1.1.2.3 2001/01/05 17:34:03 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_eh.c,v 1.1.2.4 2001/01/18 09:22:17 bouyer Exp $");
 
 #include <sys/systm.h>
 #include <sys/device.h>
@@ -315,7 +315,7 @@ eh_attach(struct device *parent, struct device *self, void *aux)
 	dp8390_stop(dsc);
 
 	sc->sc_ih = podulebus_irq_establish(self->dv_parent, pa->pa_slotnum,
-					    IPL_NET, dp8390_intr, self);
+	    IPL_NET, dp8390_intr, self, self->dv_xname);
 	if (bootverbose)
 		printf("%s: interrupting at %s\n",
 		       self->dv_xname, irq_string(sc->sc_ih));
@@ -749,9 +749,11 @@ eh_identifymau(struct eh_softc *sc)
 
 	ctlt = sc->sc_ctlt;
 	ctlh = sc->sc_ctlh;
-	/* Reset: Output 1 for 100us. */
+	/* Reset: Output 1 for a nominal 100us. */
+	/* XXX For some reason, a read is necessary between writes. */
+	bus_space_read_1(ctlt, ctlh, 0);
 	bus_space_write_1(ctlt, ctlh, 0, EH200_CTRL_MAU);
-	DELAY(100);
+	DELAY(200000);
 	for (id = 0; id < 128; id++) {
 		/* Output 0 for 10us. */
 		/* XXX For some reason, a read is necessary between writes. */

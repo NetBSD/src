@@ -1,11 +1,11 @@
-#	$NetBSD: GENERIC,v 1.39.2.5 2001/01/05 17:34:38 bouyer Exp $
+#	$NetBSD: GENERIC,v 1.39.2.6 2001/01/18 09:22:41 bouyer Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
 
 include		"arch/macppc/conf/std.macppc"
 
-#ident 		"GENERIC-$Revision: 1.39.2.5 $"
+#ident 		"GENERIC-$Revision: 1.39.2.6 $"
 
 maxusers	32
 
@@ -275,6 +275,9 @@ kue*	at uhub? port ?		# Kawasaki LSI KL5KUSB101B based adapters
 # USB scanners
 uscanner* at uhub? port ?
 
+# Y@P firmware loader
+uyap* at uhub? port ?
+
 # USB Generic driver
 ugen*	at uhub? port ? configuration ? interface ?
 
@@ -302,7 +305,6 @@ eap*	at pci? dev ? function ?	# Ensoniq AudioPCI
 #opl*	at fms?
 
 # Audio support
-#audio*	at auvia?
 audio* at awacs?
 #audio*	at clcs?
 #audio*	at cmpci?

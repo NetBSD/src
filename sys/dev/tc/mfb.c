@@ -1,4 +1,4 @@
-/* $NetBSD: mfb.c,v 1.17.2.2 2000/11/20 11:43:15 bouyer Exp $ */
+/* $NetBSD: mfb.c,v 1.17.2.3 2001/01/18 09:23:36 bouyer Exp $ */
 
 /*
  * Copyright (c) 1998, 1999 Tohru Nishimura.  All rights reserved.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mfb.c,v 1.17.2.2 2000/11/20 11:43:15 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mfb.c,v 1.17.2.3 2001/01/18 09:23:36 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -56,11 +56,21 @@ __KERNEL_RCSID(0, "$NetBSD: mfb.c,v 1.17.2.2 2000/11/20 11:43:15 bouyer Exp $");
 
 #include <uvm/uvm_extern.h>
 
+#if defined(pmax)
 #define	machine_btop(x) mips_btop(x)
 #define	MACHINE_KSEG0_TO_PHYS(x) MIPS_KSEG0_TO_PHYS(x)
 
 #define	BYTE(base, index)	*((u_int8_t *)(base) + ((index)<<2))
 #define	HALF(base, index)	*((u_int16_t *)(base) + ((index)<<1))
+#endif
+
+#if defined(__alpha__) || defined(alpha)
+#define machine_btop(x) alpha_btop(x)
+#define MACHINE_KSEG0_TO_PHYS(x) ALPHA_K0SEG_TO_PHYS(x)
+
+#define	BYTE(base, index)	*((u_int32_t *)(base) + (index))
+#define	HALF(base, index)	*((u_int32_t *)(base) + (index))
+#endif
 
 /* Bt455 hardware registers */
 #define	bt_reg	0
@@ -120,12 +130,7 @@ struct mfb_softc {
 	struct fb_devconfig *sc_dc;	/* device configuration */
 	struct hwcursor64 sc_cursor;	/* software copy of cursor */
 	int sc_curenb;			/* cursor sprite enabled */
-	int sc_changed;			/* need update of colormap */
-#define	DATA_ENB_CHANGED	0x01	/* cursor enable changed */
-#define	DATA_CURCMAP_CHANGED	0x02	/* cursor colormap changed */
-#define	DATA_CURSHAPE_CHANGED	0x04	/* cursor size, image, mask changed */
-#define	DATA_CMAP_CHANGED	0x08	/* colormap changed */
-#define	DATA_ALL_CHANGED	0x0f
+	int sc_changed;			/* need update of hardware */
 	int nscreens;
 };
 
@@ -189,7 +194,6 @@ static void mfbinit __P((struct fb_devconfig *));
 static int  set_cursor __P((struct mfb_softc *, struct wsdisplay_cursor *));
 static int  get_cursor __P((struct mfb_softc *, struct wsdisplay_cursor *));
 static void set_curpos __P((struct mfb_softc *, struct wsdisplay_curpos *));
-static void bt431_set_curpos __P((struct mfb_softc *));
 
 /* bit order reverse */
 static const u_int8_t flip[256] = {
@@ -392,7 +396,7 @@ mfbioctl(v, cmd, data, flag, p)
 
 	case WSDISPLAYIO_SCURPOS:
 		set_curpos(sc, (struct wsdisplay_curpos *)data);
-		bt431_set_curpos(sc);
+		sc->sc_changed = WSDISPLAY_CURSOR_DOPOS;
 		return (0);
 
 	case WSDISPLAYIO_GCURMAX:
@@ -504,12 +508,27 @@ mfbintr(arg)
 	vdac = (void *)(mfbbase + MX_BT455_OFFSET);
 	curs = (void *)(mfbbase + MX_BT431_OFFSET);
 	v = sc->sc_changed;
-	sc->sc_changed = 0;	
-	if (v & DATA_ENB_CHANGED) {
+	if (v & WSDISPLAY_CURSOR_DOCUR) {
 		SELECT431(curs, BT431_REG_COMMAND);
 		HALF(curs, bt_ctl) = (sc->sc_curenb) ? 0x4444 : 0x0404;
 	}
-	if (v & DATA_CURCMAP_CHANGED) {
+	if (v & (WSDISPLAY_CURSOR_DOPOS | WSDISPLAY_CURSOR_DOHOT)) {
+		int x, y;
+		u_int16_t twin;
+
+		x = sc->sc_cursor.cc_pos.x - sc->sc_cursor.cc_hot.x;
+		y = sc->sc_cursor.cc_pos.y - sc->sc_cursor.cc_hot.y;
+
+		x += sc->sc_cursor.cc_magic.x;
+		y += sc->sc_cursor.cc_magic.y;
+
+		SELECT431(curs, BT431_REG_CURSOR_X_LOW);
+		HALF(curs, bt_ctl) = TWIN_LO(x);	tc_wmb();
+		HALF(curs, bt_ctl) = TWIN_HI(x);	tc_wmb();
+		HALF(curs, bt_ctl) = TWIN_LO(y);	tc_wmb();
+		HALF(curs, bt_ctl) = TWIN_HI(y);	tc_wmb();
+	}
+	if (v & WSDISPLAY_CURSOR_DOCMAP) {
 		u_int8_t *cp = sc->sc_cursor.cc_color;
 
 		SELECT455(vdac, 8);
@@ -525,7 +544,7 @@ mfbintr(arg)
 		BYTE(vdac, bt_ovly) = cp[0];	tc_wmb();
 		BYTE(vdac, bt_ovly) = 0;	tc_wmb();
 	}
-	if (v & DATA_CURSHAPE_CHANGED) {
+	if (v & WSDISPLAY_CURSOR_DOSHAPE) {
 		u_int8_t *ip, *mp, img, msk;
 		int bcnt;
 
@@ -558,6 +577,7 @@ mfbintr(arg)
 			bcnt += 2;
 		}
 	}
+	sc->sc_changed = 0;	
 	return (1);
 }
 
@@ -633,30 +653,22 @@ set_cursor(sc, p)
 		    !uvm_useracc(p->mask, count, B_READ))
 			return (EFAULT);
 	}
-	if (v & (WSDISPLAY_CURSOR_DOPOS | WSDISPLAY_CURSOR_DOCUR)) {
-		if (v & WSDISPLAY_CURSOR_DOCUR)
-			cc->cc_hot = p->hot;
-		if (v & WSDISPLAY_CURSOR_DOPOS)
-			set_curpos(sc, &p->pos);
-		bt431_set_curpos(sc);
-	}
 
-	sc->sc_changed = 0;
-	if (v & WSDISPLAY_CURSOR_DOCUR) {
+	if (v & WSDISPLAY_CURSOR_DOCUR)
 		sc->sc_curenb = p->enable;
-		sc->sc_changed |= DATA_ENB_CHANGED;
-	}
-	if (v & WSDISPLAY_CURSOR_DOCMAP) {
+	if (v & WSDISPLAY_CURSOR_DOPOS)
+		set_curpos(sc, &p->pos);
+	if (v & WSDISPLAY_CURSOR_DOHOT)
+		cc->cc_hot = p->hot;
+	if (v & WSDISPLAY_CURSOR_DOCMAP)
 		copyin(p->cmap.red, &cc->cc_color[index], count);
-		sc->sc_changed |= DATA_CURCMAP_CHANGED;
-	}
 	if (v & WSDISPLAY_CURSOR_DOSHAPE) {
 		cc->cc_size = p->size;
 		memset(cc->cc_image, 0, sizeof cc->cc_image);
 		copyin(p->image, cc->cc_image, count);
 		copyin(p->mask, cc->cc_image+CURSOR_MAX_SIZE, count);
-		sc->sc_changed |= DATA_CURSHAPE_CHANGED;
 	}
+	sc->sc_changed = v;
 
 	return (0);
 #undef cc
@@ -688,30 +700,4 @@ set_curpos(sc, curpos)
 		x = dc->dc_wid;
 	sc->sc_cursor.cc_pos.x = x;
 	sc->sc_cursor.cc_pos.y = y;
-}
-
-static void
-bt431_set_curpos(sc)
-	struct mfb_softc *sc;
-{
-	caddr_t mfbbase = (caddr_t)sc->sc_dc->dc_vaddr;
-	void *curs = (void *)(mfbbase + MX_BT431_OFFSET);
-	u_int16_t twin;
-	int x, y, s;
-
-	x = sc->sc_cursor.cc_pos.x - sc->sc_cursor.cc_hot.x;
-	y = sc->sc_cursor.cc_pos.y - sc->sc_cursor.cc_hot.y;
-
-	x += sc->sc_cursor.cc_magic.x;
-	y += sc->sc_cursor.cc_magic.y;
-
-	s = spltty();
-
-	SELECT431(curs, BT431_REG_CURSOR_X_LOW);
-	HALF(curs, bt_ctl) = TWIN_LO(x);	tc_wmb();
-	HALF(curs, bt_ctl) = TWIN_HI(x);	tc_wmb();
-	HALF(curs, bt_ctl) = TWIN_LO(y);	tc_wmb();
-	HALF(curs, bt_ctl) = TWIN_HI(y);	tc_wmb();
-
-	splx(s);
 }

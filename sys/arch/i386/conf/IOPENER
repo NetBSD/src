@@ -1,4 +1,4 @@
-#	$NetBSD: IOPENER,v 1.11.2.2 2000/11/20 20:09:17 bouyer Exp $
+#	$NetBSD: IOPENER,v 1.11.2.3 2001/01/18 09:22:34 bouyer Exp $
 #
 #	IOPENER -- GENERIC-like kernel for the Netpliance i-opener
 #	from: GENERIC,v 1.358 2000/07/05 04:07:25 sommerfeld Exp
@@ -6,7 +6,7 @@
 
 include "arch/i386/conf/std.i386"
 
-#ident 		"IOPENER-$Revision: 1.11.2.2 $"
+#ident 		"IOPENER-$Revision: 1.11.2.3 $"
 
 maxusers	32		# estimated number of users
 
@@ -331,6 +331,9 @@ kue*	at uhub? port ?		# Kawasaki LSI KL5KUSB101B based adapters
 # USB Handspring Visor
 #uvisor*	at uhub? port ?
 #ucom*	at uvisor?
+
+# Y@P firmware loader
+uyap* at uhub? port ?
 
 # USB Generic driver
 ugen*	at uhub? port ?

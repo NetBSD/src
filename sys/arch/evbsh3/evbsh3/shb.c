@@ -1,4 +1,4 @@
-/*	$NetBSD: shb.c,v 1.3.2.1 2000/11/20 20:07:35 bouyer Exp $	*/
+/*	$NetBSD: shb.c,v 1.3.2.2 2001/01/18 09:22:28 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994 Charles Hannum.  All rights reserved.
@@ -744,7 +744,7 @@ void
 Xsoftclock(void)
 {
 
-        softclock();
+        softclock(NULL);
 }
 
 #define	LEGAL_IRQ(x)	((x) >= 0 && (x) < SHB_MAX_HARDINTR && (x) != 2)

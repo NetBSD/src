@@ -1,3 +1,5 @@
+/*	$NetBSD: dvdio.h,v 1.3.4.3 2001/01/18 09:24:02 bouyer Exp $	*/
+
 #include <sys/types.h>
 #include <sys/ioccom.h>
 

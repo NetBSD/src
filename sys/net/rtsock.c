@@ -1,4 +1,4 @@
-/*	$NetBSD: rtsock.c,v 1.31.2.2 2000/11/22 16:06:02 bouyer Exp $	*/
+/*	$NetBSD: rtsock.c,v 1.31.2.3 2001/01/18 09:23:54 bouyer Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -222,7 +222,6 @@ route_output(m, va_alist)
 	so = va_arg(ap, struct socket *);
 	va_end(ap);
 
-	bzero(&info, sizeof(info));
 #define senderr(e) do { error = e; goto flush;} while (0)
 	if (m == 0 || ((m->m_len < sizeof(int32_t)) &&
 	   (m = m_pullup(m, sizeof(int32_t))) == 0))
@@ -246,9 +245,11 @@ route_output(m, va_alist)
 		senderr(EPROTONOSUPPORT);
 	}
 	rtm->rtm_pid = curproc->p_pid;
+	bzero(&info, sizeof(info));
 	info.rti_addrs = rtm->rtm_addrs;
 	if (rt_xaddrs((caddr_t)(rtm + 1), len + (caddr_t)rtm, &info))
 		senderr(EINVAL);
+	info.rti_flags = rtm->rtm_flags;
 	if (dst == 0 || (dst->sa_family >= AF_MAX))
 		senderr(EINVAL);
 	if (gate != 0 && (gate->sa_family >= AF_MAX))
@@ -275,8 +276,7 @@ route_output(m, va_alist)
 	case RTM_ADD:
 		if (gate == 0)
 			senderr(EINVAL);
-		error = rtrequest(RTM_ADD, dst, gate, netmask,
-		    rtm->rtm_flags, &saved_nrt);
+		error = rtrequest1(rtm->rtm_type, &info, &saved_nrt);
 		if (error == 0 && saved_nrt) {
 			rt_setmetrics(rtm->rtm_inits,
 			    &rtm->rtm_rmx, &saved_nrt->rt_rmx);
@@ -286,8 +286,7 @@ route_output(m, va_alist)
 		break;
 
 	case RTM_DELETE:
-		error = rtrequest(RTM_DELETE, dst, gate, netmask,
-		    rtm->rtm_flags, &saved_nrt);
+		error = rtrequest1(rtm->rtm_type, &info, &saved_nrt);
 		if (error == 0) {
 			(rt = saved_nrt)->rt_refcnt++;
 			goto report;
@@ -347,6 +346,13 @@ route_output(m, va_alist)
 			break;
 
 		case RTM_CHANGE:
+			/*
+			 * new gateway could require new ifaddr, ifp;
+			 * flags may also be different; ifp may be specified
+			 * by ll sockaddr when protocol address is ambiguous
+			 */
+			if ((error = rt_getifa(&info)) != 0)
+				senderr(error);
 			if (gate && rt_setgate(rt, rt_key(rt), gate))
 				senderr(EDQUOT);
 			/* new gateway could require new ifaddr, ifp;
@@ -364,8 +370,8 @@ route_output(m, va_alist)
 				struct ifaddr *oifa = rt->rt_ifa;
 				if (oifa != ifa) {
 				    if (oifa && oifa->ifa_rtrequest)
-					oifa->ifa_rtrequest(RTM_DELETE,
-					rt, gate);
+					oifa->ifa_rtrequest(RTM_DELETE, rt,
+					    &info);
 				    IFAFREE(rt->rt_ifa);
 				    rt->rt_ifa = ifa;
 				    IFAREF(rt->rt_ifa);
@@ -375,7 +381,7 @@ route_output(m, va_alist)
 			rt_setmetrics(rtm->rtm_inits, &rtm->rtm_rmx,
 			    &rt->rt_rmx);
 			if (rt->rt_ifa && rt->rt_ifa->ifa_rtrequest)
-				rt->rt_ifa->ifa_rtrequest(RTM_ADD, rt, gate);
+				rt->rt_ifa->ifa_rtrequest(RTM_ADD, rt, &info);
 			if (genmask)
 				rt->rt_genmask = genmask;
 			/*

@@ -1,4 +1,4 @@
-/*	$NetBSD: twe.c,v 1.4.2.4 2001/01/05 17:36:18 bouyer Exp $	*/
+/*	$NetBSD: twe.c,v 1.4.2.5 2001/01/18 09:23:31 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -816,7 +816,7 @@ twe_ccb_map(struct twe_softc *sc, struct twe_ccb *ccb)
 
 	/* The data as a whole must be 512-byte aligned. */
 	if (((u_long)ccb->ccb_data & (TWE_ALIGNMENT - 1)) != 0) {
-		s = splimp();
+		s = splvm();
 		/* XXX */
 		ccb->ccb_abuf = uvm_km_kmemalloc(kmem_map, uvmexp.kmem_object,
 		    ccb->ccb_datasize, UVM_KMF_NOWAIT);
@@ -907,7 +907,7 @@ twe_ccb_unmap(struct twe_softc *sc, struct twe_ccb *ccb)
 		if ((ccb->ccb_flags & TWE_CCB_DATA_IN) != 0)
 			memcpy(ccb->ccb_data, (void *)ccb->ccb_abuf,
 			    ccb->ccb_datasize);
-		s = splimp();
+		s = splvm();
 		/* XXX */
 		uvm_km_free(kmem_map, ccb->ccb_abuf, ccb->ccb_datasize);
 		splx(s);

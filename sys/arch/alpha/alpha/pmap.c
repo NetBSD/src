@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.111.2.6 2001/01/05 17:33:40 bouyer Exp $ */
+/* $NetBSD: pmap.c,v 1.111.2.7 2001/01/18 09:22:05 bouyer Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -154,7 +154,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.111.2.6 2001/01/05 17:33:40 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.111.2.7 2001/01/18 09:22:05 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -448,7 +448,7 @@ struct pmap_tlb_shootdown_q {
 
 #define	PSJQ_LOCK(pq, s)						\
 do {									\
-	s = splimp();							\
+	s = splvm();							\
 	simple_lock(&(pq)->pq_slock);					\
 } while (0)
 

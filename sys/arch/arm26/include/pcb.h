@@ -1,4 +1,5 @@
-/* $NetBSD: pcb.h,v 1.1.6.2 2000/11/20 20:02:43 bouyer Exp $ */
+/* $NetBSD: pcb.h,v 1.1.6.3 2001/01/18 09:22:16 bouyer Exp $ */
+
 /*-
  * Copyright (c) 2000 Ben Harris
  * All rights reserved.
@@ -26,16 +27,21 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 /* This file is part of NetBSD/arm26 -- a port of NetBSD to ARM2/3 machines. */
+/*
+ * pcb.h - The machine-dependent part of the user structure.
+ */
 
 #ifndef _ARM26_PCB_H
 #define _ARM26_PCB_H
 
-struct trapframe;
-struct switchframe;
+#include <machine/frame.h>
 
 struct pcb {
+	u_int	pcb_flags;
+#define PCB_OWNFPU	0x00000001
 	struct	trapframe *pcb_tf;
 	struct	switchframe *pcb_sf;
+	struct	fpframe pcb_ff;
 	void	*pcb_onfault;  /* return here after failed page fault */
 	label_t	*pcb_onfault_lj; /* longjmp here ditto */
 	label_t *pcb_onundef_lj; /* longjmp here on undefined instruction */
@@ -47,6 +53,5 @@ struct pcb {
 
 struct md_coredump {
 };
-
 
 #endif

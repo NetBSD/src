@@ -1,4 +1,4 @@
-/*	$NetBSD: clmpcc.c,v 1.7.2.2 2000/11/22 16:03:14 bouyer Exp $ */
+/*	$NetBSD: clmpcc.c,v 1.7.2.3 2001/01/18 09:23:17 bouyer Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -299,7 +299,7 @@ clmpcc_attach(sc)
 	printf(": Cirrus Logic CD240%c Serial Controller\n",
 		(clmpcc_rd_msvr(sc) & CLMPCC_MSVR_PORT_ID) ? '0' : '1');
 
-#ifndef __GENERIC_SOFT_INTERRUPTS
+#ifndef __HAVE_GENERIC_SOFT_INTERRUPTS
 	sc->sc_soft_running = 0;
 #else
 	sc->sc_softintr_cookie =
@@ -1228,7 +1228,7 @@ rx_done:
 		}
 
 		clmpcc_wrreg(sc, CLMPCC_REG_REOIR, 0);
-#ifndef __GENERIC_SOFT_INTERRUPTS
+#ifndef __HAVE_GENERIC_SOFT_INTERRUPTS
 		if ( sc->sc_soft_running == 0 ) {
 			sc->sc_soft_running = 1;
 			(sc->sc_softhook)(sc);
@@ -1355,7 +1355,7 @@ clmpcc_txintr(arg)
 		 * Request Tx processing in the soft interrupt handler
 		 */
 		ch->ch_tx_done = 1;
-#ifndef __GENERIC_SOFT_INTERRUPTS
+#ifndef __HAVE_GENERIC_SOFT_INTERRUPTS
 		if ( sc->sc_soft_running == 0 ) {
 			sc->sc_soft_running = 1;
 			(sc->sc_softhook)(sc);
@@ -1400,7 +1400,7 @@ clmpcc_mdintr(arg)
 
 	clmpcc_wrreg(sc, CLMPCC_REG_MEOIR, 0);
 
-#ifndef __GENERIC_SOFT_INTERRUPTS
+#ifndef __HAVE_GENERIC_SOFT_INTERRUPTS
 	if ( sc->sc_soft_running == 0 ) {
 		sc->sc_soft_running = 1;
 		(sc->sc_softhook)(sc);
@@ -1425,7 +1425,7 @@ clmpcc_softintr(arg)
 	u_int c;
 	int chan;
 
-#ifndef __GENERIC_SOFT_INTERRUPTS
+#ifndef __HAVE_GENERIC_SOFT_INTERRUPTS
 	sc->sc_soft_running = 0;
 #endif
 

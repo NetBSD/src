@@ -1,27 +1,30 @@
-/*	$NetBSD: if_stripvar.h,v 1.6.14.2 2000/12/13 15:50:33 bouyer Exp $	*/
+/*	$NetBSD: if_stripvar.h,v 1.6.14.3 2001/01/18 09:23:53 bouyer Exp $	*/
 
 #ifndef _NET_IF_STRIPVAR_H_
 #define _NET_IF_STRIPVAR_H_
 
 /*
  * Definitions for STRIP interface data structures
- * 
  */
 struct strip_softc {
 	struct	ifnet sc_if;		/* network-visible interface */
 	int	sc_unit;		/* XXX unit number */
 	struct	ifqueue sc_fastq;	/* interactive output queue */
+	struct	ifqueue sc_inq;		/* input queue */
 	struct	tty *sc_ttyp;		/* pointer to tty structure */
 	struct	callout sc_timo_ch;	/* timeout callout */
 	u_char	*sc_mp;			/* pointer to next available buf char */
 	u_char	*sc_ep;			/* pointer to last available buf char */
-	u_char	*sc_buf;		/* input buffer */
+	u_char	*sc_pktstart;		/* pointer to beginning of packet */
+	struct mbuf *sc_mbuf;		/* input buffer */
 	u_char	*sc_rxbuf;		/* input destuffing buffer */
 	u_char	*sc_txbuf;		/* output stuffing buffer */
-	u_char	*sc_xxx;		/* XXX don't ask... */
 	u_int	sc_flags;		/* see below */
 	long	sc_oqlen;		/* previous output queue size */
 	long	sc_otimeout;		/* number of times output's stalled */
+#ifdef __HAVE_GENERIC_SOFT_INTERRUPTS
+	void	*sc_si;			/* softintr handle */
+#endif
 #ifdef __NetBSD__
 	int	sc_oldbufsize;		/* previous output buffer size */
 	int	sc_oldbufquot;		/* previous output buffer quoting */

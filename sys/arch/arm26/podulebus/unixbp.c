@@ -1,4 +1,4 @@
-/* $NetBSD: unixbp.c,v 1.1.6.4 2000/12/13 15:49:20 bouyer Exp $ */
+/* $NetBSD: unixbp.c,v 1.1.6.5 2001/01/18 09:22:18 bouyer Exp $ */
 
 /*-
  * Copyright (c) 2000 Ben Harris
@@ -33,13 +33,14 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: unixbp.c,v 1.1.6.4 2000/12/13 15:49:20 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: unixbp.c,v 1.1.6.5 2001/01/18 09:22:18 bouyer Exp $");
 
 #include <sys/device.h>
 #include <sys/systm.h>
 #include <machine/bus.h>
 #include <arch/arm26/iobus/iocvar.h>
 #include <arch/arm26/podulebus/unixbpreg.h>
+#include <arch/arm26/podulebus/unixbpvar.h>
 
 struct unixbp_softc {
 	struct device sc_dev;
@@ -80,7 +81,7 @@ unixbp_attach(struct device *parent, struct device *self, void *aux)
 
 	sc->sc_iot = ioc->ioc_fast_t;
 	sc->sc_ioh = ioc->ioc_fast_h;
-	if (self->dv_unit = 0)
+	if (self->dv_unit == 0)
 		unixbp0 = sc;
 
 	printf("\n");

@@ -1,4 +1,4 @@
-/*	$NetBSD: ultrix_misc.c,v 1.53.2.5 2001/01/05 17:35:29 bouyer Exp $	*/
+/*	$NetBSD: ultrix_misc.c,v 1.53.2.6 2001/01/18 09:23:13 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1995, 1997 Jonathan Stone (hereinafter referred to as the author)
@@ -141,6 +141,10 @@
 
 #include <compat/ultrix/ultrix_flock.h>
 
+#ifdef __mips
+#include <mips/cachectl.h>
+#endif
+
 static int ultrix_to_bsd_flock __P((struct ultrix_flock *, struct flock *));
 static void bsd_to_ultrix_flock __P((struct flock *, struct ultrix_flock *));
 
@@ -162,17 +166,22 @@ extern const char * const ultrix_syscallnames[];
 #endif /* vax */
 #endif
 
-
 extern char ultrix_sigcode[], ultrix_esigcode[];
+#ifdef __HAVE_SYSCALL_INTERN
+void syscall_intern(struct proc *);
+#else
 void syscall __P((void));
+#endif
 
 const struct emul emul_ultrix = {
 	"ultrix",
 	"/emul/ultrix",
+#ifndef __HAVE_MINIMAL_EMUL
 	0,
 	NULL,
 	ULTRIX_SYS_syscall,
 	ULTRIX_SYS_MAXSYSCALL,
+#endif
 	ultrix_sysent,
 	ultrix_syscallnames,
 	sendsig,
@@ -181,7 +190,11 @@ const struct emul emul_ultrix = {
 	NULL,
 	NULL,
 	NULL,
-	syscall
+#ifdef __HAVE_SYSCALL_INTERN
+	syscall_intern,
+#else
+	syscall,
+#endif
 };
 
 #define GSI_PROG_ENV 1

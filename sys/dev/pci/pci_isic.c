@@ -33,7 +33,7 @@
  *	pci_isic.c - pcmcia bus frontend for i4b_isic driver
  *	-------------------------------------------------------
  *
- *	$Id: pci_isic.c,v 1.1.1.1.2.2 2001/01/05 17:36:12 bouyer Exp $ 
+ *	$Id: pci_isic.c,v 1.1.1.1.2.3 2001/01/18 09:23:27 bouyer Exp $ 
  *
  *      last edit-date: [Fri Jan  5 11:38:58 2001]
  *
@@ -88,7 +88,9 @@ static int pci_isic_match __P((struct device *, struct cfdata *, void *));
 static void pci_isic_attach __P((struct device *, struct device *, void *));
 static const struct isic_pci_product * find_matching_card __P((struct pci_attach_args *pa));
 
+#ifdef ISICPCI_ELSA_QS1PCI
 static void isic_pciattach __P((struct pci_l1_softc *psc, struct pci_attach_args *pa));
+#endif
 
 struct cfattach pci_isic_ca = {
 	sizeof(struct pci_l1_softc), pci_isic_match, pci_isic_attach
@@ -197,6 +199,7 @@ pci_isic_attach(parent, self, aux)
 /*---------------------------------------------------------------------------*
  *	isic - pci device driver attach routine
  *---------------------------------------------------------------------------*/
+#ifdef ISICPCI_ELSA_QS1PCI
 static void
 isic_pciattach(psc, pa)
 	struct pci_l1_softc *psc;
@@ -292,6 +295,23 @@ isic_pciattach(psc, pa)
 		}
 	}
 	
+	/* Map and establish the interrupt. */
+	if (pci_intr_map(pa, &ih)) {
+		printf("%s: couldn't map interrupt\n", sc->sc_dev.dv_xname);
+		return;
+	}
+	intrstr = pci_intr_string(pc, ih);
+	psc->sc_ih = pci_intr_establish(pc, ih, IPL_NET, isicintr, sc);
+	if (psc->sc_ih == NULL) {
+		printf("%s: couldn't establish interrupt",
+		    sc->sc_dev.dv_xname);
+		if (intrstr != NULL)
+			printf(" at %s", intrstr);
+		printf("\n");
+		return;
+	}
+	printf("%s: interrupting at %s\n", sc->sc_dev.dv_xname, intrstr);
+
 	/* ISAC setup */
 	
 	isic_isac_init(sc);
@@ -332,23 +352,5 @@ isic_pciattach(psc, pa)
 	/* init higher protocol layers */
 	
 	MPH_Status_Ind(sc->sc_unit, STI_ATTACH, sc->sc_cardtyp);
-	
-
-	/* Map and establish the interrupt. */
-	if (pci_intr_map(pa, &ih)) {
-		printf("%s: couldn't map interrupt\n", sc->sc_dev.dv_xname);
-		return;
-	}
-	intrstr = pci_intr_string(pc, ih);
-	psc->sc_ih = pci_intr_establish(pc, ih, IPL_NET, isicintr, sc);
-	if (psc->sc_ih == NULL) {
-		printf("%s: couldn't establish interrupt",
-		    sc->sc_dev.dv_xname);
-		if (intrstr != NULL)
-			printf(" at %s", intrstr);
-		printf("\n");
-		return;
-	}
-	printf("%s: interrupting at %s\n", sc->sc_dev.dv_xname, intrstr);
 }
-
+#endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.141.2.1 2000/11/20 19:58:20 bouyer Exp $	*/
+/*	$NetBSD: machdep.c,v 1.141.2.2 2001/01/18 09:22:08 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -1407,14 +1407,6 @@ intrhand(sr)
 #endif
 				uvmexp.softs++;
 				netintr();
-			}
-			if (ssir_active & SIR_CLOCK) {
-#ifdef REALLYDEBUG
-				printf("calling softclock\n");
-#endif
-				uvmexp.softs++;
-				/* XXXX softclock(&frame.f_stackadj); */
-				softclock();
 			}
 			if (ssir_active & SIR_CBACK) {
 #ifdef REALLYDEBUG

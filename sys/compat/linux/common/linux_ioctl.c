@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_ioctl.c,v 1.22.8.2 2000/12/13 15:49:50 bouyer Exp $	*/
+/*	$NetBSD: linux_ioctl.c,v 1.22.8.3 2001/01/18 09:23:13 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -135,6 +135,8 @@ linux_sys_ioctl(p, v, retval)
 		return linux_ioctl_hdio(p, uap, retval);
 	case 0x02:
 		return linux_ioctl_fdio(p, uap, retval);
+	case 0x12:
+		return linux_ioctl_blkio(p, uap, retval);
 	default:
 		return linux_machdepioctl(p, uap, retval);
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_faith.c,v 1.4.2.3 2001/01/05 17:36:50 bouyer Exp $	*/
+/*	$NetBSD: if_faith.c,v 1.4.2.4 2001/01/18 09:23:50 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -91,7 +91,7 @@ struct faith_softc {
 static int faithioctl __P((struct ifnet *, u_long, caddr_t));
 int faithoutput __P((struct ifnet *, struct mbuf *, struct sockaddr *,
 	struct rtentry *));
-static void faithrtrequest __P((int, struct rtentry *, struct sockaddr *));
+static void faithrtrequest __P((int, struct rtentry *, struct rt_addrinfo *));
 
 void faithattach __P((int));
 
@@ -137,6 +137,7 @@ faith_clone_create(ifc, unit)
 	sc->sc_if.if_addrlen = 0;
 	sc->sc_if.if_dlt = DLT_NULL;
 	if_attach(&sc->sc_if);
+	if_alloc_sadl(&sc->sc_if);
 #if NBPFILTER > 0
 	bpfattach(&sc->sc_if, DLT_NULL, sizeof(u_int));
 #endif
@@ -247,10 +248,10 @@ faithoutput(ifp, m, dst, rt)
 
 /* ARGSUSED */
 static void
-faithrtrequest(cmd, rt, sa)
+faithrtrequest(cmd, rt, info)
 	int cmd;
 	struct rtentry *rt;
-	struct sockaddr *sa;
+	struct rt_addrinfo *info;
 {
 	if (rt) {
 		rt->rt_rmx.rmx_mtu = rt->rt_ifp->if_mtu; /* for ISO */

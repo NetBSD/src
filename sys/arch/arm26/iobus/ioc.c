@@ -1,4 +1,5 @@
-/* $NetBSD: ioc.c,v 1.3.2.3 2001/01/05 17:34:03 bouyer Exp $ */
+/* $NetBSD: ioc.c,v 1.3.2.4 2001/01/18 09:22:16 bouyer Exp $ */
+
 /*-
  * Copyright (c) 1998, 1999, 2000 Ben Harris
  * All rights reserved.
@@ -32,7 +33,7 @@
 
 #include <sys/param.h>
 
-__RCSID("$NetBSD: ioc.c,v 1.3.2.3 2001/01/05 17:34:03 bouyer Exp $");
+__RCSID("$NetBSD: ioc.c,v 1.3.2.4 2001/01/18 09:22:16 bouyer Exp $");
 
 #include <sys/device.h>
 #include <sys/kernel.h>
@@ -51,12 +52,12 @@ __RCSID("$NetBSD: ioc.c,v 1.3.2.3 2001/01/05 17:34:03 bouyer Exp $");
 
 #include "locators.h"
 
-static int ioc_match __P((struct device *parent, struct cfdata *cf, void *aux));
-static void ioc_attach __P((struct device *parent, struct device *self, void *aux));
-static int ioc_search __P((struct device *parent, struct cfdata *cf, void *aux));
-static int ioc_print __P((void *aux, const char *pnp));
-static int ioc_irq_clock __P((void *cookie));
-static int ioc_irq_statclock __P((void *cookie));
+static int ioc_match(struct device *parent, struct cfdata *cf, void *aux);
+static void ioc_attach(struct device *parent, struct device *self, void *aux);
+static int ioc_search(struct device *parent, struct cfdata *cf, void *aux);
+static int ioc_print(void *aux, const char *pnp);
+static int ioc_irq_clock(void *cookie);
+static int ioc_irq_statclock(void *cookie);
 
 struct ioc_softc {
 	struct device		sc_dev;
@@ -78,10 +79,7 @@ extern struct cfdriver ioc_cd;
  */
 
 static int
-ioc_match(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+ioc_match(struct device *parent, struct cfdata *cf, void *aux)
 {
 
 	/*
@@ -98,10 +96,7 @@ ioc_match(parent, cf, aux)
 }
 
 static void
-ioc_attach(parent, self, aux)
-	struct device *parent;
-	struct device *self;
-	void *aux;
+ioc_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct ioc_softc *sc = (void *)self;
 	struct iobus_attach_args *ioa = aux;
@@ -142,10 +137,7 @@ ioc_attach(parent, self, aux)
 extern struct bus_space ioc_bs_tag;
 
 static int
-ioc_search(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+ioc_search(struct device *parent, struct cfdata *cf, void *aux)
 {
 	struct ioc_softc *sc = (void *)parent;
 	struct ioc_attach_args ioc;
@@ -181,9 +173,7 @@ ioc_search(parent, cf, aux)
 }
 
 static int
-ioc_print(aux, pnp)
-	void *aux;
-	const char *pnp;
+ioc_print(void *aux, const char *pnp)
 {
 	struct ioc_attach_args *ioc = aux;
 
@@ -208,8 +198,7 @@ ioc_print(aux, pnp)
  */
 
 u_int
-ioc_ctl_read(self)
-	struct device *self;
+ioc_ctl_read(struct device *self)
 {
 	struct ioc_softc *sc = (void *)self;
 
@@ -217,9 +206,7 @@ ioc_ctl_read(self)
 }
 
 void
-ioc_ctl_write(self, value, mask)
-	struct device *self;
-	u_int value, mask;
+ioc_ctl_write(struct device *self, u_int value, u_int mask)
 {
 	struct ioc_softc *sc = (void *)self;
 	int s;
@@ -235,29 +222,11 @@ ioc_ctl_write(self, value, mask)
 }
 
 /*
- * Interrupt handling
- */
-
-struct irq_handler *
-ioc_irq_establish(self, irq, level, handler, cookie)
-	struct device *self;
-	int irq, level;
-	int handler __P((void *));
-	void *cookie;
-{
-	/* struct ioc_softc *sc = (void *)self; */
-
-	return irq_establish(irq, level, handler, cookie);
-}
-
-/*
  * Find out if an interrupt line is currently active
  */
 
 int
-ioc_irq_status(self, irq)
-	struct device *self;
-	int irq;
+ioc_irq_status(struct device *self, int irq)
 {
 	struct ioc_softc *sc = (void *)self;
 	bus_space_tag_t bst = sc->sc_bst;
@@ -272,8 +241,7 @@ ioc_irq_status(self, irq)
 }
 
 u_int32_t
-ioc_irq_status_full(self)
-	struct device *self;
+ioc_irq_status_full(struct device *self)
 {
 	struct ioc_softc *sc = (void *)self;
 	bus_space_tag_t bst = sc->sc_bst;
@@ -289,9 +257,7 @@ ioc_irq_status_full(self)
 }
 
 void
-ioc_irq_setmask(self, mask)
-	struct device *self;
-	u_int32_t mask;
+ioc_irq_setmask(struct device *self, u_int32_t mask)
 {
 	struct ioc_softc *sc = (void *)self;
 	bus_space_tag_t bst = sc->sc_bst;
@@ -302,18 +268,14 @@ ioc_irq_setmask(self, mask)
 }
 
 void
-ioc_irq_waitfor(self, irq)
-	struct device *self;
-	int irq;
+ioc_irq_waitfor(struct device *self, int irq)
 {
 
 	while (!ioc_irq_status(self, irq));
 }
 
 void
-ioc_irq_clear(self, mask)
-	struct device *self;
-	int mask;
+ioc_irq_clear(struct device *self, int mask)
 {
 	struct ioc_softc *sc = (void *)self;
 	bus_space_tag_t bst = sc->sc_bst;
@@ -332,9 +294,7 @@ ioc_irq_clear(self, mask)
  * else.
  */
 
-int ioc_get_irq_level(self, irq)
-	struct device *self;
-	int irq;
+int ioc_get_irq_level(struct device *self, int irq)
 {
 	struct ioc_softc *sc = (void *)self;
 
@@ -357,9 +317,7 @@ int ioc_get_irq_level(self, irq)
  * Counters
  */
 
-void ioc_counter_start(self, counter, value)
-	struct device *self;
-	int counter, value;
+void ioc_counter_start(struct device *self, int counter, int value)
 {
 	struct ioc_softc *sc = (void *)self;
 	bus_space_tag_t bst = sc->sc_bst;
@@ -386,7 +344,7 @@ void ioc_counter_start(self, counter, value)
 static int t0_count;
 	
 void
-cpu_initclocks()
+cpu_initclocks(void)
 {
 	struct device *self;
 	struct ioc_softc *sc;
@@ -403,17 +361,16 @@ cpu_initclocks()
 	    (t0_count = IOC_TIMER_RATE / hz) > 65535)
 		panic("ioc_initclocks: Impossible clock rate: %d Hz", hz);
 	ioc_counter_start(self, 0, t0_count);
-	sc->sc_clkirq = ioc_irq_establish(self, IOC_IRQ_TM0, IPL_CLOCK,
-					  ioc_irq_clock, NULL);
+	sc->sc_clkirq = irq_establish(IOC_IRQ_TM0, IPL_CLOCK, ioc_irq_clock,
+	    NULL, "hardclock");
 	if (bootverbose)
 		printf("%s: %d Hz clock interrupting at %s\n",
 		    self->dv_xname, hz, irq_string(sc->sc_clkirq));
 	
 	if (stathz) {
 		setstatclockrate(stathz);
-		sc->sc_sclkirq = ioc_irq_establish(self, IOC_IRQ_TM1,
-						   IPL_STATCLOCK,
-						   ioc_irq_statclock, NULL);
+		sc->sc_sclkirq = irq_establish(IOC_IRQ_TM1, IPL_STATCLOCK,
+		    ioc_irq_statclock, NULL, "statclock");
 		if (bootverbose)
 			printf("%s: %d Hz statclock interrupting at %s\n",
 			    self->dv_xname, stathz, irq_string(sc->sc_sclkirq));
@@ -421,8 +378,7 @@ cpu_initclocks()
 }
 
 static int
-ioc_irq_clock(cookie)
-	void *cookie;
+ioc_irq_clock(void *cookie)
 {
 
 	hardclock(cookie);
@@ -430,8 +386,7 @@ ioc_irq_clock(cookie)
 }
 
 static int
-ioc_irq_statclock(cookie)
-	void *cookie;
+ioc_irq_statclock(void *cookie)
 {
 
 	statclock(cookie);
@@ -439,8 +394,7 @@ ioc_irq_statclock(cookie)
 }
 
 void
-setstatclockrate(hzrate)
-	int hzrate;
+setstatclockrate(int hzrate)
 {
 	struct device *self;
 	int count;
@@ -459,8 +413,7 @@ setstatclockrate(hzrate)
 }
 
 void
-microtime(tv)
-	struct timeval *tv;
+microtime(struct timeval *tv)
 {
 	struct device *self;
 	struct ioc_softc *sc;

@@ -1,4 +1,4 @@
-/* $NetBSD: types.h,v 1.1.6.3 2001/01/05 17:34:03 bouyer Exp $ */
+/* $NetBSD: types.h,v 1.1.6.4 2001/01/18 09:22:16 bouyer Exp $ */
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -40,6 +40,8 @@
 
 #include <sys/cdefs.h>
 #include <machine/int_types.h>
+
+#define	__HAVE_GENERIC_SOFT_INTERRUPTS
 
 /* NB: This should probably be if defined(_KERNEL) */
 #if !defined(_POSIX_C_SOURCE) && !defined(_XOPEN_SOURCE)

@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.7.2.3 2001/01/05 17:34:01 bouyer Exp $ */
+/* $NetBSD: pmap.c,v 1.7.2.4 2001/01/18 09:22:14 bouyer Exp $ */
 /*-
  * Copyright (c) 1997, 1998, 2000 Ben Harris
  * All rights reserved.
@@ -105,7 +105,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.7.2.3 2001/01/05 17:34:01 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.7.2.4 2001/01/18 09:22:14 bouyer Exp $");
 
 #include <sys/kernel.h> /* for cold */
 #include <sys/malloc.h>
@@ -609,7 +609,7 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 
 	UVMHIST_LOG(pmaphist, "mapping ppn %d at lpn %d in pmap %p",
 	       ppn, lpn, pmap, 0);
-	s = splimp();
+	s = splvm();
 
 	/* Remove any existing mapping at this lpn */
 	if (pmap->pm_entries[lpn] != NULL &&
@@ -653,7 +653,7 @@ pmap_remove(pmap_t pmap, vaddr_t sva, vaddr_t eva)
 	slpn = atop(sva); elpn = atop(eva);
 	UVMHIST_LOG(pmaphist, "clearing from lpn %d to lpn %d in pmap %p",
 	       slpn, elpn - 1, pmap, 0);
-	s = splimp();
+	s = splvm();
 	for (lpn = slpn; lpn < elpn; lpn++) {
 		pv = pmap->pm_entries[lpn];
 		if (pv != NULL) {
@@ -910,7 +910,7 @@ pmap_protect(pmap_t pmap, vaddr_t sva, vaddr_t eva, vm_prot_t prot)
 		return; /* can't restrict kernel w/o unmapping. */
 
 	slpn = atop(sva); elpn = atop(eva);
-	s = splimp();
+	s = splvm();
 	for (lpn = slpn; lpn < elpn; lpn++) {
 		pv = pmap->pm_entries[lpn];
 		if (pv != NULL) {

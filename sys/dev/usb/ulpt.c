@@ -1,4 +1,4 @@
-/*	$NetBSD: ulpt.c,v 1.27.2.3 2001/01/05 17:36:32 bouyer Exp $	*/
+/*	$NetBSD: ulpt.c,v 1.27.2.4 2001/01/18 09:23:38 bouyer Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ulpt.c,v 1.24 1999/11/17 22:33:44 n_hibma Exp $	*/
 
 /*
@@ -368,7 +368,17 @@ ulpt_reset(struct ulpt_softc *sc)
 	USETW(req.wValue, 0);
 	USETW(req.wIndex, sc->sc_ifaceno);
 	USETW(req.wLength, 0);
-	(void)usbd_do_request(sc->sc_udev, &req, 0);
+
+	/*
+	 * There was a mistake in the USB printer 1.0 spec that gave the
+	 * request type as UT_WRITE_CLASS_OTHER, it should have been
+	 * UT_WRITE_CLASS_INTERFACE.  Many printers use the old one,
+	 * so we try both.
+	 */
+	if (usbd_do_request(sc->sc_udev, &req, 0)) {
+		req.bmRequestType = UT_WRITE_CLASS_INTERFACE;
+		(void)usbd_do_request(sc->sc_udev, &req, 0);
+	}
 }
 
 /*

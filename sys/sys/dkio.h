@@ -1,4 +1,4 @@
-/*	$NetBSD: dkio.h,v 1.3.8.1 2000/11/20 18:11:29 bouyer Exp $	*/
+/*	$NetBSD: dkio.h,v 1.3.8.2 2001/01/18 09:24:02 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1987, 1988, 1993
@@ -47,6 +47,12 @@
 #define DIOCWDINFO	_IOW('d', 103, struct disklabel)/* set, update disk */
 #define DIOCGPART	_IOW('d', 104, struct partinfo)	/* get partition */
 
+#if defined(__HAVE_OLD_DISKLABEL) && defined(_KERNEL)
+#define ODIOCGDINFO	_IOR('d', 101, struct olddisklabel)/* get */
+#define ODIOCSDINFO	_IOW('d', 102, struct olddisklabel)/* set */
+#define ODIOCWDINFO	_IOW('d', 103, struct olddisklabel)/* set, update dk */
+#endif
+
 /* do format operation, read or write */
 #define DIOCRFORMAT	_IOWR('d', 105, struct format_op)
 #define DIOCWFORMAT	_IOWR('d', 106, struct format_op)
@@ -64,5 +70,9 @@
 		/* get default label, clear label */
 #define	DIOCGDEFLABEL	_IOR('d', 114, struct disklabel)
 #define	DIOCCLRLABEL	_IO('d', 115)
+
+#if defined(__HAVE_OLD_DISKLABEL) && defined(_KERNEL)
+#define	ODIOCGDEFLABEL	_IOR('d', 114, struct olddisklabel)
+#endif
 
 #endif /* _SYS_DKIO_H_ */

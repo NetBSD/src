@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.9.8.1 2000/11/20 20:13:32 bouyer Exp $	*/
+/*	$NetBSD: proc.h,v 1.9.8.2 2001/01/18 09:22:43 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -40,15 +40,21 @@
 
 #ifndef _MIPS_PROC_H_
 #define _MIPS_PROC_H_
+
+struct proc;
+
 /*
  * Machine-dependent part of the proc structure for MIPS
  */
 struct mdproc {
-	void *md_regs;		/* registers on current frame */
+	void	*md_regs;		/* registers on current frame */
 	int	md_flags;		/* machine-dependent flags */
 	int	md_upte[UPAGES];	/* ptes for mapping u page */
 	int	md_ss_addr;		/* single step address for ptrace */
 	int	md_ss_instr;		/* single step instruction for ptrace */
+	__volatile int md_astpending;	/* AST pending on return to userland */
+					/* syscall entry for this process */
+	void	(*md_syscall)(struct proc *, u_int, u_int, u_int);
 };
 
 /* md_flags */

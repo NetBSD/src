@@ -1,4 +1,4 @@
-/* 	$NetBSD: intr.h,v 1.1.12.1 2000/11/20 20:32:52 bouyer Exp $	*/
+/* 	$NetBSD: intr.h,v 1.1.12.2 2001/01/18 09:23:08 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1998 Matt Thomas.
@@ -116,6 +116,7 @@ do {								\
 #define splnet()	_splraise(IPL_NET)		/* IPL15 */
 #define spltty()	_splraise(IPL_TTY)		/* IPL15 */
 #define splimp()	_splraise(IPL_IMP)		/* IPL17 */
+#define splvm()		_splraise(IPL_IMP)		/* IPL17 */
 #define splclock()	_splraise(IPL_CLOCK)		/* IPL18 */
 #define splhigh()	_splraise(IPL_HIGH)		/* IPL1F */
 #define splstatclock()	splclock()
@@ -134,9 +135,6 @@ do {								\
 #define setsoftddb()	_setsirr(IPL_SOFTDDB)
 #define setsoftserial()	_setsirr(IPL_SOFTSERIAL)
 #define setsoftnet()	_setsirr(IPL_SOFTNET)
-#define setsoftclock()	_setsirr(IPL_SOFTCLOCK)
-
-#define __GENERIC_SOFT_INTERRUPTS
 
 #if !defined(_LOCORE)
 LIST_HEAD(sh_head, softintr_handler);

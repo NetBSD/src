@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.47.2.4 2001/01/05 17:35:23 bouyer Exp $	*/
+/*	$NetBSD: linux_machdep.c,v 1.47.2.5 2001/01/18 09:23:12 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1995, 2000 The NetBSD Foundation, Inc.
@@ -638,6 +638,10 @@ linux_machdepioctl(p, v, retval)
 		if ((unsigned)SCARG(uap, data) == LINUX_K_MEDIUMRAW)
 			SCARG(&bia, data) = (caddr_t)K_RAW;
 		break;
+	case LINUX_KIOCSOUND:
+		SCARG(&bia, data) =
+		    (caddr_t)(((unsigned long)SCARG(&bia, data)) & 0xffff);
+		/* fall through */
 	case LINUX_KDMKTONE:
 		com = KDMKTONE;
 		break;

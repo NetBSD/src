@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.6.2.3 2001/01/05 17:34:54 bouyer Exp $	*/
+/*	$NetBSD: cpu.h,v 1.6.2.4 2001/01/18 09:22:52 bouyer Exp $	*/
 
 /*
  * Copyright (C) 1995-1997 Wolfgang Solfrank.
@@ -81,6 +81,7 @@ extern struct machvec machine_interface;
 #define	splnet()	((*machine_interface.splnet)())
 #define	spltty()	((*machine_interface.spltty)())
 #define	splimp()	((*machine_interface.splimp)())
+#define	splvm()		((*machine_interface.splimp)())
 #define	splclock()	((*machine_interface.splclock)())
 #define	spllowersoftclock() ((*machine_interface.spllowersoftclock)())
 #define	splsoftclock()	((*machine_interface.splsoftclock)())

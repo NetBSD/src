@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.h,v 1.38.2.2 2000/11/22 16:06:41 bouyer Exp $	*/
+/*	$NetBSD: sysctl.h,v 1.38.2.3 2001/01/18 09:24:03 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -91,7 +91,8 @@ struct ctlname {
 #define	CTL_USER	8		/* user-level */
 #define	CTL_DDB		9		/* in-kernel debugger */
 #define	CTL_PROC	10		/* per-proc attr */
-#define	CTL_MAXID	11		/* number of valid top-level ids */
+#define	CTL_VENDOR	11		/* vendor-specific data */
+#define	CTL_MAXID	12		/* number of valid top-level ids */
 
 #define	CTL_NAMES { \
 	{ 0, 0 }, \
@@ -105,7 +106,14 @@ struct ctlname {
 	{ "user", CTLTYPE_NODE }, \
 	{ "ddb", CTLTYPE_NODE }, \
 	{ "proc", CTLTYPE_NODE }, \
+	{ "vendor", CTLTYPE_NODE }, \
 }
+
+/*
+ * The "vendor" toplevel name is to be used by vendors who wish to
+ * have their own private MIB tree. If you do that, please use
+ * vendor.<yourname>.*
+ */
 
 /*
  * CTL_KERN identifiers
