@@ -1,4 +1,4 @@
-/* $NetBSD: rpb.h,v 1.14 1998/01/12 07:07:19 thorpej Exp $ */
+/* $NetBSD: rpb.h,v 1.15 1998/01/29 22:28:52 ross Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -55,6 +55,7 @@ struct rpb {
 #define	ST_DEC_3000_500		4		/* "Flamingo" family (TC) */
 #define	ST_DEC_2000_300		6		/* "Jensen" (EISA/ISA) */
 #define	ST_DEC_3000_300		7		/* "Pelican" (TC) */
+#define	ST_AVALON_A12		8		/* XXX Avalon Multicomputer */
 #define	ST_DEC_2100_A500	9		/* "Sable" (?) */
 #define	ST_DEC_APXVME_64	10		/* "AXPvme" (VME?) */
 #define	ST_DEC_AXPPCI_33	11		/* "NoName" (PCI/ISA) */
@@ -191,24 +192,27 @@ struct pcs {
 	vm_offset_t	pcs_pal_scraddr;	/*  A0: PAL scratch addr */
 	struct {
 		u_int64_t
-			pcs_alpha	: 8,	/* alphabetic char 'a' - 'z' */
+			minorrev	: 8,	/* alphabetic char 'a' - 'z' */
+			majorrev	: 8,	/* alphabetic char 'a' - 'z' */
 #define	PAL_TYPE_STANDARD	0
 #define	PAL_TYPE_VMS		1
 #define	PAL_TYPE_OSF1		2
-			pcs_pal_type	: 8,	/* PALcode type:
+			pal_type	: 8,	/* PALcode type:
 						 * 0 == standard
 						 * 1 == OpenVMS
 						 * 2 == OSF/1
 						 * 3-127 DIGITAL reserv.
 						 * 128-255 non-DIGITAL reserv.
 						 */
-			sbz1		: 16,
-			pcs_proc_cnt	: 7,	/* Processor count */
-			sbz2		: 25;
+			sbz1		: 8,
+			compatibility	: 16,	/* Compatibility revision */
+			proc_cnt	: 16;	/* Processor count */
 	} pcs_pal_rev;				/*  A8: */
-#define	pcs_alpha	pcs_pal_rev.alpha
-#define	pcs_pal_type	pcs_pal_rev.pal_type
-#define	pcs_proc_cnt	pcs_pal_rev.proc_cnt
+#define pcs_minorrev	pcs_pal_rev.minorrev	
+#define pcs_majorrev	pcs_pal_rev.majorrev	
+#define pcs_pal_type	pcs_pal_rev.pal_type
+#define pcs_compatibility	pcs_pal_rev.compatibility
+#define pcs_proc_cnt	pcs_pal_rev.proc_cnt
 
 	u_int64_t	pcs_proc_type;		/*  B0: processor type */
 
