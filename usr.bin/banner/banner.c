@@ -1,4 +1,4 @@
-/*	$NetBSD: banner.c,v 1.8 2003/03/13 11:57:23 mjl Exp $	*/
+/*	$NetBSD: banner.c,v 1.9 2003/03/13 12:13:43 mjl Exp $	*/
 
 /*
  *	Changes for banner(1)
@@ -62,7 +62,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)printjob.c	8.2 (Berkeley) 4/16/94";
 #else
-__RCSID("$NetBSD: banner.c,v 1.8 2003/03/13 11:57:23 mjl Exp $");
+__RCSID("$NetBSD: banner.c,v 1.9 2003/03/13 12:13:43 mjl Exp $");
 #endif
 #endif /* not lint */
 
@@ -142,7 +142,10 @@ scan_out(int scfd, char *scsp, int dlm)
 		    *strp++ = BackGnd;
 		sp = scsp;
 		for (nchrs = 0; *sp != dlm && *sp != '\0'; ) {
-			d = dropit(c = TRC(cc = *sp++));
+			cc = *sp++;
+			if(cc < ' ' || cc > 0x7f)
+				cc = ' ';
+			d = dropit(c = TRC(cc));
 			if ((!d && scnhgt > HEIGHT) || (scnhgt <= Drop && d))
 				for (j = WIDTH; --j;)
 					*strp++ = BackGnd;
