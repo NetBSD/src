@@ -1,11 +1,11 @@
-/*	$NetBSD: extract.c,v 1.20 1999/08/24 00:48:38 hubertf Exp $	*/
+/*	$NetBSD: extract.c,v 1.21 2000/06/16 23:49:17 sjg Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "FreeBSD - Id: extract.c,v 1.17 1997/10/08 07:45:35 charnier Exp";
 #else
-__RCSID("$NetBSD: extract.c,v 1.20 1999/08/24 00:48:38 hubertf Exp $");
+__RCSID("$NetBSD: extract.c,v 1.21 2000/06/16 23:49:17 sjg Exp $");
 #endif
 #endif
 
@@ -86,7 +86,11 @@ rollback(char *name, char *home, plist_t *start, plist_t *stop)
 	}
 }
 
-void
+
+/*
+ * Return 0 on error, 1 for success.
+ */
+int
 extract_plist(char *home, package_t *pkg)
 {
 	plist_t *p = pkg->head;
@@ -162,7 +166,7 @@ extract_plist(char *home, package_t *pkg)
 								    "unable to back up %s to %s, aborting pkg_add",
 								    try, pf);
 								rollback(PkgName, home, pkg->head, p);
-								return;
+								return 0;
 							}
 						}
 					}
@@ -311,4 +315,5 @@ extract_plist(char *home, package_t *pkg)
 	}
 	PUSHOUT(Directory);
 	pkgdb_close();
+	return 1;
 }
