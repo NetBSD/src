@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_exec_elf32.c,v 1.10 2002/06/01 15:10:43 fvdl Exp $	*/
+/*	$NetBSD: netbsd32_exec_elf32.c,v 1.11 2002/08/26 21:06:02 christos Exp $	*/
 /*	from: NetBSD: exec_aout.c,v 1.15 1996/09/26 23:34:46 cgd Exp */
 
 /*
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_exec_elf32.c,v 1.10 2002/06/01 15:10:43 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_exec_elf32.c,v 1.11 2002/08/26 21:06:02 christos Exp $");
 
 #define	ELFSIZE		32
 
@@ -116,15 +116,15 @@ ELFNAME2(netbsd32,probe_noteless)(struct proc *p, struct exec_package *epp,
  * extra information in case of dynamic binding.
  */
 int
-netbsd32_elf32_copyargs(struct exec_package *pack, struct ps_strings *arginfo,
-		        char **stackp, void *argp)
+netbsd32_elf32_copyargs(struct proc *p, struct exec_package *pack,
+    struct ps_strings *arginfo, char **stackp, void *argp)
 {
 	size_t len;
 	AuxInfo ai[ELF_AUX_ENTRIES], *a;
 	struct elf_args *ap;
 	int error;
 
-	if ((error = netbsd32_copyargs(pack, arginfo, stackp, argp)) != 0)
+	if ((error = netbsd32_copyargs(p, pack, arginfo, stackp, argp)) != 0)
 		return error;
 
 	a = ai;
@@ -161,6 +161,22 @@ netbsd32_elf32_copyargs(struct exec_package *pack, struct ps_strings *arginfo,
 
 		a->a_type = AT_ENTRY;
 		a->a_v = ap->arg_entry;
+		a++;
+
+		a->au_type = AT_EUID;
+		a->au_v = p->p_ucred->cr_uid;
+		a++;
+
+		a->au_type = AT_RUID;
+		a->au_v = p->p_cred->ruid;
+		a++;
+
+		a->au_type = AT_EGID;
+		a->au_v = p->p_ucred->cr_gid;
+		a++;
+
+		a->au_type = AT_RGID;
+		a->au_v = p->p_cred->rgid;
 		a++;
 
 		free((char *)ap, M_TEMP);

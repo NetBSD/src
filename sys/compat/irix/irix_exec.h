@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_exec.h,v 1.13 2002/08/25 19:03:12 manu Exp $ */
+/*	$NetBSD: irix_exec.h,v 1.14 2002/08/26 21:05:59 christos Exp $ */
 
 /*-
  * Copyright (c) 2001-2002 The NetBSD Foundation, Inc.
@@ -81,8 +81,8 @@ int irix_check_exec __P((struct proc *p));
 #define IRIX_AUX_ARGSIZ howmany(IRIX_ELF_AUX_ENTRIES * \
     sizeof(Aux32Info), sizeof (Elf32_Addr))
 
-int irix_elf32_copyargs __P((struct exec_package *, struct ps_strings *,
-    char **, void *));
+int irix_elf32_copyargs __P((struct proc *, struct exec_package *,
+    struct ps_strings *, char **, void *));
 
 int irix_elf32_probe_o32 __P((struct proc *, struct exec_package *, void *,  
     char *, vaddr_t *));
@@ -95,8 +95,8 @@ int irix_elf32_probe_n32 __P((struct proc *, struct exec_package *, void *,
 /* #define IRIX_AUX_ARGSIZ howmany(IRIX_ELF_AUX_ENTRIES * \
     sizeof(Aux64Info), sizeof (Elf64_Addr))  */
 
-int irix_elf64_copyargs __P((struct exec_package *, struct ps_strings *,
-    char **, void *));
+int irix_elf64_copyargs __P((struct proc *, struct exec_package *,
+    struct ps_strings *, char **, void *));
 
 int irix_elf64_probe __P((struct proc *, struct exec_package *, void *,  
     char *, vaddr_t *));
