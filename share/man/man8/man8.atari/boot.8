@@ -1,4 +1,4 @@
-.\"	$NetBSD: boot.8,v 1.10 2003/04/08 03:49:44 lukem Exp $
+.\"	$NetBSD: boot.8,v 1.11 2003/04/08 07:51:39 wiz Exp $
 .\"
 .\" Copyright (c) 1990, 1991 The Regents of the University of California.
 .\" All rights reserved.
@@ -46,8 +46,7 @@
 .Nd
 system bootstrapping procedures
 .Sh DESCRIPTION
-.Sy Power fail and crash recovery
-.Pp
+.Ss Power fail and crash recovery
 When the
 .Nx
 kernel is booted normally (using one of the two methods discussed below),
@@ -66,9 +65,7 @@ configured dump device (which will be automatically recovered with
 .Xr savecore 8
 during the next boot cycle).  After the dump is complete (successful
 or not), the system will attempt a reboot.
-.Pp
-.Sy Booting NetBSD using the bootloader
-.Pp
+.Ss Booting NetBSD using the bootloader
 When a bootable
 .Nx
 partition is created by means of
@@ -141,9 +138,7 @@ Boot in quiet mode
 Boot in verbose mode
 .El
 .El
-.Pp
-.Sy Booting using the loadbsd program
-.Pp
+.Ss Booting using the loadbsd program
 When you want (or have to) start
 .Nx
 from GEM, you have to use the
