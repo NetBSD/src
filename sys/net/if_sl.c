@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sl.c,v 1.52 1998/08/26 15:12:55 mrg Exp $	*/
+/*	$NetBSD: if_sl.c,v 1.53 1998/10/06 18:38:08 kleink Exp $	*/
 
 /*
  * Copyright (c) 1987, 1989, 1992, 1993
@@ -101,7 +101,7 @@
 #include <netinet/in_var.h>
 #include <netinet/ip.h>
 #else
-Huh? Slip without inet?
+#error Slip without inet?
 #endif
 
 #include <net/slcompress.h>
@@ -164,7 +164,7 @@ Huh? Slip without inet?
 #define	SLMTU		296
 #endif
 #if (SLMTU < 3)
-Huh?  SLMTU way too small.
+#error SLMTU way too small.
 #endif
 #define	SLIP_HIWAT	roundup(50,CBSIZE)
 #ifndef __NetBSD__					/* XXX - cgd */
