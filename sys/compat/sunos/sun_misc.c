@@ -42,7 +42,7 @@
  *	@(#)sun_misc.c	8.1 (Berkeley) 6/18/93
  *
  * from: Header: sun_misc.c,v 1.16 93/04/07 02:46:27 torek Exp 
- * $Id: sun_misc.c,v 1.21 1994/05/05 09:36:23 deraadt Exp $
+ * $Id: sun_misc.c,v 1.22 1994/05/19 22:11:54 deraadt Exp $
  */
 
 /*
@@ -598,18 +598,16 @@ sun_uname(p, uap, retval)
 	int *retval;
 {
 	struct sun_utsname sut;
+	extern char ostype[], machine[], osrelease[];
 
-	/* first update utsname just as with NetBSD uname() */
-	bcopy(hostname, utsname.nodename, sizeof(utsname.nodename));
-	utsname.nodename[sizeof(utsname.nodename)-1] = '\0';
-
-	/* then copy it over into SunOS struct utsname */
 	bzero(&sut, sizeof(sut));
-	bcopy(utsname.sysname, sut.sysname, sizeof(sut.sysname) - 1);
-	bcopy(utsname.nodename, sut.nodename, sizeof(sut.nodename) - 1);
-	bcopy(utsname.release, sut.release, sizeof(sut.release) - 1);
-	bcopy(utsname.version, sut.version, sizeof(sut.version) - 1);
-	bcopy(utsname.machine, sut.machine, sizeof(sut.machine) - 1);
+
+	bcopy(ostype, sut.sysname, sizeof(sut.sysname) - 1);
+	bcopy(hostname, sut.nodename, sizeof(sut.nodename));
+	sut.nodename[sizeof(sut.nodename)-1] = '\0';
+	bcopy(osrelease, sut.release, sizeof(sut.release) - 1);
+	bcopy("1", sut.version, sizeof(sut.version) - 1);
+	bcopy(machine, sut.machine, sizeof(sut.machine) - 1);
 
 	return copyout((caddr_t)&sut, (caddr_t)uap->name, sizeof(struct sun_utsname));
 }
