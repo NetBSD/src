@@ -1,4 +1,4 @@
-/*	$NetBSD: atw.c,v 1.28 2004/05/31 10:49:32 dyoung Exp $	*/
+/*	$NetBSD: atw.c,v 1.29 2004/05/31 11:28:03 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002, 2003, 2004 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atw.c,v 1.28 2004/05/31 10:49:32 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atw.c,v 1.29 2004/05/31 11:28:03 dyoung Exp $");
 
 #include "bpfilter.h"
 
@@ -2956,7 +2956,7 @@ atw_rxintr(struct atw_softc *sc)
 		    sc->sc_rxdescs[i].ar_buf2));
 
 		/*
-		 * Make sure the packet fit in one buffer.  This should
+		 * Make sure the packet fits in one buffer.  This should
 		 * always be the case.
 		 */
 		if ((rxstat & (ATW_RXSTAT_FS|ATW_RXSTAT_LS)) !=
@@ -3440,7 +3440,7 @@ atw_start(struct ifnet *ifp)
 		hh = mtod(m0, struct atw_frame *);
 		wh = &hh->atw_ihdr;
 
-		do_encrypt = (wh->i_fc[1] & IEEE80211_FC1_WEP) ? 1 : 0;
+		do_encrypt = ((wh->i_fc[1] & IEEE80211_FC1_WEP) != 0) ? 1 : 0;
 
 		/* Copy everything we need from the 802.11 header:
 		 * Frame Control; address 1, address 3, or addresses
