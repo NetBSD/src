@@ -1,4 +1,4 @@
-/*	$NetBSD: mq200subr.c,v 1.4 2003/07/15 02:29:30 lukem Exp $	*/
+/*	$NetBSD: mq200subr.c,v 1.5 2003/12/27 05:47:54 takemura Exp $	*/
 
 /*-
  * Copyright (c) 2001 TAKEMURA Shin
@@ -31,7 +31,7 @@
 
 #ifdef _KERNEL
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mq200subr.c,v 1.4 2003/07/15 02:29:30 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mq200subr.c,v 1.5 2003/12/27 05:47:54 takemura Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -103,7 +103,7 @@ int mq200_crt_nparams = sizeof(mq200_crt_params)/sizeof(*mq200_crt_params);
 /*
  * get PLL setting register value for given frequency
  */
-void
+int
 mq200_pllparam(int reqout, u_int32_t *res)
 {
 	int n, m, p, out;
@@ -111,6 +111,7 @@ mq200_pllparam(int reqout, u_int32_t *res)
 	int bn, bm, bp, e;
 
 	e = ref;
+	bn = 0; bp = 0; bm = 0;
 	for (p = 0; p <= 4; p++) {
 		for (n = 0; n < (1<<5); n++) {
 			m = (reqout * ((n + 1) << p)) / ref - 1;
@@ -129,6 +130,8 @@ mq200_pllparam(int reqout, u_int32_t *res)
 			}
 		}
 	}
+	if (ref <= e)
+		return (-1);
 
 #if 0
 	out = ref * (bm + 1) / ((bn + 1) << bp);
@@ -139,6 +142,8 @@ mq200_pllparam(int reqout, u_int32_t *res)
 	*res = ((bm << MQ200_PLL_M_SHIFT) |
 		(bn << MQ200_PLL_N_SHIFT) |
 		(bp << MQ200_PLL_P_SHIFT));
+
+	return (0);
 }
 
 void
@@ -169,7 +174,11 @@ mq200_set_pll(struct mq200_softc *sc, int pll, int clock)
 	}
 	if (clock != 0 && clock != -1) {
 		/* PLL Programming	*/
-		mq200_pllparam(clock, &param);
+		if (mq200_pllparam(clock, &param) != 0) {
+			printf("mq200: invalid clock rate: %s %d.%03dMHz\n",
+			    mq200_clknames[pll], clock/1000, clock%1000);
+			return;
+		}
 		mq200_mod(sc, paramreg, MQ200_PLL_PARAM_MASK, param);
 		/* enable PLL	*/
 		mq200_on(sc, enreg, enbit);
