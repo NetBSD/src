@@ -1,4 +1,4 @@
-/*	$NetBSD: label.c,v 1.40 2003/08/10 14:51:49 dsl Exp $	*/
+/*	$NetBSD: label.c,v 1.41 2003/10/19 20:17:31 dsl Exp $	*/
 
 /*
  * Copyright 1997 Jonathan Stone
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: label.c,v 1.40 2003/08/10 14:51:49 dsl Exp $");
+__RCSID("$NetBSD: label.c,v 1.41 2003/10/19 20:17:31 dsl Exp $");
 #endif
 
 #include <sys/types.h>
@@ -47,7 +47,6 @@ __RCSID("$NetBSD: label.c,v 1.40 2003/08/10 14:51:49 dsl Exp $");
 #include <util.h>
 #include <unistd.h>
 #include <sys/dkio.h>
-#include <sys/ioctl.h>
 #include <ufs/ffs/fs.h>
 
 #include "defs.h"
@@ -302,23 +301,6 @@ edit_restore(menudesc *m, void *arg)
 	return 1;
 }
 
-static void
-set_ptn_header(menudesc *m, void *arg)
-{
-	partinfo *p = arg;
-
-	msg_clear();
-	msg_table_add(MSG_edfspart, 'a' + (p - bsdlabel));
-
-	if (PI_ISBSDFS(p)) {
-		m->opts[4].opt_flags &= ~OPT_IGNORE;
-		m->opts[5].opt_flags &= ~OPT_IGNORE;
-	} else {
-		m->opts[4].opt_flags |= OPT_IGNORE;
-		m->opts[5].opt_flags |= OPT_IGNORE;
-	}
-}
-
 static int
 set_fstype(menudesc *m, void *arg)
 {
@@ -339,6 +321,7 @@ get_fstype(menudesc *m, void *arg)
 	m->cursel = p->pi_fstype;
 }
 
+static void set_ptn_header(menudesc *m, void *arg);
 static void set_ptn_label(menudesc *m, int opt, void *arg);
 int all_fstype_menu = -1;
 
@@ -378,7 +361,7 @@ edit_ptn(menudesc *menu, void *arg)
 
 	if (fspart_menu == -1) {
 		fspart_menu = new_menu(NULL, fs_fields, nelem(fs_fields),
-			0, 8, 0, 70,
+			0, -1, 0, 70,
 			MC_NOBOX | MC_NOCLEAR | MC_SCROLL,
 			set_ptn_header, set_ptn_label, NULL,
 			NULL, MSG_partition_sizes_ok);
@@ -411,11 +394,49 @@ edit_ptn(menudesc *menu, void *arg)
 }
 
 static void
+set_ptn_header(menudesc *m, void *arg)
+{
+	partinfo *p = arg;
+	int i;
+
+	msg_clear();
+	msg_table_add(MSG_edfspart, 'a' + (p - bsdlabel));
+
+	for (i = PTN_MENU_START; i <= PTN_MENU_MOUNTPT; i++) {
+		m->opts[i].opt_flags |= OPT_IGNORE;
+		if (i == PTN_MENU_END) {
+			continue;
+		}
+		if (p->pi_fstype == FS_SWAP && i > PTN_MENU_END)
+			continue;
+		if (p->pi_fstype == FS_UNUSED)
+			continue;
+		if (!PI_ISBSDFS(p)
+		    && i >= PTN_MENU_BSIZE && i <= PTN_MENU_ISIZE)
+			continue;
+		m->opts[i].opt_flags &= ~OPT_IGNORE;
+	}
+}
+
+static void
+disp_sector_count(menudesc *m, msg fmt, uint s)
+{
+	uint ms = MEG / sectorsize;
+
+	wprintw(m->mw, msg_string(fmt),
+		s / ms, s / dlcylsize, s % dlcylsize ? '*' : ' ', s );
+}
+
+static void
 set_ptn_label(menudesc *m, int opt, void *arg)
 {
 	partinfo *p = arg;
-	int ms = MEG / sectorsize;
-	int s;
+
+	if (m->opts[opt].opt_flags & OPT_IGNORE
+	    && (opt != PTN_MENU_END || p->pi_fstype == FS_UNUSED)) {
+		wprintw(m->mw, "            -");
+		return;
+	}
 
 	switch (opt) {
 	case PTN_MENU_FSKIND:
@@ -423,39 +444,24 @@ set_ptn_label(menudesc *m, int opt, void *arg)
 			fstypenames[p->pi_fstype]);
 		break;
 	case PTN_MENU_START:
-		s = p->pi_offset;
-		wprintw(m->mw, msg_string(MSG_start_fmt),
-			s / ms, s / dlcylsize, s );
+		disp_sector_count(m, MSG_start_fmt, p->pi_offset);
 		break;
 	case PTN_MENU_SIZE:
-		s = p->pi_size;
-		wprintw(m->mw, msg_string(MSG_size_fmt),
-			s / ms, s / dlcylsize, s );
+		disp_sector_count(m, MSG_size_fmt, p->pi_size);
 		break;
 	case PTN_MENU_END:
-		s = p->pi_offset + p->pi_size;
-		wprintw(m->mw, msg_string(MSG_end_fmt),
-			s / ms, s / dlcylsize, s );
+		disp_sector_count(m, MSG_end_fmt, p->pi_offset + p->pi_size);
 		break;
 	case PTN_MENU_BSIZE:
-		if (PI_ISBSDFS(p))
-			wprintw(m->mw, msg_string(MSG_bsize_fmt),
-			    p->pi_fsize * p->pi_frag);
-		else
-			wprintw(m->mw, "      -");
+		wprintw(m->mw, msg_string(MSG_bsize_fmt),
+			p->pi_fsize * p->pi_frag);
 		break;
 	case PTN_MENU_FSIZE:
-		if (PI_ISBSDFS(p))
-			wprintw(m->mw, msg_string(MSG_fsize_fmt), p->pi_fsize);
-		else
-			wprintw(m->mw, "      -");
+		wprintw(m->mw, msg_string(MSG_fsize_fmt), p->pi_fsize);
 		break;
 	case PTN_MENU_ISIZE:
-		if (PI_ISBSDFS(p))
-			wprintw(m->mw, msg_string(p->pi_isize > 0 ?
-			    MSG_isize_fmt : MSG_isize_fmt_dflt), p->pi_isize);
-		else
-			wprintw(m->mw, "      -");
+		wprintw(m->mw, msg_string(p->pi_isize > 0 ?
+			MSG_isize_fmt : MSG_isize_fmt_dflt), p->pi_isize);
 		break;
 	case PTN_MENU_NEWFS:
 		wprintw(m->mw, msg_string(MSG_newfs_fmt),
@@ -566,8 +572,8 @@ edit_and_check_label(partinfo *lp, int nparts, int rawpart, int bsdpart)
 
 	if (menu_no == -1) {
 		menu_no = new_menu(NULL, menu, maxpart + 1,
-			0, 6, maxpart + 2, 74,
-			MC_SCROLL | MC_NOBOX | MC_DFLTEXIT,
+			0, -1, maxpart + 2, 74,
+			MC_ALWAYS_SCROLL | MC_NOBOX | MC_DFLTEXIT,
 			set_label_texts, fmt_fspart, NULL, NULL,
 			MSG_partition_sizes_ok);
 	}
@@ -637,6 +643,13 @@ incorelabel(const char *dkname, partinfo *lp)
 		maxpart = MAXPARTITIONS;
 	if (maxpart > lab.d_npartitions)
 		maxpart = lab.d_npartitions;
+
+	/*
+	 * Historically sysinst writes the name to d_typename rather
+	 * than d_diskname.  Who knows why, but pull the value back here.
+	 */
+	if (lab.d_typename[0] != 0 && strcmp(lab.d_typename, "unknown") != 0)
+		strlcpy(bsddiskname, lab.d_typename, sizeof bsddiskname);
 
 	fd = opendisk(dkname, O_RDONLY, buf, sizeof buf, 0);
 	pp = &lab.d_partitions[0];

@@ -1,4 +1,4 @@
-/*	$NetBSD: disks.c,v 1.72 2003/09/27 10:47:17 dsl Exp $ */
+/*	$NetBSD: disks.c,v 1.73 2003/10/19 20:17:31 dsl Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -263,7 +263,8 @@ write_disklabel (void)
 #ifdef DISKLABEL_CMD
 	/* disklabel the disk */
 	return run_prog(RUN_DISPLAY, MSG_cmdfail,
-	    "%s -f /tmp/disktab %s %s", DISKLABEL_CMD, diskdev, bsddiskname);
+	    "%s -f /tmp/disktab %s '%s'",
+	    DISKLABEL_CMD, diskdev, bsddiskname);
 #else
 	return 0;
 #endif
@@ -344,8 +345,8 @@ do_flfs_newfs(const char *partname, int partno, const char *mountpoint)
 				bsdlabel[partno].pi_isize);
 		else
 			options[0] = 0;
-		error = run_prog(RUN_DISPLAY, MSG_cmdfail, "%s%s /dev/r%s",
-		    newfs, options, partname);
+		error = run_prog(RUN_DISPLAY | RUN_PROGRESS, MSG_cmdfail,
+		    "%s%s /dev/r%s", newfs, options, partname);
 	} else
 		error = 0;
 
