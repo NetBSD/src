@@ -1,4 +1,4 @@
-/*	$NetBSD: fetch.c,v 1.122 2000/08/06 08:51:22 lukem Exp $	*/
+/*	$NetBSD: fetch.c,v 1.123 2000/08/27 06:39:25 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1997-2000 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: fetch.c,v 1.122 2000/08/06 08:51:22 lukem Exp $");
+__RCSID("$NetBSD: fetch.c,v 1.123 2000/08/27 06:39:25 lukem Exp $");
 #endif /* not lint */
 
 /*
@@ -1090,11 +1090,11 @@ fetch_url(const char *url, const char *proxyenv, char *proxyauth, char *wwwauth)
 			chunksize = strtol(xferbuf, &ep, 16);
 
 				/*
-				 * XXX:	Work around bug in Apache 1.3.9, which
-				 *	incorrectly puts a trailing space after
-				 *	the chunksize.
+				 * XXX:	Work around bug in Apache 1.3.9 and
+				 *	1.3.11, which incorrectly put trailing
+				 *	space after the chunksize.
 				 */
-			if (*ep == ' ')
+			while (*ep == ' ')
 				ep++;
 
 			if (strcmp(ep, "\r\n") != 0) {
