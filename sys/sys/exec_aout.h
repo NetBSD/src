@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_aout.h,v 1.21 1998/11/13 12:04:49 christos Exp $	*/
+/*	$NetBSD: exec_aout.h,v 1.22 1998/11/15 12:43:04 drochner Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Christopher G. Demetriou
@@ -113,16 +113,16 @@ struct exec {
  */
 #define	N_GETMAGIC(ex) \
     ((((ex).a_midmag)&0xffff0000) ? \
-    (ntohl((u_int32_t)(((ex).a_midmag))&0xffff)) : ((ex).a_midmag))
+    (ntohl((u_int32_t)((ex).a_midmag))&0xffff) : ((ex).a_midmag))
 #define	N_GETMAGIC2(ex) \
     ((((ex).a_midmag)&0xffff0000) ? \
-    (ntohl((u_int32_t)(((ex).a_midmag))&0xffff)) : (((ex).a_midmag) | 0x10000))
+    (ntohl((u_int32_t)((ex).a_midmag))&0xffff) : (((ex).a_midmag) | 0x10000))
 #define	N_GETMID(ex) \
     ((((ex).a_midmag)&0xffff0000) ? \
-    ((ntohl((u_int32_t)(((ex).a_midmag))>>16)&0x03ff)) : MID_ZERO)
+    ((ntohl((u_int32_t)((ex).a_midmag))>>16)&0x03ff) : MID_ZERO)
 #define	N_GETFLAG(ex) \
     ((((ex).a_midmag)&0xffff0000) ? \
-    ((ntohl((u_int32_t)(((ex).a_midmag))>>26)&0x3f)) : 0)
+    ((ntohl((u_int32_t)((ex).a_midmag))>>26)&0x3f) : 0)
 #define	N_SETMAGIC(ex,mag,mid,flag) \
     ((ex).a_midmag = htonl((u_int32_t) \
     ((((flag)&0x3f)<<26)|(((mid)&0x03ff)<<16)|(((mag)&0xffff)))))
