@@ -1,4 +1,4 @@
-/*	$NetBSD: qe.c,v 1.1 1999/01/17 20:44:18 pk Exp $	*/
+/*	$NetBSD: qe.c,v 1.2 1999/01/18 13:29:01 pk Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -107,6 +107,11 @@
 #include <netinet/in_systm.h>
 #include <netinet/in_var.h>
 #include <netinet/ip.h>
+#endif
+
+#ifdef NS
+#include <netns/ns.h>
+#include <netns/ns_if.h>
 #endif
 
 #if NBPFILTER > 0
@@ -869,17 +874,16 @@ qeioctl(ifp, cmd, data)
 			break;
 #endif /* INET */
 #ifdef NS
-		/* XXX - This code is probably wrong. */
 		case AF_NS:
 		    {
 			struct ns_addr *ina = &IA_SNS(ifa)->sns_addr;
 
 			if (ns_nullhost(*ina))
-				ina->x_host = *(union ns_host *)
-				    (sc->sc_ethercom.ac_enaddr);
+				ina->x_host =
+					*(union ns_host *)LLADDR(ifp->if_sadl);
 			else
-				bcopy(ina->x_host.c_host,
-				    sc->sc_enaddr, sizeof(sc->sc_enaddr));
+				bcopy(ina->x_host.c_host, LLADDR(ifp->if_sadl),
+				      sizeof(sc->sc_enaddr));
 			/* Set new address. */
 			qeinit(sc);
 			break;
