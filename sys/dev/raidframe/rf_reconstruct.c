@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_reconstruct.c,v 1.48 2002/10/18 02:46:37 oster Exp $	*/
+/*	$NetBSD: rf_reconstruct.c,v 1.49 2002/11/15 03:57:48 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -33,7 +33,7 @@
  ************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_reconstruct.c,v 1.48 2002/10/18 02:46:37 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_reconstruct.c,v 1.49 2002/11/15 03:57:48 oster Exp $");
 
 #include <sys/time.h>
 #include <sys/buf.h>
@@ -374,6 +374,10 @@ rf_ReconstructFailedDiskBasic(raidPtr, row, col)
 			raidPtr->raid_cinfo[srow][scol].ci_vp,
 			&c_label);
 		
+
+		rf_update_component_labels(raidPtr, 
+					   RF_NORMAL_COMPONENT_UPDATE);
+
 	}
 	return (rc);
 }
@@ -623,6 +627,9 @@ rf_ReconstructInPlace(raidPtr, row, col)
 		raidwrite_component_label(raidPtr->raid_cinfo[row][col].ci_dev,
 					  raidPtr->raid_cinfo[row][col].ci_vp,
 					  &c_label);
+
+		rf_update_component_labels(raidPtr, 
+					   RF_NORMAL_COMPONENT_UPDATE);
 
 	}
 	RF_SIGNAL_COND(raidPtr->waitForReconCond);
