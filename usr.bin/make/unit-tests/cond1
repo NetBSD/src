@@ -1,0 +1,37 @@
+# $Id: cond1,v 1.1 2004/04/08 00:59:01 sjg Exp $
+
+PRIMES=2 3 5 7 11
+NUMBERS=1 2 3 4 5
+
+n=2
+.if ${PRIMES:M$n} == ""
+X=not
+.else
+X=
+.endif
+
+# We expect an extra else warning
+.if ${MACHINE_ARCH} == no-such
+A=one
+.else
+A=other
+.else
+A=this should be an error
+.endif
+
+# We expect an extra else warning
+.if $X != ""
+.if ${MACHINE_ARCH} == no-such
+B=one
+.else
+B=other
+.else
+B=this should be an error
+.endif
+.else
+B=unknown
+.endif
+
+all:
+	@echo "$n is $X prime"
+	@echo "A='$A' B='$B'"
