@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.1 1995/02/13 23:07:00 cgd Exp $	*/
+/*	$NetBSD: locore.s,v 1.2 1995/03/09 12:05:34 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -995,7 +995,7 @@ LEAF(switch_exit, 1)
  * Copy a null-terminated string within the kernel's address space.
  * If lenp is not NULL, store the number of chars copied in *lenp
  *
- * int copystr(char *from, char *to, u_int len, u_int *lenp);
+ * int copystr(char *from, char *to, size_t len, size_t *lenp);
  */
 LEAF(copystr, 4)
 	SETGP(pv)

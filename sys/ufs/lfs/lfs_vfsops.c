@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vfsops.c,v 1.7 1995/03/08 01:51:52 cgd Exp $	*/
+/*	$NetBSD: lfs_vfsops.c,v 1.8 1995/03/09 12:06:10 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1994
@@ -100,7 +100,7 @@ lfs_mount(mp, path, data, ndp, p)
 	struct ufs_args args;
 	struct ufsmount *ump;
 	register struct lfs *fs;				/* LFS */
-	u_long size;
+	size_t size;
 	int error;
 	mode_t accessmode;
 
