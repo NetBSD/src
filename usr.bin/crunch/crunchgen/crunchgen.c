@@ -1,4 +1,4 @@
-/*	$NetBSD: crunchgen.c,v 1.23 2001/10/04 04:17:04 jmc Exp $	*/
+/*	$NetBSD: crunchgen.c,v 1.24 2001/10/04 07:34:47 jmc Exp $	*/
 /*
  * Copyright (c) 1994 University of Maryland
  * All Rights Reserved.
@@ -33,7 +33,7 @@
  */
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: crunchgen.c,v 1.23 2001/10/04 04:17:04 jmc Exp $");
+__RCSID("$NetBSD: crunchgen.c,v 1.24 2001/10/04 07:34:47 jmc Exp $");
 #endif
 
 #include <stdlib.h>
@@ -716,7 +716,7 @@ void gen_output_makefile(void)
     for(p = progs; p != NULL; p = p->next)
 	prog_makefile_rules(outmk, p); 
 
-    fprintf(outmk, "\n.include <bsd.sys.mk>\n");
+    fprintf(outmk, "\n.include <bsd.prog.mk>\n");
     fprintf(outmk, "\n# ========\n");
     fclose(outmk);
 }
@@ -805,14 +805,14 @@ void top_makefile_rules(FILE *outmk)
     fprintf(outmk, "DBG=%s\n", dbg);
     fprintf(outmk, "STRIP?=strip\n");
     fprintf(outmk, "CRUNCHIDE?=crunchide\n");
-    fprintf(outmk, "LIBS=");
-    fprintf(outmk, "-L%s ", libdir);
-    output_strlst(outmk, libs);
 
     fprintf(outmk, "CRUNCHED_OBJS=");
     for(p = progs; p != NULL; p = p->next)
 	fprintf(outmk, " %s.cro", p->name);
     fprintf(outmk, "\n");
+    fprintf(outmk, "DPADD+= ${CRUNCHED_OBJS}\n");
+    fprintf(outmk, "LDADD+= ${CRUNCHED_OBJS} ");
+    output_strlst(outmk, libs);
     fprintf(outmk, "CRUNCHEDOBJSDIRS=${CRUNCHED_OBJS:R}\n\n");
     
     fprintf(outmk, "SUBMAKE_TARGETS=");
@@ -820,12 +820,11 @@ void top_makefile_rules(FILE *outmk)
 	fprintf(outmk, " %s_make", p->ident);
     fprintf(outmk, "\n\n");
 
-    fprintf(outmk, "%s: %s.o $(CRUNCHED_OBJS)\n", 
-	    execfname, execfname);
-    fprintf(outmk, "\t$(CC) -static -o %s %s.o $(CRUNCHED_OBJS) $(LIBS)\n",
-	    execfname, execfname);
-    fprintf(outmk, "\t$(STRIP) %s\n", execfname);
-    fprintf(outmk, "all: objs exe\nobjs: $(SUBMAKE_TARGETS)\n");
+    fprintf(outmk, "PROG=%s\n", execfname);
+    fprintf(outmk, "MKMAN=no\n\n");
+    
+    fprintf(outmk, "all: ${PROG}\n\t${STRIP} ${PROG}\n");
+    fprintf(outmk, "objs: $(SUBMAKE_TARGETS)\n");
     fprintf(outmk, "exe: %s\n", execfname);
     fprintf(outmk, "clean:\n\trm -rf %s *.cro *.o *_stub.c ${CRUNCHEDOBJSDIRS}\n",
 	    execfname);
@@ -849,7 +848,7 @@ void prog_makefile_rules(FILE *outmk, prog_t *p)
 	    p->ident, p->ident, p->ident);
 	fprintf(outmk, "\tprintf \".PATH: ${%s_SRCDIR}\\n.CURDIR:= ${%s_SRCDIR}\\n"
 	    ".include \\\"\\$${.CURDIR}/Makefile\\\"\\n\" \\\n", p->ident, p->ident);
-	fprintf(outmk, "\t| make COPTS= DBG=${DBG} -f- depend ${%s_OBJS}\n\n",
+	fprintf(outmk, "\t| make DBG=\"${DBG}\" -f- depend ${%s_OBJS}\n\n",
 	    p->ident);
     }
     else
