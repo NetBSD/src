@@ -1,4 +1,4 @@
-# 	$NetBSD: INSTALL,v 1.4 2000/09/25 13:54:52 abs Exp $
+# 	$NetBSD: INSTALL,v 1.5 2000/10/02 18:43:36 abs Exp $
 #
 #	INSTALL kernel for RISC-NEWS
 
@@ -76,5 +76,5 @@ st*	at scsibus? target ? lun ?	# SCSI tapes
 cd*	at scsibus? target ? lun ?	# SCSI CD-ROMs
 
 pseudo-device	loop			# loopback interface; required
-pseudo-device	pty			# pseudo-terminals
+pseudo-device	pty		2	# pseudo-terminals (Sysinst needs two)
 pseudo-device	md		1	# memory disk device

@@ -1,4 +1,4 @@
-# $NetBSD: INSTALL,v 1.7 2000/09/25 13:54:52 abs Exp $
+# $NetBSD: INSTALL,v 1.8 2000/10/02 18:43:37 abs Exp $
 #
 # INSTALL - Installation kernel for the Sun3
 #
@@ -187,6 +187,6 @@ pseudo-device	tun		2	# network tunneling over tty
 # rnd is EXPERIMENTAL
 #pseudo-device	rnd			# /dev/random and in-kernel generator
 
-pseudo-device	pty			# pseudo-terminals
+pseudo-device	pty		2	# pseudo-terminals (Sysinst needs two)
 #pseudo-device	vnd		4	# paging to files
 #pseudo-device	ccd		4	# concatenated disks

@@ -1,4 +1,4 @@
-# 	$NetBSD: INSTALL,v 1.1 2000/10/02 07:54:34 wdk Exp $
+# 	$NetBSD: INSTALL,v 1.2 2000/10/02 18:43:36 abs Exp $
 #
 include		"arch/mipsco/conf/std.mipsco"
 
@@ -76,7 +76,7 @@ cd*	at scsibus? target ? lun ?	# SCSI CD-ROMs
 ch*	at scsibus? target ? lun ?	# SCSI changer devices
 
 pseudo-device	loop			# loopback interface; required
-pseudo-device	pty			# pseudo-terminals
+pseudo-device	pty		2	# pseudo-terminals (Sysinst needs two)
 #pseudo-device	sl		2	# SLIP interfaces
 #pseudo-device	ppp		2	# PPP interfaces
 #pseudo-device	tun		4	# Network "tunnel" device

@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL_SMALL,v 1.10 2000/09/25 13:54:53 abs Exp $
+#	$NetBSD: INSTALL_SMALL,v 1.11 2000/10/02 18:43:37 abs Exp $
 
 #
 #	INSTALL_SMALL -- `small' installation kernel.
@@ -6,7 +6,7 @@
 
 include "arch/x68k/conf/std.x68k"
 
-#ident 		"INSTALL_SMALL-$Revision: 1.10 $"
+#ident 		"INSTALL_SMALL-$Revision: 1.11 $"
 
 makeoptions     COPTS="-Os"             # Optimise for space. Implies -O2
 
@@ -316,7 +316,7 @@ pseudo-device	loop
 
 ## Pseudo ttys, required for network logins and programs like screen.
 
-#pseudo-device	pty		8	# pseudo-ttys (for network, etc.)
+pseudo-device	pty		2	# pseudo-terminals (Sysinst needs two)
 
 ## Random device, used to implement /dev/random (a source of random noise),
 ## and generate randomness for some kernel formulae.

@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL_SMALL,v 1.57 2000/09/27 16:09:18 fvdl Exp $
+#	$NetBSD: INSTALL_SMALL,v 1.58 2000/10/02 18:43:35 abs Exp $
 #
 #	INSTALL_SMALL - Small Installation kernel.
 #
@@ -485,7 +485,7 @@ pseudo-device	loop			# network loopback
 #pseudo-device	tun		2	# network tunneling over tty
 
 # miscellaneous pseudo-devices
-pseudo-device	pty		2	# pseudo-terminals
+pseudo-device	pty		2	# pseudo-terminals (Sysinst needs two)
 #pseudo-device	tb		1	# tablet line discipline
 #pseudo-device	rnd			# /dev/random and in-kernel generator
 #options 	RND_COM			# use "com" randomness as well (BROKEN)

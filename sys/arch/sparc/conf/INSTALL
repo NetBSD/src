@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.21 2000/09/25 13:54:52 abs Exp $
+#	$NetBSD: INSTALL,v 1.22 2000/10/02 18:43:37 abs Exp $
 #
 # from: NetBSD: GENERIC,v 1.84 1999/06/06 13:00:03 mrg Exp
 #
@@ -545,7 +545,7 @@ cgfourteen0	at obio0			# sun4m
 
 ## Pseudo ttys, required for network logins and programs like screen.
 
-pseudo-device	pty			# pseudo-ttys (for network, etc.)
+pseudo-device	pty		2	# pseudo-terminals (Sysinst needs two)
 
 ## Random device, used to implement /dev/random (a source of random noise),
 ## and generate randomness for some kernel formulae.

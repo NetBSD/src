@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.8 2000/09/25 13:54:51 abs Exp $
+#	$NetBSD: INSTALL,v 1.9 2000/10/02 18:43:35 abs Exp $
 #
 # First try for BEBOX config file
 #
@@ -69,7 +69,7 @@ config		netbsd	root on ? type ffs
 pseudo-device	md		1
 pseudo-device	loop
 #pseudo-device	bpfilter	8	# packet filter
-pseudo-device	pty
+pseudo-device	pty		2	# pseudo-terminals (Sysinst needs two)
 
 #
 # device
