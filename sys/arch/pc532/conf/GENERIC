@@ -1,11 +1,11 @@
-#	$NetBSD: GENERIC,v 1.8 2000/01/23 23:46:16 hubertf Exp $
+#	$NetBSD: GENERIC,v 1.9 2000/04/19 06:50:34 itojun Exp $
 #
 # GENERIC: generic kernel for most machines
 #
 
 include	"arch/pc532/conf/std.pc532"
 
-#ident 		"GENERIC-$Revision: 1.8 $"
+#ident 		"GENERIC-$Revision: 1.9 $"
 
 maxusers	8			# estimated number of users
 
@@ -86,5 +86,6 @@ pseudo-device	ppp 1			# Point-to-Point Protocol
 pseudo-device	tun 1			# network tunneling
 pseudo-device	gif		4	# IPv[46] over IPv[46] tunnel (RFC1933)
 #pseudo-device	faith		1	# IPv[46] tcp relay translation i/f
+#pseudo-device	stf		1	# 6to4 IPv6 over IPv4 encapsulation
 pseudo-device	ccd 4			# Concatenated Disk Driver
 pseudo-device   rnd                     # kernel random number generator
