@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.30.2.9 2002/06/24 22:03:54 nathanw Exp $	*/
+/*	$NetBSD: pmap.c,v 1.30.2.10 2002/07/02 19:04:40 nathanw Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -143,7 +143,7 @@
 #include <machine/param.h>
 #include <arm/arm32/katelib.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.30.2.9 2002/06/24 22:03:54 nathanw Exp $");        
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.30.2.10 2002/07/02 19:04:40 nathanw Exp $");        
 #ifdef PMAP_DEBUG
 #define	PDEBUG(_lev_,_stat_) \
 	if (pmap_debug_level >= (_lev_)) \
@@ -401,7 +401,7 @@ __inline static boolean_t
 pmap_is_curpmap(struct pmap *pmap)
 {
 
-	if ((curlwp && curproc->p_vmspace->vm_map.pmap == pmap) ||
+	if ((curproc && curproc->p_vmspace->vm_map.pmap == pmap) ||
 	    pmap == pmap_kernel())
 		return (TRUE);
 
@@ -1726,7 +1726,7 @@ pmap_clean_page(struct pv_entry *pv, boolean_t is_src)
 	/* Since we flush the cache each time we change curlwp, we
 	 * only need to flush the page if it is in the current pmap.
 	 */
-	if (curlwp)
+	if (curproc)
 		pmap = curproc->p_vmspace->vm_map.pmap;
 	else
 		pmap = pmap_kernel();
@@ -3021,7 +3021,6 @@ pmap_dump_pvlist(phys, m)
 static pt_entry_t *
 pmap_map_ptes(struct pmap *pmap)
 {
-	struct lwp *l;
 	struct proc *p;
 
     	/* the kernel's pmap is always accessible */
@@ -3034,9 +3033,8 @@ pmap_map_ptes(struct pmap *pmap)
 		return (pt_entry_t *)PTE_BASE;
 	}
 
-	l = curlwp;
-	KDASSERT(l != NULL);
-	p = l->l_proc;
+	p = curproc;
+	KDASSERT(p != NULL);
 
 	/* need to lock both curpmap and pmap: use ordered locking */
 	if ((vaddr_t) pmap < (vaddr_t) p->p_vmspace->vm_map.pmap) {
@@ -3068,7 +3066,7 @@ pmap_unmap_ptes(struct pmap *pmap)
 	if (pmap_is_curpmap(pmap)) {
 		simple_unlock(&pmap->pm_obj.vmobjlock);
 	} else {
-		KDASSERT(curlwp != NULL);
+		KDASSERT(curproc != NULL);
 		simple_unlock(&pmap->pm_obj.vmobjlock);
 		simple_unlock(
 		    &curproc->p_vmspace->vm_map.pmap->pm_obj.vmobjlock);
@@ -3391,7 +3389,7 @@ void
 pmap_procwr(struct proc *p, vaddr_t va, int len)
 {
 	/* We only need to do anything if it is the current process. */
-	if (curlwp != NULL && p == curproc)
+	if (p == curproc)
 		cpu_icache_sync_range(va, len);
 }
 /*
