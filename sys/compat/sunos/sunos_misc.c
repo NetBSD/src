@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos_misc.c,v 1.39 1994/12/15 09:41:36 pk Exp $	*/
+/*	$NetBSD: sunos_misc.c,v 1.40 1994/12/16 19:01:43 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -522,7 +522,10 @@ sunos_fchroot(p, uap, retval)
  * XXX: This needs cleaning up.
  */
 int
-sunos_auditsys(...)
+sunos_auditsys(p, uap, retval)
+	struct proc *p;
+	void *uap;
+	register_t *retval;
 {
 	return 0;
 }
