@@ -1,4 +1,4 @@
-/*	$NetBSD: rcons.c,v 1.3 1995/09/11 07:45:48 jonathan Exp $	*/
+/*	$NetBSD: rcons.c,v 1.4 1995/09/11 21:29:26 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1995
@@ -149,6 +149,8 @@ rconsattach (n)
 	printf("rconsattach: %d raster consoles\n", n);
 #endif
 
+#ifdef notyet /* ugly console input on pmaxes */
+
 	/* Try to set up the input device... */
 	if (cn_in_dev != NODEV && cn_in_devvp == NULLVP) {
 		/* try to get a reference on its vnode, but fail silently */
@@ -163,7 +165,7 @@ rconsattach (n)
 	 * with any special-case console input hacks, and point the
 	 * console device at rcons.
 	 */
-/* FIXME */		cn_tab->cn_dev = makedev (/*RCONSDEV*/85, 0);
+#endif
 	
 }
 

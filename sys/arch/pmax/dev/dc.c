@@ -1,4 +1,4 @@
-/*	$NetBSD: dc.c,v 1.11 1995/08/10 04:21:42 jonathan Exp $	*/
+/*	$NetBSD: dc.c,v 1.12 1995/09/11 21:29:23 jonathan Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -84,14 +84,12 @@
 #include <pmax/pmax/pmaxtype.h>
 #include <pmax/pmax/cons.h>
 
-#include <pmax/dev/device.h>
 #include <pmax/dev/pdma.h>
-#include <pmax/dev/fbreg.h>
+#include <pmax/dev/lk201.h>
 
 #include "dcvar.h"
 
 extern int pmax_boardtype;
-extern struct consdev cn_tab;
 
 /*
  * Autoconfiguration data for config.new.
@@ -103,7 +101,7 @@ int	dcmatch  __P((struct device * parent, void *cfdata, void *aux));
 void	dcattach __P((struct device *parent, struct device *self, void *aux));
 
 int	dc_doprobe __P((void *addr, int unit, int flags, int pri));
-void	dcintr __P((int unit));
+int	dcintr __P((void * xxxunit));
 
 extern struct cfdriver dccd;
 struct  cfdriver dccd = {
@@ -176,7 +174,6 @@ struct speedtab dcspeedtab[] = {
 /*
  * Match driver based on name
  */
-
 int
 dcmatch(parent, match, aux)
 	struct device *parent;
@@ -216,8 +213,20 @@ dcattach(parent, self, aux)
 			  ca->ca_slot);
 
 	/* tie pseudo-slot to device */
-	BUS_INTR_ESTABLISH(ca, dcintr, self->dv_unit);
+	BUS_INTR_ESTABLISH(ca, dcintr, (void *)self->dv_unit);
 	printf("\n");
+}
+
+/*
+ * Is there a framebuffer console device using this serial driver?
+ * XXX used for ugly special-cased console input that should be redone
+ * more cleanly.
+ */
+static inline int
+raster_console()
+{
+	return (cn_tab->cn_pri == CN_INTERNAL ||
+		cn_tab->cn_pri == CN_NORMAL);
 }
 
 
@@ -240,8 +249,8 @@ dc_doprobe(addr, unit, flags, priority)
 	 * For a remote console, wait a while for previous output to
 	 * complete.
 	 */
-	if (major(cn_tab.cn_dev) == DCDEV && unit == 0 &&
-		cn_tab.cn_screen == 0)
+	if (major(cn_tab->cn_dev) == DCDEV && unit == 0 &&
+		cn_tab->cn_pri == CN_REMOTE)
 		DELAY(10000);
 
 	/* reset chip */
@@ -272,7 +281,8 @@ dc_doprobe(addr, unit, flags, priority)
 	 * Special handling for consoles.
 	 */
 	if (unit == 0) {
-		if (cn_tab.cn_screen) {
+		if (cn_tab->cn_pri == CN_INTERNAL ||
+		    cn_tab->cn_pri == CN_NORMAL) {
 			s = spltty();
 			dcaddr->dc_lpr = LPR_RXENAB | LPR_8_BIT_CHAR |
 				LPR_B4800 | DCKBD_PORT;
@@ -284,13 +294,13 @@ dc_doprobe(addr, unit, flags, priority)
 			KBDReset(makedev(DCDEV, DCKBD_PORT), dcPutc);
 			MouseInit(makedev(DCDEV, DCMOUSE_PORT), dcPutc, dcGetc);
 			splx(s);
-		} else if (major(cn_tab.cn_dev) == DCDEV) {
+		} else if (major(cn_tab->cn_dev) == DCDEV) {
 			s = spltty();
 			dcaddr->dc_lpr = LPR_RXENAB | LPR_8_BIT_CHAR |
-				LPR_B9600 | minor(cn_tab.cn_dev);
+				LPR_B9600 | minor(cn_tab->cn_dev);
 			MachEmptyWriteBuffer();
 			DELAY(1000);
-			cn_tab.cn_disabled = 0;
+			/*cn_tab.cn_disabled = 0;*/ /* FIXME */
 			splx(s);
 		}
 	}
@@ -490,7 +500,7 @@ dcparam(tp, t)
 	/*
 	 * Handle console cases specially.
 	 */
-	if (cn_tab.cn_screen) {
+	if (raster_console()) {
 		if (unit == DCKBD_PORT) {
 			dcaddr->dc_lpr = LPR_RXENAB | LPR_8_BIT_CHAR |
 				LPR_B4800 | DCKBD_PORT;
@@ -502,7 +512,7 @@ dcparam(tp, t)
 			MachEmptyWriteBuffer();
 			return (0);
 		}
-	} else if (tp->t_dev == cn_tab.cn_dev) {
+	} else if (tp->t_dev == cn_tab->cn_dev) {
 		dcaddr->dc_lpr = LPR_RXENAB | LPR_8_BIT_CHAR |
 			LPR_B9600 | unit;
 		MachEmptyWriteBuffer();
@@ -532,10 +542,11 @@ dcparam(tp, t)
 /*
  * Check for interrupts from all devices.
  */
-void
-dcintr(unit)
-	register int unit;
+int
+dcintr(xxxunit)
+	void *xxxunit;
 {
+	register int unit = (int)xxxunit;
 	register dcregs *dcaddr;
 	register unsigned csr;
 
@@ -547,6 +558,8 @@ dcintr(unit)
 		if (csr & CSR_TRDY)
 			dcxint(dc_tty[unit + ((csr >> 8) & 03)]);
 	}
+	/* XXX check for spurious interrupts */
+	return 0;
 }
 
 dcrint(unit)
@@ -567,7 +580,7 @@ dcrint(unit)
 			overrun = 1;
 		}
 		/* the keyboard requires special translation */
-		if (tp == dc_tty[DCKBD_PORT] && cn_tab.cn_screen) {
+		if (tp == dc_tty[DCKBD_PORT] && raster_console()) {
 #ifdef KADB
 			if (cc == LK_DO) {
 				spl0();
@@ -585,38 +598,7 @@ dcrint(unit)
 			if ((cc = kbdMapChar(cc)) < 0)
 				return;
 		} else if (tp == dc_tty[DCMOUSE_PORT] && dcMouseButtons) {
-			register MouseReport *mrp;
-			static MouseReport currentRep;
-
-			mrp = &currentRep;
-			mrp->byteCount++;
-			if (cc & MOUSE_START_FRAME) {
-				/*
-				 * The first mouse report byte (button state).
-				 */
-				mrp->state = cc;
-				if (mrp->byteCount > 1)
-					mrp->byteCount = 1;
-			} else if (mrp->byteCount == 2) {
-				/*
-				 * The second mouse report byte (delta x).
-				 */
-				mrp->dx = cc;
-			} else if (mrp->byteCount == 3) {
-				/*
-				 * The final mouse report byte (delta y).
-				 */
-				mrp->dy = cc;
-				mrp->byteCount = 0;
-				if (mrp->dx != 0 || mrp->dy != 0) {
-					/*
-					 * If the mouse moved,
-					 * post a motion event.
-					 */
-					(*dcMouseEvent)(mrp);
-				}
-				(*dcMouseButtons)(mrp);
-			}
+			mouseInput(cc);
 			return;
 		}
 		if (!(tp->t_state & TS_ISOPEN)) {
@@ -694,7 +676,7 @@ dcstart(tp)
 	if (tp->t_outq.c_cc == 0)
 		goto out;
 	/* handle console specially */
-	if (tp == dc_tty[DCKBD_PORT] && cn_tab.cn_screen) {
+	if (tp == dc_tty[DCKBD_PORT] && raster_console()) {
 		while (tp->t_outq.c_cc > 0) {
 			cc = getc(&tp->t_outq) & 0x7f;
 			cnputc(cc);

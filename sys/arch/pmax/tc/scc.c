@@ -1,4 +1,4 @@
-/*	$NetBSD: scc.c,v 1.1 1995/08/22 04:28:41 jonathan Exp $	*/
+/*	$NetBSD: scc.c,v 1.2 1995/09/11 21:29:28 jonathan Exp $	*/
 
 /* 
  * Copyright (c) 1991,1990,1989,1994,1995 Carnegie Mellon University
@@ -102,10 +102,9 @@
 
 #include <pmax/include/pmioctl.h>
 
-#include <pmax/dev/device.h>
 #include <pmax/dev/pdma.h>
 #include <dev/ic/z8530reg.h>
-#include <pmax/dev/fbreg.h>
+#include <pmax/dev/lk201.h>
 
 #include <machine/autoconf.h>
 
@@ -128,8 +127,6 @@
 #include <alpha/tc/tc.h>
 #endif
 
-
-extern struct consdev cn_tab;
 extern void ttrstrt	__P((void *));
 
 #ifdef alpha
@@ -142,13 +139,32 @@ extern void ttrstrt	__P((void *));
  * macros that also work on Alphas with serial consoles.
  * (Should be replaced with rcons?)
  */
-#ifdef pmax
-#define CONSOLE_ON_FRAMEBUFFER() (cn_tab.cn_screen)
-#endif
+
+
+/*
+ * True iff the console unit is diverted throught this SCC device.
+ * (used to just test if cn_tab->cn_getc was sccGetc, but that
+ * breaks with the new-style glass-tty framebuffer console input.
+ */
+
+#define CONSOLE_ON_UNIT(unit) \
+  (major(cn_tab->cn_dev) == SCCDEV && SCCUNIT(cn_tab->cn_dev) == (unit))
 
 #ifdef alpha
-#define CONSOLE_ON_FRAMEBUFFER() 1	/* Treat test for cn_screen as true */
+#define RASTER_CONSOLE() 1	/* Treat test for cn_screen as true */
 #endif
+
+/*
+ * Is there a framebuffer console device using this serial driver?
+ * XXX used for ugly special-cased console input that should be redone
+ * more cleanly.
+ */
+
+static inline int
+raster_console()
+{
+	return (cn_tab->cn_pri == CN_NORMAL || cn_tab->cn_pri == CN_INTERNAL);
+}
 
 
 #define	NSCCLINE 	(NSCC*2)
@@ -231,7 +247,7 @@ int		sccmctl __P((dev_t, int, int));
 static void	scc_modem_intr __P((dev_t));
 static void	sccreset __P((struct scc_softc *));
 
-void		sccintr __P((void *));
+int		sccintr __P((void *));
 #ifdef alpha
 void	scc_alphaintr __P((int));
 #endif
@@ -331,21 +347,20 @@ sccattach(parent, self, aux)
 	unit = sc->sc_dv.dv_unit;
 	flags = sc->sc_dv.dv_cfdata->cf_flags;
 
-	sccaddr = MACH_PHYS_TO_UNCACHED(BUS_CVTADDR(ca));
+	sccaddr = (void*)MACH_PHYS_TO_UNCACHED(BUS_CVTADDR(ca));
 #ifdef alpha
 	sccaddr = TC_DENSE_TO_SPARSE(sccaddr);
 #endif	/*alpha*/
 
 	/* Register the interrupt handler. */
-	BUS_INTR_ESTABLISH(ca, sccintr, (void *)(long)sc->sc_dv.dv_unit);
+	BUS_INTR_ESTABLISH(ca, sccintr, (void *)sc);
 
 	/*
 	 * For a remote console, wait a while for previous output to
 	 * complete.
 	 */
 #ifdef TK_NOTYET
-	if (major(cn_tab.cn_dev) == SCCDEV && cn_tab.cn_screen == 0 &&
-		SCCUNIT(cn_tab.cn_dev) == unit)
+	if (CONSOLE_ON_UNIT(unit) && (cn_tab->cn_pri == CN_REMOTE))
 		DELAY(10000);
 #else
 	if ((cputype == ST_DEC_3000_500 && sc->sc_dv.dv_unit == 1) ||
@@ -374,8 +389,10 @@ sccattach(parent, self, aux)
 	 * Special handling for consoles.
 	 */
 #ifdef TK_NOTYET
-	if (cn_tab.cn_screen) {
-		if (cn_tab.cn_kbdgetc == sccGetc) {
+	if ((cn_tab->cn_getc == LKgetc)) {
+		/* XXX test below may be too inclusive ? */
+		if (1 /*CONSOLE_ON_UNIT(unit)*/ ) {
+
 			if (unit == 1) {
 				s = spltty();
 				ctty.t_dev = makedev(SCCDEV, SCCKBD_PORT);
@@ -411,12 +428,13 @@ sccattach(parent, self, aux)
 				splx(s);
 			}
 		}
-	} else if (SCCUNIT(cn_tab.cn_dev) == unit)
+	} else
 #endif /* TK_NOTYET */
+	 if (SCCUNIT(cn_tab->cn_dev) == unit)
 	 {
 		s = spltty();
 #ifdef pmax
-		ctty.t_dev = cn_tab.cn_dev;
+		ctty.t_dev = cn_tab->cn_dev;
 #else
                 ctty.t_dev = makedev(SCCDEV,
                     sc->sc_dv.dv_unit == 0 ? SCCCOMM2_PORT : SCCCOMM3_PORT);
@@ -430,7 +448,7 @@ sccattach(parent, self, aux)
 		(void) sccparam(&ctty, &cterm);
 		DELAY(1000);
 #ifdef TK_NOTYET
-		cn_tab.cn_disabled = 0;
+		/*cn_tab.cn_disabled = 0;*/ /* FIXME */
 #endif
 		splx(s);
 	}
@@ -453,7 +471,7 @@ sccattach(parent, self, aux)
 		/* wire carrier for console. */
 		sc->scc_softCAR |= SCCLINE(cn_tab->cn_dev);
 	} else
-#endif
+#endif /* alpha */
 		printf("\n");
 }
 
@@ -740,7 +758,7 @@ sccparam(tp, t)
 	 * Handle console specially.
 	 */
 #ifdef TK_NOTYET
-	if (cn_tab.cn_screen) {
+	if (cn_tab->cn_getc == LKgetc) {
 		if (minor(tp->t_dev) == SCCKBD_PORT) {
 			cflag = CS8;
 			ospeed = ttspeedtab(4800, sccspeedtab);
@@ -748,7 +766,7 @@ sccparam(tp, t)
 			cflag = CS8 | PARENB | PARODD;
 			ospeed = ttspeedtab(4800, sccspeedtab);
 		}
-	} else if (tp->t_dev == cn_tab.cn_dev)
+	} else if (tp->t_dev == cn_tab->cn_dev)
 #endif /*TK_NOTYET*/
 	{
 		cflag = CS8;
@@ -879,19 +897,18 @@ sccparam(tp, t)
 /*
  * Check for interrupts from all devices.
  */
-void
-sccintr(xxxunit)
-	void * xxxunit;
+int
+sccintr(xxxsc)
+	void * xxxsc;
 {
-	register int unit = (long)xxxunit;
+	register struct scc_softc *sc = (struct scc_softc *)xxxsc;
+	register int unit = sc->sc_dv.dv_unit;
 	register scc_regmap_t *regs;
 	register struct tty *tp;
 	register struct pdma *dp;
-	register struct scc_softc *sc;
 	register int cc, chan, rr1, rr2, rr3;
 	int overrun = 0;
 
-	sc = scccd.cd_devs[unit];
 	regs = (scc_regmap_t *)sc->scc_pdma[0].p_addr;
 	unit <<= 1;
 	for (;;) {
@@ -901,7 +918,7 @@ sccintr(xxxunit)
 	    if (rr2 == 6) {	/* strange, distinguished value */
 		SCC_READ_REG(regs, SCC_CHANNEL_A, ZSRR_IPEND, rr3);
 		if (rr3 == 0)
-			return;
+			return 0 ;/* XXX FIXME why ? */
 	    }
 
 	    SCC_WRITE_REG(regs, SCC_CHANNEL_A, SCC_RR0, ZSWR0_CLR_INTR);
@@ -959,12 +976,12 @@ sccintr(xxxunit)
 		/*
 		 * Keyboard needs special treatment.
 		 */
-		if (tp == scc_tty[SCCKBD_PORT] && CONSOLE_ON_FRAMEBUFFER()) {
+		if (tp == scc_tty[SCCKBD_PORT] && raster_console()) {
 #ifdef KADB
 			if (cc == LK_DO) {
 				spl0();
 				kdbpanic();
-				return;
+				return -1;
 			}
 #endif
 #ifdef DEBUG
@@ -982,38 +999,8 @@ sccintr(xxxunit)
 		 * Now for mousey
 		 */
 		} else if (tp == scc_tty[SCCMOUSE_PORT] && sccMouseButtons) {
-			register MouseReport *mrp;
-			static MouseReport currentRep;
-
-			mrp = &currentRep;
-			mrp->byteCount++;
-			if (cc & MOUSE_START_FRAME) {
-				/*
-				 * The first mouse report byte (button state).
-				 */
-				mrp->state = cc;
-				if (mrp->byteCount > 1)
-					mrp->byteCount = 1;
-			} else if (mrp->byteCount == 2) {
-				/*
-				 * The second mouse report byte (delta x).
-				 */
-				mrp->dx = cc;
-			} else if (mrp->byteCount == 3) {
-				/*
-				 * The final mouse report byte (delta y).
-				 */
-				mrp->dy = cc;
-				mrp->byteCount = 0;
-				if (mrp->dx != 0 || mrp->dy != 0) {
-					/*
-					 * If the mouse moved,
-					 * post a motion event.
-					 */
-					(*sccMouseEvent)(mrp);
-				}
-				(*sccMouseButtons)(mrp);
-			}
+			/*XXX*/
+			mouseInput(cc);
 			continue;
 		}
 		if (!(tp->t_state & TS_ISOPEN)) {
@@ -1067,7 +1054,7 @@ sccstart(tp)
 	if (tp->t_outq.c_cc == 0)
 		goto out;
 	/* handle console specially */
-	if (tp == scc_tty[SCCKBD_PORT] && CONSOLE_ON_FRAMEBUFFER()) {
+	if (tp == scc_tty[SCCKBD_PORT] && raster_console()) {
 		while (tp->t_outq.c_cc > 0) {
 			cc = getc(&tp->t_outq) & 0x7f;
 			cnputc(cc);
@@ -1116,7 +1103,7 @@ sccstart(tp)
 #ifdef DIAGNOSTIC
 		if (cc == 0)
 			panic("sccstart: No chars");
-#endif
+#endif /* DIAGNOSTIC */
 		SCC_WRITE_DATA(regs, chan, *dp->p_mem++);
 	}
 	wbflush();
@@ -1253,7 +1240,7 @@ scc_modem_intr(dev)
 	} else if (tp->t_state & TS_CARR_ON)
 		(void)(*linesw[tp->t_line].l_modem)(tp, 0);
 #endif /*notyet*/
-#endif
+#endif /* !alpha */
 	splx(s);
 }
 
@@ -1276,7 +1263,8 @@ sccGetc(dev)
 	if (!regs)
 		return (0);
 #ifdef pmax
-	s = spltty();	/* XXX  why different spls? */
+	/*s = spltty(); */	/* XXX  why different spls? */
+	s = splhigh();
 #else
 	s = splhigh();
 #endif
@@ -1389,5 +1377,5 @@ rr(msg, regs)
 	printf("B: 0: %x  1: %x  2(state): %x        10: %x  15: %x\n",
 	    r0, r1, r2, r10, r15);
 }
-#endif
+#endif /* SCC_DEBUG */
 #endif /* NSCC */
