@@ -32,8 +32,7 @@ divert(-1)
 # OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 # SUCH DAMAGE.
 #
-VERSIONID(`@(#)version.m4	8.8.5.3 (Berkeley) 1/21/97')
-#
+
 divert(0)
-# Configuration version number
-DZ8.8.5`'ifdef(`confCF_VERSION', `/confCF_VERSION')
+VERSIONID(`@(#)linux.m4	8.2 (Berkeley) 8/21/93')
+define(`LOCAL_MAILER_PATH', /bin/mail.local)dnl
