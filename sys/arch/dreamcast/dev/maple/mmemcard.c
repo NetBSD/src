@@ -1,4 +1,4 @@
-/*	$NetBSD: mmemcard.c,v 1.1 2002/11/15 14:10:12 itohy Exp $	*/
+/*	$NetBSD: mmemcard.c,v 1.2 2002/12/06 16:03:52 itohy Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -134,7 +134,7 @@ struct mmem_softc {
 		struct disk	pt_dk;		/* disk(9) */
 		struct mmem_media_info pt_info;	/* geometry per part */
 
-		char		pt_name[16 /* see device.h */ + 4 /* ".256" */];
+		char		pt_name[16 /* see device.h */ + 4 /* ".255" */];
 	} *sc_pt;
 
 	/* write request buffer (only one is used at a time) */
@@ -703,8 +703,11 @@ mmemstrategy(bp)
 	diskunit = DISKUNIT(bp->b_dev);
 	unit = MMEM_UNIT(diskunit);
 	part = MMEM_PART(diskunit);
-	sc = mmem_cd.cd_devs[unit];
-	pt = &sc->sc_pt[part];
+	if ((sc = device_lookup(&mmem_cd, unit)) == NULL
+	    || sc->sc_stat == MMEM_INIT
+	    || sc->sc_stat == MMEM_INIT2
+	    || part >= sc->sc_npt || (pt = &sc->sc_pt[part])->pt_flags == 0)
+		goto inval;
 
 #if 0
 	printf("%s: mmemstrategy: blkno %d, count %ld\n",
@@ -824,7 +827,7 @@ mmemstart_bp(sc)
 	/* handle retry */
 	if (sc->sc_retry++ > MMEM_MAXRETRY) {
 		/* retry count exceeded */
-		mmemdone(sc, pt, 1);
+		mmemdone(sc, pt, EIO);
 		return;
 	}
 
@@ -857,7 +860,7 @@ mmemstart_write2(sc)
 	/* handle retry */
 	if (sc->sc_retry++ > MMEM_MAXRETRY - 2 /* spare for verify read */) {
 		/* retry count exceeded */
-		mmemdone(sc, pt, 1);
+		mmemdone(sc, pt, EIO);
 		return;
 	}
 
@@ -895,7 +898,7 @@ mmemdone(sc, pt, err)
 
 		/* raise error if no block is read */
 		if (bcnt == 0) {
-			bp->b_error = EIO;
+			bp->b_error = err;
 			bp->b_flags |= B_ERROR;
 		}
 		goto term_xfer;
