@@ -1,3 +1,83 @@
+1998-11-08  Mark Mitchell  <mark@markmitchell.com>
+
+	* decl.c (grokdeclarator): Tighten checks for invalid
+	destructors.  Improve error-messages and error-recovery.
+	* decl2.c (check_classfn): Don't assume that mangled destructor 
+	names contain type information.
+
+1998-11-02  Jason Merrill  <jason@yorick.cygnus.com>
+
+	* decl2.c (import_export_decl): Call import_export_class.
+
+1998-10-28  Jason Merrill  <jason@yorick.cygnus.com>
+
+	* class.c (finish_struct_1): Don't complain about non-copy
+	assignment ops in union members.
+
+	* class.c (build_vtable): Don't pass at_eof to import_export_vtable.
+	(prepare_fresh_vtable): Likewise.
+	(finish_struct_1): Don't call import_export_class.
+	* decl2.c (finish_vtable_vardecl): Do import/export stuff.
+	(finish_prevtable_vardecl): Lose.
+	(finish_file): Don't call it.
+	* pt.c (instantiate_class_template): Likewise.
+
+1998-10-23  Martin von Löwis  <loewis@informatik.hu-berlin.de>
+
+	* parse.y (condition): Convert VAR_DECL from reference to indirect
+	reference.
+
+1998-10-18  Jason Merrill  <jason@yorick.cygnus.com>
+
+	* method.c (hack_identifier): Just return a member function.
+
+1998-10-18  Martin von Löwis  <loewis@informatik.hu-berlin.de>
+
+	* decl2.c (validate_nonmember_using_decl): Fix using-directives of
+	std if std is ignored.
+
+1998-10-14  Jason Merrill  <jason@yorick.cygnus.com>
+
+	* spew.c (yylex): Clear looking_for_typename if we got
+	'enum { ... };'.
+
+1998-10-13  Jason Merrill  <jason@yorick.cygnus.com>
+
+	* tinfo2.cc (fast_compare): Remove.
+	(before): Just use strcmp.
+	* tinfo.cc (operator==): Just use strcmp.
+
+1998-10-12  Jason Merrill  <jason@yorick.cygnus.com>
+
+	* tinfo.cc (operator==): Always compare names.
+
+1998-10-12  Jason Merrill  <jason@yorick.cygnus.com>
+
+	* inc/typeinfo: Add #pragma interface.
+	(operator!=): Just call operator==.
+	* tinfo.cc: Add #pragma implementation.
+	(operator==): Move from inc/typeinfo and tinfo2.cc.
+
+	* typeck2.c (my_friendly_abort): Add URL.
+
+1998-10-05  Martin von Löwis  <loewis@informatik.hu-berlin.de>
+
+	* method.c (build_decl_overload_real): Clear
+	numeric_output_need_bar after __.
+
+1998-10-04  Jason Merrill  <jason@yorick.cygnus.com>
+
+	* decl.c (cp_finish_decl): Make statics in extern inlines and
+	templates common, if possible and the target doesn't support weak
+	symbols.
+
+1998-10-03  Jason Merrill  <jason@yorick.cygnus.com>
+
+	* decl2.c (merge_functions): Remove duplicates.
+
+	* typeck.c (build_conditional_expr): Only fold if ifexp is an
+	INTEGER_CST.
+
 Fri Oct  2 02:07:26 1998  Mumit Khan  <khan@xraylith.wisc.edu>
 
 	* parse.y (nomods_initdcl0): Set up the parser stack correctly.
@@ -6,6 +86,20 @@ Fri Oct  2 02:07:26 1998  Mumit Khan  <khan@xraylith.wisc.edu>
 
 	* decl.c (duplicate_decls): Don't complain about different
 	exceptions from an internal decl even if pedantic.
+
+1998-08-24  Gavin Romig-Koch  <gavin@cygnus.com>
+
+	* typeck.c (c_expand_return): Handle the case that valtype
+	is wider than the functions return type.
+
+1998-08-24  Martin von Löwis  <loewis@informatik.hu-berlin.de>
+
+	* search.c (my_tree_cons): Reimplement.
+
+1998-08-17  Jason Merrill  <jason@yorick.cygnus.com>
+
+	* decl.c (finish_enum): Also set TYPE_SIZE_UNIT.
+	* class.c (finish_struct_bits): Likewise.
 
 1998-08-17  Mark Mitchell  <mark@markmitchell.com>
 

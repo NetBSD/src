@@ -3470,6 +3470,7 @@ add_constant (x, mode, address_only)
   else if (GET_CODE (x) == SYMBOL_REF && CONSTANT_POOL_ADDRESS_P(x))
     {
       *address_only = 1;
+      mode = get_pool_mode (x);
       x = get_pool_constant (x);
     }
 #ifndef AOF_ASSEMBLER
@@ -5866,9 +5867,9 @@ final_prescan_insn (insn, opvec, noperands)
 	      /* Instructions using or affecting the condition codes make it
 		 fail.  */
 	      scanbody = PATTERN (this_insn);
-	      if ((GET_CODE (scanbody) == SET
-		   || GET_CODE (scanbody) == PARALLEL)
-		  && get_attr_conds (this_insn) != CONDS_NOCOND)
+	      if (! (GET_CODE (scanbody) == SET
+		     || GET_CODE (scanbody) == PARALLEL)
+		  || get_attr_conds (this_insn) != CONDS_NOCOND)
 		fail = TRUE;
 	      break;
 

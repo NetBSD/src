@@ -1480,9 +1480,12 @@ check_classfn (ctype, function)
 		  fndecl = OVL_CURRENT (fndecls);
 		  /* The DECL_ASSEMBLER_NAME for a TEMPLATE_DECL is
 		     not mangled, so the check below does not work
-		     correctly in that case.  */
+		     correctly in that case.  Since mangled destructor names
+		     do not include the type of the arguments, we
+		     can't use this short-cut for them, either.  */
 		  if (TREE_CODE (function) != TEMPLATE_DECL
 		      && TREE_CODE (fndecl) != TEMPLATE_DECL
+		      && !DESTRUCTOR_NAME_P (DECL_ASSEMBLER_NAME (function))
 		      && (DECL_ASSEMBLER_NAME (function) 
 			  == DECL_ASSEMBLER_NAME (fndecl)))
 		    return fndecl;
@@ -2649,20 +2652,14 @@ import_export_class (ctype)
     }
 }
     
-int
-finish_prevtable_vardecl (prev, vars)
+static int
+finish_vtable_vardecl (prev, vars)
      tree prev, vars;
 {
   tree ctype = DECL_CONTEXT (vars);
   import_export_class (ctype);
   import_export_vtable (vars, ctype, 1);
-  return 1;
-}
-    
-static int
-finish_vtable_vardecl (prev, vars)
-     tree prev, vars;
-{
+
   if (write_virtuals >= 0
       && ! DECL_EXTERNAL (vars)
       && ((TREE_PUBLIC (vars) && ! DECL_WEAK (vars) && ! DECL_ONE_ONLY (vars))
@@ -2830,6 +2827,7 @@ import_export_decl (decl)
   else if (DECL_FUNCTION_MEMBER_P (decl))
     {
       tree ctype = DECL_CLASS_CONTEXT (decl);
+      import_export_class (ctype);
       if (CLASSTYPE_INTERFACE_KNOWN (ctype)
 	  && (! DECL_ARTIFICIAL (decl) || DECL_VINDEX (decl)))
 	{
@@ -2844,6 +2842,10 @@ import_export_decl (decl)
   else if (DECL_ARTIFICIAL (decl) && DECL_MUTABLE_P (decl))
     {
       tree ctype = TREE_TYPE (DECL_NAME (decl));
+
+      if (IS_AGGR_TYPE (ctype))
+	import_export_class (ctype);
+
       if (IS_AGGR_TYPE (ctype) && CLASSTYPE_INTERFACE_KNOWN (ctype)
 	  && TYPE_VIRTUAL_P (ctype)
 	  /* If the type is a cv-qualified variant of a type, then we
@@ -3216,11 +3218,6 @@ finish_file ()
   SET_DECL_ARTIFICIAL (vars);
   pushdecl (vars);
 #endif
-
-  /* Walk to mark the inline functions we need, then output them so
-     that we can pick up any other tdecls that those routines need.  */
-  walk_vtables ((void (*) PROTO ((tree, tree))) 0,
-		finish_prevtable_vardecl);
 
   for (vars = static_aggregates; vars; vars = TREE_CHAIN (vars))
     if (! TREE_ASM_WRITTEN (TREE_VALUE (vars)))
@@ -3910,22 +3907,22 @@ add_using_namespace (user, used, indirect)
     add_using_namespace (TREE_PURPOSE (t), used, 1);
 }
 
-/* Combines two sets of overloaded functions into an OVERLOAD chain.
-   The first list becomes the tail of the result. */
+/* Combines two sets of overloaded functions into an OVERLOAD chain, removing
+   duplicates.  The first list becomes the tail of the result.
+
+   The algorithm is O(n^2).  */
 
 static tree
 merge_functions (s1, s2)
      tree s1;
      tree s2;
 {
-  if (TREE_CODE (s2) == OVERLOAD)
-    while (s2)
-      {
-	s1 = build_overload (OVL_FUNCTION (s2), s1);
-	s2 = OVL_CHAIN (s2);
-      }
-  else
-    s1 = build_overload (s2, s1);
+  for (; s2; s2 = OVL_NEXT (s2))
+    {
+      tree fn = OVL_CURRENT (s2);
+      if (! ovl_member (fn, s1))
+	s1 = build_overload (fn, s1);
+    }
   return s1;
 }
 
@@ -4458,8 +4455,11 @@ validate_nonmember_using_decl (decl, scope, name)
 {
   if (TREE_CODE (decl) == SCOPE_REF
       && TREE_OPERAND (decl, 0) == std_node)
-    return NULL_TREE;
-  if (TREE_CODE (decl) == SCOPE_REF)
+    {
+      *scope = global_namespace;
+      *name = TREE_OPERAND (decl, 1);
+    }
+  else if (TREE_CODE (decl) == SCOPE_REF)
     {
       *scope = TREE_OPERAND (decl, 0);
       *name = TREE_OPERAND (decl, 1);
