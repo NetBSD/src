@@ -1,4 +1,4 @@
-.\"	$NetBSD: reboot.8,v 1.18 2003/02/25 10:35:08 wiz Exp $
+.\"	$NetBSD: reboot.8,v 1.19 2003/04/04 18:13:47 perry Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -55,7 +55,7 @@ The
 and
 .Nm
 utilities flush the file system cache to disk, send all running processes
-a SIGTERM, wait up to 30 seconds for them to die, send a SIGKILL to the
+a SIGTERM, wait for several seconds for them to die, send a SIGKILL to the
 survivors and, respectively, power down, halt or restart the system.
 The action is logged, including entering a shutdown record into the login
 accounting file and sending a message via
@@ -107,6 +107,13 @@ The
 .Nm poweroff
 command first appeared in
 .Nx 1.5 .
+.Sh CAVEATS
+Once the command has begun its work, stopping it before it completes
+will probably result in a system so crippled it must be
+physically reset.
+To prevent premature termination, the command
+blocks many signals early in its execution.
+However, nothing can defend against deliberate attempts to evade this.
 .Sh BUGS
 The single user shell will ignore the SIGTERM signal.
 To avoid waiting for the timeout when
