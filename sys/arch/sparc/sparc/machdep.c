@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.109 1998/03/29 05:10:44 mrg Exp $ */
+/*	$NetBSD: machdep.c,v 1.110 1998/03/29 21:56:32 pk Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -1807,7 +1807,15 @@ struct sparc_bus_dma_tag mainbus_dma_tag = {
 };
 
 
-/* EXP EXP */
+/*
+ * Base bus space handlers.
+ */
+static int	sparc_bus_unmap __P((void *, bus_space_handle_t, bus_size_t));
+static int	sparc_bus_mmap __P((void *, bus_type_t, bus_addr_t, int));
+static void	*sparc_mainbus_intr_establish __P((void *, int, int,
+						   int (*) __P((void *)),
+						   void *));
+
 int
 sparc_bus_map(cookie, iospace, addr, size, flags, virt, hp)
 	void		*cookie;	/* not used */
@@ -1854,13 +1862,11 @@ sparc_bus_map(cookie, iospace, addr, size, flags, virt, hp)
 	return (0);
 }
 
-int	sparc_bus_unmap __P((void *, bus_space_handle_t, bus_size_t));
-
 int     
 sparc_bus_unmap(cookie, bh, size)
-	void *cookie;
+	void		*cookie;	/* not used */
+	bus_size_t	size;
 	bus_space_handle_t bh;
-	bus_size_t size;
 {
 	vm_offset_t va = trunc_page((vm_offset_t)bh);
 	vm_offset_t endva = va + round_page(size);
@@ -1871,10 +1877,10 @@ sparc_bus_unmap(cookie, bh, size)
 
 int     
 sparc_bus_mmap(cookie, iospace, paddr, flags)
-	void *cookie;
-	bus_type_t iospace;
-	bus_addr_t paddr;
-	int flags;
+	void		*cookie;	/* not used */
+	bus_type_t	iospace;
+	bus_addr_t	paddr;
+	int		flags;
 {
 	return (paddr | PMAP_IOENC(iospace) | PMAP_NC);
 }
@@ -1908,12 +1914,6 @@ bus_space_probe(tag, btype, paddr, size, offset, flags, callback, arg)
 	return (result);
 }
 
-static void *sparc_mainbus_intr_establish __P((
-		void *,			/*cookie*/
-		int,			/*level*/
-		int,			/*flags*/
-		int (*) __P((void *)),	/*handler*/
-		void *));		/*handler arg*/
 
 void *
 sparc_mainbus_intr_establish(cookie, level, flags, handler, arg)
@@ -1948,4 +1948,3 @@ struct sparc_bus_space_tag mainbus_space_tag = {
 	sparc_bus_mmap,			/* bus_space_mmap */
 	sparc_mainbus_intr_establish	/* bus_intr_establish */
 };
-
