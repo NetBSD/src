@@ -1,4 +1,4 @@
-#	$NetBSD: files.sparc,v 1.19 1996/04/04 22:57:55 pk Exp $
+#	$NetBSD: files.sparc,v 1.20 1996/04/11 21:05:42 thorpej Exp $
 
 # @(#)files.sparc	8.1 (Berkeley) 7/19/93
 # sparc-specific configuration info
@@ -29,15 +29,20 @@ file	arch/sparc/sparc/auxreg.c
 
 device clock
 attach clock at mainbus, obio
+
 device oclock
 attach oclock at obio
+
 device timer
 attach timer at mainbus, obio
+
 device eeprom
 attach eeprom at obio
 file	arch/sparc/sparc/clock.c
+
 device power
 attach power at obio
+file	arch/sparc/dev/power.c			power
 
 device cpu
 attach cpu at mainbus
@@ -64,7 +69,7 @@ file	arch/sparc/sparc/iommu.c		iommu
 
 device sbus { slot = -1, offset = -1 }
 attach sbus at mainbus, iommu
-file	arch/sparc/dev/sbus.c		sbus
+file	arch/sparc/dev/sbus.c			sbus
 
 
 #
