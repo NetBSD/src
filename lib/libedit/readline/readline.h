@@ -1,4 +1,4 @@
-/*	$NetBSD: readline.h,v 1.5 2003/09/14 22:15:23 christos Exp $	*/
+/*	$NetBSD: readline.h,v 1.6 2003/09/15 01:29:36 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -70,7 +70,10 @@ typedef KEYMAP_ENTRY *Keymap;
 #define control_character_bit		0x40
 
 #ifndef CTRL
+#include <sys/ioctl.h>
+#ifndef CTRL
 #define CTRL(c)		((c) & 037)
+#endif
 #endif
 #ifndef UNCTRL
 #define UNCTRL(c)	(((c) - 'a' + 'A')|control_character_bit)
