@@ -1,4 +1,4 @@
-/*	$NetBSD: error.h,v 1.6 2001/02/05 01:44:07 christos Exp $	*/
+/*	$NetBSD: error.h,v 1.7 2002/05/26 22:41:20 wiz Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -117,7 +117,7 @@ extern	char	*scriptname;
 
 extern	boolean	query;
 extern	boolean	terse;
-int	inquire __P((char *, ...));	/* inquire for yes/no */
+int	inquire(char *, ...);	/* inquire for yes/no */
 /* 
  *	codes for inquire() to return
  */
@@ -126,7 +126,7 @@ int	inquire __P((char *, ...));	/* inquire for yes/no */
 #define	Q_YES	3			/* 'Y' */
 #define	Q_yes	4			/* 'y' */
 
-int	probethisfile __P((char *));
+int	probethisfile(char *);
 /*
  *	codes for probethisfile to return
  */
@@ -210,44 +210,44 @@ extern	char	*currentfilename;
 /*
  *	Functional forwards
  */
-void	arrayify __P((int *, Eptr **, Eptr));
-char   *Calloc __P((int, int));
-void	clob_last __P((char *,  char));
-int	countfiles  __P((Eptr *));
-Errorclass discardit __P((Eptr));
-void	diverterrors __P((char *, int, Eptr **, int, boolean,  int));
-void	eaterrors __P((int *, Eptr **));
-boolean	edit __P((char *));
-void	erroradd __P((int, char **, Errorclass, Errorclass));
-void	errorprint __P((FILE *, Eptr, boolean));
-void	execvarg __P((int, int *, char ***));
-void	filenames __P((int, Eptr **));
-void	findfiles __P((int, Eptr *, int *, Eptr ***));
-char	firstchar __P((char *));
-void	getignored __P((char *));
-void	hackfile __P((char *, Eptr **, int, int));
-void	insert __P((int));
-char	lastchar __P((char *));
-int	mustoverwrite __P((FILE *, FILE *));
-int	mustwrite __P((char *, int, FILE *));
-char	next_lastchar __P((char *));
-int	nopertain __P((Eptr **));
-int	oktotouch __P((char *));
-void	onintr __P((int));
-boolean	persperdexplode __P((char *, char **, char **));
-int	position __P((char *, char));
-boolean	preview __P((char *,  int, Eptr **, int));
-void	printerrors __P((boolean, int, Eptr []));
-char   *plural __P((int));
-boolean	qpersperdexplode __P((char *, char **, char **));
-int	settotouch __P((char *));
-char   *strsave __P((char *));
-char   *substitute __P((char *, char, char));
-void	text __P((Eptr, boolean));
-boolean	touchfiles __P((int, Eptr **, int *, char ***));
-char   *verbform __P((int));
-void	wordvbuild __P((char *, int*, char ***));
-int	wordvcmp __P((char **, int, char **));
-void	wordvprint __P((FILE *, int, char **));
-char  **wordvsplice __P((int, int, char **));
-boolean	writetouched __P((int));
+void	arrayify(int *, Eptr **, Eptr);
+char   *Calloc(int, int);
+void	clob_last(char *,  char);
+int	countfiles(Eptr *);
+Errorclass discardit(Eptr);
+void	diverterrors(char *, int, Eptr **, int, boolean,  int);
+void	eaterrors(int *, Eptr **);
+boolean	edit(char *);
+void	erroradd(int, char **, Errorclass, Errorclass);
+void	errorprint(FILE *, Eptr, boolean);
+void	execvarg(int, int *, char ***);
+void	filenames(int, Eptr **);
+void	findfiles(int, Eptr *, int *, Eptr ***);
+char	firstchar(char *);
+void	getignored(char *);
+void	hackfile(char *, Eptr **, int, int);
+void	insert(int);
+char	lastchar(char *);
+int	mustoverwrite(FILE *, FILE *);
+int	mustwrite(char *, int, FILE *);
+char	next_lastchar(char *);
+int	nopertain(Eptr **);
+int	oktotouch(char *);
+void	onintr(int);
+boolean	persperdexplode(char *, char **, char **);
+int	position(char *, char);
+boolean	preview(char *,  int, Eptr **, int);
+void	printerrors(boolean, int, Eptr []);
+char   *plural(int);
+boolean	qpersperdexplode(char *, char **, char **);
+int	settotouch(char *);
+char   *strsave(char *);
+char   *substitute(char *, char, char);
+void	text(Eptr, boolean);
+boolean	touchfiles(int, Eptr **, int *, char ***);
+char   *verbform(int);
+void	wordvbuild(char *, int*, char ***);
+int	wordvcmp(char **, int, char **);
+void	wordvprint(FILE *, int, char **);
+char  **wordvsplice(int, int, char **);
+boolean	writetouched(int);

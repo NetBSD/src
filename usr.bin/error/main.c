@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.6 2001/06/11 01:50:57 wiz Exp $	*/
+/*	$NetBSD: main.c,v 1.7 2002/05/26 22:41:21 wiz Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: main.c,v 1.6 2001/06/11 01:50:57 wiz Exp $");
+__RCSID("$NetBSD: main.c,v 1.7 2002/05/26 22:41:21 wiz Exp $");
 #endif /* not lint */
 
 #include <signal.h>
@@ -81,10 +81,10 @@ boolean	terse	= FALSE;	/* Terse output */
 
 char	*suffixlist = ".*";	/* initially, can touch any file */
 
-int	errorsort __P((const void *, const void *));
-void	forkvi __P((int, char **));
-int	main __P((int, char **));
-void	try __P((char *, int, char **));
+int	errorsort(const void *, const void *);
+void	forkvi(int, char **);
+int	main(int, char **);
+void	try(char *, int, char **);
 
 /*
  *	error [-I ignorename] [-n] [-q] [-t suffixlist] [-s] [-v] [infile]
@@ -130,9 +130,7 @@ void	try __P((char *, int, char **));
  *		Default: stdin
  */
 int
-main(argc, argv)
-	int	argc;
-	char	*argv[];
+main(int argc, char **argv)
 {
 	char	*cp;
 	char	*ignorename = 0;
@@ -233,9 +231,7 @@ main(argc, argv)
 }
 
 void
-forkvi(argc, argv)
-	int	argc;
-	char	**argv;
+forkvi(int argc, char **argv)
 {
 	if (query){
 		switch(inquire(terse
@@ -260,10 +256,7 @@ forkvi(argc, argv)
 }
 
 void
-try(name, argc, argv)
-	char	*name;
-	int	argc;
-	char	**argv;
+try(char *name, int argc, char **argv)
 {
 	argv[0] = name;
 	wordvprint(stdout, argc, argv);
@@ -278,8 +271,7 @@ try(name, argc, argv)
 	execvp(name, argv);
 }
 
-int errorsort(x1, x2)
-	const void *x1, *x2;
+int errorsort(const void *x1, const void *x2)
 {
 	Eptr	*epp1 = (Eptr *)x1, *epp2 = (Eptr *)x2;
 	Eptr	ep1, ep2;

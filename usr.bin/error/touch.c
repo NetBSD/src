@@ -1,4 +1,4 @@
-/*	$NetBSD: touch.c,v 1.12 2001/09/24 13:22:35 wiz Exp $	*/
+/*	$NetBSD: touch.c,v 1.13 2002/05/26 22:41:21 wiz Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)touch.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: touch.c,v 1.12 2001/09/24 13:22:35 wiz Exp $");
+__RCSID("$NetBSD: touch.c,v 1.13 2002/05/26 22:41:21 wiz Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -49,11 +49,7 @@ __RCSID("$NetBSD: touch.c,v 1.12 2001/09/24 13:22:35 wiz Exp $");
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-#if __STDC__
 #include <stdarg.h>
-#else
-#include <varargs.h>
-#endif
 #include "error.h"
 #include "pathnames.h"
 
@@ -69,11 +65,7 @@ int	touchstatus = Q_YES;
 extern	char	*suffixlist;
 
 void
-findfiles(nerrors, errors, r_nfiles, r_files)
-	int	nerrors;
-	Eptr	*errors;
-	int	*r_nfiles;
-	Eptr	***r_files;
+findfiles(int nerrors, Eptr *errors, int *r_nfiles, Eptr ***r_files)
 {
 	int	nfiles;
 	Eptr	**files;
@@ -123,8 +115,7 @@ findfiles(nerrors, errors, r_nfiles, r_files)
 }
 
 int
-countfiles(errors)
-	Eptr	*errors;
+countfiles(Eptr *errors)
 {
 	char	*name;
 	int	ei;
@@ -159,9 +150,7 @@ char	*class_table[] = {
 int	class_count[C_LAST - C_FIRST] = {0};
 
 void
-filenames(nfiles, files)
-	int	nfiles;
-	Eptr	**files;
+filenames(int nfiles, Eptr **files)
 {
 	int	fi;
 	char	*sep = " ";
@@ -198,8 +187,7 @@ filenames(nfiles, files)
  *	Dump out errors that don't pertain to any file
  */
 int
-nopertain(files)
-	Eptr	**files;
+nopertain(Eptr **files)
 {
 	int	type;
 	int	someerrors = 0;
@@ -233,11 +221,7 @@ nopertain(files)
 extern	boolean	notouch;
 
 boolean
-touchfiles(nfiles, files, r_edargc, r_edargv)
-	int	nfiles;
-	Eptr	**files;
-	int	*r_edargc;
-	char	***r_edargv;
+touchfiles(int nfiles, Eptr **files, int *r_edargc, char ***r_edargv)
 {
 	char	*name;
 	Eptr	errorp;
@@ -293,11 +277,7 @@ touchfiles(nfiles, files, r_edargc, r_edargv)
 }
 
 void
-hackfile(name, files, ix, nerrors)
-	char	*name;
-	Eptr	**files;
-	int	ix;
-	int	nerrors;
+hackfile(char *name, Eptr **files, int ix, int nerrors)
 {
 	boolean	previewed;
 	int	errordest;	/* where errors go*/
@@ -327,11 +307,7 @@ hackfile(name, files, ix, nerrors)
 }
 
 boolean
-preview(name, nerrors, files, ix)
-	char	*name;
-	int	nerrors;
-	Eptr	**files;
-	int	ix;
+preview(char *name, int nerrors, Eptr **files, int ix)
 {
 	int	back;
 	Eptr	*erpp;
@@ -359,8 +335,7 @@ preview(name, nerrors, files, ix)
 }
 
 int
-settotouch(name)
-	char	*name;
+settotouch(char *name)
 {
 	int	dest = TOSTDOUT;
 
@@ -407,13 +382,8 @@ settotouch(name)
 }
 
 void
-diverterrors(name, dest, files, ix, previewed, nterrors)
-	char	*name;
-	int	dest;
-	Eptr	**files;
-	int	ix;
-	boolean	previewed;
-	int	nterrors;
+diverterrors(char *name, int dest, Eptr **files, int ix, boolean previewed,
+	     int nterrors)
 {
 	int	nerrors;
 	Eptr	*erpp;
@@ -452,8 +422,7 @@ diverterrors(name, dest, files, ix, previewed, nterrors)
 }
 
 int
-oktotouch(filename)
-	char	*filename;
+oktotouch(char *filename)
 {
 	char	*src;
 	char	*pat;
@@ -505,10 +474,7 @@ oktotouch(filename)
  *	We fill in the arguments, and the null.
  */
 void
-execvarg(n_pissed_on, r_argc, r_argv)
-	int	n_pissed_on;
-	int	*r_argc;
-	char	***r_argv;
+execvarg(int n_pissed_on, int *r_argc, char ***r_argv)
 {
 	Eptr	p;
 	char	*sep;
@@ -550,8 +516,7 @@ boolean	tempfileopen = FALSE;
  *	Well, if it isn't, then return TRUE if something failed
  */
 boolean
-edit(name)
-	char	*name;
+edit(char *name)
 {
 	int fd;
 	const char *tmpdir;
@@ -586,8 +551,7 @@ edit(name)
 char	edbuf[BUFSIZ];
 
 void
-insert(place)
-	int	place;
+insert(int place)
 {
 	--place;	/* always insert messages before the offending line*/
 	for(; o_lineno < place; o_lineno++, n_lineno++){
@@ -598,9 +562,7 @@ insert(place)
 }
 
 void
-text(p, use_all)
-	Eptr	p;
-	boolean	use_all;
+text(Eptr p, boolean use_all)
 {
 	int	offset = use_all ? 0 : 2;
 
@@ -618,8 +580,7 @@ text(p, use_all)
  *	then bring the temporary in over the local file
  */
 boolean
-writetouched(overwrite)
-	int	overwrite;
+writetouched(int overwrite)
 {
 	int	nread;
 	FILE	*localfile;
@@ -685,9 +646,7 @@ writetouched(overwrite)
  *	return 1 if the tmpfile can be removed after writing it out
  */
 int
-mustoverwrite(preciousfile, tmpfile)
-	FILE	*preciousfile;
-	FILE	*tmpfile;
+mustoverwrite(FILE *preciousfile, FILE *tmpfile)
 {
 	int	nread;
 
@@ -701,10 +660,7 @@ mustoverwrite(preciousfile, tmpfile)
  *	return 0 on catastrophe
  */
 int
-mustwrite(base, n, preciousfile)
-	char	*base;
-	int	n;
-	FILE	*preciousfile;
+mustwrite(char *base, int n, FILE *preciousfile)
 {
 	int	nwrote;
 
@@ -738,8 +694,7 @@ mustwrite(base, n, preciousfile)
 }
 
 void
-onintr(dummy)
-	int dummy;
+onintr(int dummy)
 {
 	switch(inquire(terse
 	    ? "\nContinue? "
@@ -761,10 +716,7 @@ onintr(dummy)
 }
 
 void
-errorprint(place, errorp, print_all)
-	FILE	*place;
-	Eptr	errorp;
-	boolean	print_all;
+errorprint(FILE *place, Eptr errorp, boolean print_all)
 {
 	int	offset = print_all ? 0 : 2;
 
@@ -776,13 +728,7 @@ errorprint(place, errorp, print_all)
 }
 
 int
-#if __STDC__
 inquire(char *fmt, ...)
-#else
-inquire(fmt, va_alist)
-	char	*fmt;
-	va_dcl
-#endif
 {
 	va_list ap;
 	char	buffer[128];
@@ -792,11 +738,7 @@ inquire(fmt, va_alist)
 	for(;;){
 		do{
 			fflush(stdout);
-#if __STDC__
 			va_start(ap, fmt);
-#else
-			va_start(ap);
-#endif
 			vfprintf(stderr, fmt, ap);
 			va_end(ap);
 			fflush(stderr);
@@ -812,8 +754,7 @@ inquire(fmt, va_alist)
 }
 
 int
-probethisfile(name)
-	char	*name;
+probethisfile(char *name)
 {
 	struct stat statbuf;
 	if (stat(name, &statbuf) < 0)

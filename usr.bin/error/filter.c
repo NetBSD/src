@@ -1,4 +1,4 @@
-/*	$NetBSD: filter.c,v 1.7 2001/02/05 01:44:07 christos Exp $	*/
+/*	$NetBSD: filter.c,v 1.8 2002/05/26 22:41:20 wiz Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)filter.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: filter.c,v 1.7 2001/02/05 01:44:07 christos Exp $");
+__RCSID("$NetBSD: filter.c,v 1.8 2002/05/26 22:41:20 wiz Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -58,16 +58,15 @@ char	*lint_libs[] = {
 	IG_FILE4,
 	0
 };
-int	lexsort __P((const void *, const void *));
-int	search_ignore __P((char *));
+int	lexsort(const void *, const void *);
+int	search_ignore(char *);
 
 /*
  *	Read the file ERRORNAME of the names of functions in lint
  *	to ignore complaints about.
  */
 void
-getignored(auxname)
-	char	*auxname;
+getignored(char *auxname)
 {
 	int	i;
 	FILE	*fyle;
@@ -135,8 +134,7 @@ getignored(auxname)
 }
 
 int
-lexsort(c1, c2)
-	const void *c1, *c2;
+lexsort(const void *c1, const void *c2)
 {
 	char	**cpp1, **cpp2;
 
@@ -146,8 +144,7 @@ lexsort(c1, c2)
 }
 
 int
-search_ignore(key)
-	char	*key;
+search_ignore(char *key)
 {
 	int	ub, lb;
 	int	halfway;
@@ -175,8 +172,7 @@ search_ignore(key)
  *	Return the new categorization of the error class.
  */
 Errorclass
-discardit(errorp)
-	Eptr		errorp;
+discardit(Eptr errorp)
 {
 	int		language;
 	int		i;

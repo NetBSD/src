@@ -1,4 +1,4 @@
-/*	$NetBSD: pi.c,v 1.8 2001/02/05 01:44:07 christos Exp $	*/
+/*	$NetBSD: pi.c,v 1.9 2002/05/26 22:41:21 wiz Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)pi.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: pi.c,v 1.8 2001/02/05 01:44:07 christos Exp $");
+__RCSID("$NetBSD: pi.c,v 1.9 2002/05/26 22:41:21 wiz Exp $");
 #endif /* not lint */
 
 #include <stdio.h>
@@ -50,11 +50,11 @@ static	char	*c_linenumber;
 static	char	*unk_hdr[] = {"In", "program", "???"};
 static	char	**c_header = &unk_hdr[0];
 
-boolean	alldigits __P((char *));
-boolean	isdateformat __P((int, char **));
-boolean	instringset __P((char *, char **));
-Errorclass pi __P((void));
-boolean	piptr __P((char *));
+boolean	alldigits(char *);
+boolean	isdateformat(int, char **);
+boolean	instringset(char *, char **);
+Errorclass pi(void);
+boolean	piptr(char *);
 
 
 /*
@@ -167,8 +167,7 @@ char *pi_imp1[] = {"improperly", "used", "on", "line"};
 char *pi_imp2[] = {"improperly", "used", "on", "lines"};
 
 boolean
-alldigits(string)
-	char	*string;
+alldigits(char *string)
 {
 	for (; *string && isdigit((unsigned char)*string); string++)
 		continue;
@@ -176,9 +175,7 @@ alldigits(string)
 }
 
 boolean
-instringset(member, set)
-	char	*member;
-	char	**set;
+instringset(char *member, char **set)
 {
 	for(; *set; set++){
 		if (strcmp(*set, member) == 0)
@@ -188,9 +185,7 @@ instringset(member, set)
 }
 
 boolean
-isdateformat(wordc, wordv)
-	int	wordc;
-	char	**wordv;
+isdateformat(int wordc, char **wordv)
 {
 	return(
 	        (wordc == 5)
@@ -201,8 +196,7 @@ isdateformat(wordc, wordv)
 }
 
 boolean
-piptr(string)
-	char	*string;
+piptr(char *string)
 {
 	if (*string != '-')
 		return(FALSE);
@@ -220,7 +214,7 @@ extern	int	wordc;
 extern	char	**wordv;
 
 Errorclass
-pi()
+pi(void)
 {
 	char	**nwordv;
 
