@@ -1,4 +1,4 @@
-/*	$NetBSD: rawfs.c,v 1.1 1996/05/28 15:23:56 chuck Exp $	*/
+/*	$NetBSD: rawfs.c,v 1.2 2001/07/07 09:06:43 scw Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon W. Ross
@@ -116,7 +116,7 @@ int	rawfs_read(f, start, size, resid)
 		if (csize > fs->fs_len)
 			csize = fs->fs_len;
 
-		bcopy(fs->fs_ptr, addr, csize);
+		memcpy(addr, fs->fs_ptr, csize);
 		fs->fs_ptr += csize;
 		fs->fs_len -= csize;
 		addr += csize;

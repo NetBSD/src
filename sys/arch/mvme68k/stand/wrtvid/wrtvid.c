@@ -1,4 +1,4 @@
-/*	$NetBSD: wrtvid.c,v 1.2 2000/12/04 21:24:34 scw Exp $	*/
+/*	$NetBSD: wrtvid.c,v 1.3 2001/07/07 09:06:45 scw Exp $	*/
 
 #include <sys/types.h>
 #include <fcntl.h>
@@ -52,7 +52,7 @@ main(int argc, char **argv)
 	tape_exe = open(fileext, O_WRONLY|O_CREAT|O_TRUNC,0644);
 
 	pcpul = (struct cpu_disklabel *)malloc(sizeof(struct cpu_disklabel));
-	bzero(pcpul, sizeof(struct cpu_disklabel));
+	memset(pcpul, 0, sizeof(struct cpu_disklabel));
 
 	strcpy(pcpul->vid_id, "NBSD");
 
