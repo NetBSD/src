@@ -1,4 +1,4 @@
-/*	$NetBSD: shutdown.c,v 1.26 1998/04/01 15:17:31 kleink Exp $	*/
+/*	$NetBSD: shutdown.c,v 1.27 1998/06/06 21:18:54 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988, 1990, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1990, 1993\n\
 #if 0
 static char sccsid[] = "@(#)shutdown.c	8.4 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: shutdown.c,v 1.26 1998/04/01 15:17:31 kleink Exp $");
+__RCSID("$NetBSD: shutdown.c,v 1.27 1998/06/06 21:18:54 thorpej Exp $");
 #endif
 #endif /* not lint */
 
@@ -92,6 +92,7 @@ struct interval {
 
 static time_t offset, shuttime;
 static int dofast, dohalt, doreboot, killflg, mbuflen, nofork, nosync, dodump;
+static int dopowerdown;
 static char *whom, mbuf[BUFSIZ];
 
 void badtime __P((void));
@@ -119,7 +120,7 @@ main(argc, argv)
 	if (geteuid())
 		errx(1, "NOT super-user");
 #endif
-	while ((ch = getopt(argc, argv, "Ddfhknr")) != -1)
+	while ((ch = getopt(argc, argv, "Ddfhknpr")) != -1)
 		switch (ch) {
 		case 'd':
 			dodump = 1;
@@ -130,6 +131,9 @@ main(argc, argv)
 		case 'f':
 			dofast = 1;
 			break;
+		case 'p':
+			dopowerdown = 1;
+			/* FALLTHROUGH */
 		case 'h':
 			dohalt = 1;
 			break;
@@ -160,7 +164,9 @@ main(argc, argv)
 		usage();
 	}
 	if (dohalt && doreboot) {
-		warnx("incompatible switches -h and -r");
+		const char *which_flag = dopowerdown ? "p" : "h";
+
+		warnx("incompatible switches -%s and -r", which_flag);
 		usage();
 	}
 
@@ -346,7 +352,7 @@ die_you_gravy_sucking_pig_dog()
 	if (dofast)
 		doitfast();
 	if (doreboot || dohalt) {
-		char *args[8], **arg, *path;
+		char *args[16], **arg, *path;
 
 		arg = &args[0];
 		if (doreboot) {
@@ -360,6 +366,8 @@ die_you_gravy_sucking_pig_dog()
 			*arg++ = "-d";
 		if (nosync)
 			*arg++ = "-n";
+		if (dopowerdown)
+			*arg++ = "-p";
 		*arg++ = "-l";
 		*arg++ = 0;
 #ifndef DEBUG
