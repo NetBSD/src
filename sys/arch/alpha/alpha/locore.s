@@ -1,4 +1,4 @@
-/* $NetBSD: locore.s,v 1.91 2001/04/18 00:38:10 thorpej Exp $ */
+/* $NetBSD: locore.s,v 1.92 2001/04/19 17:48:46 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
 
 #include <machine/asm.h>
 
-__KERNEL_RCSID(0, "$NetBSD: locore.s,v 1.91 2001/04/18 00:38:10 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: locore.s,v 1.92 2001/04/19 17:48:46 thorpej Exp $");
 
 #include "assym.h"
 
@@ -253,12 +253,12 @@ NESTED_NOPROFILE(locorestart,1,0,ra,0,0)
 
 /**************************************************************************/
 
-#if defined(DDB)
+#if defined(DDB) || defined(KGDB)
 /*
  * Pull in debugger glue.
  */
 #include <alpha/alpha/debug.s>
-#endif /* DDB */
+#endif /* DDB || KGDB */
 
 /**************************************************************************/
 

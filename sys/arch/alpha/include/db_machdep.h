@@ -1,4 +1,4 @@
-/* $NetBSD: db_machdep.h,v 1.12 2000/11/22 02:25:52 thorpej Exp $ */
+/* $NetBSD: db_machdep.h,v 1.13 2001/04/19 17:48:47 thorpej Exp $ */
 
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
@@ -92,6 +92,9 @@ int	ddb_trap(unsigned long, unsigned long, unsigned long,
 
 int	alpha_debug(unsigned long, unsigned long, unsigned long,
 	    unsigned long, struct trapframe *);
+
+struct alpha_bus_space;
+void	alpha_kgdb_init(const char **, struct alpha_bus_space *);
 
 /*
  * We define some of our own commands.
