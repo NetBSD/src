@@ -1,4 +1,4 @@
-	$NetBSD: install,v 1.8 1998/05/15 03:28:55 ross Exp $	
+	$NetBSD: install,v 1.9 1998/05/15 18:52:54 ross Exp $	
 
 0. Introduction
 
@@ -258,7 +258,7 @@
 
     All you need to do is mount the CD-ROM, which will generally
     be device cd0. (The initial boot messages will tell you what
-    the CD-ROM drive as probed as.) This would be done with:
+    the CD-ROM drive is probed as.) This would be done with:
 
         mount -r -t cd9660 /dev/cd0a /mnt2
 
@@ -386,14 +386,12 @@
 
     The source to the toolchain components is available in:
 
-	/pub/NetBSD/NetBSD-1.3.2/alpha/source/toolchain.tgz
+	.../alpha/source/toolchain.tgz
 
     This module unpacks into ./toolchain, so:
 
 	cd /usr/local
-	ftp ftp://hostname/pub/NetBSD/NetBSD-1.3.2/alpha/source/toolchain.tgz
-	tar xpfz toolchain.tgz
-	rm toolchain.rgz
+	tar xpfz .../toolchain.tgz
 
 
 5. Configuring NetBSD
