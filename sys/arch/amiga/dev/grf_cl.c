@@ -1,4 +1,4 @@
-/*      $NetBSD: grf_cl.c,v 1.16 1996/10/13 03:07:01 christos Exp $        */
+/*      $NetBSD: grf_cl.c,v 1.17 1996/10/21 09:31:53 veego Exp $        */
 
 /*
  * Copyright (c) 1995 Ezra Story
@@ -160,7 +160,7 @@ static void *cl_fbaddr = 0;	/* framebuffer */
 static void *cl_regaddr = 0;	/* registers */
 static int cl_fbsize;		/* framebuffer size */
 
-/* current sprite info, if you add summport for multiple boards
+/* current sprite info, if you add support for multiple boards
  * make this an array or something
  */
 struct grf_spriteinfo cl_cursprite;
@@ -1280,7 +1280,7 @@ cl_load_mon(gp, md)
 		sr15 = ((cl_fbsize / 0x100000 == 2) ? 0x38 : 0xb8);
 	    WSeq(ba, SEQ_ID_CONF_RBACK, 0x00);
 	} else {
-		sr15 = (TEXT || (gv->depth == 1)) ? 0x90 : 0xb0;
+		sr15 = (TEXT || (gv->depth == 1)) ? 0xd0 : 0xb0;
 	}
 	WSeq(ba, SEQ_ID_DRAM_CNTL, sr15);
 	WGfx(ba, GCT_ID_READ_MAP_SELECT, 0x00);
