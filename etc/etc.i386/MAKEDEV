@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.48 1997/03/31 21:23:34 mycroft Exp $
+#	$NetBSD: MAKEDEV,v 1.49 1997/03/31 21:28:24 mycroft Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -137,9 +137,10 @@ ttyv*)
 fd)
 	rm -f fd/*
 	mkdir fd > /dev/null 2>&1
-	(cd fd && eval `echo "" | awk ' BEGIN { \
-		for (i = 0; i < 64; i++) \
-	 		printf("mknod %d c 22 %d;", i, i)}'`)
+	n=0; while [ $n -lt 64 ]; do
+		mknod fd/$n	c 22 $n
+		n=$(($n + 1))
+	done
 	chown -R bin.bin fd
 	chmod 555 fd
 	chmod 666 fd/*
