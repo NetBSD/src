@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_icmp.c,v 1.63 2001/10/30 06:41:10 kml Exp $	*/
+/*	$NetBSD: ip_icmp.c,v 1.64 2001/11/04 13:38:50 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -942,6 +942,13 @@ icmp_sysctl(name, namelen, oldp, oldlenp, newp, newlen)
 	return error;
 }
 
+/* Table of common MTUs: */
+
+static const u_int mtu_table[] = {
+	65535, 65280, 32000, 17914, 9180, 8166,
+	4352, 2002, 1492, 1006, 508, 296, 68, 0
+};
+
 void
 icmp_mtudisc(icp, faddr)
 	struct icmp *icp;
@@ -953,11 +960,6 @@ icmp_mtudisc(icp, faddr)
 	u_long mtu = ntohs(icp->icmp_nextmtu);  /* Why a long?  IPv6 */
 	int    error;
 
-	/* Table of common MTUs: */
-
-	static const u_int mtu_table[] = { 65535, 65280, 32000, 17914, 9180,
-	    8166, 4352, 2002, 1492, 1006, 508, 296, 68, 0};
-    
 	rt = rtalloc1(dst, 1);
 	if (rt == 0)
 		return;
@@ -1051,14 +1053,10 @@ ip_next_mtu(mtu, dir)	/* XXX */
 	int mtu;
 	int dir;
 {
-	static const u_int mtutab[] = {
-		65535, 32000, 17914, 8166, 4352, 2002, 1492, 1006, 508, 296,
-		68, 0
-	};
 	int i;
 
-	for (i = 0; i < (sizeof mtutab) / (sizeof mtutab[0]); i++) {
-		if (mtu >= mtutab[i])
+	for (i = 0; i < (sizeof mtu_table) / (sizeof mtu_table[0]); i++) {
+		if (mtu >= mtu_table[i])
 			break;
 	}
 
@@ -1066,15 +1064,15 @@ ip_next_mtu(mtu, dir)	/* XXX */
 		if (i == 0) {
 			return 0;
 		} else {
-			return mtutab[i - 1];
+			return mtu_table[i - 1];
 		}
 	} else {
-		if (mtutab[i] == 0) {
+		if (mtu_table[i] == 0) {
 			return 0;
-		} else if(mtu > mtutab[i]) {
-			return mtutab[i];
+		} else if (mtu > mtu_table[i]) {
+			return mtu_table[i];
 		} else {
-			return mtutab[i + 1];
+			return mtu_table[i + 1];
 		}
 	}
 }
