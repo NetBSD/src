@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.244 2001/04/05 21:48:15 thorpej Exp $
+# $NetBSD: mi,v 1.245 2001/04/06 10:47:16 wiz Exp $
 .			base-sys-root
 ./altroot		base-sys-root
 ./bin			base-sys-root
@@ -1109,6 +1109,7 @@
 ./usr/share/man/cat4/hp300			base-man-share
 ./usr/share/man/cat4/i386			base-man-share
 ./usr/share/man/cat4/mac68k			base-man-share
+./usr/share/man/cat4/macppc			base-man-share
 ./usr/share/man/cat4/mvme68k			base-man-share
 ./usr/share/man/cat4/pc532			base-man-share
 ./usr/share/man/cat4/pmax			base-man-share
@@ -1172,6 +1173,7 @@
 ./usr/share/man/man4/hp300		base-man-share
 ./usr/share/man/man4/i386		base-man-share
 ./usr/share/man/man4/mac68k		base-man-share
+./usr/share/man/man4/macppc		base-man-share
 ./usr/share/man/man4/mvme68k		base-man-share
 ./usr/share/man/man4/pc532		base-man-share
 ./usr/share/man/man4/pmax		base-man-share
