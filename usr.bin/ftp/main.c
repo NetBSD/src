@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.25 1997/08/23 07:32:54 lukem Exp $	*/
+/*	$NetBSD: main.c,v 1.26 1997/10/14 16:31:22 christos Exp $	*/
 
 /*
  * Copyright (c) 1985, 1989, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1985, 1989, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.6 (Berkeley) 10/9/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.25 1997/08/23 07:32:54 lukem Exp $");
+__RCSID("$NetBSD: main.c,v 1.26 1997/10/14 16:31:22 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -368,6 +368,7 @@ cmdscanner(top)
 #ifndef SMALL
 		} else {
 			const char *buf;
+			HistEvent ev;
 			cursor_pos = NULL;
 
 			if ((buf = el_gets(el, &num)) == NULL || num == 0)
@@ -381,7 +382,7 @@ cmdscanner(top)
 			}
 			memcpy(line, buf, num);
 			line[num] = '\0';
-			history(hist, H_ENTER, buf);
+			history(hist, &ev, H_ENTER, buf);
 		}
 #endif /* !SMALL */
 
