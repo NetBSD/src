@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci_pci.c,v 1.2 1998/07/22 10:43:37 augustss Exp $	*/
+/*	$NetBSD: ohci_pci.c,v 1.3 1998/07/25 15:15:39 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -50,16 +50,18 @@
 #include <sys/proc.h>
 #include <sys/queue.h>
 
+#include <machine/bus.h>
+
 #include <dev/pci/pcidevs.h>
 #include <dev/pci/pcivar.h>
 
 #include <dev/usb/usb.h>
 #include <dev/usb/usbdi.h>
 #include <dev/usb/usbdivar.h>
+#include <dev/usb/usb_mem.h>
+
 #include <dev/usb/ohcireg.h>
 #include <dev/usb/ohcivar.h>
-
-#include <machine/bus.h>
 
 int	ohci_pci_match __P((struct device *, struct cfdata *, void *));
 void	ohci_pci_attach __P((struct device *, struct device *, void *));
