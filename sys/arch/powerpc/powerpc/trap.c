@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.76 2003/01/18 21:28:12 matt Exp $	*/
+/*	$NetBSD: trap.c,v 1.77 2003/01/19 02:43:12 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -66,10 +66,11 @@ volatile int want_resched;
 #endif
 
 static int fix_unaligned __P((struct lwp *l, struct trapframe *frame));
-static inline void setusr __P((int));
+static inline vaddr_t setusr __P((vaddr_t, size_t *));
+static inline void unsetusr __P((void));
 
 void trap __P((struct trapframe *));	/* Called from locore / trap_subr */
-int setfault __P((faultbuf));	/* defined in locore.S */
+int setfault __P((faultbuf));		/* defined in locore.S */
 /* Why are these not defined in a header? */
 int badaddr __P((void *, size_t));
 int badaddr_read __P((void *, size_t, int *));
@@ -120,7 +121,7 @@ trap(struct trapframe *frame)
 		 */
 		if ((frame->dsisr & DSISR_NOTFOUND) &&
 		    vm_map_pmap(kernel_map)->pm_evictions > 0 &&
-		    (va >> ADDR_SR_SHFT) != USER_SR &&
+		    (va >> ADDR_SR_SHFT) != pcb->pcb_kmapsr &&
 		    pmap_pte_spill(vm_map_pmap(kernel_map), trunc_page(va)))
 			return;
 
@@ -129,13 +130,9 @@ trap(struct trapframe *frame)
 		 */
 		if (intr_depth < 0) {
 			KERNEL_LOCK(LK_CANRECURSE|LK_EXCLUSIVE);
-			if ((va >> ADDR_SR_SHFT) == USER_SR) {
-				sr_t user_sr;
-
-				asm ("mfsr %0, %1"
-				     : "=r"(user_sr) : "K"(USER_SR));
+			if ((va >> ADDR_SR_SHFT) == pcb->pcb_kmapsr) {
 				va &= ADDR_PIDX | ADDR_POFF;
-				va |= user_sr << ADDR_SR_SHFT;
+				va |= pcb->pcb_umapsr << ADDR_SR_SHFT;
 				map = &p->p_vmspace->vm_map;
 				/* KERNEL_PROC_LOCK(l); */
 
@@ -400,13 +397,42 @@ brain_damage2:
 	userret(l, frame);
 }
 
-static inline void
-setusr(content)
-	int content;
+#ifdef _LP64
+static inline vaddr_t
+setusr(vaddr_t uva, size_t *len_p)
 {
-	asm volatile ("isync; mtsr %0,%1; isync"
-		      :: "n"(USER_SR), "r"(content));
+	*len_p = SEGMENT_LENGTH - (uva & ~SEGMENT_MASK);
+	return pmap_setusr(uva) + (uva & ~SEGMENT_MASK);
 }
+static void
+unsetusr(void)
+{
+	pmap_unsetusr();
+}
+#else
+static inline vaddr_t
+setusr(vaddr_t uva, size_t *len_p)
+{
+	struct pcb *pcb = curpcb;
+	vaddr_t p;
+	KASSERT(pcb->pcb_kmapsr == 0);
+	pcb->pcb_kmapsr = USER_SR;
+	pcb->pcb_umapsr = uva >> ADDR_SR_SHFT;
+	*len_p = SEGMENT_LENGTH - (uva & ~SEGMENT_MASK);
+	p = (USER_SR << ADDR_SR_SHFT) + (uva & ~SEGMENT_MASK);
+	__asm __volatile ("isync; mtsr %0,%1; isync"
+	    ::	"n"(USER_SR), "r"(pcb->pcb_pm->pm_sr[pcb->pcb_umapsr]));
+	return p;
+}
+
+static void
+unsetusr(void)
+{
+	curpcb->pcb_kmapsr = 0;
+	__asm __volatile ("isync; mtsr %0,%1; isync"
+	    ::	"n"(USER_SR), "r"(EMPTY_SEGMENT));
+}
+#endif
 
 int
 copyin(udaddr, kaddr, len)
@@ -414,30 +440,29 @@ copyin(udaddr, kaddr, len)
 	void *kaddr;
 	size_t len;
 {
-	const char *up = udaddr;
+	vaddr_t uva = (vaddr_t) udaddr;
 	char *kp = kaddr;
-	char *p;
-	int rv;
-	size_t l;
 	faultbuf env;
+	int rv;
 
-	if ((rv = setfault(env)) != 0) {
-		curpcb->pcb_onfault = 0;
-		return rv;
-	}
+	if ((rv = setfault(env)) != 0)
+		goto out;
+
 	while (len > 0) {
-		p = (char *)USER_ADDR + ((u_int)up & ~SEGMENT_MASK);
-		l = ((char *)USER_ADDR + SEGMENT_LENGTH) - p;
-		if (l > len)
-			l = len;
-		setusr(curpcb->pcb_pm->pm_sr[(u_int)up >> ADDR_SR_SHFT]);
-		memcpy(kp, p, l);
-		up += l;
-		kp += l;
-		len -= l;
+		size_t seglen;
+		vaddr_t p = setusr(uva, &seglen);
+		if (seglen > len)
+			seglen = len;
+		memcpy(kp, (const char *) p, seglen);
+		uva += seglen;
+		kp += seglen;
+		len -= seglen;
 	}
+
+  out:
+	unsetusr();
 	curpcb->pcb_onfault = 0;
-	return 0;
+	return rv;
 }
 
 int
@@ -447,29 +472,28 @@ copyout(kaddr, udaddr, len)
 	size_t len;
 {
 	const char *kp = kaddr;
-	char *up = udaddr;
-	char *p;
-	int rv;
-	size_t l;
+	vaddr_t uva = (vaddr_t) udaddr;
 	faultbuf env;
+	int rv;
 
-	if ((rv = setfault(env)) != 0) {
-		curpcb->pcb_onfault = 0;
-		return rv;
-	}
+	if ((rv = setfault(env)) != 0)
+		goto out;
+
 	while (len > 0) {
-		p = (char *)USER_ADDR + ((u_int)up & ~SEGMENT_MASK);
-		l = ((char *)USER_ADDR + SEGMENT_LENGTH) - p;
-		if (l > len)
-			l = len;
-		setusr(curpcb->pcb_pm->pm_sr[(u_int)up >> ADDR_SR_SHFT]);
-		memcpy(p, kp, l);
-		up += l;
-		kp += l;
-		len -= l;
+		size_t seglen;
+		vaddr_t p = setusr(uva, &seglen);
+		if (seglen > len)
+			seglen = len;
+		memcpy((char *)p, kp, seglen);
+		uva += seglen;
+		kp += seglen;
+		len -= seglen;
 	}
+
+  out:
+	unsetusr();
 	curpcb->pcb_onfault = 0;
-	return 0;
+	return rv;
 }
 
 /*
@@ -492,15 +516,12 @@ kcopy(src, dst, len)
 	int rv;
 
 	oldfault = curpcb->pcb_onfault;
-	if ((rv = setfault(env)) != 0) {
-		curpcb->pcb_onfault = oldfault;
-		return rv;
-	}
 
-	memcpy(dst, src, len);
+	if ((rv = setfault(env)) == 0)
+		memcpy(dst, src, len);
 
 	curpcb->pcb_onfault = oldfault;
-	return 0;
+	return rv;
 }
 
 int
@@ -542,7 +563,7 @@ badaddr_read(addr, size, rptr)
 		x = *(volatile int32_t *)addr;
 		break;
 	default:
-		panic("badaddr: invalid size (%d)", size);
+		panic("badaddr: invalid size (%lu)", (u_long) size);
 	}
 
 	/* Make sure we took the machine check, if we caused one. */
@@ -631,41 +652,34 @@ copyinstr(udaddr, kaddr, len, done)
 	size_t len;
 	size_t *done;
 {
-	const char *up = udaddr;
+	vaddr_t uva = (vaddr_t) udaddr;
 	char *kp = kaddr;
-	char *p;
-	size_t l, ls, d;
 	faultbuf env;
 	int rv;
 
-	if ((rv = setfault(env)) != 0) {
-		curpcb->pcb_onfault = 0;
-		return rv;
-	}
-	d = 0;
+	if ((rv = setfault(env)) != 0)
+		goto out2;
+
 	while (len > 0) {
-		p = (char *)USER_ADDR + ((uintptr_t)up & ~SEGMENT_MASK);
-		l = ((char *)USER_ADDR + SEGMENT_LENGTH) - p;
-		if (l > len)
-			l = len;
-		setusr(curpcb->pcb_pm->pm_sr[(uintptr_t)up >> ADDR_SR_SHFT]);
-		for (ls = l; ls > 0; ls--) {
-			if ((*kp++ = *p++) == 0) {
-				d += l - ls + 1;
-				rv = 0;
+		size_t seglen;
+		vaddr_t p = setusr(uva, &seglen);
+		if (seglen > len)
+			seglen = len;
+		len -= seglen;
+		uva += seglen;
+		for (; seglen-- > 0; p++) {
+			if ((*kp++ = *(char *)p) == 0)
 				goto out;
-			}
 		}
-		d += l;
-		len -= l;
 	}
 	rv = ENAMETOOLONG;
 
  out:
+	if (done != NULL)
+		*done = kp - (char *) kaddr;
+ out2:
+	unsetusr();
 	curpcb->pcb_onfault = 0;
-	if (done != NULL) {
-		*done = d;
-	}
 	return rv;
 }
 
@@ -678,40 +692,33 @@ copyoutstr(kaddr, udaddr, len, done)
 	size_t *done;
 {
 	const char *kp = kaddr;
-	char *up = udaddr;
-	char *p;
-	int rv;
-	size_t l, ls, d;
+	vaddr_t uva = (vaddr_t) udaddr;
 	faultbuf env;
+	int rv;
 
-	if ((rv = setfault(env)) != 0) {
-		curpcb->pcb_onfault = 0;
-		return rv;
-	}
-	d = 0;
+	if ((rv = setfault(env)) != 0)
+		goto out2;
+
 	while (len > 0) {
-		p = (char *)USER_ADDR + ((uintptr_t)up & ~SEGMENT_MASK);
-		l = ((char *)USER_ADDR + SEGMENT_LENGTH) - p;
-		if (l > len)
-			l = len;
-		setusr(curpcb->pcb_pm->pm_sr[(uintptr_t)up >> ADDR_SR_SHFT]);
-		for (ls = l; ls > 0; ls--) {
-			if ((*p++ = *kp++) == 0) {
-				d += l - ls + 1;
-				rv = 0;
+		size_t seglen;
+		vaddr_t p = setusr(uva, &seglen);
+		if (seglen > len)
+			seglen = len;
+		len -= seglen;
+		uva += seglen;
+		for (; seglen-- > 0; p++) {
+			if ((*(char *)p = *kp++) == 0)
 				goto out;
-			}
 		}
-		d += l;
-		len -= l;
 	}
 	rv = ENAMETOOLONG;
 
  out:
+	if (done != NULL)
+		*done = kp - (char *) kaddr;
+ out2:
+	unsetusr();
 	curpcb->pcb_onfault = 0;
-	if (done != NULL) {
-		*done = d;
-	}
 	return rv;
 }
 
