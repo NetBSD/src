@@ -1,4 +1,4 @@
-/*	$NetBSD: adb.c,v 1.31 1999/11/07 08:07:20 scottr Exp $	*/
+/*	$NetBSD: adb.c,v 1.32 1999/11/07 08:22:50 scottr Exp $	*/
 
 /*
  * Copyright (C) 1994	Bradley A. Grantham
@@ -65,7 +65,6 @@ extern void	adb_jadbproc __P((void));
  * Global variables.
  */
 int	adb_polling = 0;	/* Are we polling?  (Debugger mode) */
-int	adb_initted = 0;	/* adb_init() has completed successfully */
 #ifdef ADB_DEBUG
 int	adb_debug = 0;		/* Output debugging messages */
 #endif /* ADB_DEBUG */
