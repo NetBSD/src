@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.33 2000/12/09 07:10:35 mycroft Exp $
+	$NetBSD: syscalls.master,v 1.34 2000/12/17 16:11:38 jdolecek Exp $
 
 ;	from: @(#)syscalls.master	8.2 (Berkeley) 1/13/94
 
@@ -128,7 +128,7 @@
 45	NOARGS		{ int sys_ktrace(char *fname, int ops, int facs, \
 			    int pid); }
 #else
-45	UNIMPL		ktrace
+45	EXCL		ktrace
 #endif
 46	NOARGS		{ int compat_13_sys_sigaction(int signum, \
 			    const struct sigaction13 *nsa, \
@@ -590,7 +590,7 @@
 332	UNIMPL		sched_get_priority_max
 333	UNIMPL		sched_get_priority_min
 334	UNIMPL		sched_rr_get_interval
-335	UNIMPL		utrace
+335	STD		{ int freebsd_sys_utrace(void *addr, size_t len); }
 336	UNIMPL		sendfile
 337	UNIMPL		kldsym
 338	UNIMPL		jail
