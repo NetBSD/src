@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.README,v 1.21 1997/03/24 21:54:13 christos Exp $
+#	$NetBSD: bsd.README,v 1.22 1997/03/27 09:10:09 mycroft Exp $
 #	@(#)bsd.README	5.1 (Berkeley) 5/11/90
 
 This is the README file for the new make "include" files for the BSD
@@ -265,10 +265,6 @@ BINMODE		Binary mode.
 CLEANFILES	Additional files to remove for the clean and cleandir targets.
 
 COPTS		Additional flags to the compiler when creating C objects.
-
-HIDEGAME	If HIDEGAME is defined, the binary is installed in
-		/usr/games/hide, and a symbolic link is created to
-		/usr/games/dm.
 
 LDADD		Additional loader objects.  Usually used for libraries.
 		For example, to load with the compatibility and utility
