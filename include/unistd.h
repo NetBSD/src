@@ -1,4 +1,4 @@
-/*	$NetBSD: unistd.h,v 1.59 1998/07/26 13:34:18 mycroft Exp $	*/
+/*	$NetBSD: unistd.h,v 1.60 1998/07/26 19:20:55 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -291,7 +291,7 @@ int	 getdomainname __P((char *, size_t));
 int	 getgrouplist __P((const char *, gid_t, gid_t *, int *));
 mode_t	 getmode __P((const void *, mode_t));
 int	 getsubopt __P((char **, char * const *, char **));
-const char *getusershell __P((void));
+const	 char *getusershell __P((void));
 int	 initgroups __P((const char *, gid_t));
 int	 iruserok __P((u_int32_t, int, const char *, const char *));
 int	 nfssvc __P((int, void *));
@@ -315,7 +315,7 @@ int	 setrgid __P((gid_t));
 int	 setruid __P((uid_t));
 void	 setusershell __P((void));
 void	 strmode __P((mode_t, char *));
-const char *strsignal __P((int));
+const	 char *strsignal __P((int));
 int	 swapctl __P((int, const void *, int));
 int	 swapon __P((const char *));		/* obsoleted by swapctl() */
 int	 syscall __P((int, ...));
