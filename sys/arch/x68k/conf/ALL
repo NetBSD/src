@@ -1,4 +1,4 @@
-#	$NetBSD: ALL,v 1.17 1997/10/19 09:29:55 oki Exp $
+#	$NetBSD: ALL,v 1.18 1997/11/17 01:58:39 lukem Exp $
 
 #
 #	ALL -- everything that's currently supported
@@ -26,6 +26,7 @@ options 	SWAPPAGER		# swap pager (anonymous and swap space)
 options 	VNODEPAGER		# vnode pager (mapped files)
 options 	DEVPAGER		# device pager (mapped devices)
 options 	DDB			# kernel debugger; recommended
+#options 	DDB_HISTORY_SIZE=100	# enable history editing in DDB
 options 	DIAGNOSTIC		# internal consistency checking
 
 options 	KTRACE			# system call tracing, a la ktrace(1)
