@@ -1,11 +1,11 @@
-/*	$NetBSD: plist.c,v 1.10 1998/10/08 12:15:25 agc Exp $	*/
+/*	$NetBSD: plist.c,v 1.11 1998/10/08 12:58:00 agc Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: plist.c,v 1.24 1997/10/08 07:48:15 charnier Exp";
 #else
-__RCSID("$NetBSD: plist.c,v 1.10 1998/10/08 12:15:25 agc Exp $");
+__RCSID("$NetBSD: plist.c,v 1.11 1998/10/08 12:58:00 agc Exp $");
 #endif
 #endif
 
@@ -390,7 +390,7 @@ delete_package(Boolean ign_err, Boolean nukedirs, Package *pkg)
 	    break;
 
 	case PLIST_UNEXEC:
-	    format_cmd(tmp, p->name, Where, last_file);
+	    format_cmd(tmp, sizeof(tmp), p->name, Where, last_file);
 	    if (Verbose)
 		printf("Execute `%s'\n", tmp);
 	    if (!Fake && system(tmp)) {
@@ -401,7 +401,7 @@ delete_package(Boolean ign_err, Boolean nukedirs, Package *pkg)
 
 	case PLIST_FILE:
 	    last_file = p->name;
-	    sprintf(tmp, "%s/%s", Where, p->name);
+	    (void) snprintf(tmp, sizeof(tmp), "%s/%s", Where, p->name);
 	    if (isdir(tmp)) {
 		warnx("attempting to delete directory `%s' as a file\n"
 	   "this packing list is incorrect - ignoring delete request", tmp);
@@ -444,7 +444,7 @@ delete_package(Boolean ign_err, Boolean nukedirs, Package *pkg)
 	    break;
 
 	case PLIST_DIR_RM:
-	    sprintf(tmp, "%s/%s", Where, p->name);
+	    (void) snprintf(tmp, sizeof(tmp), "%s/%s", Where, p->name);
 	    if (!isdir(tmp)) {
 		warnx("attempting to delete file `%s' as a directory\n"
 	"this packing list is incorrect - ignoring delete request", tmp);

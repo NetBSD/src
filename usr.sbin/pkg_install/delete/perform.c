@@ -1,11 +1,11 @@
-/*	$NetBSD: perform.c,v 1.7 1998/10/04 01:48:15 hubertf Exp $	*/
+/*	$NetBSD: perform.c,v 1.8 1998/10/08 12:57:59 agc Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: perform.c,v 1.15 1997/10/13 15:03:52 jkh Exp";
 #else
-__RCSID("$NetBSD: perform.c,v 1.7 1998/10/04 01:48:15 hubertf Exp $");
+__RCSID("$NetBSD: perform.c,v 1.8 1998/10/08 12:57:59 agc Exp $");
 #endif
 #endif
 
@@ -64,7 +64,7 @@ pkg_do(char *pkg)
     if (Plist.head)
 	free_plist(&Plist);
 
-    sprintf(LogDir, "%s/%s", (tmp = getenv(PKG_DBDIR)) ? tmp : DEF_LOG_DIR,
+    (void) snprintf(LogDir, sizeof(LogDir), "%s/%s", (tmp = getenv(PKG_DBDIR)) ? tmp : DEF_LOG_DIR,
     	    pkg);
     if (!fexists(LogDir)) {
 	warnx("no such package '%s' installed", pkg);
@@ -187,7 +187,7 @@ undepend(const char *deppkgname, char *pkg2delname)
      char *tmp;
      int s;
 
-     sprintf(fname, "%s/%s/%s",
+     (void) snprintf(fname, sizeof(fname), "%s/%s/%s",
 	     (tmp = getenv(PKG_DBDIR)) ? tmp : DEF_LOG_DIR,
 	     deppkgname, REQUIRED_BY_FNAME);
      fp = fopen(fname, "r");
@@ -195,7 +195,7 @@ undepend(const char *deppkgname, char *pkg2delname)
 	 warnx("couldn't open dependency file `%s'", fname);
 	 return 0;
      }
-     sprintf(ftmp, "%s.XXXXXX", fname);
+     (void) snprintf(ftmp, sizeof(ftmp), "%s.XXXXXX", fname);
      s = mkstemp(ftmp);
      if (s == -1) {
 	 fclose(fp);

@@ -1,11 +1,11 @@
-/*	$NetBSD: perform.c,v 1.23 1998/10/04 01:48:15 hubertf Exp $	*/
+/*	$NetBSD: perform.c,v 1.24 1998/10/08 12:57:59 agc Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: perform.c,v 1.44 1997/10/13 15:03:46 jkh Exp";
 #else
-__RCSID("$NetBSD: perform.c,v 1.23 1998/10/04 01:48:15 hubertf Exp $");
+__RCSID("$NetBSD: perform.c,v 1.24 1998/10/08 12:57:59 agc Exp $");
 #endif
 #endif
 
@@ -142,14 +142,14 @@ pkg_do(char *pkg)
 		    warnx("can't stat package file '%s'", pkg_fullname);
 		    goto bomb;
 		}
-		sprintf(extract_contents, "--fast-read %s", CONTENTS_FNAME);
+		(void) snprintf(extract_contents, sizeof(extract_contents), "--fast-read %s", CONTENTS_FNAME);
 		extract = extract_contents;
 	    }
 	    else {
 		extract = NULL;
 		sb.st_size = 100000;	/* Make up a plausible average size */
 	    }
-	    Home = make_playpen(playpen, sb.st_size * 4);
+	    Home = make_playpen(playpen, sizeof(playpen), sb.st_size * 4);
 	    if (!Home)
 		warnx("unable to make playpen for %ld bytes",
 		    (long)(sb.st_size * 4));
@@ -248,7 +248,7 @@ pkg_do(char *pkg)
     PkgName = (p = find_plist(&Plist, PLIST_NAME)) ? p->name : "anonymous";
 
     /* See if we're already registered */
-    sprintf(LogDir, "%s/%s", dbdir, PkgName);
+    (void) snprintf(LogDir, sizeof(LogDir), "%s/%s", dbdir, PkgName);
     if ((isdir(LogDir) || islinktodir(LogDir)) && !Force) {
 	warnx("package `%s' already recorded as installed", PkgName);
 	code = 1;
@@ -461,7 +461,7 @@ pkg_do(char *pkg)
 	    code = 1;
 	    goto success;	/* well, partial anyway */
 	}
-	sprintf(LogDir, "%s/%s", dbdir, PkgName);
+	(void) snprintf(LogDir, sizeof(LogDir), "%s/%s", dbdir, PkgName);
 	zapLogDir = 1;
 	if (Verbose)
 	    printf("Attempting to record package into %s.\n", LogDir);
@@ -478,7 +478,7 @@ pkg_do(char *pkg)
 	    move_file(".", DEINSTALL_FNAME, LogDir);
 	if (fexists(REQUIRE_FNAME))
 	    move_file(".", REQUIRE_FNAME, LogDir);
-	sprintf(contents, "%s/%s", LogDir, CONTENTS_FNAME);
+	(void) snprintf(contents, sizeof(contents), "%s/%s", LogDir, CONTENTS_FNAME);
 	cfile = fopen(contents, "w");
 	if (!cfile) {
 	    warnx("can't open new contents file '%s'! can't register pkg",
@@ -501,7 +501,7 @@ pkg_do(char *pkg)
 		continue;
 	    if (Verbose)
 		printf("Attempting to record dependency on package `%s'\n", p->name);
-	    sprintf(contents, "%s/%s", dbdir,
+	    (void) snprintf(contents, sizeof(contents), "%s/%s", dbdir,
 	    	    basename_of(p->name));
 	    if (ispkgpattern(p->name)) {
 		char *s;

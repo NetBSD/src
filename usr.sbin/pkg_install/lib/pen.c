@@ -1,11 +1,11 @@
-/*	$NetBSD: pen.c,v 1.10 1998/10/08 12:15:25 agc Exp $	*/
+/*	$NetBSD: pen.c,v 1.11 1998/10/08 12:58:00 agc Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: pen.c,v 1.25 1997/10/08 07:48:12 charnier Exp";
 #else
-__RCSID("$NetBSD: pen.c,v 1.10 1998/10/08 12:15:25 agc Exp $");
+__RCSID("$NetBSD: pen.c,v 1.11 1998/10/08 12:58:00 agc Exp $");
 #endif
 #endif
 
@@ -69,7 +69,7 @@ where_playpen(void)
 
 /* Find a good place to play. */
 static char *
-find_play_pen(char *pen, size_t sz)
+find_play_pen(char *pen, size_t pensize, size_t sz)
 {
     char *cp;
     struct stat sb;
@@ -77,9 +77,9 @@ find_play_pen(char *pen, size_t sz)
     if (pen[0] && stat(pen, &sb) != FAIL && (min_free(pen) >= sz))
 	return pen;
     else if ((cp = getenv("PKG_TMPDIR")) != NULL && stat(cp, &sb) != FAIL && (min_free(cp) >= sz))
-	sprintf(pen, "%s/instmp.XXXXXX", cp);
+	(void) snprintf(pen, pensize, "%s/instmp.XXXXXX", cp);
     else if ((cp = getenv("TMPDIR")) != NULL && stat(cp, &sb) != FAIL && (min_free(cp) >= sz))
-	sprintf(pen, "%s/instmp.XXXXXX", cp);
+	(void) snprintf(pen, pensize, "%s/instmp.XXXXXX", cp);
     else if (stat("/var/tmp", &sb) != FAIL && min_free("/var/tmp") >= sz)
 	strcpy(pen, "/var/tmp/instmp.XXXXXX");
     else if (stat("/tmp", &sb) != FAIL && min_free("/tmp") >= sz)
@@ -102,9 +102,9 @@ find_play_pen(char *pen, size_t sz)
  * pathname of previous working directory.
  */
 char *
-make_playpen(char *pen, size_t sz)
+make_playpen(char *pen, size_t pensize, size_t sz)
 {
-    if (!find_play_pen(pen, sz))
+    if (!find_play_pen(pen, pensize, sz))
 	return NULL;
 
     if (!mktemp(pen)) {

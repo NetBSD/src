@@ -1,11 +1,11 @@
-/*	$NetBSD: str.c,v 1.9 1998/10/08 12:22:54 agc Exp $	*/
+/*	$NetBSD: str.c,v 1.10 1998/10/08 12:58:00 agc Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "Id: str.c,v 1.5 1997/10/08 07:48:21 charnier Exp";
 #else
-__RCSID("$NetBSD: str.c,v 1.9 1998/10/08 12:22:54 agc Exp $");
+__RCSID("$NetBSD: str.c,v 1.10 1998/10/08 12:58:00 agc Exp $");
 #endif
 #endif
 
@@ -37,17 +37,16 @@ __RCSID("$NetBSD: str.c,v 1.9 1998/10/08 12:22:54 agc Exp $");
 char *
 basename_of(char *str)
 {
-    char *basename = str + strlen(str) - 1;
+	char *slash;
 
-    while (basename != str && basename[-1] != '/')
-	--basename;
-    return basename;
+	return ((slash = strrchr(str, '/')) == (char *) NULL) ? str : slash + 1;
 }
 
 /* Return the dirname portion of a path */
 char *
 dirname_of(const char *path)
 {
+	size_t	cc;
 	char	*s;
 	char	*t;
 
@@ -58,8 +57,12 @@ dirname_of(const char *path)
 		/* "/foo" -> return "/" */
 		return "/";
 	}
-	t = (char *) malloc((size_t)(s - path) + 1);
-	(void) sprintf(t, "%.*s", (int)(s - path), path);
+	cc = (size_t)(s - path) + 1;
+	if ((t = (char *) malloc(cc)) == (char *) NULL) {
+		errx(1, "out of memory in dirname_of");
+	}
+	(void) memcpy(t, path, cc);
+	t[cc] = 0;
 	return t;
 }
 
@@ -368,4 +371,18 @@ findbestmatchingname(const char *dir, const char *pattern)
 		return strdup(buf);
 	}
 	return NULL;
+}
+
+/* bounds-checking strncpy */
+char *
+strnncpy(char *to, size_t tosize, char *from, size_t cc)
+{
+	size_t	len;
+
+	if ((len = cc) >= tosize - 1) {
+		len = tosize - 1;
+	}
+	(void) strncpy(to, from, len);
+	to[len] = 0;
+	return to;
 }

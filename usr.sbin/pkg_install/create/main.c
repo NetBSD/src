@@ -1,11 +1,11 @@
-/*	$NetBSD: main.c,v 1.6 1998/06/05 11:22:20 frueauf Exp $	*/
+/*	$NetBSD: main.c,v 1.7 1998/10/08 12:57:59 agc Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: main.c,v 1.17 1997/10/08 07:46:23 charnier Exp";
 #else
-__RCSID("$NetBSD: main.c,v 1.6 1998/06/05 11:22:20 frueauf Exp $");
+__RCSID("$NetBSD: main.c,v 1.7 1998/10/08 12:57:59 agc Exp $");
 #endif
 #endif
 
@@ -40,6 +40,7 @@ char	*Mtree		= NULL;
 char	*Pkgdeps	= NULL;
 char	*Pkgcfl		= NULL;
 char	PlayPen[FILENAME_MAX];
+size_t	PlayPenSize	= sizeof(PlayPen);
 int	Dereference	= 0;
 int	PlistOnly	= 0;
 

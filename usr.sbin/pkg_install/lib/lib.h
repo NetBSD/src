@@ -1,4 +1,4 @@
-/* $NetBSD: lib.h,v 1.10 1998/10/08 12:15:24 agc Exp $ */
+/* $NetBSD: lib.h,v 1.11 1998/10/08 12:58:00 agc Exp $ */
 
 /* from FreeBSD Id: lib.h,v 1.25 1997/10/08 07:48:03 charnier Exp */
 
@@ -93,7 +93,8 @@ typedef enum _plist_t plist_t;
 typedef unsigned int Boolean;
 
 struct _plist {
-    struct _plist *prev, *next;
+    struct _plist *prev;
+    struct _plist *next;
     char *name;
     Boolean marked;
     plist_t type;
@@ -101,7 +102,8 @@ struct _plist {
 typedef struct _plist *PackingList;
 
 struct _pack {
-    struct _plist *head, *tail;
+    struct _plist *head;
+    struct _plist *tail;
 };
 typedef struct _pack Package;
 
@@ -113,7 +115,7 @@ typedef int (*matchfn)(const char *found, char *data);
 /* Misc */
 int		vsystem(const char *, ...);
 void		cleanup(int);
-char		*make_playpen(char *, size_t);
+char		*make_playpen(char *, size_t, size_t);
 char		*where_playpen(void);
 void		leave_playpen(char *);
 off_t		min_free(char *);
@@ -133,6 +135,7 @@ int		pmatch(const char *, const char *);
 int		findmatchingname(const char *, const char *, matchfn, char *); /* doesn't really belong here */
 char		*findbestmatchingname(const char *, const char *); /* neither */
 int		ispkgpattern(const char *);
+char		*strnncpy(char *to, size_t tosize, char *from, size_t cc);
 
 /* File */
 Boolean		fexists(char *);
@@ -155,7 +158,7 @@ void		move_file(char *, char *, char *);
 void		copy_hierarchy(char *, char *, Boolean);
 int		delete_hierarchy(char *, Boolean, Boolean);
 int		unpack(char *, char *);
-void		format_cmd(char *, char *, char *, char *);
+void		format_cmd(char *, size_t , char *, char *, char *);
 
 /* Packing list */
 PackingList	new_plist_entry(void);

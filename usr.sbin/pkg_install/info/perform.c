@@ -1,11 +1,11 @@
-/*	$NetBSD: perform.c,v 1.14 1998/10/08 12:15:24 agc Exp $	*/
+/*	$NetBSD: perform.c,v 1.15 1998/10/08 12:58:00 agc Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: perform.c,v 1.23 1997/10/13 15:03:53 jkh Exp";
 #else
-__RCSID("$NetBSD: perform.c,v 1.14 1998/10/08 12:15:24 agc Exp $");
+__RCSID("$NetBSD: perform.c,v 1.15 1998/10/08 12:58:00 agc Exp $");
 #endif
 #endif
 
@@ -92,7 +92,7 @@ pkg_do(char *pkg)
 				code = 1;
 				goto bail;
 			}
-			Home = make_playpen(PlayPen, sb.st_size / 2);
+			Home = make_playpen(PlayPen, PlayPenSize, sb.st_size / 2);
 			if (unpack(fname, "+*")) {
 				warnx("error during unpacking, no info for '%s' available", pkg);
 				code = 1;
@@ -107,7 +107,7 @@ pkg_do(char *pkg)
 	else {
 		char           *tmp;
 
-		sprintf(log_dir, "%s/%s", (tmp = getenv(PKG_DBDIR)) ? tmp : DEF_LOG_DIR,
+		(void) snprintf(log_dir, sizeof(log_dir), "%s/%s", (tmp = getenv(PKG_DBDIR)) ? tmp : DEF_LOG_DIR,
 			pkg);
 		if (!fexists(log_dir)) {
 			warnx("can't find package `%s' installed or in a file!", pkg);

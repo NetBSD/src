@@ -1,11 +1,11 @@
-/*	$NetBSD: file.c,v 1.18 1998/10/08 12:15:24 agc Exp $	*/
+/*	$NetBSD: file.c,v 1.19 1998/10/08 12:58:00 agc Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: file.c,v 1.29 1997/10/08 07:47:54 charnier Exp";
 #else
-__RCSID("$NetBSD: file.c,v 1.18 1998/10/08 12:15:24 agc Exp $");
+__RCSID("$NetBSD: file.c,v 1.19 1998/10/08 12:58:00 agc Exp $");
 #endif
 #endif
 
@@ -303,8 +303,8 @@ fileGetURL(char *base, char *spec)
     ftp = ftpGetURL(fname, &status);
     if (ftp) {
 	pen[0] = '\0';
-	if ((rp = make_playpen(pen, 0)) != NULL) {
-            rp=strdup(pen); /* XXX be safe for nested calls */
+	if ((rp = make_playpen(pen, sizeof(pen), 0)) != NULL) {
+            rp=strdup(pen); /* be safe for nested calls */
 	    if (Verbose)
 		printf("Extracting from FTP connection into %s\n", pen);
 	    tpid = fork();
@@ -582,61 +582,64 @@ unpack(char *pkg, char *flist)
     return 0;
 }
 
-/* Using fmt, replace all instances of:
- *
+/*
+ * Using fmt, replace all instances of:
+ * 
  * %F	With the parameter "name"
  * %D	With the parameter "dir"
  * %B	Return the directory part ("base") of %D/%F
  * %f	Return the filename part of %D/%F
- *
- * Does not check for overflow - caution!
- *
+ * 
+ * Check that no overflows can occur.
  */
 void
-format_cmd(char *buf, char *fmt, char *dir, char *name)
+format_cmd(char *buf, size_t size, char *fmt, char *dir, char *name)
 {
-    char *cp, scratch[FILENAME_MAX * 2];
+	char	scratch[FILENAME_MAX * 2];
+	char   *bufp;
+	char   *cp;
 
-    while (*fmt) {
-	if (*fmt == '%') {
-	    switch (*++fmt) {
-	    case 'F':
-		strcpy(buf, name);
-		buf += strlen(name);
-		break;
+	for (bufp = buf ; (int)(bufp - buf) < size && *fmt ; ) {
+		if (*fmt == '%') {
+			switch (*++fmt) {
+			case 'F':
+				strnncpy(bufp, size - (int)(bufp - buf), name, strlen(name));
+				bufp += strlen(bufp);
+				break;
 
-	    case 'D':
-		strcpy(buf, dir);
-		buf += strlen(dir);
-		break;
+			case 'D':
+				strnncpy(bufp, size - (int)(bufp - buf), dir, strlen(dir));
+				bufp += strlen(bufp);
+				break;
 
-	    case 'B':
-		sprintf(scratch, "%s/%s", dir, name);
-		cp = &scratch[strlen(scratch) - 1];
-		while (cp != scratch && *cp != '/')
-		    --cp;
-		*cp = '\0';
-		strcpy(buf, scratch);
-		buf += strlen(scratch);
-		break;
+			case 'B':
+				(void) snprintf(scratch, sizeof(scratch), "%s/%s", dir, name);
+				if ((cp = strrchr(scratch, '/')) == (char *) NULL) {
+					cp = scratch;
+				}
+				strnncpy(bufp, size - (int)(bufp - buf), scratch, (size_t)(cp - scratch));
+				bufp += strlen(bufp);
+				break;
 
-	    case 'f':
-		sprintf(scratch, "%s/%s", dir, name);
-		cp = &scratch[strlen(scratch) - 1];
-		while (cp != scratch && *(cp - 1) != '/')
-		    --cp;
-		strcpy(buf, cp);
-		buf += strlen(cp);
-		break;
+			case 'f':
+				(void) snprintf(scratch, sizeof(scratch), "%s/%s", dir, name);
+				if ((cp = strrchr(scratch, '/')) == (char *) NULL) {
+					cp = scratch;
+				} else {
+					cp++;
+				}
+				strnncpy(bufp, size - (int)(bufp - buf), cp, strlen(cp));
+				bufp += strlen(bufp);
+				break;
 
-	    default:
-		*buf++ = *fmt;
-		break;
-	    }
-	    ++fmt;
+			default:
+				*bufp++ = *fmt;
+				break;
+			}
+			++fmt;
+		} else {
+			*bufp++ = *fmt++;
+		}
 	}
-	else
-	    *buf++ = *fmt++;
-    }
-    *buf = '\0';
+	*bufp = '\0';
 }
