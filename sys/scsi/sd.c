@@ -1,4 +1,4 @@
-/*	$NetBSD: sd.c,v 1.46 1994/11/21 10:39:25 mycroft Exp $	*/
+/*	$NetBSD: sd.c,v 1.47 1994/11/22 03:23:55 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
@@ -183,11 +183,10 @@ sdopen(dev, flag, fmt)
 	dev_t dev;
 	int flag, fmt;
 {
-	int error = 0;
+	int error;
 	int unit, part;
 	struct sd_data *sd;
 	struct scsi_link *sc_link;
-	int s;
 
 	unit = SDUNIT(dev);
 	if (unit >= sdcd.cd_ndevs)
@@ -203,30 +202,21 @@ sdopen(dev, flag, fmt)
 	    ("sdopen: dev=0x%x (unit %d (of %d), partition %d)\n", dev, unit,
 	    sdcd.cd_ndevs, part));
 
-	s = splbio();
-
 	while ((sd->flags & SDF_LOCKED) != 0) {
 		sd->flags |= SDF_WANTED;
-		if ((error = tsleep(sd, PRIBIO | PCATCH, "sdopn", 0)) != 0) {
-			splx(s);
+		if ((error = tsleep(sd, PRIBIO | PCATCH, "sdopn", 0)) != 0)
 			return error;
-		}
 	}
 
-	/*
-	 * If any partition is open, but the disk has been invalidated,
-	 * disallow further opens.
-	 */
-	if (sd->sc_dk.dk_openmask != 0 &&
-	    (sc_link->flags & SDEV_MEDIA_LOADED) == 0) {
-		splx(s);
-		return ENXIO;
-	}
-
-	if (sd->sc_dk.dk_openmask == 0) {
+	if (sd->sc_dk.dk_openmask != 0) {
+		/*
+		 * If any partition is open, but the disk has been invalidated,
+		 * disallow further opens.
+		 */
+		if ((sc_link->flags & SDEV_MEDIA_LOADED) == 0)
+			return ENXIO;
+	} else {
 		sd->flags |= SDF_LOCKED;
-
-		splx(s);
 
 		/*
 		 * "unit attention" errors should occur here if the 
@@ -248,7 +238,7 @@ sdopen(dev, flag, fmt)
 		 */
 		sc_link->flags |= SDEV_OPEN;	/* unit attn becomes an err now */
 		if (scsi_test_unit_ready(sc_link, 0)) {
-			SC_DEBUG(sc_link, SDEV_DB3, ("device not reponding\n"));
+			SC_DEBUG(sc_link, SDEV_DB3, ("device not responding\n"));
 			error = ENXIO;
 			goto bad;
 		}
@@ -273,8 +263,6 @@ sdopen(dev, flag, fmt)
 			SC_DEBUG(sc_link, SDEV_DB3, ("Disklabel loaded "));
 		}
 
-		s = splbio();
-
 		sd->flags &= ~SDF_LOCKED;
 		if ((sd->flags & SDF_WANTED) != 0) {
 			sd->flags &= ~SDF_WANTED;
@@ -282,11 +270,7 @@ sdopen(dev, flag, fmt)
 		}
 	}
 
-	splx(s);
-
-	/*
-	 *  Check that the partition exists
-	 */
+	/* Check that the partition exists. */
 	if (part != RAW_PART &&
 	    (part >= sd->sc_dk.dk_label.d_npartitions ||
 	     sd->sc_dk.dk_label.d_partitions[part].p_fstype == FS_UNUSED)) {
@@ -317,15 +301,12 @@ bad:
 		sc_link->flags &= ~SDEV_OPEN;
 	}
 
-	s = splbio();
-
 	sd->flags &= ~SDF_LOCKED;
 	if ((sd->flags & SDF_WANTED) != 0) {
 		sd->flags &= ~SDF_WANTED;
 		wakeup(sd);
 	}
 
-	splx(s);
 	return error;
 }
 
@@ -340,6 +321,7 @@ sdclose(dev, flag, fmt)
 {
 	struct sd_data *sd = sdcd.cd_devs[SDUNIT(dev)];
 	int part = SDPART(dev);
+	int s;
 
 	switch (fmt) {
 	case S_IFCHR:
@@ -352,9 +334,28 @@ sdclose(dev, flag, fmt)
 	sd->sc_dk.dk_openmask = sd->sc_dk.dk_copenmask | sd->sc_dk.dk_bopenmask;
 
 	if (sd->sc_dk.dk_openmask == 0) {
+		sd->flags |= SDF_LOCKED;
+
+#if 0
+		s = splbio();
+		while (...) {
+			sd->flags |= SDF_WAITING;
+			if ((error = tsleep(sd, PRIBIO | PCATCH, "sdcls", 0)) != 0)
+				return error;
+		}
+		splx(s);
+#endif
+
 		scsi_prevent(sd->sc_link, PR_ALLOW, SCSI_ERR_OK | SCSI_SILENT);
 		sd->sc_link->flags &= ~SDEV_OPEN;
+
+		sd->flags &= ~SDF_LOCKED;
+		if ((sd->flags & SDF_WANTED) != 0) {
+			sd->flags &= ~SDF_WANTED;
+			wakeup(sd);
+		}
 	}
+
 	return 0;
 }
 
