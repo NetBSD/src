@@ -1,4 +1,4 @@
-/*	$NetBSD: sa11x0.c,v 1.2 2001/02/23 04:31:19 ichiro Exp $	*/
+/*	$NetBSD: sa11x0.c,v 1.3 2001/02/24 12:43:52 toshii Exp $	*/
 
 /*-
  * Copyright (c) 2001, The NetBSD Foundation, Inc.  All rights reserved.
@@ -82,6 +82,7 @@ struct cfattach saip_ca = {
 };
 
 extern struct bus_space sa11x0_bs_tag;
+extern vaddr_t saipic_base;
 
 extern int SetCPSR(int, int);
 
@@ -154,6 +155,7 @@ sa11x0_attach(parent, self, aux)
 	if (bus_space_map(sc->sc_iot, SAIPIC_BASE, SAIPIC_NPORTS,
 			0, &sc->sc_ioh))
 		panic("%s: Cannot map registers\n", self->dv_xname);
+	saipic_base = sc->sc_ioh;
 
 	printf("\n");
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: sa11x0_reg.h,v 1.2 2001/02/23 04:31:19 ichiro Exp $	*/
+/*	$NetBSD: sa11x0_reg.h,v 1.3 2001/02/24 12:43:52 toshii Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.  All rights reserved.
@@ -39,31 +39,19 @@
 #define _HPCARM_SA11X0_REG_H_
 
 /* Physical register base addresses */
-#define SAOST_HW_BASE		0x90000000	/* OS Timer */
-#define SARTC_HW_BASE		0x90010000	/* Real-Time Clock */
-#define SAPMR_HW_BASE		0x90020000	/* Power Manager */
-#define SARCR_HW_BASE		0x90030000	/* Reset Controller */
-#define SAGPIO_HW_BASE		0x90040000	/* GPIO */
-#define SAIPIC_HW_BASE		0x90050000	/* Interrupt Controller */
+#define SAOST_BASE		0x90000000	/* OS Timer */
+#define SARTC_BASE		0x90010000	/* Real-Time Clock */
+#define SAPMR_BASE		0x90020000	/* Power Manager */
+#define SARCR_BASE		0x90030000	/* Reset Controller */
+#define SAGPIO_BASE		0x90040000	/* GPIO */
+#define SAIPIC_BASE		0x90050000	/* Interrupt Controller */
 #define SACOM3_HW_BASE		0x80050000	/* UART 3  */
 
-#define SADMAC_HW_BASE		0xB0000000	/* DMA Controller */
-#define SALCD_HW_BASE		0xB0100000	/* LCD */
+#define SADMAC_BASE		0xB0000000	/* DMA Controller */
+#define SALCD_BASE		0xB0100000	/* LCD */
 
 /* Register base virtual addresses mapped by initarm() */
-#define SAOST_BASE		0xd0000000
-#define SARTC_BASE		0xd0001000
-#define SAPMR_BASE		0xd0002000
-#define SARCR_BASE		0xd0003000
-#define SAGPIO_BASE		0xd0004000
-#define SAIPIC_BASE		0xd0005000
-#define SAIPIC_BASE_0		0xd0000000 /* == IO_BASE XXX */
-#define SAIPIC_BASE_1		0x5000
-#define SADMAC_BASE		0xd0006000
-
-#define SACOM3_BASE		0xd000d000	/* UART 3  */
-
-#define SALCD_BASE		0xd0010000	/* LCD */
+#define SACOM3_BASE             0xd000d000
 
 /* Interrupt controller registers */
 #define SAIPIC_NPORTS		6
