@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.36 1999/01/03 02:23:28 mark Exp $	*/
+/*	$NetBSD: pmap.c,v 1.37 1999/01/09 21:10:50 mark Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -1131,8 +1131,8 @@ pmap_allocpagedir(pmap)
 	if (!(pt->pt_flags & PTFLAG_KPT)) {
 		/* Duplicate the kernel mapping i.e. all mappings 0xf0000000+ */
 
-		bcopy((void *)kernel_pmap->pm_pdir + (PD_SIZE - KERNEL_PD_SIZE),
-		    (void *)pmap->pm_pdir + (PD_SIZE - KERNEL_PD_SIZE),
+		bcopy((char *)kernel_pmap->pm_pdir + (PD_SIZE - KERNEL_PD_SIZE),
+		    (char *)pmap->pm_pdir + (PD_SIZE - KERNEL_PD_SIZE),
 		    KERNEL_PD_SIZE);
 		pt->pt_flags |= PTFLAG_KPT;
 	}
@@ -1166,10 +1166,10 @@ pmap_allocpagedir(pmap)
 	 * into the page table used to map the
 	 * pmap's page tables
 	 */
-	bcopy((void *)(PROCESS_PAGE_TBLS_BASE
+	bcopy((char *)(PROCESS_PAGE_TBLS_BASE
 	    + (PROCESS_PAGE_TBLS_BASE >> (PGSHIFT - 2))
 	    + ((PD_SIZE - KERNEL_PD_SIZE) >> 2)),
-	    (void *)pmap->pm_vptpt + ((PD_SIZE - KERNEL_PD_SIZE) >> 2),
+	    (char *)pmap->pm_vptpt + ((PD_SIZE - KERNEL_PD_SIZE) >> 2),
 	    (KERNEL_PD_SIZE >> 2));
 
 	pmap->pm_count = 1;
