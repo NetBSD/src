@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.124 1997/05/27 01:07:48 thorpej Exp $
+#	$NetBSD: files,v 1.125 1997/06/11 10:40:25 bouyer Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -424,13 +424,22 @@ file ufs/lfs/lfs_vfsops.c		lfs
 file ufs/lfs/lfs_vnops.c		lfs
 file ufs/mfs/mfs_vfsops.c		mfs
 file ufs/mfs/mfs_vnops.c		mfs
-file ufs/ufs/ufs_bmap.c			ffs | lfs | mfs
-file ufs/ufs/ufs_ihash.c		ffs | lfs | mfs
+file ufs/ufs/ufs_bmap.c			ffs | lfs | mfs | ext2fs
+file ufs/ufs/ufs_ihash.c		ffs | lfs | mfs | ext2fs
 file ufs/ufs/ufs_inode.c		ffs | lfs | mfs
-file ufs/ufs/ufs_lookup.c		ffs | lfs | mfs
+file ufs/ufs/ufs_lookup.c		ffs | lfs | mfs | ext2fs
 file ufs/ufs/ufs_quota.c		quota & (ffs | lfs | mfs)
-file ufs/ufs/ufs_vfsops.c		ffs | lfs | mfs
-file ufs/ufs/ufs_vnops.c		ffs | lfs | mfs
+file ufs/ufs/ufs_vfsops.c		ffs | lfs | mfs | ext2fs
+file ufs/ufs/ufs_vnops.c		ffs | lfs | mfs | ext2fs
+file ufs/ext2fs/ext2fs_alloc.c	ext2fs
+file ufs/ext2fs/ext2fs_balloc.c	ext2fs
+file ufs/ext2fs/ext2fs_bmap.c	ext2fs
+file ufs/ext2fs/ext2fs_inode.c	ext2fs
+file ufs/ext2fs/ext2fs_lookup.c	ext2fs
+file ufs/ext2fs/ext2fs_readwrite.c ext2fs
+file ufs/ext2fs/ext2fs_subr.c	ext2fs
+file ufs/ext2fs/ext2fs_vfsops.c	ext2fs
+file ufs/ext2fs/ext2fs_vnops.c	ext2fs
 file vm/device_pager.c			devpager
 file vm/kern_lock.c
 file vm/swap_pager.c			swappager
