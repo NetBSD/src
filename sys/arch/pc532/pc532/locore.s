@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.61 2000/05/31 01:46:16 nisimura Exp $	*/
+/*	$NetBSD: locore.s,v 1.62 2000/05/31 05:06:55 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1993 Philip A. Nelson.
@@ -809,6 +809,8 @@ sw1:	/* Get the process and unlink it from the queue. */
 
 	/* Isolate process. XXX Is this necessary? */
 	movqd	0,P_BACK(r2)
+
+	/* p->p_cpu initialized in fork1() for single-processor */
 
 	/* Record new process. */
 	movb	SONPROC,P_STAT(r2)	/* p->p_stat = SONPROC */

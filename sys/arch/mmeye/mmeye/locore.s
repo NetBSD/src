@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.15 2000/05/31 01:46:16 nisimura Exp $	*/
+/*	$NetBSD: locore.s,v 1.16 2000/05/31 05:06:52 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1997
@@ -768,6 +768,8 @@ XL_switch_error:
 	/* Isolate process.  XXX Is this necessary? */
 	xor	r0, r0
 	mov.l	r0, @(P_BACK, r8)	/* r8->p_back = 0 */
+
+	/* p->p_cpu initialized in fork1() for single-processor */
 
 	/* Process now running on a processor. */
 	mov	#P_STAT, r0

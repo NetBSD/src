@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuswitch.S,v 1.33 2000/05/26 21:19:31 thorpej Exp $	*/
+/*	$NetBSD: cpuswitch.S,v 1.34 2000/05/31 05:06:47 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -428,6 +428,8 @@ findqueue:
 	 */
 	mov	r0, #0x00000000
 	str	r0, [r6, #(P_BACK)]
+
+	/* p->p_cpu initialized in fork1() for single-processor */
 
 	/* Process is now on a processor. */
 	mov	r0, #SONPROC			/* p->p_stat = SONPROC */
