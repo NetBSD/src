@@ -1,4 +1,4 @@
-/*	$NetBSD: history.c,v 1.24 2003/08/07 16:44:31 agc Exp $	*/
+/*	$NetBSD: history.c,v 1.25 2003/10/18 23:48:42 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)history.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: history.c,v 1.24 2003/08/07 16:44:31 agc Exp $");
+__RCSID("$NetBSD: history.c,v 1.25 2003/10/18 23:48:42 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -87,6 +87,7 @@ struct history {
 #define	HENTER(h, ev, str)	(*(h)->h_enter)((h)->h_ref, ev, str)
 #define	HADD(h, ev, str)	(*(h)->h_add)((h)->h_ref, ev, str)
 
+#define	h_strdup(a)	strdup(a)
 #define	h_malloc(a)	malloc(a)
 #define	h_realloc(a, b)	realloc((a), (b))
 #define	h_free(a)	free(a)
@@ -394,7 +395,7 @@ history_def_insert(history_t *h, HistEvent *ev, const char *str)
 	h->cursor = (hentry_t *) h_malloc(sizeof(hentry_t));
 	if (h->cursor == NULL)
 		goto oomem;
-	if ((h->cursor->ev.str = strdup(str)) == NULL) {
+	if ((h->cursor->ev.str = h_strdup(str)) == NULL) {
 		h_free((ptr_t)h->cursor);
 		goto oomem;
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: el.c,v 1.35 2003/10/16 22:26:32 christos Exp $	*/
+/*	$NetBSD: el.c,v 1.36 2003/10/18 23:48:42 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)el.c	8.2 (Berkeley) 1/3/94";
 #else
-__RCSID("$NetBSD: el.c,v 1.35 2003/10/16 22:26:32 christos Exp $");
+__RCSID("$NetBSD: el.c,v 1.36 2003/10/18 23:48:42 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -68,7 +68,10 @@ el_init(const char *prog, FILE *fin, FILE *fout, FILE *ferr)
 	el->el_infd = fileno(fin);
 	el->el_outfile = fout;
 	el->el_errfile = ferr;
-	el->el_prog = strdup(prog);
+	if ((el->el_prog = el_strdup(prog)) == NULL) {
+		el_free(el);
+		return NULL;
+	}
 
 	/*
          * Initialize all the modules. Order is important!!!
@@ -76,7 +79,7 @@ el_init(const char *prog, FILE *fin, FILE *fout, FILE *ferr)
 	el->el_flags = 0;
 
 	if (term_init(el) == -1) {
-		free(el->el_prog);
+		el_free(el->el_prog);
 		el_free(el);
 		return NULL;
 	}
