@@ -1,4 +1,4 @@
-/*	$NetBSD: bios.S,v 1.10 1995/01/18 17:50:51 mycroft Exp $	*/
+/*	$NetBSD: bios.S,v 1.11 1995/03/12 00:10:56 mycroft Exp $	*/
 
 /*
  * Ported to boot 386BSD by Julian Elischer (julian@tfs.com) Sept 1992
@@ -71,39 +71,32 @@ ENTRY(biosread)
 	pushl	%ebp
 	movl	%esp, %ebp
 	pushl	%ebx
-	pushl	%ecx
-	pushl	%edx
-	pushl	%es
 
-	movb	0x10(%ebp), %dh
-	movw	0x0c(%ebp), %cx
+	movb	16(%ebp), %dh
+	movw	12(%ebp), %cx
 	xchgb	%ch, %cl	# cylinder; the highest 2 bits of cyl is in %cl
 	rorb	$2, %cl
-	movb	0x14(%ebp), %al
+	movb	20(%ebp), %al
 	orb	%al, %cl
 	incb	%cl		# sector; sec starts from 1, not 0
-	movb	0x8(%ebp), %dl	# device
-	movl	0x1c(%ebp), %ebx	# offset
+	movb	8(%ebp), %dl	# device
+	movl	28(%ebp), %ebx	# offset
 				# prot_to_real will set %es to BOOTSEG
 
 	call	_C_LABEL(prot_to_real)	# enter real mode
 
 	movb	$0x2, %ah	# subfunction
 	addr32
-	movb	0x18(%ebp), %al	# number of sectors
+	movb	24(%ebp), %al	# number of sectors
 	int	$0x13
-
-	movl	%eax, %ebx	# save return value (actually movw %ax, %bx)
+	setc	%bl
 
 	data32
 	call	_C_LABEL(real_to_prot) # back to protected mode
 
 	xorl	%eax, %eax
-	movb	%bh, %al	# return value in %ax
+	movb	%bl, %al	# return value in %ax
 
-	popl	%es
-	popl	%edx
-	popl	%ecx
 	popl	%ebx
 	popl	%ebp
 	ret
@@ -129,7 +122,7 @@ ENTRY(putc)
 	pushl	%ebx
 	pushl	%ecx
 
-	movb	0x8(%ebp), %cl
+	movb	8(%ebp), %cl
 
 	call	_C_LABEL(prot_to_real)
 
@@ -258,11 +251,8 @@ ENTRY(get_diskinfo)
 	pushl	%ebp
 	movl	%esp, %ebp
 	pushl	%ebx
-	pushl	%ecx
-	pushl	%edx
-	pushl	%es
 
-	movb	0x8(%ebp), %dl		# diskinfo(drive #)
+	movb	8(%ebp), %dl		# diskinfo(drive #)
 
 	call	_C_LABEL(prot_to_real)	# enter real mode
 
@@ -296,9 +286,6 @@ ok:
 	andb	$0x3f, %cl		# mask of cylinder gunk
 	movb	%cl, %al		# max sector (and # sectors)
 
-	popl	%es
-	popl	%edx
-	popl	%ecx
 	popl	%ebx
 	popl	%ebp
 	ret

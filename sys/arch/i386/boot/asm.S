@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.S,v 1.11 1995/01/18 17:50:50 mycroft Exp $	*/
+/*	$NetBSD: asm.S,v 1.12 1995/03/12 00:10:53 mycroft Exp $	*/
 
 /*
  * Ported to boot 386BSD by Julian Elischer (julian@tfs.com) Sept 1992
@@ -102,7 +102,6 @@ xprot:
  * 	transfer from protected mode to real mode
  */
 ENTRY(prot_to_real)
-
 	# set up a dummy stack frame for the second seg change.
 	movl 	_ourseg, %eax
 	pushw	%ax
@@ -145,13 +144,13 @@ ENTRY(startprog)
 	movl	%esp, %ebp
 
 	# get things we need into registers
-	movl	0x8(%ebp), %ecx		# entry offset 
-	movl	0xc(%ebp), %eax		# &argv
+	movl	8(%ebp), %ecx		# entry offset 
+	movl	12(%ebp), %eax		# &argv
 
-	# make a new stack at 0:0xa0000 (big segs)
+	# make a new stack at 0:0x90000 (big segs)
 	movl	$0x10, %ebx
 	movw	%bx, %ss
-	movl	$0xa0000, %ebx
+	movl	$0x90000, %ebx
 	movl	%ebx, %esp
 	
 	# push some number of args onto the stack
@@ -159,8 +158,8 @@ ENTRY(startprog)
 	pushl	32(%eax)		# argv[8] = extmem
 	pushl	16(%eax)		# argv[4] = esym
 	pushl	$0			# nominally a cyl offset in the boot.
-	pushl	0x8(%eax)		# argv[2] = bootdev
-	pushl	0x4(%eax)		# argv[1] = howto
+	pushl	8(%eax)			# argv[2] = bootdev
+	pushl	4(%eax)			# argv[1] = howto
 	pushl	$0			# dummy 'return' address
 	
 	# push on our entry address
@@ -185,7 +184,6 @@ ENTRY(pbzero)
 	movl	%esp, %ebp
 	pushl	%es
 	pushl	%edi
-	pushl	%ecx
 
 	cld
 
@@ -193,18 +191,16 @@ ENTRY(pbzero)
 	movl	$0x10, %eax
 	movl	%ax, %es
 
-	movl	0x8(%ebp), %edi		# destination
-	movl	0xc(%ebp), %ecx		# count
+	movl	8(%ebp), %edi		# destination
+	movl	12(%ebp), %ecx		# count
 	xorl	%eax, %eax		# value
 
 	rep
 	stosb
 
-	popl	%ecx
 	popl	%edi
 	popl	%es
 	popl	%ebp
-
 	ret
 
 /*
@@ -217,7 +213,6 @@ ENTRY(pcpy)
 	pushl	%es
 	pushl	%esi
 	pushl	%edi
-	pushl	%ecx
 
 	cld
 
@@ -225,19 +220,17 @@ ENTRY(pcpy)
 	movl	$0x10, %eax
 	movl	%ax, %es
 
-	movl	0x8(%ebp), %esi		# source
-	movl	0xc(%ebp), %edi		# destination
-	movl	0x10(%ebp), %ecx	# count
+	movl	8(%ebp), %esi		# source
+	movl	12(%ebp), %edi		# destination
+	movl	16(%ebp), %ecx		# count
 
 	rep
 	movsb
 
-	popl	%ecx
 	popl	%edi
 	popl	%esi
 	popl	%es
 	popl	%ebp
-
 	ret
 
 #ifdef CHECKSUM
@@ -250,7 +243,6 @@ ENTRY(cksum)
 	movl	%esp, %ebp
 	pushl	%es
 	pushl	%edi
-	pushl	%ecx
 
 	cld
 
@@ -258,8 +250,8 @@ ENTRY(cksum)
 	movl	$0x10, %eax
 	movl	%ax, %es
 
-	movl	0x8(%ebp), %edi		# destination
-	movl	0xc(%ebp), %ecx		# count
+	movl	8(%ebp), %edi		# destination
+	movl	12(%ebp), %ecx		# count
 	shrl	$2, %ecx
 	xorl	%edx, %edx		# value
 
@@ -270,8 +262,29 @@ ENTRY(cksum)
 
 	movl	%edx, %eax
 
-	popl	%ecx
 	popl	%edi
 	popl	%es
 	popl	%ebp
+	ret
+#endif
+
+#if 0
+ENTRY(getword)
+	pushl	%ebp
+	movl	%esp, %ebp
+	pushl	%es
+
+	# set %es to point at the flat segment
+	movl	$0x10, %eax
+	movl	%ax, %es
+
+	movl	8(%ebp), %eax
+	es
+	movl	(%eax), %edx
+
+	movl	%edx, %eax
+
+	popl	%es
+	popl	%ebp
+	ret
 #endif
