@@ -1,4 +1,4 @@
-/*	$NetBSD: dtop.c,v 1.19 1996/10/13 03:39:31 christos Exp $	*/
+/*	$NetBSD: dtop.c,v 1.20 1996/10/13 13:13:55 jonathan Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -114,8 +114,8 @@ SOFTWARE.
 
 #include <dev/cons.h>
 
+#include <mips/cpuregs.h>		/* mips cached->uncached */
 #include <machine/pmioctl.h>
-#include <machine/machConst.h>
 #include <machine/dc7085cons.h>
 
 #include <pmax/pmax/asic.h>
