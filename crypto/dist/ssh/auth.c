@@ -1,4 +1,4 @@
-/*	$NetBSD: auth.c,v 1.1.1.10 2001/11/27 04:03:45 itojun Exp $	*/
+/*	$NetBSD: auth.c,v 1.1.1.11 2002/03/08 01:20:31 itojun Exp $	*/
 /*
  * Copyright (c) 2000 Markus Friedl.  All rights reserved.
  *
@@ -24,7 +24,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: auth.c,v 1.30 2001/11/17 19:14:34 stevesk Exp $");
+RCSID("$OpenBSD: auth.c,v 1.35 2002/03/01 13:12:10 markus Exp $");
 
 #include <libgen.h>
 
@@ -72,43 +72,60 @@ allowed_user(struct passwd * pw)
 	shell = (pw->pw_shell[0] == '\0') ? _PATH_BSHELL : pw->pw_shell;
 
 	/* deny if shell does not exists or is not executable */
-	if (stat(shell, &st) != 0)
+	if (stat(shell, &st) != 0) {
+		log("User %.100s not allowed because shell %.100s does not exist",
+		    pw->pw_name, shell);
 		return 0;
-	if (!((st.st_mode & S_IFREG) && (st.st_mode & (S_IXOTH|S_IXUSR|S_IXGRP))))
+	}
+	if (!((st.st_mode & S_IFREG) && (st.st_mode & (S_IXOTH|S_IXUSR|S_IXGRP)))) {
+		log("User %.100s not allowed because shell %.100s is not executable",
+		    pw->pw_name, shell);
 		return 0;
+	}
 
 	if (options.num_deny_users > 0 || options.num_allow_users > 0) {
-		hostname = get_canonical_hostname(options.reverse_mapping_check);
+		hostname = get_canonical_hostname(options.verify_reverse_mapping);
 		ipaddr = get_remote_ipaddr();
 	}
 
 	/* Return false if user is listed in DenyUsers */
 	if (options.num_deny_users > 0) {
 		for (i = 0; i < options.num_deny_users; i++)
-			if (match_user(pw->pw_name, hostname, ipaddr,
-			    options.deny_users[i]))
+ 			if (match_user(pw->pw_name, hostname, ipaddr,
+			    options.deny_users[i])) {
+ 				log("User %.100s not allowed because listed in DenyUsers",
+ 				    pw->pw_name);
 				return 0;
+			}
 	}
 	/* Return false if AllowUsers isn't empty and user isn't listed there */
 	if (options.num_allow_users > 0) {
 		for (i = 0; i < options.num_allow_users; i++)
-			if (match_user(pw->pw_name, hostname, ipaddr,
+ 			if (match_user(pw->pw_name, hostname, ipaddr,
 			    options.allow_users[i]))
 				break;
 		/* i < options.num_allow_users iff we break for loop */
-		if (i >= options.num_allow_users)
+		if (i >= options.num_allow_users) {
+			log("User %.100s not allowed because not listed in AllowUsers",
+			    pw->pw_name);
 			return 0;
+		}
 	}
 	if (options.num_deny_groups > 0 || options.num_allow_groups > 0) {
 		/* Get the user's group access list (primary and supplementary) */
-		if (ga_init(pw->pw_name, pw->pw_gid) == 0)
+		if (ga_init(pw->pw_name, pw->pw_gid) == 0) {
+			log("User %.100s not allowed because not in any group",
+			    pw->pw_name);
 			return 0;
+		}
 
 		/* Return false if one of user's groups is listed in DenyGroups */
 		if (options.num_deny_groups > 0)
 			if (ga_match(options.deny_groups,
 			    options.num_deny_groups)) {
 				ga_free();
+				log("User %.100s not allowed because a group is listed in DenyGroups",
+				    pw->pw_name);
 				return 0;
 			}
 		/*
@@ -119,6 +136,8 @@ allowed_user(struct passwd * pw)
 			if (!ga_match(options.allow_groups,
 			    options.num_allow_groups)) {
 				ga_free();
+				log("User %.100s not allowed because none of user's groups are listed in AllowGroups",
+				    pw->pw_name);
 				return 0;
 			}
 		ga_free();
@@ -221,7 +240,7 @@ expand_filename(const char *filename, struct passwd *pw)
 		}
 		if (cp[0] == '%' && cp[1] == 'u') {
 			buffer_append(&buffer, pw->pw_name,
-			     strlen(pw->pw_name));
+			    strlen(pw->pw_name));
 			cp++;
 			continue;
 		}
@@ -275,7 +294,7 @@ check_key_in_hostfiles(struct passwd *pw, Key *key, const char *host,
 		if (options.strict_modes &&
 		    (stat(user_hostfile, &st) == 0) &&
 		    ((st.st_uid != 0 && st.st_uid != pw->pw_uid) ||
-		     (st.st_mode & 022) != 0)) {
+		    (st.st_mode & 022) != 0)) {
 			log("Authentication refused for %.100s: "
 			    "bad owner or modes for %.200s",
 			    pw->pw_name, user_hostfile);
@@ -348,7 +367,7 @@ secure_filename(FILE *f, const char *file, struct passwd *pw,
 		if (stat(buf, &st) < 0 ||
 		    (st.st_uid != 0 && st.st_uid != uid) ||
 		    (st.st_mode & 022) != 0) {
-			snprintf(err, errlen, 
+			snprintf(err, errlen,
 			    "bad ownership or modes for directory %s", buf);
 			return -1;
 		}

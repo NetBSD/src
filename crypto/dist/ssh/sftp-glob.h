@@ -1,8 +1,8 @@
-/*	$NetBSD: sftp-glob.h,v 1.1.1.4 2001/09/27 02:00:52 itojun Exp $	*/
-/* $OpenBSD: sftp-glob.h,v 1.5 2001/06/26 17:27:24 markus Exp $ */
+/*	$NetBSD: sftp-glob.h,v 1.1.1.5 2002/03/08 01:21:19 itojun Exp $	*/
+/* $OpenBSD: sftp-glob.h,v 1.6 2002/02/13 00:59:23 djm Exp $ */
 
 /*
- * Copyright (c) 2001 Damien Miller.  All rights reserved.
+ * Copyright (c) 2001,2002 Damien Miller.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -27,5 +27,13 @@
 
 /* Remote sftp filename globbing */
 
+#ifndef _SFTP_GLOB_H
+#define _SFTP_GLOB_H
+
+#include "sftp-client.h"
+
 int
-remote_glob(int, int, const char *, int, int (*)(const char *, int), glob_t *);
+remote_glob(struct sftp_conn *, const char *, int, 
+    int (*)(const char *, int), glob_t *);
+
+#endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: auth-passwd.c,v 1.1.1.6 2001/09/27 02:00:36 itojun Exp $	*/
+/*	$NetBSD: auth-passwd.c,v 1.1.1.7 2002/03/08 01:20:30 itojun Exp $	*/
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -37,10 +37,9 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: auth-passwd.c,v 1.23 2001/06/26 16:15:23 dugsong Exp $");
+RCSID("$OpenBSD: auth-passwd.c,v 1.24 2002/03/04 12:43:06 markus Exp $");
 
 #include "packet.h"
-#include "xmalloc.h"
 #include "log.h"
 #include "servconf.h"
 #include "auth.h"
