@@ -1,4 +1,4 @@
-/*	$NetBSD: fat.h,v 1.15 2000/03/27 17:40:26 jdolecek Exp $	*/
+/*	$NetBSD: fat.h,v 1.16 2000/05/13 06:04:41 cgd Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1997 Wolfgang Solfrank.
@@ -87,8 +87,8 @@
  * of course).
  * Note that cn is supposed to be already adjusted accordingly to FAT type.
  */ 
-#define	MSDOSFSEOF(pmp, cn)	\
-	(((cn) & CLUST_EOFS) == (CLUST_EOFS & (pmp)->pm_fatmask))
+#define	MSDOSFSEOF(cn, fatmask)	\
+	(((cn) & CLUST_EOFS) == (CLUST_EOFS & (fatmask)))
 
 #ifdef _KERNEL
 /*
