@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_denode.c,v 1.44 2000/05/28 04:13:57 mycroft Exp $	*/
+/*	$NetBSD: msdosfs_denode.c,v 1.45 2000/06/28 02:49:15 mrg Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -58,8 +58,6 @@
 #include <sys/kernel.h>		/* defines "time" */
 #include <sys/dirent.h>
 #include <sys/namei.h>
-
-#include <vm/vm.h>
 
 #include <uvm/uvm_extern.h>
 
