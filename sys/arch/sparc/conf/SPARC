@@ -1,5 +1,5 @@
 # from:	@(#)SPARC	8.1 (Berkeley) 6/29/93
-# $Id: SPARC,v 1.4 1994/03/03 13:17:14 deraadt Exp $
+# $Id: SPARC,v 1.5 1994/04/12 07:47:20 deraadt Exp $
 # SPARCstation 1, 1+, 2, etc.
 
 include	"std.sparc"
@@ -51,10 +51,15 @@ sd*	at tg? drive ?
 
 bwtwo*	at sbus? slot ? offset ?
 cgthree* at sbus? slot ? offset ?
+cgsix* at sbus? slot ? offset ?
 
 le*	at sbus? slot ? offset ?
 
 pseudo-device	loop
-pseudo-device	pty
-pseudo-device	sl
+pseudo-device	pty	32
+pseudo-device	sl	2
 pseudo-device	kbd
+pseudo-device	ppp	2
+pseudo-device	tun	4
+pseudo-device	vn	3
+pseudo-device	bpfilter 16
