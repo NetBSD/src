@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.101 2001/06/02 18:09:23 chs Exp $	*/
+/*	$NetBSD: trap.c,v 1.102 2001/06/03 03:12:31 chs Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -229,10 +229,11 @@ trap(type, code, v, tf)
 	u_int code, v;
 	struct trapframe tf;
 {
-	register struct proc *p;
-	register int sig, tmp;
+	struct proc *p;
+	int sig, tmp;
 	u_int ucode;
 	u_quad_t sticks;
+	caddr_t onfault;
 
 	uvmexp.traps++;
 	p = curproc;
@@ -508,7 +509,11 @@ trap(type, code, v, tf)
 		 * This function may also, for example, disallow any
 		 * faults in the kernel text segment, etc.
 		 */
+
+		onfault = p->p_addr->u_pcb.pcb_onfault;
+		p->p_addr->u_pcb.pcb_onfault = NULL;
 		rv = _pmap_fault(map, va, ftype);
+		p->p_addr->u_pcb.pcb_onfault = onfault;
 
 #ifdef	DEBUG
 		if (rv && MDB_ISPID(p->p_pid)) {
