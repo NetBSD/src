@@ -38,7 +38,7 @@
  * from: Utah $Hdr: locore.s 1.66 92/12/22$
  *
  *	from: @(#)locore.s	8.6 (Berkeley) 5/27/94
- *	$Id: locore.s,v 1.29 1994/09/09 03:58:38 mycroft Exp $
+ *	$Id: locore.s,v 1.30 1994/09/09 23:40:15 mycroft Exp $
  */
 
 /*
@@ -404,11 +404,21 @@ _trap0:
 	addql	#4,sp			| pop syscall arg
 	tstl	_astpending
 	jne	Lrei2
+	tstb	_ssir
+	jeq	Ltrap1
+	movw	#SPL1,sr
+	tstb	_ssir
+	jne	Lsir1
+Ltrap1:	
 	movl	sp@(FR_SP),a0		| grab and restore
 	movl	a0,usp			|   user SP
 	moveml	sp@+,#0x7FFF		| restore most registers
 	addql	#8,sp			| pop SP and stack adjust
-	jra	Lchksir			| all done
+#ifdef STACKCHECK
+	jra	Ldorte
+#else
+	rte
+#endif
 
 /*
  * Routines for traps 1 and 2.  The meaning of the two traps depends
@@ -764,6 +774,7 @@ Lgotsir:
 	moveml	#0xFFFF,sp@-		| save all registers
 	movl	usp,a1			| including
 	movl	a1,sp@(FR_SP)		|    the users SP
+Lsir1:	
 	clrl	sp@-			| VA == none
 	clrl	sp@-			| code == none
 	movl	#T_SSIR,sp@-		| type == software interrupt
