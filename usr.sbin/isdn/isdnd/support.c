@@ -27,7 +27,7 @@
  *	i4b daemon - misc support routines
  *	----------------------------------
  *
- *	$Id: support.c,v 1.5 2002/03/30 07:12:41 martin Exp $ 
+ *	$Id: support.c,v 1.6 2002/04/05 15:26:59 martin Exp $ 
  *
  * $FreeBSD$
  *
@@ -233,7 +233,32 @@ setup_dialout(struct cfg_entry *cep)
 {
 	struct isdn_ctrl_state *ctrl;
 
-	ctrl = find_ctrl_state(cep->isdncontroller);
+	if (cep->isdncontroller < 0) {
+		/* we are free to choose a controller */
+		for (ctrl = get_first_ctrl_state(); ctrl; ctrl = NEXT_CTRL(ctrl)) {
+			if (get_controller_state(ctrl) != CTRL_UP)
+				continue;
+			switch(cep->isdnchannel) {
+			case CHAN_B1:
+			case CHAN_B2:
+				if (ret_channel_state(ctrl, cep->isdnchannel) != CHAN_IDLE)
+					continue;
+				break;
+
+			case CHAN_ANY:
+				if (ret_channel_state(ctrl, CHAN_B1) != CHAN_IDLE &&
+				   ret_channel_state(ctrl, CHAN_B2) != CHAN_IDLE)
+					continue;
+				break;
+			}
+			/* this controller looks ok */
+			break;
+		}
+	} else {
+		/* fixed controller in config, use that */
+		ctrl = find_ctrl_state(cep->isdncontroller);
+	}
+
 	if (ctrl == NULL)
 		return (ERROR);
 
@@ -245,7 +270,7 @@ setup_dialout(struct cfg_entry *cep)
 		return(ERROR);
 	}
 
-	cep->isdncontrollerused = cep->isdncontroller;
+	cep->isdncontrollerused = ctrl->bri;
 
 	/* check channel available */
 
