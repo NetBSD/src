@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.2 2000/08/15 04:56:46 wdk Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.3 2000/08/16 21:54:44 wdk Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -65,6 +65,7 @@
 
 #include <machine/cpu.h>
 #include <machine/mainboard.h>
+#include <machine/autoconf.h>
 
 /*
  * The following several variables are related to
@@ -113,7 +114,9 @@ cpu_rootconf()
 	setroot(booted_device, booted_partition);
 }
 
-dev_t	bootdev = 0;		/* should be dev_t, but not until 32 bits */
+dev_t	bootdev = NULL;
+char	boot_class;
+int	boot_id, boot_lun, boot_part;
 
 /*
  * Attempt to find the device from which we were booted.
@@ -123,6 +126,16 @@ findroot(devpp, partp)
 	struct device **devpp;
 	int *partp;
 {
+	struct device *dv;
+
+	for (dv = TAILQ_FIRST(&alldevs); dv; dv = TAILQ_NEXT(dv, dv_list)) {
+		if (dv->dv_class == boot_class && dv->dv_unit == boot_id) {
+			*devpp = dv;
+			*partp = boot_part;
+			return;
+		}
+	}
+
 	/*
 	 * Default to "not found".
 	 */
@@ -131,3 +144,28 @@ findroot(devpp, partp)
 	return;
 }
 
+void
+makebootdev(cp)
+	char *cp;
+{
+	boot_class = -1;
+	boot_id = boot_lun = boot_part = 0;
+
+	if (strlen(cp) < 6)
+		return;
+	if (strncmp(cp, "dk", 2) == 0 && cp[4] == '(') { /* Disk */
+		cp += 5;
+		if (*cp >= '0' && *cp <= '9')
+			boot_lun = *cp++ - '0';
+		if (*cp == ',')
+			cp += 1;
+		if (*cp >= '0' && *cp <= '9')
+			boot_id = *cp++ - '0';
+		if (*cp == ',')
+			cp += 1;
+		if (*cp >= '0' && *cp <= '9')
+			boot_part = *cp - '0';
+		boot_class = DV_DISK;
+		return;
+	}
+}
