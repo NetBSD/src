@@ -39,7 +39,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)savecore.c	8.3 (Berkeley) 1/2/94";*/
-static char *rcsid = "$Id: savecore.c,v 1.14 1994/06/11 08:01:17 mycroft Exp $";
+static char *rcsid = "$Id: savecore.c,v 1.15 1994/09/17 00:23:00 mycroft Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -97,7 +97,7 @@ long	dumplo;				/* where dump starts on dumpdev */
 int	dumpmag;			/* magic number in dump */
 int	dumpsize;			/* amount of memory dumped */
 
-char	*vmunix;
+char	*kernel;
 char	*dirname;			/* directory to save dumps in */
 char	*ddname;			/* name of dump device */
 dev_t	dumpdev;			/* dump device */
@@ -148,7 +148,7 @@ main(argc, argv)
 			force = 1;
 			break;
 		case 'N':
-			vmunix = optarg;
+			kernel = optarg;
 			break;
 		case 'z':
 			compress = 1;
@@ -166,7 +166,7 @@ main(argc, argv)
 		dirname = argv[0];
 	}
 	if (argc == 2)
-		vmunix = argv[1];
+		kernel = argv[1];
 
 	(void)time(&now);
 	kmem_setup();
@@ -219,7 +219,7 @@ kmem_setup()
 			exit(1);
 		}
 
-	dump_sys = vmunix ? vmunix : _PATH_UNIX;
+	dump_sys = kernel ? kernel : _PATH_UNIX;
 	if ((nlist(dump_sys, dump_nl)) == -1)
 		syslog(LOG_ERR, "%s: nlist: %s", dump_sys, strerror(errno));
 	for (i = 0; dumpsyms[i] != -1; i++)
@@ -251,7 +251,7 @@ kmem_setup()
 		syslog(LOG_ERR, "%s: fdopen: %m", _PATH_KMEM);
 		exit(1);
 	}
-	if (vmunix)
+	if (kernel)
 		return;
 	(void)fseek(fp, (off_t)current_nl[X_VERSION].n_value, L_SET);
 	(void)fgets(vers, sizeof(vers), fp);
@@ -273,7 +273,7 @@ check_kmem()
 	}
 	fseek(fp, (off_t)(dumplo + ok(dump_nl[X_VERSION].n_value)), L_SET);
 	fgets(core_vers, sizeof(core_vers), fp);
-	if (strcmp(vers, core_vers) && vmunix == 0)
+	if (strcmp(vers, core_vers) && kernel == 0)
 		syslog(LOG_WARNING,
 		    "warning: %s version mismatch:\n\t%s\nand\t%s\n",
 		    _PATH_UNIX, vers, core_vers);
@@ -350,7 +350,7 @@ err1:			syslog(LOG_WARNING, "%s: %s", path, strerror(errno));
 	(void)fclose(fp);
 
 	/* Create the core file. */
-	(void)snprintf(path, sizeof(path), "%s/vmcore.%d%s",
+	(void)snprintf(path, sizeof(path), "%s/netbsd.%d%s.core",
 	    dirname, bounds, compress ? ".Z" : "");
 	if (compress) {
 		if ((fp = zopen(path, "w", 0)) == NULL) {
@@ -398,7 +398,7 @@ err1:			syslog(LOG_WARNING, "%s: %s", path, strerror(errno));
 			syslog(LOG_ERR, "%s: %s",
 			    path, strerror(nw == 0 ? EIO : errno));
 err2:			syslog(LOG_WARNING,
-			    "WARNING: vmcore may be incomplete");
+			    "WARNING: core may be incomplete");
 			(void)printf("\n");
 			exit(1);
 		}
@@ -411,7 +411,7 @@ err2:			syslog(LOG_WARNING,
 		(void)close(ofd);
 
 	/* Copy the kernel. */
-	ifd = Open(vmunix ? vmunix : _PATH_UNIX, O_RDONLY);
+	ifd = Open(kernel ? kernel : _PATH_UNIX, O_RDONLY);
 	(void)snprintf(path, sizeof(path), "%s/netbsd.%d%s",
 	    dirname, bounds, compress ? ".Z" : "");
 	if (compress) {
@@ -432,15 +432,15 @@ err2:			syslog(LOG_WARNING,
 			syslog(LOG_ERR, "%s: %s",
 			    path, strerror(nw == 0 ? EIO : errno));
 			syslog(LOG_WARNING,
-			    "WARNING: vmunix may be incomplete");
+			    "WARNING: kernel may be incomplete");
 			exit(1);
 		}
 	}
 	if (nr < 0) {
 		syslog(LOG_ERR, "%s: %s",
-		    vmunix ? vmunix : _PATH_UNIX, strerror(errno));
+		    kernel ? kernel : _PATH_UNIX, strerror(errno));
 		syslog(LOG_WARNING,
-		    "WARNING: vmunix may be incomplete");
+		    "WARNING: kernel may be incomplete");
 		exit(1);
 	}
 	if (compress)
@@ -530,18 +530,18 @@ int
 check_space()
 {
 	register FILE *fp;
-	char *tvmunix;
-	off_t minfree, spacefree, vmunixsize, needed;
+	char *tkernel;
+	off_t minfree, spacefree, kernelsize, needed;
 	struct stat st;
 	struct statfs fsbuf;
 	char buf[100], path[MAXPATHLEN];
 
-	tvmunix = vmunix ? vmunix : _PATH_UNIX;
-	if (stat(tvmunix, &st) < 0) {
-		syslog(LOG_ERR, "%s: %m", tvmunix);
+	tkernel = kernel ? kernel : _PATH_UNIX;
+	if (stat(tkernel, &st) < 0) {
+		syslog(LOG_ERR, "%s: %m", tkernel);
 		exit(1);
 	}
-	vmunixsize = st.st_blocks * S_BLKSIZE;
+	kernelsize = st.st_blocks * S_BLKSIZE;
 	if (statfs(dirname, &fsbuf) < 0) {
 		syslog(LOG_ERR, "%s: %m", dirname);
 		exit(1);
@@ -559,7 +559,7 @@ check_space()
 		(void)fclose(fp);
 	}
 
-	needed = (dumpsize + vmunixsize) / 1024;
+	needed = (dumpsize + kernelsize) / 1024;
  	if (minfree > 0 && spacefree - needed < minfree) {
 		syslog(LOG_WARNING,
 		    "no dump, not enough free space on device");
