@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_malloc.c,v 1.24 1997/02/02 21:22:16 thorpej Exp $	*/
+/*	$NetBSD: kern_malloc.c,v 1.25 1997/10/09 13:02:18 mycroft Exp $	*/
 
 /*
  * Copyright 1996 Christopher G. Demetriou.  All rights reserved.
@@ -52,7 +52,7 @@ struct kmembuckets bucket[MINBUCKET + 16];
 struct kmemstats kmemstats[M_LAST];
 struct kmemusage *kmemusage;
 char *kmembase, *kmemlimit;
-char *memname[] = INITKMEMNAMES;
+const char *memname[] = INITKMEMNAMES;
 
 #ifdef DIAGNOSTIC
 /*
