@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs.c,v 1.9 2003/04/02 22:02:56 he Exp $	*/
+/*	$NetBSD: ffs.c,v 1.10 2003/04/02 23:02:29 he Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: ffs.c,v 1.9 2003/04/02 22:02:56 he Exp $");
+__RCSID("$NetBSD: ffs.c,v 1.10 2003/04/02 23:02:29 he Exp $");
 #endif	/* !__lint */
 
 #include <sys/param.h>
@@ -91,11 +91,12 @@ ffs_read_disk_block(ib_params *params, uint64_t blkno, int size, char *blk)
 
 	rv = pread(params->fsfd, blk, size, blkno * DEV_BSIZE);
 	if (rv == -1) {
-		warn("Reading block %llu in `%s'", blkno, params->filesystem);
+		warn("Reading block %llu in `%s'", 
+		    (unsigned long long)blkno, params->filesystem);
 		return (0);
 	} else if (rv != size) {
-		warnx("Reading block %llu in `%s': short read", blkno,
-		    params->filesystem);
+		warnx("Reading block %llu in `%s': short read",
+		    (unsigned long long)blkno, params->filesystem);
 		return (0);
 	}
 
