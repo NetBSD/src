@@ -1,4 +1,4 @@
-/*	$NetBSD: rup.c,v 1.22 2000/06/03 19:32:34 fvdl Exp $	*/
+/*	$NetBSD: rup.c,v 1.23 2001/01/16 02:43:37 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1993, John Brezak
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: rup.c,v 1.22 2000/06/03 19:32:34 fvdl Exp $");
+__RCSID("$NetBSD: rup.c,v 1.23 2001/01/16 02:43:37 cgd Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -98,6 +98,7 @@ search_host(struct sockaddr *sa)
 				return 1;
 			break;
 		default:
+			break;
 		}
 	}
 	return(0);
