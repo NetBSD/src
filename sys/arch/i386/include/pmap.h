@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.46 2000/09/06 19:09:46 thorpej Exp $	*/
+/*	$NetBSD: pmap.h,v 1.47 2000/09/06 23:32:13 thorpej Exp $	*/
 
 /*
  *
@@ -187,18 +187,6 @@
 #define NKPTP_MIN	4	/* smallest value we allow */
 #define NKPTP_MAX	(1024 - (KERNBASE/NBPD) - 1)
 				/* largest value (-1 for APTP space) */
-
-/*
- * various address macros
- *
- *  vtopte: return a pointer to the PTE mapping a VA
- *  kvtopte: same as above (takes a KVA, but doesn't matter with this pmap)
- *
- * plus alternative versions of the above
- */
-
-#define vtopte(VA)	(PTE_BASE + i386_btop(VA))
-#define kvtopte(VA)	vtopte(VA)
 
 /*
  * pdei/ptei: generate index into PDP/PTP from a VA
@@ -491,6 +479,35 @@ pmap_protect(pmap, sva, eva, prot)
 			pmap_remove(pmap, sva, eva);
 		}
 	}
+}
+
+/*
+ * various address inlines
+ *
+ *  vtopte: return a pointer to the PTE mapping a VA, works only for
+ *  user and PT addresses
+ *
+ *  kvtopte: return a pointer to the PTE mapping a kernel VA
+ */
+
+#include <lib/libkern/libkern.h>
+
+static __inline pt_entry_t *
+vtopte(vaddr_t va)
+{
+
+	KASSERT(va < (PDSLOT_KERN << PDSHIFT));
+
+	return (PTE_BASE + i386_btop(va));
+}
+
+static __inline pt_entry_t *
+kvtopte(vaddr_t va)
+{
+
+	KASSERT(va >= (PDSLOT_KERN << PDSHIFT));
+
+	return (PTE_BASE + i386_btop(va));
 }
 
 paddr_t vtophys __P((vaddr_t));
