@@ -1,4 +1,4 @@
-/*	$NetBSD: db_disasm.c,v 1.11 2002/12/06 10:12:13 scw Exp $	*/
+/*	$NetBSD: db_disasm.c,v 1.12 2003/05/17 09:31:33 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -1090,6 +1090,11 @@ db_disasm(db_addr_t loc, boolean_t dummy)
 	format_func_t fp;
 	opcode_t op;
 	const char *mnemonic, *comma = "";
+
+	/*
+	 * Ditch the SHmedia bit
+	 */
+	loc &= ~3;
 
 	if (loc < SH5_KSEG0_BASE) {
 		op = fuword((void *)loc);
