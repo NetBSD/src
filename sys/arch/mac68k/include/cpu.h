@@ -57,7 +57,7 @@
  * from: Utah $Hdr: cpu.h 1.16 91/03/25$
  *
  *	from: @(#)cpu.h	7.7 (Berkeley) 6/27/91
- *	$Id: cpu.h,v 1.12 1994/07/07 00:24:10 briggs Exp $
+ *	$Id: cpu.h,v 1.13 1994/07/10 16:56:31 briggs Exp $
  */
 
 /*
@@ -195,6 +195,17 @@ extern unsigned char ssir;
 #define MACH_MACLC575		92
 #define MACH_MACQ605		94
 
+/*
+ * Machine classes.  These define subsets of the above machines.
+ */
+#define MACH_CLASSH	0x0000	/* Hopeless cases... */
+#define MACH_CLASSII	0x0001	/* MacII class */
+#define MACH_CLASSIIci	0x0003	/* Similar to IIci -- Have RBV. */
+#define MACH_CLASSIIfx	0x0004	/* The IIfx is in a class by itself. */
+#define MACH_CLASSPB	0x0008	/* Powerbooks.  Power management. */
+#define MACH_CLASSLC	0x0010	/* Low-Cost/Performa/Wal-Mart Macs. */
+#define MACH_CLASSQ	0x0100	/* Centris/Quadras. */
+
 /* MF processor passed in */
 #define MACH_68020	0
 #define MACH_68030	1
@@ -215,21 +226,46 @@ extern unsigned char ssir;
 #define	MHZ_40		5
 
 #ifdef KERNEL
-extern	unsigned long	IOBase, NuBusBase;
-extern	int		machineid;
+struct mac68k_machine_S {
+	int			cpu_model_index;
+	/*
+	 * Misc. info from booter.
+	 */
+	int			machineid;
+	int			mach_processor;
+	int			mach_memsize;
+	int			booter_version;
+	/*
+	 * Debugging flags.
+	 */
+	int			do_graybars;
+	int			serial_boot_echo;
+	/*
+	 * Misc. hardware info.
+	 */
+	int			scsi80;		/* Has NCR 5380 */
+	int			scsi96;		/* Has NCR 53C96 */
+	int			scsi96_2;	/* Has 2nd 53C96 */
 
-extern	int		mach_processor, mach_memsize;
-extern	int		do_graybars,    serial_boot_echo;
-extern	int		booter_version;
-extern	int		mmutype,	cpu040;
-extern	unsigned long	load_addr;
+	int			sccClkConst;	/* "Constant" for SCC bps */
+};
+
+extern unsigned long		IOBase;		/* Base address of I/O */
+extern unsigned long		NuBusBase;	/* Base address of NuBus */
+
+extern  struct mac68k_machine_S	mac68k_machine;
+extern	int			mmutype, cpu040;
+extern	unsigned long		load_addr      ;
 #endif
 
 /* physical memory sections */
 #define	ROMBASE		(0x40000000)
-#define INTIOBASE	(0x50f00000)
-#define INTIOTOP	(0x51000000)	/* ~ 128 K */
-#define IIOMAPSIZE	btoc(INTIOTOP - INTIOBASE)
+
+/* This should not be used.  Use IOBase, instead. */
+#define INTIOBASE	(0x50000000)
+
+#define INTIOTOP	(IOBase+0x01000000)
+#define IIOMAPSIZE	btoc(0x01000000)
 
 /* XXX -- Need to do something about superspace. */
 #ifdef NO_SUPER_SPACE_YET
