@@ -1,5 +1,5 @@
-/*	$NetBSD: ipcomp_core.c,v 1.11 2000/09/20 21:43:52 itojun Exp $	*/
-/*	$KAME: ipcomp_core.c,v 1.14 2000/09/20 21:41:36 itojun Exp $	*/
+/*	$NetBSD: ipcomp_core.c,v 1.12 2000/09/20 22:34:24 itojun Exp $	*/
+/*	$KAME: ipcomp_core.c,v 1.15 2000/09/20 22:30:52 itojun Exp $	*/
 
 /*
  * Copyright (C) 1999 WIDE Project.
@@ -241,6 +241,7 @@ deflate_common(m, md, lenp, mode)
 			ipseclog((LOG_ERR, "ipcomp_%scompress: %sflate: %s\n",
 				mode ? "de" : "", mode ? "in" : "de",
 				zs.msg ? zs.msg : "unknown error"));
+			mode ? inflateEnd(&zs) : deflateEnd(&zs);
 			error = EINVAL;
 			goto fail;
 		}
