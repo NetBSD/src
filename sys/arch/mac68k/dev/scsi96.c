@@ -1,4 +1,4 @@
-/*	$NetBSD: scsi96.c,v 1.12 1995/08/12 20:31:07 mycroft Exp $	*/
+/*	$NetBSD: scsi96.c,v 1.13 1995/08/14 03:55:28 briggs Exp $	*/
 
 /*
  * Copyright (C) 1994	Allen K. Briggs
@@ -127,6 +127,7 @@ ncr96probe(parent, match, aux)
 	static int probed = 0;
 	struct ncr53c96_softc *ncr53c96;
 
+		return 0;
 	if (!mac68k_machine.scsi96) {
 		return 0;
 	}
