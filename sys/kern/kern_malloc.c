@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_malloc.c,v 1.75 2002/09/27 15:37:45 provos Exp $	*/
+/*	$NetBSD: kern_malloc.c,v 1.76 2002/11/10 03:35:31 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_malloc.c,v 1.75 2002/09/27 15:37:45 provos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_malloc.c,v 1.76 2002/11/10 03:35:31 thorpej Exp $");
 
 #include "opt_lockdebug.h"
 
@@ -166,7 +166,7 @@ const long addrmask[] = { 0,
  * The WEIRD_ADDR is used as known text to copy into free objects so
  * that modifications after frees can be detected.
  */
-#define	WEIRD_ADDR	((unsigned) 0xdeadbeef)
+#define	WEIRD_ADDR	((uint32_t) 0xdeadbeef)
 #ifdef DEBUG
 #define	MAX_COPY	PAGE_SIZE
 #else
@@ -182,7 +182,7 @@ const long addrmask[] = { 0,
  * helps to detect memory reuse problems and avoid free list corruption.
  */
 struct freelist {
-	int32_t	spare0;
+	uint32_t spare0;
 	int16_t	type;
 	int16_t	spare1;
 	caddr_t	next;
@@ -211,7 +211,7 @@ malloc(unsigned long size, int type, int flags)
 	int s;
 	caddr_t va, cp, savedlist;
 #ifdef DIAGNOSTIC
-	int32_t *end, *lp;
+	uint32_t *end, *lp;
 	int copysize;
 	const char *savedtype;
 #endif
@@ -359,14 +359,14 @@ malloc(unsigned long size, int type, int flags)
 		*lp = WEIRD_ADDR;
 
 	/* and check that the data hasn't been modified. */
-	end = (int32_t *)&va[copysize];
+	end = (uint32_t *)&va[copysize];
 	for (lp = (int32_t *)va; lp < end; lp++) {
 		if (__predict_true(*lp == WEIRD_ADDR))
 			continue;
 		printf("Data modified on freelist: "
 		    "word %ld of object %p size %ld previous type %s "
 		    "(0x%x != 0x%x)\n",
-		    (long)(lp - (int32_t *)va), va, size,
+		    (long)(lp - (uint32_t *)va), va, size,
 		    savedtype, *lp, WEIRD_ADDR);
 #ifdef MALLOCLOG
 		hitmlog(va);
@@ -707,8 +707,8 @@ kmeminit(void)
 
 	kmemusage = (struct kmemusage *) uvm_km_zalloc(kernel_map,
 	    (vsize_t)(nkmempages * sizeof(struct kmemusage)));
-	kmem_map = uvm_km_suballoc(kernel_map, (vaddr_t *)&kmembase,
-	    (vaddr_t *)&kmemlimit, (vsize_t)(nkmempages << PAGE_SHIFT), 
+	kmem_map = uvm_km_suballoc(kernel_map, (void *)&kmembase,
+	    (void *)&kmemlimit, (vsize_t)(nkmempages << PAGE_SHIFT), 
 	    VM_MAP_INTRSAFE, FALSE, &kmem_map_store);
 #ifdef KMEMSTATS
 	for (indx = 0; indx < MINBUCKET + 16; indx++) {
