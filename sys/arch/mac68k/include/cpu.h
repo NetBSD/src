@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.27 1996/01/09 15:26:02 briggs Exp $	*/
+/*	$NetBSD: cpu.h,v 1.28 1996/02/27 03:23:42 briggs Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -267,14 +267,10 @@ extern	unsigned long		load_addr;
 
 /* physical memory sections */
 #define	ROMBASE		(0x40800000)
-#define	ROMLEN		(0x01000000)		/* 16MB should be plenty! */
+#define	ROMLEN		(0x00100000)		/* 1MB will work for all 68k */
 #define	ROMMAPSIZE	btoc(ROMLEN)		/* 16k of page tables.  */
 
-/* This should not be used.  Use IOBase, instead. */
-#define INTIOBASE	(0x50000000)
-
-#define INTIOTOP	(IOBase+0x01000000)
-#define IIOMAPSIZE	btoc(0x01000000)
+#define IIOMAPSIZE	btoc(0x00100000)	/* 1MB should be enough */
 
 /* XXX -- Need to do something about superspace.
  * Technically, NuBus superspace starts at 0x60000000, but no
