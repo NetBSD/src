@@ -1,4 +1,4 @@
-/*	$NetBSD: iomd_irq.S,v 1.22 2001/02/25 23:59:48 reinoud Exp $	*/
+/*	$NetBSD: iomd_irq.S,v 1.23 2001/04/19 20:46:07 chris Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -50,6 +50,24 @@
 
 	.text
 	.align	0
+/*
+ * ffs table used for servicing irq's quickly must be here otherwise adr can't
+ * reach it
+ * The algorithm for ffs was devised by D. Seal and posted to
+ * comp.sys.arm on 16 Feb 1994.
+ */
+.type Lirq_ffs_table, _ASM_TYPE_OBJECT;
+Lirq_ffs_table:
+/* same as ffs table but all nums are -1 from that */
+/*               0   1   2   3   4   5   6   7           */
+	.byte	 0,  0,  1, 12,  2,  6,  0, 13  /*  0- 7 */
+	.byte	 3,  0,  7,  0,  0,  0,  0, 14  /*  8-15 */
+	.byte	10,  4,  0,  0,  8,  0,  0, 25  /* 16-23 */
+	.byte	 0,  0,  0,  0,  0, 21, 27, 15  /* 24-31 */
+	.byte	31, 11,  5,  0,  0,  0,  0,  0	/* 32-39 */
+	.byte	 9,  0,  0, 24,  0,  0, 20, 26  /* 40-47 */
+	.byte	30,  0,  0,  0,  0, 23,  0, 19  /* 48-55 */
+	.byte   29,  0, 22, 18, 28, 17, 16,  0  /* 56-63 */
 
 /*
  *
@@ -82,11 +100,12 @@ Lspl_masks:
 /*
  * Register usage
  *
+ *  r5  - Address of ffs table
  *  r6  - Address of current handler
  *  r7  - Pointer to handler pointer list
  *  r8  - Current IRQ requests.
- *  r9  - Used to count through possible IRQ bits.
  *  r10 - Base address of IOMD
+ *  r11 - IRQ requests still to service.
  */
 
 Liomd_base:
@@ -181,73 +200,112 @@ Lfind_highest_ipl:
 	msr	cpsr_all, r0
 
 	ldr	r7, [pc, #Lirqhandlers - . - 8]
-        mov	r9, #0x00000001
+	/* 
+	 * take a copy of the IRQ request so that we can strip bits out of it
+	 * note that we only use 24 bits with iomd2 chips
+	 */
+#ifdef  CPU_ARM7500
+	mov	r11, r8
+#else
+	bic	r11, r8, #0xff000000
+#endif
+	/* ffs routine to find first irq to service */
+	/* standard trick to isolate bottom bit in a0 or 0 if a0 = 0 on entry */
+	rsb	r4, r11, #0
+	ands	r10, r11, r4
 
+	/* 
+	 * now r10 has at most 1 set bit, call this X
+	 * if X = 0, branch to exit code
+	 */
+	beq	exitirq
+	adr	r5, Lirq_ffs_table
 irqloop:
-	/* This would benefit from a special ffs type routine */
-	tst	r8, r9			/* Is a bit set ? */
-	beq	nextirq			/* No ? try next bit */
+	/*
+	 * at this point:
+	 *	r5 = address of ffs table
+	 *	r7 = address of irq handlers table
+	 *	r8 = irq request
+	 *	r10 = bit of irq to be serviced
+	 *	r11 = bitmask of IRQ's to service
+	 */
 
-	ldr	r6, [r7]		/* Get address of first handler structure */
+	/* find the set bit */
+	orr	r9, r10, r10, lsl #4	/* X * 0x11 */
+	orr	r9, r9, r9, lsl #6	/* X * 0x451 */
+	rsb	r9, r9, r9, lsl #16	/* X * 0x0450fbaf */
+	/* fetch the bit number */
+	ldrb	r9, [r5, r9, lsr #26 ]
 
+	/* 
+	 * r9 = irq to service
+	 */
+
+	/* apologies for the dogs dinner of code here, but it's in an attempt
+	 * to minimise stalling on SA's, hence lots of things happen here:
+	 *	- getting address of handler, if it doesn't exist we call
+	 *	  stray_irqhandler this is assumed to be rare so we don't
+	 *	  care about performance for it
+	 *	- statinfo is updated
+	 *	- unsetting of the irq bit in r11
+	 *	- irq stats (if enabled) also get put in the mix
+	 */
+	ldr	r4, Lcnt		/* Stat info A */
+	ldr	r6, [r7, r9, lsl #2]	/* Get address of first handler structure */
+
+	ldr	r1, [r4, #(V_INTR)]	/* Stat info B */
+	
 	teq	r6, #0x00000000		/* Do we have a handler */
 	moveq	r0, r8			/* IRQ requests as arg 0 */
 	beq	_C_LABEL(stray_irqhandler) /* call special handler */
-
-        ldr	r0, Lcnt		/* Stat info */
-	ldr	r1, [r0, #(V_INTR)]
+	
+#ifdef IRQSTATS
+	ldr	r2, Lintrcnt
+	ldr	r3, [r6, #(IH_NUM)]
+#endif
+	/* stat info C */
 	add	r1, r1, #0x00000001
-	str	r1, [r0, #(V_INTR)]
-
-	/*
-	 * XXX: Should stats be accumlated for every interrupt routine
-	 * called or for every physical interrupt that is serviced.
-	 */
+	str	r1, [r4, #(V_INTR)]
 
 #ifdef IRQSTATS
-	ldr	r0, Lintrcnt
-	ldr	r1, [r6, #(IH_NUM)]
+	ldr	r3, [r2, r3, lsl #2]!
+#endif
+	bic	r11, r11, r10		/* clear the IRQ bit */
 
-	add	r0, r0, r1, lsl #2
-	ldr	r1, [r0]
-	add	r1, r1, #0x00000001
-	str	r1, [r0]
+#ifdef IRQSTATS
+	add	r3, r3, #0x00000001
+	str	r3, [r2]
 #endif	/* IRQSTATS */
 
 irqchainloop:
-	add	lr, pc, #nextinchain - . - 8	/* return address */
 	ldr	r0, [r6, #(IH_ARG)]	/* Get argument pointer */
+	add	lr, pc, #nextinchain - . - 8	/* return address */
 	teq	r0, #0x00000000		/* If arg is zero pass stack frame */
 	addeq	r0, sp, #8		/* ... stack frame [XXX needs care] */
 	ldr	pc, [r6, #(IH_FUNC)]	/* Call handler */
 
 nextinchain:
+	ldr	r6, [r6, #(IH_NEXT)]	/* fetch next handler */
+	
 	teq	r0, #0x00000001		/* Was the irq serviced ? */
-	beq	irqdone
-
-	ldr	r6, [r6, #(IH_NEXT)]
-	teq	r6, #0x00000000
+	
+	/* if it was it'll just fall through this: */
+	teqne	r6, #0x00000000
 	bne	irqchainloop
 
-irqdone:
-nextirq:
-	add	r7, r7, #0x00000004	/* update pointer to handlers */
-	mov	r9, r9, lsl #1		/* move on to next bit */
-#ifdef CPU_ARM7500
-	teq	r9, #0			/* done the last bit ? */
-#else
-	teq	r9, #(1 << 24)		/* done the last bit ? */
-#endif	/* CPU_ARM7500 */
-	bne	irqloop			/* no - loop back. */
+	/* Check for next irq */
+	rsb	r4, r11, #0
+	ands	r10, r11, r4
+	/* check if there are anymore irq's to service */
+	bne 	irqloop
 
-	ldmfd	sp!, {r2}
-	ldr	r1, Lcurrent_spl_level
-	str	r2, [r1]
-
-	/* Restore previous disabled mask */
-	ldmfd	sp!, {r2}
+exitirq:
+	ldmfd	sp!, {r2, r3}
+	ldr	r9, Lcurrent_spl_level
 	ldr	r1, Ldisabled_mask
-	str	r2, [r1]
+	str	r2, [r9]
+	str	r3, [r1]
+
 	bl	_C_LABEL(irq_setmasks)
 
 	bl	_C_LABEL(dosoftints)	/* Handle the soft interrupts */
@@ -333,8 +391,8 @@ ENTRY(irq_setmasks)
 
 	/* Calculate IOMD interrupt mask */
 	ldr	r1, Lcurrent_mask	/* All the enabled interrupts */
-	ldr	r1, [r1]
 	ldr	r2, Lspl_mask		/* Block due to current spl level */
+	ldr	r1, [r1]
 	ldr	r2, [r2]
 	and	r1, r1, r2
 	ldr	r2, Ldisabled_mask	/* Block due to active interrupts */
@@ -478,6 +536,8 @@ _C_LABEL(intrcnt):
 	.long	0
 _C_LABEL(eintrcnt):
 #endif	/* IRQSTATS */
+
+
 
 /* FIQ code */
 
