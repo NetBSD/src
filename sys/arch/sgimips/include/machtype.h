@@ -1,4 +1,4 @@
-/*	$NetBSD: machtype.h,v 1.3 2002/03/13 13:12:28 simonb Exp $	*/
+/*	$NetBSD: machtype.h,v 1.4 2004/01/13 12:30:23 sekiya Exp $	*/
 
 /*
  * Copyright (c) 2001 Rafal K. Boni
@@ -62,6 +62,11 @@
 
 #define MACH_SGI_IP7_4D_3X0		13	/* 4D/3x0 */
 #define MACH_SGI_IP7_4D_4X0		15	/* 4D/4x0 */
+
+#define MACH_SGI_IP12_4D_3X		120	/* Personal Iris 4d/3x */
+#define MACH_SGI_IP12_VIP12		121	/* IP12 on 6U VME card */
+#define MACH_SGI_IP12_HP1		122	/* Hollywood (Indigo R3k) */
+#define MACH_SGI_IP12_HPLC		123	/* Hollywood Light */
 
 #define MACH_SGI_IP22_FULLHOUSE		22	/* Indigo2 */
 #define MACH_SGI_IP22_GUINESS		24	/* Indy, Challenge S */
