@@ -1,4 +1,4 @@
-/*	$NetBSD: Locore.c,v 1.2 1998/08/13 02:10:48 eeh Exp $	*/
+/*	$NetBSD: Locore.c,v 1.3 1998/08/16 23:30:00 eeh Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -35,6 +35,9 @@
 #include <sparc64/stand/ofwboot/openfirm.h>
 
 #include <machine/cpu.h>
+
+typedef unsigned long vaddr_t;
+typedef unsigned long long paddr_t;
 
 vaddr_t OF_claim_virt __P((vaddr_t vaddr, int len));
 vaddr_t OF_alloc_virt __P((int len, int align));
@@ -397,11 +400,12 @@ OF_chain(virt, size, entry, arg, len)
 	args.arg = arg;
 	args.len = len;
 	openfirmware(&args);
-#ifdef DEBUG
+	printf("OF_chain: prom returned!\n");
+
 	/* OK, firmware failed us.  Try calling prog directly */
 	entry(0, arg, len, (int)romp, (int)romp);
+	panic("OF_chain: kernel returned!\n");
 	__asm("ta 2" : :);
-#endif
 }
 #else
 void
@@ -419,6 +423,7 @@ OF_chain(virt, size, entry, arg, len)
 	 */
 /*	OF_release(virt, size); */
 	entry(0, arg, len, (int)romp, (int)romp);
+	panic("OF_chain: kernel returned!\n");
 }
 #endif
 
@@ -750,8 +755,8 @@ int len;
 		int pad2; int ihandle;
 		u_int64_t align;
 		u_int64_t len;
-		int pad4; void* phys_hi;
-		int pad5; void* phys_lo;
+		int pad4; unsigned int phys_hi;
+		int pad5; unsigned int phys_lo;
 		int64_t status;
 		int64_t res;
 		u_int64_t rphys_hi;
@@ -777,7 +782,8 @@ int len;
 #endif
 	args.ihandle = memh;
 	args.len = len;
-	args.phys_lo = (void*)phys;
+	args.phys_hi = (unsigned int)(phys>>32);
+	args.phys_lo = (unsigned int)phys;
 	if(openfirmware(&args) != 0)
 		return 0LL;
 	return args.rphys_lo; /* Kluge till we go 64-bit */
@@ -800,8 +806,8 @@ int len;
 		int pad1; char *method;
 		int pad2; int ihandle;
 		u_int64_t len;
-		int pad4; void* phys_hi;
-		int pad5; void* phys_lo;
+		int pad4; unsigned int phys_hi;
+		int pad5; unsigned int phys_lo;
 	} args = {
 		0,"call-method",
 		5,
@@ -821,7 +827,8 @@ int len;
 #endif
 	args.ihandle = memh;
 	args.len = len;
-	args.phys_lo = (void*)phys;
+	args.phys_hi = (unsigned int)(phys>>32);
+	args.phys_lo = (unsigned int)phys;
 	return openfirmware(&args);
 }
 

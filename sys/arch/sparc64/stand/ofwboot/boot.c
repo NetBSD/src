@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.2 1998/07/30 00:27:04 mrg Exp $	*/
+/*	$NetBSD: boot.c,v 1.3 1998/08/16 23:30:00 eeh Exp $	*/
 
 /*
  * Copyright (c) 1997 Jason R. Thorpe.  All rights reserved.
@@ -42,8 +42,8 @@
  *	[promdev[{:|,}partition]]/[filename] [flags]
  */
 
-#ifndef ELFSIZE
-#define	ELFSIZE		32		/* We use 32-bit ELF. */
+#ifdef ELFSIZE
+#undef	ELFSIZE		/* We use both. */
 #endif
 
 #include <lib/libsa/stand.h>
@@ -68,11 +68,12 @@ int debug;
 
 
 #ifdef SPARC_BOOT_ELF
-int	elf_exec __P((int, Elf_Ehdr *, u_int32_t *, void **, void **));
+int	elf32_exec __P((int, Elf32_Ehdr *, u_int64_t *, void **, void **));
+int	elf64_exec __P((int, Elf64_Ehdr *, u_int64_t *, void **, void **));
 #endif
 
 #ifdef SPARC_BOOT_AOUT
-int	aout_exec __P((int, struct exec *, u_int32_t *, void **));
+int	aout_exec __P((int, struct exec *, u_int64_t *, void **));
 #endif
 
 static void
@@ -141,15 +142,19 @@ parseargs(str, howtop)
 
 
 static void
-chain(entry, args, ssym, esym)
-	void (*entry)();
+chain(pentry, args, ssym, esym)
+	u_int64_t pentry;
 	char *args;
 	void *ssym;
 	void *esym;
 {
 	extern char end[];
+	void (*entry)();
 	int l, machine_tag;
 	int newargs[3];
+
+	/* FIXME FIXME FIXME */
+	entry = (void*)(int)pentry;
 
 	freeall();
 	/*
@@ -202,11 +207,12 @@ loadfile(fd, args)
 		struct exec aout;
 #endif
 #ifdef SPARC_BOOT_ELF
-		Elf_Ehdr elf;
+		Elf32_Ehdr elf32;
+		Elf64_Ehdr elf64;
 #endif
 	} hdr;
 	int rval;
-	u_int32_t entry;
+	u_int64_t entry;
 	void *ssym;
 	void *esym;
 
@@ -230,8 +236,11 @@ loadfile(fd, args)
 	} else
 #endif
 #ifdef SPARC_BOOT_ELF
-	if (bcmp(Elf_e_ident, hdr.elf.e_ident, Elf_e_siz) == 0) {
-		rval = elf_exec(fd, &hdr.elf, &entry, &ssym, &esym);
+	if (bcmp(Elf32_e_ident, hdr.elf32.e_ident, Elf32_e_siz) == 0) {
+		rval = elf32_exec(fd, &hdr.elf32, &entry, &ssym, &esym);
+	} else
+	if (bcmp(Elf64_e_ident, hdr.elf64.e_ident, Elf64_e_siz) == 0) {
+		rval = elf64_exec(fd, &hdr.elf64, &entry, &ssym, &esym);
 	} else
 #endif
 	{
@@ -241,7 +250,7 @@ loadfile(fd, args)
 	if (rval)
 		goto err;
 
-	printf(" start=0x%x\n", entry);
+	printf(" start=0x%x\n", (int)entry);
 
 	close(fd);
 
@@ -252,7 +261,7 @@ loadfile(fd, args)
 		printf("\n");
 	}
 
-	chain((void *)entry, args, ssym, esym);
+	chain(entry, args, ssym, esym);
 	/* NOTREACHED */
 
  err:
@@ -265,7 +274,7 @@ int
 aout_exec(fd, hdr, entryp, esymp)
 	int fd;
 	struct exec *hdr;
-	u_int32_t *entryp;
+	u_int64_t *entryp;
 	void **esymp;
 {
 	void *addr;
@@ -338,11 +347,27 @@ aout_exec(fd, hdr, entryp, esymp)
 #endif /* SPARC_BOOT_AOUT */
 
 #ifdef SPARC_BOOT_ELF
+#if 1
+/* New style */
+
+#ifdef ELFSIZE
+#undef ELFSIZE
+#endif
+
+#define ELFSIZE	32
+#include "elfXX_exec.c"
+
+#undef ELFSIZE
+#define ELFSIZE	64
+#include "elfXX_exec.c"
+
+#else
+/* Old style */
 int
-elf_exec(fd, elf, entryp, ssymp, esymp)
+elf32_exec(fd, elf, entryp, ssymp, esymp)
 	int fd;
-	Elf_Ehdr *elf;
-	u_int32_t *entryp;
+	Elf32_Ehdr *elf;
+	u_int64_t *entryp;
 	void **ssymp;
 	void **esymp;
 {
@@ -363,7 +388,7 @@ elf_exec(fd, elf, entryp, ssymp, esymp)
 	printf("Booting %s\n", opened_name);
 
 	for (i = 0; i < elf->e_phnum; i++) {
-		Elf_Phdr phdr;
+		Elf32_Phdr phdr;
 		(void)lseek(fd, elf->e_phoff + sizeof(phdr) * i, SEEK_SET);
 		if (read(fd, (void *)&phdr, sizeof(phdr)) != sizeof(phdr)) {
 			printf("read phdr: %s\n", strerror(errno));
@@ -404,7 +429,7 @@ elf_exec(fd, elf, entryp, ssymp, esymp)
 	/*
 	 * Compute the size of the symbol table.
 	 */
-	size = sizeof(Elf_Ehdr) + (elf->e_shnum * sizeof(Elf32_Shdr));
+	size = sizeof(Elf32_Ehdr) + (elf->e_shnum * sizeof(Elf32_Shdr));
 	shp = addr = alloc(elf->e_shnum * sizeof(Elf32_Shdr));
 	(void)lseek(fd, elf->e_shoff, SEEK_SET);
 	if (read(fd, addr, elf->e_shnum * sizeof(Elf32_Shdr)) !=
@@ -435,20 +460,20 @@ elf_exec(fd, elf, entryp, ssymp, esymp)
 	 * Copy the headers.
 	 */
 	elf->e_phoff = 0;
-	elf->e_shoff = sizeof(Elf_Ehdr);
+	elf->e_shoff = sizeof(Elf32_Ehdr);
 	elf->e_phentsize = 0;
 	elf->e_phnum = 0;
-	bcopy(elf, addr, sizeof(Elf_Ehdr));
-	bcopy(shp, addr + sizeof(Elf_Ehdr), elf->e_shnum * sizeof(Elf32_Shdr));
+	bcopy(elf, addr, sizeof(Elf32_Ehdr));
+	bcopy(shp, addr + sizeof(Elf32_Ehdr), elf->e_shnum * sizeof(Elf32_Shdr));
 	free(shp, elf->e_shnum * sizeof(Elf32_Shdr));
 	*ssymp = addr;
 
 	/*
 	 * Now load the symbol sections themselves.
 	 */
-	shp = addr + sizeof(Elf_Ehdr);
-	addr += sizeof(Elf_Ehdr) + (elf->e_shnum * sizeof(Elf32_Shdr));
-	off = sizeof(Elf_Ehdr) + (elf->e_shnum * sizeof(Elf32_Shdr));
+	shp = addr + sizeof(Elf32_Ehdr);
+	addr += sizeof(Elf32_Ehdr) + (elf->e_shnum * sizeof(Elf32_Shdr));
+	off = sizeof(Elf32_Ehdr) + (elf->e_shnum * sizeof(Elf32_Shdr));
 	for (first = 1, i = 0; i < elf->e_shnum; i++, shp++) {
 		if (shp->sh_type == Elf_sht_symtab
 		    || shp->sh_type == Elf_sht_strtab) {
@@ -472,6 +497,7 @@ elf_exec(fd, elf, entryp, ssymp, esymp)
 	*entryp = elf->e_entry;
 	return (0);
 }
+#endif
 #endif /* SPARC_BOOT_ELF */
 
 void
