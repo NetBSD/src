@@ -1,4 +1,4 @@
-.\" $NetBSD: wsmoused.8,v 1.13 2003/08/06 22:11:50 jmmv Exp $
+.\" $NetBSD: wsmoused.8,v 1.14 2004/06/07 21:25:51 snj Exp $
 .\"
 .\" Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -79,7 +79,7 @@ for more information.
 .Pp
 .Nm
 is designed to be a multipurpose mouse daemon.
-Functionality is provided though independant
+Functionality is provided though independent
 .Em modes ,
 enabled either though the
 .Fl m
@@ -89,8 +89,8 @@ property in the configuration file (the former takes precedence).
 .Ss The action mode
 The
 .Sq action
-mode executes commands upon receivement of mouse button events.
-Commands can be associated on a button basis, and can differenciate between
+mode executes commands upon receiving mouse button events.
+Commands can be associated on a button basis, and can differentiate between
 push or release events.
 .Ss The selection mode
 The
@@ -99,7 +99,7 @@ mode provides visual copy and paste support in text consoles when using
 the
 .Xr wscons 4
 device.
-A selection is created by clicking with the mouse primary button at any
+A selection is created by clicking with the primary mouse button at any
 point on the screen and dragging it while clicked.
 When the button is released, the selected text is copied to an internal
 buffer for further pasting with the secondary button.
@@ -125,7 +125,7 @@ when using the
 .Xr rc.subr 8
 framework.
 You should set
-.Sq wsmoused_user="<some_user>"
+.Sq wsmoused_user="\*[Lt]some_user\*[Gt]"
 in
 .Xr rc.conf 5
 to a safer user (and adjust file permissions accordingly) if the commands
