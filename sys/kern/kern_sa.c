@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sa.c,v 1.1.2.25 2002/07/12 01:40:18 nathanw Exp $	*/
+/*	$NetBSD: kern_sa.c,v 1.1.2.26 2002/07/17 19:52:26 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -127,7 +127,9 @@ sys_sa_register(struct lwp *l, void *v, register_t *retval)
 		/* Initialize. */
 		memset(s, 0, sizeof(*s));
 		simple_lock_init(&s->sa_lock);
+		s->sa_flag = 0;
 		s->sa_vp = NULL;
+		s->sa_idle = NULL;
 		s->sa_concurrency = 1;
 		s->sa_stacks = malloc(sizeof(stack_t) * SA_NUMSTACKS,
 		    M_SA, M_WAITOK);
@@ -246,30 +248,47 @@ int
 sys_sa_yield(struct lwp *l, void *v, register_t *retval)
 {
 	struct proc *p = l->l_proc;
-	struct sadata *s = p->p_sa;
+	struct sadata *sa = p->p_sa;
+	int s;
 
 	DPRINTFN(1,("sa_yield(%d.%d)\n", p->p_pid, l->l_lid));
 
-	if (s == NULL || !(p->p_flag & P_SA))
+	if (sa == NULL || !(p->p_flag & P_SA))
 		return (EINVAL);
 
-	/* We are no longer using this VP */
-	s->sa_vp = NULL;
-
-	/* Don't let a process sa_yield() itself into oblivion. */
-	if ((p->p_nlwps - p->p_nzlwps) == 1) {
+	/*
+	 * If we're the last running LWP, stick around to recieve
+	 * signals.
+	 */
+	if (p->p_nrlwps == 1) {
 		DPRINTFN(1,("sa_yield(%d.%d) going dormant\n", 
 		    p->p_pid, l->l_lid));
-		/* A signal will probably wake us up. Worst case, the upcall
+		/*
+		 * A signal will probably wake us up. Worst case, the upcall
 		 * happens and just causes the process to yield again.
 		 */
-		l->l_flag &= ~L_SA;
-		tsleep((caddr_t) p, PUSER | PCATCH, "sawait", 0);
-		l->l_flag |= L_SA;
-		return (0);
+		s = splsched();	/* Protect from timer expirations */
+		KDASSERT(sa->sa_vp == l);
+		/*
+		 * If we were told to make an upcall or exit before
+		 * the splsched(), make sure we process it instead of
+		 * doing to sleep. It might make more sense for this to
+		 * be handled inside of tsleep....
+		 */
+		if (p->p_userret == NULL) {
+			sa->sa_idle = l;
+			l->l_flag &= ~L_SA;
+			tsleep((caddr_t) p, PUSER | PCATCH, "sawait", 0);
+			l->l_flag |= L_SA;
+			sa->sa_idle = NULL;
+			sa->sa_vp = l;
+		}
+		splx(s);
+	} else {
+		sa->sa_vp = NULL;
+		lwp_exit(l);
+		/* NOTREACHED */
 	}
-	lwp_exit(l);
-
 	return (0);
 }
 
@@ -282,13 +301,25 @@ sys_sa_preempt(struct lwp *l, void *v, register_t *retval)
 	return (ENOSYS);
 }
 
+
+/* XXX Hm, naming collision. */
+void
+sa_preempt(struct lwp *l)
+{
+	struct proc *p = l->l_proc;
+	struct sadata *sa = p->p_sa;
+
+	if (sa->sa_flag & SA_PREEMPT)
+		sa_upcall(l, SA_UPCALL_PREEMPTED, l, NULL, 0, NULL);
+} 
+
+
 /*
  * Set up the user-level stack and trapframe to do an upcall.
  *
  * NOTE: This routine WILL FREE "arg" in the case of failure!  Callers
  * should not touch the "arg" pointer once calling sa_upcall().
  */
-
 int
 sa_upcall(struct lwp *l, int type, struct lwp *event, struct lwp *interrupted,
 	size_t argsize, void *arg)
@@ -481,6 +512,7 @@ sa_switchcall(void *arg)
 
 	if (LIST_EMPTY(&sa->sa_lwpcache)) {
 		/* Allocate the next cache LWP */
+		DPRINTFN(6,("sa_switchcall(pid: %d.%d) allocating LWP\n", p->p_pid, l->l_lid));
 		sa_newcachelwp(l);
 	}
 	upcallret(l);
@@ -593,21 +625,37 @@ sa_upcall_userret(struct lwp *l)
 		struct lwp *l2;
 		int s;
 		DPRINTFN(8,("sa_upcall_userret(%d.%d) unblocking ",p->p_pid, l->l_lid));
-		/* Put ourselves on the virtual processor and note that the
+		/*
+		 * Put ourselves on the virtual processor and note that the
 		 * previous occupant of that position was interrupted.
 		 */
 		l2 = sa->sa_vp;
 		sa->sa_vp = l;
 
+		KDASSERT(l2 != l);
 		if (l2) {
 			SCHED_LOCK(s);
-			remrunqueue(l2);
-			p->p_nrlwps--;
+			switch (l2->l_stat) {
+			case LSRUN:
+				remrunqueue(l2);
+				p->p_nrlwps--;
+				break;
+			case LSSLEEP:
+				unsleep(l2);
+				break;
+#ifdef DIAGNOSTIC
+			default:
+				panic("SA VP %d.%d is in state %d, not running"
+				    " or sleeping\n", p->p_pid, l2->l_lid, 
+				    l2->l_stat);
+#endif
+			}
 			sa_putcachelwp(p, l2);
 			SCHED_UNLOCK(s);
 		}
 		if (sa_upcall(l, SA_UPCALL_UNBLOCKED, l, l2, 0, NULL) != 0) {
-			/* We were supposed to deliver an UNBLOCKED
+			/*
+			 * We were supposed to deliver an UNBLOCKED
 			 * upcall, but don't have resources to do so.
 			 */
 #ifdef DIAGNOSTIC
@@ -765,6 +813,10 @@ debug_print_sa(struct proc *p)
 	    debug_print_lwp(l);
 	sa = p->p_sa;
 	if (sa) {
+		if (sa->sa_vp)
+			printf("SA VP: %d\n", sa->sa_vp->l_lid);
+		if (sa->sa_idle)
+			printf("SA idle: %d\n", sa->sa_idle->l_lid);
 		printf("SAs: %d cached LWPs\n", sa->sa_ncached);
 		LIST_FOREACH(l, &sa->sa_lwpcache, l_sibling)
 		    debug_print_lwp(l);
