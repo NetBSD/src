@@ -1,4 +1,4 @@
-/*	$NetBSD: i82557.c,v 1.52 2001/05/22 15:29:30 thorpej Exp $	*/
+/*	$NetBSD: i82557.c,v 1.53 2001/06/02 01:04:01 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2001 The NetBSD Foundation, Inc.
@@ -167,7 +167,17 @@ const u_int8_t fxp_cb_config_template[] = {
 	0xf0,	/* 18 */
 	0x0,	/* 19 */
 	0x3f,	/* 20 */
-	0x5	/* 21 */
+	0x5,	/* 21 */
+	0x0,	/* 22 */
+	0x0,	/* 23 */
+	0x0,	/* 24 */
+	0x0,	/* 25 */
+	0x0,	/* 26 */
+	0x0,	/* 27 */
+	0x0,	/* 28 */
+	0x0,	/* 29 */
+	0x0,	/* 30 */
+	0x0,	/* 31 */
 };
 
 void	fxp_mii_initmedia(struct fxp_softc *);
@@ -258,6 +268,9 @@ fxp_attach(struct fxp_softc *sc)
 	struct fxp_phytype *fp;
 
 	callout_init(&sc->sc_callout);
+
+	/* Start out using the standard RFA. */
+	sc->sc_rfa_size = RFA_SIZE;
 
 	/*
 	 * Enable some good stuff on i82558 and later.
@@ -1376,7 +1389,8 @@ fxp_init(struct ifnet *ifp)
 				    FXP_CB_COMMAND_EL);
 	/* BIG_ENDIAN: no need to swap to store 0xffffffff */
 	cbp->link_addr =	0xffffffff; /* (no) next command */
-	cbp->byte_count =	22;	/* (22) bytes to config */
+					/* bytes in config block */
+	cbp->byte_count =	FXP_CONFIG_LEN;
 	cbp->rx_fifo_limit =	8;	/* rx fifo threshold (32 bytes) */
 	cbp->tx_fifo_limit =	0;	/* tx fifo threshold (0 bytes) */
 	cbp->adaptive_ifs =	0;	/* (no) adaptive interframe spacing */
