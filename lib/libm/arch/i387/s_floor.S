@@ -5,7 +5,7 @@
 
 #include <machine/asm.h>
 
-RCSID("$NetBSD: s_floor.S,v 1.6 2001/06/19 17:49:36 fvdl Exp $")
+RCSID("$NetBSD: s_floor.S,v 1.7 2002/03/26 15:17:37 fvdl Exp $")
 
 ENTRY(floor)
 #ifdef __i386__
@@ -13,17 +13,17 @@ ENTRY(floor)
 	movl	%esp,%ebp
 	subl	$8,%esp
 
-	fstcw	-12(%ebp)		/* store fpu control word */
-	movw	-12(%ebp),%dx
+	fstcw	-4(%ebp)		/* store fpu control word */
+	movw	-4(%ebp),%dx
 	orw	$0x0400,%dx		/* round towards -oo */
 	andw	$0xf7ff,%dx
-	movw	%dx,-16(%ebp)
-	fldcw	-16(%ebp)		/* load modfied control word */
+	movw	%dx,-8(%ebp)
+	fldcw	-8(%ebp)		/* load modfied control word */
 
 	fldl	8(%ebp);		/* round */
 	frndint
 
-	fldcw	-12(%ebp)		/* restore original control word */
+	fldcw	-4(%ebp)		/* restore original control word */
 
 	leave
 #else
