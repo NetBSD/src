@@ -130,10 +130,10 @@ scsi_probe(int masunit, struct scsi_switch *sw, int physid, int type, int want)
 
 	if( scsi_inquire(masunit, targ, lun, sw, (u_char *)&inqbuf,
 	    SCSI_NOSLEEP | SCSI_NOMASK) != COMPLETE)
-		return (struct scsidevs *)0;
+		return (struct scsidevs *)-1;
 
 	if( inqbuf.device_qualifier==3 && inqbuf.device_type==T_NODEVICE)
-		return (struct scsidevs *)0;
+		return (struct scsidevs *)-1;
 
 	switch(inqbuf.device_qualifier) {
 	case 0:
@@ -332,7 +332,7 @@ scsi_attach(int masunit, int mytarg, struct scsi_switch *sw,
 			}
 			if(!match) {
 				sw->printed[targ] |= (1<<lun);
-				continue;
+				break;
 			}
 			ret = (*(match->attach_rtn))(masunit, sw, *physid, *unit);
 			if(ret==0)
