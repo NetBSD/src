@@ -1,4 +1,4 @@
-/*	$NetBSD: fb.c,v 1.20 1998/03/31 11:32:53 jonathan Exp $	*/
+/*	$NetBSD: fb.c,v 1.21 1998/11/23 04:26:15 jonathan Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -211,8 +211,8 @@ fbconnect (name, info, silent)
 		if ((fbcd.cd_devs [fbix]->fi_type.fb_boardtype
 		     == info -> fi_type.fb_boardtype)
 		    && fbcd.cd_devs [fbix]->fi_unit == info -> fi_unit)
-			goto got_it;
-			
+			break;
+
 	if (fbcd.cd_ndevs >= NFB) {
 		printf ("fb: more frame buffers probed than configured!\n");
 		return;
@@ -237,15 +237,14 @@ fbconnect (name, info, silent)
 		first = 0;
 	}
 
-got_it:
 	if (!silent)
 		printf (" (%dx%dx%d)%s",
 			info -> fi_type.fb_width,
 			info -> fi_type.fb_height,
 			info -> fi_type.fb_depth,
-			(fbix ? ""
+			(fbix != 0 ? ""
 			 : ((cn_tab -> cn_pri == CN_REMOTE)
-			    ? "" : " (console)")));
+			    ? " (rcons)" : " (console)")));
 	return;
 }
 
