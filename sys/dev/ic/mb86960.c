@@ -1,4 +1,4 @@
-/*	$NetBSD: mb86960.c,v 1.34 1999/06/23 04:17:11 abs Exp $	*/
+/*	$NetBSD: mb86960.c,v 1.35 1999/09/13 10:31:35 itojun Exp $	*/
 
 /*
  * All Rights Reserved, Copyright (C) Fujitsu Limited 1995
@@ -91,6 +91,11 @@
 
 #include <dev/ic/mb86960reg.h>
 #include <dev/ic/mb86960var.h>
+
+#ifndef __BUS_SPACE_HAS_STREAM_METHODS
+#define bus_space_write_multi_stream_2	bus_space_write_multi_2
+#define bus_space_read_multi_stream_2	bus_space_read_multi_2
+#endif /* __BUS_SPACE_HAS_STREAM_METHODS */
 
 /* Standard driver entry points.  These can be static. */
 void	mb86960_init	__P((struct mb86960_softc *));
@@ -1364,7 +1369,7 @@ mb86960_get_packet(sc, len)
 	m->m_len = len;
 
 	/* Get a packet. */
-	bus_space_read_multi_2(bst, bsh, FE_BMPR8, mtod(m, u_int16_t *),
+	bus_space_read_multi_stream_2(bst, bsh, FE_BMPR8, mtod(m, u_int16_t *),
 			       (len + 1) >> 1);
 
 #if NBPFILTER > 0
@@ -1524,7 +1529,7 @@ mb86960_write_mbufs(sc, m)
 
 		/* Output contiguous words. */
 		if (len > 1)
-			bus_space_write_multi_2(bst, bsh, FE_BMPR8,
+			bus_space_write_multi_stream_2(bst, bsh, FE_BMPR8,
 						(u_int16_t *)data, len >> 1);
 
 		/* Save remaining byte, if there is one. */
