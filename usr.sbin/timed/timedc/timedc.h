@@ -1,3 +1,5 @@
+/*	$NetBSD: timedc.h,v 1.4 1997/10/17 08:57:30 mrg Exp $	*/
+
 /*-
  * Copyright (c) 1985, 1993 The Regents of the University of California.
  * All rights reserved.
@@ -30,7 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)timedc.h	5.1 (Berkeley) 5/11/93
+ *	@(#)timedc.h	8.1 (Berkeley) 6/6/93
  */
 
 #include <sys/param.h>

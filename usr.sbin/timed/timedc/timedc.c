@@ -1,3 +1,5 @@
+/*	$NetBSD: timedc.c,v 1.4 1997/10/17 08:57:26 mrg Exp $	*/
+
 /*-
  * Copyright (c) 1985, 1993 The Regents of the University of California.
  * All rights reserved.
@@ -38,11 +40,11 @@ char copyright[] =
 #endif /* not lint */
 
 #ifndef lint
-static char sccsid[] = "@(#)timedc.c	5.1 (Berkeley) 5/11/93";
+static char sccsid[] = "@(#)timedc.c	8.1 (Berkeley) 6/6/93";
 #endif /* not lint */
 
 #ifdef sgi
-#ident "$Revision: 1.3 $"
+#ident "$Revision: 1.4 $"
 #endif
 
 #include "timedc.h"
