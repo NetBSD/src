@@ -28,7 +28,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Header: /cvsroot/src/sys/arch/sun3/sun3/pmap.c,v 1.20 1994/04/24 20:10:24 glass Exp $
+ * $Header: /cvsroot/src/sys/arch/sun3/sun3/pmap.c,v 1.21 1994/05/02 05:46:12 glass Exp $
  */
 #include <sys/systm.h>
 #include <sys/param.h>
@@ -102,7 +102,7 @@ vm_offset_t avail_start, avail_end;
 #define	NKSEG	(NSEGMAP - (KERNBASE / NBSG)) /* is KERNBASE ok? */
 #define	NUSEG	(NSEGMAP-NKSEG)			
 
-#define splpmap splbio
+#define splpmap splimp
 
 #define PMAP_LOCK() s = splpmap()
 #define PMAP_UNLOCK() splx(s)
