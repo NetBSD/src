@@ -1,4 +1,4 @@
-/*	$NetBSD: caesar.c,v 1.9 1999/09/08 21:17:46 jsm Exp $	*/
+/*	$NetBSD: caesar.c,v 1.10 2000/01/09 17:17:20 jsm Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -51,7 +51,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\n\
 #if 0
 static char sccsid[] = "@(#)caesar.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: caesar.c,v 1.9 1999/09/08 21:17:46 jsm Exp $");
+__RCSID("$NetBSD: caesar.c,v 1.10 2000/01/09 17:17:20 jsm Exp $");
 #endif
 #endif /* not lint */
 
@@ -100,7 +100,7 @@ main(argc, argv)
 		printit(argv[1]);
 
 	if (!(inbuf = malloc(LINELENGTH)))
-		errx(1, "out of memory");
+		err(1, NULL);
 
 	/* adjust frequency table to weight low probs REAL low */
 	for (i = 0; i < 26; ++i)
