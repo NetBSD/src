@@ -1,4 +1,4 @@
-/*	$NetBSD: hpux_compat.c,v 1.65 2003/06/29 22:29:17 fvdl Exp $	*/
+/*	$NetBSD: hpux_compat.c,v 1.66 2003/08/02 19:21:48 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpux_compat.c,v 1.65 2003/06/29 22:29:17 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpux_compat.c,v 1.66 2003/08/02 19:21:48 jdolecek Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_sysv.h"
@@ -224,7 +224,12 @@ hpux_sys_waitpid(l, v, retval)
 	void *v;
 	register_t *retval;
 {
-	struct hpux_sys_waitpid_args *uap = v;
+	struct hpux_sys_waitpid_args /* {
+		syscallarg(pid_t) pid;
+		syscallarg(int *) status;
+		syscallarg(int) options;
+		syscallarg(struct rusage *) rusage;
+	} */ *uap = v;
 	int rv, sig, xstat, error;
 
 	SCARG(uap, rusage) = 0;
@@ -244,7 +249,10 @@ hpux_sys_waitpid(l, v, retval)
 		 * pull it back, change the signal portion, and write
 		 * it back out.
 		 */
-		rv = fuword((caddr_t)SCARG(uap, status));
+		error = copyin(SCARG(uap, status), &rv, sizeof(int));
+		if (error)
+			return (error);
+
 		if (WIFSTOPPED(rv)) {
 			sig = WSTOPSIG(rv);
 			rv = W_STOPCODE(bsdtohpuxsig(sig));
@@ -254,7 +262,8 @@ hpux_sys_waitpid(l, v, retval)
 			rv = W_EXITCODE(xstat, bsdtohpuxsig(sig)) |
 				WCOREDUMP(rv);
 		}
-		(void)suword((caddr_t)SCARG(uap, status), rv);
+
+		error = copyout(&rv, SCARG(uap, status), sizeof(int));
 	}
 	return (error);
 }
