@@ -1,4 +1,4 @@
-/*	$NetBSD: dumplfs.c,v 1.18.2.4 2001/07/02 17:48:15 perseant Exp $	*/
+/*	$NetBSD: dumplfs.c,v 1.18.2.5 2001/07/10 01:46:12 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -45,7 +45,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)dumplfs.c	8.5 (Berkeley) 5/24/95";
 #else
-__RCSID("$NetBSD: dumplfs.c,v 1.18.2.4 2001/07/02 17:48:15 perseant Exp $");
+__RCSID("$NetBSD: dumplfs.c,v 1.18.2.5 2001/07/10 01:46:12 perseant Exp $");
 #endif
 #endif /* not lint */
 
@@ -214,7 +214,7 @@ main(int argc, char **argv)
 
 	if (seglist != NULL)
 		for (; seglist != NULL; seglist = seglist->next) {
-			seg_addr = dtosn(lfs_master, seglist->num);
+			seg_addr = sntod(lfs_master, seglist->num);
 			dump_segment(fd, seglist->num, seg_addr, lfs_master,
 				     do_allsb);
 		}
@@ -713,8 +713,10 @@ dump_cleaner_info(struct lfs *lfsp, void *ipage)
 	CLEANERINFO *cip;
 
 	cip = (CLEANERINFO *)ipage;
-	if (lfsp->lfs_version > 1) 
-		(void)printf("free_ino %d\n", cip->free_ino);
+	if (lfsp->lfs_version > 1) {
+		(void)printf("free_head %d\n", cip->free_head);
+		(void)printf("free_tail %d\n", cip->free_tail);
+	}
 	(void)printf("clean\t%d\tdirty\t%d\n",
 		     cip->clean, cip->dirty);
 	(void)printf("bfree\t%d\tavail\t%d\n\n",

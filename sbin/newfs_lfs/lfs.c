@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs.c,v 1.21.2.3 2001/07/02 17:48:14 perseant Exp $	*/
+/*	$NetBSD: lfs.c,v 1.21.2.4 2001/07/10 01:46:11 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)lfs.c	8.5 (Berkeley) 5/24/95";
 #else
-__RCSID("$NetBSD: lfs.c,v 1.21.2.3 2001/07/02 17:48:14 perseant Exp $");
+__RCSID("$NetBSD: lfs.c,v 1.21.2.4 2001/07/10 01:46:11 perseant Exp $");
 #endif
 #endif /* not lint */
 
@@ -484,8 +484,10 @@ make_lfs(int fd, struct disklabel *lp, struct partition *partp, int minfree,
 		fatal("%s", strerror(errno));
 	cleaninfo->clean = lfsp->lfs_nseg - 1;
 	cleaninfo->dirty = 1;
-	if (version > 1)
-		cleaninfo->free_ino = LFS_FIRST_INUM;
+	if (version > 1) {
+		cleaninfo->free_head = LFS_FIRST_INUM;
+		cleaninfo->free_tail = lfsp->lfs_ifpb - 1;
+	}
 
 	if (!(segtable = malloc(lfsp->lfs_segtabsz << lfsp->lfs_bshift)))
 		fatal("%s", strerror(errno));
