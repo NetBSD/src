@@ -1,4 +1,4 @@
-/* 	$NetBSD: ioapic.c,v 1.2 2003/03/04 22:43:36 fvdl Exp $	*/
+/* 	$NetBSD: ioapic.c,v 1.3 2003/04/01 15:09:55 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -289,7 +289,7 @@ ioapic_attach(struct device *parent, struct device *self, void *aux)
 	
 	printf("%s: pa 0x%lx", sc->sc_pic.pic_dev.dv_xname, aaa->apic_address);
 
-	if (x86_mem_add_mapping(aaa->apic_address, NBPG, 0, &bh) != 0) {
+	if (x86_mem_add_mapping(aaa->apic_address, PAGE_SIZE, 0, &bh) != 0) {
 		printf(": map failed\n");
 		return;
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: vidcrender.c,v 1.10 2002/10/05 17:16:37 chs Exp $	*/
+/*	$NetBSD: vidcrender.c,v 1.11 2003/04/01 15:03:00 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 Mark Brinicombe
@@ -257,7 +257,7 @@ vidcrender_coldinit(vc)
 		dispsize = videomemory.vidm_size;
 		transfersize = 16;
 	} else {
-		dispsize = bootconfig.vram[0].pages * NBPG;
+		dispsize = bootconfig.vram[0].pages * PAGE_SIZE;
 		transfersize = dispsize >> 10;
 	}
     
@@ -1244,7 +1244,7 @@ vidc_cursor_init(vc)
 
 	if (!cursor_data) {
 		/* Allocate cursor memory first time round */
-		cursor_data = (char *)uvm_km_zalloc(kernel_map, NBPG);
+		cursor_data = (char *)uvm_km_zalloc(kernel_map, PAGE_SIZE);
 		if (!cursor_data)
 			panic("Cannot allocate memory for hardware cursor");
 		(void) pmap_extract(pmap_kernel(), (vaddr_t)cursor_data, &pa);
