@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_task.c,v 1.34 2003/11/17 01:52:14 manu Exp $ */
+/*	$NetBSD: mach_task.c,v 1.35 2003/11/17 13:20:06 manu Exp $ */
 
 /*-
  * Copyright (c) 2002-2003 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 #include "opt_compat_darwin.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_task.c,v 1.34 2003/11/17 01:52:14 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_task.c,v 1.35 2003/11/17 13:20:06 manu Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -348,16 +348,40 @@ mach_task_get_exception_ports(args)
 	struct lwp *l = args->l;
 	size_t *msglen = args->rsize;
 	struct mach_emuldata *med;
+	struct mach_right *mr;
+	int i, j, count;
 
 	med = l->l_proc->p_emuldata;
 
-	uprintf("Unimplemented mach_task_get_exception_ports\n");
+	/* It always return an array of 32 ports even if only 9 can be used */
+	count = sizeof(rep->rep_old_handler) / sizeof(rep->rep_old_handler[0]);
 
 	rep->rep_msgh.msgh_bits =
-	    MACH_MSGH_REPLY_LOCAL_BITS(MACH_MSG_TYPE_MOVE_SEND_ONCE);
+	    MACH_MSGH_REPLY_LOCAL_BITS(MACH_MSG_TYPE_MOVE_SEND_ONCE) |
+	    MACH_MSGH_BITS_COMPLEX;
 	rep->rep_msgh.msgh_size = sizeof(*rep) - sizeof(rep->rep_trailer);
 	rep->rep_msgh.msgh_local_port = req->req_msgh.msgh_local_port;
 	rep->rep_msgh.msgh_id = req->req_msgh.msgh_id + 100;
+	rep->rep_body.msgh_descriptor_count = count;
+	rep->rep_masks_count = count;
+
+	j = 0;
+	for (i = 0; i <= MACH_EXC_MAX; i++) {
+		if (med->med_exc[i] == NULL)
+			continue;
+
+		mr = mach_right_get(med->med_exc[i], l, MACH_PORT_TYPE_SEND, 0);
+
+		rep->rep_old_handler[j].name = mr->mr_name;
+		rep->rep_old_handler[j].disposition = 0x11; 
+		rep->rep_old_handler[j].type = 0;
+		rep->rep_masks[j] = 1 << i;
+		rep->rep_old_behaviors[j] = (int)mr->mr_port->mp_data >> 16;
+		rep->rep_old_flavors[j] = (int)mr->mr_port->mp_data & 0xff;
+
+		j++;
+	}
+
 	rep->rep_trailer.msgh_trailer_size = 8;
 
 	*msglen = sizeof(*rep);
@@ -396,7 +420,7 @@ mach_task_set_exception_ports(args)
 		med->med_exc[MACH_EXC_BAD_ACCESS] = mp;
 	if (req->req_mask & MACH_EXC_MASK_BAD_INSTRUCTION)
 		med->med_exc[MACH_EXC_BAD_INSTRUCTION] = mp;
-	if (req->req_mask & MACH_EXC_MASK_ARITHMETIC)
+	if (req->req_mask & MACH_EXC_MASK_ARITHMETIC) 
 		med->med_exc[MACH_EXC_ARITHMETIC] = mp;
 	if (req->req_mask & MACH_EXC_MASK_EMULATION)
 		med->med_exc[MACH_EXC_EMULATION] = mp;
@@ -410,6 +434,14 @@ mach_task_set_exception_ports(args)
 		med->med_exc[MACH_EXC_MACH_SYSCALL] = mp;
 	if (req->req_mask & MACH_EXC_MASK_RPC_ALERT)
 		med->med_exc[MACH_EXC_RPC_ALERT] = mp;
+
+#ifdef DEBUG_MACH
+	if (req->req_mask & (MACH_EXC_ARITHMETIC | MACH_EXC_EMULATION |
+	    MACH_EXC_MASK_SOFTWARE | MACH_EXC_MASK_SYSCALL |
+	    MACH_EXC_MASK_MACH_SYSCALL | MACH_EXC_RPC_ALERT)) 
+		printf("mach_set_exception_ports: some exceptions are "
+		    "not supported (mask %x)\n", req->req_mask);
+#endif
 
 	rep->rep_msgh.msgh_bits =
 	    MACH_MSGH_REPLY_LOCAL_BITS(MACH_MSG_TYPE_MOVE_SEND_ONCE);

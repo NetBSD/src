@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_notify.c,v 1.3 2003/11/17 01:52:14 manu Exp $ */
+/*	$NetBSD: mach_notify.c,v 1.4 2003/11/17 13:20:06 manu Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_notify.c,v 1.3 2003/11/17 01:52:14 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_notify.c,v 1.4 2003/11/17 13:20:06 manu Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_compat_mach.h" /* For COMPAT_MACH in <sys/ktrace.h> */
@@ -420,6 +420,28 @@ mach_siginfo_to_exception(ksi, code)
 			    ksi->ksi_signo, ksi->ksi_code);
 			break;
 		}
+		break;
+
+	case SIGILL:
+		switch (ksi->ksi_code) {
+		case ILL_ILLOPC:
+		case ILL_ILLOPN:
+		case ILL_ILLADR:
+		case ILL_ILLTRP:
+			code[0] = MACH_ILL_ILLOPC;
+			code[1] = (long)ksi->ksi_addr;
+			break;
+		case ILL_PRVOPC:
+		case ILL_PRVREG:
+			code[0] = MACH_ILL_PRVOPC;
+			code[1] = (long)ksi->ksi_addr;
+			break;
+		default:
+			printf("untranslated siginfo signo %d, code %d\n", 
+			    ksi->ksi_signo, ksi->ksi_code);
+			break;
+		}
+		break;
 
 	default:
 		printf("untranslated siginfo signo %d, code %d\n", 
