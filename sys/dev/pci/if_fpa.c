@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fpa.c,v 1.10 1996/05/20 00:30:49 thorpej Exp $	*/
+/*	$NetBSD: if_fpa.c,v 1.11 1996/05/20 15:53:02 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1996 Matt Thomas <matt@3am-software.com>
@@ -386,7 +386,6 @@ pdq_pci_attach(
     pdq_uint32_t data;
     pci_intr_handle_t intrhandle;
     const char *intrstr;
-    const char *model;
 #ifdef PDQ_IOMAPPED
     bus_io_addr_t iobase;
     bus_io_size_t iosize;
@@ -394,17 +393,6 @@ pdq_pci_attach(
     bus_mem_addr_t membase;
     bus_mem_size_t memsize;
 #endif
-
-    switch (PCI_PRODUCT(pa->pa_id)) {
-    case PCI_PRODUCT_DEC_DEFPA:
-	model = "Digital Equipment DEFPA FDDI Controller";
-        break;
-
-    default:
-	model = "unknown model!";
-	break;
-    }
-    printf(": %s\n", model);
 
     data = pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_CFLT);
     if ((data & 0xFF00) < (DEFPA_LATENCY << 8)) {
@@ -420,12 +408,16 @@ pdq_pci_attach(
 
 #ifdef PDQ_IOMAPPED
     if (pci_io_find(pa->pa_pc, pa->pa_tag, PCI_CBIO, &iobase, &iosize)
-	    || bus_io_map(pa->pa_bc, iobase, iosize, &sc->sc_iobase))
+	    || bus_io_map(pa->pa_bc, iobase, iosize, &sc->sc_iobase)){
+        printf("\n%s: can't map I/O space!\n", sc->sc_dev.dv_xname);
 	return;
+    }
 #else
     if (pci_mem_find(pa->pa_pc, pa->pa_tag, PCI_CBMA, &membase, &memsize, NULL)
-	    || bus_mem_map(pa->pa_bc, membase, memsize, 0, &sc->sc_membase))
+	    || bus_mem_map(pa->pa_bc, membase, memsize, 0, &sc->sc_membase)) {
+	printf("\n%s: can't map memory space!\n", sc->sc_dev.dv_xname);
 	return;
+    }
 #endif
 
     sc->sc_pdq = pdq_initialize(sc->sc_bc, sc->sc_membase,
