@@ -1,4 +1,4 @@
-/*	$NetBSD: uucpd.c,v 1.21 2003/04/29 17:22:01 agc Exp $	*/
+/*	$NetBSD: uucpd.c,v 1.22 2003/05/17 21:20:09 itojun Exp $	*/
 
 /*
  * Copyright (c) 1985 The Regents of the University of California.
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1985 The Regents of the University of California
 #if 0
 static char sccsid[] = "from: @(#)uucpd.c	5.10 (Berkeley) 2/26/91";
 #else
-__RCSID("$NetBSD: uucpd.c,v 1.21 2003/04/29 17:22:01 agc Exp $");
+__RCSID("$NetBSD: uucpd.c,v 1.22 2003/05/17 21:20:09 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -198,8 +198,8 @@ doit(sa)
 		return;
 	}
 	alarm(0);
-	sprintf(Logname, "LOGNAME=%s", user);
-	sprintf(Username, "USER=%s", user);
+	snprintf(Logname, sizeof(Logname), "LOGNAME=%s", user);
+	snprintf(Username, sizeof(Username), "USER=%s", user);
 	dologin(pw, sa);
 	if (initgroups(pw->pw_name, pw->pw_gid) < 0 ||
 	    setgid(pw->pw_gid) < 0 ||
@@ -261,7 +261,7 @@ dologout()
 	pid_t pid;
 
 	while ((pid = wait(&status)) > 0) {
-		sprintf(line, "uucp%.4d", pid);
+		snprintf(line, sizeof(line), "uucp%.4d", pid);
 #ifdef SUPPORT_UTMPX
 		if (logoutx(line, status, DEAD_PROCESS))
 			logwtmpx(line, "", "", status, DEAD_PROCESS);
@@ -289,10 +289,10 @@ dologin(pw, sa)
 	pid_t pid = getpid();
 
 	/* hack, but must be unique and no tty line */
-	sprintf(line, "uucp%.4d", pid = getpid());
+	snprintf(line, sizeof(line), "uucp%.4d", pid = getpid());
 	(void)gettimeofday(&tv, NULL);
 	if (getnameinfo(sa, sa->sa_len, hbuf, sizeof(hbuf), NULL, 0, 0))
-		(void)strcpy(hbuf, "?");
+		(void)strlcpy(hbuf, "?", sizeof(hbuf));
 #endif
 #ifdef SUPPORT_UTMPX
 	SCPYN(utmpx.ut_line, line);
