@@ -1,4 +1,4 @@
-;	$NetBSD: siop.ss,v 1.12 2000/10/23 14:53:53 bouyer Exp $
+;	$NetBSD: siop.ss,v 1.13 2002/04/18 11:56:11 bouyer Exp $
 
 ;
 ;  Copyright (c) 2000 Manuel Bouyer.
@@ -81,6 +81,9 @@ ENTRY get_extmsgdata;
 ENTRY resel_targ0;
 ENTRY msgin_space;
 ENTRY lunsw_return;
+ENTRY led_on1;
+ENTRY led_on2;
+ENTRY led_off;
 EXTERN abs_script_sched_slot0;
 EXTERN abs_targ0;
 EXTERN abs_msgin;
@@ -134,6 +137,10 @@ reselect_fail:
 	; check that host asserted SIGP, this'll clear SIGP in ISTAT
 	MOVE CTEST2 & 0x40 TO SFBR;
 	INT int_resfail,  IF 0x00;
+; a NOP by default; patched with MOVE GPREG & 0xfe to GPREG on compile-time
+; option "SIOP_SYMLED"
+led_on1:
+	NOP;
 script_sched:
 	; Clear DSA and init status
 	MOVE 0xff to DSA0;
@@ -197,7 +204,15 @@ reselect:
 	MOVE 0xff to DSA3;
 	MOVE 0x00 to SCRATCHA2; no tag
 	MOVE 0x20 to SCRATCHA3; simple tag msg, ignored by reselected:
+; a NOP by default; patched with MOVE GPREG | 0x01 to GPREG on compile-time
+; option "SIOP_SYMLED"
+led_off:
+	NOP;
 	WAIT RESELECT REL(reselect_fail)
+; a NOP by default; patched with MOVE GPREG & 0xfe to GPREG on compile-time
+; option "SIOP_SYMLED"
+led_on2:
+	NOP;
 	MOVE SSID & 0x8f to SFBR
 	MOVE SFBR to SCRATCHA0 ; save reselect ID
 ; find the rigth param for this target
@@ -406,3 +421,9 @@ ldsa_select:
 	JUMP ldsa_abs_selected;
 ldsa_data:
 	NOP; contains data used by the MOVE MEMORY
+
+PROC siop_led_on:
+	MOVE GPREG & 0xfe TO GPREG;
+
+PROC siop_led_off:
+	MOVE GPREG | 0x01 TO GPREG;
