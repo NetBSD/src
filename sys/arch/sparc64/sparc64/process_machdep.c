@@ -1,4 +1,4 @@
-/*	$NetBSD: process_machdep.c,v 1.14 2003/08/07 16:29:51 agc Exp $ */
+/*	$NetBSD: process_machdep.c,v 1.15 2003/10/03 07:50:12 petrov Exp $ */
 
 /*
  * Copyright (c) 1993 The Regents of the University of California.
@@ -95,7 +95,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.14 2003/08/07 16:29:51 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.15 2003/10/03 07:50:12 petrov Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -111,9 +111,7 @@ __KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.14 2003/08/07 16:29:51 agc Exp
 
 /* Unfortunately we need to convert v9 trapframe to v8 regs */
 int
-process_read_regs(l, regs)
-	struct lwp *l;
-	struct reg *regs;
+process_read_regs(struct lwp *l, struct reg *regs)
 {
 	struct trapframe64* tf = l->l_md.md_tf;
 	struct reg32* regp = (struct reg32*)regs;
@@ -147,9 +145,7 @@ process_read_regs(l, regs)
 }
 
 int
-process_write_regs(l, regs)
-	struct lwp *l;
-	struct reg *regs;
+process_write_regs(struct lwp *l, struct reg *regs)
 {
 	struct trapframe64* tf = l->l_md.md_tf;
 	struct reg32* regp = (struct reg32*)regs;
@@ -186,29 +182,25 @@ process_write_regs(l, regs)
 }
 
 int
-process_sstep(l, sstep)
-	struct lwp *l;
-	int sstep;
+process_sstep(struct lwp *l, int sstep)
 {
+
 	if (sstep)
 		return EINVAL;
 	return (0);
 }
 
 int
-process_set_pc(l, addr)
-	struct lwp *l;
-	caddr_t addr;
+process_set_pc(struct lwp *l, caddr_t addr)
 {
+
 	l->l_md.md_tf->tf_pc = (vaddr_t)addr;
 	l->l_md.md_tf->tf_npc = (vaddr_t)addr + 4;
 	return (0);
 }
 
 int
-process_read_fpregs(l, regs)
-	struct lwp *l;
-	struct fpreg *regs;
+process_read_fpregs(struct lwp *l, struct fpreg *regs)
 {
 	extern struct fpstate64	initfpstate;
 	struct fpstate64	*statep = &initfpstate;
@@ -235,9 +227,7 @@ process_read_fpregs(l, regs)
 }
 
 int
-process_write_fpregs(l, regs)
-	struct lwp *l;
-	struct fpreg *regs;
+process_write_fpregs(struct lwp *l, struct fpreg *regs)
 {
 
 	extern struct fpstate64	initfpstate;
