@@ -1,4 +1,4 @@
-/*	$NetBSD: gethostnamadr.c,v 1.20 1997/04/13 10:30:34 mrg Exp $	*/
+/*	$NetBSD: gethostnamadr.c,v 1.21 1997/04/13 10:56:20 mrg Exp $	*/
 
 /*
  * ++Copyright++ 1985, 1988, 1993
@@ -60,7 +60,7 @@
 static char sccsid[] = "@(#)gethostnamadr.c	8.1 (Berkeley) 6/4/93";
 static char rcsid[] = "Id: gethnamaddr.c,v 8.20 1996/09/28 06:51:07 vixie Exp";
 #else
-static char rcsid[] = "$NetBSD: gethostnamadr.c,v 1.20 1997/04/13 10:30:34 mrg Exp $";
+static char rcsid[] = "$NetBSD: gethostnamadr.c,v 1.21 1997/04/13 10:56:20 mrg Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -87,6 +87,12 @@ static char rcsid[] = "$NetBSD: gethostnamadr.c,v 1.20 1997/04/13 10:30:34 mrg E
 #include <stdlib.h>
 #include <string.h>
 
+#ifdef YP
+#include <rpc/rpc.h>
+#include <rpcsvc/yp_prot.h>
+#include <rpcsvc/ypclnt.h>
+#endif
+
 #define	MAXALIASES	35
 #define	MAXADDRS	35
 
@@ -94,6 +100,10 @@ static const char AskedForGot[] =
 			  "gethostby*.getanswer: asked for \"%s\", got \"%s\"";
 
 static char *h_addr_ptrs[MAXADDRS + 1];
+
+#ifdef YP
+static char *__ypdomain;
+#endif
 
 static struct hostent host;
 static char *host_aliases[MAXALIASES];
@@ -954,3 +964,133 @@ dn_skipname(comp_dn, eom)
 	return (__dn_skipname(comp_dn, eom));
 }
 #endif /*old-style libc with yp junk in it*/
+
+#ifdef YP
+struct hostent *
+_yphostent(line)
+	char *line;
+{
+	static struct in_addr host_addrs[MAXADDRS];
+	char *p = line;
+	char *cp, **q;
+	char **hap;
+	struct in_addr *buf;
+	int more;
+
+	host.h_name = NULL;
+	host.h_addr_list = h_addr_ptrs;
+	host.h_length = sizeof(u_int32_t);
+	host.h_addrtype = AF_INET;
+	hap = h_addr_ptrs;
+	buf = host_addrs;
+	q = host.h_aliases = host_aliases;
+
+nextline:
+	more = 0;
+	cp = strpbrk(p, " \t");
+	if (cp == NULL) {
+		if (host.h_name == NULL)
+			return (NULL);
+		else
+			goto done;
+	}
+	*cp++ = '\0';
+
+	*hap++ = (char *)buf;
+	(void) inet_aton(p, buf++);
+
+	while (*cp == ' ' || *cp == '\t')
+		cp++;
+	p = cp;
+	cp = strpbrk(p, " \t\n");
+	if (cp != NULL) {
+		if (*cp == '\n')
+			more = 1;
+		*cp++ = '\0';
+	}
+	if (!host.h_name)
+		host.h_name = p;
+	else if (strcmp(host.h_name, p)==0)
+		;
+	else if (q < &host_aliases[MAXALIASES - 1])
+		*q++ = p;
+	p = cp;
+	if (more)
+		goto nextline;
+
+	while (cp && *cp) {
+		if (*cp == ' ' || *cp == '\t') {
+			cp++;
+			continue;
+		}
+		if (*cp == '\n') {
+			cp++;
+			goto nextline;
+		}
+		if (q < &host_aliases[MAXALIASES - 1])
+			*q++ = cp;
+		cp = strpbrk(cp, " \t");
+		if (cp != NULL)
+			*cp++ = '\0';
+	}
+done:
+	*q = NULL;
+	*hap = NULL;
+	return (&host);
+}
+
+struct hostent *
+_yp_gethtbyaddr(addr, len, type)
+	const char *addr;
+	int len, type;
+{
+	struct hostent *hp = (struct hostent *)NULL;
+	static char *__ypcurrent;
+	int __ypcurrentlen, r;
+	char name[sizeof("xxx.xxx.xxx.xxx") + 1];
+	
+	if (!__ypdomain) {
+		if (_yp_check(&__ypdomain) == 0)
+			return (hp);
+	}
+	(void)snprintf(name, sizeof name, "%u.%u.%u.%u",
+		((unsigned)addr[0] & 0xff),
+		((unsigned)addr[1] & 0xff),
+		((unsigned)addr[2] & 0xff),
+		((unsigned)addr[3] & 0xff));
+	if (__ypcurrent)
+		free(__ypcurrent);
+	__ypcurrent = NULL;
+	r = yp_match(__ypdomain, "hosts.byaddr", name,
+		strlen(name), &__ypcurrent, &__ypcurrentlen);
+	if (r==0)
+		hp = _yphostent(__ypcurrent);
+	if (hp==NULL)
+		h_errno = HOST_NOT_FOUND;
+	return (hp);
+}
+
+struct hostent *
+_yp_gethtbyname(name)
+	const char *name;
+{
+	struct hostent *hp = (struct hostent *)NULL;
+	static char *__ypcurrent;
+	int __ypcurrentlen, r;
+
+	if (!__ypdomain) {
+		if (_yp_check(&__ypdomain) == 0)
+			return (hp);
+	}
+	if (__ypcurrent)
+		free(__ypcurrent);
+	__ypcurrent = NULL;
+	r = yp_match(__ypdomain, "hosts.byname", name,
+		strlen(name), &__ypcurrent, &__ypcurrentlen);
+	if (r==0)
+		hp = _yphostent(__ypcurrent);
+	if (hp==NULL)
+		h_errno = HOST_NOT_FOUND;
+	return (hp);
+}
+#endif
