@@ -1,4 +1,4 @@
-/*	$NetBSD: SYS.h,v 1.11 1999/01/14 22:48:20 kleink Exp $ */
+/*	$NetBSD: SYS.h,v 1.12 2000/03/23 04:58:59 mycroft Exp $ */
 
 /*-
  * Copyright (c) 1996 Jonathan STone
@@ -81,12 +81,12 @@
  *     preserving the callee's entry address in t9.
  */
 #ifdef ABICALLS
-# define PIC_LEAF(x,sr) \
-	.abicalls; LEAF(x); .set noreorder; .cpload sr; .set reorder
-# define PIC_CALL(l,sr) la sr, _C_LABEL(l); jr sr
+	.abicalls
+# define PIC_PROLOGUE(x,sr)	.set noreorder; .cpload sr; .set reorder
+# define PIC_CALL(l,sr)		la sr, _C_LABEL(l); jr sr
 #else
-# define PIC_LEAF(x,sr)	LEAF(x)
-# define PIC_CALL(l,sr)	j  _C_LABEL(l)
+# define PIC_PROLOGUE(x,sr)
+# define PIC_CALL(l,sr)		j  _C_LABEL(l)
 #endif
 
 
@@ -96,13 +96,6 @@
 # define SYSTRAP(x)	li v0,SYS_/**/x; syscall;
 #endif
 
-
-/*
- * Helper macro: produce a possibly-PIC entry point 'x' that syscalls 'y'.
- */
-#define PIC_SYSTRAP(x,y)						\
-	PIC_LEAF(x,t9);							\
-	SYSTRAP(y)
 
 /*
  * Do a syscall that cannot fail (sync, get{p,u,g,eu,eg)id)
@@ -122,13 +115,17 @@
  * and syscall name are not the same.
  */
 #define PSEUDO_NOERROR(x,y)						\
-	PIC_SYSTRAP(x,y);						\
+LEAF(x);								\
+	SYSTRAP(y);							\
 	j ra;								\
 	END(x)
 
 #define PSEUDO(x,y)							\
-	PIC_SYSTRAP(x,y);						\
-	bne a3,zero,err; j ra;						\
-err:	PIC_CALL(__cerror,t9);						\
+LEAF(x);								\
+	PIC_PROLOGUE(x,t9);						\
+	SYSTRAP(y);							\
+	bne a3,zero,err;						\
+	j ra;								\
+err:									\
+	PIC_CALL(__cerror,t9);						\
 	END(x)
-
