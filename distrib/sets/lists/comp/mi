@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.204 2000/03/20 19:09:19 jlam Exp $
+#	$NetBSD: mi,v 1.205 2000/03/23 07:12:36 thorpej Exp $
 ./sys			comp-sysutil-root
 ./usr/bin/addr2line	comp-miscutil-bin
 ./usr/bin/ar		comp-util-bin
@@ -2549,6 +2549,13 @@
 ./usr/share/man/cat9/bus_space_write_region_2.0		comp-kern-catman
 ./usr/share/man/cat9/bus_space_write_region_4.0		comp-kern-catman
 ./usr/share/man/cat9/bus_space_write_region_8.0		comp-kern-catman
+./usr/share/man/cat9/callout.0		comp-kern-catman
+./usr/share/man/cat9/callout_active.0	comp-kern-catman
+./usr/share/man/cat9/callout_deactivate.0	comp-kern-catman
+./usr/share/man/cat9/callout_init.0	comp-kern-catman
+./usr/share/man/cat9/callout_pending.0	comp-kern-catman
+./usr/share/man/cat9/callout_reset.0	comp-kern-catman
+./usr/share/man/cat9/callout_stop.0	comp-kern-catman
 ./usr/share/man/cat9/cltom.0		comp-kern-catman
 ./usr/share/man/cat9/copy.0		comp-kern-catman
 ./usr/share/man/cat9/copyin.0		comp-kern-catman
@@ -4049,6 +4056,13 @@
 ./usr/share/man/man9/bus_space_write_region_2.9		comp-kern-man
 ./usr/share/man/man9/bus_space_write_region_4.9		comp-kern-man
 ./usr/share/man/man9/bus_space_write_region_8.9		comp-kern-man
+./usr/share/man/man9/callout.9		comp-kern-man
+./usr/share/man/man9/callout_active.9	comp-kern-man
+./usr/share/man/man9/callout_deactivate.9	comp-kern-man
+./usr/share/man/man9/callout_init.9	comp-kern-man
+./usr/share/man/man9/callout_pending.9	comp-kern-man
+./usr/share/man/man9/callout_reset.9	comp-kern-man
+./usr/share/man/man9/callout_stop.9	comp-kern-man
 ./usr/share/man/man9/cltom.9		comp-kern-man
 ./usr/share/man/man9/copy.9		comp-kern-man
 ./usr/share/man/man9/copyin.9		comp-kern-man
