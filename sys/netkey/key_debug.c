@@ -1,4 +1,4 @@
-/*	$NetBSD: key_debug.c,v 1.28 2003/09/12 07:38:11 itojun Exp $	*/
+/*	$NetBSD: key_debug.c,v 1.29 2004/10/29 19:31:04 dsl Exp $	*/
 /*	$KAME: key_debug.c,v 1.36 2003/06/27 06:46:01 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: key_debug.c,v 1.28 2003/09/12 07:38:11 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: key_debug.c,v 1.29 2004/10/29 19:31:04 dsl Exp $");
 
 #ifdef _KERNEL
 #include "opt_inet.h"
@@ -347,7 +347,7 @@ kdebug_sadb_identity(ext)
 			p = (char *)(id + 1);
 			ep = p + len;
 			for (/*nothing*/; *p && p < ep; p++) {
-				if (isprint(*p))
+				if (isprint((unsigned char)*p))
 					printf("%c", *p & 0xff);
 				else
 					printf("\\%03o", *p & 0xff);
