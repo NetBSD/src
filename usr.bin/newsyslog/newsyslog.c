@@ -1,7 +1,7 @@
 /*
  * This file contains changes from the Open Software Foundation.
  * The RCS history log will appear at the end of this file.
- * @(#)newsyslog.c	$Revision: 1.2 $ $Date: 1993/05/21 14:47:30 $ $Locker:  $
+ * @(#)newsyslog.c	$Revision: 1.3 $ $Date: 1993/05/22 03:52:20 $ $Locker:  $
  */
 
 /*
@@ -31,7 +31,7 @@ provided "as is" without express or implied warranty.
  */
 
 #if !defined(lint) && !defined(_NOIDENT)
-static char rcsid[] = "@(#)$RCSfile: newsyslog.c,v $ $Revision: 1.2 $ (OSF) $Date: 1993/05/21 14:47:30 $";
+static char rcsid[] = "@(#)$RCSfile: newsyslog.c,v $ $Revision: 1.3 $ (OSF) $Date: 1993/05/22 03:52:20 $";
 #endif
 
 #ifndef CONF
@@ -42,6 +42,9 @@ static char rcsid[] = "@(#)$RCSfile: newsyslog.c,v $ $Revision: 1.2 $ (OSF) $Dat
 #endif
 #ifndef COMPRESS
 #define COMPRESS "/usr/ucb/compress" /* File compression program */
+#endif
+#ifndef COMPRESS_POSTFIX
+#define COMPRESS_POSTFIX ".Z"
 #endif
 
 #include <stdio.h>
@@ -383,7 +386,7 @@ dotrim(log,numdays,flags,perm,owner_uid,group_gid)
         /* Remove oldest log */
         (void) sprintf(file1,"%s.%d",log,numdays);
         (void) strcpy(zfile1, file1);
-        (void) strcat(zfile1, ".Z");
+        (void) strcat(zfile1, COMPRESS_POSTFIX);
 
         if (noaction) {
                 printf("rm -f %s\n", file1);
@@ -400,8 +403,8 @@ dotrim(log,numdays,flags,perm,owner_uid,group_gid)
                 (void) strcpy(zfile1, file1);
                 (void) strcpy(zfile2, file2);
                 if (lstat(file1, &st)) {
-                        (void) strcat(zfile1, ".Z");
-                        (void) strcat(zfile2, ".Z");
+                        (void) strcat(zfile1, COMPRESS_POSTFIX);
+                        (void) strcat(zfile2, COMPRESS_POSTFIX);
                         if (lstat(zfile1, &st)) continue;
                 }
                 if (noaction) {
@@ -517,7 +520,7 @@ int age_old_log(file)
 
         (void) strcpy(tmp,file);
         if (stat(strcat(tmp,".0"),&sb) < 0)
-            if (stat(strcat(tmp,".Z"), &sb) < 0)
+            if (stat(strcat(tmp,COMPRESS_POSTFIX), &sb) < 0)
                 return(-1);
         return( (int) (timenow - sb.st_mtime + 1800) / 3600);
 }
@@ -569,13 +572,17 @@ char *string;
 }
 
 #if !defined(__SABER__) && !defined(lint) && !defined(NO_WHAT_STRINGS)
-static char *what_string = "@(#)newsyslog.c\t$Revision: 1.2 $ $Date: 1993/05/21 14:47:30 $ $Locker:  $";
+static char *what_string = "@(#)newsyslog.c\t$Revision: 1.3 $ $Date: 1993/05/22 03:52:20 $ $Locker:  $";
 #endif
 
 /*
  * HISTORY
  * $Log: newsyslog.c,v $
- * Revision 1.2  1993/05/21 14:47:30  cgd
+ * Revision 1.3  1993/05/22 03:52:20  cgd
+ * add use of "COMPRESS_POSTFIX" define, to determine what postfix
+ * (e.g. ".Z", ".z", etc.) to append to compressed log files.
+ *
+ * Revision 1.2  1993/05/21  14:47:30  cgd
  * use the correct (or so john brezak says) copyright.
  *
  * Revision 1.1  1993/05/21  14:44:02  cgd
