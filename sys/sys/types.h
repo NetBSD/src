@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.19 1994/10/28 23:06:09 cgd Exp $	*/
+/*	$NetBSD: types.h,v 1.20 1994/12/08 06:43:32 jtc Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -73,6 +73,7 @@ typedef	u_int16_t	mode_t;		/* permissions */
 typedef	u_int16_t	nlink_t;	/* link count */
 typedef	quad_t		off_t;		/* file offset */
 typedef	int32_t		pid_t;		/* process id */
+typedef quad_t		rlim_t;		/* resource limit */
 typedef	int32_t		segsz_t;	/* segment size */
 typedef	int32_t		swblk_t;	/* swap offset */
 typedef	u_int32_t	uid_t;		/* user id */

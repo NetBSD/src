@@ -1,4 +1,4 @@
-/*	$NetBSD: resource.h,v 1.10 1994/10/29 08:20:19 cgd Exp $	*/
+/*	$NetBSD: resource.h,v 1.11 1994/12/08 06:43:30 jtc Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -99,8 +99,8 @@ struct orlimit {
 };
 
 struct rlimit {
-	quad_t	rlim_cur;		/* current (soft) limit */
-	quad_t	rlim_max;		/* maximum value for rlim_cur */
+	rlim_t	rlim_cur;		/* current (soft) limit */
+	rlim_t	rlim_max;		/* maximum value for rlim_cur */
 };
 
 /* Load average structure. */
