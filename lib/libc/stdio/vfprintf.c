@@ -1,4 +1,4 @@
-/*	$NetBSD: vfprintf.c,v 1.22 1997/12/19 14:08:44 kleink Exp $	*/
+/*	$NetBSD: vfprintf.c,v 1.23 1998/02/03 18:41:23 perry Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -41,7 +41,7 @@
 #if 0
 static char *sccsid = "@(#)vfprintf.c	5.50 (Berkeley) 12/16/92";
 #else
-__RCSID("$NetBSD: vfprintf.c,v 1.22 1997/12/19 14:08:44 kleink Exp $");
+__RCSID("$NetBSD: vfprintf.c,v 1.23 1998/02/03 18:41:23 perry Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -78,9 +78,9 @@ static int __sbprintf __P((FILE *, const char *, va_list));
 static int
 __sprint(fp, uio)
 	FILE *fp;
-	register struct __suio *uio;
+	struct __suio *uio;
 {
-	register int err;
+	int err;
 
 	if (uio->uio_resid == 0) {
 		uio->uio_iovcnt = 0;
@@ -99,7 +99,7 @@ __sprint(fp, uio)
  */
 static int
 __sbprintf(fp, fmt, ap)
-	register FILE *fp;
+	FILE *fp;
 	const char *fmt;
 	va_list ap;
 {
@@ -171,12 +171,12 @@ vfprintf(fp, fmt0, ap)
 	const char *fmt0;
 	_BSD_VA_LIST_ ap;
 {
-	register char *fmt;	/* format string */
-	register int ch;	/* character from fmt */
-	register int n, m;	/* handy integers (short term usage) */
-	register char *cp;	/* handy char pointer (short term usage) */
-	register struct __siov *iovp;/* for PRINT macro */
-	register int flags;	/* flags as above */
+	char *fmt;	/* format string */
+	int ch;	/* character from fmt */
+	int n, m;	/* handy integers (short term usage) */
+	char *cp;	/* handy char pointer (short term usage) */
+	struct __siov *iovp;/* for PRINT macro */
+	int flags;	/* flags as above */
 	int ret;		/* return value accumulator */
 	int width;		/* width from format (%8d), or 0 */
 	int prec;		/* precision from format (%.3d), or -1 */
@@ -765,7 +765,7 @@ exponent(p0, exp, fmtch)
 	char *p0;
 	int exp, fmtch;
 {
-	register char *p, *t;
+	char *p, *t;
 	char expbuf[MAXEXP];
 
 	p = p0;

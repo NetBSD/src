@@ -1,4 +1,4 @@
-/*	$NetBSD: regerror.c,v 1.7 1997/07/21 14:08:16 jtc Exp $	*/
+/*	$NetBSD: regerror.c,v 1.8 1998/02/03 18:38:14 perry Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994 Henry Spencer.
@@ -44,7 +44,7 @@
 #if 0
 static char sccsid[] = "@(#)regerror.c	8.4 (Berkeley) 3/20/94";
 #else
-__RCSID("$NetBSD: regerror.c,v 1.7 1997/07/21 14:08:16 jtc Exp $");
+__RCSID("$NetBSD: regerror.c,v 1.8 1998/02/03 18:38:14 perry Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -131,10 +131,10 @@ const regex_t *preg;
 char *errbuf;
 size_t errbuf_size;
 {
-	register struct rerr *r;
-	register size_t len;
-	register int target = errcode &~ REG_ITOA;
-	register char *s;
+	struct rerr *r;
+	size_t len;
+	int target = errcode &~ REG_ITOA;
+	char *s;
 	char convbuf[50];
 
 	if (errcode == REG_ATOI)
@@ -174,7 +174,7 @@ const regex_t *preg;
 char *localbuf;
 int buflen;
 {
-	register struct rerr *r;
+	struct rerr *r;
 
 	for (r = rerrs; r->code != 0; r++)
 		if (strcmp(r->name, preg->re_endp) == 0)

@@ -1,4 +1,4 @@
-/*	$NetBSD: malloc.c,v 1.11 1998/01/30 23:38:00 perry Exp $	*/
+/*	$NetBSD: malloc.c,v 1.12 1998/02/03 18:44:17 perry Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)malloc.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: malloc.c,v 1.11 1998/01/30 23:38:00 perry Exp $");
+__RCSID("$NetBSD: malloc.c,v 1.12 1998/02/03 18:44:17 perry Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -147,10 +147,10 @@ void *
 malloc(nbytes)
 	size_t nbytes;
 {
-  	register union overhead *op;
-	register int bucket;
-  	register long n;
-	register unsigned amt;
+  	union overhead *op;
+	int bucket;
+  	long n;
+	unsigned amt;
 
 	/*
 	 * First time malloc is called, setup page size and
@@ -233,8 +233,8 @@ static void
 morecore(bucket)
 	int bucket;
 {
-  	register union overhead *op;
-	register long sz;		/* size of desired block */
+  	union overhead *op;
+	long sz;		/* size of desired block */
   	long amt;			/* amount to allocate */
   	int nblks;			/* how many blocks we get */
 
@@ -275,8 +275,8 @@ void
 free(cp)
 	void *cp;
 {   
-  	register long size;
-	register union overhead *op;
+  	long size;
+	union overhead *op;
 
   	if (cp == NULL)
   		return;
@@ -318,8 +318,8 @@ realloc(cp, nbytes)
 	void *cp; 
 	size_t nbytes;
 {   
-  	register u_long onb;
-	register long i;
+  	u_long onb;
+	long i;
 	union overhead *op;
   	char *res;
 	int was_alloced = 0;
@@ -393,8 +393,8 @@ findbucket(freep, srchlen)
 	union overhead *freep;
 	int srchlen;
 {
-	register union overhead *p;
-	register int i, j;
+	union overhead *p;
+	int i, j;
 
 	for (i = 0; i < NBUCKETS; i++) {
 		j = 0;
@@ -419,8 +419,8 @@ void
 mstats(s)
 	char *s;
 {
-  	register int i, j;
-  	register union overhead *p;
+  	int i, j;
+  	union overhead *p;
   	int totfree = 0,
   	totused = 0;
 

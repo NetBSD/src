@@ -1,4 +1,4 @@
-/*	$NetBSD: setenv.c,v 1.11 1998/01/30 23:38:05 perry Exp $	*/
+/*	$NetBSD: setenv.c,v 1.12 1998/02/03 18:44:20 perry Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)setenv.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: setenv.c,v 1.11 1998/01/30 23:38:05 perry Exp $");
+__RCSID("$NetBSD: setenv.c,v 1.12 1998/02/03 18:44:20 perry Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -59,13 +59,13 @@ __weak_alias(unsetenv,_unsetenv);
  */
 int
 setenv(name, value, rewrite)
-	register const char *name;
-	register const char *value;
+	const char *name;
+	const char *value;
 	int rewrite;
 {
 	extern char **environ;
 	static int alloced;			/* if allocated space before */
-	register char *c;
+	char *c;
 	int l_value, offset;
 
 	if (*value == '=')			/* no `=' in value */
@@ -79,8 +79,8 @@ setenv(name, value, rewrite)
 			return (0);
 		}
 	} else {					/* create new slot */
-		register int cnt;
-		register char **p;
+		int cnt;
+		char **p;
 
 		for (p = environ, cnt = 0; *p; ++p, ++cnt);
 		if (alloced) {			/* just increase size */
@@ -118,7 +118,7 @@ unsetenv(name)
 	const char *name;
 {
 	extern char **environ;
-	register char **p;
+	char **p;
 	int offset;
 
 	while (__findenv(name, &offset))	/* if set multiple times */
