@@ -1,4 +1,4 @@
-/*	$NetBSD: shb.c,v 1.16 2002/02/28 01:56:59 uch Exp $	*/
+/*	$NetBSD: shb.c,v 1.17 2002/03/06 15:03:21 uch Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994 Charles Hannum.  All rights reserved.
@@ -458,7 +458,7 @@ mask_irq(irq)
 		ipr[IPRA] &= ~((15)<<12);
 		_reg_write_2(SH3_IPRA, ipr[IPRA]);
 #else
-		_reg_write_2(SH3_IPRA, _reg_read_2(SH3_IPRA) & ~((15)<<8));
+		_reg_write_2(SH3_IPRA, _reg_read_2(SH3_IPRA) & ~((15)<<12));
 #endif
 		break;
 	case SCI_IRQ:
