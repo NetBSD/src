@@ -14,9 +14,10 @@
  * I would appreciate (though I do not require) receiving a copy of any
  * improvements you might make to this program.
  *
- *	$Id: units.c,v 1.2 1994/01/29 01:43:47 jtc Exp $
+ *	$Id: units.c,v 1.3 1994/12/21 07:22:00 jtc Exp $
  */
 
+#include <ctype.h>
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
@@ -288,7 +289,7 @@ addunit(struct unittype * theunit, char *toadd, int flip)
 {
 	char *scratch, *savescr;
 	char *item;
-	char *divider, *subunit, *slash;
+	char *divider, *slash;
 	int doingtop;
 
 	savescr = scratch = dupstr(toadd);
