@@ -1,7 +1,7 @@
-/*	$NetBSD: smc83c170.c,v 1.9 1998/10/05 19:10:22 thorpej Exp $	*/
+/*	$NetBSD: smc83c170.c,v 1.10 1999/02/12 05:55:27 thorpej Exp $	*/
 
 /*-
- * Copyright (c) 1998 The NetBSD Foundation, Inc.
+ * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -105,12 +105,6 @@ void	epic_statchg __P((struct device *));
 int	epic_mediachange __P((struct ifnet *));
 void	epic_mediastatus __P((struct ifnet *, struct ifmediareq *));
 
-/*
- * Fudge the incoming packets by this much, to ensure the data after
- * the Ethernet header is aligned.
- */
-#define	RX_ALIGNMENT_FUDGE	2
-
 /* XXX Should be somewhere else. */
 #define	ETHER_MIN_LEN		60
 
@@ -185,7 +179,7 @@ epic_attach(sc)
 	for (i = 0; i < EPIC_NTXDESC; i++) {
 		if ((error = bus_dmamap_create(sc->sc_dmat, MCLBYTES,
 		    EPIC_NFRAGS, MCLBYTES, 0, BUS_DMA_NOWAIT,
-		    &sc->sc_txsoft[i].ds_dmamap)) != 0) {
+		    &EPIC_DSTX(sc, i)->ds_dmamap)) != 0) {
 			printf("%s: unable to create tx DMA map %d, "
 			    "error = %d\n", sc->sc_dev.dv_xname, i, error);
 			goto fail;
@@ -200,7 +194,7 @@ epic_attach(sc)
 	for (i = 0; i < EPIC_NRXDESC; i++) {
 		if ((error = bus_dmamap_create(sc->sc_dmat, MCLBYTES, 1,
 		    MCLBYTES, 0, BUS_DMA_NOWAIT,
-		    &sc->sc_rxsoft[i].ds_dmamap)) != 0) {
+		    &EPIC_DSRX(sc, i)->ds_dmamap)) != 0) {
 			printf("%s: unable to create rx DMA map %d, "
 			    "error = %d\n", sc->sc_dev.dv_xname, i, error);
 			goto fail;
@@ -302,10 +296,10 @@ epic_attach(sc)
 	switch (attach_stage) {
 	case 7:
 		for (i = 0; i < EPIC_NRXDESC; i++) {
-			if (sc->sc_rxsoft[i].ds_mbuf != NULL) {
+			if (EPIC_DSRX(sc, i)->ds_mbuf != NULL) {
 				bus_dmamap_unload(sc->sc_dmat,
-				    sc->sc_rxsoft[i].ds_dmamap);
-				m_freem(sc->sc_rxsoft[i].ds_mbuf);
+				    EPIC_DSRX(sc, i)->ds_dmamap);
+				m_freem(EPIC_DSRX(sc, i)->ds_mbuf);
 			}
 		}
 		/* FALLTHROUGH */
@@ -313,13 +307,13 @@ epic_attach(sc)
 	case 6:
 		for (i = 0; i < EPIC_NRXDESC; i++)
 			bus_dmamap_destroy(sc->sc_dmat,
-			    sc->sc_rxsoft[i].ds_dmamap);
+			    EPIC_DSRX(sc, i)->ds_dmamap);
 		/* FALLTHROUGH */
 
 	case 5:
 		for (i = 0; i < EPIC_NTXDESC; i++)
 			bus_dmamap_destroy(sc->sc_dmat,
-			    sc->sc_txsoft[i].ds_dmamap);
+			    EPIC_DSTX(sc, i)->ds_dmamap);
 		/* FALLTHROUGH */
 
 	case 4:
@@ -362,94 +356,82 @@ epic_start(ifp)
 	struct ifnet *ifp;
 {
 	struct epic_softc *sc = ifp->if_softc;
+	struct mbuf *m0, *m;
 	struct epic_txdesc *txd;
 	struct epic_descsoft *ds;
 	struct epic_fraglist *fr;
 	bus_dmamap_t dmamap;
-	struct mbuf *m0;
-	int nexttx, seg, error, txqueued;
+	int error, firsttx, nexttx, opending, seg;
 
-	txqueued = 0;
+	/*
+	 * Remember the previous txpending and the first transmit
+	 * descriptor we use.
+	 */
+	opending = sc->sc_txpending;
+	firsttx = EPIC_NEXTTX(sc->sc_txlast);
 
 	/*
 	 * Loop through the send queue, setting up transmit descriptors
 	 * until we drain the queue, or use up all available transmit
 	 * descriptors.
 	 */
-	while (ifp->if_snd.ifq_head != NULL &&
-	    sc->sc_txpending < EPIC_NTXDESC) {
+	while (sc->sc_txpending < EPIC_NTXDESC) {
 		/*
 		 * Grab a packet off the queue.
 		 */
 		IF_DEQUEUE(&ifp->if_snd, m0);
+		if (m0 == NULL)
+			break;
 
 		/*
 		 * Get the last and next available transmit descriptor.
 		 */
 		nexttx = EPIC_NEXTTX(sc->sc_txlast);
-		txd = &sc->sc_control_data->ecd_txdescs[nexttx];
-		fr = &sc->sc_control_data->ecd_txfrags[nexttx];
-		ds = &sc->sc_txsoft[nexttx];
+		txd = EPIC_CDTX(sc, nexttx);
+		fr = EPIC_CDFL(sc, nexttx);
+		ds = EPIC_DSTX(sc, nexttx);
 		dmamap = ds->ds_dmamap;
 
- loadmap:
 		/*
-		 * Load the DMA map with the packet.
+		 * Load the DMA map.  If this fails, the packet either
+		 * didn't fit in the alloted number of frags, or we were
+		 * short on resources.  In this case, we'll copy and try
+		 * again.
 		 */
-		error = bus_dmamap_load_mbuf(sc->sc_dmat, dmamap, m0,
-		    BUS_DMA_NOWAIT);
-		switch (error) {
-		case 0:
-			/* Success. */
-			break;
-
-		case EFBIG:
-		    {
-			struct mbuf *mn;
-
-			/*
-			 * We ran out of segments.  We have to recopy this
-			 * mbuf chain first.  Bail out if we can't get the
-			 * new buffers.
-			 */
-			printf("%s: too many segments, ", sc->sc_dev.dv_xname);
-
-			MGETHDR(mn, M_DONTWAIT, MT_DATA);
-			if (mn == NULL) {
-				m_freem(m0);
-				printf("aborting\n");
-				goto out;
+		if (bus_dmamap_load_mbuf(sc->sc_dmat, dmamap, m0,
+		    BUS_DMA_NOWAIT) != 0) {
+			MGETHDR(m, M_DONTWAIT, MT_DATA);
+			if (m == NULL) {
+				printf("%s: unable to allocate Tx mbuf\n",
+				    sc->sc_dev.dv_xname);
+				IF_PREPEND(&ifp->if_snd, m0);
+				break;
 			}
 			if (m0->m_pkthdr.len > MHLEN) {
-				MCLGET(mn, M_DONTWAIT);
-				if ((mn->m_flags & M_EXT) == 0) {
-					m_freem(mn);
-					m_freem(m0);
-					printf("aborting\n");
-					goto out;
+				MCLGET(m, M_DONTWAIT);
+				if ((m->m_flags & M_EXT) == 0) {
+					printf("%s: unable to allocate Tx "
+					    "cluster\n", sc->sc_dev.dv_xname);
+					m_freem(m);
+					IF_PREPEND(&ifp->if_snd, m0);
+					break;
 				}
 			}
-			m_copydata(m0, 0, m0->m_pkthdr.len, mtod(mn, caddr_t));
-			mn->m_pkthdr.len = mn->m_len = m0->m_pkthdr.len;
+			m_copydata(m0, 0, m0->m_pkthdr.len, mtod(m, caddr_t));
+			m->m_pkthdr.len = m->m_len = m0->m_pkthdr.len;
 			m_freem(m0);
-			m0 = mn;
-			printf("retrying\n");
-			goto loadmap;
-		    }
-		
-		default:
-			/*
-			 * Some other problem; report it.
-			 */
-			printf("%s: can't load mbuf chain, error = %d\n",
-			    sc->sc_dev.dv_xname, error);
-			m_freem(m0);
-			goto out;
+			m0 = m;
+			error = bus_dmamap_load_mbuf(sc->sc_dmat, dmamap,
+			    m0, BUS_DMA_NOWAIT);
+			if (error) {
+				printf("%s: unable to load Tx buffer, "
+				    "error = %d\n", sc->sc_dev.dv_xname, error);
+				IF_PREPEND(&ifp->if_snd, m0);
+				break;
+			}
 		}
 
-		/*
-		 * Initialize the fraglist.
-		 */
+		/* Initialize the fraglist. */
 		fr->ef_nfrags = dmamap->dm_nsegs;
 		for (seg = 0; seg < dmamap->dm_nsegs; seg++) {
 			fr->ef_frags[seg].ef_addr =
@@ -458,6 +440,9 @@ epic_start(ifp)
 			    dmamap->dm_segs[seg].ds_len;
 		}
 
+		EPIC_CDFLSYNC(sc, nexttx, BUS_DMASYNC_PREWRITE);
+
+		/* Sync the DMA map. */
 		bus_dmamap_sync(sc->sc_dmat, dmamap, 0, dmamap->dm_mapsize,
 		    BUS_DMASYNC_PREWRITE);
 
@@ -467,23 +452,28 @@ epic_start(ifp)
 		ds->ds_mbuf = m0;
 
 		/*
-		 * Finish setting up the new transmit descriptor: set the
-		 * packet length and give it to the EPIC.
+		 * Fill in the transmit descriptor.  The EPIC doesn't
+		 * auto-pad, so we have to do this ourselves.
 		 */
+		txd->et_control = ET_TXCTL_LASTDESC | ET_TXCTL_FRAGLIST;
 		txd->et_txlength = max(m0->m_pkthdr.len, ETHER_MIN_LEN);
-		txd->et_txstatus = ET_TXSTAT_OWNER;
 
 		/*
-		 * Committed; advance the lasttx pointer.  If nothing was
-		 * previously queued, reset the dirty pointer.
+		 * If this is the first descriptor we're enqueueing,
+		 * don't give it to the EPIC yet.  That could cause
+		 * a race condition.  We'll do it below.
 		 */
-		sc->sc_txlast = nexttx;
-		if (sc->sc_txpending == 0)
-			sc->sc_txdirty = nexttx;
+		if (nexttx == firsttx)
+			txd->et_txstatus = 0;
+		else
+			txd->et_txstatus = ET_TXSTAT_OWNER;
 
+		EPIC_CDTXSYNC(sc, nexttx,
+		    BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
+
+		/* Advance the tx pointer. */
 		sc->sc_txpending++;
-
-		txqueued = 1;
+		sc->sc_txlast = nexttx;
 
 #if NBPFILTER > 0
 		/*
@@ -494,18 +484,40 @@ epic_start(ifp)
 #endif
 	}
 
- out:
-	/*
-	 * We're finished.  If we added more packets, make sure the
-	 * transmit DMA engine is running.
-	 */
-	if (txqueued) {
+	if (sc->sc_txpending == EPIC_NTXDESC) {
+		/* No more slots left; notify upper layer. */
+		ifp->if_flags |= IFF_OACTIVE;
+	}
+
+	if (sc->sc_txpending != opending) {
+		/*
+		 * We enqueued packets.  If the transmitter was idle,
+		 * reset the txdirty pointer.
+		 */
+		if (opending == 0)
+			sc->sc_txdirty = firsttx;
+
+		/*
+		 * Cause a transmit interrupt to happen on the
+		 * last packet we enqueued.
+		 */
+		EPIC_CDTX(sc, sc->sc_txlast)->et_control |= ET_TXCTL_IAF;
+		EPIC_CDTXSYNC(sc, sc->sc_txlast,
+		    BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
+
+		/*
+		 * The entire packet chain is set up.  Give the
+		 * first descriptor to the EPIC now.
+		 */
+		EPIC_CDTX(sc, firsttx)->et_txstatus = ET_TXSTAT_OWNER;
+		EPIC_CDTXSYNC(sc, firsttx,
+		    BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
+
+		/* Start the transmitter. */
 		bus_space_write_4(sc->sc_st, sc->sc_sh, EPIC_COMMAND,
 		    COMMAND_TXQUEUED);
 
-		/*
-		 * Set a 5 second watchdog timer.
-		 */
+		/* Set a watchdog timer in case the chip flakes out. */
 		ifp->if_timer = 5;
 	}
 }
@@ -591,7 +603,6 @@ epic_ioctl(ifp, cmd, data)
 			 * stop it.
 			 */
 			epic_stop(sc);
-			ifp->if_flags &= ~IFF_RUNNING;
 		} else if ((ifp->if_flags & IFF_UP) != 0 &&
 			   (ifp->if_flags & IFF_RUNNING) == 0) {
 			/*
@@ -599,7 +610,7 @@ epic_ioctl(ifp, cmd, data)
 			 * start it.
 			 */
 			epic_init(sc);
-		} else {
+		} else if ((ifp->if_flags & IFF_UP) != 0) {
 			/*
 			 * Reset the interface to pick up changes in any other
 			 * flags that affect the hardware state.
@@ -653,7 +664,7 @@ epic_intr(arg)
 	struct epic_descsoft *ds;
 	struct mbuf *m;
 	u_int32_t intstat;
-	int i, len, claimed = 0, error;
+	int i, len, claimed = 0;
 
  top:
 	/*
@@ -676,10 +687,11 @@ epic_intr(arg)
 	 */
 	if (intstat & (INTSTAT_RCC | INTSTAT_RQE)) {
 		for (i = sc->sc_rxptr;; i = EPIC_NEXTRX(i)) {
-			rxd = &sc->sc_control_data->ecd_rxdescs[i];
-			ds = &sc->sc_rxsoft[i];
-			m = ds->ds_mbuf;
-			error = 0;
+			rxd = EPIC_CDRX(sc, i);
+			ds = EPIC_DSRX(sc, i);
+
+			EPIC_CDRXSYNC(sc, i,
+			    BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
 
 			if (rxd->er_rxstatus & ER_RXSTAT_OWNER) {
 				/*
@@ -689,81 +701,75 @@ epic_intr(arg)
 				break;
 			}
 
-			bus_dmamap_sync(sc->sc_dmat, ds->ds_dmamap, 0,
-			    ds->ds_dmamap->dm_mapsize, BUS_DMASYNC_POSTREAD);
-
 			/*
-			 * Make sure the packet arrived intact.
+			 * Make sure the packet arrived intact.  If an error
+			 * occurred, update stats and reset the descriptor.
+			 * The buffer will be reused the next time the
+			 * descriptor comes up in the ring.
 			 */
 			if ((rxd->er_rxstatus & ER_RXSTAT_PKTINTACT) == 0) {
-#if 1
 				if (rxd->er_rxstatus & ER_RXSTAT_CRCERROR)
 					printf("%s: CRC error\n",
 					    sc->sc_dev.dv_xname);
 				if (rxd->er_rxstatus & ER_RXSTAT_ALIGNERROR)
 					printf("%s: alignment error\n",
 					    sc->sc_dev.dv_xname);
-#endif
 				ifp->if_ierrors++;
-				error = 1;
+				EPIC_INIT_RXDESC(sc, i);
+				continue;
 			}
+
+			bus_dmamap_sync(sc->sc_dmat, ds->ds_dmamap, 0,
+			    ds->ds_dmamap->dm_mapsize, BUS_DMASYNC_POSTREAD);
 
 			/*
 			 * Add a new buffer to the receive chain.  If this
 			 * fails, the old buffer is recycled.
 			 */
-			if (epic_add_rxbuf(sc, i) == 0) {
-				/*
-				 * We wanted to reset the buffer, but
-				 * didn't want to pass it on up.
-				 */
-				if (error) {
-					m_freem(m);
-					continue;
-				}
-
-				len = rxd->er_buflength;
-				if (len < sizeof(struct ether_header)) {
-					m_freem(m);
-					continue;
-				}
-
-				m->m_pkthdr.rcvif = ifp;
-				m->m_pkthdr.len = m->m_len = len;
-				eh = mtod(m, struct ether_header *);
-#if NBPFILTER > 0
-				/*
-				 * Pass this up to any BPF listeners.
-				 */
-				if (ifp->if_bpf) {
-					bpf_mtap(ifp->if_bpf, m);
-
-					/*
-					 * Only pass this up the stack
-					 * if it's for us.
-					 */
-					if ((ifp->if_flags & IFF_PROMISC) &&
-					    bcmp(LLADDR(ifp->if_sadl),
-						 eh->ether_dhost,
-						 ETHER_ADDR_LEN) != 0 &&
-					    (rxd->er_rxstatus &
-					     (ER_RXSTAT_BCAST|ER_RXSTAT_MCAST))
-					     == 0) {
-						m_freem(m);
-						continue;
-					}
-				}
-#endif /* NPBFILTER > 0 */
-				m->m_data += sizeof(struct ether_header);
-				m->m_len -= sizeof(struct ether_header);
-				m->m_pkthdr.len = m->m_len;
-				ether_input(ifp, eh, m);
+			m = ds->ds_mbuf;
+			if (epic_add_rxbuf(sc, i) != 0) {
+				ifp->if_ierrors++;
+				EPIC_INIT_RXDESC(sc, i);
+				bus_dmamap_sync(sc->sc_dmat, ds->ds_dmamap, 0,
+				    ds->ds_dmamap->dm_mapsize,
+				    BUS_DMASYNC_PREREAD);
+				continue;
 			}
+
+			len = rxd->er_buflength;
+			if (len < sizeof(struct ether_header)) {
+				m_freem(m);
+				continue;
+			}
+
+			m->m_pkthdr.rcvif = ifp;
+			m->m_pkthdr.len = m->m_len = len;
+			eh = mtod(m, struct ether_header *);
+
+#if NBPFILTER > 0
+			/*
+			 * Pass this up to any BPF listeners, but only
+			 * pass it up the stack if its for us.
+			 */
+			if (ifp->if_bpf) {
+				bpf_mtap(ifp->if_bpf, m);
+				if ((ifp->if_flags & IFF_PROMISC) != 0 &&
+				    bcmp(LLADDR(ifp->if_sadl), eh->ether_dhost,
+					 ETHER_ADDR_LEN) != 0 &&
+				    (rxd->er_rxstatus &
+				     (ER_RXSTAT_BCAST|ER_RXSTAT_MCAST)) == 0) {
+					m_freem(m);
+					continue;
+				}
+			}
+#endif /* NPBFILTER > 0 */
+			
+			/* Remove the Ethernet header and pass it on. */
+			m_adj(m, sizeof(struct ether_header));
+			ether_input(ifp, eh, m);
 		}
-		
-		/*
-		 * Update the recieve pointer.
-		 */
+
+		/* Update the recieve pointer. */
 		sc->sc_rxptr = i;
 
 		/*
@@ -777,7 +783,7 @@ epic_intr(arg)
 			 * receiver.
 			 */
 			bus_space_write_4(sc->sc_st, sc->sc_sh, EPIC_PRCDAR,
-			    sc->sc_cddma + EPIC_CDOFF(ecd_rxdescs[0]));
+			    EPIC_CDRXADDR(sc, sc->sc_rxptr));
 			bus_space_write_4(sc->sc_st, sc->sc_sh, EPIC_COMMAND,
 			    COMMAND_RXQUEUED | COMMAND_START_RX);
 		}
@@ -787,43 +793,42 @@ epic_intr(arg)
 	 * Check for transmission complete interrupts.
 	 */
 	if (intstat & (INTSTAT_TXC | INTSTAT_TXU)) {
-		for (i = sc->sc_txdirty;; i = EPIC_NEXTTX(i)) {
-			txd = &sc->sc_control_data->ecd_txdescs[i];
-			ds = &sc->sc_txsoft[i];
+		ifp->if_flags &= ~IFF_OACTIVE;
+		for (i = sc->sc_txdirty; sc->sc_txpending != 0;
+		     i = EPIC_NEXTTX(i), sc->sc_txpending--) {
+			txd = EPIC_CDTX(sc, i);
+			ds = EPIC_DSTX(sc, i);
 
-			if (sc->sc_txpending == 0 ||
-			    (txd->et_txstatus & ET_TXSTAT_OWNER) != 0)
+			EPIC_CDTXSYNC(sc, i,
+			    BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
+
+			if (txd->et_txstatus & ET_TXSTAT_OWNER)
 				break;
 
-			if (ds->ds_mbuf != NULL) {
-				bus_dmamap_sync(sc->sc_dmat, ds->ds_dmamap,
-				    0, ds->ds_dmamap->dm_mapsize,
-				    BUS_DMASYNC_POSTWRITE);
-				bus_dmamap_unload(sc->sc_dmat, ds->ds_dmamap);
-				m_freem(ds->ds_mbuf);
-				ds->ds_mbuf = NULL;
-			}
-			sc->sc_txpending--;
+			EPIC_CDFLSYNC(sc, i, BUS_DMASYNC_POSTWRITE);
+
+			bus_dmamap_sync(sc->sc_dmat, ds->ds_dmamap,
+			    0, ds->ds_dmamap->dm_mapsize,
+			    BUS_DMASYNC_POSTWRITE);
+			bus_dmamap_unload(sc->sc_dmat, ds->ds_dmamap);
+			m_freem(ds->ds_mbuf);
+			ds->ds_mbuf = NULL;
 
 			/*
 			 * Check for errors and collisions.
 			 */
 			if ((txd->et_txstatus & ET_TXSTAT_PACKETTX) == 0)
 				ifp->if_oerrors++;
+			else
+				ifp->if_opackets++;
 			ifp->if_collisions +=
 			    TXSTAT_COLLISIONS(txd->et_txstatus);
-			if (txd->et_txstatus & ET_TXSTAT_CARSENSELOST) {
-#if 1
+			if (txd->et_txstatus & ET_TXSTAT_CARSENSELOST)
 				printf("%s: lost carrier\n",
 				    sc->sc_dev.dv_xname);
-#endif
-				/* XXX clear "active" but in media data */
-			}
 		}
 		
-		/*
-		 * Update the dirty transmit buffer pointer.
-		 */
+		/* Update the dirty transmit buffer pointer. */
 		sc->sc_txdirty = i;
 
 		/*
@@ -934,7 +939,6 @@ epic_init(sc)
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	u_int8_t *enaddr = LLADDR(ifp->if_sadl);
 	struct epic_txdesc *txd;
-	struct epic_rxdesc *rxd;
 	u_int32_t genctl, reg0;
 	int i;
 
@@ -1004,28 +1008,28 @@ epic_init(sc)
 	mii_mediachg(&sc->sc_mii);
 
 	/*
-	 * Initialize the transmit descriptors.
+	 * Initialize the transmit descriptor ring.  txlast is initialized
+	 * to the end of the list so that it will wrap around to the first
+	 * descriptor when the first packet is transmitted.
 	 */
-	txd = sc->sc_control_data->ecd_txdescs;
-	bzero(txd, sizeof(sc->sc_control_data->ecd_txdescs));
 	for (i = 0; i < EPIC_NTXDESC; i++) {
-		txd[i].et_control = ET_TXCTL_LASTDESC | ET_TXCTL_IAF |
-		    ET_TXCTL_FRAGLIST;
-		txd[i].et_bufaddr = sc->sc_cddma + EPIC_CDOFF(ecd_txfrags[i]);
-		txd[i].et_nextdesc = sc->sc_cddma +
-		    EPIC_CDOFF(ecd_txdescs[(i + 1) & EPIC_NTXDESC_MASK]);
+		txd = EPIC_CDTX(sc, i);
+		memset(txd, 0, sizeof(struct epic_txdesc));
+		txd->et_bufaddr = EPIC_CDFLADDR(sc, i);
+		txd->et_nextdesc = EPIC_CDTXADDR(sc, EPIC_NEXTTX(i));
+		EPIC_CDTXSYNC(sc, i, BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
 	}
+	sc->sc_txpending = 0;
+	sc->sc_txdirty = 0;
+	sc->sc_txlast = EPIC_NTXDESC - 1;
 
 	/*
-	 * Initialize the receive descriptors.  Note the buffers
-	 * and control word have already been initialized; we only
-	 * need to initialize the ring.
+	 * Initialize the receive descriptor ring.  The buffers are
+	 * already allocated.
 	 */
-	rxd = sc->sc_control_data->ecd_rxdescs;
-	for (i = 0; i < EPIC_NRXDESC; i++) {
-		rxd[i].er_nextdesc = sc->sc_cddma +
-		    EPIC_CDOFF(ecd_rxdescs[(i + 1) & EPIC_NRXDESC_MASK]);
-	}
+	for (i = 0; i < EPIC_NRXDESC; i++)
+		EPIC_INIT_RXDESC(sc, i);
+	sc->sc_rxptr = 0;
 
 	/*
 	 * Initialize the interrupt mask and enable interrupts.
@@ -1037,20 +1041,9 @@ epic_init(sc)
 	 * Give the transmit and receive rings to the EPIC.
 	 */
 	bus_space_write_4(st, sh, EPIC_PTCDAR,
-	    sc->sc_cddma + EPIC_CDOFF(ecd_txdescs[0]));
+	    EPIC_CDTXADDR(sc, EPIC_NEXTTX(sc->sc_txlast)));
 	bus_space_write_4(st, sh, EPIC_PRCDAR,
-	    sc->sc_cddma + EPIC_CDOFF(ecd_rxdescs[0]));
-
-	/*
-	 * Initialize our ring pointers.  txlast it initialized to
-	 * the end of the list so that it will wrap around to the
-	 * first descriptor when the first packet is transmitted.
-	 */
-	sc->sc_txpending = 0;
-	sc->sc_txdirty = 0;
-	sc->sc_txlast = EPIC_NTXDESC - 1;
-
-	sc->sc_rxptr = 0;
+	    EPIC_CDRXADDR(sc, sc->sc_rxptr));
 
 	/*
 	 * Set the EPIC in motion.
@@ -1114,32 +1107,11 @@ epic_stop(sc)
 	 * Release any queued transmit buffers.
 	 */
 	for (i = 0; i < EPIC_NTXDESC; i++) {
-		ds = &sc->sc_txsoft[i];
+		ds = EPIC_DSTX(sc, i);
 		if (ds->ds_mbuf != NULL) {
 			bus_dmamap_unload(sc->sc_dmat, ds->ds_dmamap);
 			m_freem(ds->ds_mbuf);
 			ds->ds_mbuf = NULL;
-		}
-	}
-	sc->sc_txpending = 0;
-
-	/*
-	 * Release the receive buffers, then reallocate/reinitialize.
-	 */
-	for (i = 0; i < EPIC_NRXDESC; i++) {
-		ds = &sc->sc_rxsoft[i];
-		if (ds->ds_mbuf != NULL) {
-			bus_dmamap_unload(sc->sc_dmat, ds->ds_dmamap);
-			m_freem(ds->ds_mbuf);
-			ds->ds_mbuf = NULL;
-		}
-		if (epic_add_rxbuf(sc, i) != 0) {
-			/*
-			 * This "can't happen" - we're at splnet()
-			 * and we just freed the buffer we need
-			 * above.
-			 */
-			panic("epic_stop: no buffers!");
 		}
 	}
 
@@ -1238,68 +1210,39 @@ epic_add_rxbuf(sc, idx)
 	struct epic_softc *sc;
 	int idx;
 {
-	struct epic_rxdesc *rxd = &sc->sc_control_data->ecd_rxdescs[idx];
-	struct epic_descsoft *ds = &sc->sc_rxsoft[idx];
-	struct mbuf *m, *oldm;
-	int error = 0;
-
-	oldm = ds->ds_mbuf;
+	struct epic_descsoft *ds = EPIC_DSRX(sc, idx);
+	struct mbuf *m;
+	int error;
 
 	MGETHDR(m, M_DONTWAIT, MT_DATA);
-	if (m != NULL) {
-		MCLGET(m, M_DONTWAIT);
-		if ((m->m_flags & M_EXT) == 0) {
-			error = ENOMEM;
-			m_freem(m);
-			if (oldm == NULL)
-				return (error);
-			m = oldm;
-			m->m_data = m->m_ext.ext_buf;
-		}
-	} else {
-		error = ENOMEM;
-		if (oldm == NULL)
-			return (error);
-		m = oldm;
-		m->m_data = m->m_ext.ext_buf;
+	if (m == NULL)
+		return (ENOBUFS);
+
+	MCLGET(m, M_DONTWAIT);
+	if ((m->m_flags & M_EXT) == 0) {
+		m_freem(m);
+		return (ENOBUFS);
 	}
+
+	if (ds->ds_mbuf != NULL)
+		bus_dmamap_unload(sc->sc_dmat, ds->ds_dmamap);
 
 	ds->ds_mbuf = m;
 
-	/*
-	 * Set up the DMA map for this receive buffer.
-	 */
-	if (m != oldm) {
-		if (oldm != NULL)
-			bus_dmamap_unload(sc->sc_dmat, ds->ds_dmamap);
-		error = bus_dmamap_load(sc->sc_dmat, ds->ds_dmamap,
-		    m->m_ext.ext_buf, m->m_ext.ext_size, NULL, BUS_DMA_NOWAIT);
-		if (error) {
-			printf("%s: can't load rx buffer, error = %d\n",
-			    sc->sc_dev.dv_xname, error);
-			panic("epic_add_rxbuf");	/* XXX */
-		}
+	error = bus_dmamap_load(sc->sc_dmat, ds->ds_dmamap,
+	    m->m_ext.ext_buf, m->m_ext.ext_size, NULL, BUS_DMA_NOWAIT);
+	if (error) {
+		printf("%s: can't load rx DMA map %d, error = %d\n",
+		    sc->sc_dev.dv_xname, idx, error);
+		panic("epic_add_rxbuf");	/* XXX */
 	}
 
 	bus_dmamap_sync(sc->sc_dmat, ds->ds_dmamap, 0,
 	    ds->ds_dmamap->dm_mapsize, BUS_DMASYNC_PREREAD);
 
-	/*
-	 * Move the data pointer up so that the incoming packet
-	 * will be 32-bit aligned.
-	 */
-	m->m_data += RX_ALIGNMENT_FUDGE;
+	EPIC_INIT_RXDESC(sc, idx);
 
-	/*
-	 * Initialize the receive descriptor.
-	 */
-	rxd->er_bufaddr = ds->ds_dmamap->dm_segs[0].ds_addr +
-	    RX_ALIGNMENT_FUDGE;
-	rxd->er_buflength = m->m_ext.ext_size - RX_ALIGNMENT_FUDGE;
-	rxd->er_control = 0;
-	rxd->er_rxstatus = ER_RXSTAT_OWNER;
-
-	return (error);
+	return (0);
 }
 
 /*
