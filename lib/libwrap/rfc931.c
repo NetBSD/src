@@ -1,3 +1,5 @@
+/*	$NetBSD: rfc931.c,v 1.2 1997/10/09 21:20:46 christos Exp $	*/
+
  /*
   * rfc931() speaks a common subset of the RFC 931, AUTH, TAP, IDENT and RFC
   * 1413 protocols. It queries an RFC 931 etc. compatible daemon on a remote
@@ -9,8 +11,13 @@
   * Author: Wietse Venema, Eindhoven University of Technology, The Netherlands.
   */
 
+#include <sys/cdefs.h>
 #ifndef lint
+#if 0
 static char sccsid[] = "@(#) rfc931.c 1.10 95/01/02 16:11:34";
+#else
+__RCSID("$NetBSD: rfc931.c,v 1.2 1997/10/09 21:20:46 christos Exp $");
+#endif
 #endif
 
 /* System libraries. */
@@ -20,6 +27,8 @@ static char sccsid[] = "@(#) rfc931.c 1.10 95/01/02 16:11:34";
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
+#include <stdlib.h>
+#include <unistd.h>
 #include <setjmp.h>
 #include <signal.h>
 #include <string.h>
@@ -34,6 +43,9 @@ static char sccsid[] = "@(#) rfc931.c 1.10 95/01/02 16:11:34";
 int     rfc931_timeout = RFC931_TIMEOUT;/* Global so it can be changed */
 
 static jmp_buf timebuf;
+
+static FILE *fsocket __P((int, int, int));
+static void timeout __P((int));
 
 /* fsocket - open stdio stream on top of socket */
 
@@ -81,6 +93,10 @@ char   *dest;
     char   *cp;
     char   *result = unknown;
     FILE   *fp;
+
+#ifdef __GNUC__
+    (void) &result; /* Avoid longjmp clobbering */
+#endif
 
     /*
      * Use one unbuffered stdio stream for writing to and for reading from
@@ -152,8 +168,8 @@ char   *dest;
 		     * protocol, not part of the data.
 		     */
 
-		    if (cp = strchr(user, '\r'))
-			*cp = 0;
+		    if ((cp = strchr(user, '\r')) != NULL)
+			*cp = '\0';
 		    result = user;
 		}
 	    }
