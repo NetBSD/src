@@ -1,11 +1,11 @@
-/*	$NetBSD: plist.c,v 1.31 2001/06/19 13:42:23 wiz Exp $	*/
+/*	$NetBSD: plist.c,v 1.32 2002/03/05 13:01:21 agc Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: plist.c,v 1.24 1997/10/08 07:48:15 charnier Exp";
 #else
-__RCSID("$NetBSD: plist.c,v 1.31 2001/06/19 13:42:23 wiz Exp $");
+__RCSID("$NetBSD: plist.c,v 1.32 2002/03/05 13:01:21 agc Exp $");
 #endif
 #endif
 
@@ -62,6 +62,7 @@ static cmd_t cmdv[] = {
 	{"mtree", PLIST_MTREE, 1, 0},
 	{"dirrm", PLIST_DIR_RM, 1, 0},
 	{"option", PLIST_OPTION, 1, 0},
+	{"blddep", PLIST_BLDDEP, 1, 0},
 	{NULL, FAIL, 0, 0}
 };
 
