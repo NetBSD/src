@@ -1,4 +1,4 @@
-/*	$NetBSD: beep.c,v 1.24 2001/07/09 21:46:21 reinoud Exp $	*/
+/*	$NetBSD: beep.c,v 1.25 2001/07/09 23:35:58 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1995 Mark Brinicombe
@@ -41,8 +41,6 @@
  * Each write will generate a beep  
  *
  */
-
-#include "opt_cputypes.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -114,12 +112,10 @@ beepprobe(parent, cf, aux)
 
 	/* So far I only know about this IOMD */
 	switch (id) {
-#ifdef CPU_ARM7500
 	case ARM7500_IOC_ID:
 	case ARM7500FE_IOC_ID:
 		sdma_channel = IRQ_SDMA;
 		return(1);
-#endif
 	case RPC600_IOMD_ID:
 		sdma_channel = IRQ_DMASCH0;
 		return(1);
