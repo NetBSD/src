@@ -1,4 +1,4 @@
-/*	$NetBSD: string.h,v 1.19 1999/09/08 22:09:36 lukem Exp $	*/
+/*	$NetBSD: string.h,v 1.20 1999/09/09 09:30:40 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -64,8 +64,6 @@ int	 strcoll __P((const char *, const char *));
 char	*strcpy __P((char *, const char *));
 size_t	 strcspn __P((const char *, const char *));
 __aconst char *strerror __P((int));
-size_t	 strlcat __P((char *, const char *, size_t));
-size_t	 strlcpy __P((char *, const char *, size_t));
 size_t	 strlen __P((const char *));
 char	*strncat __P((char *, const char *, size_t));
 int	 strncmp __P((const char *, const char *, size_t));
@@ -91,6 +89,8 @@ char	*strdup __P((const char *));
 #if !defined(_ANSI_SOURCE) && !defined(_POSIX_C_SOURCE) && \
     !defined(_XOPEN_SOURCE)
 #include <strings.h>		/* for backwards-compatibilty */
+size_t	 strlcat __P((char *, const char *, size_t));
+size_t	 strlcpy __P((char *, const char *, size_t));
 char	*strsep __P((char **, const char *));
 #endif /* !defined(_ANSI_SOURCE) && !defined(_POSIX_SOURCE) && ... */
 __END_DECLS
