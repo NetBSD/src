@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf.h,v 1.34 2000/01/22 23:07:53 mycroft Exp $	*/
+/*	$NetBSD: exec_elf.h,v 1.35 2000/02/22 10:49:19 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -131,15 +131,21 @@ typedef	u_int16_t Elf64_Quarter;
 #define	EI_CLASS	4
 #define	EI_DATA		5
 #define	EI_VERSION	6
-#define	EI_PAD		7
+#define	EI_OSABI	7
+#define	EI_ABIVERSION	8
+#define	EI_PAD		9
+
+#define	ELFDATANONE	0	/* Invalid data encoding */
+#define	ELFDATA2LSB	1	/* 2's complement values, LSB first */
+#define	ELFDATA2MSB	2	/* 2's complement values, MSB first */
 
 #define	EV_NONE		0	/* Invalid version */
 #define	EV_CURRENT	1	/* Current version */
 #define	EV_NUM		2
 
-#define	ELFDATANONE	0	/* Invalid data encoding */
-#define	ELFDATA2LSB	1	/* 2's complement values, LSB first */
-#define	ELFDATA2MSB	2	/* 2's complement values, MSB first */
+#define	ELFOSABI_SYSV		0	/* UNIX System V ABI */
+#define	ELFOSABI_HPUX		1	/* HP-UX operating system */
+#define	ELFOSABI_STANDALONE	255	/* Standalone (embedded) application */
 
 #define	PF_R		0x4	/* Segment is readable */
 #define	PF_W		0x2	/* Segment is writable */
