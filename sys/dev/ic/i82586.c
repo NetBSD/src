@@ -1,4 +1,4 @@
-/*	$NetBSD: i82586.c,v 1.35 2001/03/10 19:59:13 jdolecek Exp $	*/
+/*	$NetBSD: i82586.c,v 1.36 2001/03/10 20:04:30 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -147,7 +147,7 @@ Mode of operation:
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: i82586.c,v 1.35 2001/03/10 19:59:13 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i82586.c,v 1.36 2001/03/10 20:04:30 jdolecek Exp $");
 
 #include <sys/systm.h>
 #include <sys/mbuf.h>
@@ -359,7 +359,7 @@ i82586_start_cmd(sc, cmd, iecmdbuf, mask, async)
 	off = IE_SCB_CMD(sc->scb);
 	sc->ie_bus_write16(sc, off, cmd);
 	IE_BUS_BARRIER(sc, off, 2, BUS_SPACE_BARRIER_WRITE);
-	(sc->chan_attn)(sc);
+	(sc->chan_attn)(sc, CARD_RESET);
 
 	if (async != 0) {
 		sc->async_cmd_inprogress = 1;
@@ -1266,7 +1266,7 @@ i82586_proberam(sc)
 	if (sc->hwreset)
 		(sc->hwreset)(sc, CHIP_PROBE);
 
-	(sc->chan_attn) (sc);
+	(sc->chan_attn) (sc, CHIP_PROBE);
 
 	delay(100);		/* wait a while... */
 
