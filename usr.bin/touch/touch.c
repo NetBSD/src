@@ -1,4 +1,4 @@
-/*	$NetBSD: touch.c,v 1.20 1998/01/21 00:24:46 mycroft Exp $	*/
+/*	$NetBSD: touch.c,v 1.21 1998/01/21 00:48:44 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1993\n\
 #if 0
 static char sccsid[] = "@(#)touch.c	8.2 (Berkeley) 4/28/95";
 #endif
-__RCSID("$NetBSD: touch.c,v 1.20 1998/01/21 00:24:46 mycroft Exp $");
+__RCSID("$NetBSD: touch.c,v 1.21 1998/01/21 00:48:44 mycroft Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -287,8 +287,13 @@ stime_arg2(arg, year, tvp)
 	t->tm_mday = ATOI2(arg);
 	t->tm_hour = ATOI2(arg);
 	t->tm_min = ATOI2(arg);
-	if (year)
-		t->tm_year = ATOI2(arg);
+	if (year) {
+		year = ATOI2(arg);
+		if (year < 69)
+			t->tm_year = year + 2000 - TM_YEAR_BASE;
+		else
+			t->tm_year = year + 1900 - TM_YEAR_BASE;
+	}
 
 	t->tm_isdst = -1;		/* Figure out DST. */
 	tvp[0].tv_sec = tvp[1].tv_sec = mktime(t);
