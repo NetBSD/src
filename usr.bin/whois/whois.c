@@ -1,4 +1,4 @@
-/*	$NetBSD: whois.c,v 1.7 1997/10/20 03:23:38 lukem Exp $	*/
+/*	$NetBSD: whois.c,v 1.8 1998/11/24 01:33:47 kim Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\n\
 #if 0
 static char sccsid[] = "@(#)whois.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: whois.c,v 1.7 1997/10/20 03:23:38 lukem Exp $");
+__RCSID("$NetBSD: whois.c,v 1.8 1998/11/24 01:33:47 kim Exp $");
 #endif
 #endif /* not lint */
 
@@ -76,6 +76,8 @@ main(argc, argv)
 	struct servent *sp;
 	int s;
 	char *host;
+	int port = 0;
+	char *p;
 
 	host = NICHOST;
 	while ((ch = getopt(argc, argv, "h:")) != -1)
@@ -93,6 +95,10 @@ main(argc, argv)
 	if (!argc)
 		usage();
 
+	if ((p = strrchr(host, ':')) != NULL) {
+		*p++ = '\0';
+		port = atoi(p);
+	}
 	hp = gethostbyname(host);
 	if (hp == NULL)
 		errx(1, "%s: %s", host, hstrerror(h_errno));
@@ -105,10 +111,13 @@ main(argc, argv)
 	if (bind(s, (struct sockaddr *)&sin, sizeof(sin)) < 0)
 		err(1, "bind");
 	memmove((char *)&sin.sin_addr, hp->h_addr, hp->h_length);
-	sp = getservbyname("whois", "tcp");
-	if (sp == NULL)
-		errx(1, "whois/tcp: unknown service");
-	sin.sin_port = sp->s_port;
+	if (port == 0) {
+		sp = getservbyname("whois", "tcp");
+		if (sp == NULL)
+			errx(1, "whois/tcp: unknown service");
+		sin.sin_port = sp->s_port;
+	} else
+		sin.sin_port = htons(port);
 	if (connect(s, (struct sockaddr *)&sin, sizeof(sin)) < 0)
 		err(1, "connect");
 	sfi = fdopen(s, "r");
