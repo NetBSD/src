@@ -1,4 +1,4 @@
-/*	$NetBSD: type_alnum.c,v 1.4 2001/01/21 11:47:09 blymn Exp $	*/
+/*	$NetBSD: type_alnum.c,v 1.5 2001/01/23 01:57:01 blymn Exp $	*/
 
 /*-
  * Copyright (c) 1998-1999 Brett Lymn
@@ -101,6 +101,9 @@ alnum_check_field(FIELD *field, char *args)
 	buf = args;
 	start = 0;
 
+	if (buf == NULL)
+		return FALSE;
+	
 	  /* skip leading white space */
 	while ((buf[start] != '\0')
 	       && ((buf[start] == ' ') || (buf[start] == '\t')))
