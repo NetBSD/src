@@ -1,4 +1,4 @@
-/*	$NetBSD: udp.c,v 1.2 2002/04/23 09:16:09 ragge Exp $	*/
+/*	$NetBSD: udp.c,v 1.3 2003/08/31 22:40:49 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1992 Regents of the University of California.
@@ -129,7 +129,7 @@ sendudp(d, pkt, len)
 	cc = sendether(d, ip, len, ea, ETHERTYPE_IP);
 	if (cc == -1)
 		return (-1);
-	if (cc != len)
+	if ((size_t)cc != len)
 		panic("sendudp: bad write (%d != %d)", cc, len);
 	return (cc - (sizeof(*ip) + sizeof(*uh)));
 }
@@ -160,7 +160,7 @@ readudp(d, pkt, len, tleft)
 	ip = (struct ip *)uh - 1;
 
 	n = readether(d, ip, len + sizeof(*ip) + sizeof(*uh), tleft, &etype);
-	if (n == -1 || n < sizeof(*ip) + sizeof(*uh))
+	if (n == -1 || (size_t)n < sizeof(*ip) + sizeof(*uh))
 		return -1;
 
 	/* Ethernet address checks now in readether() */

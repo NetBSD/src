@@ -1,4 +1,4 @@
-/*	$NetBSD: rarp.c,v 1.21 2003/03/12 14:51:31 drochner Exp $	*/
+/*	$NetBSD: rarp.c,v 1.22 2003/08/31 22:40:48 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1992 Regents of the University of California.
@@ -193,7 +193,7 @@ rarprecv(d, pkt, len, tleft)
 
 	n = readether(d, pkt, len, tleft, &etype);
 	errno = 0;	/* XXX */
-	if (n == -1 || n < sizeof(struct ether_arp)) {
+	if (n == -1 || (size_t)n < sizeof(struct ether_arp)) {
 #ifdef RARP_DEBUG
 		if (debug)
 			printf("bad len=%d\n", n);

@@ -1,4 +1,4 @@
-/*	$NetBSD: tftp.c,v 1.15 2003/08/18 15:45:29 dsl Exp $	 */
+/*	$NetBSD: tftp.c,v 1.16 2003/08/31 22:40:49 fvdl Exp $	 */
 
 /*
  * Copyright (c) 1996
@@ -301,7 +301,8 @@ tftp_read(f, addr, size, resid)
 	tftpfile = (struct tftp_handle *) f->f_fsdata;
 
 	while (size > 0) {
-		int needblock, count;
+		int needblock;
+		size_t count;
 
 #if !defined(LIBSA_NO_TWIDDLE)
 		if (!(tc++ % 16))
@@ -334,7 +335,7 @@ tftp_read(f, addr, size, resid)
 		}
 
 		if (tftpfile->currblock == needblock) {
-			int offinblock, inbuffer;
+			size_t offinblock, inbuffer;
 
 			offinblock = tftpfile->off % SEGSIZE;
 

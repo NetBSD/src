@@ -1,4 +1,4 @@
-/* $NetBSD: 3c90xb.c,v 1.8 2002/02/19 20:38:28 thorpej Exp $ */
+/* $NetBSD: 3c90xb.c,v 1.9 2003/08/31 22:40:14 fvdl Exp $ */
 
 /*
  * Copyright (c) 1999
@@ -89,7 +89,7 @@ void *dmamem; /* virtual */
 
 static int iobase;
 static u_char myethaddr[6];
-int ether_medium;
+unsigned ether_medium;
 
 static struct {
 	int did;

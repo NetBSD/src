@@ -1,4 +1,4 @@
-/*	$NetBSD: net.c,v 1.27 2000/10/25 01:49:55 thorpej Exp $	*/
+/*	$NetBSD: net.c,v 1.28 2003/08/31 22:40:48 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1992 Regents of the University of California.
@@ -98,7 +98,7 @@ sendrecv(d, sproc, sbuf, ssize, rproc, rbuf, rsize)
 				return -1;
 			}
 			cc = (*sproc)(d, sbuf, ssize);
-			if (cc != -1 && cc < ssize)
+			if (cc != -1 && (size_t)cc < ssize)
 				panic("sendrecv: short write! (%d < %d)",
 				    cc, ssize);
 

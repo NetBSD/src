@@ -1,4 +1,4 @@
-/*	$NetBSD: bootp.c,v 1.24 2003/03/12 14:51:31 drochner Exp $	*/
+/*	$NetBSD: bootp.c,v 1.25 2003/08/31 22:40:47 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1992 Regents of the University of California.
@@ -306,7 +306,7 @@ bootprecv(d, pkt, len, tleft)
 #endif
 
 	n = readudp(d, pkt, len, tleft);
-	if (n == -1 || n < sizeof(struct bootp) - BOOTP_VENDSIZE)
+	if (n == -1 || (size_t)n < sizeof(struct bootp) - BOOTP_VENDSIZE)
 		goto bad;
 
 	bp = (struct bootp *)pkt;

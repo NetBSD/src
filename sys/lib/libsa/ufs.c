@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs.c,v 1.41 2003/08/27 22:42:08 dsl Exp $	*/
+/*	$NetBSD: ufs.c,v 1.42 2003/08/31 22:40:49 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -222,7 +222,7 @@ read_inode(ino_t inumber, struct open_file *f)
 	struct file *fp = (struct file *)f->f_fsdata;
 	struct fs *fs = fp->f_fs;
 	char *buf;
-	size_t rsize;
+	ssize_t rsize;
 	int rc;
 	daddr_t inode_sector;
 #ifdef LIBSA_LFS
@@ -248,7 +248,7 @@ read_inode(ino_t inumber, struct open_file *f)
 	    inode_sector, fs->fs_bsize, buf, &rsize);
 	if (rc)
 		return rc;
-	if (rsize != fs->fs_bsize)
+	if (rsize != (ssize_t)fs->fs_bsize)
 		return EIO;
 
 #ifdef LIBSA_LFS
@@ -281,10 +281,10 @@ block_map(struct open_file *f, indp_t file_block, indp_t *disk_block_p)
 {
 	struct file *fp = (struct file *)f->f_fsdata;
 	struct fs *fs = fp->f_fs;
-	int level;
+	unsigned level;
 	indp_t ind_cache;
 	indp_t ind_block_num;
-	size_t rsize;
+	ssize_t rsize;
 	int rc;
 	indp_t *buf = (void *)fp->f_buf;
 
@@ -356,7 +356,7 @@ block_map(struct open_file *f, indp_t file_block, indp_t *disk_block_p)
 			buf, &rsize);
 		if (rc)
 			return (rc);
-		if (rsize != fs->fs_bsize)
+		if (rsize != (ssize_t)fs->fs_bsize)
 			return EIO;
 		ind_block_num = buf[file_block >> level];
 		if (level == 0)
@@ -394,7 +394,7 @@ buf_read_file(struct open_file *f, char **buf_p, size_t *size_p)
 #ifdef LIBSA_LFS
 	block_size = dblksize(fs, &fp->f_di, file_block);
 #else
-	block_size = sblksize(fs, fp->f_di.di_size, file_block);
+	block_size = sblksize(fs, (int64_t)fp->f_di.di_size, file_block);
 #endif
 
 	if (file_block != fp->f_buf_blkno) {
@@ -451,7 +451,7 @@ search_directory(const char *name, int length, struct open_file *f,
 	int rc;
 
 	fp->f_seekp = 0;
-	while (fp->f_seekp < fp->f_di.di_size) {
+	while (fp->f_seekp < (off_t)fp->f_di.di_size) {
 		rc = buf_read_file(f, &buf, &buf_size);
 		if (rc)
 			return (rc);
@@ -570,7 +570,8 @@ ufs_open(const char *path, struct open_file *f)
 	ffs_oldfscompat(fs);
 #endif
 
-	if (fs->fs_bsize > MAXBSIZE || fs->fs_bsize < sizeof(struct fs)) {
+	if (fs->fs_bsize > MAXBSIZE ||
+	    (size_t)fs->fs_bsize < sizeof(struct fs)) {
 		rc = EINVAL;
 		goto out;
 	}
@@ -767,7 +768,7 @@ ufs_read(struct open_file *f, void *start, size_t size, size_t *resid)
 	char *addr = start;
 
 	while (size != 0) {
-		if (fp->f_seekp >= fp->f_di.di_size)
+		if (fp->f_seekp >= (off_t)fp->f_di.di_size)
 			break;
 
 		rc = buf_read_file(f, &buf, &buf_size);

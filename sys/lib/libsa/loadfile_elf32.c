@@ -1,4 +1,4 @@
-/* $NetBSD: loadfile_elf32.c,v 1.7 2002/02/11 20:25:56 reinoud Exp $ */
+/* $NetBSD: loadfile_elf32.c,v 1.8 2003/08/31 22:40:48 fvdl Exp $ */
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -272,7 +272,7 @@ ELFNAMEEND(loadfile)(fd, elf, marks, flags)
 	Elf_Shdr *shp;
 	Elf_Phdr *phdr;
 	int i, j;
-	size_t sz;
+	ssize_t sz;
 	int first;
 	paddr_t minp = ~0, maxp = 0, pos = 0;
 	paddr_t offset = marks[MARK_START], shpp, elfp = NULL;
@@ -321,7 +321,7 @@ ELFNAMEEND(loadfile)(fd, elf, marks, flags)
 				return 1;
 			}
 			if (READ(fd, phdr[i].p_vaddr, phdr[i].p_filesz) !=
-			    phdr[i].p_filesz) {
+			    (ssize_t)phdr[i].p_filesz) {
 				WARN(("read text"));
 				FREE(phdr, sz);
 				return 1;
@@ -397,7 +397,7 @@ ELFNAMEEND(loadfile)(fd, elf, marks, flags)
 			case SHT_STRTAB:
 				for (j = 0; j < elf->e_shnum; j++)
 					if (shp[j].sh_type == SHT_SYMTAB &&
-					    shp[j].sh_link == i)
+					    shp[j].sh_link == (unsigned)i)
 						goto havesym;
 				/* FALLTHROUGH */
 			default:
@@ -416,7 +416,7 @@ ELFNAMEEND(loadfile)(fd, elf, marks, flags)
 						return 1;
 					}
 					if (READ(fd, maxp, shp[i].sh_size) !=
-					    shp[i].sh_size) {
+					    (ssize_t)shp[i].sh_size) {
 						WARN(("read symbols"));
 						FREE(shp, sz);
 						return 1;

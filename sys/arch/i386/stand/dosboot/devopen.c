@@ -1,4 +1,4 @@
-/*	$NetBSD: devopen.c,v 1.5 2001/06/01 23:26:31 jdolecek Exp $	 */
+/*	$NetBSD: devopen.c,v 1.6 2003/08/31 22:40:13 fvdl Exp $	 */
 
 /*
  * Copyright (c) 1996
@@ -85,7 +85,7 @@ dev2bios(devname, unit, biosdev)
 	unsigned int    unit;
 	int            *biosdev;
 {
-	int             i;
+	unsigned             i;
 
 	for (i = 0; i < NUMBIOSDEVS; i++)
 		if (!strcmp(devname, biosdevtab[i].name)) {

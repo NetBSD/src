@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs.c,v 1.7 2003/08/18 15:47:43 dsl Exp $	*/
+/*	$NetBSD: nfs.c,v 1.8 2003/08/31 22:40:15 fvdl Exp $	*/
 
 /*-
  *  Copyright (c) 1993 John Brezak
@@ -118,7 +118,7 @@ nfs_getrootfh(d, path, fhp)
 	char *path;
 	u_char *fhp;
 {
-	int len;
+	size_t len;
 	struct args {
 		n_long	len;
 		char	path[FNAME_SIZE];
@@ -135,7 +135,7 @@ nfs_getrootfh(d, path, fhp)
 		n_long	h[RPC_HEADER_WORDS];
 		struct repl d;
 	} rdata;
-	size_t cc;
+	ssize_t cc;
 	
 #ifdef NFS_DEBUG
 	if (debug)
@@ -209,7 +209,7 @@ nfs_lookupfh(d, name, len, newfd)
 
 	memset(args, 0, sizeof(*args));
 	memcpy(args->fh, d->fh, sizeof(args->fh));
-	if (len > sizeof(args->name))
+	if ((size_t)len > sizeof(args->name))
 		len = sizeof(args->name);
 	memcpy(args->name, name, len);
 	args->len = htonl(len);
@@ -301,7 +301,7 @@ nfs_readdata(d, off, addr, len)
 		n_long	h[RPC_HEADER_WORDS];
 		struct nfs_read_repl d;
 	} rdata;
-	size_t cc;
+	ssize_t cc;
 	long x;
 	int hlen, rlen;
 
