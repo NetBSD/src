@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_state.c,v 1.44.2.2 2004/08/13 03:56:05 jmc Exp $	*/
+/*	$NetBSD: ip_state.c,v 1.44.2.3 2004/10/08 03:13:47 jmc Exp $	*/
 
 /*
  * Copyright (C) 1995-2003 by Darren Reed.
@@ -110,7 +110,7 @@ struct file;
 #if !defined(lint)
 #if defined(__NetBSD__)
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_state.c,v 1.44.2.2 2004/08/13 03:56:05 jmc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_state.c,v 1.44.2.3 2004/10/08 03:13:47 jmc Exp $");
 #else
 static const char sccsid[] = "@(#)ip_state.c	1.8 6/5/96 (C) 1993-2000 Darren Reed";
 static const char rcsid[] = "@(#)Id: ip_state.c,v 2.186.2.13 2004/06/13 23:49:34 darrenr Exp";
@@ -826,7 +826,7 @@ u_int flags;
 			/*
 			 * So you can do keep state with neighbour discovery.
 			 */
-			flags |= SI_W_DADDR;
+			is->is_flags |= SI_W_DADDR;
 			hv -= is->is_daddr;
 		} else {
 			hv += is->is_dst.i6[1];
@@ -844,9 +844,6 @@ u_int flags;
 #ifdef	USE_INET6
 	case IPPROTO_ICMPV6 :
 		ic = fin->fin_dp;
-
-		if ((ic->icmp_type & ICMP6_INFOMSG_MASK) == 0)
-			return NULL;
 
 		switch (ic->icmp_type)
 		{
@@ -1647,22 +1644,62 @@ u_32_t cmask;
 	/*
 	 * Only one of the source or destination address can be flaged as a
 	 * wildcard.  Fill in the missing address, if set.
+	 * For IPv6, if the address being copied in is multicast, then
+	 * don't reset the wild flag - multicast causes it to be set in the
+	 * first place!
 	 */
 	if ((flags & (SI_W_SADDR|SI_W_DADDR))) {
+		fr_ip_t *fi = &fin->fin_fi;
+
 		if ((flags & SI_W_SADDR) != 0) {
 			if (rev == 0) {
-				is->is_src = fin->fin_fi.fi_src;
+#ifdef USE_INET6
+				if (is->is_v == 6 &&
+				    IN6_IS_ADDR_MULTICAST(&fi->fi_src.in6))
+					/*EMPTY*/;
+				else
+#endif
+				{
+					is->is_src = fi->fi_src;
+					is->is_flags &= ~SI_W_SADDR;
+				}
 			} else {
-				is->is_src = fin->fin_fi.fi_dst;
+#ifdef USE_INET6
+				if (is->is_v == 6 &&
+				    IN6_IS_ADDR_MULTICAST(&fi->fi_dst.in6))
+					/*EMPTY*/;
+				else
+#endif
+				{
+					is->is_src = fi->fi_dst;
+					is->is_flags &= ~SI_W_SADDR;
+				}
 			}
 		} else if ((flags & SI_W_DADDR) != 0) {
 			if (rev == 0) {
-				is->is_dst = fin->fin_fi.fi_dst;
+#ifdef USE_INET6
+				if (is->is_v == 6 &&
+				    IN6_IS_ADDR_MULTICAST(&fi->fi_dst.in6))
+					/*EMPTY*/;
+				else
+#endif
+				{
+					is->is_dst = fi->fi_dst;
+					is->is_flags &= ~SI_W_DADDR;
+				}
 			} else {
-				is->is_dst = fin->fin_fi.fi_src;
+#ifdef USE_INET6
+				if (is->is_v == 6 &&
+				    IN6_IS_ADDR_MULTICAST(&fi->fi_src.in6))
+					/*EMPTY*/;
+				else
+#endif
+				{
+					is->is_dst = fi->fi_src;
+					is->is_flags &= ~SI_W_DADDR;
+				}
 			}
 		}
-		is->is_flags &= ~(SI_W_SADDR|SI_W_DADDR);
 		if ((is->is_flags & (SI_WILDA|SI_WILDP)) == 0) {
 			ATOMIC_DECL(ips_stats.iss_wild);
 		}
@@ -1919,8 +1956,10 @@ fr_info_t *fin;
 				}
 				backward = IP6_NEQ(&is->is_src, &dst);
 				i = (backward << 1) + fin->fin_out;
+#if 0
 				if (is->is_icmppkts[i] > is->is_pkts[i])
 					continue;
+#endif
 				ips_stats.iss_hits++;
 				is->is_icmppkts[i]++;
 				is->is_bytes[i] += fin->fin_plen;
@@ -1966,8 +2005,11 @@ fr_info_t *fin;
 					 tcp, FI_ICMPCMP))) {
 			backward = IP6_NEQ(&is->is_dst, &src);
 			i = (backward << 1) + fin->fin_out;
-			if (((is->is_pass & FR_NOICMPERR) != 0) ||
-			    (is->is_icmppkts[i] > is->is_pkts[i]))
+			if (((is->is_pass & FR_NOICMPERR) != 0)
+#if 0
+			    || (is->is_icmppkts[i] > is->is_pkts[i])
+#endif
+			    )
 				break;
 			ips_stats.iss_hits++;
 			is->is_icmppkts[i]++;
@@ -2426,12 +2468,14 @@ u_32_t *passp;
 matched:
 	fr = is->is_rule;
 	if (fr != NULL) {
+#if 0
 		if ((fin->fin_out == 0) && (fr->fr_nattag.ipt_num[0] != 0)) {
 			if (fin->fin_nattag == NULL)
 				return NULL;
 			if (fr_matchtag(&fr->fr_nattag, fin->fin_nattag) != 0)
 				return NULL;
 		}
+#endif
 		(void) strncpy(fin->fin_group, fr->fr_group, FR_GROUPLEN);
 		fin->fin_icode = fr->fr_icode;
 	}
@@ -2754,8 +2798,10 @@ int which, proto;
 	for (isp = &ips_list; ((is = *isp) != NULL); ) {
 		delete = 0;
 
-		if ((proto != 0) && (is->is_v != proto))
+		if ((proto != 0) && (is->is_v != proto)) {
+			isp = &is->is_next;
 			continue;
+		}
 
 		switch (which)
 		{
