@@ -1,3 +1,4 @@
+#	$NetBSD: GENERIC,v 1.2 1996/07/16 23:24:05 thorpej Exp $
 #
 #	Generic configuration file for MIPS R4400 PICA system
 #

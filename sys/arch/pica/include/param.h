@@ -1,3 +1,5 @@
+/*	$NetBSD: param.h,v 1.2 1996/07/16 23:24:28 thorpej Exp $	*/
+
 /*
  * Copyright (c) 1988 University of Utah.
  * Copyright (c) 1992, 1993
@@ -39,7 +41,6 @@
  *
  *
  *	from: @(#)param.h	8.1 (Berkeley) 6/10/93
- *      $Id: param.h,v 1.1.1.1 1996/03/13 04:58:08 jonathan Exp $
  */
 
 /*
