@@ -1,4 +1,4 @@
-/*      $NetBSD: pciide_hpt_reg.h,v 1.7 2002/05/19 17:40:47 bouyer Exp $       */
+/*      $NetBSD: pciide_hpt_reg.h,v 1.7.2.1 2002/11/01 16:20:30 tron Exp $       */
 
 /*
  * Copyright (c) 2000 Manuel Bouyer.
@@ -46,6 +46,7 @@
 #define HPT366_REV 0x01
 #define HPT370_REV 0x03
 #define HPT370A_REV 0x04
+#define HPT372_REV 0x05
 #define HPT374_REV 0x07
 
 #define HPT_IDETIM(chan, drive) (0x40 + ((drive) * 4) + ((chan) * 8))
@@ -138,10 +139,18 @@ static const u_int32_t hpt370_udma[] __attribute__((__unused__)) =
 	{0x16514e31, 0x164d4e31, 0x16494e31, 0x166d4e31, 0x16454e31,
 	 0x1a85f442};
 
-static u_int32_t hpt374_pio[] =
+static const u_int32_t hpt372_pio[] __attribute__((__unused__)) =
+	{0x0d029d5e, 0x0d029d26, 0x0c829ca6, 0x0c829c84, 0x0c829c62};
+static const u_int32_t hpt372_dma[] __attribute__((__unused__)) =
+	{0x2c829d2e, 0x2c829c66, 0x2829c62};
+static const u_int32_t hpt372_udma[] __attribute__((__unused__)) =
+	{0x1c829c62, 0x1c9a9c62, 0x1c929c62, 0x1c8e9c62, 0x1c8a9c62,
+	 0x1cae9c62, 0x1c869c62};
+
+static u_int32_t hpt374_pio[] __attribute__((__unused__)) =
 	{0x0ac1f48a, 0x0ac1f465, 0x0a81f454, 0x0a81f443, 0x0a81f442};
-static u_int32_t hpt374_dma[] =
+static u_int32_t hpt374_dma[] __attribute__((__unused__)) =
 	{0x228082ea, 0x22808254, 0x22808242};
-static u_int32_t hpt374_udma[] =
+static u_int32_t hpt374_udma[] __attribute__((__unused__)) =
 	{0x121882ea, 0x12148254, 0x120c8242, 0x128c8242, 0x12ac8242,
 	    0x12848242, 0x12808242};
