@@ -1,4 +1,4 @@
-/*	$NetBSD: crt0.c,v 1.5 2001/11/08 22:23:59 bjh21 Exp $	*/
+/*	$NetBSD: crt0.c,v 1.6 2002/01/01 01:31:06 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1997 Mark Brinicombe
@@ -44,33 +44,31 @@ extern	void		_start(void);
 	void		___start(int, char *[], char *[], struct ps_strings *,
 				const Obj_Entry *, void (*)(void));
 
-__asm("
-	.text
-	.align	0
-	.globl	_start
-	.globl	__start
-_start:
-__start:
-	mov	r5, r2		/* cleanup */
-	mov	r4, r1		/* obj_main */
-	mov	r3, r0		/* ps_strings */
-	/* Get argc, argv, and envp from stack */
-	ldr	r0, [sp, #0x0000]
-	add	r1, sp, #0x0004
-	add	r2, r1, r0, lsl #2
-	add	r2, r2, #0x0004
-
-	/* Ensure the stack is properly aligned before calling C code. */
-	bic	sp, sp, #" ___STRING(STACKALIGNBYTES) "
-	sub	sp, sp, #8
-	str	r5, [sp, #4]
-	str	r4, [sp, #0]
-
-	b	" ___STRING(_C_LABEL(___start)) "
-");
+__asm("	.text			\n"
+"	.align	0		\n"
+"	.globl	_start		\n"
+"	.globl	__start		\n"
+"_start:			\n"
+"__start:			\n"
+"	mov	r5, r2		/* cleanup */		\n"
+"	mov	r4, r1		/* obj_main */		\n"
+"	mov	r3, r0		/* ps_strings */	\n"
+"	/* Get argc, argv, and envp from stack */	\n"
+"	ldr	r0, [sp, #0x0000]	\n"
+"	add	r1, sp, #0x0004		\n"
+"	add	r2, r1, r0, lsl #2	\n"
+"	add	r2, r2, #0x0004		\n"
+"\n"
+"	/* Ensure the stack is properly aligned before calling C code. */\n"
+"	bic	sp, sp, #" ___STRING(STACKALIGNBYTES) "	\n"
+"	sub	sp, sp, #8	\n"
+"	str	r5, [sp, #4]	\n"
+"	str	r4, [sp, #0]	\n"
+"\n"
+"	b	" ___STRING(_C_LABEL(___start)) " ");
 
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: crt0.c,v 1.5 2001/11/08 22:23:59 bjh21 Exp $");
+__RCSID("$NetBSD: crt0.c,v 1.6 2002/01/01 01:31:06 thorpej Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 void
