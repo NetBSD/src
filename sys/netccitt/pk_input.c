@@ -682,7 +682,7 @@ register struct x25config *xcp;
 	if (xcp -> xc_addr.x25_net && (xcp -> xc_nodnic || xcp ->xc_prepnd0)) {
 		octet dnicname[sizeof(long) * NBBY/3 + 2];
 
-		sprintf (dnicname, "%d", xcp -> xc_addr.x25_net);
+		sprintf ((char *) dnicname, "%d", xcp -> xc_addr.x25_net);
 		prune_dnic (buf, sa -> x25_addr, dnicname, xcp);
 	} else
 		bcopy ((caddr_t)buf, (caddr_t)sa -> x25_addr, count + 1);
