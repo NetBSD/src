@@ -1,4 +1,4 @@
-/*	$NetBSD: fstat.c,v 1.47 2001/06/16 12:08:05 jdolecek Exp $	*/
+/*	$NetBSD: fstat.c,v 1.48 2001/06/17 08:27:57 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993\n\
 #if 0
 static char sccsid[] = "@(#)fstat.c	8.3 (Berkeley) 5/2/95";
 #else
-__RCSID("$NetBSD: fstat.c,v 1.47 2001/06/16 12:08:05 jdolecek Exp $");
+__RCSID("$NetBSD: fstat.c,v 1.48 2001/06/17 08:27:57 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -388,17 +388,22 @@ ftrans (fp, i)
 		    i, fp, Pid);
 		return;
 	}
-	if (file.f_type == DTYPE_VNODE)
+	switch (file.f_type) {
+	case DTYPE_VNODE:
 		vtrans((struct vnode *)file.f_data, i, file.f_flag);
-	else if (file.f_type == DTYPE_SOCKET) {
+		break;
+	case DTYPE_SOCKET:
 		if (checkfile == 0)
 			socktrans((struct socket *)file.f_data, i);
-	} else if (file.f_type == DTYPE_PIPE) {
+		break;
+	case DTYPE_PIPE:
 		if (checkfile == 0)
 			ptrans(&file, (struct pipe *)file.f_data, i);
-	} else {
+		break;
+	default:
 		dprintf("unknown file type %d for file %d of pid %d",
 		    file.f_type, i, Pid);
+		break;
 	}
 }
 
