@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)tty_compat.c	7.10 (Berkeley) 5/9/91
- *	$Id: tty_compat.c,v 1.4 1993/05/22 11:41:46 cgd Exp $
+ *	$Id: tty_compat.c,v 1.5 1993/06/05 22:40:48 cgd Exp $
  */
 
 /* 
@@ -54,6 +54,9 @@
 int ttydebug = 0;
 
 static struct speedtab compatspeeds[] = {
+#define MAX_SPEED	17
+	115200,	17,
+	57600,	16,
 	38400,	15,
 	19200,	14,
 	9600,	13,
@@ -72,9 +75,9 @@ static struct speedtab compatspeeds[] = {
 	0,	0,
 	-1,	-1,
 };
-static int compatspcodes[16] = { 
+static int compatspcodes[] = { 
 	0, 50, 75, 110, 134, 150, 200, 300, 600, 1200,
-	1800, 2400, 4800, 9600, 19200, 38400,
+	1800, 2400, 4800, 9600, 19200, 38400, 57600, 115200
 };
 
 /*ARGSUSED*/
@@ -90,12 +93,12 @@ ttcompat(tp, com, data, flag)
 		register speed;
 
 		speed = ttspeedtab(tp->t_ospeed, compatspeeds);
-		sg->sg_ospeed = (speed == -1) ? 15 : speed;
+		sg->sg_ospeed = (speed == -1) ? MAX_SPEED : speed;
 		if (tp->t_ispeed == 0)
 			sg->sg_ispeed = sg->sg_ospeed;
 		else {
 			speed = ttspeedtab(tp->t_ispeed, compatspeeds);
-			sg->sg_ispeed = (speed == -1) ? 15 : speed;
+			sg->sg_ispeed = (speed == -1) ? MAX_SPEED : speed;
 		}
 		sg->sg_erase = cc[VERASE];
 		sg->sg_kill = cc[VKILL];
@@ -110,11 +113,11 @@ ttcompat(tp, com, data, flag)
 		int speed;
 
 		term = tp->t_termios;
-		if ((speed = sg->sg_ispeed) > 15 || speed < 0)
+		if ((speed = sg->sg_ispeed) > MAX_SPEED || speed < 0)
 			term.c_ispeed = speed;
 		else
 			term.c_ispeed = compatspcodes[speed];
-		if ((speed = sg->sg_ospeed) > 15 || speed < 0)
+		if ((speed = sg->sg_ospeed) > MAX_SPEED || speed < 0)
 			term.c_ospeed = speed;
 		else
 			term.c_ospeed = compatspcodes[speed];
@@ -123,7 +126,7 @@ ttcompat(tp, com, data, flag)
 		tp->t_flags = ttcompatgetflags(tp)&0xffff0000 | sg->sg_flags&0xffff;
 		ttcompatsetflags(tp, &term);
 		return (ttioctl(tp, com == TIOCSETP ? TIOCSETAF : TIOCSETA, 
-			&term, flag));
+			(caddr_t)&term, flag));
 	}
 
 	case TIOCGETC: {
@@ -192,7 +195,7 @@ ttcompat(tp, com, data, flag)
 				tp->t_flags &= ~(*(int *)data<<16);
 		}
 		ttcompatsetlflags(tp, &term);
-		return (ttioctl(tp, TIOCSETA, &term, flag));
+		return (ttioctl(tp, TIOCSETA, (caddr_t)&term, flag));
 	}
 	case TIOCLGET:
 		tp->t_flags =
