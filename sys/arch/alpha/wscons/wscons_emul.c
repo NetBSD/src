@@ -1,4 +1,4 @@
-/* $NetBSD: wscons_emul.c,v 1.11 1997/09/25 01:32:16 thorpej Exp $ */
+/* $NetBSD: wscons_emul.c,v 1.12 1997/09/25 02:13:44 thorpej Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: wscons_emul.c,v 1.11 1997/09/25 01:32:16 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wscons_emul.c,v 1.12 1997/09/25 02:13:44 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -177,19 +177,11 @@ wscons_emul_input_normal(we, c)
 			panic("wscons_emul: didn't scroll (2)");
 #endif
 
-#if 0
 		/* scroll all of the rows up one; leave current row # alone */
-		(*we->ac_ef->wef_copyrows)(we->ac_efa, 1, 0,
-		    we->ac_nrow - 1);
+		(*we->ac_ef->wef_copyrows)(we->ac_efa, scrollskip, 0,
+		    we->ac_nrow - scrollskip);
 		(*we->ac_ef->wef_eraserows)(we->ac_efa,
-		    we->ac_nrow - 1, 1);
-#else
-		(*we->ac_ef->wef_copyrows)(we->ac_efa, 10, 0,
-		    we->ac_nrow - 10);
-		(*we->ac_ef->wef_eraserows)(we->ac_efa,
-		    we->ac_nrow - 10, 10);
-		we->ac_crow -= 10 - 1;
-#endif
+		    we->ac_nrow - scrollskip, scrollskip);
 		break;
 	}
 
