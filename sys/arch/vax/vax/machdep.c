@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.77 1999/04/11 04:04:10 chs Exp $	 */
+/* $NetBSD: machdep.c,v 1.78 1999/04/14 23:42:00 ragge Exp $	 */
 
 /*
  * Copyright (c) 1994, 1998 Ludd, University of Lule}, Sweden.
@@ -274,12 +274,6 @@ cpu_startup()
 	 */
 	exec_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
 				 16 * NCARGS, TRUE, FALSE, NULL);
-
-	/*
-	 * Finally, allocate mbuf cluster submap.
-	 */
-	mb_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
-			       VM_MBUF_SIZE, FALSE, FALSE, NULL);
 
 #if VAX410 || VAX43
 	/*
