@@ -1,4 +1,4 @@
-/*	$NetBSD: mmu_sh3.h,v 1.3 2002/04/28 17:10:35 uch Exp $	*/
+/*	$NetBSD: mmu_sh3.h,v 1.4 2002/05/09 12:26:16 uch Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
 #define	SH3_MMU_ENTRY			32
 
 #define	SH3_PTEH			0xfffffff0
-#define	  SH3_PTEH_ASID_MASK		  0x0000000f
+#define	  SH3_PTEH_ASID_MASK		  0x000000ff
 #define	  SH3_PTEH_VPN_MASK		  0xfffffc00
 #define	SH3_PTEL			0xfffffff4
 #define	  SH3_PTEL_HWBITS		  0x1ffff17e /* [28:12][8][6:1] */
@@ -72,7 +72,7 @@
 #define	  SH3_MMU_D_VALID		  0x00000100
 #define	  SH3_MMUAA_D_VPN_MASK_1K	  0xfffe0c00	/* [31:17][11:10] */
 #define	  SH3_MMUAA_D_VPN_MASK_4K	  0xfffe0000	/* [31:17] */
-#define	  SH3_MMUAA_D_ASID_MASK		  0x0000000f
+#define	  SH3_MMUAA_D_ASID_MASK		  0x000000ff
 
 /* Data array */
 #define	SH3_MMUDA			0xf3000000
