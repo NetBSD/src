@@ -1,4 +1,4 @@
-/*	$NetBSD: malloc.h,v 1.54 2000/11/07 12:12:15 jdolecek Exp $	*/
+/*	$NetBSD: malloc.h,v 1.55 2000/11/10 15:47:03 matt Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -174,7 +174,9 @@
 #define	M_RR_ADDR	113	/* IPv6 Router Renumbering Ifid */
 #define M_SOFTINTR	114	/* Softinterrupt structures */
 #define M_EMULDATA	115	/* Per-process emulation data */
-#define M_LAST		116	/* Must be last type + 1 */
+#define M_1394CTL	116	/* IEEE 1394 control structures */
+#define M_1394DATA	117	/* IEEE 1394 data buffers */
+#define M_LAST		118	/* Must be last type + 1 */
 
 #define	INITKMEMNAMES { \
 	"free",		/* 0 M_FREE */ \
@@ -293,6 +295,8 @@
 	"rp_addr",	/* 113 M_RR_ADDR */ \
 	"softintr",	/* 114 M_SOFTINTR */ \
 	"emuldata",	/* 115 M_EMULDATA */ \
+	"1394ctl",	/* 115 M_1394CTL */ \
+	"1394data",	/* 115 M_1394DATA */ \
 	NULL,		/* 116 */ \
 }
 
