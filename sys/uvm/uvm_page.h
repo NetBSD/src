@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.h,v 1.18 2000/11/27 08:40:05 chs Exp $	*/
+/*	$NetBSD: uvm_page.h,v 1.19 2000/12/28 08:24:55 chs Exp $	*/
 
 /* 
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -409,65 +409,6 @@ PHYS_TO_VM_PAGE(pa)
 }
 
 #define VM_PAGE_IS_FREE(entry)  ((entry)->pqflags & PQ_FREE)
-
-extern
-simple_lock_data_t	vm_page_queue_lock;	/* lock on active and inactive
-						   page queues */
-extern						/* lock on free page queue */
-simple_lock_data_t	vm_page_queue_free_lock;
-
-#define PAGE_ASSERT_WAIT(m, interruptible)	{ \
-				(m)->flags |= PG_WANTED; \
-				assert_wait((m), (interruptible)); \
-			}
-
-#define PAGE_WAKEUP(m)	{ \
-				(m)->flags &= ~PG_BUSY; \
-				if ((m)->flags & PG_WANTED) { \
-					(m)->flags &= ~PG_WANTED; \
-					wakeup((m)); \
-				} \
-			}
-
-#define	vm_page_lock_queues()	simple_lock(&vm_page_queue_lock)
-#define	vm_page_unlock_queues()	simple_unlock(&vm_page_queue_lock)
-
-#define vm_page_set_modified(m)	{ (m)->flags &= ~PG_CLEAN; }
-
-#define	VM_PAGE_INIT(mem, obj, offset) { \
-	(mem)->flags = PG_BUSY | PG_CLEAN | PG_FAKE; \
-	if (obj) \
-		vm_page_insert((mem), (obj), (offset)); \
-	else \
-		(mem)->object = NULL; \
-	(mem)->wire_count = 0; \
-}
-
-#if VM_PAGE_DEBUG
-
-/*
- * VM_PAGE_CHECK: debugging check of a vm_page structure
- */
-static __inline void
-VM_PAGE_CHECK(mem)
-	struct vm_page *mem;
-{
-	int lcv;
-
-	for (lcv = 0 ; lcv < vm_nphysseg ; lcv++) {
-		if ((unsigned int) mem >= (unsigned int) vm_physmem[lcv].pgs &&
-		    (unsigned int) mem <= (unsigned int) vm_physmem[lcv].lastpg)
-			break;
-	}
-	if (lcv == vm_nphysseg ||
-	    (mem->flags & (PG_ACTIVE|PG_INACTIVE)) == (PG_ACTIVE|PG_INACTIVE))
-		panic("vm_page_check: not valid!"); 
-	return;
-}
-
-#else /* VM_PAGE_DEBUG */
-#define	VM_PAGE_CHECK(mem)
-#endif /* VM_PAGE_DEBUG */
 
 #endif /* _KERNEL */
 
