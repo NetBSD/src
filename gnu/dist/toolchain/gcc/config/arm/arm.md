@@ -48,6 +48,11 @@
 
 (define_attr "is_strongarm" "no,yes" (const (symbol_ref "arm_is_strong")))
 
+;; Operand number of an input operand that is shifted.  Zoer if the
+;; given instruction does not shift one of its input operands.
+(define_attr "is_xscale" "no,yes" (const (symbol_ref "arm_is_xscale")))
+(define_attr "shift" "" (const_int 0))
+
 ; Floating Point Unit.  If we only have floating point emulation, then there
 ; is no point in scheduling the floating point insns.  (Well, for best
 ; performance we should try and group them together).
@@ -238,11 +243,25 @@
 ;; Core unit
 ;;--------------------------------------------------------------------
 ;; Everything must spend at least one cycle in the core unit
+(define_function_unit "core" 1 0 (eq_attr "core_cycles" "single") 1 1)
+
 (define_function_unit "core" 1 0
   (and (eq_attr "ldsched" "yes") (eq_attr "type" "store1")) 1 1)
 
 (define_function_unit "core" 1 0
   (and (eq_attr "ldsched" "yes") (eq_attr "type" "load")) 2 1)
+
+;; We do not need to conditionalize the define_function_unit immediately
+;; above.  This one will be ignored for anything other than xscale
+;; compiles and for xscale compiles it provides a larger delay
+;; and the scheduler will DTRT.
+;; FIXME: this test need to be revamped to not depend on this feature
+;; of the scheduler.
+
+(define_function_unit "core" 1 0
+  (and (and (eq_attr "ldsched" "yes") (eq_attr "type" "load"))
+       (eq_attr "is_xscale" "yes"))
+   3 1)
 
 (define_function_unit "core" 1 0
   (and (eq_attr "ldsched" "!yes") (eq_attr "type" "load,store1")) 2 2)
@@ -275,6 +294,10 @@
 (define_function_unit "core" 1 0 (eq_attr "type" "store3") 4 4)
 
 (define_function_unit "core" 1 0 (eq_attr "type" "store4") 5 5)
+
+(define_function_unit "core" 1 0
+  (and (eq_attr "core_cycles" "multi")
+       (eq_attr "type" "!mult,load,store1,store2,store3,store4")) 32 32)
 
 ;; Note: For DImode insns, there is normally no reason why operands should
 ;; not be in the same register, what we don't want is for something being
@@ -1410,7 +1433,9 @@
 			  (match_operand:SI 3 "arm_rhs_operand" "rM")]))
 		(match_operand:SI 1 "s_register_operand" "r")))]
   ""
-  "bic%?\\t%0, %1, %2%S4")
+  "bic%?\\t%0, %1, %2%S4"
+  [(set_attr "shift" "2")]
+)
 
 (define_insn "*andsi_notsi_si_compare0"
   [(set (reg:CC_NOOV 24)
@@ -1783,7 +1808,9 @@
 	 [(match_operand:SI 1 "s_register_operand" "r")
 	  (match_operand:SI 2 "reg_or_int_operand" "rM")]))]
   ""
-  "mov%?\\t%0, %1%S3")
+  "mov%?\\t%0, %1%S3"
+  [(set_attr "shift" "1")]
+)
 
 (define_insn "*shiftsi3_compare0"
   [(set (reg:CC_NOOV 24)
@@ -1795,7 +1822,10 @@
 	(match_op_dup 3 [(match_dup 1) (match_dup 2)]))]
   ""
   "mov%?s\\t%0, %1%S3"
-[(set_attr "conds" "set")])
+[(set_attr "conds" "set")
+ (set_attr "shift" "1")
+ ]
+)
 
 (define_insn "*shiftsi3_compare0_scratch"
   [(set (reg:CC_NOOV 24)
@@ -1806,7 +1836,10 @@
    (clobber (match_scratch:SI 0 "=r"))]
   ""
   "mov%?s\\t%0, %1%S3"
-[(set_attr "conds" "set")])
+[(set_attr "conds" "set")
+ (set_attr "shift" "1")
+ ]
+)
 
 (define_insn "*notsi_shiftsi"
   [(set (match_operand:SI 0 "s_register_operand" "=r")
@@ -1814,7 +1847,9 @@
 		 [(match_operand:SI 1 "s_register_operand" "r")
 		  (match_operand:SI 2 "arm_rhs_operand" "rM")])))]
   ""
-  "mvn%?\\t%0, %1%S3")
+  "mvn%?\\t%0, %1%S3"
+  [(set_attr "shift" "1")]
+)
 
 (define_insn "*notsi_shiftsi_compare0"
   [(set (reg:CC_NOOV 24)
@@ -1826,7 +1861,10 @@
 	(not:SI (match_op_dup 3 [(match_dup 1) (match_dup 2)])))]
   ""
   "mvn%?s\\t%0, %1%S3"
-[(set_attr "conds" "set")])
+[(set_attr "conds" "set")
+ (set_attr "shift" "1")
+ ]
+)
 
 (define_insn "*not_shiftsi_compare0_scratch"
   [(set (reg:CC_NOOV 24)
@@ -1837,7 +1875,10 @@
    (clobber (match_scratch:SI 0 "=r"))]
   ""
   "mvn%?s\\t%0, %1%S3"
-[(set_attr "conds" "set")])
+[(set_attr "conds" "set")
+ (set_attr "shift" "1")
+ ]
+)
 
 
 ;; Unary arithmetic insns
@@ -1900,6 +1941,7 @@
    cmp\\t%0, #0\;rsblt\\t%0, %0, #0
    eor%?\\t%0, %1, %1, asr #31\;sub%?\\t%0, %0, %1, asr #31"
 [(set_attr "conds" "clob,*")
+ (set_attr "shift" "1")
  (set_attr "length" "8")])
 
 (define_insn "*neg_abssi2"
@@ -1911,6 +1953,7 @@
    cmp\\t%0, #0\;rsbgt\\t%0, %0, #0
    eor%?\\t%0, %1, %1, asr #31\;rsb%?\\t%0, %0, %1, asr #31"
 [(set_attr "conds" "clob,*")
+ (set_attr "shift" "1")
  (set_attr "length" "8")])
 
 (define_insn "abssf2"
@@ -2163,7 +2206,10 @@
     output_asm_insn (\"mov%?\\t%Q0, %1\", operands);
   return \"mov%?\\t%R0, %Q0, asr #31\";
 "
-[(set_attr "length" "8")])
+[(set_attr "length" "8")
+ (set_attr "shift" "1")
+ ]
+)
 
 (define_expand "zero_extendhisi2"
   [(set (match_dup 2) (ashift:SI (match_operand:HI 1 "nonimmediate_operand" "")
@@ -3597,7 +3643,10 @@
 		      (match_operand:SI 2 "arm_rhs_operand" "rM")])))]
   ""
   "cmp%?\\t%0, %1%S3"
-[(set_attr "conds" "set")])
+[(set_attr "conds" "set")
+ (set_attr "shift" "1")
+ ]
+)
 
 (define_insn "*cmpsi_shiftsi_swp"
   [(set (reg:CC_SWP 24)
@@ -3607,7 +3656,10 @@
 			(match_operand:SI 0 "s_register_operand" "r")))]
   ""
   "cmp%?\\t%0, %1%S3"
-[(set_attr "conds" "set")])
+[(set_attr "conds" "set")
+ (set_attr "shift" "1")
+ ]
+)
 
 (define_insn "*cmpsi_neg_shiftsi"
   [(set (reg:CC 24)
@@ -3617,7 +3669,10 @@
 			      (match_operand:SI 2 "arm_rhs_operand" "rM")]))))]
   ""
   "cmn%?\\t%0, %1%S3"
-[(set_attr "conds" "set")])
+[(set_attr "conds" "set")
+ (set_attr "shift" "1")
+ ]
+)
 
 (define_insn "*cmpsf_insn"
   [(set (reg:CCFP 24)
@@ -4467,7 +4522,9 @@
               (match_operand:SI 5 "reg_or_int_operand" "rI")])
            (match_operand:SI 2 "s_register_operand" "r")]))]
   ""
-  "%i1%?\\t%0, %2, %4%S3")
+  "%i1%?\\t%0, %2, %4%S3"
+  [(set_attr "shift" "4")]
+)
 
 (define_insn "*arith_shiftsi_compare0"
   [(set (reg:CC_NOOV 24)
@@ -4482,7 +4539,10 @@
 			 (match_dup 2)]))]
   ""
   "%i1%?s\\t%0, %2, %4%S3"
-[(set_attr "conds" "set")])
+[(set_attr "conds" "set")
+ (set_attr "shift" "4")
+ ]
+)
 
 (define_insn "*arith_shiftsi_compare0_scratch"
   [(set (reg:CC_NOOV 24)
@@ -4495,7 +4555,10 @@
    (clobber (match_scratch:SI 0 "=r"))]
   ""
   "%i1%?s\\t%0, %2, %4%S3"
-[(set_attr "conds" "set")])
+[(set_attr "conds" "set")
+ (set_attr "shift" "4")
+ ]
+)
 
 (define_insn "*sub_shiftsi"
   [(set (match_operand:SI 0 "s_register_operand" "=r")
@@ -4504,7 +4567,9 @@
 		   [(match_operand:SI 3 "s_register_operand" "r")
 		    (match_operand:SI 4 "reg_or_int_operand" "rM")])))]
   ""
-  "sub%?\\t%0, %1, %3%S2")
+  "sub%?\\t%0, %1, %3%S2"
+  [(set_attr "shift" "3")]
+)
 
 (define_insn "*sub_shiftsi_compare0"
   [(set (reg:CC_NOOV 24)
@@ -4519,7 +4584,10 @@
 						 (match_dup 4)])))]
   ""
   "sub%?s\\t%0, %1, %3%S2"
-[(set_attr "conds" "set")])
+[(set_attr "conds" "set")
+ (set_attr "shift" "3")
+ ]
+)
 
 (define_insn "*sub_shiftsi_compare0_scratch"
   [(set (reg:CC_NOOV 24)
@@ -4532,7 +4600,10 @@
    (clobber (match_scratch:SI 0 "=r"))]
   ""
   "sub%?s\\t%0, %1, %3%S2"
-[(set_attr "conds" "set")])
+[(set_attr "conds" "set")
+ (set_attr "shift" "3")
+ ]
+)
 
 ;; These variants of the above insns can occur if the first operand is the
 ;; frame pointer and we eliminate that.  This is a kludge, but there doesn't
@@ -5236,6 +5307,7 @@
    mov%D5\\t%0, %1\;mov%d5\\t%0, %2%S4
    mvn%D5\\t%0, #%B1\;mov%d5\\t%0, %2%S4"
 [(set_attr "conds" "use")
+ (set_attr "shift" "2")
  (set_attr "length" "4,8,8")])
 
 (define_insn "*ifcompare_move_shift"
@@ -5269,6 +5341,7 @@
    mov%d5\\t%0, %1\;mov%D5\\t%0, %2%S4
    mvn%d5\\t%0, #%B1\;mov%D5\\t%0, %2%S4"
 [(set_attr "conds" "use")
+ (set_attr "shift" "2")
  (set_attr "length" "4,8,8")])
 
 (define_insn "*ifcompare_shift_shift"
@@ -5303,6 +5376,7 @@
   ""
   "mov%d5\\t%0, %1%S6\;mov%D5\\t%0, %3%S7"
 [(set_attr "conds" "use")
+ (set_attr "shift" "1")
  (set_attr "length" "8")])
 
 (define_insn "*ifcompare_not_arith"
