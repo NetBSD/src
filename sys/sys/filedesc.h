@@ -1,4 +1,4 @@
-/*	$NetBSD: filedesc.h,v 1.32 2004/05/31 15:30:55 pk Exp $	*/
+/*	$NetBSD: filedesc.h,v 1.33 2004/06/10 06:15:23 atatat Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -33,6 +33,8 @@
 
 #ifndef _SYS_FILEDESC_H_
 #define	_SYS_FILEDESC_H_
+
+#include <sys/lock.h>
 
 /*
  * This structure is used for the management of descriptors.  It may be
