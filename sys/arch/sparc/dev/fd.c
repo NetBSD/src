@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.51 1997/05/24 20:16:19 pk Exp $	*/
+/*	$NetBSD: fd.c,v 1.52 1997/07/29 09:58:07 fair Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles Hannum.
@@ -556,7 +556,7 @@ fdmatch(parent, match, aux)
 		int i;
 		printf("fdprobe: %d stati:", n);
 		for (i = 0; i < n; i++)
-			printf(" %x", fdc->sc_status[i]);
+			printf(" 0x%x", fdc->sc_status[i]);
 		printf("\n");
 	}
 #endif
@@ -1787,7 +1787,7 @@ fdioctl(dev, cmd, addr, flag, p)
 		fdcresult(fdc);
 		printf("dumpreg(%d regs): <", fdc->sc_nstat);
 		for (i = 0; i < fdc->sc_nstat; i++)
-			printf(" %x", fdc->sc_status[i]);
+			printf(" 0x%x", fdc->sc_status[i]);
 		printf(">\n");
 		}
 
@@ -1856,7 +1856,7 @@ fdformat(dev, finfo, p)
 
 #ifdef FD_DEBUG
 	if (fdc_debug)
-		printf("fdformat: blkno %x count %ld\n",
+		printf("fdformat: blkno 0x%x count %ld\n",
 			bp->b_blkno, bp->b_bcount);
 #endif
 
