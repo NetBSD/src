@@ -1,4 +1,4 @@
-/*	$NetBSD: printf.c,v 1.30 2004/10/30 19:28:10 christos Exp $	*/
+/*	$NetBSD: printf.c,v 1.30.2.1 2005/03/27 16:30:56 tron Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -41,7 +41,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\n\
 #if 0
 static char sccsid[] = "@(#)printf.c	8.2 (Berkeley) 3/22/95";
 #else
-__RCSID("$NetBSD: printf.c,v 1.30 2004/10/30 19:28:10 christos Exp $");
+__RCSID("$NetBSD: printf.c,v 1.30.2.1 2005/03/27 16:30:56 tron Exp $");
 #endif
 #endif /* not lint */
 
@@ -354,7 +354,7 @@ conv_escape_str(char *str, void (*do_putchar)(int))
 			for (i = 0; i < 3; i++) {
 				if (!isdigit((unsigned char)*str) || *str > '7')
 					break;
-				octnum = (octnum << 3) | (*str - '0');
+				octnum = (octnum << 3) | (*str++ - '0');
 			}
 			do_putchar(octnum);
 			continue;
