@@ -16,7 +16,7 @@
  * scatter gather is done by the board, then look at one of the Adaptec
  * drivers to finish off the job..
  *
- *	$Id: wd7000.c,v 1.16 1994/03/25 07:40:59 mycroft Exp $
+ *	$Id: wd7000.c,v 1.17 1994/06/16 01:08:35 mycroft Exp $
  */
 #include "wds.h"
 #if NWDS > 0
@@ -237,7 +237,7 @@ wdsprobe(struct isa_device *dev)
 void
 wds_minphys(struct buf *bp)
 {
-	int base = (int)bp->b_un.b_addr & (PAGESIZ-1);
+	int base = (int)bp->b_data & (PAGESIZ-1);
 
 	if(base + bp->b_bcount > PAGESIZ)
 		bp->b_bcount = PAGESIZ - base;
