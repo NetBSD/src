@@ -1,4 +1,4 @@
-/*	$NetBSD: mt.c,v 1.24 1997/10/05 13:07:24 veego Exp $	*/
+/*	$NetBSD: mt.c,v 1.24.2.1 1997/10/21 20:05:56 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\n\
 #if 0
 static char sccsid[] = "@(#)mt.c	8.2 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: mt.c,v 1.24 1997/10/05 13:07:24 veego Exp $");
+__RCSID("$NetBSD: mt.c,v 1.24.2.1 1997/10/21 20:05:56 thorpej Exp $");
 #endif
 #endif /* not lint */
 
@@ -51,7 +51,6 @@ __RCSID("$NetBSD: mt.c,v 1.24 1997/10/05 13:07:24 veego Exp $");
  * mt --
  *   magnetic tape manipulation program
  */
-#include <rmt.h>
 #include <sys/types.h>
 #include <sys/ioctl.h>
 #include <sys/mtio.h>
@@ -65,6 +64,8 @@ __RCSID("$NetBSD: mt.c,v 1.24 1997/10/05 13:07:24 veego Exp $");
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+
+#include <rmt.h>
 
 /* pseudo ioctl constants */
 #define MTASF	100
