@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_motorola.c,v 1.12 2005/01/01 21:02:13 yamt Exp $        */
+/*	$NetBSD: pmap_motorola.c,v 1.13 2005/02/14 02:15:43 chs Exp $        */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -124,7 +124,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_motorola.c,v 1.12 2005/01/01 21:02:13 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_motorola.c,v 1.13 2005/02/14 02:15:43 chs Exp $");
 
 #include "opt_compat_hpux.h"
 
@@ -3026,9 +3026,8 @@ pmap_check_wiring(str, va)
 
 	pa = pmap_pte_pa(pmap_pte(pmap_kernel(), va));
 	pg = PHYS_TO_VM_PAGE(pa);
-	if (pg->wire_count >= PAGE_SIZE / sizeof(pt_entry_t)) {
+	if (pg->wire_count > PAGE_SIZE / sizeof(pt_entry_t)) {
 		panic("*%s*: 0x%lx: wire count %d", str, va, pg->wire_count);
-		return;
 	}
 
 	count = 0;
