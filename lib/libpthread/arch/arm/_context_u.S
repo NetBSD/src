@@ -1,4 +1,4 @@
-/*	$NetBSD: _context_u.S,v 1.1.2.6 2001/11/22 06:21:36 thorpej Exp $	*/
+/*	$NetBSD: _context_u.S,v 1.1.2.7 2001/11/22 21:33:20 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -76,8 +76,7 @@
 	 * PC slot in the ucontext so that when the context is		\
 	 * resumed, we magically appear back at the call site.		\
 	 */								\
-	mov	r2, #(_UC_USER)					;	\
-	orr	r2, r2, #(_UC_CPU)				;	\
+	mov	r2, #(_UC_USER | _UC_CPU)			;	\
 	str	r2, [reg, #(UC_FLAGS)]				;	\
 	mov	r2, #(PSR_USR32_MODE)				;	\
 	str	r2, [reg, #(_REG_CPSR)]				;	\
