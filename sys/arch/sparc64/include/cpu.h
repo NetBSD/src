@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.5 1998/11/24 12:49:14 mrg Exp $ */
+/*	$NetBSD: cpu.h,v 1.5.6.1 1999/06/21 01:02:33 thorpej Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -63,6 +63,7 @@
 
 #include <machine/psl.h>
 #include <machine/reg.h>
+#include <machine/intr.h>
 #include <sparc64/sparc64/intreg.h>
 
 /*
@@ -79,29 +80,6 @@
  * as well for strayintr (see locore.s:interrupt and intr.c:strayintr).
  * Note that CLKF_INTR is valid only if CLKF_USERMODE is false.
  */
-/* 
- * Note: we have to do something to make sure this matches the definition
- * of trapframe in reg.h.
- */
-#if 0
-struct clockframe {
-	u_int64_t	tstate;		/* pstate before interrupt, excluding PSR_ET */
-	u_int64_t	pc;		/* pc at interrupt */
-	u_int64_t	npc;		/* npc at interrupt */
-	u_int64_t	faultaddr;	/* faulting addr -- not used */
-	u_int64_t	oldfp;		/* location of prev trapframe */
-	u_int	pil;			/* actual interrupt priority level */
-	u_int	oldpil;			/* priority before interrupt */
-	u_int64_t	fp;		/* %fp at interrupt */
-};
-typedef const struct clockframe clockframe;
-extern int eintstack[];
-
-#define	CLKF_USERMODE(framep)	(((framep)->tstate & TSTATE_PRIV) == 0)
-#define	CLKF_BASEPRI(framep)	(((framep)->oldpil) == 0)
-#define	CLKF_PC(framep)		((framep)->pc)
-#define	CLKF_INTR(framep)	(((framep)->fp < (u_int)eintstack)&&((framep)->fp > (u_int)KERNBASE))
-#else
 extern int eintstack[];
 struct clockframe {
 	struct trapframe t;
@@ -111,7 +89,6 @@ struct clockframe {
 #define	CLKF_BASEPRI(framep)	(((framep)->t.tf_oldpil) == 0)
 #define	CLKF_PC(framep)		((framep)->t.tf_pc)
 #define	CLKF_INTR(framep)	(((framep)->t.tf_kstack < (u_int)eintstack)&&((framep)->t.tf_kstack > (u_int)KERNBASE))
-#endif
 
 /*
  * Software interrupt request `register'.
@@ -178,15 +155,6 @@ extern struct intrhand *intrlev[MAXINTNUM];
 
 void	intr_establish __P((int level, struct intrhand *));
 
-/*
- * intr_fasttrap() is a lot like intr_establish, but is used for ``fast''
- * interrupt vectors (vectors that are not shared and are handled in the
- * trap window).  Such functions must be written in assembly.
- *
- * This should be removed for sun4u.
- */
-void	intr_fasttrap __P((int level, void (*vec)(void)));
-
 /* disksubr.c */
 struct dkbad;
 int isbad __P((struct dkbad *bt, int, int, int));
@@ -196,15 +164,15 @@ void	dumpconf __P((void));
 caddr_t	reserve_dumppages __P((caddr_t));
 /* clock.c */
 struct timeval;
-void	lo_microtime __P((struct timeval *));
-int	statintr __P((void *));
+int	tickintr __P((void *)); /* level 10 (tick) interrupt code */
 int	clockintr __P((void *));/* level 10 (clock) interrupt code */
 int	statintr __P((void *));	/* level 14 (statclock) interrupt code */
 /* locore.s */
 struct fpstate;
 void	savefpstate __P((struct fpstate *));
 void	loadfpstate __P((struct fpstate *));
-int	probeget __P((caddr_t, int));
+int	probeget __P((paddr_t, int, int));
+int	probeset __P((paddr_t, int, int, u_int64_t));
 #if 0
 void	write_all_windows __P((void));
 void	write_user_windows __P((void));
@@ -244,9 +212,6 @@ void kgdb_attach __P((int (*)(void *), void (*)(void *, int), void *));
 void kgdb_connect __P((int));
 void kgdb_panic __P((void));
 #endif
-/* iommu.c */
-void	iommu_enter __P((u_int, u_int));
-void	iommu_remove __P((u_int, u_int));
 /* emul.c */
 int	fixalign __P((struct proc *, struct trapframe *));
 int	emulinstr __P((vaddr_t, struct trapframe *));

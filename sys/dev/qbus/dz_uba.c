@@ -1,4 +1,4 @@
-/*	$NetBSD: dz_uba.c,v 1.7 1999/06/06 19:14:49 ragge Exp $ */
+/*	$NetBSD: dz_uba.c,v 1.7.2.1 1999/06/21 01:18:51 thorpej Exp $ */
 /*
  * Copyright (c) 1998 Ludd, University of Lule}, Sweden. All rights reserved.
  * Copyright (c) 1996  Ken C. Wellsch.  All rights reserved.

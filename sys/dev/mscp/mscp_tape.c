@@ -1,4 +1,4 @@
-/*	$NetBSD: mscp_tape.c,v 1.14 1999/06/06 19:16:18 ragge Exp $ */
+/*	$NetBSD: mscp_tape.c,v 1.14.2.1 1999/06/21 01:18:27 thorpej Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.

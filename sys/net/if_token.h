@@ -1,4 +1,4 @@
-/*	$NetBSD: if_token.h,v 1.2.2.1 1999/04/08 21:44:00 bad Exp $	*/
+/*	$NetBSD: if_token.h,v 1.2.2.1.2.1 1999/06/21 01:27:36 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -100,9 +100,18 @@ struct token_rif {
 
 /*
  * This assumes that route information fields are appended to
- * existing structures like llinfo_arp and tr_header
+ * existing structures like llinfo_arp and token_header
  */
 #define TOKEN_RIF(x) ((struct token_rif *) ((x) + 1))
+
+/*
+ * This is a kludge to get at the token ring mac header and the source route
+ * information after m_adj() has been used on the mbuf.
+ * Note that m is always an mbuf with a packet header.
+ */
+#define M_TRHSTART(m) \
+	(ALIGN(((m)->m_flags & M_EXT ? (m)->m_ext.ext_buf : &(m)->m_pktdat[0]) \
+	    + sizeof (struct token_header)) - sizeof(struct token_header))
 
 #if defined(_KERNEL)
 /*
@@ -116,10 +125,6 @@ struct token_rif {
 #define	token_sprintf		ether_sprintf
 
 void    token_ifattach __P((struct ifnet *, caddr_t));
-void    token_input __P((struct ifnet *, struct token_header *, struct mbuf *));
-int     token_output __P((struct ifnet *,
-           struct mbuf *, struct sockaddr *, struct rtentry *)); 
-
 #endif
 
 #endif /* !_NET_IF_TOKEN_H_ */

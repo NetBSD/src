@@ -1,4 +1,4 @@
-/* 	$NetBSD: wsfont.c,v 1.7 1999/05/18 21:51:58 ad Exp $ */
+/* 	$NetBSD: wsfont.c,v 1.7.2.1 1999/06/21 01:19:41 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsfont.c,v 1.7 1999/05/18 21:51:58 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsfont.c,v 1.7.2.1 1999/06/21 01:19:41 thorpej Exp $");
 
 #include "opt_wsfont.h"
 

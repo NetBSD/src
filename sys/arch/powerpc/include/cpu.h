@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.6 1999/05/05 11:20:54 tsubai Exp $	*/
+/*	$NetBSD: cpu.h,v 1.6.2.1 1999/06/21 01:01:03 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1999 Wolfgang Solfrank.

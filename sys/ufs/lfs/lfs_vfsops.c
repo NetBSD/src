@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vfsops.c,v 1.28.2.1 1999/04/13 21:33:57 perseant Exp $	*/
+/*	$NetBSD: lfs_vfsops.c,v 1.28.2.1.2.1 1999/06/21 01:31:12 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -394,6 +394,7 @@ lfs_mountfs(devvp, mp, p)
 	/* Set up the I/O information */
 	fs->lfs_iocount = 0;
 	fs->lfs_dirvcount = 0;
+	fs->lfs_diropwait = 0;
 	fs->lfs_activesb = 0;
 #ifdef LFS_CANNOT_ROLLFW
 	fs->lfs_sbactive = NULL;

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ktrace.c,v 1.33 1998/09/11 12:50:10 mycroft Exp $	*/
+/*	$NetBSD: kern_ktrace.c,v 1.33.8.1 1999/06/21 01:24:01 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -69,6 +69,7 @@ ktrderef(p)
 	if (p->p_traceflag & KTRFAC_FD) {
 		struct file *fp = p->p_tracep;
 
+		FILE_USE(fp);
 		closef(fp, NULL);
 	} else {
 		struct vnode *vp = p->p_tracep;
@@ -107,6 +108,7 @@ ktrgetheader(type)
 	microtime(&kth->ktr_time);
 	kth->ktr_pid = p->p_pid;
 	memcpy(kth->ktr_comm, p->p_comm, MAXCOMLEN);
+	/* Note: ktr_len and ktr_buf are left to be filled in by the caller. */
 	return (kth);
 }
 
@@ -154,6 +156,7 @@ ktrsysret(v, code, error, retval)
 	p->p_traceflag |= KTRFAC_ACTIVE;
 	kth = ktrgetheader(KTR_SYSRET);
 	ktp.ktr_code = code;
+	ktp.ktr_eosys = 0;			/* XXX unused */
 	ktp.ktr_error = error;
 	ktp.ktr_retval = retval;		/* what about val2 ? */
 
@@ -595,8 +598,10 @@ ktrwrite(p, v, kth)
 	if (p->p_traceflag & KTRFAC_FD) {
 		struct file *fp = v;
 
+		FILE_USE(fp);
 		error = (*fp->f_ops->fo_write)(fp, &fp->f_offset, &auio,
 		    fp->f_cred, FOF_UPDATE_OFFSET);
+		FILE_UNUSE(fp, NULL);
 	}
 	else {
 		struct vnode *vp = v;

@@ -1,4 +1,4 @@
-/* $NetBSD: osf1_descrip.c,v 1.4 1999/05/05 20:01:04 thorpej Exp $ */
+/* $NetBSD: osf1_descrip.c,v 1.4.2.1 1999/06/21 01:08:30 thorpej Exp $ */
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.

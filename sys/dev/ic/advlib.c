@@ -1,4 +1,4 @@
-/*      $NetBSD: advlib.c,v 1.8 1999/02/25 20:21:33 dante Exp $        */
+/*      $NetBSD: advlib.c,v 1.8.4.1 1999/06/21 01:17:39 thorpej Exp $        */
 
 /*
  * Low level routines for the Advanced Systems Inc. SCSI controllers chips
@@ -89,7 +89,9 @@ static void AscInitLram __P((ASC_SOFTC *));
 static void AscInitQLinkVar __P((ASC_SOFTC *));
 static int AscResetChipAndScsiBus __P((bus_space_tag_t, bus_space_handle_t));
 static u_int16_t AscGetChipBusType __P((bus_space_tag_t, bus_space_handle_t));
-
+/*
+static u_int16_t AscGetEisaChipCfg __P((bus_space_tag_t, bus_space_handle_t));
+*/
 /* Chip register routines */
 static void AscSetBank __P((bus_space_tag_t, bus_space_handle_t, u_int8_t));
 
@@ -99,8 +101,6 @@ static int AscStopChip __P((bus_space_tag_t, bus_space_handle_t));
 static u_int8_t AscSetChipScsiID __P((bus_space_tag_t, bus_space_handle_t,
 					u_int8_t));
 static u_int8_t AscGetChipScsiCtrl __P((bus_space_tag_t, bus_space_handle_t));
-static u_int8_t AscGetChipVersion __P((bus_space_tag_t, bus_space_handle_t,
-					u_int16_t));
 static int AscSetRunChipSynRegAtID __P((bus_space_tag_t, bus_space_handle_t,
 					u_int8_t, u_int8_t));
 static int AscSetChipSynRegAtID __P((bus_space_tag_t, bus_space_handle_t,
@@ -174,13 +174,10 @@ static void AscGetQDoneInfo __P((bus_space_tag_t, bus_space_handle_t, u_int16_t,
 static void AscToggleIRQAct __P((bus_space_tag_t, bus_space_handle_t));
 static void AscDisableInterrupt __P((bus_space_tag_t, bus_space_handle_t));
 static void AscEnableInterrupt __P((bus_space_tag_t, bus_space_handle_t));
-static u_int8_t AscGetChipIRQ __P((bus_space_tag_t, bus_space_handle_t,
-					u_int16_t));
 static u_int8_t AscSetChipIRQ __P((bus_space_tag_t, bus_space_handle_t,
 					u_int8_t, u_int16_t));
 static void AscAckInterrupt __P((bus_space_tag_t, bus_space_handle_t));
 static u_int32_t AscGetMaxDmaCount __P((u_int16_t));
-static u_int16_t AscGetIsaDmaChannel __P((bus_space_tag_t, bus_space_handle_t));
 static u_int16_t AscSetIsaDmaChannel __P((bus_space_tag_t, bus_space_handle_t,
 					u_int16_t));
 static u_int8_t AscGetIsaDmaSpeed __P((bus_space_tag_t, bus_space_handle_t));
@@ -257,7 +254,6 @@ AscInitASC_SOFTC(sc)
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
 	int             i;
-	u_int8_t        chip_version;
 
 
 	ASC_SET_CHIP_CONTROL(iot, ioh, ASC_CC_HALT);
@@ -286,10 +282,8 @@ AscInitASC_SOFTC(sc)
 	sc->chip_scsi_id = ASC_DEF_CHIP_SCSI_ID;
 	sc->lib_serial_no = ASC_LIB_SERIAL_NUMBER;
 	sc->lib_version = (ASC_LIB_VERSION_MAJOR << 8) | ASC_LIB_VERSION_MINOR;
-	chip_version = AscGetChipVersion(iot, ioh, sc->bus_type);
-	sc->chip_version = chip_version;
 	if ((sc->bus_type & ASC_IS_PCI) &&
-	    (chip_version >= ASC_CHIP_VER_PCI_ULTRA_3150)) {
+	    (sc->chip_version >= ASC_CHIP_VER_PCI_ULTRA_3150)) {
 		sc->bus_type = ASC_IS_PCI_ULTRA;
 		sc->sdtr_period_tbl[0] = SYN_ULTRA_XFER_NS_0;
 		sc->sdtr_period_tbl[1] = SYN_ULTRA_XFER_NS_1;
@@ -308,10 +302,10 @@ AscInitASC_SOFTC(sc)
 		sc->sdtr_period_tbl[14] = SYN_ULTRA_XFER_NS_14;
 		sc->sdtr_period_tbl[15] = SYN_ULTRA_XFER_NS_15;
 		sc->max_sdtr_index = 15;
-		if (chip_version == ASC_CHIP_VER_PCI_ULTRA_3150)
+		if (sc->chip_version == ASC_CHIP_VER_PCI_ULTRA_3150)
 			ASC_SET_EXTRA_CONTROL(iot, ioh,
 				       (SEC_ACTIVE_NEGATE | SEC_SLEW_RATE));
-		else if (chip_version >= ASC_CHIP_VER_PCI_ULTRA_3050)
+		else if (sc->chip_version >= ASC_CHIP_VER_PCI_ULTRA_3050)
 			ASC_SET_EXTRA_CONTROL(iot, ioh,
 				   (SEC_ACTIVE_NEGATE | SEC_ENABLE_FILTER));
 	} else {
@@ -350,7 +344,7 @@ AscInitASC_SOFTC(sc)
  * This function initialize some ASC_SOFTC fields with values read from
  * on-board EEProm.
  */
-u_int16_t
+int16_t
 AscInitFromEEP(sc)
 	ASC_SOFTC      *sc;
 {
@@ -368,6 +362,11 @@ AscInitFromEEP(sc)
 	warn_code = 0;
 	AscWriteLramWord(iot, ioh, ASCV_HALTCODE_W, 0x00FE);
 	AscStopQueueExe(iot, ioh);
+
+	AscStopChip(iot, ioh);
+	AscResetChipAndScsiBus(iot, ioh);
+	DvcSleepMilliSecond(sc->scsi_reset_wait * 1000);
+
 	if ((AscStopChip(iot, ioh) == FALSE) ||
 	    (AscGetChipScsiCtrl(iot, ioh) != 0)) {
 		AscResetChipAndScsiBus(iot, ioh);
@@ -412,8 +411,7 @@ AscInitFromEEP(sc)
 	eep_config->cfg_lsw |= ASC_CFG0_HOST_INT_ON;
 
 	if (chksum != eep_config->chksum) {
-		if (AscGetChipVersion(iot, ioh, sc->bus_type) ==
-		    ASC_CHIP_VER_PCI_ULTRA_3050) {
+		if (sc->chip_version == ASC_CHIP_VER_PCI_ULTRA_3050) {
 			eep_config->init_sdtr = 0xFF;
 			eep_config->disc_enable = 0xFF;
 			eep_config->start_motor = 0xFF;
@@ -561,8 +559,7 @@ AscInitFromASC_SOFTC(sc)
 			}
 		}
 	} else if (sc->bus_type == ASC_IS_ISAPNP) {
-		if (AscGetChipVersion(iot, ioh, sc->bus_type) ==
-		    ASC_CHIP_VER_ASYN_BUG) {
+		if (sc->chip_version ==  ASC_CHIP_VER_ASYN_BUG) {
 			sc->bug_fix_cntl |= ASC_BUG_FIX_ASYN_USE_SYN;
 		}
 	}
@@ -740,15 +737,16 @@ AscGetChipBusType(iot, ioh)
 	u_int16_t       chip_ver;
 
 	chip_ver = ASC_GET_CHIP_VER_NO(iot, ioh);
-	if ((chip_ver >= ASC_CHIP_MIN_VER_VL) &&
+/*	if ((chip_ver >= ASC_CHIP_MIN_VER_VL) &&
 	    (chip_ver <= ASC_CHIP_MAX_VER_VL)) {
-		/*
-		 * if(((iop_base & 0x0C30) == 0x0C30) || ((iop_base & 0x0C50)
-		 * == 0x0C50)) return (ASC_IS_EISA);
-		 */
-		return (ASC_IS_VL);
+		if(((ioh & 0x0C30) == 0x0C30) || ((ioh & 0x0C50) == 0x0C50)) {
+			return (ASC_IS_EISA);
+		}
+		else {
+			return (ASC_IS_VL);
+		}
 	}
-	if ((chip_ver >= ASC_CHIP_MIN_VER_ISA) &&
+*/	if ((chip_ver >= ASC_CHIP_MIN_VER_ISA) &&
 	    (chip_ver <= ASC_CHIP_MAX_VER_ISA)) {
 		if (chip_ver >= ASC_CHIP_MIN_VER_ISA_PNP)
 			return (ASC_IS_ISAPNP);
@@ -761,6 +759,18 @@ AscGetChipBusType(iot, ioh)
 	return (0);
 }
 
+/*
+static u_int16_t
+AscGetEisaChipCfg(iot, ioh)
+	bus_space_tag_t iot;
+	bus_space_handle_t ioh;
+{
+	int	eisa_cfg_iop;
+
+	eisa_cfg_iop = ASC_GET_EISA_SLOT(ioh) | (ASC_EISA_CFG_IOP_MASK);
+	return (inw(eisa_cfg_iop));
+}
+*/
 
 /******************************************************************************/
 /*                             Chip register routines                         */
@@ -832,25 +842,6 @@ AscStopChip(iot, ioh)
 		return (0);
 
 	return (1);
-}
-
-
-static u_int8_t
-AscGetChipVersion(iot, ioh, bus_type)
-	bus_space_tag_t iot;
-	bus_space_handle_t ioh;
-	u_int16_t       bus_type;
-{
-	if (bus_type & ASC_IS_EISA) {
-		/*
-		 * u_int16_t	eisa_iop; u_int8_t	revision;
-		 *
-		 * eisa_iop = ASC_GET_EISA_SLOT(iop_base) |
-		 * ASC_EISA_REV_IOP_MASK; revision = inp(eisa_iop);
-		 * return((ASC_CHIP_MIN_VER_EISA - 1) + revision);
-		 */
-	}
-	return (ASC_GET_CHIP_VER_NO(iot, ioh));
 }
 
 
@@ -2081,7 +2072,7 @@ AscEnableInterrupt(iot, ioh)
 }
 
 
-static u_int8_t
+u_int8_t
 AscGetChipIRQ(iot, ioh, bus_type)
 	bus_space_tag_t iot;
 	bus_space_handle_t ioh;
@@ -2091,14 +2082,14 @@ AscGetChipIRQ(iot, ioh, bus_type)
 	u_int8_t        chip_irq;
 
 
-	if (bus_type & ASC_IS_EISA) {
-		/*
-		 * cfg_lsw = AscGetEisaChipCfg(iot, ioh); chip_irq =
-		 * ((cfg_lsw >> 8) & 0x07) + 10; if((chip_irq == 13) ||
-		 * (chip_irq > 15)) return (0); return(chip_irq);
-		 */
+/*	if (bus_type & ASC_IS_EISA) {
+		cfg_lsw = AscGetEisaChipCfg(iot, ioh);
+		chip_irq = ((cfg_lsw >> 8) & 0x07) + 10;
+		if((chip_irq == 13) || (chip_irq > 15))
+			return (0);
+		return(chip_irq);
 	}
-	if ((bus_type & ASC_IS_VL) != 0) {
+*/	if ((bus_type & ASC_IS_VL) != 0) {
 		cfg_lsw = ASC_GET_CHIP_CFG_LSW(iot, ioh);
 		chip_irq = (cfg_lsw >> 2) & 0x07;
 		if ((chip_irq == 0) ||
@@ -2205,7 +2196,7 @@ AscGetMaxDmaCount(bus_type)
 }
 
 
-static u_int16_t
+u_int16_t
 AscGetIsaDmaChannel(iot, ioh)
 	bus_space_tag_t iot;
 	bus_space_handle_t ioh;

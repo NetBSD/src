@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_ls.c,v 1.1 1999/04/14 11:32:50 drochner Exp $	 */
+/*	$NetBSD: ufs_ls.c,v 1.1.2.1 1999/06/21 01:25:34 thorpej Exp $	 */
 
 /*
  * Copyright (c) 1993

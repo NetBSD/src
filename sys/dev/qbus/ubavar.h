@@ -1,4 +1,4 @@
-/*	$NetBSD: ubavar.h,v 1.25 1999/06/06 19:14:49 ragge Exp $	*/
+/*	$NetBSD: ubavar.h,v 1.25.2.1 1999/06/21 01:18:56 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986 Regents of the University of California.

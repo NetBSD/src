@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.4 1999/03/23 21:29:05 drochner Exp $	*/
+/*	$NetBSD: bus.h,v 1.4.4.1 1999/06/21 01:03:42 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -105,7 +105,7 @@ typedef u_long bus_size_t;
 /*
  * Access methods for bus resources and address space.
  */
-typedef	struct vax_bus_space bus_space_tag_t;
+typedef	struct vax_bus_space *bus_space_tag_t;
 typedef	u_long bus_space_handle_t;
 
 struct vax_bus_space {
@@ -836,18 +836,6 @@ vax_mem_copy_region_4(t, h1, o1, h2, o2, c)
 #define	bus_space_copy_region_8	!!! bus_space_copy_region_8 unimplemented !!!
 #endif
 
-#ifdef __BUS_SPACE_COMPAT_OLDDEFS
-/* compatibility definitions; deprecated */
-#define	bus_space_copy_1(t, h1, o1, h2, o2, c)				\
-	bus_space_copy_region_1((t), (h1), (o1), (h2), (o2), (c))
-#define	bus_space_copy_2(t, h1, o1, h2, o2, c)				\
-	bus_space_copy_region_1((t), (h1), (o1), (h2), (o2), (c))
-#define	bus_space_copy_4(t, h1, o1, h2, o2, c)				\
-	bus_space_copy_region_1((t), (h1), (o1), (h2), (o2), (c))
-#define	bus_space_copy_8(t, h1, o1, h2, o2, c)				\
-	bus_space_copy_region_1((t), (h1), (o1), (h2), (o2), (c))
-#endif
-
 
 /*
  * Bus read/write barrier methods.
@@ -864,12 +852,6 @@ vax_mem_copy_region_4(t, h1, o1, h2, o2, c)
 #define	BUS_SPACE_BARRIER_READ	0x01		/* force read barrier */
 #define	BUS_SPACE_BARRIER_WRITE	0x02		/* force write barrier */
 
-#ifdef __BUS_SPACE_COMPAT_OLDDEFS
-/* compatibility definitions; deprecated */
-#define	BUS_BARRIER_READ	BUS_SPACE_BARRIER_READ
-#define	BUS_BARRIER_WRITE	BUS_SPACE_BARRIER_WRITE
-#endif
-
 
 /*
  * Flags used in various bus DMA methods.
@@ -882,6 +864,11 @@ vax_mem_copy_region_4(t, h1, o1, h2, o2, c)
 #define	BUS_DMA_BUS2		0x20
 #define	BUS_DMA_BUS3		0x40
 #define	BUS_DMA_BUS4		0x80
+
+/*
+ * Private flags stored in the DMA map.
+ */
+#define DMAMAP_HAS_SGMAP	0x80000000	/* sgva/len are valid */
 
 /* Forwards needed by prototypes below. */
 struct mbuf;
@@ -1059,13 +1046,13 @@ int	_bus_dmamap_create __P((bus_dma_tag_t, bus_size_t, int, bus_size_t,
 	    bus_size_t, int, bus_dmamap_t *));
 void	_bus_dmamap_destroy __P((bus_dma_tag_t, bus_dmamap_t));
 
-int	_bus_dmamap_load_direct __P((bus_dma_tag_t, bus_dmamap_t,
+int	_bus_dmamap_load __P((bus_dma_tag_t, bus_dmamap_t,
 	    void *, bus_size_t, struct proc *, int));
-int	_bus_dmamap_load_mbuf_direct __P((bus_dma_tag_t,
+int	_bus_dmamap_load_mbuf __P((bus_dma_tag_t,
 	    bus_dmamap_t, struct mbuf *, int));
-int	_bus_dmamap_load_uio_direct __P((bus_dma_tag_t,
+int	_bus_dmamap_load_uio __P((bus_dma_tag_t,
 	    bus_dmamap_t, struct uio *, int));
-int	_bus_dmamap_load_raw_direct __P((bus_dma_tag_t,
+int	_bus_dmamap_load_raw __P((bus_dma_tag_t,
 	    bus_dmamap_t, bus_dma_segment_t *, int, bus_size_t, int));
 
 void	_bus_dmamap_unload __P((bus_dma_tag_t, bus_dmamap_t));

@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_sched.h,v 1.1 1999/05/12 19:49:09 thorpej Exp $	*/
+/*	$NetBSD: linux_sched.h,v 1.1.2.1 1999/06/21 01:07:38 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_malloc.c,v 1.41 1999/03/24 05:51:23 mrg Exp $	*/
+/*	$NetBSD: kern_malloc.c,v 1.41.4.1 1999/06/21 01:24:01 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -50,7 +50,7 @@
 
 #include <uvm/uvm_extern.h>
 
-static struct vm_map kmem_map_store;
+static struct vm_map_intrsafe kmem_map_store;
 vm_map_t kmem_map = NULL;
 
 #include "opt_kmemstats.h"
@@ -310,11 +310,11 @@ malloc(size, type, flags)
 		int rv;
 		vaddr_t addr = (vaddr_t)kbp->kb_next;
 
-		vm_map_lock_read(kmem_map);
+		vm_map_lock(kmem_map);
 		rv = uvm_map_checkprot(kmem_map, addr,
 				       addr + sizeof(struct freelist),
 				       VM_PROT_WRITE);
-		vm_map_unlock_read(kmem_map);
+		vm_map_unlock(kmem_map);
 
 		if (!rv)
 								{
@@ -627,7 +627,7 @@ kmeminit()
 		(vsize_t)(npg * sizeof(struct kmemusage)));
 	kmem_map = uvm_km_suballoc(kernel_map, (vaddr_t *)&kmembase,
 		(vaddr_t *)&kmemlimit, (vsize_t)(npg * NBPG), 
-			FALSE, FALSE, &kmem_map_store);
+			VM_MAP_INTRSAFE, FALSE, &kmem_map_store.vmi_map);
 #ifdef KMEMSTATS
 	for (indx = 0; indx < MINBUCKET + 16; indx++) {
 		if (1 << indx >= CLBYTES)

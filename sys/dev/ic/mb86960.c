@@ -1,4 +1,4 @@
-/*	$NetBSD: mb86960.c,v 1.32 1999/03/25 23:19:16 thorpej Exp $	*/
+/*	$NetBSD: mb86960.c,v 1.32.4.1 1999/06/21 01:17:51 thorpej Exp $	*/
 
 /*
  * All Rights Reserved, Copyright (C) Fujitsu Limited 1995
@@ -1390,9 +1390,7 @@ mb86960_get_packet(sc, len)
 	}
 #endif
 
-	/* Fix up data start offset in mbuf to point past ether header. */
-	m_adj(m, sizeof(struct ether_header));
-	ether_input(ifp, eh, m);
+	(*ifp->if_input)(ifp, m);
 	return (1);
 }
 

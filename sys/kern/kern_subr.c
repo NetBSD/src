@@ -1,12 +1,12 @@
-/*	$NetBSD: kern_subr.c,v 1.45 1999/03/24 05:51:25 mrg Exp $	*/
+/*	$NetBSD: kern_subr.c,v 1.45.4.1 1999/06/21 01:24:02 thorpej Exp $	*/
 
 /*-
- * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
+ * Copyright (c) 1997, 1998, 1999 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
  * by Jason R. Thorpe of the Numerical Aerospace Simulation Facility,
- * NASA Ames Research Center.
+ * NASA Ames Research Center, and by Luke Mewburn.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -107,12 +107,10 @@
 #include <net/if.h>
 
 /* XXX these should eventually move to subr_autoconf.c */
-static int findblkmajor __P((const char *, struct devnametobdevmaj *));
-static const char *findblkname __P((int, struct devnametobdevmaj *));
-static struct device *getdisk __P((char *, int, int,
-	struct devnametobdevmaj *, dev_t *, int));
-static struct device *parsedisk __P((char *, int, int,
-	struct devnametobdevmaj *, dev_t *));
+static int findblkmajor __P((const char *));
+static const char *findblkname __P((int));
+static struct device *getdisk __P((char *, int, int, dev_t *, int));
+static struct device *parsedisk __P((char *, int, int, dev_t *));
 static int getstr __P((char *, int));
 
 int
@@ -405,10 +403,9 @@ static struct device fakemdrootdev[NMD];
 #endif
 
 void
-setroot(bootdv, bootpartition, nam2blk)
+setroot(bootdv, bootpartition)
 	struct device *bootdv;
 	int bootpartition;
-	struct devnametobdevmaj *nam2blk;
 {
 	struct device *dv;
 	int len, print_newline = 0;
@@ -426,14 +423,6 @@ setroot(bootdv, bootpartition, nam2blk)
 	const char *deffsname;
 	struct vfsops *vops;
 	extern int (*mountroot) __P((void));
-	static struct devnametobdevmaj *last_nam2blk;
-
-	if (nam2blk == NULL) {
-		if (last_nam2blk == NULL)
-			panic("setroot: no name to bdev major map");
-		nam2blk = last_nam2blk;
-	}
-	last_nam2blk = nam2blk;
 
 #ifdef MEMORY_DISK_HOOKS
 	for (i = 0; i < NMD; i++) {
@@ -506,15 +495,13 @@ setroot(bootdv, bootpartition, nam2blk)
 			}
 			if (len > 0 && buf[len - 1] == '*') {
 				buf[--len] = '\0';
-				dv = getdisk(buf, len, 1, nam2blk,
-				    &nrootdev, 0);
+				dv = getdisk(buf, len, 1, &nrootdev, 0);
 				if (dv != NULL) {
 					rootdv = dv;
 					break;
 				}
 			}
-			dv = getdisk(buf, len, bootpartition, nam2blk,
-			    &nrootdev, 0);
+			dv = getdisk(buf, len, bootpartition, &nrootdev, 0);
 			if (dv != NULL) {
 				rootdv = dv;
 				break;
@@ -557,7 +544,7 @@ setroot(bootdv, bootpartition, nam2blk)
 				dumpspec = "none";
 				goto havedump;
 			}
-			dv = getdisk(buf, len, 1, nam2blk, &ndumpdev, 1);
+			dv = getdisk(buf, len, 1, &ndumpdev, 1);
 			if (dv) {
 				dumpdv = dv;
 				break;
@@ -616,7 +603,7 @@ setroot(bootdv, bootpartition, nam2blk)
 		 */
 		rootdv = bootdv;
 
-		majdev = findblkmajor(bootdv->dv_xname, nam2blk);
+		majdev = findblkmajor(bootdv->dv_xname);
 		if (majdev >= 0) {
 			/*
 			 * Root is on a disk.  `bootpartition' is root.
@@ -643,7 +630,7 @@ setroot(bootdv, bootpartition, nam2blk)
 			goto haveroot;
 		}
 
-		rootdevname = findblkname(major(rootdev), nam2blk);
+		rootdevname = findblkname(major(rootdev));
 		if (rootdevname == NULL) {
 			printf("unknown device major 0x%x\n", rootdev);
 			boothowto |= RB_ASKNAME;
@@ -735,7 +722,7 @@ setroot(bootdv, bootpartition, nam2blk)
 			goto nodumpdev;
 		}
 
-		dumpdevname = findblkname(major(dumpdev), nam2blk);
+		dumpdevname = findblkname(major(dumpdev));
 		if (dumpdevname == NULL)
 			goto nodumpdev;
 		memset(buf, 0, sizeof(buf));
@@ -772,43 +759,34 @@ setroot(bootdv, bootpartition, nam2blk)
 }
 
 static int
-findblkmajor(name, nam2blk)
+findblkmajor(name)
 	const char *name;
-	struct devnametobdevmaj *nam2blk;
 {
 	int i;
 
-	if (nam2blk == NULL)
-		return (-1);
-
-	for (i = 0; nam2blk[i].d_name != NULL; i++)
-		if (strncmp(name, nam2blk[i].d_name,
-		    strlen(nam2blk[i].d_name)) == 0)
-			return (nam2blk[i].d_maj);
+	for (i = 0; dev_name2blk[i].d_name != NULL; i++)
+		if (strncmp(name, dev_name2blk[i].d_name,
+		    strlen(dev_name2blk[i].d_name)) == 0)
+			return (dev_name2blk[i].d_maj);
 	return (-1);
 }
 
 const char *
-findblkname(maj, nam2blk)
+findblkname(maj)
 	int maj;
-	struct devnametobdevmaj *nam2blk;
 {
 	int i;
 
-	if (nam2blk == NULL)
-		return (NULL);
-
-	for (i = 0; nam2blk[i].d_name != NULL; i++)
-		if (nam2blk[i].d_maj == maj)
-			return (nam2blk[i].d_name);
+	for (i = 0; dev_name2blk[i].d_name != NULL; i++)
+		if (dev_name2blk[i].d_maj == maj)
+			return (dev_name2blk[i].d_name);
 	return (NULL);
 }
 
 static struct device *
-getdisk(str, len, defpart, nam2blk, devp, isdump)
+getdisk(str, len, defpart, devp, isdump)
 	char *str;
 	int len, defpart;
-	struct devnametobdevmaj *nam2blk;
 	dev_t *devp;
 	int isdump;
 {
@@ -817,7 +795,7 @@ getdisk(str, len, defpart, nam2blk, devp, isdump)
 	int		i;
 #endif
 
-	if ((dv = parsedisk(str, len, defpart, nam2blk, devp)) == NULL) {
+	if ((dv = parsedisk(str, len, defpart, devp)) == NULL) {
 		printf("use one of:");
 #ifdef MEMORY_DISK_HOOKS
 		if (isdump == 0)
@@ -841,10 +819,9 @@ getdisk(str, len, defpart, nam2blk, devp, isdump)
 }
 
 static struct device *
-parsedisk(str, len, defpart, nam2blk, devp)
+parsedisk(str, len, defpart, devp)
 	char *str;
 	int len, defpart;
-	struct devnametobdevmaj *nam2blk;
 	dev_t *devp;
 {
 	struct device *dv;
@@ -882,7 +859,7 @@ parsedisk(str, len, defpart, nam2blk, devp)
 #ifdef MEMORY_DISK_HOOKS
  gotdisk:
 #endif
-			majdev = findblkmajor(dv->dv_xname, nam2blk);
+			majdev = findblkmajor(dv->dv_xname);
 			if (majdev < 0)
 				panic("parsedisk");
 			*devp = MAKEDISKDEV(majdev, dv->dv_unit, part);
@@ -949,4 +926,71 @@ getstr(cp, size)
 			*lp++ = c;
 		}
 	}
+}
+
+/*
+ * snprintf() `bytes' into `buf', reformatting it so that the number,
+ * plus a possible `x' + suffix extension) fits into len bytes (including
+ * the terminating NUL).
+ * Returns the number of bytes stored in buf, or -1 * if there was a problem.
+ * E.g, given a len of 9 and a suffix of `B': 
+ *	bytes		result
+ *	-----		------
+ *	99999		`99999 B'
+ *	100000		`97 KB'
+ *	66715648	`65152 KB'
+ *	252215296	`240 MB'
+ */
+int
+humanize_number(buf, len, bytes, suffix)
+	char		*buf;
+	size_t		 len;
+	u_int64_t	 bytes;
+	const char	*suffix;
+{
+		/* prefixes are: (none), Kilo, Mega, Giga, Tera, Peta, Exa */
+	static const char prefixes[] = " KMGTPE";
+
+	int		i, r;
+	u_int64_t	max;
+	size_t		suffixlen;
+
+	if (buf == NULL || suffix == NULL)
+		return (-1);
+	if (len > 0)
+		buf[0] = '\0';
+	suffixlen = strlen(suffix);
+			/* check if enough room for `x y' + suffix + `\0' */
+	if (len < 4 + suffixlen)
+		return (-1);
+
+	max = 1;
+	for (i = 0; i < len - suffixlen - 3; i++)
+		max *= 10;
+	for (i = 0; bytes >= max && i < sizeof(prefixes); i++)
+		bytes /= 1024;
+
+	r = snprintf(buf, len, "%qu%s%c%s", (unsigned long long)bytes,
+	    i == 0 ? "" : " ", prefixes[i], suffix);
+
+	return (r);
+}
+
+int
+format_bytes(buf, len, bytes)
+	char		*buf;
+	size_t		 len;
+	u_int64_t	 bytes;
+{
+	int	rv;
+	size_t	nlen;
+
+	rv = humanize_number(buf, len, bytes, "B");
+	if (rv != -1) {
+			/* nuke the trailing ` B' if it exists */
+		nlen = strlen(buf) - 2;
+		if (strcmp(&buf[nlen], " B") == 0)
+			buf[nlen] = '\0';
+	}
+	return (rv);
 }

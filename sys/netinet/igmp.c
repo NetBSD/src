@@ -1,4 +1,4 @@
-/*	$NetBSD: igmp.c,v 1.19.2.1 1999/04/26 15:45:02 perry Exp $	*/
+/*	$NetBSD: igmp.c,v 1.19.2.1.2.1 1999/06/21 01:27:48 thorpej Exp $	*/
 
 /*
  * Internet Group Management Protocol (IGMP) routines.

@@ -1,4 +1,4 @@
-/*	$NetBSD: putchar.c,v 1.1 1999/03/25 04:02:57 simonb Exp $	 */
+/*	$NetBSD: putchar.c,v 1.1.4.1 1999/06/21 00:59:12 thorpej Exp $	 */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -36,6 +36,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <stand.h>
 #include <machine/dec_prom.h>
 
 /* Ug, no console putchar on pmax PROMs! */

@@ -1,4 +1,4 @@
-/*	$NetBSD: fb.c,v 1.22.2.1 1999/04/30 16:11:43 perry Exp $	*/
+/*	$NetBSD: fb.c,v 1.22.2.1.2.1 1999/06/21 00:58:38 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993

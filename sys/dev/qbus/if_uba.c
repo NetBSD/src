@@ -1,4 +1,4 @@
-/*	$NetBSD: if_uba.c,v 1.16 1999/06/06 20:45:21 ragge Exp $	*/
+/*	$NetBSD: if_uba.c,v 1.16.2.1 1999/06/21 01:18:53 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.

@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.118.2.1 1999/04/13 22:52:43 jonathan Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.118.2.1.2.1 1999/06/21 01:18:39 thorpej Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.114 1999/04/12 23:18:16 jonathan Exp 
+ *	NetBSD: pcidevs,v 1.131 1999/06/19 04:49:52 augustss Exp 
  */
 
 /*
@@ -100,6 +100,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    "3c900B-COMBO Ethernet",
 	},
 	{
+	    PCI_VENDOR_3COM, PCI_PRODUCT_3COM_3C900BTPC,
+	    0,
+	    "3Com",
+	    "3c900B-TPC Ethernet",
+	},
+	{
 	    PCI_VENDOR_3COM, PCI_PRODUCT_3COM_3C905BTX,
 	    0,
 	    "3Com",
@@ -136,6 +142,18 @@ struct pci_knowndev pci_knowndevs[] = {
 	    "Voodoo2",
 	},
 	{
+	    PCI_VENDOR_3DFX, PCI_PRODUCT_3DFX_BANSHEE,
+	    0,
+	    "3Dfx Interactive",
+	    "Banshee",
+	},
+	{
+	    PCI_VENDOR_3DFX, PCI_PRODUCT_3DFX_VOODOO3,
+	    0,
+	    "3Dfx Interactive",
+	    "Voodoo3",
+	},
+	{
 	    PCI_VENDOR_3DLABS, PCI_PRODUCT_3DLABS_300SX,
 	    0,
 	    "3D Labs",
@@ -154,10 +172,22 @@ struct pci_knowndev pci_knowndevs[] = {
 	    "GLINT DELTA",
 	},
 	{
+	    PCI_VENDOR_3DLABS, PCI_PRODUCT_3DLABS_PERMEDIA,
+	    0,
+	    "3D Labs",
+	    "GLINT Permedia",
+	},
+	{
 	    PCI_VENDOR_3DLABS, PCI_PRODUCT_3DLABS_500MX,
 	    0,
 	    "3D Labs",
 	    "GLINT 500MX",
+	},
+	{
+	    PCI_VENDOR_3DLABS, PCI_PRODUCT_3DLABS_PERMEDI2,
+	    0,
+	    "3D Labs",
+	    "GLINT Permedia 2",
 	},
 	{
 	    PCI_VENDOR_ACC, PCI_PRODUCT_ACC_2188,
@@ -262,6 +292,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    "M1543 PCI-ISA Bridge",
 	},
 	{
+	    PCI_VENDOR_ALI, PCI_PRODUCT_ALI_M3309,
+	    0,
+	    "Acer Labs",
+	    "M3309 MPEG Decoder",
+	},
+	{
 	    PCI_VENDOR_ALI, PCI_PRODUCT_ALI_M4803,
 	    0,
 	    "Acer Labs",
@@ -352,6 +388,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    "AHA-2944",
 	},
 	{
+	    PCI_VENDOR_ADP, PCI_PRODUCT_ADP_AIC7895,
+	    0,
+	    "Adaptec",
+	    "AIC-7895 Ultra",
+	},
+	{
 	    PCI_VENDOR_ADP, PCI_PRODUCT_ADP_AIC7880,
 	    0,
 	    "Adaptec",
@@ -368,6 +410,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Adaptec",
 	    "AHA-3940 Ultra",
+	},
+	{
+	    PCI_VENDOR_ADP, PCI_PRODUCT_ADP_389XU,
+	    0,
+	    "Adaptec",
+	    "AHA-389X Ultra",
 	},
 	{
 	    PCI_VENDOR_ADP, PCI_PRODUCT_ADP_2944U,
@@ -451,7 +499,49 @@ struct pci_knowndev pci_knowndevs[] = {
 	    PCI_VENDOR_APPLE, PCI_PRODUCT_APPLE_BANDIT,
 	    0,
 	    "Apple Computer",
-	    "PCI Controller",
+	    "Bandit Host-PCI Bridge",
+	},
+	{
+	    PCI_VENDOR_APPLE, PCI_PRODUCT_APPLE_GC,
+	    0,
+	    "Apple Computer",
+	    "Grand Central I/O Controller",
+	},
+	{
+	    PCI_VENDOR_APPLE, PCI_PRODUCT_APPLE_CONTROL,
+	    0,
+	    "Apple Computer",
+	    "Control",
+	},
+	{
+	    PCI_VENDOR_APPLE, PCI_PRODUCT_APPLE_PLANB,
+	    0,
+	    "Apple Computer",
+	    "PlanB",
+	},
+	{
+	    PCI_VENDOR_APPLE, PCI_PRODUCT_APPLE_OHARE,
+	    0,
+	    "Apple Computer",
+	    "OHare I/O Controller",
+	},
+	{
+	    PCI_VENDOR_APPLE, PCI_PRODUCT_APPLE_BANDIT2,
+	    0,
+	    "Apple Computer",
+	    "Bandit Host-PCI Bridge",
+	},
+	{
+	    PCI_VENDOR_APPLE, PCI_PRODUCT_APPLE_HEATHROW,
+	    0,
+	    "Apple Computer",
+	    "MAC-IO I/O Controller (Heathrow)",
+	},
+	{
+	    PCI_VENDOR_APPLE, PCI_PRODUCT_APPLE_PADDINGTON,
+	    0,
+	    "Apple Computer",
+	    "MAC-IO I/O Controller (Paddington)",
 	},
 	{
 	    PCI_VENDOR_ARC, PCI_PRODUCT_ARC_1000PV,
@@ -508,16 +598,106 @@ struct pci_knowndev pci_knowndevs[] = {
 	    "Mach64 VT",
 	},
 	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_MACH64_B,
+	    0,
+	    "ATI Technologies",
+	    "Mach64 B",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_MACH64_GB,
+	    0,
+	    "ATI Technologies",
+	    "Mach64 GB",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_MACH64_GD,
+	    0,
+	    "ATI Technologies",
+	    "Mach64 GD",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_MACH64_GI,
+	    0,
+	    "ATI Technologies",
+	    "Mach64 GI",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_MACH64_GP,
+	    0,
+	    "ATI Technologies",
+	    "Mach64 GP",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_MACH64_GQ,
+	    0,
+	    "ATI Technologies",
+	    "Mach64 GQ",
+	},
+	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_MACH64_GT,
 	    0,
 	    "ATI Technologies",
 	    "Mach64 GT",
 	},
 	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_MACH64_GU,
+	    0,
+	    "ATI Technologies",
+	    "Mach64 GU",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_MACH64_GV,
+	    0,
+	    "ATI Technologies",
+	    "Mach64 GV",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_MACH64_GW,
+	    0,
+	    "ATI Technologies",
+	    "Mach64 GW",
+	},
+	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_MACH64_GX,
 	    0,
 	    "ATI Technologies",
 	    "Mach64 GX",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_MACH64_GZ,
+	    0,
+	    "ATI Technologies",
+	    "Mach64 GZ",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_MACH64_LB,
+	    0,
+	    "ATI Technologies",
+	    "Mach64 LB",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_MACH64_LD,
+	    0,
+	    "ATI Technologies",
+	    "Mach64 LD",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_MACH64_LG,
+	    0,
+	    "ATI Technologies",
+	    "Mach64 LG",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_MACH64_LI,
+	    0,
+	    "ATI Technologies",
+	    "Mach64 LI",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_MACH64_LP,
+	    0,
+	    "ATI Technologies",
+	    "Mach64 LP",
 	},
 	{
 	    PCI_VENDOR_AMCIRCUITS, PCI_PRODUCT_AMCIRCUITS_S5933,
@@ -572,6 +752,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Bit3 Computer Corp.",
 	    "PCI-VME Interface Mod. 617",
+	},
+	{
+	    PCI_VENDOR_BIT3, PCI_PRODUCT_BIT3_PCIVME618,
+	    0,
+	    "Bit3 Computer Corp.",
+	    "PCI-VME Interface Mod. 618",
 	},
 	{
 	    PCI_VENDOR_BIT3, PCI_PRODUCT_BIT3_PCIVME2706,
@@ -694,10 +880,28 @@ struct pci_knowndev pci_knowndevs[] = {
 	    "CL-GD5446",
 	},
 	{
+	    PCI_VENDOR_CIRRUS, PCI_PRODUCT_CIRRUS_CL_GD5480,
+	    0,
+	    "Cirrus Logic",
+	    "CL-GD5480",
+	},
+	{
 	    PCI_VENDOR_CIRRUS, PCI_PRODUCT_CIRRUS_CL_PD6729,
 	    0,
 	    "Cirrus Logic",
 	    "CL-PD6729",
+	},
+	{
+	    PCI_VENDOR_CIRRUS, PCI_PRODUCT_CIRRUS_CL_PD6832,
+	    0,
+	    "Cirrus Logic",
+	    "CL-PD6832 PCI-CardBus Bridge",
+	},
+	{
+	    PCI_VENDOR_CIRRUS, PCI_PRODUCT_CIRRUS_CL_PD6833,
+	    0,
+	    "Cirrus Logic",
+	    "CL-PD6833 PCI-CardBus Bridge",
 	},
 	{
 	    PCI_VENDOR_CIRRUS, PCI_PRODUCT_CIRRUS_CL_GD7542,
@@ -1102,6 +1306,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    "SOLO-1 AudioDrive",
 	},
 	{
+	    PCI_VENDOR_ESSTECH, PCI_PRODUCT_ESSTECH_MAESTRO2E,
+	    0,
+	    "ESS Technology Inc",
+	    "Maestro 2E",
+	},
+	{
 	    PCI_VENDOR_2MICRO, PCI_PRODUCT_2MICRO_OZ6832,
 	    0,
 	    "2 Micro Inc",
@@ -1126,10 +1336,16 @@ struct pci_knowndev pci_knowndevs[] = {
 	    "ATM PCA-200e",
 	},
 	{
-	    PCI_VENDOR_FUJITSU4, PCI_PRODUCT_FUJITSU4_LTMODEM,
+	    PCI_VENDOR_LUCENT, PCI_PRODUCT_LUCENT_LTMODEM,
 	    0,
-	    "Fujitsu Limited (4th PCI Vendor ID)",
+	    "AT&T Microelectronics",
 	    "K56flex DSVD LTMODEM",
+	},
+	{
+	    PCI_VENDOR_LUCENT, PCI_PRODUCT_LUCENT_USBHC,
+	    0,
+	    "AT&T Microelectronics",
+	    "USB Host Controller",
 	},
 	{
 	    PCI_VENDOR_FUTUREDOMAIN, PCI_PRODUCT_FUTUREDOMAIN_TMC_18C30,
@@ -1558,10 +1774,22 @@ struct pci_knowndev pci_knowndevs[] = {
 	    "MGA Millennium II 2164WA-B AG",
 	},
 	{
-	    PCI_VENDOR_MATROX, PCI_PRODUCT_MATROX_G200,
+	    PCI_VENDOR_MATROX, PCI_PRODUCT_MATROX_G200_PCI,
 	    0,
 	    "Matrox",
-	    "MGA G200",
+	    "MGA G200 PCI",
+	},
+	{
+	    PCI_VENDOR_MATROX, PCI_PRODUCT_MATROX_G200_AGP,
+	    0,
+	    "Matrox",
+	    "MGA G200 AGP",
+	},
+	{
+	    PCI_VENDOR_MATROX, PCI_PRODUCT_MATROX_G400_AGP,
+	    0,
+	    "Matrox",
+	    "MGA G400 AGP",
 	},
 	{
 	    PCI_VENDOR_MATROX, PCI_PRODUCT_MATROX_IMPRESSION,
@@ -1570,16 +1798,22 @@ struct pci_knowndev pci_knowndevs[] = {
 	    "MGA Impression",
 	},
 	{
-	    PCI_VENDOR_MATROX, PCI_PRODUCT_MATROX_G100,
+	    PCI_VENDOR_MATROX, PCI_PRODUCT_MATROX_G100_PCI,
 	    0,
 	    "Matrox",
-	    "MGA G100",
+	    "MGA G100 PCI",
 	},
 	{
 	    PCI_VENDOR_MATROX, PCI_PRODUCT_MATROX_G100_AGP,
 	    0,
 	    "Matrox",
 	    "MGA G100 AGP",
+	},
+	{
+	    PCI_VENDOR_MOT, PCI_PRODUCT_MOT_MPC106,
+	    0,
+	    "Motorola",
+	    "MPC106 Host-PCI Bridge (grackle)",
 	},
 	{
 	    PCI_VENDOR_MYLEX, PCI_PRODUCT_MYLEX_960P,
@@ -1634,6 +1868,30 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Olicom",
 	    "Olicom OC-2326 10/100-TX Ethernet",
+	},
+	{
+	    PCI_VENDOR_SUN, PCI_PRODUCT_SUN_EBUS,
+	    0,
+	    "Sun Microsystems",
+	    "SPARC Ebus",
+	},
+	{
+	    PCI_VENDOR_SUN, PCI_PRODUCT_SUN_HMENETWORK,
+	    0,
+	    "Sun Microsystems",
+	    "SUNW,hme compatible Ethernet",
+	},
+	{
+	    PCI_VENDOR_SUN, PCI_PRODUCT_SUN_SIMBA,
+	    0,
+	    "Sun Microsystems",
+	    "Simba PCI bridge",
+	},
+	{
+	    PCI_VENDOR_SUN, PCI_PRODUCT_SUN_US_IIi,
+	    0,
+	    "Sun Microsystems",
+	    "UltraSPARC IIi PCI",
 	},
 	{
 	    PCI_VENDOR_SYMBIOS, PCI_PRODUCT_SYMBIOS_810,
@@ -1702,6 +1960,24 @@ struct pci_knowndev pci_knowndevs[] = {
 	    "MagicGraph 128ZV",
 	},
 	{
+	    PCI_VENDOR_NEOMAGIC, PCI_PRODUCT_NEOMAGIC_NMMG2160,
+	    0,
+	    "Neomagic",
+	    "MagicGraph 128XD",
+	},
+	{
+	    PCI_VENDOR_NEOMAGIC, PCI_PRODUCT_NEOMAGIC_NMMM256AV_VGA,
+	    0,
+	    "Neomagic",
+	    "MagicMedia 256AV VGA",
+	},
+	{
+	    PCI_VENDOR_NEOMAGIC, PCI_PRODUCT_NEOMAGIC_NMMM256AV_AU,
+	    0,
+	    "Neomagic",
+	    "MagicMedia 256AV Audio",
+	},
+	{
 	    PCI_VENDOR_NEXGEN, PCI_PRODUCT_NEXGEN_NX82C501,
 	    0,
 	    "NexGen Microsystems",
@@ -1724,6 +2000,18 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Number 9 Computer Company",
 	    "Imagine-128 II",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_RIVATNT,
+	    0,
+	    "Nvidia Corporation",
+	    "Riva TNT",
+	},
+	{
+	    PCI_VENDOR_NVIDIA_SGS, PCI_PRODUCT_NVIDIA_SGS_RIVA128,
+	    0,
+	    "Nvidia Corporation & SGS Thomson Microelectric",
+	    "Riva 128",
 	},
 	{
 	    PCI_VENDOR_OAKTECH, PCI_PRODUCT_OAKTECH_OTI1007,
@@ -1930,16 +2218,16 @@ struct pci_knowndev pci_knowndevs[] = {
 	    "Trio64UV+",
 	},
 	{
-	    PCI_VENDOR_S3, PCI_PRODUCT_S3_868,
-	    0,
-	    "S3",
-	    "868",
-	},
-	{
 	    PCI_VENDOR_S3, PCI_PRODUCT_S3_VIRGE_VX,
 	    0,
 	    "S3",
 	    "ViRGE/VX",
+	},
+	{
+	    PCI_VENDOR_S3, PCI_PRODUCT_S3_868,
+	    0,
+	    "S3",
+	    "868",
 	},
 	{
 	    PCI_VENDOR_S3, PCI_PRODUCT_S3_928,
@@ -2026,6 +2314,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    "Trio64V2/DX",
 	},
 	{
+	    PCI_VENDOR_S3, PCI_PRODUCT_S3_PLATO_PX,
+	    0,
+	    "S3",
+	    "Plato/PX",
+	},
+	{
 	    PCI_VENDOR_S3, PCI_PRODUCT_S3_TRIO3D,
 	    0,
 	    "S3",
@@ -2036,6 +2330,24 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "S3",
 	    "ViRGE/DX",
+	},
+	{
+	    PCI_VENDOR_S3, PCI_PRODUCT_S3_VIRGE_GX2,
+	    0,
+	    "S3",
+	    "ViRGE/GX2",
+	},
+	{
+	    PCI_VENDOR_S3, PCI_PRODUCT_S3_VIRGE_MX,
+	    0,
+	    "S3",
+	    "ViRGE/MX",
+	},
+	{
+	    PCI_VENDOR_S3, PCI_PRODUCT_S3_VIRGE_MXP,
+	    0,
+	    "S3",
+	    "ViRGE/MXP",
 	},
 	{
 	    PCI_VENDOR_S3, PCI_PRODUCT_S3_SONICVIBES,
@@ -2128,10 +2440,22 @@ struct pci_knowndev pci_knowndevs[] = {
 	    "5597/5598 host bridge",
 	},
 	{
+	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_6326,
+	    0,
+	    "Silicon Integrated System",
+	    "6326 AGP VGA",
+	},
+	{
 	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_5597_USB,
 	    0,
 	    "Silicon Integrated System",
 	    "5597/5598 USB host controller",
+	},
+	{
+	    PCI_VENDOR_SILMOTION, PCI_PRODUCT_SILMOTION_LYNX_E,
+	    0,
+	    "Silicon Motion",
+	    "Lynx E",
 	},
 	{
 	    PCI_VENDOR_SMC, PCI_PRODUCT_SMC_37C665,
@@ -2150,12 +2474,6 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Standard Microsystems",
 	    "83C170 (\"EPIC/100\") Fast Ethernet",
-	},
-	{
-	    PCI_VENDOR_STB2, PCI_PRODUCT_STB2_VELOCITY128,
-	    0,
-	    "STB Systems (2nd PCI Vendor ID)",
-	    "Velocity128 (AGP)",
 	},
 	{
 	    PCI_VENDOR_SURECOM, PCI_PRODUCT_SURECOM_NE34,
@@ -2206,6 +2524,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    "TLAN",
 	},
 	{
+	    PCI_VENDOR_TI, PCI_PRODUCT_TI_PCILYNX,
+	    0,
+	    "Texas Instruments",
+	    "LYNX FireWire Host Controller",
+	},
+	{
 	    PCI_VENDOR_TI, PCI_PRODUCT_TI_PCI1130,
 	    0,
 	    "Texas Instruments",
@@ -2248,10 +2572,22 @@ struct pci_knowndev pci_knowndevs[] = {
 	    "PCI1225 PCI-CardBus Bridge",
 	},
 	{
+	    PCI_VENDOR_TI, PCI_PRODUCT_TI_PCI1251,
+	    0,
+	    "Texas Instruments",
+	    "PCI1251 PCI-CardBus Bridge",
+	},
+	{
 	    PCI_VENDOR_TI, PCI_PRODUCT_TI_PCI2030,
 	    0,
 	    "Texas Instruments",
 	    "PCI2030 PCI-CardBus Bridge",
+	},
+	{
+	    PCI_VENDOR_SONY, PCI_PRODUCT_SONY_CXD1947A,
+	    0,
+	    "Sony",
+	    "CXD1947A FireWire Host Controller",
 	},
 	{
 	    PCI_VENDOR_TOSHIBA, PCI_PRODUCT_TOSHIBA_R4X00,
@@ -5350,9 +5686,9 @@ struct pci_knowndev pci_knowndevs[] = {
 	    NULL,
 	},
 	{
-	    PCI_VENDOR_FUJITSU4, 0,
+	    PCI_VENDOR_LUCENT, 0,
 	    PCI_KNOWNDEV_NOPROD,
-	    "Fujitsu Limited (4th PCI Vendor ID)",
+	    "AT&T Microelectronics",
 	    NULL,
 	},
 	{
@@ -5512,6 +5848,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    NULL,
 	},
 	{
+	    PCI_VENDOR_SILMOTION, 0,
+	    PCI_KNOWNDEV_NOPROD,
+	    "Silicon Motion",
+	    NULL,
+	},
+	{
 	    PCI_VENDOR_ENSONIQ, 0,
 	    PCI_KNOWNDEV_NOPROD,
 	    "Ensoniq",
@@ -5554,9 +5896,9 @@ struct pci_knowndev pci_knowndevs[] = {
 	    NULL,
 	},
 	{
-	    PCI_VENDOR_STB2, 0,
+	    PCI_VENDOR_NVIDIA_SGS, 0,
 	    PCI_KNOWNDEV_NOPROD,
-	    "STB Systems (2nd PCI Vendor ID)",
+	    "Nvidia Corporation & SGS Thomson Microelectric",
 	    NULL,
 	},
 	{

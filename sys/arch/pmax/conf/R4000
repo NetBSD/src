@@ -2,7 +2,7 @@
 # R4000 (any model) kernel config file
 
 #
-# 	$NetBSD: R4000,v 1.13 1999/03/27 08:15:29 simonb Exp $
+# 	$NetBSD: R4000,v 1.13.4.1 1999/06/21 00:58:32 thorpej Exp $
 #
 include		"arch/pmax/conf/std.pmax"
 
@@ -71,6 +71,11 @@ options 	GATEWAY		# IP packet forwarding
 options 	COMPAT_12	# Netbsd 1.2 reboot()
 options 	COMPAT_13	# Netbsd 1.3
 
+# Raster console options
+options		FONT_BOLD8x16		# Font for fb devices
+options		FONT_LUCIDA16x29	# Font for px devices
+#options	FONT_GALLANT12x22
+#options	FONT_QVSS8x15
 
 # pmax specific
 options 	COMPAT_ULTRIX	# ultrix compatibility

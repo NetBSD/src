@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.9 1999/03/26 23:41:34 mycroft Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.9.4.1 1999/06/21 01:01:07 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -50,8 +50,10 @@
  * Finish a fork operation, with process p2 nearly set up.
  */
 void
-cpu_fork(p1, p2)
+cpu_fork(p1, p2, stack, stacksize)
 	struct proc *p1, *p2;
+	void *stack;
+	size_t stacksize;
 {
 	struct trapframe *tf;
 	struct callframe *cf;
@@ -82,6 +84,13 @@ cpu_fork(p1, p2)
 	stktop1 = (caddr_t)trapframe(p1);
 	stktop2 = (caddr_t)trapframe(p2);
 	bcopy(stktop1, stktop2, sizeof(struct trapframe));
+
+	/*
+	 * If specified, give the child a different stack.
+	 */
+	if (stack != NULL)
+		tf->fixreg[1] = (register_t)stack + stacksize;
+
 	stktop2 = (caddr_t)((u_long)stktop2 & ~15);	/* Align stack pointer */
 	
 	/*
@@ -216,7 +225,9 @@ cpu_coredump(p, vp, cred, chdr)
 }
 
 /*
- * Map an IO request into kernel virtual address space.
+ * Map a user I/O request into kernel virtual address space.
+ * Note: the pages are already locked by uvm_vslock(), so we
+ * do not need to pass an access_type to pmap_enter().   
  */
 void
 vmapbuf(bp, len)
@@ -246,7 +257,7 @@ vmapbuf(bp, len)
 }
 
 /*
- * Free the io map addresses associated with this IO operation.
+ * Unmap a previously-mapped user I/O request.
  */
 void
 vunmapbuf(bp, len)

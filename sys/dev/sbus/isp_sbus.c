@@ -1,4 +1,4 @@
-/* $NetBSD: isp_sbus.c,v 1.10.2.1 1999/04/26 15:46:47 perry Exp $ */
+/* $NetBSD: isp_sbus.c,v 1.10.2.1.2.1 1999/06/21 01:19:07 thorpej Exp $ */
 /* release_03_25_99 */
 /*
  * SBus specific probe and attach routines for Qlogic ISP SCSI adapters.
@@ -259,7 +259,8 @@ isp_sbus_mbxdma(isp)
 {
 	struct isp_sbussoftc *sbc = (struct isp_sbussoftc *) isp;
 	bus_dma_segment_t seg;
-	size_t len, rseg;
+	int rseg;
+	bus_size_t len;
 
 	/*
 	 * NOTE: Since most Sun machines aren't I/O coherent,

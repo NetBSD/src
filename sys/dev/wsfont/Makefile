@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 1999/04/13 00:24:05 ad Exp $
+#	$NetBSD: Makefile,v 1.1.2.1 1999/06/21 01:19:35 thorpej Exp $
 
 INCSDIR= /usr/include/dev/wsfont
 

@@ -1,4 +1,4 @@
-#	$NetBSD: files.x68k,v 1.24 1999/03/30 04:25:07 minoura Exp $
+#	$NetBSD: files.x68k,v 1.24.4.1 1999/06/21 01:04:12 thorpej Exp $
 #
 # new style config file for x68k architecture
 #
@@ -42,7 +42,6 @@ file	arch/x68k/x68k/bus.c
 
 file	dev/cons.c
 file	dev/cninit.c
-major	{vnd = 6}
 
 # Emulation modules
 # 6888x emulator (FPU_EMULATE)
@@ -146,7 +145,6 @@ file	arch/x68k/dev/fd.c		fd needs-flag
 include "dev/scsipi/files.scsipi"
 major	{cd = 7}
 major	{sd = 4}
-major	{st = 5}
 
 device scsirom {}
 attach	scsirom at intio
@@ -174,6 +172,9 @@ file	arch/x68k/dev/md_root.c		memory_disk_hooks
 
 include	"compat/sunos/files.sunos"
 file	arch/m68k/m68k/sunos_machdep.c	compat_sunos
+
+# SVR4 Binary Compatibility (COMPAT_SVR4)
+include "compat/svr4/files.svr4"
 
 # Linux binary compatibility (COMPAT_LINUX)
 include "compat/linux/files.linux"

@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_compat_43.c,v 1.6.2.1 1999/04/15 03:12:38 mrg Exp $	*/
+/*	$NetBSD: netbsd32_compat_43.c,v 1.6.2.1.2.1 1999/06/21 01:08:08 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998 Matthew R. Green

@@ -1,4 +1,4 @@
-/* $NetBSD: wsconsio.h,v 1.16 1999/02/12 11:14:49 drochner Exp $ */
+/* $NetBSD: wsconsio.h,v 1.16.4.1 1999/06/21 01:19:32 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -151,11 +151,26 @@ struct wskbd_map_data {
 
 /* Get mouse type */
 #define	WSMOUSEIO_GTYPE		_IOR('W', 32, u_int)
-#define		WSMOUSE_TYPE_VSXXX	1	/* DEC TC(?) serial */
+#define		WSMOUSE_TYPE_VSXXX	1	/* DEC serial */
 #define		WSMOUSE_TYPE_PS2	2	/* PS/2-compatible */
 #define		WSMOUSE_TYPE_USB	3	/* USB mouse */
 #define		WSMOUSE_TYPE_LMS	4	/* Logitech busmouse */
 #define		WSMOUSE_TYPE_MMS	5	/* Microsoft InPort mouse */
+
+/* Set resolution.  Not applicable to all mouse types. */
+#define	WSMOUSEIO_SRES		_IOR('W', 33, u_int)
+#define		WSMOUSE_RES_MIN		0
+#define		WSMOUSE_RES_DEFAULT	75
+#define		WSMOUSE_RES_MAX		100
+
+/* Set scale factor (num / den).  Not applicable to all mouse types. */
+#define	WSMOUSEIO_SSCALE	_IOR('W', 34, u_int[2])
+
+/* Set sample rate.  Not applicable to all mouse types. */
+#define	WSMOUSEIO_SRATE		_IOR('W', 35, u_int)
+#define		WSMOUSE_RATE_MIN	0
+#define		WSMOUSE_RATE_DEFAULT	50
+#define		WSMOUSE_RATE_MAX	100
 
 /*
  * Display ioctls (64 - 95)
@@ -164,10 +179,10 @@ struct wskbd_map_data {
 /* Get display type */
 #define	WSDISPLAYIO_GTYPE	_IOR('W', 64, u_int)
 #define		WSDISPLAY_TYPE_UNKNOWN	0	/* unknown */
-#define		WSDISPLAY_TYPE_PM_MONO	1	/* ??? */
-#define		WSDISPLAY_TYPE_PM_COLOR	2	/* ??? */
+#define		WSDISPLAY_TYPE_PM_MONO	1	/* DEC [23]100 mono */
+#define		WSDISPLAY_TYPE_PM_COLOR	2	/* DEC [23]100 color */
 #define		WSDISPLAY_TYPE_CFB	3	/* DEC TC CFB */
-#define		WSDISPLAY_TYPE_XCFB	4	/* ??? */
+#define		WSDISPLAY_TYPE_XCFB	4	/* DEC `maxine' onboard fb */
 #define		WSDISPLAY_TYPE_MFB	5	/* DEC TC MFB */
 #define		WSDISPLAY_TYPE_SFB	6	/* DEC TC SFB */
 #define		WSDISPLAY_TYPE_ISAVGA	7	/* (generic) ISA VGA */
@@ -176,6 +191,8 @@ struct wskbd_map_data {
 #define		WSDISPLAY_TYPE_SFBP	10	/* DEC TC SFB+ */
 #define		WSDISPLAY_TYPE_PCIMISC	11	/* (generic) PCI misc. disp. */
 #define		WSDISPLAY_TYPE_NEXTMONO	12	/* NeXT mono display */
+#define		WSDISPLAY_TYPE_PX	13	/* DEC TC PX */
+#define		WSDISPLAY_TYPE_PXG	14	/* DEC TC PXG */
 
 /* Basic display information.  Not applicable to all display types. */
 struct wsdisplay_fbinfo {
@@ -244,7 +261,7 @@ struct wsdisplay_cursor {
 
 /*
  * XXX WARNING
- * XXX The following 3 definitions are very preliminary and are likely
+ * XXX The following definitions are very preliminary and are likely
  * XXX to be changed without care about backwards compatibility!
  */
 struct wsdisplay_font {
@@ -277,6 +294,14 @@ struct wsdisplay_usefontdata {
 	char *name;
 };
 #define WSDISPLAYIO_USEFONT	_IOW('W', 80, struct wsdisplay_usefontdata)
+
+struct wsdisplay_kbddata {
+	int op;
+#define WSDISPLAY_KBD_ADD 0
+#define WSDISPLAY_KBD_DEL 1
+	int idx;
+};
+#define WSDISPLAYIO_SETKEYBOARD _IOWR('W', 81, struct wsdisplay_kbddata)
 
 /* XXX NOT YET DEFINED */
 /* Mapping information retrieval. */

@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.16.2.2 1999/04/12 22:09:10 oster Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.16.2.2.2.1 1999/06/21 01:18:58 thorpej Exp $	*/
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -992,6 +992,7 @@ raidioctl(dev, cmd, data, flag, p)
 		sparePtr = (RF_SingleComponent_t *) data;
 		memcpy( &hot_spare, sparePtr, sizeof(RF_SingleComponent_t));
 		printf("Adding spare\n");
+		raidPtrs[unit]->proc = p;	/* Blah... :-p GO */
 		retcode = rf_add_hot_spare(raidPtrs[unit], &hot_spare);
 		return(retcode);
 

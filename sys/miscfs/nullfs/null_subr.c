@@ -1,4 +1,4 @@
-/*	$NetBSD: null_subr.c,v 1.13.6.1 1999/04/15 23:10:42 wrstuden Exp $	*/
+/*	$NetBSD: null_subr.c,v 1.13.6.1.2.1 1999/06/21 01:26:41 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993

@@ -1,4 +1,4 @@
-/*	$NetBSD: apcdmareg.h,v 1.1 1999/06/05 14:29:10 mrg Exp $	*/
+/*	$NetBSD: apcdmareg.h,v 1.1.2.1 1999/06/21 01:17:41 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.

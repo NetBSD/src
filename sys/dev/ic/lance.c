@@ -1,4 +1,4 @@
-/*	$NetBSD: lance.c,v 1.7.2.1 1999/04/30 18:57:36 perry Exp $	*/
+/*	$NetBSD: lance.c,v 1.7.2.1.2.1 1999/06/21 01:17:50 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -528,9 +528,8 @@ lance_read(sc, boff, len)
 	}
 #endif
 
-	/* Pass the packet up, with the ether header sort-of removed. */
-	m_adj(m, sizeof(struct ether_header));
-	ether_input(ifp, eh, m);
+	/* Pass the packet up. */
+	(*ifp->if_input)(ifp, m);
 }
 
 #undef	ifp

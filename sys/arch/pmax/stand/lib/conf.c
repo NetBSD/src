@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.13 1999/04/01 05:52:38 simonb Exp $	*/
+/*	$NetBSD: conf.c,v 1.13.4.1 1999/06/21 00:59:11 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -47,8 +47,12 @@
 const	struct callback *callv = &callvec;
 
 #ifndef LIBSA_SINGLE_DEVICE
-#ifdef SMALL
+
+#ifdef LIBSA_NO_DEV_CLOSE
 #define rzclose /*(()(struct open_file*))*/0
+#endif
+
+#ifdef LIBSA_NO_DEV_IOCTL
 #define rzioctl /*(()(struct open_file*, u_long, void*))*/0
 #else
 #define	rzioctl		noioctl

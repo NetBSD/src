@@ -1,4 +1,4 @@
-/*	$NetBSD: asc.c,v 1.16.4.2 1999/04/12 21:27:07 pk Exp $	*/
+/*	$NetBSD: asc.c,v 1.16.4.2.2.1 1999/06/21 00:57:43 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993

@@ -1,4 +1,4 @@
-/*	$NetBSD: sbus.c,v 1.11 1999/03/26 23:41:36 mycroft Exp $ */
+/*	$NetBSD: sbus.c,v 1.11.4.1 1999/06/21 01:02:32 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -81,11 +81,36 @@
  */
 
 /*
+ * Copyright (c) 1999 Eduardo Horvath
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ *  
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR  ``AS IS'' AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR  BE LIABLE
+ * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+ * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+ * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+ * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+ * SUCH DAMAGE.
+ *
+ */
+
+
+/*
  * Sbus stuff.
  */
 #include "opt_ddb.h"
 
 #include <sys/param.h>
+#include <sys/extent.h>
 #include <sys/malloc.h>
 #include <sys/systm.h>
 #include <sys/device.h>
@@ -93,6 +118,8 @@
 
 #include <machine/bus.h>
 #include <sparc64/sparc64/vaddrs.h>
+#include <sparc64/dev/iommureg.h>
+#include <sparc64/dev/iommuvar.h>
 #include <sparc64/dev/sbusreg.h>
 #include <dev/sbus/sbusvar.h>
 
@@ -108,7 +135,6 @@ int sbusdebug = 0;
 #endif
 
 void sbusreset __P((int));
-int sbus_flush __P((struct sbus_softc *));
 
 static bus_space_tag_t sbus_alloc_bustag __P((struct sbus_softc *));
 static bus_dma_tag_t sbus_alloc_dmatag __P((struct sbus_softc *));
@@ -146,8 +172,6 @@ extern struct cfdriver sbus_cd;
 /*
  * DVMA routines
  */
-void sbus_enter __P((struct sbus_softc *, vaddr_t, int64_t, int));
-void sbus_remove __P((struct sbus_softc *, vaddr_t, size_t));
 int sbus_dmamap_load __P((bus_dma_tag_t, bus_dmamap_t, void *,
 			  bus_size_t, struct proc *, int));
 void sbus_dmamap_unload __P((bus_dma_tag_t, bus_dmamap_t));
@@ -286,83 +310,24 @@ sbus_attach(parent, self, aux)
 	 */
 	error = getprop(node, "ranges", sizeof(struct sbus_range),
 			 &sc->sc_nrange, (void **)&sc->sc_range);
-	switch (error) {
-	case 0:
-		break;
-#if 0
-	case ENOENT:
-		/* Fall back to our own `range' construction */
-		sc->sc_range = sbus_translations;
-		sc->sc_nrange =
-			sizeof(sbus_translations)/sizeof(sbus_translations[0]);
-		break;
-#endif
-	default:
+	if (error)
 		panic("%s: error getting ranges property", sc->sc_dev.dv_xname);
-	}
 
+	/* initailise the IOMMU */
 
-	/*
-	 * Setup the iommu.
-	 *
-	 * The sun4u iommu is part of the SBUS controller so we will
-	 * deal with it here.  We could try to fake a device node so
-	 * we can eventually share it with the PCI bus run by psyco,
-	 * but I don't want to get into that sort of cruft.
-	 */
+	/* punch in our copies */
+	sc->sc_is.is_bustag = sc->sc_bustag;
+	sc->sc_is.is_iommu = &sc->sc_sysio->sys_iommu;
+	sc->sc_is.is_sb = &sc->sc_sysio->sys_strbuf;
 
-	/* 
-	 * All IOMMUs will share the same TSB which is allocated in pmap_bootstrap.
-	 *
-	 * This makes device management easier.
-	 */
-	{
-		extern int64_t		*iotsb;
-		extern paddr_t		iotsbp;
-		extern int		iotsbsize;
-		
-		sc->sc_tsbsize = iotsbsize;
-		sc->sc_tsb = iotsb;
-		sc->sc_ptsb = iotsbp;
-	}
-#if 1
-	/* Need to do 64-bit stores */
-	bus_space_write_8(sc->sc_bustag, &sc->sc_sysio->sys_iommu.iommu_cr, 
-			  0, (IOMMUCR_TSB1K|IOMMUCR_8KPG|IOMMUCR_EN));
-	bus_space_write_8(sc->sc_bustag, &sc->sc_sysio->sys_iommu.iommu_tsb,
-			  0, sc->sc_ptsb);
-#else
-	stxa(&sc->sc_sysio->sys_iommu.iommu_cr,ASI_NUCLEUS,(IOMMUCR_TSB1K|IOMMUCR_8KPG|IOMMUCR_EN));
-	stxa(&sc->sc_sysio->sys_iommu.iommu_tsb,ASI_NUCLEUS,sc->sc_ptsb);
-#endif
 #ifdef DEBUG
 	if (sbusdebug & SDB_DVMA)
-	{
-		/* Probe the iommu */
-		int64_t cr, tsb;
-
-		printf("iommu regs at: cr=%lx tsb=%lx flush=%lx\n", &sc->sc_sysio->sys_iommu.iommu_cr,
-		       &sc->sc_sysio->sys_iommu.iommu_tsb, &sc->sc_sysio->sys_iommu.iommu_flush);
-		cr = sc->sc_sysio->sys_iommu.iommu_cr;
-		tsb = sc->sc_sysio->sys_iommu.iommu_tsb;
-		printf("iommu cr=%lx tsb=%lx\n", (long)cr, (long)tsb);
-		printf("sysio base %p phys %p TSB base %p phys %p", 
-		       (long)sc->sc_sysio, (long)pmap_extract(pmap_kernel(), (vaddr_t)sc->sc_sysio), 
-		       (long)sc->sc_tsb, (long)sc->sc_ptsb);
-		delay(1000000); /* 1 s */
-	}
+		printf("sysio base %p phys %p\n", 
+		       (long)sc->sc_sysio, (long)pmap_extract(pmap_kernel(), (vaddr_t)sc->sc_sysio));
 #endif
 
-	/*
-	 * Initialize streaming buffer.
-	 */
-	sc->sc_flushpa = pmap_extract(pmap_kernel(), (vaddr_t)&sc->sc_flush);
-#if 1
-	bus_space_write_8(sc->sc_bustag, &sc->sc_sysio->sys_strbuf.strbuf_ctl, 
-			  0, STRBUF_EN); /* Enable diagnostics mode? */
-#else
-	stxa(&sc->sc_sysio->sys_strbuf.strbuf_ctl,ASI_NUCLEUS,STRBUF_EN);
-#endif
+	/* XXX should have instance number */
+	iommu_init("SBus dvma", &sc->sc_is, 0);
 
 	/*
 	 * Loop through ROM children, fixing any relative addresses
@@ -577,180 +542,10 @@ sbusreset(sbus)
 			printf(" %s", dev->dv_xname);
 		}
 	}
-#if 1
 	/* Reload iommu regs */
-	bus_space_write_8(sc->ma_bustag, &sc->sc_sysio->sys_iommu.iommu_cr, 
-			  0, (IOMMUCR_TSB1K|IOMMUCR_8KPG|IOMMUCR_EN));
-	bus_space_write_8(sc->sc_bustag, &sc->sc_sysio->sys_iommu.iommu_tsb, 
-			  0, sc->sc_ptsb);
-	bus_space_write_8(sc->sc_bustag, &sc->sc_sysio->sys_strbuf.strbuf_ctl, 
-			  0, STRBUF_EN); /* Enable diagnostics mode? */
-#else
-	/* Reload iommu regs */
-	stxa(&sc->sc_sysio->sys_iommu.iommu_cr,ASI_NUCLEUS,(IOMMUCR_TSB1K|IOMMUCR_8KPG|IOMMUCR_EN));
-	stxa(&sc->sc_sysio->sys_iommu.iommu_tsb,ASI_NUCLEUS,sc->sc_ptsb);
-	stxa(&sc->sc_sysio->sys_strbuf.strbuf_ctl,ASI_NUCLEUS,STRBUF_EN);
-#endif
+	iommu_reset(&sc->sc_is);
 }
 
-/*
- * Here are the iommu control routines. 
- */
-void
-sbus_enter(sc, va, pa, flags)
-	struct sbus_softc *sc;
-	vaddr_t va;
-	int64_t pa;
-	int flags;
-{
-	int64_t tte;
-
-#ifdef DIAGNOSTIC
-	if (va < sc->sc_dvmabase)
-		panic("sbus_enter: va 0x%lx not in DVMA space",va);
-#endif
-
-	tte = MAKEIOTTE(pa, !(flags&BUS_DMA_NOWRITE), !(flags&BUS_DMA_NOCACHE), 
-			!(flags&BUS_DMA_COHERENT));
-	
-	/* Is the streamcache flush really needed? */
-#if 1
-	bus_space_write_8(sc->sc_bustag, &sc->sc_sysio->sys_strbuf.strbuf_pgflush,
-			  0, va);
-#else
-	stxa(&(sc->sc_sysio->sys_strbuf.strbuf_pgflush), ASI_NUCLEUS, va);
-#endif
-	sbus_flush(sc);
-	sc->sc_tsb[IOTSBSLOT(va,sc->sc_tsbsize)] = tte;
-#if 1
-	bus_space_write_8(sc->sc_bustag, &sc->sc_sysio->sys_iommu.iommu_flush, 
-			  0, va);
-#else
-	stxa(&sc->sc_sysio->sys_iommu.iommu_flush,ASI_NUCLEUS,va);
-#endif
-#ifdef DEBUG
-	if (sbusdebug & SDB_DVMA)
-		printf("sbus_enter: va %lx pa %lx TSB[%lx]@%p=%lx\n",
-		       va, (long)pa, IOTSBSLOT(va,sc->sc_tsbsize), 
-		       &sc->sc_tsb[IOTSBSLOT(va,sc->sc_tsbsize)],
-		       (long)tte);
-#endif
-}
-
-/*
- * sbus_clear: clears mappings created by sbus_enter
- *
- * Only demap from IOMMU if flag is set.
- */
-void
-sbus_remove(sc, va, len)
-	struct sbus_softc *sc;
-	vaddr_t va;
-	size_t len;
-{
-
-#ifdef DIAGNOSTIC
-	if (va < sc->sc_dvmabase)
-		panic("sbus_remove: va 0x%lx not in DVMA space", (long)va);
-	if ((long)(va + len) < (long)va)
-		panic("sbus_remove: va 0x%lx + len 0x%lx wraps", 
-		      (long) va, (long) len);
-	if (len & ~0xfffffff) 
-		panic("sbus_remove: rediculous len 0x%lx", (long)len);
-#endif
-
-	va = trunc_page(va);
-	while (len > 0) {
-
-		/*
-		 * Streaming buffer flushes:
-		 * 
-		 *   1 Tell strbuf to flush by storing va to strbuf_pgflush
-		 * If we're not on a cache line boundary (64-bits):
-		 *   2 Store 0 in flag
-		 *   3 Store pointer to flag in flushsync
-		 *   4 wait till flushsync becomes 0x1
-		 *
-		 * If it takes more than .5 sec, something went wrong.
-		 */
-#ifdef DEBUG
-		if (sbusdebug & SDB_DVMA)
-			printf("sbus_remove: flushing va %p TSB[%lx]@%p=%lx, %lu bytes left\n", 	       
-			       (long)va, (long)IOTSBSLOT(va,sc->sc_tsbsize), 
-			       (long)&sc->sc_tsb[IOTSBSLOT(va,sc->sc_tsbsize)],
-			       (long)(sc->sc_tsb[IOTSBSLOT(va,sc->sc_tsbsize)]), 
-			       (u_long)len);
-#endif
-#if 1
-		bus_space_write_8(sc->sc_bustag, &sc->sc_sysio->sys_strbuf.strbuf_pgflush, 0, va);
-#else
-		stxa(&(sc->sc_sysio->sys_strbuf.strbuf_pgflush), ASI_NUCLEUS, va);
-#endif
-		if (len <= NBPG) {
-			sbus_flush(sc);
-			len = 0;
-		} else len -= NBPG;
-#ifdef DEBUG
-		if (sbusdebug & SDB_DVMA)
-			printf("sbus_remove: flushed va %p TSB[%lx]@%p=%lx, %lu bytes left\n", 	       
-			       (long)va, (long)IOTSBSLOT(va,sc->sc_tsbsize), 
-			       (long)&sc->sc_tsb[IOTSBSLOT(va,sc->sc_tsbsize)],
-			       (long)(sc->sc_tsb[IOTSBSLOT(va,sc->sc_tsbsize)]), 
-			       (u_long)len);
-#endif
-		sc->sc_tsb[IOTSBSLOT(va,sc->sc_tsbsize)] = 0;
-#if 1
-		bus_space_write_8(sc->sc_bustag, &sc->sc_sysio->sys_iommu.iommu_flush, 0, va);
-#else
-		stxa(&sc->sc_sysio->sys_iommu.iommu_flush, ASI_NUCLEUS, va);
-#endif
-		va += NBPG;
-	}
-}
-
-int 
-sbus_flush(sc)
-	struct sbus_softc *sc;
-{
-	extern u_int64_t cpu_clockrate;
-	u_int64_t flushtimeout;
-
-	sc->sc_flush = 0;
-	membar_sync();
-#if 1
-	bus_space_write_8(sc->sc_bustag, &sc->sc_sysio->sys_strbuf.strbuf_flushsync, 0, sc->sc_flushpa);
-#else
-	stxa(&sc->sc_sysio->sys_strbuf.strbuf_flushsync, ASI_NUCLEUS, sc->sc_flushpa);
-#endif
-	membar_sync();
-	flushtimeout = tick() + cpu_clockrate/2; /* .5 sec after *now* */
-#ifdef DEBUG
-	if (sbusdebug & SDB_DVMA)
-		printf("sbus_flush: flush = %lx at va = %lx pa = %lx now=%lx until = %lx\n", 
-		       (long)sc->sc_flush, (long)&sc->sc_flush, 
-		       (long)sc->sc_flushpa, (long)tick(), flushtimeout);
-#endif
-	/* Bypass non-coherent D$ */
-#if 0
-	while( !ldxa(sc->sc_flushpa, ASI_PHYS_CACHED) && flushtimeout > tick()) membar_sync();
-#else
-	{ int i; for(i=140000000/2; !ldxa(sc->sc_flushpa, ASI_PHYS_CACHED) && i; i--) membar_sync(); }
-#endif
-#ifdef DIAGNOSTIC
-	if( !sc->sc_flush ) {
-		printf("sbus_flush: flush timeout %p at %p\n", (long)sc->sc_flush, 
-		       (long)sc->sc_flushpa); /* panic? */
-#ifdef DDB
-		Debugger();
-#endif
-	}
-#endif
-#ifdef DEBUG
-	if (sbusdebug & SDB_DVMA)
-		printf("sbus_flush: flushed\n");
-#endif
-	return (sc->sc_flush);
-}
 /*
  * Get interrupt attributes for an Sbus device.
  */
@@ -929,10 +724,7 @@ sbus_intr_establish(t, level, flags, handler, arg)
 	ih->ih_arg = arg;
 	ih->ih_number = vec;
 	ih->ih_pil = (1<<ipl);
-	if ((flags & BUS_INTR_ESTABLISH_FASTTRAP) != 0)
-		intr_fasttrap(ipl, (void (*)__P((void)))handler);
-	else
-		intr_establish(ipl, ih);
+	intr_establish(ipl, ih);
 	return (ih);
 }
 
@@ -950,7 +742,7 @@ sbus_alloc_bustag(sc)
 	bzero(sbt, sizeof *sbt);
 	sbt->cookie = sc;
 	sbt->parent = sc->sc_bustag;
-	sbt->type = ASI_PRIMARY;
+	sbt->type = SBUS_BUS_SPACE;
 	sbt->sparc_bus_map = _sbus_bus_map;
 	sbt->sparc_bus_mmap = sbus_bus_mmap;
 	sbt->sparc_intr_establish = sbus_intr_establish;
@@ -1000,10 +792,11 @@ sbus_dmamap_load(t, map, buf, buflen, p, flags)
 	struct proc *p;
 	int flags;
 {
-	int err;
+	int err, s;
 	bus_size_t sgsize;
 	paddr_t curaddr;
-	vaddr_t  dvmaddr, vaddr = (vaddr_t)buf;
+	u_long dvmaddr;
+	vaddr_t vaddr = (vaddr_t)buf;
 	pmap_t pmap;
 	struct sbus_softc *sc = (struct sbus_softc *)t->_cookie;
 
@@ -1014,8 +807,53 @@ sbus_dmamap_load(t, map, buf, buflen, p, flags)
 #endif
 		bus_dmamap_unload(t, map);
 	}
-	if ((err = bus_dmamap_load(t->_parent, map, buf, buflen, p, flags)))
+
+	/*
+	 * Make sure that on error condition we return "no valid mappings".
+	 */
+	map->dm_nsegs = 0;
+
+	if (buflen > map->_dm_size)
+#ifdef DEBUG
+	{ 
+		printf("sbus_dmamap_load(): error %d > %d -- map size exceeded!\n", buflen, map->_dm_size);
+		Debugger();
+		return (EINVAL);
+	}		
+#else	
+		return (EINVAL);
+#endif
+	sgsize = round_page(buflen + ((int)vaddr & PGOFSET));
+
+	/*
+	 * XXX Need to implement "don't dma across this boundry".
+	 */
+	
+	s = splhigh();
+	err = extent_alloc(sc->sc_is.is_dvmamap, sgsize, NBPG,
+			     map->_dm_boundary, EX_NOWAIT, (u_long *)&dvmaddr);
+	splx(s);
+
+	if (err != 0)
 		return (err);
+
+#ifdef DEBUG
+	if (dvmaddr == (bus_addr_t)-1)	
+	{ 
+		printf("sbus_dmamap_load(): dvmamap_alloc(%d, %x) failed!\n", sgsize, flags);
+		Debugger();
+	}		
+#endif	
+	if (dvmaddr == (bus_addr_t)-1)
+		return (ENOMEM);
+
+	/*
+	 * We always use just one segment.
+	 */
+	map->dm_mapsize = buflen;
+	map->dm_nsegs = 1;
+	map->dm_segs[0].ds_addr = dvmaddr + (vaddr & PGOFSET);
+	map->dm_segs[0].ds_len = sgsize;
 
 	if (p != NULL)
 		pmap = p->p_vmspace->vm_map.pmap;
@@ -1045,7 +883,7 @@ sbus_dmamap_load(t, map, buf, buflen, p, flags)
 			printf("sbus_dmamap_load: map %p loading va %lx at pa %lx\n",
 			       map, (long)dvmaddr, (long)(curaddr & ~(NBPG-1)));
 #endif
-		sbus_enter(sc, trunc_page(dvmaddr), trunc_page(curaddr), flags);
+		iommu_enter(&sc->sc_is, trunc_page(dvmaddr), trunc_page(curaddr), flags);
 			
 		dvmaddr += PAGE_SIZE;
 		vaddr += sgsize;
@@ -1060,11 +898,13 @@ sbus_dmamap_unload(t, map)
 	bus_dmamap_t map;
 {
 	vaddr_t addr;
-	int len;
+	int len, error, s;
+	bus_addr_t dvmaddr;
+	bus_size_t sgsize;
 	struct sbus_softc *sc = (struct sbus_softc *)t->_cookie;
 
 	if (map->dm_nsegs != 1)
-		panic("_sbus_dmamap_unload: nsegs = %d", map->dm_nsegs);
+		panic("sbus_dmamap_unload: nsegs = %d", map->dm_nsegs);
 
 	addr = trunc_page(map->dm_segs[0].ds_addr);
 	len = map->dm_segs[0].ds_len;
@@ -1074,8 +914,22 @@ sbus_dmamap_unload(t, map)
 		printf("sbus_dmamap_unload: map %p removing va %lx size %lx\n",
 		       map, (long)addr, (long)len);
 #endif
-	sbus_remove(sc, addr, len);
-	bus_dmamap_unload(t->_parent, map);
+	iommu_remove(&sc->sc_is, addr, len);
+	dvmaddr = (map->dm_segs[0].ds_addr & ~PGOFSET);
+	sgsize = map->dm_segs[0].ds_len;
+
+	/* Mark the mappings as invalid. */
+	map->dm_mapsize = 0;
+	map->dm_nsegs = 0;
+	
+	/* Unmapping is bus dependent */
+	s = splhigh();
+	error = extent_free(sc->sc_is.is_dvmamap, dvmaddr, sgsize, EX_NOWAIT);
+	splx(s);
+	if (error != 0)
+		printf("warning: %ld of DVMA space lost\n", (long)sgsize);
+
+	cache_flush((caddr_t)dvmaddr, (u_int) sgsize);	
 }
 
 
@@ -1131,13 +985,9 @@ sbus_dmamap_sync(t, map, offset, len, ops)
 				printf("sbus_dmamap_sync: flushing va %p, %lu bytes left\n", 	       
 				       (long)va, (u_long)len);
 #endif
-#if 1
-			bus_space_write_8(sc->sc_bustag, &sc->sc_sysio->sys_strbuf.strbuf_pgflush, 0, va);
-#else
-			stxa(&(sc->sc_sysio->sys_strbuf.strbuf_pgflush), ASI_NUCLEUS, va);
-#endif
+			bus_space_write_8(sc->sc_bustag, &sc->sc_is.is_sb->strbuf_pgflush, 0, va);
 			if (len <= NBPG) {
-				sbus_flush(sc);
+				iommu_flush(&sc->sc_is);
 				len = 0;
 			} else
 				len -= NBPG;
@@ -1177,11 +1027,11 @@ sbus_dmamem_alloc(t, size, alignment, boundary, segs, nsegs, rsegs, flags)
 	int flags;
 {
 	paddr_t curaddr;
-	bus_addr_t dvmaddr;
+	u_long dvmaddr;
 	vm_page_t m;
 	struct pglist *mlist;
 	int error;
-	int n;
+	int n, s;
 	struct sbus_softc *sc = (struct sbus_softc *)t->_cookie;
 
 	if ((error = bus_dmamem_alloc(t->_parent, size, alignment, 
@@ -1191,13 +1041,25 @@ sbus_dmamem_alloc(t, size, alignment, boundary, segs, nsegs, rsegs, flags)
 	/*
 	 * Allocate a DVMA mapping for our new memory.
 	 */
-	for (n=0; n<*rsegs; n++) {
+	for (n = 0; n < *rsegs; n++) {
+#if 1
+		s = splhigh();
+		if (extent_alloc(sc->sc_is.is_dvmamap, segs[0].ds_len, alignment,
+				 boundary, EX_NOWAIT, (u_long *)&dvmaddr)) {
+			splx(s);
+				/* Free what we got and exit */
+			bus_dmamem_free(t->_parent, segs, nsegs);
+			return (ENOMEM);
+		}
+		splx(s);
+#else
 		dvmaddr = dvmamap_alloc(segs[0].ds_len, flags);
 		if (dvmaddr == (bus_addr_t)-1) {
 			/* Free what we got and exit */
 			bus_dmamem_free(t->_parent, segs, nsegs);
 			return (ENOMEM);
 		}
+#endif
 		segs[n].ds_addr = dvmaddr;
 		size = segs[n].ds_len;
 		mlist = segs[n]._ds_mlist;
@@ -1205,7 +1067,12 @@ sbus_dmamem_alloc(t, size, alignment, boundary, segs, nsegs, rsegs, flags)
 		/* Map memory into DVMA space */
 		for (m = mlist->tqh_first; m != NULL; m = m->pageq.tqe_next) {
 			curaddr = VM_PAGE_TO_PHYS(m);
-			sbus_enter(sc, dvmaddr, curaddr, flags);
+#ifdef DEBUG
+			if (sbusdebug & SDB_DVMA)
+				printf("sbus_dmamem_alloc: map %p loading va %lx at pa %lx\n",
+				       (long)m, (long)dvmaddr, (long)(curaddr & ~(NBPG-1)));
+#endif
+			iommu_enter(&sc->sc_is, dvmaddr, curaddr, flags);
 			dvmaddr += PAGE_SIZE;
 		}
 	}
@@ -1220,15 +1087,23 @@ sbus_dmamem_free(t, segs, nsegs)
 {
 	vaddr_t addr;
 	int len;
-	int n;
+	int n, s, error;
 	struct sbus_softc *sc = (struct sbus_softc *)t->_cookie;
 
 
 	for (n=0; n<nsegs; n++) {
 		addr = segs[n].ds_addr;
 		len = segs[n].ds_len;
-		sbus_remove(sc, addr, len);
+		iommu_remove(&sc->sc_is, addr, len);
+#if 1
+		s = splhigh();
+		error = extent_free(sc->sc_is.is_dvmamap, addr, len, EX_NOWAIT);
+		splx(s);
+		if (error != 0)
+			printf("warning: %ld of DVMA space lost\n", (long)len);
+#else
 		dvmamap_free(addr, len);
+#endif
 	}
 	bus_dmamem_free(t->_parent, segs, nsegs);
 }
@@ -1250,7 +1125,6 @@ sbus_dmamem_map(t, segs, nsegs, size, kvap, flags)
 	vaddr_t va;
 	bus_addr_t addr;
 	struct pglist *mlist;
-	struct sbus_softc *sc = (struct sbus_softc *)t->_cookie;
 	int cbit;
 
 	/* 
@@ -1274,7 +1148,8 @@ sbus_dmamem_map(t, segs, nsegs, size, kvap, flags)
 
 		addr = VM_PAGE_TO_PHYS(m);
 		pmap_enter(pmap_kernel(), va, addr | cbit,
-		    VM_PROT_READ | VM_PROT_WRITE, TRUE, 0);
+		    VM_PROT_READ | VM_PROT_WRITE, TRUE,
+		    VM_PROT_READ | VM_PROT_WRITE);
 		va += PAGE_SIZE;
 		size -= PAGE_SIZE;
 	}
@@ -1291,7 +1166,6 @@ sbus_dmamem_unmap(t, kva, size)
 	caddr_t kva;
 	size_t size;
 {
-	struct sbus_softc *sc = (struct sbus_softc *)t->_cookie;
 	
 #ifdef DIAGNOSTIC
 	if ((u_long)kva & PGOFSET)

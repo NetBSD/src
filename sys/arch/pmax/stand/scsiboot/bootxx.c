@@ -1,4 +1,4 @@
-/*	$NetBSD: bootxx.c,v 1.17 1999/03/31 07:43:39 simonb Exp $	*/
+/*	$NetBSD: bootxx.c,v 1.17.4.1 1999/06/21 00:59:14 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -81,24 +81,31 @@
 
 #include "byteswap.h"
 
-int loadfile __P((char *name));
+
+typedef void (*entrypt) __P((int, char **, int, const void *));
+
+int main __P((int, char **));
+entrypt loadfile __P((char *name));
+
 extern int clear_cache __P((char *addr, int len));
+extern int bcmp __P((const void *, const void *, size_t));	/* XXX */
 
 /*
  * This gets arguments from the PROM, calls other routines to open
- * and load the program to boot, and then transfers execution to that
- * new program.
- * Argv[0] should be something like "rz(0,0,0)vmunix" on a DECstation 3100.
- * Argv[0,1] should be something like "boot 5/rz0/vmunix" on a DECstation 5000.
- * The argument "-a" means vmunix should do an automatic reboot.
+ * and load the secondary boot loader called boot, and then transfers
+ * execution to that program.
+ *
+ * Argv[0] should be something like "rz(0,0,0)netbsd" on a DECstation 3100.
+ * Argv[0,1] should be something like "boot 5/rz0/netbsd" on a DECstation 5000.
+ * The argument "-a" means netbsd should do an automatic reboot.
  */
 int
 main(argc, argv)
 	int argc;
 	char **argv;
 {
-	register char *cp;
-	int entry;
+	char *cp;
+	entrypt entry;
 
 	/* check for DS5000 boot */
 	if (strcmp(argv[0], "boot") == 0) {
@@ -111,40 +118,48 @@ main(argc, argv)
 	printf(">> NetBSD/pmax Primary Boot\n");
 #endif
 	entry = loadfile(cp);
-	if (entry == -1)
+	if ((int)entry == -1)
 		return (1);
 
 	clear_cache((char *)RELOC, 1024 * 1024);
 	if (callv == &callvec)
-		((void (*)())entry)(argc, argv, 0, 0);
+		entry(argc, argv, 0, 0);
 	else
-		((void (*)())entry)(argc, argv, DEC_PROM_MAGIC, callv);
+		entry(argc, argv, DEC_PROM_MAGIC, callv);
 	return (1);
 }
 
 /*
  * Open 'filename', read in program and return the entry point or -1 if error.
  */
-int
+entrypt
 loadfile(fname)
-	register char *fname;
+	char *fname;
 {
-	register int fd, i, n;
-	char *buf;
+	int fd, i;
+	char c, *buf, bootfname[64];
 	Elf32_Ehdr ehdr;
 	Elf32_Phdr phdr;
-	char bootfname[64];
 
 	strcpy(bootfname, fname);
 	buf = bootfname;
-	while ((n = *buf++) != '\0') {
-		if (n == ')')
+	while ((c = *buf++) != '\0') {
+		if (c == ')')
 			break;
-		if (n != '/')
+		if (c != '/')
 			continue;
-		while ((n = *buf++) != '\0')
-			if (n == '/')
+		while ((c = *buf++) != '\0')
+			if (c == '/')
 				break;
+		/*
+		 * Make "N/rzY" with no trailing '/' valid by adding
+		 * the extra '/' before appending 'boot' to the path.
+		 */
+		if (c != '/') {
+			buf--;
+			*buf++ = '/';
+			*buf = '\0';
+		}
 		break;
 	}
 	strcpy(buf, "boot");
@@ -173,7 +188,7 @@ loadfile(fname)
 		if (read(fd, (char *)phdr.p_paddr, phdr.p_filesz) != phdr.p_filesz)
 			goto cerr;
 	}
-	return (ehdr.e_entry);
+	return ((entrypt)ehdr.e_entry);
 
 cerr:
 #ifndef LIBSA_NO_FS_CLOSE
@@ -181,5 +196,5 @@ cerr:
 #endif
 err:
 	printf("Can't load '%s'\n", bootfname);
-	return (-1);
+	return ((entrypt)-1);
 }

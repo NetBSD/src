@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.143.2.1 1999/04/16 16:23:50 chs Exp $ */
+/*	$NetBSD: machdep.c,v 1.143.2.1.2.1 1999/06/21 01:01:48 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -81,10 +81,8 @@
  *	@(#)machdep.c	8.6 (Berkeley) 1/14/94
  */
 
-#include "opt_bufcache.h"
 #include "opt_compat_netbsd.h"
 #include "opt_compat_sunos.h"
-#include "opt_sysv.h"
 
 #include <sys/param.h>
 #include <sys/signal.h>
@@ -107,15 +105,6 @@
 #include <sys/msgbuf.h>
 #include <sys/syscallargs.h>
 #include <sys/exec.h>
-#ifdef SYSVMSG
-#include <sys/msg.h>
-#endif
-#ifdef SYSVSEM
-#include <sys/sem.h>
-#endif
-#ifdef SYSVSHM
-#include <sys/shm.h>
-#endif
 
 #include <vm/vm.h>
 #include <vm/vm_kern.h>
@@ -150,24 +139,7 @@ vm_map_t exec_map = NULL;
 vm_map_t mb_map = NULL;
 extern paddr_t avail_end;
 
-/*
- * Declare these as initialized data so we can patch them.
- */
-int	nswbuf = 0;
-#ifdef	NBUF
-int	nbuf = NBUF;
-#else
-int	nbuf = 0;
-#endif
-#ifdef	BUFPAGES
-int	bufpages = BUFPAGES;
-#else
-int	bufpages = 0;
-#endif
-
 int	physmem;
-
-extern	caddr_t msgbufaddr;
 
 /*
  * safepri is a safe priority for sleep to set for a spin-wait
@@ -181,9 +153,10 @@ int   safepri = 0;
  */
 struct extent *dvmamap24;
 
-caddr_t allocsys __P((caddr_t));
 void	dumpsys __P((void));
 void	stackdump __P((void));
+
+caddr_t	mdallocsys __P((caddr_t));
 
 /*
  * Machine-dependent startup code
@@ -193,7 +166,6 @@ cpu_startup()
 {
 	unsigned i;
 	caddr_t v;
-	int sz;
 	int base, residual;
 #ifdef DEBUG
 	extern int pmapdebug;
@@ -201,6 +173,7 @@ cpu_startup()
 #endif
 	vaddr_t minaddr, maxaddr;
 	vsize_t size;
+	char pbuf[9];
 
 #ifdef DEBUG
 	pmapdebug = 0;
@@ -225,18 +198,19 @@ cpu_startup()
 	 */
 	printf(version);
 	/*identifycpu();*/
-	printf("real mem = %d\n", ctob(physmem));
+	format_bytes(pbuf, sizeof(pbuf), ctob(physmem));
+	printf("total memory = %s\n", pbuf);
 
 	/*
 	 * Find out how much space we need, allocate it,
 	 * and then give everything true virtual addresses.
 	 */
-	sz = (int)allocsys((caddr_t)0);
+	size = (vsize_t)allocsys(NULL, mdallocsys);
 
-	if ((v = (caddr_t)uvm_km_alloc(kernel_map, round_page(sz))) == 0)
+	if ((v = (caddr_t)uvm_km_alloc(kernel_map, round_page(size))) == 0)
 		panic("startup: no room for tables");
 
-	if (allocsys(v) - v != sz)
+	if ((vsize_t)(allocsys(v, mdallocsys) - v) != size)
 		panic("startup: table size inconsistency");
 
         /*
@@ -291,7 +265,7 @@ cpu_startup()
 	 * limits the number of processes exec'ing at any time.
 	 */
         exec_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
-                                 16*NCARGS, TRUE, FALSE, NULL);
+                                 16*NCARGS, VM_MAP_PAGEABLE, FALSE, NULL);
 
 	if (CPU_ISSUN4OR4C) {
 		/*
@@ -309,7 +283,7 @@ cpu_startup()
 	 * Finally, allocate mbuf cluster submap.
 	 */
         mb_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
-            VM_MBUF_SIZE, FALSE, FALSE, NULL);
+	    nmbclusters * mclbytes, VM_MAP_INTRSAFE, FALSE, NULL);
 
 	/*
 	 * Initialize callouts
@@ -322,9 +296,10 @@ cpu_startup()
 #ifdef DEBUG
 	pmapdebug = opmapdebug;
 #endif
-	printf("avail mem = %ld\n", ptoa(uvmexp.free));
-	printf("using %d buffers containing %d bytes of memory\n",
-		nbuf, bufpages * CLBYTES);
+	format_bytes(pbuf, sizeof(pbuf), ptoa(uvmexp.free));
+	printf("avail memory = %s\n", pbuf);
+	format_bytes(pbuf, sizeof(pbuf), bufpages * CLBYTES);
+	printf("using %d buffers containing %s of memory\n", nbuf, pbuf);
 
 	/*
 	 * Set up buffers, so they can be used to read disk labels.
@@ -334,70 +309,15 @@ cpu_startup()
 	pmap_redzone();
 }
 
-/*
- * Allocate space for system data structures.  We are given
- * a starting virtual address and we return a final virtual
- * address; along the way we set each data structure pointer.
- *
- * You call allocsys() with 0 to find out how much space we want,
- * allocate that much and fill it with zeroes, and then call
- * allocsys() again with the correct base virtual address.
- */
 caddr_t
-allocsys(v)
+mdallocsys(v)
 	caddr_t v;
 {
 
-#define	valloc(name, type, num) \
-	    v = (caddr_t)(((name) = (type *)v) + (num))
-	valloc(callout, struct callout, ncallout);
-#ifdef SYSVSHM
-	valloc(shmsegs, struct shmid_ds, shminfo.shmmni);
-#endif
-#ifdef SYSVSEM
-	valloc(sema, struct semid_ds, seminfo.semmni);
-	valloc(sem, struct sem, seminfo.semmns);
-	/* This is pretty disgusting! */
-	valloc(semu, int, (seminfo.semmnu * seminfo.semusz) / sizeof(int));
-#endif
-#ifdef SYSVMSG
-	valloc(msgpool, char, msginfo.msgmax);
-	valloc(msgmaps, struct msgmap, msginfo.msgseg);
-	valloc(msghdrs, struct msg, msginfo.msgtql);
-	valloc(msqids, struct msqid_ds, msginfo.msgmni);
-#endif
+	/* Clip bufpages if necessary. */
+	if (CPU_ISSUN4C && bufpages > (128 * (65536/MAXBSIZE)))
+		bufpages = (128 * (65536/MAXBSIZE));
 
-	/*
-	 * Determine how many buffers to allocate (enough to
-	 * hold 5% of total physical memory, but at least 16 and at
-	 * most 1/2 of available kernel virtual memory).
-	 * Allocate 1/2 as many swap buffer headers as file i/o buffers.
-	 */
-	if (bufpages == 0) {
-		int bmax = btoc(VM_MAX_KERNEL_ADDRESS-VM_MIN_KERNEL_ADDRESS) /
-			   (MAXBSIZE/NBPG) / 2;
-		bufpages = (physmem / 20) / CLSIZE;
-		if (nbuf == 0 && bufpages > bmax)
-			bufpages = bmax;
-		/*
-		 * XXX stopgap measure to prevent wasting too much KVM on
-		 * the sparsely filled buffer cache.
-		 */
-		if (CPU_ISSUN4C && bufpages > (128 * (65536/MAXBSIZE)))
-			bufpages = (128 * (65536/MAXBSIZE));
-	}
-	if (nbuf == 0) {
-		nbuf = bufpages;
-		if (nbuf < 16)
-			nbuf = 16;
-	}
-
-	if (nswbuf == 0) {
-		nswbuf = (nbuf / 2) &~ 1;	/* force even */
-		if (nswbuf > 256)
-			nswbuf = 256;		/* sanity */
-	}
-	valloc(buf, struct buf, nbuf);
 	return (v);
 }
 
@@ -1646,7 +1566,8 @@ sun4_dmamem_map(t, segs, nsegs, size, kvap, flags)
 
 		pa = VM_PAGE_TO_PHYS(m);
 		pmap_enter(pmap_kernel(), va, pa | PMAP_NC,
-			   VM_PROT_READ | VM_PROT_WRITE, TRUE, 0);
+			   VM_PROT_READ | VM_PROT_WRITE, TRUE,
+			   VM_PROT_READ | VM_PROT_WRITE);
 
 		va += PAGE_SIZE;
 		size -= PAGE_SIZE;

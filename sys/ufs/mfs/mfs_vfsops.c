@@ -1,4 +1,4 @@
-/*	$NetBSD: mfs_vfsops.c,v 1.19 1999/02/26 23:44:50 wrstuden Exp $	*/
+/*	$NetBSD: mfs_vfsops.c,v 1.19.4.1 1999/06/21 01:31:30 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1989, 1990, 1993, 1994
@@ -227,10 +227,8 @@ mfs_mount(mp, path, data, ndp, p)
 		}
 		if (fs->fs_ronly && (mp->mnt_flag & MNT_WANTRDWR))
 			fs->fs_ronly = 0;
-#ifdef EXPORTMFS
 		if (args.fspec == 0)
 			return (vfs_export(mp, &ump->um_export, &args.export));
-#endif
 		return (0);
 	}
 	error = getnewvnode(VT_MFS, (struct mount *)0, mfs_vnodeop_p, &devvp);

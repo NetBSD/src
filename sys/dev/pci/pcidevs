@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.113.2.1 1999/04/13 22:52:42 jonathan Exp $
+$NetBSD: pcidevs,v 1.113.2.1.2.1 1999/06/21 01:18:37 thorpej Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -466,7 +466,7 @@ vendor PYRAMID		0x11bb	Pyramid Technologies
 vendor NETPERIPH	0x11bc	Network Peripherals
 vendor PINNACLE		0x11bd	Pinnacle Systems
 vendor IMI		0x11be	International Microcircuts
-vendor FUJITSU4		0x11c1	Fujitsu Limited (4th PCI Vendor ID)
+vendor LUCENT		0x11c1	AT&T Microelectronics
 vendor NEC2		0x11c3	NEC (2nd PCI Vendor ID)
 vendor DOCTECH		0x11c4	Document Technologies
 vendor SHIVA		0x11c5	Shiva
@@ -493,6 +493,7 @@ vendor LINEARSYS	0x1254	Linear Systems
 vendor ASIX		0x125b	ASIX Electronics
 vendor AURORA		0x125c	Aurora Technologies
 vendor ESSTECH		0x125d	ESS Technology Inc
+vendor SILMOTION	0x126f	Silicon Motion
 vendor ENSONIQ		0x1274	Ensoniq
 vendor NETAPP		0x1275	Network Appliance
 vendor ROCKWELL		0x127a	Rockwell Semiconductor Systems
@@ -500,7 +501,7 @@ vendor TRITECH		0x1292	TriTech Microelectronics
 vendor KOFAX		0x1296	Kofax Image Products
 vendor RISCOM		0x12aa	RISCom
 vendor PICTUREEL	0x12c5	Picture Elements
-vendor STB2		0x12d2	STB Systems (2nd PCI Vendor ID)
+vendor NVIDIA_SGS	0x12d2	Nvidia Corporation & SGS Thomson Microelectric
 vendor LMC		0x1376	LAN Media Corporation
 vendor SYMPHONY2	0x1c1c	Symphony Labs (2nd PCI Vendor ID)
 vendor TEKRAM2		0x1de1	Tekram Technology (2nd PCI Vendor ID)
@@ -538,6 +539,7 @@ product	3COM 3C905TX	0x9050	3c905-TX 10/100 Ethernet
 product	3COM 3C905T4	0x9051	3c905-T4 10/100 Ethernet
 product 3COM 3C900BTPO	0x9004	3c900B-TPO Ethernet
 product 3COM 3C900BCOMBO 0x9005	3c900B-COMBO Ethernet
+product 3COM 3C900BTPC	0x9006	3c900B-TPC Ethernet
 product 3COM 3C905BTX	0x9055	3c905B-TX 10/100 Ethernet
 product 3COM 3C905BT4	0x9056	3c905B-T4 10/100 Ethernet
 product 3COM 3C905BFX	0x905a	3c905B-FX 10/100 Ethernet
@@ -546,12 +548,16 @@ product 3COM 3C980SRV	0x9800	3c980 Server Adapter 10/100 Ethernet
 /* 3Dfx Interactive producs */
 product 3DFX VOODOO	0x0001	Voodoo
 product 3DFX VOODOO2	0x0002	Voodoo2
+product 3DFX BANSHEE	0x0003	Banshee
+product 3DFX VOODOO3	0x0005	Voodoo3
 
 /* 3D Labs products */
 product 3DLABS 300SX	0x0001	GLINT 300SX
 product 3DLABS 500TX	0x0002	GLINT 500TX
 product 3DLABS DELTA	0x0003	GLINT DELTA
+product 3DLABS PERMEDIA	0x0004	GLINT Permedia
 product 3DLABS 500MX	0x0006	GLINT 500MX
+product 3DLABS PERMEDI2	0x0007	GLINT Permedia 2
 
 /* ACC Products */
 product ACC 2188	0x0000	ACCM 2188 VL-PCI Bridge
@@ -577,6 +583,7 @@ product ALI M1461	0x1461	M1461 Host-PCI Bridge
 product ALI M1531	0x1531	M1531 Host-PCI Bridge
 product ALI M1541	0x1541	M1541 Host-PCI Bridge
 product ALI M1543	0x1533	M1543 PCI-ISA Bridge
+product ALI M3309	0x3309	M3309 MPEG Decoder
 product ALI M4803	0x5215	M4803
 product ALI M5229	0x5229	M5229 UDMA IDE Controller
 product ALI M5237	0x5237	M5237 USB Host Controller
@@ -594,9 +601,11 @@ product ADP 2940	0x7178	AHA-2940
 product ADP 3940	0x7278	AHA-3940
 product ADP 3985	0x7378	AHA-3985
 product ADP 2944	0x7478	AHA-2944
+product ADP AIC7895	0x7895	AIC-7895 Ultra
 product ADP AIC7880	0x8078	AIC-7880 Ultra
 product ADP 2940U	0x8178	AHA-2940 Ultra
 product ADP 3940U	0x8278	AHA-3940 Ultra
+product ADP 389XU	0x8378	AHA-389X Ultra
 product ADP 2944U	0x8478	AHA-2944 Ultra
 
 product ADP2 2940U2	0x0010	AHA-2940 Ultra2
@@ -619,7 +628,14 @@ product AMD PCSCSI_PCI	0x2020	53c974 PCscsi-PCI SCSI
 product AMD PCNETS_PCI	0x2040	79C974 PCnet-PCI Ethernet & SCSI
 
 /* Apple products */
-product APPLE BANDIT	0x0001 PCI Controller
+product APPLE BANDIT		0x0001	Bandit Host-PCI Bridge
+product APPLE GC		0x0002	Grand Central I/O Controller
+product APPLE CONTROL		0x0003	Control
+product APPLE PLANB		0x0004	PlanB
+product APPLE OHARE		0x0007	OHare I/O Controller
+product APPLE BANDIT2		0x0008	Bandit Host-PCI Bridge
+product APPLE HEATHROW		0x0010	MAC-IO I/O Controller (Heathrow)
+product APPLE PADDINGTON	0x0017	MAC-IO I/O Controller (Paddington)
 
 /* ARC Logic products */
 product ARC 1000PV	0xa091	1000PV
@@ -635,8 +651,23 @@ product ATI MACH64_CT	0x4354	Mach64 CT
 product ATI MACH64_CX	0x4358	Mach64 CX
 product ATI MACH64_ET	0x4554	Mach64 ET
 product ATI MACH64_VT	0x4654	Mach64 VT
+product ATI MACH64_B	0x4750	Mach64 B
+product ATI MACH64_GB	0x4742	Mach64 GB
+product ATI MACH64_GD	0x4744	Mach64 GD
+product ATI MACH64_GI	0x4749	Mach64 GI
+product ATI MACH64_GP	0x4750	Mach64 GP
+product ATI MACH64_GQ	0x4751	Mach64 GQ
 product ATI MACH64_GT	0x4754	Mach64 GT
+product ATI MACH64_GU	0x4755	Mach64 GU
+product ATI MACH64_GV	0x4756	Mach64 GV
+product ATI MACH64_GW	0x4757	Mach64 GW
 product ATI MACH64_GX	0x4758	Mach64 GX
+product ATI MACH64_GZ	0x475a	Mach64 GZ
+product ATI MACH64_LB	0x4c42	Mach64 LB
+product ATI MACH64_LD	0x4c44	Mach64 LD
+product ATI MACH64_LG	0x4c47	Mach64 LG
+product ATI MACH64_LI	0x4c49	Mach64 LI
+product ATI MACH64_LP	0x4c50	Mach64 LP
 
 /* Applied Micro Circuts products */
 product AMCIRCUITS S5933	0x4750	S5933 PCI Matchmaker
@@ -656,6 +687,7 @@ product AVM FRITZ_CARD		0x0a00	Fritz! Card ISDN Interface
 
 /* Bit3 products */
 product BIT3 PCIVME617		0x0001	PCI-VME Interface Mod. 617
+product BIT3 PCIVME618		0x0010	PCI-VME Interface Mod. 618
 product BIT3 PCIVME2706		0x0300	PCI-VME Interface Mod. 2706
 
 /* Brooktree products */
@@ -686,7 +718,10 @@ product CIRRUS CL_GD5434_4	0x00a4	CL-GD5434-4
 product CIRRUS CL_GD5434_8	0x00a8	CL-GD5434-8
 product CIRRUS CL_GD5436	0x00ac	CL-GD5436
 product CIRRUS CL_GD5446	0x00b8	CL-GD5446
+product CIRRUS CL_GD5480	0x00bc	CL-GD5480
 product CIRRUS CL_PD6729	0x1100	CL-PD6729
+product	CIRRUS CL_PD6832	0x1110	CL-PD6832 PCI-CardBus Bridge
+product	CIRRUS CL_PD6833	0x1113	CL-PD6833 PCI-CardBus Bridge
 product CIRRUS CL_GD7542	0x1200	CL-GD7542
 product CIRRUS CL_GD7543	0x1202	CL-GD7543
 product CIRRUS CL_GD7541	0x1204	CL-GD7541
@@ -789,7 +824,8 @@ product ESSENTIAL RR_HIPPI	0x0001	RoadRunner HIPPI Interface
 product ESSENTIAL RR_GIGE	0x0005	RoadRunner Gig-E Interface
 
 /* ESS Technology Inc products */
-product ESSTECH	SOLO1	0x1969	SOLO-1 AudioDrive
+product ESSTECH	SOLO1		0x1969	SOLO-1 AudioDrive
+product ESSTECH	MAESTRO2E	0x1978	Maestro 2E
 
 /* 2 Micro Inc */
 product 2MICRO  OZ6832	0x6832	OZ6832 CardBus Controller
@@ -802,7 +838,8 @@ product FORE PCA200	0x0210	ATM PCA-200
 product FORE PCA200E	0x0300	ATM PCA-200e
 
 /* Fujtsu products */
-product FUJITSU4	LTMODEM	0x0440	K56flex DSVD LTMODEM
+product LUCENT LTMODEM		0x0440	K56flex DSVD LTMODEM
+product LUCENT USBHC		0x5801	USB Host Controller
 
 /* Future Domain products */
 product FUTUREDOMAIN TMC_18C30	0x0000	TMC-18C30 (36C70)
@@ -906,10 +943,15 @@ product MATROX MILLENNIUM	0x0519	MGA Millennium 2064W (\"Storm\")
 product MATROX MYSTIQUE		0x051a	MGA Mystique 1064SG
 product MATROX MILLENNIUM2	0x051b	MGA Millennium II 2164W
 product MATROX MILLENNIUM2_AGP	0x051f	MGA Millennium II 2164WA-B AG
-product MATROX G200		0x0521	MGA G200
+product MATROX G200_PCI		0x0520	MGA G200 PCI
+product MATROX G200_AGP		0x0521	MGA G200 AGP
+product MATROX G400_AGP		0x0525	MGA G400 AGP
 product MATROX IMPRESSION	0x0d10	MGA Impression
-product MATROX G100		0x1000	MGA G100
+product MATROX G100_PCI		0x1000	MGA G100 PCI
 product MATROX G100_AGP		0x1001	MGA G100 AGP
+
+/* Motorola products */
+product MOT MPC106	0x0002	MPC106 Host-PCI Bridge (grackle)
 
 /* Mylex products */
 product MYLEX 960P	0x0001	DAC960P RAID controller
@@ -932,6 +974,12 @@ product OLICOM OC2183	0x0013	Olicom OC-2183/2185 Ethernet
 product OLICOM OC2325	0x0012	Olicom OC-2325 Ethernet
 product OLICOM OC2326	0x0014	Olicom OC-2326 10/100-TX Ethernet
 
+/* Sun Microsystems products */
+product SUN EBUS	0x1000	SPARC Ebus
+product SUN HMENETWORK	0x1001	SUNW,hme compatible Ethernet
+product SUN SIMBA	0x5000	Simba PCI bridge
+product SUN US_IIi	0xa000	UltraSPARC IIi PCI
+
 /* NCR/Symbios Logic products */
 product SYMBIOS 810	0x0001	53c810
 product SYMBIOS 820	0x0002	53c820
@@ -950,6 +998,9 @@ product NEC POWERVR2	0x0046	PowerVR PCX2
 
 /* Neomagic products */
 product NEOMAGIC NMMG128ZV	0x0003	MagicGraph 128ZV
+product NEOMAGIC NMMG2160	0x0004	MagicGraph 128XD
+product NEOMAGIC NMMM256AV_VGA	0x0005	MagicMedia 256AV VGA
+product NEOMAGIC NMMM256AV_AU	0x8005	MagicMedia 256AV Audio
 
 /* NexGen products */
 product NEXGEN NX82C501	0x4e78	NX82C501 Host-PCI Bridge
@@ -960,6 +1011,12 @@ product NKK NDR4600	0xA001	NDR4600 Host-PCI Bridge
 /* Number Nine products */
 product NUMBER9 I128	0x2309	Imagine-128
 product NUMBER9 I128_2	0x2339	Imagine-128 II
+
+/* Nvidia Corporationn products */
+product NVIDIA	RIVATNT	0x0020	Riva TNT
+
+/* Nvidia Corporation & SGS Thomson Microelectric */
+product NVIDIA_SGS	RIVA128	0x0018	Riva 128
 
 /* Oak Technologies products */
 product OAKTECH OTI1007	0x0107	OTI107
@@ -1016,8 +1073,8 @@ product S3 TRIO32	0x8810	Trio32
 product S3 TRIO64	0x8811	Trio32/64
 product S3 AURORA64P	0x8812	Aurora64V+
 product S3 TRIO64UVP	0x8814	Trio64UV+
-product S3 868		0x8880	868
 product S3 VIRGE_VX	0x883d	ViRGE/VX
+product S3 868		0x8880	868
 product S3 928		0x88b0	86C928
 product S3 864_0	0x88c0	86C864-0 (\"Vision864\")
 product S3 864_1	0x88c1	86C864-1 (\"Vision864\")
@@ -1032,8 +1089,12 @@ product S3 968_1	0x88f1	86C968-1 (\"Vision968\")
 product S3 968_2	0x88f2	86C968-2 (\"Vision968\")
 product S3 968_3	0x88f3	86C968-3 (\"Vision968\")
 product S3 TRIO64V2_DX	0x8901	Trio64V2/DX
+product S3 PLATO_PX	0x8901	Plato/PX
 product S3 TRIO3D	0x8904	86C365 Trio3D
 product S3 VIRGE_DX	0x8a01	ViRGE/DX
+product S3 VIRGE_GX2	0x8a10	ViRGE/GX2
+product S3 VIRGE_MX	0x8c01	ViRGE/MX
+product S3 VIRGE_MXP	0x8c03	ViRGE/MXP
 product	S3 SONICVIBES	0xca00	SonicVibes
 
 /* SGS Thomson products */
@@ -1055,15 +1116,16 @@ product SIS 85C601		0x0601	85C601
 product SIS 900			0x0900	SiS900 10/100 Ethernet
 product SIS 5597_IDE		0x5513	5597/5598 IDE controller
 product SIS 5597_HB		0x5597	5597/5598 host bridge
+product SIS 6326		0x6326	6326 AGP VGA
 product SIS 5597_USB		0x7001	5597/5598 USB host controller
+
+/* Silicon Motion products */
+product SILMOTION LYNX_E	0x0810	Lynx E
 
 /* SMC products */
 product SMC 37C665	0x1000	FDC 37C665
 product SMC 37C922	0x1001	FDC 37C922
 product SMC 83C170	0x0005	83C170 (\"EPIC/100\") Fast Ethernet
-
-/* STB Systems products */
-product STB2 VELOCITY128 0x0018	Velocity128 (AGP)
 
 /* Surecom Technology products */
 product SURECOM NE34	0x0e34	NE-34 Ethernet
@@ -1082,15 +1144,20 @@ product TEKRAM2	DC690C		0x690c	DC-690C
 
 /* Texas Instruments products */
 product	TI	TLAN		0x0500	TLAN
+product	TI	PCILYNX		0x8000	LYNX FireWire Host Controller
 product TI	PCI1130		0xac12	PCI1130 PCI-CardBus Bridge
 product TI	PCI1031		0xac13	PCI1031 PCI-pcmcia Bridge
 product TI	PCI1131		0xac15	PCI1131 PCI-CardBus Bridge
 product TI	PCI1250		0xac16	PCI1250 PCI-CardBus Bridge
 product TI	PCI1220		0xac17	PCI1220 PCI-CardBus Bridge
 product TI	PCI1221		0xac19	PCI1221 PCI-CardBus Bridge
-product TI	PCI1225		0xac1C	PCI1225 PCI-CardBus Bridge
+product TI	PCI1225		0xac1c	PCI1225 PCI-CardBus Bridge
+product TI	PCI1251		0xac1d	PCI1251 PCI-CardBus Bridge
 product TI	PCI2030		0xac20	PCI2030 PCI-CardBus Bridge
   
+/* Sony products */
+product	SONY	CXD1947A	0x8009	CXD1947A FireWire Host Controller
+
 /* Toshiba products */
 product TOSHIBA R4X00		0x0009	R4x00 Host-PCI Bridge
 product TOSHIBA TC35856F	0x0020	TC35856F ATM (\"Meteor\")

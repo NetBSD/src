@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.18 1999/01/16 20:43:21 chuck Exp $ */
+/*	$NetBSD: vmparam.h,v 1.18.4.1 1999/06/21 01:01:45 thorpej Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -128,12 +128,13 @@
 #define VM_MAX_KERNEL_ADDRESS	((vaddr_t)0xfe000000)
 
 /* virtual sizes (bytes) for various kernel submaps */
-#define VM_MBUF_SIZE		(NMBCLUSTERS*MCLBYTES)
 #define VM_KMEM_SIZE		(NKMEMCLUSTERS*CLBYTES)
 
-#define VM_PHYSSEG_MAX          32       /* we only have one "hole" */
-#define VM_PHYSSEG_STRAT        VM_PSTRAT_BSEARCH
-#define VM_PHYSSEG_NOADD                /* can't add RAM after vm_mem_init */
+#define MACHINE_NEW_NONCONTIG
+
+#define VM_PHYSSEG_MAX		32       /* up to 32 segments */
+#define VM_PHYSSEG_STRAT	VM_PSTRAT_BSEARCH
+#define VM_PHYSSEG_NOADD		/* can't add RAM after vm_mem_init */
 
 #define	VM_NFREELIST		1
 #define	VM_FREELIST_DEFAULT	0

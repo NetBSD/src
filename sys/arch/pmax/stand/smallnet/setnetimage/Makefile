@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.1 1999/05/13 08:38:05 simonb Exp $
+# $NetBSD: Makefile,v 1.1.2.1 1999/06/21 00:59:17 thorpej Exp $
 
 PROG=	setnetimage
 MKMAN=	no

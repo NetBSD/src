@@ -1,4 +1,4 @@
-/*	$NetBSD: iommureg.h,v 1.3 1999/06/04 13:48:48 mrg Exp $	*/
+/*	$NetBSD: iommureg.h,v 1.3.2.1 1999/06/21 01:02:30 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993

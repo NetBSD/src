@@ -1,4 +1,4 @@
-/*	$NetBSD: scsirom.c,v 1.3.2.2 1999/04/22 16:40:09 perry Exp $	*/
+/*	$NetBSD: scsirom.c,v 1.3.2.2.2.1 1999/06/21 01:04:13 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999 NetBSD Foundation, Inc.

@@ -1,10 +1,10 @@
-/*	$NetBSD: pcmciadevs.h,v 1.36.2.1 1999/04/27 13:54:48 perry Exp $	*/
+/*	$NetBSD: pcmciadevs.h,v 1.36.2.1.2.1 1999/06/21 01:18:48 thorpej Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcmciadevs,v 1.33.2.1 1999/04/27 13:53:47 perry Exp 
+ *	NetBSD: pcmciadevs,v 1.36 1999/06/19 18:16:07 mjl Exp 
  */
 
 /*-
@@ -222,11 +222,17 @@
 #define	PCMCIA_CIS_NEWMEDIA_BASICS	{ NULL, NULL, NULL, NULL }
 #define	PCMCIA_PRODUCT_NEWMEDIA_BASICS	0x0019
 #define	PCMCIA_STR_NEWMEDIA_BASICS	"NewMedia BASICS Ethernet"
+#define	PCMCIA_CIS_NEWMEDIA_BUSTOASTER	{ NULL, NULL, NULL, NULL }
+#define	PCMCIA_PRODUCT_NEWMEDIA_BUSTOASTER	0xc102
+#define	PCMCIA_STR_NEWMEDIA_BUSTOASTER	"NewMedia BusToaster SCSI Host Adapter"
 
 /* Standard Microsystems Corporation Products */
 #define	PCMCIA_CIS_SMC_8016	{ NULL, NULL, NULL, NULL }
 #define	PCMCIA_PRODUCT_SMC_8016	0x0105
 #define	PCMCIA_STR_SMC_8016	"SMC 8016 EtherCard"
+#define	PCMCIA_CIS_SMC_EZCARD	{ NULL, NULL, NULL, NULL }
+#define	PCMCIA_PRODUCT_SMC_EZCARD	0x8022
+#define	PCMCIA_STR_SMC_EZCARD	"SMC EXCard 10 PCMCIA"
 
 /* Cards we know only by their cis */
 #define	PCMCIA_VENDOR_PREMAX	-1	/* Premax */

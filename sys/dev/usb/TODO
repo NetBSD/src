@@ -16,3 +16,4 @@ Use lock manager locks.
 
 Implement a modem driver for the Abstract Control Model.
 
+Implement USB suspend/resume for APM suspend/resume.

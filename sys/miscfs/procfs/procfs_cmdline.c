@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_cmdline.c,v 1.4.2.1 1999/04/27 13:57:38 perry Exp $	*/
+/*	$NetBSD: procfs_cmdline.c,v 1.4.2.1.2.1 1999/06/21 01:26:42 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1999 Jaromir Dolecek <dolecek@ics.muni.cz>

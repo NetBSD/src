@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.100.4.1 1999/06/07 04:25:30 chs Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.100.4.2 1999/06/21 01:24:01 thorpej Exp $	*/
 
 /*-
  * Copyright (C) 1993, 1994, 1996 Christopher G. Demetriou
@@ -440,7 +440,7 @@ sys_execve(p, v, retval)
 
 	/*
 	 * deal with set[ug]id.
-	 * MNT_NOEXEC and P_TRACED have already been used to disable s[ug]id.
+	 * MNT_NOSUID and P_TRACED have already been used to disable s[ug]id.
 	 */
 	if (((attr.va_mode & S_ISUID) != 0 && p->p_ucred->cr_uid != attr.va_uid)
 	 || ((attr.va_mode & S_ISGID) != 0 && p->p_ucred->cr_gid != attr.va_gid)){

@@ -1,4 +1,4 @@
-/*	$NetBSD: tc_3maxplus.c,v 1.1 1998/04/19 07:59:13 jonathan Exp $	*/
+/*	$NetBSD: tc_3maxplus.c,v 1.1.12.1 1999/06/21 00:59:19 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: tc_3maxplus.c,v 1.1 1998/04/19 07:59:13 jonathan Exp $ ");
+__KERNEL_RCSID(0, "$NetBSD: tc_3maxplus.c,v 1.1.12.1 1999/06/21 00:59:19 thorpej Exp $ ");
 
 #include <sys/types.h>
 #include <sys/device.h>
@@ -67,7 +67,7 @@ int tc_kn03_nslots =
 
 
 /*
- * 3MAXPLUS turbochannel autoconfiguration table 
+ * 3MAXPLUS turbochannel autoconfiguration table
  */
 struct tcbus_attach_args kn03_tc_desc =
 {
@@ -96,5 +96,4 @@ tcbus_attach_3maxplus(parent, self, aux)
         struct device *self;
         void *aux;
 {
-	
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_socket.c,v 1.6 1998/09/04 19:54:39 christos Exp $	*/
+/*	$NetBSD: svr4_socket.c,v 1.6.8.1 1999/06/21 01:09:55 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -147,7 +147,8 @@ svr4_add_socket(p, path, st)
 	struct stat *st;
 {
 	struct svr4_sockcache_entry *e;
-	int len, error;
+	size_t len;
+	int error;
 
 	if (!initialized) {
 		TAILQ_INIT(&svr4_head);

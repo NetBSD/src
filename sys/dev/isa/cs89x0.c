@@ -1,4 +1,4 @@
-/*	$NetBSD: cs89x0.c,v 1.9 1999/03/30 21:02:41 mycroft Exp $	*/
+/*	$NetBSD: cs89x0.c,v 1.9.4.1 1999/06/21 01:18:00 thorpej Exp $	*/
 
 /*
  * Copyright 1997
@@ -1589,12 +1589,8 @@ cs_ether_input(sc, m)
 	}
 #endif
 
-	/*
-	 * Pass the packet up, with the ether header sort-of removed. ie.
-	 * adjust the data pointer to point to the data.
-	 */
-	m_adj(m, sizeof(struct ether_header));
-	ether_input(ifp, eh, m);
+	/* Pass the packet up. */
+	(*ifp->if_input)(ifp, m);
 }
 
 void 

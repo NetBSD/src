@@ -1,10 +1,10 @@
-/*	$NetBSD: pcmciadevs_data.h,v 1.36.2.1 1999/04/27 13:54:48 perry Exp $	*/
+/*	$NetBSD: pcmciadevs_data.h,v 1.36.2.1.2.1 1999/06/21 01:18:48 thorpej Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcmciadevs,v 1.33.2.1 1999/04/27 13:53:47 perry Exp 
+ *	NetBSD: pcmciadevs,v 1.36 1999/06/19 18:16:07 mjl Exp 
  */
 
 /*-
@@ -311,11 +311,25 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    "NewMedia BASICS Ethernet"	},
 	},
 	{
+	    PCMCIA_VENDOR_NEWMEDIA, PCMCIA_PRODUCT_NEWMEDIA_BUSTOASTER,
+	    PCMCIA_CIS_NEWMEDIA_BUSTOASTER,
+	    0,
+	    "NewMedia Corporation",
+	    "NewMedia BusToaster SCSI Host Adapter"	},
+	},
+	{
 	    PCMCIA_VENDOR_SMC, PCMCIA_PRODUCT_SMC_8016,
 	    PCMCIA_CIS_SMC_8016,
 	    0,
 	    "Standard Microsystems Corporation",
 	    "SMC 8016 EtherCard"	},
+	},
+	{
+	    PCMCIA_VENDOR_SMC, PCMCIA_PRODUCT_SMC_EZCARD,
+	    PCMCIA_CIS_SMC_EZCARD,
+	    0,
+	    "Standard Microsystems Corporation",
+	    "SMC EXCard 10 PCMCIA"	},
 	},
 	{
 	    PCMCIA_VENDOR_UNKNOWN, PCMCIA_PRODUCT_MEGAHERTZ_XJ2288,

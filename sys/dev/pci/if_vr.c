@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vr.c,v 1.19.2.2 1999/04/26 23:54:36 perry Exp $	*/
+/*	$NetBSD: if_vr.c,v 1.19.2.2.2.1 1999/06/21 01:18:35 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -863,9 +863,8 @@ vr_rxeof(sc)
 			}
 		}
 #endif
-		/* Remove header from mbuf and pass it on. */
-		m_adj(m, sizeof(struct ether_header));
-		ether_input(ifp, eh, m);
+		/* Pass it on. */
+		(*ifp->if_input)(ifp, m);
 	}
 
 	/* Update the receive pointer. */
@@ -1751,7 +1750,6 @@ vr_attach(parent, self, aux)
 	ifp->if_mtu = ETHERMTU;
 	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
 	ifp->if_ioctl = vr_ioctl;
-	ifp->if_output = ether_output;
 	ifp->if_start = vr_start;
 	ifp->if_watchdog = vr_watchdog;
 	ifp->if_baudrate = 10000000;

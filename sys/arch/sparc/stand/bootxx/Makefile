@@ -1,11 +1,11 @@
-#	$NetBSD: Makefile,v 1.9 1999/03/05 11:15:53 pk Exp $
+#	$NetBSD: Makefile,v 1.9.4.1 1999/06/21 01:01:53 thorpej Exp $
 
 PROG=		bootxx
 PROGSOURCE=	bootxx.c
 
 .include "../Makefile.buildboot"
 
-CPPFLAGS+=	-DBOOTXX
+CPPFLAGS+=	-DBOOTXX -DLIBSA_NO_CLOSE
 STRIPFLAG=
 LINKFLAGS=	-N -Ttext ${RELOC} -e start
 

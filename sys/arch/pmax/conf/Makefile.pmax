@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.pmax,v 1.70.2.1 1999/04/16 12:57:52 simonb Exp $
+#	$NetBSD: Makefile.pmax,v 1.70.2.1.2.1 1999/06/21 00:58:32 thorpej Exp $
 
 # Makefile for NetBSD
 #
@@ -48,7 +48,7 @@ HAVE_GCC28!=	${CC} --version | egrep "^(2\.8|egcs)" ; echo
 INCLUDES=	-I. -I$S/arch -I$S -nostdinc
 CPPFLAGS=	${INCLUDES} ${IDENT} ${PARAM} -D_KERNEL -Dpmax
 CWARNFLAGS?=	-Wall -Werror -Wstrict-prototypes -Wmissing-prototypes \
-		-Wno-uninitialized -Wpointer-arith
+		-Wuninitialized -Wpointer-arith
 .if (${HAVE_GCC28} != "")
 CWARNFLAGS+=	-Wno-main
 .endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.113 1999/02/26 01:18:09 nathanw Exp $	*/
+/*	$NetBSD: audio.c,v 1.113.4.1 1999/06/21 01:17:35 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -304,7 +304,7 @@ audioattach(parent, self, aux)
 		au_check_ports(sc, &sc->sc_outports, &mi, oclass, 
 			       AudioNoutput, AudioNmaster, otable);
 		if (mi.mixer_class == oclass && 
-		    strcmp(mi.label.name, AudioNmonitor))
+		    (strcmp(mi.label.name, AudioNmonitor) == 0))
 			sc->sc_monitor_port = mi.index;
 	}
 	DPRINTF(("audio_attach: inputs ports=0x%x, output ports=0x%x\n",
@@ -1251,7 +1251,7 @@ audio_write(dev, uio, ioflag)
 	struct audio_softc *sc = audio_cd.cd_devs[unit];
 	struct audio_ringbuffer *cb = &sc->sc_pr;
 	u_char *inp, *einp;
-	int error, s, n, cc, used;
+	int saveerror, error, s, n, cc, used;
 
 	DPRINTFN(2,("audio_write: sc=%p(unit=%d) count=%lu used=%d(hi=%d)\n", 
 		    sc, unit, (unsigned long)uio->uio_resid, sc->sc_pr.used, 
@@ -1386,8 +1386,14 @@ audio_write(dev, uio, ioflag)
 			cc = 0;
 		cb->needfill = 0;
 		cb->copying = 0;
-		if (!sc->sc_pbus && !cb->pause)
-			error = audiostartp(sc); /* XXX clobbers error */
+		if (!sc->sc_pbus && !cb->pause) {
+			saveerror = error;
+			error = audiostartp(sc);
+			if (saveerror != 0) {
+				/* Report the first error that occured. */
+				error = saveerror;
+			}
+		}
 		splx(s);
 		if (cc != 0) {
 			DPRINTFN(1, ("audio_write: fill %d\n", cc));
@@ -2509,7 +2515,7 @@ audiosetinfo(sc, ai)
 		ct.type = AUDIO_MIXER_VALUE;
 		ct.un.value.num_channels = 1;
 		ct.un.value.level[AUDIO_MIXER_LEVEL_MONO] = ai->monitor_gain;
-		error = sc->hw_if->get_port(sc->hw_hdl, &ct);
+		error = sc->hw_if->set_port(sc->hw_hdl, &ct);
 		if (error)
 			return(error);
 	}

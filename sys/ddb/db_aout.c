@@ -1,4 +1,4 @@
-/*	$NetBSD: db_aout.c,v 1.21.4.2 1999/04/12 21:27:07 pk Exp $	*/
+/*	$NetBSD: db_aout.c,v 1.21.4.2.2.1 1999/06/21 01:16:19 thorpej Exp $	*/
 
 /* 
  * Mach Operating System
@@ -90,7 +90,7 @@ db_aout_sym_init(symsize, vsymtab, vesymtab, name)
 	register struct nlist	*sym_start, *sym_end;
 	register struct nlist	*sp;
 	register char *strtab;
-	register int slen;
+	register int slen, bad = 0;
 	char *estrtab;
 
 	if (ALIGNED_POINTER(vsymtab, long) == 0) {
@@ -107,6 +107,11 @@ db_aout_sym_init(symsize, vsymtab, vesymtab, name)
 	sym_end   = (struct nlist *)((char *)sym_start + symsize);
 
 	strtab = (char *)sym_end;
+	if (ALIGNED_POINTER(strtab, int) == 0) {
+		printf("[ %s symbol table has bad string table address %p ]\n",
+		    name, strtab);
+		return (FALSE);
+	}
 	slen = *(int *)strtab;
 
 	estrtab = strtab + slen;
@@ -128,16 +133,20 @@ db_aout_sym_init(symsize, vsymtab, vesymtab, name)
 		    printf("[ %s has bad a.out string table index (0x%x) ]\n",
 		        name, strx);
 		    sp->n_un.n_name = 0;
+		    bad = 1;
 		    continue;
 		}
 		sp->n_un.n_name = strtab + strx;
 	    }
 	}
 
+	if (bad)
+		return (FALSE);
+
 	if (db_add_symbol_table((char *)sym_start, (char *)sym_end, name,
 	    NULL) !=  -1) {
-                printf("[ preserving %d bytes of %s a.out symbol table ]\n",
-                          (char *)vesymtab - (char *)vsymtab, name);
+                printf("[ preserving %ld bytes of %s a.out symbol table ]\n",
+                          (long)vesymtab - (long)vsymtab, name);
 		return (TRUE);
         }
 	

@@ -1,4 +1,4 @@
-/*	$NetBSD: findcpu.c,v 1.2 1999/05/23 22:56:54 ragge Exp $	*/
+/*	$NetBSD: findcpu.c,v 1.2.2.1 1999/06/21 01:03:45 thorpej Exp $	*/
 /*
  * Copyright (c) 1994, 1998 Ludd, University of Lule}, Sweden.
  * All rights reserved.

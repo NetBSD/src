@@ -1,38 +1,18 @@
-/*	$NetBSD: sbusreg.h,v 1.3 1998/09/05 23:57:25 eeh Exp $ */
+/*	$NetBSD: sbusreg.h,v 1.3.8.1 1999/06/21 01:02:32 thorpej Exp $ */
 
 /*
- * Copyright (c) 1992, 1993
- *	The Regents of the University of California.  All rights reserved.
- *
- * This software was developed by the Computer Systems Engineering group
- * at Lawrence Berkeley Laboratory under DARPA contract BG 91-66 and
- * contributed to Berkeley.
- *
- * All advertising materials mentioning features or use of this software
- * must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Lawrence Berkeley Laboratory.
+ * Copyright (c) 1996-1999 Eduardo Horvath
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
  * 1. Redistributions of source code must retain the above copyright
  *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
- *    may be used to endorse or promote products derived from this software
- *    without specific prior written permission.
- *
- * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
+ *  
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR  ``AS IS'' AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
+ * ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR  BE LIABLE
  * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
  * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
  * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
@@ -41,15 +21,10 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)sbusreg.h	8.1 (Berkeley) 6/11/93
  */
 
+
 /*
- * Sun-4c S-bus definitions.  (Should be made generic!)
- *
- * Sbus slot 0 is not a separate slot; it talks to the onboard I/O devices.
- * It is, however, addressed just like any `real' Sbus.
- *
  * Sbus device addresses are obtained from the FORTH PROMs.  They come
  * in `absolute' and `relative' address flavors, so we have to handle both.
  * Relative addresses do *not* include the slot number.
@@ -119,33 +94,11 @@ struct sysioreg {
 
 	u_int64_t	pad3[117];
 
-	struct iommureg {
-		u_int64_t	iommu_cr;	/* IOMMU control register */		/* 1fe.0000.2400 */
-#define IOMMUCR_TSB1K		0x000000000000000000LL	/* Nummber of entries in IOTSB */
-#define IOMMUCR_TSB2K		0x000000000000010000LL
-#define IOMMUCR_TSB4K		0x000000000000020000LL
-#define IOMMUCR_TSB8K		0x000000000000030000LL
-#define IOMMUCR_TSB16K		0x000000000000040000LL
-#define IOMMUCR_TSB32K		0x000000000000050000LL
-#define IOMMUCR_TSB64K		0x000000000000060000LL
-#define IOMMUCR_TSB128K		0x000000000000070000LL
-#define IOMMUCR_8KPG		0x000000000000000000LL	/* 8K iommu page size */
-#define IOMMUCR_64KPG		0x000000000000000004LL	/* 64K iommu page size */
-#define IOMMUCR_DE		0x000000000000000002LL	/* Diag enable */
-#define IOMMUCR_EN		0x000000000000000001LL	/* Enable IOMMU */
-		u_int64_t	iommu_tsb;	/* IOMMU TSB base register */		/* 1fe.0000.2408 */
-		u_int64_t	iommu_flush;	/* IOMMU flush register */		/* 1fe.0000.2410 */
-	} sys_iommu;
+	struct iommureg sys_iommu;							/* 1fe.0000.2400,2410 */
 
 	u_int64_t	pad4[125];
 
-	struct strbuf {
-		u_int64_t	strbuf_ctl;		/* streaming buffer control reg */	/* 1fe.0000.2800 */
-#define STRBUF_EN		0x000000000000000001LL
-#define STRBUF_D		0x000000000000000002LL
-		u_int64_t	strbuf_pgflush;		/* streaming buffer page flush */	/* 1fe.0000.2808 */
-		u_int64_t	strbuf_flushsync;	/* streaming buffer flush sync */	/* 1fe.0000.2810 */
-	} sys_strbuf;
+	struct iommu_strbuf	sys_strbuf;						/* 1fe.0000.2800-2810 */
 
 	u_int64_t	pad5[125];
 
@@ -237,44 +190,3 @@ struct sysioreg {
 	u_int64_t	pad16[16];
 	u_int64_t	strbuf_ln_tag_diag[16];	/* streaming buffer line tag diag */	/* 1fe.0000.5900-5978 */
 };
-
-/* 
- * sun4u iommu stuff.  Probably belongs elsewhere.
- */
-
-#define	IOTTE_V		0x8000000000000000LL	/* Entry valid */
-#define IOTTE_64K	0x2000000000000000LL	/* 8K or 64K page? */
-#define IOTTE_8K	0x0000000000000000LL
-#define IOTTE_STREAM	0x1000000000000000LL	/* Is page streamable? */
-#define	IOTTE_LOCAL	0x0800000000000000LL	/* Accesses to same bus segment? */
-#define IOTTE_PAMASK	0x000001ffffffe000LL	/* Let's assume this is correct */
-#define IOTTE_C		0x0000000000000010LL	/* Accesses to cacheable space */
-#define IOTTE_W		0x0000000000000002LL	/* Writeable */
-
-#define MAKEIOTTE(pa,w,c,s)	(((pa)&IOTTE_PAMASK)|((w)?IOTTE_W:0)|((c)?IOTTE_C:0)|((s)?IOTTE_STREAM:0)|(IOTTE_V|IOTTE_8K))
-#if 0
-/* This version generates a pointer to a int64_t */
-#define IOTSBSLOT(va,sz)	((((((vaddr_t)(va))-(((vaddr_t)0xff800000)<<(sz))))>>(13-3))&(~7))
-#else
-/* Here we just try to create an array index */
-#define IOTSBSLOT(va,sz)	((u_int)((((((vaddr_t)(va))-(((vaddr_t)0xff800000)<<(sz))))>>(13))))
-#endif
-
-/*
- * intr map stuff.  Probably belongs elsewhere.
- */
-
-#define INTMAP_V	0x080000000LL	/* Interrupt valid (enabled) */
-#define INTMAP_TID	0x07c000000LL	/* UPA target ID mask */
-#define INTMAP_IGN	0x0000007c0LL	/* Interrupt group no. */
-#define INTMAP_INO	0x00000003fLL	/* Interrupt number */
-#define INTMAP_INR	(INTMAP_IGN|INTMAP_INO)
-#define INTMAP_SLOT	0x000000018LL	/* SBUS slot # */
-#define INTMAP_OBIO	0x000000020LL	/* Onboard device */
-#define INTMAP_LSHIFT	11		/* Encode level in vector */
-#define	INTLEVENCODE(x)	(((x)&0x0f)<<INTMAP_LSHIFT)
-#define INTLEV(x)	(((x)>>INTMAP_LSHIFT)&0x0f)
-#define INTVEC(x)	((x)&INTMAP_INR)
-#define INTSLOT(x)	(((x)>>3)&0x7)
-#define	INTPRI(x)	((x)&0x7)
-

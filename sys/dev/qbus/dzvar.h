@@ -1,4 +1,4 @@
-/*	$NetBSD: dzvar.h,v 1.5 1999/05/27 16:03:41 ragge Exp $	*/
+/*	$NetBSD: dzvar.h,v 1.5.2.1 1999/06/21 01:18:51 thorpej Exp $	*/
 /*
  * Copyright (c) 1996  Ken C. Wellsch.  All rights reserved.
  * Copyright (c) 1992, 1993

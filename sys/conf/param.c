@@ -1,4 +1,4 @@
-/*	$NetBSD: param.c,v 1.25 1998/10/23 19:37:32 jonathan Exp $	*/
+/*	$NetBSD: param.c,v 1.25.8.1 1999/06/21 01:12:23 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1989 Regents of the University of California.
@@ -41,18 +41,17 @@
  */
 
 #include "opt_rtc_offset.h"
+#include "opt_sb_max.h"
 #include "opt_sysv.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/socket.h>
+#include <sys/socketvar.h>
 #include <sys/proc.h>
 #include <sys/vnode.h>
 #include <sys/file.h>
 #include <sys/callout.h>
-#ifdef REAL_CLISTS
-#include <sys/clist.h>
-#endif
 #include <sys/mbuf.h>
 #include <ufs/ufs/quota.h>
 #include <sys/kernel.h>
@@ -98,11 +97,24 @@ int	maxproc = NPROC;
 int	desiredvnodes = NVNODE;
 int	maxfiles = 3 * (NPROC + MAXUSERS) + 80;
 int	ncallout = 16 + NPROC;
-#ifdef REAL_CLISTS
-int	nclist = 60 + 12 * MAXUSERS;
-#endif
-int	nmbclusters = NMBCLUSTERS;
+u_long	sb_max = SB_MAX;	/* maximum socket buffer size */
 int	fscale = FSCALE;	/* kernel uses `FSCALE', user uses `fscale' */
+
+/*
+ * Various mbuf-related parameters.  These can also be changed at run-time
+ * with sysctl.
+ */
+int	nmbclusters = NMBCLUSTERS;
+
+#ifndef MBLOWAT
+#define	MBLOWAT		16
+#endif
+int	mblowat = MBLOWAT;
+
+#ifndef MCLLOWAT
+#define	MCLLOWAT	8
+#endif
+int	mcllowat = MCLLOWAT;
 
 /*
  * Values in support of System V compatible shared memory.	XXX
@@ -157,42 +169,32 @@ struct	msginfo msginfo = {
 #endif
 
 /*
- * These are initialized at bootstrap time
- * to values dependent on memory size
- */
-int	nbuf, nswbuf;
-
-/*
  * These have to be allocated somewhere; allocating
  * them here forces loader errors if this file is omitted
  * (if they've been externed everywhere else; hah!).
  */
 struct 	callout *callout;
-struct	cblock *cfree;
-struct	buf *buf, *swbuf;
+struct	buf *buf;
 char	*buffers;
-
-struct	utsname utsname;
 
 /*
  * These control when and to what priority a process gets after a certain
  * amount of CPU time expires.  AUTONICETIME is in seconds.
  * AUTONICEVAL is NOT offset by NZERO, i.e. it's between PRIO_MIN and PRIO_MAX.
  */
-#ifdef AUTONICETIME
-int autonicetime = AUTONICETIME;
-#else
-int autonicetime = (60 * 10);	/* 10 minutes */
+#ifndef AUTONICETIME
+#define AUTONICETIME (60 * 10)	/* 10 minutes */
 #endif
 
-#ifdef AUTONICEVAL
-int autoniceval = AUTONICEVAL;
-#else
-int autoniceval = 4;		/* default + 4 */
+#ifndef AUTONICEVAL
+#define AUTONICEVAL 4		/* default + 4 */
 #endif
+
+int autonicetime = AUTONICETIME;
+int autoniceval = AUTONICEVAL;
 
 /*
  * Actual network mbuf sizes (read-only), for netstat.
  */
-int	msize = MSIZE;
-int	mclbytes = MCLBYTES;
+const	int msize = MSIZE;
+const	int mclbytes = MCLBYTES;

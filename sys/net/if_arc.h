@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arc.h,v 1.9 1999/02/25 11:20:34 is Exp $	*/
+/*	$NetBSD: if_arc.h,v 1.9.4.1 1999/06/21 01:27:33 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -121,9 +121,6 @@ u_int8_t arcbroadcastaddr;
 
 void	arc_ifattach __P((struct ifnet *, u_int8_t));
 char	*arc_sprintf __P((u_int8_t *));
-void	arc_input __P((struct ifnet *, struct mbuf *));
-int	arc_output __P((struct ifnet *, struct mbuf *, struct sockaddr *,
-	    struct rtentry *));
 int	arc_isphds __P((int));
 #endif
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: tropicvar.h,v 1.2.2.1 1999/04/29 22:22:08 perry Exp $	*/
+/*	$NetBSD: tropicvar.h,v 1.2.2.1.2.1 1999/06/21 01:17:57 thorpej Exp $	*/
 
 /* 
  * Mach Operating System
@@ -33,8 +33,8 @@
 /*
  * HISTORY
  * $Log: tropicvar.h,v $
- * Revision 1.2.2.1  1999/04/29 22:22:08  perry
- * pullup 1.2->1.3 (bad)
+ * Revision 1.2.2.1.2.1  1999/06/21 01:17:57  thorpej
+ * Sync w/ -current.
  *
  * Revision 1.3  1999/04/29 15:47:02  bad
  * From Onno van der Linden:
@@ -61,11 +61,11 @@
  * 
  */
 
-/* $Header: /cvsroot/src/sys/dev/ic/tropicvar.h,v 1.2.2.1 1999/04/29 22:22:08 perry Exp $ */
+/* $Header: /cvsroot/src/sys/dev/ic/tropicvar.h,v 1.2.2.1.2.1 1999/06/21 01:17:57 thorpej Exp $ */
 /* $ACIS:if_lanvar.h 12.0$ */
 
 #if !defined(lint) && !defined(LOCORE)  && defined(RCS_HDRS)
-static char    *rcsidif_lanvar = "$Header: /cvsroot/src/sys/dev/ic/tropicvar.h,v 1.2.2.1 1999/04/29 22:22:08 perry Exp $";
+static char    *rcsidif_lanvar = "$Header: /cvsroot/src/sys/dev/ic/tropicvar.h,v 1.2.2.1.2.1 1999/06/21 01:17:57 thorpej Exp $";
 #endif
 
 /*
