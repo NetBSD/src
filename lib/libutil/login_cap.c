@@ -1,4 +1,4 @@
-/* $NetBSD: login_cap.c,v 1.5 2000/02/10 20:52:54 mjl Exp $ */
+/*	$NetBSD: login_cap.c,v 1.6 2000/07/05 11:46:41 ad Exp $	*/
 
 /*-
  * Copyright (c) 1995,1997 Berkeley Software Design, Inc. All rights reserved.
@@ -33,6 +33,11 @@
  *
  *	BSDI login_cap.c,v 2.13 1998/02/07 03:17:05 prb Exp
  */
+
+#include <sys/cdefs.h>
+#if defined(LIBC_SCCS) && !defined(lint)
+__RCSID("$NetBSD: login_cap.c,v 1.6 2000/07/05 11:46:41 ad Exp $");
+#endif /* LIBC_SCCS and not lint */
  
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -53,19 +58,18 @@
 #include <syslog.h>
 #include <unistd.h>
 
+static char	*classfiles[] = { _PATH_LOGIN_CONF, 0 };
 
-static	char *classfiles[] = { _PATH_LOGIN_CONF, 0 };
-static	void setuserpath __P((login_cap_t *, char *));
-static	u_quad_t multiply __P((u_quad_t, u_quad_t));
-static	u_quad_t strtolimit __P((char *, char **, int));
-static	u_quad_t strtosize __P((char *, char **, int));
-static	int gsetrl __P((login_cap_t *, int, char *, int type));
-static	int setuserenv __P((login_cap_t *));
-static	int isinfinite __P((const char *));
+static void	setuserpath(login_cap_t *, char *);
+static u_quad_t	multiply(u_quad_t, u_quad_t);
+static u_quad_t	strtolimit(char *, char **, int);
+static u_quad_t	strtosize(char *, char **, int);
+static int	gsetrl(login_cap_t *, int, char *, int type);
+static int	setuserenv(login_cap_t *);
+static int	isinfinite(const char *);
 
 login_cap_t *
-login_getclass(class)
-	char *class;
+login_getclass(char *class)
 {
 	login_cap_t *lc;
 	int res;
@@ -127,18 +131,13 @@ login_getclass(class)
 }
 
 login_cap_t *
-login_getpwclass(pwd)
-	const struct passwd *pwd;
+login_getpwclass(const struct passwd *pwd)
 {
 	return login_getclass(pwd ? pwd->pw_class : NULL);
 }
 
 char *
-login_getcapstr(lc, cap, def, e)
-	login_cap_t *lc;
-	char *cap;
-	char *def;
-	char *e;
+login_getcapstr(login_cap_t *lc, char *cap, char *def, char *e)
 {
 	char *res;
 	int status;
@@ -165,11 +164,7 @@ login_getcapstr(lc, cap, def, e)
 }
 
 quad_t
-login_getcaptime(lc, cap, def, e)
-	login_cap_t *lc;
-	char *cap;
-	quad_t def;
-	quad_t e;
+login_getcaptime(login_cap_t *lc, char *cap, quad_t def, quad_t e)
 {
 	char *ep;
 	char *res, *sres;
@@ -245,11 +240,7 @@ invalid:
 }
 
 quad_t
-login_getcapnum(lc, cap, def, e)
-	login_cap_t *lc;
-	char *cap;
-	quad_t def;
-	quad_t e;
+login_getcapnum(login_cap_t *lc, char *cap, quad_t def, quad_t e)
 {
 	char *ep;
 	char *res;
@@ -293,11 +284,7 @@ login_getcapnum(lc, cap, def, e)
 }
 
 quad_t
-login_getcapsize(lc, cap, def, e)
-	login_cap_t *lc;
-	char *cap;
-	quad_t def;
-	quad_t e;
+login_getcapsize(login_cap_t *lc, char *cap, quad_t def, quad_t e)
 {
 	char *ep;
 	char *res;
@@ -339,10 +326,7 @@ login_getcapsize(lc, cap, def, e)
 }
 
 int
-login_getcapbool(lc, cap, def)
-	login_cap_t *lc;
-	char *cap;
-	u_int def;
+login_getcapbool(login_cap_t *lc, char *cap, u_int def)
 {
 	if (!lc || !lc->lc_cap)
 		return (def);
@@ -351,8 +335,7 @@ login_getcapbool(lc, cap, def)
 }
 
 void
-login_close(lc)
-	login_cap_t *lc;
+login_close(login_cap_t *lc)
 {
 	if (lc) {
 		if (lc->lc_class)
@@ -387,11 +370,7 @@ static struct {
 };
 
 static int
-gsetrl(lc, what, name, type)
-	login_cap_t *lc;
-	int what;
-	char *name;
-	int type;
+gsetrl(login_cap_t *lc, int what, char *name, int type)
 {
 	struct rlimit rl;
 	struct rlimit r;
@@ -443,8 +422,7 @@ gsetrl(lc, what, name, type)
 }
 
 static int
-setuserenv(lc)
-	login_cap_t *lc;
+setuserenv(login_cap_t *lc)
 {
 	char *stop = ", \t";
 	int i, count;
@@ -484,7 +462,7 @@ setuserenv(lc)
 
 	for (i = 0; i < count && res[i]; i++) {
 		if (*res[i] != '\0') {
-			if ((ptr = strchr(res[i], '=')))
+			if ((ptr = strchr(res[i], '=')) != NULL)
 				*ptr++ = '\0';
 			else 
 				ptr = "";
@@ -496,11 +474,8 @@ setuserenv(lc)
 	return 0;
 }
 
-
 int
-setclasscontext(class, flags)
-	char *class;
-	u_int flags;
+setclasscontext(char *class, u_int flags)
 {
 	int ret;
 	login_cap_t *lc;
@@ -515,11 +490,7 @@ setclasscontext(class, flags)
 }
 
 int
-setusercontext(lc, pwd, uid, flags)
-	login_cap_t *lc;
-	struct passwd *pwd;
-	uid_t uid;
-	u_int flags;
+setusercontext(login_cap_t *lc, struct passwd *pwd, uid_t uid, u_int flags)
 {
 	login_cap_t *flc;
 	quad_t p;
@@ -597,9 +568,7 @@ setusercontext(lc, pwd, uid, flags)
 }
 
 static void
-setuserpath(lc, home)
-	login_cap_t *lc;
-	char *home;
+setuserpath(login_cap_t *lc, char *home)
 {
 	size_t hlen, plen;
 	int cnt = 0;
@@ -659,12 +628,8 @@ setuserpath(lc, home)
  *	   seperated by x (also * for backwards compatibility), specifying
  *	   the product of the indicated values.
  */
-static
-u_quad_t
-strtosize(str, endptr, radix)
-	char *str;
-	char **endptr;
-	int radix;
+static u_quad_t
+strtosize(char *str, char **endptr, int radix)
 {
 	u_quad_t num, num2;
 	char *expr, *expr2;
@@ -734,12 +699,8 @@ erange:
 	return (UQUAD_MAX);
 }
 
-static
-u_quad_t
-strtolimit(str, endptr, radix)
-	char *str;
-	char **endptr;
-	int radix;
+static u_quad_t
+strtolimit(char *str, char **endptr, int radix)
 {
 	if (isinfinite(str)) {
 		if (endptr)
@@ -769,9 +730,7 @@ isinfinite(const char *s)
 }
 
 static u_quad_t
-multiply(n1, n2)
-	u_quad_t n1;
-	u_quad_t n2;
+multiply(u_quad_t n1, u_quad_t n2)
 {
 	static int bpw = 0;
 	u_quad_t m;
