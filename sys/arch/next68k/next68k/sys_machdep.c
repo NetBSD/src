@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_machdep.c,v 1.8 1999/07/08 18:08:56 thorpej Exp $ */
+/*	$NetBSD: sys_machdep.c,v 1.9 1999/11/25 20:30:40 is Exp $ */
 
 /*
  * This file was taken from mvme68k/mvme68k/sys_machdep.c
@@ -163,6 +163,13 @@ cachectl1(req, addr, len, p)
 #endif
 
 		if (addr == 0 ||
+#if defined(M68040)
+#if defined(M68060)
+		    (cputype == CPU_68040 && req & CC_IPURGE) ||
+#else
+		    (req && CC_IPURGE) ||
+#endif
+#endif
 		    (req & ~CC_EXTPURGE) != CC_PURGE && len > 2*NBPG)
 			doall = 1;
 
