@@ -1,4 +1,4 @@
-/*	$NetBSD: i82557.c,v 1.86 2004/05/16 02:59:04 thorpej Exp $	*/
+/*	$NetBSD: i82557.c,v 1.87 2004/09/20 07:32:02 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2001, 2002 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i82557.c,v 1.86 2004/05/16 02:59:04 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i82557.c,v 1.87 2004/09/20 07:32:02 simonb Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -1470,7 +1470,7 @@ fxp_tick(void *arg)
 #endif
 
 	/*
-	 * If we haven't received any packets in FXP_MAC_RX_IDLE seconds,
+	 * If we haven't received any packets in FXP_MAX_RX_IDLE seconds,
 	 * then assume the receiver has locked up and attempt to clear
 	 * the condition by reprogramming the multicast filter (actually,
 	 * resetting the interface). This is a work-around for a bug in
