@@ -1,4 +1,4 @@
-/* $NetBSD: if_ea.c,v 1.6 1996/05/07 00:55:17 thorpej Exp $ */
+/* $NetBSD: if_ea.c,v 1.7 1996/05/17 16:24:03 mark Exp $ */
 
 /*
  * Copyright (c) 1995 Mark Brinicombe
@@ -251,11 +251,10 @@ eaprobe(parent, match, aux)
 	struct podule_attach_args *pa = (void *)aux;
 	u_int iobase;
 	
-/*	dprintf(("Probing for SEEQ 8005... \n"));*/
-
 /* Look for a network slot interface */
 
-	if (matchpodule(pa, MY_MANUFACTURER, MY_PODULE, -1) == 0)
+	if ((matchpodule(pa, MY_MANUFACTURER, MY_PODULE, -1) == 0)
+	    && (matchpodule(pa, 0x53, MY_PODULE, -1) == 0))
 		return(0);
 
 	iobase = pa->pa_podule->mod_base + EA_8005_BASE;
