@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_pqdegdags.c,v 1.3 1999/02/05 00:06:15 oster Exp $	*/
+/*	$NetBSD: rf_pqdegdags.c,v 1.4 1999/08/13 03:41:57 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -46,7 +46,6 @@
 #include "rf_general.h"
 #include "rf_pqdegdags.h"
 #include "rf_pq.h"
-#include "rf_sys.h"
 
 static void 
 applyPDA(RF_Raid_t * raidPtr, RF_PhysDiskAddr_t * pda, RF_PhysDiskAddr_t * ppda,
