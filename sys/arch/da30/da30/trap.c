@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.6 1995/03/09 07:47:33 mycroft Exp $	*/
+/*	$NetBSD: trap.c,v 1.7 1995/03/09 08:59:52 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -621,7 +621,7 @@ syscall(code, frame)
 	}
 
 #ifdef SYSCALL_DEBUG
-	scdebug_ret(p, code, error, rval[0]);
+	scdebug_ret(p, code, error, rval);
 #endif
 	userret(p, &frame, sticks, (u_int)0, 0);
 #ifdef KTRACE
