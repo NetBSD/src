@@ -1,4 +1,4 @@
-/* $NetBSD: conf.c,v 1.6 1996/04/19 19:40:29 mark Exp $ */
+/* $NetBSD: conf.c,v 1.7 1996/05/12 21:30:17 mark Exp $ */
 
 /*
  * Copyright (c) 1994 Mark Brinicombe.
@@ -79,9 +79,6 @@ bdev_decl(cd);
 bdev_decl(vnd);
 #include "ccd.h"
 bdev_decl(ccd);
-/* Temporary hack for ATAPI CDROM */
-#include "wcd.h"
-bdev_decl(wcd);
 
 /* Block devices */
 
@@ -106,7 +103,7 @@ struct bdevsw bdevsw[] = {
 	bdev_disk_init(NFDC, fd),	/* 17: floppy diskette */
 	bdev_disk_init(NRD, rd),	/* 18: ramdisk */
 	bdev_disk_init(NVND,vnd),	/* 19: vnode disk driver */
-	bdev_disk_init(NWCD, wcd),	/* 20: */
+	bdev_lkm_dummy(),		/* 20: */
  	bdev_disk_init(NCCD,ccd),	/* 21: concatenated disk driver */
 	bdev_lkm_dummy(),		/* 22: */
 	bdev_lkm_dummy(),		/* 23: */
@@ -265,8 +262,6 @@ cdev_decl(cpu);
 cdev_decl(iic);
 #include "rtc.h"
 cdev_decl(rtc);
-/* Temporary hack for ATAPI CDROM */
-cdev_decl(wcd);
 
 /* Character devices */
 
@@ -291,7 +286,7 @@ struct cdevsw cdevsw[] = {
 	cdev_disk_init(NFDC, fd),       /* 17: floppy diskette */
 	cdev_disk_init(NRD, rd),        /* 18: ram disk driver */
 	cdev_disk_init(NVND,vnd),       /* 19: vnode disk driver */
-	cdev_disk_init(NWCD, wcd),	/* 20: */
+	cdev_lkm_dummy(),		/* 20: */
  	cdev_disk_init(NCCD,ccd),	/* 21: concatenated disk driver */
 	cdev_lkm_dummy(),		/* 22: */
 	cdev_lkm_dummy(),		/* 23: */
@@ -366,7 +361,7 @@ static int chrtoblktbl[] = {
     /* 17 */        17,
     /* 18 */        18,
     /* 19 */        19,
-    /* 20 */        20,
+    /* 20 */        NODEV,
     /* 21 */        21,
     /* 22 */        NODEV,
     /* 23 */        NODEV,
