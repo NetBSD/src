@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.4 2002/08/26 10:14:02 scw Exp $	*/
+/*	$NetBSD: trap.c,v 1.5 2002/08/31 09:11:56 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -471,6 +471,9 @@ trap_type(int traptype)
 		break;
 	case T_AST:
 		t = "AST";
+		break;
+	case T_NMI:
+		t = "NMI";
 		break;
 	default:
 		t = "Unknown Exception";
