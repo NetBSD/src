@@ -1,4 +1,4 @@
-/*	$NetBSD: socket.h,v 1.29 1998/04/25 10:41:12 kleink Exp $	*/
+/*	$NetBSD: socket.h,v 1.30 1998/04/25 17:29:45 matt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1985, 1986, 1988, 1993, 1994
@@ -297,6 +297,8 @@ struct msghdr {
 #define	MSG_CTRUNC	0x20		/* control data lost before delivery */
 #define	MSG_WAITALL	0x40		/* wait for full request or error */
 #define	MSG_DONTWAIT	0x80		/* this message should be nonblocking */
+#define	MSG_BCAST	0x100		/* this message was rcvd using link-level brdcst */
+#define	MSG_MCAST	0x200		/* this message was rcvd using link-level mcast */
 
 /*
  * Header for ancillary data objects in msg_control buffer.
