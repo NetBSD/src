@@ -1,4 +1,4 @@
-/*      $NetBSD: n_atanh.c,v 1.2 1997/10/20 14:12:02 ragge Exp $ */
+/*      $NetBSD: n_atanh.c,v 1.3 1998/10/20 02:26:10 matt Exp $ */
 /*
  * Copyright (c) 1985, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -66,9 +66,9 @@ static char sccsid[] = "@(#)atanh.c	8.1 (Berkeley) 6/4/93";
  */
 #include "mathimpl.h"
 
-#if defined(vax)||defined(tahoe)
+#if defined(__vax__)||defined(tahoe)
 #include <errno.h>
-#endif	/* defined(vax)||defined(tahoe) */
+#endif	/* defined(__vax__)||defined(tahoe) */
 
 double atanh(x)
 double x;

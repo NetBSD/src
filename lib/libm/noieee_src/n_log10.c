@@ -1,4 +1,4 @@
-/*      $NetBSD: n_log10.c,v 1.2 1997/10/20 14:13:10 ragge Exp $ */
+/*      $NetBSD: n_log10.c,v 1.3 1998/10/20 02:26:12 matt Exp $ */
 /*
  * Copyright (c) 1985, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -90,9 +90,9 @@ ic(ivln10, 4.3429448190325181667E-1, -2, 1.BCB7B1526E50E)
 double log10(x)
 double x;
 {
-#if defined(vax)||defined(tahoe)
+#if defined(__vax__)||defined(tahoe)
 	return(log(x)/ln10hi);
-#else	/* defined(vax)||defined(tahoe) */
+#else	/* defined(__vax__)||defined(tahoe) */
 	return(ivln10*log(x));
-#endif	/* defined(vax)||defined(tahoe) */
+#endif	/* defined(__vax__)||defined(tahoe) */
 }

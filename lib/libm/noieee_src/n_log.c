@@ -1,4 +1,4 @@
-/*      $NetBSD: n_log.c,v 1.2 1997/10/20 14:13:05 ragge Exp $ */
+/*      $NetBSD: n_log.c,v 1.3 1998/10/20 02:26:12 matt Exp $ */
 /*
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -78,7 +78,7 @@ static char sccsid[] = "@(#)log.c	8.2 (Berkeley) 11/30/93";
  *	+Inf	return +Inf
 */
 
-#if defined(vax) || defined(tahoe)
+#if defined(__vax__) || defined(tahoe)
 #define _IEEE		0
 #define TRUNC(x)	x = (double) (float) (x)
 #else
@@ -380,7 +380,7 @@ log(x) double x;
 	volatile double u1;
 
 	/* Catch special cases */
-	if (x <= 0)
+	if (x <= 0) {
 		if (_IEEE && x == zero)	/* log(0) = -Inf */
 			return (-one/zero);
 		else if (_IEEE)		/* log(neg) = NaN */
@@ -389,11 +389,12 @@ log(x) double x;
 			return (infnan(-ERANGE));
 		else
 			return (infnan(EDOM));
-	else if (!finite(x))
+	} else if (!finite(x)) {
 		if (_IEEE)		/* x = NaN, Inf */
 			return (x+x);
 		else
 			return (infnan(ERANGE));
+	}
 	
 	/* Argument reduction: 1 <= g < 2; x/2^m = g;	*/
 	/* y = F*(1 + f/F) for |f| <= 2^-8		*/

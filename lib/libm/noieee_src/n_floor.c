@@ -1,4 +1,4 @@
-/*      $NetBSD: n_floor.c,v 1.2 1997/10/20 14:12:30 ragge Exp $ */
+/*      $NetBSD: n_floor.c,v 1.3 1998/10/20 02:26:11 matt Exp $ */
 /*
  * Copyright (c) 1985, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -62,9 +62,9 @@ double x;
 	volatile double y;
 
 	if (
-#if !defined(vax)&&!defined(tahoe)
+#if !defined(__vax__)&&!defined(tahoe)
 		x != x ||	/* NaN */
-#endif	/* !defined(vax)&&!defined(tahoe) */
+#endif	/* !defined(__vax__)&&!defined(tahoe) */
 		x >= L)		/* already an even integer */
 		return x;
 	else if (x < (double)0)
@@ -83,9 +83,9 @@ double x;
 	volatile double y;
 
 	if (
-#if !defined(vax)&&!defined(tahoe)
+#if !defined(__vax__)&&!defined(tahoe)
 		x != x ||	/* NaN */
-#endif	/* !defined(vax)&&!defined(tahoe) */
+#endif	/* !defined(__vax__)&&!defined(tahoe) */
 		x >= L)		/* already an even integer */
 		return x;
 	else if (x < (double)0)
@@ -127,10 +127,10 @@ double x;
 	volatile double t;
 	const double one = 1.0;
 
-#if !defined(vax)&&!defined(tahoe)
+#if !defined(__vax__)&&!defined(tahoe)
 	if (x != x)				/* NaN */
 		return (x);
-#endif	/* !defined(vax)&&!defined(tahoe) */
+#endif	/* !defined(__vax__)&&!defined(tahoe) */
 	if (copysign(x,one) >= L)		/* already an integer */
 	    return (x);
 	s = copysign(L,x);

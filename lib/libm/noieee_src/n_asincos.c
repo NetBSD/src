@@ -1,4 +1,4 @@
-/*	$NetBSD: n_asincos.c,v 1.2 1997/10/20 14:11:49 ragge Exp $	*/
+/*	$NetBSD: n_asincos.c,v 1.3 1998/10/20 02:26:09 matt Exp $	*/
 /*
  * Copyright (c) 1985, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -97,9 +97,9 @@ asin(x)
 	double x;
 {
 	double s,t,one=1.0;
-#if !defined(vax)&&!defined(tahoe)
+#if !defined(__vax__)&&!defined(tahoe)
 	if(x!=x) return(x);	/* x is NaN */
-#endif	/* !defined(vax)&&!defined(tahoe) */
+#endif	/* !defined(__vax__)&&!defined(tahoe) */
 	s=copysign(x,one);
 	if(s <= 0.5)
 	    return(atan2(x,sqrt(one-x*x)));
