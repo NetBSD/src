@@ -1,4 +1,4 @@
-/*	$NetBSD: vnconfig.c,v 1.16 1999/01/19 22:33:04 tron Exp $	*/
+/*	$NetBSD: vnconfig.c,v 1.17 1999/04/01 17:24:03 veego Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -86,6 +86,7 @@
 #include <sys/disklabel.h>
 #include <sys/disk.h>
 
+#define __POOL_EXPOSE
 #include <dev/vndvar.h>
 
 #include <disktab.h>
