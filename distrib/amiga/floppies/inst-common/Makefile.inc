@@ -1,4 +1,4 @@
-#	$Id: Makefile.inc,v 1.3 1995/09/30 08:04:03 chopps Exp $
+#	$Id: Makefile.inc,v 1.4 1995/09/30 08:59:02 chopps Exp $
 
 # TOP is assumed to be defined by Makefile including this one.
 
@@ -19,7 +19,7 @@ MTREE=		${COMMONDIR}/mtree.conf
 all: ${CBIN}
 	dd if=/dev/zero of=${IMAGE} bs=80k count=22
 	vnconfig -v -c ${VND_DEV} ${IMAGE}
-	newfs -O -m 0 -o space -i 5120 -c 80 ${VND_RDEV} floppyhd
+	newfs -O -m 0 -o space ${VND_RDEV} floppyhd
 	mount ${VND_DEV} ${MOUNT_POINT}
 	mtree -def ${MTREE} -p ${MOUNT_POINT}/ -u
 	TOPDIR=${TOP} CURDIR=${.CURDIR} OBJDIR=${.OBJDIR} \
