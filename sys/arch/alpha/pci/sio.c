@@ -1,4 +1,4 @@
-/* $NetBSD: sio.c,v 1.31 2000/07/12 20:50:00 thorpej Exp $ */
+/* $NetBSD: sio.c,v 1.32 2000/07/12 21:02:14 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: sio.c,v 1.31 2000/07/12 20:50:00 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sio.c,v 1.32 2000/07/12 21:02:14 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -251,8 +251,9 @@ sio_bridge_callback(self)
 	 * Deal with platforms which have Odd ISA DMA needs.
 	 */
 	switch (cputype) {
-#ifdef DEC_2100_A500
+#if defined(DEC_2100_A500) || defined(DEC_2100A_A500)
 	case ST_DEC_2100_A500:
+	case ST_DEC_2100A_A500:
 		sc->sc_ic = sableio_pickisa();
 		break;
 #endif
@@ -268,8 +269,9 @@ sio_bridge_callback(self)
 	 * Deal with platforms that hook up ISA interrupts differently.
 	 */
 	switch (cputype) {
-#ifdef DEC_2100_A500
+#if defined(DEC_2100_A500) || defined(DEC_2100A_A500)
 	case ST_DEC_2100_A500:
+	case ST_DEC_2100A_A500:
 		pci_2100_a500_isa_pickintr(sc->sc_pc, sc->sc_ic);
 		break;
 #endif
