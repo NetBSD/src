@@ -1,4 +1,4 @@
-/*	$NetBSD: ethertypes.h,v 1.4 1998/09/09 04:32:39 thorpej Exp $	*/
+/*	$NetBSD: ethertypes.h,v 1.5 1998/10/13 02:34:31 kim Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -48,15 +48,39 @@
 #ifndef _NET_ETHERTYPES_H_
 #define _NET_ETHERTYPES_H_
 
+#define ETHERTYPE_8023		0x0004	/* IEEE 802.3 packet */
 #define	ETHERTYPE_PUP		0x0200	/* PUP protocol */
+#define	ETHERTYPE_SPRITE	0x0500	/* ??? */
 #define	ETHERTYPE_NS		0x0600	/* XNS */
 #define	ETHERTYPE_IP		0x0800	/* IP protocol */
-#define	ETHERTYPE_ARP		0x0806	/* address resolution protocol */
-#define	ETHERTYPE_REVARP	0x8035	/* reverse addr resolution protocol */
-#define	ETHERTYPE_AT		0x809B	/* AppleTalk */
+#define	ETHERTYPE_ARP		0x0806	/* Address resolution protocol */
+#define	ETHERTYPE_MOPDL		0x6001	/* DEC MOP dump/load */
+#define	ETHERTYPE_MOPRC		0x6002	/* DEC MOP remote console */
+#define	ETHERTYPE_DECnet	0x6003	/* DEC DECNET Phase IV route */
+#define	ETHERTYPE_DN		ETHERTYPE_DECnet
+#define	ETHERTYPE_LAT		0x6004	/* DEC LAT */
+#define ETHERTYPE_SCA		0x6007	/* DEC LAVC, SCA */
+#define ETHERTYPE_HP		0x8005	/* HP Probe */
+#define ETHERTYPE_SG_DIAG	0x8013	/* SGI diagnostic type */
+#define ETHERTYPE_SG_NETGAMES	0x8014	/* SGI network games */
+#define ETHERTYPE_SG_RESV	0x8015	/* SGI reserved type */
+#define ETHERTYPE_SG_BOUNCE	0x8016	/* SGI bounce server */
+#define	ETHERTYPE_REVARP	0x8035	/* Reverse addr resolution protocol */
+#define	ETHERTYPE_LANBRIDGE	0x8038	/* DEC LANBridge */
+#define	ETHERTYPE_DECDNS	0x803C	/* DEC DNS */
+#define	ETHERTYPE_DECDTS	0x803E	/* DEC DTS */
+#define	ETHERTYPE_VEXP		0x805B	/* Stanford V Kernel exp. */
+#define	ETHERTYPE_VPROD		0x805C	/* Stanford V Kernel prod. */
+#define	ETHERTYPE_ATALK		0x809B	/* AppleTalk */
 #define	ETHERTYPE_AARP		0x80F3	/* AppleTalk AARP */
-#define	ETHERTYPE_IPV6		0x86DD	/* IP protocol version 6 */
 #define	ETHERTYPE_IPX		0x8137	/* Novell IPX */
+#define ETHERTYPE_XTP		0x817D	/* Protocol Engines XTP */
+#define ETHERTYPE_STP		0x8181	/* Scheduled Transfer STP, HIPPI-ST */
+#define	ETHERTYPE_IPV6		0x86DD	/* IP protocol version 6 */
+#define	ETHERTYPE_PPP		0x880B	/* PPP */
+#define	ETHERTYPE_LOOPBACK	0x9000	/* Loopback */
+#define ETHERTYPE_LBACK		ETHERTYPE_LOOPBACK
+#define	ETHERTYPE_MAX		0xFFFF	/* Maximum valid ethernet type */
 
 /*
  * The ETHERTYPE_NTRAILER packet types starting at ETHERTYPE_TRAIL have

@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_gre.c,v 1.4 1998/10/07 23:33:02 thorpej Exp $ */
+/*	$NetBSD: ip_gre.c,v 1.5 1998/10/13 02:34:32 kim Exp $ */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -189,7 +189,7 @@ gre_input2(struct mbuf *m ,int hlen,u_char proto)
 			break;
 #endif
 #ifdef NETATALK
-		case ETHERTYPE_AT:
+		case ETHERTYPE_ATALK:
 			ifq = &atintrq1;
 			schednetisr(NETISR_ATALK);
 			break;
