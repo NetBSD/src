@@ -1,4 +1,4 @@
-/*	$NetBSD: size.c,v 1.9 1997/08/25 06:42:19 mikel Exp $	*/
+/*	$NetBSD: size.c,v 1.10 1997/10/19 23:10:35 lukem Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -44,7 +44,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993\n\
 #if 0
 static char sccsid[] = "@(#)size.c	8.2 (Berkeley) 12/9/93";
 #endif
-__RCSID("$NetBSD: size.c,v 1.9 1997/08/25 06:42:19 mikel Exp $");
+__RCSID("$NetBSD: size.c,v 1.10 1997/10/19 23:10:35 lukem Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -79,7 +79,7 @@ main(argc, argv)
 {
 	int ch, eval;
 
-	while ((ch = getopt(argc, argv, "wt")) != EOF)
+	while ((ch = getopt(argc, argv, "wt")) != -1)
 		switch(ch) {
 		case 'w':
 			ignore_bad_archive_entries = 0;
