@@ -1,5 +1,5 @@
 # from:	@(#)GENERIC.sparc	8.1 (Berkeley) 6/11/93
-# $Id: GENERIC.sparc,v 1.1.2.2 1994/08/12 06:36:33 mycroft Exp $
+# $Id: GENERIC.sparc,v 1.1.2.3 1994/08/17 11:10:40 mycroft Exp $
 # Generic SPARC
 
 include	"std.sparc"
@@ -66,3 +66,4 @@ le*	at sbus? slot ? offset ?
 pseudo-device	loop
 pseudo-device	pty
 pseudo-device	sl
+pseudo-device	kbd
