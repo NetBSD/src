@@ -1,4 +1,4 @@
-/*	$NetBSD: nextrom.h,v 1.3 1998/11/10 22:45:45 dbj Exp $	*/
+/*	$NetBSD: nextrom.h,v 1.4 1999/01/31 07:02:34 dbj Exp $	*/
 /*
  * Copyright (c) 1998 Darrin B. Jewell
  * All rights reserved.
@@ -239,5 +239,11 @@ caddr_t mon_alloc();
 
 #define NeXT_TURBO_COLOR 5			/* probed witnessed */
 
+extern u_char rom_enetaddr[];
+extern u_char rom_boot_dev[];
+extern u_char rom_boot_arg[];
+extern u_char rom_boot_info[];
+extern u_char rom_boot_file[];
+extern u_char rom_bootfile[];
 
 #endif /* NEXTROM_H_INCLUDED */
