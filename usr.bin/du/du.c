@@ -1,4 +1,4 @@
-/*	$NetBSD: du.c,v 1.23 2003/08/07 11:13:34 agc Exp $	*/
+/*	$NetBSD: du.c,v 1.23.2.1 2004/05/17 09:17:43 tron Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)du.c	8.5 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: du.c,v 1.23 2003/08/07 11:13:34 agc Exp $");
+__RCSID("$NetBSD: du.c,v 1.23.2.1 2004/05/17 09:17:43 tron Exp $");
 #endif
 #endif /* not lint */
 
@@ -76,13 +76,13 @@ main(argc, argv)
 	FTSENT *p;
 	int64_t totalblocks;
 	int ftsoptions, listdirs, listfiles;
-	int Hflag, Lflag, Pflag, aflag, ch, cflag, gkmflag, rval, sflag;
+	int Hflag, Lflag, Pflag, aflag, ch, cflag, gkmflag, nflag, rval, sflag;
 	char *noargv[2];
 
-	Hflag = Lflag = Pflag = aflag = cflag = gkmflag = sflag = 0;
+	Hflag = Lflag = Pflag = aflag = cflag = gkmflag = nflag = sflag = 0;
 	totalblocks = 0;
 	ftsoptions = FTS_PHYSICAL;
-	while ((ch = getopt(argc, argv, "HLPacghkmrsx")) != -1)
+	while ((ch = getopt(argc, argv, "HLPacghkmnrsx")) != -1)
 		switch (ch) {
 		case 'H':
 			Hflag = 1;
@@ -117,6 +117,9 @@ main(argc, argv)
 			blocksize = 1024 * 1024;
 			gkmflag = 1;
 			break; 
+		case 'n':
+			nflag = 1;
+			break;
 		case 'r':
 			break;
 		case 's':
@@ -175,7 +178,20 @@ main(argc, argv)
 	if ((fts = fts_open(argv, ftsoptions, NULL)) == NULL)
 		err(1, "fts_open `%s'", *argv);
 
-	for (rval = 0; (p = fts_read(fts)) != NULL;)
+	for (rval = 0; (p = fts_read(fts)) != NULL;) {
+		if (nflag) {
+			switch (p->fts_info) {
+			case FTS_NS:
+			case FTS_SLNONE:
+				/* nothing */
+				break;
+			default:
+				if (p->fts_statp->st_flags & UF_NODUMP) {
+					fts_set(fts, p, FTS_SKIP);
+					continue;
+				}
+			}
+		}
 		switch (p->fts_info) {
 		case FTS_D:			/* Ignore. */
 			break;
@@ -213,6 +229,7 @@ main(argc, argv)
 			if (cflag)
 				totalblocks += p->fts_statp->st_blocks;
 		}
+	}
 	if (errno)
 		err(1, "fts_read");
 	if (cflag)
