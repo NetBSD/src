@@ -1,4 +1,4 @@
-/*	$NetBSD: un.h,v 1.16 1997/02/27 05:46:37 mikel Exp $	*/
+/*	$NetBSD: un.h,v 1.17 1998/01/07 22:49:12 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -47,6 +47,11 @@ struct	sockaddr_un {
 	char	sun_path[104];		/* path name (gag) */
 };
 
+/*
+ * Socket options for UNIX IPC domain.
+ */
+#define	LOCAL_CREDS	0x0001		/* pass credentials to receiver */
+
 #ifdef _KERNEL
 struct unpcb;
 struct socket;
@@ -66,7 +71,8 @@ void	unp_shutdown __P((struct unpcb *unp));
 int 	unp_externalize __P((struct mbuf *));
 int	unp_internalize __P((struct mbuf *, struct proc *));
 void 	unp_dispose __P((struct mbuf *));
-int	unp_output __P((struct mbuf *, struct mbuf *, struct unpcb *));
+int	unp_output __P((struct mbuf *, struct mbuf *, struct unpcb *,
+	    struct proc *));
 void	unp_setsockaddr __P((struct unpcb *, struct mbuf *));
 void	unp_setpeeraddr __P((struct unpcb *, struct mbuf *));
 #else /* !_KERNEL */
