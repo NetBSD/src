@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.271 2002/10/30 15:45:10 agc Exp $
+#	$NetBSD: Makefile,v 1.272 2002/11/11 22:34:27 wiz Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/18/93
 
 MAN=	aac.4 acphy.4 adv.4 adw.4 agp.4 ahb.4 ahc.4 amdpm.4 \
@@ -18,7 +18,7 @@ MAN=	aac.4 acphy.4 adv.4 adw.4 agp.4 ahb.4 ahc.4 amdpm.4 \
 	lc.4 ld.4 lkm.4 \
 	lo.4 lxtphy.4 mainbus.4 makphy.4 mbe.4 mca.4 mcclock.4 \
 	md.4 mfb.4 mhzc.4 midi.4 mii.4 \
-	mk48txx.4 mlx.4 mly.4 mpu.4 mtio.4 ne.4 neo.4 netintro.4 ns.4 \
+	mk48txx.4 mlx.4 mly.4 mpu.4 mtd.4 mtio.4 ne.4 neo.4 netintro.4 ns.4 \
 	nsclpcsio.4 nsip.4 \
 	nsphy.4 nsphyter.4 ntwoc.4 null.4 opl.4 options.4 osiop.4 pas.4 \
 	pcdisplay.4 pciide.4 pckbc.4 pckbd.4 pcn.4 pcppi.4 pcscp.4 pcweasel.4 \
