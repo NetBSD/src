@@ -1,5 +1,7 @@
-.\" Copyright (c) 1987, 1990 The Regents of the University of California.
-.\" All rights reserved.
+.\"	$NetBSD: ctags.1,v 1.4 1995/03/26 20:14:04 glass Exp $
+.\"
+.\" Copyright (c) 1987, 1990, 1993
+.\"	The Regents of the University of California.  All rights reserved.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
 .\" modification, are permitted provided that the following conditions
@@ -29,10 +31,9 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"     from: @(#)ctags.1	6.8 (Berkeley) 4/24/91
-.\"	$Id: ctags.1,v 1.3 1994/01/11 02:19:57 jtc Exp $
+.\"     @(#)ctags.1	8.1 (Berkeley) 6/6/93
 .\"
-.Dd April 24, 1991
+.Dd June 6, 1993
 .Dt CTAGS 1
 .Os BSD 4
 .Sh NAME
@@ -50,16 +51,17 @@ makes a tags file for
 from the specified C,
 Pascal, Fortran,
 .Tn YACC ,
-lex, and lisp sources.  A tags file gives the
-locations of specified objects in a group of files.  Each line of the
-tags file contains the object name, the file in which it is defined,
-and a search pattern for the object definition, separated by white-space.
+lex, and lisp sources.
+A tags file gives the locations of specified objects in a group of files.
+Each line of the tags file contains the object name, the file in which it
+is defined, and a search pattern for the object definition, separated by
+white-space.
 Using the
 .Ar tags
 file,
 .Xr ex 1
-can quickly locate these object
-definitions.  Depending on the options provided to
+can quickly locate these object definitions.
+Depending upon the options provided to
 .Nm ctags ,
 objects will consist of subroutines, typedefs, defines, structs,
 enums and unions.
@@ -84,7 +86,7 @@ that take arguments are tagged automatically.
 .It Fl f
 Places the tag descriptions in a file called
 .Ar tagsfile .
-The default behavior is to place them in a file
+The default behaviour is to place them in a file called
 .Ar tags .
 .It Fl t
 create tags for typedefs, structs, unions, and enums.
@@ -169,8 +171,8 @@ default output tags file
 .El
 .Sh DIAGNOSTICS
 .Nm Ctags
-exits with a value of 1 if an error occurred, where
-duplicate objects are not considered errors, 0 otherwise.
+exits with a value of 1 if an error occurred, 0 otherwise.
+Duplicate objects are not considered errors.
 .Sh SEE ALSO
 .Xr ex 1 ,
 .Xr vi 1
@@ -196,9 +198,9 @@ functions is a hack.
 .Nm Ctags
 relies on the input being well formed, and any syntactical
 errors will completely confuse it.  It also finds some legal syntax
-confusing; for example, as it doesn't understand
-.Li #ifdef Ns 's ,
-(incidentally, that's a feature, not a bug) any code with unbalanced
+confusing; for example, since it doesn't understand
+.Li #ifdef Ns 's
+(incidentally, that's a feature, not a bug), any code with unbalanced
 braces inside
 .Li #ifdef Ns 's
 will cause it to become somewhat disoriented.
