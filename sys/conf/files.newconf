@@ -67,6 +67,7 @@ file isofs/isofs_vfsops.c	isofs
 file isofs/isofs_vnops.c	isofs
 file kern/exec_aout.c	
 file kern/exec_conf.c	
+file kern/exec_ecoff.c		compat_ultrix	
 file kern/exec_script.c	
 file kern/exec_subr.c	
 file kern/init_main.c	
