@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf32.c,v 1.98 2004/08/01 22:16:19 jdolecek Exp $	*/
+/*	$NetBSD: exec_elf32.c,v 1.99 2004/10/30 09:38:15 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1994, 2000 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: exec_elf32.c,v 1.98 2004/08/01 22:16:19 jdolecek Exp $");
+__KERNEL_RCSID(1, "$NetBSD: exec_elf32.c,v 1.99 2004/10/30 09:38:15 skrll Exp $");
 
 /* If not included by exec_elf64.c, ELFSIZE won't be defined. */
 #ifndef ELFSIZE
@@ -589,9 +589,7 @@ ELFNAME2(exec,makecmds)(struct proc *p, struct exec_package *epp)
 
 	/*
 	 * On the same architecture, we may be emulating different systems.
-	 * See which one will accept this executable. This currently only
-	 * applies to SVR4, and IBCS2 on the i386 and Linux on the i386
-	 * and the Alpha.
+	 * See which one will accept this executable.
 	 *
 	 * Probe functions would normally see if the interpreter (if any)
 	 * exists. Emulation packages may possibly replace the interpreter in
