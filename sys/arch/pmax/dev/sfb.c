@@ -1,4 +1,4 @@
-/*	$NetBSD: sfb.c,v 1.17 1996/10/13 03:39:40 christos Exp $	*/
+/*	$NetBSD: sfb.c,v 1.18 1996/10/13 13:14:01 jonathan Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -101,7 +101,8 @@
 #include <pmax/dev/bt459.h>
 #include <pmax/dev/sfbreg.h>
 
-#include <machine/machConst.h>
+#include <mips/cpuregs.h>		/* mips cached->uncached */
+
 #include <pmax/pmax/pmaxtype.h>
 #include <machine/pmioctl.h>
 #include <pmax/dev/fbreg.h>
