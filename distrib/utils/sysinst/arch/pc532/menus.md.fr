@@ -1,4 +1,4 @@
-/*	$NetBSD: menus.md.fr,v 1.8 2000/03/14 22:42:53 fvdl Exp $	*/
+/*	$NetBSD: menus.md.fr,v 1.9 2000/03/28 00:29:56 thorpej Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -56,9 +56,13 @@ menu editfsparts, y=12, exit;
  
 menu md_distcustom, x=26, y=5, exit, title "Sélection des composants";
 	display action { show_cur_distsets (); };
+	option	"Kernel",		 action { toggle_getit (0); };
+	option	"Base",			 action { toggle_getit (1); };
+	option	"System (/etc)",	 action { toggle_getit (2); };
 	option  "Outils de développement", 	 action { toggle_getit (3); };
 	option  "Jeux", 		 action { toggle_getit (4); };
 	option  "Pages de manuel", 	 action { toggle_getit (5); };
 	option  "Divers", 	 action { toggle_getit (6); };
 	option  "Outils de manipulation de textes", action { toggle_getit (7); };
+	option	"Security (Crypto)",	 action { toggle_getit (8); };
 
