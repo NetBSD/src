@@ -5,7 +5,7 @@ TODO list for system packages
   from build.sh
 + decide whether to keep a separate system package database of
   metadata, and, if so, where to keep it
-+ decide whether to use pkg_* -K for this, or to add a separate argument
++ if using separate database, add a flag to support this to pkg_*
 + add syspkg support to sysinst
 	+ add pkg_install utilities (and necessary sub-utilities) to
 	  the crunched install tools
@@ -13,5 +13,7 @@ TODO list for system packages
 + need a tool to create meta-packages
 	+ base-bind meta-pkg created from base-bind-root,
 	  base-bind-bin and base-bind-example
-	+ take this from a spec-file, or from command line
+	+ base meta-pkg created from base-* meta-pkgs
+	+ bundle packages into tar files (`pkgsets'per src/distrib/syspkg/notes)
+	+ meta-pkg content entirely derivable from pkg names (base-*, base-bind-*)
 + add system packages to the release ISOs
