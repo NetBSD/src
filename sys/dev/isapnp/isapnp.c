@@ -1,4 +1,4 @@
-/*	$NetBSD: isapnp.c,v 1.1 1997/01/16 22:00:59 christos Exp $	*/
+/*	$NetBSD: isapnp.c,v 1.2 1997/01/24 21:58:34 christos Exp $	*/
 
 /*
  * Copyright (c) 1996 Christos Zoulas.  All rights reserved.
@@ -357,7 +357,7 @@ isapnp_bestconfig(sc, ipa)
 #define SAMEDEV(a, b) (strcmp((a)->ipa_devlogic, (b)->ipa_devlogic) == 0)
 
 		/* Find the best config */
-		for (best = c = f; c != NULL; c = c->ipa_next) {
+		for (best = c = f; c != NULL; c = c->ipa_sibling) {
 			if (!SAMEDEV(c, f))
 				continue;
 			if (c->ipa_pref < best->ipa_pref)
@@ -369,17 +369,17 @@ isapnp_bestconfig(sc, ipa)
 
 		/* Remove this config from the list */
 		if (best == f)
-			f = f->ipa_next;
+			f = f->ipa_sibling;
 		else {
-			for (c = f; c->ipa_next != best; c = c->ipa_next)
+			for (c = f; c->ipa_sibling != best; c = c->ipa_sibling)
 				continue;
-			c->ipa_next = best->ipa_next;
+			c->ipa_sibling = best->ipa_sibling;
 		}
 
 		if (error) {
 			best->ipa_pref = ISAPNP_DEP_CONFLICTING;
 
-			for (c = f; c != NULL; c = c->ipa_next)
+			for (c = f; c != NULL; c = c->ipa_sibling)
 				if (c != best && SAMEDEV(c, best))
 					break;
 			/* Last config for this logical device is conflicting */
@@ -398,17 +398,17 @@ isapnp_bestconfig(sc, ipa)
 			for (c = f; c; ) {
 				if (c == best)
 					continue;
-				d = c->ipa_next;
+				d = c->ipa_sibling;
 				if (SAMEDEV(c, best))
 					ISAPNP_FREE(c);
 				else {
 					if (n)
-						n->ipa_next = c;
+						n->ipa_sibling = c;
 				
 					else
 						l = c;
 					n = c;
-					c->ipa_next = NULL;
+					c->ipa_sibling = NULL;
 				}
 				c = d;
 			}

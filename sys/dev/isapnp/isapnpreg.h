@@ -1,4 +1,4 @@
-/*	$NetBSD: isapnpreg.h,v 1.1 1997/01/16 22:01:02 christos Exp $	*/
+/*	$NetBSD: isapnpreg.h,v 1.2 1997/01/24 21:58:35 christos Exp $	*/
 
 /*
  * Copyright (c) 1996 Christos Zoulas.  All rights reserved.
@@ -36,7 +36,7 @@
 
 #define ISAPNP_MAX_CARDS		8
 #define ISAPNP_MAX_IDENT		32
-#define ISAPNP_MAX_DEVCLASS		8
+#define ISAPNP_MAX_DEVCLASS		16
 #define ISAPNP_SERIAL_SIZE		9
 #define ISAPNP_MAX_TAGSIZE		256
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: isapnpres.c,v 1.3 1997/01/24 21:17:19 veego Exp $	*/
+/*	$NetBSD: isapnpres.c,v 1.4 1997/01/24 21:58:36 christos Exp $	*/
 
 /*
  * Copyright (c) 1996 Christos Zoulas.  All rights reserved.
@@ -47,8 +47,17 @@
 
 
 static int isapnp_wait_status __P((struct isapnp_softc *));
-static struct isapnp_attach_args *isapnp_process_tag __P((u_char, u_char,
-    u_char *, struct isapnp_attach_args *));
+static struct isapnp_attach_args *
+    isapnp_newdev __P((struct isapnp_attach_args *));
+static struct isapnp_attach_args *
+    isapnp_newconf __P((struct isapnp_attach_args *));
+static void isapnp_merge __P((struct isapnp_attach_args *,
+    struct isapnp_attach_args *));
+static struct isapnp_attach_args *
+    isapnp_flatten __P((struct isapnp_attach_args *));
+static int isapnp_process_tag __P((u_char, u_char, u_char *,
+    struct isapnp_attach_args **, struct isapnp_attach_args **,
+    struct isapnp_attach_args **));
 
 
 /* isapnp_wait_status():
@@ -68,18 +77,152 @@ isapnp_wait_status(sc)
 	return 1;
 }
 
+
+/* isapnp_newdev():
+ *	Add a new logical device to the current card; expand the configuration
+ *	resources of the current card if needed.
+ */
+static struct isapnp_attach_args *
+isapnp_newdev(card)
+	struct isapnp_attach_args *card;
+{
+	struct isapnp_attach_args *ipa, *dev = ISAPNP_MALLOC(sizeof(*dev));
+
+	memset(dev, 0, sizeof(*dev));
+
+	dev->ipa_pref = ISAPNP_DEP_ACCEPTABLE;
+	memcpy(dev->ipa_devident, card->ipa_devident,
+	    sizeof(card->ipa_devident));
+
+	if (card->ipa_child == NULL)
+		card->ipa_child = dev;
+	else {
+		for (ipa = card->ipa_child; ipa->ipa_sibling != NULL; 
+		    ipa = ipa->ipa_sibling)
+			continue;
+		ipa->ipa_sibling = dev;
+	}
+
+
+	return dev;
+}
+
+
+/* isapnp_newconf():
+ *	Add a new alternate configuration to a logical device
+ */
+static struct isapnp_attach_args *
+isapnp_newconf(dev)
+	struct isapnp_attach_args *dev;
+{
+	struct isapnp_attach_args *ipa, *conf = ISAPNP_MALLOC(sizeof(*conf));
+
+	memset(conf, 0, sizeof(*conf));
+
+	memcpy(conf->ipa_devident, dev->ipa_devident,
+	    sizeof(conf->ipa_devident));
+	memcpy(conf->ipa_devlogic, dev->ipa_devlogic,
+	    sizeof(conf->ipa_devlogic));
+	memcpy(conf->ipa_devclass, dev->ipa_devclass,
+	    sizeof(conf->ipa_devclass));
+
+	if (dev->ipa_child == NULL)
+		dev->ipa_child = conf;
+	else {
+		for (ipa = dev->ipa_child; ipa->ipa_sibling;
+		    ipa = ipa->ipa_sibling)
+			continue;
+		ipa->ipa_sibling = conf;
+	}
+
+	return conf;
+}
+
+
+/* isapnp_merge():
+ *	Merge the common device configurations to the subconfigurations
+ */
+static void
+isapnp_merge(d, c)
+	struct isapnp_attach_args *d, *c;
+{
+	int i;
+
+	for (i = 0; i < d->ipa_nio; i++)
+		c->ipa_io[c->ipa_nio++] = d->ipa_io[i];
+
+	for (i = 0; i < d->ipa_nmem; i++)
+		c->ipa_mem[c->ipa_nmem++] = d->ipa_mem[i];
+
+	for (i = 0; i < d->ipa_nmem32; i++)
+		c->ipa_mem32[c->ipa_nmem32++] = d->ipa_mem32[i];
+
+	for (i = 0; i < d->ipa_nirq; i++)
+		c->ipa_irq[c->ipa_nirq++] = d->ipa_irq[i];
+
+	for (i = 0; i < d->ipa_ndrq; i++)
+		c->ipa_drq[c->ipa_ndrq++] = d->ipa_drq[i];
+}
+
+
+/* isapnp_flatten():
+ *	Flatten the tree to a list of config entries.
+ */
+static struct isapnp_attach_args *
+isapnp_flatten(card)
+	struct isapnp_attach_args *card;
+{
+	struct isapnp_attach_args *dev, *conf, *d, *c, *pa;
+
+	dev = card->ipa_child;
+	ISAPNP_FREE(card);
+
+	for (conf = c = NULL, d = dev; d; d = dev) {
+		dev = d->ipa_sibling;
+		if (d->ipa_child == NULL) {
+			/*
+			 * No subconfigurations; all configuration info
+			 * is in the device node.
+			 */
+			d->ipa_sibling = NULL;
+			pa = d;
+		}
+		else {
+			/*
+			 * Push down device configuration info to the
+			 * subconfigurations
+			 */
+			for (pa = d->ipa_child; pa; pa = pa->ipa_sibling)
+				isapnp_merge(d, pa);
+
+			pa = d->ipa_child;
+			ISAPNP_FREE(d);
+		}
+
+		if (c == NULL)
+			c = conf = pa;
+		else
+			c->ipa_sibling = pa;
+
+		while (c->ipa_sibling)
+			c = c->ipa_sibling;
+	}
+	return conf;
+}
+
+
 /* isapnp_process_tag():
  *	Process a resource tag
  */
-static struct isapnp_attach_args *
-isapnp_process_tag(tag, len, buf, pa)
+static int
+isapnp_process_tag(tag, len, buf, card, dev, conf)
 	u_char tag, len, *buf;
-	struct isapnp_attach_args *pa;
+	struct isapnp_attach_args **card, **dev, **conf;
 {
-	struct isapnp_attach_args *npa;
 	char str[64];
 	struct isapnp_region *r;
 	struct isapnp_pin *p;
+	struct isapnp_attach_args *pa;
 
 #define COPY(a, b) strncpy((a), (b), sizeof(a)), (a)[sizeof(a) - 1] = '\0'
 
@@ -87,19 +230,72 @@ isapnp_process_tag(tag, len, buf, pa)
 	case ISAPNP_TAG_VERSION_NUM:
 		DPRINTF(("PnP version %d.%d, Vendor version %d.%d\n",
 		    buf[0] >> 4, buf[0] & 0xf, buf[1] >> 4,  buf[1] & 0xf));
-		break;
+		return 0;
 
 	case ISAPNP_TAG_LOGICAL_DEV_ID:
 		(void) isapnp_id_to_vendor(str, buf);
 		DPRINTF(("Logical device id %s\n", str));
-		COPY(pa->ipa_devlogic, str);
-		break;
+
+		*dev = isapnp_newdev(*card);
+		COPY((*dev)->ipa_devlogic, str);
+		return 0;
 
 	case ISAPNP_TAG_COMPAT_DEV_ID:
 		(void) isapnp_id_to_vendor(str, buf);
 		DPRINTF(("Compatible device id %s\n", str));
-		break;
+		return 0;
+
+	case ISAPNP_TAG_DEP_START:
+		if (len == 0)
+			buf[0] = ISAPNP_DEP_ACCEPTABLE;
+
+		if (*dev == NULL)
+			return -1;
+
+		*conf = isapnp_newconf(*dev);
+		(*conf)->ipa_pref = buf[0];
+#ifdef DEBUG_ISAPNP
+		isapnp_print_dep_start(">>> Start dependent functions ",
+		    (*conf)->ipa_pref);
+#endif
+		return 0;
 		
+	case ISAPNP_TAG_DEP_END:
+		DPRINTF(("<<<End dependend functions\n"));
+		*conf = NULL;
+		return 0;
+
+	case ISAPNP_TAG_ANSI_IDENT_STRING:
+		buf[len] = '\0';
+		DPRINTF(("ANSI Ident: %s\n", buf));
+		if (*dev == NULL)
+			COPY((*card)->ipa_devident, buf);
+		else
+			COPY((*dev)->ipa_devclass, buf);
+		return 0;
+
+	case ISAPNP_TAG_END:
+		*dev = NULL;
+		return 0;
+
+	default:
+		/* Handled below */
+		break;
+	}
+
+
+	/*
+	 * Decide which configuration we add the tag to
+	 */
+	if (*conf)
+		pa = *conf;
+	else if (*dev)
+		pa = *dev;
+	else
+		/* error */
+		return -1;
+
+	switch (tag) {
 	case ISAPNP_TAG_IRQ_FORMAT:
 		if (len < 2)
 			break;
@@ -127,39 +323,6 @@ isapnp_process_tag(tag, len, buf, pa)
 #endif
 		break;
 
-	case ISAPNP_TAG_DEP_START:
-		if (len == 0)
-			buf[0] = ISAPNP_DEP_ACCEPTABLE;
-		if (pa->ipa_pref != ISAPNP_DEP_UNSET) {
-			npa = ISAPNP_MALLOC(sizeof(*npa));
-			memset(npa, 0, sizeof(*npa));
-			memcpy(npa->ipa_devident, pa->ipa_devident,
-			    sizeof(pa->ipa_devident));
-			memcpy(npa->ipa_devlogic, pa->ipa_devlogic,
-			    sizeof(pa->ipa_devlogic));
-			memcpy(npa->ipa_devclass, pa->ipa_devclass,
-			    sizeof(pa->ipa_devclass));
-			pa->ipa_next = npa;
-			pa = npa;
-		}
-		pa->ipa_pref = buf[0];
-#ifdef DEBUG_ISAPNP
-		isapnp_print_dep_start(">>> Start dependent functions ",
-		    pa->ipa_pref);
-#endif
-		break;
-		
-	case ISAPNP_TAG_DEP_END:
-		DPRINTF(("<<<End dependend functions\n"));
-		npa = ISAPNP_MALLOC(sizeof(*npa));
-		memset(npa, 0, sizeof(*npa));
-		npa->ipa_pref = ISAPNP_DEP_UNSET;
-		memcpy(npa->ipa_devident, pa->ipa_devident,
-		    sizeof(pa->ipa_devident));
-
-		pa->ipa_next = npa;
-		pa = npa;
-		break;
 
 	case ISAPNP_TAG_IO_PORT_DESC:
 		r = &pa->ipa_io[pa->ipa_nio++];
@@ -196,9 +359,6 @@ isapnp_process_tag(tag, len, buf, pa)
 	case ISAPNP_TAG_VENDOR_DEF:
 		break;
 
-	case ISAPNP_TAG_END:
-		break;
-
 	case ISAPNP_TAG_MEM_RANGE_DESC:
 		r = &pa->ipa_mem[pa->ipa_nmem++];
 		r->minbase = (buf[2] << 8) | buf[1];
@@ -210,14 +370,6 @@ isapnp_process_tag(tag, len, buf, pa)
 #endif
 		break;
 
-	case ISAPNP_TAG_ANSI_IDENT_STRING:
-		buf[len] = '\0';
-		DPRINTF(("ANSI Ident: %s\n", buf));
-		if (pa->ipa_devident[0] == '\0')
-			COPY(pa->ipa_devident, buf);
-		else
-			COPY(pa->ipa_devclass, buf);
-		break;
 
 	case ISAPNP_TAG_UNICODE_IDENT_STRING:
 		buf[len] = '\0';
@@ -269,7 +421,7 @@ isapnp_process_tag(tag, len, buf, pa)
 #endif
 		break;
 	}
-	return pa;
+	return 0;
 }
 
 
@@ -284,36 +436,42 @@ isapnp_get_resource(sc, c)
 	u_char d, tag;
 	u_short len;
 	int i;
-	struct isapnp_attach_args *ipa, *pa;
+	int warned = 0;
+	struct isapnp_attach_args *card, *dev = NULL, *conf = NULL;
+	u_char buf[ISAPNP_MAX_TAGSIZE], *p;
 
-	pa = ipa = ISAPNP_MALLOC(sizeof(*ipa));
-	memset(ipa, 0, sizeof(*ipa));
-	pa->ipa_pref = ISAPNP_DEP_UNSET;
+	memset(buf, 0, sizeof(buf));
 
-	for (i = 0; i < ISAPNP_SERIAL_SIZE; i++) {
-		if (isapnp_wait_status(sc))
-			goto bad;
-
-		d = isapnp_read_reg(sc, ISAPNP_RESOURCE_DATA);
-
-		if (d != sc->sc_id[c][i] && i != ISAPNP_SERIAL_SIZE - 1) {
-			printf("isapnp: card %d violates PnP spec; byte %d\n",
-			    c + 1, i);
-			break;
-		}
-	}
-
-	do {
-		u_char buf[ISAPNP_MAX_TAGSIZE], *p;
-
-		memset(buf, 0, sizeof(buf));
+	card = ISAPNP_MALLOC(sizeof(*card));
+	memset(card, 0, sizeof(*card));
 
 #define NEXT_BYTE \
 		if (isapnp_wait_status(sc)) \
 			goto bad; \
-		d = isapnp_read_reg(sc, ISAPNP_RESOURCE_DATA);
-		
+		d = isapnp_read_reg(sc, ISAPNP_RESOURCE_DATA)
+
+	for (i = 0; i < ISAPNP_SERIAL_SIZE; i++) {
 		NEXT_BYTE;
+
+		if (d != sc->sc_id[c][i] && i != ISAPNP_SERIAL_SIZE - 1) {
+			if (!warned) {
+				printf("%s: card %d violates PnP spec; byte %d\n",
+				    sc->sc_dev.dv_xname, c + 1, i);
+				warned++;
+			}
+			if (i == 0) {
+				/*
+				 * Magic! If this is the first byte, we
+				 * assume that the tag data begins here.
+				 */
+				goto parse;
+			}
+		}
+	}
+
+	do {
+		NEXT_BYTE;
+parse:
 
 		if (d & ISAPNP_LARGE_TAG) {
 			tag = d;
@@ -335,21 +493,27 @@ isapnp_get_resource(sc, c)
 		}
 
 		if (len >= ISAPNP_MAX_TAGSIZE) {
-			printf("isapnp: Maximum tag size exceeded, card %d\n",
-			    c + 1);
+			printf("%s: Maximum tag size exceeded, card %d\n",
+			    sc->sc_dev.dv_xname, c + 1);
 			len = ISAPNP_MAX_TAGSIZE;
+			if (++warned == 10)
+				goto bad;
 		}
 
-		pa = isapnp_process_tag(tag, len, buf, pa);
+		if (isapnp_process_tag(tag, len, buf, &card, &dev, &conf) == -1)
+			printf("%s: No current device for tag, card %d\n",
+			    sc->sc_dev.dv_xname, c + 1);
 	}
 	while (tag != ISAPNP_TAG_END);
-	return ipa;
+	return isapnp_flatten(card);
+
 bad:
-	while (ipa) {
-		pa = ipa->ipa_next;
-		ISAPNP_FREE(ipa);
-		ipa = pa;
+	for (card = isapnp_flatten(card); card; ) {
+		dev = card->ipa_sibling;
+		ISAPNP_FREE(card);
+		card = dev;
 	}
-	printf("isapnp: Resource timeout, card %d\n", c + 1);
+	printf("%s: %s, card %d\n", sc->sc_dev.dv_xname,
+	    warned >= 10 ? "Too many tag errors" : "Resource timeout", c + 1);
 	return NULL;
 }
