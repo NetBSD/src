@@ -1,8 +1,9 @@
 /*
+ * Copyright (c) 1997 Erez Zadok
  * Copyright (c) 1990 Jan-Simon Pendry
  * Copyright (c) 1990 Imperial College of Science, Technology & Medicine
- * Copyright (c) 1990, 1993
- *	The Regents of the University of California.  All rights reserved.
+ * Copyright (c) 1990 The Regents of the University of California.
+ * All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
  * Jan-Simon Pendry at Imperial College, London.
@@ -17,8 +18,8 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
+ *      This product includes software developed by the University of
+ *      California, Berkeley and its contributors.
  * 4. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
@@ -35,9 +36,9 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)info_union.c	8.1 (Berkeley) 6/6/93
+ *      %W% (Berkeley) %G%
  *
- * $Id: info_union.c,v 1.1.1.1 1994/06/13 19:52:53 mycroft Exp $
+ * $Id: info_union.c,v 1.1.1.2 1997/07/24 21:21:07 christos Exp $
  *
  */
 
@@ -48,106 +49,96 @@
  * THIS WILL CAUSE A DEADLOCK!
  */
 
-#include "am.h"
-
-#ifdef HAS_UNION_MAPS
-
-#ifdef _POSIX_SOURCE
-#include <dirent.h>
-#define	DIRENT struct dirent
-#else
-#include <sys/dir.h>
-#define	DIRENT struct direct
-#endif
+#ifdef HAVE_CONFIG_H
+# include <config.h>
+#endif /* HAVE_CONFIG_H */
+#include <am_defs.h>
+#include <amd.h>
 
 #define	UNION_PREFIX	"union:"
 #define	UNION_PREFLEN	6
 
+
 /*
  * No way to probe - check the map name begins with "union:"
  */
-int union_init P((char *map, time_t *tp));
-int union_init(map, tp)
-char *map;
-time_t *tp;
+int
+union_init(mnt_map *m, char *map, time_t *tp)
 {
-	*tp = 0;
-	return strncmp(map, UNION_PREFIX, UNION_PREFLEN) == 0 ? 0 : ENOENT;
+  *tp = 0;
+  return strncmp(map, UNION_PREFIX, UNION_PREFLEN) == 0 ? 0 : ENOENT;
 }
 
-int union_search P((mnt_map *m, char *map, char *key, char **pval, time_t *tp));
-int union_search(m, map, key, pval, tp)
-mnt_map *m;
-char *map;
-char *key;
-char **pval;
-time_t *tp;
+
+int
+union_search(mnt_map *m, char *map, char *key, char **pval, time_t *tp)
 {
-	char *mapd = strdup(map + UNION_PREFLEN);
-	char **v = strsplit(mapd, ':', '\"');
-	char **p;
-	for (p = v; p[1]; p++)
-		;
-	*pval = xmalloc(strlen(*p) + 5);
-	sprintf(*pval, "fs:=%s", *p);
-	free(mapd);
-	free(v);
-	return 0;
+  char *mapd = strdup(map + UNION_PREFLEN);
+  char **v = strsplit(mapd, ':', '\"');
+  char **p;
+
+  for (p = v; p[1]; p++) ;
+  *pval = xmalloc(strlen(*p) + 5);
+  sprintf(*pval, "fs:=%s", *p);
+  free(mapd);
+  free(v);
+  return 0;
 }
 
-int union_reload P((mnt_map *m, char *map, void (*fn)()));
-int union_reload(m, map, fn)
-mnt_map *m;
-char *map;
-void (*fn)();
+
+int
+union_reload(mnt_map *m, char *map, void (*fn) ())
 {
-	char *mapd = strdup(map + UNION_PREFLEN);
-	char **v = strsplit(mapd, ':', '\"');
-	char **dir;
+  char *mapd = strdup(map + UNION_PREFLEN);
+  char **v = strsplit(mapd, ':', '\"');
+  char **dir;
 
-	/*
-	 * Add fake /defaults entry
-	 */
-	(*fn)(m, strdup("/defaults"), strdup("type:=link;opts:=nounmount;sublink:=${key}"));
+  /*
+   * Add fake /defaults entry
+   */
+  (*fn) (m, strdup("/defaults"), strdup("type:=link;opts:=nounmount;sublink:=${key}"));
 
-	for (dir = v; *dir; dir++) {
-		int dlen;
-		DIRENT *dp;
-		DIR *dirp = opendir(*dir);
-		if (!dirp) {
-			plog(XLOG_USER, "Cannot read directory %s: %m", *dir);
-			continue;
-		}
-		dlen = strlen(*dir);
-#ifdef DEBUG
-		dlog("Reading directory %s...", *dir);
-#endif
-		while (dp = readdir(dirp)) {
-			char *val;
-			if (dp->d_name[0] == '.' &&
-					(dp->d_name[1] == '\0' ||
-					(dp->d_name[1] == '.' && dp->d_name[2] == '\0')))
-				continue;
+  for (dir = v; *dir; dir++) {
+    int dlen;
+    struct dirent *dp;
+
+    DIR *dirp = opendir(*dir);
+    if (!dirp) {
+      plog(XLOG_USER, "Cannot read directory %s: %m", *dir);
+      continue;
+    }
+    dlen = strlen(*dir);
 
 #ifdef DEBUG
-			dlog("... gives %s", dp->d_name);
-#endif
-			val = xmalloc(dlen + 5);
-			sprintf(val, "fs:=%s", *dir);
-			(*fn)(m, strdup(dp->d_name), val);
-		}
-		closedir(dirp);
-	}
-	/*
-	 * Add wildcard entry
-	 */
-	{ char *val = xmalloc(strlen(dir[-1]) + 5);
-	  sprintf(val, "fs:=%s", dir[-1]);
-	  (*fn)(m, strdup("*"), val);
-	}
-	free(mapd);
-	free(v);
-	return 0;
-}
+    dlog("Reading directory %s...", *dir);
+#endif /* DEBUG */
+    while ((dp = readdir(dirp))) {
+      char *val, *dpname = &dp->d_name[0];
+      if (dpname[0] == '.' &&
+	  (dpname[1] == '\0' ||
+	   (dpname[1] == '.' && dpname[2] == '\0')))
+	continue;
 
-#endif /* HAS_UNION_MAPS */
+#ifdef DEBUG
+      dlog("... gives %s", dp->d_name);
+#endif /* DEBUG */
+      val = xmalloc(dlen + 5);
+      sprintf(val, "fs:=%s", *dir);
+      (*fn) (m, strdup(dp->d_name), val);
+    }
+    closedir(dirp);
+  }
+
+  /*
+   * Add wildcard entry
+   */
+  {
+    char *val = xmalloc(strlen(dir[-1]) + 5);
+
+    sprintf(val, "fs:=%s", dir[-1]);
+    (*fn) (m, strdup("*"), val);
+  }
+  free(mapd);
+  free(v);
+  return 0;
+}

@@ -1,11 +1,7 @@
-#	@(#)Makefile	8.1 (Berkeley) 6/28/93
+#	$NetBSD: Makefile,v 1.1.1.2 1997/07/24 21:24:18 christos Exp $
 
-PROG=	mk-amd-map
-CFLAGS+=-I${.CURDIR}/../include
-CFLAGS+=-I${.CURDIR}/../rpcx
-CFLAGS+=-I${.CURDIR}/../config
-CFLAGS+=-DOS_HDR=\"os-bsd44.h\"
-MAN8=	mk-amd-map.0
+PROG= mk-amd-map
+SRCS=	mk-amd-map.c 
+MAN+= mk-amd-map.8
 
-.include "../../Makefile.inc"
 .include <bsd.prog.mk>

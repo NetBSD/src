@@ -1,8 +1,9 @@
 /*
+ * Copyright (c) 1997 Erez Zadok
  * Copyright (c) 1989 Jan-Simon Pendry
  * Copyright (c) 1989 Imperial College of Science, Technology & Medicine
- * Copyright (c) 1989, 1993
- *	The Regents of the University of California.  All rights reserved.
+ * Copyright (c) 1989 The Regents of the University of California.
+ * All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
  * Jan-Simon Pendry at Imperial College, London.
@@ -17,8 +18,8 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
+ *      This product includes software developed by the University of
+ *      California, Berkeley and its contributors.
  * 4. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
@@ -35,9 +36,9 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)fsi_data.h	8.1 (Berkeley) 6/6/93
+ *      %W% (Berkeley) %G%
  *
- * $Id: fsi_data.h,v 1.1.1.1 1994/06/13 19:54:03 mycroft Exp $
+ * $Id: fsi_data.h,v 1.1.1.2 1997/07/24 21:23:46 christos Exp $
  *
  */
 
@@ -51,80 +52,76 @@ typedef struct ether_if ether_if;
 typedef struct fsmount fsmount;
 typedef struct host host;
 typedef struct ioloc ioloc;
-typedef struct mount mount;
-typedef struct qelem qelem;
+typedef struct fsi_mount fsi_mount;
 
-/*
- * Linked lists...
- */
-struct qelem {
-	qelem *q_forw;
-	qelem *q_back;
-};
 
 /*
  * Automount tree
  */
 struct automount {
-	qelem a_q;
-	ioloc *a_ioloc;
-	char *a_name;		/* Automount key */
-	char *a_volname;	/* Equivalent volume to be referenced */
-	char *a_symlink;	/* Symlink representation */
-	qelem *a_mount;		/* Tree representation */
-	dict_ent *a_mounted;
+  qelem a_q;
+  ioloc *a_ioloc;
+  char *a_name;			/* Automount key */
+  char *a_volname;		/* Equivalent volume to be referenced */
+  char *a_symlink;		/* Symlink representation */
+  char *a_opts;			/* opts for mounting */
+  char *a_hardwiredfs;		/* hack to bypass bogus fs definitions */
+  qelem *a_mount;		/* Tree representation */
+  dict_ent *a_mounted;
 };
 
 /*
  * List of automount trees
  */
 struct auto_tree {
-	qelem t_q;
-	ioloc *t_ioloc;
-	char *t_defaults;
-	qelem *t_mount;
+  qelem t_q;
+  ioloc *t_ioloc;
+  char *t_defaults;
+  qelem *t_mount;
 };
-	
+
 /*
  * A host
  */
 struct host {
-	qelem q;
-	int h_mask;
-	ioloc *h_ioloc;
-	fsmount *h_netroot, *h_netswap;
+  qelem q;
+  int h_mask;
+  ioloc *h_ioloc;
+  fsmount *h_netroot, *h_netswap;
 #define HF_HOST	0
-	char *h_hostname;	/* The full name of the host */
-	char *h_lochost;	/* The name of the host with local domains stripped */
-	char *h_hostpath;	/* The filesystem path to the host (cf compute_hostpath) */
+  char *h_hostname;		/* The full name of the host */
+  char *h_lochost;		/* The name of the host with local domains *
+				 * * * stripped */
+  char *h_hostpath;		/* The filesystem path to the host (cf * * *
+				 * compute_hostpath) */
 #define	HF_ETHER 1
-	qelem *h_ether;
+  qelem *h_ether;
 #define	HF_CONFIG 2
-	qelem *h_config;
+  qelem *h_config;
 #define	HF_ARCH 3
-	char *h_arch;
+  char *h_arch;
 #define	HF_CLUSTER 4
-	char *h_cluster;
+  char *h_cluster;
 #define	HF_OS 5
-	char *h_os;
-	qelem *h_disk_fs;
-	qelem *h_mount;
+  char *h_os;
+  qelem *h_disk_fs;
+  qelem *h_mount;
 };
 
 /*
  * An ethernet interface
  */
 struct ether_if {
-	qelem e_q;
-	int e_mask;
-	ioloc *e_ioloc;
-	char *e_if;
+  qelem e_q;
+  int e_mask;
+  ioloc *e_ioloc;
+  char *e_if;
 #define	EF_INADDR 0
-	struct in_addr e_inaddr;
+  struct in_addr e_inaddr;
 #define	EF_NETMASK 1
-	u_long e_netmask;
+  u_long e_netmask;
 #define	EF_HWADDR 2
-	char *e_hwaddr;
+  char *e_hwaddr;
 };
 
 /*
@@ -135,48 +132,49 @@ struct ether_if {
  * need updating.
  */
 struct disk_fs {
-	qelem d_q;
-	int d_mask;
-	ioloc *d_ioloc;
-	host *d_host;
-	char *d_mountpt;
-	char *d_dev;
+  qelem d_q;
+  int d_mask;
+  ioloc *d_ioloc;
+  host *d_host;
+  char *d_mountpt;
+  char *d_dev;
 #define	DF_FSTYPE	0
-	char *d_fstype;
+  char *d_fstype;
 #define	DF_OPTS		1
-	char *d_opts;
+  char *d_opts;
 #define	DF_DUMPSET	2
-	char *d_dumpset;
+  char *d_dumpset;
 #define	DF_PASSNO	3
-	int d_passno;
+  int d_passno;
 #define	DF_FREQ		4
-	int d_freq;
+  int d_freq;
 #define	DF_MOUNT	5
-	qelem *d_mount;
+  qelem *d_mount;
 #define	DF_LOG		6
-	char *d_log;
+  char *d_log;
 };
+
 #define	DF_REQUIRED	((1<<DF_FSTYPE)|(1<<DF_OPTS)|(1<<DF_PASSNO)|(1<<DF_MOUNT))
 
 /*
  * A mount tree
  */
-struct mount {
-	qelem m_q;
-	ioloc *m_ioloc;
-	int m_mask;
+struct fsi_mount {
+  qelem m_q;
+  ioloc *m_ioloc;
+  int m_mask;
 #define	DM_VOLNAME	0
-	char *m_volname;
+  char *m_volname;
 #define	DM_EXPORTFS	1
-	char *m_exportfs;
+  char *m_exportfs;
 #define	DM_SEL		2
-	char *m_sel;
-	char *m_name;
-	int m_name_len;
-	mount *m_parent;
-	disk_fs *m_dk;
-	mount *m_exported;
-	qelem *m_mount;
+  char *m_sel;
+  char *m_name;
+  int m_name_len;
+  fsi_mount *m_parent;
+  disk_fs *m_dk;
+  fsi_mount *m_exported;
+  qelem *m_mount;
 };
 
 /*
@@ -187,21 +185,23 @@ struct mount {
  * need updating.
  */
 struct fsmount {
-	qelem f_q;
-	mount *f_ref;
-	ioloc *f_ioloc;
-	int f_mask;
+  qelem f_q;
+  fsi_mount *f_ref;
+  ioloc *f_ioloc;
+  int f_mask;
 #define	FM_LOCALNAME	0
-	char *f_localname;
+  char *f_localname;
 #define	FM_VOLNAME	1
-	char *f_volname;
+  char *f_volname;
 #define	FM_FSTYPE	2
-	char *f_fstype;
+  char *f_fstype;
 #define	FM_OPTS		3
-	char *f_opts;
+  char *f_opts;
 #define	FM_FROM		4
-	char *f_from;
+  char *f_from;
+#define FM_DIRECT	5
 };
+
 #define	FM_REQUIRED	((1<<FM_VOLNAME)|(1<<FM_FSTYPE)|(1<<FM_OPTS)|(1<<FM_FROM)|(1<<FM_LOCALNAME))
 #define	FM_NETROOT	0x01
 #define	FM_NETSWAP	0x02
@@ -209,28 +209,28 @@ struct fsmount {
 
 #define	DICTHASH	5
 struct dict_ent {
-	dict_ent *de_next;
-	char *de_key;
-	int de_count;
-	qelem de_q;
+  dict_ent *de_next;
+  char *de_key;
+  int de_count;
+  qelem de_q;
 };
 
 /*
  * Dictionaries ...
  */
 struct dict_data {
-	qelem dd_q;
-	char *dd_data;
+  qelem dd_q;
+  char *dd_data;
 };
 
 struct dict {
-	dict_ent *de[DICTHASH];
+  dict_ent *de[DICTHASH];
 };
 
 /*
  * Source text location for error reports
  */
 struct ioloc {
-	int i_line;
-	char *i_file;
+  int i_line;
+  char *i_file;
 };
