@@ -1,4 +1,4 @@
-/*	$NetBSD: tc.c,v 1.7 1996/02/27 21:48:52 cgd Exp $	*/
+/*	$NetBSD: tc.c,v 1.8 1996/03/02 01:16:51 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -32,6 +32,7 @@
 
 #include <dev/tc/tcreg.h>
 #include <dev/tc/tcvar.h>
+#include <dev/tc/tcdevs.h>
 
 struct tc_softc {
 	struct	device sc_dv;
@@ -54,6 +55,7 @@ struct cfdriver tccd =
 int	tcprint __P((void *, char *));
 int	tcsubmatch __P((struct device *, void *, void *));
 int	tc_checkslot __P((tc_addr_t, char *));
+void	tc_devinfo __P((const char *, char *));
 
 int
 tcmatch(parent, cfdata, aux)
@@ -185,12 +187,15 @@ tcprint(aux, pnp)
 	char *pnp;
 {
 	struct tc_attach_args *ta = aux;
+	char devinfo[256];
 
-        if (pnp)
-                printf("%s at %s", ta->ta_modname, pnp);	/* XXX */
-        printf(" slot %d offset 0x%lx", ta->ta_slot,
+	if (pnp) {
+		tc_devinfo(ta->ta_modname, devinfo);
+		printf("%s at %s", devinfo, pnp);  
+	}
+	printf(" slot %d offset 0x%lx", ta->ta_slot,
 	    (long)ta->ta_offset);
-        return (UNCONF);
+	return (UNCONF);
 }
 
 int   
@@ -279,4 +284,51 @@ tc_intr_disestablish(dev, cookie)
 	struct tc_softc *sc = (struct tc_softc *)dev;
 
 	(*sc->sc_intr_disestablish)(sc->sc_dv.dv_parent, cookie);
+}
+
+#ifdef TCVERBOSE
+/*      
+ * Descriptions of of known devices.
+ */     
+struct tc_knowndev {
+	const char *id, *name;
+};      
+
+#include <dev/tc/tcdevs_data.h>
+#endif /* TCVERBOSE */
+
+void
+tc_devinfo(id, cp)
+	const char *id;
+	char *cp;
+{
+	const char *name;
+#ifdef TCVERBOSE
+	struct tc_knowndev *tdp;
+	int match;
+	const char *unmatched = "unknown device ";
+#else
+	const char *unmatched = "";
+#endif
+
+	name = NULL;
+
+#ifdef TCVERBOSE
+	/* find the device in the table, if possible. */
+	tdp = tc_knowndevs;
+	while (tdp->id != NULL) {
+		/* check this entry for a match */
+		match = !strcmp(tdp->id, id);
+		if (match) {
+			name = tdp->name;
+			break;
+		}
+		tdp++;
+	}
+#endif
+
+	if (name == NULL)
+		cp += sprintf(cp, "%s%s", unmatched, id);
+	else
+		cp += sprintf(cp, "%s (%s)", name, id);
 }
