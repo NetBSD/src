@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.25 2003/02/04 21:24:54 leo Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.26 2003/04/03 17:49:22 he Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -166,7 +166,7 @@ readdisklabel(dev, strat, lp, clp)
 	lp->d_partitions[RAW_PART].p_size = lp->d_secperunit;
 	lp->d_npartitions                 = RAW_PART + 1;
 	lp->d_bbsize                      = BBSIZE;
-	lp->d_sbsize                      = SBSIZE;
+	lp->d_sbsize                      = SBLOCKSIZE;
 
 #ifdef DISKLABEL_NBDA
 	/* Try the native NetBSD/Atari format first. */
