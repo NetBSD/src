@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.108 2002/11/22 12:21:04 wiz Exp $
+# $NetBSD: GENERIC,v 1.109 2003/02/27 19:22:45 perseant Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include		"arch/pmax/conf/std.pmax"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.108 $"
+#ident		"GENERIC-$Revision: 1.109 $"
 
 maxusers	64
 
@@ -227,6 +227,7 @@ pseudo-device	gif		4	# IPv[46] over IPv[46] tunnel (RFC1933)
 #pseudo-device	stf		1	# 6to4 IPv6 over IPv4 encapsulation
 pseudo-device	vlan			# IEEE 802.1q encapsulation
 pseudo-device	bridge			# simple inter-network bridging
+#options	BRIDGE_IPF		# bridge uses IP/IPv6 pfil hooks too
 
 pseudo-device	vnd		 4	# virtual disk ick
 pseudo-device	ccd		 4	# concatenated disks
