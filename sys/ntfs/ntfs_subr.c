@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_subr.c,v 1.29 2001/06/19 22:10:11 jdolecek Exp $	*/
+/*	$NetBSD: ntfs_subr.c,v 1.30 2001/06/25 18:33:14 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 Semen Ustimenko (semenu@FreeBSD.org)
@@ -1629,6 +1629,20 @@ ntfs_readntvattr_plain(
 						  min(ntfs_cntob(ccl) - off,
 						      MAXBSIZE - off));
 					cl = ntfs_btocl(tocopy + off);
+
+					/*
+					 * If 'off' pushes us to next
+					 * block, don't attempt to read whole
+					 * 'tocopy' at once. This is to avoid
+					 * bread() with varying 'size' for
+					 * same 'blkno', which is not good.
+					 */
+					if (cl > ntfs_btocl(tocopy)) {
+						tocopy -=
+						    ntfs_btocnoff(tocopy + off);
+						cl--;
+					}
+
 					ddprintf(("ntfs_readntvattr_plain: " \
 						"read: cn: 0x%x cl: %d, " \
 						"off: %d len: %d, left: %d\n",
@@ -1672,7 +1686,7 @@ ntfs_readntvattr_plain(
 				off = 0;
 				if (uio) {
 					size_t remains = tocopy;
-					for(; remains; remains++)
+					for(; remains; remains--)
 						uiomove("", 1, uio);
 				} else 
 					bzero(data, tocopy);
