@@ -1,4 +1,4 @@
-/*	$NetBSD: psl.h,v 1.13 1994/10/27 04:16:20 cgd Exp $	*/
+/*	$NetBSD: psl.h,v 1.14 1994/11/06 01:37:47 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -69,6 +69,7 @@
 #define	PSL_USERCLR	(PSL_MBZ | PSL_VIP | PSL_VIF | PSL_NT | PSL_VM)
 
 #ifdef KERNEL
+
 #define	IPL_NONE	-1
 #define	IPL_BIO		0
 #define	IPL_NET		1
@@ -76,63 +77,84 @@
 #define	IPL_CLOCK	3
 
 #define	SIR_CLOCK	31
-#define	SIR_CLOCKMASK	(1 << SIR_CLOCK)
+#define	SIR_CLOCKMASK	((1 << SIR_CLOCK))
 #define	SIR_NET		30
 #define	SIR_NETMASK	((1 << SIR_NET) | SIR_CLOCKMASK)
 #define	SIR_TTY		29
 #define	SIR_TTYMASK	((1 << SIR_TTY) | SIR_CLOCKMASK)
 
 #ifndef LOCORE
+
 int cpl, ipending, astpending, imask[4];
 
-#define	SPL(name, adjust) \
-static __inline int			\
-__CONCAT(spl,name)()				\
-{ 					\
-	register int ocpl = cpl;	\
-	adjust;				\
-	return ocpl;			\
-}
-
-SPL(bio, cpl |= imask[IPL_BIO])
-SPL(imp, cpl |= imask[IPL_NET])
-SPL(tty, cpl |= imask[IPL_TTY])
-SPL(clock, cpl |= imask[IPL_CLOCK])
-#define	splstatclock()	splclock()
-SPL(high, cpl = -1)
 /*
- * splsoftclock() is used by hardclock() to lower the priority from clock to
- * softclock before it calls softclock().
+ * Add a mask to cpl, and return the old value of cpl.
  */
-SPL(softclock, cpl = SIR_CLOCKMASK)
-SPL(softnet, cpl |= SIR_NETMASK)
-#define	splnet()	splsoftnet()
-SPL(softtty, cpl |= SIR_TTYMASK)
+static __inline int
+splraise(ncpl)
+	register int ncpl;
+{
+	register int ocpl = cpl;
+	cpl |= ncpl;
+	return (ocpl);
+}
 
 extern void spllower __P((void));
 
-static __inline void
-spl0()
-{
-	cpl = 0;
-	if (ipending)
-		spllower();
-}
-
-static __inline void
+/*
+ * Restore a value to cpl (unmasking interrupts).  If any unmasked
+ * interrupts are pending, call spllower() to process them.
+ *
+ * NOTE: We go to the trouble of returning the old value of cpl for
+ * the benefit of some splsoftclock() callers.  This extra work is
+ * usually optimized away by the compiler.
+ */
+static __inline int
 splx(ncpl)
 	register int ncpl;
 {
+	register int ocpl = cpl;
 	cpl = ncpl;
 	if (ipending & ~ncpl)
 		spllower();
+	return (ocpl);
 }
 
+/*
+ * Hardware interrupt masks
+ */
+#define	splbio()	splraise(imask[IPL_BIO])
+#define	splimp()	splraise(imask[IPL_NET])
+#define	spltty()	splraise(imask[IPL_TTY])
+#define	splclock()	splraise(imask[IPL_CLOCK])
+#define	splstatclock()	splclock()
+
+/*
+ * Software interrupt masks
+ *
+ * NOTE: splsoftclock() is used by hardclock() to lower the priority from
+ * clock to softclock before it calls softclock().
+ */
+#define	splsoftclock()	splx(SIR_CLOCKMASK)
+#define	splsoftnet()	splraise(SIR_NETMASK)
+#define	splnet()	splsoftnet()
+#define	splsofttty()	splraise(SIR_TTYMASK)
+
+/*
+ * Miscellaneous
+ */
+#define	splhigh()	splraise(-1)
+#define	spl0()		splx(0)
+
+/*
+ * Software interrupt registration
+ */
 #define	softintr(n)	(ipending |= (1 << (n)))
 #define	setsoftast()	(astpending = 1)
 #define	setsoftclock()	softintr(SIR_CLOCK)
 #define	setsoftnet()	softintr(SIR_NET)
 #define	setsofttty()	softintr(SIR_TTY)
+
 #endif /* !LOCORE */
 #endif /* KERNEL */
 
