@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_descrip.c,v 1.122 2004/01/05 00:36:49 christos Exp $	*/
+/*	$NetBSD: kern_descrip.c,v 1.123 2004/01/07 09:26:29 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.122 2004/01/05 00:36:49 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.123 2004/01/07 09:26:29 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -353,7 +353,8 @@ sys_fcntl(struct lwp *l, void *v, register_t *retval)
 		return 0;
 
 	case F_MAXFD:
-		return fdp->fd_lastfile;
+		*retval = fdp->fd_lastfile;
+		return 0;
 
 	default:
 		/* Handled below */
