@@ -1,4 +1,4 @@
-/*	$NetBSD: emacs.c,v 1.19 2003/08/26 08:40:51 wiz Exp $	*/
+/*	$NetBSD: emacs.c,v 1.20 2003/08/26 08:52:03 wiz Exp $	*/
 
 /*
  *  Emacs-like command line editing and history
@@ -10,7 +10,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: emacs.c,v 1.19 2003/08/26 08:40:51 wiz Exp $");
+__RCSID("$NetBSD: emacs.c,v 1.20 2003/08/26 08:52:03 wiz Exp $");
 #endif
 
 
@@ -1268,7 +1268,9 @@ x_meta_yank(c)
 	int c;
 {
 	int	len;
-	if (x_last_command != XFUNC_yank && x_last_command != XFUNC_meta_yank) {
+	if ((x_last_command != XFUNC_yank && x_last_command != XFUNC_meta_yank)
+	    || killstack[killtp] == 0) {
+		killtp = killsp;
 		x_e_puts("\nyank something first");
 		x_redraw(-1);
 		return KSTD;
