@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)machdep.c	7.4 (Berkeley) 6/3/91
- *	$Id: machdep.c,v 1.24 1993/06/03 01:31:05 cgd Exp $
+ *	$Id: machdep.c,v 1.25 1993/06/03 18:01:08 cgd Exp $
  */
 
 #include "param.h"
@@ -507,7 +507,6 @@ boot(arghowto)
 	register int devtype;		/* r10 == major of root dev */
 	extern char *panicstr;
 	extern int cold;
-	int nomsg = 1;
 
 	if(cold) {
 		printf("hit reset please");
@@ -520,6 +519,7 @@ boot(arghowto)
 
 		waittime = 0;
 		(void) splnet();
+		printf("syncing disks... ");
 		/*
 		 * Release inodes held by texts before update.
 		 */
@@ -534,23 +534,21 @@ boot(arghowto)
 					nbusy++;
 			if (nbusy == 0)
 				break;
-			if (nomsg) {
-				printf("updating disks before rebooting... ");
-				nomsg = 0;
-			}
-			/* printf("%d ", nbusy); */
+			printf("%d ", nbusy);
 			DELAY(40000 * iter);
 		}
 		if (nbusy)
-			printf(" failed!\n");
+			printf("giving up\n");
 		else if (nomsg == 0)
-			printf("succeded.\n");
+			printf("done\n");
 		DELAY(10000);			/* wait for printf to finish */
 	}
 	splhigh();
 	devtype = major(rootdev);
 	if (howto&RB_HALT) {
-		printf("\nThe operating system has halted. Please press any key to reboot.\n\n");
+		printf("\n");
+		printf("The operating system has halted.\n");
+		printf("Please press any key to reboot.\n\n");
 		cngetc();
 	} else {
 		if (howto & RB_DUMP) {
