@@ -1,4 +1,4 @@
-.\"	$NetBSD: ccd.4,v 1.19 1999/12/15 22:07:31 abs Exp $
+.\"	$NetBSD: ccd.4,v 1.20 2000/04/05 04:03:21 enami Exp $
 .\"
 .\" Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -95,7 +95,12 @@ disklabel and the
 .Nm Ns 's
 disklabel.
 The kernel will only allow component partitions of type
-.Dv FS_BSDFFS .
+.Dv FS_CCD .
+But for now, it allows partition of all types since some port
+lacks support of an on-disk BSD disklabel.
+The partition of
+.Dv FS_UNUSED
+may be rejected because device driver of component disk will refuse it.
 .Pp
 In order to compile in support for the
 .Nm "" ,
