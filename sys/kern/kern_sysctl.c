@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sysctl.c,v 1.79 2000/09/11 18:45:29 thorpej Exp $	*/
+/*	$NetBSD: kern_sysctl.c,v 1.80 2000/09/23 11:33:05 bjh21 Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -102,7 +102,9 @@ static int sysctl_msgbuf __P((void *, size_t *));
 static int sysctl_doeproc __P((int *, u_int, void *, size_t *));
 static void fill_kproc2 __P((struct proc *, struct kinfo_proc2 *));
 static int sysctl_procargs __P((int *, u_int, void *, size_t *, struct proc *));
+#if NPTY > 0
 static int sysctl_pty __P((void *, size_t *, void *, size_t));
+#endif
 
 /*
  * The `sysctl_memlock' is intended to keep too many processes from
