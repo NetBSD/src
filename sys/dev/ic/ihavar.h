@@ -1,4 +1,4 @@
-/*	$NetBSD: ihavar.h,v 1.6 2001/11/17 21:26:12 tsutsui Exp $ */
+/*	$NetBSD: ihavar.h,v 1.7 2002/02/09 15:13:01 tsutsui Exp $ */
 /*
  * Initio INI-9xxxU/UW SCSI Device Driver
  *
@@ -68,12 +68,12 @@ struct iha_sg_element {
 #define IHA_SG_SIZE (sizeof(struct iha_sg_element) * IHA_MAX_SG_ENTRIES)
 
 /*
- * iha_scsi_req_q - SCSI Request structure used by the
+ * iha_scb - SCSI Request structure used by the
  *		    Tulip (aka inic-940/950).
  */
 
-struct iha_scsi_req_q {
-	TAILQ_ENTRY(iha_scsi_req_q) chain;
+struct iha_scb {
+	TAILQ_ENTRY(iha_scb) chain;
 
 	bus_dmamap_t dmap;		/* maps xs->buf xfer buffer	*/
 
@@ -141,10 +141,10 @@ struct tcs {
 	int offset;
 	int tagcnt;
 
-	struct iha_scsi_req_q *ntagscb;
+	struct iha_scb *ntagscb;
 
-	u_int8_t  syncm;
-	u_int8_t  sconfig0;
+	u_int8_t syncm;
+	u_int8_t sconfig0;
 };
 
 struct iha_softc {
@@ -180,21 +180,21 @@ struct iha_softc {
 #define		      PHASE_MSG_OUT	     0x06   /*	1    1	  0	     */
 #define		      PHASE_MSG_IN	     0x07   /*	1    1	  1	     */
 
-	struct iha_scsi_req_q *sc_scb;		    /* SCB array	     */
-	struct iha_scsi_req_q *sc_actscb;	    /* SCB using SCSI bus    */
+	struct iha_scb *sc_scb;			    /* SCB array	     */
+	struct iha_scb *sc_actscb;		    /* SCB using SCSI bus    */
 	struct iha_sg_element *sc_sglist;
 
-	TAILQ_HEAD(, iha_scsi_req_q) sc_freescb,
-				     sc_pendscb,
-				     sc_donescb;
+	TAILQ_HEAD(, iha_scb) sc_freescb,
+			      sc_pendscb,
+			      sc_donescb;
 
 	struct tcs sc_tcs[IHA_MAX_TARGETS];
 
-	u_int8_t  sc_msg[IHA_MAX_EXTENDED_MSG];    /* [0] len, [1] Msg Code */
-	u_int8_t  sc_sistat;
-	u_int8_t  sc_status0;
-	u_int8_t  sc_status1;
-	u_int8_t  sc_sconf1;
+	u_int8_t sc_msg[IHA_MAX_EXTENDED_MSG];	    /* [0] len, [1] Msg Code */
+	u_int8_t sc_sistat;
+	u_int8_t sc_status0;
+	u_int8_t sc_status1;
+	u_int8_t sc_sconf1;
 };
 
 /*
