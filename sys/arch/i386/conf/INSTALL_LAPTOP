@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL_LAPTOP,v 1.2 2000/09/30 13:25:12 fvdl Exp $
+#	$NetBSD: INSTALL_LAPTOP,v 1.3 2000/10/02 12:54:39 fvdl Exp $
 #
 #	INSTALL - Installation kernel.
 #
@@ -159,7 +159,7 @@ config		netbsd	root on ? type ?
 
 mainbus0 at root
 
-apm0	at mainbus0			# Advanced power management
+#apm0	at mainbus0			# Advanced power management
 
 
 # Basic Bus Support
@@ -176,7 +176,7 @@ options 	PCIBIOS_ADDR_FIXUP      # fixup PCI I/O addresses
 options 	PCIBIOS_BUS_FIXUP       # fixup PCI bus numbering
 options 	PCIBIOS_INTR_FIXUP      # fixup PCI interrupt routing
 #options        PCIBIOS_IRQS_HINT=0x0a00 # PCI interrupts hint. IRQ 9 or 11
-#options        PCIBIOS_INTR_GUESS      # see pcibios(4)
+options        PCIBIOS_INTR_GUESS      # see pcibios(4)
 #options        PCIINTR_DEBUG           # super-verbose PCI interrupt fixup
 
 # PCI bridges
