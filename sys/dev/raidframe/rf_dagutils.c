@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_dagutils.c,v 1.23 2003/12/30 21:59:03 oster Exp $	*/
+/*	$NetBSD: rf_dagutils.c,v 1.24 2004/01/10 17:04:44 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -33,7 +33,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_dagutils.c,v 1.23 2003/12/30 21:59:03 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_dagutils.c,v 1.24 2004/01/10 17:04:44 oster Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -261,8 +261,8 @@ rf_PrintNodeInfoString(RF_DagNode_t *node)
 	    || (df == rf_DiskReadMirrorPartitionFunc)) {
 		pda = (RF_PhysDiskAddr_t *) node->params[0].p;
 		bufPtr = (void *) node->params[1].p;
-		lk = RF_EXTRACT_LOCK_FLAG(node->params[3].v);
-		unlk = RF_EXTRACT_UNLOCK_FLAG(node->params[3].v);
+		lk = 0;
+		unlk = 0;
 		RF_ASSERT(!(lk && unlk));
 		printf("c %d offs %ld nsect %d buf 0x%lx %s\n", pda->col,
 		    (long) pda->startSector, (int) pda->numSector, (long) bufPtr,
@@ -271,8 +271,8 @@ rf_PrintNodeInfoString(RF_DagNode_t *node)
 	}
 	if (df == rf_DiskUnlockFunc) {
 		pda = (RF_PhysDiskAddr_t *) node->params[0].p;
-		lk = RF_EXTRACT_LOCK_FLAG(node->params[3].v);
-		unlk = RF_EXTRACT_UNLOCK_FLAG(node->params[3].v);
+		lk = 0;
+		unlk = 0;
 		RF_ASSERT(!(lk && unlk));
 		printf("c %d %s\n", pda->col,
 		    (lk) ? "LOCK" : ((unlk) ? "UNLK" : "nop"));

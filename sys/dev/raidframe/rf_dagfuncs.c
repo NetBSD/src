@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_dagfuncs.c,v 1.17 2003/12/31 00:00:06 oster Exp $	*/
+/*	$NetBSD: rf_dagfuncs.c,v 1.18 2004/01/10 17:04:44 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_dagfuncs.c,v 1.17 2003/12/31 00:00:06 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_dagfuncs.c,v 1.18 2004/01/10 17:04:44 oster Exp $");
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -267,10 +267,7 @@ rf_DiskReadFuncForThreads(RF_DagNode_t *node)
 	caddr_t buf = (caddr_t) node->params[1].p;
 	RF_StripeNum_t parityStripeID = (RF_StripeNum_t) node->params[2].v;
 	unsigned priority = RF_EXTRACT_PRIORITY(node->params[3].v);
-	unsigned lock = RF_EXTRACT_LOCK_FLAG(node->params[3].v);
-	unsigned unlock = RF_EXTRACT_UNLOCK_FLAG(node->params[3].v);
 	unsigned which_ru = RF_EXTRACT_RU(node->params[3].v);
-	RF_DiskQueueDataFlags_t flags = 0;
 	RF_IoType_t iotype = (node->dagHdr->status == rf_enable) ? RF_IO_TYPE_READ : RF_IO_TYPE_NOP;
 	RF_DiskQueue_t *dqs = ((RF_Raid_t *) (node->dagHdr->raidPtr))->Queues;
 	void   *b_proc = NULL;
@@ -278,15 +275,11 @@ rf_DiskReadFuncForThreads(RF_DagNode_t *node)
 	if (node->dagHdr->bp)
 		b_proc = (void *) ((struct buf *) node->dagHdr->bp)->b_proc;
 
-	RF_ASSERT(!(lock && unlock));
-	flags |= (lock) ? RF_LOCK_DISK_QUEUE : 0;
-	flags |= (unlock) ? RF_UNLOCK_DISK_QUEUE : 0;
-
 	req = rf_CreateDiskQueueData(iotype, pda->startSector, pda->numSector,
 	    buf, parityStripeID, which_ru,
 	    (int (*) (void *, int)) node->wakeFunc,
 	    node, NULL, node->dagHdr->tracerec,
-	    (void *) (node->dagHdr->raidPtr), flags, b_proc);
+	    (void *) (node->dagHdr->raidPtr), 0, b_proc);
 	if (!req) {
 		(node->wakeFunc) (node, ENOMEM);
 	} else {
@@ -308,10 +301,7 @@ rf_DiskWriteFuncForThreads(RF_DagNode_t *node)
 	caddr_t buf = (caddr_t) node->params[1].p;
 	RF_StripeNum_t parityStripeID = (RF_StripeNum_t) node->params[2].v;
 	unsigned priority = RF_EXTRACT_PRIORITY(node->params[3].v);
-	unsigned lock = RF_EXTRACT_LOCK_FLAG(node->params[3].v);
-	unsigned unlock = RF_EXTRACT_UNLOCK_FLAG(node->params[3].v);
 	unsigned which_ru = RF_EXTRACT_RU(node->params[3].v);
-	RF_DiskQueueDataFlags_t flags = 0;
 	RF_IoType_t iotype = (node->dagHdr->status == rf_enable) ? RF_IO_TYPE_WRITE : RF_IO_TYPE_NOP;
 	RF_DiskQueue_t *dqs = ((RF_Raid_t *) (node->dagHdr->raidPtr))->Queues;
 	void   *b_proc = NULL;
@@ -320,16 +310,13 @@ rf_DiskWriteFuncForThreads(RF_DagNode_t *node)
 		b_proc = (void *) ((struct buf *) node->dagHdr->bp)->b_proc;
 
 	/* normal processing (rollaway or forward recovery) begins here */
-	RF_ASSERT(!(lock && unlock));
-	flags |= (lock) ? RF_LOCK_DISK_QUEUE : 0;
-	flags |= (unlock) ? RF_UNLOCK_DISK_QUEUE : 0;
 	req = rf_CreateDiskQueueData(iotype, pda->startSector, pda->numSector,
 	    buf, parityStripeID, which_ru,
 	    (int (*) (void *, int)) node->wakeFunc,
 	    (void *) node, NULL,
 	    node->dagHdr->tracerec,
 	    (void *) (node->dagHdr->raidPtr),
-	    flags, b_proc);
+	    0, b_proc);
 
 	if (!req) {
 		(node->wakeFunc) (node, ENOMEM);
