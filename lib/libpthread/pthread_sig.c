@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_sig.c,v 1.13 2003/03/20 01:03:52 nathanw Exp $	*/
+/*	$NetBSD: pthread_sig.c,v 1.14 2003/05/27 15:24:25 christos Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_sig.c,v 1.13 2003/03/20 01:03:52 nathanw Exp $");
+__RCSID("$NetBSD: pthread_sig.c,v 1.14 2003/05/27 15:24:25 christos Exp $");
 
 /* We're interposing a specific version of the signal interface. */
 #define	__LIBC12_SOURCE__
@@ -892,8 +892,8 @@ pthread__signal_tramp(int sig, int code,
 	 * by a signal.
 	 */
 	_setcontext_u(uc);
-       	/*NOTREACHED*//*CONSTCOND*/
-	pthread__assert(0);
+	/*NOTREACHED*/
+	pthread__abort();
 }
 
 /*
