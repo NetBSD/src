@@ -1,4 +1,4 @@
-/*	$NetBSD: redir.c,v 1.24 2002/09/27 18:56:55 christos Exp $	*/
+/*	$NetBSD: redir.c,v 1.25 2002/09/27 22:56:24 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)redir.c	8.2 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: redir.c,v 1.24 2002/09/27 18:56:55 christos Exp $");
+__RCSID("$NetBSD: redir.c,v 1.25 2002/09/27 22:56:24 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -58,6 +58,7 @@ __RCSID("$NetBSD: redir.c,v 1.24 2002/09/27 18:56:55 christos Exp $");
  * Code for dealing with input/output redirection.
  */
 
+#include "main.h"
 #include "shell.h"
 #include "nodes.h"
 #include "jobs.h"
@@ -260,6 +261,7 @@ openhere(redir)
 	{
 	int pip[2];
 	int len = 0;
+	int isroot = rootshell;
 
 	if (pipe(pip) < 0)
 		error("Pipe call failed");
@@ -270,7 +272,7 @@ openhere(redir)
 			goto out;
 		}
 	}
-	if (forkshell((struct job *)NULL, (union node *)NULL, FORK_NOJOB) == 0) {
+	if (forkshell((struct job *)NULL, (union node *)NULL, FORK_NOJOB, &isroot) == 0) {
 		close(pip[0]);
 		signal(SIGINT, SIG_IGN);
 		signal(SIGQUIT, SIG_IGN);

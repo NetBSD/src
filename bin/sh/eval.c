@@ -1,4 +1,4 @@
-/*	$NetBSD: eval.c,v 1.63 2002/09/27 21:32:25 mycroft Exp $	*/
+/*	$NetBSD: eval.c,v 1.64 2002/09/27 22:56:24 christos Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)eval.c	8.9 (Berkeley) 6/8/95";
 #else
-__RCSID("$NetBSD: eval.c,v 1.63 2002/09/27 21:32:25 mycroft Exp $");
+__RCSID("$NetBSD: eval.c,v 1.64 2002/09/27 22:56:24 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -74,6 +74,7 @@ __RCSID("$NetBSD: eval.c,v 1.63 2002/09/27 21:32:25 mycroft Exp $");
 #include "error.h"
 #include "show.h"
 #include "mystring.h"
+#include "main.h"
 #ifndef SMALL
 #include "myhistedit.h"
 #endif
@@ -96,13 +97,13 @@ int exitstatus;			/* exit status of last command */
 int oexitstatus;		/* saved exit status */
 
 
-STATIC void evalloop __P((union node *, int));
-STATIC void evalfor __P((union node *, int));
-STATIC void evalcase __P((union node *, int));
-STATIC void evalsubshell __P((union node *, int));
+STATIC void evalloop __P((union node *, int, int *));
+STATIC void evalfor __P((union node *, int, int *));
+STATIC void evalcase __P((union node *, int, int *));
+STATIC void evalsubshell __P((union node *, int, int *));
 STATIC void expredir __P((union node *));
-STATIC void evalpipe __P((union node *));
-STATIC void evalcommand __P((union node *, int, struct backcmd *));
+STATIC void evalpipe __P((union node *, int *));
+STATIC void evalcommand __P((union node *, int, struct backcmd *, int *));
 STATIC void prehash __P((union node *));
 
 
@@ -171,11 +172,14 @@ evalstring(s, flag)
 	{
 	union node *n;
 	struct stackmark smark;
+	int isroot;
 
 	setstackmark(&smark);
 	setinputstring(s, 1);
+
 	while ((n = parsecmd(0)) != NEOF) {
-		evaltree(n, flag);
+		isroot = rootshell;
+		evaltree(n, flag, &isroot);
 		popstackmark(&smark);
 	}
 	popfile();
@@ -190,9 +194,10 @@ evalstring(s, flag)
  */
 
 void
-evaltree(n, flags)
+evaltree(n, flags, isroot)
 	union node *n;
 	int flags;
+	int *isroot;
 {
 	if (n == NULL) {
 		TRACE(("evaltree(NULL) called\n"));
@@ -202,77 +207,77 @@ evaltree(n, flags)
 #ifndef SMALL
 	displayhist = 1;	/* show history substitutions done with fc */
 #endif
-	TRACE(("evaltree(0x%lx: %d) called\n", (long)n, n->type));
+	TRACE(("evaltree(0x%lx: %d, %d) called\n", (long)n, n->type, *isroot));
 	switch (n->type) {
 	case NSEMI:
-		evaltree(n->nbinary.ch1, flags & EV_TESTED);
+		evaltree(n->nbinary.ch1, flags & EV_TESTED, isroot);
 		if (evalskip)
 			goto out;
-		evaltree(n->nbinary.ch2, flags);
+		evaltree(n->nbinary.ch2, flags, isroot);
 		break;
 	case NAND:
-		evaltree(n->nbinary.ch1, EV_TESTED);
+		evaltree(n->nbinary.ch1, EV_TESTED, isroot);
 		if (evalskip || exitstatus != 0) {
 			/* don't bomb out on "set -e; false && true" */
 			flags |= EV_TESTED;
 			goto out;
 		}
-		evaltree(n->nbinary.ch2, flags | EV_TESTED);
+		evaltree(n->nbinary.ch2, flags | EV_TESTED, isroot);
 		break;
 	case NOR:
-		evaltree(n->nbinary.ch1, EV_TESTED);
+		evaltree(n->nbinary.ch1, EV_TESTED, isroot);
 		if (evalskip || exitstatus == 0)
 			goto out;
-		evaltree(n->nbinary.ch2, flags | EV_TESTED);
+		evaltree(n->nbinary.ch2, flags | EV_TESTED, isroot);
 		break;
 	case NREDIR:
 		expredir(n->nredir.redirect);
 		redirect(n->nredir.redirect, REDIR_PUSH);
-		evaltree(n->nredir.n, flags);
+		evaltree(n->nredir.n, flags, isroot);
 		popredir();
 		break;
 	case NSUBSHELL:
-		evalsubshell(n, flags);
+		evalsubshell(n, flags, isroot);
 		break;
 	case NBACKGND:
-		evalsubshell(n, flags);
+		evalsubshell(n, flags, isroot);
 		break;
 	case NIF: {
-		evaltree(n->nif.test, EV_TESTED);
+		evaltree(n->nif.test, EV_TESTED, isroot);
 		if (evalskip)
 			goto out;
 		if (exitstatus == 0)
-			evaltree(n->nif.ifpart, flags);
+			evaltree(n->nif.ifpart, flags, isroot);
 		else if (n->nif.elsepart)
-			evaltree(n->nif.elsepart, flags);
+			evaltree(n->nif.elsepart, flags, isroot);
 		else
 			exitstatus = 0;
 		break;
 	}
 	case NWHILE:
 	case NUNTIL:
-		evalloop(n, flags);
+		evalloop(n, flags, isroot);
 		break;
 	case NFOR:
-		evalfor(n, flags);
+		evalfor(n, flags, isroot);
 		break;
 	case NCASE:
-		evalcase(n, flags);
+		evalcase(n, flags, isroot);
 		break;
 	case NDEFUN:
 		defun(n->narg.text, n->narg.next);
 		exitstatus = 0;
 		break;
 	case NNOT:
-		evaltree(n->nnot.com, EV_TESTED);
+		evaltree(n->nnot.com, EV_TESTED, isroot);
 		exitstatus = !exitstatus;
 		break;
 
 	case NPIPE:
-		evalpipe(n);
+		evalpipe(n, isroot);
 		break;
 	case NCMD:
-		evalcommand(n, flags, (struct backcmd *)NULL);
+		evalcommand(n, flags, (struct backcmd *)NULL, isroot);
 		break;
 	default:
 		out1fmt("Node type = %d\n", n->type);
@@ -288,16 +293,17 @@ out:
 
 
 STATIC void
-evalloop(n, flags)
+evalloop(n, flags, isroot)
 	union node *n;
 	int flags;
+	int *isroot;
 {
 	int status;
 
 	loopnest++;
 	status = 0;
 	for (;;) {
-		evaltree(n->nbinary.ch1, EV_TESTED);
+		evaltree(n->nbinary.ch1, EV_TESTED, isroot);
 		if (evalskip) {
 skipping:	  if (evalskip == SKIPCONT && --skipcount <= 0) {
 				evalskip = 0;
@@ -314,7 +320,7 @@ skipping:	  if (evalskip == SKIPCONT && --skipcount <= 0) {
 			if (exitstatus == 0)
 				break;
 		}
-		evaltree(n->nbinary.ch2, flags & EV_TESTED);
+		evaltree(n->nbinary.ch2, flags & EV_TESTED, isroot);
 		status = exitstatus;
 		if (evalskip)
 			goto skipping;
@@ -326,9 +332,10 @@ skipping:	  if (evalskip == SKIPCONT && --skipcount <= 0) {
 
 
 STATIC void
-evalfor(n, flags)
+evalfor(n, flags, isroot)
     union node *n;
     int flags;
+    int *isroot;
 {
 	struct arglist arglist;
 	union node *argp;
@@ -349,7 +356,7 @@ evalfor(n, flags)
 	loopnest++;
 	for (sp = arglist.list ; sp ; sp = sp->next) {
 		setvar(n->nfor.var, sp->text, 0);
-		evaltree(n->nfor.body, flags & EV_TESTED);
+		evaltree(n->nfor.body, flags & EV_TESTED, isroot);
 		if (evalskip) {
 			if (evalskip == SKIPCONT && --skipcount <= 0) {
 				evalskip = 0;
@@ -368,9 +375,10 @@ out:
 
 
 STATIC void
-evalcase(n, flags)
+evalcase(n, flags, isroot)
 	union node *n;
 	int flags;
+	int *isroot;
 {
 	union node *cp;
 	union node *patp;
@@ -385,7 +393,7 @@ evalcase(n, flags)
 		for (patp = cp->nclist.pattern ; patp ; patp = patp->narg.next) {
 			if (casematch(patp, arglist.list->text)) {
 				if (evalskip == 0) {
-					evaltree(cp->nclist.body, flags);
+					evaltree(cp->nclist.body, flags, isroot);
 				}
 				goto out;
 			}
@@ -402,9 +410,10 @@ out:
  */
 
 STATIC void
-evalsubshell(n, flags)
+evalsubshell(n, flags, isroot)
 	union node *n;
 	int flags;
+	int *isroot;
 {
 	struct job *jp;
 	int backgnd = (n->type == NBACKGND);
@@ -412,12 +421,13 @@ evalsubshell(n, flags)
 	expredir(n->nredir.redirect);
 	INTOFF;
 	jp = makejob(n, 1);
-	if (forkshell(jp, n, backgnd) == 0) {
+	if (forkshell(jp, n, backgnd, isroot) == 0) {
 		INTON;
 		if (backgnd)
 			flags &=~ EV_TESTED;
 		redirect(n->nredir.redirect, 0);
-		evaltree(n->nredir.n, flags | EV_EXIT);	/* never returns */
+		/* never returns */
+		evaltree(n->nredir.n, flags | EV_EXIT, isroot);
 	}
 	if (! backgnd)
 		exitstatus = waitforjob(jp);
@@ -470,8 +480,9 @@ expredir(n)
  */
 
 STATIC void
-evalpipe(n)
+evalpipe(n, isroot)
 	union node *n;
+	int *isroot;
 {
 	struct job *jp;
 	struct nodelist *lp;
@@ -495,7 +506,7 @@ evalpipe(n)
 				error("Pipe call failed");
 			}
 		}
-		if (forkshell(jp, lp->n, n->npipe.backgnd) == 0) {
+		if (forkshell(jp, lp->n, n->npipe.backgnd, isroot) == 0) {
 			INTON;
 			if (prevfd > 0) {
 				close(0);
@@ -510,7 +521,7 @@ evalpipe(n)
 					close(pip[1]);
 				}
 			}
-			evaltree(lp->n, EV_EXIT);
+			evaltree(lp->n, EV_EXIT, isroot);
 		}
 		if (prevfd >= 0)
 			close(prevfd);
@@ -534,9 +545,10 @@ evalpipe(n)
  */
 
 void
-evalbackcmd(n, result)
+evalbackcmd(n, result, isroot)
 	union node *n;
 	struct backcmd *result;
+	int *isroot;
 {
 	int pip[2];
 	struct job *jp;
@@ -560,7 +572,7 @@ evalbackcmd(n, result)
 	 */
 	if (n->type == NCMD) {
 		exitstatus = oexitstatus;
-		evalcommand(n, EV_BACKCMD, result);
+		evalcommand(n, EV_BACKCMD, result, isroot);
 	} else
 #endif
 	{
@@ -569,7 +581,7 @@ evalbackcmd(n, result)
 		if (pipe(pip) < 0)
 			error("Pipe call failed");
 		jp = makejob(n, 1);
-		if (forkshell(jp, n, FORK_NOJOB) == 0) {
+		if (forkshell(jp, n, FORK_NOJOB, isroot) == 0) {
 			FORCEINTON;
 			close(pip[0]);
 			if (pip[1] != 1) {
@@ -578,7 +590,7 @@ evalbackcmd(n, result)
 				close(pip[1]);
 			}
 			eflag = 0;
-			evaltree(n, EV_EXIT);
+			evaltree(n, EV_EXIT, isroot);
 		}
 		close(pip[1]);
 		result->fd = pip[0];
@@ -599,10 +611,11 @@ int vforked = 0;
  */
 
 STATIC void
-evalcommand(cmd, flags, backcmd)
+evalcommand(cmd, flags, backcmd, isroot)
 	union node *cmd;
 	int flags;
 	struct backcmd *backcmd;
+	int *isroot;
 {
 	struct stackmark smark;
 	union node *argp;
@@ -634,7 +647,8 @@ evalcommand(cmd, flags, backcmd)
 
 	vforked = 0;
 	/* First expand the arguments. */
-	TRACE(("evalcommand(0x%lx, %d) called\n", (long)cmd, flags));
+	TRACE(("evalcommand(0x%lx, %d, %d) called\n", (long)cmd, flags,
+	    *isroot));
 	setstackmark(&smark);
 	arglist.lastp = &arglist.list;
 	varlist.lastp = &varlist.list;
@@ -780,7 +794,7 @@ evalcommand(cmd, flags, backcmd)
 				}
 				savehandler = handler;
 				handler = &jmploc;
-				forkchild(jp, cmd, mode, vforked);
+				forkchild(jp, cmd, mode, vforked, isroot);
 				break;
 			default:
 				handler = savehandler;	/* restore from vfork(2) */
@@ -794,13 +808,13 @@ evalcommand(cmd, flags, backcmd)
 					goto normal_fork;
 				}
 				vforked = 0;
-				forkparent(jp, cmd, mode, pid);
+				forkparent(jp, cmd, mode, pid, isroot);
 				goto parent;
 			}
 		} else {
 normal_fork:
 #endif
-			if (forkshell(jp, cmd, mode) != 0)
+			if (forkshell(jp, cmd, mode, isroot) != 0)
 				goto parent;	/* at end of routine */
 			INTON;
 #ifdef DO_SHAREDVFORK
@@ -855,7 +869,7 @@ normal_fork:
 		for (sp = varlist.list ; sp ; sp = sp->next)
 			mklocal(sp->text, 0);
 		funcnest++;
-		evaltree(cmdentry.u.func, flags & EV_TESTED);
+		evaltree(cmdentry.u.func, flags & EV_TESTED, isroot);
 		funcnest--;
 		INTOFF;
 		poplocalvars();

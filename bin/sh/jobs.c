@@ -1,4 +1,4 @@
-/*	$NetBSD: jobs.c,v 1.49 2002/09/27 21:32:25 mycroft Exp $	*/
+/*	$NetBSD: jobs.c,v 1.50 2002/09/27 22:56:24 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)jobs.c	8.5 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: jobs.c,v 1.49 2002/09/27 21:32:25 mycroft Exp $");
+__RCSID("$NetBSD: jobs.c,v 1.50 2002/09/27 22:56:24 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -651,10 +651,11 @@ makejob(node, nprocs)
  */
 
 int
-forkshell(jp, n, mode)
+forkshell(jp, n, mode, isroot)
 	union node *n;
 	struct job *jp;
 	int mode;
+	int *isroot;
 {
 	int pid;
 
@@ -666,32 +667,32 @@ forkshell(jp, n, mode)
 		error("Cannot fork");
 		break;
 	case 0:
-		forkchild(jp, n, mode, 0);
+		forkchild(jp, n, mode, 0, isroot);
 		return 0;
 	default:
-		return forkparent(jp, n, mode, pid);
+		return forkparent(jp, n, mode, pid, isroot);
 	}
 }
 
 int
-forkparent(jp, n, mode, pid)
+forkparent(jp, n, mode, pid, isroot)
 	union node *n;
 	struct job *jp;
 	int mode;
 	pid_t pid;
+	int *isroot;
 {
 	int pgrp;
 
-	if (rootshell && mode != FORK_NOJOB && mflag) {
+	if (*isroot && mode != FORK_NOJOB && mflag) {
+		*isroot = 0;
 		if (jp == NULL || jp->nprocs == 0)
 			pgrp = pid;
 		else
 			pgrp = jp->ps[0].pid;
-#ifdef notdef
 		if (setpgid(pid, pgrp) == -1)
 			error("Cannot set process group (%s) at %d",
 			    strerror(errno), __LINE__);
-#endif
 	}
 	if (mode == FORK_BG)
 		backgndpid = pid;		/* set $! */
@@ -708,11 +709,12 @@ forkparent(jp, n, mode, pid)
 }
 
 void
-forkchild(jp, n, mode, vforked)
+forkchild(jp, n, mode, vforked, isroot)
 	union node *n;
 	struct job *jp;
 	int mode;
 	int vforked;
+	int *isroot;
 {
 	struct job *p;
 	int wasroot;
@@ -722,9 +724,9 @@ forkchild(jp, n, mode, vforked)
 	const char *nullerr = "Can't open %s";
 
 	TRACE(("Child shell %d\n", getpid()));
-	wasroot = rootshell;
+	wasroot = *isroot;
+	*isroot = 0;
 	if (!vforked) {
-		rootshell = 0;
 		for (i = njobs, p = jobtab ; --i >= 0 ; p++)
 			if (p->used)
 				freejob(p);

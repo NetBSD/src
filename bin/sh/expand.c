@@ -1,4 +1,4 @@
-/*	$NetBSD: expand.c,v 1.53 2002/05/15 14:59:21 christos Exp $	*/
+/*	$NetBSD: expand.c,v 1.54 2002/09/27 22:56:24 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)expand.c	8.5 (Berkeley) 5/15/95";
 #else
-__RCSID("$NetBSD: expand.c,v 1.53 2002/05/15 14:59:21 christos Exp $");
+__RCSID("$NetBSD: expand.c,v 1.54 2002/09/27 22:56:24 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -432,6 +432,7 @@ expbackq(cmd, quoted, flag)
 	char const *syntax = quoted? DQSYNTAX : BASESYNTAX;
 	int saveherefd;
 	int quotes = flag & (EXP_FULL | EXP_CASE);
+	int isroot = rootshell;
 
 	INTOFF;
 	saveifs = ifsfirst;
@@ -440,7 +441,7 @@ expbackq(cmd, quoted, flag)
 	saveherefd = herefd;
 	herefd = -1;
 	p = grabstackstr(dest);
-	evalbackcmd(cmd, &in);
+	evalbackcmd(cmd, &in, &isroot);
 	ungrabstackstr(p, dest);
 	ifsfirst = saveifs;
 	ifslastp = savelastp;
