@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-#	$NetBSD: ypinit.sh,v 1.3 1996/08/09 15:16:30 thorpej Exp $
+#	$NetBSD: ypinit.sh,v 1.4 1997/10/08 14:09:19 lukem Exp $
 #
 # ypinit.sh - setup a master or slave YP server
 #
@@ -16,6 +16,8 @@ MAKEDBM=/usr/sbin/makedbm
 YP_DIR=/var/yp
 
 ERROR=USAGE				# assume usage error
+
+umask 077				# protect created directories
 
 if [ $# -eq 1 ]; then
 	if [ $1 = "-m" ]; then		# ypinit -m
@@ -89,14 +91,15 @@ then
 	exit 1
 fi
 
-echo -n "Server type: ${SERVERTYPE} Domain: ${DOMAIN}"
+echo "Server type: ${SERVERTYPE}"
+echo "Domain:      ${DOMAIN}"
 if [ X${SERVERTYPE} = X"SLAVE" ]; then
-	echo -n " Master: ${MASTER}"
+	echo "Master:      ${MASTER}"
 fi
 echo ""
 cat << \__notice1
 
-Installing the YP data base will require that you answer a few questions.
+Installing the YP database will require that you answer a few questions.
 Questions will all be asked at the beginning of the procedure.
 
 __notice1
