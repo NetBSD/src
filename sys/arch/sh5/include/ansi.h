@@ -1,4 +1,4 @@
-/*	$NetBSD: ansi.h,v 1.4 2003/03/02 22:18:20 tshiozak Exp $	*/
+/*	$NetBSD: ansi.h,v 1.5 2003/04/01 10:27:17 scw Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -77,22 +77,9 @@
  * and rune_t are typedef'd, _WCHAR_T_ will be undef'd, but _RUNE_T remains
  * defined for ctype.h.
  */
-/*
- * XXX: Yet another hack for the non-native sh5 toolchain
- */
-#if __GNUC__ < 3
-#ifndef __cplusplus
-#define	_BSD_WCHAR_T_		unsigned short int		/* wchar_t */
-#endif
-#define	_BSD_WINT_T_		int				/* wint_t */
-#define	_BSD_RUNE_T_		unsigned short int		/* rune_t */
-#else
-#ifndef __cplusplus
 #define	_BSD_WCHAR_T_		int		/* wchar_t */
-#endif
 #define	_BSD_WINT_T_		int		/* wint_t */
 #define	_BSD_RUNE_T_		int		/* rune_t */
-#endif
 #define _BSD_WCTRANS_T_		void *		/* wctrans_t */
 #define _BSD_WCTYPE_T_		void *		/* wctype_t */
 
