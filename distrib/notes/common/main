@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.86 2000/11/10 06:21:07 lukem Exp $
+.\"	$NetBSD: main,v 1.87 2000/11/10 06:56:11 lukem Exp $
 .\"
 .\" Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -538,7 +538,7 @@ unpacked into
 .Pa /usr/src
 with the command:
 .Pp
-.Dl # Ic "tar -C / -zxpf set_name.tgz"
+.Dl # Ic "( cd / ; tar -zxpf - ) < set_name.tgz"
 .Pp
 The
 .Pa sets/Split/
@@ -565,7 +565,7 @@ The split distributions may be reassembled and extracted with
 .Ic cat
 as follows:
 .Pp
-.Dl # Ic "cat set_name.?? | tar -C / -xzpf -"
+.Dl # Ic "cat set_name.?? | ( cd / ; tar -zxpf - )"
 .Pp
 In each of the source distribution set directories, there are
 files which contain the checksums of the files in the directory:

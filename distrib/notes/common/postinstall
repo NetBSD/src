@@ -1,4 +1,4 @@
-.\"	$NetBSD: postinstall,v 1.16 2000/11/02 16:40:45 mbw Exp $
+.\"	$NetBSD: postinstall,v 1.17 2000/11/10 06:56:11 lukem Exp $
 .\"
 .\" Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -251,9 +251,10 @@ retrieving the file
 .Lk ftp://ftp.netbsd.org/pub/NetBSD/NetBSD-current/tar_files/pkgsrc.tar.gz
 They are typically extracted into
 .Pa /usr/pkgsrc
-(though other locations work fine), as with the command:
+(though other locations work fine), with the commands:
 .Pp
-.Dl # Ic "mkdir /usr/pkgsrc; tar -C /usr/pkgsrc -zxpf pkgsrc.tar.gz"
+.Dl # Ic "mkdir /usr/pkgsrc"
+.Dl # Ic "( cd /usr/pkgsrc ; tar -zxpf - ) < pkgsrc.tar.gz"
 .Pp
 After extracting, then see the
 .Pa README
