@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.63 1999/04/17 17:02:50 ragge Exp $	   */
+/*	$NetBSD: pmap.c,v 1.64 1999/05/23 23:03:44 ragge Exp $	   */
 /*
  * Copyright (c) 1994, 1998 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -808,35 +808,63 @@ if(startpmapdebug) printf("pmap_protect: pmap %p, start %lx, end %lx, prot %x\n"
 	mtpr(0,PR_TBIA);
 }
 
-#ifdef NEW_REF
+int pmap_simulref(int bits, int addr);
 /*
  * Called from interrupt vector routines if we get a page invalid fault.
  * Note: the save mask must be or'ed with 0x3f for this function.
  * Returns 0 if normal call, 1 if CVAX bug detected.
  */
 int
-pmap_simulref(bits, addr)
-	int	bits, addr;
+pmap_simulref(int bits, int addr)
 {
+	u_int	*pte;
+	struct  pv_entry *pv;
+	paddr_t	pa;
 
-
+#ifdef PMAPDEBUG
+if (startpmapdebug) 
+	printf("pmap_simulref: bits %x addr %x\n", bits, addr);
+#endif
 #ifdef DEBUG
 	if (bits & 1)
 		panic("pte trans len");
 #endif
+	/* Set addess on logical page boundary */
+	addr &= ~PGOFSET;
 	/* First decode userspace addr */
 	if (addr >= 0) {
 		if ((addr << 1) < 0)
-			pte = mfpr(PR_P1BR);
+			pte = (u_int *)mfpr(PR_P1BR);
 		else
-			pte = mfpr(PR_P0BR);
+			pte = (u_int *)mfpr(PR_P0BR);
+		pte += PG_PFNUM(addr);
 		if (bits & 2) { /* PTE reference */
-			
+			pte = (u_int *)TRUNC_PAGE(pte);
+			pte = (u_int *)kvtopte(pte);
+			if (pte[0] == 0) /* Check for CVAX bug */
+				return 1;	
+			pa = (u_int)pte & ~KERNBASE;
+		} else
+			pa = Sysmap[PG_PFNUM(pte)].pg_pfn << VAX_PGSHIFT;
+	} else {
+		pte = (u_int *)kvtopte(addr);
+		pa = (u_int)pte & ~KERNBASE;
+	}
+	pte[0] |= PG_V;
+	pte[1] |= PG_V;
+	pte[2] |= PG_V;
+	pte[3] |= PG_V;
+	pte[4] |= PG_V;
+	pte[5] |= PG_V;
+	pte[6] |= PG_V;
+	pte[7] |= PG_V;
+	pv = pv_table + (pa >> PGSHIFT);
+	pv->pv_attr |= PG_V; /* Referenced */
+	if (bits & 4)
+		pv->pv_attr |= PG_M; /* (will be) modified. XXX page tables  */
+	return 0;
+}
 
-
-
-
-#endif
 /*
  * Checks if page is referenced; returns true or false depending on result.
  */
@@ -863,29 +891,6 @@ pmap_is_referenced(pa)
 	if (pv->pv_attr & PG_V)
 		return 1;
 
-#ifndef NEW_REF
-	if (pv->pv_pte)
-		if ((pv->pv_pte[0].pg_v | pv->pv_pte[2].pg_v |
-		    pv->pv_pte[4].pg_v | pv->pv_pte[6].pg_v)) {
-#ifdef PMAPDEBUG
-			if (startpmapdebug) printf("Yes (1)\n");
-#endif
-			return 1;
-		}
-
-	while ((pv = pv->pv_next)) {
-		if ((pv->pv_pte[0].pg_v | pv->pv_pte[2].pg_v |
-		    pv->pv_pte[4].pg_v | pv->pv_pte[6].pg_v)) {
-#ifdef PMAPDEBUG
-			if (startpmapdebug) printf("Yes (2)\n");
-#endif
-			return 1;
-		}
-	}
-#ifdef PMAPDEBUG
-	if (startpmapdebug) printf("No pmap_is_referenced\n");
-#endif
-#endif
 	return 0;
 }
 
