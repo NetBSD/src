@@ -1,4 +1,4 @@
-/*	$NetBSD: vnd.c,v 1.53 1997/12/31 02:46:51 enami Exp $	*/
+/*	$NetBSD: vnd.c,v 1.54 1998/01/26 23:30:44 bad Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -982,6 +982,17 @@ vndsetcred(vnd, cred)
 	auio.uio_resid = aiov.iov_len;
 	VOP_LOCK(vnd->sc_vp);
 	error = VOP_READ(vnd->sc_vp, &auio, 0, vnd->sc_cred);
+	if (error == 0) {
+		/*
+		 * Because vnd does all IO directly through the vnode
+		 * we need to flush (atleast) the buffer from the above
+		 * VOP_READ from the buffer cache to prevent cache
+		 * incoherencies.  Also, be careful to write dirty
+		 * buffers back to stable storage.
+		 */
+		error = vinvalbuf(vnd->sc_vp, V_SAVE, vnd->sc_cred,
+		    curproc, 0, 0);
+	}
 	VOP_UNLOCK(vnd->sc_vp);
 
 	free(tmpbuf, M_TEMP);
