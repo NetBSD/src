@@ -1,4 +1,4 @@
-/*	$NetBSD: syslogd.c,v 1.44 2001/03/21 17:02:43 itojun Exp $	*/
+/*	$NetBSD: syslogd.c,v 1.45 2001/06/08 04:16:28 mrg Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1988, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)syslogd.c	8.3 (Berkeley) 4/4/94";
 #else
-__RCSID("$NetBSD: syslogd.c,v 1.44 2001/03/21 17:02:43 itojun Exp $");
+__RCSID("$NetBSD: syslogd.c,v 1.45 2001/06/08 04:16:28 mrg Exp $");
 #endif
 #endif /* not lint */
 
@@ -193,6 +193,7 @@ int	Initialized = 0;	/* set when we have initialized ourselves */
 int	MarkInterval = 20 * 60;	/* interval between marks in seconds */
 int	MarkSeq = 0;		/* mark sequence number */
 int	SecureMode = 0;		/* listen only on unix domain socks */
+int	UseNameService = 1;	/* make domain name queries */
 int	NumForwards = 0;	/* number of forwarding actions in conf file */
 char	**LogPaths;		/* array of pathnames to read messages from */
 
@@ -231,7 +232,7 @@ main(argc, argv)
 
 	(void)setlocale(LC_ALL, "");
 
-	while ((ch = getopt(argc, argv, "dsf:m:p:P:")) != -1)
+	while ((ch = getopt(argc, argv, "dnsf:m:p:P:")) != -1)
 		switch(ch) {
 		case 'd':		/* debug */
 			Debug++;
@@ -241,6 +242,9 @@ main(argc, argv)
 			break;
 		case 'm':		/* mark interval */
 			MarkInterval = atoi(optarg) * 60;
+			break;
+		case 'n':		/* turn off DNS queries */
+			UseNameService = 0;
 			break;
 		case 'p':		/* path */
 			logpath_add(&LogPaths, &funixsize, 
@@ -949,6 +953,9 @@ cvthname(f)
 		dprintf("Malformed from address %s\n", gai_strerror(error));
 		return ("???");
 	}
+
+	if (!UseNameService)
+		return (ip);
 
 	error = getnameinfo((struct sockaddr*)f, ((struct sockaddr*)f)->sa_len,
 			host, sizeof host, NULL, 0, niflag);

@@ -1,4 +1,4 @@
-.\"	$NetBSD: syslogd.8,v 1.20 2001/05/03 16:45:01 wiz Exp $
+.\"	$NetBSD: syslogd.8,v 1.21 2001/06/08 04:16:28 mrg Exp $
 .\"
 .\" Copyright (c) 1983, 1986, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -41,7 +41,7 @@
 .Nd log systems messages
 .Sh SYNOPSIS
 .Nm "
-.Op Fl dsS
+.Op Fl dsSn
 .Bk -words
 .Op Fl f Ar config_file
 .Ek
@@ -73,6 +73,8 @@ the default is
 .It Fl m
 Select the number of minutes between ``mark'' messages;
 the default is 20 minutes.
+.It Fl n
+Do not perform hostname lookups; report only numeric addresses.
 .It Fl s
 Select ``secure'' mode, in which syslogd does not listen on a UDP socket but
 only communicates over a
