@@ -1,4 +1,4 @@
-/*	$NetBSD: cache_r5k.c,v 1.1.2.1 2001/10/24 16:49:54 thorpej Exp $	*/
+/*	$NetBSD: cache_r5k.c,v 1.1.2.2 2001/11/11 03:44:06 shin Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -139,7 +139,7 @@ r5k_icache_sync_range_index_32(vaddr_t va, vsize_t size)
 	va = trunc_line(va);
 	w2va = va + mips_picache_way_size;
 
-	mips_dcache_wbinv_range_index(va, size);
+	mips_dcache_wbinv_range_index(va, (eva - va));
 
 	__asm __volatile("sync");
 
@@ -152,6 +152,7 @@ r5k_icache_sync_range_index_32(vaddr_t va, vsize_t size)
 
 	while (va < eva) {
 		cache_op_r4k_line(va, CACHE_R4K_I|CACHEOP_R4K_INDEX_INV);
+		cache_op_r4k_line(w2va, CACHE_R4K_I|CACHEOP_R4K_INDEX_INV);
 		va += 32;
 		w2va += 32;
 	}
@@ -281,7 +282,7 @@ r5k_pdcache_wbinv_range_index_32(vaddr_t va, vsize_t size)
 
 	while ((eva - va) >= (16 * 32)) {
 		cache_r4k_op_16lines_32_2way(va, w2va,
-		    CACHE_R4K_D|CACHEOP_R4K_HIT_WB_INV);
+		    CACHE_R4K_D|CACHEOP_R4K_INDEX_WB_INV);
 		va += (16 * 32);
 		w2va += (16 * 32);
 	}
