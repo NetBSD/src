@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.241.2.8 1997/10/15 20:59:36 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.241.2.9 1997/10/16 01:12:07 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -182,8 +182,8 @@ extern struct proc *npxproc;
 #include "com.h"
 #if (NCOM > 0)
 #include <sys/termios.h>
-#include <dev/isa/comreg.h>
-#include <dev/isa/comvar.h>
+#include <dev/ic/comreg.h>
+#include <dev/ic/comvar.h>
 #endif
 
 /* the following is used externally (sysctl_hw) */
