@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.139 2003/02/09 19:44:20 martin Exp $ */
+/*	$NetBSD: machdep.c,v 1.140 2003/04/01 16:34:59 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -240,7 +240,7 @@ cpu_startup()
 		 * "base" pages for the rest.
 		 */
 		curbuf = (vaddr_t) buffers + (i * MAXBSIZE);
-		curbufsize = NBPG * ((i < residual) ? (base+1) : base);
+		curbufsize = PAGE_SIZE * ((i < residual) ? (base+1) : base);
 
 		while (curbufsize) {
 			pg = uvm_pagealloc(NULL, 0, NULL, 0);
@@ -273,7 +273,7 @@ cpu_startup()
 #endif
 	format_bytes(pbuf, sizeof(pbuf), ptoa(uvmexp.free));
 	printf("avail memory = %s\n", pbuf);
-	format_bytes(pbuf, sizeof(pbuf), bufpages * NBPG);
+	format_bytes(pbuf, sizeof(pbuf), bufpages * PAGE_SIZE);
 	printf("using %u buffers containing %s of memory\n", nbuf, pbuf);
 
 	/*
@@ -980,7 +980,7 @@ cpu_dumpconf()
 	dumpsize = physmem;
 }
 
-#define	BYTES_PER_DUMP	(NBPG)	/* must be a multiple of pagesize */
+#define	BYTES_PER_DUMP	(PAGE_SIZE)	/* must be a multiple of pagesize */
 static vaddr_t dumpspace;
 
 caddr_t
@@ -1054,9 +1054,9 @@ printf("starting dump, blkno %lld\n", (long long)blkno);
 		/* Remind me: why don't we dump page 0 ? */
 		if (maddr == 0) {
 			/* Skip first page at physical address 0 */
-			maddr += NBPG;
-			i += NBPG;
-			blkno += btodb(NBPG);
+			maddr += PAGE_SIZE;
+			i += PAGE_SIZE;
+			blkno += btodb(PAGE_SIZE);
 		}
 #endif
 		for (; i < mp->size; i += n) {
@@ -1301,7 +1301,7 @@ _bus_dmamap_load(t, map, buf, buflen, p, flags)
 	map->dm_segs[i].ds_addr = NULL;
 	map->dm_segs[i].ds_len = 0;
 
-	incr = NBPG - (vaddr & PGOFSET);
+	incr = PAGE_SIZE - (vaddr & PGOFSET);
 	while (sgsize > 0) {
 		paddr_t pa;
 	
@@ -1316,13 +1316,13 @@ _bus_dmamap_load(t, map, buf, buflen, p, flags)
 		    && ((map->dm_segs[i].ds_len + incr) <= map->_dm_maxsegsz)) {
 			/* Hey, waddyaknow, they're contiguous */
 			map->dm_segs[i].ds_len += incr;
-			incr = NBPG;
+			incr = PAGE_SIZE;
 			continue;
 		}
 		if (++i >= map->_dm_segcnt)
 			return (E2BIG);
 		map->dm_segs[i].ds_addr = pa;
-		map->dm_segs[i].ds_len = incr = NBPG;
+		map->dm_segs[i].ds_len = incr = PAGE_SIZE;
 	}
 	map->dm_nsegs = i + 1;
 	/* Mapping is bus dependent */
@@ -1358,7 +1358,7 @@ _bus_dmamap_load_mbuf(t, map, m, flags)
 			paddr_t pa;
 			long incr;
 
-			incr = NBPG - (vaddr & PGOFSET);
+			incr = PAGE_SIZE - (vaddr & PGOFSET);
 			incr = min(buflen, incr);
 
 			(void) pmap_extract(pmap_kernel(), vaddr, &pa);
@@ -1494,7 +1494,7 @@ _bus_dmamap_load_uio(t, map, uio, flags)
 			paddr_t pa;
 			long incr;
 
-			incr = min(buflen, NBPG);
+			incr = min(buflen, PAGE_SIZE);
 			(void) pmap_extract(pm, vaddr, &pa);
 			buflen -= incr;
 			vaddr += incr;
@@ -1624,9 +1624,9 @@ _bus_dmamap_sync(t, map, offset, len, ops)
 				continue;
 			TAILQ_FOREACH(pg, pglist, pageq) {
 				paddr_t start;
-				psize_t size = NBPG;
+				psize_t size = PAGE_SIZE;
 
-				if (offset < NBPG) {
+				if (offset < PAGE_SIZE) {
 					start = VM_PAGE_TO_PHYS(pg) + offset;
 					if (size > len)
 						size = len;
@@ -1937,7 +1937,7 @@ sparc_bus_map(t, addr, size, flags, unused, hp)
 
 	if (!(flags & BUS_SPACE_MAP_CACHEABLE)) pm_flags |= PMAP_NC;
 
-	if ((err = extent_alloc(io_space, size, NBPG,
+	if ((err = extent_alloc(io_space, size, PAGE_SIZE,
 		0, EX_NOWAIT|EX_BOUNDZERO, (u_long *)&v)))
 			panic("sparc_bus_map: cannot allocate io_space: %d", err);
 

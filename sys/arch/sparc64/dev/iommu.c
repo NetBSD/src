@@ -1,4 +1,4 @@
-/*	$NetBSD: iommu.c,v 1.63 2003/01/16 21:55:52 petrov Exp $	*/
+/*	$NetBSD: iommu.c,v 1.64 2003/04/01 16:34:58 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Eduardo Horvath
@@ -121,9 +121,9 @@ iommu_init(name, is, tsbsize, iovabase)
 	 * contiguous.
 	 */
 
-	size = NBPG << is->is_tsbsize;
+	size = PAGE_SIZE << is->is_tsbsize;
 	if (uvm_pglistalloc((psize_t)size, (paddr_t)0, (paddr_t)-1,
-		(paddr_t)NBPG, (paddr_t)0, &pglist, 1, 0) != 0)
+		(paddr_t)PAGE_SIZE, (paddr_t)0, &pglist, 1, 0) != 0)
 		panic("iommu_init: no memory");
 
 	va = uvm_km_valloc(kernel_map, size);
@@ -137,7 +137,7 @@ iommu_init(name, is, tsbsize, iovabase)
 	TAILQ_FOREACH(pg, &pglist, pageq) {
 		pa = VM_PAGE_TO_PHYS(pg);
 		pmap_kenter_pa(va, pa | PMAP_NVC, VM_PROT_READ | VM_PROT_WRITE);
-		va += NBPG;
+		va += PAGE_SIZE;
 	}
 	pmap_update(pmap_kernel());
 	memset(is->is_tsb, 0, size);
@@ -182,8 +182,8 @@ iommu_init(name, is, tsbsize, iovabase)
 		(unsigned long long)is->is_ptsb,
 		(unsigned long long)(is->is_ptsb + size));
 	is->is_dvmamap = extent_create(name,
-				       is->is_dvmabase, is->is_dvmaend - NBPG,
-				       M_DEVBUF, 0, 0, EX_NOWAIT);
+	    is->is_dvmabase, is->is_dvmaend - PAGE_SIZE,
+	    M_DEVBUF, 0, 0, EX_NOWAIT);
 }
 
 /*
@@ -326,16 +326,16 @@ iommu_remove(is, va, len)
 			"for va %p size %lx\n",
 			(int)IOTSBSLOT(va,is->is_tsbsize), (void *)(u_long)va,
 			(u_long)len));
-		if (len <= NBPG)
+		if (len <= PAGE_SIZE)
 			len = 0;
 		else
-			len -= NBPG;
+			len -= PAGE_SIZE;
 
 		/* XXX Zero-ing the entry would not require RMW */
 		is->is_tsb[IOTSBSLOT(va,is->is_tsbsize)] &= ~IOTTE_V;
 		bus_space_write_8(is->is_bustag, is->is_iommu,
 			IOMMUREG(iommu_flush), va);
-		va += NBPG;
+		va += PAGE_SIZE;
 	}
 }
 
@@ -457,7 +457,7 @@ iommu_dvmamap_load(t, sb, map, buf, buflen, p, flags)
 	 */
 	if ((boundary = (map->dm_segs[0]._ds_boundary)) == 0)
 		boundary = map->_dm_boundary;
-	align = max(map->dm_segs[0]._ds_align, NBPG);
+	align = max(map->dm_segs[0]._ds_align, PAGE_SIZE);
 
 	/*
 	 * If our segment size is larger than the boundary we need to
@@ -548,7 +548,7 @@ iommu_dvmamap_load(t, sb, map, buf, buflen, p, flags)
 		/*
 		 * Compute the segment size, and adjust counts.
 		 */
-		sgsize = NBPG - ((u_long)vaddr & PGOFSET);
+		sgsize = PAGE_SIZE - ((u_long)vaddr & PGOFSET);
 		if (buflen < sgsize)
 			sgsize = buflen;
 
@@ -556,7 +556,7 @@ iommu_dvmamap_load(t, sb, map, buf, buflen, p, flags)
 		    ("iommu_dvmamap_load: map %p loading va %p "
 			    "dva %lx at pa %lx\n",
 			    map, (void *)vaddr, (long)dvmaddr,
-			    (long)(curaddr & ~(NBPG-1))));
+			    (long)(curaddr & ~(PAGE_SIZE-1))));
 		iommu_enter(sb, trunc_page(dvmaddr), trunc_page(curaddr),
 		    flags|0x4000);
 
@@ -940,7 +940,7 @@ iommu_dvmamap_sync(t, sb, map, offset, len, ops)
 		if ((tte & IOTTE_STREAM) && sb->sb_flush) {
 			vaend = (va + len + PGOFSET) & ~PGOFSET;
 
-			for (va &= ~PGOFSET; va <= vaend; va += NBPG) {
+			for (va &= ~PGOFSET; va <= vaend; va += PAGE_SIZE) {
 				DPRINTF(IDB_BUSDMA,
 					("iommu_dvmamap_sync: flushing va %p\n",
 					 (void *)(u_long)va));

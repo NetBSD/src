@@ -1,4 +1,4 @@
-/*	$NetBSD: kgdb_stub.c,v 1.10 2003/01/21 20:42:02 martin Exp $ */
+/*	$NetBSD: kgdb_stub.c,v 1.11 2003/04/01 16:34:59 thorpej Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -636,7 +636,7 @@ kgdb_acc(addr, len, rw, usertoo)
 			return (1);
 	}
 	addr = (caddr_t)((int)addr & ~PGOFSET);
-	for (; len > 0; len -= NBPG, addr += NBPG) {
+	for (; len > 0; len -= PAGE_SIZE, addr += PAGE_SIZE) {
 		if (((int)addr >> PG_VSHIFT) != 0 &&
 		    ((int)addr >> PG_VSHIFT) != -1)
 			return (0);
@@ -669,7 +669,7 @@ kdb_mkwrite(addr, len)
 	}
 
 	addr = (caddr_t)((int)addr & ~PGOFSET);
-	for (; len > 0; len -= NBPG, addr += NBPG)
+	for (; len > 0; len -= PAGE_SIZE, addr += PAGE_SIZE)
 #if defined(SUN4M)
 		if (CPU_ISSUN4M)
 			setpte4m((vaddr_t)addr,

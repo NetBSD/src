@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.24 2003/01/18 06:55:25 thorpej Exp $ */
+/*	$NetBSD: mem.c,v 1.25 2003/04/01 16:34:59 thorpej Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -126,10 +126,10 @@ mmrw(dev, uio, flags)
 			    trunc_page(v), prot, prot|PMAP_WIRED);
 			pmap_update(pmap_kernel());
 			o = uio->uio_offset & PGOFSET;
-			c = min(uio->uio_resid, (int)(NBPG - o));
+			c = min(uio->uio_resid, (int)(PAGE_SIZE - o));
 			error = uiomove((caddr_t)vmmap + o, c, uio);
 			pmap_remove(pmap_kernel(), (vaddr_t)vmmap,
-			    (vaddr_t)vmmap + NBPG);
+			    (vaddr_t)vmmap + PAGE_SIZE);
 			pmap_update(pmap_kernel());
 			break;
 #else
@@ -140,7 +140,7 @@ mmrw(dev, uio, flags)
 				goto unlock;
 			}
 			o = uio->uio_offset & PGOFSET;
-			c = min(uio->uio_resid, (int)(NBPG - o));
+			c = min(uio->uio_resid, (int)(PAGE_SIZE - o));
 			/* However, we do need to partially re-implement uiomove() */
 			if (uio->uio_rw != UIO_READ && uio->uio_rw != UIO_WRITE)
 				panic("mmrw: uio mode");
@@ -231,10 +231,10 @@ mmrw(dev, uio, flags)
 			}
 			if (zeropage == NULL) {
 				zeropage = (caddr_t)
-				    malloc(NBPG, M_TEMP, M_WAITOK);
-				bzero(zeropage, NBPG);
+				    malloc(PAGE_SIZE, M_TEMP, M_WAITOK);
+				bzero(zeropage, PAGE_SIZE);
 			}
-			c = min(iov->iov_len, NBPG);
+			c = min(iov->iov_len, PAGE_SIZE);
 			error = uiomove(zeropage, c, uio);
 			break;
 

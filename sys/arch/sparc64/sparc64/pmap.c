@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.137 2003/03/30 00:28:19 thorpej Exp $	*/
+/*	$NetBSD: pmap.c,v 1.138 2003/04/01 16:34:59 thorpej Exp $	*/
 #undef	NO_VCACHE /* Don't forget the locked TLB in dostart */
 #define	HWREF
 /*
@@ -110,7 +110,7 @@ extern int pseg_set __P((struct pmap *, vaddr_t, int64_t, paddr_t));
 #define PV_NC		0x10LL
 #define PV_WE		0x20LL	/* Debug -- this page was writable somtime */
 #define PV_MASK		(0x03fLL)
-#define PV_VAMASK	(~(NBPG - 1))
+#define PV_VAMASK	(~(PAGE_SIZE - 1))
 #define PV_MATCH(pv,va)	(!(((pv)->pv_va ^ (va)) & PV_VAMASK))
 #define PV_SETVA(pv,va) ((pv)->pv_va = (((va) & PV_VAMASK) | \
 					(((pv)->pv_va) & PV_MASK)))
@@ -411,7 +411,7 @@ pmap_bootdebug()
 
 /*
  * Calculate the correct number of page colors to use.  This should be the
- * size of the E$/NBPG.  However, different CPUs can have different sized
+ * size of the E$/PAGE_SIZE.  However, different CPUs can have different sized
  * E$, so we need to take the GCM of the E$ size.
  */
 static int pmap_calculate_colors __P((void));
@@ -436,7 +436,7 @@ pmap_calculate_colors() {
 				sizeof(assoc)) != sizeof(assoc))
 				/* Fake asociativity of 1 */
 				assoc = 1;
-			color = size/assoc/NBPG;
+			color = size/assoc/PAGE_SIZE;
 			if (color > maxcolor)
 				maxcolor = color;
 		}
@@ -526,7 +526,7 @@ pmap_bootstrap(kernelstart, kernelend, maxctx)
 	 */
 	msgbufp = (struct kern_msgbuf *)(vaddr_t)MSGBUF_VA;
 /* XXXXX -- increase msgbufsiz for uvmhist printing */
-	msgbufsiz = 4*NBPG /* round_page(sizeof(struct msgbuf)) */;
+	msgbufsiz = 4*PAGE_SIZE /* round_page(sizeof(struct msgbuf)) */;
 	BDPRINTF(PDB_BOOT, ("Trying to allocate msgbuf at %lx, size %lx\r\n", 
 			    (long)msgbufp, (long)msgbufsiz));
 	if ((long)msgbufp !=
@@ -896,7 +896,7 @@ remap_data:
 	/*
 	 * Allocate a 64MB page for the cpu_info structure now.
 	 */
-	if ((cpu0paddr = prom_alloc_phys(8*NBPG, 8*NBPG)) == 0 ) {
+	if ((cpu0paddr = prom_alloc_phys(8*PAGE_SIZE, 8*PAGE_SIZE)) == 0 ) {
 		prom_printf("Cannot allocate new cpu_info\r\n");
 		OF_exit();
 	}
@@ -948,7 +948,7 @@ remap_data:
 		(u_long)firstaddr));
 	firstaddr = ((firstaddr + TSBSIZE - 1) & ~(TSBSIZE-1)); 
 #ifdef DEBUG
-	i = (firstaddr + (NBPG-1)) & ~(NBPG-1);	/* First, page align */
+	i = (firstaddr + (PAGE_SIZE-1)) & ~(PAGE_SIZE-1);	/* First, page align */
 	if ((int)firstaddr < i) {
 		prom_printf("TSB alloc fixup failed\r\n");
 		prom_printf("frobbed i, firstaddr before TSB=%x, %lx\r\n",
@@ -1024,8 +1024,8 @@ remap_data:
 
 	/* Throw away page zero if we have it. */
 	if (avail->start == 0) {
-		avail->start += NBPG;
-		avail->size -= NBPG;
+		avail->start += PAGE_SIZE;
+		avail->size -= PAGE_SIZE;
 	}
 	/*
 	 * Now we need to remove the area we valloc'ed from the available
@@ -1063,7 +1063,7 @@ remap_data:
 		/*
 		 * Now page align the start of the region.
 		 */
-		s = mp->start % NBPG;
+		s = mp->start % PAGE_SIZE;
 		if (mp->size >= s) {
 			mp->size -= s;
 			mp->start += s;
@@ -1071,7 +1071,7 @@ remap_data:
 		/*
 		 * And now align the size of the region.
 		 */
-		mp->size -= mp->size % NBPG;
+		mp->size -= mp->size % PAGE_SIZE;
 		/*
 		 * Check whether some memory is left here.
 		 */
@@ -1104,7 +1104,8 @@ remap_data:
 #if 0
 		{
 			paddr_t p;
-			for (p = mp->start; p < mp->start+mp->size; p += NBPG)
+			for (p = mp->start; p < mp->start+mp->size;
+			     p += PAGE_SIZE)
 				pmap_zero_page(p);
 		}
 #endif
@@ -1194,17 +1195,17 @@ remap_data:
 			0 /* IE */);
 		do {
 			pmap_enter_kpage(va, data);
-			va += NBPG;
-			msgbufsiz -= NBPG;
-			phys_msgbuf += NBPG;
-		} while (psize-=NBPG);
+			va += PAGE_SIZE;
+			msgbufsiz -= PAGE_SIZE;
+			phys_msgbuf += PAGE_SIZE;
+		} while (psize-=PAGE_SIZE);
 	}
 	BDPRINTF(PDB_BOOT1, ("Done inserting mesgbuf into pmap_kernel()\r\n"));
 	
 	BDPRINTF(PDB_BOOT1, ("Inserting PROM mappings into pmap_kernel()\r\n"));
 	for (i = 0; i < prom_map_size; i++)
 		if (prom_map[i].vstart && ((prom_map[i].vstart>>32) == 0))
-			for (j = 0; j < prom_map[i].vsize; j += NBPG) {
+			for (j = 0; j < prom_map[i].vsize; j += PAGE_SIZE) {
 				int k;
 				
 				for (k = 0; page_size_map[k].mask; k++) {
@@ -1230,7 +1231,7 @@ remap_data:
 	 */
 	vmmap = (vaddr_t)roundup(ekdata, 4*MEG);
 	/* Let's keep 1 page of redzone after the kernel */
-	vmmap += NBPG;
+	vmmap += PAGE_SIZE;
 	{ 
 		extern vaddr_t u0[2];
 		extern struct pcb* proc0paddr;
@@ -1252,7 +1253,7 @@ remap_data:
 			int64_t data;
 
 			pmap_get_page(&pa);
-			prom_map_phys(pa, NBPG, vmmap, -1);
+			prom_map_phys(pa, PAGE_SIZE, vmmap, -1);
 			data = TSB_DATA(0 /* global */,
 				PGSZ_8K,
 				pa,
@@ -1263,17 +1264,17 @@ remap_data:
 				1 /* valid */,
 				0 /* IE */);
 			pmap_enter_kpage(vmmap, data);
-			vmmap += NBPG;
+			vmmap += PAGE_SIZE;
 		}
 		BDPRINTF(PDB_BOOT1, 
 			 ("Done inserting stack 0 into pmap_kernel()\r\n"));
 
 		/* Now map in and initialize our cpu_info structure */
 #ifdef DIAGNOSTIC
-		vmmap += NBPG; /* redzone -- XXXX do we need one? */
+		vmmap += PAGE_SIZE; /* redzone -- XXXX do we need one? */
 #endif
 		if ((vmmap ^ INTSTACK) & VA_ALIAS_MASK) 
-			vmmap += NBPG; /* Matchup virtual color for D$ */
+			vmmap += PAGE_SIZE; /* Matchup virtual color for D$ */
 		intstk = vmmap;
 		cpus = (struct cpu_info *)(intstk+CPUINFO_VA-INTSTACK);
 
@@ -1304,13 +1305,13 @@ remap_data:
 				1 /* valid */,
 				0 /* IE */);
 			pmap_enter_kpage(vmmap, data);
-			vmmap += NBPG;
-			pa += NBPG;
+			vmmap += PAGE_SIZE;
+			pa += PAGE_SIZE;
 		}
 		BDPRINTF(PDB_BOOT1, ("Initializing cpu_info\r\n"));
 
 		/* Initialize our cpu_info structure */
-		bzero((void *)intstk, 8*NBPG);
+		bzero((void *)intstk, 8*PAGE_SIZE);
 		cpus->ci_next = NULL; /* Redundant, I know. */
 		cpus->ci_curlwp = &lwp0;
 		cpus->ci_cpcb = (struct pcb *)u0[0]; /* Need better source */
@@ -1352,12 +1353,10 @@ pmap_init()
 	vaddr_t va;
 
 	BDPRINTF(PDB_BOOT1, ("pmap_init()\r\n"));
-	if (PAGE_SIZE != NBPG)
-		panic("pmap_init: PAGE_SIZE!=NBPG");
 
 	size = sizeof(struct pv_entry) * physmem;
 	if (uvm_pglistalloc((psize_t)size, (paddr_t)0, (paddr_t)-1,
-		(paddr_t)NBPG, (paddr_t)0, &pglist, 1, 0) != 0)
+		(paddr_t)PAGE_SIZE, (paddr_t)0, &pglist, 1, 0) != 0)
 		panic("cpu_start: no memory");
 
 	va = uvm_km_valloc(kernel_map, size);
@@ -1378,7 +1377,7 @@ pmap_init()
 			1 /* valid */,
 			0 /* IE */);
 		pmap_enter_kpage(va, data);
-		va += NBPG;
+		va += PAGE_SIZE;
 	}
 
 	/*
@@ -1406,7 +1405,7 @@ pmap_virtual_space(start, end)
 	 * Reserve one segment for kernel virtual memory
 	 */
 	/* Reserve two pages for pmap_copy_page && /dev/mem */
-	*start = kbreak = (vaddr_t)(vmmap + 2*NBPG);
+	*start = kbreak = (vaddr_t)(vmmap + 2*PAGE_SIZE);
 	*end = VM_MAX_KERNEL_ADDRESS;
 	BDPRINTF(PDB_BOOT1, ("pmap_virtual_space: %x-%x\r\n", *start, *end));
 }
@@ -1756,7 +1755,7 @@ pmap_kremove(va, size)
 	KASSERT(va < kdata || va > ekdata);
 
 	DPRINTF(PDB_DEMAP, ("pmap_kremove: start 0x%lx size %lx\n", va, size));
-	for (; size >= NBPG; va += NBPG, size -= NBPG) {
+	for (; size >= PAGE_SIZE; va += PAGE_SIZE, size -= PAGE_SIZE) {
 
 #ifdef DIAGNOSTIC
 		/*
@@ -2089,7 +2088,7 @@ pmap_remove(pm, va, endva)
 	REMOVE_STAT(calls);
 
 	/* Now do the real work */
-	for (; va < endva; va += NBPG) {
+	for (; va < endva; va += PAGE_SIZE) {
 #ifdef DIAGNOSTIC
 		/*
 		 * Is this part of the permanent 4MB mapping?
@@ -2186,7 +2185,7 @@ pmap_protect(pm, sva, eva, prot)
 		
 	simple_lock(&pm->pm_lock);
 	sva = sva & ~PGOFSET;
-	for (; sva < eva; sva += NBPG) {
+	for (; sva < eva; sva += PAGE_SIZE) {
 #ifdef DEBUG
 		/*
 		 * Is this part of the permanent 4MB mapping?
@@ -3523,7 +3522,7 @@ pmap_testout()
 	int ref, mod;
 
 	/* Allocate a page */
-	va = (vaddr_t)(vmmap - NBPG);
+	va = (vaddr_t)(vmmap - PAGE_SIZE);
 	KASSERT(va != NULL);
 	loc = (int*)va;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: sbus.c,v 1.58 2003/01/01 02:22:56 thorpej Exp $ */
+/*	$NetBSD: sbus.c,v 1.59 2003/04/01 16:34:58 thorpej Exp $ */
 
 /*
  * Copyright (c) 1999-2002 Eduardo Horvath
@@ -50,7 +50,7 @@
 #include <sparc64/dev/sbusreg.h>
 #include <dev/sbus/sbusvar.h>
 
-#include <uvm/uvm_prot.h>
+#include <uvm/uvm_extern.h>
 
 #include <machine/autoconf.h>
 #include <machine/cpu.h>
@@ -290,8 +290,9 @@ sbus_attach(parent, self, aux)
 		u_long dummy;
 
 		if (extent_alloc_subregion(sc->sc_is.is_dvmamap,
-		    sc->sc_is.is_dvmabase, sc->sc_is.is_dvmabase + NBPG, NBPG,
-		    NBPG, 0, EX_NOWAIT|EX_BOUNDZERO, (u_long *)&dummy) != 0)
+		    sc->sc_is.is_dvmabase, sc->sc_is.is_dvmabase + PAGE_SIZE,
+		    PAGE_SIZE, PAGE_SIZE, 0, EX_NOWAIT|EX_BOUNDZERO,
+		    (u_long *)&dummy) != 0)
 			panic("sbus iommu: can't toss first dvma page");
 	}
 
