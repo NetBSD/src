@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.30 2001/09/15 01:19:38 wdk Exp $	*/
+/*	$NetBSD: machdep.c,v 1.31 2002/08/04 01:41:30 gmcgarry Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.30 2001/09/15 01:19:38 wdk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.31 2002/08/04 01:41:30 gmcgarry Exp $");
 
 /* from: Utah Hdr: machdep.c 1.63 91/04/24 */
 
@@ -67,7 +67,6 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.30 2001/09/15 01:19:38 wdk Exp $");
 #include <sys/device.h>
 #include <sys/user.h>
 #include <sys/exec.h>
-#include <sys/sysctl.h>
 #include <sys/mount.h>
 #include <sys/syscallargs.h>
 #include <sys/kcore.h>
@@ -105,9 +104,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.30 2001/09/15 01:19:38 wdk Exp $");
 #include "com.h"			/* XXX */
 
 /* the following is used externally (sysctl_hw) */
-char  machine[] = MACHINE;	/* from <machine/param.h> */
-char  machine_arch[] = MACHINE_ARCH;
-char  cpu_model[40];
+extern char  cpu_model[];
 
 /* Our exported CPU info; we can have only one. */  
 struct cpu_info cpu_info_store;
@@ -480,30 +477,6 @@ cpu_startup()
 	 * Set up buffers, so they can be used to read disk labels.
 	 */
 	bufinit();
-}
-
-/*
- * machine dependent system variables.
- */
-int
-cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
-	int *name;
-	u_int namelen;
-	void *oldp;
-	size_t *oldlenp;
-	void *newp;
-	size_t newlen;
-	struct proc *p;
-{
-	/* all sysctl names at this level are terminal */
-	if (namelen != 1)
-		return (ENOTDIR);		/* overloaded */
-
-	switch (name[0]) {
-	default:
-		return (EOPNOTSUPP);
-	}
-	/* NOTREACHED */
 }
 
 /*

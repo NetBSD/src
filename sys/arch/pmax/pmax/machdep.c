@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.199 2002/03/05 16:14:28 simonb Exp $	*/
+/*	$NetBSD: machdep.c,v 1.200 2002/08/04 01:41:28 gmcgarry Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.199 2002/03/05 16:14:28 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.200 2002/08/04 01:41:28 gmcgarry Exp $");
 
 #include "fs_mfs.h"
 #include "opt_ddb.h"
@@ -59,8 +59,6 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.199 2002/03/05 16:14:28 simonb Exp $")
 #include <sys/boot_flag.h>
 
 #include <uvm/uvm_extern.h>
-
-#include <sys/sysctl.h>
 
 #include <dev/cons.h>
 
@@ -89,9 +87,8 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.199 2002/03/05 16:14:28 simonb Exp $")
 #include "opt_dec_3maxplus.h"
 
 /* the following is used externally (sysctl_hw) */
-char	machine[] = MACHINE;		/* from <machine/param.h> */
-char	machine_arch[] = MACHINE_ARCH;	/* from <machine/param.h> */
-char	cpu_model[40];
+extern char	cpu_model[];
+
 unsigned ssir;				/* simulated interrupt register */
 
 /* Our exported CPU info; we can have only one. */  
@@ -513,40 +510,6 @@ cpu_startup()
 	 * Set up buffers, so they can be used to read disk labels.
 	 */
 	bufinit();
-}
-
-/*
- * Machine dependent system variables.
- */
-int
-cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
-	int *name;
-	u_int namelen;
-	void *oldp;
-	size_t *oldlenp;
-	void *newp;
-	size_t newlen;
-	struct proc *p;
-{
-	struct btinfo_bootpath *bibp;
-
-	/* all sysctl names at this level are terminal */
-	if (namelen != 1)
-		return (ENOTDIR);		/* overloaded */
-
-	switch (name[0]) {
-	case CPU_CONSDEV:
-		return (sysctl_rdstruct(oldp, oldlenp, newp, &cn_tab->cn_dev,
-		    sizeof cn_tab->cn_dev));
-	case CPU_BOOTED_KERNEL:
-	        bibp = lookup_bootinfo(BTINFO_BOOTPATH);
-	        if(!bibp)
-			return (ENOENT); /* ??? */
-		return (sysctl_rdstring(oldp, oldlenp, newp, bibp->bootpath));
-	default:
-		return (EOPNOTSUPP);
-	}
-	/* NOTREACHED */
 }
 
 /*

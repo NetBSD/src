@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.74 2002/04/27 23:24:55 shin Exp $	*/
+/*	$NetBSD: machdep.c,v 1.75 2002/08/04 01:41:23 gmcgarry Exp $	*/
 
 /*-
  * Copyright (c) 1999 Shin Takemura, All rights reserved.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.74 2002/04/27 23:24:55 shin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.75 2002/08/04 01:41:23 gmcgarry Exp $");
 
 #include "opt_vr41xx.h"
 #include "opt_tx39xx.h"
@@ -97,7 +97,6 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.74 2002/04/27 23:24:55 shin Exp $");
 #include <sys/buf.h>
 #include <sys/reboot.h>
 #include <sys/mount.h>
-#include <sys/sysctl.h>
 #include <sys/boot_flag.h>
 
 #include <ufs/mfs/mfs_extern.h>	/* mfs_initminiroot() */
@@ -151,10 +150,9 @@ static int __bicons_enable;
 #endif
 
 /* the following is used externally (sysctl_hw) */
-char	machine[] = MACHINE;		/* from <machine/param.h> */
-char	machine_arch[] = MACHINE_ARCH;	/* from <machine/param.h> */
-char	cpu_model[128];	
+extern	cpu_model[128];	
 char	cpu_name[40];			/* set cpu depend xx_init() */
+
 struct cpu_info cpu_info_store;		/* only one cpu */
 int	cpuspeed = 1;			/* approx # instr per usec. */
 
