@@ -32,7 +32,7 @@ static char sccsid[] = "@(#)ld.c	6.10 (Berkeley) 5/22/91";
    Set, indirect, and warning symbol features added by Randy Smith. */
 
 /*
- *	$Id: ld.c,v 1.28 1994/06/16 13:41:52 pk Exp $
+ *	$Id: ld.c,v 1.29 1994/06/24 13:33:43 pk Exp $
  */
    
 /* Define how to initialize system-dependent header fields.  */
@@ -1268,25 +1268,25 @@ enter_file_symbols(entry)
 				enter_global_ref(lsp,
 					p->n_un.n_strx + entry->strings, entry);
 		} else if (p->n_type == N_WARNING) {
-			char *name = p->n_un.n_strx + entry->strings;
+			char *msg = p->n_un.n_strx + entry->strings;
 
 			/* Grab the next entry.  */
-			p++;
+			lsp++;
+			p = &lsp->nzlist.nlist;
 			if (p->n_type != (N_UNDF | N_EXT)) {
 				warnx(
 		"%s: Warning symbol without external reference following.",
 					get_file_name(entry));
 				make_executable = 0;
-				p--;		/* Process normally.  */
+				lsp--;		/* Process normally.  */
 			} else {
 				symbol *sp;
-				char *sname = p->n_un.n_strx + entry->strings;
+				char *name = p->n_un.n_strx + entry->strings;
 				/* Deal with the warning symbol.  */
-				enter_global_ref(lsp,
-					p->n_un.n_strx + entry->strings, entry);
-				sp = getsym (sname);
-				sp->warning = (char *)xmalloc(strlen(name)+1);
-				strcpy (sp->warning, name);
+				enter_global_ref(lsp, name, entry);
+				sp = getsym(name);
+				sp->warning = (char *)xmalloc(strlen(msg)+1);
+				strcpy(sp->warning, msg);
 				warning_count++;
 			}
 		} else if (p->n_type & N_EXT) {
