@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sa.c,v 1.1.2.18 2002/02/19 23:24:25 nathanw Exp $	*/
+/*	$NetBSD: kern_sa.c,v 1.1.2.19 2002/04/02 00:15:59 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -353,7 +353,6 @@ void
 sa_switch(struct lwp *l, int type)
 {
 	struct proc *p = l->l_proc;
-	struct sadata *sa = p->p_sa;
 	struct sadata_upcall *sd;
 	struct lwp *l2;
 	int error;
@@ -370,7 +369,10 @@ sa_switch(struct lwp *l, int type)
 		 * Instead, simply let the LWP that was running before
 		 * we woke up have another go.
 		 */
-		l2 = sa->sa_preempted;
+		/* Find the interrupted LWP */
+		LIST_FOREACH(l2, &p->p_lwps, l_sibling)
+		    if (l2->l_stat == LSRUN)
+			    break;
 	} else {
 		/* Get an LWP */
 		/* The process of allocating a new LWP could cause
@@ -421,7 +423,6 @@ sa_switch(struct lwp *l, int type)
 			return;
 		}
 		
-		p->p_nrlwps++;
 		l->l_flag |= L_SA_BLOCKING;
 		l2->l_priority = l2->l_usrpri;
 		setrunnable(l2);
@@ -470,12 +471,8 @@ sa_switchcall(void *arg)
 	struct sadata *sa;
 
 	l = curproc;
-	KASSERT(l != NULL);
 	p = l->l_proc;
-	KASSERT(p != NULL);
 	sa = p->p_sa;
-	KASSERT(sa != NULL);
-
 	DPRINTFN(6,("sa_switchcall(pid: %d.%d)\n", p->p_pid, l->l_lid));
 
 	if (LIST_EMPTY(&sa->sa_lwpcache)) {
@@ -585,15 +582,17 @@ sa_upcall_userret(struct lwp *l)
 	p = l->l_proc;
 	sa = p->p_sa;
 
-	DPRINTFN(7,("sa_upcall_userret(%d.%d)",p->p_pid,l->l_lid));
+	DPRINTFN(7,("sa_upcall_userret(%d.%d)\n",p->p_pid,l->l_lid));
 
 	if (l->l_flag & L_SA_BLOCKING) {
 		/* Invoke an "unblocked" upcall */
 		struct lwp *l2;
 		int s;
 		DPRINTFN(8,("sa_upcall_userret(%d.%d) unblocking ",p->p_pid, l->l_lid));
-		l2 = sa->sa_preempted;
-		sa->sa_preempted = NULL;
+		/* Find the interrupted LWP */
+		LIST_FOREACH(l2, &p->p_lwps, l_sibling)
+		    if (l2->l_stat == LSRUN)
+			    break;
 		if (l2) {
 			SCHED_LOCK(s);
 			remrunqueue(l2);
@@ -721,7 +720,8 @@ sa_upcall_userret(struct lwp *l)
 	type = sau->sau_type;
 
 	sadata_upcall_free(sau);
-	DPRINTFN(7,(" type %d\n", type));
+	DPRINTFN(7,("sa_upcall_userret(%d.%d): type %d\n",p->p_pid,
+	    l->l_lid, type));
 
 	cpu_upcall(l, type, nevents, nint, sapp, ap, stack, sa->sa_upcall);
 }
@@ -751,8 +751,8 @@ debug_print_sa(struct proc *p)
 	struct lwp *l;
 	struct sadata *sa;
 
-	printf("Process %d (%s), state %d, flags %x\n", 
-	    p->p_pid, p->p_comm, p->p_stat, p->p_flag);
+	printf("Process %d (%s), state %d, address %p, flags %x\n", 
+	    p->p_pid, p->p_comm, p->p_stat, p, p->p_flag);
 	printf("LWPs: %d (%d running, %d zombies)\n", 
 	    p->p_nlwps, p->p_nrlwps, p->p_nzlwps);
 	LIST_FOREACH(l, &p->p_lwps, l_sibling)
@@ -775,7 +775,7 @@ debug_print_lwp(struct lwp *l)
 	struct proc *p;
 
 	p = l->l_proc;
-	printf("LWP %d, address %p ", l->l_lid, p);
+	printf("LWP %d address %p ", l->l_lid, l);
 	printf("state %d flags %x ", l->l_stat, l->l_flag);
 	if (l->l_wchan)
 		printf("wait %p %s", l->l_wchan, l->l_wmesg);

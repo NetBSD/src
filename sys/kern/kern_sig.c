@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.112.2.12 2002/04/01 07:47:53 nathanw Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.112.2.13 2002/04/02 00:15:59 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.112.2.12 2002/04/01 07:47:53 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.112.2.13 2002/04/02 00:15:59 nathanw Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_compat_sunos.h"
@@ -1294,16 +1294,16 @@ proc_unstop(p)
 	     l = LIST_NEXT(l, l_sibling))
 		if (l->l_stat == LSSTOP) {
 			if (l->l_wchan == 0) {
-				p->p_nrlwps++;
 				if (lr == NULL)
 					lr = l;
 				else
 					setrunnable(l);
-			}
-			else
+			} else
 				l->l_stat = LSSLEEP;
 		}
-	
+	if (p->p_flag & P_SA)
+		sa_upcall(lr, SA_UPCALL_PREEMPTED, lr, NULL, 0, NULL);
+
 	return lr;
 }
 

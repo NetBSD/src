@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_time.c,v 1.54.2.11 2002/02/28 04:14:45 nathanw Exp $	*/
+/*	$NetBSD: kern_time.c,v 1.54.2.12 2002/04/02 00:16:00 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.54.2.11 2002/02/28 04:14:45 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.54.2.12 2002/04/02 00:16:00 nathanw Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -793,7 +793,6 @@ realtimerexpire(void *arg)
 				    NULL, NULL, sizeof(siginfo_t), 
 				    &pt->pt_info, sd);
 				if (ret == 0) {
-					p->p_nrlwps++;
 					l2->l_priority = l2->l_usrpri;
 					PRELE(l2);
 					setrunnable(l2);
