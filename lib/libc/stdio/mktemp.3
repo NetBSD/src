@@ -1,4 +1,4 @@
-.\"	$NetBSD: mktemp.3,v 1.18 2003/01/18 11:29:55 thorpej Exp $
+.\"	$NetBSD: mktemp.3,v 1.19 2003/02/16 16:21:59 wiz Exp $
 .\"
 .\" Copyright (c) 1989, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -131,7 +131,7 @@ For instance, code of this form:
 char sfn[15] = "";
 FILE *sfp;
 
-strcpy(sfn, "/tmp/ed.XXXXXX");
+strlcpy(sfn, "/tmp/ed.XXXXXX", sizeof sfn);
 if (mktemp(sfn) == NULL || (sfp = fopen(sfn, "w+")) == NULL) {
         fprintf(stderr, "%s: %s\en", sfn, strerror(errno));
         return (NULL);
