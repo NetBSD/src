@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.en,v 1.125.2.1 2004/04/18 02:26:13 jmc Exp $	*/
+/*	$NetBSD: msg.mi.en,v 1.125.2.2 2004/06/07 10:20:13 tron Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -483,26 +483,12 @@ message ftpsource
 ready to use.  If "user" is "ftp", then the password is not needed.
 
 host:		%s 
-directory:	%s 
+base directory:	%s 
+set directory:	%s 
 user:		%s 
 password:	%s 
 proxy:		%s 
 }
-
-message host
-{host}
-
-message dir
-{directory}
-
-message user
-{user}
-
-message passwd
-{password}
-
-message proxy
-{proxy}
 
 message email
 {e-mail address}
@@ -516,7 +502,8 @@ Remember, the directory should contain the .tgz files and
 must be nfs mountable.
 
 host:		%s 
-directory:	%s 
+base directory:	%s 
+set directory:	%s 
 }
 
 message nfsbadmount
@@ -528,7 +515,7 @@ the distribution is located.
 Remember, the directory should contain the .tgz files.
 
 device:		%s 
-directory:	%s
+set directory:	%s
 }
 
 message localfssource
@@ -538,21 +525,23 @@ Remember, the directory should contain the .tgz files.
 
 device:		%s 
 file system:	%s 
-directory:	%s
+base directory:	%s 
+set directory:	%s
 }
 
 message localdir
 {Enter the already-mounted local directory where the distribution is located. 
 Remember, the directory should contain the .tgz files.
 
-directory:	%s
+base directory:	%s 
+set directory:	%s
 }
 
 message filesys
 {file system}
 
 message cdrombadmount
-{The CDROM could not be mounted on device %s.}
+{The CDROM /dev/%s could not be mounted.}
 
 message localfsbadmount
 {%s could not be mounted on local device %s.}
@@ -612,7 +601,7 @@ message net_media
 {Network media type}
 
 message netok
-{The following are the values you entered.  Are they OK?
+{The following are the values you entered.
 
 DNS Domain:		%s 
 Host Name:		%s 
@@ -628,6 +617,9 @@ message netokv6
 {IPv6 autoconf:		%s 
 IPv6 Nameserver:	%s 
 }
+
+message netok_ok
+{Are they OK?}
 
 message netagain
 {Please reenter the information about your network.  Your last answers
@@ -648,11 +640,9 @@ message realdir
 {Could not change to directory %s: %s.  Install aborted.
 }
 
-message ftperror_cont
-{Ftp detected an error.  Press <return> to continue.}
-
 message ftperror
-{Ftp could not retrieve a file.  Do you want to try again?}
+{Ftp could not retrieve a file.
+Do you want to try again?}
 
 message distdir
 {What directory shall I use for %s? }
@@ -667,9 +657,10 @@ each file is extracted?
 }
 
 message notarfile
-{Release set %s does not exist.
+{Release set %s does not exist.}
 
-Continue extracting sets?}
+message notarfile_ok
+{Continue extracting sets?}
 
 message endtarok
 {All selected distribution sets unpacked successfully.}
@@ -1022,6 +1013,8 @@ message Custom_installation {Custom installation}
 message Change {Change}
 message hidden {** hidden **}
 message Host {Host}
+message Base_dir {Base directory}
+message Set_dir {Set directory}
 message Directory {Directory}
 message User {User}
 message Password {Password}
@@ -1041,16 +1034,15 @@ message Blowfish_2_7_round {Blowfish 2^7 round}
 message do_not_change {do not change}
 message Device {Device}
 message File_system {File system}
-message Change_directory_path {Change directory path}
 message Select_IPv6_DNS_server {  Select IPv6 DNS server}
 message other {other }
 message Perform_IPv6_autoconfiguration {Perform IPv6 autoconfiguration?}
 message Perform_DHCP_autoconfiguration {Perform DHCP autoconfiguration?}
 message Root_shell {Root shell}
 message Select_set_extraction_verbosity {Select set extraction verbosity}
-message Progress_bar_recommended {Progress bar (recommended)}
+message Progress_bar {Progress bar (recommended)}
 message Silent {Silent}
-message Verbose_file_name_listing_slow {Verbose file name listing (slow)}
+message Verbose {Verbose file name listing (slow)}
 
 .if AOUT2ELF
 message aoutfail
