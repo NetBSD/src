@@ -1,7 +1,11 @@
-#	$NetBSD: Makefile,v 1.5 2001/12/19 23:54:32 tv Exp $
+#	$NetBSD: Makefile,v 1.6 2001/12/31 23:04:12 thorpej Exp $
 
 # XXX - This gdb.new directory should be renamed to "gdb" after all platforms
 # have been migrated to the new toolchain.
+
+.include <bsd.own.mk>
+
+.if ${MKGDB} != "no" && ${MKBFD} != "no"
 
 .include "${.CURDIR}/../arch/${MACHINE_ARCH}/defs.mk"
 
@@ -22,6 +26,8 @@ DPADD=		${LIBTERMCAP} ${LIBINTL} ${LIBM} ${LIBKVM}
 TEXINFO=	gdb.texinfo gdbint.texinfo stabs.texinfo
 INFOFLAGS=	-I${DIST}/gdb/doc -I${DIST}/gdb/mi \
 		-I${DIST}/readline/doc -I${.CURDIR}/..
+
+.endif	# MKGDB != no && MKBFD != no
 
 .include "../../Makefile.inc"
 .include <bsd.prog.mk>
