@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ep_isa.c,v 1.13 1997/04/27 09:44:45 veego Exp $	*/
+/*	$NetBSD: if_ep_isa.c,v 1.14 1997/04/28 15:52:44 mjacob Exp $	*/
 
 /*
  * Copyright (c) 1997 Jonathan Stone <jonathan@NetBSD.org>
@@ -114,7 +114,7 @@ static struct epcard {
 	int	iobase;
 	int	irq;
 	char	available;
-	int	model;
+	long	model;
 } epcards[MAXEPCARDS];
 static int nepcards;
 
@@ -295,7 +295,7 @@ ep_isa_attach(parent, self, aux)
 	sc->sc_ioh = ioh;
 	sc->bustype = EP_BUS_ISA;
 
-	chipset = (int)ia->ia_aux;
+	chipset = (int)(long)ia->ia_aux;
 	if ((chipset & 0xfff0) == PROD_ID_3C509) {
 		printf(": 3Com 3C509 Ethernet\n");
 		epconfig(sc, EP_CHIPSET_3C509);
