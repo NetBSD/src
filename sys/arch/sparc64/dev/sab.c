@@ -1,4 +1,4 @@
-/*	$NetBSD: sab.c,v 1.14 2003/07/15 03:36:07 lukem Exp $	*/
+/*	$NetBSD: sab.c,v 1.15 2004/03/17 17:04:59 pk Exp $	*/
 /*	$OpenBSD: sab.c,v 1.7 2002/04/08 17:49:42 jason Exp $	*/
 
 /*
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sab.c,v 1.14 2003/07/15 03:36:07 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sab.c,v 1.15 2004/03/17 17:04:59 pk Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -220,7 +220,7 @@ sab_match(parent, match, aux)
 	if (strcmp(ea->ea_name, "se") == 0)
 		return (1);
 
-	compat = PROM_getpropstring(ea->ea_node, "compatible");
+	compat = prom_getpropstring(ea->ea_node, "compatible");
 	if (compat != NULL && !strcmp(compat, "sab82532"))
 		return (1);
 

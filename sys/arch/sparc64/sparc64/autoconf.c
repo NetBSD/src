@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.92 2004/03/17 15:22:57 pk Exp $ */
+/*	$NetBSD: autoconf.c,v 1.93 2004/03/17 17:04:59 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.92 2004/03/17 15:22:57 pk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.93 2004/03/17 17:04:59 pk Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -708,7 +708,7 @@ extern struct sparc_bus_space_tag mainbus_space_tag;
 			portid = -1;
 		ma.ma_upaid = portid;
 
-		if (PROM_getprop(node, "reg", sizeof(*ma.ma_reg), 
+		if (prom_getprop(node, "reg", sizeof(*ma.ma_reg), 
 				 &ma.ma_nreg, &ma.ma_reg) != 0)
 			continue;
 #ifdef DEBUG
@@ -721,7 +721,7 @@ extern struct sparc_bus_space_tag mainbus_space_tag;
 				printf(" no reg\n");
 		}
 #endif
-		rv = PROM_getprop(node, "interrupts", sizeof(*ma.ma_interrupts),
+		rv = prom_getprop(node, "interrupts", sizeof(*ma.ma_interrupts),
 			&ma.ma_ninterrupts, &ma.ma_interrupts);
 		if (rv != 0 && rv != ENOENT) {
 			free(ma.ma_reg, M_DEVBUF);
@@ -735,7 +735,7 @@ extern struct sparc_bus_space_tag mainbus_space_tag;
 				printf(" no interrupts\n");
 		}
 #endif
-		rv = PROM_getprop(node, "address", sizeof(*ma.ma_address), 
+		rv = prom_getprop(node, "address", sizeof(*ma.ma_address), 
 			&ma.ma_naddress, &ma.ma_address);
 		if (rv != 0 && rv != ENOENT) {
 			free(ma.ma_reg, M_DEVBUF);
@@ -768,7 +768,7 @@ CFATTACH_DECL(mainbus, sizeof(struct device),
     mainbus_match, mainbus_attach, NULL, NULL);
 
 int
-PROM_getprop(node, name, size, nitem, bufp)
+prom_getprop(node, name, size, nitem, bufp)
 	int	node;
 	char	*name;
 	size_t	size;
@@ -778,7 +778,7 @@ PROM_getprop(node, name, size, nitem, bufp)
 	void	*buf;
 	long	len;
 
-	len = PROM_getproplen(node, name);
+	len = prom_getproplen(node, name);
 	if (len <= 0)
 		return (ENOENT);
 
@@ -807,7 +807,7 @@ PROM_getprop(node, name, size, nitem, bufp)
  * Internal form of proplen().  Returns the property length.
  */
 long
-PROM_getproplen(node, name)
+prom_getproplen(node, name)
 	int node;
 	char *name;
 {
@@ -820,18 +820,18 @@ PROM_getproplen(node, name)
  * subsequent calls.
  */
 char *
-PROM_getpropstring(node, name)
+prom_getpropstring(node, name)
 	int node;
 	char *name;
 {
 	static char stringbuf[32];
 
-	return (PROM_getpropstringA(node, name, stringbuf, sizeof stringbuf));
+	return (prom_getpropstringA(node, name, stringbuf, sizeof stringbuf));
 }
 
-/* Alternative PROM_getpropstring(), where caller provides the buffer */
+/* Alternative prom_getpropstring(), where caller provides the buffer */
 char *
-PROM_getpropstringA(node, name, buffer, bufsize)
+prom_getpropstringA(node, name, buffer, bufsize)
 	int node;
 	char *name;
 	char *buffer;
@@ -839,7 +839,7 @@ PROM_getpropstringA(node, name, buffer, bufsize)
 {
 	int blen = bufsize - 1;
 
-	if (PROM_getprop(node, name, 1, &blen, &buffer) != 0)
+	if (prom_getprop(node, name, 1, &blen, &buffer) != 0)
 		blen = 0;
 
 	buffer[blen] = '\0';	/* usually unnecessary */
@@ -851,7 +851,7 @@ PROM_getpropstringA(node, name, buffer, bufsize)
  * The return value is the property, or the default if there was none.
  */
 int
-PROM_getpropint(node, name, deflt)
+prom_getpropint(node, name, deflt)
 	int node;
 	char *name;
 	int deflt;
@@ -922,7 +922,7 @@ int prom_getoption(const char *name, char *buf, int buflen)
 		return (ENOENT);
 
 	len = buflen - 1;
-	if ((error = PROM_getprop(node, (char *)name, 1, &len, &buf)) != 0)
+	if ((error = prom_getprop(node, (char *)name, 1, &len, &buf)) != 0)
 		return error;
 
 	buf[len] = '\0';
@@ -947,7 +947,7 @@ static struct idprom idprom;
 	dst = (char *)&idprom;
 	len = sizeof(struct idprom);
 	node = findroot();
-	if (PROM_getprop(node, "idprom", 1, &len, &dst) != 0) {
+	if (prom_getprop(node, "idprom", 1, &len, &dst) != 0) {
 		printf("`idprom' property cannot be read: "
 			"cannot get ethernet address");
 	}
@@ -983,7 +983,7 @@ void prom_getether(node, cp)
 	 */
 	nitem = 6+1;
 	bp = buf;
-	if (PROM_getprop(node, "mac-address", 1, &nitem, &bp) == 0 &&
+	if (prom_getprop(node, "mac-address", 1, &nitem, &bp) == 0 &&
 	    nitem >= 6) {
 		memcpy(cp, bp, 6);
 		return;
@@ -1000,7 +1000,7 @@ void prom_getether(node, cp)
 
 	/* Retrieve the node's "local-mac-address" property, if any */
 	nitem = 6;
-	if (PROM_getprop(node, "local-mac-address", 1, &nitem, &cp) == 0 &&
+	if (prom_getprop(node, "local-mac-address", 1, &nitem, &cp) == 0 &&
 	    nitem == 6)
 		return;
 

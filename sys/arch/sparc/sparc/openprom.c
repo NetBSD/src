@@ -1,4 +1,4 @@
-/*	$NetBSD: openprom.c,v 1.20 2004/03/16 22:45:18 pk Exp $ */
+/*	$NetBSD: openprom.c,v 1.21 2004/03/17 17:04:59 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: openprom.c,v 1.20 2004/03/16 22:45:18 pk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: openprom.c,v 1.21 2004/03/17 17:04:59 pk Exp $");
 
 #include "opt_sparc_arch.h"
 
@@ -178,7 +178,7 @@ openpromioctl(dev, cmd, data, flags, p)
 			break;
 		value = malloc(len, M_TEMP, M_WAITOK);
 		s = splhigh();
-		error = PROM_getprop(node, name, 1, &len, &value);
+		error = prom_getprop(node, name, 1, &len, &value);
 		splx(s);
 		if (error != 0)
 			break;

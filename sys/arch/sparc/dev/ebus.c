@@ -1,4 +1,4 @@
-/*	$NetBSD: ebus.c,v 1.15 2003/08/27 15:59:50 mrg Exp $ */ 
+/*	$NetBSD: ebus.c,v 1.16 2004/03/17 17:04:59 pk Exp $ */ 
 
 /*
  * Copyright (c) 1999, 2000 Matthew R. Green
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ebus.c,v 1.15 2003/08/27 15:59:50 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ebus.c,v 1.16 2004/03/17 17:04:59 pk Exp $");
 
 #if defined(DEBUG) && !defined(EBUS_DEBUG)
 #define EBUS_DEBUG
@@ -189,7 +189,7 @@ ebus_match(parent, match, aux)
 	if (node == -1)
 		return (0);
 
-	PROM_getpropstringA(node, "name", name, sizeof name);
+	prom_getpropstringA(node, "name", name, sizeof name);
 	if (PCI_CLASS(pa->pa_class) == PCI_CLASS_BRIDGE
 	    && PCI_VENDOR(pa->pa_id) == PCI_VENDOR_SUN
 	    && PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_SUN_EBUS
@@ -214,7 +214,7 @@ ebus_init_wiring_table(sc)
 		return (0);
 	}
 
-	model = PROM_getpropstringA(prom_findroot(), "model",
+	model = prom_getpropstringA(prom_findroot(), "model",
 				    buf, sizeof(buf));
 	if (model == NULL)
 		panic("ebus_init_wiring_table: no \"model\" property");
@@ -269,7 +269,7 @@ ebus_attach(parent, self, aux)
 	 * get by processing "ranges".
 	 * 
 	 */
-	error = PROM_getprop(node, "reg", sizeof(struct ofw_pci_register),
+	error = prom_getprop(node, "reg", sizeof(struct ofw_pci_register),
 			     &sc->sc_nreg, &sc->sc_reg);
 	if (error)
 		panic("%s: unable to read ebus registers (error %d)",
@@ -280,7 +280,7 @@ ebus_attach(parent, self, aux)
 	 */
 	DPRINTF(EDB_CHILD, ("ebus node %08x, searching children...\n", node));
 	for (node = firstchild(node); node; node = nextsibling(node)) {
-		char *name = PROM_getpropstring(node, "name");
+		char *name = prom_getpropstring(node, "name");
 
 		if (ebus_setup_attach_args(sc, node, &ea) != 0) {
 			printf("ebus_attach: %s: incomplete\n", name);
@@ -303,7 +303,7 @@ ebus_setup_attach_args(sc, node, ea)
 
 	memset(ea, 0, sizeof(struct ebus_attach_args));
 
-	err = PROM_getprop(node, "name", 1, &n, &ea->ea_name);
+	err = prom_getprop(node, "name", 1, &n, &ea->ea_name);
 	if (err != 0)
 		return (err);
 	ea->ea_name[n] = '\0';
@@ -312,7 +312,7 @@ ebus_setup_attach_args(sc, node, ea)
 	ea->ea_bustag = sc->sc_childbustag;
 	ea->ea_dmatag = sc->sc_dmatag;
 
-	err = PROM_getprop(node, "reg", sizeof(struct ebus_regs),
+	err = prom_getprop(node, "reg", sizeof(struct ebus_regs),
 			   &ea->ea_nreg, &ea->ea_reg);
 	if (err != 0)
 		return (err);
@@ -330,7 +330,7 @@ ebus_setup_attach_args(sc, node, ea)
 	    }
 
 
-	err = PROM_getprop(node, "address", sizeof(u_int32_t),
+	err = prom_getprop(node, "address", sizeof(u_int32_t),
 			   &ea->ea_nvaddr, &ea->ea_vaddr);
 	if (err != ENOENT) {
 		if (err != 0)
