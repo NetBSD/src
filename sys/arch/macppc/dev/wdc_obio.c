@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_obio.c,v 1.6 2000/01/21 18:45:14 tsubai Exp $	*/
+/*	$NetBSD: wdc_obio.c,v 1.7 2000/04/02 12:36:38 tsubai Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -119,6 +119,7 @@ wdc_obio_attach(parent, self, aux)
 	struct channel_softc *chp = &sc->wdc_channel;
 	int intr;
 	int use_dma = 0;
+	char path[80];
 
 	if (sc->sc_wdcdev.sc_dev.dv_cfdata->cf_flags & WDC_OPTIONS_DMA) {
 		if (ca->ca_nreg >= 16 || ca->ca_nintr == -1)
@@ -181,6 +182,19 @@ wdc_obio_attach(parent, self, aux)
 		printf("%s: can't allocate memory for command queue",
 		sc->sc_wdcdev.sc_dev.dv_xname);
 		return;
+	}
+
+#define OHARE_FEATURE_REG	0xf3000038
+
+	/* XXX Enable wdc1 by feature reg. */
+	bzero(path, sizeof(path));
+	OF_package_to_path(ca->ca_node, path, sizeof(path));
+	if (strcmp(path, "/bandit@F2000000/ohare@10/ata@21000") == 0) {
+		u_int x;
+
+		x = in32rb(OHARE_FEATURE_REG);
+		x |= 8;
+		out32rb(OHARE_FEATURE_REG, x);
 	}
 
 	wdcattach(chp);
