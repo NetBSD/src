@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.69 1998/07/28 18:34:54 thorpej Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.70 1998/08/05 02:45:10 perry Exp $	*/
 
 /*-
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
@@ -140,7 +140,7 @@ cpu_fork(p1, p2)
 #else
 		new_ldt = (union descriptor *)kmem_alloc(kernel_map, len);
 #endif
-		bcopy(pcb->pcb_ldt, new_ldt, len);
+		memcpy(new_ldt, pcb->pcb_ldt, len);
 		pcb->pcb_ldt = new_ldt;
 		ldt_alloc(pcb, new_ldt, len);
 	}

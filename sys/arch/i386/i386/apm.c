@@ -1,4 +1,4 @@
-/*	$NetBSD: apm.c,v 1.31 1998/04/03 18:18:05 cgd Exp $ */
+/*	$NetBSD: apm.c,v 1.32 1998/08/05 02:45:08 perry Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -1089,7 +1089,7 @@ apmattach(parent, self, aux)
 	apm_powmgt_engage(1, APM_DEV_NETWORK(APM_DEV_ALLUNITS));
 	apm_powmgt_engage(1, APM_DEV_PCMCIA(APM_DEV_ALLUNITS));
 #endif
-	bzero(&regs, sizeof(regs));
+	memset(&regs, 0, sizeof(regs));
 	error = apm_get_powstat(&regs);
 	if (error == 0) {
 		apm_power_print(apmsc, &regs);
@@ -1242,7 +1242,7 @@ apmioctl(dev, cmd, data, flag, p)
 			return (EIO);
 		}
 
-		bzero(powerp, sizeof(*powerp));
+		memset(powerp, 0, sizeof(*powerp));
 		if (APM_BATT_LIFE(&regs) != APM_BATT_LIFE_UNKNOWN)
 			powerp->battery_life = APM_BATT_LIFE(&regs);
 		powerp->ac_state = APM_AC_STATE(&regs);
