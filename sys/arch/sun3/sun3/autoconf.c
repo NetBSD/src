@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.17 1994/12/12 18:59:56 gwr Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.18 1994/12/13 18:37:22 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -49,13 +49,15 @@
 #include <sys/dmap.h>
 #include <sys/reboot.h>
 
-#include <machine/autoconf.h>
-#include <machine/vmparam.h>
-#include <machine/cpu.h>
-#include <machine/pte.h>
-#include <machine/isr.h>
+#include <vm/vm.h>
+#include <vm/vm_kern.h>
+#include <vm/vm_map.h>
 
-#include <setjmp.h>
+#include <machine/autoconf.h>
+#include <machine/cpu.h>
+#include <machine/isr.h>
+#include <machine/pte.h>
+#include <machine/pmap.h>
 
 extern int soft1intr();
 
@@ -207,69 +209,76 @@ bus_print(args, name)
 
 /*
  * Read addr with size len (1,2,4) into val.
- * If this generates a bus error, return non-zero.
+ * If this generates a bus error, return -1
  *
  *	Create a temporary mapping,
- *	Prepare for bus-error with setjmp,
- *	Try the access,
+ *	Try the access using fu{byte,sword,word}
  *	Clean up temp. mapping
  */
-extern caddr_t vmempage;
-int bus_peek(ca, off, len, val)
-	struct confargs *ca;
-	int off, len;
-	int *val;
+extern vm_offset_t tmp_vpages[];
+extern int fubyte(), fusword(), fuword();
+int bus_peek(bustype, paddr, sz)
+	int bustype, paddr, sz;
 {
-#if 0	/* XXX - Not yet. */
-	int rv, x, ptype;
-	vm_offset_t va, pa;
+	int off, pte, rv, s;
+	vm_offset_t pgva;
+	caddr_t va;
 
-	switch (ca->ca_bustype) {
+	off = paddr & PGOFSET;
+	paddr -= off;
+	pte = PA_PGNUM(paddr);
+
+	/*
+	 * The temporary mapping has user-accessibility
+	 * because fubyte et. al. do the access using
+	 * an explicit switch to user space...
+	 * (XXX -Should see if fubyte still needs that.)
+	 */
+#define	PG_PEEK 	PG_VALID | PG_WRITE | PG_NC
+	switch (bustype) {
 	case BUS_OBMEM:
-		ptype = PMAP_NC;
+		pte |= (PG_PEEK | PGT_OBMEM);
 		break;
 	case BUS_OBIO:
-		ptype = PMAP_NC | PMAP_OBIO;
+		pte |= (PG_PEEK | PGT_OBIO);
 		break;
 	case BUS_VME16:
-		ptype = PMAP_NC | PMAP_VME16;
+		pte |= (PG_PEEK | PGT_VME_D16);
 		break;
 	case BUS_VME32:
-		ptype = PMAP_NC | PMAP_VME32;
+		pte |= (PG_PEEK | PGT_VME_D32);
 		break;
 	default:
 		return (-1);
 	}
+#undef	PG_PEEK
 
-	pa = ca->ca_paddr + off;
-	off = pa & PGOFSET;
-	pa -= off;
-	pa |= ptype;
-	va = vmempage + off;
+	s = splvm();
 
-	pmap_enter(kernel_pmap, vmempage, pa,
-			   VM_PROT_WRITE, TRUE);
+	pgva = tmp_vpages[0];
+	va = (caddr_t)pgva + off;
+
+	set_pte(pgva, pte);
 
 	/*
 	 * OK, try the access using one of the assembly routines
 	 * that will set pcb_onfault and catch any bus errors.
 	 */
-	switch (len) {
+	switch (sz) {
 	case 1:
-		rv = peekb(va, &x);
+		rv = fubyte(va);
 		break;
 	case 2:
-		rv = peeks(va, &x);
+		rv = fusword(va);
 		break;
 	case 4:
-		rv = peekl(va, &x);
+		rv = fuword(va);
 		break;
 	default:
 		rv = -1;
 	}
 
-	pmap_remove(kernel_pmap, vmempage, vmempage + NBPG);
-
-#endif
-	return 0;
+	set_pte(pgva, PG_INVAL);
+	splx(s);
+	return rv;
 }
