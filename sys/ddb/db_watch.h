@@ -24,9 +24,14 @@
  * rights to redistribute these changes.
  */
 /*
+ * $Id: db_watch.h,v 1.2 1993/05/20 03:39:39 cgd Exp $
+ *
  * HISTORY
  * $Log: db_watch.h,v $
- * Revision 1.1.1.1  1993/03/21 09:45:37  cgd
+ * Revision 1.2  1993/05/20 03:39:39  cgd
+ * add explicit rcs id
+ *
+ * Revision 1.1.1.1  1993/03/21  09:46:27  cgd
  * initial import of 386bsd-0.1 sources
  *
  * Revision 1.1  1992/03/25  21:45:40  pace

@@ -24,9 +24,14 @@
  * rights to redistribute these changes.
  */
 /*
+ * $Id: db_aout.c,v 1.3 1993/05/20 03:39:06 cgd Exp $
+ *
  * HISTORY
  * $Log: db_aout.c,v $
- * Revision 1.2  1993/05/07 09:13:53  cgd
+ * Revision 1.3  1993/05/20 03:39:06  cgd
+ * add explicit rcs id
+ *
+ * Revision 1.2  1993/05/07  09:13:53  cgd
  * make SYMTAB_SPACE user-definable, as an "option"
  *
  * Revision 1.1.1.1  1993/03/21  09:46:26  cgd
