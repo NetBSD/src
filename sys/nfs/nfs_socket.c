@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_socket.c,v 1.36 1997/04/08 17:57:16 fvdl Exp $	*/
+/*	$NetBSD: nfs_socket.c,v 1.37 1997/05/12 23:40:22 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1995
@@ -228,9 +228,9 @@ nfs_connect(nmp, rep)
 		so->so_snd.sb_timeo = 0;
 	}
 	if (nmp->nm_sotype == SOCK_DGRAM) {
-		sndreserve = nmp->nm_wsize + NFS_MAXPKTHDR;
-		rcvreserve = max(nmp->nm_rsize, nmp->nm_readdirsize) +
-		    NFS_MAXPKTHDR;
+		sndreserve = (nmp->nm_wsize + NFS_MAXPKTHDR) * 2;
+		rcvreserve = (max(nmp->nm_rsize, nmp->nm_readdirsize) +
+		    NFS_MAXPKTHDR) * 2;
 	} else if (nmp->nm_sotype == SOCK_SEQPACKET) {
 		sndreserve = (nmp->nm_wsize + NFS_MAXPKTHDR) * 2;
 		rcvreserve = (max(nmp->nm_rsize, nmp->nm_readdirsize) +
@@ -581,6 +581,8 @@ errout:
 				error = nfs_reconnect(rep);
 			if (!error)
 				goto tryagain;
+			else
+				nfs_sndunlock(&rep->r_nmp->nm_flag);
 		}
 	} else {
 		if ((so = rep->r_nmp->nm_so) == NULL)
@@ -653,7 +655,9 @@ nfs_reply(myrep)
 			 */
 			if (NFSIGNORE_SOERROR(nmp->nm_soflags, error)) {
 				nmp->nm_so->so_error = 0;
+#ifdef DEBUG
 				printf("nfs_reply: ignoring error %d\n", error);
+#endif
 				if (myrep->r_flags & R_GETONEREP)
 					return (0);
 				continue;
@@ -1298,8 +1302,10 @@ nfs_timer(arg)
 			    nmp->nm_nam, (struct mbuf *)0, (struct proc *)0);
 			if (error) {
 				if (NFSIGNORE_SOERROR(nmp->nm_soflags, error)) {
+#ifdef DEBUG
 					printf("nfs_timer: ignoring error %d\n",
 						error);
+#endif
 					so->so_error = 0;
 				}
 			} else {
