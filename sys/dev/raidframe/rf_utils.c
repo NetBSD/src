@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_utils.c,v 1.10 2002/09/21 00:47:59 oster Exp $	*/
+/*	$NetBSD: rf_utils.c,v 1.11 2003/01/03 08:05:22 junyoung Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -33,7 +33,7 @@
  ****************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_utils.c,v 1.10 2002/09/21 00:47:59 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_utils.c,v 1.11 2003/01/03 08:05:22 junyoung Exp $");
 
 #include "rf_archs.h"
 #include "rf_utils.h"
@@ -93,7 +93,7 @@ rf_free_1d_array(a, n)
 {
 	RF_Free(a, n * sizeof(RF_RowCol_t));
 }
- 0)
+
 /* Euclid's algorithm:  finds and returns the greatest common divisor
  * between a and b.     (MCH)
  */
