@@ -1,4 +1,4 @@
-.\" $NetBSD: usbhidaction.1,v 1.1 2000/12/30 13:07:49 augustss Exp $
+.\" $NetBSD: usbhidaction.1,v 1.2 2000/12/30 16:18:13 augustss Exp $
 .\"
 .\" Copyright (c) 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -93,25 +93,25 @@ If the value is `*' it will match any value.
 The action is a normal command that is executed with
 .Xr system 3 .
 Before it is executed some substitution will occur:
-an occurence of `$n' will be replaced by the nth argument on the
-command line, an occurence of `$V' will be replaced by the numeric value
-of the HID item, an occurence of `$N' will be replaced by the name
-of the control, and an occurence of `$H' will be replaced by the name
+`$n' will be replaced by the nth argument on the
+command line, `$V' will be replaced by the numeric value
+of the HID item, `$N' will be replaced by the name
+of the control, and `$H' will be replaced by the name
 of the HID device.
 .Sh EXAMPLES
 The following configuration file can be used to control a pair
 of Philips USB speakers with the HID controls on the speakers.
 .Bd -literal -offset indent
 # Configuration for various Philips USB speakers
-Consumer:Consumer_Control.Consumer:Volume_Up				1
+Consumer:Consumer_Control.Consumer:Volume_Up			   1
 	mixerctl -f $1 -n -w fea8-i7-master++
-Consumer:Consumer_Control.Consumer:Volume_Down				1
+Consumer:Consumer_Control.Consumer:Volume_Down			   1
 	mixerctl -f $1 -n -w fea8-i7-master--
-Consumer:Consumer_Control.Consumer:Mute					1
+Consumer:Consumer_Control.Consumer:Mute				   1
 	mixerctl -f $1 -n -w fea8-i7-mute++
-Consumer:Consumer_Control.Consumer:Channel_Top.Microsoft:Base_Up	1
+Consumer:Consumer_Control.Consumer:Channel_Top.Microsoft:Base_Up   1
 	mixerctl -f $1 -n -w fea8-i7-bass++
-Consumer:Consumer_Control.Consumer:Channel_Top.Microsoft:Base_Down	1
+Consumer:Consumer_Control.Consumer:Channel_Top.Microsoft:Base_Down 1
 	mixerctl -f $1 -n -w fea8-i7-bass--
 .Ed
 .Pp
