@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.1 2000/05/09 21:55:58 bjh21 Exp $	*/
+/*	$NetBSD: asm.h,v 1.2 2000/06/23 12:18:46 kleink Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -98,6 +98,12 @@
 #define RCSID(x)	.section ".ident"; .asciz x
 #else
 #define RCSID(x)	.text; .asciz x
+#endif
+
+#ifdef __ELF__
+#define	WEAK_ALIAS(alias,sym)						\
+	.weak alias;							\
+	alias = sym
 #endif
 
 #ifdef __STDC__
