@@ -1,4 +1,4 @@
-# $NetBSD: md.arm32,v 1.1 2002/02/11 16:23:20 tron Exp $
+# $NetBSD: md.shark,v 1.1 2002/02/11 19:11:01 thorpej Exp $
 ./usr/X11R6/lib/libXdpms.a
 ./usr/X11R6/man/cat3/XF86DGA.0
 ./usr/X11R6/man/cat3/XF86DGADirectVideo.0
