@@ -1,11 +1,11 @@
-/*	$NetBSD: futil.c,v 1.4 1997/10/17 14:53:34 lukem Exp $	*/
+/*	$NetBSD: futil.c,v 1.5 1997/10/18 11:05:34 lukem Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: futil.c,v 1.7 1997/10/08 07:45:39 charnier Exp";
 #else
-__RCSID("$NetBSD: futil.c,v 1.4 1997/10/17 14:53:34 lukem Exp $");
+__RCSID("$NetBSD: futil.c,v 1.5 1997/10/18 11:05:34 lukem Exp $");
 #endif
 #endif
 
@@ -48,7 +48,7 @@ make_hierarchy(char *dir)
     else
 	cp1 = cp2 = dir;
     while (cp2) {
-	if ((cp2 = index(cp1, '/')) !=NULL )
+	if ((cp2 = strchr(cp1, '/')) !=NULL )
 	    *cp2 = '\0';
 	if (fexists(dir)) {
 	    if (!isdir(dir))
