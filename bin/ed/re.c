@@ -61,20 +61,22 @@ optpat()
 	char delim;
 	int n;
 
-	if ((delim = *ibufp) == '\n')
+	if ((delim = *ibufp) == '\n') {
+		sprintf(errmsg, "no previous pattern");
 		return exp;
-	else if (delim == ' ' || *++ibufp == '\n') {
+	} else if (delim == ' ' || *++ibufp == '\n') {
 		sprintf(errmsg, "invalid pattern delimiter");
 		return NULL;
-	} else if (*ibufp == delim)
+	} else if (*ibufp == delim) {
+		sprintf(errmsg, "no previous pattern");
 		return exp;
-	else if ((exps = getlhs(delim)) == NULL)
+	} else if ((exps = getlhs(delim)) == NULL)
 		return NULL;
 	/* buffer alloc'd && not reserved */
 	if (exp && !patlock)
 		regfree(exp);
 	else if ((exp = (pattern_t *) malloc(sizeof(pattern_t))) == NULL) {
-		fprintf(stderr, "out of memory\n");
+		sprintf(errmsg, "out of memory");
 		return NULL;
 	}
 	patlock = 0;
