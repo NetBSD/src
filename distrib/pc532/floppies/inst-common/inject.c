@@ -27,7 +27,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: inject.c,v 1.1 1995/09/26 21:25:07 phil Exp $
+ *	$Id: inject.c,v 1.2 1995/10/03 22:31:03 phil Exp $
  */
 
 #include <stdio.h>
@@ -38,28 +38,44 @@
 #include <sys/mman.h>
 #include <bm.h>
 
+/*
+ * Map a file
+ */
+
 void *map(char *file, int mode, int *len)
 {
 	int fd;
 	struct stat sb;
 	void *p;
 
+	/* Open the file we'd like map */
 	fd = open(file, mode);
 	if (fd < 0) {
 		perror(file);
 		exit(1);
 	}
+
+	/* Get the length of the file */
 	if (fstat(fd, &sb) < 0) {
 		perror("fstat");
 		exit(1);
 	}
+
+	/* Return the length of file in len */
 	*len = sb.st_size;
+
+	/* Now map the file */
 	p = mmap(NULL, *len, PROT_READ | (mode == O_RDWR ? PROT_WRITE : 0),
 			MAP_SHARED, fd, 0);
 	if (p == NULL) {
 		perror("mmap");
 		exit(1);
 	}
+
+	/*
+	 * We will access this mostly sequential.
+	 * So let's tell it to the vm system.
+	 */
 	madvise(p, *len, MADV_SEQUENTIAL);
 	close(fd);
 	return(p);
@@ -77,20 +93,30 @@ main(int argc, char **argv)
 		exit(1);
 	}
 
+	/* Map the kernel image read/write */
 	kern = map(argv[1], O_RDWR, &kernlen);
+
+	/* Map the filesystem image read only */
 	filesys = map(argv[2], O_RDONLY, &filesyslen);
 
+	/* Search the kernel image for the ramdisk signature */
 	bm = bm_comp(pattern, sizeof(pattern), NULL);
 	ramdisk = bm_exec(bm, kern, kernlen);
 	if (!ramdisk) {
 		fprintf(stderr, "Origin of ramdisk not found in kernel\n");
 		exit(1);
 	}
+
+	/* Does the filesystem image fit into the kernel image? */
 	if ((kernlen - (ramdisk - kern)) < filesyslen) {
 		fprintf(stderr, "Kernel image to small\n");
 		exit(1);
 	}
+
+	/* Copy the filesystem image into the kernel image */
 	memcpy(ramdisk, filesys, filesyslen);
+
+	/* Sync vm/fs and unmap the images */
 	msync(kern, kernlen);
 	munmap(kern, kernlen);
 	munmap(filesys, filesyslen);
