@@ -1,4 +1,4 @@
-/* $NetBSD: lapic.c,v 1.4 2002/10/06 20:38:38 fvdl Exp $ */
+/* $NetBSD: lapic.c,v 1.5 2002/11/22 15:23:41 fvdl Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -71,8 +71,24 @@
 void		lapic_delay __P((int));
 void		lapic_microtime __P((struct timeval *));
 static u_int32_t lapic_gettick __P((void));
-void		lapic_clockintr __P((void *));
+void		lapic_clockintr __P((void *, struct intrframe));
 static void 	lapic_map __P((paddr_t));
+
+static void lapic_hwmask(struct pic *, int);
+static void lapic_hwunmask(struct pic *, int);
+static void lapic_setup(struct pic *, struct cpu_info *, int, int, int);
+
+extern char idt_allocmap[];
+
+struct pic local_pic = {
+	{0, {NULL}, NULL, NULL, NULL, 0, "lapic", NULL, 0},
+	PIC_LAPIC,
+	__SIMPLELOCK_UNLOCKED,
+	lapic_hwmask,
+	lapic_hwunmask,
+	lapic_setup,
+	lapic_setup,
+};
 
 static void
 lapic_map(lapic_base)
@@ -116,7 +132,7 @@ lapic_enable()
 }
 
 void
-lapic_set_lvt ()
+lapic_set_lvt()
 {
 	struct cpu_info *ci = curcpu();
 	int i;
@@ -172,10 +188,14 @@ lapic_boot_init(lapic_base)
 	lapic_map(lapic_base);
 
 #ifdef MULTIPROCESSOR
-	idt_vec_set(LAPIC_IPI_VECTOR, Xintripi);
+	idt_allocmap[LAPIC_IPI_VECTOR] = 1;
+	idt_vec_set(LAPIC_IPI_VECTOR, Xintr_lapic_ipi);
 #endif
+	idt_allocmap[LAPIC_SPURIOUS_VECTOR] = 1;
 	idt_vec_set(LAPIC_SPURIOUS_VECTOR, Xintrspurious);
-	idt_vec_set(LAPIC_TIMER_VECTOR, Xintrltimer);
+
+	idt_allocmap[LAPIC_TIMER_VECTOR] = 1;
+	idt_vec_set(LAPIC_TIMER_VECTOR, Xintr_lapic_ltimer);
 }
 
 static inline u_int32_t lapic_gettick()
@@ -197,14 +217,14 @@ u_int64_t lapic_frac_cycle_per_usec;
 u_int32_t lapic_delaytab[26];
 
 void
-lapic_clockintr (arg)
-	void *arg;
+lapic_clockintr(void *arg, struct intrframe frame)
 {
-	struct clockframe *frame = arg;
 #if defined(I586_CPU) || defined(I686_CPU)
 	static int microset_iter; /* call tsc_microset once/sec */
 	struct cpu_info *ci = curcpu();
 	extern struct timeval tsc_time;
+
+	ci->ci_isources[LIR_TIMER]->is_evcnt.ev_count++;
 
 	/*
 	 * If we have a cycle counter, do the microset thing.
@@ -225,11 +245,11 @@ lapic_clockintr (arg)
 	}
 #endif
 
-	hardclock(frame);
+	hardclock((struct clockframe *)&frame);
 }
 
 void
-lapic_initclocks ()
+lapic_initclocks()
 {
 	/*
 	 * Start local apic countdown timer running, in repeated mode.
@@ -445,3 +465,42 @@ i386_ipi(vec,target,dl)
 	return result;
 }
 
+
+/*
+ * Using 'pin numbers' as:
+ * 0 - timer
+ * 1 - unused
+ * 2 - PCINT
+ * 3 - LVINT0
+ * 4 - LVINT1
+ * 5 - LVERR
+ */
+
+static void
+lapic_hwmask(struct pic *pic, int pin)
+{
+	int reg;
+	u_int32_t val;
+
+	reg = LAPIC_LVTT + (pin << 4);
+	val = i82489_readreg(reg);
+	val |= LAPIC_LVT_MASKED;
+	i82489_writereg(reg, val);
+}
+
+static void
+lapic_hwunmask(struct pic *pic, int pin)
+{
+	int reg;
+	u_int32_t val;
+
+	reg = LAPIC_LVTT + (pin << 4);
+	val = i82489_readreg(reg);
+	val &= ~LAPIC_LVT_MASKED;
+	i82489_writereg(reg, val);
+}
+
+static void
+lapic_setup(struct pic *pic, struct cpu_info *ci, int pin, int idtvec, int type)
+{
+}

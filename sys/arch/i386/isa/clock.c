@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.74 2002/10/02 05:47:12 thorpej Exp $	*/
+/*	$NetBSD: clock.c,v 1.75 2002/11/22 15:23:48 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994 Charles M. Hannum.
@@ -90,7 +90,7 @@ WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.74 2002/10/02 05:47:12 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.75 2002/11/22 15:23:48 fvdl Exp $");
 
 /* #define CLOCKDEBUG */
 /* #define CLOCK_PARANOIA */
@@ -141,7 +141,7 @@ static pcppi_tag_t ppicookie;
 #endif /* PCPPI */
 
 void	spinwait __P((int));
-int	clockintr __P((void *));
+int	clockintr __P((void *, struct intrframe));
 int	gettick __P((void));
 void	sysbeep __P((int, int));
 void	rtcinit __P((void));
@@ -385,10 +385,8 @@ startrtclock()
 }
 
 int
-clockintr(arg)
-	void *arg;
+clockintr(void *arg, struct intrframe frame)
 {
-	struct clockframe *frame = arg;		/* not strictly necessary */
 #if defined(I586_CPU) || defined(I686_CPU)
 	static int microset_iter; /* call tsc_microset once/sec */
 	struct cpu_info *ci = curcpu();
@@ -413,7 +411,7 @@ clockintr(arg)
 	}
 #endif
 
-	hardclock(frame);
+	hardclock((struct clockframe *)&frame);
 
 #if NMCA > 0
 	if (MCA_system) {
@@ -574,7 +572,8 @@ i8254_initclocks()
 	 * XXX If you're doing strange things with multiple clocks, you might
 	 * want to keep track of clock handlers.
 	 */
-	(void)isa_intr_establish(NULL, 0, IST_PULSE, IPL_CLOCK, clockintr, 0);
+	(void)isa_intr_establish(NULL, 0, IST_PULSE, IPL_CLOCK,
+	    (int (*)(void *))clockintr, 0);
 }
 
 void

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.497 2002/11/14 12:52:28 minoura Exp $	*/
+/*	$NetBSD: machdep.c,v 1.498 2002/11/22 15:23:41 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.497 2002/11/14 12:52:28 minoura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.498 2002/11/22 15:23:41 fvdl Exp $");
 
 #include "opt_cputype.h"
 #include "opt_ddb.h"
@@ -211,7 +211,6 @@ int     cpureset_delay = 2000; /* default to 2s */
 #ifdef MTRR
 struct mtrr_funcs *mtrr_funcs;
 #endif
-
 
 int	physmem;
 int	dumpmem_low;
@@ -2661,6 +2660,8 @@ setregs(p, pack, stack)
  */
 
 union	descriptor *idt, *gdt, *ldt;
+char idt_allocmap[NIDT];
+struct simplelock idt_lock = SIMPLELOCK_INITIALIZER;
 #ifdef I586_CPU
 union	descriptor *pentium_idt;
 #endif
@@ -3375,17 +3376,21 @@ init386(first_avail)
 	ldt[LSOL26CALLS_SEL] = ldt[LBSDICALLS_SEL] = ldt[LSYS5CALLS_SEL];
 
 	/* exceptions */
-	for (x = 0; x < 32; x++)
+	for (x = 0; x < 32; x++) {
 		setgate(&idt[x].gd, IDTVEC(exceptions)[x], 0, SDT_SYS386TGT,
 		    (x == 3 || x == 4) ? SEL_UPL : SEL_KPL,
 		    GSEL(GCODE_SEL, SEL_KPL));
+		idt_allocmap[x] = 1;
+	}
 
 	/* new-style interrupt gate for syscalls */
 	setgate(&idt[128].gd, &IDTVEC(syscall), 0, SDT_SYS386TGT, SEL_UPL,
 	    GSEL(GCODE_SEL, SEL_KPL));
+	idt_allocmap[128] = 1;
 #ifdef COMPAT_SVR4
 	setgate(&idt[0xd2].gd, &IDTVEC(svr4_fasttrap), 0, SDT_SYS386TGT,
 	    SEL_UPL, GSEL(GCODE_SEL, SEL_KPL));
+	idt_allocmap[0xd2] = 1;
 #endif /* COMPAT_SVR4 */
 
 	setregion(&region, gdt, NGDT * sizeof(gdt[0]) - 1);
@@ -3435,14 +3440,12 @@ init386(first_avail)
 	mca_busprobe();
 #endif
 
-#if NISA > 0
-	isa_defaultirq();
-#endif
+	intr_default_setup();
 
 	/* Initialize software interrupts. */
 	softintr_init();
 
-	splraise(IPL_SERIAL);	/* XXX MP clean me */
+	splraise(IPL_IPI);
 	enable_intr();
 
 	if (physmem < btoc(2 * 1024 * 1024)) {
@@ -3625,47 +3628,43 @@ void need_resched(struct cpu_info *ci)
  */
 
 int
-idt_vec_alloc (low, high)
+idt_vec_alloc(low, high)
 	int low;
 	int high;
 {
 	int vec;
 
-	for (vec=low; vec<=high; vec++)
-		if (idt[vec].gd.gd_p == 0)
+	simple_lock(&idt_lock);
+	for (vec = low; vec <= high; vec++) {
+		if (idt_allocmap[vec] == 0) {
+			idt_allocmap[vec] = 1;
+			simple_unlock(&idt_lock);
 			return vec;
+		}
+	}
+	simple_unlock(&idt_lock);
 	return 0;
 }
 
-void idt_vec_set (vec, function)
+void
+idt_vec_set(vec, function)
 	int vec;
 	void (*function) __P((void));
 {
+	/*
+	 * Vector should be allocated, so no locking needed.
+	 */
+	KASSERT(idt_allocmap[vec] == 1);
 	setgate(&idt[vec].gd, function, 0, SDT_SYS386IGT, SEL_KPL,
 	    GSEL(GCODE_SEL, SEL_KPL));
 }
 
 void
-idt_vec_free (vec)
+idt_vec_free(vec)
 	int vec;
 {
+	simple_lock(&idt_lock);
 	unsetgate(&idt[vec].gd);
+	idt_allocmap[vec] = 0;
+	simple_unlock(&idt_lock);
 }
-
-#if 0
-extern void xxx_lapic_time(void);
-
-void
-xxx_lapic_time(void)
-{
-	uint64_t before, after;
-	int i, sum;
-
-	before=rdtsc();
-	for (i=0; i<1000000; i++) {
-		sum += lapic_tpr;
-	}
-	after=rdtsc();
-	printf("1000000 lapic_tpr reads: %llx\n", after-before);
-}
-#endif
