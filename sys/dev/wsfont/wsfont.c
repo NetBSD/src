@@ -1,4 +1,4 @@
-/* 	$NetBSD: wsfont.c,v 1.9 1999/12/04 13:35:42 ad Exp $	*/
+/* 	$NetBSD: wsfont.c,v 1.10 1999/12/14 22:35:17 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsfont.c,v 1.9 1999/12/04 13:35:42 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsfont.c,v 1.10 1999/12/14 22:35:17 ad Exp $");
 
 #include "opt_wsfont.h"
 
@@ -99,9 +99,6 @@ struct font {
 	u_char	bitorder;	/* XXX move to wsdisplay_font */
 	u_char	byteorder;	/* XXX move to wsdisplay_font */
 };	
-
-#define WSFONT_BUILTIN	(0x01)
-#define WSFONT_STATIC	(0x02)
 
 /* Our list of built-in fonts */
 static struct font *list, builtin_fonts[] = {
@@ -380,13 +377,13 @@ wsfont_remove(cookie)
 		return (-1);
 	}
 	
-	if ((ent->flg & WSFONT_BUILTIN) || ent->lockcount != 0) {
+	if ((ent->flg & WSFONT_BUILTIN) != 0 || ent->lockcount != 0) {
 		splx(s);
 		return (-1);
 	}
 	
 	/* Don't free statically allocated font data */
-	if (!(ent->flg & WSFONT_STATIC)) {
+	if ((ent->flg & WSFONT_STATIC) != 0) {
 		FREE(ent->font->data, M_DEVBUF);
 		FREE(ent->font, M_DEVBUF);
 	}
@@ -482,7 +479,6 @@ wsfont_unlock(cookie)
 	if ((ent = wsfont_find0(cookie)) != NULL) {
 		if (ent->lockcount == 0)
 			panic("wsfont_unlock: font not locked\n");
-			
 		lc = --ent->lockcount;
 	} else	
 		lc = -1;
