@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee_handler.c,v 1.4 1996/10/13 03:30:25 christos Exp $	*/
+/*	$NetBSD: ieee_handler.c,v 1.5 1996/10/23 07:43:42 matthias Exp $	*/
 
 /* 
  * IEEE floating point support for NS32081 and NS32381 fpus.
@@ -52,7 +52,6 @@
  * */
 
 #include <sys/types.h>
-#include <stddef.h>
 #include "ieee_internal.h"
 
 #if defined(KERNEL) || defined(_KERNEL)
@@ -69,7 +68,9 @@
 #  define AT	void *
 # endif
 # define get_dword(addr) ({long _t; COPYIN((addr), (vm_offset_t) &_t, sizeof(long)); _t;})
+# define	offsetof(type, member)	((size_t)(&((type *)0)->member))
 #else /* KERNEL */
+# include <stddef.h>
 # include <machine/param.h>
 # include <setjmp.h>
 # define AT	vm_offset_t
