@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_vnops.c,v 1.66 1999/08/14 02:20:19 christos Exp $	*/
+/*	$NetBSD: procfs_vnops.c,v 1.67 1999/08/24 23:29:09 sommerfeld Exp $	*/
 
 /*
  * Copyright (c) 1993 Jan-Simon Pendry
@@ -876,7 +876,7 @@ procfs_readdir(v)
 		struct proc_target *pt;
 
 		if (i >= nproc_targets)
-			return EINVAL;
+			return 0;
 
 		p = PFIND(pfs->pfs_pid);
 		if (p == NULL)
