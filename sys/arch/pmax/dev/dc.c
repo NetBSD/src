@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)dc.c	8.2 (Berkeley) 11/30/93
- *      $Id: dc.c,v 1.5 1994/05/30 06:12:07 glass Exp $
+ *      $Id: dc.c,v 1.6 1994/06/02 06:14:59 glass Exp $
  */
 
 /*
@@ -193,14 +193,12 @@ dcprobe(cp)
 
 	/* init pseudo DMA structures */
 	pdp = &dcpdma[cp->pmax_unit * 4];
-	tp = dc_tty[cp->pmax_unit * 4];
-	if (tp == NULL)
-		tp = dc_tty[cp->pmax_unit * 4] = ttymalloc();
 	for (cntr = 0; cntr < 4; cntr++) {
 		pdp->p_addr = (void *)dcaddr;
-		pdp->p_arg = (int)tp;
+		tp = dc_tty[cp->pmax_unit * 4 + cntr] = ttymalloc();
+		pdp->p_arg = (int) tp;
 		pdp->p_fcn = dcxint;
-		pdp++, tp++;
+		pdp++;
 	}
 	dcsoftCAR[cp->pmax_unit] = cp->pmax_flags | 0xB;
 

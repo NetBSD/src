@@ -1,4 +1,4 @@
-# $Id: files.pmax.oldconf,v 1.5 1994/05/27 08:57:52 glass Exp $
+# $Id: files.pmax.oldconf,v 1.6 1994/06/02 06:14:56 glass Exp $
 arch/pmax/pmax/autoconf.c		standard
 arch/pmax/pmax/clock.c			standard
 arch/pmax/pmax/conf.c			standard
@@ -10,7 +10,6 @@ arch/pmax/pmax/machdep.c		standard config-dependent
 arch/pmax/pmax/mem.c			standard
 arch/pmax/pmax/pmap.c			standard
 arch/pmax/pmax/process_machdep.c	standard
-#arch/pmax/pmax/procfs_machdep.c	optional procfs
 arch/pmax/pmax/sys_machdep.c		standard
 arch/pmax/pmax/trap.c			standard
 arch/pmax/pmax/vm_machdep.c		standard
@@ -29,9 +28,8 @@ arch/pmax/dev/scc.c			optional scc device-driver
 arch/pmax/dev/sii.c			optional sii device-driver
 arch/pmax/dev/tz.c			optional tz device-driver
 arch/pmax/dev/xcfb.c			optional xcfb device-driver
-arch/pmax/ultrix/ultrix_compat.c	optional compat_ultrix
-arch/pmax/ultrix/ultrix_syscalls.c	optional compat_ultrix
-arch/pmax/ultrix/ultrix_sysent.c	optional compat_ultrix
+compat/ultrix/ultrix_misc.c		optional compat_ultrix
+compat/ultrix/ultrix_syscalls.c		optional compat_ultrix
+compat/ultrix/ultrix_sysent.c		optional compat_ultrix
 netinet/in_cksum.c			optional inet
 netns/ns_cksum.c			optional ns
-#dev/cd.c				optional cd

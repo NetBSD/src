@@ -37,7 +37,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)machdep.c	8.3 (Berkeley) 1/12/94
- *      $Id: machdep.c,v 1.7 1994/06/01 04:50:30 glass Exp $
+ *      $Id: machdep.c,v 1.8 1994/06/02 06:15:06 glass Exp $
  */
 
 /* from: Utah Hdr: machdep.c 1.63 91/04/24 */
@@ -958,16 +958,16 @@ cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
  * Set registers on exec.
  * Clear all registers except sp, pc.
  */
-setregs(p, entry, retval)
+setregs(p, entry, stack, retval)
 	register struct proc *p;
 	u_long entry;
+	u_long stack;
 	int retval[2];
 {
-	int sp = p->p_md.md_regs[SP];
 	extern struct proc *machFPCurProcPtr;
 
 	bzero((caddr_t)p->p_md.md_regs, (FSR + 1) * sizeof(int));
-	p->p_md.md_regs[SP] = sp;
+	p->p_md.md_regs[SP] = stack;
 	p->p_md.md_regs[PC] = entry & ~3;
 	p->p_md.md_regs[PS] = PSL_USERSET;
 	p->p_md.md_flags & ~MDP_FPUSED;
