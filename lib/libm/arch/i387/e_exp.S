@@ -5,7 +5,7 @@
 
 #include <machine/asm.h>
 
-RCSID("$NetBSD: e_exp.S,v 1.8 1999/07/02 15:37:34 simonb Exp $")
+RCSID("$NetBSD: e_exp.S,v 1.9 2000/09/26 07:28:24 kleink Exp $")
 
 /* e^x = 2^(x * log2(e)) */
 ENTRY(__ieee754_exp)
@@ -22,7 +22,7 @@ ENTRY(__ieee754_exp)
 	fldl	8(%ebp)
 	fldl2e
 	fmulp				/* x * log2(e) */
-	fstl	%st(1)
+	fldl	%st(0)
 	frndint				/* int(x * log2(e)) */
 	fxch	%st(1)
 	fsub	%st(1),%st		/* fract(x * log2(e)) */
