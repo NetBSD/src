@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sip.c,v 1.52.4.8 2003/06/15 12:42:45 tron Exp $	*/
+/*	$NetBSD: if_sip.c,v 1.52.4.9 2003/08/15 12:49:28 tron Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sip.c,v 1.52.4.8 2003/06/15 12:42:45 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sip.c,v 1.52.4.9 2003/08/15 12:49:28 tron Exp $");
 
 #include "bpfilter.h"
 
@@ -2294,6 +2294,14 @@ SIP_DECL(init)(struct ifnet *ifp)
 	 * Initialize the prototype RXCFG register.
 	 */
 	sc->sc_rxcfg |= (sc->sc_rx_drain_thresh << RXCFG_DRTH_SHIFT);
+#ifndef DP83820
+	/*
+	* Accept packets >1518 bytes (including FCS) so we can handle
+	* 802.1q-tagged frames properly.
+	*/
+	if (sc->sc_ethercom.ec_capenable & ETHERCAP_VLAN_MTU)
+		sc->sc_rxcfg |= RXCFG_ALP;
+#endif
 	bus_space_write_4(st, sh, SIP_RXCFG, sc->sc_rxcfg);
 
 #ifdef DP83820
