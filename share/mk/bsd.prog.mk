@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.prog.mk,v 1.81 1997/05/09 13:40:38 mycroft Exp $
+#	$NetBSD: bsd.prog.mk,v 1.82 1997/05/17 02:01:09 mycroft Exp $
 #	@(#)bsd.prog.mk	8.2 (Berkeley) 4/2/94
 
 .if exists(${.CURDIR}/../Makefile.inc)
@@ -11,8 +11,6 @@
 .PHONY:		cleanprog proginstall scriptsinstall
 realinstall:	proginstall scriptsinstall
 clean cleandir:	cleanprog
-
-.SUFFIXES: .out .o .c .cc .C .y .l .s .8 .7 .6 .5 .4 .3 .2 .1 .0
 
 CFLAGS+=	${COPTS}
 
