@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.14 1997/03/01 09:49:44 matthias Exp $	*/
+/*	$NetBSD: intr.c,v 1.15 1997/03/20 12:00:50 matthias Exp $	*/
 
 /*
  * Copyright (c) 1994 Matthias Pfaller.
@@ -34,7 +34,7 @@
 #include <sys/param.h>
 #include <sys/vmmeter.h>
 #include <sys/systm.h>
-#include <net/netisr.h>
+
 #include <machine/psl.h>
 
 #define INTS	32
@@ -43,7 +43,6 @@ static int next_sir = SOFTINT;
 unsigned int imask[NIPL] = {0xffffffff, 0xffffffff};
 unsigned int Cur_pl = 0xffffffff, sirpending, astpending;
 
-static void softnet __P((void *));
 static void badhard __P((void *));
 static void badsoft __P((void *));
 
@@ -53,8 +52,27 @@ static void badsoft __P((void *));
 void
 intr_init()
 {
-	int i, clk, net, sir;
-		
+	int i, sir;
+
+	/* We don't use the ICU in vectored mode but set this anyway. */
+	ICUB(SVCT) = VEC_ICU;
+
+	/* ICU is not cascaded. */	
+	ICUW(CSRC) = 0;
+
+	/* We are using the ICU in fixed priority mode. */
+	ICUB(MCTL) = 2;
+
+	/* Initialize all interrupts to FALLING_EDGE. */
+	ICUW(TPL) = 0;
+	ICUW(ELTG) = 0;
+
+	/* Reset first priority register. */
+	ICUB(FPRT) = 0;
+
+	/* Reset interrupt in-service register. */
+	ICUW(ISRV) = 0;
+
 	for (i = 0; i < 16; i++) {
 		ivt[i].iv_vec = badhard;
 		ivt[i].iv_level = IPL_ZERO;
@@ -84,14 +102,6 @@ intr_init()
 	/* Disable IR_SOFT in all priority levels other then IPL_ZERO. */
 	for (i = 1; i < NIPL; i++)
 		imask[i] |= 1 << IR_SOFT;
-
-	/* Allocate softclock at IPL_NET as splnet() has to block softclock. */
-	clk = intr_establish(SOFTINT, (void (*)(void *))softclock, NULL,
-				"softclock", IPL_NET, IPL_NET, 0);
-	net = intr_establish(SOFTINT, softnet, NULL,
-				"softnet", IPL_NET, IPL_NET, 0);
-	if (clk != SIR_CLOCK || net != SIR_NET)
-		panic("Wrong clock or net softint allocated");
 }
 
 /*
@@ -110,7 +120,7 @@ check_sir(arg)
 #endif
 
 	di();
-	while (cirpending = sirpending) {
+	while ((cirpending = sirpending) != 0) {
 		sirpending &= ~SIR_ALLMASK;
 		ei();
 		for (iv = ivt + SOFTINT, mask = 0x10000;
@@ -223,43 +233,6 @@ intr_establish(intr, vector, arg, use, blevel, rlevel, mode)
 }
 
 /*
- * Network software interrupt routine
- */
-static void
-softnet(arg)
-	void *arg;
-{
-	register int isr;
-
-	di(); isr = netisr; netisr = 0; ei();
-	if (isr == 0) return;
-
-#ifdef INET
-#include "ether.h"
-#if NETHER > 0
-	if (isr & (1 << NETISR_ARP)) arpintr();
-#endif
-	if (isr & (1 << NETISR_IP)) ipintr();
-#endif
-#ifdef IMP
-	if (isr & (1 << NETISR_IMP)) impintr();
-#endif
-#ifdef NS
-	if (isr & (1 << NETISR_NS)) nsintr();
-#endif
-#ifdef ISO
-	if (isr & (1 << NETISR_ISO)) clnlintr();
-#endif
-#ifdef CCITT
-	if (isr & (1 << NETISR_CCITT)) ccittintr();
-#endif
-#include "ppp.h"
-#if NPPP > 0
-	if (isr & (1 << NETISR_PPP)) pppintr();
-#endif
-}
-
-/*
  * Default hardware interrupt handler
  */
 static void
@@ -271,7 +244,7 @@ badhard(arg)
 	di();
 	bad_count++;
 	if (bad_count < 5)
-   		printf("Unknown hardware interrupt: vec=%d pc=0x%08x psr=0x%04x cpl=0x%08x\n",
+   		printf("Unknown hardware interrupt: vec=%ld pc=0x%08x psr=0x%04x cpl=0x%08lx\n",
 		      frame->if_vec, frame->if_regs.r_pc, frame->if_regs.r_psr, frame->if_pl);
 
 	if (bad_count == 5)
