@@ -1,4 +1,4 @@
-/*	$NetBSD: kgdb_stub.c,v 1.13 2003/01/18 10:06:32 thorpej Exp $	*/
+/*	$NetBSD: kgdb_stub.c,v 1.14 2003/05/13 02:13:14 dbj Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kgdb_stub.c,v 1.13 2003/01/18 10:06:32 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kgdb_stub.c,v 1.14 2003/05/13 02:13:14 dbj Exp $");
 
 #include "opt_kgdb.h"
 
@@ -530,12 +530,12 @@ kgdb_trap(type, regs)
 					continue;
 				}
 				PC_REGS(regs) = addr;
-				DPRINTF(("kgdb: continuing at %08lx\n", addr))
+				DPRINTF(("kgdb: continuing at %08lx\n", addr));
 
 			} else {
 				DPRINTF((
 				  "kgdb: continuing at old address %08lx\n",
-				  PC_REGS(regs)));
+				  (vaddr_t)PC_REGS(regs)));
 			}
 
 			db_clear_single_step(regs);
