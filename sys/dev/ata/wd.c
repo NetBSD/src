@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.188 1998/11/23 23:00:27 kenh Exp $ */
+/*	$NetBSD: wd.c,v 1.189 1998/12/16 13:00:02 bouyer Exp $ */
 
 /*
  * Copyright (c) 1998 Manuel Bouyer.  All rights reserved.
@@ -101,6 +101,7 @@
 #include "locators.h"
 
 #define	WAITTIME	(4 * hz)	/* time to wait for a completion */
+#define	WDIORETRIES_SINGLE 4	/* number of retries before single-sector */
 #define	WDIORETRIES	5	/* number of retries before giving up */
 #define	RECOVERYTIME hz/2	/* time to wait before retrying a cmd */
 
@@ -446,7 +447,7 @@ __wdstart(wd, bp)
 	 * the sector number of the problem, and will eventually allow the
 	 * transfer to succeed.
 	 */
-	if (wd->sc_multi == 1 || wd->retries > 0)
+	if (wd->sc_multi == 1 || wd->retries >= WDIORETRIES_SINGLE)
 		wd->sc_wdc_bio.flags = ATA_SINGLE;
 	else
 		wd->sc_wdc_bio.flags = 0;
