@@ -1,4 +1,4 @@
-/*	$NetBSD: sysfpga.c,v 1.10 2002/10/05 10:59:10 scw Exp $	*/
+/*	$NetBSD: sysfpga.c,v 1.11 2002/10/05 12:18:58 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -106,7 +106,11 @@ static struct sysfpga_device sysfpga_devices[] = {
 #define	sysfpga_reg_write(s,r,v)	\
 	    bus_space_write_4((s)->sc_bust, (s)->sc_bush, (r), (v))
 
-
+/*
+ * Flash the Discrete LED twice per second, with 10% duty-cycle for ON
+ */
+#define	TWINKLE_PERIOD	(hz / 2)
+#define	TWINKLE_DUTY	10
 static void sysfpga_twinkle_led(void *);
 
 #if NSUPERIO > 0
@@ -261,16 +265,9 @@ sysfpga_twinkle_led(void *arg)
 	sysfpga_reg_write(sc, SYSFPGA_REG_LEDCR, ledcr);
 	ledcr &= SYSFPGA_LEDCR_SLED_MASK;
 
-	/*
-	 * We flash the LED twice per second, with 25% duty-cycle for ON
-	 */
-#define	TWINKLE_PERIOD	(hz / 2)
-
 	next = (ledcr == SYSFPGA_LEDCR_SLED_ON) ?
-	    TWINKLE_PERIOD / 4 :
-	    TWINKLE_PERIOD - (TWINKLE_PERIOD / 4);
-
-#undef TWINKLE_PERIOD
+	    TWINKLE_PERIOD / (100 / TWINKLE_DUTY) :
+	    TWINKLE_PERIOD - (TWINKLE_PERIOD / (100 / TWINKLE_DUTY));
 
 	callout_reset(&sc->sc_ledco, next, sysfpga_twinkle_led, sc);
 }
