@@ -1,4 +1,4 @@
-/* $NetBSD: trap.c,v 1.78 2002/06/08 15:50:59 yamt Exp $ */
+/* $NetBSD: trap.c,v 1.78.2.1 2002/12/18 01:05:19 gmcgarry Exp $ */
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -99,7 +99,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.78 2002/06/08 15:50:59 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.78.2.1 2002/12/18 01:05:19 gmcgarry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -499,8 +499,7 @@ trap(const u_long a0, const u_long a1, const u_long a2, const u_long entry,
 			if (rv == ENOMEM) {
 				printf("UVM: pid %d (%s), uid %d killed: "
 				       "out of swap\n", p->p_pid, p->p_comm,
-				       p->p_cred && p->p_ucred ?
-				       p->p_ucred->cr_uid : -1);
+				       p->p_ucred ?  p->p_ucred->cr_uid : -1);
 				i = SIGKILL;
 			} else
 				i = SIGSEGV;

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_fork.c,v 1.104 2002/12/12 20:41:45 jdolecek Exp $	*/
+/*	$NetBSD: kern_fork.c,v 1.104.2.1 2002/12/18 01:06:08 gmcgarry Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2001 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_fork.c,v 1.104 2002/12/12 20:41:45 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_fork.c,v 1.104.2.1 2002/12/18 01:06:08 gmcgarry Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_systrace.h"
@@ -217,7 +217,7 @@ fork1(struct proc *p1, int flags, int exitsig, void *stack, size_t stacksize,
 	 * exceed the limit. The variable nprocs is the current number of
 	 * processes, maxproc is the limit.
 	 */
-	uid = p1->p_cred->p_ruid;
+	uid = p1->p_ucred->cr_ruid;
 	if (__predict_false((nprocs >= maxproc - 5 && uid != 0) ||
 			    nprocs >= maxproc)) {
 		static struct timeval lasttfm;
@@ -303,9 +303,7 @@ fork1(struct proc *p1, int flags, int exitsig, void *stack, size_t stacksize,
 
 	if (p1->p_flag & P_PROFIL)
 		startprofclock(p2);
-	p2->p_cred = pool_get(&pcred_pool, PR_WAITOK);
-	memcpy(p2->p_cred, p1->p_cred, sizeof(*p2->p_cred));
-	p2->p_cred->p_refcnt = 1;
+	p2->p_ucred = p1->p_ucred;
 	crhold(p1->p_ucred);
 
 	LIST_INIT(&p2->p_raslist);

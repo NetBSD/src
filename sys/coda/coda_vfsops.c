@@ -1,4 +1,4 @@
-/*	$NetBSD: coda_vfsops.c,v 1.19 2002/09/21 18:10:34 christos Exp $	*/
+/*	$NetBSD: coda_vfsops.c,v 1.19.2.1 2002/12/18 01:05:43 gmcgarry Exp $	*/
 
 /*
  * 
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: coda_vfsops.c,v 1.19 2002/09/21 18:10:34 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: coda_vfsops.c,v 1.19.2.1 2002/12/18 01:05:43 gmcgarry Exp $");
 
 #ifdef	_LKM
 #define	NVCODA 4
@@ -361,7 +361,7 @@ coda_root(vfsp, vpp)
 	    }
     }
 
-    error = venus_root(vftomi(vfsp), p->p_cred->pc_ucred, p, &VFid);
+    error = venus_root(vftomi(vfsp), p->p_ucred, p, &VFid);
 
     if (!error) {
 	/*
@@ -441,7 +441,7 @@ coda_nb_statfs(vfsp, sbp, p)
      */
     /* Note: Normal fs's have a bsize of 0x400 == 1024 */
 
-    error = venus_statfs(vftomi(vfsp), p->p_cred->pc_ucred, p, &fsstat);
+    error = venus_statfs(vftomi(vfsp), p->p_ucred, p, &fsstat);
 
     if (!error) {
 	sbp->f_type = 0;
@@ -521,7 +521,7 @@ coda_fhtovp(vfsp, fhp, nam, vpp, exflagsp, creadanonp)
 	return(0);
     }
     
-    error = venus_fhtovp(vftomi(vfsp), &cfid->cfid_fid, p->p_cred->pc_ucred, p, &VFid, &vtype);
+    error = venus_fhtovp(vftomi(vfsp), &cfid->cfid_fid, p->p_ucred, p, &VFid, &vtype);
     
     if (error) {
 	CODADEBUG(CODA_VGET, myprintf(("vget error %d\n",error));)

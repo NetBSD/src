@@ -1,4 +1,4 @@
-/* $NetBSD: osf1_prot.c,v 1.4 2001/11/13 02:09:14 lukem Exp $ */
+/* $NetBSD: osf1_prot.c,v 1.4.12.1 2002/12/18 01:05:57 gmcgarry Exp $ */
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: osf1_prot.c,v 1.4 2001/11/13 02:09:14 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: osf1_prot.c,v 1.4.12.1 2002/12/18 01:05:57 gmcgarry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -84,19 +84,18 @@ osf1_sys_setgid(p, v, retval)
 	register_t *retval;
 {
 	struct osf1_sys_setgid_args *uap = v;
-	struct pcred *pc = p->p_cred;
 	gid_t gid = SCARG(uap, gid);
 	int error;
 
-	if ((error = suser(pc->pc_ucred, &p->p_acflag)) != 0 &&
-	    gid != pc->p_rgid && gid != pc->p_svgid)
+	if ((error = suser(p->p_ucred, &p->p_acflag)) != 0 &&
+	    gid != p->p_ucred->cr_rgid && gid != p->p_ucred->cr_svgid)
 		return (error);
 
-	pc->pc_ucred = crcopy(pc->pc_ucred);
-	pc->pc_ucred->cr_gid = gid;
+	p->p_ucred = crcopy(p->p_ucred);
+	p->p_ucred->cr_gid = gid;
 	if (error == 0) {
-		pc->p_rgid = gid;
-		pc->p_svgid = gid;
+		p->p_ucred->cr_rgid = gid;
+		p->p_ucred->cr_svgid = gid;
 	}
 	p->p_flag |= P_SUGID;
 	return (0);
@@ -123,21 +122,20 @@ osf1_sys_setuid(p, v, retval)
 	register_t *retval;
 {
 	struct osf1_sys_setuid_args *uap = v;
-	struct pcred *pc = p->p_cred;
 	uid_t uid = SCARG(uap, uid);
 	int error;
 
-	if ((error = suser(pc->pc_ucred, &p->p_acflag)) != 0 &&
-	    uid != pc->p_ruid && uid != pc->p_svuid)
+	if ((error = suser(p->p_ucred, &p->p_acflag)) != 0 &&
+	    uid != p->p_ucred->cr_ruid && uid != p->p_ucred->cr_svuid)
 		return (error);
 
-	pc->pc_ucred = crcopy(pc->pc_ucred);
-	pc->pc_ucred->cr_uid = uid;
+	p->p_ucred = crcopy(p->p_ucred);
+	p->p_ucred->cr_uid = uid;
 	if (error == 0) {
-	        (void)chgproccnt(pc->p_ruid, -1);
+	        (void)chgproccnt(p->p_ucred->cr_ruid, -1);
 	        (void)chgproccnt(uid, 1);
-		pc->p_ruid = uid;
-		pc->p_svuid = uid;
+		p->p_ucred->cr_ruid = uid;
+		p->p_ucred->cr_svuid = uid;
 	}
 	p->p_flag |= P_SUGID;
 	return (0);

@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_lwp.c,v 1.7 2002/09/23 05:51:18 simonb Exp $	*/
+/*	$NetBSD: svr4_lwp.c,v 1.7.2.1 2002/12/18 01:05:58 gmcgarry Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_lwp.c,v 1.7 2002/09/23 05:51:18 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_lwp.c,v 1.7.2.1 2002/12/18 01:05:58 gmcgarry Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -214,12 +214,12 @@ svr4_sys__lwp_wait(p, v, retval)
 }
 
 /* XXX Stolen from kern_sig.c */
-#define CANSIGNAL(p, pc, q, signum) \
-	((pc)->pc_ucred->cr_uid == 0 || \
-	    (pc)->p_ruid == (q)->p_cred->p_ruid || \
-	    (pc)->pc_ucred->cr_uid == (q)->p_cred->p_ruid || \
-	    (pc)->p_ruid == (q)->p_ucred->cr_uid || \
-	    (pc)->pc_ucred->cr_uid == (q)->p_ucred->cr_uid || \
+#define CANSIGNAL(p, q, signum) \
+	((p)->p_ucred->cr_uid == 0 || \
+	    (p)->p_ucred->cr_ruid == (q)->p_ucred->cr_ruid || \
+	    (p)->p_ucred->cr_uid == (q)->p_ucred->cr_ruid || \
+	    (p)->p_ucred->cr_ruid == (q)->p_ucred->cr_uid || \
+	    (p)->p_ucred->cr_uid == (q)->p_ucred->cr_uid || \
 	    ((signum) == SIGCONT && (q)->p_session == (p)->p_session))
 int
 svr4_sys__lwp_suspend(p, v, retval)
@@ -234,7 +234,7 @@ svr4_sys__lwp_suspend(p, v, retval)
 	if ((pt = pfind(SCARG(uap, lwpid))) == NULL)
 		return ESRCH;
 
-	if (!CANSIGNAL(p, p->p_cred, pt, 0))
+	if (!CANSIGNAL(p, pt, 0))
 		return EPERM;
 
 	pt->p_stat = SSTOP;
@@ -253,7 +253,7 @@ svr4_sys__lwp_continue(p, v, retval)
 	if ((pt = pfind(SCARG(uap, lwpid))) == NULL)
 		return ESRCH;
 
-	if (!CANSIGNAL(p, p->p_cred, pt, 0))
+	if (!CANSIGNAL(p, pt, 0))
 		return EPERM;
 
 	pt->p_stat = SRUN;

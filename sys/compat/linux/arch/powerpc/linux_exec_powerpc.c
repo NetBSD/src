@@ -1,4 +1,4 @@
-/* $NetBSD: linux_exec_powerpc.c,v 1.8 2002/11/13 13:37:22 jdolecek Exp $ */
+/* $NetBSD: linux_exec_powerpc.c,v 1.8.2.1 2002/12/18 01:05:49 gmcgarry Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_exec_powerpc.c,v 1.8 2002/11/13 13:37:22 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_exec_powerpc.c,v 1.8.2.1 2002/12/18 01:05:49 gmcgarry Exp $");
 
 #if defined (__alpha__)
 #define ELFSIZE 64
@@ -147,7 +147,7 @@ ELFNAME2(linux,copyargs)(p, pack, arginfo, stackp, argp)
 		a++;
 
 		a->a_type = LINUX_AT_GID;
-		a->a_v = p->p_cred->p_rgid;
+		a->a_v = p->p_ucred->cr_rgid;
 		a++;
 
 		a->a_type = LINUX_AT_EUID;
@@ -155,7 +155,7 @@ ELFNAME2(linux,copyargs)(p, pack, arginfo, stackp, argp)
 		a++;
 
 		a->a_type = LINUX_AT_UID;
-		a->a_v = p->p_cred->p_ruid;
+		a->a_v = p->p_ucred->cr_ruid;
 		a++;
 #endif
 

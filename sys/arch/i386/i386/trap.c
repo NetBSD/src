@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.176 2002/11/22 15:23:44 fvdl Exp $	*/
+/*	$NetBSD: trap.c,v 1.176.2.1 2002/12/18 01:05:27 gmcgarry Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.176 2002/11/22 15:23:44 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.176.2.1 2002/12/18 01:05:27 gmcgarry Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -578,8 +578,7 @@ copyfault:
 		if (error == ENOMEM) {
 			printf("UVM: pid %d (%s), uid %d killed: out of swap\n",
 			       p->p_pid, p->p_comm,
-			       p->p_cred && p->p_ucred ?
-			       p->p_ucred->cr_uid : -1);
+			       p->p_ucred ?  p->p_ucred->cr_uid : -1);
 			(*p->p_emul->e_trapsignal)(p, SIGKILL, T_PAGEFLT);
 		} else {
 			(*p->p_emul->e_trapsignal)(p, SIGSEGV, T_PAGEFLT);

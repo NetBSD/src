@@ -1,4 +1,4 @@
-/*	$NetBSD: filecore_vfsops.c,v 1.22 2002/09/21 20:28:50 mycroft Exp $	*/
+/*	$NetBSD: filecore_vfsops.c,v 1.22.2.1 2002/12/18 01:06:02 gmcgarry Exp $	*/
 
 /*-
  * Copyright (c) 1998 Andrew McMurry
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: filecore_vfsops.c,v 1.22 2002/09/21 20:28:50 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: filecore_vfsops.c,v 1.22.2.1 2002/12/18 01:06:02 gmcgarry Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -352,8 +352,8 @@ filecore_mountfs(devvp, mp, p, argp)
 	fcmp->fc_devvp = devvp;
 	fcmp->fc_mntflags = argp->flags;
 	if (argp->flags & FILECOREMNT_USEUID) {
-		fcmp->fc_uid = p->p_cred->p_ruid;
-		fcmp->fc_gid = p->p_cred->p_rgid;
+		fcmp->fc_uid = p->p_ucred->cr_ruid;
+		fcmp->fc_gid = p->p_ucred->cr_rgid;
 	} else {
 		fcmp->fc_uid = argp->uid;
 		fcmp->fc_gid = argp->gid;

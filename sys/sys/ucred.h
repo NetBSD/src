@@ -1,4 +1,4 @@
-/*	$NetBSD: ucred.h,v 1.14 2001/11/29 21:20:00 christos Exp $	*/
+/*	$NetBSD: ucred.h,v 1.14.12.1 2002/12/18 01:06:28 gmcgarry Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -53,6 +53,10 @@ struct uucred {
 
 struct ucred {
 	u_int32_t	cr_ref;			/* reference count */
+	uid_t		cr_ruid;		/* Real user id */
+	uid_t		cr_svuid;		/* saved effective user id */
+	gid_t		cr_rgid;		/* real group id */
+	gid_t		cr_svgid;		/* saved effective group id */
 	uid_t		cr_uid;			/* effective user id */
 	gid_t		cr_gid;			/* effective group id */
 	u_int32_t	cr_ngroups;		/* number of groups */
@@ -63,15 +67,26 @@ struct ucred {
 #define FSCRED ((struct ucred *)-2)	/* filesystem credential */
 
 #ifdef _KERNEL
-#define	crhold(cr)	(cr)->cr_ref++
 
 
-struct ucred	*crcopy __P((struct ucred *));
-struct ucred	*crdup __P((struct ucred *));
-void		crfree __P((struct ucred *));
-struct ucred	*crget __P((void));
-int		suser __P((struct ucred *, u_short *));
-void		crcvt __P((struct ucred *, const struct uucred *));
+struct ucred *	crcopy(struct ucred *);
+void		crcvt(struct ucred *, const struct uucred *);
+struct ucred *	crdup(struct ucred *);
+void		crfree(struct ucred *);
+struct ucred *	crget(void);
+int		suser(struct ucred *, u_short *);
+static __inline void crhold(struct ucred *);
+
+static __inline void
+crhold(cred)
+     struct ucred *cred;
+{
+
+	cred->cr_ref++;
+}
+
+void crinit(void);
+
 #endif /* _KERNEL */
 
 #endif /* !_SYS_UCRED_H_ */

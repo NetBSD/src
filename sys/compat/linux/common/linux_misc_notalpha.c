@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_misc_notalpha.c,v 1.63 2002/04/03 14:28:36 tron Exp $	*/
+/*	$NetBSD: linux_misc_notalpha.c,v 1.63.6.1 2002/12/18 01:05:51 gmcgarry Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_misc_notalpha.c,v 1.63 2002/04/03 14:28:36 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_misc_notalpha.c,v 1.63.6.1 2002/12/18 01:05:51 gmcgarry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -310,7 +310,6 @@ linux_sys_setresgid(p, v, retval)
 		syscallarg(gid_t) egid;
 		syscallarg(gid_t) sgid;
 	} */ *uap = v;
-	struct pcred *pc = p->p_cred;
 	gid_t rgid, egid, sgid;
 	int error;
 
@@ -324,24 +323,24 @@ linux_sys_setresgid(p, v, retval)
 	 * behavior of the Linux kernel.
 	 */
 	if (rgid != (gid_t)-1 &&
-	    rgid != pc->p_rgid &&
-	    rgid != pc->pc_ucred->cr_gid &&
-	    rgid != pc->p_svgid &&
-	    (error = suser(pc->pc_ucred, &p->p_acflag)))
+	    rgid != p->p_ucred->cr_rgid &&
+	    rgid != p->p_ucred->cr_gid &&
+	    rgid != p->p_ucred->cr_svgid &&
+	    (error = suser(p->p_ucred, &p->p_acflag)))
 		return (error);
 
 	if (egid != (gid_t)-1 &&
-	    egid != pc->p_rgid &&
-	    egid != pc->pc_ucred->cr_gid &&
-	    egid != pc->p_svgid &&
-	    (error = suser(pc->pc_ucred, &p->p_acflag)))
+	    egid != p->p_ucred->cr_rgid &&
+	    egid != p->p_ucred->cr_gid &&
+	    egid != p->p_ucred->cr_svgid &&
+	    (error = suser(p->p_ucred, &p->p_acflag)))
 		return (error);
 
 	if (sgid != (gid_t)-1 &&
-	    sgid != pc->p_rgid &&
-	    sgid != pc->pc_ucred->cr_gid &&
-	    sgid != pc->p_svgid &&
-	    (error = suser(pc->pc_ucred, &p->p_acflag)))
+	    sgid != p->p_ucred->cr_rgid &&
+	    sgid != p->p_ucred->cr_gid &&
+	    sgid != p->p_ucred->cr_svgid &&
+	    (error = suser(p->p_ucred, &p->p_acflag)))
 		return (error);
 
 	/*
@@ -350,16 +349,16 @@ linux_sys_setresgid(p, v, retval)
 	 * set the saved UID in this call unless the user specifies
 	 * it.
 	 */
+	p->p_ucred = crcopy(p->p_ucred);
 	if (rgid != (gid_t)-1)
-		pc->p_rgid = rgid;
+		p->p_ucred->cr_rgid = rgid;
 
 	if (egid != (gid_t)-1) {
-		pc->pc_ucred = crcopy(pc->pc_ucred);
-		pc->pc_ucred->cr_gid = egid;
+		p->p_ucred->cr_gid = egid;
 	}
 
 	if (sgid != (gid_t)-1)
-		pc->p_svgid = sgid;
+		p->p_ucred->cr_svgid = sgid;
 
 	if (rgid != (gid_t)-1 && egid != (gid_t)-1 && sgid != (gid_t)-1)
 		p->p_flag |= P_SUGID;
@@ -377,7 +376,6 @@ linux_sys_getresgid(p, v, retval)
 		syscallarg(gid_t *) egid;
 		syscallarg(gid_t *) sgid;
 	} */ *uap = v;
-	struct pcred *pc = p->p_cred;
 	int error;
 
 	/*
@@ -387,15 +385,16 @@ linux_sys_getresgid(p, v, retval)
 	 *	2. If that succeeds, copy out egid.
 	 *	3. If both of those succeed, copy out sgid.
 	 */
-	if ((error = copyout(&pc->p_rgid, SCARG(uap, rgid),
+	if ((error = copyout(&p->p_ucred->cr_rgid, SCARG(uap, rgid),
 			     sizeof(gid_t))) != 0)
 		return (error);
 
-	if ((error = copyout(&pc->pc_ucred->cr_gid, SCARG(uap, egid),
+	if ((error = copyout(&p->p_ucred->cr_gid, SCARG(uap, egid),
 			     sizeof(gid_t))) != 0)
 		return (error);
 
-	return (copyout(&pc->p_svgid, SCARG(uap, sgid), sizeof(gid_t)));
+	return (copyout(&p->p_ucred->cr_svgid, SCARG(uap, sgid),
+			sizeof(gid_t)));
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_execve.c,v 1.13 2002/09/16 03:41:40 martin Exp $	*/
+/*	$NetBSD: netbsd32_execve.c,v 1.13.2.1 2002/12/18 01:05:54 gmcgarry Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_execve.c,v 1.13 2002/09/16 03:41:40 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_execve.c,v 1.13.2.1 2002/12/18 01:05:54 gmcgarry Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ktrace.h"
@@ -413,8 +413,8 @@ netbsd32_execve2(p, uap, retval)
 			p->p_ucred->cr_gid = attr.va_gid;
 	} else
 		p->p_flag &= ~P_SUGID;
-	p->p_cred->p_svuid = p->p_ucred->cr_uid;
-	p->p_cred->p_svgid = p->p_ucred->cr_gid;
+	p->p_ucred->cr_svuid = p->p_ucred->cr_uid;
+	p->p_ucred->cr_svgid = p->p_ucred->cr_gid;
 
 	doexechooks(p);
 

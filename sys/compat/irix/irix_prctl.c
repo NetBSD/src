@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_prctl.c,v 1.19 2002/10/23 21:30:46 manu Exp $ */
+/*	$NetBSD: irix_prctl.c,v 1.19.2.1 2002/12/18 01:05:46 gmcgarry Exp $ */
 
 /*-
  * Copyright (c) 2001-2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_prctl.c,v 1.19 2002/10/23 21:30:46 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_prctl.c,v 1.19.2.1 2002/12/18 01:05:46 gmcgarry Exp $");
 
 #include <sys/errno.h>
 #include <sys/types.h>
@@ -171,7 +171,6 @@ irix_sys_prctl(p, v, retval)
 		pid_t pid = (pid_t)SCARG(uap, arg1);
 		struct irix_emuldata *ied;
 		struct proc *target;
-		struct pcred *pc;
 
 		if (pid == 0)
 			pid = p->p_pid;
@@ -182,12 +181,11 @@ irix_sys_prctl(p, v, retval)
 		if (irix_check_exec(target) == 0)
 			return 0;
 
-		pc = p->p_cred;
-		if (!(pc->pc_ucred->cr_uid == 0 || \
-		    pc->p_ruid == target->p_cred->p_ruid || \
-		    pc->pc_ucred->cr_uid == target->p_cred->p_ruid || \
-		    pc->p_ruid == target->p_ucred->cr_uid || \
-		    pc->pc_ucred->cr_uid == target->p_ucred->cr_uid))
+		if (!(p->p_ucred->cr_uid == 0 || \
+		    p->p_ucred->cr_ruid == target->p_ucred->cr_ruid || \
+		    p->p_ucred->cr_uid == target->p_ucred->cr_ruid || \
+		    p->p_ucred->cr_ruid == target->p_ucred->cr_uid || \
+		    p->p_ucred->cr_uid == target->p_ucred->cr_uid))
 			return EPERM;
 
 		ied = (struct irix_emuldata *)(target->p_emuldata);
@@ -480,13 +478,9 @@ irix_sproc_child(isc)
 	 * Handle shared process UID/GID
 	 */
 	if (inh & IRIX_PR_SID) {
-		pc = p2->p_cred;
-		parent->p_cred->p_refcnt++;
-		p2->p_cred = parent->p_cred;
-		if (--pc->p_refcnt == 0) {
-			crfree(pc->pc_ucred);	
-			pool_put(&pcred_pool, pc);
-		}
+		p2->p_ucred = parent->p_ucred;
+		crhold(parent->p_ucred);
+		crfree(p->p_ucred);	
 	}
 
 	/* 
@@ -575,12 +569,11 @@ irix_sys_procblk(p, v, retval)
 		return ESRCH;
 
 	/* May we stop it? */
-	pc = p->p_cred;
-	if (!(pc->pc_ucred->cr_uid == 0 || \
-	    pc->p_ruid == target->p_cred->p_ruid || \
-	    pc->pc_ucred->cr_uid == target->p_cred->p_ruid || \
-	    pc->p_ruid == target->p_ucred->cr_uid || \
-	    pc->pc_ucred->cr_uid == target->p_ucred->cr_uid))
+	if (!(p->p_ucred->cr_uid == 0 || \
+	    p->p_ucred->cr_ruid == target->p_ucred->cr_ruid || \
+	    p->p_ucred->cr_uid == target->p_ucred->cr_ruid || \
+	    p->p_ucred->cr_ruid == target->p_ucred->cr_uid || \
+	    p->p_ucred->cr_uid == target->p_ucred->cr_uid))
 		return EPERM;
 
 	/* Is it an IRIX process? */

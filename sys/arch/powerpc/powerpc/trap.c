@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.74 2002/11/25 02:07:37 thorpej Exp $	*/
+/*	$NetBSD: trap.c,v 1.74.2.1 2002/12/18 01:05:35 gmcgarry Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -229,8 +229,7 @@ trap(struct trapframe *frame)
 			printf("UVM: pid %d (%s), uid %d killed: "
 			       "out of swap\n",
 			       p->p_pid, p->p_comm,
-			       p->p_cred && p->p_ucred ?
-			       p->p_ucred->cr_uid : -1);
+			       p->p_ucred ? p->p_ucred->cr_uid : -1);
 			trapsignal(p, SIGKILL, EXC_DSI);
 		} else {
 			trapsignal(p, SIGSEGV, EXC_DSI);

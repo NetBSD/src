@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf32.c,v 1.77 2002/11/13 15:49:44 jdolecek Exp $	*/
+/*	$NetBSD: exec_elf32.c,v 1.77.2.1 2002/12/18 01:06:03 gmcgarry Exp $	*/
 
 /*-
  * Copyright (c) 1994, 2000 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: exec_elf32.c,v 1.77 2002/11/13 15:49:44 jdolecek Exp $");
+__KERNEL_RCSID(1, "$NetBSD: exec_elf32.c,v 1.77.2.1 2002/12/18 01:06:03 gmcgarry Exp $");
 
 /* If not included by exec_elf64.c, ELFSIZE won't be defined. */
 #ifndef ELFSIZE
@@ -164,7 +164,7 @@ ELFNAME(copyargs)(struct proc *p, struct exec_package *pack,
 		a++;
 
 		a->a_type = AT_RUID;
-		a->a_v = p->p_cred->p_ruid;
+		a->a_v = p->p_ucred->cr_ruid;
 		a++;
 
 		a->a_type = AT_EGID;
@@ -175,7 +175,7 @@ ELFNAME(copyargs)(struct proc *p, struct exec_package *pack,
 		a++;
 
 		a->a_type = AT_RGID;
-		a->a_v = p->p_cred->p_rgid;
+		a->a_v = p->p_ucred->cr_rgid;
 		a++;
 
 		free(ap, M_TEMP);

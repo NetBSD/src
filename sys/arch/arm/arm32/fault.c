@@ -1,4 +1,4 @@
-/*	$NetBSD: fault.c,v 1.25 2002/10/13 12:24:57 bjh21 Exp $	*/
+/*	$NetBSD: fault.c,v 1.25.4.1 2002/12/18 01:05:22 gmcgarry Exp $	*/
 
 /*
  * Copyright (c) 1994-1997 Mark Brinicombe.
@@ -47,7 +47,7 @@
 #include "opt_pmap_debug.h"
 
 #include <sys/types.h>
-__KERNEL_RCSID(0, "$NetBSD: fault.c,v 1.25 2002/10/13 12:24:57 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fault.c,v 1.25.4.1 2002/12/18 01:05:22 gmcgarry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -532,8 +532,7 @@ copyfault:
 		if (rv == ENOMEM) {
 			printf("UVM: pid %d (%s), uid %d killed: "
 			       "out of swap\n", p->p_pid, p->p_comm,
-			       p->p_cred && p->p_ucred ?
-			       p->p_ucred->cr_uid : -1);
+			       p->p_ucred ? p->p_ucred->cr_uid : -1);
 			trapsignal(p, SIGKILL, TRAP_CODE);
 		} else
 			trapsignal(p, SIGSEGV, TRAP_CODE);
@@ -691,8 +690,7 @@ prefetch_abort_handler(frame)
 	if (error == ENOMEM) {
 		printf("UVM: pid %d (%s), uid %d killed: "
 		    "out of swap\n", p->p_pid, p->p_comm,
-		    p->p_cred && p->p_ucred ?
-		    p->p_ucred->cr_uid : -1);
+		    p->p_ucred ? p->p_ucred->cr_uid : -1);
 		trapsignal(p, SIGKILL, fault_pc);
 	} else
 		trapsignal(p, SIGSEGV, fault_pc);

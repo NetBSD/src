@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.h,v 1.85 2002/12/11 19:14:35 jdolecek Exp $	*/
+/*	$NetBSD: sysctl.h,v 1.85.2.1 2002/12/18 01:06:27 gmcgarry Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -286,7 +286,6 @@ struct kinfo_proc {
 	struct	eproc {
 		struct	proc *e_paddr;		/* address of proc */
 		struct	session *e_sess;	/* session pointer */
-		struct	pcred e_pcred;		/* process credentials */
 		struct	ucred e_ucred;		/* current credentials */
 		struct	vmspace e_vm;		/* address space */
 		pid_t	e_ppid;			/* parent process id */

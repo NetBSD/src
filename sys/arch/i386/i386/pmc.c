@@ -1,4 +1,4 @@
-/*	$NetBSD: pmc.c,v 1.5 2002/10/05 05:55:46 gmcgarry Exp $	*/
+/*	$NetBSD: pmc.c,v 1.5.2.1 2002/12/18 01:05:26 gmcgarry Exp $	*/
 
 /*-
  * Copyright (c) 2000 Zembu Labs, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmc.c,v 1.5 2002/10/05 05:55:46 gmcgarry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmc.c,v 1.5.2.1 2002/12/18 01:05:26 gmcgarry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -72,7 +72,6 @@ pmc_init(void)
 		return;
 
 	pmc_type = PMC_TYPE_NONE;
-	cpu_vendor = i386_nocpuid_cpus[cpu].cpu_vendorname;
 
 	switch (cpu_class) {
 	case CPUCLASS_586:

@@ -1,4 +1,4 @@
-/*	$NetBSD: db_xxx.c,v 1.17 2002/08/26 11:34:29 scw Exp $	*/
+/*	$NetBSD: db_xxx.c,v 1.17.2.1 2002/12/18 01:06:02 gmcgarry Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_xxx.c,v 1.17 2002/08/26 11:34:29 scw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_xxx.c,v 1.17.2.1 2002/12/18 01:06:02 gmcgarry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -157,7 +157,7 @@ db_show_all_procs(db_expr_t addr, int haddr, db_expr_t count, char *modif)
 			case 'n':
 				db_printf("%10d %10d %10d %d %#7x %16s %7.7s\n",
 				    pp ? pp->p_pid : -1, p->p_pgrp->pg_id,
-				    p->p_cred->p_ruid, p->p_stat, p->p_flag,
+				    p->p_ucred->cr_ruid, p->p_stat, p->p_flag,
 				    p->p_comm, (p->p_wchan && p->p_wmesg) ?
 					p->p_wmesg : "");
 				break;

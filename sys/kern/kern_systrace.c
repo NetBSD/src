@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_systrace.c,v 1.22 2002/11/24 11:37:56 scw Exp $	*/
+/*	$NetBSD: kern_systrace.c,v 1.22.2.1 2002/12/18 01:06:15 gmcgarry Exp $	*/
 
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_systrace.c,v 1.22 2002/11/24 11:37:56 scw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_systrace.c,v 1.22.2.1 2002/12/18 01:06:15 gmcgarry Exp $");
 
 #include "opt_systrace.h"
 
@@ -584,8 +584,8 @@ systraceopen(dev_t dev, int flag, int mode, struct proc *p)
 
 	if (suser(p->p_ucred, &p->p_acflag) == 0)
 		fst->issuser = 1;
-	fst->p_ruid = p->p_cred->p_ruid;
-	fst->p_rgid = p->p_cred->p_rgid;
+	fst->p_ruid = p->p_ucred->cr_ruid;
+	fst->p_rgid = p->p_ucred->cr_rgid;
 
 	fp->f_flag = FREAD | FWRITE;
 	fp->f_type = DTYPE_MISC;
@@ -685,7 +685,7 @@ systrace_enter(struct proc *p, register_t code, void *v, register_t retval[])
 	struct str_process *strp;
 	struct str_policy *strpolicy;
 	struct fsystrace *fst;
-	struct pcred *pc;
+	struct ucred *cr;
 	int policy, error = 0, report = 0, maycontrol = 0, issuser = 0;
 
 	systrace_lock();
@@ -713,8 +713,8 @@ systrace_enter(struct proc *p, register_t code, void *v, register_t retval[])
 		maycontrol = 1;
 		issuser = 1;
 	} else if (!(p->p_flag & P_SUGID)) {
-		maycontrol = fst->p_ruid == p->p_cred->p_ruid &&
-		    fst->p_rgid == p->p_cred->p_rgid;
+		maycontrol = fst->p_ruid == p->p_ucred->cr_ruid &&
+		    fst->p_rgid == p->p_ucred->cr_rgid;
 	}
 
 	if (!maycontrol) {
@@ -785,10 +785,10 @@ systrace_enter(struct proc *p, register_t code, void *v, register_t retval[])
 		goto out;
 	}
 
-	pc = p->p_cred;
+	cr = p->p_ucred;
 	strp->oldemul = p->p_emul;
-	strp->olduid = pc->p_ruid;
-	strp->oldgid = pc->p_rgid;
+	strp->olduid = cr->cr_ruid;
+	strp->oldgid = cr->cr_rgid;
 
 	/* Elevate privileges as desired */
 	if (issuser) {
@@ -811,7 +811,7 @@ systrace_exit(struct proc *p, register_t code, void *v, register_t retval[],
 	const struct sysent *callp;
 	struct str_process *strp;
 	struct fsystrace *fst;
-	struct pcred *pc;
+	struct ucred *cr;
 
 	/* Report change in emulation */
 	systrace_lock();
@@ -823,14 +823,14 @@ systrace_exit(struct proc *p, register_t code, void *v, register_t retval[],
 	DPRINTF(("exit syscall %lu, oldemul %p\n", (u_long)code, strp->oldemul));
 
 	/* Return to old privileges */
-	pc = p->p_cred;
+	cr = p->p_ucred;
 	if (ISSET(strp->flags, STR_PROC_SETEUID)) {
-		if (pc->pc_ucred->cr_uid == strp->seteuid)
+		if (cr->cr_uid == strp->seteuid)
 			systrace_seteuid(p, strp->saveuid);
 		CLR(strp->flags, STR_PROC_SETEUID);
 	}
 	if (ISSET(strp->flags, STR_PROC_SETEGID)) {
-		if (pc->pc_ucred->cr_gid == strp->setegid)
+		if (cr->cr_gid == strp->setegid)
 			systrace_setegid(p, strp->savegid);
 		CLR(strp->flags, STR_PROC_SETEGID);
 	}
@@ -865,8 +865,8 @@ systrace_exit(struct proc *p, register_t code, void *v, register_t retval[],
 	/* Report if effective uid or gid changed */
 	systrace_lock();
 	strp = p->p_systrace;
-	if (strp != NULL && (strp->olduid != p->p_cred->p_ruid ||
-	    strp->oldgid != p->p_cred->p_rgid)) {
+	if (strp != NULL && (strp->olduid != p->p_ucred->cr_ruid ||
+	    strp->oldgid != p->p_ucred->cr_rgid)) {
 
 		fst = strp->parent;
 		SYSTRACE_LOCK(fst, p);
@@ -898,17 +898,17 @@ systrace_exit(struct proc *p, register_t code, void *v, register_t retval[],
 uid_t
 systrace_seteuid(struct proc *p,  uid_t euid)
 {
-	struct pcred *pc = p->p_cred;
-	uid_t oeuid = pc->pc_ucred->cr_uid;
+	struct ucred *cr = p->p_ucred;
+	uid_t oeuid = cr->cr_uid;
 
-	if (pc->pc_ucred->cr_uid == euid)
+	if (cr->cr_uid == euid)
 		return (oeuid);
 
 	/*
 	 * Copy credentials so other references do not see our changes.
 	 */
-	pc->pc_ucred = crcopy(pc->pc_ucred);
-	pc->pc_ucred->cr_uid = euid;
+	p->p_ucred = crcopy(cr);
+	p->p_ucred->cr_uid = euid;
 	p_sugid(p);
 
 	return (oeuid);
@@ -917,17 +917,17 @@ systrace_seteuid(struct proc *p,  uid_t euid)
 gid_t
 systrace_setegid(struct proc *p,  gid_t egid)
 {
-	struct pcred *pc = p->p_cred;
-	gid_t oegid = pc->pc_ucred->cr_gid;
+	struct ucred *cr = p->p_ucred;
+	gid_t oegid = cr->cr_gid;
 
-	if (pc->pc_ucred->cr_gid == egid)
+	if (cr->cr_gid == egid)
 		return (oegid);
 
 	/*
 	 * Copy credentials so other references do not see our changes.
 	 */
-	pc->pc_ucred = crcopy(pc->pc_ucred);
-	pc->pc_ucred->cr_gid = egid;
+	p->p_ucred = crcopy(cr);
+	p->p_ucred->cr_gid = egid;
 	p_sugid(p);
 
 	return (oegid);
@@ -1214,7 +1214,7 @@ systrace_attach(struct fsystrace *fst, pid_t pid)
 	 *	special privilidges using setuid() from being
 	 *	traced. This is good security.]
 	 */
-	if ((proc->p_cred->p_ruid != p->p_cred->p_ruid ||
+	if ((proc->p_ucred->cr_ruid != p->p_ucred->cr_ruid ||
 		ISSET(proc->p_flag, P_SUGID)) &&
 	    (error = suser(p->p_ucred, &p->p_acflag)) != 0)
 		goto out;
@@ -1527,8 +1527,8 @@ systrace_msg_ugid(struct fsystrace *fst, struct str_process *strp)
 	struct str_msg_ugid *msg_ugid = &strp->msg.msg_data.msg_ugid;
 	struct proc *p = strp->proc;
 
-	msg_ugid->uid = p->p_cred->p_ruid;
-	msg_ugid->gid = p->p_cred->p_rgid;
+	msg_ugid->uid = p->p_ucred->cr_ruid;
+	msg_ugid->gid = p->p_ucred->cr_rgid;
 
 	return (systrace_make_msg(strp, SYSTR_MSG_UGID));
 }

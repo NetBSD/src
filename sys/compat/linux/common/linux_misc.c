@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_misc.c,v 1.115 2002/12/16 19:37:03 christos Exp $	*/
+/*	$NetBSD: linux_misc.c,v 1.115.2.1 2002/12/18 01:05:50 gmcgarry Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 1999 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_misc.c,v 1.115 2002/12/16 19:37:03 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_misc.c,v 1.115.2.1 2002/12/18 01:05:50 gmcgarry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1059,7 +1059,6 @@ linux_sys_getgroups16(p, v, retval)
 	struct sys_getgroups_args bsa;
 	gid_t *bset, *kbset;
 	linux_gid_t *lset;
-	struct pcred *pc = p->p_cred;
 
 	n = SCARG(uap, gidsetsize);
 	if (n < 0)
@@ -1068,7 +1067,7 @@ linux_sys_getgroups16(p, v, retval)
 	bset = kbset = NULL;
 	lset = NULL;
 	if (n > 0) {
-		n = min(pc->pc_ucred->cr_ngroups, n);
+		n = min(p->p_ucred->cr_ngroups, n);
 		sg = stackgap_init(p, 0);
 		bset = stackgap_alloc(p, &sg, n * sizeof (gid_t));
 		kbset = malloc(n * sizeof (gid_t), M_TEMP, M_WAITOK);
@@ -1088,7 +1087,7 @@ linux_sys_getgroups16(p, v, retval)
 		error = copyout(lset, SCARG(uap, gidset),
 		    n * sizeof (linux_gid_t));
 	} else
-		*retval = pc->pc_ucred->cr_ngroups;
+		*retval = p->p_ucred->cr_ngroups;
 out:
 	if (kbset != NULL)
 		free(kbset, M_TEMP);
@@ -1162,7 +1161,7 @@ linux_sys_setfsuid(p, v, retval)
 	 uid_t uid;
 
 	 uid = SCARG(uap, uid);
-	 if (p->p_cred->p_ruid != uid)
+	 if (p->p_ucred->cr_ruid != uid)
 		 return sys_nosys(p, v, retval);
 	 else
 		 return (0);
@@ -1191,7 +1190,6 @@ linux_sys_setresuid(p, v, retval)
 		syscallarg(uid_t) euid;
 		syscallarg(uid_t) suid;
 	} */ *uap = v;
-	struct pcred *pc = p->p_cred;
 	uid_t ruid, euid, suid;
 	int error;
 
@@ -1205,24 +1203,24 @@ linux_sys_setresuid(p, v, retval)
 	 * behavior of the Linux kernel.
 	 */
 	if (ruid != (uid_t)-1 &&
-	    ruid != pc->p_ruid &&
-	    ruid != pc->pc_ucred->cr_uid &&
-	    ruid != pc->p_svuid &&
-	    (error = suser(pc->pc_ucred, &p->p_acflag)))
+	    ruid != p->p_ucred->cr_ruid &&
+	    ruid != p->p_ucred->cr_uid &&
+	    ruid != p->p_ucred->cr_svuid &&
+	    (error = suser(p->p_ucred, &p->p_acflag)))
 		return (error);
 
 	if (euid != (uid_t)-1 &&
-	    euid != pc->p_ruid &&
-	    euid != pc->pc_ucred->cr_uid &&
-	    euid != pc->p_svuid &&
-	    (error = suser(pc->pc_ucred, &p->p_acflag)))
+	    euid != p->p_ucred->cr_ruid &&
+	    euid != p->p_ucred->cr_uid &&
+	    euid != p->p_ucred->cr_svuid &&
+	    (error = suser(p->p_ucred, &p->p_acflag)))
 		return (error);
 
 	if (suid != (uid_t)-1 &&
-	    suid != pc->p_ruid &&
-	    suid != pc->pc_ucred->cr_uid &&
-	    suid != pc->p_svuid &&
-	    (error = suser(pc->pc_ucred, &p->p_acflag)))
+	    suid != p->p_ucred->cr_ruid &&
+	    suid != p->p_ucred->cr_uid &&
+	    suid != p->p_ucred->cr_svuid &&
+	    (error = suser(p->p_ucred, &p->p_acflag)))
 		return (error);
 
 	/*
@@ -1231,19 +1229,19 @@ linux_sys_setresuid(p, v, retval)
 	 * set the saved UID in this call unless the user specifies
 	 * it.
 	 */
+	p->p_ucred = crcopy(p->p_ucred);
 	if (ruid != (uid_t)-1) {
-		(void)chgproccnt(pc->p_ruid, -1);
+		(void)chgproccnt(p->p_ucred->cr_ruid, -1);
 		(void)chgproccnt(ruid, 1);
-		pc->p_ruid = ruid;
+		p->p_ucred->cr_ruid = ruid;
 	}
 
 	if (euid != (uid_t)-1) {
-		pc->pc_ucred = crcopy(pc->pc_ucred);
-		pc->pc_ucred->cr_uid = euid;
+		p->p_ucred->cr_uid = euid;
 	}
 
 	if (suid != (uid_t)-1)
-		pc->p_svuid = suid;
+		p->p_ucred->cr_svuid = suid;
 
 	if (ruid != (uid_t)-1 && euid != (uid_t)-1 && suid != (uid_t)-1)
 		p->p_flag |= P_SUGID;
@@ -1261,7 +1259,6 @@ linux_sys_getresuid(p, v, retval)
 		syscallarg(uid_t *) euid;
 		syscallarg(uid_t *) suid;
 	} */ *uap = v;
-	struct pcred *pc = p->p_cred;
 	int error;
 
 	/*
@@ -1271,15 +1268,16 @@ linux_sys_getresuid(p, v, retval)
 	 *	2. If that succeeds, copy out euid.
 	 *	3. If both of those succeed, copy out suid.
 	 */
-	if ((error = copyout(&pc->p_ruid, SCARG(uap, ruid),
+	if ((error = copyout(&p->p_ucred->cr_ruid, SCARG(uap, ruid),
 			     sizeof(uid_t))) != 0)
 		return (error);
 
-	if ((error = copyout(&pc->pc_ucred->cr_uid, SCARG(uap, euid),
+	if ((error = copyout(&p->p_ucred->cr_uid, SCARG(uap, euid),
 			     sizeof(uid_t))) != 0)
 		return (error);
 
-	return (copyout(&pc->p_svuid, SCARG(uap, suid), sizeof(uid_t)));
+	return (copyout(&p->p_ucred->cr_svuid, SCARG(uap, suid),
+			sizeof(uid_t)));
 }
 
 int

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sysctl.c,v 1.122 2002/12/16 18:15:18 jdolecek Exp $	*/
+/*	$NetBSD: kern_sysctl.c,v 1.122.2.1 2002/12/18 01:06:13 gmcgarry Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.122 2002/12/16 18:15:18 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.122.2.1 2002/12/18 01:06:13 gmcgarry Exp $");
 
 #include "opt_ddb.h"
 #include "opt_insecure.h"
@@ -774,14 +774,14 @@ proc_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp,
 		if (ptmp == NULL)
 			return(ESRCH);
 		if (p->p_ucred->cr_uid != 0) {
-			if(p->p_cred->p_ruid != ptmp->p_cred->p_ruid ||
-			    p->p_cred->p_ruid != ptmp->p_cred->p_svuid)
+			if(p->p_ucred->cr_ruid != ptmp->p_ucred->cr_ruid ||
+			    p->p_ucred->cr_ruid != ptmp->p_ucred->cr_svuid)
 				return EPERM;
-			if (ptmp->p_cred->p_rgid != ptmp->p_cred->p_svgid)
+			if (ptmp->p_ucred->cr_rgid != ptmp->p_ucred->cr_svgid)
 				return EPERM; /* sgid proc */
 			for (i = 0; i < p->p_ucred->cr_ngroups; i++) {
 				if (p->p_ucred->cr_groups[i] ==
-				    ptmp->p_cred->p_rgid)
+				    ptmp->p_ucred->cr_rgid)
 					break;
 			}
 			if (i == p->p_ucred->cr_ngroups)
@@ -904,7 +904,7 @@ cleanup:
 			return error;
 
 		if (newp)
-			error = dosetrlimit(ptmp, p->p_cred,
+			error = dosetrlimit(ptmp, p->p_ucred,
 			    name[2] - 1, &alim);
 		return error;
 		break;
@@ -1559,7 +1559,7 @@ again:
 			break;
 
 		case KERN_PROC_RUID:
-			if (p->p_cred->p_ruid != (uid_t)arg)
+			if (p->p_ucred->cr_ruid != (uid_t)arg)
 				continue;
 			break;
 
@@ -1569,7 +1569,7 @@ again:
 			break;
 
 		case KERN_PROC_RGID:
-			if (p->p_cred->p_rgid != (uid_t)arg)
+			if (p->p_ucred->cr_rgid != (uid_t)arg)
 				continue;
 			break;
 
@@ -1646,7 +1646,6 @@ fill_eproc(struct proc *p, struct eproc *ep)
 
 	ep->e_paddr = p;
 	ep->e_sess = p->p_session;
-	ep->e_pcred = *p->p_cred;
 	ep->e_ucred = *p->p_ucred;
 	if (p->p_stat == SIDL || P_ZOMBIE(p)) {
 		ep->e_vm.vm_rssize = 0;
@@ -1726,13 +1725,13 @@ fill_kproc2(struct proc *p, struct kinfo_proc2 *ki)
 	ki->p_tpgid = NO_PID;	/* may be changed if controlling tty below */
 
 	ki->p_uid = p->p_ucred->cr_uid;
-	ki->p_ruid = p->p_cred->p_ruid;
+	ki->p_ruid = p->p_ucred->cr_ruid;
 	ki->p_gid = p->p_ucred->cr_gid;
-	ki->p_rgid = p->p_cred->p_rgid;
+	ki->p_rgid = p->p_ucred->cr_rgid;
 
-	memcpy(ki->p_groups, p->p_cred->pc_ucred->cr_groups,
-	    min(sizeof(ki->p_groups), sizeof(p->p_cred->pc_ucred->cr_groups)));
-	ki->p_ngroups = p->p_cred->pc_ucred->cr_ngroups;
+	memcpy(ki->p_groups, p->p_ucred->cr_groups,
+	    min(sizeof(ki->p_groups), sizeof(p->p_ucred->cr_groups)));
+	ki->p_ngroups = p->p_ucred->cr_ngroups;
 
 	ki->p_jobc = p->p_pgrp->pg_jobc;
 	if ((p->p_flag & P_CONTROLT) && (tp = p->p_session->s_ttyp)) {
@@ -1886,8 +1885,8 @@ sysctl_procargs(int *name, u_int namelen, void *where, size_t *sizep,
 	/* only root or same user change look at the environment */
 	if (type == KERN_PROC_ENV || type == KERN_PROC_NENV) {
 		if (up->p_ucred->cr_uid != 0) {
-			if (up->p_cred->p_ruid != p->p_cred->p_ruid ||
-			    up->p_cred->p_ruid != p->p_cred->p_svuid)
+			if (up->p_ucred->cr_ruid != p->p_ucred->cr_ruid ||
+			    up->p_ucred->cr_ruid != p->p_ucred->cr_svuid)
 				return (EPERM);
 		}
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_resource_43.c,v 1.9 2001/11/13 02:08:01 lukem Exp $	*/
+/*	$NetBSD: kern_resource_43.c,v 1.9.12.1 2002/12/18 01:05:44 gmcgarry Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_resource_43.c,v 1.9 2001/11/13 02:08:01 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_resource_43.c,v 1.9.12.1 2002/12/18 01:05:44 gmcgarry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -102,5 +102,5 @@ compat_43_sys_setrlimit(p, v, retval)
 		return (error);
 	lim.rlim_cur = olim.rlim_cur;
 	lim.rlim_max = olim.rlim_max;
-	return (dosetrlimit(p, p->p_cred, which, &lim));
+	return (dosetrlimit(p, p->p_ucred, which, &lim));
 }

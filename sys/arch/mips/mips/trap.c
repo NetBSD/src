@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.175 2002/11/09 20:06:07 thorpej Exp $	*/
+/*	$NetBSD: trap.c,v 1.175.2.1 2002/12/18 01:05:29 gmcgarry Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -44,7 +44,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.175 2002/11/09 20:06:07 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.175.2.1 2002/12/18 01:05:29 gmcgarry Exp $");
 
 #include "opt_cputype.h"	/* which mips CPU levels do we support? */
 #include "opt_ktrace.h"
@@ -376,9 +376,8 @@ trap(status, cause, vaddr, opc, frame)
 			goto copyfault;
 		if (rv == ENOMEM) {
 			printf("UVM: pid %d (%s), uid %d killed: out of swap\n",
-			       p->p_pid, p->p_comm,
-			       p->p_cred && p->p_ucred ?
-			       p->p_ucred->cr_uid : (uid_t) -1);
+			    p->p_pid, p->p_comm,
+			    p->p_ucred ? p->p_ucred->cr_uid : (uid_t) -1);
 			sig = SIGKILL;
 		} else {
 			sig = (rv == EACCES) ? SIGBUS : SIGSEGV;

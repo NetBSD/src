@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_usrreq.c,v 1.56 2002/11/25 08:32:00 itojun Exp $	*/
+/*	$NetBSD: uipc_usrreq.c,v 1.56.2.1 2002/12/18 01:06:16 gmcgarry Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_usrreq.c,v 1.56 2002/11/25 08:32:00 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_usrreq.c,v 1.56.2.1 2002/12/18 01:06:16 gmcgarry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1015,9 +1015,9 @@ unp_addsockcred(p, control)
 	cmp->cmsg_len = len;
 	cmp->cmsg_level = SOL_SOCKET;
 	cmp->cmsg_type = SCM_CREDS;
-	sc->sc_uid = p->p_cred->p_ruid;
+	sc->sc_uid = p->p_ucred->cr_ruid;
 	sc->sc_euid = p->p_ucred->cr_uid;
-	sc->sc_gid = p->p_cred->p_rgid;
+	sc->sc_gid = p->p_ucred->cr_rgid;
 	sc->sc_egid = p->p_ucred->cr_gid;
 	sc->sc_ngroups = p->p_ucred->cr_ngroups;
 	for (i = 0; i < sc->sc_ngroups; i++)

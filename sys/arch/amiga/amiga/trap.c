@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.88 2002/02/14 07:08:03 chs Exp $	*/
+/*	$NetBSD: trap.c,v 1.88.12.1 2002/12/18 01:05:21 gmcgarry Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -47,7 +47,7 @@
 #include "opt_compat_sunos.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.88 2002/02/14 07:08:03 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.88.12.1 2002/12/18 01:05:21 gmcgarry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -523,7 +523,7 @@ nogo:
 	if (rv == ENOMEM) {
 		printf("UVM: pid %d (%s), uid %d killed: out of swap\n",
 		       p->p_pid, p->p_comm,
-		       p->p_cred && p->p_ucred ? p->p_ucred->cr_uid : -1);
+		       p->p_ucred ? p->p_ucred->cr_uid : -1);
 		trapsignal(p, SIGKILL, v);
 	} else {
 		trapsignal(p, SIGSEGV, v);

@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.81 2002/12/09 03:20:45 itojun Exp $	*/
+/*	$NetBSD: key.c,v 1.81.2.1 2002/12/18 01:06:21 gmcgarry Exp $	*/
 /*	$KAME: key.c,v 1.249 2002/06/14 14:46:22 itojun Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.81 2002/12/09 03:20:45 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.81.2.1 2002/12/18 01:06:21 gmcgarry Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -5695,8 +5695,8 @@ key_acquire(saidx, sp)
 		id->sadb_ident_exttype = idexttype;
 		id->sadb_ident_type = SADB_IDENTTYPE_USERFQDN;
 		/* XXX is it correct? */
-		if (curproc && curproc->p_cred)
-			id->sadb_ident_id = curproc->p_cred->p_ruid;
+		if (curproc && curproc->p_ucred)
+			id->sadb_ident_id = curproc->p_ucred->cr_ruid;
 		if (userfqdn && userfqdnlen)
 			bcopy(userfqdn, id + 1, userfqdnlen);
 		p += sizeof(struct sadb_ident) + PFKEY_ALIGN8(userfqdnlen);

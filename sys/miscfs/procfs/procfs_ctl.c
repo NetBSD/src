@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_ctl.c,v 1.23 2002/07/25 20:04:03 jdolecek Exp $	*/
+/*	$NetBSD: procfs_ctl.c,v 1.23.2.1 2002/12/18 01:06:19 gmcgarry Exp $	*/
 
 /*
  * Copyright (c) 1993 Jan-Simon Pendry
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_ctl.c,v 1.23 2002/07/25 20:04:03 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_ctl.c,v 1.23.2.1 2002/12/18 01:06:19 gmcgarry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -136,7 +136,7 @@ procfs_control(curp, p, op, sig)
 		 *      (3) it's not owned by you, or is set-id on exec
 		 *          (unless you're root), or...
 		 */
-		if ((p->p_cred->p_ruid != curp->p_cred->p_ruid ||
+		if ((p->p_ucred->cr_ruid != curp->p_ucred->cr_ruid ||
 			ISSET(p->p_flag, P_SUGID)) &&
 		    (error = suser(curp->p_ucred, &curp->p_acflag)) != 0)
 			return (error);

@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.214 2002/12/11 23:23:45 abs Exp $	*/
+/*	$NetBSD: init_main.c,v 1.214.2.1 2002/12/18 01:06:04 gmcgarry Exp $	*/
 
 /*
  * Copyright (c) 1995 Christopher G. Demetriou.  All rights reserved.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.214 2002/12/11 23:23:45 abs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.214.2.1 2002/12/18 01:06:04 gmcgarry Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfsserver.h"
@@ -80,6 +80,7 @@ __KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.214 2002/12/11 23:23:45 abs Exp $");
 #include <sys/protosw.h>
 #include <sys/reboot.h>
 #include <sys/user.h>
+#include <sys/ucred.h>
 #include <sys/sysctl.h>
 #include <sys/event.h>
 #ifdef SYSVSHM
@@ -135,7 +136,6 @@ const char copyright[] =
 struct	session session0;
 struct	pgrp pgrp0;
 struct	proc proc0;
-struct	pcred cred0;
 struct	filedesc0 filedesc0;
 struct	cwdinfo cwdi0;
 struct	plimit limit0;
@@ -283,8 +283,7 @@ main(void)
 	callout_init(&p->p_tsleep_ch);
 
 	/* Create credentials. */
-	cred0.p_refcnt = 1;
-	p->p_cred = &cred0;
+	crinit();
 	p->p_ucred = crget();
 	p->p_ucred->cr_ngroups = 1;	/* group 0 */
 

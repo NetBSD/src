@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_mount.c,v 1.4 2002/03/16 20:43:52 christos Exp $ */
+/*	$NetBSD: irix_mount.c,v 1.4.8.1 2002/12/18 01:05:46 gmcgarry Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_mount.c,v 1.4 2002/03/16 20:43:52 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_mount.c,v 1.4.8.1 2002/12/18 01:05:46 gmcgarry Exp $");
 
 #include <sys/types.h>
 #include <sys/signal.h>
@@ -67,7 +67,7 @@ irix_sys_getmountid(p, v, retval)
 		syscallarg(irix_mountid_t *) buf;
 	} */ *uap = v;
 	caddr_t sg = stackgap_init(p, 0);
-	struct ucred *cred = crget();
+	struct ucred *cred;
 	struct vnode *vp;
 	int error = 0;
 	struct nameidata nd;
@@ -76,10 +76,9 @@ irix_sys_getmountid(p, v, retval)
 
 	CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
 
-	(void)memcpy(cred, p->p_ucred, sizeof(*cred));
-	cred->cr_ref = 1;
-	cred->cr_uid = p->p_cred->p_ruid;
-	cred->cr_gid = p->p_cred->p_rgid;
+	cred = crdup(p->p_ucred);
+	cred->cr_uid = p->p_ucred->cr_ruid;
+	cred->cr_gid = p->p_ucred->cr_rgid;
 
 	/* Get the vnode for the requested path */
 	NDINIT(&nd, LOOKUP, FOLLOW | LOCKLEAF, UIO_USERSPACE,

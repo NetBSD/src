@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.15 2002/10/24 13:56:46 scw Exp $	*/
+/*	$NetBSD: trap.c,v 1.15.2.1 2002/12/18 01:05:36 gmcgarry Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -311,8 +311,7 @@ trap(struct proc *p, struct trapframe *tf)
 		if (rv == ENOMEM) {
 			printf("UVM: pid %d (%s), uid %d killed: out of swap\n",
 			    p->p_pid, p->p_comm,
-			    (p->p_cred && p->p_ucred) ?
-			    p->p_ucred->cr_uid : -1);
+			    p->p_ucred ? p->p_ucred->cr_uid : -1);
 			sig = SIGKILL;
 		} else
 			sig = (rv == EACCES) ? SIGBUS : SIGSEGV;

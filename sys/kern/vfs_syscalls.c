@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.178 2002/10/30 22:36:46 kleink Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.178.2.1 2002/12/18 01:06:17 gmcgarry Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.178 2002/10/30 22:36:46 kleink Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.178.2.1 2002/12/18 01:06:17 gmcgarry Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_43.h"
@@ -65,16 +65,15 @@ __KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.178 2002/10/30 22:36:46 kleink Ex
 #include <miscfs/genfs/genfs.h>
 #include <miscfs/syncfs/syncfs.h>
 
-static int change_dir __P((struct nameidata *, struct proc *));
-static int change_flags __P((struct vnode *, u_long, struct proc *));
-static int change_mode __P((struct vnode *, int, struct proc *p));
-static int change_owner __P((struct vnode *, uid_t, gid_t, struct proc *,
-    int));
-static int change_utimes __P((struct vnode *vp, const struct timeval *,
-	       struct proc *p));
-static int rename_files __P((const char *, const char *, struct proc *, int));
+static int change_dir(struct nameidata *, struct proc *);
+static int change_flags(struct vnode *, u_long, struct proc *);
+static int change_mode(struct vnode *, int, struct proc *p);
+static int change_owner(struct vnode *, uid_t, gid_t, struct proc *, int);
+static int change_utimes(struct vnode *vp, const struct timeval *,
+	       struct proc *p);
+static int rename_files(const char *, const char *, struct proc *, int);
 
-void checkdirs __P((struct vnode *));
+void checkdirs(struct vnode *);
 
 int dovfsusermount = 0;
 
@@ -1907,8 +1906,8 @@ sys_access(p, v, retval)
 
 	(void)memcpy(cred, p->p_ucred, sizeof(*cred));
 	cred->cr_ref = 1;
-	cred->cr_uid = p->p_cred->p_ruid;
-	cred->cr_gid = p->p_cred->p_rgid;
+	cred->cr_uid = p->p_ucred->cr_ruid;
+	cred->cr_gid = p->p_ucred->cr_rgid;
 	NDINIT(&nd, LOOKUP, FOLLOW | LOCKLEAF, UIO_USERSPACE,
 	    SCARG(uap, path), p);
 	/* Override default credentials */

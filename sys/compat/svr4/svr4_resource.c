@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_resource.c,v 1.7 2001/11/13 02:09:24 lukem Exp $	 */
+/*	$NetBSD: svr4_resource.c,v 1.7.12.1 2002/12/18 01:05:59 gmcgarry Exp $	 */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_resource.c,v 1.7 2001/11/13 02:09:24 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_resource.c,v 1.7.12.1 2002/12/18 01:05:59 gmcgarry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -188,7 +188,7 @@ svr4_sys_setrlimit(p, v, retval)
 	else if (slim.rlim_cur == SVR4_RLIM_SAVED_CUR)
 		blim.rlim_cur = limp->rlim_cur;
 
-	return dosetrlimit(p, p->p_cred, rl, &blim);
+	return dosetrlimit(p, p->p_ucred, rl, &blim);
 }
 
 
@@ -286,5 +286,5 @@ svr4_sys_setrlimit64(p, v, retval)
 	else if (slim.rlim_cur == SVR4_RLIM64_SAVED_CUR)
 		blim.rlim_cur = limp->rlim_cur;
 
-	return dosetrlimit(p, p->p_cred, rl, &blim);
+	return dosetrlimit(p, p->p_ucred, rl, &blim);
 }
