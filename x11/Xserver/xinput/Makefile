@@ -1,12 +1,11 @@
-#	$NetBSD: Makefile,v 1.10 2004/08/01 18:52:03 uch Exp $
+#	$NetBSD: Makefile,v 1.10.2.1 2004/11/21 10:01:28 rtr Exp $
 
 .include "../Makefile.serverlib"
-
-.include <bsd.own.mk>
+.include "../Makefile.servermod"
 
 LIB=		xinput
-.PATH:		${X11SRCDIR.xc}/programs/Xserver/Xi
 
+.PATH:		${X11SRCDIR.xc}/programs/Xserver/Xi
 SRCS=		allowev.c chgdctl.c chgfctl.c chgkbd.c chgkmap.c chgprop.c \
 		chgptr.c closedev.c devbell.c exevents.c extinit.c getbmap.c \
 		getdctl.c getfctl.c getfocus.c getkmap.c getmmap.c getprop.c \

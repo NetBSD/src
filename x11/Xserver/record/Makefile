@@ -1,11 +1,11 @@
-#	$NetBSD: Makefile,v 1.3.4.1 2004/11/15 09:12:44 rtr Exp $
+#	$NetBSD: Makefile,v 1.3.4.2 2004/11/21 10:01:28 rtr Exp $
 
-.include <bsd.own.mk>
+.include "../Makefile.serverlib"
 
 .if ${X11LOADABLE} != "no"
 XMODULEDIR=	${X11ROOTDIR}/lib/modules/extensions
 SRCS=		recordmod.c
 .endif
 
-.include "../Makefile.serverlib"
+.include "../Makefile.servermod"
 .include "Makefile.record"

@@ -1,10 +1,12 @@
-# $NetBSD: Makefile,v 1.3.4.1 2004/11/15 09:12:43 rtr Exp $
+# $NetBSD: Makefile,v 1.3.4.2 2004/11/21 10:01:27 rtr Exp $
 
 XMODULEDIR=	${X11USRLIBDIR}/modules
 
 .include "../../../Makefile.serverlib"
+.include "../../../Makefile.servermod"
 
 LIB=	xf1bpp
+
 .PATH:	${X11SRCDIR.xc}/programs/Xserver/hw/xfree86/${LIB}
 SRCS=	maskbits.c mfbbitblt.c mfbbltC.c mfbbltCI.c mfbbltG.c mfbbltO.c \
 	mfbbltX.c mfbbres.c mfbbresd.c mfbbstore.c mfbclip.c mfbcmap.c \

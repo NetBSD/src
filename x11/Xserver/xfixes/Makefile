@@ -1,10 +1,11 @@
-#	$NetBSD: Makefile,v 1.1.2.1 2004/11/15 09:12:45 rtr Exp $
+#	$NetBSD: Makefile,v 1.1.2.2 2004/11/21 10:01:28 rtr Exp $
 
 .include "../Makefile.serverlib"
+.include "../Makefile.servermod"
 
 LIB=		xfixes
-.PATH:		${X11SRCDIR.xc}/programs/Xserver/xfixes
 
+.PATH:		${X11SRCDIR.xc}/programs/Xserver/xfixes
 SRCS=		cursor.c region.c saveset.c select.c xfixes.c
 
 CPPFLAGS+=	${X11FLAGS.PERVASIVE_EXTENSION}

@@ -1,12 +1,13 @@
-#	$NetBSD: Makefile,v 1.7 2004/03/06 03:31:08 rtr Exp $
+#	$NetBSD: Makefile,v 1.7.4.1 2004/11/21 10:01:28 rtr Exp $
 
 .include "../Makefile.serverlib"
+.include "../Makefile.servermod"
 
 LIB=		xkb
+
 .PATH:		${X11SRCDIR.xc}/programs/Xserver/xkb
 .PATH:		${X11SRCDIR.xc}/lib/X11
 .PATH:		${X11SRCDIR.xc}/lib/xkbfile
-
 SRCS=		XKBAlloc.c XKBGAlloc.c XKBMAlloc.c XKBMisc.c ddxBeep.c \
 		ddxConfig.c ddxCtrls.c ddxDevBtn.c ddxFakeBtn.c ddxFakeMtn.c \
 		ddxInit.c ddxKeyClick.c ddxKillSrv.c ddxLEDs.c ddxList.c \

@@ -1,8 +1,9 @@
-#	$NetBSD: Makefile,v 1.5.4.2 2004/11/21 00:20:22 rtr Exp $
+#	$NetBSD: Makefile,v 1.5.4.3 2004/11/21 10:01:26 rtr Exp $
 
 XMODULEDIR=     ${X11USRLIBDIR}/modules/fonts
 
 .include "../../Makefile.serverlib"
+.include "../../Makefile.servermod"
 
 LIB=	freetype
 
