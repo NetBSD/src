@@ -1,4 +1,4 @@
-/*	$NetBSD: rcmd.c,v 1.26 1998/09/26 23:58:29 christos Exp $	*/
+/*	$NetBSD: rcmd.c,v 1.27 1998/10/18 14:22:05 christos Exp $	*/
 
 /*
  * Copyright (c) 1997 Matthew R. Green.
@@ -39,7 +39,7 @@
 #if 0
 static char sccsid[] = "@(#)rcmd.c	8.3 (Berkeley) 3/26/94";
 #else
-__RCSID("$NetBSD: rcmd.c,v 1.26 1998/09/26 23:58:29 christos Exp $");
+__RCSID("$NetBSD: rcmd.c,v 1.27 1998/10/18 14:22:05 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -167,7 +167,9 @@ hprcmd(hp, ahost, rport, locuser, remuser, cmd, fd2p)
 			return (-1);
 		}
 		fcntl(s, F_SETOWN, pid);
+#ifdef BSD4_4
 		sin.sin_len = sizeof(struct sockaddr_in);
+#endif
 		sin.sin_family = hp->h_addrtype;
 		sin.sin_port = rport;
 		memmove(&sin.sin_addr, hp->h_addr_list[0], hp->h_length);
@@ -394,7 +396,9 @@ rresvport(alport)
 	struct sockaddr_in sin;
 	int s;
 
+#ifdef BSD4_4
 	sin.sin_len = sizeof(struct sockaddr_in);
+#endif
 	sin.sin_family = AF_INET;
 	sin.sin_addr.s_addr = INADDR_ANY;
 	s = socket(AF_INET, SOCK_STREAM, 0);
