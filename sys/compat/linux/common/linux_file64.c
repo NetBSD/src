@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_file64.c,v 1.14 2002/05/13 05:37:58 simonb Exp $	*/
+/*	$NetBSD: linux_file64.c,v 1.15 2002/05/13 05:41:27 matt Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 2000 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_file64.c,v 1.14 2002/05/13 05:37:58 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_file64.c,v 1.15 2002/05/13 05:41:27 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -69,6 +69,8 @@ __KERNEL_RCSID(0, "$NetBSD: linux_file64.c,v 1.14 2002/05/13 05:37:58 simonb Exp
 #include <compat/linux/common/linux_dirent.h>
 
 #include <compat/linux/linux_syscallargs.h>
+
+#ifndef alpha
 
 static void bsd_to_linux_stat __P((struct stat *, struct linux_stat64 *));
 static int linux_do_stat64 __P((struct proc *, void *, register_t *, int));
@@ -336,6 +338,8 @@ linux_sys_fcntl64(p, v, retval)
 	}
 }
 #endif /* !m68k */
+
+#endif /* !alpha */
 
 /*
  * Linux 'readdir' call. This code is mostly taken from the
