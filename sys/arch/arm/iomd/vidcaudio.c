@@ -1,4 +1,4 @@
-/*	$NetBSD: vidcaudio.c,v 1.40.2.1 2005/01/03 16:42:52 kent Exp $	*/
+/*	$NetBSD: vidcaudio.c,v 1.40.2.2 2005/01/05 03:31:37 kent Exp $	*/
 
 /*
  * Copyright (c) 1995 Melvin Tang-Richardson
@@ -65,7 +65,7 @@
 
 #include <sys/param.h>	/* proc.h */
 
-__KERNEL_RCSID(0, "$NetBSD: vidcaudio.c,v 1.40.2.1 2005/01/03 16:42:52 kent Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vidcaudio.c,v 1.40.2.2 2005/01/05 03:31:37 kent Exp $");
 
 #include <sys/audioio.h>
 #include <sys/conf.h>   /* autoconfig functions */
@@ -346,29 +346,16 @@ static int
 mulaw_to_vidc_fetch_to(stream_fetcher_t *self, audio_stream_t *dst, int max_used)
 {
 	stream_filter_t *this;
-	uint8_t *d;
-	const uint8_t *s;
 	int m, err;
-	int used_dst, used_src;
 
 	this = (stream_filter_t *)self;
 	if ((err = this->prev->fetch_to(this->prev, this->src, max_used)))
 		return err;
 	m = dst->end - dst->start;
 	m = min(m, max_used);
-	d = dst->inp;
-	s = this->src->outp;
-	used_dst = audio_stream_get_used(dst);
-	used_src = audio_stream_get_used(this->src);
-	while (used_dst < m && used_src > 0) {
+	FILTER_LOOP_PROLOGUE(this->src, 1, dst, 1, m) {
 		*d = MULAW_TO_VIDC(*s);
-		d = audio_stream_add_inp(dst, d, 1);
-		s = audio_stream_add_outp(this->src, s, 1);
-		used_dst++;
-		used_src--;
-	}
-	dst->inp = d;
-	this->src->outp = s;
+	} FILTER_LOOP_EPILOGUE(this->src, dst);
 	return 0;
 }
 
@@ -384,10 +371,7 @@ mulaw_to_vidc_stereo_fetch_to(stream_fetcher_t *self, audio_stream_t *dst,
 			      int max_used)
 {
 	stream_filter_t *this;
-	uint8_t *d;
-	const uint8_t *s;
 	int m, err;
-	int used_dst, used_src;
 
 	this = (stream_filter_t *)self;
 	max_used = (max_used + 1) & ~1;
@@ -395,19 +379,9 @@ mulaw_to_vidc_stereo_fetch_to(stream_fetcher_t *self, audio_stream_t *dst,
 		return err;
 	m = (dst->end - dst->start) & ~1;
 	m = min(m, max_used);
-	d = dst->inp;
-	s = this->src->outp;
-	used_dst = audio_stream_get_used(dst);
-	used_src = audio_stream_get_used(this->src);
-	while (used_dst < m && used_src > 0) {
+	FILTER_LOOP_PROLOGUE(this->src, 1, dst, 2, m) {
 		d[0] = d[1] = MULAW_TO_VIDC(*s);
-		d = audio_stream_add_inp(dst, d, 2);
-		s = audio_stream_add_outp(this->src, s, 1);
-		used_dst += 2;
-		used_src--;
-	}
-	dst->inp = d;
-	this->src->outp = s;
+	} FILTER_LOOP_EPILOGUE(this->src, dst);
 	return 0;
 }
 
