@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.266 2002/10/23 00:58:28 christos Exp $	*/
+/*	$NetBSD: locore.s,v 1.267 2002/10/23 03:28:34 junyoung Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -1054,8 +1054,8 @@ ENTRY(i386_copyout)
 	shrl	$2,%ecx
 	rep
 	movsl
-	movb	%al,%cl
-	andb	$3,%cl
+	movl	%eax,%ecx
+	andl	$3,%ecx
 	rep
 	movsb
 
@@ -1096,8 +1096,8 @@ ENTRY(i486_copyout)
 	shrl	$2,%ecx
 	rep
 	movsl
-	movb	%al,%cl
-	andb	$3,%cl
+	movl	%eax,%ecx
+	andl	$3,%ecx
 	rep
 	movsb
 
@@ -1148,8 +1148,8 @@ ENTRY(i386_copyin)
 	shrl	$2,%ecx
 	rep
 	movsl
-	movb	%al,%cl
-	andb	$3,%cl
+	movl	%eax,%ecx
+	andl	$3,%ecx
 	rep
 	movsb
 
