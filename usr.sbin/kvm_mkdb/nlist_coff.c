@@ -1,4 +1,4 @@
-/*	$NetBSD: nlist_coff.c,v 1.1 1999/09/12 16:08:15 itojun Exp $	*/
+/*	$NetBSD: nlist_coff.c,v 1.2 2000/01/07 09:40:34 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: nlist_coff.c,v 1.1 1999/09/12 16:08:15 itojun Exp $");
+__RCSID("$NetBSD: nlist_coff.c,v 1.2 2000/01/07 09:40:34 msaitoh Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -54,7 +54,7 @@ __RCSID("$NetBSD: nlist_coff.c,v 1.1 1999/09/12 16:08:15 itojun Exp $");
 #include "extern.h"
 
 #ifdef NLIST_COFF
-#include <machine/exec_coff.h>
+#include <sys/exec_coff.h>
 
 typedef struct nlist NLIST;
 #define	_strx	n_un.n_strx
