@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipiconf.h,v 1.93 2005/01/31 21:13:16 reinoud Exp $	*/
+/*	$NetBSD: scsipiconf.h,v 1.94 2005/01/31 23:06:41 reinoud Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2004 The NetBSD Foundation, Inc.
@@ -76,8 +76,8 @@ struct scsipi_xfer;
 TAILQ_HEAD(scsipi_xfer_queue, scsipi_xfer);
 
 struct scsipi_generic {
-	u_int8_t opcode;
-	u_int8_t bytes[15];
+	uint8_t opcode;
+	uint8_t bytes[15];
 };
 
 
@@ -202,11 +202,11 @@ struct scsipi_adapter {
 	void	(*adapt_request)(struct scsipi_channel *,
 		    scsipi_adapter_req_t, void *);
 	void	(*adapt_minphys)(struct buf *);
-	int	(*adapt_ioctl)(struct scsipi_channel *, u_long,
+	int	(*adapt_ioctl)(struct scsipi_channel *, ulong,
 		    caddr_t, int, struct proc *);
 	int	(*adapt_enable)(struct device *, int);
 	int	(*adapt_getgeom)(struct scsipi_periph *,
-			struct disk_parms *, u_long);
+			struct disk_parms *, uint32_t);
 	int	(*adapt_accesschk)(struct scsipi_periph *,
 			struct scsipi_inquiry_pattern *);
 };
@@ -329,9 +329,9 @@ struct scsipi_channel {
 /*
  * Number of tag words in a periph structure:
  *
- *	n_tag_words = ((256 / NBBY) / sizeof(u_int32_t))
+ *	n_tag_words = ((256 / NBBY) / sizeof(uint32_t))
  */
-#define	PERIPH_NTAGWORDS	((256 / 8) / sizeof(u_int32_t))
+#define	PERIPH_NTAGWORDS	((256 / 8) / sizeof(uint32_t))
 
 
 /*
@@ -367,7 +367,7 @@ struct scsipi_periph {
 	/*
 	 * Information gleaned from the inquiry data.
 	 */
-	u_int8_t periph_type;		/* basic device type */
+	uint8_t periph_type;		/* basic device type */
 	int	periph_cap;		/* capabilities */
 	int	periph_quirks;		/* device's quirks */
 
@@ -382,7 +382,7 @@ struct scsipi_periph {
 	int	periph_qfreeze;		/* queue freeze count */
 
 	/* Bitmap of free command tags. */
-	u_int32_t periph_freetags[PERIPH_NTAGWORDS];
+	uint32_t periph_freetags[PERIPH_NTAGWORDS];
 
 	/* Pending scsipi_xfers on this peripherial. */
 	struct scsipi_xfer_queue periph_xferq;
@@ -514,21 +514,21 @@ struct scsipi_xfer {
 					/* a buf */
 	union {
 		struct  scsipi_sense_data scsi_sense; /* 32 bytes */
-		u_int32_t atapi_sense;
+		uint32_t atapi_sense;
 	} sense;
 
 	struct scsipi_xfer *xs_sensefor;/* we are requesting sense for this */
 					/* xfer */
 
-	u_int8_t status;		/* SCSI status */
+	uint8_t status;		/* SCSI status */
 
 	/*
 	 * Info for tagged command queueing.  This may or may not
 	 * be used by a given adapter driver.  These are the same
 	 * as the bytes in the tag message.
 	 */
-	u_int8_t xs_tag_type;		/* tag type */
-	u_int8_t xs_tag_id;		/* tag ID */
+	uint8_t xs_tag_type;		/* tag type */
+	uint8_t xs_tag_id;		/* tag ID */
 
 	struct	scsipi_generic cmdstore
 	    __attribute__ ((aligned (4)));/* stash the command in here */
@@ -588,7 +588,7 @@ struct scsipi_xfer {
  * match, the higher the configuration priority.
  */
 struct scsipi_inquiry_pattern {
-	u_int8_t type;
+	uint8_t type;
 	boolean removable;
 	char *vendor;
 	char *product;
@@ -604,7 +604,7 @@ struct scsipibus_attach_args {
 	struct scsipi_inquiry_pattern sa_inqbuf;
 	struct scsipi_inquiry_data *sa_inqptr;
 	union {				/* bus-type specific infos */
-		u_int8_t scsi_version;	/* SCSI version */
+		uint8_t scsi_version;	/* SCSI version */
 	} scsipi_info;
 };
 
@@ -632,7 +632,7 @@ caddr_t	scsipi_inqmatch(struct scsipi_inquiry_pattern *, caddr_t,
 const char *scsipi_dtype(int);
 void	scsipi_strvis(uint8_t *, int, uint8_t *, int);
 int	scsipi_execute_xs(struct scsipi_xfer *);
-u_int64_t scsipi_size(struct scsipi_periph *, int);
+uint64_t scsipi_size(struct scsipi_periph *, int);
 int	scsipi_test_unit_ready(struct scsipi_periph *, int);
 int	scsipi_prevent(struct scsipi_periph *, int, int);
 int	scsipi_inquire(struct scsipi_periph *,
@@ -663,7 +663,7 @@ int	scsipi_thread_call_callback(struct scsipi_channel *,
 	    void *);
 void	scsipi_async_event(struct scsipi_channel *,
 	    scsipi_async_event_t, void *);
-int	scsipi_do_ioctl(struct scsipi_periph *, dev_t, u_long, caddr_t,
+int	scsipi_do_ioctl(struct scsipi_periph *, dev_t, ulong, caddr_t,
 	    int, struct proc *);
 
 void	scsipi_print_xfer_mode(struct scsipi_periph *);
@@ -701,7 +701,7 @@ void	show_mem(uint8_t *, int);
 #endif /* _KERNEL */
 
 static __inline void __unused
-_lto2b(u_int32_t val, u_int8_t *bytes)
+_lto2b(uint32_t val, uint8_t *bytes)
 {
 
 	bytes[0] = (val >> 8) & 0xff;
@@ -709,7 +709,7 @@ _lto2b(u_int32_t val, u_int8_t *bytes)
 }
 
 static __inline void __unused
-_lto3b(u_int32_t val, u_int8_t *bytes)
+_lto3b(uint32_t val, uint8_t *bytes)
 {
 
 	bytes[0] = (val >> 16) & 0xff;
@@ -718,7 +718,7 @@ _lto3b(u_int32_t val, u_int8_t *bytes)
 }
 
 static __inline void __unused
-_lto4b(u_int32_t val, u_int8_t *bytes)
+_lto4b(uint32_t val, uint8_t *bytes)
 {
 
 	bytes[0] = (val >> 24) & 0xff;
@@ -728,7 +728,7 @@ _lto4b(u_int32_t val, u_int8_t *bytes)
 }
 
 static __inline void __unused
-_lto8b(u_int64_t val, u_int8_t *bytes)
+_lto8b(uint64_t val, uint8_t *bytes)
 {
 
 	bytes[0] = (val >> 56) & 0xff;
@@ -741,20 +741,20 @@ _lto8b(u_int64_t val, u_int8_t *bytes)
 	bytes[7] = val         & 0xff;
 }
 
-static __inline u_int32_t __unused
-_2btol(const u_int8_t *bytes)
+static __inline uint32_t __unused
+_2btol(const uint8_t *bytes)
 {
-	u_int32_t rv;
+	uint32_t rv;
 
 	rv = (bytes[0] << 8) |
 	     bytes[1];
 	return (rv);
 }
 
-static __inline u_int32_t __unused
-_3btol(const u_int8_t *bytes)
+static __inline uint32_t __unused
+_3btol(const uint8_t *bytes)
 {
-	u_int32_t rv;
+	uint32_t rv;
 
 	rv = (bytes[0] << 16) |
 	     (bytes[1] << 8) |
@@ -762,10 +762,10 @@ _3btol(const u_int8_t *bytes)
 	return (rv);
 }
 
-static __inline u_int32_t __unused
-_4btol(const u_int8_t *bytes)
+static __inline uint32_t __unused
+_4btol(const uint8_t *bytes)
 {
-	u_int32_t rv;
+	uint32_t rv;
 
 	rv = (bytes[0] << 24) |
 	     (bytes[1] << 16) |
@@ -774,37 +774,37 @@ _4btol(const u_int8_t *bytes)
 	return (rv);
 }
 
-static __inline u_int64_t __unused
-_5btol(const u_int8_t *bytes)
+static __inline uint64_t __unused
+_5btol(const uint8_t *bytes)
 {
-	u_int64_t rv;
+	uint64_t rv;
 
-	rv = ((u_int64_t)bytes[0] << 32) |
-	     ((u_int64_t)bytes[1] << 24) |
-	     ((u_int64_t)bytes[2] << 16) |
-	     ((u_int64_t)bytes[3] << 8) |
-	     (u_int64_t)bytes[4];
+	rv = ((uint64_t)bytes[0] << 32) |
+	     ((uint64_t)bytes[1] << 24) |
+	     ((uint64_t)bytes[2] << 16) |
+	     ((uint64_t)bytes[3] << 8) |
+	     (uint64_t)bytes[4];
 	return (rv);
 }
 
-static __inline u_int64_t __unused
-_8btol(const u_int8_t *bytes)
+static __inline uint64_t __unused
+_8btol(const uint8_t *bytes)
 {
-	u_int64_t rv;
+	uint64_t rv;
 
-	rv = ((u_int64_t)bytes[0] << 56) |
-	     ((u_int64_t)bytes[1] << 48) |
-	     ((u_int64_t)bytes[2] << 40) |
-	     ((u_int64_t)bytes[3] << 32) |
-	     ((u_int64_t)bytes[4] << 24) |
-	     ((u_int64_t)bytes[5] << 16) |
-	     ((u_int64_t)bytes[6] << 8) |
-	     (u_int64_t)bytes[7];
+	rv = ((uint64_t)bytes[0] << 56) |
+	     ((uint64_t)bytes[1] << 48) |
+	     ((uint64_t)bytes[2] << 40) |
+	     ((uint64_t)bytes[3] << 32) |
+	     ((uint64_t)bytes[4] << 24) |
+	     ((uint64_t)bytes[5] << 16) |
+	     ((uint64_t)bytes[6] << 8) |
+	     (uint64_t)bytes[7];
 	return (rv);
 }
 
 static __inline void __unused
-_lto2l(u_int32_t val, u_int8_t *bytes)
+_lto2l(uint32_t val, uint8_t *bytes)
 {
 
 	bytes[0] = val & 0xff;
@@ -812,7 +812,7 @@ _lto2l(u_int32_t val, u_int8_t *bytes)
 }
 
 static __inline void __unused
-_lto3l(u_int32_t val, u_int8_t *bytes)
+_lto3l(uint32_t val, uint8_t *bytes)
 {
 
 	bytes[0] = val & 0xff;
@@ -821,7 +821,7 @@ _lto3l(u_int32_t val, u_int8_t *bytes)
 }
 
 static __inline void __unused
-_lto4l(u_int32_t val, u_int8_t *bytes)
+_lto4l(uint32_t val, uint8_t *bytes)
 {
 
 	bytes[0] = val & 0xff;
@@ -830,20 +830,20 @@ _lto4l(u_int32_t val, u_int8_t *bytes)
 	bytes[3] = (val >> 24) & 0xff;
 }
 
-static __inline u_int32_t __unused
-_2ltol(const u_int8_t *bytes)
+static __inline uint32_t __unused
+_2ltol(const uint8_t *bytes)
 {
-	u_int32_t rv;
+	uint32_t rv;
 
 	rv = bytes[0] |
 	     (bytes[1] << 8);
 	return (rv);
 }
 
-static __inline u_int32_t __unused
-_3ltol(const u_int8_t *bytes)
+static __inline uint32_t __unused
+_3ltol(const uint8_t *bytes)
 {
-	u_int32_t rv;
+	uint32_t rv;
 
 	rv = bytes[0] |
 	     (bytes[1] << 8) |
@@ -851,10 +851,10 @@ _3ltol(const u_int8_t *bytes)
 	return (rv);
 }
 
-static __inline u_int32_t __unused
-_4ltol(const u_int8_t *bytes)
+static __inline uint32_t __unused
+_4ltol(const uint8_t *bytes)
 {
-	u_int32_t rv;
+	uint32_t rv;
 
 	rv = bytes[0] |
 	     (bytes[1] << 8) |

@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipiconf.c,v 1.28 2005/01/31 21:13:16 reinoud Exp $	*/
+/*	$NetBSD: scsipiconf.c,v 1.29 2005/01/31 23:06:41 reinoud Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2004 The NetBSD Foundation, Inc.
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scsipiconf.c,v 1.28 2005/01/31 21:13:16 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scsipiconf.c,v 1.29 2005/01/31 23:06:41 reinoud Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -91,7 +91,7 @@ struct scsipi_periph *
 scsipi_alloc_periph(int malloc_flag)
 {
 	struct scsipi_periph *periph;
-	u_int i;
+	uint i;
 
 	periph = malloc(sizeof(*periph), M_DEVBUF, malloc_flag|M_ZERO);
 	if (periph == NULL)
@@ -123,7 +123,7 @@ caddr_t
 scsipi_inqmatch(struct scsipi_inquiry_pattern *inqbuf, caddr_t base,
     int nmatches, int matchsize, int *bestpriority)
 {
-	u_int8_t type;
+	uint8_t type;
 	caddr_t bestmatch;
 
 	/* Include the qualifier to catch vendor-unique types. */
