@@ -1,4 +1,4 @@
-/* $NetBSD: mcpcia_pci.c,v 1.1 1998/04/15 00:50:14 mjacob Exp $ */
+/* $NetBSD: mcpcia_pci.c,v 1.2 1998/04/30 04:25:22 mjacob Exp $ */
 
 /*
  * Copyright (c) 1998 by Matthew Jacob
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mcpcia_pci.c,v 1.1 1998/04/15 00:50:14 mjacob Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mcpcia_pci.c,v 1.2 1998/04/30 04:25:22 mjacob Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -144,6 +144,7 @@ mcpcia_conf_read(cpv, tag, offset)
 #endif
 
 	dp = (pcireg_t *)KV(paddr);
+	alpha_mb();
 	if (badaddr(dp, sizeof (*dp)) == 0) {
 		data = *dp;
 	}
@@ -181,6 +182,7 @@ mcpcia_conf_write(cpv, tag, offset, data)
 #endif
 
 	dp = (pcireg_t *)KV(paddr);
+	alpha_mb();
 	*dp = data;
 	alpha_mb();
 }
