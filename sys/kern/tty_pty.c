@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_pty.c,v 1.61 2002/03/17 19:41:08 atatat Exp $	*/
+/*	$NetBSD: tty_pty.c,v 1.62 2002/03/25 04:26:43 itohy Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty_pty.c,v 1.61 2002/03/17 19:41:08 atatat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty_pty.c,v 1.62 2002/03/25 04:26:43 itohy Exp $");
 
 #include "opt_compat_sunos.h"
 
@@ -817,10 +817,10 @@ ptyioctl(dev, cmd, data, flag, p)
 				return (EINVAL);
 			if (!ISSET(tp->t_lflag, NOFLSH))
 				ttyflush(tp, FREAD|FWRITE);
-			pgsignal(tp->t_pgrp, sig, 1);
 			if ((sig == SIGINFO) &&
 			    (!ISSET(tp->t_lflag, NOKERNINFO)))
 				ttyinfo(tp);
+			pgsignal(tp->t_pgrp, sig, 1);
 			return(0);
 		}
 	error = (*tp->t_linesw->l_ioctl)(tp, cmd, data, flag, p);
