@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_stream.c,v 1.10 1996/02/04 02:01:19 christos Exp $	 */
+/*	$NetBSD: svr4_stream.c,v 1.11 1996/02/10 00:48:12 christos Exp $	 */
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -339,8 +339,8 @@ svr4_showioc(str, ioc)
 	int error;
 	int i;
 
-	printf("%s cmd = %d, timeout = %d, len = %d, buf = %x { ",
-	       str, ioc->cmd, ioc->timeout, ioc->len, (unsigned int) ioc->buf);
+	printf("%s cmd = %d, timeout = %d, len = %d, buf = %p { ",
+	       str, ioc->cmd, ioc->timeout, ioc->len, ioc->buf);
 
 	if ((error = copyin(ioc->buf, ptr, ioc->len)) != 0) {
 		free((char *) ptr, M_TEMP);
@@ -584,8 +584,7 @@ svr4_getstrbuf(str)
 	    }
 	}
 
-	printf(", { %d, %d, %x=[ ", str->maxlen, str->len,
-	       (unsigned int) str->buf);
+	printf(", { %d, %d, %p=[ ", str->maxlen, str->len, str->buf);
 	for (i = 0; i < len; i++) {
 		printf("%x ", (unsigned char) ptr[i]);
 		if (i > 20) {
