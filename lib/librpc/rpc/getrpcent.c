@@ -168,6 +168,23 @@ getrpcent()
 	return interpret(d->line, strlen(d->line));
 }
 
+static char *
+firstwhtspc(s)
+char *s;
+{
+	char *ft, *fs;
+
+	ft = index(s, '\t');
+	fs = index(s, ' ');
+
+	if (ft == NULL)
+		return fs;
+	if (fs == NULL)
+		return ft;
+	
+	return (ft < fs) ? ft : fs;
+}
+
 static struct rpcent *
 interpret(val, len)
 {
@@ -190,13 +207,9 @@ interpret(val, len)
 			return (getrpcent());
 	}
 	*cp = '\0';
-	cp = index(p, ' ');
+	cp = firstwhtspc(p);
 	if (cp == NULL)
-    {
-		cp = index(p, '\t');
-		if (cp == NULL)
-			return (getrpcent());
-	}
+		return (getrpcent());
 	*cp++ = '\0';
 	/* THIS STUFF IS INTERNET SPECIFIC */
 	d->rpc.r_name = d->line;
@@ -204,31 +217,21 @@ interpret(val, len)
 		cp++;
 	d->rpc.r_number = atoi(cp);
 	q = d->rpc.r_aliases = d->rpc_aliases;
-	cp = index(p, ' ');
+	p = cp;
+	cp = firstwhtspc(p);
 	if (cp != NULL)
 		*cp++ = '\0';
-	else
-    {
-		cp = index(p, '\t');
-		if (cp != NULL)
-			*cp++ = '\0';
-	}
 	while (cp && *cp) {
+		p = cp;
 		if (*cp == ' ' || *cp == '\t') {
 			cp++;
 			continue;
 		}
 		if (q < &(d->rpc_aliases[MAXALIASES - 1]))
 			*q++ = cp;
-		cp = index(p, ' ');
+		cp = firstwhtspc(p);
 		if (cp != NULL)
 			*cp++ = '\0';
-		else
-	    {
-			cp = index(p, '\t');
-			if (cp != NULL)
-				*cp++ = '\0';
-		}
 	}
 	*q = NULL;
 	return (&d->rpc);
