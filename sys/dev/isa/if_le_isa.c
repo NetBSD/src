@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le_isa.c,v 1.10.2.2 1997/05/17 00:30:46 thorpej Exp $	*/
+/*	$NetBSD: if_le_isa.c,v 1.10.2.3 1997/05/25 02:12:22 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -439,12 +439,8 @@ le_isa_attach(parent, self, aux)
 
 		val = 0xff;
 		for (;;) {
-#if 0	/* XXX !! */
-			bus_space_set_region_1(memt, memh, 0, val);
-#else
-			for (i = 0; i < ia->ia_msize; i++)
-				bus_space_write_1(memt, memh, i, val);
-#endif
+			bus_space_set_region_1(memt, memh, 0, val,
+			    ia->ia_msize);
 			for (i = 0; i < ia->ia_msize; i++)
 				if (bus_space_read_1(memt, memh, 1) != val) {
 					printf("%s: failed to clear memory\n",
