@@ -1,4 +1,4 @@
-/*	$NetBSD: if_de.c,v 1.34 1998/11/05 19:48:46 ragge Exp $	*/
+/*	$NetBSD: if_de.c,v 1.35 1998/11/29 14:48:52 ragge Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989 Regents of the University of California.
@@ -276,7 +276,7 @@ deinit(ds)
 		return;
 	if ((ifp->if_flags & IFF_RUNNING) == 0) {
 		if (if_ubaminit(&ds->ds_deuba, (void *)ds->ds_dev.dv_parent,
-		    sizeof (struct ether_header), (int)btoc(ETHERMTU),
+		    sizeof (struct ether_header), (int)vax_btoc(ETHERMTU),
 		    ds->ds_ifr, NRCV, ds->ds_ifw, NXMT) == 0) { 
 			printf("%s: can't initialize\n", ds->ds_dev.dv_xname);
 			ds->ds_if.if_flags &= ~IFF_UP;
