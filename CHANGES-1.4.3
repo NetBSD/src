@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.4.3,v 1.1.2.36 2000/07/06 10:57:24 he Exp $
+#	$NetBSD: CHANGES-1.4.3,v 1.1.2.37 2000/07/06 17:03:20 he Exp $
 
 A complete list of changes from NetBSD 1.4.2 to NetBSD 1.4.3:
 
@@ -785,3 +785,30 @@ sys/dev/pci/if_ti.c				1.3
 
   Make the ti(4) driver compile again after the wi(4) related
   pullups of if_media.h changed IFM_1000_FX to IFM_1000_SX.
+
+share/mk/bsd.lib.mk				patch
+
+  Correct a typo.
+
+domestic/lib/libacl/shlib_version		patch (new)
+domestic/lib/libcom_err/shlib_version		patch (new)
+domestic/lib/libdes/shlib_version		patch (new)
+domestic/lib/libkadm/shlib_version		patch (new)
+domestic/lib/libkafs/shlib_version		patch (new)
+domestic/lib/libkdb/shlib_version		patch (new)
+domestic/lib/libkrb/shlib_version		patch (new)
+domestic/lib/libkstream/shlib_version		patch (new)
+domestic/lib/libss/shlib_version		patch (new)
+domestic/lib/libacl/Makefile			patch
+domestic/lib/libcom_err/Makefile		patch
+domestic/lib/libdes/Makefile			patch
+domestic/lib/libkadm/Makefile			patch
+domestic/lib/libkafs/Makefile			patch
+domestic/lib/libkdb/Makefile			patch
+domestic/lib/libkrb/Makefile			patch
+domestic/lib/libkstream/Makefile		patch
+domestic/lib/libss/Makefile			patch
+
+  Use shlib_version files instead of specifying SHLIB_MAJOR and
+  SHLIB_MINOR in the Makefiles, which does not work very well
+  after the recent update of bsd.lib.mk.
