@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_swap.c,v 1.35 1996/10/21 01:32:38 perry Exp $	*/
+/*	$NetBSD: vm_swap.c,v 1.36 1997/01/22 07:28:21 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -105,7 +105,7 @@ swapinit()
 	}
 	niswap = roundup(niswap, dmmax);
 	niswap *= niswdev;
-	if (swdevt[0].sw_vp == NULL &&
+	if (niswdev != 0 && swdevt[0].sw_vp == NULL &&
 	    bdevvp(swdevt[0].sw_dev, &swdevt[0].sw_vp))
 		panic("swapvp");
 	/*
@@ -122,8 +122,6 @@ swapinit()
 		}
 	}
 	nswdev += niswdev;
-	if (nswdev == 0)
-		panic("swapinit");
 	nswap += niswap;
 #else
 	nswdev = 0;
@@ -133,12 +131,10 @@ swapinit()
 		if (swp->sw_nblks > nswap)
 			nswap = swp->sw_nblks;
 	}
-	if (nswdev == 0)
-		panic("swapinit");
 	if (nswdev > 1)
 		nswap = ((nswap + dmmax - 1) / dmmax) * dmmax;
 	nswap *= nswdev;
-	if (swdevt[0].sw_vp == NULL &&
+	if (nswdev != 0 && swdevt[0].sw_vp == NULL &&
 	    bdevvp(swdevt[0].sw_dev, &swdevt[0].sw_vp))
 		panic("swapvp");
 #endif
