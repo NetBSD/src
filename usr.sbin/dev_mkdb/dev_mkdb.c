@@ -1,3 +1,5 @@
+/*	$NetBSD: dev_mkdb.c,v 1.10 2001/04/10 06:11:27 enami Exp $	*/
+
 /*-
  * Copyright (c) 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -41,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1990, 1993\n\
 #if 0
 static char sccsid[] = "from: @(#)dev_mkdb.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: dev_mkdb.c,v 1.9 2001/04/10 06:08:12 enami Exp $");
+__RCSID("$NetBSD: dev_mkdb.c,v 1.10 2001/04/10 06:11:27 enami Exp $");
 #endif
 #endif /* not lint */
 
@@ -49,10 +51,10 @@ __RCSID("$NetBSD: dev_mkdb.c,v 1.9 2001/04/10 06:08:12 enami Exp $");
 #include <sys/stat.h>
 
 #include <db.h>
-#include <dirent.h>
 #include <err.h>
 #include <errno.h>
 #include <fcntl.h>
+#include <fts.h>
 #include <kvm.h>
 #include <nlist.h>
 #include <paths.h>
@@ -69,18 +71,19 @@ main(argc, argv)
 	int argc;
 	char *argv[];
 {
-	DIR *dirp;
-	struct dirent *dp;
-	struct stat sb;
+	struct stat *st;
 	struct {
 		mode_t type;
 		dev_t dev;
 	} bkey;
 	DB *db;
 	DBT data, key;
+	FTS *ftsp;
+	FTSENT *p;
 	int ch;
-	u_char buf[MAXNAMLEN + 1];
+	u_char buf[MAXPATHLEN + 1];
 	char dbtmp[MAXPATHLEN + 1], dbname[MAXPATHLEN + 1];
+	char *pathv[2];
 
 	while ((ch = getopt(argc, argv, "")) != -1)
 		switch (ch) {
@@ -97,7 +100,11 @@ main(argc, argv)
 	if (chdir(_PATH_DEV))
 		err(1, "%s", _PATH_DEV);
 
-	dirp = opendir(".");
+	pathv[0] = _PATH_DEV;
+	pathv[1] = NULL;
+	ftsp = fts_open(pathv, FTS_PHYSICAL, NULL);
+	if (ftsp == NULL)
+		err(1, "fts_open: %s", _PATH_DEV);
 
 	(void)snprintf(dbtmp, sizeof(dbtmp), "%sdev.tmp", _PATH_VARRUN);
 	(void)snprintf(dbname, sizeof(dbtmp), "%sdev.db", _PATH_VARRUN);
@@ -116,32 +123,35 @@ main(argc, argv)
 	key.data = &bkey;
 	key.size = sizeof(bkey);
 	data.data = buf;
-	while ((dp = readdir(dirp)) != NULL) {
-		if (lstat(dp->d_name, &sb)) {
-			warn("%s", dp->d_name);
+	while ((p = fts_read(ftsp)) != NULL) {
+		switch (p->fts_info) {
+		case FTS_DEFAULT:
+			st = p->fts_statp;
+			break;
+		default:
 			continue;
 		}
 
 		/* Create the key. */
-		if (S_ISCHR(sb.st_mode))
+		if (S_ISCHR(st->st_mode))
 			bkey.type = S_IFCHR;
-		else if (S_ISBLK(sb.st_mode))
+		else if (S_ISBLK(st->st_mode))
 			bkey.type = S_IFBLK;
 		else
 			continue;
-		bkey.dev = sb.st_rdev;
+		bkey.dev = st->st_rdev;
 
 		/*
 		 * Create the data; nul terminate the name so caller doesn't
-		 * have to.
+		 * have to.  Skip _PATH_DEV and slash.
 		 */
-		memmove(buf, dp->d_name, dp->d_namlen);
-		buf[dp->d_namlen] = '\0';
-		data.size = dp->d_namlen + 1;
+		strlcpy(buf, p->fts_path + sizeof(_PATH_DEV), sizeof(buf));
+		data.size = p->fts_pathlen - sizeof(_PATH_DEV) + 1;
 		if ((*db->put)(db, &key, &data, 0))
 			err(1, "dbput %s", dbtmp);
 	}
 	(void)(*db->close)(db);
+	fts_close(ftsp);
 	if (rename(dbtmp, dbname))
 		err(1, "rename %s to %s", dbtmp, dbname);
 	exit(0);
