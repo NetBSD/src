@@ -1,4 +1,4 @@
-/*	$NetBSD: signal.h,v 1.13 2003/09/25 18:42:18 matt Exp $	*/
+/*	$NetBSD: signal.h,v 1.14 2003/09/25 22:22:36 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -99,7 +99,7 @@ do {									\
 #endif /* !__HAVE_SIGINFO */
 
 #ifdef _KERNEL
-void	sendsig_sigcontext(int, sigset_t *, u_long);
+void	sendsig_sigcontext(int, const sigset_t *, u_long);
 #endif
 
 #endif	/* _NETBSD_SOURCE */
