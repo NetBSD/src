@@ -1,4 +1,4 @@
-/*	$NetBSD: queue.h,v 1.19 1999/11/15 18:49:12 fvdl Exp $	*/
+/*	$NetBSD: queue.h,v 1.20 2000/03/15 02:03:11 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -133,6 +133,65 @@ struct {								\
 #define	LIST_FIRST(head)		((head)->lh_first)
 
 #define	LIST_NEXT(elm, field)		((elm)->field.le_next)
+
+/*
+ * Singly-linked List definitions.
+ */
+#define SLIST_HEAD(name, type)						\
+struct name {								\
+	struct type *slh_first;	/* first element */			\
+}
+
+#define SLIST_HEAD_INITIALIZER(head)					\
+	{ NULL }
+ 
+#define SLIST_ENTRY(type)						\
+struct {								\
+	struct type *sle_next;	/* next element */			\
+}
+ 
+/*
+ * Singly-linked List functions.
+ */
+#define	SLIST_EMPTY(head)	((head)->slh_first == NULL)
+
+#define	SLIST_FIRST(head)	((head)->slh_first)
+
+#define SLIST_FOREACH(var, head, field)					\
+	for((var) = (head)->slh_first; (var); (var) = (var)->field.sle_next)
+
+#define SLIST_INIT(head) do {						\
+	(head)->slh_first = NULL;					\
+} while (/*CONSTCOND*/0)
+
+#define SLIST_INSERT_AFTER(slistelm, elm, field) do {			\
+	(elm)->field.sle_next = (slistelm)->field.sle_next;		\
+	(slistelm)->field.sle_next = (elm);				\
+} while (/*CONSTCOND*/0)
+
+#define SLIST_INSERT_HEAD(head, elm, field) do {			\
+	(elm)->field.sle_next = (head)->slh_first;			\
+	(head)->slh_first = (elm);					\
+} while (/*CONSTCOND*/0)
+
+#define SLIST_NEXT(elm, field)	((elm)->field.sle_next)
+
+#define SLIST_REMOVE_HEAD(head, field) do {				\
+	(head)->slh_first = (head)->slh_first->field.sle_next;		\
+} while (/*CONSTCOND*/0)
+
+#define SLIST_REMOVE(head, elm, type, field) do {			\
+	if ((head)->slh_first == (elm)) {				\
+		SLIST_REMOVE_HEAD((head), field);			\
+	}								\
+	else {								\
+		struct type *curelm = (head)->slh_first;		\
+		while( curelm->field.sle_next != (elm) )		\
+			curelm = curelm->field.sle_next;		\
+		curelm->field.sle_next =				\
+		    curelm->field.sle_next->field.sle_next;		\
+	}								\
+} while (/*CONSTCOND*/0)
 
 /*
  * Simple queue definitions.
