@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vnops.c,v 1.12 2004/09/13 19:25:48 jdolecek Exp $	*/
+/*	$NetBSD: msdosfs_vnops.c,v 1.13 2005/01/09 16:42:44 chs Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_vnops.c,v 1.12 2004/09/13 19:25:48 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_vnops.c,v 1.13 2005/01/09 16:42:44 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -461,7 +461,7 @@ msdosfs_read(v)
 		int a_ioflag;
 		struct ucred *a_cred;
 	} */ *ap = v;
-	int error = 0;
+	int error = 0, flags;
 	int64_t diff;
 	int blsize;
 	long n;
@@ -496,7 +496,8 @@ msdosfs_read(v)
 			win = ubc_alloc(&vp->v_uobj, uio->uio_offset,
 					&bytelen, UBC_READ);
 			error = uiomove(win, bytelen, uio);
-			ubc_release(win, 0);
+			flags = UBC_WANT_UNMAP(vp) ? UBC_UNMAP : 0;
+			ubc_release(win, flags);
 			if (error)
 				break;
 		}
@@ -555,11 +556,11 @@ msdosfs_write(v)
 		int a_ioflag;
 		struct ucred *a_cred;
 	} */ *ap = v;
-	int resid;
-	u_long osize;
+	int resid, flags, extended = 0;
 	int error = 0;
-	u_long count;
 	int ioflag = ap->a_ioflag;
+	u_long osize;
+	u_long count;
 	void *win;
 	vsize_t bytelen;
 	off_t oldoff;
@@ -570,7 +571,6 @@ msdosfs_write(v)
 	struct msdosfsmount *pmp = dep->de_pmp;
 	struct ucred *cred = ap->a_cred;
 	boolean_t async;
-	int extended=0;
 
 #ifdef MSDOSFS_DEBUG
 	printf("msdosfs_write(vp %p, uio %p, ioflag %x, cred %p\n",
@@ -648,7 +648,8 @@ msdosfs_write(v)
 
 		win = ubc_alloc(&vp->v_uobj, oldoff, &bytelen, UBC_WRITE);
 		error = uiomove(win, bytelen, uio);
-		ubc_release(win, 0);
+		flags = UBC_WANT_UNMAP(vp) ? UBC_UNMAP : 0;
+		ubc_release(win, flags);
 		if (error) {
 			break;
 		}
