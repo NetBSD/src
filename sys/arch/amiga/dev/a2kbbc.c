@@ -1,4 +1,4 @@
-/*	$NetBSD: a2kbbc.c,v 1.8 2000/01/02 18:29:22 is Exp $	*/
+/*	$NetBSD: a2kbbc.c,v 1.9 2000/01/03 20:30:51 is Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -205,7 +205,6 @@ a2kusettod(tvp)
 		return (0);
 
 	clock_secs_to_ymdhms(secs, &dt);
-	dt.dt_year -= CLOCK_BASE_YEAR;
 
 	/*
 	 * hold clock
@@ -237,7 +236,7 @@ a2kusettod(tvp)
 	rt->day2    = dt.dt_day % 10;
 	rt->month1  = dt.dt_mon / 10;
 	rt->month2  = dt.dt_mon % 10;
-	rt->year1   = dt.dt_year / 10;
+	rt->year1   = (dt.dt_year / 10) % 10;
 	rt->year2   = dt.dt_year % 10;
 	rt->weekday = dt.dt_wday;
 
