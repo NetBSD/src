@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.6 2003/07/15 02:29:24 lukem Exp $	*/
+/*	$NetBSD: mem.c,v 1.7 2003/11/01 18:23:37 matt Exp $	*/
 
 /*	$OpenBSD: mem.c,v 1.5 2001/05/05 20:56:36 art Exp $	*/
 
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.6 2003/07/15 02:29:24 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.7 2003/11/01 18:23:37 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -130,7 +130,7 @@ const struct cdevsw mem_cdevsw = {
 static caddr_t zeropage;
 
 /* A lock for the vmmap, 16-byte aligned as PA-RISC semaphores must be. */
-static int32_t vmmap_lock __attribute__ ((aligned (16))) = 1;
+static __cpu_simple_lock_t vmmap_lock;
 
 int
 memmatch(parent, cf, aux)   
@@ -277,11 +277,7 @@ mmrw(dev, uio, flags)
 			 * acquire it.
 			 */
 			while (!lockheld) {
-				__asm __volatile(
-			"	ldcw		%1, %0		\n"
-			"	comb,=,n	%%r0, %0, 0	\n"
-			"	sync				\n"
-			: "=r" (lockheld), "+m" (vmmap_lock));
+				lockheld = __cpu_simple_lock_try(&vmmap_lock);
 				if (lockheld)
 					break;
 				error = tsleep((caddr_t)&vmmap_lock, 
@@ -350,10 +346,7 @@ use_kmem:
 
 	/* If we hold the vmmap lock, release it. */
 	if (lockheld) {
-		__asm __volatile(
-		"	sync			\n"
-		"	stw	%1, %0		\n"
-		: "+m" (vmmap_lock) : "r" (1));
+		__cpu_simple_unlock(&vmmap_lock);
 		wakeup((caddr_t)&vmmap_lock);
 	}
 
