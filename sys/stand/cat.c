@@ -29,8 +29,6 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- * 
- *	$Id $
  */
 
 #ifndef lint
@@ -40,9 +38,8 @@ static char copyright[] =
 #endif /* not lint */
 
 #ifndef lint
-/*From: */
-/*	static char sccsid[] = "@(#)cat.c	8.1 (Berkeley) 6/11/93";*/
-static char rcsid[] = "$Id: cat.c,v 1.3 1994/01/26 03:21:41 cgd Exp $";
+/*static char sccsid[] = "from: @(#)cat.c	8.1 (Berkeley) 6/11/93";*/
+static char rcsid[] = "NetBSD $Id: cat.c,v 1.4 1994/06/27 19:54:45 cgd Exp $";
 #endif /* not lint */
 
 main()
