@@ -9,6 +9,7 @@
 __indr_reference(_errx, errx);
 #else
 
+#define	__NO_NAMESPACE_H	/* XXX */
 #define _errx    errx
 #define _verrx   verrx
 #define rcsid   _rcsid

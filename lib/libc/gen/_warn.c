@@ -9,7 +9,9 @@
 __indr_reference(_warn, warn);
 #else
 
-#define _warn  warn
+#define	__NO_NAMESPACE_H	/* XXX */
+#define _warn	warn
+#define	_vwarn	vwarn
 #define rcsid   _rcsid
 #include "warn.c"
 

@@ -9,6 +9,7 @@
 __indr_reference(_vwarnx, vwarnx);
 #else
 
+#define	__NO_NAMESPACE_H	/* XXX */
 #define _vwarnx	vwarnx
 #define rcsid   _rcsid
 #include "vwarnx.c"
