@@ -1,0 +1,39 @@
+#	$NetBSD: mtree.common,v 1.1 2002/02/08 02:18:54 lukem Exp $
+
+/set				type=dir uname=root gname=wheel mode=0755
+
+.
+./bin
+./dev
+./dist
+./dist/base_obsolete		type=file mode=644 optional
+./dist/comp_obsolete		type=file mode=644 optional
+./dist/etc_obsolete		type=file mode=644 optional
+./dist/games_obsolete		type=file mode=644 optional
+./dist/man_obsolete		type=file mode=644 optional
+./dist/misc_obsolete		type=file mode=644 optional
+./dist/text_obsolete		type=file mode=644 optional
+./dist/xbase_obsolete		type=file mode=644 optional
+./dist/xcomp_obsolete		type=file mode=644 optional
+./dist/xcontrib_obsolete	type=file mode=644 optional
+./dist/xfont_obsolete		type=file mode=644 optional
+./dist/xserver_obsolete		type=file mode=644 optional
+./dist/xmisc_obsolete		type=file mode=644 optional
+./etc
+./mnt
+./mnt2
+./kern
+./sbin
+./tmp				mode=01777
+./usr
+./usr/bin
+./usr/mdec
+./usr/sbin
+./usr/share
+./usr/share/misc
+./var
+./var/db
+./var/run
+./var/log
+./var/spool
+./var/spool/lock
