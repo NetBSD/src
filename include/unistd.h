@@ -1,4 +1,4 @@
-/*	$NetBSD: unistd.h,v 1.42 1997/10/16 23:26:24 christos Exp $	*/
+/*	$NetBSD: unistd.h,v 1.42.2.1 1998/11/22 07:19:42 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -125,6 +125,7 @@ int	 gethostname __P((char *, int));
 mode_t	 getmode __P((const void *, mode_t));
 int	 getpagesize __P((void));
 char	*getpass __P((const char *));
+pid_t	 getpgid __P((pid_t));
 char	*getusershell __P((void));
 char	*getwd __P((char *));			/* obsoleted by getcwd() */
 int	 initgroups __P((const char *, gid_t));
