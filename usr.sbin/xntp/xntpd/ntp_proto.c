@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_proto.c,v 1.5 1998/08/12 14:11:53 christos Exp $	*/
+/*	$NetBSD: ntp_proto.c,v 1.5.2.1 1999/10/10 23:17:23 cgd Exp $	*/
 
 /*
  * ntp_proto.c - NTP version 3 protocol machinery
@@ -2269,11 +2269,16 @@ static int default_get_precision()
 		int tz_dsttime;
 	} tzp;
 #endif /* defined(VMS) || defined(_SEQUENT_) */
-	long last;
+	long last, last1;
 	int i;
 	long diff;
 	long val;
 	long usec;
+	long est[MINLOOPS];
+#ifdef DEBUG_PRECISION
+	int j;
+	long oldest[MINLOOPS];
+#endif
 #ifdef HAVE_GETCLOCK
         struct timespec ts;
 #endif
@@ -2287,7 +2292,7 @@ static int default_get_precision()
 #else /*  not HAVE_GETCLOCK */
 	GETTIMEOFDAY(&tp, &tzp);
 #endif /* not HAVE_GETCLOCK */
-	last = tp.tv_usec;
+	last1 = last = tp.tv_usec;
 	for (i = 0; i < MINLOOPS && usec < HUSECS;) {
 #ifdef HAVE_GETCLOCK
                 (void) getclock(TIMEOFDAY, &ts);
@@ -2302,13 +2307,28 @@ static int default_get_precision()
 			diff += DUSECS;
 		usec += diff;
 		if (diff > MINSTEP) {
+#ifdef DEBUG_PRECISION
+			oldest[i] = diff;
+#endif
+			diff = tp.tv_usec - last1;
+			last1 = tp.tv_usec;
+			if (diff < 0)
+				diff += DUSECS;
+			est[i] = diff;
 			i++;
 			if (diff < val)
 				val = diff;
 		}
 	}
+
 	NLOG(NLOG_SYSINFO) /* conditional if clause for conditional syslog */
 	  msyslog(LOG_INFO, "precision = %d usec", val);
+#ifdef DEBUG_PRECISION
+	for (j=0; j<i; j++) {
+		msyslog(LOG_INFO, "est: %d %d", oldest[j], est[j]);
+	}
+#endif
+	
 	if (usec >= HUSECS)
 		val = MINSTEP;	/* val <= MINSTEP; fast machine */
 	diff = HUSECS;
