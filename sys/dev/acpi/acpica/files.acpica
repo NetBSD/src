@@ -1,4 +1,4 @@
-#       $NetBSD: files.acpica,v 1.3 2002/12/23 00:22:04 kanaoka Exp $
+#       $NetBSD: files.acpica,v 1.4 2003/02/13 14:16:13 kanaoka Exp $
 
 file    dev/acpi/acpica/Osd/OsdEnvironment.c            acpi
 file    dev/acpi/acpica/Osd/OsdHardware.c               acpi
@@ -106,7 +106,6 @@ file	dev/acpi/acpica/Subsystem/nsxfobj.c		acpi
 
 # interpreter/parser/
 file	dev/acpi/acpica/Subsystem/psargs.c		acpi
-file	dev/acpi/acpica/Subsystem/psfind.c		acpi
 file	dev/acpi/acpica/Subsystem/psopcode.c		acpi
 file	dev/acpi/acpica/Subsystem/psparse.c		acpi
 file	dev/acpi/acpica/Subsystem/psscope.c		acpi

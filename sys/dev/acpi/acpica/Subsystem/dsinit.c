@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Module Name: dsinit - Object initialization namespace walk
- *              $Revision: 1.2 $
+ *              xRevision: 6 $
  *
  *****************************************************************************/
 
@@ -9,7 +9,7 @@
  *
  * 1. Copyright Notice
  *
- * Some or all of this work - Copyright (c) 1999 - 2002, Intel Corp.
+ * Some or all of this work - Copyright (c) 1999 - 2003, Intel Corp.
  * All rights reserved.
  *
  * 2. License
@@ -114,14 +114,14 @@
  *
  *****************************************************************************/
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: dsinit.c,v 1.3 2003/02/13 14:16:18 kanaoka Exp $");
+
 #define __DSINIT_C__
 
 #include "acpi.h"
-#include "acparser.h"
-#include "amlcode.h"
 #include "acdispat.h"
 #include "acnamesp.h"
-#include "acinterp.h"
 
 #define _COMPONENT          ACPI_DISPATCHER
         ACPI_MODULE_NAME    ("dsinit")
@@ -200,10 +200,9 @@ AcpiDsInitOneObject (
 
         /* Print a dot for each method unless we are going to print the entire pathname */
 
-        if (!(AcpiDbgLevel & ACPI_LV_INIT_NAMES)
-	    && (AcpiDbgLevel & ACPI_LV_LOAD))
+        if (!(AcpiDbgLevel & ACPI_LV_INIT_NAMES))
         {
-            AcpiOsPrintf (".");
+            ACPI_DEBUG_PRINT_RAW ((ACPI_DB_INIT, "."));
         }
 
         /*

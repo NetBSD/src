@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Module Name: evmisc - Miscellaneous event manager support functions
- *              xRevision: 59 $
+ *              xRevision: 62 $
  *
  *****************************************************************************/
 
@@ -9,7 +9,7 @@
  *
  * 1. Copyright Notice
  *
- * Some or all of this work - Copyright (c) 1999 - 2002, Intel Corp.
+ * Some or all of this work - Copyright (c) 1999 - 2003, Intel Corp.
  * All rights reserved.
  *
  * 2. License
@@ -115,7 +115,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: evmisc.c,v 1.4 2002/12/23 00:22:09 kanaoka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: evmisc.c,v 1.5 2003/02/13 14:16:19 kanaoka Exp $");
 
 #include "acpi.h"
 #include "acevents.h"
@@ -334,7 +334,7 @@ AcpiEvQueueNotifyRequest (
     {
         /* There is no per-device notify handler for this device */
 
-        ACPI_DEBUG_PRINT ((ACPI_DB_INFO, 
+        ACPI_DEBUG_PRINT ((ACPI_DB_INFO,
             "No notify handler for [%4.4s] node %p\n", Node->Name.Ascii, Node));
     }
 
@@ -678,7 +678,7 @@ AcpiEvReleaseGlobalLock (void)
 void
 AcpiEvTerminate (void)
 {
-    NATIVE_UINT_MAX32       i;
+    ACPI_NATIVE_UINT        i;
     ACPI_STATUS             Status;
 
 
@@ -697,10 +697,10 @@ AcpiEvTerminate (void)
          */
         for (i = 0; i < ACPI_NUM_FIXED_EVENTS; i++)
         {
-            Status = AcpiDisableEvent(i, ACPI_EVENT_FIXED, 0);
+            Status = AcpiDisableEvent ((UINT32) i, ACPI_EVENT_FIXED, 0);
             if (ACPI_FAILURE (Status))
             {
-                ACPI_DEBUG_PRINT ((ACPI_DB_ERROR, "Could not disable fixed event %d\n", i));
+                ACPI_DEBUG_PRINT ((ACPI_DB_ERROR, "Could not disable fixed event %d\n", (UINT32) i));
             }
         }
 
@@ -709,12 +709,12 @@ AcpiEvTerminate (void)
          */
         for (i = 0; i < AcpiGbl_GpeNumberMax; i++)
         {
-            if (AcpiEvGetGpeNumberIndex(i) != ACPI_GPE_INVALID)
+            if (AcpiEvGetGpeNumberIndex ((UINT32)i) != ACPI_GPE_INVALID)
             {
-                Status = AcpiHwDisableGpe(i);
+                Status = AcpiHwDisableGpe((UINT32) i);
                 if (ACPI_FAILURE (Status))
                 {
-                    ACPI_DEBUG_PRINT ((ACPI_DB_ERROR, "Could not disable GPE %d\n", i));
+                    ACPI_DEBUG_PRINT ((ACPI_DB_ERROR, "Could not disable GPE %d\n", (UINT32) i));
                 }
             }
         }
@@ -722,7 +722,7 @@ AcpiEvTerminate (void)
         /*
          * Remove SCI handler
          */
-        Status = AcpiEvRemoveSciHandler();
+        Status = AcpiEvRemoveSciHandler ();
         if (ACPI_FAILURE(Status))
         {
             ACPI_DEBUG_PRINT ((ACPI_DB_ERROR, "Could not remove SCI handler\n"));

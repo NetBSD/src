@@ -2,7 +2,7 @@
  *
  * Module Name: nsxfname - Public interfaces to the ACPI subsystem
  *                         ACPI Namespace oriented interfaces
- *              xRevision: 92 $
+ *              xRevision: 94 $
  *
  *****************************************************************************/
 
@@ -10,7 +10,7 @@
  *
  * 1. Copyright Notice
  *
- * Some or all of this work - Copyright (c) 1999 - 2002, Intel Corp.
+ * Some or all of this work - Copyright (c) 1999 - 2003, Intel Corp.
  * All rights reserved.
  *
  * 2. License
@@ -116,7 +116,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nsxfname.c,v 1.4 2002/12/23 00:22:13 kanaoka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nsxfname.c,v 1.5 2003/02/13 14:16:23 kanaoka Exp $");
 
 #define __NSXFNAME_C__
 
@@ -290,7 +290,7 @@ AcpiGetName (
 
     ACPI_STRNCPY (Buffer->Pointer, Node->Name.Ascii,
                 ACPI_NAME_SIZE);
-    ((NATIVE_CHAR *) Buffer->Pointer) [ACPI_NAME_SIZE] = 0;
+    ((char *) Buffer->Pointer) [ACPI_NAME_SIZE] = 0;
     Status = AE_OK;
 
 

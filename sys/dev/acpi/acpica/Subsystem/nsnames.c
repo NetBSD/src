@@ -1,7 +1,7 @@
 /*******************************************************************************
  *
  * Module Name: nsnames - Name manipulation and search
- *              xRevision: 80 $
+ *              xRevision: 82 $
  *
  ******************************************************************************/
 
@@ -9,7 +9,7 @@
  *
  * 1. Copyright Notice
  *
- * Some or all of this work - Copyright (c) 1999 - 2002, Intel Corp.
+ * Some or all of this work - Copyright (c) 1999 - 2003, Intel Corp.
  * All rights reserved.
  *
  * 2. License
@@ -115,7 +115,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nsnames.c,v 1.4 2002/12/23 00:22:13 kanaoka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nsnames.c,v 1.5 2003/02/13 14:16:22 kanaoka Exp $");
 
 #define __NSNAMES_C__
 
@@ -147,7 +147,7 @@ void
 AcpiNsBuildExternalPath (
     ACPI_NAMESPACE_NODE     *Node,
     ACPI_SIZE               Size,
-    NATIVE_CHAR             *NameBuffer)
+    char                    *NameBuffer)
 {
     ACPI_SIZE               Index;
     ACPI_NAMESPACE_NODE     *ParentNode;
@@ -216,11 +216,11 @@ AcpiNsBuildExternalPath (
  *
  ******************************************************************************/
 
-NATIVE_CHAR *
+char *
 AcpiNsGetExternalPathname (
     ACPI_NAMESPACE_NODE     *Node)
 {
-    NATIVE_CHAR             *NameBuffer;
+    char                    *NameBuffer;
     ACPI_SIZE               Size;
 
 

@@ -1,7 +1,7 @@
 /*******************************************************************************
  *
  * Module Name: dbstats - Generation and display of ACPI table statistics
- *              xRevision: 64 $
+ *              xRevision: 66 $
  *
  ******************************************************************************/
 
@@ -9,7 +9,7 @@
  *
  * 1. Copyright Notice
  *
- * Some or all of this work - Copyright (c) 1999 - 2002, Intel Corp.
+ * Some or all of this work - Copyright (c) 1999 - 2003, Intel Corp.
  * All rights reserved.
  *
  * 2. License
@@ -115,7 +115,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dbstats.c,v 1.7 2002/12/23 00:22:07 kanaoka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dbstats.c,v 1.8 2003/02/13 14:16:17 kanaoka Exp $");
 
 #include "acpi.h"
 #include "acdebug.h"
@@ -368,7 +368,7 @@ AcpiDbCountNamespaceObjects (
 
 ACPI_STATUS
 AcpiDbDisplayStatistics (
-    NATIVE_CHAR             *TypeArg)
+    char                    *TypeArg)
 {
     UINT32                  i;
     UINT32                  Type;

@@ -2,7 +2,7 @@
 /******************************************************************************
  *
  * Module Name: exmutex - ASL Mutex Acquire/Release functions
- *              xRevision: 16 $
+ *              xRevision: 18 $
  *
  *****************************************************************************/
 
@@ -10,7 +10,7 @@
  *
  * 1. Copyright Notice
  *
- * Some or all of this work - Copyright (c) 1999 - 2002, Intel Corp.
+ * Some or all of this work - Copyright (c) 1999 - 2003, Intel Corp.
  * All rights reserved.
  *
  * 2. License
@@ -116,7 +116,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exmutex.c,v 1.6 2002/12/23 00:22:11 kanaoka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exmutex.c,v 1.7 2003/02/13 14:16:20 kanaoka Exp $");
 
 #define __EXMUTEX_C__
 
@@ -351,7 +351,7 @@ AcpiExReleaseMutex (
         ACPI_REPORT_ERROR ((
             "Thread %X cannot release Mutex [%4.4s] acquired by thread %X\n",
             WalkState->Thread->ThreadId,
-            ObjDesc->Mutex.Node->Name.Ascii, 
+            ObjDesc->Mutex.Node->Name.Ascii,
             ObjDesc->Mutex.OwnerThread->ThreadId));
         return_ACPI_STATUS (AE_AML_NOT_OWNER);
     }

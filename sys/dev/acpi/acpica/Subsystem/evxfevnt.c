@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Module Name: evxfevnt - External Interfaces, ACPI event disable/enable
- *              xRevision: 59 $
+ *              xRevision: 60 $
  *
  *****************************************************************************/
 
@@ -9,7 +9,7 @@
  *
  * 1. Copyright Notice
  *
- * Some or all of this work - Copyright (c) 1999 - 2002, Intel Corp.
+ * Some or all of this work - Copyright (c) 1999 - 2003, Intel Corp.
  * All rights reserved.
  *
  * 2. License
@@ -115,7 +115,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: evxfevnt.c,v 1.4 2002/12/23 00:22:09 kanaoka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: evxfevnt.c,v 1.5 2003/02/13 14:16:19 kanaoka Exp $");
 
 #define __EVXFEVNT_C__
 
