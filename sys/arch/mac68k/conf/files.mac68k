@@ -1,4 +1,4 @@
-#	$NetBSD: files.mac68k,v 1.88 1999/02/18 07:33:44 scottr Exp $
+#	$NetBSD: files.mac68k,v 1.88.2.1 1999/03/05 08:24:23 scottr Exp $
 
 # mac68k-specific configuration info
 
@@ -16,15 +16,13 @@ maxusers 2 8 64
 device mainbus { }			# no locators (yet?)
 attach mainbus at root
 
+include "dev/wscons/files.wscons"
+
 define obio_norm { [addr = -1], ["no drq" = -1], ["no hsk" = -1] }
 define obio_scsi5380 { [addr = -1], [drq = -1], [hsk = -1] }
 device	obio: obio_norm, obio_scsi5380
 attach	obio at mainbus
 file	arch/mac68k/obio/obio.c		obio
-
-device	nubus { }
-attach	nubus at mainbus
-file	arch/mac68k/nubus/nubus.c	nubus
 
 device	adb { }
 attach	adb at obio_norm
@@ -37,17 +35,21 @@ device	aed
 attach	aed at adb
 file	arch/mac68k/dev/aed.c		aed needs-flag
 
-device	kbd
-attach	kbd at adb
-file	arch/mac68k/dev/kbd.c		kbd needs-flag
+device	akbd: wskbddev
+attach	akbd at adb
+file	arch/mac68k/dev/akbd.c		akbd needs-flag
 
-device	ms
-attach	ms at adb
-file	arch/mac68k/dev/ms.c		ms needs-flag
+device	ams: wsmousedev
+attach	ams at adb
+file	arch/mac68k/dev/ams.c		ams needs-flag
 
 device	asc
 attach	asc at obio_norm
 file	arch/mac68k/obio/asc.c		asc needs-flag
+
+device	nubus { }
+attach	nubus at mainbus
+file	arch/mac68k/nubus/nubus.c	nubus
 
 define grfbus { }
 file	arch/mac68k/dev/grf_subr.c	grfbus

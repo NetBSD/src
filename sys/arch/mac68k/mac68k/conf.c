@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.49 1999/02/18 07:32:56 scottr Exp $	*/
+/*	$NetBSD: conf.c,v 1.49.2.1 1999/03/05 08:24:25 scottr Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -110,10 +110,9 @@ int	nblkdev = sizeof(bdevsw) / sizeof(bdevsw[0]);
 #include "ss.h"
 #include "tun.h"
 #include "uk.h"
-#if 0
+#include "wsdisplay.h"
 #include "wskbd.h"
 #include "wsmouse.h"
-#endif
 #include "zsc.h"
 #include "zstty.h"
 #include "scsibus.h"
@@ -151,10 +150,9 @@ cdev_decl(sw);
 cdev_decl(tun);
 cdev_decl(uk);
 cdev_decl(vnd);
-#if 0
 cdev_decl(wskbd);
 cdev_decl(wsmouse);
-#endif
+cdev_decl(wsdisplay);
 cdev_decl(zs);
 cdev_decl(zsc);
 cdev_decl(scsibus);
@@ -203,16 +201,12 @@ struct cdevsw	cdevsw[] =
 	cdev_se_init(NSE, se),		/* 37: SCSI ethernet */
 	cdev_rnd_init(NRND, rnd),	/* 38: random source pseudo-device */
 	cdev_scsibus_init(NSCSIBUS,scsibus), /* 39: SCSI bus */
-#if 0
 	cdev_mouse_init(NWSKBD, wskbd),	/* 40: wscons keyboard driver */
-	cdev_mouse_init(NWSMOUSE,
-	    wsmouse),			/* 41: wscons mouse driver */
-#else
-	cdev_notdef(),			/* 40 */
-	cdev_notdef(),			/* 41 */
-#endif
+	cdev_mouse_init(NWSMOUSE, wsmouse), /* 41: wscons mouse driver */
 	cdev_disk_init(NRAID,raid),	/* 42: RAIDframe disk driver */
 	cdev_disk_init(NFD,fd),		/* 43: Sony floppy disk */
+	cdev_wsdisplay_init(NWSDISPLAY,
+			    wsdisplay), /* 44: frame buffers, etc. */
 };
 int	nchrdev = sizeof(cdevsw) / sizeof(cdevsw[0]);
 

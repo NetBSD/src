@@ -1,4 +1,4 @@
-/*	$NetBSD: adbsysasm.s,v 1.9 1999/02/11 06:41:08 ender Exp $	*/
+/*	$NetBSD: adbsysasm.s,v 1.9.2.1 1999/03/05 08:24:24 scottr Exp $	*/
 
 /*-
  * Copyright (C) 1994	Bradley A. Grantham
@@ -31,8 +31,8 @@
  */
 
 #include "opt_adb.h"
-#include "kbd.h"
-#include "ms.h"
+#include "akbd.h"
+#include "ams.h"
 #include <machine/asm.h>
 
 /* 
@@ -42,7 +42,7 @@
 /* This routine is called when a keyboard has sent us some data. */
 /* (provided it has been set up with SetADBInfo) */
 GLOBAL(adb_kbd_asmcomplete)
-#if NKBD > 0
+#if NAKBD > 0
 	moveml	#0x80e0, sp@-	| save scratch regs
 	movl	d0, sp@-	/* ADB command byte */
 	movl	a2, sp@-	/* data area pointer */
@@ -57,7 +57,7 @@ GLOBAL(adb_kbd_asmcomplete)
 /* This routine is called when a mouse has sent us some data. */
 /* (provided it has been set up with SetADBInfo) */
 GLOBAL(adb_ms_asmcomplete)
-#if NMS > 0
+#if NAMS > 0
 	moveml	#0x80e0, sp@-	| save scratch regs
 	movl	d0, sp@-	/* ADB command byte */
 	movl	a2, sp@-	/* data area pointer */

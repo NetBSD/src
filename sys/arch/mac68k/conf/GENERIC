@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.84 1999/02/18 07:35:07 scottr Exp $
+#	$NetBSD: GENERIC,v 1.85.2.2 1999/03/05 08:24:23 scottr Exp $
 #
 # GENERIC
 
@@ -109,8 +109,6 @@ options 	GRF_COMPAT	# Include grf compatibility code
 #options 	MRG_ADB		# Use ROM-based ADB driver
 options 	ZS_CONSOLE_ABORT
 
-options 	ADB_DEBUG
-
 options 	NFS_BOOT_BOOTP
 
 # Kernel root file system and dump configuration.
@@ -139,8 +137,8 @@ nubus0 at mainbus?
 # Apple Desktop Bus interface
 adb0	at obio?
 aed*	at adb?				# ADB event device
-kbd*	at adb?				# ADB keyboard
-ms*	at adb?				# ADB mouse
+akbd*	at adb?				# ADB keyboard
+ams*	at adb?				# ADB mouse
 
 # Basic frame buffer support
 intvid0	at obio?			# Internal video hardware
@@ -152,6 +150,11 @@ grf*	at macvid?
 
 # Integrated Terminal Emulator (console) support
 ite0	at grf?
+
+# Workstation Console devices
+#wsdisplay0 at fb? console ?
+wskbd0	at akbd? console ?
+wsmouse0 at ams?
 
 
 # Serial Devices

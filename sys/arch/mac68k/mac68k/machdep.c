@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.223 1999/02/28 04:52:07 scottr Exp $	*/
+/*	$NetBSD: machdep.c,v 1.223.2.1 1999/03/05 08:24:25 scottr Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -82,6 +82,8 @@
 #include "opt_uvm.h"
 #include "opt_compat_netbsd.h"
 #include "opt_sysv.h"
+#include "akbd.h"
+#include "wskbd.h"
 #include "zsc.h"
 
 #include <sys/param.h>
@@ -147,6 +149,9 @@
 #include <machine/viareg.h>
 #include <mac68k/mac68k/macrom.h>
 #include <mac68k/dev/adbvar.h>
+#if NAKBD > 0
+#include <mac68k/dev/akbdvar.h>
+#endif
 #include <mac68k/dev/zs_cons.h>
 #include "arp.h"
 
@@ -328,6 +333,9 @@ consinit(void)
 	static int init;	/* = 0 */
 
 	if (!init) {
+#if (NAKBD > 0) && (NWSKBD > 0)
+		akbd_cnattach();
+#endif
 		cninit();
 		init = 1;
 	} else {

@@ -1,4 +1,4 @@
-/*	$NetBSD: adbsys.h,v 1.12 1998/10/23 01:16:24 ender Exp $	*/
+/*	$NetBSD: adbsys.h,v 1.12.6.1 1999/03/05 08:24:25 scottr Exp $	*/
 
 /*-
  * Copyright (C) 1993, 1994	Allen K. Briggs, Chris P. Caputo,
@@ -114,8 +114,10 @@ typedef struct adb_dev_s{
 #define ADB_ADJJAPKBD	18
 #define ADB_PBEXTISOKBD	20
 #define ADB_PBEXTJAPKBD	21
+#define ADB_JPKBDII	22
 #define ADB_PBEXTKBD	24
 #define ADB_DESIGNKBD	27	/* XXX Needs to be verified XXX */
+#define ADB_PBJPKBD	30
 
 	/* Interesting mouse handler IDs */
 #define ADBMS_100DPI	1
