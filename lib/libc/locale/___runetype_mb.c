@@ -1,4 +1,4 @@
-/*	$NetBSD: ___runetype_mb.c,v 1.9 2003/08/07 16:43:03 agc Exp $	*/
+/*	$NetBSD: ___runetype_mb.c,v 1.10 2005/02/10 19:19:57 tnozaki Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: ___runetype_mb.c,v 1.9 2003/08/07 16:43:03 agc Exp $");
+__RCSID("$NetBSD: ___runetype_mb.c,v 1.10 2005/02/10 19:19:57 tnozaki Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <wctype.h>
@@ -45,23 +45,29 @@ _RuneType
 ___runetype_mb(c)
 	wint_t c;
 {
+	__nbrune_t c0;
 	uint32_t x;
-	_RuneRange *rr = &_CurrentRuneLocale->rl_runetype_ext;
-	_RuneEntry *re = rr->rr_rune_ranges;
+	_RuneRange *rr;
+	_RuneEntry *base, *re;
 
 	if (c == WEOF)
-		return(0U);
+		return (0U);
 
-	for (x = 0; x < rr->rr_nranges; ++x, ++re) {
-		/* XXX assumes wchar_t = int */
-		if ((__nbrune_t)c < re->re_min)
-			return(0U);
-		if ((__nbrune_t)c <= re->re_max) {
+	c0 = (__nbrune_t)c; /* XXX assumes wint_t = int */
+	rr = &_CurrentRuneLocale->rl_runetype_ext;
+	base = rr->rr_rune_ranges;
+	for (x = rr->rr_nranges; x; x >>= 1) {
+		re = base + (x >> 1);
+		if (re->re_min <= c0 && re->re_max >= c0) {
 			if (re->re_rune_types)
-				return(re->re_rune_types[(__nbrune_t)c - re->re_min]);
+				return (re->re_rune_types[c0 - re->re_min]);
 			else
-				return(re->re_map);
+				return (re->re_map);
+		} else if (c0 > re->re_max) {
+			base = re + 1;
+			x--;
 		}
 	}
-	return(0U);
+
+	return (0U);
 }
