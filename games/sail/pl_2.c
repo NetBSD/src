@@ -1,4 +1,4 @@
-/*	$NetBSD: pl_2.c,v 1.8 2001/01/04 04:41:41 jwise Exp $	*/
+/*	$NetBSD: pl_2.c,v 1.9 2001/01/04 05:34:56 jwise Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)pl_2.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: pl_2.c,v 1.8 2001/01/04 04:41:41 jwise Exp $");
+__RCSID("$NetBSD: pl_2.c,v 1.9 2001/01/04 05:34:56 jwise Exp $");
 #endif
 #endif /* not lint */
 
@@ -46,7 +46,7 @@ __RCSID("$NetBSD: pl_2.c,v 1.8 2001/01/04 04:41:41 jwise Exp $");
 #include "extern.h"
 #include "player.h"
 
-void	play(void);
+void	play(void)  __attribute__((__noreturn__));
 
 void
 play(void)

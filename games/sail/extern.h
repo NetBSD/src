@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.22 2001/01/04 03:51:24 jwise Exp $ */
+/*	$NetBSD: extern.h,v 1.23 2001/01/04 05:34:56 jwise Exp $ */
 
 /*
  * Copyright (c) 1983, 1993
@@ -44,9 +44,9 @@ extern int mode;
 #define MODE_LOGGER	3
 
 	/* command line flags */
-extern char randomize;			/* -x, give first available ship */
-extern char longfmt;			/* -l, print score in long format */
-extern char nobells;			/* -b, don't ring bell before Signal */
+extern int randomize;			/* -x, give first available ship */
+extern int longfmt;			/* -l, print score in long format */
+extern int nobells;			/* -b, don't ring bell before Signal */
 
 	/* other initial modes */
 extern gid_t gid;
@@ -290,7 +290,7 @@ extern int turn;
 extern int game;
 extern int alive;
 extern int people;
-extern char hasdriver;
+extern int hasdriver;
 
 /* assorted.c */
 void table (int, int, int, struct ship *, struct ship *, int);
