@@ -1,4 +1,4 @@
-/* $NetBSD: isadma_bounce.c,v 1.3 2000/06/29 08:34:11 mrg Exp $ */
+/* $NetBSD: isadma_bounce.c,v 1.3.8.1 2001/10/24 17:36:18 thorpej Exp $ */
 /* NetBSD: isadma_bounce.c,v 1.2 2000/06/01 05:49:36 thorpej Exp  */
 
 /*-
@@ -40,7 +40,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: isadma_bounce.c,v 1.3 2000/06/29 08:34:11 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isadma_bounce.c,v 1.3.8.1 2001/10/24 17:36:18 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -436,15 +436,8 @@ isadma_bounce_dmamap_sync(bus_dma_tag_t t, bus_dmamap_t map, bus_addr_t offset,
 	struct isadma_bounce_cookie *cookie = map->_dm_cookie;
 	void (*sync)(bus_dma_tag_t, bus_dmamap_t, bus_addr_t, bus_size_t, int);
 
-#if defined(MIPS1) && defined(MIPS3)
-	sync = (CPUISMIPS3) ? _mips3_bus_dmamap_sync : _mips1_bus_dmamap_sync;
-#elif defined(MIPS1)
-	sync = _mips1_bus_dmamap_sync;
-#elif defined(MIPS3)
-	sync = _mips3_bus_dmamap_sync;
-#else
-#error neither MIPS1 nor MIPS3 is defined
-#endif
+	sync = _bus_dmamap_sync;
+
 	/*
 	 * Mixing PRE and POST operations is not allowed.
 	 */

@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma_jazz.c,v 1.3 2000/06/29 08:34:12 mrg Exp $	*/
+/*	$NetBSD: bus_dma_jazz.c,v 1.3.8.1 2001/10/24 17:36:19 thorpej Exp $	*/
 
 /*-
  * Copyright (C) 2000 Shuichiro URATA.  All rights reserved.
@@ -53,9 +53,7 @@ int	jazz_bus_dmamap_load_uio __P((bus_dma_tag_t, bus_dmamap_t,
 int	jazz_bus_dmamap_load_raw __P((bus_dma_tag_t, bus_dmamap_t,
 	    bus_dma_segment_t *, int, bus_size_t, int));
 void	jazz_bus_dmamap_unload __P((bus_dma_tag_t, bus_dmamap_t));
-void	jazz_mips1_bus_dmamap_sync __P((bus_dma_tag_t, bus_dmamap_t,
-	    bus_addr_t, bus_size_t, int));
-void	jazz_mips3_bus_dmamap_sync __P((bus_dma_tag_t, bus_dmamap_t,
+void	jazz_bus_dmamap_sync __P((bus_dma_tag_t, bus_dmamap_t,
 	    bus_addr_t, bus_size_t, int));
 
 void
@@ -69,16 +67,7 @@ jazz_bus_dma_tag_init(t)
 	t->_dmamap_load_uio = jazz_bus_dmamap_load_uio;
 	t->_dmamap_load_raw = jazz_bus_dmamap_load_raw;
 	t->_dmamap_unload = jazz_bus_dmamap_unload;
-#if defined(MIPS1) && defined(MIPS3)
-	t->_dmamap_sync = (CPUISMIPS3) ?
-	    jazz_mips3_bus_dmamap_sync : jazz_mips1_bus_dmamap_sync;
-#elif defined(MIPS1)
-	t->_dmamap_sync = jazz_mips1_bus_dmamap_sync;
-#elif defined(MIPS3)
-	t->_dmamap_sync = jazz_mips3_bus_dmamap_sync;
-#else
-#error neither MIPS1 nor MIPS3 is defined
-#endif
+	t->_dmamap_sync = jazz_bus_dmamap_sync;
 	t->_dmamem_alloc = _bus_dmamem_alloc;
 	t->_dmamem_free = _bus_dmamem_free;
 }
@@ -222,32 +211,11 @@ jazz_bus_dmamap_unload(t, map)
 	_bus_dmamap_unload(t, map);
 }
 
-#ifdef MIPS1
-/*
- * Function for MIPS1 DMA map synchronization.
- */
-void
-jazz_mips1_bus_dmamap_sync(t, map, offset, len, ops)
-	bus_dma_tag_t t;
-	bus_dmamap_t map;
-	bus_addr_t offset;
-	bus_size_t len;
-	int ops;
-{
-	/* Flush DMA TLB */
-	if ((ops & (BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE)) != 0)
-		jazz_dmatlb_flush();
-
-	return (_mips1_bus_dmamap_sync(t, map, offset, len, ops));
-}
-#endif /* MIPS1 */
-
-#ifdef MIPS3
 /*
  * Function for MIPS3 DMA map synchronization.
  */
 void
-jazz_mips3_bus_dmamap_sync(t, map, offset, len, ops)
+jazz_bus_dmamap_sync(t, map, offset, len, ops)
 	bus_dma_tag_t t;
 	bus_dmamap_t map;
 	bus_addr_t offset;
@@ -258,6 +226,5 @@ jazz_mips3_bus_dmamap_sync(t, map, offset, len, ops)
 	if ((ops & (BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE)) != 0)
 		jazz_dmatlb_flush();
 
-	return (_mips3_bus_dmamap_sync(t, map, offset, len, ops));
+	return (_bus_dmamap_sync(t, map, offset, len, ops));
 }
-#endif /* MIPS3 */
