@@ -1,4 +1,4 @@
-/*	$NetBSD: genassym.c,v 1.4 1997/01/23 22:44:47 gwr Exp $	*/
+/*	$NetBSD: genassym.c,v 1.5 1997/02/03 19:33:42 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Gordon W. Ross
@@ -37,6 +37,16 @@
  *	from: @(#)genassym.c	8.3 (Berkeley) 1/4/94
  */
 
+/*
+ * This program is designed so that it can be both:
+ * (1) Run on the native machine and generated output
+ * (2) Converted to assembly and parsed by genassym.awk
+ *     to produce the same output as (1) does.
+ * The second method is done as follows:
+ *   m68k-xxx-gcc [options] -S .../genassym.c
+ *   awk -f genassym.awk < genassym.s > assym.h
+ */
+
 #include <sys/param.h>
 #include <sys/types.h>
 #include <sys/cdefs.h>
@@ -62,36 +72,7 @@
 extern void printf __P((char *fmt, ...));
 extern void exit __P((int));
 
-#if 1	/* XXX - Temporary hack... */
-/*
- * Make this work correctly on a SPARC!
- * Should be able to fix this by adding:
- * __attribute__((packed)) where needed.
- */
-struct mytrapframe {
-	int 	tf_regs[16];
-	short	tf_pad;
-	short	tf_stackadj;
-	u_short	tf_sr;
-	u_short	tf_pc[2];	/* XXX was:  u_int tf_pc; */
-	u_short	tf_format:4,
-	        tf_vector:12;
-};
-#define trapframe mytrapframe
-#endif	/* XXX */
-
-void
-def(what, val)
-	char *what;
-	int val;
-{
-	printf("#define\t%s\t", what);
-	/* Hack to make the output easier to verify. */
-	if ((val < -99) || (val > 999))
-		printf("0x%x\n", val);
-	else
-		printf("%d\n", val);
-}
+#define def(name, value) { name, value }
 
 #ifdef	__STDC__
 #define	def1(name) def(#name, name)
@@ -99,46 +80,52 @@ def(what, val)
 #define	def1(name) def("name", name)
 #endif
 
-main()
-{
-	struct pcb *pcb = (struct pcb *) 0;
-	struct proc *p = (struct proc *) 0;
-	struct vmspace *vms = (struct vmspace *) 0;
-	struct trapframe *tf = (struct trapframe *) 0;
-	struct fpframe *fpf = (struct fpframe *) 0;
+#define	offsetof(type, member) ((size_t)(&((type *)0)->member))
+
+/*
+ * Note: genassym.awk cares about the form of this structure,
+ * as well as the names and placement of the "asdefs" array
+ * and the "nassefs" variable below.  Clever, but fragile.
+ */
+struct nv {
+	char n[28];
+	int v;
+};
+
+struct nv assyms[] = {
 
 	/* bus error stuff */
-	/* def1(BUSERR_REG); XXX */
-	/* def1(BUSERR_MMU); XXX */
+	/* def1(BUSERR_REG), XXX */
+	/* def1(BUSERR_MMU), XXX */
 
 	/* 68k isms */
-	def1(PSL_LOWIPL);
-	def1(PSL_HIGHIPL);
-	def1(PSL_USER);
-	def1(PSL_S);
-	def1(FC_CONTROL);
-	def1(FC_SUPERD);
-	def1(FC_USERD);
-	def1(IC_CLEAR);
-	def1(DC_CLEAR);
-	def1(CACHE_CLR);
+	def1(PSL_LOWIPL),
+	def1(PSL_HIGHIPL),
+	def1(PSL_USER),
+	def1(PSL_S),
+	def1(FC_CONTROL),
+	def1(FC_SUPERD),
+	def1(FC_USERD),
+	def1(IC_CLEAR),
+	def1(DC_CLEAR),
+	def1(CACHE_CLR),
 
 	/* sun3 memory map */
-	def1(DVMA_SPACE_START);
-	def1(MONSTART);
-	def1(PROM_BASE);
-	def1(USRSTACK);
+	def1(DVMA_SPACE_START),
+	def1(MONSTART),
+	def1(PROM_BASE),
+	def1(USRSTACK),
 
 	/* kernel-isms */
-	def1(KERNBASE);
-	def1(USPACE);
+	def1(KERNBASE),
+	def1(USPACE),
 
 	/* system calls */
-	def1(SYS_sigreturn);
+	def1(SYS_sigreturn),
 
 	/* errno-isms */
-	def1(EFAULT);
-	def1(ENAMETOOLONG);
+	def1(EFAULT),
+	def1(ENAMETOOLONG),
 
 	/* trap types: locore.s includes trap.h */
 
@@ -147,44 +134,62 @@ main()
 	 */
 
 	/* proc fields and values */
-	def("P_FORW", &p->p_forw);
-	def("P_BACK", &p->p_back);
-	def("P_VMSPACE", &p->p_vmspace);
-	def("P_ADDR", &p->p_addr);
-	def("P_PRIORITY", &p->p_priority);
-	def("P_STAT", &p->p_stat);
-	def("P_WCHAN", &p->p_wchan);
-	def("P_FLAG", &p->p_flag);
-	def("P_MDFLAG", &p->p_md.md_flags);
-	def("P_MDREGS", &p->p_md.md_regs);
-	def1(SRUN);
+	def("P_FORW", offsetof(struct proc, p_forw)),
+	def("P_BACK", offsetof(struct proc, p_back)),
+	def("P_VMSPACE", offsetof(struct proc, p_vmspace)),
+	def("P_ADDR", offsetof(struct proc, p_addr)),
+	def("P_PRIORITY", offsetof(struct proc, p_priority)),
+	def("P_STAT", offsetof(struct proc, p_stat)),
+	def("P_WCHAN", offsetof(struct proc, p_wchan)),
+	def("P_FLAG", offsetof(struct proc, p_flag)),
+	def("P_MDFLAG", offsetof(struct proc, p_md.md_flags)),
+	def("P_MDREGS", offsetof(struct proc, p_md.md_regs)),
+	def1(SRUN),
 
-	/* HP-UX trace bit */
-	def("MDP_TRCB", ffs(MDP_HPUXTRACE) - 1);
+	/* XXX: HP-UX trace bit? */
 
 	/* VM structure fields */
-	def("VM_PMAP", &vms->vm_pmap);
-	def("VM_PMAP_MMUCRP", &vms->vm_pmap.pm_mmucrp);
-	def("VM_PMAP_A_TMGR", &vms->vm_pmap.pm_a_tmgr);
+	def("VM_PMAP", offsetof(struct vmspace, vm_pmap)),
+	def("VM_PMAP_MMUCRP", offsetof(struct vmspace, vm_pmap.pm_mmucrp)),
+	def("VM_PMAP_A_TMGR", offsetof(struct vmspace, vm_pmap.pm_a_tmgr)),
 
 	/* pcb offsets */
-	def("PCB_FLAGS", &pcb->pcb_flags);
-	def("PCB_PS", &pcb->pcb_ps);
-	def("PCB_USP", &pcb->pcb_usp);
-	def("PCB_REGS", pcb->pcb_regs);
-	def("PCB_ONFAULT", &pcb->pcb_onfault);
-	def("PCB_FPCTX", &pcb->pcb_fpregs);
-	def("SIZEOF_PCB", sizeof(*pcb));
+	def("PCB_FLAGS", offsetof(struct pcb, pcb_flags)),
+	def("PCB_PS", offsetof(struct pcb, pcb_ps)),
+	def("PCB_USP", offsetof(struct pcb, pcb_usp)),
+	def("PCB_REGS", offsetof(struct pcb, pcb_regs[0])),
+	def("PCB_ONFAULT", offsetof(struct pcb, pcb_onfault)),
+	def("PCB_FPCTX", offsetof(struct pcb, pcb_fpregs)),
+	def("SIZEOF_PCB", sizeof(struct pcb)),
 
 	/* exception frame offset/sizes */
-	def("FR_SP", &tf->tf_regs[15]);
-	def("FR_ADJ", &tf->tf_stackadj);
-	def("FR_HW", &tf->tf_sr);
-	def("FR_SIZE", sizeof(*tf));
+	def("FR_SP", offsetof(struct trapframe, tf_regs[15])),
+	def("FR_ADJ", offsetof(struct trapframe, tf_stackadj)),
+	def("FR_HW", offsetof(struct trapframe, tf_sr)),
+	def("FR_SIZE", sizeof(struct trapframe)),
 
 	/* FP frame offsets */
-	def("FPF_REGS", &fpf->fpf_regs[0]);
-	def("FPF_FPCR", &fpf->fpf_fpcr);
+	def("FPF_REGS", offsetof(struct fpframe, fpf_regs[0])),
+	def("FPF_FPCR", offsetof(struct fpframe, fpf_fpcr)),
+};
+int nassyms = sizeof(assyms)/sizeof(assyms[0]);
+
+main()
+{
+	char *name;
+	int i, val;
+
+	for (i = 0; i < nassyms; i++) {
+		name = assyms[i].n;
+		val  = assyms[i].v;
+
+		printf("#define\t%s\t", name);
+		/* Hack to make the output easier to verify. */
+		if ((val < 0) || (val > 999))
+			printf("0x%x\n", val);
+		else
+			printf("%d\n", val);
+	}
 
 	exit(0);
 }
