@@ -1,4 +1,4 @@
-/*	$NetBSD: scn.c,v 1.13 1995/01/19 07:03:39 phil Exp $	*/
+/*	$NetBSD: scn.c,v 1.14 1995/04/10 07:50:42 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -62,7 +62,6 @@
 #include <sys/syslog.h>
 #include <sys/types.h>
 #include <sys/device.h>
-#include <device.h>
 
 #include <dev/cons.h>
 
