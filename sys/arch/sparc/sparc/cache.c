@@ -1,4 +1,4 @@
-/*	$NetBSD: cache.c,v 1.60 2002/01/25 17:40:44 pk Exp $ */
+/*	$NetBSD: cache.c,v 1.61 2002/01/25 19:19:46 tsutsui Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -436,7 +436,6 @@ sun4_vcache_flush_page(va)
 		sta(p, ASI_FLUSHPG, 0);
 }
 
-}
 /*
  * Flush the given virtual page from the cache.
  * (va is the actual address, and must be aligned on a page boundary.)
