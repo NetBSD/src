@@ -1,4 +1,4 @@
-/*	$NetBSD: necpb.c,v 1.9 2001/08/17 11:11:57 ur Exp $	*/
+/*	$NetBSD: necpb.c,v 1.10 2002/05/15 17:15:18 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -176,6 +176,7 @@ necpb_init(ncp)
 	ncp->nc_pc.pc_attach_hook = necpb_attach_hook;
 	ncp->nc_pc.pc_bus_maxdevs = necpb_bus_maxdevs;
 	ncp->nc_pc.pc_make_tag = necpb_make_tag;
+	ncp->nc_pc.pc_decompose_tag = necpb_decompose_tag;
 	ncp->nc_pc.pc_conf_read = necpb_conf_read;
 	ncp->nc_pc.pc_conf_write = necpb_conf_write;
 	ncp->nc_pc.pc_intr_map = necpb_intr_map;
