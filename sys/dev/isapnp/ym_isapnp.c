@@ -1,4 +1,4 @@
-/*	$NetBSD: ym_isapnp.c,v 1.10 1999/03/22 14:32:59 mycroft Exp $ */
+/*	$NetBSD: ym_isapnp.c,v 1.11 1999/10/05 03:47:20 itohy Exp $ */
 
 
 /*
@@ -42,6 +42,8 @@
  *  Original code from OpenBSD.
  */
 
+#include "mpu_ym.h"
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
@@ -63,6 +65,7 @@
 #include <dev/ic/cs4231reg.h>
 #include <dev/isa/cs4231var.h>
 
+#include <dev/ic/opl3sa3reg.h>
 #include <dev/isa/wssreg.h>
 #include <dev/isa/ymvar.h>
 
@@ -122,9 +125,14 @@ ym_isapnp_attach(parent, self, aux)
 	sc->ym_irq = ipa->ipa_irq[0].num;
 	sc->ym_playdrq = ipa->ipa_drq[0].num;
 	sc->ym_recdrq = ipa->ipa_drq[1].num;
-	
-	sc->sc_controlioh = ipa->ipa_io[4].h; 
-	
+
+	sc->sc_sb_ioh = ipa->ipa_io[0].h;
+	sc->sc_opl_ioh = ipa->ipa_io[2].h;
+#if NMPU_YM > 0
+	sc->sc_mpu_ioh = ipa->ipa_io[3].h;
+#endif
+	sc->sc_controlioh = ipa->ipa_io[4].h;
+
 	ac->sc_iot = sc->sc_iot;
 	if (bus_space_subregion(sc->sc_iot, sc->sc_ioh, WSS_CODEC, AD1848_NPORT,
 	    &ac->sc_ioh)) {
@@ -142,4 +150,3 @@ ym_isapnp_attach(parent, self, aux)
 
 	ym_attach(sc);
 }
-
