@@ -1,4 +1,4 @@
-/*	$NetBSD: crib.c,v 1.7 1997/07/10 06:47:29 mikel Exp $	*/
+/*	$NetBSD: crib.c,v 1.8 1997/10/10 12:32:24 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1993
@@ -33,17 +33,17 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
-static char copyright[] =
-"@(#) Copyright (c) 1980, 1993\n\
-	The Regents of the University of California.  All rights reserved.\n";
+__COPYRIGHT("@(#) Copyright (c) 1980, 1993\n\
+	The Regents of the University of California.  All rights reserved.\n");
 #endif /* not lint */
 
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)crib.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$NetBSD: crib.c,v 1.7 1997/07/10 06:47:29 mikel Exp $";
+__RCSID("$NetBSD: crib.c,v 1.8 1997/10/10 12:32:24 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -58,6 +58,8 @@ static char rcsid[] = "$NetBSD: crib.c,v 1.7 1997/07/10 06:47:29 mikel Exp $";
 #include "cribcur.h"
 #include "pathnames.h"
 
+int	main __P((int, char *[]));
+
 int
 main(argc, argv)
 	int argc;
@@ -67,7 +69,7 @@ main(argc, argv)
 	FILE *f;
 	int ch;
 
-	while ((ch = getopt(argc, argv, "eqr")) != EOF)
+	while ((ch = getopt(argc, argv, "eqr")) != -1)
 		switch (ch) {
 		case 'e':
 			explain = TRUE;
@@ -193,10 +195,11 @@ gamescore()
 void
 game()
 {
-	register int i, j;
+	int i, j;
 	BOOLEAN flag;
 	BOOLEAN compcrib;
 
+	compcrib = FALSE;
 	makedeck(deck);
 	shuffle(deck);
 	if (gamecount == 0) {
@@ -287,7 +290,7 @@ int
 playhand(mycrib)
 	BOOLEAN mycrib;
 {
-	register int deckpos;
+	int deckpos;
 
 	werase(Compwin);
 	wrefresh(Compwin);
@@ -319,7 +322,7 @@ int
 deal(mycrib)
 	BOOLEAN mycrib;
 {
-	register int i, j;
+	int i, j;
 
 	for (i = j = 0; i < FULLHAND; i++) {
 		if (mycrib) {
@@ -342,7 +345,7 @@ void
 discard(mycrib)
 	BOOLEAN mycrib;
 {
-	register char *prompt;
+	char *prompt;
 	CARD crd;
 
 	prcrib(mycrib, TRUE);
@@ -373,7 +376,7 @@ cut(mycrib, pos)
 	BOOLEAN mycrib;
 	int  pos;
 {
-	register int i;
+	int i;
 	BOOLEAN win;
 
 	win = FALSE;
@@ -416,7 +419,7 @@ void
 prcrib(mycrib, blank)
 	BOOLEAN mycrib, blank;
 {
-	register int y, cardx;
+	int y, cardx;
 
 	if (mycrib)
 		cardx = CRIB_X;
@@ -448,12 +451,13 @@ peg(mycrib)
 	BOOLEAN mycrib;
 {
 	static CARD ch[CINHAND], ph[CINHAND];
-	register int i, j, k;
-	register int l;
-	register int cnum, pnum, sum;
-	register BOOLEAN myturn, mego, ugo, last, played;
+	int i, j, k;
+	int l;
+	int cnum, pnum, sum;
+	BOOLEAN myturn, mego, ugo, last, played;
 	CARD crd;
 
+	played = FALSE;
 	cnum = pnum = CINHAND;
 	for (i = 0; i < CINHAND; i++) {	/* make copies of hands */
 		ch[i] = chand[i];
