@@ -1,4 +1,4 @@
-/*	$NetBSD: isapnp.c,v 1.29 1998/10/10 13:43:10 hannken Exp $	*/
+/*	$NetBSD: isapnp.c,v 1.30 1998/11/21 23:38:11 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -225,6 +225,8 @@ isapnp_alloc_region(t, r)
 #endif
 		if (error == 0)
 			return 0;
+		if (r->align == 0)
+			break;
 	}
 	return error;
 }
