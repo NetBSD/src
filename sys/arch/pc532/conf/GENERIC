@@ -1,11 +1,11 @@
-#	$NetBSD: GENERIC,v 1.16 2000/12/19 10:42:06 bouyer Exp $
+#	$NetBSD: GENERIC,v 1.17 2001/06/30 11:00:36 darcy Exp $
 #
 # GENERIC: generic kernel for most machines
 #
 
 include	"arch/pc532/conf/std.pc532"
 
-#ident 		"GENERIC-$Revision: 1.16 $"
+#ident 		"GENERIC-$Revision: 1.17 $"
 
 maxusers	8			# estimated number of users
 
@@ -17,6 +17,10 @@ options 	KTRACE			# system call tracing, a la ktrace(1)
 #options 	ACCOUNTING		# process accounting
 #options 	SYSVMSG			# System V message queues
 #options 	SYSVSEM			# System V semaphores
+#options	SEMMNI=10	# number of semaphore identifiers
+#options	SEMMNS=60	# number of semaphores in system
+#options	SEMUME=10	# max number of undo entries per process
+#options	SEMMNU=30	# number of undo structures in system
 #options 	SYSVSHM			# System V shared memory
 #options 	SHMMAXPGS=1024
 options 	LKM			# loadable kernel modules
