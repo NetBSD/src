@@ -1,8 +1,9 @@
-# $NetBSD: md.pmax,v 1.38 2000/04/29 03:46:30 thorpej Exp $
+# $NetBSD: md.pmax,v 1.38.4.1 2000/09/12 13:48:09 tsutsui Exp $
 ./usr/include/pmax	comp-c-include
 ./usr/include/pmax/_G_config.h	comp-c-include
 ./usr/include/pmax/ansi.h	comp-c-include
 ./usr/include/pmax/aout_machdep.h	comp-c-include
+./usr/include/pmax/asm.h	comp-c-include
 ./usr/include/pmax/autoconf.h	comp-c-include
 ./usr/include/pmax/bsd-aout.h	comp-c-include
 ./usr/include/pmax/bswap.h	comp-c-include
