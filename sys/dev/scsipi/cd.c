@@ -1,4 +1,4 @@
-/*	$NetBSD: cd.c,v 1.199 2004/01/10 14:39:50 yamt Exp $	*/
+/*	$NetBSD: cd.c,v 1.200 2004/02/22 00:26:43 enami Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001, 2003 The NetBSD Foundation, Inc.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd.c,v 1.199 2004/01/10 14:39:50 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd.c,v 1.200 2004/02/22 00:26:43 enami Exp $");
 
 #include "rnd.h"
 
@@ -1631,7 +1631,7 @@ cd_size(cd, flags)
 	if (scsipi_command(cd->sc_periph,
 	    (struct scsipi_generic *)&scsipi_cmd, sizeof(scsipi_cmd),
 	    (u_char *)&rdcap, sizeof(rdcap), CDRETRIES, 30000, NULL,
-	    flags | XS_CTL_DATA_IN | XS_CTL_DATA_IN) != 0)
+	    flags | XS_CTL_DATA_IN | XS_CTL_DATA_ONSTACK) != 0)
 		return (0);
 
 	blksize = _4btol(rdcap.length);
