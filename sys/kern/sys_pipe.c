@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_pipe.c,v 1.7 2001/07/17 18:18:52 jdolecek Exp $	*/
+/*	$NetBSD: sys_pipe.c,v 1.8 2001/07/17 18:21:59 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1996 John S. Dyson
@@ -1129,7 +1129,7 @@ retry:
 	}
 
 	uio->uio_resid  -= bcnt;
-	/* uio_offset not updated, not set/uset for write(2) */
+	/* uio_offset not updated, not set/used for write(2) */
 
 	return (0);
 }
@@ -1188,8 +1188,8 @@ pipe_write(fp, offset, uio, cred, flags)
 			pipeunlock(wpipe);
 		} else {
 			/*
-			 * If an error occured, unbusy and return, waking up any
-			 * pending readers.
+			 * If an error occurred, unbusy and return, waking up
+			 * any waiting readers.
 			 */ 
 			--wpipe->pipe_busy;
 			if (wpipe->pipe_busy == 0
