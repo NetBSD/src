@@ -1,8 +1,8 @@
-/*	$NetBSD: ns_sort.c,v 1.3 2001/01/27 07:22:00 itojun Exp $	*/
+/*	$NetBSD: ns_sort.c,v 1.3.2.1 2002/06/28 11:35:11 lukem Exp $	*/
 
 #if !defined(lint) && !defined(SABER)
 static const char sccsid[] = "@(#)ns_sort.c	4.10 (Berkeley) 3/3/91";
-static const char rcsid[] = "Id: ns_sort.c,v 8.6 2000/04/21 06:54:13 vixie Exp";
+static const char rcsid[] = "Id: ns_sort.c,v 8.8 2001/09/25 04:50:22 marka Exp";
 #endif /* not lint */
 
 /*
@@ -243,6 +243,7 @@ sort_response(u_char *cp, u_char *eom, int ancount, struct sockaddr_in *from) {
 			indirect = 1;
 			break;
 		default:
+			indirect = 0;
 			panic("unexpected ime type in ip_match_address()",
 			      NULL);
 		}
@@ -285,6 +286,7 @@ sort_response(u_char *cp, u_char *eom, int ancount, struct sockaddr_in *from) {
 				iml = imematch->next->u.indirect.list;
 				break;
 			default:
+				iml = NULL;
 				panic("unexpected ime type in ip_match_address()",
 				      NULL);
 			}
@@ -306,9 +308,9 @@ sort_response(u_char *cp, u_char *eom, int ancount, struct sockaddr_in *from) {
 
 static int
 sort_rr(u_char *cp, u_char *eom, int ancount, ip_match_list iml) {
-	int type, class, dlen, n, c, distance, closest;
+	int type, class, dlen, n, c, distance, closest = 0;
 	struct in_addr inaddr;
-	u_char *rr1 = NULL, *rrbest, *cpstart;
+	u_char *rr1 = NULL, *rrbest = NULL, *cpstart;
 
 	rr1 = NULL;
 	cpstart = cp;
@@ -387,6 +389,7 @@ ip_match_address_elt(ip_match_list iml, struct in_addr address,
 			indirect = 1;
 			break;
 		default:
+			indirect = 0;
 			panic("unexpected ime type in ip_match_address()",
 			      NULL);
 		}
