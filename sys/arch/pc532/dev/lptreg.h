@@ -1,6 +1,6 @@
-/*	$NetBSD: lptreg.h,v 1.2 1995/05/08 19:37:48 phil Exp $	*/
+/*	$NetBSD: lptreg.h,v 1.3 1995/05/16 07:30:35 phil Exp $	*/
 
-/* 
+/*
  * Copyright (c) 1994 Matthias Pfaller.
  * All rights reserved.
  *
@@ -15,14 +15,13 @@
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
  *	This product includes software developed by Matthias Pfaller.
- * 4. The name of Matthias Pfaller may not be used to endorse or promote
- *    products derived from this software without specific prior written
- *    permission.
+ * 4. The name of the author may not be used to endorse or promote products
+ *    derived from this software without specific prior written permission
  *
- * THIS SOFTWARE IS PROVIDED BY MATTHIAS PFALLER ``AS IS'' AND ANY EXPRESS OR
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
  * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
- * IN NO EVENT SHALL MATTHIAS PFALLER BE LIABLE FOR ANY DIRECT, INDIRECT, 
+ * IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
  * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
  * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
  * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
@@ -44,7 +43,7 @@ struct i8255 {
 /* port_a */
 #define LPA_ALF		0x01
 #define LPA_SELECT	0x02
-#define LPA_PRIME	0x04		/* Positive logic! */
+#define LPA_NPRIME	0x04
 #define	LPA_ACKENABLE	0x08		/* Enable Ack interrupts */
 #define LPA_ACTIVE	0x10		/* Device active led */
 
@@ -53,9 +52,9 @@ struct i8255 {
 #define LPC_NSTROBE	0x02
 #define LPC_NBUSY	0x08		/* Negative logic! */
 #define LPC_NERROR	0x10
-#define LPC_NACK	0x20
+#define LPC_ONLINE	0x20
 #define LPC_NOPAPER	0x40
-#define LPC_ONLINE	0x80
+#define LPC_NACK	0x80
 
 /* port_control */
 #define LPT_PROBE_MODE	0x8c

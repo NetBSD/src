@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.25 1995/01/22 07:06:48 phil Exp $	*/
+/*	$NetBSD: locore.s,v 1.26 1995/05/16 07:30:49 phil Exp $	*/
 
 /*
  * Copyright (c) 1993 Philip A. Nelson.
@@ -29,6 +29,9 @@
  * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
  * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ *
+ *	locore.s
+ *
  */
 
 /*
@@ -45,24 +48,6 @@
 #include <machine/asm.h>
 #include <machine/icu.h>
 #include "assym.h"
-#include "lpt.h"
-#include "aic.h"
-#include "dp.h"
-#include "ncr.h"
-
-/* Includes and defines for the net software interrupts. */
-#include "net/netisr.h"
-/* #include "inet.h" ???? needed? */
-
-/* Net support. */
-#define DONET(s,c)  \
-	.globl c ;\
-	movd	1<<s, r0 ;\
-	andd	_netisr(pc), r0 ;\
-	cmpqd	0, r0 ;\
-	beq	1f ;\
-	bsr	c ;\
-1:
 
 /* define some labels */
 #define PSR_U 0x100
@@ -92,14 +77,6 @@ __save_fp: 	.long 0
 __old_intbase:	.long 0
 __have_fpu:	.long 0
 
-/* spl... support.... */
-.globl	_PL_bio, _PL_tty, _PL_net, _PL_zero
-Cur_pl:		.long	0x0fffffff	/* All inhibited but not zero! */
-_PL_bio:	.long   0		/* Initial values for these. */
-_PL_tty:	.long   0
-_PL_net:	.long   0
-_PL_zero:	.long	0
-
 .text
 .globl start
 start:
@@ -113,7 +90,7 @@ __boot_flags:
 
 	.align 4	/* So the trap table is double aligned. */
 int_base_tab:		/* Here is the fixed jump table for traps! */
-	.long __trap_nvi
+	.long __int
 	.long __trap_nmi
 	.long __trap_abt
 	.long __trap_slave
@@ -129,29 +106,6 @@ int_base_tab:		/* Here is the fixed jump table for traps! */
 	.long __trap_ovf
 	.long __trap_dbg
 	.long __trap_reserved
-
-.globl _int_table
-_int_table:		/* Here is the fixed jump table for interrupts! */
-	.long __int_bad		/* 0 */
-	.long __int_bad		/* 1 */
-	.long __int_clk		/* 2 - highest priority */
-	.long __int_bad		/* 3 */
-	.long __int_scsi1	/* 4 - NCR DP8490 */
-	.long __int_scsi0	/* 5 - Adaptec 6250 */
-	.long __int_bad		/* 6 */
-#if NLPT > 0
-	.long __int_lpt		/* 7 - i8255 */
-#else
-	.long __int_uart3	/* 7 - uart 3*/
-#endif
-	.long __int_bad		/* 8 */
-	.long __int_uart2	/* 9  - uart 2*/
-	.long __int_bad		/* 10 */
-	.long __int_uart1	/* 11 - uart 1*/
-	.long __int_bad		/* 12 */
-	.long __int_uart0	/* 13 - uart 0*/
-	.long __int_bad		/* 14 */
-	.long __int_bad		/* 15 */
 
 here_we_go:	/* This is the actual start of the locore code! */
 
@@ -189,16 +143,16 @@ zero_bss:
 	lprd	sp, KERN_INT_SP # use the idle/interrupt stack.
 	lprd	fp, KERN_INT_SP # use the idle/interrupt stack.
 
-	/* Load cfg register is bF7 (IC,DC,DE,M,F,I) or bF5 */
+	/* Load cfg register is bF6 (IC,DC,DE,M,F) or bF4 */
 	sprd	cfg, r0
 	tbitb	1, r0		/* Test the F bit! */
 	bfc	cfg_no_fpu
 	movqd	1, __have_fpu(pc)
-	lprd	cfg, 0xbf7
+	lprd	cfg, 0xbf6
 	br	jmphi
 	
 cfg_no_fpu:
-	lprd	cfg, 0xbf5
+	lprd	cfg, 0xbf4
 
 /* Now jump to high addresses after starting mapping! */
 
@@ -319,6 +273,9 @@ ENTRY (_get_fp)
 
 ENTRY(low_level_reboot)
 
+	movd	-1,tos
+	bsr	_splx
+	cmpqd	0,tos
 	ints_off			/* Stop things! */
 	addr	xxxlow(pc), r0		/* jump to low memory */
 	andd	~KERNBASE, r0
@@ -482,10 +439,7 @@ tmp_nmi:				#come here if parity error
 .globl EX(qs)
 .globl EX(whichqs)
 .globl EX(want_resched)
-.globl EX(want_softclock)
-.globl EX(want_softnet)
-.globl EX(spl0)
-
+.globl EX(Cur_pl)
 
 /*
    User/Kernel copy routines ... {fu,su}{word,byte} and copyin/coyinstr
@@ -516,7 +470,7 @@ ENTRY(suiword)
 	movqd	4, tos
 	movd	B_ARG0, tos
 	bsr	_check_user_write
-	adjspb	-8
+	adjspd	-8
 	cmpqd	0, r0
 	bne	fusufault
 	movd	_curpcb(pc), r2
@@ -531,7 +485,7 @@ ENTRY(suibyte)
 	movqd	1, tos
 	movd	B_ARG0, tos
 	bsr	_check_user_write
-	adjspb	-8
+	adjspd	-8
 	cmpqd	0, r0
 	bne	fusufault
 	movd	_curpcb(pc), r2
@@ -567,7 +521,7 @@ ENTRY(copyout)
 	movd	B_ARG2, tos	/* Length */
 	movd	B_ARG1, tos	/* adr */
 	bsr	_check_user_write
-	adjspb	-8
+	adjspd	-8
 	cmpqd	0, r0
 	bne	cifault
 	br	docopy
@@ -593,77 +547,87 @@ cifault:
 	exit	[r2,r3]
 	ret	0
 
-/* setrunqueue: adds a process into a queue.  p->p_pri has a value between
- * 0 and 127.  By dividing by 4, it is shrunk into the 32 available queues.
- *
- * C calling prototype:  void setrunqueue (struct proc *p)
- *
- * Should be called at splhigh() and p->p_stat should be SRUN
- *
- */
 
+/*****************************************************************************/
+
+/*
+ * The following primitives manipulate the run queues.
+ * _whichqs tells which of the 32 queues _qs
+ * have processes in them.  Setrq puts processes into queues, Remrq
+ * removes them from queues.  The running process is on no queue,
+ * other processes are on a queue related to p->p_pri, divided by 4
+ * actually to shrink the 0-127 range of priorities into the 32 available
+ * queues.
+ */
+	.globl	_whichqs,_qs,_cnt,_panic
+
+/*
+ * setrunqueue(struct proc *p);
+ * Insert a process on the appropriate queue.  Should be called at splclock().
+ */
 ENTRY(setrunqueue)
-	enter	[r2,r3,r4],0
-	movd	B_ARG0, r2
-	cmpqd	0, P_BACK(r2)		/* Items not on any list NULL-point */
-	beq	set1
-	addr	m_setrq(pc),tos		/* Was on the list! */
-	bsr	_panic	
-set1:
-	movzbd	P_PRIORITY(r2),r3
-	ashd	-2,r3
-	sbitd	r3,_whichqs(pc)		/* set queue full */
-	addr	_qs(pc)[r3:q], r3	/* get addr of qs entry */
-	movd	P_BACK(r3),r4		/* get addr of last entry. */
-	movd	P_FORW(r4), P_FORW(r2)  /* set p->p_forw */
-	movd	r2, P_FORW(r4)		/* update tail's p_forw */
-	movd    r4, P_BACK(r2)		/* set p->p_back */
-	movd	r2, P_BACK(r3)		/* update qs ph_back */
-	exit	[r2,r3,r4]
+	movd	S_ARG0, r0
+	movd	r2, tos
+
+	cmpqd	0, P_BACK(r0)		/* should not be on q already */
+	bne	1f
+	cmpqd	0, P_WCHAN(r0)
+	bne	1f
+	cmpb	SRUN, P_STAT(r0)
+	bne	1f
+
+	movzbd	P_PRIORITY(r0),r1
+	lshd	-2,r1
+	sbitd	r1,_whichqs(pc)		/* set queue full bit */
+	addr	_qs(pc)[r1:q], r1	/* locate q hdr */
+	movd	P_BACK(r1),r2		/* locate q tail */
+	movd	r1, P_FORW(r0)		/* set p->p_forw */
+	movd	r0, P_BACK(r1)		/* update q's p_back */
+	movd	r0, P_FORW(r2)		/* update tail's p_forw */
+	movd    r2, P_BACK(r0)		/* set p->p_back */
+	movd	tos, r2
 	ret	0
 
-/* remrq: removes a process from a queue.  p->p_pri has a value between
- * 0 and 127.  By dividing by 4, it is shrunk into the 32 available queues.
- *
- * C calling prototype:  void remrq (struct proc *p)
- *
- * Should be called at splhigh()
- *
+1:	addr	2f(pc),tos		/* Was on the list! */
+	bsr	_panic	
+2:	.asciz "setrunqueue problem!"
+
+/*
+ * remrq(struct proc *p);
+ * Remove a process from its queue.  Should be called at splclock().
  */
-
 ENTRY(remrq)
-	enter	[r2,r3,r4,r5],0
-	movd	B_ARG0, r2
-	movzbd	P_PRIORITY(r2), r3
-	ashd	-2, r3
-	cbitd	r3, _whichqs(pc)	/* clear queue full */
-	bfs	rem1
+	movd	S_ARG0, r1
+	movd	r2, tos
+	movzbd	P_PRIORITY(r1), r0
 
-	addr	m_remrq(pc),tos		/* No queue entry! */
-	bsr	_panic	
-rem1:
-	movd	P_FORW(r2),  r4		/* Addr of next item. */
-	movd	P_BACK(r2), r5		/* Addr of prev item. */
-	movd	r4, P_FORW(r5)		/* Unlink item. */
-	movd	r5, P_BACK(r4)
-	movqd	0, P_FORW(r2)		/* show not on queue. */
-	movqd	0, P_BACK(r2)		/* show not on queue. */
-	cmpd	r4, r5			/* r4 = r5 => empty queue */
-	beq	rem2
+	lshd	-2, r0
+	tbitd	r0, _whichqs(pc)
+	bfc	1f
 
-	sbitd	r3, _whichqs(pc)		/* Restore whichqs bit. */
+	movd	P_BACK(r1), r2		/* Address of prev. item */
+	movqd	0, P_BACK(r1)		/* Clear reverse link */
+	movd	P_FORW(r1), r1		/* Addr of next item. */
+	movd	r1, P_FORW(r2)		/* Unlink item. */
+	movd	r2, P_BACK(r1)
+	cmpd	r1, r2			/* r1 = r2 => empty queue */
+	bne	2f
 
-rem2:
-	exit	[r2,r3,r4,r5]
+	cbitd	r0, _whichqs(pc)	/* mark q as empty */
+
+2:	movd	tos, r2
 	ret	0
 
+1:	addr	2f(pc),tos		/* No queue entry! */
+	bsr	_panic	
+2:	.asciz "remrq problem!"
 
 /* Switch to another process from kernel code...  */
 
 ENTRY(cpu_switch)
 	ints_off	/* to make sure cpu_switch runs to completion. */
 	enter	[r0,r1,r2,r3,r4,r5,r6,r7],0
-/*	addqd	1, _cnt+V_SWTCH(pc) 		*/
+/*	addqd	1, _cnt+V_SWTCH(pc) */
 
 	movd	_curproc(pc), r0
 	cmpqd	0, r0
@@ -678,7 +642,7 @@ ENTRY(cpu_switch)
 	smr	ptb0,  PCB_PTB(r0)
 
 	/*  Save the Cur_pl.  */
-	movd	Cur_pl(pc), PCB_PL(r0)
+	movd	_Cur_pl(pc), PCB_PL(r0)
 
 	movqd	0, _curproc(pc)		/* no current proc! */
 
@@ -729,8 +693,7 @@ restart:	/* r2 has pointer to new proc.. */
 	/* Restore the previous processor level. */
 	movd	PCB_PL(r3), tos
 	bsr	_splx
-	adjspb  -4
-
+	cmpqd	0,tos
 	/* Return to the caller of swtch! */
 	exit	[r0,r1,r2,r3,r4,r5,r6,r7]
 	ret	0			
@@ -743,12 +706,11 @@ Idle:
 	movqd	0, r0
 	ffsd	_whichqs(pc), r0
 	bfc	sw1
-	bsr	_spl0
+	movd	_imask(pc),tos
+	bsr	_splx
+	cmpqd	0,tos
 	wait			/* Wait for interrupt. */
 	br	sw1
-
-m_setrq: .asciz "Setrunqueue problem!"
-m_remrq: .asciz "Remrq problem!"
 
 /* As part of the fork operation, we need to prepare a user are for 
    execution, to be resumed by swtch()...  
@@ -774,7 +736,7 @@ ENTRY(low_level_fork)
 	sprd	sp, PCB_KSP(r2)
 	sprd	fp,  PCB_KFP(r2)
 	/* Don't save ptb0 because child has a different ptb0! */
-	movd	Cur_pl(pc), PCB_PL(r2)
+	movd	_Cur_pl(pc), PCB_PL(r2)
 
 	/* Copy the kernel stack from this process to new stack. */
 	addr	0(sp), r1	/* Source address */
@@ -793,7 +755,7 @@ ENTRY(low_level_fork)
 	bsr	_panic
 
 kcopy:
-	ashd	-2,r0		/* Divide by 4 to get # of doubles. */
+	lshd	-2,r0		/* Divide by 4 to get # of doubles. */
 	movsd			/* Copy the stack! */
 
 	/* Set parent to return 0. */
@@ -807,14 +769,6 @@ kcopy:
 
 m_ll_fork: .asciz "_low_level_fork: kstack not double alligned."
 	
-
-/* Interrupt and trap processing. */
-ENTRY(_trap_nvi)
-	enter	[r0,r1,r2,r3,r4,r5,r6,r7],8
-	sprd	usp, REGS_USP(sp)
-	sprd	sb, REGS_SB(sp)
-	movqd	0, tos
-	br	all_trap
 
 ENTRY(_trap_nmi)
 	enter	[r0,r1,r2,r3,r4,r5,r6,r7],8
@@ -909,13 +863,7 @@ ENTRY(_trap_dvz)
 	br	all_trap
 
 ENTRY(_trap_flg)
-#if SMALL_INV	
-	cinv	i, r0		/* Invalidate first line */
-	addd	r1, r0
-	cinv	i, r0		/* Invalidate possible second line */
-#else
-	cinv	ia, r0		/* Invalidate the entire cache. */
-#endif	
+	cinv	ia, r0
 	addqd	1, tos		/* Increment return address */
 	rett	0
 
@@ -1001,7 +949,7 @@ abt_trap:
 	movl	f7,PCB_F7(r3)
 	
 	bsr _trap
-	adjspb	-12	/* Pop off software part of trap frame. */
+	adjspd	-12	/* Pop off software part of trap frame. */
 
 	/* Restore the FPU registers. */
 	lfsr	PCB_FSR(r3)
@@ -1023,7 +971,7 @@ abt_trap:
 
 trap_no_fpu:
 	bsr _trap
-	adjspb	-12	/* Pop off software part of trap frame. */
+	adjspd	-12	/* Pop off software part of trap frame. */
 
 	/* Reload the usp and sb just in case anything has changed. */
 	lprd	usp, REGS_USP(sp)
@@ -1033,112 +981,36 @@ trap_no_fpu:
 	rett  0
 
 /* Interrupt service routines.... */
+ENTRY(_int)
+	enter	[r0,r1,r2,r3,r4,r5,r6,r7],8
+	sprd	usp,REGS_USP(sp)
+	sprd	sb,REGS_SB(sp)
+	lprd    sb,0			/* for the kernel */
+	movd	_Cur_pl(pc), tos
+	movb	@ICU_ADR+HVCT,r0	/* fetch vector */
+	andd	0x0f,r0
+	movd	r0,tos
+	movqd	1,r1			/* 2 + 2 */
+	lshd	r0,r1			/* 3 + 2 */
+	ord	r1,_Cur_pl(pc)		/* 2 + 2 = 13 */
+					/* sbit would be 16 */
+	movw	_Cur_pl(pc),@ICU_ADR+IMSK
+	ints_on
+	addqd	1,_intrcnt(pc)[r0:d]
+	lshd	4,r0
+	addqd	1,_cnt+V_INTR(pc)
+	addqd	1,_ivt+IV_CNT(r0)	/* increment counters */
+	movd	_ivt+IV_ARG(r0),r1	/* get argument */
+	cmpqd	0,r1
+	bne	1f
+	addr	0(sp),r1		/* NULL -> push frame address */
+1:	movd	r1,tos
+	movd	_ivt+IV_VEC(r0),r0	/* call the handler */
+	jsr	0(r0)			
 
-ENTRY(_int_clk)
-	enter	[r0,r1,r2,r3,r4,r5,r6,r7],8
-	sprd	usp, REGS_USP(sp)
-	sprd	sb, REGS_SB(sp)
-	lprd    sb, 0			/* for the kernel */
-	movd	Cur_pl(pc), tos
-	movqd	0,tos
-	addr	0(sp),tos	/* The address of the frame. */
-	bsr	_hardclock
-	cmpqd	0,tos		/* Remove the address of the frame. */
-	br	exit_int
-
-ENTRY(_int_scsi0)
-	enter	[r0,r1,r2,r3,r4,r5,r6,r7],8
-	sprd	usp, REGS_USP(sp)
-	sprd	sb, REGS_SB(sp)
-	lprd    sb, 0			/* for the kernel */
-	movd	Cur_pl(pc), tos
-#if NAIC > 0
-	movqd	0,tos
-	bsr _aic_intr
-#else
-	movqd	5,tos
-	bsr _bad_intr
-#endif
-	br	exit_int
-
-ENTRY(_int_scsi1)
-	enter	[r0,r1,r2,r3,r4,r5,r6,r7],8
-	sprd	usp, REGS_USP(sp)
-	sprd	sb, REGS_SB(sp)
-	movd	Cur_pl(pc), tos
-#if NDP > 0
-	movqd	1,tos
-	bsr _dp_intr
-#else
-#if NNCR > 0
-	movqd	1,tos
-	bsr _ncr5380_intr
-#else
-	movqd	4,tos
-	bsr _bad_intr
-#endif
-#endif
-	br	exit_int
-
-ENTRY(_int_uart0)
-	enter	[r0,r1,r2,r3,r4,r5,r6,r7],8
-	sprd	usp, REGS_USP(sp)
-	sprd	sb, REGS_SB(sp)
-	lprd    sb, 0			/* for the kernel */
-	movd	Cur_pl(pc), tos
-	movqd	0,tos
-	bsr _scnintr
-	br	exit_int
-ENTRY(_int_uart1)
-	enter	[r0,r1,r2,r3,r4,r5,r6,r7],8
-	sprd	usp, REGS_USP(sp)
-	sprd	sb, REGS_SB(sp)
-	lprd    sb, 0			/* for the kernel */
-	movd	Cur_pl(pc), tos
-	movqd	1,tos
-	bsr _scnintr
-	br	exit_int
-ENTRY(_int_uart2)
-	enter	[r0,r1,r2,r3,r4,r5,r6,r7],8
-	sprd	usp, REGS_USP(sp)
-	sprd	sb, REGS_SB(sp)
-	lprd    sb, 0			/* for the kernel */
-	movd	Cur_pl(pc), tos
-	movqd	2,tos
-	bsr _scnintr
-	br	exit_int
-ENTRY(_int_uart3)
-	enter	[r0,r1,r2,r3,r4,r5,r6,r7],8
-	sprd	usp, REGS_USP(sp)
-	sprd	sb, REGS_SB(sp)
-	lprd    sb, 0			/* for the kernel */
-	movd	Cur_pl(pc), tos
-	movqd	3,tos
-	bsr _scnintr
-	br	exit_int
-#if NLPT > 0
-ENTRY(_int_lpt)
-	enter	[r0,r1,r2,r3,r4,r5,r6,r7],8
-	sprd	usp, REGS_USP(sp)
-	sprd	sb, REGS_SB(sp)
-	lprd	sb, 0
-	movd	Cur_pl(pc), tos
-	movqd	0,tos
-	bsr _lptintr
-	br	exit_int
-#endif
-ENTRY(_int_bad)
-	enter	[r0,r1,r2,r3,r4,r5,r6,r7],8
-	sprd	usp, REGS_USP(sp)
-	sprd	sb, REGS_SB(sp)
-	lprd    sb, 0			/* for the kernel */
-	movd	Cur_pl(pc), tos
-	movqd	0,tos
-	bsr _bad_intr
-
-/* Common exit to all interrupt codes. */
-exit_int:
-	adjspb -8
+	adjspd	-8			/* Remove arg and vec from stack */
+	bsr	_splx			/* Restore Cur_pl */
+	cmpqd	0,tos
 
 	tbitw	8, REGS_PSR(sp)		/* In system mode? */
 	bfs	do_user_intr		/* branch if yes! */
@@ -1146,10 +1018,9 @@ exit_int:
 	lprd	usp, REGS_USP(sp)
 	lprd	sb, REGS_SB(sp)
 	exit	[r0,r1,r2,r3,r4,r5,r6,r7]
-	reti
+	rett	0
 
 do_user_intr:
-
 	/* Do "user" mode interrupt processing, including preemption. */
 	ints_off
 	movd	_curproc(pc), r2
@@ -1173,69 +1044,18 @@ do_user_intr:
 	movl	f7,PCB_F7(r3)
 
 intr_no_fpu:
-	/* Do a reti to keep the icu happy. */
-	sprw	psr, tos
-	movqw 	0, tos		/* mod = 0 */
-	addr	do_soft_intr(pc), tos
-	reti
-
-do_soft_intr:
 	/* turn on interrupts! */
 	ints_on
 
-	/* Net processing */
-	bsr	_splnet
-	movd	r0, tos
-	cmpqd	0, _want_softnet(pc)
-	beq	no_net
-
-#ifdef INET
-#include "ether.h"
-#if NETHER > 0
-	DONET(NETISR_ARP, _arpintr)
-#endif
-	DONET(NETISR_IP, _ipintr)
-#endif
-#ifdef IMP
-	DONET(NETISR_IMP, _impintr)
-#endif
-#ifdef NS
-	DONET(NETISR_NS, _nsintr)
-#endif
-#ifdef ISO
-	DONET(NETISR_ISO, _clnlintr)
-#endif
-#ifdef CCITT
-	DONET(NETISR_CCITT, _ccittintr)
-#endif
-	movqd	0, _want_softnet(pc)
-	movqd	0, _netisr(pc)
-
-no_net:
-	/* Run with interrupts on. */
-	bsr	_splx
-	movd	tos, r0
-
-	cmpqd	0, _want_softclock(pc)
-	beq	no_soft
-	bsr	_splsoftclock
-	movd	r0, tos		/* save the pl */
-	bsr	_softclock
-	movqd	0, _want_softclock(pc)
-	bsr	_splx		/* parameter is alread on the stack. */
-	movd	tos, r0		/* pop the parameter. */
-	
-no_soft:
 	cmpqd	0, _want_resched(pc)
 	beq	do_usr_ret
 	movd	18, tos
 	movqd	0,tos
 	movqd	0,tos
 	bsr _trap
-	adjspb	-12	/* Pop off software part of trap frame. */
+	adjspd	-12	/* Pop off software part of trap frame. */
 
 do_usr_ret:
-	bsr	_spl0
 
 	/* Have an fpu? */
 	cmpqd	0, __have_fpu(pc)
@@ -1264,148 +1084,6 @@ intr_panic:
 
 intr_panic_msg:
 	.asciz "user mode interrupt with no current process!"
-
-
-/* ICU support.  The assembly routines for the PC532 ICU. */
-		
-ENTRY(splnet)
-	ints_off
-	save	[r1]
-	movd	Cur_pl(pc), r0
-	movd	r0,r1
-	ord	_PL_net(pc), r1
-	movw	r1, @ICU_ADR+IMSK
-	movd	r1, Cur_pl(pc)
-	restore [r1]
-	ints_on
-	ret	0
-
-ENTRY(splimp)
-	ints_off
-	save	[r1]
-	movd	Cur_pl(pc), r0
-	movd	r0, r1
-	ord	SPL_IMP, r1
-	movw	r1, @ICU_ADR+IMSK
-	movd	r1, Cur_pl(pc)
-	restore [r1]
-	ints_on
-	ret	0
-
-ENTRY(splsoftclock)
-	ints_off
-	save	[r1]
-	movd	Cur_pl(pc), r0
-	movd	r0, r1
-	ord	SPL_SOFTCLK, r1
-	movd	r1, Cur_pl(pc)
-	restore [r1]
-	ints_on
-	ret	0
-
-ENTRY(splbio)
-	ints_off
-	save	[r1]
-	movd	Cur_pl(pc), r0
-	movd	r0, r1
-	ord	_PL_bio(pc), r1
-	movw	r1, @ICU_ADR+IMSK
-	movd	r1, Cur_pl(pc)
-	restore [r1]
-	ints_on
-	ret	0
-
-ENTRY(splclock)
-ENTRY(splstatclock)
-	ints_off
-	save	[r1]
-	movd	Cur_pl(pc), r0
-	movd	r0, r1
-	ord	SPL_CLK, r1
-	movw	r1, @ICU_ADR+IMSK
-	movd	r1, Cur_pl(pc)
-	restore [r1]
-	ints_on 
-	ret 0
-
-ENTRY(spltty)
-	ints_off
-	save	[r1]
-	movd	Cur_pl(pc), r0
-	movd	r0, r1
-	ord	_PL_tty(pc), r1
-	movw	r1, @ICU_ADR+IMSK
-	movd	r1, Cur_pl(pc)
-	restore [r1]
-	ints_on
-	ret 0
-
-ENTRY(splhigh)			/* Just turn off interrupts! */
-	ints_off
-	movd	Cur_pl(pc), r0
-	ret 0
-	
-
-ENTRY(splx)
-	ints_off
-	movd	S_ARG0, r0
-	save	[r1]
-	comd	_PL_zero(pc), r1
-	cmpd	r1, r0			/* Going to level 0 is special. */
-	beq	do_spl0
-
-	movw	r0, @ICU_ADR+IMSK
-	movd	r0, Cur_pl(pc)
-	restore [r1]
-	ints_on
-	ret 0
-
-ENTRY(splnone)
-ENTRY(spl0)
-	ints_off
-	save	[r1]
-do_spl0:
-	comd	_PL_zero(pc), r1
-	ord	SPL_NET, r1
-	movw	r1, @ICU_ADR+IMSK
-	movd	r1, Cur_pl(pc)
-	ints_on
-
-	/* Now for the network software interrupts. */
-
-	cmpqd	0, _want_softnet(pc)
-	beq	no_net1
-
-#ifdef INET
-#if NETHER > 0
-	DONET(NETISR_ARP, _arpintr)
-#endif
-	DONET(NETISR_IP, _ipintr)
-#endif
-#ifdef IMP
-	DONET(NETISR_IMP, _impintr)
-#endif
-#ifdef NS
-	DONET(NETISR_NS, _nsintr)
-#endif
-#ifdef ISO
-	DONET(NETISR_ISO, _clnlintr)
-#endif
-#ifdef CCITT
-	DONET(NETISR_CCITT, _ccittintr)
-#endif
-	movqd	0, _want_softnet(pc)
-	movqd	0, _netisr(pc)
-
-no_net1:
-	ints_off
-	comd	_PL_zero(pc), r1
-	movw	r1, @ICU_ADR+IMSK
-	movd	r1, Cur_pl(pc)
-	restore [r1]
-	ints_on
-
-	ret 0
 
 /* Include all other .s files. */
 #include "bcopy.s"
@@ -1464,10 +1142,44 @@ no_net1:
 _PDRPDROFF:
 	.long PDRPDROFF
 
-/* Some bogus data, to keep vmstat happy, for now. */
+/* vmstat -i uses the following labels and __int even increments the
+ * counters. This information is also availiable from ivt[n].iv_use 
+ * andivt[n].iv_cnt in much better form.
+ */
 	.globl	_intrnames, _eintrnames, _intrcnt, _eintrcnt
 _intrnames:
+	.asciz "int  0"
+	.asciz "int  1"
+	.asciz "int  2"
+	.asciz "int  3"
+	.asciz "int  4"
+	.asciz "int  5"
+	.asciz "int  6"
+	.asciz "int  7"
+	.asciz "int  8"
+	.asciz "int  9"
+	.asciz "int 10"
+	.asciz "int 11"
+	.asciz "int 12"
+	.asciz "int 13"
+	.asciz "int 14"
+	.asciz "int 15"
 _eintrnames:
 _intrcnt:
-_eintrcnt:
 	.long	0
+	.long	0
+	.long	0
+	.long	0
+	.long	0
+	.long	0
+	.long	0
+	.long	0
+	.long	0
+	.long	0
+	.long	0
+	.long	0
+	.long	0
+	.long	0
+	.long	0
+	.long	0
+_eintrcnt:
