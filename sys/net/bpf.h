@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf.h,v 1.11 1995/04/22 13:26:32 cgd Exp $	*/
+/*	$NetBSD: bpf.h,v 1.12 1995/09/27 18:30:40 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993
@@ -110,6 +110,8 @@ struct bpf_version {
 #define BIOCGSTATS	_IOR(B,111, struct bpf_stat)
 #define BIOCIMMEDIATE	_IOW(B,112, u_int)
 #define BIOCVERSION	_IOR(B,113, struct bpf_version)
+#define BIOCSRSIG	_IOW(B,114, u_int)
+#define BIOCGRSIG	_IOR(B,115, u_int)
 #else
 #define	BIOCGBLEN	_IOR('B',102, u_int)
 #define	BIOCSBLEN	_IOWR('B',102, u_int)
@@ -124,6 +126,8 @@ struct bpf_version {
 #define BIOCGSTATS	_IOR('B',111, struct bpf_stat)
 #define BIOCIMMEDIATE	_IOW('B',112, u_int)
 #define BIOCVERSION	_IOR('B',113, struct bpf_version)
+#define BIOCSRSIG	_IOW('B',114, u_int)
+#define BIOCGRSIG	_IOR('B',115, u_int)
 #endif
 
 /*
