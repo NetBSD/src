@@ -1,4 +1,4 @@
-#	$NetBSD: files.pmax,v 1.40 1997/05/24 08:19:44 jonathan Exp $
+#	$NetBSD: files.pmax,v 1.41 1997/05/29 03:08:40 mhitch Exp $
 # DECstation-specific configuration info
 
 # maxpartitions must be first item in files.${ARCH}.
@@ -135,7 +135,7 @@ device pm
 file	arch/pmax/dev/pm.c		pm needs-flag
 file	arch/pmax/dev/bt478.c		pm
 attach pm at mainbus with pm_ds
-file	arch/pmax/dev/pm_ds.c		dc_ds
+file	arch/pmax/dev/pm_ds.c		pm_ds
 
 ########################################################################
 # Turbochannel options.
