@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.c,v 1.48 2000/06/29 07:14:28 mrg Exp $	*/
+/*	$NetBSD: locore.c,v 1.49 2000/07/06 17:36:23 ragge Exp $	*/
 /*
  * Copyright (c) 1994, 1998 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -68,6 +68,7 @@ extern struct cpu_dep ka780_calls;
 extern struct cpu_dep ka750_calls;
 extern struct cpu_dep ka860_calls;
 extern struct cpu_dep ka820_calls;
+extern struct cpu_dep ka6400_calls;
 extern struct cpu_dep ka88_calls;
 extern struct cpu_dep ka43_calls;
 extern struct cpu_dep ka46_calls;
@@ -229,6 +230,12 @@ start(struct rpb *prpb)
 	case VAX_BTYP_8800: /* Matches all other KA88-machines also */
 		strcpy(cpu_model, "VAX 8800");
 		dep_call = &ka88_calls;
+		break;
+#endif
+#if VAX6400
+	case VAX_BTYP_9RR:
+		/* cpu_model set in steal_pages */
+		dep_call = &ka6400_calls;
 		break;
 #endif
 	default:
