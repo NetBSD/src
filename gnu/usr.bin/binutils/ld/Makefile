@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2001/08/06 19:34:22 tv Exp $
+#	$NetBSD: Makefile,v 1.3 2001/08/06 20:00:02 tv Exp $
 
 TOP=		${.CURDIR}/../../..
 DIST=		${TOP}/dist/toolchain
@@ -6,14 +6,12 @@ DIST=		${TOP}/dist/toolchain
 .include <bsd.own.mk>
 .include "${.CURDIR}/arch/${MACHINE_ARCH}/defs.mk"
 
-TARGET=		${G_target_alias:C/[\.0-9]*$//}
-
 PROG=		ld
 SRCS=		${G_OFILES:.o=.c}
 CPPFLAGS+=	-I${.CURDIR}/arch/${MACHINE_ARCH} \
 		-DDEFAULT_EMULATION=\"${G_EMUL}\" \
 		-DSCRIPTDIR=\"/usr/share\" \
-		-DTARGET=\"${TARGET}\"
+		-DTARGET=\"${G_target_alias}\"
 
 LDADD=		-lintl
 DPADD=		${LIBINTL}
@@ -26,7 +24,7 @@ IBERTYOBJ!=	cd ${TOP}/lib/libiberty && ${PRINTOBJDIR}
 LDADD+=		-L${IBERTYOBJ} -liberty
 DPADD+=		${IBERTYOBJ}/libiberty.a
 
-TEXINFO=	ld.texinfo
+TEXINFO=	${G_TEXINFOS}
 INFOFLAGS=	-I${DIST}/ld -I${DIST}/bfd/doc
 FILESDIR=	/usr/share/ldscripts
 
@@ -50,7 +48,7 @@ CLEANFILES+=	.depend.${f} e${f}.c
 
 e${f}.c: ${DIST}/ld/genscripts.sh stringify.sed
 	LIB_PATH=/usr/lib sh ${DIST}/ld/genscripts.sh ${DIST}/ld ${LIBDIR} /usr \
-		none ${TARGET} ${TARGET} ${G_EMUL} ${LIBDIR} ${f}
+		none ${G_target_alias} ${G_target_alias} ${G_EMUL} ${LIBDIR} ${f}
 
 FILES+=		${f}.x ${f}.xbn ${f}.xn ${f}.xr ${f}.xu
 
