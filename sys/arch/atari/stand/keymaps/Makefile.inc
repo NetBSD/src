@@ -1,6 +1,6 @@
-# $NetBSD: Makefile.inc,v 1.1.1.1 1996/06/22 20:14:10 leo Exp $
+# $NetBSD: Makefile.inc,v 1.2 1996/06/22 21:01:29 leo Exp $
 MAN=
-INSTDIR=/usr/share/keymaps/atari
+INSTDIR=/usr/share/keymap/atari
 
 all: ${PROG} ${MAP}
 
