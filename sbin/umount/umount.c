@@ -1,4 +1,4 @@
-/*	$NetBSD: umount.c,v 1.20 1997/09/16 12:24:06 lukem Exp $	*/
+/*	$NetBSD: umount.c,v 1.20.2.1 1997/11/02 00:21:01 mellon Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1989, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1989, 1993\n\
 #if 0
 static char sccsid[] = "@(#)umount.c	8.8 (Berkeley) 5/8/95";
 #else
-__RCSID("$NetBSD: umount.c,v 1.20 1997/09/16 12:24:06 lukem Exp $");
+__RCSID("$NetBSD: umount.c,v 1.20.2.1 1997/11/02 00:21:01 mellon Exp $");
 #endif
 #endif /* not lint */
 
@@ -325,7 +325,7 @@ getmntname(name, what, type)
 		warn("getmntinfo");
 		return (NULL);
 	}
-	for (i = 0; i < mntsize; i++) {
+	for (i = mntsize - 1; i >= 0; i--) {
 		if ((what == MNTON) && !strcmp(mntbuf[i].f_mntfromname, name)) {
 			if (type)
 				*type = mntbuf[i].f_fstypename;
