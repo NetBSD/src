@@ -37,7 +37,7 @@
  * From:
  *	Id: procfs_vfsops.c,v 4.1 1993/12/17 10:47:45 jsp Rel
  *
- *	$Id: procfs_vfsops.c,v 1.9 1994/01/05 07:51:31 cgd Exp $
+ *	$Id: procfs_vfsops.c,v 1.10 1994/01/09 19:44:08 ws Exp $
  */
 
 /*
@@ -48,6 +48,7 @@
 #include <sys/time.h>
 #include <sys/kernel.h>
 #include <sys/proc.h>
+#include <sys/resourcevar.h>
 #include <sys/buf.h>
 #include <sys/syslog.h>
 #include <sys/mount.h>
@@ -133,17 +134,12 @@ procfs_root(mp, vpp)
 	struct mount *mp;
 	struct vnode **vpp;
 {
-	struct pfsnode *pfs;
 	struct vnode *vp;
 	int error;
 
 	error = procfs_allocvp(mp, &vp, (pid_t) 0, Proot);
 	if (error)
 		return (error);
-
-	vp->v_type = VDIR;
-	vp->v_flag = VROOT;
-	pfs = VTOPFS(vp);
 
 	*vpp = vp;
 	return (0);
@@ -207,21 +203,57 @@ procfs_sync(mp, waitfor)
 	return (0);
 }
 
+struct pfs_handle {
+	u_short		h_len;
+	u_short		h_align;
+	pfstype		h_pfstype;
+	pid_t		h_pid;
+	struct timeval	h_start;
+};
+
 procfs_fhtovp(mp, fhp, vpp)
 	struct mount *mp;
 	struct fid *fhp;
 	struct vnode **vpp;
 {
+	struct pfs_handle *php;
+	struct proc *p;
 
-	return (EINVAL);
+	php = (struct pfs_handle *)fhp;
+
+	if (php->h_pfstype != Proot) {
+
+		if (!(p = PFIND(php->h_pid)))
+			return ESTALE;
+
+		if (bcmp(&p->p_stats->p_start,&php->h_start,sizeof(struct timeval)))
+			return ESTALE;
+	}
+
+	return procfs_allocvp(mp,vpp,php->h_pid,php->h_pfstype);
 }
 
 procfs_vptofh(vp, fhp)
 	struct vnode *vp;
 	struct fid *fhp;
 {
+	struct pfs_handle *php;
+	struct proc *p;
+	struct pfsnode *pfs = VTOPFS(vp);
 
-	return EINVAL;
+	php = (struct pfs_handle *)fhp;
+	php->h_len = sizeof(*php);
+
+	php->h_pfstype = pfs->pfs_type;
+	php->h_pid = pfs->pfs_pid;
+
+	if (pfs->pfs_type != Proot) {
+		if (!(p = PFIND(pfs->pfs_pid)))
+			return ENOENT;
+		php->h_start = p->p_stats->p_start;
+	}
+
+	return 0;
 }
 
 procfs_init()
