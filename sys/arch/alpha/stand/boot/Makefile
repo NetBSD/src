@@ -1,10 +1,9 @@
-#	$NetBSD: Makefile,v 1.2 1995/02/16 02:32:50 cgd Exp $
+#	$NetBSD: Makefile,v 1.3 1995/02/27 16:36:46 cgd Exp $
 #
 # BSD Boot blocks for the Alpha
 #
 # XXX should generate a primary boot block, too...
 
-DESTDIR=
 INCPATH=-I../../../.. -I.
 
 # Boot relocation address
@@ -50,7 +49,7 @@ clean cleandir:
 	cd libsa && make cleandir
 
 install:
-	install -c -o root -g wheel -m 444 boot ${DESTDIR}/
+	install -c -o root -g wheel -m 555 boot ${DESTDIR}/
 
 depend: ${SRCS}
 	mkdep -p ${INCPATH} ${DEFS} ${SRCS}

@@ -1,10 +1,9 @@
-#	$NetBSD: Makefile,v 1.2 1995/02/16 02:33:06 cgd Exp $
+#	$NetBSD: Makefile,v 1.3 1995/02/27 16:36:55 cgd Exp $
 #
 # BSD Boot blocks for the Alpha
 #
 # XXX should generate a primary boot block, too...
 
-DESTDIR=
 #INCPATH=-I../../.. -I.
 INCPATH=-I/sys -I. -I/sys/arch/alpha/stand
 

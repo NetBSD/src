@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.1 1995/02/13 23:07:23 cgd Exp $
+#	$NetBSD: GENERIC,v 1.2 1995/02/27 16:36:34 cgd Exp $
 #
 # Generic Alpha kernel.  Enough to get booted, etc., but not much more.
 
@@ -39,6 +39,9 @@ options		COMPAT_43
 # OSF/1 binary compatibility
 options		COMPAT_OSF1
 
+# Loadable Kernel Modules
+options		LKM
+
 config		netbsd	swap generic
 
 tc*	at	mainbus0
@@ -62,4 +65,4 @@ pseudo-device	bpfilter
 pseudo-device	loop
 pseudo-device	pty
 pseudo-device	sl
-pseudo-device	vn
+pseudo-device	vnd

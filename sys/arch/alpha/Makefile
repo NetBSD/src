@@ -1,27 +1,30 @@
-#	$NetBSD: Makefile,v 1.2 1995/02/16 02:37:34 cgd Exp $
+#	$NetBSD: Makefile,v 1.3 1995/02/27 16:36:07 cgd Exp $
 
-# Makefile for alpha links
+# Makefile for alpha tags file and boot blocks
 
-.include "../kern/Make.tags.inc"
+NOPROG=	noprog
+NOMAN=	noman
 
-all:
-	@echo "make links or tags only"
+SUBDIR=	stand
 
-DIRS=	alpha conf dev include osf
+TALPHA=	../alpha/tags
+SALPHA=	../alpha/alpha/*.[ch] ../alpha/include/*.h ../alpha/tc/*.[ch]
+AALPHA=	../alpha/alpha/*.S
 
-links::
-	-for i in ${DIRS}; do \
-	    (cd $$i && { rm -f tags; ln -s ${SYSTAGS} tags; }) done
+# Directories in which to place alpha tags links
+DALPHA=	tc include
 
-# XXX should be absolute paths
-ALPHA=	alpha/*.[ch] conf/*.[ch] dev/*.[ch] include/*.[ch] osf/*.[ch]
-AALPHA=	alpha/*.s
-
-tags::
-	-ctags -wdt ${COMM} ${PMAX}
-	egrep "^LEAF(.*)|^[AN]LEAF(.*)|^NON_LEAF(.*)" ${APMAX} | \
+tags:
+	-ctags -dtf ${TALPHA} ${COMM} ${SALPHA}
+	egrep "^ENTRY(.*)|^ALTENTRY(.*)" ${AALPHA} | \
 	    sed "s;\([^:]*\):\([^(]*\)(\([^, )]*\)\(.*\);\3 \1 /^\2(\3\4$$/;" \
-		>> tags
-	sort -o tags tags
-	chown bin.wsrc tags
-	chmod 444 tags
+		>> ${TALPHA}
+	sort -o ${TALPHA} ${TALPHA}
+
+links:
+	-for i in ${DALPHA}; do \
+	    cd $$i && rm -f tags; ln -s ../tags tags; done
+
+obj: _SUBDIRUSE
+
+.include <bsd.prog.mk>
