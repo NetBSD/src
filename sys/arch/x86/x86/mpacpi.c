@@ -1,4 +1,4 @@
-/*	$NetBSD: mpacpi.c,v 1.17 2003/11/13 23:00:54 fvdl Exp $	*/
+/*	$NetBSD: mpacpi.c,v 1.18 2004/03/23 14:07:42 kochi Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mpacpi.c,v 1.17 2003/11/13 23:00:54 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mpacpi.c,v 1.18 2004/03/23 14:07:42 kochi Exp $");
 
 #include "opt_acpi.h"
 #include "opt_mpbios.h"
@@ -67,9 +67,6 @@ __KERNEL_RCSID(0, "$NetBSD: mpacpi.c,v 1.17 2003/11/13 23:00:54 fvdl Exp $");
 
 #include <dev/acpi/acpivar.h>
 #include <dev/acpi/acpi_madt.h>
-/* XXX */
-#include <dev/acpi/acpica/Subsystem/actables.h>
-#include <dev/acpi/acpica/Subsystem/acnamesp.h>
 
 #include "pci.h"
 
@@ -384,9 +381,8 @@ static ACPI_STATUS
 mpacpi_pcibus_cb(ACPI_HANDLE handle, UINT32 level, void *ct, void **status)
 {
 	ACPI_STATUS ret;
-	ACPI_NAMESPACE_NODE *node;
 	ACPI_BUFFER buf;
-	ACPI_INTEGER val;
+	int val;
 	struct mpacpi_pcibus *mpr;
 
 	ret = acpi_get(handle, &buf, AcpiGetIrqRoutingTable);
@@ -397,10 +393,8 @@ mpacpi_pcibus_cb(ACPI_HANDLE handle, UINT32 level, void *ct, void **status)
 	mpr = malloc(sizeof (struct mpacpi_pcibus), M_TEMP, M_WAITOK|M_ZERO);
 	if (mpr == NULL)
 		return AE_NO_MEMORY;
-	node = AcpiNsMapHandleToNode(handle);
 	if (level == 1) {
-		ret = AcpiUtEvaluateNumericObject(METHOD_NAME__BBN,
-		    node, &val);
+		ret = acpi_eval_integer(handle, METHOD_NAME__BBN, &val);
 		if (ACPI_FAILURE(ret)) {
 			mpr->mpr_bus = mpacpi_npciroots;
 			if (mp_verbose)
@@ -433,7 +427,7 @@ static ACPI_STATUS
 mpacpi_pcihier_cb(ACPI_HANDLE handle, UINT32 level, void *ct, void **status)
 {
 	ACPI_STATUS ret;
-	ACPI_INTEGER val;
+	int val;
 	pcireg_t binf, class;
 	pcitag_t tag;
 	struct acpi_softc *acpi;
@@ -444,7 +438,7 @@ mpacpi_pcihier_cb(ACPI_HANDLE handle, UINT32 level, void *ct, void **status)
 	mparent = mpw->mpw_mpr;
 	acpi = mpw->mpw_acpi;
 
-	ret = AcpiUtEvaluateNumericObject(METHOD_NAME__ADR, handle, &val);
+	ret = acpi_eval_integer(handle, METHOD_NAME__ADR, &val);
 	if (ACPI_FAILURE(ret))
 		return AE_OK;
 
