@@ -1,4 +1,4 @@
-/*	$NetBSD: advnops.c,v 1.53 2000/05/19 18:54:22 thorpej Exp $	*/
+/*	$NetBSD: advnops.c,v 1.54 2000/08/03 00:54:23 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -638,8 +638,7 @@ adosfs_readdir(v)
 
 	if (sp->a_ncookies) {
 		ncookies = 0;
-		MALLOC(cookies, off_t *, sizeof (off_t) * uavail, M_TEMP,
-		    M_WAITOK);
+		cookies = malloc(sizeof (off_t) * uavail, M_TEMP, M_WAITOK);
 		*sp->a_cookies = cookies;
 	}
 
@@ -752,7 +751,7 @@ reterr:
 #endif
 	if (sp->a_ncookies) {
 		if (error) {
-			FREE(*sp->a_cookies, M_TEMP);
+			free(*sp->a_cookies, M_TEMP);
 			*sp->a_ncookies = 0;
 			*sp->a_cookies = NULL;
 		} else
