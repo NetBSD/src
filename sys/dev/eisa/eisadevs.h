@@ -1,7 +1,6 @@
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
- * $NetBSD: eisadevs.h,v 1.14 1998/01/05 19:25:06 perry Exp $
  * generated from:
  *	NetBSD: eisadevs,v 1.14 1997/07/12 14:41:05 perry Exp 
  */
