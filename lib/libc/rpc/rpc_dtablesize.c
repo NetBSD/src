@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc_dtablesize.c,v 1.6 1996/12/17 22:00:39 cgd Exp $	*/
+/*	$NetBSD: rpc_dtablesize.c,v 1.7 1996/12/18 01:06:37 mrg Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -32,28 +32,21 @@
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char *sccsid = "from: @(#)rpc_dtablesize.c 1.2 87/08/11 Copyr 1987 Sun Micro";*/
 /*static char *sccsid = "from: @(#)rpc_dtablesize.c	2.1 88/07/29 4.0 RPCSRC";*/
-static char *rcsid = "$NetBSD: rpc_dtablesize.c,v 1.6 1996/12/17 22:00:39 cgd Exp $";
+static char *rcsid = "$NetBSD: rpc_dtablesize.c,v 1.7 1996/12/18 01:06:37 mrg Exp $";
 #endif
 
 #include <sys/param.h>
 #include <sys/sysctl.h>
 
 /*
- * Cache the result of getdtablesize(), so we don't have to do an
+ * Cache the result of sysconf(_SC_OPEN_MAX), so we don't have to do an
  * expensive system call every time.
  */
 int
 _rpc_dtablesize()
 {
 	static int size;
-	int mib[2];
-	size_t len;
-	
-	if (size == 0) {
-		mib[0] = CTL_KERN;
-		mib[1] = KERN_MAXFILES;
-		len = sizeof size;
-		sysctl(mib, 2, &size, &len, NULL, 0);
-	}
+	if (size == 0)
+		size = sysconf(_SC_OPEN_MAX);
 	return (size);
 }
