@@ -1,3 +1,4 @@
+/*	$NetBSD: pf_print_state.c,v 1.2 2004/06/22 15:16:30 itojun Exp $	*/
 /*	$OpenBSD: pf_print_state.c,v 1.39 2004/02/10 17:48:08 henning Exp $	*/
 
 /*
@@ -35,6 +36,9 @@
 #include <net/if.h>
 #define TCPSTATES
 #include <netinet/tcp_fsm.h>
+#ifdef __NetBSD__
+#include <netinet/in.h>
+#endif
 #include <net/pfvar.h>
 #include <arpa/inet.h>
 #include <netdb.h>
@@ -284,8 +288,13 @@ print_state(struct pf_state *s, int opts)
 		printf("\n");
 	}
 	if (opts & PF_OPT_VERBOSE2) {
+#ifdef __OpenBSD__
 		printf("   id: %016llx creatorid: %08x\n",
 		    betoh64(s->id), ntohl(s->creatorid));
+#else
+		printf("   id: %016llx creatorid: %08x\n",
+		    (unsigned long long)be64toh(s->id), ntohl(s->creatorid));
+#endif
 	}
 }
 
