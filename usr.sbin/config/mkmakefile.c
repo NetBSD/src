@@ -1,4 +1,4 @@
-/*	$NetBSD: mkmakefile.c,v 1.47 2000/12/03 07:06:15 matt Exp $	*/
+/*	$NetBSD: mkmakefile.c,v 1.48 2001/01/31 00:15:40 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -62,7 +62,7 @@ static const char *srcpath(struct files *);
 static const char *prefix_prologue(const char *);
 
 static int emitdefs(FILE *);
-static int emitfiles(FILE *, int);
+static int emitfiles(FILE *, int, int);
 
 static int emitobjs(FILE *);
 static int emitcfiles(FILE *);
@@ -307,18 +307,18 @@ static int
 emitcfiles(FILE *fp)
 {
 
-	return (emitfiles(fp, 'c'));
+	return (emitfiles(fp, 'c', 0));
 }
 
 static int
 emitsfiles(FILE *fp)
 {
 
-	return (emitfiles(fp, 's'));
+	return (emitfiles(fp, 's', 1));
 }
 
 static int
-emitfiles(FILE *fp, int suffix)
+emitfiles(FILE *fp, int suffix, int upper_suffix)
 {
 	struct files *fi;
 	struct config *cf;
@@ -336,7 +336,8 @@ emitfiles(FILE *fp, int suffix)
 		if ((fpath = srcpath(fi)) == NULL)
                         return (1);
 		len = strlen(fpath);
-		if (fpath[len - 1] != suffix)
+		if (! ((fpath[len - 1] == suffix) ||
+		    (upper_suffix && fpath[len - 1] == toupper(suffix))))
 			continue;
 		if (*fpath != '/') {
 			len += 3;	/* "$S/" */
