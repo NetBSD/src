@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.43 1997/10/27 18:06:39 thorpej Exp $
+#	$NetBSD: Makefile,v 1.44 1998/01/30 07:10:31 mellon Exp $
 
 .include <bsd.own.mk>			# for configuration variables.
 
@@ -42,6 +42,14 @@ afterinstall:
 
 build: beforeinstall
 	(cd ${.CURDIR}/share/mk && ${MAKE} install)
+.if exists(domestic) && !defined (EXPORTABLE_SYSTEM)
+	(cd ${.CURDIR}/domestic/usr.bin/compile_et && \
+	    ${MAKE} depend && ${MAKE} && \
+	    ${MAKE} install)
+	(cd ${.CURDIR}/domestic/usr.bin/make_cmds && \
+	    ${MAKE} depend && ${MAKE} && \
+	    ${MAKE} install)
+.endif
 	${MAKE} includes
 .if !defined(UPDATE)
 	${MAKE} cleandir
@@ -49,7 +57,15 @@ build: beforeinstall
 	(cd ${.CURDIR}/lib/csu && ${MAKE} depend && ${MAKE} && ${MAKE} install)
 	(cd ${.CURDIR}/lib && ${MAKE} depend && ${MAKE} && ${MAKE} install)
 	(cd ${.CURDIR}/gnu/lib && ${MAKE} depend && ${MAKE} && ${MAKE} install)
+	(cd ${.CURDIR}/usr.bin/lex &&\
+	    ${MAKE} depend && ${MAKE} && ${MAKE} install)
+	(cd ${.CURDIR}/usr.bin/yacc && \
+	    ${MAKE} depend && ${MAKE} && ${MAKE} install)
+	(cd ${.CURDIR}/usr.bin/xlint && \
+	    ${MAKE} depend && ${MAKE} && ${MAKE} install)
 .if exists(domestic) && !defined(EXPORTABLE_SYSTEM)
+	(cd ${.CURDIR}/domestic/lib/libkrb && \
+	    ${MAKE} depend && ${MAKE} && ${MAKE} install)
 	(cd ${.CURDIR}/domestic/lib/ && ${MAKE} depend && ${MAKE} && \
 	    ${MAKE} install)
 .endif
