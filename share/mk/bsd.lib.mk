@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.lib.mk,v 1.212 2002/11/22 06:44:56 thorpej Exp $
+#	$NetBSD: bsd.lib.mk,v 1.213 2003/03/30 00:35:07 thorpej Exp $
 #	@(#)bsd.lib.mk	8.3 (Berkeley) 4/22/94
 
 .include <bsd.init.mk>
@@ -166,7 +166,13 @@ MKSHLIBOBJS= no
 SHLIB_SOVERSION=	${SHLIB_MAJOR}
 SHLIB_SHFLAGS=		-soname lib${LIB}.so.${SHLIB_SOVERSION}
 SHLIB_LDSTARTFILE?=	${DESTDIR}/usr/lib/crti.o ${DESTDIR}/usr/lib/crtbeginS.o
+# Some platforms require additional endfile support.
+.if ${MACHINE_ARCH} == "powerpc" && defined(HAVE_GCC3)
+SHLIB_LDENDFILE?=	${DESTDIR}/usr/lib/crtsavres.o \
+			${DESTDIR}/usr/lib/crtendS.o ${DESTDIR}/usr/lib/crtn.o
+.else
 SHLIB_LDENDFILE?=	${DESTDIR}/usr/lib/crtendS.o ${DESTDIR}/usr/lib/crtn.o
+.endif
 .endif
 
 CFLAGS+=	${COPTS}

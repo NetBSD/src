@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.prog.mk,v 1.164 2003/02/22 04:46:08 uwe Exp $
+#	$NetBSD: bsd.prog.mk,v 1.165 2003/03/30 00:35:07 thorpej Exp $
 #	@(#)bsd.prog.mk	8.2 (Berkeley) 4/2/94
 
 .include <bsd.init.mk>
@@ -24,7 +24,12 @@ LIBCRTBEGIN=	${DESTDIR}/usr/lib/crti.o ${DESTDIR}/usr/lib/crtbegin.o
 .MADE: ${LIBCRTBEGIN}
 .endif
 .ifndef LIBCRTEND
+.if ${MACHINE_ARCH} == "powerpc" && defined(HAVE_GCC3)
+LIBCRTEND=	${DESTDIR}/usr/lib/crtsavres.o \
+		${DESTDIR}/usr/lib/crtend.o ${DESTDIR}/usr/lib/crtn.o
+.else
 LIBCRTEND=	${DESTDIR}/usr/lib/crtend.o ${DESTDIR}/usr/lib/crtn.o
+.endif
 .MADE: ${LIBCRTEND}
 .endif
 _SHLINKER=	${SHLINKDIR}/ld.elf_so
