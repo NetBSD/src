@@ -1,4 +1,4 @@
-/*	$NetBSD: rmt.c,v 1.12 2002/07/04 06:43:19 itojun Exp $	*/
+/*	$NetBSD: rmt.c,v 1.13 2003/07/13 12:17:12 itojun Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)rmt.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: rmt.c,v 1.12 2002/07/04 06:43:19 itojun Exp $");
+__RCSID("$NetBSD: rmt.c,v 1.13 2003/07/13 12:17:12 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -161,7 +161,7 @@ top:
 		rval = read(tape, record, n);
 		if (rval < 0)
 			goto ioerror;
-		(void)sprintf(resp, "A%d\n", rval);
+		(void)snprintf(resp, sizeof(resp), "A%d\n", rval);
 		(void)write(STDOUT_FILENO, resp, strlen(resp));
 		(void)write(STDOUT_FILENO, record, rval);
 		goto top;
@@ -192,7 +192,7 @@ top:
 			/* limit size to 'original' mtget size */
 			if (rval > 24)
 				rval = 24;
-			(void)sprintf(resp, "A%d\n", rval);
+			(void)snprintf(resp, sizeof(resp), "A%d\n", rval);
 			(void)write(STDOUT_FILENO, resp, strlen(resp));
 			(void)write(STDOUT_FILENO, (char *)&mtget, rval);
 			goto top;
@@ -204,7 +204,7 @@ top:
 	}
 respond:
 	DEBUG1("rmtd: A %d\n", rval);
-	(void)sprintf(resp, "A%d\n", rval);
+	(void)snprintf(resp, sizeof(resp), "A%d\n", rval);
 	(void)write(STDOUT_FILENO, resp, strlen(resp));
 	goto top;
 ioerror:
