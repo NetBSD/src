@@ -1,4 +1,4 @@
-/* $NetBSD: dec_kn300.c,v 1.2 1998/04/15 21:29:03 mjacob Exp $ */
+/* $NetBSD: dec_kn300.c,v 1.3 1998/04/17 02:45:20 mjacob Exp $ */
 
 /*
  * Copyright (c) 1998 by Matthew Jacob
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_kn300.c,v 1.2 1998/04/15 21:29:03 mjacob Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_kn300.c,v 1.3 1998/04/17 02:45:20 mjacob Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -49,6 +49,7 @@ __KERNEL_RCSID(0, "$NetBSD: dec_kn300.c,v 1.2 1998/04/15 21:29:03 mjacob Exp $")
 #include <dev/ic/comvar.h>
 
 #include <dev/isa/isavar.h>
+#include <dev/isa/pckbcvar.h>
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>
 
@@ -58,6 +59,8 @@ __KERNEL_RCSID(0, "$NetBSD: dec_kn300.c,v 1.2 1998/04/15 21:29:03 mjacob Exp $")
 #include <dev/scsipi/scsi_all.h>
 #include <dev/scsipi/scsipi_all.h>
 #include <dev/scsipi/scsiconf.h>
+
+#include "pckbd.h"
 
 #ifndef	CONSPEED
 #define	CONSPEED	TTYDEF_SPEED
@@ -135,8 +138,11 @@ dec_kn300_cons_init()
 		 * *second* mcpcia.
 		 */
 		if (mcp && mcp->mcpcia_next) {
+#if	NPCKBD > 0
 			ccp = &mcp->mcpcia_next->mcpcia_cc;
 		
+			(void) pckbc_cnattach(&ccp->cc_iot, PCKBC_KBD_SLOT);
+
 			if ((ctb->ctb_turboslot & 0xffff) == 0)
 				isa_display_console(&ccp->cc_iot,
 				    &ccp->cc_memt);
@@ -145,6 +151,10 @@ dec_kn300_cons_init()
 				    &ccp->cc_pc,
 				    (ctb->ctb_turboslot >> 8) & 0xff,
 				    ctb->ctb_turboslot & 0xff, 0);
+#else
+			panic("not configured to use display && keyboard "
+				"console");
+#endif
 		} else {
 			printf("CANNOT DETERMINE CONSOLE'S PCI BUS\n");
 		}

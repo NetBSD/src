@@ -1,4 +1,4 @@
-/* $NetBSD: dec_eb64plus.c,v 1.13 1998/04/15 21:06:47 drochner Exp $ */
+/* $NetBSD: dec_eb64plus.c,v 1.14 1998/04/17 02:45:19 mjacob Exp $ */
 
 /*
  * Copyright (c) 1995, 1996, 1997 Carnegie-Mellon University.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_eb64plus.c,v 1.13 1998/04/15 21:06:47 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_eb64plus.c,v 1.14 1998/04/17 02:45:19 mjacob Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -59,6 +59,8 @@ __KERNEL_RCSID(0, "$NetBSD: dec_eb64plus.c,v 1.13 1998/04/15 21:06:47 drochner E
 #include <dev/scsipi/scsi_all.h>
 #include <dev/scsipi/scsipi_all.h>
 #include <dev/scsipi/scsiconf.h>
+
+#include "pckbd.h"
 
 #ifndef CONSPEED
 #define CONSPEED TTYDEF_SPEED
@@ -126,6 +128,7 @@ dec_eb64plus_cons_init()
 		}
 
 	case 3:
+#if	NPCKBD	> 0
 		/* display console ... */
 		/* XXX */
 		(void) pckbc_cnattach(&acp->ac_iot, PCKBC_KBD_SLOT);
@@ -136,6 +139,9 @@ dec_eb64plus_cons_init()
 			pci_display_console(&acp->ac_iot, &acp->ac_memt,
 			    &acp->ac_pc, (ctb->ctb_turboslot >> 8) & 0xff,
 			    ctb->ctb_turboslot & 0xff, 0);
+#else
+		panic("not configured to use display && keyboard console");
+#endif
 		break;
 
 	default:
