@@ -1,4 +1,4 @@
-.\"	$NetBSD: menuc.1,v 1.14 2003/05/09 05:28:30 phil Exp $
+.\"	$NetBSD: menuc.1,v 1.15 2003/05/09 07:30:50 dsl Exp $
 .\"
 .\" Copyright 1997 Piermont Information Systems Inc.
 .\" All rights reserved.
@@ -33,7 +33,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
 .\" THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd September 26, 1997
+.Dd May 9, 2003
 .Os
 .Dt MENUC 1
 .Sh NAME
@@ -105,6 +105,9 @@ number of menu definition elements in any order.
 The initial code block usually contains includes of header files used by
 code in the menu code blocks later in the
 .Ar file .
+If USER_MENU_INIT is #defined, then it will be evaluated before the
+rest of the menu is initialised, if it evaluates to a non-zero value
+then the initialisation will fail.
 The file is free format, so the actual formatting of the input
 .Ar file
 is to the taste of the programmer.
@@ -171,7 +174,7 @@ The general format is:
 The options appear in three forms:
 .Dl variable = value
 .Dl [no] switch
-.Dl variable "string"
+.Dl variable Ar string
 .Pp
 The variables for the first form are
 .Va x ,
@@ -182,6 +185,9 @@ and
 These specify the upper left (x,y) and the
 height (h) and width (w) of the menu window.
 The upper left is in the curses coordinate system.
+If
+.Va x
+is \&-1 the menu window will be centered.
 If not specified, the upper left is the upper left of the screen
 and the height and width of the menu window is computed
 from the menu definition.
@@ -189,27 +195,33 @@ from the menu definition.
 Options of the second form turn on or off (with the
 optional no) features of the menu system.
 The
-.Li box
+.Va box
 option turns on a box around the menu window.
 The
-.Li exit
+.Va exit
 option enables the standard exit option in the menus.
 The
-.Li scrollable
+.Va scrollable
 option allows the menu to be scrollable if the
 menu window is smaller than the number of menu options.
 The
-.Li shortcut
+.Va shortcut
 option prints a single character shortcut with each menu
 option.
 .Pp
 The third sets text variables.
+The
+.Ar string
+can be either a quoted text string or a name #defined to something
+suitable for initialising a const char * field.
 The variable
 .Va title
 sets the text title for the menus.
 The variable
 .Va exitstring
-sets the text for the exit menu option.
+sets the text for the exit menu option and sets the
+.Va exit
+option.
 .Pp
 The default declaration may appear multiple times.
 Each time, it sets the default values for menu definitions that follow
@@ -257,7 +269,8 @@ The general format of a menu item is:
 .Dl option \*[Lt]string\*[Gt], \*[Lt]element_list\*[Gt] ;
 The
 .Em \*[Lt]string\*[Gt]
-is the text displayed for the menu item.
+is the text displayed for the menu item, this must be a quoted string
+or a name #defined to something that will initialise a const char * field.
 There may be an arbitrary number of these items.
 (If there are shortcuts in the menu, a practical limit
 of 51 should be recognized.
@@ -327,10 +340,10 @@ struct menudesc;
 
 typedef
 struct menu_ent {
-        char   *opt_name;
-        int     opt_menu;
-        int     opt_flags;
-        int     (*opt_action)(struct menudesc *);
+        const char  *opt_name;
+        int         opt_menu;
+        int         opt_flags;
+        int         (*opt_action)(struct menudesc *);
 } menu_ent ;
 
 /* For opt_menu */
@@ -343,19 +356,19 @@ struct menu_ent {
 
 typedef
 struct menudesc {
-        char     *title;
-        int      y, x;
-        int      h, w;
-        int      mopt;
-        int      numopts;
-        int      cursel;
-        int      topline;
-        menu_ent *opts;
-        WINDOW   *mw;
-        char     *helpstr;
-        char     *exitstr;
-        void    (*post_act)(void);
-        void    (*exit_act)(void);
+        const char  *title;
+        int         y, x;
+        int         h, w;
+        int         mopt;
+        int         numopts;
+        int         cursel;
+        int         topline;
+        menu_ent    *opts;
+        WINDOW      *mw;
+        const char  *helpstr;
+        const char  *exitstr;
+        void       (*post_act)(void);
+        void       (*exit_act)(void);
 } menudesc ;
 
 /* defines for mopt field. */

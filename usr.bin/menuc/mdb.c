@@ -1,4 +1,4 @@
-/*	$NetBSD: mdb.c,v 1.25 2003/05/08 16:20:56 dsl Exp $	*/
+/*	$NetBSD: mdb.c,v 1.26 2003/05/09 07:30:50 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -52,9 +52,9 @@ static int menu_no = 0;
 static id_rec *menus[MAX];
 
 /* Other defines */
-#define OPT_SUB    1
-#define OPT_ENDWIN 2
-#define OPT_EXIT   4
+#define OPT_SUB		1
+#define OPT_ENDWIN	2
+#define OPT_EXIT	4
 
 
 /* get_menu returns a pointer to a newly created id_rec or an old one. */
@@ -166,30 +166,30 @@ write_menu_file (char *initcode)
 		"struct menudesc;\n"	
 		"typedef\n"
 		"struct menu_ent {\n"
-		"	const char   *opt_name;\n"
-		"	int	opt_menu;\n"
-		"	int	opt_flags;\n"
-		"	int	(*opt_action)(struct menudesc *);\n"
+		"	const char	*opt_name;\n"
+		"	int		opt_menu;\n"
+		"	int		opt_flags;\n"
+		"	int		(*opt_action)(struct menudesc *);\n"
 		"} menu_ent ;\n\n"
-		"#define OPT_SUB    1\n"
-		"#define OPT_ENDWIN 2\n"
-		"#define OPT_EXIT   4\n"
-		"#define OPT_NOMENU -1\n\n"
+		"#define OPT_SUB	1\n"
+		"#define OPT_ENDWIN	2\n"
+		"#define OPT_EXIT	4\n"
+		"#define OPT_NOMENU	-1\n\n"
 		"typedef\n"
 		"struct menudesc {\n"
-		"	const char     *title;\n"
-		"	int      y, x;\n"
-		"	int	 h, w;\n"
-		"	int	 mopt;\n"
-		"	int      numopts;\n"
-		"	int	 cursel;\n"
-		"	int	 topline;\n"
-		"	menu_ent *opts;\n"
-		"	WINDOW   *mw;\n"
-		"	char     *helpstr;\n"
-		"	char     *exitstr;\n"
-		"	void    (*post_act)(void);\n"
-		"	void    (*exit_act)(void);\n"
+		"	const char	*title;\n"
+		"	int		y, x;\n"
+		"	int		h, w;\n"
+		"	int		mopt;\n"
+		"	int		mopts;\n"
+		"	int		cursel;\n"
+		"	int		topline;\n"
+		"	menu_ent	*opts;\n"
+		"	WINDOW		*mw;\n"
+		"	const char	*helpstr;\n"
+		"	const char	*exitstr;\n"
+		"	void		(*post_act)(void);\n"
+		"	void		(*exit_act)(void);\n"
 		"} menudesc ;\n"
 		"\n"
 		"/* defines for mopt field. */\n"
@@ -345,7 +345,7 @@ write_menu_file (char *initcode)
 			(void) fprintf (out_file, "\n\"");
 			while (*tmpstr)
 				if (*tmpstr != '\n')
-				  fputc (*tmpstr++, out_file);
+					fputc (*tmpstr++, out_file);
 				else {
 					(void) fprintf (out_file, "\\n\\\n");
 					tmpstr++;
@@ -393,7 +393,7 @@ write_menu_file (char *initcode)
 
 	/* Copy menu_sys.def file. */
 	while ((ch = fgetc(sys_file)) != '\014')  /* Control-L */
-		fputc(ch, out_file);     	
+		fputc(ch, out_file);
 
 	if (do_dynamic) {
 		while ((ch = fgetc(sys_file)) != '\n')
