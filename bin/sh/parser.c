@@ -1,4 +1,4 @@
-/*	$NetBSD: parser.c,v 1.56 2004/06/26 22:09:49 dsl Exp $	*/
+/*	$NetBSD: parser.c,v 1.57 2004/06/27 10:27:57 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)parser.c	8.7 (Berkeley) 5/16/95";
 #else
-__RCSID("$NetBSD: parser.c,v 1.56 2004/06/26 22:09:49 dsl Exp $");
+__RCSID("$NetBSD: parser.c,v 1.57 2004/06/27 10:27:57 dsl Exp $");
 #endif
 #endif /* not lint */
 
@@ -1020,6 +1020,12 @@ readtoken1(int firstc, char const *syntax, char *eofmark, int striptabs)
 					syntax = SQSYNTAX;
 					break;
 				}
+				if (eofmark != NULL && arinest == 0 &&
+				    varnest == 0) {
+					/* Ignore inside quoted here document */
+					USTPUTC(c, out);
+					break;
+				}
 				/* End of single quotes... */
 				if (arinest)
 					syntax = ARISYNTAX;
@@ -1032,6 +1038,7 @@ readtoken1(int firstc, char const *syntax, char *eofmark, int striptabs)
 			case CDQUOTE:
 				if (eofmark != NULL && arinest == 0 &&
 				    varnest == 0) {
+					/* Ignore inside here document */
 					USTPUTC(c, out);
 					break;
 				}
