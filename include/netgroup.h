@@ -1,4 +1,4 @@
-/*	$NetBSD: netgroup.h,v 1.3.4.1 1997/05/23 19:58:27 lukem Exp $	*/
+/*	$NetBSD: netgroup.h,v 1.3.4.2 1998/10/31 12:36:35 lukem Exp $	*/
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -34,6 +34,8 @@
 #ifndef _NETGROUP_H_
 #define	_NETGROUP_H_
 
+#include <sys/cdefs.h>
+
 #define	_PATH_NETGROUP		"/etc/netgroup"
 
 #define	_PATH_NETGROUP_DB	"/etc/netgroup.db"
@@ -50,13 +52,11 @@
 #define _NG_GROUP	 2
 
 struct netgroup {
-	char		*ng_host;	/* host name */
-	char		*ng_user;	/* user name */
-	char		*ng_domain;	/* domain name */
-	struct netgroup	*ng_next;	/* thread */
+	__aconst char *ng_host;		/* host name */
+	__aconst char *ng_user;		/* user name */
+	__aconst char *ng_domain;	/* domain name */
+	struct	netgroup *ng_next;	/* thread */
 };
-
-#include <sys/cdefs.h>
 
 __BEGIN_DECLS
 void	setnetgrent	__P((const char *));
