@@ -1,9 +1,10 @@
 #
-# 	$NetBSD: LCARD,v 1.2 2003/12/29 12:51:48 igy Exp $
+# 	$NetBSD: LCARD,v 1.2.2.1 2004/07/15 20:22:33 he Exp $
 #
 include		"arch/hpcmips/conf/std.lcard"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
+#options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
 
 maxusers	8
 
