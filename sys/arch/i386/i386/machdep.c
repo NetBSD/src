@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.148 1995/04/21 07:53:52 mycroft Exp $	*/
+/*	$NetBSD: machdep.c,v 1.149 1995/04/21 09:15:23 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -79,12 +79,14 @@
 
 #include <machine/cpu.h>
 #include <machine/cpufunc.h>
+#include <machine/pio.h>
 #include <machine/psl.h>
 #include <machine/reg.h>
 #include <machine/specialreg.h>
 
 #include <dev/isa/isareg.h>
 #include <dev/isa/isavar.h>
+#include <dev/ic/i8042.h>
 #include <i386/isa/isa_machdep.h>
 #include <i386/isa/rtc.h>
 
@@ -124,9 +126,9 @@ static	vm_offset_t avail_next;
 
 int	_udatasel, _ucodesel, _gsel_tss;
 
+caddr_t allocsys __P((caddr_t));
 void dumpsys __P((void));
-
-caddr_t allocsys();
+void cpu_reset __P((void));
 
 /*
  * Machine-dependent startup code
@@ -1404,4 +1406,33 @@ consinit()
 		return;
 	initted = 1;
 	cninit();
+}
+
+void
+cpu_reset()
+{
+	struct region_descriptor region;
+
+	/* Toggle the hardware reset line on the keyboard controller. */
+	outb(KBCMDP, KBC_PULSE0);
+	delay(20);
+	outb(KBCMDP, KBC_PULSE0);
+	delay(20);
+
+	/*
+	 * Try to cause a triple fault and watchdog reset by setting the
+	 * IDT to point to nothing.
+	 */
+	region.rd_limit = 0;
+	region.rd_base = 0;
+	lidt(&region);
+
+	/*
+	 * Try to cause a triple fault and watchdog reset by unmapping the
+	 * entire address space.
+	 */
+	bzero((caddr_t)PTD, NBPG);
+	pmap_update(); 
+
+	for (;;);
 }
