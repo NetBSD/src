@@ -1,0 +1,2 @@
+# $NetBSD: md.x86_64,v 1.1 2003/03/06 23:42:53 fvdl Exp $
+./etc/ttyaction		etc-sys-etc
