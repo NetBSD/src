@@ -1,4 +1,4 @@
-/*	$NetBSD: rwlock.h,v 1.1.2.2 2002/03/17 06:50:55 thorpej Exp $	*/
+/*	$NetBSD: rwlock.h,v 1.1.2.3 2002/03/17 20:18:55 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -66,11 +66,15 @@
  *	RWLOCK_INIT(rwl)
  *		Initialize the rwlock.
  *
- *	RWLOCK_ACQUIRE(rwl, old, new, actual)
- *		Perform an atomic "compare and swap" operation such
- *		that:
- *			if ((actual = rwl->rwl_owner) == old)
+ *	RWLOCK_ACQUIRE(rwl, old, new)
+ *		Perform an atomic "compare and swap" operation and
+ *		evaluate to true or false according to the success
+ *		of the operation, such that:
+ *			if (rwl->rwl_owner == old) {
  *				rwl->rwl_owner = new;
+ *				return 1;
+ *			} else
+ *				return 0;
  *
  *	RWLOCK_RELEASE(rwl, old, new, actual)
  *		As above, but for releasing the lock.
@@ -78,7 +82,6 @@
  *	RWLOCK_SET_WAITERS(rwl, need_wait, set_wait)
  *		Set the has-waiters indication.  If the needs-waiting
  *		condition becomes false, abort the operation.
- *		Memory barriers are for the "acquire
  *
  *	RWLOCK_GIVE(rwl, new)
  *		Give the lock to the receiver (direct-handoff).
@@ -87,7 +90,7 @@
  *		Receive the lock from the giver (direct-handoff).
  *
  *	RWLOCK_THREAD
- *		Mask if valid thread/count bits.
+ *		Mask of valid thread/count bits.
  */
 
 typedef int krw_t;
