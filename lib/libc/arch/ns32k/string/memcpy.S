@@ -6,7 +6,7 @@
 #include <machine/asm.h>
 
 #if defined(LIBC_SCCS)
-	RCSID("$NetBSD: memcpy.S,v 1.1 1996/09/24 09:29:59 matthias Exp $")
+	RCSID("$NetBSD: memcpy.S,v 1.2 1996/11/07 07:43:02 matthias Exp $")
 #endif
 
 #if !defined(BCOPY) && !defined(MEMMOVE)
@@ -24,6 +24,10 @@ ENTRY(memcpy)
  *	copy len bytes from the string s to d.
  *	s and d may overlap.
  */
+
+# ifdef _KERNEL
+ALTENTRY(ovbcopy,bcopy)
+# endif
 
 ENTRY(bcopy)
 #else
