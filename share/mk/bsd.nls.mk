@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.nls.mk,v 1.5 1997/05/06 20:54:37 mycroft Exp $
+#	$NetBSD: bsd.nls.mk,v 1.6 1997/05/06 21:29:42 mycroft Exp $
 
 .if !target(.MAIN)
 .if exists(${.CURDIR}/../Makefile.inc)
@@ -43,6 +43,7 @@ nlsinstall:: ${DESTDIR}${NLSDIR}/${F:T:R}/${NLSNAME}.cat
 ${DESTDIR}${NLSDIR}/${F:T:R}/${NLSNAME}.cat: .MADE
 .endif
 
+.PRECIOUS: ${DESTDIR}${NLSDIR}/${F:T:R}/${NLSNAME}.cat
 ${DESTDIR}${NLSDIR}/${F:T:R}/${NLSNAME}.cat: ${F}
 	${INSTALL} -d ${.TARGET:H}
 	${INSTALL} ${COPY} -o ${NLSOWN} -g ${NLSGRP} -m ${NLSMODE} ${.ALLSRC} \
