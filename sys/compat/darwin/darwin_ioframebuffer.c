@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_ioframebuffer.c,v 1.7 2003/05/14 15:50:38 manu Exp $ */
+/*	$NetBSD: darwin_ioframebuffer.c,v 1.8 2003/05/14 18:28:05 manu Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_ioframebuffer.c,v 1.7 2003/05/14 15:50:38 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_ioframebuffer.c,v 1.8 2003/05/14 18:28:05 manu Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -48,14 +48,21 @@ __KERNEL_RCSID(0, "$NetBSD: darwin_ioframebuffer.c,v 1.7 2003/05/14 15:50:38 man
 #include <sys/proc.h>
 #include <sys/device.h>
 
+#include <uvm/uvm_extern.h>
+#include <uvm/uvm_map.h>
+#include <uvm/uvm.h>
+
 #include <compat/mach/mach_types.h>
 #include <compat/mach/mach_message.h>
 #include <compat/mach/mach_port.h>
 #include <compat/mach/mach_errno.h>
 #include <compat/mach/mach_iokit.h>
 
-#include <compat/darwin/darwin_ioframebuffer.h>
 #include <compat/darwin/darwin_iokit.h>
+#include <compat/darwin/darwin_ioframebuffer.h>
+
+static struct uvm_object *darwin_ioframebuffer_shmem = NULL;
+static void darwin_ioframebuffer_shmeminit(vaddr_t);
 
 /* This is ugly, but we hope to see it going away quickly */
 
@@ -81,7 +88,7 @@ struct mach_iokit_devclass darwin_ioframebuffer_devclass = {
 	darwin_ioframebuffer_connect_method_scalari_scalaro,
 	darwin_ioframebuffer_connect_method_scalari_structo,
 	darwin_ioframebuffer_connect_method_structi_structo,
-	NULL,
+	darwin_ioframebuffer_connect_map_memory,
 	"IOFramebuffer",
 };
 
@@ -344,4 +351,98 @@ darwin_ioframebuffer_connect_method_structi_structo(args)
 	*msglen = sizeof(*rep) - (4096 - rep->rep_outcount);
 	rep->rep_msgh.msgh_size = *msglen - sizeof(rep->rep_trailer);
 	return 0;
+}
+
+int 
+darwin_ioframebuffer_connect_map_memory(args)
+	struct mach_trap_args *args;
+{
+	mach_io_connect_map_memory_request_t *req = args->smsg;
+	mach_io_connect_map_memory_reply_t *rep = args->rmsg;
+	size_t *msglen = args->rsize;
+	struct proc *p = args->l->l_proc;
+	int error;
+	size_t memsize;
+	size_t len;
+	vaddr_t pvaddr;
+	vaddr_t kvaddr;
+
+#ifdef DEBUG_DARWIN
+	printf("darwin_ioframebuffer_connect_map_memory()\n");
+#endif
+	switch (req->req_memtype) {
+	case DARWIN_IOFRAMEBUFFER_CURSOR_MEMORY:
+		len = sizeof(struct darwin_ioframebuffer_shmem);
+		memsize = round_page(len);
+		if (darwin_ioframebuffer_shmem == NULL) {
+			darwin_ioframebuffer_shmem = uao_create(memsize, 0);
+
+			error = uvm_map(kernel_map, &kvaddr, memsize,
+			    darwin_ioframebuffer_shmem, 0, PAGE_SIZE,
+			    UVM_MAPFLAG(UVM_PROT_RW, UVM_PROT_RW,
+			    UVM_INH_SHARE, UVM_ADV_RANDOM, 0));
+			if (error != 0) {
+				uao_detach(darwin_ioframebuffer_shmem);
+				darwin_ioframebuffer_shmem = NULL;
+				return mach_msg_error(args, error);
+			}
+
+			if ((error = uvm_map_pageable(kernel_map, kvaddr,
+			    kvaddr + memsize, FALSE, 0)) != 0) {
+				uao_detach(darwin_ioframebuffer_shmem);
+				darwin_ioframebuffer_shmem = NULL;
+				return mach_msg_error(args, error);
+			}
+
+			darwin_ioframebuffer_shmeminit(kvaddr);
+		}
+
+		uao_reference(darwin_ioframebuffer_shmem);
+		pvaddr = VM_DEFAULT_ADDRESS(p->p_vmspace->vm_daddr, memsize);
+
+		if ((error = uvm_map(&p->p_vmspace->vm_map, &pvaddr,
+		    memsize, darwin_ioframebuffer_shmem, 0, PAGE_SIZE,
+		    UVM_MAPFLAG(UVM_PROT_RW, UVM_PROT_RW,
+		    UVM_INH_SHARE, UVM_ADV_RANDOM, 0))) != 0) 
+			return mach_msg_error(args, error);
+
+#ifdef DEBUG_DARWIN
+		printf("pvaddr = 0x%08lx\n", (long)pvaddr);
+#endif
+		break;
+
+	case DARWIN_IOFRAMEBUFFER_SYSTEM_APERTURE:
+	case DARWIN_IOFRAMEBUFFER_VRAM_MEMORY:
+	default:
+#ifdef DEBUG_DARWIN
+		printf("unimplemented memtype %d\n", req->req_memtype);
+#endif
+		return mach_msg_error(args, EINVAL);
+		break;
+	}
+
+	rep->rep_msgh.msgh_bits =
+	    MACH_MSGH_REPLY_LOCAL_BITS(MACH_MSG_TYPE_MOVE_SEND_ONCE);
+	rep->rep_msgh.msgh_size = sizeof(*rep) - sizeof(rep->rep_trailer);
+	rep->rep_msgh.msgh_local_port = req->req_msgh.msgh_local_port;
+	rep->rep_msgh.msgh_id = req->req_msgh.msgh_id + 100;
+	rep->rep_retval = 0;
+	rep->rep_addr = pvaddr;
+	rep->rep_len = len;
+	rep->rep_trailer.msgh_trailer_size = 8;
+
+	*msglen = sizeof(*rep);
+
+	return 0;
+}
+
+void
+darwin_ioframebuffer_shmeminit(kvaddr)
+	vaddr_t kvaddr;
+{
+	struct darwin_ioframebuffer_shmem *shmem;
+
+	shmem = (struct darwin_ioframebuffer_shmem *)kvaddr;
+
+	return;
 }

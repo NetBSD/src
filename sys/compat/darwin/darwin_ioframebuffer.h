@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_ioframebuffer.h,v 1.5 2003/05/14 14:41:05 manu Exp $ */
+/*	$NetBSD: darwin_ioframebuffer.h,v 1.6 2003/05/14 18:28:05 manu Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -41,11 +41,41 @@
 
 extern struct mach_iokit_devclass darwin_ioframebuffer_devclass;
 
+#define DARWIN_IOFRAMEBUFFER_CURSOR_MEMORY	100
+#define DARWIN_IOFRAMEBUFFER_VRAM_MEMORY	110
+#define DARWIN_IOFRAMEBUFFER_SYSTEM_APERTURE	0
+
+struct darwin_ioframebuffer_shmem {
+	darwin_ev_lock_data_t dis_sem;
+	char dis_cursshow;
+	char dis_sursobscured;
+	char dis_shieldflag;
+	char dis_dhielded;
+	darwin_iogbounds dis_saverect;
+	darwin_iogbounds dis_shieldrect;
+	darwin_iogpoint dis_location;
+	darwin_iogbounds dis_cursrect;
+	darwin_iogbounds dis_oldcursrect;
+	darwin_iogbounds dis_screen;
+	int version;
+	darwin_absolutetime dis_vbltime;
+	darwin_absolutetime dis_vbldelta;
+	unsigned int dis_reserved1[30];
+	unsigned char dis_hwcurscapable;
+	unsigned char dis_hwcursactive;
+	unsigned char dis_hwcursshields;
+	unsigned char dis_reserved2;
+	darwin_iogsize dis_cursorsize[4];
+	darwin_iogpoint dis_hotspot[4];
+	unsigned char dis_curs[0];
+};
+
 int 
 darwin_ioframebuffer_connect_method_scalari_scalaro(struct mach_trap_args *);
 int 
 darwin_ioframebuffer_connect_method_scalari_structo(struct mach_trap_args *);
 int
 darwin_ioframebuffer_connect_method_structi_structo(struct mach_trap_args *);
+int darwin_ioframebuffer_connect_map_memory(struct mach_trap_args *);
 
 #endif /* _DARWIN_IOFRAMEBUFFER_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_iokit.c,v 1.16 2003/05/14 14:41:04 manu Exp $ */
+/*	$NetBSD: mach_iokit.c,v 1.17 2003/05/14 18:28:04 manu Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include "opt_compat_darwin.h"
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_iokit.c,v 1.16 2003/05/14 14:41:04 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_iokit.c,v 1.17 2003/05/14 18:28:04 manu Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -958,5 +958,25 @@ mach_io_connect_set_properties(args)
 	rep->rep_trailer.msgh_trailer_size = 8;
 
 	*msglen = sizeof(*rep); 
+	return 0;
+}
+
+int
+mach_io_service_close(args)
+	struct mach_trap_args *args;
+{
+	mach_io_service_close_request_t *req = args->smsg;
+	mach_io_service_close_reply_t *rep = args->rmsg;
+	size_t *msglen = args->rsize; 
+
+	rep->rep_msgh.msgh_bits = 
+	    MACH_MSGH_REPLY_LOCAL_BITS(MACH_MSG_TYPE_MOVE_SEND_ONCE);
+	rep->rep_msgh.msgh_size = sizeof(*rep) - sizeof(rep->rep_trailer);
+	rep->rep_msgh.msgh_local_port = req->req_msgh.msgh_local_port;
+	rep->rep_msgh.msgh_id = req->req_msgh.msgh_id + 100;
+	rep->rep_retval = 0;
+	rep->rep_trailer.msgh_trailer_size = 8;
+
+	*msglen = sizeof(*rep);
 	return 0;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_iohidsystem.h,v 1.3 2003/04/29 22:16:39 manu Exp $ */
+/*	$NetBSD: darwin_iohidsystem.h,v 1.4 2003/05/14 18:28:05 manu Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -40,25 +40,6 @@
 #define	_DARWIN_IOHIDSYSTEM_H_
 
 extern struct mach_iokit_devclass darwin_iohidsystem_devclass;
-
-typedef volatile int darwin_ev_lock_data_t; /* aka IOSharedLockData */
-
-typedef struct {
-	int16_t x;
-	int16_t y;
-} darwin_iogpoint;
-
-typedef struct {
-	int16_t width;
-	int16_t height;
-} darwin_iogsize;
-
-typedef struct {
-	int16_t minx;
-	int16_t maxx;
-	int16_t miny;
-	int16_t maxy;
-} darwin_iogbounds;
 
 /* Events and event queue */
 
