@@ -1,0 +1,330 @@
+/*	$NetBSD: menus.mi.en,v 1.33 1999/06/20 05:48:45 cgd Exp $	*/
+
+/*
+ * Copyright 1997 Piermont Information Systems Inc.
+ * All rights reserved.
+ *
+ * Written by Philip A. Nelson for Piermont Information Systems Inc.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *      This product includes software develooped for the NetBSD Project by
+ *      Piermont Information Systems Inc.
+ * 4. The name of Piermont Information Systems Inc. may not be used to endorse
+ *    or promote products derived from this software without specific prior
+ *    written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY PIERMONT INFORMATION SYSTEMS INC. ``AS IS''
+ * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED. IN NO EVENT SHALL PIERMONT INFORMATION SYSTEMS INC. BE 
+ * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR 
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF 
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF 
+ * THE POSSIBILITY OF SUCH DAMAGE.
+ *
+ */
+
+/*
+ * Menu system definitions -- machine independent
+ *
+ * Some menus may be called directly in the code rather than via the 
+ * menu system.
+ *
+ *  This file must be first in the sed command line.
+ *
+ */
+
+{
+#include <stdio.h>
+#include <time.h>
+#include <curses.h>
+#include "defs.h"
+#include "md.h"
+#include "msg_defs.h"
+#include "menu_defs.h"
+}
+
+default y=12, no exit, scrollable;
+
+allow dynamic menus;
+
+menu netbsd, title "NetBSD-@@VERSION@@ Install System",
+    exit, exitstring "Exit Install System";
+	display action  { toplevel(); };
+	option "Install NetBSD to hard disk",
+		action { do_install(); };
+	option "Upgrade NetBSD on a hard disk",
+		action { do_upgrade(); };
+	option "Re-install sets or install additional sets",
+		action { do_reinstall_sets(); };
+	option "Reboot the computer", exit,
+		action { run_prog(0, 0, NULL, "/sbin/reboot"); };
+	option "Utility menu", sub menu utility;
+
+menu utility, title "NetBSD-@@VERSION@@ Utilities", exit;
+	option "Run /bin/sh",
+		action (endwin) { system("/bin/sh"); };
+/*	option "test", action { run_prog(0, 1, NULL, "/bin/pwd"); }; */
+	option "Configure network",
+		action {
+			extern int network_up;
+
+			network_up = 0;
+			config_network();
+		};
+/*	option "Partition a disk"; XXX add later.  */
+	option "Logging functions", action { do_logging(); };
+	option "Halt the system", exit,
+		action { run_prog(0, 0, NULL, "/sbin/halt"); };
+
+menu yesno, title "yes or no?";
+	option "Yes", exit, action  {yesno = 1;};
+	option "No",  exit, action  {yesno = 0;};
+
+menu noyes, title "yes or no?";
+	option "No",  exit, action  {yesno = 0;};
+	option "Yes", exit, action  {yesno = 1;};
+
+menu ok, title "Hit enter to continue";
+	option "ok", exit;
+
+menu layout, title  "Choose your installation";
+	option "Standard", 	  exit, action { layoutkind = 1; };
+	option "Standard with X", exit, action { layoutkind = 2; };
+	option "Custom", 	  exit, action { layoutkind = 3; };
+
+menu sizechoice, title  "Choose your size specifier";
+	option "Megabytes", exit, action 
+		{ sizemult = MEG / sectorsize;
+		  multname = msg_string(MSG_megname);
+		};
+	option "Cylinders", exit, action 
+		{ sizemult = dlcylsize; 
+		  multname = msg_string(MSG_cylname);
+		};
+	option "Sectors", exit, action 
+		{ sizemult = 1; 
+		  multname = msg_string(MSG_secname);
+		};
+
+menu fspartok, title "Partitions ok?", y=15;
+	display action  {
+		msg_display(MSG_fspart, multname);
+		disp_cur_fspart(-1, 0);
+	};
+	option "Change a partition", sub menu editfsparts;
+	option "Partitions are ok", exit;
+
+menu edfspart, title "Change what?", exit, y=15;
+	display action  {
+		msg_display (MSG_edfspart, 'a'+editpart);
+		disp_cur_fspart(editpart, 1);
+	};
+	option "FS kind", sub menu  selfskind;
+	option "Offset/size", action  
+		{	int start, size;
+			msg_display_add(MSG_defaultunit, multname);
+			start = getpartoff(MSG_offset, 0);
+			size = getpartsize(MSG_size, start, 0);
+			if (size == -1)
+				size = dlsize - start;
+			bsdlabel[editpart].pi_offset = start;
+			bsdlabel[editpart].pi_size = size;
+		};
+	option "Bsize/Fsize", action 
+		{	char buf[40]; int i;
+
+			if (bsdlabel[editpart].pi_fstype != FS_BSDFFS) {
+				msg_display (MSG_not42bsd, 'a'+editpart);
+				process_menu (MENU_ok);
+				return FALSE;
+			}
+			msg_prompt_add (MSG_bsize, NULL, buf, 40);
+			i = atoi(buf);
+			bsdlabel[editpart].pi_bsize = i;
+			msg_prompt_add (MSG_fsize, NULL, buf, 40);
+			i = atoi(buf);
+			bsdlabel[editpart].pi_fsize = i;
+		};
+	option "Mount point", action 
+		{	if (bsdlabel[editpart].pi_fstype == FS_BSDFFS ||
+			    bsdlabel[editpart].pi_fstype == FS_MSDOS)
+				msg_prompt_add (MSG_mountpoint, NULL,
+					fsmount[editpart], 20);
+			else {
+				msg_display (MSG_nomount, 'a'+editpart);
+				process_menu (MENU_ok);
+			}
+		};
+
+menu selfskind, title "Select the type", y=15;
+	option "4.2BSD", exit, action 
+			{ bsdlabel[editpart].pi_fstype = FS_BSDFFS;
+			  bsdlabel[editpart].pi_bsize  = 8192;
+			  bsdlabel[editpart].pi_fsize  = 1024;
+			};
+	option "unused", exit, action 
+			{ bsdlabel[editpart].pi_fstype = FS_UNUSED;
+			  bsdlabel[editpart].pi_bsize  = 0;
+			  bsdlabel[editpart].pi_fsize  = 0;
+			};
+	option "swap", exit, action 
+			{ bsdlabel[editpart].pi_fstype = FS_SWAP;
+			  bsdlabel[editpart].pi_bsize  = 0;
+			  bsdlabel[editpart].pi_fsize  = 0;
+			};
+	option "msdos", exit, action 
+			{ bsdlabel[editpart].pi_fstype = FS_MSDOS;
+			  bsdlabel[editpart].pi_bsize  = 0;
+			  bsdlabel[editpart].pi_fsize  = 0;
+			};
+
+
+menu distmedium, title "Select medium";
+	display action { msg_display (MSG_distmedium); nodist = 0; };
+	option "ftp",  action	{
+				  got_dist = get_via_ftp();
+			        },
+				exit;
+	option "nfs",  action	{ 
+				  got_dist = get_via_nfs();
+			 	}, exit;
+	option "cdrom", action  {
+				  got_dist = get_via_cdrom();
+				}, exit; 
+	option "floppy", action {
+			          got_dist = get_via_floppy(); 
+				}, exit;
+	option "unmounted fs", action {
+				  got_dist = get_via_localfs(); 
+				}, exit;
+	option "local dir", action {
+				   got_dist = get_via_localdir();
+				 }, exit;
+	option "none",  action { nodist = 1; }, exit;
+
+menu distset, title "Select your distribution";
+	display action { msg_display (MSG_distset); };
+	option "Full installation", exit;
+	option "Custom installation", next menu md_distcustom;
+
+menu ftpsource, title "Change";
+	display action
+		{ msg_display (MSG_ftpsource, ftp_host, ftp_dir, ftp_user);
+		  if (strcmp(ftp_user, "ftp") == 0)
+			msg_printf_add ("%s", ftp_pass);
+		  else if (strlen(ftp_pass) != 0)
+			msg_printf_add ("** hidden **", ftp_pass);
+		};
+	option "Host", action
+		{ msg_prompt (MSG_host, ftp_host, ftp_host, 255); };
+	option "Directory", action
+		{ msg_prompt (MSG_dir, ftp_dir, ftp_dir, 255); };
+	option "User", action
+		{ msg_prompt (MSG_user, ftp_user, ftp_user, 255); };
+	option "Password", action
+		{ if (strcmp(ftp_user, "ftp") == 0)
+			msg_prompt (MSG_email, ftp_pass, ftp_pass, 255);
+		  else {
+			msg_noecho ();
+			msg_prompt (MSG_passwd, "", ftp_pass, 255);
+			msg_echo ();
+		  }
+		};
+	option "Get Distribution", exit;
+
+menu nfssource, title "Change";
+	display action
+		{ msg_display (MSG_nfssource, nfs_host, nfs_dir); };
+	option "Host", action
+		{ msg_prompt (MSG_host, NULL, nfs_host, 255); };
+	option "Directory", action
+		{ msg_prompt (MSG_dir, NULL, nfs_dir, 255); };
+	option "Continue", exit;
+
+menu nfsbadmount, title "What do you want to do?";
+	option "Try again", exit, sub menu nfssource, action
+		{ yesno = 1; ignorerror = 0; };
+	option "Give up", exit, action
+		{ yesno = 0; ignorerror = 0; };
+	option "Ignore, continue anyway", exit, action
+		{ yesno = 1; ignorerror = 1; };
+
+
+menu fdremount, title "What do you want to do?";
+	option "Try again", exit, action { yesno = 1; };
+	option "Abort install", exit, action { yesno = 0; };
+
+menu fdok, title "Hit enter to continue";
+	option "OK", exit, action { yesno = 1; };
+	option "Abort install", exit, action { yesno = 0; };
+
+
+menu cdromsource, title "Change";
+	display action
+		{ msg_display (MSG_cdromsource, cdrom_dev, cdrom_dir); };
+	option "Device", action
+		{ msg_prompt (MSG_dev, cdrom_dev, cdrom_dev, SSTRSIZE); };
+	option "Directory", action
+		{ msg_prompt (MSG_dir, cdrom_dir, cdrom_dir, STRSIZE); };
+	option "Continue", exit;
+
+menu cdrombadmount, title "What do you want to do?";
+	option "Try again", exit, sub menu cdromsource, action
+		{ yesno = 1; ignorerror = 0; };
+	option "Give up", exit, action
+		{ yesno = 0; ignorerror = 0; };
+	option "Ignore, continue anyway", exit, action
+		{ yesno = 1; ignorerror = 1; };
+
+
+menu localfssource, title "Change";
+	display action
+		{ msg_display (MSG_localfssource, localfs_dev, localfs_fs, localfs_dir); };
+	option "Device", action
+		{ msg_prompt (MSG_dev, localfs_dev, localfs_dev, SSTRSIZE); };
+	option "Filesystem", action
+		{ msg_prompt (MSG_filesys, localfs_fs, localfs_fs, STRSIZE); };
+	option "Directory", action
+		{ msg_prompt (MSG_dir, localfs_dir, localfs_dir, STRSIZE); };
+	option "Continue", exit;
+
+menu localfsbadmount, title "What do you want to do?";
+	option "Try again", exit, sub menu localfssource, action
+		{ yesno = 1; ignorerror = 0; };
+	option "Give up", exit, action
+		{ yesno = 0; ignorerror = 0; };
+	option "Ignore, continue anyway", exit, action
+		{ yesno = 1; ignorerror = 1; };
+
+menu localdirsource, title "Change";
+	display action
+		{ msg_display(MSG_localdir, localfs_dir); };
+	option "Directory", action
+		{ msg_prompt (MSG_dir, localfs_dir, localfs_dir, STRSIZE); },
+		exit;
+	option "Continue", exit;
+
+menu localdirbad, title "What do you want to do?";
+	option "Change directory path",  action
+		{ yesno = 1;
+	          msg_prompt(MSG_localdir, localfs_dir, localfs_dir, STRSIZE);
+		}, exit;
+	option "Give up", exit, action
+		{ yesno = 0; ignorerror = 0; };
+	option "Ignore, continue anyway", exit, action
+		{ yesno = 1; ignorerror = 1; };
+
+
