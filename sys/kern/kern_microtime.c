@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_microtime.c,v 1.4.4.1 2004/06/22 08:49:57 tron Exp $	*/
+/*	$NetBSD: kern_microtime.c,v 1.4.4.2 2004/07/04 12:34:32 he Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -54,7 +54,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: kern_microtime.c,v 1.4.4.1 2004/06/22 08:49:57 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_microtime.c,v 1.4.4.2 2004/07/04 12:34:32 he Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -83,7 +83,7 @@ cc_microtime(struct timeval *tvp)
 	static struct simplelock microtime_slock = SIMPLELOCK_INITIALIZER;
 	struct timeval t;
 	struct cpu_info *ci = curcpu();
-	int64_t sec, usec;
+	int64_t cc, sec, usec;
 	int s;
 
 #ifdef MULTIPROCESSOR
@@ -97,18 +97,19 @@ cc_microtime(struct timeval *tvp)
 		 * Determine the current clock time as the time at last
 		 * microset() call, plus the CC accumulation since then.
 		 * This time should lie in the interval between the current
-		 * master clock time and the time at the nexdt tick, but
+		 * master clock time and the time at the next tick, but
 		 * this code does not explicitly require that in the interest
 		 * of speed.  If something ugly occurs, like a settimeofday()
 		 * call, the processors may disagree among themselves for not
 		 * more than the interval between microset() calls.  In any
 		 * case, the following sanity checks will suppress timewarps.
 		 */
+		simple_lock(&microtime_slock);
 		t = ci->ci_cc_time;
-		usec = cpu_counter32() - ci->ci_cc_cc;
-		if (usec < 0)
-			usec += 0x100000000LL;
-		t.tv_usec += (usec * ci->ci_cc_ms_delta) / ci->ci_cc_denom;
+		cc = cpu_counter32() - ci->ci_cc_cc;
+		if (cc < 0)
+			cc += 0x100000000LL;
+		t.tv_usec += (cc * ci->ci_cc_ms_delta) / ci->ci_cc_denom;
 		while (t.tv_usec >= 1000000) {
 			t.tv_usec -= 1000000;
 			t.tv_sec++;
@@ -118,6 +119,7 @@ cc_microtime(struct timeval *tvp)
 		 * Can't use the CC -- just use the system time.
 		 */
 		/* XXXSMP: not atomic */
+		simple_lock(&microtime_slock);
 		t = time;
 	}
 
@@ -130,7 +132,6 @@ cc_microtime(struct timeval *tvp)
 	 * human equivalent is presumed to be correctly implemented and
 	 * to set the clock backward only upon unavoidable crisis.
 	 */
-	simple_lock(&microtime_slock);
 	sec = lasttime.tv_sec - t.tv_sec;
 	usec = lasttime.tv_usec - t.tv_usec;
 	if (usec < 0) {
