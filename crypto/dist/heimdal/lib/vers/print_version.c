@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998 - 2003 Kungliga Tekniska Högskolan
+ * Copyright (c) 1998 - 2004 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden). 
  * All rights reserved. 
  *
@@ -34,8 +34,8 @@
 #ifdef HAVE_CONFIG_H
 #include <config.h>
 #ifdef __RCSID
-__RCSID("$Heimdal: print_version.c,v 1.6 2003/01/02 15:32:50 joda Exp $"
-        "$NetBSD: print_version.c,v 1.6 2003/06/23 20:02:53 aymeric Exp $");
+__RCSID("$Heimdal: print_version.c,v 1.6.2.1 2004/02/12 18:31:33 joda Exp $"
+        "$NetBSD: print_version.c,v 1.7 2004/04/02 14:59:48 lha Exp $");
 #endif /* __RCSID */
 #endif
 #include "roken.h"
