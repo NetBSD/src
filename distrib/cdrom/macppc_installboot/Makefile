@@ -1,7 +1,13 @@
+#	$NetBSD: Makefile,v 1.2 2002/09/29 06:38:19 lukem Exp $
+
+NOMAN=	# defined
+
+.include <bsd.own.mk>
+
 PROG=		macppc_installboot
-CPPFLAGS+=	-I/sys/arch
-CLEANFILES+=	mkmacppcboot macppcboot.raw
-NOMAN=1
+CPPFLAGS+=	-I${NETBSDSRCDIR}/sys/arch
+
+CLEANFILES+=	mkmacppcboot
 
 .include <bsd.prog.mk>
 
@@ -10,5 +16,3 @@ mkmacppcboot: mkmacppcboot.c
 
 macppcboot.raw: mkmacppcboot bootxx.raw
 	./mkmacppcboot <${.CURDIR}/bootxx.raw >$@
-
-all: macppcboot.raw
