@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.h,v 1.1 2001/01/10 19:02:08 bjh21 Exp $	*/
+/*	$NetBSD: trap.h,v 1.2 2001/01/18 20:42:03 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1995 Mark Brinicombe.
@@ -47,6 +47,11 @@
  * needs an undefined instruction as a break point.
  * Ideally ARM would define several standard instruction
  * sequences for use as breakpoints.
+ * The BKPT instruction isn't much use to us, since its
+ * behaviour is unpredictable on ARMv3 and lower.
+ *
+ * The ARM ARM says that for maximum compatibility, we should use undefined
+ * instructions that look like 0x.7f...f. .
  */
 
 #define GDB_BREAKPOINT		0xe6000011	/* Used by GDB */
