@@ -1,4 +1,4 @@
-/*	$NetBSD: z8530var.h,v 1.4 1996/10/16 20:34:54 gwr Exp $	*/
+/*	$NetBSD: z8530var.h,v 1.5 1996/10/23 00:38:05 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -49,11 +49,13 @@
 /*
  * Function vector - per channel
  */
+struct zs_chanstate;
+typedef void	(*zsop_t) __P((struct zs_chanstate *));
 struct zsops {
-	void	(*zsop_rxint)();	/* receive char available */
-	void	(*zsop_stint)();	/* external/status */
-	void	(*zsop_txint)();	/* xmit buffer empty */
-	void	(*zsop_softint)();	/* process software interrupt */
+	zsop_t	zsop_rxint; 	/* receive char available */
+	zsop_t	zsop_stint; 	/* external/status */
+	zsop_t	zsop_txint; 	/* xmit buffer empty */
+	zsop_t	zsop_softint;	/* process software interrupt */
 };
 
 extern struct zsops zsops_null;
@@ -74,7 +76,8 @@ struct zs_chanstate {
 
 	int	cs_brg_clk;		/* BAUD Rate Generator clock
 					 * (usually PCLK / 16) */
-	int	cs_defspeed;		/* default baud rate (from PROM) */
+	int	cs_defspeed;		/* default baud rate */
+	int	cs_defcflag;		/* default cflag */
 
 	/*
 	 * We must keep a copy of the write registers as they are
@@ -91,22 +94,56 @@ struct zs_chanstate {
 	 */
 	u_char	cs_creg[16];		/* current values */
 	u_char	cs_preg[16];		/* pending values */
+	int 	cs_heldchange;		/* change pending (creg != preg) */
 
-	u_char	cs_heldchange;		/* change pending (creg != preg) */
 	u_char	cs_rr0;			/* last rr0 processed */
 	u_char	cs_rr0_delta;		/* rr0 changes at status intr. */
+	u_char	cs_rr0_dcd;		/* which bit to read as DCD */
+	u_char	cs_rr0_cts;		/* which bit to read as CTS */
+	/* the above is set only while CRTSCTS is enabled. */
+
+	u_char	cs_wr5_dtr;		/* which bit to write as DTR */
+	u_char	cs_wr5_rts;		/* which bit to write as RTS */
+	/* the above is set only while CRTSCTS is enabled. */
 
 	char	cs_softreq;		/* need soft interrupt call */
+	char	cs_pad[1];
+	/* MD code might define a larger variant of this. */
 };
 
 struct zsc_softc {
 	struct	device zsc_dev;		/* required first: base device */
-	struct	zs_chanstate zsc_cs[2];	/* channel A and B soft state */
+	struct	zs_chanstate *zsc_cs[2];	/* channel A and B soft state */
+	/* MD code might define a larger variant of this. */
 };
 
 struct zsc_attach_args {
 	int channel;	/* two serial channels per zsc */
 	int hwflags;
 };
-#define ZS_HWFLAG_CONSOLE 1
+#define ZS_HWFLAG_CONSOLE	1
+#define ZS_HWFLAG_NO_DCD	2	/* Ignore the DCD bit */
+#define ZS_HWFLAG_NO_CTS	4	/* Ignore the CTS bit */
+#define ZS_HWFLAG_RAW   	8	/* advise raw mode */
+
+int 	zsc_intr_soft __P((void *));
+int 	zsc_intr_hard __P((void *));
+
+void	zs_abort __P((struct zs_chanstate *));
+void	zs_break __P((struct zs_chanstate *, int));
+void	zs_iflush __P((struct zs_chanstate *));
+void	zs_loadchannelregs __P((struct zs_chanstate *));
+int 	zs_set_speed __P((struct zs_chanstate *, int));
+int 	zs_set_modes __P((struct zs_chanstate *, int));
+
+u_char zs_read_reg __P((struct zs_chanstate *, u_char));
+void  zs_write_reg __P((struct zs_chanstate *, u_char, u_char));
+
+u_char zs_read_csr __P((struct zs_chanstate *));
+void  zs_write_csr __P((struct zs_chanstate *, u_char));
+
+u_char zs_read_data __P((struct zs_chanstate *));
+void  zs_write_data __P((struct zs_chanstate *, u_char));
+
+extern int zs_major;
 
