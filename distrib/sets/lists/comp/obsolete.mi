@@ -1,4 +1,4 @@
-# $NetBSD: obsolete.mi,v 1.66 2002/04/03 15:57:39 wiz Exp $
+# $NetBSD: obsolete.mi,v 1.67 2002/05/06 05:29:09 lukem Exp $
 /usr/bin/genclass
 /usr/bin/gettextize
 /usr/include/bfd
@@ -257,6 +257,7 @@
 /usr/include/dev/sun/event_var.h
 /usr/include/dev/sun/kbd_tables.h
 /usr/include/dev/sun/kbd_xlate.h
+/usr/include/dev/sun/sun_boot.h
 /usr/include/dev/tc/ascvar.h
 /usr/include/dev/tc/clockvar.h
 /usr/include/dev/tc/if_levar.h
@@ -708,9 +709,9 @@
 /usr/share/man/cat9/disk_detatch.0
 /usr/share/man/cat9/uvm_vnp_sync.0
 /usr/share/man/cat9/uvm_vnp_terminate.0
+/usr/share/man/cat9/vn_marktext.0
 /usr/share/man/cat9/vslock.0
 /usr/share/man/cat9/vsunlock.0
-/usr/share/man/cat9/vn_marktext.0
 /usr/share/man/man2/arm32_drain_writebuf.2
 /usr/share/man/man2/arm32_sync_icache.2
 /usr/share/man/man3/MD5_Init.3
@@ -791,9 +792,9 @@
 /usr/share/man/man9/disk_detatch.9
 /usr/share/man/man9/uvm_vnp_sync.9
 /usr/share/man/man9/uvm_vnp_terminate.9
+/usr/share/man/man9/vn_marktext.9
 /usr/share/man/man9/vslock.9
 /usr/share/man/man9/vsunlock.9
-/usr/share/man/man9/vn_marktext.9
 /usr/share/misc/gprof.callg
 /usr/share/misc/gprof.flat
 /usr/share/mk/bsd.crypto.mk

@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.438 2002/05/02 15:39:45 wiz Exp $
+#	$NetBSD: mi,v 1.439 2002/05/06 05:29:08 lukem Exp $
 ./sys				comp-sysutil-root
 ./usr/bin/addr2line		comp-debug-bin
 ./usr/bin/ar			comp-util-bin
@@ -181,7 +181,6 @@
 ./usr/include/dev/sun/fbio.h		comp-c-include
 ./usr/include/dev/sun/kbd_reg.h		comp-c-include
 ./usr/include/dev/sun/kbio.h		comp-c-include
-./usr/include/dev/sun/sun_boot.h	comp-c-include
 ./usr/include/dev/sun/vuid_event.h	comp-c-include
 ./usr/include/dev/tc			comp-c-include
 ./usr/include/dev/tc/sfbreg.h		comp-c-include
@@ -683,6 +682,7 @@
 ./usr/include/sys/ansi.h		comp-c-include
 ./usr/include/sys/ataio.h		comp-c-include
 ./usr/include/sys/audioio.h		comp-c-include
+./usr/include/sys/bootinfo.h		comp-c-include
 ./usr/include/sys/bswap.h		comp-c-include
 ./usr/include/sys/buf.h			comp-c-include
 ./usr/include/sys/callout.h		comp-c-include
@@ -882,6 +882,12 @@
 ./usr/include/zlib.h			comp-c-include
 ./usr/lib/crt0.o		comp-c-lib
 ./usr/lib/gcrt0.o		comp-c-lib
+./usr/lib/i18n/libBIG5.a	comp-i18n-lib
+./usr/lib/i18n/libEUC.a		comp-i18n-lib
+./usr/lib/i18n/libEUCTW.a	comp-i18n-lib
+./usr/lib/i18n/libISO2022.a	comp-i18n-lib
+./usr/lib/i18n/libMSKanji.a	comp-i18n-lib
+./usr/lib/i18n/libUTF8.a	comp-i18n-lib
 ./usr/lib/libasn1.a		comp-c-lib
 ./usr/lib/libasn1_p.a		comp-c-proflib
 ./usr/lib/libbz2.a		comp-c-lib
@@ -988,12 +994,6 @@
 ./usr/lib/liby_p.a		comp-c-proflib
 ./usr/lib/libz.a		comp-c-lib
 ./usr/lib/libz_p.a		comp-c-proflib
-./usr/lib/i18n/libBIG5.a	comp-i18n-lib
-./usr/lib/i18n/libEUC.a		comp-i18n-lib
-./usr/lib/i18n/libEUCTW.a	comp-i18n-lib
-./usr/lib/i18n/libISO2022.a	comp-i18n-lib
-./usr/lib/i18n/libMSKanji.a	comp-i18n-lib
-./usr/lib/i18n/libUTF8.a	comp-i18n-lib
 ./usr/libexec/cc1			comp-c-bin
 ./usr/libexec/cc1obj			comp-objc-bin
 ./usr/libexec/cc1plus			comp-cxx-bin
@@ -2717,8 +2717,6 @@
 ./usr/share/man/cat3/warn.0	comp-c-catman
 ./usr/share/man/cat3/warnx.0	comp-c-catman
 ./usr/share/man/cat3/wcrtomb.0	comp-c-catman
-./usr/share/man/cat3/wcsrtombs.0	comp-c-catman
-./usr/share/man/cat3/wcstombs.0	comp-c-catman
 ./usr/share/man/cat3/wcscat.0		comp-c-catman
 ./usr/share/man/cat3/wcschr.0		comp-c-catman
 ./usr/share/man/cat3/wcscmp.0		comp-c-catman
@@ -2732,8 +2730,10 @@
 ./usr/share/man/cat3/wcsncpy.0		comp-c-catman
 ./usr/share/man/cat3/wcspbrk.0		comp-c-catman
 ./usr/share/man/cat3/wcsrchr.0		comp-c-catman
+./usr/share/man/cat3/wcsrtombs.0	comp-c-catman
 ./usr/share/man/cat3/wcsspn.0		comp-c-catman
 ./usr/share/man/cat3/wcsstr.0		comp-c-catman
+./usr/share/man/cat3/wcstombs.0	comp-c-catman
 ./usr/share/man/cat3/wctomb.0	comp-c-catman
 ./usr/share/man/cat3/wmemchr.0		comp-c-catman
 ./usr/share/man/cat3/wmemcmp.0		comp-c-catman
@@ -3393,8 +3393,8 @@
 ./usr/share/man/cat9/uvm_swap_init.0		comp-sys-catman
 ./usr/share/man/cat9/uvm_swapin.0		comp-sys-catman
 ./usr/share/man/cat9/uvm_sysctl.0		comp-sys-catman
-./usr/share/man/cat9/uvm_useracc.0		comp-sys-catman
 ./usr/share/man/cat9/uvm_unloan.0		comp-sys-catman
+./usr/share/man/cat9/uvm_useracc.0		comp-sys-catman
 ./usr/share/man/cat9/uvm_vnp_setsize.0		comp-sys-catman
 ./usr/share/man/cat9/uvm_vslock.0		comp-sys-catman
 ./usr/share/man/cat9/uvm_vsunlock.0		comp-sys-catman
@@ -4236,10 +4236,10 @@
 ./usr/share/man/man3/fflush.3		comp-c-man
 ./usr/share/man/man3/ffs.3		comp-c-man
 ./usr/share/man/man3/fgetc.3		comp-c-man
-./usr/share/man/man3/fgetwc.3		comp-c-man
 ./usr/share/man/man3/fgetln.3		comp-c-man
 ./usr/share/man/man3/fgetpos.3		comp-c-man
 ./usr/share/man/man3/fgets.3		comp-c-man
+./usr/share/man/man3/fgetwc.3		comp-c-man
 ./usr/share/man/man3/fileno.3		comp-c-man
 ./usr/share/man/man3/finite.3		comp-c-man
 ./usr/share/man/man3/finitef.3		comp-c-man
@@ -5198,8 +5198,6 @@
 ./usr/share/man/man3/warn.3		comp-c-man
 ./usr/share/man/man3/warnx.3		comp-c-man
 ./usr/share/man/man3/wcrtomb.3	comp-c-man
-./usr/share/man/man3/wcsrtombs.3	comp-c-man
-./usr/share/man/man3/wcstombs.3	comp-c-man
 ./usr/share/man/man3/wcscat.3		comp-c-man
 ./usr/share/man/man3/wcschr.3		comp-c-man
 ./usr/share/man/man3/wcscmp.3		comp-c-man
@@ -5213,8 +5211,10 @@
 ./usr/share/man/man3/wcsncpy.3		comp-c-man
 ./usr/share/man/man3/wcspbrk.3		comp-c-man
 ./usr/share/man/man3/wcsrchr.3		comp-c-man
+./usr/share/man/man3/wcsrtombs.3	comp-c-man
 ./usr/share/man/man3/wcsspn.3		comp-c-man
 ./usr/share/man/man3/wcsstr.3		comp-c-man
+./usr/share/man/man3/wcstombs.3	comp-c-man
 ./usr/share/man/man3/wctomb.3	comp-c-man
 ./usr/share/man/man3/wmemchr.3		comp-c-man
 ./usr/share/man/man3/wmemcmp.3		comp-c-man
@@ -5874,8 +5874,8 @@
 ./usr/share/man/man9/uvm_swap_init.9		comp-sys-man
 ./usr/share/man/man9/uvm_swapin.9		comp-sys-man
 ./usr/share/man/man9/uvm_sysctl.9		comp-sys-man
-./usr/share/man/man9/uvm_useracc.9		comp-sys-man
 ./usr/share/man/man9/uvm_unloan.9		comp-sys-man
+./usr/share/man/man9/uvm_useracc.9		comp-sys-man
 ./usr/share/man/man9/uvm_vnp_setsize.9		comp-sys-man
 ./usr/share/man/man9/uvm_vslock.9		comp-sys-man
 ./usr/share/man/man9/uvm_vsunlock.9		comp-sys-man
