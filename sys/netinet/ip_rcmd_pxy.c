@@ -1,14 +1,14 @@
-/*	$NetBSD: ip_rcmd_pxy.c,v 1.10 2004/03/28 09:00:57 martti Exp $	*/
+/*	$NetBSD: ip_rcmd_pxy.c,v 1.10.2.1 2004/08/13 03:55:58 jmc Exp $	*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: ip_rcmd_pxy.c,v 1.10 2004/03/28 09:00:57 martti Exp $");
+__KERNEL_RCSID(1, "$NetBSD: ip_rcmd_pxy.c,v 1.10.2.1 2004/08/13 03:55:58 jmc Exp $");
 
 /*
  * Copyright (C) 1998-2003 by Darren Reed
  *
  * See the IPFILTER.LICENCE file for details on licencing.
  *
- * Id: ip_rcmd_pxy.c,v 1.41 2004/01/27 00:31:38 darrenr Exp
+ * Id: ip_rcmd_pxy.c,v 1.41.2.2 2004/05/24 14:01:49 darrenr Exp
  *
  * Simple RCMD transparent proxy for in-kernel use.  For use with the NAT
  * code.
@@ -127,9 +127,13 @@ nat_t *nat;
 
 	m = fin->fin_m;
 	ip = fin->fin_ip;
-	off = (char *)tcp - MTOD(m, char *) + (TCP_OFF(tcp) << 2);
+	off = (char *)tcp - (char *)ip + (TCP_OFF(tcp) << 2) + fin->fin_ipoff;
 
+#ifdef __sgi
+	dlen = fin->fin_plen - off;
+#else
 	dlen = MSGDSIZE(m) - off;
+#endif
 	if (dlen <= 0)
 		return 0;
 
