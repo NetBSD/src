@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ep_pcmcia.c,v 1.1.2.12 1997/10/16 17:38:46 thorpej Exp $	*/
+/*	$NetBSD: if_ep_pcmcia.c,v 1.1.2.13 1997/10/16 19:45:37 thorpej Exp $	*/
 
 #include "bpfilter.h"
 
@@ -169,10 +169,8 @@ ep_pcmcia_attach(parent, self, aux)
 	 * having to be between 0x00 and 0x70 mod 0x100.  weird.
 	 */
 
-	/* XXX Will have to fix this!! */
-
 	if (pa->product == PCMCIA_PRODUCT_3COM_3C562) {
-		for (i = 0x300; i < 0x1000;
+		for (i = roundup(pa->pf->sc->iobase, 0x100); i < 0x1000;
 		    i += ((i % 0x100) == 0x70) ? 0x90 : 0x10) {
 			if (pcmcia_io_alloc(pa->pf, i, cfe->iospace[0].length,
 			    0, &psc->sc_pcioh) == 0)
