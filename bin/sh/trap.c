@@ -36,7 +36,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)trap.c	5.2 (Berkeley) 4/12/91";*/
-static char rcsid[] = "$Id: trap.c,v 1.4 1993/08/01 18:57:59 mycroft Exp $";
+static char rcsid[] = "$Id: trap.c,v 1.5 1993/08/06 21:50:18 mycroft Exp $";
 #endif /* not lint */
 
 #include "shell.h"
@@ -46,7 +46,6 @@ static char rcsid[] = "$Id: trap.c,v 1.4 1993/08/01 18:57:59 mycroft Exp $";
 #include "jobs.h"
 #include "options.h"
 #include "syntax.h"
-#include "signames.h"
 #include "output.h"
 #include "memalloc.h"
 #include "error.h"
@@ -69,10 +68,10 @@ static char rcsid[] = "$Id: trap.c,v 1.4 1993/08/01 18:57:59 mycroft Exp $";
 
 extern char nullstr[1];		/* null string */
 
-char *trap[MAXSIG+1];		/* trap handler commands */
-MKINIT char sigmode[MAXSIG];	/* current value of signal */
-char gotsig[MAXSIG];		/* indicates specified signal received */
-int pendingsigs;			/* indicates some signal received */
+char *trap[NSIG];		/* trap handler commands */
+MKINIT char sigmode[NSIG];	/* current value of signal */
+char gotsig[NSIG];		/* indicates specified signal received */
+int pendingsigs;		/* indicates some signal received */
 
 /*
  * The trap builtin.
@@ -84,7 +83,7 @@ trapcmd(argc, argv)  char **argv; {
 	int signo;
 
 	if (argc <= 1) {
-		for (signo = 0 ; signo <= MAXSIG ; signo++) {
+		for (signo = 0 ; signo < NSIG ; signo++) {
 			if (trap[signo] != NULL)
 				out1fmt("%d: %s\n", signo, trap[signo]);
 		}
@@ -96,7 +95,7 @@ trapcmd(argc, argv)  char **argv; {
 	else
 		action = *ap++;
 	while (*ap) {
-		if ((signo = number(*ap)) < 0 || signo > MAXSIG)
+		if ((signo = number(*ap)) < 0 || signo >= NSIG)
 			error("%s: bad trap", *ap);
 		INTOFF;
 		if (action)
@@ -122,7 +121,7 @@ void
 clear_traps() {
 	char **tp;
 
-	for (tp = trap ; tp <= &trap[MAXSIG] ; tp++) {
+	for (tp = trap ; tp < &trap[NSIG] ; tp++) {
 		if (*tp && **tp) {	/* trap not NULL or SIG_IGN */
 			INTOFF;
 			ckfree(*tp);
@@ -183,7 +182,7 @@ setsignal(signo) {
 #endif
 		}
 	}
-	t = &sigmode[signo - 1];
+	t = &sigmode[signo];
 	if (*t == 0) {	/* current setting unknown */
 		/*
 		 * There is a race condition here if action is not S_IGN.
@@ -215,22 +214,22 @@ setsignal(signo) {
 
 void
 ignoresig(signo) {
-	if (sigmode[signo - 1] != S_IGN && sigmode[signo - 1] != S_HARD_IGN) {
+	if (sigmode[signo] != S_IGN && sigmode[signo] != S_HARD_IGN) {
 		signal(signo, SIG_IGN);
 	}
-	sigmode[signo - 1] = S_HARD_IGN;
+	sigmode[signo] = S_HARD_IGN;
 }
 
 
 #ifdef mkinit
-INCLUDE "signames.h"
+INCLUDE <sys/signal.h>
 INCLUDE "trap.h"
 
 SHELLPROC {
 	char *sm;
 
 	clear_traps();
-	for (sm = sigmode ; sm < sigmode + MAXSIG ; sm++) {
+	for (sm = sigmode ; sm < sigmode + NSIG ; sm++) {
 		if (*sm == S_IGN)
 			*sm = S_HARD_IGN;
 	}
@@ -250,7 +249,7 @@ onsig(signo) {
 		onint();
 		return;
 	}
-	gotsig[signo - 1] = 1;
+	gotsig[signo] = 1;
 	pendingsigs++;
 }
 
@@ -268,12 +267,12 @@ dotrap() {
 
 	for (;;) {
 		for (i = 1 ; ; i++) {
-			if (gotsig[i - 1])
-				break;
-			if (i >= MAXSIG)
+			if (i >= NSIG)
 				goto done;
+			if (gotsig[i])
+				break;
 		}
-		gotsig[i - 1] = 0;
+		gotsig[i] = 0;
 		savestatus=exitstatus;
 		evalstring(trap[i]);
 		exitstatus=savestatus;
