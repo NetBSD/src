@@ -1,4 +1,4 @@
-/*	$NetBSD: idprom.h,v 1.9 1994/11/21 21:33:45 gwr Exp $	*/
+/*	$NetBSD: idprom.h,v 1.10 1995/02/11 20:59:38 gwr Exp $	*/
 
 /*
  * Copyright (c) 1993 Adam Glass
@@ -48,5 +48,8 @@ struct idprom {
 #define IDPROM_VERSION 1
 #define IDPROM_SIZE (sizeof(struct idprom))
 
-int idprom_fetch __P((struct idprom *, int));
+#ifdef	KERNEL
+extern struct idprom identity_prom;
+int idprom_init();
 void idprom_etheraddr __P((u_char *));
+#endif
