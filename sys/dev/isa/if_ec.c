@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ec.c,v 1.20 2003/01/15 22:20:07 bouyer Exp $	*/
+/*	$NetBSD: if_ec.c,v 1.21 2004/05/11 22:45:09 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ec.c,v 1.20 2003/01/15 22:20:07 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ec.c,v 1.21 2004/05/11 22:45:09 wiz Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -489,7 +489,7 @@ ec_attach(parent, self, aux)
 	/*
 	 * Intialize "Vector Pointer" registers.  These gawd-awful things
 	 * are compared to 20 bits of the address on the ISA, and if they
-	 * match, the shared memory is disabled.  We se them to 0xffff0...
+	 * match, the shared memory is disabled.  We set them to 0xffff0...
 	 * allegedly the reset vector.
 	 */
 	bus_space_write_1(asict, asich, ELINK2_VPTR2, 0xff);
