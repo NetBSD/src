@@ -1,4 +1,4 @@
-/*	$NetBSD: ctype.h,v 1.17 1998/05/10 16:57:51 kleink Exp $	*/
+/*	$NetBSD: ctype.h,v 1.18 2000/06/13 01:21:52 simonb Exp $	*/
 
 /*
  * Copyright (c) 1989 The Regents of the University of California.
@@ -62,31 +62,31 @@ extern const short	*_toupper_tab_;
 
 
 __BEGIN_DECLS
-extern int	isalnum __P ((int));
-extern int	isalpha __P ((int));
-extern int	iscntrl __P ((int));
-extern int	isdigit __P ((int));
-extern int	isgraph __P ((int));
-extern int	islower __P ((int));
-extern int	isprint __P ((int));
-extern int	ispunct __P ((int));
-extern int	isspace __P ((int));
-extern int	isupper __P ((int));
-extern int	isxdigit __P ((int));
-extern int	tolower __P ((int));
-extern int	toupper __P ((int));
+int	isalnum __P ((int));
+int	isalpha __P ((int));
+int	iscntrl __P ((int));
+int	isdigit __P ((int));
+int	isgraph __P ((int));
+int	islower __P ((int));
+int	isprint __P ((int));
+int	ispunct __P ((int));
+int	isspace __P ((int));
+int	isupper __P ((int));
+int	isxdigit __P ((int));
+int	tolower __P ((int));
+int	toupper __P ((int));
 
 #if !defined(_ANSI_SOURCE) && !defined(_POSIX_C_SOURCE) || \
     defined(_XOPEN_SOURCE)
-extern int	isascii __P ((int));
-extern int	toascii __P ((int));
-extern int	_tolower __P ((int));
-extern int	_toupper __P ((int));
+int	isascii __P ((int));
+int	toascii __P ((int));
+int	_tolower __P ((int));
+int	_toupper __P ((int));
 #endif
 
 #if !defined(_ANSI_SOURCE) && !defined(_POSIX_C_SOURCE) && \
     !defined(_XOPEN_SOURCE)
-extern int	isblank __P ((int));
+int	isblank __P ((int));
 #endif
 __END_DECLS
 
