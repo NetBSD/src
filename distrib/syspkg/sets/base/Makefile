@@ -1,3 +1,5 @@
+#	$NetBSD: Makefile,v 1.6 2004/06/30 03:37:41 jmc Exp $
+
 SUBDIR+=base-adosfs-lkm
 SUBDIR+=base-adosfs-root
 SUBDIR+=base-amd-bin
