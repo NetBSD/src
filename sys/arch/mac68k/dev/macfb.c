@@ -1,4 +1,4 @@
-/* $NetBSD: macfb.c,v 1.1.2.8 1999/11/23 17:28:19 scottr Exp $ */
+/* $NetBSD: macfb.c,v 1.1.2.9 1999/12/13 05:04:13 scottr Exp $ */
 /*
  * Copyright (c) 1998 Matt DeBergalis
  * All rights reserved.
@@ -97,9 +97,10 @@ const struct wsscreen_list macfb_screenlist = {
 static int	macfb_ioctl __P((void *, u_long, caddr_t, int, struct proc *));
 static int	macfb_mmap __P((void *, off_t, int));
 static int	macfb_alloc_screen __P((void *, const struct wsscreen_descr *,
-		void **, int *, int *, long *));
+		    void **, int *, int *, long *));
 static void	macfb_free_screen __P((void *, void *));
-static void	macfb_show_screen __P((void *, void *));
+static int	macfb_show_screen __P((void *, void *, int,
+		    void (*)(void *, int, int), void *));
 
 const struct wsdisplay_accessops macfb_accessops = {
 	macfb_ioctl,
@@ -348,11 +349,15 @@ macfb_free_screen(v, cookie)
 	sc->nscreens--;
 }
 
-void
-macfb_show_screen(v, cookie)
+int
+macfb_show_screen(v, cookie, waitok, cb, cbarg)
 	void *v;
 	void *cookie;
+	int waitok;
+	void (*cb) __P((void *, int, int));
+	void *cbarg;
 {
+	return 0;
 }
 
 int
@@ -362,8 +367,8 @@ macfb_cnattach(addr)
 	struct macfb_devconfig *dc = &macfb_console_dc;
 	long defattr;
 
-	dc->dc_vaddr = videoaddr;
-	dc->dc_paddr = mac68k_vidphys;
+	dc->dc_vaddr = m68k_trunc_page(videoaddr);
+	dc->dc_paddr = m68k_trunc_page(mac68k_vidphys);
 
 	dc->dc_wid = videosize & 0xffff;
 	dc->dc_ht = (videosize >> 16) & 0xffff;
@@ -372,7 +377,7 @@ macfb_cnattach(addr)
 
 	dc->dc_size = (mac68k_vidlen > 0) ?
 	    mac68k_vidlen : dc->dc_ht * dc->dc_rowbytes;
-	dc->dc_offset = 0;
+	dc->dc_offset = m68k_page_offset(mac68k_vidphys);
 
 	/* set up the display */
 	macfb_init(&macfb_console_dc);
