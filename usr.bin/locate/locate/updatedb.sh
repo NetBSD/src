@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-#	$NetBSD: updatedb.sh,v 1.5 2001/06/18 11:10:25 lukem Exp $
+#	$NetBSD: updatedb.sh,v 1.6 2001/11/07 15:31:41 lukem Exp $
 #
 # Copyright (c) 1989, 1993
 #	The Regents of the University of California.  All rights reserved.
@@ -54,8 +54,13 @@ trap "rm -f $FILELIST; exit 1" INT QUIT TERM
 
 # search locally or everything
 # find -s $SRCHPATHS -print \
-find -s $SRCHPATHS \( ! -fstype local -o -fstype fdesc -o -fstype kernfs \) \
-		-a -prune -o -print \
+find -s $SRCHPATHS \( \
+    ! -fstype local	\
+    -o -fstype cd9660	\
+    -o -fstype fdesc	\
+    -o -fstype kernfs	\
+    -o -fstype procfs	\
+    \) -a -prune -o -print \
 	>> "$FILELIST"
 
 BIGRAMS="`$LIBDIR/locate.bigram <$FILELIST`"
