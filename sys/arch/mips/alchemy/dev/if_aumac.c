@@ -1,4 +1,4 @@
-/* $NetBSD: if_aumac.c,v 1.11 2003/07/04 01:19:58 thorpej Exp $ */
+/* $NetBSD: if_aumac.c,v 1.11.4.1 2005/01/24 21:42:31 he Exp $ */
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_aumac.c,v 1.11 2003/07/04 01:19:58 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_aumac.c,v 1.11.4.1 2005/01/24 21:42:31 he Exp $");
 
 #include "bpfilter.h"
 
@@ -503,7 +503,8 @@ aumac_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 			 * Multicast list has changed; set the hardware filter
 			 * accordingly.
 			 */
-			aumac_set_filter(sc);
+			if (ifp->if_flags & IFF_RUNNING)
+				aumac_set_filter(sc);
 		}
 		break;
 	}
