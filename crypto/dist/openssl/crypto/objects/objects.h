@@ -59,10 +59,11 @@
 #ifndef HEADER_OBJECTS_H
 #define HEADER_OBJECTS_H
 
-#ifdef  __cplusplus
-extern "C" {
-#endif
+#define USE_OBJ_MAC
 
+#ifdef USE_OBJ_MAC
+#include <openssl/obj_mac.h>
+#else
 #define SN_undef			"UNDEF"
 #define LN_undef			"undefined"
 #define NID_undef			0
@@ -451,54 +452,54 @@ extern "C" {
 #define LN_desx_cbc			"desx-cbc"
 #define NID_desx_cbc			80
 
-#define SN_ld_ce			"ld-ce"
-#define NID_ld_ce			81
-#define OBJ_ld_ce			2L,5L,29L
+#define SN_id_ce			"id-ce"
+#define NID_id_ce			81
+#define OBJ_id_ce			2L,5L,29L
 
 #define SN_subject_key_identifier	"subjectKeyIdentifier"
 #define LN_subject_key_identifier	"X509v3 Subject Key Identifier"
 #define NID_subject_key_identifier	82
-#define OBJ_subject_key_identifier	OBJ_ld_ce,14L
+#define OBJ_subject_key_identifier	OBJ_id_ce,14L
 
 #define SN_key_usage			"keyUsage"
 #define LN_key_usage			"X509v3 Key Usage"
 #define NID_key_usage			83
-#define OBJ_key_usage			OBJ_ld_ce,15L
+#define OBJ_key_usage			OBJ_id_ce,15L
 
 #define SN_private_key_usage_period	"privateKeyUsagePeriod"
 #define LN_private_key_usage_period	"X509v3 Private Key Usage Period"
 #define NID_private_key_usage_period	84
-#define OBJ_private_key_usage_period	OBJ_ld_ce,16L
+#define OBJ_private_key_usage_period	OBJ_id_ce,16L
 
 #define SN_subject_alt_name		"subjectAltName"
 #define LN_subject_alt_name		"X509v3 Subject Alternative Name"
 #define NID_subject_alt_name		85
-#define OBJ_subject_alt_name		OBJ_ld_ce,17L
+#define OBJ_subject_alt_name		OBJ_id_ce,17L
 
 #define SN_issuer_alt_name		"issuerAltName"
 #define LN_issuer_alt_name		"X509v3 Issuer Alternative Name"
 #define NID_issuer_alt_name		86
-#define OBJ_issuer_alt_name		OBJ_ld_ce,18L
+#define OBJ_issuer_alt_name		OBJ_id_ce,18L
 
 #define SN_basic_constraints		"basicConstraints"
 #define LN_basic_constraints		"X509v3 Basic Constraints"
 #define NID_basic_constraints		87
-#define OBJ_basic_constraints		OBJ_ld_ce,19L
+#define OBJ_basic_constraints		OBJ_id_ce,19L
 
 #define SN_crl_number			"crlNumber"
 #define LN_crl_number			"X509v3 CRL Number"
 #define NID_crl_number			88
-#define OBJ_crl_number			OBJ_ld_ce,20L
+#define OBJ_crl_number			OBJ_id_ce,20L
 
 #define SN_certificate_policies		"certificatePolicies"
 #define LN_certificate_policies		"X509v3 Certificate Policies"
 #define NID_certificate_policies	89
-#define OBJ_certificate_policies	OBJ_ld_ce,32L
+#define OBJ_certificate_policies	OBJ_id_ce,32L
 
 #define SN_authority_key_identifier	"authorityKeyIdentifier"
 #define LN_authority_key_identifier	"X509v3 Authority Key Identifier"
 #define NID_authority_key_identifier	90
-#define OBJ_authority_key_identifier	OBJ_ld_ce,35L
+#define OBJ_authority_key_identifier	OBJ_id_ce,35L
 
 #define SN_bf_cbc			"BF-CBC"
 #define LN_bf_cbc			"bf-cbc"
@@ -559,7 +560,7 @@ extern "C" {
 #define SN_crl_distribution_points	"crlDistributionPoints"
 #define LN_crl_distribution_points	"X509v3 CRL Distribution Points"
 #define NID_crl_distribution_points	103
-#define OBJ_crl_distribution_points	OBJ_ld_ce,31L
+#define OBJ_crl_distribution_points	OBJ_id_ce,31L
 
 #define SN_md5WithRSA			"RSA-NP-MD5"
 #define LN_md5WithRSA			"md5WithRSA"
@@ -676,7 +677,7 @@ extern "C" {
 #define SN_ext_key_usage		"extendedKeyUsage"
 #define LN_ext_key_usage		"X509v3 Extended Key Usage"
 #define NID_ext_key_usage		126
-#define OBJ_ext_key_usage		OBJ_ld_ce,37
+#define OBJ_ext_key_usage		OBJ_id_ce,37
 
 #define SN_id_pkix			"PKIX"
 #define NID_id_pkix			127
@@ -750,17 +751,17 @@ extern "C" {
 #define SN_delta_crl			"deltaCRL"
 #define LN_delta_crl			"X509v3 Delta CRL Indicator"
 #define NID_delta_crl			140
-#define OBJ_delta_crl			OBJ_ld_ce,27L
+#define OBJ_delta_crl			OBJ_id_ce,27L
 
 #define SN_crl_reason			"CRLReason"
 #define LN_crl_reason			"CRL Reason Code"
 #define NID_crl_reason			141
-#define OBJ_crl_reason			OBJ_ld_ce,21L
+#define OBJ_crl_reason			OBJ_id_ce,21L
 
 #define SN_invalidity_date		"invalidityDate"
 #define LN_invalidity_date		"Invalidity Date"
 #define NID_invalidity_date		142
-#define OBJ_invalidity_date		OBJ_ld_ce,24L
+#define OBJ_invalidity_date		OBJ_id_ce,24L
 
 #define SN_sxnet			"SXNetID"
 #define LN_sxnet			"Strong Extranet ID"
@@ -953,6 +954,7 @@ extern "C" {
 #define LN_OCSP_sign			"OCSP Signing"
 #define NID_OCSP_sign			180
 #define OBJ_OCSP_sign			OBJ_id_kp,9L
+#endif /* USE_OBJ_MAC */
 
 #include <openssl/bio.h>
 #include <openssl/asn1.h>
@@ -967,6 +969,10 @@ extern "C" {
 #define	OBJ_NAME_ALIAS		0x8000
 
 
+#ifdef  __cplusplus
+extern "C" {
+#endif
+
 typedef struct obj_name_st
 	{
 	int type;
@@ -979,8 +985,8 @@ typedef struct obj_name_st
 
 
 int OBJ_NAME_init(void);
-int OBJ_NAME_new_index(unsigned long (*hash_func)(),int (*cmp_func)(),
-	void (*free_func)());
+int OBJ_NAME_new_index(unsigned long (*hash_func)(const char *),int (*cmp_func)(const void *, const void *),
+	void (*free_func)(const char *, int, const char *));
 const char *OBJ_NAME_get(const char *name,int type);
 int OBJ_NAME_add(const char *name,int type,const char *data);
 int OBJ_NAME_remove(const char *name,int type);
@@ -997,9 +1003,7 @@ int		OBJ_txt2nid(char *s);
 int		OBJ_ln2nid(const char *s);
 int		OBJ_sn2nid(const char *s);
 int		OBJ_cmp(ASN1_OBJECT *a,ASN1_OBJECT *b);
-char *		OBJ_bsearch(char *key,char *base,int num,int size,int (*cmp)());
-
-void		ERR_load_OBJ_strings(void );
+char *		OBJ_bsearch(char *key,char *base,int num,int size,int (*cmp)(const void *, const void *));
 
 int		OBJ_new_nid(int num);
 int		OBJ_add_object(ASN1_OBJECT *obj);
@@ -1011,6 +1015,7 @@ int		OBJ_create_objects(BIO *in);
 /* The following lines are auto generated by the script mkerr.pl. Any changes
  * made after this point may be overwritten when the script is next run.
  */
+void ERR_load_OBJ_strings(void);
 
 /* Error codes for the OBJ functions. */
 
@@ -1029,4 +1034,3 @@ int		OBJ_create_objects(BIO *in);
 }
 #endif
 #endif
-

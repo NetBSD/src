@@ -223,7 +223,7 @@ int X509_print(BIO *bp, X509 *x)
 	ret=1;
 err:
 	if (str != NULL) ASN1_STRING_free(str);
-	if (m != NULL) Free(m);
+	if (m != NULL) OPENSSL_free(m);
 	return(ret);
 	}
 
@@ -349,6 +349,8 @@ int X509_NAME_print(BIO *bp, X509_NAME *name, int obase)
 	ll=80-2-obase;
 
 	s=X509_NAME_oneline(name,buf,256);
+	if (!*s)
+		return 1;
 	s++; /* skip the first slash */
 
 	l=ll;

@@ -133,8 +133,12 @@ extern "C" {
 
 /* Upper/Lower Bounds */
 #define SSL2_MAX_MASTER_KEY_LENGTH_IN_BITS	256
-#define SSL2_MAX_RECORD_LENGTH_2_BYTE_HEADER	(unsigned int)32767 
-#define SSL2_MAX_RECORD_LENGTH_3_BYTE_HEADER	16383 /**/
+#ifdef MPE
+#define SSL2_MAX_RECORD_LENGTH_2_BYTE_HEADER	29998u
+#else
+#define SSL2_MAX_RECORD_LENGTH_2_BYTE_HEADER	32767u  /* 2^15-1 */
+#endif
+#define SSL2_MAX_RECORD_LENGTH_3_BYTE_HEADER	16383 /* 2^14-1 */
 
 #define SSL2_CHALLENGE_LENGTH	16
 /*#define SSL2_CHALLENGE_LENGTH	32 */
@@ -185,7 +189,7 @@ typedef struct ssl2_state_st
 	unsigned char *ract_data;
 	unsigned char *wact_data;
 	unsigned char *mac_data;
-	unsigned char *pad_data;
+	unsigned char *pad_data_UNUSED; /* only for binary compatibility with 0.9.6b */
 
 	unsigned char *read_key;
 	unsigned char *write_key;
@@ -205,11 +209,11 @@ typedef struct ssl2_state_st
 		unsigned int conn_id_length;
 		unsigned int cert_type;	
 		unsigned int cert_length;
-		int csl; 
-		int clear;
+		unsigned int csl; 
+		unsigned int clear;
 		unsigned int enc; 
 		unsigned char ccl[SSL2_MAX_CERT_CHALLENGE_LENGTH];
-		int cipher_spec_length;
+		unsigned int cipher_spec_length;
 		unsigned int session_id_length;
 		unsigned int clen;
 		unsigned int rlen;
