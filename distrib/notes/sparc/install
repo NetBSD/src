@@ -1,4 +1,4 @@
-.\"	$NetBSD: install,v 1.29 2000/10/10 12:55:22 lukem Exp $
+.\"	$NetBSD: install,v 1.30 2000/10/20 12:26:41 pk Exp $
 .\"
 .\" Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -37,31 +37,21 @@ Installing
 is a relatively complex process, but if you have
 this document in hand it shouldn't be too much trouble.
 .Pp
-.Nx*M
-has two installation systems, an easy to use 'sysinst',
-and a more flexible miniroot script based system.
-.Pp
 There are several ways to install
 .Nx
-onto a disk. The easiest way is to use the 'syboot.fs' image copied to
-a floppy or your local disk's swap partition.
-More advanced users may prefer booting the
-.Nx
-miniroot from the local disk's swap partition.
+onto a disk. The easiest way is to use the 'miniroot.fs' image copied to
+your local disk's swap partition.
 Alternatively, if your Sparcstation is hooked up in a network you
 can find a server and arrange for a diskless setup which is a
 convenient way to install on a machine whose disk does not currently
 hold a usable operating system (see the section `Installing
 .Nx
-by using a diskless setup' below).  There is
-also a bootable 1.44 MB floppy available that contains a slightly less
-featureful miniroot environment.
+by using a diskless setup' below).  Also available is
+a two-disk bootable 1.44 MB floppy image set that can be used to boot into
+the miniroot environment.
 .
 .Ss2 Installing NetBSD by using the NetBSD miniroot
 .
-If you wish to use the more flexible 'miniroot.fs', use in place
-of 'syboot.fs' below.
-.Pp
 The miniroot is a self-contained
 .Nx
 filesystem holding all utilities
@@ -77,7 +67,7 @@ the partition will then not available during the installation process.
 Loading the miniroot onto your raw partition is simple. On
 .Nx
 as well as SunOS you use a command like:
-.Dl # Ic dd if=syboot.fs of=/dev/rsd0b bs=4k conv=sync
+.Dl # Ic dd if=miniroot.fs of=/dev/rsd0b bs=4k conv=sync
 (Here, `/dev/rsd0b' is assumed to be your swap partition.) There's a
 potential problem here if /dev/rsd0b is actually in use as a swap
 partition by your currently running system. If you don't have another
@@ -126,33 +116,53 @@ The
 install floppy works only on the sun4c and sun4m class.
 Making the install floppy is simple:
 .Pp
-If you wish to use the more flexible 'boot.fs', use in place
-of 'syboot.fs' below.
-.Pp
-On
+Get two formatted floppy disks. If you have unformatted disks you can
+run the
+.Xr fdformat 8
+program that comes with
 .Nx
-as well as SunOS you use the following three commands:
+as well as SunOS. Use the following command:
 .Dl # Ic "fdformat"
-.Dl # Ic "gunzip syboot.fs.gz"
-.Dl # Ic "dd if=syboot.fs of=/dev/rfd0a bs=36k"
-(Be sure that the `fdformat' command completes successfully before proceeding
-to the `dd' step; on
+.Pp
+Make sure that the `fdformat' command completes successfully before proceeding
+to with the next step; on
 .Nx
 , a string of all `V's, and on SunOS, a string of
-all `.'s.).
+all `.'s.
+Alternatively, you can use almost any PC to format your floppy disks.
 .Pp
-On a Windows system you can use the
+Next, transfer the floppy images onto the floppy disks:
+.Dl # Ic "insert the first disk"
+.Dl # Ic "gunzip boot.fs.gz"
+.Dl # Ic "dd if=boot.fs of=/dev/rfd0a bs=36k"
+.Dl # Ic "eject floppy"
+Label this disk
+.Dq NetBSD bootfs .
+.Pp
+.Dl # Ic "insert the first disk"
+.Dl # Ic "dd if=instfs.tgz of=/dev/rfd0a bs=36k"
+.Dl # Ic "eject floppy"
+Label this disk
+.Dq NetBSD instfs .
+.Pp
+You can also accomplish this task on a Windows system by using the
 .Nm rawrite.exe
 command provided with the NetBSD/i386 install tools.
 .Pp
-From the OpenBOOT prompt, the following should boot the floppy.
+Insert the disk labeled
+.Dq NetBSD bootfs
+into the floppy drive of the target system.
+From the OpenBOOT prompt, the following should boot the system from the floppy.
 .Dl ok Ic "boot fd(,,1)                 # Version 1 OpenBOOT ROMs
 .Dl ok Ic "boot /fd                     # or
 .Dl ok Ic "boot floppy                  # Version 2 OpenBOOT ROMs
 .Pp
-After the initial probe messages you'll be asked to start
-the install or upgrade procedure. Proceed to the section
-.Sx Running the installation scripts.
+After the initial probe messages you'll be asked to insert the disk labeled
+.Dq NetBSD instfs
+into the drive. After the installation tools from the second disk have
+been loaded, you will be asked to start the install or upgrade procedure.
+Proceed to the section
+.Sx Running the installation scripts
 below.
 .
 .Ss2 Installing NetBSD by using a diskless setup
@@ -211,6 +221,8 @@ filesets. However, the easiest way is to put the
 files you want
 to install into the root directory for your client on the server.
 .Pp
+.ie 0 \{\
+.\" section commented out because netbsd.ram.gz is no longer self-contained
 Next you must select whether to use the easier 'sysinst' or more flexible
 script based install.
 .
@@ -219,14 +231,14 @@ script based install.
 Follow this section and skip the next if you wish to use the easier 'sysinst'
 installation method.
 .Pp
-Copy the installation/netboot/netbsd.syram.gz image into the exported
+Copy the installation/bootfs/netbsd.ram.gz image into the exported
 root directory for your machine, then boot your workstation from the
 server by entering the appropriate `boot' command at the monitor prompt.
 Depending on the PROM version in your machine, this command takes one of
 the following forms:
-.Dl "\*> b le()netbsd.syram.gz             # for sun4 monitors
-.Dl "ok boot le()netbsd.syram.gz           # for version 1 OpenBOOT ROMs
-.Dl "ok boot net netbsd.syram.gz           # for version 2 OpenBOOT ROMs
+.Dl "\*> b le()netbsd.ram.gz             # for sun4 monitors
+.Dl "ok boot le()netbsd.ram.gz           # for version 1 OpenBOOT ROMs
+.Dl "ok boot net netbsd.ram.gz           # for version 2 OpenBOOT ROMs
 .Pp
 This will boot the
 .Nx
@@ -240,11 +252,14 @@ instead of `ok', type:
 .Dl "ok
 .Note)
 .
+.\}
 .Ss2 Diskless script installation
 .
+.ie 0 \{\
 Follow this section and skip the previous if you wish to use the more
 flexible 'miniroot' script installation method.
 .Pp
+.\}
 Unpack `base.tar.gz', `etc.tar.gz', and 'kern.tgz' on the server in
 the root directory for your machine. If you elect to use a separately
 NFS-mounted filesystem for `/usr' with your diskless setup, make sure the
@@ -262,9 +277,11 @@ A few configuration files need to be edited:
 .(tag indent
 .It Ar root Ns Pa /etc/hosts
 Add the IP addresses of both server and client.
+
 .It Ar root Ns Pa /etc/myname
 This files contains the client's hostname; use the same
 name as in \*<root\*>/etc/hosts.
+
 .It Ar root Ns Pa /etc/fstab
 Enter the entries for the remotely mounted filesystems.
 For example:
@@ -287,6 +304,13 @@ if you plan to use the diskless setup regularly. In that case, you may re-run
 MAKEDEV on your
 .Nx
 machine once it has booted.
+.Pp
+If you to use the server setup for installation purposes only, then you
+may create a considerably smaller client filesystem by unpacking
+`instfs.tgz' (found in the `installation/bootfs' distribution directory)
+into your client's NFS root directory instead of using `base.tar.gz'
+and `etc.tar.gz'. You still need 'kern.tgz' to extract a kernel,
+since `instfs.tgz' does not contain one.
 .Pp
 Boot your workstation from the server by entering the appropriate `boot'
 command at the monitor prompt. Depending on the PROM version in your machine,
@@ -314,10 +338,9 @@ by hand now:
 .Dl netbsd# Ic mount /usr
 .Pp
 .(Note
-For floppy installs, the text editor provided is ed.
-For miniroot installs, the text editor is vi.
+the text editor provided nu the miniroot is
+.Xr vi 1 .
 .Note)
-.Pp
 When using
 .Xr disklabel 8
 to edit disklabels the -e switch will invoke the editor on the
@@ -374,7 +397,6 @@ even if you define less then eight partitions. If this line displays
 a different number and the program complains about it (after you leave
 the editor), then try setting it to `8 partitions:'.
 .Note)
-.
 .Ss2 Sample disklabel screen
 .(disp
 netbsd# disklabel sd2
@@ -417,6 +439,14 @@ The installation system will do most of the work of transferring the
 system from the distribution sets onto your disk. You will frequently be
 asked for confirmation before the system proceeds with each phase of the
 installation process.
+.Pp
+Note: the
+.Ox
+miniroot also supports the use of the experimental
+full-screen installation program
+.Dq sysinst .
+To use sysinst instead of the default installtion script, follow the
+on-screen instruction that is displayed after the miniroot has started.
 .Pp
 Occasionally, you will have to provide a piece of information such as the
 name of the disk you want to install on or IP addresses and domain names
