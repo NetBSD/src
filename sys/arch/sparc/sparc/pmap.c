@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.217 2002/12/31 15:23:29 pk Exp $ */
+/*	$NetBSD: pmap.c,v 1.218 2003/01/01 15:56:11 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -3599,7 +3599,7 @@ pmap_alloc_cpu(sc)
 	int cachebit;
 	int pagesz = NBPG;
 
-	cachebit = (sc->flags & CPUFLG_CACHEPAGETABLES) != 0;
+	cachebit = (cpuinfo.flags & CPUFLG_CACHEPAGETABLES) != 0;
 
 	/*
 	 * Allocate properly aligned and contiguous physically memory
