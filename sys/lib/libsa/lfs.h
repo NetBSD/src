@@ -1,4 +1,4 @@
-/* $NetBSD: lfs.h,v 1.1 1999/08/18 20:04:40 cgd Exp $ */
+/* $NetBSD: lfs.h,v 1.2 2003/02/23 23:17:42 simonb Exp $ */
 
 /*-
  * Copyright (c) 1993
@@ -35,11 +35,16 @@
  *	@(#)ufs.h	8.1 (Berkeley) 6/11/93
  */
 
-int	lfs_open __P((char *path, struct open_file *f));
-int	lfs_close __P((struct open_file *f));
-int	lfs_read __P((struct open_file *f, void *buf,
-		size_t size, size_t *resid));
-int	lfs_write __P((struct open_file *f, void *buf,
-		size_t size, size_t *resid));
-off_t	lfs_seek __P((struct open_file *f, off_t offset, int where));
-int	lfs_stat __P((struct open_file *f, struct stat *sb));
+int	lfsv1_open(char *path, struct open_file *f);
+int	lfsv1_close(struct open_file *f);
+int	lfsv1_read(struct open_file *f, void *buf, size_t size, size_t *resid);
+int	lfsv1_write(struct open_file *f, void *buf, size_t size, size_t *resid);
+off_t	lfsv1_seek(struct open_file *f, off_t offset, int where);
+int	lfsv1_stat(struct open_file *f, struct stat *sb);
+
+int	lfsv2_open(char *path, struct open_file *f);
+int	lfsv2_close(struct open_file *f);
+int	lfsv2_read(struct open_file *f, void *buf, size_t size, size_t *resid);
+int	lfsv2_write(struct open_file *f, void *buf, size_t size, size_t *resid);
+off_t	lfsv2_seek(struct open_file *f, off_t offset, int where);
+int	lfsv2_stat(struct open_file *f, struct stat *sb);
