@@ -1,4 +1,4 @@
-/*	$NetBSD: pccbb.c,v 1.101 2004/08/11 00:18:20 mycroft Exp $	*/
+/*	$NetBSD: pccbb.c,v 1.102 2004/08/11 01:04:40 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 and 2000
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pccbb.c,v 1.101 2004/08/11 00:18:20 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pccbb.c,v 1.102 2004/08/11 01:04:40 mycroft Exp $");
 
 /*
 #define CBB_DEBUG
@@ -2528,11 +2528,17 @@ pccbb_pcmcia_socket_disable(pch)
 {
 	struct pcic_handle *ph = (struct pcic_handle *)pch;
 	struct pccbb_softc *sc = (struct pccbb_softc *)ph->ph_parent;
-	u_int8_t power;
+	u_int8_t intr, power;
 
 	DPRINTF(("pccbb_pcmcia_socket_disable\n"));
 
-	delay(2 * 1000);
+	/* disable interrupts */
+	intr = Pcic_read(h, PCIC_INTR);
+	intr &= ~(PCIC_INTR_IRQ_MASK | PCIC_INTR_CARDTYPE_MASK);
+	Pcic_write(h, PCIC_INTR, intr);
+
+	/* zero out the address windows */
+	Pcic_write(ph, PCIC_ADDRWIN_ENABLE, 0);
 
 	/* power down the socket to reset it, clear the card reset pin */
 	pccbb_power(sc, CARDBUS_VCC_0V | CARDBUS_VPP_0V);
@@ -2564,7 +2570,7 @@ pccbb_pcmcia_socket_settype(pch, type)
 	/* set the card type */
 
 	intr = Pcic_read(ph, PCIC_INTR);
-	intr &= ~PCIC_INTR_CARDTYPE_MASK;
+	intr &= ~(PCIC_INTR_IRQ_MASK | PCIC_INTR_CARDTYPE_MASK);
 	if (type == PCMCIA_IFTYPE_IO)
 		intr |= PCIC_INTR_CARDTYPE_IO;
 	else
