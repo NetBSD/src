@@ -33,7 +33,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)move.c	5.8 (Berkeley) 2/28/91";*/
-static char rcsid[] = "$Id: move.c,v 1.5 1993/08/01 18:51:14 mycroft Exp $";
+static char rcsid[] = "$Id: move.c,v 1.6 1993/12/08 08:21:41 mycroft Exp $";
 #endif /* not lint */
 
 /*************************************************************************
@@ -102,6 +102,27 @@ int delaystr[10];
 short ospeed;
 
 static char str[80];
+
+apr(struct point *ps, char *fmt, ...)
+{
+	va_list ap;
+	struct point p;
+
+	va_start(ap, fmt);
+	p.line = ps->line+1; p.col = ps->col+1;
+	move(&p);
+	(void)vsprintf(str, fmt, ap);
+	pstring(str);
+}
+
+pr(char *fmt, ...)
+{
+	va_list ap;
+
+	va_start(ap, fmt);
+	(void)vsprintf(str, fmt, ap);
+	pstring(str);
+}
 
 move(sp)
 struct point *sp;
@@ -385,27 +406,6 @@ pch(c)
 		cursor.col = 0;
 		++cursor.line;
 	}
-}
-
-apr(ps, fmt, ap)
-	struct point *ps;
-	char *fmt;
-	va_list ap;
-{
-	struct point p;
-
-	p.line = ps->line+1; p.col = ps->col+1;
-	move(&p);
-	(void)vsprintf(str, fmt, &ap);
-	pstring(str);
-}
-
-pr(fmt, ap)
-	char *fmt;
-	va_list ap;
-{
-	(void)vsprintf(str, fmt, &ap);
-	pstring(str);
 }
 
 pstring(s)
