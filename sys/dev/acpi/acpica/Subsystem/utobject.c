@@ -114,6 +114,9 @@
  *
  *****************************************************************************/
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: utobject.c,v 1.3 2001/11/13 13:02:03 lukem Exp $");
+
 #define __UTOBJECT_C__
 
 #include "acpi.h"

@@ -114,6 +114,9 @@
  *
  *****************************************************************************/
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: utglobal.c,v 1.2 2001/11/13 13:02:03 lukem Exp $");
+
 #define __UTGLOBAL_C__
 #define DEFINE_ACPI_GLOBALS
 

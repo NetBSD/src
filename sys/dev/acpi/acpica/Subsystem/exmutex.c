@@ -115,6 +115,9 @@
  *
  *****************************************************************************/
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: exmutex.c,v 1.3 2001/11/13 13:02:00 lukem Exp $");
+
 #define __EXMUTEX_C__
 
 #include "acpi.h"
