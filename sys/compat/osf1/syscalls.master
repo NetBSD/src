@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.13.2.1 1999/06/21 19:29:19 cgd Exp $
+	$NetBSD: syscalls.master,v 1.13.2.2 1999/06/26 01:52:49 cgd Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -77,8 +77,10 @@
 24	NOARGS		{ uid_t sys_getuid(void); }
 25	UNIMPL		exec_with_loader
 26	UNIMPL		ptrace
-27	UNIMPL		recvmsg
-28	UNIMPL		sendmsg
+27	STD		{ int osf1_sys_recvmsg_xopen(int s, \
+			    struct osf1_msghdr_xopen *msg, int flags); }
+28	STD		{ int osf1_sys_sendmsg_xopen(int s, \
+			    const struct osf1_msghdr_xopen *msg, int flags); }
 29	UNIMPL		recvfrom
 30	UNIMPL		accept
 31	UNIMPL		getpeername
@@ -172,7 +174,8 @@
 97	STD		{ int osf1_sys_socket(int domain, int type, \
 			    int protocol); }
 98	NOARGS		{ int sys_connect(int s, caddr_t name, int namelen); }
-99	UNIMPL		old accept
+99	NOARGS		{ int compat_43_sys_accept(int s, caddr_t name, \
+			    int *anamelen); }
 100	NOARGS		{ int sys_getpriority(int which, int who); }
 101	NOARGS		{ int compat_43_sys_send(int s, caddr_t buf, int len, \
 			    int flags); }
