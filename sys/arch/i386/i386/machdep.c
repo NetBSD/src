@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)machdep.c	7.4 (Berkeley) 6/3/91
- *	$Id: machdep.c,v 1.91 1994/03/24 21:50:33 mycroft Exp $
+ *	$Id: machdep.c,v 1.92 1994/03/29 04:38:08 mycroft Exp $
  */
 
 #include <stddef.h>
@@ -59,6 +59,7 @@
 #include <sys/msgbuf.h>
 #include <sys/mount.h>
 #include <sys/vnode.h>
+#include <sys/device.h>
 #ifdef SYSVMSG
 #include <sys/msg.h>
 #endif
@@ -80,6 +81,7 @@
 #include <machine/specialreg.h>
 
 #include <i386/isa/isa.h>
+#include <i386/isa/isavar.h>
 #include <i386/isa/rtc.h>
 
 #include "isa.h"
