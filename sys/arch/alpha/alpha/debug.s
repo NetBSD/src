@@ -1,4 +1,4 @@
-/* $NetBSD: debug.s,v 1.2 1999/05/31 06:41:39 ross Exp $ */
+/* $NetBSD: debug.s,v 1.3 1999/05/31 20:40:23 ross Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -67,8 +67,8 @@ ABS(debug_stack_top, debug_stack_bottom + NBPG)
  *		a4	frame pointer
  */
 NESTED_NOPROFILE(alpha_debug, 5, 32, ra, IM_RA|IM_S0, 0)
-	br	pv, Ldbg1
-Ldbg1:	LDGP(pv)
+	br	pv, 1f
+1:	LDGP(pv)
 	lda	t0, FRAME_SIZE*8(a4)	/* what would sp have been? */
 	stq	t0, FRAME_SP*8(a4)	/* belatedly save sp for ddb view */
 	lda	sp, -32(sp)		/* set up stack frame */
@@ -89,17 +89,15 @@ Ldbg1:	LDGP(pv)
 	 */
 	lda	t0, debug_stack_bottom
 	cmpule	sp, t0, t1		/* sp <= debug_stack_bottom */
-	bne	t1, Ldbg2		/* yes, switch now */
+	bne	t1, 2f		/* yes, switch now */
 
 	lda	t0, debug_stack_top
 	cmpule	t0, sp, t1		/* debug_stack_top <= sp? */
-	bne	t1, Ldbg3		/* yes, we're on the debug stack */
+	bne	t1, 3f		/* yes, we're on the debug stack */
 
-Ldbg2:
-	lda	sp, debug_stack_top	/* sp <- debug_stack_top */
+2:	lda	sp, debug_stack_top	/* sp <- debug_stack_top */
 
-Ldbg3:
-	/* Dispatch to the debugger - arguments are already in place. */
+3:	/* Dispatch to the debugger - arguments are already in place. */
 	CALL(ddb_trap)
 
 	/* Debugger return value in v0; switch back to our previous stack. */

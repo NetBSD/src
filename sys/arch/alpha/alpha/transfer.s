@@ -1,4 +1,4 @@
-/*	$NetBSD: transfer.s,v 1.1 1997/11/03 04:22:04 ross Exp $	*/
+/*	$NetBSD: transfer.s,v 1.2 1999/05/31 20:40:23 ross Exp $	*/
 
 /*-
  * Copyright (c) 1997 Avalon Computer Systems, Inc.
@@ -38,7 +38,7 @@
 
 #include <machine/asm.h>
 
-__KERNEL_RCSID(0, "$NetBSD: transfer.s,v 1.1 1997/11/03 04:22:04 ross Exp $")
+__KERNEL_RCSID(0, "$NetBSD: transfer.s,v 1.2 1999/05/31 20:40:23 ross Exp $")
 
 /*
  * New transfer point for NetBSD Alpha kernel.  This could be written in
@@ -50,8 +50,8 @@ __KERNEL_RCSID(0, "$NetBSD: transfer.s,v 1.1 1997/11/03 04:22:04 ross Exp $")
 .globl	locorestart
 .ent	__transfer 0
 __transfer:
-	br	pv,Lt1		/* paranoia, we transfer here from C code! */
-Lt1:	ldgp	gp,0(pv)
+	br	pv,1f		/* paranoia, we transfer here from C code! */
+1:	ldgp	gp,0(pv)
 	lda	pv,locorestart
 	jmp	zero,(pv)
 .end	__transfer
