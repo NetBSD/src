@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.100 1994/12/03 14:55:51 mycroft Exp $	*/
+/*	$NetBSD: locore.s,v 1.101 1994/12/04 07:37:27 mycroft Exp $	*/
 
 #undef DIAGNOSTIC
 #define DIAGNOSTIC
@@ -183,8 +183,10 @@ start:	movw	$0x1234,0x472			# warm boot
 	movl	12(%esp),%eax
 	movl	%eax,_cyloffset-KERNBASE
  	movl	16(%esp),%eax
+	testl	%eax,%eax
+	jz	1f
  	addl	$(KERNBASE),%eax
- 	movl	%eax,_esym-KERNBASE
+1: 	movl	%eax,_esym-KERNBASE
 
 	/* First, reset the PSL. */
 	pushl	$PSL_MBO
