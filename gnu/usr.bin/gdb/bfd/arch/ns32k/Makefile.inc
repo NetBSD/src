@@ -1,6 +1,6 @@
-# $Id: Makefile.inc,v 1.1 1994/04/28 17:11:00 phil Exp $
+# $Id: Makefile.inc,v 1.2 1994/09/19 23:51:31 deraadt Exp $
 
-SRCS+=		netbsd-ns32k.c cpu-ns32k.c
+SRCS+=		netbsd-ns32k.c cpu-ns32k.c trad-core.c
 
 CFLAGS+=	-DTRAD_CORE
 
