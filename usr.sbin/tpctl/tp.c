@@ -1,7 +1,7 @@
-/*	$NetBSD: tp.c,v 1.1 2002/08/27 14:12:18 takemura Exp $	*/
+/*	$NetBSD: tp.c,v 1.2 2003/01/03 04:41:49 takemura Exp $	*/
 
 /*-
- * Copyright (c) 2002 TAKEMRUA Shin
+ * Copyright (c) 2002, 2003 TAKEMRUA Shin
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -30,6 +30,7 @@
  */
 
 #include <stdio.h>
+#include <string.h>
 #include <sys/ioctl.h>
 #include <sys/fcntl.h>
 #include <sys/mman.h>
@@ -38,9 +39,11 @@
 
 #include "tpctl.h"
 
+#define MIN(a, b)	((a) < (b) ? (a) : (b))
+
 #ifndef lint
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: tp.c,v 1.1 2002/08/27 14:12:18 takemura Exp $");
+__RCSID("$NetBSD: tp.c,v 1.2 2003/01/03 04:41:49 takemura Exp $");
 #endif /* not lint */
 
 int
@@ -48,6 +51,7 @@ tp_init(struct tp *tp, int fd)
 {
 	u_int flags;
 	struct wsmouse_calibcoords calibcoords;
+	struct wsmouse_id id;
 
 	tp->fd = fd;
 
@@ -69,11 +73,14 @@ tp_init(struct tp *tp, int fd)
 	if (fcntl(tp->fd, F_SETFL, flags) < 0)
 		return (-1);
 
-	/*
-	 * XXX, currently, you can't retrieve any identifier
-	 */
-	tp->id[0] = '*';
-	tp->id[1] = '\0';
+	id.type = WSMOUSE_ID_TYPE_UIDSTR;
+	if (ioctl(tp->fd, WSMOUSEIO_GETID, &id) == 0) {
+		strncpy(tp->id, id.data, MIN(sizeof(tp->id), id.length));
+		tp->id[sizeof(tp->id) - 1] = '\0';
+	} else {
+		tp->id[0] = '*';
+		tp->id[1] = '\0';
+	}
 
 	return (0);
 }
