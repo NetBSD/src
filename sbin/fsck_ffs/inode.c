@@ -1,4 +1,4 @@
-/*	$NetBSD: inode.c,v 1.48 2004/07/20 15:05:33 mycroft Exp $	*/
+/*	$NetBSD: inode.c,v 1.49 2004/10/08 17:33:52 dbj Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)inode.c	8.8 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: inode.c,v 1.48 2004/07/20 15:05:33 mycroft Exp $");
+__RCSID("$NetBSD: inode.c,v 1.49 2004/10/08 17:33:52 dbj Exp $");
 #endif
 #endif /* not lint */
 
@@ -730,6 +730,28 @@ allocino(request, type)
 	if (ino == maxino)
 		return (0);
 	cg = ino_to_cg(sblock, ino);
+	/* If necessary, extend the inoinfo array. grow exponentially */
+	if ((ino % sblock->fs_ipg) >= inostathead[cg].il_numalloced) {
+		unsigned long newalloced, i;
+		newalloced = MIN(sblock->fs_ipg,
+			MAX(2 * inostathead[cg].il_numalloced, 10));
+		info = calloc(newalloced, sizeof(struct inostat));
+		if (info == NULL) {
+			pwarn("cannot alloc %lu bytes to extend inoinfo\n",
+				sizeof(struct inostat) * newalloced);
+			return 0;
+		}
+		memmove(info, inostathead[cg].il_stat,
+			inostathead[cg].il_numalloced * sizeof(*info));
+		for (i = inostathead[cg].il_numalloced; i < newalloced; i++) {
+			info[i].ino_state = USTATE;
+		}
+		if (inostathead[cg].il_numalloced)
+			free(inostathead[cg].il_stat);
+		inostathead[cg].il_stat = info;
+		inostathead[cg].il_numalloced = newalloced;
+		info = inoinfo(ino);
+	}
 	getblk(&cgblk, cgtod(sblock, cg), sblock->fs_cgsize);
 	memcpy(cgp, cgblk.b_un.b_cg, sblock->fs_cgsize);
 	if ((doswap && !needswap) || (!doswap && needswap))
