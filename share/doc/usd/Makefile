@@ -1,3 +1,5 @@
+#	$NetBSD: Makefile,v 1.16 1998/01/09 06:55:55 perry Exp $
+#
 #	@(#)Makefile	8.3 (Berkeley) 5/16/94
 
 # The following modules do not build/install:
