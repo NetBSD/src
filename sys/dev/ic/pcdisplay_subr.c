@@ -1,4 +1,4 @@
-/* $NetBSD: pcdisplay_subr.c,v 1.1 1998/05/28 16:48:40 drochner Exp $ */
+/* $NetBSD: pcdisplay_subr.c,v 1.2 1998/06/17 20:44:16 drochner Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -87,7 +87,8 @@ pcdisplay_putstr(id, row, col, cp, len, attr)
 		off *= 2;
 
 		for (i = 0; i < len; i++, cp++, off += 2)
-			bus_space_write_2(memt, memh, off, (attr << 8) | *cp);
+			bus_space_write_2(memt, memh, off,
+					  (attr << 8) | (u_char)*cp);
 	} else {
 		u_int16_t *m = &scr->mem[off];
 
