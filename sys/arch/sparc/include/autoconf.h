@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.h,v 1.33 2000/03/21 12:48:46 pk Exp $ */
+/*	$NetBSD: autoconf.h,v 1.34 2002/03/11 16:06:42 pk Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -126,9 +126,8 @@ struct mainbus_attach_args {
 	bus_dma_tag_t	ma_dmatag;
 	char		*ma_name;	/* PROM node name */
 	int		ma_node;	/* PROM handle */
-	bus_type_t	ma_iospace;	/* device I/O space */
 	bus_addr_t	ma_paddr;	/* register physical address */
-	int		ma_size;	/* register physical size */
+	bus_size_t	ma_size;	/* register physical size */
 	int		ma_pri;		/* priority (IPL) */
 	void		*ma_promvaddr;	/* PROM virtual address, if any */
 };
@@ -149,15 +148,11 @@ union obio_attach_args {
 	struct obio4_attach_args	uoba_oba4;	/* sun4 on-board view */
 };
 
-#define obio_bus_map(t, a, o, s, f, v, hp)		\
-	bus_space_map2(t, 0, (long)(a) + o, s, f, (vaddr_t)v, hp)
-
 /* obio specific bus flag */
 #define OBIO_BUS_MAP_USE_ROM	BUS_SPACE_MAP_BUS1
 
 /* obio bus helper that finds ROM mappings; exported for autoconf.c */
-int	obio_find_rom_map __P((bus_addr_t, bus_type_t, int,
-				bus_space_handle_t *));
+int	obio_find_rom_map __P((bus_addr_t, int, bus_space_handle_t *));
 
 
 /*
