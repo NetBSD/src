@@ -1,17 +1,17 @@
-/*	$NetBSD: update.c,v 1.3 1997/10/09 21:20:55 christos Exp $	*/
+/*	$NetBSD: update.c,v 1.4 1999/07/02 16:15:34 simonb Exp $	*/
 
  /*
   * Routines for controlled update/initialization of request structures.
-  * 
+  *
   * request_init() initializes its argument. Pointers and string-valued members
   * are initialized to zero, to indicate that no lookup has been attempted.
-  * 
+  *
   * request_set() adds information to an already initialized request structure.
-  * 
+  *
   * Both functions take a variable-length name-value list.
-  * 
+  *
   * Diagnostics are reported through syslog(3).
-  * 
+  *
   * Author: Wietse Venema, Eindhoven University of Technology, The Netherlands.
   */
 
@@ -20,7 +20,7 @@
 #if 0
 static char sccsid[] = "@(#) update.c 1.1 94/12/28 17:42:56";
 #else
-__RCSID("$NetBSD: update.c,v 1.3 1997/10/09 21:20:55 christos Exp $");
+__RCSID("$NetBSD: update.c,v 1.4 1999/07/02 16:15:34 simonb Exp $");
 #endif
 #endif
 

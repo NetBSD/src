@@ -1,7 +1,7 @@
 /*
  * Copyright (C) 1995, 1996, 1997, 1998, and 1999 WIDE Project.
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -13,7 +13,7 @@
  * 3. Neither the name of the project nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE PROJECT AND CONTRIBUTORS ``AS IS'' AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("@(#) pfkey.c $Revision: 1.1 $");
+__RCSID("@(#) pfkey.c $Revision: 1.2 $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -475,7 +475,7 @@ int pfkey_send_getspi(
 
 /*
  * sending SADB_UPDATE message to the kernel.
- * The length of key material is a_keylen + e_keylen. 
+ * The length of key material is a_keylen + e_keylen.
  * OUT:
  *	positive: success and return length sent.
  *	-1	: error occured, and set errno.
@@ -514,7 +514,7 @@ int pfkey_send_update(
 
 /*
  * sending SADB_ADD message to the kernel.
- * The length of key material is a_keylen + e_keylen. 
+ * The length of key material is a_keylen + e_keylen.
  * OUT:
  *	positive: success and return length sent.
  *	-1	: error occured, and set errno.
@@ -553,7 +553,7 @@ int pfkey_send_add(
 
 /*
  * sending SADB_DELETE message to the kernel.
- * The length of key material is a_keylen + e_keylen. 
+ * The length of key material is a_keylen + e_keylen.
  * OUT:
  *	positive: success and return length sent.
  *	-1	: error occured, and set errno.
@@ -578,7 +578,7 @@ int pfkey_send_delete(
 
 /*
  * sending SADB_GET message to the kernel.
- * The length of key material is a_keylen + e_keylen. 
+ * The length of key material is a_keylen + e_keylen.
  * OUT:
  *	positive: success and return length sent.
  *	-1	: error occured, and set errno.

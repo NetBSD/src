@@ -1,4 +1,4 @@
-/*	$NetBSD: findconfig.c,v 1.4 1998/07/06 06:46:34 mrg Exp $	*/
+/*	$NetBSD: findconfig.c,v 1.5 1999/07/02 15:58:36 simonb Exp $	*/
 
 
 #ifdef HAVE_CONFIG_H
@@ -19,8 +19,8 @@ FindConfig(base)
 {
     static char result[BUFSIZ];
     char hostname[MAXHOSTNAMELEN + 1], *cp;
-    struct stat sbuf; 
-    struct utsname unamebuf; 
+    struct stat sbuf;
+    struct utsname unamebuf;
 
     /* All keyed by initial target being a directory */
     (void) strcpy(result, base);
@@ -55,8 +55,8 @@ FindConfig(base)
 			}
 		    }
 		}
-	    } 
-	} 
+	    }
+	}
     }
 outahere:
     return(result);

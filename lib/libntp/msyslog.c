@@ -1,4 +1,4 @@
-/*	$NetBSD: msyslog.c,v 1.3 1998/03/06 18:17:15 christos Exp $	*/
+/*	$NetBSD: msyslog.c,v 1.4 1999/07/02 15:58:36 simonb Exp $	*/
 
 /*
  * msyslog - either send a message to the terminal or print it on
@@ -122,7 +122,7 @@ void msyslog(va_alist)
 		err = strerror(olderrno);
 #else  /* SYS_WINNT */
 		err = xerr;
- 		FormatMessage( 
+ 		FormatMessage(
 			FORMAT_MESSAGE_FROM_SYSTEM,
 			NULL,
 			GetLastError(),
@@ -151,7 +151,7 @@ void msyslog(va_alist)
 #else
 	{
 		lpszStrings[0] = buf;
- 
+
 		switch (event_type[level])
 		{
 		case EVENTLOG_ERROR_TYPE       :
@@ -163,7 +163,7 @@ void msyslog(va_alist)
 			{
 			reportAnIEvent(NTP_INFO,1,lpszStrings);
 			break;
-			}  
+			}
 		case EVENTLOG_WARNING_TYPE     :
 			{
 			reportAnWEvent(NTP_WARNING,1,lpszStrings);
@@ -171,7 +171,7 @@ void msyslog(va_alist)
 			}
 		} /* switch end */
 
-	} 
+	}
 #endif /* SYS_WINNT */
 	else {
 #else
