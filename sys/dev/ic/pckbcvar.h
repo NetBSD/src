@@ -1,4 +1,4 @@
-/* $NetBSD: pckbcvar.h,v 1.6 2001/07/23 21:03:22 jdolecek Exp $ */
+/* $NetBSD: pckbcvar.h,v 1.7 2003/12/12 14:30:16 martin Exp $ */
 
 /*
  * Copyright (c) 1998
@@ -43,6 +43,14 @@ typedef int pckbc_slot_t;
 #define	PCKBC_AUX_SLOT	1
 #define	PCKBC_NSLOTS	2
 
+/* Simple cmd/slot ringbuffer structure */
+struct pckbc_rbuf_item {
+	int data;
+	int slot;
+};
+
+#define	PCKBC_RBUF_SIZE	32	/* number of rbuf entries */
+
 /*
  * external representation (pckbc_tag_t),
  * needed early for console operation
@@ -59,6 +67,10 @@ struct pckbc_internal {
 	struct pckbc_softc *t_sc; /* back pointer */
 
 	struct callout t_cleanup;
+
+	struct pckbc_rbuf_item rbuf[PCKBC_RBUF_SIZE];
+	int rbuf_read;
+	int rbuf_write;
 };
 
 typedef void (*pckbc_inputfcn) __P((void *, int));
@@ -106,6 +118,8 @@ int pckbc_cnattach __P((bus_space_tag_t, bus_addr_t, bus_size_t,
 			pckbc_slot_t));
 int pckbc_is_console __P((bus_space_tag_t, bus_addr_t));
 int pckbcintr __P((void *));
+int pckbcintr_hard __P((void *));
+void pckbcintr_soft __P((void *));
 
 /* md hook for use without mi wscons */
 int pckbc_machdep_cnattach __P((pckbc_tag_t, pckbc_slot_t));
