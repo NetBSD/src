@@ -1,4 +1,4 @@
-/*	$NetBSD: gapspci_dma.c,v 1.2 2001/02/01 19:35:04 marcus Exp $	*/
+/*	$NetBSD: gapspci_dma.c,v 1.3 2001/02/01 19:56:44 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -358,10 +358,16 @@ gaps_dmamap_sync(bus_dma_tag_t t, bus_dmamap_t map, bus_addr_t offset,
 
 #ifdef DIAGNOSTIC
 	if ((ops & (BUS_DMASYNC_PREWRITE|BUS_DMASYNC_POSTREAD)) != 0) {
-		if (offset >= map->dm_mapsize)
+		if (offset >= map->dm_mapsize) {
+			printf("offset 0x%lx mapsize 0x%lx\n",
+			    offset, map->dm_mapsize);
 			panic("gaps_dmamap_sync: bad offset");
-		if (len == 0 || (offset + len) > map->dm_mapsize)
+		}
+		if (len == 0 || (offset + len) > map->dm_mapsize) {
+			printf("len 0x%lx offset 0x%lx mapsize 0x%lx\n",
+			    len, offset, map->dm_mapsize);
 			panic("gaps_dmamap_sync: bad length");
+		}
 	}
 #endif
 
