@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.33 1994/10/30 19:15:46 cgd Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.34 1994/11/06 20:39:50 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -764,12 +764,8 @@ psignal(p, signum)
 		/*
 		 * When a sleeping process receives a stop
 		 * signal, process immediately if possible.
-		 * All other (caught or default) signals
-		 * cause the process to run.
 		 */
-		if (prop & SA_STOP) {
-			if (action != SIG_DFL)
-				goto runfast;
+		if ((prop & SA_STOP) && action == SIG_DFL) {
 			/*
 			 * If a child holding parent blocked,
 			 * stopping could cause deadlock.
@@ -782,8 +778,12 @@ psignal(p, signum)
 				psignal(p->p_pptr, SIGCHLD);
 			stop(p);
 			goto out;
-		} else
-			goto runfast;
+		}
+		/*
+		 * All other (caught or default) signals
+		 * cause the process to run.
+		 */
+		goto runfast;
 		/*NOTREACHED*/
 
 	case SSTOP:
@@ -986,9 +986,9 @@ issignal(p)
 				    prop & SA_TTYSTOP))
 					break;	/* == ignore */
 				p->p_xstat = signum;
-				stop(p);
 				if ((p->p_pptr->p_flag & P_NOCLDSTOP) == 0)
 					psignal(p->p_pptr, SIGCHLD);
+				stop(p);
 				mi_switch();
 				break;
 			} else if (prop & SA_IGNORE) {
