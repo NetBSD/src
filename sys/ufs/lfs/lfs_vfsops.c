@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vfsops.c,v 1.93 2003/02/19 12:18:59 yamt Exp $	*/
+/*	$NetBSD: lfs_vfsops.c,v 1.94 2003/02/19 12:22:51 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.93 2003/02/19 12:18:59 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.94 2003/02/19 12:22:51 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -1804,9 +1804,11 @@ lfs_gop_write(struct vnode *vp, struct vm_page **pgs, int npages, int flags)
 				wakeup(pgs[i]);
 			if (pgs[i]->flags & PG_PAGEOUT)
 				uvmexp.paging--;
+			if (pgs[i]->flags & PG_DELWRI) {
+				uvm_pageunwire(pgs[i]);
+			}
 			pgs[i]->flags &= ~(PG_BUSY|PG_CLEAN|PG_WANTED|PG_DELWRI|PG_PAGEOUT|PG_RELEASED);
 			UVM_PAGE_OWN(pg, NULL);
-			uvm_pageactivate(pgs[i]);
 		}
 		uvm_page_unbusy(pgs, npages);
 		uvm_unlock_pageq();
@@ -1841,6 +1843,9 @@ lfs_gop_write(struct vnode *vp, struct vm_page **pgs, int npages, int flags)
 			pgs[i]->flags &= ~PG_DELWRI;
 			pgs[i]->flags |= PG_PAGEOUT;
 			uvmexp.paging++;
+			uvm_lock_pageq();
+			uvm_pageunwire(pgs[i]);
+			uvm_unlock_pageq();
 		}
 
 	/*

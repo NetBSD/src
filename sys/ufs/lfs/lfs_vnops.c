@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vnops.c,v 1.84 2003/02/17 23:48:22 perseant Exp $	*/
+/*	$NetBSD: lfs_vnops.c,v 1.85 2003/02/19 12:22:51 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.84 2003/02/17 23:48:22 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.85 2003/02/19 12:22:51 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1146,20 +1146,21 @@ check_dirty(struct lfs *fs, struct vnode *vp,
 				if (flags & PGO_FREE) {
 					/* XXXUBC need better way to update */
 					lfs_subsys_pages += MIN(1, pages_per_block);
+					/*
+					 * wire the page so that
+					 * pdaemon don't see it again.
+					 */
 					uvm_lock_pageq();
-					UVM_PAGE_OWN(pg, NULL);
-					uvm_pagedequeue(pg);
+					uvm_pagewire(pg);
+					uvm_unlock_pageq();
 					/* Suspended write flag */
 					pg->flags |= PG_DELWRI;
-					uvm_unlock_pageq();
 				}
-			} else {
-				UVM_PAGE_OWN(pg, NULL);
 			}
 			if (pg->flags & PG_WANTED)
 				wakeup(pg);
 			pg->flags &= ~(PG_WANTED|PG_BUSY);
-			/* UVM_PAGE_OWN(pg, NULL); */
+			UVM_PAGE_OWN(pg, NULL);
 		}
 
 		if (by_list) {
