@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.214 1998/10/19 22:09:16 tron Exp $	*/
+/*	$NetBSD: machdep.c,v 1.215 1998/10/26 23:17:54 scottr Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -2514,6 +2514,8 @@ get_physical(u_int addr, u_long * phys)
 			if ((ph & MMU40_RES) == 0)
 				return 0;
 		}
+		if ((ph & MMU40_TTR) != 0)
+			ph = addr;
 
 		mask = (macos_tc & 0x4000) ? 0x00001fff : 0x00000fff;
 		ph &= (~mask);
