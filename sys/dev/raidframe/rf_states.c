@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_states.c,v 1.31 2004/03/19 01:56:03 oster Exp $	*/
+/*	$NetBSD: rf_states.c,v 1.32 2004/03/20 17:30:40 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_states.c,v 1.31 2004/03/19 01:56:03 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_states.c,v 1.32 2004/03/20 17:30:40 oster Exp $");
 
 #include <sys/errno.h>
 
@@ -382,76 +382,75 @@ rf_State_Lock(RF_RaidAccessDesc_t *desc)
 	RF_Raid_t *raidPtr = desc->raidPtr;
 	RF_AccessStripeMapHeader_t *asmh = desc->asmap;
 	RF_AccessStripeMap_t *asm_p;
+	RF_StripeNum_t lastStripeID = -1;
 	int     suspended = RF_FALSE;
 
 #if RF_ACC_TRACE > 0
 	RF_ETIMER_START(timer);
 #endif
-	if (!(raidPtr->Layout.map->flags & RF_NO_STRIPE_LOCKS)) {
-		RF_StripeNum_t lastStripeID = -1;
-
-		/* acquire each lock that we don't already hold */
-		for (asm_p = asmh->stripeMap; asm_p; asm_p = asm_p->next) {
-			RF_ASSERT(RF_IO_IS_R_OR_W(desc->type));
-			if (!rf_suppressLocksAndLargeWrites &&
-			    asm_p->parityInfo &&
-			    !(desc->flags & RF_DAG_SUPPRESS_LOCKS) &&
-			    !(asm_p->flags & RF_ASM_FLAGS_LOCK_TRIED)) {
-				asm_p->flags |= RF_ASM_FLAGS_LOCK_TRIED;
+	
+	/* acquire each lock that we don't already hold */
+	for (asm_p = asmh->stripeMap; asm_p; asm_p = asm_p->next) {
+		RF_ASSERT(RF_IO_IS_R_OR_W(desc->type));
+		if (!rf_suppressLocksAndLargeWrites &&
+		    asm_p->parityInfo &&
+		    !(desc->flags & RF_DAG_SUPPRESS_LOCKS) &&
+		    !(asm_p->flags & RF_ASM_FLAGS_LOCK_TRIED)) {
+			asm_p->flags |= RF_ASM_FLAGS_LOCK_TRIED;
 				/* locks must be acquired hierarchically */
-				RF_ASSERT(asm_p->stripeID > lastStripeID);
-				lastStripeID = asm_p->stripeID;
-
-				RF_INIT_LOCK_REQ_DESC(asm_p->lockReqDesc, desc->type,
-				    (void (*) (struct buf *)) rf_ContinueRaidAccess, desc, asm_p,
-				    raidPtr->Layout.dataSectorsPerStripe);
-				if (rf_AcquireStripeLock(raidPtr->lockTable, asm_p->stripeID,
-					&asm_p->lockReqDesc)) {
+			RF_ASSERT(asm_p->stripeID > lastStripeID);
+			lastStripeID = asm_p->stripeID;
+			
+			RF_INIT_LOCK_REQ_DESC(asm_p->lockReqDesc, desc->type,
+					      (void (*) (struct buf *)) rf_ContinueRaidAccess, desc, asm_p,
+					      raidPtr->Layout.dataSectorsPerStripe);
+			if (rf_AcquireStripeLock(raidPtr->lockTable, asm_p->stripeID,
+						 &asm_p->lockReqDesc)) {
+				suspended = RF_TRUE;
+				break;
+			}
+		}
+		if (desc->type == RF_IO_TYPE_WRITE &&
+		    raidPtr->status == rf_rs_reconstructing) {
+			if (!(asm_p->flags & RF_ASM_FLAGS_FORCE_TRIED)) {
+				int     val;
+				
+				asm_p->flags |= RF_ASM_FLAGS_FORCE_TRIED;
+				val = rf_ForceOrBlockRecon(raidPtr, asm_p,
+							   (void (*) (RF_Raid_t *, void *)) rf_ContinueRaidAccess, desc);
+				if (val == 0) {
+					asm_p->flags |= RF_ASM_FLAGS_RECON_BLOCKED;
+				} else {
 					suspended = RF_TRUE;
 					break;
-				}
-			}
-			if (desc->type == RF_IO_TYPE_WRITE &&
-			    raidPtr->status == rf_rs_reconstructing) {
-				if (!(asm_p->flags & RF_ASM_FLAGS_FORCE_TRIED)) {
-					int     val;
-
-					asm_p->flags |= RF_ASM_FLAGS_FORCE_TRIED;
-					val = rf_ForceOrBlockRecon(raidPtr, asm_p,
-					    (void (*) (RF_Raid_t *, void *)) rf_ContinueRaidAccess, desc);
-					if (val == 0) {
-						asm_p->flags |= RF_ASM_FLAGS_RECON_BLOCKED;
-					} else {
-						suspended = RF_TRUE;
-						break;
-					}
-				} else {
-#if RF_DEBUG_PSS > 0
-					if (rf_pssDebug) {
-						printf("raid%d: skipping force/block because already done, psid %ld\n",
-						       desc->raidPtr->raidid, 
-						       (long) asm_p->stripeID);
-					}
-#endif
 				}
 			} else {
 #if RF_DEBUG_PSS > 0
 				if (rf_pssDebug) {
-					printf("raid%d: skipping force/block because not write or not under recon, psid %ld\n",
+					printf("raid%d: skipping force/block because already done, psid %ld\n",
 					       desc->raidPtr->raidid, 
 					       (long) asm_p->stripeID);
 				}
 #endif
 			}
-		}
-#if RF_ACC_TRACE > 0
-		RF_ETIMER_STOP(timer);
-		RF_ETIMER_EVAL(timer);
-		tracerec->specific.user.lock_us += RF_ETIMER_VAL_US(timer);
+		} else {
+#if RF_DEBUG_PSS > 0
+			if (rf_pssDebug) {
+				printf("raid%d: skipping force/block because not write or not under recon, psid %ld\n",
+				       desc->raidPtr->raidid, 
+				       (long) asm_p->stripeID);
+			}
 #endif
-		if (suspended)
-			return (RF_TRUE);
+		}
 	}
+#if RF_ACC_TRACE > 0
+	RF_ETIMER_STOP(timer);
+	RF_ETIMER_EVAL(timer);
+	tracerec->specific.user.lock_us += RF_ETIMER_VAL_US(timer);
+#endif
+	if (suspended)
+		return (RF_TRUE);
+
 	desc->state++;
 	return (RF_FALSE);
 }
@@ -701,19 +700,17 @@ rf_State_Cleanup(RF_RaidAccessDesc_t *desc)
 
 	RF_ETIMER_START(timer);
 #endif
-	if (!(raidPtr->Layout.map->flags & RF_NO_STRIPE_LOCKS)) {
-		for (asm_p = asmh->stripeMap; asm_p; asm_p = asm_p->next) {
-			if (!rf_suppressLocksAndLargeWrites &&
-			    asm_p->parityInfo &&
-			    !(desc->flags & RF_DAG_SUPPRESS_LOCKS)) {
-				RF_ASSERT_VALID_LOCKREQ(&asm_p->lockReqDesc);
-				rf_ReleaseStripeLock(raidPtr->lockTable, 
-						     asm_p->stripeID,
-						     &asm_p->lockReqDesc);
-			}
-			if (asm_p->flags & RF_ASM_FLAGS_RECON_BLOCKED) {
-				rf_UnblockRecon(raidPtr, asm_p);
-			}
+	for (asm_p = asmh->stripeMap; asm_p; asm_p = asm_p->next) {
+		if (!rf_suppressLocksAndLargeWrites &&
+		    asm_p->parityInfo &&
+		    !(desc->flags & RF_DAG_SUPPRESS_LOCKS)) {
+			RF_ASSERT_VALID_LOCKREQ(&asm_p->lockReqDesc);
+			rf_ReleaseStripeLock(raidPtr->lockTable, 
+					     asm_p->stripeID,
+					     &asm_p->lockReqDesc);
+		}
+		if (asm_p->flags & RF_ASM_FLAGS_RECON_BLOCKED) {
+			rf_UnblockRecon(raidPtr, asm_p);
 		}
 	}
 #if RF_ACC_TRACE > 0
