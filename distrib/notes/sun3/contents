@@ -1,4 +1,4 @@
-	$NetBSD: contents,v 1.7 1998/01/09 18:47:31 perry Exp $	
+	$NetBSD: contents,v 1.8 1998/05/29 17:57:11 gwr Exp $	
 
 The sun3-specific portion of the NetBSD _VER release is found in the
 "sun3" subdirectory of the distribution.  That subdirectory is laid
@@ -51,6 +51,10 @@ on either method.
 .../sun3/binary/kernel/
 
 	netbsd-gen.gz	A gzipped GENERIC kernel (for upgrade)
+
+	netbsd-inst.gz	A gzipped INSTALL kernel.  This has a
+			small enough configuration so it will
+			boot on any Sun-3 (even a 3/50).
 
 	netbsd-rd.gz	A gzipped copy of the "RAMDISK kernel"
 			for installing the miniroot filesystem.
