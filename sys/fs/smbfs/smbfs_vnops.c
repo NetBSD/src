@@ -1,4 +1,4 @@
-/*	$NetBSD: smbfs_vnops.c,v 1.7 2003/02/21 20:13:21 jdolecek Exp $	*/
+/*	$NetBSD: smbfs_vnops.c,v 1.8 2003/02/23 17:28:48 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -121,54 +121,6 @@ int smbfs_print(void *);
 int smbfs_pathconf(void *ap);
 int smbfs_advlock(void *);
 
-#ifndef __NetBSD__
-vop_t **smbfs_vnodeop_p;
-static struct vnodeopv_entry_desc smbfs_vnodeop_entries[] = {
-	{ &vop_default_desc,		(vop_t *) vop_defaultop },
-	{ &vop_access_desc,		(vop_t *) smbfs_access },
-	{ &vop_advlock_desc,		(vop_t *) smbfs_advlock },
-	{ &vop_close_desc,		(vop_t *) smbfs_close },
-	{ &vop_create_desc,		(vop_t *) smbfs_create },
-	{ &vop_fsync_desc,		(vop_t *) smbfs_fsync },
-	{ &vop_getattr_desc,		(vop_t *) smbfs_getattr },
-	{ &vop_getpages_desc,		(vop_t *) smbfs_getpages },
-	{ &vop_inactive_desc,		(vop_t *) smbfs_inactive },
-	{ &vop_ioctl_desc,		(vop_t *) smbfs_ioctl },
-	{ &vop_islocked_desc,		(vop_t *) vop_stdislocked },
-	{ &vop_link_desc,		(vop_t *) smbfs_link },
-	{ &vop_lock_desc,		(vop_t *) vop_stdlock },
-	{ &vop_lookup_desc,		(vop_t *) smbfs_lookup },
-	{ &vop_mkdir_desc,		(vop_t *) smbfs_mkdir },
-	{ &vop_mknod_desc,		(vop_t *) smbfs_mknod },
-	{ &vop_open_desc,		(vop_t *) smbfs_open },
-	{ &vop_pathconf_desc,		(vop_t *) smbfs_pathconf },
-	{ &vop_print_desc,		(vop_t *) smbfs_print },
-	{ &vop_putpages_desc,		(vop_t *) smbfs_putpages },
-	{ &vop_read_desc,		(vop_t *) smbfs_read },
-	{ &vop_readdir_desc,		(vop_t *) smbfs_readdir },
-	{ &vop_reclaim_desc,		(vop_t *) smbfs_reclaim },
-	{ &vop_remove_desc,		(vop_t *) smbfs_remove },
-	{ &vop_rename_desc,		(vop_t *) smbfs_rename },
-	{ &vop_rmdir_desc,		(vop_t *) smbfs_rmdir },
-	{ &vop_setattr_desc,		(vop_t *) smbfs_setattr },
-	{ &vop_strategy_desc,		(vop_t *) smbfs_strategy },
-	{ &vop_symlink_desc,		(vop_t *) smbfs_symlink },
-	{ &vop_unlock_desc,		(vop_t *) vop_stdunlock },
-	{ &vop_write_desc,		(vop_t *) smbfs_write },
-#ifndef FB_RELENG3
-	{ &vop_getextattr_desc, 	(vop_t *) smbfs_getextattr },
-/*	{ &vop_setextattr_desc,		(vop_t *) smbfs_setextattr },*/
-#endif
-	{ NULL, NULL }
-};
-
-static struct vnodeopv_desc smbfs_vnodeop_opv_desc =
-	{ &smbfs_vnodeop_p, smbfs_vnodeop_entries };
-
-VNODEOP_SET(smbfs_vnodeop_opv_desc);
-#endif /* !__NetBSD__ */
-
-#ifdef __NetBSD__
 int (**smbfs_vnodeop_p) __P((void *));
 static struct vnodeopv_entry_desc smbfs_vnodeop_entries[] = {
 	{ &vop_default_desc,		vn_default_error },
@@ -206,7 +158,6 @@ static struct vnodeopv_entry_desc smbfs_vnodeop_entries[] = {
 };
 const struct vnodeopv_desc smbfs_vnodeop_opv_desc =
 	{ &smbfs_vnodeop_p, smbfs_vnodeop_entries };
-#endif /* __NetBSD__ */
 
 int
 smbfs_access(v)
