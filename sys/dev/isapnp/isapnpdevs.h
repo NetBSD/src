@@ -1,4 +1,4 @@
-/*	$NetBSD: isapnpdevs.h,v 1.2 1998/07/30 09:47:49 drochner Exp $	*/
+/*	$NetBSD: isapnpdevs.h,v 1.3 1998/08/07 00:53:24 matt Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
@@ -53,6 +53,8 @@ extern const struct isapnp_devinfo isapnp_aic_devinfo;
 extern const struct isapnp_devinfo isapnp_com_devinfo;
 /* 3Com 3CXXX Ethernet */
 extern const struct isapnp_devinfo isapnp_ep_devinfo;
+/* ESS Audio Drive */
+extern const struct isapnp_devinfo isapnp_ess_devinfo;
 /* Generic Joystick */
 extern const struct isapnp_devinfo isapnp_joy_devinfo;
 /* Gravis Ultrasound */
