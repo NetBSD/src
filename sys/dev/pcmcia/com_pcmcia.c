@@ -1,4 +1,4 @@
-/*	$NetBSD: com_pcmcia.c,v 1.41 2004/08/09 15:40:56 mycroft Exp $	 */
+/*	$NetBSD: com_pcmcia.c,v 1.42 2004/08/09 17:00:53 mycroft Exp $	 */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com_pcmcia.c,v 1.41 2004/08/09 15:40:56 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com_pcmcia.c,v 1.42 2004/08/09 17:00:53 mycroft Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -264,12 +264,6 @@ retry:
 found:
 	/* Enable the card. */
 	pcmcia_function_init(pa->pf, cfe);
-	if (com_pcmcia_enable1(sc))
-		aprint_error("%s: function enable failed\n", self->dv_xname);
-
-	sc->enabled = 1;
-
-	/* map in the io space */
 
 	if (pcmcia_io_map(pa->pf, ((cfe->flags & PCMCIA_CFE_IO16) ?
 	    PCMCIA_WIDTH_AUTO : PCMCIA_WIDTH_IO8), &psc->sc_pcioh,
@@ -277,6 +271,17 @@ found:
 		aprint_error("%s: can't map i/o space\n", self->dv_xname);
 		return;
 	}
+
+	if (com_pcmcia_enable(sc)) {
+		aprint_error("%s: function enable failed\n", self->dv_xname);
+		pcmcia_io_unmap(psc->sc_pf, psc->sc_io_window);
+		return;
+	}
+
+	sc->enabled = 1;
+
+	/* map in the io space */
+
 	sc->sc_iot = psc->sc_pcioh.iot;
 	sc->sc_ioh = psc->sc_pcioh.ioh;
 
@@ -292,7 +297,7 @@ found:
 
 	sc->enabled = 0;
 
-	com_pcmcia_disable1(sc);
+	com_pcmcia_disable(sc);
 }
 
 int
@@ -330,17 +335,19 @@ com_pcmcia_enable(sc)
 	struct pcmcia_function *pf = psc->sc_pf;
 	int error;
 
-	if ((error = com_pcmcia_enable1(sc)) != 0)
-		return error;
-
 	/* establish the interrupt. */
 	psc->sc_ih = pcmcia_intr_establish(pf, IPL_SERIAL, comintr, sc);
 	if (psc->sc_ih == NULL) {
 		printf("%s: couldn't establish interrupt\n",
 		    sc->sc_dev.dv_xname);
-		com_pcmcia_disable1(sc);
 		return 1;
 	}
+
+	if ((error = com_pcmcia_enable1(sc)) != 0) {
+		pcmcia_intr_disestablish(pf, psc->sc_ih);
+		return error;
+	}
+
 	return 0;
 }
 
