@@ -1,4 +1,4 @@
-/*	$NetBSD: file.h,v 1.28 2002/07/09 14:59:54 pooka Exp $	*/
+/*	$NetBSD: file.h,v 1.29 2002/07/10 16:15:54 pooka Exp $	*/
 
 /*
  * file.h - definitions for file(1) program
@@ -30,8 +30,6 @@
 
 #ifndef __file_h__
 #define __file_h__
-
-#include <inttypes.h>
 
 #ifndef __linux__
 #define _LARGEFILE_SOURCE
