@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs.c,v 1.20 1996/12/27 11:55:58 pk Exp $	*/
+/*	$NetBSD: nfs.c,v 1.21 1997/06/16 20:47:11 drochner Exp $	*/
 
 /*-
  *  Copyright (c) 1993 John Brezak
@@ -81,11 +81,13 @@ struct nfs_read_repl {
 	u_char	data[NFSREAD_SIZE];
 };
 
+#ifndef NFS_NOSYMLINK
 struct nfs_readlnk_repl {
 	n_long	errno;
 	n_long	len;
 	char	path[NFS_MAXPATHLEN];
 };
+#endif
 
 struct nfs_iodesc {
 	struct	iodesc	*iodesc;
@@ -226,6 +228,7 @@ nfs_lookupfh(d, name, newfd)
 	return (0);
 }
 
+#ifndef NFS_NOSYMLINK
 /*
  * Get the destination of a symbolic link.
  */
@@ -270,6 +273,7 @@ nfs_readlink(d, buf)
 	buf[rdata.d.len] = 0;
 	return (0);
 }
+#endif
 
 /*
  * Read data from a file.
@@ -381,11 +385,13 @@ nfs_open(path, f)
 	struct open_file *f;
 {
 	struct nfs_iodesc *newfd, *currfd;
+#ifndef NFS_NOSYMLINK
 	register char *cp, *ncp;
 	register int c;
 	char namebuf[NFS_MAXPATHLEN + 1];
 	char linkbuf[NFS_MAXPATHLEN + 1];
 	int nlinks = 0;
+#endif
 	int error = 0;
 
 #ifdef NFS_DEBUG
@@ -399,7 +405,8 @@ nfs_open(path, f)
 
 	currfd = &nfs_root_node;
 	newfd = 0;
-	
+
+#ifndef NFS_NOSYMLINK
 	cp = path;
 	while (*cp) {
 		/*
@@ -494,6 +501,14 @@ nfs_open(path, f)
 	error = 0;
 
 out:
+#else
+        /* allocate file system specific data structure */
+        currfd = alloc(sizeof(*currfd));
+        currfd->iodesc = nfs_root_node.iodesc;
+        currfd->off = 0;
+
+        error = nfs_lookupfh(&nfs_root_node, path, currfd);
+#endif
 	if (!error) {
 		f->f_fsdata = (void *)currfd;
 		return (0);
