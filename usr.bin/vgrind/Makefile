@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.10 1999/02/13 02:54:57 lukem Exp $
+#	$NetBSD: Makefile,v 1.11 2000/01/23 18:26:14 mycroft Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/9/93
 
 .include <bsd.own.mk>
@@ -20,7 +20,7 @@ FILESDIR_tmac.vgrind=		/usr/share/tmac
 SCRIPTS=vgrind.sh
 SCRIPTSDIR=/usr/bin
 
-all: vfontedpr vgrindefs.src.db
+realall: vfontedpr vgrindefs.src.db
 
 .if ${MKSHARE} != "no"
 vgrindefs.src.db: vgrindefs.src
