@@ -1,4 +1,4 @@
-.\"	$NetBSD: xfer,v 1.19 2001/07/22 13:33:59 wiz Exp $
+.\"	$NetBSD: xfer,v 1.20 2001/07/30 13:44:04 jdolecek Exp $
 .\"
 .\" Copyright (c) 1999-2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -64,6 +64,10 @@ memory, which currently will not work, as this is a total of 3712k.
 For old machines that may have EISA, SCSI and more RAM, but only
 have an 1.2M floppy drive, use
 .Pa boot-small.fs .
+.Pp
+For old IBM PS/2 machines with MCA, use
+.Pa boot-ps2.fs .
+.Pp
 For all other systems, use
 .Pa boot1.fs
 and
