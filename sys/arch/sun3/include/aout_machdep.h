@@ -30,6 +30,8 @@
 #ifndef _SUN3_EXEC_H_
 #define _SUN3_EXEC_H_
 
+#if 0
+/* delete once we talk to chris */
 /*
  * the following, if defined, prepares a set of vmspace commands for
  * a given exectable package defined by epp.
@@ -44,6 +46,7 @@
  * a non-zero return value indicates that the machine type is correct.
  */
 /*#define cpu_exec_checkmid(mid) (mid == MID_SUN3)*/
+#endif
 
 #define __LDPGSZ	8192
 

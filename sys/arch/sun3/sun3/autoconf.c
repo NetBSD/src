@@ -28,7 +28,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Header: /cvsroot/src/sys/arch/sun3/sun3/autoconf.c,v 1.4 1993/08/28 15:37:07 glass Exp $
+ * $Header: /cvsroot/src/sys/arch/sun3/sun3/autoconf.c,v 1.5 1994/02/04 08:20:19 glass Exp $
  */
 /*
  * Setup the system to run on the current machine.

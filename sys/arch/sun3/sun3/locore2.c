@@ -28,7 +28,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Header: /cvsroot/src/sys/arch/sun3/sun3/locore2.c,v 1.14 1993/11/23 05:29:18 glass Exp $
+ * $Header: /cvsroot/src/sys/arch/sun3/sun3/locore2.c,v 1.15 1994/02/04 08:21:07 glass Exp $
  */
 
 #include "systm.h"

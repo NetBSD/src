@@ -28,7 +28,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Header: /cvsroot/src/sys/arch/sun3/netboot/Attic/le_poll.c,v 1.1 1993/10/12 05:23:31 glass Exp $
+ * $Header: /cvsroot/src/sys/arch/sun3/netboot/Attic/le_poll.c,v 1.2 1994/02/04 08:20:14 glass Exp $
  */
 
 #include <sys/param.h>
