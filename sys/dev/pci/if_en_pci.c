@@ -1,4 +1,4 @@
-/*	$NetBSD: if_en_pci.c,v 1.11 1999/03/24 01:05:15 thorpej Exp $	*/
+/*	$NetBSD: if_en_pci.c,v 1.12 1999/03/24 18:47:51 cgd Exp $	*/
 
 /*
  *
@@ -203,8 +203,8 @@ void *aux;
   /*
    * make sure bus mastering is enabled
    */
-  pci_conf_write(pc, pa->pa_tag, PCI_COMMAND_STATUS_REG,
-    pci_conf_read(pc, pa->pa_tag, PCI_COMMAND_STATUS_REG) |
+  pci_conf_write(pa->pa_pc, pa->pa_tag, PCI_COMMAND_STATUS_REG,
+    pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_COMMAND_STATUS_REG) |
     PCI_COMMAND_MASTER_ENABLE);
 
   /*
