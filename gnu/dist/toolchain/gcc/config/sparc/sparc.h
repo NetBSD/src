@@ -50,11 +50,11 @@ Boston, MA 02111-1307, USA.  */
 
 /* Code model selection.
    -mcmodel is used to select the v9 code model.
-   Different code models aren't supported for v8 code.
+   Different code models aren't supported for v7/8 code.
 
    TARGET_CM_32:     32 bit address space, top 32 bits = 0,
 		     pointers are 32 bits.  Note that this isn't intended
-                     to imply a v8 abi.
+                     to imply a v7/8 abi.
 
    TARGET_CM_MEDLOW: 32 bit address space, top 32 bits = 0,
                      avoid generating %uhi and %ulo terms,
@@ -173,8 +173,8 @@ extern enum cmodel sparc_cmodel;
 #endif
 
 #if TARGET_CPU_DEFAULT == TARGET_CPU_sparclite86x
-#define CPP_CPU32_DEFAULT_SPEC "-D__sparclite86x__ -D__sparc_v8__"
-#define ASM_CPU32_DEFAULT_SPEC "-Av8"
+#define CPP_CPU32_DEFAULT_SPEC "-D__sparclite86x__"
+#define ASM_CPU32_DEFAULT_SPEC "-Asparclite"
 #endif
 
 #endif
@@ -233,7 +233,7 @@ Unrecognized value in TARGET_CPU_DEFAULT.
 %{mcpu=v8:-D__sparc_v8__} \
 %{mcpu=supersparc:-D__supersparc__ -D__sparc_v8__} \
 %{mcpu=hypersparc:-D__hypersparc__ -D__sparc_v8__} \
-%{mcpu=sparclite86x:-D__sparclite86x__ -D__sparc_v8__} \
+%{mcpu=sparclite86x:-D__sparclite86x__} \
 %{mcpu=v9:-D__sparc_v9__} \
 %{mcpu=ultrasparc:-D__sparc_v9__} \
 %{!mcpu*:%{!mcypress:%{!msparclite:%{!mf930:%{!mf934:%{!mv8:%{!msupersparc:%(cpp_cpu_default)}}}}}}} \
@@ -297,6 +297,7 @@ Unrecognized value in TARGET_CPU_DEFAULT.
 %{msparclite:-Asparclite} \
 %{mf930:-Asparclite} %{mf934:-Asparclite} \
 %{mcpu=sparclite:-Asparclite} \
+%{mcpu=sparclite86x:-Asparclite} \
 %{mcpu=f930:-Asparclite} %{mcpu=f934:-Asparclite} \
 %{mv8plus:-Av8plus} \
 %{mcpu=v9:-Av9} \
@@ -542,9 +543,8 @@ extern int target_flags;
 #define TARGET_VIS (target_flags & MASK_VIS)
 
 /* Compile for Solaris V8+.  32 bit Solaris preserves the high bits of
-   the current out and global registers.  Linux saves the high bits on
-   context switches but not signals.  */
-#define MASK_V8PLUS 0x2000000                 
+   the current out and global registers and Linux 2.2+ as well.  */
+#define MASK_V8PLUS 0x2000000
 #define TARGET_V8PLUS (target_flags & MASK_V8PLUS)                            
 
 /* TARGET_HARD_MUL: Use hardware multiply instructions but not %y.
@@ -555,7 +555,7 @@ extern int target_flags;
 #define TARGET_HARD_MUL32				\
   ((TARGET_V8 || TARGET_SPARCLITE			\
     || TARGET_SPARCLET || TARGET_DEPRECATED_V8_INSNS)	\
-   && ! TARGET_V8PLUS)
+   && ! TARGET_V8PLUS && TARGET_ARCH32)
 
 #define TARGET_HARD_MUL					\
   (TARGET_V8 || TARGET_SPARCLITE || TARGET_SPARCLET	\
@@ -1822,6 +1822,31 @@ do {									\
   ASM_OUTPUT_LABEL (FILE, NAME);					\
 } while (0)
 
+/* Output the special assembly code needed to tell the assembler some
+   register is used as global register variable.  */
+
+#ifdef HAVE_AS_REGISTER_PSEUDO_OP
+#define ASM_DECLARE_REGISTER_GLOBAL(FILE, DECL, REGNO, NAME)		\
+do {									\
+  if (TARGET_ARCH64)							\
+    {									\
+      int __end = HARD_REGNO_NREGS ((REGNO), DECL_MODE (decl)) + (REGNO); \
+      int __reg;							\
+      extern char sparc_hard_reg_printed[8];				\
+      for (__reg = (REGNO); __reg < 8 && __reg < __end; __reg++)	\
+	if ((__reg & ~1) == 2 || (__reg & ~1) == 6)			\
+	  {								\
+	    if (__reg == (REGNO))					\
+	      fprintf ((FILE), "\t.register\t%%g%d, %s\n", __reg, (NAME)); \
+	    else							\
+	      fprintf ((FILE), "\t.register\t%%g%d, .gnu.part%d.%s\n",	\
+		       __reg, __reg - (REGNO), (NAME));			\
+	    sparc_hard_reg_printed[__reg] = 1;				\
+	  }								\
+    }									\
+} while (0)
+#endif
+
 /* This macro generates the assembly code for function entry.
    FILE is a stdio stream to output the code to.
    SIZE is an int: how many units of temporary storage to allocate.
@@ -2234,6 +2259,14 @@ extern struct rtx_def *sparc_builtin_saveregs ();
        : 0))
 #endif
 
+/* Should gcc use [%reg+%lo(xx)+offset] addresses?  */
+
+#ifdef HAVE_AS_OFFSETABLE_LO10
+#define USE_AS_OFFSETABLE_LO10 1
+#else
+#define USE_AS_OFFSETABLE_LO10 0
+#endif
+
 /* GO_IF_LEGITIMATE_ADDRESS recognizes an RTL expression
    that is a valid memory address for an instruction.
    The MODE argument is the machine mode for the MEM expression
@@ -2258,6 +2291,9 @@ extern struct rtx_def *sparc_builtin_saveregs ();
 
 #define RTX_OK_FOR_OFFSET_P(X)						\
   (GET_CODE (X) == CONST_INT && INTVAL (X) >= -0x1000 && INTVAL (X) < 0x1000)
+  
+#define RTX_OK_FOR_OLO10_P(X)						\
+  (GET_CODE (X) == CONST_INT && INTVAL (X) >= -0x1000 && INTVAL (X) < 0xc00 - 8)
 
 #define GO_IF_LEGITIMATE_ADDRESS(MODE, X, ADDR)		\
 { if (RTX_OK_FOR_BASE_P (X))				\
@@ -2307,6 +2343,30 @@ extern struct rtx_def *sparc_builtin_saveregs ();
 		      && TARGET_V9			\
 		      && TARGET_HARD_QUAD)))		\
 	      || RTX_OK_FOR_OFFSET_P (op0))		\
+	    goto ADDR;					\
+	}						\
+      else if (USE_AS_OFFSETABLE_LO10			\
+	       && GET_CODE (op0) == LO_SUM		\
+	       && TARGET_ARCH64				\
+	       && ! TARGET_CM_MEDMID			\
+	       && RTX_OK_FOR_OLO10_P (op1))		\
+	{						\
+	  register rtx op00 = XEXP (op0, 0);		\
+	  register rtx op01 = XEXP (op0, 1);		\
+	  if (RTX_OK_FOR_BASE_P (op00)			\
+	      && CONSTANT_P (op01))			\
+	    goto ADDR;					\
+	}						\
+      else if (USE_AS_OFFSETABLE_LO10			\
+	       && GET_CODE (op1) == LO_SUM		\
+	       && TARGET_ARCH64				\
+	       && ! TARGET_CM_MEDMID			\
+	       && RTX_OK_FOR_OLO10_P (op0))		\
+	{						\
+	  register rtx op10 = XEXP (op1, 0);		\
+	  register rtx op11 = XEXP (op1, 1);		\
+	  if (RTX_OK_FOR_BASE_P (op10)			\
+	      && CONSTANT_P (op11))			\
 	    goto ADDR;					\
 	}						\
     }							\
@@ -3109,15 +3169,29 @@ do {									\
 	offset = INTVAL (XEXP (addr, 1)), base = XEXP (addr, 0);\
       else							\
 	base = XEXP (addr, 0), index = XEXP (addr, 1);		\
-      fputs (reg_names[REGNO (base)], FILE);			\
-      if (index == 0)						\
-	fprintf (FILE, "%+d", offset);				\
-      else if (GET_CODE (index) == REG)				\
-	fprintf (FILE, "+%s", reg_names[REGNO (index)]);	\
-      else if (GET_CODE (index) == SYMBOL_REF			\
-	       || GET_CODE (index) == CONST)			\
-	fputc ('+', FILE), output_addr_const (FILE, index);	\
-      else abort ();						\
+      if (GET_CODE (base) == LO_SUM)				\
+	{							\
+	  if (! USE_AS_OFFSETABLE_LO10				\
+	      || TARGET_ARCH32					\
+	      || TARGET_CM_MEDMID)				\
+	    abort ();						\
+	  output_operand (XEXP (base, 0), 0);			\
+	  fputs ("+%lo(", FILE);				\
+	  output_address (XEXP (base, 1));			\
+	  fprintf (FILE, ")+%d", offset);			\
+	}							\
+      else							\
+	{							\
+	  fputs (reg_names[REGNO (base)], FILE);		\
+	  if (index == 0)					\
+	    fprintf (FILE, "%+d", offset);			\
+	  else if (GET_CODE (index) == REG)			\
+	    fprintf (FILE, "+%s", reg_names[REGNO (index)]);	\
+	  else if (GET_CODE (index) == SYMBOL_REF		\
+		   || GET_CODE (index) == CONST)		\
+	    fputc ('+', FILE), output_addr_const (FILE, index);	\
+	  else abort ();					\
+	}							\
     }								\
   else if (GET_CODE (addr) == MINUS				\
 	   && GET_CODE (XEXP (addr, 1)) == LABEL_REF)		\
