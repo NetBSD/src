@@ -1,14 +1,14 @@
-#	$NetBSD: Makefile,v 1.13.2.1 2002/11/03 16:20:30 he Exp $
+#	$NetBSD: Makefile,v 1.13.2.2 2002/11/30 15:11:55 he Exp $
 
 HOSTLIB=	nbcompat
 
 SRCS=		basename.c dirname.c fgetln.c flock.c fparseln.c \
-		getmode.c getopt_long.c issetugid.c libyywrap.c \
-		md2c.c md2hl.c md4c.c md4hl.c md5c.c md5hl.c pread.c \
-		pwcache.c pwrite.c pw_scan.c rmd160.c rmd160hl.c setenv.c \
-		setgroupent.c setpassent.c setprogname.c sha1.c sha1hl.c \
-		snprintf.c strlcat.c strlcpy.c strmode.c strsep.c \
-		unvis.c vis.c \
+		getmode.c getopt_long.c gettemp.c issetugid.c libyywrap.c \
+		md2c.c md2hl.c md4c.c md4hl.c md5c.c md5hl.c mkdtemp.c \
+		mkstemp.c pread.c pwcache.c pwrite.c pw_scan.c rmd160.c \
+		rmd160hl.c setenv.c setgroupent.c setpassent.c setprogname.c \
+		sha1.c sha1hl.c snprintf.c strlcat.c strlcpy.c strmode.c \
+		strsep.c unvis.c vis.c \
 		_err.c _errx.c _verr.c _verrx.c _vwarn.c _vwarnx.c \
 		_warn.c _warnx.c __fts13.c __glob13.c
 
@@ -21,6 +21,7 @@ CPPFLAGS+=	-I. -I./include -I${.CURDIR} -DHAVE_CONFIG_H \
 .PATH:		${.CURDIR}/../../lib/libc/gen \
 		${.CURDIR}/../../lib/libc/hash \
 		${.CURDIR}/../../lib/libc/md \
+		${.CURDIR}/../../lib/libc/stdio \
 		${.CURDIR}/../../lib/libc/stdlib \
 		${.CURDIR}/../../lib/libc/string \
 		${.CURDIR}/../../lib/libutil \
