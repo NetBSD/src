@@ -1,6 +1,6 @@
 #define	AU1x00_UART	/* XXX */
 
-/*	$NetBSD: aucom.c,v 1.7 2003/06/29 12:34:55 simonb Exp $	*/
+/*	$NetBSD: aucom.c,v 1.8 2003/06/29 13:18:24 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@
  * XXX: hacked to work with almost 16550-alike Alchemy Au1X00 on-chip uarts
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aucom.c,v 1.7 2003/06/29 12:34:55 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aucom.c,v 1.8 2003/06/29 13:18:24 simonb Exp $");
 
 #include "opt_com.h"
 #include "opt_ddb.h"
@@ -483,12 +483,6 @@ com_attach_subr(struct com_softc *sc)
 	callout_init(&sc->sc_diag_callout);
 #if (defined(MULTIPROCESSOR) || defined(LOCKDEBUG)) && defined(COM_MPLOCK)
 	simple_lock_init(&sc->sc_lock);
-#endif
-
-#ifdef AU1x00_UART
-	/* Enable the UART module. */
-	bus_space_write_1(sc->sc_iot, sc->sc_ioh, com_modctl,
-	    UMC_ME | UMC_CE);
 #endif
 
 	/* Disable interrupts before configuring the device. */
