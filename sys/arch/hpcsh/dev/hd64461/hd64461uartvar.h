@@ -1,4 +1,4 @@
-/*	$NetBSD: hd64461uartvar.h,v 1.2 2001/04/19 18:24:16 uch Exp $	*/
+/*	$NetBSD: hd64461uartvar.h,v 1.3 2002/02/11 17:21:48 uch Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -36,4 +36,25 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#define HD64461COM_TX_BUSY()						\
+	while ((*(volatile u_int8_t *)HD64461_ULSR_REG8 & LSR_TXRDY) == 0)
+
+#define HD64461COM_PUTC(c)						\
+do {									\
+	HD64461COM_TX_BUSY();						\
+	*(volatile u_int8_t *)HD64461_UTBR_REG8 =  c;			\
+	HD64461COM_TX_BUSY();						\
+} while (/*CONSTCOND*/0)
+
+#define HD64461COM_PRINT(s)						\
+do {									\
+	char *__s =(char *)(s);						\
+	int __i;							\
+	for (__i = 0; __s[__i] != '\0'; __i++) {			\
+		char __c = __s[__i];					\
+		if (__c == '\n')					\
+			HD64461COM_PUTC('\r');				\
+		HD64461COM_PUTC(__c);					\
+	}								\
+} while (/*CONSTCOND*/0)
 
