@@ -1,4 +1,4 @@
-/*	$NetBSD: lib.c,v 1.24 2001/10/08 22:09:20 aymeric Exp $	*/
+/*	$NetBSD: lib.c,v 1.25 2001/10/08 22:11:31 aymeric Exp $	*/
 
 /*
  *	- library routines
@@ -604,8 +604,8 @@ read_shared_object(fd, entry)
 {
 	struct _dynamic			dyn;
 	struct section_dispatch_table	sdt;
-	struct nlist			*np;
-	struct nzlist			*nzp;
+	struct nlist			*np = NULL;
+	struct nzlist			*nzp = NULL;
 	int				n, i, has_nz = 0;
 
 	if (!(entry->flags & E_HEADER_VALID))
