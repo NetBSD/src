@@ -1,4 +1,4 @@
-# $NetBSD: md.i386,v 1.47 2000/06/13 00:54:22 wiz Exp $
+# $NetBSD: md.i386,v 1.48 2000/06/20 01:28:39 minoura Exp $
 ./usr/include/i386		comp-c-include
 ./usr/include/i386/_G_config.h		comp-c-include
 ./usr/include/i386/ansi.h		comp-c-include
@@ -8,8 +8,8 @@
 ./usr/include/i386/bioscall.h		comp-c-include
 ./usr/include/i386/bootinfo.h		comp-c-include
 ./usr/include/i386/bswap.h		comp-c-include
-./usr/include/i386/byte_swap.h		comp-c-include
 ./usr/include/i386/bus.h		comp-c-include
+./usr/include/i386/byte_swap.h		comp-c-include
 ./usr/include/i386/cdefs.h		comp-c-include
 ./usr/include/i386/conf.h		comp-c-include
 ./usr/include/i386/cpu.h		comp-c-include
@@ -60,12 +60,12 @@
 ./usr/include/i386/varargs.h		comp-c-include
 ./usr/include/i386/vm86.h		comp-c-include
 ./usr/include/i386/vmparam.h		comp-c-include
-./usr/lib/libi386.so		comp-c-shlib
 ./usr/lib/libi386.a		comp-c-lib
+./usr/lib/libi386.so		comp-c-shlib
 ./usr/lib/libi386_p.a		comp-c-proflib
 ./usr/lib/libi386_pic.a		comp-c-piclib
-./usr/lib/libm387.so		comp-c-shlib
 ./usr/lib/libm387.a		comp-c-lib
+./usr/lib/libm387.so		comp-c-shlib
 ./usr/lib/libm387_p.a		comp-c-proflib
 ./usr/lib/libm387_pic.a		comp-c-piclib
 ./usr/libdata/lint/llib-li386.ln		comp-c-lintlib

@@ -1,4 +1,4 @@
-# $NetBSD: md.arm32,v 1.8 2000/01/11 14:20:44 tron Exp $
+# $NetBSD: md.arm32,v 1.9 2000/06/20 01:28:50 minoura Exp $
 ./usr/X11R6/bin/SuperProbe
 ./usr/X11R6/bin/X
 ./usr/X11R6/bin/XF86_Mono
@@ -67,8 +67,8 @@
 ./usr/X11R6/lib/modules/xf86Wacom.so
 ./usr/X11R6/man/cat1/SuperProbe.0
 ./usr/X11R6/man/cat1/XF86_8514.0
-./usr/X11R6/man/cat1/XF86_Accel.0
 ./usr/X11R6/man/cat1/XF86_AGX.0
+./usr/X11R6/man/cat1/XF86_Accel.0
 ./usr/X11R6/man/cat1/XF86_I128.0
 ./usr/X11R6/man/cat1/XF86_Mach32.0
 ./usr/X11R6/man/cat1/XF86_Mach64.0

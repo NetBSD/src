@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.22 2000/05/02 12:46:07 simonb Exp $
+# $NetBSD: mi,v 1.23 2000/06/20 01:28:48 minoura Exp $
 ./bin/ed
 ./etc/openssl/openssl.cnf
 ./sbin/init
@@ -148,21 +148,21 @@
 ./usr/lib/libk5crypto.a
 ./usr/lib/libk5crypto_p.a
 ./usr/lib/libkadm.a
-./usr/lib/libkadm_p.a
 ./usr/lib/libkadm5clnt.a
 ./usr/lib/libkadm5clnt_p.a
 ./usr/lib/libkadm5srv.a
 ./usr/lib/libkadm5srv_p.a
+./usr/lib/libkadm_p.a
 ./usr/lib/libkafs.a
 ./usr/lib/libkafs_p.a
 ./usr/lib/libkdb.a
-./usr/lib/libkdb_p.a
 ./usr/lib/libkdb5.a
 ./usr/lib/libkdb5_p.a
+./usr/lib/libkdb_p.a
 ./usr/lib/libkrb.a
-./usr/lib/libkrb_p.a
 ./usr/lib/libkrb5.a
 ./usr/lib/libkrb5_p.a
+./usr/lib/libkrb_p.a
 ./usr/lib/libkstream.a
 ./usr/lib/libkstream_p.a
 ./usr/lib/libprofile.a
@@ -200,11 +200,11 @@
 ./usr/sbin/kadmin
 ./usr/sbin/kadmin.local
 ./usr/sbin/kadmind
+./usr/sbin/kdb5_util
 ./usr/sbin/kdb_destroy
 ./usr/sbin/kdb_edit
 ./usr/sbin/kdb_init
 ./usr/sbin/kdb_util
-./usr/sbin/kdb5_util
 ./usr/sbin/kprop
 ./usr/sbin/krb5kdc
 ./usr/sbin/ksrvutil
@@ -275,11 +275,11 @@
 ./usr/share/man/cat5/krb.realms.0
 ./usr/share/man/cat8/kadmin.0
 ./usr/share/man/cat8/kadmind.0
+./usr/share/man/cat8/kdb5_util.0
 ./usr/share/man/cat8/kdb_destroy.0
 ./usr/share/man/cat8/kdb_edit.0
 ./usr/share/man/cat8/kdb_init.0
 ./usr/share/man/cat8/kdb_util.0
-./usr/share/man/cat8/kdb5_util.0
 ./usr/share/man/cat8/kprop.0
 ./usr/share/man/cat8/krb5kdc.0
 ./usr/share/man/cat8/ksrvutil.0
@@ -347,11 +347,11 @@
 ./usr/share/man/man5/krb.realms.5
 ./usr/share/man/man8/kadmin.8
 ./usr/share/man/man8/kadmind.8
+./usr/share/man/man8/kdb5_util.8
 ./usr/share/man/man8/kdb_destroy.8
 ./usr/share/man/man8/kdb_edit.8
 ./usr/share/man/man8/kdb_init.8
 ./usr/share/man/man8/kdb_util.8
-./usr/share/man/man8/kdb5_util.8
 ./usr/share/man/man8/kprop.8
 ./usr/share/man/man8/krb5kdc.8
 ./usr/share/man/man8/ksrvutil.8

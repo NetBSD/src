@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.59 2000/06/13 16:29:55 itojun Exp $
+# $NetBSD: mi,v 1.60 2000/06/20 01:28:43 minoura Exp $
 ./.cshrc
 ./.profile
 ./dev/MAKEDEV.local
@@ -25,12 +25,12 @@
 ./etc/inetd.conf
 ./etc/lkm.conf
 ./etc/localtime
+./etc/mail.rc
 ./etc/mail/aliases
 ./etc/mail/aliases.db
 ./etc/mail/helpfile
-./etc/mail/sendmail.cf
 ./etc/mail/sendmail-IPv6.cf
-./etc/mail.rc
+./etc/mail/sendmail.cf
 ./etc/mailer.conf
 ./etc/man.conf
 ./etc/master.passwd
@@ -52,13 +52,13 @@
 ./etc/ntp.conf
 ./etc/passwd
 ./etc/phones
-./etc/printcap
-./etc/profile
-./etc/protocols
 ./etc/postfix/README
 ./etc/postfix/main.cf
 ./etc/postfix/master.cf
 ./etc/postfix/postfix-script
+./etc/printcap
+./etc/profile
+./etc/protocols
 ./etc/pwd.db
 ./etc/rbootd.conf
 ./etc/rc
@@ -69,8 +69,8 @@
 ./etc/rc.d/accounting
 ./etc/rc.d/amd
 ./etc/rc.d/apmd
-./etc/rc.d/bootparams
 ./etc/rc.d/bootconf.sh
+./etc/rc.d/bootparams
 ./etc/rc.d/ccd
 ./etc/rc.d/cleartmp
 ./etc/rc.d/cron
@@ -124,8 +124,8 @@
 ./etc/rc.d/sendmail
 ./etc/rc.d/swap1
 ./etc/rc.d/swap2
-./etc/rc.d/sysdb
 ./etc/rc.d/sysctl
+./etc/rc.d/sysdb
 ./etc/rc.d/syslogd
 ./etc/rc.d/systemfs
 ./etc/rc.d/timed

@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.16 1999/09/03 07:48:36 tron Exp $
+# $NetBSD: mi,v 1.17 2000/06/20 01:28:49 minoura Exp $
 ./usr/X11R6
 ./usr/X11R6/bin
 ./usr/X11R6/bin/Xmark
@@ -264,9 +264,9 @@
 ./usr/X11R6/lib/X11/locale/th_TH.TACTIS/XLC_LOCALE
 ./usr/X11R6/lib/X11/locale/zh
 ./usr/X11R6/lib/X11/locale/zh/XLC_LOCALE
+./usr/X11R6/lib/X11/locale/zh_TW
 ./usr/X11R6/lib/X11/locale/zh_TW.Big5
 ./usr/X11R6/lib/X11/locale/zh_TW.Big5/XLC_LOCALE
-./usr/X11R6/lib/X11/locale/zh_TW
 ./usr/X11R6/lib/X11/locale/zh_TW/XLC_LOCALE
 ./usr/X11R6/lib/X11/proxymngr
 ./usr/X11R6/lib/X11/proxymngr/pmconfig
@@ -456,8 +456,8 @@
 ./usr/X11R6/lib/X11/xkb/symbols/gb
 ./usr/X11R6/lib/X11/xkb/symbols/group
 ./usr/X11R6/lib/X11/xkb/symbols/hu
-./usr/X11R6/lib/X11/xkb/symbols/iso9995-3
 ./usr/X11R6/lib/X11/xkb/symbols/is
+./usr/X11R6/lib/X11/xkb/symbols/iso9995-3
 ./usr/X11R6/lib/X11/xkb/symbols/it
 ./usr/X11R6/lib/X11/xkb/symbols/jp
 ./usr/X11R6/lib/X11/xkb/symbols/keypad

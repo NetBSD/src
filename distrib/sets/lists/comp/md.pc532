@@ -1,12 +1,12 @@
-# $NetBSD: md.pc532,v 1.30 2000/04/29 03:46:29 thorpej Exp $
+# $NetBSD: md.pc532,v 1.31 2000/06/20 01:28:39 minoura Exp $
 ./usr/include/pc532	comp-c-include
 ./usr/include/pc532/_G_config.h	comp-c-include
 ./usr/include/pc532/ansi.h	comp-c-include
 ./usr/include/pc532/aout_machdep.h	comp-c-include
 ./usr/include/pc532/asm.h	comp-c-include
+./usr/include/pc532/autoconf.h	comp-c-include
 ./usr/include/pc532/bswap.h	comp-c-include
 ./usr/include/pc532/byte_swap.h	comp-c-include
-./usr/include/pc532/autoconf.h	comp-c-include
 ./usr/include/pc532/cdefs.h	comp-c-include
 ./usr/include/pc532/conf.h	comp-c-include
 ./usr/include/pc532/cpu.h	comp-c-include

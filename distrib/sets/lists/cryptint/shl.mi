@@ -1,4 +1,4 @@
-#	$NetBSD: shl.mi,v 1.4 2000/06/14 15:24:09 assar Exp $
+#	$NetBSD: shl.mi,v 1.5 2000/06/20 01:28:43 minoura Exp $
 ./usr/lib/libasn1.so.2.0
 ./usr/lib/libasn1_pic.a
 ./usr/lib/libcom_err.so.1.0
@@ -14,20 +14,20 @@
 ./usr/lib/libhdb.so.4.1
 ./usr/lib/libhdb_pic.a
 ./usr/lib/libkadm.a
-./usr/lib/libkadm_pic.a
 ./usr/lib/libkadm.so.2.0
 ./usr/lib/libkadm5clnt.so.5.1
 ./usr/lib/libkadm5clnt_pic.a
 ./usr/lib/libkadm5srv.so.6.0
 ./usr/lib/libkadm5srv_pic.a
+./usr/lib/libkadm_pic.a
 ./usr/lib/libkafs.so.2.0
 ./usr/lib/libkafs_pic.a
 ./usr/lib/libkdb.so.2.0
 ./usr/lib/libkdb_pic.a
 ./usr/lib/libkrb.so.2.1
-./usr/lib/libkrb_pic.a
 ./usr/lib/libkrb5.so.11.1
 ./usr/lib/libkrb5_pic.a
+./usr/lib/libkrb_pic.a
 ./usr/lib/libroken.so.8.1
 ./usr/lib/libroken_pic.a
 ./usr/lib/libsl.so.1.0

@@ -1,9 +1,9 @@
-# $NetBSD: md.amiga,v 1.43 1999/05/18 23:18:17 tron Exp $
+# $NetBSD: md.amiga,v 1.44 2000/06/20 01:28:36 minoura Exp $
 ./dev/mouse
 ./sbin/binpatch
+./usr/mdec/fdboot
 ./usr/mdec/installboot
 ./usr/mdec/xxboot
-./usr/mdec/fdboot
 ./usr/sbin/grfconfig
 ./usr/sbin/iteconfig
 ./usr/sbin/loadkmap
