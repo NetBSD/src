@@ -1,4 +1,4 @@
-.\"	$NetBSD: innetgr.1,v 1.4 2001/12/01 16:43:16 wiz Exp $
+.\"	$NetBSD: innetgr.1,v 1.5 2004/07/10 16:11:29 wiz Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -42,18 +42,18 @@
 .Nd check netgroup members
 .Sh SYNOPSIS
 .Nm
+.Op Fl v
 .Op Fl d Ar domain
 .Op Fl h Ar host
 .Op Fl u Ar user
-.Op Fl v
 .Ar netgroup
 .Sh DESCRIPTION
 .Nm
 checks if the specified domain, host or user is a member of
-the given netgroup. This program is does not produce any output
-unless the verbose (
-.Fl v
-) flag is given.
+the given netgroup.
+This program is does not produce any output unless the verbose
+.Pq Fl v
+flag is given.
 .Sh EXIT STATUS
 .Bl -tag -width Ds
 .It 0
