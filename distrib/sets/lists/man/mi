@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.275 2000/10/05 01:55:53 itojun Exp $
+# $NetBSD: mi,v 1.276 2000/10/10 10:03:16 itojun Exp $
 ./usr/share/info/am-utils.info
 ./usr/share/info/as.info
 ./usr/share/info/awk.info
@@ -252,6 +252,7 @@
 ./usr/share/man/cat1/openssl_x509.0
 ./usr/share/man/cat1/page.0
 ./usr/share/man/cat1/pagesize.0
+./usr/share/man/cat1/passwd.0
 ./usr/share/man/cat1/paste.0
 ./usr/share/man/cat1/patch.0
 ./usr/share/man/cat1/pawd.0
@@ -1668,6 +1669,7 @@
 ./usr/share/man/man1/openssl_x509.1
 ./usr/share/man/man1/page.1
 ./usr/share/man/man1/pagesize.1
+./usr/share/man/man1/passwd.1
 ./usr/share/man/man1/paste.1
 ./usr/share/man/man1/patch.1
 ./usr/share/man/man1/pawd.1
