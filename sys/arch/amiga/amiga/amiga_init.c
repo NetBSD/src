@@ -1,4 +1,4 @@
-/*	$NetBSD: amiga_init.c,v 1.77 2002/04/25 09:20:25 aymeric Exp $	*/
+/*	$NetBSD: amiga_init.c,v 1.77.2.1 2002/07/09 05:38:57 gehenna Exp $	*/
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -35,7 +35,7 @@
 #include "opt_p5ppc68kboard.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amiga_init.c,v 1.77 2002/04/25 09:20:25 aymeric Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amiga_init.c,v 1.77.2.1 2002/07/09 05:38:57 gehenna Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -249,7 +249,6 @@ start_c(id, fphystart, fphysize, cphysize, esym_addr, flags, inh_sync, boot_part
 	RELOC(boot_cphysize, u_long) = cphysize;
 
 	RELOC(machineid, int) = id;
-	RELOC(chipmem_start, vaddr_t) = cphysize;
 	RELOC(chipmem_end, vaddr_t) = cphysize;
 	RELOC(esym, char *) = esym_addr;
 	RELOC(boot_flags, u_long) = flags;
@@ -611,7 +610,7 @@ start_c(id, fphystart, fphysize, cphysize, esym_addr, flags, inh_sync, boot_part
 		for (; i<RELOC(Sysseg, u_int); i+= NBPG, pg_proto += NBPG)
 			*pg++ = pg_proto;
 
-		pg_proto = (pg_proto &= ~PG_CCB) | PG_CI;
+		pg_proto = (pg_proto & ~PG_CCB) | PG_CI;
 		for (; i < vstart; i += NBPG, pg_proto += NBPG)
 			*pg++ = pg_proto;
 
