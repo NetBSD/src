@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_prot.c,v 1.63.2.4 2002/01/08 00:32:33 nathanw Exp $	*/
+/*	$NetBSD: kern_prot.c,v 1.63.2.5 2002/02/28 19:59:35 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1990, 1991, 1993
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_prot.c,v 1.63.2.4 2002/01/08 00:32:33 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_prot.c,v 1.63.2.5 2002/02/28 19:59:35 nathanw Exp $");
 
 #include "opt_compat_43.h"
 
@@ -789,12 +789,12 @@ sys___getlogin(l, v, retval)
  */
 /* ARGSUSED */
 int
-sys_setlogin(l, v, retval)
+sys___setlogin(l, v, retval)
 	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
-	struct sys_setlogin_args /* {
+	struct sys___setlogin_args /* {
 		syscallarg(const char *) namebuf;
 	} */ *uap = v;
 	struct proc *p = l->l_proc;
