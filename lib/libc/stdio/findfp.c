@@ -1,6 +1,8 @@
+/*	$NetBSD: findfp.c,v 1.6 1995/02/02 02:09:17 jtc Exp $	*/
+
 /*-
- * Copyright (c) 1990 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1990, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
  * Chris Torek.
@@ -35,8 +37,10 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-/*static char *sccsid = "from: @(#)findfp.c	5.10 (Berkeley) 2/24/91";*/
-static char *rcsid = "$Id: findfp.c,v 1.5 1994/12/08 22:58:47 cgd Exp $";
+#if 0
+static char sccsid[] = "@(#)findfp.c	8.2 (Berkeley) 1/4/94";
+#endif
+static char rcsid[] = "$NetBSD: findfp.c,v 1.6 1995/02/02 02:09:17 jtc Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
@@ -50,15 +54,15 @@ static char *rcsid = "$Id: findfp.c,v 1.5 1994/12/08 22:58:47 cgd Exp $";
 
 int	__sdidinit;
 
-#define NSTATIC	20	/* stdin + stdout + stderr + the usual */
-#define	NDYNAMIC 10	/* add ten more whenever necessary */
+#define	NDYNAMIC 10		/* add ten more whenever necessary */
 
 #define	std(flags, file) \
 	{0,0,0,flags,file,{0},0,__sF+file,__sclose,__sread,__sseek,__swrite}
 /*	 p r w flags file _bf z  cookie      close    read    seek    write */
 
-static FILE usual[NSTATIC - 3];	/* the usual */
-static struct glue uglue = { 0, NSTATIC - 3, usual };
+				/* the usual - (stdin + stdout + stderr) */
+static FILE usual[FOPEN_MAX - 3];
+static struct glue uglue = { 0, FOPEN_MAX - 3, usual };
 
 FILE __sF[3] = {
 	std(__SRD, STDIN_FILENO),		/* stdin */
@@ -131,9 +135,10 @@ found:
 void
 f_prealloc()
 {
-	int n = getdtablesize() - NSTATIC + 20;		/* 20 for slop */
 	register struct glue *g;
+	int n;
 
+	n = getdtablesize() - FOPEN_MAX + 20;		/* 20 for slop. */
 	for (g = &__sglue; (n -= g->niobs) > 0 && g->next; g = g->next)
 		/* void */;
 	if (n > 0)

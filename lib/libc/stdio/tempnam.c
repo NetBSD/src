@@ -1,6 +1,8 @@
+/*	$NetBSD: tempnam.c,v 1.6 1995/02/02 02:10:42 jtc Exp $	*/
+
 /*
- * Copyright (c) 1988 Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1988, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,8 +34,10 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-/*static char *sccsid = "from: @(#)tempnam.c	5.1 (Berkeley) 2/22/91";*/
-static char *rcsid = "$Id: tempnam.c,v 1.5 1994/10/19 03:18:47 cgd Exp $";
+#if 0
+static char sccsid[] = "@(#)tempnam.c	8.1 (Berkeley) 6/4/93";
+#endif
+static char rcsid[] = "$NetBSD: tempnam.c,v 1.6 1995/02/02 02:10:42 jtc Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
@@ -59,14 +63,14 @@ tempnam(dir, pfx)
 
 	if (f = getenv("TMPDIR")) {
 		(void)snprintf(name, MAXPATHLEN, "%s%s%sXXXXXX", f,
-			*(f + strlen(f) - 1) == '/'? "": "/", pfx);
+		    *(f + strlen(f) - 1) == '/'? "": "/", pfx);
 		if (f = mktemp(name))
 			return(f);
 	}
 
 	if (f = (char *)dir) {
 		(void)snprintf(name, MAXPATHLEN, "%s%s%sXXXXXX", f,
-			*(f + strlen(f) - 1) == '/'? "": "/", pfx);
+		    *(f + strlen(f) - 1) == '/'? "": "/", pfx);
 		if (f = mktemp(name))
 			return(f);
 	}
