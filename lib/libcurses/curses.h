@@ -1,3 +1,5 @@
+/*	$NetBSD: curses.h,v 1.18 1997/07/22 07:36:18 mikel Exp $	*/
+
 /*
  * Copyright (c) 1981, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
