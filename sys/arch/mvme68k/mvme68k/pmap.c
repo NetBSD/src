@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.57 2001/04/29 07:41:58 scw Exp $        */
+/*	$NetBSD: pmap.c,v 1.58 2001/05/11 13:05:06 scw Exp $        */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -2696,6 +2696,17 @@ _pmap_set_page_cacheable(pm, va)
 	pte = pmap_pte(pm, va);
 
 	if ( pmap_pte_ci(pte) ) {
+#if defined(M68040) || defined(M68060)
+#if defined(M68020) || defined(M68030)
+		if (mmutype == MMU_68040)
+#endif
+#else
+		{
+			paddr_t pa = pmap_pte_pa(pte);
+			DCFP(pa);
+			ICPP(pa);
+		}
+#endif
 		*pte &= ~PG_CI;
 		TBIS(va);
 	}
@@ -2714,6 +2725,17 @@ _pmap_set_page_cacheinhibit(pm, va)
 	pte = pmap_pte(pm, va);
 
 	if ( ! pmap_pte_ci(pte) ) {
+#if defined(M68040) || defined(M68060)
+#if defined(M68020) || defined(M68030)
+		if (mmutype == MMU_68040)
+#endif
+#else
+		{
+			paddr_t pa = pmap_pte_pa(pte);
+			DCFP(pa);
+			ICPP(pa);
+		}
+#endif
 		*pte |= PG_CI;
 		TBIS(va);
 	}
