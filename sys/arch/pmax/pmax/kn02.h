@@ -1,4 +1,4 @@
-/*	$NetBSD: kn02.h,v 1.6 1999/03/25 01:17:52 simonb Exp $	*/
+/*	$NetBSD: kn02.h,v 1.7 1999/08/16 13:12:17 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -199,35 +199,22 @@
 #	define KN02_IP_SLOT1	0x00000002	/* option slot 1 */
 #	define KN02_IP_SLOT0	0x00000001	/* option slot 0 */
 
-#define KN02_CSR_BAUD38		0x00000100	/* rw */
-						/* Max DZ baud rate */
-#define KN02_CSR_DIAGDN		0x00000200	/* rw */
-						/* Diag jumper */
-#define KN02_CSR_BNK32M		0x00000400	/* rw */
-						/* Memory bank stride */
-#define KN02_CSR_TXDIS		0x00000800	/* rw */
-						/* Disable DZ xmit */
-#define KN02_CSR_LEDIAG		0x00001000	/* rw */
-						/* Latch ECC */
-#define KN02_CSR_CORRECT	0x00002000	/* rw */
-						/* ECC corrects single bit */
-#define KN02_CSR_ECCMD		0x0000c000	/* rw */
-						/* ECC logic mode */
-#define KN02_CSR_IOINTEN	0x00ff0000	/* rw */
-#define	KN02_CSR_IOINTEN_SHIFT	16	/* Interrupt enable */
-
-#define KN02_CSR_NRMMOD		0x01000000	/* ro */
-						/* Diag jumper state */
-#define KN02_CSR_REFEVEN	0x02000000	/* ro */
-						/* Refreshing even mem bank */
-#define KN02_CSR_PRSVNVR	0x04000000	/* ro */
-						/* Preserve NVR jumper */
-#define KN02_CSR_PSWARN		0x08000000	/* ro */
-						/* PS overheating */
+#define KN02_CSR_BAUD38		0x00000100	/* rw  Max DZ baud rate */
+#define KN02_CSR_DIAGDN		0x00000200	/* rw  Diag jumper */
+#define KN02_CSR_BNK32M		0x00000400	/* rw  Memory bank stride */
+#define KN02_CSR_TXDIS		0x00000800	/* rw  Disable DZ xmit */
+#define KN02_CSR_LEDIAG		0x00001000	/* rw  Latch ECC */
+#define KN02_CSR_CORRECT	0x00002000	/* rw  ECC corrects single bit */
+#define KN02_CSR_ECCMD		0x0000c000	/* rw  ECC logic mode */
+#define KN02_CSR_IOINTEN	0x00ff0000	/* rw  Interrupt enable */
+#define	KN02_CSR_IOINTEN_SHIFT	16
+#define KN02_CSR_NRMMOD		0x01000000	/* ro  Diag jumper state */
+#define KN02_CSR_REFEVEN	0x02000000	/* ro  Refreshing even mem bank */
+#define KN02_CSR_PRSVNVR	0x04000000	/* ro  Preserve NVR jumper */
+#define KN02_CSR_PSWARN		0x08000000	/* ro  PS overheating */
 #define KN02_CSR_RRESERVED	0xf0000000	/* rz */
 
-#define KN02_CSR_LEDS		0x000000ff	/* wo */
-						/* Diag LEDs */
+#define KN02_CSR_LEDS		0x000000ff	/* wo  Diag LEDs */
 #define KN02_CSR_WRESERVED	0xff000000	/* wz */
 
 
