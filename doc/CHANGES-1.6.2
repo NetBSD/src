@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.2,v 1.1.2.238 2003/11/26 09:42:03 cyber Exp $
+#	$NetBSD: CHANGES-1.6.2,v 1.1.2.239 2003/11/26 22:38:02 jmc Exp $
 
 A complete list of changes from NetBSD 1.6.1 to NetBSD 1.6.2:
 
@@ -3055,8 +3055,11 @@ lib/libc/sys/intro.2				1.36
 sys/netinet/ip_nat.c				patched by hand
 sys/netinet/ip_nat.h				patched by hand
 
-	 Change to ip filter's NAT code to keep excessive NAT
-	 entries from causing the kernel to panic.
-	 [jklos, ticket #1568]
+	Change to ip filter's NAT code to keep excessive NAT
+	entries from causing the kernel to panic.
+	[jklos, ticket #1568]
 
+sys/conf/osrelease.sh                           patched by hand
+share/tmac/doc-common                           patched by hand
 
+	Update to 1.6.2_RC2
