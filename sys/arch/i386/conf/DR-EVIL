@@ -1,4 +1,4 @@
-#	$NetBSD: DR-EVIL,v 1.3 1999/11/17 20:41:27 tron Exp $
+#	$NetBSD: DR-EVIL,v 1.4 1999/12/07 19:38:36 thorpej Exp $
 #
 #	DR-EVIL -- Dell Inspiron 3500 laptop used by thorpej@netbsd.org
 #
@@ -275,7 +275,7 @@ pckbc0	at isa?			# pc keyboard controller
 pckbd*	at pckbc?		# PC keyboard
 # "opms" should not be enabled together with "pms" or "pmsi"
 pms*		at pckbc?		# PS/2 mouse for wsmouse
-#pmsi*		at pckbc?	# PS/2 "Intelli"mouse for wsmouse
+#pmsi*		at pckbc?		# PS/2 "Intelli"mouse for wsmouse
 #opms*		at pckbc?		# backwards compatible PS/2 mouse
 #vga0		at isa?
 vga*		at pci?
@@ -526,7 +526,7 @@ sm*	at mhzc?
 
 # CardBus network cards
 ex*	at cardbus? dev ? function ?	# 3Com 3C575TX
-#tlp*	at cardbus? dev ? function ?	# DECchip 21x4x and clones
+tlp*	at cardbus? dev ? function ?	# DECchip 21x4x and clones
 fxp*	at cardbus? dev ? function ?	# Intel i8255x
 
 # MII/PHY support
