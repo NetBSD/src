@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sm_pcmcia.c,v 1.1.2.3 1997/09/29 21:17:38 thorpej Exp $	*/
+/*	$NetBSD: if_sm_pcmcia.c,v 1.1.2.4 1997/10/14 00:47:27 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -157,7 +157,7 @@ sm_pcmcia_attach(parent, self, aux)
 
 	/* Allocate and map i/o space for the card. */
 	if (pcmcia_io_alloc(pa->pf, 0, cfe->iospace[0].length,
-	    &psc->sc_pcioh)) {
+	    cfe->iospace[0].length, &psc->sc_pcioh)) {
 		printf(": can't allocate i/o space\n");
 		return;
 	}

@@ -158,10 +158,12 @@ ep_pcmcia_attach(parent, self, aux)
     /* XXX there's a comment in the linux driver about the io address
        having to be between 0x00 and 0x70 mod 0x100.  weird. */
 
+    /* XXX Will have to fix this!! */
+
     if (pa->product == PCMCIA_PRODUCT_3COM_3C562) {
 	for (i = 0x300; i < 0x1000; i += ((i%0x100) == 0x70)?0x90:0x10) {
 	    if (pcmcia_io_alloc(pa->pf, i, cfe->iospace[0].length,
-				&psc->sc_pcioh) == 0)
+				0, &psc->sc_pcioh) == 0)
 		break;
 	}
 	if (i == 0x1000) {
@@ -170,7 +172,7 @@ ep_pcmcia_attach(parent, self, aux)
 	}
     } else {
 	if (pcmcia_io_alloc(pa->pf, 0, cfe->iospace[0].length,
-			    &psc->sc_pcioh))
+			    cfe->iospace[0].length, &psc->sc_pcioh))
 	    printf(": can't allocate i/o space\n");
     }
 
