@@ -1,10 +1,10 @@
 /*
  * Missing stuff from OS's
  *
- *	$Id: util.c,v 1.1 1994/03/05 00:35:16 cgd Exp $
+ *	$Id: util.c,v 1.2 1994/05/09 06:36:22 glass Exp $
  */
 #include <stdio.h>
-#include <sys/cdefs.h>
+#include "make.h"
 
 #if !__STDC__
 # ifndef const
