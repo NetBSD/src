@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vfsops.c,v 1.64 2000/05/29 18:28:48 mycroft Exp $	*/
+/*	$NetBSD: ffs_vfsops.c,v 1.65 2000/06/15 22:35:37 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1994
@@ -200,6 +200,8 @@ ffs_mount(mp, path, data, ndp, p)
 			if (error == 0 &&
 			    ffs_cgupdate(ump, MNT_WAIT) == 0 &&
 			    fs->fs_clean & FS_WASCLEAN) {
+				if (mp->mnt_flag & MNT_SOFTDEP)
+					fs->fs_flags &= ~FS_DOSOFTDEP;
 				fs->fs_clean = FS_ISCLEAN;
 				(void) ffs_sbupdate(ump, MNT_WAIT);
 			}
@@ -207,6 +209,43 @@ ffs_mount(mp, path, data, ndp, p)
 				return (error);
 			fs->fs_ronly = 1;
 		}
+
+		/*
+		 * Flush soft dependencies if disabling it via an update
+		 * mount. This may leave some items to be processed,
+		 * so don't do this yet XXX.
+		 */
+		if ((fs->fs_flags & FS_DOSOFTDEP) &&
+		    !(mp->mnt_flag & MNT_SOFTDEP) && fs->fs_ronly == 0) {
+#ifdef notyet
+			flags = WRITECLOSE;
+			if (mp->mnt_flag & MNT_FORCE)
+				flags |= FORCECLOSE;
+			error = softdep_flushfiles(mp, flags, p);
+			if (error == 0 && ffs_cgupdate(ump, MNT_WAIT) == 0)
+				fs->fs_flags &= ~FS_DOSOFTDEP;
+				(void) ffs_sbupdate(ump, MNT_WAIT);
+#else
+			mp->mnt_flag |= MNT_SOFTDEP;
+#endif
+		}
+
+		/*
+		 * When upgrading to a softdep mount, we must first flush
+		 * all vnodes. (not done yet -- see above)
+		 */
+		if (!(fs->fs_flags & FS_DOSOFTDEP) &&
+		    (mp->mnt_flag & MNT_SOFTDEP) && fs->fs_ronly == 0) {
+#ifdef notyet
+			flags = WRITECLOSE;
+			if (mp->mnt_flag & MNT_FORCE)
+				flags |= FORCECLOSE;
+			error = ffs_flushfiles(mp, flags, p);
+#else
+			mp->mnt_flag &= ~MNT_SOFTDEP;
+#endif
+		}
+
 		if (mp->mnt_flag & MNT_RELOAD) {
 			error = ffs_reload(mp, ndp->ni_cnd.cn_cred, p);
 			if (error)
@@ -234,8 +273,7 @@ ffs_mount(mp, path, data, ndp, p)
 				    p->p_ucred);
 				if (error)
 					return (error);
-			} else
-				mp->mnt_flag &= ~MNT_SOFTDEP;
+			}
 		}
 		if (args.fspec == 0) {
 			/*
@@ -313,6 +351,8 @@ ffs_mount(mp, path, data, ndp, p)
 	(void) copyinstr(args.fspec, mp->mnt_stat.f_mntfromname, MNAMELEN - 1, 
 	    &size);
 	memset(mp->mnt_stat.f_mntfromname + size, 0, MNAMELEN - size);
+	if (mp->mnt_flag & MNT_SOFTDEP)
+		fs->fs_flags |= FS_DOSOFTDEP;
 	if (fs->fs_fmod != 0) {	/* XXX */
 		fs->fs_fmod = 0;
 		if (fs->fs_clean & FS_WASCLEAN)
@@ -432,8 +472,6 @@ ffs_reload(mountp, cred, p)
 	}
 	if ((fs->fs_flags & FS_DOSOFTDEP))
 		softdep_mount(devvp, mountp, fs, cred);
-	else
-		mountp->mnt_flag &= ~MNT_SOFTDEP;
 	/*
 	 * We no longer know anything about clusters per cylinder group.
 	 */
@@ -746,6 +784,8 @@ ffs_unmount(mp, mntflags, p)
 	if (fs->fs_ronly == 0 &&
 	    ffs_cgupdate(ump, MNT_WAIT) == 0 &&
 	    fs->fs_clean & FS_WASCLEAN) {
+		if (mp->mnt_flag & MNT_SOFTDEP)
+			fs->fs_flags &= ~FS_DOSOFTDEP;
 		fs->fs_clean = FS_ISCLEAN;
 		(void) ffs_sbupdate(ump, MNT_WAIT);
 	}
