@@ -1,4 +1,4 @@
-/*	$NetBSD: filter.c,v 1.6 2000/01/14 06:53:48 mjl Exp $	*/
+/*	$NetBSD: filter.c,v 1.7 2001/02/05 01:44:07 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)filter.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: filter.c,v 1.6 2000/01/14 06:53:48 mjl Exp $");
+__RCSID("$NetBSD: filter.c,v 1.7 2001/02/05 01:44:07 christos Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -58,7 +58,6 @@ char	*lint_libs[] = {
 	IG_FILE4,
 	0
 };
-extern	char*	processname;
 int	lexsort __P((const void *, const void *));
 int	search_ignore __P((char *));
 

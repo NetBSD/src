@@ -1,4 +1,4 @@
-/*	$NetBSD: touch.c,v 1.10 2000/10/11 14:46:02 is Exp $	*/
+/*	$NetBSD: touch.c,v 1.11 2001/02/05 01:44:07 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)touch.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: touch.c,v 1.10 2000/10/11 14:46:02 is Exp $");
+__RCSID("$NetBSD: touch.c,v 1.11 2001/02/05 01:44:07 christos Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -65,6 +65,8 @@ __RCSID("$NetBSD: touch.c,v 1.10 2000/10/11 14:46:02 is Exp $");
 
 #define	FILEITERATE(fi, lb)	for (fi = lb; fi <= nfiles; fi++)
 int	touchstatus = Q_YES;
+
+extern	char	*suffixlist;
 
 void
 findfiles(nerrors, errors, r_nfiles, r_files)
@@ -453,7 +455,6 @@ int
 oktotouch(filename)
 	char	*filename;
 {
-	extern	char	*suffixlist;
 	char	*src;
 	char	*pat;
 	char	*osrc;

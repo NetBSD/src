@@ -1,4 +1,4 @@
-/*	$NetBSD: pi.c,v 1.7 2000/01/14 06:53:48 mjl Exp $	*/
+/*	$NetBSD: pi.c,v 1.8 2001/02/05 01:44:07 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)pi.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: pi.c,v 1.7 2000/01/14 06:53:48 mjl Exp $");
+__RCSID("$NetBSD: pi.c,v 1.8 2001/02/05 01:44:07 christos Exp $");
 #endif /* not lint */
 
 #include <stdio.h>
@@ -46,7 +46,6 @@ __RCSID("$NetBSD: pi.c,v 1.7 2000/01/14 06:53:48 mjl Exp $");
 #include <string.h>
 #include "error.h"
 
-extern	char	*currentfilename;
 static	char	*c_linenumber;
 static	char	*unk_hdr[] = {"In", "program", "???"};
 static	char	**c_header = &unk_hdr[0];
