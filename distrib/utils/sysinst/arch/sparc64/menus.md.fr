@@ -1,4 +1,4 @@
-/*	$NetBSD: menus.md.fr,v 1.3 2000/10/01 22:57:18 thorpej Exp $	*/
+/*	$NetBSD: menus.md.fr,v 1.4 2000/12/22 04:43:54 mrg Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -37,7 +37,7 @@
  *
  */
 
-/* sparc machine dependent menus, french */
+/* sparc64 machine dependent menus, french */
 
 menu editfsparts, y=12, exit;
 	display action  {
