@@ -1,4 +1,4 @@
-/*      $NetBSD: subr.s,v 1.14 1996/02/02 18:09:05 mycroft Exp $     */
+/*      $NetBSD: subr.s,v 1.15 1996/02/13 17:45:32 ragge Exp $     */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -117,57 +117,65 @@ _badaddr:	.word	0x0
 		ret
 
 #
-# copyin(from, to, len) copies from userspace to kernelspace.
+# Speeded up locopyin/locopyout written by Ken Wellsch.
 #
+# locopyin (from, to, len, addr) copies from userspace to kernelspace.
+#       addr is iftrap addr for faulting.
+#
+	.globl  _locopyin
+	.align  2
 
-	.globl	_locopyin
-_locopyin:.word	0x1c
+_locopyin:      .word   0x3c    # save R2|R3|R4|R5
+
+	movl     4(ap),r4       # stash userspace address
+	movl    12(ap),r3       # and length in case of fault?
+
+	brb     copyio
+
+#
+# locopyout (from, to, len, addr) copies from kernelspace to userspace.
+#       addr is iftrap addr for faulting.
+#
+	.globl  _locopyout
+	.align  2
+
+_locopyout:     .word   0x3c    # save R2|R3|R4|R5
+
+	movl    8(ap),r4	# stash userspace address
+	movl    12(ap),r3       # and length in case of fault?
+
+copyio:
+
+	movl    12(ap),r2       # len
+	beql    5f
+
 	movl    16(ap),r0       # Get fault pointer flag
-	movl	$ci,(r0)
+	movl    $cio,(r0)       # and stuff return address into it
 
-	movl	4(ap),r0	# from
-	movl	8(ap),r1	# to
-	movl	12(ap),r2	# len
+	movl    4(ap),r0	# from
+	movl    8(ap),r1	# to
 
-	movl	r0,r4
-	movl	r2,r3
+	ashl    $-3,r2,r5       # convert length to quad words
+	beql    2f
+1: 
+	movq    (r0)+,(r1)+     # do the copying in large hunks
+	sobgtr  r5,1b	   	# (although movc3 is twice as fast
+				# alas movc5 clobbers [r0-r5] thus
+				# damaging the magic r3/r4 pair)
+2:
+	bicl3   $-8,r2,r5       # compute trailing bytes (<=7)
+	beql    4f
+3:
+	movb    (r0)+,(r1)+
+	sobgtr  r5,3b
+4:
+	movl    16(ap),r0	# remove fault address
+	clrl    (r0)
+5:
+	clrl    r0		# flag the successful operation
+cio:
+	ret
 
-	tstl	r2
-	beql	3f
-2:      movb    (r0)+,(r1)+       # XXX Should be done in a faster way.
-        decl    r2              
-        bneq    2b
-3:      movl	16(ap),r0
-	clrl	(r0)
-	clrl    r0
-ci:	ret
-
-#
-# locopyout(from, to, len, addr) in the same manner as copyin()
-#	addr is iftrap addr for faulting.
-#
-
-	.globl	_locopyout
-_locopyout:.word   0x1c
-	movl	16(ap),r0	# Get fault pointer flag
-	movl	$co,(r0)	# and save ret addr
-
-        movl    4(ap),r0        # from
-        movl    8(ap),r1        # to
-        movl    12(ap),r2       # len
-
-        movl    r1,r4
-        movl    r2,r3
-
-	tstl	r2
-	beql	3f
-2:	movb	(r0)+,(r1)+	# XXX Should be done in a faster way.
-	decl	r2
-	bneq	2b
-3:	movl    16(ap),r0
-	clrl	(r0)
-	clrl	r0
-co:	ret
 
 #
 # copystr(from, to, maxlen, *copied, addr)
