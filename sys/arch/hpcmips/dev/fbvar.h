@@ -1,4 +1,4 @@
-/*	$NetBSD: fbvar.h,v 1.2 1999/10/24 08:37:30 takemura Exp $	*/
+/*	$NetBSD: fbvar.h,v 1.3 1999/10/24 08:43:59 takemura Exp $	*/
 
 /*-
  * Copyright (c) 1999
@@ -55,5 +55,5 @@ struct fb_softc {
 	int nscreens;
 };
 
-int	fb_cnattach(bus_space_tag_t iot, bus_space_tag_t memt,
+int	fb_cnattach(bus_space_tag_t iot, int iobase,
 		    int type, int check);
