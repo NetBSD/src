@@ -1,4 +1,4 @@
-/*	$NetBSD: mntopts.h,v 1.11 2002/11/07 12:43:50 christos Exp $	*/
+/*	$NetBSD: mntopts.h,v 1.1 2003/03/22 12:44:03 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1994

@@ -1,15 +1,13 @@
-#	$NetBSD: Makefile,v 1.12 2002/09/21 18:43:36 christos Exp $
+#	$NetBSD: Makefile,v 1.13 2003/03/22 12:44:00 jdolecek Exp $
 #	@(#)Makefile	8.2 (Berkeley) 3/27/94
 
 .include <bsd.own.mk>
 
 PROG=	mount_nfs
-SRCS=	mount_nfs.c getmntopts.c
+SRCS=	mount_nfs.c
 MAN=	mount_nfs.8
 
-MOUNT=	${NETBSDSRCDIR}/sbin/mount
-CPPFLAGS+= -DNFS -I${MOUNT}
-.PATH:	${MOUNT}
+CPPFLAGS+= -DNFS
 
 .if defined(notdef)			# XXX no kernel kerb NFS support!
 .if defined(KERBEROS)

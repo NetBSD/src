@@ -1,4 +1,4 @@
-/*	$NetBSD: getmntopts.c,v 1.6 1999/11/09 15:06:33 drochner Exp $	*/
+/*	$NetBSD: getmntopts.c,v 1.1 2003/03/22 12:44:04 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)getmntopts.c	8.3 (Berkeley) 3/29/95";
 #else
-__RCSID("$NetBSD: getmntopts.c,v 1.6 1999/11/09 15:06:33 drochner Exp $");
+__RCSID("$NetBSD: getmntopts.c,v 1.1 2003/03/22 12:44:04 jdolecek Exp $");
 #endif
 #endif /* not lint */
 
@@ -51,7 +51,7 @@ __RCSID("$NetBSD: getmntopts.c,v 1.6 1999/11/09 15:06:33 drochner Exp $");
 #include <stdlib.h>
 #include <string.h>
 
-#include "mntopts.h"
+#include <mntopts.h>
 
 int getmnt_silent = 0;
 
