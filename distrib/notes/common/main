@@ -1,4 +1,4 @@
-.\" $NetBSD: main,v 1.43 2000/01/17 05:33:14 itojun Exp $
+.\" $NetBSD: main,v 1.44 2000/02/16 10:48:13 tsutsui Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -770,22 +770,25 @@ them, and would like to mentioned, tell us!)
 .It Ta Mark Brinicombe Ta Mt mark@NetBSD.ORG Ta Sy arm32
 .It Ta Jeremy Cooper Ta Mt jeremy@NetBSD.ORG Ta Sy sun3x
 .It Ta Ross Harvey Ta Mt ross@NetBSD.ORG Ta Sy alpha
-.It Ta Ignatios Souvatzis Ta Mt is@NetBSD.ORG Ta Sy amiga
 .It Ta "Jun-ichiro itojun Hagino" Ta Mt itojun@NetBSD.ORG Ta Sy sh3
 .It Ta Eduardo Horvath Ta Mt eeh@NetBSD.ORG Ta Sy sparc64
+.It Ta Darrin Jewell Ta Mt dbj@NetBSD.ORG Ta Sy next68k
 .It Ta Paul Kranenburg Ta Mt pk@NetBSD.ORG Ta Sy sparc
 .It Ta Anders Magnusson Ta Mt ragge@NetBSD.ORG Ta Sy vax
-.It Ta Tsubai Masanari Ta Mt tsubai@NetBSD.ORG Ta Sy macppc
-.It Ta Tsubai Masanari Ta Mt tsubai@NetBSD.ORG Ta Sy newsmips
 .It Ta Minoura Makoto Ta Mt minoura@NetBSD.ORG Ta Sy x68k
 .It Ta Phil Nelson Ta Mt phil@NetBSD.ORG Ta Sy pc532
+.It Ta Tohru Nishimura Ta Mt nisimura@NetBSD.ORG Ta Sy luna68k
 .It Ta Scott Reynolds Ta Mt scottr@NetBSD.ORG Ta Sy mac68k
-.It Ta Darrin Jewell Ta Mt dbj@NetBSD.ORG Ta Sy next68k
 .It Ta Kazuki Sakamoto Ta Mt sakamoto@NetBSD.ORG Ta Sy bebox
+.It Ta Noriyuki Soda Ta Mt soda@NetBSD.ORG Ta Sy arc
 .It Ta Wolfgang Solfrank Ta Mt ws@NetBSD.ORG Ta Sy ofppc
+.It Ta Ignatios Souvatzis Ta Mt is@NetBSD.ORG Ta Sy amiga
 .It Ta Jonathan Stone Ta Mt jonathan@NetBSD.ORG Ta Sy pmax
 .It Ta Shin Takemura Ta Mt takemura@NetBSD.ORG Ta Sy hpcmips
 .It Ta Jason Thorpe Ta Mt thorpej@NetBSD.ORG Ta Sy hp300
+.It Ta Tsubai Masanari Ta Mt tsubai@NetBSD.ORG Ta Sy macppc
+.It Ta Tsubai Masanari Ta Mt tsubai@NetBSD.ORG Ta Sy newsmips
+.It Ta Izumi Tsutsui Ta Mt tsutsui@NetBSD.ORG Ta Sy news68k
 .It Ta "Frank van der Linden" Ta Mt fvdl@NetBSD.ORG Ta Sy i386
 .It Ta Leo Weppelman Ta Mt leo@NetBSD.ORG Ta Sy atari
 .It Ta Nathan Williams Ta Mt nathanw@NetBSD.ORG Ta Sy sun3
@@ -888,7 +891,6 @@ them, and would like to mentioned, tell us!)
 .It Ta Joseph Myers Ta Mt jsm@NetBSD.ORG
 .It Ta Ken Nakata Ta Mt kenn@NetBSD.ORG
 .It Ta Bob Nestor Ta Mt rnestor@NetBSD.ORG
-.It Ta Tohru Nishimura Ta Mt nisimura@NetBSD.ORG
 .It Ta Masaru Oki Ta Mt oki@NetBSD.ORG
 .It Ta Greg Oster Ta Mt oster@NetBSD.ORG
 .It Ta Herb Peyerl Ta Mt hpeyerl@NetBSD.ORG
@@ -913,14 +915,12 @@ them, and would like to mentioned, tell us!)
 .It Ta Takao Shinohara Ta Mt shin@NetBSD.ORG
 .It Ta Chuck Silvers Ta Mt chs@NetBSD.ORG
 .It Ta Thor Lancelot Simon Ta Mt tls@NetBSD.ORG
-.It Ta Noriyuki Soda Ta Mt soda@NetBSD.ORG
 .It Ta Bill Sommerfeld Ta Mt sommerfeld@NetBSD.ORG
 .It Ta Bill Studenmund Ta Mt wrstuden@NetBSD.ORG
 .It Ta Kevin Sullivan Ta Mt sullivan@NetBSD.ORG
 .It Ta Kimmo Suominen Ta Mt kim@NetBSD.ORG
 .It Ta Matt Thomas Ta Mt matt@NetBSD.ORG
 .It Ta Christoph Toshok Ta Mt toshok@NetBSD.ORG
-.It Ta Izumi Tsutsui Ta Mt tsutsui@NetBSD.ORG
 .It Ta UCHIYAMA Yasushi Ta Mt uch@NetBSD.ORG
 .It Ta Todd Vierling Ta Mt tv@NetBSD.ORG
 .It Ta Aymeric Vincent Ta Mt aymeric@NetBSD.ORG
