@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.3,v 1.1.2.58 2004/04/01 03:08:10 jmc Exp $
+#	$NetBSD: CHANGES-1.6.3,v 1.1.2.59 2004/04/01 07:06:54 tron Exp $
 
 A complete list of changes from NetBSD 1.6.2 to NetBSD 1.6.3:
 
@@ -350,3 +350,10 @@ sbin/routed/routed.8				patch
 
 	Fix inconsistency between manual page and RFC 1256.
 	[ws, ticket #1643]
+
+gnu/dist/cvs/src/server.c			1.14
+
+	Correctly fallback into the normal path when SETXID_SUPPORT is defined
+	but the binary was the normal one.  Fixes PR#23471.
+	[jmc, ticket #1646]
+
