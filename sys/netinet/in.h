@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)in.h	7.11 (Berkeley) 4/20/91
- *	$Id: in.h,v 1.7 1994/01/26 01:26:37 cgd Exp $
+ *	$Id: in.h,v 1.8 1994/01/28 13:46:02 deraadt Exp $
  */
 
 #ifndef _NETINET_IN_H_
@@ -184,6 +184,8 @@ struct ip_mreq {
 #ifdef KERNEL
 struct	in_addr in_makeaddr();
 u_long	in_netof(), in_lnaof();
+
+struct socket;
 
 int	in_broadcast __P((struct in_addr));
 int	in_canforward __P((struct in_addr));
