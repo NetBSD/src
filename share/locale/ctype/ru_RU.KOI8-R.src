@@ -1,4 +1,4 @@
-/*	$NetBSD: ru_RU.KOI8-R.src,v 1.3 2002/12/06 02:50:22 thorpej Exp $	*/
+/*	$NetBSD: ru_RU.KOI8-R.src,v 1.4 2004/06/24 03:28:50 itojun Exp $	*/
 
 /*
  * LOCALE_CTYPE for Russian koi8-r character set (RFC1489)
@@ -6,9 +6,9 @@
 ENCODING	"NONE"
 VARIABLE        Russian CODESET=KOI8-R
 
-//
-// This is a comment
-//
+/*
+ * This is a comment
+ */
 ALPHA		'A' - 'Z' 'a' - 'z' 0xa3 0xb3 0xc0 - 0xff
 CONTROL		0x00 - 0x1f 0x7f
 DIGIT		'0' - '9'
@@ -21,9 +21,9 @@ XDIGIT          '0' - '9' 'a' - 'f' 'A' - 'F'
 BLANK		' ' '\t' 0x9a
 PRINT		0x20 - 0x7e 0x80 - 0xff
 SWIDTH1		0x20 - 0x7e 0xa0 - 0xff
-// IDEOGRAM
-// SPECIAL
-// PHONEGRAM
+/* IDEOGRAM */
+/* SPECIAL */
+/* PHONEGRAM */
 
 MAPLOWER       	<'A' - 'Z' : 'a'>
 MAPLOWER       	<'a' - 'z' : 'a'>

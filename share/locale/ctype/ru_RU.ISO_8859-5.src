@@ -1,4 +1,4 @@
-/*	$NetBSD: ru_RU.ISO_8859-5.src,v 1.3 2002/12/06 02:50:21 thorpej Exp $	*/
+/*	$NetBSD: ru_RU.ISO_8859-5.src,v 1.4 2004/06/24 03:28:50 itojun Exp $	*/
 
 /*
  * LOCALE_CTYPE for Russian part of ISO8859-5 set
@@ -36,9 +36,9 @@ UPPER		'A' - 'Z' \
 XDIGIT          '0' - '9' 'a' - 'f' 'A' - 'F'
 SWIDTH1		0x20 - 0x7e 0xa0 - 0xff
 
-// IDEOGRAM
-// SPECIAL
-// PHONEGRAM
+/* IDEOGRAM */
+/* SPECIAL */
+/* PHONEGRAM */
 
 MAPLOWER       	<'A' - 'Z' : 'a'>
 MAPLOWER       	<'a' - 'z' : 'a'>

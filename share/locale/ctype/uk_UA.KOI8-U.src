@@ -1,4 +1,4 @@
-/*	$NetBSD: uk_UA.KOI8-U.src,v 1.3 2002/12/06 02:50:22 thorpej Exp $	*/
+/*	$NetBSD: uk_UA.KOI8-U.src,v 1.4 2004/06/24 03:28:50 itojun Exp $	*/
 
 /*
  * LOCALE_CTYPE for Ukrainian koi8-u character set (RFC2319)
@@ -8,9 +8,9 @@
 ENCODING	"NONE"
 VARIABLE        Ukrainian CODESET=KOI8-U character set
 
-//
-// This is a comment
-//
+/*
+ * This is a comment
+ */
 ALPHA		'A' - 'Z' 'a' - 'z' 0xa3 0xb3 0xa4 0xb4 0xa6 0xb6 0xa7 0xb7 0xad 0xbd 0xc0 - 0xff
 CONTROL		0x00 - 0x1f 0x7f
 DIGIT		'0' - '9'
@@ -23,9 +23,9 @@ XDIGIT          '0' - '9' 'a' - 'f' 'A' - 'F'
 BLANK		' ' '\t' 0x9a
 PRINT		0x20 - 0x7e 0x80 - 0xff
 SWIDTH1		0x20 - 0x7e 0x80 - 0xff
-// IDEOGRAM
-// SPECIAL
-// PHONEGRAM
+/* IDEOGRAM */
+/* SPECIAL */
+/* PHONEGRAM */
 
 MAPLOWER       	<'A' - 'Z' : 'a'>
 MAPLOWER       	<'a' - 'z' : 'a'>
