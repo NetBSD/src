@@ -1,4 +1,4 @@
-/*	$NetBSD: yp_match.c,v 1.3 1996/05/23 13:49:02 christos Exp $	 */
+/*	$NetBSD: yp_match.c,v 1.3.2.1 1996/09/17 21:21:49 jtc Exp $	 */
 
 /*
  * Copyright (c) 1992, 1993 Theo de Raadt <deraadt@fsa.ca>
@@ -32,14 +32,19 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$NetBSD: yp_match.c,v 1.3 1996/05/23 13:49:02 christos Exp $";
+static char rcsid[] = "$NetBSD: yp_match.c,v 1.3.2.1 1996/09/17 21:21:49 jtc Exp $";
 #endif
 
+#include "namespace.h"
 #include <stdlib.h>
 #include <string.h>
 #include <rpc/rpc.h>
 #include <rpcsvc/yp_prot.h>
 #include <rpcsvc/ypclnt.h>
+
+#ifdef __weak_alias
+__weak_alias(yp_match,_yp_match);
+#endif
 
 #define YPMATCHCACHE
 
@@ -231,6 +236,6 @@ again:
 #endif
 	}
 	xdr_free(xdr_ypresp_val, (char *) &yprv);
-	_yp_unbind(ysd);
+	__yp_unbind(ysd);
 	return r;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: yplib.c,v 1.24 1996/05/29 20:06:04 thorpej Exp $	 */
+/*	$NetBSD: yplib.c,v 1.24.2.1 1996/09/17 21:21:55 jtc Exp $	 */
 
 /*
  * Copyright (c) 1992, 1993 Theo de Raadt <deraadt@fsa.ca>
@@ -32,9 +32,10 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$NetBSD: yplib.c,v 1.24 1996/05/29 20:06:04 thorpej Exp $";
+static char rcsid[] = "$NetBSD: yplib.c,v 1.24.2.1 1996/09/17 21:21:55 jtc Exp $";
 #endif
 
+#include "namespace.h"
 #include <sys/param.h>
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -50,6 +51,12 @@ static char rcsid[] = "$NetBSD: yplib.c,v 1.24 1996/05/29 20:06:04 thorpej Exp $
 #include <rpcsvc/yp_prot.h>
 #include <rpcsvc/ypclnt.h>
 
+#ifdef __weak_alias
+__weak_alias(yp_bind,_yp_bind);
+__weak_alias(yp_get_default_domain,_yp_get_default_domain);
+__weak_alias(yp_unbind,_yp_unbind);
+#endif
+
 #define BINDINGDIR	"/var/yp/binding"
 #define YPBINDLOCK	"/var/run/ypbind.lock"
 
@@ -59,7 +66,7 @@ char _yp_domain[MAXHOSTNAMELEN];
 struct timeval _yplib_timeout = { 10, 0 };
 int _yplib_nerrs = 5;
 
-void _yp_unbind __P((struct dom_binding *));
+void __yp_unbind __P((struct dom_binding *));
 
 int
 _yp_dobind(dom, ypdb)
@@ -241,7 +248,7 @@ gotit:
 }
 
 void
-_yp_unbind(ypb)
+__yp_unbind(ypb)
 	struct dom_binding *ypb;
 {
 	clnt_destroy(ypb->dom_client);
