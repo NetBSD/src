@@ -1,4 +1,4 @@
-.\"	$NetBSD: ps.1,v 1.64 2003/10/16 10:00:54 wiz Exp $
+.\"	$NetBSD: ps.1,v 1.65 2004/02/13 09:55:24 wiz Exp $
 .\"
 .\" Copyright (c) 1980, 1990, 1991, 1993, 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -86,7 +86,7 @@ and
 options).
 The default output format includes, for each process, the process'
 .Tn ID ,
-controlling terminal, cpu time (including both user and system time),
+controlling terminal, CPU time (including both user and system time),
 state, and associated command.
 .Pp
 The options are as follows:
@@ -101,9 +101,9 @@ This may be somewhat confusing; for example, all
 scripts will show as
 .Dq sh .
 .It Fl C
-Change the way the cpu percentage is calculated by using a
+Change the way the CPU percentage is calculated by using a
 .Dq raw
-cpu calculation that ignores
+CPU calculation that ignores
 .Dq resident
 time (this normally has no effect).
 .It Fl e
@@ -161,7 +161,7 @@ the standard header.
 Display information associated with the specified process
 .Tn ID .
 .It Fl r
-Sort by current cpu usage, instead of by process
+Sort by current CPU usage, instead of by process
 .Tn ID ,
 equivalent to
 .Fl k
@@ -232,7 +232,7 @@ A complete list of the available keywords are listed below.
 Some of these keywords are further specified as follows:
 .Bl -tag -width indent
 .It %cpu
-The cpu utilization of the process; this is a decaying average over up to
+The CPU utilization of the process; this is a decaying average over up to
 a minute of previous (real) time.
 Since the time base over which this is computed varies (since processes may
 be very young) it is possible for the sum of all
@@ -452,7 +452,7 @@ Several of them have aliases (keywords which are synonyms).
 .Pp
 .Bl -tag -width groupnames -compact
 .It %cpu
-percentage cpu usage (alias pcpu)
+percentage CPU usage (alias pcpu)
 .It %mem
 percentage memory usage (alias pmem)
 .It acflag
@@ -460,9 +460,9 @@ accounting flag (alias acflg)
 .It command
 command and arguments
 .It cpu
-short-term cpu usage factor (for scheduling)
+short-term CPU usage factor (for scheduling)
 .It ctime
-accumulated cpu time of all children that have exited
+accumulated CPU time of all children that have exited
 .It egid
 effective group id
 .It egroup
@@ -581,7 +581,7 @@ time started
 .It state
 symbolic process state (alias stat)
 .It stime
-accumulated system cpu time
+accumulated system CPU time
 .It svgid
 saved gid from a setgid executable
 .It svgroup
@@ -593,7 +593,7 @@ user name (from svuid)
 .It tdev
 control terminal device number
 .It time
-accumulated cpu time, user + system (alias cputime)
+accumulated CPU time, user + system (alias cputime)
 .It tpgid
 control terminal process group
 .Tn ID
@@ -615,7 +615,7 @@ scheduling priority on return from system call (alias usrpri)
 .It user
 user name (from uid)
 .It utime
-accumulated user cpu time
+accumulated user CPU time
 .It vsz
 virtual size in Kbytes (alias vsize)
 .It wchan
