@@ -1,4 +1,4 @@
-/*	$NetBSD: print.c,v 1.17 1997/07/30 05:01:04 thorpej Exp $	*/
+/*	$NetBSD: print.c,v 1.18 1998/01/17 12:00:46 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)print.c	8.5 (Berkeley) 7/28/94";
 #else
-__RCSID("$NetBSD: print.c,v 1.17 1997/07/30 05:01:04 thorpej Exp $");
+__RCSID("$NetBSD: print.c,v 1.18 1998/01/17 12:00:46 mycroft Exp $");
 #endif
 #endif /* not lint */
 
@@ -115,12 +115,9 @@ printlong(dp)
 		if (f_flags)
 			(void)printf("%-*s ", dp->s_flags, np->flags);
 		if (S_ISCHR(sp->st_mode) || S_ISBLK(sp->st_mode))
-			(void)printf("%3d, %3d ",
-			    major(sp->st_rdev), minor(sp->st_rdev));
-		else if (dp->bcfile)
-			(void)printf("%*s%*qd ",
-			    8 - dp->s_size, "", dp->s_size,
-			    (long long)sp->st_size);
+			(void)printf("%*u, %*u ",
+			    dp->s_major, major(sp->st_rdev), dp->s_minor,
+			    minor(sp->st_rdev));
 		else
 			(void)printf("%*qd ", dp->s_size,
 			    (long long)sp->st_size);
