@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.2,v 1.1.2.260 2004/02/07 20:04:22 jmc Exp $
+#	$NetBSD: CHANGES-1.6.2,v 1.1.2.261 2004/02/07 20:07:56 jmc Exp $
 
 A complete list of changes from NetBSD 1.6.1 to NetBSD 1.6.2:
 
@@ -3385,3 +3385,13 @@ sys/kern/sysv_shm.c			1.74
 	Fix missing reference leak in the error path of shmat() mentioned in 
 	Full-Disclosure.
 	[groo, ticket #1604]
+
+sys/netinet6/ip6_output.c			1.78 (via patch)
+sys/netinet/tcp_output.c			1.107 (via patch)
+
+	Strictly follow RFC2460 section 5 last paragraph (sending rule when 
+	PMTU < 1280). Deal with IPv6 path MTU < 1280 (RFC2460 section 5 
+	last paragraph) Check if there really is room for TCP data.
+	[itojun, ticket #1605]
+
+	(Moved tags on last 3 files)
