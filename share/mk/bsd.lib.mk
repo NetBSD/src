@@ -1,8 +1,9 @@
-#	$NetBSD: bsd.lib.mk,v 1.218 2003/05/27 19:32:18 wiz Exp $
+#	$NetBSD: bsd.lib.mk,v 1.219 2003/05/31 20:33:16 thorpej Exp $
 #	@(#)bsd.lib.mk	8.3 (Berkeley) 4/22/94
 
 .include <bsd.init.mk>
 .include <bsd.shlib.mk>
+.include <bsd.gcc.mk>
 
 ##### Basic targets
 .PHONY:		checkver cleanlib libinstall
@@ -152,14 +153,8 @@ MKSHLIBOBJS= no
 .if ${OBJECT_FMT} == "ELF"
 SHLIB_SOVERSION=	${SHLIB_MAJOR}
 SHLIB_SHFLAGS=		-soname lib${LIB}.so.${SHLIB_SOVERSION}
-SHLIB_LDSTARTFILE?=	${DESTDIR}/usr/lib/crti.o ${DESTDIR}/usr/lib/crtbeginS.o
-# Some platforms require additional endfile support.
-.if ${MACHINE_ARCH} == "powerpc" && defined(HAVE_GCC3)
-SHLIB_LDENDFILE?=	${DESTDIR}/usr/lib/crtsavres.o \
-			${DESTDIR}/usr/lib/crtendS.o ${DESTDIR}/usr/lib/crtn.o
-.else
-SHLIB_LDENDFILE?=	${DESTDIR}/usr/lib/crtendS.o ${DESTDIR}/usr/lib/crtn.o
-.endif
+SHLIB_LDSTARTFILE?=	${DESTDIR}/usr/lib/crti.o ${_GCC_CRTBEGINS}
+SHLIB_LDENDFILE?=	${_GCC_CRTENDS} ${DESTDIR}/usr/lib/crtn.o
 .endif
 
 CFLAGS+=	${COPTS}
