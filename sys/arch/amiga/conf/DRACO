@@ -1,13 +1,13 @@
-# $NetBSD: DRACO,v 1.53 2001/06/11 01:50:52 wiz Exp $
+# $NetBSD: DRACO,v 1.54 2001/07/08 16:34:03 abs Exp $
 #
 # This file was automatically created. Changes will be
 # lost when running make in this directory.
 #
-# Created from: #NetBSD: GENERIC,v 1.156 2001/02/02 21:52:13 is Exp $
+# Created from: #NetBSD: GENERIC,v 1.160 2001/07/08 16:32:13 abs Exp $
 
 include "arch/amiga/conf/std.amiga"
 
-#ident  		"GENERIC-$Revision: 1.53 $"
+#ident  		"GENERIC-$Revision: 1.54 $"
 
 maxusers	8
 options 	RTC_OFFSET=0
@@ -38,6 +38,7 @@ options 	ISO,TPIP	# OSI
 #options 	EON		# OSI tunneling over IP
 options 	CCITT,LLC,HDLC	# X.25
 options 	NETATALK	# AppleTalk networking protocols
+#options 	TCP_DEBUG	# Record last TCP_NDEBUG packets with SO_DEBUG
 
 options 	PPP_BSDCOMP	# BSD-Compress compression support for PPP
 options 	PPP_DEFLATE	# Deflate compression support for PPP
@@ -79,7 +80,7 @@ options 	NFSSERVER	# Network File System server side code
 
 #Compatibility options for various existing systems
 
-options 	TCP_COMPAT_42	# compatibility with 4.2BSD TCP/IP
+#options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
 options 	COMPAT_43	# compatibility with 4.3BSD interfaces
 options 	COMPAT_09	# compatibility with NetBSD 0.9
 options 	COMPAT_10	# compatibility with NetBSD 1.0
@@ -97,6 +98,10 @@ options 	EXEC_ELF32	# 32-bit ELF executables (Linux, SVR4)
 options 	SYSVSHM		# System V-like shared memory
 options 	SYSVMSG		# System V-like messages
 options 	SYSVSEM		# System V-like semaphores
+#options	SEMMNI=10	# number of semaphore identifiers
+#options	SEMMNS=60	# number of semaphores in system
+#options	SEMUME=10	# max number of undo entries per process
+#options	SEMMNU=30	# number of undo structures in system
 
 #Support for various kernel options
 

@@ -1,12 +1,12 @@
 #
-# $NetBSD: FALCON,v 1.38 2001/06/11 01:50:53 wiz Exp $
+# $NetBSD: FALCON,v 1.39 2001/07/08 16:34:03 abs Exp $
 #
 # This file was automatically created. Changes will be
 # lost when running makeconf in this directory.
 #
 # Created from: 
 #		NetBSD: FALCON.in,v 1.4 2001/04/10 06:28:38 leo Exp $
-#		NetBSD: GENERIC.in,v 1.2 2001/04/10 06:46:01 leo Exp $
+#		NetBSD: GENERIC.in,v 1.4 2001/07/08 16:32:15 abs Exp $
 
 #This configuration file is for a generic ATARI-Falcon
 
@@ -17,7 +17,7 @@
 
 include "arch/atari/conf/std.atari"
 
-#ident  		"GENERIC-$Revision: 1.38 $"
+#ident  		"GENERIC-$Revision: 1.39 $"
 
 #Add support for about 16 users. This variable is used to size
 #various kernel structures.
@@ -67,6 +67,8 @@ options 	PFIL_HOOKS      # pfil(9) packet filter hooks
 options 	IPFILTER_LOG    # ipmon(8) log support
 #options 	IPFILTER_DEFAULT_BLOCK	# block packages by default
 
+#options 	TCP_DEBUG	# Record last TCP_NDEBUG packets with SO_DEBUG
+
 #File systems
 file-system 	FFS		# Berkeley fast file system
 file-system 	MFS		# Memory based filesystem
@@ -91,7 +93,7 @@ options 	QUOTA		# Disk quotas for local disks
 options 	SOFTDEP         # FFS soft updates support.
 options 	NFSSERVER	# Network File System server side code
 #options 	EXT2FS_SYSTEM_FLAGS	# makes ext2fs file flags (append and
-				#immutable) behave as system flags.
+				# immutable) behave as system flags.
 
 #Misc. debugging options
 
@@ -113,9 +115,9 @@ options 	COMPAT_14	# Compatibility to NetBSD1.4
 #options 	COMPAT_09	# has no meaning on the atari
 #options 	COMPAT_SUNOS	# Support to run Sun-3 executables
 #options 	COMPAT_SVR4	# Support to run SVR4 executables
-#options 	TCP_COMPAT_42	# Disable UDP checksums (not needed)
 #options 	COMPAT_LINUX	# Support to run Linux/m68k executables
 #options 	EXEC_ELF32	# 32-bit ELF executables (Linux, SVR4)
+#options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
 
 #Support for System V IPC facilities.
 
@@ -202,7 +204,7 @@ ser0		at mainbus0	# UART on first 68901 (ttyB0)
 wdc0		at mainbus0	# IDE-bus
 wd*		at wdc? channel ? drive ?
 
- #ATAPI bus support
+ # ATAPI bus support
 atapibus* at wdc? channel ?
 
 #ATAPI devices
