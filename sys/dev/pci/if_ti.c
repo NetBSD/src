@@ -1,4 +1,4 @@
-/* $NetBSD: if_ti.c,v 1.47.2.1 2002/06/20 16:33:37 gehenna Exp $ */
+/* $NetBSD: if_ti.c,v 1.47.2.2 2002/07/20 11:35:09 gehenna Exp $ */
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ti.c,v 1.47.2.1 2002/06/20 16:33:37 gehenna Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ti.c,v 1.47.2.2 2002/07/20 11:35:09 gehenna Exp $");
 
 #include "bpfilter.h"
 #include "opt_inet.h"
@@ -2288,7 +2288,7 @@ static int ti_encap_tigon1(sc, m_head, txidx)
 	dmamap = dma->dmamap;
 
 	error = bus_dmamap_load_mbuf(sc->sc_dmat, dmamap, m_head,
-	    BUS_DMA_WRITE);
+	    BUS_DMA_WRITE | BUS_DMA_NOWAIT);
 	if (error) {
 		struct mbuf *m;
 		int i = 0;
@@ -2395,7 +2395,7 @@ static int ti_encap_tigon2(sc, m_head, txidx)
 	dmamap = dma->dmamap;
 
 	error = bus_dmamap_load_mbuf(sc->sc_dmat, dmamap, m_head,
-	    BUS_DMA_WRITE);
+	    BUS_DMA_WRITE | BUS_DMA_NOWAIT);
 	if (error) {
 		struct mbuf *m;
 		int i = 0;

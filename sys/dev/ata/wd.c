@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.220.8.2 2002/07/15 10:35:15 gehenna Exp $ */
+/*	$NetBSD: wd.c,v 1.220.8.3 2002/07/20 11:35:06 gehenna Exp $ */
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.220.8.2 2002/07/15 10:35:15 gehenna Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.220.8.3 2002/07/20 11:35:06 gehenna Exp $");
 
 #ifndef WDCDEBUG
 #define WDCDEBUG
@@ -134,7 +134,7 @@ struct wd_softc {
 	/* General disk infos */
 	struct device sc_dev;
 	struct disk sc_dk;
-	struct buf_queue sc_q;
+	struct bufq_state sc_q;
 	struct callout sc_restart_ch;
 	/* IDE disk soft states */
 	struct ata_bio sc_wdc_bio; /* current transfer */
@@ -280,7 +280,7 @@ wdattach(parent, self, aux)
 	WDCDEBUG_PRINT(("wdattach\n"), DEBUG_FUNCS | DEBUG_PROBE);
 
 	callout_init(&wd->sc_restart_ch);
-	BUFQ_INIT(&wd->sc_q);
+	bufq_init(&wd->sc_q, BUFQ_DISKSORT|BUFQ_SORT_RAWBLOCK);
 
 	wd->atabus = adev->adev_bustype;
 	wd->openings = adev->adev_openings;
@@ -420,8 +420,7 @@ wddetach(self, flags)
 	s = splbio();
 
 	/* Kill off any queued buffers. */ 
-	while ((bp = BUFQ_FIRST(&sc->sc_q)) != NULL) {
-		BUFQ_REMOVE(&sc->sc_q, bp);
+	while ((bp = BUFQ_GET(&sc->sc_q)) != NULL) {
 		bp->b_error = EIO;
 		bp->b_flags |= B_ERROR; 
 		bp->b_resid = bp->b_bcount;
@@ -511,7 +510,7 @@ wdstrategy(bp)
 
 	/* Queue transfer on drive, activate drive and controller if idle. */
 	s = splbio();
-	disksort_blkno(&wd->sc_q, bp);
+	BUFQ_PUT(&wd->sc_q, bp);
 	wdstart(wd);
 	splx(s);
 	return;
@@ -538,9 +537,8 @@ wdstart(arg)
 	while (wd->openings > 0) {
 
 		/* Is there a buf for us ? */
-		if ((bp = BUFQ_FIRST(&wd->sc_q)) == NULL)
+		if ((bp = BUFQ_GET(&wd->sc_q)) == NULL)
 			return;
-		BUFQ_REMOVE(&wd->sc_q, bp);
 	
 		/* 
 		 * Make the command. First lock the device

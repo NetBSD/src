@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_swap.c,v 1.64.2.1 2002/05/16 03:43:24 gehenna Exp $	*/
+/*	$NetBSD: uvm_swap.c,v 1.64.2.2 2002/07/20 11:35:16 gehenna Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997 Matthew R. Green
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_swap.c,v 1.64.2.1 2002/05/16 03:43:24 gehenna Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_swap.c,v 1.64.2.2 2002/07/20 11:35:16 gehenna Exp $");
 
 #include "fs_nfs.h"
 #include "opt_uvmhist.h"
@@ -140,7 +140,7 @@ struct swapdev {
 
 	int			swd_bsize;	/* blocksize (bytes) */
 	int			swd_maxactive;	/* max active i/o reqs */
-	struct buf_queue	swd_tab;	/* buffer list */
+	struct bufq_state	swd_tab;	/* buffer list */
 	int			swd_active;	/* number of active buffers */
 };
 
@@ -626,7 +626,7 @@ sys_swapctl(p, v, retval)
 		sdp->swd_flags = SWF_FAKE;	/* placeholder only */
 		sdp->swd_vp = vp;
 		sdp->swd_dev = (vp->v_type == VBLK) ? vp->v_rdev : NODEV;
-		BUFQ_INIT(&sdp->swd_tab);
+		bufq_init(&sdp->swd_tab, BUFQ_DISKSORT|BUFQ_SORT_RAWBLOCK);
 
 		swaplist_insert(sdp, spp, priority);
 		simple_unlock(&uvm.swap_data_lock);
@@ -1307,7 +1307,7 @@ sw_reg_strategy(sdp, bp, bn)
 		vnx->vx_pending++;
 
 		/* sort it in and start I/O if we are not over our limit */
-		disksort_blkno(&sdp->swd_tab, &nbp->vb_buf);
+		BUFQ_PUT(&sdp->swd_tab, &nbp->vb_buf);
 		sw_reg_start(sdp);
 		splx(s);
 
@@ -1336,7 +1336,7 @@ out: /* Arrive here at splbio */
 /*
  * sw_reg_start: start an I/O request on the requested swapdev
  *
- * => reqs are sorted by disksort (above)
+ * => reqs are sorted by b_rawblkno (above)
  */
 static void
 sw_reg_start(sdp)
@@ -1352,10 +1352,9 @@ sw_reg_start(sdp)
 	sdp->swd_flags |= SWF_BUSY;
 
 	while (sdp->swd_active < sdp->swd_maxactive) {
-		bp = BUFQ_FIRST(&sdp->swd_tab);
+		bp = BUFQ_GET(&sdp->swd_tab);
 		if (bp == NULL)
 			break;
-		BUFQ_REMOVE(&sdp->swd_tab, bp);
 		sdp->swd_active++;
 
 		UVMHIST_LOG(pdhist,

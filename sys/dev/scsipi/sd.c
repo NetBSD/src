@@ -1,4 +1,4 @@
-/*	$NetBSD: sd.c,v 1.183.2.1 2002/05/16 11:40:54 gehenna Exp $	*/
+/*	$NetBSD: sd.c,v 1.183.2.2 2002/07/20 11:35:09 gehenna Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.183.2.1 2002/05/16 11:40:54 gehenna Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.183.2.2 2002/07/20 11:35:09 gehenna Exp $");
 
 #include "opt_scsi.h"
 #include "rnd.h"
@@ -152,7 +152,7 @@ sdattach(parent, sd, periph, ops)
 
 	SC_DEBUG(periph, SCSIPI_DB2, ("sdattach: "));
 
-	BUFQ_INIT(&sd->buf_queue);
+	bufq_init(&sd->buf_queue, BUFQ_DISKSORT|BUFQ_SORT_RAWBLOCK);
 
 	/*
 	 * Store information needed to contact our base driver
@@ -283,8 +283,7 @@ sddetach(self, flags)
 	s = splbio();
 
 	/* Kill off any queued buffers. */
-	while ((bp = BUFQ_FIRST(&sd->buf_queue)) != NULL) {
-		BUFQ_REMOVE(&sd->buf_queue, bp);
+	while ((bp = BUFQ_GET(&sd->buf_queue)) != NULL) {
 		bp->b_error = EIO;
 		bp->b_flags |= B_ERROR;
 		bp->b_resid = bp->b_bcount;
@@ -658,7 +657,7 @@ sdstrategy(bp)
 	 * XXX Only do disksort() if the current operating mode does not
 	 * XXX include tagged queueing.
 	 */
-	disksort_blkno(&sd->buf_queue, bp);
+	BUFQ_PUT(&sd->buf_queue, bp);
 
 	/*
 	 * Tell the device to get going on the transfer if it's
@@ -728,9 +727,8 @@ sdstart(periph)
 		/*
 		 * See if there is a buf with work for us to do..
 		 */
-		if ((bp = BUFQ_FIRST(&sd->buf_queue)) == NULL)
+		if ((bp = BUFQ_GET(&sd->buf_queue)) == NULL)
 			return;
-		BUFQ_REMOVE(&sd->buf_queue, bp);
 
 		/*
 		 * If the device has become invalid, abort all the
