@@ -1,4 +1,4 @@
-/*	$NetBSD: setterm.c,v 1.17 2000/04/17 12:25:46 blymn Exp $	*/
+/*	$NetBSD: setterm.c,v 1.18 2000/04/19 13:52:39 blymn Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)setterm.c	8.8 (Berkeley) 10/25/94";
 #else
-__RCSID("$NetBSD: setterm.c,v 1.17 2000/04/17 12:25:46 blymn Exp $");
+__RCSID("$NetBSD: setterm.c,v 1.18 2000/04/19 13:52:39 blymn Exp $");
 #endif
 #endif /* not lint */
 
@@ -52,7 +52,9 @@ __RCSID("$NetBSD: setterm.c,v 1.17 2000/04/17 12:25:46 blymn Exp $");
 #include "curses.h"
 #include "curses_private.h"
 
-static void zap __P((void));
+static int zap(struct tinfo *tinfo);
+
+struct tinfo *_cursesi_genbuf;
 
 static char	*sflags[] = {
 		/*	 am   be   bs   cc   da   eo   hc   hl  */
@@ -94,16 +96,17 @@ static char	*_PC,
 		};
 
 static char	*aoftspace;		/* Address of _tspace for relocation */
-static char	tspace[4096];		/* Space for capability strings */
+static char	*tspace;		/* Space for capability strings */
+static size_t   tspace_size;            /* size of tspace */
 
 char *ttytype;
 
 int
 setterm(char *type)
 {
-	static char genbuf[2048];
-	static char __ttytype[128];
+	static char __ttytype[128], cm_buff[1024], tc[1024], *tcptr;
 	int unknown;
+	size_t limit;
 	struct winsize win;
 	char *p;
 
@@ -114,9 +117,8 @@ setterm(char *type)
 	if (type[0] == '\0')
 		type = "xx";
 	unknown = 0;
-	if (tgetent(genbuf, type) != 1) {
+	if (t_getent(&_cursesi_genbuf, type) != 1) {
 		unknown++;
-		(void)strncpy(genbuf, "xx|dumb:", sizeof(genbuf) - 1);
 	}
 #ifdef DEBUG
 	__CTRACE("setterm: tty = %s\n", type);
@@ -128,8 +130,14 @@ setterm(char *type)
 		LINES = win.ws_row;
 		COLS = win.ws_col;
 	}  else {
-		LINES = tgetnum("li");
-		COLS = tgetnum("co");
+		if (unknown) {
+			LINES = -1;
+			COLS = -1;
+		} else {
+			LINES = t_getnum(_cursesi_genbuf, "li");
+			COLS = t_getnum(_cursesi_genbuf, "co");
+		}
+		
 	}
 
 	/* POSIX 1003.2 requires that the environment override. */
@@ -147,22 +155,20 @@ setterm(char *type)
 #ifdef DEBUG
 	__CTRACE("setterm: LINES = %d, COLS = %d\n", LINES, COLS);
 #endif
-	aoftspace = tspace;
-	zap();			/* Get terminal description. */
-
+	if (!unknown) {
+		if (zap(_cursesi_genbuf) == ERR) /* Get terminal description.*/
+			return ERR;
+	}
+	
 	/* If we can't tab, we can't backtab, either. */
 	if (!GT)
 		BT = NULL;
 
 	/*
-	 * Test for cursor motion capbility.
+	 * Test for cursor motion capability.
 	 *
-	 * XXX
-	 * This is truly stupid -- historically, tgoto returns "OOPS" if it
-	 * can't do cursor motions.  Some systems have been fixed to return
-	 * a NULL pointer.
 	 */
-	if ((p = tgoto(CM, 0, 0)) == NULL || *p == 'O') {
+	if (t_goto(_cursesi_genbuf, CM, 0, 0, cm_buff, 1023) < 0) {
 		CA = 0;
 		CM = 0;
 	} else
@@ -170,11 +176,19 @@ setterm(char *type)
 
 	PC = _PC ? _PC[0] : 0;
 	aoftspace = tspace;
-	ttytype = __longname(genbuf, __ttytype);
-
+	if (unknown) {
+		strcpy(ttytype, "dumb");
+	} else {
+		tcptr = tc;
+		limit = 1023;
+		if (t_getterm(_cursesi_genbuf, &tcptr, &limit) < 0)
+			return ERR;
+		ttytype = __longname(tc, __ttytype);
+	}
+	
 	/* If no scrolling commands, no quick change. */
 	__noqch =
-	    (CS == NULL || HO == NULL ||
+  	    (CS == NULL || HO == NULL ||
 	    (SF == NULL && sf == NULL) || (SR == NULL && sr == NULL)) &&
 	    ((AL == NULL && al == NULL) || (DL == NULL && dl == NULL));
 
@@ -185,14 +199,15 @@ setterm(char *type)
  * zap --
  *	Gets all the terminal flags from the termcap database.
  */
-static void
-zap()
+static int
+zap(struct tinfo *tinfo)
 {
 	const char *namp;
         char ***sp;
 	int  **vp;
 	char **fp;
 	char tmp[3];
+	size_t i;
 #ifdef DEBUG
 	char	*cp;
 #endif
@@ -203,7 +218,7 @@ zap()
 	do {
 		*tmp = *namp;
 		*(tmp + 1) = *(namp + 1);
-		*(*fp++) = tgetflag(tmp);
+		*(*fp++) = t_getflag(tinfo, tmp);
 #ifdef DEBUG
 		__CTRACE("%2.2s = %s\n", namp, *fp[-1] ? "TRUE" : "FALSE");
 #endif
@@ -215,19 +230,39 @@ zap()
 	do {
 		*tmp = *namp;
 		*(tmp + 1) = *(namp + 1);
-		*(*vp++) = tgetnum(tmp);
+		*(*vp++) = t_getnum(tinfo, tmp);
 #ifdef DEBUG
 		__CTRACE("%2.2s = %d\n", namp, *vp[-1]);
 #endif
 		namp += 2;
 
 	} while (*namp);
+
+	  /* calculate the size of tspace.... */
+	namp = "acaeALasbcblbtcdceclcmcrcsdcDLdmdoeAedeik0k1k2k3k4k5k6k7k8k9hoicimipkdkekhklkrkskullmambmdmemhmkmpmrndnlocoppcprscseSFsospSRtatetiucueupusvbvsveABAFaldlIcIpSbSfsfsrALDLUPDOLERI";
+	tspace_size = 0;
+	do {
+		*tmp = *namp;
+		*(tmp + 1) = *(namp + 1);
+		t_getstr(tinfo, tmp, NULL, &i);
+		tspace_size += i;
+		namp += 2;
+	} while (*namp);
+
+	if ((tspace = (char *) malloc(tspace_size)) == NULL)
+		return ERR;
+#ifdef DEBUG
+	__CTRACE("Allocated %d (0x%x) size buffer for tspace\n", tspace_size,
+		 tspace_size);
+#endif
+	aoftspace = tspace;
+	
 	namp = "acaeALasbcblbtcdceclcmcrcsdcDLdmdoeAedeik0k1k2k3k4k5k6k7k8k9hoicimipkdkekhklkrkskullmambmdmemhmkmpmrndnlocoppcprscseSFsospSRtatetiucueupusvbvsveABAFaldlIcIpSbSfsfsrALDLUPDOLERI";
 	sp = sstrs;
 	do {
 		*tmp = *namp;
 		*(tmp + 1) = *(namp + 1);
-		*(*sp++) = tgetstr(tmp, &aoftspace);
+		*(*sp++) = t_getstr(tinfo, tmp, &aoftspace, NULL);
 #ifdef DEBUG
 		__CTRACE("%2.2s = %s", namp, *sp[-1] == NULL ? "NULL\n" : "\"");
 		if (*sp[-1] != NULL) {
@@ -241,15 +276,17 @@ zap()
 	if (XS)
 		SO = SE = NULL;
 	else {
-		if (tgetnum("sg") > 0)
+		if (t_getnum(tinfo, "sg") > 0)
 			SO = NULL;
-		if (tgetnum("ug") > 0)
+		if (t_getnum(tinfo, "ug") > 0)
 			US = NULL;
 		if (!SO && US) {
 			SO = US;
 			SE = UE;
 		}
 	}
+
+	return OK;
 }
 
 /*
@@ -259,5 +296,20 @@ zap()
 char	*
 getcap(char *name)
 {
-	return (tgetstr(name, &aoftspace));
+	size_t ent_size, offset;
+	char *new_tspace;
+
+	  /* verify cap exists and grab size of it at the same time */
+	if (t_getstr(_cursesi_genbuf, name, NULL, &ent_size) == ERR)
+		return ERR;
+
+	  /* grow tspace to hold the new cap */
+	if ((new_tspace = realloc(tspace, ent_size + tspace_size)) == NULL)
+		return ERR;
+
+	  /* point aoftspace to the same place in the newly allocated buffer */
+	offset = aoftspace - tspace;
+	tspace = new_tspace + offset;
+	
+	return (t_getstr(_cursesi_genbuf, name, &aoftspace, NULL));
 }
