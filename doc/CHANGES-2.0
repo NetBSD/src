@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.171 2004/04/30 03:46:55 jmc Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.172 2004/04/30 03:48:49 jmc Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -1726,3 +1726,10 @@ lib/libc/db/hash/ndbm.c				patch
 	XPG4.2: when it is attempted to open a database write-only, silently
 	"upgrade" to use read/write access on the database file.
 	[kleink, ticket #240]
+
+distrib/utils/sysinst/arch/i386/md.h		1.50
+distrib/i386/floppies/ramdisk-big/list		1.21
+sys/arch/i386/conf/INSTALL			1.239
+
+	Add support for raid(4) and raidctl(8) on i386
+	[gendalia, ticket #241]
