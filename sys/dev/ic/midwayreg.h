@@ -1,4 +1,4 @@
-/*	$NetBSD: midwayreg.h,v 1.5 1996/10/21 22:34:30 thorpej Exp $	*/
+/*	$NetBSD: midwayreg.h,v 1.6 1997/03/20 21:34:47 chuck Exp $	*/
 
 /*
  * m i d w a y r e g . h
@@ -208,9 +208,12 @@ typedef caddr_t bus_addr_t;
 				/* convert byte offset to reg value */
 #define MID_DRQ_REG2A(N)	(((N) << 3) + MID_DRQOFF) /* and back */
 
-#define MID_MK_RXQ(CNT,VC,END,TYPE) \
+/* note: format of word 1 of RXQ is different beween ENI and ADP cards */
+#define MID_MK_RXQ_ENI(CNT,VC,END,TYPE) \
 	( ((CNT) << 16)|((VC) << 6)|(END)|(TYPE) )
 
+#define MID_MK_RXQ_ADP(CNT,VC,END,JK) \
+	( ((CNT) << 12)|((VC) << 2)|((END) >> 4)|(((JK) != 0) ? 1 : 0))
 /*
  * dma xmit q.
  */
@@ -221,8 +224,12 @@ typedef caddr_t bus_addr_t;
 #define MID_DTQ_REG2A(N)	(((N) << 3) + MID_DTQOFF) /* and back */
 
 
-#define MID_MK_TXQ(CNT,CHN,END,TYPE) \
+/* note: format of word 1 of TXQ is different beween ENI and ADP cards */
+#define MID_MK_TXQ_ENI(CNT,CHN,END,TYPE) \
 	( ((CNT) << 16)|((CHN) << 6)|(END)|(TYPE) )
+
+#define MID_MK_TXQ_ADP(CNT,CHN,END,JK) \
+	( ((CNT) << 12)|((CHN) << 2)|((END) >> 4)|(((JK) != 0) ? 1 : 0) )
 
 /*
  * dma types
