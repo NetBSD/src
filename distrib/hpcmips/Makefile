@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.9 2002/03/05 21:23:29 thorpej Exp $
+#	$NetBSD: Makefile,v 1.10 2002/03/23 03:21:23 shin Exp $
 
 .include "../Makefile.inc"
 
@@ -14,9 +14,11 @@ IINST=		${INSTALL} ${RENAME} ${PRESERVE} ${COPY} -m ${NONBINMODE}
 PBSDBOOTDIR = ${KERNSRCDIR}/arch/${MACHINE}/stand/pbsdboot
 PBSDBOOT = ${PBSDBOOTDIR}/pbsdboot.exe
 PBSDBOOT1 = ${PBSDBOOTDIR}/pbsdboot1.exe
+HPCBOOTDIR = ${KERNSRCDIR}/arch/hpc/stand
+HPCBOOT = ${HPCBOOTDIR}/binary/MIPS/hpcboot.exe
 MDSETIMAGE?=	mdsetimage
 
-INSTKERNELS = TX3912 TX3922
+INSTKERNELS = TX3912
 
 .ifndef RELEASEDIR
 release:
@@ -42,6 +44,8 @@ release:
 	cd ${KERNSRCDIR}/arch/${MACHINE}/stand/pbsdboot; make
 	${IINST} ${PBSDBOOT} ${ITARGET}/.
 	${IINST} ${PBSDBOOT1} ${ITARGET}/.
+	cd ${KERNSRCDIR}/arch/hpc/stand; make
+	${IINST} ${HPCBOOT} ${ITARGET}/.
 	${.CURDIR}/../sets/makesums -t ${ITARGET} '*.gz' '*.exe'
 .endif
 
