@@ -1,4 +1,4 @@
-/*	$NetBSD: res_data.c,v 1.3 2004/05/20 19:31:52 christos Exp $	*/
+/*	$NetBSD: res_data.c,v 1.4 2004/05/20 19:43:39 christos Exp $	*/
 
 /*
  * Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
@@ -17,8 +17,13 @@
  * OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+#include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
+#ifdef notdef
 static const char rcsid[] = "Id: res_data.c,v 1.1.206.2 2004/03/16 12:34:18 marka Exp";
+#else
+__RCSID("$NetBSD: res_data.c,v 1.4 2004/05/20 19:43:39 christos Exp $");
+#endif
 #endif /* LIBC_SCCS and not lint */
 
 #include "port_before.h"

@@ -1,4 +1,4 @@
-/*	$NetBSD: herror.c,v 1.2 2004/05/20 17:23:22 christos Exp $	*/
+/*	$NetBSD: herror.c,v 1.3 2004/05/20 19:43:39 christos Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -50,9 +50,14 @@
  * OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+#include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
+#ifdef notdef
 static const char sccsid[] = "@(#)herror.c	8.1 (Berkeley) 6/4/93";
 static const char rcsid[] = "Id: herror.c,v 1.2.206.1 2004/03/09 08:33:54 marka Exp";
+#else
+__RCSID("$NetBSD: herror.c,v 1.3 2004/05/20 19:43:39 christos Exp $");
+#endif
 #endif /* LIBC_SCCS and not lint */
 
 #include "port_before.h"

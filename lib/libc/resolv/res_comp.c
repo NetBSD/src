@@ -1,4 +1,4 @@
-/*	$NetBSD: res_comp.c,v 1.2 2004/05/20 19:31:52 christos Exp $	*/
+/*	$NetBSD: res_comp.c,v 1.3 2004/05/20 19:43:39 christos Exp $	*/
 
 /*
  * Copyright (c) 1985, 1993
@@ -69,10 +69,14 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT
  * OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
-
+#include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
+#ifdef notdef
 static const char sccsid[] = "@(#)res_comp.c	8.1 (Berkeley) 6/4/93";
 static const char rcsid[] = "Id: res_comp.c,v 1.1.2.1.4.1 2004/03/09 08:33:54 marka Exp";
+#else
+__RCSID("$NetBSD: res_comp.c,v 1.3 2004/05/20 19:43:39 christos Exp $");
+#endif
 #endif /* LIBC_SCCS and not lint */
 
 #include "port_before.h"
