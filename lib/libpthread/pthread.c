@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread.c,v 1.37 2005/01/06 17:38:29 mycroft Exp $	*/
+/*	$NetBSD: pthread.c,v 1.38 2005/02/03 17:30:33 christos Exp $	*/
 
 /*-
  * Copyright (c) 2001,2002,2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread.c,v 1.37 2005/01/06 17:38:29 mycroft Exp $");
+__RCSID("$NetBSD: pthread.c,v 1.38 2005/02/03 17:30:33 christos Exp $");
 
 #include <err.h>
 #include <errno.h>
@@ -51,6 +51,9 @@ __RCSID("$NetBSD: pthread.c,v 1.37 2005/01/06 17:38:29 mycroft Exp $");
 #include <unistd.h>
 #include <sys/param.h>
 #include <sys/sysctl.h>
+#ifdef PTHREAD_MLOCK_KLUDGE
+#include <sys/mman.h>
+#endif
 
 #include <sched.h>
 #include "pthread.h"
@@ -134,6 +137,9 @@ pthread_init(void)
 	int i, mib[2], ncpu;
 	size_t len;
 	extern int __isthreaded;
+#ifdef PTHREAD_MLOCK_KLUDGE
+	int ret;
+#endif
 
 	mib[0] = CTL_HW;
 	mib[1] = HW_NCPU; 
@@ -164,6 +170,10 @@ pthread_init(void)
 	pthread_attr_init(&pthread_default_attr);
 	PTQ_INIT(&pthread__allqueue);
 	PTQ_INIT(&pthread__deadqueue);
+#ifdef PTHREAD_MLOCK_KLUDGE
+	ret = mlock(&pthread__deadqueue, sizeof(pthread__deadqueue));
+	pthread__assert(ret == 0);
+#endif
 	PTQ_INIT(&pthread__runqueue);
 	PTQ_INIT(&pthread__idlequeue);
 	for (i = 0; i < pthread__maxconcurrency; i++)
@@ -317,7 +327,9 @@ pthread_create(pthread_t *thread, const pthread_attr_t *attr,
 	pthread_attr_t nattr;
 	struct pthread_attr_private *p;
 	char *name;
+#ifdef PTHREAD_MLOCK_KLUDGE
 	int ret;
+#endif
 
 	PTHREADD_ADD(PTHREADD_CREATE);
 
@@ -360,6 +372,10 @@ pthread_create(pthread_t *thread, const pthread_attr_t *attr,
 				free(name);
 			return ret;
 		}
+#ifdef PTHREAD_MLOCK_KLUDGE
+		ret = mlock(newthread, sizeof(struct __pthread_st));
+		pthread__assert(ret == 0);
+#endif
 	}
 
 	/* 2. Set up state. */
