@@ -1,4 +1,4 @@
-/*	$NetBSD: route.h,v 1.29 2002/05/12 20:40:12 matt Exp $	*/
+/*	$NetBSD: route.h,v 1.30 2002/11/02 07:26:57 perry Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -274,7 +274,7 @@ do { \
 		rtfree(rt); \
 	else \
 		(rt)->rt_refcnt--; \
-} while (0)
+} while (/*CONSTCOND*/ 0)
 
 extern	struct	route_cb route_cb;
 extern	struct	rtstat	rtstat;

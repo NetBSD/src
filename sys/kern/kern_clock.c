@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_clock.c,v 1.80 2002/08/07 05:16:22 briggs Exp $	*/
+/*	$NetBSD: kern_clock.c,v 1.81 2002/11/02 07:25:19 perry Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_clock.c,v 1.80 2002/08/07 05:16:22 briggs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_clock.c,v 1.81 2002/11/02 07:25:19 perry Exp $");
 
 #include "opt_callout.h"
 #include "opt_ntp.h"
@@ -391,13 +391,13 @@ struct simplelock callwheel_slock;
 do {									\
 	s = splclock();							\
 	simple_lock(&callwheel_slock);					\
-} while (0)
+} while (/*CONSTCOND*/ 0)
 
 #define	CALLWHEEL_UNLOCK(s)						\
 do {									\
 	simple_unlock(&callwheel_slock);				\
 	splx(s);							\
-} while (0)
+} while (/*CONSTCOND*/ 0)
 
 static void callout_stop_locked(struct callout *);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_pipe.c,v 1.29 2002/11/01 21:46:51 kristerw Exp $	*/
+/*	$NetBSD: sys_pipe.c,v 1.30 2002/11/02 07:25:23 perry Exp $	*/
 
 /*
  * Copyright (c) 1996 John S. Dyson
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_pipe.c,v 1.29 2002/11/01 21:46:51 kristerw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_pipe.c,v 1.30 2002/11/02 07:25:23 perry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -135,13 +135,13 @@ static struct fileops pipeops = {
 	do {								\
 		PIPE_UNLOCK(wpipe);					\
 		mtx_lock(&Giant);					\
-	} while (0)
+	} while (/*CONSTCOND*/ 0)
 
 #define PIPE_DROP_GIANT(pipe)						\
 	do {								\
 		mtx_unlock(&Giant);					\
 		PIPE_LOCK(wpipe);					\
-	} while (0)
+	} while (/*CONSTCOND*/ 0)
 
 #endif /* FreeBSD */
 

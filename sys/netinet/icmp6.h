@@ -1,4 +1,4 @@
-/*	$NetBSD: icmp6.h,v 1.24 2002/06/09 16:33:37 itojun Exp $	*/
+/*	$NetBSD: icmp6.h,v 1.25 2002/11/02 07:28:10 perry Exp $	*/
 /*	$KAME: icmp6.h,v 1.39 2001/02/06 03:48:06 itojun Exp $	*/
 
 /*
@@ -464,7 +464,7 @@ do {								\
 	p = (u_char *)filterp;					\
 	for (i = 0; i < sizeof(struct icmp6_filter); i++)	\
 		p[i] = 0xff;					\
-} while (0)
+} while (/*CONSTCOND*/ 0)
 #define	ICMP6_FILTER_SETBLOCKALL(filterp) \
 	bzero(filterp, sizeof(struct icmp6_filter))
 #else /* _KERNEL */
@@ -626,7 +626,7 @@ void	icmp6_mtudisc_callback_register __P((void (*)(struct in6_addr *)));
 do {								\
 	if (ifp)						\
 		((struct in6_ifextra *)((ifp)->if_afdata[AF_INET6]))->icmp6_ifstat->tag++; \
-} while (0)
+} while (/*CONSTCOND*/ 0)
 
 #define icmp6_ifoutstat_inc(ifp, type, code) \
 do { \
@@ -677,7 +677,7 @@ do { \
 			 icmp6_ifstat_inc(ifp, ifs6_out_redirect); \
 			 break; \
 		} \
-} while (0)
+} while (/*CONSTCOND*/ 0)
 
 extern int	icmp6_rediraccept;	/* accept/process redirects */
 extern int	icmp6_redirtimeout;	/* cache time for redirect routes */

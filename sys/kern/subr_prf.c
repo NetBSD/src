@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_prf.c,v 1.85 2002/08/26 11:34:27 scw Exp $	*/
+/*	$NetBSD: subr_prf.c,v 1.86 2002/11/02 07:25:22 perry Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1988, 1991, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_prf.c,v 1.85 2002/08/26 11:34:27 scw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_prf.c,v 1.86 2002/11/02 07:25:22 perry Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ipkdb.h"
@@ -89,13 +89,13 @@ struct simplelock kprintf_slock = SIMPLELOCK_INITIALIZER;
 do {									\
 	(s) = splhigh();						\
 	__cpu_simple_lock(&kprintf_slock.lock_data);			\
-} while (0)
+} while (/*CONSTCOND*/ 0)
 
 #define	KPRINTF_MUTEX_EXIT(s)						\
 do {									\
 	__cpu_simple_unlock(&kprintf_slock.lock_data);			\
 	splx((s));							\
-} while (0)
+} while (/*CONSTCOND*/ 0)
 #else /* ! MULTIPROCESSOR */
 #define	KPRINTF_MUTEX_ENTER(s)	(s) = splhigh()
 #define	KPRINTF_MUTEX_EXIT(s)	splx((s))
@@ -807,7 +807,7 @@ bitmask_snprintf(val, p, buf, buflen)
 	*(b)++ = (c);		\
 	if (--(l) == 0)		\
 		goto out;	\
-} while (0)
+} while (/*CONSTCOND*/ 0)
 #define PUTSTR(b, p, l) do {		\
 	int c;				\
 	while ((c = *(p)++) != 0) {	\
@@ -815,7 +815,7 @@ bitmask_snprintf(val, p, buf, buflen)
 		if (--(l) == 0)		\
 			goto out;	\
 	}				\
-} while (0)
+} while (/*CONSTCOND*/ 0)
 
 	/*
 	 * Chris Torek's new bitmask format is identified by a leading \177

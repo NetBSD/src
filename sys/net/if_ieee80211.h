@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ieee80211.h,v 1.23 2002/10/15 08:51:50 onoe Exp $	*/
+/*	$NetBSD: if_ieee80211.h,v 1.24 2002/11/02 07:26:55 perry Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -482,7 +482,7 @@ struct ieee80211com {
 	if ((ic)->ic_send_mgmt[(type)>>IEEE80211_FC0_SUBTYPE_SHIFT] != NULL)  \
 		(*(ic)->ic_send_mgmt[(type)>>IEEE80211_FC0_SUBTYPE_SHIFT])    \
 		    (ic,ni,type,arg);					      \
-} while (0)
+} while (/*CONSTCOND*/ 0)
 
 #define	IEEE80211_ADDR_EQ(a1,a2)	(memcmp(a1,a2,IEEE80211_ADDR_LEN) == 0)
 #define	IEEE80211_ADDR_COPY(dst,src)	memcpy(dst,src,IEEE80211_ADDR_LEN)
