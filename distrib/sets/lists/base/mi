@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.260 2001/05/22 14:52:24 fredette Exp $
+# $NetBSD: mi,v 1.261 2001/05/27 21:18:01 wiz Exp $
 .			base-sys-root
 ./altroot		base-sys-root
 ./bin			base-sys-root
@@ -1137,6 +1137,7 @@
 ./usr/share/man/cat8/arm32		base-man-share
 ./usr/share/man/cat8/atari		base-man-share
 ./usr/share/man/cat8/bebox		base-man-share
+./usr/share/man/cat8/dreamcast		base-man-share
 ./usr/share/man/cat8/hp300		base-man-share
 ./usr/share/man/cat8/hpcmips		base-man-share
 ./usr/share/man/cat8/i386		base-man-share
@@ -1202,6 +1203,7 @@
 ./usr/share/man/man8/arm32		base-man-share
 ./usr/share/man/man8/atari		base-man-share
 ./usr/share/man/man8/bebox		base-man-share
+./usr/share/man/man8/dreamcast		base-man-share
 ./usr/share/man/man8/hp300		base-man-share
 ./usr/share/man/man8/hpcmips		base-man-share
 ./usr/share/man/man8/i386		base-man-share
