@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: scan.l,v 1.6 1995/10/02 17:26:57 jpo Exp $	*/
+/*	$NetBSD: scan.l,v 1.7 1995/10/02 17:29:59 jpo Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -33,7 +33,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$NetBSD: scan.l,v 1.6 1995/10/02 17:26:57 jpo Exp $";
+static char rcsid[] = "$NetBSD: scan.l,v 1.7 1995/10/02 17:29:59 jpo Exp $";
 #endif
 
 #include <stdlib.h>
@@ -61,9 +61,6 @@ pos_t	curr_pos = { 1, "" };
  * parsed).
  */
 pos_t	csrc_pos = { 1, "" };
-
-/* Line number in output of cpp */
-int	isrcline = 1;
 
 static	void	incline __P((void));
 static	void	badchar __P((int));
@@ -165,7 +162,6 @@ static void
 incline()
 {
 	curr_pos.p_line++;
-	isrcline++;
 	if (curr_pos.p_file == csrc_pos.p_file)
 		csrc_pos.p_line++;
 }
@@ -996,6 +992,7 @@ directive()
  *	FALLTHRU FALLTHROUGH
  *	LINTLIBRARY
  *	LINTED NOSTRICT
+ *	LONGLONG
  *	NOTREACHED
  *	PRINTFLIKEn
  *	PROTOLIB
@@ -1021,6 +1018,7 @@ comment()
 		{ "FALLTHROUGH",	0,	fallthru	},
 		{ "LINTLIBRARY",	0,	lintlib		},
 		{ "LINTED",		0,	linted		},
+		{ "LONGLONG",		0,	longlong	},
 		{ "NOSTRICT",		0,	linted		},
 		{ "NOTREACHED",		0,	notreach	},
 		{ "PRINTFLIKE",		1,	printflike	},
@@ -1099,6 +1097,21 @@ comment()
 		if (lc == '*' && c == '/')
 			eoc = 1;
 	}
+}
+
+/*
+ * Clear flags for lint comments LINTED, LONGLONG and CONSTCOND.
+ * clrwflgs() is called after function definitions and global and
+ * local declarations and definitions. It is also called between
+ * the controlling expression and the body of control statements
+ * (if, switch, for, while).
+ */
+void
+clrwflgs()
+{
+	nowarn = 0;
+	quadflg = 0;
+	ccflg = 0;
 }
 
 /*

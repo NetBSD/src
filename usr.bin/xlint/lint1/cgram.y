@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: cgram.y,v 1.6 1995/10/02 17:26:52 jpo Exp $	*/
+/*	$NetBSD: cgram.y,v 1.7 1995/10/02 17:29:45 jpo Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -33,7 +33,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$NetBSD: cgram.y,v 1.6 1995/10/02 17:26:52 jpo Exp $";
+static char rcsid[] = "$NetBSD: cgram.y,v 1.7 1995/10/02 17:29:45 jpo Exp $";
 #endif
 
 #include <stdlib.h>
@@ -230,9 +230,11 @@ translation_unit:
 ext_decl:
 	  func_def {
 		glclrlc(0);
+		clrwflgs();
 	  }
 	| data_def {
 		glclrlc(0);
+		clrwflgs();
 	  }
 	;
 
@@ -1210,9 +1212,15 @@ opt_stmnt_list:
 	;
 
 stmnt_list:
-	  stmnt
-	| stmnt_list stmnt
-	| stmnt_list error T_SEMI
+	  stmnt {
+		clrwflgs();
+	  }
+	| stmnt_list stmnt {
+		clrwflgs();
+	  }
+	| stmnt_list error T_SEMI {
+		clrwflgs();
+	  }
 	;
 
 expr_stmnt:
@@ -1254,12 +1262,14 @@ if_without_else:
 if_expr:
 	  T_IF T_LPARN expr T_RPARN {
 		if1($3);
+		clrwflgs();
 	  }
 	;
 
 switch_expr:
 	  T_SWITCH T_LPARN expr T_RPARN {
 		switch1($3);
+		clrwflgs();
 	  }
 	;
 
@@ -1288,6 +1298,7 @@ iteration_stmnt:
 while_expr:
 	  T_WHILE T_LPARN expr T_RPARN {
 		while1($3);
+		clrwflgs();
 	  }
 	;
 
@@ -1306,6 +1317,7 @@ do_while_expr:
 for_exprs:
 	  T_FOR T_LPARN opt_expr T_SEMI opt_expr T_SEMI opt_expr T_RPARN {
 		for1($3, $5, $7);
+		clrwflgs();
 	  }
 	;
 
@@ -1357,8 +1369,12 @@ read_until_rparn:
 	;
 
 declaration_list:
-	  declaration
-	| declaration_list declaration
+	  declaration {
+		clrwflgs();
+	  }
+	| declaration_list declaration {
+		clrwflgs();
+	  }
 	;
 
 constant:

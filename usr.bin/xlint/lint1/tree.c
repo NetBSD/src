@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.7 1995/10/02 17:22:51 jpo Exp $	*/
+/*	$NetBSD: tree.c,v 1.8 1995/10/02 17:30:04 jpo Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -32,7 +32,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$NetBSD: tree.c,v 1.7 1995/10/02 17:22:51 jpo Exp $";
+static char rcsid[] = "$NetBSD: tree.c,v 1.8 1995/10/02 17:30:04 jpo Exp $";
 #endif
 
 #include <stdlib.h>
@@ -685,7 +685,7 @@ build(op, ln, rn)
 	if (mp->m_tctx) {
 		if (ln->tn_op == CON ||
 		    ((mp->m_binary && op != QUEST) && rn->tn_op == CON)) {
-			if (hflag && isrcline > ccline + 1)
+			if (hflag && !ccflg)
 				/* constant in conditional context */
 				warning(161);
 		}
@@ -3358,7 +3358,7 @@ expr(tn, vctx, tctx)
 			/* assignment in conditional context */
 			warning(159);
 	} else if (tn->tn_op == CON) {
-		if (hflag && tctx && isrcline > ccline + 1)
+		if (hflag && tctx && !ccflg)
 			/* constant in conditional context */
 			warning(161);
 	}
