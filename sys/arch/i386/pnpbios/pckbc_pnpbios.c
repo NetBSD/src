@@ -1,4 +1,4 @@
-/*	$NetBSD: pckbc_pnpbios.c,v 1.6 2002/10/01 12:57:18 fvdl Exp $	*/
+/*	$NetBSD: pckbc_pnpbios.c,v 1.7 2002/10/02 05:47:17 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pckbc_pnpbios.c,v 1.6 2002/10/01 12:57:18 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pckbc_pnpbios.c,v 1.7 2002/10/02 05:47:17 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -88,7 +88,7 @@ static struct pckbc_pnpbios_softc *first;
 extern struct cfdriver pckbc_cd;
 
 CFATTACH_DECL(pckbc_pnpbios, sizeof(struct pckbc_pnpbios_softc),
-    pckbc_pnpbios_match, pckbc_pnpbios_attach, NULL, NULL)
+    pckbc_pnpbios_match, pckbc_pnpbios_attach, NULL, NULL);
 
 void	pckbc_pnpbios_intr_establish(struct pckbc_softc *, pckbc_slot_t);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: lm_pnpbios.c,v 1.6 2002/10/01 12:57:17 fvdl Exp $ */
+/*	$NetBSD: lm_pnpbios.c,v 1.7 2002/10/02 05:47:16 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lm_pnpbios.c,v 1.6 2002/10/01 12:57:17 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lm_pnpbios.c,v 1.7 2002/10/02 05:47:16 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -64,8 +64,8 @@ void lm_pnpbios_attach __P((struct device *, struct device *, void *));
 int lm_pnpbios_hints_index __P((const char *));
 
 
-CFATTACH_DECL(lm_pnpbios, sizeof(struct lm_softc), lm_pnpbios_match,
-    lm_pnpbios_attach, NULL, NULL)
+CFATTACH_DECL(lm_pnpbios, sizeof(struct lm_softc),
+    lm_pnpbios_match, lm_pnpbios_attach, NULL, NULL);
 
 /*
  * XXX - no known pnpbios ids for lm series chips.
