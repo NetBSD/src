@@ -27,7 +27,7 @@
  *	1tr6.c - print 1TR6 protocol traces
  *	-----------------------------------
  *
- *	$Id: 1tr6.c,v 1.1.1.1 2001/01/06 13:00:29 martin Exp $ 
+ *	$Id: 1tr6.c,v 1.2 2003/10/06 04:19:41 itojun Exp $ 
  *
  * $FreeBSD$
  *
@@ -55,12 +55,12 @@ decode_1tr6(char *pbuf, int n, int off, unsigned char *buf, int raw)
 	int j;
 	int i;
 
-	if(n <= 0)
+	if (n <= 0)
 		return;
 
 	*pbuf = '\0';
 	
-	if(raw)
+	if (raw)
 	{	
 		for (i = 0; i < n; i += 16)
 		{
@@ -123,7 +123,7 @@ decode_1tr6(char *pbuf, int n, int off, unsigned char *buf, int raw)
 
 	sprintf((pbuf+strlen(pbuf)), "message=");
 
-	if(pd == 0x40)	/* protocol discriminator N0 */
+	if (pd == 0x40)	/* protocol discriminator N0 */
 	{
 		switch(buf[i])
 		{
@@ -162,7 +162,7 @@ decode_1tr6(char *pbuf, int n, int off, unsigned char *buf, int raw)
 				break;
 		}
 	}
-	else if(pd == 0x41)
+	else if (pd == 0x41)
 	{
 		switch(buf[i])
 		{
@@ -278,7 +278,7 @@ decode_1tr6(char *pbuf, int n, int off, unsigned char *buf, int raw)
 	{
 		sprintf((pbuf+strlen(pbuf)), "\n     ");
 		
-		if(buf[i] & 0x80)
+		if (buf[i] & 0x80)
 		{
 			/* single octett info element */
 
@@ -291,7 +291,7 @@ decode_1tr6(char *pbuf, int n, int off, unsigned char *buf, int raw)
 				case 0x10:	/* shift */
 					oldcodeset = codeset;
 					codeset = buf[i] & 0x07;
-					if(buf[i] & 0x08)
+					if (buf[i] & 0x08)
 						codelock = 0;
 					else
 						codelock = 1;
@@ -318,7 +318,7 @@ decode_1tr6(char *pbuf, int n, int off, unsigned char *buf, int raw)
 		{
 			/* variable length info element */
 
-			if(codeset == 0)
+			if (codeset == 0)
 			{
 				switch(buf[i])
 				{
@@ -355,7 +355,7 @@ decode_1tr6(char *pbuf, int n, int off, unsigned char *buf, int raw)
 								sprintf((pbuf+strlen(pbuf)), "any channel");
 								break;
 						}
-						if(buf[i] & 0x08)
+						if (buf[i] & 0x08)
 							sprintf((pbuf+strlen(pbuf)), " (exclusive)]");
 						else
 							sprintf((pbuf+strlen(pbuf)), " (preferred)]");
@@ -471,7 +471,7 @@ decode_1tr6(char *pbuf, int n, int off, unsigned char *buf, int raw)
 						break;
 				}
 			}
-			else if(codeset == 6)
+			else if (codeset == 6)
 			{
 				switch(buf[i])
 				{
@@ -593,7 +593,7 @@ decode_1tr6(char *pbuf, int n, int off, unsigned char *buf, int raw)
 									sprintf((pbuf+strlen(pbuf)), "undefined value");
 									break;
 							}
-							if(buf[j+i] & 0x80)
+							if (buf[j+i] & 0x80)
 								sprintf((pbuf+strlen(pbuf)),"(flag=req)]");
 							else
 								sprintf((pbuf+strlen(pbuf)),"(flag=ind)]");
@@ -628,7 +628,7 @@ decode_1tr6(char *pbuf, int n, int off, unsigned char *buf, int raw)
 
 next:
 
-			if(!codelock && (codeset != oldcodeset))
+			if (!codelock && (codeset != oldcodeset))
 				codeset = oldcodeset;
 		}
 	}

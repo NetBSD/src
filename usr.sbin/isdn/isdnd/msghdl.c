@@ -27,7 +27,7 @@
  *	i4b daemon - message from kernel handling routines
  *	--------------------------------------------------
  *
- *	$Id: msghdl.c,v 1.6 2002/12/06 15:00:15 thorpej Exp $ 
+ *	$Id: msghdl.c,v 1.7 2003/10/06 04:19:41 itojun Exp $ 
  *
  * $FreeBSD$
  *
@@ -1000,9 +1000,9 @@ msg_idle_timeout_ind(msg_idle_timeout_ind_t *mp)
  *    handle incoming MSG_PACKET_IND message
  *---------------------------------------------------------------------------*/
 static char *
-strapp(char *buf, const char *txt)
+strapp(char *buf, char *lim, const char *txt)
 {
-	while(*txt)
+	while (*txt && buf < lim - 1)
 		*buf++ = *txt++;
 	*buf = '\0';
 	return buf;
@@ -1012,16 +1012,17 @@ strapp(char *buf, const char *txt)
  *    handle incoming MSG_PACKET_IND message
  *---------------------------------------------------------------------------*/
 static char *
-ipapp(char *buf, unsigned long a )
+ipapp(char *buf, char *lim, unsigned long a)
 {
-	unsigned long ma = ntohl( a );
+	unsigned long ma = ntohl(a);
+	ssize_t n;
 
-	buf += sprintf(buf, "%lu.%lu.%lu.%lu",
-				(ma>>24)&0xFF,
-				(ma>>16)&0xFF,
-				(ma>>8)&0xFF,
-				(ma)&0xFF);
-	return buf;
+	n = snprintf(buf, lim - buf, "%lu.%lu.%lu.%lu", (ma>>24)&0xFF,
+	    (ma>>16)&0xFF, (ma>>8)&0xFF, (ma)&0xFF);
+	if (n > 0)
+		return buf + n;
+	else
+		return NULL;
 }
 
 /*---------------------------------------------------------------------------*
@@ -1049,53 +1050,64 @@ msg_packet_ind(msg_packet_ind_t *mp)
 	ip = (struct ip*)mp->pktdata;
 	proto_hdr = mp->pktdata + ((ip->ip_hl)<<2);
 
-	if( ip->ip_p == IPPROTO_TCP )
+	if (ip->ip_p == IPPROTO_TCP)
 	{
 		struct tcphdr* tcp = (struct tcphdr*)proto_hdr;
 
-		cptr = strapp( cptr, "TCP " );
-		cptr = ipapp( cptr, ip->ip_src.s_addr );
-		cptr += sprintf( cptr, ":%u -> ", ntohs( tcp->th_sport ) );
-		cptr = ipapp( cptr, ip->ip_dst.s_addr );
-		cptr += sprintf( cptr, ":%u", ntohs( tcp->th_dport ) );
+		cptr = strapp(cptr, tmp + sizeof(tmp), "TCP ");
+		cptr = ipapp(cptr, tmp + sizeof(tmp), ip->ip_src.s_addr);
+		cptr += snprintf(cptr, sizeof(tmp) - (cptr - tmp),
+		    ":%u -> ", ntohs(tcp->th_sport));
+		cptr = ipapp(cptr, tmp + sizeof(tmp), ip->ip_dst.s_addr);
+		cptr += snprintf(cptr, sizeof(tmp) - (cptr - tmp),
+		    ":%u", ntohs(tcp->th_dport));
 
-		if(tcp->th_flags & TH_FIN)  cptr = strapp( cptr, " FIN" );
-		if(tcp->th_flags & TH_SYN)  cptr = strapp( cptr, " SYN" );
-		if(tcp->th_flags & TH_RST)  cptr = strapp( cptr, " RST" );
-		if(tcp->th_flags & TH_PUSH) cptr = strapp( cptr, " PUSH" );
-		if(tcp->th_flags & TH_ACK)  cptr = strapp( cptr, " ACK" );
-		if(tcp->th_flags & TH_URG)  cptr = strapp( cptr, " URG" );
+		if (tcp->th_flags & TH_FIN)
+			cptr = strapp(cptr, tmp + sizeof(tmp), " FIN");
+		if (tcp->th_flags & TH_SYN)
+			cptr = strapp(cptr, tmp + sizeof(tmp), " SYN");
+		if (tcp->th_flags & TH_RST)
+			cptr = strapp(cptr, tmp + sizeof(tmp), " RST");
+		if (tcp->th_flags & TH_PUSH)
+			cptr = strapp(cptr, tmp + sizeof(tmp), " PUSH");
+		if (tcp->th_flags & TH_ACK)
+			cptr = strapp(cptr, tmp + sizeof(tmp), " ACK");
+		if (tcp->th_flags & TH_URG)
+			cptr = strapp(cptr, tmp + sizeof(tmp), " URG");
 	}
-	else if( ip->ip_p == IPPROTO_UDP )
+	else if (ip->ip_p == IPPROTO_UDP)
 	{
 		struct udphdr* udp = (struct udphdr*)proto_hdr;
 
-		cptr = strapp( cptr, "UDP " );
-		cptr = ipapp( cptr, ip->ip_src.s_addr );
-		cptr += sprintf( cptr, ":%u -> ", ntohs( udp->uh_sport ) );
-		cptr = ipapp( cptr, ip->ip_dst.s_addr );
-		cptr += sprintf( cptr, ":%u", ntohs( udp->uh_dport ) );
+		cptr = strapp(cptr, tmp + sizeof(tmp), "UDP ");
+		cptr = ipapp(cptr, tmp + sizeof(tmp), ip->ip_src.s_addr);
+		cptr += snprintf(cptr, sizeof(tmp) - (cptr - tmp),
+		    ":%u -> ", ntohs(udp->uh_sport));
+		cptr = ipapp(cptr, tmp + sizeof(tmp), ip->ip_dst.s_addr);
+		cptr += snprintf(cptr, sizeof(tmp) - (cptr - tmp),
+		    ":%u", ntohs(udp->uh_dport));
 	}
-	else if( ip->ip_p == IPPROTO_ICMP )
+	else if (ip->ip_p == IPPROTO_ICMP)
 	{
 		struct icmp* icmp = (struct icmp*)proto_hdr;
 
-		cptr += sprintf( cptr, "ICMP:%u.%u", icmp->icmp_type, icmp->icmp_code);
-		cptr = ipapp( cptr, ip->ip_src.s_addr );
-		cptr = strapp( cptr, " -> " );
-		cptr = ipapp( cptr, ip->ip_dst.s_addr );
+		cptr += snprintf(cptr, sizeof(tmp) - (cptr - tmp),
+		    "ICMP:%u.%u", icmp->icmp_type, icmp->icmp_code);
+		cptr = ipapp(cptr, tmp + sizeof(tmp), ip->ip_src.s_addr);
+		cptr = strapp(cptr, tmp + sizeof(tmp), " -> ");
+		cptr = ipapp(cptr, tmp + sizeof(tmp), ip->ip_dst.s_addr);
 	}
 	else
 	{
-		cptr += sprintf( cptr, "PROTO=%u ", ip->ip_p);
-		cptr = ipapp( cptr, ip->ip_src.s_addr);
-		cptr = strapp( cptr, " -> " );
-		cptr = ipapp( cptr, ip->ip_dst.s_addr);
+		cptr += snprintf(cptr, sizeof(tmp) - (cptr - tmp),
+		    "PROTO=%u ", ip->ip_p);
+		cptr = ipapp(cptr, tmp + sizeof(tmp), ip->ip_src.s_addr);
+		cptr = strapp(cptr, tmp + sizeof(tmp), " -> ");
+		cptr = ipapp(cptr, tmp + sizeof(tmp), ip->ip_dst.s_addr);
 	}
 
-	logit(LL_PKT, "%s %s %u %s",
-		name, mp->direction ? "send" : "recv",
-		ntohs( ip->ip_len ), tmp );
+	logit(LL_PKT, "%s %s %u %s", name, mp->direction ? "send" : "recv",
+	    ntohs(ip->ip_len), tmp);
 }
 
 /*
