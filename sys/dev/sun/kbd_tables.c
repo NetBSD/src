@@ -1,4 +1,4 @@
-/*	$NetBSD: kbd_tables.c,v 1.2 1996/02/29 19:32:18 gwr Exp $	*/
+/*	$NetBSD: kbd_tables.c,v 1.3 1996/12/17 20:46:13 gwr Exp $	*/
 
 /*
  * Copyright (c) 1996 Gordon W. Ross
@@ -34,7 +34,9 @@
  * Keyboard translation tables.  (See kbd_tables.h)
  */
 
-#define	_KERNEL 1
+#include <sys/types.h>
+
+#define	_KERNEL 1	/* XXX */
 #include "kbd_tables.h"
 
 
@@ -53,7 +55,7 @@
 /*
  * Key release codes are decoded in this map.
  */
-struct keymap keymap_release = {
+u_short keymap_release[KEYMAP_SIZE] = {
     /*   0:             */	KEYSYM_HOLE,
     /*   1: L1/Stop     */	KEYSYM_NOP,
     /*   2:             */	KEYSYM_HOLE,
@@ -189,7 +191,7 @@ struct keymap keymap_release = {
  * This map is used when a control key is down.
  */
 #define	CTL(c)	((c)&0x1F)
-struct keymap keymap_control = {
+u_short keymap_control[KEYMAP_SIZE] = {
     /*   0:             */	KEYSYM_HOLE,
     /*   1: L1/Stop     */	KEYSYM_NOP,
     /*   2:             */	KEYSYM_HOLE,
@@ -327,7 +329,7 @@ struct keymap keymap_control = {
  * (lower-case, upper-case)
  */
 
-struct keymap keymap_s3_lc = {
+u_short keymap_s3_lc[KEYMAP_SIZE] = {
     /*   0:             */	KEYSYM_HOLE,
     /*   1: L1/Stop     */	KEYSYM_FUNC_L(1),
     /*   2:             */	KEYSYM_HOLE,
@@ -459,7 +461,7 @@ struct keymap keymap_s3_lc = {
 };
 
 
-struct keymap keymap_s3_uc = {
+u_short keymap_s3_uc[KEYMAP_SIZE] = {
     /*   0:             */	KEYSYM_HOLE,
     /*   1: L1/Stop     */	KEYSYM_FUNC_L(1),
     /*   2:             */	KEYSYM_HOLE,
@@ -596,7 +598,7 @@ struct keymap keymap_s3_uc = {
  * (lower-case, upper-case)
  */
 
-struct keymap keymap_s4_lc = {
+u_short keymap_s4_lc[KEYMAP_SIZE] = {
     /*   0:             */	KEYSYM_HOLE,
     /*   1: L1/Stop     */	KEYSYM_FUNC_L(1),
     /*   2:             */	KEYSYM_HOLE,
@@ -728,7 +730,7 @@ struct keymap keymap_s4_lc = {
 };
 
 
-struct keymap keymap_s4_uc = {
+u_short keymap_s4_uc[KEYMAP_SIZE] = {
     /*   0:             */	KEYSYM_HOLE,
     /*   1: L1/Stop     */	KEYSYM_FUNC_L(1),
     /*   2:             */	KEYSYM_HOLE,
@@ -907,17 +909,17 @@ unsigned short kbd_numlock_map[64] = {
 #define	kbd_type2 kbd_type3
 
 static struct keyboard kbd_type3 = {
-	&keymap_release,
-	&keymap_control,
-	&keymap_s3_lc,
-	&keymap_s3_uc,
+	keymap_release,
+	keymap_control,
+	keymap_s3_lc,
+	keymap_s3_uc,
 };
 
 static struct keyboard kbd_type4 = {
-	&keymap_release,
-	&keymap_control,
-	&keymap_s4_lc,
-	&keymap_s4_uc,
+	keymap_release,
+	keymap_control,
+	keymap_s4_lc,
+	keymap_s4_uc,
 };
 
 /* Treat type 5 as type 4 (close enough) */
