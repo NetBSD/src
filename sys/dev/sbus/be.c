@@ -1,4 +1,4 @@
-/*	$NetBSD: be.c,v 1.15 2000/02/02 17:46:42 thorpej Exp $	*/
+/*	$NetBSD: be.c,v 1.16 2000/02/14 17:06:45 pk Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -1063,6 +1063,7 @@ beinit(sc)
 	bus_space_handle_t br = sc->sc_br;
 	bus_space_handle_t cr = sc->sc_cr;
 	struct qec_softc *qec = sc->sc_qec;
+	u_int32_t v;
 	u_int32_t qecaddr;
 	u_int8_t *ea;
 	int s;
@@ -1078,10 +1079,15 @@ beinit(sc)
 	bus_space_write_4(t, br, BE_BRI_MACADDR1, (ea[2] << 8) | ea[3]);
 	bus_space_write_4(t, br, BE_BRI_MACADDR2, (ea[4] << 8) | ea[5]);
 
+	/* Clear hash table */
 	bus_space_write_4(t, br, BE_BRI_HASHTAB0, 0);
 	bus_space_write_4(t, br, BE_BRI_HASHTAB1, 0);
 	bus_space_write_4(t, br, BE_BRI_HASHTAB2, 0);
 	bus_space_write_4(t, br, BE_BRI_HASHTAB3, 0);
+
+	/* Re-initialize RX configuration */
+	v = BE_BR_RXCFG_FIFO;
+	bus_space_write_4(t, br, BE_BRI_RXCFG, v);
 
 	be_mcreset(sc);
 
@@ -1131,9 +1137,9 @@ beinit(sc)
 			  BE_BR_TXCFG_FIFO | BE_BR_TXCFG_ENABLE);
 
 	/* Enable receiver */
-	bus_space_write_4(t, br, BE_BRI_RXCFG,
-			  BE_BR_RXCFG_HENABLE | BE_BR_RXCFG_FIFO |
-			  BE_BR_RXCFG_ENABLE);
+	v = bus_space_read_4(t, br, BE_BRI_RXCFG);
+	v |= BE_BR_RXCFG_FIFO | BE_BR_RXCFG_ENABLE;
+	bus_space_write_4(t, br, BE_BRI_RXCFG, v);
 
 	ifp->if_flags |= IFF_RUNNING;
 	ifp->if_flags &= ~IFF_OACTIVE;
@@ -1166,16 +1172,9 @@ be_mcreset(sc)
 		return;
 	}
 
-	v = bus_space_read_4(t, br, BE_BRI_RXCFG);
-	v &= ~BE_BR_RXCFG_PMISC;
-	bus_space_write_4(t, br, BE_BRI_RXCFG, v);
-
 	if (ifp->if_flags & IFF_ALLMULTI) {
-		bus_space_write_4(t, br, BE_BRI_HASHTAB0, 0xffff);
-		bus_space_write_4(t, br, BE_BRI_HASHTAB1, 0xffff);
-		bus_space_write_4(t, br, BE_BRI_HASHTAB2, 0xffff);
-		bus_space_write_4(t, br, BE_BRI_HASHTAB3, 0xffff);
-		return;
+		hash[3] = hash[2] = hash[1] = hash[0] = 0xffff;
+		goto chipit;
 	}
 
 	hash[3] = hash[2] = hash[1] = hash[0] = 0;
@@ -1193,12 +1192,9 @@ be_mcreset(sc)
 			 * which the range is big enough to require
 			 * all bits set.)
 			 */
-			bus_space_write_4(t, br, BE_BRI_HASHTAB0, 0xffff);
-			bus_space_write_4(t, br, BE_BRI_HASHTAB1, 0xffff);
-			bus_space_write_4(t, br, BE_BRI_HASHTAB2, 0xffff);
-			bus_space_write_4(t, br, BE_BRI_HASHTAB3, 0xffff);
+			hash[3] = hash[2] = hash[1] = hash[0] = 0xffff;
 			ifp->if_flags |= IFF_ALLMULTI;
-			return;
+			goto chipit;
 		}
 
 		crc = 0xffffffff;
@@ -1222,11 +1218,19 @@ be_mcreset(sc)
 		ETHER_NEXT_MULTI(step, enm);
 	}
 
+	ifp->if_flags &= ~IFF_ALLMULTI;
+
+chipit:
+	/* Enable the hash filter */
 	bus_space_write_4(t, br, BE_BRI_HASHTAB0, hash[0]);
 	bus_space_write_4(t, br, BE_BRI_HASHTAB1, hash[1]);
 	bus_space_write_4(t, br, BE_BRI_HASHTAB2, hash[2]);
 	bus_space_write_4(t, br, BE_BRI_HASHTAB3, hash[3]);
-	ifp->if_flags &= ~IFF_ALLMULTI;
+
+	v = bus_space_read_4(t, br, BE_BRI_RXCFG);
+	v &= ~BE_BR_RXCFG_PMISC;
+	v |= BE_BR_RXCFG_HENABLE;
+	bus_space_write_4(t, br, BE_BRI_RXCFG, v);
 }
 
 /*
