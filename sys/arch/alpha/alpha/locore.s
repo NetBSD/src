@@ -1,4 +1,4 @@
-/* $NetBSD: locore.s,v 1.54 1998/11/11 06:41:23 thorpej Exp $ */
+/* $NetBSD: locore.s,v 1.55 1998/11/19 02:27:29 ross Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -39,7 +39,7 @@
 
 #include <machine/asm.h>
 
-__KERNEL_RCSID(0, "$NetBSD: locore.s,v 1.54 1998/11/11 06:41:23 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: locore.s,v 1.55 1998/11/19 02:27:29 ross Exp $");
 
 #ifndef EVCNT_COUNTERS
 #include <machine/intrcnt.h>
@@ -1623,16 +1623,22 @@ XLEAF(suswintr, 2)				/* XXX what is a 'word'? */
 
 	.data
 EXPORT(intrnames)
-#ifndef EVCNT_COUNTERS
-	INTRNAMES_DEFINITION
-#endif
+	.asciz	"clock"
+intr_n = 0
+.rept INTRCNT_COUNT
+	.ascii "intr "
+	.byte intr_n / 10 + '0, intr_n % 10 + '0
+	.asciz "       "		# space for platform-specific rewrite
+	intr_n = intr_n + 1
+.endr
 EXPORT(eintrnames)
 	.align 3
 EXPORT(intrcnt)
-#ifndef EVCNT_COUNTERS
-	INTRCNT_DEFINITION
-#endif
+	.fill INTRCNT_COUNT + 1, 8, 0
 EXPORT(eintrcnt)
+#ifdef EVCNT_COUNTERS
+	.err
+#endif
 	.text
 
 /**************************************************************************/
