@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.116 2000/12/11 05:29:03 mycroft Exp $	*/
+/*	$NetBSD: proc.h,v 1.117 2000/12/19 22:08:36 scw Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1989, 1991, 1993
@@ -85,7 +85,7 @@ struct exec_package;
 struct ps_strings;
 
 struct	emul {
-	char	e_name[8];		/* Symbolic name */
+	const char *e_name;		/* Symbolic name */
 	const char *e_path;		/* Extra emulation path (NULL if none)*/
 #ifndef __HAVE_MINIMAL_EMUL
 	int	e_flags;		/* Miscellaneous flags */
