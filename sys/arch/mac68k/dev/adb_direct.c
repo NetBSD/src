@@ -1,4 +1,4 @@
-/*	$NetBSD: adb_direct.c,v 1.13 1998/03/26 06:25:49 scottr Exp $	*/
+/*	$NetBSD: adb_direct.c,v 1.14 1998/03/29 03:50:30 scottr Exp $	*/
 
 /* From: adb_direct.c 2.02 4/18/97 jpw */
 
@@ -1552,7 +1552,13 @@ adb_pass_up(struct adbCommand *in)
 			break;
 
 		case ADB_HW_PB:
-			return;		/* how does PM handle "unsolicited" messages? */
+			cmd = in->data[1];
+			if (in->data[0] < 2)
+				len = 0;
+			else
+				len = in->data[0]-1;
+			start = 1;
+			break;
 
 		case ADB_HW_UNKNOWN:
 			return;
