@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sa.c,v 1.52 2004/07/06 12:23:40 yamt Exp $	*/
+/*	$NetBSD: kern_sa.c,v 1.53 2004/07/18 21:29:26 chs Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sa.c,v 1.52 2004/07/06 12:23:40 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sa.c,v 1.53 2004/07/18 21:29:26 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -797,16 +797,16 @@ sa_upcall0(struct lwp *l, int type, struct lwp *event, struct lwp *interrupted,
 static void
 sa_upcall_getstate(union sau_state *ss, struct lwp *l)
 {
+	caddr_t sp;
+	size_t ucsize;
 
 	if (l) {
 		getucontext(l, &ss->ss_captured.ss_ctx);
+		sp = (void *)_UC_MACHINE_SP(&ss->ss_captured.ss_ctx);
+		sp = STACK_ALIGN(sp, ~_UC_UCONTEXT_ALIGN);
+		ucsize = roundup(sizeof(ucontext_t), (~_UC_UCONTEXT_ALIGN) + 1);
 		ss->ss_captured.ss_sa.sa_context = (ucontext_t *)
-		    (intptr_t)((_UC_MACHINE_SP(&ss->ss_captured.ss_ctx) -
-			sizeof(ucontext_t))
-#ifdef _UC_UCONTEXT_ALIGN
-			& _UC_UCONTEXT_ALIGN
-#endif
-			    );
+			STACK_ALLOC(sp, ucsize);
 		ss->ss_captured.ss_sa.sa_id = l->l_lid;
 		ss->ss_captured.ss_sa.sa_cpu = l->l_savp->savp_id;
 	} else
@@ -1363,6 +1363,7 @@ sa_makeupcalls(struct lwp *l)
 	union sau_state e_ss;
 	void *stack, *ap;
 	ucontext_t u, *up;
+	size_t sz;
 	int i, nint, nevents, s, type;
 
 	p = l->l_proc;
@@ -1371,7 +1372,7 @@ sa_makeupcalls(struct lwp *l)
 
 	sau = SIMPLEQ_FIRST(&vp->savp_upcalls);
 	SIMPLEQ_REMOVE_HEAD(&vp->savp_upcalls, sau_next);
-	
+
 	if (sau->sau_flags & SAU_FLAG_DEFERRED_EVENT)
 		sa_upcall_getstate(&sau->sau_event,
 		    sau->sau_event.ss_deferred.ss_lwp);
@@ -1379,9 +1380,12 @@ sa_makeupcalls(struct lwp *l)
 		sa_upcall_getstate(&sau->sau_interrupted,
 		    sau->sau_interrupted.ss_deferred.ss_lwp);
 
-	stack = (void *)
-	    (((uintptr_t)sau->sau_stack.ss_sp + sau->sau_stack.ss_size)
-		& ~ALIGNBYTES);
+#ifdef __MACHINE_STACK_GROWS_UP
+	stack = sau->sau_stack.ss_sp;
+#else
+	stack = (caddr_t)sau->sau_stack.ss_sp + sau->sau_stack.ss_size;
+#endif
+	stack = STACK_ALIGN(stack, ALIGNBYTES);
 
 	self_sa.sa_id = l->l_lid;
 	self_sa.sa_cpu = vp->savp_id;
@@ -1395,7 +1399,8 @@ sa_makeupcalls(struct lwp *l)
 #ifdef DIAGNOSTIC
 			printf("sa_makeupcalls(%d.%d): couldn't copyout"
 			    " context of event LWP %d\n",
-			    p->p_pid, l->l_lid, sau->sau_event.ss_captured.ss_sa.sa_id);
+			    p->p_pid, l->l_lid,
+			    sau->sau_event.ss_captured.ss_sa.sa_id);
 #endif
 			sigexit(l, SIGILL);
 			/* NOTREACHED */
@@ -1412,7 +1417,8 @@ sa_makeupcalls(struct lwp *l)
 #ifdef DIAGNOSTIC
 			printf("sa_makeupcalls(%d.%d): couldn't copyout"
 			    " context of interrupted LWP %d\n",
-			    p->p_pid, l->l_lid, sau->sau_interrupted.ss_captured.ss_sa.sa_id);
+			    p->p_pid, l->l_lid,
+			    sau->sau_interrupted.ss_captured.ss_sa.sa_id);
 #endif
 			sigexit(l, SIGILL);
 			/* NOTREACHED */
@@ -1436,8 +1442,10 @@ sa_makeupcalls(struct lwp *l)
 	/* Copy out the activation's ucontext */
 	u.uc_stack = sau->sau_stack;
 	u.uc_flags = _UC_STACK;
-	up = stack;
-	up--;
+
+	up = (void *)STACK_ALLOC(stack, sizeof(ucontext_t));
+	stack = STACK_GROW(stack, sizeof(ucontext_t));
+
 	if (copyout(&u, up, sizeof(ucontext_t)) != 0) {
 		sadata_upcall_free(sau);
 #ifdef DIAGNOSTIC
@@ -1451,8 +1459,17 @@ sa_makeupcalls(struct lwp *l)
 	sas[0]->sa_context = up;
 
 	/* Next, copy out the sa_t's and pointers to them. */
-	sap = (struct sa_t *) up;
-	sapp = (struct sa_t **) (sap - (1 + nevents + nint));
+
+	sz = (1 + nevents + nint) * sizeof(struct sa_t);
+	sap = (void *)STACK_ALLOC(stack, sz);
+	sap += 1 + nevents + nint;
+	stack = STACK_GROW(stack, sz);
+
+	sz = (1 + nevents + nint) * sizeof(struct sa_t *);
+	sapp = (void *)STACK_ALLOC(stack, sz);
+	sapp += 1 + nevents + nint;
+	stack = STACK_GROW(stack, sz);
+
 	KDASSERT(nint <= 1);
 	for (i = nevents + nint; i >= 0; i--) {
 		sap--;
@@ -1474,6 +1491,7 @@ sa_makeupcalls(struct lwp *l)
 			l2->l_flag &= ~L_SA_BLOCKING;
 			sa_putcachelwp(p, l2); /* PHOLD from sa_setwoken */
 			SCHED_UNLOCK(s);
+
 			if (copyout(&e_ss.ss_captured.ss_ctx,
 				e_ss.ss_captured.ss_sa.sa_context,
 				sizeof(ucontext_t)) != 0) {
@@ -1506,8 +1524,8 @@ sa_makeupcalls(struct lwp *l)
 	 * a structure, so...
 	 */
 	if (sau->sau_arg) {
-		ap = (char *)sapp - sau->sau_argsize;
-		stack = ap;
+		ap = STACK_ALLOC(stack, sau->sau_argsize);
+		stack = STACK_GROW(stack, sau->sau_argsize);
 		if (copyout(sau->sau_arg, ap, sau->sau_argsize) != 0) {
 			/* Copying onto the stack didn't work. Die. */
 			sadata_upcall_free(sau);
@@ -1521,10 +1539,11 @@ sa_makeupcalls(struct lwp *l)
 			/* NOTREACHED */
 		}
 	} else {
-		ap = 0;
-		stack = sapp;
+		ap = NULL;
+#ifdef __hppa__
+		stack = STACK_ALIGN(stack, HPPA_FRAME_SIZE);
+#endif
 	}
-
 	type = sau->sau_type;
 
 	sadata_upcall_free(sau);
