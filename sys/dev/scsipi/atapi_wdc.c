@@ -1,4 +1,4 @@
-/*	$NetBSD: atapi_wdc.c,v 1.75 2004/08/11 17:49:27 mycroft Exp $	*/
+/*	$NetBSD: atapi_wdc.c,v 1.76 2004/08/11 17:51:24 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atapi_wdc.c,v 1.75 2004/08/11 17:49:27 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atapi_wdc.c,v 1.76 2004/08/11 17:51:24 mycroft Exp $");
 
 #ifndef WDCDEBUG
 #define WDCDEBUG
@@ -452,21 +452,19 @@ wdc_atapi_start(struct wdc_channel *chp, struct ata_xfer *xfer)
 		if (chp->ch_status & WDCS_ERR) {
 			if (chp->ch_error == WDCE_ABRT) {
 				/*
-				 * some ATAPI drives rejects pio settings.
-				 * all we can do here is fall back to PIO 0
+				 * Some ATAPI drives reject PIO settings.
+				 * Fall back to PIO mode 3 since that's the
+				 * minimum for ATAPI.
 				 */
-				drvp->drive_flags &= ~DRIVE_MODE;
-				drvp->drive_flags &= ~(DRIVE_DMA|DRIVE_UDMA);
-				drvp->PIO_mode = 0;
-				drvp->DMA_mode = 0;
-				printf("%s:%d:%d: pio setting rejected, "
-				    "falling back to PIO mode 0\n",
+				printf("%s:%d:%d: PIO mode %d rejected, "
+				    "falling back to PIO mode 3\n",
 				    wdc->sc_dev.dv_xname,
-				    chp->ch_channel, xfer->c_drive);
-				wdc->set_modes(chp);
-				goto ready;
-			}
-			goto error;
+				    chp->ch_channel, xfer->c_drive,
+				    drvp->PIO_mode);
+				if (drvp->PIO_mode > 3)
+					drvp->PIO_mode = 3;
+			} else
+				goto error;
 		}
 		if (drvp->drive_flags & DRIVE_UDMA) {
 			wdccommand(chp, drvp->drive, SET_FEATURES, 0, 0, 0,
@@ -480,8 +478,26 @@ wdc_atapi_start(struct wdc_channel *chp, struct ata_xfer *xfer)
 		errstring = "dmamode";
 		if (wdc_wait_for_unbusy(chp, ATAPI_MODE_DELAY, wait_flags))
 			goto timeout;
-		if (chp->ch_status & WDCS_ERR)
-			goto error;
+		if (chp->ch_status & WDCS_ERR) {
+			if (chp->ch_error == WDCE_ABRT) {
+				if (drvp->drive_flags & DRIVE_UDMA)
+					goto error;
+				else {
+					/*
+					 * The drive rejected our DMA setting.
+					 * Fall back to mode 1.
+					 */
+					printf("%s:%d:%d: DMA mode %d rejected, "
+					    "falling back to DMA mode 0\n",
+					    wdc->sc_dev.dv_xname,
+					    chp->ch_channel, xfer->c_drive,
+					    drvp->DMA_mode);
+					if (drvp->DMA_mode > 0)
+						drvp->DMA_mode = 0;
+				}
+			} else
+				goto error;
+		}
 ready:
 		drvp->state = READY;
 		bus_space_write_1(chp->ctl_iot, chp->ctl_ioh, wd_aux_ctlr,
