@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld_start.S,v 1.11 2002/09/26 01:54:52 mycroft Exp $	*/
+/*	$NetBSD: rtld_start.S,v 1.12 2002/09/26 01:59:16 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2002 The NetBSD Foundation, Inc.
@@ -80,7 +80,6 @@ _rtld_start:
 	.global	_rtld_bind_start
 	.type	_rtld_bind_start,@function
 _rtld_bind_start:	# (obj, reloff)
-	sub	%sp, 24, %sp
 	ld	[%o7 + 8], %o0		/* obj id is in second PLT slot */
 	srl	%g1, 10, %o1		/* offset is in high 22 bits */
 	call	_rtld_bind		/* Call _rtld_bind(obj, offset) */
