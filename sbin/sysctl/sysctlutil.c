@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctlutil.c,v 1.6 2004/03/24 16:34:34 atatat Exp $ */
+/*	$NetBSD: sysctlutil.c,v 1.7 2004/03/24 17:21:02 atatat Exp $ */
 
 #include <sys/param.h>
 #define __USE_NEW_SYSCTL
@@ -147,6 +147,7 @@ learn_tree(int *name, u_int namelen, struct sysctlnode *pnode)
 			 */
 			pnode->sysctl_child[rc].sysctl_child = NULL;
 		}
+		pnode->sysctl_child[rc].sysctl_desc = NULL;
 	}
 
 	return (0);
