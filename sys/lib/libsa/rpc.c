@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc.c,v 1.22 2003/03/12 14:51:32 drochner Exp $	*/
+/*	$NetBSD: rpc.c,v 1.23 2003/08/31 22:40:49 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1992 Regents of the University of California.
@@ -197,7 +197,7 @@ rpc_call(d, prog, vers, proc, sdata, slen, rdata, rlen)
 	if (cc == -1)
 		return (-1);
 
-	if (cc <= sizeof(*reply)) {
+	if ((size_t)cc <= sizeof(*reply)) {
 		errno = EBADRPC;
 		return (-1);
 	}
@@ -430,7 +430,7 @@ rpc_getport(d, prog, vers)
 
 	cc = rpc_call(d, PMAPPROG, PMAPVERS, PMAPPROC_GETPORT,
 		args, sizeof(*args), res, sizeof(*res));
-	if (cc < sizeof(*res)) {
+	if ((size_t)cc < sizeof(*res)) {
 		printf("getport: %s", strerror(errno));
 		errno = EBADRPC;
 		return (-1);

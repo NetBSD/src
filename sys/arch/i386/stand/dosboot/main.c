@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.18 2001/07/05 00:58:45 itojun Exp $	 */
+/*	$NetBSD: main.c,v 1.19 2003/08/31 22:40:13 fvdl Exp $	 */
 
 /*
  * Copyright (c) 1996, 1997
@@ -228,7 +228,7 @@ print_banner(void)
 		 * xmsmem is a few kB less than the actual size, but
 		 *  better than nothing.
 		 */
-		if (xmsmem > extmem)
+		if ((int)xmsmem > extmem)
 			extmem = xmsmem;
 		s = "(xms) ";
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: dosfs.c,v 1.7 2003/08/18 15:45:27 dsl Exp $	*/
+/*	$NetBSD: dosfs.c,v 1.8 2003/08/31 22:40:48 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1996, 1998 Robert Nordier
@@ -132,9 +132,9 @@ static const struct direntry dot[2] = {
 #define okclus(fs, c)  ((c) >= LOCLUS && (c) <= (fs)->xclus)
 
 /* Get start cluster from directory entry */
-#define stclus(sz, de)  ((sz) != 32 ? getushort((de)->deStartCluster) : \
+#define stclus(sz, de)  ((sz) != 32 ? (u_int)getushort((de)->deStartCluster) : \
                          ((u_int)getushort((de)->deHighClust) << 16) |  \
-			 getushort((de)->deStartCluster))
+			 (u_int)getushort((de)->deStartCluster))
 
 static int dosunmount(DOS_FS *);
 static int parsebs(DOS_FS *, DOS_BS *);
