@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.14 2002/09/28 11:04:26 scw Exp $	*/
+/*	$NetBSD: trap.c,v 1.15 2002/10/24 13:56:46 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -540,7 +540,7 @@ panic_trap(struct trapframe *tf, register_t ssr, register_t spc,
 	printf("KCR0=0x%lx, KCR1=0x%lx\n\n", (intptr_t)kcr0, (intptr_t)kcr1);
 
 	printf("Exc Scratch Area:\n");
-	printf("  CRIT: 0x%08x%08x\n", (u_int)excf.es_critical);
+	printf("  CRIT: 0x%x\n", (u_int)excf.es_critical);
 	printf("    R0: 0x%08x%08x\n",
 	    (u_int)(excf.es_r[0] >> 32), (u_int)excf.es_r[0]);
 	printf("    R1: 0x%08x%08x\n",

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.22 2002/10/23 13:24:28 scw Exp $	*/
+/*	$NetBSD: pmap.c,v 1.23 2002/10/24 13:56:45 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -2340,8 +2340,8 @@ pmap_protect(pmap_t pm, vaddr_t va, vaddr_t endva, vm_prot_t prot)
 			continue;
 		}
 
-		PMPRINTF(("pmap_protect: protecting VA 0x%lx, PA 0x%x\n",
-		    va, pvo->pvo_ptel & SH5_PTEL_PPN_MASK));
+		PMPRINTF(("pmap_protect: protecting VA 0x%lx, PA 0x%lx\n",
+		    va, (paddr_t)(pvo->pvo_ptel & SH5_PTEL_PPN_MASK)));
 
 		pvo->pvo_ptel &= ~clrbits;
 		pvo->pvo_vaddr &= ~PVO_WRITABLE;

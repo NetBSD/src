@@ -1,4 +1,4 @@
-/*	$NetBSD: db_disasm.c,v 1.8 2002/09/19 10:03:11 scw Exp $	*/
+/*	$NetBSD: db_disasm.c,v 1.9 2002/10/24 13:56:45 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -1472,7 +1472,8 @@ sh5_fmt_xsd16_decode_op(int fmt, int op, int d, db_addr_t loc, char *ops)
 					if (diff)
 						sprintf(extra_info,
 						    "%s <%s+0x%x>",
-						    accmovi_str, symname, diff);
+						    accmovi_str, symname,
+						    (int)diff);
 					else
 						sprintf(extra_info, "%s <%s>",
 						    accmovi_str, symname);
@@ -1499,7 +1500,7 @@ sh5_fmt_xsd16_decode_op(int fmt, int op, int d, db_addr_t loc, char *ops)
 			sprintf(ops, "0x%lx", loc);
 		else {
 			if (diff)
-				sprintf(ops, "%s+0x%x", symname, diff);
+				sprintf(ops, "%s+0x%x", symname, (int) diff);
 			else
 				strcpy(ops, symname);
 		}
