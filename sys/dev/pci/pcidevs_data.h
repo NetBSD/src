@@ -1,4 +1,4 @@
-/*	$NetBSD: pcidevs_data.h,v 1.113 1999/03/09 11:48:59 drochner Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.114 1999/03/11 05:17:55 sakamoto Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
@@ -2404,10 +2404,34 @@ struct pci_knowndev pci_knowndevs[] = {
 	    "VT82C595 (Apollo VP2) Host-PCI Bridge",
 	},
 	{
+	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT82C596A,
+	    0,
+	    "VIA Technologies",
+	    "VT82C596A (Apollo Pro) PCI-ISA Bridge",
+	},
+	{
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT82C597,
 	    0,
 	    "VIA Technologies",
 	    "VT82C597 (Apollo VP3) Host-PCI Bridge",
+	},
+	{
+	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT82C598PCI,
+	    0,
+	    "VIA Technologies",
+	    "VT82C598 (Apollo MVP3) Host-PCI",
+	},
+	{
+	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT82C691,
+	    0,
+	    "VIA Technologies",
+	    "VT82C691 (Apollo Pro) Host-PCI",
+	},
+	{
+	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT82C693,
+	    0,
+	    "VIA Technologies",
+	    "VT82C693 (Apollo Pro Plus) Host-PCI",
 	},
 	{
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT86C926,
@@ -2446,22 +2470,34 @@ struct pci_knowndev pci_knowndevs[] = {
 	    "VT83C572 USB Controller",
 	},
 	{
-	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT3043,
-	    0,
-	    "VIA Technologies",
-	    "VT3043 (Rhine) 10/100 Ethernet",
-	},
-	{
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT82C586_PWR,
 	    0,
 	    "VIA Technologies",
 	    "VT82C586 (Apollo VP) Power Management Controller",
 	},
 	{
+	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT3043,
+	    0,
+	    "VIA Technologies",
+	    "VT3043 (Rhine) 10/100 Ethernet",
+	},
+	{
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT86C100A,
 	    0,
 	    "VIA Technologies",
 	    "VT86C100A (Rhine-II) 10/100 Ethernet",
+	},
+	{
+	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT82C597AGP,
+	    0,
+	    "VIA Technologies",
+	    "VT82C597 (Apollo VP3) PCI-AGP",
+	},
+	{
+	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT82C598AGP,
+	    0,
+	    "VIA Technologies",
+	    "VT82C598 (Apollo MVP3) PCI-AGP",
 	},
 	{
 	    PCI_VENDOR_VORTEX, PCI_PRODUCT_VORTEX_GDT_6000B,
