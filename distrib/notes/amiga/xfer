@@ -5,11 +5,10 @@ Installation is supported from several media types, including:
 	FTP
 	NetBSD partitions, if doing an upgrade.
 
-The install or upgrade miniroot file system needs to be transferred
-to the NetBSD swap partition.  This can be done from AmigaDOS in
-the case of a new install or upgrade, or from NetBSD when doing an
-upgrade.  See the "Preparing your System for NetBSD Installation"
-section for details.
+The miniroot file system needs to be transferred to the NetBSD swap
+partition.  This can be done from AmigaDOS in the case of a new
+install or upgrade, or from NetBSD when doing an upgrade.  See the
+"Preparing your System for NetBSD Installation" section for details.
 
 The steps necessary to prepare the distribution sets
 for installation depend on which method of installation
@@ -102,7 +101,7 @@ following:
 	Place the distribution sets you wish to upgrade somewhere in
 	your current file system tree.  At a bare minimum, you must
 	upgrade the "base" binary distribution, and so must put the
-	"base11" set somewhere in your file system.  If you wish,
+	"base13" set somewhere in your file system.  If you wish,
 	you can do the other sets, as well, but you should NOT upgrade
 	the "etc" distribution; the "etc" distribution contains system
 	configuration files that you should review and update by hand.
