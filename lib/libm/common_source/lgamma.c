@@ -33,7 +33,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)lgamma.c	5.11 (Berkeley) 12/16/92";*/
-static char rcsid[] = "$Id: lgamma.c,v 1.1 1993/08/14 13:42:55 mycroft Exp $";
+static char rcsid[] = "$Id: lgamma.c,v 1.2 1994/02/06 18:48:04 chopps Exp $";
 #endif /* not lint */
 
 /*
@@ -81,7 +81,6 @@ static int endian;
 #define infnan(x)	0.0
 #endif
 
-extern double log1p(double);
 static double small_lgam(double);
 static double large_lgam(double);
 static double neg_lgam(double);
@@ -140,7 +139,7 @@ int signgam;
 #define pb6	 5.69394463439411649408050664078e-03
 #define pb7	-1.44705562421428915453880392761e-02
 
-double
+__pure double
 lgamma(double x)
 {
 	double r;
