@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.27 2001/10/18 17:06:14 rearnsha Exp $	*/
+/*	$NetBSD: pmap.c,v 1.28 2001/10/18 18:15:56 rearnsha Exp $	*/
 
 /*
  * Copyright (c) 2001 Richard Earnshaw
@@ -142,7 +142,7 @@
 #include <machine/param.h>
 #include <machine/katelib.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.27 2001/10/18 17:06:14 rearnsha Exp $");        
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.28 2001/10/18 18:15:56 rearnsha Exp $");        
 #ifdef PMAP_DEBUG
 #define	PDEBUG(_lev_,_stat_) \
 	if (pmap_debug_level >= (_lev_)) \
@@ -2056,6 +2056,25 @@ pmap_pte_delref(pmap, va)
  * other mappings within the same pmap, or kernel_pmap.
  * This function is also called when a page is unmapped, to possibly reenable
  * caching on any remaining mappings.
+ *
+ * The code implements the following logic, where:
+ *
+ * KW = # of kernel read/write pages
+ * KR = # of kernel read only pages
+ * UW = # of user read/write pages
+ * UR = # of user read only pages
+ * OW = # of user read/write pages in another pmap, then
+ * 
+ * KC = kernel mapping is cacheable
+ * UC = user mapping is cacheable
+ *
+ *                     KW=0,KR=0  KW=0,KR>0  KW=1,KR=0  KW>1,KR>=0
+ *                   +---------------------------------------------
+ * UW=0,UR=0,OW=0    | ---        KC=1       KC=1       KC=0
+ * UW=0,UR>0,OW=0    | UC=1       KC=1,UC=1  KC=0,UC=0  KC=0,UC=0
+ * UW=0,UR>0,OW>0    | UC=1       KC=0,UC=1  KC=0,UC=0  KC=0,UC=0
+ * UW=1,UR=0,OW=0    | UC=1       KC=0,UC=0  KC=0,UC=0  KC=0,UC=0
+ * UW>1,UR>=0,OW>=0  | UC=0       KC=0,UC=0  KC=0,UC=0  KC=0,UC=0
  *
  * Note that the pmap must have it's ptes mapped in, and passed with ptes.
  */
