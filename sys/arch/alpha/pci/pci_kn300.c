@@ -1,4 +1,4 @@
-/* $NetBSD: pci_kn300.c,v 1.8 1998/07/07 21:44:58 thorpej Exp $ */
+/* $NetBSD: pci_kn300.c,v 1.9 1998/07/07 22:24:39 thorpej Exp $ */
 
 /*
  * Copyright (c) 1998 by Matthew Jacob
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pci_kn300.c,v 1.8 1998/07/07 21:44:58 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_kn300.c,v 1.9 1998/07/07 22:24:39 thorpej Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -321,7 +321,7 @@ kn300_iointr(framep, vec)
 	 * Nobody fielded the interrupt?
 	 */
 	alpha_shared_intr_stray(kn300_pci_intr, savirqs[v], kn300_spurious(v));
-	if (ALPHA_SHARED_INTR_DISABLE(&kn300_pci_intr[v]) == 0)
+	if (ALPHA_SHARED_INTR_DISABLE(kn300_pci_intr, v) == 0)
 		return;
 	/*
 	 * Search for the controlling mcpcia.
