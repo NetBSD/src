@@ -1,4 +1,4 @@
-/*	$NetBSD: systrace-translate.c,v 1.4 2002/08/01 08:47:04 itojun Exp $	*/
+/*	$NetBSD: systrace-translate.c,v 1.5 2002/08/02 14:29:34 itojun Exp $	*/
 /*	$OpenBSD: systrace-translate.c,v 1.9 2002/07/30 06:07:06 itojun Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
@@ -62,7 +62,9 @@
 } while (0)
 
 static int print_oflags(char *, size_t, struct intercept_translate *);
+#ifdef HAVE_LINUX_FCNTL_H
 static int linux_print_oflags(char *, size_t, struct intercept_translate *);
+#endif
 static int print_modeflags(char *, size_t, struct intercept_translate *);
 static int print_number(char *, size_t, struct intercept_translate *);
 static int print_uname(char *, size_t, struct intercept_translate *);
@@ -121,6 +123,7 @@ print_oflags(char *buf, size_t buflen, struct intercept_translate *tl)
 	return (0);
 }
 
+#ifdef HAVE_LINUX_FCNTL_H
 static int
 linux_print_oflags(char *buf, size_t buflen, struct intercept_translate *tl)
 {
@@ -163,6 +166,7 @@ linux_print_oflags(char *buf, size_t buflen, struct intercept_translate *tl)
 
 	return (0);
 }
+#endif
 
 static int
 print_modeflags(char *buf, size_t buflen, struct intercept_translate *tl)
@@ -256,10 +260,12 @@ struct intercept_translate oflags = {
 	NULL, print_oflags,
 };
 
+#ifdef HAVE_LINUX_FCNTL_H
 struct intercept_translate linux_oflags = {
 	"oflags",
 	NULL, linux_print_oflags,
 };
+#endif
 
 struct intercept_translate modeflags = {
 	"mode",
