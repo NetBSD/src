@@ -1,5 +1,5 @@
 #! /bin/sh -
-#	$NetBSD: makesyscalls.sh,v 1.3 1994/06/30 16:42:53 cgd Exp $
+#	$NetBSD: makesyscalls.sh,v 1.4 1994/06/30 17:00:20 cgd Exp $
 #
 #	@(#)makesyscalls.sh	8.1 (Berkeley) 6/11/93
 
@@ -57,11 +57,9 @@ awk < $1 "
 
 		printf "struct sysent svr4_sysent[] = {\n" > sysent
 
-		printf " * created from: NetBSD %s %s %s %s\n */\n\n",$2,$3,$4,$
-5 > sysnames
+		printf " * created from: NetBSD %s %s %s %s\n */\n\n",$2,$3,$4,$5 > sysnames
 
-		printf " * created from: NetBSD %s %s %s %s\n */\n\n",$2,$3,$4,$
-5 > syshdr
+		printf " * created from: NetBSD %s %s %s %s\n */\n\n",$2,$3,$4,$5 > syshdr
 		next
 	}
 	NF == 0 || $1 ~ /^;/ {
