@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vfsops.c,v 1.58 2000/03/16 10:37:00 fvdl Exp $	*/
+/*	$NetBSD: ffs_vfsops.c,v 1.59 2000/03/16 18:20:06 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1994
@@ -74,6 +74,9 @@
 #include <ufs/ffs/fs.h>
 #include <ufs/ffs/ffs_extern.h>
 
+/* how many times ffs_init() was called */
+int ffs_initcount = 0;
+
 extern struct lock ufs_hashlock;
 
 int ffs_sbupdate __P((struct ufsmount *, int));
@@ -102,6 +105,7 @@ struct vfsops ffs_vfsops = {
 	ffs_fhtovp,
 	ffs_vptofh,
 	ffs_init,
+	ffs_done,
 	ffs_sysctl,
 	ffs_mountroot,
 	ufs_check_export,
@@ -1106,11 +1110,25 @@ ffs_vptofh(vp, fhp)
 void
 ffs_init()
 {
+	if (ffs_initcount++ > 0)
+		return;
+
 	softdep_initialize();
 	ufs_init();
 
 	pool_init(&ffs_inode_pool, sizeof(struct inode), 0, 0, 0, "ffsinopl",
 	    0, pool_page_alloc_nointr, pool_page_free_nointr, M_FFSNODE);
+}
+
+void
+ffs_done()
+{
+	if (--ffs_initcount > 0)
+		return;
+
+	/* XXX softdep cleanup ? */
+	ufs_done();
+	pool_destroy(&ffs_inode_pool);
 }
 
 int
