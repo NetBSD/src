@@ -1,4 +1,4 @@
-/*	$NetBSD: satalink.c,v 1.21 2004/08/20 06:39:39 thorpej Exp $	*/
+/*	$NetBSD: satalink.c,v 1.22 2004/08/21 00:28:34 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -769,7 +769,7 @@ sii3112_drv_probe(struct ata_channel *chp)
 	struct wdc_regs *wdr = CHAN_TO_WDC_REGS(chp);
 	uint32_t scontrol, sstatus;
 	uint8_t scnt, sn, cl, ch;
-	int i;
+	int i, s;
 
 	/* XXX This should be done by other code. */
 	for (i = 0; i < 2; i++) {
@@ -852,10 +852,12 @@ sii3112_drv_probe(struct ata_channel *chp)
 		 * scnt and sn are supposed to be 0x1 for ATAPI, but in some
 		 * cases we get wrong values here, so ignore it.
 		 */
+		s = splbio();
 		if (cl == 0x14 && ch == 0xeb)
 			chp->ch_drive[0].drive_flags |= DRIVE_ATAPI;
 		else
 			chp->ch_drive[0].drive_flags |= DRIVE_ATA;
+		splx(s);
 
 		aprint_normal("%s: port %d: device present, speed: %s\n",
 		    sc->sc_wdcdev.sc_atac.atac_dev.dv_xname, chp->ch_channel,
@@ -872,7 +874,7 @@ static void
 sii3112_setup_channel(struct ata_channel *chp)
 {
 	struct ata_drive_datas *drvp;
-	int drive;
+	int drive, s;
 	u_int32_t idedma_ctl, dtm;
 	struct pciide_channel *cp = CHAN_TO_PCHAN(chp);
 	struct pciide_softc *sc = CHAN_TO_PCIIDE(chp);
@@ -890,7 +892,9 @@ sii3112_setup_channel(struct ata_channel *chp)
 			continue;
 		if (drvp->drive_flags & DRIVE_UDMA) {
 			/* use Ultra/DMA */
+			s = splbio();
 			drvp->drive_flags &= ~DRIVE_DMA;
+			splx(s);
 			idedma_ctl |= IDEDMA_CTL_DRV_DMA(drive);
 			dtm |= DTM_IDEx_DMA;
 		} else if (drvp->drive_flags & DRIVE_DMA) {
