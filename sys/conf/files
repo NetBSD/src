@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.514 2002/04/16 21:00:27 thorpej Exp $
+#	$NetBSD: files,v 1.515 2002/04/16 21:27:13 thorpej Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -102,11 +102,6 @@ defparam opt_tcp_space.h	TCP_RECVSPACE TCP_SENDSPACE
 
 defflag	opt_inet_csum.h		INET_CSUM_COUNTERS TCP_CSUM_COUNTERS
 				UDP_CSUM_COUNTERS
-
-defflag	opt_altq_enabled.h	ALTQ
-defflag	opt_altq.h		ALTQ_CBQ ALTQ_WFQ ALTQ_FIFOQ ALTQ_RED ALTQ_BLUE
-				ALTQ_FLOWVALVE ALTQ_RIO ALTQ_LOCALQ ALTQ_HFSC
-				ALTQ_CDNR ALTQ_PRIQ ALTQ_NOPCC ALTQ_DEBUG
 
 defparam			SB_MAX
 
@@ -250,6 +245,11 @@ define	crypto
 # devices ARPing IPv4 pull this in:
 #
 define	arp
+
+#
+# ALTQ network traffic shaping subsystem
+#
+include "altq/files.altq"
 
 # Device description for machine-independent IPKDB code.
 #
@@ -902,20 +902,6 @@ file	adosfs/adlookup.c		adosfs
 file	adosfs/adutil.c			adosfs
 file	adosfs/advfsops.c		adosfs
 file	adosfs/advnops.c		adosfs
-file	altq/altq_conf.c		altq
-file	altq/altq_afmap.c		altq
-file	altq/altq_blue.c		altq
-file	altq/altq_cbq.c			altq
-file	altq/altq_cdnr.c		altq
-file	altq/altq_fifoq.c		altq
-file	altq/altq_hfsc.c		altq
-file	altq/altq_localq.c		altq
-file	altq/altq_priq.c		altq
-file	altq/altq_red.c			altq
-file	altq/altq_rio.c			altq
-file	altq/altq_rmclass.c		altq
-file	altq/altq_subr.c		altq
-file	altq/altq_wfq.c			altq
 file	coda/coda_namecache.c		coda
 file	coda/coda_psdev.c		vcoda			needs-count
 file	coda/coda_subr.c		coda
