@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ep.c,v 1.71 1995/04/11 05:10:26 mycroft Exp $	*/
+/*	$NetBSD: if_ep.c,v 1.72 1995/04/17 12:08:59 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994 Herb Peyerl <hpeyerl@novatel.ca>
@@ -68,7 +68,7 @@
 #include <machine/cpu.h>
 #include <machine/pio.h>
 
-#include <i386/isa/isavar.h>
+#include <dev/isa/isavar.h>
 #include <dev/isa/if_epreg.h>
 #include <dev/isa/elink.h>
 
@@ -80,7 +80,7 @@
  */
 struct ep_softc {
 	struct device sc_dev;
-	struct intrhand sc_ih;
+	void *sc_ih;
 
 	struct arpcom sc_arpcom;	/* Ethernet common part		*/
 	int	ep_iobase;		/* i/o bus address		*/
@@ -102,7 +102,7 @@ struct cfdriver epcd = {
 	NULL, "ep", epprobe, epattach, DV_IFNET, sizeof(struct ep_softc)
 };
 
-int epintr __P((struct ep_softc *));
+int epintr __P((void *));
 static void epxstat __P((struct ep_softc *));
 static int epstatus __P((struct ep_softc *));
 static void epinit __P((struct ep_softc *));
@@ -337,10 +337,8 @@ epattach(parent, self, aux)
 
 	sc->tx_start_thresh = 20;	/* probably a good starting point. */
 
-	sc->sc_ih.ih_fun = epintr;
-	sc->sc_ih.ih_arg = sc;
-	sc->sc_ih.ih_level = IPL_NET;
-	intr_establish(ia->ia_irq, IST_EDGE, &sc->sc_ih);
+	sc->sc_ih = isa_intr_establish(ia->ia_irq, ISA_IST_EDGE, ISA_IPL_NET,
+	    epintr, sc);
 }
 
 /*
@@ -675,9 +673,10 @@ eptxstat(sc)
 }
 
 int
-epintr(sc)
-	register struct ep_softc *sc;
+epintr(arg)
+	void *arg;
 {
+	register struct ep_softc *sc = arg;
 	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
 	u_short status;
 	int ret = 0;
@@ -1041,7 +1040,7 @@ epwatchdog(unit)
 
 	log(LOG_ERR, "%s: device timeout\n", sc->sc_dev.dv_xname);
 	epreset(sc);
-	return 0;
+	return;
 }
 
 static void

@@ -1,4 +1,6 @@
-/*	$NetBSD: wd7000.c,v 1.19 1994/11/18 22:03:49 mycroft Exp $	*/
+/*	$NetBSD: wd7000.c,v 1.20 1995/04/17 12:09:35 cgd Exp $	*/
+
+/* XXX THIS DRIVER IS BROKEN.  IT WILL NOT EVEN COMPILE. */
 
 /*
  * UNFINISHED! UNFINISHED! UNFINISHED! UNFINISHED! UNFINISHED! UNFINISHED!
@@ -38,7 +40,7 @@
 #include <machine/cpu.h>
 #include <machine/pio.h>
 
-#include <i386/isa/isa_device.h>
+#include <i386/isa/isa_device.h>	/* XXX BROKEN */
 
 extern int delaycount;  /* from clock setup code */
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.138 1995/04/15 05:02:56 mycroft Exp $	*/
+/*	$NetBSD: wd.c,v 1.139 1995/04/17 12:09:31 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -54,7 +54,7 @@
 #include <machine/cpu.h>
 #include <machine/pio.h>
 
-#include <i386/isa/isavar.h>
+#include <dev/isa/isavar.h>
 #include <dev/isa/wdreg.h>
 
 #define	WAITTIME	(4 * hz)	/* time to wait for a completion */
@@ -120,7 +120,7 @@ struct wd_softc {
 
 struct wdc_softc {
 	struct device sc_dev;
-	struct intrhand sc_ih;
+	void *sc_ih;
 
 	int sc_iobase;			/* I/O port base */
 	int sc_drq;			/* DMA channel */
@@ -158,7 +158,7 @@ void wdstart __P((struct wd_softc *));
 struct dkdriver wddkdriver = { wdstrategy };
 
 void wdfinish __P((struct wd_softc *, struct buf *));
-int wdcintr __P((struct wdc_softc *));
+int wdcintr __P((void *));
 void wdcstart __P((struct wdc_softc *));
 int wdcommand __P((struct wd_softc *, int, int, int, int, int));
 int wdcommandshort __P((struct wdc_softc *, int, int));
@@ -249,10 +249,8 @@ wdcattach(parent, self, aux)
 
 	printf("\n");
 
-	wdc->sc_ih.ih_fun = wdcintr;
-	wdc->sc_ih.ih_arg = wdc;
-	wdc->sc_ih.ih_level = IPL_BIO;
-	intr_establish(ia->ia_irq, IST_EDGE, &wdc->sc_ih);
+	wdc->sc_ih = isa_intr_establish(ia->ia_irq, ISA_IST_EDGE, ISA_IPL_BIO,
+	    wdcintr, wdc);
 
 	for (wa.wa_drive = 0; wa.wa_drive < 2; wa.wa_drive++)
 		(void)config_found(self, (void *)&wa, wdprint);
@@ -700,9 +698,10 @@ loop:
  * the next chunk if so.
  */
 int
-wdcintr(wdc)
-	struct wdc_softc *wdc;
+wdcintr(arg)
+	void *arg;
 {
+	struct wdc_softc *wdc = arg;
 	struct wd_softc *wd;
 	struct buf *bp;
 

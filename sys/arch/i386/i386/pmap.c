@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.28 1995/04/10 12:42:02 mycroft Exp $	*/
+/*	$NetBSD: pmap.c,v 1.29 1995/04/17 12:06:49 cgd Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Charles Hannum.
@@ -89,7 +89,8 @@
 
 #include <machine/cpu.h>
 
-#include <i386/isa/isareg.h>
+#include <dev/isa/isareg.h>
+#include <i386/isa/isa_machdep.h>
 
 #include "isa.h"
 

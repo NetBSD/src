@@ -1,4 +1,4 @@
-/*	$NetBSD: microtime.s,v 1.15 1994/11/06 22:05:08 mycroft Exp $	*/
+/*	$NetBSD: microtime.s,v 1.16 1995/04/17 12:06:47 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1993 The Regents of the University of California.
@@ -34,7 +34,7 @@
  */
 
 #include <machine/asm.h>
-#include <i386/isa/isareg.h>
+#include <dev/isa/isareg.h>
 #include <i386/isa/timerreg.h>
 
 #define	IRQ_BIT(irq_num)	(1 << ((irq_num) % 8))

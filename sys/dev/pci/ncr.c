@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr.c,v 1.13 1995/03/28 20:00:53 jtc Exp $	*/
+/*	$NetBSD: ncr.c,v 1.14 1995/04/17 12:09:43 cgd Exp $	*/
 
 /**************************************************************************
 **
@@ -907,7 +907,7 @@ struct ccb {
 struct ncb {
 #ifdef __NetBSD__
 	struct device sc_dev;
-	struct intrhand sc_ih;
+	void *sc_ih;
 #else /* !__NetBSD__ */
 	int	unit;
 #endif /* __NetBSD__ */
@@ -1157,7 +1157,7 @@ ccb_p	ncr_get_ccb	(ncb_p np, u_long flags, u_long t,u_long l);
 U_INT32 ncr_info	(int unit);
 #endif /* !__NetBSD__ */
 void	ncr_init	(ncb_p np, char * msg, u_long code);
-int	ncr_intr	(ncb_p np);
+int	ncr_intr	(void *);
 void	ncr_int_ma	(ncb_p np);
 void	ncr_int_sir	(ncb_p np);
 void    ncr_int_sto     (ncb_p np);
@@ -1204,7 +1204,7 @@ void	ncr_attach	(pcici_t tag, int unit);
 
 
 static char ident[] =
-	"\n$Id: ncr.c,v 1.13 1995/03/28 20:00:53 jtc Exp $\n";
+	"\n$Id: ncr.c,v 1.14 1995/04/17 12:09:43 cgd Exp $\n";
 
 u_long	ncr_version = NCR_VERSION
 	+ (u_long) sizeof (struct ncb)
@@ -3280,11 +3280,8 @@ void ncr_attach (pcici_t config_id, int unit)
 	};
 
 #ifdef __NetBSD__
-	np->sc_ih.ih_fun = ncr_intr;
-	np->sc_ih.ih_arg = np;
-	np->sc_ih.ih_level = IPL_BIO;
-
-	if (pci_map_int(pa->pa_tag, &np->sc_ih))
+	np->sc_ih = pci_map_int(pa->pa_tag, PCI_IPL_BIO, ncr_intr, np);
+	if (np->sc_ih == NULL)
 		return;
 #else /* !__NetBSD__ */
 	/*
@@ -3314,7 +3311,7 @@ void ncr_attach (pcici_t config_id, int unit)
 		ncr_name (np));
 	DELAY (1000000);
 #endif
-	printf ("%s scanning for targets 0..%d ($Revision: 1.13 $)\n",
+	printf ("%s scanning for targets 0..%d ($Revision: 1.14 $)\n",
 		ncr_name (np), MAX_TARGET-1);
 
 	/*
@@ -3366,9 +3363,10 @@ void ncr_attach (pcici_t config_id, int unit)
 */
 
 int
-ncr_intr(np)
-	ncb_p np;
+ncr_intr(arg)
+	void *arg;
 {
+	ncb_p np = arg;
 	int n = 0;
 
 	if (DEBUG_FLAGS & DEBUG_TINY) printf ("[");

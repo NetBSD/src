@@ -1,4 +1,4 @@
-/*	$NetBSD: if_eg.c,v 1.11 1995/04/11 05:10:20 mycroft Exp $	*/
+/*	$NetBSD: if_eg.c,v 1.12 1995/04/17 12:08:53 cgd Exp $	*/
 
 /*
  * Copyright (c) 1993 Dean Huxley <dean@fsa.ca>
@@ -73,7 +73,7 @@
 #include <machine/cpu.h>
 #include <machine/pio.h>
 
-#include <i386/isa/isavar.h>
+#include <dev/isa/isavar.h>
 #include <dev/isa/if_egreg.h>
 #include <dev/isa/elink.h>
 
@@ -96,7 +96,7 @@
  */
 struct eg_softc {
 	struct device sc_dev;
-	struct intrhand sc_ih;
+	void *sc_ih;
 	struct arpcom sc_arpcom;	/* Ethernet common part */
 	int eg_cmd;			/* Command register R/W */
 	int eg_ctl;			/* Control register R/W (EG_CTL_*) */
@@ -118,7 +118,7 @@ struct cfdriver egcd = {
 	NULL, "eg", egprobe, egattach, DV_IFNET, sizeof(struct eg_softc)
 };
 
-int egintr __P((struct eg_softc *));
+int egintr __P((void *));
 static void eginit __P((struct eg_softc *));
 static int egioctl __P((struct ifnet *, u_long, caddr_t));
 static int egrecv __P((struct eg_softc *));
@@ -404,11 +404,9 @@ egattach(parent, self, aux)
 #if NBPFILTER > 0
 	bpfattach(&ifp->if_bpf, ifp, DLT_EN10MB, sizeof(struct ether_header));
 #endif
-	
-	sc->sc_ih.ih_fun = egintr;
-	sc->sc_ih.ih_arg = sc;
-	sc->sc_ih.ih_level = IPL_NET;
-	intr_establish(ia->ia_irq, IST_EDGE, &sc->sc_ih);
+
+	sc->sc_ih = isa_intr_establish(ia->ia_irq, ISA_IST_EDGE, ISA_IPL_NET,
+	    egintr, sc);
 }
 
 static void
@@ -556,9 +554,10 @@ egstart(ifp)
 }
 
 int
-egintr(sc)
-	register struct eg_softc *sc;
+egintr(arg)
+	void *arg;
 {
+	register struct eg_softc *sc = arg;
 	int i, len;
 	short *ptr;
 

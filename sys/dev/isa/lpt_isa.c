@@ -1,4 +1,4 @@
-/*	$NetBSD: lpt_isa.c,v 1.29 1995/01/29 07:37:10 cgd Exp $	*/
+/*	$NetBSD: lpt_isa.c,v 1.30 1995/04/17 12:09:17 cgd Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Charles Hannum.
@@ -67,7 +67,7 @@
 #include <machine/cpu.h>
 #include <machine/pio.h>
 
-#include <i386/isa/isavar.h>
+#include <dev/isa/isavar.h>
 #include <dev/isa/lptreg.h>
 
 #define	TIMEOUT		hz*16	/* wait up to 16 seconds for a ready */
@@ -85,7 +85,7 @@ int lptdebug = 1;
 
 struct lpt_softc {
 	struct device sc_dev;
-	struct intrhand sc_ih;
+	void *sc_ih;
 
 	size_t sc_count;
 	struct buf *sc_inbuf;
@@ -107,7 +107,7 @@ struct lpt_softc {
 
 int lptprobe __P((struct device *, void *, void *));
 void lptattach __P((struct device *, struct device *, void *));
-int lptintr __P((struct lpt_softc *));
+int lptintr __P((void *));
 
 struct cfdriver lptcd = {
 	NULL, "lpt", lptprobe, lptattach, DV_TTY, sizeof(struct lpt_softc)
@@ -237,12 +237,9 @@ lptattach(parent, self, aux)
 	sc->sc_state = 0;
 	outb(iobase + lpt_control, LPC_NINIT);
 
-	if (ia->ia_irq != IRQUNK) {
-		sc->sc_ih.ih_fun = lptintr;
-		sc->sc_ih.ih_arg = sc;
-		sc->sc_ih.ih_level = IPL_NONE;
-		intr_establish(ia->ia_irq, IST_EDGE, &sc->sc_ih);
-	}
+	if (ia->ia_irq != IRQUNK)
+		sc->sc_ih = isa_intr_establish(ia->ia_irq, ISA_IST_EDGE,
+		    ISA_IPL_NONE, lptintr, sc);
 }
 
 /*
@@ -482,9 +479,10 @@ lptwrite(dev, uio)
  * another char.
  */
 int
-lptintr(sc)
-	struct lpt_softc *sc;
+lptintr(arg)
+	void *arg;
 {
+	struct lpt_softc *sc = arg;
 	int iobase = sc->sc_iobase;
 
 #if 0

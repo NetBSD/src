@@ -1,4 +1,4 @@
-/*	$NetBSD: aha1742.c,v 1.45 1995/04/13 04:16:16 cgd Exp $	*/
+/*	$NetBSD: aha1742.c,v 1.46 1995/04/17 12:08:19 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
@@ -60,7 +60,9 @@
 
 #include <machine/pio.h>
 
-#include <i386/isa/isavar.h>
+#include <dev/eisa/eisareg.h>
+#include <dev/eisa/eisavar.h>
+
 #include <scsi/scsi_all.h>
 #include <scsi/scsiconf.h>
 
@@ -262,7 +264,7 @@ struct ahb_ecb {
 struct ahb_softc {
 	struct device sc_dev;
 	struct isadev sc_id;
-	struct intrhand sc_ih;
+	void *sc_ih;
 
 	int sc_iobase;
 	int sc_irq;
@@ -278,7 +280,7 @@ struct ahb_softc {
 void ahb_send_mbox __P((struct ahb_softc *, int, struct ahb_ecb *));
 int ahb_poll __P((struct ahb_softc *, struct scsi_xfer *, int));
 void ahb_send_immed __P((struct ahb_softc *, int, u_long));
-int ahbintr __P((struct ahb_softc *));
+int ahbintr __P((void *));
 void ahb_done __P((struct ahb_softc *, struct ahb_ecb *));
 void ahb_free_ecb __P((struct ahb_softc *, struct ahb_ecb *, int));
 struct ahb_ecb *ahb_get_ecb __P((struct ahb_softc *, int));
@@ -539,10 +541,8 @@ ahbattach(parent, self, aux)
 #ifdef NEWCONFIG
 	isa_establish(&ahb->sc_id, &ahb->sc_dev);
 #endif
-	ahb->sc_ih.ih_fun = ahbintr;
-	ahb->sc_ih.ih_arg = ahb;
-	ahb->sc_ih.ih_level = IPL_BIO;
-	intr_establish(ia->ia_irq, IST_LEVEL, &ahb->sc_ih);
+	ahb->sc_ih = eisa_intr_establish(ia->ia_irq, EISA_IST_LEVEL,
+	    EISA_IPL_BIO, ahbintr, ahb);
 
 	/*
 	 * ask the adapter what subunits are present
@@ -554,9 +554,10 @@ ahbattach(parent, self, aux)
  * Catch an interrupt from the adaptor
  */
 int
-ahbintr(ahb)
-	struct ahb_softc *ahb;
+ahbintr(arg)
+	void *arg;
 {
+	struct ahb_softc *ahb = arg;
 	struct ahb_ecb *ecb;
 	u_char ahbstat;
 	u_long mboxval;

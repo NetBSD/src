@@ -1,7 +1,8 @@
-/*	$NetBSD: pci_machdep.h,v 1.3 1995/04/17 12:08:00 cgd Exp $	*/
+/*	$NetBSD: eisareg.h,v 1.1 1995/04/17 12:08:21 cgd Exp $	*/
 
 /*
- * Copyright (c) 1994 Charles Hannum.  All rights reserved.
+ * Copyright (c) 1995 Christopher G. Demetriou
+ * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -13,9 +14,10 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *	This product includes software developed by Charles Hannum.
+ *      This product includes software developed by Christopher G. Demetriou
+ *      for the NetBSD Project.
  * 4. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission.
+ *    derived from this software without specific prior written permission
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
@@ -30,35 +32,5 @@
  */
 
 /*
- * Machine-specific definitions for PCI autoconfiguration.
- *
- * See the comments in pci_machdep.c for more explanation.
+ * XXX something should go here.  nothing does, yet.
  */
-
-/*
- * Configuration tag; created from a {bus,device,function} triplet by
- * pci_make_tag(), and passed to pci_conf_read() and pci_conf_write().
- * We could instead always pass the {bus,device,function} triplet to
- * the read and write routines, but this would cause extra overhead.
- *
- * Machines other than PCs are likely to use the equivalent of mode 1
- * tags always.  Mode 2 is historical and deprecated by the Revision
- * 2.0 specification.
- */
-typedef union {
-	u_long mode1;
-	struct {
-		u_short port;
-		u_char enable;
-		u_char forward;
-	} mode2;
-} pcitag_t;
-
-/*
- * Type of a value read from or written to a configuration register.
- * Always 32 bits.
- */
-typedef u_int32_t pcireg_t;
-
-extern int pci_mode;
-extern int pci_mode_detect __P((void));

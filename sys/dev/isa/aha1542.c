@@ -1,4 +1,4 @@
-/*	$NetBSD: aha1542.c,v 1.41 1995/01/13 14:46:44 mycroft Exp $	*/
+/*	$NetBSD: aha1542.c,v 1.42 1995/04/17 12:08:28 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
@@ -62,7 +62,7 @@
 
 #include <machine/pio.h>
 
-#include <i386/isa/isavar.h>
+#include <dev/isa/isavar.h>
 #include <scsi/scsi_all.h>
 #include <scsi/scsiconf.h>
 
@@ -313,7 +313,7 @@ int	aha_debug = 1;
 struct aha_softc {
 	struct device sc_dev;
 	struct isadev sc_id;
-	struct intrhand sc_ih;
+	void *sc_ih;
 
 	int sc_iobase;
 	int sc_irq, sc_drq;
@@ -327,7 +327,7 @@ struct aha_softc {
 };
 
 int aha_cmd();	/* XXX must be varargs to prototype */
-int ahaintr __P((struct aha_softc *));
+int ahaintr __P((void *));
 void aha_free_ccb __P((struct aha_softc *, struct aha_ccb *, int));
 struct aha_ccb *aha_get_ccb __P((struct aha_softc *, int));
 struct aha_ccb *aha_ccb_phys_kv __P((struct aha_softc *, u_long));
@@ -581,10 +581,8 @@ ahaattach(parent, self, aux)
 #ifdef NEWCONFIG
 	isa_establish(&aha->sc_id, &aha->sc_dev);
 #endif
-	aha->sc_ih.ih_fun = ahaintr;
-	aha->sc_ih.ih_arg = aha;
-	aha->sc_ih.ih_level = IPL_BIO;
-	intr_establish(ia->ia_irq, IST_EDGE, &aha->sc_ih);
+	aha->sc_ih = isa_intr_establish(ia->ia_irq, ISA_IST_EDGE, ISA_IPL_BIO,
+	    ahaintr, aha);
 
 	/*
 	 * ask the adapter what subunits are present
@@ -596,9 +594,10 @@ ahaattach(parent, self, aux)
  * Catch an interrupt from the adaptor
  */
 int
-ahaintr(aha)
-	struct aha_softc *aha;
+ahaintr(arg)
+	void *arg;
 {
+	struct aha_softc *aha = arg;
 	struct aha_mbx_in *wmbi;
 	struct aha_mbx *wmbx;
 	struct aha_ccb *ccb;

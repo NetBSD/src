@@ -1,4 +1,4 @@
-/*	$NetBSD: pms.c,v 1.19 1995/01/07 22:48:29 mycroft Exp $	*/
+/*	$NetBSD: pms.c,v 1.20 1995/04/17 12:07:31 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1994 Charles Hannum.
@@ -89,7 +89,7 @@
 
 struct pms_softc {		/* driver status information */
 	struct device sc_dev;
-	struct intrhand sc_ih;
+	void *sc_ih;
 
 	struct clist sc_q;
 	struct selinfo sc_rsel;
@@ -102,7 +102,7 @@ struct pms_softc {		/* driver status information */
 
 int pmsprobe __P((struct device *, void *, void *));
 void pmsattach __P((struct device *, struct device *, void *));
-int pmsintr __P((struct pms_softc *));
+int pmsintr __P((void *));
 
 struct cfdriver pmscd = {
 	NULL, "pms", pmsprobe, pmsattach, DV_TTY, sizeof(struct pms_softc)
@@ -192,10 +192,8 @@ pmsattach(parent, self, aux)
 	/* Other initialization was done by pmsprobe. */
 	sc->sc_state = 0;
 
-	sc->sc_ih.ih_fun = pmsintr;
-	sc->sc_ih.ih_arg = sc;
-	sc->sc_ih.ih_level = IPL_NONE;
-	intr_establish(ia->ia_irq, IST_EDGE, &sc->sc_ih);
+	sc->sc_ih = intr_establish(ia->ia_irq, ISA_IST_EDGE, ISA_IPL_NONE,
+	    pmsintr, sc);
 }
 
 int
@@ -362,9 +360,10 @@ pmsioctl(dev, cmd, addr, flag)
 #define PS2MBUTMASK 0x04
 
 int
-pmsintr(sc)
-	struct pms_softc *sc;
+pmsintr(arg)
+	void *arg;
 {
+	struct pms_softc *sc = arg;
 	static int state = 0;
 	static u_char buttons;
 	u_char changed;
