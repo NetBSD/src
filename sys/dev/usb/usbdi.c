@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi.c,v 1.56 2000/01/16 13:34:51 augustss Exp $	*/
+/*	$NetBSD: usbdi.c,v 1.57 2000/01/16 23:11:43 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usbdi.c,v 1.28 1999/11/17 22:33:49 n_hibma Exp $	*/
 
 /*
@@ -151,8 +151,8 @@ usbd_open_pipe(iface, address, flags, pipe)
 	usbd_status err;
 	int i;
 
-	DPRINTFN(3,("usbd_open_pipe: address=0x%x flags=0x%x\n", address, 
-		    flags));
+	DPRINTFN(3,("usbd_open_pipe: iface=%p address=0x%x flags=0x%x\n",
+		    iface, address, flags));
 
 	for (i = 0; i < iface->idesc->bNumEndpoints; i++) {
 		ep = &iface->endpoints[i];
