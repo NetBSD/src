@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.184.2.12 2004/12/29 13:54:05 kent Exp $	*/
+/*	$NetBSD: audio.c,v 1.184.2.13 2004/12/29 15:02:28 kent Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.184.2.12 2004/12/29 13:54:05 kent Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.184.2.13 2004/12/29 15:02:28 kent Exp $");
 
 #include "audio.h"
 #if NAUDIO > 0
@@ -217,6 +217,7 @@ const struct audio_params audio_default = {
 	.sample_rate = 8000,
 	.encoding = AUDIO_ENCODING_ULAW,
 	.precision = 8,
+	.validbits = 8,
 	.channels = 1,
 };
 
@@ -2805,7 +2806,7 @@ audiosetinfo(struct audio_softc *sc, struct audio_info *ai)
 			cleared = TRUE;
 		}
 		modechange = TRUE;
-		/* rp.subframe_size = rp.precision; */
+		rp.validbits = rp.precision; /* we don't have API to specify validbits */
 		setmode |= AUMODE_RECORD;
 	}
 	if (np > 0) {
@@ -2814,7 +2815,7 @@ audiosetinfo(struct audio_softc *sc, struct audio_info *ai)
 			cleared = TRUE;
 		}
 		modechange = TRUE;
-		/* pp.subframe_size = pp.precision; */
+		pp.validbits = pp.precision; /* we don't have API to specify validbits */
 		setmode |= AUMODE_PLAY;
 	}
 
