@@ -19,13 +19,13 @@
  *		-d	use compiled-in rootdev
  *		-r	specify root device
  *
- *	$NetBSD: loadbsd.c,v 1.3 1999/07/29 08:19:55 itohy Exp $
+ *	$NetBSD: loadbsd.c,v 1.4 1999/09/23 15:14:59 minoura Exp $
  */
 
 #include <sys/cdefs.h>
 
-__RCSID("$NetBSD: loadbsd.c,v 1.3 1999/07/29 08:19:55 itohy Exp $");
-#define VERSION	"$Revision: 1.3 $ $Date: 1999/07/29 08:19:55 $"
+__RCSID("$NetBSD: loadbsd.c,v 1.4 1999/09/23 15:14:59 minoura Exp $");
+#define VERSION	"$Revision: 1.4 $ $Date: 1999/09/23 15:14:59 $"
 
 #include <sys/types.h>		/* ntohl */
 #include <sys/reboot.h>
@@ -159,7 +159,8 @@ const struct devtbl {
 	char name[3];
 	u_char major;
 } devtable[] = {
-	X68K_BOOT_DEV_LIST
+	X68K_BOOT_DEV_LIST,
+	X68K_BOOT_NETIF_LIST
 };
 
 static int
@@ -455,7 +456,7 @@ kernel options:\n\
 \t	format:  [/interface/]device@unit[,lun][:partition]\n\
 \t	    interface: one of  spc@0, spc@1, mha@0\n\
 \t		       (current boot interface if omitted)\n\
-\t	    device:    one of  fd, sd, cd, md\n\
+\t	    device:    one of  fd, sd, cd, md, ne\n\
 \t	    unit:      device unit number (SCSI ID for SCSI device)\n\
 \t	    lun:       SCSI LUN # (0 if omitted)\n\
 \t	    partition: partition letter ('a' if omitted)\n\
