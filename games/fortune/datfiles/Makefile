@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.25 1999/09/21 16:34:51 tron Exp $
+#	$NetBSD: Makefile,v 1.26 2000/01/23 22:10:52 mycroft Exp $
 #	@(#)Makefile	8.2 (Berkeley) 4/19/94
 
 .include <bsd.own.mk>			# for INSTALL_OFFENSIVE_FORTUNES
@@ -29,7 +29,7 @@ FILES=${SRCFILES} ${DATFILES}
 FILESDIR=/usr/share/games/fortune
 .endif
 
-all: ${DATFILES}
+realall: ${DATFILES}
 
 # Normal fortunes: build directly from data files.
 
