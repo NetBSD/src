@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.418 2001/12/24 12:30:38 jdolecek Exp $
+#	$NetBSD: mi,v 1.419 2001/12/28 18:00:56 augustss Exp $
 ./sys				comp-sysutil-root
 ./usr/bin/addr2line		comp-debug-bin
 ./usr/bin/ar			comp-util-bin
@@ -839,7 +839,7 @@
 ./usr/include/ulimit.h			comp-c-include
 ./usr/include/unctrl.h			comp-c-include
 ./usr/include/unistd.h			comp-c-include
-./usr/include/usb.h			comp-c-include
+./usr/include/usbhid.h			comp-c-include
 ./usr/include/util.h			comp-c-include
 ./usr/include/utime.h			comp-c-include
 ./usr/include/utmp.h			comp-c-include
@@ -973,8 +973,8 @@
 ./usr/lib/libtermcap_p.a	comp-c-proflib
 ./usr/lib/libtermlib.a		comp-c-lib
 ./usr/lib/libtermlib_p.a	comp-c-proflib
-./usr/lib/libusb.a		comp-c-lib
-./usr/lib/libusb_p.a		comp-c-proflib
+./usr/lib/libusbhid.a		comp-c-lib
+./usr/lib/libusbhid_p.a		comp-c-proflib
 ./usr/lib/libutil.a		comp-c-lib
 ./usr/lib/libutil_p.a		comp-c-proflib
 ./usr/lib/libwrap.a		comp-c-lib
@@ -2175,7 +2175,7 @@
 ./usr/share/man/cat3/lgammaf.0	comp-c-catman
 ./usr/share/man/cat3/lgammaf_r.0	comp-c-catman
 ./usr/share/man/cat3/lh_stats.0		comp-c-catman
-./usr/share/man/cat3/libusb.0	comp-c-catman
+./usr/share/man/cat3/libusbhid.0	comp-c-catman
 ./usr/share/man/cat3/link_addr.0	comp-c-catman
 ./usr/share/man/cat3/link_ntoa.0	comp-c-catman
 ./usr/share/man/cat3/linkaddr.0	comp-c-catman
@@ -2673,7 +2673,7 @@
 ./usr/share/man/cat3/ungetwc.0	comp-c-catman
 ./usr/share/man/cat3/unsetenv.0	comp-c-catman
 ./usr/share/man/cat3/unvis.0	comp-c-catman
-./usr/share/man/cat3/usb.0	comp-c-catman
+./usr/share/man/cat3/usbhid.0	comp-c-catman
 ./usr/share/man/cat3/user_from_uid.0	comp-c-catman
 ./usr/share/man/cat3/usleep.0	comp-c-catman
 ./usr/share/man/cat3/util.0	comp-c-catman
@@ -4635,7 +4635,7 @@
 ./usr/share/man/man3/lgammaf.3		comp-c-man
 ./usr/share/man/man3/lgammaf_r.3		comp-c-man
 ./usr/share/man/man3/lh_stats.3		comp-c-man
-./usr/share/man/man3/libusb.3		comp-c-man
+./usr/share/man/man3/libusbhid.3		comp-c-man
 ./usr/share/man/man3/link_addr.3		comp-c-man
 ./usr/share/man/man3/link_ntoa.3		comp-c-man
 ./usr/share/man/man3/linkaddr.3		comp-c-man
@@ -5133,7 +5133,7 @@
 ./usr/share/man/man3/ungetwc.3		comp-c-man
 ./usr/share/man/man3/unsetenv.3		comp-c-man
 ./usr/share/man/man3/unvis.3		comp-c-man
-./usr/share/man/man3/usb.3		comp-c-man
+./usr/share/man/man3/usbhid.3		comp-c-man
 ./usr/share/man/man3/user_from_uid.3		comp-c-man
 ./usr/share/man/man3/usleep.3		comp-c-man
 ./usr/share/man/man3/util.3		comp-c-man
