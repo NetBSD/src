@@ -33,7 +33,7 @@
 
 #include "kadmin_locl.h"
 
-RCSID("$Id: kadmind.c,v 1.1.1.2 2000/08/02 19:58:52 assar Exp $");
+RCSID("$Id: kadmind.c,v 1.2 2000/08/06 06:48:50 thorpej Exp $");
 
 static char *config_file;
 static char *keyfile;
@@ -135,7 +135,7 @@ main(int argc, char **argv)
     {
 	int fd = 0;
 	struct sockaddr sa;
-	size_t sa_size;
+	socklen_t sa_size;
 	krb5_auth_context ac = NULL;
 	int debug_port;
 	sa_size = sizeof(sa);
