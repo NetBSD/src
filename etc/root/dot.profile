@@ -1,4 +1,4 @@
-#	$NetBSD: dot.profile,v 1.15 2000/02/19 19:00:14 mycroft Exp $
+#	$NetBSD: dot.profile,v 1.15.6.1 2002/12/07 21:59:17 he Exp $
 
 export PATH=/sbin:/usr/sbin:/bin:/usr/bin:/usr/pkg/sbin:/usr/pkg/bin
 export PATH=${PATH}:/usr/X11R6/bin:/usr/local/sbin:/usr/local/bin
@@ -13,7 +13,7 @@ fi
 umask 022
 #ulimit -c 0
 
-export ENV=$HOME/.shrc
+export ENV=/root/.shrc
 
 # Do not display in 'su -' case
 if [ -z "$SU_FROM" ]; then
