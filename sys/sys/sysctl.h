@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.h,v 1.95 2003/06/29 22:32:28 fvdl Exp $	*/
+/*	$NetBSD: sysctl.h,v 1.96 2003/07/02 20:07:47 ragge Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -196,7 +196,8 @@ struct ctlname {
 #define	KERN_POSIX_SPIN_LOCKS	70	/* int: POSIX Spin Locks option */
 #define	KERN_POSIX_READER_WRITER_LOCKS 71 /* int: POSIX R/W Locks option */
 #define	KERN_DUMP_ON_PANIC	72	/* int: dump on panic */
-#define	KERN_MAXID		73	/* number of valid kern ids */
+#define	KERN_SOMAXKVA		73	/* int: max socket kernel virtual mem */
+#define	KERN_MAXID		74	/* number of valid kern ids */
 
 
 #define	CTL_KERN_NAMES { \
@@ -273,6 +274,7 @@ struct ctlname {
 	{ "posix_spin_locks", CTLTYPE_INT }, \
 	{ "posix_reader_writer_locks", CTLTYPE_INT }, \
 	{ "dump_on_panic", CTLTYPE_INT}, \
+	{ "somaxkva", CTLTYPE_INT}, \
 }
 
 /*

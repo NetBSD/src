@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_socket.c,v 1.83 2003/06/29 22:31:30 fvdl Exp $	*/
+/*	$NetBSD: uipc_socket.c,v 1.84 2003/07/02 20:07:45 ragge Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -72,11 +72,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.83 2003/06/29 22:31:30 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.84 2003/07/02 20:07:45 ragge Exp $");
 
 #include "opt_sock_counters.h"
 #include "opt_sosend_loan.h"
 #include "opt_mbuftrace.h"
+#include "opt_somaxkva.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -147,7 +148,10 @@ int use_sosend_loan = 1;
 
 struct mbuf *so_pendfree;
 
-int somaxkva = 16 * 1024 * 1024;
+#ifndef SOMAXKVA
+#define	SOMAXKVA (16 * 1024 * 1024)
+#endif
+int somaxkva = SOMAXKVA;
 int socurkva;
 int sokvawaiters;
 
