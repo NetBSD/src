@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.293 2004/06/22 14:21:02 tron Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.294 2004/06/22 15:34:45 tron Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -4390,4 +4390,14 @@ gnu/usr.bin/groff/doc/Makefile			1.5
 
 	Install GNU `troff' (or `groff') info manual.
 	[uebayasi, ticket #536]
+
+sys/dev/pci/if_tl.c				1.65
+sys/dev/pci/pcidevs				1.628
+sys/dev/pci/pcidevs.h				regen
+sys/dev/pci/pcidevs_data.h			regen
+
+	Apply patch from kern/25936 by Michael Blake: Add support for the
+	Netelligent 10/100 TX variant found on the Compaq Proliant Professional
+	Workstation 5100.
+	[bouyer, ticket #537]
 
