@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.393 2005/01/22 16:38:55 hamajima Exp $
+$NetBSD: usbdevs,v 1.394 2005/01/23 01:25:04 elric Exp $
 
 /*
  * Copyright (c) 1998-2004 The NetBSD Foundation, Inc.
@@ -387,6 +387,7 @@ vendor HAWKING		0x0e66	Hawking
 vendor OTI		0x0ea0	Ours Technology
 vendor PILOTECH		0x0eaf	Pilotech
 vendor EGALAX		0x0eef	eGalax
+vendor AIRPRIME		0x0f3d	AirPrime, Incorporated
 vendor QUALCOMM		0x1004	Qualcomm
 vendor MOTOROLA		0x1063	Motorola
 vendor CCYU		0x1065	CCYU Technology
@@ -531,6 +532,9 @@ product AGFA SNAPSCANE20	0x2091	SnapScan e20
 product AGFA SNAPSCANE25	0x2095	SnapScan e25
 product AGFA SNAPSCANE26	0x2097	SnapScan e26
 product AGFA SNAPSCANE52	0x20fd	SnapScan e52
+
+/* AirPrime products */
+product AIRPRIME PC5220		0x0112	CDMA Wireless PC Card
 
 /* AIPTEK International products */
 product AIPTEK2 PENCAM_MEGA_1_3	0x504a	PenCam Mega 1.3
