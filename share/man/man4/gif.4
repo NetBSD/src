@@ -1,4 +1,4 @@
-.\"	$NetBSD: gif.4,v 1.23 2002/09/04 00:04:20 wiz Exp $
+.\"	$NetBSD: gif.4,v 1.24 2003/09/07 16:22:27 wiz Exp $
 .\"	$KAME: gif.4,v 1.24 2001/02/20 12:54:01 itojun Exp $
 .\"
 .\" Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -44,7 +44,7 @@ It can tunnel IPv[46] traffic over IPv[46].
 Therefore, there can be four possible configurations.
 The behavior of
 .Nm
-is mainly based on RFC2893 IPv6-over-IPv4 configured tunnel.
+is mainly based on RFC 2893 IPv6-over-IPv4 configured tunnel.
 .Nm
 can also tunnel ISO traffic over IPv[46] using EON encapsulation.
 .Pp
@@ -92,7 +92,7 @@ interface flag.
 Without
 .Dv IFF_LINK1 ,
 .Nm
-will show a normal behavior, like described in RFC2893.
+will show a normal behavior, like described in RFC 2893.
 This can be summarized as follows:
 .Bl -tag -width "Ingress" -offset indent
 .It Ingress
@@ -127,7 +127,7 @@ If outer ECN CE bit is
 enable ECN CE bit on the inner.
 .El
 .Pp
-Note that the ECN friendly behavior violates RFC2893.
+Note that the ECN friendly behavior violates RFC 2893.
 This should be used in mutual agreement with the peer.
 .Ss Packet format
 Every inner packet is encapsulated in an outer packet.
@@ -210,7 +210,7 @@ and on the cisco
 .Xr ifconfig 8
 .Rs
 .%A	C. Perkins
-.%B	RFC2003
+.%B	RFC 2003
 .%T	IP Encapsulation within IP
 .%D	October 1996
 .%O	ftp://ftp.isi.edu/in-notes/rfc2003.txt
@@ -218,7 +218,7 @@ and on the cisco
 .Rs
 .%A	R. Gilligan
 .%A	E. Nordmark
-.%B	RFC2893
+.%B	RFC 2893
 .%T	Transition Mechanisms for IPv6 Hosts and Routers
 .%D	August 2000
 .%O	ftp://ftp.isi.edu/in-notes/rfc2893.txt
@@ -233,8 +233,8 @@ and on the cisco
 .Re
 .\"
 .Sh STANDARDS
-IPv4 over IPv4 encapsulation is compatible with RFC2003.
-IPv6 over IPv4 encapsulation is compatible with RFC2893.
+IPv4 over IPv4 encapsulation is compatible with RFC 2003.
+IPv6 over IPv4 encapsulation is compatible with RFC 2893.
 .\"
 .Sh HISTORY
 The
