@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_subr.c,v 1.145 2003/08/07 16:33:18 agc Exp $	*/
+/*	$NetBSD: tcp_subr.c,v 1.146 2003/08/15 03:42:05 jonathan Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_subr.c,v 1.145 2003/08/07 16:33:18 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_subr.c,v 1.146 2003/08/15 03:42:05 jonathan Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -156,6 +156,14 @@ __KERNEL_RCSID(0, "$NetBSD: tcp_subr.c,v 1.145 2003/08/07 16:33:18 agc Exp $");
 #ifdef IPSEC
 #include <netinet6/ipsec.h>
 #endif /*IPSEC*/
+
+#ifdef FAST_IPSEC
+#include <netipsec/ipsec.h>
+#ifdef INET6
+#include <netipsec/ipsec6.h>
+#endif
+#endif	/* FAST_IPSEC*/
+
 
 #ifdef INET6
 struct in6pcb tcb6;
@@ -865,7 +873,8 @@ tcp_respond(tp, template, m, th0, ack, seq, flags)
 	case AF_INET:
 		error = ip_output(m, NULL, ro,
 		    (tp && tp->t_mtudisc ? IP_MTUDISC : 0),
-		    NULL);
+		    (struct ip_moptions *)0,
+		     (tp == NULL ? (struct inpcb *)0 : tp->t_inpcb));
 		break;
 #endif
 #ifdef INET6
@@ -2134,7 +2143,7 @@ tcp_new_iss1(void *laddr, void *faddr, u_int16_t lport, u_int16_t fport,
 	return (tcp_iss);
 }
 
-#ifdef IPSEC
+#if defined(IPSEC) || defined(FAST_IPSEC)
 /* compute ESP/AH header size for TCP, including outer IP header. */
 size_t
 ipsec4_hdrsiz_tcp(tp)

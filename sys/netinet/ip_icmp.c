@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_icmp.c,v 1.75 2003/08/07 16:33:12 agc Exp $	*/
+/*	$NetBSD: ip_icmp.c,v 1.76 2003/08/15 03:42:02 jonathan Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -101,7 +101,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_icmp.c,v 1.75 2003/08/07 16:33:12 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_icmp.c,v 1.76 2003/08/15 03:42:02 jonathan Exp $");
 
 #include "opt_ipsec.h"
 
@@ -132,6 +132,11 @@ __KERNEL_RCSID(0, "$NetBSD: ip_icmp.c,v 1.75 2003/08/07 16:33:12 agc Exp $");
 #include <netinet6/ipsec.h>
 #include <netkey/key.h>
 #endif
+
+#ifdef FAST_IPSEC
+#include <netipsec/ipsec.h>
+#include <netipsec/key.h>
+#endif	/* FAST_IPSEC*/
 
 #include <machine/stdarg.h>
 
@@ -603,7 +608,7 @@ reflect:
 			rtfree(rt);
 
 		pfctlinput(PRC_REDIRECT_HOST, sintosa(&icmpsrc));
-#ifdef IPSEC
+#if defined(IPSEC) || defined(FAST_IPSEC)
 		key_sa_routechange((struct sockaddr *)&icmpsrc);
 #endif
 		break;
@@ -872,7 +877,8 @@ icmp_send(m, opts)
 	/* Don't lookup socket */
 	(void)ipsec_setsocket(m, NULL);
 #endif
-	(void) ip_output(m, opts, NULL, 0, NULL);
+	(void) ip_output(m, opts, NULL, 0, 
+	    (struct ip_moptions *)0, (struct inpcb *)0);
 }
 
 n_time

@@ -1,4 +1,4 @@
-/*	$NetBSD: in_pcb.c,v 1.86 2003/08/07 16:33:10 agc Exp $	*/
+/*	$NetBSD: in_pcb.c,v 1.87 2003/08/15 03:42:01 jonathan Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in_pcb.c,v 1.86 2003/08/07 16:33:10 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in_pcb.c,v 1.87 2003/08/15 03:42:01 jonathan Exp $");
 
 #include "opt_ipsec.h"
 
@@ -128,6 +128,9 @@ __KERNEL_RCSID(0, "$NetBSD: in_pcb.c,v 1.86 2003/08/07 16:33:10 agc Exp $");
 #ifdef IPSEC
 #include <netinet6/ipsec.h>
 #include <netkey/key.h>
+#elif FAST_IPSEC
+#include <netipsec/ipsec.h>
+#include <netipsec/key.h>
 #endif /* IPSEC */
 
 struct	in_addr zeroin_addr;
@@ -181,7 +184,7 @@ in_pcballoc(so, v)
 	struct inpcbtable *table = v;
 	struct inpcb *inp;
 	int s;
-#ifdef IPSEC
+#if defined(IPSEC) || defined(FAST_IPSEC)
 	int error;
 #endif
 
@@ -192,7 +195,7 @@ in_pcballoc(so, v)
 	inp->inp_table = table;
 	inp->inp_socket = so;
 	inp->inp_errormtu = -1;
-#ifdef IPSEC
+#if defined(IPSEC) || defined(FAST_IPSEC)
 	error = ipsec_init_pcbpolicy(so, &inp->inp_sp);
 	if (error != 0) {
 		pool_put(&inpcb_pool, inp);
@@ -446,7 +449,7 @@ in_pcbconnect(v, nam)
 	inp->inp_faddr = sin->sin_addr;
 	inp->inp_fport = sin->sin_port;
 	in_pcbstate(inp, INP_CONNECTED);
-#ifdef IPSEC
+#if defined(IPSEC) /*|| defined(FAST_IPSEC)*/ /*XXX*/
 	if (inp->inp_socket->so_type == SOCK_STREAM)
 		ipsec_pcbconn(inp->inp_sp);
 #endif
@@ -464,7 +467,7 @@ in_pcbdisconnect(v)
 	in_pcbstate(inp, INP_BOUND);
 	if (inp->inp_socket->so_state & SS_NOFDREF)
 		in_pcbdetach(inp);
-#ifdef IPSEC
+#if defined(IPSEC) /*|| defined(FAST_IPSEC)*/ /*XXX*/
 	ipsec_pcbdisconn(inp->inp_sp);
 #endif
 }
@@ -477,7 +480,7 @@ in_pcbdetach(v)
 	struct socket *so = inp->inp_socket;
 	int s;
 
-#ifdef IPSEC
+#if defined(IPSEC) || defined(FAST_IPSEC)
 	ipsec4_delete_pcbpolicy(inp);
 #endif /*IPSEC*/
 	so->so_pcb = 0;

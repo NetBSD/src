@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_mroute.c,v 1.76 2003/08/07 16:33:13 agc Exp $	*/
+/*	$NetBSD: ip_mroute.c,v 1.77 2003/08/15 03:42:03 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_mroute.c,v 1.76 2003/08/07 16:33:13 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_mroute.c,v 1.77 2003/08/15 03:42:03 jonathan Exp $");
 
 #include "opt_ipsec.h"
 
@@ -120,6 +120,11 @@ __KERNEL_RCSID(0, "$NetBSD: ip_mroute.c,v 1.76 2003/08/07 16:33:13 agc Exp $");
 #ifdef IPSEC
 #include <netinet6/ipsec.h>
 #include <netkey/key.h>
+#endif
+
+#ifdef FAST_IPSEC
+#include <netipsec/ipsec.h>
+#include <netipsec/key.h>
 #endif
 
 #include <machine/stdarg.h>
@@ -1847,7 +1852,7 @@ tbf_send_packet(vifp, m)
 		(void)ipsec_setsocket(m, NULL);
 #endif
 		ip_output(m, (struct mbuf *)0, &vifp->v_route,
-		    IP_FORWARDING, (struct ip_moptions *)0);
+		    IP_FORWARDING, (struct ip_moptions *)0, (struct inpcb *)0);
 	} else {
 		/* if physical interface option, extract the options and then send */
 		struct ip_moptions imo;
@@ -1864,7 +1869,7 @@ tbf_send_packet(vifp, m)
 		(void)ipsec_setsocket(m, NULL);
 #endif
 		error = ip_output(m, (struct mbuf *)0, (struct route *)0,
-		    IP_FORWARDING|IP_MULTICASTOPTS, &imo);
+		    IP_FORWARDING|IP_MULTICASTOPTS, &imo, (struct inpcb *)0);
 
 		if (mrtdebug & DEBUG_XMIT)
 			log(LOG_DEBUG, "phyint_send on vif %ld err %d\n",

@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_input.c,v 1.172 2003/08/07 16:33:12 agc Exp $	*/
+/*	$NetBSD: ip_input.c,v 1.173 2003/08/15 03:42:02 jonathan Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.172 2003/08/07 16:33:12 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.173 2003/08/15 03:42:02 jonathan Exp $");
 
 #include "opt_gateway.h"
 #include "opt_pfil_hooks.h"
@@ -147,6 +147,10 @@ __KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.172 2003/08/07 16:33:12 agc Exp $");
 #include <netinet6/ipsec.h>
 #include <netkey/key.h>
 #endif
+#ifdef FAST_IPSEC
+#include <netipsec/ipsec.h>
+#include <netipsec/key.h>
+#endif	/* FAST_IPSEC*/
 
 #ifndef	IPFORWARDING
 #ifdef GATEWAY
@@ -429,6 +433,12 @@ ip_input(struct mbuf *m)
 	int downmatch;
 	int checkif;
 	int srcrt = 0;
+#ifdef FAST_IPSEC
+	struct m_tag *mtag;
+	struct tdb_ident *tdbi;
+	struct secpolicy *sp;
+	int s, error;
+#endif /* FAST_IPSEC */
 
 	MCLAIM(m, &ip_rx_mowner);
 #ifdef	DIAGNOSTIC
@@ -762,6 +772,34 @@ ip_input(struct mbuf *m)
 			goto bad;
 		}
 #endif
+#ifdef FAST_IPSEC
+		mtag = m_tag_find(m, PACKET_TAG_IPSEC_IN_DONE, NULL);
+		s = splsoftnet();
+		if (mtag != NULL) {
+			tdbi = (struct tdb_ident *)(mtag + 1);
+			sp = ipsec_getpolicy(tdbi, IPSEC_DIR_INBOUND);
+		} else {
+			sp = ipsec_getpolicybyaddr(m, IPSEC_DIR_INBOUND,
+						   IP_FORWARDING, &error);   
+		}
+		if (sp == NULL) {	/* NB: can happen if error */
+			splx(s);
+			/*XXX error stat???*/
+			DPRINTF(("ip_input: no SP for forwarding\n"));	/*XXX*/
+			goto bad;
+		}
+
+		/*
+		 * Check security policy against packet attributes.
+		 */
+		error = ipsec_in_reject(sp, m);
+		KEY_FREESP(&sp);
+		splx(s);
+		if (error) {
+			ipstat.ips_cantforward++;
+			goto bad;
+		}
+#endif	/* FAST_IPSEC */
 
 		ip_forward(m, srcrt);
 	}
@@ -850,7 +888,7 @@ found:
 		IPQ_UNLOCK();
 	}
 
-#ifdef IPSEC
+#if defined(IPSEC)
 	/*
 	 * enforce IPsec policy checking if we are seeing last header.
 	 * note that we do not visit this with protocols with pcb layer
@@ -862,6 +900,45 @@ found:
 		goto bad;
 	}
 #endif
+#if FAST_IPSEC
+	/*
+	 * enforce IPsec policy checking if we are seeing last header.
+	 * note that we do not visit this with protocols with pcb layer
+	 * code - like udp/tcp/raw ip.
+	 */
+	if ((inetsw[ip_protox[ip->ip_p]].pr_flags & PR_LASTHDR) != 0) {
+		/*
+		 * Check if the packet has already had IPsec processing
+		 * done.  If so, then just pass it along.  This tag gets
+		 * set during AH, ESP, etc. input handling, before the
+		 * packet is returned to the ip input queue for delivery.
+		 */ 
+		mtag = m_tag_find(m, PACKET_TAG_IPSEC_IN_DONE, NULL);
+		s = splsoftnet();
+		if (mtag != NULL) {
+			tdbi = (struct tdb_ident *)(mtag + 1);
+			sp = ipsec_getpolicy(tdbi, IPSEC_DIR_INBOUND);
+		} else {
+			sp = ipsec_getpolicybyaddr(m, IPSEC_DIR_INBOUND,
+						   IP_FORWARDING, &error);   
+		}
+		if (sp != NULL) {
+			/*
+			 * Check security policy against packet attributes.
+			 */
+			error = ipsec_in_reject(sp, m);
+			KEY_FREESP(&sp);
+		} else {
+			/* XXX error stat??? */
+			error = EINVAL;
+DPRINTF(("ip_input: no SP, packet discarded\n"));/*XXX*/
+			goto bad;
+		}
+		splx(s);
+		if (error)
+			goto bad;
+	}
+#endif /* FAST_IPSEC */
 
 	/*
 	 * Switch out to protocol's input routine.
@@ -1566,7 +1643,7 @@ ip_forward(m, srcrt)
 	struct mbuf *mcopy;
 	n_long dest;
 	struct ifnet *destifp;
-#ifdef IPSEC
+#if defined(IPSEC) || defined(FAST_IPSEC)
 	struct ifnet dummyifp;
 #endif
 
@@ -1664,7 +1741,9 @@ ip_forward(m, srcrt)
 	(void)ipsec_setsocket(m, NULL);
 #endif
 	error = ip_output(m, (struct mbuf *)0, &ipforward_rt,
-	    (IP_FORWARDING | (ip_directedbcast ? IP_ALLOWBROADCAST : 0)), 0);
+	    (IP_FORWARDING | (ip_directedbcast ? IP_ALLOWBROADCAST : 0)),
+			  (struct ip_moptions *)0, (struct inpcb *)0);
+
 	if (error)
 		ipstat.ips_cantforward++;
 	else {
@@ -1704,7 +1783,7 @@ ip_forward(m, srcrt)
 	case EMSGSIZE:
 		type = ICMP_UNREACH;
 		code = ICMP_UNREACH_NEEDFRAG;
-#ifndef IPSEC
+#if !defined(IPSEC) && !defined(FAST_IPSEC)
 		if (ipforward_rt.ro_rt)
 			destifp = ipforward_rt.ro_rt->rt_ifp;
 #else
@@ -1755,7 +1834,11 @@ ip_forward(m, srcrt)
 					}
 				}
 
+#ifdef	IPSEC
 				key_freesp(sp);
+#else
+				KEY_FREESP(&sp);
+#endif
 			}
 		}
 #endif /*IPSEC*/

@@ -1,9 +1,9 @@
-/*	$NetBSD: ipsec_output.c,v 1.1 2003/08/13 20:06:51 jonathan Exp $	*/
+/*	$NetBSD: ipsec_output.c,v 1.2 2003/08/15 03:42:07 jonathan Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/ipsec_output.c,v 1.3.2.1 2003/01/24 05:11:35 sam Exp $	*/
 /*	$KAME: ipsec.c,v 1.103 2001/05/24 07:14:18 sakane Exp $	*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec_output.c,v 1.1 2003/08/13 20:06:51 jonathan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec_output.c,v 1.2 2003/08/15 03:42:07 jonathan Exp $");
 
 /*
  * IPsec output processing.
@@ -151,7 +151,9 @@ ipsec_process_done(struct mbuf *m, struct ipsecrequest *isr)
 		ip->ip_len = ntohs(ip->ip_len);
 		ip->ip_off = ntohs(ip->ip_off);
 #endif /* __FreeBSD_ */
-		return ip_output(m, NULL, NULL, IP_RAWOUTPUT, NULL, NULL);
+		return ip_output(m, NULL, NULL, IP_RAWOUTPUT,
+		    (struct ip_moptions *)0, (struct inpcb*)0);
+
 #endif /* INET */
 #ifdef INET6
 	case AF_INET6:
