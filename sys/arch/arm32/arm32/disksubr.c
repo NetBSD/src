@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.8 1998/03/27 19:28:52 cgd Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.9 1998/03/27 23:39:57 cgd Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -160,7 +160,6 @@ readdisklabel(dev, strat, lp, osdep)
 	cyl = LABELSECTOR / lp->d_secpercyl;
 
 	if (osdep) {
-		struct riscbsd_partition *rp = osdep->partitions;
 		struct filecore_bootblock *bb;
 		int heads;
 		int sectors;
@@ -438,7 +437,6 @@ writedisklabel(dev, strat, lp, osdep)
 	cyl = LABELSECTOR / lp->d_secpercyl;
 
 	if (osdep) {
-		struct riscbsd_partition *rp = osdep->partitions;
 		struct filecore_bootblock *bb;
 		int heads;
 		int sectors;
