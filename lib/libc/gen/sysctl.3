@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysctl.3,v 1.65 2000/08/02 12:26:54 itojun Exp $
+.\"	$NetBSD: sysctl.3,v 1.66 2000/08/04 13:31:54 kml Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -775,10 +775,10 @@ the MTU of the appropriate interface.  Otherwise, it is calculated based on
 the greater of the MTU of the interface, and the largest (non-loopback)
 interface MTU on the system.
 .It Li tcp.sack
-Returns a value which determines the level of Selective Acknowledgement
-supported by TCP.  If 2, we will transmit and receive SACK options.
-If 1, we will transmit SACK options, but ignore any SACK options received.
-If 0, SACK is disabled.
+TCP Selective ACKnowledgement (RFC 2018) is not implemented in 
+.Nx 
+at this time.
+Changing this value will have no effect.
 .It Li tcp.win_scale
 If rfc1323 is enabled, a value of 1 indicates RFC1323 window scale options,
 for increasing the TCP window size, are enabled.
