@@ -1,4 +1,4 @@
-/* $NetBSD: if_skvar.h,v 1.1 2003/08/26 21:11:01 jdolecek Exp $ */
+/* $NetBSD: if_skvar.h,v 1.2 2003/10/15 02:18:52 briggs Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -146,6 +146,38 @@ struct sk_ring_data {
 #define SK_RX_RING_ADDR(sc, i) \
     ((sc)->sk_ring_map->dm_segs[0].ds_addr + \
      offsetof(struct sk_ring_data, sk_rx_ring[(i)]))
+
+#define SK_CDOFF(x)	offsetof(struct sk_ring_data, x)
+#define SK_CDTXOFF(x)	SK_CDOFF(sk_tx_ring[(x)])
+#define SK_CDRXOFF(x)	SK_CDOFF(sk_rx_ring[(x)])
+
+#define SK_CDTXSYNC(sc, x, n, ops)					\
+do {									\
+	int __x, __n;							\
+									\
+	__x = (x);							\
+	__n = (n);							\
+									\
+	/* If it will wrap around, sync to the end of the ring. */	\
+	if ((__x + __n) > SK_TX_RING_CNT) {				\
+		bus_dmamap_sync((sc)->sk_softc->sc_dmatag,		\
+		    (sc)->sk_ring_map, SK_CDTXOFF(__x),			\
+		    sizeof(struct sk_tx_desc) *	 (SK_TX_RING_CNT - __x),\
+		    (ops));						\
+		__n -= (SK_TX_RING_CNT - __x);				\
+		__x = 0;						\
+	}								\
+									\
+	/* Now sync whatever is left. */				\
+	bus_dmamap_sync((sc)->sk_softc->sc_dmatag, (sc)->sk_ring_map,	\
+	    SK_CDTXOFF((__x)), sizeof(struct sk_tx_desc) * __n, (ops));	\
+} while (/*CONSTCOND*/0)
+
+#define SK_CDRXSYNC(sc, x, ops)						\
+do {									\
+	bus_dmamap_sync((sc)->sk_softc->sc_dmatag, (sc)->sk_ring_map,	\
+	    SK_CDRXOFF((x)), sizeof(struct sk_rx_desc), (ops));		\
+} while (/*CONSTCOND*/0)
 
 struct sk_bcom_hack {
 	int			reg;
