@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.h,v 1.29 2000/03/28 02:58:46 simonb Exp $	*/
+/*	$NetBSD: locore.h,v 1.30 2000/04/12 01:05:34 nisimura Exp $	*/
 
 /*
  * Copyright 1996 The Board of Trustees of The Leland Stanford
@@ -59,15 +59,13 @@ void mips1_FlushCache  __P((void));
 void mips1_FlushDCache  __P((vaddr_t addr, vsize_t len));
 void mips1_FlushICache  __P((vaddr_t addr, vsize_t len));
 void mips1_ForceCacheUpdate __P((void));
-void mips1_SetPID   __P((int pid));
 
+void mips1_SetPID   __P((int pid));
 void mips1_TBIA __P((int));
 void mips1_TBIAP __P((int));
 void mips1_TBIS __P((vaddr_t));
-
 int mips1_TLBUpdate __P((u_int, /*pt_entry_t*/ u_int));
-void mips1_TLBWriteIndexed  __P((u_int index, u_int high,
-				 u_int low));
+
 void mips1_wbflush __P((void));
 void mips1_proc_trampoline __P((void));
 void mips1_cpu_switch_resume __P((void));
@@ -78,10 +76,11 @@ void mips3_FlushDCache __P((vaddr_t addr, vaddr_t len));
 void mips3_FlushICache __P((vaddr_t addr, vaddr_t len));
 void mips3_ForceCacheUpdate __P((void));
 void mips3_HitFlushDCache __P((vaddr_t, int));
+
 void mips3_SetPID  __P((int pid));
-void mips3_TLBFlush __P((int numtlb));
-void mips3_TLBFlushAddr __P( /* XXX Really pte highpart ? */
-			    (vaddr_t addr));
+void mips3_TBIA __P((int));
+void mips3_TBIAP __P((int));
+void mips3_TBIS __P((vaddr_t));
 int mips3_TLBUpdate __P((u_int, /*pt_entry_t*/ u_int));
 struct tlb;
 void mips3_TLBRead __P((int, struct tlb *));
@@ -90,11 +89,10 @@ void mips3_TLBWriteIndexedVPS __P((u_int index, struct tlb *tlb));
 void mips3_TLBWriteIndexed __P((u_int index, u_int high,
 				u_int lo0, u_int lo1));
 #endif
+void mips3_SetWIRED __P((int));
 void mips3_wbflush __P((void));
 void mips3_proc_trampoline __P((void));
 void mips3_cpu_switch_resume __P((void));
-
-void mips3_SetWIRED __P((int));
 
 void mips5200_FlushCache  __P((void));
 void mips5200_FlushDCache __P((vaddr_t addr, vaddr_t len));
@@ -167,8 +165,8 @@ extern mips_locore_jumpvec_t r4000_locore_vec;
 #endif
 #define MachForceCacheUpdate	mips3_ForceCacheUpdate
 #define MachSetPID		mips3_SetPID
-#define MachTLBFlush()		mips3_TLBFlush(mips_num_tlb_entries)
-#define MachTLBFlushAddr	mips3_TLBFlushAddr
+#define MIPS_TBIAP()		mips3_TBIAP(mips_num_tlb_entries)
+#define MIPS_TBIS		mips3_TBIS
 #define MachTLBUpdate		mips3_TLBUpdate
 #define wbflush()		mips3_wbflush()
 #define proc_trampoline		mips3_proc_trampoline
@@ -180,8 +178,8 @@ extern mips_locore_jumpvec_t r4000_locore_vec;
 #define MachFlushICache		mips1_FlushICache
 #define MachForceCacheUpdate	mips1_ForceCacheUpdate
 #define MachSetPID		mips1_SetPID
-#define MachTLBFlush()		mips1_TBIAP(mips_num_tlb_entries)
-#define MachTLBFlushAddr	mips1_TBIS
+#define MIPS_TBIAP()		mips1_TBIAP(mips_num_tlb_entries)
+#define MIPS_TBIS		mips1_TBIS
 #define MachTLBUpdate		mips1_TLBUpdate
 #define wbflush()		mips1_wbflush()
 #define proc_trampoline		mips1_proc_trampoline
@@ -195,8 +193,8 @@ extern mips_locore_jumpvec_t r4000_locore_vec;
 #define MachFlushICache		(*(mips_locore_jumpvec.flushICache))
 #define MachForceCacheUpdate	(*(mips_locore_jumpvec.forceCacheUpdate))
 #define MachSetPID		(*(mips_locore_jumpvec.setTLBpid))
-#define MachTLBFlush()		(*(mips_locore_jumpvec.tlbFlush))(mips_num_tlb_entries)
-#define MachTLBFlushAddr	(*(mips_locore_jumpvec.tlbFlushAddr))
+#define MIPS_TBIAP()		(*(mips_locore_jumpvec.tlbFlush))(mips_num_tlb_entries)
+#define MIPS_TBIS		(*(mips_locore_jumpvec.tlbFlushAddr))
 #define MachTLBUpdate		(*(mips_locore_jumpvec.tlbUpdate))
 #define wbflush()		(*(mips_locore_jumpvec.wbflush))()
 #define proc_trampoline		(mips_locore_jumpvec.proc_trampoline)

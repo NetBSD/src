@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_machdep.c,v 1.75 2000/03/28 02:58:49 simonb Exp $	*/
+/*	$NetBSD: mips_machdep.c,v 1.76 2000/04/12 01:05:35 nisimura Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -52,7 +52,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.75 2000/03/28 02:58:49 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.76 2000/04/12 01:05:35 nisimura Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_ultrix.h"
@@ -192,8 +192,8 @@ mips_locore_jumpvec_t mips3_locore_vec =
 	mips3_FlushCache,
 #endif
 	mips3_SetPID,
-	mips3_TLBFlush,
-	mips3_TLBFlushAddr,
+	mips3_TBIAP,
+	mips3_TBIS,
 	mips3_TLBUpdate,
 	mips3_wbflush,
 	mips3_proc_trampoline,
@@ -447,7 +447,7 @@ mips_vector_init()
 	case 3:
 	case 4:
 		mips3_SetWIRED(0);
-		mips3_TLBFlush(mips_num_tlb_entries);
+		mips3_TBIA(mips_num_tlb_entries);
 		mips3_SetWIRED(MIPS3_TLB_WIRED_ENTRIES);
 		mips3_vector_init();
 		break;
