@@ -1,4 +1,4 @@
-/*	$NetBSD: i82557.c,v 1.34.2.2 2000/12/31 20:14:54 jhawk Exp $	*/
+/*	$NetBSD: i82557.c,v 1.34.2.3 2001/05/06 15:04:55 he Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -477,12 +477,20 @@ fxp_power(why, arg)
 	int s;
 
 	s = splnet();
-	if (why != PWR_RESUME)
+	switch (why) {
+	case PWR_SUSPEND:
+	case PWR_STANDBY:
 		fxp_stop(sc, 0);
-	else {
+		break;
+	case PWR_RESUME:
 		ifp = &sc->sc_ethercom.ec_if;
 		if (ifp->if_flags & IFF_UP)
 			fxp_init(sc);
+		break;
+	case PWR_SOFTSUSPEND:
+	case PWR_SOFTSTANDBY:
+	case PWR_SOFTRESUME:
+		break;
 	}
 	splx(s);
 }
