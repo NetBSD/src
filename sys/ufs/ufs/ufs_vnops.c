@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_vnops.c,v 1.106 2003/08/10 09:54:06 dsl Exp $	*/
+/*	$NetBSD: ufs_vnops.c,v 1.107 2003/08/16 07:04:17 dsl Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993, 1995
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_vnops.c,v 1.106 2003/08/10 09:54:06 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_vnops.c,v 1.107 2003/08/16 07:04:17 dsl Exp $");
 
 #ifndef _LKM
 #include "opt_quota.h"
@@ -2021,7 +2021,7 @@ ufs_vinit(struct mount *mntp, int (**specops)(void *), int (**fifoops)(void *),
 	/*
 	 * Initialize modrev times
 	 */
-	ip->i_modrev = mono_time.tv_sec * 0x100000000ull
+	ip->i_modrev = (uint64_t)(uint)mono_time.tv_sec << 32
 			| mono_time.tv_usec * 4294u;
 	*vpp = vp;
 }
