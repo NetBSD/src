@@ -1,4 +1,4 @@
-/*	$NetBSD: kdump.c,v 1.22 1998/10/18 17:43:43 christos Exp $	*/
+/*	$NetBSD: kdump.c,v 1.23 1998/10/24 19:04:51 christos Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993\n\
 #if 0
 static char sccsid[] = "@(#)kdump.c	8.4 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: kdump.c,v 1.22 1998/10/18 17:43:43 christos Exp $");
+__RCSID("$NetBSD: kdump.c,v 1.23 1998/10/24 19:04:51 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -96,10 +96,10 @@ struct ktr_header ktr_header;
 #include "../../sys/compat/svr4/svr4_syscalls.c"
 #include "../../sys/compat/ultrix/ultrix_syscalls.c"
 
-#include "../../sys/compat/hpux/hpux_error.c"
-#include "../../sys/compat/svr4/svr4_error.c"
-#include "../../sys/compat/ibcs2/ibcs2_error.c"
-#include "../../sys/compat/linux/common/linux_error.c"
+#include "../../sys/compat/hpux/hpux_errno.c"
+#include "../../sys/compat/svr4/svr4_errno.c"
+#include "../../sys/compat/ibcs2/ibcs2_errno.c"
+#include "../../sys/compat/linux/common/linux_errno.c"
 #undef KTRACE
 
 struct emulation {
@@ -118,17 +118,17 @@ static struct emulation emulations[] = {
 	{  "freebsd",  freebsd_syscallnames, FREEBSD_SYS_MAXSYSCALL,
 	        NULL,		        0 },
 	{     "hpux",	  hpux_syscallnames,    HPUX_SYS_MAXSYSCALL,
-	  hpux_error,   NELEM(hpux_error) },
+	  native_to_hpux_errno,  NELEM(native_to_hpux_errno)  },
 	{    "ibcs2",    ibcs2_syscallnames,   IBCS2_SYS_MAXSYSCALL,
-	 ibcs2_error,  NELEM(ibcs2_error) },
+	 native_to_ibcs2_errno,  NELEM(native_to_ibcs2_errno) },
 	{    "linux",    linux_syscallnames,   LINUX_SYS_MAXSYSCALL,
-	 linux_error,  NELEM(linux_error) },
+	 native_to_linux_errno,  NELEM(native_to_linux_errno) },
 	{     "osf1",     osf1_syscallnames,    OSF1_SYS_MAXSYSCALL,
 	        NULL,		        0 },
 	{    "sunos",    sunos_syscallnames,   SUNOS_SYS_MAXSYSCALL,
 	        NULL,		        0 },
 	{     "svr4",     svr4_syscallnames,    SVR4_SYS_MAXSYSCALL,
-	  svr4_error,   NELEM(svr4_error) },
+	  native_to_svr4_errno,  NELEM(native_to_svr4_errno)  },
 	{   "ultrix",   ultrix_syscallnames,  ULTRIX_SYS_MAXSYSCALL,
 	        NULL,			0 },
 	{       NULL,		       NULL,		          0,
