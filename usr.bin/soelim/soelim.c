@@ -1,4 +1,4 @@
-/*	$NetBSD: soelim.c,v 1.8 2001/02/19 23:03:52 cgd Exp $	*/
+/*	$NetBSD: soelim.c,v 1.9 2001/04/09 13:30:47 wiz Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\n\
 #if 0
 static char sccsid[] = "@(#)soelim.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: soelim.c,v 1.8 2001/02/19 23:03:52 cgd Exp $");
+__RCSID("$NetBSD: soelim.c,v 1.9 2001/04/09 13:30:47 wiz Exp $");
 #endif /* not lint */
 
 /*
@@ -76,26 +76,23 @@ struct path {
 	size_t n, c;
 };
 
-static int	 process __P((struct path *, char *));
-static void	 initpath __P((struct path *));
-static void	 addpath __P((struct path *,  const char *));
-static FILE	*openpath __P((struct path *, const char *, const char *));
+static int	 process(struct path *, char *);
+static void	 initpath(struct path *);
+static void	 addpath(struct path *,  const char *);
+static FILE	*openpath(struct path *, const char *, const char *);
 
-int	main __P((int, char **));
+int	main(int, char **);
 
 
 static void
-initpath(p)
-	struct path *p;
+initpath(struct path *p)
 {
 	p->list = NULL;
 	p->n = p->c = 0;
 }
 
 static void
-addpath(p, dir)
-	struct path *p;
-	const char *dir;
+addpath(struct path *p, const char *dir)
 {
 	if (p->list == NULL || p->n <= p->c - 2) {
 		p->n += 10;
@@ -111,10 +108,7 @@ addpath(p, dir)
 }
 
 static FILE *
-openpath(p, name, parm)
-	struct path *p;
-	const char *name;
-	const char *parm;
+openpath(struct path *p, const char *name, const char *parm)
 {
 	char filename[MAXPATHLEN];
 	const char *f;
@@ -139,9 +133,7 @@ openpath(p, name, parm)
 }
 
 int
-main(argc, argv)
-	int argc;
-	char *argv[];
+main(int argc, char *argv[])
 {
 	struct path p;
 	int c;
@@ -177,9 +169,7 @@ main(argc, argv)
 }
 
 int
-process(p, file)
-	struct path *p;
-	char *file;
+process(struct path *p, char *file)
 {
 	char *cp;
 	int c;
