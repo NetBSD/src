@@ -1,4 +1,4 @@
-/*	$NetBSD: sb_isapnp.c,v 1.20 1998/02/22 05:14:34 enami Exp $	*/
+/*	$NetBSD: sb_isapnp.c,v 1.21 1998/04/13 13:19:40 augustss Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -54,6 +54,7 @@
 #include <dev/isapnp/isapnpreg.h>
 #include <dev/isapnp/isapnpvar.h>
 
+#include <dev/isa/mpu401var.h>
 #include <dev/isa/sbreg.h>
 #include <dev/isa/sbvar.h>
 #include <dev/isa/sbdspvar.h>
@@ -100,6 +101,7 @@ sb_isapnp_match(parent, match, aux)
 	    strcmp(ipa->ipa_devlogic, "CTL0045") && /* SB AWE64 Value */
 	    strcmp(ipa->ipa_devlogic, "ESS1868") &&
 	    strcmp(ipa->ipa_devlogic, "OPT9250") && /* Televideo card, Opti */
+	    strcmp(ipa->ipa_devlogic, "YMH0021") && /* OPL3-SA3 */
 	    strcmp(ipa->ipa_devcompat, "PNPB000") && /* generic SB 1.5 */
 	    strcmp(ipa->ipa_devcompat, "PNPB001") && /* generic SB 2.0 */
 	    strcmp(ipa->ipa_devcompat, "PNPB002") && /* generic SB Pro */
@@ -147,10 +149,15 @@ sb_isapnp_attach(parent, self, aux)
                 	sc->sc_drq16 = ipa->ipa_drq[1].num;
         } else
         	sc->sc_drq16 = DRQUNK;
-	/*
-	 * isapnp is a child if isa, and we needs isa for the dma
-	 * routines
-	 */
+
+	/* LOC */
+	if (ipa->ipa_nio > 1) {
+		sc->sc_mpu_sc.iobase = ipa->ipa_io[1].base;
+		sc->sc_mpu_sc.ioh = ipa->ipa_io[1].h;
+	} else
+		sc->sc_mpu_sc.iobase = 0;
+
+	/* isapnp is a child if isa, and we needs isa for the dma routines. */
 	sc->sc_isa = parent->dv_parent;
 
 	if (!sbmatch(sc)) {
