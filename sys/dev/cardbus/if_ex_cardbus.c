@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ex_cardbus.c,v 1.28 2003/11/02 09:56:38 wiz Exp $	*/
+/*	$NetBSD: if_ex_cardbus.c,v 1.28.2.1 2004/07/23 22:10:25 he Exp $	*/
 
 /*
  * CardBus specific routines for 3Com 3C575-family CardBus ethernet adapter
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ex_cardbus.c,v 1.28 2003/11/02 09:56:38 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ex_cardbus.c,v 1.28.2.1 2004/07/23 22:10:25 he Exp $");
 
 /* #define EX_DEBUG 4 */	/* define to report information for debugging */
 
@@ -152,6 +152,30 @@ const struct ex_cardbus_product {
 	      CARDBUS_COMMAND_MASTER_ENABLE,
 	  EX_CB_CYCLONE,
 	  "3c575CT Ethernet" },
+
+	{ CARDBUS_PRODUCT_3COM_3C656_E,
+	  EX_CONF_90XB | EX_CONF_PHY_POWER | EX_CONF_EEPROM_OFF |
+	    EX_CONF_EEPROM_8BIT | EX_CONF_INV_LED_POLARITY,
+	  CARDBUS_COMMAND_IO_ENABLE | CARDBUS_COMMAND_MEM_ENABLE |
+	      CARDBUS_COMMAND_MASTER_ENABLE,
+	  EX_CB_CYCLONE,
+	  "3c656-TX Ethernet" },
+
+	{ CARDBUS_PRODUCT_3COM_3C656B_E,
+	  EX_CONF_90XB | EX_CONF_PHY_POWER | EX_CONF_EEPROM_OFF |
+	    EX_CONF_EEPROM_8BIT | EX_CONF_INV_LED_POLARITY,
+	  CARDBUS_COMMAND_IO_ENABLE | CARDBUS_COMMAND_MEM_ENABLE |
+	      CARDBUS_COMMAND_MASTER_ENABLE,
+	  EX_CB_CYCLONE,
+	  "3c656B-TX Ethernet" },
+
+	{ CARDBUS_PRODUCT_3COM_3C656C_E,
+	  EX_CONF_90XB | EX_CONF_PHY_POWER | EX_CONF_EEPROM_OFF |
+	    EX_CONF_EEPROM_8BIT,
+	  CARDBUS_COMMAND_IO_ENABLE | CARDBUS_COMMAND_MEM_ENABLE |
+	      CARDBUS_COMMAND_MASTER_ENABLE,
+	  EX_CB_CYCLONE,
+	  "3c656C-TX Ethernet" },
 
 	{ 0,
 	  0,
