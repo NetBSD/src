@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)signalvar.h	8.3 (Berkeley) 1/4/94
- *	$Id: signalvar.h,v 1.8 1994/05/05 05:40:18 cgd Exp $
+ *	$Id: signalvar.h,v 1.9 1994/05/07 00:45:51 cgd Exp $
  */
 
 #ifndef	_SYS_SIGNALVAR_H_		/* tmp for user.h */
@@ -53,7 +53,7 @@ struct	sigacts {
 	sigset_t ps_sigintr;		/* signals that interrupt syscalls */
 	sigset_t ps_oldmask;		/* saved mask from before sigpause */
 	int	ps_flags;		/* signal flags, below */
-	struct	sigstack ps_sigstk;	/* sp & on stack state variable */
+	struct	sigaltstack ps_sigstk;	/* sp & on stack state variable */
 	int	ps_sig;			/* for core dump/debugger XXX */
 	int	ps_code;		/* for core dump/debugger XXX */
 	int	ps_addr;		/* for core dump/debugger XXX */
