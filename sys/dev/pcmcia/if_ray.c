@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ray.c,v 1.7 2000/02/02 07:22:06 augustss Exp $	*/
+/*	$NetBSD: if_ray.c,v 1.8 2000/02/02 08:08:50 augustss Exp $	*/
 /* 
  * Copyright (c) 2000 Christian E. Hopps
  * All rights reserved.
@@ -663,6 +663,9 @@ ray_detach(self, flags)
 
 	if (sc->sc_if.if_flags & IFF_RUNNING)
 		ray_disable(sc);
+
+	shutdownhook_disestablish(sc->sc_sdhook);
+	ifmedia_delete_instance(&sc->sc_media, IFM_INST_ANY);
 
 	/* give back the memory */
 #if RAY_USE_AMEM
