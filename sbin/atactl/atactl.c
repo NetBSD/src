@@ -1,4 +1,4 @@
-/*	$NetBSD: atactl.c,v 1.5 1999/10/29 23:07:43 soren Exp $	*/
+/*	$NetBSD: atactl.c,v 1.6 1999/11/01 02:30:58 soren Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -137,7 +137,7 @@ struct bitinfo ata_cmd_set2[] = {
 	{ WDC_CMD2_RMSN, "Removable Media Status Notification feature set" },
 	{ ATA_CMD2_APM, "Advanced Power Management feature set" },
 	{ ATA_CMD2_CFA, "CFA feature set" },
-	{ ATA_CMD2_RWQ, "READ/WRITE DMS QUEUED commands" },
+	{ ATA_CMD2_RWQ, "READ/WRITE DMA QUEUED commands" },
 	{ WDC_CMD2_DM, "DOWNLOAD MICROCODE command" },
 	{ NULL, NULL },
 };
