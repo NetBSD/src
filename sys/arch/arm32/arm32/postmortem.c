@@ -1,4 +1,4 @@
-/* $NetBSD: postmortem.c,v 1.2 1996/02/22 22:51:14 mark Exp $ */
+/* $NetBSD: postmortem.c,v 1.3 1996/03/08 20:49:47 mark Exp $ */
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe.
@@ -39,7 +39,7 @@
  *
  * Created      : 17/09/94
  *
- *    $Id: postmortem.c,v 1.2 1996/02/22 22:51:14 mark Exp $
+ *    $Id: postmortem.c,v 1.3 1996/03/08 20:49:47 mark Exp $
  */
 
 #include <sys/param.h>
@@ -150,9 +150,6 @@ pm_dumpw(addr, count)
 	}
 }
 
-
-extern int syscallcode;
-extern trapframe_t syscallframe;
 
 /* Dump a trap frame */
 
