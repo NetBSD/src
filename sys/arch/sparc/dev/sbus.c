@@ -42,7 +42,7 @@
  *	@(#)sbus.c	8.1 (Berkeley) 6/11/93
  *
  * from: Header: sbus.c,v 1.10 92/11/26 02:28:13 torek Exp  (LBL)
- * $Id: sbus.c,v 1.1 1993/10/02 10:23:55 deraadt Exp $
+ * $Id: sbus.c,v 1.2 1994/09/17 23:57:38 deraadt Exp $
  */
 
 /*
@@ -54,14 +54,15 @@
 
 #include <machine/autoconf.h>
 
-#include <sparc/sbus/sbusreg.h>
-#include <sparc/sbus/sbusvar.h>
+#include <sparc/dev/sbusreg.h>
+#include <sparc/dev/sbusvar.h>
 
 /* autoconfiguration driver */
 void	sbus_attach __P((struct device *, struct device *, void *));
-struct cfdriver sbuscd =
-    { NULL, "sbus", matchbyname, sbus_attach,
-      DV_DULL, sizeof(struct sbus_softc) };
+struct cfdriver sbuscd = {
+	NULL, "sbus", matchbyname, sbus_attach,
+	DV_DULL, sizeof(struct sbus_softc)
+};
 
 /*
  * Print the location of some sbus-attached device (called just
@@ -74,11 +75,11 @@ sbus_print(args, sbus)
 	void *args;
 	char *sbus;
 {
-	register struct sbus_attach_args *sa = args;
+	register struct confargs *ca = args;
 
 	if (sbus)
-		printf("%s at %s", sa->sa_ra.ra_name, sbus);
-	printf(" slot %d offset 0x%x", sa->sa_slot, sa->sa_offset);
+		printf("%s at %s", ca->ca_ra.ra_name, sbus);
+	printf(" slot %d offset 0x%x", ca->ca_slot, ca->ca_offset);
 	return (UNCONF);
 }
 
@@ -92,10 +93,11 @@ sbus_attach(parent, self, aux)
 	void *aux;
 {
 	register struct sbus_softc *sc = (struct sbus_softc *)self;
+	struct confargs *ca = aux;
+	register struct romaux *ra = &ca->ca_ra;
 	register int base, node, slot;
 	register char *name;
-	struct sbus_attach_args sa;
-	register struct romaux *ra;
+	struct confargs oca;
 
 	/*
 	 * XXX there is only one Sbus, for now -- do not know how to
@@ -110,15 +112,14 @@ sbus_attach(parent, self, aux)
 	 * Record clock frequency for synchronous SCSI.
 	 * IS THIS THE CORRECT DEFAULT??
 	 */
-	ra = aux;
 	node = ra->ra_node;
 	sc->sc_clockfreq = getpropint(node, "clock-frequency", 25*1000*1000);
 	printf(": clock = %s MHz\n", clockfreq(sc->sc_clockfreq));
 
 	if (ra->ra_bp != NULL && strcmp(ra->ra_bp->name, "sbus") == 0)
-		sa.sa_ra.ra_bp = ra->ra_bp + 1;
+		oca.ca_ra.ra_bp = ra->ra_bp + 1;
 	else
-		sa.sa_ra.ra_bp = NULL;
+		oca.ca_ra.ra_bp = NULL;
 
 	/*
 	 * Loop through ROM children, fixing any relative addresses
@@ -126,18 +127,19 @@ sbus_attach(parent, self, aux)
 	 */
 	for (node = firstchild(node); node; node = nextsibling(node)) {
 		name = getpropstring(node, "name");
-		if (!romprop(&sa.sa_ra, name, node))
+		if (!romprop(&oca.ca_ra, name, node))
 			continue;
-		base = (int)sa.sa_ra.ra_paddr;
+		base = (int)oca.ca_ra.ra_paddr;
 		if (SBUS_ABS(base)) {
-			sa.sa_slot = SBUS_ABS_TO_SLOT(base);
-			sa.sa_offset = SBUS_ABS_TO_OFFSET(base);
+			oca.ca_slot = SBUS_ABS_TO_SLOT(base);
+			oca.ca_offset = SBUS_ABS_TO_OFFSET(base);
 		} else {
-			sa.sa_slot = slot = sa.sa_ra.ra_iospace;
-			sa.sa_offset = base;
-			sa.sa_ra.ra_paddr = (void *)SBUS_ADDR(slot, base);
+			oca.ca_slot = slot = oca.ca_ra.ra_iospace;
+			oca.ca_offset = base;
+			oca.ca_ra.ra_paddr = (void *)SBUS_ADDR(slot, base);
 		}
-		(void) config_found(&sc->sc_dev, (void *)&sa, sbus_print);
+		oca.ca_bustype = BUS_SBUS;
+		(void) config_found(&sc->sc_dev, (void *)&oca, sbus_print);
 	}
 }
 
@@ -176,4 +178,32 @@ sbusreset(sbus)
 			printf(" %s", dev->dv_xname);
 		}
 	}
+}
+
+/* 
+ * find a device matching "name" and unit number
+ */
+struct device *
+getdevunit(name, unit)
+	char *name;
+	int unit;
+{
+	struct device *dev = alldevs;
+	char num[10], fullname[16];
+	int lunit;
+
+	/* compute length of name and decimal expansion of unit number */
+	sprintf(num, "%d", unit);
+	lunit = strlen(num);
+	if (strlen(name) + lunit >= sizeof(fullname) - 1)
+		panic("config_attach: device name too long");
+
+	strcpy(fullname, name);
+	strcat(fullname, num);
+
+	while (strcmp(dev->dv_xname, fullname) != 0) {
+		if ((dev = dev->dv_next) == NULL)
+			return NULL;
+	}
+	return dev;
 }
