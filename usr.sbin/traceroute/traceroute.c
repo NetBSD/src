@@ -42,7 +42,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)traceroute.c	8.1 (Berkeley) 6/6/93";*/
-static char *rcsid = "$Id: traceroute.c,v 1.6 1995/01/04 04:47:42 mycroft Exp $";
+static char *rcsid = "$Id: traceroute.c,v 1.7 1995/03/21 14:29:14 mycroft Exp $";
 #endif /* not lint */
 
 /*
@@ -266,7 +266,6 @@ void send_probe __P((int, int, struct sockaddr_in *));
 double deltaT __P((struct timeval *, struct timeval *));
 int packet_ok __P((u_char *, int, struct sockaddr_in *, int));
 void print __P((u_char *, int, struct sockaddr_in *));
-void tvsub __P((struct timeval *, struct timeval *));
 char *inetname __P((struct in_addr));
 void usage __P((void));
 
@@ -771,22 +770,6 @@ in_cksum(addr, len)
 	return (answer);
 }
 #endif notyet
-
-/*
- * Subtract 2 timeval structs:  out = out - in.
- * Out is assumed to be >= in.
- */
-void
-tvsub(out, in)
-	register struct timeval *out, *in;
-{
-	if ((out->tv_usec -= in->tv_usec) < 0)   {
-		out->tv_sec--;
-		out->tv_usec += 1000000;
-	}
-	out->tv_sec -= in->tv_sec;
-}
-
 
 /*
  * Construct an Internet address representation.
