@@ -1,4 +1,4 @@
-/*	$NetBSD: smbfs_vfsops.c,v 1.7 2003/02/16 19:35:16 jdolecek Exp $	*/
+/*	$NetBSD: smbfs_vfsops.c,v 1.8 2003/02/18 10:27:17 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2000-2001, Boris Popov
@@ -128,10 +128,6 @@ smbfs_mount(struct mount *mp, const char *path, void *data,
 	size_t size;
 	int error;
 
-	if (data == NULL) {
-		printf("missing data argument\n");
-		return EINVAL;
-	}
 	if (mp->mnt_flag & MNT_GETARGS) {
 		smp = VFSTOSMBFS(mp);
 		if (smp == NULL)
@@ -153,22 +149,19 @@ smbfs_mount(struct mount *mp, const char *path, void *data,
 	}
 	smb_makescred(&scred, p, p->p_ucred);
 	error = smb_dev2share(args.dev, SMBM_EXEC, &scred, &ssp);
-	if (error) {
-		printf("invalid device handle %d (%d)\n", args.dev, error);
+	if (error)
 		return error;
-	}
-	vcp = SSTOVC(ssp);
 	smb_share_unlock(ssp, 0);
-	mp->mnt_stat.f_iosize = SSTOVC(ssp)->vc_txmax;
+	vcp = SSTOVC(ssp);
+	mp->mnt_stat.f_iosize = vcp->vc_txmax;
 
         MALLOC(smp, struct smbmount *, sizeof(*smp), M_SMBFSDATA, M_WAITOK);
 	memset(smp, 0, sizeof(*smp));
-
         mp->mnt_data = smp;
+
 	smp->sm_hash = hashinit(desiredvnodes, HASH_LIST, 
 				M_SMBFSHASH, M_WAITOK, &smp->sm_hashlen);
-	if (smp->sm_hash == NULL)
-		goto bad;
+
 	lockinit(&smp->sm_hashlock, PVFS, "smbfsh", 0, 0);
 	smp->sm_share = ssp;
 	smp->sm_root = NULL;
@@ -203,7 +196,7 @@ smbfs_mount(struct mount *mp, const char *path, void *data,
 #ifdef DIAGNOSTICS
 	SMBERROR("mp=%p\n", mp);
 #endif
-	return error;
+	return (0);
 
 bad:
         if (smp) {
