@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.9 1999/07/02 15:09:10 itojun Exp $	*/
+/*	$NetBSD: main.c,v 1.10 1999/07/11 19:30:39 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988, 1990, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1990, 1993\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.3 (Berkeley) 5/30/95";
 #else
-__RCSID("$NetBSD: main.c,v 1.9 1999/07/02 15:09:10 itojun Exp $");
+__RCSID("$NetBSD: main.c,v 1.10 1999/07/11 19:30:39 thorpej Exp $");
 #endif
 #endif /* not lint */
 
@@ -111,10 +111,9 @@ usage()
 	    "[-r] ",
 #endif
 #if defined(IPSEC) && defined(IPSEC_POLICY_IPSEC)
-	    "[-P policy] [host-name [port]]"
-#else
-	    "[host-name [port]]"
+	    "[-P policy] "
 #endif
+	    "[host-name [port]]"
 	);
 	exit(1);
 }
