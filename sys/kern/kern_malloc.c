@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_malloc.c,v 1.64 2001/11/12 15:25:12 lukem Exp $	*/
+/*	$NetBSD: kern_malloc.c,v 1.65 2001/11/17 03:50:28 lukem Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_malloc.c,v 1.64 2001/11/12 15:25:12 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_malloc.c,v 1.65 2001/11/17 03:50:28 lukem Exp $");
 
 #include "opt_lockdebug.h"
 
@@ -410,6 +410,8 @@ out:
 	domlog(va, size, type, 1, file, line);
 #endif
 	splx(s);
+	if (va != NULL && (flags & M_ZERO))
+		memset(va, 0, size);
 	return ((void *) va);
 }
 
