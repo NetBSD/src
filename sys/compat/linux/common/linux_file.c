@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_file.c,v 1.37.2.13 2002/12/19 00:42:53 thorpej Exp $	*/
+/*	$NetBSD: linux_file.c,v 1.37.2.14 2002/12/20 00:03:51 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_file.c,v 1.37.2.13 2002/12/19 00:42:53 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_file.c,v 1.37.2.14 2002/12/20 00:03:51 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -696,7 +696,7 @@ linux_sys_mknod(l, v, retval)
 
 		SCARG(&bma, path) = SCARG(uap, path);
 		SCARG(&bma, mode) = SCARG(uap, mode);
-		return sys_mkfifo(p, &bma, retval);
+		return sys_mkfifo(l, &bma, retval);
 	} else {
 		struct sys_mknod_args bma;
 
