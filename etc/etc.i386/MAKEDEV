@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.92 1999/08/25 23:06:48 augustss Exp $
+#	$NetBSD: MAKEDEV,v 1.93 1999/08/27 14:13:33 augustss Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -76,6 +76,7 @@
 #	uhid*	Generic HID devices
 #	ulpt*	Printer devices
 #	ugen*	Generic device
+#	ttyU*	Modem
 #
 # Call units:
 #
