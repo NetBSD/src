@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.70 1997/04/09 20:50:03 thorpej Exp $	*/
+/*	$NetBSD: trap.c,v 1.71 1997/07/29 06:43:59 fair Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -462,7 +462,7 @@ trap(type, code, v, tf)
 
 #ifdef DEBUG
 		if ((mmudebug & MDB_WBFOLLOW) || MDB_ISPID(p->p_pid))
-		printf("trap: T_MMUFLT pid=%d, code=%x, v=%x, pc=%x, sr=%x\n",
+		printf("trap: T_MMUFLT pid=%d, code=0x%x, v=0x%x, pc=0x%x, sr=0x%x\n",
 		       p->p_pid, code, v, tf.tf_pc, tf.tf_sr);
 #endif
 
@@ -501,7 +501,7 @@ trap(type, code, v, tf)
 
 #ifdef	DEBUG
 		if (rv && MDB_ISPID(p->p_pid)) {
-			printf("vm_fault(%p, %x, %x, 0) -> %x\n",
+			printf("vm_fault(%p, 0x%lx, 0x%x, 0) -> 0x%x\n",
 			       map, va, ftype, rv);
 			if (mmudebug & MDB_WBFAILED)
 				Debugger();
@@ -539,7 +539,7 @@ trap(type, code, v, tf)
 #endif
 				goto copyfault;
 			}
-			printf("vm_fault(%p, %x, %x, 0) -> %x\n",
+			printf("vm_fault(%p, 0x%lx, 0x%x, 0) -> 0x%x\n",
 			       map, va, ftype, rv);
 			goto dopanic;
 		}
