@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.16 1999/01/31 14:06:40 scw Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.17 2000/01/18 19:45:28 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Dale Rahn.
@@ -42,8 +42,6 @@
 #include <dev/scsipi/scsiconf.h>
 
 #include <machine/autoconf.h>
-
-#define b_cylin b_resid
 
 #ifdef DEBUG
 int disksubr_debug = 0;
@@ -124,7 +122,7 @@ readdisklabel(dev, strat, lp, clp)
 	bp->b_blkno = 0; /* contained in block 0 */
 	bp->b_bcount = lp->d_secsize;
 	bp->b_flags = B_BUSY | B_READ;
-	bp->b_cylin = 0; /* contained in block 0 */
+	bp->b_cylinder = 0; /* contained in block 0 */
 	(*strat)(bp);
 
 	if (biowait(bp)) {
@@ -245,7 +243,7 @@ writedisklabel(dev, strat, lp, clp)
 	bp->b_blkno = 0; /* contained in block 0 */
 	bp->b_bcount = lp->d_secsize;
 	bp->b_flags = B_BUSY | B_READ;
-	bp->b_cylin = 0; /* contained in block 0 */
+	bp->b_cylinder = 0; /* contained in block 0 */
 	(*strat)(bp);
 
 	if (error = biowait(bp)) {
@@ -281,7 +279,7 @@ writedisklabel(dev, strat, lp, clp)
 		bp->b_blkno = 0; /* contained in block 0 */
 		bp->b_bcount = lp->d_secsize;
 		bp->b_flags = B_WRITE;
-		bp->b_cylin = 0; /* contained in block 0 */
+		bp->b_cylinder = 0; /* contained in block 0 */
 		(*strat)(bp);
 
 		error = biowait(bp);
@@ -330,7 +328,7 @@ bounds_check_with_label(bp, lp, wlabel)
         }
 
 	/* calculate cylinder for disksort to order transfers with */
-        bp->b_cylin = (bp->b_blkno + p->p_offset) / lp->d_secpercyl;
+        bp->b_cylinder = (bp->b_blkno + p->p_offset) / lp->d_secpercyl;
 	return(1);
 
 bad:

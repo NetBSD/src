@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.1 1999/12/09 14:53:16 tsutsui Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.2 2000/01/18 19:45:52 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -42,8 +42,6 @@
 #include <sys/disk.h>
 #include <sys/disklabel.h>
 
-#define	b_cylin	b_resid
-
 char*	readdisklabel __P((dev_t dev, void (*strat) __P((struct buf *bp)),
 		       register struct disklabel *lp,
 		       struct cpu_disklabel *osdep));
@@ -79,7 +77,7 @@ readdisklabel(dev, strat, lp, osdep)
 	bp->b_blkno = LABELSECTOR;
 	bp->b_bcount = lp->d_secsize;
 	bp->b_flags = B_BUSY | B_READ;
-	bp->b_cylin = LABELSECTOR / lp->d_secpercyl;
+	bp->b_cylinder = LABELSECTOR / lp->d_secpercyl;
 	(*strat)(bp);
 	if (biowait(bp)) {
 		msg = "I/O error";
