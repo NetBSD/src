@@ -1,4 +1,4 @@
-/*	$NetBSD: stic.c,v 1.17 2002/03/17 19:41:03 atatat Exp $	*/
+/*	$NetBSD: stic.c,v 1.17.4.1 2002/05/16 11:30:54 gehenna Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: stic.c,v 1.17 2002/03/17 19:41:03 atatat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: stic.c,v 1.17.4.1 2002/05/16 11:30:54 gehenna Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -164,10 +164,6 @@ void	stic_free_screen(void *, void *);
 int	stic_show_screen(void *, void *, int, void (*)(void *, int, int),
 			 void *);
 
-int	sticopen(dev_t, int, int, struct proc *);
-int	sticclose(dev_t, int, int, struct proc *);
-paddr_t	sticmmap(dev_t, off_t, int);
-
 void	stic_do_switch(void *);
 void	stic_setup_backing(struct stic_info *, struct stic_screen *);
 void	stic_setup_vdac(struct stic_info *);
@@ -188,6 +184,15 @@ void	stic_eraserows(void *, int, int, long);
 int	stic_mapchar(void *, int, u_int *);
 void	stic_putchar(void *, int, int, u_int, long);
 int	stic_alloc_attr(void *, int, int, int, long *);
+
+dev_type_open(sticopen);
+dev_type_close(sticclose);
+dev_type_mmap(sticmmap);
+
+const struct cdevsw stic_cdevsw = {
+	sticopen, sticclose, noread, nowrite, noioctl,
+	nostop, notty, nopoll, sticmmap,
+};
 
 /* Colormap for wscons, matching WSCOL_*. Upper 8 are high-intensity. */
 static const u_int8_t stic_cmap[16*3] = {
