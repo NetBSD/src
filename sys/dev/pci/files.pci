@@ -1,4 +1,4 @@
-#	$NetBSD: files.pci,v 1.97 2000/06/24 00:37:20 thorpej Exp $
+#	$NetBSD: files.pci,v 1.98 2000/06/25 18:49:22 sommerfeld Exp $
 #
 # Config file and device description for machine-independent PCI code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -292,6 +292,11 @@ file	dev/pci/if_rtk_pci.c		rtk_pci
 
 # DECchip 21x4x Ethernet controller family, and assorted clones.
 attach	tlp at pci with tlp_pci
+defopt	opt_tlp.h		 	TLP_MATCH_21040
+				 	TLP_MATCH_21041
+				 	TLP_MATCH_21140
+				 	TLP_MATCH_21142
+
 file	dev/pci/if_tlp_pci.c		tlp_pci
 
 # Bit3 PCI-VME mod. 617
