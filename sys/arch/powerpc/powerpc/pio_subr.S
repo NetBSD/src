@@ -1,4 +1,4 @@
-/*	$NetBSD: pio_subr.S,v 1.1 2003/03/15 08:03:19 matt Exp $	*/
+/*	$NetBSD: pio_subr.S,v 1.2 2003/03/16 06:52:39 matt Exp $	*/
 
 /*
  * Copyright (c) 2003 Matt Thomas
@@ -322,7 +322,7 @@ ENTRY_NOPROFILE(outs8)
 	cmpwi	5,0		/* len == 0? */
 	beqlr-			/*   return if len == 0 */
 	addi	5,5,-1		/* len -= 1 */
-	addi	5,5,4		/* len += src */
+	add	5,5,4		/* len += src */
 	addi	4,4,-1		/* pre-decrement */
 1:	lbzu	0,1(4)		/* load and increment */
 	stb	0,0(3)		/* store */
@@ -348,7 +348,7 @@ ENTRY_NOPROFILE(outs16)
 	beqlr-			/*   return if len == 0 */
 	addi	5,5,-1		/* len -= 1 */
 	slwi	5,5,1		/* len *= 2 */
-	addi	5,5,4		/* len += src */
+	add	5,5,4		/* len += src */
 	addi	4,4,-2		/* pre-decrement */
 1:	lhzu	0,2(4)		/* load and increment */
 	sth	0,0(3)		/* store */
@@ -374,7 +374,7 @@ ENTRY_NOPROFILE(outs32)
 	beqlr-			/*   return if len == 0 */
 	addi	5,5,-1		/* len -= 1 */
 	slwi	5,5,2		/* len *= 4 */
-	addi	5,5,4		/* len += src */
+	add	5,5,4		/* len += src */
 	addi	4,4,-4		/* pre-decrement */
 1:	lwzu	0,4(4)		/* load and increment */
 	stw	0,0(3)		/* store */
@@ -400,7 +400,7 @@ ENTRY_NOPROFILE(outs32)
 	beqlr-			/*   return if len == 0 */
 	addi	5,5,-1		/* len -= 1 */
 	sldi	5,5,2		/* len *= 4 */
-	addi	5,5,4		/* len += src */
+	add	5,5,4		/* len += src */
 	addi	4,4,-4		/* pre-decrement */
 1:	ldzu	0,4(4)		/* load and increment */
 	std	0,0(3)		/* store */
@@ -431,7 +431,7 @@ ENTRY_NOPROFILE(outs16rb)
 	beqlr-			/*   return if len == 0 */
 	addi	5,5,-1		/* len -= 1 */
 	slwi	5,5,1		/* len *= 2 */
-	addi	5,5,4		/* len += src */
+	add	5,5,4		/* len += src */
 	addi	4,4,-2		/* pre-decrement */
 1:	lwzu	0,2(4)		/* load and increment */
 	sthbrx	0,0,3		/* store (byte-reversed) */
@@ -457,7 +457,7 @@ ENTRY_NOPROFILE(outs32rb)
 	beqlr-			/*   return if len == 0 */
 	addi	5,5,-1		/* len -= 1 */
 	slwi	5,5,2		/* len *= 4 */
-	addi	5,5,4		/* len += src */
+	add	5,5,4		/* len += src */
 	addi	4,4,-4		/* pre-decrement */
 1:	lwzu	0,4(4)		/* load and increment */
 	stwbrx	0,0,3		/* store (byte-reversed) */
@@ -488,7 +488,7 @@ ENTRY_NOPROFILE(ins8)
 	cmpwi	5,0		/* len == 0? */
 	beqlr-			/*   return if len == 0 */
 	addi	5,5,-1		/* len -= 1 */
-	addi	5,5,4		/* len += src */
+	add	5,5,4		/* len += src */
 	addi	4,4,-1		/* pre-decrement */
 1:	lbz	0,0(3)		/* load value */
 	stbu	0,1(4)		/* store and increment */
@@ -514,7 +514,7 @@ ENTRY_NOPROFILE(ins16)
 	beqlr-			/*   return if len == 0 */
 	addi	5,5,-1		/* len -= 1 */
 	slwi	5,5,1		/* len *= 2 */
-	addi	5,5,4		/* len += src */
+	add	5,5,4		/* len += src */
 	addi	4,4,-2		/* pre-decrement */
 1:	lhz	0,0(3)		/* load value */
 	sthu	0,2(4)		/* store and increment */
@@ -540,7 +540,7 @@ ENTRY_NOPROFILE(ins32)
 	beqlr-			/*   return if len == 0 */
 	addi	5,5,-1		/* len -= 1 */
 	slwi	5,5,2		/* len *= 4 */
-	addi	5,5,4		/* len += src */
+	add	5,5,4		/* len += src */
 	addi	4,4,-4		/* pre-decrement */
 1:	lwz	0,0(3)		/* load value */
 	stwu	0,4(4)		/* store and increment */
@@ -571,7 +571,7 @@ ENTRY_NOPROFILE(ins16rb)
 	beqlr-			/*   return if len == 0 */
 	addi	5,5,-1		/* len -= 1 */
 	slwi	5,5,1		/* len *= 2 */
-	addi	5,5,4		/* len += src */
+	add	5,5,4		/* len += src */
 	addi	4,4,-2		/* pre-decrement */
 1:	lhbrx	0,0,3		/* load value (byte reversed) */
 	sthu	0,2(4)		/* store and increment */
@@ -596,7 +596,7 @@ ENTRY_NOPROFILE(ins32rb)
 	beqlr-			/*   return if len == 0 */
 	addi	5,5,-1		/* len -= 1 */
 	slwi	5,5,2		/* len *= 4 */
-	addi	5,5,4		/* len += src */
+	add	5,5,4		/* len += src */
 	addi	4,4,-4		/* pre-decrement */
 1:	lwbrx	0,0,3		/* load value (byte reversed) */
 	stwu	0,4(4)		/* store and increment */
