@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.50 2003/04/02 02:47:19 thorpej Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.51 2003/06/29 11:02:24 darrenr Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -269,7 +269,6 @@ cpu_coredump(l, vp, cred, chdr)
 {
 	struct coreseg cseg;
 	struct md_coredump md_core;
-	struct proc *p = l->l_proc;
 	struct pcb *pcb = &l->l_addr->u_pcb;
 	int error;
 
@@ -303,11 +302,11 @@ cpu_coredump(l, vp, cred, chdr)
 
 	if ((error = vn_rdwr(UIO_WRITE, vp, (caddr_t)&cseg, chdr->c_seghdrsize,
 			    (off_t)chdr->c_hdrsize, UIO_SYSSPACE,
-			    IO_NODELOCKED|IO_UNIT, cred, NULL, p)) != 0)
+			    IO_NODELOCKED|IO_UNIT, cred, NULL, l)) != 0)
 		return error;
 	if ((error = vn_rdwr(UIO_WRITE, vp, (caddr_t)&md_core, sizeof md_core,
 			    (off_t)(chdr->c_hdrsize + chdr->c_seghdrsize), UIO_SYSSPACE,
-			    IO_NODELOCKED|IO_UNIT, cred, NULL, p)) != 0)
+			    IO_NODELOCKED|IO_UNIT, cred, NULL, l)) != 0)
 		return error;
 
 	chdr->c_nseg++;
