@@ -1566,10 +1566,10 @@ solib_create_inferior_hook()
      can go groveling around in the dynamic linker structures to find
      out what we need to know about them.
 
-	 Note: This applies to NetBSD too, where ld.so is kind enough to
-	 generated a breakpoint trap after mapping the shared libraries,
-	 but before calling main.  We HAVE to let ld.so do that, because
-	 there is no symbol marking the spot we would like to stop.  */
+     Note: This applies to NetBSD too, where ld.so is kind enough to
+     generated a breakpoint trap after mapping the shared libraries,
+     but before calling main.  We HAVE to let ld.so do that, because
+     there is no symbol marking the spot we would like to stop.  */
 
   clear_proceed_status ();
   stop_soon_quietly = 1;
