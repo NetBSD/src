@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.64 2000/06/19 04:22:16 matt Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.64.2.1 2000/06/28 13:33:43 ragge Exp $	*/
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -170,7 +170,7 @@ struct	cfattach mainbus_ca = {
 #include "rl.h"
 #include "ra.h"
 #include "hp.h"
-
+#include "ry.h"
 
 static int ubtest(void *);
 static int jmfr(char *, struct device *, int);
@@ -191,6 +191,9 @@ static int booted_ra(struct device *, void *);
 #if NHP
 static int booted_hp(struct device *, void *);
 #endif
+#if NRD
+static int booted_rd(struct device *, void *);
+#endif
 
 int (*devreg[])(struct device *, void *) = {
 	booted_qe,
@@ -209,6 +212,9 @@ int (*devreg[])(struct device *, void *) = {
 #endif
 #if NHP
 	booted_hp,
+#endif
+#if NRD
+	booted_rd,
 #endif
 	0,
 };
@@ -401,6 +407,21 @@ booted_hp(struct device *dev, void *aux)
 		return 0;
 
 	if (mbaaddr != rpb.adpphy)
+		return 0;
+
+	return 1;
+}
+#endif
+#if NRD
+int     
+booted_rd(struct device *dev, void *aux)
+{
+	int *nr = aux; /* XXX - use the correct attach struct */
+
+	if (jmfr("rd", dev, BDEV_RD))
+		return 0;
+
+	if (*nr != rpb.unit)
 		return 0;
 
 	return 1;
