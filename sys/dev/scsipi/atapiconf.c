@@ -1,4 +1,4 @@
-/*	$NetBSD: atapiconf.c,v 1.16 1998/12/08 00:14:41 thorpej Exp $	*/
+/*	$NetBSD: atapiconf.c,v 1.17 1998/12/16 13:06:52 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1996 Manuel Bouyer.  All rights reserved.
@@ -233,7 +233,7 @@ atapi_probedev(atapi, target)
 	struct cfdata *cf;
 	struct scsi_quirk_inquiry_pattern *finger;
 	int priority;
-	char serial_number[20], model[40], firmware_revision[8];
+	char serial_number[21], model[41], firmware_revision[9];
 
 	/* skip if already attached */
 	if (atapi->sc_link[target])
