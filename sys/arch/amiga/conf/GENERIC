@@ -1,7 +1,7 @@
 #
 # GENERIC AMIGA
 #
-#	$Id: GENERIC,v 1.18 1994/06/15 19:04:23 chopps Exp $
+#	$Id: GENERIC,v 1.19 1994/06/17 20:06:50 chopps Exp $
 #
 # This configuration file contains all possible options
 #
@@ -58,7 +58,7 @@ options		FDESC		# /dev/fd filesystem
 #options		ISOFS		# ISO 9660 file system, with Rock Ridge
 options		PORTAL		# Portal filesystem
 options		FIFO		# FIFO operations on vnodes (Recommended)
-#options		ADOSFS		# AmigaDOS file system
+options		ADOSFS		# AmigaDOS file system
 
 
 #
