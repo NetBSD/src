@@ -1,4 +1,4 @@
-/*	$NetBSD: mb86960.c,v 1.29 1998/12/03 23:33:45 pk Exp $	*/
+/*	$NetBSD: mb86960.c,v 1.30 1999/02/17 03:41:01 thorpej Exp $	*/
 
 /*
  * All Rights Reserved, Copyright (C) Fujitsu Limited 1995
@@ -1251,7 +1251,7 @@ mb86960_ioctl(ifp, cmd, data)
 			if ((error = mb86960_enable(sc)) != 0)
 				break;
 			mb86960_init(sc);
-		} else if (sc->sc_enabled) {
+		} else if ((ifp->if_flags & IFF_UP) != 0) {
 			/*
 			 * Reset the interface to pick up changes in any other
 			 * flags that affect hardware registers.

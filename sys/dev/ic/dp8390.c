@@ -1,4 +1,4 @@
-/*	$NetBSD: dp8390.c,v 1.20 1999/02/07 01:54:50 thorpej Exp $	*/
+/*	$NetBSD: dp8390.c,v 1.21 1999/02/17 03:40:59 thorpej Exp $	*/
 
 /*
  * Device driver for National Semiconductor DS8390/WD83C690 based ethernet
@@ -890,7 +890,7 @@ dp8390_ioctl(ifp, cmd, data)
 			if ((error = dp8390_enable(sc)) != 0)
 				break;
 			dp8390_init(sc);
-		} else if (sc->sc_enabled) {
+		} else if ((ifp->if_flags & IFF_UP) != 0) {
 			/*
 			 * Reset the interface to pick up changes in any other
 			 * flags that affect hardware registers.

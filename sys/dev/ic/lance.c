@@ -1,4 +1,4 @@
-/*	$NetBSD: lance.c,v 1.5 1998/12/12 16:58:10 mycroft Exp $	*/
+/*	$NetBSD: lance.c,v 1.6 1999/02/17 03:41:01 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -654,7 +654,7 @@ lance_ioctl(ifp, cmd, data)
 			 * start it.
 			 */
 			lance_init(sc);
-		} else {
+		} else if ((ifp->if_flags & IFF_UP) != 0) {
 			/*
 			 * Reset the interface to pick up changes in any other
 			 * flags that affect hardware registers.

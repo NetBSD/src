@@ -1,4 +1,4 @@
-/*	$NetBSD: i82586.c,v 1.19 1998/12/12 16:58:10 mycroft Exp $	*/
+/*	$NetBSD: i82586.c,v 1.20 1999/02/17 03:41:00 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -2026,7 +2026,7 @@ i82586_ioctl(ifp, cmd, data)
 			 * start it.
 			 */
 			i82586_init(sc);
-		} else {
+		} else if ((ifp->if_flags & IFF_UP) != 0) {
 			/*
 			 * Reset the interface to pick up changes in any other
 			 * flags that affect hardware registers.

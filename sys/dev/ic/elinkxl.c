@@ -1,4 +1,4 @@
-/*	$NetBSD: elinkxl.c,v 1.3 1999/01/10 14:19:46 drochner Exp $	*/
+/*	$NetBSD: elinkxl.c,v 1.4 1999/02/17 03:41:00 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -1299,8 +1299,13 @@ ex_ioctl(ifp, cmd, data)
 			 * start it.
 			 */
 			ex_init(sc);
-		} else
+		} else if ((ifp->if_flags & IFF_UP) != 0) {
+			/*
+			 * Deal with other flags that change hardware
+			 * state, i.e. IFF_PROMISC.
+			 */
 			ex_set_mc(sc);
+		}
 		break;
 
 	case SIOCADDMULTI:
