@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ie.c,v 1.26 1995/01/03 01:30:43 mycroft Exp $	*/
+/*	$NetBSD: if_ie.c,v 1.27 1995/01/06 21:41:29 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994 Charles Hannum.
@@ -425,6 +425,7 @@ el_probe(sc, ia)
 
 	/* Reset and put card in CONFIG state without changing address. */
 	elink_reset();
+	outb(ELINK_ID_PORT, 0x00);
 	outb(ELINK_ID_PORT, 0x00);
 	elink_idseq(ELINK_507_POLY);
 	elink_idseq(ELINK_507_POLY);
