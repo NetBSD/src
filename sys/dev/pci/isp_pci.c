@@ -1,4 +1,4 @@
-/* $NetBSD: isp_pci.c,v 1.68 2001/03/14 05:47:56 mjacob Exp $ */
+/* $NetBSD: isp_pci.c,v 1.69 2001/06/14 19:54:07 mjacob Exp $ */
 /*
  * This driver, which is contained in NetBSD in the files:
  *
@@ -714,7 +714,7 @@ isp_pci_mbxdma(struct ispsoftc *isp)
 	if (isp->isp_rquest_dma)	/* been here before? */
 		return (0);
 
-	len = isp->isp_maxcmds * sizeof (XS_T);
+	len = isp->isp_maxcmds * sizeof (XS_T *);
 	isp->isp_xflist = (XS_T **) malloc(len, M_DEVBUF, M_WAITOK);
 	if (isp->isp_xflist == NULL) {
 		isp_prt(isp, ISP_LOGERR, "cannot malloc xflist array");
