@@ -1,4 +1,4 @@
-/*	$NetBSD: rpcinfo.c,v 1.8 1998/02/10 07:15:34 lukem Exp $	*/
+/*	$NetBSD: rpcinfo.c,v 1.9 1998/02/12 03:52:12 lukem Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
@@ -6,7 +6,7 @@
 static char sccsid[] = "from: @(#)rpcinfo.c 1.22 87/08/12 SMI";
 static char sccsid[] = "from: @(#)rpcinfo.c	2.2 88/08/11 4.0 RPCSRC";
 #else
-__RCSID("$NetBSD: rpcinfo.c,v 1.8 1998/02/10 07:15:34 lukem Exp $");
+__RCSID("$NetBSD: rpcinfo.c,v 1.9 1998/02/12 03:52:12 lukem Exp $");
 #endif
 #endif
 
@@ -528,7 +528,7 @@ pmapdump(argc, argv)
 	} else {
 		printf("   program vers proto   port\n");
 		for (; head != NULL; head = head->pml_next) {
-			printf("%10d%5d",
+			printf("%10ld%5ld",
 			    head->pml_map.pm_prog,
 			    head->pml_map.pm_vers);
 			if (head->pml_map.pm_prot == IPPROTO_UDP)
@@ -536,8 +536,8 @@ pmapdump(argc, argv)
 			else if (head->pml_map.pm_prot == IPPROTO_TCP)
 				printf("%6s", "tcp");
 			else
-				printf("%6d",  head->pml_map.pm_prot);
-			printf("%7d",  head->pml_map.pm_port);
+				printf("%6ld",  head->pml_map.pm_prot);
+			printf("%7ld",  head->pml_map.pm_port);
 			rpc = getrpcbynumber(head->pml_map.pm_prog);
 			if (rpc)
 				printf("  %s\n", rpc->r_name);
