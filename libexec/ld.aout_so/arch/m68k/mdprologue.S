@@ -27,7 +27,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: mdprologue.S,v 1.6 1994/08/03 15:57:54 chopps Exp $
+ *	$Id: mdprologue.S,v 1.7 1995/05/07 13:22:12 briggs Exp $
  */
 
 /*
@@ -64,7 +64,7 @@ _binder_entry:
 	movel	d0,sp@-
 	subql	#6,a0			| point to PLT slot
 	movel	a0,sp@-
-	jbsr	_binder,a1		| relocate function address
+	jbsr	_binder			| relocate function address
 	addql	#8,sp
 	movel	d0,sp@(16)		| put function address on stack
 |	movel	#0x80000004,d0		| CC_EXTPURGE | CC_IPURGE
