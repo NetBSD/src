@@ -1,4 +1,4 @@
-#	$NetBSD: aliases,v 1.12 2000/04/30 05:49:10 perry Exp $
+#	$NetBSD: aliases,v 1.13 2001/02/26 00:03:15 lukem Exp $
 #
 #	from: @(#)aliases	8.2 (Berkeley) 3/5/94
 #
@@ -20,6 +20,7 @@ daemon:		root
 falken:		root
 games:		root
 ingres:		root
+named:		root
 nobody:		root
 postfix:	root
 toor:		root
