@@ -1,4 +1,4 @@
-/*	$NetBSD: mount.h,v 1.88 2001/01/22 12:17:41 jdolecek Exp $	*/
+/*	$NetBSD: mount.h,v 1.89 2001/01/24 20:34:59 kleink Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993
@@ -289,7 +289,7 @@ struct vfsconf {
 
 #endif
 
-#ifdef __STDC__
+#if __STDC__
 struct nameidata;
 struct mbuf;
 struct vnodeopv_desc;
