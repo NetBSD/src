@@ -1,4 +1,4 @@
-#	$NetBSD: files.hpcsh,v 1.18 2002/02/13 16:25:35 uch Exp $
+#	$NetBSD: files.hpcsh,v 1.19 2002/02/17 21:01:15 uch Exp $
 #
 maxpartitions 8
 
@@ -97,7 +97,7 @@ file	dev/hpc/video_subr.c			hd64461video
 define	hd64465if {}
 device	hd64465if: hd64465if
 attach	hd64465if at shb
-file	arch/hpcsh/dev/hd64465/hd64465.c	hd64465if
+file	arch/hpcsh/dev/hd64465/hd64465.c	hd64465if	needs-flag
 
 attach	com at hd64465if with hd64465uart
 file	arch/hpcsh/dev/hd64465/hd64465uart.c	hd64465uart

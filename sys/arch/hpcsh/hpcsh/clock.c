@@ -1,7 +1,7 @@
-/*	$NetBSD: clock.c,v 1.5 2002/02/11 17:32:35 uch Exp $	*/
+/*	$NetBSD: clock.c,v 1.6 2002/02/17 21:01:18 uch Exp $	*/
 
 /*-
- * Copyright (c) 2001 The NetBSD Foundation, Inc.
+ * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -40,13 +40,153 @@
 
 #include <dev/clock_subr.h>
 
-#include <sh3/rtcreg.h>
-#include <sh3/tmureg.h>
+#include <sh3/cpufunc.h>
 
 #include <machine/shbvar.h>
 #include <machine/debug.h>
 
 #include <hpcsh/hpcsh/clockvar.h>
+
+/* RTC */
+#define SH3_R64CNT			0xfffffec0
+#define SH3_RSECCNT			0xfffffec2
+#define SH3_RMINCNT			0xfffffec4
+#define SH3_RHRCNT			0xfffffec6
+#define SH3_RWKCNT			0xfffffec8
+#define SH3_RDAYCNT			0xfffffeca
+#define SH3_RMONCNT			0xfffffecc
+#define SH3_RYRCNT			0xfffffece
+#define SH3_RSECAR			0xfffffed0
+#define SH3_RMINAR			0xfffffed2
+#define SH3_RHRAR			0xfffffed4
+#define SH3_RWKAR			0xfffffed6
+#define SH3_RDAYAR			0xfffffed8
+#define SH3_RMONAR			0xfffffeda
+#define SH3_RCR1			0xfffffedc
+#define SH3_RCR2			0xfffffede
+
+#define SH4_R64CNT			0xffc80000
+#define SH4_RSECCNT			0xffc80004
+#define SH4_RMINCNT			0xffc80008
+#define SH4_RHRCNT			0xffc8000c
+#define SH4_RWKCNT			0xffc80010
+#define SH4_RDAYCNT			0xffc80014
+#define SH4_RMONCNT			0xffc80018
+#define SH4_RYRCNT			0xffc8001c	/* 16 bit */
+#define SH4_RSECAR			0xffc80020
+#define SH4_RMINAR			0xffc80024
+#define SH4_RHRAR			0xffc80028
+#define SH4_RWKAR			0xffc8002c
+#define SH4_RDAYAR			0xffc80030
+#define SH4_RMONAR			0xffc80034
+#define SH4_RCR1			0xffc80038
+#define SH4_RCR2			0xffc8003c
+
+#if defined(SH3) && defined(SH4)
+int __sh_R64CNT;
+int __sh_RSECCNT;
+int __sh_RMINCNT;
+int __sh_RHRCNT;
+int __sh_RWKCNT;
+int __sh_RDAYCNT;
+int __sh_RMONCNT;
+int __sh_RYRCNT;
+int __sh_RSECAR;
+int __sh_RMINAR;
+int __sh_RHRAR;
+int __sh_RWKAR;
+int __sh_RDAYAR;
+int __sh_RMONAR;
+int __sh_RCR1;
+int __sh_RCR2;
+#endif /* SH3 && SH4 */
+
+#define   SH_RCR1_CF			  0x80
+#define   SH_RCR1_CIE			  0x10
+#define   SH_RCR1_AIE			  0x08
+#define   SH_RCR1_AF			  0x01
+#define   SH_RCR2_PEF			  0x80
+#define   SH_RCR2_PES2			  0x40
+#define   SH_RCR2_PES1			  0x20
+#define   SH_RCR2_PES0			  0x10
+#define   SH_RCR2_ENABLE		  0x08
+#define   SH_RCR2_ADJ			  0x04
+#define   SH_RCR2_RESET			  0x02
+#define   SH_RCR2_START			  0x01
+
+/* TMU */
+#define SH3_TOCR			0xfffffe90
+#define SH3_TSTR			0xfffffe92
+#define SH3_TCOR0			0xfffffe94
+#define SH3_TCNT0			0xfffffe98
+#define SH3_TCR0			0xfffffe9c
+#define SH3_TCOR1			0xfffffea0
+#define SH3_TCNT1			0xfffffea4
+#define SH3_TCR1			0xfffffea8
+#define SH3_TCOR2			0xfffffeac
+#define SH3_TCNT2			0xfffffeb0
+#define SH3_TCR2			0xfffffeb4
+#define SH3_TCPR2			0xfffffeb8
+
+#define SH4_TOCR			0xffd80000
+#define SH4_TSTR			0xffd80004
+#define SH4_TCOR0			0xffd80008
+#define SH4_TCNT0			0xffd8000c
+#define SH4_TCR0			0xffd80010
+#define SH4_TCOR1			0xffd80014
+#define SH4_TCNT1			0xffd80018
+#define SH4_TCR1			0xffd8001c
+#define SH4_TCOR2			0xffd80020
+#define SH4_TCNT2			0xffd80024
+#define SH4_TCR2			0xffd80028
+#define SH4_TCPR2			0xffd8002c
+
+#if defined(SH3) && defined(SH4)
+int __sh_TOCR;
+int __sh_TSTR;
+int __sh_TCOR0;
+int __sh_TCNT0;
+int __sh_TCR0;
+int __sh_TCOR1;
+int __sh_TCNT1;
+int __sh_TCR1;
+int __sh_TCOR2;
+int __sh_TCNT2;
+int __sh_TCR2;
+int __sh_TCPR2;
+#endif /* SH3 && SH4 */
+
+#define TOCR_TCOE			  0x01
+#define TSTR_STR2			  0x04
+#define TSTR_STR1			  0x02
+#define TSTR_STR0			  0x01
+#define TCR_ICPF			  0x0200
+#define TCR_UNF				  0x0100
+#define TCR_ICPE1			  0x0080
+#define TCR_ICPE0			  0x0040
+#define TCR_UNIE			  0x0020
+#define TCR_CKEG1			  0x0010
+#define TCR_CKEG0			  0x0008
+#define TCR_TPSC2			  0x0004
+#define TCR_TPSC1			  0x0002
+#define TCR_TPSC0			  0x0001
+#define TCR_TPSC_P4			  0x0000
+#define TCR_TPSC_P16			  0x0001
+#define TCR_TPSC_P64			  0x0002
+#define TCR_TPSC_P256			  0x0003
+#define SH3_TCR_TPSC_RTC		  0x0004
+#define SH3_TCR_TPSC_TCLK		  0x0005
+#define SH4_TCR_TPSC_P512		  0x0004
+#define SH4_TCR_TPSC_RTC		  0x0006
+#define SH4_TCR_TPSC_TCLK		  0x0007
+
+#if defined(SH3) && defined(SH4)
+#define SH_(x)		__sh_ ## x
+#elif defined(SH3)
+#define SH_(x)		SH3_ ## x
+#elif defined(SH4)
+#define SH_(x)		SH4_ ## x
+#endif
 
 #ifndef HZ
 #define HZ		64
@@ -60,8 +200,11 @@
  *  + use TMU channel 0 as clock interrupt source.
  *  + TMU channel 0 input source is SH internal RTC output. (1.6384kHz)
  */
+static void clock_register_init(void);
 /* TMU */
-static int clockintr(void *);
+/* interrupt handler is timing critical. prepared for each. */
+int sh3_clock_intr(void *);
+int sh4_clock_intr(void *);
 /* RTC */
 static void rtc_init(void);
 static int rtc_gettime(struct clock_ymdhms *);
@@ -109,29 +252,31 @@ static int __pclock;
 /*
  * Estimate CPU and Peripheral clock.
  */
+#define TMU_START(x)							\
+do {									\
+	_reg_write_1(SH_(TSTR), _reg_read_1(SH_(TSTR)) & ~TSTR_STR ## x);\
+	_reg_write_4(SH_(TCNT ## x), 0xffffffff);			\
+	_reg_write_1(SH_(TSTR), _reg_read_1(SH_(TSTR)) | TSTR_STR ## x);\
+} while (/*CONSTCOND*/0)
+#define TMU_ELAPSED(x)							\
+	(0xffffffff - _reg_read_4(SH_(TCNT ## x)))
 void
 clock_init()
 {
-#define TMU_START(x)							\
-({									\
-	SHREG_TSTR &= ~TSTR_STR ## x;					\
-	SHREG_TCNT ## x = 0xffffffff;					\
-	SHREG_TSTR |= TSTR_STR ## x;					\
-})
-#define TMU_ELAPSED(x)							\
-	(0xffffffff - SHREG_TCNT ## x)
 
 	u_int32_t t0, t1;
 
+	clock_register_init();
+
 	/* initialize TMU */
-	SHREG_TCR0 = 0;
-	SHREG_TCR1 = 0;
-	SHREG_TCR2 = 0;
+	_reg_write_2(SH_(TCR0), 0);
+	_reg_write_2(SH_(TCR1), 0);
+	_reg_write_2(SH_(TCR2), 0);
 
 	/* stop all counter */
-	SHREG_TSTR = 0;
+	_reg_write_1(SH_(TSTR), 0);
 	/* set TMU channel 0 source to RTC counter clock (16.384kHz) */
-	SHREG_TCR0 = TCR_TPSC_RTC;
+	_reg_write_2(SH_(TCR0), CPU_IS_SH3 ? SH3_TCR_TPSC_RTC : SH4_TCR_TPSC_RTC);
 
 	/*
 	 * estimate CPU clock.
@@ -140,16 +285,17 @@ clock_init()
 	DELAY_LOOP(10000000);
 	t0 = TMU_ELAPSED(0);
 	__cpuclock = (100000000 / t0) * RTC_CLOCK;
-#ifdef SH4
-	__cpuclock >>= 1;	/* two-issue */
-#endif
+
+	if (CPU_IS_SH4)
+		__cpuclock >>= 1;	/* two-issue */
+
 	__cnt_delay = (RTC_CLOCK * 10) / t0;
 
 	/*
 	 * estimate PCLOCK
 	 */
 	/* set TMU channel 1 source to PCLOCK / 4 */
-	SHREG_TCR1 = TCR_TPSC_P4;
+	_reg_write_2(SH_(TCR1), TCR_TPSC_P4);
 	TMU_START(0);
 	TMU_START(1);
 	delay(1000000);
@@ -159,7 +305,7 @@ clock_init()
 	__pclock = (t1 / t0) * RTC_CLOCK * 4;
 
 	/* stop all counter */
-	SHREG_TSTR = 0;
+	_reg_write_1(SH_(TSTR), 0);
 
 	/* Initialize RTC */
 	rtc_init();
@@ -194,7 +340,8 @@ microtime(struct timeval *tv)
 	*tv = time;
 	splx(s);
 
-	tv->tv_usec += ((__cnt_clock - SHREG_TCNT0) * 1000000) / RTC_CLOCK;
+	tv->tv_usec += ((__cnt_clock - _reg_read_4(SH_(TCNT0))) * 1000000) /
+	    RTC_CLOCK;
 	while (tv->tv_usec >= 1000000) {
 		tv->tv_usec -= 1000000;
 		tv->tv_sec++;
@@ -215,7 +362,7 @@ microtime(struct timeval *tv)
 void
 delay(int n)
 {
-
+	
 	DELAY_LOOP(__cnt_delay * n);
 }
 
@@ -230,27 +377,44 @@ cpu_initclocks()
 	tick = 1000000 / hz;
 
 	/* use TMU channel 0 as clock source. */
-	SHREG_TSTR &= ~TSTR_STR1;
-	SHREG_TCR1 = TCR_UNIE | TCR_TPSC_RTC;
+	_reg_write_1(SH_(TSTR), _reg_read_1(SH_(TSTR)) & ~TSTR_STR1);
+	_reg_write_2(SH_(TCR1), TCR_UNIE | 
+	    (CPU_IS_SH3 ? SH3_TCR_TPSC_RTC : SH4_TCR_TPSC_RTC));
 	__cnt_clock = RTC_CLOCK / hz - 1;
-	SHREG_TCOR1 = __cnt_clock;
-	SHREG_TCNT1 = __cnt_clock;
-	SHREG_TSTR |= TSTR_STR1;
+	_reg_write_4(SH_(TCOR1), __cnt_clock);
+	_reg_write_4(SH_(TCNT1), __cnt_clock);
+	_reg_write_1(SH_(TSTR), _reg_read_1(SH_(TSTR)) | TSTR_STR1);
 
-	shb_intr_establish(TMU1_IRQ, IST_EDGE, IPL_CLOCK, clockintr, 0);
+	shb_intr_establish(TMU1_IRQ, IST_EDGE, IPL_CLOCK,
+	    CPU_IS_SH3 ? sh3_clock_intr : sh4_clock_intr, 0);
 }
 
+#ifdef SH3
 int
-clockintr(void *arg) /* trap frame */
+sh3_clock_intr(void *arg) /* trap frame */
 {
 	/* clear underflow status */
-	SHREG_TCR1 &= ~TCR_UNF;
+	_reg_write_2(SH3_TCR1, _reg_read_2(SH3_TCR1) & ~TCR_UNF);
 
 	__dbg_heart_beat(HEART_BEAT_WHITE);
 	hardclock(arg);
 
 	return (1);
 }
+#endif /* SH3 */
+#ifdef SH4
+int
+sh4_clock_intr(void *arg) /* trap frame */
+{
+	/* clear underflow status */
+	_reg_write_2(SH4_TCR1, _reg_read_2(SH4_TCR1) & ~TCR_UNF);
+
+	__dbg_heart_beat(HEART_BEAT_WHITE);
+	hardclock(arg);
+
+	return (1);
+}
+#endif /* SH4 */
 
 /*
  * Initialize time of day.
@@ -336,10 +500,11 @@ setstatclockrate(int newhz)
 void
 rtc_init()
 {
+
 	/* reset RTC alarm and interrupt */
-	SHREG_RCR1 = 0;
+	_reg_write_1(SH_(RCR1), 0);
 	/* make sure to start RTC */
-	SHREG_RCR2 = (SHREG_RCR2_ENABLE | SHREG_RCR2_START);
+	_reg_write_1(SH_(RCR2), SH_RCR2_ENABLE | SH_RCR2_START);
 }
 
 int
@@ -348,16 +513,16 @@ rtc_gettime(struct clock_ymdhms *dt)
 	int retry = 8;
 
 	/* disable carry interrupt */
-	SHREG_RCR1 &= ~SHREG_RCR1_CIE;
+	_reg_write_1(SH_(RCR1), _reg_read_1(SH_(RCR1)) & ~SH_RCR1_CIE);
 
 	do {
-		u_int8_t r = SHREG_RCR1;
-		r &= ~SHREG_RCR1_CF;
-		r |= SHREG_RCR1_AF; /* don't clear alarm flag */
-		SHREG_RCR1 = r;
+		u_int8_t r = _reg_read_1(SH_(RCR1));
+		r &= ~SH_RCR1_CF;
+		r |= SH_RCR1_AF; /* don't clear alarm flag */
+		_reg_write_1(SH_(RCR1), r);
 
 		/* read counter */
-#define RTCGET(x, y)	dt->dt_ ## x = FROMBCD(SHREG_R ## y ## CNT)
+#define RTCGET(x, y)	dt->dt_ ## x = FROMBCD(_reg_read_1(SH_(R ## y ## CNT)))
 		RTCGET(year, YR);
 		RTCGET(mon, MON);
 		RTCGET(wday, WK);
@@ -366,7 +531,7 @@ rtc_gettime(struct clock_ymdhms *dt)
 		RTCGET(min, MIN);
 		RTCGET(sec, SEC);
 #undef RTCGET		
-	} while ((SHREG_RCR1 & SHREG_RCR1_CF) && --retry > 0);
+	} while ((_reg_read_1(SH_(RCR1)) & SH_RCR1_CF) && --retry > 0);
 
 	if (retry == 0) {
 		printf("rtc_gettime: couldn't read RTC register.\n");
@@ -387,14 +552,17 @@ rtc_settime(struct clock_ymdhms *dt)
 	u_int8_t r;
 
 	/* stop clock */
-	r = SHREG_RCR2;
-	r |= SHREG_RCR2_RESET;
-	r &= ~SHREG_RCR2_START;
-	SHREG_RCR2 = r;
+	r = _reg_read_1(SH_(RCR2));
+	r |= SH_RCR2_RESET;
+	r &= ~SH_RCR2_START;
+	_reg_write_1(SH_(RCR2), r);
 
 	/* set time */
-#define RTCSET(x, y)	SHREG_R ## x ## CNT = TOBCD(dt->dt_ ## y);
-	SHREG_RYRCNT	= TOBCD(dt->dt_year % 100);
+	if (CPU_IS_SH3)
+		_reg_write_1(SH3_RYRCNT, TOBCD(dt->dt_year % 100));
+	else
+		_reg_write_2(SH4_RYRCNT, TOBCD(dt->dt_year % 100));
+#define RTCSET(x, y)	_reg_write_1(SH_(R ## x ## CNT), TOBCD(dt->dt_ ## y))
 	RTCSET(MON, mon);
 	RTCSET(WK, wday);
 	RTCSET(DAY, day);
@@ -403,7 +571,79 @@ rtc_settime(struct clock_ymdhms *dt)
 	RTCSET(SEC, sec);
 #undef RTCSET
 	/* start clock */
-	SHREG_RCR2 = (r | SHREG_RCR2_START);
+	_reg_write_1(SH_(RCR2), r | SH_RCR2_START);
 
 	return (0);
 }
+
+#define SH3REG(x)	__sh_ ## x = SH3_ ## x
+#define SH4REG(x)	__sh_ ## x = SH4_ ## x
+static void
+clock_register_init()
+{
+#if defined(SH3) && defined(SH4)
+	if (CPU_IS_SH3) {
+		SH3REG(R64CNT);
+		SH3REG(RSECCNT);
+		SH3REG(RMINCNT);
+		SH3REG(RHRCNT);
+		SH3REG(RWKCNT);
+		SH3REG(RDAYCNT);
+		SH3REG(RMONCNT);
+		SH3REG(RYRCNT);
+		SH3REG(RSECAR);
+		SH3REG(RMINAR);
+		SH3REG(RHRAR);
+		SH3REG(RWKAR);
+		SH3REG(RDAYAR);
+		SH3REG(RMONAR);
+		SH3REG(RCR1);
+		SH3REG(RCR2);
+		SH3REG(TOCR);
+		SH3REG(TSTR);
+		SH3REG(TCOR0);
+		SH3REG(TCNT0);
+		SH3REG(TCR0);
+		SH3REG(TCOR1);
+		SH3REG(TCNT1);
+		SH3REG(TCR1);
+		SH3REG(TCOR2);
+		SH3REG(TCNT2);
+		SH3REG(TCR2);
+		SH3REG(TCPR2);
+	}
+
+	if (CPU_IS_SH4) {
+		SH4REG(R64CNT);
+		SH4REG(RSECCNT);
+		SH4REG(RMINCNT);
+		SH4REG(RHRCNT);
+		SH4REG(RWKCNT);
+		SH4REG(RDAYCNT);
+		SH4REG(RMONCNT);
+		SH4REG(RYRCNT);
+		SH4REG(RSECAR);
+		SH4REG(RMINAR);
+		SH4REG(RHRAR);
+		SH4REG(RWKAR);
+		SH4REG(RDAYAR);
+		SH4REG(RMONAR);
+		SH4REG(RCR1);
+		SH4REG(RCR2);
+		SH4REG(TOCR);
+		SH4REG(TSTR);
+		SH4REG(TCOR0);
+		SH4REG(TCNT0);
+		SH4REG(TCR0);
+		SH4REG(TCOR1);
+		SH4REG(TCNT1);
+		SH4REG(TCR1);
+		SH4REG(TCOR2);
+		SH4REG(TCNT2);
+		SH4REG(TCR2);
+		SH4REG(TCPR2);
+	}
+#endif /* SH3 && SH4 */
+}
+#undef SH3REG
+#undef SH4REG

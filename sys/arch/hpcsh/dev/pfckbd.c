@@ -1,4 +1,4 @@
-/*	$NetBSD: pfckbd.c,v 1.5 2002/01/29 18:53:23 uch Exp $	*/
+/*	$NetBSD: pfckbd.c,v 1.6 2002/02/17 21:01:16 uch Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -49,6 +49,11 @@
 
 #include <dev/hpc/hpckbdvar.h>
 
+/*
+ * pfckbd only supports SH7709.
+ */
+#undef SH4
+#define SH7709
 #include <sh3/pfcreg.h>
 
 #include <hpcsh/dev/pfckbdvar.h>
@@ -114,6 +119,9 @@ int
 pfckbd_match(struct device *parent, struct cfdata *cf, void *aux)
 {
 
+	if (CPU_IS_SH4)
+		return (0);	/* not for SH4 */
+	
 	return (!pfckbd_core.pc_attached);
 }
 
