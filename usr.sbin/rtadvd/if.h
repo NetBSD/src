@@ -1,5 +1,5 @@
-/*	$NetBSD: if.h,v 1.3 2000/05/23 11:37:59 itojun Exp $	*/
-/*	$KAME: if.h,v 1.2 2000/05/16 13:34:13 itojun Exp $	*/
+/*	$NetBSD: if.h,v 1.3.4.1 2000/07/20 00:30:15 itojun Exp $	*/
+/*	$KAME: if.h,v 1.3 2000/05/27 11:47:09 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, 1998, and 1999 WIDE Project.
@@ -36,6 +36,7 @@ extern struct if_msghdr **iflist;
 extern size_t ifblock_size;
 extern char *ifblock;
 
+struct nd_opt_hdr;
 struct sockaddr_dl *if_nametosdl __P((char *name));
 int if_getmtu __P((char *name));
 int if_getflags __P((int ifindex, int oifflags));

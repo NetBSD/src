@@ -1,5 +1,5 @@
-/*	$NetBSD: dump.c,v 1.1 2000/05/23 11:37:58 itojun Exp $	*/
-/*	$KAME: dump.c,v 1.10 2000/05/23 11:31:25 itojun Exp $	*/
+/*	$NetBSD: dump.c,v 1.1.4.1 2000/07/20 00:30:15 itojun Exp $	*/
+/*	$KAME: dump.c,v 1.11 2000/05/27 11:30:43 jinmei Exp $	*/
 
 /*
  * Copyright (C) 2000 WIDE Project.
@@ -55,6 +55,7 @@
 
 #include "rtadvd.h"
 #include "timer.h"
+#include "if.h"
 #include "dump.h"
 
 static FILE *fp;
@@ -100,6 +101,10 @@ if_dump()
 	for (rai = ralist; rai; rai = rai->next) {
 		fprintf(fp, "%s:\n", rai->ifname);
 
+		fprintf(fp, "  Status: %s\n",
+			(iflist[rai->ifindex]->ifm_flags & IFF_UP) ? "UP" :
+			"DOWN");
+
 		/* control information */
 		if (rai->lastsent.tv_sec) {
 			/* note that ctime() appends CR by itself */
@@ -110,6 +115,8 @@ if_dump()
 			fprintf(fp, "  Next RA will be sent: %s",
 				ctime((time_t *)&rai->timer->tm.tv_sec));
 		}
+		else
+			fprintf(fp, "  RA timer is stopped");
 		fprintf(fp, "  waits: %d, initcount: %d\n",
 			rai->waiting, rai->initcounter);
 
