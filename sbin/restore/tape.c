@@ -1,4 +1,4 @@
-/*	$NetBSD: tape.c,v 1.20.4.1 1996/12/06 01:50:49 rat Exp $	*/
+/*	$NetBSD: tape.c,v 1.20.4.2 1996/12/10 06:14:11 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)tape.c	8.6 (Berkeley) 9/13/94";
 #else
-static char rcsid[] = "$NetBSD: tape.c,v 1.20.4.1 1996/12/06 01:50:49 rat Exp $";
+static char rcsid[] = "$NetBSD: tape.c,v 1.20.4.2 1996/12/10 06:14:11 mycroft Exp $";
 #endif
 #endif /* not lint */
 
@@ -1045,7 +1045,7 @@ gethead(buf)
 		if (checksum((int *)buf) == FAIL)
 			return (FAIL);
 		if (Bcvt)
-			swabst((u_char *)"8l4s31l", (u_char *)buf);
+			swabst((u_char *)"8l4s31l528b1l192b2l", (u_char *)buf);
 		goto good;
 	}
 	readtape((char *)(&u_ospcl.s_ospcl));
