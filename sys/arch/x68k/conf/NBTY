@@ -1,4 +1,4 @@
-#	$NetBSD: NBTY,v 1.6 1997/05/08 16:39:39 oki Exp $
+#	$NetBSD: NBTY,v 1.7 1997/06/12 18:42:29 mrg Exp $
 
 #
 #	ALL -- everything that's currently supported
@@ -97,7 +97,7 @@ options 	PANICBUTTON		# enable interrupt switch
 #options 	PPP_OUTQ_SIZE=4096
 options 	SLMTU=552
 
-#config		netbsd root on sd6a swap on sd6b
+#config		netbsd root on sd6a 
 config		netbsd root on ? type ?
 
 mainbus0	at root

@@ -1,4 +1,4 @@
-#	$NetBSD: STEELHEAD,v 1.19 1997/06/01 18:15:12 phil Exp $
+#	$NetBSD: STEELHEAD,v 1.20 1997/06/12 18:42:13 mrg Exp $
 #
 # STEELHEAD: Phil Nelson's pc532
 #
@@ -51,7 +51,7 @@ options		"CONSOLE_SPEED=B19200"	# default baud on the console (tty00)
 #options	"RAMD_SIZE=1536000"	# Size of the "boot strap ram disk"
 #options	"RAMD_ADR=0x400000"	# Adr of the "boot strap ram disk"
 
-config		netbsd	root on sd0 type ffs swap on sd0 and sd1 and vnd0a
+config		netbsd	root on sd0 type ffs 
 
 ncr0	at mainbus0 flags 0x2000
 

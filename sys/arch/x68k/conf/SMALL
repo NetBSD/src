@@ -1,4 +1,4 @@
-#	$NetBSD: SMALL,v 1.5 1997/05/08 16:39:39 oki Exp $
+#	$NetBSD: SMALL,v 1.6 1997/06/12 18:42:30 mrg Exp $
 
 #
 #	SMALL
@@ -89,7 +89,7 @@ options 	"EIOMAPSIZE=0"		# do not mapping PCI address space
 #options 	BUFPAGES=900
 #options 	PROFTIMER, PRF_INTERVAL=500
 
-#config		netbsd root on sd6a swap on sd6b
+#config		netbsd root on sd6a 
 config		netbsd root on ? type ?
 
 # ethernet board

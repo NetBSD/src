@@ -1,4 +1,4 @@
-#	$NetBSD: SMALL030,v 1.5 1997/05/08 16:39:40 oki Exp $
+#	$NetBSD: SMALL030,v 1.6 1997/06/12 18:42:33 mrg Exp $
 
 #
 #	SMALL030 -- small configuration with mc68030 processor
@@ -90,7 +90,7 @@ options 	ITEKANJI		# Kanji display for console
 #options 	KGDB,"KGDBDEV=15*256+2", KGDBRATE=19200
 #options 	PPP_OUTQ_SIZE=4096
 
-#config		netbsd root on sd6a type ffs swap on sd6b
+#config		netbsd root on sd6a type ffs 
 config		netbsd root on ? type ?
 
 mainbus0	at root

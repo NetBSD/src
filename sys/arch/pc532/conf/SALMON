@@ -1,4 +1,4 @@
-#	$NetBSD: SALMON,v 1.7 1997/03/22 08:29:48 matthias Exp $
+#	$NetBSD: SALMON,v 1.8 1997/06/12 18:42:12 mrg Exp $
 #
 # SALMON: Phil Nelson's 2nd (test) pc532 
 #
@@ -51,7 +51,7 @@ options		INET			# IP
 #options	"RAMD_SIZE=1536000"	# Size of the "boot strap ram disk"
 #options	"RAMD_ADR=0x400000"	# Adr of the "boot strap ram disk"
 
-config		netbsd	root on sd0 type ffs swap on sd0 and sd1 and vnd0a
+config		netbsd	root on sd0 type ffs 
 
 #rd0 at mainbus?
 

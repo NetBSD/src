@@ -1,4 +1,4 @@
-#	$NetBSD: HOMEWORLD,v 1.14 1997/04/30 06:06:02 mycroft Exp $
+#	$NetBSD: HOMEWORLD,v 1.15 1997/06/12 18:42:04 mrg Exp $
 #
 #	HOMEWORLD - Mail, CVS, and GNATS server
 #
@@ -85,7 +85,7 @@ options		INET		# IP + ICMP + TCP + UDP
 options 	NKMEMCLUSTERS=2048	# slots in kmem_map
 options 	NMBCLUSTERS=1024	# slots in mb_map
 
-config		netbsd	root on sd0a type ffs swap on sd0b and sd1b
+config		netbsd	root on sd0a type ffs
 #options	COMCONSOLE=0,CONADDR=0x3f8,CONUNIT=0,CONSPEED=9600
 
 #options 	EISAVERBOSE	# verbose EISA device messages
