@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.45 2003/08/07 16:29:50 agc Exp $ */
+/*	$NetBSD: intr.c,v 1.46 2003/10/01 02:01:20 petrov Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.45 2003/08/07 16:29:50 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.46 2003/10/01 02:01:20 petrov Exp $");
 
 #include "opt_ddb.h"
 #include "pcons.h"
@@ -195,8 +195,6 @@ struct intrhand *intrhand[16] = {
 	NULL,			/* 14 = counter 1 = profiling timer */
 	NULL			/* 15 = async faults */
 };
-
-int fastvec = 0;
 
 /*
  * PCI devices can share interrupts so we need to have
