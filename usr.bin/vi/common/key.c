@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.4 2002/04/09 01:47:31 thorpej Exp $	*/
+/*	$NetBSD: key.c,v 1.5 2002/05/09 02:36:57 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -16,7 +16,7 @@
 #if 0
 static const char sccsid[] = "@(#)key.c	10.33 (Berkeley) 9/24/96";
 #else
-__RCSID("$NetBSD: key.c,v 1.4 2002/04/09 01:47:31 thorpej Exp $");
+__RCSID("$NetBSD: key.c,v 1.5 2002/05/09 02:36:57 simonb Exp $");
 #endif
 #endif /* not lint */
 
@@ -110,7 +110,7 @@ int
 v_key_init(sp)
 	SCR *sp;
 {
-	CHAR_T ch;
+	int ch;
 	GS *gp;
 	KEYLIST *kp;
 	int cnt;
