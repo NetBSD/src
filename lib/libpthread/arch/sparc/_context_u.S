@@ -1,4 +1,4 @@
-/*	$NetBSD: _context_u.S,v 1.1.2.2 2002/11/28 17:18:01 uwe Exp $	*/
+/*	$NetBSD: _context_u.S,v 1.1.2.3 2002/11/29 16:01:02 uwe Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -56,12 +56,12 @@
 	add	%i7, 12, %l0				; \
 	st	%l0, [uc + UC_GREG + _REG_nPC * 4]	; \
 							  \
-	set	0x40000000 | _UC_CPU, %l1		; \
+	set	_UC_CPU | _UC_USER, %l1			; \
 	st	%l1, [uc + UC_FLAGS]
 
 #define SETC(uc)					  \
 	ld	[uc + UC_FLAGS], %l0			; \
-	set	0x40000000, %l1				; \
+	set	_UC_USER, %l1				; \
 	btst	%l1, %l0				; \
 	bz	1f					; \
 	 nop						; \
@@ -87,15 +87,13 @@ ENTRY(_getcontext_u)
 ENTRY(_setcontext_u)
 	save	%sp, -CCFSZ, %sp
 	FLUSHW
-	mov	%i0, %o0
-	SETC(%o0)
+	SETC(%i0)
 	NOTREACHED
 
 ENTRY(_swapcontext_u)
 	save	%sp, -CCFSZ, %sp
 	FLUSHW
 	GETC(%i0)
-	mov	%i1, %o0
-	SETC(%o0)
+	SETC(%i1)
 	NOTREACHED
 
