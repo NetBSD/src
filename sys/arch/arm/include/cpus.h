@@ -1,4 +1,4 @@
-/*	$NetBSD: cpus.h,v 1.8 2001/03/11 00:14:56 bjh21 Exp $	*/
+/*	$NetBSD: cpus.h,v 1.9 2002/03/09 21:30:58 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1995 Mark Brinicombe.
@@ -89,10 +89,6 @@ typedef struct _cpu {
 	u_int	fpu_flags;	/* The FPU flags */
 	char	fpu_model[256];	/* Text description of FPU */
 
-/* These are ARM specific variables */
-
-	u_int cpu_id;		/* The CPU id */
-	u_int cpu_ctrl;		/* The CPU control register */
 } cpu_t;
 
 #ifdef _KERNEL
