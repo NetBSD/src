@@ -1,4 +1,4 @@
-/*	$NetBSD: function.c,v 1.40 2001/12/02 12:46:39 kleink Exp $	*/
+/*	$NetBSD: function.c,v 1.41 2002/09/27 15:56:27 provos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "from: @(#)function.c	8.10 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: function.c,v 1.40 2001/12/02 12:46:39 kleink Exp $");
+__RCSID("$NetBSD: function.c,v 1.41 2002/09/27 15:56:27 provos Exp $");
 #endif
 #endif /* not lint */
 
@@ -50,6 +50,7 @@ __RCSID("$NetBSD: function.c,v 1.40 2001/12/02 12:46:39 kleink Exp $");
 #include <sys/wait.h>
 #include <sys/mount.h>
 
+#include <dirent.h>
 #include <err.h>
 #include <errno.h>
 #include <fnmatch.h>
@@ -87,13 +88,17 @@ static	int64_t	find_parsenum __P((PLAN *, char *, char *, char *));
 	int	f_cmin __P((PLAN *, FTSENT *));
 	int	f_cnewer __P((PLAN *, FTSENT *));
 	int	f_ctime __P((PLAN *, FTSENT *));
+	int	f_empty __P((PLAN *, FTSENT *));
 	int	f_exec __P((PLAN *, FTSENT *));
+	int	f_execdir __P((PLAN *, FTSENT *));
 	int	f_flags __P((PLAN *, FTSENT *));
 	int	f_fstype __P((PLAN *, FTSENT *));
 	int	f_group __P((PLAN *, FTSENT *));
 	int	f_inum __P((PLAN *, FTSENT *));
 	int	f_links __P((PLAN *, FTSENT *));
 	int	f_ls __P((PLAN *, FTSENT *));
+	int	f_mindepth __P((PLAN *, FTSENT *));
+	int	f_maxdepth __P((PLAN *, FTSENT *));
 	int	f_mmin __P((PLAN *, FTSENT *));
 	int	f_mtime __P((PLAN *, FTSENT *));
 	int	f_name __P((PLAN *, FTSENT *));
@@ -396,6 +401,51 @@ c_depth(argvp, isok)
 }
  
 /*
+ * -empty functions --
+ *
+ *	True if the file or directory is empty
+ */
+int
+f_empty(plan, entry)
+	PLAN *plan;
+	FTSENT *entry;
+{
+	if (S_ISREG(entry->fts_statp->st_mode) &&
+	    entry->fts_statp->st_size == 0)
+		return (1);
+	if (S_ISDIR(entry->fts_statp->st_mode)) {
+		struct dirent *dp;
+		int empty;
+		DIR *dir;
+
+		empty = 1;
+		dir = opendir(entry->fts_accpath);
+		if (dir == NULL)
+			err(1, "%s", entry->fts_accpath);
+		for (dp = readdir(dir); dp; dp = readdir(dir))
+			if (dp->d_name[0] != '.' ||
+			    (dp->d_name[1] != '\0' &&
+				(dp->d_name[1] != '.' || dp->d_name[2] != '\0'))) {
+				empty = 0;
+				break;
+			}
+		closedir(dir);
+		return (empty);
+	}
+	return (0);
+}
+
+PLAN *
+c_empty(argvp, isok)
+	char ***argvp;
+	int isok;
+{
+	ftsoptions &= ~FTS_NOSTAT;
+
+	return (palloc(N_EMPTY, f_empty));
+}
+
+/*
  * [-exec | -ok] utility [arg ... ] ; functions --
  *
  *	True if the executed utility returns a zero value as exit status.
@@ -498,6 +548,106 @@ c_exec(argvp, isok)
 	*argvp = argv + 1;
 	return (new);
 }
+
+/*
+ * -execdir utility [arg ... ] ; functions --
+ *
+ *	True if the executed utility returns a zero value as exit status.
+ *	The end of the primary expression is delimited by a semicolon.  If
+ *	"{}" occurs anywhere, it gets replaced by the unqualified pathname.
+ *	The current directory for the execution of utility is the same as
+ *	the directory where the file lives.
+ */
+int
+f_execdir(plan, entry)
+	PLAN *plan;
+	FTSENT *entry;
+{
+	int cnt;
+	pid_t pid;
+	int status;
+	char *file;
+
+	/* XXX - if file/dir ends in '/' this will not work -- can it? */
+	if ((file = strrchr(entry->fts_path, '/')))
+		file++;
+	else
+		file = entry->fts_path;
+
+	for (cnt = 0; plan->e_argv[cnt]; ++cnt)
+		if (plan->e_len[cnt])
+			brace_subst(plan->e_orig[cnt], &plan->e_argv[cnt],
+			    file, &plan->e_len[cnt]);
+
+	/* don't mix output of command with find output */
+	fflush(stdout);
+	fflush(stderr);
+
+	switch (pid = vfork()) {
+	case -1:
+		err(1, "fork");
+		/* NOTREACHED */
+	case 0:
+		execvp(plan->e_argv[0], plan->e_argv);
+		warn("%s", plan->e_argv[0]);
+		_exit(1);
+	}
+	pid = waitpid(pid, &status, 0);
+	return (pid != -1 && WIFEXITED(status) && !WEXITSTATUS(status));
+}
+ 
+/*
+ * c_execdir --
+ *	build three parallel arrays, one with pointers to the strings passed
+ *	on the command line, one with (possibly duplicated) pointers to the
+ *	argv array, and one with integer values that are lengths of the
+ *	strings, but also flags meaning that the string has to be massaged.
+ */
+PLAN *
+c_execdir(argvp, isok)
+	char ***argvp;
+	int isok;
+{
+	PLAN *new;			/* node returned */
+	int cnt;
+	char **argv, **ap, *p;
+
+	ftsoptions &= ~FTS_NOSTAT;
+	isoutput = 1;
+    
+	new = palloc(N_EXECDIR, f_execdir);
+
+	for (ap = argv = *argvp;; ++ap) {
+		if (!*ap)
+			errx(1,
+			    "-execdir: no terminating \";\"");
+		if (**ap == ';')
+			break;
+	}
+
+	cnt = ap - *argvp + 1;
+	new->e_argv = (char **)emalloc((u_int)cnt * sizeof(char *));
+	new->e_orig = (char **)emalloc((u_int)cnt * sizeof(char *));
+	new->e_len = (int *)emalloc((u_int)cnt * sizeof(int));
+
+	for (argv = *argvp, cnt = 0; argv < ap; ++argv, ++cnt) {
+		new->e_orig[cnt] = *argv;
+		for (p = *argv; *p; ++p)
+			if (p[0] == '{' && p[1] == '}') {
+				new->e_argv[cnt] = emalloc((u_int)MAXPATHLEN);
+				new->e_len[cnt] = MAXPATHLEN;
+				break;
+			}
+		if (!*p) {
+			new->e_argv[cnt] = *argv;
+			new->e_len[cnt] = 0;
+		}
+	}
+	new->e_argv[cnt] = new->e_orig[cnt] = NULL;
+
+	*argvp = argv + 1;
+	return (new);
+}
  
 /*
  * -flags [-]flags functions --
@@ -543,7 +693,6 @@ c_flags(argvp, isok)
 	new->f_data = flagset;
 	return (new);
 }
-
  
 /*
  * -follow functions --
@@ -792,6 +941,65 @@ c_ls(argvp, isok)
 	return (palloc(N_LS, f_ls));
 }
 
+/*
+ * - maxdepth n functions --
+ *
+ *	True if the current search depth is less than or equal to the
+ *	maximum depth specified
+ */
+int
+f_maxdepth(plan, entry)
+	PLAN *plan;
+	FTSENT *entry;
+{
+	extern FTS *tree;
+
+	if (entry->fts_level >= plan->max_data)
+		fts_set(tree, entry, FTS_SKIP);
+	return (entry->fts_level <= plan->max_data);
+}
+
+PLAN *
+c_maxdepth(argvp, isok)
+	char ***argvp;
+	int isok;
+{
+	char *arg = **argvp;
+	PLAN *new;
+
+	(*argvp)++;
+	new = palloc(N_MAXDEPTH, f_maxdepth);
+	new->max_data = atoi(arg);
+	return (new);
+}
+
+/*
+ * - mindepth n functions --
+ *
+ *	True if the current search depth is greater than or equal to the
+ *	minimum depth specified
+ */
+int
+f_mindepth(plan, entry)
+	PLAN *plan;
+	FTSENT *entry;
+{
+	return (entry->fts_level >= plan->min_data);
+}
+
+PLAN *
+c_mindepth(argvp, isok)
+	char ***argvp;
+	int isok;
+{
+	char *arg = **argvp;
+	PLAN *new;
+
+	(*argvp)++;
+	new = palloc(N_MINDEPTH, f_mindepth);
+	new->min_data = atoi(arg);
+	return (new);
+}
 /*
  * -mmin n functions --
  *

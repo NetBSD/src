@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.16 2001/12/02 12:46:39 kleink Exp $	*/
+/*	$NetBSD: extern.h,v 1.17 2002/09/27 15:56:25 provos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -49,6 +49,7 @@ PLAN	*paren_squish __P((PLAN *));
 struct stat;
 void	 printlong __P((char *, char *, struct stat *));
 int	 queryuser __P((char **));
+void	 show_path __P((int));
 
 PLAN	*c_amin __P((char ***, int));
 PLAN	*c_anewer __P((char ***, int));
@@ -57,7 +58,9 @@ PLAN	*c_cmin __P((char ***, int));
 PLAN	*c_cnewer __P((char ***, int));
 PLAN	*c_ctime __P((char ***, int));
 PLAN	*c_depth __P((char ***, int));
+PLAN	*c_empty __P((char ***, int));
 PLAN	*c_exec __P((char ***, int));
+PLAN	*c_execdir __P((char ***, int));
 PLAN	*c_flags __P((char ***, int));
 PLAN	*c_follow __P((char ***, int));
 PLAN	*c_fstype __P((char ***, int));
@@ -66,6 +69,8 @@ PLAN	*c_inum __P((char ***, int));
 PLAN	*c_iregex __P((char ***, int));
 PLAN	*c_links __P((char ***, int));
 PLAN	*c_ls __P((char ***, int));
+PLAN	*c_maxdepth __P((char ***, int));
+PLAN	*c_mindepth __P((char ***, int));
 PLAN	*c_mmin __P((char ***, int));
 PLAN	*c_mtime __P((char ***, int));
 PLAN	*c_name __P((char ***, int));
