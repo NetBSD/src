@@ -46,6 +46,12 @@ static char sccsid[] = "@(#)getpwent.c	5.21 (Berkeley) 3/14/91";
 #include <stdlib.h>
 #include <string.h>
 #include <limits.h>
+#ifdef YP
+#include <stdio.h>
+#include <rpc/rpc.h>
+#include <rpcsvc/yp_prot.h>
+#include <rpcsvc/ypclnt.h>
+#endif
 
 static struct passwd _pw_passwd;	/* password structure */
 static DB *_pw_db;			/* password database */
@@ -53,21 +59,143 @@ static int _pw_keynum;			/* key counter */
 static int _pw_stayopen;		/* keep fd's open */
 static int __hashpw(), __initdb();
 
+#ifdef YP
+static char     *__ypcurrent, *__ypdomain;
+static int      __ypcurrentlen, __ypmode=0;
+static char	line[1024];
+
+int
+__ypparse(pw, s, l)
+struct passwd *pw;
+char *s;
+int l;
+{
+	char *bp, *cp;
+
+	bp = s;
+	pw->pw_name = strsep(&bp, ":\n");
+	pw->pw_passwd = strsep(&bp, ":\n");
+	if (!(cp = strsep(&bp, ":\n")))
+		return 1;
+	pw->pw_uid = atoi(cp);
+	if (!(cp = strsep(&bp, ":\n")))
+		return 0;
+	pw->pw_gid = atoi(cp);
+	pw->pw_change = 0;
+	pw->pw_class = "";
+	pw->pw_gecos = strsep(&bp, ":\n");
+	pw->pw_dir = strsep(&bp, ":\n");
+	pw->pw_shell = strsep(&bp, ":\n");
+	pw->pw_expire = 0;
+	return 0;
+}
+#endif
+
 struct passwd *
 getpwent()
 {
 	DBT key;
 	char bf[sizeof(_pw_keynum) + 1];
+#ifdef YP
+	char *bp, *cp;
+#endif
 
 	if (!_pw_db && !__initdb())
 		return((struct passwd *)NULL);
+
+#ifdef YP
+again:
+	if(__ypmode) {
+		char *key, *data;
+		int keylen, datalen;
+		int r;
+
+		if(!__ypdomain) {
+			if( _yp_check(&__ypdomain) == 0) {
+				__ypmode = 0;
+				goto again;
+			}
+		}
+		if(__ypcurrent) {
+			r = yp_next(__ypdomain, "passwd.byname",
+				__ypcurrent, __ypcurrentlen,
+				&key, &keylen, &data, &datalen);
+			free(__ypcurrent);
+			__ypcurrent = NULL;
+			/*printf("yp_next %d\n", r);*/
+			switch(r) {
+			case 0:
+				break;
+			default:
+				__ypcurrent = NULL;
+				__ypmode = 0;
+				free(data);
+				data = NULL;
+				goto again;
+			}
+			__ypcurrent = key;
+			__ypcurrentlen = keylen;
+			bcopy(data, line, datalen);
+			free(data);
+			data = NULL;
+		} else {
+			r = yp_first(__ypdomain, "passwd.byname",
+				&__ypcurrent, &__ypcurrentlen,
+				&data, &datalen);
+			/*printf("yp_first %d\n", r);*/
+			switch(r) {
+			case 0:
+				break;
+			default:
+				__ypmode = 0;
+				free(data);
+				goto again;
+			}
+			bcopy(data, line, datalen);
+			free(data);
+			data = NULL;
+		}
+		line[datalen] = '\0';
+		/*printf("line = %s\n", line);*/
+		bp = line;
+		goto parse;
+	}
+#endif
 
 	++_pw_keynum;
 	bf[0] = _PW_KEYBYNUM;
 	bcopy((char *)&_pw_keynum, bf + 1, sizeof(_pw_keynum));
 	key.data = (u_char *)bf;
 	key.size = sizeof(_pw_keynum) + 1;
-	return(__hashpw(&key) ? &_pw_passwd : (struct passwd *)NULL);
+	if(__hashpw(&key)) {
+#ifdef YP
+		if(strcmp(_pw_passwd.pw_name, "+") == 0) {
+			__ypmode = 1;
+			goto again;
+		}
+#endif
+		return &_pw_passwd;
+	}
+	return (struct passwd *)NULL;
+
+#ifdef YP
+parse:
+	_pw_passwd.pw_name = strsep(&bp, ":\n");
+	_pw_passwd.pw_passwd = strsep(&bp, ":\n");
+	if (!(cp = strsep(&bp, ":\n")))
+		goto again;
+	_pw_passwd.pw_uid = atoi(cp);
+	if (!(cp = strsep(&bp, ":\n")))
+		goto again;
+	_pw_passwd.pw_gid = atoi(cp);
+	_pw_passwd.pw_change = 0;
+	_pw_passwd.pw_class = "";
+	_pw_passwd.pw_gecos = strsep(&bp, ":\n");
+	_pw_passwd.pw_dir = strsep(&bp, ":\n");
+	_pw_passwd.pw_shell = strsep(&bp, ":\n");
+	_pw_passwd.pw_expire = 0;
+	return &_pw_passwd;
+#endif
 }
 
 struct passwd *
@@ -75,6 +203,60 @@ getpwnam(name)
 	const char *name;
 {
 	DBT key;
+
+#ifdef YP
+	char bf[sizeof(_pw_keynum) + 1];
+	int r;
+
+	if (!_pw_db && !__initdb())
+		return((struct passwd *)NULL);
+
+	for(_pw_keynum=1; _pw_keynum; _pw_keynum++) {
+		bf[0] = _PW_KEYBYNUM;
+		bcopy((char *)&_pw_keynum, bf + 1, sizeof(_pw_keynum));
+		key.data = (u_char *)bf;
+		key.size = sizeof(_pw_keynum) + 1;
+		if(__hashpw(&key) == 0)
+			break;
+		if(strcmp(_pw_passwd.pw_name, "+") == 0) {
+			if(!__ypdomain) {
+				if(_yp_check(&__ypdomain) == 0) {
+					continue;
+				}
+			}
+			if(__ypcurrent) {
+				free(__ypcurrent);
+				__ypcurrent = NULL;
+			}
+			r = yp_match(__ypdomain, "passwd.byname",
+				name, strlen(name),
+				&__ypcurrent, &__ypcurrentlen);
+			switch(r) {
+			case 0:
+				break;
+			default:
+				free(__ypcurrent);
+				__ypcurrent = NULL;
+				continue;
+			}
+			if(__ypparse(&_pw_passwd, __ypcurrent, __ypcurrentlen))
+				continue;
+		}
+		if( strcmp(_pw_passwd.pw_name, name) == 0) {
+			if (!_pw_stayopen) {
+				(void)(_pw_db->close)(_pw_db);
+				_pw_db = (DB *)NULL;
+			}
+			return &_pw_passwd;
+		}
+		continue;
+	}
+	if (!_pw_stayopen) {
+		(void)(_pw_db->close)(_pw_db);
+		_pw_db = (DB *)NULL;
+	}
+	return (struct passwd *)NULL;
+#else
 	int len, rval;
 	char bf[UT_NAMESIZE + 1];
 
@@ -93,6 +275,7 @@ getpwnam(name)
 		_pw_db = (DB *)NULL;
 	}
 	return(rval ? &_pw_passwd : (struct passwd *)NULL);
+#endif
 }
 
 struct passwd *
@@ -104,6 +287,61 @@ getpwuid(uid)
 #endif
 {
 	DBT key;
+
+#ifdef YP
+	char bf[sizeof(_pw_keynum) + 1], uidbuf[20];
+	int r;
+
+	if (!_pw_db && !__initdb())
+		return((struct passwd *)NULL);
+
+	for(_pw_keynum=1; _pw_keynum; _pw_keynum++) {
+		bf[0] = _PW_KEYBYNUM;
+		bcopy((char *)&_pw_keynum, bf + 1, sizeof(_pw_keynum));
+		key.data = (u_char *)bf;
+		key.size = sizeof(_pw_keynum) + 1;
+		if(__hashpw(&key) == 0)
+			break;
+		if(strcmp(_pw_passwd.pw_name, "+") == 0) {
+			if(!__ypdomain) {
+				if(_yp_check(&__ypdomain) == 0) {
+					continue;
+				}
+			}
+			if(__ypcurrent) {
+				free(__ypcurrent);
+				__ypcurrent = NULL;
+			}
+			sprintf(uidbuf, "%d", uid);
+			r = yp_match(__ypdomain, "passwd.byuid",
+				uidbuf, strlen(uidbuf),
+				&__ypcurrent, &__ypcurrentlen);
+			switch(r) {
+			case 0:
+				break;
+			default:
+				free(__ypcurrent);
+				__ypcurrent = NULL;
+				continue;
+			}
+			if(__ypparse(&_pw_passwd, __ypcurrent, __ypcurrentlen))
+				continue;
+		}
+		if( _pw_passwd.pw_uid == uid) {
+			if (!_pw_stayopen) {
+				(void)(_pw_db->close)(_pw_db);
+				_pw_db = (DB *)NULL;
+			}
+			return &_pw_passwd;
+		}
+		continue;
+	}
+	if (!_pw_stayopen) {
+		(void)(_pw_db->close)(_pw_db);
+		_pw_db = (DB *)NULL;
+	}
+	return (struct passwd *)NULL;
+#else
 	int keyuid, rval;
 	char bf[sizeof(keyuid) + 1];
 
@@ -122,6 +360,7 @@ getpwuid(uid)
 		_pw_db = (DB *)NULL;
 	}
 	return(rval ? &_pw_passwd : (struct passwd *)NULL);
+#endif
 }
 
 int
@@ -138,6 +377,12 @@ setpwent()
 {
 	_pw_keynum = 0;
 	_pw_stayopen = 0;
+#ifdef YP
+	__ypmode = 0;
+	if(__ypcurrent)
+		free(__ypcurrent);
+	__ypcurrent = NULL;
+#endif
 	return(1);
 }
 
@@ -149,9 +394,15 @@ endpwent()
 		(void)(_pw_db->close)(_pw_db);
 		_pw_db = (DB *)NULL;
 	}
+#ifdef YP
+	__ypmode = 0;
+	if(__ypcurrent)
+		free(__ypcurrent);
+	__ypcurrent = NULL;
+#endif
 }
 
-static
+static int
 __initdb()
 {
 	static int warned;
@@ -166,7 +417,7 @@ __initdb()
 	return(0);
 }
 
-static
+static int
 __hashpw(key)
 	DBT *key;
 {
