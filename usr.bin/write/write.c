@@ -1,4 +1,4 @@
-/*	$NetBSD: write.c,v 1.8 1997/02/11 08:21:03 mrg Exp $	*/
+/*	$NetBSD: write.c,v 1.9 1997/10/19 14:35:31 mrg Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -36,17 +36,18 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
-static char copyright[] =
-"@(#) Copyright (c) 1989, 1993\n\
-	The Regents of the University of California.  All rights reserved.\n";
+__COPYRIGHT("@(#) Copyright (c) 1989, 1993\n\
+	The Regents of the University of California.  All rights reserved.\n");
 #endif /* not lint */
 
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)write.c	8.2 (Berkeley) 4/27/95";
+#else
+__RCSID("$NetBSD: write.c,v 1.9 1997/10/19 14:35:31 mrg Exp $");
 #endif
-static char *rcsid = "$NetBSD: write.c,v 1.8 1997/02/11 08:21:03 mrg Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -63,12 +64,13 @@ static char *rcsid = "$NetBSD: write.c,v 1.8 1997/02/11 08:21:03 mrg Exp $";
 #include <utmp.h>
 #include <err.h>
 
-void done(); 
+void done __P((int));
 void do_write __P((char *, char *, uid_t));
 void wr_fputs __P((char *));
 void search_utmp __P((char *, char *, char *, uid_t, int));
 int term_chk __P((char *, int *, time_t *, int));
 int utmp_chk __P((char *, char *));
+int main __P((int, char **));
 
 int
 main(argc, argv)
@@ -92,7 +94,7 @@ main(argc, argv)
 		errx(1, "can't find your tty");
 	if (!(mytty = ttyname(myttyfd)))
 		errx(1, "can't find your tty's name");
-	if (cp = strrchr(mytty, '/'))
+	if ((cp = strrchr(mytty, '/')) != NULL)
 		mytty = cp + 1;
 	if (term_chk(mytty, &msgsok, &atime, 1))
 		exit(1);
@@ -127,8 +129,11 @@ main(argc, argv)
 		(void)fprintf(stderr, "usage: write user [tty]\n");
 		exit(1);
 	}
-	done();
+	done(0);
 	/* NOTREACHED */
+#ifdef __GNUC__
+	return (0);
+#endif
 }
 
 /*
@@ -257,7 +262,7 @@ do_write(tty, mytty, myuid)
 
 	/* Determine our login name before the we reopen() stdout */
 	if ((login = getlogin()) == NULL)
-		if (pwd = getpwuid(myuid))
+		if ((pwd = getpwuid(myuid)) != NULL)
 			login = pwd->pw_name;
 		else
 			login = "???";
@@ -286,7 +291,8 @@ do_write(tty, mytty, myuid)
  * done - cleanup and exit
  */
 void
-done()
+done(dummy)
+	int dummy;
 {
 	(void)printf("EOF\r\n");
 	exit(0);
@@ -317,6 +323,6 @@ wr_fputs(s)
 	}
 	return;
 
-err:	err(1, NULL);
+err:	err(1, "%s", "");
 #undef PUTC
 }
