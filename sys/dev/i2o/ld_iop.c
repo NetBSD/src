@@ -1,7 +1,7 @@
-/*	$NetBSD: ld_iop.c,v 1.5 2001/02/06 12:22:24 ad Exp $	*/
+/*	$NetBSD: ld_iop.c,v 1.6 2001/03/20 13:01:49 ad Exp $	*/
 
 /*-
- * Copyright (c) 2000 The NetBSD Foundation, Inc.
+ * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -63,27 +63,31 @@
 #include <dev/ldvar.h>
 
 #include <dev/i2o/i2o.h>
+#include <dev/i2o/iopio.h>
 #include <dev/i2o/iopvar.h>
 
-#define	LD_IOP_MAXQUEUECNT	64		/* XXX */
-#define	LD_IOP_TIMEOUT		10*1000*1000
+#define	LD_IOP_TIMEOUT		30*1000
+
+#define	LD_IOP_CLAIMED		0x01
+#define	LD_IOP_NEW_EVTMASK	0x02
 
 struct ld_iop_softc {
 	struct	ld_softc sc_ld;
 	struct	iop_initiator sc_ii;
 	struct	iop_initiator sc_eventii;
-	int	sc_claimed;
-	u_int	sc_tid;
+	int	sc_flags;
 };
 
+static void	ld_iop_adjqparam(struct device *, int);
 static void	ld_iop_attach(struct device *, struct device *, void *);
 static int	ld_iop_detach(struct device *, int);
 static int	ld_iop_dump(struct ld_softc *, void *, int, int);
 static int	ld_iop_flush(struct ld_softc *);
 static void	ld_iop_intr(struct device *, struct iop_msg *, void *);
 static void	ld_iop_intr_event(struct device *, struct iop_msg *, void *);
-static int	ld_iop_start(struct ld_softc *, struct buf *);
 static int	ld_iop_match(struct device *, struct cfdata *, void *);
+static int	ld_iop_start(struct ld_softc *, struct buf *);
+static void	ld_iop_unconfig(struct ld_iop_softc *, int);
 
 struct cfattach ld_iop_ca = {
 	sizeof(struct ld_iop_softc),
@@ -93,21 +97,22 @@ struct cfattach ld_iop_ca = {
 };
 
 #ifdef I2OVERBOSE
-static const char *ld_iop_errors[] = { 
+static const char * const ld_iop_errors[] = { 
 	"success", 
 	"media error", 
-	"failure communicating with device",
+	"access error",
 	"device failure",
-	"device is not ready",
+	"device not ready",
 	"media not present",
-	"media locked by another user",
+	"media locked",
 	"media failure",
-	"failure communicating to device",
-	"device bus failure",
-	"device locked by another user",
-	"device write protected",
+	"protocol failure",
+	"bus failure",
+	"access violation",
+	"media write protected",
 	"device reset",
-	"volume has changed, waiting for acknowledgement",
+	"volume changed, waiting for acknowledgement",
+	"timeout",
 };
 #endif
 
@@ -129,7 +134,7 @@ ld_iop_attach(struct device *parent, struct device *self, void *aux)
 	struct ld_iop_softc *sc;
 	struct iop_softc *iop;
 	int rv, evreg, enable;
-	char ident[64 + 1], *typestr, *fixedstr;
+	char *typestr, *fixedstr;
 	u_int cachesz;
 	struct {
 		struct	i2o_param_op_results pr;
@@ -137,75 +142,69 @@ ld_iop_attach(struct device *parent, struct device *self, void *aux)
 		union {
 			struct	i2o_param_rbs_cache_control cc;
 			struct	i2o_param_rbs_device_info bdi;
-			struct	i2o_param_device_identity di;
 			struct	i2o_param_rbs_operation op;
 		} p;
-	} param;
+	} param /* XXX gcc __attribute__ ((__packed__)) */;
 
 	sc = (struct ld_iop_softc *)self;
 	ld = &sc->sc_ld;
 	iop = (struct iop_softc *)parent;
 	ia = (struct iop_attach_args *)aux;
-	sc->sc_tid = ia->ia_tid;
 	evreg = 0;
 
 	/* Register us as an initiator. */
 	sc->sc_ii.ii_dv = self;
 	sc->sc_ii.ii_intr = ld_iop_intr;
+	sc->sc_ii.ii_adjqparam = ld_iop_adjqparam;
 	sc->sc_ii.ii_flags = 0;
 	sc->sc_ii.ii_tid = ia->ia_tid;
-	if (iop_initiator_register(iop, &sc->sc_ii) != 0) {
-		printf("%s: unable to register initiator\n", self->dv_xname);
-		return;
-	}
+	iop_initiator_register(iop, &sc->sc_ii);
 
 	/* Register another initiator to handle events from the device. */
 	sc->sc_eventii.ii_dv = self;
 	sc->sc_eventii.ii_intr = ld_iop_intr_event;
 	sc->sc_eventii.ii_flags = II_DISCARD | II_UTILITY;
 	sc->sc_eventii.ii_tid = ia->ia_tid;
-	if (iop_initiator_register(iop, &sc->sc_eventii) != 0) {
-		printf("%s: unable to register initiator", self->dv_xname);
-		goto bad;
-	}
-	if (iop_util_eventreg(iop, &sc->sc_eventii, 0xffffffff)) {
+	iop_initiator_register(iop, &sc->sc_eventii);
+
+	rv = iop_util_eventreg(iop, &sc->sc_eventii,
+	    I2O_EVENT_GEN_EVENT_MASK_MODIFIED | 
+	    I2O_EVENT_GEN_DEVICE_RESET |
+	    I2O_EVENT_GEN_STATE_CHANGE |
+	    I2O_EVENT_GEN_GENERAL_WARNING);
+	if (rv != 0) {
 		printf("%s: unable to register for events", self->dv_xname);
 		goto bad;
 	}
 	evreg = 1;
 
+	/*
+	 * Start out with one queued command.  The `iop' driver will adjust
+	 * the queue parameters once we're up and running.
+	 */
+	ld->sc_maxqueuecnt = 1;
+
 	ld->sc_maxxfer = IOP_MAX_XFER;
-	ld->sc_maxqueuecnt = LD_IOP_MAXQUEUECNT;
 	ld->sc_dump = ld_iop_dump;
 	ld->sc_flush = ld_iop_flush;
 	ld->sc_start = ld_iop_start;
 
 	/* Say what the device is. */
-	printf(": ");
-	if (iop_param_op(iop, ia->ia_tid, 0, I2O_PARAM_DEVICE_IDENTITY, &param,
-	    sizeof(param)) == 0) {
-		iop_strvis(iop, param.p.di.vendorinfo, 
-		    sizeof(param.p.di.vendorinfo), ident, sizeof(ident));
-		printf("<%s, ", ident);
-		iop_strvis(iop, param.p.di.productinfo, 
-		    sizeof(param.p.di.productinfo), ident, sizeof(ident));
-		printf("%s, ", ident);
-		iop_strvis(iop, param.p.di.revlevel, 
-		    sizeof(param.p.di.revlevel), ident, sizeof(ident));
-		printf("%s> ", ident);
-	}
+	printf(":");
+	iop_print_ident(iop, ia->ia_tid);
 
 	/*
 	 * Claim the device so that we don't get any nasty surprises.  Allow
 	 * failure.
 	 */
-	sc->sc_claimed = !iop_util_claim(iop, &sc->sc_ii, 0,
+	rv = iop_util_claim(iop, &sc->sc_ii, 0,
 	    I2O_UTIL_CLAIM_CAPACITY_SENSITIVE |
 	    I2O_UTIL_CLAIM_NO_PEER_SERVICE |
 	    I2O_UTIL_CLAIM_NO_MANAGEMENT_SERVICE |
 	    I2O_UTIL_CLAIM_PRIMARY_USER);
+	sc->sc_flags = rv ? 0 : LD_IOP_CLAIMED;
 
-	rv = iop_param_op(iop, ia->ia_tid, 0, I2O_PARAM_RBS_DEVICE_INFO,
+	rv = iop_param_op(iop, ia->ia_tid, NULL, 0, I2O_PARAM_RBS_DEVICE_INFO,
 	    &param, sizeof(param));
 	if (rv != 0) {
 		printf("%s: unable to get parameters (0x%04x; %d)\n",
@@ -243,7 +242,7 @@ ld_iop_attach(struct device *parent, struct device *self, void *aux)
 		enable = 0;
 		break;
 	case I2O_RBS_TYPE_CDROM:
-		typestr = "cdrom";
+		typestr = "CD-ROM";
 		enable = 0;
 		break;
 	case I2O_RBS_TYPE_OPTICAL:
@@ -264,15 +263,15 @@ ld_iop_attach(struct device *parent, struct device *self, void *aux)
 	} else
 		fixedstr = "fixed";
 
-	printf("%s, %s", typestr, fixedstr);
+	printf(" %s, %s", typestr, fixedstr);
 
 	/*
 	 * Determine if the device has an private cache.  If so, print the
 	 * cache size.  Even if the device doesn't appear to have a cache,
-	 * we perform a flush at shutdown, as it is still valid to do so.
+	 * we perform a flush at shutdown.
 	 */
-	rv = iop_param_op(iop, ia->ia_tid, 0, I2O_PARAM_RBS_CACHE_CONTROL,
-	    &param, sizeof(param));
+	rv = iop_param_op(iop, ia->ia_tid, NULL, 0,
+	    I2O_PARAM_RBS_CACHE_CONTROL, &param, sizeof(param));
 	if (rv != 0) {
 		printf("%s: unable to get parameters (0x%04x; %d)\n",
 		   ld->sc_dv.dv_xname, I2O_PARAM_RBS_CACHE_CONTROL, rv);
@@ -286,9 +285,9 @@ ld_iop_attach(struct device *parent, struct device *self, void *aux)
 
 	/*
 	 * Configure the DDM's timeout functions to time out all commands
-	 * after 10 seconds.
+	 * after 30 seconds.
 	 */
-	rv = iop_param_op(iop, ia->ia_tid, 0, I2O_PARAM_RBS_OPERATION,
+	rv = iop_param_op(iop, ia->ia_tid, NULL, 0, I2O_PARAM_RBS_OPERATION,
 	    &param, sizeof(param));
 	if (rv != 0) {
 		printf("%s: unable to get parameters (0x%04x; %d)\n",
@@ -296,17 +295,24 @@ ld_iop_attach(struct device *parent, struct device *self, void *aux)
 		goto bad;
 	}
 
-	param.p.op.timeoutbase = htole32(LD_IOP_TIMEOUT); 
-	param.p.op.rwvtimeoutbase = htole32(LD_IOP_TIMEOUT); 
+	param.p.op.timeoutbase = htole32(LD_IOP_TIMEOUT * 1000); 
+	param.p.op.rwvtimeoutbase = htole32(LD_IOP_TIMEOUT * 1000); 
 	param.p.op.rwvtimeout = 0; 
 
-	rv = iop_param_op(iop, ia->ia_tid, 1, I2O_PARAM_RBS_OPERATION,
+	rv = iop_param_op(iop, ia->ia_tid, NULL, 1, I2O_PARAM_RBS_OPERATION,
 	    &param, sizeof(param));
+#ifdef notdef
+	/*
+	 * Intel RAID adapters don't like the above, but do post a
+	 * `parameter changed' event.  Perhaps we're doing something
+	 * wrong...
+	 */
 	if (rv != 0) {
 		printf("%s: unable to set parameters (0x%04x; %d)\n",
 		   ld->sc_dv.dv_xname, I2O_PARAM_RBS_OPERATION, rv);
 		goto bad;
 	}
+#endif
 
 	if (enable)
 		ld->sc_flags |= LDF_ENABLED;
@@ -316,14 +322,43 @@ ld_iop_attach(struct device *parent, struct device *self, void *aux)
 	ldattach(ld);
 	return;
 
-bad:
-	if (sc->sc_claimed)
+ bad:
+	ld_iop_unconfig(sc, evreg);
+}
+
+static void
+ld_iop_unconfig(struct ld_iop_softc *sc, int evreg)
+{
+	struct iop_softc *iop;
+	int s;
+
+	iop = (struct iop_softc *)sc->sc_ld.sc_dv.dv_parent;
+
+	if ((sc->sc_flags & LD_IOP_CLAIMED) != 0)
 		iop_util_claim(iop, &sc->sc_ii, 1,
 		    I2O_UTIL_CLAIM_PRIMARY_USER);
-	if (evreg)
-		iop_util_eventreg(iop, &sc->sc_eventii, 0);
-	if (sc->sc_eventii.ii_intr != NULL)
-		iop_initiator_unregister(iop, &sc->sc_eventii);
+
+	if (evreg) {
+		/*
+		 * Mask off events, and wait up to 5 seconds for a reply. 
+		 * Note that some adapters won't reply to this (XXX We
+		 * should check the event capabilities).
+		 */
+		sc->sc_flags &= ~LD_IOP_NEW_EVTMASK;
+		iop_util_eventreg(iop, &sc->sc_eventii,
+		    I2O_EVENT_GEN_EVENT_MASK_MODIFIED);
+		s = splbio();
+		if ((sc->sc_flags & LD_IOP_NEW_EVTMASK) == 0)
+			tsleep(&sc->sc_eventii, PRIBIO, "ld_iopevt", hz * 5);
+		splx(s);
+#ifdef I2ODEBUG
+		if ((sc->sc_flags & LD_IOP_NEW_EVTMASK) == 0)
+			printf("%s: didn't reply to event unregister",
+			    sc->sc_ld.sc_dv.dv_xname);
+#endif
+	}
+
+	iop_initiator_unregister(iop, &sc->sc_eventii);
 	iop_initiator_unregister(iop, &sc->sc_ii);
 }
 
@@ -335,11 +370,10 @@ ld_iop_detach(struct device *self, int flags)
 	int rv;
 
 	sc = (struct ld_iop_softc *)self;
+	iop = (struct iop_softc *)self->dv_parent;
 
 	if ((rv = ldbegindetach(&sc->sc_ld, flags)) != 0)
 		return (rv);
-
-	iop = (struct iop_softc *)self->dv_parent;
 
 	/*
 	 * Abort any requests queued with the IOP, but allow requests that
@@ -351,18 +385,9 @@ ld_iop_detach(struct device *self, int flags)
 
 	ldenddetach(&sc->sc_ld);
 
-	/* Un-claim the target, and un-register us as an initiator. */
-	if ((sc->sc_ld.sc_flags & LDF_ENABLED) != 0) {
-		if (sc->sc_claimed) {
-			rv = iop_util_claim(iop, &sc->sc_ii, 1,
-			    I2O_UTIL_CLAIM_PRIMARY_USER);
-			if (rv != 0)
-				return (rv);
-		}
-		iop_util_eventreg(iop, &sc->sc_eventii, 0);
-		iop_initiator_unregister(iop, &sc->sc_eventii);
-		iop_initiator_unregister(iop, &sc->sc_ii);
-	}
+	/* Un-claim the target, and un-register our initiators. */
+	if ((sc->sc_ld.sc_flags & LDF_ENABLED) != 0)
+		ld_iop_unconfig(sc, 1);
 
 	return (0);
 }
@@ -373,16 +398,15 @@ ld_iop_start(struct ld_softc *ld, struct buf *bp)
 	struct iop_msg *im;
 	struct iop_softc *iop;
 	struct ld_iop_softc *sc;
-	struct i2o_rbs_block_read *mb;
-	int rv, flags, write;
+	struct i2o_rbs_block_read *mf;
+	u_int rv, flags, write;
 	u_int64_t ba;
+	u_int32_t mb[IOP_MAX_MSG_SIZE / sizeof(u_int32_t)];
 
 	sc = (struct ld_iop_softc *)ld;
 	iop = (struct iop_softc *)ld->sc_dv.dv_parent;
 
-	im = NULL;
-	if ((rv = iop_msg_alloc(iop, &sc->sc_ii, &im, IM_NOWAIT)) != 0)
-		goto bad;
+	im = iop_msg_alloc(iop, &sc->sc_ii, 0);
 	im->im_dvcontext = bp;
 
 	write = ((bp->b_flags & B_READ) == 0);
@@ -406,28 +430,25 @@ ld_iop_start(struct ld_softc *ld, struct buf *bp)
 	 * both reads and writes, as it's almost identical to the
 	 * block_write structure.
 	 */
-	mb = (struct i2o_rbs_block_read *)im->im_msg;
-	mb->msgflags = I2O_MSGFLAGS(i2o_rbs_block_read);
-	mb->msgfunc = I2O_MSGFUNC(sc->sc_tid,
+	mf = (struct i2o_rbs_block_read *)mb;
+	mf->msgflags = I2O_MSGFLAGS(i2o_rbs_block_read);
+	mf->msgfunc = I2O_MSGFUNC(sc->sc_ii.ii_tid,
 	    write ? I2O_RBS_BLOCK_WRITE : I2O_RBS_BLOCK_READ);
-	mb->msgictx = sc->sc_ii.ii_ictx;
-	mb->msgtctx = im->im_tctx;
-	mb->flags = flags | (1 << 16);		/* flags & time multiplier */
-	mb->datasize = bp->b_bcount;
-	mb->lowoffset = (u_int32_t)ba;
-	mb->highoffset = (u_int32_t)(ba >> 32);
+	mf->msgictx = sc->sc_ii.ii_ictx;
+	mf->msgtctx = im->im_tctx;
+	mf->flags = flags | (1 << 16);		/* flags & time multiplier */
+	mf->datasize = bp->b_bcount;
+	mf->lowoffset = (u_int32_t)ba;
+	mf->highoffset = (u_int32_t)(ba >> 32);
 
-	/* Map the data transfer. */
-	if ((rv = iop_msg_map(iop, im, bp->b_data, bp->b_bcount, write)) != 0)
-		goto bad;
-
-	/* Enqueue the command. */
-	iop_msg_enqueue(iop, im, 0);
-	return (0);
-
-bad:
-	if (im != NULL)
-		iop_msg_free(iop, &sc->sc_ii, im);
+	/* Map the data transfer and enqueue the command. */
+	rv = iop_msg_map_bio(iop, im, mb, bp->b_data, bp->b_bcount, write);
+	if (rv == 0) {
+		if ((rv = iop_msg_post(iop, im, mb, 0)) != 0) {
+			iop_msg_unmap(iop, im);
+			iop_msg_free(iop, im);
+		}
+	}
 	return (rv);
 }
 
@@ -437,37 +458,35 @@ ld_iop_dump(struct ld_softc *ld, void *data, int blkno, int blkcnt)
 	struct iop_msg *im;
 	struct iop_softc *iop;
 	struct ld_iop_softc *sc;
-	struct i2o_rbs_block_write *mb;
+	struct i2o_rbs_block_write *mf;
 	int rv, bcount;
 	u_int64_t ba;
+	u_int32_t mb[IOP_MAX_MSG_SIZE / sizeof(u_int32_t)];
 
 	sc = (struct ld_iop_softc *)ld;
 	iop = (struct iop_softc *)ld->sc_dv.dv_parent;
 	bcount = blkcnt * ld->sc_secsize;
 	ba = (u_int64_t)blkno * ld->sc_secsize;
+	im = iop_msg_alloc(iop, &sc->sc_ii, IM_POLL);
 
-	rv = iop_msg_alloc(iop, &sc->sc_ii, &im, IM_NOWAIT | IM_NOINTR);
-	if (rv != 0)
-		return (rv);
+	mf = (struct i2o_rbs_block_write *)mb;
+	mf->msgflags = I2O_MSGFLAGS(i2o_rbs_block_write);
+	mf->msgfunc = I2O_MSGFUNC(sc->sc_ii.ii_tid, I2O_RBS_BLOCK_WRITE);
+	mf->msgictx = sc->sc_ii.ii_ictx;
+	mf->msgtctx = im->im_tctx;
+	mf->flags = I2O_RBS_BLOCK_WRITE_CACHE_WT | (1 << 16);
+	mf->datasize = bcount;
+	mf->lowoffset = (u_int32_t)ba;
+	mf->highoffset = (u_int32_t)(ba >> 32);
 
-	mb = (struct i2o_rbs_block_write *)im->im_msg;
-	mb->msgflags = I2O_MSGFLAGS(i2o_rbs_block_write);
-	mb->msgfunc = I2O_MSGFUNC(sc->sc_tid, I2O_RBS_BLOCK_WRITE);
-	mb->msgictx = sc->sc_ii.ii_ictx;
-	mb->msgtctx = im->im_tctx;
-	mb->flags = I2O_RBS_BLOCK_WRITE_CACHE_WT | (1 << 16);
-	mb->datasize = bcount;
-	mb->lowoffset = (u_int32_t)ba;
-	mb->highoffset = (u_int32_t)(ba >> 32);
-
-	if ((rv = iop_msg_map(iop, im, data, bcount, 1)) != 0) {
-		iop_msg_free(iop, &sc->sc_ii, im);
+	if ((rv = iop_msg_map(iop, im, mb, data, bcount, 1)) != 0) {
+		iop_msg_free(iop, im);
 		return (rv);
 	}
 
-	rv = (iop_msg_send(iop, im, 5000) != 0 ? EIO : 0);
+	rv = iop_msg_post(iop, im, mb, LD_IOP_TIMEOUT * 2);
 	iop_msg_unmap(iop, im);
-	iop_msg_free(iop, &sc->sc_ii, im);
+	iop_msg_free(iop, im);
  	return (rv);
 }
 
@@ -477,25 +496,25 @@ ld_iop_flush(struct ld_softc *ld)
 	struct iop_msg *im;
 	struct iop_softc *iop;
 	struct ld_iop_softc *sc;
-	struct i2o_rbs_cache_flush *mb;
+	struct i2o_rbs_cache_flush mf;
 	int rv;
 
 	sc = (struct ld_iop_softc *)ld;
 	iop = (struct iop_softc *)ld->sc_dv.dv_parent;
+	im = iop_msg_alloc(iop, &sc->sc_ii, IM_WAIT);
 
-	rv = iop_msg_alloc(iop, &sc->sc_ii, &im, IM_NOWAIT | IM_NOINTR);
-	if (rv != 0)
-		return (rv);
+	mf.msgflags = I2O_MSGFLAGS(i2o_rbs_cache_flush);
+	mf.msgfunc = I2O_MSGFUNC(sc->sc_ii.ii_tid, I2O_RBS_CACHE_FLUSH);
+	mf.msgictx = sc->sc_ii.ii_ictx;
+	mf.msgtctx = im->im_tctx;
+	mf.flags = 1 << 16;			/* time multiplier */
 
-	mb = (struct i2o_rbs_cache_flush *)im->im_msg;
-	mb->msgflags = I2O_MSGFLAGS(i2o_rbs_cache_flush);
-	mb->msgfunc = I2O_MSGFUNC(sc->sc_tid, I2O_RBS_CACHE_FLUSH);
-	mb->msgictx = sc->sc_ii.ii_ictx;
-	mb->msgtctx = im->im_tctx;
-	mb->flags = 1 << 16;			/* time multiplier */
-
- 	rv = iop_msg_send(iop, im, 10000);
-	iop_msg_free(iop, &sc->sc_ii, im);
+	/*
+	 * XXX Aincent disks will return an error here.  Also, we shouldn't
+	 * be polling on completion while the system is running.
+	 */
+	rv = iop_msg_post(iop, im, &mf, LD_IOP_TIMEOUT * 2);
+	iop_msg_free(iop, im);
 	return (rv);
 }
 
@@ -506,8 +525,8 @@ ld_iop_intr(struct device *dv, struct iop_msg *im, void *reply)
 	struct buf *bp;
 	struct ld_iop_softc *sc;
 	struct iop_softc *iop;
+	int err, detail;
 #ifdef I2OVERBOSE
-	int detail;
 	const char *errstr;
 #endif
 
@@ -516,30 +535,31 @@ ld_iop_intr(struct device *dv, struct iop_msg *im, void *reply)
 	sc = (struct ld_iop_softc *)dv;
 	iop = (struct iop_softc *)dv->dv_parent;
 
-#ifdef I2OVERBOSE
-	if (rb->reqstatus != I2O_STATUS_SUCCESS) {
+	err = ((rb->msgflags & I2O_MSGFLAGS_FAIL) != 0);
+
+	if (!err && rb->reqstatus != I2O_STATUS_SUCCESS) {
 		detail = le16toh(rb->detail);
+#ifdef I2OVERBOSE
 		if (detail > sizeof(ld_iop_errors) / sizeof(ld_iop_errors[0]))
-			errstr = "unknown error";
+			errstr = "<unknown>";
 		else
 			errstr = ld_iop_errors[detail];
-		printf("%s: %s\n", dv->dv_xname, errstr);
+		printf("%s: error 0x%04x: %s\n", dv->dv_xname, detail, errstr);
 #else
-	if (rb->reqstatus != I2O_STATUS_SUCCESS) {
+		printf("%s: error 0x%04x\n", dv->dv_xname, detail);
 #endif
+		err = 1;
+	}
+
+	if (err) {
 		bp->b_flags |= B_ERROR;
 		bp->b_error = EIO;
-#ifndef notyet
 		bp->b_resid = bp->b_bcount;
 	} else
-		bp->b_resid = 0;
-#else
-	}
-	bp->b_resid = bp->b_bcount - le32toh(rb->transfercount);
-#endif
+		bp->b_resid = bp->b_bcount - le32toh(rb->transfercount);
 
 	iop_msg_unmap(iop, im);
-	iop_msg_free(iop, &sc->sc_ii, im);
+	iop_msg_free(iop, im);
 	lddone(&sc->sc_ld, bp);
 }
 
@@ -547,15 +567,40 @@ static void
 ld_iop_intr_event(struct device *dv, struct iop_msg *im, void *reply)
 {
 	struct i2o_util_event_register_reply *rb;
+	struct ld_iop_softc *sc;
 	u_int event;
 
 	rb = reply;
-	event = le32toh(rb->event);
 
+	if ((rb->msgflags & I2O_MSGFLAGS_FAIL) != 0)
+		return;
+
+	event = le32toh(rb->event);
+	sc = (struct ld_iop_softc *)dv;
+
+	if (event == I2O_EVENT_GEN_EVENT_MASK_MODIFIED) {
+		sc->sc_flags |= LD_IOP_NEW_EVTMASK;
+		wakeup(&sc->sc_eventii);
 #ifndef I2ODEBUG
-	if (event == I2O_EVENT_GEN_EVENT_MASK_MODIFIED)
 		return;
 #endif
+	}
 
 	printf("%s: event 0x%08x received\n", dv->dv_xname, event);
+}
+
+static void
+ld_iop_adjqparam(struct device *dv, int mpi)
+{
+	struct iop_softc *iop;
+
+	/*
+	 * AMI controllers seem to loose the plot if you hand off lots of
+	 * queued commands.
+	 */
+	iop = (struct iop_softc *)dv->dv_parent;
+	if (le16toh(I2O_ORG_AMI) == iop->sc_status.orgid && mpi > 64)
+		mpi = 64;
+
+	ldadjqparam((struct ld_softc *)dv, mpi);
 }
