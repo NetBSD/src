@@ -1,4 +1,4 @@
-/*	$NetBSD: smb_rq.c,v 1.10 2003/02/25 09:12:11 jdolecek Exp $	*/
+/*	$NetBSD: smb_rq.c,v 1.11 2003/02/26 19:30:52 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2000-2001, Boris Popov
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smb_rq.c,v 1.10 2003/02/25 09:12:11 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smb_rq.c,v 1.11 2003/02/26 19:30:52 jdolecek Exp $");
  
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -189,7 +189,7 @@ smb_rq_enqueue(struct smb_rq *rqp)
 			SMBS_ST_UNLOCK(ssp);
 			error = ltsleep(&ssp->ss_vcgenid,
 				PWAIT | PCATCH | PNORELOCK,
-				"90trcn", hz, SMBS_ST_LOCKPTR(ssp));
+				"smbtrcn", hz, SMBS_ST_LOCKPTR(ssp));
 			if (error && error != EWOULDBLOCK)
 				return (error);
 			continue;
