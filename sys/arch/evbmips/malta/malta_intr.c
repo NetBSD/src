@@ -1,4 +1,4 @@
-/*	$NetBSD: malta_intr.c,v 1.6 2002/11/10 15:21:52 simonb Exp $	*/
+/*	$NetBSD: malta_intr.c,v 1.7 2002/12/06 05:46:47 simonb Exp $	*/
 
 /*
  * Copyright 2001, 2002 Wasabi Systems, Inc.
@@ -317,7 +317,7 @@ static int
 malta_pci_intr_map(struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 {
 #ifdef YAMON_IRQ_MAP_BAD
-	static const int pciirqmap[13/*device*/][4/*pin*/] = {
+	static const int pciirqmap[12/*device*/][4/*pin*/] = {
 		{ -1, -1, -1, 11 },	/* 10: USB */
 		{ 10, -1, -1, -1 },	/* 11: Ethernet */
 		{ 11, -1, -1, -1 },	/* 12: Audio */
