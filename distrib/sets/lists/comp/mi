@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.441 2002/05/24 04:01:44 itojun Exp $
+#	$NetBSD: mi,v 1.442 2002/05/25 02:18:36 gmcgarry Exp $
 ./sys				comp-sysutil-root
 ./usr/bin/addr2line		comp-debug-bin
 ./usr/bin/ar			comp-util-bin
@@ -2821,6 +2821,7 @@
 ./usr/share/man/cat9/Cardbus_make_tag.0		comp-sys-catman
 ./usr/share/man/cat9/Cardbus_mapreg_map.0		comp-sys-catman
 ./usr/share/man/cat9/Cardbus_mapreg_unmap.0		comp-sys-catman
+./usr/share/man/cat9/DELAY.0	comp-sys-catman
 ./usr/share/man/cat9/ETHER_FIRST_MULTI.0		comp-sys-catman
 ./usr/share/man/cat9/ETHER_IS_MULTICAST.0		comp-sys-catman
 ./usr/share/man/cat9/ETHER_NEXT_MULTI.0		comp-sys-catman
@@ -3006,6 +3007,7 @@
 ./usr/share/man/cat9/cardbus_mapreg_unmap.0		comp-sys-catman
 ./usr/share/man/cat9/cdevvp.0		comp-sys-catman
 ./usr/share/man/cat9/checkalias.0		comp-sys-catman
+./usr/share/man/cat9/child_return.0	comp-sys-catman
 ./usr/share/man/cat9/clock_secs_to_ymdhms.0	comp-sys-catman
 ./usr/share/man/cat9/clock_ymdhms_to_secs.0	comp-sys-catman
 ./usr/share/man/cat9/cltom.0		comp-sys-catman
@@ -3034,9 +3036,27 @@
 ./usr/share/man/cat9/copyout.0		comp-sys-catman
 ./usr/share/man/cat9/copyoutstr.0		comp-sys-catman
 ./usr/share/man/cat9/copystr.0		comp-sys-catman
+./usr/share/man/cat9/cpu_configure.0	comp-sys-catman
+./usr/share/man/cat9/cpu_coredump.0	comp-sys-catman
+./usr/share/man/cat9/cpu_dump.0	comp-sys-catman
+./usr/share/man/cat9/cpu_dumpconf.0	comp-sys-catman
+./usr/share/man/cat9/cpu_dumpsize.0	comp-sys-catman
+./usr/share/man/cat9/cpu_exit.0	comp-sys-catman
+./usr/share/man/cat9/cpu_fork.0	comp-sys-catman
+./usr/share/man/cat9/cpu_initclocks.0	comp-sys-catman
+./usr/share/man/cat9/cpu_number.0	comp-sys-catman
 ./usr/share/man/cat9/cpu_reboot.0		comp-sys-catman
+./usr/share/man/cat9/cpu_rootconf.0	comp-sys-catman
+./usr/share/man/cat9/cpu_startup.0	comp-sys-catman
+./usr/share/man/cat9/cpu_swapin.0	comp-sys-catman
+./usr/share/man/cat9/cpu_swapout.0	comp-sys-catman
 ./usr/share/man/cat9/cpu_switch.0		comp-sys-catman
+./usr/share/man/cat9/cpu_sysctl.0	comp-sys-catman
+./usr/share/man/cat9/cpu_wait.0	comp-sys-catman
 ./usr/share/man/cat9/ctxsw.0		comp-sys-catman
+./usr/share/man/cat9/curcpu.0	comp-sys-catman
+./usr/share/man/cat9/curproc.0	comp-sys-catman
+./usr/share/man/cat9/delay.0	comp-sys-catman
 ./usr/share/man/cat9/disk.0		comp-sys-catman
 ./usr/share/man/cat9/disk_attach.0		comp-sys-catman
 ./usr/share/man/cat9/disk_busy.0		comp-sys-catman
@@ -3049,6 +3069,7 @@
 ./usr/share/man/cat9/dopowerhooks.0		comp-sys-catman
 ./usr/share/man/cat9/doshutdownhooks.0		comp-sys-catman
 ./usr/share/man/cat9/driver.0		comp-sys-catman
+./usr/share/man/cat9/dumpsys.0	comp-sys-catman
 ./usr/share/man/cat9/ether_addmulti.0		comp-sys-catman
 ./usr/share/man/cat9/ether_delmulti.0		comp-sys-catman
 ./usr/share/man/cat9/ether_ifattach.0		comp-sys-catman
@@ -3102,6 +3123,16 @@
 ./usr/share/man/cat9/ioasic_intr_evcnt.0		comp-sys-catman
 ./usr/share/man/cat9/ioasic_submatch.0		comp-sys-catman
 ./usr/share/man/cat9/ioctl.0		comp-sys-catman
+./usr/share/man/cat9/ipkdb.0	comp-sys-catman
+./usr/share/man/cat9/ipkdb_connect.0	comp-sys-catman
+./usr/share/man/cat9/ipkdb_init.0	comp-sys-catman
+./usr/share/man/cat9/ipkdb_poll.0	comp-sys-catman
+./usr/share/man/cat9/ipkdb_trap.0	comp-sys-catman
+./usr/share/man/cat9/ipkdbcmds.0	comp-sys-catman
+./usr/share/man/cat9/ipkdbfbyte.0	comp-sys-catman
+./usr/share/man/cat9/ipkdbif_init.0	comp-sys-catman
+./usr/share/man/cat9/ipkdbinit.0	comp-sys-catman
+./usr/share/man/cat9/ipkdbsbyte.0	comp-sys-catman
 ./usr/share/man/cat9/isa.0		comp-sys-catman
 ./usr/share/man/cat9/isa_dmaabort.0		comp-sys-catman
 ./usr/share/man/cat9/isa_dmacascade.0		comp-sys-catman
@@ -3128,6 +3159,7 @@
 ./usr/share/man/cat9/isapnp_devmatch.0		comp-sys-catman
 ./usr/share/man/cat9/isapnp_unconfig.0		comp-sys-catman
 ./usr/share/man/cat9/itimerfix.0		comp-sys-catman
+./usr/share/man/cat9/kcopy.0	comp-sys-catman
 ./usr/share/man/cat9/kernacc.0		comp-sys-catman
 ./usr/share/man/cat9/kprintf.0		comp-sys-catman
 ./usr/share/man/cat9/kthread.0		comp-sys-catman
@@ -3141,6 +3173,7 @@
 ./usr/share/man/cat9/lockmgr_printinfo.0	comp-sys-catman
 ./usr/share/man/cat9/lockstatus.0	comp-sys-catman
 ./usr/share/man/cat9/log.0		comp-sys-catman
+./usr/share/man/cat9/longjmp.0	comp-sys-catman
 ./usr/share/man/cat9/lookup.0		comp-sys-catman
 ./usr/share/man/cat9/ltsleep.0		comp-sys-catman
 ./usr/share/man/cat9/m_adj.0		comp-sys-catman
@@ -3245,6 +3278,7 @@
 ./usr/share/man/cat9/powerhook_establish.0		comp-sys-catman
 ./usr/share/man/cat9/ppsratecheck.0		comp-sys-catman
 ./usr/share/man/cat9/printf.0		comp-sys-catman
+./usr/share/man/cat9/proc_trampoline.0	comp-sys-catman
 ./usr/share/man/cat9/prop_copy.0	comp-sys-catman
 ./usr/share/man/cat9/prop_delete.0	comp-sys-catman
 ./usr/share/man/cat9/prop_get.0		comp-sys-catman
@@ -3278,6 +3312,7 @@
 ./usr/share/man/cat9/runtime.0		comp-sys-catman
 ./usr/share/man/cat9/scsipi.0		comp-sys-catman
 ./usr/share/man/cat9/setdisklabel.0		comp-sys-catman
+./usr/share/man/cat9/setjmp.0	comp-sys-catman
 ./usr/share/man/cat9/setrunqueue.0		comp-sys-catman
 ./usr/share/man/cat9/shutdownhook_disestablish.0		comp-sys-catman
 ./usr/share/man/cat9/shutdownhook_establish.0		comp-sys-catman
@@ -5303,6 +5338,7 @@
 ./usr/share/man/man9/Cardbus_make_tag.9		comp-sys-man
 ./usr/share/man/man9/Cardbus_mapreg_map.9		comp-sys-man
 ./usr/share/man/man9/Cardbus_mapreg_unmap.9		comp-sys-man
+./usr/share/man/man9/DELAY.9	comp-sys-man
 ./usr/share/man/man9/ETHER_FIRST_MULTI.9		comp-sys-man
 ./usr/share/man/man9/ETHER_IS_MULTICAST.9		comp-sys-man
 ./usr/share/man/man9/ETHER_NEXT_MULTI.9		comp-sys-man
@@ -5488,6 +5524,7 @@
 ./usr/share/man/man9/cardbus_mapreg_unmap.9		comp-sys-man
 ./usr/share/man/man9/cdevvp.9		comp-sys-man
 ./usr/share/man/man9/checkalias.9		comp-sys-man
+./usr/share/man/man9/child_return.9	comp-sys-man
 ./usr/share/man/man9/clock_secs_to_ymdhms.9	comp-sys-man
 ./usr/share/man/man9/clock_ymdhms_to_secs.9	comp-sys-man
 ./usr/share/man/man9/cltom.9		comp-sys-man
@@ -5516,9 +5553,27 @@
 ./usr/share/man/man9/copyout.9		comp-sys-man
 ./usr/share/man/man9/copyoutstr.9		comp-sys-man
 ./usr/share/man/man9/copystr.9		comp-sys-man
+./usr/share/man/man9/cpu_configure.9	comp-sys-man
+./usr/share/man/man9/cpu_coredump.9	comp-sys-man
+./usr/share/man/man9/cpu_dump.9	comp-sys-man
+./usr/share/man/man9/cpu_dumpconf.9	comp-sys-man
+./usr/share/man/man9/cpu_dumpsize.9	comp-sys-man
+./usr/share/man/man9/cpu_exit.9	comp-sys-man
+./usr/share/man/man9/cpu_fork.9	comp-sys-man
+./usr/share/man/man9/cpu_initclocks.9	comp-sys-man
+./usr/share/man/man9/cpu_number.9	comp-sys-man
 ./usr/share/man/man9/cpu_reboot.9		comp-sys-man
+./usr/share/man/man9/cpu_rootconf.9	comp-sys-man
+./usr/share/man/man9/cpu_startup.9	comp-sys-man
+./usr/share/man/man9/cpu_swapin.9	comp-sys-man
+./usr/share/man/man9/cpu_swapout.9	comp-sys-man
 ./usr/share/man/man9/cpu_switch.9		comp-sys-man
+./usr/share/man/man9/cpu_sysctl.9	comp-sys-man
+./usr/share/man/man9/cpu_wait.9	comp-sys-man
 ./usr/share/man/man9/ctxsw.9		comp-sys-man
+./usr/share/man/man9/curcpu.9	comp-sys-man
+./usr/share/man/man9/curproc.9	comp-sys-man
+./usr/share/man/man9/delay.9	comp-sys-man
 ./usr/share/man/man9/disk.9		comp-sys-man
 ./usr/share/man/man9/disk_attach.9		comp-sys-man
 ./usr/share/man/man9/disk_busy.9		comp-sys-man
@@ -5531,6 +5586,7 @@
 ./usr/share/man/man9/dopowerhooks.9		comp-sys-man
 ./usr/share/man/man9/doshutdownhooks.9		comp-sys-man
 ./usr/share/man/man9/driver.9		comp-sys-man
+./usr/share/man/man9/dumpsys.9	comp-sys-man
 ./usr/share/man/man9/ether_addmulti.9		comp-sys-man
 ./usr/share/man/man9/ether_delmulti.9		comp-sys-man
 ./usr/share/man/man9/ether_ifattach.9		comp-sys-man
@@ -5584,6 +5640,16 @@
 ./usr/share/man/man9/ioasic_intr_evcnt.9		comp-sys-man
 ./usr/share/man/man9/ioasic_submatch.9		comp-sys-man
 ./usr/share/man/man9/ioctl.9		comp-sys-man
+./usr/share/man/man9/ipkdb.9	comp-sys-man
+./usr/share/man/man9/ipkdb_connect.9	comp-sys-man
+./usr/share/man/man9/ipkdb_init.9	comp-sys-man
+./usr/share/man/man9/ipkdb_poll.9	comp-sys-man
+./usr/share/man/man9/ipkdb_trap.9	comp-sys-man
+./usr/share/man/man9/ipkdbcmds.9	comp-sys-man
+./usr/share/man/man9/ipkdbfbyte.9	comp-sys-man
+./usr/share/man/man9/ipkdbif_init.9	comp-sys-man
+./usr/share/man/man9/ipkdbinit.9	comp-sys-man
+./usr/share/man/man9/ipkdbsbyte.9	comp-sys-man
 ./usr/share/man/man9/isa.9		comp-sys-man
 ./usr/share/man/man9/isa_dmaabort.9		comp-sys-man
 ./usr/share/man/man9/isa_dmacascade.9		comp-sys-man
@@ -5610,6 +5676,7 @@
 ./usr/share/man/man9/isapnp_devmatch.9		comp-sys-man
 ./usr/share/man/man9/isapnp_unconfig.9		comp-sys-man
 ./usr/share/man/man9/itimerfix.9		comp-sys-man
+./usr/share/man/man9/kcopy.9	comp-sys-man
 ./usr/share/man/man9/kernacc.9		comp-sys-man
 ./usr/share/man/man9/kprintf.9		comp-sys-man
 ./usr/share/man/man9/kthread.9		comp-sys-man
@@ -5623,6 +5690,7 @@
 ./usr/share/man/man9/lockmgr_printinfo.9	comp-sys-man
 ./usr/share/man/man9/lockstatus.9	comp-sys-man
 ./usr/share/man/man9/log.9		comp-sys-man
+./usr/share/man/man9/longjmp.9	comp-sys-man
 ./usr/share/man/man9/lookup.9		comp-sys-man
 ./usr/share/man/man9/ltsleep.9		comp-sys-man
 ./usr/share/man/man9/m_adj.9		comp-sys-man
@@ -5727,6 +5795,7 @@
 ./usr/share/man/man9/powerhook_establish.9		comp-sys-man
 ./usr/share/man/man9/ppsratecheck.9		comp-sys-man
 ./usr/share/man/man9/printf.9		comp-sys-man
+./usr/share/man/man9/proc_trampoline.9	comp-sys-man
 ./usr/share/man/man9/prop_copy.9		comp-sys-man
 ./usr/share/man/man9/prop_delete.9		comp-sys-man
 ./usr/share/man/man9/prop_get.9		comp-sys-man
@@ -5760,6 +5829,7 @@
 ./usr/share/man/man9/runtime.9		comp-sys-man
 ./usr/share/man/man9/scsipi.9		comp-sys-man
 ./usr/share/man/man9/setdisklabel.9		comp-sys-man
+./usr/share/man/man9/setjmp.9	comp-sys-man
 ./usr/share/man/man9/setrunqueue.9		comp-sys-man
 ./usr/share/man/man9/shutdownhook_disestablish.9		comp-sys-man
 ./usr/share/man/man9/shutdownhook_establish.9		comp-sys-man
