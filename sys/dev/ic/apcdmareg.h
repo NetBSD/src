@@ -1,4 +1,4 @@
-/*	$NetBSD: apcdmareg.h,v 1.2 2000/06/16 11:47:34 pk Exp $	*/
+/*	$NetBSD: apcdmareg.h,v 1.3 2002/03/12 04:48:28 uwe Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -41,6 +41,9 @@
  * Thanks to Derrick J. Brashear for additional info on the
  * meaning of some of these bits.
  */
+#ifndef _DEV_IC_APCDMAREG_H_
+#define _DEV_IC_APCDMAREG_H_
+
 struct apc_dma {
 	volatile u_int32_t dmacsr;	/* APC CSR */
 	volatile u_int32_t lpad[3];	/* */
@@ -86,27 +89,22 @@ struct apc_dma {
 	"\14CM\13CD\12CMI\11CMIE\10PPAUSE\7CPAUSE\6PDN\4PGO\3CGO"
 
 /*
- * To start DMA, you write to dma[cp]nva and dma[cp]nc and set [CP]DMA_GO
- * in dmacsr. dma[cp]va and dma[cp]c, when read, appear to be the live
- * counter as the DMA operation progresses.
- * Supposedly, you get an interrupt with the "dirty" bits (APC_PD,APC_CD)
- * set, when the next DMA buffer can be programmed, while the current one
- * is still in progress. We don't currently use this feature, since I
- * haven't been able to make it work.. instead the next buffer goes in
- * as soon as we see a "pipe empty" (APC_PM) interrupt.
+ * Note that when we program CSR, we should be careful to not
+ * accidentally clear any pending interrupt bits (a pending interrupt
+ * reads as 1 and writing back 1 will clear), so instead of
+ *
+ *     dma->dmacsr |= bits;
+ *
+ * we should do
+ *
+ *     temp = dma->dmacsr & ~APC_INTR_MASK;
+ *     temp |= bits;
+ *     dma->dmacsr = temp;
+ *
+ * When clearing bits, always add APC_INTR_MASK, i.e.
+ *
+ *     dma->dmacsr &= ~(bits | APC_INTR_MASK);
  */
+#define APC_INTR_MASK	(APC_IP|APC_PI|APC_CI|APC_EI|APC_PMI|APC_CMI)
 
-/* It's not clear if there's a maximum DMA size.. */
-#define APC_MAX		(sc->sc_blksz)/*(16*1024)*/
-
-/*
- * List of device memory allocations (see cs4231_malloc/cs4231_free).
- */
-struct cs_dma {
-	struct	cs_dma	*next;
-	caddr_t		addr;
-	bus_dmamap_t	dmamap;
-	bus_dma_segment_t segs[1];
-	int		nsegs;
-	size_t		size;
-};
+#endif /* _DEV_IC_APCDMAREG_H_ */
