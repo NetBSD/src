@@ -1,4 +1,4 @@
-.\" $NetBSD: pthread_rwlock_rdlock.3,v 1.6 2003/07/04 11:57:17 wiz Exp $
+.\" $NetBSD: pthread_rwlock_rdlock.3,v 1.7 2003/07/04 11:57:58 wiz Exp $
 .\"
 .\" Copyright (c) 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -91,7 +91,7 @@ The
 .Fn pthread_rwlock_tryrdlock
 function performs the same action as
 .Fn pthread_rwlock_rdlock ,
-but does not block if the lock cannot be immediately obtained (i.e.
+but does not block if the lock cannot be immediately obtained (i.e.,
 the lock is held for writing or there are waiting writers).
 .Pp
 A thread may hold multiple concurrent read locks.  If so,
