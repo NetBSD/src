@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.428.2.19 2003/01/27 06:21:36 jmc Exp $
+$NetBSD: pcidevs,v 1.428.2.20 2003/01/28 06:22:37 jmc Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -555,6 +555,7 @@ vendor SYMPHONY2	0x1c1c	Symphony Labs (2nd PCI Vendor ID)
 vendor TEKRAM2		0x1de1	Tekram Technology (2nd PCI Vendor ID)
 vendor COREGA		0x15e8	Corega
 vendor GLOBALSUN	0x16ab	Global Sun Tech
+vendor ALTIMA		0x173b	Altima
 vendor FZJZEL		0x1796	FZ Juelich / ZEL
 vendor SANDBURST	0x17ba	Sandburst, Inc.
 vendor HINT		0x3388	HiNT
@@ -761,6 +762,11 @@ product ALTEON ACENIC_COPPER	0x0002	ACEnic 1000baseT Gigabit Ethernet
 product ALTEON BCM5700		0x0003	ACEnic BCM5700 10/100/1000 Ethernet
 product ALTEON BCM5701		0x0004	ACEnic BCM5701 10/100/1000 Ethernet
 
+/* Altima products */
+product ALTIMA AC1000	0x03e8	AC1000 Gigabit Ethernet
+product ALTIMA AC1001	0x03e9	AC1001 Gigabit Ethernet
+product ALTIMA AC9100	0x03ea	AC9100 Gigabit Ethernet
+
 /* AMD products */
 product AMD PCNET_PCI	0x2000	PCnet-PCI Ethernet
 product AMD PCNET_HOME	0x2001	PCnet-Home HomePNA Ethernet
@@ -945,6 +951,14 @@ product BIT3 PCIVME2706		0x0300	PCI-VME Interface Mod. 2706
 /* Broadcom Corporation products */
 product BROADCOM BCM5700	0x1644	BCM5700 10/100/1000 Ethernet
 product BROADCOM BCM5701	0x1645	BCM5701 10/100/1000 Ethernet
+product BROADCOM BCM5702	0x1646	BCM5702 10/100/1000 Ethernet
+product BROADCOM BCM5702X	0x16a6	BCM5702X 10/100/1000 Ethernet
+product BROADCOM BCM5702FE	0x164d	BCM5702FE 10/100 Ethernet
+product BROADCOM BCM5703	0x1647	BCM5703 10/100/1000 Ethernet
+product BROADCOM BCM5703X	0x16a7	BCM5703X 10/100/1000 Ethernet
+product BROADCOM BCM5704C	0x1648	BCM5704C Gigabit Ethernet (1000BASE-T)
+product BROADCOM BCM5704S	0x16a8	BCM5704S Gigabit Ethernet (1000BASE-X)
+product BROADCOM BCM5705	0x1653	BCM5705 10/100/1000 Ethernet
 product BROADCOM BCM4401	0x4401	BCM4401 10/100 Ethernet
 
 /* Brooktree products */
@@ -1957,7 +1971,7 @@ product SYMPHONY	83C553	0x0565	83C553 PCI-ISA Bridge
 /* Schneider & Koch (really SysKonnect) products */
 product	SCHNEIDERKOCH	SKNET_FDDI	0x4000	SK-NET FDDI-xP
 product	SCHNEIDERKOCH	SKNET_GE	0x4300	SK-NET GE
-product SCHNEIDERKOCH	ALTIMA		0x4400	SK-NET Altima Gigabit Ethernet
+product SCHNEIDERKOCH	SK_9DX1		0x4400	SK-NET SK-9DX1 Gigabit Ethernet
 /* These next two are are really subsystem IDs */
 product SCHNEIDERKOCH	SK_9D21		0x4421	SK-9D21 1000BASE-T
 product SCHNEIDERKOCH	SK_9D41		0x4441	SK-9D41 1000BASE-X
