@@ -1,4 +1,4 @@
-/*	$NetBSD: ftpd.c,v 1.95.2.2 2000/07/07 11:33:33 itojun Exp $	*/
+/*	$NetBSD: ftpd.c,v 1.95.2.3 2000/07/25 08:38:39 lukem Exp $	*/
 
 /*
  * Copyright (c) 1997-2000 The NetBSD Foundation, Inc.
@@ -109,7 +109,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)ftpd.c	8.5 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: ftpd.c,v 1.95.2.2 2000/07/07 11:33:33 itojun Exp $");
+__RCSID("$NetBSD: ftpd.c,v 1.95.2.3 2000/07/25 08:38:39 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -172,8 +172,9 @@ struct	passwd *pw;
 int	sflag;
 int	stru;			/* avoid C keyword */
 int	mode;
-int	doutmp = 0;		/* update utmp file */
-int	mapped = 0;		/* IPv4 connection on AF_INET6 socket */
+int	doutmp;			/* update utmp file */
+int	dropprivs;		/* if privileges should or have been dropped */
+int	mapped;			/* IPv4 connection on AF_INET6 socket */
 off_t	file_size;
 off_t	byte_count;
 static char ttyline[20];
@@ -240,12 +241,17 @@ main(int argc, char *argv[])
 	logging = 0;
 	pdata = -1;
 	sflag = 0;
+	doutmp = 0;
+	dropprivs = 0;
+	mapped = 0;
 	usedefault = 1;
 	(void)strcpy(confdir, _DEFAULT_CONFDIR);
 	hostname[0] = '\0';
+	homedir[0] = '\0';
 	gidcount = 0;
 
-	while ((ch = getopt(argc, argv, "a:c:C:dh:lst:T:u:Uv")) != -1) {
+	version = FTPD_VERSION;
+	while ((ch = getopt(argc, argv, "a:c:C:dh:Hlrst:T:u:UvV:")) != -1) {
 		switch (ch) {
 		case 'a':
 			anondir = optarg;
@@ -269,8 +275,18 @@ main(int argc, char *argv[])
 			strlcpy(hostname, optarg, sizeof(hostname));
 			break;
 
+		case 'H':
+			if (gethostname(hostname, sizeof(hostname)) == -1)
+				hostname[0] = '\0';
+			hostname[sizeof(hostname) - 1] = '\0';
+			break;
+
 		case 'l':
 			logging++;	/* > 1 == extra logging */
+			break;
+
+		case 'r':
+			dropprivs = 1;
 			break;
 
 		case 's':
@@ -286,6 +302,13 @@ main(int argc, char *argv[])
 
 		case 'U':
 			doutmp = 1;
+			break;
+
+		case 'V':
+			if (EMPTYSTR(optarg) || strcmp(optarg, "-") == 0)
+				version = NULL;
+			else
+				version = xstrdup(optarg);
 			break;
 
 		default:
@@ -349,7 +372,7 @@ main(int argc, char *argv[])
 		(void) fflush(stdout);
 		(void) fclose(fd);
 		reply(530,
-			"Connection from IPv4 mapped address is not supported.");
+		    "Connection from IPv4 mapped address is not supported.");
 		exit(0);
 #endif
 
@@ -364,8 +387,6 @@ main(int argc, char *argv[])
 			syslog(LOG_WARNING, "setsockopt (IP_TOS): %m");
 	}
 #endif
-	data_source.su_port = htons(ntohs(ctrl_addr.su_port) - 1);
-
 	/* if the hostname hasn't been given, attempt to determine it */ 
 	if (hostname[0] == '\0') {
 		if (getnameinfo((struct sockaddr *)&ctrl_addr, ctrl_addr.su_len,
@@ -426,13 +447,16 @@ main(int argc, char *argv[])
 	curclass.type = CLASS_REAL;
 
 	/* If logins are disabled, print out the message. */
-	if (format_file(_PATH_NOLOGIN, 530)) {
+	if (display_file(_PATH_NOLOGIN, 530)) {
 		reply(530, "System not available.");
 		exit(0);
 	}
-	(void)format_file(conffilename(_PATH_FTPWELCOME), 220);
+	(void)display_file(conffilename(_PATH_FTPWELCOME), 220);
 		/* reply(220,) must follow */
-	reply(220, "%s FTP server (%s) ready.", hostname, FTPD_VERSION);
+	if (EMPTYSTR(version))
+		reply(220, "%s FTP server ready.", hostname);
+	else
+		reply(220, "%s FTP server (%s) ready.", hostname, version);
 
 	(void) setjmp(errcatch);
 	for (;;)
@@ -506,6 +530,10 @@ user(const char *name)
 			reply(530, "Can't change user from chroot user.");
 			return;
 		case CLASS_REAL:
+			if (dropprivs) {
+				reply(530, "Can't change user.");
+				return;
+			}
 			end_login();
 			break;
 		default:
@@ -726,12 +754,13 @@ static void
 end_login(void)
 {
 
-	(void) seteuid((uid_t)0);
 	if (logged_in) {
 		logwtmp(ttyline, "", "");
 		if (doutmp)
 			logout(utmp.ut_line);
 	}
+			/* reset login state */
+	(void) seteuid((uid_t)0);
 	pw = NULL;
 	logged_in = 0;
 	quietmessages = 0;
@@ -743,8 +772,8 @@ void
 pass(const char *passwd)
 {
 	int		 rval;
-	const char	*cp, *shell, *home;
-	char		*class;
+	const char	*cp, *shell;
+	char		*class, root[MAXPATHLEN];
 
 	class = NULL;
 	if (logged_in || askpasswd == 0) {
@@ -753,7 +782,7 @@ pass(const char *passwd)
 	}
 	askpasswd = 0;
 	if (curclass.type != CLASS_GUEST) {
-				/* "ftp" is only account allowed no password */
+			/* "ftp" is the only account allowed with no password */
 		if (pw == NULL) {
 			rval = 1;	/* failure below */
 			goto skip;
@@ -794,13 +823,14 @@ pass(const char *passwd)
  skip:
 		if (pw != NULL && pw->pw_expire && time(NULL) >= pw->pw_expire)
 			rval = 2;
-		/*
-		 * If rval > 0, the user failed the authentication check
-		 * above.  If rval == 0, either Kerberos or local authentication
-		 * succeeded.
-		 */
+
+			/*
+			 * If rval > 0, the user failed the authentication check
+			 * above.  If rval == 0, either Kerberos or local
+			 * authentication succeeded.
+			 */
 		if (rval) {
-			reply(530, rval == 2 ? "Password expired." :
+			reply(530, "%s", rval == 2 ? "Password expired." :
 			    "Login incorrect.");
 			if (logging) {
 				syslog(LOG_NOTICE,
@@ -820,7 +850,7 @@ pass(const char *passwd)
 		}
 	}
 
-	/* password was ok; see if anything else prevents login */
+			/* password ok; see if anything else prevents login */
 	if (! checkuser(_PATH_FTPUSERS, pw->pw_name, 1, 0, &class)) {
 		reply(530, "User %s may not use FTP.", pw->pw_name);
 		if (logging)
@@ -828,7 +858,7 @@ pass(const char *passwd)
 			    remotehost, pw->pw_name);
 		goto bad;
 	}
-	/* check for valid shell, if not guest user */
+			/* if not guest user, check for valid shell */
 	if ((shell = pw->pw_shell) == NULL || *shell == 0)
 		shell = _PATH_BSHELL;
 	while ((cp = getusershell()) != NULL)
@@ -849,12 +879,13 @@ pass(const char *passwd)
 		goto bad;
 	}
 	(void) initgroups(pw->pw_name, pw->pw_gid);
+			/* cache groups for cmds.c::matchgroup() */
 	gidcount = getgroups(sizeof(gidlist), gidlist);
 
-	/* open wtmp before chroot */
+			/* open wtmp before chroot */
 	logwtmp(ttyline, pw->pw_name, remotehost);
 
-	/* open utmp before chroot */
+			/* open utmp before chroot */
 	if (doutmp) {
 		memset((void *)&utmp, 0, sizeof(utmp));
 		(void)time(&utmp.ut_time);
@@ -892,69 +923,129 @@ pass(const char *passwd)
 		}
 	}
 
-	/* parse ftpd.conf, setting up various parameters */
+			/* parse ftpd.conf, setting up various parameters */
 	parse_conf(class);
 	count_users();
 	if (curclass.limit != -1 && connections > curclass.limit) {
 		if (! EMPTYSTR(curclass.limitfile))
-			(void)format_file(conffilename(curclass.limitfile),530);
+			(void)display_file(conffilename(curclass.limitfile),
+			    530);
 		reply(530,
 		    "User %s access denied, connection limit of %d reached.",
 		    pw->pw_name, curclass.limit);
 		syslog(LOG_NOTICE,
-	"Maximum connection limit of %d for class %s reached, login refused",
-		    curclass.limit, curclass.classname);
+    "Maximum connection limit of %d for class %s reached, login refused for %s",
+		    curclass.limit, curclass.classname, pw->pw_name);
 		goto bad;
 	}
 
-	home = "/";
+	homedir[0] = '/';
 	switch (curclass.type) {
 	case CLASS_GUEST:
-		/*
-		 * We MUST do a chdir() after the chroot. Otherwise
-		 * the old current directory will be accessible as "."
-		 * outside the new root!
-		 */
-		if (chroot(anondir ? anondir : pw->pw_dir) < 0 ||
-		    chdir("/") < 0) {
+			/*
+			 * We MUST do a chdir() after the chroot. Otherwise
+			 * the old current directory will be accessible as "."
+			 * outside the new root!
+			 */
+		format_path(root,
+		    curclass.chroot ? curclass.chroot :
+		    anondir ? anondir :
+		    pw->pw_dir);
+		format_path(homedir,
+		    curclass.homedir ? curclass.homedir :
+		    "/");
+		if (EMPTYSTR(homedir))
+			homedir[0] = '/';
+		if (EMPTYSTR(root) || chroot(root) < 0) {
+			syslog(LOG_NOTICE,
+			    "GUEST user %s: can't chroot to %s: %m",
+			    pw->pw_name, root);
+			goto bad_guest;
+		}
+		if (chdir(homedir) < 0) {
+			syslog(LOG_NOTICE,
+			    "GUEST user %s: can't chdir to %s: %m",
+			    pw->pw_name, homedir);
+ bad_guest:
 			reply(550, "Can't set guest privileges.");
 			goto bad;
 		}
 		break;
 	case CLASS_CHROOT:
-		if (chroot(pw->pw_dir) < 0 || chdir("/") < 0) {
+		format_path(root,
+		    curclass.chroot ? curclass.chroot :
+		    pw->pw_dir);
+		format_path(homedir,
+		    curclass.homedir ? curclass.homedir :
+		    "/");
+		if (EMPTYSTR(homedir))
+			homedir[0] = '/';
+		if (EMPTYSTR(root) || chroot(root) < 0) {
+			syslog(LOG_NOTICE,
+			    "CHROOT user %s: can't chroot to %s: %m",
+			    pw->pw_name, root);
+			goto bad_chroot;
+		}
+		if (chdir(homedir) < 0) {
+			syslog(LOG_NOTICE,
+			    "CHROOT user %s: can't chdir to %s: %m",
+			    pw->pw_name, homedir);
+ bad_chroot:
 			reply(550, "Can't change root.");
 			goto bad;
 		}
 		break;
 	case CLASS_REAL:
-		if (chdir(pw->pw_dir) < 0) {
+		format_path(homedir,
+		    curclass.homedir ? curclass.homedir :
+		    pw->pw_dir);
+		if (EMPTYSTR(homedir) || chdir(homedir) < 0) {
 			if (chdir("/") < 0) {
+				syslog(LOG_NOTICE,
+				    "REAL user %s: can't chdir to %s: %m",
+				    pw->pw_name,
+				    !EMPTYSTR(homedir) ?  homedir : "/");
 				reply(530,
 				    "User %s: can't change directory to %s.",
-				    pw->pw_name, pw->pw_dir);
+				    pw->pw_name,
+				    !EMPTYSTR(homedir) ? homedir : "/");
 				goto bad;
-			} else
+			} else {
 				reply(-230,
 				    "No directory! Logging in with home=/");
-		} else
-			home = pw->pw_dir;
+				homedir[0] = '/';
+			}
+		}
 		break;
 	}
-	if (seteuid((uid_t)pw->pw_uid) < 0) {
-		reply(550, "Can't set uid.");
-		goto bad;
+	if (dropprivs ||
+	    (curclass.type != CLASS_REAL && 
+	    ntohs(ctrl_addr.su_port) > IPPORT_RESERVED + 1)) {
+		dropprivs++;
+		if (setgid((gid_t)pw->pw_gid) < 0) {
+			reply(550, "Can't set gid.");
+			goto bad;
+		}
+		if (setuid((uid_t)pw->pw_uid) < 0) {
+			reply(550, "Can't set uid.");
+			goto bad;
+		}
+	} else {
+		if (seteuid((uid_t)pw->pw_uid) < 0) {
+			reply(550, "Can't set uid.");
+			goto bad;
+		}
 	}
-	setenv("HOME", home, 1);
+	setenv("HOME", homedir, 1);
 
 	if (curclass.type == CLASS_GUEST && passwd[0] == '-')
 		quietmessages = 1;
 
-	/*
-	 * Display a login message, if it exists.
-	 * N.B. reply(230,) must follow the message.
-	 */
-	(void)format_file(conffilename(curclass.motd), 230);
+			/*
+			 * Display a login message, if it exists.
+			 * N.B. reply(230,) must follow the message.
+			 */
+	(void)display_file(conffilename(curclass.motd), 230);
 	show_chdir_messages(230);
 	if (curclass.type == CLASS_GUEST) {
 		reply(230, "Guest login ok, access restrictions apply.");
@@ -986,7 +1077,7 @@ pass(const char *passwd)
 	(void) umask(curclass.umask);
 	goto cleanuppass;
  bad:
-	/* Forget all about it... */
+			/* Forget all about it... */
 	end_login();
  cleanuppass:
 	if (class)
@@ -1207,11 +1298,14 @@ store(const char *name, const char *mode, int unique)
 static FILE *
 getdatasock(const char *mode)
 {
-	int on = 1, s, t, tries;
+	int		on, s, t, tries;
+	in_port_t	port;
 
+	on = 1;
 	if (data >= 0)
 		return (fdopen(data, mode));
-	(void) seteuid((uid_t)0);
+	if (! dropprivs)
+		(void) seteuid((uid_t)0);
 	s = socket(ctrl_addr.su_family, SOCK_STREAM, 0);
 	if (s < 0)
 		goto bad;
@@ -1221,9 +1315,20 @@ getdatasock(const char *mode)
 	if (setsockopt(s, SOL_SOCKET, SO_KEEPALIVE,
 	    (char *) &on, sizeof(on)) < 0)
 		goto bad;
-	/* anchor socket to avoid multi-homing problems */
+			/* anchor socket to avoid multi-homing problems */
 	data_source = ctrl_addr;
-	data_source.su_port = htons(20); /* ftp-data port */
+			/*
+			 * By default source port for PORT connctions is
+			 * ctrlport-1 (see RFC959 section 5.2).
+			 * However, if privs have been dropped and that
+			 * would be < IPPORT_RESERVED, use a random port
+			 * instead.
+			 */
+	port = ntohs(ctrl_addr.su_port) - 1;
+	if (dropprivs && port < IPPORT_RESERVED)
+		port = 0;		/* use random port */
+	data_source.su_port = htons(port);
+
 	for (tries = 1; ; tries++) {
 		if (bind(s, (struct sockaddr *)&data_source,
 		    data_source.su_len) >= 0)
@@ -1232,7 +1337,8 @@ getdatasock(const char *mode)
 			goto bad;
 		sleep(tries);
 	}
-	(void) seteuid((uid_t)pw->pw_uid);
+	if (! dropprivs)
+		(void) seteuid((uid_t)pw->pw_uid);
 #ifdef IP_TOS
 	if (!mapped && ctrl_addr.su_family == AF_INET) {
 		on = IPTOS_THROUGHPUT;
@@ -1243,9 +1349,10 @@ getdatasock(const char *mode)
 #endif
 	return (fdopen(s, mode));
  bad:
-	/* Return the real value of errno (close may change it) */
+		/* Return the real value of errno (close may change it) */
 	t = errno;
-	(void) seteuid((uid_t)pw->pw_uid);
+	if (! dropprivs)
+		(void) seteuid((uid_t)pw->pw_uid);
 	(void) close(s);
 	errno = t;
 	return (NULL);
@@ -1661,7 +1768,7 @@ statcmd(void)
 	a = p = (u_char *)NULL;
 
 	reply(-211, "%s FTP server status:", hostname);
-	reply(0, "Version: %s", FTPD_VERSION);
+	reply(0, "Version: %s", EMPTYSTR(version) ? "<suppressed>" : version);
 	ntop_buf[0] = '\0';
 	if (!getnameinfo((struct sockaddr *)&his_addr, his_addr.su_len,
 			ntop_buf, sizeof(ntop_buf), NULL, 0, NI_NUMERICHOST)
@@ -1803,14 +1910,14 @@ statcmd(void)
 	if (logged_in) {
 		struct ftpconv *cp;
 
-		reply(0, "");
+		reply(0, "%s", "");
 		reply(0, "Class: %s, type: %s",
 		    curclass.classname, CURCLASSTYPE);
 		reply(0, "Check PORT/LPRT commands: %sabled",
 		    curclass.checkportcmd ? "en" : "dis");
-		if (curclass.display != NULL)
+		if (! EMPTYSTR(curclass.display))
 			reply(0, "Display file: %s", curclass.display);
-		if (curclass.notify != NULL)
+		if (! EMPTYSTR(curclass.notify))
 			reply(0, "Notify fileglob: %s", curclass.notify);
 		reply(0, "Idle timeout: %d, maximum timeout: %d",
 		    curclass.timeout, curclass.maxtimeout);
@@ -1822,7 +1929,11 @@ statcmd(void)
 		if (curclass.limitfile)
 			reply(0, "Connection limit exceeded file: %s",
 			    curclass.limitfile);
-		if (curclass.motd != NULL)
+		if (! EMPTYSTR(curclass.chroot))
+			reply(0, "Chroot format: %s", curclass.chroot);
+		if (! EMPTYSTR(curclass.homedir))
+			reply(0, "Homedir format: %s", curclass.homedir);
+		if (! EMPTYSTR(curclass.motd))
 			reply(0, "MotD file: %s", curclass.motd);
 		reply(0,
 	    "Modify commands (CHMOD, DELE, MKD, RMD, RNFR, UMASK): %sabled",
@@ -1925,7 +2036,6 @@ dologout(int status)
 	transflag = 0;
 
 	if (logged_in) {
-		(void) seteuid((uid_t)0);
 		logwtmp(ttyline, "", "");
 		if (doutmp)
 			logout(utmp.ut_line);

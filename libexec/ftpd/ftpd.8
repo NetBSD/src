@@ -1,4 +1,4 @@
-.\"	$NetBSD: ftpd.8,v 1.53.2.1 2000/06/22 08:42:26 lukem Exp $
+.\"	$NetBSD: ftpd.8,v 1.53.2.2 2000/07/25 08:38:38 lukem Exp $
 .\"
 .\" Copyright (c) 1997-2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -67,7 +67,7 @@
 .\"
 .\"     @(#)ftpd.8	8.2 (Berkeley) 4/19/94
 .\"
-.Dd June 20, 2000
+.Dd July 23, 2000
 .Dt FTPD 8
 .Os
 .Sh NAME
@@ -76,11 +76,12 @@
 Internet File Transfer Protocol server
 .Sh SYNOPSIS
 .Nm
-.Op Fl dlsU
+.Op Fl dHlrsU
 .Op Fl a Ar anondir
 .Op Fl c Ar confdir
 .Op Fl C Ar user
 .Op Fl h Ar hostname
+.Op Fl V Ar version
 .Sh DESCRIPTION
 .Nm
 is the Internet File Transfer Protocol server process.
@@ -119,9 +120,10 @@ This can be useful for testing configurations.
 Debugging information is written to the syslog using
 .Dv LOG_FTP .
 .It Fl h Ar hostname
-Explicitly set the hostname to advertise as.
-Defaults to the hostname associated with the IP address that
-.NM
+Explicitly set the hostname to advertise as to
+.Ar hostname .
+The default is the hostname associated with the IP address that
+.Nm
 is listening on.
 This ability (with or without
 .Fl h ) ,
@@ -134,6 +136,12 @@ servers, each listening on separate addresses as separate names.
 Refer to
 .Xr inetd.conf 5
 for more information on starting services to listen on specific IP addresses.
+.It Fl H
+Equivalent to
+.Do
+-h
+`hostname`
+.Dc .
 .It Fl l
 Each successful and failed
 .Tn FTP
@@ -142,6 +150,17 @@ session is logged using syslog with a facility of
 If this option is specified twice, the retrieve (get), store (put), append,
 delete, make directory, remove directory and rename operations and
 their filename arguments are also logged.
+.It Fl r
+Permanently drop root privileges once the user is logged in.
+The use of this option may result in the server using a port other
+than the (listening-port - 1) for
+.Sy PORT
+style commands, which is contrary to the
+.Cm RFC 959
+specification, but in practice very few clients rely upon this behaviour.
+See
+.Sx SECURITY CONSIDERATIONS
+below for more details.
 .It Fl s
 Require a secure authentication mechanism like Kerberos or S/Key to be used.
 .It Fl U
@@ -151,6 +170,19 @@ session is logged to the file
 .Pa /var/run/utmp ,
 making them visible to commands such as
 .Xr who 1 .
+.It Fl V Ar version
+Use
+.Ar version
+as the version to advertise in the login banner and in the output of
+.Sy STAT
+and
+.Sy SYST
+instead of the default version information.
+If
+.Ar version
+is empty or
+.Sq -
+then don't display any version information.
 .El
 .Pp
 The file
@@ -253,8 +285,14 @@ The following
 requests (as specified in
 .Cm RFC 959 )
 are recognized, but are not implemented:
-ACCT, SMNT, and REIN.
-MDTM and SIZE are not specified in
+.Sy ACCT ,
+.Sy SMNT ,
+and
+.Sy REIN .
+.Sy MDTM
+and
+.Sy SIZE
+are not specified in
 .Cm RFC 959 ,
 but will appear in the
 next updated
@@ -264,13 +302,13 @@ RFC.
 The
 .Nm
 server will abort an active file transfer only when the
-ABOR
+.Sy ABOR
 command is preceded by a Telnet "Interrupt Process" (IP)
 signal and a Telnet "Synch" signal in the command Telnet stream,
 as described in Internet
 .Cm RFC 959 .
 If a
-STAT
+.Sy STAT
 command is received during a data transfer, preceded by a Telnet IP
 and Synch, transfer status will be returned.
 .Pp
@@ -293,9 +331,12 @@ The login name must be in the password data base,
 and not have a null password.
 In this case a password must be provided by the client before any
 file operations may be performed.
-If the user has an S/Key key, the response from a successful USER
+If the user has an S/Key key, the response from a successful
+.Sy USER
 command will include an S/Key challenge.
-The client may choose to respond with a PASS command giving either
+The client may choose to respond with a
+.Sy PASS
+command giving either
 a standard password or an S/Key one-time password.
 The server will automatically determine which type of password it
 has been given and attempt to authenticate accordingly.
@@ -315,13 +356,13 @@ shell is assumed to be
 .It
 If directed by the file
 .Xr ftpchroot 5
-the session's root will be changed to the user's login directory by
+the session's root directory will be changed by
 .Xr chroot 2
-as for an
-.Dq anonymous
-or
-.Dq ftp
-account (see next item).
+to the directory specified in the
+.Xr ftpd.conf 5
+.Sy chroot
+directive (if set),
+or to the home directory of the user.
 However, the user must still supply a password.
 This feature is intended as a compromise between a fully anonymous account
 and a fully privileged account.
@@ -340,11 +381,28 @@ file (user
 In this case the user is allowed
 to log in by specifying any password (by convention an email address for
 the user should be used as the password).
+.Pp
 The server performs a
 .Xr chroot 2
-to the home directory of the
+to the directory specified in the
+.Xr ftpd.conf 5
+.Sy chroot
+directive (if set),
+the
+.Fl a Ar anondir
+directory (if set),
+or to the home directory of the
 .Dq ftp
 user.
+.Pp
+The server then performs a
+.Xr chdir 2
+to the directory specified in the
+.Xr ftpd.conf 5
+.Sy homedir
+directive (if set), otherwise to
+.Pa / .
+.Pp
 If other restrictions are required (such as disabling of certain
 commands and the setting of a specific umask), then appropriate
 entries in
@@ -391,7 +449,7 @@ Remote hostname.
 .It "\&%T"
 Current time.
 .It "\&%U"
-Username.
+User name.
 .It "\&%\&%"
 A
 .Dq \&%
@@ -436,7 +494,7 @@ and
 (see
 .Xr group 5 )
 must be present for the
-.Xr LIST
+.Sy LIST
 command to be able to display owner and group names instead of numbers.
 The password field in
 .Xr passwd 5
@@ -473,7 +531,7 @@ above.
 .It Pa ~ftp/tmp
 This directory is used to create temporary files which contain
 the error messages generated by a conversion or
-.Sq LIST
+.Sy LIST
 command.
 The owner should be the user
 .Dq ftp .
@@ -484,7 +542,7 @@ uploading files here (see
 .Pa ~ftp/incoming
 above), then don't create this directory.
 However, error messages from conversion or
-.Sq LIST
+.Sy LIST
 commands won't be returned to the user.
 (This is the traditional behaviour.)
 Note that the
@@ -548,7 +606,7 @@ and supports the extensions from
 .Cm RFC 2389 ,
 .Cm RFC 2428
 and
-.Cm draft-ietf-ftpext-mlst-10 .
+.Cm draft-ietf-ftpext-mlst-11 .
 .Sh HISTORY
 The
 .Nm
@@ -560,15 +618,26 @@ Various features such as the
 functionality,
 .Cm RFC 2389 ,
 and
-.Cm draft-ietf-ftpext-mlst-10
+.Cm draft-ietf-ftpext-mlst-11
 support was implemented in
 .Nx 1.3
 and later releases by Luke Mewburn <lukem@netbsd.org>.
 .Sh BUGS
 The server must run as the super-user to create sockets with
-privileged port numbers.
-It maintains an effective user id of the logged in user, reverting
-to the super-user only when binding addresses to sockets.
+privileged port numbers (i.e, those less than
+.Dv IPPORT_RESERVED ,
+which is 1024).
+If
+.Nm
+is listening on a privileged port
+it maintains an effective user id of the logged in user, reverting
+to the super-user only when binding addresses to privileged sockets.
+The
+.Fl r
+option can be used to override this behaviour and force privileges to
+be permanently revoked; see
+.Sx SECURITY CONSIDERATIONS
+below for more details.
 .Pp
 .Nm
 may have trouble handling connections from scoped IPv6 addresses, or
@@ -582,20 +651,62 @@ For the latter case, running two daemons,
 one for IPv4 and one for IPv6, will avoid the problem.
 .Sh SECURITY CONSIDERATIONS
 .Cm RFC 959
-provides no restrictions on the PORT command, and this can lead
-to security problems, as
+provides no restrictions on the
+.Sy PORT
+command, and this can lead to security problems, as
 .Nm
 can be fooled into connecting to any service on any host.
 With the
 .Dq checkportcmd
 feature of the
 .Xr ftpd.conf 5 ,
-PORT commands with different host addresses, or TCP ports lower than
+.Sy PORT
+commands with different host addresses, or TCP ports lower than
 .Dv IPPORT_RESERVED
 will be rejected.
+This also prevents
+.Sq third-party proxy ftp
+from working.
 Use of this option is
 .Em strongly
-recommended.
+recommended, and enabled by default.
+.Pp
+By default
+.Nm
+uses a port that is one less than the port it is listening on to
+communicate back to the client for the
+.Sy EPRT ,
+.Sy LPTR ,
+and
+.Sy PORT
+commands.
+As the default port for
+.Nm
+(21) is a privileged port below
+.Dv IPPORT_RESERVED ,
+.Nm
+retains the ability to switch back to root privileges to bind these
+ports.
+In order to increase security by reducing the potential for a bug in
+.Nm
+providing a remote root compromise,
+.Nm
+will permanently drop root privileges if one of the following is true:
+.Bl -enum -offset indent
+.It
+.Nm
+is running on a port greater than
+.Dv IPPORT_RESERVED
+and the user has logged in as a
+.Sq guest
+or 
+.Sq chroot
+user.
+.It
+.Nm
+was invoked with
+.Fl r .
+.El
 .Pp
 Don't create
 .Pa ~ftp/tmp
@@ -606,4 +717,5 @@ Note that if uploads are disabled with the
 .Xr ftpd.conf 5
 directive
 .Sy upload ,
-then this directory cannot be abused by the user in this way.
+then this directory cannot be abused by the user in this way, so it
+should be safe to create.

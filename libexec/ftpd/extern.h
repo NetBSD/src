@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.28 2000/06/19 15:15:03 lukem Exp $	*/
+/*	$NetBSD: extern.h,v 1.28.2.1 2000/07/25 08:38:37 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -105,15 +105,17 @@ void	closedataconn(FILE *);
 char   *conffilename(const char *);
 char  **copyblk(char **);
 void	count_users(void);
-void	cprintf(FILE *, const char *, ...);
+void	cprintf(FILE *, const char *, ...)
+	    __attribute__((__format__(__printf__, 2, 3)));
 void	cwd(const char *);
 FILE   *dataconn(const char *, off_t, const char *);
 void	delete(const char *);
+int	display_file(const char *, int);
 char  **do_conversion(const char *);
 void	dologout(int);
 void	fatal(const char *);
 void	feat(void);
-int	format_file(const char *, int);
+void	format_path(char *, const char *);
 int	ftpd_pclose(FILE *);
 FILE   *ftpd_popen(char *[], const char *, int);
 char   *getline(char *, int, FILE *);
@@ -135,7 +137,8 @@ void	pwd(void);
 void	removedir(const char *);
 void	renamecmd(const char *, const char *);
 char   *renamefrom(const char *);
-void	reply(int, const char *, ...);
+void	reply(int, const char *, ...)
+	    __attribute__((__format__(__printf__, 2, 3)));
 void	retrieve(char *[], const char *);
 void	send_file_list(const char *);
 void	show_chdir_messages(int);
@@ -176,9 +179,11 @@ struct ftpconv {
 
 struct ftpclass {
 	int		 checkportcmd;	/* Check PORT commands are valid */
+	char		*chroot;	/* Directory to chroot(2) to at login */
 	char		*classname;	/* Current class */
 	struct ftpconv	*conversions;	/* List of conversions */
 	char		*display;	/* Files to display upon chdir */
+	char		*homedir;	/* Directory to chdir(2) to at login */
 	int	 	 limit;		/* Max connections (-1 = unlimited) */
 	char		*limitfile;	/* File to display if limit reached */
 	int		 maxrateget;	/* Maximum get transfer rate throttle */
@@ -236,6 +241,7 @@ GLOBAL	int		gidcount;	/* number of entries in gidlist[] */
 GLOBAL	gid_t		gidlist[NGROUPS_MAX];
 GLOBAL	int		hasyyerrored;
 GLOBAL	char		hostname[MAXHOSTNAMELEN+1];
+GLOBAL	char		homedir[MAXPATHLEN];
 #ifdef KERBEROS5
 GLOBAL	krb5_context	kcontext;
 #endif
@@ -253,6 +259,7 @@ GLOBAL	char		tmpline[7];
 GLOBAL	sig_atomic_t	transflag;
 GLOBAL	int		type;
 GLOBAL	int		usedefault;		/* for data transfers */
+GLOBAL	const char     *version;
 
 						/* total file data bytes */
 GLOBAL	off_t		total_data_in,  total_data_out,  total_data;

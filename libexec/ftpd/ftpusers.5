@@ -1,4 +1,4 @@
-.\"	$NetBSD: ftpusers.5,v 1.6 2000/05/30 23:53:37 lukem Exp $
+.\"	$NetBSD: ftpusers.5,v 1.6.2.1 2000/07/25 08:38:41 lukem Exp $
 .\"
 .\" Copyright (c) 1997-2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -34,7 +34,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd May 31, 2000
+.Dd July 17, 2000
 .Dt FTPUSERS 5
 .Os
 .Sh NAME
@@ -71,7 +71,7 @@ The syntax of each line is:
 These elements are:
 .Bl -tag -width "groupglob" -offset indent
 .It Sy userglob
-matched against the username, using
+matched against the user name, using
 .Xr fnmatch 3
 glob matching
 (e.g,
@@ -118,7 +118,7 @@ If there is a match in
 .Sx /etc/ftpchroot
 for the user.
 .It Sy guest
-If the username is
+If the user name is
 .Dq anonymous
 or
 .Sq ftp .
@@ -147,10 +147,15 @@ in order to allow guest logins.
 .Ss /etc/ftpchroot
 The file
 .Pa /etc/ftpchroot
-is used to determine which users will have their session's root changed
-to the user's home directory (using
-.Xr chroot 2 ) .
-If the file does not exist, the root change is not performed.
+is used to determine which users will have their session's root directory
+changed (using
+.Xr chroot 2 ) ,
+either to the directory specified in the
+.Xr ftpd.conf 5
+.Sy chroot
+directive (if set),
+or to the home directory of the user.
+If the file does not exist, the root directory change is not performed.
 .Pp
 The syntax is similar to
 .Nm "" ,
