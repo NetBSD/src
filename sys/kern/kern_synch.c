@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_synch.c,v 1.137 2003/09/08 11:14:18 itojun Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.138 2003/10/26 20:55:57 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.137 2003/09/08 11:14:18 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.138 2003/10/26 20:55:57 fvdl Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ktrace.h"
@@ -837,7 +837,7 @@ mi_switch(struct lwp *l, struct lwp *newl)
 	long s, u;
 	struct timeval tv;
 #if defined(MULTIPROCESSOR)
-	int hold_count;
+	int hold_count = 0;	/* XXX: gcc */
 #endif
 	struct proc *p = l->l_proc;
 	int retval;
