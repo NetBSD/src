@@ -1,4 +1,4 @@
-/*	$NetBSD: if_kue.c,v 1.16 2000/03/15 22:40:30 augustss Exp $	*/
+/*	$NetBSD: if_kue.c,v 1.17 2000/03/20 00:27:11 augustss Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
  *	Bill Paul <wpaul@ee.columbia.edu>.  All rights reserved.
@@ -344,8 +344,6 @@ kue_load_fw(sc)
 	struct kue_softc	*sc;
 {
 	usbd_status		err;
-	u_char			eaddr[ETHER_ADDR_LEN];
-	u_int32_t		alen;
 
 	DPRINTFN(1,("%s: %s: enter\n", USBDEVNAME(sc->kue_dev), __FUNCTION__));
 
@@ -358,21 +356,12 @@ kue_load_fw(sc)
 	 * so we have to avoid this condition if we don't want
 	 * to look stupid.
 	 *
-	 * We can test this quickly by trying to read the MAC
-	 * address; if this fails to return any data, the firmware
-	 * needs to be reloaded, otherwise the device is already
-	 * operational and we can just return.
+	 * We can test this quickly by issuing a request that
+	 * is only valid after firmware download.
 	 */
-	err = kue_ctl_l(sc, KUE_CTL_READ, KUE_CMD_GET_MAC, 0, (char *)&eaddr,
-		  ETHER_ADDR_LEN, USBD_SHORT_XFER_OK, &alen);
-
-	if (err) {
-		printf("%s: kue_load_fw: failed to read MAC: %s\n",
-		    USBDEVNAME(sc->kue_dev), usbd_errstr(err));
-			return (EIO);
-	}
-
-	if (alen == ETHER_ADDR_LEN) {
+	err = kue_ctl(sc, KUE_CTL_READ, KUE_CMD_GET_ETHER_DESCRIPTOR,
+	    0, (char *)&sc->kue_desc, sizeof(sc->kue_desc));
+	if (!err) {
 		printf("%s: warm boot, no firmware download\n",
 		       USBDEVNAME(sc->kue_dev));
 		return (0);
