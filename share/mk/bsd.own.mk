@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.234 2001/12/12 05:50:09 thorpej Exp $
+#	$NetBSD: bsd.own.mk,v 1.235 2001/12/15 00:39:08 thorpej Exp $
 
 .if !defined(_BSD_OWN_MK_)
 _BSD_OWN_MK_=1
@@ -285,7 +285,7 @@ SHLIB_VERSION_FILE?= ${.CURDIR}/shlib_version
 GNU_ARCH.arm26=arm
 GNU_ARCH.arm32=arm
 GNU_ARCH.sh3eb=sh
-GNU_ARCH.sh3el=sh
+GNU_ARCH.sh3el=shl
 MACHINE_GNU_ARCH=${GNU_ARCH.${MACHINE_ARCH}:U${MACHINE_ARCH}}
 
 # In order to identify NetBSD to GNU packages, we sometimes need
@@ -294,6 +294,8 @@ MACHINE_GNU_ARCH=${GNU_ARCH.${MACHINE_ARCH}:U${MACHINE_ARCH}}
     (${MACHINE_GNU_ARCH} == "arm" || \
      ${MACHINE_ARCH} == "i386" || \
      ${MACHINE_ARCH} == "m68k" || \
+     ${MACHINE_GNU_ARCH} == "sh" || \
+     ${MACHINE_GNU_ARCH} == "shl" || \
      ${MACHINE_ARCH} == "sparc" || \
      ${MACHINE_ARCH} == "vax")
 MACHINE_GNU_PLATFORM=${MACHINE_GNU_ARCH}--netbsdelf
