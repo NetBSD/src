@@ -1,4 +1,4 @@
-/*	$NetBSD: wc.c,v 1.23 2002/03/23 21:20:21 enami Exp $	*/
+/*	$NetBSD: wc.c,v 1.24 2002/03/23 21:27:14 enami Exp $	*/
 
 /*
  * Copyright (c) 1980, 1987, 1991, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1987, 1991, 1993\n\
 #if 0
 static char sccsid[] = "@(#)wc.c	8.2 (Berkeley) 5/2/95";
 #else
-__RCSID("$NetBSD: wc.c,v 1.23 2002/03/23 21:20:21 enami Exp $");
+__RCSID("$NetBSD: wc.c,v 1.24 2002/03/23 21:27:14 enami Exp $");
 #endif
 #endif /* not lint */
 
@@ -96,7 +96,7 @@ main(argc, argv)
 	setlocale(LC_ALL, "");
 
 	while ((ch = getopt(argc, argv, "lwcm")) != -1)
-		switch ((char)ch) {
+		switch (ch) {
 		case 'l':
 			doline = 1;
 			break;
@@ -173,24 +173,22 @@ do_mb(wc, p, mblen, st, cnt, file)
 
 	*cnt = c;
 
-	return r;
+	return (r);
 }
 
 static void
 cnt(file)
 	char *file;
 {
-	u_char *C;
-	wchar_t *WC;
-	short gotsp;
-	int len = 0;
-	wc_count_t linect, wordct, charct;
-	struct stat sb;
-	int fd;
 	u_char buf[MAXBSIZE];
 	wchar_t wbuf[MAXBSIZE];
-	size_t r = 0;
+	struct stat sb;
+	wc_count_t charct, linect, wordct;
 	mbstate_t st;
+	u_char *C;
+	wchar_t *WC;
+	size_t r = 0;
+	int fd, gotsp, len = 0;
 
 	linect = wordct = charct = 0;
 	if (file) {
