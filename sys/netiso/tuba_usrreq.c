@@ -1,4 +1,4 @@
-/*	$NetBSD: tuba_usrreq.c,v 1.2 1994/06/29 06:40:56 cgd Exp $	*/
+/*	$NetBSD: tuba_usrreq.c,v 1.3 1995/04/22 13:29:33 cgd Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -94,7 +94,7 @@ tuba_usrreq(so, req, m, nam, control)
 	struct sockaddr_iso *siso;
 
 	if (req == PRU_CONTROL)
-		return (iso_control(so, (int)m, (caddr_t)nam,
+		return (iso_control(so, (long)m, (caddr_t)nam,
 			(struct ifnet *)control));
 
 	s = splnet();
