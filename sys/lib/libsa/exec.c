@@ -1,4 +1,4 @@
-/*	$NetBSD: exec.c,v 1.14 1996/10/10 22:46:20 christos Exp $	*/
+/*	$NetBSD: exec.c,v 1.15 1996/10/13 02:29:01 christos Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -68,7 +68,7 @@ exec(path, loadaddr, howto)
 #ifndef INSECURE
 	(void) fstat(io, &sb);
 	if (sb.st_uid || (sb.st_mode & 2)) {
-		kprintf("non-secure file, will not load\n");
+		printf("non-secure file, will not load\n");
 		close(io);
 		errno = EPERM;
 		return;
@@ -83,7 +83,7 @@ exec(path, loadaddr, howto)
 	}
 
         /* Text */
-	kprintf("%ld", x.a_text);
+	printf("%ld", x.a_text);
 	addr = loadaddr;
 #ifdef NO_LSEEK
 	if (N_GETMAGIC(x) == ZMAGIC && read(io, (char *)addr, 0x400) == -1)
@@ -99,13 +99,13 @@ exec(path, loadaddr, howto)
 			*addr++ = 0;
 
         /* Data */
-	kprintf("+%ld", x.a_data);
+	printf("+%ld", x.a_data);
 	if (read(io, addr, x.a_data) != x.a_data)
 		goto shread;
 	addr += x.a_data;
 
         /* Bss */
-	kprintf("+%ld", x.a_bss);
+	printf("+%ld", x.a_bss);
 	for (i = 0; i < x.a_bss; i++)
 		*addr++ = 0;
 
@@ -113,7 +113,7 @@ exec(path, loadaddr, howto)
 	ssym = addr;
 	bcopy(&x.a_syms, addr, sizeof(x.a_syms));
 	addr += sizeof(x.a_syms);
-	kprintf("+[%ld", x.a_syms);
+	printf("+[%ld", x.a_syms);
 	if (read(io, addr, x.a_syms) != x.a_syms)
 		goto shread;
 	addr += x.a_syms;
@@ -131,7 +131,7 @@ exec(path, loadaddr, howto)
 	}
 
 	/* and that many bytes of (debug symbols?) */
-	kprintf("+%d]", i);
+	printf("+%d]", i);
 
 	close(io);
 
@@ -141,14 +141,14 @@ exec(path, loadaddr, howto)
 #undef round_to_size
 
 	/* and note the end address of all this	*/
-	kprintf(" total=0x%lx", (u_long)addr);
+	printf(" total=0x%lx", (u_long)addr);
 
 	x.a_entry += (long)loadaddr;
-	kprintf(" start=0x%lx\n", x.a_entry);
+	printf(" start=0x%lx\n", x.a_entry);
 
 #ifdef EXEC_DEBUG
-        kprintf("ssym=0x%x esym=0x%x\n", ssym, esym);
-        kprintf("\n\nReturn to boot...\n");
+        printf("ssym=0x%x esym=0x%x\n", ssym, esym);
+        printf("\n\nReturn to boot...\n");
         getchar();
 #endif
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs.c,v 1.18 1996/10/10 22:46:27 christos Exp $	*/
+/*	$NetBSD: nfs.c,v 1.19 1996/10/13 02:29:04 christos Exp $	*/
 
 /*-
  *  Copyright (c) 1993 John Brezak
@@ -128,7 +128,7 @@ nfs_getrootfh(d, path, fhp)
 	
 #ifdef NFS_DEBUG
 	if (debug)
-		kprintf("nfs_getrootfh: %s\n", path);
+		printf("nfs_getrootfh: %s\n", path);
 #endif
 
 	args = &sdata.d;
@@ -193,7 +193,7 @@ nfs_lookupfh(d, name, newfd)
 	
 #ifdef NFS_DEBUG
 	if (debug)
-		kprintf("lookupfh: called\n");
+		printf("lookupfh: called\n");
 #endif
 
 	args = &sdata.d;
@@ -246,7 +246,7 @@ nfs_readlink(d, buf)
 
 #ifdef NFS_DEBUG
 	if (debug)
-		kprintf("readlink: called\n");
+		printf("readlink: called\n");
 #endif
 
 	bcopy(d->fh, sdata.fh, NFS_FHSIZE);
@@ -325,7 +325,7 @@ nfs_readdata(d, off, addr, len)
 	rlen = cc - hlen;
 	x = ntohl(repl->count);
 	if (rlen < x) {
-		kprintf("nfsread: short packet, %d < %ld\n", rlen, x);
+		printf("nfsread: short packet, %d < %ld\n", rlen, x);
 		errno = EBADRPC;
 		return(-1);
 	}
@@ -365,7 +365,7 @@ nfs_mount(sock, ip, path)
 
 #ifdef NFS_DEBUG
 	if (debug)
-		kprintf("nfs_mount: got fh for %s\n", path);
+		printf("nfs_mount: got fh for %s\n", path);
 #endif
 
 	return(0);
@@ -390,10 +390,10 @@ nfs_open(path, f)
 
 #ifdef NFS_DEBUG
  	if (debug)
- 	    kprintf("nfs_open: %s\n", path);
+ 	    printf("nfs_open: %s\n", path);
 #endif
 	if (nfs_root_node.iodesc == NULL) {
-		kprintf("nfs_open: must mount first.\n");
+		printf("nfs_open: must mount first.\n");
 		return (ENXIO);
 	}
 
@@ -501,7 +501,7 @@ out:
 		
 #ifdef NFS_DEBUG
 	if (debug)
-		kprintf("nfs_open: %s lookupfh failed: %s\n",
+		printf("nfs_open: %s lookupfh failed: %s\n",
 		    path, strerror(error));
 #endif
 	if (currfd != &nfs_root_node)
@@ -520,7 +520,7 @@ nfs_close(f)
 
 #ifdef NFS_DEBUG
 	if (debug)
-		kprintf("nfs_close: fp=0x%x\n", fp);
+		printf("nfs_close: fp=0x%x\n", fp);
 #endif
 
 	if (fp)
@@ -546,7 +546,7 @@ nfs_read(f, buf, size, resid)
 	
 #ifdef NFS_DEBUG
 	if (debug)
-		kprintf("nfs_read: size=%d off=%d\n", size, (int)fp->off);
+		printf("nfs_read: size=%d off=%d\n", size, (int)fp->off);
 #endif
 	while ((int)size > 0) {
 		twiddle();
@@ -555,13 +555,13 @@ nfs_read(f, buf, size, resid)
 		if (cc == -1) {
 #ifdef NFS_DEBUG
 			if (debug)
-				kprintf("nfs_read: read: %s", strerror(errno));
+				printf("nfs_read: read: %s", strerror(errno));
 #endif
 			return (errno);	/* XXX - from nfs_readdata */
 		}
 		if (cc == 0) {
 			if (debug)
-				kprintf("nfs_read: hit EOF unexpectantly");
+				printf("nfs_read: hit EOF unexpectantly");
 			goto ret;
 		}
 		fp->off += cc;
