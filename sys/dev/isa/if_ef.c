@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ef.c,v 1.10 2001/11/13 08:01:16 lukem Exp $	*/
+/*	$NetBSD: if_ef.c,v 1.11 2001/11/26 23:31:00 fredette Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ef.c,v 1.10 2001/11/13 08:01:16 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ef.c,v 1.11 2001/11/26 23:31:00 fredette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -597,7 +597,8 @@ ef_attach(parent, self, aux)
 	bus_space_set_region_1(sc->bt, sc->bh, 0, 0, sc->sc_msize);
 
 	/* set card to 16-bit bus mode */
-	bus_space_write_1(sc->bt, sc->bh, IE_SCP_BUS_USE((u_long)sc->scp), 0);
+	bus_space_write_1(sc->bt, sc->bh, IE_SCP_BUS_USE((u_long)sc->scp),
+			  IE_SYSBUS_16BIT);
 
 	/* set up pointers to key structures */
 	ef_write_24(sc, IE_SCP_ISCP((u_long)sc->scp), (u_long) sc->iscp);

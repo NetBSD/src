@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ie.c,v 1.12 2001/07/07 07:51:37 scw Exp $ */
+/*	$NetBSD: if_ie.c,v 1.13 2001/11/26 23:31:00 fredette Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -111,7 +111,7 @@ ie_reset(sc, why)
 	case CHIP_PROBE:
 	case CARD_RESET:
 		bus_space_write_2(ps->ps_bust, ps->ps_bush, IE_MPUREG_UPPER,
-		    IE_MPU_RESET);
+		    IE_PORT_RESET);
 		bus_space_write_2(ps->ps_bust, ps->ps_bush, IE_MPUREG_LOWER, 0);
 		delay(1000);
 
@@ -121,10 +121,10 @@ ie_reset(sc, why)
 		 * (due to wrong-endianess of the chip)
 		 */
 		ie_write_16(sc, IE_ISCP_BUSY(sc->iscp), 1);
-		ie_write_16(sc, IE_SCP_BUS_USE(sc->scp), 0x50);
+		ie_write_16(sc, IE_SCP_BUS_USE(sc->scp), IE_BUS_USE);
 
 		scp_addr = sc->scp + (u_int) sc->sc_iobase;
-		scp_addr |= IE_MPU_SCP_ADDRESS;
+		scp_addr |= IE_PORT_ALT_SCP;
 
 		bus_space_write_2(ps->ps_bust, ps->ps_bush, IE_MPUREG_UPPER,
 		    scp_addr & 0xffff);
@@ -331,7 +331,7 @@ ie_pcctwo_attach(parent, self, args)
 	 *            Internal bus throttle timer triggering,
 	 *            82586 operating mode.
 	 */
-	ie_write_16(sc, IE_SCP_BUS_USE(sc->scp), 0x50);
+	ie_write_16(sc, IE_SCP_BUS_USE(sc->scp), IE_BUS_USE);
 	ie_write_24(sc, IE_SCP_ISCP(sc->scp), sc->iscp);
 	ie_write_16(sc, IE_ISCP_SCB(sc->iscp), sc->scb);
 	ie_write_24(sc, IE_ISCP_BASE(sc->iscp), sc->scp);

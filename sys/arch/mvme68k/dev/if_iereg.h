@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iereg.h,v 1.3 2000/03/18 22:33:02 scw Exp $ */
+/*	$NetBSD: if_iereg.h,v 1.4 2001/11/26 23:31:00 fredette Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -49,9 +49,16 @@
 
 #define IE_MPUREG_SIZE	0x08
 
-#define	IE_MPU_RESET		0x00	/* Software Reset */
-#define	IE_MPU_SELF_TEST	0x01	/* Execute a Self-Test */
-#define	IE_MPU_SCP_ADDRESS	0x02	/* Sys. Configuration Address Pointer */
-#define	IE_MPU_DUMP		0x03	/* Execute a Dump */
+/*
+ * BUS_USE -> Interrupt Active High (edge-triggered),
+ *            Lock function enabled,
+ *            Internal bus throttle timer triggering,
+ *            82586 operating mode.
+ */
+#define IE_BUS_USE	(IE_SYSBUS_596_INTHIGH	| \
+			 IE_SYSBUS_596_LOCK	| \
+			 IE_SYSBUS_596_TRGINT	| \
+			 IE_SYSBUS_596_82586	| \
+			 IE_SYSBUS_596_RSVD_SET)
 
 #endif /* __mvme68k_if_iereg_h */
