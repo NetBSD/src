@@ -34,7 +34,7 @@ struct pcmcia_chip_functions {
 
     /* I/O space allocation */
     int (*io_alloc) __P((pcmcia_chipset_handle_t, bus_addr_t, bus_size_t,
-			 struct pcmcia_io_handle *));
+			 bus_size_t, struct pcmcia_io_handle *));
     void (*io_free) __P((pcmcia_chipset_handle_t,
 			 struct pcmcia_io_handle *));
 
@@ -65,8 +65,8 @@ struct pcmcia_chip_functions {
 #define pcmcia_chip_mem_unmap(tag, handle, window) \
 	((*(tag)->mem_unmap)((handle), (window)))
 
-#define pcmcia_chip_io_alloc(tag, handle, start, size, pcihp) \
-	((*(tag)->io_alloc)((handle), (start), (size), (pcihp)))
+#define pcmcia_chip_io_alloc(tag, handle, start, size, align, pcihp) \
+	((*(tag)->io_alloc)((handle), (start), (size), (align), (pcihp)))
 #define pcmcia_chip_io_free(tag, handle, pcihp) \
 	((*(tag)->io_free)((handle), (pcihp)))
 #define pcmcia_chip_io_map(tag, handle, width, card_addr, size, pcihp, \
