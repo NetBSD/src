@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_usrreq.c,v 1.43 1999/05/05 19:05:43 thorpej Exp $	*/
+/*	$NetBSD: uipc_usrreq.c,v 1.44 1999/05/05 20:01:10 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -908,7 +908,8 @@ unp_internalize(control, p)
 	for (i = 0; i < nfds; i++) {
 		fd = *fdp++;
 		if ((unsigned)fd >= fdescp->fd_nfiles ||
-		    fdescp->fd_ofiles[fd] == NULL)
+		    fdescp->fd_ofiles[fd] == NULL ||
+		    (fdescp->fd_ofiles[fd]->f_iflags & FIF_WANTCLOSE) != 0)
 			return (EBADF);
 	}
 
@@ -946,9 +947,11 @@ morespace:
 	rp = ((struct file **)ALIGN(cm + 1)) + nfds - 1;
 	for (i = 0; i < nfds; i++) {
 		fp = fdescp->fd_ofiles[*fdp--];
+		FILE_USE(fp);
 		*rp-- = fp;
 		fp->f_count++;
 		fp->f_msgcount++;
+		FILE_UNUSE(fp, NULL);
 		unp_rights++;
 	}
 	return (0);
@@ -1172,12 +1175,16 @@ unp_gc()
 		}
 	}
 	for (i = nunref, fpp = extra_ref; --i >= 0; ++fpp) {
+		FILE_USE(fp);
 		fp = *fpp;
 		if (fp->f_type == DTYPE_SOCKET)
 			sorflush((struct socket *)fp->f_data);
+		FILE_UNUSE(fp, NULL);
 	}
-	for (i = nunref, fpp = extra_ref; --i >= 0; ++fpp)
+	for (i = nunref, fpp = extra_ref; --i >= 0; ++fpp) {
+		FILE_USE(fp);
 		(void) closef(*fpp, (struct proc *)0);
+	}
 	free((caddr_t)extra_ref, M_FILE);
 	unp_gcing = 0;
 }
@@ -1264,6 +1271,7 @@ unp_discard(fp)
 {
 	if (fp == NULL)
 		return;
+	FILE_USE(fp);
 	fp->f_msgcount--;
 	unp_rights--;
 	(void) closef(fp, (struct proc *)0);
