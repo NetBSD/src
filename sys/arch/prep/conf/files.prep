@@ -1,4 +1,4 @@
-#	$NetBSD: files.prep,v 1.28 2002/04/16 20:50:22 thorpej Exp $
+#	$NetBSD: files.prep,v 1.29 2002/04/22 09:41:20 augustss Exp $
 #
 # prep-specific configuration info
 #
@@ -174,7 +174,7 @@ major	{fd = 2}
 # Game adapter (joystick)
 file	arch/prep/isa/joy_timer.c	joy
 
-device	paud { }: audio, isadma, ad1848, auconv
+device	paud { }: audiobus, isadma, ad1848, auconv
 attach	paud at isa with paud_isa
 file	arch/prep/isa/paud_isa.c	paud_isa
 

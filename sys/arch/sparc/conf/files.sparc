@@ -1,4 +1,4 @@
-#	$NetBSD: files.sparc,v 1.111 2002/04/16 20:50:23 thorpej Exp $
+#	$NetBSD: files.sparc,v 1.112 2002/04/22 09:41:21 augustss Exp $
 
 # @(#)files.sparc	8.1 (Berkeley) 7/19/93
 # sparc-specific configuration info
@@ -184,7 +184,7 @@ file	arch/sparc/dev/dma_obio.c	dma_obio
 attach esp at obio with esp_obio
 file	arch/sparc/dev/esp_obio.c	esp_obio
 
-device	audioamd: audio, am7930
+device	audioamd: audiobus, am7930
 attach	audioamd at mainbus with audioamd_mainbus
 attach	audioamd at sbus with audioamd_sbus
 file	arch/sparc/dev/audioamd.c		audioamd
