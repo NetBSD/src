@@ -1,4 +1,4 @@
-/*	$NetBSD: eisa.c,v 1.16 1996/12/05 01:25:36 cgd Exp $	*/
+/*	$NetBSD: eisa.c,v 1.16.8.1 1997/05/13 03:01:31 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -146,6 +146,7 @@ eisaattach(parent, self, aux)
 {
 	struct eisabus_attach_args *eba = aux;
 	bus_space_tag_t iot, memt;
+	bus_dma_tag_t dmat;
 	eisa_chipset_tag_t ec;
 	int slot, maxnslots;
 
@@ -155,6 +156,7 @@ eisaattach(parent, self, aux)
 	iot = eba->eba_iot;
 	memt = eba->eba_memt;
 	ec = eba->eba_ec;
+	dmat = eba->eba_dmat;
 
 	/*
 	 * Search for and attach subdevices.
@@ -172,6 +174,7 @@ eisaattach(parent, self, aux)
 		ea.ea_iot = iot;
 		ea.ea_memt = memt;
 		ea.ea_ec = ec;
+		ea.ea_dmat = dmat;
 		ea.ea_slot = slot;
 		slotaddr = EISA_SLOT_ADDR(slot);
 
