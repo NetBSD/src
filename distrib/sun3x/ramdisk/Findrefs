@@ -1,0 +1,12 @@
+#!/bin/sh
+# $NetBSD: Findrefs,v 1.1.1.1 1997/12/24 09:21:19 jeremy Exp $
+
+# Small helper to find out who pulls in X
+
+[ "$1" ] || { echo "$0: match_string" ; exit 1; }
+
+for f in *.lo
+do
+	nm -p $f | grep "$1" && echo $f
+done
+
