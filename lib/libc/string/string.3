@@ -32,7 +32,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)string.3	8.2 (Berkeley) 12/11/93
-.\"	$NetBSD: string.3,v 1.5 1998/02/05 18:50:51 perry Exp $
+.\"	$NetBSD: string.3,v 1.6 1998/09/14 21:31:31 kleink Exp $
 .\"
 .Dd December 11, 1993
 .Dt STRING 3
@@ -56,6 +56,7 @@
 .Nm strcspn ,
 .Nm strstr ,
 .Nm strtok ,
+.Nm strtok_r ,
 .Nm index ,
 .Nm rindex
 .Nd string specific functions
@@ -100,6 +101,8 @@
 .Ft char *
 .Fn strtok "char *s" "const char *delim"
 .Ft char *
+.Fn strtok_r "char *s" "const char *delim" "char **lasts"
+.Ft char *
 .Fn index "const char *s" "int c"
 .Ft char *
 .Fn rindex "const char *s" "int c"
@@ -132,6 +135,7 @@ for size limitations.
 .Xr strcspn 3 ,
 .Xr strstr 3 ,
 .Xr strtok 3 ,
+.Xr strtok_r 3 ,
 .Xr rindex 3
 .Xr bstring 3
 .Sh STANDARDS
@@ -156,3 +160,7 @@ and
 functions
 conform to
 .St -ansiC .
+The
+.Fn strtok_r
+function conforms to
+.St -p1003.1c-95 .
