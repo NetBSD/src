@@ -1,7 +1,7 @@
-/*	$NetBSD: hpcboot.h,v 1.1 2001/02/09 18:34:42 uch Exp $	*/
+/*	$NetBSD: hpcboot.h,v 1.2 2002/02/04 17:32:36 uch Exp $	*/
 
 /*-
- * Copyright (c) 2001 The NetBSD Foundation, Inc.
+ * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -142,7 +142,9 @@ BOOL VirtualCopy(LPVOID, LPVOID, DWORD, DWORD);
 BOOL SetKMode(BOOL);
 BOOL LockPages(LPVOID, DWORD, PDWORD, int);
 BOOL UnlockPages(LPVOID, DWORD);
-
+void CacheSync(int);
+#define CACHE_D_WBINV	1
+#define CACHE_I_INV	2
 /* ExtEscape */
 #define GETVFRAMEPHYSICAL	6144
 #define GETVFRAMELEN		6145
