@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.78 2003/07/15 02:15:02 lukem Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.79 2003/08/29 13:52:45 ragge Exp $	*/
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.78 2003/07/15 02:15:02 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.79 2003/08/29 13:52:45 ragge Exp $");
 
 #include "opt_compat_netbsd.h"
 
@@ -184,6 +184,7 @@ CFATTACH_DECL(mainbus, sizeof(struct device),
 static int ubtest(void *);
 static int jmfr(char *, struct device *, int);
 static int booted_qe(struct device *, void *);
+static int booted_qt(struct device *, void *);
 static int booted_le(struct device *, void *);
 static int booted_ze(struct device *, void *);
 static int booted_de(struct device *, void *);
@@ -206,6 +207,7 @@ static int booted_rd(struct device *, void *);
 
 int (*devreg[])(struct device *, void *) = {
 	booted_qe,
+	booted_qt,
 	booted_le,
 	booted_ze,
 	booted_de,
@@ -310,6 +312,15 @@ booted_ze(struct device *dev, void *aux)
 {
 	if (jmfr("ze", dev, BDEV_ZE))
 		return 0;
+	return 1;
+}
+
+int
+booted_qt(struct device *dev, void *aux)
+{
+	if (jmfr("qt", dev, BDEV_QE) || ubtest(aux))
+		return 0;
+
 	return 1;
 }
 
