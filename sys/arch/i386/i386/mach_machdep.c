@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_machdep.c,v 1.12 2003/11/13 01:44:36 christos Exp $	 */
+/*	$NetBSD: mach_machdep.c,v 1.13 2003/12/02 04:53:11 christos Exp $	 */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_machdep.c,v 1.12 2003/11/13 01:44:36 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_machdep.c,v 1.13 2003/12/02 04:53:11 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_vm86.h"
@@ -68,6 +68,7 @@ __KERNEL_RCSID(0, "$NetBSD: mach_machdep.c,v 1.12 2003/11/13 01:44:36 christos E
 #include <compat/mach/mach_types.h>
 #include <compat/mach/mach_host.h>
 #include <compat/mach/mach_thread.h>
+#include <compat/mach/mach_vm.h>
 
 #include <machine/cpu.h>
 #include <machine/cpufunc.h>
@@ -217,3 +218,10 @@ mach_thread_set_state_machdep(struct lwp *l, int flavor, void *state)
 	printf("Unimplemented thread state flavor %d\n", flavor);
 	return EINVAL;
 }
+
+int
+mach_vm_machine_attribute_machdep(struct lwp *l, vaddr_t v, size_t s, int *ip)
+{
+	return 0;
+}
+
