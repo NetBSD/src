@@ -1,6 +1,6 @@
 #! /bin/sh
 
-# $NetBSD: linkfarm.sh,v 1.1.2.7 2003/07/25 11:54:03 jlam Exp $
+# $NetBSD: linkfarm.sh,v 1.1.2.8 2003/07/25 17:27:26 jlam Exp $
 
 #
 # Copyright (c) 2002 Alistair G. Crooks.  All rights reserved.
@@ -52,6 +52,15 @@ usage() {
 version() {
 	echo "20030725"
 	exit 0
+}
+
+checkdir() {
+	if [ -d "$1" ]; then
+		:
+	else
+		echo "linkfarm: \`$1' doesn't exist"
+		exit 1
+	fi
 }
 
 ignorefiles=${PLIST_IGNORE_FILES:-info/dir}
@@ -113,6 +122,7 @@ package=$1
 # if we're checking the entries, check, then exit
 case $check in
 yes)
+	checkdir $stowdir/$package
 	(cd $stowdir/$package; 
 	ex=0;
 	for f in `$findprog . ! -type d -print`; do
@@ -137,6 +147,7 @@ esac
 # if we need to get rid of old linkfarms, do it
 case $delete in
 yes)	
+	checkdir $stowdir/$package
 	(cd $stowdir/$package;
 	for f in `$findprog . ! -type d -print`; do
 		newf=`echo $f | $sedprog -e 's|^\./||'`
@@ -166,6 +177,7 @@ esac
 # if we need to create new linkfarms, do it
 case $create in
 yes)
+	checkdir $stowdir/$package
 	(cd $stowdir/$package; 
 	for d in `$findprog . -type d -print`; do
 		newd=`echo $d | $sedprog -e 's|^\./||'`
