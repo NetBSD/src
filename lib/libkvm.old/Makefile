@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.8 1997/10/23 02:28:37 lukem Exp $
+#	$NetBSD: Makefile,v 1.9 1998/02/11 18:30:37 thorpej Exp $
 #	from: @(#)Makefile	8.1 (Berkeley) 6/4/93
 
 .PATH: ${.CURDIR}/../libkvm
@@ -20,3 +20,8 @@ SRCS+=	kvm.c kvm_file.c kvm_getloadavg.c kvm_proc.c
 NOMAN=	yes
 
 .include <bsd.lib.mk>
+
+# XXX
+.if defined(UVM)
+CPPFLAGS+=	-DUVM
+.endif
