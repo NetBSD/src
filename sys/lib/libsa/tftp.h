@@ -1,4 +1,4 @@
-/*	$NetBSD: tftp.h,v 1.3 2003/08/07 16:32:30 agc Exp $	*/
+/*	$NetBSD: tftp.h,v 1.4 2003/08/18 15:45:29 dsl Exp $	*/
 
 /*
  * Copyright (c) 1996
@@ -105,13 +105,6 @@ struct	tftphdr {
 #define	EEXISTS		6		/* file already exists */
 #define	ENOUSER		7		/* no such user */
 
-int tftp_open __P((char *path, struct open_file *f));
-int tftp_read __P((struct open_file *f, void *addr,
-	      size_t size, size_t *resid));
-int tftp_close __P((struct open_file *f));
-int tftp_write __P((struct open_file *f, void *addr,
-	      size_t size, size_t *resid));
-int tftp_stat __P((struct open_file *f, struct stat *sb));
-off_t tftp_seek __P((struct open_file *f, off_t offset, int where));
+FS_DEF(tftp);
 
 #define IPPORT_TFTP 69
