@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_nat.c,v 1.23 1998/11/22 15:17:19 mrg Exp $	*/
+/*	$NetBSD: ip_nat.c,v 1.24 1999/02/02 19:57:32 cjs Exp $	*/
 
 /*
  * Copyright (C) 1995-1998 by Darren Reed.
@@ -10,8 +10,12 @@
  * Added redirect stuff and a LOT of bug fixes. (mcn@EnGarde.com)
  */
 #if !defined(lint)
+#if defined(__NetBSD__)
+static const char rcsid[] = "$NetBSD: ip_nat.c,v 1.24 1999/02/02 19:57:32 cjs Exp $";
+#else
 static const char sccsid[] = "@(#)ip_nat.c	1.11 6/5/96 (C) 1995 Darren Reed";
 static const char rcsid[] = "@(#)Id: ip_nat.c,v 2.0.2.44.2.30 1998/11/22 01:50:27 darrenr Exp ";
+#endif
 #endif
 
 #if defined(__FreeBSD__) && defined(KERNEL) && !defined(_KERNEL)
