@@ -42,7 +42,7 @@
  *	@(#)sun_misc.c	8.1 (Berkeley) 6/18/93
  *
  * from: Header: sun_misc.c,v 1.16 93/04/07 02:46:27 torek Exp 
- * $Id: ultrix_misc.c,v 1.3 1994/06/22 03:37:17 glass Exp $
+ * $Id: ultrix_misc.c,v 1.4 1994/06/25 07:06:49 glass Exp $
  */
 
 /*
@@ -334,6 +334,7 @@ sun_sigpending(p, uap, retval)
 	return (copyout((caddr_t)&mask, (caddr_t)uap->mask, sizeof(int)));
 }
 
+#if 0
 /* XXX: Temporary until sys/dir.h, include/dirent.h and sys/dirent.h are fixed */
 struct dirent {
 	u_long	d_fileno;		/* file number of entry */
@@ -341,6 +342,7 @@ struct dirent {
 	u_short	d_namlen;		/* length of string in d_name */
 	char	d_name[255 + 1];	/* name must be no longer than this */
 };
+#endif
 
 /*
  * Here is the sun layout.  (Compare the BSD layout in <sys/dirent.h>.)
