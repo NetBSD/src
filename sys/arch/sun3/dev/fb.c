@@ -1,4 +1,4 @@
-/*	$NetBSD: fb.c,v 1.9.6.4 2005/01/24 08:34:47 skrll Exp $ */
+/*	$NetBSD: fb.c,v 1.9.6.5 2005/02/04 07:09:16 skrll Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fb.c,v 1.9.6.4 2005/01/24 08:34:47 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fb.c,v 1.9.6.5 2005/02/04 07:09:16 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -87,23 +87,23 @@ fb_attach(struct fbdevice *fb, int newpri)
 }
 
 int 
-fbopen(dev_t dev, int flags, int mode, struct proc *p)
+fbopen(dev_t dev, int flags, int mode, struct lwp *l)
 {
 
 	if (devfb == NULL)
 		return (ENXIO);
-	return ((*devfb->fb_driver->fbd_open)(dev, flags, mode, p));
+	return ((*devfb->fb_driver->fbd_open)(dev, flags, mode, l));
 }
 
 int 
-fbclose(dev_t dev, int flags, int mode, struct proc *p)
+fbclose(dev_t dev, int flags, int mode, struct lwp *l)
 {
 
-	return ((*devfb->fb_driver->fbd_close)(dev, flags, mode, p));
+	return ((*devfb->fb_driver->fbd_close)(dev, flags, mode, l));
 }
 
 int 
-fbioctl(dev_t dev, u_long cmd, caddr_t data, int flags, struct proc *p)
+fbioctl(dev_t dev, u_long cmd, caddr_t data, int flags, struct lwp *l)
 {
 	return (fbioctlfb(devfb, cmd, data));
 }

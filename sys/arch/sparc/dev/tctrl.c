@@ -1,4 +1,4 @@
-/*	$NetBSD: tctrl.c,v 1.24.2.3 2004/09/21 13:22:03 skrll Exp $	*/
+/*	$NetBSD: tctrl.c,v 1.24.2.4 2005/02/04 07:09:16 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tctrl.c,v 1.24.2.3 2004/09/21 13:22:03 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tctrl.c,v 1.24.2.4 2005/02/04 07:09:16 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -900,10 +900,10 @@ tctrl_write(sc, off, v)
 }
 
 int
-tctrlopen(dev, flags, mode, p)
+tctrlopen(dev, flags, mode, l)
 	dev_t dev;
 	int flags, mode;
-	struct proc *p;
+	struct lwp *l;
 {
 	int unit = (minor(dev)&0xf0);
 	int ctl = (minor(dev)&0x0f);
@@ -934,10 +934,10 @@ tctrlopen(dev, flags, mode, p)
 }
 
 int
-tctrlclose(dev, flags, mode, p)
+tctrlclose(dev, flags, mode, l)
 	dev_t dev;
 	int flags, mode;
-	struct proc *p;
+	struct lwp *l;
 {
 	int ctl = (minor(dev)&0x0f);
 	struct tctrl_softc *sc;
@@ -957,12 +957,12 @@ tctrlclose(dev, flags, mode, p)
 }
 
 int
-tctrlioctl(dev, cmd, data, flags, p)
+tctrlioctl(dev, cmd, data, flags, l)
         dev_t dev;
         u_long cmd;
         caddr_t data;
         int flags;
-        struct proc *p;
+        struct lwp *l;
 {
 	struct tctrl_req req, *reqn;
 	struct tctrl_pwr *pwrreq;  
@@ -997,14 +997,14 @@ tctrlioctl(dev, cmd, data, flags, p)
 		req.cmdbuf[0] = TS102_OP_RD_INT_CHARGE_RATE;
 		req.cmdlen = 1;
 		req.rsplen = 2;
-		req.p = p;
+		req.p = l->l_proc;
 		tadpole_request(&req, 0);
 		if (req.rspbuf[0] > 0x00)
 			powerp->battery_state = APM_BATT_CHARGING;
 		req.cmdbuf[0] = TS102_OP_RD_INT_CHARGE_LEVEL;
 		req.cmdlen = 1;
 		req.rsplen = 3;
-		req.p = p;
+		req.p = l->l_proc;
 		tadpole_request(&req, 0);
 		c = req.rspbuf[0];
 		powerp->battery_life = c;
@@ -1024,7 +1024,7 @@ tctrlioctl(dev, cmd, data, flags, p)
 		req.cmdbuf[0] = TS102_OP_RD_EXT_STATUS;
 		req.cmdlen = 1;
 		req.rsplen = 3;
-		req.p = p;
+		req.p = l->l_proc;
 		tadpole_request(&req, 0);
 		a = req.rspbuf[0] * 256 + req.rspbuf[1];
 		if (a & TS102_EXT_STATUS_MAIN_POWER_AVAILABLE)
@@ -1047,7 +1047,7 @@ tctrlioctl(dev, cmd, data, flags, p)
 	/* this ioctl assumes the caller knows exactly what he is doing */
 	case TCTRL_CMD_REQ:
 		reqn = (struct tctrl_req *)data;
-		if ((i = suser(p->p_ucred, &p->p_acflag)) != 0 &&
+		if ((i = suser(l->l_proc->p_ucred, &l->l_proc->p_acflag)) != 0 &&
 		    (reqn->cmdbuf[0] == TS102_OP_CTL_BITPORT ||
 		    (reqn->cmdbuf[0] >= TS102_OP_CTL_WATCHDOG &&
 		    reqn->cmdbuf[0] <= TS102_OP_CTL_SECURITY_KEY) ||
@@ -1058,7 +1058,7 @@ tctrlioctl(dev, cmd, data, flags, p)
 		    reqn->cmdbuf[0] < TS102_OP_RD_INT_CHARGE_LEVEL) ||
 		    reqn->cmdbuf[0] > TS102_OP_RD_EXT_CHARGE_LEVEL))
 			return(i);
-		reqn->p = p;
+		reqn->p = l->l_proc;
 		tadpole_request(reqn, 0);
 		break;
 
@@ -1096,7 +1096,7 @@ tctrlioctl(dev, cmd, data, flags, p)
 			req.cmdbuf[0] = TS102_OP_RD_CURRENT_TEMP;
 			req.cmdlen = 1;
 			req.rsplen = 2;
-			req.p = p;
+			req.p = l->l_proc;
 			tadpole_request(&req, 0);
 			envdata->cur.data_us =             /* 273160? */
 			    (u_int32_t)((int)((int)req.rspbuf[0]-32)*5000000/9+273150000);
@@ -1104,7 +1104,7 @@ tctrlioctl(dev, cmd, data, flags, p)
 			req.cmdbuf[0] = TS102_OP_RD_MAX_TEMP;
 			req.cmdlen = 1;
 			req.rsplen = 2;
-			req.p = p;
+			req.p = l->l_proc;
 			tadpole_request(&req, 0);
 			envdata->max.data_us =
 			    (u_int32_t)((int)((int)req.rspbuf[0]-32)*5000000/9+273150000);
@@ -1112,7 +1112,7 @@ tctrlioctl(dev, cmd, data, flags, p)
 			req.cmdbuf[0] = TS102_OP_RD_MIN_TEMP;
 			req.cmdlen = 1;
 			req.rsplen = 2;
-			req.p = p;
+			req.p = l->l_proc;
 			tadpole_request(&req, 0);
 			envdata->min.data_us =
 			    (u_int32_t)((int)((int)req.rspbuf[0]-32)*5000000/9+273150000);
@@ -1128,7 +1128,7 @@ tctrlioctl(dev, cmd, data, flags, p)
 				req.cmdbuf[0] = TS102_OP_RD_DC_IN_VLT;
 			req.cmdlen = 1;
 			req.rsplen = 2;
-			req.p = p;
+			req.p = l->l_proc;
 			tadpole_request(&req, 0);
 			envdata->cur.data_s = (int32_t)req.rspbuf[0]*1000000/11;
 			break;			
@@ -1197,10 +1197,10 @@ tctrlioctl(dev, cmd, data, flags, p)
 }
 
 int
-tctrlpoll(dev, events, p)
+tctrlpoll(dev, events, l)
 	dev_t dev;
 	int events;
-	struct proc *p;
+	struct lwp *l;
 {
 	struct tctrl_softc *sc = tctrl_cd.cd_devs[TCTRL_STD_DEV];
 	int revents = 0;
@@ -1209,7 +1209,7 @@ tctrlpoll(dev, events, p)
 		if (sc->sc_event_count)
 			revents |= events & (POLLIN | POLLRDNORM);
 		else
-			selrecord(p, &sc->sc_rsel);
+			selrecord(l, &sc->sc_rsel);
 	}
 
 	return (revents);

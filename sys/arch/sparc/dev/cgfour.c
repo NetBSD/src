@@ -1,4 +1,4 @@
-/*	$NetBSD: cgfour.c,v 1.33.2.3 2004/09/21 13:22:01 skrll Exp $	*/
+/*	$NetBSD: cgfour.c,v 1.33.2.4 2005/02/04 07:09:16 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -109,7 +109,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cgfour.c,v 1.33.2.3 2004/09/21 13:22:01 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cgfour.c,v 1.33.2.4 2005/02/04 07:09:16 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -329,10 +329,10 @@ cgfourattach(parent, self, aux)
 }
 
 int
-cgfouropen(dev, flags, mode, p)
+cgfouropen(dev, flags, mode, l)
 	dev_t dev;
 	int flags, mode;
-	struct proc *p;
+	struct lwp *l;
 {
 	int unit = minor(dev);
 
@@ -342,12 +342,12 @@ cgfouropen(dev, flags, mode, p)
 }
 
 int
-cgfourioctl(dev, cmd, data, flags, p)
+cgfourioctl(dev, cmd, data, flags, l)
 	dev_t dev;
 	u_long cmd;
 	caddr_t data;
 	int flags;
-	struct proc *p;
+	struct lwp *l;
 {
 #if defined(SUN4)
 	struct cgfour_softc *sc = cgfour_cd.cd_devs[minor(dev)];

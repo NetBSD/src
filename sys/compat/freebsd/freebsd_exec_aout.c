@@ -1,4 +1,4 @@
-/*	$NetBSD: freebsd_exec_aout.c,v 1.5.2.4 2004/09/21 13:25:10 skrll Exp $	*/
+/*	$NetBSD: freebsd_exec_aout.c,v 1.5.2.5 2005/02/04 07:09:17 skrll Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Christopher G. Demetriou
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: freebsd_exec_aout.c,v 1.5.2.4 2004/09/21 13:25:10 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: freebsd_exec_aout.c,v 1.5.2.5 2005/02/04 07:09:17 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -47,7 +47,7 @@ __KERNEL_RCSID(0, "$NetBSD: freebsd_exec_aout.c,v 1.5.2.4 2004/09/21 13:25:10 sk
 /*
 * exec_aout_makecmds(): Check if it's an a.out-format executable.
 *
-* Given a proc pointer and an exec package pointer, see if the referent
+* Given a lwp pointer and an exec package pointer, see if the referent
 * of the epp is in a.out format.  First check 'standard' magic numbers for
 * this architecture.  If that fails, try a CPU-dependent hook.
  *
@@ -73,16 +73,16 @@ exec_freebsd_aout_makecmds(l, epp)
 	/* assume FreeBSD's MID_MACHINE and [ZQNO]MAGIC is same as NetBSD's */
 	switch (midmag) {
 	case (MID_MACHINE << 16) | ZMAGIC:
-		error = exec_aout_prep_oldzmagic(l->l_proc, epp);
+		error = exec_aout_prep_oldzmagic(l, epp);
 		break;
 	case (MID_MACHINE << 16) | QMAGIC:
-		error = exec_aout_prep_zmagic(l->l_proc, epp);
+		error = exec_aout_prep_zmagic(l, epp);
 		break;
 	case (MID_MACHINE << 16) | NMAGIC:
-		error = exec_aout_prep_nmagic(l->l_proc, epp);
+		error = exec_aout_prep_nmagic(l, epp);
 		break;
 	case (MID_MACHINE << 16) | OMAGIC:
-		error = exec_aout_prep_omagic(l->l_proc, epp);
+		error = exec_aout_prep_omagic(l, epp);
 		break;
 	}
 	if (error)

@@ -1,4 +1,4 @@
-/*	$NetBSD: exec.h,v 1.97.2.6 2005/01/24 08:59:40 skrll Exp $	*/
+/*	$NetBSD: exec.h,v 1.97.2.7 2005/02/04 07:09:29 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -161,7 +161,7 @@ struct execsw {
 					/* Dump core */
 	int	(*es_coredump) __P((struct lwp *, struct vnode *,
 				    struct ucred *));
-	int	(*es_setup_stack) __P((struct proc *, struct exec_package *));
+	int	(*es_setup_stack) __P((struct lwp *, struct exec_package *));
 };
 
 #define EXECSW_PRIO_ANY		0x000	/* default, no preference */
@@ -236,7 +236,7 @@ MALLOC_DECLARE(M_EXEC);
  */
 void	kill_vmcmd		__P((struct exec_vmcmd **));
 int	exec_makecmds		__P((struct lwp *, struct exec_package *));
-int	exec_runcmds		__P((struct proc *, struct exec_package *));
+int	exec_runcmds		__P((struct lwp *, struct exec_package *));
 void	vmcmdset_extend		__P((struct exec_vmcmd_set *));
 void	kill_vmcmds		__P((struct exec_vmcmd_set *));
 int	vmcmd_map_pagedvn	__P((struct lwp *, struct exec_vmcmd *));
@@ -248,7 +248,7 @@ int	copyargs		__P((struct lwp *, struct exec_package *,
 void	setregs			__P((struct lwp *, struct exec_package *,
 				     u_long));
 #ifdef VERIFIED_EXEC
-int	check_veriexec		__P((struct proc *, struct vnode *,
+int	check_veriexec		__P((struct lwp *, struct vnode *,
 				     struct exec_package *, int));
 int	check_exec		__P((struct lwp *, struct exec_package *,
 				     int));
@@ -258,7 +258,7 @@ int	check_exec		__P((struct lwp *, struct exec_package *));
 int	exec_init		__P((int));
 int	exec_read_from		__P((struct lwp *, struct vnode *, u_long off,
     void *, size_t));
-int	exec_setup_stack	__P((struct proc *, struct exec_package *));
+int	exec_setup_stack	__P((struct lwp *, struct exec_package *));
 
 
 #ifdef LKM
@@ -273,10 +273,10 @@ int	exec_remove		__P((const struct execsw *));
 void	new_vmcmd __P((struct exec_vmcmd_set *,
 		    int (*) __P((struct lwp *, struct exec_vmcmd *)),
 		    u_long, u_long, struct vnode *, u_long, u_int, int));
-#define	NEW_VMCMD(evsp,proc,len,addr,vp,offset,prot) \
-	new_vmcmd(evsp,proc,len,addr,vp,offset,prot,0)
-#define	NEW_VMCMD2(evsp,proc,len,addr,vp,offset,prot,flags) \
-	new_vmcmd(evsp,proc,len,addr,vp,offset,prot,flags)
+#define	NEW_VMCMD(evsp,lwp,len,addr,vp,offset,prot) \
+	new_vmcmd(evsp,lwp,len,addr,vp,offset,prot,0)
+#define	NEW_VMCMD2(evsp,lwp,len,addr,vp,offset,prot,flags) \
+	new_vmcmd(evsp,lwp,len,addr,vp,offset,prot,flags)
 
 #endif /* _KERNEL */
 

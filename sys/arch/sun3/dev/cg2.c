@@ -1,4 +1,4 @@
-/*	$NetBSD: cg2.c,v 1.22.6.4 2005/01/24 08:34:47 skrll Exp $	*/
+/*	$NetBSD: cg2.c,v 1.22.6.5 2005/02/04 07:09:16 skrll Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cg2.c,v 1.22.6.4 2005/01/24 08:34:47 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cg2.c,v 1.22.6.5 2005/02/04 07:09:16 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -195,7 +195,7 @@ cg2attach(struct device *parent, struct device *self, void *args)
 }
 
 int 
-cg2open(dev_t dev, int flags, int mode, struct proc *p)
+cg2open(dev_t dev, int flags, int mode, struct lwp *l)
 {
 	int unit = minor(dev);
 
@@ -205,7 +205,7 @@ cg2open(dev_t dev, int flags, int mode, struct proc *p)
 }
 
 int 
-cg2ioctl(dev_t dev, u_long cmd, caddr_t data, int flags, struct proc *p)
+cg2ioctl(dev_t dev, u_long cmd, caddr_t data, int flags, struct lwp *l)
 {
 	struct cg2_softc *sc = cgtwo_cd.cd_devs[minor(dev)];
 

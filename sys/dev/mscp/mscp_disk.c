@@ -1,4 +1,4 @@
-/*	$NetBSD: mscp_disk.c,v 1.41.2.7 2005/01/17 19:31:23 skrll Exp $	*/
+/*	$NetBSD: mscp_disk.c,v 1.41.2.8 2005/02/04 07:09:17 skrll Exp $	*/
 /*
  * Copyright (c) 1988 Regents of the University of California.
  * All rights reserved.
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mscp_disk.c,v 1.41.2.7 2005/01/17 19:31:23 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mscp_disk.c,v 1.41.2.8 2005/02/04 07:09:17 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -571,7 +571,7 @@ raioctl(dev, cmd, data, flag, l)
 	    {
 	    	struct dkwedge_list *dkwl = (void *) data;
 
-		return (dkwedge_list(&ra->ra_disk, dkwl, p));
+		return (dkwedge_list(&ra->ra_disk, dkwl, l));
 	    }
 
 	default:

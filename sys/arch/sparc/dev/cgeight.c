@@ -1,4 +1,4 @@
-/*	$NetBSD: cgeight.c,v 1.34.2.3 2004/09/21 13:22:01 skrll Exp $	*/
+/*	$NetBSD: cgeight.c,v 1.34.2.4 2005/02/04 07:09:16 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -109,7 +109,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cgeight.c,v 1.34.2.3 2004/09/21 13:22:01 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cgeight.c,v 1.34.2.4 2005/02/04 07:09:16 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -337,10 +337,10 @@ cgeightattach(parent, self, aux)
 }
 
 int
-cgeightopen(dev, flags, mode, p)
+cgeightopen(dev, flags, mode, l)
 	dev_t dev;
 	int flags, mode;
-	struct proc *p;
+	struct lwp *l;
 {
 	int unit = minor(dev);
 
@@ -350,12 +350,12 @@ cgeightopen(dev, flags, mode, p)
 }
 
 int
-cgeightioctl(dev, cmd, data, flags, p)
+cgeightioctl(dev, cmd, data, flags, l)
 	dev_t dev;
 	u_long cmd;
 	caddr_t data;
 	int flags;
-	struct proc *p;
+	struct lwp *l;
 {
 #if defined(SUN4)
 	struct cgeight_softc *sc = cgeight_cd.cd_devs[minor(dev)];

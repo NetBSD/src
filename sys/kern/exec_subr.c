@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_subr.c,v 1.37.2.4 2004/09/21 13:35:03 skrll Exp $	*/
+/*	$NetBSD: exec_subr.c,v 1.37.2.5 2005/02/04 07:09:28 skrll Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1996 Christopher G. Demetriou
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exec_subr.c,v 1.37.2.4 2004/09/21 13:35:03 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exec_subr.c,v 1.37.2.5 2005/02/04 07:09:28 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -308,7 +308,7 @@ exec_read_from(struct lwp *l, struct vnode *vp, u_long off, void *buf,
  */
 
 int
-exec_setup_stack(struct proc *p, struct exec_package *epp)
+exec_setup_stack(struct lwp *l, struct exec_package *epp)
 {
 	u_long max_stack_size;
 	u_long access_linear_min, access_size;
@@ -327,7 +327,7 @@ exec_setup_stack(struct proc *p, struct exec_package *epp)
 	}
 	epp->ep_maxsaddr = (u_long)STACK_GROW(epp->ep_minsaddr, 
 		max_stack_size);
-	epp->ep_ssize = p->p_rlimit[RLIMIT_STACK].rlim_cur;
+	epp->ep_ssize = l->l_proc->p_rlimit[RLIMIT_STACK].rlim_cur;
 
 	/*
 	 * set up commands for stack.  note that this takes *two*, one to

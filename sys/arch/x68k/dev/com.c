@@ -1,4 +1,4 @@
-/*	$NetBSD: com.c,v 1.30.6.4 2005/01/24 08:35:10 skrll Exp $	*/
+/*	$NetBSD: com.c,v 1.30.6.5 2005/02/04 07:09:16 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.30.6.4 2005/01/24 08:35:10 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.30.6.5 2005/02/04 07:09:16 skrll Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -392,7 +392,7 @@ comattach(struct device *parent, struct device *dev, void *aux)
 }
 
 int
-comopen(dev_t dev, int flag, int mode, struct proc *p)
+comopen(dev_t dev, int flag, int mode, struct lwp *l)
 {
 	int unit = COMUNIT(dev);
 	struct com_softc *sc;
@@ -419,7 +419,7 @@ comopen(dev_t dev, int flag, int mode, struct proc *p)
 
 	if ((tp->t_state & TS_ISOPEN) &&
 	    (tp->t_state & TS_XCLUDE) &&
-	    p->p_ucred->cr_uid != 0)
+	    l->l_proc->p_ucred->cr_uid != 0)
 		return (EBUSY);
 
 	s = spltty();
@@ -517,7 +517,7 @@ comopen(dev_t dev, int flag, int mode, struct proc *p)
 }
  
 int
-comclose(dev_t dev, int flag, int mode, struct proc *p)
+comclose(dev_t dev, int flag, int mode, struct lwp *l)
 {
 	int unit = COMUNIT(dev);
 	struct com_softc *sc = xcom_cd.cd_devs[unit];
@@ -572,12 +572,12 @@ comwrite(dev_t dev, struct uio *uio, int flag)
 }
 
 int
-compoll(dev_t dev, int events, struct proc *p)
+compoll(dev_t dev, int events, struct lwp *l)
 {
 	struct com_softc *sc = xcom_cd.cd_devs[COMUNIT(dev)];
 	struct tty *tp = sc->sc_tty;
  
-	return ((*tp->t_linesw->l_poll)(tp, events, p));
+	return ((*tp->t_linesw->l_poll)(tp, events, l));
 }
 
 struct tty *
@@ -602,7 +602,7 @@ tiocm_xxx2mcr(int data)
 }
 
 int
-comioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
+comioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 {
 	int unit = COMUNIT(dev);
 	struct com_softc *sc = xcom_cd.cd_devs[unit];
@@ -610,11 +610,11 @@ comioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 	int iobase = sc->sc_iobase;
 	int error;
 
-	error = (*tp->t_linesw->l_ioctl)(tp, cmd, data, flag, p);
+	error = (*tp->t_linesw->l_ioctl)(tp, cmd, data, flag, l);
 	if (error != EPASSTHROUGH)
 		return error;
 
-	error = ttioctl(tp, cmd, data, flag, p);
+	error = ttioctl(tp, cmd, data, flag, l);
 	if (error != EPASSTHROUGH)
 		return error;
 
@@ -687,7 +687,7 @@ comioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 	case TIOCSFLAGS: {
 		int userbits, driverbits = 0;
 
-		error = suser(p->p_ucred, &p->p_acflag); 
+		error = suser(l->l_proc->p_ucred, &l->l_proc->p_acflag); 
 		if (error != 0)
 			return(EPERM); 
 

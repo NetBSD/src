@@ -1,4 +1,4 @@
-/*	$NetBSD: zx.c,v 1.8.2.3 2004/09/21 13:33:14 skrll Exp $	*/
+/*	$NetBSD: zx.c,v 1.8.2.4 2005/02/04 07:09:17 skrll Exp $	*/
 
 /*
  *  Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zx.c,v 1.8.2.3 2004/09/21 13:33:14 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zx.c,v 1.8.2.4 2005/02/04 07:09:17 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -277,7 +277,7 @@ zx_attach(struct device *parent, struct device *self, void *args)
 }
 
 int
-zxopen(dev_t dev, int flags, int mode, struct proc *p)
+zxopen(dev_t dev, int flags, int mode, struct lwp *l)
 {
 
 	if (device_lookup(&zx_cd, minor(dev)) == NULL)
@@ -286,7 +286,7 @@ zxopen(dev_t dev, int flags, int mode, struct proc *p)
 }
 
 int
-zxclose(dev_t dev, int flags, int mode, struct proc *p)
+zxclose(dev_t dev, int flags, int mode, struct lwp *l)
 {
 	struct zx_softc *sc;
 
@@ -298,7 +298,7 @@ zxclose(dev_t dev, int flags, int mode, struct proc *p)
 }
 
 int
-zxioctl(dev_t dev, u_long cmd, caddr_t data, int flags, struct proc *p)
+zxioctl(dev_t dev, u_long cmd, caddr_t data, int flags, struct lwp *l)
 {
 	struct zx_softc *sc;
 	struct fbcmap *cm;

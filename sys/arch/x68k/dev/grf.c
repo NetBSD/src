@@ -1,4 +1,4 @@
-/*	$NetBSD: grf.c,v 1.26.2.4 2005/01/24 08:35:10 skrll Exp $	*/
+/*	$NetBSD: grf.c,v 1.26.2.5 2005/02/04 07:09:16 skrll Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grf.c,v 1.26.2.4 2005/01/24 08:35:10 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: grf.c,v 1.26.2.5 2005/02/04 07:09:16 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -144,7 +144,7 @@ const struct cdevsw grf_cdevsw = {
 
 /*ARGSUSED*/
 int
-grfopen(dev_t dev, int flags, int mode, struct proc *p)
+grfopen(dev_t dev, int flags, int mode, struct lwp *l)
 {
 	int unit = GRFUNIT(dev);
 	struct grf_softc *gp;
@@ -172,7 +172,7 @@ grfopen(dev_t dev, int flags, int mode, struct proc *p)
 
 /*ARGSUSED*/
 int
-grfclose(dev_t dev, int flags, int mode, struct proc *p)
+grfclose(dev_t dev, int flags, int mode, struct lwp *l)
 {
 	struct grf_softc *gp = grf_cd.cd_devs[GRFUNIT(dev)];
 
@@ -187,7 +187,7 @@ grfclose(dev_t dev, int flags, int mode, struct proc *p)
 
 /*ARGSUSED*/
 int
-grfioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
+grfioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 {
 	int unit = GRFUNIT(dev);
 	struct grf_softc *gp = grf_cd.cd_devs[unit];
@@ -212,11 +212,11 @@ grfioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 		break;
 
 	case GRFIOCMAP:
-		error = grfmap(dev, (caddr_t *)data, p);
+		error = grfmap(dev, (caddr_t *)data, l->l_proc);
 		break;
 
 	case GRFIOCUNMAP:
-		error = grfunmap(dev, *(caddr_t *)data, p);
+		error = grfunmap(dev, *(caddr_t *)data, l->l_proc);
 		break;
 
 	case GRFSETVMODE:

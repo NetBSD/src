@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_macho.c,v 1.25.2.4 2004/09/21 13:35:03 skrll Exp $	*/
+/*	$NetBSD: exec_macho.c,v 1.25.2.5 2005/02/04 07:09:28 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exec_macho.c,v 1.25.2.4 2004/09/21 13:35:03 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exec_macho.c,v 1.25.2.5 2005/02/04 07:09:28 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -658,7 +658,7 @@ exec_macho_makecmds(l, epp)
 		goto bad;
 	}
 
-	return (*epp->ep_esch->es_setup_stack)(l->l_proc, epp);
+	return (*epp->ep_esch->es_setup_stack)(l, epp);
 bad:
 	kill_vmcmds(&epp->ep_vmcmds);
 bad2:

@@ -1,4 +1,4 @@
-/*      $NetBSD: opms.c,v 1.9.2.4 2004/12/18 09:31:27 skrll Exp $        */
+/*      $NetBSD: opms.c,v 1.9.2.5 2005/02/04 07:09:16 skrll Exp $        */
 
 /*
  * Copyright 1997
@@ -91,7 +91,7 @@
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: opms.c,v 1.9.2.4 2004/12/18 09:31:27 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: opms.c,v 1.9.2.5 2005/02/04 07:09:16 skrll Exp $");
 
 #include "opms.h"
 #if NOPMS > 1
@@ -401,7 +401,7 @@ opmsattach(parent, self, aux)
 **     dev  - Device identifier consisting of major and minor numbers.
 **     flag - not used
 **     mode - not used.
-**     p    - not used.
+**     l    - not used.
 **
 **  IMPLICIT INPUTS:
 **
@@ -424,11 +424,11 @@ opmsattach(parent, self, aux)
 **--
 */
 int
-opmsopen(dev, flag, mode, p)
+opmsopen(dev, flag, mode, l)
     dev_t dev;
     int flag;
     int mode;
-    struct proc *p;
+    struct lwp *l;
 {
     int                 unit = PMSUNIT(dev);
     struct opms_softc    *sc;
@@ -490,7 +490,7 @@ opmsopen(dev, flag, mode, p)
 **     dev  - Device identifier consisting of major and minor numbers.
 **     flag - Not used.
 **     mode - Not used.
-**     p    - Not used. 
+**     l    - Not used. 
 **
 **  IMPLICIT INPUTS:
 **
@@ -510,11 +510,11 @@ opmsopen(dev, flag, mode, p)
 **--
 */
 int
-opmsclose(dev, flag, mode, p)
+opmsclose(dev, flag, mode, l)
     dev_t dev;
     int flag;
     int mode;
-    struct proc *p;
+    struct lwp *l;
 {
     struct opms_softc *sc = opms_cd.cd_devs[PMSUNIT(dev)];
 
@@ -652,7 +652,7 @@ opmsread(dev, uio, flag)
 **     cmd  - requested ioctl 
 **     addr - address of user buffer for mouse info
 **     flag - unused
-**     p    - pointer to proc structure of user.
+**     l    - pointer to lwp structure of user.
 **     
 **  IMPLICIT INPUTS:
 **
@@ -672,12 +672,12 @@ opmsread(dev, uio, flag)
 **--
 */
 int
-opmsioctl(dev, cmd, addr, flag, p)
+opmsioctl(dev, cmd, addr, flag, l)
     dev_t       dev;
     u_long      cmd;
     caddr_t     addr;
     int         flag;
-    struct proc *p;
+    struct lwp *l;
 {
     struct opms_softc     *sc = opms_cd.cd_devs[PMSUNIT(dev)];
     struct mouseinfo     info;
@@ -943,7 +943,7 @@ opmsintr(arg)
 **
 **      dev    - device identifier consisting of major and minor numbers.
 **      events - the set of events to check for.
-**      p      - pointer to proc structure of user.
+**      l      - pointer to lwp structure of user.
 **
 **  IMPLICIT INPUTS:
 **
@@ -963,10 +963,10 @@ opmsintr(arg)
 **--
 */
 int
-opmspoll(dev, events, p)
+opmspoll(dev, events, l)
     dev_t dev;
     int events;
-    struct proc *p;
+    struct lwp *l;
 {
     struct opms_softc     *sc     = opms_cd.cd_devs[PMSUNIT(dev)];
     int                  revents = 0;
@@ -984,7 +984,7 @@ opmspoll(dev, events, p)
         {
             /* Record that the process has done a select 
             */
-            selrecord(p, &sc->sc_rsel);
+            selrecord(l, &sc->sc_rsel);
         }
     }
     splx(oldIpl);

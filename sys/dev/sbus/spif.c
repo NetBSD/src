@@ -1,4 +1,4 @@
-/*	$NetBSD: spif.c,v 1.1.2.4 2004/09/21 13:33:13 skrll Exp $	*/
+/*	$NetBSD: spif.c,v 1.1.2.5 2005/02/04 07:09:17 skrll Exp $	*/
 /*	$OpenBSD: spif.c,v 1.12 2003/10/03 16:44:51 miod Exp $	*/
 
 /*
@@ -41,7 +41,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spif.c,v 1.1.2.4 2004/09/21 13:33:13 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spif.c,v 1.1.2.5 2005/02/04 07:09:17 skrll Exp $");
 
 #include "spif.h"
 #if NSPIF > 0
@@ -322,11 +322,11 @@ stty_attach(parent, dev, aux)
 }
 
 int
-stty_open(dev, flags, mode, p)
+stty_open(dev, flags, mode, l)
 	dev_t dev;
 	int flags;
 	int mode;
-	struct proc *p;
+	struct lwp *l;
 {
 	struct spif_softc *csc;
 	struct stty_softc *sc;
@@ -384,7 +384,8 @@ stty_open(dev, flags, mode, p)
 		else
 			CLR(tp->t_state, TS_CARR_ON);
 	}
-	else if (ISSET(tp->t_state, TS_XCLUDE) && p->p_ucred->cr_uid != 0) {
+	else if (ISSET(tp->t_state, TS_XCLUDE) &&
+	     l->l_proc->p_ucred->cr_uid != 0) {
 		return (EBUSY);
 	} else {
 		s = spltty();
@@ -409,11 +410,11 @@ stty_open(dev, flags, mode, p)
 }
 
 int
-stty_close(dev, flags, mode, p)
+stty_close(dev, flags, mode, l)
 	dev_t dev;
 	int flags;
 	int mode;
-	struct proc *p;
+	struct lwp *l;
 {
 	struct stty_softc *sc = stty_cd.cd_devs[SPIF_CARD(dev)];
 	struct stty_port *sp = &sc->sc_port[SPIF_PORT(dev)];
@@ -438,12 +439,12 @@ stty_close(dev, flags, mode, p)
 }
 
 int
-stty_ioctl(dev, cmd, data, flags, p)
+stty_ioctl(dev, cmd, data, flags, l)
 	dev_t dev;
 	u_long cmd;
 	caddr_t data;
 	int flags;
-	struct proc *p;
+	struct lwp *l;
 {
 	struct stty_softc *stc = stty_cd.cd_devs[SPIF_CARD(dev)];
 	struct stty_port *sp = &stc->sc_port[SPIF_PORT(dev)];
@@ -451,11 +452,11 @@ stty_ioctl(dev, cmd, data, flags, p)
 	struct tty *tp = sp->sp_tty;
 	int error;
 
-	error = (*tp->t_linesw->l_ioctl)(tp, cmd, data, flags, p);
+	error = (*tp->t_linesw->l_ioctl)(tp, cmd, data, flags, l);
 	if (error >= 0)
 		return (error);
 
-	error = ttioctl(tp, cmd, data, flags, p);
+	error = ttioctl(tp, cmd, data, flags, l);
 	if (error >= 0)
 		return (error);
 
@@ -496,7 +497,7 @@ stty_ioctl(dev, cmd, data, flags, p)
 		*((int *)data) = sp->sp_openflags;
 		break;
 	case TIOCSFLAGS:
-		if( suser(p->p_ucred, &p->p_acflag) )
+		if( suser(l->l_proc->p_ucred, &l->l_proc->p_acflag) )
 			error = EPERM;
 		else
 			sp->sp_openflags = *((int *)data) &
@@ -691,16 +692,16 @@ stty_write(dev, uio, flags)
 }
 
 int
-stty_poll(dev, events, p)
+stty_poll(dev, events, l)
 	dev_t dev;
 	int events;
-	struct proc *p;
+	struct lwp *l;
 {
 	struct stty_softc *sc = stty_cd.cd_devs[SPIF_CARD(dev)];
 	struct stty_port *sp = &sc->sc_port[SPIF_PORT(dev)];
 	struct tty *tp = sp->sp_tty;
  
-	return ((*tp->t_linesw->l_poll)(tp, events, p));
+	return ((*tp->t_linesw->l_poll)(tp, events, l));
 }
 
 struct tty *
@@ -1068,21 +1069,21 @@ sbpp_attach(parent, dev, aux)
 }
 
 int
-sbpp_open(dev, flags, mode, p)
+sbpp_open(dev, flags, mode, l)
 	dev_t dev;
 	int flags;
 	int mode;
-	struct proc *p;
+	struct lwp *l;
 {
 	return (ENXIO);
 }
 
 int
-sbpp_close(dev, flags, mode, p)
+sbpp_close(dev, flags, mode, l)
 	dev_t dev;
 	int flags;
 	int mode;
-	struct proc *p;
+	struct lwp *l;
 {
 	return (ENXIO);
 }
@@ -1121,21 +1122,21 @@ sbpp_rw(dev, uio)
 }
 
 int
-sbpp_poll(dev, events, p)
+sbpp_poll(dev, events, l)
 	dev_t dev;
 	int events;
-	struct proc *p;
+	struct lwp *l;
 {
-	return (seltrue(dev, events, p));
+	return (seltrue(dev, events, l));
 }
 
 int
-sbpp_ioctl(dev, cmd, data, flags, p)
+sbpp_ioctl(dev, cmd, data, flags, l)
 	dev_t dev;
 	u_long cmd;
 	caddr_t data;
 	int flags;
-	struct proc *p;
+	struct lwp *l;
 {
 	int error;
 

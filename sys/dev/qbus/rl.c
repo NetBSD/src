@@ -1,4 +1,4 @@
-/*	$NetBSD: rl.c,v 1.21.2.5 2004/11/02 07:52:46 skrll Exp $	*/
+/*	$NetBSD: rl.c,v 1.21.2.6 2005/02/04 07:09:17 skrll Exp $	*/
 
 /*
  * Copyright (c) 2000 Ludd, University of Lule}, Sweden. All rights reserved.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rl.c,v 1.21.2.5 2004/11/02 07:52:46 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rl.c,v 1.21.2.6 2005/02/04 07:09:17 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -539,7 +539,7 @@ rlioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct lwp *l)
 	    {
 	    	struct dkwedge_list *dkwl = (void *) addr;
 
-		return (dkwedge_list(&rc->rc_disk, dkwl, p));
+		return (dkwedge_list(&rc->rc_disk, dkwl, l));
 	    }
 
 	default:
