@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_subr.c,v 1.78 2002/02/08 00:58:58 thorpej Exp $	*/
+/*	$NetBSD: kern_subr.c,v 1.79 2002/03/04 02:25:23 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2002 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_subr.c,v 1.78 2002/02/08 00:58:58 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_subr.c,v 1.79 2002/03/04 02:25:23 simonb Exp $");
 
 #include "opt_ddb.h"
 #include "opt_md.h"
@@ -625,7 +625,6 @@ setroot(bootdv, bootpartition)
 	struct ifnet *ifp;
 	const char *deffsname;
 	struct vfsops *vops;
-	extern int (*mountroot) __P((void));
 
 #ifdef MEMORY_DISK_HOOKS
 	for (i = 0; i < NMD; i++) {

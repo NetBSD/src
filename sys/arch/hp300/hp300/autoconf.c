@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.54 2002/02/23 21:52:26 gmcgarry Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.55 2002/03/04 02:25:21 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -310,7 +310,6 @@ cpu_configure()
 void
 cpu_rootconf()
 {
-	extern int (*mountroot) __P((void));
 	struct dev_data *dd;
 	struct device *dv;
 	struct vfsops *vops;

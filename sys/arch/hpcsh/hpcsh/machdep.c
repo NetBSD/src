@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.31 2002/03/04 02:19:08 simonb Exp $	*/
+/*	$NetBSD: machdep.c,v 1.32 2002/03/04 02:25:22 simonb Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -115,8 +115,10 @@
 #define DRAM_BANK1_END		(DRAM_BANK1_START + DRAM_BANK_SIZE)
 
 #ifdef NFS
-extern int nfs_mountroot(void);
-extern int (*mountroot)(void);
+#include <nfs/rpcv2.h>
+#include <nfs/nfsproto.h>
+#include <nfs/nfs.h>
+#include <nfs/nfsmount.h>
 #endif
 
 struct user *proc0paddr;
