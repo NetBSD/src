@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_alloc.c,v 1.19 1999/04/11 23:24:04 perseant Exp $	*/
+/*	$NetBSD: lfs_alloc.c,v 1.20 1999/04/16 00:41:58 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -292,15 +292,18 @@ lfs_vfree(v)
 	struct lfs *fs;
 	ufs_daddr_t old_iaddr;
 	ino_t ino;
+	int already_locked;
 	
 	/* Get the inode number and file system. */
 	ip = VTOI(ap->a_pvp);
 	fs = ip->i_lfs;
 	ino = ip->i_number;
 	
+	/* If we already hold ufs_hashlock, don't panic, just do it anyway */
+	already_locked = lockstatus(&ufs_hashlock) && ufs_hashlock.lk_lockholder == curproc->p_pid;
 	while(WRITEINPROG(ap->a_pvp)
 	      || fs->lfs_seglock
-	      || lockmgr(&ufs_hashlock, LK_EXCLUSIVE|LK_SLEEPFAIL, 0))
+	      || (!already_locked && lockmgr(&ufs_hashlock, LK_EXCLUSIVE|LK_SLEEPFAIL, 0)))
 	{
 		if (WRITEINPROG(ap->a_pvp)) {
 			tsleep(ap->a_pvp, (PRIBIO+1), "lfs_vfree", 0);
