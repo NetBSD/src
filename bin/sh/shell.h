@@ -1,4 +1,4 @@
-/*	$NetBSD: shell.h,v 1.13 2000/05/22 10:18:47 elric Exp $	*/
+/*	$NetBSD: shell.h,v 1.14 2002/05/25 23:09:06 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -57,17 +57,10 @@
 #define BSD 1
 #endif
 
-#ifdef __STDC__
 typedef void *pointer;
 #ifndef NULL
 #define NULL (void *)0
 #endif
-#else /* not __STDC__ */
-typedef char *pointer;
-#ifndef NULL
-#define NULL 0
-#endif
-#endif /*  not __STDC__ */
 #define STATIC	/* empty */
 #define MKINIT	/* empty */
 
