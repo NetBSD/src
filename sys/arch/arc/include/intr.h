@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.3 2000/04/03 11:44:20 soda Exp $	*/
+/*	$NetBSD: intr.h,v 1.4 2000/04/15 22:05:52 soda Exp $	*/
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -125,10 +125,6 @@ extern struct splvec splvec;
 #define SOFTNET_INTR	1
 #define FPU_INTR	2
 extern u_long intrcnt[];
-
-/* handle i/o device interrupts */
-extern int (*mips_hardware_intr) __P((unsigned, unsigned, unsigned, unsigned));
-int arc_hardware_intr __P((unsigned, unsigned, unsigned, unsigned));
 
 struct clockframe;
 void set_intr __P((int, int(*)(u_int, struct clockframe *), int));
