@@ -58,7 +58,6 @@
 ./usr/include/sparc/aout_machdep.h
 ./usr/include/sparc/asm.h
 ./usr/include/sparc/autoconf.h
-./usr/include/sparc/bsd_audioio.h
 ./usr/include/sparc/bsd_openprom.h
 ./usr/include/sparc/bus.h
 ./usr/include/sparc/cdefs.h
@@ -82,7 +81,6 @@
 ./usr/include/sparc/kbio.h
 ./usr/include/sparc/kcore.h
 ./usr/include/sparc/limits.h
-./usr/include/sparc/mbppio.h
 ./usr/include/sparc/oldmon.h
 ./usr/include/sparc/openpromio.h
 ./usr/include/sparc/param.h
