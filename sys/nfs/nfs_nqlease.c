@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_nqlease.c,v 1.40 2002/05/12 23:04:35 matt Exp $	*/
+/*	$NetBSD: nfs_nqlease.c,v 1.41 2002/10/21 12:52:33 yamt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_nqlease.c,v 1.40 2002/05/12 23:04:35 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_nqlease.c,v 1.41 2002/10/21 12:52:33 yamt Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -880,7 +880,7 @@ nqnfs_getlease(vp, rwflag, cred, p)
 	if (reqtime > time.tv_sec) {
 		frev = fxdr_hyper(tl);
 		nqnfs_clientlease(nmp, np, rwflag, cachable, reqtime, frev);
-		nfsm_loadattr(vp, (struct vattr *)0);
+		nfsm_loadattr(vp, (struct vattr *)0, 0);
 	} else
 		error = NQNFS_EXPIRED;
 	nfsm_reqdone;
