@@ -1,4 +1,4 @@
-/*	$NetBSD: kloader_machdep.c,v 1.4 2002/02/17 21:01:18 uch Exp $	*/
+/*	$NetBSD: kloader_machdep.c,v 1.5 2002/02/28 01:57:00 uch Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -42,9 +42,6 @@
 #include <sh3/cache_sh4.h>
 
 #include <machine/kloader.h>
-
-#define SH4_TLB_DISABLE	*(__volatile__ u_int32_t *)SH4_MMUCR = SH4_MMUCR_TI
-#define SH3_TLB_DISABLE	*(__volatile__ u_int32_t *)SH3_MMUCR = SH3_MMUCR_TF
 
 /* 
  * 2nd-bootloader. Make sure that PIC and its size is lower than page size.

@@ -1,4 +1,4 @@
-/*	$NetBSD: tmureg.h,v 1.5 2002/02/22 19:44:02 uch Exp $	*/
+/*	$NetBSD: tmureg.h,v 1.6 2002/02/28 01:56:58 uch Exp $	*/
 
 /*-
  * Copyright (C) 1999 SAITOH Masanobu.  All rights reserved.
@@ -28,6 +28,7 @@
 
 #ifndef _SH3_TMUREG_H_
 #define _SH3_TMUREG_H_
+#include <sh3/devreg.h>
 
 /*
  * TMU
@@ -81,5 +82,22 @@
 #define SH4_TCR_TPSC_P512		  0x0004
 #define SH4_TCR_TPSC_RTC		  0x0006
 #define SH4_TCR_TPSC_TCLK		  0x0007
+
+#ifndef _LOCORE
+#if defined(SH3) && defined(SH4)
+extern u_int32_t __sh_TOCR;
+extern u_int32_t __sh_TSTR;
+extern u_int32_t __sh_TCOR0;
+extern u_int32_t __sh_TCNT0;
+extern u_int32_t __sh_TCR0;
+extern u_int32_t __sh_TCOR1;
+extern u_int32_t __sh_TCNT1;
+extern u_int32_t __sh_TCR1;
+extern u_int32_t __sh_TCOR2;
+extern u_int32_t __sh_TCNT2;
+extern u_int32_t __sh_TCR2;
+extern u_int32_t __sh_TCPR2;
+#endif /* SH3 && SH4 */
+#endif /* !_LOCORE */
 
 #endif	/* !_SH3_TMUREG_H_ */
