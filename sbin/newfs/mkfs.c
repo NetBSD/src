@@ -33,7 +33,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)mkfs.c	6.18 (Berkeley) 7/3/91";*/
-static char rcsid[] = "$Id: mkfs.c,v 1.5 1993/08/01 18:26:14 mycroft Exp $";
+static char rcsid[] = "$Id: mkfs.c,v 1.6 1993/10/01 01:56:42 mycroft Exp $";
 #endif /* not lint */
 
 #ifndef STANDALONE
@@ -572,6 +572,8 @@ next:
 	sblock.fs_cstotal.cs_nifree = 0;
 	sblock.fs_cstotal.cs_nffree = 0;
 	sblock.fs_fmod = 0;
+	sblock.fs_state = FSOKAY;
+	sblock.fs_clean = FS_CLEANFREQ;
 	sblock.fs_ronly = 0;
 	/*
 	 * Dump out summary information about file system.
