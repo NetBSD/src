@@ -1,7 +1,4 @@
-$NetBSD: TODO,v 1.7 2003/12/22 14:33:54 rtr Exp $
-
-finish Xserver, especially:
-	hw/xfree86
+$NetBSD: TODO,v 1.8 2004/01/10 23:35:55 lukem Exp $
 
 clean up XTODO issues
 
