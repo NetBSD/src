@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.379 2001/12/20 03:24:59 thorpej Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.380 2001/12/29 22:31:10 ichiro Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.376 2001/12/20 03:24:22 thorpej Exp 
+ *	NetBSD: pcidevs,v 1.377 2001/12/29 22:30:33 ichiro Exp 
  */
 
 /*
@@ -5872,6 +5872,12 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    "V96DPC i960 (Dual) Host-PCI Bridge",
 	},
 	{
+	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT6305,
+	    0,
+	    "VIA Technologies",
+	    "VT6305 OCHI IEEE 1394 Controller",
+	},
+	{
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT8363_HB,
 	    0,
 	    "VIA Technologies",
@@ -6014,6 +6020,12 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "VIA Technologies",
 	    "VT3043 (Rhine) 10/100 Ethernet",
+	},
+	{
+	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT6306,
+	    0,
+	    "VIA Technologies",
+	    "VT3606 OCHI IEEE 1394 Controller",
 	},
 	{
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT82C686A_SMB,
