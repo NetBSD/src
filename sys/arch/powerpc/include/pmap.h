@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.10 1999/02/26 14:40:45 tsubai Exp $	*/
+/*	$NetBSD: pmap.h,v 1.11 1999/03/05 06:10:48 tsubai Exp $	*/
 
 /*-
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -54,6 +54,7 @@ typedef u_int sr_t;
 struct pmap {
 	sr_t pm_sr[16];		/* segments used in this pmap */
 	int pm_refs;		/* ref count */
+	struct pmap_statistics pm_stats;	/* pmap statistics */
 };
 
 typedef	struct pmap *pmap_t;
@@ -69,6 +70,8 @@ extern struct pmap kernel_pmap_;
 #define	pmap_change_wiring(pm, va, wired)
 
 #define	pmap_phys_address(x)		(x)
+
+#define	pmap_resident_count(pmap)	((pmap)->pm_stats.resident_count)
 
 void pmap_bootstrap __P((u_int kernelstart, u_int kernelend));
 paddr_t pmap_extract __P((struct pmap *, vaddr_t));
