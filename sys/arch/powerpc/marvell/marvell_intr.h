@@ -1,4 +1,4 @@
-/*	$NetBSD: marvell_intr.h,v 1.2 2003/03/15 07:50:28 matt Exp $	*/
+/*	$NetBSD: marvell_intr.h,v 1.3 2003/03/16 06:57:31 matt Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -518,7 +518,7 @@ void	strayintr(int);
 		"	stwcx.	0,0,%1\n"	\
 		"	bne-	1b"		\
 	   :					\
-	   : "r"(1 << (isr)), "r"(&netisr)	\
+	   : "r"(1 << (isr)), "b"(&netisr)	\
 	   : "cr0", "r0");			\
 	setsoftnet();				\
 } while (/*CONSTCOND*/ 0)
