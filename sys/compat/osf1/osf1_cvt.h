@@ -1,4 +1,4 @@
-/* $NetBSD: osf1_cvt.h,v 1.1 1999/05/01 02:57:09 cgd Exp $ */
+/* $NetBSD: osf1_cvt.h,v 1.2 1999/05/01 04:38:20 cgd Exp $ */
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -39,6 +39,8 @@
 #include <sys/resource.h>
 #include <sys/signal.h>
 #include <sys/stat.h>
+
+#include <compat/common/compat_util.h>
 
 void	osf1_cvt_rusage_from_native(const struct rusage *nru,
 				    struct osf1_rusage *oru);
