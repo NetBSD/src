@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_lookup.c,v 1.1.1.1 2004/03/28 08:56:44 martti Exp $	*/
+/*	$NetBSD: ip_lookup.c,v 1.1.1.1.2.1 2004/04/02 14:00:51 tron Exp $	*/
 
 /*
  * Copyright (C) 2002-2003 by Darren Reed.
@@ -214,9 +214,8 @@ caddr_t data;
 	ip_pool_t *p;
 	int err;
 
-	err = COPYIN(data, &op, sizeof(op));
-	if (err != 0)
-		return EFAULT;
+	BCOPYIN(data, &op, sizeof(op));
+	err = 0;
 	op.iplo_name[sizeof(op.iplo_name) - 1] = '\0';
 
 	switch (op.iplo_type)
@@ -285,9 +284,8 @@ caddr_t data;
 	ip_pool_t *p;
 	int err;
 
-	err = COPYIN(data, &op, sizeof(op));
-	if (err != 0)
-		return EFAULT;
+	err = 0;
+	BCOPYIN(data, &op, sizeof(op));
 	op.iplo_name[sizeof(op.iplo_name) - 1] = '\0';
 
 	switch (op.iplo_type)
@@ -346,9 +344,8 @@ caddr_t data;
 	iplookupop_t op;
 	int err;
 
-	err = COPYIN(data, &op, sizeof(op));
-	if (err != 0)
-		return EFAULT;
+	err = 0;
+	BCOPYIN(data, &op, sizeof(op));
 	op.iplo_name[sizeof(op.iplo_name) - 1] = '\0';
 
 	switch (op.iplo_type)
@@ -389,9 +386,8 @@ caddr_t data;
 	iplookupop_t op;
 	int err;
 
-	err = COPYIN(data, &op, sizeof(op));
-	if (err != 0)
-		return EFAULT;
+	err = 0;
+	BCOPYIN(data, &op, sizeof(op));
 	op.iplo_name[sizeof(op.iplo_name) - 1] = '\0';
 
 	if (op.iplo_arg & IPLT_ANON)
@@ -432,9 +428,8 @@ caddr_t data;
 	iplookupop_t op;
 	int err;
 
-	err = COPYIN(data, &op, sizeof(op));
-	if (err != 0)
-		return EFAULT;
+	err = 0;
+	BCOPYIN(data, &op, sizeof(op));
 
 	switch (op.iplo_type)
 	{
@@ -468,9 +463,8 @@ caddr_t data;
 	int err, unit, num, type;
 	iplookupflush_t flush;
 
-	err = COPYIN(data, &flush, sizeof(flush));
-	if (err != 0)
-		return EFAULT;
+	err = 0;
+	BCOPYIN(data, &flush, sizeof(flush));
 
 	flush.iplf_name[sizeof(flush.iplf_name) - 1] = '\0';
 
