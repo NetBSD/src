@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.29 1997/06/15 01:08:16 jonathan Exp $	*/
+/*	$NetBSD: locore.S,v 1.30 1997/06/15 01:18:25 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -2023,17 +2023,16 @@ END(cpu_getregs)
  *	implicitly accesses caller's a0-a3.
  */
 NON_LEAF(stacktrace, 32, ra)
-	subu	$sp,$sp,32
-	la	$2, _C_LABEL(printf)
-	sw	$31,24($sp)
+	subu	sp,sp,32
+	la	v0, _C_LABEL(printf)
+	sw	ra,24(sp)
 
 	jal	stacktrace_subr
-	sw	$2,16($sp)
+	sw	v0,16(sp)
 
-	lw	$31,24($sp)
-	addu	$sp,$sp,32
-	j	$31
-	.end	stacktrace
+	lw	ra,24(sp)
+	addu	sp,sp,32
+	j	ra
 END(stacktrace)
 
 /*
@@ -2041,17 +2040,16 @@ END(stacktrace)
  *	implicitly accesses caller's a0-a3.
  */
 NON_LEAF(logstacktrace, 32, ra)
-	subu	$sp,$sp,32
-	la	$2, _C_LABEL(addlog)
-	sw	$31,24($sp)
+	subu	sp,sp,32
+	la	v0, _C_LABEL(addlog)
+	sw	ra,24(sp)
 
 	jal	stacktrace_subr
-	sw	$2,16($sp)
+	sw	v0,16(sp)
 
-	lw	$31,24($sp)
-	addu	$sp,$sp,32
-	j	$31
-	.end	stacktrace
+	lw	ra,24(sp)
+	addu	sp,sp,32
+	j	ra
 END(stacktrace)
 
 
