@@ -1,4 +1,4 @@
-/*	$NetBSD: ka750.c,v 1.5 1995/03/30 21:25:21 ragge Exp $	*/
+/*	$NetBSD: ka750.c,v 1.6 1995/11/10 18:52:57 ragge Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1988 The Regents of the University of California.
@@ -37,15 +37,12 @@
  *      @(#)autoconf.c  7.20 (Berkeley) 5/9/91
  */
 
-/* All bugs are subject to removal without further notice */
-
-#if VAX750
-
 #include "sys/param.h"
 #include "sys/types.h"
 #include "sys/device.h"
+#include "vm/vm.h"
+#include "vm/vm_kern.h"
 #include "machine/ka750.h"
-#include "machine/nexus.h"
 #include "machine/pte.h"
 #include "machine/mtpr.h"
 #include "vax/uba/ubavar.h"
@@ -54,43 +51,38 @@
 #include "mba.h"
 #include "uba.h"
 
-#include "vm/vm.h"
-#include "vm/vm_kern.h"
-#include "vax/include/pmap.h"
-
-struct nexus *nexus;
-
 int
 ka750_conf()
 {
 	extern char cpu_model[];
 
 	strcpy(cpu_model,"VAX 11/750");
-	config_rootfound("backplane",75);
+	config_rootfound("backplane",(void*)75);
 }
 
 int
 conf_750(){
-	extern int cpu_type, nmba, numuba;
+	extern int cpu_type;
 
 	printf(": 11/750, hardware rev %d, ucode rev %d\n",
 		V750HARDW(cpu_type), V750UCODE(cpu_type));
 }
 
-ka750_clock(){
-	u_int i;
 /*
- * It's time to start clocks in system...
+ * ka750_clock() makes the 11/750 interrupt clock and todr
+ * register start counting.
  */
-	i=~10000; /* Complement of 10000 milliseconds */
-	mtpr(i,PR_NICR); /* Load in count register */
-	mtpr(0x51,PR_ICCS); /* Start clock and enable interrupt */
-	if(mfpr(PR_TODR)){
+int
+ka750_clock() {
+
+	mtpr(-10000, PR_NICR); /* Load in count register */
+	mtpr(0x800000d1, PR_ICCS); /* Start clock and enable interrupt */
+	if (mfpr(PR_TODR)) {
 		/* todr running */
 		return 0;
 	} else {
 		/* Start TODR register. */
-		mtpr(1,PR_TODR);
+		mtpr(1, PR_TODR);
 		return 1;
 	}
 
@@ -105,14 +97,7 @@ mbainterrupt(){return;}
 #endif
 
 
-/*
- * 750-specific code.
- */
-
-
 #include "sys/param.h"
-
-/* #include "mem.h" */
 
 extern volatile caddr_t mcraddr[];
 
@@ -233,4 +218,23 @@ ka750_mchk(cmcf)
 	}
 	return (-1);
 }
-#endif
+
+ka750_steal_pages()
+{
+	extern	vm_offset_t avail_start, virtual_avail;
+	extern	struct nexus *nexus;
+	int	junk;
+
+	/*
+	 * We take away the pages we need, one for SCB and the rest
+	 * for UBA vectors == 1 + 2 will alloc all needed space.
+	 * We also set up virtual area for SBI.
+	 */
+	MAPPHYS(junk, V750PGS, VM_PROT_READ|VM_PROT_WRITE);
+	MAPVIRT(nexus, btoc(NEX750SZ));
+	pmap_map((vm_offset_t)nexus, NEX750, NEX750 + NEX750SZ,
+	    VM_PROT_READ|VM_PROT_WRITE);
+
+	return 0;
+}
+
