@@ -1,4 +1,4 @@
-#	$Id: files.oldconf,v 1.49 1994/05/13 06:19:13 mycroft Exp $
+#	$Id: files.oldconf,v 1.50 1994/05/19 06:11:04 cgd Exp $
 #
 adosfs/adlookup.c	optional adosfs
 adosfs/adutil.c		optional adosfs
@@ -55,7 +55,6 @@ kern/kern_time.c	standard
 kern/kern_xxx.c		standard
 kern/subr_disk.c	standard
 kern/subr_log.c		standard
-kern/subr_mcount.c	optional profiling-routine
 kern/subr_prf.c		standard
 kern/subr_prof.c	standard
 kern/subr_rmap.c	standard
