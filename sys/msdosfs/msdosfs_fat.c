@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_fat.c,v 1.5 1994/06/29 06:35:38 cgd Exp $	*/
+/*	$NetBSD: msdosfs_fat.c,v 1.6 1994/06/30 07:27:17 deraadt Exp $	*/
 
 /*
  * Written by Paul Popelka (paulp@uts.amdahl.com)
@@ -320,7 +320,9 @@ updateotherfats(pmp, bp, fatbn)
 
 
 extern inline void
-usemap_alloc(struct msdosfsmount * pmp, u_long cn)
+usemap_alloc(pmp, cn)
+	struct msdosfsmount *pmp;
+	u_long cn;
 {
 	pmp->pm_inusemap[cn / 8] |= 1 << (cn % 8);
 	pmp->pm_freeclustercount--;
@@ -329,7 +331,9 @@ usemap_alloc(struct msdosfsmount * pmp, u_long cn)
 }
 
 extern inline void
-usemap_free(struct msdosfsmount * pmp, u_long cn)
+usemap_free(pmp, cn)
+	struct msdosfsmount *pmp;
+	u_long cn;
 {
 	pmp->pm_freeclustercount++;
 	pmp->pm_inusemap[cn / 8] &= ~(1 << (cn % 8));
