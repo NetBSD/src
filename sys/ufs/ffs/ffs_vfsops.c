@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vfsops.c,v 1.122 2003/09/17 02:24:33 enami Exp $	*/
+/*	$NetBSD: ffs_vfsops.c,v 1.123 2003/09/25 23:39:17 enami Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1994
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.122 2003/09/17 02:24:33 enami Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.123 2003/09/25 23:39:17 enami Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -1584,7 +1584,7 @@ ffs_sbupdate(mp, waitfor)
 	ffs_oldfscompat_write((struct fs *)bp->b_data, mp);
 #ifdef FFS_EI
 	if (mp->um_flags & UFS_NEEDSWAP)
-		ffs_sb_swap(fs, (struct fs *)bp->b_data);
+		ffs_sb_swap((struct fs *)bp->b_data, (struct fs *)bp->b_data);
 #endif
 #ifdef SUPPORT_FS_42POSTBLFMT_WRITE
 	if (fs->fs_old_postblformat == FS_42POSTBLFMT)
