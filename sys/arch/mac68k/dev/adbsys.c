@@ -1,4 +1,4 @@
-/*	$NetBSD: adbsys.c,v 1.27 1997/06/16 06:35:27 scottr Exp $	*/
+/*	$NetBSD: adbsys.c,v 1.28 1997/08/08 17:58:48 ender Exp $	*/
 
 /*-
  * Copyright (C) 1994	Bradley A. Grantham
@@ -320,13 +320,43 @@ adb_init()
 		case ADBADDR_MAP:
 			switch (adbdata.devType) {
 			case ADB_STDKBD:
-				printf("keyboard");
+				printf("standard keyboard");
 				break;
 			case ADB_EXTKBD:
 				printf("extended keyboard");
 				break;
+			case ADB_EXTISOKBD:
+				printf("extended keyboard (ISO layout)");
+				break;
+			case ADB_KBDII:
+				printf("keyboard II");
+				break;
+			case ADB_ISOKBDII:
+				printf("keyboard II (ISO layout)");
+				break;
 			case ADB_PBKBD:
 				printf("PowerBook keyboard");
+				break;
+			case ADB_PBISOKBD:
+				printf("PowerBook keyboard (ISO layout)");
+				break;
+			case ADB_ADJKPD:
+				printf("adjustable keypad");
+				break;
+			case ADB_ADJKBD:
+				printf("adjustable keyboard");
+				break;
+			case ADB_ADJISOKBD:
+				printf("adjustable keyboard (ISO layout)");
+				break;
+			case ADB_ADJJAPKBD:
+				printf("adjustable keyboard (Japanese layout)");
+				break;
+			case ADB_PB500KBD:
+				printf("PowerBook 5xx keyboard");
+				break;
+			case ADB_PB500ISOKBD:
+				printf("PowerBook 5xx keyboard (ISO layout)");
 				break;
 			default:
 				printf("mapped device (%d)",
