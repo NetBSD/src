@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ade.c,v 1.9 2001/06/13 10:46:00 wiz Exp $	*/
+/*	$NetBSD: if_ade.c,v 1.10 2001/07/12 23:25:39 thorpej Exp $	*/
 
 /*
  * NOTE: this version of if_de was modified for bounce buffers prior
@@ -3046,7 +3046,7 @@ tulip_addr_filter(
 	     * go into hash perfect mode (512 bit multicast
 	     * hash and one perfect hardware).
 	     */
-	    bzero(sc->tulip_setupdata, sizeof(sc->tulip_setupdata));
+	    memset(sc->tulip_setupdata, 0, sizeof(sc->tulip_setupdata));
 	    ETHER_FIRST_MULTI(step, TULIP_ETHERCOM(sc), enm);
 	    while (enm != NULL) {
 		if (bcmp(enm->enm_addrlo, enm->enm_addrhi, 6) == 0) {
@@ -4610,11 +4610,11 @@ tulip_initring(
     ri->ri_max = ndescs;
     (void)lcl_dma_ram_next(16);	/* superstitiously avoid the origin */
     ri->ri_first = (tulip_desc_t *)lcl_dma_ram_next(dsize);
-    bzero(ri->ri_first, dsize);
+    memset(ri->ri_first, 0, dsize);
     for(i=0; i<ndescs; ++i) {
 	    kvalist[i] = lcl_dma_ram_next(TULIP_XX_BUFLEN);
 	    BEGIN(ri->ri_first+i);
-		bzero(&t, sizeof(t));
+		memset(&t, 0, sizeof(t));
 		t.d_addr1 = a12map(TULIP_KVATOPHYS(sc,kvalist[i]));
 	    END(ri->ri_first+i);
     }
@@ -4706,7 +4706,7 @@ tulip_initring(		/* the usual case */
     ri->ri_max = ndescs;
     ri->ri_first = descs;
     ri->ri_last = ri->ri_first + ri->ri_max;
-    bzero((caddr_t) ri->ri_first, sizeof(ri->ri_first[0]) * ri->ri_max);
+    memset((caddr_t) ri->ri_first, 0, sizeof(ri->ri_first[0]) * ri->ri_max);
     ri->ri_last[-1].d_flag = TULIP_DFLAG_ENDRING;
 }
 #endif

@@ -1,4 +1,4 @@
-/* $NetBSD: vm_machdep.c,v 1.68 2001/04/26 03:10:45 ross Exp $ */
+/* $NetBSD: vm_machdep.c,v 1.69 2001/07/12 23:25:39 thorpej Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.68 2001/04/26 03:10:45 ross Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.69 2001/07/12 23:25:39 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -71,7 +71,7 @@ cpu_coredump(struct proc *p, struct vnode *vp, struct ucred *cred,
 			fpusave_proc(p, 1);
 		cpustate.md_fpstate = p->p_addr->u_pcb.pcb_fp;
 	} else
-		bzero(&cpustate.md_fpstate, sizeof(cpustate.md_fpstate));
+		memset(&cpustate.md_fpstate, 0, sizeof(cpustate.md_fpstate));
 
 	CORE_SETMAGIC(cseg, CORESEGMAGIC, MID_MACHINE, CORE_CPU);
 	cseg.c_addr = 0;

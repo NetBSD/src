@@ -1,4 +1,4 @@
-/* $NetBSD: sgmap_common.c,v 1.16 2001/01/03 20:29:58 thorpej Exp $ */
+/* $NetBSD: sgmap_common.c,v 1.17 2001/07/12 23:25:40 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: sgmap_common.c,v 1.16 2001/01/03 20:29:58 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sgmap_common.c,v 1.17 2001/07/12 23:25:40 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -134,7 +134,7 @@ alpha_sgmap_init(bus_dma_tag_t t, struct alpha_sgmap *sgmap, const char *name,
 		alpha_sgmap_prefetch_spill_page_pa = seg.ds_addr;
 		alpha_sgmap_prefetch_spill_page_va =
 		    ALPHA_PHYS_TO_K0SEG(alpha_sgmap_prefetch_spill_page_pa);
-		bzero((caddr_t)alpha_sgmap_prefetch_spill_page_va, NBPG);
+		memset((caddr_t)alpha_sgmap_prefetch_spill_page_va, 0, NBPG);
 	}
 	
 	return;

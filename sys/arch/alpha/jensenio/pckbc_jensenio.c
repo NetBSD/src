@@ -1,4 +1,4 @@
-/* $NetBSD: pckbc_jensenio.c,v 1.1 2000/07/12 20:36:10 thorpej Exp $ */
+/* $NetBSD: pckbc_jensenio.c,v 1.2 2001/07/12 23:25:40 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pckbc_jensenio.c,v 1.1 2000/07/12 20:36:10 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pckbc_jensenio.c,v 1.2 2001/07/12 23:25:40 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -124,7 +124,7 @@ pckbc_jensenio_attach(struct device *parent, struct device *self, void *aux)
 			panic("pckbc_jensenio_attach: couldn't map");
 
 		t = malloc(sizeof(struct pckbc_internal), M_DEVBUF, M_WAITOK);
-		bzero(t, sizeof(struct pckbc_internal));
+		memset(t, 0, sizeof(struct pckbc_internal));
 		t->t_iot = ja->ja_iot;
 		t->t_ioh_d = ioh_d;
 		t->t_ioh_c = ioh_c;

@@ -1,4 +1,4 @@
-/* $NetBSD: sgmap_typedep.c,v 1.14 2001/01/03 20:29:58 thorpej Exp $ */
+/* $NetBSD: sgmap_typedep.c,v 1.15 2001/07/12 23:25:40 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-__KERNEL_RCSID(0, "$NetBSD: sgmap_typedep.c,v 1.14 2001/01/03 20:29:58 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sgmap_typedep.c,v 1.15 2001/07/12 23:25:40 thorpej Exp $");
 
 #include "opt_ddb.h"
 
@@ -271,7 +271,7 @@ __C(SGMAP_TYPE,_unload)(bus_dma_tag_t t, bus_dmamap_t map,
 	if (panicstr == NULL) {
 		sl = &__C(SGMAP_TYPE,_log)[__C(SGMAP_TYPE,_log_next)];
 
-		bzero(sl, sizeof(*sl));
+		memset(sl, 0, sizeof(*sl));
 		sl->sl_op = 0;
 		sl->sl_sgmap = sgmap;
 		sl->sl_sgva = map->_dm_sgva;
