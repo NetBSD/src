@@ -1,4 +1,4 @@
-/*	$NetBSD: ite.c,v 1.52.4.1 2002/05/19 07:41:33 gehenna Exp $	*/
+/*	$NetBSD: ite.c,v 1.52.4.2 2002/07/16 05:01:54 gehenna Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -85,7 +85,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ite.c,v 1.52.4.1 2002/05/19 07:41:33 gehenna Exp $");                                                  
+__KERNEL_RCSID(0, "$NetBSD: ite.c,v 1.52.4.2 2002/07/16 05:01:54 gehenna Exp $");                                                  
 
 #include "hil.h"
 
@@ -482,7 +482,7 @@ iteioctl(dev, cmd, addr, flag, p)
 	int error;
 
 	error = (*tp->t_linesw->l_ioctl)(tp, cmd, addr, flag, p);
-	if (error == EPASSTHROUGH)
+	if (error != EPASSTHROUGH)
 		return (error);
 	return ttioctl(tp, cmd, addr, flag, p);
 }
