@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)disklabel.h	7.19 (Berkeley) 5/7/91
- *	$Id: disklabel.h,v 1.18 1994/02/22 17:23:48 hpeyerl Exp $
+ *	$Id: disklabel.h,v 1.19 1994/02/23 03:19:41 hpeyerl Exp $
  */
 
 #ifndef _SYS_DISKLABEL_H_
@@ -50,10 +50,6 @@
  *
  * The arch dependant label offsets et'al should be defined in machine/param.h.
  */
-
-#ifdef amiga
-#define MAXPARTITIONS   16
-#endif
 
 #ifndef	LABELSECTOR
 #define LABELSECTOR	0			/* sector containing label */
