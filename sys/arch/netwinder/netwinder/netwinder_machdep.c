@@ -1,4 +1,4 @@
-/*	$NetBSD: netwinder_machdep.c,v 1.38 2002/10/09 00:23:21 thorpej Exp $	*/
+/*	$NetBSD: netwinder_machdep.c,v 1.39 2002/10/09 00:33:39 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997,1998 Mark Brinicombe.
@@ -160,8 +160,6 @@ void consinit		__P((void));
 
 int fcomcnattach __P((u_int iobase, int rate,tcflag_t cflag));
 int fcomcndetach __P((void));
-
-void isa_netwinder_init __P((u_int iobase, u_int membase));
 
 void process_kernel_args	__P((char *));
 void data_abort_handler		__P((trapframe_t *frame));
