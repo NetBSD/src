@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_reloc.c,v 1.20 2002/09/12 18:36:43 mycroft Exp $	*/
+/*	$NetBSD: mips_reloc.c,v 1.21 2002/09/12 18:43:17 mycroft Exp $	*/
 
 /*
  * Copyright 1997 Michael L. Hitch <mhitch@montana.edu>
@@ -130,9 +130,9 @@ _rtld_relocate_nonplt_self(dynp, relocbase)
 
 	i = (got[1] & 0x80000000) ? 2 : 1;
 	/* Relocate the local GOT entries */
-	while (i < local_gotno)
-		got[i++] += relocbase;
-	got += local_gotno;
+	got += i;
+	for (; i < local_gotno; i++)
+		*got++ += relocbase;
 	sym = symtab + gotsym;
 	/* Now do the global GOT entries */
 	for (i = gotsym; i < symtabno; i++) {
@@ -245,9 +245,9 @@ _rtld_relocate_nonplt_objects(obj, self, dodebug)
 
 	i = (got[1] & 0x80000000) ? 2 : 1;
 	/* Relocate the local GOT entries */
-	while (i < obj->local_gotno)
-		got[i++] += (Elf_Addr)obj->relocbase;
-	got += obj->local_gotno;
+	got += i;
+	for (; i < obj->local_gotno; i++)
+		*got++ += (Elf_Addr)obj->relocbase;
 	sym = obj->symtab + obj->gotsym;
 	/* Now do the global GOT entries */
 	for (i = obj->gotsym; i < obj->symtabno; i++) {
