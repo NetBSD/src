@@ -1,4 +1,4 @@
-/*	$NetBSD: test.c,v 1.22 2000/04/09 23:24:59 christos Exp $	*/
+/* $NetBSD: test.c,v 1.23 2001/07/30 10:17:41 wiz Exp $ */
 
 /*
  * test(1); version 7-like  --  author Erik Baalbergen
@@ -12,18 +12,19 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: test.c,v 1.22 2000/04/09 23:24:59 christos Exp $");
+__RCSID("$NetBSD: test.c,v 1.23 2001/07/30 10:17:41 wiz Exp $");
 #endif
 
-#include <sys/types.h>
 #include <sys/stat.h>
-#include <unistd.h>
+#include <sys/types.h>
+
 #include <ctype.h>
+#include <err.h>
 #include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <err.h>
+#include <unistd.h>
 #ifdef __STDC__
 #include <stdarg.h>
 #else
@@ -147,24 +148,24 @@ static struct t_op {
 static char **t_wp;
 static struct t_op const *t_wp_op;
 
-static void syntax __P((const char *, const char *));
-static int oexpr __P((enum token));
-static int aexpr __P((enum token));
-static int nexpr __P((enum token));
-static int primary __P((enum token));
-static int binop __P((void));
-static int filstat __P((char *, enum token));
-static enum token t_lex __P((char *));
-static int isoperand __P((void));
-static int getn __P((const char *));
-static int newerf __P((const char *, const char *));
-static int olderf __P((const char *, const char *));
-static int equalf __P((const char *, const char *));
+static void syntax(const char *, const char *);
+static int oexpr(enum token);
+static int aexpr(enum token);
+static int nexpr(enum token);
+static int primary(enum token);
+static int binop(void);
+static int filstat(char *, enum token);
+static enum token t_lex(char *);
+static int isoperand(void);
+static int getn(const char *);
+static int newerf(const char *, const char *);
+static int olderf(const char *, const char *);
+static int equalf(const char *, const char *);
 
 #if defined(SHELL)
-extern void error __P((const char *, ...)) __attribute__((__noreturn__));
+extern void error(const char *, ...) __attribute__((__noreturn__));
 #else
-static void error __P((const char *, ...)) __attribute__((__noreturn__));
+static void error(const char *, ...) __attribute__((__noreturn__));
 
 static void
 #ifdef __STDC__
@@ -190,19 +191,15 @@ error(va_alist)
 #endif
 
 #ifdef SHELL
-int testcmd __P((int, char **));
+int testcmd(int, char **);
 
 int
-testcmd(argc, argv)
-	int argc;
-	char **argv;
+testcmd(int argc, char **argv)
 #else
-int main __P((int, char **));
+int main(int, char **);
 
 int
-main(argc, argv)
-	int argc;
-	char **argv;
+main(int argc, char **argv)
 #endif
 {
 	int	res;
@@ -227,9 +224,7 @@ main(argc, argv)
 }
 
 static void
-syntax(op, msg)
-	const char	*op;
-	const char	*msg;
+syntax(const char *op, const char *msg)
 {
 	if (op && *op)
 		error("%s: %s", op, msg);
@@ -238,8 +233,7 @@ syntax(op, msg)
 }
 
 static int
-oexpr(n)
-	enum token n;
+oexpr(enum token n)
 {
 	int res;
 
@@ -251,8 +245,7 @@ oexpr(n)
 }
 
 static int
-aexpr(n)
-	enum token n;
+aexpr(enum token n)
 {
 	int res;
 
@@ -264,8 +257,7 @@ aexpr(n)
 }
 
 static int
-nexpr(n)
-	enum token n;			/* token */
+nexpr(enum token n)
 {
 	if (n == UNOT)
 		return !nexpr(t_lex(*++t_wp));
@@ -273,8 +265,7 @@ nexpr(n)
 }
 
 static int
-primary(n)
-	enum token n;
+primary(enum token n)
 {
 	enum token nn;
 	int res;
@@ -313,7 +304,7 @@ primary(n)
 }
 
 static int
-binop()
+binop(void)
 {
 	const char *opnd1, *opnd2;
 	struct t_op const *op;
@@ -359,9 +350,7 @@ binop()
 }
 
 static int
-filstat(nm, mode)
-	char *nm;
-	enum token mode;
+filstat(char *nm, enum token mode)
 {
 	struct stat s;
 
@@ -409,8 +398,7 @@ filstat(nm, mode)
 }
 
 static enum token
-t_lex(s)
-	char *s;
+t_lex(char *s)
 {
 	struct t_op const *op = ops;
 
@@ -433,7 +421,7 @@ t_lex(s)
 }
 
 static int
-isoperand()
+isoperand(void)
 {
 	struct t_op const *op = ops;
 	char *s;
@@ -454,8 +442,7 @@ isoperand()
 
 /* atoi with error detection */
 static int
-getn(s)
-	const char *s;
+getn(const char *s)
 {
 	char *p;
 	long r;
@@ -476,8 +463,7 @@ getn(s)
 }
 
 static int
-newerf (f1, f2)
-const char *f1, *f2;
+newerf (const char *f1, const char *f2)
 {
 	struct stat b1, b2;
 
@@ -487,8 +473,7 @@ const char *f1, *f2;
 }
 
 static int
-olderf (f1, f2)
-const char *f1, *f2;
+olderf (const char *f1, const char *f2)
 {
 	struct stat b1, b2;
 
@@ -498,8 +483,7 @@ const char *f1, *f2;
 }
 
 static int
-equalf (f1, f2)
-const char *f1, *f2;
+equalf (const char *f1, const char *f2)
 {
 	struct stat b1, b2;
 
