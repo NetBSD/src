@@ -1,4 +1,4 @@
-/*	$NetBSD: mdreloc.c,v 1.21 2002/09/12 22:56:31 mycroft Exp $	*/
+/*	$NetBSD: mdreloc.c,v 1.22 2002/09/24 13:59:31 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 2000 Eduardo Horvath.
@@ -229,8 +229,8 @@ _rtld_relocate_plt_object(obj, rela, addrp)
 		return (-1);
 
 	value = (Elf_Addr) (defobj->relocbase + def->st_value);
-	rdbg(("bind now/fixup in %s --> old=%lx new=%lx", 
-	    defobj->strtab + def->st_name, (u_long)*where, (u_long)value));
+	rdbg(("bind now/fixup in %s --> old=%p new=%p", 
+	    defobj->strtab + def->st_name, (void *)*where, (void *)value));
 
 	/*
 	 * At the PLT entry pointed at by `where', we now construct
