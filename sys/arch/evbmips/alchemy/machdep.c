@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.2 2002/08/05 01:33:36 simonb Exp $ */
+/* $NetBSD: machdep.c,v 1.3 2002/08/25 20:21:36 thorpej Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.2 2002/08/05 01:33:36 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.3 2002/08/25 20:21:36 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -311,8 +311,7 @@ cpu_startup(void)
 	char pbuf[9];
 	vaddr_t minaddr, maxaddr;
 	vsize_t size;
-	int base, residual;
-	u_int i;
+	u_int i, base, residual;
 #ifdef DEBUG
 	extern int pmapdebug;		/* XXX */
 	int opmapdebug = pmapdebug;
@@ -400,7 +399,7 @@ cpu_startup(void)
 	format_bytes(pbuf, sizeof(pbuf), ptoa(uvmexp.free));
 	printf("avail memory = %s\n", pbuf);
 	format_bytes(pbuf, sizeof(pbuf), bufpages * NBPG);
-	printf("using %d buffers containing %s of memory\n", nbuf, pbuf);
+	printf("using %u buffers containing %s of memory\n", nbuf, pbuf);
 
 	/*
 	 * Set up buffers, so they can be used to read disklabels.

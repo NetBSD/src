@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.20 2002/07/05 18:45:15 matt Exp $ */
+/* $NetBSD: machdep.c,v 1.21 2002/08/25 20:21:34 thorpej Exp $ */
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -700,9 +700,10 @@ identifycpu()
 void
 cpu_startup()
 {
-	int i, size, base, residual;
+	u_int i, base, residual;
 	caddr_t	v;
 	vaddr_t minaddr, maxaddr;
+	vsize_t size;
 	char pbuf[9];
 
 	initmsgbuf((caddr_t)msgbuf_paddr, round_page(MSGBUFSIZE));
@@ -797,7 +798,7 @@ cpu_startup()
 	format_bytes(pbuf, sizeof(pbuf), ptoa(uvmexp.free));
 	printf("avail memory = %s\n", pbuf);
 	format_bytes(pbuf, sizeof(pbuf), bufpages * NBPG);
-	printf("using %d buffers containing %s of memory\n", nbuf, pbuf);
+	printf("using %u buffers containing %s of memory\n", nbuf, pbuf);
 
 	/*
 	 * Set up the buffers, so they can be used to read disk labels

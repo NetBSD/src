@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.4 2002/08/11 20:50:39 bjh21 Exp $ */
+/* $NetBSD: machdep.c,v 1.5 2002/08/25 20:21:33 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998 Ben Harris
@@ -32,7 +32,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.4 2002/08/11 20:50:39 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.5 2002/08/25 20:21:33 thorpej Exp $");
 
 #include <sys/buf.h>
 #include <sys/kernel.h>
@@ -139,7 +139,7 @@ haltsys:
 void
 cpu_startup()
 {
-	int i, base, residual;
+	u_int i, base, residual;
 	vaddr_t minaddr, maxaddr;
 	vsize_t size;
 	char pbuf[9];
@@ -218,7 +218,7 @@ cpu_startup()
 	format_bytes(pbuf, sizeof(pbuf), ptoa(uvmexp.free));
 	printf("avail memory = %s\n", pbuf);
 	format_bytes(pbuf, sizeof(pbuf), bufpages * NBPG);
-	printf("using %d buffers containing %s of memory\n", nbuf, pbuf);
+	printf("using %u buffers containing %s of memory\n", nbuf, pbuf);
 
 	/*
 	 * Set up buffers, so they can be used to read disk labels.

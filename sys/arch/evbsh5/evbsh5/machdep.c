@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.2 2002/07/12 19:52:22 scw Exp $	*/
+/*	$NetBSD: machdep.c,v 1.3 2002/08/25 20:21:36 thorpej Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -217,9 +217,8 @@ compute_ctc_tick_per_us(void)
 void
 cpu_startup(void)
 {
-	unsigned i;
 	caddr_t v;
-	int base, residual;
+	u_int i, base, residual;
 	vaddr_t minaddr, maxaddr;
 	vsize_t size;
 	char pbuf[16];
@@ -302,7 +301,7 @@ cpu_startup(void)
 	format_bytes(pbuf, sizeof(pbuf), ptoa(uvmexp.free));
 	printf("avail memory = %s\n", pbuf);
 	format_bytes(pbuf, sizeof(pbuf), bufpages * NBPG);
-	printf("using %d buffers containing %s bytes of memory\n", nbuf, pbuf);
+	printf("using %u buffers containing %s bytes of memory\n", nbuf, pbuf);
 
 	/*
 	 * Set up buffers, so they can be used to read disk labels.
