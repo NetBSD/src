@@ -33,7 +33,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)dohits.c	4.2 (Berkeley) 4/26/91";*/
-static char rcsid[] = "$Id: dohits.c,v 1.2 1993/08/01 18:04:57 mycroft Exp $";
+static char rcsid[] = "$Id: dohits.c,v 1.3 1994/04/10 07:20:47 cgd Exp $";
 #endif /* not lint */
 
 /*
@@ -258,7 +258,9 @@ char	*aidfile, *fcnfile;
     }
     scanwhite(fcnfile, "FCN_");
 
-    while (gets(line) != NULL) {
+    while (fgets(line, sizeof(line), stdin) != NULL) {
+	if (line[strlen(line)-1] == '\n')
+		line[strlen(line)-1] = '\0';
 	if (!isdigit(line[0])) {
 	    continue;
 	}

@@ -33,7 +33,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)system.c	4.5 (Berkeley) 4/26/91";*/
-static char rcsid[] = "$Id: system.c,v 1.2 1993/08/01 18:05:21 mycroft Exp $";
+static char rcsid[] = "$Id: system.c,v 1.3 1994/04/10 07:20:35 cgd Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -605,7 +605,7 @@ child_died(code)
 	    }
 	    printf("[Hit return to continue]");
 	    fflush(stdout);
-	    (void) gets(inputbuffer);
+	    (void) fgets(inputbuffer, sizeof(inputbuffer), stdin);
 	    setconnmode();
 	    ConnectScreen();	/* Turn screen on (if need be) */
 	    (void) close(serversock);
