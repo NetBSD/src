@@ -1,4 +1,4 @@
-/*	$NetBSD: ntpdate.c,v 1.1.1.2 2000/04/22 14:53:42 simonb Exp $	*/
+/*	$NetBSD: ntpdate.c,v 1.2 2001/02/02 03:35:24 hubertf Exp $	*/
 
 /*
  * ntpdate - set the time of day by polling one or more NTP servers
@@ -431,7 +431,7 @@ ntpdatemain (
 	
 	if (errflg) {
 		(void) fprintf(stderr,
-				   "usage: %s [-bBdqsv] [-a key#] [-e delay] [-k file] [-p samples] [-o version#] [-r rate] [-t timeo] server ...\n",
+				   "usage: %s [-bBdqsuv] [-a key#] [-e delay] [-k file] [-p samples] [-o version#] [-r rate] [-t timeo] server ...\n",
 				   progname);
 		exit(2);
 	}
