@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_usrreq.c,v 1.47 2000/06/05 06:06:07 thorpej Exp $	*/
+/*	$NetBSD: uipc_usrreq.c,v 1.48 2000/06/05 16:29:45 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -815,7 +815,7 @@ unp_externalize(rights)
 
 	/* Make sure the recipient should be able to see the descriptors.. */
 	if (p->p_cwdi->cwdi_rdir != NULL) {
-		rp = (struct file **)ALIGN(cm + 1);
+		rp = (struct file **)CMSG_DATA(cm);
 		for (i = 0; i < nfds; i++) {
 			fp = *rp++;
 			/*
@@ -1205,16 +1205,16 @@ unp_scan(m0, op, discard)
 	int qfds;
 
 	while (m0) {
-		for (m = m0; m; m = m->m_next)
+		for (m = m0; m; m = m->m_next) {
 			if (m->m_type == MT_CONTROL &&
 			    m->m_len >= sizeof(*cm)) {
 				cm = mtod(m, struct cmsghdr *);
 				if (cm->cmsg_level != SOL_SOCKET ||
 				    cm->cmsg_type != SCM_RIGHTS)
 					continue;
-				qfds = (cm->cmsg_len - ALIGN(sizeof(*cm)))
-						/ sizeof(struct file *);
-				rp = (struct file **)ALIGN(cm + 1);
+				qfds = (cm->cmsg_len - CMSG_ALIGN(sizeof(*cm)))
+				    / sizeof(struct file *);
+				rp = (struct file **)CMSG_DATA(cm);
 				for (i = 0; i < qfds; i++) {
 					struct file *fp = *rp;
 					if (discard)
@@ -1224,6 +1224,7 @@ unp_scan(m0, op, discard)
 				}
 				break;		/* XXX, but saves time */
 			}
+		}
 		m0 = m0->m_act;
 	}
 }
