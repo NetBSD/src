@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.31 2003/05/18 23:30:00 kristerw Exp $ */
+/* $NetBSD: cgram.y,v 1.32 2003/05/20 13:59:32 christos Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: cgram.y,v 1.31 2003/05/18 23:30:00 kristerw Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.32 2003/05/20 13:59:32 christos Exp $");
 #endif
 
 #include <stdlib.h>
@@ -1222,9 +1222,8 @@ direct_abs_decl:
 	  }
 	;
 
-stmnt:
+non_expr_stmnt:
 	  labeled_stmnt
-	| expr_stmnt
 	| comp_stmnt
 	| selection_stmnt
 	| iteration_stmnt
@@ -1232,6 +1231,10 @@ stmnt:
 		ftflg = 0;
 	  }
 	| asm_stmnt
+
+stmnt:
+	  expr_stmnt
+	| non_expr_stmnt
 	;
 
 labeled_stmnt:
@@ -1300,13 +1303,9 @@ expr_stmnt:
 	;
 
 /*
- * The following two productions are used to implement
- * ({ [[decl-list] stmt-list] }). The way it is currently implemented,
- * does not handle things other than expression lists, which is wrong.
- * This means that ({ if (foo) blah; }) will still give a syntax error.
- * Currently nothing in the tree uses such constructs (I changed the
- * single occurance), so I am deferring implementation of this until it
- * is really needed.
+ * The following two productions are used to implement 
+ * ({ [[decl-list] stmt-list] }).
+ * XXX: This is not well tested.
  */
 expr_stmnt_val:
 	  expr T_SEMI {
@@ -1320,7 +1319,10 @@ expr_stmnt_val:
 	;
 
 expr_stmnt_list:
-	expr_stmnt_val
+	  expr_stmnt_val
+	| non_expr_stmnt expr_stmnt_val {
+		$$ = $2;
+	}
 	| expr_stmnt_list expr_stmnt_val
 	;
 
