@@ -1,4 +1,4 @@
-/*	$NetBSD: si.c,v 1.20 1995/08/12 20:31:15 mycroft Exp $	*/
+/*	$NetBSD: si.c,v 1.21 1995/08/14 20:00:00 gwr Exp $	*/
 
 /*
  * Copyright (C) 1994 Adam Glass, Gordon W. Ross
@@ -709,10 +709,11 @@ sci_data_out(regs, phase, count, data)
 
 	icmd = regs->sci_icmd & ~(SCI_ICMD_DIFF|SCI_ICMD_TEST);
 loop:
+	/* SCSI bus phase not valid until REQ is true. */
+	WAIT_FOR_REQ(regs);
 	if (SCI_CUR_PHASE(regs->sci_bus_csr) != phase)
 		return cnt;
 
-	WAIT_FOR_REQ(regs);
 	icmd |= SCI_ICMD_DATA;
 	regs->sci_icmd = icmd;
 	regs->sci_odata = *data++;
@@ -741,10 +742,11 @@ sci_data_in(regs, phase, count, data)
 	icmd = regs->sci_icmd & ~(SCI_ICMD_DIFF|SCI_ICMD_TEST);
 
 loop:
+	/* SCSI bus phase not valid until REQ is true. */
+	WAIT_FOR_REQ(regs);
 	if (SCI_CUR_PHASE(regs->sci_bus_csr) != phase)
 		return cnt;
 
-	WAIT_FOR_REQ(regs);
 	*data++ = regs->sci_data;
 	icmd |= SCI_ICMD_ACK;
 	regs->sci_icmd = icmd;
