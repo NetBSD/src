@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.86 2003/04/17 18:03:20 fvdl Exp $
+#	$NetBSD: MAKEDEV,v 1.87 2003/04/20 17:03:32 martin Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -112,6 +112,7 @@
 #	dmoverio hardware-assisted data movers
 #	veriexec verified executable fingerprint loader
 #	twe	3ware Escalade control interface
+#	sysmon	System Monitoring hardware
 #
 dialin=0
 dialout=524288		# high bit of the minor number
@@ -152,6 +153,7 @@ init|all)
 	makedev bwtwo1 cgthree1 cgsix1 tcx1
 	makedev cgtwo0 cgfour0 cgeight0
 	makedev scsibus0 scsibus1 scsibus2 scsibus3
+	makedev sysmon
 	makedev lkm random local ipl cfs0 apm apmctl tctrl0
 	makedev isdns
 	makedev pci0
@@ -609,6 +611,22 @@ bpp*)
 	rm -f bpp$unit
 	mknod bpp$unit c 107 $(($unit + 0))
 	chmod 600 bpp$unit
+	;;
+
+
+sysmon)
+	major=135
+	rm -f sysmon
+	mknod sysmon c $major 0
+	chmod 644 sysmon
+
+	rm -f watchdog
+	mknod watchdog c $major 1
+	chmod 644 watchdog
+
+	rm -f power
+	mknod power c $major 2
+	chmod 640 power
 	;;
 
 scsibus*)
