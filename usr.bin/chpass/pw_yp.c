@@ -1,4 +1,4 @@
-/*	$NetBSD: pw_yp.c,v 1.10 1997/05/21 02:20:15 lukem Exp $	*/
+/*	$NetBSD: pw_yp.c,v 1.11 1997/07/25 06:37:27 mikel Exp $	*/
 
 /*
  * Copyright (c) 1988 The Regents of the University of California.
@@ -36,13 +36,15 @@
 #if 0
 static char sccsid[] = "@(#)pw_yp.c	1.0 2/2/93";
 #else
-static char rcsid[] = "$NetBSD: pw_yp.c,v 1.10 1997/05/21 02:20:15 lukem Exp $";
+static char rcsid[] = "$NetBSD: pw_yp.c,v 1.11 1997/07/25 06:37:27 mikel Exp $";
 #endif
 #endif /* not lint */
 
 #ifdef	YP
 
+#include <err.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <netdb.h>
 #include <time.h>
@@ -98,6 +100,7 @@ check_yppasswdd()
 	return (0);
 }
 
+int
 pw_yp(pw, uid)
 	struct passwd *pw;
 	uid_t uid;
