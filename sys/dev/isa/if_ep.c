@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ep.c,v 1.72 1995/04/17 12:08:59 cgd Exp $	*/
+/*	$NetBSD: if_ep.c,v 1.73 1995/06/12 00:09:49 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994 Herb Peyerl <hpeyerl@novatel.ca>
@@ -351,10 +351,6 @@ epinit(sc)
 {
 	register struct ifnet *ifp = &sc->sc_arpcom.ac_if;
 	int s, i;
-
-	/* Address not known. */
-	if (ifp->if_addrlist == 0)
-		return;
 
 	s = splimp();
 
