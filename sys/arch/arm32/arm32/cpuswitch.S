@@ -1,4 +1,4 @@
-/* $NetBSD: cpuswitch.S,v 1.3 1996/03/08 20:03:12 mark Exp $ */
+/* $NetBSD: cpuswitch.S,v 1.4 1996/03/09 17:15:46 mark Exp $ */
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -447,7 +447,7 @@ findqueue:
 
         mrs	r3, cpsr_all
 	bic	r2, r3, #(PSR_MODE)
-	orr	r2, r2, #(PSR_UND32_MODE)
+	orr	r2, r2, #(PSR_UND32_MODE | I32_bit | F32_bit)
         msr	cpsr_all, r2
 
 	str	sp, [r1, #(PCB_UND_SP)]
