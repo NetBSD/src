@@ -1,4 +1,4 @@
-.\"	$NetBSD: install,v 1.8.2.1 1999/04/04 04:29:42 minoura Exp $	
+.\"	$NetBSD: install,v 1.8.2.2 1999/04/15 16:29:51 minoura Exp $	
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -89,16 +89,14 @@ begins with its name. As mentioned above, you will need your
 disk's geometry when creating NetBSD's partitions. You will
 also need to know the name, to tell the install tools what
 disk to install on.
-.Pp
-While booting, you will probably see several warnings. You
-should be warned that no swap space is present, and that
-init(8) cannot find /etc/rc. Do not be alarmed, these are
-completely normal. When you reach the prompt asking you for a
-shell name, just hit return.
 .It
-You will be presented with a welcome message and a prompt,
-asking if you wish to proceed with the installation process.
-If you wish to proceed, enter "y" and hit return.
+You will be presented with a welcome message and a prompt
+asking whether you are going to "install" NetBSD or "upgrade"
+an exisiting system.  Select "install" to start installation.
+.It
+You will be presented a prompt asking if you wish to proceed
+with the installation process.  If you wish to proceed,
+enter "y" and hit return.
 .It
 The install program will then tell you which disks it can
 install on, and ask you which it should use.
