@@ -1,4 +1,4 @@
-/*	$NetBSD: courier.c,v 1.8 1997/11/22 07:28:53 lukem Exp $	*/
+/*	$NetBSD: courier.c,v 1.9 1998/03/30 02:31:44 mrg Exp $	*/
 
 /*
  * Copyright (c) 1986, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)courier.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: courier.c,v 1.8 1997/11/22 07:28:53 lukem Exp $");
+__RCSID("$NetBSD: courier.c,v 1.9 1998/03/30 02:31:44 mrg Exp $");
 #endif /* not lint */
 
 /*
@@ -363,7 +363,7 @@ cour_verbose_read()
 #define setvec(vec, a) \
         vec.sv_handler = a; vec.sv_mask = vec.sv_onstack = 0
 
-static napms = 50; /* Give the courier 50 milliseconds between characters */
+static int napms = 50; /* Give the courier 50 milliseconds between characters */
 
 static int ringring;
 
