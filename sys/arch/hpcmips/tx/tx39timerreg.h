@@ -1,7 +1,7 @@
-/*	$NetBSD: tx39timerreg.h,v 1.2 1999/12/22 15:35:35 uch Exp $ */
+/*	$NetBSD: tx39timerreg.h,v 1.3 2000/01/03 18:24:04 uch Exp $ */
 
 /*
- * Copyright (c) 1999, by UCHIYAMA Yasushi
+ * Copyright (c) 1999, 2000 by UCHIYAMA Yasushi
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -52,6 +52,7 @@
 
 /* Real timer clock (32.768kHz) */
 #define TX39_RTCLOCK		32768
+#define TX39_MSEC2RTC(m)	((TX39_RTCLOCK * m) / 1000)
 
 /*
  *	RTC Register High/Low
