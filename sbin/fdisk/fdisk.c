@@ -1,4 +1,4 @@
-/*	$NetBSD: fdisk.c,v 1.64 2003/05/14 11:24:05 dsl Exp $ */
+/*	$NetBSD: fdisk.c,v 1.65 2003/05/17 23:14:42 itojun Exp $ */
 
 /*
  * Mach Operating System
@@ -35,7 +35,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: fdisk.c,v 1.64 2003/05/14 11:24:05 dsl Exp $");
+__RCSID("$NetBSD: fdisk.c,v 1.65 2003/05/17 23:14:42 itojun Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -788,15 +788,12 @@ read_boot(const char *name, void *buf, size_t len, int err_exit)
 
 	if (boot_path != NULL)
 		free(boot_path);
-	boot_path = malloc(strlen(boot_dir) + 1 + strlen(name) + 1);
+	if (strchr(name, '/') == 0)
+		asprintf(&boot_path, "%s/%s", boot_dir, name);
+	else
+		boot_path = strdup(name);
 	if (boot_path == NULL)
 		err(1, "Malloc failed");
-	if (strchr(name, '/') == 0) {
-		strcpy(boot_path, boot_dir);
-		strcat(boot_path, "/");
-	} else
-		boot_path[0] = 0;
-	strcat(boot_path, name);
 
 	if ((bfd = open(boot_path, O_RDONLY)) < 0 || fstat(bfd, &st) == -1) {
 		warn("%s", boot_path);
