@@ -1,4 +1,4 @@
-/* -*-C++-*-	$NetBSD: rootwindow.cpp,v 1.10 2003/12/23 17:22:20 uwe Exp $	*/
+/* -*-C++-*-	$NetBSD: rootwindow.cpp,v 1.11 2003/12/25 03:19:53 uwe Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -212,8 +212,6 @@ RootWindow::WMCreate(HWND w, LPCREATESTRUCT aux)
 	// Progress bar
 	_progress_bar = new ProgressBar(_app, *this, rect);
 	_progress_bar->create(aux);
-	SendMessage(_progress_bar->_window, PBM_SETSTEP, 1, 0);
-	SendMessage(_progress_bar->_window, PBM_SETPOS, 0, 0);
 
  	// regsiter myself to menu
 	HpcMenuInterface::Instance()._root = this;
@@ -271,7 +269,7 @@ BootButton::create(LPCREATESTRUCT aux)
 	int cx = BOOT_BUTTON_WIDTH;
 	int cy = _root._button_height;
 
-	_window = CreateWindow(TEXT("BUTTON"), TEXT("BOOT"),
+	_window = CreateWindow(TEXT("BUTTON"), TEXT("Boot"),
 	    BS_PUSHBUTTON | BS_NOTIFY |
 	    WS_VISIBLE | WS_CHILD | WS_TABSTOP,
 	    _rect.left, _rect.top, cx, cy, _parent_window,
@@ -292,7 +290,7 @@ CancelButton::create(LPCREATESTRUCT aux)
 	int cy = _root._button_height;
 	int x = _rect.right - BOOT_BUTTON_WIDTH;
 
-	_window = CreateWindow(TEXT("BUTTON"), TEXT("CANCEL"),
+	_window = CreateWindow(TEXT("BUTTON"), TEXT("Cancel"),
 	    BS_PUSHBUTTON | BS_NOTIFY | WS_TABSTOP |
 	    WS_VISIBLE | WS_CHILD,
 	    x, _rect.top, cx, cy, _parent_window,
@@ -311,12 +309,15 @@ ProgressBar::create(LPCREATESTRUCT aux)
 	int cx = _rect.right - _rect.left - BOOT_BUTTON_WIDTH * 2;
 	int cy = _root._button_height;
 	int x = _rect.left + BOOT_BUTTON_WIDTH;
-	_window = CreateWindow(PROGRESS_CLASS, TEXT(""),
-	    WS_VISIBLE | WS_CHILD,
+	_window = CreateWindowEx(WS_EX_CLIENTEDGE,
+	    PROGRESS_CLASS, TEXT(""),
+	    PBS_SMOOTH | WS_VISIBLE | WS_CHILD,
 	    x, _rect.top, cx, cy, _parent_window,
 	    reinterpret_cast <HMENU>(IDC_PROGRESSBAR),
 	    aux->hInstance, NULL);
 	SendMessage(_window, PBM_SETRANGE, 0, MAKELPARAM(0, 11));
+	SendMessage(_window, PBM_SETSTEP, 1, 0);
+	SendMessage(_window, PBM_SETPOS, 0, 0);
 
 	return IsWindow(_window) ? TRUE : FALSE;
 }
