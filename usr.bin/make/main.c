@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.98 2004/02/05 23:31:34 ross Exp $	*/
+/*	$NetBSD: main.c,v 1.99 2004/03/24 00:59:40 fair Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,7 +69,7 @@
  */
 
 #ifdef MAKE_BOOTSTRAP
-static char rcsid[] = "$NetBSD: main.c,v 1.98 2004/02/05 23:31:34 ross Exp $";
+static char rcsid[] = "$NetBSD: main.c,v 1.99 2004/03/24 00:59:40 fair Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
@@ -81,7 +81,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.98 2004/02/05 23:31:34 ross Exp $");
+__RCSID("$NetBSD: main.c,v 1.99 2004/03/24 00:59:40 fair Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -880,7 +880,7 @@ main(int argc, char **argv)
 	/*
 	 * Read in the built-in rules first, followed by the specified
 	 * makefile, if it was (makefile != (char *) NULL), or the default
-	 * Makefile and makefile, in that order, if it wasn't.
+	 * makefile and Makefile, in that order, if it wasn't.
 	 */
 	if (!noBuiltins) {
 		LstNode ln;
