@@ -1,4 +1,4 @@
-/*	$NetBSD: jot.c,v 1.4 1997/10/19 03:34:49 lukem Exp $	*/
+/*	$NetBSD: jot.c,v 1.5 1998/12/19 17:06:20 christos Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1993\n\
 #if 0
 static char sccsid[] = "@(#)jot.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: jot.c,v 1.4 1997/10/19 03:34:49 lukem Exp $");
+__RCSID("$NetBSD: jot.c,v 1.5 1998/12/19 17:06:20 christos Exp $");
 #endif /* not lint */
 
 /*
@@ -357,7 +357,7 @@ getprec(s)
 	if (!*p)
 		return (0);
 	for (q = ++p; *p; p++)
-		if (!isdigit(*p))
+		if (!isdigit((unsigned char)*p))
 			break;
 	return (p - q);
 }
@@ -381,7 +381,7 @@ getformat()
 	else if (!*(p+1))
 		strcat(format, "%");		/* cannot end in single '%' */
 	else {
-		while (!isalpha(*p))
+		while (!isalpha((unsigned char)*p))
 			p++;
 		switch (*p) {
 		case 'f': case 'e': case 'g': case '%':
