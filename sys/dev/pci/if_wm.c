@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.20 2002/08/17 20:58:04 thorpej Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.21 2002/08/23 07:45:39 itojun Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -49,6 +49,7 @@
  */
 
 #include "bpfilter.h"
+#include "rnd.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -63,6 +64,10 @@
 #include <sys/queue.h>
 
 #include <uvm/uvm_extern.h>		/* for PAGE_SIZE */
+
+#if NRND > 0
+#include <sys/rnd.h>
+#endif
 
 #include <net/if.h>
 #include <net/if_dl.h> 
@@ -270,6 +275,10 @@ struct wm_softc {
 	int sc_tbi_anstate;		/* autonegotiation state */
 
 	int sc_mchash_type;		/* multicast filter offset */
+
+#if NRND > 0
+	rndsource_element_t rnd_source;	/* random source */
+#endif
 };
 
 #define	WM_RXCHAIN_RESET(sc)						\
@@ -870,6 +879,10 @@ wm_attach(struct device *parent, struct device *self, void *aux)
 	 */
 	if_attach(ifp);
 	ether_ifattach(ifp, enaddr);
+#if NRND > 0
+	rnd_attach_source(&sc->rnd_source, sc->sc_dev.dv_xname,
+	    RND_TYPE_NET, 0);
+#endif
 
 #ifdef WM_EVENT_COUNTERS
 	/* Attach event counters. */
@@ -1427,6 +1440,11 @@ wm_intr(void *arg)
 		icr = CSR_READ(sc, WMREG_ICR);
 		if ((icr & sc->sc_icr) == 0)
 			break;
+
+#if NRND > 0
+		if (RND_ENABLED(&sc->rnd_source))
+			rnd_add_uint32(&sc->rnd_source, icr);
+#endif
 
 		handled = 1;
 
