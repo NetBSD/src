@@ -1246,7 +1246,7 @@ init_nbsd_core_ops (void)
   nbsd_core_ops.to_has_stack = 1;
   nbsd_core_ops.to_has_registers = 1;
   nbsd_core_ops.to_has_execution = 0;
-  nbsd_core_ops.to_has_thread_control = tc_none;
+  nbsd_core_ops.to_has_thread_control = tc_schedlock;
   nbsd_core_ops.to_thread_alive = nbsd_core_thread_alive;
   nbsd_core_ops.to_pid_to_str = nbsd_pid_to_str;
   nbsd_core_ops.to_find_new_threads = nbsd_find_new_threads;
