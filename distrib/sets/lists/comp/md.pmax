@@ -1,6 +1,5 @@
 ./usr/bin/elf2aout
 ./usr/bin/elf2ecoff
-./usr/bin/ld.old
 ./usr/bin/objcopy
 ./usr/bin/objdump
 ./usr/include/machine
