@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr53c9x.c,v 1.36.2.13 2001/02/11 19:15:35 bouyer Exp $	*/
+/*	$NetBSD: ncr53c9x.c,v 1.36.2.14 2001/03/23 11:31:42 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -880,8 +880,6 @@ ncr53c9x_scsipi_request(chan, req, arg)
 			ti->flags |= T_NEGOTIATE;
 			ti->period = sc->sc_minsync;
 		}
-		printf("target %d flags 0x%x sc_minsync %d period %d\n", 
-		    xm->xm_target, ti->flags, sc->sc_minsync, ti->period);
 		/*
 		 * If we're not going to negotiate, send the notification
 		 * now, since it won't happen later.
