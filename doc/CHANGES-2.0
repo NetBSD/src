@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.237 2004/05/30 11:55:12 tron Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.238 2004/05/30 15:02:18 tron Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -3360,6 +3360,23 @@ gnu/dist/gcc/gcc/objc/objc-parse.c		1.4
 sys/arch/sparc/sparc/autoconf.c			1.207
 
 	Increase buffer size for s[dt]-targets PROM property otherwise some
-	 machines (including my SS1+) with old PROM fails to get it.
+	machines (including my SS1+) with old PROM fails to get it.
 	[tsutsui, ticket #423]
+
+usr.bin/gzip/Makefile				1.9
+usr.bin/gzip/gzip.c				1.44-1.46
+usr.bin/gzip/unbzip2.c				1.5
+usr.bin/gzip/zuncompress.c			1.4
+
+	Fix various bugs in gzip(1) including PRs 25507, 25508 and 25509.
+	[mrg, ticket #420]
+
+usr.bin/gzip/zgrep				1.3-1.4
+
+	Quote pattern when passing to grep, so that patterns containing
+	spaces would be handled properly. Fixes PR bin/25345 by Arto Selonen.
+	Use "zcat -fq" not just plain "zcat". This lets zgrep work on non
+	compressed files (as reported by simonb) as well as not printing
+	random warnings that zgrep isn't ready to handle.
+	[mrg, ticket #421]
 
