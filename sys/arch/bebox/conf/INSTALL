@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.15 2002/01/27 13:23:13 jdolecek Exp $
+#	$NetBSD: INSTALL,v 1.16 2002/03/09 23:35:56 chs Exp $
 #
 # First try for BEBOX config file
 #
@@ -28,7 +28,6 @@ options 		MINIROOTSIZE=3074	# size of memory disk, in blocks
 #options 	DDB
 #options 	DDB_HISTORY_SIZE=100	# Enable history editing in DDB
 #options 	KTRACE
-options 	NEWPMAP
 options		PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
 
 #options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
