@@ -1,4 +1,4 @@
-/*	$NetBSD: in6.h,v 1.27 2001/07/24 00:44:36 itojun Exp $	*/
+/*	$NetBSD: in6.h,v 1.28 2001/10/15 09:51:16 itojun Exp $	*/
 /*	$KAME: in6.h,v 1.83 2001/03/29 02:55:07 jinmei Exp $	*/
 
 /*
@@ -402,7 +402,7 @@ struct route_in6 {
 #define IPV6_RTHDR		24 /* bool; routing header */
 #define IPV6_PKTOPTIONS		25 /* buf/cmsghdr; set/get IPv6 options */
 #define IPV6_CHECKSUM		26 /* int; checksum offset for raw socket */
-#define IPV6_BINDV6ONLY		27 /* bool; only bind INET6 at null bind */
+#define IPV6_V6ONLY		27 /* bool; only bind INET6 at null bind */
 
 #if 1 /*IPSEC*/
 #define IPV6_IPSEC_POLICY	28 /* struct; get/set security policy */
@@ -527,7 +527,7 @@ struct in6_pktinfo {
 #define IPV6CTL_KAME_VERSION	20
 #define IPV6CTL_USE_DEPRECATED	21	/* use deprecated addr (RFC2462 5.5.4) */
 #define IPV6CTL_RR_PRUNE	22	/* walk timer for router renumbering */
-#define IPV6CTL_BINDV6ONLY	24
+#define IPV6CTL_V6ONLY		24
 /* 25 to 27: reserved */
 #define IPV6CTL_ANONPORTMIN	28	/* minimum ephemeral port */
 #define IPV6CTL_ANONPORTMAX	29	/* maximum ephemeral port */

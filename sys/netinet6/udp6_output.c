@@ -1,5 +1,5 @@
-/*	$NetBSD: udp6_output.c,v 1.1 2001/02/08 16:48:02 itojun Exp $	*/
-/*	$KAME: udp6_output.c,v 1.21 2001/02/07 11:51:54 itojun Exp $	*/
+/*	$NetBSD: udp6_output.c,v 1.2 2001/10/15 09:51:17 itojun Exp $	*/
+/*	$KAME: udp6_output.c,v 1.43 2001/10/15 09:19:52 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -123,14 +123,16 @@ udp6_output(in6p, m, addr6, control, p)
 	u_int32_t plen = sizeof(struct udphdr) + ulen;
 	struct ip6_hdr *ip6;
 	struct udphdr *udp6;
-	struct	in6_addr *laddr, *faddr;
+	struct in6_addr *laddr, *faddr;
+	struct in6_addr laddr_mapped; /* XXX ugly */
 	u_short fport;
 	int error = 0;
 	struct ip6_pktopts opt, *stickyopt = in6p->in6p_outputopts;
 	int priv;
-	int af, hlen;
+	int af = AF_INET6, hlen = sizeof(struct ip6_hdr);
 #ifdef INET
 	struct ip *ip;
+	struct udpiphdr *ui;
 #endif
 	int flags;
 	struct sockaddr_in6 tmp;
@@ -169,6 +171,7 @@ udp6_output(in6p, m, addr6, control, p)
 		}
 
 		if (!IN6_IS_ADDR_UNSPECIFIED(&in6p->in6p_faddr)) {
+			/* how about ::ffff:0.0.0.0 case? */
 			error = EISCONN;
 			goto release;
 		}
@@ -179,6 +182,37 @@ udp6_output(in6p, m, addr6, control, p)
 
 		faddr = &sin6->sin6_addr;
 		fport = sin6->sin6_port; /* allow 0 port */
+
+		if (IN6_IS_ADDR_V4MAPPED(faddr)) {
+			if ((in6p->in6p_flags & IN6P_IPV6_V6ONLY))
+			{
+				/*
+				 * I believe we should explicitly discard the
+				 * packet when mapped addresses are disabled,
+				 * rather than send the packet as an IPv6 one.
+				 * If we chose the latter approach, the packet
+				 * might be sent out on the wire based on the
+				 * default route, the situation which we'd
+				 * probably want to avoid.
+				 * (20010421 jinmei@kame.net)
+				 */
+				error = EINVAL;
+				goto release;
+			}
+			if (!IN6_IS_ADDR_UNSPECIFIED(&in6p->in6p_laddr)
+			    && !IN6_IS_ADDR_V4MAPPED(&in6p->in6p_laddr)) {
+				/*
+				 * when remote addr is an IPv4-mapped address, 
+				 * local addr should not be an IPv6 address,
+				 * since you cannot determine how to map IPv6 
+				 * source address to IPv4.
+				 */
+				error = EINVAL;
+				goto release;
+			}
+
+			af = AF_INET;
+		}
 
 		/* KAME hack: embed scopeid */
 		if (in6_embedscope(&sin6->sin6_addr, sin6, in6p, NULL) != 0) {
@@ -191,8 +225,41 @@ udp6_output(in6p, m, addr6, control, p)
 					      in6p->in6p_moptions,
 					      &in6p->in6p_route,
 					      &in6p->in6p_laddr, &error);
-		} else
-			laddr = &in6p->in6p_laddr;	/*XXX*/
+		} else {
+			/*
+			 * XXX: freebsd[34] does not have in_selectsrc, but
+			 * we can omit the whole part because freebsd4 calls
+			 * udp_output() directly in this case, and thus we'll
+			 * never see this path.
+			 */
+			if (IN6_IS_ADDR_UNSPECIFIED(&in6p->in6p_laddr)) {
+				struct sockaddr_in *sinp, sin_dst;
+
+				bzero(&sin_dst, sizeof(sin_dst));
+				sin_dst.sin_family = AF_INET;
+				sin_dst.sin_len = sizeof(sin_dst);
+				bcopy(&faddr->s6_addr[12], &sin_dst.sin_addr,
+				      sizeof(sin_dst.sin_addr));
+				sinp = in_selectsrc(&sin_dst,
+						    (struct route *)&in6p->in6p_route,
+						    in6p->in6p_socket->so_options,
+						    NULL, &error);
+				if (sinp == NULL) {
+					if (error == 0)
+						error = EADDRNOTAVAIL;
+					goto release;
+				}
+				bzero(&laddr_mapped, sizeof(laddr_mapped));
+				laddr_mapped.s6_addr16[5] = 0xffff; /* ugly */
+				bcopy(&sinp->sin_addr,
+				      &laddr_mapped.s6_addr[12],
+				      sizeof(sinp->sin_addr));
+				laddr = &laddr_mapped;
+			} else
+			{
+				laddr = &in6p->in6p_laddr;	/* XXX */
+			}
+		}
 		if (laddr == NULL) {
 			if (error == 0)
 				error = EADDRNOTAVAIL;
@@ -206,18 +273,30 @@ udp6_output(in6p, m, addr6, control, p)
 			error = ENOTCONN;
 			goto release;
 		}
+		if (IN6_IS_ADDR_V4MAPPED(&in6p->in6p_faddr)) {
+			if ((in6p->in6p_flags & IN6P_IPV6_V6ONLY))
+			{
+				/*
+				 * XXX: this case would happen when the
+				 * application sets the V6ONLY flag after
+				 * connecting the foreign address.
+				 * Such applications should be fixed,
+				 * so we bark here.
+				 */
+				log(LOG_INFO, "udp6_output: IPV6_V6ONLY "
+				    "option was set for a connected socket\n");
+				error = EINVAL;
+				goto release;
+			} else
+				af = AF_INET;
+		}
 		laddr = &in6p->in6p_laddr;
 		faddr = &in6p->in6p_faddr;
 		fport = in6p->in6p_fport;
 	}
 
-	if (!IN6_IS_ADDR_V4MAPPED(faddr)) {
-		af = AF_INET6;
-		hlen = sizeof(struct ip6_hdr);
-	} else {
-		af = AF_INET;
+	if (af == AF_INET)
 		hlen = sizeof(struct ip);
-	}
 
 	/*
 	 * Calculate data length and get a mbuf
@@ -274,7 +353,7 @@ udp6_output(in6p, m, addr6, control, p)
 			error = ENOBUFS;
 			goto release;
 		}
-#endif /*IPSEC*/
+#endif /* IPSEC */
 		error = ip6_output(m, in6p->in6p_outputopts, &in6p->in6p_route,
 		    flags, in6p->in6p_moptions, NULL);
 		break;
@@ -287,23 +366,31 @@ udp6_output(in6p, m, addr6, control, p)
 		}
 
 		ip = mtod(m, struct ip *);
+		ui = (struct udpiphdr *)ip;
+		bzero(ui->ui_x1, sizeof ui->ui_x1);
+		ui->ui_pr = IPPROTO_UDP;
+		ui->ui_len = htons(plen);
+		bcopy(&faddr->s6_addr[12], &ui->ui_dst, sizeof(ui->ui_dst));
+		ui->ui_ulen = ui->ui_len;
 
-		ip->ip_len = plen;
-		ip->ip_p = IPPROTO_UDP;
-		ip->ip_ttl = in6_selecthlim(in6p, NULL);	/*XXX*/
-		ip->ip_tos = 0;			/*XXX*/
-		bcopy(&laddr->s6_addr[12], &ip->ip_src, sizeof(ip->ip_src));
-		bcopy(&faddr->s6_addr[12], &ip->ip_dst, sizeof(ip->ip_dst));
-
-		udp6->uh_sum = 0;
-		if ((udp6->uh_sum = in_cksum(m, ulen)) == 0)
+		flags = (in6p->in6p_socket->so_options &
+			 (SO_DONTROUTE | SO_BROADCAST));
+		bcopy(&laddr->s6_addr[12], &ui->ui_src, sizeof(ui->ui_src));
+		udp6->uh_sum = in_cksum(m, hlen + plen);
+		if (udp6->uh_sum == 0)
 			udp6->uh_sum = 0xffff;
+
+		ip->ip_len = hlen + plen;
+		ip->ip_ttl = in6_selecthlim(in6p, NULL); /* XXX */
+		ip->ip_tos = 0;	/* XXX */
+
+		ip->ip_len = hlen + plen; /* XXX */
 
 		udpstat.udps_opackets++;
 #ifdef IPSEC
-		(void)ipsec_setsocket(m, NULL);	/*XXX*/
-#endif /*IPSEC*/
-		error = ip_output(m, NULL, &in6p->in6p_route, 0 /*XXX*/);
+		(void)ipsec_setsocket(m, NULL);	/* XXX */
+#endif /* IPSEC */
+		error = ip_output(m, NULL, &in6p->in6p_route, flags /* XXX */);
 		break;
 #else
 		error = EAFNOSUPPORT;
