@@ -1,4 +1,4 @@
-.\"	$NetBSD: options.4,v 1.88 1999/09/28 14:52:33 bouyer Exp $
+.\"	$NetBSD: options.4,v 1.89 1999/10/28 10:29:23 ad Exp $
 .\"
 .\" Copyright (c) 1996
 .\" 	Perry E. Metzger.  All rights reserved.
@@ -847,6 +847,22 @@ See
 and
 .Xr sysctl 3
 for details.
+.It Cd options RASOPS_CLIPPING
+Enables clipping within the 
+.Nm rasops
+raster-console output system. 
+.Em NOTE :
+only available on architectures that use
+.Nm rasops
+for console output.
+.It Cd options RASOPS_SMALL
+Removes optimized character writing code from the 
+.Nm rasops
+raster-console output system.
+.Em NOTE :
+only available on architectures that use
+.Nm rasops
+for console output.
 .El
 .Ss Networking Options
 .Bl -ohang
