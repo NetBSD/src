@@ -1,4 +1,4 @@
-/*	$NetBSD: dec_2100_a50.c,v 1.10 1996/06/14 20:38:11 cgd Exp $	*/
+/*	$NetBSD: dec_2100_a50.c,v 1.11 1996/08/27 16:28:08 cgd Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -28,6 +28,7 @@
  */
 
 #include <sys/param.h>
+#include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/termios.h>
 #include <dev/cons.h>
