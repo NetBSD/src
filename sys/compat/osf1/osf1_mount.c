@@ -1,4 +1,4 @@
-/*	$NetBSD: osf1_mount.c,v 1.25 2004/04/23 12:02:39 christos Exp $	*/
+/*	$NetBSD: osf1_mount.c,v 1.26 2004/04/26 20:33:50 christos Exp $	*/
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: osf1_mount.c,v 1.25 2004/04/23 12:02:39 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: osf1_mount.c,v 1.26 2004/04/26 20:33:50 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "fs_nfs.h"
@@ -172,7 +172,7 @@ osf1_sys_getfsstat(l, v, retval)
 			 */
 			if (((SCARG(uap, flags) & OSF1_MNT_NOWAIT) == 0 ||
 			    (SCARG(uap, flags) & OSF1_MNT_WAIT)) &&
-			    (error = VFS_STATFS(mp, sp, p)))
+			    (error = VFS_STAVTFS(mp, sp, p)))
 				continue;
 			sp->f_flag = mp->mnt_flag & MNT_VISFLAGMASK;
 			osf1_cvt_statfs_from_native(sp, &osfs);
