@@ -170,32 +170,35 @@ process again from scratch.
 	proceed, enter "yes" at the prompt.
 
 	The install program will now label your disk and make the file
-	systems you specified.  It will also create an /etc/fstab for
-	your system, and mount all of the file systems under /mnt.
-	(In other words, your root partition will be mounted on /mnt,
-	your /usr partition on /mnt/usr, and so on.)  There should be
-	no errors in this section of the installation.  If there are,
-	restart from the beginning of the installation process.
+	systems you specified.  The filesystems will be initialized to
+	contain NetBSD bootstrapping binaries and configuration files.
+	It will also create an /etc/fstab for your system, and mount all
+	of the file systems under /mnt.	(In other words, your root
+	partition will be mounted on /mnt, your /usr partition on /mnt/usr,
+	and so on.)  There should be no errors in this section of the
+	installation.  If there are, restart from the beginning of the
+	installation process.
 
-	You will be placed at a shell prompt ("#"), and from there you
-	have to load and install the distribution sets.  How you do
-	this depends on which installation medium you've chosen;
-	instructions for the various types are below.
+	You will be placed at a shell prompt ("#").  The remaining tasks
+	are to copy the kernel from the kernel copy floppy to the hard
+	drive's root filesystem and install the distribution sets. The
+	flow of installation differs depending on your hardware resources,
+	and on what media the distribution sets reside.
 
 	To install from floppy:
-		NOTE THAT THE NetBSD 1.0 DISTRIBUTION DOES _NOT_
-		SUPPORT INSTALLATION VIA FLOPPY ON MACHINES WITH ONE
-		FLOPPY DRIVE.  If you only have one floppy drive,
-		you'll have to use a different method of installation.
-		This will be fixed in the future.
-
+		If you only have only one floppy drive, the order of
+		installation is different.  Follow the directions in the
+		"Kernel installation" section which will help you install a
+		kernel on the hard drive and then boot off the hard drive.
+		Then continue with the rest of the process described here to
+		install the distribution sets from floppy:
+				
 		The first thing you should do is pick a temporary
 		directory where the distribution files can be stored.
 		To do this, enter the command "Set_tmp_dir", and enter
 		the name of the temporary directory.  (Don't forget
-		that your disk is mounted under /mnt; you should
-		probably pick a directory under /mnt/usr.)  The
-		default is /mnt/usr/distrib.
+		that if your disk is still mounted under /mnt; you should
+		probably pick a directory under /mnt/usr.)
 
 		After you have picked a temporary directory, enter the
 		"Load_fd" command, to load the distribution sets from
@@ -407,8 +410,9 @@ process again from scratch.
 	information.  It will set up your configuration files and make
 	the device nodes for the newly-installed system.
 
-	Once your system is configured, you must install a kernel on
-	your hard disk.  Enter "halt" at the prompt to halt the
+Kernel Installation:
+
+	Enter "halt" at the prompt to halt the
 	system.  When the system is halted, remove the "inst-10"
 	floppy from the floppy drive, and replace it with the NetBSD
 	1.0 kernel-copy floppy that you previously booted from. Reboot
