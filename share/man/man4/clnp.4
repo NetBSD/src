@@ -1,4 +1,4 @@
-.\"	$NetBSD: clnp.4,v 1.4 1994/11/30 16:22:07 jtc Exp $
+.\"	$NetBSD: clnp.4,v 1.5 1998/04/29 20:26:21 fair Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -47,8 +47,9 @@
 .Fn socket AF_ISO SOCK_RAW 0
 .Sh DESCRIPTION
 .Tn CLNP
-is the connectionless-mode network protocol used by the 
-connectionless-mode network service. This protocol is specified in
+is the connectionless-mode network protocol used by the
+connectionless-mode network service.
+This protocol is specified in
 .Tn ISO
 8473.
 It may be accessed
@@ -58,17 +59,17 @@ for debugging purposes only.
 .Tn CLNP
 sockets are connectionless,
 and are normally used with the
-.Xr sendto
+.Xr sendto 2
 and
-.Xr recvfrom
-calls, though the
+.Xr recvfrom 2
+system calls, though the
 .Xr connect 2
 call may also be used to fix the destination for future
-packets (in which case the 
+packets (in which case the
 .Xr read 2
 or
 .Xr recv 2
-and 
+and
 .Xr write 2
 or
 .Xr send 2
@@ -76,12 +77,12 @@ system calls may be used).
 .Pp
 Outgoing packets automatically have a
 .Tn CLNP
-header prepended to
-them. Incoming packets received by the user contain the full
+header prepended to them.
+Incoming packets received by the user contain the full
 .Tn CLNP
 header.
 The following
-.Xr setsockopt
+.Xr setsockopt 2
 options apply to
 .Tn CLNP :
 .Bl -tag -width CLNPOPT_FLAGS
@@ -103,7 +104,8 @@ checksum
 .It Dv CLNPOPT_OPTS
 Sets
 .Tn CLNP
-options. The options must be formatted exactly as specified by
+options.
+The options must be formatted exactly as specified by
 .Tn ISO
 8473, section 7.5
 .Dq Options Part.
@@ -112,11 +114,12 @@ be sent on all packets until a different option is set.
 .El
 .Sh CONGESTION EXPERIENCE BIT
 Whenever a packet is transmitted, the globally unique quality of
-service option is added to the packet. The sequencing preferred bit and
-the low transit delay bit are set in this option.
+service option is added to the packet.
+The sequencing preferred bit and the low transit delay bit are set
+in this option.
 .Pp
 If a packet is forwarded containing the globally unique quality of
-service option, and the interface through which the packet will be 
+service option, and the interface through which the packet will be
 transmitted has a queue length greater than
 .Em congest_threshold ,
 then the congestion experienced bit is set in the quality of service option.
@@ -125,7 +128,7 @@ The threshold value stored in
 .Em congest_threshold
 may be tuned.
 .Pp
-When a packet is received with the 
+When a packet is received with the
 globally unique quality of service option present, and the
 congestion experienced bit is set, then the transport congestion
 control function is called.
@@ -144,7 +147,7 @@ connected;
 When the system runs out of memory for
 an internal data structure;
 .It Bq Er EADDRNOTAVAIL
-When an attempt is made to create a 
+When an attempt is made to create a
 socket with a network address for which no network interface
 exists;
 .It Bq Er EHOSTUNREACH
