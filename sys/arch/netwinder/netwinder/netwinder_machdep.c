@@ -1,4 +1,4 @@
-/*	$NetBSD: netwinder_machdep.c,v 1.1 2001/04/19 06:53:58 matt Exp $	*/
+/*	$NetBSD: netwinder_machdep.c,v 1.2 2001/04/20 16:09:48 matt Exp $	*/
 
 /*
  * Copyright (c) 1997,1998 Mark Brinicombe.
@@ -77,8 +77,6 @@
 #include <dev/isa/isareg.h>
 #include <dev/isa/isavar.h>
 #endif
-
-#define VERBOSE_INIT_ARM
 
 /*
  * Address to call from cpu_reset() to reset the machine.
@@ -340,7 +338,6 @@ initarm(bootinfo)
 {
 	int loop;
 	int loop1;
-	u_int logical;
 	u_int l1pagetable;
 	u_int l2pagetable;
 	extern char page0[], page0_end[];
@@ -474,6 +471,7 @@ initarm(bootinfo)
 	printf("Allocating page tables\n");
 #endif
 
+#if 0
 	/* Update the address of the first free 16KB chunk of physical memory */
 	physical_freestart  = KERNEL_TEXT_BASE - KERNEL_BASE;
         physical_freestart += (kernexec->a_text + (NBPG - 1)) & ~(NBPG - 1);
@@ -483,6 +481,9 @@ initarm(bootinfo)
         physical_freestart += (kernexec->a_syms + sizeof(int)
 		    + *(u_int *)((int)end + kernexec->a_syms + sizeof(int))
 		    + (NBPG - 1)) & ~(NBPG - 1);
+#endif
+#else
+	physical_freestart = 0x00200000;	/* start at 2MB */
 #endif
 
 	free_pages -= (physical_freestart - physical_start) / NBPG;
@@ -581,7 +582,9 @@ initarm(bootinfo)
 	if (N_GETMAGIC(kernexec[0]) != ZMAGIC)
 		panic("Illegal kernel format\n");
 	else {
-		
+#if 0
+		u_int logical;
+
 		logical  = map_chunk(0, l2pagetable, KERNEL_BASE,
 		    physical_start, KERNEL_TEXT_BASE - KERNEL_BASE,
 		    AP_KRW, PT_CACHEABLE);
@@ -599,6 +602,10 @@ initarm(bootinfo)
 		    physical_start + logical, kernexec->a_syms + sizeof(int)
 		    + *(u_int *)((int)end + kernexec->a_syms + sizeof(int)),
 		    AP_KRW, PT_CACHEABLE);
+#endif
+#else
+		map_section(l1pagetable, 0xf0000000, 0x00000000, 1);
+		map_section(l1pagetable, 0xf0100000, 0x00100000, 1);
 #endif
 	}
 #if 0
