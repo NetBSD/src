@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.4 1998/07/02 18:58:32 tsubai Exp $	*/
+/*	$NetBSD: conf.c,v 1.5 1998/07/03 11:50:32 tsubai Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -52,6 +52,8 @@ bdev_decl(st);
 bdev_decl(cd);
 #include "md.h"
 bdev_decl(md);
+/*#include "wd.h"*/
+/*bdev_decl(wd);*/
 
 struct bdevsw bdevsw[] = {
 	bdev_notdef(),			/* 0: Openfirmware disk */
@@ -64,7 +66,7 @@ struct bdevsw bdevsw[] = {
 	bdev_lkm_dummy(),		/* 7 */
 	bdev_lkm_dummy(),		/* 8 */
 	bdev_disk_init(NMD,md),		/* 9: memory disk driver */
-	bdev_lkm_dummy(),		/* 10 */
+	bdev_notdef(),			/* 10: reserved for IDE disk driver */
 	bdev_lkm_dummy(),		/* 11 */
 };
 int nblkdev = sizeof bdevsw / sizeof bdevsw[0];
@@ -105,8 +107,9 @@ cdev_decl(vnd);
 cdev_decl(ccd);
 #include "adb.h"
 cdev_decl(adb);
-#include "ofcons.h"
+/*cdev_decl(wd);*/
 cdev_decl(ofc);
+cdev_decl(nvram);
 
 struct cdevsw cdevsw[] = {
 	cdev_cn_init(1,cn),		/* 0: virtual console */
@@ -116,7 +119,7 @@ struct cdevsw cdevsw[] = {
 	cdev_ptc_init(NPTY,ptc),	/* 4: pseudo tty master */
 	cdev_log_init(1,log),		/* 5: /dev/klog */
 	cdev_swap_init(1,sw),		/* 6: /dev/drum pseudo device */
-	cdev_tty_init(NOFCONS,ofc),	/* 7: Openfirmware console */
+	cdev_tty_init(1,ofc),		/* 7: Openfirmware console */
 	cdev_notdef(),			/* 8: Openfirmware disk */
 	cdev_notdef(),			/* 9: Openfirmware RTC */
 	cdev_bpftun_init(NBPFILTER,bpf),/* 10: Berkeley packet filter */
@@ -139,9 +142,10 @@ struct cdevsw cdevsw[] = {
 	cdev_disk_init(NMD,md),		/* 27: memory disk driver */
 	cdev_mouse_init(NADB,adb),	/* 28: ADB event interface */
 	cdev_lkm_dummy(),		/* 29: */
-	cdev_lkm_dummy(),		/* 30: */
+	cdev_notdef(),			/* 30: reserved for IDE disk driver */
 	cdev_lkm_init(NLKM,lkm),	/* 31: loadable module driver */
 	cdev_fd_init(1,filedesc),	/* 32: file descriptor pseudo-device */
+	cdev_mm_init(1,nvram),		/* 33: nvram device */
 };
 int nchrdev = sizeof cdevsw / sizeof cdevsw[0];
 
@@ -206,9 +210,10 @@ static int chrtoblktbl[] = {
 	/* 27 */	9,
 	/* 28 */	NODEV,
 	/* 29 */	NODEV,
-	/* 30 */	NODEV,
+	/* 30 */	10,
 	/* 31 */	NODEV,
 	/* 32 */	NODEV,
+	/* 33 */	NODEV,
 };
 
 /*
