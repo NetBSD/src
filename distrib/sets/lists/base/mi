@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.169.2.8 2000/08/06 21:18:32 thorpej Exp $
+# $NetBSD: mi,v 1.169.2.9 2000/08/09 07:58:04 drochner Exp $
 .
 ./altroot
 ./bin
@@ -1152,6 +1152,17 @@
 ./usr/share/vi/catalog/german
 ./usr/share/vi/catalog/ru_SU.KOI8-R
 ./usr/share/vi/catalog/swedish
+./usr/share/wscons
+./usr/share/wscons/fonts
+./usr/share/wscons/fonts/vt220h.808
+./usr/share/wscons/fonts/vt220h.810
+./usr/share/wscons/fonts/vt220h.814
+./usr/share/wscons/fonts/vt220h.816
+./usr/share/wscons/fonts/vt220l.808
+./usr/share/wscons/fonts/vt220l.810
+./usr/share/wscons/fonts/vt220l.814
+./usr/share/wscons/fonts/vt220l.816
+./usr/share/wscons/keymaps
 ./usr/share/zoneinfo
 ./usr/share/zoneinfo/Africa
 ./usr/share/zoneinfo/Africa/Abidjan
