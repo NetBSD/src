@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_input.c,v 1.44 2001/10/16 06:24:44 itojun Exp $	*/
+/*	$NetBSD: ip6_input.c,v 1.45 2001/10/24 06:36:38 itojun Exp $	*/
 /*	$KAME: ip6_input.c,v 1.188 2001/03/29 05:34:31 itojun Exp $	*/
 
 /*
@@ -97,7 +97,7 @@
 #ifdef INET
 #include <netinet/ip.h>
 #include <netinet/ip_icmp.h>
-#endif /*INET*/
+#endif /* INET */
 #include <netinet/ip6.h>
 #include <netinet6/in6_var.h>
 #include <netinet6/ip6_var.h>
@@ -116,7 +116,6 @@
 /* we need it for NLOOP. */
 #include "loop.h"
 #include "faith.h"
-
 #include "gif.h"
 #include "bpfilter.h"
 
@@ -541,7 +540,7 @@ ip6_input(m)
 		 && ip6_forward_rt.ro_rt->rt_ifp->if_type == IFT_FAITH) {
 			/* XXX do we need more sanity checks? */
 			ours = 1;
-			deliverifp = ip6_forward_rt.ro_rt->rt_ifp; /*faith*/
+			deliverifp = ip6_forward_rt.ro_rt->rt_ifp; /* faith */
 			goto hbhcheck;
 		}
 	}
