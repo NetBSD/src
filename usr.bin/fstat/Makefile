@@ -1,8 +1,8 @@
-#	$NetBSD: Makefile,v 1.12 1999/03/24 05:51:31 mrg Exp $
+#	$NetBSD: Makefile,v 1.13 1999/08/02 17:39:13 jdolecek Exp $
 #	from: @(#)Makefile	8.1 (Berkeley) 6/6/93
 
 PROG=	fstat
-SRCS=	fstat.c isofs.c
+SRCS=	fstat.c isofs.c ntfs.c
 DPADD=	${LIBKVM}
 LDADD=	-lkvm
 BINGRP=	kmem
