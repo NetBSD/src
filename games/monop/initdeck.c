@@ -1,4 +1,4 @@
-/*	$NetBSD: initdeck.c,v 1.12 1999/12/30 01:40:08 simonb Exp $	*/
+/*	$NetBSD: initdeck.c,v 1.13 2000/07/31 11:39:00 simonb Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -44,15 +44,35 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\n\
 #if 0
 static char sccsid[] = "@(#)initdeck.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: initdeck.c,v 1.12 1999/12/30 01:40:08 simonb Exp $");
+__RCSID("$NetBSD: initdeck.c,v 1.13 2000/07/31 11:39:00 simonb Exp $");
 #endif
 #endif /* not lint */
 #endif /* __NetBSD__ */
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <sys/types.h>
 #include "deck.h"
+
+#ifndef u_int32_t
+#define	u_int32_t	unsigned int
+#endif
+
+u_int32_t
+h2nl(u_int32_t h)
+{
+	unsigned char c[4];
+	u_int32_t rv;
+
+	c[0] = (h >> 24) & 0xff;
+	c[1] = (h >> 16) & 0xff;
+	c[2] = (h >>  8) & 0xff;
+	c[3] = (h >>  0) & 0xff;
+	memcpy(&rv, c, sizeof rv);
+
+	return (rv);
+}
 
 /*
  *	This program initializes the card files for monopoly.
@@ -136,10 +156,10 @@ main(ac, av)
 	fseek(outf, 0, SEEK_SET);
 
 	/* number of community chest cards first... */
-	nc = htonl(CC_D.num_cards);
+	nc = h2nl(CC_D.num_cards);
 	fwrite(&nc, sizeof(nc), 1, outf);
 	/* ... then number of chance cards. */
-	nc = htonl(CH_D.num_cards);
+	nc = h2nl(CH_D.num_cards);
 	fwrite(&nc, sizeof(nc), 1, outf);
 
 	/* dump offsets in big-endian byte order */
@@ -213,7 +233,7 @@ putem()
 	putc(getc(inf), outf);
 	for (num = 0; (c=getc(inf)) != '\n'; )
 		num = num * 10 + (c - '0');
-	putw(htonl(num), outf);
+	putw(h2nl(num), outf);
 	newline = FALSE;
 	while ((c=getc(inf)) != EOF)
 		if (newline && c == '%') {
@@ -230,7 +250,7 @@ putem()
 			putc(c = getc(inf), outf);
 			for (num = 0; (c=getc(inf)) != EOF && c != '\n'; )
 				num = num * 10 + (c - '0');
-			putw(htonl(num), outf);
+			putw(h2nl(num), outf);
 		}
 		else {
 			putc(c, outf);
