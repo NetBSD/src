@@ -1,4 +1,5 @@
-/* $NetBSD: vrc4172pmureg.h,v 1.1 2000/11/11 04:42:09 sato Exp $ */
+/*	$NetBSD: vrc4172pmureg.h,v 1.2 2001/04/13 08:11:44 itojun Exp $	*/
+
 /*
  * Copyright (c) 2000 SATO Kazumi.  All rights reserved.
  *
