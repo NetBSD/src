@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_stat.h,v 1.6 1998/09/04 19:54:40 christos Exp $	 */
+/*	$NetBSD: svr4_stat.h,v 1.7 1999/03/23 14:57:01 kleink Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -109,5 +109,6 @@ struct svr4_stat64 {
 #define	SVR4_PC_ASYNC_IO		10
 #define	SVR4_PC_PRIO_IO			11
 #define	SVR4_PC_SYNC_IO			12
+#define	SVR4_PC_FILESIZEBITS		67
 
 #endif /* !_SVR4_STAT_H_ */
