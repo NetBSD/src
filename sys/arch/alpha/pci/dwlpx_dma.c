@@ -1,4 +1,4 @@
-/* $NetBSD: dwlpx_dma.c,v 1.6 1998/02/04 07:37:29 thorpej Exp $ */
+/* $NetBSD: dwlpx_dma.c,v 1.7 1998/03/23 07:42:40 mjacob Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dwlpx_dma.c,v 1.6 1998/02/04 07:37:29 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwlpx_dma.c,v 1.7 1998/03/23 07:42:40 mjacob Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -69,11 +69,13 @@ void	dwlpx_bus_dmamap_destroy_sgmap __P((bus_dma_tag_t, bus_dmamap_t));
 
 int	dwlpx_bus_dmamap_load_direct __P((bus_dma_tag_t, bus_dmamap_t, void *,
 	    bus_size_t, struct proc *, int));
+
 int	dwlpx_bus_dmamap_load_sgmap __P((bus_dma_tag_t, bus_dmamap_t, void *,
 	    bus_size_t, struct proc *, int));
 
 int	dwlpx_bus_dmamap_load_mbuf_direct __P((bus_dma_tag_t, bus_dmamap_t,
 	    struct mbuf *, int));
+
 int	dwlpx_bus_dmamap_load_mbuf_sgmap __P((bus_dma_tag_t, bus_dmamap_t,
 	    struct mbuf *, int));
 
@@ -89,10 +91,8 @@ int	dwlpx_bus_dmamap_load_raw_sgmap __P((bus_dma_tag_t, bus_dmamap_t,
 
 void	dwlpx_bus_dmamap_unload_sgmap __P((bus_dma_tag_t, bus_dmamap_t));
 
-/*
- * The direct-mapped DMA window begins at this PCI address.
- */
-#define	DWLPx_DIRECT_MAPPED_BASE 0x40000000
+#define	DWLPx_DIRECT_MAPPED_BASE	0x80000000
+#define	DWLPx_SG_MAPPED_BASE		0x10000000
 
 void
 dwlpx_dma_init(ccp)
@@ -101,7 +101,7 @@ dwlpx_dma_init(ccp)
 	char *exname;
 	bus_dma_tag_t t;
 	u_int32_t *page_table;
-	int i;
+	int i, lim, wmask;
 
 	/*
 	 * Initialize the DMA tag used for direct-mapped DMA.
@@ -152,7 +152,7 @@ dwlpx_dma_init(ccp)
 	 * the SGMAP page table; there is no TLB.  The DWLPA
 	 * has room for 32K entries, yielding a total of 256M
 	 * of sgva space.  The DWLPB has 32K entries or 128K
-	 * entries, depending on TBIT, yielding wither 256M or
+	 * entries, depending on TBIT, yielding either 256M or
 	 * 1G of sgva space.
 	 *
 	 * This sgva space must be shared across all windows
@@ -162,10 +162,10 @@ dwlpx_dma_init(ccp)
 	 * window.  Note that sgvabase != window base.  The former
 	 * is used to compute indexes into the page table only.
 	 *
-	 * In the current implementation, we follow the lead of
-	 * the workstation chipsets; the first window is an 8M
-	 * window SGMAP-mapped mapped at 8M, and the second window
-	 * is a 1G window direct-mapped mapped at 1G.
+	 * In the current implementation the first window is a
+	 * 2G window direct-mapped mapped at 2G and the second
+	 * window is disabled and the third window is a 256M
+	 * or 1GB scatter/gather map at 1GB.
 	 */
 
 	/*
@@ -173,24 +173,30 @@ dwlpx_dma_init(ccp)
 	 */
 	page_table =
 	    (u_int32_t *)ALPHA_PHYS_TO_K0SEG(PCIA_SGMAP_PT + ccp->cc_sysbase);
-	for (i = 0; i < (32*1024); i++)
-		page_table[i] = 0;
+	if (ccp->cc_sc->dwlpx_sgmapsz == DWLPX_SG128K) {
+		lim = 128 * 1024;
+		wmask = PCIA_WMASK_1G;
+	} else {
+		lim = 32 * 1024;
+		wmask = PCIA_WMASK_256M;
+	}
+	for (i = 0; i < lim; i++)
+		page_table[i * SGMAP_PTE_SPACING] = 0;
 	alpha_mb();
 
 	/*
-	 * Initialize the SGMAP for window A:
+	 * Initialize the SGMAP for window C:
 	 *
-	 *	Size: 8M
-	 *	Window base: 8M
+	 *	Size: 256M or 1GB
+	 *	Window base: 1GB
 	 *	SGVA base: 0
 	 */
 	exname = malloc(16, M_DEVBUF, M_NOWAIT);
 	if (exname == NULL)
 		panic("dwlpx_dma_init");
 	sprintf(exname, "%s_sgmap_a", ccp->cc_sc->dwlpx_dev.dv_xname);
-	alpha_sgmap_init(t, &ccp->cc_sgmap, exname,
-	    (8*1024*1024), 0, (8*1024*1024), sizeof(u_int32_t),
-	    (void *)page_table, 0);
+	alpha_sgmap_init(t, &ccp->cc_sgmap, exname, DWLPx_SG_MAPPED_BASE,
+	    0, lim * NBPG, sizeof(u_int32_t), (void *)page_table, 0);
 
 	/*
 	 * Set up DMA windows for this DWLPx.
@@ -199,24 +205,19 @@ dwlpx_dma_init(ccp)
 	 * one on hose zero of a KFTIA.
 	 */
 	for (i = 0; i < NHPC; i++) {
-		REGVAL(PCIA_WMASK_A(i) + ccp->cc_sysbase) = PCIA_WMASK_8M;
+		REGVAL(PCIA_WMASK_A(i) + ccp->cc_sysbase) = PCIA_WMASK_2G;
 		REGVAL(PCIA_TBASE_A(i) + ccp->cc_sysbase) = 0;
-		alpha_mb();
 		REGVAL(PCIA_WBASE_A(i) + ccp->cc_sysbase) =
-		    (8*1024*1024) | PCIA_WBASE_W_EN | PCIA_WBASE_SG_EN;
-		alpha_mb();
-
-		REGVAL(PCIA_WMASK_B(i) + ccp->cc_sysbase) = PCIA_WMASK_1G;
-		REGVAL(PCIA_TBASE_B(i) + ccp->cc_sysbase) = 0;
-		alpha_mb();
-		REGVAL(PCIA_WBASE_B(i) + ccp->cc_sysbase) =
 		    DWLPx_DIRECT_MAPPED_BASE | PCIA_WBASE_W_EN;
-		alpha_mb();
 
-		REGVAL(PCIA_WMASK_C(i) + ccp->cc_sysbase) = 0;
+		REGVAL(PCIA_WMASK_B(i) + ccp->cc_sysbase) = 0;
+		REGVAL(PCIA_TBASE_B(i) + ccp->cc_sysbase) = 0;
+		REGVAL(PCIA_WBASE_B(i) + ccp->cc_sysbase) = 0;
+
+		REGVAL(PCIA_WMASK_C(i) + ccp->cc_sysbase) = wmask;
 		REGVAL(PCIA_TBASE_C(i) + ccp->cc_sysbase) = 0;
-		alpha_mb();
-		REGVAL(PCIA_WBASE_C(i) + ccp->cc_sysbase) = 0;
+		REGVAL(PCIA_WBASE_C(i) + ccp->cc_sysbase) =
+		    DWLPx_SG_MAPPED_BASE | PCIA_WBASE_W_EN | PCIA_WBASE_SG_EN;
 		alpha_mb();
 	}
 
@@ -238,17 +239,20 @@ dwlpx_dma_get_tag(t, bustype)
 	alpha_bus_t bustype;
 {
 	struct dwlpx_config *ccp = t->_cookie;
+	extern int physmem;
 
 	switch (bustype) {
 	case ALPHA_BUS_PCI:
 	case ALPHA_BUS_EISA:
 		/*
-		 * XXX FIXME!
-		 * XXX If the system has more than 1G of RAM,
-		 * XXX we need to use SGMAPs, or some combination
-		 * XXX of direct-mapped and SGMAP-mapped DMA.
+		 * As best as I can tell from the DU source, you can't
+		 * do DIRECT MAPPED and S/G at the same time.
 		 */
-		return (&ccp->cc_dmat_direct);
+#ifndef	MSS3_DEBUG_SG
+		if (physmem <= btoc(2048LL << 20LL))
+			return (&ccp->cc_dmat_direct);
+#endif
+		/* FALLTHROUGH */
 
 	case ALPHA_BUS_ISA:
 		/*
@@ -326,7 +330,6 @@ dwlpx_bus_dmamap_load_direct(t, map, buf, buflen, p, flags)
 	struct proc *p;
 	int flags;
 {
-
 	return (_bus_dmamap_load_direct_common(t, map, buf, buflen, p,
 	    flags, DWLPx_DIRECT_MAPPED_BASE));
 }
