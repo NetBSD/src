@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.35 1999/03/14 14:19:05 fvdl Exp $	*/
+/*	$NetBSD: defs.h,v 1.36 1999/03/31 00:44:48 fvdl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -40,6 +40,7 @@
 
 /* System includes needed for this. */
 #include <sys/types.h>
+#define FSTYPENAMES
 #include <sys/disklabel.h>
 
 /* Define for external varible use */ 
@@ -75,7 +76,13 @@ typedef struct distinfo {
 	char *desc;
 } distinfo;
 
-typedef  int partinfo[5];	/* Single partition from a disklabel */
+typedef struct _partinfo {
+	int pi_size;
+	int pi_offset;
+	int pi_fstype;
+	int pi_bsize;
+	int pi_fsize;
+} partinfo;	/* Single partition from a disklabel */
 
 /* variables */
 
@@ -150,13 +157,6 @@ EXTERN int dlcyl, dlhead, dlsec, dlsize, dlcylsize;
 EXTERN int swapadj INIT(0);
 
 /* Information for the NetBSD disklabel */
-EXTERN char *fstype[]
-#ifdef MAIN
-= {"unused", "swap", "4.2BSD", "msdos", "ados", "boot", "filecore"}
-#endif
-;
-enum DTYPE {T_UNUSED, T_SWAP, T_42BSD, T_MSDOS, T_ADOS, T_BOOT, T_FILECORE};
-enum DINFO {D_SIZE, D_OFFSET, D_FSTYPE, D_BSIZE, D_FSIZE};
 enum DLTR {A,B,C,D,E,F,G,H};
 EXTERN char partname[] INIT("abcdefgh");
 EXTERN partinfo bsdlabel[16];
@@ -164,9 +164,6 @@ EXTERN char fsmount[16][20] INIT({""});
 #define DISKNAME_SIZE 80
 EXTERN char bsddiskname[DISKNAME_SIZE];
 EXTERN char *doessf INIT("");
-
-/* scsi_fake communication */
-EXTERN int fake_sel;
 
 /* other vars for menu communication */
 EXTERN int  nodist;
@@ -215,10 +212,11 @@ EXTERN char net_defroute[STRSIZE] INIT("");
 EXTERN char net_media[STRSIZE] INIT("");
 
 /* Variables for upgrade. */
+#if 0
 #define MAXFS 16
 EXTERN char fs_dev[MAXFS][STRSIZE];
 EXTERN char fs_mount[MAXFS][STRSIZE];
-EXTERN int  fs_num;
+#endif
 
 /* needed prototypes */
 
@@ -237,9 +235,8 @@ void toplevel __P((void));
 
 /* from disks.c */
 int	find_disks __P((void));
-void	disp_cur_part __P((int,int));
+void	disp_cur_part __P((struct mbr_partition *, int,int));
 void	disp_cur_fspart __P((int, int));
-void	scsi_fake __P((void));
 void	make_bsd_partitions __P((void));
 void	write_disklabel __P((void));
 void	make_filesystems __P((void));
@@ -259,6 +256,10 @@ void	do_install __P((void));
 
 /* from factor.c */
 void	factor __P((long, long *, int, int *));
+
+/* from fdisk.c */
+void	get_disk_info __P((char *));
+void	set_disk_info __P((char *));
 
 /* from geom.c */
 int	get_geom __P((char *, struct disklabel *));
