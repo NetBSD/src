@@ -1,4 +1,4 @@
-/* $NetBSD: mdsetimage.c,v 1.12 2003/03/04 12:16:41 dogcow Exp $ */
+/* $NetBSD: mdsetimage.c,v 1.13 2003/03/06 00:31:41 thorpej Exp $ */
 /* from: NetBSD: mdsetimage.c,v 1.15 2001/03/21 23:46:48 cgd Exp $ */
 
 /*
@@ -38,7 +38,7 @@ __COPYRIGHT(
 #endif /* not lint */
 
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: mdsetimage.c,v 1.12 2003/03/04 12:16:41 dogcow Exp $");
+__RCSID("$NetBSD: mdsetimage.c,v 1.13 2003/03/06 00:31:41 thorpej Exp $");
 #endif /* not lint */
 
 #if HAVE_CONFIG_H
@@ -75,7 +75,6 @@ struct symbols {
 int		main(int, char *[]);
 static void	usage(void) __attribute__((noreturn));
 static int	find_md_root(bfd *, struct symbols symbols[]);
-static int32_t  conv_endian(bfd *, int32_t);
 
 int	verbose;
 int	extract;
@@ -164,7 +163,7 @@ main(int argc, char *argv[])
 
 	md_root_offset = md_root_symbols[X_MD_ROOT_IMAGE].offset;
 	md_root_size_offset = md_root_symbols[X_MD_ROOT_SIZE].offset;
-	md_root_size = conv_endian(abfd, *((int32_t *)(mappedkfile + md_root_size_offset)));
+	md_root_size = bfd_get_32(abfd, &mappedkfile[md_root_size_offset]);
 
 	munmap(mappedkfile, ksb.st_size);
 
@@ -228,7 +227,7 @@ main(int argc, char *argv[])
 	if (verbose)
 		fprintf(stderr, "done copying image\n");
 	if (setsize && !extract) {
-		volatile int32_t buf;
+		char buf[sizeof(uint32_t)];
 
 		if (verbose)
 			fprintf(stderr, "setting md_root_size to %llu\n",
@@ -236,8 +235,8 @@ main(int argc, char *argv[])
 		if (lseek(kfd, md_root_size_offset, SEEK_SET) !=
 		    md_root_size_offset)
 			err(1, "seek %s", kfile);
-		buf = conv_endian(abfd, fssb.st_size);
-		if (write(kfd, (const void *) &buf, sizeof(buf)) != sizeof(buf))
+		bfd_put_32(abfd, fssb.st_size, buf);
+		if (write(kfd, buf, sizeof(buf)) != sizeof(buf))
 			err(1, "write %s", kfile);
 	}
 
@@ -314,28 +313,3 @@ find_md_root(bfd *abfd, struct symbols symbols[])
 
 	return (0);
 }
-
-static int32_t
-conv_endian(bfd *abfd, int32_t len)
-{
-	int32_t x;
-
-	switch (abfd->xvec->byteorder) {
-	case BFD_ENDIAN_BIG:
-		return (htonl(len));
-		/*NOTREACHED*/
-	case BFD_ENDIAN_LITTLE:
-		x = htonl(len);
-		return ((x << 24) & 0xff000000 ) |
-		    ((x <<  8) & 0x00ff0000 ) |
-		    ((x >>  8) & 0x0000ff00 ) |
-		    ((x >> 24) & 0x000000ff );
-		/*NOTREACHED*/
-	case BFD_ENDIAN_UNKNOWN:
-	default:
-		errx(1, "unknown BFD endianness");
-		return (len);
-		/*NOTREACHED*/
-	}
-}
-
