@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.180 2001/05/26 21:27:02 chs Exp $ */
+/* $NetBSD: pmap.c,v 1.181 2001/07/15 05:24:20 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -154,7 +154,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.180 2001/05/26 21:27:02 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.181 2001/07/15 05:24:20 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1220,8 +1220,6 @@ pmap_destroy(pmap_t pmap)
 	if (pmapdebug & PDB_FOLLOW)
 		printf("pmap_destroy(%p)\n", pmap);
 #endif
-	if (pmap == NULL)
-		return;
 
 	PMAP_LOCK(pmap);
 	refs = --pmap->pm_count;
@@ -1262,11 +1260,10 @@ pmap_reference(pmap_t pmap)
 	if (pmapdebug & PDB_FOLLOW)
 		printf("pmap_reference(%p)\n", pmap);
 #endif
-	if (pmap != NULL) {
-		PMAP_LOCK(pmap);
-		pmap->pm_count++;
-		PMAP_UNLOCK(pmap);
-	}
+
+	PMAP_LOCK(pmap);
+	pmap->pm_count++;
+	PMAP_UNLOCK(pmap);
 }
 
 /*
@@ -1310,9 +1307,6 @@ pmap_do_remove(pmap_t pmap, vaddr_t sva, vaddr_t eva, boolean_t dowired)
 	if (pmapdebug & (PDB_FOLLOW|PDB_REMOVE|PDB_PROTECT))
 		printf("pmap_remove(%p, %lx, %lx)\n", pmap, sva, eva);
 #endif
-
-	if (pmap == NULL)
-		return;
 
 	/*
 	 * If this is the kernel pmap, we can use a faster method
@@ -1553,9 +1547,6 @@ pmap_protect(pmap_t pmap, vaddr_t sva, vaddr_t eva, vm_prot_t prot)
 		printf("pmap_protect(%p, %lx, %lx, %x)\n",
 		    pmap, sva, eva, prot);
 #endif
-
-	if (pmap == NULL)
-		return;
 
 	if ((prot & VM_PROT_READ) == VM_PROT_NONE) {
 		pmap_remove(pmap, sva, eva);
@@ -2078,8 +2069,6 @@ pmap_unwire(pmap_t pmap, vaddr_t va)
 	if (pmapdebug & PDB_FOLLOW)
 		printf("pmap_unwire(%p, %lx)\n", pmap, va);
 #endif
-	if (pmap == NULL)
-		return;
 
 	PMAP_LOCK(pmap);
 
