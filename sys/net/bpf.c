@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf.c,v 1.62 2001/09/10 23:11:06 bjh21 Exp $	*/
+/*	$NetBSD: bpf.c,v 1.63 2001/11/12 23:49:33 lukem Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993
@@ -41,6 +41,9 @@
  * static char rcsid[] =
  * "Header: bpf.c,v 1.67 96/09/26 22:00:52 leres Exp ";
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.63 2001/11/12 23:49:33 lukem Exp $");
 
 #include "bpfilter.h"
 

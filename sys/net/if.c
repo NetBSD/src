@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.98 2001/11/05 18:02:15 matt Exp $	*/
+/*	$NetBSD: if.c,v 1.99 2001/11/12 23:49:34 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -99,6 +99,9 @@
  *
  *	@(#)if.c	8.5 (Berkeley) 1/9/95
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.99 2001/11/12 23:49:34 lukem Exp $");
 
 #include "opt_inet.h"
 

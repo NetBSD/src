@@ -1,4 +1,4 @@
-/*	$NetBSD: if_strip.c,v 1.39 2001/06/14 05:44:25 itojun Exp $	*/
+/*	$NetBSD: if_strip.c,v 1.40 2001/11/12 23:49:44 lukem Exp $	*/
 /*	from: NetBSD: if_sl.c,v 1.38 1996/02/13 22:00:23 christos Exp $	*/
 
 /*
@@ -89,6 +89,9 @@
  * more robust and slightly less likely to hang serial line.
  * Sped up a bunch of things.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: if_strip.c,v 1.40 2001/11/12 23:49:44 lukem Exp $");
 
 #include "strip.h"
 #if NSTRIP > 0

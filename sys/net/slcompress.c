@@ -1,4 +1,4 @@
-/*	$NetBSD: slcompress.c,v 1.22 2001/07/18 16:43:10 thorpej Exp $   */
+/*	$NetBSD: slcompress.c,v 1.23 2001/11/12 23:49:49 lukem Exp $   */
 /*	Id: slcompress.c,v 1.3 1996/05/24 07:04:47 paulus Exp 	*/
 
 /*
@@ -43,6 +43,9 @@
  * Van Jacobson (van@helios.ee.lbl.gov), Dec 31, 1989:
  *	- Initial distribution.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: slcompress.c,v 1.23 2001/11/12 23:49:49 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/mbuf.h>

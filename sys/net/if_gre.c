@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gre.c,v 1.21 2001/05/10 01:30:55 itojun Exp $ */
+/*	$NetBSD: if_gre.c,v 1.22 2001/11/12 23:49:39 lukem Exp $ */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -44,6 +44,9 @@
  * router. See gre(4) for more details.
  * Also supported:  IP in IP encaps (proto 55) as of RFC 2004
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: if_gre.c,v 1.22 2001/11/12 23:49:39 lukem Exp $");
 
 #include "gre.h"
 #if NGRE > 0

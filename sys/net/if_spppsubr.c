@@ -1,4 +1,4 @@
-/*	$NetBSD: if_spppsubr.c,v 1.28 2001/11/05 18:02:15 matt Exp $	 */
+/*	$NetBSD: if_spppsubr.c,v 1.29 2001/11/12 23:49:43 lukem Exp $	 */
 
 /*
  * Synchronous PPP/Cisco link level subroutines.
@@ -26,6 +26,9 @@
  *
  * From: Id: if_spppsubr.c,v 1.23 1999/02/23 14:47:50 hm Exp
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.29 2001/11/12 23:49:43 lukem Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipx.h"

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_stf.c,v 1.20 2001/11/06 08:14:27 itojun Exp $	*/
+/*	$NetBSD: if_stf.c,v 1.21 2001/11/12 23:49:43 lukem Exp $	*/
 /*	$KAME: if_stf.c,v 1.62 2001/06/07 22:32:16 itojun Exp $	*/
 
 /*
@@ -73,6 +73,9 @@
  * for details.  The code tries to filter out some of malicious packets.
  * Note that there is no way to be 100% secure.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: if_stf.c,v 1.21 2001/11/12 23:49:43 lukem Exp $");
 
 #if defined(__FreeBSD__) && __FreeBSD__ >= 3
 #include "opt_inet.h"

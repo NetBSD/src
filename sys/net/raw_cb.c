@@ -1,4 +1,4 @@
-/*	$NetBSD: raw_cb.c,v 1.11 2000/03/30 09:45:40 augustss Exp $	*/
+/*	$NetBSD: raw_cb.c,v 1.12 2001/11/12 23:49:47 lukem Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -34,6 +34,9 @@
  *
  *	@(#)raw_cb.c	8.1 (Berkeley) 6/10/93
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: raw_cb.c,v 1.12 2001/11/12 23:49:47 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

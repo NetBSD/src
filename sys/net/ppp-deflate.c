@@ -1,4 +1,4 @@
-/*	$NetBSD: ppp-deflate.c,v 1.8 2001/07/18 16:43:10 thorpej Exp $	*/
+/*	$NetBSD: ppp-deflate.c,v 1.9 2001/11/12 23:49:46 lukem Exp $	*/
 /*	Id: ppp-deflate.c,v 1.5 1997/03/04 03:33:28 paulus Exp 	*/
 
 /*
@@ -29,6 +29,9 @@
  * OBLIGATION TO PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS,
  * OR MODIFICATIONS.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ppp-deflate.c,v 1.9 2001/11/12 23:49:46 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
