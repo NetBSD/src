@@ -1,4 +1,4 @@
-/*	$NetBSD: refresh.c,v 1.30 2000/05/18 20:37:42 mycroft Exp $	*/
+/*	$NetBSD: refresh.c,v 1.31 2000/05/19 01:05:44 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)refresh.c	8.7 (Berkeley) 8/13/94";
 #else
-__RCSID("$NetBSD: refresh.c,v 1.30 2000/05/18 20:37:42 mycroft Exp $");
+__RCSID("$NetBSD: refresh.c,v 1.31 2000/05/19 01:05:44 mycroft Exp $");
 #endif
 #endif				/* not lint */
 
@@ -442,7 +442,7 @@ makech(wy)
 
 	if (force) {
 		if (CM) {
-			t_goto(_cursesi_genbuf, CM, lx, ly, cm_buff, 1023);
+			t_goto(NULL, CM, lx, ly, cm_buff, 1023);
 			tputs(cm_buff, 0, __cputchar);
 		} else {
 			tputs(HO, 0, __cputchar);
