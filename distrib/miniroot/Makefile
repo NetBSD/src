@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.42 2001/11/27 05:05:38 jmc Exp $
+#	$NetBSD: Makefile,v 1.43 2002/01/07 12:56:42 shin Exp $
 
 .include "../../Makefile.inc"
 .include <bsd.own.mk>
@@ -59,7 +59,7 @@ all: ${CBIN}
 	@df -i ${MOUNT_POINT}
 	@echo ""
 	umount ${MOUNT_POINT}
-	vnconfig -u ${VND_DEV}
+	vnconfig -u ${VND}
 
 unconfig:
 	-umount -f ${MOUNT_POINT}
