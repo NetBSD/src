@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)wd.c	7.2 (Berkeley) 5/9/91
- *	$Id: wd.c,v 1.46 1994/02/26 17:10:12 mycroft Exp $
+ *	$Id: wd.c,v 1.47 1994/02/26 17:13:44 mycroft Exp $
  */
 
 #define	QUIETWORKS	/* define this to make wdopen() set DKFL_QUIET */
@@ -642,7 +642,7 @@ wdintr(struct intrframe wdif)
     
 	/* is it not a transfer, but a control operation? */
 	if (du->dk_state < OPEN) {
-		wdtab[unit].b_active = 0;
+		wdtab[ctrlr].b_active = 0;
 		if (wdcontrol(bp))
 			wdstart(ctrlr);
 		return;
