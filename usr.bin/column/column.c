@@ -1,4 +1,4 @@
-/*	$NetBSD: column.c,v 1.11 2003/10/16 06:46:46 itojun Exp $	*/
+/*	$NetBSD: column.c,v 1.12 2005/02/17 17:17:25 xtraeme Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)column.c	8.4 (Berkeley) 5/4/95";
 #endif
-__RCSID("$NetBSD: column.c,v 1.11 2003/10/16 06:46:46 itojun Exp $");
+__RCSID("$NetBSD: column.c,v 1.12 2005/02/17 17:17:25 xtraeme Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -54,14 +54,13 @@ __RCSID("$NetBSD: column.c,v 1.11 2003/10/16 06:46:46 itojun Exp $");
 #include <string.h>
 #include <unistd.h>
 
-void  c_columnate __P((void));
-void *emalloc __P((int));
-void  input __P((FILE *));
-void  maketbl __P((void));
-int   main __P((int, char **));
-void  print __P((void));
-void  r_columnate __P((void));
-void  usage __P((void));
+void  c_columnate(void);
+void *emalloc(int);
+void  input(FILE *);
+void  maketbl(void);
+void  print(void);
+void  r_columnate(void);
+void  usage(void);
 
 int termwidth = 80;		/* default terminal width */
 
@@ -69,12 +68,10 @@ int entries;			/* number of records */
 int eval;			/* exit value */
 int maxlength;			/* longest record */
 char **list;			/* array of pointers to records */
-char *separator = "\t ";	/* field separator for table option */
+const char *separator = "\t ";	/* field separator for table option */
 
 int
-main(argc, argv)
-	int argc;
-	char **argv;
+main(int argc, char **argv)
 {
 	struct winsize win;
 	FILE *fp;
@@ -136,7 +133,7 @@ main(argc, argv)
 
 #define	TAB	8
 void
-c_columnate()
+c_columnate(void)
 {
 	int chcnt, col, cnt, endcol, numcols;
 	char **lp;
@@ -165,7 +162,7 @@ c_columnate()
 }
 
 void
-r_columnate()
+r_columnate(void)
 {
 	int base, chcnt, cnt, col, endcol, numcols, numrows, row;
 
@@ -192,7 +189,7 @@ r_columnate()
 }
 
 void
-print()
+print(void)
 {
 	int cnt;
 	char **lp;
@@ -208,7 +205,7 @@ typedef struct _tbl {
 #define	DEFCOLS	25
 
 void
-maketbl()
+maketbl(void)
 {
 	TBL *t;
 	int coloff, cnt;
@@ -257,8 +254,7 @@ maketbl()
 #define	MAXLINELEN	(LINE_MAX + 1)
 
 void
-input(fp)
-	FILE *fp;
+input(FILE *fp)
 {
 	static int maxentry;
 	int len;
@@ -292,8 +288,7 @@ input(fp)
 }
 
 void *
-emalloc(size)
-	int size;
+emalloc(int size)
 {
 	char *p;
 
@@ -304,7 +299,7 @@ emalloc(size)
 }
 
 void
-usage()
+usage(void)
 {
 
 	(void)fprintf(stderr,
