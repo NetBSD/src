@@ -1,4 +1,4 @@
-/*	$NetBSD: head.c,v 1.9 1998/01/27 17:00:19 kleink Exp $	*/
+/*	$NetBSD: head.c,v 1.10 1998/01/31 20:42:07 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1987, 1992, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1987, 1992, 1993\n\
 #if 0
 static char sccsid[] = "@(#)head.c	8.2 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: head.c,v 1.9 1998/01/27 17:00:19 kleink Exp $");
+__RCSID("$NetBSD: head.c,v 1.10 1998/01/31 20:42:07 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -151,11 +151,7 @@ obsolete(argv)
 		if (ap[0] != '-' || ap[1] == '-' || !isdigit(ap[1]))
 			return;
 		if ((ap = malloc(strlen(*argv) + 2)) == NULL)
-#ifdef __GNUC__			
 			err(1, "%s", "");
-#else
-			err(1, NULL);
-#endif		
 		ap[0] = '-';
 		ap[1] = 'n';
 		(void)strcpy(ap + 2, *argv + 1);
@@ -166,6 +162,7 @@ obsolete(argv)
 void
 usage()
 {
-	(void)fputs("usage: head [-n lines] [file ...]\n", stderr);
+	extern char *__progname;
+	(void)fprintf(stderr, "Usage: %s [-n lines] [file ...]\n", __progname);
 	exit(1);
 }
