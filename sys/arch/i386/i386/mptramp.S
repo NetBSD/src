@@ -1,4 +1,4 @@
-/*	$NetBSD: mptramp.S,v 1.3 2003/04/08 23:48:49 thorpej Exp $	*/
+/*	$NetBSD: mptramp.S,v 1.4 2003/06/26 16:48:18 drochner Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -118,7 +118,7 @@
 #endif
 
         .globl  _C_LABEL(cpu),_C_LABEL(cpu_id),_C_LABEL(cpu_vendor)
-	.globl  _C_LABEL(cpuid_level),_C_LABEL(cpu_feature)
+	.globl  _C_LABEL(cpuid_level)
 	.globl	_C_LABEL(mpidle)
 
 	.global _C_LABEL(cpu_spinup_trampoline)
