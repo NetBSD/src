@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipi_base.c,v 1.86 2003/04/16 20:25:59 thorpej Exp $	*/
+/*	$NetBSD: scsipi_base.c,v 1.87 2003/04/16 21:08:06 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scsipi_base.c,v 1.86 2003/04/16 20:25:59 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scsipi_base.c,v 1.87 2003/04/16 21:08:06 nathanw Exp $");
 
 #include "opt_scsi.h"
 
@@ -2604,7 +2604,7 @@ scsipi_sync_factor_to_period(factor)
 			return (scsipi_syncparams[i].ss_period);
 	}
 
-	return ((factor * 4) * 100));
+	return ((factor * 4) * 100);
 }
 
 int
