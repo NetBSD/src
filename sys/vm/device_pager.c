@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)device_pager.c	7.2 (Berkeley) 4/20/91
- *	$Id: device_pager.c,v 1.4 1993/08/30 07:09:20 deraadt Exp $
+ *	$Id: device_pager.c,v 1.5 1993/10/02 00:00:21 cgd Exp $
  */
 
 /*
@@ -74,10 +74,11 @@ dev_pager_init()
 }
 
 vm_pager_t
-dev_pager_alloc(handle, size, prot)
+dev_pager_alloc(handle, size, prot, start_off)
 	caddr_t handle;
 	vm_size_t size;
 	vm_prot_t prot;
+	int start_off;
 {
 	dev_t dev;
 	vm_pager_t pager;
@@ -120,7 +121,7 @@ dev_pager_alloc(handle, size, prot)
 		if (prot & VM_PROT_EXECUTE)
 			nprot |= PROT_EXEC;
 		npages = atop(round_page(size));
-		for (off = 0; npages--; off += PAGE_SIZE)
+		for (off = start_off; npages--; off += PAGE_SIZE)
 			if ((*mapfunc)(dev, off, nprot) == -1)
 				return(NULL);
 		/*
@@ -146,10 +147,11 @@ dev_pager_alloc(handle, size, prot)
 		npages = devp->devp_npages;
 		object = devp->devp_object = vm_object_allocate(ptoa(npages));
 		vm_object_enter(object, pager);
-		vm_object_setpager(object, pager, (vm_offset_t)0, FALSE);
+		vm_object_setpager(object, pager, (vm_offset_t)start_off,
+		    FALSE);
 		devp->devp_pages = (vm_page_t)
 			kmem_alloc(kernel_map, npages*sizeof(struct vm_page));
-		off = 0;
+		off = start_off;
 		for (page = devp->devp_pages;
 		     page < &devp->devp_pages[npages]; page++) {
 			vm_object_lock(object);
