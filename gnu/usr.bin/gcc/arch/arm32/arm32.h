@@ -46,6 +46,12 @@ extern char *fp_immediate_constant ();
 extern struct rtx_def *gen_compare_reg ();
 extern struct rtx_def *arm_gen_store_multiple ();
 extern struct rtx_def *arm_gen_load_multiple ();
+extern int load_multiple_operation ();
+extern int store_multiple_operation ();
+extern int load_multiple_sequence ();
+extern char *emit_ldm_seq ();
+extern int store_multiple_sequence ();
+extern char *emit_stm_seq ();
 
 extern char *arm_condition_codes[];
 
