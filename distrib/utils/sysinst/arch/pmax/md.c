@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.3.2.7 1998/05/29 04:05:00 mycroft Exp $	*/
+/*	$NetBSD: md.c,v 1.3.2.8 1998/05/29 18:05:58 mycroft Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -456,4 +456,9 @@ md_update(void)
 	puts (CL);
 	wrefresh(stdscr);
 	return 1;
+}
+
+void
+md_cleanup_install(void)
+{
 }
