@@ -1,4 +1,4 @@
-/*	$NetBSD: el.c,v 1.5 1997/04/11 17:52:44 christos Exp $	*/
+/*	$NetBSD: el.c,v 1.6 1997/04/24 18:54:16 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -40,7 +40,7 @@
 #if 0
 static char sccsid[] = "@(#)el.c	8.2 (Berkeley) 1/3/94";
 #else
-static char rcsid[] = "$NetBSD: el.c,v 1.5 1997/04/11 17:52:44 christos Exp $";
+static char rcsid[] = "$NetBSD: el.c,v 1.6 1997/04/24 18:54:16 christos Exp $";
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -308,7 +308,9 @@ el_source(el, fname)
 	return -1;
 
     while ((ptr = fgetln(fp, &len)) != NULL) {
-	ptr[len - 1] = '\0';
+	if (ptr[len - 1] == '\n')
+	    --len;
+	ptr[len] = '\0';
 	if (parse_line(el, ptr) == -1) {
 	    (void) fclose(fp);
 	    return -1;
