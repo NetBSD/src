@@ -1,4 +1,4 @@
-/* $NetBSD: process_machdep.c,v 1.6 1997/10/14 10:25:48 mark Exp $ */
+/* $NetBSD: process_machdep.c,v 1.7 1998/02/22 23:35:45 mark Exp $ */
 
 /*
  * Copyright (c) 1995 Frank Lancaster.  All rights reserved.
@@ -68,14 +68,14 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/time.h>
-#include <sys/kernel.h>
+#include <sys/device.h>
 #include <sys/proc.h>
-#include <sys/user.h>
-#include <sys/vnode.h>
 #include <sys/ptrace.h>
 
 #include <machine/reg.h>
+#include <machine/cpus.h>
+
+#include <arm32/fpe-arm/armfpe.h>
 
 static __inline struct trapframe *
 process_frame(p)
@@ -84,15 +84,6 @@ process_frame(p)
 
 	return (p->p_md.md_regs);
 }
-
-#ifndef ARMFPE
-static __inline struct fpe_sp_state *
-process_fpframe(p)
-	struct proc *p;
-{
-	return (&p->p_addr->u_pcb.pcb_fpstate);
-}
-#endif
 
 int
 process_read_regs(p, regs)
@@ -118,18 +109,9 @@ process_read_fpregs(p, regs)
 #ifdef ARMFPE
 	arm_fpe_getcontext(p, regs);
 	return(0);
-#else
+#else	/* ARMFPE */
 	bzero(regs, sizeof(struct fpreg));
 	return(0);
-#if 0
-#error "Non ARMFPE configs need debugging"
-	struct fpe_sp_state *statep;
-
-	/* NOTE: struct fpreg == struct fpstate */
-	statep = process_fpframe(p);
-	bcopy(statep, regs, sizeof(struct fpreg));
-	return(0);
-#endif
 #endif	/* ARMFPE */
 }
 
@@ -158,17 +140,8 @@ process_write_fpregs(p, regs)
 #ifdef ARMFPE
 	arm_fpe_setcontext(p, regs);
 	return(0);
-#else
+#else	/* ARMFPE */
 	return(0);
-#if 0
-#error "Non ARMFPE configs need debugging"
-        struct fpe_sp_state *statep;
-
-	/* NOTE: struct fpreg == struct fpstate */
-	statep = process_fpframe(p);
-	bcopy(regs, statep, sizeof(struct fpreg));
-	return(0);
-#endif
 #endif	/* ARMFPE */
 }
 
