@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.164 2001/11/30 10:06:46 msaitoh Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.165 2001/11/30 10:31:32 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.164 2001/11/30 10:06:46 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.165 2001/11/30 10:31:32 msaitoh Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
@@ -2805,7 +2805,7 @@ vfs_vnode_print(vp, full, pr)
 		vp->v_tag < sizeof(vnode_tags) / sizeof(vnode_tags[0])) ?
 		vnode_tags[vp->v_tag] : "UNKNOWN";
 	
-	(*pr)("type %s(%d) tag %s(%d) id 0x%lu mount %p typedata %p\n",
+	(*pr)("type %s(%d) tag %s(%d) id 0x%lx mount %p typedata %p\n",
 	      vtype, vp->v_type, vtag, vp->v_tag,
 	      vp->v_id, vp->v_mount, vp->v_mountedhere);
 
