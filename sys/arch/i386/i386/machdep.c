@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.362 1999/08/10 12:00:50 fvdl Exp $	*/
+/*	$NetBSD: machdep.c,v 1.363 1999/08/10 12:16:13 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -675,7 +675,7 @@ struct cpu_cpuid_nameclass i386_cpuid_cpus[] = {
 			},
 			NULL
 		},
-		/* Family 6, not yet available from AMD */
+		/* Family 6 */
 		{
 			CPUCLASS_686,
 			{
