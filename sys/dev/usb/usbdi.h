@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi.h,v 1.40 2000/02/02 07:34:00 augustss Exp $	*/
+/*	$NetBSD: usbdi.h,v 1.41 2000/03/02 12:37:51 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usbdi.h,v 1.18 1999/11/17 22:33:49 n_hibma Exp $	*/
 
 /*
@@ -184,6 +184,8 @@ usb_endpoint_descriptor_t *usbd_get_endpoint_descriptor
 	__P((usbd_interface_handle iface, u_int8_t address));
 
 usbd_status usbd_reload_device_desc __P((usbd_device_handle));
+
+int usbd_ratecheck __P((struct timeval *last));
 
 /* NetBSD attachment information */
 

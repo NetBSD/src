@@ -1,4 +1,4 @@
-/*	$NetBSD: if_aue.c,v 1.25 2000/03/01 19:00:51 augustss Exp $	*/
+/*	$NetBSD: if_aue.c,v 1.26 2000/03/02 12:37:50 augustss Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
  *	Bill Paul <wpaul@ee.columbia.edu>.  All rights reserved.
@@ -173,8 +173,6 @@ static struct aue_type aue_devs[] = {
 	{ USB_VENDOR_COREGA, USB_PRODUCT_COREGA_FETHER_USB_TX },
 	{ 0, 0 }
 };
-
-static struct timeval aue_errinterval = { 0, 2500000 }; /* 0.25 s*/
 
 USB_DECLARE_DRIVER(aue);
 
@@ -1167,10 +1165,10 @@ aue_rxeof(xfer, priv, status)
 		if (status == USBD_NOT_STARTED || status == USBD_CANCELLED)
 			return;
 		sc->aue_rx_errs++;
-		if (ratecheck(&sc->aue_rx_notice, &aue_errinterval)) {
+		if (usbd_ratecheck(&sc->aue_rx_notice)) {
 			printf("%s: %u usb errors on rx: %s\n",
-			   USBDEVNAME(sc->aue_dev), sc->aue_rx_errs,
-			   usbd_errstr(status));
+			    USBDEVNAME(sc->aue_dev), sc->aue_rx_errs,
+			    usbd_errstr(status));
 			sc->aue_rx_errs = 0;
 		}
 		if (status == USBD_STALLED)
