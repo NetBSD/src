@@ -1,4 +1,4 @@
-/*	$NetBSD: pecoff_misc.c,v 1.6 2003/06/28 14:21:25 darrenr Exp $	*/
+/*	$NetBSD: pecoff_misc.c,v 1.7 2003/06/29 03:29:14 dogcow Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pecoff_misc.c,v 1.6 2003/06/28 14:21:25 darrenr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pecoff_misc.c,v 1.7 2003/06/29 03:29:14 dogcow Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ktrace.h"
@@ -638,7 +638,7 @@ pecoff_sys___posix_lchown(l, v, retval)
 	struct pecoff_sys___posix_lchown_args *uap = v;
 	caddr_t sg = stackgap_init(p, 0);
 
-	CHECK_ALT_SYMLINK(p, &sg, SCARG(uap, path));
+	CHECK_ALT_SYMLINK(l, &sg, SCARG(uap, path));
 
 	return sys___posix_lchown(l, v, retval);
 }
@@ -654,7 +654,7 @@ pecoff_sys_lchflags(l, v, retval)
 	struct pecoff_sys_lchflags_args *uap = v;
 	caddr_t sg = stackgap_init(p, 0);
 
-	CHECK_ALT_SYMLINK(p, &sg, SCARG(uap, path));
+	CHECK_ALT_SYMLINK(l, &sg, SCARG(uap, path));
 
 	return sys_lchflags(l, v, retval);
 }
