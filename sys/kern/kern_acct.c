@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_acct.c,v 1.30 1994/06/29 06:32:17 cgd Exp $	*/
+/*	$NetBSD: kern_acct.c,v 1.31 1994/07/04 20:27:06 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -125,11 +125,11 @@ acct(p, uap, retval)
 	 * If accounting was previously enabled, kill the old space-watcher,
 	 * close the file, and (if no new file was specified, leave).
 	 */
-	if (acctp != NULLVP || savacctp != NULLVP) {
+	if (acctp != NULL || savacctp != NULL) {
 		untimeout(acctwatch, NULL);
-		error = vn_close((acctp != NULLVP ? acctp : savacctp), FWRITE,
+		error = vn_close((acctp != NULL ? acctp : savacctp), FWRITE,
 		    p->p_ucred, p);
-		acctp = savacctp = NULLVP;
+		acctp = savacctp = NULL;
 	}
 	if (uap->path == NULL)
 		return (error);
@@ -160,7 +160,7 @@ acct_process(p)
 
 	/* If accounting isn't enabled, don't bother */
 	vp = acctp;
-	if (vp == NULLVP)
+	if (vp == NULL)
 		return (0);
 
 	/*
@@ -270,23 +270,32 @@ acctwatch(a)
 {
 	struct statfs sb;
 
-	if (savacctp != NULLVP && savacctp->v_type != VBAD) {
+	if (savacctp) {
+		if (savacctp->v_type == VBAD) {
+			(void) vn_close(savacctp, FWRITE, NOCRED, NULL);
+			savacctp = NULL;
+			return;
+		}
 		(void)VFS_STATFS(savacctp->v_mount, &sb, (struct proc *)0);
 		if (sb.f_bavail > acctresume * sb.f_blocks / 100) {
 			acctp = savacctp;
-			savacctp = NULLVP;
+			savacctp = NULL;
 			log(LOG_NOTICE, "Accounting resumed\n");
 		}
-	} else if (acctp != NULLVP && acctp->v_type != VBAD) {
+	} else {
+		if (acctp == NULL)
+			return;
+		if (acctp->v_type == VBAD) {
+			(void) vn_close(acctp, FWRITE, NOCRED, NULL);
+			acctp = NULL;
+			return;
+		}
 		(void)VFS_STATFS(acctp->v_mount, &sb, (struct proc *)0);
 		if (sb.f_bavail <= acctsuspend * sb.f_blocks / 100) {
 			savacctp = acctp;
-			acctp = NULLVP;
+			acctp = NULL;
 			log(LOG_NOTICE, "Accounting suspended\n");
 		}
-	} else {
-		/* Accounting was turned off behind our back. */
-		return;
 	}
 	timeout(acctwatch, NULL, acctchkfreq * hz);
 }
