@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.3 1999/02/15 04:36:35 hubertf Exp $	*/
+/*	$NetBSD: clock.c,v 1.4 1999/07/11 12:44:05 tsubai Exp $	*/
 /*
  * Copyright (c) 1988 University of Utah.
  * Copyright (c) 1992, 1993
@@ -74,7 +74,7 @@ clockmatch(parent, cf, aux)
 {
 	struct confargs *ca = aux;
 
-	if (strcmp(ca->ca_name, "clock"))
+	if (strcmp(ca->ca_name, "mkclock") != 0)
 		return 0;
 
 	return 1;

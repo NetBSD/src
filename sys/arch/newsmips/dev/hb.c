@@ -1,4 +1,4 @@
-/*	$NetBSD: hb.c,v 1.2 1998/06/05 14:19:22 tsubai Exp $	*/
+/*	$NetBSD: hb.c,v 1.3 1999/07/11 12:44:04 tsubai Exp $	*/
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -32,34 +32,16 @@ hb_match(parent, cf, aux)
 	return 1;
 }
 
-static char *hbdevs[] = {
-	"clock",
-	"fb",
-	"zsc",
-	"kb",
-	"ms",
-	"le",
-	"sc",
-	NULL
-};
-
 static void
 hb_attach(parent, self, aux)
 	struct device *parent;
 	struct device *self;
 	void *aux;
 {
-	struct confargs ca;
-	char **p = hbdevs;
+	struct confargs *ca = aux;
 
 	printf("\n");
-	bzero(&ca, sizeof(ca));
-
-	while (*p) {
-		ca.ca_name = *p;
-		config_search(hb_search, self, &ca);
-		p++;
-	}
+	config_search(hb_search, self, ca);
 }
 
 static int
@@ -71,8 +53,9 @@ hb_search(parent, cf, aux)
 	struct confargs *ca = aux;
 
 	ca->ca_addr = cf->cf_addr;
+	ca->ca_name = cf->cf_driver->cd_name;
 
-	if ((*cf->cf_attach->ca_match)(parent, cf, ca) != 0)
+	if ((*cf->cf_attach->ca_match)(parent, cf, ca) > 0)
 		config_attach(parent, cf, ca, hb_print);
 
 	return 0;
@@ -91,11 +74,10 @@ hb_print(args, name)
 
 	/* Be quiet about empty HB locations. */
 	if (name)
-		return(QUIET);
+		return QUIET;
 
 	if (ca->ca_addr != -1)
 		printf(" addr 0x%x", ca->ca_addr);
 
-	return(UNCONF);
+	return UNCONF;
 }
-
