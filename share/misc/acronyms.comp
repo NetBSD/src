@@ -1,4 +1,4 @@
-$NetBSD: acronyms.comp,v 1.19 2003/10/07 15:05:14 jmmv Exp $
+$NetBSD: acronyms.comp,v 1.20 2003/10/14 01:15:07 mycroft Exp $
 
 ABI	application binary interface
 ACPI	advanced configuration and power interface
@@ -14,12 +14,14 @@ BIOS	basic input/output system
 BLOB	binary large object
 BSD	berkeley software distribution
 CAD	computer-aided design
+CAV	constant angular velocity (as opposed to CLV)
 CD	compact disc
 CDRAM	cache dynamic random access memory
 CGA	color graphics array
 CHS	cylinder/head/sector
 CIDR	classless inter-domain routing
 CLI	command line interface
+CLV	constant linear velocity (as opposed to CAV)
 CPU	central process unit
 CRLF	carriage return line feed
 CRT	cathode ray tube
