@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.29 1995/01/03 01:30:26 mycroft Exp $	*/
+/*	$NetBSD: clock.c,v 1.30 1995/04/17 12:06:59 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994 Charles Hannum.
@@ -98,8 +98,8 @@ WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 #include <machine/pio.h>
 #include <machine/cpufunc.h>
 
-#include <i386/isa/isareg.h>
-#include <i386/isa/isavar.h>
+#include <dev/isa/isareg.h>
+#include <dev/isa/isavar.h>
 #include <i386/isa/clock.h>
 #include <i386/isa/rtc.h>
 #include <i386/isa/timerreg.h>
@@ -128,9 +128,10 @@ startrtclock()
 }
 
 int
-clockintr(frame)
-	struct clockframe *frame;
+clockintr(arg)
+	void *arg;
 {
+	struct clockframe *frame = arg;		/* not strictly necessary */
 
 	hardclock(frame);
 	return -1;
@@ -275,12 +276,13 @@ findcpuspeed()
 void
 cpu_initclocks()
 {
-	static struct intrhand clockhand;
 
-	clockhand.ih_fun = clockintr;
-	clockhand.ih_arg = 0;
-	clockhand.ih_level = IPL_CLOCK;
-	intr_establish(0, IST_PULSE, &clockhand);
+	/*
+	 * XXX If you're doing strange things with multiple clocks, you might
+	 * want to keep track of clock handlers.
+	 */
+	(void)isa_intr_establish(0, ISA_IST_PULSE, ISA_IPL_CLOCK,
+	    clockintr, 0);
 }
 
 void

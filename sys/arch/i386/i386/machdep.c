@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.145 1995/04/13 20:48:27 mycroft Exp $	*/
+/*	$NetBSD: machdep.c,v 1.146 1995/04/17 12:06:43 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles Hannum.
@@ -83,8 +83,9 @@
 #include <machine/reg.h>
 #include <machine/specialreg.h>
 
-#include <i386/isa/isareg.h>
-#include <i386/isa/isavar.h>
+#include <dev/isa/isareg.h>
+#include <dev/isa/isavar.h>
+#include <i386/isa/isa_machdep.h>
 #include <i386/isa/rtc.h>
 
 #include "isa.h"

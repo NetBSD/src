@@ -1,4 +1,4 @@
-/*	$NetBSD: ultra14f.c,v 1.48 1995/03/14 02:35:11 mycroft Exp $	*/
+/*	$NetBSD: ultra14f.c,v 1.49 1995/04/17 12:09:27 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
@@ -65,7 +65,7 @@
 
 #include <machine/pio.h>
 
-#include <i386/isa/isavar.h>
+#include <dev/isa/isavar.h>
 
 #include <scsi/scsi_all.h>
 #include <scsi/scsiconf.h>
@@ -259,7 +259,7 @@ struct uha_mscp {
 struct uha_softc {
 	struct device sc_dev;
 	struct isadev sc_id;
-	struct intrhand sc_ih;
+	void *sc_ih;
 
 	int sc_iobase;
 	int sc_irq, sc_drq;
@@ -285,8 +285,8 @@ int u14_abort __P((struct uha_softc *, struct uha_mscp *));
 int u24_abort __P((struct uha_softc *, struct uha_mscp *));
 int u14_poll __P((struct uha_softc *, struct scsi_xfer *, int));
 int u24_poll __P((struct uha_softc *, struct scsi_xfer *, int));
-int u14intr __P((struct uha_softc *));
-int u24intr __P((struct uha_softc *));
+int u14intr __P((void *));
+int u24intr __P((void *));
 void uha_done __P((struct uha_softc *, struct uha_mscp *));
 void uha_free_mscp __P((struct uha_softc *, struct uha_mscp *, int flags));
 struct uha_mscp *uha_get_mscp __P((struct uha_softc *, int));
@@ -604,10 +604,8 @@ uhaattach(parent, self, aux)
 #ifdef NEWCONFIG
 	isa_establish(&uha->sc_id, &uha->sc_dev);
 #endif
-	uha->sc_ih.ih_fun = uha->intr;
-	uha->sc_ih.ih_arg = uha;
-	uha->sc_ih.ih_level = IPL_BIO;
-	intr_establish(ia->ia_irq, IST_EDGE, &uha->sc_ih);
+	uha->sc_ih = isa_intr_establish(ia->ia_irq, ISA_IST_EDGE, ISA_IPL_BIO,
+	    uha->intr, uha);
 
 	/*
 	 * ask the adapter what subunits are present
@@ -619,9 +617,10 @@ uhaattach(parent, self, aux)
  * Catch an interrupt from the adaptor
  */
 int
-u14intr(uha)
-	struct uha_softc *uha;
+u14intr(arg)
+	void *arg;
 {
+	struct uha_softc *uha = arg;
 	struct uha_mscp *mscp;
 	u_char uhastat;
 	u_long mboxval;
@@ -665,9 +664,10 @@ u14intr(uha)
 }
 
 int
-u24intr(uha)
-	struct uha_softc *uha;
+u24intr(arg)
+	void *arg;
 {
+	struct uha_softc *uha = arg;
 	struct uha_mscp *mscp;
 	u_char uhastat;
 	u_long mboxval;

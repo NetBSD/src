@@ -1,4 +1,4 @@
-/*	$NetBSD: genassym.c,v 1.35 1995/04/12 15:38:09 mycroft Exp $	*/
+/*	$NetBSD: genassym.c,v 1.36 1995/04/17 12:06:39 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -62,7 +62,7 @@
 
 #include "isa.h"
 #if NISA > 0
-#include <i386/isa/isavar.h>
+#include <i386/isa/isa_machdep.h>
 #endif
 
 main()
@@ -95,11 +95,6 @@ main()
 	def("APTDPTDI", APTDPTDI);
 
 	def("VM_MAXUSER_ADDRESS", VM_MAXUSER_ADDRESS);
-
-	def("UPAGES", UPAGES);
-	def("USPACE", USPACE);
-	def("PGSHIFT", PGSHIFT);
-	def("PDSHIFT", PDSHIFT);
 
 	def("P_ADDR", &p->p_addr);
 	def("P_BACK", &p->p_back);

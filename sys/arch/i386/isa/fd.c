@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.72 1995/04/10 04:18:14 mycroft Exp $	*/
+/*	$NetBSD: fd.c,v 1.73 1995/04/17 12:07:06 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles Hannum.
@@ -57,8 +57,8 @@
 #include <machine/cpu.h>
 #include <machine/pio.h>
 
-#include <i386/isa/isavar.h>
-#include <i386/isa/dmavar.h>
+#include <dev/isa/isavar.h>
+#include <dev/isa/isadmavar.h>
 #include <i386/isa/fdreg.h>
 #ifdef NEWCONFIG
 #include <i386/isa/nvram.h>
@@ -94,7 +94,7 @@ enum fdc_state {
 struct fdc_softc {
 	struct device sc_dev;		/* boilerplate */
 	struct isadev sc_id;
-	struct intrhand sc_ih;
+	void *sc_ih;
 
 	int sc_iobase;
 	int sc_drq;
@@ -199,7 +199,7 @@ void fdcstart __P((struct fdc_softc *fdc));
 void fdcstatus __P((struct device *dv, int n, char *s));
 void fdctimeout __P((void *arg));
 void fdcpseudointr __P((void *arg));
-int fdcintr __P((struct fdc_softc *));
+int fdcintr __P((void *));
 void fdcretry __P((struct fdc_softc *fdc));
 void fdfinish __P((struct fd_softc *fd, struct buf *bp));
 
@@ -307,10 +307,8 @@ fdcattach(parent, self, aux)
 	at_setup_dmachan(fdc->sc_drq, FDC_MAXIOSIZE);
 	isa_establish(&fdc->sc_id, &fdc->sc_dev);
 #endif
-	fdc->sc_ih.ih_fun = fdcintr;
-	fdc->sc_ih.ih_arg = fdc;
-	fdc->sc_ih.ih_level = IPL_BIO;
-	intr_establish(ia->ia_irq, IST_EDGE, &fdc->sc_ih);
+	fdc->sc_ih = isa_intr_establish(ia->ia_irq, ISA_IST_EDGE, ISA_IPL_BIO,
+	    fdcintr, fdc);
 
 	/*
 	 * The NVRAM info only tells us about the first two disks on the
@@ -800,19 +798,19 @@ void
 fdcpseudointr(arg)
 	void *arg;
 {
-	struct fdc_softc *fdc = arg;
 	int s;
 
 	/* Just ensure it has the right spl. */
 	s = splbio();
-	(void) fdcintr(fdc);
+	(void) fdcintr(arg);
 	splx(s);
 }
 
 int
-fdcintr(fdc)
-	struct fdc_softc *fdc;
+fdcintr(arg)
+	void *arg;
 {
+	struct fdc_softc *fdc = arg;
 #define	st0	fdc->sc_status[0]
 #define	cyl	fdc->sc_status[1]
 	struct fd_softc *fd;

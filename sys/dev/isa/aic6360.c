@@ -1,4 +1,4 @@
-/*	$NetBSD: aic6360.c,v 1.30 1995/02/02 21:08:42 mycroft Exp $	*/
+/*	$NetBSD: aic6360.c,v 1.31 1995/04/17 12:08:32 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Charles Hannum.  All rights reserved.
@@ -129,7 +129,7 @@
 #include <scsi/scsi_message.h>
 #include <scsi/scsiconf.h>
 
-#include <i386/isa/isavar.h>
+#include <dev/isa/isavar.h>
 
 /* Definitions, most of them has turned out to be unneccesary, but here they
  * are anyway.
@@ -486,7 +486,7 @@ struct aic_tinfo {
 struct aic_softc {
 	struct device sc_dev;
 	struct isadev sc_id;
-	struct intrhand sc_ih;
+	void *sc_ih;
 
 	int sc_iobase;
 	int sc_irq, sc_drq;
@@ -575,7 +575,7 @@ int aic_debug = 0x00; /* AIC_SHOWSTART|AIC_SHOWMISC|AIC_SHOWTRACE; /**/
 int	aicprobe	__P((struct device *, void *, void *));
 void	aicattach	__P((struct device *, struct device *, void *));
 void	aic_minphys	__P((struct buf *));
-int	aicintr		__P((struct aic_softc *));
+int	aicintr		__P((void *));
 void 	aic_init	__P((struct aic_softc *));
 void	aic_done	__P((struct aic_softc *, struct aic_acb *));
 void	aic_dequeue	__P((struct aic_softc *, struct aic_acb *));
@@ -763,10 +763,8 @@ aicattach(parent, self, aux)
 #ifdef NEWCONFIG
 	isa_establish(&sc->sc_id, &sc->sc_dev);
 #endif
-	sc->sc_ih.ih_fun = aicintr;
-	sc->sc_ih.ih_arg = sc;
-	sc->sc_ih.ih_level = IPL_BIO;
-	intr_establish(ia->ia_irq, IST_EDGE, &sc->sc_ih);
+	sc->sc_ih = isa_intr_establish(ia->ia_irq, ISA_IST_EDGE, ISA_IPL_BIO,
+	    aicintr, sc);
 	
 	config_found(self, &sc->sc_link, aicprint);
 }
@@ -2047,9 +2045,10 @@ phasechange:
  * 1) always uses programmed I/O
  */
 int 
-aicintr(sc)
-	register struct aic_softc *sc;
+aicintr(arg)
+	void *arg;
 {
+	register struct aic_softc *sc = arg;
 	u_char sstat0, sstat1;
 	register struct aic_acb *acb;
 	register struct scsi_link *sc_link;

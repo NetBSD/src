@@ -1,4 +1,6 @@
-/*	$NetBSD: if_hp.c,v 1.19 1995/01/29 07:37:06 cgd Exp $	*/
+/*	$NetBSD: if_hp.c,v 1.20 1995/04/17 12:09:01 cgd Exp $	*/
+
+/* XXX THIS DRIVER IS BROKEN.  IT WILL NOT EVEN COMPILE. */
 
 /*-
  * Copyright (c) 1990, 1991 William F. Jolitz.
@@ -90,9 +92,9 @@
 #include <machine/cpu.h>
 #include <machine/pio.h>
 
-#include <i386/isa/isa_device.h>
+#include <i386/isa/isa_device.h>	/* XXX BROKEN */
 #include <dev/isa/if_nereg.h>
-#include <i386/isa/icu.h>
+#include <i386/isa/icu.h>		/* XXX BROKEN */
 
 int     hpprobe(), hpattach(), hpintr();
 int     hpstart(), hpinit(), ether_output(), hpioctl();

@@ -1,4 +1,4 @@
-/*	$NetBSD: pas.c,v 1.4 1995/03/25 00:01:19 mycroft Exp $	*/
+/*	$NetBSD: pas.c,v 1.5 1995/04/17 12:07:23 cgd Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -32,7 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: pas.c,v 1.4 1995/03/25 00:01:19 mycroft Exp $
+ *	$Id: pas.c,v 1.5 1995/04/17 12:07:23 cgd Exp $
  */
 /*
  * Todo:
@@ -54,8 +54,8 @@
 #include <sys/audioio.h>
 #include <dev/audio_if.h>
 
-#include <i386/isa/isavar.h>
-#include <i386/isa/dmavar.h>
+#include <dev/isa/isavar.h>
+#include <dev/isa/isadmavar.h>
 #include <i386/isa/icu.h>
 
 #include <i386/isa/sbdspvar.h>
@@ -89,7 +89,7 @@ int	pasdebug = 0;
 struct pas_softc {
 	struct	device sc_dev;		/* base device */
 	struct	isadev sc_id;		/* ISA device */
-	struct	intrhand sc_ih;		/* interrupt vectoring */
+	void	*sc_ih;			/* interrupt vectoring */
 
 	u_short sc_iobase;		/* PAS iobase */
 	u_short sc_irq;			/* PAS irq */
@@ -439,10 +439,8 @@ pasattach(parent, self, aux)
 #ifdef NEWCONFIG
 	isa_establish(&sc->sc_id, &sc->sc_dev);
 #endif
-	sc->sc_ih.ih_fun = sbdsp_intr;
-	sc->sc_ih.ih_arg = &sc->sc_sbdsp;
-	sc->sc_ih.ih_level = IPL_BIO;
-	intr_establish(ia->ia_irq, IST_EDGE, &sc->sc_ih);
+	sc->sc_ih = isa_intr_establish(ia->ia_irq, ISA_IST_EDGE, ISA_IPL_BIO,
+	    sbdsp_intr, &sc->sc_sbdsp);
 
 #ifdef NEWCONFIG
 	/*
