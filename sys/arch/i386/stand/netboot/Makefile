@@ -1,10 +1,10 @@
-#	$NetBSD: Makefile,v 1.23 2001/11/01 09:45:03 yamt Exp $
+#	$NetBSD: Makefile,v 1.24 2001/12/12 01:49:45 tv Exp $
 
 S=	${.CURDIR}/../../../../
 
 BASE= netboot
 PROG= ${BASE}.rom
-MKMAN=	no
+NOMAN=	# defined
 NEWVERSWHAT=	"Network Boot"
 
 SRCS= main.c devopen.c conf.c dev_net.c exec.c

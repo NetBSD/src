@@ -1,10 +1,10 @@
-#	$NetBSD: Makefile,v 1.7 2001/03/21 11:02:24 tsutsui Exp $
+#	$NetBSD: Makefile,v 1.8 2001/12/12 01:49:53 tv Exp $
 
 SA_PROG= tapeboot
 SRCS=   boot.c conf.c rawfs.c dev_tape.c
 
 PROG=	${SA_PROG}
-MKMAN= no
+NOMAN= # defined
 
 .include <bsd.prog.mk>
 

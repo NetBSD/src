@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2000/08/20 14:58:45 mrg Exp $
+#	$NetBSD: Makefile,v 1.2 2001/12/12 01:49:51 tv Exp $
 
 CURDIR=	${.CURDIR}
 S=	${CURDIR}/../../../..
@@ -14,7 +14,7 @@ CLEANFILES=	assym.fth.h assym.fth.h.tmp machine sparc \
 		bootblk bootblk.text bootblk.text.tmp
 
 NOMAN=
-STRIPFLAG=
+# definedSTRIPFLAG=
 
 # deal with Solaris vs. NetBSD build environments for now ..
 OS!=uname -s

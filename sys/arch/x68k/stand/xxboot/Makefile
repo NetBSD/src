@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.11 2001/12/02 14:41:21 minoura Exp $
+#	$NetBSD: Makefile,v 1.12 2001/12/12 01:49:57 tv Exp $
 
 BOOT=	xxboot
 VERSION=0.3
@@ -15,7 +15,7 @@ STRIPFLAG=
 BINMODE=	444
 SCRIPTSMODE=	555
 SCRIPTS=	installboot.sh
-MKMAN=		no
+NOMAN=		# defined
 
 STRIP?=		strip
 

@@ -1,10 +1,10 @@
-#	$NetBSD: Makefile,v 1.1 2001/01/22 13:41:51 jdolecek Exp $
+#	$NetBSD: Makefile,v 1.2 2001/12/12 01:50:16 tv Exp $
 
 .include "../Makefile.inc"
 
 .PATH:	$S/filecorefs ${.CURDIR}/..
 
-MKMAN=	no
+NOMAN=	# defined
 
 KMOD=	filecorefs
 

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.8 2001/09/22 02:09:37 tv Exp $
+#	$NetBSD: Makefile,v 1.9 2001/12/12 01:48:43 tv Exp $
 
 BINDIR=	/usr/mdec
 BINMODE=444
@@ -7,7 +7,7 @@ STRIPFLAG=
 
 PROG=	mbr_bootsel
 SRCS=	mbr_bootsel.S
-MKMAN=	no
+NOMAN=	# defined
 
 .include <bsd.own.mk>
 

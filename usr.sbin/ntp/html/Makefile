@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2000/05/02 12:01:11 simonb Exp $
+#	$NetBSD: Makefile,v 1.2 2001/12/12 01:48:53 tv Exp $
 
 .include <bsd.own.mk>
 
@@ -22,7 +22,7 @@ FILES=	Oncore-SHMEM.htm accopt.htm assoc.htm audio.htm authopt.htm \
 	y2k.htm
 .endif
 SUBDIR=	hints
-MKOBJ=  no
+NOOBJ=  # defined
 
 .include <bsd.subdir.mk>
 .include <bsd.prog.mk>

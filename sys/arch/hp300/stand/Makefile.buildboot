@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.buildboot,v 1.17 2001/12/03 05:44:36 gmcgarry Exp $
+#	$NetBSD: Makefile.buildboot,v 1.18 2001/12/12 01:49:42 tv Exp $
 
 # RELOC=FFF00000 allows for boot prog up to FF000 (1044480) bytes long
 RELOC=	FFF00000
@@ -10,7 +10,7 @@ S=		${.CURDIR}/../../../..
 PROG=		${PROGAOUT}.lif
 
 SRCS=		${COMMONSOURCE} ${DRIVERSOURCE} ${PROGSOURCE}
-MKMAN=		no
+NOMAN=		# defined
 STRIPFLAG=
 BINMODE=	444
 

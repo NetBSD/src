@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2000/09/04 22:14:31 christos Exp $
+#	$NetBSD: Makefile,v 1.3 2001/12/12 01:49:03 tv Exp $
 
 .include "${.CURDIR}/../Makefile.inc"
 LIB=	cvs
@@ -10,9 +10,9 @@ SRCS=	argmatch.c dup2.c getdate.y getline.c getopt.c getopt1.c \
 	md5.c regex.c savecwd.c sighandle.c stripslash.c xgetwd.c \
 	yesno.c
 
-MKLINT=		no
-MKPIC=		no
-MKPROFILE=	no
+NOLINT=		# defined
+NOPIC=		# defined
+NOPROFILE=	# defined
 
 # only needed during build
 libinstall::

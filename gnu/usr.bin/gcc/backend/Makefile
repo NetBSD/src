@@ -1,10 +1,10 @@
-#	$NetBSD: Makefile,v 1.4 2001/10/08 22:56:31 tv Exp $
+#	$NetBSD: Makefile,v 1.5 2001/12/12 01:49:02 tv Exp $
 
 LIB=		backend
-MKLINT=		no
-MKPROFILE=	no
-MKPIC=		no
-MKLINKLIB=	no
+NOLINT=		# defined
+NOPROFILE=	# defined
+NOPIC=		# defined
+NOLINKLIB=	# defined
 
 SRCS=		${G_OBJS:.o=.c} ${G_out_file:T}
 

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2001/12/04 18:54:35 thorpej Exp $
+#	$NetBSD: Makefile,v 1.5 2001/12/12 01:49:52 tv Exp $
 
 CURDIR=	${.CURDIR}
 S=	${CURDIR}/../../../..
@@ -19,7 +19,7 @@ CPPFLAGS+=	-D_STANDALONE -DSUN4U
 CPPFLAGS+=	-DBOOT_ELF32 -DBOOT_ELF64
 #CPPFLAGS+=	-DNETIF_DEBUG 
 
-MKMAN=		no
+NOMAN=		# defined
 STRIPFLAG=
 BINMODE=	444
 

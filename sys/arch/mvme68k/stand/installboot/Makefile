@@ -1,9 +1,9 @@
-#	$NetBSD: Makefile,v 1.9 2001/10/31 21:39:03 thorpej Exp $
+#	$NetBSD: Makefile,v 1.10 2001/12/12 01:49:46 tv Exp $
 
 .include <bsd.own.mk>
 
 PROG=	installboot
-MKMAN=	no
+NOMAN=	# defined
 BINDIR=/usr/mdec
 LIBSA=${.CURDIR}/../../../../lib/libsa
 COPTS+= -Wall -Wstrict-prototypes -Wmissing-prototypes

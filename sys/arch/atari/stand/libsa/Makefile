@@ -1,9 +1,9 @@
-#	$NetBSD: Makefile,v 1.12 2001/11/14 23:01:14 tv Exp $
+#	$NetBSD: Makefile,v 1.13 2001/12/12 01:49:39 tv Exp $
 
 LIB=	sa
 
-MKPIC=no
-MKPROFILE=no
+NOPIC=# defined
+NOPROFILE=# defined
 OBJMACHINE=
 
 CPPFLAGS+=	${DEFS} ${INCL}

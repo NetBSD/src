@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2001/03/15 12:03:12 itojun Exp $
+#	$NetBSD: Makefile,v 1.3 2001/12/12 01:49:08 tv Exp $
 
 PROG=	lmtp
 
@@ -14,6 +14,6 @@ SRCS=	lmtp.c lmtp_connect.c lmtp_proto.c lmtp_chat.c lmtp_session.c \
 DPADD+=	${LIBPMASTER} ${LIBPGLOBAL} ${LIBPDNS} ${LIBPUTIL}
 LDADD+= ${LIBPMASTER} ${LIBPGLOBAL} ${LIBPDNS} ${LIBPUTIL}
 
-NOMAN=1
+NOMAN=# defined
 
 .include <bsd.prog.mk>

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2001/11/01 22:50:18 thorpej Exp $
+#	$NetBSD: Makefile,v 1.2 2001/12/12 01:49:38 tv Exp $
 
 S=	${.CURDIR}/../../../..
 
@@ -9,7 +9,7 @@ CFLAGS+=	-Wno-main
 CPPFLAGS+=	-DSUPPORT_DHCP -I${.CURDIR}
 DBG=		-Os
 
-MKMAN=		no
+NOMAN=		# defined
 STRIPFLAG=
 BINMODE=	444
 

@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.booters,v 1.4 2001/11/22 02:18:24 soren Exp $
+# $NetBSD: Makefile.booters,v 1.5 2001/12/12 01:49:51 tv Exp $
 
 # $S must correspond to the top of the 'sys' tree
 S=	${.CURDIR}/../../../..
@@ -30,7 +30,7 @@ NETBSD_VERS!=	sh ${.CURDIR}/../../../../conf/osrelease.sh
 CPPFLAGS+=	-DNETBSD_VERS='"${NETBSD_VERS}"'
 
 # PROG set by parent.
-MKMAN=		no
+NOMAN=		# defined
 
 # We load the kernel at 420K in from the start of RAM to give the boot
 # loader plenty of breathing room.  Load the boot loader starting at

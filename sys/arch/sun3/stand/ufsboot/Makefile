@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.10 2001/03/21 11:02:24 tsutsui Exp $
+#	$NetBSD: Makefile,v 1.11 2001/12/12 01:49:53 tv Exp $
 
 SA_PROG= ufsboot
 
@@ -9,7 +9,7 @@ SRCS= conf.c
 SRCS+= ufs.c
 
 PROG=	${SA_PROG}
-MKMAN= no
+NOMAN= # defined
 
 .include <bsd.prog.mk>
 .PATH: ${S}/lib/libsa

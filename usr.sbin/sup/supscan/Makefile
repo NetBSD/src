@@ -1,8 +1,8 @@
-#	$NetBSD: Makefile,v 1.4 2001/01/18 03:28:20 mycroft Exp $
+#	$NetBSD: Makefile,v 1.5 2001/12/12 01:48:56 tv Exp $
 
 PROG=	supscan
 SRCS=	supscan.c scan.c
-MKMAN=	no
+NOMAN=	# defined
 
 .PATH:	${.CURDIR}/../source
 

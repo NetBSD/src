@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.7 2001/01/11 13:15:07 enami Exp $
+# $NetBSD: Makefile,v 1.8 2001/12/12 01:48:52 tv Exp $
 
 .include <bsd.own.mk>
 
@@ -6,7 +6,7 @@ DIST=		${.CURDIR}/../../crypto/dist
 .PATH: ${DIST}/heimdal/kdc
 
 WARNS?=  1
-MKLINT= no
+NOLINT= # defined
 
 PROG= kstash
 

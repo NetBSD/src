@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2001/03/13 18:13:21 itojun Exp $
+#	$NetBSD: Makefile,v 1.4 2001/12/12 01:49:10 tv Exp $
 
 PROG=	postdrop
 
@@ -12,6 +12,6 @@ BINMODE=2555
 DPADD+= ${LIBPGLOBAL} ${LIBPUTIL}
 LDADD+= ${LIBPGLOBAL} ${LIBPUTIL}
 
-NOMAN=1
+NOMAN=# defined
 
 .include <bsd.prog.mk>
