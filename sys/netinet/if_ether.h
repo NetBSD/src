@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ether.h,v 1.22 1996/05/11 13:00:00 mycroft Exp $	*/
+/*	$NetBSD: if_ether.h,v 1.23 1996/10/09 01:15:06 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -119,6 +119,7 @@ struct	ether_arp {
 struct	arpcom {
 	struct	 ifnet ac_if;			/* network-visible interface */
 	u_int8_t ac_enaddr[ETHER_ADDR_LEN];	/* ethernet hardware address */
+	char	 ac__pad[2];			/* be nice to m68k ports */
 	LIST_HEAD(, ether_multi) ac_multiaddrs;	/* list of ether multicast addrs */
 	int	 ac_multicnt;			/* length of ac_multiaddrs list */
 };

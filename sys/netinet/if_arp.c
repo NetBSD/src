@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arp.c,v 1.31 1996/05/11 12:59:55 mycroft Exp $	*/
+/*	$NetBSD: if_arp.c,v 1.32 1996/10/09 01:15:04 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1993
