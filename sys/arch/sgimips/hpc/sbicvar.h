@@ -1,4 +1,4 @@
-/*	$NetBSD: sbicvar.h,v 1.3 2001/11/18 05:14:39 thorpej Exp $	*/
+/*	$NetBSD: sbicvar.h,v 1.4 2001/11/21 23:22:25 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -59,8 +59,8 @@
  * We'll generally update: xs->{flags,resid,error,sense,status} and
  * occasionally xs->retries.
  */
-struct sbic_acb {
-	TAILQ_ENTRY(sbic_acb) chain;
+struct wd33c93_acb {
+	TAILQ_ENTRY(wd33c93_acb) chain;
 	struct scsipi_xfer *xs;		/* SCSI xfer ctrl block from above */
 	int	flags;			/* Status */
 #define ACB_FREE	0x00
@@ -87,8 +87,8 @@ struct sbic_acb {
  * this for now.  Is there a way to reliably hook it up to sc->fordriver??
  */
 
-struct sbic_linfo {
-	LIST_ENTRY(sbic_linfo)	link;
+struct wd33c93_linfo {
+	LIST_ENTRY(wd33c93_linfo)	link;
 	time_t	last_used;
 	int	lun;
 	int	used;			/* # slots in use */
@@ -97,11 +97,11 @@ struct sbic_linfo {
 #define L_STATE_IDLE	0
 #define L_STATE_BUSY	1
 #define L_STATE_ESTAT	2
-	struct sbic_acb	*untagged;
-	struct sbic_acb	*queued[SBIC_NTAGS];
+	struct wd33c93_acb	*untagged;
+	struct wd33c93_acb	*queued[SBIC_NTAGS];
 };
 
-struct sbic_tinfo {
+struct wd33c93_tinfo {
 	int	cmds;			/* # of commands processed */
 	int	dconns;			/* # of disconnects */
 
@@ -116,13 +116,13 @@ struct sbic_tinfo {
 	u_char  period;			/* Period suggestion */
 	u_char  offset;			/* Offset suggestion */
 	u_char	nextag;			/* Next available tag */
-	struct sbic_linfo *lun[SBIC_NLUN]; /* LUN list for this target */
+	struct wd33c93_linfo *lun[SBIC_NLUN]; /* LUN list for this target */
 } tinfo_t;
 
 /* Look up a lun in a tinfo */
 #define TINFO_LUN(t, l) 	((t)->lun[(l)])
 
-struct  sbic_softc {
+struct  wd33c93_softc {
 	struct device	sc_dev;
 
 	struct scsipi_channel sc_channel; /* proto for sub devices */
@@ -145,10 +145,10 @@ struct  sbic_softc {
 	ssize_t	sc_tcnt;		/* number of bytes transfered */
 
 	/* Lists of command blocks */
-	TAILQ_HEAD(acb_list, sbic_acb) ready_list;
+	TAILQ_HEAD(acb_list, wd33c93_acb) ready_list;
 
-	struct sbic_acb	 *sc_nexus;	/* current command */
-	struct sbic_tinfo sc_tinfo[8];
+	struct wd33c93_acb	 *sc_nexus;	/* current command */
+	struct wd33c93_tinfo sc_tinfo[8];
 
 	u_short	sc_state;
 	u_short	sc_status;
@@ -176,11 +176,11 @@ struct  sbic_softc {
 	int	sc_minsync;		/* Minimum sync period (4ns units) */
 	int	sc_maxoffset;		/* Maximum sync ofset (bytes) */
 
-	int  (*sc_dmasetup) __P((struct sbic_softc *,caddr_t *,
+	int  (*sc_dmasetup) __P((struct wd33c93_softc *,caddr_t *,
 					    size_t *,int,size_t *));
-	int  (*sc_dmago) __P((struct sbic_softc *));
-	void (*sc_dmastop) __P((struct sbic_softc *));
-	void (*sc_reset) __P((struct sbic_softc *));
+	int  (*sc_dmago) __P((struct wd33c93_softc *));
+	void (*sc_dmastop) __P((struct wd33c93_softc *));
+	void (*sc_reset) __P((struct wd33c93_softc *));
 };
 
 /* values for sc_flags */
@@ -245,10 +245,10 @@ struct  sbic_softc {
 #define DEBUG_SYNC	0x800
 
 #ifdef DEBUG
-extern int sbic_debug_flags;
+extern int wd33c93_debug_flags;
 #define SBIC_DEBUG(level, str)						\
 	do {								\
-		if (sbic_debug & __CONCAT(DEBUG_,level))		\
+		if (wd33c93_debug & __CONCAT(DEBUG_,level))		\
 			 printf str;					\
 	} while (0)
 #else
@@ -258,10 +258,10 @@ extern int sbic_debug_flags;
 struct buf;
 struct scsipi_xfer;
 
-void sbic_minphys __P((struct buf *bp));
-void sbic_scsi_request __P((struct scsipi_channel *,
+void wd33c93_minphys __P((struct buf *bp));
+void wd33c93_scsi_request __P((struct scsipi_channel *,
 				scsipi_adapter_req_t, void *));
-void sbic_attach __P((struct sbic_softc *));
-int  sbic_intr __P((struct sbic_softc *));
+void wd33c93_attach __P((struct wd33c93_softc *));
+int  wd33c93_intr __P((struct wd33c93_softc *));
 
 #endif /* _SBICVAR_H_ */

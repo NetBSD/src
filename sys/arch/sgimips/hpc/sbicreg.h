@@ -1,4 +1,4 @@
-/*	$NetBSD: sbicreg.h,v 1.2 2001/11/10 07:32:42 wdk Exp $	*/
+/*	$NetBSD: sbicreg.h,v 1.3 2001/11/21 23:22:25 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001 Wayne Knowles
@@ -87,7 +87,7 @@
 #define SBIC_queue_tag	26
 #define	SBIC_aux_status	27
 
-/* sbic_asr is addressed directly */
+/* wd33c93_asr is addressed directly */
 
 /*
  *  Register defines
@@ -324,94 +324,94 @@
 #define SCSI_STATUS_MASK	0x3e	/* Mask unused bits in status byte */
 
 /* approximate, but we won't do SBT on selects */
-#define sbic_isa_select(cmd)    (((cmd) > 0x5) && ((cmd) < 0xa))
+#define wd33c93_isa_select(cmd)    (((cmd) > 0x5) && ((cmd) < 0xa))
 
 #define PAD(n)  char n;
 #define SBIC_MACHINE_DMA_MODE   SBIC_CTL_DMA
 
 typedef struct {
-        volatile unsigned char  sbic_asr;   /* r : Aux Status Register */
-#define sbic_address            sbic_asr    /* w : desired register no */
-        volatile unsigned char  sbic_value; /* rw: register value */
-} sbic_padded_ind_regmap_t;
-typedef volatile sbic_padded_ind_regmap_t *sbic_regmap_p;
+        volatile unsigned char  wd33c93_asr;   /* r : Aux Status Register */
+#define wd33c93_address            wd33c93_asr    /* w : desired register no */
+        volatile unsigned char  wd33c93_value; /* rw: register value */
+} wd33c93_padded_ind_regmap_t;
+typedef volatile wd33c93_padded_ind_regmap_t *wd33c93_regmap_p;
 
 #define	SBIC_ASR		0	/* offset to ASC register */
 #define	SBIC_ADDR		0	/* offset to address reg */
 #define	SBIC_VAL		1	/* offset to data register */
 
-#define sbic_read_reg(sc,regno,val)   					\
+#define wd33c93_read_reg(sc,regno,val)   					\
     do {                                				\
 	bus_space_write_1((sc)->sc_regt,(sc)->sc_regh,SBIC_ADDR,(regno)); \
 	(val) = bus_space_read_1((sc)->sc_regt,(sc)->sc_regh,SBIC_VAL); \
     } while (0)
 
-#define sbic_write_reg(sc,regno,val)  					\
+#define wd33c93_write_reg(sc,regno,val)  					\
     do {                                				\
 	bus_space_write_1((sc)->sc_regt, (sc)->sc_regh, SBIC_ADDR, (regno)); \
 	bus_space_write_1((sc)->sc_regt, (sc)->sc_regh, SBIC_VAL,  (val)); \
     } while (0)
 
-#define SET_SBIC_myid(sc,val)         sbic_write_reg(sc,SBIC_myid,val)
-#define GET_SBIC_myid(sc,val)         sbic_read_reg(sc,SBIC_myid,val)
-#define SET_SBIC_cdbsize(sc,val)      sbic_write_reg(sc,SBIC_cdbsize,val)
-#define GET_SBIC_cdbsize(sc,val)      sbic_read_reg(sc,SBIC_cdbsize,val)
-#define SET_SBIC_control(sc,val)      sbic_write_reg(sc,SBIC_control,val)
-#define GET_SBIC_control(sc,val)      sbic_read_reg(sc,SBIC_control,val)
-#define SET_SBIC_timeo(sc,val)        sbic_write_reg(sc,SBIC_timeo,val)
-#define GET_SBIC_timeo(sc,val)        sbic_read_reg(sc,SBIC_timeo,val)
-#define SET_SBIC_cdb1(sc,val)         sbic_write_reg(sc,SBIC_cdb1,val)
-#define GET_SBIC_cdb1(sc,val)         sbic_read_reg(sc,SBIC_cdb1,val)
-#define SET_SBIC_cdb2(sc,val)         sbic_write_reg(sc,SBIC_cdb2,val)
-#define GET_SBIC_cdb2(sc,val)         sbic_read_reg(sc,SBIC_cdb2,val)
-#define SET_SBIC_cdb3(sc,val)         sbic_write_reg(sc,SBIC_cdb3,val)
-#define GET_SBIC_cdb3(sc,val)         sbic_read_reg(sc,SBIC_cdb3,val)
-#define SET_SBIC_cdb4(sc,val)         sbic_write_reg(sc,SBIC_cdb4,val)
-#define GET_SBIC_cdb4(sc,val)         sbic_read_reg(sc,SBIC_cdb4,val)
-#define SET_SBIC_cdb5(sc,val)         sbic_write_reg(sc,SBIC_cdb5,val)
-#define GET_SBIC_cdb5(sc,val)         sbic_read_reg(sc,SBIC_cdb5,val)
-#define SET_SBIC_cdb6(sc,val)         sbic_write_reg(sc,SBIC_cdb6,val)
-#define GET_SBIC_cdb6(sc,val)         sbic_read_reg(sc,SBIC_cdb6,val)
-#define SET_SBIC_cdb7(sc,val)         sbic_write_reg(sc,SBIC_cdb7,val)
-#define GET_SBIC_cdb7(sc,val)         sbic_read_reg(sc,SBIC_cdb7,val)
-#define SET_SBIC_cdb8(sc,val)         sbic_write_reg(sc,SBIC_cdb8,val)
-#define GET_SBIC_cdb8(sc,val)         sbic_read_reg(sc,SBIC_cdb8,val)
-#define SET_SBIC_cdb9(sc,val)         sbic_write_reg(sc,SBIC_cdb9,val)
-#define GET_SBIC_cdb9(sc,val)         sbic_read_reg(sc,SBIC_cdb9,val)
-#define SET_SBIC_cdb10(sc,val)        sbic_write_reg(sc,SBIC_cdb10,val)
-#define GET_SBIC_cdb10(sc,val)        sbic_read_reg(sc,SBIC_cdb10,val)
-#define SET_SBIC_cdb11(sc,val)        sbic_write_reg(sc,SBIC_cdb11,val)
-#define GET_SBIC_cdb11(sc,val)        sbic_read_reg(sc,SBIC_cdb11,val)
-#define SET_SBIC_cdb12(sc,val)        sbic_write_reg(sc,SBIC_cdb12,val)
-#define GET_SBIC_cdb12(sc,val)        sbic_read_reg(sc,SBIC_cdb12,val)
-#define SET_SBIC_tlun(sc,val)         sbic_write_reg(sc,SBIC_tlun,val)
-#define GET_SBIC_tlun(sc,val)         sbic_read_reg(sc,SBIC_tlun,val)
-#define SET_SBIC_cmd_phase(sc,val)    sbic_write_reg(sc,SBIC_cmd_phase,val)
-#define GET_SBIC_cmd_phase(sc,val)    sbic_read_reg(sc,SBIC_cmd_phase,val)
-#define SET_SBIC_syn(sc,val)          sbic_write_reg(sc,SBIC_syn,val)
-#define GET_SBIC_syn(sc,val)          sbic_read_reg(sc,SBIC_syn,val)
-#define SET_SBIC_count_hi(sc,val)     sbic_write_reg(sc,SBIC_count_hi,val)
-#define GET_SBIC_count_hi(sc,val)     sbic_read_reg(sc,SBIC_count_hi,val)
-#define SET_SBIC_count_med(sc,val)    sbic_write_reg(sc,SBIC_count_med,val)
-#define GET_SBIC_count_med(sc,val)    sbic_read_reg(sc,SBIC_count_med,val)
-#define SET_SBIC_count_lo(sc,val)     sbic_write_reg(sc,SBIC_count_lo,val)
-#define GET_SBIC_count_lo(sc,val)     sbic_read_reg(sc,SBIC_count_lo,val)
-#define SET_SBIC_selid(sc,val)        sbic_write_reg(sc,SBIC_selid,val)
-#define GET_SBIC_selid(sc,val)        sbic_read_reg(sc,SBIC_selid,val)
-#define SET_SBIC_rselid(sc,val)       sbic_write_reg(sc,SBIC_rselid,val)
-#define GET_SBIC_rselid(sc,val)       sbic_read_reg(sc,SBIC_rselid,val)
-#define SET_SBIC_csr(sc,val)          sbic_write_reg(sc,SBIC_csr,val)
-#define GET_SBIC_csr(sc,val)          sbic_read_reg(sc,SBIC_csr,val)
-#define SET_SBIC_cmd(sc,val)          sbic_write_reg(sc,SBIC_cmd,val)
-#define GET_SBIC_cmd(sc,val)          sbic_read_reg(sc,SBIC_cmd,val)
-#define SET_SBIC_data(sc,val)         sbic_write_reg(sc,SBIC_data,val)
-#define GET_SBIC_data(sc,val)         sbic_read_reg(sc,SBIC_data,val)
-#define SET_SBIC_queue_tag(sc,val)    sbic_write_reg(sc,SBIC_queue_tag,val)
-#define GET_SBIC_queue_tag(sc,val)    sbic_read_reg(sc,SBIC_queue_tag,val)
+#define SET_SBIC_myid(sc,val)         wd33c93_write_reg(sc,SBIC_myid,val)
+#define GET_SBIC_myid(sc,val)         wd33c93_read_reg(sc,SBIC_myid,val)
+#define SET_SBIC_cdbsize(sc,val)      wd33c93_write_reg(sc,SBIC_cdbsize,val)
+#define GET_SBIC_cdbsize(sc,val)      wd33c93_read_reg(sc,SBIC_cdbsize,val)
+#define SET_SBIC_control(sc,val)      wd33c93_write_reg(sc,SBIC_control,val)
+#define GET_SBIC_control(sc,val)      wd33c93_read_reg(sc,SBIC_control,val)
+#define SET_SBIC_timeo(sc,val)        wd33c93_write_reg(sc,SBIC_timeo,val)
+#define GET_SBIC_timeo(sc,val)        wd33c93_read_reg(sc,SBIC_timeo,val)
+#define SET_SBIC_cdb1(sc,val)         wd33c93_write_reg(sc,SBIC_cdb1,val)
+#define GET_SBIC_cdb1(sc,val)         wd33c93_read_reg(sc,SBIC_cdb1,val)
+#define SET_SBIC_cdb2(sc,val)         wd33c93_write_reg(sc,SBIC_cdb2,val)
+#define GET_SBIC_cdb2(sc,val)         wd33c93_read_reg(sc,SBIC_cdb2,val)
+#define SET_SBIC_cdb3(sc,val)         wd33c93_write_reg(sc,SBIC_cdb3,val)
+#define GET_SBIC_cdb3(sc,val)         wd33c93_read_reg(sc,SBIC_cdb3,val)
+#define SET_SBIC_cdb4(sc,val)         wd33c93_write_reg(sc,SBIC_cdb4,val)
+#define GET_SBIC_cdb4(sc,val)         wd33c93_read_reg(sc,SBIC_cdb4,val)
+#define SET_SBIC_cdb5(sc,val)         wd33c93_write_reg(sc,SBIC_cdb5,val)
+#define GET_SBIC_cdb5(sc,val)         wd33c93_read_reg(sc,SBIC_cdb5,val)
+#define SET_SBIC_cdb6(sc,val)         wd33c93_write_reg(sc,SBIC_cdb6,val)
+#define GET_SBIC_cdb6(sc,val)         wd33c93_read_reg(sc,SBIC_cdb6,val)
+#define SET_SBIC_cdb7(sc,val)         wd33c93_write_reg(sc,SBIC_cdb7,val)
+#define GET_SBIC_cdb7(sc,val)         wd33c93_read_reg(sc,SBIC_cdb7,val)
+#define SET_SBIC_cdb8(sc,val)         wd33c93_write_reg(sc,SBIC_cdb8,val)
+#define GET_SBIC_cdb8(sc,val)         wd33c93_read_reg(sc,SBIC_cdb8,val)
+#define SET_SBIC_cdb9(sc,val)         wd33c93_write_reg(sc,SBIC_cdb9,val)
+#define GET_SBIC_cdb9(sc,val)         wd33c93_read_reg(sc,SBIC_cdb9,val)
+#define SET_SBIC_cdb10(sc,val)        wd33c93_write_reg(sc,SBIC_cdb10,val)
+#define GET_SBIC_cdb10(sc,val)        wd33c93_read_reg(sc,SBIC_cdb10,val)
+#define SET_SBIC_cdb11(sc,val)        wd33c93_write_reg(sc,SBIC_cdb11,val)
+#define GET_SBIC_cdb11(sc,val)        wd33c93_read_reg(sc,SBIC_cdb11,val)
+#define SET_SBIC_cdb12(sc,val)        wd33c93_write_reg(sc,SBIC_cdb12,val)
+#define GET_SBIC_cdb12(sc,val)        wd33c93_read_reg(sc,SBIC_cdb12,val)
+#define SET_SBIC_tlun(sc,val)         wd33c93_write_reg(sc,SBIC_tlun,val)
+#define GET_SBIC_tlun(sc,val)         wd33c93_read_reg(sc,SBIC_tlun,val)
+#define SET_SBIC_cmd_phase(sc,val)    wd33c93_write_reg(sc,SBIC_cmd_phase,val)
+#define GET_SBIC_cmd_phase(sc,val)    wd33c93_read_reg(sc,SBIC_cmd_phase,val)
+#define SET_SBIC_syn(sc,val)          wd33c93_write_reg(sc,SBIC_syn,val)
+#define GET_SBIC_syn(sc,val)          wd33c93_read_reg(sc,SBIC_syn,val)
+#define SET_SBIC_count_hi(sc,val)     wd33c93_write_reg(sc,SBIC_count_hi,val)
+#define GET_SBIC_count_hi(sc,val)     wd33c93_read_reg(sc,SBIC_count_hi,val)
+#define SET_SBIC_count_med(sc,val)    wd33c93_write_reg(sc,SBIC_count_med,val)
+#define GET_SBIC_count_med(sc,val)    wd33c93_read_reg(sc,SBIC_count_med,val)
+#define SET_SBIC_count_lo(sc,val)     wd33c93_write_reg(sc,SBIC_count_lo,val)
+#define GET_SBIC_count_lo(sc,val)     wd33c93_read_reg(sc,SBIC_count_lo,val)
+#define SET_SBIC_selid(sc,val)        wd33c93_write_reg(sc,SBIC_selid,val)
+#define GET_SBIC_selid(sc,val)        wd33c93_read_reg(sc,SBIC_selid,val)
+#define SET_SBIC_rselid(sc,val)       wd33c93_write_reg(sc,SBIC_rselid,val)
+#define GET_SBIC_rselid(sc,val)       wd33c93_read_reg(sc,SBIC_rselid,val)
+#define SET_SBIC_csr(sc,val)          wd33c93_write_reg(sc,SBIC_csr,val)
+#define GET_SBIC_csr(sc,val)          wd33c93_read_reg(sc,SBIC_csr,val)
+#define SET_SBIC_cmd(sc,val)          wd33c93_write_reg(sc,SBIC_cmd,val)
+#define GET_SBIC_cmd(sc,val)          wd33c93_read_reg(sc,SBIC_cmd,val)
+#define SET_SBIC_data(sc,val)         wd33c93_write_reg(sc,SBIC_data,val)
+#define GET_SBIC_data(sc,val)         wd33c93_read_reg(sc,SBIC_data,val)
+#define SET_SBIC_queue_tag(sc,val)    wd33c93_write_reg(sc,SBIC_queue_tag,val)
+#define GET_SBIC_queue_tag(sc,val)    wd33c93_read_reg(sc,SBIC_queue_tag,val)
 
 #define SBIC_TC_PUT(sc,val)						\
     do {								\
-        sbic_write_reg(sc,SBIC_count_hi,((val)>>16));			\
+        wd33c93_write_reg(sc,SBIC_count_hi,((val)>>16));			\
 	bus_space_write_1((sc)->sc_regt, (sc)->sc_regh,			\
 			  SBIC_VAL, (val)>>8); 				\
 	bus_space_write_1((sc)->sc_regt, (sc)->sc_regh,			\
@@ -420,7 +420,7 @@ typedef volatile sbic_padded_ind_regmap_t *sbic_regmap_p;
 
 #define SBIC_TC_GET(sc,val)						\
     do {								\
-        sbic_read_reg(sc,SBIC_count_hi,(val));				\
+        wd33c93_read_reg(sc,SBIC_count_hi,(val));				\
         (val) = ((val)<<8) | bus_space_read_1((sc)->sc_regt,		\
 	    			(sc)->sc_regh,SBIC_VAL);		\
         (val) = ((val)<<8) | bus_space_read_1((sc)->sc_regt,		\
@@ -431,7 +431,7 @@ typedef volatile sbic_padded_ind_regmap_t *sbic_regmap_p;
     do {                                            			\
         int   n   = (cmdsize) - 1;                  			\
         char *ptr = (char *)(cmd);                  			\
-        sbic_write_reg(regs, SBIC_cdb1, *ptr++);    			\
+        wd33c93_write_reg(regs, SBIC_cdb1, *ptr++);    			\
         while(n-- > 0)							\
 		bus_space_write_1((sc)->sc_regt, (sc)->sc_regh,		\
 			  SBIC_VAL, *ptr++); /* XXX write_multi */	\

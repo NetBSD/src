@@ -1,4 +1,4 @@
-/*	$NetBSD: wdsc.c,v 1.5 2001/11/20 17:38:31 thorpej Exp $	*/
+/*	$NetBSD: wdsc.c,v 1.6 2001/11/21 23:22:25 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001 Wayne Knowles
@@ -61,7 +61,7 @@
 #include <sys/kgdb.h>
 
 struct wdsc_softc {
-	struct sbic_softc	sc_sbic; /* Must be first */
+	struct wd33c93_softc	sc_wd33c93; /* Must be first */
         struct evcnt		sc_intrcnt; /* Interrupt counter */
 	bus_dma_tag_t		sc_dmat;
 	bus_dmamap_t		sc_dmamap;
@@ -79,11 +79,11 @@ struct cfattach wdsc_ca = {
 	sizeof(struct wdsc_softc), wdsc_match, wdsc_attach
 };
 
-int     wdsc_dmasetup   __P((struct sbic_softc *, caddr_t *,size_t *,
+int     wdsc_dmasetup   __P((struct wd33c93_softc *, caddr_t *,size_t *,
 				int, size_t *));
-int     wdsc_dmago      __P((struct sbic_softc *));
-void    wdsc_dmastop    __P((struct sbic_softc *));
-void	wdsc_reset	__P((struct sbic_softc *));
+int     wdsc_dmago      __P((struct wd33c93_softc *));
+void    wdsc_dmastop    __P((struct wd33c93_softc *));
+void	wdsc_reset	__P((struct wd33c93_softc *));
 int     wdsc_dmaintr    __P((void *));
 int     wdsc_scsiintr   __P((void *));
 
@@ -117,7 +117,7 @@ wdsc_attach(pdp, dp, auxp)
 	struct device *pdp, *dp;
 	void *auxp;
 {
-	struct sbic_softc *sc = (void *)dp;
+	struct wd33c93_softc *sc = (void *)dp;
 	struct wdsc_softc *wsc = (void *)dp;
 	struct hpc_attach_args *haa = auxp;
 	int err;
@@ -146,7 +146,7 @@ wdsc_attach(pdp, dp, auxp)
 	sc->sc_dmastop  = wdsc_dmastop;
 	sc->sc_reset	= wdsc_reset;
 
-	sc->sc_adapter.adapt_request = sbic_scsi_request;
+	sc->sc_adapter.adapt_request = wd33c93_scsi_request;
 	sc->sc_adapter.adapt_minphys = minphys;
 
 	sc->sc_id = 7;			/* Host ID = 7 */
@@ -162,7 +162,7 @@ wdsc_attach(pdp, dp, auxp)
 	}
 
 	hpcdma_init(haa, &wsc->sc_hpcdma, DMA_SEGS);
-	sbic_attach(sc);
+	wd33c93_attach(sc);
 	return;
 }
 
@@ -173,7 +173,7 @@ wdsc_attach(pdp, dp, auxp)
  */
 int
 wdsc_dmasetup(dev, addr, len, datain, dmasize)
-	struct sbic_softc *dev;
+	struct wd33c93_softc *dev;
 	caddr_t *addr;
 	size_t *len;
 	int datain;
@@ -218,7 +218,7 @@ wdsc_dmasetup(dev, addr, len, datain, dmasize)
  */
 int
 wdsc_dmago(dev)
-	struct sbic_softc *dev;
+	struct wd33c93_softc *dev;
 {
 	struct wdsc_softc *wsc = (void *)dev;
 	struct hpc_dma_softc *dsc = &wsc->sc_hpcdma;
@@ -245,7 +245,7 @@ wdsc_dmago(dev)
  */
 void
 wdsc_dmastop(dev)
-	struct sbic_softc *dev;
+	struct wd33c93_softc *dev;
 {
 	struct wdsc_softc *wsc = (void *)dev;
 	struct hpc_dma_softc *dsc = &wsc->sc_hpcdma;
@@ -268,7 +268,7 @@ wdsc_dmastop(dev)
  */
 void
 wdsc_reset(dev)
-	struct sbic_softc *dev;
+	struct wd33c93_softc *dev;
 {
 	struct wdsc_softc *wsc = (void *)dev;
 	struct hpc_dma_softc *dsc = &wsc->sc_hpcdma;
@@ -283,11 +283,11 @@ int
 wdsc_scsiintr(arg)
 	void *arg;
 {
-	struct sbic_softc *dev = arg;
+	struct wd33c93_softc *dev = arg;
 	struct wdsc_softc *wsc = arg;
 	int found;
 
-	found = sbic_intr(dev);
+	found = wd33c93_intr(dev);
 	if (found)
 		wsc->sc_intrcnt.ev_count++;
 	return(found);
