@@ -1,4 +1,4 @@
-/*	$NetBSD: wi.c,v 1.50 2002/03/06 14:41:39 dbj Exp $	*/
+/*	$NetBSD: wi.c,v 1.51 2002/03/10 00:16:47 augustss Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.50 2002/03/06 14:41:39 dbj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.51 2002/03/10 00:16:47 augustss Exp $");
 
 #define WI_HERMES_AUTOINC_WAR	/* Work around data write autoinc bug. */
 #define WI_HERMES_STATS_WAR	/* Work around stats counter bug. */
@@ -1984,6 +1984,10 @@ wi_get_id(sc)
 		break;
 	case WI_NIC_3874A:
 		printf("RF:PRISM2.5 MAC:ISL3874A(PCI)");
+		sc->sc_prism2 = 1;
+		break;
+	case WI_NIC_LUCENT:
+		printf("Lucent Technologies, WaveLAN/IEEE");
 		sc->sc_prism2 = 1;
 		break;
 	default:
