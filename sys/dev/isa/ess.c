@@ -1,4 +1,4 @@
-/*	$NetBSD: ess.c,v 1.14 1998/08/09 04:40:55 mycroft Exp $	*/
+/*	$NetBSD: ess.c,v 1.15 1998/08/09 04:58:08 mycroft Exp $	*/
 
 /*
  * Copyright 1997
@@ -1068,13 +1068,14 @@ ess_set_params(addr, setmode, usemode, play, rec)
 
 	DPRINTF(("ess_set_params: set=%d use=%d\n", setmode, usemode));
 
+	/*
+	 * The ES1887 manual (page 39, `Full-Duplex DMA Mode') claims that in
+	 * full-duplex operation the sample rates must be the same for both
+	 * channels.  This appears appears to be false; the only bit in common
+	 * is the clock source selection.  However, we'll be conservative
+	 * here.  - mycroft
+	 */
 	if (play->sample_rate != rec->sample_rate) {
-		/*
-		 * The manual claims that in full-duplex operation the sample
-		 * rates must be the same.  This is a lie.  It appears that
-		 * the only bit in common is the crystal selection.  However,
-		 * we'll be conservative here.  - mycroft
-		 */
 		if ((usemode | setmode) == AUMODE_PLAY) {
 			rec->sample_rate = play->sample_rate;
 			setmode |= AUMODE_RECORD;
