@@ -23,7 +23,7 @@
  * These notices must be retained in any copies of any part of this
  * documentation and/or software.
  *
- * $Id: md4.c,v 1.3 1995/06/05 19:48:33 pk Exp $
+ * $Id: md4.c,v 1.4 1996/09/19 19:36:51 thorpej Exp $
  */
 
 /* 
@@ -45,7 +45,7 @@
  */
 
 /* Implementation notes:
- * This implementation assumes that longs are 32-bit quantities.
+ * This implementation assumes that ints are 32-bit quantities.
  * Note that on big endian machines the routine
  * MDupdate modifies has a side-effect on its input array (the order of bytes
  * in each word are reversed).  If this is undesired a call to MDreverse(X) can
@@ -56,7 +56,7 @@
 #include <machine/endian.h>
 #include "md4.h"
 
-static void MDblock __ARGS((MDptr, unsigned long *));
+static void MDblock __ARGS((MDptr, unsigned int *));
 
 /* Compile-time declarations of MD4 ``magic constants'' */
 #define I0  0x67452301       /* Initial values for MD buffer */
@@ -85,7 +85,7 @@ static void MDblock __ARGS((MDptr, unsigned long *));
 
 /* Compile-time macro declarations for MD4.
  * Note: The ``rot'' operator uses the variable ``tmp''.
- * It assumes tmp is declared as unsigned long, so that the >>
+ * It assumes tmp is declared as unsigned int, so that the >>
  * operator will shift in zeros rather than extending the sign bit.
  */
 #define	f(X,Y,Z)             ((X&Y) | ((~X)&Z))
@@ -96,7 +96,7 @@ static void MDblock __ARGS((MDptr, unsigned long *));
 #define gg(A,B,C,D,i,s)      A = rot((A + g(B,C,D) + X[i] + C2),s)
 #define hh(A,B,C,D,i,s)      A = rot((A + h(B,C,D) + X[i] + C3),s)
 
-void MDreverse __ARGS((unsigned long *X));
+void MDreverse __ARGS((unsigned int *X));
 
 /* MDprint(MDp)
  * Print message digest buffer MDp as 32 hexadecimal digits.
@@ -135,17 +135,17 @@ MDptr MDp;
 }
 
 /* MDreverse(X)
- * Reverse the byte-ordering of every long in X.
- * Assumes X is an array of 16 longs.
+ * Reverse the byte-ordering of every int in X.
+ * Assumes X is an array of 16 ints.
  * The macro revx reverses the byte-ordering of the next word of X.
  */
 #define revx { t = (*X << 16) | (*X >> 16); \
 	       *X++ = ((t & 0xFF00FF00) >> 8) | ((t & 0x00FF00FF) << 8); }
 void
 MDreverse(X)
-unsigned long *X;
+unsigned int *X;
 {
-	register unsigned long t;
+	register unsigned int t;
 
 	revx;
 	revx;
@@ -174,9 +174,9 @@ unsigned long *X;
 static void
 MDblock(MDp,X)
 MDptr MDp;
-unsigned long *X;
+unsigned int *X;
 { 
-	register unsigned long tmp, A, B, C, D;
+	register unsigned int tmp, A, B, C, D;
 
 #if BYTE_ORDER == BIG_ENDIAN
 	MDreverse(X);
@@ -260,7 +260,7 @@ unsigned char *X;
 unsigned int count;
 {
 	int i,bit,byte,mask;
-	unsigned long tmp;
+	unsigned int tmp;
 	unsigned char XX[64];
 	unsigned char *p;
 
@@ -285,7 +285,7 @@ unsigned int count;
 	/* Process data */
 	if(count == 512){
 		/* Full block of data to handle */
-		MDblock(MDp,(unsigned long *)X);
+		MDblock(MDp,(unsigned int *)X);
 	} else if(count > 512){
 		/* Check for count too large */
 		printf("\nError: MDupdate called with illegal count value %ld.",count);
@@ -308,15 +308,15 @@ unsigned int count;
 		if(byte <= 55){
 			for(i=0;i<8;i++)
 				XX[56+i] = MDp->count[i];
-			MDblock(MDp,(unsigned long *)XX);
+			MDblock(MDp,(unsigned int *)XX);
 		} else {
 			/* need to do two blocks to finish up */
-			MDblock(MDp,(unsigned long *)XX);
+			MDblock(MDp,(unsigned int *)XX);
 			for(i=0;i<56;i++)
 				XX[i] = 0;
 			for(i=0;i<8;i++)
 				XX[56+i] = MDp->count[i];
-			MDblock(MDp,(unsigned long *)XX);
+			MDblock(MDp,(unsigned int *)XX);
 		}
 	/* Set flag saying we're done with MD computation */
 	MDp->done = 1;
