@@ -1,4 +1,4 @@
-/*	$NetBSD: redir.c,v 1.19 1998/07/28 11:41:58 mycroft Exp $	*/
+/*	$NetBSD: redir.c,v 1.20 1999/02/04 16:17:39 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)redir.c	8.2 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: redir.c,v 1.19 1998/07/28 11:41:58 mycroft Exp $");
+__RCSID("$NetBSD: redir.c,v 1.20 1999/02/04 16:17:39 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -191,35 +191,35 @@ openredirect(redir, memory)
 	case NFROM:
 		fname = redir->nfile.expfname;
 		if ((f = open(fname, O_RDONLY)) < 0)
-			error("cannot open %s: %s", fname, errmsg(errno, E_OPEN));
-movefd:
-		if (f != fd) {
-			copyfd(f, fd);
-			close(f);
-		}
+			goto eopen;
+		break;
+	case NFROMTO:
+		fname = redir->nfile.expfname;
+		if ((f = open(fname, O_RDWR|O_CREAT|O_TRUNC, 0666)) < 0)
+			goto ecreate;
 		break;
 	case NTO:
 		fname = redir->nfile.expfname;
 #ifdef O_CREAT
 		if ((f = open(fname, O_WRONLY|O_CREAT|O_TRUNC, 0666)) < 0)
-			error("cannot create %s: %s", fname, errmsg(errno, E_CREAT));
+			goto ecreate;
 #else
 		if ((f = creat(fname, 0666)) < 0)
-			error("cannot create %s: %s", fname, errmsg(errno, E_CREAT));
+			goto ecreate;
 #endif
-		goto movefd;
+		break;
 	case NAPPEND:
 		fname = redir->nfile.expfname;
 #ifdef O_APPEND
 		if ((f = open(fname, O_WRONLY|O_CREAT|O_APPEND, 0666)) < 0)
-			error("cannot create %s: %s", fname, errmsg(errno, E_CREAT));
+			goto ecreate;
 #else
 		if ((f = open(fname, O_WRONLY)) < 0
 		 && (f = creat(fname, 0666)) < 0)
-			error("cannot create %s: %s", fname, errmsg(errno, E_CREAT));
+			goto ecreate;
 		lseek(f, (off_t)0, 2);
 #endif
-		goto movefd;
+		break;
 	case NTOFD:
 	case NFROMFD:
 		if (redir->ndup.dupfd >= 0) {	/* if not ">&-" */
@@ -228,15 +228,26 @@ movefd:
 			else
 				copyfd(redir->ndup.dupfd, fd);
 		}
-		break;
+		INTON;
+		return;
 	case NHERE:
 	case NXHERE:
 		f = openhere(redir);
-		goto movefd;
+		break;
 	default:
 		abort();
 	}
+
+	if (f != fd) {
+		copyfd(f, fd);
+		close(f);
+	}
 	INTON;
+	return;
+ecreate:
+	error("cannot create %s: %s", fname, errmsg(errno, E_CREAT));
+eopen:
+	error("cannot open %s: %s", fname, errmsg(errno, E_OPEN));
 }
 
 
