@@ -1,4 +1,4 @@
-.\"$NetBSD: hardware,v 1.23 2002/04/22 00:35:50 mbw Exp $
+.\"$NetBSD: hardware,v 1.24 2002/04/23 19:48:42 bouyer Exp $
 .
 Currently,
 .Nx*M
@@ -292,7 +292,7 @@ Mac OS X SCSI Card Updater from
 .Note)
 .It
 NCR/Symbios 53C8xx
-.Pq Em ncr No or Em siop
+.Pq Em siop No or Em esiop
 .It
 Many other PCI SCSI controllers should work, but no one has tried them
 .It
