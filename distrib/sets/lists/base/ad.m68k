@@ -1,7 +1,8 @@
-# $NetBSD: ad.m68k,v 1.6 1999/04/19 03:11:31 simonb Exp $
+# $NetBSD: ad.m68k,v 1.7 1999/05/18 23:18:17 tron Exp $
 ./sbin/ldconfig
 ./usr/lib/libm68k.so.0.0
 ./usr/libexec/ld.so
+./usr/lkm/adosfs.o
 ./usr/lkm/cd9660.o
 ./usr/lkm/coda.o
 ./usr/lkm/ext2fs.o
@@ -10,6 +11,7 @@
 ./usr/lkm/kernfs.o
 ./usr/lkm/mfs.o
 ./usr/lkm/msdosfs.o
+./usr/lkm/ntfs.o
 ./usr/lkm/nullfs.o
 ./usr/lkm/portal.o
 ./usr/lkm/procfs.o

@@ -1,2 +1,1 @@
-# $NetBSD: md.ofppc,v 1.1 1999/05/12 12:08:10 tron Exp $
-./usr/lkm/ntfs.o
+# $NetBSD: md.ofppc,v 1.2 1999/05/18 23:18:17 tron Exp $
