@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.29 1997/10/21 19:25:16 scw Exp $	*/
+/*	$NetBSD: locore.s,v 1.30 1997/11/01 17:56:49 scw Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -183,12 +183,36 @@ start:					| start of kernel and .text!
 	movl	0xfffe0774,d1		| End + 1 of onboard memory
 	movl	d1,a0@(4)		| phys_seg_list[0].ps_end
 	clrl	a0@(8)			| phys_seg_list[0].ps_startpage
-	movl	0xfffe0764,a0@(0x0c)	| Start of offboard segment
+
+	/* offboard RAM */
+	clrl	a0@(0x0c)		| phys_seg_list[1].ps_start
+	movl	#NBPG-1,d0
+	addl	0xfffe0764,d0		| Start of offboard segment
+	andl	#-NBPG,d0		| Round up to page boundary
 	beq	Lsavmaxmem		| Jump if none defined
-	movl	0xfffe0768,d1		| End of offboard segment
-	addql	#1,d1			| +1
+	movl	#NBPG,d1		| Note: implicit '+1'
+	addl	0xfffe0768,d1		| End of offboard segment
+	andl	#-NBPG,d1		| Round up to page boundary
+	cmpl	d1,d0			| Quick and dirty validity check
+	bcss	Loff_ok			| Yup, looks good.
+	movel	a0@(4),d1		| Just use onboard RAM otherwise
+	bras	Lsavmaxmem
+Loff_ok:
+	movl	d0,a0@(0x0c)		| phys_seg_list[1].ps_start
 	movl	d1,a0@(0x10)		| phys_seg_list[1].ps_end
 	clrl	a0@(0x14)		| phys_seg_list[1].ps_startpage
+
+	/*
+	 * Offboard RAM needs to be cleared to zero to initialise parity
+	 * on most VMEbus RAM cards. Without this, some cards will buserr
+	 * when first read.
+	 */
+	movel	d0,a0			| offboard start address again.
+Lclearoff:
+	clrl	a0@+			| zap a word
+	cmpl	a0,d1			| reached end?
+	bnes	Lclearoff
+
 Lsavmaxmem:
 	moveq	#PGSHIFT,d2
 	lsrl	d2,d1			| convert to page (click) number
