@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.615.2.15 2004/10/08 03:07:47 jmc Exp $
+$NetBSD: pcidevs,v 1.615.2.16 2004/11/12 06:14:24 jmc Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -1294,6 +1294,7 @@ product DELL PERC_3DI_2		0x0008	PERC 3/Di
 product DELL PERC_3DI_3		0x000a	PERC 3/Di
 product DELL PERC_4DI		0x000e	PERC 4/Di
 product DELL PERC_4DI_2		0x000f	PERC 4/Di
+product DELL PERC_4ESI		0x0013	PERC 4e/Si
 product DELL PERC_3DI_2_SUB	0x00cf	PERC 3/Di
 product DELL PERC_3SI_2_SUB	0x00d0	PERC 3/Si
 product DELL PERC_3DI_SUB2	0x00d1	PERC 3/Di
