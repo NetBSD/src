@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.1 2001/02/06 16:45:20 uch Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.2 2002/03/08 13:22:12 uch Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -48,18 +48,7 @@ int	mainbus_print __P((void *, const char *));
 union mainbus_attach_args {
 	const char *mba_busname;		/* first elem of all */
 	struct shbus_attach_args mba_sba;
-#ifdef	TODO
-	struct pcibus_attach_args mba_pba;
-	struct eisabus_attach_args mba_eba;
-	struct isabus_attach_args mba_iba;
-#endif
 };
-
-/*
- * This is set when the ISA bus is attached.  If it's not set by the
- * time it's checked below, then mainbus attempts to attach an ISA.
- */
-int	isa_has_been_seen;
 
 /*
  * Probe for the mainbus; always succeeds.
@@ -102,9 +91,6 @@ mainbus_print(aux, pnp)
 
 	if (pnp)
 		printf("%s at %s", mba->mba_busname, pnp);
-#ifdef	TODO
-	if (!strcmp(mba->mba_busname, "pci"))
-		printf(" bus %d", mba->mba_pba.pba_bus);
-#endif
+
 	return (UNCONF);
 }
