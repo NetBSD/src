@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.c,v 1.16 1998/12/11 14:28:58 kleink Exp $	*/
+/*	$NetBSD: proc.c,v 1.17 1999/03/19 12:58:00 christos Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)proc.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: proc.c,v 1.16 1998/12/11 14:28:58 kleink Exp $");
+__RCSID("$NetBSD: proc.c,v 1.17 1999/03/19 12:58:00 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -91,13 +91,13 @@ pchild(notused)
     struct process *fp;
     int pid;
     extern int insource;
-    union wait w;
+    int w;
     int     jobflags;
     struct rusage ru;
 
 loop:
     errno = 0;			/* reset, just in case */
-    pid = wait3(&w.w_status,
+    pid = wait3(&w,
        (setintr && (intty || insource) ? WNOHANG | WUNTRACED : WNOHANG), &ru);
 
     if (pid <= 0) {
@@ -118,7 +118,7 @@ found:
     pp->p_flags &= ~(PRUNNING | PSTOPPED | PREPORTED);
     if (WIFSTOPPED(w)) {
 	pp->p_flags |= PSTOPPED;
-	pp->p_reason = w.w_stopsig;
+	pp->p_reason = WSTOPSIG(w);
     }
     else {
 	if (pp->p_flags & (PTIME | PPTIME) || adrof(STRtime))
@@ -126,16 +126,16 @@ found:
 
 	pp->p_rusage = ru;
 	if (WIFSIGNALED(w)) {
-	    if (w.w_termsig == SIGINT)
+	    if (WTERMSIG(w) == SIGINT)
 		pp->p_flags |= PINTERRUPTED;
 	    else
 		pp->p_flags |= PSIGNALED;
-	    if (w.w_coredump)
+	    if (WCOREDUMP(w))
 		pp->p_flags |= PDUMPED;
-	    pp->p_reason = w.w_termsig;
+	    pp->p_reason = WTERMSIG(w);
 	}
 	else {
-	    pp->p_reason = w.w_retcode;
+	    pp->p_reason = WEXITSTATUS(w);
 	    if (pp->p_reason != 0)
 		pp->p_flags |= PAEXITED;
 	    else
@@ -435,7 +435,7 @@ pclrcurr(pp)
     struct process *pp;
 {
 
-    if (pp == pcurrent)
+    if (pp == pcurrent) {
 	if (pprevious != NULL) {
 	    pcurrent = pprevious;
 	    pprevious = pgetcurr(pp);
@@ -444,7 +444,7 @@ pclrcurr(pp)
 	    pcurrent = pgetcurr(pp);
 	    pprevious = pgetcurr(pp);
 	}
-    else if (pp == pprevious)
+    } else if (pp == pprevious)
 	pprevious = pgetcurr(pp);
 }
 
@@ -652,7 +652,7 @@ pendjob()
 	(void) fprintf(cshout, "[%d]", pp->p_index);
 	tp = pp;
 	do {
-	    (void) fprintf(cshout, " %d", pp->p_pid);
+	    (void) fprintf(cshout, " %ld", (long)pp->p_pid);
 	    pp = pp->p_friends;
 	} while (pp != tp);
 	(void) fputc('\n', cshout);
@@ -710,7 +710,7 @@ pprint(pp, flag)
 		hadnl = 0;
 	    }
 	    if (flag & FANCY) {
-		(void) fprintf(cshout, "%5d ", pp->p_pid);
+		(void) fprintf(cshout, "%5ld ", (long)pp->p_pid);
 		hadnl = 0;
 	    }
 	    if (flag & (REASON | AREASON)) {
@@ -718,7 +718,7 @@ pprint(pp, flag)
 		    format = "%-23s";
 		else
 		    format = "%s";
-		if (pstatus == status)
+		if (pstatus == status) {
 		    if (pp->p_reason == reason) {
 			(void) fprintf(cshout, format, "");
 			hadnl = 0;
@@ -726,7 +726,7 @@ pprint(pp, flag)
 		    }
 		    else
 			reason = pp->p_reason;
-		else {
+		} else {
 		    status = pstatus;
 		    reason = pp->p_reason;
 		}
