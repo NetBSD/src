@@ -28,3 +28,45 @@ without DDB.
 
 [ kernel/scsi ] In the sd driver, start a mode sense with a clean
 sense buffer.
+
+[ kernel/alpha ] Fix race condition in tcds interrupt code.
+
+[ distrib/amiga ] Add missing hardware items to release notes.
+
+[ mountd(8) ] Fix two critical bugs on NetBSD/alpha.
+
+[ kernel/atari ] Fix AHDI badsector list handling.
+
+[ kernel/atari ] Add lpt0 driver to fix undefined symbols.
+
+[ kernel/pmax ] Add initialization of SYSV IPC/SHM/semaphores.
+
+[ kernel/pmax ] Add call to doshutdownhooks().
+
+[ kernel/pmax ] Fix typo in pmax debug code (pr #2739).
+
+[ kernel/pmax ] Fix data corruption bug in asc SCSI driver.
+
+[ kernel/pmax ] Fix semantic confusion between SIGBUS and SIGSEGV.
+
+[ kernel/alpha ] Fix PPP netisr handling.
+
+[ kernel/mac68k ] Fix output interrupt race condtion in zs driver.
+
+[ kernel/elf ] Deal with ELF executables with only one section.
+
+[ kernel/amiga ] Fix m68881_save/restore() on 68060 machines.
+
+[ kernel/atari ] Fix installboot version strings.
+
+[ kernel/m68k ] Fix fmovem register naming in kernel disassembler.
+
+[ kernel/m68k ] Fix error that prevented FPINCOS opcode emulation.
+
+[ kernel/alpha ] Fix TurboChannel framebuffer detection code.
+
+[ kernel/alpha ] Fix register access in SCC driver.
+
+[ kernel/amiga ] Fix spurious interrupt in ARCnet driver.
+
+[ kernel/generic ] Fix infinite loop bug in shutdown code.
