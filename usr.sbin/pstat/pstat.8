@@ -1,4 +1,4 @@
-.\"	$NetBSD: pstat.8,v 1.34 2003/12/21 02:52:02 mrg Exp $
+.\"	$NetBSD: pstat.8,v 1.35 2004/12/09 01:14:59 matt Exp $
 .\"
 .\" Copyright (c) 1980, 1991, 1993, 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -95,6 +95,10 @@ Number of processes that know this open file.
 Number of messages outstanding for this file.
 .It DATA
 The location of the vnode table entry or socket structure for this file.
+.It USE
+Number of active users of this open file.
+.It IFLG
+Value of internal flags.
 .It OFFSET
 The file offset (see
 .Xr lseek 2 ) .
