@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.63 2000/07/02 00:20:48 thorpej Exp $	*/
+/*	$NetBSD: if.c,v 1.64 2000/07/04 01:51:22 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -973,9 +973,12 @@ ifioctl(so, cmd, data, p)
 
 	switch (cmd) {
 	case SIOCIFCREATE:
-		return (if_clone_create(ifr->ifr_name));
 	case SIOCIFDESTROY:
-		return (if_clone_destroy(ifr->ifr_name));
+		if ((error = suser(p->p_ucred, &p->p_acflag)) != 0)
+			return (error);
+		return ((cmd == SIOCIFCREATE) ?
+			if_clone_create(ifr->ifr_name) :
+			if_clone_destroy(ifr->ifr_name));
 	}
 
 	ifp = ifunit(ifr->ifr_name);
