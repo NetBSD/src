@@ -1,5 +1,5 @@
 #
-#	$NetBSD: files.atari,v 1.79 2001/04/10 06:37:08 leo Exp $
+#	$NetBSD: files.atari,v 1.80 2001/04/24 06:39:47 leo Exp $
 
 maxpartitions 16
 
@@ -153,6 +153,8 @@ include "dev/pci/files.pci"
 # ISA-devices
 #
 file	arch/atari/isa/isa_machdep.c	isa
+file	arch/atari/isa/isa_hades.c	_atarihw_
+file	arch/atari/isa/isa_milan.c	_milanhw_
 file	arch/atari/isa/isa_dma.c	isadma
 
 device	isabus
