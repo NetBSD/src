@@ -1,4 +1,4 @@
-/*     $NetBSD: login.c,v 1.40 1998/08/25 20:59:38 ross Exp $       */
+/*     $NetBSD: login.c,v 1.41 1999/01/06 13:52:23 lukem Exp $       */
 
 /*-
  * Copyright (c) 1980, 1987, 1988, 1991, 1993, 1994
@@ -44,7 +44,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)login.c	8.4 (Berkeley) 4/2/94";
 #endif
-__RCSID("$NetBSD: login.c,v 1.40 1998/08/25 20:59:38 ross Exp $");
+__RCSID("$NetBSD: login.c,v 1.41 1999/01/06 13:52:23 lukem Exp $");
 #endif /* not lint */
 
 /*
@@ -126,7 +126,7 @@ int	failures;
 char	term[64], *envinit[1], *hostname, *username, *tty;
 
 static const char copyrightstr[] = "\
-Copyright (c) 1996, 1997, 1998
+Copyright (c) 1996, 1997, 1998, 1999
 \tThe NetBSD Foundation, Inc.  All rights reserved.
 Copyright (c) 1980, 1983, 1986, 1988, 1990, 1991, 1993, 1994
 \tThe Regents of the University of California.  All rights reserved.\n\n";
