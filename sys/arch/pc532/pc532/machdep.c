@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.56 1997/02/08 09:34:06 matthias Exp $	*/
+/*	$NetBSD: machdep.c,v 1.57 1997/03/20 12:00:54 matthias Exp $	*/
 
 /*-
  * Copyright (c) 1996 Matthias Pfaller.
@@ -42,8 +42,6 @@
  *	@(#)machdep.c	7.4 (Berkeley) 6/3/91
  */
 
-static char rcsid[] = "/b/source/CVS/src/sys/arch/pc532/pc532/machdep.c,v 1.2 1993/09/13 07:26:49 phil Exp";
-
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/signalvar.h>
@@ -57,6 +55,9 @@ static char rcsid[] = "/b/source/CVS/src/sys/arch/pc532/pc532/machdep.c,v 1.2 19
 #include <sys/conf.h>
 #include <sys/file.h>
 #include <sys/callout.h>
+#ifdef REAL_CLISTS
+#include <sys/clist.h>
+#endif
 #include <sys/malloc.h>
 #include <sys/mbuf.h>
 #include <sys/msgbuf.h>
@@ -90,6 +91,35 @@ static char rcsid[] = "/b/source/CVS/src/sys/arch/pc532/pc532/machdep.c,v 1.2 19
 #include <machine/pmap.h>
 #include <machine/icu.h>
 #include <machine/kcore.h>
+
+#include <net/netisr.h>
+#include <net/if.h>
+
+#ifdef INET
+#include <netinet/in.h>
+#include <netinet/if_ether.h>
+#include <netinet/ip_var.h>
+#endif
+#ifdef NS
+#include <netns/ns_var.h>
+#endif
+#ifdef ISO
+#include <netiso/iso.h>
+#include <netiso/clnp.h>
+#endif
+#ifdef CCITT
+#include <netccitt/x25.h>
+#include <netccitt/pk.h>
+#include <netccitt/pk_extern.h>
+#endif
+#ifdef NATM
+#include <netnatm/natm.h>
+#endif
+#include "ppp.h"
+#if NPPP > 0
+#include <net/ppp_defs.h>
+#include <net/if_ppp.h>
+#endif
 
 #ifdef DDB
 #include <machine/db_machdep.h>
@@ -142,10 +172,15 @@ extern	vm_offset_t avail_start, avail_end;
 extern	int nkpde;
 extern	struct user *proc0paddr;
 
-caddr_t	allocsys __P((caddr_t));
-void	dumpsys __P((void));
-void	consinit __P((void));
-void	cpu_reset __P((void));
+static vm_offset_t alloc_pages __P((int));
+static caddr_t 	allocsys __P((caddr_t));
+static int	cpu_dump __P((void));
+static int	cpu_dumpsize __P((void));
+static void	cpu_reset __P((void));
+static void	dumpsys __P((void));
+void		init532 __P((void));
+static void	map __P((pd_entry_t *, vm_offset_t, vm_offset_t, int, int));
+static void	softnet __P((void *));
 
 /*
  * Machine-dependent startup code
@@ -160,7 +195,6 @@ cpu_startup()
 	int base, residual;
 	vm_offset_t minaddr, maxaddr;
 	vm_size_t size;
-	int x;
 
 	/*
 	 * Initialize error message buffer (at end of core).
@@ -283,7 +317,7 @@ cpu_startup()
  * allocate that much and fill it with zeroes, and then call
  * allocsys() again with the correct base virtual address.
  */
-caddr_t
+static caddr_t
 allocsys(v)
 	register caddr_t v;
 {
@@ -620,7 +654,7 @@ long	dumplo = 0; 		/* blocks */
 /*
  * cpu_dumpsize: calculate size of machine-dependent kernel core dump headers.
  */
-int
+static int
 cpu_dumpsize()
 {
 	int size;
@@ -635,7 +669,7 @@ cpu_dumpsize()
 /*
  * cpu_dump: dump machine-dependent kernel core dump headers.
  */
-int
+static int
 cpu_dump()
 {
 	int (*dump) __P((dev_t, daddr_t, caddr_t, size_t));
@@ -934,10 +968,14 @@ map(pd, virtual, physical, protection, size)
 void
 init532()
 {
-	extern void icu_init();
+	extern void main __P((void *));
 	extern int inttab[];
-	extern char etext[], edata[], end[], *esym;
+	extern char etext[], end[];
+#ifdef DDB
+	extern char *esym;
+#endif
 	pd_entry_t *pd;
+	int clk, net;
 
 #if VERYLOWDEBUG
 	umprintf ("Starting init532\n");
@@ -971,7 +1009,7 @@ init532()
 #endif
 		avail_start = kppa(end);
 
-	avail_end   = ram_size(avail_start);
+	avail_end   = ram_size((void *)avail_start);
 	if (maxphysmem != 0 && avail_end > maxphysmem)
 		avail_end = maxphysmem;
 	physmem     = btoc(avail_end);
@@ -1058,8 +1096,15 @@ init532()
 	__asm __volatile("jump @1f; 1:");
 
 	/* Set up the ICU. */
-	icu_init();
 	intr_init();
+
+	/* Allocate softclock at IPL_NET as splnet() has to block softclock. */
+	clk = intr_establish(SOFTINT, (void (*)(void *))softclock, NULL,
+				"softclock", IPL_NET, IPL_NET, 0);
+	net = intr_establish(SOFTINT, softnet, NULL,
+				"softnet", IPL_NET, IPL_NET, 0);
+	if (clk != SIR_CLOCK || net != SIR_NET)
+		panic("Wrong clock or net softint allocated");
 
 	/* Initialize the pmap module. */
 	pmap_bootstrap(avail_start + KERNBASE);
@@ -1142,7 +1187,6 @@ cpu_exec_aout_makecmds(p, epp)
 void
 consinit()
 {
-	extern void cninit();
 	cninit();
 
 #ifdef KGDB
@@ -1158,7 +1202,7 @@ consinit()
 #endif
 }
 
-void
+static void
 cpu_reset()
 {
 	/* Mask all ICU interrupts. */
@@ -1192,3 +1236,41 @@ cpu_reset()
 	/* Jump into ROM copy. */
 	__asm __volatile("jump @0");
 }
+
+/*
+ * Network software interrupt routine
+ */
+static void
+softnet(arg)
+	void *arg;
+{
+	register int isr;
+
+	di(); isr = netisr; netisr = 0; ei();
+	if (isr == 0) return;
+
+#ifdef INET
+#include "ether.h"
+#if NETHER > 0
+	if (isr & (1 << NETISR_ARP)) arpintr();
+#endif
+	if (isr & (1 << NETISR_IP)) ipintr();
+#endif
+#ifdef IMP
+	if (isr & (1 << NETISR_IMP)) impintr();
+#endif
+#ifdef NS
+	if (isr & (1 << NETISR_NS)) nsintr();
+#endif
+#ifdef ISO
+	if (isr & (1 << NETISR_ISO)) clnlintr();
+#endif
+#ifdef CCITT
+	if (isr & (1 << NETISR_CCITT)) ccittintr();
+#endif
+#include "ppp.h"
+#if NPPP > 0
+	if (isr & (1 << NETISR_PPP)) pppintr();
+#endif
+}
+
