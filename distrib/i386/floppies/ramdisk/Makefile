@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.11.2.2 1999/06/22 16:51:43 perry Exp $
+#	$NetBSD: Makefile,v 1.11.2.3 1999/11/11 21:07:04 he Exp $
 
 TOP=		${.CURDIR}/..
 WARNS=1
@@ -74,6 +74,7 @@ HACKSRC=${TOP}/../../utils/libhack
 # turn off small gethostby* temporarily
 HACKOBJS:= getcap.o getgrent.o getnet.o getnetgr.o getpwent.o setlocale.o yplib.o
 
+release:
 
 clean cleandir distclean:
 	/bin/rm -f ${AUXCLEAN} *.core ${IMAGE} ${CBIN} ${CBIN}.mk ${CBIN}.cache *.o *.lo *.c
