@@ -37,7 +37,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)locore.s	7.3 (Berkeley) 5/13/91
- *	$Id: locore.s,v 1.55 1994/04/05 07:59:55 mycroft Exp $
+ *	$Id: locore.s,v 1.56 1994/04/05 15:08:46 mycroft Exp $
  */
 
 /*
@@ -1529,7 +1529,7 @@ swtch_exited:
 	movl	__default_ldt,%ecx
 	cmpl	_currentldt,%ecx
 	je	2f
-	lldt	__default_ldt
+	lldt	%ecx
 	movl	%ecx,_currentldt
 	jmp	2f
 1:	pushl	%esi
@@ -1566,7 +1566,17 @@ swtch_return:
 	popl	%ebx
 	ret
 
-	.globl	_proc0, _vmspace_free, _kernel_map, _kmem_free
+/*
+ * Used by cpu_exit() to switch to a safe stack and clean up the old process.
+ * This works by switching to proc0's context (which presumably can't exit, and
+ * is always stopped in swtch()), deallocating some resources for the old
+ * process, and then jumping into swtch() to resume proc0.  We make the state
+ * look exactly like we had swtch()ed back into proc0, so that swtch() can do
+ * the normal short-circuiting if possible.  The exception is we don't bother
+ * checking for a user-set LDT, and we set %fs and %gs to null selectors since
+ * we don't need them and it's faster.
+ */
+	.globl	_proc0,_vmspace_free,_kernel_map,_kmem_free
 ENTRY(swtch_exit)
 	movl	4(%esp),%edi		# old process
 	movl	$_proc0,%ebx
@@ -1581,15 +1591,14 @@ ENTRY(swtch_exit)
 	movl	PCB_CR3(%esi),%ecx
 	movl	%ecx,%cr3
 
-	/* Don't need to worry about ldt. */
+	/* Can't have a user-set ldt. */
 
 	/* Restore stack and segments. */
 	movl	PCB_ESP(%esi),%esp
 	movl	PCB_EBP(%esi),%ebp
-	movl	PCB_FS(%esi),%ecx	# XXX necessary?
-	movl	%cx,%fs			# XXX necessary?
-	movl	PCB_GS(%esi),%ecx	# XXX necessary?
-	movl	%cx,%gs			# XXX necessary?
+	xorl	%ecx,%ecx
+	movl	%cx,%fs
+	movl	%cx,%gs
 
 	/* Record new pcb. */
 	movl	%esi,_curpcb
