@@ -1,4 +1,4 @@
-/* $NetBSD: loadfile.c,v 1.19 2001/10/31 01:51:42 thorpej Exp $ */
+/* $NetBSD: loadfile.c,v 1.20 2001/10/31 17:20:50 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -107,13 +107,15 @@ loadfile(fname, marks, flags)
 #ifdef BOOT_ECOFF
 		struct ecoff_exechdr coff;
 #endif
-#ifdef BOOT_ELF
-		Elf_Ehdr elf;
+#ifdef BOOT_ELF32
+		Elf32_Ehdr elf32;
+#endif
+#ifdef BOOT_ELF64
+		Elf64_Ehdr elf64;
 #endif
 #ifdef BOOT_AOUT
 		struct exec aout;
 #endif
-		
 	} hdr;
 	ssize_t nr;
 	int fd, rval;
@@ -135,10 +137,16 @@ loadfile(fname, marks, flags)
 		rval = loadfile_coff(fd, &hdr.coff, marks, flags);
 	} else
 #endif
-#ifdef BOOT_ELF
-	if (memcmp(hdr.elf.e_ident, ELFMAG, SELFMAG) == 0 &&
-	    hdr.elf.e_ident[EI_CLASS] == ELFCLASS) {
-		rval = loadfile_elf(fd, &hdr.elf, marks, flags);
+#ifdef BOOT_ELF32
+	if (memcmp(hdr.elf32.e_ident, ELFMAG, SELFMAG) == 0 &&
+	    hdr.elf32.e_ident[EI_CLASS] == ELFCLASS32) {
+		rval = loadfile_elf32(fd, &hdr.elf32, marks, flags);
+	} else
+#endif
+#ifdef BOOT_ELF64
+	if (memcmp(hdr.elf64.e_ident, ELFMAG, SELFMAG) == 0 &&
+	    hdr.elf64.e_ident[EI_CLASS] == ELFCLASS64) {
+		rval = loadfile_elf64(fd, &hdr.elf64, marks, flags);
 	} else
 #endif
 #ifdef BOOT_AOUT

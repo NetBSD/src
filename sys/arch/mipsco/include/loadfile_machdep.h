@@ -1,4 +1,4 @@
-/*	$NetBSD: loadfile_machdep.h,v 1.1 2000/09/19 07:50:50 wdk Exp $	 */
+/*	$NetBSD: loadfile_machdep.h,v 1.2 2001/10/31 17:20:46 thorpej Exp $	 */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -40,8 +40,7 @@
 #define _MIPSCO_LOADFILE_MACHDEP_H_
 
 #define BOOT_ECOFF
-#define BOOT_ELF
-#define ELFSIZE 32
+#define BOOT_ELF32
 
 #define LOAD_KERNEL	(LOAD_ALL & ~LOAD_TEXTA)
 #define COUNT_KERNEL	(COUNT_ALL & ~COUNT_TEXTA)
