@@ -1,11 +1,13 @@
-This is GNU dc.  (Taken from the GNU bc 1.03 distribution.)
+This is GNU bc 1.04.
 
-ALL other files distributed with GNU dc are available in some form in
-/usr/src/gnu/usr.bin/bc.  (aka ../bc)
+The full distribution of GNU bc-1.04 may be found at any GNU software
+archive.  The master copy is at ftp://prep.ai.mit.edu/pub/gnu/bc-1.04.tar.gz.
 
-The files array.c, eval.c, misc.c, stack.c and string.c were renamed from
-their original distribution names as dc-xxxx.c.
+Not everything included in the full bc-1.04 distribution is included.
+The files included here are only the needed files for building bc on
+NetBSD.  Their location in the NetBSD tree are different than in the
+original bc-1.04 source tree.
 
-An original distribution of GNU bc/dc can be regenerated from the files
-in the directories bc and dc.  (It will require GNU autoconf 2.0 to 
-regenerate some files.)
+
+
+
