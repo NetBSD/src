@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.4 1996/02/22 10:10:44 leo Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.5 1996/03/14 21:41:04 leo Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman
@@ -254,13 +254,14 @@ mbattach(pdp, dp, auxp)
 	void *auxp;
 {
 	printf ("\n");
-	config_found(dp, "nvr"    , simple_devprint);
 	config_found(dp, "clock"  , simple_devprint);
 	config_found(dp, "grfbus" , simple_devprint);
 	config_found(dp, "kbd"    , simple_devprint);
 	config_found(dp, "fdc"    , simple_devprint);
 	config_found(dp, "zs"     , simple_devprint);
 	config_found(dp, "ncrscsi", simple_devprint);
+	config_found(dp, "nvr"    , simple_devprint);
+	config_found(dp, "*"      , simple_devprint);
 }
 
 int

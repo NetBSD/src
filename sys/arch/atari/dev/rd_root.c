@@ -1,7 +1,7 @@
-/*	$NetBSD: ramd.c,v 1.6 1996/01/07 22:02:06 thorpej Exp $	*/
+/*	$NetBSD: rd_root.c,v 1.1 1996/03/14 21:41:51 leo Exp $	*/
 
 /*
- * Copyright (c) 1995 Leo Weppelman.
+ * Copyright (c) 1996 Leo Weppelman.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -44,6 +44,8 @@
 #include <sys/disk.h>
 #include <sys/dkbad.h>
 
+#include <dev/ramdisk.h>
+
 /*
  * Misc. defines:
  */
@@ -54,8 +56,6 @@ struct   ramd_info {
 	u_long	ramd_size;  /* Size of disk in bytes			*/
 	u_long	ramd_flag;  /* see defs below				*/
 	dev_t	ramd_dev;   /* device to load from			*/
-	u_long	ramd_state; /* runtime state  see defs below		*/
-	caddr_t	ramd_addr;  /* Kernel virtual addr			*/
 };
 
 /*
@@ -64,29 +64,16 @@ struct   ramd_info {
 #define	RAMD_LOAD	0x01	/* Auto load when first opened	*/
 #define	RAMD_LCOMP	0x02	/* Input is compressed		*/
 
-/*
- * ramd_state:
- */
-#define	RAMD_ALLOC	0x01	/* Memory is allocated		*/
-#define	RAMD_OPEN	0x02	/* Ramdisk is open		*/
-#define	RAMD_INOPEN	0x04	/* Ramdisk is being opened	*/
-#define	RAMD_WANTED	0x08	/* Someone is waiting on struct	*/
-#define	RAMD_LOADED	0x10	/* Ramdisk is properly loaded	*/
-
 struct ramd_info rd_info[RAMD_NDEV] = {
     {
 	1105920,		/*	1Mb in 2160 sectors		*/
 	RAMD_LOAD,		/* auto-load this device		*/
 	MAKEDISKDEV(2, 0, 1),	/* XXX: This is crap! (720Kb flop)	*/
-	0,			/* Will be set at runtime		*/
-	NULL 			/* Will be set at runtime		*/
     },
     {
 	1474560,		/*	1.44Mb in 2880 sectors		*/
 	RAMD_LOAD,		/* auto-load this device		*/
 	MAKEDISKDEV(2, 0, 1),	/* XXX: This is crap! (720Kb flop)	*/
-	0,			/* Will be set at runtime		*/
-	NULL 			/* Will be set at runtime		*/
     }
 };
 
@@ -98,234 +85,93 @@ struct read_info {
     caddr_t	ebufp;		/* absolute maximum for bufp		*/
     int		chunk;		/* chunk size on input medium		*/
     int		media_sz;	/* size of input medium			*/
-    void	(*strat)();	/* strategy function for read		*/
+    void	(*strat)(struct buf *);	/* strategy function for read	*/
 };
 
-static	struct disk ramd_disks[RAMD_NDEV];	/* XXX Ick. */
 
-/*
- * Autoconfig stuff....
- */
-static int	ramdmatch __P((struct device *, struct cfdata *, void *));
-static int	ramdprint __P((void *, char *));
-static void	ramdattach __P((struct device *, struct device *, void *));
-
-struct cfdriver ramdcd = {
-	NULL, "rd", (cfmatch_t)ramdmatch, ramdattach, DV_DULL,
-	sizeof(struct device), NULL, 0 };
-
-void	rdstrategy __P((struct buf *));
-
-struct	dkdriver ramddkdriver = { rdstrategy };
-
-static int
-ramdmatch(pdp, cfp, auxp)
-struct device	*pdp;
-struct cfdata	*cfp;
-void		*auxp;
-{
-	if(strcmp("rd", auxp) || (cfp->cf_unit >= RAMD_NDEV))
-		return(0);
-	return(1);
-}
-
-static void
-ramdattach(pdp, dp, auxp)
-struct device	*pdp, *dp;
-void		*auxp;
-{
-	int	i;
-	struct	disk *diskp;
-
-	/*
-	 * XXX It's not really clear to me _exactly_ what's going
-	 * on here, so this might need to be adjusted.  --thorpej
-	 */
-
-	for(i = 0; i < RAMD_NDEV; i++) {
-		/*
-		 * Initialize and attach the disk structure.
-		 */
-		diskp = &ramd_disks[i];
-		bzero(diskp, sizeof(struct disk));
-		if ((diskp->dk_name = malloc(8, M_DEVBUF, M_NOWAIT)) == NULL)
-			panic("ramdattach: can't allocate space for name");
-		bzero(diskp->dk_name, 8);
-		sprintf(diskp->dk_name, "rd%d", i);
-		diskp->dk_driver = &ramddkdriver;
-		disk_attach(diskp);
-
-		config_found(dp, (void*)i, ramdprint);
-	}
-}
-
-static int
-ramdprint(auxp, pnp)
-void	*auxp;
-char	*pnp;
-{
-	return(UNCONF);
-}
-
-static int  loaddisk __P((struct  ramd_info *, struct proc *));
+static int  loaddisk __P((struct  rd_conf *, dev_t ld_dev, struct proc *));
 static int  ramd_norm_read __P((struct read_info *));
 static int  cpy_uncompressed __P((caddr_t, int, struct read_info *));
 static int  rd_compressed __P((caddr_t, int, struct read_info *));
 
+/*
+ * This is called during autoconfig.
+ */
 int
-rdopen(dev, flags, devtype, p)
-dev_t		dev;
-int		flags, devtype;
-struct proc	*p;
+rd_match_hook(parent, self, aux)
+	struct device	*parent;
+	void	*self;
+	void	*aux;
+{
+	if(strcmp("rd", aux) && strcmp("*", aux))
+		return(0);
+	return(1);
+}
+
+void
+rd_attach_hook(unit, rd)
+int		unit;
+struct rd_conf	*rd;
+{
+	extern int	atari_realconfig;
+
+	if (atari_realconfig && (unit < RAMD_NDEV) && rd_info[unit].ramd_flag) {
+		printf (":%sauto-load on open. Size %d bytes.", 
+		    rd_info[unit].ramd_flag & RAMD_LCOMP ? " decompress/" : "",
+		    rd_info[unit].ramd_size);
+		rd->rd_type = RD_UNCONFIGURED; /* Paranoia... */
+	}
+}
+
+void
+rd_open_hook(unit, rd)
+int		unit;
+struct rd_conf	*rd;
 {
 	struct ramd_info *ri;
 	int		 s;
 	int		 error = 0;
 
-	if(DISKUNIT(dev) >= RAMD_NDEV)
-		return(ENXIO);
+	if(unit >= RAMD_NDEV)
+		return;
 
-	ri = &rd_info[DISKUNIT(dev)];
-	if(ri->ramd_state & RAMD_OPEN)
-		return(0);
-
-	/*
-	 * If someone is busy opening, wait for it to complete.
-	 */
-	s = splbio();
-	while(ri->ramd_state & RAMD_INOPEN) {
-		ri->ramd_state |= RAMD_WANTED;
-		tsleep((caddr_t)ri, PRIBIO, "rdopen", 0);
-	}
-	ri->ramd_state |= RAMD_INOPEN;
-	splx(s);
-
-	if(!(ri->ramd_state & RAMD_ALLOC)) {
-		ri->ramd_addr = malloc(ri->ramd_size, M_DEVBUF, M_WAITOK);
-		if(ri->ramd_addr == NULL) {
-			error = ENXIO;
-			goto done;
+	ri = &rd_info[unit];
+	if (rd->rd_type != RD_UNCONFIGURED)
+		return;	/* Only configure once */
+	rd->rd_addr = malloc(ri->ramd_size, M_DEVBUF, M_WAITOK);
+	rd->rd_size = ri->ramd_size;
+	if(rd->rd_addr == NULL)
+		return;
+	if(ri->ramd_flag & RAMD_LOAD) {
+		if (loaddisk(rd, ri->ramd_dev, curproc)) {
+			free(rd->rd_addr, M_DEVBUF);
+			rd->rd_addr = NULL;
+			return;
 		}
-		ri->ramd_state |= RAMD_ALLOC;
 	}
-	if((ri->ramd_flag & RAMD_LOAD) && !(ri->ramd_state & RAMD_LOADED)) {
-		error = loaddisk(ri, p);
-		if(!error)
-			ri->ramd_state |= RAMD_LOADED;
-	}
-done:
-	ri->ramd_state &= ~RAMD_INOPEN;
-	if(ri->ramd_state & RAMD_WANTED) {
-		ri->ramd_state &= ~RAMD_WANTED;
-		wakeup((caddr_t)ri);
-	}
-	return(error);
-}
-
-int
-rdclose(dev, flags, devtype, p)
-dev_t		dev;
-int		flags, devtype;
-struct proc	*p;
-{
-	return(0);
-}
-
-int
-rdioctl(dev, cmd, addr, flag, p)
-dev_t		dev;
-u_long		cmd;
-int		flag;
-caddr_t		addr;
-struct proc	*p;
-{
-	return(ENOTTY);
-}
-
-/*
- * no dumps to ram disks thank you.
- */
-int
-rdsize(dev)
-dev_t	dev;
-{
-   return(-1);
-}
-
-void
-rdstrategy(bp)
-struct buf *bp;
-{
-	struct ramd_info	*ri;
-	long			maxsz, sz;
-	char			*datap;
-
-	ri = &rd_info[DISKUNIT(bp->b_dev)];
-
-	maxsz = ri->ramd_size / DEV_BSIZE;
-	sz = (bp->b_bcount + DEV_BSIZE - 1) / DEV_BSIZE;
-	if (bp->b_blkno < 0 || bp->b_blkno + sz > maxsz) {
-		if((bp->b_blkno == maxsz) && (bp->b_flags & B_READ)) {
-			/* Hitting EOF */
-			bp->b_resid = bp->b_bcount;
-			goto done;
-		}
-		sz = maxsz - bp->b_blkno;
-		if((sz <= 0) || (bp->b_blkno < 0)) {
-			bp->b_error = EINVAL;
-			bp->b_flags |= B_ERROR;
-			goto done;
-		}
-		bp->b_bcount = sz * DEV_BSIZE;
-	}
-	datap = (char*)((u_long)ri->ramd_addr + bp->b_blkno * DEV_BSIZE);
-	if(bp->b_flags & B_READ)
-		bcopy(datap, bp->b_data, bp->b_bcount);
-	else bcopy(bp->b_data, datap, bp->b_bcount);
-	bp->b_resid = 0;
-	biodone(bp);
-	return;
-
-done:
-	bp->b_resid = bp->b_bcount;
-	biodone(bp);
-}
-
-int
-rdread(dev, uio)
-dev_t		dev;
-struct uio	*uio;
-{
-   return (physio(rdstrategy, NULL, dev, B_READ, minphys, uio));
-}
-
-int
-rdwrite(dev, uio)
-dev_t		dev;
-struct uio	*uio;
-{
-   return (physio(rdstrategy, NULL, dev, B_WRITE, minphys, uio));
+	rd->rd_type = RD_KMEM_ALLOCATED;
 }
 
 static int
-loaddisk(ri, proc)
-struct ramd_info	*ri;
+loaddisk(rd, ld_dev, proc)
+struct rd_conf		*rd;
+dev_t			ld_dev;
 struct proc		*proc;
 {
 	struct buf		buf;
 	int			error;
-	struct bdevsw		*bdp = &bdevsw[major(ri->ramd_dev)];
+	struct bdevsw		*bdp = &bdevsw[major(ld_dev)];
 	struct disklabel	dl;
 	struct read_info	rs;
 
 	/*
-	 * Initialize out buffer header:
+	 * Initialize our buffer header:
 	 */
 	buf.b_actf  = NULL;
 	buf.b_rcred = buf.b_wcred = proc->p_ucred;
 	buf.b_vnbufs.le_next = NOLIST;
 	buf.b_flags = B_BUSY;
-	buf.b_dev   = ri->ramd_dev;
+	buf.b_dev   = ld_dev;
 	buf.b_error = 0;
 	buf.b_proc  = proc;
 
@@ -333,33 +179,33 @@ struct proc		*proc;
 	 * Setup read_info:
 	 */
 	rs.bp       = &buf;
-	rs.nbytes   = ri->ramd_size;
+	rs.nbytes   = rd->rd_size;
 	rs.offset   = 0;
-	rs.bufp     = ri->ramd_addr;
-	rs.ebufp    = ri->ramd_addr + ri->ramd_size;
+	rs.bufp     = rd->rd_addr;
+	rs.ebufp    = rd->rd_addr + rd->rd_size;
 	rs.chunk    = RAMD_CHUNK;
-	rs.media_sz = ri->ramd_size;
+	rs.media_sz = rd->rd_size;
 	rs.strat    = bdp->d_strategy;
 
 	/*
 	 * Open device and try to get some statistics.
 	 */
-	if(error = bdp->d_open(ri->ramd_dev,FREAD | FNONBLOCK, 0, proc))
+	if(error = bdp->d_open(ld_dev, FREAD | FNONBLOCK, 0, proc))
 		return(error);
-	if(bdp->d_ioctl(ri->ramd_dev,DIOCGDINFO,(caddr_t)&dl,FREAD,proc) == 0) {
+	if(bdp->d_ioctl(ld_dev, DIOCGDINFO, (caddr_t)&dl, FREAD, proc) == 0) {
 		/* Read on a cylinder basis */
 		rs.chunk    = dl.d_secsize * dl.d_secpercyl;
 		rs.media_sz = dl.d_secperunit * dl.d_secsize;
 	}
 
-#ifdef notyet
+#ifdef support_compression
 	if(ri->ramd_flag & RAMD_LCOMP)
 		error = decompress(cpy_uncompressed, rd_compressed, &rs);
 	else
-#endif /* notyet */
+#endif /* support_compression */
 		error = ramd_norm_read(&rs);
 
-	bdp->d_close(ri->ramd_dev,FREAD | FNONBLOCK, 0, proc);
+	bdp->d_close(ld_dev,FREAD | FNONBLOCK, 0, proc);
 	return(error);
 }
 
@@ -417,11 +263,10 @@ struct read_info	*rsp;
 		}
 	}
 	printf("\n");
-	s = splbio();
-	splx(s);
 	return(error);
 }
 
+#ifdef support_compression
 /*
  * Functions supporting uncompression:
  */
@@ -493,6 +338,7 @@ int			nbyte;
 		if(error || !done)
 			break;
 
+		if((rsp->offset == rsp->media_sz) && (nbyte != 0)) {
 		if(rsp->offset == rsp->media_sz) {
 			printf("\nInsert next media and hit any key...");
 			if(cngetc() != '\n')
@@ -504,3 +350,4 @@ int			nbyte;
 	splx(s);
 	return(nread);
 }
+#endif /* support_compression */

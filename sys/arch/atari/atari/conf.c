@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.12 1996/03/14 21:24:40 christos Exp $	*/
+/*	$NetBSD: conf.c,v 1.13 1996/03/14 21:41:06 leo Exp $	*/
 
 /*
  * Copyright (c) 1991 The Regents of the University of California.
@@ -62,7 +62,7 @@ int	lkmenodev();
 
 #include "vnd.h"
 bdev_decl(vnd);
-#include "ramd.h"
+#include "rd.h"
 bdev_decl(rd);
 #include "fd.h"
 #define	fdopen	Fdopen	/* conflicts with fdopen() in kern_descrip.c */
@@ -81,7 +81,7 @@ bdev_decl(ccd);
 struct bdevsw	bdevsw[] =
 {
 	bdev_disk_init(NVND,vnd),	/* 0: vnode disk driver */
-	bdev_rd_init(NRAMD,rd),		/* 1: ram disk - for install disk */
+	bdev_rd_init(NRD,rd),		/* 1: ram disk - for install disk */
 #define	fdopen	Fdopen	/* conflicts with fdopen() in kern_descrip.c */
 	bdev_disk_init(NFD,fd),		/* 2: floppy disk */
 #undef	fdopen
@@ -232,6 +232,7 @@ dev_t	swapdev = makedev(3, 0);
 /*
  * Returns true if dev is /dev/mem or /dev/kmem.
  */
+int
 iskmemdev(dev)
 	dev_t dev;
 {
@@ -242,6 +243,7 @@ iskmemdev(dev)
 /*
  * Returns true if dev is /dev/zero.
  */
+int
 iszerodev(dev)
 	dev_t dev;
 {
