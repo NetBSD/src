@@ -1,4 +1,4 @@
-#	$NetBSD: DUMMY,v 1.11 1998/06/26 01:54:05 lukem Exp $
+#	$NetBSD: DUMMY,v 1.12 1998/09/02 19:22:13 matthias Exp $
 #
 # DUMMY: Matthias Pfaller's second pc532
 #
@@ -7,15 +7,15 @@ include	"arch/pc532/conf/std.pc532"
 
 maxusers	8			# estimated number of users
 
-makeoptions DEBUG="-g"
+makeoptions	DEBUG="-g" 
+makeoptions	COPTS="-O1 -msb -mrtd"
+options 	MRTD
+
 #options 	DDB			# kernel debugger; recommended
 #options 	DDB_HISTORY_SIZE=100	# enable history editing in DDB
 options 	KGDB			# remote gdb kernel debugger
 options 	KGDBDEV=0x0802		#	over tty02
 options 	KGDBRATE=9600		#	with 9600 baud
-
-options		UVM			# new virtual memory subsystem
-options		PMAP_NEW		# new pmap module
 
 #options 	DIAGNOSTIC		# internal consistency checking
 options 	KTRACE			# system call tracing, a la ktrace(1)
@@ -36,8 +36,8 @@ options 	COMPAT_43		# and 4.3BSD
 
 # file system options
 file-system 	FFS			# Berkeley fast file system
-file-system 	UNION
-file-system 	NULLFS
+#file-system 	UNION
+#file-system 	NULLFS
 file-system 	NFS			# Network File System client
 
 #options 	QUOTA			# file system quotas
@@ -49,7 +49,7 @@ options 	INET			# IP + ICMP + TCP + UDP
 #options 	ISO,TPIP		# OSI
 #options 	EON			# OSI tunneling over IP
 #options 	CCITT,LLC,HDLC		# X.25
-options 	PPP_BSDCOMP,PPP_DEFLATE	# compression for PPP
+#options 	PPP_BSDCOMP,PPP_DEFLATE	# compression for PPP
 
 # pc532 specific options
 options 	CONSOLE_SPEED=B9600	# default console baud rate
@@ -72,7 +72,7 @@ pseudo-device	pty 16			# pseudo-terminals
 pseudo-device	loop 1			# loopback network
 pseudo-device	vnd 4			# vnode  devices
 pseudo-device	bpfilter 8		# packet filter
-pseudo-device	ccd 1
-pseudo-device	sl 1			# compressed SLIP
-pseudo-device	ppp 1			# Point-to-Point Protocol
-pseudo-device	tun 1			# ip tunneling
+#pseudo-device	ccd 1
+#pseudo-device	sl 1			# compressed SLIP
+#pseudo-device	ppp 1			# Point-to-Point Protocol
+#pseudo-device	tun 1			# ip tunneling

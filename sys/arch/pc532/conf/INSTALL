@@ -1,10 +1,13 @@
-#	$NetBSD: INSTALL,v 1.15 1998/06/26 01:54:05 lukem Exp $
+#	$NetBSD: INSTALL,v 1.16 1998/09/02 19:22:13 matthias Exp $
 #
 # INSTALL -- install kernel
 #
 #
 
 include	"arch/pc532/conf/std.pc532"
+
+# don't inline, save space
+makeoptions	COPTS+="-O1"
 
 # Enable the hooks used for initializing the root memory-disk.
 options 	MEMORY_DISK_HOOKS

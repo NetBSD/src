@@ -1,4 +1,5 @@
-#	$NetBSD: KLONDIKE,v 1.16 1998/06/26 01:54:05 lukem Exp $
+
+#	$NetBSD: KLONDIKE,v 1.17 1998/09/02 19:22:14 matthias Exp $
 #
 # KLONDIKE: Matthias Pfaller's pc532
 #
@@ -7,9 +8,13 @@ include	"arch/pc532/conf/std.pc532"
 
 maxusers	8			# estimated number of users
 
+#makeoptions	COPTS="-O2 -msb -mrtd"
+#options 	MRTD
+
 #makeoptions	DEBUG="-g"
 options 	DDB			# kernel debugger; recommended
 #options 	DDB_HISTORY_SIZE=100	# enable history editing in DDB
+
 #options 	DIAGNOSTIC		# internal consistency checking
 options 	KTRACE			# system call tracing, a la ktrace(1)
 
@@ -19,6 +24,7 @@ options 	KTRACE			# system call tracing, a la ktrace(1)
 options 	LKM			# loadable kernel modules
 options 	INSECURE		# allow lkms in multiuser mode
 options 	PFIL_HOOKS		# pfil(9) packet filter hooks
+options 	SCSIVERBOSE		# verbose SCSI error messages
 
 # compatibility options
 options 	COMPAT_10		# NetBSD 1.0,
