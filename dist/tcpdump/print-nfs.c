@@ -1,4 +1,4 @@
-/*	$NetBSD: print-nfs.c,v 1.1.1.2 2002/02/18 09:08:25 itojun Exp $	*/
+/*	$NetBSD: print-nfs.c,v 1.1.1.3 2002/05/31 09:28:34 itojun Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -23,7 +23,7 @@
 
 #ifndef lint
 static const char rcsid[] =
-    "@(#) Header: /tcpdump/master/tcpdump/print-nfs.c,v 1.89 2001/07/08 08:01:43 itojun Exp (LBL)";
+    "@(#) Header: /tcpdump/master/tcpdump/print-nfs.c,v 1.91 2002/04/24 06:27:06 guy Exp (LBL)";
 #endif
 
 #ifdef HAVE_CONFIG_H
@@ -758,9 +758,10 @@ nfs_printfh(register const u_int32_t *dp, const u_int len)
 {
 	my_fsid fsid;
 	ino_t ino;
-	char *sfsname = NULL;
+	const char *sfsname = NULL;
+	char *spacep;
 
-	Parse_fh((caddr_t*)dp, len, &fsid, &ino, NULL, &sfsname, 0);
+	Parse_fh((const u_char *)dp, len, &fsid, &ino, NULL, &sfsname, 0);
 
 	if (sfsname) {
 		/* file system ID is ASCII, not numeric, for this server OS */
@@ -770,9 +771,9 @@ nfs_printfh(register const u_int32_t *dp, const u_int len)
 		strncpy(temp, sfsname, NFSX_V3FHMAX);
 		temp[sizeof(temp) - 1] = '\0';
 		/* Remove trailing spaces */
-		sfsname = strchr(temp, ' ');
-		if (sfsname)
-			*sfsname = 0;
+		spacep = strchr(temp, ' ');
+		if (spacep)
+			*spacep = '\0';
 
 		(void)printf(" fh %s/", temp);
 	} else {

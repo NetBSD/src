@@ -1,5 +1,5 @@
-.\"	$NetBSD: tcpdump.8,v 1.1.1.2 2002/02/18 09:09:18 itojun Exp $
-.\" @(#) Header: /tcpdump/master/tcpdump/tcpdump.1,v 1.114 2002/01/04 07:37:49 guy Exp (LBL)
+.\"	$NetBSD: tcpdump.8,v 1.1.1.3 2002/05/31 09:27:46 itojun Exp $
+.\" @(#) Header: /tcpdump/master/tcpdump/tcpdump.1,v 1.120 2002/05/17 09:57:50 guy Exp (LBL)
 .\"
 .\" Copyright (c) 1987, 1988, 1989, 1990, 1991, 1992, 1994, 1995, 1996, 1997
 .\"	The Regents of the University of California.  All rights reserved.
@@ -28,7 +28,7 @@ tcpdump \- dump traffic on a network
 .na
 .B tcpdump
 [
-.B \-adeflnNOpqRStuvxX
+.B \-aAdeflnNOpqRStuvxX
 ] [
 .B \-c
 .I count
@@ -153,7 +153,9 @@ to capture in promiscuous mode; on those versions of Solaris, you must
 be root, or
 .I tcpdump
 must be installed setuid to root, in order to capture in promiscuous
-mode.
+mode.  Note that, on many (perhaps all) interfaces, if you don't capture
+in promiscuous mode, you will not see any outgoing packets, so a capture
+not done in promiscuous mode may not be very useful.
 .TP
 .B Under HP-UX with DLPI:
 You must be root or
@@ -170,11 +172,22 @@ You must be root or
 .I tcpdump
 must be installed setuid to root.
 .TP
-.B Under Ultrix and Digital UNIX:
-Once the super-user has enabled promiscuous-mode operation using
-.IR pfconfig (8),
-any user may capture network traffic with
+.B Under Ultrix and Digital UNIX/Tru64 UNIX:
+Any user may capture network traffic with
 .IR tcpdump .
+However, no user (not even the super-user) can capture in promiscuous
+mode on an interface unless the super-user has enabled promiscuous-mode
+operation on that interface using
+.IR pfconfig (8),
+and no user (not even the super-user) can capture unicast traffic
+received by or sent by the machine on an interface unless the super-user
+has enabled copy-all-mode operation on that interface using
+.IR pfconfig ,
+so
+.I useful
+packet capture on an interface probably requires that either
+promiscuous-mode or copy-all-mode operation, or both modes of
+operation, be enabled on that interface.
 .TP
 .B Under BSD:
 You must have read access to
@@ -183,6 +196,10 @@ You must have read access to
 Reading a saved packet file doesn't require special privileges.
 .SH OPTIONS
 .TP
+.TP
+.B \-A
+Print each packet (minus its link level header) in ASCII.  Handy for
+capturing web pages.
 .B \-a
 Attempt to convert network and broadcast addresses to names.
 .TP
@@ -355,6 +372,7 @@ on each dump line.
 .TP
 .B \-tttt
 Print a timestamp in default format proceeded by date on each dump line.
+.TP
 .B \-u
 Print undecoded NFS handles.
 .TP
@@ -773,9 +791,11 @@ data inside the packet, use the following syntax:
 \fIproto\fB [ \fIexpr\fB : \fIsize\fB ]\fR
 .fi
 .in -.5i
-\fIProto\fR is one of \fBether, fddi, tr,
+\fIProto\fR is one of \fBether, fddi, tr, ppp, slip, link,
 ip, arp, rarp, tcp, udp, icmp\fR or \fBip6\fR, and
 indicates the protocol layer for the index operation.
+(\fBether, fddi, tr, ppp, slip\fR and \fBlink\fR all refer to the link
+layer.)
 Note that \fItcp, udp\fR and other upper-layer protocol types only
 apply to IPv4, not IPv6 (this will be fixed in the future).
 The byte offset, relative to the indicated protocol layer, is
@@ -1895,7 +1915,9 @@ will be copied from the kernel (the 2.0[.x] packet capture mechanism, if
 asked to copy only part of a packet to userland, will not report the
 true length of the packet; this would cause most IP packets to get an
 error from
-.BR tcpdump ).
+.BR tcpdump );
+.IP
+capturing on some PPP devices won't work correctly.
 .LP
 We recommend that you upgrade to a 2.2 or later kernel.
 .LP

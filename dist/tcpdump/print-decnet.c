@@ -1,4 +1,4 @@
-/*	$NetBSD: print-decnet.c,v 1.1.1.2 2002/02/18 09:07:57 itojun Exp $	*/
+/*	$NetBSD: print-decnet.c,v 1.1.1.3 2002/05/31 09:27:55 itojun Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994, 1995, 1996, 1997
@@ -23,7 +23,7 @@
 
 #ifndef lint
 static const char rcsid[] =
-    "@(#) Header: /tcpdump/master/tcpdump/print-decnet.c,v 1.33 2001/09/17 21:57:59 fenner Exp (LBL)";
+    "@(#) Header: /tcpdump/master/tcpdump/print-decnet.c,v 1.34 2002/04/07 02:09:05 guy Exp (LBL)";
 #endif
 
 #ifdef HAVE_CONFIG_H
@@ -37,7 +37,7 @@ static const char rcsid[] =
 struct mbuf;
 struct rtentry;
 
-#ifdef	HAVE_LIBDNET
+#ifdef HAVE_NETDNET_DNETDB_H
 #include <netdnet/dnetdb.h>
 #endif
 
@@ -65,7 +65,7 @@ static void print_reason(int);
 static void pdata(u_char *, int);
 #endif
 
-#ifdef	HAVE_LIBDNET
+#ifndef HAVE_NETDNET_DNETDB_H_DNET_HTOA
 extern char *dnet_htoa(struct dn_naddr *);
 #endif
 
@@ -750,7 +750,7 @@ dnnum_string(u_short dnaddr)
 const char *
 dnname_string(u_short dnaddr)
 {
-#ifdef	HAVE_LIBDNET
+#ifdef HAVE_DNET_HTOA
 	struct dn_naddr dna;
 
 	dna.a_len = sizeof(short);

@@ -1,4 +1,4 @@
-/*	$NetBSD: print-ppp.c,v 1.1.1.2 2002/02/18 09:08:34 itojun Exp $	*/
+/*	$NetBSD: print-ppp.c,v 1.1.1.3 2002/05/31 09:28:11 itojun Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993, 1994, 1995, 1996, 1997
@@ -33,7 +33,7 @@
 
 #ifndef lint
 static const char rcsid[] =
-    "@(#) Header: /tcpdump/master/tcpdump/print-ppp.c,v 1.64 2001/09/09 02:04:19 guy Exp (LBL)";
+    "@(#) Header: /tcpdump/master/tcpdump/print-ppp.c,v 1.66 2002/05/29 10:32:02 guy Exp (LBL)";
 #endif
 
 #ifdef HAVE_CONFIG_H
@@ -992,11 +992,12 @@ handle_ppp(u_int proto, const u_char *p, int length)
 }
 
 /* Standard PPP printer */
-void
+u_int
 ppp_print(register const u_char *p, u_int length)
 {
 	u_int proto;
 	u_int full_length = length;
+	u_int hdr_len = 0;
 
 	/*
 	 * Here, we assume that p points to the Address and Control
@@ -1007,6 +1008,7 @@ ppp_print(register const u_char *p, u_int length)
 	if (*p == PPP_ADDRESS && *(p + 1) == PPP_CONTROL) {
 		p += 2;			/* ACFC not used */
 		length -= 2;
+		hdr_len += 2;
 	}
 
 	if (length < 2)
@@ -1015,19 +1017,21 @@ ppp_print(register const u_char *p, u_int length)
 		proto = *p;		/* PFC is used */
 		p++;
 		length--;
+		hdr_len++;
 	} else {
 		proto = EXTRACT_16BITS(p);
 		p += 2;
 		length -= 2;
+		hdr_len += 2;
 	}
 
-	if (eflag)
-		printf("%s %d: ", ppp_protoname(proto), full_length);
+	printf("%s %d: ", ppp_protoname(proto), full_length);
 
 	handle_ppp(proto, p, length);
-	return;
+	return (hdr_len);
 trunc:
 	printf("[|ppp]");
+	return (0);
 }
 
 
@@ -1156,8 +1160,7 @@ ppp_hdlc_if_print(u_char *user, const struct pcap_pkthdr *h,
 		proto = EXTRACT_16BITS(p);
 		p += 2;
 		length -= 2;
-		if (eflag)
-			printf("%s: ", ppp_protoname(proto));
+		printf("%s: ", ppp_protoname(proto));
 
 		handle_ppp(proto, p, length);
 		break;

@@ -1,4 +1,4 @@
-/*	$NetBSD: print-esp.c,v 1.1.1.2 2002/02/18 09:08:00 itojun Exp $	*/
+/*	$NetBSD: print-esp.c,v 1.1.1.3 2002/05/31 09:28:29 itojun Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994
@@ -23,7 +23,7 @@
 
 #ifndef lint
 static const char rcsid[] =
-    "@(#) Header: /tcpdump/master/tcpdump/print-esp.c,v 1.20 2002/01/21 11:39:59 mcr Exp (LBL)";
+    "@(#) Header: /tcpdump/master/tcpdump/print-esp.c,v 1.24 2002/04/07 02:16:03 guy Exp (LBL)";
 #endif
 
 #ifdef HAVE_CONFIG_H
@@ -35,16 +35,17 @@ static const char rcsid[] =
 #include <sys/time.h>
 #include <sys/types.h>
 #include <sys/socket.h>
+#include <stdlib.h>
 
 #include <netinet/in.h>
 
 #ifdef HAVE_LIBCRYPTO
 #include <openssl/des.h>
 #include <openssl/blowfish.h>
-#ifdef HAVE_RC5_H
+#ifdef HAVE_OPENSSL_RC5_H
 #include <openssl/rc5.h>
 #endif
-#ifdef HAVE_CAST_H
+#ifdef HAVE_OPENSSL_CAST_H
 #include <openssl/cast.h>
 #endif
 #endif
@@ -119,7 +120,7 @@ static int hex2byte(char *hexstring)
 }
 
 
-void esp_print_decodesecret()
+static void esp_print_decodesecret(void)
 {
 	char *colon;
 	int   len, i;
@@ -194,7 +195,9 @@ esp_print(register const u_char *bp, register const u_char *bp2,
 	char *secret;
 	int ivlen = 0;
 	u_char *ivoff;
+#ifdef HAVE_LIBCRYPTO
 	u_char *p;
+#endif
 	
 	esp = (struct esp *)bp;
 	spi = (u_int32_t)ntohl(esp->esp_spi);
@@ -358,8 +361,8 @@ esp_print(register const u_char *bp, register const u_char *bp2,
 
 		des_check_key = 1;
 		des_set_odd_parity((void *)secret);
-		des_set_odd_parity((void *)secret+8);
-		des_set_odd_parity((void *)secret+16);
+		des_set_odd_parity((void *)(secret + 8));
+		des_set_odd_parity((void *)(secret + 16));
 		if(des_set_key((void *)secret, s1) != 0) {
 		  printf("failed to schedule key 1\n");
 		}

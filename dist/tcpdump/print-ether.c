@@ -1,4 +1,4 @@
-/*	$NetBSD: print-ether.c,v 1.1.1.2 2002/02/18 09:08:01 itojun Exp $	*/
+/*	$NetBSD: print-ether.c,v 1.1.1.3 2002/05/31 09:28:41 itojun Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997, 2000
@@ -22,7 +22,7 @@
  */
 #ifndef lint
 static const char rcsid[] =
-    "@(#) Header: /tcpdump/master/tcpdump/print-ether.c,v 1.65 2001/07/04 22:03:14 fenner Exp (LBL)";
+    "@(#) Header: /tcpdump/master/tcpdump/print-ether.c,v 1.68 2002/05/29 10:06:26 guy Exp (LBL)";
 #endif
 
 #ifdef HAVE_CONFIG_H
@@ -51,7 +51,7 @@ const u_char *packetp;
 const u_char *snapend;
 
 static inline void
-ether_print(register const u_char *bp, u_int length)
+ether_hdr_print(register const u_char *bp, u_int length)
 {
 	register const struct ether_header *ep;
 
@@ -69,31 +69,20 @@ ether_print(register const u_char *bp, u_int length)
 			     length);
 }
 
-/*
- * This is the top level routine of the printer.  'p' is the points
- * to the ether header of the packet, 'h->tv' is the timestamp,
- * 'h->length' is the length of the packet off the wire, and 'h->caplen'
- * is the number of bytes actually captured.
- */
 void
-ether_if_print(u_char *user, const struct pcap_pkthdr *h, const u_char *p)
+ether_print(const u_char *p, u_int length, u_int caplen)
 {
-	u_int caplen = h->caplen;
-	u_int length = h->len;
 	struct ether_header *ep;
 	u_short ether_type;
 	u_short extracted_ethertype;
 
-	++infodelay;
-	ts_print(&h->ts);
-
 	if (caplen < ETHER_HDRLEN) {
 		printf("[|ether]");
-		goto out;
+		return;
 	}
 
 	if (eflag)
-		ether_print(p, length);
+		ether_hdr_print(p, length);
 
 	/*
 	 * Some printers want to get back at the ethernet addresses,
@@ -120,7 +109,7 @@ ether_if_print(u_char *user, const struct pcap_pkthdr *h, const u_char *p)
 		    &extracted_ethertype) == 0) {
 			/* ether_type not known, print raw packet */
 			if (!eflag)
-				ether_print((u_char *)ep, length + ETHER_HDRLEN);
+				ether_hdr_print((u_char *)ep, length + ETHER_HDRLEN);
 			if (extracted_ethertype) {
 				printf("(LLC %s) ",
 			       etherproto_string(htons(extracted_ethertype)));
@@ -132,14 +121,38 @@ ether_if_print(u_char *user, const struct pcap_pkthdr *h, const u_char *p)
 	    &extracted_ethertype) == 0) {
 		/* ether_type not known, print raw packet */
 		if (!eflag)
-			ether_print((u_char *)ep, length + ETHER_HDRLEN);
+			ether_hdr_print((u_char *)ep, length + ETHER_HDRLEN);
 		if (!xflag && !qflag)
 			default_print(p, caplen);
 	}
-	if (xflag)
-		default_print(p, caplen);
- out:
+}
+
+/*
+ * This is the top level routine of the printer.  'p' is the points
+ * to the ether header of the packet, 'h->tv' is the timestamp,
+ * 'h->length' is the length of the packet off the wire, and 'h->caplen'
+ * is the number of bytes actually captured.
+ */
+void
+ether_if_print(u_char *user, const struct pcap_pkthdr *h, const u_char *p)
+{
+	u_int caplen = h->caplen;
+	u_int length = h->len;
+
+	++infodelay;
+	ts_print(&h->ts);
+
+	ether_print(p, length, caplen);
+
+	/*
+	 * If "-x" was specified, print stuff past the Ethernet header,
+	 * if there's anything to print.
+	 */
+	if (xflag && caplen > ETHER_HDRLEN)
+		default_print(p + ETHER_HDRLEN, caplen - ETHER_HDRLEN);
+
 	putchar('\n');
+
 	--infodelay;
 	if (infoprint)
 		info(0);
@@ -196,6 +209,7 @@ ether_encap_print(u_short ethertype, const u_char *p,
 		return (1);
 
 	case ETHERTYPE_IPX:
+		printf("(NOV-ETHII) ");
 		ipx_print(p, length);
 		return (1);
 
@@ -217,7 +231,7 @@ ether_encap_print(u_short ethertype, const u_char *p,
 		    extracted_ethertype) == 0) {
 			/* ether_type not known, print raw packet */
 			if (!eflag)
-				ether_print(p - 18, length + 4);
+				ether_hdr_print(p - 18, length + 4);
 			if (*extracted_ethertype) {
 				printf("(LLC %s) ",
 			       etherproto_string(htons(*extracted_ethertype)));

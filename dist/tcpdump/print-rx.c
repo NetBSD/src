@@ -1,4 +1,4 @@
-/*	$NetBSD: print-rx.c,v 1.1.1.2 2002/02/18 09:08:45 itojun Exp $	*/
+/*	$NetBSD: print-rx.c,v 1.1.1.3 2002/05/31 09:27:58 itojun Exp $	*/
 
 /*
  * Copyright: (c) 2000 United States Government as represented by the
@@ -36,7 +36,7 @@
 
 #ifndef lint
 static const char rcsid[] =
-    "@(#) Header: /tcpdump/master/tcpdump/print-rx.c,v 1.27 2001/10/20 07:41:55 itojun Exp";
+    "@(#) Header: /tcpdump/master/tcpdump/print-rx.c,v 1.29 2002/04/30 06:45:08 guy Exp";
 #endif
 
 #ifdef HAVE_CONFIG_H
@@ -46,7 +46,9 @@ static const char rcsid[] =
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#ifdef TIME_WITH_SYS_TIME
 #include <time.h>
+#endif
 #include <sys/param.h>
 #include <sys/time.h>
 #include <sys/types.h>
@@ -757,15 +759,15 @@ rx_cache_find(const struct rx_header *rxh, const struct ip *ip, int sport,
  * This is the sickest one of all
  */
 
-#define VECOUT(MAX) { char *sp; \
-			char s[AFSNAMEMAX]; \
+#define VECOUT(MAX) { u_char *sp; \
+			u_char s[AFSNAMEMAX]; \
 			int k; \
 			if ((MAX) + 1 > sizeof(s)) \
 				goto trunc; \
 			TCHECK2(bp[0], (MAX) * sizeof(int32_t)); \
 			sp = s; \
 			for (k = 0; k < (MAX); k++) { \
-				*sp++ = (char) EXTRACT_32BITS(bp); \
+				*sp++ = (u_char) EXTRACT_32BITS(bp); \
 				bp += sizeof(int32_t); \
 			} \
 			s[(MAX)] = '\0'; \
@@ -1130,7 +1132,7 @@ acl_print(u_char *s, int maxsize, u_char *end)
 			goto finish;
 		s += n;
 		printf(" +{");
-		fn_print(user, NULL);
+		fn_print((u_char *)user, NULL);
 		printf(" ");
 		ACLOUT(acl);
 		printf("}");
@@ -1143,7 +1145,7 @@ acl_print(u_char *s, int maxsize, u_char *end)
 			goto finish;
 		s += n;
 		printf(" -{");
-		fn_print(user, NULL);
+		fn_print((u_char *)user, NULL);
 		printf(" ");
 		ACLOUT(acl);
 		printf("}");

@@ -1,4 +1,4 @@
-/*	$NetBSD: print-bootp.c,v 1.1.1.2 2002/02/18 09:07:54 itojun Exp $	*/
+/*	$NetBSD: print-bootp.c,v 1.1.1.3 2002/05/31 09:27:49 itojun Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993, 1994, 1995, 1996, 1997
@@ -24,7 +24,7 @@
  */
 #ifndef lint
 static const char rcsid[] =
-    "@(#) Header: /tcpdump/master/tcpdump/print-bootp.c,v 1.60 2001/09/17 21:57:56 fenner Exp (LBL)";
+    "@(#) Header: /tcpdump/master/tcpdump/print-bootp.c,v 1.61 2002/04/26 04:59:08 guy Exp (LBL)";
 #endif
 
 #ifdef HAVE_CONFIG_H
@@ -351,13 +351,14 @@ static struct tok arp2str[] = {
 static void
 rfc1048_print(register const u_char *bp)
 {
-	register u_char tag;
+	register u_int16_t tag;
 	register u_int len, size;
 	register const char *cp;
 	register char c;
 	int first;
 	u_int32_t ul;
-	u_short us;
+	u_int16_t us;
+	u_int8_t uc;
 
 	printf(" vend-rfc1048");
 
@@ -378,9 +379,9 @@ rfc1048_print(register const u_char *bp)
 			 * preclude overlap of 1-byte and 2-byte spaces.
 			 * If not, we need to offset tag after this step.
 			 */
-			cp = tok2str(xtag2str, "?xT%d", tag);
+			cp = tok2str(xtag2str, "?xT%u", tag);
 		} else
-			cp = tok2str(tag2str, "?T%d", tag);
+			cp = tok2str(tag2str, "?T%u", tag);
 		c = *cp++;
 		printf(" %s:", cp);
 
@@ -396,8 +397,8 @@ rfc1048_print(register const u_char *bp)
 		}
 
 		if (tag == TAG_DHCP_MESSAGE && len == 1) {
-			c = *bp++;
-			switch (c) {
+			uc = *bp++;
+			switch (uc) {
 			case DHCPDISCOVER:	printf("DISCOVER");	break;
 			case DHCPOFFER:		printf("OFFER");	break;
 			case DHCPREQUEST:	printf("REQUEST");	break;
@@ -406,7 +407,7 @@ rfc1048_print(register const u_char *bp)
 			case DHCPNAK:		printf("NACK");		break;
 			case DHCPRELEASE:	printf("RELEASE");	break;
 			case DHCPINFORM:	printf("INFORM");	break;
-			default:		printf("%u", c);	break;
+			default:		printf("%u", uc);	break;
 			}
 			continue;
 		}
@@ -414,8 +415,8 @@ rfc1048_print(register const u_char *bp)
 		if (tag == TAG_PARM_REQUEST) {
 			first = 1;
 			while (len-- > 0) {
-				c = *bp++;
-				cp = tok2str(tag2str, "?T%d", c);
+				uc = *bp++;
+				cp = tok2str(tag2str, "?T%u", uc);
 				if (!first)
 					putchar('+');
 				printf("%s", cp + 1);
@@ -427,9 +428,9 @@ rfc1048_print(register const u_char *bp)
 			first = 1;
 			while (len > 1) {
 				len -= 2;
-				c = EXTRACT_16BITS(bp);
+				us = EXTRACT_16BITS(bp);
 				bp += 2;
-				cp = tok2str(xtag2str, "?xT%d", c);
+				cp = tok2str(xtag2str, "?xT%u", us);
 				if (!first)
 					putchar('+');
 				printf("%s", cp + 1);
@@ -504,7 +505,7 @@ rfc1048_print(register const u_char *bp)
 				if (!first)
 					putchar(',');
 				us = EXTRACT_16BITS(bp);
-				printf("%d", us);
+				printf("%u", us);
 				bp += sizeof(us);
 				size -= sizeof(us);
 				first = 0;
@@ -524,7 +525,7 @@ rfc1048_print(register const u_char *bp)
 					putchar('Y');
 					break;
 				default:
-					printf("%d?", *bp);
+					printf("%u?", *bp);
 					break;
 				}
 				++bp;
@@ -543,7 +544,7 @@ rfc1048_print(register const u_char *bp)
 				if (c == 'x')
 					printf("%02x", *bp);
 				else
-					printf("%d", *bp);
+					printf("%u", *bp);
 				++bp;
 				--size;
 				first = 0;
@@ -570,7 +571,7 @@ rfc1048_print(register const u_char *bp)
 				if (*bp++)
 					printf("[svrreg]");
 				if (*bp)
-					printf("%d/%d/", *bp, *(bp+1));
+					printf("%u/%u/", *bp, *(bp+1));
 				bp += 2;
 				putchar('"');
 				(void)fn_printn(bp, size - 3, NULL);
@@ -602,7 +603,7 @@ rfc1048_print(register const u_char *bp)
 			    }
 
 			default:
-				printf("[unknown special tag %d, size %d]",
+				printf("[unknown special tag %u, size %u]",
 				    tag, size);
 				bp += size;
 				size = 0;
@@ -612,7 +613,7 @@ rfc1048_print(register const u_char *bp)
 		}
 		/* Data left over? */
 		if (size)
-			printf("[len %d]", len);
+			printf("[len %u]", len);
 	}
 	return;
 trunc:
