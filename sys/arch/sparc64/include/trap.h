@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.h,v 1.4 1999/06/07 05:28:04 eeh Exp $ */
+/*	$NetBSD: trap.h,v 1.5 2003/01/21 19:46:49 martin Exp $ */
 
 /*
  * Copyright (c) 1996-1999 Eduardo Horvath
@@ -51,7 +51,7 @@
 #define T_TAGOF		0x023	/* (14) tag overflow */
 #define T_CLEAN_WINDOW	0x024	/* (10) clean window exception */
 /*	through		0x027	   unused */
-#define T_DIV0		0x028	/* (15) division routine was handed 0 */
+#define T_IDIV0		0x028	/* (15) division by 0 */
 /*			0x02a	   unused */
 /*	through		0x02f	   unused */
 #define	T_DATAFAULT	0x030	/* (12) address fault during data fetch */
@@ -105,7 +105,7 @@
 /* beginning of `user' vectors (from trap instructions) - all priority 16 */
 #define	T_SUN_SYSCALL	0x100	/* system call */
 #define	T_BREAKPOINT	0x101	/* breakpoint `instruction' */
-#define	T_UDIV0		0x102	/* division routine was handed 0 */
+#define	T_DIV0		0x102	/* division routine was handed 0 */
 #define	T_FLUSHWIN	0x103	/* flush windows */
 #define	T_CLEANWIN	0x104	/* provide clean windows */
 #define	T_RANGECHECK	0x105	/* ? */
@@ -142,7 +142,8 @@
 
 /*
  * `software trap' macros to keep people happy (sparc v8 manual says not
- * to set the upper bits).
+ * to set the upper bits). Correct mask is 0xff for v9, but all values
+ * here are small enough - so keep it the same as the sparc port.
  */
 #define	ST_BREAKPOINT	(T_BREAKPOINT & 0x7f)
 #define	ST_DIV0		(T_DIV0 & 0x7f)
