@@ -1,4 +1,4 @@
-/*	$NetBSD: inet.c,v 1.20 1997/04/03 04:46:46 christos Exp $	*/
+/*	$NetBSD: inet.c,v 1.21 1997/05/22 17:21:28 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "from: @(#)inet.c	8.4 (Berkeley) 4/20/94";
 #else
-static char *rcsid = "$NetBSD: inet.c,v 1.20 1997/04/03 04:46:46 christos Exp $";
+static char *rcsid = "$NetBSD: inet.c,v 1.21 1997/05/22 17:21:28 christos Exp $";
 #endif
 #endif /* not lint */
 
@@ -140,9 +140,9 @@ protopr(off, name)
 		}
 		if (Aflag)
 			if (istcp)
-				printf("%8lp ", (u_long) inpcb.inp_ppcb);
+				printf("%8lx ", (u_long) inpcb.inp_ppcb);
 			else
-				printf("%8lp ", (u_long) prev);
+				printf("%8lx ", (u_long) prev);
 		printf("%-5.5s %6ld %6ld ", name, sockb.so_rcv.sb_cc,
 			sockb.so_snd.sb_cc);
 		inetprint(&inpcb.inp_laddr, (int)inpcb.inp_lport, name);
