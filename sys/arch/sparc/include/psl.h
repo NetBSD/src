@@ -1,4 +1,4 @@
-/*	$NetBSD: psl.h,v 1.9 1996/02/03 16:10:58 pk Exp $ */
+/*	$NetBSD: psl.h,v 1.10 1996/02/09 23:14:23 christos Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -78,24 +78,35 @@
 #define	PIL_CLOCK	10
 
 #if defined(_KERNEL) && !defined(_LOCORE)
+
+static __inline int getpsr __P((void));
+static __inline void setpsr __P((int));
+static __inline int spl0 __P((void));
+static __inline int splhigh __P((void));
+static __inline void splx __P((int));
+
 /*
  * GCC pseudo-functions for manipulating PSR (primarily PIL field).
  */
-static __inline int getpsr() {
+static __inline int getpsr()
+{
 	int psr;
 
 	__asm __volatile("rd %%psr,%0" : "=r" (psr));
 	return (psr);
 }
 
-static __inline void setpsr(int newpsr) {
+static __inline void setpsr(newpsr)
+	int newpsr;
+{
 	__asm __volatile("wr %0,0,%%psr" : : "r" (newpsr));
 	__asm __volatile("nop");
 	__asm __volatile("nop");
 	__asm __volatile("nop");
 }
 
-static __inline int spl0() {
+static __inline int spl0()
+{
 	int psr, oldipl;
 
 	/*
@@ -121,7 +132,9 @@ static __inline int spl0() {
  * into the ipl field.)
  */
 #define	SPL(name, newipl) \
-static __inline int name() { \
+static __inline int name __P((void)); \
+static __inline int name() \
+{ \
 	int psr, oldipl; \
 	__asm __volatile("rd %%psr,%0" : "=r" (psr)); \
 	oldipl = psr & PSR_PIL; \
@@ -174,7 +187,8 @@ SPL(splaudio, 13)
 /* second sparc timer interrupts at level 14 */
 SPL(splstatclock, 14)
 
-static __inline int splhigh() {
+static __inline int splhigh()
+{
 	int psr, oldipl;
 
 	__asm __volatile("rd %%psr,%0" : "=r" (psr));
@@ -185,7 +199,9 @@ static __inline int splhigh() {
 }
 
 /* splx does not have a return value */
-static __inline void splx(int newipl) {
+static __inline void splx(newipl)
+	int newipl;
+{
 	int psr;
 
 	__asm __volatile("rd %%psr,%0" : "=r" (psr));
