@@ -1,11 +1,11 @@
-/*	$NetBSD: linux_syscall.h,v 1.40 2002/01/14 23:14:34 bjh21 Exp $	*/
+/*	$NetBSD: linux_fcntl.h,v 1.1 2002/01/14 23:14:37 bjh21 Exp $	*/
 
 /*-
- * Copyright (c) 1998 The NetBSD Foundation, Inc.
+ * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Eric Haszlakiewicz.
+ * by Frank van der Linden and Eric Haszlakiewicz.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -36,23 +36,46 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _LINUX_SYSCALL_H
-#define _LINUX_SYSCALL_H
+/*
+ * Various flag values used in Linux for open(2) and fcntl(2).
+ */
 
-#if defined(__i386__)
-#include <compat/linux/arch/i386/linux_syscall.h>
-#elif defined(__m68k__)
-#include <compat/linux/arch/m68k/linux_syscall.h>
-#elif defined(__alpha__)
-#include <compat/linux/arch/alpha/linux_syscall.h>
-#elif defined(__powerpc__)
-#include <compat/linux/arch/powerpc/linux_syscall.h>
-#elif defined(__mips__)
-#include <compat/linux/arch/mips/linux_syscall.h>
-#elif defined(__arm__)
-#include <compat/linux/arch/arm/linux_syscall.h>
-#else
-#define	LINUX_SYS_MAXSYSCALL	0
-#endif
+#ifndef _ARM_LINUX_FCNTL_H
+#define _ARM_LINUX_FCNTL_H
 
-#endif /* !_LINUX_SYSCALL_H */
+/* read/write mode for open(2) defined in common/linux_fcntl.h */
+
+/* flags used in open(2) */
+#define LINUX_O_CREAT		0x0040
+#define LINUX_O_EXCL		0x0080
+#define LINUX_O_NOCTTY		0x0100
+#define LINUX_O_TRUNC		0x0200
+#define LINUX_O_APPEND		0x0400
+#define LINUX_O_NDELAY		0x0800
+#define LINUX_O_SYNC		0x1000
+
+#define LINUX_FASYNC		0x2000
+
+/* fcntl(2) operations */
+#define LINUX_F_DUPFD		0
+#define LINUX_F_GETFD		1
+#define LINUX_F_SETFD		2
+#define LINUX_F_GETFL		3
+#define LINUX_F_SETFL		4
+#define LINUX_F_GETLK		5
+#define LINUX_F_SETLK		6
+#define LINUX_F_SETLKW		7
+#define LINUX_F_SETOWN		8
+#define LINUX_F_GETOWN		9
+
+#define LINUX_F_RDLCK		0
+#define LINUX_F_WRLCK		1
+#define LINUX_F_UNLCK		2
+
+#define LINUX_LOCK_EX		4
+#define LINUX_LOCK_SH		8
+
+#define LINUX_F_GETLK64		12
+#define LINUX_F_SETLK64		13
+#define LINUX_F_SETLKW64	14
+#endif /* !_ARM_LINUX_FCNTL_H */
