@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.638 2003/11/12 02:48:42 christos Exp $
+#	$NetBSD: mi,v 1.639 2003/11/14 17:45:06 christos Exp $
 ./usr/bin/addr2line		comp-debug-bin
 ./usr/bin/ar			comp-util-bin
 ./usr/bin/as			comp-util-bin
@@ -243,7 +243,6 @@
 ./usr/include/fmtmsg.h			comp-c-include
 ./usr/include/fnmatch.h			comp-c-include
 ./usr/include/form.h			comp-c-include
-./usr/include/frame.h			comp-c-include
 ./usr/include/fstab.h			comp-c-include
 ./usr/include/fts.h			comp-c-include
 ./usr/include/getopt.h			comp-c-include
