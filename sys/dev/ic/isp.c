@@ -1,4 +1,4 @@
-/* $NetBSD: isp.c,v 1.100 2002/11/25 01:44:21 thorpej Exp $ */
+/* $NetBSD: isp.c,v 1.101 2003/03/03 20:53:14 mjacob Exp $ */
 /*
  * This driver, which is contained in NetBSD in the files:
  *
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isp.c,v 1.100 2002/11/25 01:44:21 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isp.c,v 1.101 2003/03/03 20:53:14 mjacob Exp $");
 
 #ifdef	__NetBSD__
 #include <dev/ic/isp_netbsd.h>
@@ -430,7 +430,7 @@ isp_reset(struct ispsoftc *isp)
 			isp_prt(isp, ISP_LOGCONFIG, "Ultra Mode Capable");
 			sdp->isp_ultramode = 1;
 			/*
-			 * If we're in Ultra Mode, we have to be 60Mhz clock-
+			 * If we're in Ultra Mode, we have to be 60MHz clock-
 			 * even for the SBus version.
 			 */
 			isp->isp_clock = 60;
@@ -821,14 +821,10 @@ again:
 	 * It turns out that even for QLogic 2100s with ROM 1.10 and above
 	 * we do get a firmware attributes word returned in mailbox register 6.
 	 *
-	 * Because the lun is in a a different position in the Request Queue
+	 * Because the lun is in a different position in the Request Queue
 	 * Entry structure for Fibre Channel with expanded lun firmware, we
 	 * can only support one lun (lun zero) when we don't know what kind
 	 * of firmware we're running.
-	 *
-	 * Note that we only do this once (the first time thru isp_reset)
-	 * because we may be called again after firmware has been loaded once
-	 * and released.
 	 */
 	if (IS_SCSI(isp)) {
 		if (dodnld) {
@@ -1320,6 +1316,14 @@ isp_fibre_init(struct ispsoftc *isp)
 			 * so we don't need to clear it in fwoptions.
 			 */
 			icbp->icb_xfwoptions |= ICBXOPT_ZIO;
+#if	0
+			/*
+			 * Values, in 100us increments. The default
+			 * is 2 (200us) if a value 0 (default) is
+			 * selected.
+			 */
+			icbp->icb_idelaytimer = 2;
+#endif
 
 			if (isp->isp_confopts & ISP_CFG_ONEGB) {
 				icbp->icb_zfwoptions |= ICBZOPT_RATE_ONEGB;
@@ -1659,7 +1663,7 @@ isp_fclink_test(struct ispsoftc *isp, int usdelay)
 	 * Check to see if we're on a fabric by trying to see if we
 	 * can talk to the fabric name server. This can be a bit
 	 * tricky because if we're a 2100, we should check always
-	 * (in case we're connected to an server doing aliasing).
+	 * (in case we're connected to a server doing aliasing).
 	 */
 	fcp->isp_onfabric = 0;
 
@@ -4243,9 +4247,13 @@ isp_parse_async(struct ispsoftc *isp, u_int16_t mbox)
 			break;
 		case ISP_CONN_FATAL:
 			isp_prt(isp, ISP_LOGERR, "FATAL CONNECTION ERROR");
+#ifdef	ISP_FW_CRASH_DUMP
+			isp_async(isp, ISPASYNC_FW_CRASH, NULL);
+#else
 			isp_async(isp, ISPASYNC_FW_CRASH, NULL);
 			isp_reinit(isp);
 			isp_async(isp, ISPASYNC_FW_RESTARTED, NULL);
+#endif
 			return (-1);
 		case ISP_CONN_LOOPBACK:
 			isp_prt(isp, ISP_LOGWARN,
@@ -4319,10 +4327,8 @@ isp_handle_other_response(struct ispsoftc *isp, int type,
 		if (isp_target_notify(isp, (ispstatusreq_t *) hp, optrp)) {
 			return (1);
 		}
-#else
-		optrp = optrp;
-		/* FALLTHROUGH */
 #endif
+		/* FALLTHROUGH */
 	case RQSTYPE_REQUEST:
 	default:
 		if (isp_async(isp, ISPASYNC_UNHANDLED_RESPONSE, hp)) {
@@ -5228,7 +5234,7 @@ static char *fc_mbcmd_names[] = {
 	NULL,
 	NULL,
 	NULL,
-	NULL,
+	"DRIVER HEARTBEAT",
 	NULL,
 	"GET/SET DATA RATE",
 	NULL,
@@ -6555,7 +6561,7 @@ isp2200_fw_dump(struct ispsoftc *isp)
 	}
 	ptr = isp->isp_mbxworkp;	/* finish fetch of final word */
 	*ptr++ = isp->isp_mboxtmp[2];
-	isp_prt(isp, ISP_LOGALL, "isp_fw_dump: SRAM dumped succesfully");
+	isp_prt(isp, ISP_LOGALL, "isp_fw_dump: SRAM dumped successfully");
 	FCPARAM(isp)->isp_dump_data[0] = isp->isp_type; /* now used */
 	(void) isp_async(isp, ISPASYNC_FW_DUMPED, 0);
 }
@@ -6718,7 +6724,7 @@ isp2300_fw_dump(struct ispsoftc *isp)
 	}
 	ptr = isp->isp_mbxworkp;	/* finish final word */
 	*ptr++ = mbs.param[2];
-	isp_prt(isp, ISP_LOGALL, "isp_fw_dump: SRAM dumped succesfully");
+	isp_prt(isp, ISP_LOGALL, "isp_fw_dump: SRAM dumped successfully");
 	FCPARAM(isp)->isp_dump_data[0] = isp->isp_type; /* now used */
 	(void) isp_async(isp, ISPASYNC_FW_DUMPED, 0);
 }
