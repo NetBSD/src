@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.57 1996/05/19 04:12:53 mrg Exp $ */
+/*	$NetBSD: autoconf.c,v 1.58 1996/05/20 10:49:20 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -1205,6 +1205,7 @@ mainbus_attach(parent, dev, aux)
 			oca.ca_ra.ra_name = sp;
 			(void)config_found(dev, (void *)&oca, mbprint);
 		}
+		return;
 	}
 #endif
 
