@@ -1,4 +1,4 @@
-/*	$NetBSD: kbd.c,v 1.15.2.2 1997/10/28 23:14:10 mellon Exp $	*/
+/*	$NetBSD: kbd.c,v 1.15.2.3 1997/11/03 19:17:11 mellon Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -382,7 +382,7 @@ kbdpoll(dev, events, p)
 static int kbd_iockeymap __P((struct kbd_state *ks,
 	u_long cmd, struct kiockeymap *kio));
 
-static int kbd_iocsled(struct kbd_softc *k, int *data);
+static int kbd_iocsled(struct kbd_softc *k, char *data);
 
 #ifdef	KIOCGETKEY
 static int kbd_oldkeymap __P((struct kbd_state *ks,
@@ -446,7 +446,7 @@ kbdioctl(dev, cmd, data, flag, p)
 		break;
 
 	case KIOCSLED:
-		error = kbd_iocsled(k, (int *)data);
+		error = kbd_iocsled(k, (char *)data);
 		break;
 
 	case KIOCGLED:
@@ -624,7 +624,7 @@ kbd_docmd(cmd, isuser)
 static int
 kbd_iocsled(k, data)
 	struct kbd_softc *k;
-	int *data;
+	char *data;
 {
 	int leds, error, s;
 
