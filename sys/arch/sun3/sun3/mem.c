@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.18 1995/04/13 22:02:04 gwr Exp $	*/
+/*	$NetBSD: mem.c,v 1.19 1995/08/08 21:09:01 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Gordon W. Ross
@@ -258,9 +258,9 @@ mmmmap(dev, off, prot)
 	switch (minor(dev)) {
 
 	case 0:		/* dev/mem */
-		/* Allow access only in RAM. */
-		if (v < 0 || v >= avail_end)
-			return (-1);
+		/* Allow access only in "managed" RAM. */
+		if (v < avail_start || v >= avail_end)
+			break;
 		return (v);
 
 	case 5: 	/* dev/vme16d16 */
