@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.666 2004/03/18 20:42:07 ragge Exp $
+# $NetBSD: mi,v 1.667 2004/03/20 17:09:04 bjh21 Exp $
 ./etc/mtree/set.man				man-sys-root
 ./usr/share/info/am-utils.info			man-amd-info		info
 ./usr/share/info/as.info			man-computil-info	bfd,info
@@ -499,6 +499,7 @@
 ./usr/share/man/cat4/acorn32/csc.0		man-sys-catman		.cat
 ./usr/share/man/cat4/acorn32/ie.0		man-sys-catman		.cat
 ./usr/share/man/cat4/acorn32/intro.0		man-sys-catman		.cat
+./usr/share/man/cat4/acorn32/iomdkbc.0		man-sys-catman		.cat
 ./usr/share/man/cat4/acorn32/kbd.0		man-sys-catman		.cat
 ./usr/share/man/cat4/acorn32/kmem.0		man-sys-catman		.cat
 ./usr/share/man/cat4/acorn32/lpt.0		man-sys-catman		.cat
@@ -508,6 +509,7 @@
 ./usr/share/man/cat4/acorn32/podulebus.0	man-sys-catman		.cat
 ./usr/share/man/cat4/acorn32/ptsc.0		man-sys-catman		.cat
 ./usr/share/man/cat4/acorn32/qms.0		man-sys-catman		.cat
+./usr/share/man/cat4/acorn32/rpckbd.0		man-sys-catman		.cat
 ./usr/share/man/cat4/acorn32/vidcaudio.0	man-sys-catman		.cat
 ./usr/share/man/cat4/acorn32/wsqms.0		man-obsolete		obsolete
 ./usr/share/man/cat4/acphy.0			man-sys-catman		.cat
@@ -2560,6 +2562,7 @@
 ./usr/share/man/man4/acorn32/csc.4		man-sys-man		.man
 ./usr/share/man/man4/acorn32/ie.4		man-sys-man		.man
 ./usr/share/man/man4/acorn32/intro.4		man-sys-man		.man
+./usr/share/man/man4/acorn32/iomdkbc.4		man-sys-man		.man
 ./usr/share/man/man4/acorn32/kbd.4		man-sys-man		.man
 ./usr/share/man/man4/acorn32/kmem.4		man-sys-man		.man
 ./usr/share/man/man4/acorn32/lpt.4		man-sys-man		.man
@@ -2569,6 +2572,7 @@
 ./usr/share/man/man4/acorn32/podulebus.4	man-sys-man		.man
 ./usr/share/man/man4/acorn32/ptsc.4		man-sys-man		.man
 ./usr/share/man/man4/acorn32/qms.4		man-sys-man		.man
+./usr/share/man/man4/acorn32/rpckbd.4		man-sys-man		.man
 ./usr/share/man/man4/acorn32/vidcaudio.4	man-sys-man		.man
 ./usr/share/man/man4/acorn32/wsqms.4		man-obsolete		obsolete
 ./usr/share/man/man4/acphy.4			man-sys-man		.man
