@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.kmod.mk,v 1.29 1999/02/04 11:58:30 christos Exp $
+#	$NetBSD: bsd.kmod.mk,v 1.30 1999/03/10 06:34:19 ross Exp $
 
 .if !target(__initialized__)
 __initialized__:
@@ -91,3 +91,5 @@ unload: ${PROG}
 .include <bsd.links.mk>
 .include <bsd.dep.mk>
 .include <bsd.sys.mk>
+
+.-include "machine/Makefile.inc"
