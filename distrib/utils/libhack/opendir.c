@@ -1,4 +1,4 @@
-/*	$NetBSD: opendir.c,v 1.1 1999/05/19 03:53:03 gwr Exp $	*/
+/*	$NetBSD: opendir.c,v 1.2 1999/05/23 22:08:17 gwr Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -54,7 +54,6 @@ opendir(name)
 	DIR *dirp;
 	int fd;
 	struct stat sb;
-	int pagesz;
 
 	if ((fd = open(name, O_RDONLY | O_NONBLOCK)) == -1)
 		return (NULL);
