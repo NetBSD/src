@@ -295,6 +295,23 @@ ENTRY (_get_fp)
 	addr 0(fp), r0
 	ret 0
 
+/* reboot the machine :)  if possible */
+
+.globl _rebootPTD
+ENTRY(low_level_reboot)
+
+	ints_off			/* Stop things! */
+	addr	xxxlow(pc), r0		/* jump to low memory */
+	andd	~KERNBASE, r0
+	movd	r0, tos
+	lmr	ptb0, _rebootPTD(pc)	/* get the right map */
+	ret	0
+xxxlow:
+	lmr	mcr, 0 			/* Turn off mapping. */
+	movd	0x10000000, tos		/* The ROM Address */
+	ret	0			/* Jump to the ROM! */
+
+
 /* To get back to the rom monitor .... */
 ENTRY(bpt_to_monitor)
 
@@ -1134,8 +1151,8 @@ do_soft_intr:
 	cmpqd	0, _want_softnet(pc)
 	beq	no_net
 
-	DONET(NETISR_RAW, _rawintr)
 #ifdef INET
+/*	DONET(NETISR_ARP, _arpintr) */
 	DONET(NETISR_IP, _ipintr)
 #endif
 #ifdef IMP
@@ -1146,6 +1163,12 @@ do_soft_intr:
 #endif
 #ifdef ISO
 	DONET(NETISR_ISO, _clnlintr)
+#endif
+#ifdef notyet
+#ifdef CCITT
+	DONET(NETISR_X25, _pkintr)
+	DONET(NETISR_HDLC, _hdintr)
+#endif
 #endif
 	movqd	0, _want_softnet(pc)
 	movqd	0, _netisr(pc)
@@ -1318,8 +1341,8 @@ do_spl0:
 	cmpqd	0, _want_softnet(pc)
 	beq	no_net1
 
-	DONET(NETISR_RAW, _rawintr)
 #ifdef INET
+/*	DONET(NETISR_ARP, _arpintr) */
 	DONET(NETISR_IP, _ipintr)
 #endif
 #ifdef IMP
@@ -1330,6 +1353,12 @@ do_spl0:
 #endif
 #ifdef ISO
 	DONET(NETISR_ISO, _clnlintr)
+#endif
+#ifdef notyet
+#ifdef CCITT
+	DONET(NETISR_X25, _pkintr)
+	DONET(NETISR_HDLC, _hdintr)
+#endif
 #endif
 	movqd	0, _want_softnet(pc)
 	movqd	0, _netisr(pc)
