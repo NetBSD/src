@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.2,v 1.1.2.113 2003/08/16 19:54:07 tron Exp $
+#	$NetBSD: CHANGES-1.6.2,v 1.1.2.114 2003/08/17 11:21:02 tron Exp $
 
 A complete list of changes from NetBSD 1.6.1 to NetBSD 1.6.2:
 
@@ -1278,4 +1278,28 @@ sys/arch/sparc/sparc/pmap.c			1.259 via patch
 	Make sure to flush any user register windows when stealing PMEGs in
 	me_alloc() (and SMEGs in region_alloc()). Should fix PR#14180.
 	[pk, ticket #1362]
+
+lib/libc/sys/mmap.2				1.32
+sys/sys/mman.h					1.32
+sys/uvm/uvm_mmap.c				1.72
+
+	PR/21948: Todd Vierling: Implement MAP_TRYFIXED for linux emulation.
+	[tv, ticket #1420]
+
+sys/compat/linux/common/linux_ioctl.c		1.33
+
+	PR/21936: Todd Vierling: compat/linux: ioctl 'r' misinterpreted
+	[tv, ticket #1421]
+
+sys/compat/ossaudio/ossaudio.c			1.43
+
+	Fix missing call to FILE_UNUSE.  From kern/21946, from Todd Vierling.
+	[tv, ticket #1422]
+
+sys/sys/exec_script.h				1.8
+sys/sys/param.h					1.163
+
+	grow #! line length -- patch from cgd, fixes PR kern/20112 from Todd
+	Vierling
+	[tv, ticket #1423]
 
