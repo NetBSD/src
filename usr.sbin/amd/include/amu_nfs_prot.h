@@ -1,3 +1,5 @@
+/* $NetBSD: amu_nfs_prot.h,v 1.12 2003/03/09 17:57:50 wiz Exp $ */
+
 /*
  * Copyright (c) 1997-2003 Erez Zadok
  * Copyright (c) 1990 Jan-Simon Pendry
