@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.48 2000/06/06 04:56:52 mycroft Exp $	*/
+/*	$NetBSD: var.c,v 1.49 2000/06/06 08:44:57 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -39,14 +39,14 @@
  */
 
 #ifdef MAKE_BOOTSTRAP
-static char rcsid[] = "$NetBSD: var.c,v 1.48 2000/06/06 04:56:52 mycroft Exp $";
+static char rcsid[] = "$NetBSD: var.c,v 1.49 2000/06/06 08:44:57 mycroft Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: var.c,v 1.48 2000/06/06 04:56:52 mycroft Exp $");
+__RCSID("$NetBSD: var.c,v 1.49 2000/06/06 08:44:57 mycroft Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -2004,31 +2004,62 @@ Var_Parse (str, ctxt, err, lengthPtr, freePtr)
 	        case 'D':
 	        case 'U':
 		{
-		    VarPattern 	    pattern;
-		    int what = *tstr;
-			    
-		    pattern.flags = 0;
-		    delim = '}';
+		    Buffer  buf;    	/* Buffer for patterns */
+		    int	    wantit;	/* want data in buffer */
 
-		    cp = ++tstr;
-		    if ((pattern.rhs = VarGetPattern(ctxt, err, &cp, delim,
-						     NULL, &pattern.rightLen, NULL)) == NULL)
-			goto cleanup;
-		    termc = *--cp;
-		    delim = '\0';
+		    /*
+		     * Pass through tstr looking for 1) escaped delimiters,
+		     * '$'s and backslashes (place the escaped character in
+		     * uninterpreted) and 2) unescaped $'s that aren't before
+		     * the delimiter (expand the variable substitution).
+		     * The result is left in the Buffer buf.
+		     */
+		    buf = Buf_Init(0);
+		    for (cp = tstr + 1;
+			 *cp != endc && *cp != ':' && *cp != '\0';
+			 cp++) {
+			if ((*cp == '\\') &&
+			    ((cp[1] == ':') ||
+			     (cp[1] == '$') ||
+			     (cp[1] == endc) ||
+			     (cp[1] == '\\')))
+			{
+			    Buf_AddByte(buf, (Byte) cp[1]);
+			    cp++;
+			} else if (*cp == '$') {
+			    /*
+			     * If unescaped dollar sign, assume it's a
+			     * variable substitution and recurse.
+			     */
+			    char    *cp2;
+			    int	    len;
+			    Boolean freeIt;
 
-		    newStr = str;
-		    if ((v->flags & VAR_JUNK)) {
-			if (what == 'U') {
-			    v->flags |= VAR_KEEP;
-			    newStr = pattern.rhs;
-			} else
-			    free(pattern.rhs); 
+			    cp2 = Var_Parse(cp, ctxt, err, &len, &freeIt);
+			    Buf_AddBytes(buf, strlen(cp2), (Byte *) cp2);
+			    if (freeIt)
+				free(cp2);
+			    cp += len - 1;
+			} else {
+			    Buf_AddByte(buf, (Byte) *cp);
+			}
+		    }
+		    Buf_AddByte(buf, (Byte) '\0');
+
+		    termc = *cp;
+
+		    if (*tstr == 'U')
+			wantit = ((v->flags & VAR_JUNK) != 0);
+		    else
+			wantit = ((v->flags & VAR_JUNK) == 0);
+		    if (wantit) {
+			newStr = (char *)Buf_GetAll(buf, (int *)NULL);
+			Buf_Destroy(buf, FALSE);
 		    } else {
-			if (what == 'D') 
-			    newStr = pattern.rhs;
-			else
-			    free(pattern.rhs);
+			if ((v->flags & VAR_JUNK) != 0)
+			    v->flags |= VAR_KEEP;
+			newStr = str;
+			Buf_Destroy(buf, TRUE);
 		    }
 		    break;
 		}
