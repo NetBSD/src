@@ -33,7 +33,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)test.1	6.6 (Berkeley) 6/8/92
-.\"	$Id: test.1,v 1.4 1994/06/29 22:26:50 jtc Exp $
+.\"	$Id: test.1,v 1.5 1994/06/30 05:12:34 jtc Exp $
 .\"
 .Dd June 8, 1992
 .Dt TEST 1
@@ -86,10 +86,10 @@ True if
 .Ar file
 exists and its set group ID flag
 is set.
-.It Fl h Ar file
+.It Fl k Ar file
 True if
 .Ar file
-exists and is a symbolic link.
+exists and its sticky bit is set.
 .It Fl n Ar string
 True if the length of
 .Ar string
@@ -101,7 +101,8 @@ is a named pipe
 .Po Tn FIFO Pc .
 .It Fl r Ar file
 True if
-.Ar file exists and is readable.
+.Ar file 
+exists and is readable.
 .It Fl s Ar file
 True if
 .Ar file
@@ -140,6 +141,38 @@ can be searched.
 True if the length of
 .Ar string
 is zero.
+.It Fl L Ar file
+True if 
+.Ar file
+exists and is a symbolic link.
+.It Fl O Ar file
+True if
+.Ar file
+exists and its owner matches the effective user id of this process.
+.It Fl G Ar file
+True if
+.Ar file
+exists and its group matches the effective group id of this process.
+.It Fl S Ar file
+True if
+.Ar file
+exists and is a socket.
+.It Ar file1 Fl nt Ar file2
+True if
+.Ar file1
+exists and is newer than
+.Ar file2 .
+.It Ar file1 Fl ot Ar file2
+True if
+.Ar file1
+exists and is older than
+.Ar file2 .
+.It Ar file1 Fl ef Ar file2
+True if
+.Ar file1
+and
+.Ar file2
+exist and refer to the same file.
 .It Ar string
 True if
 .Ar string
@@ -157,6 +190,23 @@ True if the strings
 and
 .Ar \&s\&2
 are not identical.
+.It Ar \&s\&1 Cm \&< Ar \&s\&2
+True if string
+.Ar \&s\&1
+comes before
+.Ar \&s\&2
+based on the ASCII value of their characters.
+.It Ar \&s\&1 Cm \&> Ar \&s\&2
+True if string
+.Ar \&s\&1
+comes after
+.Ar \&s\&2
+based on the ASCII value of their characters.
+.It Ar \&s\&1
+True if
+.Ar \&s\&1
+is not the null
+string.
 .It Ar \&n\&1 Fl \&eq Ar \&n\&2 
 True if the integers
 .Ar \&n\&1
@@ -224,16 +274,6 @@ The
 operator has higher precedence than the
 .Fl o
 operator.
-.Sh GRAMMAR AMBIGUITY
-The 
-.Nm test
-grammar is inherently ambiguous.  In order to assure a degree of consistency,
-the cases described in the 
-.St -p1003.2 , 
-section D11.2/4.62.4, standard
-are evaluated consistently according to the rules specified in the
-standards document.  All other cases are subject to the ambiguity in the
-command semantics.
 .Sh RETURN VALUES
 The
 .Nm test
@@ -250,6 +290,16 @@ An error occurred.
 .Sh STANDARDS
 The
 .Nm test
-function is expected to be
+utility implements a superset of the
 .St -p1003.2
-compatible.
+specification.
+.Sh BUGS
+The 
+.Nm test
+grammar is inherently ambiguous.  In order to assure a degree of consistency,
+the cases described in 
+.St -p1003.2
+section 4.62.4, 
+are evaluated consistently according to the rules specified in the
+standards document.  All other cases are subject to the ambiguity in the
+command semantics.
