@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.alpha,v 1.62 2000/12/17 15:52:39 jdolecek Exp $
+# $NetBSD: Makefile.alpha,v 1.63 2001/05/08 05:47:35 ross Exp $
 
 # Makefile for NetBSD
 #
@@ -14,6 +14,11 @@
 
 # DEBUG is set to -g if debugging.
 # PROF is set to -pg if profiling.
+#
+# To specify debugging, add the config line: makeoptions DEBUG="-g" 
+# A better way is to specify -g only for a few files.
+#
+#	makeoptions DEBUGLIST="uvm* trap if_*"
 
 AR?=	ar
 AS?=	as
@@ -46,7 +51,7 @@ CWARNFLAGS+=	-Wno-uninitialized
 .if (${HAVE_EGCS} != "")
 CWARNFLAGS+=	-Wno-main
 .endif
-CFLAGS=		${DEBUG} ${COPTS} ${CWARNFLAGS} -mno-fp-regs
+CFLAGS=		${DEBUG} ${COPTS} ${CWARNFLAGS} -mno-fp-regs ${${<:T:R}_G} 
 AFLAGS=		-traditional -D_LOCORE
 LOADADDRESS?=	fffffc0000300000
 LINKFLAGS=	-N -Ttext ${LOADADDRESS} -e __transfer -G 4
@@ -83,6 +88,17 @@ NORMAL_S=	${CPP} ${AFLAGS} ${CPPFLAGS} $< | sed -e 's,^\#.*,,' | ${AS} -o ${.TAR
 
 %SFILES
 
+#
+# Define a set of xxx_G variables that will add -g to just those
+# files that match the shell patterns given in ${DEBUGLIST}
+#
+
+.for i in ${DEBUGLIST}
+.for j in ${CFILES:T:M$i.c}
+${j:R}_G= -g
+.endfor
+.endfor
+
 # load lines for config "xxx" will be emitted as:
 # xxx: ${SYSTEM_DEP} swapxxx.o
 #	${SYSTEM_LD_HEAD}
@@ -97,7 +113,7 @@ SYSTEM_LD=	@echo ${LD} ${LINKFLAGS} -o $@ '$${SYSTEM_OBJ}' vers.o; \
 SYSTEM_LD_TAIL=	@${SIZE} $@; chmod 755 $@
 
 DEBUG?=
-.if ${DEBUG} == "-g"
+.if ${DEBUG} == "-g" || defined(DEBUGLIST)
 LINKFLAGS+=	-X
 SYSTEM_LD_TAIL+=; \
 		echo mv -f $@ $@.gdb; mv -f $@ $@.gdb; \
