@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.12 2000/07/19 00:58:24 matt Exp $
+#	$NetBSD: Makefile,v 1.13 2000/07/19 02:39:11 matt Exp $
 
 S=	${.CURDIR}/../../../..
 
@@ -17,7 +17,7 @@ BINDIR=	/
 MDEC_DIR=/usr/mdec
 
 SA_AS=	library
-SAMISCMAKEFLAGS=SA_USE_CREAD=yes SA_INCLUDE_NET=yes
+SAMISCMAKEFLAGS=SA_USE_CREAD=yes SA_INCLUDE_NET=yes SA_USE_LOADFILE=yes
 .include "${S}/lib/libsa/Makefile.inc"
 LIBSA=	${SALIB}
 
