@@ -10,7 +10,7 @@
  *   of this software, nor does the author assume any responsibility
  *   for damages incurred with its use.
  *
- *	$Id: if_le.c,v 1.3 1994/07/01 21:33:20 mycroft Exp $
+ *	$Id: if_le.c,v 1.4 1994/07/01 21:34:40 mycroft Exp $
  */
 
 #include "bpfilter.h"
@@ -96,8 +96,8 @@ int leintr __P((struct le_softc *));
 int le_ioctl __P((struct ifnet *, int, caddr_t));
 int le_start __P((struct ifnet *));
 int le_watchdog __P((/* short */));
-void lewrcsr __P((/* struct le_softc *, u_short, u_short */));
-u_short lerdcsr __P((/* struct le_softc *, u_short */));
+static inline void lewrcsr __P((/* struct le_softc *, u_short, u_short */));
+static inline u_short lerdcsr __P((/* struct le_softc *, u_short */));
 void le_init __P((struct le_softc *));
 void init_mem __P((struct le_softc *));
 void le_reset __P((struct le_softc *));
@@ -123,7 +123,7 @@ struct cfdriver lecd = {
 	NULL, "le", leprobe, leattach, DV_IFNET, sizeof(struct le_softc)
 };
 
-void
+static inline void
 lewrcsr(sc, port, val)
 	struct le_softc *sc;
 	u_short port;
@@ -134,7 +134,7 @@ lewrcsr(sc, port, val)
 	outw(sc->sc_rdp, val);
 }
 
-u_short
+static inline u_short
 lerdcsr(sc, port)
 	struct le_softc *sc;
 	u_short port;
