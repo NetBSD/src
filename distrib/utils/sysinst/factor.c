@@ -1,4 +1,4 @@
-/*	$NetBSD: factor.c,v 1.5 1998/02/19 18:37:58 phil Exp $ */
+/*	$NetBSD: factor.c,v 1.6 1998/02/19 19:38:39 phil Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -36,8 +36,7 @@
  *
  */
 
-#include <stdio.h>			/* defs.h uses FILE* */
-#include "defs.h"
+#include <stdlib.h>
 
 /*
  * primes - prime table, built to include up to 46345 because
@@ -62,7 +61,7 @@ static void build_primes (long max)
 	 */
 	primes[0] = 2;
 	primes[1] = 3;
-	
+
 	for (pc = primes[num_primes-1]; pc < 46345 && pc*pc <= max; pc+=2) {
 		j = 0;
 		rem = 1;
@@ -112,18 +111,26 @@ int main(int argc, char **argv)
 	long facts[30];
 	long val;
 	int i, nfact;
+	int arg;
 
 	if (argc < 2) {
-		fprintf (stderr, "usage: %s number\n", argv[0]);
+		fprintf (stderr, "usage: %s numbers\n", argv[0]);
 		exit(1);
 	}
 
-	val = atol(argv[1]);
-	factor (val, facts, 30, &nfact);
+	/* Factor each arg! */
+	for (arg = 1; arg < argc; arg++) {
 
-	printf ("%ld:", val);
-	for (i = 0; i<nfact; i++)
-		printf (" %d", facts[i]);
-	printf ("\n");
+		val = atol(argv[arg]);
+		factor (val, facts, 30, &nfact);
+
+		printf ("%ld:", val);
+		for (i = 0; i<nfact; i++)
+			printf (" %ld", facts[i]);
+		printf ("\n");
+
+	}
+
+	return 0;
 }
 #endif
