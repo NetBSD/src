@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.eng,v 1.28 1998/06/02 14:14:46 lukem Exp $	*/
+/*	$NetBSD: msg.mi.eng,v 1.29 1998/10/25 19:15:04 phil Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -672,3 +672,16 @@ You can either edit the partition table by hand, or give up and return
 to the main menu.
 
 Edit the partition table again?}
+
+message not_regular_file
+{Config file %s is not a regular file.\n}
+
+message out_of_memory
+{Out of memory (malloc failed).\n}
+
+message config_open_error
+{Could not open config file %s\n}
+
+message config_read_error
+{Could not read config file %s\n}
+
