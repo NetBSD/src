@@ -1,3 +1,5 @@
+/*	$NetBSD: 44arp.c,v 1.3 1997/05/27 23:10:46 thorpej Exp $	*/
+
 /*
  * Based upon 4.4BSD's /usr/sbin/arp
  */
@@ -23,6 +25,11 @@
 #include <errno.h>
 #include <nlist.h>
 #include <stdio.h>
+#include <netinet/in.h>
+#include <netinet/ip_var.h>
+#include <netinet/tcp.h>
+#include "ipsend.h"
+
 
 /*
  * lookup host and return
@@ -56,7 +63,7 @@ char	*addr, *eaddr;
 {
 	int	mib[6];
 	size_t	needed;
-	char	*malloc(), *lim, *buf, *next;
+	char	*lim, *buf, *next;
 	struct	rt_msghdr	*rtm;
 	struct	sockaddr_inarp	*sin;
 	struct	sockaddr_dl	*sdl;
