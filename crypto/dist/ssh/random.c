@@ -1,4 +1,4 @@
-/*	$NetBSD: random.c,v 1.3 2001/02/09 00:44:35 itojun Exp $	*/
+/*	$NetBSD: random.c,v 1.4 2001/02/14 04:46:58 itojun Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: random.c,v 1.3 2001/02/09 00:44:35 itojun Exp $");
+__RCSID("$NetBSD: random.c,v 1.4 2001/02/14 04:46:58 itojun Exp $");
 #endif
 
 /*
@@ -58,8 +58,25 @@ __RCSID("$NetBSD: random.c,v 1.3 2001/02/09 00:44:35 itojun Exp $");
 #include "includes.h"
 #include "pathnames.h"
 #include "random.h"
+#include "log.h"
 
 #define	BUFSIZE	32
+
+static const char *rndfail = "random number device is mandatory.  see rnd(4).";
+
+int
+arc4random_check(void)
+{
+	int fd;
+
+	fd = open(_PATH_URANDOM, O_RDONLY, 0666);
+	if (fd < 0) {
+		fatal(rndfail);
+		/*NOTREACHED*/
+	}
+	close(fd);
+	return 0;
+}
 
 void
 arc4random_stir(void)
@@ -76,12 +93,8 @@ arc4random_stir(void)
 		(void) close(fd);
 		memset(buf, 0, sizeof(buf));
 	} else {
-		/*
-		 * XXX We should stir in other environmental
-		 * XXX noise, here.
-		 */
-		RAND_pseudo_bytes(buf, sizeof(buf) >> 1);
-		RAND_seed(buf, sizeof(buf) >> 1);
+		fatal(rndfail);
+		/*NOTREACHED*/
 	}
 }
 

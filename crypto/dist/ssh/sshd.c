@@ -556,6 +556,9 @@ main(int ac, char **av)
 	int startups = 0;
 	int ret, key_used = 0;
 
+	if (arc4random_check() < 0)
+		fatal("rnd(4) is mandatory.");
+
 	/* Save argv. */
 	saved_argv = av;
 
