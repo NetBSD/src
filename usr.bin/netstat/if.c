@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.21 1997/04/03 04:46:45 christos Exp $	*/
+/*	$NetBSD: if.c,v 1.22 1997/04/07 03:04:24 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "from: @(#)if.c	8.2 (Berkeley) 2/21/94";
 #else
-static char *rcsid = "$NetBSD: if.c,v 1.21 1997/04/03 04:46:45 christos Exp $";
+static char *rcsid = "$NetBSD: if.c,v 1.22 1997/04/07 03:04:24 christos Exp $";
 #endif
 #endif /* not lint */
 
@@ -219,7 +219,7 @@ intpr(interval, ifnetaddr)
 					    hexsep = ':', hexfmt = "%02x%c";
 				    n = sdl->sdl_alen;
 				}
-				m = printf("%-11.11s ", "<Link>");
+				m = printf("%-13.13s ", "<Link>");
 				goto hexprint;
 			default:
 				m = printf("(%d)", sa->sa_family);
@@ -231,7 +231,7 @@ intpr(interval, ifnetaddr)
 				while (--n >= 0)
 					m += printf(hexfmt, *cp++ & 0xff,
 						    n > 0 ? hexsep : ' ');
-				m = 30 - m;
+				m = 32 - m;
 				while (m-- > 0)
 					putchar(' ');
 				break;
