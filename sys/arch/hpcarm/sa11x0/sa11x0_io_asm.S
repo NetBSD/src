@@ -1,4 +1,4 @@
-/*	$NetBSD: sa11x0_io_asm.S,v 1.3 2001/03/10 17:32:14 toshii Exp $	*/
+/*	$NetBSD: sa11x0_io_asm.S,v 1.4 2001/06/23 10:19:04 toshii Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe.
@@ -84,8 +84,8 @@ ENTRY(sa11x0_bs_rm_1)
 
 sa11x0_bs_rm_1_loop:
 	ldrb	r1, [r0]
-	strb	r1, [r3], #0x0001
 	subs	r2, r2, #0x00000001
+	strb	r1, [r3], #0x0001
 	bgt	sa11x0_bs_rm_1_loop
 
 	mov	pc, lr
@@ -96,13 +96,44 @@ ENTRY(sa11x0_bs_rm_2)
 	cmp	r2, #0x00000000
 	movle	pc, lr
 
+	tst	r2, #0x00000007
+	tsteq	r1, #0x00000003
+	beq	sa11x0_bs_rm_2_fast
+
 sa11x0_bs_rm_2_loop:
 	ldrh	r1, [r0]
-	strh	r1, [r3], #0x0002
 	subs	r2, r2, #0x00000001
+	strh	r1, [r3], #0x0002
 	bgt	sa11x0_bs_rm_2_loop
 
 	mov	pc, lr
+
+sa11x0_bs_rm_2_fast:
+	stmfd	sp!, {r4, r5, lr}
+
+sa11x0_bs_rm_2_fastloop:
+	ldrh	r1, [r0]
+	ldrh	lr, [r0]
+	orr	r1, r1, lr, lsl #16
+
+	ldrh	r4, [r0]
+	ldrh	lr, [r0]
+	orr	r4, r4, lr, lsl #16
+
+	ldrh	r5, [r0]
+	ldrh	lr, [r0]
+	orr	r5, r5, lr, lsl #16
+
+	ldrh	ip, [r0]
+	ldrh	lr, [r0]
+	orr	ip, ip, lr, lsl #16
+
+	stmia	r3!, {r1, r4, r5, ip}
+	subs	r2, r2, #8
+	bgt	sa11x0_bs_rm_2_fastloop
+
+	ldmfd	sp!, {r4, r5, pc}
+
 
 ENTRY(sa11x0_bs_rm_4)
 	add	r0, r1, r2
@@ -112,8 +143,8 @@ ENTRY(sa11x0_bs_rm_4)
 
 sa11x0_bs_rm_4_loop:
 	ldr	r1, [r0]
-	str	r1, [r3], #0x0004
 	subs	r2, r2, #0x00000001
+	str	r1, [r3], #0x0004
 	bgt	sa11x0_bs_rm_4_loop
 
 	mov	pc, lr
@@ -130,8 +161,8 @@ ENTRY(sa11x0_bs_wm_1)
 
 sa11x0_wm_1_loop:
 	ldrb	r1, [r3], #0x0001
-	strb	r1, [r0]
 	subs	r2, r2, #0x00000001
+	strb	r1, [r0]
 	bgt	sa11x0_wm_1_loop
 
 	mov	pc, lr
@@ -144,8 +175,8 @@ ENTRY(sa11x0_bs_wm_2)
 
 sa11x0_bs_wm_2_loop:
 	ldrh	r1, [r3], #0x0002
-	strh	r1, [r0]
 	subs	r2, r2, #0x00000001
+	strh	r1, [r0]
 	bgt	sa11x0_bs_wm_2_loop
 
 	mov	pc, lr
@@ -158,8 +189,8 @@ ENTRY(sa11x0_bs_wm_4)
 
 sa11x0_bs_wm_4_loop:
 	ldr	r1, [r3], #0x0004
-	str	r1, [r0]
 	subs	r2, r2, #0x00000001
+	str	r1, [r0]
 	bgt	sa11x0_bs_wm_4_loop
 
 	mov	pc, lr
