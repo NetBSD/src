@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.118 2000/12/22 22:59:01 jdolecek Exp $	*/
+/*	$NetBSD: proc.h,v 1.119 2000/12/22 23:19:15 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1989, 1991, 1993
@@ -148,9 +148,8 @@ struct	proc {
 	int	p_flag;			/* P_* flags. */
 	struct cpu_info * __volatile p_cpu; /* CPU we're running on if
 					       SONPROC */
-	u_char	p_unused;		/* XXX: used to be emulation flag */
 	char	p_stat;			/* S* process status. */
-	char	p_pad1[2];
+	char	p_pad1[3];
 
 	pid_t	p_pid;			/* Process identifier. */
 	LIST_ENTRY(proc) p_hash;	/* Hash chain. */
