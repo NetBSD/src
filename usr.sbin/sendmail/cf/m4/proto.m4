@@ -34,7 +34,7 @@ divert(-1)
 #
 divert(0)
 
-VERSIONID(`@(#)proto.m4	8.1 (Berkeley) 6/8/93')
+VERSIONID(`@(#)proto.m4	8.1 (Berkeley) 6/27/93')
 
 MAILER(local)dnl
 
@@ -175,12 +175,12 @@ CONCAT(OD, confAUTO_REBUILD)
 
 # error message header/file */
 ifdef(`confERROR_MESSAGE',
-	concat(OE, confERROR_MESSAGE),
+	CONCAT(OE, confERROR_MESSAGE),
 	#OE/etc/sendmail.oE)
 
 # error mode
 ifdef(`confERROR_MODE',
-	concat(Oe, confERROR_MODE),
+	CONCAT(Oe, confERROR_MODE),
 	#Oep)
 
 # save Unix-style "From_" lines at top of header?

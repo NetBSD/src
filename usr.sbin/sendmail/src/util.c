@@ -33,7 +33,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)util.c	8.1 (Berkeley) 6/7/93";
+static char sccsid[] = "@(#)util.c	8.1 (Berkeley) 6/27/93";
 #endif /* not lint */
 
 # include "sendmail.h"
@@ -414,24 +414,63 @@ buildfname(gecos, login, buf)
 **		none.
 */
 
+#ifndef S_IXOTH
+# define S_IXOTH	(S_IEXEC >> 6)
+#endif
+
 int
 safefile(fn, uid, mode)
 	char *fn;
 	uid_t uid;
 	int mode;
 {
+	register char *p;
 	struct stat stbuf;
+
+	if (tTd(54, 4))
+		printf("safefile(%s, %d, %o): ", fn, uid, mode);
+	errno = 0;
+
+	for (p = fn; (p = strchr(++p, '/')) != NULL; *p = '/')
+	{
+		*p = '\0';
+		if (stat(fn, &stbuf) < 0 || !bitset(S_IXOTH, stbuf.st_mode))
+		{
+			int ret = errno;
+
+			if (ret == 0)
+				ret = EACCES;
+			if (tTd(54, 4))
+				printf("[dir %s] %s\n", fn, errstring(ret));
+			*p = '/';
+			return ret;
+		}
+	}
 
 	if (stat(fn, &stbuf) < 0)
 	{
 		int ret = errno;
 
+		if (tTd(54, 4))
+			printf("%s\n", errstring(ret));
+
 		errno = 0;
 		return ret;
 	}
-	if (stbuf.st_uid == uid && (stbuf.st_mode & mode) == mode)
+	if (stbuf.st_uid != uid && uid == 0)
+		mode >>= 6;
+	if (tTd(54, 4))
+		printf("[uid %d, stat %o] ", stbuf.st_uid, stbuf.st_mode);
+	if ((stbuf.st_uid == uid || uid == 0) &&
+	    (stbuf.st_mode & mode) == mode)
+	{
+		if (tTd(54, 4))
+			printf("OK\n");
 		return 0;
-	return EPERM;
+	}
+	if (tTd(54, 4))
+		printf("EACCES\n");
+	return EACCES;
 }
 /*
 **  FIXCRLF -- fix <CR><LF> in line.
