@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 1988 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1988, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,12 +32,15 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-/*static char sccsid[] = "from: @(#)login.c	5.4 (Berkeley) 6/1/90";*/
-static char rcsid[] = "$Id: login.c,v 1.3 1994/04/01 03:06:40 cgd Exp $";
+/* from: static char sccsid[] = "@(#)login.c	8.1 (Berkeley) 6/4/93"; */
+static char *rcsid = "$Id: login.c,v 1.4 1994/05/04 10:56:00 cgd Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
-#include <sys/file.h>
+
+#include <fcntl.h>
+#include <unistd.h>
+#include <stdlib.h>
 #include <utmp.h>
 #include <stdio.h>
 
@@ -51,11 +54,11 @@ login(ut)
 	tty = ttyslot();
 	if (tty > 0 && (fd = open(_PATH_UTMP, O_WRONLY|O_CREAT, 0644)) >= 0) {
 		(void)lseek(fd, (off_t)(tty * sizeof(struct utmp)), L_SET);
-		(void)write(fd, (char *)ut, sizeof(struct utmp));
+		(void)write(fd, ut, sizeof(struct utmp));
 		(void)close(fd);
 	}
 	if ((fd = open(_PATH_WTMP, O_WRONLY|O_APPEND, 0)) >= 0) {
-		(void)write(fd, (char *)ut, sizeof(struct utmp));
+		(void)write(fd, ut, sizeof(struct utmp));
 		(void)close(fd);
 	}
 }

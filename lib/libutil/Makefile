@@ -1,5 +1,5 @@
-#	from: @(#)Makefile	5.10 (Berkeley) 5/6/91
-#	$Id: Makefile,v 1.5 1994/01/27 23:31:19 cgd Exp $
+#	from: @(#)Makefile	8.1 (Berkeley) 6/4/93
+#	$Id: Makefile,v 1.6 1994/05/04 10:55:57 cgd Exp $
 
 LIB=	util
 CFLAGS+=-DLIBC_SCCS
