@@ -1,3 +1,5 @@
+/*	$NetBSD: misc.c,v 1.2 1997/10/07 13:39:59 mrg Exp $	*/
+
 /*-
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -31,50 +33,30 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
-static char sccsid[] = "@(#)misc.c	8.1 (Berkeley) 6/4/93";
+#if 0
+static char sccsid[] = "from: @(#)misc.c	8.1 (Berkeley) 6/4/93";
+#else
+__RCSID("$NetBSD: misc.c,v 1.2 1997/10/07 13:39:59 mrg Exp $");
+#endif
 #endif /* not lint */
 
-#include <sys/types.h>
+#include <sys/param.h>
+#include <sys/mount.h>
 
-#include <unistd.h>
+#include <ufs/ufs/dinode.h>
+#include <ufs/lfs/lfs.h>
+
 #include <errno.h>
-#include <stdlib.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
+
+#include "clean.h"
 
 extern char *special;
-
-#if __STDC__
-#include <stdarg.h>
-#else
-#include <varargs.h>
-#endif
-
-void
-#if __STDC__
-err(const int fatal, const char *fmt, ...)
-#else
-err(fmt, va_alist)
-	char *fmt;
-	va_dcl
-#endif
-{
-	va_list ap;
-#if __STDC__
-	va_start(ap, fmt);
-#else
-	va_start(ap);
-#endif
-	(void)fprintf(stderr, "%s: ", special);
-	(void)vfprintf(stderr, fmt, ap);
-	va_end(ap);
-	if (errno)
-		(void)fprintf(stderr, " %s", strerror(errno));
-	(void)fprintf(stderr, "\n");
-	if (fatal)
-		exit(1);
-}
 
 void
 get(fd, off, p, len)

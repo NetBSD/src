@@ -1,3 +1,5 @@
+/*	$NetBSD: library.c,v 1.4 1997/10/07 13:39:59 mrg Exp $	*/
+
 /*-
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -31,9 +33,13 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
-/*static char sccsid[] = "from: @(#)library.c	8.1 (Berkeley) 6/4/93";*/
-static char *rcsid = "$Id: library.c,v 1.3 1997/08/01 06:33:39 mikel Exp $";
+#if 0
+static char sccsid[] = "from: @(#)library.c	8.1 (Berkeley) 6/4/93";
+#else
+__RCSID("$NetBSD: library.c,v 1.4 1997/10/07 13:39:59 mrg Exp $");
+#endif
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -46,6 +52,7 @@ static char *rcsid = "$Id: library.c,v 1.3 1997/08/01 06:33:39 mikel Exp $";
 #include <ufs/ufs/dinode.h>
 #include <ufs/lfs/lfs.h>
 
+#include <err.h>
 #include <fcntl.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -63,6 +70,9 @@ int	 bi_toss __P((const void *, const void *, const void *));
 void	 get_ifile __P((FS_INFO *, int));
 int	 get_superblock __P((FS_INFO *, struct lfs *));
 int	 pseg_valid __P((FS_INFO *, SEGSUM *));
+void	 print_SEGSUM __P((struct lfs *, SEGSUM *));
+
+extern u_long cksum __P((void *, size_t));	/* XXX */
 
 /*
  * This function will get information on a a filesystem which matches
@@ -108,7 +118,6 @@ get_fs_info (lstatfsp, use_mmap)
 	int use_mmap;			/* IN: mmap or read */
 {
 	FS_INFO	*fsp;
-	int	i;
 
 	fsp = (FS_INFO *)malloc(sizeof(FS_INFO));
 	if (fsp == NULL)
@@ -134,7 +143,6 @@ reread_fs_info(fsp, use_mmap)
 	FS_INFO *fsp;	/* IN: prointer fs_infos to reread */
 	int use_mmap;
 {
-	int i;
 
 	if (statfs(fsp->fi_statfsp->f_mntonname, fsp->fi_statfsp))
 		err(1, "reread_fs_info: statfs failed");
@@ -238,8 +246,18 @@ redo_read:
 	 * and segment usage table multiplied by the number of ifile
 	 * entries per page.
 	 */
-	fsp->fi_ifile_count = (fsp->fi_ifile_length >> fsp->fi_lfs.lfs_bshift -
-	    fsp->fi_lfs.lfs_cleansz - fsp->fi_lfs.lfs_segtabsz) *
+	/*
+	 * XXX this used to read:
+	 *
+	 *	fsp->fi_ifile_count = (fsp->fi_ifile_length >> fsp->fi_lfs.lfs_bshift -
+	 *	    fsp->fi_lfs.lfs_cleansz - fsp->fi_lfs.lfs_segtabsz) *
+	 *	    fsp->fi_lfs.lfs_ifpb;
+	 *
+	 * but now has ()'s around the -'s to quell a GCC warning.  This
+	 * may not have been the intended purpose, however!
+	 */
+	fsp->fi_ifile_count = (fsp->fi_ifile_length >> (fsp->fi_lfs.lfs_bshift -
+	    fsp->fi_lfs.lfs_cleansz - fsp->fi_lfs.lfs_segtabsz)) *
 	    fsp->fi_lfs.lfs_ifpb;
 
 	free (ifile_name);
@@ -267,9 +285,13 @@ lfs_segmapv(fsp, seg, seg_buf, blocks, bcount)
 	struct lfs *lfsp;
 	caddr_t s, segend;
 	daddr_t pseg_addr, seg_addr;
-	int i, nelem, nblocks, sumsize;
+	int nelem, nblocks, sumsize;
 	time_t timestamp;
+#if defined(VERBOSE) || defined(DIAGNOSTIC)
+	int i = 0;	/* XXX gcc */
+#endif
 
+	i = 0;
 	lfsp = &fsp->fi_lfs;
 	nelem = 2 * lfsp->lfs_ssize;
 	if (!(bip = malloc(nelem * sizeof(BLOCK_INFO))))
@@ -425,7 +447,7 @@ add_inodes (fsp, bip, countp, sp, seg_buf, seg_addr)
 	caddr_t	seg_buf;	/* the buffer containing the segment's data */
 	daddr_t	seg_addr;	/* disk address of seg_buf */
 {
-	struct dinode *di;
+	struct dinode *di = NULL;	/* XXX gcc */
 	struct lfs *lfsp;
 	IFILE *ifp;
 	BLOCK_INFO *bp;
@@ -589,7 +611,6 @@ munmap_segment (fsp, seg_buf, use_mmap)
 		free (seg_buf);
 }
 
-
 /*
  * USEFUL DEBUGGING TOOLS:
  */
@@ -615,9 +636,9 @@ bi_compare(a, b)
 	ba = a;
 	bb = b;
 
-	if (diff = (int)(ba->bi_inode - bb->bi_inode))
+	if ((diff = (int)(ba->bi_inode - bb->bi_inode)))
 		return (diff);
-	if (diff = (int)(ba->bi_lbn - bb->bi_lbn)) {
+	if ((diff = (int)(ba->bi_lbn - bb->bi_lbn))) {
 		if (ba->bi_lbn == LFS_UNUSED_LBN)
 			return(-1);
 		else if (bb->bi_lbn == LFS_UNUSED_LBN)
@@ -629,7 +650,7 @@ bi_compare(a, b)
 		else
 			return (diff);
 	}
-	if (diff = (int)(ba->bi_segcreate - bb->bi_segcreate))
+	if ((diff = (int)(ba->bi_segcreate - bb->bi_segcreate)))
 		return (diff);
 	diff = (int)(ba->bi_daddr - bb->bi_daddr);
 	return (diff);
