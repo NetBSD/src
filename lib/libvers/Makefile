@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.1 2000/08/03 03:53:40 assar Exp $
+# $NetBSD: Makefile,v 1.2 2000/08/03 22:48:46 assar Exp $
 DIST=		${.CURDIR}/../../crypto/dist
 .PATH: ${DIST}/heimdal/lib/vers
 
@@ -6,6 +6,12 @@ WARNS?=  1
 MKLINT= no
 
 LIB=	vers
+
+NOPROFILE=	noprofile
+NOPIC=		nopic
+
+# not installed, only linked against in source tree
+libinstall::
 
 includes: print_version.h
 
