@@ -1,4 +1,4 @@
-/*	$NetBSD: rnd.h,v 1.6 1997/10/15 07:22:59 explorer Exp $	*/
+/*	$NetBSD: rnd.h,v 1.7 1997/10/19 03:47:50 explorer Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -55,6 +55,10 @@
 
 #ifndef RND_POOLWORDS
 #define RND_POOLWORDS	128	/* size of entropy pool in 32-bit words */
+#endif
+
+#ifndef RND_EVENTQSIZE
+#define RND_EVENTQSIZE	250	/* size of event queue */
 #endif
 
 #define RND_POOLBITS     (RND_POOLWORDS * 32)
