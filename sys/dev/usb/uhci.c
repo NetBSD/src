@@ -1,4 +1,4 @@
-/*	$NetBSD: uhci.c,v 1.78 2000/01/19 01:02:11 augustss Exp $	*/
+/*	$NetBSD: uhci.c,v 1.79 2000/01/19 01:04:26 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhci.c,v 1.33 1999/11/17 22:33:41 n_hibma Exp $	*/
 
 /*
@@ -788,7 +788,6 @@ uhci_root_intr_done(xfer)
 	usbd_xfer_handle xfer;
 {
 }
-
 
 void
 uhci_lock_frames(sc)
@@ -2524,6 +2523,7 @@ uhci_open(pipe)
 	struct uhci_pipe *upipe = (struct uhci_pipe *)pipe;
 	usb_endpoint_descriptor_t *ed = pipe->endpoint->edesc;
 	usbd_status err;
+	int ival;
 
 	DPRINTFN(1, ("uhci_open: pipe=%p, addr=%d, endpt=%d (%d)\n",
 		     pipe, pipe->device->address, 
@@ -2572,7 +2572,10 @@ uhci_open(pipe)
 			break;
 		case UE_INTERRUPT:
 			pipe->methods = &uhci_device_intr_methods;
-			return (uhci_device_setintr(sc, upipe, ed->bInterval));
+			ival = pipe->interval;
+			if (ival == USBD_DEFAULT_INTERVAL)
+				ival = ed->bInterval;
+			return (ohci_device_setintr(sc, opipe, ival));
 		case UE_ISOCHRONOUS:
 			pipe->methods = &uhci_device_isoc_methods;
 			return (uhci_setup_isoc(pipe));
