@@ -38,7 +38,7 @@
  * from: Utah $Hdr: machdep.c 1.63 91/04/24$
  *
  *	@(#)machdep.c	7.16 (Berkeley) 6/3/91
- *	$Id: machdep.c,v 1.20 1994/04/22 02:47:35 chopps Exp $
+ *	$Id: machdep.c,v 1.21 1994/04/24 12:05:28 chopps Exp $
  */
 
 #include <sys/param.h>
@@ -1026,7 +1026,7 @@ static int waittime = -1;
 void
 bootsync(void)
 {
-	if (waittime < 0 && bfreelist[0].b_forw) {
+	if (waittime < 0) {
 		register struct buf *bp;
 		int iter, nbusy;
 
