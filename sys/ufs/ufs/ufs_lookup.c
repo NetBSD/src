@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_lookup.c,v 1.50 2003/08/07 16:34:45 agc Exp $	*/
+/*	$NetBSD: ufs_lookup.c,v 1.51 2003/09/11 17:33:43 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_lookup.c,v 1.50 2003/08/07 16:34:45 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_lookup.c,v 1.51 2003/09/11 17:33:43 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -702,7 +702,8 @@ ufs_makedirentry(ip, cnp, newdirp)
 #endif
 	newdirp->d_ino = ip->i_number;
 	newdirp->d_namlen = cnp->cn_namelen;
-	memcpy(newdirp->d_name, cnp->cn_nameptr, (unsigned)cnp->cn_namelen + 1);
+	memcpy(newdirp->d_name, cnp->cn_nameptr, (size_t)cnp->cn_namelen);
+	newdirp->d_name[cnp->cn_namelen] = '\0';
 	if (ITOV(ip)->v_mount->mnt_maxsymlinklen > 0)
 		newdirp->d_type = IFTODT(ip->i_mode);
 	else {

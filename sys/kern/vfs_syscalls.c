@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.192 2003/09/02 12:31:35 drochner Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.193 2003/09/11 17:33:42 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.192 2003/09/02 12:31:35 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.193 2003/09/11 17:33:42 christos Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_43.h"
@@ -2958,8 +2958,8 @@ rename_files(from, to, p, retain)
 	if ((error = namei(&fromnd)) != 0)
 		return (error);
 	fvp = fromnd.ni_vp;
-	NDINIT(&tond, RENAME, LOCKPARENT | LOCKLEAF | NOCACHE | SAVESTART,
-	    UIO_USERSPACE, to, p);
+	NDINIT(&tond, RENAME, LOCKPARENT | LOCKLEAF | NOCACHE | SAVESTART |
+	    (fvp->v_type == VDIR ? CREATEDIR : 0), UIO_USERSPACE, to, p);
 	if ((error = namei(&tond)) != 0) {
 		VOP_ABORTOP(fromnd.ni_dvp, &fromnd.ni_cnd);
 		vrele(fromnd.ni_dvp);
@@ -3047,7 +3047,8 @@ sys_mkdir(l, v, retval)
 	int error;
 	struct nameidata nd;
 
-	NDINIT(&nd, CREATE, LOCKPARENT, UIO_USERSPACE, SCARG(uap, path), p);
+	NDINIT(&nd, CREATE, LOCKPARENT | CREATEDIR, UIO_USERSPACE,
+	    SCARG(uap, path), p);
 	if ((error = namei(&nd)) != 0)
 		return (error);
 	vp = nd.ni_vp;

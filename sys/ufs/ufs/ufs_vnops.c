@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_vnops.c,v 1.107 2003/08/16 07:04:17 dsl Exp $	*/
+/*	$NetBSD: ufs_vnops.c,v 1.108 2003/09/11 17:33:43 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993, 1995
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_vnops.c,v 1.107 2003/08/16 07:04:17 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_vnops.c,v 1.108 2003/09/11 17:33:43 christos Exp $");
 
 #ifndef _LKM
 #include "opt_quota.h"
@@ -756,7 +756,8 @@ ufs_whiteout(void *v)
 		newdir.d_ino = WINO;
 		newdir.d_namlen = cnp->cn_namelen;
 		memcpy(newdir.d_name, cnp->cn_nameptr,
-		    (unsigned)cnp->cn_namelen + 1);
+		    (size_t)cnp->cn_namelen);
+		newdir.d_name[cnp->cn_namelen] = '\0';
 		newdir.d_type = DT_WHT;
 		error = ufs_direnter(dvp, NULL, &newdir, cnp, NULL);
 		break;

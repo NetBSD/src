@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_lookup.c,v 1.50 2003/08/25 09:12:44 cb Exp $	*/
+/*	$NetBSD: vfs_lookup.c,v 1.51 2003/09/11 17:33:42 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.50 2003/08/25 09:12:44 cb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.51 2003/09/11 17:33:42 christos Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_systrace.h"
@@ -532,9 +532,10 @@ unionlookup:
 			goto bad;
 		/*
 		 * If this was not the last component, or there were trailing
-		 * slashes, then the name must exist.
+		 * slashes, and we are not going to create a directory,
+		 * then the name must exist.
 		 */
-		if (cnp->cn_flags & REQUIREDIR) {
+		if ((cnp->cn_flags & (REQUIREDIR | CREATEDIR)) == REQUIREDIR) {
 			error = ENOENT;
 			goto bad;
 		}
