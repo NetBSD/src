@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.310 1998/07/05 08:49:34 jonathan Exp $	*/
+/*	$NetBSD: machdep.c,v 1.311 1998/07/08 04:36:39 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -581,7 +581,13 @@ cpu_startup()
 		curbufsize = CLBYTES * ((i < residual) ? (base+1) : base);
 
 		while (curbufsize) {
-			pg = uvm_pagealloc(NULL, 0, NULL);
+			/*
+			 * Attempt to allocate buffers from the first
+			 * 16M of RAM to avoid bouncing file system
+			 * transfers.
+			 */
+			pg = uvm_pagealloc_strat(NULL, 0, NULL,
+			    UVM_PGA_STRAT_FALLBACK, VM_FREELIST_FIRST16);
 			if (pg == NULL)
 				panic("cpu_startup: not enough memory for "
 				    "buffer cache");
