@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.33 1996/05/05 12:02:41 briggs Exp $	*/
+/*	$NetBSD: cpu.h,v 1.34 1996/05/05 16:33:46 briggs Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -355,7 +355,7 @@ __BEGIN_DECLS
 u_int get_mapping __P((void));
 
 /* locore.s */
-void	m68881_restore __P((int []));
+void	m68881_restore __P((struct fpframe *));
 void	m68881_save __P((struct fpframe *));
 u_int	getsfc __P((void));
 u_int	getdfc __P((void));
