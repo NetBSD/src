@@ -1,4 +1,4 @@
-/*	$NetBSD: lms.c,v 1.1 1997/10/14 06:49:10 sakamoto Exp $	*/
+/*	$NetBSD: lms.c,v 1.2 1998/01/12 18:18:07 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994 Charles Hannum.
@@ -79,9 +79,7 @@ struct cfattach lms_ca = {
 	sizeof(struct lms_softc), (cfmatch_t)lmsprobe, lmsattach
 };
 
-struct cfdriver lms_cd = {
-	NULL, "lms", DV_TTY
-};
+extern struct cfdriver lms_cd;
 
 #define	LMSUNIT(dev)	(minor(dev))
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: pms.c,v 1.2 1997/11/27 10:19:59 sakamoto Exp $	*/
+/*	$NetBSD: pms.c,v 1.3 1998/01/12 18:18:09 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1994 Charles Hannum.
@@ -111,9 +111,7 @@ struct cfattach pms_ca = {
 	sizeof(struct pms_softc), pmsprobe, pmsattach,
 };
 
-struct cfdriver pms_cd = {
-	NULL, "pms", DV_TTY
-};
+extern struct cfdriver pms_cd;
 
 #define	PMSUNIT(dev)	(minor(dev))
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: pchb.c,v 1.1 1997/10/14 06:51:42 sakamoto Exp $	*/
+/*	$NetBSD: pchb.c,v 1.2 1998/01/12 18:18:13 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -53,10 +53,6 @@ void	pchbattach __P((struct device *, struct device *, void *));
 
 struct cfattach pchb_ca = {
 	sizeof(struct device), (cfmatch_t)pchbmatch, pchbattach
-};
-
-struct cfdriver pchb_cd = {
-	NULL, "pchb", DV_DULL
 };
 
 int
