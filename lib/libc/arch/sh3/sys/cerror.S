@@ -1,4 +1,4 @@
-/*	$NetBSD: cerror.S,v 1.4 2001/05/11 19:58:08 msaitoh Exp $	*/
+/*	$NetBSD: cerror.S,v 1.5 2003/07/01 14:35:45 marcus Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -40,7 +40,7 @@
 
 #include <machine/asm.h>
 #if defined(SYSLIBC_SCCS) && !defined(lint)
-	RCSID("$NetBSD: cerror.S,v 1.4 2001/05/11 19:58:08 msaitoh Exp $")
+	RCSID("$NetBSD: cerror.S,v 1.5 2003/07/01 14:35:45 marcus Exp $")
 #endif /* SYSLIBC_SCCS and not lint */
 
 #include "SYS.h"
@@ -49,11 +49,26 @@
 
 	.globl	_C_LABEL(errno)
 cerror:
+#ifdef PIC
+	mov	r0, r2
+	mova	L_GOT, r0
+	mov.l	L_GOT, r1
+	add	r0, r1
+	mov.l	L_errno, r0
+	mov.l	@(r0, r1), r1
+	mov.l	r2, @r1
+#else
 	mov.l	L_errno, r1
 	mov.l	r0, @r1
+#endif
 	mov	#0xff, r0
 	rts
 	mov	#0xff, r1
 
 	.align	2
+#ifdef PIC
+L_GOT:		.long	_GLOBAL_OFFSET_TABLE_
+L_errno:	.long	_C_LABEL(errno)@GOT
+#else
 L_errno:	.long	_C_LABEL(errno)
+#endif

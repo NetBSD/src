@@ -1,4 +1,4 @@
-/*	$NetBSD: sigsetjmp.S,v 1.4 2001/05/11 19:58:07 msaitoh Exp $	*/
+/*	$NetBSD: sigsetjmp.S,v 1.5 2003/07/01 14:35:44 marcus Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -40,7 +40,7 @@
 
 #include <machine/asm.h>
 #if defined(LIBC_SCCS)
-	RCSID("$NetBSD: sigsetjmp.S,v 1.4 2001/05/11 19:58:07 msaitoh Exp $")
+	RCSID("$NetBSD: sigsetjmp.S,v 1.5 2003/07/01 14:35:44 marcus Exp $")
 #endif
 
 ENTRY(sigsetjmp)
@@ -54,8 +54,14 @@ ENTRY(sigsetjmp)
 	mov.l	r4, @-r15
 	mov	#0, r4
 	mov.l	Lsigblock, r0
+#ifdef PIC
+	bsrf	r0
+	nop
+2:	
+#else
 	jsr	@r0
 	nop
+#endif
 	mov.l	@r15+, r4
 	lds.l	@r15+, pr
 
@@ -79,7 +85,11 @@ ENTRY(sigsetjmp)
 
 	.align	2
 Lsigblock:
+#ifdef PIC
+	.long	_C_LABEL(sigblock)-2b
+#else
 	.long	_C_LABEL(sigblock)
+#endif
 
 ENTRY(siglongjmp)
 	mov	r4, r0
@@ -94,8 +104,14 @@ ENTRY(siglongjmp)
 	add	#4*10, r0
 	mov.l	@r0, r4
 	mov.l	Lsigsetmask, r0
+#ifdef PIC
+	bsrf	r0
+	nop
+2:	
+#else
 	jsr	@r0
 	nop
+#endif
 	mov.l	@r15+, r5
 	mov.l	@r15+, r4
 
@@ -119,4 +135,8 @@ ENTRY(siglongjmp)
 
 	.align	2
 Lsigsetmask :
+#ifdef PIC
+	.long	_C_LABEL(sigsetmask)-2b
+#else
 	.long	_C_LABEL(sigsetmask)
+#endif

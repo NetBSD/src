@@ -1,4 +1,4 @@
-/*	$NetBSD: __sigsetjmp14.S,v 1.4 2001/05/11 19:58:07 msaitoh Exp $	*/
+/*	$NetBSD: __sigsetjmp14.S,v 1.5 2003/07/01 14:35:44 marcus Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -40,7 +40,7 @@
 
 #include <machine/asm.h>
 #if defined(LIBC_SCCS)
-	RCSID("$NetBSD: __sigsetjmp14.S,v 1.4 2001/05/11 19:58:07 msaitoh Exp $")
+	RCSID("$NetBSD: __sigsetjmp14.S,v 1.5 2003/07/01 14:35:44 marcus Exp $")
 #endif
 
 ENTRY(__sigsetjmp14)
@@ -55,9 +55,16 @@ ENTRY(__sigsetjmp14)
 	mov	#0, r5
 	add	#4*10, r6	/* &sigmask */
 
+#ifdef PIC
+	mov.l	L__sigprocmask14r1, r0
+	bsrf	r0
+	nop
+L__sigprocmask14o1:	
+#else
 	mov.l	L__sigprocmask14, r0
 	jsr	@r0
 	nop
+#endif
 
 	mov.l	@r15+, r5
 	mov.l	@r15+, r4
@@ -91,9 +98,16 @@ ENTRY(__siglongjmp14)
 	mov	#3, r4		/* SIG_SETMASK */
 	add	#4*10, r5	/* &sigmask */
 	mov	#0, r6
+#ifdef PIC
+	mov.l	L__sigprocmask14r2, r0
+	bsrf	r0
+	nop
+L__sigprocmask14o2:
+#else
 	mov.l	L__sigprocmask14, r0
 	jsr	@r0
 	nop
+#endif
 	mov.l	@r15+, r5
 	mov.l	@r15+, r4
 
@@ -117,5 +131,12 @@ ENTRY(__siglongjmp14)
 	nop
 
 	.align	2
+#ifdef PIC
+L__sigprocmask14r1:
+	.long	_C_LABEL(__sigprocmask14)-L__sigprocmask14o1
+L__sigprocmask14r2:
+	.long	_C_LABEL(__sigprocmask14)-L__sigprocmask14o2
+#else
 L__sigprocmask14:
 	.long	_C_LABEL(__sigprocmask14)
+#endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: sdivsi3.S,v 1.4 2001/05/11 19:58:07 msaitoh Exp $	*/
+/*	$NetBSD: sdivsi3.S,v 1.5 2003/07/01 14:35:44 marcus Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -40,7 +40,7 @@
 
 #include <machine/asm.h>
 #if defined(LIBC_SCCS)
-	RCSID("$NetBSD: sdivsi3.S,v 1.4 2001/05/11 19:58:07 msaitoh Exp $")
+	RCSID("$NetBSD: sdivsi3.S,v 1.5 2003/07/01 14:35:44 marcus Exp $")
 #endif
 
 /* r0 <= r4 / r5 */
@@ -78,7 +78,11 @@ div_by_zero:
 	mov	r15, r14
 
 	mov.l	L_raise, r1
+#ifdef PIC
+1:	bsrf	r1
+#else
 	jsr	@r1
+#endif
 	mov	#8, r4		/* delay slot */
 	mov	#0, r0
 
@@ -88,5 +92,9 @@ div_by_zero:
 
 	.align	2
 L_raise:
+#ifdef PIC
+	.long	_C_LABEL(raise)-(1b+4)
+#else
 	.long	_C_LABEL(raise)
+#endif
 #endif

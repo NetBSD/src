@@ -1,4 +1,4 @@
-/*	$NetBSD: swapcontext.S,v 1.2 2003/01/20 00:26:39 thorpej Exp $	*/
+/*	$NetBSD: swapcontext.S,v 1.3 2003/07/01 14:35:44 marcus Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -38,22 +38,31 @@
 
 #include <machine/asm.h>
 #if defined(SYSLIBC_SCCS) && !defined(lint)
-	RCSID("$NetBSD: swapcontext.S,v 1.2 2003/01/20 00:26:39 thorpej Exp $")
+	RCSID("$NetBSD: swapcontext.S,v 1.3 2003/07/01 14:35:44 marcus Exp $")
 #endif /* SYSLIBC_SCCS and not lint */
 
 ENTRY(swapcontext)
 	mov.l	r5, @-r15
 	sts.l	pr, @-r15
 	mov.l	_L._getcontext, r0
+#ifdef PIC
+	bsrf	r0
+#else
 	jsr	@r0
+#endif
 	 mov.l	r4, @-r15
+2:
 	mov.l	@r15+, r1
 	tst	r0, r0
 	bf	1f
 	mov.l	@r15, r0
 	mov.l	r0, @(36 + 1 * 4, r1)	/* saved pc <- pr */
 	mov.l	_L.setcontext, r2
+#ifdef PIC
+	bsrf	r2
+#else
 	jsr	@r2
+#endif
 	 mov.l	@(4, r15), r4
 1:
 	lds.l	@r15+, pr
@@ -61,5 +70,10 @@ ENTRY(swapcontext)
 	 add	#4, r15
 
 	.align	2
+#ifdef PIC
+_L._getcontext:		.long _C_LABEL(_getcontext)-2b
+_L.setcontext:		.long _C_LABEL(setcontext)-1b
+#else
 _L._getcontext:		.long _C_LABEL(_getcontext)
 _L.setcontext:		.long _C_LABEL(setcontext)
+#endif

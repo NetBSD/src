@@ -1,4 +1,4 @@
-/*	$NetBSD: exect.S,v 1.2 2001/05/11 19:58:08 msaitoh Exp $	*/
+/*	$NetBSD: exect.S,v 1.3 2003/07/01 14:35:45 marcus Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -40,7 +40,7 @@
 
 #include <machine/asm.h>
 #if defined(SYSLIBC_SCCS) && !defined(lint)
-	RCSID("$NetBSD: exect.S,v 1.2 2001/05/11 19:58:08 msaitoh Exp $")
+	RCSID("$NetBSD: exect.S,v 1.3 2003/07/01 14:35:45 marcus Exp $")
 #endif /* SYSLIBC_SCCS and not lint */
 
 #include "SYS.h"
@@ -51,11 +51,20 @@ ENTRY(exect)
 	trapa	#0x80
 
 	mov.l	Lcerror, r1
+#ifdef PIC
+	braf	r0
+#else
 	jmp	@r0
-
+#endif
+	nop
+1:
 	.align	2
 LSYS_execve:	.long	SYS_execve
+#ifdef PIC
+Lcerror:	.long	cerror-1b
+#else
 Lcerror:	.long	cerror
+#endif
 
 #if 0
 ENTRY(exect)

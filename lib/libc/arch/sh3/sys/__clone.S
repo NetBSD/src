@@ -1,4 +1,4 @@
-/*	$NetBSD: __clone.S,v 1.1 2001/07/22 17:18:25 tsubai Exp $	*/
+/*	$NetBSD: __clone.S,v 1.2 2003/07/01 14:35:45 marcus Exp $	*/
 
 /*-
  * Copyright (c) 2001 Tsubai Masanari.  All rights reserved.
@@ -58,14 +58,22 @@ ENTRY(__clone)
 	mov	r7, r4		/* arg */
 
 	mov.l	L__exit, r1
+#ifdef PIC
+	bsrf	r1
+#else
 	jsr	@r1
+#endif
 	mov	r0, r4
-
+2:
 inval:
 	mov	#EINVAL, r0
 err:
 	mov.l	Lcerror, r1
+#ifdef PIC
+	braf	r1
+#else
 	jmp	@r1
+#endif
 	nop
 1:
 	rts
@@ -74,7 +82,14 @@ err:
 	.align	2
 LSYS___clone:
 	.long	SYS___clone
+#ifdef PIC
+L__exit:
+	.long	_C_LABEL(_exit)-2b
+Lcerror:
+	.long	cerror-1b
+#else
 L__exit:
 	.long	_C_LABEL(_exit)
 Lcerror:
 	.long	cerror
+#endif
