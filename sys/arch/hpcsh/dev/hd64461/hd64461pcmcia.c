@@ -1,4 +1,4 @@
-/*	$NetBSD: hd64461pcmcia.c,v 1.13 2002/02/28 01:57:00 uch Exp $	*/
+/*	$NetBSD: hd64461pcmcia.c,v 1.14 2002/03/03 14:34:01 uch Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -52,13 +52,13 @@
 #include <dev/pcmcia/pcmciavar.h>
 #include <dev/pcmcia/pcmciachip.h>
 
-#include <sh3/cpufunc.h>
 #include <sh3/bscreg.h>
 
 #include <hpcsh/dev/hd64461/hd64461reg.h>
 #include <hpcsh/dev/hd64461/hd64461var.h>
 #include <hpcsh/dev/hd64461/hd64461intcvar.h>
 #include <hpcsh/dev/hd64461/hd64461gpioreg.h>
+#include <hpcsh/dev/hd64461/hd64461pcmciavar.h>
 #include <hpcsh/dev/hd64461/hd64461pcmciareg.h>
 
 #include "locators.h"
@@ -908,41 +908,28 @@ hd64461pcmcia_power_on(enum controller_channel channel)
 
 	/* detect voltage and supply VCC */
 	r = hd64461_reg_read_1(isr);
+
 	switch (r & (HD64461_PCCISR_VS1 | HD64461_PCCISR_VS2)) {
 	case (HD64461_PCCISR_VS1 | HD64461_PCCISR_VS2): /* 5 V */
 		DPRINTF("5V card\n");
-		r = hd64461_reg_read_1(gcr);
-		r &= ~HD64461_PCCGCR_VCC0;
-		hd64461_reg_write_1(gcr, r);
-		r = hd64461_reg_read_1(scr);
-		r &= ~HD64461_PCCSCR_VCC1;
-		hd64461_reg_write_1(scr, r);
+		hd64461pcmcia_power(channel, V_5, 1);
 		break;
 	case HD64461_PCCISR_VS2:	/* 3.3 / 5 V */
 		/* FALLTHROUGH */
 	case 0:				/* x.x / 3.3 / 5 V */
 		DPRINTF("3.3V card\n");
-		if (channel == CHANNEL_1) { 
-			r = hd64461_reg_read_1(gcr);
-			r &= ~HD64461_PCCGCR_VCC0;
-			hd64461_reg_write_1(gcr, r);
-		} else { 
-			r = hd64461_reg_read_1(gcr);
-			r |= HD64461_PCCGCR_VCC0;
-			hd64461_reg_write_1(gcr, r);
-		} 
-		r = hd64461_reg_read_1(scr);
-		r &= ~HD64461_PCCSCR_VCC1;
-		hd64461_reg_write_1(scr, r);
+		hd64461pcmcia_power(channel, V_3_3, 1);
 		break;
 	case HD64461_PCCISR_VS1:	/* x.x V */
 		/* FALLTHROUGH */
-		printf("x.x V not supported.\n");
+		DPRINTF("x.x V card\n");
+		hd64461pcmcia_power(channel, V_X_X, 1);
 		return;
 	default:
 		printf("\nunknown Voltage. don't attach.\n");
 		return;
 	}
+
 	/*
 	 * wait 100ms until power raise (Tpr) and 20ms to become
 	 * stable (Tsu(Vcc)).
@@ -1208,4 +1195,4 @@ hd64461pcmcia_info(struct hd64461pcmcia_softc *sc)
 
 	dbg_banner_line();
 }
-#endif /* DEBUG */
+#endif /* HD64461PCMCIA_DEBUG */
