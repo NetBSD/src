@@ -1,4 +1,4 @@
-.\"	$NetBSD: pci.4,v 1.33 2000/05/15 06:31:56 bouyer Exp $
+.\"	$NetBSD: pci.4,v 1.34 2000/07/24 12:17:45 ad Exp $
 .\"
 .\" Copyright (c) 1997 Jason R. Thorpe.  All rights reserved.
 .\" Copyright (c) 1997 Jonathan Stone
@@ -74,9 +74,17 @@ includes machine-independent
 drivers, sorted by device type and driver name:
 .Pp
 .Ss SCSI interfaces
-.Bl -tag -width speaker -offset indent
+.Bl -tag -width pcdisplay -offset indent
 .It ahc
 Adaptec 29xx, 39xx, and other AIC-7xxx-based
+.Tn SCSI
+interfaces.
+.It adv
+Advansys
+.Tn SCSI
+interfaces.
+.It adw
+Advansys Ultra Wide
 .Tn SCSI
 interfaces.
 .It bha
@@ -84,7 +92,9 @@ Buslogic BT-9xx
 .Tn SCSI
 interfaces.
 .It dpt
-DPT SmartCache/SmartRAID III and IV SCSI interfaces.
+DPT SmartCache/SmartRAID III and IV
+.Tn SCSI
+interfaces.
 .It isp
 QLogic ISP-1020, ISP-1040, and ISP-2100
 .Tn SCSI
@@ -95,14 +105,26 @@ interfaces.
 Symbios Logic/NCR 53c8xx-family
 .Tn SCSI
 interfaces.
+.It pcscp
+Advanced Micro Devices Am53c974 PCscsi-PCI
+.Tn SCSI
+interfaces.
 .It siop
 Symbios Logic/NCR 53c8xx-family
 .Tn SCSI
 interfaces.
 .El
 .Pp
+.Ss Disk and tape controllers
+.Bl -tag -width pcdisplay -offset indent
+.It cac
+Compaq array controllers.
+.It pciide
+IDE disk controllers.
+.El
+.Pp
 .Ss Network interfaces
-.Bl -tag -width speaker -offset indent
+.Bl -tag -width pcdisplay -offset indent
 .It de
 .Tn DEC
 DC21x4x (Tulip) based
@@ -111,20 +133,19 @@ interfaces, including the DE435,
 DE450, and DE500, and Znyx, SMC, Cogent/Adaptec, and Asante single- and
 multi-port
 .Tn Ethernet
-interfaces.  Multi-port interfaces are typically
-configured as a
-.Tn PCI Ns \- Ns Tn PCI
-bridge with multiple
-.Em de
-instances on the
-.Tn PCI
-bus on the other side of the bridge.
+interfaces.
 .It en
 Midway-based Efficent Networks Inc. and Adaptec ATM interfaces.
 .It ep
 3Com 3c590, 3c595, 3c900, and 3c905
 .Tn Ethernet
 interfaces.
+.It epic
+SMC83C170 (EPIC/100)
+.Tn Ethernet
+interfaces.
+.It esh
+RoadRunner-based HIPPI interfaces.
 .It ex
 3Com 3c900, 3c905, and 3c980
 .Tn Ethernet
@@ -142,6 +163,8 @@ interfaces.
 PCNet-PCI
 .Tn Ethernet
 interfaces.
+.It lmc
+LAN Media Corp WAN interfaces.
 .It ne
 NE2000-compatible
 .Tn Ethernet
@@ -149,22 +172,33 @@ interfaces.
 .It ntwoc
 SDL Communications N2pci and WAN/ic 400 synchronous serial interfaces.
 .It rtk
-RealTek 8129/8139 based Ethernet interfaces.
+RealTek 8129/8139 based
+.Tn Ethernet
+interfaces.
 .It tl
 Texas Instruments ThunderLAN-based
+.Tn Ethernet
+interfaces.
+.It tlp
+DECchip 21x4x and clone
+.Tn Ethernet
+interfaces.
+.It vr
+VIA VT3043 (Rhine) and VT86C100A (Rhine-II)
 .Tn Ethernet
 interfaces.
 .El
 .Pp
 .Ss Serial interfaces
-.Bl -tag -width speaker -offset indent
+.Bl -tag -width pcdisplay -offset indent
 .It cy
-Cyclades Cyclom-4Y, -8Y, and -16Y asynchronous serial communications
-device interface.
+Cyclades Cyclom-4Y, -8Y, and -16Y multi-port serial interfaces.
+.It cz
+Cyclades-Z series multi-port serial interfaces.
 .El
 .Pp
 .Ss Audio devices
-.Bl -tag -width speaker -offset indent
+.Bl -tag -width pcdisplay -offset indent
 .It auvia
 VIA VT82C686A integrated AC'97 sound device.
 .It clcs
@@ -181,27 +215,30 @@ Forte Media FM801 sound device.
 S3 SonicVibes sound device.
 .El
 .Pp
-.Ss Miscellaneous devices
-.Bl -tag -width speaker -offset indent
-.It cac
-Compaq array controller.
+.Ss Bridges
+.Bl -tag -width pcdisplay -offset indent
 .It cbb
 .Tn PCI
 Yenta compatible
 .Tn CardBus
 bridges.
-.It ohci
-USB OHCI host controller
-.It pcic
-.Tn PCI
-.Tn PCMCIA
-controllers, including the Cirrus Logic GD6729.
 .It ppb
 Generic
 .Tn PCI Ns \- Ns Tn PCI
 bridges, including
 .Tn PCI
 expansion backplanes.
+.El
+.Ss Miscellaneous devices
+.Bl -tag -width pcdisplay -offset indent
+.It bktr
+Brooktree 848 compatible TV cards.
+.It ohci
+USB OHCI host controllers.
+.It pcic
+.Tn PCI
+.Tn PCMCIA
+controllers, including the Cirrus Logic GD6729.
 .It puc
 PCI
 .Dq universal
@@ -211,25 +248,36 @@ and
 .Nm lpt
 communications ports.
 .It uhci
-USB UHCI host controller
+USB UHCI host controllers.
+.It viapm
+VIA VT82C686A hardware monitors.
+.It vga
+VGA graphics boards (this is a
+.Xr wscons 4
+driver).
 .El
 .Pp
 .Sh SEE ALSO
 .Xr intro 4 ,
+.Xr adv 4 ,
+.Xr adw 4 ,
 .Xr ahc 4 ,
 .Xr auvia 4 ,
 .Xr bha 4 ,
 .Xr bktr 4 ,
 .Xr cac 4 ,
+.Xr cbb 4 ,
 .Xr clcs 4 ,
 .Xr cmpci 4 ,
 .Xr cy 4 ,
+.Xr cz 4 ,
 .Xr de 4 ,
 .Xr dpt 4 ,
 .Xr eap 4 ,
-.Xr eso 4 ,
 .Xr en 4 ,
 .Xr ep 4 ,
+.Xr epic 4 ,
+.Xr esh 4 ,
 .Xr eso 4 ,
 .Xr ex 4 ,
 .Xr fms 4 ,
@@ -237,15 +285,26 @@ USB UHCI host controller
 .Xr fxp 4 ,
 .Xr isp 4 ,
 .Xr le 4 ,
+.Xr lmc 4 ,
 .Xr ncr 4 ,
 .Xr ne 4 ,
+.Xr ntwoc 4 ,
+.Xr ohci 4 ,
 .Xr pcic 4 ,
+.Xr pciide 4 ,
+.Xr pcscp 4 ,
 .Xr ppb 4 ,
 .Xr puc 4 ,
+.Xr rtk 4 ,
 .Xr siop 4 ,
 .Xr sv 4 ,
 .Xr tl 4 ,
-.Xr usb 4
+.Xr tlp 4 ,
+.Xr uhci 4 ,
+.Xr vga 4 ,
+.Xr viapm 4 ,
+.Xr vr 4 ,
+.Xr wscons 4
 .Sh HISTORY
 The machine-independent
 .Tn PCI
