@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.16 2001/04/28 15:41:33 kleink Exp $ */
+/*	$NetBSD: types.h,v 1.17 2001/05/12 22:42:07 kleink Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -66,6 +66,7 @@ typedef unsigned int		register32_t;
 #ifdef __arch64__
 typedef unsigned long int	register64_t;
 #else
+/* LONGLONG */
 typedef unsigned long long int	register64_t;
 #endif
 
@@ -76,6 +77,7 @@ typedef vaddr_t			vsize_t;
 #ifdef __arch64__
 typedef unsigned long int	paddr_t;
 #else
+/* LONGLONG */
 typedef unsigned long long int	paddr_t;
 #endif /* __arch64__ */
 #else
