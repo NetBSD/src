@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wmreg.h,v 1.4 2002/10/18 00:56:16 yamt Exp $	*/
+/*	$NetBSD: if_wmreg.h,v 1.5 2003/05/30 02:08:55 matt Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -280,10 +280,10 @@ struct livengood_tcpip_ctxdesc {
 #define	CTRL_EXT_GPI_EN(x)	(1U << (x)) /* gpin interrupt enable */
 #define	CTRL_EXT_SWDPINS_SHIFT	4
 #define	CTRL_EXT_SWDPINS_MASK	0x0d
-#define	CTRL_EXT_SWDPIN(x)	(1U << (CTRL_SWDPINS_SHIFT + (x) - 4))
+#define	CTRL_EXT_SWDPIN(x)	(1U << (CTRL_EXT_SWDPINS_SHIFT + (x) - 4))
 #define	CTRL_EXT_SWDPIO_SHIFT	8
 #define	CTRL_EXT_SWDPIO_MASK	0x0d
-#define	CTRL_EXT_SWDPIO(x)	(1U << (CTRL_SWDPIO_SHIFT + (x) - 4))
+#define	CTRL_EXT_SWDPIO(x)	(1U << (CTRL_EXT_SWDPIO_SHIFT + (x) - 4))
 #define	CTRL_EXT_ASDCHK		(1U << 12) /* ASD check */
 #define	CTRL_EXT_EE_RST		(1U << 13) /* EEPROM reset */
 #define	CTRL_EXT_IPS		(1U << 14) /* invert power state bit 0 */
