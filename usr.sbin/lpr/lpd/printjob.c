@@ -1,4 +1,4 @@
-/*	$NetBSD: printjob.c,v 1.29 2001/09/24 13:22:36 wiz Exp $	*/
+/*	$NetBSD: printjob.c,v 1.30 2001/10/09 02:15:38 mjl Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -45,7 +45,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)printjob.c	8.7 (Berkeley) 5/10/95";
 #else
-__RCSID("$NetBSD: printjob.c,v 1.29 2001/09/24 13:22:36 wiz Exp $");
+__RCSID("$NetBSD: printjob.c,v 1.30 2001/10/09 02:15:38 mjl Exp $");
 #endif
 #endif /* not lint */
 
@@ -142,7 +142,7 @@ static void	setty __P((void));
 static void	alarmer __P((int));
 
 void
-printjob()
+printjob(void)
 {
 	struct stat stb;
 	struct queue *q, **qp;
@@ -152,8 +152,8 @@ printjob()
 	int errcnt, count = 0;
 
 	init();					/* set up capabilities */
-	(void)write(1, "", 1);			/* ack that daemon is started */
-	(void)close(2);			/* set up log file */
+	(void)write(STDOUT_FILENO, "", 1);			/* ack that daemon is started */
+	(void)close(STDERR_FILENO);			/* set up log file */
 	if (open(LF, O_WRONLY|O_APPEND, 0664) < 0) {
 		syslog(LOG_ERR, "%s: %m", LF);
 		(void)open(_PATH_DEVNULL, O_WRONLY);
@@ -316,8 +316,7 @@ char ifonts[4][40] = {
  * and performing the various actions.
  */
 static int
-printit(file)
-	char *file;
+printit(char *file)
 {
 	int i;
 	char *cp;
@@ -526,9 +525,7 @@ pass2:
  * stderr as the log file, and must not ignore SIGINT.
  */
 static int
-print(format, file)
-	int format;
-	char *file;
+print(int format, char *file)
 {
 	FILE *fp;
 	int status;
@@ -763,8 +760,7 @@ start:
  * 0 if all is well.
  */
 static int
-sendit(file)
-	char *file;
+sendit(char *file)
 {
 	int i, err = OK;
 	char *cp, last[BUFSIZ];
@@ -850,9 +846,7 @@ sendit(file)
  * Return positive if we should try resending.
  */
 static int
-sendfile(type, file)
-	int type;
-	char *file;
+sendfile(int type, char *file)
 {
 	int f, i, amt;
 	struct stat stb;
@@ -930,7 +924,7 @@ sendfile(type, file)
  * Return non-zero if the connection was lost.
  */
 static char
-response()
+response(void)
 {
 	struct sigaction osa, nsa;
 	char resp;
@@ -954,8 +948,7 @@ response()
  * Banner printing stuff
  */
 static void
-banner(name1, name2)
-	char *name1, *name2;
+banner(char *name1, char *name2)
 {
 	time_t tvec;
 
@@ -1011,9 +1004,7 @@ scnline(key, p, c)
 #define TRC(q)	(((q)-' ')&0177)
 
 static void
-scan_out(scfd, scsp, dlm)
-	int scfd, dlm;
-	char *scsp;
+scan_out(int scfd, char *scsp, int dlm)
 {
 	char *strp;
 	int nchrs, j;
@@ -1072,9 +1063,7 @@ dropit(c)
  *   tell people about job completion
  */
 static void
-sendmail(user, bombed)
-	char *user;
-	int bombed;
+sendmail(char *user, int bombed)
 {
 	int i, p[2], s, nofile;
 	char *cp = NULL; /* XXX gcc */
@@ -1154,8 +1143,7 @@ sendmail(user, bombed)
  * dofork - fork with retries on failure
  */
 static int
-dofork(action)
-	int action;
+dofork(int action)
 {
 	int i, pid;
 	struct passwd *pw;
@@ -1212,7 +1200,7 @@ abortpr(signo)
 }
 
 static void
-init()
+init(void)
 {
 	int status;
 	char *s;
@@ -1295,7 +1283,7 @@ init()
  * Acquire line printer or remote connection.
  */
 static void
-openpr()
+openpr(void)
 {
 	int i, nofile;
 	char *cp;
@@ -1349,8 +1337,7 @@ openpr()
  * or to a terminal server on the net
  */
 static void
-opennet(cp)
-	char *cp;
+opennet(char *cp)
 {
 	int i;
 	int resp, port;
@@ -1394,7 +1381,7 @@ opennet(cp)
  * Printer is connected to an RS232 port on this host
  */
 static void
-opentty()
+opentty(void)
 {
 	int i;
 
@@ -1422,7 +1409,7 @@ opentty()
  * Printer is on a remote host
  */
 static void
-openrem()
+openrem(void)
 {
 	int i, n;
 	int resp;
@@ -1452,8 +1439,7 @@ openrem()
 }
 
 static void
-alarmer(s)
-	int s;
+alarmer(int s)
 {
 	/* nothing */
 }
@@ -1488,7 +1474,7 @@ struct bauds {
  * setup tty lines.
  */
 static void
-setty()
+setty(void)
 {
 	struct info i;
 	char **argv, **ap, *p, *val;
