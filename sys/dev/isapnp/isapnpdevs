@@ -1,4 +1,4 @@
-$NetBSD: isapnpdevs,v 1.14 1998/12/21 07:57:00 christos Exp $
+$NetBSD: isapnpdevs,v 1.15 1999/01/04 22:39:42 augustss Exp $
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -74,6 +74,7 @@ devlogic	com	BRI1400		Boca 33.6 PnP
 devlogic	com	BRIB400		Boca 56k PnP
 devlogic	com	ROK0010		Rockwell ?
 devlogic	com	USR2070		USR Sportster 56k
+devlogic	com	USR3031		USR 56k Faxmodem
 devlogic	com	ZTIF761		Zoom ComStar 33.6
 devlogic	com	CIR3000		Cirrus Logic V43 
 devlogic	com	MOT0000		Motorolla ModemSurfr
