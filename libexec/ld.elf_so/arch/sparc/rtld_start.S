@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld_start.S,v 1.10 2002/09/25 14:38:51 mycroft Exp $	*/
+/*	$NetBSD: rtld_start.S,v 1.11 2002/09/26 01:54:52 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2002 The NetBSD Foundation, Inc.
@@ -51,7 +51,7 @@
 _rtld_start:
 	mov	0, %fp			/* Erect a fence post for ourselves */
 	mov	%g1, %l1		/* save ps_strings */
-	sub	%sp, 8, %sp		/* Make room for return args */
+	sub	%sp, 24+8, %sp		/* room for return args and save area */
 
 	sethi	%hi(_GLOBAL_OFFSET_TABLE_-4), %l7
 	call	.LLGETPC0
@@ -65,11 +65,11 @@ _rtld_start:
 
 	sub	%l7, %l0, %o1		/* relocbase */
 	call	_rtld
-	 add	%sp, 64, %o0		/* &argc - 8 */
+	 add	%sp, 24+64, %o0		/* &argc - 8 */
 
-	ld	[%sp + 64], %g3		/* arg: cleanup */
-	ld	[%sp + 64 + 4], %g2	/* arg: obj */
-	add	%sp, 8, %sp		/* restore stack pointer */
+	ld	[%sp + 24+64], %g3	/* arg: cleanup */
+	ld	[%sp + 24+64 + 4], %g2	/* arg: obj */
+	add	%sp, 24+8, %sp		/* restore stack pointer */
 
 	jmp	%o0
 	 mov	%l1, %g1		/* restore ps_strings */
@@ -80,6 +80,7 @@ _rtld_start:
 	.global	_rtld_bind_start
 	.type	_rtld_bind_start,@function
 _rtld_bind_start:	# (obj, reloff)
+	sub	%sp, 24, %sp
 	ld	[%o7 + 8], %o0		/* obj id is in second PLT slot */
 	srl	%g1, 10, %o1		/* offset is in high 22 bits */
 	call	_rtld_bind		/* Call _rtld_bind(obj, offset) */
