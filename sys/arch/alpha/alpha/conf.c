@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.7 1995/07/04 07:15:28 mycroft Exp $	*/
+/*	$NetBSD: conf.c,v 1.8 1995/08/03 00:55:27 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -117,6 +117,10 @@ cdev_decl(scc);
 cdev_decl(lkm);
 #include "audio.h"
 cdev_decl(audio);
+#include "wsc.h"
+cdev_decl(wsc);
+#include "com.h"
+cdev_decl(com);
 
 cdev_decl(prom);			/* XXX XXX XXX */
 
@@ -147,6 +151,8 @@ struct cdevsw	cdevsw[] =
 	cdev_lkm_dummy(),		/* 22 */
 	cdev_tty_init(1,prom),          /* 23: XXX prom console */
 	cdev_audio_init(NAUDIO,audio),	/* 24: generic audio I/O */
+	cdev_tty_init(NWSC,wsc),	/* 25: workstation console */
+	cdev_tty_init(NCOM,com),	/* 26: ns16550 UART */
 };
 int	nchrdev = sizeof (cdevsw) / sizeof (cdevsw[0]);
 
@@ -209,6 +215,10 @@ static int chrtoblktbl[] = {
 	/* 20 */	NODEV,
 	/* 21 */	NODEV,
 	/* 22 */	NODEV,
+	/* 23 */	NODEV,
+	/* 24 */	NODEV,
+	/* 25 */	NODEV,
+	/* 26 */	NODEV,
 };
 
 /*
