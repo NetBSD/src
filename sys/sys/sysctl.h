@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.h,v 1.83 2002/12/11 13:12:48 scw Exp $	*/
+/*	$NetBSD: sysctl.h,v 1.84 2002/12/11 17:32:53 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -186,7 +186,8 @@ struct ctlname {
 #endif
 #define	KERN_LABELSECTOR	62	/* int: disklabel sector */
 #define	KERN_LABELOFFSET	63	/* int: offset of label within sector */
-#define	KERN_MAXID		64	/* number of valid kern ids */
+#define	KERN_LWP		64	/* struct: lwp entries */
+#define	KERN_MAXID		65	/* number of valid kern ids */
 
 #define	CTL_KERN_NAMES { \
 	{ 0, 0 }, \
@@ -253,6 +254,7 @@ struct ctlname {
 	{ "urandom", CTLTYPE_INT }, \
 	{ "labelsector", CTLTYPE_INT }, \
 	{ "labeloffset", CTLTYPE_INT }, \
+	{ "lwp", CTLTYPE_STRUCT }, \
 }
 
 /*
