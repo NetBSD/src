@@ -1,4 +1,4 @@
-/*	$NetBSD: udp_usrreq.c,v 1.64 2000/03/22 20:58:30 ws Exp $	*/
+/*	$NetBSD: udp_usrreq.c,v 1.65 2000/03/30 02:39:37 simonb Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -1161,7 +1161,6 @@ udp_ctlinput(cmd, sa, v)
 {
 	register struct ip *ip = v;
 	register struct udphdr *uh;
-	extern int inetctlerrmap[];
 	void (*notify) __P((struct inpcb *, int)) = udp_notify;
 	int errno;
 
