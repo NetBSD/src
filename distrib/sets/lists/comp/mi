@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.523 2003/01/23 22:03:57 kleink Exp $
+#	$NetBSD: mi,v 1.524 2003/01/23 22:08:44 kleink Exp $
 ./usr/bin/addr2line		comp-debug-bin
 ./usr/bin/ar			comp-util-bin
 ./usr/bin/as			comp-util-bin
@@ -1066,6 +1066,7 @@
 ./usr/share/man/cat1/g++.0		comp-cxx-catman
 ./usr/share/man/cat1/g77.0		comp-fortran-catman
 ./usr/share/man/cat1/gcc.0		comp-c-catman
+./usr/share/man/cat1/gcore.0		comp-debug-catman
 ./usr/share/man/cat1/gcov.0		comp-debug-catman
 ./usr/share/man/cat1/gdb.0		comp-debug-catman
 ./usr/share/man/cat1/gprof.0		comp-debug-catman
@@ -4093,6 +4094,7 @@
 ./usr/share/man/man1/g++.1		comp-cxx-man
 ./usr/share/man/man1/g77.1		comp-fortran-man
 ./usr/share/man/man1/gcc.1		comp-c-man
+./usr/share/man/man1/gcore.1		comp-debug-man
 ./usr/share/man/man1/gcov.1		comp-debug-man
 ./usr/share/man/man1/gdb.1		comp-debug-man
 ./usr/share/man/man1/gprof.1		comp-debug-man
