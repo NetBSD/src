@@ -1,4 +1,4 @@
-/*	$NetBSD: rbus_machdep.c,v 1.4 2003/07/17 07:56:46 nakayama Exp $	*/
+/*	$NetBSD: rbus_machdep.c,v 1.5 2003/08/29 12:36:44 nakayama Exp $	*/
 
 /*
  * Copyright (c) 2003 Takeshi Nakayama.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rbus_machdep.c,v 1.4 2003/07/17 07:56:46 nakayama Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rbus_machdep.c,v 1.5 2003/08/29 12:36:44 nakayama Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -169,7 +169,7 @@ pccbb_attach_hook(parent, self, pa)
 		else {
 			reg = pci_conf_read(pc, pa->pa_tag, PPB_REG_BUSINFO);
 			reg &= 0xff000000;
-			reg |= pp->pp_bus | (bus << 8) | (bus << 16);
+			reg |= pa->pa_bus | (bus << 8) | (bus << 16);
 			pci_conf_write(pc, pa->pa_tag, PPB_REG_BUSINFO, reg);
 #ifdef DIAGNOSTIC
 			if ((*pp->pp_busnode)[bus].node != 0)
