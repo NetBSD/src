@@ -1,4 +1,4 @@
-/* $NetBSD: alpha.h,v 1.17.4.2 2001/08/30 23:43:43 nathanw Exp $ */
+/* $NetBSD: alpha.h,v 1.17.4.3 2001/12/17 20:57:59 nathanw Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -92,7 +92,7 @@ u_int64_t console_restart(struct trapframe *);
 void	do_sir(void);
 void	dumpconf(void);
 void	exception_return(void);					/* MAGIC */
-void	frametoreg(struct trapframe *, struct reg *);
+void	frametoreg(const struct trapframe *, struct reg *);
 long	fswintrberr(void);					/* MAGIC */
 void	init_bootstrap_console(void);
 void	init_prom_interface(struct rpb *);
@@ -103,7 +103,7 @@ void	machine_check(unsigned long, struct trapframe *, unsigned long,
 u_int64_t hwrpb_checksum(void);
 void	hwrpb_restart_setup(void);
 void	regdump(struct trapframe *);
-void	regtoframe(struct reg *, struct trapframe *);
+void	regtoframe(const struct reg *, struct trapframe *);
 void	savectx(struct pcb *);
 void    switch_exit(struct lwp *);				/* MAGIC */
 void    switch_lwp_exit(struct lwp *);				/* MAGIC */
