@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.53 2001/02/13 22:54:26 bjh21 Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.54 2001/02/26 15:59:54 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -64,7 +64,6 @@
 #include <machine/vmparam.h>
 
 #ifdef ARMFPE
-#include <machine/cpus.h>
 #include <arm32/fpe-arm/armfpe.h>
 #endif
 
