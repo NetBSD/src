@@ -1,4 +1,4 @@
-/* $NetBSD: trap.c,v 1.68 2001/04/20 00:10:18 thorpej Exp $ */
+/* $NetBSD: trap.c,v 1.69 2001/04/20 18:00:50 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -100,7 +100,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.68 2001/04/20 00:10:18 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.69 2001/04/20 18:00:50 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -382,11 +382,19 @@ trap(const u_long a0, const u_long a1, const u_long a2, const u_long entry,
 		switch (a1) {
 		case ALPHA_MMCSR_FOR:
 		case ALPHA_MMCSR_FOE:
-			pmap_emulate_reference(p, a0, user, 0);
-			goto out;
-
 		case ALPHA_MMCSR_FOW:
-			pmap_emulate_reference(p, a0, user, 1);
+			if (user)
+				KERNEL_PROC_LOCK(p);
+			else
+				KERNEL_LOCK(LK_CANRECURSE|LK_EXCLUSIVE);
+
+			pmap_emulate_reference(p, a0, user,
+			    a1 == ALPHA_MMCSR_FOW ? 1 : 0);
+
+			if (user)
+				KERNEL_PROC_UNLOCK(p);
+			else
+				KERNEL_UNLOCK();
 			goto out;
 
 		case ALPHA_MMCSR_INVALTRANS:
