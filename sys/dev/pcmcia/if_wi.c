@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wi.c,v 1.8 2000/02/27 23:10:51 enami Exp $	*/
+/*	$NetBSD: if_wi.c,v 1.9 2000/03/02 05:00:47 enami Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -31,7 +31,7 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
  * THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: if_wi.c,v 1.8 2000/02/27 23:10:51 enami Exp $
+ *	$Id: if_wi.c,v 1.9 2000/03/02 05:00:47 enami Exp $
  */
 
 /*
@@ -90,6 +90,7 @@
 #include <net/if_dl.h>
 #include <net/if_media.h>
 #include <net/if_ether.h>
+#include <net/if_ieee80211.h>
 
 #ifdef INET
 #include <netinet/in.h>
@@ -115,7 +116,7 @@
 
 #if !defined(lint)
 static const char rcsid[] =
-	"$Id: if_wi.c,v 1.8 2000/02/27 23:10:51 enami Exp $";
+	"$Id: if_wi.c,v 1.9 2000/03/02 05:00:47 enami Exp $";
 #endif
 
 #ifdef foo
@@ -157,6 +158,13 @@ static void wi_shutdown		__P((void *));
 
 static int wi_enable __P((struct wi_softc *));
 static void wi_disable __P((struct wi_softc *));
+static int wi_media_change __P((struct ifnet *));
+static void wi_media_status __P((struct ifnet *, struct ifmediareq *));
+
+static int wi_set_ssid __P((struct wi_ssid *, u_int8_t *, int));
+static void wi_request_fill_ssid __P((struct wi_req *, struct wi_ssid *));
+static int wi_write_ssid __P((struct wi_softc *, int, struct wi_req *,
+    struct wi_ssid *));
 
 struct cfattach wi_ca = {
 	sizeof(struct wi_softc), wi_match, wi_attach, wi_detach, wi_activate
@@ -292,16 +300,11 @@ wi_attach(parent, self, aux)
 	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
 	ifp->if_baudrate = 2000000;
 
-	bzero(sc->wi_node_name, sizeof(sc->wi_node_name));
-	bcopy(WI_DEFAULT_NODENAME, sc->wi_node_name,
+	(void)wi_set_ssid(&sc->wi_nodeid, WI_DEFAULT_NODENAME,
 	    sizeof(WI_DEFAULT_NODENAME) - 1);
-
-	bzero(sc->wi_net_name, sizeof(sc->wi_net_name));
-	bcopy(WI_DEFAULT_NETNAME, sc->wi_net_name,
+	(void)wi_set_ssid(&sc->wi_netid, WI_DEFAULT_NETNAME,
 	    sizeof(WI_DEFAULT_NETNAME) - 1);
-
-	bzero(sc->wi_ibss_name, sizeof(sc->wi_ibss_name));
-	bcopy(WI_DEFAULT_IBSS, sc->wi_ibss_name,
+	(void)wi_set_ssid(&sc->wi_ibssid, WI_DEFAULT_IBSS,
 	    sizeof(WI_DEFAULT_IBSS) - 1);
 
 	sc->wi_portnum = WI_DEFAULT_PORT;
@@ -334,6 +337,24 @@ wi_attach(parent, self, aux)
 	gen.wi_len = 2;
 	wi_read_record(sc, &gen);
 	sc->wi_has_wep = gen.wi_val;
+
+	ifmedia_init(&sc->sc_media, 0, wi_media_change, wi_media_status);
+#define	IFM_AUTOADHOC \
+	IFM_MAKEWORD(IFM_IEEE80211, IFM_AUTO, IFM_IEEE80211_ADHOC, 0)
+#define	ADD(m, c)	ifmedia_add(&sc->sc_media, (m), (c), NULL)
+	ADD(IFM_MAKEWORD(IFM_IEEE80211, IFM_AUTO, 0, 0), 0);
+	ADD(IFM_AUTOADHOC, 0);
+	ADD(IFM_MAKEWORD(IFM_IEEE80211, IFM_IEEE80211_DS1, 0, 0), 0);
+	ADD(IFM_MAKEWORD(IFM_IEEE80211, IFM_IEEE80211_DS1,
+	    IFM_IEEE80211_ADHOC, 0), 0);
+	ADD(IFM_MAKEWORD(IFM_IEEE80211, IFM_IEEE80211_DS2, 0, 0), 0);
+	ADD(IFM_MAKEWORD(IFM_IEEE80211, IFM_IEEE80211_DS2,
+	    IFM_IEEE80211_ADHOC, 0), 0);
+	ADD(IFM_MAKEWORD(IFM_IEEE80211, IFM_IEEE80211_DS11, 0, 0), 0);
+	ADD(IFM_MAKEWORD(IFM_IEEE80211, IFM_IEEE80211_DS11,
+	    IFM_IEEE80211_ADHOC, 0), 0);
+#undef ADD
+	ifmedia_set(&sc->sc_media, IFM_AUTOADHOC);
 
 	/*
 	 * Call MI attach routines.
@@ -962,16 +983,16 @@ wi_setdef(sc, wreq)
 		sc->wi_channel = wreq->wi_val[0];
 		break;
 	case WI_RID_NODENAME:
-		bzero(sc->wi_node_name, sizeof(sc->wi_node_name));
-		bcopy((char *)&wreq->wi_val[1], sc->wi_node_name, 30);
+		error = wi_set_ssid(&sc->wi_nodeid,
+		    (u_int8_t *)&wreq->wi_val[1], wreq->wi_val[0]);
 		break;
 	case WI_RID_DESIRED_SSID:
-		bzero(sc->wi_net_name, sizeof(sc->wi_net_name));
-		bcopy((char *)&wreq->wi_val[1], sc->wi_net_name, 30);
+		error = wi_set_ssid(&sc->wi_netid,
+		    (u_int8_t *)&wreq->wi_val[1], wreq->wi_val[0]);
 		break;
 	case WI_RID_OWN_SSID:
-		bzero(sc->wi_ibss_name, sizeof(sc->wi_ibss_name));
-		bcopy((char *)&wreq->wi_val[1], sc->wi_ibss_name, 30);
+		error = wi_set_ssid(&sc->wi_ibssid,
+		    (u_int8_t *)&wreq->wi_val[1], wreq->wi_val[0]);
 		break;
 	case WI_RID_PM_ENABLED:
 		sc->wi_pm_enabled = wreq->wi_val[0];
@@ -1038,22 +1059,13 @@ wi_getdef(sc, wreq)
 		wreq->wi_val[0] = sc->wi_channel;
 		break;
 	case WI_RID_NODENAME:
-		bzero(&wreq->wi_val[0], sizeof(wreq->wi_val));
-		wreq->wi_val[0] = strlen(sc->wi_node_name);
-		wreq->wi_len += roundup(wreq->wi_val[0], 2) / 2 - 1;
-		bcopy(sc->wi_node_name, &wreq->wi_val[1], 30);
+		wi_request_fill_ssid(wreq, &sc->wi_nodeid);
 		break;
 	case WI_RID_DESIRED_SSID:
-		bzero(&wreq->wi_val[0], sizeof(wreq->wi_val));
-		wreq->wi_val[0] = strlen(sc->wi_net_name);
-		wreq->wi_len += roundup(wreq->wi_val[0], 2) / 2 - 1;
-		bcopy(sc->wi_net_name, &wreq->wi_val[1], 30);
+		wi_request_fill_ssid(wreq, &sc->wi_netid);
 		break;
 	case WI_RID_OWN_SSID:
-		bzero(&wreq->wi_val[0], sizeof(wreq->wi_val));
-		wreq->wi_val[0] = strlen(sc->wi_ibss_name);
-		wreq->wi_len += roundup(wreq->wi_val[0], 2) / 2 - 1;
-		bcopy(sc->wi_ibss_name, &wreq->wi_val[1], 30);
+		wi_request_fill_ssid(wreq, &sc->wi_ibssid);
 		break;
 	case WI_RID_PM_ENABLED:
 		wreq->wi_val[0] = sc->wi_pm_enabled;
@@ -1091,12 +1103,13 @@ static int wi_ioctl(ifp, command, data)
 	u_long			command;
 	caddr_t			data;
 {
-	int			s, error = 0;
+	int			s, len, error = 0;
 	struct wi_softc		*sc = ifp->if_softc;
 	struct wi_req		wreq;
 	struct ifreq		*ifr;
 	struct proc *p = curproc;
 	struct ifaddr *ifa = (struct ifaddr *)data;
+	u_int8_t nwid[IEEE80211_NWID_LEN + 1];
 
 	if ((sc->sc_dev.dv_flags & DVF_ACTIVE) == 0)
 		return (ENXIO);
@@ -1178,6 +1191,12 @@ static int wi_ioctl(ifp, command, data)
 			error = 0;
 		}
 		break;
+
+	case SIOCSIFMEDIA:
+	case SIOCGIFMEDIA:
+		error = ifmedia_ioctl(ifp, ifr, &sc->sc_media, command);
+		break;
+
 	case SIOCGWAVELAN:
 		error = copyin(ifr->ifr_data, &wreq, sizeof(wreq));
 		if (error)
@@ -1227,6 +1246,48 @@ static int wi_ioctl(ifp, command, data)
 				wi_init(sc);
 		}
 		break;
+	case SIOCG80211NWID:
+		/*
+		 * Actually, the ESS-ID is a variable length octet string
+		 * up to 32 bytes, and we should have a way to pass length
+		 * separately.  But for now, we treat as if it is terminated
+		 * by NUL.  XXX.
+		 */
+		if (sc->sc_enabled == 0)
+			/* Return the desried ID */
+			error = copyout(&sc->wi_netid.ws_id, ifr->ifr_data,
+			    IEEE80211_NWID_LEN);		/* XXX */
+		else {
+			wreq.wi_type = WI_RID_CURRENT_SSID;
+			wreq.wi_len = WI_MAX_DATALEN;
+			if (wi_read_record(sc, (struct wi_ltv_gen *)&wreq) ||
+			    wreq.wi_val[0] > IEEE80211_NWID_LEN)
+				error = EINVAL;
+			else
+				error = copyout(&wreq.wi_val[1], ifr->ifr_data,
+				    IEEE80211_NWID_LEN);	/* XXX */
+		}
+		break;
+	case SIOCS80211NWID:
+		memset(nwid, 0, sizeof(nwid));
+		error = copyin(ifr->ifr_data, nwid, IEEE80211_NWID_LEN);
+		if (error != 0)
+			break;
+		len = strlen(nwid);			/* XXX */
+		if (sc->wi_netid.ws_len == len &&
+		    memcmp(sc->wi_netid.ws_id, nwid, len) == 0)
+			break;
+		wi_set_ssid(&sc->wi_netid, nwid, len);
+		if (sc->sc_enabled != 0) {
+			error = wi_write_ssid(sc, WI_RID_DESIRED_SSID, &wreq,
+			    &sc->wi_netid);
+			if (error == 0 &&
+			    (ifp->if_flags & IFF_RUNNING) != 0) {
+				untimeout(wi_inquire, sc);
+				wi_inquire(sc);
+			}
+		}
+		break;
 	default:
 		error = EINVAL;
 		break;
@@ -1242,6 +1303,7 @@ wi_init(sc)
 	struct wi_softc *sc;
 {
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
+	struct wi_req wreq;
 	struct wi_ltv_macaddr mac;
 	int s, id = 0;
 
@@ -1275,16 +1337,16 @@ wi_init(sc)
 	WI_SETVAL(WI_RID_MAX_SLEEP, sc->wi_max_sleep);
 
 	/* Specify the IBSS name */
-	WI_SETSTR(WI_RID_OWN_SSID, sc->wi_ibss_name);
+	wi_write_ssid(sc, WI_RID_OWN_SSID, &wreq, &sc->wi_ibssid);
 
 	/* Specify the network name */
-	WI_SETSTR(WI_RID_DESIRED_SSID, sc->wi_net_name);
+	wi_write_ssid(sc, WI_RID_DESIRED_SSID, &wreq, &sc->wi_netid);
 
 	/* Specify the frequency to use */
 	WI_SETVAL(WI_RID_OWN_CHNL, sc->wi_channel);
 
 	/* Program the nodename. */
-	WI_SETSTR(WI_RID_NODENAME, sc->wi_node_name);
+	wi_write_ssid(sc, WI_RID_NODENAME, &wreq, &sc->wi_nodeid);
 
 	/* Set our MAC address. */
 	mac.wi_len = 4;
@@ -1534,6 +1596,9 @@ wi_detach(self, flags)
 	shutdownhook_disestablish(sc->sc_sdhook);
 	wi_disable(sc);
 
+	/* Delete all remaining media. */
+	ifmedia_delete_instance(&sc->sc_media, IFM_INST_ANY);
+
 	if (sc->wi_resource & WI_RES_NET) {
 #if NBPFILTER > 0
 		bpfdetach(ifp);
@@ -1549,4 +1614,99 @@ wi_detach(self, flags)
 	}
 
 	return (0);
+}
+
+static int
+wi_set_ssid(ws, id, len)
+	struct wi_ssid *ws;
+	u_int8_t *id;
+	int len;
+{
+
+	if (len > IEEE80211_NWID_LEN)
+		return (EINVAL);
+	ws->ws_len = len;
+	memcpy(ws->ws_id, id, len);
+	if (len < IEEE80211_NWID_LEN)			/* XXX */
+		ws->ws_id[len] = 0;			/* XXX */
+	return (0);
+}
+
+static void
+wi_request_fill_ssid(wreq, ws)
+	struct wi_req *wreq;
+	struct wi_ssid *ws;
+{
+
+	memset(&wreq->wi_val[0], 0, sizeof(wreq->wi_val));
+	wreq->wi_val[0] = ws->ws_len;
+	wreq->wi_len = roundup(wreq->wi_val[0], 2) / 2 + 1;
+	memcpy(&wreq->wi_val[1], ws->ws_id, wreq->wi_val[0]);
+}
+
+static int
+wi_write_ssid(sc, type, wreq, ws)
+	struct wi_softc *sc;
+	int type;
+	struct wi_req *wreq;
+	struct wi_ssid *ws;
+{
+
+	wreq->wi_type = type;
+	wi_request_fill_ssid(wreq, ws);
+	return (wi_write_record(sc, (struct wi_ltv_gen *)wreq));
+}
+
+static int
+wi_media_change(ifp)
+	struct ifnet *ifp;
+{
+	struct wi_softc *sc = ifp->if_softc;
+	int otype = sc->wi_ptype;
+	int orate = sc->wi_tx_rate;
+
+	if ((sc->sc_media.ifm_cur->ifm_media & IFM_IEEE80211_ADHOC) != 0)
+		sc->wi_ptype = WI_PORTTYPE_ADHOC;
+	else
+		sc->wi_ptype = WI_PORTTYPE_BSS;
+
+	switch (IFM_SUBTYPE(sc->sc_media.ifm_cur->ifm_media)) {
+	case IFM_IEEE80211_DS1:
+		sc->wi_tx_rate = 1;
+		break;
+	case IFM_IEEE80211_DS2:
+		sc->wi_tx_rate = 2;
+		break;
+	case IFM_AUTO:
+		sc->wi_tx_rate = 3;
+		break;
+	case IFM_IEEE80211_DS11:
+		sc->wi_tx_rate = 11;
+		break;
+	}
+
+	if (sc->sc_enabled != 0) {
+		if (otype != sc->wi_ptype ||
+		    orate != sc->wi_tx_rate)
+			wi_init(sc);
+	}
+
+	return (0);
+}
+
+static void
+wi_media_status(ifp, imr)
+	struct ifnet *ifp;
+	struct ifmediareq *imr;
+{
+	struct wi_softc *sc = ifp->if_softc;
+
+	if (sc->sc_enabled == 0) {
+		imr->ifm_active = IFM_IEEE80211|IFM_NONE;
+		imr->ifm_status = 0;
+		return;
+	}
+
+	imr->ifm_active = sc->sc_media.ifm_cur->ifm_media;
+	imr->ifm_status = IFM_AVALID|IFM_ACTIVE;
 }

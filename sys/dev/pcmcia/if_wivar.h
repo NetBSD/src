@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wivar.h,v 1.5 2000/02/27 23:10:51 enami Exp $	*/
+/*	$NetBSD: if_wivar.h,v 1.6 2000/03/02 05:00:47 enami Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -31,7 +31,7 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
  * THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: if_wivar.h,v 1.5 2000/02/27 23:10:51 enami Exp $
+ *	$Id: if_wivar.h,v 1.6 2000/03/02 05:00:47 enami Exp $
  */
 
 
@@ -39,6 +39,14 @@
  * FreeBSD driver ported to NetBSD by Bill Sommerfeld in the back of the
  * Oslo IETF plenary meeting.
  */
+
+/*
+ * Service set identifier.
+ */
+struct wi_ssid {
+	int ws_len;
+	u_int8_t ws_id[IEEE80211_NWID_LEN];
+};
 
 struct wi_softc	{
 	struct device sc_dev;
@@ -54,9 +62,9 @@ struct wi_softc	{
 
   	void *sc_sdhook;	/* saved shutdown hook for card */
 	void *sc_ih;
-	u_int8_t		sc_macaddr[6];
+	u_int8_t		sc_macaddr[ETHER_ADDR_LEN];
 	
-	struct ifmedia		ifmedia;
+	struct ifmedia		sc_media;
 	int			wi_tx_data_id;
 	int			wi_tx_mgmt_id;
 	int			wi_if_flags;
@@ -70,9 +78,11 @@ struct wi_softc	{
 	u_int16_t		wi_channel;
 	u_int16_t		wi_pm_enabled;
 	u_int16_t		wi_max_sleep;
-	char			wi_node_name[32];
-	char			wi_net_name[32];
-	char			wi_ibss_name[32];
+
+	struct wi_ssid		wi_nodeid;
+	struct wi_ssid		wi_netid;
+	struct wi_ssid		wi_ibssid;
+
 	u_int8_t		wi_txbuf[1596];
 	int                     wi_has_wep;
 	int                     wi_use_wep;
