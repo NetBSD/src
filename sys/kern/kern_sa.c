@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sa.c,v 1.33 2003/10/31 23:36:50 cl Exp $	*/
+/*	$NetBSD: kern_sa.c,v 1.34 2003/11/01 01:38:47 cl Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sa.c,v 1.33 2003/10/31 23:36:50 cl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sa.c,v 1.34 2003/11/01 01:38:47 cl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -440,8 +440,14 @@ sa_preempt(struct lwp *l)
 	struct proc *p = l->l_proc;
 	struct sadata *sa = p->p_sa;
 
+	/* 
+	 * Defer saving the lwp's state because on some ports
+	 * preemption can occur between generating an unblocked upcall
+	 * and processing the upcall queue.
+	 */
 	if (sa->sa_flag & SA_FLAG_PREEMPT)
-		sa_upcall(l, SA_UPCALL_PREEMPTED, l, NULL, 0, NULL);
+		sa_upcall(l, SA_UPCALL_PREEMPTED | SA_UPCALL_DEFER_EVENT,
+		    l, NULL, 0, NULL);
 }
 
 
@@ -1068,18 +1074,14 @@ sa_getcachelwp(struct proc *p)
 
 
 void
-sa_upcall_userret(struct lwp *l)
+sa_unblock_userret(struct lwp *l)
 {
 	struct proc *p;
+	struct lwp *l2;
 	struct sadata *sa;
-	struct sa_t **sapp, *sap;
 	struct sadata_upcall *sau;
-	struct sa_t self_sa;
-	struct sa_t *sas[3];
 	stack_t st;
-	void *stack, *ap;
-	ucontext_t u, *up;
-	int f, i, nsas, nint, nevents, sig, s, type;
+	int f, s;
 
 	p = l->l_proc;
 	sa = p->p_sa;
@@ -1089,7 +1091,7 @@ sa_upcall_userret(struct lwp *l)
 	KERNEL_PROC_LOCK(l);
 	SA_LWP_STATE_LOCK(l, f);
 
-	DPRINTFN(7,("sa_upcall_userret(%d.%d %x) \n", p->p_pid, l->l_lid,
+	DPRINTFN(7,("sa_unblock_userret(%d.%d %x) \n", p->p_pid, l->l_lid,
 	    l->l_flag));
 
 	while (l->l_upcallstack != NULL) {
@@ -1122,10 +1124,8 @@ sa_upcall_userret(struct lwp *l)
 
 	if (l->l_flag & L_SA_BLOCKING) {
 		/* Invoke an "unblocked" upcall */
-		struct lwp *l2;
-		DPRINTFN(8,("sa_upcall_userret(%d.%d) unblocking\n",
+		DPRINTFN(8,("sa_unblock_userret(%d.%d) unblocking\n",
 		    p->p_pid, l->l_lid));
-
 
 		sau = sadata_upcall_alloc(1);
 		sau->sau_arg = NULL;
@@ -1134,7 +1134,6 @@ sa_upcall_userret(struct lwp *l)
 			sadata_upcall_free(sau);
 			lwp_exit(l);
 		}
-
 	
 		SCHED_ASSERT_UNLOCKED();
 
@@ -1142,7 +1141,8 @@ sa_upcall_userret(struct lwp *l)
 
 		KDASSERT(sa->sa_nstacks > 0);
 		st = sa->sa_stacks[--sa->sa_nstacks];
-
+		DPRINTFN(9,("sa_unblock_userret(%d.%d) nstacks--   = %2d\n",
+		    l->l_proc->p_pid, l->l_lid, sa->sa_nstacks));
 		
 		SCHED_ASSERT_UNLOCKED();
 			
@@ -1152,8 +1152,10 @@ sa_upcall_userret(struct lwp *l)
 			lwp_exit(l);
 		}
 
-		DPRINTFN(9,("sa_upcall_userret(%d.%d) nstacks--   = %2d\n",
-		    l->l_proc->p_pid, l->l_lid, sa->sa_nstacks));
+		/*
+		 * Defer saving the event lwp's state because a
+		 * PREEMPT upcall could be on the queue already.
+		 */
 		if (sa_upcall0(l, SA_UPCALL_UNBLOCKED | SA_UPCALL_DEFER_EVENT,
 			l, l2, 0, NULL, sau, &st) != 0) {
 			/*
@@ -1161,7 +1163,7 @@ sa_upcall_userret(struct lwp *l)
 			 * upcall, but don't have resources to do so.
 			 */
 #ifdef DIAGNOSTIC
-			printf("sa_upcall_userret: out of upcall resources"
+			printf("sa_unblock_userret: out of upcall resources"
 			    " for %d.%d\n", p->p_pid, l->l_lid);
 #endif
 			sigexit(l, SIGABRT);
@@ -1173,22 +1175,35 @@ sa_upcall_userret(struct lwp *l)
 		SCHED_LOCK(s);
 		sa_putcachelwp(p, l2); /* PHOLD from sa_vp_repossess */
 		SCHED_UNLOCK(s);
-
-		/* We migth have sneaked past signal handling and userret */
-		SA_LWP_STATE_UNLOCK(l, f);
-		KERNEL_PROC_UNLOCK(l);
-
-		/* take pending signals */
-		while ((sig = CURSIG(l)) != 0)
-			postsig(sig);
-
-		/* Invoke per-process kernel-exit handling, if any */
-		if (p->p_userret)
-			(p->p_userret)(l, p->p_userret_arg);
-
-		KERNEL_PROC_LOCK(l);
-		SA_LWP_STATE_LOCK(l, f);
 	}
+	SA_LWP_STATE_UNLOCK(l, f);
+	KERNEL_PROC_UNLOCK(l);
+}
+
+
+void
+sa_upcall_userret(struct lwp *l)
+{
+	struct proc *p;
+	struct sadata *sa;
+	struct sa_t **sapp, *sap;
+	struct sadata_upcall *sau;
+	struct sa_t self_sa;
+	struct sa_t *sas[3];
+	void *stack, *ap;
+	ucontext_t u, *up;
+	int f, i, nsas, nint, nevents, type;
+
+	p = l->l_proc;
+	sa = p->p_sa;
+	
+	SCHED_ASSERT_UNLOCKED();
+
+	KERNEL_PROC_LOCK(l);
+	SA_LWP_STATE_LOCK(l, f);
+
+	DPRINTFN(7,("sa_upcall_userret(%d.%d %x) \n", p->p_pid, l->l_lid,
+	    l->l_flag));
 
 	KDASSERT(sa->sa_vp == l);
 

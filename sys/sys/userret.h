@@ -1,4 +1,4 @@
-/* $NetBSD: userret.h,v 1.1 2003/10/31 16:44:35 cl Exp $ */
+/* $NetBSD: userret.h,v 1.2 2003/11/01 01:38:47 cl Exp $ */
 
 /*-
  * Copyright (c) 1998, 2000, 2003 The NetBSD Foundation, Inc.
@@ -84,11 +84,15 @@ mi_userret(struct lwp *l)
 	struct proc *p = l->l_proc;
 	int sig;
 
+	/* Generate UNBLOCKED upcall. */
+	if (l->l_flag & L_SA_BLOCKING)
+		sa_unblock_userret(l);
+
 	/* Take pending signals. */
 	while ((sig = CURSIG(l)) != 0)
 		postsig(sig);
 
-	/* Invoke per-process kernel-exit handling, if any */
+	/* Invoke per-process kernel-exit handling, if any. */
 	if (p->p_userret)
 		(p->p_userret)(l, p->p_userret_arg);
 

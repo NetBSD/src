@@ -1,4 +1,4 @@
-/*	$NetBSD: savar.h,v 1.8 2003/10/31 22:47:44 cl Exp $	*/
+/*	$NetBSD: savar.h,v 1.9 2003/11/01 01:38:47 cl Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -128,6 +128,7 @@ void	sa_putcachelwp(struct proc *, struct lwp *);
 struct lwp *sa_getcachelwp(struct proc *);
 
 
+void	sa_unblock_userret(struct lwp *);
 void	sa_upcall_userret(struct lwp *);
 void	cpu_upcall(struct lwp *, int, int, int, void *, void *, void *, sa_upcall_t);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.88 2003/10/31 03:28:14 simonb Exp $     */
+/*	$NetBSD: trap.c,v 1.89 2003/11/01 01:38:47 cl Exp $     */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -33,7 +33,7 @@
  /* All bugs are subject to removal without further notice */
 		
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.88 2003/10/31 03:28:14 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.89 2003/11/01 01:38:47 cl Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ktrace.h"
@@ -126,6 +126,10 @@ userret(struct lwp *l, struct trapframe *frame, u_quad_t oticks)
 {
 	int sig;
 	struct proc *p = l->l_proc;
+
+	/* Generate UNBLOCKED upcall. */
+	if (l->l_flag & L_SA_BLOCKING)
+		sa_unblock_userret(l);
 
 	/* Take pending signals. */
 	while ((sig = CURSIG(l)) != 0)
