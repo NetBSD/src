@@ -1,13 +1,22 @@
-#	$NetBSD: Makefile.inc,v 1.71.2.2 1997/11/05 05:52:06 thorpej Exp $
+#	$NetBSD: Makefile.inc,v 1.71.2.3 1997/11/07 23:10:50 mellon Exp $
 #	@(#)Makefile.inc	8.1 (Berkeley) 6/17/93
 
 # sys sources
 .PATH: ${.CURDIR}/arch/${MACHINE_ARCH}/sys ${.CURDIR}/sys
 
 # modules with non-default implementations on at least one architecture:
-SRCS+=	Ovfork.S brk.S cerror.S exect.S fork.S pipe.S ptrace.S \
-	sbrk.S setlogin.S sigpending.S sigprocmask.S sigreturn.S \
-	sigsuspend.S syscall.S
+SRCS+=	Ovfork.S brk.S exect.S fork.S pipe.S ptrace.S sbrk.S setlogin.S \
+	sigpending.S sigprocmask.S sigreturn.S sigsuspend.S syscall.S
+SRCS+=	cerror.S
+
+LSRCS+=	Lint_Ovfork.c Lint_brk.c Lint_exect.c Lint_fork.c Lint_pipe.c \
+	Lint_ptrace.c Lint_sbrk.c Lint_setlogin.c Lint_sigpending.c \
+	Lint_sigprocmask.c Lint_sigreturn.c Lint_sigsuspend.c \
+	Lint_syscall.c
+DPSRCS+= Lint_Ovfork.c Lint_brk.c Lint_exect.c Lint_fork.c Lint_pipe.c \
+	Lint_ptrace.c Lint_sbrk.c Lint_setlogin.c Lint_sigpending.c \
+	Lint_sigprocmask.c Lint_sigreturn.c Lint_sigsuspend.c \
+	Lint_syscall.c
 
 # glue to provide compatibility between GCC 1.X and 2.X and for compat
 # with old syscall interfaces.
@@ -146,19 +155,19 @@ CLEANFILES+= LintSysNormal.c LintSysNoerr.c LintSysPseudo.c
 LintSysNormal.c: ${.CURDIR}/sys/makelintstub \
     ${DESTDIR}/usr/include/sys/syscall.h
 	@echo creating ${.TARGET}
-	@${.CURDIR}/sys/makelintstub -o ${.TARGET} \
+	@sh ${.CURDIR}/sys/makelintstub -o ${.TARGET} \
 	    -s ${DESTDIR}/usr/include/sys/syscall.h ${ASM}
 
 LintSysNoerr.c: ${.CURDIR}/sys/makelintstub \
     ${DESTDIR}/usr/include/sys/syscall.h
 	@echo creating ${.TARGET}
-	@${.CURDIR}/sys/makelintstub -o ${.TARGET} -n \
+	@sh ${.CURDIR}/sys/makelintstub -o ${.TARGET} -n \
 	    -s ${DESTDIR}/usr/include/sys/syscall.h ${NOERR}
 
 LintSysPseudoNoerr.c: ${.CURDIR}/sys/makelintstub \
     ${DESTDIR}/usr/include/sys/syscall.h
 	@echo creating ${.TARGET}
-	@${.CURDIR}/sys/makelintstub -o ${.TARGET} -p \
+	@sh ${.CURDIR}/sys/makelintstub -o ${.TARGET} -p \
 	    -s ${DESTDIR}/usr/include/sys/syscall.h ${PSEUDONOERR}
 
 MAN+=	accept.2 access.2 acct.2 adjtime.2 bind.2 brk.2 chdir.2 chflags.2 \
