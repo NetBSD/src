@@ -1,4 +1,4 @@
-/*	$NetBSD: type_alnum.c,v 1.7 2004/04/23 02:58:27 simonb Exp $	*/
+/*	$NetBSD: type_alnum.c,v 1.8 2004/10/27 19:59:24 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1998-1999 Brett Lymn
@@ -115,7 +115,7 @@ alnum_check_field(FIELD *field, char *args)
 
 	  /* find the end of the non-whitespace stuff */
 	cur = start;
-	while((buf[cur] != '\0') && isalnum(buf[cur]))
+	while(isalnum(buf[cur] & 0xff))
 		cur++;
 
 	  /* no good if it exceeds the width */

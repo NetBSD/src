@@ -1,4 +1,4 @@
-/*	$NetBSD: type_alpha.c,v 1.8 2004/04/23 02:58:27 simonb Exp $	*/
+/*	$NetBSD: type_alpha.c,v 1.9 2004/10/27 19:59:24 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1998-1999 Brett Lymn
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: type_alpha.c,v 1.8 2004/04/23 02:58:27 simonb Exp $");
+__RCSID("$NetBSD: type_alpha.c,v 1.9 2004/10/27 19:59:24 dsl Exp $");
 
 #include <stdlib.h>
 #include <string.h>
@@ -117,7 +117,7 @@ alpha_check_field(FIELD *field, char *args)
 
 	  /* find the end of the non-whitespace stuff */
 	cur = start;
-	while((buf[cur] != '\0') && isalpha(buf[cur]))
+	while(isalpha(buf[cur] & 0xff))
 		cur++;
 
 	  /* no good if it exceeds the width */

@@ -1,4 +1,4 @@
-/*	$NetBSD: emacs.c,v 1.17 2004/08/13 12:10:39 mycroft Exp $	*/
+/*	$NetBSD: emacs.c,v 1.18 2004/10/27 19:59:24 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)emacs.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: emacs.c,v 1.17 2004/08/13 12:10:39 mycroft Exp $");
+__RCSID("$NetBSD: emacs.c,v 1.18 2004/10/27 19:59:24 dsl Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -290,8 +290,8 @@ em_upper_case(EditLine *el, int c __attribute__((__unused__)))
 	    el->el_state.argument, ce__isword);
 
 	for (cp = el->el_line.cursor; cp < ep; cp++)
-		if (islower((unsigned char) *cp))
-			*cp = toupper(*cp);
+		if (islower(*cp & 0xff))
+			*cp = toupper(*cp & 0xff);
 
 	el->el_line.cursor = ep;
 	if (el->el_line.cursor > el->el_line.lastchar)
@@ -314,16 +314,16 @@ em_capitol_case(EditLine *el, int c __attribute__((__unused__)))
 	    el->el_state.argument, ce__isword);
 
 	for (cp = el->el_line.cursor; cp < ep; cp++) {
-		if (isalpha((unsigned char) *cp)) {
-			if (islower((unsigned char) *cp))
-				*cp = toupper(*cp);
+		if (isalpha(*cp & 0xff)) {
+			if (islower(*cp & 0xff))
+				*cp = toupper(*cp & 0xff);
 			cp++;
 			break;
 		}
 	}
 	for (; cp < ep; cp++)
-		if (isupper((unsigned char) *cp))
-			*cp = tolower(*cp);
+		if (isupper(*cp & 0xff))
+			*cp = tolower(*cp & 0xff);
 
 	el->el_line.cursor = ep;
 	if (el->el_line.cursor > el->el_line.lastchar)
@@ -346,8 +346,8 @@ em_lower_case(EditLine *el, int c __attribute__((__unused__)))
 	    el->el_state.argument, ce__isword);
 
 	for (cp = el->el_line.cursor; cp < ep; cp++)
-		if (isupper((unsigned char) *cp))
-			*cp = tolower(*cp);
+		if (isupper(*cp & 0xff))
+			*cp = tolower(*cp & 0xff);
 
 	el->el_line.cursor = ep;
 	if (el->el_line.cursor > el->el_line.lastchar)
