@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.56 1999/10/13 03:51:33 tsubai Exp $	*/
+/*	$NetBSD: machdep.c,v 1.57 1999/10/15 12:24:36 tsubai Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -857,6 +857,7 @@ softnet()
 }
 
 #include "zsc.h"
+#include "com.h"
 /*
  * Soft tty interrupts.
  */
@@ -865,6 +866,9 @@ softserial()
 {
 #if NZSC > 0
 	zssoft();
+#endif
+#if NCOM > 0
+	comsoft();
 #endif
 }
 
