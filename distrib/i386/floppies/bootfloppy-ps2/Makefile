@@ -1,11 +1,11 @@
-#	$NetBSD: Makefile,v 1.3 2002/02/03 16:22:21 lukem Exp $
+#	$NetBSD: Makefile,v 1.4 2002/02/08 04:37:25 lukem Exp $
 
 TOP=	${.CURDIR}/..
 
 .include "${TOP}/Makefile.inc"
 
 IMAGE=	boot-ps2.fs
-KERN!=	cd $(.CURDIR)/../kernel-ramdisk/; \
+KERN!=	cd ${TOP}/kernel-ramdisk/; \
         printf "xxx: .MAKE\n\t@echo \$${.OBJDIR}/netbsd.INSTALL_PS2.gz\n" | \
 	${MAKE} -s -f-
 
