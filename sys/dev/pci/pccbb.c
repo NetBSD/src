@@ -1,4 +1,4 @@
-/*	$NetBSD: pccbb.c,v 1.33 2000/03/14 10:20:09 enami Exp $	*/
+/*	$NetBSD: pccbb.c,v 1.34 2000/03/14 10:23:16 enami Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 and 2000
@@ -943,7 +943,13 @@ pccbbintr(arg)
 					    CARDSLOT_EVENT_REMOVAL_CB);
 				}
 			}
-		} else if (0x00 == (sockstate & CB_SOCKET_STAT_CD)) {
+		} else if (0x00 == (sockstate & CB_SOCKET_STAT_CD) &&
+		    /*
+		     * The pccbbintr may called from powerdown hook when
+		     * the system resumed, to detect the card
+		     * insertion/removal during suspension.
+		     */
+		    (sc->sc_flags & CBB_CARDEXIST) == 0) {
 			if (sc->sc_flags & CBB_INSERTING) {
 				untimeout(pci113x_insert, sc);
 			}
