@@ -1,4 +1,4 @@
-/*	$NetBSD: com_isapnp.c,v 1.13 1998/07/23 19:30:44 christos Exp $	*/
+/*	$NetBSD: com_isapnp.c,v 1.14 1998/09/18 14:38:48 enami Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -101,7 +101,7 @@ com_isapnp_attach(parent, self, aux)
 	/*
 	 * if the chip isn't something we recognise skip it.
 	 */
-	if (comprobe1(sc->sc_iot, sc->sc_ioh, sc->sc_iobase) == 0)
+	if (comprobe1(sc->sc_iot, sc->sc_ioh) == 0)
 		return;
 
 	sc->sc_frequency = 115200 * 16; /* is that always right? */
