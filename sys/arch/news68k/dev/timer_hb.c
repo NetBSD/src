@@ -1,4 +1,4 @@
-/*	$NetBSD: timer_hb.c,v 1.2 2002/09/27 20:34:12 thorpej Exp $	*/
+/*	$NetBSD: timer_hb.c,v 1.3 2002/10/02 04:40:08 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -69,9 +69,8 @@ static __inline void leds_intr __P((void));
 
 extern void _isr_clock __P((void));	/* locore.s */
 
-const struct cfattach timer_hb_ca = {
-	sizeof(struct device), timer_hb_match, timer_hb_attach
-};
+CFATTACH_DECL(timer_hb, sizeof(struct device),
+    timer_hb_match, timer_hb_attach, NULL, NULL);
 
 static volatile u_int8_t *ctrl_timer; /* XXX */
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: ms_kbc.c,v 1.3 2002/09/27 20:34:11 thorpej Exp $	*/
+/*	$NetBSD: ms_kbc.c,v 1.4 2002/10/02 04:40:08 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 Izumi Tsutsui.  All rights reserved.
@@ -52,9 +52,8 @@ int ms_kbc_enable(void *);
 void ms_kbc_disable(void *);
 int ms_kbc_ioctl(void *, u_long, caddr_t, int, struct proc *);
 
-const struct cfattach ms_kbc_ca = {
-	sizeof(struct ms_softc), ms_kbc_match, ms_kbc_attach
-};
+CFATTACH_DECL(ms_kbc, sizeof(struct ms_softc),
+    ms_kbc_match, ms_kbc_attach, NULL, NULL);
 
 struct wsmouse_accessops ms_kbc_accessops = {
 	ms_kbc_enable,

@@ -1,4 +1,4 @@
-/*	$NetBSD: si.c,v 1.8 2002/09/27 20:34:11 thorpej Exp $	*/
+/*	$NetBSD: si.c,v 1.9 2002/10/02 04:40:08 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -90,9 +90,8 @@ void si_dma_poll __P((struct ncr5380_softc *));
 void si_dma_eop __P((struct ncr5380_softc *));
 void si_dma_stop __P((struct ncr5380_softc *));
 
-const struct cfattach si_ca = {
-	sizeof(struct si_softc), si_match, si_attach
-};
+CFATTACH_DECL(si, sizeof(struct si_softc),
+    si_match, si_attach, NULL, NULL);
 
 /*
  * Options for disconnect/reselect, DMA, and interrupts.
