@@ -34,7 +34,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)strcpy.3	8.1 (Berkeley) 6/4/93
-.\"	$NetBSD: strcpy.3,v 1.13 2003/05/06 09:58:25 lukem Exp $
+.\"	$NetBSD: strcpy.3,v 1.14 2003/05/06 10:10:41 wiz Exp $
 .\"
 .Dd May 6, 2002
 .Dt STRCPY 3
@@ -111,7 +111,7 @@ and does
 .Em not
 null terminate
 .Va chararray
-because the source string is >= the length parameter.
+because the source string is \*[Gt]= the length parameter.
 .Fn strncpy
 .Em only
 null terminates the destination string when the length of the source
