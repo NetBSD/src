@@ -1,4 +1,4 @@
-/*	$NetBSD: wdcvar.h,v 1.27 2001/01/06 14:55:50 takemura Exp $	*/
+/*	$NetBSD: wdcvar.h,v 1.28 2001/01/22 07:00:39 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -147,6 +147,7 @@ struct wdc_xfer {
 #define C_POLL		0x0004 /* cmd is polled */
 #define C_DMA		0x0008 /* cmd uses DMA */
 #define C_SENSE		0x0010 /* cmd is a internal command */
+#define	C_FORCEPIO	0x0020 /* cmd must use PIO */
 
 	/* Informations about our location */
 	struct channel_softc *chp;
