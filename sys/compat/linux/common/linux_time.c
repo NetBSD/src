@@ -1,4 +1,4 @@
-/* $NetBSD: linux_time.c,v 1.7 2002/01/17 15:10:26 rjs Exp $ */
+/* $NetBSD: linux_time.c,v 1.8 2003/01/18 21:21:39 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_time.c,v 1.7 2002/01/17 15:10:26 rjs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_time.c,v 1.8 2003/01/18 21:21:39 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/ucred.h>
@@ -46,6 +46,7 @@ __KERNEL_RCSID(0, "$NetBSD: linux_time.c,v 1.7 2002/01/17 15:10:26 rjs Exp $");
 #include <sys/stdint.h>
 #include <sys/time.h>
 #include <sys/systm.h>
+#include <sys/sa.h>
 #include <sys/syscallargs.h>
 
 #include <compat/linux/common/linux_types.h>
@@ -66,8 +67,8 @@ __KERNEL_RCSID(0, "$NetBSD: linux_time.c,v 1.7 2002/01/17 15:10:26 rjs Exp $");
  */ 
 struct timezone linux_sys_tz;
 
-int linux_sys_gettimeofday(p, v, retval)
-   struct proc *p;
+int linux_sys_gettimeofday(l, v, retval)
+   struct lwp *l;
    void *v;
    register_t *retval;
 {
@@ -78,7 +79,7 @@ int linux_sys_gettimeofday(p, v, retval)
 	int error = 0;
 
 	if (SCARG(uap, tp)) {
-		error = sys_gettimeofday (p, v, retval);
+		error = sys_gettimeofday (l, v, retval);
 		if (error) 
 			return (error);
 	}
@@ -92,8 +93,8 @@ int linux_sys_gettimeofday(p, v, retval)
 	return (0);
 }
 
-int linux_sys_settimeofday(p, v, retval)
-   struct proc *p;
+int linux_sys_settimeofday(l, v, retval)
+   struct lwp *l;
    void *v;
    register_t *retval;
 {
@@ -104,7 +105,7 @@ int linux_sys_settimeofday(p, v, retval)
 	int error = 0;
 
 	if (SCARG(uap, tp)) {
-		error = sys_settimeofday(p, v, retval);
+		error = sys_settimeofday(l, v, retval);
 		if (error) 
 			return (error);
 	}
