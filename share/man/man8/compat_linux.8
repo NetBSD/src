@@ -1,4 +1,4 @@
-.\"	$NetBSD: compat_linux.8,v 1.19 2001/09/05 23:47:15 wiz Exp $
+.\"	$NetBSD: compat_linux.8,v 1.20 2001/09/05 23:51:53 wiz Exp $
 .\"
 .\" Copyright (c) 1995 Frank van der Linden
 .\" All rights reserved.
@@ -37,13 +37,15 @@
 .Nd setup procedure for running Linux binaries
 .Sh DESCRIPTION
 .Nx
-supports running Linux binaries. This applies to i386, PowerPC, alpha
-and m68k systems for now. Both the a.out and ELF binary formats are supported.
+supports running Linux binaries.  This applies to i386, PowerPC, alpha
+and m68k systems for now.  Both the a.out and ELF binary formats are supported.
 Most programs should work, including the ones that use the Linux SVGAlib (only
-on i386). Programs that will not work include the Linux /proc filesystem
-(which is different from the optional
+on i386).  Programs that will not work include some that use the Linux
+.Pa /proc
+filesystem (which is different from the optional
 .Nx
-/proc filesystem), and i386-specific calls, such as
+.Pa /proc
+filesystem), and i386-specific calls, such as
 enabling virtual 8086 mode. Currently, sound is only partially
 supported for Linux binaries (they will probably run, depending on
 what Linux sound support features are used).
