@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.126 2003/01/24 01:27:21 thorpej Exp $
+	$NetBSD: syscalls.master,v 1.127 2003/02/15 20:54:39 jdolecek Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
 
@@ -513,9 +513,14 @@
 241	STD		{ int sys_fdatasync(int fd); }
 242	STD		{ int sys_mlockall(int flags); }
 243	STD		{ int sys_munlockall(void); }
-244	UNIMPL		sys_sigwaitinfo
-245	UNIMPL		sys_sigtimedwait
-246	UNIMPL		sys_sigqueue
+244	STD		{ int sys___sigtimedwait(const sigset_t *set, \
+			    siginfo_t *info, \
+			    struct timespec *timeout); }
+245	UNIMPL		sys_sigqueue
+;
+; Syscall 246 is free for any use
+;
+246	UNIMPL
 #if defined(P1003_1B_SEMAPHORE) || !defined(_KERNEL)
 247	STD		{ int sys__ksem_init(unsigned int value, semid_t *idp); }
 248	STD		{ int sys__ksem_open(const char *name, int oflag, \
