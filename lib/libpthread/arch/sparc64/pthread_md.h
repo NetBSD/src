@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_md.h,v 1.1.2.1 2002/02/22 03:00:47 petrov Exp $	*/
+/*	$NetBSD: pthread_md.h,v 1.1.2.2 2002/04/26 00:15:23 petrov Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -36,6 +36,9 @@
 #ifndef _LIB_PTHREAD_SPARC64_MD_H
 #define _LIB_PTHREAD_SPARC64_MD_H
 
+/*
+ * pthread__sp used for identifying thread
+ */
 static __inline long
 pthread__sp(void)
 {
@@ -46,11 +49,10 @@ pthread__sp(void)
 	return ret;
 }
 
-#define pthread__uc_sp(ucp) ((ucp)->uc_mcontext.__gregs[_REG_SP])
+#define pthread__uc_sp(ucp) ((ucp)->uc_mcontext.__gregs[_REG_O6])
 #define pthread__uc_pc(ucp) ((ucp)->uc_mcontext.__gregs[_REG_PC])
 
-/* pthread__signal  */
-#define STACKSPACE 32	/* 4 quad values */
+#define STACKSPACE 176	/* min stack frame, i assume */
 
-#endif /* _LIB_PTHREAD_ALPHA_MD_H */
+#endif /* _LIB_PTHREAD_SPARC64_MD_H */
 
