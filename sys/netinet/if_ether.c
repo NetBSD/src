@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ether.c,v 1.34.4.9 1997/02/19 18:11:15 is Exp $	*/
+/*	$NetBSD: if_ether.c,v 1.34.4.10 1997/03/06 20:28:26 is Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1993
@@ -55,17 +55,10 @@
 #include <sys/syslog.h>
 #include <sys/proc.h>
 
+#include <net/ethertypes.h>
 #include <net/if.h>
 #include <net/if_dl.h>
 #include <net/route.h>
-
-/* 
- * XXX The next one should go away, but the ETHERTYPE_* symbols are used
- * by Ethernet stuff in their role as Ethernet protocol types, and by 
- * ARP stuff in their role as ARP protocol numbers. We should move them 
- * into a seperate file. -is
- */
-#include <net/if_ether.h>
 
 #include <netinet/in.h>
 #include <netinet/in_systm.h>
