@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2004/02/07 06:52:06 lukem Exp $
+#	$NetBSD: Makefile,v 1.6 2004/03/06 03:31:06 rtr Exp $
 
 XMODULEDIR=	${X11USRLIBDIR}/modules/drivers
 
@@ -9,7 +9,7 @@ MAN=	nv.4
 .PATH:	${X11SRCDIR.xc}/programs/Xserver/hw/xfree86/drivers/nv
 
 SRCS=	nv_driver.c nv_dac.c nv_setup.c nv_cursor.c nv_xaa.c nv_dga.c \
-	nv_shadow.c riva_hw.c nv_video.c
+	nv_shadow.c nv_hw.c nv_video.c
 
 CPPFLAGS+=	-I${X11SRCDIR.xc}/programs/Xserver/hw/xfree86/drivers/nv \
 		-I${X11SRCDIR.xc}/programs/Xserver/hw/xfree86/common \

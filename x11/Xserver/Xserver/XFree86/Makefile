@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.9 2004/01/23 08:59:20 rtr Exp $
+#	$NetBSD: Makefile,v 1.10 2004/03/06 03:31:06 rtr Exp $
 
 .include <bsd.own.mk>
 
@@ -13,7 +13,7 @@ MAN=	XFree86.1 XF86Config.5
 
 LDADD=	${LIBDIR.xkb}/xf86KillSrv.o ${LIBDIR.xkb}/xf86VT.o \
 	${LIBDIR.xkb}/xf86Private.o ${LIBDIR.hw/xfree86/xf86}/xf86Init.o \
-	${LIBDIR.hw/xfree86/xf86}/xf86IniExt.o
+	${LIBDIR.hw/xfree86/xf86}/xf86IniExt.o ${LIBDIR.fontbase}/fontcache.o
 
 LDADD+=	${LDADD.hw/xfree86/xf86} ${LDADD.hw/xfree86/xf86config} \
 	${LDADD.hw/xfree86/xf86_os} ${LDADD.hw/xfree86/loader} \
