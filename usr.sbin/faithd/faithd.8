@@ -1,5 +1,5 @@
-.\"	$NetBSD: faithd.8,v 1.17 2002/01/19 03:12:56 wiz Exp $
-.\"	$KAME: faithd.8,v 1.32 2001/08/02 02:37:20 itojun Exp $
+.\"	$NetBSD: faithd.8,v 1.18 2002/05/09 14:24:03 itojun Exp $
+.\"	$KAME: faithd.8,v 1.37 2002/05/09 14:21:23 itojun Exp $
 .\"
 .\" Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
 .\" All rights reserved.
@@ -168,8 +168,6 @@ Use privileged TCP port number as source port,
 for IPv4 TCP connection toward final destination.
 For relaying
 .Xr ftp 1
-and
-.Xr rlogin 1 ,
 this flag is not necessary as special program code is supplied.
 .El
 .Pp
@@ -178,9 +176,7 @@ will relay both normal and out-of-band TCP data.
 It is capable of emulating TCP half close as well.
 .Nm
 includes special support for protocols used by
-.Xr ftp 1
-and
-.Xr rlogin 1 .
+.Xr ftp 1 .
 When translating FTP protocol,
 .Nm
 translates network level addresses in
@@ -188,13 +184,6 @@ translates network level addresses in
 and
 .Li PASV/LPSV/EPSV
 commands.
-For RLOGIN protocol,
-.Nm
-will relay back connection from
-.Xr rlogind 8
-on the server to
-.Xr rlogin 1
-on client.
 .Pp
 Inactive sessions will be disconnected in 30 minutes,
 to avoid stale sessions from chewing up resources.
@@ -328,18 +317,11 @@ If you would like to pass extra arguments to the local daemon:
 Here are some other examples.
 You may need
 .Fl p
-to translate rsh/rlogin services.
+if the service checks the source port range.
 .Bd -literal -offset
 # faithd ssh
-# faithd login /usr/libexec/rlogin rlogind
-# faithd shell /usr/libexec/rshd rshd
+# faithd telnet /usr/libexec/telnetd telnetd
 .Ed
-.Pp
-However, you should be careful when translating rlogin or rsh
-connections.
-See
-.Sx SECURITY CONSIDERATIONS
-for more details.
 .Ss inetd mode samples
 Add the following lines into
 .Xr inetd.conf 5 .
@@ -396,9 +378,7 @@ The
 command first appeared in WIDE Hydrangea IPv6 protocol stack kit.
 .\"
 .Sh SECURITY CONSIDERATIONS
-It is very insecure to use
-.Xr rhosts 5
-and other IP-address based authentication, for connections relayed by
+It is very insecure to use IP-address based authentication, for connections relayed by
 .Nm Ns ,
 and any other TCP relaying services.
 .Pp
