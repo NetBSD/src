@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ethersubr.c,v 1.110 2003/06/11 10:34:55 martin Exp $	*/
+/*	$NetBSD: if_ethersubr.c,v 1.111 2003/06/11 10:44:10 martin Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.110 2003/06/11 10:34:55 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.111 2003/06/11 10:44:10 martin Exp $");
 
 #include "opt_inet.h"
 #include "opt_atalk.h"
@@ -106,7 +106,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.110 2003/06/11 10:34:55 martin Ex
 /*
  * XXX there should really be a way to issue this warning from within config(8)
  */
-#error You have included a pseudo-device in your configuration that depends on the presence of ethernet interfaces, but have no such interfaces configured. Check if you really need pseudo-device bridge, pppoe or vlan.
+#error You have included NETATALK or a pseudo-device in your configuration that depends on the presence of ethernet interfaces, but have no such interfaces configured. Check if you really need pseudo-device bridge, pppoe, vlan or options NETATALK.
 #endif
 
 #if NBPFILTER > 0 
