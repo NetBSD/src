@@ -1,4 +1,4 @@
-/*	$NetBSD: option.c,v 1.8 1998/02/02 14:02:28 mrg Exp $	*/
+/*	$NetBSD: option.c,v 1.9 1998/02/21 22:47:21 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "from: @(#)option.c	8.2 (Berkeley) 4/16/94";
 #else
-__RCSID("$NetBSD: option.c,v 1.8 1998/02/02 14:02:28 mrg Exp $");
+__RCSID("$NetBSD: option.c,v 1.9 1998/02/21 22:47:21 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -61,38 +61,38 @@ static OPTION *option __P((char *));
 
 /* NB: the following table must be sorted lexically. */
 static OPTION const options[] = {
-	{ "!",		N_NOT,		c_not,		O_ZERO },
-	{ "(",		N_OPENPAREN,	c_openparen,	O_ZERO },
-	{ ")",		N_CLOSEPAREN,	c_closeparen,	O_ZERO },
-	{ "-a",		N_AND,		NULL,		O_NONE },
-	{ "-and",	N_AND,		NULL,		O_NONE },
-	{ "-atime",	N_ATIME,	c_atime,	O_ARGV },
-	{ "-ctime",	N_CTIME,	c_ctime,	O_ARGV },
-	{ "-depth",	N_DEPTH,	c_depth,	O_ZERO },
-	{ "-exec",	N_EXEC,		c_exec,		O_ARGVP },
-	{ "-follow",	N_FOLLOW,	c_follow,	O_ZERO },
-	{ "-fstype",	N_FSTYPE,	c_fstype,	O_ARGV },
-	{ "-group",	N_GROUP,	c_group,	O_ARGV },
-	{ "-inum",	N_INUM,		c_inum,		O_ARGV },
-	{ "-links",	N_LINKS,	c_links,	O_ARGV },
-	{ "-ls",	N_LS,		c_ls,		O_ZERO },
-	{ "-mtime",	N_MTIME,	c_mtime,	O_ARGV },
-	{ "-name",	N_NAME,		c_name,		O_ARGV },
-	{ "-newer",	N_NEWER,	c_newer,	O_ARGV },
-	{ "-nogroup",	N_NOGROUP,	c_nogroup,	O_ZERO },
-	{ "-nouser",	N_NOUSER,	c_nouser,	O_ZERO },
-	{ "-o",		N_OR,		c_or,		O_ZERO },
-	{ "-ok",	N_OK,		c_exec,		O_ARGVP },
-	{ "-or",	N_OR,		c_or,		O_ZERO },
-	{ "-path", 	N_PATH,		c_path,		O_ARGV },
-	{ "-perm",	N_PERM,		c_perm,		O_ARGV },
-	{ "-print",	N_PRINT,	c_print,	O_ZERO },
-	{ "-print0",	N_PRINT0,	c_print0,	O_ZERO },
-	{ "-prune",	N_PRUNE,	c_prune,	O_ZERO },
-	{ "-size",	N_SIZE,		c_size,		O_ARGV },
-	{ "-type",	N_TYPE,		c_type,		O_ARGV },
-	{ "-user",	N_USER,		c_user,		O_ARGV },
-	{ "-xdev",	N_XDEV,		c_xdev,		O_ZERO },
+	{ "!",		N_NOT,		c_not,		0 },
+	{ "(",		N_OPENPAREN,	c_openparen,	0 },
+	{ ")",		N_CLOSEPAREN,	c_closeparen,	0 },
+	{ "-a",		N_AND,		c_null,		0 },
+	{ "-and",	N_AND,		c_null,		0 },
+	{ "-atime",	N_ATIME,	c_atime,	1 },
+	{ "-ctime",	N_CTIME,	c_ctime,	1 },
+	{ "-depth",	N_DEPTH,	c_depth,	0 },
+	{ "-exec",	N_EXEC,		c_exec,		1 },
+	{ "-follow",	N_FOLLOW,	c_follow,	0 },
+	{ "-fstype",	N_FSTYPE,	c_fstype,	1 },
+	{ "-group",	N_GROUP,	c_group,	1 },
+	{ "-inum",	N_INUM,		c_inum,		1 },
+	{ "-links",	N_LINKS,	c_links,	1 },
+	{ "-ls",	N_LS,		c_ls,		0 },
+	{ "-mtime",	N_MTIME,	c_mtime,	1 },
+	{ "-name",	N_NAME,		c_name,		1 },
+	{ "-newer",	N_NEWER,	c_newer,	1 },
+	{ "-nogroup",	N_NOGROUP,	c_nogroup,	0 },
+	{ "-nouser",	N_NOUSER,	c_nouser,	0 },
+	{ "-o",		N_OR,		c_or,		0 },
+	{ "-ok",	N_OK,		c_exec,		1 },
+	{ "-or",	N_OR,		c_or,		0 },
+	{ "-path", 	N_PATH,		c_path,		1 },
+	{ "-perm",	N_PERM,		c_perm,		1 },
+	{ "-print",	N_PRINT,	c_print,	0 },
+	{ "-print0",	N_PRINT0,	c_print0,	0 },
+	{ "-prune",	N_PRUNE,	c_prune,	0 },
+	{ "-size",	N_SIZE,		c_size,		1 },
+	{ "-type",	N_TYPE,		c_type,		1 },
+	{ "-user",	N_USER,		c_user,		1 },
+	{ "-xdev",	N_XDEV,		c_xdev,		0 }
 };
 
 /*
@@ -116,25 +116,11 @@ find_create(argvp)
 	if ((p = option(*argv)) == NULL)
 		errx(1, "%s: unknown option", *argv);
 	++argv;
-	if (p->flags & (O_ARGV|O_ARGVP) && !*argv)
+	if (p->arg && !*argv)
 		errx(1, "%s: requires additional arguments", *--argv);
 
-	switch(p->flags) {
-	case O_NONE:
-		new = NULL;
-		break;
-	case O_ZERO:
-		new = (p->create)();
-		break;
-	case O_ARGV:
-		new = (p->create)(*argv++);
-		break;
-	case O_ARGVP:
-		new = (p->create)(&argv, p->token == N_OK);
-		break;
-	default:
-		abort();
-	}
+	new = (p->create)(&argv, p->token == N_OK);
+
 	*argvp = argv;
 	return (new);
 }

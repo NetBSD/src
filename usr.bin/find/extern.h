@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.7 1998/02/02 14:02:12 mrg Exp $	*/
+/*	$NetBSD: extern.h,v 1.8 1998/02/21 22:47:20 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -50,33 +50,34 @@ struct stat;
 void	 printlong __P((char *, char *, struct stat *));
 int	 queryuser __P((char **));
 
-PLAN	*c_atime __P((char *));
-PLAN	*c_ctime __P((char *));
-PLAN	*c_depth __P((void));
+PLAN	*c_atime __P((char ***, int));
+PLAN	*c_ctime __P((char ***, int));
+PLAN	*c_depth __P((char ***, int));
 PLAN	*c_exec __P((char ***, int));
-PLAN	*c_follow __P((void));
-PLAN	*c_fstype __P((char *));
-PLAN	*c_group __P((char *));
-PLAN	*c_inum __P((char *));
-PLAN	*c_links __P((char *));
-PLAN	*c_ls __P((void));
-PLAN	*c_name __P((char *));
-PLAN	*c_newer __P((char *));
-PLAN	*c_nogroup __P((void));
-PLAN	*c_nouser __P((void));
-PLAN	*c_path __P((char *));
-PLAN	*c_perm __P((char *));
-PLAN	*c_print __P((void));
-PLAN	*c_print0 __P((void));
-PLAN	*c_prune __P((void));
-PLAN	*c_size __P((char *));
-PLAN	*c_type __P((char *));
-PLAN	*c_user __P((char *));
-PLAN	*c_xdev __P((void));
-PLAN	*c_openparen __P((void));
-PLAN	*c_closeparen __P((void));
-PLAN	*c_mtime __P((char *));
-PLAN	*c_not __P((void));
-PLAN	*c_or __P((void));
+PLAN	*c_follow __P((char ***, int));
+PLAN	*c_fstype __P((char ***, int));
+PLAN	*c_group __P((char ***, int));
+PLAN	*c_inum __P((char ***, int));
+PLAN	*c_links __P((char ***, int));
+PLAN	*c_ls __P((char ***, int));
+PLAN	*c_name __P((char ***, int));
+PLAN	*c_newer __P((char ***, int));
+PLAN	*c_nogroup __P((char ***, int));
+PLAN	*c_nouser __P((char ***, int));
+PLAN	*c_path __P((char ***, int));
+PLAN	*c_perm __P((char ***, int));
+PLAN	*c_print __P((char ***, int));
+PLAN	*c_print0 __P((char ***, int));
+PLAN	*c_prune __P((char ***, int));
+PLAN	*c_size __P((char ***, int));
+PLAN	*c_type __P((char ***, int));
+PLAN	*c_user __P((char ***, int));
+PLAN	*c_xdev __P((char ***, int));
+PLAN	*c_openparen __P((char ***, int));
+PLAN	*c_closeparen __P((char ***, int));
+PLAN	*c_mtime __P((char ***, int));
+PLAN	*c_not __P((char ***, int));
+PLAN	*c_or __P((char ***, int));
+PLAN	*c_null __P((char ***, int));
 
 extern int ftsoptions, isdeprecated, isdepth, isoutput, isxargs;
