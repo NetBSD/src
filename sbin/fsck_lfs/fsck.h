@@ -1,4 +1,4 @@
-/*	$NetBSD: fsck.h,v 1.3 2000/01/20 21:32:31 perseant Exp $	*/
+/*	$NetBSD: fsck.h,v 1.4 2000/05/16 04:55:59 perseant Exp $	*/
 
 /*
  * Copyright (c) 1997
@@ -208,13 +208,15 @@ struct inoinfo {
 ino_t allocino __P((ino_t, int));
 int ino_to_fsba __P((struct lfs *, ino_t));
 struct bufarea *getfileblk __P((struct lfs *, struct dinode *, ino_t));
-struct bufarea *lfs_bginode __P((ino_t));
 struct dinode *ginode __P((ino_t));
 struct dinode *lfs_ginode __P((ino_t));
 struct dinode *lfs_difind __P((struct lfs *, ino_t, struct dinode *));
-struct ifile *lfs_ientry __P((ino_t));
+struct ifile *lfs_ientry __P((ino_t, struct bufarea **));
 struct inoinfo *getinoinfo __P((ino_t));
 void getblk __P((struct bufarea *, daddr_t, long));
 void getdblk __P((struct bufarea *, daddr_t, long));
+int check_summary(struct lfs *, SEGSUM *, daddr_t);
+SEGUSE *lfs_gseguse(int, struct bufarea **);
+daddr_t lfs_ino_daddr(ino_t);
 
 #include "fsck_vars.h"
