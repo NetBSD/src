@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_mips1.S,v 1.39 2000/09/05 00:55:48 soren Exp $	*/
+/*	$NetBSD: locore_mips1.S,v 1.40 2000/09/05 01:24:52 soren Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -852,7 +852,6 @@ outofworld:
 	move	a1, sp
 	la	sp, start			# set sp to a valid place
 	PANIC("TLB out of universe: ksp was %p")
-	nop
 	.set	at
 END(mips1_TLBMissException)
 
