@@ -1,3 +1,5 @@
+/*	$NetBSD: config.h,v 1.2 1995/09/28 06:05:28 tls Exp $	*/
+
 /*-
  * Copyright (c) 1993
  *	The Regents of the University of California.
