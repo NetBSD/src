@@ -1,4 +1,6 @@
-/* $Id: cfparse.y,v 1.1.1.1 2005/02/12 11:11:43 manu Exp $ */
+/*	$NetBSD: cfparse.y,v 1.1.1.2 2005/02/23 14:54:11 manu Exp $	*/
+
+/* Id: cfparse.y,v 1.37 2005/02/11 06:59:01 manubsd Exp */
 
 %{
 /*

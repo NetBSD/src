@@ -1,4 +1,6 @@
-/* $Id: main.c,v 1.1.1.1 2005/02/12 11:12:35 manu Exp $ */
+/*	$NetBSD: main.c,v 1.1.1.2 2005/02/23 14:54:22 manu Exp $	*/
+
+/* Id: main.c,v 1.14.2.2 2005/02/23 12:18:40 manubsd Exp */
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -77,7 +79,7 @@
 #include "backupsa.h"
 #include "vendorid.h"
 
-#include "../../package_version.h"
+#include "package_version.h"
 
 int f_local = 0;	/* local test mode.  behave like a wall. */
 int vflag = 1;		/* for print-isakmp.c */
@@ -170,12 +172,6 @@ main(ac, av)
 	initrmconf();
 	oakley_dhinit();
 	compute_vendorids();
-#ifdef HAVE_LIBRADIUS
-	if (xauth_radius_init() != 0) {
-		errx(1, "could not initialize libradius");
-		/* NOTREACHED*/
-	}
-#endif
 
 	parse(ac, av);
 
@@ -201,6 +197,13 @@ main(ac, av)
 	if (error != 0)
 		errx(1, "failed to parse configuration file.");
 	restore_params();
+
+#ifdef HAVE_LIBRADIUS
+	if (xauth_radius_init() != 0) {
+		errx(1, "could not initialize libradius");
+		/* NOTREACHED*/
+	}
+#endif
 
 	if (dump_config)
 		dumprmconf ();

@@ -1,3 +1,5 @@
+/*	$NetBSD: setkey.c,v 1.1.1.2 2005/02/23 14:54:40 manu Exp $	*/
+
 /*	$KAME: setkey.c,v 1.36 2003/09/24 23:52:51 itojun Exp $	*/
 
 /*
@@ -67,7 +69,7 @@
 
 #include "config.h"
 #include "libpfkey.h"
-#include "../../package_version.h"
+#include "package_version.h"
 
 #define strlcpy(d,s,l) (strncpy(d,s,l), (d)[(l)-1] = '\0')
 

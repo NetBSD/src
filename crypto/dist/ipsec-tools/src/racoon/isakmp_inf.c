@@ -1,4 +1,6 @@
-/* $Id: isakmp_inf.c,v 1.1.1.1 2005/02/12 11:12:27 manu Exp $ */
+/*	$NetBSD: isakmp_inf.c,v 1.1.1.2 2005/02/23 14:54:21 manu Exp $	*/
+
+/* Id: isakmp_inf.c,v 1.14.4.1 2005/02/18 10:01:39 vanhu Exp */
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -107,6 +109,13 @@ static void purge_remote __P((struct ph1handle *));
 static void purge_isakmp_spi __P((int, isakmp_index *, size_t));
 static void purge_ipsec_spi __P((struct sockaddr *, int, u_int32_t *, size_t));
 static void info_recv_initialcontact __P((struct ph1handle *));
+
+#ifdef INET6
+/* XXX copy of setscopeid from isakmp_quick.c */
+static u_int32_t setscopeid __P((struct sockaddr *, struct sockaddr *));
+#endif
+
+
 
 /* %%%
  * Information Exchange
@@ -1014,6 +1023,224 @@ purge_ipsec_spi(dst0, proto, spi, n)
 			 */
 			iph2 = getph2bysaidx(src, dst, proto, spi[i]);
 			if (iph2) {
+				/* Delete the SPD entry if we generated it
+				 */
+				if (iph2->ph1 && iph2->ph1->rmconf && iph2->ph1->rmconf->gen_policy) {
+					struct policyindex spidx;
+					struct sockaddr_storage addr;
+					u_int8_t pref;
+					struct sockaddr *src = iph2->src;
+					struct sockaddr *dst = iph2->dst;
+					int error;
+					int idi2type = 0;/* switch whether copy IDs into id[src,dst]. */
+
+					plog(LLV_INFO, LOCATION, NULL,
+						 "generated policy, deleting it.\n");
+
+					memset(&spidx, 0, sizeof(spidx));
+					iph2->spidx_gen = (caddr_t )&spidx;
+
+					/* make inbound policy */
+					iph2->src = dst;
+					iph2->dst = src;
+					spidx.dir = IPSEC_DIR_INBOUND;
+					spidx.ul_proto = 0;
+
+					/* Note: code from get_proposal_r
+					 */
+
+#define _XIDT(d) ((struct ipsecdoi_id_b *)(d)->v)->type
+
+					/*
+					 * make destination address in spidx from either ID payload
+					 * or phase 1 address into a address in spidx.
+					 */
+					if (iph2->id != NULL
+						&& (_XIDT(iph2->id) == IPSECDOI_ID_IPV4_ADDR
+							|| _XIDT(iph2->id) == IPSECDOI_ID_IPV6_ADDR
+							|| _XIDT(iph2->id) == IPSECDOI_ID_IPV4_ADDR_SUBNET
+							|| _XIDT(iph2->id) == IPSECDOI_ID_IPV6_ADDR_SUBNET)) {
+						/* get a destination address of a policy */
+						error = ipsecdoi_id2sockaddr(iph2->id,
+													 (struct sockaddr *)&spidx.dst,
+													 &spidx.prefd, &spidx.ul_proto);
+						if (error)
+							goto purge;
+						
+#ifdef INET6
+						/*
+						 * get scopeid from the SA address.
+						 * note that the phase 1 source address is used as
+						 * a destination address to search for a inbound policy entry
+						 * because rcoon is responder.
+						 */
+						if (_XIDT(iph2->id) == IPSECDOI_ID_IPV6_ADDR) {
+							error = setscopeid((struct sockaddr *)&spidx.dst,
+											   iph2->src);
+							if (error)
+								goto purge;
+						}
+#endif
+						
+						if (_XIDT(iph2->id) == IPSECDOI_ID_IPV4_ADDR
+							|| _XIDT(iph2->id) == IPSECDOI_ID_IPV6_ADDR)
+							idi2type = _XIDT(iph2->id);
+						
+					} else {
+						
+						plog(LLV_DEBUG, LOCATION, NULL,
+							 "get a destination address of SP index "
+							 "from phase1 address "
+							 "due to no ID payloads found "
+							 "OR because ID type is not address.\n");
+						
+						/*
+						 * copy the SOURCE address of IKE into the DESTINATION address
+						 * of the key to search the SPD because the direction of policy
+						 * is inbound.
+						 */
+						memcpy(&spidx.dst, iph2->src, sysdep_sa_len(iph2->src));
+						switch (spidx.dst.ss_family) {
+						case AF_INET:
+							spidx.prefd = sizeof(struct in_addr) << 3;
+							break;
+#ifdef INET6
+						case AF_INET6:
+							spidx.prefd = sizeof(struct in6_addr) << 3;
+							break;
+#endif
+						default:
+							spidx.prefd = 0;
+							break;
+						}
+					}
+					
+					/* make source address in spidx */
+					if (iph2->id_p != NULL
+						&& (_XIDT(iph2->id_p) == IPSECDOI_ID_IPV4_ADDR
+							|| _XIDT(iph2->id_p) == IPSECDOI_ID_IPV6_ADDR
+							|| _XIDT(iph2->id_p) == IPSECDOI_ID_IPV4_ADDR_SUBNET
+							|| _XIDT(iph2->id_p) == IPSECDOI_ID_IPV6_ADDR_SUBNET)) {
+						/* get a source address of inbound SA */
+						error = ipsecdoi_id2sockaddr(iph2->id_p,
+													 (struct sockaddr *)&spidx.src,
+													 &spidx.prefs, &spidx.ul_proto);
+						if (error)
+							goto purge;
+
+#ifdef INET6
+						/*
+						 * get scopeid from the SA address.
+						 * for more detail, see above of this function.
+						 */
+						if (_XIDT(iph2->id_p) == IPSECDOI_ID_IPV6_ADDR) {
+							error = setscopeid((struct sockaddr *)&spidx.src,
+											   iph2->dst);
+							if (error)
+								goto purge;
+						}
+#endif
+
+						/* make id[src,dst] if both ID types are IP address and same */
+						if (_XIDT(iph2->id_p) == idi2type
+							&& spidx.dst.ss_family == spidx.src.ss_family) {
+							iph2->src_id = dupsaddr((struct sockaddr *)&spidx.dst);
+							iph2->dst_id = dupsaddr((struct sockaddr *)&spidx.src);
+						}
+
+					} else {
+						plog(LLV_DEBUG, LOCATION, NULL,
+							 "get a source address of SP index "
+							 "from phase1 address "
+							 "due to no ID payloads found "
+							 "OR because ID type is not address.\n");
+
+						/* see above comment. */
+						memcpy(&spidx.src, iph2->dst, sysdep_sa_len(iph2->dst));
+						switch (spidx.src.ss_family) {
+						case AF_INET:
+							spidx.prefs = sizeof(struct in_addr) << 3;
+							break;
+#ifdef INET6
+						case AF_INET6:
+							spidx.prefs = sizeof(struct in6_addr) << 3;
+							break;
+#endif
+						default:
+							spidx.prefs = 0;
+							break;
+						}
+					}
+
+#undef _XIDT
+
+					plog(LLV_DEBUG, LOCATION, NULL,
+						 "get a src address from ID payload "
+						 "%s prefixlen=%u ul_proto=%u\n",
+						 saddr2str((struct sockaddr *)&spidx.src),
+						 spidx.prefs, spidx.ul_proto);
+					plog(LLV_DEBUG, LOCATION, NULL,
+						 "get dst address from ID payload "
+						 "%s prefixlen=%u ul_proto=%u\n",
+						 saddr2str((struct sockaddr *)&spidx.dst),
+						 spidx.prefd, spidx.ul_proto);
+
+					/*
+					 * convert the ul_proto if it is 0
+					 * because 0 in ID payload means a wild card.
+					 */
+					if (spidx.ul_proto == 0)
+						spidx.ul_proto = IPSEC_ULPROTO_ANY;
+
+#undef _XIDT
+
+					/* End of code from get_proposal_r
+					 */
+
+					if (pk_sendspddelete(iph2) < 0) {
+						plog(LLV_ERROR, LOCATION, NULL,
+							 "pfkey spddelete(inbound) failed.\n");
+					}else{
+						plog(LLV_DEBUG, LOCATION, NULL,
+							 "pfkey spddelete(inbound) sent.\n");
+					}
+
+#ifdef HAVE_POLICY_FWD
+					/* make forward policy if required */
+					if (tunnel_mode_prop(iph2->approval)) {
+						spidx->dir = IPSEC_DIR_FWD;
+						if (pk_sendspddelete(iph2) < 0) {
+							plog(LLV_ERROR, LOCATION, NULL,
+								 "pfkey spddelete(forward) failed.\n");
+						}else{
+							plog(LLV_DEBUG, LOCATION, NULL,
+								 "pfkey spddelete(forward) sent.\n");
+						}
+					}
+#endif
+
+					/* make outbound policy */
+					iph2->src = src;
+					iph2->dst = dst;
+					spidx.dir = IPSEC_DIR_OUTBOUND;
+					addr = spidx.src;
+					spidx.src = spidx.dst;
+					spidx.dst = addr;
+					pref = spidx.prefs;
+					spidx.prefs = spidx.prefd;
+					spidx.prefd = pref;
+
+					if (pk_sendspddelete(iph2) < 0) {
+						plog(LLV_ERROR, LOCATION, NULL,
+							 "pfkey spddelete(outbound) failed.\n");
+					}else{
+						plog(LLV_DEBUG, LOCATION, NULL,
+							 "pfkey spddelete(outbound) sent.\n");
+					}
+				purge:
+					iph2->spidx_gen=NULL;
+				}
+
 				unbindph12(iph2);
 				remph2(iph2);
 				delph2(iph2);
@@ -1697,6 +1924,43 @@ isakmp_sched_r_u(iph1, retry)
 	else
 		sched_new(iph1->rmconf->dpd_interval,
 			  isakmp_info_send_r_u, iph1);
+
+	return 0;
+}
+#endif
+
+
+#ifdef INET6
+/* XXX copy of setscopeid from isakmp_quick.c
+ */
+static u_int32_t
+setscopeid(sp_addr0, sa_addr0)
+	struct sockaddr *sp_addr0, *sa_addr0;
+{
+	struct sockaddr_in6 *sp_addr, *sa_addr;
+    
+	sp_addr = (struct sockaddr_in6 *)sp_addr0;
+	sa_addr = (struct sockaddr_in6 *)sa_addr0;
+
+	if (!IN6_IS_ADDR_LINKLOCAL(&sp_addr->sin6_addr)
+	 && !IN6_IS_ADDR_SITELOCAL(&sp_addr->sin6_addr)
+	 && !IN6_IS_ADDR_MULTICAST(&sp_addr->sin6_addr))
+		return 0;
+
+	/* this check should not be here ? */
+	if (sa_addr->sin6_family != AF_INET6) {
+		plog(LLV_ERROR, LOCATION, NULL,
+			"can't get scope ID: family mismatch\n");
+		return -1;
+	}
+
+	if (!IN6_IS_ADDR_LINKLOCAL(&sa_addr->sin6_addr)) {
+		plog(LLV_ERROR, LOCATION, NULL,
+			"scope ID is not supported except of lladdr.\n");
+		return -1;
+	}
+
+	sp_addr->sin6_scope_id = sa_addr->sin6_scope_id;
 
 	return 0;
 }

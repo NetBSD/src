@@ -1,3 +1,5 @@
+/*	$NetBSD: pfkey.c,v 1.1.1.2 2005/02/23 14:54:09 manu Exp $	*/
+
 /*	$KAME: pfkey.c,v 1.47 2003/10/02 19:52:12 itojun Exp $	*/
 
 /*

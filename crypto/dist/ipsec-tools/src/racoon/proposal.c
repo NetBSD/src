@@ -1,4 +1,6 @@
-/* $Id: proposal.c,v 1.1.1.1 2005/02/12 11:12:51 manu Exp $ */
+/*	$NetBSD: proposal.c,v 1.1.1.2 2005/02/23 14:54:25 manu Exp $	*/
+
+/* Id: proposal.c,v 1.13 2004/09/13 14:09:19 ludvigm Exp */
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.

@@ -1,4 +1,6 @@
-/* $Id: remoteconf.c,v 1.1.1.1 2005/02/12 11:12:59 manu Exp $ */
+/*	$NetBSD: remoteconf.c,v 1.1.1.2 2005/02/23 14:54:27 manu Exp $	*/
+
+/* Id: remoteconf.c,v 1.26.2.1 2005/02/17 21:24:17 manubsd Exp */
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -202,7 +204,7 @@ newrmconf()
 	new->send_cr = TRUE;
 	new->support_proxy = FALSE;
 	for (i = 0; i <= SCRIPT_MAX; i++)
-		new->script[0] = -1;
+		new->script[i] = -1;
 	new->gen_policy = FALSE;
 	new->retry_counter = lcconf->retry_counter;
 	new->retry_interval = lcconf->retry_interval;

@@ -1,4 +1,6 @@
-/* $Id: misc.h,v 1.1.1.1 2005/02/12 11:12:36 manu Exp $ */
+/*	$NetBSD: misc.h,v 1.1.1.2 2005/02/23 14:54:22 manu Exp $	*/
+
+/* Id: misc.h,v 1.6 2004/06/11 16:00:17 ludvigm Exp */
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.

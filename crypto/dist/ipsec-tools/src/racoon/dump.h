@@ -1,4 +1,6 @@
-/* $Id: dump.h,v 1.1.1.1 2005/02/12 11:11:53 manu Exp $ */
+/*	$NetBSD: dump.h,v 1.1.1.2 2005/02/23 14:54:13 manu Exp $	*/
+
+/* Id: dump.h,v 1.3 2004/06/11 16:00:16 ludvigm Exp */
 
 /*
  * Copyright (C) 2000 WIDE Project.

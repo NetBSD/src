@@ -1,4 +1,6 @@
-/* $Id: isakmp_xauth.c,v 1.1.1.1 2005/02/12 11:12:33 manu Exp $ */
+/*	$NetBSD: isakmp_xauth.c,v 1.1.1.2 2005/02/23 14:54:21 manu Exp $	*/
+
+/* Id: isakmp_xauth.c,v 1.17.2.1 2005/02/23 12:18:40 manubsd Exp */
 
 /*
  * Copyright (C) 2004 Emmanuel Dreyfus
@@ -423,11 +425,17 @@ xauth_sendstatus(iph1, status, id)
 int
 xauth_radius_init(void)
 {
+	/* If it's not required in the config, don't initialize it */
+	if ((isakmp_cfg_config.authsource != ISAKMP_CFG_AUTH_RADIUS) &&
+	    (isakmp_cfg_config.accounting != ISAKMP_CFG_ACCT_RADIUS) &&
+	    (isakmp_cfg_config.confsource != ISAKMP_CFG_CONF_RADIUS))
+		return 0;
+
 	/* For first time use, initialize Radius */
 	if (radius_state == NULL) {
 		if ((radius_state = rad_auth_open()) == NULL) {
 			plog(LLV_ERROR, LOCATION, NULL, 
-			    "Cannot init librradius\n");
+			    "Cannot init libradius\n");
 			return -1;
 		}
 

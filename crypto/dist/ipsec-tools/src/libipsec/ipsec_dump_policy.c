@@ -1,4 +1,6 @@
-/* $Id: ipsec_dump_policy.c,v 1.1.1.1 2005/02/12 11:11:23 manu Exp $ */
+/*	$NetBSD: ipsec_dump_policy.c,v 1.1.1.2 2005/02/23 14:54:07 manu Exp $	*/
+
+/* Id: ipsec_dump_policy.c,v 1.7 2004/10/29 16:37:03 ludvigm Exp */
 
 /*
  * Copyright (C) 1995, 1996, 1997, 1998, and 1999 WIDE Project.
