@@ -1,4 +1,4 @@
-#	$NetBSD: FOUR_TTYS,v 1.15 1998/01/22 23:21:57 gwr Exp $
+#	$NetBSD: FOUR_TTYS,v 1.16 1998/01/28 16:40:20 gwr Exp $
 
 # FOUR_TTYS Sun3 (3/50, 3/60, 3/110, 3/160, 3/260)
 # like GENERIC but both zs chips are used as ttys
@@ -72,6 +72,7 @@ options 	TCP_COMPAT_42	# compatibility with 4.2BSD TCP/IP
 
 # Work-around for root on slow servers (insurance...)
 options 	NFS_BOOT_RWSIZE=1024
+options 	NFS_BOOT_BOOTPARAM
 
 config		netbsd root on ? type ?
 
