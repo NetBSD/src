@@ -1,4 +1,4 @@
-/*	$NetBSD: ultrix_misc.c,v 1.12 1995/04/25 21:51:15 mellon Exp $	*/
+/*	$NetBSD: ultrix_misc.c,v 1.13 1995/06/01 16:38:17 mellon Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -1053,4 +1053,16 @@ sun_sysconf(p, uap, retval)
 		return EINVAL;
 	}
 	return 0;
+}
+
+struct ultrix_sigcleanup_args {
+	struct sigcontext *sigcntxp;
+};
+
+int ultrix_sigcleanup(p, uap, retval)
+	struct proc *p;
+	struct ultrix_sigcleanup_args *uap;
+	register_t *retval;
+{
+	sigreturn (p, (struct sigreturn_args *)uap, retval);
 }

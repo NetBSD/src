@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.9 1995/02/01 05:09:14 mellon Exp $
+	$NetBSD: syscalls.master,v 1.10 1995/06/01 16:38:15 mellon Exp $
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 ; System call name/number master file (or rather, slave, from SunOS).
 ; Processed to created sun_sysent.c, sun_syscalls.c and sun_syscall.h.
@@ -194,7 +194,7 @@
 136	NOARGS		{ int mkdir(char *path, int mode); }
 137	NOARGS		{ int rmdir(char *path); }
 138	NOARGS		{ int utimes(char *path, struct timeval *tptr); }
-139	NOARGS		{ int sigreturn(struct sigcontext *sigcntxp); }
+139	STD		{ int ultrix_sigcleanup(struct sigcontext *sigcntxp); }
 140	NOARGS		{ int adjtime(struct timeval *delta, \
 			    struct timeval *olddelta); }
 141	NOARGS		{ int compat_43_getpeername(int fdes, caddr_t asa, int *alen); }

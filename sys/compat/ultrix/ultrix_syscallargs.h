@@ -52,6 +52,10 @@ struct sun_setsockopt_args {
 	syscallarg(int) valsize;
 };
 
+struct ultrix_sigcleanup_args {
+	syscallarg(struct sigcontext *) sigcntxp;
+};
+
 struct sun_nfssvc_args {
 	syscallarg(int) fd;
 };

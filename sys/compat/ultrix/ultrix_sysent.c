@@ -114,7 +114,7 @@ int	socketpair();
 int	mkdir();
 int	rmdir();
 int	utimes();
-int	sigreturn();
+int	ultrix_sigcleanup();
 int	adjtime();
 int	compat_43_getpeername();
 int	compat_43_gethostid();
@@ -509,8 +509,8 @@ struct sysent ultrix_sysent[] = {
 	    rmdir },				/* 137 = rmdir */
 	{ 2, s(struct utimes_args),
 	    utimes },				/* 138 = utimes */
-	{ 1, s(struct sigreturn_args),
-	    sigreturn },			/* 139 = sigreturn */
+	{ 1, s(struct ultrix_sigcleanup_args),
+	    ultrix_sigcleanup },		/* 139 = ultrix_sigcleanup */
 	{ 2, s(struct adjtime_args),
 	    adjtime },				/* 140 = adjtime */
 	{ 3, s(struct compat_43_getpeername_args),
