@@ -1,4 +1,4 @@
-/*	$NetBSD: if_es.c,v 1.3 1995/04/11 05:58:58 mycroft Exp $	*/
+/*	$NetBSD: if_es.c,v 1.4 1995/04/14 17:29:50 chopps Exp $	*/
 
 /*
  * Copyright (c) 1995 Michael L. Hitch
@@ -191,6 +191,12 @@ esattach(parent, self, aux)
 	sc->sc_isr.isr_arg = sc;
 	sc->sc_isr.isr_ipl = 2;
 	add_isr(&sc->sc_isr);
+}
+
+void
+esstop(sc)
+	struct es_softc* sc;
+{
 }
 
 void
@@ -670,7 +676,6 @@ if (esdebug)
 		sc->sc_intctl |= MSK_TX_EMPTY | MSK_TX;
 	}
 	smc->b2.msk = sc->sc_intctl;
-	return 0;
 }
 
 int
