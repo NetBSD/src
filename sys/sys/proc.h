@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.60 1998/05/02 18:41:47 christos Exp $	*/
+/*	$NetBSD: proc.h,v 1.61 1998/08/02 04:41:32 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1989, 1991, 1993
@@ -302,6 +302,8 @@ LIST_HEAD(proclist, proc);
 extern struct proclist allproc;		/* List of all processes. */
 extern struct proclist zombproc;	/* List of zombie processes. */
 struct proc *initproc;			/* Process slots for init, pager. */
+
+extern struct pool proc_pool;		/* memory pool for procs */
 
 #define	NQS	32			/* 32 run queues. */
 int	whichqs;			/* Bit mask summary of non-empty Q's. */

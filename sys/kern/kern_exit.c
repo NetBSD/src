@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exit.c,v 1.52 1998/07/31 22:50:49 perry Exp $	*/
+/*	$NetBSD: kern_exit.c,v 1.53 1998/08/02 04:41:32 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -60,6 +60,7 @@
 #include <sys/vnode.h>
 #include <sys/syslog.h>
 #include <sys/malloc.h>
+#include <sys/pool.h>
 #include <sys/resourcevar.h>
 #include <sys/ptrace.h>
 #include <sys/acct.h>
@@ -381,7 +382,7 @@ loop:
 			 * release while still running in process context.
 			 */
 			cpu_wait(p);
-			FREE(p, M_PROC);
+			pool_put(&proc_pool, p);
 			nprocs--;
 			return (0);
 		}

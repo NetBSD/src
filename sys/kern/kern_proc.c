@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_proc.c,v 1.23 1998/03/01 02:22:29 fvdl Exp $	*/
+/*	$NetBSD: kern_proc.c,v 1.24 1998/08/02 04:41:32 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -47,6 +47,7 @@
 #include <ufs/ufs/quota.h>
 #include <sys/uio.h>
 #include <sys/malloc.h>
+#include <sys/pool.h>
 #include <sys/mbuf.h>
 #include <sys/ioctl.h>
 #include <sys/tty.h>
@@ -73,6 +74,7 @@ struct pgrphashhead *pgrphashtbl;
 u_long pgrphash;
 struct proclist allproc;
 struct proclist zombproc;
+struct pool proc_pool;
 
 static void orphanpg __P((struct pgrp *));
 #ifdef DEBUG
@@ -91,6 +93,8 @@ procinit()
 	pidhashtbl = hashinit(maxproc / 4, M_PROC, M_WAITOK, &pidhash);
 	pgrphashtbl = hashinit(maxproc / 4, M_PROC, M_WAITOK, &pgrphash);
 	uihashtbl = hashinit(maxproc / 16, M_PROC, M_WAITOK, &uihash);
+	pool_init(&proc_pool, sizeof(struct proc), 0, 0, 0, "procpl",
+	    0, NULL, NULL, M_PROC);
 }
 
 /*
