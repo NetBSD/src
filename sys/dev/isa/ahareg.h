@@ -210,6 +210,14 @@ struct aha_mailbox {
 	} cmd;
 };
 
+struct aha_unlock {
+	struct {
+		u_char	opcode;
+		u_char	junk;
+		u_char	magic;
+	} cmd;
+};
+
 struct aha_devices {
 	struct {
 		u_char	opcode;
