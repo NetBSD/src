@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vfsops.c,v 1.59 2000/03/16 18:20:06 jdolecek Exp $	*/
+/*	$NetBSD: ffs_vfsops.c,v 1.60 2000/03/30 02:48:22 simonb Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1994
@@ -79,8 +79,6 @@ int ffs_initcount = 0;
 
 extern struct lock ufs_hashlock;
 
-int ffs_sbupdate __P((struct ufsmount *, int));
-
 extern struct vnodeopv_desc ffs_vnodeop_opv_desc;
 extern struct vnodeopv_desc ffs_specop_opv_desc;
 extern struct vnodeopv_desc ffs_fifoop_opv_desc;
@@ -121,7 +119,6 @@ struct pool ffs_inode_pool;
 int
 ffs_mountroot()
 {
-	extern struct vnode *rootvp;
 	struct fs *fs;
 	struct mount *mp;
 	struct proc *p = curproc;	/* XXX */
@@ -519,7 +516,6 @@ ffs_mountfs(devvp, mp, p)
 #endif
 	int32_t *lp;
 	struct ucred *cred;
-	extern struct vnode *rootvp;
 	u_int64_t maxfilesize;					/* XXX */
 	u_int32_t sbsize;
 
