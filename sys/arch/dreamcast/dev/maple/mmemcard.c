@@ -1,4 +1,4 @@
-/*	$NetBSD: mmemcard.c,v 1.4 2004/10/28 07:07:36 yamt Exp $	*/
+/*	$NetBSD: mmemcard.c,v 1.5 2005/02/19 15:40:16 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mmemcard.c,v 1.4 2004/10/28 07:07:36 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mmemcard.c,v 1.5 2005/02/19 15:40:16 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -67,44 +67,44 @@ struct mmem_funcdef {	/* XXX assuming little-endian structure packing */
 };
 
 struct mmem_request_read_data {
-	u_int32_t	func_code;
-	u_int8_t	pt;
-	u_int8_t	phase;
-	u_int16_t	block;
+	uint32_t	func_code;
+	uint8_t		pt;
+	uint8_t		phase;
+	uint16_t	block;
 };
 
 struct mmem_response_read_data {
-	u_int32_t	func_code;	/* function code (big endian) */
-	u_int32_t	blkno;		/* 512byte block number (big endian) */
-	u_int8_t	data[MMEM_MAXACCSIZE];
+	uint32_t	func_code;	/* function code (big endian) */
+	uint32_t	blkno;		/* 512byte block number (big endian) */
+	uint8_t		data[MMEM_MAXACCSIZE];
 };
 
 struct mmem_request_write_data {
-	u_int32_t	func_code;
-	u_int8_t	pt;
-	u_int8_t	phase;		/* 0, 1, 2, 3: for each 128 byte */
-	u_int16_t	block;
-	u_int8_t	data[MMEM_MAXACCSIZE];
+	uint32_t	func_code;
+	uint8_t		pt;
+	uint8_t		phase;		/* 0, 1, 2, 3: for each 128 byte */
+	uint16_t	block;
+	uint8_t		data[MMEM_MAXACCSIZE];
 };
 #define MMEM_SIZE_REQW(sc)	((sc)->sc_waccsz + 8)
 
 struct mmem_request_get_media_info {
-	u_int32_t	func_code;
-	u_int32_t	pt;		/* pt (1 byte) and unused 3 bytes */
+	uint32_t	func_code;
+	uint32_t	pt;		/* pt (1 byte) and unused 3 bytes */
 };
 
 struct mmem_media_info {
-	u_int16_t	maxblk, minblk;
-	u_int16_t	infpos;
-	u_int16_t	fatpos, fatsz;
-	u_int16_t	dirpos, dirsz;
-	u_int16_t	icon;
-	u_int16_t	datasz;
-	u_int16_t	rsvd[3];
+	uint16_t	maxblk, minblk;
+	uint16_t	infpos;
+	uint16_t	fatpos, fatsz;
+	uint16_t	dirpos, dirsz;
+	uint16_t	icon;
+	uint16_t	datasz;
+	uint16_t	rsvd[3];
 };
 
 struct mmem_response_media_info {
-	u_int32_t	func_code;	/* function code (big endian) */
+	uint32_t	func_code;	/* function code (big endian) */
 	struct mmem_media_info info;
 };
 
@@ -174,17 +174,17 @@ struct mmem_softc {
 #define MMEM_DISKMINOR(unit, part, disklabel_partition) \
 	DISKMINOR(((unit) << 8) | (part), (disklabel_partition))
 
-static int	mmemmatch __P((struct device *, struct cfdata *, void *));
-static void	mmemattach __P((struct device *, struct device *, void *));
-static void	mmem_defaultlabel __P((struct mmem_softc *, struct mmem_pt *,
-		    struct disklabel *));
-static int	mmemdetach __P((struct device *, int));
-static void	mmem_intr __P((void *, struct maple_response *, int, int));
-static void	mmem_printerror __P((const char *, int, int, u_int32_t));
-static void	mmemstart __P((struct mmem_softc *));
-static void	mmemstart_bp __P((struct mmem_softc *));
-static void	mmemstart_write2 __P((struct mmem_softc *));
-static void	mmemdone __P((struct mmem_softc *, struct mmem_pt *, int));
+static int	mmemmatch(struct device *, struct cfdata *, void *);
+static void	mmemattach(struct device *, struct device *, void *);
+static void	mmem_defaultlabel(struct mmem_softc *, struct mmem_pt *,
+		    struct disklabel *);
+static int	mmemdetach(struct device *, int);
+static void	mmem_intr(void *, struct maple_response *, int, int);
+static void	mmem_printerror(const char *, int, int, uint32_t);
+static void	mmemstart(struct mmem_softc *);
+static void	mmemstart_bp(struct mmem_softc *);
+static void	mmemstart_write2(struct mmem_softc *);
+static void	mmemdone(struct mmem_softc *, struct mmem_pt *, int);
 
 dev_type_open(mmemopen);
 dev_type_close(mmemclose);
@@ -211,26 +211,21 @@ extern struct cfdriver mmem_cd;
 struct dkdriver mmemdkdriver = { mmemstrategy };
 
 static int
-mmemmatch(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+mmemmatch(struct device *parent, struct cfdata *cf, void *aux)
 {
 	struct maple_attach_args *ma = aux;
 
-	return (ma->ma_function == MAPLE_FN_MEMCARD ? MAPLE_MATCH_FUNC : 0);
+	return ma->ma_function == MAPLE_FN_MEMCARD ? MAPLE_MATCH_FUNC : 0;
 }
 
 static void
-mmemattach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+mmemattach(struct device *parent, struct device *self, void *aux)
 {
-	struct mmem_softc *sc = (void *) self;
+	struct mmem_softc *sc = (void *)self;
 	struct maple_attach_args *ma = aux;
 	int i;
 	union {
-		u_int32_t v;
+		uint32_t v;
 		struct mmem_funcdef s;
 	} funcdef;
 
@@ -304,16 +299,14 @@ mmemattach(parent, self, aux)
 	/*
 	 * get capacity (start from partition 0)
 	 */
-	sc->sc_reqm.func_code = htonl(MAPLE_FUNC(MAPLE_FN_MEMCARD));
+	sc->sc_reqm.func_code = htobe32(MAPLE_FUNC(MAPLE_FN_MEMCARD));
 	sc->sc_reqm.pt = 0;
 	maple_command(sc->sc_parent, sc->sc_unit, MAPLE_FN_MEMCARD,
 	    MAPLE_COMMAND_GETMINFO, sizeof sc->sc_reqm / 4, &sc->sc_reqm, 0);
 }
 
 static int
-mmemdetach(self, flags)
-	struct device *self;
-	int flags;
+mmemdetach(struct device *self, int flags)
 {
 	struct mmem_softc *sc = (struct mmem_softc *) self;
 	struct buf *bp;
@@ -370,13 +363,11 @@ mmemdetach(self, flags)
 
 /* fake disklabel */
 static void
-mmem_defaultlabel(sc, pt, d)
-	struct mmem_softc *sc;
-	struct mmem_pt *pt;
-	struct disklabel *d;
+mmem_defaultlabel(struct mmem_softc *sc, struct mmem_pt *pt,
+    struct disklabel *d)
 {
 
-	bzero(d, sizeof *d);
+	memset(d, 0, sizeof *d);
 
 #if 0
 	d->d_type = DTYPE_FLOPPY;		/* XXX? */
@@ -402,10 +393,7 @@ mmem_defaultlabel(sc, pt, d)
  * called back from maple bus driver
  */
 static void
-mmem_intr(dev, response, sz, flags)
-	void *dev;
-	struct maple_response *response;
-	int sz, flags;
+mmem_intr(void *dev, struct maple_response *response, int sz, int flags)
 {
 	struct mmem_softc *sc = dev;
 	struct mmem_response_read_data *r = (void *) response->data;
@@ -425,7 +413,7 @@ mmem_intr(dev, response, sz, flags)
 		case MAPLE_RESPONSE_DATATRF:
 			pt->pt_info = rm->info;
 			format_bytes(pbuf, sizeof(pbuf),
-			    (u_int64_t)
+			    (uint64_t)
 				((pt->pt_info.maxblk - pt->pt_info.minblk + 1)
 				 * sc->sc_bsize));
 			printf("%s: %s, blk %d %d, inf %d, fat %d %d, dir %d %d, icon %d, data %d\n",
@@ -450,7 +438,7 @@ mmem_intr(dev, response, sz, flags)
 			break;
 		default:
 			printf("%s: init: unexpected response %#x, sz %d\n",
-			    pt->pt_name, ntohl(response->response_code), sz);
+			    pt->pt_name, be32toh(response->response_code), sz);
 			break;
 		}
 		if (++part == sc->sc_npt) {
@@ -461,9 +449,9 @@ mmem_intr(dev, response, sz, flags)
 			 */
 			pt = &sc->sc_pt[0];
 			sc->sc_reqr.func_code =
-			    htonl(MAPLE_FUNC(MAPLE_FN_MEMCARD));
+			    htobe32(MAPLE_FUNC(MAPLE_FN_MEMCARD));
 			sc->sc_reqr.pt = 0;
-			sc->sc_reqr.block = htons(pt->pt_info.minblk);
+			sc->sc_reqr.block = htobe16(pt->pt_info.minblk);
 			sc->sc_reqr.phase = 0;
 			maple_command(sc->sc_parent, sc->sc_unit,
 			    MAPLE_FN_MEMCARD, MAPLE_COMMAND_BREAD,
@@ -491,7 +479,8 @@ mmem_intr(dev, response, sz, flags)
 		switch ((maple_response_t) response->response_code) {
 		case MAPLE_RESPONSE_DATATRF:		/* read done */
 			off = sc->sc_raccsz * sc->sc_reqr.phase;
-			bcopy(r->data + off, sc->sc_iobuf + off, sc->sc_raccsz);
+			memcpy(sc->sc_iobuf + off, r->data + off,
+			    sc->sc_raccsz);
 
 			if (++sc->sc_reqr.phase == sc->sc_racc) {
 				/* all phase done */
@@ -513,8 +502,8 @@ mmem_intr(dev, response, sz, flags)
 		default:
 			printf("%s: read: unexpected response %#x %#x, sz %d\n",
 			    sc->sc_pt[sc->sc_reqr.pt].pt_name,
-			    ntohl(response->response_code),
-			    ntohl(r->func_code), sz);
+			    be32toh(response->response_code),
+			    be32toh(r->func_code), sz);
 			mmemstart_bp(sc);		/* retry */
 			break;
 		}
@@ -526,7 +515,7 @@ mmem_intr(dev, response, sz, flags)
 		switch ((maple_response_t) response->response_code) {
 		case MAPLE_RESPONSE_DATATRF:		/* read done */
 			off = sc->sc_raccsz * sc->sc_reqr.phase;
-			if (bcmp(r->data + off, sc->sc_iobuf + off,
+			if (memcmp(r->data + off, sc->sc_iobuf + off,
 			    sc->sc_raccsz)) {
 				/*
 				 * data differ, start writing
@@ -554,8 +543,8 @@ mmem_intr(dev, response, sz, flags)
 		default:
 			printf("%s: verify: unexpected response %#x %#x, sz %d\n",
 			    sc->sc_pt[sc->sc_reqr.pt].pt_name,
-			    ntohl(response->response_code),
-			    ntohl(r->func_code), sz);
+			    be32toh(response->response_code),
+			    be32toh(r->func_code), sz);
 			mmemstart_write2(sc);	/* start writing */
 			break;
 		}
@@ -577,9 +566,9 @@ mmem_intr(dev, response, sz, flags)
 				    MAPLE_FLAG_CMD_PERIODIC_TIMING);
 			} else {
 				/* go next phase */
-				bcopy(sc->sc_iobuf
-					+ sc->sc_waccsz * sc->sc_reqw.phase,
-				    sc->sc_reqw.data, sc->sc_waccsz);
+				memcpy(sc->sc_reqw.data, sc->sc_iobuf +
+				    sc->sc_waccsz * sc->sc_reqw.phase,
+				    sc->sc_waccsz);
 				maple_command(sc->sc_parent, sc->sc_unit,
 				    MAPLE_FN_MEMCARD, MAPLE_COMMAND_BWRITE,
 				    MMEM_SIZE_REQW(sc) / 4, &sc->sc_reqw,
@@ -595,8 +584,8 @@ mmem_intr(dev, response, sz, flags)
 		default:
 			printf("%s: write: unexpected response %#x, %#x, sz %d\n",
 			    sc->sc_pt[sc->sc_reqw.pt].pt_name,
-			    ntohl(response->response_code),
-			    ntohl(r->func_code), sz);
+			    be32toh(response->response_code),
+			    be32toh(r->func_code), sz);
 			mmemstart_write2(sc);	/* retry writing */
 			break;
 		}
@@ -608,11 +597,7 @@ mmem_intr(dev, response, sz, flags)
 }
 
 static void
-mmem_printerror(head, rd, blk, code)
-	const char *head;
-	int rd;		/* 1: read, 0: write */
-	int blk;
-	u_int32_t code;
+mmem_printerror(const char *head, int rd, int blk, uint32_t code)
 {
 
 	printf("%s: error %sing blk %d:", head, rd? "read" : "writ", blk);
@@ -635,10 +620,7 @@ mmem_printerror(head, rd, blk, code)
 }
 
 int
-mmemopen(dev, flags, devtype, p)
-	dev_t dev;
-	int flags, devtype;
-	struct proc *p;
+mmemopen(dev_t dev, int flags, int devtype, struct proc *p)
 {
 	int diskunit, unit, part, labelpart;
 	struct mmem_softc *sc;
@@ -667,10 +649,7 @@ mmemopen(dev, flags, devtype, p)
 }
 
 int
-mmemclose(dev, flags, devtype, p)
-	dev_t dev;
-	int flags, devtype;
-	struct proc *p;
+mmemclose(dev_t dev, int flags, int devtype, struct proc *p)
 {
 	int diskunit, unit, part, labelpart;
 	struct mmem_softc *sc;
@@ -696,8 +675,7 @@ mmemclose(dev, flags, devtype, p)
 }
 
 void
-mmemstrategy(bp)
-	struct buf *bp;
+mmemstrategy(struct buf *bp)
 {
 	int diskunit, unit, part, labelpart;
 	struct mmem_softc *sc;
@@ -777,8 +755,7 @@ done:	bp->b_resid = bp->b_bcount;
  * start I/O operations
  */
 static void
-mmemstart(sc)
-	struct mmem_softc *sc;
+mmemstart(struct mmem_softc *sc)
 {
 	struct buf *bp;
 	struct mmem_pt *pt;
@@ -816,8 +793,7 @@ mmemstart(sc)
  * start/retry a specified I/O operation
  */
 static void
-mmemstart_bp(sc)
-	struct mmem_softc *sc;
+mmemstart_bp(struct mmem_softc *sc)
 {
 	struct buf *bp;
 	int diskunit, part;
@@ -840,17 +816,16 @@ mmemstart_bp(sc)
 	 */
 	/* start read */
 	sc->sc_stat = (bp->b_flags & B_READ) ? MMEM_READ : MMEM_WRITE1;
-	sc->sc_reqr.func_code = htonl(MAPLE_FUNC(MAPLE_FN_MEMCARD));
+	sc->sc_reqr.func_code = htobe32(MAPLE_FUNC(MAPLE_FN_MEMCARD));
 	sc->sc_reqr.pt = part;
-	sc->sc_reqr.block = htons(bp->b_rawblkno);
+	sc->sc_reqr.block = htobe16(bp->b_rawblkno);
 	sc->sc_reqr.phase = 0;		/* first phase */
 	maple_command(sc->sc_parent, sc->sc_unit, MAPLE_FN_MEMCARD,
 	    MAPLE_COMMAND_BREAD, sizeof sc->sc_reqr / 4, &sc->sc_reqr, 0);
 }
 
 static void
-mmemstart_write2(sc)
-	struct mmem_softc *sc;
+mmemstart_write2(struct mmem_softc *sc)
 {
 	struct buf *bp;
 	int diskunit, part;
@@ -873,22 +848,19 @@ mmemstart_write2(sc)
 	 */
 	/* start write */
 	sc->sc_stat = MMEM_WRITE2;
-	sc->sc_reqw.func_code = htonl(MAPLE_FUNC(MAPLE_FN_MEMCARD));
+	sc->sc_reqw.func_code = htobe32(MAPLE_FUNC(MAPLE_FN_MEMCARD));
 	sc->sc_reqw.pt = part;
-	sc->sc_reqw.block = htons(bp->b_rawblkno);
+	sc->sc_reqw.block = htobe16(bp->b_rawblkno);
 	sc->sc_reqw.phase = 0;		/* first phase */
-	bcopy(sc->sc_iobuf /* + sc->sc_waccsz * phase */,
-	    sc->sc_reqw.data, sc->sc_waccsz);
+	memcpy(sc->sc_reqw.data, sc->sc_iobuf /* + sc->sc_waccsz * phase */,
+	    sc->sc_waccsz);
 	maple_command(sc->sc_parent, sc->sc_unit, MAPLE_FN_MEMCARD,
 	    MAPLE_COMMAND_BWRITE, MMEM_SIZE_REQW(sc) / 4, &sc->sc_reqw,
 	    MAPLE_FLAG_CMD_PERIODIC_TIMING);
 }
 
 static void
-mmemdone(sc, pt, err)
-	struct mmem_softc *sc;
-	struct mmem_pt *pt;
-	int err;
+mmemdone(struct mmem_softc *sc, struct mmem_pt *pt, int err)
 {
 	struct buf *bp = sc->sc_bp;
 	int s;
@@ -930,32 +902,21 @@ mmemdone(sc, pt, err)
 }
 
 int
-mmemread(dev, uio, flags)
-	dev_t	dev;
-	struct	uio *uio;
-	int	flags;
+mmemread(dev_t dev, struct uio *uio, int flags)
 {
 
-	return (physio(mmemstrategy, NULL, dev, B_READ, minphys, uio));
+	return physio(mmemstrategy, NULL, dev, B_READ, minphys, uio);
 }
 
 int
-mmemwrite(dev, uio, flags)
-	dev_t	dev;
-	struct	uio *uio;
-	int	flags;
+mmemwrite(dev_t dev, struct uio *uio, int flags)
 {
 
-	return (physio(mmemstrategy, NULL, dev, B_WRITE, minphys, uio));
+	return physio(mmemstrategy, NULL, dev, B_WRITE, minphys, uio);
 }
 
 int
-mmemioctl(dev, cmd, data, flag, p)
-	dev_t dev;
-	u_long cmd;
-	caddr_t data;
-	int flag;
-	struct proc *p;
+mmemioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 {
 	int diskunit, unit, part;
 	struct mmem_softc *sc;
