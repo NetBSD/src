@@ -1,4 +1,4 @@
-/*	$NetBSD: rnd_pos.c,v 1.3 1995/04/22 10:09:07 cgd Exp $	*/
+/*	$NetBSD: rnd_pos.c,v 1.4 1997/10/12 14:10:02 lukem Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -33,11 +33,12 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)rnd_pos.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$NetBSD: rnd_pos.c,v 1.3 1995/04/22 10:09:07 cgd Exp $";
+__RCSID("$NetBSD: rnd_pos.c,v 1.4 1997/10/12 14:10:02 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -54,7 +55,6 @@ rnd_pos()
 {
 	static COORD	pos;
 	static int	call = 0;
-	register int	i = 0;
 
 	do {
 		pos.y = rnd(Y_FIELDSIZE - 1) + 1;
@@ -65,10 +65,10 @@ rnd_pos()
 	return &pos;
 }
 
+int
 rnd(range)
-int	range;
+	int	range;
 {
-	unsigned int	rand();
 
 	return rand() % range;
 }

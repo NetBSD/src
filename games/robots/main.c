@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.5 1995/04/22 10:08:54 cgd Exp $	*/
+/*	$NetBSD: main.c,v 1.6 1997/10/12 14:09:58 lukem Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -33,34 +33,34 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
-static char copyright[] =
-"@(#) Copyright (c) 1980, 1993\n\
-	The Regents of the University of California.  All rights reserved.\n";
+__COPYRIGHT("@(#) Copyright (c) 1980, 1993\n\
+	The Regents of the University of California.  All rights reserved.\n");
 #endif /* not lint */
 
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$NetBSD: main.c,v 1.5 1995/04/22 10:08:54 cgd Exp $";
+__RCSID("$NetBSD: main.c,v 1.6 1997/10/12 14:09:58 lukem Exp $");
 #endif
 #endif /* not lint */
 
 # include	"robots.h"
-# include	<signal.h>
-# include	<ctype.h>
 
+int main __P((int, char **));
+
+int
 main(ac, av)
-int	ac;
-char	**av;
+	int	ac;
+	char	**av;
 {
-	register char	*sp;
-	register bool	bad_arg;
-	register bool	show_only;
+	char	*sp;
+	bool	bad_arg;
+	bool	show_only;
 	extern char	*Scorefile;
 	extern int	Max_per_uid;
-	void quit();
 
 	show_only = FALSE;
 	if (ac > 1) {
@@ -150,7 +150,9 @@ char	**av;
 		refresh();
 		score();
 	} while (another());
-	quit();
+	quit(0);
+	/* NOTREACHED */
+	return(0);
 }
 
 void
@@ -165,7 +167,8 @@ __cputchar(ch)
  *	Leave the program elegantly.
  */
 void
-quit()
+quit(dummy)
+	int dummy;
 {
 	endwin();
 	exit(0);
@@ -176,9 +179,10 @@ quit()
  * another:
  *	See if another game is desired
  */
+bool
 another()
 {
-	register int	y;
+	int	y;
 
 #ifdef	FANCY
 	if ((Stand_still || Pattern_roll) && !Newscore)

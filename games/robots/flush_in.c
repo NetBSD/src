@@ -1,4 +1,4 @@
-/*	$NetBSD: flush_in.c,v 1.4 1995/04/28 23:09:08 mycroft Exp $	*/
+/*	$NetBSD: flush_in.c,v 1.5 1997/10/12 14:09:56 lukem Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -33,21 +33,22 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)flush_in.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$NetBSD: flush_in.c,v 1.4 1995/04/28 23:09:08 mycroft Exp $";
+__RCSID("$NetBSD: flush_in.c,v 1.5 1997/10/12 14:09:56 lukem Exp $");
 #endif
 #endif /* not lint */
 
-# include	<stdio.h>
-# include	<termios.h>
+# include	"robots.h"
 
 /*
  * flush_in:
  *	Flush all pending input.
  */
+void
 flush_in()
 {
 	tcflush(fileno(stdin), TCIFLUSH);
