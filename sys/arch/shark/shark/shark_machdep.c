@@ -1,4 +1,4 @@
-/*	$NetBSD: shark_machdep.c,v 1.12 2003/04/02 04:27:21 thorpej Exp $	*/
+/*	$NetBSD: shark_machdep.c,v 1.13 2003/04/26 11:05:20 ragge Exp $	*/
 
 /*
  * Copyright 1997
@@ -47,6 +47,7 @@
 #include <sys/kernel.h>
 #include <sys/buf.h>
 #include <sys/exec.h>
+#include <sys/ksyms.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -87,6 +88,8 @@
 #include <dev/scsipi/scsipi_all.h>
 #include <dev/scsipi/scsipiconf.h>
 #endif
+
+#include "ksyms.h"
 
 /*
  *  Imported variables
@@ -289,20 +292,20 @@ initarm(ofw_handle)
 	if (fiq_claim(&shark_fiqhandler))
 		panic("Cannot claim FIQ vector.");
 
-#ifdef DDB
-	db_machine_init();
-#ifdef __ELF__
-	ddb_init(0, NULL, NULL);	/* XXX */
+#if NKSYMS || defined(DDB) || defined(LKM)
+	ksyms_init(0, NULL, NULL);	/* XXX */
 #else
 	{
 		struct exec *kernexec = (struct exec *)KERNEL_TEXT_BASE;
 		extern int end;
 		extern char *esym;
 
-		ddb_init(kernexec->a_syms, &end, esym);
+		ksyms_init(kernexec->a_syms, &end, esym);
 	}
 #endif /* __ELF__ */
 
+#ifdef DDB
+	db_machine_init();
 	if (boothowto & RB_KDB)
 		Debugger();
 #endif

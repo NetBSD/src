@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.75 2003/04/01 22:37:26 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.76 2003/04/26 11:05:07 ragge Exp $	*/
 /*	$OpenBSD: machdep.c,v 1.36 1999/05/22 21:22:19 weingart Exp $	*/
 
 /*
@@ -72,6 +72,7 @@
 #include <sys/sa.h>
 #include <sys/syscallargs.h>
 #include <sys/kcore.h>
+#include <sys/ksyms.h>
 #ifdef MFS
 #include <ufs/mfs/mfs_extern.h>
 #endif
@@ -102,6 +103,8 @@
 
 #include <arc/arc/arcbios.h>
 #include <arc/arc/wired_map.h>
+
+#include "ksyms.h"
 
 #include "com.h"
 #if NCOM > 0
@@ -341,14 +344,14 @@ mach_init(argc, argv, envv)
 		kernend += round_page(mfs_initminiroot(kernend));
 #endif
 
-#ifdef DDB
+#if NKSYMS || defined(DDB) || defined(LKM)
 #if 0 /* XXX */
 	/* init symbols if present */
 	if (esym)
-		ddb_init(1000, &end, (int*)esym);
+		ksyms_init(1000, &end, (int*)esym);
 #else
 #ifdef SYMTAB_SPACE
-	ddb_init(0, NULL, NULL);
+	ksyms_init(0, NULL, NULL);
 #endif
 #endif
 #endif

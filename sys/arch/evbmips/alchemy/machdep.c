@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.7 2003/04/02 03:51:33 thorpej Exp $ */
+/* $NetBSD: machdep.c,v 1.8 2003/04/26 11:05:11 ragge Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.7 2003/04/02 03:51:33 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.8 2003/04/26 11:05:11 ragge Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -61,6 +61,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.7 2003/04/02 03:51:33 thorpej Exp $");
 #include <sys/kcore.h>
 #include <sys/boot_flag.h>
 #include <sys/termios.h>
+#include <sys/ksyms.h>
 
 #include <net/if.h>
 #include <net/if_ether.h>
@@ -69,7 +70,9 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.7 2003/04/02 03:51:33 thorpej Exp $");
 
 #include <dev/cons.h>
 
-#ifdef DDB
+#include "ksyms.h"
+
+#if NKSYMS || defined(DDB) || defined(LKM)
 #include <machine/db_machdep.h>
 #include <ddb/db_extern.h>
 #endif
@@ -313,8 +316,10 @@ mach_init(int argc, char **argv, yamon_env_var *envp, u_long memsize)
 	/*
 	 * Initialize debuggers, and break into them, if appropriate.
 	 */
+#if NKSYMS || defined(DDB) || defined(LKM)
+	ksyms_init(0, 0, 0);
+#endif
 #ifdef DDB
-	ddb_init(0, 0, 0);
 	if (boothowto & RB_KDB)
 		Debugger();
 #endif
