@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vr.c,v 1.72 2005/01/25 17:02:09 jmmv Exp $	*/
+/*	$NetBSD: if_vr.c,v 1.73 2005/01/27 11:58:01 scw Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -104,7 +104,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vr.c,v 1.72 2005/01/25 17:02:09 jmmv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vr.c,v 1.73 2005/01/27 11:58:01 scw Exp $");
 
 #include "rnd.h"
 
@@ -1029,6 +1029,7 @@ vr_start(struct ifnet *ifp)
 			error = bus_dmamap_load_mbuf(sc->vr_dmat,
 			    ds->ds_dmamap, m, BUS_DMA_WRITE|BUS_DMA_NOWAIT);
 			if (error) {
+				m_freem(m);
 				printf("%s: unable to load Tx buffer, "
 				    "error = %d\n", sc->vr_dev.dv_xname, error);
 				break;
