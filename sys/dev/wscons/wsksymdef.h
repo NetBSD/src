@@ -1,4 +1,4 @@
-/*	$NetBSD: wsksymdef.h,v 1.4 1998/04/16 13:29:41 drochner Exp $ */
+/*	$NetBSD: wsksymdef.h,v 1.5 1998/04/18 10:57:13 drochner Exp $ */
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -431,6 +431,7 @@
 #define KB_USER			0x0100
 #define KB_US			0x0200
 #define KB_DE			0x0300
+#define KB_DK			0x0400
 
 #define KB_NODEAD		0x0001
 
@@ -438,6 +439,7 @@
 	{ KB_USER,	"user" }, \
 	{ KB_US,	"us" }, \
 	{ KB_DE,	"de" }, \
+	{ KB_DK,	"dk" }, \
 	{ KB_NODEAD,	"nodead" }
 
 #endif /* !_DEV_WSCONS_WSKSYMDEF_H_ */
