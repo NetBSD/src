@@ -1,18 +1,21 @@
-#	$NetBSD: Makefile,v 1.3 1995/09/30 21:43:40 pk Exp $
+#	$NetBSD: Makefile,v 1.4 1995/10/09 23:25:57 pk Exp $
 
 R=	..
 .PATH:	${.CURDIR}/${R}
 PROG=	bootxx
 SRCS=	srt0.S bootxx.c promdev.c dvma.c
+KOBJS=	__main.o bzero.o rem.o urem.o udiv.o
 NOMAN=	1
 STRIP=
 BINDIR=	/usr/mdec
-LIBS!=	cd ${.CURDIR}/${R}; ${MAKE} libdep
-
 CFLAGS= -DBOOTXX
 
-${PROG}:${OBJS} ${LIBS}
-	${LD} -N -T ${RELOC} -e start ${OBJS} ${LIBS}
+LIBS!=	cd ${.CURDIR}/${R}; ${MAKE} sadep
+KOBJDIR!= cd ${.CURDIR}/${R}; ${MAKE} kernlibdir
+_KOBJS=${KOBJS:S,^,${KOBJDIR}/,g}
+
+${PROG}:${OBJS} ${_KOBJS} ${LIBS}
+	${LD} -N -T ${RELOC} -e start ${OBJS} ${_KOBJS} ${LIBS}
 	# convert to Sun magic
 	(echo -n 01 | tr 01 '\01\03'; tail +3c a.out) > ${.TARGET}
 	@rm a.out

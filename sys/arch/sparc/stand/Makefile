@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.9 1995/10/05 21:03:12 pk Exp $
+#	$NetBSD: Makefile,v 1.10 1995/10/09 23:25:54 pk Exp $
 
 SUBDIR= boot bootxx installboot
 
@@ -13,6 +13,15 @@ all: ${SALIB} ${KERNLIB} _SUBDIRUSE
 
 libdep:
 	@echo  ${.OBJDIR}/${SALIB} ${.OBJDIR}/${KERNLIB}
+
+sadep:
+	@echo  ${.OBJDIR}/${SALIB}
+
+kernlibdir:
+	@echo  ${.OBJDIR}/${KERNDST}
+
+salibdir:
+	@echo  ${.OBJDIR}/${SADST}
 
 clean:: _SUBDIRUSE
 
