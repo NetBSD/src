@@ -1,4 +1,4 @@
-/* $NetBSD: bootxx.c,v 1.7 2000/05/21 09:44:16 ragge Exp $ */
+/* $NetBSD: bootxx.c,v 1.8 2000/05/23 23:34:21 matt Exp $ */
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
  * All rights reserved.
@@ -90,7 +90,6 @@ void
 Xmain()
 {
 	int io;
-	char *hej = "/boot";
 
 	vax_cputype = (mfpr(PR_SID) >> 24) & 0xFF;
 
@@ -120,7 +119,11 @@ Xmain()
 	rpb->rpb_base = rpb;
 	rpb->iovec = (int)bqo;
 
-	io = open(hej, 0);
+	io = open("/boot.vax", 0);
+	if (io < 0)
+		io = open("/boot", 0);
+	if (io < 0)
+		asm("halt");
 
 	read(io, (void *)0x10000, 0x10000);
 	bcopy((void *) 0x10000, 0, 0xffff);
