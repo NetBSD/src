@@ -1,4 +1,4 @@
-/*	$NetBSD: if_xennet.c,v 1.15 2005/03/18 11:15:40 cube Exp $	*/
+/*	$NetBSD: if_xennet.c,v 1.16 2005/03/26 21:22:45 bouyer Exp $	*/
 
 /*
  *
@@ -33,7 +33,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_xennet.c,v 1.15 2005/03/18 11:15:40 cube Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_xennet.c,v 1.16 2005/03/26 21:22:45 bouyer Exp $");
 
 #include "opt_inet.h"
 #include "rnd.h"
@@ -824,7 +824,7 @@ network_tx_buf_gc(struct xennet_softc *sc)
 		 */
 		sc->sc_tx->event = /* atomic */
 			prod + (sc->sc_tx_entries >> 1) + 1;
-		__insn_barrier();
+		x86_lfence();
 	} while (prod != sc->sc_tx->resp_prod);
 
 	if (sc->sc_tx->resp_prod == sc->sc_tx->req_prod)
@@ -1060,11 +1060,12 @@ xennet_start(struct ifnet *ifp)
 		txreq->addr = xpmap_ptom(pa);
 		txreq->size = m->m_pkthdr.len;
 
-		__insn_barrier();
+		x86_lfence();
 		idx++;
 		sc->sc_tx->req_prod = idx;
 
 		sc->sc_tx_entries++; /* XXX atomic */
+		x86_lfence();
 
 #ifdef XENNET_DEBUG
 		DPRINTFN(XEDB_MEM, ("packet addr %p/%p, physical %p/%p, "
@@ -1087,7 +1088,7 @@ xennet_start(struct ifnet *ifp)
 
 	network_tx_buf_gc(sc);
 
-	__insn_barrier();
+	x86_lfence();
 	if (sc->sc_tx->resp_prod != idx)
 		hypervisor_notify_via_evtchn(sc->sc_evtchn);
 

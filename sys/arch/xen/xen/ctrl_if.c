@@ -1,4 +1,4 @@
-/*	$NetBSD: ctrl_if.c,v 1.3 2005/03/17 15:31:17 bouyer Exp $	*/
+/*	$NetBSD: ctrl_if.c,v 1.4 2005/03/26 21:22:45 bouyer Exp $	*/
 
 /******************************************************************************
  * ctrl_if.c
@@ -9,7 +9,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ctrl_if.c,v 1.3 2005/03/17 15:31:17 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ctrl_if.c,v 1.4 2005/03/26 21:22:45 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -101,7 +101,7 @@ static void __ctrl_if_tx_tasklet(unsigned long data)
     CONTROL_RING_IDX rp;
 
     rp = ctrl_if->tx_resp_prod;
-    __insn_barrier(); /* Ensure we see all requests up to 'rp'. */
+    x86_lfence(); /* Ensure we see all requests up to 'rp'. */
 
     while ( ctrl_if_tx_resp_cons != rp )
     {
@@ -163,7 +163,7 @@ static void __ctrl_if_rx_tasklet(unsigned long data)
 
     dp = ctrl_if_rxmsg_deferred_prod;
     rp = ctrl_if->rx_req_prod;
-    __insn_barrier(); /* Ensure we see all requests up to 'rp'. */
+    x86_lfence(); /* Ensure we see all requests up to 'rp'. */
 
     while ( ctrl_if_rx_req_cons != rp )
     {
@@ -253,7 +253,7 @@ ctrl_if_send_message_noblock(
 
     memcpy(&ctrl_if->tx_ring[MASK_CONTROL_IDX(ctrl_if->tx_req_prod)], 
            msg, sizeof(*msg));
-    __insn_barrier(); /* Write the message before letting the controller peek at it. */
+    x86_lfence(); /* Write the message before letting the controller peek at it. */
     ctrl_if->tx_req_prod++;
 
     simple_unlock(&ctrl_if_lock);
@@ -300,7 +300,7 @@ static void __ctrl_if_get_response(ctrl_msg_t *msg, unsigned long id)
     struct rsp_wait    *wait = (struct rsp_wait *)id;
 
     memcpy(wait->msg, msg, sizeof(*msg));
-    __insn_barrier();
+    x86_lfence();
     wait->done = 1;
 
     wakeup(wait);
@@ -351,7 +351,7 @@ ctrl_if_enqueue_space_callback(
      * the task is not executed despite the ring being non-full then we will
      * certainly return 'not full'.
      */
-    __insn_barrier();
+    x86_lfence();
     return TX_FULL(ctrl_if);
 }
 #endif
@@ -379,7 +379,7 @@ ctrl_if_send_response(
     if ( dmsg != msg )
         memcpy(dmsg, msg, sizeof(*msg));
 
-    __insn_barrier(); /* Write the message before letting the controller peek at it. */
+    x86_lfence(); /* Write the message before letting the controller peek at it. */
     ctrl_if->rx_resp_prod++;
 
     simple_unlock(&ctrl_if_lock);
