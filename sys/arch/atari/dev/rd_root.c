@@ -1,4 +1,4 @@
-/*	$NetBSD: rd_root.c,v 1.2 1996/03/27 10:13:09 leo Exp $	*/
+/*	$NetBSD: rd_root.c,v 1.3 1996/04/18 08:52:09 leo Exp $	*/
 
 /*
  * Copyright (c) 1996 Leo Weppelman.
@@ -91,8 +91,11 @@ struct read_info {
 
 static int  loaddisk __P((struct  rd_conf *, dev_t ld_dev, struct proc *));
 static int  ramd_norm_read __P((struct read_info *));
+
+#ifdef support_compression
 static int  cpy_uncompressed __P((caddr_t, int, struct read_info *));
 static int  rd_compressed __P((caddr_t, int, struct read_info *));
+#endif
 
 /*
  * This is called during autoconfig.
@@ -177,7 +180,7 @@ struct proc		*proc;
 	/*
 	 * Open device and try to get some statistics.
 	 */
-	if(error = bdp->d_open(ld_dev, FREAD | FNONBLOCK, 0, proc))
+	if((error = bdp->d_open(ld_dev, FREAD | FNONBLOCK, 0, proc)) != 0)
 		return(error);
 	if(bdp->d_ioctl(ld_dev, DIOCGDINFO, (caddr_t)&dl, FREAD, proc) == 0) {
 		/* Read on a cylinder basis */

@@ -1,4 +1,4 @@
-/*	$NetBSD: atari5380.c,v 1.11 1996/04/12 09:05:31 leo Exp $	*/
+/*	$NetBSD: atari5380.c,v 1.12 1996/04/18 08:51:50 leo Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -880,7 +880,7 @@ machine_match(struct device *pdp, void *match, void *auxp,
 static u_char *
 alloc_bounceb(u_long len)
 {
-	u_long	tmp;
+	void	*tmp;
 
 	return((u_char *)alloc_stmem(len, &tmp));
 }
@@ -900,7 +900,8 @@ scsi_ctrl(int sr)
 	if (GET_5380_REG(NCR5380_DMSTAT) & SC_IRQ_SET) {
 		scsi_idisable();
 		if (!BASEPRI(sr))
-			add_sicallback(ncr_ctrl_intr, cur_softc, 0);
+			add_sicallback((si_farg)ncr_ctrl_intr,
+						(void *)cur_softc, 0);
 		else {
 			spl1();
 			ncr_ctrl_intr(cur_softc);
@@ -919,7 +920,8 @@ scsi_dma(int sr)
 	if ((reqp = connected) && (reqp->dr_flag & DRIVER_IN_DMA)) {
 		scsi_idisable();
 		if (!BASEPRI(sr))
-			add_sicallback(ncr_dma_intr, cur_softc, 0);
+			add_sicallback((si_farg)ncr_dma_intr,
+					(void *)cur_softc, 0);
 		else {
 			spl1();
 			ncr_dma_intr(cur_softc);

@@ -1,4 +1,4 @@
-/*	$NetBSD: ite.c,v 1.11 1996/03/20 12:41:50 leo Exp $	*/
+/*	$NetBSD: ite.c,v 1.12 1996/04/18 08:51:59 leo Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -59,8 +59,12 @@
 #include <sys/proc.h>
 #include <dev/cons.h>
 
+#include <machine/cpu.h>
+
 #include <atari/atari/kdassert.h>
+#include <atari/dev/event_var.h>
 #include <atari/dev/kbdmap.h>
+#include <atari/dev/kbdvar.h>
 #include <atari/dev/iteioctl.h>
 #include <atari/dev/itevar.h>
 #include <atari/dev/grfioctl.h>
@@ -124,17 +128,6 @@ void iteputchar __P((int c, struct ite_softc *ip));
 void ite_putstr __P((const u_char * s, int len, dev_t dev));
 void iteattach __P((struct device *, struct device *, void *));
 int  itematch __P((struct device *, void *, void *));
-
-/*
- * Standard character device functions.
- */
-dev_type_open(iteopen);
-dev_type_close(iteclose);
-dev_type_read(iteread);
-dev_type_write(itewrite);
-dev_type_ioctl(iteioctl);
-dev_type_tty(itetty);
-dev_type_stop(itestop);
 
 /*
  * Console specific types.
@@ -679,7 +672,7 @@ int	unit;
 	/*
 	 * Now make it visible
 	 */
-	viewioctl(ip->grf->g_viewdev, VIOCDISPLAY, NULL, 0, -1);
+	viewioctl(ip->grf->g_viewdev, VIOCDISPLAY, NULL, 0, NOPROC);
 }
 
 /* XXX called after changes made in underlying grf layer. */
@@ -861,7 +854,7 @@ enum caller	caller;
 /* And now the old stuff. */
 
 /* these are used to implement repeating keys.. */
-static u_char last_char;
+static u_int last_char;
 static u_char tout_pending;
 
 /*ARGSUSED*/
@@ -871,7 +864,8 @@ void *arg;
 {
 	tout_pending = 0;
 	if(last_char) 
-		add_sicallback(ite_filter, last_char, ITEFILT_REPEATER);
+		add_sicallback((si_farg)ite_filter, (void *)last_char,
+						    (void *)ITEFILT_REPEATER);
 }
 
 void
@@ -905,7 +899,7 @@ enum caller	caller;
 	 * to not allow a key-up event to get thru before a repeat for
 	 * the key-down, we remove any outstanding callout requests..
 	 */
-	rem_sicallback(ite_filter);
+	rem_sicallback((si_farg)ite_filter);
 
 
 	/*
@@ -1037,7 +1031,7 @@ enum caller	caller;
 	/* handle dead keys */
 	if (key.mode & KBD_MODE_DEAD) {
 		/* if entered twice, send accent itself */
-		if (last_dead == key.mode & KBD_MODE_ACCMASK)
+		if (last_dead == (key.mode & KBD_MODE_ACCMASK))
 			last_dead = 0;
 		else {
 			last_dead = key.mode & KBD_MODE_ACCMASK;
