@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le.c,v 1.19.6.1 1999/01/31 14:12:30 scw Exp $	*/
+/*	$NetBSD: if_le.c,v 1.19.6.2 1999/01/31 14:27:29 scw Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -110,6 +110,9 @@
 #include <mvme68k/dev/if_lereg.h>
 #include <mvme68k/dev/if_levar.h>
 
+#include <mvme68k/mvme68k/machdep.h>
+
+
 int 	le_pcc_match __P((struct device *, struct cfdata  *, void *));
 void	le_pcc_attach __P((struct device *, struct device *, void *));
 
@@ -133,9 +136,6 @@ extern struct cfdriver le_cd;
 
 hide void le_pcc_wrcsr __P((struct lance_softc *, u_int16_t, u_int16_t));
 hide u_int16_t le_pcc_rdcsr __P((struct lance_softc *, u_int16_t));
-
-extern void	*ether_data_buff;
-extern u_long	ether_data_buff_size;
 
 hide void
 le_pcc_wrcsr(sc, port, val)
@@ -184,9 +184,6 @@ le_pcc_attach(parent, self, aux)
 	struct le_softc *lesc = (void *)self;
 	struct lance_softc *sc = &lesc->sc_am7990.lsc;
 	struct pcc_attach_args *pa = aux;
-
-	/* XXX the following declarations should be elsewhere */
-	extern void myetheraddr __P((u_char *));
 
 	/* Map control registers. */
 	lesc->sc_r1 = (struct lereg1 *)PCC_VADDR(pa->pa_offset);

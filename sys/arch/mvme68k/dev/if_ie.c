@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ie.c,v 1.1.2.2 1999/01/31 14:12:30 scw Exp $ */
+/*	$NetBSD: if_ie.c,v 1.1.2.3 1999/01/31 14:27:28 scw Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -60,6 +60,8 @@
 #include <mvme68k/dev/pccvar.h>
 #include <mvme68k/dev/pcctworeg.h>
 
+#include <mvme68k/mvme68k/machdep.h>
+
 
 #ifdef IE_DEBUG
 #define DPRINTF(x)	printf x
@@ -92,10 +94,6 @@ struct cfattach ie_pcctwo_ca = {
 };
 
 extern struct cfdriver ie_cd;
-
-extern void	*ether_data_buff;
-extern u_long	ether_data_buff_len;
-
 
 /*
  * i82596 Support Routines for MVME1[67]7 Boards
@@ -179,6 +177,8 @@ ie_pcctwo_attach(parent, self, args)
 	struct ie_softc *sc = &isc->sc_ie;
 	struct pcc_attach_args *pa = args;
 	u_int8_t ethaddr[ETHER_ADDR_LEN];
+
+	myetheraddr(ethaddr);
 
 	i82586_attach(sc, "hello", ethaddr, NULL, 0, 0);
 }
