@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.82 1997/04/07 00:04:16 kleink Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.83 1997/04/09 23:26:06 kleink Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -1124,7 +1124,6 @@ sys_lseek(p, v, retval)
 	register struct filedesc *fdp = p->p_fd;
 	register struct file *fp;
 	struct vattr vattr;
-	register off_t newoff;
 	int error;
 
 	if ((u_int)SCARG(uap, fd) >= fdp->fd_nfiles ||
@@ -1138,25 +1137,22 @@ sys_lseek(p, v, retval)
 		return (ESPIPE);
 	switch (SCARG(uap, whence)) {
 	case L_INCR:
-		newoff = fp->f_offset + SCARG(uap, offset);
+		fp->f_offset += SCARG(uap, offset);
 		break;
 	case L_XTND:
 		error = VOP_GETATTR((struct vnode *)fp->f_data, &vattr,
 				    cred, p);
 		if (error)
 			return (error);
-		newoff = SCARG(uap, offset) + vattr.va_size;
+		fp->f_offset = SCARG(uap, offset) + vattr.va_size;
 		break;
 	case L_SET:
-		newoff = SCARG(uap, offset);
+		fp->f_offset = SCARG(uap, offset);
 		break;
 	default:
 		return (EINVAL);
 	}
-	if (newoff < 0)
-		return (EINVAL);
-
-	*(off_t *)retval = fp->f_offset = newoff;
+	*(off_t *)retval = fp->f_offset;
 	return (0);
 }
 
