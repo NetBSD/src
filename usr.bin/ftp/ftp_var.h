@@ -1,4 +1,4 @@
-/*	$NetBSD: ftp_var.h,v 1.24 1998/06/04 08:28:36 lukem Exp $	*/
+/*	$NetBSD: ftp_var.h,v 1.25 1998/07/10 04:39:04 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1985, 1989, 1993, 1994
@@ -156,6 +156,13 @@ int     cpend;                  /* flag: if != 0, then pending server reply */
 int	mflag;			/* flag: if != 0, then active multi command */
 
 int	options;		/* used during socket creation */
+
+int	sndbuf_size;		/* socket send buffer size */
+int	sndbuf_manual;		/* sndbuf_size was set manually; override
+				   conf file */
+int	rcvbuf_size;		/* socket receive buffer size */
+int	rcvbuf_manual;		/* rcvbuf_size was set manually; override
+				   conf file */
 
 /*
  * Format of command table.
