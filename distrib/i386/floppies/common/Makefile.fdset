@@ -1,8 +1,14 @@
-#	$NetBSD: Makefile.fdset,v 1.4 2002/04/10 21:12:15 mycroft Exp $
+#	$NetBSD: Makefile.fdset,v 1.5 2002/04/11 12:17:15 lukem Exp $
 
-# TOP is assumed to be defined by Makefile including this one.
+.include <bsd.own.mk>
+.include "${_SRC_TOP_}/distrib/Makefile.inc"
 
-BASENAME?=	boot
+# needs the following set:
+#	BASENAME	basename of floppy
+#	KERNELDIR	where kernel is grabbed from
+#	KERNEL		kernel name
+
+
 IMAGE1?=	${BASENAME}1.fs
 FSTMP=		ustar.tmp
 MDEC=		${DESTDIR}/usr/mdec
@@ -11,9 +17,11 @@ BOOTCODE?=	${MDEC}/biosboot.sym
 
 DISKSIZE?=	2880
 
-CLEANFILES+=	netbsd boot ustar.tmp
+CLEANFILES+=	netbsd boot ustar.tmp ${IMAGE1} ${IMAGE1}.tmp
 
-realall:	netbsd boot
+realall:	${IMAGE1}
+
+${IMAGE1}:	netbsd boot
 	${PAX} -wvf ${FSTMP} boot netbsd
 	@echo
 	@echo Making disk number one
@@ -24,6 +32,7 @@ realall:	netbsd boot
 	    if=${FSTMP} of=${IMAGE1}.tmp
 	@echo "installing new bootblocks"
 	${MDEC}/installboot -b 17 -v -f ${BOOTCODE} ${IMAGE1}.tmp
+		# XXXDISTRIB
 	@ls -l ${FSTMP} | (read mode links uid gid size junk; \
 		dksize=$$((${DISKSIZE} * 512 - 8 * 1024)); \
 		disks=$$(($$size / $$dksize + 1)); \
@@ -63,9 +72,11 @@ realall:	netbsd boot
 # for "netbsd" first, and calling it "netbsd" instead of "netbsd.gz"
 # we avoid scanning all the diskettes before reading the file.
 
-netbsd: ${KERN}
+KERNELOBJDIR!=	cd ${.CURDIR}/../${KERNELDIR} && ${PRINTOBJDIR}
+
+netbsd: ${KERNELOBJDIR}/${KERNEL}
 	rm -f netbsd
-	cp ${KERN} netbsd
+	cp ${KERNELOBJDIR}/${KERNEL} netbsd
 
 # This is "cheating", just so that we have the available
 # space at the start of the tar file.  Installboot will overwrite
@@ -83,12 +94,10 @@ boot: ${BOOTCODE}
 release: check_RELEASEDIR
 	-mkdir -p ${RELEASEDIR}/installation/floppy
 	cp -p ${BASENAME}?.fs ${RELEASEDIR}/installation/floppy
+		# XXXDISTRIB: use ${RELINSTALL}
 
 clean cleandir distclean:
-	rm -f *.core ${CLEANFILES} ${BASENAME}?.fs ${IMAGE1}.tmp
+	rm -f ${BASENAME}?.fs 
 	rm -rf empty
 
-.include <bsd.own.mk>
-.include <bsd.obj.mk>
-.include <bsd.subdir.mk>
-.include <bsd.sys.mk>
+.include <bsd.prog.mk>

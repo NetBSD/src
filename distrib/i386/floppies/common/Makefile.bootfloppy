@@ -1,18 +1,24 @@
-#	$NetBSD: Makefile.bootfloppy,v 1.4 2002/04/10 21:12:15 mycroft Exp $
+#	$NetBSD: Makefile.bootfloppy,v 1.5 2002/04/11 12:17:15 lukem Exp $
 
-# TOP is assumed to be defined by Makefile including this one.
+.include <bsd.own.mk>
+.include "${_SRC_TOP_}/distrib/Makefile.inc"
 
-IMAGE?=		boot-xxx.fs
+# needs the following set:
+#	IMAGE		image name
+#	KERNELDIR	where kernel is grabbed from
+#	KERNEL		kernel name
+#	DISKSIZE	size of image in 0.5K blocks
+
 FSTMP=		ustar.tmp
 MDEC=		${DESTDIR}/usr/mdec
 BOOTCODE?=	${MDEC}/biosboot.sym
 #BOOTCODE=	${MDEC}/biosboot_com0.sym	# Serial output
 
-DISKSIZE?=	2880
+CLEANFILES+=	netbsd boot ustar.tmp ${METAFILE} ${IMAGE} ${IMAGE}.tmp
 
-CLEANFILES+=	netbsd boot ustar.tmp ${METAFILE}
+realall:	${IMAGE}
 
-realall:	netbsd boot
+${IMAGE}:	netbsd boot
 	if test "${METAFILE}" != ""; then \
 		touch ${METAFILE}; \
 	fi
@@ -26,6 +32,7 @@ realall:	netbsd boot
 	    if=${FSTMP} of=${IMAGE}.tmp
 	@echo "installing new bootblocks"
 	${MDEC}/installboot -b 17 -v -f ${BOOTCODE} ${IMAGE}.tmp
+		# XXXDISTRIB
 	@ls -l ${FSTMP} | (read mode links uid gid size junk; \
 		dksize=$$((${DISKSIZE} * 512 - 8 * 1024)); \
 		disks=$$(($$size / $$dksize + 1)); \
@@ -59,9 +66,11 @@ realall:	netbsd boot
 # for "netbsd" first, and calling it "netbsd" instead of "netbsd.gz"
 # we avoid scanning all the diskettes before reading the file.
 
-netbsd: ${KERN}
+KERNELOBJDIR!=	cd ${.CURDIR}/../${KERNELDIR} && ${PRINTOBJDIR}
+
+netbsd: ${KERNELOBJDIR}/${KERNEL}
 	rm -f netbsd
-	cp ${KERN} netbsd
+	cp ${KERNELOBJDIR}/${KERNEL} netbsd
 
 # This is "cheating", just so that we have the available
 # space at the start of the tar file.  Installboot will overwrite
@@ -81,10 +90,6 @@ release: check_RELEASEDIR
 	cp -p ${IMAGE} ${RELEASEDIR}/installation/floppy
 
 clean cleandir distclean:
-	rm -f *.core ${CLEANFILES} ${IMAGE} ${IMAGE}.tmp
 	rm -rf empty
 
-.include <bsd.own.mk>
-.include <bsd.obj.mk>
-.include <bsd.subdir.mk>
-.include <bsd.sys.mk>
+.include <bsd.prog.mk>

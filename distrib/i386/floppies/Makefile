@@ -1,25 +1,14 @@
-#	$NetBSD: Makefile,v 1.27 2001/11/08 07:41:03 jmc Exp $
+#	$NetBSD: Makefile,v 1.28 2002/04/11 12:17:14 lukem Exp $
 
-DBG=		-Os
+SUBDIR=		ramdisk-big ramdisk-small ramdisk-tiny \
+		ramdisk-rescuesmall ramdisk-rescuetiny \
+		.WAIT \
+		kernel-ramdisk kernel-rescue \
+		.WAIT \
+		fdset fdset-com fdset-laptop \
+		bootfloppy-big bootfloppy-ps2 bootfloppy-small bootfloppy-tiny \
+		rescue-small rescue-tiny
 
-SUBDIR=		ramdisk-big
-SUBDIR+=	ramdisk-small
-SUBDIR+=	ramdisk-tiny
-SUBDIR+=	kernel-ramdisk
-SUBDIR+=	fdset
-SUBDIR+=	fdset-com
-SUBDIR+=	fdset-laptop
-SUBDIR+=	bootfloppy-big
-SUBDIR+=	bootfloppy-ps2
-SUBDIR+=	bootfloppy-small
-SUBDIR+=	bootfloppy-tiny
-
-SUBDIR+=	ramdisk-rescuesmall
-SUBDIR+=	ramdisk-rescuetiny
-SUBDIR+=	kernel-rescue
-SUBDIR+=	rescue-small
-SUBDIR+=	rescue-tiny
-
-TARGETS+=release
+TARGETS+=	release
 
 .include <bsd.subdir.mk>

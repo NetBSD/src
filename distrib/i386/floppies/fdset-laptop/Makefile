@@ -1,14 +1,7 @@
-#	$NetBSD: Makefile,v 1.6 2002/03/05 20:29:35 thorpej Exp $
+#	$NetBSD: Makefile,v 1.7 2002/04/11 12:17:16 lukem Exp $
 
-.include <bsd.own.mk>
+BASENAME=	bootlap
+KERNELDIR=	kernel-ramdisk
+KERNEL=		netbsd.INSTALL_LAPTOP.gz
 
-TOP=	${.CURDIR}/..
-
-.include "${TOP}/Makefile.inc"
-
-BASENAME=bootlap
-
-KERNDIR!=	cd ${TOP}/kernel-ramdisk && ${PRINTOBJDIR}
-KERN=		${KERNDIR}/netbsd.INSTALL_LAPTOP.gz
-
-.include "${TOP}/common/Makefile.fdset"
+.include "${.CURDIR}/../common/Makefile.fdset"

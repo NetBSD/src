@@ -1,17 +1,17 @@
-#	$NetBSD: Makefile.ramdisk,v 1.16 2002/04/06 18:16:10 tsutsui Exp $
+#	$NetBSD: Makefile.ramdisk,v 1.17 2002/04/11 12:17:15 lukem Exp $
 
-TOP=	${.CURDIR}/..
-
-.include "${TOP}/Makefile.inc"
 .include <bsd.own.mk>
+.include "${_SRC_TOP_}/distrib/Makefile.inc"
 
-.PATH:		${TOP}/common
+I386COMMON=	${.CURDIR}/../common
+
+.PATH:		${I386COMMON}
 
 WARNS=		1
 DBG=		-Os
 
 CRUNCHBIN=	ramdiskbin
-LISTS=		${.CURDIR}/list ${TOP}/common/list.ramdisk
+LISTS=		${.CURDIR}/list ${I386COMMON}/list.ramdisk
 MTREECONF=	${DISTRIBDIR}/common/mtree.common
 IMAGEENDIAN=	le
 IMAGEDEPENDS+= 	${CRUNCHBIN} \
