@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.106 1997/10/17 07:07:26 enami Exp $
+#	$NetBSD: GENERIC,v 1.107 1997/10/17 07:08:55 enami Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -246,8 +246,8 @@ joy*	at isapnp?
 
 # PCMCIA controllers, sockets, and devices.
 
-pcic0	at isa? port 0x3E0 iomem 0xd0000 iosiz 0x4000
-pcic1	at isa? port 0x3E2 iomem 0xd4000 iosiz 0x4000
+pcic0	at isa? port 0x3e0 iomem 0xd0000 iosiz 0x4000
+pcic1	at isa? port 0x3e2 iomem 0xd4000 iosiz 0x4000
 
 pcmcia*	at pcic? controller ? socket ?
 
