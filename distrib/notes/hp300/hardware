@@ -1,4 +1,4 @@
-.\"	$NetBSD: hardware,v 1.12 2002/05/03 04:01:08 mbw Exp $
+.\"	$NetBSD: hardware,v 1.13 2002/05/03 04:09:04 mbw Exp $
 .
 .Nx*M
 \*V will run on most HP 9000/300- and 400-series machines.
@@ -233,8 +233,8 @@ console.
 .(bullet -offset indent
 CPUs
 .(bullet -compact
-310 (16? MHz 68010, with built-in monochrome framebuffer, rs232
-(25, hil, and slow hpib)
+310 (10 MHz 68010, with built-in monochrome framebuffer, rs232
+(25 pin), hil, and slow hpib)
 .It
 332 (16? MHz 68030, with no floating point unit)
 .bullet)
