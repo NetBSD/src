@@ -1,6 +1,6 @@
-.\"	$NetBSD: ftpd.8,v 1.71 2003/02/04 23:07:33 perry Exp $
+.\"	$NetBSD: ftpd.8,v 1.72 2003/02/26 12:27:04 lukem Exp $
 .\"
-.\" Copyright (c) 1997-2002 The NetBSD Foundation, Inc.
+.\" Copyright (c) 1997-2003 The NetBSD Foundation, Inc.
 .\" All rights reserved.
 .\"
 .\" This code is derived from software contributed to The NetBSD Foundation
@@ -67,7 +67,7 @@
 .\"
 .\"     @(#)ftpd.8	8.2 (Berkeley) 4/19/94
 .\"
-.Dd October 25, 2002
+.Dd February 26, 2002
 .Dt FTPD 8
 .Os
 .Sh NAME
@@ -82,6 +82,7 @@ Internet File Transfer Protocol server
 .Op Fl C Ar user
 .Op Fl e Ar emailaddr
 .Op Fl h Ar hostname
+.Op Fl L Ar xferlogfile
 .Op Fl P Ar dataport
 .Op Fl V Ar version
 .Sh DESCRIPTION
@@ -172,6 +173,13 @@ session is logged using syslog with a facility of
 If this option is specified more than once, the retrieve (get), store (put),
 append, delete, make directory, remove directory and rename operations and
 their file name arguments are also logged.
+.It Fl L Ar xferlogfile
+Log
+.Tn wu-ftpd
+style
+.Sq xferlog
+entries to
+.Ar xferlogfile .
 .It Fl P Ar dataport
 Use
 .Ar dataport
