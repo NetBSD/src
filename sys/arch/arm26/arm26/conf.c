@@ -1,4 +1,4 @@
-/* $NetBSD: conf.c,v 1.2 2000/08/17 16:31:52 bjh21 Exp $ */
+/* $NetBSD: conf.c,v 1.3 2000/08/17 22:09:10 bjh21 Exp $ */
 /*-
  * Copyright (c) 1998, 2000 Ben Harris
  * All rights reserved.
@@ -31,6 +31,9 @@
  */
 
 #include <sys/param.h>
+
+__RCSID("$NetBSD: conf.c,v 1.3 2000/08/17 22:09:10 bjh21 Exp $");
+
 #include <sys/systm.h>
 #include <sys/buf.h>
 #include <sys/ioctl.h>
@@ -116,7 +119,7 @@ struct cdevsw cdevsw[] = {
 	cdev_bpftun_init(NBPFILTER, bpf),/*18: Berkeley packet filter */
 	cdev_bpftun_init(NTUN,tun),	/* 19: network tunnel */
 	cdev_tty_init(NCOM, com),	/* 20: ns8250 etc serial */
-	cdev_lpt_init(NLPT, lpt),	/* 21: PC-style parallel
+	cdev_lpt_init(NLPT, lpt),	/* 21: PC-style parallel */
 };
 
 int nchrdev = sizeof(cdevsw) / sizeof(cdevsw[0]);
