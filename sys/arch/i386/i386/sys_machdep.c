@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)sys_machdep.c	5.5 (Berkeley) 1/19/91
- *	$Id: sys_machdep.c,v 1.4 1993/10/15 13:47:22 cgd Exp $
+ *	$Id: sys_machdep.c,v 1.5 1993/10/26 15:54:22 brezak Exp $
  */
 
 #include "npx.h"
@@ -62,16 +62,7 @@
 #include "vm/vm_map.h"
 #include "machine/sysarch.h"
 
-#define       LUDATA_SEL      	4
-#define       NLDT              LUDATA_SEL+1
-#define       GUSERLDT_SEL	7       /* User LDT */
-#define       NGDT		GUSERLDT_SEL+1
-
 extern vm_map_t kernel_map;
-extern int currentldt;
-extern union descriptor gdt[NGDT];
-extern union descriptor ldt[NLDT];
-extern struct soft_segment_descriptor gdt_segs[];
 
 #ifdef TRACE
 int	nvualarm;

@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)segments.h	7.1 (Berkeley) 5/9/91
- *	$Id: segments.h,v 1.3 1993/05/22 08:00:37 cgd Exp $
+ *	$Id: segments.h,v 1.4 1993/10/26 15:53:54 brezak Exp $
  */
 
 /*
@@ -194,12 +194,46 @@ struct region_descriptor {
 #define SEGEX_IDX(s)	((s)>>3)&0x1fff)
 
 /*
- * Size of IDT table
+ * Entries in the Interrupt Descriptor Table (IDT)
  */
-
 #define	NIDT	256
 #define	NRSVIDT	32		/* reserved entries for cpu exceptions */
 
+/*
+ * Entries in the Global Descriptor Table (GDT)
+ */
+#define	GNULL_SEL	0	/* Null Descriptor */
+#define	GCODE_SEL	1	/* Kernel Code Descriptor */
+#define	GDATA_SEL	2	/* Kernel Data Descriptor */
+#define	GLDT_SEL	3	/* LDT - eventually one per process */
+#define	GTGATE_SEL	4	/* Process task switch gate */
+#define	GPANIC_SEL	5	/* Task state to consider panic from */
+#define	GPROC0_SEL	6	/* Task state process slot zero and up */
+#define	GUSERLDT_SEL	7	/* User LDT */
+#define NGDT 		GUSERLDT_SEL+1
+
+/*
+/*
+ * Entries in the Local Descriptor Table (LDT)
+ */
+#define	LSYS5CALLS_SEL	0	/* forced by intel BCS */
+#define	LSYS5SIGR_SEL	1
+#define	L43BSDCALLS_SEL	2	/* notyet */
+#define	LUCODE_SEL	3
+#define	LUDATA_SEL	4
+#if 0
+/* seperate stack, es,fs,gs sels ? */
+#define	LPOSIXCALLS_SEL	5	/* notyet */
+#endif
+#define NLDT		LUDATA_SEL+1
+
+#ifdef KERNEL
+extern int currentldt;
+extern union descriptor gdt[NGDT];
+extern union descriptor ldt[NLDT];
+extern struct soft_segment_descriptor gdt_segs[];
+#endif
+        
 #if __GNUC__ >= 2
 #pragma pack(4)
 #endif
