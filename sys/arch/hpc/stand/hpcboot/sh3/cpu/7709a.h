@@ -1,7 +1,7 @@
-/*	$NetBSD: sh_7709a.h,v 1.1 2001/02/09 18:35:16 uch Exp $	*/
+/*	$NetBSD: 7709a.h,v 1.1 2002/02/11 17:08:57 uch Exp $	*/
 
 /*-
- * Copyright (c) 2001 The NetBSD Foundation, Inc.
+ * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -36,11 +36,8 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _HPCBOOT_SH_7709A_H_
-#define _HPCBOOT_SH_7709A_H_
-#ifndef _HPCBOOT_SH3_H_
-#error "include sh3.h"
-#endif
+#ifndef _HPCBOOT_SH_CPU_7709A_H_
+#define _HPCBOOT_SH_CPU_7709A_H_
 
 #define SH7709A_CACHE_LINESZ		16
 #define SH7709A_CACHE_ENTRY		256
@@ -58,12 +55,14 @@ __BEGIN_MACRO								\
 	u_int32_t __e, __w, __wa, __a;					\
 									\
 	for (__w = 0; __w < SH7709A_CACHE_WAY; __w++) {			\
-		__wa = CCA | __w << SH7709A_CACHE_WAY_SHIFT;		\
+		__wa = SH3_CCA | __w << SH7709A_CACHE_WAY_SHIFT;	\
 		for (__e = 0; __e < SH7709A_CACHE_ENTRY; __e++)	{	\
 			__a = __wa |(__e << SH7709A_CACHE_ENTRY_SHIFT);	\
-			VOLATILE_REF(__a) &= ~0x3; /* Clear U,V bit */	\
+			_reg_read_4(__a) &= ~0x3; /* Clear U,V bit */	\
 		}							\
 	}								\
 __END_MACRO
 
-#endif // _HPCBOOT_SH_7709A_H_
+#define SH7709A_MMU_DISABLE	SH3_MMU_DISABLE
+
+#endif // _HPCBOOT_SH_CPU_7709A_H_
