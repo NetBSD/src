@@ -1,4 +1,4 @@
-/*	$NetBSD: clientloop.c,v 1.12 2001/11/07 06:26:47 itojun Exp $	*/
+/*	$NetBSD: clientloop.c,v 1.13 2001/11/27 04:10:23 itojun Exp $	*/
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -60,7 +60,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: clientloop.c,v 1.86 2001/10/24 19:57:40 markus Exp $");
+RCSID("$OpenBSD: clientloop.c,v 1.88 2001/11/22 12:34:22 markus Exp $");
 
 #include "ssh.h"
 #include "ssh1.h"
@@ -102,8 +102,8 @@ extern char *host;
  * window size to be sent to the server a little later.  This is volatile
  * because this is updated in a signal handler.
  */
-static volatile int received_window_change_signal = 0;
-static volatile int received_signal = 0;
+static volatile sig_atomic_t received_window_change_signal = 0;
+static volatile sig_atomic_t received_signal = 0;
 
 /* Flag indicating whether the user\'s terminal is in non-blocking mode. */
 static int in_non_blocking_mode = 0;
@@ -347,8 +347,8 @@ client_wait_until_can_do_something(fd_set **readsetp, fd_set **writesetp,
 		if (session_closed && !channel_still_open() &&
 		    !packet_have_data_to_write()) {
 			/* clear mask since we did not call select() */
-			memset(*readsetp, 0, *maxfdp);
-			memset(*writesetp, 0, *maxfdp);
+			memset(*readsetp, 0, *nallocp);
+			memset(*writesetp, 0, *nallocp);
 			return;
 		} else {
 			FD_SET(connection_in, *readsetp);
@@ -376,8 +376,8 @@ client_wait_until_can_do_something(fd_set **readsetp, fd_set **writesetp,
 		 * We have to return, because the mainloop checks for the flags
 		 * set by the signal handlers.
 		 */
-		memset(*readsetp, 0, *maxfdp);
-		memset(*writesetp, 0, *maxfdp);
+		memset(*readsetp, 0, *nallocp);
+		memset(*writesetp, 0, *nallocp);
 
 		if (errno == EINTR)
 			return;

@@ -1,4 +1,4 @@
-/*	$NetBSD: auth2.c,v 1.11 2001/11/07 06:26:47 itojun Exp $	*/
+/*	$NetBSD: auth2.c,v 1.12 2001/11/27 04:10:22 itojun Exp $	*/
 /*
  * Copyright (c) 2000 Markus Friedl.  All rights reserved.
  *
@@ -24,7 +24,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: auth2.c,v 1.71 2001/09/27 15:31:17 markus Exp $");
+RCSID("$OpenBSD: auth2.c,v 1.73 2001/11/17 19:14:34 stevesk Exp $");
 
 #include <openssl/evp.h>
 
@@ -51,7 +51,6 @@ RCSID("$OpenBSD: auth2.c,v 1.71 2001/09/27 15:31:17 markus Exp $");
 #include "misc.h"
 #include "hostfile.h"
 #include "canohost.h"
-#include "tildexpand.h"
 #include "match.h"
 
 /* import */
@@ -708,7 +707,8 @@ hostbased_key_allowed(struct passwd *pw, const char *cuser, char *chost,
     Key *key)
 {
 	const char *resolvedname, *ipaddr, *lookup;
-	int host_status, len;
+	HostStatus host_status;
+	int len;
 
 	resolvedname = get_canonical_hostname(options.reverse_mapping_check);
 	ipaddr = get_remote_ipaddr();

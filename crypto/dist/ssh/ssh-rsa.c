@@ -1,4 +1,4 @@
-/*	$NetBSD: ssh-rsa.c,v 1.6 2001/09/27 03:24:06 itojun Exp $	*/
+/*	$NetBSD: ssh-rsa.c,v 1.7 2001/11/27 04:10:25 itojun Exp $	*/
 /*
  * Copyright (c) 2000 Markus Friedl.  All rights reserved.
  *
@@ -24,7 +24,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: ssh-rsa.c,v 1.10 2001/09/17 19:27:15 stevesk Exp $");
+RCSID("$OpenBSD: ssh-rsa.c,v 1.13 2001/11/10 13:22:42 markus Exp $");
 
 #include <openssl/evp.h>
 #include <openssl/err.h>
@@ -53,6 +53,10 @@ ssh_rsa_sign(
 
 	if (key == NULL || key->type != KEY_RSA || key->rsa == NULL) {
 		error("ssh_rsa_sign: no RSA key");
+		return -1;
+	}
+	if (datafellows & SSH_BUG_SIGBLOB) {
+		error("ssh_rsa_sign: SSH_BUG_SIGBLOB not supported");
 		return -1;
 	}
 	nid = (datafellows & SSH_BUG_RSASIGMD5) ? NID_md5 : NID_sha1;
@@ -125,6 +129,10 @@ ssh_rsa_verify(
 		error("ssh_rsa_verify: no RSA key");
 		return -1;
 	}
+	if (datafellows & SSH_BUG_SIGBLOB) {
+		error("ssh_rsa_verify: SSH_BUG_SIGBLOB not supported");
+		return -1;
+	}
 	if (BN_num_bits(key->rsa->n) < 768) {
 		error("ssh_rsa_verify: n too small: %d bits",
 		    BN_num_bits(key->rsa->n));
@@ -144,14 +152,14 @@ ssh_rsa_verify(
 	rlen = buffer_len(&b);
 	buffer_free(&b);
 	if(rlen != 0) {
-		xfree(sigblob);
 		error("ssh_rsa_verify: remaining bytes in signature %d", rlen);
+		xfree(sigblob);
 		return -1;
 	}
 	nid = (datafellows & SSH_BUG_RSASIGMD5) ? NID_md5 : NID_sha1;
 	if ((evp_md = EVP_get_digestbynid(nid)) == NULL) {
-		xfree(sigblob);
 		error("ssh_rsa_verify: EVP_get_digestbynid %d failed", nid);
+		xfree(sigblob);
 		return -1;
 	}
 	dlen = evp_md->md_size;
