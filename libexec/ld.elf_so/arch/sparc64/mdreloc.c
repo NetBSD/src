@@ -1,4 +1,4 @@
-/*	$NetBSD: mdreloc.c,v 1.28 2002/09/25 22:29:12 mycroft Exp $	*/
+/*	$NetBSD: mdreloc.c,v 1.29 2002/09/26 02:14:10 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 2000 Eduardo Horvath.
@@ -213,7 +213,7 @@ caddr_t _rtld_bind __P((const Obj_Entry *, Elf_Word));
 /*
  * Install rtld function call into this PLT slot.
  */
-#define	SAVE		0x9de3bf50
+#define	SAVE		0x9de3bf50	/* i.e. `save %sp,-176,%sp' */
 #define	SETHI_l0	0x21000000
 #define	SETHI_l1	0x23000000
 #define	OR_l0_l0	0xa0142000
