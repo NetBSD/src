@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.16.2.1 1997/11/18 01:02:33 mellon Exp $	*/
+/*	$NetBSD: util.c,v 1.16.2.2 1997/12/14 01:19:52 mellon Exp $	*/
 
 /*
  * Copyright (c) 1985, 1989, 1993, 1994
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: util.c,v 1.16.2.1 1997/11/18 01:02:33 mellon Exp $");
+__RCSID("$NetBSD: util.c,v 1.16.2.2 1997/12/14 01:19:52 mellon Exp $");
 #endif /* not lint */
 
 /*
@@ -536,7 +536,8 @@ remotemodtime(file, noisy)
 	return (rtime);
 }
 
-void updateprogressmeter __P((int));
+#ifndef	SMALL
+static void updateprogressmeter __P((int));
 
 void
 updateprogressmeter(dummy)
@@ -555,6 +556,7 @@ updateprogressmeter(dummy)
 	    ctty_pgrp == (int)pgrp)
 		progressmeter(0);
 }
+#endif	/* SMALL */
 
 /*
  * Display a transfer progress bar if progress is non-zero.
@@ -572,6 +574,7 @@ void
 progressmeter(flag)
 	int flag;
 {
+#ifndef	SMALL
 	/*
 	 * List of order of magnitude prefixes.
 	 * The last is `P', as 2^64 = 16384 Petabytes
@@ -672,6 +675,7 @@ progressmeter(flag)
 		(void)putchar('\n');
 	}
 	fflush(stdout);
+#endif	/* SMALL */
 }
 
 /*
@@ -686,6 +690,7 @@ void
 ptransfer(siginfo)
 	int siginfo;
 {
+#ifndef	SMALL
 	struct timeval now, td;
 	double elapsed;
 	off_t bs;
@@ -719,6 +724,7 @@ ptransfer(siginfo)
 		    remaining % 60);
 	}
 	(void)write(siginfo ? STDERR_FILENO : STDOUT_FILENO, buf, len);
+#endif	/* SMALL */
 }
 
 /*
