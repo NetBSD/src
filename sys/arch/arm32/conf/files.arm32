@@ -260,6 +260,12 @@ file	arch/arm32/podulebus/simide_io_asm.S	simide
 
 attach	wdc at simide with wdc_sim
 
+# Atomwide Multi-Port Serial driver
+device	amps {}
+attach	amps at podulebus
+attach	com at amps with com_amps
+file	arch/arm32/podulebus/amps.c		amps
+
 device  vidcvideo
 attach	vidcvideo at vidc
 file    arch/arm32/vidc/console/vidcvideo.c	vidcvideo needs-count
