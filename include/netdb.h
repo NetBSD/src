@@ -1,4 +1,4 @@
-/*	$NetBSD: netdb.h,v 1.36 2004/04/14 04:37:59 itojun Exp $	*/
+/*	$NetBSD: netdb.h,v 1.37 2004/05/08 18:52:15 kleink Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -85,6 +85,7 @@
 #define _NETDB_H_
 
 #include <machine/ansi.h>
+#include <machine/endian_machdep.h>
 #include <sys/ansi.h>
 #include <sys/cdefs.h>
 #include <sys/featuretest.h>
@@ -135,7 +136,15 @@ struct	netent {
 	char		*n_name;	/* official name of net */
 	char		**n_aliases;	/* alias list */
 	int		n_addrtype;	/* net address type */
-	unsigned long	n_net;		/* network # XXX */
+#if (defined(__sparc__) && defined(_LP64)) || \
+    (defined(__sh__) && defined(_LP64) && (_BYTE_ORDER == _BIG_ENDIAN))
+	int		__n_pad0;	/* ABI compatibility */
+#endif
+	uint32_t	n_net;		/* network # */
+#if defined(__alpha__) || (defined(__i386__) && defined(_LP64)) || \
+    (defined(__sh__) && defined(_LP64) && (_BYTE_ORDER == _LITTLE_ENDIAN))
+	int		__n_pad0;	/* ABI compatibility */
+#endif
 };
 
 struct	servent {
@@ -286,7 +295,7 @@ struct hostent	*getipnodebyaddr __P((const void *, size_t, int, int *));
 struct hostent	*getipnodebyname __P((const char *, int, int, int *));
 #endif
 #endif
-struct netent	*getnetbyaddr __P((unsigned long, int));
+struct netent	*getnetbyaddr __P((uint32_t, int));
 struct netent	*getnetbyname __P((const char *));
 struct netent	*getnetent __P((void));
 struct protoent	*getprotobyname __P((const char *));

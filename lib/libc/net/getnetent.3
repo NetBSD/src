@@ -1,4 +1,4 @@
-.\"	$NetBSD: getnetent.3,v 1.12 2003/08/07 16:43:08 agc Exp $
+.\"	$NetBSD: getnetent.3,v 1.13 2004/05/08 18:52:15 kleink Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     @(#)getnetent.3	8.1 (Berkeley) 6/4/93
 .\"
-.Dd January 16, 1999
+.Dd May 8, 2004
 .Dt GETNETENT 3
 .Os
 .Sh NAME
@@ -48,7 +48,7 @@
 .Ft struct netent *
 .Fn getnetbyname "const char *name"
 .Ft struct netent *
-.Fn getnetbyaddr "long net" "int type"
+.Fn getnetbyaddr "uint32_t net" "int type"
 .Fn setnetent "int stayopen"
 .Fn endnetent
 .Sh DESCRIPTION
@@ -68,7 +68,7 @@ struct	netent {
 	char		*n_name;	/* official name of net */
 	char		**n_aliases;	/* alias list */
 	int		n_addrtype;	/* net number type */
-	unsigned long	n_net;		/* net number */
+	uint32_t	n_net;		/* net number */
 };
 .Ed
 .Pp
