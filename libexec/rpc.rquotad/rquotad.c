@@ -1,4 +1,4 @@
-/*	$NetBSD: rquotad.c,v 1.16 2000/06/03 20:57:40 fvdl Exp $	*/
+/*	$NetBSD: rquotad.c,v 1.17 2001/01/10 01:50:05 lukem Exp $	*/
 
 /*
  * by Manuel Bouyer (bouyer@ensta.fr)
@@ -8,7 +8,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: rquotad.c,v 1.16 2000/06/03 20:57:40 fvdl Exp $");
+__RCSID("$NetBSD: rquotad.c,v 1.17 2001/01/10 01:50:05 lukem Exp $");
 #endif
 
 #include <sys/param.h>
@@ -203,9 +203,9 @@ printerr_reply(SVCXPRT *transp)	/* when a reply to a request failed */
 	name = (char *)inet_ntoa(caller->sin_addr);
 	errno = save_errno;
 	if (errno == 0)
-		syslog(LOG_ERR, "couldn't send reply to %s", name);
+		syslog(LOG_WARNING, "couldn't send reply to %s", name);
 	else
-		syslog(LOG_ERR, "couldn't send reply to %s: %m", name);
+		syslog(LOG_WARNING, "couldn't send reply to %s: %m", name);
 }
 
 /* initialise the fs_tab list from entries in /etc/fstab */
@@ -279,7 +279,8 @@ getfsquota(long id, char *path, struct dqblk *dqblk)
 			return (1);
 
 		if ((fd = open(fs->qfpathname, O_RDONLY)) < 0) {
-			syslog(LOG_ERR, "open error: %s: %m", fs->qfpathname);
+			syslog(LOG_WARNING, "open error: %s: %m",
+			    fs->qfpathname);
 			return (0);
 		}
 		if (lseek(fd, (off_t)(id * sizeof(struct dqblk)), SEEK_SET)
@@ -300,7 +301,8 @@ getfsquota(long id, char *path, struct dqblk *dqblk)
 			ret = 1;
 			break;
 		default:	/* ERROR */
-			syslog(LOG_ERR, "read error: %s: %m", fs->qfpathname);
+			syslog(LOG_WARNING, "read error: %s: %m",
+			    fs->qfpathname);
 			close(fd);
 			return (0);
 		}
