@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.106 1999/01/23 15:35:21 drochner Exp $
+#	$NetBSD: INSTALL,v 1.107 1999/01/25 05:10:03 cgd Exp $
 #
 #	INSTALL - Installation kernel.
 #
@@ -67,8 +67,6 @@ options 	RTC_OFFSET=0	# hardware clock is this many mins. west of GMT
 #options 	SHMMAXPGS=1024	# 1024 pages is the default
 
 #options 	LKM		# loadable kernel modules
-
-options 	MSGBUFSIZE="(128 * 1024)"
 
 # Diagnostic/debugging support options
 #options 	DIAGNOSTIC	# cheap kernel consistency checks
