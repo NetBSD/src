@@ -1,4 +1,4 @@
-/*	$NetBSD: i82557var.h,v 1.20 2001/05/21 23:58:44 thorpej Exp $	*/
+/*	$NetBSD: i82557var.h,v 1.21 2001/05/22 00:27:01 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -203,9 +203,7 @@ struct fxp_softc {
 	int	sc_txdirty;		/* first dirty TX descriptor */
 	int	sc_txlast;		/* last used TX descriptor */
 
-	int phy_primary_addr;		/* address of primary PHY */
 	int phy_primary_device;		/* device type of primary PHY */
-	int phy_10Mbps_only;		/* PHY is 10Mbps-only device */
 
 	int	sc_enabled;	/* boolean; power enabled on interface */
 	int	(*sc_enable)(struct fxp_softc *);
