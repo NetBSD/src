@@ -1,4 +1,4 @@
-/*	$NetBSD: displayq.c,v 1.24 2002/07/14 15:27:58 wiz Exp $	*/
+/*	$NetBSD: displayq.c,v 1.25 2003/05/17 20:46:42 itojun Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)displayq.c	8.4 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: displayq.c,v 1.24 2002/07/14 15:27:58 wiz Exp $");
+__RCSID("$NetBSD: displayq.c,v 1.25 2003/05/17 20:46:42 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -242,23 +242,21 @@ displayq(int format)
 		putchar('\n');
 	(void)snprintf(line, sizeof(line), "%c%s", format + '\3', RP);
 	cp = line;
-	for (i = 0; i < requests && cp-line+10 < sizeof(line) - 1; i++) {
+	ecp = line + sizeof(line);
+	for (i = 0; i < requests && cp - line + 11 < sizeof(line) - 2; i++) {
 		cp += strlen(cp);
-		(void)snprintf(cp, (size_t)(line - cp), " %d", requ[i]);
+		(void)snprintf(cp, ecp - cp, " %d", requ[i]);
 	}
 	for (i = 0; i < users && cp - line + 1 + strlen(user[i]) <
-	    sizeof(line) - 1; i++) {
+	    sizeof(line) - 2; i++) {
 		cp += strlen(cp);
-		if (cp - line > sizeof(line) - 1)
+		if (cp - line > sizeof(line) - 2)
 			break;
 		*cp++ = ' ';
-		if (strlen(user[i]) < (sizeof(line) - (cp - line) - 1))
-			(void)strcpy(cp, user[i]);
-		else
-			(void)strncpy(cp, user[i],
-				(sizeof(line) - (cp - line) - 1));
+		/* truncation may happen */
+		(void)strlcpy(cp, user[i], ecp - cp);
 	}
-	(void)strncat(line, "\n", sizeof(line) - strlen(line) - 1);
+	(void)strlcat(line, "\n", sizeof(line));
 	fd = getport(RM, 0);
 	if (fd < 0) {
 		if (from != host)
