@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs.c,v 1.18 1999/03/10 00:43:33 perseant Exp $	*/
+/*	$NetBSD: lfs.c,v 1.19 1999/03/18 07:14:53 is Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)lfs.c	8.5 (Berkeley) 5/24/95";
 #else
-__RCSID("$NetBSD: lfs.c,v 1.18 1999/03/10 00:43:33 perseant Exp $");
+__RCSID("$NetBSD: lfs.c,v 1.19 1999/03/18 07:14:53 is Exp $");
 #endif
 #endif /* not lint */
 
@@ -147,8 +147,8 @@ static struct lfs lfs_default =  {
 		/* dlfs_fsmnt */        { 0 },
 		/* dlfs_clean */        0,
 
-		/* dlfs_cksum */	0,
-		/* dlfs_pad */ 		{ 0 }
+		/* dlfs_pad */ 		{ 0 },
+		/* dlfs_cksum */	0
 	},
 	/* lfs_sp */		NULL,
 	/* lfs_ivnode */	NULL,
