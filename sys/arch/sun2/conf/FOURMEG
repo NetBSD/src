@@ -1,4 +1,4 @@
-# $NetBSD: FOURMEG,v 1.14 2002/08/22 14:36:48 abs Exp $
+# $NetBSD: FOURMEG,v 1.15 2002/09/18 02:44:09 lukem Exp $
 
 # FOURMEG Sun2 (2/120, 2/170, 2/50, ...)
 # Supports root on: ie0, sd*, ...
@@ -7,7 +7,7 @@ include "arch/sun2/conf/std.sun2"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"FOURMEG-$Revision: 1.14 $"
+#ident 		"FOURMEG-$Revision: 1.15 $"
 
 # Machines to be supported by this kernel
 #options 	FPU_EMULATE
@@ -24,7 +24,7 @@ options 	KTRACE		# system call tracing
 #options 	LKM		# loadable kernel modules
 #options 	INSECURE	# disable kernel security level
 #options 	UCONSOLE	# Allow non-root TIOCCONS
-#options 	USERCONF	# userconf(4) support
+options 	USERCONF	# userconf(4) support
 options		PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
 options 	MALLOC_NOINLINE		# Not inlining MALLOC saves memory
 

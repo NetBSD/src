@@ -1,4 +1,4 @@
-#	$NetBSD: ALL,v 1.53 2002/08/11 13:19:35 isaki Exp $
+#	$NetBSD: ALL,v 1.54 2002/09/18 02:44:11 lukem Exp $
 
 #
 #	ALL -- everything that currently exist including experimental
@@ -8,7 +8,7 @@ include "arch/x68k/conf/std.x68k"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"ALL-$Revision: 1.53 $"
+#ident 		"ALL-$Revision: 1.54 $"
 
 maxusers	32
 
@@ -71,7 +71,7 @@ options 	SYSVSHM		# System V shared memory
 ## Loadable kernel module support
 options 	LKM
 
-#options 	USERCONF	# userconf(4) support
+options 	USERCONF	# userconf(4) support
 #options	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
 
 ## NFS boot options; not supported currently: needs nfsboot program

@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC_TINY,v 1.45 2002/08/22 14:36:49 abs Exp $
+#	$NetBSD: GENERIC_TINY,v 1.46 2002/09/18 02:44:00 lukem Exp $
 #
 #	GENERIC_TINY -- suitable default for 4M machines
 #			No EISA, PCI, or SCSI.
@@ -59,7 +59,7 @@ options 	NMBCLUSTERS=256
 
 #options 	LKM		# loadable kernel modules
 
-#options 	USERCONF	# userconf(4) support
+options 	USERCONF	# userconf(4) support
 options		PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
 options 	MALLOC_NOINLINE	# Not inlining MALLOC saves memory
 

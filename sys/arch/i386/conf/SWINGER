@@ -1,4 +1,4 @@
-#	$NetBSD: SWINGER,v 1.36 2002/08/02 05:26:48 ichiro Exp $
+#	$NetBSD: SWINGER,v 1.37 2002/09/18 02:44:01 lukem Exp $
 #	from NetBSD: GENERIC,v 1.325 2000/04/14 14:53:32 augustss Exp
 #
 #	SWINGER -- thorpej's Abit BP6+dual Celeron
@@ -8,7 +8,7 @@ include "arch/i386/conf/std.i386"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"SWINGER-$Revision: 1.36 $"
+#ident 		"SWINGER-$Revision: 1.37 $"
 
 maxusers	64		# estimated number of users
 
@@ -64,7 +64,7 @@ options 	SYSVSHM		# System V-like memory sharing
 
 options 	LKM		# loadable kernel modules
 
-#options 	USERCONF	# userconf(4) support
+options 	USERCONF	# userconf(4) support
 #options	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
 
 # Diagnostic/debugging support options

@@ -1,4 +1,4 @@
-#	$NetBSD: RAMDISK,v 1.34 2002/04/25 15:06:39 atatat Exp $
+#	$NetBSD: RAMDISK,v 1.35 2002/09/18 02:44:10 lukem Exp $
 
 # RAMDISK: Root/swap on ramdisk
 # This kernel is used to:
@@ -41,7 +41,7 @@ options 	MEMORY_DISK_IS_ROOT	# force root on memory disk
 options 	MEMORY_DISK_SERVER=0	# no userspace memory disk support
 options 	MEMORY_DISK_ROOT_SIZE=800	# size of memory disk, in blocks
 
-#options 	USERCONF	# userconf(4) support
+options 	USERCONF	# userconf(4) support
 options		PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
 
 config		netbsd root on ? type ffs
