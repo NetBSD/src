@@ -1,4 +1,4 @@
-/*	$NetBSD: ftpcmd.y,v 1.20 1998/06/30 20:18:52 tv Exp $	*/
+/*	$NetBSD: ftpcmd.y,v 1.21 1998/09/05 17:33:00 lukem Exp $	*/
 
 /*
  * Copyright (c) 1985, 1988, 1993, 1994
@@ -47,7 +47,7 @@
 #if 0
 static char sccsid[] = "@(#)ftpcmd.y	8.3 (Berkeley) 4/6/94";
 #else
-__RCSID("$NetBSD: ftpcmd.y,v 1.20 1998/06/30 20:18:52 tv Exp $");
+__RCSID("$NetBSD: ftpcmd.y,v 1.21 1998/09/05 17:33:00 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -119,7 +119,9 @@ char	*fromname;
 	MRSQ	MRCP	ALLO	REST	RNFR	RNTO
 	ABOR	DELE	CWD	LIST	NLST	SITE
 	STAT	HELP	NOOP	MKD	RMD	PWD
-	CDUP	STOU	SMNT	SYST	SIZE	MDTM
+	CDUP	STOU	SMNT	SYST
+
+	SIZE	MDTM
 
 	UMASK	IDLE	CHMOD
 
@@ -475,7 +477,7 @@ cmd
 		}
 
 		/*
-		 * SIZE is not in RFC959, but Postel has blessed it and
+		 * SIZE is not in RFC 959, but Postel has blessed it and
 		 * it will be in the updated RFC.
 		 *
 		 * Return size of file in a format suitable for
@@ -490,7 +492,7 @@ cmd
 		}
 
 		/*
-		 * MDTM is not in RFC959, but Postel has blessed it and
+		 * MDTM is not in RFC 959, but Postel has blessed it and
 		 * it will be in the updated RFC.
 		 *
 		 * Return modification time of file as an ISO 3307
@@ -530,6 +532,7 @@ cmd
 			yyerrok;
 		}
 	;
+
 rcmd
 	: RNFR check_modify SP pathname CRLF
 		{
@@ -731,7 +734,6 @@ octal_number
 		}
 	;
 
-
 check_login
 	: /* empty */
 		{
@@ -743,6 +745,7 @@ check_login
 			}
 		}
 	;
+
 check_modify
 	: /* empty */
 		{
@@ -773,6 +776,7 @@ extern jmp_buf errcatch;
 #define	ZSTR2	6	/* optional STRING after SP */
 #define	SITECMD	7	/* SITE command */
 #define	NSTR	8	/* Number followed by a string */
+#define NOARGS	9	/* No arguments allowed */
 
 struct tab {
 	char	*name;
@@ -782,21 +786,46 @@ struct tab {
 	char	*help;
 };
 
-struct tab cmdtab[] = {		/* In order defined in RFC 765 */
+struct tab cmdtab[] = {
+				/* From RFC 959, in order defined (5.3.1) */
 	{ "USER", USER, STR1, 1,	"<sp> username" },
 	{ "PASS", PASS, ZSTR1, 1,	"<sp> password" },
 	{ "ACCT", ACCT, STR1, 0,	"(specify account)" },
+	{ "CWD",  CWD,  OSTR, 1,	"[ <sp> directory-name ]" },
+	{ "CDUP", CDUP, NOARGS, 1,	"(change to parent directory)" },
 	{ "SMNT", SMNT, ARGS, 0,	"(structure mount)" },
-	{ "REIN", REIN, ARGS, 0,	"(reinitialize server state)" },
-	{ "QUIT", QUIT, ARGS, 1,	"(terminate service)", },
+	{ "QUIT", QUIT, NOARGS, 1,	"(terminate service)", },
+	{ "REIN", REIN, NOARGS, 0,	"(reinitialize server state)" },
 	{ "PORT", PORT, ARGS, 1,	"<sp> b0, b1, b2, b3, b4" },
-	{ "PASV", PASV, ARGS, 1,	"(set server in passive mode)" },
+	{ "PASV", PASV, NOARGS, 1,	"(set server in passive mode)" },
 	{ "TYPE", TYPE, ARGS, 1,	"<sp> [ A | E | I | L ]" },
 	{ "STRU", STRU, ARGS, 1,	"(specify file structure)" },
 	{ "MODE", MODE, ARGS, 1,	"(specify transfer mode)" },
 	{ "RETR", RETR, STR1, 1,	"<sp> file-name" },
 	{ "STOR", STOR, STR1, 1,	"<sp> file-name" },
+	{ "STOU", STOU, STR1, 1,	"<sp> file-name" },
 	{ "APPE", APPE, STR1, 1,	"<sp> file-name" },
+	{ "ALLO", ALLO, ARGS, 1,	"allocate storage (vacuously)" },
+	{ "REST", REST, ARGS, 1,	"<sp> offset (restart command)" },
+	{ "RNFR", RNFR, STR1, 1,	"<sp> file-name" },
+	{ "RNTO", RNTO, STR1, 1,	"<sp> file-name" },
+	{ "ABOR", ABOR, NOARGS, 1,	"(abort operation)" },
+	{ "DELE", DELE, STR1, 1,	"<sp> file-name" },
+	{ "RMD",  RMD,  STR1, 1,	"<sp> path-name" },
+	{ "MKD",  MKD,  STR1, 1,	"<sp> path-name" },
+	{ "PWD",  PWD,  NOARGS, 1,	"(return current directory)" },
+	{ "LIST", LIST, OSTR, 1,	"[ <sp> path-name ]" },
+	{ "NLST", NLST, OSTR, 1,	"[ <sp> path-name ]" },
+	{ "SITE", SITE, SITECMD, 1,	"site-cmd [ <sp> arguments ]" },
+	{ "SYST", SYST, NOARGS, 1,	"(get type of operating system)" },
+	{ "STAT", STAT, OSTR, 1,	"[ <sp> path-name ]" },
+	{ "HELP", HELP, OSTR, 1,	"[ <sp> <string> ]" },
+	{ "NOOP", NOOP, NOARGS, 1,	"" },
+
+	{ "SIZE", SIZE, OSTR, 1,	"<sp> path-name" },
+	{ "MDTM", MDTM, OSTR, 1,	"<sp> path-name" },
+
+				/* obsolete commands */
 	{ "MLFL", MLFL, OSTR, 0,	"(mail file)" },
 	{ "MAIL", MAIL, OSTR, 0,	"(mail to user)" },
 	{ "MSND", MSND, OSTR, 0,	"(mail send to terminal)" },
@@ -804,32 +833,12 @@ struct tab cmdtab[] = {		/* In order defined in RFC 765 */
 	{ "MSAM", MSAM, OSTR, 0,	"(mail send to terminal and mailbox)" },
 	{ "MRSQ", MRSQ, OSTR, 0,	"(mail recipient scheme question)" },
 	{ "MRCP", MRCP, STR1, 0,	"(mail recipient)" },
-	{ "ALLO", ALLO, ARGS, 1,	"allocate storage (vacuously)" },
-	{ "REST", REST, ARGS, 1,	"<sp> offset (restart command)" },
-	{ "RNFR", RNFR, STR1, 1,	"<sp> file-name" },
-	{ "RNTO", RNTO, STR1, 1,	"<sp> file-name" },
-	{ "ABOR", ABOR, ARGS, 1,	"(abort operation)" },
-	{ "DELE", DELE, STR1, 1,	"<sp> file-name" },
-	{ "CWD",  CWD,  OSTR, 1,	"[ <sp> directory-name ]" },
 	{ "XCWD", CWD,	OSTR, 1,	"[ <sp> directory-name ]" },
-	{ "LIST", LIST, OSTR, 1,	"[ <sp> path-name ]" },
-	{ "NLST", NLST, OSTR, 1,	"[ <sp> path-name ]" },
-	{ "SITE", SITE, SITECMD, 1,	"site-cmd [ <sp> arguments ]" },
-	{ "SYST", SYST, ARGS, 1,	"(get type of operating system)" },
-	{ "STAT", STAT, OSTR, 1,	"[ <sp> path-name ]" },
-	{ "HELP", HELP, OSTR, 1,	"[ <sp> <string> ]" },
-	{ "NOOP", NOOP, ARGS, 1,	"" },
-	{ "MKD",  MKD,  STR1, 1,	"<sp> path-name" },
-	{ "XMKD", MKD,  STR1, 1,	"<sp> path-name" },
-	{ "RMD",  RMD,  STR1, 1,	"<sp> path-name" },
+	{ "XCUP", CDUP, NOARGS, 1,	"(change to parent directory)" },
 	{ "XRMD", RMD,  STR1, 1,	"<sp> path-name" },
-	{ "PWD",  PWD,  ARGS, 1,	"(return current directory)" },
-	{ "XPWD", PWD,  ARGS, 1,	"(return current directory)" },
-	{ "CDUP", CDUP, ARGS, 1,	"(change to parent directory)" },
-	{ "XCUP", CDUP, ARGS, 1,	"(change to parent directory)" },
-	{ "STOU", STOU, STR1, 1,	"<sp> file-name" },
-	{ "SIZE", SIZE, OSTR, 1,	"<sp> path-name" },
-	{ "MDTM", MDTM, OSTR, 1,	"<sp> path-name" },
+	{ "XMKD", MKD,  STR1, 1,	"<sp> path-name" },
+	{ "XPWD", PWD,  NOARGS, 1,	"(return current directory)" },
+
 	{ NULL,   0,    0,    0,	0 }
 };
 
@@ -873,7 +882,7 @@ getline(s, n, iop)
 	FILE *iop;
 {
 	int c;
-	register char *cs;
+	char *cs;
 
 	cs = s;
 /* tmpline may contain saved command from urgent mode interruption */
@@ -926,8 +935,8 @@ getline(s, n, iop)
 			/* Don't syslog passwords */
 			syslog(LOG_DEBUG, "command: %.5s ???", s);
 		} else {
-			register char *cp;
-			register int len;
+			char *cp;
+			int len;
 
 			/* Don't syslog trailing CR-LF */
 			len = strlen(s);
@@ -962,10 +971,11 @@ yylex()
 	static int cpos, state;
 	char *cp, *cp2;
 	struct tab *p;
-	int n;
+	int n, errored;
 	char c;
 
 	for (;;) {
+		errored = 0;
 		switch (state) {
 
 		case CMD:
@@ -996,8 +1006,8 @@ yylex()
 			if (p != 0) {
 				if (p->implemented == 0) {
 					nack(p->name);
-					longjmp(errcatch,0);
-					/* NOTREACHED */
+					errored = 1;
+					break;
 				}
 				state = p->state;
 				yylval.s = p->name;
@@ -1020,10 +1030,9 @@ yylex()
 			cbuf[cpos] = c;
 			if (p != 0) {
 				if (p->implemented == 0) {
-					state = CMD;
 					nack(p->name);
-					longjmp(errcatch,0);
-					/* NOTREACHED */
+					errored = 1;
+					break;
 				}
 				state = p->state;
 				yylval.s = p->name;
@@ -1165,12 +1174,27 @@ yylex()
 			}
 			break;
 
+		case NOARGS:
+			if (cbuf[cpos] == '\n') {
+				state = CMD;
+				return (CRLF);
+			}
+			c = cbuf[cpos];
+			cbuf[cpos] = '\0';
+			reply(501, "'%s' command does not take any arguments.",
+			    cbuf);
+			cbuf[cpos] = c;
+			errored = 1;
+			break;
+
 		default:
 			fatal("Unknown state in scanner.");
 		}
-		yyerror((char *) 0);
+		if (!errored)
+			yyerror((char *) 0);
 		state = CMD;
-		longjmp(errcatch,0);
+		longjmp(errcatch, 0);
+		/* NOTREACHED */
 	}
 }
 
@@ -1190,10 +1214,9 @@ copy(s)
 {
 	char *p;
 
-	p = malloc((unsigned) strlen(s) + 1);
+	p = strdup(s);
 	if (p == NULL)
 		fatal("Ran out of memory.");
-	(void) strcpy(p, s);
 	return (p);
 }
 
