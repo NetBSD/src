@@ -1,4 +1,4 @@
-/*	$NetBSD: dumpfs.c,v 1.9 1995/03/18 14:55:16 cgd Exp $	*/
+/*	$NetBSD: dumpfs.c,v 1.10 1995/04/12 21:23:24 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1983, 1992, 1993
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)dumpfs.c	8.2 (Berkeley) 2/2/94";
 #else
-static char rcsid[] = "$NetBSD: dumpfs.c,v 1.9 1995/03/18 14:55:16 cgd Exp $";
+static char rcsid[] = "$NetBSD: dumpfs.c,v 1.10 1995/04/12 21:23:24 mycroft Exp $";
 #endif
 #endif /* not lint */
 
@@ -168,8 +168,8 @@ dumpfs(name)
 	    afs.fs_sbsize, afs.fs_cgsize, afs.fs_cgoffset, afs.fs_cgmask);
 	printf("csaddr\t%d\tcssize\t%d\tshift\t%d\tmask\t0x%08x\n",
 	    afs.fs_csaddr, afs.fs_cssize, afs.fs_csshift, afs.fs_csmask);
-	printf("cgrotor\t%d\tfmod\t%d\tronly\t%d\n",
-	    afs.fs_cgrotor, afs.fs_fmod, afs.fs_ronly);
+	printf("cgrotor\t%d\tfmod\t%d\tronly\t%d\tclean\t0x%02x\n",
+	    afs.fs_cgrotor, afs.fs_fmod, afs.fs_ronly, afs.fs_clean);
 	if (afs.fs_cpc != 0)
 		printf("blocks available in each of %d rotational positions",
 		     afs.fs_nrpos);
