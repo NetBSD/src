@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.9 2001/11/06 20:39:13 thorpej Exp $	*/
+/*	$NetBSD: cpu.c,v 1.10 2001/11/23 21:18:30 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Mark Brinicombe.
@@ -52,8 +52,9 @@
 #include <uvm/uvm_extern.h>
 #include <machine/conf.h>
 #include <machine/cpu.h>
-#include <machine/cpus.h>
-#include <machine/undefined.h>
+#include <arm/undefined.h>
+
+#include <arm/cpus.h>
 
 #ifdef ARMFPE
 #include <machine/bootconfig.h> /* For boot args */
