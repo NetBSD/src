@@ -1,4 +1,4 @@
-/*	$NetBSD: ftpcmd.y,v 1.61 2001/04/10 01:41:18 itojun Exp $	*/
+/*	$NetBSD: ftpcmd.y,v 1.62 2001/04/12 02:28:59 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1997-2000 The NetBSD Foundation, Inc.
@@ -83,7 +83,7 @@
 #if 0
 static char sccsid[] = "@(#)ftpcmd.y	8.3 (Berkeley) 4/6/94";
 #else
-__RCSID("$NetBSD: ftpcmd.y,v 1.61 2001/04/10 01:41:18 itojun Exp $");
+__RCSID("$NetBSD: ftpcmd.y,v 1.62 2001/04/12 02:28:59 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -1426,6 +1426,7 @@ toolong(int signo)
 void
 ftp_handle_line(char *cp)
 {
+
 	cmdp = cp;
 	yyparse();
 }
@@ -1433,6 +1434,7 @@ ftp_handle_line(char *cp)
 void
 ftp_loop(void)
 {
+
 	while (1) {
 		(void) signal(SIGALRM, toolong);
 		(void) alarm(curclass.timeout);
