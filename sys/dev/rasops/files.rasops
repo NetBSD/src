@@ -1,12 +1,4 @@
-# 	$NetBSD: files.rasops,v 1.5 1999/10/23 23:14:13 ad Exp $
-
-define rasops1
-define rasops2
-define rasops8
-define rasops15
-define rasops16
-define rasops24
-define rasops32
+# 	$NetBSD: files.rasops,v 1.6 2000/04/20 18:23:38 thorpej Exp $
 
 # Note: `rasops_glue' is only here to force the header file's name
 #       hence it must be mentioned first  (shudder...)
