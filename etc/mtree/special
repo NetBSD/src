@@ -1,4 +1,4 @@
-#	$NetBSD: special,v 1.53 2002/03/22 04:03:44 itojun Exp $
+#	$NetBSD: special,v 1.54 2002/03/22 15:47:01 itojun Exp $
 #	@(#)special	8.2 (Berkeley) 1/23/94
 #
 # Hand-crafted mtree specification for the dangerous files.
@@ -222,16 +222,17 @@
 ./etc/shells			type=file mode=0644
 ./etc/shosts.equiv		type=file mode=0600 optional
 ./etc/spwd.db			type=file mode=0600 tags=exclude
-./etc/ssh.conf			type=file mode=0644 optional
-./etc/ssh_host_dsa_key		type=file mode=0600 optional tags=nodiff
-./etc/ssh_host_dsa_key.pub	type=file mode=0644 optional
-./etc/ssh_host_key		type=file mode=0600 optional tags=nodiff
-./etc/ssh_host_key.pub		type=file mode=0644 optional
-./etc/ssh_host_rsa_key		type=file mode=0600 optional tags=nodiff
-./etc/ssh_host_rsa_key.pub	type=file mode=0644 optional
-./etc/ssh_known_hosts		type=file mode=0644 optional
-./etc/ssh_known_hosts2		type=file mode=0644 optional
-./etc/sshd.conf			type=file mode=0644 optional
+./etc/ssh			type=dir  mode=0644 optional
+./etc/ssh/ssh.conf		type=file mode=0644 optional
+./etc/ssh/ssh_host_dsa_key	type=file mode=0600 optional tags=nodiff
+./etc/ssh/ssh_host_dsa_key.pub	type=file mode=0644 optional
+./etc/ssh/ssh_host_key		type=file mode=0600 optional tags=nodiff
+./etc/ssh/ssh_host_key.pub	type=file mode=0644 optional
+./etc/ssh/ssh_host_rsa_key	type=file mode=0600 optional tags=nodiff
+./etc/ssh/ssh_host_rsa_key.pub	type=file mode=0644 optional
+./etc/ssh/ssh_known_hosts	type=file mode=0644 optional
+./etc/ssh/ssh_known_hosts2	type=file mode=0644 optional
+./etc/ssh/sshd.conf		type=file mode=0644 optional
 ./etc/sysctl.conf		type=file mode=0644
 ./etc/syslog.conf		type=file mode=0644
 ./etc/ttyaction			type=file mode=0644 optional
