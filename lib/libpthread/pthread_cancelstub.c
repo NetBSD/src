@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_cancelstub.c,v 1.11 2005/03/18 11:23:44 kleink Exp $	*/
+/*	$NetBSD: pthread_cancelstub.c,v 1.12 2005/03/21 09:00:49 kleink Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_cancelstub.c,v 1.11 2005/03/18 11:23:44 kleink Exp $");
+__RCSID("$NetBSD: pthread_cancelstub.c,v 1.12 2005/03/21 09:00:49 kleink Exp $");
 
 /*
  * This is necessary because the names are always weak (they are not
@@ -65,6 +65,7 @@ __RCSID("$NetBSD: pthread_cancelstub.c,v 1.11 2005/03/18 11:23:44 kleink Exp $")
 
 #include <signal.h>
 #include <sys/mman.h>
+#include <sys/select.h>
 #include <sys/socket.h>
 
 #include "pthread.h"
