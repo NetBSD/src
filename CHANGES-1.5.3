@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.5.3,v 1.1.2.53 2002/03/25 18:02:02 he Exp $
+#	$NetBSD: CHANGES-1.5.3,v 1.1.2.54 2002/03/27 10:20:51 he Exp $
 
 A complete list of changes from NetBSD 1.5.2 to NetBSD 1.5.3:
 
@@ -2543,3 +2543,28 @@ distrib/notes/i386/hardware			1.102
 distrib/notes/common/main			patch
 
   Add support for the pciide part of the AMD-768 chipset.
+
+sys/dev/pci/if_sip.c				1.49 via patch
+
+  Fix multicast reception on DP83815.  Fixes PR#15998.
+
+gnu/lib/libgcc/Makefile				1.13
+
+  Add __udiv_w_sdiv for VAX, required for gnupg.  Fixes PR#14987.
+
+sys/arch/i386/pnpbios/ym_pnpbios.c		1.5-1.6
+sys/dev/ic/ad1848.c				1.10-1.14
+sys/dev/ic/ad1848var.h				1.8
+sys/dev/ic/opl3sa3reg.h				1.2
+sys/dev/isa/ad1848_isa.c			1.16,1.19-1.21
+sys/dev/isa/mpu_ym.c				1.2-1.3
+sys/dev/isa/opl_ym.c				1.2-1.3
+sys/dev/isa/ym.c				1.19-1.21 via patch
+sys/dev/isa/ymvar.h				1.7-1.8 via patch
+sys/dev/isapnp/ym_isapnp.c			1.12-1.13
+
+  Several changes to wss-compatible audio devices:
+   o Fix ADPCM playback/recording
+   o Add explicit support for OPL3-SA2 (YMF711), fixes PR#14819
+   o Add AD1845 support
+   o other minor bugfixes and cleanups
