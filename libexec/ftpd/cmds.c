@@ -1,4 +1,4 @@
-/*	$NetBSD: cmds.c,v 1.14 2002/01/17 05:21:47 itojun Exp $	*/
+/*	$NetBSD: cmds.c,v 1.15 2002/02/01 04:35:30 lukem Exp $	*/
 
 /*
  * Copyright (c) 1999-2001 The NetBSD Foundation, Inc.
@@ -101,7 +101,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: cmds.c,v 1.14 2002/01/17 05:21:47 itojun Exp $");
+__RCSID("$NetBSD: cmds.c,v 1.15 2002/02/01 04:35:30 lukem Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -246,12 +246,13 @@ mlsd(const char *path)
 		perror_reply(501, path);
 		return;
 	}
+	if ((dirp = opendir(path)) == NULL)
+		goto mlsdperror;
+
 	dout = dataconn("MLSD", (off_t)-1, "w");
 	if (dout == NULL)
 		return;
 
-	if ((dirp = opendir(path)) == NULL)
-		goto mlsdperror;
 	f.stat = &sb;
 	while ((dp = readdir(dirp)) != NULL) {
 		snprintf(name, sizeof(name), "%s/%s", path, dp->d_name);
