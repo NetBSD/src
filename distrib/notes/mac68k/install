@@ -105,13 +105,13 @@ If the system does not come up:
 	  you saw.
 
 If the system does come up, congratulations, you have successfully
-installed NetBSD 1.1.  When you reboot into NetBSD, you should log
+installed NetBSD 1.2.  When you reboot into NetBSD, you should log
 in as "root" at the login prompt.  There is no initial password, but
 if you're using the machine in a networked environment, you should
 create yourself an account and protect it and the "root" account with
 good passwords.
 
-Some of the files in the NetBSD 1.1 distribution might need to be
+Some of the files in the NetBSD 1.2 distribution might need to be
 tailored for your site.  In particular, the /etc/sendmail.cf file will
 almost definitely need to be adjusted, and other files in /etc will
 probably need to be modified, as well.  If you are unfamiliar with
