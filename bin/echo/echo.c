@@ -1,4 +1,4 @@
-/* $NetBSD: echo.c,v 1.13 2003/11/24 22:38:46 jschauma Exp $	*/
+/* $NetBSD: echo.c,v 1.14 2003/11/24 22:47:02 jschauma Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -40,18 +40,11 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)echo.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: echo.c,v 1.13 2003/11/24 22:38:46 jschauma Exp $");
+__RCSID("$NetBSD: echo.c,v 1.14 2003/11/24 22:47:02 jschauma Exp $");
 #endif
 #endif /* not lint */
 
-#include <sys/param.h>
-
-#include <err.h>
 #include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <unistd.h>
-#include <vis.h>
 
 int main(int, char *[]);
 
