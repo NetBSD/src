@@ -6,7 +6,7 @@ mkdir
 rmdir
 symlink
 */
-/*	$NetBSD: coda_vnops.c,v 1.6 1998/09/26 15:24:47 tv Exp $	*/
+/*	$NetBSD: coda_vnops.c,v 1.7 1998/09/28 17:55:22 rvb Exp $	*/
 
 /*
  * 
@@ -56,6 +56,11 @@ symlink
 /*
  * HISTORY
  * $Log: coda_vnops.c,v $
+ * Revision 1.7  1998/09/28 17:55:22  rvb
+ * I want to distinguish from DEBUG printouts and CODA_VERBOSE printouts.
+ * The latter are normal informational messages that are sometimes
+ * interesting to view.
+ *
  * Revision 1.6  1998/09/26 15:24:47  tv
  * DIAGNOSTIC -> DEBUG for all non-panic messages.  DIAGNOSTIC is only for
  * sanity checks and should not turn on any messages not already printed
@@ -508,13 +513,13 @@ coda_close(v)
 
     if (IS_UNMOUNTING(cp)) {
 	if (cp->c_ovp) {
-#ifdef	DEBUG
+#ifdef	CODA_VERBOSE
 	    printf("coda_close: destroying container ref %d, ufs vp %p of vp %p/cp %p\n",
 		    vp->v_usecount, cp->c_ovp, vp, cp);
 #endif
 	    vgone(cp->c_ovp);
 	} else {
-#ifdef	DEBUG
+#ifdef	CODA_VERBOSE
 	    printf("coda_close: NO container vp %p/cp %p\n", vp, cp);
 #endif
 	}
@@ -1333,7 +1338,7 @@ coda_create(v)
 		panic("unlocked parent but couldn't lock child");
 	    }
 	}
-#ifdef DEBUG
+#ifdef OLD_DIAGNOSTIC
 	else {
 	    printf("coda_create: LOCKLEAF not set!\n");
 	}

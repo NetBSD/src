@@ -1,4 +1,4 @@
-/*	$NetBSD: coda_namecache.c,v 1.6 1998/09/26 15:24:46 tv Exp $	*/
+/*	$NetBSD: coda_namecache.c,v 1.7 1998/09/28 17:55:21 rvb Exp $	*/
 
 /*
  * 
@@ -47,6 +47,11 @@
 /*
  * HISTORY
  * $Log: coda_namecache.c,v $
+ * Revision 1.7  1998/09/28 17:55:21  rvb
+ * I want to distinguish from DEBUG printouts and CODA_VERBOSE printouts.
+ * The latter are normal informational messages that are sometimes
+ * interesting to view.
+ *
  * Revision 1.6  1998/09/26 15:24:46  tv
  * DIAGNOSTIC -> DEBUG for all non-panic messages.  DIAGNOSTIC is only for
  * sanity checks and should not turn on any messages not already printed
@@ -292,7 +297,7 @@ coda_nc_init(void)
     
     bzero(&coda_nc_stat, (sizeof(struct coda_nc_statistics)));
 
-#ifdef	DEBUG
+#ifdef	CODA_VERBOSE
     printf("CODA NAME CACHE: CACHE %d, HASH TBL %d\n", CODA_NC_CACHESIZE, CODA_NC_HASHSIZE);
 #endif
     CODA_ALLOC(coda_nc_heap, struct coda_cache *, TOTAL_CACHE_SIZE);
