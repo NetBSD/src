@@ -1,4 +1,4 @@
-/* $NetBSD: sio_pic.c,v 1.32 2004/07/01 18:46:49 mycroft Exp $ */
+/* $NetBSD: sio_pic.c,v 1.32.10.1 2005/03/30 10:21:48 tron Exp $ */
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: sio_pic.c,v 1.32 2004/07/01 18:46:49 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sio_pic.c,v 1.32.10.1 2005/03/30 10:21:48 tron Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -548,6 +548,8 @@ sio_iointr(arg, vec)
 
 	if (!alpha_shared_intr_dispatch(sio_intr, irq))
 		alpha_shared_intr_stray(sio_intr, irq, "isa irq");
+	else
+		alpha_shared_intr_reset_strays(sio_intr, irq);
 
 	/*
 	 * Some versions of the machines which use the SIO
