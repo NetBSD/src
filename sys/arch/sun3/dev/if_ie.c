@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ie.c,v 1.16.6.2 1997/03/06 16:14:10 is Exp $ */
+/*	$NetBSD: if_ie.c,v 1.16.6.3 1997/03/10 15:08:32 is Exp $ */
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles Hannum.
@@ -124,7 +124,7 @@
 #include <netinet/in_systm.h>
 #include <netinet/in_var.h>
 #include <netinet/ip.h>
-#include <netinet/if_ether.h>
+#include <netinet/if_inarp.h>
 #endif
 
 #ifdef NS

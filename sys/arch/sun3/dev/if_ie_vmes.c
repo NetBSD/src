@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ie_vmes.c,v 1.7.4.1 1997/03/06 14:03:45 is Exp $	*/
+/*	$NetBSD: if_ie_vmes.c,v 1.7.4.2 1997/03/10 15:08:35 is Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -53,7 +53,7 @@
 #include <netinet/in_systm.h>
 #include <netinet/in_var.h>
 #include <netinet/ip.h>
-#include <netinet/if_ether.h>
+#include <netinet/if_inarp.h>
 #endif
 
 #include <machine/autoconf.h>

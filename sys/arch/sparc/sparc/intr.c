@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.17 1996/10/20 19:32:42 pk Exp $ */
+/*	$NetBSD: intr.c,v 1.17.6.1 1997/03/10 15:14:49 is Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -63,7 +63,7 @@
 
 #ifdef INET
 #include <netinet/in.h>
-#include <netinet/if_ether.h>
+#include <netinet/if_inarp.h>
 #include <netinet/ip_var.h>
 #endif
 #ifdef NS
