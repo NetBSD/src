@@ -1,4 +1,4 @@
-/*	$NetBSD: com2.c,v 1.13 2000/09/22 08:18:20 jsm Exp $	*/
+/*	$NetBSD: com2.c,v 1.14 2000/09/22 08:19:21 jsm Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)com2.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: com2.c,v 1.13 2000/09/22 08:18:20 jsm Exp $");
+__RCSID("$NetBSD: com2.c,v 1.14 2000/09/22 08:19:21 jsm Exp $");
 #endif
 #endif				/* not lint */
 
@@ -51,7 +51,7 @@ wearit()
 	int     firstnumber, value;
 
 	firstnumber = wordnumber;
-	while (wordtype[++wordnumber] == ADJS);
+	wordnumber++;
 	while (wordnumber <= wordcount && (wordtype[wordnumber] == OBJECT ||
 	    wordtype[wordnumber] == NOUNS) && wordvalue[wordnumber] != DOOR) {
 		value = wordvalue[wordnumber];
@@ -139,7 +139,7 @@ draw()
 int
 use()
 {
-	while (wordtype[++wordnumber] == ADJS && wordnumber < wordcount);
+	wordnumber++;
 	if (wordvalue[wordnumber] == AMULET && testbit(inven, AMULET) &&
 	    position != FINAL) {
 		puts("The amulet begins to glow.");
@@ -184,9 +184,7 @@ murder()
 	if (n == NUMOFOBJECTS) {
 		if (testbit(inven, LASER)) {
 			printf("Your laser should do the trick.\n");
-			n = wordnumber;
-			while (wordtype[++n] == ADJS)
-				;
+			n = wordnumber + 1;
 			switch(wordvalue[n]) {
 			case NORMGOD:
 			case TIMER:
@@ -211,7 +209,7 @@ murder()
 			puts("You don't have suitable weapons to kill.");
 	} else {
 		printf("Your %s should do the trick.\n", objsht[n]);
-		while (wordtype[++wordnumber] == ADJS);
+		wordnumber++;
 		switch (wordvalue[wordnumber]) {
 
 		case NORMGOD:
