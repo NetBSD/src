@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.23 1995/03/10 23:36:42 gwr Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.24 1995/04/10 05:44:08 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -62,7 +62,7 @@
 extern int soft1intr();
 
 void mainbusattach __P((struct device *, struct device *, void *));
-void conf_init(), swapgeneric();
+void swapgeneric();
 void swapconf(), dumpconf();
 
 
@@ -108,9 +108,6 @@ void configure()
 	/* Install non-device interrupt handlers. */
 	isr_add_autovect(nmi_intr, 0, 7);
 	isr_add_autovect(soft1intr, 0, 1);
-
-	/* Build table for CHR-to-BLK translation, etc. */
-	conf_init();
 
 #ifdef	GENERIC
 	/* Choose root and swap devices. */
