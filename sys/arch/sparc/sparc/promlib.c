@@ -1,4 +1,4 @@
-/*	$NetBSD: promlib.c,v 1.3 1999/03/02 13:41:03 pk Exp $ */
+/*	$NetBSD: promlib.c,v 1.4 1999/04/14 09:12:46 pk Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -145,7 +145,7 @@ notimplemented()
 	char str[64];
 	int n;
 
-	n = sprintf(str, "Operation not implemented on ROM version %d\n",
+	n = sprintf(str, "Operation not implemented on ROM version %d\r\n",
 		    promops.po_version);
 
 	/*
