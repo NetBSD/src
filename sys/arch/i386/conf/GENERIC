@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.599 2004/04/30 02:08:17 lukem Exp $
+# $NetBSD: GENERIC,v 1.600 2004/04/30 02:47:16 christos Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.599 $"
+#ident 		"GENERIC-$Revision: 1.600 $"
 
 maxusers	32		# estimated number of users
 
@@ -123,7 +123,7 @@ options 	COMPAT_13	# NetBSD 1.3, 386BSD, and BSDI
 options 	COMPAT_14	# NetBSD 1.4
 options 	COMPAT_15	# NetBSD 1.5
 options 	COMPAT_16	# NetBSD 1.6
-options 	COMPAT_20	# NetBSD 2.0
+#options 	COMPAT_20	# NetBSD 2.0
 options 	COMPAT_43	# 4.3BSD, 386BSD, and BSDI
 options 	COMPAT_386BSD_MBRPART # recognize old partition ID
 #options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
@@ -345,6 +345,9 @@ pci*	at ppb? bus ?
 #options 	PCIBIOS_INTR_FIXUP	# fixup PCI interrupt routing
 #options 	PCIBIOS_IRQS_HINT=0x0a00 # PCI interrupts hint. IRQ 9 or 11
 #options 	PCIBIOS_INTR_GUESS	# see pcibios(4)
+#options	PCIBIOS_LIBRETTO_FIXUP	# this code makes the Toshiba Libretto
+					# L2/L3 work, but should not be enabled
+					# on anything else.
 #options 	PCIINTR_DEBUG		# super-verbose PCI interrupt fixup
 
 # System Controllers
