@@ -23,12 +23,15 @@
  * any improvements or extensions that they make and grant Carnegie the
  * rights to redistribute these changes.
  *
- *	$Id: db_interface.c,v 1.3 1993/06/27 06:02:50 andrew Exp $
+ *	$Id: db_interface.c,v 1.4 1993/07/22 13:04:45 brezak Exp $
  */
 /*
  * HISTORY
  * $Log: db_interface.c,v $
- * Revision 1.3  1993/06/27 06:02:50  andrew
+ * Revision 1.4  1993/07/22 13:04:45  brezak
+ * Allow one to fault in DDB and survive.
+ *
+ * Revision 1.3  1993/06/27  06:02:50  andrew
  * ANSIfications - removed all implicit function return types and argument
  * definitions.  Ensured that all files include "systm.h" to gain access to
  * general prototypes.  Casts where necessary.
@@ -74,6 +77,7 @@
 #include <setjmp.h>
 #include <sys/systm.h> /* just for boothowto --eichin */
 int	db_active = 0;
+extern jmp_buf	db_jmpbuf;
 
 /*
  * Received keyboard interrupt sequence.
@@ -118,6 +122,11 @@ kdb_trap(type, code, regs)
 		    db_nofault = 0;
 		    longjmp(*no_fault, 1);
 		}
+                else if (db_active) {
+                    db_printf("Faulted in DDB; continuing...\n");
+                    db_flush_lex();
+                    longjmp(db_jmpbuf, 1);
+                }
 	}
 
 	/*  Should switch to kdb`s own stack here. */
@@ -185,9 +194,6 @@ kdbprinttrap(type, code)
 /*
  * Read bytes from kernel address space for debugger.
  */
-
-extern jmp_buf	db_jmpbuf;
-
 void
 db_read_bytes(addr, size, data)
 	vm_offset_t	addr;
