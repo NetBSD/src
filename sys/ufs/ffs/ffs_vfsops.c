@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vfsops.c,v 1.103 2002/09/28 20:11:08 dbj Exp $	*/
+/*	$NetBSD: ffs_vfsops.c,v 1.104 2002/11/24 11:09:13 scw Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1994
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.103 2002/09/28 20:11:08 dbj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.104 2002/11/24 11:09:13 scw Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -182,7 +182,7 @@ ffs_mount(mp, path, data, ndp, p)
 	struct nameidata *ndp;
 	struct proc *p;
 {
-	struct vnode *devvp;
+	struct vnode *devvp = NULL;
 	struct ufs_args args;
 	struct ufsmount *ump = NULL;
 	struct fs *fs;

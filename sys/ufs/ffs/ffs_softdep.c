@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_softdep.c,v 1.35 2002/09/27 15:38:04 provos Exp $	*/
+/*	$NetBSD: ffs_softdep.c,v 1.36 2002/11/24 11:09:13 scw Exp $	*/
 
 /*
  * Copyright 1998 Marshall Kirk McKusick. All Rights Reserved.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_softdep.c,v 1.35 2002/09/27 15:38:04 provos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_softdep.c,v 1.36 2002/11/24 11:09:13 scw Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -344,8 +344,8 @@ sema_get(semap, interlock)
 	struct sema *semap;
 	struct lockit *interlock;
 {
-	int s;
-	
+	int s = 0;	/* Quell an uninitialized variable warning */
+
 	if (semap->value++ > 0) {
 		if (interlock != NULL)
 			s = FREE_LOCK_INTERLOCKED(interlock);
