@@ -12,7 +12,7 @@
 #include <machine/autoconf.h>
 #include <machine/mon.h>
 
-#include "../sun3/cons.h"
+#include <dev/cons.h>
 #include "../sun3/interreg.h"
 
 /*
@@ -272,7 +272,7 @@ promcnprobe(cp)
 promcninit(cp)
      struct consdev *cp;
 {
-    cp->cn_tp = NULL;
+    mon_printf("console on prom0\n");
 }
 
 promcngetc(dev)
