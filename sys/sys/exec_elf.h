@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf.h,v 1.31 1999/11/09 21:38:09 kleink Exp $	*/
+/*	$NetBSD: exec_elf.h,v 1.32 1999/11/10 17:31:56 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -547,6 +547,10 @@ typedef struct {
 #define	ELF_R_TYPE	ELF32_R_TYPE
 #define	ELFCLASS	ELFCLASS32
 
+#define	ELF_ST_BIND	ELF32_ST_BIND
+#define	ELF_ST_TYPE	ELF32_ST_TYPE
+#define	ELF_ST_INFO	ELF32_ST_INFO
+
 #define	AuxInfo		Aux32Info
 #elif defined(ELFSIZE) && (ELFSIZE == 64)
 #define	Elf_Ehdr	Elf64_Ehdr
@@ -565,6 +569,10 @@ typedef struct {
 #define	ELF_R_SYM	ELF64_R_SYM
 #define	ELF_R_TYPE	ELF64_R_TYPE
 #define	ELFCLASS	ELFCLASS64
+
+#define	ELF_ST_BIND	ELF64_ST_BIND
+#define	ELF_ST_TYPE	ELF64_ST_TYPE
+#define	ELF_ST_INFO	ELF64_ST_INFO
 
 #define	AuxInfo		Aux64Info
 #endif
