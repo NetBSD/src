@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ed.c,v 1.74 1995/05/01 02:39:30 mycroft Exp $	*/
+/*	$NetBSD: if_ed.c,v 1.75 1995/05/28 11:29:46 mycroft Exp $	*/
 
 /*
  * Device driver for National Semiconductor DS8390/WD83C690 based ethernet
@@ -2304,7 +2304,7 @@ ed_getmcaf(ac, af)
 		crc >>= 26;
 
 		/* Turn on the corresponding bit in the filter. */
-		af[crc >> 5] |= 1 << ((crc & 0x1f) ^ 24);
+		af[crc >> 5] |= 1 << ((crc & 0x1f) ^ 0);
 
 		ETHER_NEXT_MULTI(step, enm);
 	}
