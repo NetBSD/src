@@ -17,7 +17,7 @@ You should have received a copy of the GNU General Public License
 along with GNU CC; see the file COPYING.  If not, write to
 the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA. 
 
-	$Id: config.h,v 1.1 1993/08/23 09:21:44 cgd Exp $
+	$Id: config.h,v 1.2 1993/10/03 13:57:56 pk Exp $
 */
 
 #ifndef i386
@@ -45,7 +45,12 @@ the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
 #define alloca __builtin_alloca
 #endif
 
+#define ASM_SPEC	" %| %{fpic:-k} %{fPIC:-k}"
+#define LINK_SPEC \
+"%{!nostdlib:%{!r*:%{!e*:-e start}}} -dc -dp %{static:-Bstatic} %{assert*}"
+
 /* target machine dependencies.
    tm.h is a symbolic link to the actual target specific file.   */
 
 #include "tm.h"
+
