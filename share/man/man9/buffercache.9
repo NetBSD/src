@@ -1,4 +1,4 @@
-.\"     $NetBSD: buffercache.9,v 1.3 2003/09/06 19:09:03 wiz Exp $
+.\"     $NetBSD: buffercache.9,v 1.4 2003/09/06 19:25:04 yamt Exp $
 .\"
 .\" Copyright (c)2003 YAMAMOTO Takashi,
 .\" All rights reserved.
@@ -231,16 +231,16 @@ Set the
 flag in
 .Fa bp
 and simply call
-.Fa VOP_BWRITE ,
+.Fn VOP_BWRITE ,
 which results in
-.Fa bwrite
+.Fn bwrite
 for most filesystems.
 .\" - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 .It Fn bdwrite "bp"
 Delayed write.
 Unlike
-.Fa bawrite ,
-.Fa bdwrite
+.Fn bawrite ,
+.Fn bdwrite
 won't start any I/O.
 It only marks the buffer as dirty
 .Pq Dv B_DELWRI
