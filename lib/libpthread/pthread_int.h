@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_int.h,v 1.1.2.31 2002/10/21 22:19:00 nathanw Exp $	*/
+/*	$NetBSD: pthread_int.h,v 1.1.2.32 2002/10/22 01:25:43 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -249,6 +249,15 @@ void	pthread__testcancel(pthread_t self);
 #ifndef PTHREAD_MD_INIT
 #define PTHREAD_MD_INIT
 #endif
+
+#ifndef _INITCONTEXT_U_MD
+#define _INITCONTEXT_U_MD(ucp)
+#endif
+
+#define _INITCONTEXT_U(ucp) do {					\
+	(ucp)->uc_flags = _UC_CPU | _UC_STACK;				\
+	_INITCONTEXT_U_MD(ucp)						\
+	} while (0)
 
 /* Stack location of pointer to a particular thread */
 #define pthread__id(sp) \
