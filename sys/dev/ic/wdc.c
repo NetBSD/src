@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc.c,v 1.64 1999/03/29 08:32:02 bouyer Exp $ */
+/*	$NetBSD: wdc.c,v 1.65 1999/03/31 11:18:31 bouyer Exp $ */
 
 
 /*
@@ -187,11 +187,11 @@ wdcprobe(chp)
 	    (chp->wdc->cap & WDC_CAPABILITY_NO_EXTRA_RESETS) == 0) {
 		bus_space_write_1(chp->cmd_iot, chp->cmd_ioh, wd_sdh,
 		    WDSD_IBM);
-		delay(1);
+		delay(10);
 		st0 = bus_space_read_1(chp->cmd_iot, chp->cmd_ioh, wd_status);
 		bus_space_write_1(chp->cmd_iot, chp->cmd_ioh, wd_sdh,
 		    WDSD_IBM | 0x10);
-		delay(1);
+		delay(10);
 		st1 = bus_space_read_1(chp->cmd_iot, chp->cmd_ioh, wd_status);
 
 		WDCDEBUG_PRINT(("%s:%d: before reset, st0=0x%x, st1=0x%x\n",
@@ -209,7 +209,7 @@ wdcprobe(chp)
 	/* assert SRST, wait for reset to complete */
 	bus_space_write_1(chp->cmd_iot, chp->cmd_ioh, wd_sdh,
 	    WDSD_IBM);
-	delay(1);
+	delay(10);
 	bus_space_write_1(chp->ctl_iot, chp->ctl_ioh, wd_aux_ctlr,
 	    WDCTL_RST | WDCTL_IDS); 
 	DELAY(1000);
@@ -218,7 +218,7 @@ wdcprobe(chp)
 	delay(1000);
 	(void) bus_space_read_1(chp->cmd_iot, chp->cmd_ioh, wd_error);
 	bus_space_write_1(chp->ctl_iot, chp->ctl_ioh, wd_aux_ctlr, WDCTL_4BIT);
-	delay(1);
+	delay(10);
 
 	ret_value = __wdcwait_reset(chp, ret_value);
 	WDCDEBUG_PRINT(("%s:%d: after reset, ret_value=0x%d\n",
@@ -240,7 +240,7 @@ wdcprobe(chp)
 			continue;
 		bus_space_write_1(chp->cmd_iot, chp->cmd_ioh, wd_sdh,
 		    WDSD_IBM | (drive << 4));
-		delay(1);
+		delay(10);
 		/* Save registers contents */
 		sc = bus_space_read_1(chp->cmd_iot, chp->cmd_ioh, wd_seccnt);
 		sn = bus_space_read_1(chp->cmd_iot, chp->cmd_ioh, wd_sector);
@@ -275,7 +275,7 @@ wdcprobe(chp)
 			continue;
 		bus_space_write_1(chp->cmd_iot, chp->cmd_ioh, wd_sdh,
 		    WDSD_IBM | (drive << 4));
-		delay(1);
+		delay(10);
 		/*
 		 * Test registers writability (Error register not writable,
 		 * but cyllo is), then try an ATA command.
@@ -617,29 +617,29 @@ __wdcwait_reset(chp, drv_mask)
 	for (timeout = 0; timeout < WDCNDELAY_RST;timeout++) {
 		bus_space_write_1(chp->cmd_iot, chp->cmd_ioh, wd_sdh,
 		    WDSD_IBM); /* master */
-		delay(1);
+		delay(10);
 		st0 = bus_space_read_1(chp->cmd_iot, chp->cmd_ioh, wd_status);
 		bus_space_write_1(chp->cmd_iot, chp->cmd_ioh, wd_sdh,
 		    WDSD_IBM | 0x10); /* slave */
-		delay(1);
+		delay(10);
 		st1 = bus_space_read_1(chp->cmd_iot, chp->cmd_ioh, wd_status);
 
 		if ((drv_mask & 0x01) == 0) {
 			/* no master */
 			if ((drv_mask & 0x02) != 0 && (st1 & WDCS_BSY) == 0) {
 				/* No master, slave is ready, it's done */
-				return drv_mask;
+				goto end;
 			}
 		} else if ((drv_mask & 0x02) == 0) {
 			/* no slave */
 			if ((drv_mask & 0x01) != 0 && (st0 & WDCS_BSY) == 0) {
 				/* No slave, master is ready, it's done */
-				return drv_mask;
+				goto end;
 			}
 		} else {
 			/* Wait for both master and slave to be ready */
 			if ((st0 & WDCS_BSY) == 0 && (st1 & WDCS_BSY) == 0) {
-				return drv_mask;
+				goto end;
 			}
 		}
 		delay(WDCDELAY);
@@ -649,6 +649,11 @@ __wdcwait_reset(chp, drv_mask)
 		drv_mask &= ~0x01;
 	if (st1 & WDCS_BSY)
 		drv_mask &= ~0x02;
+end:
+	WDCDEBUG_PRINT(("%s:%d: wdcwait_reset() end, st0=0x%x, st1=0x%x\n",
+	    chp->wdc ? chp->wdc->sc_dev.dv_xname : "wdcprobe", chp->channel,
+	    st0, st1), DEBUG_PROBE);
+
 	return drv_mask;
 }
 
