@@ -1,3 +1,390 @@
+2000-07-08  Erez Zadok  <ezk@shekel.mcl.cs.columbia.edu>
+
+	*******************************************************************
+	*** Released am-utils-6.0.4					***
+	*******************************************************************
+
+2000-07-08  Erez Zadok  <ezk@earth.cs.columbia.edu>
+
+	* configure.in: update shared library information
+
+2000-07-04  Erez Zadok  <ezk@shekel.mcl.cs.columbia.edu>
+
+	* INSTALL: document osf4.0f
+
+	* doc/am-utils.texi (Supported Platforms): document osf4.0f
+
+2000-06-19  Erez Zadok  <ezk@vir.cs.columbia.edu>
+
+	* doc/am-utils.texi (dollar Selector Variable): document
+	${dollar}.
+
+	* amd/opts.c: special new variable ${dollar} which expands into a
+	literal '$' sign.  Otherwise there is no way to include a literal
+	dollar symbol in an amd map.
+
+2000-06-11  Erez Zadok  <ezk@earth.cs.columbia.edu>
+
+	* amd/opts.c: correct comment name at top of opt_fields.
+
+2000-06-11  Ion Badulescu  <ionut@moisil.cs.columbia.edu>
+
+	* config.guess.long: munge config.guess' output so that intel
+	linux appears as i386-pc-linux
+
+Fri Jun  9 16:06:56 2000  Erez Zadok  <ezk@defiant.dev.hydraweb.com>
+
+	* conf/nfs_prot/nfs_prot_bsdi2.h: getifaddrs() on bsdi2 is broken.
+	Don't use it.
+
+2000-06-09  Rainer Orth  <ro@TechFak.Uni-Bielefeld.DE>
+
+	* amd/mapc.c (maptypes): Change default allocation mode to
+	MAPC_INC where reload support is missing to avoid warning in
+	mapc_create().
+
+2000-06-09  Erez Zadok  <ezk@shekel.mcl.cs.columbia.edu>
+
+	* conf/nfs_prot/nfs_prot_sunos5_5.h: turn off autofs support for
+	solaris 2.5 until a full port can be done.
+
+2000-06-07  Erez Zadok  <ezk@shekel.mcl.cs.columbia.edu>
+
+	* released snapshot am-utils-6.0.4s5
+
+	* Makefile.am, aux/GNUmakefile: fix maintainer rules to update
+	config.* and texinfo.tex files.
+
+	* amd/nfs_subr.c (nfsproc_getattr_2_svc): Don't conditionalize the
+	mtime update of the symlinks on the SYMTTL option, but rather
+	delay unmount of what was looked up using am_timeo_w.  Patch from
+	Nick Williams <Nick.Williams@msdw.com>.  As Nick says "Basically:
+	during unmount, increment the parent dir's mtime (fixes people
+	doing amq -u). During stat, increase the TTL (to fix bad-luck
+	timeouts), but leave the mtime alone."
+
+	(nfsproc_lookup_2_svc, nfsproc_readlink_2_svc, unlink_or_rmdir,
+	nfsproc_readdir_2_svc): correctly update d_drops stats for amq -s.
+	Patch from Nick Williams <Nick.Williams@msdw.com>.
+
+	* amd/map.c (unmount_mp): update mtime of amd symlink to further
+	reduce the chances of race conditions between unmounting and
+	looking up an entry again.  Patch from Nick Williams
+	<Nick.Williams@msdw.com>.
+
+	* README: updated instructions
+
+	* bootstrap: remove log file before existing
+
+2000-06-06  Erez Zadok  <ezk@aladdin.dev.hydraweb.com>
+
+	* configure.in: no longer using aux/ subdir. don't force autoconf
+	2.14. comment out (but leave explanation) everything that's needed
+	for autoconf 2.14, so for now it works with autoconf-2.13, but the
+	code is ready for 2.14 when it is released.  Similar changes to
+	make code work with automake-1.4, until the next release comes
+	out.
+
+	* libamu/Makefile.am: include definitions that are required in
+	automake 1.4, but won't be necessary when the next release of
+	automake comes out (see XXX comments).
+
+	* cache_check_dynamic.m4, check_checkmount_style.m4,
+	check_mnttab_style.m4, check_mount_style.m4,
+	check_network_transport_type.m4, check_nfs_prot_headers.m4,
+	check_umount_style.m4: use symlink creation code that works for
+	both autoconf 2.13 and 2.14 (when the latter comes out).
+
+	* bootstrap: new script for maintainers to run to update autoconf,
+	automake, and libtool related files.  Has the same effect as
+	"buildall -K".
+
+	* removed dependencies on CVS versions of autoconf, automake, and
+	libtool, especially the modified automake I had.  This is so that
+	maintainers could built the auto* files out of the latest released
+	GNU autoconf, automake, and libtool.  However, without my nice
+	patches to automake, many files that used to live in the aux/
+	subdir now were moved to the top level source directory: acconfig.h,
+	acinclude.m4, aclocal.m4, aux_conf.h.in, config.guess,
+	config.guess.long, config.h.in, config.sub, configure.in, depcomp,
+	install-sh, ltconfig, ltmain.sh, missing, and mkinstalldirs.  Also
+	texinfo.tex and mdate-sh moved from aux/ dir to doc/ dir.
+
+2000-06-05  Erez Zadok  <ezk@shekel.mcl.cs.columbia.edu>
+
+	* cvs-server.txt: instructions for maintainers to access the CVS
+	server for am-utils.
+
+2000-06-02  Erez Zadok  <ezk@shekel.mcl.cs.columbia.edu>
+
+	* amd/am_ops.c (ops_match): changed XLOG_USER messages about
+	merging addopts options to the more appropriate XLOG_INFO.  Patch
+	submitted by Tom Schmidt <tschmidt@micron.com>.
+
+	* config.{guess,sub}: make sure chmod'ed a+rx.  Updated from
+	latest GNU copies.
+
+2000-05-30  Erez Zadok  <ezk@shekel.mcl.cs.columbia.edu>
+
+	* released snapshot am-utils-6.0.4s4
+
+2000-05-29  Ion Badulescu  <ionut@moisil.cs.columbia.edu>
+
+	* conf/transp/transp_sockets.c (amu_svc_getcaller): cast result of
+	svc_getcaller() to sockaddr_in, to appease glibc 2.2
+
+2000-05-28  Erez Zadok  <ezk@mulberry.mcl.cs.columbia.edu>
+
+	* doc/am-utils.texi (Network Filesystem Group): minor typos
+
+2000-05-27  Erez Zadok  <ezk@shekel.mcl.cs.columbia.edu>
+
+	* amd/amfs_auto.c (amfs_auto_readdir_browsable): cast pointers to
+	long for 64-bit architectures.
+
+	* libamu/xutil.c (amu_release_controlling_tty): eliminate an
+	unused variable "tempfile"
+
+	* libamu/wire.c (getwire_lookup): handle calling irs_gen_acc with
+	one or two arguments (bsdi3 vs. bsdi4)
+
+2000-05-26  Ion Badulescu  <ionut@moisil.cs.columbia.edu>
+
+	* libamu/xutil.c (amu_release_controlling_tty): close standard
+	file descriptors, re-open them as /dev/null
+
+	* include/am_defs.h: don't try to include both <ndbm.h> and
+	<db1/ndbm.h>, it really doesn't work
+
+2000-05-16  Ion Badulescu  <ib42@earth.cs.columbia.edu>
+
+	* hlfsd/stubs.c (nfsproc_lookup_2_svc): added code to update mtime
+	on lookup if MNT2_NFS_OPT_SYMTTL is not defined (copied from
+	getattr).  This fixes the problem introduced by the Linux nfsv3
+	patches.
+
+2000-04-30  Erez Zadok  <ezk@beetle.mcl.cs.columbia.edu>
+
+	* include/am_defs.h, aux/macros/mount_headers.m4,
+	aux/macros/try_compile_anyfs.m4: include linux/kdev_t.h and
+	linux/list.h before including linux/fs.h, and define __KERNEL__
+	for those two headers.  All of this to get a couple of definitions
+	that are needed in the new struct vfsmount.
+
+	* aux/configure.in: look for <linux/kdev_t.h> and <linux/list.h>.
+
+	* include/am_defs.h, aux/macros/mount_headers.m4: avoid conflicts
+	between linux/in.h. and netinet/in.h (linux-2.3.99-pre6), by
+	defining _LINUX_IN_H so it doesn't get included.
+
+2000-04-03  Erez Zadok  <ezk@shekel.mcl.cs.columbia.edu>
+
+	* minor new ports: i686-pc-linux-gnu-rh6.2,
+	i386-unknown-freebsdelf3.4, i586-pc-linux-gnu-rh6.2.
+
+2000-04-03  Erez Zadok  <ezk@vir.cs.columbia.edu>
+
+	* aux/acconfig.h: move all #undef macros above @TOP@, so they can
+	be recognized by pickier autoconf.
+
+2000-04-03  Erez Zadok  <ezk@shekel.mcl.cs.columbia.edu>
+
+	* aux/macros/cache_check_dynamic.m4 (ac_tmp): use correct echo -n
+	or \c.
+
+2000-03-25  Erez Zadok  <ezk@beetle.mcl.cs.columbia.edu>
+
+	* include/am_defs.h: ditto
+
+	* aux/macros/{mount_headers,try_compile_anyfs}.m4: force
+	non-inclusion of <linux/string.h>.  Breaks build on newer 2.3
+	kernels.
+
+2000-02-26  Erez Zadok  <ezk@shekel.mcl.cs.columbia.edu>
+
+	* doc/am-utils.texi (Amq -w option): document new amq -w option.
+
+	* amq/amq.8: document new amq -w option.
+
+	* amq/amq.c: disable last remains of insecure amq -M code.
+	(main): add amq -H option to show usage.
+	(main): new amq -w option, translates getpwd() into an amd path.
+
+2000-02-24  Erez Zadok  <ezk@shekel.mcl.cs.columbia.edu>
+
+	* minor new port: alphaev6-dec-osf5.0
+
+	* doc/am-utils.texi (Supported Platforms): hpux-11 supports NFSv3,
+	but only for UDP.
+
+	* released snapshot am-utils-6.0.4s3
+
+	* conf/nfs_prot/nfs_prot_hpux11.h: support NFSv3 in hpux-11.  Note
+	that hpux-11 NFSv3 supports UDP only, and trying TCP locks up the
+	kernel!  Must set nfs_proto=udp in amd.conf [global].
+
+	* aux/config.guess.long: set and export PATH separately.  DU5
+	/bin/sh doesn't like setting it on the command line in a
+	back-tick'ed `script`.
+
+2000-02-24  Ion Badulescu  <ionut@moisil.cs.columbia.edu>
+
+	* Makefile.am: removed struct_nfs_mount_data.m4
+
+	* aux/macros/struct_nfs_mount_data.m4: deleted
+	
+	* aux/acconfig.h: removed definition for HAVE_NFS_MOUNT_DATA
+
+	* aux/configure.in: removed check for struct nfs_mount_data
+
+2000-02-24  Ion Badulescu  <ib42@beetle.mcl.cs.columbia.edu>
+
+	* amd/amfs_auto.c (amfs_auto_bgmount): changed log message to
+	avoid having 'failed' in a message not indicating a failure
+	(amfs_auto_lookuppn): ditto
+
+	* amd/ops_autofs.c (autofs_bgmount): ditto
+	(autofs_lookuppn): ditto
+
+2000-02-24  Erez Zadok  <ezk@shekel.mcl.cs.columbia.edu>
+
+	* added .cvsignore files into the CVS repository.
+
+	* remove files which can be regenerated: .in, configure, some
+	files in aux/, and more.
+
+2000-02-20  Erez Zadok  <ezk@shekel.mcl.cs.columbia.edu>
+
+	* doc/am-utils.texi (nfs_vers/nfs_proto): description of two
+	parameters was reversed.  Reported by Paul Jenner
+	<p.jenner@eim.surrey.ac.uk>.
+
+2000-02-16  Erez Zadok  <ezk@shekel.mcl.cs.columbia.edu>
+
+	* released snapshot am-utils-6.0.4s2
+
+	* amd/mntfs.c (realloc_mntfs): don't fallback on certain ops such
+	as inherit, error, and toplvl (failover code).
+
+	* amd/conf.c (gopt_nfs_vers, gopt_nfs_proto): two new (documented)
+	global options in amd.conf: one to set the NFS version globally
+	(i.e., nfs_vers=2), and one to set the NFS protocol globally
+	(i.e., nfs_proto=udp).
+
+	* amd/mntfs.c (realloc_mntfs): attempt to fix the failover code,
+	so when a matching mount entry failed, try the next one.
+
+2000-02-15  Erez Zadok  <ezk@moisil.cs.columbia.edu>
+
+	* amd/amfs_auto.c: a new debug option "readdir" to trace the
+	progress of the browsable_dirs code.
+
+	* conf/mount/mount_linux.c (mount_linux): ensure that the new
+	linux NFSv3 code works for v2-only machines.
+
+2000-02-14  Erez Zadok  <ezk@shekel.mcl.cs.columbia.edu>
+
+	* aux/configure.in: cleanup unused dnl entries.
+
+	* conf/mount/mount_linux.c (parse_opts): typo: check for string
+	equality, not string inequality for pcfs and cdfs.
+
+	* aux/acconfig.h: look for MNT2_NFS_OPT_INTR as well.
+
+	* libamu/mount_fs.c (compute_mount_flags): check for INTR and
+	NOINTR options as well (intr was never passed to linux mount
+	syscall).
+
+2000-02-10  Erez Zadok  <ezk@shekel.mcl.cs.columbia.edu>
+
+	* released snapshot am-utils-6.0.4s1
+
+	* aux/GNUmakefile: buildall -k (for maintainers) temporarily now
+	ignores autoconf warnings: "The macro `AC_OUTPUT_COMMANDS' is
+	obsolete".  It is harmless but annoying, and will be fixed when
+	autoconf and automake in their respective CVS trees are working
+	and in sync again.
+
+	* scripts/amd.conf.5: document -D hrtime,xdrtrace
+
+	* all man pages: update copyright to 2000.
+
+	* doc/am-utils.texi: update copyright to 2000.
+
+Wed Feb  9 14:22:31 2000  Rainer Orth  <ro@TechFak.Uni-Bielefeld.DE>
+
+	* include/am_utils.h (D_XDRTRACE): Define.
+	(D_TEST): Disable here.
+
+	* libamu/xutil.c (dbg_opt): Handle it.
+
+	* doc/am-utils.texi (-D-Option): Document it.
+
+	* libamu/xdr_func.c: Use it instead of D_TRACE.
+
+	* include/am_utils.h (D_HRTIME): Define.
+
+	* doc/am-utils.texi (-D-Option): Document it.
+
+	* libamu/xutil.c (show_time_host_and_name): Print high-resolution
+	timestamp if available and activated.
+
+	* aux/configure.in (clock_gettime): Check for it in -lrt and
+	-lposix4.
+
+	* hlfsd/hlfsd.c (mnttab_file_name): Initialize to MNTTAB_FILE_NAME
+	if defined, even for some systems with in kernel mount tables.
+
+2000-02-08  Ion Badulescu  <ionut@moisil.cs.columbia.edu>
+
+	* aux/macros/mount_headers.m4: remove #if 0 around linux/nfs.h to
+	allow compiles against libc5
+
+	* aux/macros/check_mnttab_type.m4: avoid detecting nfs3 under
+	linux when the kernel doesn't support it
+
+	* include/am_compat.h: add workaround for linux efs
+
+2000-02-08  Erez Zadok  <ezk@shekel.mcl.cs.columbia.edu>
+
+	* aux/configure.in: test for ANSI C compiler (before AC_C_CONST).
+	Comment out unused AC_STRUCT_ST_RDEV (which is obsolete anyway).
+
+2000-02-07  Ion Badulescu  <ionut@moisil.cs.columbia.edu>
+
+	* libamu/mount_fs.c (compute_nfs_args): turn on VER3 option for
+	nfs (linux NFSv3).
+
+	* include/am_defs.h: avoid reinclusion of some header files under
+	linux.
+
+	* conf/nfs_prot/nfs_prot_linux.h: support NFSv3.
+
+	* conf/mount/mount_linux.c (mount_linux): support nfs mount
+	 (implementation) version 4 for NFSv3.
+
+	* aux/macros/try_compile_nfs.m4: use AC_MOUNT_HEADERS.
+
+	* aux/macros/mount_headers.m4: don't include <linux/fs.h> (may
+	need to fix the code on other linux machines).
+
+	* aux/macros/check_mnttab_type.m4 (ac_safe): ditto.
+
+	* aux/macros/check_fs_mntent.m4 (ac_safe): check for nfs3 option
+	under linux (depends on ac_cv variable, is that a good idea?)
+
+	* added NFSv3 support for linux
+
+	* aux/{configure.in,acconfig.h}: new option ver3
+
+	* aux/macros/mount_headers.m4: commented out inclusion of
+	linux/fs.h, it's not needed on rh61 (and actually generates
+	conflicts), we should see if it's still needed on libc5 systems
+
+	* aux/macros/try_compile_nfs.m4: use AC_MOUNT_HEADERS rather than
+	try to have its own (out of date) list of headers and ifdef's and
+	...
+
 2000-02-07  Erez Zadok  <ezk@shekel.mcl.cs.columbia.edu>
 
 	*******************************************************************
@@ -1748,13 +2135,12 @@ Wed Feb  7 15:35:51 1998  Rainer Orth  <ro@xayide.TechFak.Uni-Bielefeld.DE>
 	comment in <rpc/auth.h>
 
 	* include/am_defs.h: #define KERNEL to avoid definition of
-	gt_names[]
-	conf/mtab/mtab_ultrix.c: #include <sys/fs_types> before <config.h>
-	to force single definition here
+	gt_names[] conf/mtab/mtab_ultrix.c: #include <sys/fs_types> before
+	<config.h> to force single definition here
 
 	* libamu/mount_fs.c (compute_nfs_args): Ultrix support for
-	nfs_args.gfs_flags moved to callers
-	store mount options in nap->optstr
+	nfs_args.gfs_flags moved to callers store mount options in
+	nap->optstr
 
 	* include/am_defs.h: fix _am_mntent mnt_{type, opts} field
 	descriptions

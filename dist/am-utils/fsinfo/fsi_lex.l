@@ -1,3 +1,5 @@
+/*	$NetBSD: fsi_lex.l,v 1.1.1.2 2000/11/19 23:44:32 wiz Exp $	*/
+
 %{
 /*
  * Copyright (c) 1997-2000 Erez Zadok
@@ -39,7 +41,7 @@
  *
  *	%W% (Berkeley) %G%
  *
- * Id: fsi_lex.l,v 1.4 2000/01/12 16:44:58 ezk Exp 
+ * Id: fsi_lex.l,v 1.4 2000/01/12 16:44:58 ezk Exp
  *
  */
 

@@ -1,4 +1,5 @@
-/*	$NetBSD: am_defs.h,v 1.1.1.1 2000/06/07 00:52:21 dogcow Exp $ */
+/*	$NetBSD: am_defs.h,v 1.1.1.2 2000/11/19 23:43:01 wiz Exp $	*/
+
 /*
  * Copyright (c) 1997-2000 Erez Zadok
  * Copyright (c) 1990 Jan-Simon Pendry
@@ -39,7 +40,7 @@
  *
  *      %W% (Berkeley) %G%
  *
- * Id: am_defs.h,v 1.14 2000/01/12 16:45:04 ezk Exp 
+ * Id: am_defs.h,v 1.15.2.3 2000/05/26 23:40:50 ionut Exp
  *
  */
 
@@ -332,14 +333,15 @@ extern int errno;
 /* ensure that struct datum is not included again from <rpcsvc/yp_prot.h> */
 #  define DATUM
 # endif /* not DATUM */
-#endif /* HAVE_NDBM_H */
-#ifdef HAVE_DB1_NDBM_H
-# include <db1/ndbm.h>
-# ifndef DATUM
+#else /* not HAVE_NDBM_H */
+# ifdef HAVE_DB1_NDBM_H
+#  include <db1/ndbm.h>
+#  ifndef DATUM
 /* ensure that struct datum is not included again from <rpcsvc/yp_prot.h> */
-#  define DATUM
-# endif /* not DATUM */
-#endif /* HAVE_DB1_NDBM_H */
+#   define DATUM
+#  endif /* not DATUM */
+# endif /* HAVE_DB1_NDBM_H */
+#endif /* HAVE_NDBM_H */
 
 /*
  * Actions to take if <net/errno.h> exists.
@@ -560,6 +562,19 @@ struct ypall_callback;
 /* conflicts with <statfsbuf.h> */
 #  define _SYS_STATFS_H
 # endif /* _SYS_MOUNT_H */
+# ifndef _LINUX_STRING_H_
+#  define _LINUX_STRING_H_
+# endif /* not _LINUX_STRING_H_ */
+# ifdef HAVE_LINUX_KDEV_T_H
+#  define __KERNEL__
+#  include <linux/kdev_t.h>
+#  undef __KERNEL__
+# endif /* HAVE_LINUX_KDEV_T_H */
+# ifdef HAVE_LINUX_LIST_H
+#  define __KERNEL__
+#  include <linux/list.h>
+#  undef __KERNEL__
+# endif /* HAVE_LINUX_LIST_H */
 # include <linux/fs.h>
 #endif /* HAVE_LINUX_FS_H */
 
@@ -649,6 +664,10 @@ struct ypall_callback;
 # include <sys/fs/nfs_clnt.h>
 #endif /* HAVE_SYS_FS_NFS_CLNT_H */
 #ifdef HAVE_LINUX_NFS_MOUNT_H
+# define _LINUX_NFS_H
+# define _LINUX_NFS2_H
+# define _LINUX_NFS_FS_H
+# define _LINUX_IN_H
 # include <linux/nfs_mount.h>
 #endif /* HAVE_LINUX_NFS_MOUNT_H */
 

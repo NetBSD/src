@@ -143,4 +143,11 @@ The user-level nfsd (2.2beta44) on SuSE Linux systems (and possibly others)
 dies with a SEGV when amd tries to contact it for access to a volume that
 does not exist, or one for which there is no permission to mount.
 
+
+(10) *-*-hpux11
+
+If you're using NFSv3, you must install HP patches PHNE_20344 and
+PHNE_20371.  If you don't, and you try to use amd with NFSv3 over TCP, your
+kernel will panic.
+
 Erez.

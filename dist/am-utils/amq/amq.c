@@ -1,4 +1,5 @@
-/*	$NetBSD: amq.c,v 1.1.1.1 2000/06/07 00:52:23 dogcow Exp $ */
+/*	$NetBSD: amq.c,v 1.1.1.2 2000/11/19 23:42:57 wiz Exp $	*/
+
 /*
  * Copyright (c) 1997-2000 Erez Zadok
  * Copyright (c) 1990 Jan-Simon Pendry
@@ -39,7 +40,7 @@
  *
  *      %W% (Berkeley) %G%
  *
- * Id: amq.c,v 1.7 2000/01/12 16:44:36 ezk Exp 
+ * Id: amq.c,v 1.7.2.2 2000/04/01 01:22:13 ezk Exp
  *
  */
 
@@ -55,7 +56,7 @@ char copyright[] = "\
 @(#)Copyright (c) 1990 The Regents of the University of California.\n\
 @(#)All rights reserved.\n";
 #if __GNUC__ < 2
-static char rcsid[] = "Id: amq.c,v 1.7 2000/01/12 16:44:36 ezk Exp ";
+static char rcsid[] = "Id: amq.c,v 1.7.2.2 2000/04/01 01:22:13 ezk Exp";
 static char sccsid[] = "%W% (Berkeley) %G%";
 #endif /* __GNUC__ < 2 */
 #endif /* not lint */
@@ -75,9 +76,12 @@ static int stats_flag;
 static int getvers_flag;
 static int amd_program_number = AMQ_PROGRAM;
 static int use_tcp_flag, use_udp_flag;
+static int getpwd_flag;
 static char *debug_opts;
 static char *amq_logfile;
+#ifdef ENABLE_AMQ_MOUNT
 static char *mount_map;
+#endif /* ENABLE_AMQ_MOUNT */
 static char *xlog_optstr;
 static char localhost[] = "localhost";
 static char *def_server = localhost;
@@ -185,6 +189,31 @@ show_mti(amq_mount_tree *mt, enum show_opt e, int *mwid, int *dwid, int *twid)
   }
 }
 
+
+/*
+ * Display a pwd data
+ */
+static void
+show_pwd(amq_mount_tree *mt, char *path, int *flag)
+{
+  int len;
+
+  while (mt) {
+    len = strlen(mt->mt_mountpoint);
+    if (NSTREQ(path, mt->mt_mountpoint, len) &&
+	!STREQ(mt->mt_directory, mt->mt_mountpoint)) {
+      char buf[MAXPATHLEN+1];
+      strcpy(buf, mt->mt_directory);
+      strcat(buf, &path[len]);
+      strcpy(path, buf);
+      *flag = 1;
+    }
+    show_pwd(mt->mt_next, path, flag);
+    mt = mt->mt_child;
+  }
+}
+
+
 /*
  * Display a mount tree.
  */
@@ -197,6 +226,7 @@ show_mt(amq_mount_tree *mt, enum show_opt e, int *mwid, int *dwid, int *pwid)
     mt = mt->mt_child;
   }
 }
+
 
 static void
 show_mi(amq_mount_info_list *ml, enum show_opt e, int *mwid, int *dwid, int *twid)
@@ -331,11 +361,15 @@ main(int argc, char *argv[])
    * Parse arguments
    */
 #ifdef ENABLE_AMQ_MOUNT
-  while ((opt_ch = getopt(argc, argv, "fh:l:msuvx:D:M:pP:TU")) != -1)
+  while ((opt_ch = getopt(argc, argv, "Hfh:l:msuvx:D:M:pP:TUw")) != -1)
 #else /* not ENABLE_AMQ_MOUNT */
-  while ((opt_ch = getopt(argc, argv, "fh:l:msuvx:D:pP:TU")) != -1)
+  while ((opt_ch = getopt(argc, argv, "Hfh:l:msuvx:D:pP:TUw")) != -1)
 #endif /* not ENABLE_AMQ_MOUNT */
     switch (opt_ch) {
+    case 'H':
+      goto show_usage;
+      break;
+
     case 'f':
       flush_flag = 1;
       nodefault = 1;
@@ -404,6 +438,10 @@ main(int argc, char *argv[])
       use_udp_flag = 1;
       break;
 
+    case 'w':
+      getpwd_flag = 1;
+      break;
+
     default:
       errs = 1;
       break;
@@ -416,9 +454,9 @@ main(int argc, char *argv[])
   if (errs) {
   show_usage:
     fprintf(stderr, "\
-Usage: %s [-h host] [[-f] [-m] [-p] [-v] [-s]] | [[-u] directory ...]]\n\
+Usage: %s [-H] [-h host] [[-f] [-m] [-p] [-v] [-s]] | [[-u] directory ...]]\n\
 \t[-l logfile|\"syslog\"] [-x log_flags] [-D dbg_opts]%s\n\
-\t[-P prognum] [-T] [-U]\n",
+\t[-P prognum] [-T] [-U] [-w]\n",
 	    am_get_progname(),
 #ifdef ENABLE_AMQ_MOUNT
 	    " [-M mapent]"
@@ -428,7 +466,6 @@ Usage: %s [-h host] [[-f] [-m] [-p] [-v] [-s]] | [[-u] directory ...]]\n\
     );
     exit(1);
   }
-
 
 
   /* set use_udp and use_tcp flags both to on if none are defined */
@@ -577,6 +614,34 @@ Usage: %s [-h host] [[-f] [-m] [-p] [-v] [-s]] | [[-u] directory ...]]\n\
   }
 
   /*
+   * getpwd info
+   */
+  if (getpwd_flag) {
+    char path[MAXPATHLEN+1];
+    char *wd = getcwd(path, MAXPATHLEN+1);
+    amq_mount_tree_list *mlp = amqproc_export_1((voidp) 0, clnt);
+    amq_mount_tree_p mt;
+    int i, flag;
+
+    if (!wd) {
+      perror("getcwd");
+      exit(1);
+    }
+    for (i = 0; mlp && i < mlp->amq_mount_tree_list_len; i++) {
+      mt = mlp->amq_mount_tree_list_val[i];
+      while (1) {
+	flag = 0;
+	show_pwd(mt, path, &flag);
+	if (!flag) {
+	  printf("%s\n", path);
+	  break;
+	}
+      }
+    }
+    exit(0);
+  }
+
+  /*
    * Mount info
    */
   if (minfo_flag) {
@@ -596,6 +661,7 @@ Usage: %s [-h host] [[-f] [-m] [-p] [-v] [-s]] | [[-u] directory ...]]\n\
     }
   }
 
+#ifdef ENABLE_AMQ_MOUNT
   /*
    * Mount map
    */
@@ -613,6 +679,7 @@ Usage: %s [-h host] [[-f] [-m] [-p] [-v] [-s]] | [[-u] directory ...]]\n\
       perror("automount point");
     }
   }
+#endif /* ENABLE_AMQ_MOUNT */
 
   /*
    * Get Version

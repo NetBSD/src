@@ -1,4 +1,5 @@
-/*	$NetBSD: stubs.c,v 1.1.1.1 2000/06/07 00:52:24 dogcow Exp $ */
+/*	$NetBSD: stubs.c,v 1.1.1.2 2000/11/19 23:43:51 wiz Exp $	*/
+
 /*
  * Copyright (c) 1997-2000 Erez Zadok
  * Copyright (c) 1989 Jan-Simon Pendry
@@ -39,7 +40,7 @@
  *
  *      %W% (Berkeley) %G%
  *
- * Id: stubs.c,v 1.5 2000/01/12 16:45:03 ezk Exp 
+ * Id: stubs.c,v 1.5.2.1 2000/05/16 09:54:14 ib42 Exp
  *
  * HLFSD was written at Columbia University Computer Science Department, by
  * Erez Zadok <ezk@cs.columbia.edu> and Alexander Dupuy <dupuy@cs.columbia.edu>
@@ -223,6 +224,16 @@ nfsproc_lookup_2_svc(nfsdiropargs *argp, struct svc_req *rqstp)
     }
 
     if (STREQ(argp->da_name, slinkname)) {
+#ifndef MNT2_NFS_OPT_SYMTTL
+      /*
+       * This code is needed to defeat Solaris 2.4's (and newer) symlink
+       * values cache.  It forces the last-modified time of the symlink to be
+       * current.  It is not needed if the O/S has an nfs flag to turn off the
+       * symlink-cache at mount time (such as Irix 5.x and 6.x). -Erez.
+       */
+      if (++slinkfattr.na_mtime.nt_useconds == 0)
+	++slinkfattr.na_mtime.nt_seconds;
+#endif /* not MNT2_NFS_OPT_SYMTTL */
       res.dr_u.dr_drok_u.drok_fhandle = slink;
       res.dr_u.dr_drok_u.drok_attributes = slinkfattr;
       res.dr_status = NFS_OK;

@@ -1,4 +1,5 @@
-/*	$NetBSD: nfs_prot_osf2.h,v 1.1.1.1 2000/06/07 00:52:21 dogcow Exp $ */
+/*	$NetBSD: nfs_prot_osf2.h,v 1.1.1.2 2000/11/19 23:43:04 wiz Exp $	*/
+
 /*
  * Copyright (c) 1997-2000 Erez Zadok
  * Copyright (c) 1990 Jan-Simon Pendry
@@ -39,7 +40,7 @@
  *
  *      %W% (Berkeley) %G%
  *
- * Id: nfs_prot_osf2.h,v 1.3 2000/01/12 16:44:49 ezk Exp 
+ * Id: nfs_prot_osf2.h,v 1.3 2000/01/12 16:44:49 ezk Exp
  *
  */
 

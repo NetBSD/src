@@ -1,5 +1,45 @@
 # -*- text -*-
 
+*** Notes specific to am-utils version 6.0.4:
+
+- NFSv3 support for Linux and HPUX-11
+
+- new amd.conf [global] options:
+	nfs_vers: force all NFS mounts to version 2 or 3
+	nfs_proto: force all NFS mounts to udp or tcp
+
+- new debug_options (amd -D):
+	hrtime: turns on high-resolution timer if available
+	readdir: traces browsable_dirs code
+	xdrtrace: traces XDR routines
+	(trace: only traces NFS and RPC)
+
+- new amq options:
+	-H: shows usage
+	-w: translate getpwd() into an Amd path
+
+- new map syntax:
+	${dollar}: to include a literal '$' in assignments
+
+- new "opts:=" options:
+	ver3: turns on NFS version 3 on some systems (linux)
+
+- updated or minor new ports:
+	alpha-dec-osf4.0f
+	alphaev6-dec-osf5.0
+	i386-pc-linux-rh6.2
+	i386-unknown-freebsd3.4
+
+- bugs fixed:
+	symlink mtime fixes to avoid u/mount race conditions
+	update amq -s failed umounts count correctly
+	linux compiles even if efs is available
+	linux works with mount(2) option "intr"
+	linux works with pcfs and cdfs
+	handle std{in,out,err} correctly when releasing controlling tty
+	browsable_readdir works on 64-bit kernel architectures
+	irs/wire routines compile for bsdi{2,3,4}
+
 *** Notes specific to am-utils version 6.0.3:
 
 - updated or minor new ports:
@@ -21,7 +61,7 @@
 
 - ctl-amd has "status" argument (same as RedHat)
 
-- bugs
+- bugs fixed:
 	document buggy AIX 4.3 plock() behavior
 	fixes to stale file handle on symlinks
 	reduce race conditions upon rapid umount/mount sequences

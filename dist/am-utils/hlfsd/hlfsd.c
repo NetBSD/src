@@ -1,4 +1,5 @@
-/*	$NetBSD: hlfsd.c,v 1.1.1.1 2000/06/07 00:52:24 dogcow Exp $ */
+/*	$NetBSD: hlfsd.c,v 1.1.1.2 2000/11/19 23:43:50 wiz Exp $	*/
+
 /*
  * Copyright (c) 1997-2000 Erez Zadok
  * Copyright (c) 1989 Jan-Simon Pendry
@@ -39,7 +40,7 @@
  *
  *      %W% (Berkeley) %G%
  *
- * Id: hlfsd.c,v 1.6 2000/01/12 16:45:02 ezk Exp 
+ * Id: hlfsd.c,v 1.7 2000/02/11 02:09:51 ezk Exp
  *
  * HLFSD was written at Columbia University Computer Science Department, by
  * Erez Zadok <ezk@cs.columbia.edu> and Alexander Dupuy <dupuy@cs.columbia.edu>
@@ -96,11 +97,11 @@ nfstime startup;
 u_short nfs_port;
 
 /* symbol must be available always */
-#ifdef MOUNT_TABLE_ON_FILE
+#ifdef MNTTAB_FILE_NAME
 char *mnttab_file_name = MNTTAB_FILE_NAME;
-#else /* not MOUNT_TABLE_ON_FILE */
+#else /* not MNTTAB_FILE_NAME */
 char *mnttab_file_name = NULL;
-#endif /* not MOUNT_TABLE_ON_FILE */
+#endif /* not MNTTAB_FILE_NAME */
 
 /* forward declarations */
 void hlfsd_going_down(int rc);

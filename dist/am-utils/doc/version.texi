@@ -1,3 +1,4 @@
-@set UPDATED 7 February 2000
-@set EDITION 6.0.3
-@set VERSION 6.0.3
+@set UPDATED 8 July 2000
+@c $NetBSD: version.texi,v 1.1.1.2 2000/11/19 23:43:53 wiz Exp $
+@set EDITION 6.0.4
+@set VERSION 6.0.4

@@ -1,4 +1,5 @@
-/*	$NetBSD: mtab_file.c,v 1.1.1.1 2000/06/07 00:52:20 dogcow Exp $ */
+/*	$NetBSD: mtab_file.c,v 1.1.1.2 2000/11/19 23:43:12 wiz Exp $	*/
+
 /*
  * Copyright (c) 1997-2000 Erez Zadok
  * Copyright (c) 1990 Jan-Simon Pendry
@@ -39,7 +40,7 @@
  *
  *      %W% (Berkeley) %G%
  *
- * Id: mtab_file.c,v 1.4 2000/01/12 16:44:43 ezk Exp 
+ * Id: mtab_file.c,v 1.4 2000/01/12 16:44:43 ezk Exp
  *
  */
 

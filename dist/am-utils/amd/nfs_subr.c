@@ -1,4 +1,5 @@
-/*	$NetBSD: nfs_subr.c,v 1.1.1.1 2000/06/07 00:52:22 dogcow Exp $ */
+/*	$NetBSD: nfs_subr.c,v 1.1.1.2 2000/11/19 23:43:41 wiz Exp $	*/
+
 /*
  * Copyright (c) 1997-2000 Erez Zadok
  * Copyright (c) 1990 Jan-Simon Pendry
@@ -39,7 +40,7 @@
  *
  *      %W% (Berkeley) %G%
  *
- * Id: nfs_subr.c,v 1.6 2000/02/07 08:34:51 ezk Exp 
+ * Id: nfs_subr.c,v 1.6.2.1 2000/06/08 00:24:13 ezk Exp
  *
  */
 
@@ -109,6 +110,7 @@ nfsproc_getattr_2_svc(am_nfs_fh *argp, struct svc_req *rqstp)
   static nfsattrstat res;
   am_node *mp;
   int retry;
+  time_t now = clocktime();
 
 #ifdef DEBUG
   amuDebug(D_TRACE)
@@ -123,28 +125,26 @@ nfsproc_getattr_2_svc(am_nfs_fh *argp, struct svc_req *rqstp)
       plog(XLOG_DEBUG, "\tretry=%d", retry);
 #endif /* DEBUG */
 
-    if (retry < 0)
+    if (retry < 0) {
+      amd_stats.d_drops++;
       return 0;
+    }
     res.ns_status = nfs_error(retry);
   } else {
     nfsattrstat *attrp = &mp->am_attr;
 
 #ifdef DEBUG
     amuDebug(D_TRACE)
-      plog(XLOG_DEBUG, "\tstat(%s), size = %d", mp->am_path,
-	   (int) attrp->ns_u.ns_attr_u.na_size);
+      plog(XLOG_DEBUG, "\tstat(%s), size = %d, mtime=%ld",
+	   mp->am_path,
+	   (int) attrp->ns_u.ns_attr_u.na_size,
+	   (long) attrp->ns_u.ns_attr_u.na_mtime.nt_seconds);
 #endif /* DEBUG */
 
-#ifndef MNT2_NFS_OPT_SYMTTL
-    /*
-     * This code is needed to defeat Solaris 2.4's (and newer) symlink
-     * values cache.  It forces the last-modified time of the symlink to be
-     * current.  It is not needed if the O/S has an nfs flag to turn off the
-     * symlink-cache at mount time (such as Irix 5.x and 6.x). -Erez.
-     */
-    if (++attrp->ns_u.ns_attr_u.na_mtime.nt_useconds == 0)
-      ++attrp->ns_u.ns_attr_u.na_mtime.nt_seconds;
-#endif /* not MNT2_NFS_OPT_SYMTTL */
+    /* Delay unmount of what was looked up */
+    if (mp->am_timeo_w < 4 * gopt.am_timeo_w)
+      mp->am_timeo_w += gopt.am_timeo_w;
+    mp->am_ttl = now + mp->am_timeo_w;
 
     mp->am_stats.s_getattr++;
     return attrp;
@@ -199,8 +199,10 @@ nfsproc_lookup_2_svc(nfsdiropargs *argp, struct svc_req *rqstp)
 
   mp = fh_to_mp2(&argp->da_fhandle, &retry);
   if (mp == 0) {
-    if (retry < 0)
+    if (retry < 0) {
+      amd_stats.d_drops++;
       return 0;
+    }
     res.dr_status = nfs_error(retry);
   } else {
     int error;
@@ -212,9 +214,6 @@ nfsproc_lookup_2_svc(nfsdiropargs *argp, struct svc_req *rqstp)
     ap = (*mp->am_mnt->mf_ops->lookuppn) (mp, argp->da_name, &error, VLOOK_CREATE);
     if (ap == 0) {
       if (error < 0) {
-#ifdef DEBUG
-	dlog("Not sending RPC reply");
-#endif /* DEBUG */
 	amd_stats.d_drops++;
 	return 0;
       }
@@ -298,8 +297,10 @@ nfsproc_readlink_2_svc(am_nfs_fh *argp, struct svc_req *rqstp)
   mp = fh_to_mp2(argp, &retry);
   if (mp == 0) {
   readlink_retry:
-    if (retry < 0)
+    if (retry < 0) {
+      amd_stats.d_drops++;
       return 0;
+    }
     res.rlr_status = nfs_error(retry);
   } else {
     char *ln = do_readlink(mp, &retry, (nfsattrstat **) 0);
@@ -376,8 +377,10 @@ unlink_or_rmdir(nfsdiropargs *argp, struct svc_req *rqstp, int unlinkp)
 
   am_node *mp = fh_to_mp3(&argp->da_fhandle, &retry, VLOOK_DELETE);
   if (mp == 0) {
-    if (retry < 0)
+    if (retry < 0) {
+      amd_stats.d_drops++;
       return 0;
+    }
     res = nfs_error(retry);
     goto out;
   }
@@ -509,8 +512,10 @@ nfsproc_readdir_2_svc(nfsreaddirargs *argp, struct svc_req *rqstp)
 
   mp = fh_to_mp2(&argp->rda_fhandle, &retry);
   if (mp == 0) {
-    if (retry < 0)
+    if (retry < 0) {
+      amd_stats.d_drops++;
       return 0;
+    }
     res.rdr_status = nfs_error(retry);
   } else {
 #ifdef DEBUG
@@ -542,8 +547,10 @@ nfsproc_statfs_2_svc(am_nfs_fh *argp, struct svc_req *rqstp)
 
   mp = fh_to_mp2(argp, &retry);
   if (mp == 0) {
-    if (retry < 0)
+    if (retry < 0) {
+      amd_stats.d_drops++;
       return 0;
+    }
     res.sfr_status = nfs_error(retry);
   } else {
     nfsstatfsokres *fp;

@@ -1,4 +1,5 @@
-/*	$NetBSD: transp_sockets.c,v 1.1.1.1 2000/06/07 00:52:21 dogcow Exp $ */
+/*	$NetBSD: transp_sockets.c,v 1.1.1.2 2000/11/19 23:43:13 wiz Exp $	*/
+
 /*
  * Copyright (c) 1997-2000 Erez Zadok
  * Copyright (c) 1990 Jan-Simon Pendry
@@ -39,7 +40,7 @@
  *
  *      %W% (Berkeley) %G%
  *
- * Id: transp_sockets.c,v 1.6 2000/01/12 16:44:55 ezk Exp 
+ * Id: transp_sockets.c,v 1.6.2.1 2000/05/30 02:01:49 ionut Exp
  *
  * Socket specific utilities.
  *      -Erez Zadok <ezk@cs.columbia.edu>
@@ -175,7 +176,8 @@ get_mount_client(char *unused_host, struct sockaddr_in *sin, struct timeval *tv,
 struct sockaddr_in *
 amu_svc_getcaller(SVCXPRT *xprt)
 {
-  return svc_getcaller(xprt);
+  /* glibc 2.2 returns a sockaddr_storage ??? */
+  return (struct sockaddr_in *)svc_getcaller(xprt);
 }
 
 

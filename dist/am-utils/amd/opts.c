@@ -1,4 +1,5 @@
-/*	$NetBSD: opts.c,v 1.1.1.1 2000/06/07 00:52:22 dogcow Exp $ */
+/*	$NetBSD: opts.c,v 1.1.1.2 2000/11/19 23:43:41 wiz Exp $	*/
+
 /*
  * Copyright (c) 1997-2000 Erez Zadok
  * Copyright (c) 1989 Jan-Simon Pendry
@@ -39,7 +40,7 @@
  *
  *      %W% (Berkeley) %G%
  *
- * Id: opts.c,v 1.8 2000/01/12 16:44:25 ezk Exp 
+ * Id: opts.c,v 1.8.2.1 2000/06/21 04:01:59 ezk Exp
  *
  */
 
@@ -117,6 +118,7 @@ static char uid_str[12], gid_str[12];
 char *opt_uid = uid_str;
 char *opt_gid = gid_str;
 static char *vars[8];
+static char *literal_dollar = "$"; /* ${dollar}: a literal '$' in maps */
 
 /*
  * GLOBALS
@@ -130,7 +132,7 @@ struct am_opts fs_static;	/* copy of the options to play with */
  */
 static struct opt opt_fields[] = {
   /* Name and length.
-	Option str.		Selector str.	boolean fxn.	flags */
+	Option str.		Selector str.	boolean fxn.	case sensitive */
   { S("opts"),
        &fs_static.opt_opts,	0,		0, 		FALSE	},
   { S("host"),
@@ -213,6 +215,8 @@ static struct opt opt_fields[] = {
 	0,			&opt_uid,	0,		FALSE	},
   { S("gid"),
 	0,			&opt_gid,	0, 		FALSE	},
+  { S("dollar"),
+	&literal_dollar,	0,		0,		FALSE	},
   { S("var0"),
 	&vars[0],		0,		0,		FALSE	},
   { S("var1"),
