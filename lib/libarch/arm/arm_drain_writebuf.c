@@ -1,4 +1,4 @@
-/*	$NetBSD: arm32_drain_writebuf.c,v 1.2 1998/02/25 21:24:56 perry Exp $	*/
+/*	$NetBSD: arm_drain_writebuf.c,v 1.1 2002/03/30 06:24:34 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe.
@@ -38,7 +38,7 @@
 #include <machine/sysarch.h>
 
 int
-arm32_drain_writebuf()
+arm_drain_writebuf()
 {
-	return sysarch(ARM32_DRAIN_WRITEBUF, (void *)0);
+	return sysarch(ARM_DRAIN_WRITEBUF, (void *)0);
 }
