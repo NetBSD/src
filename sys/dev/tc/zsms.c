@@ -1,4 +1,4 @@
-/*	$NetBSD: zsms.c,v 1.3 2000/10/19 10:27:04 nisimura Exp $	*/
+/*	$NetBSD: zsms.c,v 1.4 2001/11/13 06:26:10 lukem Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -47,6 +47,9 @@
 /*
  * VSXXX mice attached with channel A of the 1st SCC
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: zsms.c,v 1.4 2001/11/13 06:26:10 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

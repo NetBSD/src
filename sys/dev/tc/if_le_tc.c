@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le_tc.c,v 1.11 2000/03/30 12:45:43 augustss Exp $	*/
+/*	$NetBSD: if_le_tc.c,v 1.12 2001/11/13 06:26:10 lukem Exp $	*/
 
 /*
  * Copyright (c) 1996 Carnegie-Mellon University.
@@ -30,6 +30,10 @@
 /*
  * LANCE on TurboChannel.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: if_le_tc.c,v 1.12 2001/11/13 06:26:10 lukem Exp $");
+
 #include "opt_inet.h"
 
 #include <sys/param.h>
