@@ -1,4 +1,4 @@
-/*	$NetBSD: radix.c,v 1.7 2002/04/22 07:59:42 itojun Exp $	*/
+/*	$NetBSD: radix.c,v 1.8 2002/04/24 01:48:04 itojun Exp $	*/
 /*
  * Copyright (c) 1999 Dug Song.  All rights reserved.
  * Copyright (c) 2002 Markus Friedl.  All rights reserved.
@@ -27,7 +27,7 @@
 #include "includes.h"
 #include "uuencode.h"
 
-RCSID("$OpenBSD: radix.c,v 1.19 2002/04/22 06:15:47 markus Exp $");
+RCSID("$OpenBSD: radix.c,v 1.20 2002/04/23 12:58:26 markus Exp $");
 
 #ifdef AFS
 #include <krb.h>
@@ -66,8 +66,7 @@ creds_to_radix(CREDENTIALS *creds, u_char *buf, size_t buflen)
 	buffer_put_short(&b, creds->kvno);
 
 	/* 32 bit size + data */
-	buffer_put_string(&b, creds->ticket_st.dat,
-	    sizeof(creds->ticket_st.length));
+	buffer_put_string(&b, creds->ticket_st.dat, creds->ticket_st.length);
 
 	ret = uuencode(buffer_ptr(&b), buffer_len(&b), (char *)buf, buflen);
 
