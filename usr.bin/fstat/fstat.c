@@ -1,4 +1,4 @@
-/*	$NetBSD: fstat.c,v 1.33 1998/07/28 21:25:58 mycroft Exp $	*/
+/*	$NetBSD: fstat.c,v 1.34 1999/02/18 06:09:25 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993\n\
 #if 0
 static char sccsid[] = "@(#)fstat.c	8.3 (Berkeley) 5/2/95";
 #else
-__RCSID("$NetBSD: fstat.c,v 1.33 1998/07/28 21:25:58 mycroft Exp $");
+__RCSID("$NetBSD: fstat.c,v 1.34 1999/02/18 06:09:25 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -79,6 +79,8 @@ __RCSID("$NetBSD: fstat.c,v 1.33 1998/07/28 21:25:58 mycroft Exp $");
 #include <netinet/ip.h>
 #include <netinet/in_pcb.h>
 
+#include <arpa/inet.h>
+
 #include <ctype.h>
 #include <errno.h>
 #include <kvm.h>
@@ -91,6 +93,8 @@ __RCSID("$NetBSD: fstat.c,v 1.33 1998/07/28 21:25:58 mycroft Exp $");
 #include <string.h>
 #include <unistd.h>
 #include <err.h>
+
+#include "fstat.h"
 
 #define	TEXT	-1
 #define	CDIR	-2
@@ -105,28 +109,12 @@ typedef struct devs {
 } DEVS;
 DEVS *devs;
 
-struct  filestat {
-	long	fsid;
-	long	fileid;
-	mode_t	mode;
-	u_long	size;
-	dev_t	rdev;
-};
-
-#ifdef notdef
-struct nlist nl[] = {
-	{ "" },
-};
-#endif
-
 int 	fsflg,	/* show files on same filesystem as file(s) argument */
 	pflg,	/* show files open by a particular pid */
 	uflg;	/* show files open by a particular (effective) user */
 int 	checkfile; /* true if restricting to particular files or filesystems */
 int	nflg;	/* (numerical) display f.s. and rdev as dev_t */
 int	vflg;	/* display errors in locating kernel data objects etc... */
-
-#define dprintf	if (vflg) fprintf
 
 struct file **ofiles;	/* buffer of pointers to file structures */
 int maxfiles;
@@ -140,12 +128,6 @@ int maxfiles;
 		} \
 		maxfiles = (d); \
 	}
-
-/*
- * a kvm_read that returns true if everything is read 
- */
-#define KVM_READ(kaddr, paddr, len) \
-	(kvm_read(kd, (u_long)(kaddr), (char *)(paddr), (len)) == (len))
 
 kvm_t *kd;
 
@@ -196,7 +178,7 @@ main(argc, argv)
 			if (pflg++)
 				usage();
 			if (!isdigit(*optarg)) {
-				warnx("-p requires a process id\n");
+				warnx("-p requires a process id");
 				usage();
 			}
 			what = KERN_PROC_PID;
@@ -206,7 +188,7 @@ main(argc, argv)
 			if (uflg++)
 				usage();
 			if (!(passwd = getpwnam(optarg))) {
-				errx(1, "%s: unknown uid\n", optarg);
+				errx(1, "%s: unknown uid", optarg);
 			}
 			what = KERN_PROC_UID;
 			arg = passwd->pw_uid;
@@ -255,13 +237,8 @@ main(argc, argv)
 	if (nlistf == NULL && memf == NULL)
 		(void)setgid(getgid());
 
-#ifdef notdef
-	if (kvm_nlist(kd, nl) != 0) {
-		errx(1, "no namelist: %s\n", kvm_geterr(kd));
-	}
-#endif
 	if ((p = kvm_getprocs(kd, what, arg, &cnt)) == NULL) {
-		errx(1, "%s\n", kvm_geterr(kd));
+		errx(1, "%s", kvm_geterr(kd));
 	}
 	if (nflg)
 		printf("%s",
@@ -283,7 +260,7 @@ main(argc, argv)
 }
 
 const	char *Uname, *Comm;
-int	Pid;
+pid_t	Pid;
 
 #define PREFIX(i) printf("%-8.8s %-10s %5d", Uname, Comm, Pid); \
 	switch(i) { \
@@ -325,14 +302,12 @@ dofiles(kp)
 	if (p->p_fd == NULL)
 		return;
 	if (!KVM_READ(p->p_fd, &filed0, sizeof (filed0))) {
-		dprintf(stderr, "can't read filedesc at %lx for pid %d\n",
-			(long)p->p_fd, Pid);
+		warnx("can't read filedesc at %p for pid %d", p->p_fd, Pid);
 		return;
 	}
 	if (filed.fd_nfiles < 0 || filed.fd_lastfile >= filed.fd_nfiles ||
 	    filed.fd_freefile > filed.fd_lastfile + 1) {
-		dprintf(stderr, "filedesc corrupted at %lx for pid %d\n",
-			(long)p->p_fd, Pid);
+		dprintf("filedesc corrupted at %p for pid %d", p->p_fd, Pid);
 		return;
 	}
 	/*
@@ -357,9 +332,8 @@ dofiles(kp)
 	if (filed.fd_nfiles > NDFILE) {
 		if (!KVM_READ(filed.fd_ofiles, ofiles,
 		    (filed.fd_lastfile+1) * FPSIZE)) {
-			dprintf(stderr,
-			    "can't read file structures at %lx for pid %d\n",
-			    (long)filed.fd_ofiles, Pid);
+			dprintf("can't read file structures at %p for pid %d",
+			    filed.fd_ofiles, Pid);
 			return;
 		}
 	} else
@@ -369,9 +343,8 @@ dofiles(kp)
 		if (ofiles[i] == NULL)
 			continue;
 		if (!KVM_READ(ofiles[i], &file, sizeof (struct file))) {
-			dprintf(stderr,
-			    "can't read file %d at %lx for pid %d\n",
-			    i, (long)ofiles[i], Pid);
+			dprintf("can't read file %d at %p for pid %d",
+			    i, ofiles[i], Pid);
 			continue;
 		}
 		if (file.f_type == DTYPE_VNODE)
@@ -381,8 +354,7 @@ dofiles(kp)
 				socktrans((struct socket *)file.f_data, i);
 		}
 		else {
-			dprintf(stderr, 
-				"unknown file type %d for file %d of pid %d\n",
+			dprintf("unknown file type %d for file %d of pid %d",
 				file.f_type, i, Pid);
 		}
 	}
@@ -396,13 +368,12 @@ vtrans(vp, i, flag)
 {
 	struct vnode vn;
 	struct filestat fst;
-	char mode[15];
+	char mode[15], rw[3];
 	char *badtype = NULL, *filename;
 
 	filename = badtype = NULL;
 	if (!KVM_READ(vp, &vn, sizeof (struct vnode))) {
-		dprintf(stderr, "can't read vnode at %lx for pid %d\n",
-			(long)vp, Pid);
+		dprintf("can't read vnode at %p for pid %d", vp, Pid);
 		return;
 	}
 	if (vn.v_type == VNON || vn.v_tag == VT_NON)
@@ -425,6 +396,10 @@ vtrans(vp, i, flag)
 			break;
 		case VT_EXT2FS:
 			if (!ext2fs_filestat(&vn, &fst))
+				badtype = "error";
+			break;
+		case VT_ISOFS:
+			if (!isofs_filestat(&vn, &fst))
 				badtype = "error";
 			break;
 		default: {
@@ -478,13 +453,14 @@ vtrans(vp, i, flag)
 		break;
 	}
 	default:
-		printf(" %6ld", (long)fst.size);
+		printf(" %6qd", (long long)fst.size);
 	}
-	putchar(' ');
+	rw[0] = '\0';
 	if (flag & FREAD)
-		putchar('r');
+		strcat(rw, "r");
 	if (flag & FWRITE)
-		putchar('w');
+		strcat(rw, "w");
+	printf(" %-2s", rw);
 	if (filename && !fsflg)
 		printf("  %s", filename);
 	putchar('\n');
@@ -498,14 +474,13 @@ ufs_filestat(vp, fsp)
 	struct inode inode;
 
 	if (!KVM_READ(VTOI(vp), &inode, sizeof (inode))) {
-		dprintf(stderr, "can't read inode at %lx for pid %d\n",
-			(long)VTOI(vp), Pid);
+		dprintf("can't read inode at %p for pid %d", VTOI(vp), Pid);
 		return 0;
 	}
 	fsp->fsid = inode.i_dev & 0xffff;
 	fsp->fileid = (long)inode.i_number;
 	fsp->mode = (mode_t)inode.i_ffs_mode;
-	fsp->size = (u_long)inode.i_ffs_size;
+	fsp->size = inode.i_ffs_size;
 	fsp->rdev = inode.i_ffs_rdev;
 
 	return 1;
@@ -519,14 +494,13 @@ ext2fs_filestat(vp, fsp)
 	struct inode inode;
 
 	if (!KVM_READ(VTOI(vp), &inode, sizeof (inode))) {
-		dprintf(stderr, "can't read inode at %lx for pid %d\n",
-		    (long)VTOI(vp), Pid);
+		dprintf("can't read inode at %p for pid %d", VTOI(vp), Pid);
 		return 0;
 	}
 	fsp->fsid = inode.i_dev & 0xffff;
 	fsp->fileid = (long)inode.i_number;
 	fsp->mode = (mode_t)inode.i_e2fs_mode;
-	fsp->size = (u_long)inode.i_e2fs_size;
+	fsp->size = inode.i_e2fs_size;
 	fsp->rdev = 0;  /* XXX */
 	return 1;
 }
@@ -541,14 +515,13 @@ nfs_filestat(vp, fsp)
 	mode_t mode;
 
 	if (!KVM_READ(VTONFS(vp), &nfsnode, sizeof (nfsnode))) {
-		dprintf(stderr, "can't read nfsnode at 0x%lx for pid %d\n",
-			(u_long)VTONFS(vp), Pid);
+		dprintf("can't read nfsnode at %p for pid %d", VTONFS(vp),
+		    Pid);
 		return 0;
 	}
 	if (!KVM_READ(nfsnode.n_vattr, &va, sizeof(va))) {
-		dprintf(stderr,
-		    "can't read vnode attributes at 0x%lx for pid %d\n",
-		    (u_long)nfsnode.n_vattr, Pid);
+		dprintf("can't read vnode attributes at %p for pid %d",
+		    nfsnode.n_vattr, Pid);
 		return 0;
 	}
 	fsp->fsid = va.va_fsid;
@@ -603,7 +576,7 @@ getmnton(m)
 		if (m == mt->m)
 			return (mt->mntonname);
 	if (!KVM_READ(m, &mount, sizeof(struct mount))) {
-		warnx("can't read mount table at %lx\n", (long)m);
+		warnx("can't read mount table at %p", m);
 		return (NULL);
 	}
 	if ((mt = malloc(sizeof (struct mtab))) == NULL) {
@@ -642,27 +615,25 @@ socktrans(sock, i)
 
 	/* fill in socket */
 	if (!KVM_READ(sock, &so, sizeof(struct socket))) {
-		dprintf(stderr, "can't read sock at %lx\n", (long)sock);
+		dprintf("can't read sock at %p", sock);
 		goto bad;
 	}
 
 	/* fill in protosw entry */
 	if (!KVM_READ(so.so_proto, &proto, sizeof(struct protosw))) {
-		dprintf(stderr, "can't read protosw at %lx", (long)so.so_proto);
+		dprintf("can't read protosw at %p", so.so_proto);
 		goto bad;
 	}
 
 	/* fill in domain */
 	if (!KVM_READ(proto.pr_domain, &dom, sizeof(struct domain))) {
-		dprintf(stderr, "can't read domain at %lx\n",
-		    (long)proto.pr_domain);
+		dprintf("can't read domain at %p", proto.pr_domain);
 		goto bad;
 	}
 
 	if ((len = kvm_read(kd, (u_long)dom.dom_name, dname,
 	    sizeof(dname) - 1)) != sizeof(dname) -1) {
-		dprintf(stderr, "can't read domain name at %lx\n",
-			(long)dom.dom_name);
+		dprintf("can't read domain name at %p", dom.dom_name);
 		dname[0] = '\0';
 	}
 	else
@@ -676,9 +647,9 @@ socktrans(sock, i)
 	/* 
 	 * protocol specific formatting
 	 *
-	 * Try to find interesting things to print.  For tcp, the interesting
-	 * thing is the address of the tcpcb, for udp and others, just the
-	 * inpcb (socket pcb).  For unix domain, its the address of the socket
+	 * Try to find interesting things to print.  For TCP, the interesting
+	 * thing is the address of the tcpcb, for UDP and others, just the
+	 * inpcb (socket pcb).  For UNIX domain, its the address of the socket
 	 * pcb and the address of the connected pcb (if connected).  Otherwise
 	 * just print the protocol number and address of the socket itself.
 	 * The idea is not to duplicate netstat, but to make available enough
@@ -687,20 +658,43 @@ socktrans(sock, i)
 	switch(dom.dom_family) {
 	case AF_INET:
 		getinetproto(proto.pr_protocol);
-		if (proto.pr_protocol == IPPROTO_TCP ) {
-			if (so.so_pcb) {
-				if (kvm_read(kd, (u_long)so.so_pcb,
-				    (char *)&inpcb, sizeof(struct inpcb))
-				    != sizeof(struct inpcb)) {
-					dprintf(stderr, 
-					    "can't read inpcb at %lx\n",
-					    (long)so.so_pcb);
-					goto bad;
-				}
-				printf(" %lx", (long)inpcb.inp_ppcb);
+		if (proto.pr_protocol == IPPROTO_TCP) {
+			if (so.so_pcb == NULL)
+				break;
+			if (kvm_read(kd, (u_long)so.so_pcb, (char *)&inpcb,
+			    sizeof(struct inpcb)) != sizeof(struct inpcb)) {
+				dprintf("can't read inpcb at %p", so.so_pcb);
+				goto bad;
 			}
-		}
-		else if (so.so_pcb)
+			printf(" %lx", (long)inpcb.inp_ppcb);
+			printf(" %s:%d",
+			    inpcb.inp_laddr.s_addr == INADDR_ANY ? "*" :
+			    inet_ntoa(inpcb.inp_laddr), ntohs(inpcb.inp_lport));
+			if (inpcb.inp_fport) {
+				printf(" <-> ");
+				printf("%s:%d",
+				    inpcb.inp_faddr.s_addr == INADDR_ANY ? "*" :
+				    inet_ntoa(inpcb.inp_faddr),
+				    ntohs(inpcb.inp_fport));
+			}
+		} else if (proto.pr_protocol == IPPROTO_UDP) {
+			if (so.so_pcb == NULL)
+				break;
+			if (kvm_read(kd, (u_long)so.so_pcb, (char *)&inpcb,
+			    sizeof(struct inpcb)) != sizeof(struct inpcb)) {
+				dprintf("can't read inpcb at %p", so.so_pcb);
+				goto bad;
+			}
+			printf(" %lx", (long)so.so_pcb);
+			printf(" %s:%d",
+			    inpcb.inp_laddr.s_addr == INADDR_ANY ? "*" :
+			    inet_ntoa(inpcb.inp_laddr), ntohs(inpcb.inp_lport));
+			if (inpcb.inp_fport)
+				printf(" <-> %s:%d",
+				    inpcb.inp_faddr.s_addr == INADDR_ANY ? "*" :
+				    inet_ntoa(inpcb.inp_faddr),
+				    ntohs(inpcb.inp_fport));
+		} else if (so.so_pcb)
 			printf(" %lx", (long)so.so_pcb);
 		break;
 	case AF_LOCAL:
@@ -709,8 +703,7 @@ socktrans(sock, i)
 			printf(" %lx", (long)so.so_pcb);
 			if (kvm_read(kd, (u_long)so.so_pcb, (char *)&unpcb,
 			    sizeof(struct unpcb)) != sizeof(struct unpcb)){
-				dprintf(stderr, "can't read unpcb at %lx\n",
-				    (long)so.so_pcb);
+				dprintf("can't read unpcb at %p", so.so_pcb);
 				goto bad;
 			}
 			if (unpcb.unp_conn) {
