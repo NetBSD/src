@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)isa.c	7.2 (Berkeley) 5/13/91
- *	$Id: isa.c,v 1.28.2.8 1993/10/15 03:07:51 mycroft Exp $
+ *	$Id: isa.c,v 1.28.2.9 1993/10/15 03:16:19 mycroft Exp $
  */
 
 /*
@@ -66,8 +66,9 @@ static int isasubmatch __P((struct device *, struct cfdata *, void *));
 struct cfdriver isacd =
     { NULL, "isa", isaprobe, isaattach, DV_DULL, sizeof(struct isa_softc) };
 
-void isa_defaultirq __P((void));
+static void isa_defaultirq __P((void));
 static int isaprint __P((void *, char *));
+static void isa_flushintrs __P((void));
 
 /*
  * We think there might be an ISA bus here.  Check it out.
@@ -99,9 +100,7 @@ isaattach(parent, self, aux)
 	printf("\n");
 
 	isa_defaultirq();
-
-	enable_intr();
-	splhigh();
+	disable_intr();
 	intr_enable(IRQ_SLAVE);
 
 	/* Iterate ``isasubmatch'' over all devices configured here. */
@@ -109,6 +108,9 @@ isaattach(parent, self, aux)
 
 	printf("biomask %x ttymask %x netmask %x impmask %x astmask %s\n",
 	       biomask, ttymask, netmask, impmask, astmask);
+
+	isa_flushintrs();
+	enable_intr();
 	splnone();
 }
 
@@ -212,7 +214,7 @@ extern	IDTVEC(stray);
 /*
  * Fill in default interrupt table, and mask all interrupts.
  */
-void
+static void
 isa_defaultirq()
 {
 	int i;
@@ -253,6 +255,21 @@ isa_defaultirq()
 }
 
 /*
+ * Flush any pending interrupts.
+ */
+static void
+isa_flushintrs()
+{
+	register int i;
+
+	/* clear any pending interrupts */
+	for (i = 0; i < 8; i++) {
+		outb(IO_ICU1, ICU_EOI);
+		outb(IO_ICU2, ICU_EOI);
+	}
+}
+
+/*
  * Determine what IRQ a device is using by trying to force it to generate an
  * interrupt and seeing which IRQ line goes high.  It is not safe to call
  * this function after autoconfig.
@@ -263,14 +280,9 @@ isa_discoverintr(force, aux)
 {
 	int time = TIMER_FREQ * 1;	/* wait up to 1 second */
 	u_int last, now;
-	int i;
 	u_short iobase = IO_TIMER1;
 
-	/* clear any pending interrupts */
-	for (i = 0; i < 8; i++) {
-		outb(IO_ICU1, ICU_EOI);
-		outb(IO_ICU2, ICU_EOI);
-	}
+	isa_flushintrs();
 	/* attempt to force interrupt */
 	force(aux);
 	/* set timer 2 to a known state */
