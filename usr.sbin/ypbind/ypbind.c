@@ -31,7 +31,7 @@
  */
 
 #ifndef LINT
-static char rcsid[] = "$Id: ypbind.c,v 1.15 1994/12/30 04:49:06 mycroft Exp $";
+static char rcsid[] = "$Id: ypbind.c,v 1.16 1995/01/06 13:16:15 pk Exp $";
 #endif
 
 #include <sys/param.h>
@@ -390,14 +390,14 @@ char **argv;
 
 	checkwork();
 
-	width = svc_maxfd;
-	if (rpcsock > width)
-		width = rpcsock;
-	if (pingsock > width)
-		width = pingsock;
-	width++;
-
 	while(1) {
+
+		width = svc_maxfd;
+		if (rpcsock > width)
+			width = rpcsock;
+		if (pingsock > width)
+			width = pingsock;
+		width++;
 		fdsr = svc_fdset;
 		FD_SET(rpcsock, &fdsr);
 		FD_SET(pingsock, &fdsr);
