@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vnops.c,v 1.1 2002/12/26 12:31:35 jdolecek Exp $	*/
+/*	$NetBSD: msdosfs_vnops.c,v 1.2 2003/02/25 10:29:12 jdolecek Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_vnops.c,v 1.1 2002/12/26 12:31:35 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_vnops.c,v 1.2 2003/02/25 10:29:12 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1159,7 +1159,7 @@ out:
 
 }
 
-struct {
+static const struct {
 	struct direntry dot;
 	struct direntry dotdot;
 } dosdirtemplate = {
