@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.9 2002/05/09 01:00:12 thorpej Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.10 2002/07/09 14:52:37 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -121,6 +121,7 @@ int	wm_debug = WM_DEBUG_TX|WM_DEBUG_RX|WM_DEBUG_LINK;
 #define	WM_IFQUEUELEN		256
 #define	WM_TXQUEUELEN		64
 #define	WM_TXQUEUELEN_MASK	(WM_TXQUEUELEN - 1)
+#define	WM_TXQUEUE_GC		(WM_TXQUEUELEN / 8)
 #define	WM_NTXDESC		256
 #define	WM_NTXDESC_MASK		(WM_NTXDESC - 1)
 #define	WM_NEXTTX(x)		(((x) + 1) & WM_NTXDESC_MASK)
@@ -129,10 +130,10 @@ int	wm_debug = WM_DEBUG_TX|WM_DEBUG_RX|WM_DEBUG_LINK;
 /*
  * Receive descriptor list size.  We have one Rx buffer for normal
  * sized packets.  Jumbo packets consume 5 Rx buffers for a full-sized
- * packet.  We allocate 128 receive descriptors, each with a 2k
- * buffer (MCLBYTES), which gives us room for 25 jumbo packets.
+ * packet.  We allocate 256 receive descriptors, each with a 2k
+ * buffer (MCLBYTES), which gives us room for 50 jumbo packets.
  */
-#define	WM_NRXDESC		128
+#define	WM_NRXDESC		256
 #define	WM_NRXDESC_MASK		(WM_NRXDESC - 1)
 #define	WM_NEXTRX(x)		(((x) + 1) & WM_NRXDESC_MASK)
 #define	WM_PREVRX(x)		(((x) - 1) & WM_NRXDESC_MASK)
@@ -244,7 +245,6 @@ struct wm_softc {
 
 	int	sc_txfree;		/* number of free Tx descriptors */
 	int	sc_txnext;		/* next ready Tx descriptor */
-	int	sc_txwin;		/* Tx descriptors since last Tx int */
 
 	int	sc_txsfree;		/* number of free Tx jobs */
 	int	sc_txsnext;		/* next free Tx job */
@@ -1060,12 +1060,15 @@ wm_start(struct ifnet *ifp)
 		    sc->sc_dev.dv_xname, m0));
 
 		/* Get a work queue entry. */
-		if (sc->sc_txsfree == 0) {
-			DPRINTF(WM_DEBUG_TX,
-			    ("%s: TX: no free job descriptors\n",
-				sc->sc_dev.dv_xname));
-			WM_EVCNT_INCR(&sc->sc_ev_txsstall);
-			break;
+		if (sc->sc_txsfree < WM_TXQUEUE_GC) {
+			wm_txintr(sc);
+			if (sc->sc_txsfree == 0) {
+				DPRINTF(WM_DEBUG_TX,
+				    ("%s: TX: no free job descriptors\n",
+					sc->sc_dev.dv_xname));
+				WM_EVCNT_INCR(&sc->sc_ev_txsstall);
+				break;
+			}
 		}
 
 		txs = &sc->sc_txsoft[sc->sc_txsnext];
@@ -1207,12 +1210,6 @@ wm_start(struct ifnet *ifp)
 		 */
 		sc->sc_txdescs[lasttx].wtx_cmdlen |=
 		    htole32(WTX_CMD_EOP | WTX_CMD_IFCS | WTX_CMD_RS);
-		if (++sc->sc_txwin >= (WM_TXQUEUELEN * 2 / 3)) {
-			WM_EVCNT_INCR(&sc->sc_ev_txforceintr);
-			sc->sc_txdescs[lasttx].wtx_cmdlen &=
-			    htole32(~WTX_CMD_IDE);
-			sc->sc_txwin = 0;
-		}
 
 #if 0 /* XXXJRT */
 		/*
@@ -1365,27 +1362,26 @@ wm_intr(void *arg)
 
 		handled = 1;
 
+#if defined(WM_DEBUG) || defined(WM_EVENT_COUNTERS)
 		if (icr & (ICR_RXDMT0|ICR_RXT0)) {
 			DPRINTF(WM_DEBUG_RX,
 			    ("%s: RX: got Rx intr 0x%08x\n",
 			    sc->sc_dev.dv_xname,
 			    icr & (ICR_RXDMT0|ICR_RXT0)));
 			WM_EVCNT_INCR(&sc->sc_ev_rxintr);
-			wm_rxintr(sc);
 		}
-
-		if (icr & (ICR_TXDW|ICR_TXQE)) {
-			DPRINTF(WM_DEBUG_TX,
-			    ("%s: TX: got TDXW|TXQE interrupt\n",
-			    sc->sc_dev.dv_xname));
-#ifdef WM_EVENT_COUNTERS
-			if (icr & ICR_TXDW)
-				WM_EVCNT_INCR(&sc->sc_ev_txdw);
-			else if (icr & ICR_TXQE)
-				WM_EVCNT_INCR(&sc->sc_ev_txqe);
 #endif
-			wm_txintr(sc);
+		wm_rxintr(sc);
+
+#if defined(WM_DEBUG) || defined(WM_EVENT_COUNTERS)
+		if (icr & ICR_TXDW) {
+			DPRINTF(WM_DEBUG_TX,
+			    ("%s: TX: got TDXW interrupt\n",
+			    sc->sc_dev.dv_xname));
+			WM_EVCNT_INCR(&sc->sc_ev_txdw);
 		}
+#endif
+		wm_txintr(sc);
 
 		if (icr & (ICR_LSC|ICR_RXSEQ|ICR_RXCFG)) {
 			WM_EVCNT_INCR(&sc->sc_ev_linkintr);
@@ -1489,10 +1485,8 @@ wm_txintr(struct wm_softc *sc)
 	 * If there are no more pending transmissions, cancel the watchdog
 	 * timer.
 	 */
-	if (sc->sc_txsfree == WM_TXQUEUELEN) {
+	if (sc->sc_txsfree == WM_TXQUEUELEN)
 		ifp->if_timer = 0;
-		sc->sc_txwin = 0;
-	}
 }
 
 /*
@@ -1839,7 +1833,6 @@ wm_init(struct ifnet *ifp)
 	    BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
 	sc->sc_txfree = WM_NTXDESC;
 	sc->sc_txnext = 0;
-	sc->sc_txwin = 0;
 
 	sc->sc_txctx_ipcs = 0xffffffff;
 	sc->sc_txctx_tucs = 0xffffffff;
@@ -1850,14 +1843,14 @@ wm_init(struct ifnet *ifp)
 		CSR_WRITE(sc, WMREG_OLD_TDLEN, sizeof(sc->sc_txdescs));
 		CSR_WRITE(sc, WMREG_OLD_TDH, 0);
 		CSR_WRITE(sc, WMREG_OLD_TDT, 0);
-		CSR_WRITE(sc, WMREG_OLD_TIDV, 1024);
+		CSR_WRITE(sc, WMREG_OLD_TIDV, 128);
 	} else {
 		CSR_WRITE(sc, WMREG_TBDAH, 0);
 		CSR_WRITE(sc, WMREG_TBDAL, WM_CDTXADDR(sc, 0));
 		CSR_WRITE(sc, WMREG_TDLEN, sizeof(sc->sc_txdescs));
 		CSR_WRITE(sc, WMREG_TDH, 0);
 		CSR_WRITE(sc, WMREG_TDT, 0);
-		CSR_WRITE(sc, WMREG_TIDV, 1024);
+		CSR_WRITE(sc, WMREG_TIDV, 128);
 
 		CSR_WRITE(sc, WMREG_TXDCTL, TXDCTL_PTHRESH(0) |
 		    TXDCTL_HTHRESH(0) | TXDCTL_WTHRESH(0));
@@ -1884,7 +1877,7 @@ wm_init(struct ifnet *ifp)
 		CSR_WRITE(sc, WMREG_OLD_RDLEN0, sizeof(sc->sc_rxdescs));
 		CSR_WRITE(sc, WMREG_OLD_RDH0, 0);
 		CSR_WRITE(sc, WMREG_OLD_RDT0, 0);
-		CSR_WRITE(sc, WMREG_OLD_RDTR0, 64 | RDTR_FPD);
+		CSR_WRITE(sc, WMREG_OLD_RDTR0, 28 | RDTR_FPD);
 
 		CSR_WRITE(sc, WMREG_OLD_RDBA1_HI, 0);
 		CSR_WRITE(sc, WMREG_OLD_RDBA1_LO, 0);
@@ -1898,7 +1891,7 @@ wm_init(struct ifnet *ifp)
 		CSR_WRITE(sc, WMREG_RDLEN, sizeof(sc->sc_rxdescs));
 		CSR_WRITE(sc, WMREG_RDH, 0);
 		CSR_WRITE(sc, WMREG_RDT, 0);
-		CSR_WRITE(sc, WMREG_RDTR, 64 | RDTR_FPD);
+		CSR_WRITE(sc, WMREG_RDTR, 28 | RDTR_FPD);
 	}
 	for (i = 0; i < WM_NRXDESC; i++) {
 		rxs = &sc->sc_rxsoft[i];
@@ -1980,7 +1973,7 @@ wm_init(struct ifnet *ifp)
 	 * Set up the interrupt registers.
 	 */
 	CSR_WRITE(sc, WMREG_IMC, 0xffffffffU);
-	sc->sc_icr = ICR_TXDW | ICR_TXQE | ICR_LSC | ICR_RXSEQ | ICR_RXDMT0 |
+	sc->sc_icr = ICR_TXDW | ICR_LSC | ICR_RXSEQ | ICR_RXDMT0 |
 	    ICR_RXO | ICR_RXT0;
 	if ((sc->sc_flags & WM_F_HAS_MII) == 0)
 		sc->sc_icr |= ICR_RXCFG;
