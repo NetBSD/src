@@ -1,4 +1,4 @@
-/*	$NetBSD: clmpccvar.h,v 1.5 2000/07/20 20:44:50 scw Exp $ */
+/*	$NetBSD: clmpccvar.h,v 1.6 2001/01/14 23:50:28 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -115,7 +115,7 @@ struct clmpcc_softc {
 #define CLMPCC_BYTESWAP_LOW	0x00	/* *byteswap pin is low */
 #define CLMPCC_BYTESWAP_HIGH	0x03	/* *byteswap pin is high */
 
-#ifndef __GENERIC_SOFT_INTERRUPTS
+#ifndef __HAVE_GENERIC_SOFT_INTERRUPTS
 	/* Called to request a soft interrupt callback to clmpcc_softintr */
 	void		(*sc_softhook) __P((struct clmpcc_softc *));
 	volatile int	sc_soft_running;

@@ -1,4 +1,4 @@
-/* $NetBSD: sci.c,v 1.11 2000/11/22 21:14:25 msaitoh Exp $ */
+/* $NetBSD: sci.c,v 1.12 2001/01/14 23:50:30 thorpej Exp $ */
 
 /*-
  * Copyright (C) 1999 T.Horiuchi and SAITOH Masanobu.  All rights reserved.
@@ -195,7 +195,7 @@ void	sci_break	__P((struct sci_softc *, int));
 void	sci_iflush	__P((struct sci_softc *));
 
 #define	integrate	static inline
-#ifdef __GENERIC_SOFT_INTERRUPTS
+#ifdef __HAVE_GENERIC_SOFT_INTERRUPTS
 void 	scisoft	__P((void *));
 #else
 #ifndef __NO_SOFT_SERIAL_INTERRUPT
@@ -248,7 +248,7 @@ int scicn_speed = 9600;
 
 #define	divrnd(n, q)	(((n)*2/(q)+1)/2)	/* divide and round off */
 
-#ifndef __GENERIC_SOFT_INTERRUPTS
+#ifndef __HAVE_GENERIC_SOFT_INTERRUPTS
 #ifdef __NO_SOFT_SERIAL_INTERRUPT
 volatile int	sci_softintr_scheduled;
 struct callout sci_soft_ch = CALLOUT_INITIALIZER;
@@ -921,7 +921,7 @@ sci_schedrx(sc)
 	sc->sc_rx_ready = 1;
 
 	/* Wake up the poller. */
-#ifdef __GENERIC_SOFT_INTERRUPTS
+#ifdef __HAVE_GENERIC_SOFT_INTERRUPTS
 	softintr_schedule(sc->sc_si);
 #else
 #ifndef __NO_SOFT_SERIAL_INTERRUPT
@@ -1142,7 +1142,7 @@ sci_stsoft(sc, tp)
 #endif
 }
 
-#ifdef __GENERIC_SOFT_INTERRUPTS
+#ifdef __HAVE_GENERIC_SOFT_INTERRUPTS
 void
 scisoft(arg)
 	void *arg;
@@ -1207,7 +1207,7 @@ scisoft(arg)
 		}
 	}
 
-#ifndef __GENERIC_SOFT_INTERRUPTS
+#ifndef __HAVE_GENERIC_SOFT_INTERRUPTS
 #ifdef __NO_SOFT_SERIAL_INTERRUPT
 	splx(s);
 #endif
@@ -1404,7 +1404,7 @@ sciintr(arg)
 	}
 
 	/* Wake up the poller. */
-#ifdef __GENERIC_SOFT_INTERRUPTS
+#ifdef __HAVE_GENERIC_SOFT_INTERRUPTS
 	softintr_schedule(sc->sc_si);
 #else
 #ifndef __NO_SOFT_SERIAL_INTERRUPT
