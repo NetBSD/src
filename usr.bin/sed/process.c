@@ -37,7 +37,7 @@
 
 #ifndef lint
 /* from: static char sccsid[] = "@(#)process.c	8.1 (Berkeley) 6/6/93"; */
-static char *rcsid = "$Id: process.c,v 1.15 1995/03/15 11:25:10 mycroft Exp $";
+static char *rcsid = "$Id: process.c,v 1.16 1995/03/15 12:12:16 mycroft Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -95,6 +95,7 @@ process()
 
 	for (linenum = 0; mf_fgets(&PS, REPLACE);) {
 		pd = 0;
+top:
 		cp = prog;
 redirect:
 		while (cp != NULL) {
@@ -131,13 +132,14 @@ redirect:
 			case 'D':
 				if (pd)
 					goto new;
-				if ((p = memchr(ps, '\n', psl - 1)) == NULL)
+				if ((p = memchr(ps, '\n', psl - 1)) == NULL) {
 					pd = 1;
-				else {
+					goto new;
+				} else {
 					psl -= (p + 1) - ps;
 					memmove(ps, p + 1, psl);
+					goto top;
 				}
-				goto new;
 			case 'g':
 				cspace(&PS, hs, hsl, REPLACE);
 				break;
