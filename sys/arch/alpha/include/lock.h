@@ -1,7 +1,7 @@
-/* $NetBSD: lock.h,v 1.2 1998/11/04 06:19:55 chs Exp $ */
+/* $NetBSD: lock.h,v 1.3 1999/07/27 21:45:39 thorpej Exp $ */
 
 /*-
- * Copyright (c) 1998 The NetBSD Foundation, Inc.
+ * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -42,13 +42,8 @@
  */
 
 #if defined(_KERNEL)
-void	simple_lock_init __P((__volatile struct simplelock *));
-void	simple_lock __P((__volatile struct simplelock *));
-int	simple_lock_try __P((__volatile struct simplelock *));
-void	simple_unlock __P((__volatile struct simplelock *));
-
-#if defined(LOCKDEBUG)
-#define simple_lock_dump()
-#define simple_lock_freecheck(start, end)
-#endif /* LOCKDEBUG */
+void	cpu_simple_lock_init __P((__volatile struct simplelock *));
+void	cpu_simple_lock __P((__volatile struct simplelock *));
+int	cpu_simple_lock_try __P((__volatile struct simplelock *));
+void	cpu_simple_unlock __P((__volatile struct simplelock *));
 #endif /* _KERNEL */
