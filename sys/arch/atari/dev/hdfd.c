@@ -1,4 +1,4 @@
-/*	$NetBSD: hdfd.c,v 1.15 1999/08/06 08:27:31 leo Exp $	*/
+/*	$NetBSD: hdfd.c,v 1.16 1999/10/21 15:03:28 leo Exp $	*/
 
 /*-
  * Copyright (c) 1996 Leo Weppelman
@@ -1330,15 +1330,17 @@ fdioctl(dev, cmd, addr, flag, p)
 		/* XXX do something */
 		return 0;
 
+	case DIOCSDINFO:
 	case DIOCWDINFO:
 		if ((flag & FWRITE) == 0)
-			return EBADF;
+		    return EBADF;
 
 		error = setdisklabel(&buffer, (struct disklabel *)addr, 0,NULL);
 		if (error)
-			return error;
+		    return error;
 
-		error = writedisklabel(dev, fdstrategy, &buffer, NULL);
+		if (cmd == DIOCWDINFO)
+		    error = writedisklabel(dev, fdstrategy, &buffer, NULL);
 		return error;
 
 	case FDIOCGETFORMAT:
