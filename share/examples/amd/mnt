@@ -1,8 +1,0 @@
-# $NetBSD: mnt,v 1.1 1998/06/17 07:46:29 tron Exp $
-#
-# /mnt - mount local CD ROM by cd'ing into it: cd /mnt/cdrom
-#        be sure to mkdir /mnt before using this.
-#
-/defaults	type:=cdfs;opts:=ro,nosuid,nodevs
-
-cdrom		dev:=/dev/cd0a

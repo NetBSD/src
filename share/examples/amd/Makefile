@@ -1,6 +1,6 @@
-#	$NetBSD: Makefile,v 1.2 1997/12/12 11:50:33 hubertf Exp $
+#	$NetBSD: Makefile,v 1.3 1998/06/21 16:43:31 tron Exp $
 
-FILES=	master net
+FILES=	cd master net
 FILESDIR=/usr/share/examples/amd
 NOOBJ=	noobj
 
