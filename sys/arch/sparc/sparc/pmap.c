@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.136 1999/02/14 12:48:03 pk Exp $ */
+/*	$NetBSD: pmap.c,v 1.137 1999/02/14 14:37:45 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -558,6 +558,7 @@ VA2PA(addr)
 	/* Try each level in turn until we find a valid pte. Otherwise panic */
 
 	pte = lda(((u_int)addr & ~0xfff) | ASI_SRMMUFP_L3, ASI_SRMMUFP);
+(void)lda(SRMMU_SFSR, ASI_SRMMU);
 	if ((pte & SRMMU_TETYPE) == SRMMU_TEPTE)
 	    return (((pte & SRMMU_PPNMASK) << SRMMU_PPNPASHIFT) |
 		    ((u_int)addr & 0xfff));
@@ -1030,7 +1031,7 @@ mmu_reservemon4_4c(nrp, nsp)
 			 * rather than segments, amongst the contexts.
 			 */
 			for (i = ncontext; --i > 0;)
-				(*promvec->pv_setctxt)(i, (caddr_t)va, mmureg);
+				prom_setcontext(i, (caddr_t)va, mmureg);
 		}
 #endif
 		mmuseg = getsegmap(va);
@@ -1039,7 +1040,7 @@ mmu_reservemon4_4c(nrp, nsp)
 
 		if (!HASSUN4_MMU3L)
 			for (i = ncontext; --i > 0;)
-				(*promvec->pv_setctxt)(i, (caddr_t)va, mmuseg);
+				prom_setcontext(i, (caddr_t)va, mmuseg);
 
 		if (mmuseg == seginval) {
 			va += NBPSG;
@@ -2842,7 +2843,6 @@ pmap_bootstrap4_4c(nctx, nregion, nsegment)
 	int npte, zseg, vr, vs;
 	int rcookie, scookie;
 	caddr_t p;
-	void (*rom_setmap)(int ctx, caddr_t va, int pmeg);
 	int lastpage;
 	extern char end[];
 #ifdef DDB
@@ -3034,7 +3034,6 @@ pmap_bootstrap4_4c(nctx, nregion, nsegment)
 	 * BOOT PROCESS
 	 */
 
-	rom_setmap = promvec->pv_setctxt;
 	zseg = ((((u_int)p + NBPSG - 1) & ~SGOFSET) - KERNBASE) >> SGSHIFT;
 	lastpage = VA_VPG(p);
 	if (lastpage == 0)
@@ -3070,7 +3069,7 @@ pmap_bootstrap4_4c(nctx, nregion, nsegment)
 #if defined(SUN4_MMU3L)
 			if (HASSUN4_MMU3L) {
 				for (i = 1; i < nctx; i++)
-					rom_setmap(i, p, rcookie);
+					prom_setcontext(i, p, rcookie);
 
 				TAILQ_INSERT_TAIL(&region_locked,
 						  mmureg, me_list);
@@ -3090,7 +3089,7 @@ pmap_bootstrap4_4c(nctx, nregion, nsegment)
 		if (!HASSUN4_MMU3L)
 #endif
 			for (i = 1; i < nctx; i++)
-				rom_setmap(i, p, scookie);
+				prom_setcontext(i, p, scookie);
 
 		/* set up the mmu entry */
 		TAILQ_INSERT_TAIL(&segm_locked, mmuseg, me_list);
