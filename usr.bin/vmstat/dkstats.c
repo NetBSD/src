@@ -1,4 +1,4 @@
-/*	$NetBSD: dkstats.c,v 1.18 2002/11/01 15:23:06 simonb Exp $	*/
+/*	$NetBSD: dkstats.c,v 1.19 2002/11/16 15:59:32 itojun Exp $	*/
 
 /*
  * Copyright (c) 1996 John M. Vinopal
@@ -361,6 +361,8 @@ dkinit(int select)
 			deref_kptr(p, &cur_disk, sizeof(cur_disk));
 			deref_kptr(cur_disk.dk_name, buf, sizeof(buf));
 			cur.dk_name[i] = strdup(buf);
+			if (!cur.dk_name[i])
+				err(1, "strdup");
 			cur.dk_select[i] = select;
 
 			p = cur_disk.dk_link.tqe_next;

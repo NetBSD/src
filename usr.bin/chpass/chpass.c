@@ -1,4 +1,4 @@
-/*	$NetBSD: chpass.c,v 1.26 2002/08/16 01:06:28 enami Exp $	*/
+/*	$NetBSD: chpass.c,v 1.27 2002/11/16 15:59:26 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)chpass.c	8.4 (Berkeley) 4/2/94";
 #else 
-__RCSID("$NetBSD: chpass.c,v 1.26 2002/08/16 01:06:28 enami Exp $");
+__RCSID("$NetBSD: chpass.c,v 1.27 2002/11/16 15:59:26 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -204,6 +204,10 @@ main(argc, argv)
 		/* Make a copy for later verification */
 		old_pw = *pw;
 		old_pw.pw_gecos = strdup(old_pw.pw_gecos);
+		if (!old_pw.pw_gecos) {
+			err(1, "strdup");
+			/*NOTREACHED*/
+		}
 	}
 
 	if (op == NEWSH) {

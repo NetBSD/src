@@ -1,4 +1,4 @@
-/*	$NetBSD: lock.c,v 1.19 2000/07/29 08:40:38 martin Exp $	*/
+/*	$NetBSD: lock.c,v 1.20 2002/11/16 15:59:28 itojun Exp $	*/
 
 /*
  * Copyright (c) 1980, 1987, 1993
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1987, 1993\n\
 #if 0
 static char sccsid[] = "@(#)lock.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: lock.c,v 1.19 2000/07/29 08:40:38 martin Exp $");
+__RCSID("$NetBSD: lock.c,v 1.20 2002/11/16 15:59:28 itojun Exp $");
 #endif /* not lint */
 
 /*
@@ -128,6 +128,8 @@ main(argc, argv)
 		case 'p':
 			usemine = 1;
 			mypw = strdup(pw->pw_passwd);
+			if (!mypw)
+				err(1, "strdup");
 			break;
 		case '?':
 		default:
