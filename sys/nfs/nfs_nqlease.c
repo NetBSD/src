@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_nqlease.c,v 1.32 2000/06/09 00:00:17 fvdl Exp $	*/
+/*	$NetBSD: nfs_nqlease.c,v 1.32.2.1 2000/12/14 23:36:51 he Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -1077,7 +1077,7 @@ nqnfs_clientd(nmp, cred, ncd, flag, argp, p)
 						(void) nqnfs_vacated(vp, cred);
 					} else if (vp->v_type == VREG) {
 						(void) VOP_FSYNC(vp, cred,
-						    FSYNC_WAIT, p);
+						    FSYNC_WAIT, 0, 0, p);
 						np->n_flag &= ~NMODIFIED;
 					}
 				}
