@@ -1,4 +1,4 @@
-.\"	$NetBSD: form_page.3,v 1.4 2002/02/20 11:30:35 wiz Exp $
+.\"	$NetBSD: form_page.3,v 1.5 2002/08/06 12:44:35 wiz Exp $
 .\"
 .\" Copyright (c) 1999
 .\"	Brett Lymn - blymn@baea.com.au, brett_lymn@yahoo.com.au
@@ -53,9 +53,9 @@
 .Ft int
 .Fn form_max_page "FORM *form"
 .Ft int
-.Fn set_current_field "FORM *form, FIELD *field"
+.Fn set_current_field "FORM *form" "FIELD *field"
 .Ft int
-.Fn set_form_page "FORM *form, int page"
+.Fn set_form_page "FORM *form" "int page"
 .Sh DESCRIPTION
 The
 .Fn current_field
