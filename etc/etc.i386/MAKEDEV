@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.163 2002/02/02 20:58:47 tls Exp $
+#	$NetBSD: MAKEDEV,v 1.164 2002/02/04 08:21:27 lukem Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -158,42 +158,47 @@ else
 	nofdesc=true
 fi
 
+chown root:wheel .
+
+makedev()
+{
+
 for i
 do
 
 case $i in
 
 all)
-	sh $0 std wscons fd wt0 fd0 fd1 wd0 wd1 wd2 wd3 sd0 sd1 sd2 sd3 sd4
-	sh $0 tty0 tty1 tty2 tty3 pty0
-	sh $0 raid0 raid1 raid2 raid3 raid4 raid5 raid6 raid7
-	sh $0 st0 st1 ch0 cd0 cd1 mcd0 vnd0 vnd1 lpa0 lpa1 lpa2
-	sh $0 bpf0 bpf1 bpf2 bpf3 bpf4 bpf5 bpf6 bpf7
-	sh $0 lpt0 lpt1 lpt2 ttyv0 tun0 tun1 tun2 tun3 ipl
-	sh $0 ccd0 ccd1 ccd2 ccd3 md0 ss0 ch0 uk0 uk1 random
-	sh $0 speaker lkm mms0 lms0 pms0 joy0 joy1 apm local satlink0 iop0 mlx0
-	sh $0 mly0
-	sh $0 audio
-	sh $0 radio
-	sh $0 usbs
-	sh $0 isdn
-	sh $0 music rmidi0 rmidi1 rmidi2 rmidi3 rmidi4 rmidi5 rmidi6 rmidi7
-	sh $0 scsibus0 scsibus1 scsibus2 scsibus3
-	sh $0 ld0 ld1 ld2 ld3
-	sh $0 sysmon
-	sh $0 bktr
-	sh $0 ttyCZ0 ttyCY0
-	sh $0 agp0
-	sh $0 pci0 pci1 pci2 pci3 pci4 pci5 pci6 pci7
-	sh $0 altq
-	sh $0 ed0 ed1
-	sh $0 cir0 cir1 irframe0 irframe1
-	sh $0 clockctl
-	sh $0 nsmb0 nsmb1 nsmb2 nsmb3
+	makedev std wscons fd wt0 fd0 fd1 wd0 wd1 wd2 wd3 sd0 sd1 sd2 sd3 sd4
+	makedev tty0 tty1 tty2 tty3 pty0
+	makedev raid0 raid1 raid2 raid3 raid4 raid5 raid6 raid7
+	makedev st0 st1 ch0 cd0 cd1 mcd0 vnd0 vnd1 lpa0 lpa1 lpa2
+	makedev bpf0 bpf1 bpf2 bpf3 bpf4 bpf5 bpf6 bpf7
+	makedev lpt0 lpt1 lpt2 ttyv0 tun0 tun1 tun2 tun3 ipl
+	makedev ccd0 ccd1 ccd2 ccd3 md0 ss0 ch0 uk0 uk1 random
+	makedev speaker lkm mms0 lms0 pms0 joy0 joy1 apm local satlink0
+	makedev iop0 mlx0 mly0
+	makedev audio
+	makedev radio
+	makedev usbs
+	makedev isdn
+	makedev music rmidi0 rmidi1 rmidi2 rmidi3 rmidi4 rmidi5 rmidi6 rmidi7
+	makedev scsibus0 scsibus1 scsibus2 scsibus3
+	makedev ld0 ld1 ld2 ld3
+	makedev sysmon
+	makedev bktr
+	makedev ttyCZ0 ttyCY0
+	makedev agp0
+	makedev pci0 pci1 pci2 pci3 pci4 pci5 pci6 pci7
+	makedev altq
+	makedev ed0 ed1
+	makedev cir0 cir1 irframe0 irframe1
+	makedev clockctl
+	makedev nsmb0 nsmb1 nsmb2 nsmb3
 	;;
 
 audio)
-	sh $0 audio0 audio1 audio2 audio3
+	makedev audio0 audio1 audio2 audio3
 	ln -fs sound0 sound
 	ln -fs audio0 audio
 	ln -fs mixer0 mixer
@@ -201,31 +206,31 @@ audio)
 	;;
 
 radio)
-	sh $0 radio0 radio1
+	makedev radio0 radio1
 	ln -fs radio0 radio
 	;;
 
 floppy)
-	sh $0 std wt0 fd0 fd1 wd0 wd1 wd2 wd3 sd0 sd1 sd2 sd3 sd4 tty0 tty1 tty2
-	sh $0 st0 st1 cd0 cd1 mcd0 ttyv0 opty ld0 ld1 ld2 ld3 ed0 ed1
+	makedev std wt0 fd0 fd1 wd0 wd1 wd2 wd3 sd0 sd1 sd2 sd3 sd4 st0 st1
+	makedev tty0 tty1 tty2 cd0 cd1 mcd0 ttyv0 opty ld0 ld1 ld2 ld3 ed0 ed1
 	;;
 
 ramdisk)
-	sh $0 floppy md0
+	makedev floppy md0
 	;;
 
 usbs)
-	sh $0 usb usb0 usb1 usb2 usb3 usb4 usb5 usb6 usb7
-	sh $0 uhid0 uhid1 uhid2 uhid3
-	sh $0 ulpt0 ulpt1
-	sh $0 ttyU0 ttyU1
-	sh $0 urio0
-	sh $0 uscanner0 uscanner1
-	sh $0 ugen0
+	makedev usb usb0 usb1 usb2 usb3 usb4 usb5 usb6 usb7
+	makedev uhid0 uhid1 uhid2 uhid3
+	makedev ulpt0 ulpt1
+	makedev ttyU0 ttyU1
+	makedev urio0
+	makedev uscanner0 uscanner1
+	makedev ugen0
 	;;
 
 isdn)
-	sh $0 i4b i4bctl i4brbch0 i4brbch1 i4btel0 i4btel1 i4btrc0 i4btrc1
+	makedev i4b i4bctl i4brbch0 i4brbch1 i4btel0 i4btel1 i4btrc0 i4btrc1
 	;;
 
 std)
@@ -258,7 +263,6 @@ usb*)
 	major=55
 	rm -f $usb
 	mknod $usb c $major $unit
-	chown root.wheel $usb
 	chmod 600 $usb
 	;;
 
@@ -268,7 +272,6 @@ uhid*)
 	major=56
 	rm -f $uhid
 	mknod $uhid c $major $unit
-	chown root.wheel $uhid
 	chmod 666 $uhid
 	;;
 
@@ -278,7 +281,6 @@ ulpt*)
 	major=57
 	rm -f $ulpt
 	mknod $ulpt c $major $unit
-	chown root.wheel $ulpt
 	chmod 600 $ulpt
 	;;
 
@@ -288,7 +290,6 @@ urio*)
 	major=70
 	rm -f $urio
 	mknod $urio c $major $unit
-	chown root.wheel $urio
 	chmod 666 $urio
 	;;
 
@@ -298,7 +299,6 @@ uscanner*)
 	major=75
 	rm -f $uscanner
 	mknod $uscanner c $major $unit
-	chown root.wheel $uscanner
 	chmod 600 $uscanner
 	;;
 
@@ -312,7 +312,7 @@ ttyU*)
 	mknod $ttyU c $major $(($unit + $dialin  ))
 	mknod $dtyU c $major $(($unit + $dialout ))
 	mknod $ctyU c $major $(($unit + $callunit))
-	chown uucp.wheel $ttyU $dtyU $ctyU
+	chown uucp $ttyU $dtyU $ctyU
 	chmod 600 $ttyU $dtyU $ctyU
 	;;
 
@@ -325,7 +325,6 @@ ugen*)
 		ugenj=$ugen.$j
 		rm -f $ugenj
 		mknod $ugenj c $major $(($unit * 16 + $j))
-		chown root.wheel $ugenj
 		chmod 600 $ugenj
 	done
 	;;
@@ -333,30 +332,27 @@ ugen*)
 ttyv0)
 	rm -f ttyv0
 	mknod ttyv0 c 12 0
-	chown root.wheel ttyv0
 	;;
 
 wscons)
-	sh $0 ttyE0 ttyE1 ttyE2 ttyE3 ttyE4 ttyE5 ttyE6 ttyE7
-	sh $0 wsmouse0 wsmouse1 wsmouse2 wsmouse3
-	sh $0 wskbd0 wskbd1 wskbd2 wskbd3
-	sh $0 wsmux0 wsmux1 wsmux2 wsmux3
-	sh $0 wsmouse wskbd
-	sh $0 ttyEcfg
-	sh $0 wsfont
+	makedev ttyE0 ttyE1 ttyE2 ttyE3 ttyE4 ttyE5 ttyE6 ttyE7
+	makedev wsmouse0 wsmouse1 wsmouse2 wsmouse3
+	makedev wskbd0 wskbd1 wskbd2 wskbd3
+	makedev wsmux0 wsmux1 wsmux2 wsmux3
+	makedev wsmouse wskbd
+	makedev ttyEcfg
+	makedev wsfont
 	;;
 
 wsmouse)
 	rm -f wsmouse
 	mknod wsmouse c 65 0
-	chown root.wheel wsmouse
 	chmod 600 wsmouse
 	;;
 
 wskbd)
 	rm -f wskbd
 	mknod wskbd c 65 1
-	chown root.wheel wskbd
 	chmod 600 wskbd
 	;;
 
@@ -368,10 +364,8 @@ wsmux*)
 	major=65
 	rm -f $wsmux $wsmuxctl
 	mknod $wsmux c $major $unit
-	chown root.wheel $wsmux
 	chmod 600 $wsmux
 	mknod $wsmuxctl c $major $unitctl
-	chown root.wheel $wsmuxctl
 	chmod 200 $wsmuxctl
 	;;
 
@@ -379,7 +373,6 @@ ttyEcfg)
 	chr=47
 	rm -f ttyEcfg
 	mknod ttyEcfg c $chr 255
-	chown root.wheel ttyEcfg
 	chmod 600 ttyEcfg
 	;;
 
@@ -387,7 +380,6 @@ ttyE*)
 	chr=47; unit=${i#ttyE}
 	rm -f ttyE$unit
 	mknod ttyE$unit c $chr $unit
-	chown root.wheel ttyE$unit
 	;;
 
 wsmouse*)
@@ -396,7 +388,6 @@ wsmouse*)
 	major=49
 	rm -f $wsmouse
 	mknod $wsmouse c $major $unit
-	chown root.wheel $wsmouse
 	chmod 600 $wsmouse
 	;;
 
@@ -406,20 +397,18 @@ wskbd*)
 	major=48
 	rm -f $wskbd
 	mknod $wskbd c $major $unit
-	chown root.wheel $wskbd
 	chmod 600 $wskbd
 	;;
 
 fd)
 	if $nofdesc; then
 		rm -f fd/*
-		mkdir fd > /dev/null 2>&1
+		mkdir fd 2>/dev/null
 		n=0
 		while [ $n -lt 64 ]; do
 			mknod fd/$n c 22 $n
 			n=$(($n + 1))
 		done
-		chown -R root.wheel fd
 		chmod 755 fd
 		chmod 666 fd/*
 	fi
@@ -530,7 +519,7 @@ ttyCZ*)
 		rm -f ttyCZ$nminor dtyCZ$nminor
 		mknod ttyCZ$nminor c $major $(($minor + $dialin  ))
 		mknod dtyCZ$nminor c $major $(($minor + $dialout ))
-		chown uucp.wheel ttyCZ$nminor dtyCZ$nminor
+		chown uucp ttyCZ$nminor dtyCZ$nminor
 		chmod 600 ttyCZ$nminor dtyCZ$nminor
 		minor=$(($minor + 1))
 	done
@@ -552,7 +541,7 @@ ttyCY*)
 		rm -f ttyCY$nminor dtyCY$nminor
 		mknod ttyCY$nminor c $major $(($minor + $dialin  ))
 		mknod dtyCY$nminor c $major $(($minor + $dialout ))
-		chown uucp.wheel ttyCY$nminor dtyCY$nminor
+		chown uucp ttyCY$nminor dtyCY$nminor
 		chmod 600 ttyCY$nminor dtyCY$nminor
 		minor=$(($minor + 1))
 	done
@@ -570,7 +559,7 @@ com*|tty*)					# (XXX -- com should die)
 	rm -f tty$unit dty$unit
 	mknod tty$unit c 8 $(($ounit + $dialin ))
 	mknod dty$unit c 8 $(($ounit + $dialout))
-	chown uucp.wheel tty$unit dty$unit
+	chown uucp tty$unit dty$unit
 	;;
 
 opty)
@@ -589,7 +578,6 @@ opty)
 		mknod ttyp$j c 5 $jn
 		mknod ptyp$j c 6 $jn
 	done
-	chgrp wheel ttyp[0-9a-f] ptyp[0-9a-f]
 	chmod 666 ttyp[0-9a-f] ptyp[0-9a-f] 
 	;;
 
@@ -618,7 +606,6 @@ pty*)
 		mknod pty$name$j c 6 $unit
 		jn=$(($jn + 1))
 	done
-        chgrp wheel tty$name[0-9a-zA-Z] pty$name[0-9a-zA-Z]
         chmod 666 tty$name[0-9a-zA-Z] pty$name[0-9a-zA-Z]
 	;;
 
@@ -675,7 +662,6 @@ lpt*|lpa*)
 	esac
 	rm -f $name$unit
 	mknod $name$unit	c $chr $(($unit + $flags))
-	chown root.wheel $name$unit
 	;;
 
 bpf*|tun*|mms*|lms*|pms*|joy*)
@@ -689,7 +675,6 @@ bpf*|tun*|mms*|lms*|pms*|joy*)
 	esac
 	rm -f $name$unit
 	mknod $name$unit	c $chr $unit
-	chown root.wheel $name$unit
 	;;
 
 ipl)
@@ -698,20 +683,18 @@ ipl)
 	mknod ipnat c 44 1
 	mknod ipstate c 44 2
 	mknod ipauth c 44 3
-	chown root.wheel ipl ipnat ipstate ipauth
 	chmod 600 ipl ipnat ipstate ipauth
 	;;
 
 speaker)					# (XXX - installed)
 	rm -f speaker
 	mknod speaker c 27 0
-	chown root.wheel speaker
 	;;
 
 lkm)
 	rm -f lkm
 	mknod lkm c 28 0
-	chown root.kmem lkm
+	chgrp kmem lkm
 	chmod 640 lkm
 	;;
 
@@ -728,7 +711,6 @@ audio*)
 	mknod $audio    c $major $(($unit + 128))
 	mknod $mixer    c $major $(($unit + 16))
 	mknod $audioctl c $major $(($unit + 192))
-	chown root.wheel $audio $sound $mixer $audioctl
 	chmod 666 $audio $sound $mixer $audioctl
 	;;
 
@@ -738,7 +720,6 @@ rmidi*)
 	rmidi=rmidi$unit
 	rm -f $rmidi
 	mknod $rmidi c $major $unit
-	chown root.wheel $rmidi
 	chmod 666 $rmidi
 	;;
 
@@ -751,7 +732,6 @@ music*)
 	rm -f $sequencer $music
 	mknod $music     c $major $(($unit + 0))
 	mknod $sequencer c $major $(($unit + 128))
-	chown root.wheel $music $sequencer
 	chmod 666 $music $sequencer
 	;;
 
@@ -762,7 +742,6 @@ radio*)
 	if [ "$unit" = "" ]; then unit=0; fi
 	rm -f $radio
 	mknod $radio c $major $unit
-	chown root.wheel $radio
 	chmod 666 $radio
 	;;
 
@@ -770,7 +749,6 @@ apm*)
 	rm -f apm apmctl
 	mknod apm c 21 0
 	mknod apmctl c 21 8
-	chown root.wheel apm apmctl
 	chmod 644 apm apmctl
 	;;
 
@@ -785,7 +763,6 @@ random)
 	rm -f random urandom
 	mknod random c 46 0
 	mknod urandom c 46 1
-	chown root.wheel random urandom
 	chmod 444 random
 	chmod 644 urandom
 	;;
@@ -796,7 +773,6 @@ cfs*)
 	major=60
 	rm -f $cfs
 	mknod $cfs c $major $unit
-	chown root.wheel $cfs
 	chmod 600 $cfs
 	;;
 
@@ -804,12 +780,10 @@ sysmon)
 	major=67
 	rm -f sysmon
 	mknod sysmon c $major 0
-	chown root.wheel sysmon
 	chmod 644 sysmon
 
 	rm -f watchdog
 	mknod watchdog c $major 1
-	chown root.wheel watchdog
 	chmod 644 watchdog
 	;;
 
@@ -817,12 +791,11 @@ scsibus*)
 	unit=${i#scsibus}; 
 	rm -f scsibus$unit
 	mknod scsibus$unit c 61 $unit
-	chown root:wheel scsibus$unit
 	chmod 644 scsibus$unit
 	;;
 
 bktr)
-	sh $0 bktr0 bktr1
+	makedev bktr0 bktr1
 	ln -fs bktr0 bktr
 	ln -fs tuner0 tuner
 	ln -fs vbi0 vbi
@@ -834,7 +807,6 @@ bktr*)
 	mknod bktr$unit c 71 $(($unit + 0))
 	mknod tuner$unit c 71 $(($unit + 16))
 	mknod vbi$unit c 71 $(($unit + 32))
-	chown root.wheel bktr$unit tuner$unit vbi$unit
 	chmod 444 bktr$unit tuner$unit vbi$unit
 	;;
 
@@ -863,7 +835,7 @@ agp*)
 	unit=${i#agp};
 	rm -f agp$unit
 	mknod agp$unit c 82 $unit
-	if [ "$unit" = "0" ]; then ln -sf agp$unit agpgart; fi
+	if [ "$unit" = "0" ]; then ln -fs agp$unit agpgart; fi
 	chmod 644 agp$unit
 	;;
 
@@ -882,7 +854,7 @@ dpti*)
 	;;
 
 altq)
-	mkdir -p altq
+	mkdir altq
 	chmod 755 altq
 	unit=0
 	for dev in altq cbq wfq afm fifoq red rio localq hfsc \
@@ -928,21 +900,19 @@ i4btrc*)
 	;;
 
 vmegen)
-	sh $0 vmegen0 vmegen1 vmegen2 vmegen3
+	makedev vmegen0 vmegen1 vmegen2 vmegen3
 	;;
 
 vmegen*)
 	unit=${i#vmegen}
 	rm -f vmegen$unit
 	mknod vmegen$unit c 68 $(($unit * 16 + 0))
-	chown root:wheel vmegen$unit
 	chmod 600 vmegen$unit
 	;;
 
 wsfont)
 	rm -f wsfont
 	mknod wsfont c 81 0
-	chown root:wheel wsfont
 	chmod 600 wsfont
 	;;
 
@@ -952,7 +922,6 @@ cir*)
 	major=86
 	rm -f $cir
 	mknod $cir c $major $unit
-	chown root.wheel $cir
 	chmod 666 $cir
 	;;
 
@@ -962,14 +931,13 @@ irframe*)
 	major=85
 	rm -f $irframe
 	mknod $irframe c $major $unit
-	chown root.wheel $irframe
 	chmod 600 $irframe
 	;;
 
 clockctl)
 	rm -f clockctl
 	mknod clockctl c 89 0
-	chown root.ntpd clockctl
+	chgrp ntpd clockctl
 	chmod 660 clockctl
 	;;
 
@@ -979,7 +947,6 @@ nsmb*)
 	major=88
 	rm -f $nsmb
 	mknod $nsmb c $major $unit
-	chown root.wheel $nsmb
 	chmod 644 $nsmb
 	;;
 
@@ -995,3 +962,7 @@ local)
 
 esac
 done
+
+}
+
+makedev $*
