@@ -1,4 +1,4 @@
-/*	$NetBSD: pcmciadevs_data.h,v 1.58 1999/11/20 18:32:32 jtk Exp $	*/
+/*	$NetBSD: pcmciadevs_data.h,v 1.59 1999/11/26 17:17:21 soren Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
@@ -78,6 +78,13 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    0,
 	    "3Com Corporation",
 	    "3Com 3c574-TX 10/100Mbps Ethernet"	},
+	},
+	{
+	    PCMCIA_VENDOR_3COM, PCMCIA_PRODUCT_3COM_3CXM056BNW,
+	    PCMCIA_CIS_3COM_3CXM056BNW,
+	    0,
+	    "3Com Corporation",
+	    "3Com/NoteWorthy 3CXM056-BNW 56K Modem"	},
 	},
 	{
 	    PCMCIA_VENDOR_3COM, PCMCIA_PRODUCT_3COM_3CXEM556,
@@ -178,6 +185,13 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    "National Semiconductor InfoMover"	},
 	},
 	{
+	    PCMCIA_VENDOR_IBM, PCMCIA_PRODUCT_IBM_TROPIC,
+	    PCMCIA_CIS_IBM_TROPIC,
+	    0,
+	    "IBM Corporation",
+	    "Token Ring 4/16"	},
+	},
+	{
 	    PCMCIA_VENDOR_IBM, PCMCIA_PRODUCT_IBM_HOME_AND_AWAY,
 	    PCMCIA_CIS_IBM_HOME_AND_AWAY,
 	    0,
@@ -239,6 +253,13 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    0,
 	    "Megahertz Corporation",
 	    "Megahertz XJ4288 Modem"	},
+	},
+	{
+	    PCMCIA_VENDOR_MEGAHERTZ, PCMCIA_PRODUCT_MEGAHERTZ_XJ4336,
+	    PCMCIA_CIS_MEGAHERTZ_XJ4336,
+	    0,
+	    "Megahertz Corporation",
+	    "Megahertz XJ4336 Modem"	},
 	},
 	{
 	    PCMCIA_VENDOR_MEGAHERTZ, PCMCIA_PRODUCT_MEGAHERTZ_XJ5560,
