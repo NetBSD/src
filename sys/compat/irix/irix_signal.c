@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_signal.c,v 1.19 2002/07/28 18:42:41 jdolecek Exp $ */
+/*	$NetBSD: irix_signal.c,v 1.20 2002/08/02 22:52:36 manu Exp $ */
 
 /*-
  * Copyright (c) 1994, 2001-2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_signal.c,v 1.19 2002/07/28 18:42:41 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_signal.c,v 1.20 2002/08/02 22:52:36 manu Exp $");
 
 #include <sys/types.h>
 #include <sys/signal.h>
@@ -604,7 +604,8 @@ irix_sys_sginap(p, v, retval)
 	if (rticks != 0)
 		microtime(&tvb);
 
-	if ((tsleep(&dontcare, PCATCH, 0, rticks) != 0) && (rticks != 0)) {
+	if ((tsleep(&dontcare, PZERO|PCATCH, 0, rticks) != 0) &&
+	    (rticks != 0)) {
 		microtime(&tve);
 		timersub(&tve, &tvb, &tvd);
 		delta = ((tvd.tv_sec * 1000000) + tvd.tv_usec); /* XXX */
