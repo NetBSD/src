@@ -1,4 +1,4 @@
-/*	$NetBSD: frame.h,v 1.6 2003/01/26 00:05:37 fvdl Exp $	*/
+/*	$NetBSD: frame.h,v 1.7 2003/01/26 14:12:10 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -92,20 +92,20 @@
  * Exception/Trap Stack Frame
  */
 struct trapframe {
-	int64_t tf_r15;
-	int64_t tf_r14;
-	int64_t tf_r13;
-	int64_t tf_r12;
-	int64_t tf_r11;
-	int64_t tf_r10;
-	int64_t tf_r9;
-	int64_t tf_r8;
 	int64_t	tf_rdi;
 	int64_t	tf_rsi;
-	int64_t	tf_rbp;
-	int64_t	tf_rbx;
 	int64_t	tf_rdx;
 	int64_t	tf_rcx;
+	int64_t tf_r8;
+	int64_t tf_r9;
+	int64_t tf_r10;
+	int64_t tf_r11;
+	int64_t tf_r12;
+	int64_t tf_r13;
+	int64_t tf_r14;
+	int64_t tf_r15;
+	int64_t	tf_rbp;
+	int64_t	tf_rbx;
 	int64_t	tf_rax;
 	int64_t	tf_gs;
 	int64_t	tf_fs;
@@ -127,20 +127,20 @@ struct trapframe {
  */
 struct intrframe {
 	int64_t	if_ppl;
-	int64_t if_r15;
-	int64_t if_r14;
-	int64_t if_r13;
-	int64_t if_r12;
-	int64_t if_r11;
-	int64_t if_r10;
-	int64_t if_r9;
-	int64_t if_r8;
 	int64_t	if_rdi;
 	int64_t	if_rsi;
-	int64_t	if_rbp;
-	int64_t	if_rbx;
 	int64_t	if_rdx;
 	int64_t	if_rcx;
+	int64_t if_r8;
+	int64_t if_r9;
+	int64_t if_r10;
+	int64_t if_r11;
+	int64_t if_r12;
+	int64_t if_r13;
+	int64_t if_r14;
+	int64_t if_r15;
+	int64_t	if_rbp;
+	int64_t	if_rbx;
 	int64_t	if_rax;
 	int64_t	tf_gs;
 	int64_t	tf_fs;

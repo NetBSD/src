@@ -1,4 +1,4 @@
-/*	$NetBSD: mcontext.h,v 1.1 2003/01/26 00:05:37 fvdl Exp $	*/
+/*	$NetBSD: mcontext.h,v 1.2 2003/01/26 14:12:10 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -51,20 +51,24 @@
 typedef	long		__greg_t;
 typedef	__greg_t	__gregset_t[_NGREG];
 
-#define _REG_R15	0
-#define _REG_R14	1
-#define _REG_R13	2
-#define _REG_R12	3
-#define _REG_R11	4
-#define _REG_R10	5
-#define _REG_R9		6
-#define _REG_R8		7
-#define _REG_RDI	8
-#define _REG_RSI	9
-#define _REG_RBP	10
-#define _REG_RBX	11
-#define _REG_RDX	12
-#define _REG_RCX	13
+/*
+ * This is laid out to match trapframe and intrframe (see <machine/frame.h>).
+ * Hence, memcpy between gregs and a trapframe is possible.
+ */
+#define _REG_RDI	0
+#define _REG_RSI	1
+#define _REG_RDX	2
+#define _REG_RCX	3
+#define _REG_R8		4
+#define _REG_R9		5
+#define _REG_R10	6
+#define _REG_R11	7
+#define _REG_R12	8
+#define _REG_R13	9
+#define _REG_R14	10
+#define _REG_R15	11
+#define _REG_RBP	12
+#define _REG_RBX	13
 #define _REG_RAX	14
 #define _REG_GS		15
 #define _REG_FS		16
@@ -89,6 +93,7 @@ typedef struct {
 } mcontext_t;
 
 #define _UC_UCONTEXT_ALIGN	(~0xf)
+#define _UC_MACHINE_PAD		1
 
 #ifdef _KERNEL
 #define _UC_MACHINE_SP(uc)	((uc)->uc_mcontext.__gregs[_REG_URSP])
