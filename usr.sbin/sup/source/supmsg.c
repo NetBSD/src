@@ -1,4 +1,4 @@
-/*	$NetBSD: supmsg.c,v 1.10 2002/07/10 20:19:47 wiz Exp $	*/
+/*	$NetBSD: supmsg.c,v 1.11 2002/12/06 15:21:08 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992 Carnegie Mellon University
@@ -174,7 +174,7 @@ msgsetup(void)
 		}
 		x = readstring(&collname);
 		if (x == SCMOK)
-			x = readint((int *) &lasttime);
+			x = readint((void *) &lasttime);
 		if (x == SCMOK)
 			x = readstring(&basedir);
 		if (x == SCMOK)
@@ -417,7 +417,7 @@ msglist(void)
 			x = readstring(&name);
 		}
 		if (x == SCMOK)
-			x = readint((int *) &scantime);
+			x = readint((void *) &scantime);
 		if (x == SCMOK)
 			x = readmend();
 	}
