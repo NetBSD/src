@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.56 2000/05/31 14:23:57 lukem Exp $	*/
+/*	$NetBSD: extern.h,v 1.57 2000/06/15 13:08:25 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1996-2000 The NetBSD Foundation, Inc.
@@ -194,8 +194,9 @@ void	recvrequest(const char *, const char *, const char *,
 	    const char *, int, int);
 void	reget(int, char **);
 char   *remglob(char **, int, char **);
-off_t	remotesize(const char *, int);
 time_t	remotemodtime(const char *, int);
+off_t	remotesize(const char *, int);
+void	remotesyst(void);
 void	removedir(int, char **);
 void	renamefile(int, char **);
 void	reset(int, char **);
