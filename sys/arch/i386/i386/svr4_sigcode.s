@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_locore.s,v 1.1 2000/11/21 21:13:23 jdolecek Exp $	*/
+/*	$NetBSD: svr4_sigcode.s,v 1.1 2000/11/26 11:18:21 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -74,25 +74,111 @@
  *	@(#)locore.s	7.3 (Berkeley) 5/13/91
  */
 
+#if defined(_KERNEL) && !defined(_LKM)
 #include "opt_vm86.h"
+#endif
+
 #include "assym.h"
 
-#include <machine/asm.h>
-#include <compat/ibcs2/ibcs2_syscall.h>
+#include <machine/psl.h>
+#include <machine/segments.h>
+#include <machine/trap.h>
+#include <compat/svr4/svr4_syscall.h>
 
-NENTRY(ibcs2_sigcode)
-	call    SIGF_HANDLER(%esp)
-	leal    SIGF_SC(%esp),%eax      # scp (the call may have clobbered the
-					# copy at SIGF_SCP(%esp))
-	movl    SC_FS(%eax),%ecx
-	movl    SC_GS(%eax),%edx
-	movl    %cx,%fs
-	movl    %dx,%gs
-	pushl   %eax
-	pushl   %eax                    # junk to fake return address
-	movl    $IBCS2_SYS_sigreturn,%eax
-	int     $0x80                   # enter kernel with args on stack
-	movl    $IBCS2_SYS_exit,%eax
-	int     $0x80                   # exit if sigreturn fails
-	.globl  _C_LABEL(ibcs2_esigcode)
-_C_LABEL(ibcs2_esigcode):
+/*
+ * override user-land alignment before including asm.h
+ */
+#ifdef __ELF__
+#define	ALIGN_DATA	.align	4
+#define	ALIGN_TEXT	.align	4,0x90	/* 4-byte boundaries, NOP-filled */
+#define	SUPERALIGN_TEXT	.align	16,0x90	/* 16-byte boundaries better for 486 */
+#else
+#define	ALIGN_DATA	.align	2
+#define	ALIGN_TEXT	.align	2,0x90	/* 4-byte boundaries, NOP-filled */
+#define	SUPERALIGN_TEXT	.align	4,0x90	/* 16-byte boundaries better for 486 */
+#endif
+#define _ALIGN_TEXT	ALIGN_TEXT
+#include <machine/asm.h>
+
+/*
+ * XXX traditional CPP's evaluation semantics make this necessary.
+ * XXX (__CONCAT() would be evaluated incorrectly)
+ */
+#ifdef __ELF__
+#define	IDTVEC(name)	ALIGN_TEXT; .globl X/**/name; X/**/name:
+#else
+#define	IDTVEC(name)	ALIGN_TEXT; .globl _X/**/name; _X/**/name:
+#endif
+
+
+/*
+ * These are used on interrupt or trap entry or exit.
+ */
+#define	INTRENTRY \
+	pushl	%eax		; \
+	pushl	%ecx		; \
+	pushl	%edx		; \
+	pushl	%ebx		; \
+	pushl	%ebp		; \
+	pushl	%esi		; \
+	pushl	%edi		; \
+	pushl	%ds		; \
+	pushl	%es		; \
+	movl	$GSEL(GDATA_SEL, SEL_KPL),%eax	; \
+	movl	%ax,%ds		; \
+	movl	%ax,%es
+#define	INTRFASTEXIT \
+	popl	%es		; \
+	popl	%ds		; \
+	popl	%edi		; \
+	popl	%esi		; \
+	popl	%ebp		; \
+	popl	%ebx		; \
+	popl	%edx		; \
+	popl	%ecx		; \
+	popl	%eax		; \
+	addl	$8,%esp		; \
+	iret
+
+/*
+ * Signal trampoline; copied to top of user stack.
+ */
+
+NENTRY(svr4_sigcode)
+	call	SVR4_SIGF_HANDLER(%esp)
+	leal	SVR4_SIGF_UC(%esp),%eax	# ucp (the call may have clobbered the
+					# copy at SIGF_UCP(%esp))
+#ifdef VM86
+	testl	$PSL_VM,SVR4_UC_EFLAGS(%eax)
+	jnz	1f
+#endif
+	movl	SVR4_UC_FS(%eax),%ecx
+	movl	SVR4_UC_GS(%eax),%edx
+	movl	%cx,%fs
+	movl	%dx,%gs
+1:	pushl	%eax
+	pushl	$1			# setcontext(p) == syscontext(1, p) 
+	pushl	%eax			# junk to fake return address
+	movl	$SVR4_SYS_context,%eax
+	int	$0x80	 		# enter kernel with args on stack
+	movl	$SVR4_SYS_exit,%eax
+	int	$0x80			# exit if sigreturn fails
+	.globl	_C_LABEL(svr4_esigcode)
+_C_LABEL(svr4_esigcode):
+
+IDTVEC(svr4_fasttrap)
+	pushl	$2		# size of instruction for restart
+	pushl	$T_ASTFLT	# trap # for doing ASTs
+	INTRENTRY
+	call	_C_LABEL(svr4_fasttrap)
+2:	/* Check for ASTs on exit to user mode. */
+	cli
+	cmpb	$0,_C_LABEL(astpending)
+	je	1f
+	/* Always returning to user mode here. */
+	movb	$0,_C_LABEL(astpending)
+	sti
+	/* Pushed T_ASTFLT into tf_trapno on entry. */
+	call	_C_LABEL(trap)
+	jmp	2b
+1:	INTRFASTEXIT
