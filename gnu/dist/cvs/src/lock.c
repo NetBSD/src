@@ -691,14 +691,6 @@ readers_exist (repository)
 		ret = 1;
 		break;
 	    }
-	    else
-	    {
-		/* If the file doesn't exist, it just means that it disappeared
-		   between the time we did the readdir and the time we did
-		   the stat.  */
-		if (!existence_error (errno))
-		    error (0, errno, "cannot stat %s", line);
-	    }
 	    errno = 0;
 	}
 	if (errno != 0)
