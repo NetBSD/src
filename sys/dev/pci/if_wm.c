@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.51 2003/10/20 22:52:19 thorpej Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.52 2003/10/21 04:35:01 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003 Wasabi Systems, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.51 2003/10/20 22:52:19 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.52 2003/10/21 04:35:01 thorpej Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -207,6 +207,7 @@ struct wm_softc {
 
 	wm_chip_type sc_type;		/* chip type */
 	int sc_flags;			/* flags; see below */
+	int sc_bus_speed;		/* PCI/PCIX bus speed */
 
 	void *sc_ih;			/* interrupt cookie */
 
@@ -316,6 +317,8 @@ do {									\
 /* sc_flags */
 #define	WM_F_HAS_MII		0x01	/* has MII */
 #define	WM_F_EEPROM_HANDSHAKE	0x02	/* requires EEPROM handshake */
+#define	WM_F_BUS64		0x10	/* bus is 64-bit */
+#define	WM_F_PCIX		0x20	/* bus is PCI-X */
 
 #ifdef WM_EVENT_COUNTERS
 #define	WM_EVCNT_INCR(ev)	(ev)->ev_count++
@@ -692,6 +695,51 @@ wm_attach(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 	aprint_normal("%s: interrupting at %s\n", sc->sc_dev.dv_xname, intrstr);
+
+	/*
+	 * Determine a few things about the bus we're connected to.
+	 */
+	if (sc->sc_type < WM_T_82543) {
+		/* We don't really know the bus characteristics here. */
+		sc->sc_bus_speed = 33;
+	} else  {
+		reg = CSR_READ(sc, WMREG_STATUS);
+		if (reg & STATUS_BUS64)
+			sc->sc_flags |= WM_F_BUS64;
+		if (sc->sc_type >= WM_T_82544 &&
+		    (reg & STATUS_PCIX_MODE) != 0)
+			sc->sc_flags |= WM_F_PCIX;
+		/*
+		 * The quad port adapter is special; it has a PCIX-PCIX
+		 * bridge on the board, and can run the secondary bus at
+		 * a higher speed.
+		 */
+		if (wmp->wmp_product == PCI_PRODUCT_INTEL_82546EB_QUAD) {
+			sc->sc_bus_speed = (sc->sc_flags & WM_F_PCIX) ? 120
+								      : 66;
+		} else if (sc->sc_flags & WM_F_PCIX) {
+			switch (STATUS_PCIXSPD(reg)) {
+			case STATUS_PCIXSPD_50_66:
+				sc->sc_bus_speed = 66;
+				break;
+			case STATUS_PCIXSPD_66_100:
+				sc->sc_bus_speed = 100;
+				break;
+			case STATUS_PCIXSPD_100_133:
+				sc->sc_bus_speed = 133;
+				break;
+			default:
+				aprint_error(
+				    "%s: unknown PCIXSPD %d; assuming 66MHz\n",
+				    sc->sc_dev.dv_xname, STATUS_PCIXSPD(reg));
+				sc->sc_bus_speed = 66;
+			}
+		} else
+			sc->sc_bus_speed = (reg & STATUS_PCI66) ? 66 : 33;
+		aprint_verbose("%s: %d-bit %dMHz %s bus\n", sc->sc_dev.dv_xname,
+		    (sc->sc_flags & WM_F_BUS64) ? 64 : 32, sc->sc_bus_speed,
+		    (sc->sc_flags & WM_F_PCIX) ? "PCIX" : "PCI");
+	}
 
 	/*
 	 * Allocate the control data structures, and create and load the
