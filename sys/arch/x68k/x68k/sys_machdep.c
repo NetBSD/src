@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_machdep.c,v 1.23 2001/02/21 12:39:17 minoura Exp $	*/
+/*	$NetBSD: sys_machdep.c,v 1.23.8.1 2001/11/18 18:44:19 scw Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -43,6 +43,7 @@
 #include <sys/ioctl.h>
 #include <sys/file.h>
 #include <sys/time.h>
+#include <sys/lwp.h>
 #include <sys/proc.h>
 #include <sys/uio.h>
 #include <sys/kernel.h>
@@ -243,8 +244,8 @@ dma_cachectl(addr, len)
 }
 
 int
-sys_sysarch(p, v, retval)
-	struct proc *p;
+sys_sysarch(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
