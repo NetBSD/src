@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_segment.c,v 1.103 2003/02/20 04:27:24 perseant Exp $	*/
+/*	$NetBSD: lfs_segment.c,v 1.104 2003/02/23 00:22:34 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.103 2003/02/20 04:27:24 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.104 2003/02/23 00:22:34 perseant Exp $");
 
 #define ivndebug(vp,str) printf("ino %d: %s\n",VTOI(vp)->i_number,(str))
 
@@ -137,7 +137,7 @@ int	 lfs_match_indir(struct lfs *, struct buf *);
 int	 lfs_match_tindir(struct lfs *, struct buf *);
 void	 lfs_newseg(struct lfs *);
 /* XXX ondisk32 */
-void	 lfs_shellsort(struct buf **, int32_t *, int);
+void	 lfs_shellsort(struct buf **, int32_t *, int, int);
 void	 lfs_supercallback(struct buf *);
 void	 lfs_updatemeta(struct segment *);
 int	 lfs_vref(struct vnode *);
@@ -1114,10 +1114,9 @@ lfs_gatherblock(struct segment *sp, struct buf *bp, int *sptr)
 
 	*sp->cbpp++ = bp;
 	for (j = 0; j < blksinblk; j++)
-		sp->fip->fi_blocks[sp->fip->fi_nblocks++] = bp->b_lblkno +
-			(j << fs->lfs_fbshift);
+		sp->fip->fi_blocks[sp->fip->fi_nblocks++] = bp->b_lblkno + j;
 	
-	sp->sum_bytes_left -= sizeof(int32_t);
+	sp->sum_bytes_left -= sizeof(int32_t) * blksinblk;
 	sp->seg_bytes_left -= bp->b_bcount;
 	return (0);
 }
@@ -1218,7 +1217,7 @@ loop:	for (bp = LIST_FIRST(&vp->v_dirtyblkhd); bp; bp = nbp) {
  */
 void
 lfs_update_single(struct lfs *fs, struct segment *sp, daddr_t lbn,
-		  int32_t ndaddr, int size, int num)
+		  int32_t ndaddr, int size)
 {
 	SEGUSE *sup;
 	struct buf *bp;
@@ -1226,7 +1225,7 @@ lfs_update_single(struct lfs *fs, struct segment *sp, daddr_t lbn,
 	struct inode *ip;
 	struct vnode *vp;
 	daddr_t daddr, ooff;
-	int error;
+	int num, error;
 	int bb, osize, obb;
 	
 	vp = sp->vp;
@@ -1347,6 +1346,21 @@ lfs_updatemeta(struct segment *sp)
 	KASSERT(nblocks >= 0);
 	if (vp == NULL || nblocks == 0)
 		return;
+
+	/*
+	 * This count may be high due to oversize blocks from lfs_gop_write.
+	 * Correct for this. (XXX we should be able to keep track of these.)
+	 */
+	fs = sp->fs;
+	for (i = 0; i < nblocks; i++) {
+		if (sp->start_bpp[i] == NULL) {
+			printf("nblocks = %d, not %d\n", i, nblocks);
+			nblocks = i;
+			break;
+		}
+		num = howmany(sp->start_bpp[i]->b_bcount, fs->lfs_bsize);
+		nblocks -= num - 1;
+	}
 	
 	/*
 	 * Sort the blocks.
@@ -1356,7 +1370,7 @@ lfs_updatemeta(struct segment *sp)
 	 * same inode...and if we don't sort, and there are fragments
 	 * present, blocks may be written in the wrong place.
 	 */
-	lfs_shellsort(sp->start_bpp, sp->start_lbp, nblocks);
+	lfs_shellsort(sp->start_bpp, sp->start_lbp, nblocks, fs->lfs_bsize);
 	
 	/*
 	 * Record the length of the last block in case it's a fragment.
@@ -1369,7 +1383,6 @@ lfs_updatemeta(struct segment *sp)
 	 * XXX true until lfs_markv is fixed to do everything with
 	 * XXX fake blocks (including fake inodes and fake indirect blocks).
 	 */
-	fs = sp->fs;
 	sp->fip->fi_lastlength = ((sp->start_bpp[nblocks - 1]->b_bcount - 1) &
 		fs->lfs_bmask) + 1;
 	
@@ -1379,7 +1392,8 @@ lfs_updatemeta(struct segment *sp)
 	 */
 	for (i = nblocks; i--; ++sp->start_bpp) {
 		sbp = *sp->start_bpp;
-		lbn = *sp->start_lbp++;
+		lbn = *sp->start_lbp;
+
 		sbp->b_blkno = fsbtodb(fs, fs->lfs_offset);
 
 		/*
@@ -1401,10 +1415,9 @@ lfs_updatemeta(struct segment *sp)
 		     bytesleft -= fs->lfs_bsize) {
 			size = MIN(bytesleft, fs->lfs_bsize);
 			bb = fragstofsb(fs, numfrags(fs, size));
-			lfs_update_single(fs, sp, lbn, fs->lfs_offset,
-					  size, num);
+			lbn = *sp->start_lbp++;
+			lfs_update_single(fs, sp, lbn, fs->lfs_offset, size);
 			fs->lfs_offset += bb;
-			++lbn;
 		}
 
 	}
@@ -1499,7 +1512,7 @@ lfs_initseg(struct lfs *fs)
 	
 	sp->seg_bytes_left -= fs->lfs_sumsize;
 	sp->sum_bytes_left = fs->lfs_sumsize - SEGSUM_SIZE(fs);
-	
+
 #ifndef LFS_MALLOC_SUMMARY
 	LFS_LOCK_BUF(sbp);
 	brelse(sbp);
@@ -1598,8 +1611,6 @@ extern LIST_HEAD(bufhashhdr, buf) invalhash;
  */
 #define	binshash(bp, dp)	LIST_INSERT_HEAD(dp, bp, b_hash)
 #define	bremhash(bp)		LIST_REMOVE(bp, b_hash)
-
-extern int maxbpp;
 
 static struct buf *
 lfs_newclusterbuf(struct lfs *fs, struct vnode *vp, daddr_t addr, int n)
@@ -1993,6 +2004,13 @@ lfs_writeseg(struct lfs *fs, struct segment *sp)
 			cbp->b_data = lfs_malloc(fs, CHUNKSIZE, LFS_NB_CLUSTER);
 		}
 #if defined(DEBUG) && defined(DIAGNOSTIC)
+		if (bpp - sp->bpp > (fs->lfs_sumsize - SEGSUM_SIZE(fs))
+		    / sizeof(int32_t)) {
+			panic("lfs_writeseg: real bpp overwrite");
+		}
+		if (bpp - sp->bpp > fs->lfs_ssize / fs->lfs_fsize) {
+			panic("lfs_writeseg: theoretical bpp overwrite");
+		}
 		if(dtosn(fs, dbtofsb(fs, (*bpp)->b_blkno + btodb((*bpp)->b_bcount - 1))) !=
 		   dtosn(fs, dbtofsb(fs, cbp->b_blkno))) {
 			printf("block at %" PRId64 " (%" PRIu32 "), "
@@ -2459,27 +2477,31 @@ lfs_supercallback(struct buf *bp)
  */
 
 void
-lfs_shellsort(struct buf **bp_array, int32_t *lb_array, int nmemb)
+lfs_shellsort(struct buf **bp_array, int32_t *lb_array, int nmemb, int size)
 {
 	static int __rsshell_increments[] = { 4, 1, 0 };
 	int incr, *incrp, t1, t2;
 	struct buf *bp_temp;
-	u_int32_t lbt, *lba;
 
-	lba = (u_int32_t *)lb_array;
 	for (incrp = __rsshell_increments; (incr = *incrp++) != 0;)
 		for (t1 = incr; t1 < nmemb; ++t1)
 			for (t2 = t1 - incr; t2 >= 0;)
-				if (lba[t2] > lba[t2 + incr]) {
-					lbt = lba[t2];
-					lba[t2] = lba[t2 + incr];
-					lba[t2 + incr] = lbt;
+				if ((u_int32_t)bp_array[t2]->b_lblkno >
+				    (u_int32_t)bp_array[t2 + incr]->b_lblkno) {
 					bp_temp = bp_array[t2];
 					bp_array[t2] = bp_array[t2 + incr];
 					bp_array[t2 + incr] = bp_temp;
 					t2 -= incr;
 				} else
 					break;
+
+	/* Reform the list of logical blocks */
+	incr = 0;
+	for (t1 = 0; t1 < nmemb; t1++) {
+		for (t2 = 0; t2 * size < bp_array[t1]->b_bcount; t2++) {
+			lb_array[incr++] = bp_array[t1]->b_lblkno + t2;
+		}
+	}
 }
 
 /*

@@ -1,4 +1,4 @@
-#   $NetBSD: TODO,v 1.6 2003/02/17 23:48:16 perseant Exp $
+#   $NetBSD: TODO,v 1.7 2003/02/23 00:22:33 perseant Exp $
 
 - Lock audit.  Need to check locking for multiprocessor case in particular.
 
@@ -38,13 +38,13 @@
   and possibly perform additional tasks:
 
   - Backups.  At a minimum, turn the cleaner off and on to allow
-	effective live backups.  More aggressively, the cleaner itself could
-	be the backup agent, and dump_lfs would merely be a controller.
+    effective live backups.  More aggressively, the cleaner itself could
+    be the backup agent, and dump_lfs would merely be a controller.
 
   - Cleaning time policies.  Be able to tweak the cleaner's thresholds
-	to allow more thorough cleaning during policy-determined idle
-	periods (regardless of actual idleness) or put off until later
-	during short, intensive write periods.
+    to allow more thorough cleaning during policy-determined idle
+    periods (regardless of actual idleness) or put off until later
+    during short, intensive write periods.
 
   - File coalescing and placement.  During periods we expect to be idle,
     coalesce fragmented files into one place on disk for better read
