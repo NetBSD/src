@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.lib.mk,v 1.169.2.1 2000/06/29 23:35:08 thorpej Exp $
+#	$NetBSD: bsd.lib.mk,v 1.169.2.2 2000/07/26 23:15:49 mycroft Exp $
 #	@(#)bsd.lib.mk	8.3 (Berkeley) 4/22/94
 
 .if !target(__initialized__)
@@ -89,6 +89,13 @@ AFLAGS+= -fPIC
 AS+=	-KPIC
 
 .elif ${MACHINE_ARCH} == "sparc" && ${OBJECT_FMT} == "ELF"
+
+CPICFLAGS ?= -fPIC -DPIC
+CPPPICFLAGS?= -DPIC 
+CAPICFLAGS?= ${CPPPICFLAGS} ${CPICFLAGS}
+APICFLAGS ?= -KPIC
+
+.elif ${MACHINE_ARCH} == "sparc64" && ${OBJECT_FMT} == "ELF"
 
 CPICFLAGS ?= -fPIC -DPIC
 CPPPICFLAGS?= -DPIC 
