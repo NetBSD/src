@@ -1,4 +1,4 @@
-/*	$NetBSD: netcmds.c,v 1.10 1999/12/20 04:06:25 jwise Exp $	*/
+/*	$NetBSD: netcmds.c,v 1.11 1999/12/31 12:58:12 tron Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1992, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)netcmds.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: netcmds.c,v 1.10 1999/12/20 04:06:25 jwise Exp $");
+__RCSID("$NetBSD: netcmds.c,v 1.11 1999/12/31 12:58:12 tron Exp $");
 #endif /* not lint */
 
 /*
@@ -210,7 +210,7 @@ showprotos()
 static	struct pitem {
 	long	port;
 	int	onoff;
-} *ports;
+} *ports = NULL;
 
 static int
 selectport(port, onoff)
@@ -220,9 +220,10 @@ selectport(port, onoff)
 	struct pitem *p;
 
 	if (port == -1) {
-		if (ports == 0)
+		if (ports == NULL)
 			return (0);
-		free((char *)ports), ports = 0;
+		free(ports);
+		ports = NULL;
 		nports = 0;
 		return (1);
 	}
@@ -231,10 +232,12 @@ selectport(port, onoff)
 			p->onoff = onoff;
 			return (0);
 		}
-	if (nports == 0)
-		ports = (struct pitem *)malloc(sizeof (*p));
-	else
-		ports = (struct pitem *)realloc(ports, (nports+1)*sizeof (*p));
+	p = (struct pitem *)realloc(ports, (nports+1)*sizeof (*p));
+	if (p == NULL) {
+		error("malloc failed");
+		die(0);
+	}
+	ports = p;
 	p = &ports[nports++];
 	p->port = port;
 	p->onoff = onoff;
