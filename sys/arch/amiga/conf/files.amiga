@@ -1,4 +1,4 @@
-#	$NetBSD: files.amiga,v 1.39 1996/03/17 13:21:09 cgd Exp $
+#	$NetBSD: files.amiga,v 1.40 1996/03/17 19:36:33 is Exp $
 
 # maxpartitions must be first item in files.${ARCH}.newconf
 maxpartitions 16			# NOTE THAT AMIGA IS SPECIAL!
@@ -69,7 +69,7 @@ file	arch/amiga/dev/kf_custom.c	kfont_custom
 device	grfcc: grfbus
 attach	grfcc at mainbus
 file	arch/amiga/dev/grf_cc.c		grfcc needs-flag
-file	arch/amiga/dev/ite_cc.c		grfcc | ite
+file	arch/amiga/dev/ite_cc.c		grfcc & ite
 
 pseudo-device	view
 file	arch/amiga/dev/view.c		view | grfcc needs-count
@@ -81,32 +81,32 @@ file	arch/amiga/dev/grfabs_ccglb.c	grfcc | view
 device	grfrt: grfbus
 attach	grfrt at zbus
 file	arch/amiga/dev/grf_rt.c		grfrt needs-flag
-file	arch/amiga/dev/ite_rt.c		grfrt | ite
+file	arch/amiga/dev/ite_rt.c		grfrt & ite
 
 # cirrus grf
 device	grfcl: grfbus
 attach	grfcl at zbus
 file	arch/amiga/dev/grf_cl.c		grfcl needs-flag
-file	arch/amiga/dev/ite_cl.c		grfcl | ite
+file	arch/amiga/dev/ite_cl.c		grfcl & ite
 
 # CyberVison 64 grf
 device	grfcv: grfbus
 attach	grfcv at zbus
 file	arch/amiga/dev/grf_cv.c		grfcv needs-flag
-file	arch/amiga/dev/ite_cv.c		grfcv | ite
+file	arch/amiga/dev/ite_cv.c		grfcv & ite
 
 # A2410 grf
 device	grful: grfbus
 attach	grful at zbus
 file	arch/amiga/dev/grf_ul.c		grful needs-flag
-file	arch/amiga/dev/ite_ul.c		grful | ite
+file	arch/amiga/dev/ite_ul.c		grful & ite
 file	arch/amiga/dev/grf_ultms.g	grful
 
 # retina ZIII grf
 device	grfrh: grfbus
 attach	grfrh at zbus
 file	arch/amiga/dev/grf_rh.c		grfrh needs-flag
-file	arch/amiga/dev/ite_rh.c		grfrh | ite
+file	arch/amiga/dev/ite_rh.c		grfrh & ite
   
 # handle gvp's odd autoconf info..
 device	gvpbus {}
