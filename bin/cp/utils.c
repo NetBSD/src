@@ -1,4 +1,4 @@
-/*	$NetBSD: utils.c,v 1.10 1997/10/19 12:50:47 mycroft Exp $	*/
+/*	$NetBSD: utils.c,v 1.11 1998/02/17 22:02:35 augustss Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)utils.c	8.3 (Berkeley) 4/1/94";
 #else
-__RCSID("$NetBSD: utils.c,v 1.10 1997/10/19 12:50:47 mycroft Exp $");
+__RCSID("$NetBSD: utils.c,v 1.11 1998/02/17 22:02:35 augustss Exp $");
 #endif
 #endif /* not lint */
 
@@ -117,7 +117,7 @@ copy_file(entp, dne)
 #ifdef VM_AND_BUFFER_CACHE_SYNCHRONIZED
 	if (fs->st_size <= 8 * 1048576) {
 		if ((p = mmap(NULL, (size_t)fs->st_size, PROT_READ,
-		    0, from_fd, (off_t)0)) == (char *)-1) {
+		    MAP_PRIVATE|MAP_FILE, from_fd, (off_t)0)) == (char *)-1) {
 			warn("%s", entp->fts_path);
 			rval = 1;
 		} else {
