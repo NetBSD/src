@@ -1,4 +1,4 @@
-/*	$NetBSD: ses.c,v 1.3 2000/01/21 21:19:57 mjacob Exp $ */
+/*	$NetBSD: ses.c,v 1.4 2000/02/20 21:30:44 mjacob Exp $ */
 /*
  * Copyright (C) 2000 National Aeronautics & Space Administration
  * All rights reserved.
@@ -540,7 +540,6 @@ ses_runcmd(struct ses_softc *ssc, char *cdb, int cdbl, char *dptr, int *dlenp)
 #ifndef	SCSIDEBUG
 	flg |= XS_CTL_SILENT;
 #endif
-
 	error = scsipi_command(ssc->sc_link, &sgen, cdbl,
 	    (u_char *) dptr, dl, SCSIPIRETRIES, 30000, NULL, flg);
 
@@ -1586,21 +1585,21 @@ safte_init_enc(ses_softc_t *ssc)
 {
 	int err, amt;
 	char *sdata;
-	static char cdb0[10] = { SEND_DIAGNOSTIC };
+	static char cdb0[6] = { SEND_DIAGNOSTIC };
 	static char cdb[10] =
-	    { WRITE_BUFFER , 1, 0, 0, 0, 0, 0, 0, SAFT_SCRATCH, 0 };
+	    { WRITE_BUFFER, 1, 0, 0, 0, 0, 0, 0, 16, 0 };
 
 	sdata = SES_MALLOC(SAFT_SCRATCH);
 	if (sdata == NULL)
 		return (ENOMEM);
 
-	err = ses_runcmd(ssc, cdb0, 10, NULL, 0);
+	err = ses_runcmd(ssc, cdb0, 6, NULL, 0);
 	if (err) {
 		SES_FREE(sdata, SAFT_SCRATCH);
 		return (err);
 	}
 	sdata[0] = SAFTE_WT_GLOBAL;
-	MEMZERO(&sdata[1], SAFT_SCRATCH - 1);
+	MEMZERO(&sdata[1], 15);
 	amt = -SAFT_SCRATCH;
 	err = ses_runcmd(ssc, cdb, 10, sdata, &amt);
 	SES_FREE(sdata, SAFT_SCRATCH);
