@@ -8,13 +8,14 @@
 # the sendmail distribution.
 #
 #
-#	Id: configure.sh,v 8.45 2001/12/13 23:56:43 gshapiro Exp
-#	$NetBSD: configure.sh,v 1.5 2003/06/01 14:06:56 atatat Exp $
+#	Id: configure.sh,v 8.45.2.1 2003/08/20 18:08:07 gshapiro Exp
+#	$NetBSD: configure.sh,v 1.6 2004/03/25 19:14:30 atatat Exp $
 
 #
 #  Special script to autoconfigure for M4 generation of Makefile
 #
 
+SHELL=/bin/sh
 os=""
 resolver=""
 sflag=""
@@ -154,7 +155,7 @@ then
 	echo "define(\`confLIBS', \`$libs' confLIBS)dnl"
 fi
 
-if [ ! -z "`sh $find_prog ranlib`" ]
+if [ ! -z "`$SHELL $find_prog ranlib`" ]
 then
 	echo "define(\`confRANLIB', \`ranlib')dnl"
 fi
@@ -162,7 +163,7 @@ fi
 roff_progs="groff nroff"
 for roff_prog in $roff_progs
 do
-	if [ ! -z "`sh $find_prog $roff_prog`" ]
+	if [ ! -z "`$SHELL $find_prog $roff_prog`" ]
 	then
 		found_roff=$roff_prog
 		break;
