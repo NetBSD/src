@@ -1,7 +1,7 @@
-#	$NetBSD: Makefile,v 1.1 1998/06/12 23:23:12 cgd Exp $
+#	$NetBSD: Makefile,v 1.2 1999/07/03 18:40:32 thorpej Exp $
 
 INCSDIR= /usr/include/ufs/mfs
 
-INCS=	mfs_extern.h mfsiom.h mfsnode.h
+INCS=	mfs_extern.h mfsnode.h
 
 .include <bsd.kinc.mk>
