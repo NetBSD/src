@@ -1,11 +1,11 @@
-/*	$NetBSD: perform.c,v 1.35 1999/08/19 14:12:34 agc Exp $	*/
+/*	$NetBSD: perform.c,v 1.36 1999/08/19 14:37:37 agc Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: perform.c,v 1.44 1997/10/13 15:03:46 jkh Exp";
 #else
-__RCSID("$NetBSD: perform.c,v 1.35 1999/08/19 14:12:34 agc Exp $");
+__RCSID("$NetBSD: perform.c,v 1.36 1999/08/19 14:37:37 agc Exp $");
 #endif
 #endif
 
@@ -327,7 +327,8 @@ pkg_do(char *pkg)
 		    if (cp) {
 			if (Verbose)
 			    printf("Loading it from %s.\n", cp);
-		        if (vsystem("/usr/sbin/pkg_add %s%s %s%s",
+		        if (vsystem("%s/pkg_add %s%s %s%s",
+				     BINDIR,
                                      Prefix ? "-p " : "",
                                      Prefix ? Prefix : "",
 				     Verbose ? "-v " : "", cp)) {
@@ -441,7 +442,7 @@ pkg_do(char *pkg)
 	if (Verbose)
 	    printf("mtree -U -f %s -d -e -p %s\n", MTREE_FNAME, p ? p->name : "/");
 	if (!Fake) {
-	    if (vsystem("/usr/sbin/mtree -U -f %s -d -e -p %s", MTREE_FNAME, p ? p->name : "/"))
+	    if (vsystem("%s/mtree -U -f %s -d -e -p %s", BINDIR, MTREE_FNAME, p ? p->name : "/"))
 		warnx("mtree returned a non-zero status - continuing");
 	}
 	unlink(MTREE_FNAME);
