@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel.h,v 1.4.14.2 1998/11/23 07:47:14 cgd Exp $	*/
+/*	$NetBSD: disklabel.h,v 1.4.14.3 1998/11/23 07:49:45 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -43,6 +43,7 @@
 #define	DOSPARTOFF	446
 #define	NDOSPART	4
 
+#ifndef __ASSEMBLER__
 struct dos_partition {
 	unsigned char	dp_flag;	/* bootstrap flags */
 	unsigned char	dp_shd;		/* starting head */
@@ -55,10 +56,11 @@ struct dos_partition {
 	unsigned long	dp_start;	/* absolute starting sector number */
 	unsigned long	dp_size;	/* partition size in sectors */
 };
+#endif
 
 /* Known DOS partition types. */
+#define DOSPTYP_NETBSD	0xa9		/* NetBSD partition type */
 #define	DOSPTYP_386BSD	0xa5		/* 386BSD partition type */
-#define DOSPTYP_NETBSD	DOSPTYP_386BSD	/* NetBSD partition type (XXX) */
 #define DOSPTYP_FAT12	0x01		/* 12-bit FAT */
 #define DOSPTYP_FAT16S	0x04		/* 16-bit FAT, less than 32M */
 #define DOSPTYP_FAT16B	0x06		/* 16-bit FAT, more than 32M */
@@ -67,6 +69,7 @@ struct dos_partition {
 #define DOSPTYP_FAT16L	0x0e		/* 16-bit FAT, LBA-mapped */
 #define DOSPTYP_LNXEXT2	0x83		/* Linux native */
 
+#ifndef __ASSEMBLER__
 #include <sys/dkbad.h>
 struct cpu_disklabel {
 	struct dos_partition dosparts[NDOSPART];
@@ -76,6 +79,7 @@ struct cpu_disklabel {
 /* Isolate the relevant bits to get sector and cylinder. */
 #define	DPSECT(s)	((s) & 0x3f)
 #define	DPCYL(c, s)	((c) + (((s) & 0xc0) << 2))
+#endif
 
 #ifdef _KERNEL
 struct disklabel;
