@@ -1,4 +1,9 @@
-$NetBSD: version,v 1.9 1997/01/23 23:10:38 cgd Exp $
+$NetBSD: version,v 1.10 1999/04/05 06:56:23 cgd Exp $
+
+# The newvers.sh looks for the line below.  We use this method
+# rather than $3 of the dollar-NetBSD-dollar line above so that
+# this version can be on branch-files also.
+Version: 1.10
 
 1.1:	Initial version
 1.2:	don't forget the Id string!
@@ -12,3 +17,4 @@ $NetBSD: version,v 1.9 1997/01/23 23:10:38 cgd Exp $
 1.7:	Use libsa and libkern rather than building the objects locally.
 1.8:	Search for a kernel, if none specified.
 1.9:	Add support for gzipped kernels.
+1.10:	The Great Boot Block Cleanup of April 1999.
