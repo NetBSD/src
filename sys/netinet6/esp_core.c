@@ -1,4 +1,4 @@
-/*	$NetBSD: esp_core.c,v 1.21 2002/02/27 01:32:17 itojun Exp $	*/
+/*	$NetBSD: esp_core.c,v 1.21.10.1 2002/08/09 23:14:23 lukem Exp $	*/
 /*	$KAME: esp_core.c,v 1.53 2001/11/27 09:47:30 sakane Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esp_core.c,v 1.21 2002/02/27 01:32:17 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esp_core.c,v 1.21.10.1 2002/08/09 23:14:23 lukem Exp $");
 
 #include "opt_inet.h"
 
@@ -171,18 +171,36 @@ esp_algorithm_lookup(idx)
 }
 
 int
+esp_max_padbound()
+{
+	int idx;
+	static int padbound = 0;
+
+	if (padbound)
+		return padbound;
+
+	for (idx = 0; idx < sizeof(esp_algorithms)/sizeof(esp_algorithms[0]);
+	     idx++) {
+		if (esp_algorithms[idx].padbound > padbound)
+			padbound = esp_algorithms[idx].padbound;
+	}
+	return padbound;
+}
+
+int
 esp_max_ivlen()
 {
 	int idx;
-	int ivlen;
+	static int ivlen = 0;
 
-	ivlen = 0;
+	if (ivlen)
+		return ivlen;
+
 	for (idx = 0; idx < sizeof(esp_algorithms)/sizeof(esp_algorithms[0]);
 	     idx++) {
 		if (esp_algorithms[idx].ivlenval > ivlen)
 			ivlen = esp_algorithms[idx].ivlenval;
 	}
-
 	return ivlen;
 }
 
