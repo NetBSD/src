@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.49.2.2 1997/08/01 18:38:06 cjs Exp $
+#	$NetBSD: bsd.own.mk,v 1.49.2.3 1997/10/12 22:07:53 cjs Exp $
 
 # This file may be included multiple times without harm.
 
@@ -107,7 +107,7 @@ MANDIR?=	/usr/share/man
 MANGRP?=	bin
 MANOWN?=	bin
 MANMODE?=	${NONBINMODE}
-MANINSTALL?=	catinstall
+MANINSTALL?=	maninstall catinstall
 
 LIBDIR?=	/usr/lib
 LINTLIBDIR?=	/usr/libdata/lint
@@ -155,9 +155,10 @@ NOLINT=
 NOPROFILE=
 .endif
 
-TARGETS+=	all clean cleandir depend includes install lint obj tags
-.PHONY:		all clean cleandir depend includes install lint obj tags \
-		beforedepend afterdepend beforeinstall afterinstall \
+TARGETS+=	all clean cleandir depend includes install lint obj regress \
+		tags
+.PHONY:		all clean cleandir depend includes install lint obj regress \
+		tags beforedepend afterdepend beforeinstall afterinstall \
 		realinstall
 
 .if !target(install)
