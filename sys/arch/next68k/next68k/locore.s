@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.6 1998/09/30 23:47:35 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.7 1998/11/10 22:45:45 dbj Exp $	*/
 
 /*
  * Copyright (c) 1998 Darrin B. Jewell
@@ -51,6 +51,8 @@
 
 #include "opt_compat_netbsd.h"
 #include "opt_ddb.h"
+#include "opt_uvm.h"
+
 
 #include "assym.h"
 #include <machine/asm.h>
@@ -417,9 +419,11 @@ Lehighcode:
 Lenab1:
 /* select the software page size now */
 	lea	_ASM_LABEL(tmpstk),sp	| temporary stack
-
+#ifdef UVM
+        jbsr	_C_LABEL(uvm_setpagesize) | select software page size
+#else
 	jbsr	_C_LABEL(vm_set_page_size) | select software page size
-
+#endif
         bsr     Lpushpc                 | Push the PC on the stack.
 Lpushpc:
 
@@ -441,7 +445,7 @@ Lpushpc:
 	addql	#4,sp
 Lenab2:
 /* flush TLB and turn on caches */
-	jbsr	_C_LABEL(TBIA)		| invalidate TLB
+	jbsr	_C_LABEL(_TBIA)		| invalidate TLB
 	cmpl	#MMU_68040,_C_LABEL(mmutype) | 68040?
 	jeq	Lnocache0		| yes, cache already on
 	movl	#CACHE_ON,d0
@@ -932,7 +936,11 @@ Lbrkpt3:
 
 _spurintr:	/* Level 0 */
 	addql	#1,_intrcnt+0
+#ifdef UVM
+	addql	#1,_uvmexp+UVMEXP_INTRS
+#else
 	addql	#1,_cnt+V_INTR
+#endif
 	jra	rei
 
 _intrhand_autovec:	/* Levels 1 through 6 */
@@ -1309,6 +1317,7 @@ Lsldone:
 	rts
 #endif
 
+#if 0 /* @@@{ use m68k/cacheops.c */
 /*
  * Invalidate entire TLB.
  */
@@ -1607,7 +1616,8 @@ Lnocache6:
 #endif
 #endif
 	rts
-        
+
+#endif       /* }@@@ use m68k/cacheops.c */
 #if defined(ENABLE_HP_CODE)
 ENTRY(ecacheon)
 	tstl	_C_LABEL(ectype)

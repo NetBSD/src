@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.8 1998/10/19 22:09:20 tron Exp $	*/
+/*	$NetBSD: machdep.c,v 1.9 1998/11/10 22:45:45 dbj Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -44,34 +44,34 @@
  */
 
 #include "opt_ddb.h"
+#include "opt_uvm.h"
 #include "opt_compat_hpux.h"
 #include "opt_sysv.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/buf.h>
-#include <sys/callout.h>
-#include <sys/clist.h>
-#include <sys/conf.h>
-#include <sys/exec.h>
-#include <sys/file.h>
-#include <sys/ioctl.h>
-#include <sys/kernel.h>
-#include <sys/malloc.h>
-#include <sys/map.h>
-#include <sys/mbuf.h>
-#include <sys/mount.h>
-#include <sys/msgbuf.h>
-#include <sys/proc.h>
-#include <sys/reboot.h>
 #include <sys/signalvar.h>
-#include <sys/syscallargs.h>
+#include <sys/kernel.h>
+#include <sys/map.h>
+#include <sys/proc.h>
+#include <sys/buf.h>
+#include <sys/reboot.h>
+#include <sys/conf.h>
+#include <sys/file.h>
+#include <sys/clist.h>
+#include <sys/callout.h>
+#include <sys/malloc.h>
+#include <sys/mbuf.h>
+#include <sys/msgbuf.h>
+#include <sys/ioctl.h>
 #include <sys/tty.h>
+#include <sys/mount.h>
 #include <sys/user.h>
 #include <sys/exec.h>
 #include <sys/core.h>
 #include <sys/kcore.h>
 #include <sys/vnode.h>
+#include <sys/syscallargs.h>
 #ifdef SYSVMSG
 #include <sys/msg.h>
 #endif
@@ -82,35 +82,39 @@
 #include <sys/shm.h>
 #endif
 
-#include <machine/db_machdep.h>
-#include <ddb/db_sym.h>
-#include <ddb/db_extern.h>
+#include <vm/vm.h>
+#include <vm/vm_kern.h>
+#include <vm/vm_page.h>
 
-#include <machine/autoconf.h>
+#if defined(UVM)
+#include <uvm/uvm_extern.h>
+#endif
+
+#include <sys/sysctl.h>
+
 #include <machine/cpu.h>
-
 #include <machine/reg.h>
 #include <machine/psl.h>
 #include <machine/pte.h>
+#include <machine/vmparam.h>
+#include <dev/cons.h>
 
 #include <machine/kcore.h>	/* XXX should be pulled in by sys/kcore.h */
-
-#include <dev/cons.h>
 
 #include <next68k/next68k/seglist.h>
 
 #define	MAXMEM	64*1024*CLSIZE	/* XXX - from cmap.h */
-#include <vm/vm.h>
-#include <vm/vm_kern.h>
-#include <sys/sysctl.h>
-
-#include <next68k/next68k/isr.h>
 
 /* the following is used externally (sysctl_hw) */
 char	machine[] = MACHINE;	/* from <machine/param.h> */
 
+#if defined(UVM)
+vm_map_t exec_map = NULL;
+vm_map_t mb_map = NULL;
+vm_map_t phys_map = NULL;
+#else
 vm_map_t buffer_map;
-extern vm_offset_t avail_end;
+#endif
 
 /*
  * Declare these as initialized data so we can patch them.
@@ -130,7 +134,8 @@ caddr_t	msgbufaddr;		/* KVA of message buffer */
 paddr_t msgbufpa;		/* PA of message buffer */
 
 int	maxmem;			/* max memory per process */
-int	physmem;
+int	physmem;		/* size of physical memory */
+
 /*
  * safepri is a safe priority for sleep to set for a spin-wait
  * during autoconfiguration or after a panic.
@@ -146,21 +151,21 @@ extern struct emul emul_hpux;
 
 /* prototypes for local functions */
 caddr_t	allocsys __P((caddr_t));
-void    identifycpu __P((void));
-void    initcpu __P((void));
+void	identifycpu __P((void));
+void	initcpu __P((void));
+void	dumpsys __P((void));
 
 int	cpu_dumpsize __P((void));
 int	cpu_dump __P((int (*)(dev_t, daddr_t, caddr_t, size_t), daddr_t *));
 void	cpu_init_kcore_hdr __P((void));
 
 /* functions called from locore.s */
-void    dumpsys __P((void));
-void	next68k_init __P((void));
-void    straytrap __P((int, u_short));
-void	nmihand __P((struct frame));
+void next68k_init __P((void));
+void straytrap __P((int, u_short));
+void nmihand __P((struct frame));
 
 /*
- * Machine-dependent crash dump header info.
+ * Machine-independent crash dump header info.
  */
 cpu_kcore_hdr_t cpu_kcore_hdr;
 
@@ -186,7 +191,7 @@ int	mem_cluster_cnt;
 void
 next68k_init()
 {
-  int i;
+	int i;
 
 	/*
 	 * Tell the VM system about available physical memory.
@@ -295,12 +300,12 @@ consinit()
 void
 cpu_startup()
 {
-	extern char *etext;
+	extern char *kernel_text, *etext;
 	unsigned i;
 	caddr_t v;
 	int base, residual;
-	vm_offset_t minaddr, maxaddr;
-	vm_size_t size;
+	vaddr_t minaddr, maxaddr;
+	vsize_t size;
 #ifdef DEBUG
 	extern int pmapdebug;
 	int opmapdebug = pmapdebug;
@@ -318,34 +323,80 @@ cpu_startup()
 	 */
 	printf(version);
 	identifycpu();
-	printf("real mem  = %d\n", ctob(physmem));
+	printf("real mem  = %d", ctob(physmem));
+	
+	printf("\n");
 
 	/*
 	 * Find out how much space we need, allocate it,
-	 * and the give everything true virtual addresses.
+	 * and then give everything true virtual addresses.
 	 */
-	size = (vm_size_t)allocsys((caddr_t)0);
+	size = (vsize_t)allocsys((caddr_t)0);
+#if defined(UVM)
+	if ((v = (caddr_t)uvm_km_zalloc(kernel_map, round_page(size))) == 0)
+		panic("startup: no room for tables");
+#else
 	if ((v = (caddr_t)kmem_alloc(kernel_map, round_page(size))) == 0)
 		panic("startup: no room for tables");
+#endif
 	if ((allocsys(v) - v) != size)
 		panic("startup: talbe size inconsistency");
+
 
 	/*
 	 * Now allocate buffers proper.  They are different than the above
 	 * in that they usually occupy more virtual memory than physical.
 	 */
 	size = MAXBSIZE * nbuf;
-	buffer_map = kmem_suballoc(kernel_map, (vm_offset_t *)&buffers,
+#if defined(UVM)
+	if (uvm_map(kernel_map, (vaddr_t *) &buffers, round_page(size),
+		    NULL, UVM_UNKNOWN_OFFSET,
+		    UVM_MAPFLAG(UVM_PROT_NONE, UVM_PROT_NONE, UVM_INH_NONE,
+				UVM_ADV_NORMAL, 0)) != KERN_SUCCESS)
+		panic("startup: cannot allocate VM for buffers");
+	minaddr = (vaddr_t)buffers;
+#else
+	buffer_map = kmem_suballoc(kernel_map, (vaddr_t *)&buffers,
 				   &maxaddr, size, TRUE);
-	minaddr = (vm_offset_t)buffers;
-	if (vm_map_find(buffer_map, vm_object_allocate(size), (vm_offset_t)0,
+	minaddr = (vaddr_t)buffers;
+	if (vm_map_find(buffer_map, vm_object_allocate(size), (vaddr_t)0,
 			&minaddr, size, FALSE) != KERN_SUCCESS)
 		panic("startup: cannot allocate buffers");
+#endif
 	base = bufpages / nbuf;
 	residual = bufpages % nbuf;
 	for (i = 0; i < nbuf; i++) {
-		vm_size_t curbufsize;
-		vm_offset_t curbuf;
+#if defined(UVM)
+		vsize_t curbufsize;
+		vaddr_t curbuf;
+		struct vm_page *pg;
+
+		/*
+		 * Each buffer has MAXBSIZE bytes of VM space allocated.  Of
+		 * that MAXBSIZE space, we allocate and map (base+1) pages
+		 * for the first "residual" buffers, and then we allocate
+		 * "base" pages for the rest.
+		 */
+		curbuf = (vaddr_t) buffers + (i * MAXBSIZE);
+		curbufsize = CLBYTES * ((i < residual) ? (base+1) : base);
+
+		while (curbufsize) {
+			pg = uvm_pagealloc(NULL, 0, NULL);
+			if (pg == NULL)
+				panic("cpu_startup: not enough memory for "
+				      "buffer cache");
+#ifdef PMAP_NEW
+			pmap_kenter_pgs(curbuf, &pg, 1);
+#else
+			pmap_enter(kernel_map->pmap, curbuf,
+				   VM_PAGE_TO_PHYS(pg), VM_PROT_ALL, TRUE);
+#endif
+			curbuf += PAGE_SIZE;
+			curbufsize -= PAGE_SIZE;
+		}
+#else /* ! UVM */
+		vsize_t curbufsize;
+		vaddr_t curbuf;
 
 		/*
 		 * First <residual> buffers get (base+1) physical pages
@@ -354,28 +405,46 @@ cpu_startup()
 		 * The rest of each buffer occupies virtual space,
 		 * but has no physical memory allocated for it.
 		 */
-		curbuf = (vm_offset_t)buffers + i * MAXBSIZE;
+		curbuf = (vaddr_t)buffers + i * MAXBSIZE;
 		curbufsize = CLBYTES * (i < residual ? base+1 : base);
 		vm_map_pageable(buffer_map, curbuf, curbuf+curbufsize, FALSE);
 		vm_map_simplify(buffer_map, curbuf);
+#endif /* UVM */
 	}
+
 	/*
 	 * Allocate a submap for exec arguments.  This map effectively
 	 * limits the number of processes exec'ing at any time.
 	 */
+#if defined(UVM)
+	exec_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
+				 16*NCARGS, TRUE, FALSE, NULL);
+#else
 	exec_map = kmem_suballoc(kernel_map, &minaddr, &maxaddr,
 				 16*NCARGS, TRUE);
+#endif
 	/*
 	 * Allocate a submap for physio
 	 */
+#if defined(UVM)
+	phys_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
+				 VM_PHYS_SIZE, TRUE, FALSE, NULL);
+#else
 	phys_map = kmem_suballoc(kernel_map, &minaddr, &maxaddr,
 				 VM_PHYS_SIZE, TRUE);
+#endif
 
 	/*
 	 * Finally, allocate mbuf cluster submap.
 	 */
-	mb_map = kmem_suballoc(kernel_map, (vm_offset_t *)&mbutl, &maxaddr,
+#if defined(UVM)
+	mb_map = uvm_km_suballoc(kernel_map, (vaddr_t *)&mbutl, &maxaddr,
+				 VM_MBUF_SIZE, FALSE, FALSE, NULL);
+#else
+	mb_map = kmem_suballoc(kernel_map, (vaddr_t *)&mbutl, &maxaddr,
 			       VM_MBUF_SIZE, FALSE);
+#endif
+
 	/*
 	 * Initialize callouts
 	 */
@@ -387,30 +456,46 @@ cpu_startup()
 #ifdef DEBUG
 	pmapdebug = opmapdebug;
 #endif
+#if defined(UVM)
+	printf("avail mem = %ld\n", ptoa(uvmexp.free));
+#else
 	printf("avail mem = %ld\n", ptoa(cnt.v_free_count));
+#endif
 	printf("using %d buffers containing %d bytes of memory\n",
 		nbuf, bufpages * CLBYTES);
 
 	/*
-	 * Tell the VM system that page 0 isn't mapped.
+	 * Tell the VM system that the area before the text segment
+	 * is invalid.
 	 *
-	 * XXX This is bogus; should just fix KERNBASE and
-	 * XXX VM_MIN_KERNEL_ADDRESS, but not right now.
+	 * XXX Should just change KERNBASE and VM_MIN_KERNEL_ADDRESS,
+	 * XXX but not right now.
 	 */
-	if (vm_map_protect(kernel_map, 0, NBPG, VM_PROT_NONE, TRUE)
-	    != KERN_SUCCESS)
-		panic("can't mark page 0 off-limits");
+#if defined(UVM)
+	if (uvm_map_protect(kernel_map, 0, round_page(&kernel_text),
+	    UVM_PROT_NONE, TRUE) != KERN_SUCCESS)
+		panic("can't mark pre-text pages off-limits");
+#else
+	if (vm_map_protect(kernel_map, 0, round_page(&kernel_text),
+	    VM_PROT_NONE, TRUE) != KERN_SUCCESS)
+		panic("can't mark pre-text pages off-limits");
+#endif
 
 	/*
-	 * Tell the VM system that writing to kernel text isn't allowed.
+	 * Tell the VM system that writing to the kernel text isn't allowed.
 	 * If we don't, we might end up COW'ing the text segment!
-	 *
-	 * XXX Should be m68k_trunc_page(&kernel_text) instead
-	 * XXX of NBPG.
 	 */
-	if (vm_map_protect(kernel_map, NBPG, m68k_round_page(&etext),
-	    VM_PROT_READ|VM_PROT_EXECUTE, TRUE) != KERN_SUCCESS)
+#if defined(UVM)
+	if (uvm_map_protect(kernel_map, trunc_page(&kernel_text),
+	    round_page(&etext), UVM_PROT_READ|UVM_PROT_EXEC, TRUE)
+	    != KERN_SUCCESS)
 		panic("can't protect kernel text");
+#else
+	if (vm_map_protect(kernel_map, trunc_page(&kernel_text),
+	    round_page(&etext), VM_PROT_READ|VM_PROT_EXECUTE, TRUE)
+	    != KERN_SUCCESS)
+		panic("can't protect kernel text");
+#endif
 
 	/*
 	 * Set up CPU-specific registers, cache, etc.
@@ -431,7 +516,7 @@ cpu_startup()
 /*
  * Allocate space for system data structures.  We are given
  * a starting virtual address and we return a final virtual
- * address; along the way we set each data structure pointer.
+ * address; along the way, we set each data structure pointer.
  *
  * We call allocsys() with 0 to find out how much space we want,
  * allocate that much and fill it with zeroes, and the call
@@ -442,9 +527,9 @@ allocsys(v)
 	caddr_t v;
 {
 
-#define	valloc(name, type, num)	\
+#define valloc(name, type, num) \
 	    (name) = (type *)v; v = (caddr_t)((name)+(num))
-#define	valloclim(name, type, num, lim) \
+#define valloclim(name, type, num, lim) \
 	    (name) = (type *)v; v = (caddr_t)((lim) = ((name)+(num)))
 
 #ifdef REAL_CLISTS
@@ -454,9 +539,9 @@ allocsys(v)
 #ifdef SYSVSHM
 	valloc(shmsegs, struct shmid_ds, shminfo.shmmni);
 #endif
-#ifdef SYSVSEM 
+#ifdef SYSVSEM
 	valloc(sema, struct semid_ds, seminfo.semmni);
-	valloc(sem, struct sem, seminfo.semmns); 
+	valloc(sem, struct sem, seminfo.semmns);
 	/* This is pretty disgusting! */
 	valloc(semu, int, (seminfo.semmnu * seminfo.semusz) / sizeof(int));
 #endif
@@ -468,15 +553,12 @@ allocsys(v)
 #endif
 
 	/*
-	 * Determine how many buffers to allocate.  Since HPs tend
-	 * to be long on memory and short on disk speed, we allocate
-	 * more buffer space than the BSD standard of 10% of memory
-	 * for the first 2 Meg, 5% of the remaining.  We just allocate
-	 * a flag 10%.  Insure a minimum of 16 buffers.  We allocate
-	 * 1/2 as many swap buffer headers as file i/o buffers.
+	 * Determine how many buffers to allocate.
+	 * We just allocate a flat 5%.  Insure a minimum of 16 buffers.
+	 * We allocate 1/2 as many swap buffer headers as file i/o buffers.
 	 */
 	if (bufpages == 0)
-		bufpages = physmem / 10 / CLSIZE;
+		bufpages = physmem / 20 / CLSIZE;
 	if (nbuf == 0) {
 		nbuf = bufpages;
 		if (nbuf < 16)
@@ -487,7 +569,9 @@ allocsys(v)
 		if (nswbuf > 256)
 			nswbuf = 256;		/* sanity */
 	}
+#if !defined(UVM)
 	valloc(swbuf, struct buf, nswbuf);
+#endif
 	valloc(buf, struct buf, nbuf);
 	return (v);
 }
@@ -531,7 +615,7 @@ setregs(p, pack, stack)
 /*
  * Info for CTL_HW
  */
-char	cpu_model[120];
+char	cpu_model[124];
 extern	char version[];
 
 void
@@ -662,6 +746,8 @@ cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 	/* NOTREACHED */
 }
 
+/* See: sig_machdep.c */
+
 int	waittime = -1;
 
 void
@@ -698,7 +784,7 @@ cpu_reboot(howto, bootstr)
 	/* Disable interrupts. */
 	splhigh();
 
-	/* If rebooting and a dump is requested do it. */
+	/* If rebooting and a dump is requested, do it. */
 	if (howto & RB_DUMP)
 		dumpsys();
 
@@ -1000,44 +1086,43 @@ straytrap(pc, evec)
 
 int	*nofault;
 
-#if 0
-@@@ These are used by autoconf to probe.
-
 int
-badaddr(addr)
+badaddr(addr, nbytes)
 	caddr_t addr;
+	int nbytes;
 {
 	int i;
-	label_t	faultbuf;
+	label_t faultbuf;
 
-	nofault = (int *) &faultbuf;
-	if (setjmp((label_t *)nofault)) {
-		nofault = (int *) 0;
-		return(1);
-	}
-	i = *(volatile short *)addr;
-	nofault = (int *) 0;
-	return(0);
-}
-
-int
-badbaddr(addr)
-	caddr_t addr;
-{
-	int i;
-	label_t	faultbuf;
-
-	nofault = (int *) &faultbuf;
-	if (setjmp((label_t *)nofault)) {
-		nofault = (int *) 0;
-		return(1);
-	}
-	i = *(volatile char *)addr;
-	nofault = (int *) 0;
-	return(0);
-}
+#ifdef lint
+	i = *addr; if (i) return (0);
 #endif
 
+	nofault = (int *) &faultbuf;
+	if (setjmp((label_t *)nofault)) {
+		nofault = (int *) 0;
+		return(1);
+	}
+
+	switch (nbytes) {
+	case 1:
+		i = *(volatile char *)addr;
+		break;
+
+	case 2:
+		i = *(volatile short *)addr;
+		break;
+
+	case 4:
+		i = *(volatile int *)addr;
+		break;
+
+	default:
+		panic("badaddr: bad request");
+	}
+	nofault = (int *) 0;
+	return (0);
+}
 
 /*
  * Level 7 interrupts can be caused by the keyboard or parity errors.
@@ -1057,13 +1142,11 @@ nmihand(frame)
 
 	if (!INTR_OCCURRED(NEXT_I_NMI)) {
 		printf("But NMI isn't set in intrstat!\n");
-		next68k_isr_printcounts();
 	}
 	INTR_DISABLE(NEXT_I_NMI);
 
 #ifdef DDB
   printf(": entering debugger\n");
-  next68k_isr_printcounts();
   Debugger();
   printf("continuing after NMI\n");
 #else

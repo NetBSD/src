@@ -1,4 +1,11 @@
-/*	$NetBSD: isr.h,v 1.1.1.1 1998/06/09 07:53:06 dbj Exp $	*/
+/*	$NetBSD: isr.h,v 1.2 1998/11/10 22:45:45 dbj Exp $ */
+
+/*
+ * This file was taken from from mvme68k/mvme68k/isr.h
+ * should probably be re-synced when needed.
+ * Darrin B. Jewell <jewell@mit.edu>  Tue Nov 10 05:07:16 1998
+ * original cvs id: NetBSD: isr.h,v 1.3 1997/10/09 08:40:06 jtc Exp
+ */
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
