@@ -1,4 +1,4 @@
-.\"	$NetBSD: getdiskbyname.3,v 1.4 1998/02/05 18:46:30 perry Exp $
+.\"	$NetBSD: getdiskbyname.3,v 1.5 1999/01/19 06:24:08 abs Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -37,12 +37,17 @@
 .Dt GETDISKBYNAME 3
 .Os BSD 4.2
 .Sh NAME
-.Nm getdiskbyname
+.Nm getdiskbyname ,
+.Nm setdisktab
 .Nd get generic disk description by its name
 .Sh LIBRARY
 .Lb libc
 .Sh SYNOPSIS
+.Fd #include <sys/types.h>
 .Fd #include <sys/disklabel.h>
+.Fd #include <disktab.h>
+.Ft int
+.Fn setdisktab "char *name"
 .Ft struct disklabel *
 .Fn getdiskbyname "const char *name"
 .Sh DESCRIPTION
@@ -57,6 +62,31 @@ disk partition tables.  All information is obtained from
 the 
 .Xr disktab 5
 file.
+.Pp
+The
+.Fn setdisktab
+function changes the default
+.Pn disktab
+file name from
+.Pa /etc/disktab
+.Pq aka Dv _PATH_DISKTAB
+to
+.Fa name .
+.Sh RETURN VALUES
+.Fn getdiskbyname
+returns a null pointer if the entry is not found in the current
+.Pa disktab
+file.
+.Pp
+.Fn setdisktab
+returns 0 on success and -1 if
+.Fa name
+is a null pointer or points to an empty string.
+.Sh FILES
+.Bl -tag -width /etc/disktab -compact
+.It Pa /etc/disktab
+the default database of disk types.
+.El
 .Sh SEE ALSO
 .Xr disklabel 5 ,
 .Xr disktab 5 ,
@@ -66,3 +96,13 @@ The
 .Fn getdiskbyname
 function appeared in 
 .Bx 4.3 .
+.Pp
+The
+.Fn setdisktab
+function appeared in
+.Nx 1.4 .
+.Sh BUGS
+The
+.Fn getdiskbyname
+function leaves its results in an internal static object and returns a
+pointer to that object.  Subsequent calls will modify the same object.
