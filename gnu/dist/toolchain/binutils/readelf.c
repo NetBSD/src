@@ -8210,7 +8210,38 @@ get_netbsd_elfcore_note_type (e_type)
       return buff;
     }
 
-  /* XXX Need a way to know the arch. */
+  switch (elf_header.e_machine)
+    {
+    /* On the Alpha, SPARC (32-bit and 64-bit), PT_GETREGS == mach+0
+       and PT_GETFPREGS == mach+2.  */
+
+    case EM_OLD_ALPHA:
+    case EM_ALPHA:
+    case EM_SPARC:
+    case EM_SPARC32PLUS:
+    case EM_SPARCV9:
+      switch (e_type)
+	{
+	case 32+0:	return _("PT_GETREGS (reg structure)");
+	case 32+2:	return _("PT_GETFPREGS (fpreg structure)");
+	default:
+	  break;
+	}
+      break;
+
+    /* On all other arch's, PT_GETREGS == mach+1 and
+       PT_GETFPREGS == mach+3.  */
+
+    default:
+      switch (e_type)
+	{
+	case 32+1:	return _("PT_GETREGS (reg structure)");
+	case 32+3:	return _("PT_GETFPREGS (fpreg structure)");
+	default:
+	  break;
+	}
+    }
+
   sprintf (buff, _("PT_FIRSTMACH+%d"), e_type - 32);
   return buff;
 }
