@@ -1,4 +1,4 @@
-/*	$NetBSD: uscanner.c,v 1.40 2003/01/27 00:32:44 wiz Exp $	*/
+/*	$NetBSD: uscanner.c,v 1.41 2003/06/28 14:21:46 darrenr Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uscanner.c,v 1.40 2003/01/27 00:32:44 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uscanner.c,v 1.41 2003/06/28 14:21:46 darrenr Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -383,7 +383,7 @@ USB_ATTACH(uscanner)
 }
 
 int
-uscanneropen(dev_t dev, int flag, int mode, usb_proc_ptr p)
+uscanneropen(dev_t dev, int flag, int mode, struct lwp *l)
 {
 	struct uscanner_softc *sc;
 	int unit = USCANNERUNIT(dev);
@@ -446,7 +446,7 @@ uscanneropen(dev_t dev, int flag, int mode, usb_proc_ptr p)
 }
 
 int
-uscannerclose(dev_t dev, int flag, int mode, usb_proc_ptr p)
+uscannerclose(dev_t dev, int flag, int mode, struct lwp *l)
 {
 	struct uscanner_softc *sc;
 
@@ -688,7 +688,7 @@ USB_DETACH(uscanner)
 }
 
 int
-uscannerpoll(dev_t dev, int events, usb_proc_ptr p)
+uscannerpoll(dev_t dev, int events, struct lwp *l)
 {
 	struct uscanner_softc *sc;
 	int revents = 0;
@@ -755,7 +755,7 @@ uscannerkqfilter(dev_t dev, struct knote *kn)
 }
 
 int
-uscannerioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, usb_proc_ptr p)
+uscannerioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct lwp *l)
 {
 	return (EINVAL);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_node.c,v 1.1 2002/12/23 17:52:09 jdolecek Exp $	*/
+/*	$NetBSD: cd9660_node.c,v 1.2 2003/06/28 14:21:49 darrenr Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1994
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd9660_node.c,v 1.1 2002/12/23 17:52:09 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd9660_node.c,v 1.2 2003/06/28 14:21:49 darrenr Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -222,9 +222,10 @@ iso_dunmap(device)
  * to it. If it is in core, but locked, wait for it.
  */
 struct vnode *
-cd9660_ihashget(dev, inum)
+cd9660_ihashget(dev, inum, l)
 	dev_t dev;
 	ino_t inum;
+	struct lwp *l;
 {
 	struct iso_node *ip;
 	struct vnode *vp;
@@ -236,7 +237,7 @@ loop:
 			vp = ITOV(ip);
 			simple_lock(&vp->v_interlock);
 			simple_unlock(&cd9660_ihash_slock);
-			if (vget(vp, LK_EXCLUSIVE | LK_INTERLOCK))
+			if (vget(vp, LK_EXCLUSIVE | LK_INTERLOCK, l))
 				goto loop;
 			return (vp);
 		}
@@ -289,7 +290,7 @@ cd9660_inactive(v)
 		struct proc *a_p;
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
-	struct proc *p = ap->a_p;
+	struct lwp *l = ap->a_l;
 	struct iso_node *ip = VTOI(vp);
 	int error = 0;
 	
@@ -303,7 +304,7 @@ cd9660_inactive(v)
 	 * so that it can be reused immediately.
 	 */
 	if (ip->inode.iso_mode == 0)
-		vrecycle(vp, (struct simplelock *)0, p);
+		vrecycle(vp, (struct simplelock *)0, l);
 	return error;
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_exec_xout.c,v 1.3 2003/01/18 07:40:44 thorpej Exp $	*/
+/*	$NetBSD: ibcs2_exec_xout.c,v 1.4 2003/06/28 14:21:19 darrenr Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1998 Scott Bartram
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ibcs2_exec_xout.c,v 1.3 2003/01/18 07:40:44 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ibcs2_exec_xout.c,v 1.4 2003/06/28 14:21:19 darrenr Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -62,15 +62,15 @@ __KERNEL_RCSID(0, "$NetBSD: ibcs2_exec_xout.c,v 1.3 2003/01/18 07:40:44 thorpej 
 #include <compat/ibcs2/ibcs2_util.h>
 #include <compat/ibcs2/ibcs2_syscall.h>
 
-int exec_ibcs2_xout_prep_nmagic __P((struct proc *, struct exec_package *,
+int exec_ibcs2_xout_prep_nmagic __P((struct lwp *, struct exec_package *,
 				     struct xexec *, struct xext *));
-int exec_ibcs2_xout_prep_zmagic __P((struct proc *, struct exec_package *,
+int exec_ibcs2_xout_prep_zmagic __P((struct lwp *, struct exec_package *,
 				     struct xexec *, struct xext *));
-int exec_ibcs2_xout_setup_stack __P((struct proc *, struct exec_package *));
+int exec_ibcs2_xout_setup_stack __P((struct lwp *, struct exec_package *));
 
 int
-exec_ibcs2_xout_makecmds(p, epp)
-	struct proc *p;
+exec_ibcs2_xout_makecmds(l, epp)
+	struct lwp *l;
 	struct exec_package *epp;
 {
 	int error;
@@ -88,10 +88,10 @@ exec_ibcs2_xout_makecmds(p, epp)
 	xep = (void *)((char *)epp->ep_hdr + sizeof(struct xexec));
 #ifdef notyet
 	if (xp->x_renv & XE_PURE)
-		error = exec_ibcs2_xout_prep_zmagic(p, epp, xp, xep);
+		error = exec_ibcs2_xout_prep_zmagic(l, epp, xp, xep);
 	else
 #endif
-		error = exec_ibcs2_xout_prep_nmagic(p, epp, xp, xep);
+		error = exec_ibcs2_xout_prep_nmagic(l, epp, xp, xep);
 
 	if (error)
 		kill_vmcmds(&epp->ep_vmcmds);
@@ -105,8 +105,8 @@ exec_ibcs2_xout_makecmds(p, epp)
  */
 
 int
-exec_ibcs2_xout_prep_nmagic(p, epp, xp, xep)
-	struct proc *p;
+exec_ibcs2_xout_prep_nmagic(l, epp, xp, xep)
+	struct lwp *l;
 	struct exec_package *epp;
 	struct xexec *xp;
 	struct xext *xep;
@@ -120,8 +120,8 @@ exec_ibcs2_xout_prep_nmagic(p, epp, xp, xep)
 	xs = (struct xseg *)malloc(xep->xe_segsize, M_TEMP, M_WAITOK);
 	error = vn_rdwr(UIO_READ, epp->ep_vp, (caddr_t)xs,
 			xep->xe_segsize, xep->xe_segpos,
-			UIO_SYSSPACE, IO_NODELOCKED, p->p_ucred,
-			&resid, p);
+			UIO_SYSSPACE, IO_NODELOCKED, l->l_proc->p_ucred,
+			&resid, l);
 	if (error) {
 		DPRINTF(("segment table read error %d\n", error));
 		free(xs, M_TEMP);
@@ -192,7 +192,7 @@ exec_ibcs2_xout_prep_nmagic(p, epp, xp, xep)
 		 epp->ep_entry));
 	
 	free(xs, M_TEMP);
-	return exec_ibcs2_xout_setup_stack(p, epp);
+	return exec_ibcs2_xout_setup_stack(l, epp);
 }
 
 /*
@@ -209,13 +209,13 @@ exec_ibcs2_xout_prep_nmagic(p, epp, xp, xep)
  */
 
 int
-exec_ibcs2_xout_setup_stack(p, epp)
-	struct proc *p;
+exec_ibcs2_xout_setup_stack(l, epp)
+	struct lwp *l;
 	struct exec_package *epp;
 {
 	epp->ep_maxsaddr = USRSTACK - MAXSSIZ;
 	epp->ep_minsaddr = USRSTACK;
-	epp->ep_ssize = p->p_rlimit[RLIMIT_STACK].rlim_cur;
+	epp->ep_ssize = l->l_proc->p_rlimit[RLIMIT_STACK].rlim_cur;
 
 	/*
 	 * set up commands for stack.  note that this takes *two*, one to

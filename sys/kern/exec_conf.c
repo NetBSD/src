@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_conf.c,v 1.80 2003/04/02 01:00:19 perry Exp $	*/
+/*	$NetBSD: exec_conf.c,v 1.81 2003/06/28 14:21:51 darrenr Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Christopher G. Demetriou
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exec_conf.c,v 1.80 2003/04/02 01:00:19 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exec_conf.c,v 1.81 2003/06/28 14:21:51 darrenr Exp $");
 
 #include "opt_execfmt.h"
 #include "opt_compat_freebsd.h"
@@ -81,11 +81,11 @@ __KERNEL_RCSID(0, "$NetBSD: exec_conf.c,v 1.80 2003/04/02 01:00:19 perry Exp $")
 #define	ELF64NAME(x)	CONCAT(elf,CONCAT(64,CONCAT(_,x)))
 #define	ELF64NAME2(x,y)	CONCAT(x,CONCAT(_elf64_,y))
 #ifdef EXEC_ELF32
-int ELF32NAME2(netbsd,probe)(struct proc *, struct exec_package *,
+int ELF32NAME2(netbsd,probe)(struct lwp *, struct exec_package *,
     void *, char *, vaddr_t *);
 #endif
 #ifdef EXEC_ELF64
-int ELF64NAME2(netbsd,probe)(struct proc *, struct exec_package *,
+int ELF64NAME2(netbsd,probe)(struct lwp *, struct exec_package *,
     void *, char *, vaddr_t *);
 #endif
 

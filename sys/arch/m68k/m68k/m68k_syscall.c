@@ -1,4 +1,4 @@
-/*	$NetBSD: m68k_syscall.c,v 1.7 2003/01/17 23:18:29 thorpej Exp $	*/
+/*	$NetBSD: m68k_syscall.c,v 1.8 2003/06/28 14:20:58 darrenr Exp $	*/
 
 /*-
  * Portions Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -441,7 +441,7 @@ child_return(arg)
 	machine_userret(l, f, 0);
 #ifdef KTRACE
 	if (KTRPOINT(l->l_proc, KTR_SYSRET))
-		ktrsysret(l->l_proc, SYS_fork, 0, 0);
+		ktrsysret(l, SYS_fork, 0, 0);
 #endif
 }
 

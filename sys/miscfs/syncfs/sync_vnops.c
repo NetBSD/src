@@ -1,4 +1,4 @@
-/*	$NetBSD: sync_vnops.c,v 1.8 2001/12/06 04:30:49 chs Exp $	*/
+/*	$NetBSD: sync_vnops.c,v 1.9 2003/06/28 14:22:05 darrenr Exp $	*/
 
 /*
  * Copyright 1997 Marshall Kirk McKusick. All Rights Reserved.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sync_vnops.c,v 1.8 2001/12/06 04:30:49 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sync_vnops.c,v 1.9 2003/06/28 14:22:05 darrenr Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -132,7 +132,7 @@ sync_fsync(v)
 		int a_flags;
 		off_t offlo;
 		off_t offhi;
-		struct proc *a_p;
+		struct lwp *a_l;
 	} */ *ap = v;
 	struct vnode *syncvp = ap->a_vp;
 	struct mount *mp = syncvp->v_mount;
@@ -157,7 +157,7 @@ sync_fsync(v)
 	if (vfs_busy(mp, LK_NOWAIT, &mountlist_slock) == 0) {
 		asyncflag = mp->mnt_flag & MNT_ASYNC;
 		mp->mnt_flag &= ~MNT_ASYNC;
-		VFS_SYNC(mp, MNT_LAZY, ap->a_cred, ap->a_p);
+		VFS_SYNC(mp, MNT_LAZY, ap->a_cred, ap->a_l);
 		if (asyncflag)
 			mp->mnt_flag |= MNT_ASYNC;
 		vfs_unbusy(mp);

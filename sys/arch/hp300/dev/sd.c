@@ -1,4 +1,4 @@
-/*	$NetBSD: sd.c,v 1.61 2003/05/03 18:10:48 wiz Exp $	*/
+/*	$NetBSD: sd.c,v 1.62 2003/06/28 14:20:50 darrenr Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.61 2003/05/03 18:10:48 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.62 2003/06/28 14:20:50 darrenr Exp $");
 
 #include "rnd.h"
 #include "opt_useleds.h"
@@ -1036,7 +1036,7 @@ sdread(dev, uio, flags)
 	int pid;
 
 	if ((pid = sc->sc_format_pid) >= 0 &&
-	    pid != uio->uio_procp->p_pid)
+	    pid != uio->uio_lwp->l_proc->p_pid)
 		return (EPERM);
 		
 	return (physio(sdstrategy, NULL, dev, B_READ, minphys, uio));
@@ -1053,7 +1053,7 @@ sdwrite(dev, uio, flags)
 	int pid;
 
 	if ((pid = sc->sc_format_pid) >= 0 &&
-	    pid != uio->uio_procp->p_pid)
+	    pid != uio->uio_lwp->l_proc->p_pid)
 		return (EPERM);
 		
 	return (physio(sdstrategy, NULL, dev, B_WRITE, minphys, uio));

@@ -1,4 +1,4 @@
-/*	$NetBSD: sysmonvar.h,v 1.6 2003/04/18 01:31:35 thorpej Exp $	*/
+/*	$NetBSD: sysmonvar.h,v 1.7 2003/06/28 14:21:45 darrenr Exp $	*/
 
 /*-
  * Copyright (c) 2000 Zembu Labs, Inc.
@@ -41,6 +41,7 @@
 #include <sys/power.h>
 #include <sys/queue.h>
 
+struct lwp;
 struct proc;
 struct knote;
 struct uio;
@@ -73,9 +74,9 @@ struct sysmon_envsys {
 
 #define	SME_SENSOR_IDX(sme, idx)	((idx) - (sme)->sme_fsensor)
 
-int	sysmonopen_envsys(dev_t, int, int, struct proc *);
-int	sysmonclose_envsys(dev_t, int, int, struct proc *);
-int	sysmonioctl_envsys(dev_t, u_long, caddr_t, int, struct proc *);
+int	sysmonopen_envsys(dev_t, int, int, struct lwp *);
+int	sysmonclose_envsys(dev_t, int, int, struct lwp *);
+int	sysmonioctl_envsys(dev_t, u_long, caddr_t, int, struct lwp *);
 
 int	sysmon_envsys_register(struct sysmon_envsys *);
 void	sysmon_envsys_unregister(struct sysmon_envsys *);
@@ -98,12 +99,12 @@ struct sysmon_wdog {
 	pid_t smw_tickler;		/* last process to tickle */
 };
 
-int	sysmonopen_wdog(dev_t, int, int, struct proc *);
-int	sysmonclose_wdog(dev_t, int, int, struct proc *);
-int	sysmonioctl_wdog(dev_t, u_long, caddr_t, int, struct proc *);
+int	sysmonopen_wdog(dev_t, int, int, struct lwp *);
+int	sysmonclose_wdog(dev_t, int, int, struct lwp *);
+int	sysmonioctl_wdog(dev_t, u_long, caddr_t, int, struct lwp *);
 
-int	sysmon_wdog_register(struct sysmon_wdog *);
-void	sysmon_wdog_unregister(struct sysmon_wdog *);
+int     sysmon_wdog_register(struct sysmon_wdog *);
+void    sysmon_wdog_unregister(struct sysmon_wdog *);
 
 /*****************************************************************************
  * Power management support
@@ -116,12 +117,12 @@ struct sysmon_pswitch {
 	LIST_ENTRY(sysmon_pswitch) smpsw_list;
 };
 
-int	sysmonopen_power(dev_t, int, int, struct proc *);
-int	sysmonclose_power(dev_t, int, int, struct proc *);
+int	sysmonopen_power(dev_t, int, int, struct lwp *);
+int	sysmonclose_power(dev_t, int, int, struct lwp *);
 int	sysmonread_power(dev_t, struct uio *, int);
-int	sysmonpoll_power(dev_t, int, struct proc *);
+int	sysmonpoll_power(dev_t, int, struct lwp *);
 int	sysmonkqfilter_power(dev_t, struct knote *);
-int	sysmonioctl_power(dev_t, u_long, caddr_t, int, struct proc *);
+int	sysmonioctl_power(dev_t, u_long, caddr_t, int, struct lwp *);
 
 void	sysmon_power_settype(const char *);
 
@@ -129,5 +130,5 @@ int	sysmon_pswitch_register(struct sysmon_pswitch *);
 void	sysmon_pswitch_unregister(struct sysmon_pswitch *);
 
 void	sysmon_pswitch_event(struct sysmon_pswitch *, int);
-
+ 
 #endif /* _DEV_SYSMON_SYSMONVAR_H_ */

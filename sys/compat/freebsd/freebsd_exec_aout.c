@@ -1,4 +1,4 @@
-/*	$NetBSD: freebsd_exec_aout.c,v 1.3 2001/11/13 02:08:07 lukem Exp $	*/
+/*	$NetBSD: freebsd_exec_aout.c,v 1.4 2003/06/28 14:21:17 darrenr Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Christopher G. Demetriou
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: freebsd_exec_aout.c,v 1.3 2001/11/13 02:08:07 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: freebsd_exec_aout.c,v 1.4 2003/06/28 14:21:17 darrenr Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -57,8 +57,8 @@ __KERNEL_RCSID(0, "$NetBSD: freebsd_exec_aout.c,v 1.3 2001/11/13 02:08:07 lukem 
  */
 
 int
-exec_freebsd_aout_makecmds(p, epp)
-	struct proc *p;
+exec_freebsd_aout_makecmds(l, epp)
+	struct lwp *l;
 	struct exec_package *epp;
 {
 	u_long midmag;
@@ -73,16 +73,16 @@ exec_freebsd_aout_makecmds(p, epp)
 	/* assume FreeBSD's MID_MACHINE and [ZQNO]MAGIC is same as NetBSD's */
 	switch (midmag) {
 	case (MID_MACHINE << 16) | ZMAGIC:
-		error = exec_aout_prep_oldzmagic(p, epp);
+		error = exec_aout_prep_oldzmagic(l->l_proc, epp);
 		break;
 	case (MID_MACHINE << 16) | QMAGIC:
-		error = exec_aout_prep_zmagic(p, epp);
+		error = exec_aout_prep_zmagic(l->l_proc, epp);
 		break;
 	case (MID_MACHINE << 16) | NMAGIC:
-		error = exec_aout_prep_nmagic(p, epp);
+		error = exec_aout_prep_nmagic(l->l_proc, epp);
 		break;
 	case (MID_MACHINE << 16) | OMAGIC:
-		error = exec_aout_prep_omagic(p, epp);
+		error = exec_aout_prep_omagic(l->l_proc, epp);
 		break;
 	}
 	if (error)

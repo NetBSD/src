@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.142 2003/05/17 01:38:40 nakayama Exp $ */
+/*	$NetBSD: machdep.c,v 1.143 2003/06/28 14:21:08 darrenr Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -1178,8 +1178,8 @@ stackdump()
 
 
 int
-cpu_exec_aout_makecmds(p, epp)
-	struct proc *p;
+cpu_exec_aout_makecmds(l, epp)
+	struct lwp *l;
 	struct exec_package *epp;
 {
 	return (ENOEXEC);
@@ -1443,7 +1443,7 @@ _bus_dmamap_load_uio(t, map, uio, flags)
 	bus_dma_segment_t segs[MAX_DMA_SEGS];
 	int i, j;
 	size_t len;
-	struct proc *p = uio->uio_procp;
+	struct proc *p = uio->uio_lwp->l_proc;
 	struct pmap *pm;
 
 	/*

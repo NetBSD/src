@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_stat.c,v 1.47 2003/05/16 14:36:35 itojun Exp $	 */
+/*	$NetBSD: svr4_stat.c,v 1.48 2003/06/28 14:21:27 darrenr Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_stat.c,v 1.47 2003/05/16 14:36:35 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_stat.c,v 1.48 2003/06/28 14:21:27 darrenr Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -193,7 +193,7 @@ svr4_sys_stat(l, v, retval)
 
 	caddr_t sg = stackgap_init(p, 0);
 	SCARG(&cup, ub) = stackgap_alloc(p, &sg, sizeof(struct stat));
-	CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
+	CHECK_ALT_EXIST(l, &sg, SCARG(uap, path));
 	SCARG(&cup, path) = SCARG(uap, path);
 
 	if ((error = sys___stat13(l, &cup, retval)) != 0)
@@ -238,7 +238,7 @@ svr4_sys_lstat(l, v, retval)
 
 	caddr_t sg = stackgap_init(p, 0);
 	SCARG(&cup, ub) = stackgap_alloc(p, &sg, sizeof(struct stat));
-	CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
+	CHECK_ALT_EXIST(l, &sg, SCARG(uap, path));
 	SCARG(&cup, path) = SCARG(uap, path);
 
 	if ((error = sys___lstat13(l, &cup, retval)) != 0)
@@ -318,7 +318,7 @@ svr4_sys_xstat(l, v, retval)
 	caddr_t sg = stackgap_init(p, 0);
 
 	SCARG(&cup, ub) = stackgap_alloc(p, &sg, sizeof(struct stat));
-	CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
+	CHECK_ALT_EXIST(l, &sg, SCARG(uap, path));
 	SCARG(&cup, path) = SCARG(uap, path);
 
 	if ((error = sys___stat13(l, &cup, retval)) != 0)
@@ -355,7 +355,7 @@ svr4_sys_lxstat(l, v, retval)
 	caddr_t sg = stackgap_init(p, 0);
 
 	SCARG(&cup, ub) = stackgap_alloc(p, &sg, sizeof(struct stat));
-	CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
+	CHECK_ALT_EXIST(l, &sg, SCARG(uap, path));
 	SCARG(&cup, path) = SCARG(uap, path);
 
 	if ((error = sys___lstat13(l, &cup, retval)) != 0)
@@ -425,7 +425,7 @@ svr4_sys_stat64(l, v, retval)
 	caddr_t sg = stackgap_init(p, 0);
 
 	SCARG(&cup, ub) = stackgap_alloc(p, &sg, sizeof(struct stat));
-	CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
+	CHECK_ALT_EXIST(l, &sg, SCARG(uap, path));
 	SCARG(&cup, path) = SCARG(uap, path);
 
 	if ((error = sys___stat13(l, &cup, retval)) != 0)
@@ -462,7 +462,7 @@ svr4_sys_lstat64(l, v, retval)
 	caddr_t sg = stackgap_init(p, 0);
 
 	SCARG(&cup, ub) = stackgap_alloc(p, &sg, sizeof(struct stat));
-	CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
+	CHECK_ALT_EXIST(l, &sg, SCARG(uap, path));
 	SCARG(&cup, path) = SCARG(uap, path);
 
 	if ((error = sys___lstat13(l, &cup, retval)) != 0)
@@ -686,7 +686,7 @@ svr4_sys_systeminfo(l, v, retval)
 		error = copyinstr(SCARG(uap, buf), buf, sizeof(buf), &len);
 		if (error)
 			return error;
-		error = kern_sysctl(&name, 1, 0, 0, buf, len, p);
+		error = kern_sysctl(&name, 1, 0, 0, buf, len, l);
 	}
 
 	*retval = len;
@@ -743,7 +743,7 @@ svr4_sys_utime(l, v, retval)
 	caddr_t sg = stackgap_init(p, 0);
 
 	ttp = stackgap_alloc(p, &sg, sizeof(tbuf));
-	CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
+	CHECK_ALT_EXIST(l, &sg, SCARG(uap, path));
 	SCARG(&ap, path) = SCARG(uap, path);
 	if (SCARG(uap, ubuf) != NULL) {
 		if ((error = copyin(SCARG(uap, ubuf), &ub, sizeof(ub))) != 0)
@@ -772,7 +772,7 @@ svr4_sys_utimes(l, v, retval)
 	struct svr4_sys_utimes_args *uap = v;
 	struct proc *p = l->l_proc;
 	caddr_t sg = stackgap_init(p, 0);
-	CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
+	CHECK_ALT_EXIST(l, &sg, SCARG(uap, path));
 	return sys_utimes(l, uap, retval);
 }
 
@@ -837,7 +837,7 @@ svr4_sys_pathconf(l, v, retval)
 	struct proc *p = l->l_proc;
 	caddr_t sg = stackgap_init(p, 0);
 
-	CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
+	CHECK_ALT_EXIST(l, &sg, SCARG(uap, path));
 
 	SCARG(uap, name) = svr4_to_bsd_pathconf(SCARG(uap, name));
 

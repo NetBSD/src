@@ -1,4 +1,4 @@
-/*	$NetBSD: esis.c,v 1.27 2002/05/12 21:30:36 matt Exp $	*/
+/*	$NetBSD: esis.c,v 1.28 2003/06/28 14:22:13 darrenr Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -63,7 +63,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esis.c,v 1.27 2002/05/12 21:30:36 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esis.c,v 1.28 2003/06/28 14:22:13 darrenr Exp $");
 
 #include "opt_iso.h"
 #ifdef ISO
@@ -170,18 +170,20 @@ esis_init()
  */
 /* ARGSUSED */
 int
-esis_usrreq(so, req, m, nam, control, p)
+esis_usrreq(so, req, m, nam, control, l)
 	struct socket *so;
 	int req;
 	struct mbuf *m, *nam, *control;
-	struct proc *p;
+	struct lwp *l;
 {
 	struct rawcb *rp;
+	struct proc *p;
 	int error = 0;
 
 	if (req == PRU_CONTROL)
 		return (EOPNOTSUPP);
 
+	p = l ? l->l_proc : NULL;
 	rp = sotorawcb(so);
 #ifdef DIAGNOSTIC
 	if (req != PRU_SEND && req != PRU_SENDOOB && control)

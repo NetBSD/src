@@ -1,4 +1,4 @@
-/*	$NetBSD: usb.c,v 1.77 2003/01/01 00:10:26 thorpej Exp $	*/
+/*	$NetBSD: usb.c,v 1.78 2003/06/28 14:21:46 darrenr Exp $	*/
 
 /*
  * Copyright (c) 1998, 2002 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb.c,v 1.77 2003/01/01 00:10:26 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb.c,v 1.78 2003/06/28 14:21:46 darrenr Exp $");
 
 #include "ohci.h"
 #include "uhci.h"
@@ -381,7 +381,7 @@ usbctlprint(void *aux, const char *pnp)
 #endif /* defined(__NetBSD__) || defined(__OpenBSD__) */
 
 int
-usbopen(dev_t dev, int flag, int mode, usb_proc_ptr p)
+usbopen(dev_t dev, int flag, int mode, struct lwp *l)
 {
 	int unit = minor(dev);
 	struct usb_softc *sc;
@@ -436,7 +436,7 @@ usbread(dev_t dev, struct uio *uio, int flag)
 }
 
 int
-usbclose(dev_t dev, int flag, int mode, usb_proc_ptr p)
+usbclose(dev_t dev, int flag, int mode, struct lwp *l)
 {
 	int unit = minor(dev);
 
@@ -449,7 +449,7 @@ usbclose(dev_t dev, int flag, int mode, usb_proc_ptr p)
 }
 
 int
-usbioctl(dev_t devt, u_long cmd, caddr_t data, int flag, usb_proc_ptr p)
+usbioctl(dev_t devt, u_long cmd, caddr_t data, int flag, struct lwp *l)
 {
 	struct usb_softc *sc;
 	int unit = minor(devt);
@@ -462,7 +462,7 @@ usbioctl(dev_t devt, u_long cmd, caddr_t data, int flag, usb_proc_ptr p)
 
 		case FIOASYNC:
 			if (*(int *)data)
-				usb_async_proc = p;
+				usb_async_proc = l->l_proc;
 			else
 				usb_async_proc = 0;
 			return (0);
@@ -522,7 +522,7 @@ usbioctl(dev_t devt, u_long cmd, caddr_t data, int flag, usb_proc_ptr p)
 			uio.uio_rw =
 				ur->ucr_request.bmRequestType & UT_READ ?
 				UIO_READ : UIO_WRITE;
-			uio.uio_procp = p;
+			uio.uio_lwp = l;
 			ptr = malloc(len, M_TEMP, M_WAITOK);
 			if (uio.uio_rw == UIO_WRITE) {
 				error = uiomove(ptr, len, &uio);
@@ -576,7 +576,7 @@ usbioctl(dev_t devt, u_long cmd, caddr_t data, int flag, usb_proc_ptr p)
 }
 
 int
-usbpoll(dev_t dev, int events, usb_proc_ptr p)
+usbpoll(dev_t dev, int events, struct lwp *l)
 {
 	int revents, mask, s;
 
@@ -588,7 +588,7 @@ usbpoll(dev_t dev, int events, usb_proc_ptr p)
 		if (events & mask && usb_nevents > 0)
 			revents |= events & mask;
 		if (revents == 0 && events & mask)
-			selrecord(p, &usb_selevent);
+			selrecord(l, &usb_selevent);
 		splx(s);
 
 		return (revents);

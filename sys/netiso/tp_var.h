@@ -1,4 +1,4 @@
-/*	$NetBSD: tp_var.h,v 1.4 1998/09/13 15:24:39 christos Exp $	*/
+/*	$NetBSD: tp_var.h,v 1.5 2003/06/28 14:22:14 darrenr Exp $	*/
 
 /*-
  * Copyright (c) 1995 The NetBSD Foundation, Inc.
@@ -180,7 +180,7 @@ int tp_rcvoob   __P((struct tp_pcb *, struct socket *, struct mbuf *,
 		     int *, int));
 int tp_sendoob  __P((struct tp_pcb *, struct socket *, struct mbuf *, int *));
 int tp_usrreq   __P((struct socket *, int, struct mbuf *, struct mbuf *,
-		     struct mbuf *, struct proc *));
+		     struct mbuf *, struct lwp *));
 void tp_ltrace   __P((struct socket *, struct uio *));
 int tp_confirm  __P((struct tp_pcb *));
 int tp_snd_control __P((struct mbuf *, struct socket *, struct mbuf **));

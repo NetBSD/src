@@ -1,4 +1,4 @@
-/*	$NetBSD: process_machdep.c,v 1.12 2003/03/05 05:27:24 matt Exp $	*/
+/*	$NetBSD: process_machdep.c,v 1.13 2003/06/28 14:21:05 darrenr Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -196,7 +196,7 @@ ptrace_machdep_dorequest(struct proc *p, struct lwp *l,
 		uio.uio_resid = sizeof(struct vreg);
 		uio.uio_segflg = UIO_USERSPACE;
 		uio.uio_rw = write ? UIO_WRITE : UIO_READ;
-		uio.uio_procp = p;
+		uio.uio_lwp = l;
 		return process_machdep_dovecregs(p, l, &uio);
 	}
 

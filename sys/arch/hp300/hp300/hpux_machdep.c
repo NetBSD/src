@@ -1,4 +1,4 @@
-/*	$NetBSD: hpux_machdep.c,v 1.32 2003/01/17 22:53:08 thorpej Exp $	*/
+/*	$NetBSD: hpux_machdep.c,v 1.33 2003/06/28 14:20:51 darrenr Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpux_machdep.c,v 1.32 2003/01/17 22:53:08 thorpej Exp $");                                                  
+__KERNEL_RCSID(0, "$NetBSD: hpux_machdep.c,v 1.33 2003/06/28 14:20:51 darrenr Exp $");                                                  
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -168,8 +168,8 @@ struct bsdfp {
  * m68k-specific setup for HP-UX executables.
  */
 int
-hpux_cpu_makecmds(p, epp)
-	struct proc *p;
+hpux_cpu_makecmds(l, epp)
+	struct lwp *l;
 	struct exec_package *epp;
 {
 	/* struct hpux_exec *hpux_ep = epp->ep_hdr; */

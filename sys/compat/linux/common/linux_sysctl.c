@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_sysctl.c,v 1.7 2003/01/18 21:21:37 thorpej Exp $	*/
+/*	$NetBSD: linux_sysctl.c,v 1.8 2003/06/28 14:21:22 darrenr Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_sysctl.c,v 1.7 2003/01/18 21:21:37 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_sysctl.c,v 1.8 2003/06/28 14:21:22 darrenr Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -62,23 +62,23 @@ __KERNEL_RCSID(0, "$NetBSD: linux_sysctl.c,v 1.7 2003/01/18 21:21:37 thorpej Exp
 #include <compat/linux/common/linux_exec.h>
 
 int linux_kern_sysctl(int *, u_int, void *, size_t *, void *, size_t,
-    struct proc *);
+    struct lwp *);
 int linux_vm_sysctl(int *, u_int, void *, size_t *, void *, size_t,
-    struct proc *);
+    struct lwp *);
 int linux_net_sysctl(int *, u_int, void *, size_t *, void *, size_t,
-    struct proc *);
+    struct lwp *);
 int linux_proc_sysctl(int *, u_int, void *, size_t *, void *, size_t,
-    struct proc *);
+    struct lwp *);
 int linux_fs_sysctl(int *, u_int, void *, size_t *, void *, size_t,
-    struct proc *);
+    struct lwp *);
 #ifdef DEBUG
 int linux_debug_sysctl(int *, u_int, void *, size_t *, void *, size_t,
-    struct proc *);
+    struct lwp *);
 #endif
 int linux_dev_sysctl(int *, u_int, void *, size_t *, void *, size_t,
-    struct proc *);
+    struct lwp *);
 int linux_bus_sysctl(int *, u_int, void *, size_t *, void *, size_t,
-    struct proc *);
+    struct lwp *);
 
 int
 linux_sys___sysctl(struct lwp *l, void *v, register_t *retval)
@@ -161,7 +161,7 @@ linux_sys___sysctl(struct lwp *l, void *v, register_t *retval)
 		savelen = oldlen;
 	}
 	error = (*fn)(name + 1, ls.nlen - 1, ls.oldval, oldlenp, ls.newval,
-	    ls.newlen, p);
+	    ls.newlen, l);
 	if (ls.oldval != NULL)
 		uvm_vsunlock(p, ls.oldval, savelen);
 	if (error)
@@ -185,7 +185,7 @@ char linux_version[128] = "#0 Sun Nov 11 11:11:11 MET 2000";
  */
 int
 linux_kern_sysctl(int *name, u_int nlen, void *oldp, size_t *oldlenp,
-    void *newp, size_t newlen, struct proc *p)
+    void *newp, size_t newlen, struct lwp *l)
 {
 	/*
 	 * Note that we allow writing into this, so that userland
@@ -211,7 +211,7 @@ linux_kern_sysctl(int *name, u_int nlen, void *oldp, size_t *oldlenp,
  */
 int
 linux_sysctl(int *name, u_int nlen, void *oldp, size_t *oldlenp,
-    void *newp, size_t newlen, struct proc *p)
+    void *newp, size_t newlen, struct lwp *l)
 {
 	if (nlen != 2 || name[0] != EMUL_LINUX_KERN)
 		return EOPNOTSUPP;
@@ -240,35 +240,35 @@ linux_sysctl(int *name, u_int nlen, void *oldp, size_t *oldlenp,
  */
 int
 linux_vm_sysctl(int *name, u_int nlen, void *oldp, size_t *oldlenp,
-    void *newp, size_t newlen, struct proc *p)
+    void *newp, size_t newlen, struct lwp *l)
 {
 	return (EOPNOTSUPP);
 }
 
 int
 linux_net_sysctl(int *name, u_int nlen, void *oldp, size_t *oldlenp,
-    void *newp, size_t newlen, struct proc *p)
+    void *newp, size_t newlen, struct lwp *l)
 {
 	return (EOPNOTSUPP);
 }
 
 int
 linux_proc_sysctl(int *name, u_int nlen, void *oldp, size_t *oldlenp,
-    void *newp, size_t newlen, struct proc *p)
+    void *newp, size_t newlen, struct lwp *l)
 {
 	return (EOPNOTSUPP);
 }
 
 int
 linux_fs_sysctl(int *name, u_int nlen, void *oldp, size_t *oldlenp,
-    void *newp, size_t newlen, struct proc *p)
+    void *newp, size_t newlen, struct lwp *l)
 {
 	return (EOPNOTSUPP);
 }
 #ifdef DEBUG
 int
 linux_debug_sysctl(int *name, u_int nlen, void *oldp, size_t *oldlenp,
-    void *newp, size_t newlen, struct proc *p)
+    void *newp, size_t newlen, struct lwp *l)
 {
 	return (EOPNOTSUPP);
 }
@@ -276,14 +276,14 @@ linux_debug_sysctl(int *name, u_int nlen, void *oldp, size_t *oldlenp,
 
 int
 linux_dev_sysctl(int *name, u_int nlen, void *oldp, size_t *oldlenp,
-    void *newp, size_t newlen, struct proc *p)
+    void *newp, size_t newlen, struct lwp *l)
 {
 	return (EOPNOTSUPP);
 }
 
 int
 linux_bus_sysctl(int *name, u_int nlen, void *oldp, size_t *oldlenp,
-    void *newp, size_t newlen, struct proc *p)
+    void *newp, size_t newlen, struct lwp *l)
 {
 	return (EOPNOTSUPP);
 }

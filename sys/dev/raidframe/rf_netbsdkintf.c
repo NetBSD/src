@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.159 2003/05/10 23:12:46 thorpej Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.160 2003/06/28 14:21:42 darrenr Exp $	*/
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -111,7 +111,7 @@
  ***********************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.159 2003/05/10 23:12:46 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.160 2003/06/28 14:21:42 darrenr Exp $");
 
 #include <sys/param.h>
 #include <sys/errno.h>
@@ -175,7 +175,7 @@ static void InitBP(struct buf * bp, struct vnode *, unsigned rw_flag,
 		   dev_t dev, RF_SectorNum_t startSect, 
 		   RF_SectorCount_t numSect, caddr_t buf,
 		   void (*cbFunc) (struct buf *), void *cbArg, 
-		   int logBytesPerSector, struct proc * b_proc);
+		   int logBytesPerSector, struct proc * proc);
 static void raidinit(RF_Raid_t *);
 
 void raidattach(int);
@@ -498,7 +498,7 @@ raidsize(dev)
 	omask = rs->sc_dkdev.dk_openmask & (1 << part);
 	lp = rs->sc_dkdev.dk_label;
 
-	if (omask == 0 && raidopen(dev, 0, S_IFBLK, curproc))
+	if (omask == 0 && raidopen(dev, 0, S_IFBLK, curlwp))
 		return (-1);
 
 	if (lp->d_partitions[part].p_fstype != FS_SWAP)
@@ -507,7 +507,7 @@ raidsize(dev)
 		size = lp->d_partitions[part].p_size *
 		    (lp->d_secsize / DEV_BSIZE);
 
-	if (omask == 0 && raidclose(dev, 0, S_IFBLK, curproc))
+	if (omask == 0 && raidclose(dev, 0, S_IFBLK, curlwp))
 		return (-1);
 
 	return (size);
@@ -526,10 +526,10 @@ raiddump(dev, blkno, va, size)
 }
 /* ARGSUSED */
 int
-raidopen(dev, flags, fmt, p)
+raidopen(dev, flags, fmt, l)
 	dev_t   dev;
 	int     flags, fmt;
-	struct proc *p;
+	struct lwp *l;
 {
 	int     unit = raidunit(dev);
 	struct raid_softc *rs;
@@ -599,10 +599,10 @@ raidopen(dev, flags, fmt, p)
 }
 /* ARGSUSED */
 int
-raidclose(dev, flags, fmt, p)
+raidclose(dev, flags, fmt, l)
 	dev_t   dev;
 	int     flags, fmt;
-	struct proc *p;
+	struct lwp *l;
 {
 	int     unit = raidunit(dev);
 	struct raid_softc *rs;
@@ -767,12 +767,12 @@ raidwrite(dev, uio, flags)
 }
 
 int
-raidioctl(dev, cmd, data, flag, p)
+raidioctl(dev, cmd, data, flag, l)
 	dev_t   dev;
 	u_long  cmd;
 	caddr_t data;
 	int     flag;
-	struct proc *p;
+	struct lwp *l;
 {
 	int     unit = raidunit(dev);
 	int     error = 0;
@@ -1989,7 +1989,7 @@ KernelWakeupFunc(vbp)
  */
 static void 
 InitBP(bp, b_vp, rw_flag, dev, startSect, numSect, buf, cbFunc, cbArg,
-       logBytesPerSector, b_proc)
+       logBytesPerSector, p)
 	struct buf *bp;
 	struct vnode *b_vp;
 	unsigned rw_flag;
@@ -2000,7 +2000,7 @@ InitBP(bp, b_vp, rw_flag, dev, startSect, numSect, buf, cbFunc, cbArg,
 	void (*cbFunc) (struct buf *);
 	void *cbArg;
 	int logBytesPerSector;
-	struct proc *b_proc;
+	struct proc *p;
 {
 	/* bp->b_flags       = B_PHYS | rw_flag; */
 	bp->b_flags = B_CALL | rw_flag;	/* XXX need B_PHYS here too??? */
@@ -2014,7 +2014,7 @@ InitBP(bp, b_vp, rw_flag, dev, startSect, numSect, buf, cbFunc, cbArg,
 	if (bp->b_bcount == 0) {
 		panic("bp->b_bcount is zero in InitBP!!");
 	}
-	bp->b_proc = b_proc;
+	bp->b_proc = p;
 	bp->b_iodone = cbFunc;
 	bp->b_vp = b_vp;
 
@@ -2140,35 +2140,37 @@ raidmakedisklabel(rs)
  * You'll find the original of this in ccd.c
  */
 int
-raidlookup(path, p, vpp)
+raidlookup(path, l, vpp)
 	char   *path;
-	struct proc *p;
+	struct lwp *l;
 	struct vnode **vpp;	/* result */
 {
 	struct nameidata nd;
 	struct vnode *vp;
+	struct proc *p;
 	struct vattr va;
 	int     error;
 
-	NDINIT(&nd, LOOKUP, FOLLOW, UIO_SYSSPACE, path, p);
+	p = l ? l->l_proc : NULL;
+	NDINIT(&nd, LOOKUP, FOLLOW, UIO_SYSSPACE, path, l);
 	if ((error = vn_open(&nd, FREAD | FWRITE, 0)) != 0) {
 		return (error);
 	}
 	vp = nd.ni_vp;
 	if (vp->v_usecount > 1) {
 		VOP_UNLOCK(vp, 0);
-		(void) vn_close(vp, FREAD | FWRITE, p->p_ucred, p);
+		(void) vn_close(vp, FREAD | FWRITE, p->p_ucred, l);
 		return (EBUSY);
 	}
-	if ((error = VOP_GETATTR(vp, &va, p->p_ucred, p)) != 0) {
+	if ((error = VOP_GETATTR(vp, &va, p->p_ucred, l)) != 0) {
 		VOP_UNLOCK(vp, 0);
-		(void) vn_close(vp, FREAD | FWRITE, p->p_ucred, p);
+		(void) vn_close(vp, FREAD | FWRITE, p->p_ucred, l);
 		return (error);
 	}
 	/* XXX: eventually we should handle VREG, too. */
 	if (va.va_type != VBLK) {
 		VOP_UNLOCK(vp, 0);
-		(void) vn_close(vp, FREAD | FWRITE, p->p_ucred, p);
+		(void) vn_close(vp, FREAD | FWRITE, p->p_ucred, l);
 		return (ENOTBLK);
 	}
 	VOP_UNLOCK(vp, 0);
@@ -2515,8 +2517,10 @@ rf_close_component(raidPtr, vp, auto_configured)
 	int auto_configured;
 {
 	struct proc *p;
+	struct lwp *l;
 
 	p = raidPtr->engine_thread;
+	l = LIST_FIRST(&p->p_lwps);
 
 	if (vp != NULL) {
 		if (auto_configured == 1) {
@@ -2525,7 +2529,7 @@ rf_close_component(raidPtr, vp, auto_configured)
 			vput(vp);
 			
 		} else {				
-			(void) vn_close(vp, FREAD | FWRITE, p->p_ucred, p);
+			(void) vn_close(vp, FREAD | FWRITE, p->p_ucred, l);
 		}
 	} 
 }

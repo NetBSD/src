@@ -1,4 +1,4 @@
-/*	$NetBSD: idp_usrreq.c,v 1.19 2001/11/13 01:08:10 lukem Exp $	*/
+/*	$NetBSD: idp_usrreq.c,v 1.20 2003/06/28 14:22:15 darrenr Exp $	*/
 
 /*
  * Copyright (c) 1984, 1985, 1986, 1987, 1993
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: idp_usrreq.c,v 1.19 2001/11/13 01:08:10 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: idp_usrreq.c,v 1.20 2003/06/28 14:22:15 darrenr Exp $");
 
 #include "opt_ns.h"			/* NSIP: Xerox NS over IP */
 
@@ -361,16 +361,18 @@ u_long	idp_recvspace = 2048;
 
 /*ARGSUSED*/
 int
-idp_usrreq(so, req, m, nam, control, p)
+idp_usrreq(so, req, m, nam, control, l)
 	struct socket *so;
 	int req;
 	struct mbuf *m, *nam, *control;
-	struct proc *p;
+	struct lwp *l;
 {
 	struct nspcb *nsp;
+	struct proc *p;
 	int s;
 	int error = 0;
 
+	p = l ? l->l_proc : NULL;
 	if (req == PRU_CONTROL)
                 return (ns_control(so, (u_long)m, (caddr_t)nam,
 		    (struct ifnet *)control, p));
@@ -500,14 +502,17 @@ release:
 
 /*ARGSUSED*/
 int
-idp_raw_usrreq(so, req, m, nam, control, p)
+idp_raw_usrreq(so, req, m, nam, control, l)
 	struct socket *so;
 	int req;
 	struct mbuf *m, *nam, *control;
-	struct proc *p;
+	struct lwp *l;
 {
 	int error = 0;
+	struct proc *p;
 	struct nspcb *nsp = sotonspcb(so);
+
+	p = l->l_proc;
 
 	switch (req) {
 
@@ -529,7 +534,7 @@ idp_raw_usrreq(so, req, m, nam, control, p)
 		break;
 
 	default:
-		error = idp_usrreq(so, req, m, nam, control, p);
+		error = idp_usrreq(so, req, m, nam, control, l);
 		break;
 	}
 	return (error);

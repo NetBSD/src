@@ -1,4 +1,4 @@
-/*	$NetBSD: pecoff_exec.h,v 1.4 2002/08/26 21:06:03 christos Exp $	*/
+/*	$NetBSD: pecoff_exec.h,v 1.5 2003/06/28 14:21:25 darrenr Exp $	*/
 
 /*
  * Copyright (c) 2000 Masaru OKI
@@ -106,8 +106,8 @@ struct pecoff_args {
 extern const struct emul emul_pecoff;
 
 struct exec_package;
-int     exec_pecoff_makecmds __P((struct proc *, struct exec_package *));
-int	pecoff_copyargs __P((struct proc *, struct exec_package *,
+int     exec_pecoff_makecmds __P((struct lwp *, struct exec_package *));
+int	pecoff_copyargs __P((struct lwp *, struct exec_package *,
     struct ps_strings *, char **, void *));
 
 #endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: filecore_extern.h,v 1.2 2003/02/01 06:23:41 thorpej Exp $	*/
+/*	$NetBSD: filecore_extern.h,v 1.3 2003/06/28 14:21:49 darrenr Exp $	*/
 
 /*-
  * Copyright (c) 1998 Andrew McMurry
@@ -77,11 +77,11 @@ struct filecore_mnt {
 extern struct pool filecore_node_pool;
 
 int filecore_mount __P((struct mount *,
-	    const char *, void *, struct nameidata *, struct proc *));
+	    const char *, void *, struct nameidata *, struct lwp *));
 int filecore_start __P((struct mount *, int, struct proc *));
 int filecore_unmount __P((struct mount *, int, struct proc *));
 int filecore_root __P((struct mount *, struct vnode **));
-int filecore_quotactl __P((struct mount *, int, uid_t, caddr_t, struct proc *));
+int filecore_quotactl __P((struct mount *, int, uid_t, caddr_t, struct lwp *));
 int filecore_statfs __P((struct mount *, struct statfs *, struct proc *));
 int filecore_sync __P((struct mount *, int, struct ucred *, struct proc *));
 int filecore_vget __P((struct mount *, ino_t, struct vnode **));

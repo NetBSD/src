@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.4 2003/04/02 04:18:40 thorpej Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.5 2003/06/28 14:21:04 darrenr Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -318,7 +318,7 @@ _bus_dmamap_load_uio(bus_dma_tag_t t, bus_dmamap_t map, struct uio *uio,
 	iov = uio->uio_iov;
 
 	if (uio->uio_segflg == UIO_USERSPACE) {
-		p = uio->uio_procp;
+		p = uio->uio_lwp->l_proc;
 #ifdef DIAGNOSTIC
 		if (p == NULL)
 			panic("_bus_dmamap_load_uio: USERSPACE but no proc");

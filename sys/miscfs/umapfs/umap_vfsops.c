@@ -1,4 +1,4 @@
-/*	$NetBSD: umap_vfsops.c,v 1.36 2003/04/16 21:44:24 christos Exp $	*/
+/*	$NetBSD: umap_vfsops.c,v 1.37 2003/06/28 14:22:05 darrenr Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umap_vfsops.c,v 1.36 2003/04/16 21:44:24 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umap_vfsops.c,v 1.37 2003/06/28 14:22:05 darrenr Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -59,27 +59,29 @@ __KERNEL_RCSID(0, "$NetBSD: umap_vfsops.c,v 1.36 2003/04/16 21:44:24 christos Ex
 #include <miscfs/genfs/layer_extern.h>
 
 int	umapfs_mount __P((struct mount *, const char *, void *,
-			  struct nameidata *, struct proc *));
-int	umapfs_unmount __P((struct mount *, int, struct proc *));
+			  struct nameidata *, struct lwp *));
+int	umapfs_unmount __P((struct mount *, int, struct lwp *));
 
 /*
  * Mount umap layer
  */
 int
-umapfs_mount(mp, path, data, ndp, p)
+umapfs_mount(mp, path, data, ndp, l)
 	struct mount *mp;
 	const char *path;
 	void *data;
 	struct nameidata *ndp;
-	struct proc *p;
+	struct lwp *l;
 {
 	struct umap_args args;
 	struct vnode *lowerrootvp, *vp;
 	struct umap_mount *amp;
+	struct proc *p;
 	int error;
 #ifdef UMAPFS_DIAGNOSTIC
 	int i;
 #endif
+
 	if (mp->mnt_flag & MNT_GETARGS) {
 		amp = MOUNTTOUMAPMOUNT(mp);
 		if (amp == NULL)
@@ -122,7 +124,7 @@ umapfs_mount(mp, path, data, ndp, p)
 	 * Find lower node
 	 */
 	NDINIT(ndp, LOOKUP, FOLLOW|LOCKLEAF,
-		UIO_USERSPACE, args.umap_target, p);
+		UIO_USERSPACE, args.umap_target, l);
 	if ((error = namei(ndp)) != 0)
 		return (error);
 
@@ -243,10 +245,10 @@ umapfs_mount(mp, path, data, ndp, p)
  * Free reference to umap layer
  */
 int
-umapfs_unmount(mp, mntflags, p)
+umapfs_unmount(mp, mntflags, l)
 	struct mount *mp;
 	int mntflags;
-	struct proc *p;
+	struct lwp *l;
 {
 	struct vnode *rootvp = MOUNTTOUMAPMOUNT(mp)->umapm_rootvp;
 	int error;

@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_extern.h,v 1.15 2003/05/26 21:22:19 fvdl Exp $	*/
+/*	$NetBSD: ext2fs_extern.h,v 1.16 2003/06/28 14:22:24 darrenr Exp $	*/
 
 /*-
  * Copyright (c) 1997 Manuel Bouyer.
@@ -46,7 +46,7 @@ struct m_ext2fs;
 struct inode;
 struct mount;
 struct nameidata;
-struct proc;
+struct lwp;
 struct statfs;
 struct timeval;
 struct ucred;
@@ -95,7 +95,8 @@ int ext2fs_dirremove __P((struct vnode *, struct componentname *));
 int ext2fs_dirrewrite __P((struct inode *, struct inode *,
 			   struct componentname *));
 int ext2fs_dirempty __P((struct inode *, ino_t, struct ucred *));
-int ext2fs_checkpath __P((struct inode *, struct inode *, struct ucred *));
+int ext2fs_checkpath __P((struct inode *, struct inode *, struct ucred *,
+			  struct lwp *));
 
 /* ext2fs_subr.c */
 int ext2fs_blkatoff __P((void *));
@@ -110,18 +111,18 @@ void ext2fs_reinit __P((void));
 void ext2fs_done __P((void));
 int ext2fs_mountroot __P((void));
 int ext2fs_mount __P((struct mount *, const char *, void *, struct nameidata *,
-		   struct proc *));
-int ext2fs_reload __P((struct mount *, struct ucred *, struct proc *));
-int ext2fs_mountfs __P((struct vnode *, struct mount *, struct proc *));
-int ext2fs_unmount __P((struct mount *, int, struct proc *));
-int ext2fs_flushfiles __P((struct mount *, int, struct proc *));
-int ext2fs_statfs __P((struct mount *, struct statfs *, struct proc *));
-int ext2fs_sync __P((struct mount *, int, struct ucred *, struct proc *));
-int ext2fs_vget __P((struct mount *, ino_t, struct vnode **));
-int ext2fs_fhtovp __P((struct mount *, struct fid *, struct vnode **));
+		   struct lwp *));
+int ext2fs_reload __P((struct mount *, struct ucred *, struct lwp *));
+int ext2fs_mountfs __P((struct vnode *, struct mount *, struct lwp *));
+int ext2fs_unmount __P((struct mount *, int, struct lwp *));
+int ext2fs_flushfiles __P((struct mount *, int, struct lwp *));
+int ext2fs_statfs __P((struct mount *, struct statfs *, struct lwp *));
+int ext2fs_sync __P((struct mount *, int, struct ucred *, struct lwp *));
+int ext2fs_vget __P((struct mount *, ino_t, struct vnode **, struct lwp *));
+int ext2fs_fhtovp __P((struct mount *, struct fid *, struct vnode **, struct lwp *));
 int ext2fs_vptofh __P((struct vnode *, struct fid *));
 int ext2fs_sysctl __P((int *, u_int, void *, size_t *, void *, size_t,
-		       struct proc *));
+		       struct lwp *));
 int ext2fs_sbupdate __P((struct ufsmount *, int));
 int ext2fs_cgupdate __P((struct ufsmount *, int));
 

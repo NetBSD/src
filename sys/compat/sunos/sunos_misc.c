@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos_misc.c,v 1.121 2003/05/16 14:36:33 itojun Exp $	*/
+/*	$NetBSD: sunos_misc.c,v 1.122 2003/06/28 14:21:26 darrenr Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunos_misc.c,v 1.121 2003/05/16 14:36:33 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunos_misc.c,v 1.122 2003/06/28 14:21:26 darrenr Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_nfsserver.h"
@@ -162,7 +162,7 @@ sunos_sys_creat(l, v, retval)
 	struct sys_open_args ouap;
 
 	caddr_t sg = stackgap_init(p, 0);
-	CHECK_ALT_CREAT(p, &sg, SCARG(uap, path));
+	CHECK_ALT_CREAT(l, &sg, SCARG(uap, path));
 
 	SCARG(&ouap, path) = SCARG(uap, path);
 	SCARG(&ouap, flags) = O_WRONLY | O_CREAT | O_TRUNC;
@@ -180,7 +180,7 @@ sunos_sys_access(l, v, retval)
 	struct sunos_sys_access_args *uap = v;
 	struct proc *p = l->l_proc;
 	caddr_t sg = stackgap_init(p, 0);
-	CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
+	CHECK_ALT_EXIST(l, &sg, SCARG(uap, path));
 
 	return (sys_access(l, uap, retval));
 }
@@ -194,7 +194,7 @@ sunos_sys_stat(l, v, retval)
 	struct sunos_sys_stat_args *uap = v;
 	struct proc *p = l->l_proc;
 	caddr_t sg = stackgap_init(p, 0);
-	CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
+	CHECK_ALT_EXIST(l, &sg, SCARG(uap, path));
 
 	return (compat_43_sys_stat(l, uap, retval));
 }
@@ -208,7 +208,7 @@ sunos_sys_lstat(l, v, retval)
 	struct sunos_sys_lstat_args *uap = v;
 	struct proc *p = l->l_proc;
 	caddr_t sg = stackgap_init(p, 0);
-	CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
+	CHECK_ALT_EXIST(l, &sg, SCARG(uap, path));
 
 	return (compat_43_sys_lstat(l, uap, retval));
 }
@@ -228,7 +228,7 @@ sunos_sys_execv(l, v, retval)
 	caddr_t sg;
 
 	sg = stackgap_init(p, 0);
-	CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
+	CHECK_ALT_EXIST(l, &sg, SCARG(uap, path));
 
 	SCARG(&ap, path) = SCARG(uap, path);
 	SCARG(&ap, argp) = SCARG(uap, argp);
@@ -253,7 +253,7 @@ sunos_sys_execve(l, v, retval)
 	caddr_t sg;
 
 	sg = stackgap_init(p, 0);
-	CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
+	CHECK_ALT_EXIST(l, &sg, SCARG(uap, path));
 
 	SCARG(&ap, path) = SCARG(uap, path);
 	SCARG(&ap, argp) = SCARG(uap, argp);
@@ -528,7 +528,7 @@ again:
 	auio.uio_iovcnt = 1;
 	auio.uio_rw = UIO_READ;
 	auio.uio_segflg = UIO_SYSSPACE;
-	auio.uio_procp = p;
+	auio.uio_lwp = l;
 	auio.uio_resid = buflen;
 	auio.uio_offset = off;
 	/*
@@ -865,9 +865,9 @@ sunos_sys_open(l, v, retval)
 	nmode |= ((smode & 0x2000) ? O_FSYNC : 0);
 
 	if (nmode & O_CREAT)
-		CHECK_ALT_CREAT(p, &sg, SCARG(uap, path));
+		CHECK_ALT_CREAT(l, &sg, SCARG(uap, path));
 	else
-		CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
+		CHECK_ALT_EXIST(l, &sg, SCARG(uap, path));
 
 	SCARG(uap, flags) = nmode;
 	ret = sys_open(l, (struct sys_open_args *)uap, retval);
@@ -1012,9 +1012,9 @@ sunos_sys_statfs(l, v, retval)
 	struct nameidata nd;
 
 	caddr_t sg = stackgap_init(p, 0);
-	CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
+	CHECK_ALT_EXIST(l, &sg, SCARG(uap, path));
 
-	NDINIT(&nd, LOOKUP, FOLLOW, UIO_USERSPACE, SCARG(uap, path), p);
+	NDINIT(&nd, LOOKUP, FOLLOW, UIO_USERSPACE, SCARG(uap, path), l);
 	if ((error = namei(&nd)) != 0)
 		return (error);
 	mp = nd.ni_vp->v_mount;
@@ -1076,7 +1076,7 @@ sunos_sys_mknod(l, v, retval)
 	struct proc *p = l->l_proc;
 
 	caddr_t sg = stackgap_init(p, 0);
-	CHECK_ALT_CREAT(p, &sg, SCARG(uap, path));
+	CHECK_ALT_CREAT(l, &sg, SCARG(uap, path));
 
 	if (S_ISFIFO(SCARG(uap, mode)))
 		return sys_mkfifo(l, uap, retval);

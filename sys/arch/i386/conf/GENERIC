@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.561 2003/05/29 20:22:28 fvdl Exp $
+# $NetBSD: GENERIC,v 1.562 2003/06/28 14:20:53 darrenr Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.561 $"
+#ident 		"GENERIC-$Revision: 1.562 $"
 
 maxusers	32		# estimated number of users
 
@@ -98,11 +98,11 @@ options 	USERCONF	# userconf(4) support
 #options 	NEW_BUFQ_STRATEGY
 
 # Diagnostic/debugging support options
-#options 	DIAGNOSTIC	# expensive kernel consistency checks
-#options 	DEBUG		# expensive debugging checks/support
+options 	DIAGNOSTIC	# expensive kernel consistency checks
+options 	DEBUG		# expensive debugging checks/support
 #options 	KMEMSTATS	# kernel memory statistics (vmstat -m)
 options 	DDB		# in-kernel debugger
-#options 	DDB_ONPANIC=1	# see also sysctl(8): `ddb.onpanic'
+options 	DDB_ONPANIC=1	# see also sysctl(8): `ddb.onpanic'
 options 	DDB_HISTORY_SIZE=512	# enable history editing in DDB
 #options 	KGDB		# remote debugger
 #options 	KGDB_DEVNAME="\"com\"",KGDB_DEVADDR=0x3f8,KGDB_DEVRATE=9600
@@ -119,17 +119,17 @@ options 	COMPAT_14	# NetBSD 1.4
 options 	COMPAT_15	# NetBSD 1.5
 options 	COMPAT_43	# 4.3BSD, 386BSD, and BSDI
 options 	COMPAT_386BSD_MBRPART # recognize old partition ID
-#options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
+options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
 
 options 	COMPAT_OSSAUDIO	# OSS (Voxware) audio driver compatibility
 options 	COMPAT_SVR4	# binary compatibility with SVR4
 options 	COMPAT_IBCS2	# binary compatibility with SCO and ISC
 options 	COMPAT_LINUX	# binary compatibility with Linux
 options 	COMPAT_FREEBSD	# binary compatibility with FreeBSD
-#options 	COMPAT_MACH	# binary compatibility with Mach binaries
-#options 	COMPAT_DARWIN	# binary compatibility with Darwin binaries
-#options 	EXEC_MACHO	# exec MACH-O binaries
-#options 	COMPAT_PECOFF	# kernel support to run Win32 apps
+options 	COMPAT_MACH	# binary compatibility with Mach binaries
+options 	COMPAT_DARWIN	# binary compatibility with Darwin binaries
+options 	EXEC_MACHO	# exec MACH-O binaries
+options 	COMPAT_PECOFF	# kernel support to run Win32 apps
 
 # File systems
 file-system 	FFS		# UFS
@@ -153,24 +153,24 @@ file-system	SMBFS		# experimental - CIFS; also needs nsmb (below)
 
 # File system options
 options 	QUOTA		# UFS quotas
-#options 	FFS_EI		# FFS Endian Independent support
+options 	FFS_EI		# FFS Endian Independent support
 options 	SOFTDEP		# FFS soft updates support.
 options 	NFSSERVER	# Network File System server
-#options 	EXT2FS_SYSTEM_FLAGS # makes ext2fs file flags (append and
+options 	EXT2FS_SYSTEM_FLAGS # makes ext2fs file flags (append and
 				# immutable) behave as system flags.
 
 # Networking options
 #options 	GATEWAY		# packet forwarding
 options 	INET		# IP + ICMP + TCP + UDP
 options 	INET6		# IPV6
-#options 	IPSEC		# IP security
-#options 	IPSEC_ESP	# IP security (encryption part; define w/IPSEC)
+options 	IPSEC		# IP security
+options 	IPSEC_ESP	# IP security (encryption part; define w/IPSEC)
 #options 	IPSEC_DEBUG	# debug for IP security
-#options 	MROUTING	# IP multicast routing
+options 	MROUTING	# IP multicast routing
 options 	NS		# XNS
-#options 	NSIP		# XNS tunneling over IP
+options 	NSIP		# XNS tunneling over IP
 options 	ISO,TPIP	# OSI
-#options 	EON		# OSI tunneling over IP
+options 	EON		# OSI tunneling over IP
 options 	CCITT,LLC,HDLC	# X.25
 options 	NETATALK	# AppleTalk networking protocols
 options 	PPP_BSDCOMP	# BSD-Compress compression support for PPP
@@ -241,12 +241,12 @@ config		netbsd	root on ? type ?
 mainbus0 at root
 
 cpu* at mainbus?
-#ioapic* at mainbus?
+ioapic* at mainbus?
 
 # Doesn't do anything yet.
-#p64h2apic* at pci? dev? function?	# P64H2 IOxAPIC
+p64h2apic* at pci? dev? function?	# P64H2 IOxAPIC
 
-#apm0	at mainbus0			# Advanced power management
+apm0	at mainbus0			# Advanced power management
 
 # Tuning for power management, see apm(4) for more details.
 #options 	APM_NO_IDLE		# Don't call BIOS CPU idle function
@@ -269,60 +269,60 @@ cpu* at mainbus?
 				# (acpi at mainbus must also be enabled)
 #options 	MPACPI_SCANPCI	# find PCI roots using MPACPI
 
-#acpi0 		at mainbus0
-#options 	ACPI_PCI_FIXUP		# PCI interrupt routing via ACPI
+acpi0 		at mainbus0
+options 	ACPI_PCI_FIXUP		# PCI interrupt routing via ACPI
 #options 	ACPI_ACTIVATE_DEV=0	# If set, activate inactive devices
 
 # ACPI devices
-#acpiacad* 	at acpi?		# ACPI AC Adapter
-#acpibat* 	at acpi?		# ACPI Battery
-#acpibut* 	at acpi?		# ACPI Button
-#acpiec* 	at acpi?		# ACPI Embedded Controller
-#acpilid* 	at acpi?		# ACPI Lid Switch
-#acpitz* 	at acpi?		# ACPI Thermal Zone
+acpiacad* 	at acpi?		# ACPI AC Adapter
+acpibat* 	at acpi?		# ACPI Battery
+acpibut* 	at acpi?		# ACPI Button
+acpiec* 	at acpi?		# ACPI Embedded Controller
+acpilid* 	at acpi?		# ACPI Lid Switch
+acpitz* 	at acpi?		# ACPI Thermal Zone
 
 # Mainboard devices
-#com* 		at acpi?		# Serial communications interface
-#fdc* 		at acpi?		# Floppy disk controller
-#lpt* 		at acpi?		# Parallel port
-#npx*		at acpi?		# Math coprocessor
-#pckbc*  	at acpi?		# PC keyboard controller
-#wss* 		at acpi?		# NeoMagic 256AV in wss mode
+com* 		at acpi?		# Serial communications interface
+fdc* 		at acpi?		# Floppy disk controller
+lpt* 		at acpi?		# Parallel port
+npx*		at acpi?		# Math coprocessor
+pckbc*  	at acpi?		# PC keyboard controller
+wss* 		at acpi?		# NeoMagic 256AV in wss mode
 
 # Sony Vaio jog dial
-#spic* 		at acpi?		# Sony Programmable I/O Controller
-#wsmouse* 	at spic?
+spic* 		at acpi?		# Sony Programmable I/O Controller
+wsmouse* 	at spic?
 
 # Toshiba Libretto devices
-#vald* at acpi?
+vald* at acpi?
 
 # Plug-and-Play BIOS and attached devices
 
-#pnpbios*	at mainbus?
+pnpbios*	at mainbus?
 
 # mainboard audio chips
-#ess*		at pnpbios? index ?	# ESS AudioDrive
-#sb*		at pnpbios? index ?	# NeoMagic 256AV in sb mode
-#wss*		at pnpbios? index ?	# NeoMagic 256AV in wss mode
-#ym*		at pnpbios? index ?	# OPL3-SA3
+ess*		at pnpbios? index ?	# ESS AudioDrive
+sb*		at pnpbios? index ?	# NeoMagic 256AV in sb mode
+wss*		at pnpbios? index ?	# NeoMagic 256AV in wss mode
+ym*		at pnpbios? index ?	# OPL3-SA3
 
 # com port
 # If enabled, consider changing "com0", "com1", and "com2" under "ISA Serial
 # Interfaces" to "com*", otherwise com2 will attach at pnpbios? and there
 # will be no com0.  A side effect is pcmcia (and other) com? previously
 # starting at com3 may attach as com1 or com2.
-#com*		at pnpbios? index ?	# serial ports
+com*		at pnpbios? index ?	# serial ports
 
 # parallel port
 # The above "com*" comments apply, cf. "lpt0" under "ISA parallel
 # "printer interfaces".
-#lpt*		at pnpbios? index ?	# parallel ports
+lpt*		at pnpbios? index ?	# parallel ports
 
-#pckbc*		at pnpbios? index ?	# PC keyboard/mouse controller
-#fdc*		at pnpbios? index ?	# floppy controller
+pckbc*		at pnpbios? index ?	# PC keyboard/mouse controller
+fdc*		at pnpbios? index ?	# floppy controller
 
 # IDE controller on Toshiba Portege 3000 series (crippled PCI device)
-#pciide*	at pnpbios? index ?
+pciide*	at pnpbios? index ?
 
 # PCI bus support
 pci*	at mainbus? bus ?
@@ -421,10 +421,10 @@ pms*		at pckbc?		# PS/2 mouse for wsmouse
 vga0		at isa?
 vga*		at pci? dev ? function ?
 pcdisplay0	at isa?			# CGA, MDA, EGA, HGA
-#machfb* 	at pci? dev ? function ? # ATI Mach64 framebuffer driver
+machfb* 	at pci? dev ? function ? # ATI Mach64 framebuffer driver
 wsdisplay*	at vga? console ?
 wsdisplay*	at pcdisplay? console ?
-#wsdisplay* 	at machfb? console ?
+wsdisplay* 	at machfb? console ?
 wskbd*		at pckbd? console ?
 wsmouse*	at pms? mux 0
 
@@ -448,29 +448,29 @@ pcmcom*	at pcmcia? function ?		# PCMCIA multi-port serial cards
 com*	at pcmcom? slave ?		# ...and the slave devices
 
 # CardBus serial interfaces
-#com*	at cardbus? dev ? function ?	# Modems and serial cards
+com*	at cardbus? dev ? function ?	# Modems and serial cards
 
 # ISA serial interfaces
 #options 	COM_HAYESP		# adds Hayes ESP serial board support
 com0	at isa? port 0x3f8 irq 4	# Standard PC serial ports
 com1	at isa? port 0x2f8 irq 3
 com2	at isa? port 0x3e8 irq 5
-#com3	at isa? port 0x2e8 irq 9
-#ast0	at isa? port 0x1a0 irq 5	# AST 4-port serial cards
-#com*	at ast? slave ?
-#boca0	at isa? port 0x100 irq 5	# BOCA 8-port serial cards
-#boca0	at isa? port 0x100 irq 5	# BOCA 16-port serial cards (BB2016)
-#boca1	at isa? port 0x140 irq 5	# this line is also needed for BB2016
-#com*	at boca? slave ?
-#tcom0	at isa? port 0x100 irq 7	# TC-800 8-port serial cards
-#com*	at tcom? slave ?
-#rtfps0	at isa? port 0x1230 irq 10	# RT 4-port serial cards
-#com*	at rtfps? slave ?
-#cy0	at isa? iomem 0xd4000 irq 12	# Cyclades serial cards
-#addcom0 at isa? port 0x108 irq 5	# Addonics FlexPort 8S
-#com*	at addcom? slave ?
-#moxa0	at isa?	port 0x100 irq 5	# MOXA C168H serial card (experimental)
-#com*	at moxa? slave ?
+com3	at isa? port 0x2e8 irq 9
+ast0	at isa? port 0x1a0 irq 5	# AST 4-port serial cards
+com*	at ast? slave ?
+boca0	at isa? port 0x100 irq 5	# BOCA 8-port serial cards
+boca0	at isa? port 0x100 irq 5	# BOCA 16-port serial cards (BB2016)
+boca1	at isa? port 0x140 irq 5	# this line is also needed for BB2016
+com*	at boca? slave ?
+tcom0	at isa? port 0x100 irq 7	# TC-800 8-port serial cards
+com*	at tcom? slave ?
+rtfps0	at isa? port 0x1230 irq 10	# RT 4-port serial cards
+com*	at rtfps? slave ?
+cy0	at isa? iomem 0xd4000 irq 12	# Cyclades serial cards
+addcom0 at isa? port 0x108 irq 5	# Addonics FlexPort 8S
+com*	at addcom? slave ?
+moxa0	at isa?	port 0x100 irq 5	# MOXA C168H serial card (experimental)
+com*	at moxa? slave ?
 
 # MCA serial interfaces
 com*	at mca? slot ?			# 16x50s on comm boards
@@ -491,8 +491,8 @@ lpt2	at isa? port 0x3bc
 #lm0	at isa?	port 0x290		# other common ports: 0x280, 0x310
 
 # VIA VT82C686A hardware monitor
-#viapm*	at pci? dev ? function ?
-#viaenv* at viapm?
+viapm*	at pci? dev ? function ?
+viaenv* at viapm?
 
 
 # I2O devices
@@ -544,9 +544,9 @@ aic0	at isa? port 0x340 irq 11	# Adaptec 152[02] SCSI
 bha0	at isa? port 0x330 irq ? drq ?	# BusLogic [457]4X SCSI
 bha1	at isa? port 0x334 irq ? drq ?
 # The "nca" and "dpt" probes might give false hits or hang your machine.
-#dpt0	at isa? port 0x170 irq ? drq ?	# DPT SmartCache/SmartRAID
-#nca0	at isa? port 0x360 irq 15	# Port-mapped NCR 53C80 controller
-#nca1	at isa? iomem 0xd8000 irq 5	# Memory-mapped controller (T128, etc.)
+dpt0	at isa? port 0x170 irq ? drq ?	# DPT SmartCache/SmartRAID
+nca0	at isa? port 0x360 irq 15	# Port-mapped NCR 53C80 controller
+nca1	at isa? iomem 0xd8000 irq 5	# Memory-mapped controller (T128, etc.)
 sea0	at isa? iomem 0xc8000 irq 5	# Seagate/Future Domain SCSI
 uha0	at isa? port 0x330 irq ? drq ?	# UltraStor [13]4f SCSI
 uha1	at isa? port 0x340 irq ? drq ?
@@ -554,8 +554,8 @@ wds0	at isa? port 0x350 irq 15 drq 6	# WD7000 and TMC-7000 controllers
 wds1	at isa? port 0x358 irq 11 drq 5
 
 # CardBus SCSI cards
-#adv*	at cardbus? dev ? function ?	# AdvanSys 1200[A,B], 9xx[U,UA] SCSI
-#ahc*	at cardbus? dev ? function ?	# Adaptec ADP-1480
+adv*	at cardbus? dev ? function ?	# AdvanSys 1200[A,B], 9xx[U,UA] SCSI
+ahc*	at cardbus? dev ? function ?	# Adaptec ADP-1480
 
 # MCA SCSI cards
 aha*	at mca? slot ?			# Adaptec AHA-1640
@@ -645,13 +645,13 @@ uk*	at atapibus? drive ? flags 0x0000	# ATAPI unknown
 
 # ISA floppy
 fdc0	at isa? port 0x3f0 irq 6 drq 2	# standard PC floppy controllers
-#fdc1	at isa? port 0x370 irq ? drq ?
+fdc1	at isa? port 0x370 irq ? drq ?
 fd*	at fdc? drive ?			# the drives themselves
 # some machines need you to do this instead of fd*
-#fd0	at fdc0 drive 0
+fd0	at fdc0 drive 0
 
 # ISA CD-ROM devices
-#mcd0	at isa? port 0x300 irq 10	# Mitsumi CD-ROM drives
+mcd0	at isa? port 0x300 irq 10	# Mitsumi CD-ROM drives
 
 # ISA tape devices
 # note: the wt driver conflicts unpleasantly with SMC boards at the
@@ -677,7 +677,7 @@ ex*	at pci? dev ? function ?	# 3Com 90x[BC]
 fpa*	at pci? dev ? function ?	# DEC DEFPA FDDI
 fxp*	at pci? dev ? function ?	# Intel EtherExpress PRO 10+/100B
 gsip*	at pci? dev ? function ?	# NS83820 Gigabit Ethernet
-#hme*	at pci? dev ? function ?	# Sun Microelectronics STP2002-STQ
+hme*	at pci? dev ? function ?	# Sun Microelectronics STP2002-STQ
 le*	at pci? dev ? function ?	# PCnet-PCI Ethernet
 lmc*	at pci? dev ? function ?	# Lan Media Corp SSI/HSSI/DS3
 mtd*	at pci? dev ? function ?	# Myson MTD803 3-in-1 Ethernet
@@ -719,7 +719,7 @@ ne*	at pcmcia? function ?		# NE2000-compatible Ethernet
 ray*	at pcmcia? function ?		# Raytheon Raylink (802.11)
 sm*	at pcmcia? function ?		# Megahertz Ethernet
 # tr at pcmcia has problems with Cardbus bridges
-#tr*	at pcmcia? function ?		# TROPIC based Token-Ring
+tr*	at pcmcia? function ?		# TROPIC based Token-Ring
 wi*	at pcmcia? function ?		# Lucent/Intersil WaveLan IEEE (802.11)
 xi*	at pcmcia? function ?		# Xircom CreditCard Ethernet
 
@@ -740,11 +740,11 @@ fmv0	at isa? port 0x2a0 irq ?		# FMV-181/182
 ix0	at isa? port 0x300 irq 10		# EtherExpress/16
 iy0	at isa? port 0x360 irq ?		# EtherExpress PRO 10 ISA
 lc0	at isa? port 0x320 iomem ? irq ?	# DEC EtherWORKS III (LEMAC)
-#depca0	at isa? port 0x300 iomem 0xc8000 iosiz 0x8000 irq 5	# DEPCA
-#le*	at depca?
+depca0	at isa? port 0x300 iomem 0xc8000 iosiz 0x8000 irq 5	# DEPCA
+le*	at depca?
 nele0	at isa? port 0x320 irq 9 drq 7		# NE2100
 le*	at nele?
-#ntwoc0	at isa? port 0x300 irq 5 iomem 0xc8000 flags 1	# Riscom/N2 sync serial
+ntwoc0	at isa? port 0x300 irq 5 iomem 0xc8000 flags 1	# Riscom/N2 sync serial
 bicc0	at isa? port 0x320 irq 10 drq 7		# BICC IsoLan
 le*	at bicc?
 ne0	at isa? port 0x280 irq 9		# NE[12]000 ethernet cards
@@ -757,10 +757,10 @@ we0	at isa? port 0x280 iomem 0xd0000 irq 9	# WD/SMC Ethernet
 we1	at isa? port 0x300 iomem 0xcc000 irq 10
 
 # CardBus network cards
-#ex*	at cardbus? dev ? function ?	# 3Com 3C575TX
-#fxp*	at cardbus? dev ? function ?	# Intel i8255x
-#rtk*	at cardbus? dev ? function ?	# Realtek 8129/8139
-#tlp*	at cardbus? dev ? function ?	# DECchip 21143
+ex*	at cardbus? dev ? function ?	# 3Com 3C575TX
+fxp*	at cardbus? dev ? function ?	# Intel i8255x
+rtk*	at cardbus? dev ? function ?	# Realtek 8129/8139
+tlp*	at cardbus? dev ? function ?	# DECchip 21143
 
 # MCA network cards
 elmc*	at mca? slot ?			# 3Com EtherLink/MC (3c523)
@@ -801,22 +801,22 @@ urlphy* at mii? phy ?			# Realtek RTL8150L internal PHYs
 
 # PCI USB controllers
 # The EHCI is not ready for prime time.
-#ehci*	at pci?	dev ? function ?	# Enhanced Host Controller
+ehci*	at pci?	dev ? function ?	# Enhanced Host Controller
 ohci*	at pci?	dev ? function ?	# Open Host Controller
 uhci*	at pci?	dev ? function ?	# Universal Host Controller (Intel)
 
 # CardBus USB controllers
-#ehci*	at cardbus? dev ? function ?	# Enhanced Host Controller
-#ohci*	at cardbus? dev ? function ?	# Open Host Controller
+ehci*	at cardbus? dev ? function ?	# Enhanced Host Controller
+ohci*	at cardbus? dev ? function ?	# Open Host Controller
 
 # ISA USB controllers
-#slhci0	at isa? port 0x300 irq 5	# ScanLogic SL811HS
+slhci0	at isa? port 0x300 irq 5	# ScanLogic SL811HS
 
 # USB bus support
-#usb*	at ehci?
+usb*	at ehci?
 usb*	at ohci?
 usb*	at uhci?
-#usb*	at slhci?
+usb*	at slhci?
 
 # USB Hubs
 uhub*	at usb?
@@ -919,17 +919,17 @@ oboe* 	at pci? dev ? function ?
 irframe* at oboe?
 
 # PCI IEEE1394 controllers
-#fwohci* at pci? dev ? function ?	# IEEE1394 Open Host Controller
+fwohci* at pci? dev ? function ?	# IEEE1394 Open Host Controller
 
 # CardBus IEEE1394 controllers
-#fwohci* at cardbus? dev ? function ?	# IEEE1394 Open Host Controller
+fwohci* at cardbus? dev ? function ?	# IEEE1394 Open Host Controller
 
-#fw*	at fwbus?			# IP over 1394
+fw*	at fwbus?			# IP over 1394
 
 # IEEE1394 nodes
-#fwnode* at fwbus? idhi ? idlo ?
-#sbpscsi* at fwnode?
-#scsibus* at sbpscsi?
+fwnode* at fwbus? idhi ? idlo ?
+sbpscsi* at fwnode?
+scsibus* at sbpscsi?
 
 # Audio Devices
 
@@ -959,24 +959,24 @@ ym*	at isapnp?			# Yamaha OPL3-SA3 audio
 
 # ISA audio devices
 # the "aria" probe might give false hits
-#aria0	at isa? port 0x290 irq 10 		# Aria
-#ess0	at isa? port 0x220 irq 5 drq 1 drq2 5	# ESS 18XX
+aria0	at isa? port 0x290 irq 10 		# Aria
+ess0	at isa? port 0x220 irq 5 drq 1 drq2 5	# ESS 18XX
 gus0	at isa? port 0x220 irq 7 drq 1 drq2 6	# Gravis Ultra Sound
 pas0	at isa? port 0x220 irq 7 drq 1		# ProAudio Spectrum
-#pss0	at isa? port 0x220 irq 7 drq 6		# Personal Sound System
-#sp0	at pss0 port 0x530 irq 10 drq 0		# 	sound port driver
+pss0	at isa? port 0x220 irq 7 drq 6		# Personal Sound System
+sp0	at pss0 port 0x530 irq 10 drq 0		# 	sound port driver
 sb0	at isa? port 0x220 irq 5 drq 1 drq2 5	# SoundBlaster
 wss0	at isa? port 0x530 irq 10 drq 0	drq2 1	# Windows Sound System
 
 # PCMCIA audio devices
-#esl*	at pcmcia? function ?			# ESS 1688 AudioDrive
+esl*	at pcmcia? function ?			# ESS 1688 AudioDrive
 
 #cms0	at isa? port 0x220			# Creative Music System
 
 # OPL[23] FM synthesizers
 #opl0	at isa? port 0x388	# use only if not attached to sound card
 opl*	at cmpci? flags 1
-#opl*	at esl?
+opl*	at esl?
 opl*	at eso?
 opl*	at ess?
 opl*	at fms?
@@ -1003,30 +1003,30 @@ midi*	at midibus?
 midi*	at pcppi?		# MIDI interface to the PC speaker
 
 # The spkr driver provides a simple tone interface to the built in speaker.
-#spkr0	at pcppi?		# PC speaker
+spkr0	at pcppi?		# PC speaker
 
 
 # FM-Radio devices
 # ISA radio devices
-#az0	at isa? port 0x350      # Aztech/PackardBell FM Radio Card
-#az1	at isa? port 0x358
-#rt0	at isa? port 0x20c      # AIMS Lab Radiotrack & compatible
-#rt1	at isa? port 0x284
-#rt2	at isa? port 0x30c
-#rt3	at isa? port 0x384
-#rtii0	at isa? port 0x20c      # AIMS Lab Radiotrack II FM Radio Card
-#rtii1	at isa? port 0x30c
-#sf2r0	at isa? port 0x384      # SoundForte RadioLink SF16-FMR2 FM Radio Card
+az0	at isa? port 0x350      # Aztech/PackardBell FM Radio Card
+az1	at isa? port 0x358
+rt0	at isa? port 0x20c      # AIMS Lab Radiotrack & compatible
+rt1	at isa? port 0x284
+rt2	at isa? port 0x30c
+rt3	at isa? port 0x384
+rtii0	at isa? port 0x20c      # AIMS Lab Radiotrack II FM Radio Card
+rtii1	at isa? port 0x30c
+sf2r0	at isa? port 0x384      # SoundForte RadioLink SF16-FMR2 FM Radio Card
 
 # PCI radio devices
-#gtp*	at pci? dev ? function ? # Guillemot Maxi Radio FM 2000 Radio Card
+gtp*	at pci? dev ? function ? # Guillemot Maxi Radio FM 2000 Radio Card
 
 # Radio support
-#radio*	at az?
-#radio*	at gtp?
-#radio*	at rt?
-#radio*	at rtii?
-#radio*	at sf2r?
+radio*	at az?
+radio*	at gtp?
+radio*	at rt?
+radio*	at rtii?
+radio*	at sf2r?
 
 
 # TV cards
@@ -1079,7 +1079,7 @@ include	"arch/i386/conf/GENERIC.local"
 
 # disk/mass storage pseudo-devices
 pseudo-device	ccd		4	# concatenated/striped disk devices
-#pseudo-device	cgd		4	# cryptographic disk devices
+pseudo-device	cgd		4	# cryptographic disk devices
 pseudo-device	raid		8	# RAIDframe disk driver
 options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
 # Options to enable various other RAIDframe RAID types.
@@ -1106,8 +1106,8 @@ pseudo-device	irframetty		# IrDA frame line discipline
 pseudo-device	tun		2	# network tunneling over tty
 pseudo-device	gre		2	# generic L3 over IP tunnel
 pseudo-device	gif		4	# IPv[46] over IPv[46] tunnel (RFC1933)
-#pseudo-device	faith		1	# IPv[46] tcp relay translation i/f
-#pseudo-device	stf		1	# 6to4 IPv6 over IPv4 encapsulation
+pseudo-device	faith		1	# IPv[46] tcp relay translation i/f
+pseudo-device	stf		1	# 6to4 IPv6 over IPv4 encapsulation
 pseudo-device	vlan			# IEEE 802.1q encapsulation
 pseudo-device	bridge			# simple inter-network bridging
 #options	BRIDGE_IPF		# bridge uses IP/IPv6 pfil hooks too

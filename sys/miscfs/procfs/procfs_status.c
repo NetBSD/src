@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_status.c,v 1.19 2003/01/18 09:18:06 thorpej Exp $	*/
+/*	$NetBSD: procfs_status.c,v 1.20 2003/06/28 14:22:04 darrenr Exp $	*/
 
 /*
  * Copyright (c) 1993 Jan-Simon Pendry
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_status.c,v 1.19 2003/01/18 09:18:06 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_status.c,v 1.20 2003/06/28 14:22:04 darrenr Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -55,8 +55,8 @@ __KERNEL_RCSID(0, "$NetBSD: procfs_status.c,v 1.19 2003/01/18 09:18:06 thorpej E
 #include <miscfs/procfs/procfs.h>
 
 int
-procfs_dostatus(curp, l, pfs, uio)
-	struct proc *curp;
+procfs_dostatus(curl, l, pfs, uio)
+	struct lwp *curl;
 	struct lwp *l;
 	struct pfsnode *pfs;
 	struct uio *uio;

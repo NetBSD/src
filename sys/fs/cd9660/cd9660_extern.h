@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_extern.h,v 1.2 2003/02/01 06:23:41 thorpej Exp $	*/
+/*	$NetBSD: cd9660_extern.h,v 1.3 2003/06/28 14:21:49 darrenr Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -88,15 +88,16 @@ struct iso_mnt {
 extern struct pool cd9660_node_pool;
 
 int cd9660_mount __P((struct mount *,
-	    const char *, void *, struct nameidata *, struct proc *));
-int cd9660_start __P((struct mount *, int, struct proc *));
-int cd9660_unmount __P((struct mount *, int, struct proc *));
-int cd9660_root __P((struct mount *, struct vnode **));
-int cd9660_quotactl __P((struct mount *, int, uid_t, caddr_t, struct proc *));
-int cd9660_statfs __P((struct mount *, struct statfs *, struct proc *));
-int cd9660_sync __P((struct mount *, int, struct ucred *, struct proc *));
-int cd9660_vget __P((struct mount *, ino_t, struct vnode **));
-int cd9660_fhtovp __P((struct mount *, struct fid *, struct vnode **));
+	    const char *, void *, struct nameidata *, struct lwp *));
+int cd9660_start __P((struct mount *, int, struct lwp *));
+int cd9660_unmount __P((struct mount *, int, struct lwp *));
+int cd9660_root __P((struct mount *, struct vnode **, struct lwp *));
+int cd9660_quotactl __P((struct mount *, int, uid_t, caddr_t, struct lwp *));
+int cd9660_statfs __P((struct mount *, struct statfs *, struct lwp *));
+int cd9660_sync __P((struct mount *, int, struct ucred *, struct lwp *));
+int cd9660_vget __P((struct mount *, ino_t, struct vnode **, struct lwp *));
+int cd9660_fhtovp __P((struct mount *, struct fid *, struct vnode **,
+	    struct lwp *));
 int cd9660_check_export __P((struct mount *, struct mbuf *, int *,
 	    struct ucred **));
 int cd9660_vptofh __P((struct vnode *, struct fid *));
@@ -104,7 +105,7 @@ void cd9660_init __P((void));
 void cd9660_reinit __P((void));
 void cd9660_done __P((void));
 int cd9660_sysctl __P((int *, u_int, void *, size_t *, void *, size_t,
-			struct proc *));
+			struct lwp *));
 
 int cd9660_mountroot __P((void)); 
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: vnode_if.c,v 1.42 2003/04/10 20:38:12 jdolecek Exp $	*/
+/*	$NetBSD: vnode_if.c,v 1.43 2003/06/28 14:22:00 darrenr Exp $	*/
 
 /*
  * Warning: This file is generated automatically.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vnode_if.c,v 1.42 2003/04/10 20:38:12 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vnode_if.c,v 1.43 2003/06/28 14:22:00 darrenr Exp $");
 
 
 /*
@@ -239,24 +239,24 @@ const struct vnodeop_desc vop_open_desc = {
 	vop_open_vp_offsets,
 	VDESC_NO_OFFSET,
 	VOPARG_OFFSETOF(struct vop_open_args, a_cred),
-	VOPARG_OFFSETOF(struct vop_open_args, a_p),
+	VOPARG_OFFSETOF(struct vop_open_args, a_l),
 	VDESC_NO_OFFSET,
 	NULL,
 };
 #ifdef VNODE_OP_NOINLINE
 int
-VOP_OPEN(vp, mode, cred, p)
+VOP_OPEN(vp, mode, cred, l)
 	struct vnode *vp;
 	int mode;
 	struct ucred *cred;
-	struct proc *p;
+	struct lwp *l;
 {
 	struct vop_open_args a;
 	a.a_desc = VDESC(vop_open);
 	a.a_vp = vp;
 	a.a_mode = mode;
 	a.a_cred = cred;
-	a.a_p = p;
+	a.a_l = l;
 	return (VCALL(vp, VOFFSET(vop_open), &a));
 }
 #endif
@@ -272,24 +272,24 @@ const struct vnodeop_desc vop_close_desc = {
 	vop_close_vp_offsets,
 	VDESC_NO_OFFSET,
 	VOPARG_OFFSETOF(struct vop_close_args, a_cred),
-	VOPARG_OFFSETOF(struct vop_close_args, a_p),
+	VOPARG_OFFSETOF(struct vop_close_args, a_l),
 	VDESC_NO_OFFSET,
 	NULL,
 };
 #ifdef VNODE_OP_NOINLINE
 int
-VOP_CLOSE(vp, fflag, cred, p)
+VOP_CLOSE(vp, fflag, cred, l)
 	struct vnode *vp;
 	int fflag;
 	struct ucred *cred;
-	struct proc *p;
+	struct lwp *l;
 {
 	struct vop_close_args a;
 	a.a_desc = VDESC(vop_close);
 	a.a_vp = vp;
 	a.a_fflag = fflag;
 	a.a_cred = cred;
-	a.a_p = p;
+	a.a_l = l;
 	return (VCALL(vp, VOFFSET(vop_close), &a));
 }
 #endif
@@ -305,24 +305,24 @@ const struct vnodeop_desc vop_access_desc = {
 	vop_access_vp_offsets,
 	VDESC_NO_OFFSET,
 	VOPARG_OFFSETOF(struct vop_access_args, a_cred),
-	VOPARG_OFFSETOF(struct vop_access_args, a_p),
+	VOPARG_OFFSETOF(struct vop_access_args, a_l),
 	VDESC_NO_OFFSET,
 	NULL,
 };
 #ifdef VNODE_OP_NOINLINE
 int
-VOP_ACCESS(vp, mode, cred, p)
+VOP_ACCESS(vp, mode, cred, l)
 	struct vnode *vp;
 	int mode;
 	struct ucred *cred;
-	struct proc *p;
+	struct lwp *l;
 {
 	struct vop_access_args a;
 	a.a_desc = VDESC(vop_access);
 	a.a_vp = vp;
 	a.a_mode = mode;
 	a.a_cred = cred;
-	a.a_p = p;
+	a.a_l = l;
 	return (VCALL(vp, VOFFSET(vop_access), &a));
 }
 #endif
@@ -338,24 +338,24 @@ const struct vnodeop_desc vop_getattr_desc = {
 	vop_getattr_vp_offsets,
 	VDESC_NO_OFFSET,
 	VOPARG_OFFSETOF(struct vop_getattr_args, a_cred),
-	VOPARG_OFFSETOF(struct vop_getattr_args, a_p),
+	VOPARG_OFFSETOF(struct vop_getattr_args, a_l),
 	VDESC_NO_OFFSET,
 	NULL,
 };
 #ifdef VNODE_OP_NOINLINE
 int
-VOP_GETATTR(vp, vap, cred, p)
+VOP_GETATTR(vp, vap, cred, l)
 	struct vnode *vp;
 	struct vattr *vap;
 	struct ucred *cred;
-	struct proc *p;
+	struct lwp *l;
 {
 	struct vop_getattr_args a;
 	a.a_desc = VDESC(vop_getattr);
 	a.a_vp = vp;
 	a.a_vap = vap;
 	a.a_cred = cred;
-	a.a_p = p;
+	a.a_l = l;
 	return (VCALL(vp, VOFFSET(vop_getattr), &a));
 }
 #endif
@@ -371,24 +371,24 @@ const struct vnodeop_desc vop_setattr_desc = {
 	vop_setattr_vp_offsets,
 	VDESC_NO_OFFSET,
 	VOPARG_OFFSETOF(struct vop_setattr_args, a_cred),
-	VOPARG_OFFSETOF(struct vop_setattr_args, a_p),
+	VOPARG_OFFSETOF(struct vop_setattr_args, a_l),
 	VDESC_NO_OFFSET,
 	NULL,
 };
 #ifdef VNODE_OP_NOINLINE
 int
-VOP_SETATTR(vp, vap, cred, p)
+VOP_SETATTR(vp, vap, cred, l)
 	struct vnode *vp;
 	struct vattr *vap;
 	struct ucred *cred;
-	struct proc *p;
+	struct lwp *l;
 {
 	struct vop_setattr_args a;
 	a.a_desc = VDESC(vop_setattr);
 	a.a_vp = vp;
 	a.a_vap = vap;
 	a.a_cred = cred;
-	a.a_p = p;
+	a.a_l = l;
 	return (VCALL(vp, VOFFSET(vop_setattr), &a));
 }
 #endif
@@ -470,19 +470,19 @@ const struct vnodeop_desc vop_ioctl_desc = {
 	vop_ioctl_vp_offsets,
 	VDESC_NO_OFFSET,
 	VOPARG_OFFSETOF(struct vop_ioctl_args, a_cred),
-	VOPARG_OFFSETOF(struct vop_ioctl_args, a_p),
+	VOPARG_OFFSETOF(struct vop_ioctl_args, a_l),
 	VDESC_NO_OFFSET,
 	NULL,
 };
 #ifdef VNODE_OP_NOINLINE
 int
-VOP_IOCTL(vp, command, data, fflag, cred, p)
+VOP_IOCTL(vp, command, data, fflag, cred, l)
 	struct vnode *vp;
 	u_long command;
 	void *data;
 	int fflag;
 	struct ucred *cred;
-	struct proc *p;
+	struct lwp *l;
 {
 	struct vop_ioctl_args a;
 	a.a_desc = VDESC(vop_ioctl);
@@ -491,7 +491,7 @@ VOP_IOCTL(vp, command, data, fflag, cred, p)
 	a.a_data = data;
 	a.a_fflag = fflag;
 	a.a_cred = cred;
-	a.a_p = p;
+	a.a_l = l;
 	return (VCALL(vp, VOFFSET(vop_ioctl), &a));
 }
 #endif
@@ -507,19 +507,19 @@ const struct vnodeop_desc vop_fcntl_desc = {
 	vop_fcntl_vp_offsets,
 	VDESC_NO_OFFSET,
 	VOPARG_OFFSETOF(struct vop_fcntl_args, a_cred),
-	VOPARG_OFFSETOF(struct vop_fcntl_args, a_p),
+	VOPARG_OFFSETOF(struct vop_fcntl_args, a_l),
 	VDESC_NO_OFFSET,
 	NULL,
 };
 #ifdef VNODE_OP_NOINLINE
 int
-VOP_FCNTL(vp, command, data, fflag, cred, p)
+VOP_FCNTL(vp, command, data, fflag, cred, l)
 	struct vnode *vp;
 	u_int command;
 	void *data;
 	int fflag;
 	struct ucred *cred;
-	struct proc *p;
+	struct lwp *l;
 {
 	struct vop_fcntl_args a;
 	a.a_desc = VDESC(vop_fcntl);
@@ -528,7 +528,7 @@ VOP_FCNTL(vp, command, data, fflag, cred, p)
 	a.a_data = data;
 	a.a_fflag = fflag;
 	a.a_cred = cred;
-	a.a_p = p;
+	a.a_l = l;
 	return (VCALL(vp, VOFFSET(vop_fcntl), &a));
 }
 #endif
@@ -544,22 +544,22 @@ const struct vnodeop_desc vop_poll_desc = {
 	vop_poll_vp_offsets,
 	VDESC_NO_OFFSET,
 	VDESC_NO_OFFSET,
-	VOPARG_OFFSETOF(struct vop_poll_args, a_p),
+	VOPARG_OFFSETOF(struct vop_poll_args, a_l),
 	VDESC_NO_OFFSET,
 	NULL,
 };
 #ifdef VNODE_OP_NOINLINE
 int
-VOP_POLL(vp, events, p)
+VOP_POLL(vp, events, l)
 	struct vnode *vp;
 	int events;
-	struct proc *p;
+	struct lwp *l;
 {
 	struct vop_poll_args a;
 	a.a_desc = VDESC(vop_poll);
 	a.a_vp = vp;
 	a.a_events = events;
-	a.a_p = p;
+	a.a_l = l;
 	return (VCALL(vp, VOFFSET(vop_poll), &a));
 }
 #endif
@@ -633,24 +633,24 @@ const struct vnodeop_desc vop_mmap_desc = {
 	vop_mmap_vp_offsets,
 	VDESC_NO_OFFSET,
 	VOPARG_OFFSETOF(struct vop_mmap_args, a_cred),
-	VOPARG_OFFSETOF(struct vop_mmap_args, a_p),
+	VOPARG_OFFSETOF(struct vop_mmap_args, a_l),
 	VDESC_NO_OFFSET,
 	NULL,
 };
 #ifdef VNODE_OP_NOINLINE
 int
-VOP_MMAP(vp, fflags, cred, p)
+VOP_MMAP(vp, fflags, cred, l)
 	struct vnode *vp;
 	int fflags;
 	struct ucred *cred;
-	struct proc *p;
+	struct lwp *l;
 {
 	struct vop_mmap_args a;
 	a.a_desc = VDESC(vop_mmap);
 	a.a_vp = vp;
 	a.a_fflags = fflags;
 	a.a_cred = cred;
-	a.a_p = p;
+	a.a_l = l;
 	return (VCALL(vp, VOFFSET(vop_mmap), &a));
 }
 #endif
@@ -666,19 +666,19 @@ const struct vnodeop_desc vop_fsync_desc = {
 	vop_fsync_vp_offsets,
 	VDESC_NO_OFFSET,
 	VOPARG_OFFSETOF(struct vop_fsync_args, a_cred),
-	VOPARG_OFFSETOF(struct vop_fsync_args, a_p),
+	VOPARG_OFFSETOF(struct vop_fsync_args, a_l),
 	VDESC_NO_OFFSET,
 	NULL,
 };
 #ifdef VNODE_OP_NOINLINE
 int
-VOP_FSYNC(vp, cred, flags, offlo, offhi, p)
+VOP_FSYNC(vp, cred, flags, offlo, offhi, l)
 	struct vnode *vp;
 	struct ucred *cred;
 	int flags;
 	off_t offlo;
 	off_t offhi;
-	struct proc *p;
+	struct lwp *l;
 {
 	struct vop_fsync_args a;
 	a.a_desc = VDESC(vop_fsync);
@@ -687,7 +687,7 @@ VOP_FSYNC(vp, cred, flags, offlo, offhi, p)
 	a.a_flags = flags;
 	a.a_offlo = offlo;
 	a.a_offhi = offhi;
-	a.a_p = p;
+	a.a_l = l;
 	return (VCALL(vp, VOFFSET(vop_fsync), &a));
 }
 #endif
@@ -1037,20 +1037,20 @@ const struct vnodeop_desc vop_inactive_desc = {
 	vop_inactive_vp_offsets,
 	VDESC_NO_OFFSET,
 	VDESC_NO_OFFSET,
-	VOPARG_OFFSETOF(struct vop_inactive_args, a_p),
+	VOPARG_OFFSETOF(struct vop_inactive_args, a_l),
 	VDESC_NO_OFFSET,
 	NULL,
 };
 #ifdef VNODE_OP_NOINLINE
 int
-VOP_INACTIVE(vp, p)
+VOP_INACTIVE(vp, l)
 	struct vnode *vp;
-	struct proc *p;
+	struct lwp *l;
 {
 	struct vop_inactive_args a;
 	a.a_desc = VDESC(vop_inactive);
 	a.a_vp = vp;
-	a.a_p = p;
+	a.a_l = l;
 	return (VCALL(vp, VOFFSET(vop_inactive), &a));
 }
 #endif
@@ -1066,20 +1066,20 @@ const struct vnodeop_desc vop_reclaim_desc = {
 	vop_reclaim_vp_offsets,
 	VDESC_NO_OFFSET,
 	VDESC_NO_OFFSET,
-	VOPARG_OFFSETOF(struct vop_reclaim_args, a_p),
+	VOPARG_OFFSETOF(struct vop_reclaim_args, a_l),
 	VDESC_NO_OFFSET,
 	NULL,
 };
 #ifdef VNODE_OP_NOINLINE
 int
-VOP_RECLAIM(vp, p)
+VOP_RECLAIM(vp, l)
 	struct vnode *vp;
-	struct proc *p;
+	struct lwp *l;
 {
 	struct vop_reclaim_args a;
 	a.a_desc = VDESC(vop_reclaim);
 	a.a_vp = vp;
-	a.a_p = p;
+	a.a_l = l;
 	return (VCALL(vp, VOFFSET(vop_reclaim), &a));
 }
 #endif
@@ -1471,18 +1471,18 @@ const struct vnodeop_desc vop_truncate_desc = {
 	vop_truncate_vp_offsets,
 	VDESC_NO_OFFSET,
 	VOPARG_OFFSETOF(struct vop_truncate_args, a_cred),
-	VOPARG_OFFSETOF(struct vop_truncate_args, a_p),
+	VOPARG_OFFSETOF(struct vop_truncate_args, a_l),
 	VDESC_NO_OFFSET,
 	NULL,
 };
 #ifdef VNODE_OP_NOINLINE
 int
-VOP_TRUNCATE(vp, length, flags, cred, p)
+VOP_TRUNCATE(vp, length, flags, cred, l)
 	struct vnode *vp;
 	off_t length;
 	int flags;
 	struct ucred *cred;
-	struct proc *p;
+	struct lwp *l;
 {
 	struct vop_truncate_args a;
 	a.a_desc = VDESC(vop_truncate);
@@ -1490,7 +1490,7 @@ VOP_TRUNCATE(vp, length, flags, cred, p)
 	a.a_length = length;
 	a.a_flags = flags;
 	a.a_cred = cred;
-	a.a_p = p;
+	a.a_l = l;
 	return (VCALL(vp, VOFFSET(vop_truncate), &a));
 }
 #endif
@@ -1539,22 +1539,22 @@ const struct vnodeop_desc vop_lease_desc = {
 	vop_lease_vp_offsets,
 	VDESC_NO_OFFSET,
 	VOPARG_OFFSETOF(struct vop_lease_args, a_cred),
-	VOPARG_OFFSETOF(struct vop_lease_args, a_p),
+	VOPARG_OFFSETOF(struct vop_lease_args, a_l),
 	VDESC_NO_OFFSET,
 	NULL,
 };
 #ifdef VNODE_OP_NOINLINE
 int
-VOP_LEASE(vp, p, cred, flag)
+VOP_LEASE(vp, l, cred, flag)
 	struct vnode *vp;
-	struct proc *p;
+	struct lwp *l;
 	struct ucred *cred;
 	int flag;
 {
 	struct vop_lease_args a;
 	a.a_desc = VDESC(vop_lease);
 	a.a_vp = vp;
-	a.a_p = p;
+	a.a_l = l;
 	a.a_cred = cred;
 	a.a_flag = flag;
 	return (VCALL(vp, VOFFSET(vop_lease), &a));

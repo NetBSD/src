@@ -1,4 +1,4 @@
-/*	$NetBSD: machfb.c,v 1.12 2003/01/20 11:02:47 martin Exp $	*/
+/*	$NetBSD: machfb.c,v 1.13 2003/06/28 14:21:38 darrenr Exp $	*/
 
 /*
  * Copyright (c) 2002 Bang Jun-Young
@@ -350,7 +350,7 @@ struct wsscreen_list mach64_screenlist = {
 	_mach64_scrlist
 };
 
-int	mach64_ioctl(void *, u_long, caddr_t, int, struct proc *);
+int	mach64_ioctl(void *, u_long, caddr_t, int, struct lwp *);
 paddr_t	mach64_mmap(void *, off_t, int);
 int	mach64_alloc_screen(void *, const struct wsscreen_descr *, void **,
 	    int *, int *, long *);
@@ -1225,7 +1225,7 @@ mach64_eraserows(void *cookie, int row, int nrows, long fillattr)
  */
 
 int
-mach64_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc *p)
+mach64_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct lwp *l)
 {
 
 	return ENOTTY;

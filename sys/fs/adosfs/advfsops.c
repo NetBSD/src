@@ -1,4 +1,4 @@
-/*	$NetBSD: advfsops.c,v 1.4 2003/04/16 21:44:18 christos Exp $	*/
+/*	$NetBSD: advfsops.c,v 1.5 2003/06/28 14:21:48 darrenr Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: advfsops.c,v 1.4 2003/04/16 21:44:18 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: advfsops.c,v 1.5 2003/06/28 14:21:48 darrenr Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -60,11 +60,11 @@ void adosfs_init __P((void));
 void adosfs_reinit __P((void));
 void adosfs_done __P((void));
 int adosfs_mount __P((struct mount *, const char *, void *, struct nameidata *,
-		      struct proc *));
+		      struct lwp *));
 int adosfs_start __P((struct mount *, int, struct proc *));
 int adosfs_unmount __P((struct mount *, int, struct proc *));
 int adosfs_root __P((struct mount *, struct vnode **));
-int adosfs_quotactl __P((struct mount *, int, uid_t, caddr_t, struct proc *));
+int adosfs_quotactl __P((struct mount *, int, uid_t, caddr_t, struct lwp *));
 int adosfs_statfs __P((struct mount *, struct statfs *, struct proc *));
 int adosfs_sync __P((struct mount *, int, struct ucred *, struct proc *));
 int adosfs_vget __P((struct mount *, ino_t, struct vnode **));
@@ -93,19 +93,22 @@ struct genfs_ops adosfs_genfsops = {
 int (**adosfs_vnodeop_p) __P((void *));
 
 int
-adosfs_mount(mp, path, data, ndp, p)
+adosfs_mount(mp, path, data, ndp, l)
 	struct mount *mp;
 	const char *path;
 	void *data;
 	struct nameidata *ndp;
-	struct proc *p;
+	struct lwp *l;
 {
 	struct vnode *devvp;
 	struct adosfs_args args;
 	struct adosfsmount *amp;
+	struct proc *p;
+	size_t size;
 	int error;
 	mode_t accessmode;
 
+	p = l->l_proc;
 	if (mp->mnt_flag & MNT_GETARGS) {
 		amp = VFSTOADOSFS(mp);
 		if (amp == NULL)
@@ -136,7 +139,7 @@ adosfs_mount(mp, path, data, ndp, p)
 	 * Not an update, or updating the name: look up the name
 	 * and verify that it refers to a sensible block device.
 	 */
-	NDINIT(ndp, LOOKUP, FOLLOW, UIO_USERSPACE, args.fspec, p);
+	NDINIT(ndp, LOOKUP, FOLLOW, UIO_USERSPACE, args.fspec, l);
 	if ((error = namei(ndp)) != 0)
 		return (error);
 	devvp = ndp->ni_vp;
@@ -787,12 +790,12 @@ adosfs_vptofh(vp, fhp)
 }
 
 int
-adosfs_quotactl(mp, cmds, uid, arg, p)
+adosfs_quotactl(mp, cmds, uid, arg, l)
 	struct mount *mp;
 	int cmds;
 	uid_t uid;
 	caddr_t arg;
-	struct proc *p;
+	struct lwp *l;
 {
 	return(EOPNOTSUPP);
 }

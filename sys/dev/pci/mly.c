@@ -1,4 +1,4 @@
-/*	$NetBSD: mly.c,v 1.19 2003/04/01 02:04:34 thorpej Exp $	*/
+/*	$NetBSD: mly.c,v 1.20 2003/06/28 14:21:38 darrenr Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mly.c,v 1.19 2003/04/01 02:04:34 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mly.c,v 1.20 2003/06/28 14:21:38 darrenr Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -2272,7 +2272,7 @@ mly_dmamem_free(struct mly_softc *mly, int size, bus_dmamap_t dmamap,
  * Accept an open operation on the control device.
  */
 int
-mlyopen(dev_t dev, int flag, int mode, struct proc *p)
+mlyopen(dev_t dev, int flag, int mode, struct lwp *l)
 {
 	struct mly_softc *mly;
 
@@ -2291,7 +2291,7 @@ mlyopen(dev_t dev, int flag, int mode, struct proc *p)
  * Accept the last close on the control device.
  */
 int
-mlyclose(dev_t dev, int flag, int mode, struct proc *p)
+mlyclose(dev_t dev, int flag, int mode, struct lwp *l)
 {
 	struct mly_softc *mly;
 
@@ -2304,7 +2304,7 @@ mlyclose(dev_t dev, int flag, int mode, struct proc *p)
  * Handle control operations.
  */
 int
-mlyioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
+mlyioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 {
 	struct mly_softc *mly;
 	int rv;

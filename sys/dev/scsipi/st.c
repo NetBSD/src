@@ -1,4 +1,4 @@
-/*	$NetBSD: st.c,v 1.161 2003/04/14 16:18:23 perry Exp $ */
+/*	$NetBSD: st.c,v 1.162 2003/06/28 14:21:44 darrenr Exp $ */
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: st.c,v 1.161 2003/04/14 16:18:23 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: st.c,v 1.162 2003/06/28 14:21:44 darrenr Exp $");
 
 #include "opt_scsi.h"
 
@@ -538,11 +538,11 @@ st_loadquirks(st)
  * open the device.
  */
 int
-stopen(dev, flags, mode, p)
+stopen(dev, flags, mode, l)
 	dev_t dev;
 	int flags;
 	int mode;
-	struct proc *p;
+	struct lwp *l;
 {
 	u_int stmode, dsty;
 	int error, sflags, unit, tries, ntries;
@@ -729,11 +729,11 @@ bad:
  * occurence of an open device
  */
 int
-stclose(dev, flags, mode, p)
+stclose(dev, flags, mode, l)
 	dev_t dev;
 	int flags;
 	int mode;
-	struct proc *p;
+	struct lwp *l;
 {
 	int stxx, error = 0;
 	struct st_softc *st = st_cd.cd_devs[STUNIT(dev)];
@@ -1363,12 +1363,12 @@ stwrite(dev, uio, iomode)
  * knows about the internals of this device
  */
 int
-stioctl(dev, cmd, arg, flag, p)
+stioctl(dev, cmd, arg, flag, l)
 	dev_t dev;
 	u_long cmd;
 	caddr_t arg;
 	int flag;
-	struct proc *p;
+	struct lwp *l;
 {
 	int error = 0;
 	int unit;
@@ -1566,7 +1566,7 @@ stioctl(dev, cmd, arg, flag, p)
 
 	default:
 		error = scsipi_do_ioctl(st->sc_periph, dev, cmd, arg,
-					flag, p);
+					flag, l);
 		break;
 	}
 	return (error);

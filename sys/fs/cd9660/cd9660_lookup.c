@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_lookup.c,v 1.2 2003/01/20 02:25:49 simonb Exp $	*/
+/*	$NetBSD: cd9660_lookup.c,v 1.3 2003/06/28 14:21:49 darrenr Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993, 1994
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd9660_lookup.c,v 1.2 2003/01/20 02:25:49 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd9660_lookup.c,v 1.3 2003/06/28 14:21:49 darrenr Exp $");
 
 #include <sys/param.h>
 #include <sys/namei.h>
@@ -147,7 +147,7 @@ cd9660_lookup(v)
 	/*
 	 * Check accessiblity of directory.
 	 */
-	if ((error = VOP_ACCESS(vdp, VEXEC, cred, cnp->cn_proc)) != 0)
+	if ((error = VOP_ACCESS(vdp, VEXEC, cred, cnp->cn_lwp)) != 0)
 		return (error);
 
 	if ((flags & ISLASTCN) && (vdp->v_mount->mnt_flag & MNT_RDONLY) &&
@@ -390,7 +390,7 @@ found:
 		VOP_UNLOCK(pdp, 0);	/* race to get the inode */
 		cnp->cn_flags |= PDIRUNLOCK;
 		error = cd9660_vget_internal(vdp->v_mount, dp->i_ino, &tdp,
-					     dp->i_ino != ino, ep);
+					     dp->i_ino != ino, ep, cnp->cn_lwp);
 		brelse(bp);
 		if (error) {
 			if (vn_lock(pdp, LK_EXCLUSIVE | LK_RETRY) == 0)
@@ -411,7 +411,7 @@ found:
 		*vpp = vdp;
 	} else {
 		error = cd9660_vget_internal(vdp->v_mount, dp->i_ino, &tdp,
-					     dp->i_ino != ino, ep);
+					     dp->i_ino != ino, ep, cnp->cn_lwp);
 		brelse(bp);
 		if (error)
 			return (error);

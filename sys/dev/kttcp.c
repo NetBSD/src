@@ -1,4 +1,4 @@
-/*	$NetBSD: kttcp.c,v 1.9 2003/02/26 06:31:09 matt Exp $	*/
+/*	$NetBSD: kttcp.c,v 1.10 2003/06/28 14:21:31 darrenr Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -484,8 +484,8 @@ kttcp_soreceive(struct socket *so, unsigned long long slen,
 	 * info, we save a copy of m->m_nextpkt into nextrecord.
 	 */
 #ifdef notyet /* XXXX */
-	if (uio->uio_procp)
-		uio->uio_procp->p_stats->p_ru.ru_msgrcv++;
+	if (uio->uio_lwp)
+		uio->uio_lwp->l_proc->p_stats->p_ru.ru_msgrcv++;
 #endif
 	KASSERT(m == so->so_rcv.sb_mb);
 	SBLASTRECORDCHK(&so->so_rcv, "kttcp_soreceive 1");

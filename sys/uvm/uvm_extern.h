@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_extern.h,v 1.80 2003/05/10 21:10:23 thorpej Exp $	*/
+/*	$NetBSD: uvm_extern.h,v 1.81 2003/06/28 14:22:29 darrenr Exp $	*/
 
 /*
  *
@@ -567,9 +567,9 @@ void			uvm_chgkprot __P((caddr_t, size_t, int));
 void			uvm_proc_fork __P((struct proc *, struct proc *, boolean_t));
 void			uvm_lwp_fork __P((struct lwp *, struct lwp *,
 			    void *, size_t, void (*)(void *), void *));
-int			uvm_coredump_walkmap __P((struct proc *,
+int			uvm_coredump_walkmap __P((struct lwp *,
 			    struct vnode *, struct ucred *,
-			    int (*)(struct proc *, struct vnode *,
+			    int (*)(struct lwp *, struct vnode *,
 				    struct ucred *,
 				    struct uvm_coredump_state *), void *));
 void			uvm_proc_exit __P((struct proc *));
@@ -643,7 +643,7 @@ void			uvmspace_unshare __P((struct lwp *));
 /* uvm_meter.c */
 void			uvm_meter __P((void));
 int			uvm_sysctl __P((int *, u_int, void *, size_t *,
-				void *, size_t, struct proc *));
+				void *, size_t, struct lwp *));
 
 /* uvm_mmap.c */
 int			uvm_mmap __P((struct vm_map *, vaddr_t *, vsize_t,

@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.h,v 1.107 2002/10/26 13:50:18 jdolecek Exp $	*/
+/*	$NetBSD: conf.h,v 1.108 2003/06/28 14:22:20 darrenr Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -65,10 +65,10 @@ struct vnode;
  * Block device switch table
  */
 struct bdevsw {
-	int		(*d_open)(dev_t, int, int, struct proc *);
-	int		(*d_close)(dev_t, int, int, struct proc *);
+	int		(*d_open)(dev_t, int, int, struct lwp *);
+	int		(*d_close)(dev_t, int, int, struct lwp *);
 	void		(*d_strategy)(struct buf *);
-	int		(*d_ioctl)(dev_t, u_long, caddr_t, int, struct proc *);
+	int		(*d_ioctl)(dev_t, u_long, caddr_t, int, struct lwp *);
 	int		(*d_dump)(dev_t, daddr_t, caddr_t, size_t);
 	int		(*d_psize)(dev_t);
 	int		d_type;
@@ -78,14 +78,14 @@ struct bdevsw {
  * Character device switch table
  */
 struct cdevsw {
-	int		(*d_open)(dev_t, int, int, struct proc *);
-	int		(*d_close)(dev_t, int, int, struct proc *);
+	int		(*d_open)(dev_t, int, int, struct lwp *);
+	int		(*d_close)(dev_t, int, int, struct lwp *);
 	int		(*d_read)(dev_t, struct uio *, int);
 	int		(*d_write)(dev_t, struct uio *, int);
-	int		(*d_ioctl)(dev_t, u_long, caddr_t, int, struct proc *);
+	int		(*d_ioctl)(dev_t, u_long, caddr_t, int, struct lwp *);
 	void		(*d_stop)(struct tty *, int);
 	struct tty *	(*d_tty)(dev_t);
-	int		(*d_poll)(dev_t, int, struct proc *);
+	int		(*d_poll)(dev_t, int, struct lwp *);
 	paddr_t		(*d_mmap)(dev_t, off_t, int);
 	int		(*d_kqfilter)(dev_t dev, struct knote *kn);
 	int		d_type;
@@ -101,15 +101,15 @@ const struct cdevsw *cdevsw_lookup(dev_t);
 int bdevsw_lookup_major(const struct bdevsw *);
 int cdevsw_lookup_major(const struct cdevsw *);
 
-#define	dev_type_open(n)	int n (dev_t, int, int, struct proc *)
-#define	dev_type_close(n)	int n (dev_t, int, int, struct proc *)
+#define	dev_type_open(n)	int n (dev_t, int, int, struct lwp *)
+#define	dev_type_close(n)	int n (dev_t, int, int, struct lwp *)
 #define	dev_type_read(n)	int n (dev_t, struct uio *, int)
 #define	dev_type_write(n)	int n (dev_t, struct uio *, int)
 #define	dev_type_ioctl(n) \
-		int n (dev_t, u_long, caddr_t, int, struct proc *)
+		int n (dev_t, u_long, caddr_t, int, struct lwp *)
 #define	dev_type_stop(n)	void n (struct tty *, int)
 #define	dev_type_tty(n)		struct tty * n (dev_t)
-#define	dev_type_poll(n)	int n (dev_t, int, struct proc *)
+#define	dev_type_poll(n)	int n (dev_t, int, struct lwp *)
 #define	dev_type_mmap(n)	paddr_t n (dev_t, off_t, int)
 #define	dev_type_strategy(n)	void n (struct buf *)
 #define	dev_type_dump(n)	int n (dev_t, daddr_t, caddr_t, size_t)
@@ -160,12 +160,12 @@ struct linesw {
 	int	(*l_write)	__P((struct tty *tp, struct uio *uio,
 				     int flag));
 	int	(*l_ioctl)	__P((struct tty *tp, u_long cmd, caddr_t data,
-				     int flag, struct proc *p));
+				     int flag, struct lwp *p));
 	int	(*l_rint)	__P((int c, struct tty *tp));
 	int	(*l_start)	__P((struct tty *tp));
 	int	(*l_modem)	__P((struct tty *tp, int flag));
 	int	(*l_poll)	__P((struct tty *tp, int events,
-				     struct proc *p));
+				     struct lwp *p));
 };
 
 #ifdef _KERNEL
@@ -182,9 +182,9 @@ struct linesw *ttyldisc_lookup __P((char *name));
 #define	ttyerrio ((int (*) __P((struct tty *, struct uio *, int)))enodev)
 #define	ttyerrinput ((int (*) __P((int c, struct tty *)))enodev)
 #define	ttyerrstart ((int (*) __P((struct tty *)))enodev)
-#define	ttyerrpoll ((int (*) __P((struct tty *, int, struct proc *)))enodev)
+#define	ttyerrpoll ((int (*) __P((struct tty *, int, struct lwp *)))enodev)
 
-int	ttynullioctl __P((struct tty *, u_long, caddr_t, int, struct proc *));
+int	ttynullioctl __P((struct tty *, u_long, caddr_t, int, struct lwp *));
 #endif
 
 /*

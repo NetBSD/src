@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_inode.c,v 1.57 2003/05/15 20:25:32 kristerw Exp $	*/
+/*	$NetBSD: ffs_inode.c,v 1.58 2003/06/28 14:22:25 darrenr Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_inode.c,v 1.57 2003/05/15 20:25:32 kristerw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_inode.c,v 1.58 2003/06/28 14:22:25 darrenr Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -182,7 +182,7 @@ ffs_truncate(v)
 		off_t a_length;
 		int a_flags;
 		struct ucred *a_cred;
-		struct proc *a_p;
+		struct lwp *a_l;
 	} */ *ap = v;
 	struct vnode *ovp = ap->a_vp;
 	struct genfs_node *gp = VTOG(ovp);
@@ -256,7 +256,7 @@ ffs_truncate(v)
 		    aflag);
 		if (error) {
 			(void) VOP_TRUNCATE(ovp, osize, ioflag & IO_SYNC,
-			    ap->a_cred, ap->a_p);
+			    ap->a_cred, ap->a_l);
 			return error;
 		}
 		uvm_vnp_setsize(ovp, length);
@@ -311,7 +311,7 @@ ffs_truncate(v)
 			 * so that it will have no data structures left.
 			 */
 			if ((error = VOP_FSYNC(ovp, ap->a_cred, FSYNC_WAIT,
-			    0, 0, ap->a_p)) != 0) {
+			    0, 0, ap->a_l)) != 0) {
 				lockmgr(&gp->g_glock, LK_RELEASE, NULL);
 				return (error);
 			}
@@ -323,7 +323,7 @@ ffs_truncate(v)
  			(void) chkdq(oip, -DIP(oip, blocks), NOCRED, 0);
 #endif
 			softdep_setup_freeblocks(oip, length, 0);
-			(void) vinvalbuf(ovp, 0, ap->a_cred, ap->a_p, 0, 0);
+			(void) vinvalbuf(ovp, 0, ap->a_cred, ap->a_l, 0, 0);
 			lockmgr(&gp->g_glock, LK_RELEASE, NULL);
 			oip->i_flag |= IN_CHANGE | IN_UPDATE;
 			return (VOP_UPDATE(ovp, NULL, NULL, 0));

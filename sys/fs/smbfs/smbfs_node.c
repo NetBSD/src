@@ -1,4 +1,4 @@
-/*	$NetBSD: smbfs_node.c,v 1.15 2003/04/02 16:26:53 jdolecek Exp $	*/
+/*	$NetBSD: smbfs_node.c,v 1.16 2003/06/28 14:21:51 darrenr Exp $	*/
 
 /*
  * Copyright (c) 2000-2001 Boris Popov
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smbfs_node.c,v 1.15 2003/04/02 16:26:53 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smbfs_node.c,v 1.16 2003/06/28 14:21:51 darrenr Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -114,7 +114,7 @@ smbfs_node_alloc(struct mount *mp, struct vnode *dvp,
 		if (dvp == NULL)
 			return EINVAL;
 		vp = VTOSMB(dvp)->n_parent->n_vnode;
-		if ((error = vget(vp, LK_EXCLUSIVE | LK_RETRY)) == 0)
+		if ((error = vget(vp, LK_EXCLUSIVE | LK_RETRY, curlwp)) == 0)
 			*vpp = vp;
 		return (error);
 	}
@@ -137,7 +137,7 @@ loop:
 		vp = SMBTOV(np);
 		simple_lock(&(vp)->v_interlock);
 		smbfs_hash_unlock(smp);
-		if (vget(vp, LK_EXCLUSIVE | LK_INTERLOCK) != 0)
+		if (vget(vp, LK_EXCLUSIVE | LK_INTERLOCK, curlwp) != 0)
 			goto retry;
 		*vpp = vp;
 		return (0);
@@ -268,8 +268,8 @@ smbfs_inactive(v)
 		struct vnode *a_vp;
 		struct thread *a_td;
 	} */ *ap = v;
-	struct proc *p = ap->a_p;
-	struct ucred *cred = p->p_ucred;
+	struct lwp *l = ap->a_l;
+	struct ucred *cred = l->l_proc->p_ucred;
 	struct vnode *vp = ap->a_vp;
 	struct smbnode *np = VTOSMB(vp);
 	struct smb_cred scred;
@@ -277,8 +277,8 @@ smbfs_inactive(v)
 
 	SMBVDEBUG("%.*s: %d\n", (int) np->n_nmlen, np->n_name, vp->v_usecount);
 	if (np->n_opencount) {
-		error = smbfs_vinvalbuf(vp, V_SAVE, cred, p, 1);
-		smb_makescred(&scred, p, cred);
+		error = smbfs_vinvalbuf(vp, V_SAVE, cred, l, 1);
+		smb_makescred(&scred, l, cred);
 		error = smbfs_smb_close(np->n_mount->sm_share, np->n_fid, 
 		   &np->n_mtime, &scred);
 		np->n_opencount = 0;

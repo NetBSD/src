@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_alloc.c,v 1.66 2003/04/02 10:39:40 fvdl Exp $	*/
+/*	$NetBSD: lfs_alloc.c,v 1.67 2003/06/28 14:22:26 darrenr Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_alloc.c,v 1.66 2003/04/02 10:39:40 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_alloc.c,v 1.67 2003/06/28 14:22:26 darrenr Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -113,7 +113,7 @@ static int lfs_ialloc(struct lfs *, struct vnode *, ino_t, int, struct vnode **)
  * Called with the Ifile inode locked.
  */
 int
-lfs_rf_valloc(struct lfs *fs, ino_t ino, int version, struct proc *p,
+lfs_rf_valloc(struct lfs *fs, ino_t ino, int version, struct lwp *l,
 	      struct vnode **vpp)
 {
 	IFILE *ifp;
@@ -129,7 +129,7 @@ lfs_rf_valloc(struct lfs *fs, ino_t ino, int version, struct proc *p,
 	 * we don't have to do anything else.  If the version number is wrong,
 	 * take appropriate action.
 	 */
-	error = VFS_VGET(fs->lfs_ivnode->v_mount, ino, &vp);
+	error = VFS_VGET(fs->lfs_ivnode->v_mount, ino, &vp, l);
 	if (error == 0) {
 		/* printf("lfs_rf_valloc[1]: ino %d vp %p\n", ino, vp); */
 
@@ -138,7 +138,7 @@ lfs_rf_valloc(struct lfs *fs, ino_t ino, int version, struct proc *p,
 		if (ip->i_gen == version)
 			return 0;
 		else if (ip->i_gen < version) {
-			VOP_TRUNCATE(vp, (off_t)0, 0, NOCRED, p);
+			VOP_TRUNCATE(vp, (off_t)0, 0, NOCRED, l);
 			ip->i_gen = ip->i_ffs1_gen = version;
 			LFS_SET_UINO(ip, IN_CHANGE | IN_MODIFIED | IN_UPDATE);
 			return 0;

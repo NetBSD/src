@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_quota.c,v 1.24 2003/04/02 10:39:44 fvdl Exp $	*/
+/*	$NetBSD: ufs_quota.c,v 1.25 2003/06/28 14:22:29 darrenr Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993, 1995
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_quota.c,v 1.24 2003/04/02 10:39:44 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_quota.c,v 1.25 2003/06/28 14:22:29 darrenr Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -362,8 +362,8 @@ chkdquot(ip)
  * Q_QUOTAON - set up a quota file for a particular file system.
  */
 int
-quotaon(p, mp, type, fname)
-	struct proc *p;
+quotaon(l, mp, type, fname)
+	struct lwp *l;
 	struct mount *mp;
 	int type;
 	caddr_t fname;
@@ -372,21 +372,23 @@ quotaon(p, mp, type, fname)
 	struct vnode *vp, **vpp;
 	struct vnode *nextvp;
 	struct dquot *dq;
+	struct proc *p;
 	int error;
 	struct nameidata nd;
 
+	p = l->l_proc;
 	vpp = &ump->um_quotas[type];
-	NDINIT(&nd, LOOKUP, FOLLOW, UIO_USERSPACE, fname, p);
+	NDINIT(&nd, LOOKUP, FOLLOW, UIO_USERSPACE, fname, l);
 	if ((error = vn_open(&nd, FREAD|FWRITE, 0)) != 0)
 		return (error);
 	vp = nd.ni_vp;
 	VOP_UNLOCK(vp, 0);
 	if (vp->v_type != VREG) {
-		(void) vn_close(vp, FREAD|FWRITE, p->p_ucred, p);
+		(void) vn_close(vp, FREAD|FWRITE, p->p_ucred, l);
 		return (EACCES);
 	}
 	if (*vpp != vp)
-		quotaoff(p, mp, type);
+		quotaoff(l, mp, type);
 	ump->um_qflags[type] |= QTF_OPENING;
 	mp->mnt_flag |= MNT_QUOTA;
 	vp->v_flag |= VSYSTEM;
@@ -416,7 +418,7 @@ again:
 		nextvp = LIST_NEXT(vp, v_mntvnodes);
 		if (vp->v_type == VNON ||vp->v_writecount == 0)
 			continue;
-		if (vget(vp, LK_EXCLUSIVE))
+		if (vget(vp, LK_EXCLUSIVE, l))
 			goto again;
 		if ((error = getinoquota(VTOI(vp))) != 0) {
 			vput(vp);
@@ -428,7 +430,7 @@ again:
 	}
 	ump->um_qflags[type] &= ~QTF_OPENING;
 	if (error)
-		quotaoff(p, mp, type);
+		quotaoff(l, mp, type);
 	return (error);
 }
 
@@ -436,8 +438,8 @@ again:
  * Q_QUOTAOFF - turn off disk quotas for a filesystem.
  */
 int
-quotaoff(p, mp, type)
-	struct proc *p;
+quotaoff(l, mp, type)
+	struct lwp *l;
 	struct mount *mp;
 	int type;
 {
@@ -460,7 +462,7 @@ again:
 		nextvp = LIST_NEXT(vp, v_mntvnodes);
 		if (vp->v_type == VNON)
 			continue;
-		if (vget(vp, LK_EXCLUSIVE))
+		if (vget(vp, LK_EXCLUSIVE, l))
 			goto again;
 		ip = VTOI(vp);
 		dq = ip->i_dquot[type];
@@ -472,7 +474,7 @@ again:
 	}
 	dqflush(qvp);
 	qvp->v_flag &= ~VSYSTEM;
-	error = vn_close(qvp, FREAD|FWRITE, p->p_ucred, p);
+	error = vn_close(qvp, FREAD|FWRITE, l->l_proc->p_ucred, l);
 	ump->um_quotas[type] = NULLVP;
 	crfree(ump->um_cred[type]);
 	ump->um_cred[type] = NOCRED;
@@ -616,7 +618,8 @@ setuse(mp, id, type, addr)
  * Q_SYNC - sync quota files to disk.
  */
 int
-qsync(mp)
+qsync(l, mp)
+	struct lwp *l;
 	struct mount *mp;
 {
 	struct ufsmount *ump = VFSTOUFS(mp);
@@ -647,7 +650,7 @@ again:
 			continue;
 		simple_lock(&vp->v_interlock);
 		simple_unlock(&mntvnode_slock);
-		error = vget(vp, LK_EXCLUSIVE | LK_NOWAIT | LK_INTERLOCK);
+		error = vget(vp, LK_EXCLUSIVE | LK_NOWAIT | LK_INTERLOCK, l);
 		if (error) {
 			simple_lock(&mntvnode_slock);
 			if (error == ENOENT)
@@ -813,7 +816,7 @@ dqget(vp, id, ump, type, dqp)
 	auio.uio_offset = (off_t)(id * sizeof (struct dqblk));
 	auio.uio_segflg = UIO_SYSSPACE;
 	auio.uio_rw = UIO_READ;
-	auio.uio_procp = (struct proc *)0;
+	auio.uio_lwp = (struct lwp *)0;
 	error = VOP_READ(dqvp, &auio, 0, ump->um_cred[type]);
 	if (auio.uio_resid == sizeof(struct dqblk) && error == 0)
 		memset((caddr_t)&dq->dq_dqb, 0, sizeof(struct dqblk));
@@ -921,7 +924,7 @@ dqsync(vp, dq)
 	auio.uio_offset = (off_t)(dq->dq_id * sizeof (struct dqblk));
 	auio.uio_segflg = UIO_SYSSPACE;
 	auio.uio_rw = UIO_WRITE;
-	auio.uio_procp = (struct proc *)0;
+	auio.uio_lwp = (struct lwp *)0;
 	error = VOP_WRITE(dqvp, &auio, 0, dq->dq_ump->um_cred[dq->dq_type]);
 	if (auio.uio_resid && error == 0)
 		error = EIO;

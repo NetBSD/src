@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_syscalls.c,v 1.79 2003/04/05 16:54:34 christos Exp $	*/
+/*	$NetBSD: uipc_syscalls.c,v 1.80 2003/06/28 14:21:58 darrenr Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1990, 1993
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls.c,v 1.79 2003/04/05 16:54:34 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls.c,v 1.80 2003/06/28 14:21:58 darrenr Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_pipe.h"
@@ -96,13 +96,13 @@ sys_socket(struct lwp *l, void *v, register_t *retval)
 	error = socreate(SCARG(uap, domain), &so, SCARG(uap, type),
 			 SCARG(uap, protocol));
 	if (error) {
-		FILE_UNUSE(fp, p);
+		FILE_UNUSE(fp, l);
 		fdremove(fdp, fd);
 		ffree(fp);
 	} else {
 		fp->f_data = (caddr_t)so;
 		FILE_SET_MATURE(fp);
-		FILE_UNUSE(fp, p);
+		FILE_UNUSE(fp, l);
 		*retval = fd;
 	}
 	return (error);
@@ -129,13 +129,13 @@ sys_bind(struct lwp *l, void *v, register_t *retval)
 	error = sockargs(&nam, SCARG(uap, name), SCARG(uap, namelen),
 	    MT_SONAME);
 	if (error) {
-		FILE_UNUSE(fp, p);
+		FILE_UNUSE(fp, l);
 		return (error);
 	}
 	MCLAIM(nam, ((struct socket *)fp->f_data)->so_mowner);
-	error = sobind((struct socket *)fp->f_data, nam, p);
+	error = sobind((struct socket *)fp->f_data, nam, l);
 	m_freem(nam);
-	FILE_UNUSE(fp, p);
+	FILE_UNUSE(fp, l);
 	return (error);
 }
 
@@ -156,7 +156,7 @@ sys_listen(struct lwp *l, void *v, register_t *retval)
 	if ((error = getsock(p->p_fd, SCARG(uap, s), &fp)) != 0)
 		return (error);
 	error = solisten((struct socket *)fp->f_data, SCARG(uap, backlog));
-	FILE_UNUSE(fp, p);
+	FILE_UNUSE(fp, l);
 	return (error);
 }
 
@@ -192,7 +192,7 @@ sys_accept(struct lwp *l, void *v, register_t *retval)
 		return (error);
 	s = splsoftnet();
 	so = (struct socket *)fp->f_data;
-	FILE_UNUSE(fp, p);
+	FILE_UNUSE(fp, l);
 	if (!(so->so_proto->pr_flags & PR_LISTEN)) {
 		splx(s);
 		return (EOPNOTSUPP);
@@ -243,7 +243,7 @@ sys_accept(struct lwp *l, void *v, register_t *retval)
 	fp->f_flag = fflag;
 	fp->f_ops = &socketops;
 	fp->f_data = (caddr_t)so;
-	FILE_UNUSE(fp, p);
+	FILE_UNUSE(fp, l);
 	nam = m_get(M_WAIT, MT_SONAME);
 	if ((error = soaccept(so, nam)) == 0 && SCARG(uap, name)) {
 		if (namelen > nam->m_len)
@@ -321,7 +321,7 @@ sys_connect(struct lwp *l, void *v, register_t *retval)
 	if (error == ERESTART)
 		error = EINTR;
  out:
-	FILE_UNUSE(fp, p);
+	FILE_UNUSE(fp, l);
 	return (error);
 }
 
@@ -378,15 +378,15 @@ sys_socketpair(struct lwp *l, void *v, register_t *retval)
 	    2 * sizeof(int));
 	FILE_SET_MATURE(fp1);
 	FILE_SET_MATURE(fp2);
-	FILE_UNUSE(fp1, p);
-	FILE_UNUSE(fp2, p);
+	FILE_UNUSE(fp1, l);
+	FILE_UNUSE(fp2, l);
 	return (error);
  free4:
-	FILE_UNUSE(fp2, p);
+	FILE_UNUSE(fp2, l);
 	ffree(fp2);
 	fdremove(fdp, sv[1]);
  free3:
-	FILE_UNUSE(fp1, p);
+	FILE_UNUSE(fp1, l);
 	ffree(fp1);
 	fdremove(fdp, sv[0]);
  free2:
@@ -407,11 +407,9 @@ sys_sendto(struct lwp *l, void *v, register_t *retval)
 		syscallarg(const struct sockaddr *)	to;
 		syscallarg(unsigned int)		tolen;
 	} */ *uap = v;
-	struct proc	*p;
 	struct msghdr	msg;
 	struct iovec	aiov;
 
-	p = l->l_proc;
 	msg.msg_name = (caddr_t)SCARG(uap, to);		/* XXX kills const */
 	msg.msg_namelen = SCARG(uap, tolen);
 	msg.msg_iov = &aiov;
@@ -420,7 +418,7 @@ sys_sendto(struct lwp *l, void *v, register_t *retval)
 	msg.msg_flags = 0;
 	aiov.iov_base = (char *)SCARG(uap, buf);	/* XXX kills const */
 	aiov.iov_len = SCARG(uap, len);
-	return (sendit(p, SCARG(uap, s), &msg, SCARG(uap, flags), retval));
+	return (sendit(l, SCARG(uap, s), &msg, SCARG(uap, flags), retval));
 }
 
 int
@@ -431,7 +429,6 @@ sys_sendmsg(struct lwp *l, void *v, register_t *retval)
 		syscallarg(const struct msghdr *)	msg;
 		syscallarg(int)				flags;
 	} */ *uap = v;
-	struct proc	*p;
 	struct msghdr	msg;
 	struct iovec	aiov[UIO_SMALLIOV], *iov;
 	int		error;
@@ -454,8 +451,7 @@ sys_sendmsg(struct lwp *l, void *v, register_t *retval)
 	}
 	msg.msg_iov = iov;
 	msg.msg_flags = 0;
-	p = l->l_proc;
-	error = sendit(p, SCARG(uap, s), &msg, SCARG(uap, flags), retval);
+	error = sendit(l, SCARG(uap, s), &msg, SCARG(uap, flags), retval);
 done:
 	if (iov != aiov)
 		free(iov, M_IOV);
@@ -463,8 +459,9 @@ done:
 }
 
 int
-sendit(struct proc *p, int s, struct msghdr *mp, int flags, register_t *retsize)
+sendit(struct lwp *l, int s, struct msghdr *mp, int flags, register_t *retsize)
 {
+	struct proc	*p;
 	struct file	*fp;
 	struct uio	auio;
 	struct iovec	*iov;
@@ -478,6 +475,7 @@ sendit(struct proc *p, int s, struct msghdr *mp, int flags, register_t *retsize)
 #ifdef KTRACE
 	ktriov = NULL;
 #endif
+	p = l->l_proc;
 	/* getsock() will use the descriptor for us */
 	if ((error = getsock(p->p_fd, s, &fp)) != 0)
 		return (error);
@@ -486,7 +484,7 @@ sendit(struct proc *p, int s, struct msghdr *mp, int flags, register_t *retsize)
 	auio.uio_iovcnt = mp->msg_iovlen;
 	auio.uio_segflg = UIO_USERSPACE;
 	auio.uio_rw = UIO_WRITE;
-	auio.uio_procp = p;
+	auio.uio_lwp = l;
 	auio.uio_offset = 0;			/* XXX */
 	auio.uio_resid = 0;
 	iov = mp->msg_iov;
@@ -551,7 +549,7 @@ sendit(struct proc *p, int s, struct msghdr *mp, int flags, register_t *retsize)
 #ifdef KTRACE
 	if (ktriov != NULL) {
 		if (error == 0)
-			ktrgenio(p, s, UIO_WRITE, ktriov, *retsize, error);
+			ktrgenio(l, s, UIO_WRITE, ktriov, *retsize, error);
 		free(ktriov, M_TEMP);
 	}
 #endif
@@ -559,7 +557,7 @@ sendit(struct proc *p, int s, struct msghdr *mp, int flags, register_t *retsize)
 	if (to)
 		m_freem(to);
  out:
-	FILE_UNUSE(fp, p);
+	FILE_UNUSE(fp, l);
 	return (error);
 }
 
@@ -574,7 +572,6 @@ sys_recvfrom(struct lwp *l, void *v, register_t *retval)
 		syscallarg(struct sockaddr *)	from;
 		syscallarg(unsigned int *)	fromlenaddr;
 	} */ *uap = v;
-	struct proc	*p;
 	struct msghdr	msg;
 	struct iovec	aiov;
 	int		error;
@@ -594,8 +591,7 @@ sys_recvfrom(struct lwp *l, void *v, register_t *retval)
 	aiov.iov_len = SCARG(uap, len);
 	msg.msg_control = 0;
 	msg.msg_flags = SCARG(uap, flags);
-	p = l->l_proc;
-	return (recvit(p, SCARG(uap, s), &msg,
+	return (recvit(l, SCARG(uap, s), &msg,
 		       (caddr_t)SCARG(uap, fromlenaddr), retval));
 }
 
@@ -607,9 +603,8 @@ sys_recvmsg(struct lwp *l, void *v, register_t *retval)
 		syscallarg(struct msghdr *)	msg;
 		syscallarg(int)			flags;
 	} */ *uap = v;
-	struct proc	*p;
-	struct msghdr	msg;
 	struct iovec	aiov[UIO_SMALLIOV], *uiov, *iov;
+	struct msghdr	msg;
 	int		error;
 
 	error = copyin((caddr_t)SCARG(uap, msg), (caddr_t)&msg,
@@ -632,8 +627,7 @@ sys_recvmsg(struct lwp *l, void *v, register_t *retval)
 	uiov = msg.msg_iov;
 	msg.msg_iov = iov;
 	msg.msg_flags = SCARG(uap, flags);
-	p = l->l_proc;
-	if ((error = recvit(p, SCARG(uap, s), &msg, (caddr_t)0, retval)) == 0) {
+	if ((error = recvit(l, SCARG(uap, s), &msg, (caddr_t)0, retval)) == 0) {
 		msg.msg_iov = uiov;
 		error = copyout((caddr_t)&msg, (caddr_t)SCARG(uap, msg),
 		    sizeof(msg));
@@ -645,9 +639,10 @@ done:
 }
 
 int
-recvit(struct proc *p, int s, struct msghdr *mp, caddr_t namelenp,
+recvit(struct lwp *l, int s, struct msghdr *mp, caddr_t namelenp,
 	register_t *retsize)
 {
+	struct proc	*p;
 	struct file	*fp;
 	struct uio	auio;
 	struct iovec	*iov;
@@ -658,6 +653,7 @@ recvit(struct proc *p, int s, struct msghdr *mp, caddr_t namelenp,
 	struct iovec	*ktriov;
 #endif
 
+	p = l->l_proc;
 	from = 0;
 	control = 0;
 #ifdef KTRACE
@@ -672,7 +668,7 @@ recvit(struct proc *p, int s, struct msghdr *mp, caddr_t namelenp,
 	auio.uio_iovcnt = mp->msg_iovlen;
 	auio.uio_segflg = UIO_USERSPACE;
 	auio.uio_rw = UIO_READ;
-	auio.uio_procp = p;
+	auio.uio_lwp = l;
 	auio.uio_offset = 0;			/* XXX */
 	auio.uio_resid = 0;
 	iov = mp->msg_iov;
@@ -714,7 +710,7 @@ recvit(struct proc *p, int s, struct msghdr *mp, caddr_t namelenp,
 #ifdef KTRACE
 	if (ktriov != NULL) {
 		if (error == 0)
-			ktrgenio(p, s, UIO_READ, ktriov,
+			ktrgenio(l, s, UIO_READ, ktriov,
 			    len - auio.uio_resid, error);
 		free(ktriov, M_TEMP);
 	}
@@ -773,7 +769,7 @@ recvit(struct proc *p, int s, struct msghdr *mp, caddr_t namelenp,
 	if (control)
 		m_freem(control);
  out1:
-	FILE_UNUSE(fp, p);
+	FILE_UNUSE(fp, l);
 	return (error);
 }
 
@@ -794,7 +790,7 @@ sys_shutdown(struct lwp *l, void *v, register_t *retval)
 	if ((error = getsock(p->p_fd, SCARG(uap, s), &fp)) != 0)
 		return (error);
 	error = soshutdown((struct socket *)fp->f_data, SCARG(uap, how));
-	FILE_UNUSE(fp, p);
+	FILE_UNUSE(fp, l);
 	return (error);
 }
 
@@ -841,7 +837,7 @@ sys_setsockopt(struct lwp *l, void *v, register_t *retval)
 	}
 	error = sosetopt(so, SCARG(uap, level), SCARG(uap, name), m);
  out:
-	FILE_UNUSE(fp, p);
+	FILE_UNUSE(fp, l);
 	return (error);
 }
 
@@ -893,7 +889,7 @@ sys_getsockopt(struct lwp *l, void *v, register_t *retval)
 	if (m != NULL)
 		(void) m_freem(m);
  out:
-	FILE_UNUSE(fp, p);
+	FILE_UNUSE(fp, l);
 	return (error);
 }
 
@@ -936,15 +932,15 @@ sys_pipe(struct lwp *l, void *v, register_t *retval)
 		goto free4;
 	FILE_SET_MATURE(rf);
 	FILE_SET_MATURE(wf);
-	FILE_UNUSE(rf, p);
-	FILE_UNUSE(wf, p);
+	FILE_UNUSE(rf, l);
+	FILE_UNUSE(wf, l);
 	return (0);
  free4:
-	FILE_UNUSE(wf, p);
+	FILE_UNUSE(wf, l);
 	ffree(wf);
 	fdremove(fdp, retval[1]);
  free3:
-	FILE_UNUSE(rf, p);
+	FILE_UNUSE(rf, l);
 	ffree(rf);
 	fdremove(fdp, retval[0]);
  free2:
@@ -985,7 +981,7 @@ sys_getsockname(struct lwp *l, void *v, register_t *retval)
 	m = m_getclr(M_WAIT, MT_SONAME);
 	MCLAIM(m, so->so_mowner);
 	error = (*so->so_proto->pr_usrreq)(so, PRU_SOCKADDR, (struct mbuf *)0,
-	    m, (struct mbuf *)0, (struct proc *)0);
+	    m, (struct mbuf *)0, (struct lwp *)0);
 	if (error)
 		goto bad;
 	if (len > m->m_len)
@@ -997,7 +993,7 @@ sys_getsockname(struct lwp *l, void *v, register_t *retval)
  bad:
 	m_freem(m);
  out:
-	FILE_UNUSE(fp, p);
+	FILE_UNUSE(fp, l);
 	return (error);
 }
 
@@ -1035,7 +1031,7 @@ sys_getpeername(struct lwp *l, void *v, register_t *retval)
 	m = m_getclr(M_WAIT, MT_SONAME);
 	MCLAIM(m, so->so_mowner);
 	error = (*so->so_proto->pr_usrreq)(so, PRU_PEERADDR, (struct mbuf *)0,
-	    m, (struct mbuf *)0, (struct proc *)0);
+	    m, (struct mbuf *)0, (struct lwp *)0);
 	if (error)
 		goto bad;
 	if (len > m->m_len)
@@ -1047,7 +1043,7 @@ sys_getpeername(struct lwp *l, void *v, register_t *retval)
  bad:
 	m_freem(m);
  out:
-	FILE_UNUSE(fp, p);
+	FILE_UNUSE(fp, l);
 	return (error);
 }
 

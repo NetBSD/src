@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_subs.c,v 1.122 2003/06/09 13:10:31 yamt Exp $	*/
+/*	$NetBSD: nfs_subs.c,v 1.123 2003/06/28 14:22:18 darrenr Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_subs.c,v 1.122 2003/06/09 13:10:31 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_subs.c,v 1.123 2003/06/28 14:22:18 darrenr Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -1825,10 +1825,10 @@ nfs_delayedtruncate(vp)
  */
 
 void
-nfs_cookieheuristic(vp, flagp, p, cred)
+nfs_cookieheuristic(vp, flagp, l, cred)
 	struct vnode *vp;
 	int *flagp;
-	struct proc *p;
+	struct lwp *l;
 	struct ucred *cred;
 {
 	struct uio auio;
@@ -1846,7 +1846,7 @@ nfs_cookieheuristic(vp, flagp, p, cred)
 	auio.uio_iovcnt = 1;
 	auio.uio_rw = UIO_READ;
 	auio.uio_segflg = UIO_SYSSPACE;
-	auio.uio_procp = p;
+	auio.uio_lwp = l;
 	auio.uio_resid = NFS_DIRFRAGSIZ;
 	auio.uio_offset = 0;
 
@@ -1871,7 +1871,7 @@ nfs_cookieheuristic(vp, flagp, p, cred)
 			if ((*cop >> 32) != 0 && (*cop & 0xffffffffLL) == 0) {
 				*flagp |= NFSMNT_SWAPCOOKIE;
 				nfs_invaldircache(vp, 0);
-				nfs_vinvalbuf(vp, 0, cred, p, 1);
+				nfs_vinvalbuf(vp, 0, cred, l, 1);
 			}
 			break;
 		}
@@ -1894,7 +1894,7 @@ nfs_cookieheuristic(vp, flagp, p, cred)
  * it is not.
  */
 int
-nfs_namei(ndp, fhp, len, slp, nam, mdp, dposp, retdirp, p, kerbflag, pubflag)
+nfs_namei(ndp, fhp, len, slp, nam, mdp, dposp, retdirp, l, kerbflag, pubflag)
 	struct nameidata *ndp;
 	fhandle_t *fhp;
 	uint32_t len;
@@ -1903,7 +1903,7 @@ nfs_namei(ndp, fhp, len, slp, nam, mdp, dposp, retdirp, p, kerbflag, pubflag)
 	struct mbuf **mdp;
 	caddr_t *dposp;
 	struct vnode **retdirp;
-	struct proc *p;
+	struct lwp *l;
 	int kerbflag, pubflag;
 {
 	int i, rem;
@@ -1961,7 +1961,7 @@ nfs_namei(ndp, fhp, len, slp, nam, mdp, dposp, retdirp, p, kerbflag, pubflag)
 	 * Extract and set starting directory.
 	 */
 	error = nfsrv_fhtovp(fhp, FALSE, &dp, ndp->ni_cnd.cn_cred, slp,
-	    nam, &rdonly, kerbflag, pubflag);
+	    nam, &rdonly, kerbflag, pubflag, l);
 	if (error)
 		goto out;
 	if (dp->v_type != VDIR) {
@@ -2037,7 +2037,7 @@ nfs_namei(ndp, fhp, len, slp, nam, mdp, dposp, retdirp, p, kerbflag, pubflag)
 		cnp->cn_flags |= NOCROSSMOUNT;
 	}
 
-	cnp->cn_proc = p;
+	cnp->cn_lwp = l;
 	VREF(dp);
 
     for (;;) {
@@ -2074,7 +2074,7 @@ nfs_namei(ndp, fhp, len, slp, nam, mdp, dposp, retdirp, p, kerbflag, pubflag)
 		}
 		if (ndp->ni_vp->v_mount->mnt_flag & MNT_SYMPERM) {
 			error = VOP_ACCESS(ndp->ni_vp, VEXEC, cnp->cn_cred,
-			    cnp->cn_proc);
+			    cnp->cn_lwp);
 			if (error != 0)
 				break;
 		}
@@ -2089,7 +2089,7 @@ nfs_namei(ndp, fhp, len, slp, nam, mdp, dposp, retdirp, p, kerbflag, pubflag)
 		auio.uio_offset = 0;
 		auio.uio_rw = UIO_READ;
 		auio.uio_segflg = UIO_SYSSPACE;
-		auio.uio_procp = (struct proc *)0;
+		auio.uio_lwp = (struct lwp *)0;
 		auio.uio_resid = MAXPATHLEN;
 		error = VOP_READLINK(ndp->ni_vp, &auio, cnp->cn_cred);
 		if (error) {
@@ -2325,7 +2325,7 @@ nfsm_srvfattr(nfsd, vap, fp)
  *	- if not lockflag unlock it with VOP_UNLOCK()
  */
 int
-nfsrv_fhtovp(fhp, lockflag, vpp, cred, slp, nam, rdonlyp, kerbflag, pubflag)
+nfsrv_fhtovp(fhp, lockflag, vpp, cred, slp, nam, rdonlyp, kerbflag, pubflag, l)
 	fhandle_t *fhp;
 	int lockflag;
 	struct vnode **vpp;
@@ -2334,6 +2334,7 @@ nfsrv_fhtovp(fhp, lockflag, vpp, cred, slp, nam, rdonlyp, kerbflag, pubflag)
 	struct mbuf *nam;
 	int *rdonlyp;
 	int kerbflag;
+	struct lwp *l;
 {
 	struct mount *mp;
 	int i;
@@ -2355,7 +2356,7 @@ nfsrv_fhtovp(fhp, lockflag, vpp, cred, slp, nam, rdonlyp, kerbflag, pubflag)
 	error = VFS_CHECKEXP(mp, nam, &exflags, &credanon);
 	if (error)
 		return (error);
-	error = VFS_FHTOVP(mp, &fhp->fh_fid, vpp);
+	error = VFS_FHTOVP(mp, &fhp->fh_fid, vpp, l);
 	if (error)
 		return (error);
 

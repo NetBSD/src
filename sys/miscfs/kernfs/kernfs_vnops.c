@@ -1,4 +1,4 @@
-/*	$NetBSD: kernfs_vnops.c,v 1.85 2003/04/10 21:53:33 jdolecek Exp $	*/
+/*	$NetBSD: kernfs_vnops.c,v 1.86 2003/06/28 14:22:02 darrenr Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kernfs_vnops.c,v 1.85 2003/04/10 21:53:33 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kernfs_vnops.c,v 1.86 2003/06/28 14:22:02 darrenr Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -396,7 +396,7 @@ found:
 			return (ENOENT);
 		}
 		*vpp = fvp;
-		if (vget(fvp, LK_EXCLUSIVE))
+		if (vget(fvp, LK_EXCLUSIVE, cnp->cn_lwp))
 			goto loop;
 		if (wantpunlock) {
 			VOP_UNLOCK(dvp, 0);

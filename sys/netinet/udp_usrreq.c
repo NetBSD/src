@@ -1,4 +1,4 @@
-/*	$NetBSD: udp_usrreq.c,v 1.101 2003/06/23 11:02:17 martin Exp $	*/
+/*	$NetBSD: udp_usrreq.c,v 1.102 2003/06/28 14:22:10 darrenr Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: udp_usrreq.c,v 1.101 2003/06/23 11:02:17 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udp_usrreq.c,v 1.102 2003/06/28 14:22:10 darrenr Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -920,16 +920,18 @@ int	udp_recvspace = 40 * (1024 + sizeof(struct sockaddr_in));
 
 /*ARGSUSED*/
 int
-udp_usrreq(so, req, m, nam, control, p)
+udp_usrreq(so, req, m, nam, control, l)
 	struct socket *so;
 	int req;
 	struct mbuf *m, *nam, *control;
-	struct proc *p;
+	struct lwp *l;
 {
 	struct inpcb *inp;
+	struct proc *p;
 	int s;
 	int error = 0;
 
+	p = l ? l->l_proc : NULL;
 	if (req == PRU_CONTROL)
 		return (in_control(so, (long)m, (caddr_t)nam,
 		    (struct ifnet *)control, p));

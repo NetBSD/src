@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_inode.c,v 1.75 2003/04/27 06:46:38 yamt Exp $	*/
+/*	$NetBSD: lfs_inode.c,v 1.76 2003/06/28 14:22:26 darrenr Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_inode.c,v 1.75 2003/04/27 06:46:38 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_inode.c,v 1.76 2003/06/28 14:22:26 darrenr Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -103,7 +103,7 @@ extern long locked_queue_bytes;
 static int lfs_update_seguse(struct lfs *, long, size_t);
 static int lfs_indirtrunc (struct inode *, daddr_t, daddr_t,
 			   daddr_t, int, long *, long *, long *, size_t *,
-			   struct proc *);
+			   struct lwp *);
 static int lfs_blkfree (struct lfs *, daddr_t, size_t, long *, size_t *);
 static int lfs_vtruncbuf(struct vnode *, daddr_t, int, int);
 
@@ -228,7 +228,7 @@ lfs_truncate(void *v)
 		off_t a_length;
 		int a_flags;
 		struct ucred *a_cred;
-		struct proc *a_p;
+		struct lwp *a_l;
 	} */ *ap = v;
 	struct vnode *ovp = ap->a_vp;
 	struct genfs_node *gp = VTOG(ovp);
@@ -323,7 +323,7 @@ lfs_truncate(void *v)
 			if (error) {
 				(void) VOP_TRUNCATE(ovp, osize,
 						    ap->a_flags & IO_SYNC,
-				    		    ap->a_cred, ap->a_p);
+				    		    ap->a_cred, ap->a_l);
 				return error;
 			}
 			uvm_vnp_setsize(ovp, length);
@@ -466,7 +466,7 @@ lfs_truncate(void *v)
 			error = lfs_indirtrunc(oip, indir_lbn[level],
 					       bn, lastiblock[level],
 					       level, &count, &rcount,
-					       &lastseg, &bc, ap->a_p);
+					       &lastseg, &bc, ap->a_l);
 			if (error)
 				allerror = error;
 			real_released += rcount;
@@ -640,7 +640,7 @@ lfs_update_seguse(struct lfs *fs, long lastseg, size_t num)
 static int
 lfs_indirtrunc(struct inode *ip, daddr_t lbn, daddr_t dbn,
 	       daddr_t lastbn, int level, long *countp,
-	       long *rcountp, long *lastsegp, size_t *bcp, struct proc *p)
+	       long *rcountp, long *lastsegp, size_t *bcp, struct lwp *l)
 {
 	int i;
 	struct buf *bp;
@@ -680,7 +680,7 @@ lfs_indirtrunc(struct inode *ip, daddr_t lbn, daddr_t dbn,
 		trace(TR_BREADHIT, pack(vp, fs->lfs_bsize), lbn);
 	} else {
 		trace(TR_BREADMISS, pack(vp, fs->lfs_bsize), lbn);
-		p->p_stats->p_ru.ru_inblock++;	/* pay for read */
+		l->l_proc->p_stats->p_ru.ru_inblock++;	/* pay for read */
 		bp->b_flags |= B_READ;
 		if (bp->b_bcount > bp->b_bufsize)
 			panic("lfs_indirtrunc: bad buffer size");
@@ -719,7 +719,7 @@ lfs_indirtrunc(struct inode *ip, daddr_t lbn, daddr_t dbn,
 			error = lfs_indirtrunc(ip, nlbn, nb,
 					       (daddr_t)-1, level - 1,
 					       &blkcount, &rblkcount,
-					       lastsegp, bcp, p);
+					       lastsegp, bcp, l);
 			if (error)
 				allerror = error;
 			blocksreleased += blkcount;
@@ -740,7 +740,7 @@ lfs_indirtrunc(struct inode *ip, daddr_t lbn, daddr_t dbn,
 		if (nb != 0) {
 			error = lfs_indirtrunc(ip, nlbn, nb,
 					       last, level - 1, &blkcount,
-					       &rblkcount, lastsegp, bcp, p);
+					       &rblkcount, lastsegp, bcp, l);
 			if (error)
 				allerror = error;
 			real_released += rblkcount;

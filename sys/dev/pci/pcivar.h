@@ -1,4 +1,4 @@
-/*	$NetBSD: pcivar.h,v 1.56 2003/06/15 23:09:09 fvdl Exp $	*/
+/*	$NetBSD: pcivar.h,v 1.57 2003/06/28 14:21:38 darrenr Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -208,7 +208,7 @@ const struct pci_quirkdata *
  */
 struct proc;
 int	pci_devioctl __P((pci_chipset_tag_t, pcitag_t, u_long, caddr_t,
-	    int flag, struct proc *));
+	    int flag, struct lwp *));
 
 /*
  * Power Management (PCI 2.2)

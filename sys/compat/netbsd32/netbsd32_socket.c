@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_socket.c,v 1.8 2003/01/18 08:28:26 thorpej Exp $	*/
+/*	$NetBSD: netbsd32_socket.c,v 1.9 2003/06/28 14:21:24 darrenr Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_socket.c,v 1.8 2003/01/18 08:28:26 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_socket.c,v 1.9 2003/06/28 14:21:24 darrenr Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ktrace.h"
@@ -132,7 +132,7 @@ recvit32(p, s, mp, iov, namelenp, retsize)
 	auio.uio_iovcnt = mp->msg_iovlen;
 	auio.uio_segflg = UIO_USERSPACE;
 	auio.uio_rw = UIO_READ;
-	auio.uio_procp = p;
+	auio.uio_lwp = l;
 	auio.uio_offset = 0;			/* XXX */
 	auio.uio_resid = 0;
 	for (i = 0; i < mp->msg_iovlen; i++, iov++) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: midisynvar.h,v 1.4 2001/10/02 22:41:22 augustss Exp $	*/
+/*	$NetBSD: midisynvar.h,v 1.5 2003/06/28 14:21:31 darrenr Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@ typedef struct midisyn midisyn;
 struct midisyn_methods {
 	int  (*open)	(midisyn *, int);
 	void (*close)   (midisyn *);
-	int  (*ioctl)   (midisyn *, u_long, caddr_t, int, struct proc *);
+	int  (*ioctl)   (midisyn *, u_long, caddr_t, int, struct lwp *);
 	int  (*allocv)  (midisyn *, u_int32_t, u_int32_t);
 	void (*noteon)  (midisyn *, u_int32_t, u_int32_t, u_int32_t);
 	void (*noteoff) (midisyn *, u_int32_t, u_int32_t, u_int32_t);

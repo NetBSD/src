@@ -1,4 +1,4 @@
-/*	$NetBSD: mfs_vfsops.c,v 1.48 2003/04/22 17:16:21 christos Exp $	*/
+/*	$NetBSD: mfs_vfsops.c,v 1.49 2003/06/28 14:22:28 darrenr Exp $	*/
 
 /*
  * Copyright (c) 1989, 1990, 1993, 1994
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mfs_vfsops.c,v 1.48 2003/04/22 17:16:21 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mfs_vfsops.c,v 1.49 2003/06/28 14:22:28 darrenr Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -151,7 +151,7 @@ mfs_mountroot()
 {
 	struct fs *fs;
 	struct mount *mp;
-	struct proc *p = curproc;	/* XXX */
+	struct lwp *l = curlwp;		/* XXX */
 	struct ufsmount *ump;
 	struct mfsnode *mfsp;
 	int error = 0;
@@ -179,7 +179,7 @@ mfs_mountroot()
 	mfsp->mfs_proc = NULL;		/* indicate kernel space */
 	mfsp->mfs_shutdown = 0;
 	bufq_alloc(&mfsp->mfs_buflist, BUFQ_FCFS);
-	if ((error = ffs_mountfs(rootvp, mp, p)) != 0) {
+	if ((error = ffs_mountfs(rootvp, mp, l)) != 0) {
 		mp->mnt_op->vfs_refcount--;
 		vfs_unbusy(mp);
 		bufq_free(&mfsp->mfs_buflist);
@@ -195,7 +195,7 @@ mfs_mountroot()
 	ump = VFSTOUFS(mp);
 	fs = ump->um_fs;
 	(void) copystr(mp->mnt_stat.f_mntonname, fs->fs_fsmnt, MNAMELEN - 1, 0);
-	(void)ffs_statfs(mp, &mp->mnt_stat, p);
+	(void)ffs_statfs(mp, &mp->mnt_stat, l);
 	vfs_unbusy(mp);
 	inittodr((time_t)0);
 	return (0);
@@ -230,20 +230,22 @@ mfs_initminiroot(base)
  */
 /* ARGSUSED */
 int
-mfs_mount(mp, path, data, ndp, p)
+mfs_mount(mp, path, data, ndp, l)
 	struct mount *mp;
 	const char *path;
 	void *data;
 	struct nameidata *ndp;
-	struct proc *p;
+	struct lwp *l;
 {
 	struct vnode *devvp;
 	struct mfs_args args;
 	struct ufsmount *ump;
 	struct fs *fs;
 	struct mfsnode *mfsp;
+	struct proc *p;
 	int flags, error;
 
+	p = l->l_proc;
 	if (mp->mnt_flag & MNT_GETARGS) {
 		struct vnode *vp;
 		struct mfsnode *mfsp;
@@ -292,7 +294,7 @@ mfs_mount(mp, path, data, ndp, p)
 			flags = WRITECLOSE;
 			if (mp->mnt_flag & MNT_FORCE)
 				flags |= FORCECLOSE;
-			error = ffs_flushfiles(mp, flags, p);
+			error = ffs_flushfiles(mp, flags, l);
 			if (error)
 				return (error);
 		}
@@ -317,7 +319,7 @@ mfs_mount(mp, path, data, ndp, p)
 	mfsp->mfs_proc = p;
 	mfsp->mfs_shutdown = 0;
 	bufq_alloc(&mfsp->mfs_buflist, BUFQ_FCFS);
-	if ((error = ffs_mountfs(devvp, mp, p)) != 0) {
+	if ((error = ffs_mountfs(devvp, mp, l)) != 0) {
 		mfsp->mfs_shutdown = 1;
 		vrele(devvp);
 		return (error);
@@ -343,23 +345,17 @@ int	mfs_pri = PWAIT | PCATCH;		/* XXX prob. temp */
  */
 /* ARGSUSED */
 int
-mfs_start(mp, flags, p)
+mfs_start(mp, flags, l)
 	struct mount *mp;
 	int flags;
-	struct proc *p;
+	struct lwp *l;
 {
 	struct vnode *vp = VFSTOUFS(mp)->um_devvp;
 	struct mfsnode *mfsp = VTOMFS(vp);
 	struct buf *bp;
 	caddr_t base;
 	int sleepreturn = 0;
-	struct lwp *l; /* XXX NJWLWP */
 
-	/* XXX NJWLWP the vnode interface again gives us a proc in a
-	 * place where we want a execution context. Cheat.
-	 */
-	KASSERT(curproc == p);
-	l = curlwp; 
 	base = mfsp->mfs_baseoff;
 	while (mfsp->mfs_shutdown != 1) {
 		while ((bp = BUFQ_GET(&mfsp->mfs_buflist)) != NULL) {
@@ -381,8 +377,8 @@ mfs_start(mp, flags, p)
 			lockmgr(&syncer_lock, LK_EXCLUSIVE, NULL);
 			if (vfs_busy(mp, LK_NOWAIT, 0) != 0)
 				lockmgr(&syncer_lock, LK_RELEASE, NULL);
-			else if (dounmount(mp, 0, p) != 0)
-				CLRSIG(p, CURSIG(l));
+			else if (dounmount(mp, 0, l) != 0)
+				CLRSIG(l->l_proc, CURSIG(l));
 			sleepreturn = 0;
 			continue;
 		}
@@ -398,14 +394,14 @@ mfs_start(mp, flags, p)
  * Get file system statistics.
  */
 int
-mfs_statfs(mp, sbp, p)
+mfs_statfs(mp, sbp, l)
 	struct mount *mp;
 	struct statfs *sbp;
-	struct proc *p;
+	struct lwp *l;
 {
 	int error;
 
-	error = ffs_statfs(mp, sbp, p);
+	error = ffs_statfs(mp, sbp, l);
 #ifdef COMPAT_09
 	sbp->f_type = 3;
 #else

@@ -1,4 +1,4 @@
-/*	$NetBSD: portal_vnops.c,v 1.45 2003/04/10 21:53:33 jdolecek Exp $	*/
+/*	$NetBSD: portal_vnops.c,v 1.46 2003/06/28 14:22:03 darrenr Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: portal_vnops.c,v 1.45 2003/04/10 21:53:33 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: portal_vnops.c,v 1.46 2003/06/28 14:22:03 darrenr Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -307,11 +307,11 @@ portal_open(v)
 		struct vnode *a_vp;
 		int  a_mode;
 		struct ucred *a_cred;
-		struct proc *a_p;
+		struct lwp *a_l;
 	} */ *ap = v;
 	struct socket *so = 0;
 	struct portalnode *pt;
-	struct proc *p = ap->a_p;
+	struct lwp *l = ap->a_l;
 	struct vnode *vp = ap->a_vp;
 	int s;
 	struct uio auio;
@@ -339,7 +339,7 @@ portal_open(v)
 	 * to deal with the side effects.  Check for this
 	 * by testing whether the p_dupfd has been set.
 	 */
-	if (p->p_dupfd >= 0)
+	if (l->l_proc->p_dupfd >= 0)
 		return (ENODEV);
 
 	pt = VTOPORTAL(vp);
@@ -418,7 +418,7 @@ portal_open(v)
 	auio.uio_iovcnt = 2;
 	auio.uio_rw = UIO_WRITE;
 	auio.uio_segflg = UIO_SYSSPACE;
-	auio.uio_procp = p;
+	auio.uio_lwp = l;
 	auio.uio_offset = 0;
 	auio.uio_resid = aiov[0].iov_len + aiov[1].iov_len;
 
@@ -495,7 +495,7 @@ portal_open(v)
 		int i;
 		printf("portal_open: %d extra fds\n", newfds - 1);
 		for (i = 1; i < newfds; i++) {
-			portal_closefd(curlwp, *ip); /* XXXNJWLWP */
+			portal_closefd(l, *ip); /* XXXNJWLWP */
 			ip++;
 		}
 	}
@@ -504,9 +504,9 @@ portal_open(v)
 	 * Check that the mode the file is being opened for is a subset 
 	 * of the mode of the existing descriptor.
 	 */
- 	fp = p->p_fd->fd_ofiles[fd];
+ 	fp = l->l_proc->p_fd->fd_ofiles[fd];
 	if (((ap->a_mode & (FREAD|FWRITE)) | fp->f_flag) != fp->f_flag) {
-		portal_closefd(curlwp, fd); /* XXXNJWLWP */
+		portal_closefd(l, fd); /* XXXNJWLWP */
 		error = EACCES;
 		goto bad;
 	}
@@ -516,7 +516,7 @@ portal_open(v)
 	 * special error code (ENXIO) which causes magic things to
 	 * happen in vn_open.  The whole concept is, well, hmmm.
 	 */
-	p->p_dupfd = fd;
+	l->l_proc->p_dupfd = fd;
 	error = ENXIO;
 
 bad:;

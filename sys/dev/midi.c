@@ -1,4 +1,4 @@
-/*	$NetBSD: midi.c,v 1.32 2003/01/31 02:16:23 thorpej Exp $	*/
+/*	$NetBSD: midi.c,v 1.33 2003/06/28 14:21:31 darrenr Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: midi.c,v 1.32 2003/01/31 02:16:23 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: midi.c,v 1.33 2003/06/28 14:21:31 darrenr Exp $");
 
 #include "midi.h"
 #include "sequencer.h"
@@ -379,7 +379,7 @@ midi_out(void *addr)
 }
 
 int
-midiopen(dev_t dev, int flags, int ifmt, struct proc *p)
+midiopen(dev_t dev, int flags, int ifmt, struct lwp *l)
 {
 	struct midi_softc *sc;
 	struct midi_hw_if *hw;
@@ -423,7 +423,7 @@ midiopen(dev_t dev, int flags, int ifmt, struct proc *p)
 }
 
 int
-midiclose(dev_t dev, int flags, int ifmt, struct proc *p)
+midiclose(dev_t dev, int flags, int ifmt, struct lwp *l)
 {
 	int unit = MIDIUNIT(dev);
 	struct midi_softc *sc = midi_cd.cd_devs[unit];
@@ -682,7 +682,7 @@ midi_writebytes(int unit, u_char *buf, int cc)
 }
 
 int
-midiioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
+midiioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct lwp *l)
 {
 	int unit = MIDIUNIT(dev);
 	struct midi_softc *sc = midi_cd.cd_devs[unit];
@@ -704,8 +704,8 @@ midiioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
 		if (*(int *)addr) {
 			if (sc->async)
 				return EBUSY;
-			sc->async = p;
-			DPRINTF(("midi_ioctl: FIOASYNC %p\n", p));
+			sc->async = l->l_proc;
+			DPRINTF(("midi_ioctl: FIOASYNC %p\n", l->l_proc));
 		} else
 			sc->async = 0;
 		break;
@@ -727,7 +727,7 @@ midiioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
 
 	default:
 		if (hw->ioctl)
-			error = hw->ioctl(sc->hw_hdl, cmd, addr, flag, p);
+			error = hw->ioctl(sc->hw_hdl, cmd, addr, flag, l);
 		else
 			error = EINVAL;
 		break;
@@ -736,7 +736,7 @@ midiioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
 }
 
 int
-midipoll(dev_t dev, int events, struct proc *p)
+midipoll(dev_t dev, int events, struct lwp *l)
 {
 	int unit = MIDIUNIT(dev);
 	struct midi_softc *sc = midi_cd.cd_devs[unit];
@@ -760,10 +760,10 @@ midipoll(dev_t dev, int events, struct proc *p)
 
 	if (revents == 0) {
 		if (events & (POLLIN | POLLRDNORM))
-			selrecord(p, &sc->rsel);
+			selrecord(l, &sc->rsel);
 
 		if (events & (POLLOUT | POLLWRNORM))
-			selrecord(p, &sc->wsel);
+			selrecord(l, &sc->wsel);
 	}
 
 	splx(s);

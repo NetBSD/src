@@ -1,4 +1,4 @@
-/*	$NetBSD: socketvar.h,v 1.60 2003/05/03 17:53:18 yamt Exp $	*/
+/*	$NetBSD: socketvar.h,v 1.61 2003/06/28 14:22:22 darrenr Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -276,14 +276,14 @@ int	soo_read(struct file *fp, off_t *offset, struct uio *uio,
 	    struct ucred *cred, int flags);
 int	soo_write(struct file *fp, off_t *offset, struct uio *uio,
 	    struct ucred *cred, int flags);
-int	soo_fcntl(struct file *fp, u_int cmd, void *data, struct proc *p);
-int	soo_ioctl(struct file *fp, u_long cmd, void *data, struct proc *p);
-int	soo_poll(struct file *fp, int events, struct proc *p);
+int	soo_fcntl(struct file *fp, u_int cmd, void *data, struct lwp *p);
+int	soo_ioctl(struct file *fp, u_long cmd, void *data, struct lwp *p);
+int	soo_poll(struct file *fp, int events, struct lwp *p);
 int	soo_kqfilter(struct file *fp, struct knote *kn);
-int 	soo_close(struct file *fp, struct proc *p);
-int	soo_stat(struct file *fp, struct stat *ub, struct proc *p);
+int 	soo_close(struct file *fp, struct lwp *p);
+int	soo_stat(struct file *fp, struct stat *ub, struct lwp *p);
 int	uipc_usrreq(struct socket *, int , struct mbuf *,
-	    struct mbuf *, struct mbuf *, struct proc *);
+	    struct mbuf *, struct mbuf *, struct lwp *);
 int	uipc_ctloutput(int, struct socket *, int, int, struct mbuf **);
 void	sbappend(struct sockbuf *sb, struct mbuf *m);
 void	sbappendstream(struct sockbuf *sb, struct mbuf *m);
@@ -307,7 +307,7 @@ int	sb_lock(struct sockbuf *sb);
 void	soinit(void);
 int	soabort(struct socket *so);
 int	soaccept(struct socket *so, struct mbuf *nam);
-int	sobind(struct socket *so, struct mbuf *nam, struct proc *);
+int	sobind(struct socket *so, struct mbuf *nam, struct lwp *);
 void	socantrcvmore(struct socket *so);
 void	socantsendmore(struct socket *so);
 int	soclose(struct socket *so);
@@ -338,8 +338,8 @@ int	soshutdown(struct socket *so, int how);
 void	sowakeup(struct socket *so, struct sockbuf *sb);
 int	sockargs(struct mbuf **, const void *, size_t, int);
 
-int	sendit(struct proc *, int, struct msghdr *, int, register_t *);
-int	recvit(struct proc *, int, struct msghdr *, caddr_t, register_t *);
+int	sendit(struct lwp *, int, struct msghdr *, int, register_t *);
+int	recvit(struct lwp *, int, struct msghdr *, caddr_t, register_t *);
 
 #ifdef SOCKBUF_DEBUG
 void	sblastrecordchk(struct sockbuf *, const char *);

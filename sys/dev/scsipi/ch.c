@@ -1,4 +1,4 @@
-/*	$NetBSD: ch.c,v 1.55 2002/11/26 18:49:47 christos Exp $	*/
+/*	$NetBSD: ch.c,v 1.56 2003/06/28 14:21:43 darrenr Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ch.c,v 1.55 2002/11/26 18:49:47 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ch.c,v 1.56 2003/06/28 14:21:43 darrenr Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -256,10 +256,10 @@ chattach(parent, self, aux)
 }
 
 int
-chopen(dev, flags, fmt, p)
+chopen(dev, flags, fmt, l)
 	dev_t dev;
 	int flags, fmt;
-	struct proc *p;
+	struct lwp *l;
 {
 	struct ch_softc *sc;
 	struct scsipi_periph *periph;
@@ -312,10 +312,10 @@ chopen(dev, flags, fmt, p)
 }
 
 int
-chclose(dev, flags, fmt, p)
+chclose(dev, flags, fmt, l)
 	dev_t dev;
 	int flags, fmt;
-	struct proc *p;
+	struct lwp *l;
 {
 	struct ch_softc *sc = ch_cd.cd_devs[CHUNIT(dev)];
 	struct scsipi_periph *periph = sc->sc_periph;
@@ -354,12 +354,12 @@ chread(dev, uio, flags)
 }
 
 int
-chioctl(dev, cmd, data, flags, p)
+chioctl(dev, cmd, data, flags, l)
 	dev_t dev;
 	u_long cmd;
 	caddr_t data;
 	int flags;
-	struct proc *p;
+	struct lwp *l;
 {
 	struct ch_softc *sc = ch_cd.cd_devs[CHUNIT(dev)];
 	int error = 0;
@@ -451,7 +451,7 @@ chioctl(dev, cmd, data, flags, p)
 
 	default:
 		error = scsipi_do_ioctl(sc->sc_periph, dev, cmd, data,
-		    flags, p);
+		    flags, l);
 		break;
 	}
 
@@ -459,10 +459,10 @@ chioctl(dev, cmd, data, flags, p)
 }
 
 int
-chpoll(dev, events, p)
+chpoll(dev, events, l)
 	dev_t dev;
 	int events;
-	struct proc *p;
+	struct lwp *l;
 {
 	struct ch_softc *sc = ch_cd.cd_devs[CHUNIT(dev)];
 	int revents;
@@ -475,7 +475,7 @@ chpoll(dev, events, p)
 	if (sc->sc_events == 0)
 		revents |= events & (POLLIN | POLLRDNORM);
 	else
-		selrecord(p, &sc->sc_selq);
+		selrecord(l, &sc->sc_selq);
 
 	return (revents);
 }

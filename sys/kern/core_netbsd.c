@@ -1,4 +1,4 @@
-/*	$NetBSD: core_netbsd.c,v 1.3 2003/01/18 10:06:23 thorpej Exp $	*/
+/*	$NetBSD: core_netbsd.c,v 1.4 2003/06/28 14:21:51 darrenr Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: core_netbsd.c,v 1.3 2003/01/18 10:06:23 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: core_netbsd.c,v 1.4 2003/06/28 14:21:51 darrenr Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -65,7 +65,7 @@ struct coredump_state {
 	off_t offset;
 };
 
-int	coredump_writesegs_netbsd(struct proc *, struct vnode *,
+int	coredump_writesegs_netbsd(struct lwp *, struct vnode *,
 	    struct ucred *, struct uvm_coredump_state *);
 
 int
@@ -106,7 +106,7 @@ coredump_netbsd(struct lwp *l, struct vnode *vp, struct ucred *cred)
 
 	cs.offset = cs.core.c_hdrsize + cs.core.c_seghdrsize +
 	    cs.core.c_cpusize;
-	error = uvm_coredump_walkmap(p, vp, cred, coredump_writesegs_netbsd,
+	error = uvm_coredump_walkmap(l, vp, cred, coredump_writesegs_netbsd,
 	    &cs);
 	if (error)
 		return (error);
@@ -114,13 +114,13 @@ coredump_netbsd(struct lwp *l, struct vnode *vp, struct ucred *cred)
 	/* Now write out the core header. */
 	error = vn_rdwr(UIO_WRITE, vp, (caddr_t)&cs.core,
 	    (int)cs.core.c_hdrsize, (off_t)0,
-	    UIO_SYSSPACE, IO_NODELOCKED|IO_UNIT, cred, NULL, p);
+	    UIO_SYSSPACE, IO_NODELOCKED|IO_UNIT, cred, NULL, l);
 
 	return (error);
 }
 
 int
-coredump_writesegs_netbsd(struct proc *p, struct vnode *vp, struct ucred *cred,
+coredump_writesegs_netbsd(struct lwp *l, struct vnode *vp, struct ucred *cred,
     struct uvm_coredump_state *us)
 {
 	struct coredump_state *cs = us->cookie;
@@ -144,16 +144,14 @@ coredump_writesegs_netbsd(struct proc *p, struct vnode *vp, struct ucred *cred,
 
 	error = vn_rdwr(UIO_WRITE, vp,
 	    (caddr_t)&cseg, cs->core.c_seghdrsize,
-	    cs->offset, UIO_SYSSPACE,
-	    IO_NODELOCKED|IO_UNIT, cred, NULL, p);
+	    cs->offset, UIO_SYSSPACE, IO_NODELOCKED|IO_UNIT, cred, NULL, l);
 	if (error)
 		return (error);
 
 	cs->offset += cs->core.c_seghdrsize;
 	error = vn_rdwr(UIO_WRITE, vp,
 	    (caddr_t) us->start, (int) cseg.c_size,
-	    cs->offset, UIO_USERSPACE,
-	    IO_NODELOCKED|IO_UNIT, cred, NULL, p);
+	    cs->offset, UIO_USERSPACE, IO_NODELOCKED|IO_UNIT, cred, NULL, l);
 	if (error)
 		return (error);
 
