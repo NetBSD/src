@@ -1,27 +1,27 @@
-/*	$NetBSD: bcopy.S,v 1.7 1997/10/18 05:21:44 jonathan Exp $	*/
+/*	$NetBSD: bcopy.S,v 1.8 2000/10/10 21:51:54 jeffs Exp $	*/
 
-/* 
+/*
  * Mach Operating System
  * Copyright (c) 1993 Carnegie Mellon University
  * All Rights Reserved.
- * 
+ *
  * Permission to use, copy, modify and distribute this software and its
  * documentation is hereby granted, provided that both the copyright
  * notice and this permission notice appear in all copies of the
  * software, derivative works or modified versions, and any portions
  * thereof, and that both notices appear in supporting documentation.
- * 
+ *
  * CARNEGIE MELLON ALLOWS FREE USE OF THIS SOFTWARE IN ITS "AS IS"
  * CONDITION.  CARNEGIE MELLON DISCLAIMS ANY LIABILITY OF ANY KIND FOR
  * ANY DAMAGES WHATSOEVER RESULTING FROM THE USE OF THIS SOFTWARE.
- * 
+ *
  * Carnegie Mellon requests users of this software to return to
- * 
+ *
  *  Software Distribution Coordinator  or  Software.Distribution@CS.CMU.EDU
  *  School of Computer Science
  *  Carnegie Mellon University
  *  Pittsburgh PA 15213-3890
- * 
+ *
  * any improvements or extensions that they make and grant Carnegie Mellon
  * the rights to redistribute these changes.
  */
@@ -32,7 +32,7 @@
  *	Date:	June 1993
  *
  *	Fast copy routine.  Derived from aligned_block_copy.
- */	
+ */
 
 
 #include <mips/asm.h>
@@ -42,7 +42,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 	ASMSTR("from: @(#)mips_bcopy.s	2.2 CMU 18/06/93")
-	ASMSTR("$NetBSD: bcopy.S,v 1.7 1997/10/18 05:21:44 jonathan Exp $")
+	ASMSTR("$NetBSD: bcopy.S,v 1.8 2000/10/10 21:51:54 jeffs Exp $")
 #endif /* LIBC_SCCS and not lint */
 
 #ifdef ABICALLS
@@ -57,17 +57,35 @@
  *	a2	length
  */
 
-LEAF(bcopy)
+#if defined(MEMCOPY) || defined(MEMMOVE)
+#ifdef MEMCOPY
+#define	FUNCTION	memcpy
+#else
+#define FUNCTION	memmove
+#endif
+#define	SRCREG		a1
+#define	DSTREG		a0
+#else
+#define	FUNCTION	bcopy
+#define	SRCREG		a0
+#define	DSTREG		a1
+#endif
+
+#define	SIZEREG		a2
+
+LEAF(FUNCTION)
 	.set	noat
 	.set	noreorder
+
+#if defined(MEMCOPY) || defined(MEMMOVE)
+	/* set up return value, while we still can */
+	move	v0,DSTREG
+#endif
 	/*
 	 *	Make sure we can copy forwards.
 	 */
-	sltu	t0,a0,a1	# t0 == a0 < a1
-	addu	a3,a0,a2	# a3 == end of source
-	sltu	t1,a1,a3	# t1 == a1 < a0+a2
-	and	t2,t0,t1	# overlap -- copy backwards
-	bne	t2,zero,backcopy
+	sltu	t0,SRCREG,DSTREG	# t0 == SRCREG < DSTREG
+	bne	t0,zero,6f		# copy backwards
 
 	/*
 	 * 	There are four alignment cases (with frequency)
@@ -79,118 +97,196 @@ LEAF(bcopy)
 	 * 	aligned,unaligned -> unaligned	(almost never)
 	 *
 	 *	Note that we could add another case that checks if
-	 *	the destination and source are unaligned but the 
+	 *	the destination and source are unaligned but the
 	 *	copy is alignable.  eg if src and dest are both
 	 *	on a halfword boundary.
 	 */
-	andi	t1,a1,3		# get last 3 bits of dest
-	bne	t1,zero,bytecopy
-	andi	t0,a0,3		# get last 3 bits of src
-	bne	t0,zero,destaligned
+	andi	t1,DSTREG,3		# get last 3 bits of dest
+	bne	t1,zero,3f
+	andi	t0,SRCREG,3		# get last 3 bits of src
+	bne	t0,zero,5f
 
 	/*
 	 *	Forward aligned->aligned copy, 8*4 bytes at a time.
 	 */
 	li	AT,-32
-	and	t0,a2,AT	/* count truncated to multiple of 32 */
-	addu	a3,a0,t0	/* run fast loop up to this address */
-	sltu	AT,a0,a3	/* any work to do? */
-	beq	AT,zero,wordcopy
-	subu	a2,t0
+	and	t0,SIZEREG,AT		# count truncated to multiple of 32 */
+	addu	a3,SRCREG,t0		# run fast loop up to this address
+	sltu	AT,SRCREG,a3		# any work to do?
+	beq	AT,zero,2f
+	subu	SIZEREG,t0
 
 	/*
 	 *	loop body
 	 */
-cp:
-	lw	v0,0(a0)
-	lw	v1,4(a0)
-	lw	t0,8(a0)
-	lw	t1,12(a0)
-	addu	a0,32
-	sw	v0,0(a1)
-	sw	v1,4(a1)
-	sw	t0,8(a1)
-	sw	t1,12(a1)
-	lw	t1,-4(a0)
-	lw	t0,-8(a0)
-	lw	v1,-12(a0)
-	lw	v0,-16(a0)
-	addu	a1,32
-	sw	t1,-4(a1)
-	sw	t0,-8(a1)
-	sw	v1,-12(a1)
-	bne	a0,a3,cp
-	sw	v0,-16(a1)
+1:	# cp
+	lw	t3,0(SRCREG)
+	lw	v1,4(SRCREG)
+	lw	t0,8(SRCREG)
+	lw	t1,12(SRCREG)
+	addu	SRCREG,32
+	sw	t3,0(DSTREG)
+	sw	v1,4(DSTREG)
+	sw	t0,8(DSTREG)
+	sw	t1,12(DSTREG)
+	lw	t1,-4(SRCREG)
+	lw	t0,-8(SRCREG)
+	lw	v1,-12(SRCREG)
+	lw	t3,-16(SRCREG)
+	addu	DSTREG,32
+	sw	t1,-4(DSTREG)
+	sw	t0,-8(DSTREG)
+	sw	v1,-12(DSTREG)
+	bne	SRCREG,a3,1b
+	sw	t3,-16(DSTREG)
 
 	/*
 	 *	Copy a word at a time, no loop unrolling.
 	 */
-wordcopy:
-	andi	t2,a2,3		# get byte count / 4
-	subu	t2,a2,t2	# t2 = number of words to copy * 4
-	beq	t2,zero,bytecopy
-	addu	t0,a0,t2	# stop at t0
-	subu	a2,a2,t2
+2:	# wordcopy
+	andi	t2,SIZEREG,3		# get byte count / 4
+	subu	t2,SIZEREG,t2		# t2 = number of words to copy * 4
+	beq	t2,zero,3f
+	addu	t0,SRCREG,t2		# stop at t0
+	subu	SIZEREG,SIZEREG,t2
 1:
-	lw	v0,0(a0)
-	addu	a0,4
-	sw	v0,0(a1)
-	bne	a0,t0,1b
-	addu	a1,4
+	lw	t3,0(SRCREG)
+	addu	SRCREG,4
+	sw	t3,0(DSTREG)
+	bne	SRCREG,t0,1b
+	addu	DSTREG,4
 
-bytecopy:
-	beq	a2,zero,copydone	# nothing left to do?
+3:	# bytecopy
+	beq	SIZEREG,zero,4f	# nothing left to do?
 	nop
-2:
-	lb	v0,0(a0)
-	addu	a0,1
-	sb	v0,0(a1)
-	subu	a2,1
-	bgtz	a2,2b
-	addu	a1,1
+1:
+	lb	t3,0(SRCREG)
+	addu	SRCREG,1
+	sb	t3,0(DSTREG)
+	subu	SIZEREG,1
+	bgtz	SIZEREG,1b
+	addu	DSTREG,1
 
-copydone:
+4:	# copydone
 	j	ra
 	nop
 
 	/*
 	 *	Copy from unaligned source to aligned dest.
 	 */
-destaligned:
-	andi	t0,a2,3		# t0 = bytecount mod 4
-	subu	a3,a2,t0	# number of words to transfer
-	beq	a3,zero,bytecopy
+5:	# destaligned
+	andi	t0,SIZEREG,3		# t0 = bytecount mod 4
+	subu	a3,SIZEREG,t0		# number of words to transfer
+	beq	a3,zero,3b
 	nop
-	move	a2,t0		# this many to do after we are done
-	addu	a3,a0,a3	# stop point
+	move	SIZEREG,t0		# this many to do after we are done
+	addu	a3,SRCREG,a3		# stop point
 
-3:
-	LWHI	v0,0(a0)
-	LWLO	v0,3(a0)
-	addi	a0,4
-	sw	v0,0(a1)
-	bne	a0,a3,3b
-	addi	a1,4
+1:
+	LWHI	t3,0(SRCREG)
+	LWLO	t3,3(SRCREG)
+	addi	SRCREG,4
+	sw	t3,0(DSTREG)
+	bne	SRCREG,a3,1b
+	addi	DSTREG,4
 
-	j	bytecopy
+	j	3b
+	nop
+
+6:	# backcopy -- based on above
+	addu	SRCREG,SIZEREG
+	addu	DSTREG,SIZEREG
+	andi	t1,DSTREG,3		# get last 3 bits of dest
+	bne	t1,zero,3f
+	andi	t0,SRCREG,3		# get last 3 bits of src
+	bne	t0,zero,5f
+
+	/*
+	 *	Forward aligned->aligned copy, 8*4 bytes at a time.
+	 */
+	li	AT,-32
+	and	t0,SIZEREG,AT		# count truncated to multiple of 32
+	beq	t0,zero,2f		# any work to do?
+	subu	SIZEREG,t0
+	subu	a3,SRCREG,t0
+
+	/*
+	 *	loop body
+	 */
+1:	# cp
+	lw	t3,-16(SRCREG)
+	lw	v1,-12(SRCREG)
+	lw	t0,-8(SRCREG)
+	lw	t1,-4(SRCREG)
+	subu	SRCREG,32
+	sw	t3,-16(DSTREG)
+	sw	v1,-12(DSTREG)
+	sw	t0,-8(DSTREG)
+	sw	t1,-4(DSTREG)
+	lw	t1,12(SRCREG)
+	lw	t0,8(SRCREG)
+	lw	v1,4(SRCREG)
+	lw	t3,0(SRCREG)
+	subu	DSTREG,32
+	sw	t1,12(DSTREG)
+	sw	t0,8(DSTREG)
+	sw	v1,4(DSTREG)
+	bne	SRCREG,a3,1b
+	sw	t3,0(DSTREG)
+
+	/*
+	 *	Copy a word at a time, no loop unrolling.
+	 */
+2:	# wordcopy
+	andi	t2,SIZEREG,3		# get byte count / 4
+	subu	t2,SIZEREG,t2		# t2 = number of words to copy * 4
+	beq	t2,zero,3f
+	subu	t0,SRCREG,t2		# stop at t0
+	subu	SIZEREG,SIZEREG,t2
+1:
+	lw	t3,-4(SRCREG)
+	subu	SRCREG,4
+	sw	t3,-4(DSTREG)
+	bne	SRCREG,t0,1b
+	subu	DSTREG,4
+
+3:	# bytecopy
+	beq	SIZEREG,zero,4f		# nothing left to do?
+	nop
+1:
+	lb	t3,-1(SRCREG)
+	subu	SRCREG,1
+	sb	t3,-1(DSTREG)
+	subu	SIZEREG,1
+	bgtz	SIZEREG,1b
+	subu	DSTREG,1
+
+4:	# copydone
+	j	ra
 	nop
 
 	/*
-	 *	Copy by bytes backwards.
+	 *	Copy from unaligned source to aligned dest.
 	 */
-backcopy:
-	blez	a2,copydone	# nothing left to do?
-	addu	t0,a0,a2	# end of source
-	addu	t1,a1,a2	# end of destination
-4:
-	lb	v0,-1(t0)	
-	subu	t0,1
-	sb	v0,-1(t1)
-	bne	t0,a0,4b
-	subu	t1,1
-	j	ra
+5:	# destaligned
+	andi	t0,SIZEREG,3		# t0 = bytecount mod 4
+	subu	a3,SIZEREG,t0		# number of words to transfer
+	beq	a3,zero,3b
 	nop
-	
+	move	SIZEREG,t0		# this many to do after we are done
+	subu	a3,SRCREG,a3		# stop point
+
+1:
+	LWHI	t3,-4(SRCREG)
+	LWLO	t3,-1(SRCREG)
+	subu	SRCREG,4
+	sw	t3,-4(DSTREG)
+	bne	SRCREG,a3,1b
+	subu	DSTREG,4
+
+	j	3b
+	nop
+
 	.set	reorder
 	.set	at
-	END(bcopy)
+	END(FUNCTION)
