@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)fd.c	7.4 (Berkeley) 5/25/91
- *	$Id: fd.c,v 1.22 1993/12/20 09:11:38 mycroft Exp $
+ *	$Id: fd.c,v 1.23 1994/01/27 07:10:09 cgd Exp $
  *
  * Largely rewritten to handle multiple controllers and drives
  * By Julian Elischer, Sun Apr  4 16:34:33 WST 1993
@@ -345,7 +345,7 @@ fdstrategy(bp)
 	if ((fdu >= NFD) || (bp->b_blkno < 0)) {
 		printf("fdstrat: fdu = %d, blkno = %d, bcount = %d\n",
 			fdu, bp->b_blkno, bp->b_bcount);
-		pg("fd:error in fdstrategy");
+		panic("fd: error in fdstrategy");
 		bp->b_error = EINVAL;
 		bp->b_flags |= B_ERROR;
 		goto bad;
