@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.155 2000/04/15 22:02:14 tsarna Exp $
+# $NetBSD: mi,v 1.156 2000/04/24 22:06:50 mellon Exp $
 .
 ./altroot
 ./bin
@@ -653,13 +653,11 @@
 ./usr/sbin/sliplogin
 ./usr/sbin/slstats
 ./usr/sbin/spray
-./usr/sbin/statmsg
 ./usr/sbin/stdethers
 ./usr/sbin/stdhosts
 ./usr/sbin/sup
 ./usr/sbin/supfilesrv
 ./usr/sbin/supscan
-./usr/sbin/sysconfd
 ./usr/sbin/syslogd
 ./usr/sbin/tcpdchk
 ./usr/sbin/tcpdmatch
