@@ -1,4 +1,4 @@
-#	$NetBSD: files.hp300,v 1.70 2004/07/07 08:41:34 mycroft Exp $
+#	$NetBSD: files.hp300,v 1.71 2004/08/28 17:45:24 thorpej Exp $
 #
 # hp300-specific configuration info
 
@@ -161,7 +161,6 @@ file	arch/hp300/dev/mt.c		mt needs-flag
 device	rd: disk
 attach	rd at hpibbus
 file	arch/hp300/dev/rd.c		rd needs-flag
-file	arch/hp300/dev/rd_compat.c	rd		# XXX
 
 device	ppi
 attach	ppi at hpibbus
