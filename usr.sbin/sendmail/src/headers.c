@@ -33,7 +33,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)headers.c	8.30 (Berkeley) 2/25/94";
+static char sccsid[] = "@(#)headers.c	8.32 (Berkeley) 4/14/94";
 #endif /* not lint */
 
 # include <errno.h>
@@ -530,6 +530,7 @@ logsender(e, msgid)
 	register ENVELOPE *e;
 	char *msgid;
 {
+# ifdef LOG
 	char *name;
 	register char *sbp;
 	register char *p;
@@ -604,6 +605,7 @@ logsender(e, msgid)
 	}
 	syslog(LOG_INFO, "%s relay=%s", sbuf, name);
 #  endif
+# endif
 }
 /*
 **  PRIENCODE -- encode external priority names into internal values.
@@ -951,6 +953,15 @@ putheader(mci, e)
 		{
 			if (tTd(34, 11))
 				printf(" (skipped (resent))\n");
+			continue;
+		}
+
+		/* suppress return receipts if requested */
+		if (bitset(H_RECEIPTTO, h->h_flags) &&
+		    bitset(EF_NORECEIPT, e->e_flags))
+		{
+			if (tTd(34, 11))
+				printf(" (skipped (receipt))\n");
 			continue;
 		}
 
