@@ -1,4 +1,4 @@
-/*	$NetBSD: sbusvar.h,v 1.8 1998/07/29 18:45:57 pk Exp $ */
+/*	$NetBSD: sbusvar.h,v 1.9 1998/09/19 15:49:50 pk Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -89,11 +89,14 @@ struct sbus_softc {
 	struct	device sc_dev;		/* base device */
 	bus_space_tag_t	sc_bustag;
 	bus_dma_tag_t	sc_dmatag;
+	bus_space_handle_t sc_bh;	/* SBus control registers */
 	int	sc_clockfreq;		/* clock frequency (in Hz) */
 	struct	sbusdev *sc_sbdev;	/* list of all children */
-	struct	sbus_range *sc_range;
+	struct	sbus_range *sc_range;	/* Address space translations */
 	int	sc_nrange;
 	int	sc_burst;		/* burst transfer sizes supported */
+
+	/* MD fields follow here */
 	int	*sc_intr2ipl;		/* Interrupt level translation */
 	int	*sc_intr_compat;	/* `intr' property to sbus compat */
 };
