@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ray.c,v 1.8 2000/02/02 08:08:50 augustss Exp $	*/
+/*	$NetBSD: if_ray.c,v 1.9 2000/02/02 18:39:44 chopps Exp $	*/
 /* 
  * Copyright (c) 2000 Christian E. Hopps
  * All rights reserved.
@@ -155,6 +155,8 @@ struct ray_softc {
 #endif
 	void				*sc_ih;
 	void				*sc_sdhook;
+	void				*sc_pwrhook;
+	int				sc_resumeinit;
 	int				sc_resetloop;
 
 	struct ray_ecf_startup		sc_ecf_startup;
@@ -277,6 +279,7 @@ static int ray_issue_cmd __P((struct ray_softc *, bus_size_t, u_int));
 static int ray_match __P((struct device *, struct cfdata *, void *));
 static int ray_media_change __P((struct ifnet *));
 static void ray_media_status __P((struct ifnet *, struct ifmediareq *));
+void ray_power __P((int, void *));
 static ray_cmd_func_t ray_rccs_intr __P((struct ray_softc *, bus_size_t));
 static void ray_read_region __P((struct ray_softc *, bus_size_t,void *,size_t));
 static void ray_recv __P((struct ray_softc *, bus_size_t));
@@ -563,6 +566,7 @@ ray_attach(parent, self, aux)
 	strncpy(sc->sc_cnwid, RAY_DEF_NWID, sizeof(sc->sc_dnwid));
 	sc->sc_omode = sc->sc_mode = RAY_MODE_DEFAULT;
 	sc->sc_countrycode = sc->sc_dcountrycode = RAY_PID_COUNTRY_CODE_DEFAULT;
+	sc->sc_resumeinit = 0;
 
 	/*
 	 * attach the interface
@@ -603,6 +607,7 @@ ray_attach(parent, self, aux)
 	pcmcia_function_disable(sc->sc_pf);
 
 	sc->sc_sdhook = shutdownhook_establish(ray_shutdown, sc);
+	sc->sc_pwrhook = powerhook_establish(ray_power, sc);
 
 	return;
 fail:
@@ -661,11 +666,8 @@ ray_detach(self, flags)
 	ifp = &sc->sc_if;
 	RAY_DPRINTF(("%s: detach\n", sc->sc_xname));
 
-	if (sc->sc_if.if_flags & IFF_RUNNING)
+	if (ifp->if_flags & IFF_RUNNING)
 		ray_disable(sc);
-
-	shutdownhook_disestablish(sc->sc_sdhook);
-	ifmedia_delete_instance(&sc->sc_media, IFM_INST_ANY);
 
 	/* give back the memory */
 #if RAY_USE_AMEM
@@ -679,13 +681,16 @@ ray_detach(self, flags)
 		pcmcia_mem_free(sc->sc_pf, &sc->sc_mem);
 	}
 
+	ifmedia_delete_instance(&sc->sc_media, IFM_INST_ANY);
 #if NBPFILTER > 0
 	bpfdetach(ifp);
 #endif
 	ether_ifdetach(ifp);
 	if_detach(ifp);
+	powerhook_disestablish(sc->sc_pwrhook);
+	shutdownhook_disestablish(sc->sc_sdhook);
 
-	return (0);	
+	return (0);
 }
 
 /*
@@ -761,6 +766,7 @@ ray_init(sc)
 	sc->sc_running = 0;
 	sc->sc_txfree = RAY_CCS_NTX;
 	sc->sc_checkcounters = 0;
+	sc->sc_resumeinit = 0;
 
 	/* get startup results */
 	ep = &sc->sc_ecf_startup;
@@ -870,6 +876,34 @@ ray_reset_resetloop(arg)
 	sc->sc_resetloop = 0;
 }
 
+void
+ray_power(why, arg)
+	int why;
+	void *arg;
+{
+#if 0
+	struct ray_softc *sc;
+
+	/* can't do this until power hooks are called from thread */
+	sc = arg;
+	switch (why) {
+	case PWR_RESUME:
+		if (sc->sc_resumeinit)
+			ray_init(sc);
+		break;
+	case PWR_SUSPEND:
+		if ((sc->sc_if.if_flags & IFF_RUNNING)) {
+			ray_stop(sc);
+			sc->sc_resumeinit = 1;
+		}
+		break;
+	case PWR_STANDBY:
+	default:
+		break;
+	}
+#endif
+}
+
 static void
 ray_shutdown(arg)
 	void *arg;
@@ -879,7 +913,6 @@ ray_shutdown(arg)
 	sc = arg;
 	ray_disable(sc);
 }
-
 
 static int
 ray_ioctl(ifp, cmd, data)
@@ -1079,7 +1112,7 @@ ray_intr_start(sc)
 	bus_size_t bufp, ebufp;
 	struct mbuf *m0, *m;
 	struct ifnet *ifp;
-	u_int firsti, hinti, previ, i;
+	u_int firsti, hinti, previ, i, pcount;
 	u_int16_t et;
 	u_int8_t *d;
 
@@ -1105,6 +1138,7 @@ ray_intr_start(sc)
 		return;
 	}
 
+	pcount = 0;
 	for (;;) {
 		/* if we have no descriptors be done */
 		if (i == RAY_CCS_LINK_NULL) {
@@ -1123,6 +1157,7 @@ ray_intr_start(sc)
 		if (pktlen > ETHER_MAX_LEN - ETHER_CRC_LEN) {
 			RAY_DPRINTF((
 			    "%s: mbuf too long %d\n", ifp->if_xname, pktlen));
+			ifp->if_oerrors++;
 			m_freem(m0);
 			continue;
 		}
@@ -1134,6 +1169,7 @@ ray_intr_start(sc)
 		if (!m0) {
 			RAY_DPRINTF(( "%s: couldn\'t pullup ether header\n",
 			    ifp->if_xname));
+			ifp->if_oerrors++;
 			continue;
 		}
 		RAY_DPRINTF(("%s: got pulled up mbuf 0x%lx\n", ifp->if_xname,
@@ -1146,6 +1182,7 @@ ray_intr_start(sc)
 			/* don't support llc for windows compat operation */
 			if (et <= ETHERMTU) {
 				m_freem(m0);
+				ifp->if_oerrors++;
 				continue;
 			}
 			tmplen = sizeof(struct ieee80211_frame);
@@ -1160,6 +1197,7 @@ ray_intr_start(sc)
 		if (!m0) {
 			RAY_DPRINTF(("%s: couldn\'t prepend header\n",
 			    ifp->if_xname));
+			ifp->if_oerrors++;
 			continue;
 		}
 		/* copy the frame into the mbuf for tapping */
@@ -1241,6 +1279,7 @@ ray_intr_start(sc)
 		if (ray_debug && ray_debug_dump_tx)
 			ray_dump_mbuf(sc, m0);
 #endif
+		pcount++;
 		m_freem(m0);
 	}
 
@@ -1256,6 +1295,7 @@ ray_intr_start(sc)
 		 */
 		printf("%s: dropping tx packets device busy\n", sc->sc_xname);
 		ray_free_ccs_chain(sc, firsti);
+		ifp->if_oerrors += pcount;
 		return;
 	}
 
@@ -1266,6 +1306,8 @@ ray_intr_start(sc)
 
 	RAY_DPRINTF_XMIT(("%s: sent packet: len %d\n", sc->sc_xname,
 	    pktlen));
+
+	ifp->if_opackets += pcount;
 }
 
 /*
@@ -1464,6 +1506,7 @@ done:
 		bpf_mtap(ifp->if_bpf, m);
 #endif
 	/* XXX doesn't appear to be included m->m_flags |= M_HASFCS; */
+	ifp->if_ipackets++;
 	(*ifp->if_input)(ifp, m);
 }
 
