@@ -1,4 +1,4 @@
-/* $NetBSD: pm.c,v 1.1.2.13 1999/08/11 05:34:57 nisimura Exp $ */
+/* $NetBSD: pm.c,v 1.1.2.14 1999/10/26 03:45:43 nisimura Exp $ */
 
 /*
  * Copyright (c) 1998 Tohru Nishimura.  All rights reserved.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$Id: pm.c,v 1.1.2.13 1999/08/11 05:34:57 nisimura Exp $");
+__KERNEL_RCSID(0, "$Id: pm.c,v 1.1.2.14 1999/10/26 03:45:43 nisimura Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -178,7 +178,7 @@ struct wsscreen_descr pm_stdscreen = {
 	0, 0,	/* will be filled in -- XXX shouldn't, it's global */
 	&pm_emulops,
 	0, 0,
-	0
+	WSSCREEN_REVERSE
 };
 
 const struct wsscreen_descr *_pm_scrlist[] = {
