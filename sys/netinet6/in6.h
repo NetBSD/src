@@ -1,4 +1,4 @@
-/*	$NetBSD: in6.h,v 1.39 2002/05/14 10:27:28 itojun Exp $	*/
+/*	$NetBSD: in6.h,v 1.39.4.1 2004/06/14 02:47:50 jmc Exp $	*/
 /*	$KAME: in6.h,v 1.83 2001/03/29 02:55:07 jinmei Exp $	*/
 
 /*
@@ -405,6 +405,7 @@ struct route_in6 {
 #define IPV6_IPSEC_POLICY	28 /* struct; get/set security policy */
 #endif
 #define IPV6_FAITH		29 /* bool; accept FAITH'ed connections */
+#define IPV6_USE_MIN_MTU	42 /* bool; send packets at the minimum MTU */
 /* to define items, should talk with KAME guys first, for *BSD compatibility */
 
 #define IPV6_RTHDR_LOOSE     0 /* this hop need not be a neighbor. XXX old spec */
