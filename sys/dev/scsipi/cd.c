@@ -1,4 +1,4 @@
-/*	$NetBSD: cd.c,v 1.116 1998/11/20 00:35:39 thorpej Exp $	*/
+/*	$NetBSD: cd.c,v 1.117 1998/12/08 00:18:46 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -377,11 +377,13 @@ cdclose(dev, flag, fmt, p)
 	    cd->sc_dk.dk_copenmask | cd->sc_dk.dk_bopenmask;
 
 	if (cd->sc_dk.dk_openmask == 0) {
-		/* XXXX Must wait for I/O to complete! */
+		scsipi_wait_drain(cd->sc_link);
 
 		scsipi_prevent(cd->sc_link, PR_ALLOW,
 		    SCSI_IGNORE_ILLEGAL_REQUEST | SCSI_IGNORE_NOT_READY);
 		cd->sc_link->flags &= ~SDEV_OPEN;
+
+		scsipi_wait_drain(cd->sc_link);
 
 		scsipi_adapter_delref(cd->sc_link);
 	}
