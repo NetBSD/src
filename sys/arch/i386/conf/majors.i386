@@ -1,4 +1,4 @@
-#	$NetBSD: majors.i386,v 1.10 2003/04/20 16:51:35 martin Exp $
+#	$NetBSD: majors.i386,v 1.11 2003/04/25 21:10:54 ragge Exp $
 #
 # Device majors for i386
 #
@@ -99,3 +99,4 @@ device-major	twe		char 97			twe
 device-major	nsmb		char 98			nsmb		
 device-major	vmmon		char 99			vmmon
 device-major	vmnet		char 100		vmnet
+device-major	ksyms		char 101		ksyms
