@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.3 2000/05/19 10:43:37 itojun Exp $	*/
+/*	$NetBSD: main.c,v 1.3.4.1 2000/10/18 02:16:31 tv Exp $	*/
 
 /*
  *  Copyright (c) 1998 by the University of Oregon.
@@ -659,7 +659,7 @@ restart(i)
     int s;
 #endif /* SNMP */
     
-    log(LOG_NOTICE, 0, "% restart", versionstring);
+    log(LOG_NOTICE, 0, "%s restart", versionstring);
     
     /*
      * reset all the entries
