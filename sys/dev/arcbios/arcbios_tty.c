@@ -1,4 +1,4 @@
-/*	$NetBSD: arcbios_tty.c,v 1.6.6.1 2004/10/19 15:56:44 skrll Exp $	*/
+/*	$NetBSD: arcbios_tty.c,v 1.6.6.2 2005/01/13 08:33:11 skrll Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arcbios_tty.c,v 1.6.6.1 2004/10/19 15:56:44 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arcbios_tty.c,v 1.6.6.2 2005/01/13 08:33:11 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/user.h>
@@ -70,7 +70,7 @@ const struct cdevsw arcbios_cdevsw = {
 };
 
 int
-arcbios_ttyopen(dev_t dev, int flag, int mode, struct proc *p)
+arcbios_ttyopen(dev_t dev, int flag, int mode, struct lwp *l)
 {
 	int unit = minor(dev);
 	struct tty *tp;
@@ -101,7 +101,7 @@ arcbios_ttyopen(dev_t dev, int flag, int mode, struct proc *p)
 		ttsetwater(tp);
 
 		setuptimeout = 1;
-	} else if (tp->t_state & TS_XCLUDE && p->p_ucred->cr_uid != 0) {
+	} else if (tp->t_state & TS_XCLUDE && l->l_proc->p_ucred->cr_uid != 0) {
 		splx(s);
 		return (EBUSY);
 	}
@@ -116,7 +116,7 @@ arcbios_ttyopen(dev_t dev, int flag, int mode, struct proc *p)
 }
  
 int
-arcbios_ttyclose(dev_t dev, int flag, int mode, struct proc *p)
+arcbios_ttyclose(dev_t dev, int flag, int mode, struct lwp *l)
 {
 	int unit = minor(dev);
 	struct tty *tp = arcbios_tty[unit];
@@ -144,24 +144,24 @@ arcbios_ttywrite(dev_t dev, struct uio *uio, int flag)
 }
 
 int
-arcbios_ttypoll(dev_t dev, int events, struct proc *p)
+arcbios_ttypoll(dev_t dev, int events, struct lwp *l)
 {
 	struct tty *tp = arcbios_tty[minor(dev)];
  
-	return ((*tp->t_linesw->l_poll)(tp, events, p));
+	return ((*tp->t_linesw->l_poll)(tp, events, l));
 }
  
 int
-arcbios_ttyioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
+arcbios_ttyioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 {
 	int unit = minor(dev);
 	struct tty *tp = arcbios_tty[unit];
 	int error;
 
-	error = (*tp->t_linesw->l_ioctl)(tp, cmd, data, flag, p);
+	error = (*tp->t_linesw->l_ioctl)(tp, cmd, data, flag, l);
 	if (error != EPASSTHROUGH)
 		return (error);
-	return (ttioctl(tp, cmd, data, flag, p));
+	return (ttioctl(tp, cmd, data, flag, l));
 }
 
 int
