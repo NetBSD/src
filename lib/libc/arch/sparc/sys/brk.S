@@ -1,4 +1,4 @@
-/*	$NetBSD: brk.S,v 1.7 1999/06/03 20:14:58 kleink Exp $	*/
+/*	$NetBSD: brk.S,v 1.7.8.1 2000/08/22 07:23:25 kleink Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -44,7 +44,7 @@
 #if 0
 	.asciz "@(#)brk.s	8.1 (Berkeley) 6/4/93"
 #else
-	RCSID("$NetBSD: brk.S,v 1.7 1999/06/03 20:14:58 kleink Exp $")
+	RCSID("$NetBSD: brk.S,v 1.7.8.1 2000/08/22 07:23:25 kleink Exp $")
 #endif
 #endif /* SYSLIBC_SCCS and not lint */
 
@@ -54,13 +54,17 @@
 	.globl	_C_LABEL(__minbrk)
 	.globl	_end
 
+#ifdef WEAK_ALIAS
+WEAK_ALIAS(brk, _brk)
+#endif
+
 	.data
 _C_LABEL(__minbrk):
 	.long	_end			! lower brk limit; also for gmon code
 	.text
 
+ENTRY(_brk)
 #ifdef PIC
-ENTRY(brk)
 	PIC_PROLOGUE(%o5,%o4)
 	ld	[%o5 + _C_LABEL(__minbrk)], %o4
 	ld	[%o4], %o1		! %o1 = minbrk
@@ -78,7 +82,6 @@ ENTRY(brk)
 	retl				! success, return 0 & record new break
 	 st	%o2, [%o4]
 #else
-ENTRY(brk)
 	sethi	%hi(_C_LABEL(__minbrk)), %o1	! %o1 = minbrk
 	ld	[%o1 + %lo(_C_LABEL(__minbrk))], %o1
 	cmp	%o1, %o0		! if (minbrk > %o0)
