@@ -1,4 +1,4 @@
-/* 	$NetBSD: intr.h,v 1.12 2001/04/13 23:30:06 thorpej Exp $	*/
+/* 	$NetBSD: intr.h,v 1.13 2001/06/04 15:34:57 ragge Exp $	*/
 
 /*
  * Copyright (c) 1998 Matt Thomas.
@@ -44,10 +44,11 @@
 #define IPL_CLOCK	0x18	/* clock */
 #define IPL_UBA		0x17	/* unibus adapters */
 #define IPL_IMP		0x17	/* memory allocation */
+#define IPL_NET		0x16	/* network */
 #define IPL_BIO		0x15	/* block I/O */
-#define IPL_NET		0x15	/* network */
 #define IPL_TTY		0x15	/* terminal */
 #define IPL_AUDIO	0x15	/* audio */
+#define IPL_IPI		0x14	/* interprocessor interrupt */
 #define IPL_CONSMEDIA	0x14	/* console media */
 
 /* Software interrupt level s are 0 (0x00) thru 15 (0x0f)
@@ -112,9 +113,10 @@ do {								\
 #define splsoftserial()	_splraise(IPL_SOFTSERIAL)	/* IPL0D */
 #define splddb()	_splraise(IPL_SOFTDDB)		/* IPL0F */
 #define splconsmedia()	_splraise(IPL_CONSMEDIA)	/* IPL14 */
+#define	splipi()	_splraise(IPL_IPI)		/* IPL14 */
 #define splbio()	_splraise(IPL_BIO)		/* IPL15 */
-#define splnet()	_splraise(IPL_NET)		/* IPL15 */
 #define spltty()	_splraise(IPL_TTY)		/* IPL15 */
+#define splnet()	_splraise(IPL_NET)		/* IPL16 */
 #define splvm()		_splraise(IPL_IMP)		/* IPL17 */
 #define splclock()	_splraise(IPL_CLOCK)		/* IPL18 */
 #define splhigh()	_splraise(IPL_HIGH)		/* IPL1F */
