@@ -1,4 +1,4 @@
-/*	$NetBSD: an.c,v 1.25 2003/07/06 07:54:43 dyoung Exp $	*/
+/*	$NetBSD: an.c,v 1.26 2003/09/05 05:38:44 itojun Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999
  *	Bill Paul <wpaul@ctr.columbia.edu>.  All rights reserved.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: an.c,v 1.25 2003/07/06 07:54:43 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: an.c,v 1.26 2003/09/05 05:38:44 itojun Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -279,10 +279,18 @@ an_attach(struct an_softc *sc)
 
 	memcpy(ifp->if_xname, sc->an_dev.dv_xname, IFNAMSIZ);
 
+#ifdef DIAGNOSTIC
+	if (sizeof(AN_DEFAULT_NODENAME) - 1 > sizeof(sc->an_config.an_nodename))
+		panic("AN_DEFAULT_NODENAME too long");
+#endif
 	memset(sc->an_config.an_nodename, 0, sizeof(sc->an_config.an_nodename));
 	memcpy(sc->an_config.an_nodename, AN_DEFAULT_NODENAME,
 	    sizeof(AN_DEFAULT_NODENAME) - 1);
 
+#ifdef DIAGNOSTIC
+	if (sizeof(AN_DEFAULT_NETNAME) - 1 > sizeof(sc->an_ssidlist.an_ssid1))
+		panic("AN_DEFAULT_NETNAME too long");
+#endif
 	memset(sc->an_ssidlist.an_ssid1, 0, sizeof(sc->an_ssidlist.an_ssid1));
 	memcpy(sc->an_ssidlist.an_ssid1, AN_DEFAULT_NETNAME,
 	    sizeof(AN_DEFAULT_NETNAME) - 1);
