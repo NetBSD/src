@@ -1,4 +1,4 @@
-/*	$NetBSD: namespace.h,v 1.31 1998/10/20 17:04:45 kleink Exp $	*/
+/*	$NetBSD: namespace.h,v 1.32 1998/11/30 20:43:06 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -48,6 +48,7 @@
 #define sys_errlist	_sys_errlist
 #define sys_nerr	_sys_nerr
 #define sys_siglist	_sys_siglist
+#define	sys_nsig	_sys_nsig
 #define verr		_verr
 #define verrx		_verrx
 #define vwarn		_vwarn
