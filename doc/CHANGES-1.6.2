@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.2,v 1.1.2.251 2003/12/24 05:05:23 jmc Exp $
+#	$NetBSD: CHANGES-1.6.2,v 1.1.2.252 2003/12/30 21:21:30 jmc Exp $
 
 A complete list of changes from NetBSD 1.6.1 to NetBSD 1.6.2:
 
@@ -3355,3 +3355,9 @@ gnu/dist/cvs/src/zlib.c				1.1.1.4
 	able to create directories and possibly files in the root directory
 	of the repository's filesystem.
 	[christos, ticket #1579]
+
+sys/netinet/ip_nat.c				patched by hand
+sys/netinet/ip_nat.h				patched by hand
+
+	Backout changes from #1568 as too many people are reporting problems
+	with "out of the box" configurations.
