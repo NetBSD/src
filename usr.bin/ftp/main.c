@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.29 1998/01/18 22:09:42 lukem Exp $	*/
+/*	$NetBSD: main.c,v 1.30 1998/01/21 11:14:34 lukem Exp $	*/
 
 /*
  * Copyright (c) 1985, 1989, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1985, 1989, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.6 (Berkeley) 10/9/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.29 1998/01/18 22:09:42 lukem Exp $");
+__RCSID("$NetBSD: main.c,v 1.30 1998/01/21 11:14:34 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -391,21 +391,24 @@ cmdscanner(top)
 		makeargv();
 		if (margc == 0)
 			continue;
-#if 0 && !defined(SMALL)	/* XXX: don't want el_parse */
-		/*
-		 * el_parse returns -1 to signal that it's not been handled
-		 * internally.
-		 */
-		if (el_parse(el, margc, margv) != -1)
-			continue;
-#endif /* !SMALL */
 		c = getcmd(margv[0]);
 		if (c == (struct cmd *)-1) {
 			puts("?Ambiguous command.");
 			continue;
 		}
-		if (c == 0) {
-			puts("?Invalid command.");
+		if (c == NULL) {
+#if !defined(SMALL)
+			/*
+			 * attempt to el_parse() unknown commands.
+			 * any command containing a ':' would be parsed
+			 * as "[prog:]cmd ...", and will result in a
+			 * false positive if prog != "ftp", so treat
+			 * such commands as invalid.
+			 */
+			if (strchr(margv[0], ':') != NULL || 
+			    el_parse(el, margc, margv) != 0)
+#endif /* !SMALL */
+				puts("?Invalid command.");
 			continue;
 		}
 		if (c->c_conn && !connected) {
