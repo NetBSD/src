@@ -1,4 +1,4 @@
-.\"	$NetBSD: ipf.5,v 1.8 2002/09/25 12:49:40 martti Exp $
+.\"	$NetBSD: ipf.5,v 1.9 2002/12/21 13:28:25 wiz Exp $
 .\"
 .TH IPF 5
 .SH NAME
@@ -6,7 +6,7 @@ ipf, ipf.conf, ipf6.conf \- IP packet filter rule syntax
 .SH DESCRIPTION
 .PP
 A rule file for \fBipf\fP may have any name or even be stdin.  As
-\fBipfstat\fP produces parseable rules as output when displaying the internal
+\fBipfstat\fP produces parsable rules as output when displaying the internal
 kernel filter lists, it is quite plausible to use its output to feed back
 into \fBipf\fP.  Thus, to remove all filters on input packets, the following
 could be done:
@@ -138,7 +138,7 @@ with a rule which is being applied to TCP packets.  When using
 \fBreturn-icmp\fP or \fBreturn-icmp-as-dest\fP, it is possible to specify
 the actual unreachable `type'.  That is, whether it is a network
 unreachable, port unreachable or even administratively
-prohibitied. This is done by enclosing the ICMP code associated with
+prohibited. This is done by enclosing the ICMP code associated with
 it in parenthesis directly following \fBreturn-icmp\fP or
 \fBreturn-icmp-as-dest\fP as follows:
 .nf
@@ -388,7 +388,7 @@ against, e.g.:
 .TP
 .B icmp-type
 is only effective when used with \fBproto icmp\fP and must NOT be used
-in conjuction with \fBflags\fP.  There are a number of types, which can be
+in conjunction with \fBflags\fP.  There are a number of types, which can be
 referred to by an abbreviation recognised by this language, or the numbers
 with which they are associated can be used.  The most important from
 a security point of view is the ICMP redirect.
@@ -429,7 +429,7 @@ indicates that the rule should be put in group (number n) rather than group 0.
 .PP
 When a packet is logged, with either the \fBlog\fP action or option,
 the headers of the packet are written to the \fBipl\fP packet logging
-psuedo-device. Immediately following the \fBlog\fP keyword, the
+pseudo-device. Immediately following the \fBlog\fP keyword, the
 following qualifiers may be used (in order):
 .TP
 .B body

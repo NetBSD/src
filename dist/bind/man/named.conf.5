@@ -1,4 +1,4 @@
-.\"     $NetBSD: named.conf.5,v 1.8 2002/11/17 14:09:53 itojun Exp $
+.\"     $NetBSD: named.conf.5,v 1.9 2002/12/21 13:30:51 wiz Exp $
 .\"
 .\" Copyright (c) 1999-2000 by Internet Software Consortium
 .\"
@@ -956,7 +956,7 @@ with
 .Ic maintain-ixfr-base ,
 and 
 .Ic rfc2308-type1 
-is order dependant. 
+is order dependent. 
 .It Ic host-statistics
 If
 .Li yes ,
@@ -970,7 +970,7 @@ can consume huge amounts of memory.
 .It Ic maintain-ixfr-base
 If
 .Li yes ,
-a IXFR database file is kept for all dynamicaly updated zones.
+a IXFR database file is kept for all dynamically updated zones.
 This enables the server to answer IXFR queries which can speed up
 zone transfers enormously.
 The default is
@@ -1287,7 +1287,7 @@ address must appear in the remote end's
 .Nm allow-transfer
 option for the zones being transferred, if one is specified.  This statement sets the
 .Nm transfer-source
-for all zones, but can be overriden on a per-zone basis by includinga 
+for all zones, but can be overriden on a per-zone basis by including a
 .Nm transfer-source
 statement within the zone block in the configuration file.
 .El
@@ -1973,7 +1973,7 @@ statement, to be used for transaction security when talking to the
 remote server.
 The
 .Ic key
-statememnt must come before the
+statement must come before the
 .Ic server
 statement that references it.
 .Pp
