@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: maketars,v 1.40 2003/04/07 17:22:19 perry Exp $
+# $NetBSD: maketars,v 1.41 2003/07/03 06:43:02 lukem Exp $
 #
 # Make release tar files for some or all lists.  Usage:
 # maketars [-b] [-x] [-i installdir] [-a arch] [-m machine] [-s setsdir]
@@ -12,6 +12,8 @@
 # (using pax -rw ...) instead of creating tar files.
 # In this case, remove "etc" from the list of default sets.
 #
+
+prog=`basename $0`
 
 # set defaults
 : ${PAX=pax}
@@ -65,7 +67,7 @@ while : ; do
 		;;
 	-*)
 		cat 1>&2 <<USAGE
-Usage: $0 [-b] [-x] [-i idir] [-a arch] [-m machine] [-s setsdir]
+Usage: ${prog} [-b] [-x] [-i idir] [-a arch] [-m machine] [-s setsdir]
 	    [-M metalog] [-N etcdir] [-d dest] [-t targetdir] [setname ...]
 	-b		make netbsd + x11 lists
 	-x		only make x11 lists
@@ -144,6 +146,11 @@ if [ -n "$metalog" ]; then
 		echo "/unset all"
 		cat $metalog
 	) | ${MTREE} -C -k all -N ${etcdir} > $SDIR/metalog
+	rv=$?
+	if [ $rv -ne 0 ]; then
+		echo "${prog}: mtree failed, exiting"
+		exit $rv
+	fi
 fi
 
 GZIP=-9			# for pax -z
