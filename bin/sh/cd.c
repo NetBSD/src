@@ -1,4 +1,4 @@
-/*	$NetBSD: cd.c,v 1.31 2003/08/07 09:05:30 agc Exp $	*/
+/*	$NetBSD: cd.c,v 1.32 2003/08/25 20:08:12 jmmv Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)cd.c	8.2 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: cd.c,v 1.31 2003/08/07 09:05:30 agc Exp $");
+__RCSID("$NetBSD: cd.c,v 1.32 2003/08/25 20:08:12 jmmv Exp $");
 #endif
 #endif /* not lint */
 
@@ -412,8 +412,8 @@ getpwd(int noerror)
 			error("pwd command failed");
 		}
 		p[-1] = '\0';
+		curdir = savestr(buf);
 	}
-	curdir = savestr(buf);
 	INTON;
 #endif
 }
