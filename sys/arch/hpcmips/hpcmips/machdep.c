@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.64 2001/11/10 06:56:35 shin Exp $	*/
+/*	$NetBSD: machdep.c,v 1.65 2002/01/02 13:13:20 uch Exp $	*/
 
 /*-
  * Copyright (c) 1999 Shin Takemura, All rights reserved.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.64 2001/11/10 06:56:35 shin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.65 2002/01/02 13:13:20 uch Exp $");
 
 #include "opt_vr41xx.h"
 #include "opt_tx39xx.h"
@@ -122,19 +122,18 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.64 2001/11/10 06:56:35 shin Exp $");
 #include <sys/exec_elf.h>
 #endif
 
-#if NBICONSDEV > 0
+#if NBICONSDEV > 0 
 #include <sys/conf.h>
 #include <dev/hpc/biconsvar.h>
 #include <dev/hpc/bicons.h>
 #define biconscnpollc	nullcnpollc
 cons_decl(bicons);
-static struct consdev bicons = cons_init(bicons);
-#define DPRINTF(arg) printf arg
+static struct consdev bicons __attribute((__unused__)) = cons_init(bicons);
+static int __bicons_enable;
+#define DPRINTF(arg)	{ if (__bicons_enable) printf arg; }
 #else /* NBICONSDEV > 0 */
 #define DPRINTF(arg)
 #endif /* NBICONSDEV > 0 */
-
-#define VPRINTF(arg)	if (bootverbose) printf arg;
 
 #ifdef NFS
 extern int nfs_mountroot(void);
@@ -268,7 +267,6 @@ mach_init(int argc, char *argv[], struct bootinfo *bi)
 	 * CPU core Specific Function Hooks 
 	 */
 #if defined(VR41XX) && defined(TX39XX)
-#error "currently, the case defined TX39XX && defined VR41XX don't work"
 	if (platid_match(&platid, &platid_mask_CPU_MIPS_VR_41XX))
 		vr_init();
 	else if (platid_match(&platid, &platid_mask_CPU_MIPS_TX_3900) ||
@@ -279,15 +277,16 @@ mach_init(int argc, char *argv[], struct bootinfo *bi)
 #elif defined(TX39XX)
 	tx_init();
 #else
-#error "define TX39XX or VR41XX"
+#error "define TX39XX and/or VR41XX"
 #endif
 
 #if NBICONSDEV > 0
 	/* 
 	 *  bicons don't need actual device initialize.  only bootinfo needed. 
 	 */
-	cn_tab = &bicons;
-	bicons_init(&bicons);
+	__bicons_enable = (bicons_init(&bicons) == 0);
+	if (__bicons_enable)
+		cn_tab = &bicons;
 #endif
 
 	/* Initialize frame buffer (to steal DMA buffer, stay here.) */
@@ -308,10 +307,10 @@ mach_init(int argc, char *argv[], struct bootinfo *bi)
 	intr_init();
 	mips_vector_init();
 
+#ifdef DEBUG
 	/*
 	 * Look at arguments passed to us and compute boothowto.
 	 */
-	/* XXX, for debugging. */
 	if (bootinfo) {
 		DPRINTF(("Bootinfo. available, "));
 	}
@@ -319,9 +318,9 @@ mach_init(int argc, char *argv[], struct bootinfo *bi)
 	for (i = 0; i < argc; i++) {
 		DPRINTF(("%s ", argv[i]));
 	}
-
 	DPRINTF(("\n"));
 	DPRINTF(("platform ID: %08lx %08lx\n", platid.dw.dw0, platid.dw.dw1));
+#endif /* DEBUG */
 
 #ifndef RTC_OFFSET
 	/*
@@ -416,6 +415,16 @@ mach_init(int argc, char *argv[], struct bootinfo *bi)
 
 	/* Find physical memory regions. */
 	(*platform.mem_init)((paddr_t)kernend - MIPS_KSEG0_START);
+	/* 
+	 *  Clear currently unused D-RAM area 
+	 *  (For reboot Windows CE clearly)
+	 */
+	{
+		u_int32_t sp;
+		__asm__ __volatile__("move %0, $29" : "=r"(sp));
+		KDASSERT(sp > KERNBASE + 0x400);
+		memset((void *)(KERNBASE + 0x400), 0, sp - (KERNBASE + 0x400));
+	}
 
 	printf("mem_cluster_cnt = %d\n", mem_cluster_cnt);
 	physmem = 0;

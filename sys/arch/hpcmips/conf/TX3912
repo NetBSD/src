@@ -2,21 +2,14 @@
 # Distribution kernel (TOSHIBA TX3912 based model) kernel config file
 
 #
-#	$NetBSD: TX3912,v 1.33 2001/11/21 11:28:09 uch Exp $
+#	$NetBSD: TX3912,v 1.34 2002/01/02 13:13:19 uch Exp $
 #
 include		"arch/hpcmips/conf/std.hpcmips"
 
 maxusers	16
 
-options 	MIPS1			# R2000/R3000 CPUs
-options 	ENABLE_MIPS_TX3900	# R3900 CPU core
-options 	NOFPU			# No FPU
-options 	SOFTFLOAT		# emulate FPU insn
-#options 	R3900_CACHE_DISABLE	# Disable I/D-cache
-
-options 	TX39XX			# Toshiba TX39 series
+include		"arch/hpcmips/conf/std.hpcmips.tx39"
 options 	TX391X			# Product TMPR3912
-options 	KSEG2IOBUFSIZE=0x08000000	# MCS[0:3] are mapped to kseg2
 
 options 	TX39_DEBUG
 options 	TX39_WATCHDOGTIMER
@@ -26,7 +19,6 @@ options 	TX39_WATCHDOGTIMER
 #options 	TX39POWERDEBUG
 #options 	TX39UARTDEBUG
 
-options 	__NO_SOFT_SERIAL_INTERRUPT
 options 	SERIALCONSSLOT=0	# UARTA 0, UARTB 1
 
 options 	DDB			# in-kernel debugger
@@ -99,20 +91,10 @@ config		netbsd		root on ? type ?
 hpcapm0	at mainbus0			# power management
 apmdev0	at hpcapm0			# APM
 
-txsim*	at mainbus0
 #
-# System Internal Modules
+# System Internal Modules (TX391X specific)
 #
-tx39biu*	at txsim?
-tx39icu*	at txsim?
-tx39clock*	at txsim?
-tx39power*	at txsim?
 tx3912video*	at txsim?
-tx39io*		at txsim?
-tx39sib*	at txsim?
-tx39uart*	at txsim?
-txcom0		at tx39uart? slot 0
-txcom1		at tx39uart? slot 1
 tx39ir*		at txcom1
 
 #
