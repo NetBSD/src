@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cs_mainbus.c,v 1.5 2002/12/19 07:15:05 augustss Exp $	*/
+/*	$NetBSD: if_cs_mainbus.c,v 1.6 2003/04/22 11:37:28 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -55,6 +55,7 @@
 #endif
 
 #include <machine/bus.h>
+#include <machine/pio.h>
 #include <machine/pmppc.h>
 #include <machine/mainbus.h>
 
