@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le_ioasic.c,v 1.13 1999/09/09 06:33:38 nisimura Exp $	*/
+/*	$NetBSD: if_le_ioasic.c,v 1.14 1999/10/01 09:19:42 nisimura Exp $	*/
 
 /*
  * Copyright (c) 1996 Carnegie-Mellon University.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID &  macro defns */
-__KERNEL_RCSID(0, "$NetBSD: if_le_ioasic.c,v 1.13 1999/09/09 06:33:38 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_le_ioasic.c,v 1.14 1999/10/01 09:19:42 nisimura Exp $");
 
 #include "opt_inet.h"
 
@@ -76,6 +76,7 @@ struct cfattach le_ioasic_ca = {
 };
 
 static void ioasic_lance_dma_setup __P((struct device *));
+static char *ioasic_lance_ether_address __P((void));
 
 #ifdef DDB
 #define	integrate
@@ -414,6 +415,7 @@ ioasic_lance_dma_setup(parent)
 	bus_dma_tag_t dmat = sc->sc_dmat;
 	bus_dma_segment_t seg;
 	tc_addr_t tca;
+	u_int32_t ssr;
 	int rseg;
 
 	/*
@@ -448,16 +450,23 @@ ioasic_lance_dma_setup(parent)
 	}
 
 	tca = (tc_addr_t)sc->sc_lance_dmam->dm_segs[0].ds_addr;
-	*(u_int32_t *)(ioasic_base + IOASIC_LANCE_DMAPTR)
-		= ((tca << 3) & ~(tc_addr_t)0x1f) | ((tca >> 29) & 0x1f);
-	tc_wmb();
-
-	*(u_int32_t *)(ioasic_base + IOASIC_CSR) |= IOASIC_CSR_DMAEN_LANCE;
-	tc_wmb();
+	tca = ((tca << 3) & ~0x1f) | ((tca >> 29) & 0x1f);
+	bus_space_write_4(sc->sc_bst, sc->sc_bsh, IOASIC_LANCE_DMAPTR, tca);
+	ssr = bus_space_read_4(sc->sc_bst, sc->sc_bsh, IOASIC_CSR);
+	ssr |= IOASIC_CSR_DMAEN_LANCE;
+	bus_space_write_4(sc->sc_bst, sc->sc_bsh, IOASIC_CSR, ssr);
 	return;
 
  bad:
 	bus_dmamem_unmap(dmat, le_iomem, LE_IOASIC_MEMSIZE);
 	bus_dmamem_free(dmat, &seg, rseg);
 	le_iomem = 0;
+}
+
+/* XXX */
+char *
+ioasic_lance_ether_address()
+{
+ 
+        return (char *)(ioasic_base + IOASIC_SLOT_2_START);
 }
