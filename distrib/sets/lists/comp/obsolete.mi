@@ -1,4 +1,4 @@
-# $NetBSD: obsolete.mi,v 1.19 2000/06/13 01:53:48 wiz Exp $
+# $NetBSD: obsolete.mi,v 1.19.2.1 2000/06/21 06:41:21 thorpej Exp $
 /usr/bin/genclass
 /usr/include/bfd/ansidecl.h
 /usr/include/bfd/bfd.h
@@ -360,5 +360,6 @@
 /usr/share/man/man9/vsunlock.9
 /usr/share/misc/gprof.callg
 /usr/share/misc/gprof.flat
+/usr/share/mk/bsd.crypto.mk
 /usr/share/mk/bsd.port.mk
 /usr/share/mk/bsd.port.subdir.mk
