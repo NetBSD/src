@@ -1,4 +1,4 @@
-/*	$NetBSD: progress.c,v 1.9 2004/04/03 06:19:22 lukem Exp $ */
+/*	$NetBSD: progress.c,v 1.10 2005/02/23 22:32:31 dsl Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: progress.c,v 1.9 2004/04/03 06:19:22 lukem Exp $");
+__RCSID("$NetBSD: progress.c,v 1.10 2005/02/23 22:32:31 dsl Exp $");
 #endif				/* not lint */
 
 #include <sys/types.h>
@@ -84,8 +84,9 @@ main(int argc, char *argv[])
 {
 	static char fb_buf[BUFSIZ];
 	char *infile = NULL;
-	pid_t pid = 0, gzippid = 0;
-	int ch, fd, outpipe[2], waitstat;
+	pid_t pid = 0, gzippid = 0, deadpid;
+	int ch, fd, outpipe[2];
+	int ws, gzipstat, cmdstat;
 	int lflag = 0, zflag = 0;
 	ssize_t nr, nw, off;
 	struct stat statb;
@@ -134,8 +135,7 @@ main(int argc, char *argv[])
 	/* gzip -l the file if we have the name and -z is given */
 	if (zflag && !lflag && infile != NULL) {
 		FILE *gzipsizepipe;
-		char buf[256], *cmd;
-		long size;
+		char buf[256], *cp, *cmd;
 
 		/*
 		 * Read second word of last line of gzip -l output. Looks like:
@@ -149,8 +149,8 @@ main(int argc, char *argv[])
 			err(1, "reading compressed file length");
 		for (; fgets(buf, 256, gzipsizepipe) != NULL;)
 		    continue;
-		sscanf(buf, "%*d %ld", &size);
-		filesize = size;
+		strtoimax(buf, &cp, 10);
+		filesize = strtoimax(cp, NULL, 10);
 		if (pclose(gzipsizepipe) < 0)
 			err(1, "closing compressed file length pipe");
 		free(cmd);
@@ -215,22 +215,33 @@ main(int argc, char *argv[])
 							(unsigned) nr);
 	close(outpipe[1]);
 
+	gzipstat = 0;
+	cmdstat = 0;
 	while (pid || gzippid) {
-		int deadpid;
+		deadpid = wait(&ws);
+		/*
+		 * We need to exit with an error if the command (or gzip)
+		 * exited abnormally.
+		 * Unfortunately we can't generate a true 'exited by signal'
+		 * error without sending the signal to ourselves :-(
+		 */
+		ws = WIFSIGNALED(ws) ? WTERMSIG(ws) : WEXITSTATUS(ws);
 
-		deadpid = wait(&waitstat);
-
-		if (deadpid == pid)
+		if (deadpid != -1 && errno == EINTR)
+			continue;
+		if (deadpid == pid) {
 			pid = 0;
-		else if (deadpid == gzippid)
+			cmdstat = ws;
+			continue;
+		}
+		if (deadpid == gzippid) {
 			gzippid = 0;
-		else if (deadpid != -1)
+			gzipstat = ws;
 			continue;
-		else if (errno == EINTR)
-			continue;
-		else break;
+		}
+		break;
 	}
 
 	progressmeter(1);
-	return 0;
+	exit(cmdstat ? cmdstat : gzipstat);
 }
