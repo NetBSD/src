@@ -1640,9 +1640,9 @@ md_begin ()
   /* Build a hashtable of the instructions.  */
   const struct ns32k_opcode *ptr;
   const char *stat;
-  inst_hash_handle = hash_new ();
   const struct ns32k_opcode *endop;
 
+  inst_hash_handle = hash_new ();
   endop = ns32k_opcodes + sizeof (ns32k_opcodes) / sizeof (ns32k_opcodes[0]);
   for (ptr = ns32k_opcodes; ptr < endop; ptr++)
     {
