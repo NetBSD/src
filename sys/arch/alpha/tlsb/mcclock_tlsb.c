@@ -1,4 +1,4 @@
-/* $NetBSD: mcclock_tlsb.c,v 1.4 1997/04/07 23:41:07 cgd Exp $ */
+/* $NetBSD: mcclock_tlsb.c,v 1.5 1997/07/22 18:51:03 jonathan Exp $ */
 
 /*
  * Copyright (c) 1997 by Matthew Jacob
@@ -33,7 +33,7 @@
 #include <machine/options.h>		/* Config options headers */
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mcclock_tlsb.c,v 1.4 1997/04/07 23:41:07 cgd Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mcclock_tlsb.c,v 1.5 1997/07/22 18:51:03 jonathan Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -43,8 +43,8 @@ __KERNEL_RCSID(0, "$NetBSD: mcclock_tlsb.c,v 1.4 1997/04/07 23:41:07 cgd Exp $")
 #include <machine/bus.h>
 #include <machine/autoconf.h>
 
-#include <alpha/alpha/clockvar.h>
-#include <alpha/alpha/mcclockvar.h>
+#include <dev/dec/clockvar.h>
+#include <dev/dec/mcclockvar.h>
 #include <alpha/tlsb/tlsbreg.h>
 #include <dev/ic/mc146818reg.h>
 
