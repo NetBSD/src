@@ -1,4 +1,4 @@
-# $NetBSD: RAMDISK3X,v 1.2.4.1 1998/01/27 19:13:06 gwr Exp $
+# $NetBSD: RAMDISK3X,v 1.2.4.2 1998/01/28 19:12:14 gwr Exp $
 
 # RAMDISK: Root/swap on ramdisk
 # This kernel is used to:
@@ -45,9 +45,6 @@ options 	MINIROOTSIZE=512	# size of memory disk, in blocks
 options 	INET		# IP prototol stack support
 options 	TCP_COMPAT_42	# compatibility with 4.2BSD TCP/IP
 
-# Work-around for root on slow servers (insurance...)
-options 	NFS_BOOT_RWSIZE=1024
-
 config		netbsd root on md0 type ffs
 
 # On-board I/O space (required)
@@ -73,13 +70,13 @@ zstty0	at zsc1 channel 0	# ttya
 zstty1	at zsc1 channel 1	# ttyb
 
 kbd0	at zsc0 channel 0	# keyboard
-ms0	at zsc0 channel 1	# mouse
+#ms0	at zsc0 channel 1	# mouse
 
 #
 # Network devices
 #
 
-# Intel Ethernet
+# Intel Ethernet (onboard, or VME)
 ie0 at obio0 addr 0x65000000 ipl 3
 ie1 at vme2  addr   0xe88000 ipl 3 vect 0x75
 
@@ -91,7 +88,7 @@ le0 at obio0 addr 0x65002000 ipl 3
 #
 
 # Emulex SCSI (3/80 only)
-# See GENERIC for flags description.
+# See GENERIC for the flags description.
 esp0 at obio0 addr 0x66000000 ipl 2 flags 0xff0f
 
 # Floppy drive
@@ -99,7 +96,7 @@ fdc0 at obio0 addr 0x6e000000 ipl 6 vect 0x40
 fd0  at fdc0	# First (and only) floppy drive.
 
 # Sun3 "si" SCSI controller (NCR 5380)
-# See GENERIC for flags description.
+# See GENERIC for the flags description.
 si0 at vme2  addr 0x200000 ipl 2 vect 0x40
 si1 at vme2  addr 0x204000 ipl 2 vect 0x41
 
@@ -131,7 +128,7 @@ cd* at scsibus? target ? lun ?		# SCSI CD-ROMs
 #ss* at scsibus? target ? lun ?		# SCSI scanners
 #uk* at scsibus? target ? lun ?		# unknown SCSI devices
 
-# Memory-disk (root for install tape)
+# Memory-disk drivers (root for install tape)
 pseudo-device	md		2
 
 # Misc.

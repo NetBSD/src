@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.47.2.1 1998/01/27 19:14:00 gwr Exp $
+# $NetBSD: GENERIC,v 1.47.2.2 1998/01/28 19:12:04 gwr Exp $
 
 # GENERIC Sun3 (3/50, 3/60, 3/110, 3/160, 3/260, 3/E)
 # Supports root on: ie0, le0, sd*, ...
@@ -77,6 +77,7 @@ options 	TCP_COMPAT_42	# compatibility with 4.2BSD TCP/IP
 
 # Work-around for root on slow servers (insurance...)
 options 	NFS_BOOT_RWSIZE=1024
+options 	NFS_BOOT_BOOTPARAM
 
 config		netbsd root on ? type ?
 
