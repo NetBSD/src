@@ -1,4 +1,4 @@
-/*	$NetBSD: pucdata.c,v 1.30 2002/07/05 14:10:32 enami Exp $	*/
+/*	$NetBSD: pucdata.c,v 1.31 2002/08/02 10:40:30 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Christopher G. Demetriou.  All rights reserved.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pucdata.c,v 1.30 2002/07/05 14:10:32 enami Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pucdata.c,v 1.31 2002/08/02 10:40:30 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -606,6 +606,22 @@ const struct puc_device_description puc_devices[] = {
 	    },
 	},
 
+	/* SIIG Cyber PS8000 PCI 16C650 (20x family): 8S - 32 Byte FIFOs */
+	{   "SIIG PS8000 8S PCI 16C650 (20x family)",
+	    {	0x131f,	0x2081,	0,	0	},
+	    {	0xffff,	0xffff,	0,	0	},
+	    {
+		{ PUC_PORT_TYPE_COM, 0x10, 0x00, COM_FREQ },
+		{ PUC_PORT_TYPE_COM, 0x14, 0x00, COM_FREQ },
+		{ PUC_PORT_TYPE_COM, 0x18, 0x00, COM_FREQ },
+		{ PUC_PORT_TYPE_COM, 0x1c, 0x00, COM_FREQ },
+		{ PUC_PORT_TYPE_COM, 0x20, 0x00, COM_FREQ },
+		{ PUC_PORT_TYPE_COM, 0x20, 0x08, COM_FREQ },
+		{ PUC_PORT_TYPE_COM, 0x20, 0x10, COM_FREQ },
+		{ PUC_PORT_TYPE_COM, 0x20, 0x18, COM_FREQ },
+	    },
+	},
+
 	/* VScom PCI-400: 4S */
 	{   "VScom PCI-400",
 	    {	0x10b5,	0x1077,	0x10b5,	0x1077	},
@@ -767,8 +783,27 @@ const struct puc_device_description puc_devices[] = {
 	 * I/O Flex PCI I/O Card Model-223 with 4 serial and 1 parallel ports.
 	 */
 
+	/* Oxford Semiconductor OX16PCI952 PCI `950 UARTs - 128 byte FIFOs */
+	{   "Oxford Semiconductor OX16PCI952 UARTs",
+	    {   0x1415, 0x9521, 0,	0	},
+	    {   0xffff, 0xffff, 0,	0	},
+	    {
+		{ PUC_PORT_TYPE_COM, 0x10, 0x00, COM_FREQ },
+		{ PUC_PORT_TYPE_COM, 0x14, 0x00, COM_FREQ },
+	    },
+	},
+
+	/* Oxford Semiconductor OX16PCI952 PCI Parallel port */
+	{   "Oxford Semiconductor OX16PCI952 Parallel port",
+	    {   0x1415, 0x9523, 0,	0	},
+	    {   0xffff, 0xffff, 0,	0	},
+	    {
+		{ PUC_PORT_TYPE_LPT, 0x10, 0x00, 0x00 },
+	    },
+	},
+
 	/* Oxford Semiconductor OX16PCI954 PCI UARTs */
-	{   "Qxford Semiconductor OX16PCI954 UARTs",
+	{   "Oxford Semiconductor OX16PCI954 UARTs",
 	    {	0x1415,	0x9501,	0,	0	},
 	    {	0xffff,	0xffff,	0,	0	},
 	    {
@@ -780,7 +815,7 @@ const struct puc_device_description puc_devices[] = {
 	},
 
 	/* Oxford Semiconductor OX16PCI954 PCI Parallel port */
-	{   "Qxford Semiconductor OX16PCI954 Parallel port",
+	{   "Oxford Semiconductor OX16PCI954 Parallel port",
 	    {	0x1415,	0x9513,	0,	0	},
 	    {	0xffff,	0xffff,	0,	0	},
 	    {
