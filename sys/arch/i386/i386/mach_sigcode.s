@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_sigcode.s,v 1.3 2002/05/31 18:07:31 thorpej Exp $	*/
+/*	$NetBSD: mach_sigcode.s,v 1.4 2002/10/30 15:03:42 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -118,8 +118,9 @@
 	movl	%eax,%es	; \
 	pushl	%fs		; \
 	pushl	%gs		; \
-	movl	%eax,%fs	; \
 	movl	%eax,%gs	; \
+	movl	$GSEL(GCPU_SEL, SEL_KPL),%eax	; \
+	movl	%eax,%fs		
 
 #define	INTRFASTEXIT \
 	popl	%gs		; \
@@ -136,6 +137,15 @@
 	addl	$8,%esp		; \
 	iret
 
+#define _CONCAT(a,b) a/**/b
+
+#if defined(MULTIPROCESSOR)
+#define CPUVAR(off) %fs:_CONCAT(CPU_INFO_,off)
+#else
+#define CPUVAR(off) _C_LABEL(cpu_info_primary)+_CONCAT(CPU_INFO_,off)
+#endif
+#define CHECK_ASTPENDING()		cmpl $0,CPUVAR(ASTPENDING)
+#define CLEAR_ASTPENDING()		movl $0,CPUVAR(ASTPENDING)
 
 /*
  * Signal trampoline; copied to top of user stack.
@@ -164,36 +174,17 @@ IDTVEC(mach_trap)
 	pushl	$7		# size of instruction for restart
 	pushl	$T_ASTFLT	# trap # for doing ASTs
 	INTRENTRY
-	movl	_C_LABEL(curproc),%edx	# get pointer to curproc
-#ifdef DIAGNOSTIC
-	movl	_C_LABEL(cpl),%ebx
-#endif /* DIAGNOSTIC */
+	movl	CPUVAR(CURPROC),%edx
 	movl	%esp,P_MD_REGS(%edx)	# save pointer to frame
 	call	_C_LABEL(mach_trap)
 2:	/* Check for ASTs on exit to user mode. */
 	cli
-	cmpb	$0,_C_LABEL(astpending)
+	CHECK_ASTPENDING()
 	je	1f
 	/* Always returning to user mode here. */
-	movb	$0,_C_LABEL(astpending)
+	CLEAR_ASTPENDING()
 	sti
 	/* Pushed T_ASTFLT into tf_trapno on entry. */
 	call	_C_LABEL(trap)
 	jmp	2b
-#ifndef DIAGNOSTIC
 1:	INTRFASTEXIT
-#else /* DIAGNOSTIC */
-1:	cmpl	_C_LABEL(cpl),%ebx
-	jne	3f
-	INTRFASTEXIT
-3:	sti
-	pushl	$4f
-	call	_C_LABEL(printf)
-	addl	$4,%esp
-#ifdef DDB
-	int	$3
-#endif /* DDB */
-	movl	%ebx,_C_LABEL(cpl)
-	jmp	2b
-4:	.asciz	"WARNING: SPL NOT LOWERED ON SYSCALL EXIT\n"
-#endif /* DIAGNOSTIC */
