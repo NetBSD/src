@@ -1,4 +1,4 @@
-.\"	$NetBSD: options.4,v 1.134 2001/04/04 10:52:23 wiz Exp $
+.\"	$NetBSD: options.4,v 1.135 2001/04/07 12:31:17 tsutsui Exp $
 .\"
 .\" Copyright (c) 1996
 .\" 	Perry E. Metzger.  All rights reserved.
@@ -252,6 +252,21 @@ On those architectures that support it, this enables binary
 compatibility with 32-bit SVR4 applications built for the same architecture.
 This is currently limited to the sparc64 port, and only applicable for
 64-bit kernels.
+.It Cd options COMPAT_AOUT_M68K
+On m68k architectures which have switched to ELF,
+this enable binary compatibility with
+.Nx Ns Tn /m68k
+.Xr a.out 5
+executables on
+.Nx Ns Tn /m68k
+ELF kernel.
+This handles alignment incompatibility of m68k ABI between
+a.out and ELF which causes the structure padding differences.
+Currently only some system calls which use
+.Va struct stat
+are adjusted and some binaries which use
+.Xr sysctl 3
+to retrieve network details would not work properly.
 .El
 .Ss Debugging Options
 .Bl -ohang
