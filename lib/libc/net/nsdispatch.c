@@ -1,4 +1,4 @@
-/*	$NetBSD: nsdispatch.c,v 1.16 2000/01/22 22:19:16 mycroft Exp $	*/
+/*	$NetBSD: nsdispatch.c,v 1.17 2000/12/20 20:51:08 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: nsdispatch.c,v 1.16 2000/01/22 22:19:16 mycroft Exp $");
+__RCSID("$NetBSD: nsdispatch.c,v 1.17 2000/12/20 20:51:08 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -62,6 +62,10 @@ __RCSID("$NetBSD: nsdispatch.c,v 1.16 2000/01/22 22:19:16 mycroft Exp $");
 #else
 #include <varargs.h>
 #endif
+
+extern	FILE 	*_nsyyin;
+extern	int	 _nsyyparse __P((void));
+
 
 #ifdef __weak_alias
 __weak_alias(nsdispatch,_nsdispatch)
@@ -161,9 +165,6 @@ _nsdbtget(name)
 
 	struct stat	 statbuf;
 	ns_dbt		 dbt;
-
-	extern	FILE 	*_nsyyin;
-	extern	int	 _nsyyparse __P((void));
 
 	_DIAGASSERT(name != NULL);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: gethnamaddr.c,v 1.38 2000/10/04 14:56:24 sommerfeld Exp $	*/
+/*	$NetBSD: gethnamaddr.c,v 1.39 2000/12/20 20:51:08 christos Exp $	*/
 
 /*
  * ++Copyright++ 1985, 1988, 1993
@@ -61,7 +61,7 @@
 static char sccsid[] = "@(#)gethostnamadr.c	8.1 (Berkeley) 6/4/93";
 static char rcsid[] = "Id: gethnamaddr.c,v 8.21 1997/06/01 20:34:37 vixie Exp ";
 #else
-__RCSID("$NetBSD: gethnamaddr.c,v 1.38 2000/10/04 14:56:24 sommerfeld Exp $");
+__RCSID("$NetBSD: gethnamaddr.c,v 1.39 2000/12/20 20:51:08 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -145,8 +145,6 @@ typedef union {
     char ac;
 } align;
 
-extern int h_errno;
-
 #ifdef DEBUG
 static void dprintf __P((char *, ...))
 	__attribute__((__format__(__printf__, 1, 2)));
@@ -159,9 +157,6 @@ static void map_v4v6_hostent __P((struct hostent *, char **, int *));
 static void addrsort __P((char **, int));
 #endif
 
-struct hostent *gethostbyname __P((const char *));
-struct hostent *gethostbyname2 __P((const char *, int));
-struct hostent *gethostbyaddr __P((const char *, int, int ));
 void _sethtent __P((int));
 void _endhtent __P((void));
 struct hostent *_gethtent __P((void));
@@ -170,8 +165,8 @@ void ht_sethostent __P((int));
 void ht_endhostent __P((void));
 struct hostent *ht_gethostbyname __P((char *));
 struct hostent *ht_gethostbyaddr __P((const char *, int, int ));
-struct hostent *gethostent __P((void));
 void dns_service __P((void));
+#undef dn_skipname
 int dn_skipname __P((const u_char *, const u_char *));
 int _gethtbyaddr __P((void *, void *, va_list));
 int _gethtbyname __P((void *, void *, va_list));
@@ -1117,7 +1112,7 @@ dns_service()
 	return;
 }
 
-#undef dn_skipname
+int
 dn_skipname(comp_dn, eom)
 	const u_char *comp_dn, *eom;
 {
