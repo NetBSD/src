@@ -1,4 +1,4 @@
-/*	$NetBSD: cd.c,v 1.173 2002/12/15 17:48:14 jmcneill Exp $	*/
+/*	$NetBSD: cd.c,v 1.174 2003/01/13 03:32:56 toshii Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd.c,v 1.173 2002/12/15 17:48:14 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd.c,v 1.174 2003/01/13 03:32:56 toshii Exp $");
 
 #include "rnd.h"
 
@@ -1952,11 +1952,11 @@ dvd_auth(cd, a)
 		    XS_CTL_DATA_IN|XS_CTL_DATA_ONSTACK);
 		if (error)
 			return (error);
-		a->lrpcs.type = (buf[8] >> 6) & 3;
-		a->lrpcs.vra = (buf[8] >> 3) & 7;
-		a->lrpcs.ucca = (buf[8]) & 7;
-		a->lrpcs.region_mask = buf[9];
-		a->lrpcs.rpc_scheme = buf[10];
+		a->lrpcs.type = (buf[4] >> 6) & 3;
+		a->lrpcs.vra = (buf[4] >> 3) & 7;
+		a->lrpcs.ucca = (buf[4]) & 7;
+		a->lrpcs.region_mask = buf[5];
+		a->lrpcs.rpc_scheme = buf[6];
 		return (0);
 
 	case DVD_HOST_SEND_RPC_STATE:
