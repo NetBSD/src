@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.16 2004/01/05 02:25:32 chs Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.17 2004/02/20 20:22:10 jkunz Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.16 2004/01/05 02:25:32 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.17 2004/02/20 20:22:10 jkunz Exp $");
 
 #undef BTLBDEBUG
 
@@ -172,6 +172,9 @@ void mbus_dmamem_free(void *, bus_dma_segment_t *, int);
 int mbus_dmamem_map(void *, bus_dma_segment_t *, int, size_t, caddr_t *, int);
 void mbus_dmamem_unmap(void *, caddr_t, size_t);
 paddr_t mbus_dmamem_mmap(void *, bus_dma_segment_t *, int, off_t, int, int);
+int _bus_dmamap_load_buffer(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
+    bus_size_t buflen, struct proc *p, int flags, paddr_t *lastaddrp, 
+    int *segp, int first);
 
 int
 mbus_add_mapping(bus_addr_t bpa, bus_size_t size, int flags,
@@ -826,63 +829,124 @@ mbus_dmamap_destroy(void *v, bus_dmamap_t map)
  * load DMA map with a linear buffer.
  */
 int
-mbus_dmamap_load(void *v, bus_dmamap_t map, void *addr, bus_size_t size,
+mbus_dmamap_load(void *v, bus_dmamap_t map, void *buf, bus_size_t buflen, 
     struct proc *p, int flags)
 {
-	paddr_t pa, pa_next;
-	bus_size_t mapsize;
-	bus_size_t off, pagesz;
-	int seg;
+	vaddr_t lastaddr;
+	int seg, error;
 
 	/*
 	 * Make sure that on error condition we return "no valid mappings".
 	 */
-	map->dm_nsegs = 0;
 	map->dm_mapsize = 0;
+	map->dm_nsegs = 0;
 
-	/* Stash the buffer address in the first segment. */
-	map->dm_segs[0]._ds_va = (vaddr_t)addr;
+	if (buflen > map->_dm_size)
+		return (EINVAL);
 
-	/* Load the memory. */
-	pa_next = 0;
-	seg = -1;
-	mapsize = size;
-	off = (bus_size_t)addr & (PAGE_SIZE - 1);
-	addr = (void *) ((caddr_t)addr - off);
-	while (size > 0) {
-		pa = kvtop(addr);
-		if (pa != pa_next) {
-			if (++seg >= map->_dm_segcnt)
-				panic("mbus_dmamap_load: nsegs botch");
-			map->dm_segs[seg].ds_addr = pa + off;
-			map->dm_segs[seg].ds_len = 0;
-		}
-		pa_next = pa + PAGE_SIZE;
-		pagesz = PAGE_SIZE - off;
-		if (size < pagesz)
-			pagesz = size;
-		map->dm_segs[seg].ds_len += pagesz;
-		size -= pagesz;
-		addr = (caddr_t)addr + off + pagesz;
-		off = 0;
+	seg = 0;
+	error = _bus_dmamap_load_buffer(NULL, map, buf, buflen, p, flags,
+	    &lastaddr, &seg, 1);
+	if (error == 0) {
+		map->dm_mapsize = buflen;
+		map->dm_nsegs = seg + 1;
+	}
+	return (error);
+}
+
+/*
+ * Like _bus_dmamap_load(), but for mbufs.
+ */
+int
+mbus_dmamap_load_mbuf(void *v, bus_dmamap_t map, struct mbuf *m0,
+    int flags)
+{
+	vaddr_t lastaddr;
+	int seg, error, first;
+	struct mbuf *m;
+
+	/*
+	 * Make sure that on error condition we return "no valid mappings."
+	 */
+	map->dm_mapsize = 0;
+	map->dm_nsegs = 0;
+
+#ifdef DIAGNOSTIC
+	if ((m0->m_flags & M_PKTHDR) == 0)
+		panic("_bus_dmamap_load_mbuf: no packet header");
+#endif	/* DIAGNOSTIC */
+
+	if (m0->m_pkthdr.len > map->_dm_size)
+		return (EINVAL);
+
+	first = 1;
+	seg = 0;
+	error = 0;
+	for (m = m0; m != NULL && error == 0; m = m->m_next) {
+		error = _bus_dmamap_load_buffer(NULL, map, m->m_data, m->m_len,
+		    NULL, flags, &lastaddr, &seg, first);
+		first = 0;
+	}
+	if (error == 0) {
+		map->dm_mapsize = m0->m_pkthdr.len;
+		map->dm_nsegs = seg + 1;
+	}
+	return (error);
+}
+
+/*
+ * Like _bus_dmamap_load(), but for uios.
+ */
+int
+mbus_dmamap_load_uio(void *v, bus_dmamap_t map, struct uio *uio,
+    int flags)
+{
+	vaddr_t lastaddr;
+	int seg, i, error, first;
+	bus_size_t minlen, resid;
+	struct proc *p = NULL;
+	struct iovec *iov;
+	caddr_t addr;
+
+	/*
+	 * Make sure that on error condition we return "no valid mappings."
+	 */
+	map->dm_mapsize = 0;
+	map->dm_nsegs = 0;
+
+	resid = uio->uio_resid;
+	iov = uio->uio_iov;
+
+	if (uio->uio_segflg == UIO_USERSPACE) {
+		p = uio->uio_procp;
+#ifdef DIAGNOSTIC
+		if (p == NULL)
+			panic("_bus_dmamap_load_uio: USERSPACE but no proc");
+#endif
 	}
 
-	/* Make the map truly valid. */
-	map->dm_nsegs = seg + 1;
-	map->dm_mapsize = mapsize;
-	return (0);
-}
+	first = 1;
+	seg = 0;
+	error = 0;
+	for (i = 0; i < uio->uio_iovcnt && resid != 0 && error == 0; i++) {
+		/*
+		 * Now at the first iovec to load.  Load each iovec
+		 * until we have exhausted the residual count.
+		 */
+		minlen = MIN(resid, iov[i].iov_len);
+		addr = (caddr_t)iov[i].iov_base;
 
-int
-mbus_dmamap_load_mbuf(void *v, bus_dmamap_t map, struct mbuf *m, int flags)
-{
-	panic("_dmamap_load_mbuf: not implemented");
-}
+		error = _bus_dmamap_load_buffer(NULL, map, addr, minlen,
+		    p, flags, &lastaddr, &seg, first);
+		first = 0;
 
-int
-mbus_dmamap_load_uio(void *v, bus_dmamap_t map, struct uio *uio, int flags)
-{
-	panic("_dmamap_load_uio: not implemented");
+		resid -= minlen;
+	}
+	if (error == 0) {
+		map->dm_mapsize = uio->uio_resid;
+		map->dm_nsegs = seg + 1;
+	}
+	return (error);
 }
 
 /*
@@ -956,26 +1020,62 @@ mbus_dmamap_unload(void *v, bus_dmamap_t map)
 }
 
 void
-mbus_dmamap_sync(void *v, bus_dmamap_t map, bus_addr_t addr, bus_size_t size, int ops)
+mbus_dmamap_sync(void *v, bus_dmamap_t map, bus_addr_t offset, bus_size_t len, 
+    int ops)
 {
+	int i;
 	/*
-	 * XXX - for now, we flush the whole map.
+	 * Mixing of PRE and POST operations is not allowed.
 	 */
+	if ((ops & (BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE)) != 0 &&
+	    (ops & (BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE)) != 0)
+		panic("mbus_dmamap_sync: mix PRE and POST");
+
+#ifdef DIAGNOSTIC
+	if (offset >= map->dm_mapsize)
+		panic("mbus_dmamap_sync: bad offset %lu (map size is %lu)",
+		    offset, map->dm_mapsize);
+	if (len == 0 || (offset + len) > map->dm_mapsize)
+		panic("mbus_dmamap_sync: bad length");
+#endif
 
 	/*
-	 * For everything except BUS_DMASYNC_POSTWRITE, flush 
-	 * the map from the cache.  For BUS_DMASYNC_PREREAD and 
-	 * BUS_DMASYNC_POSTREAD we should only need to purge the 
-	 * map, but this isn't good enough for the osiop driver, 
-	 * at least.
+	 * For a virtually-indexed write-back cache, we need
+	 * to do the following things:
+	 *
+	 *	PREREAD -- Invalidate the D-cache.  We do this
+	 *	here in case a write-back is required by the back-end.
+	 *
+	 *	PREWRITE -- Write-back the D-cache.  Note that if
+	 *	we are doing a PREREAD|PREWRITE, we can collapse
+	 *	the whole thing into a single Wb-Inv.
+	 *
+	 *	POSTREAD -- Nothing.
+	 *
+	 *	POSTWRITE -- Nothing.
 	 */
-	if (ops & (BUS_DMASYNC_PREWRITE |
-		   BUS_DMASYNC_PREREAD |
-		   BUS_DMASYNC_POSTREAD)) {
-		fdcache(HPPA_SID_KERNEL, map->dm_segs[0]._ds_va,
-		    map->dm_mapsize);
-		sync_caches();
+
+	ops &= (BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
+	if (ops == 0)
+		return;
+
+	for (i = 0; i < map->dm_nsegs; i++) {
+		if (offset >= map->dm_segs[i].ds_len) {
+			offset -= map->dm_segs[i].ds_len;
+			continue;
+		}
+		if (len <= map->dm_segs[i].ds_len - offset) {
+			fdcache(HPPA_SID_KERNEL, map->dm_segs[i]._ds_va + 
+			    offset, len);
+			break;
+		} else
+			fdcache(HPPA_SID_KERNEL, map->dm_segs[i]._ds_va + 
+			    offset, map->dm_segs[i].ds_len - offset);
+		len -= map->dm_segs[i].ds_len - offset;
+		offset = 0;
 	}
+	sync_caches();
+	return;
 }
 
 /*
@@ -1175,10 +1275,114 @@ mbus_dmamem_unmap(void *v, caddr_t kva, size_t size)
  * bus-specific DMA mmap(2)'ing functions.
  */
 paddr_t
-mbus_dmamem_mmap(void *v, bus_dma_segment_t *segs, int nsegs, off_t off,
-		 int prot, int flags)
+mbus_dmamem_mmap(void *v, bus_dma_segment_t *segs, int nsegs,
+	off_t off, int prot, int flags)
 {
-	panic("_dmamem_mmap: not implemented");
+	int i;
+
+	for (i = 0; i < nsegs; i++) {
+#ifdef DIAGNOSTIC
+		if (off & PGOFSET)
+			panic("_bus_dmamem_mmap: offset unaligned");
+		if (segs[i].ds_addr & PGOFSET)
+			panic("_bus_dmamem_mmap: segment unaligned");
+		if (segs[i].ds_len & PGOFSET)
+			panic("_bus_dmamem_mmap: segment size not multiple"
+			    " of page size");
+#endif	/* DIAGNOSTIC */
+		if (off >= segs[i].ds_len) {
+			off -= segs[i].ds_len;
+			continue;
+		}
+
+		return (btop((u_long)segs[i].ds_addr + off));
+	}
+
+	/* Page not found. */
+	return (-1);
+}
+
+int
+_bus_dmamap_load_buffer(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
+    bus_size_t buflen, struct proc *p, int flags, paddr_t *lastaddrp, 
+    int *segp, int first)
+{
+	bus_size_t sgsize;
+	bus_addr_t curaddr, lastaddr, baddr, bmask;
+	vaddr_t vaddr = (vaddr_t)buf;
+	int seg;
+	pmap_t pmap;
+
+	if (p != NULL)
+		pmap = p->p_vmspace->vm_map.pmap;
+	else
+		pmap = pmap_kernel();
+
+	lastaddr = *lastaddrp;
+	bmask  = ~(map->_dm_boundary - 1);
+
+	for (seg = *segp; buflen > 0; ) {
+		/*
+		 * Get the physical address for this segment.
+		 */
+		(void) pmap_extract(pmap, vaddr, &curaddr);
+
+		/*
+		 * Compute the segment size, and adjust counts.
+		 */
+		sgsize = PAGE_SIZE - ((u_long)vaddr & PGOFSET);
+		if (buflen < sgsize)
+			sgsize = buflen;
+
+		/*
+		 * Make sure we don't cross any boundaries.
+		 */
+		if (map->_dm_boundary > 0) {
+			baddr = (curaddr + map->_dm_boundary) & bmask;
+			if (sgsize > (baddr - curaddr))
+				sgsize = (baddr - curaddr);
+		}
+
+		/*
+		 * Insert chunk into a segment, coalescing with
+		 * previous segment if possible.
+		 */
+		if (first) {
+			map->dm_segs[seg].ds_addr = curaddr;
+			map->dm_segs[seg].ds_len = sgsize;
+			map->dm_segs[seg]._ds_va = vaddr;
+			first = 0;
+		} else {
+			if (curaddr == lastaddr &&
+			    (map->dm_segs[seg].ds_len + sgsize) <=
+			     map->_dm_maxsegsz &&
+			    (map->_dm_boundary == 0 ||
+			     (map->dm_segs[seg].ds_addr & bmask) ==
+			     (curaddr & bmask)))
+				map->dm_segs[seg].ds_len += sgsize;
+			else {
+				if (++seg >= map->_dm_segcnt)
+					break;
+				map->dm_segs[seg].ds_addr = curaddr;
+				map->dm_segs[seg].ds_len = sgsize;
+				map->dm_segs[seg]._ds_va = vaddr;
+			}
+		}
+
+		lastaddr = curaddr + sgsize;
+		vaddr += sgsize;
+		buflen -= sgsize;
+	}
+
+	*segp = seg;
+	*lastaddrp = lastaddr;
+
+	/*
+	 * Did we fit?
+	 */
+	if (buflen != 0)
+		return (EFBIG);		/* XXX better return value here? */
+	return (0);
 }
 
 int
