@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_mcpair.c,v 1.10 2003/12/29 04:33:31 oster Exp $	*/
+/*	$NetBSD: rf_mcpair.c,v 1.11 2003/12/29 04:34:36 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_mcpair.c,v 1.10 2003/12/29 04:33:31 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_mcpair.c,v 1.11 2003/12/29 04:34:36 oster Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -102,7 +102,9 @@ rf_FreeMCPair(t)
 {
 	pool_put(&rf_mcpair_pool, t);
 }
-/* the callback function used to wake you up when you use an mcpair to wait for something */
+
+/* the callback function used to wake you up when you use an mcpair to
+   wait for something */
 void 
 rf_MCPairWakeupFunc(mcpair)
 	RF_MCPair_t *mcpair;
