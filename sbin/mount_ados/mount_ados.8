@@ -1,4 +1,4 @@
-.\" $NetBSD: mount_ados.8,v 1.9 2000/06/14 17:25:25 cgd Exp $
+.\" $NetBSD: mount_ados.8,v 1.10 2001/02/25 20:37:15 is Exp $
 .\"
 .\" Copyright (c) 1993, 1994 Christopher G. Demetriou
 .\" All rights reserved.
@@ -105,6 +105,16 @@ directory on which the file system is being mounted.
 The
 .Sq ados
 filesystem currently supports the Amiga fast file system.
+.Pp
+The
+.Sq ados
+filesystem implementation currently is read-only. The
+.Nm
+utility silently retries the mount read-only, as if the 
+.Ar ro
+option was specified, when it encounters the 
+EROFS
+error.
 .Sh HISTORY
 The
 .Nm
