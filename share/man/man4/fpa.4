@@ -1,4 +1,4 @@
-.\"	$NetBSD: fpa.4,v 1.4 1999/11/02 10:30:38 lukem Exp $
+.\"	$NetBSD: fpa.4,v 1.5 1999/12/17 16:23:21 abs Exp $
 .\"
 .\" Copyright (c) 1995, Matt Thomas
 .\" All rights reserved.
@@ -17,15 +17,24 @@ Device Drivers for DEC FDDI Controllers
 .Cd "fpa0 at pci?"
 .Cd "fea0 at eisa?"
 .Cd "fta0 at tc?"
-.Sh DESCRIPTION
-The
+.Sh HARDWARE
+Cards supported by the
 .Nm fpa ,
 .Nm fea
 and
 .Nm fta
-device driver provides support for the DEC DEFPA PCI FDDI Controller,
-the DEC DEFEA EISA FDDI Controller, and the DEC DEFTA TurboChannel FDDI
-Controller, respectively.  All variants of either
+device driver are:
+.Pp
+.Bl -tag -width xxxxxx -offset indent
+.It DEFPA
+DEC PCI FDDI Controller
+.It DEFEA
+DEC EISA FDDI Controller
+.It DEFTA
+DEC TurboChannel FDDI Controller
+.El
+.Pp
+respectively. All variants of either
 controller are supported including the DAS and SAS configurations.
 .Pp
 .Sh DIAGNOSTICS

@@ -1,4 +1,4 @@
-.\"	$NetBSD: fxp.4,v 1.5 1999/12/15 22:07:32 abs Exp $
+.\"	$NetBSD: fxp.4,v 1.6 1999/12/17 16:23:21 abs Exp $
 .\"
 .\" Copyright (c) 1998 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -52,8 +52,19 @@ and i82558 PCI Ethernet chips.  The i82557 uses an external media
 interface, whereas the i82558 includes a built-in Intel i82555 PHY.
 The i82559 is an enhanced i82558.
 .Pp
-Supported cards include the Intel EtherExpress Pro 10+, EtherExpress
-Pro 100B, and EtherExpress Pro 100+.
+.Sh HARDWARE
+Cards supported by the 
+.Nm
+driver include:
+.Pp
+.Bl -item -compact
+.It
+Intel EtherExpress Pro 10+
+.It
+Intel EtherExpress Pro 100B
+.It
+Intel EtherExpress Pro 100+
+.El
 .Sh MEDIA SELECTION
 Media selection is supported via MII.  See
 .Xr ifmedia 4
