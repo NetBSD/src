@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.5.8.2 2002/07/14 17:46:53 gehenna Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.5.8.3 2002/07/16 08:07:29 gehenna Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -111,13 +111,12 @@ get_device(name)
 static void
 set_root_device()
 {
-	char *ptr;
             
-	if (boot_file)
+	if (boot_file[0] != '\0')
 		get_device(boot_file);
-	if (boot_args &&
-	    get_bootconf_option(boot_args, "root", BOOTOPT_TYPE_STRING, &ptr))
-		get_device(ptr);
+	else
+		/* hpcboot doesn't pass a bootdev arg if wd0 */
+		get_device("wd0");
 }
 #endif /* ifndef MEMORY_DISK_IS_ROOT */
 
