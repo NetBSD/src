@@ -1,4 +1,4 @@
-/*	$NetBSD: pucdata.c,v 1.8 1999/12/04 05:43:44 castor Exp $	*/
+/*	$NetBSD: pucdata.c,v 1.9 2000/02/08 16:26:23 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Christopher G. Demetriou.  All rights reserved.
@@ -549,6 +549,15 @@ const struct puc_device_description puc_devices[] = {
 	    {
 		{ PUC_PORT_TYPE_COM, 0x10, 0x00 },
 		{ PUC_PORT_TYPE_COM, 0x14, 0x00 },
+	    },
+	},
+
+	/* US Robotics (3Com) PCI Modems */
+	{   "US Robotics (3Com) 3CP5609 PCI 16550 Modem",
+	    {	0x12b9,	0x1008,	0,	0	},
+	    {	0xffff,	0xffff,	0,	0	},
+	    {
+		{ PUC_PORT_TYPE_COM, 0x10, 0x00 },
 	    },
 	},
 
