@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.386 2002/01/14 03:56:33 augustss Exp $
+$NetBSD: pcidevs,v 1.387 2002/01/15 20:14:47 thorpej Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -1233,6 +1233,7 @@ product INTEL 82543_SC		0x1003	i82453-SC Gigabit Ethernet
 product INTEL 82543_COPPER	0x1004	i82543 Gigabit Ethernet (1000BASE-T)
 product INTEL 82544_XT		0x1008	i82544 Gigabit Ethernet (1000BASE-T)
 product INTEL 82544_XF		0x1009	i82544 Gigabit Ethernet (1000BASE-X)
+product INTEL 82544GC		0x100c	i82544GC Gigabit Ethernet (1000BASE-T)
 product INTEL IN_BUSINESS	0x1030	InBusiness Fast Ethernet LAN Controller
 product INTEL PRO_100_VE_0	0x1031	PRO/100 VE Network Controller
 product INTEL PRO_100_VE_1	0x1032	PRO/100 VE Network Controller
