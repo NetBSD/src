@@ -1,4 +1,4 @@
-.\"	$NetBSD: gethostbyname.3,v 1.6 1995/02/25 06:20:28 cgd Exp $
+.\"	$NetBSD: gethostbyname.3,v 1.7 1996/03/30 01:14:57 jtc Exp $
 .\"
 .\" Copyright (c) 1983, 1987, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -42,7 +42,8 @@
 .Nm gethostent ,
 .Nm sethostent ,
 .Nm endhostent ,
-.Nm herror
+.Nm herror ,
+.Nm hstrerror
 .Nd get network host entry
 .Sh SYNOPSIS
 .Fd #include <netdb.h>
@@ -53,9 +54,14 @@
 .Fn gethostbyaddr "const char *addr" "int len" "int type"
 .Ft struct hostent *
 .Fn gethostent void
+.Ft void
 .Fn sethostent "int stayopen"
+.Ft void
 .Fn endhostent void
+.Ft void
 .Fn herror "char *string"
+.Ft char *
+.Fn hstrerror "int err"
 .Sh DESCRIPTION
 The
 .Fn gethostbyname
@@ -164,6 +170,10 @@ is
 .Pf non Dv -NULL ,
 it is printed, followed by a colon and a space.
 The error message is printed with a trailing newline.
+The routine
+.Fn hstrerror
+returns a pointer to the message string affiliated with an error number.
+The array pointed to is not to be modified by the program.
 .Pp
 The variable
 .Va h_errno
