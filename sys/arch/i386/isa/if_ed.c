@@ -20,7 +20,7 @@
  */
 
 /*
- * $Id: if_ed.c,v 1.8.2.5 1993/10/29 18:08:19 mycroft Exp $
+ * $Id: if_ed.c,v 1.8.2.6 1993/11/03 21:36:19 mycroft Exp $
  */
 
 /*
@@ -188,22 +188,20 @@ static int edintr __P((void *));
 struct cfdriver edcd =
 { NULL, "ed", edprobe, edattach, DV_IFNET, sizeof(struct ed_device) };
 
-int ed_init __P((int));
 int ed_ioctl __P((struct ifnet *, int, caddr_t));
-int ed_start __P((struct ifnet *));
-int ed_reset __P((int));
-int ed_watchdog __P((int));
-void ed_stop __P((int));
+void ed_start __P((struct ifnet *));
+void ed_watchdog __P((short));
+void ed_reset __P((struct ed_softc *));
+void ed_init __P((struct ed_softc *));
+void ed_stop __P((struct ed_softc *));
 
-static inline void ed_rint __P((int));
+static inline void ed_rint __P((struct ed_softc *));
 static inline void ed_xmit __P((struct ifnet *));
 static inline char *ed_ring_copy __P((struct ed_softc *, char *, char *, u_short));
 
 void ed_pio_readmem __P((struct ed_softc *, u_short, u_char *, u_short));
 void ed_pio_writemem __P((struct ed_softc *, u_char *, u_short, u_short));
 u_short ed_pio_write_mbufs __P((struct ed_softc *, struct mbuf *, u_short));
-
-extern int ether_output();
 
 struct trailer_header {
 	u_short ether_type;
@@ -575,6 +573,10 @@ ed_probe_3Com(cf, ia)
 	/*
 	 * Verify that the kernel configured I/O address matches the board
 	 *	configured address
+	 *
+	 * This is really only useful to see if something that looks like the
+	 *	board is there; after all, we are already talking it at that
+	 *	address.
 	 */
 	switch (inb(sc->asic_addr + ED_3COM_BCFR)) {
 	case ED_3COM_BCFR_300:
@@ -645,7 +647,6 @@ ed_probe_3Com(cf, ia)
 	default:
 		return(0);
 	}
-
 
 	/*
 	 * Reset NIC and ASIC. Enable on-board transceiver throughout reset
@@ -781,7 +782,7 @@ ed_probe_3Com(cf, ia)
 	 * Set IRQ. 3c503 only allows a choice of irq 2-5.
 	 */
 	switch (ia->ia_irq) {
-	case IRQ2:
+	case IRQ9:
 		outb(sc->asic_addr + ED_3COM_IDCFR, ED_3COM_IDCFR_IRQ2);
 		break;
 	case IRQ3:
@@ -797,7 +798,7 @@ ed_probe_3Com(cf, ia)
 		/* XXXX no probe yet */
 		return 0;
 	default:
-		printf("ed%d: Invalid irq configuration (%d) must be 2-5 for 3c503\n",
+		printf("ed%d: invalid irq configuration (%d); must be 3-5 or 9 for 3c503\n",
 			cf->cf_unit, ffs(ia->ia_irq) - 1);
 		return(0);
 	}
@@ -1019,7 +1020,7 @@ edattach(parent, self, aux)
 	/*
 	 * Set interface to stopped condition (reset)
 	 */
-	ed_stop(ed->ed_dev.dv_unit);
+	ed_stop(sc);
 
 	/*
 	 * Initialize ifnet structure
@@ -1027,7 +1028,6 @@ edattach(parent, self, aux)
 	ifp->if_unit = ed->ed_dev.dv_unit;
 	ifp->if_name = edcd.cd_name;
 	ifp->if_mtu = ETHERMTU;
-	ifp->if_init = ed_init;
 	ifp->if_output = ether_output;
 	ifp->if_start = ed_start;
 	ifp->if_ioctl = ed_ioctl;
@@ -1100,20 +1100,18 @@ edattach(parent, self, aux)
 /*
  * Reset interface.
  */
-int
-ed_reset(unit)
-	int unit;
+void
+ed_reset(sc)
+	struct ed_softc *sc;
 {
 	int s;
 
 	s = splnet();
-
 	/*
 	 * Stop interface and re-initialize.
 	 */
-	ed_stop(unit);
-	ed_init(unit);
-
+	ed_stop(sc);
+	ed_init(sc);
 	splx(s);
 }
  
@@ -1121,10 +1119,9 @@ ed_reset(unit)
  * Take interface offline.
  */
 void
-ed_stop(unit)
-	int unit;
+ed_stop(sc)
+	struct ed_softc *sc;
 {
-	struct ed_softc *sc = &ed_softc[unit];
 	int n = 5000;
  
 	/*
@@ -1145,33 +1142,32 @@ ed_stop(unit)
  * Device timeout/watchdog routine. Entered if the device neglects to
  *	generate an interrupt after a transmit has been started on it.
  */
-int
+void
 ed_watchdog(unit)
-	int unit;
+	short unit;
 {
 	struct ed_softc *sc = &ed_softc[unit];
 
 	log(LOG_ERR, "%s: device timeout\n", sc->sc_ed->ed_dev.dv_xname);
 	++sc->arpcom.ac_if.if_oerrors;
 
-	ed_reset(unit);
+	ed_reset(sc);
 }
 
 /*
  * Initialize device. 
  */
-int
-ed_init(unit)
-	int unit;
+void
+ed_init(sc)
+	struct ed_softc *sc;
 {
-	struct ed_softc *sc = &ed_softc[unit];
 	struct ifnet *ifp = &sc->arpcom.ac_if;
 	int i, s;
 	u_char	command;
 
-
 	/* address not known */
-	if (ifp->if_addrlist == (struct ifaddr *)0) return;
+	if (ifp->if_addrlist == (struct ifaddr *)0)
+		return;
 
 	/*
 	 * Initialize the NIC in the exact order outlined in the NS manual.
@@ -1371,7 +1367,7 @@ static inline void ed_xmit(ifp)
  *  2) that the IFF_OACTIVE flag is checked before this code is called
  *     (i.e. that the output part of the interface is idle)
  */
-int
+void
 ed_start(ifp)
 	struct ifnet *ifp;
 {
@@ -1571,10 +1567,9 @@ outloop:
  * Ethernet interface receiver interrupt.
  */
 static inline void
-ed_rint(unit)
-	int unit;
+ed_rint(sc)
+	struct ed_softc *sc;
 {
-	register struct ed_softc *sc = &ed_softc[unit];
 	u_char boundry, current;
 	u_short len;
 	struct ed_ring packet_hdr;
@@ -1625,7 +1620,7 @@ ed_rint(unit)
 				"%s: NIC memory corrupt - invalid packet length %d\n",
 			        sc->sc_ed->ed_dev.dv_xname, len);
 			++sc->arpcom.ac_if.if_ierrors;
-			ed_reset(unit);
+			ed_reset(sc);
 			return;
 		}
 
@@ -1665,7 +1660,7 @@ edintr(aux)
 	void *aux;
 {
 	struct ed_softc *sc = aux;
-	int unit = sc->sc_ed->ed_dev.dv_unit;
+	short unit = sc->sc_ed->ed_dev.dv_unit;
 	u_char isr;
 
 	/*
@@ -1783,7 +1778,7 @@ edintr(aux)
 				/*
 				 * Stop/reset/re-init NIC
 				 */
-				ed_reset(unit);
+				ed_reset(sc);
 			} else {
 
 			    /*
@@ -1819,7 +1814,7 @@ edintr(aux)
 						 ED_WD_LAAR_M16EN));
 				}
 
-				ed_rint (unit);
+				ed_rint(sc);
 
 				/* disable 16bit access */
 				if (sc->isa16bit &&
@@ -1889,7 +1884,7 @@ ed_ioctl(ifp, command, data)
 		switch (ifa->ifa_addr->sa_family) {
 #ifdef INET
 		case AF_INET:
-			ed_init(ifp->if_unit);	/* before arpwhohas */
+			ed_init(sc);	/* before arpwhohas */
 			/*
 			 * See if another station has *our* IP address.
 			 * i.e.: There is an address conflict! If a
@@ -1923,12 +1918,12 @@ ed_ioctl(ifp, command, data)
 			/*
 			 * Set new address
 			 */
-			ed_init(ifp->if_unit);
+			ed_init(sc);
 			break;
 		    }
 #endif
 		default:
-			ed_init(ifp->if_unit);
+			ed_init(sc);
 			break;
 		}
 		break;
@@ -1939,7 +1934,7 @@ ed_ioctl(ifp, command, data)
 		 */
 		if (((ifp->if_flags & IFF_UP) == 0) &&
 		    (ifp->if_flags & IFF_RUNNING)) {
-			ed_stop(ifp->if_unit);
+			ed_stop(sc);
 			ifp->if_flags &= ~IFF_RUNNING;
 		} else {
 		/*
@@ -1947,7 +1942,7 @@ ed_ioctl(ifp, command, data)
 		 */
 			if ((ifp->if_flags & IFF_UP) &&
 		    	    ((ifp->if_flags & IFF_RUNNING) == 0))
-				ed_init(ifp->if_unit);
+				ed_init(sc);
 		}
 #if NBPFILTER > 0
 		if (ifp->if_flags & IFF_PROMISC) {
@@ -2332,7 +2327,7 @@ ed_pio_write_mbufs(sc,m,dst)
 	if (!maxwait) {
 		log(LOG_WARNING, "%s: remote transmit DMA failed to complete\n",
 			sc->sc_ed->ed_dev.dv_xname);
-		ed_reset(sc->sc_ed->ed_dev.dv_unit);
+		ed_reset(sc);
 	}
 
 	return(len);
