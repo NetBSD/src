@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vnops.c,v 1.76 2003/01/08 15:40:05 yamt Exp $	*/
+/*	$NetBSD: lfs_vnops.c,v 1.77 2003/01/08 15:40:56 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.76 2003/01/08 15:40:05 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.77 2003/01/08 15:40:56 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -337,6 +337,8 @@ lfs_inactive(void *v)
 		struct vnode *a_vp;
 		struct proc *a_p;
 	} */ *ap = v;
+
+	KASSERT(VTOI(ap->a_vp)->i_ffs_nlink == VTOI(ap->a_vp)->i_ffs_effnlink);
 
 	lfs_unmark_vnode(ap->a_vp);
 
@@ -962,6 +964,8 @@ lfs_reclaim(void *v)
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
 	int error;
+
+	KASSERT(VTOI(vp)->i_ffs_nlink == VTOI(vp)->i_ffs_effnlink);
 
 	LFS_CLR_UINO(VTOI(vp), IN_ALLMOD);
 	if ((error = ufs_reclaim(vp, ap->a_p)))
