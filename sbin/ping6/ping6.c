@@ -1,4 +1,4 @@
-/*	$NetBSD: ping6.c,v 1.55 2003/06/06 14:18:40 cjep Exp $	*/
+/*	$NetBSD: ping6.c,v 1.56 2003/07/25 06:01:44 itojun Exp $	*/
 /*	$KAME: ping6.c,v 1.164 2002/11/16 14:05:37 itojun Exp $	*/
 
 /*
@@ -81,7 +81,7 @@ static char sccsid[] = "@(#)ping.c	8.1 (Berkeley) 6/5/93";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ping6.c,v 1.55 2003/06/06 14:18:40 cjep Exp $");
+__RCSID("$NetBSD: ping6.c,v 1.56 2003/07/25 06:01:44 itojun Exp $");
 #endif
 #endif
 
@@ -2179,8 +2179,8 @@ summary()
 		if (nreceived > ntransmitted)
 			(void)printf("-- somebody's duplicating packets!");
 		else
-			(void)printf("%.1f%% packet loss", 0.05 +
-			    (((ntransmitted - nreceived) * 100.0) /
+			(void)printf("%.1f%% packet loss",
+			    ((((double)ntransmitted - nreceived) * 100.0) /
 			    ntransmitted));
 	}
 	(void)putchar('\n');
