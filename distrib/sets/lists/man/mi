@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.643 2004/01/03 14:17:06 lukem Exp $
+# $NetBSD: mi,v 1.644 2004/01/03 15:21:30 lukem Exp $
 ./usr/share/info/am-utils.info			man-amd-info
 ./usr/share/info/as.info			man-computil-info
 ./usr/share/info/awk.info			man-util-info
@@ -370,10 +370,10 @@
 ./usr/share/man/cat1/shar.0			man-util-catman
 ./usr/share/man/cat1/shlock.0			man-util-catman
 ./usr/share/man/cat1/shuffle.0			man-util-catman
-./usr/share/man/cat1/skey.0			man-util-catman
-./usr/share/man/cat1/skeyaudit.0		man-util-catman
-./usr/share/man/cat1/skeyinfo.0			man-util-catman
-./usr/share/man/cat1/skeyinit.0			man-util-catman
+./usr/share/man/cat1/skey.0			man-util-catman	skey
+./usr/share/man/cat1/skeyaudit.0		man-util-catman	skey
+./usr/share/man/cat1/skeyinfo.0			man-util-catman	skey
+./usr/share/man/cat1/skeyinit.0			man-util-catman	skey
 ./usr/share/man/cat1/sleep.0			man-util-catman
 ./usr/share/man/cat1/slogin.0			man-secsh-catman
 ./usr/share/man/cat1/sntp.0			man-ntp-catman
@@ -2417,10 +2417,10 @@
 ./usr/share/man/man1/shar.1			man-util-man
 ./usr/share/man/man1/shlock.1			man-util-man
 ./usr/share/man/man1/shuffle.1			man-util-man
-./usr/share/man/man1/skey.1			man-util-man
-./usr/share/man/man1/skeyaudit.1		man-util-man
-./usr/share/man/man1/skeyinfo.1			man-util-man
-./usr/share/man/man1/skeyinit.1			man-util-man
+./usr/share/man/man1/skey.1			man-util-man	skey
+./usr/share/man/man1/skeyaudit.1		man-util-man	skey
+./usr/share/man/man1/skeyinfo.1			man-util-man	skey
+./usr/share/man/man1/skeyinit.1			man-util-man	skey
 ./usr/share/man/man1/sleep.1			man-util-man
 ./usr/share/man/man1/slogin.1			man-secsh-man
 ./usr/share/man/man1/sntp.1			man-ntp-man

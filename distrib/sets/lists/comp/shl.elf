@@ -1,4 +1,4 @@
-# $NetBSD: shl.elf,v 1.47 2003/12/29 03:13:28 lukem Exp $
+# $NetBSD: shl.elf,v 1.48 2004/01/03 15:21:30 lukem Exp $
 ./lib/libc.so			comp-c-lib
 ./lib/libcrypt.so		comp-c-lib
 ./lib/libcrypto.so		comp-c-lib
@@ -68,7 +68,7 @@
 ./usr/lib/libresolv.so		comp-c-lib
 ./usr/lib/libroken.so		comp-c-lib	kerberos
 ./usr/lib/librt.so		comp-c-lib
-./usr/lib/libskey.so		comp-c-lib
+./usr/lib/libskey.so		comp-c-lib	skey
 ./usr/lib/libsl.so		comp-c-lib	kerberos
 ./usr/lib/libss.so		comp-c-lib	kerberos
 ./usr/lib/libssl.so		comp-c-lib

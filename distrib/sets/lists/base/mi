@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.451 2004/01/03 14:17:06 lukem Exp $
+# $NetBSD: mi,v 1.452 2004/01/03 15:21:30 lukem Exp $
 .			base-sys-root
 ./altroot		base-sys-root
 ./bin			base-sys-root
@@ -567,10 +567,10 @@
 ./usr/bin/shlock	base-util-bin
 ./usr/bin/showmount	base-nfsclient-bin
 ./usr/bin/shuffle	base-util-bin
-./usr/bin/skey		base-util-bin
-./usr/bin/skeyaudit	base-util-bin
-./usr/bin/skeyinfo	base-util-bin
-./usr/bin/skeyinit	base-util-bin
+./usr/bin/skey		base-util-bin	skey
+./usr/bin/skeyaudit	base-util-bin	skey
+./usr/bin/skeyinfo	base-util-bin	skey
+./usr/bin/skeyinit	base-util-bin	skey
 ./usr/bin/slogin	base-secsh-bin
 ./usr/bin/sort		base-util-bin
 ./usr/bin/split		base-util-bin
