@@ -578,8 +578,8 @@ parse()
 						for (i=0; i<MAXY; i++)
 							for (j=0; j<MAXX; j++)  know[j][i]=1;
 						for (i=0; i<SPNUM; i++)	spelknow[i]=1;
-						for (i=0; i<MAXSCROLL; i++)  scrollname[i][0]=' ';
-						for (i=0; i<MAXPOTION; i++)  potionname[i][0]=' ';
+						for (i=0; i<MAXSCROLL; i++)  scrollname[i]=scrollhide[i];
+						for (i=0; i<MAXPOTION; i++)  potionname[i]=potionhide[i];
 						}
 						for (i=0; i<MAXSCROLL; i++)
 						  if (strlen(scrollname[i])>2) /* no null items */
