@@ -541,7 +541,6 @@ thread_wakeup(event)
 	splx(s);
 }
 
-#if	defined(DDB) || defined(DEBUG)
 /*
  * DEBUG stuff
  */
@@ -556,11 +555,10 @@ iprintf(a, b, c, d, e, f, g, h)
 
 	i = indent;
 	while (i >= 8) {
-		db_printf("\t");
+		printf("\t");
 		i -= 8;
 	}
 	for (; i > 0; --i)
-		db_printf(" ");
-	db_printf(a, b, c, d, e, f, g, h);
+		printf(" ");
+	printf(a, b, c, d, e, f, g, h);
 }
-#endif	/* DDB || DEBUG */
