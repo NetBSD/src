@@ -1,4 +1,4 @@
-.\"	$NetBSD: mkfifo.1,v 1.5 1997/07/16 04:42:32 mikel Exp $
+.\"	$NetBSD: mkfifo.1,v 1.6 1997/10/19 05:11:52 lukem Exp $
 .\"
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -43,11 +43,11 @@
 .Nm mkfifo
 .Nd make fifos
 .Sh SYNOPSIS
-.Nm mkfifo
+.Nm
 .Op Fl m Ar mode
 .Ar fifo_name  ...
 .Sh DESCRIPTION
-.Nm Mkfifo
+.Nm
 creates the fifos requested, in the order specified,
 using mode
 .Li \&0666 
@@ -69,10 +69,10 @@ operators are interpreted relative to an assumed initial mode of
 .Dq a=rw
 .El
 .Pp
-.Nm Mkfifo
+.Nm
 requires write permission in the parent directory.
 .Pp
-.Nm Mkfifo
+.Nm
 exits 0 if successful, and >0 if an error occurred.
 .Sh SEE ALSO
 .Xr mkdir 1 ,
@@ -81,7 +81,7 @@ exits 0 if successful, and >0 if an error occurred.
 .Xr mknod 8
 .Sh STANDARDS
 The
-.Nm mkfifo
+.Nm
 utility is expected to be
 .St -p1003.2-92
 compliant.
