@@ -33,11 +33,14 @@
 
 #include "krb5_locl.h"
 
-RCSID("$Id: mcache.c,v 1.2 2000/08/10 02:23:07 thorpej Exp $");
+RCSID("$Id: mcache.c,v 1.3 2000/08/10 15:51:20 thorpej Exp $");
 
 typedef struct krb5_mcache {
     struct krb5_mcache *next;
     char *filename;
+#if 0
+    unsigned int refcnt;
+#endif
     krb5_principal primary_principal;
     struct link {
 	krb5_creds cred;
@@ -70,6 +73,9 @@ mcc_resolve(krb5_context context, krb5_ccache *id, const char *res)
 	    break;
 
     if (m != NULL) {
+#if 0
+	m->refcnt++;
+#endif
 	(*id)->data.data = m;
 	(*id)->data.length = sizeof(*m);
 	return 0;
@@ -85,6 +91,9 @@ mcc_resolve(krb5_context context, krb5_ccache *id, const char *res)
 	return KRB5_CC_NOMEM;
     }
 
+#if 0
+    m->refcnt = 1;
+#endif
     m->primary_principal = NULL;
     m->creds = NULL;
     (*id)->data.data = m;
@@ -121,6 +130,9 @@ mcc_gen_new(krb5_context context, krb5_ccache *id)
     close(fd);
 
     m->filename = file;
+#if 0
+    m->refcnt = 1;
+#endif
     m->primary_principal = NULL;
     m->creds = NULL;
     (*id)->data.data = m;
@@ -154,9 +166,24 @@ static krb5_error_code
 mcc_close(krb5_context context,
 	  krb5_ccache id)
 {
+
+    return 0;
+}
+
+static krb5_error_code
+mcc_destroy(krb5_context context,
+	    krb5_ccache id)
+{
     krb5_mcache *m = (krb5_mcache *)id->data.data;
     krb5_mcache *n;
     struct link *l;
+
+#if 0
+    if (m->refcnt == 0)
+	krb5_abortx("mcc_close: refcnt already 0");
+    if (--m->refcnt != 0)
+	return 0;
+#endif
 
     if (m == mcc_head)
 	mcc_head = m->next;
@@ -178,17 +205,9 @@ mcc_close(krb5_context context,
 	l = l->next;
 	free (old);
     }
+    (void) unlink(FILENAME(id));
     free (FILENAME(id));
     krb5_data_free(&id->data);
-    return 0;
-}
-
-static krb5_error_code
-mcc_destroy(krb5_context context,
-	    krb5_ccache id)
-{
-
-    (void) unlink(FILENAME(id));
 
     return 0;
 }
