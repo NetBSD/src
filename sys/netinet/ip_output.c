@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_output.c,v 1.74.4.2 2002/01/14 15:44:38 he Exp $	*/
+/*	$NetBSD: ip_output.c,v 1.74.4.3 2002/12/15 15:20:21 he Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -191,6 +191,7 @@ ip_output(m0, va_alist)
 	struct secpolicy *sp = NULL;
 #endif /*IPSEC*/
 
+	len = 0;
 	va_start(ap, m0);
 	opt = va_arg(ap, struct mbuf *);
 	ro = va_arg(ap, struct route *);
@@ -213,7 +214,8 @@ ip_output(m0, va_alist)
 #endif
 	if (opt) {
 		m = ip_insertoptions(m, opt, &len);
-		hlen = len;
+		if (len >= sizeof(struct ip))
+			hlen = len;
 	}
 	ip = mtod(m, struct ip *);
 	/*
