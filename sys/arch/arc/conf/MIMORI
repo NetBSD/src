@@ -1,6 +1,7 @@
-#	$NetBSD: PICA,v 1.21 2000/06/17 07:29:07 soda Exp $
+#	$NetBSD: MIMORI,v 1.1 2000/06/17 07:29:07 soda Exp $
+#	NetBSD: GENERIC,v 1.31 2000/06/09 05:33:02 soda Exp 
 #
-#	configuration file for ACER PICA system
+#	MIMORI -- URATA-san's NEC RISCstation 2250
 #
 
 include		"arch/arc/conf/std.arc"
@@ -42,8 +43,8 @@ options 	COMPAT_43	# and 4.3BSD
 options 	COMPAT_386BSD_MBRPART # recognize old partition ID
 
 # mipsel specific
-options 	COMPAT_ULTRIX	# Ultrix binary compatibility
-options 	EXEC_ECOFF	# Ultrix RISC binaries are ECOFF format
+#options 	COMPAT_ULTRIX	# Ultrix binary compatibility
+#options 	EXEC_ECOFF	# Ultrix RISC binaries are ECOFF format
 
 # File systems
 file-system 	FFS		# fast filesystem
@@ -56,7 +57,7 @@ file-system 	MSDOSFS		# MS-DOS file system
 file-system 	NFS		# Network File System client
 file-system 	FDESC		# /dev/fd
 file-system 	KERNFS		# /kern
-#file-system 	NULLFS		# loopback file system
+file-system 	NULLFS		# loopback file system
 #file-system 	OVERLAY		# overlay file system
 #file-system 	PORTAL		# portal filesystem (still experimental)
 file-system 	PROCFS		# /proc
@@ -65,13 +66,12 @@ file-system 	PROCFS		# /proc
 #file-system	CODA		# Coda File System; also needs vcoda (below)
 
 # File system options
-options 	QUOTA		# FFS quotas
+#options 	QUOTA		# FFS quotas
 #options 	FFS_EI		# FFS Endian Independent support
-#options 	SOFTDEP		# FFS soft updates support.
+options 	SOFTDEP		# FFS soft updates support.
 options 	NFSSERVER	# Network File System server
 #options 	EXT2FS_SYSTEM_FLAGS # makes ext2fs file flags (append and
 				# immutable) behave as system flags.
-
 # Networking options
 #options 	GATEWAY		# IP packet forwarding
 options 	INET		# IP + ICMP + TCP + UDP
@@ -85,7 +85,7 @@ options 	INET6		# IPV6
 #options 	ISO,TPIP	# OSI networking
 #options 	EON		# OSI tunneling over IP
 #options 	CCITT,LLC,HDLC	# X.25
-options 	NETATALK	# AppleTalk networking protocols
+#options 	NETATALK	# AppleTalk networking protocols
 options 	PPP_BSDCOMP	# BSD-Compress compression support for PPP
 options 	PPP_DEFLATE	# Deflate compression support for PPP
 options 	PPP_FILTER	# Active filter support for PPP (requires bpf)
@@ -97,14 +97,16 @@ options 	IPFILTER_LOG	# ipmon(8) log support
 
 # These options enable verbose messages for several subsystems.
 # Warning, these may compile large string tables into the kernel!
-#options 	EISAVERBOSE	# verbose EISA device autoconfig messages
-#options 	PCIVERBOSE	# verbose PCI device autoconfig messages
+options 	EISAVERBOSE	# verbose EISA device autoconfig messages
+options 	PCIVERBOSE	# verbose PCI device autoconfig messages
 #options 	PCI_CONFIG_DUMP	# verbosely dump PCI config space
 options 	SCSIVERBOSE	# human readable SCSI error messages
 
 # Kernel root file system and dump configuration.
 options 	NFS_BOOT_DHCP,NFS_BOOT_BOOTPARAM
 config		netbsd	root on ? type ?
+#config		netbsd	root on sd0a type ffs
+#config		netbsd	root on ? type nfs
 
 #
 # Device configuration
@@ -119,7 +121,7 @@ pica*		at mainbus0	# ACER Pica systems local bus.
 aclock0 	at pica?
 #pc0		at pica?
 #opms0		at pica?
-vga0		at pica?	# Jazz localbus VGA
+#vga0		at pica?	# Jazz localbus VGA
 pckbc0		at pica?	# PC keyboard controller
 com0		at pica?
 com1		at pica?
@@ -129,19 +131,56 @@ sn0		at pica?
 fdc0		at pica?
 fd*		at fdc? drive ?
 
-asc0		at pica?
-scsibus* 	at asc?
-
 #siop0		at pica?
 #scsibus* 	at siop?
 
-#### ISA bus devices
+#### PCI bus devices
 
-isabr*		at mainbus0	# ISA Bus bridge (std ISA bus).
-isa*		at isabr?
+necpb*		at mainbus0	# NEC RISCstation PCI host bridge.
+pci*		at necpb?
 
-com2		at isa? port 0x3f8 irq 4
-com3		at isa? port 0x2f8 irq 3
+#pcivga* 	at pci? dev ? function ?
+#siop*		at pci? dev ? function ?
+#scsibus* 	at siop?
+#de*		at pci? dev ? function ?
+
+ex*		at pci? dev ? function ?	# 3Com 90x[B]
+fxp*		at pci? dev ? function ?	# Intel EtherExpress PRO
+le*		at pci? dev ? function ?	# PCnet-PCI
+ne*		at pci? dev ? function ?	# NE2000-compatible
+tlp*		at pci? dev ? function ?	# DECchip 21x4x (and clones)
+#options 	TLP_MATCH_21040
+#options 	TLP_MATCH_21041
+#options 	TLP_MATCH_21140
+#options 	TLP_MATCH_21142
+
+# IDE and related devices
+# PCI IDE controllers - see pciide(4) for supported hardware.
+# The 0x0001 flag force the driver to use DMA, even if the driver doesn't know
+# how to set up DMA modes for this chip. This may work, or may cause
+# a machine hang with some controllers.
+pciide*		at pci ? dev ? function ? flags 0x0000
+wd*		at pciide? channel ? drive ? flags 0x0000
+atapibus*	at pciide? channel ?
+
+tga*		at pci? dev ? function ?	# DEC ZLXp-E[123] Graphics
+ahc*		at pci? dev ? function ?	# Adaptec [23]94x, aic78x0 SCSI
+scsibus*	at ahc?
+
+#### MII/PHY support
+
+exphy*		at mii? phy ?		# 3Com internal PHYs
+icsphy*		at mii? phy ?		# Integrated Circuit Systems ICS1890
+inphy*		at mii? phy ?		# Intel 82555 PHYs
+iophy*		at mii? phy ?		# Intel 82553 PHYs
+lxtphy*		at mii? phy ?		# Level One LXT-970 PHYs
+nsphy*		at mii? phy ?		# NS83840 PHYs
+nsphyter*	at mii? phy ?		# NS83843 PHYs
+qsphy*		at mii? phy ?		# Quality Semiconductor QS6612 PHYs
+sqphy*		at mii? phy ?		# Seeq 80220/80221/80223 PHYs
+tlphy*		at mii? phy ?		# ThunderLAN PHYs
+tqphy*		at mii? phy ?		# TDK Semiconductor PHYs
+ukphy*		at mii? phy ?		# generic unknown PHYs
 
 #### SCSI bus devices
 
@@ -152,10 +191,17 @@ ch*		at scsibus? target ? lun ?
 ss*		at scsibus? target ? lun ?
 uk*		at scsibus? target ? lun ?
 
+#### ATAPI bus devices
+
+# flags have the same meaning as for IDE drives.
+cd*		at atapibus? drive ? flags 0x0000	# ATAPI CD-ROM drives
+sd*		at atapibus? drive ? flags 0x0000	# ATAPI disk drives
+uk*		at atapibus? drive ? flags 0x0000	# ATAPI unknown
+
 #### Workstation Console attachments
 
-wsdisplay*	at vga?
-#wsdisplay*	at tga?
+#wsdisplay*	at vga?
+wsdisplay*	at tga?
 pckbd*		at pckbc?	# PC keyboard (kbd port)
 wskbd*		at pckbd?
 pms*		at pckbc?	# PS/2-style mouse (aux port)
@@ -179,7 +225,7 @@ pseudo-device	ppp		2	# Point-to-Point Protocol
 pseudo-device	sl		2	# Serial Line IP
 #pseudo-device	strip		2	# Starmode Radio IP (Metricom)
 pseudo-device	tun		2	# network tunneling over tty
-#pseudo-device	gre		2	# generic L3 over IP tunnel
+pseudo-device	gre		2	# generic L3 over IP tunnel
 pseudo-device	ipip		2	# IP Encapsulation within IP (RFC 2003)
 pseudo-device	gif		4	# IPv[46] over IPv[46] tunnel (RFC1933)
 #pseudo-device	faith		1	# IPv[46] tcp relay translation i/f
@@ -187,7 +233,7 @@ pseudo-device	gif		4	# IPv[46] over IPv[46] tunnel (RFC1933)
 
 # miscellaneous pseudo-devices
 pseudo-device	pty		64	# pseudo-terminals
-#pseudo-device	tb		1	# tablet line discipline
+pseudo-device	tb		1	# tablet line discipline
 #pseudo-device	sequencer	1	# MIDI sequencer
 # rnd works; RND_COM does not on port arc yet.
 pseudo-device	rnd			# /dev/random and in-kernel generator

@@ -1,4 +1,4 @@
-#	$NetBSD: P4032,v 1.7 2000/06/14 22:02:19 veego Exp $
+#	$NetBSD: P4032,v 1.8 2000/06/17 07:29:07 soda Exp $
 #	$OpenBSD: P4032,v 1.5 1998/03/16 09:38:36 pefo Exp $
 #
 #	configuration file for Algorithmics P4032 board
@@ -128,7 +128,7 @@ lpt0		at algor?
 pbcpcibr*	at mainbus0	# Algorithmics PCI bus bridge.
 pci*		at pbcpcibr?
 
-#pcivga* 	at pci? dev ? function ?
+#vga* 		at pci? dev ? function ?
 siop*		at pci? dev ? function ?
 scsibus* 	at siop?
 de*		at pci? dev ? function ?
@@ -162,6 +162,7 @@ pseudo-device	tun		2	# network tunneling over tty
 pseudo-device	ipip		2	# IP Encapsulation within IP (RFC 2003)
 pseudo-device	gif		4	# IPv[46] over IPv[46] tunnel (RFC1933)
 #pseudo-device	faith		1	# IPv[46] tcp relay translation i/f
+#pseudo-device	stf		1	# 6to4 IPv6 over IPv4 encapsulation
 
 # miscellaneous pseudo-devices
 pseudo-device	pty		64	# pseudo-terminals
