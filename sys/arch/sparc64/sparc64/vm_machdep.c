@@ -1,4 +1,5 @@
-/*	$NetBSD: vm_machdep.c,v 1.33 2000/10/19 05:28:50 mrg Exp $ */
+/*	$NetBSD: vm_machdep.c,v 1.34 2000/12/07 00:53:29 eeh Exp $ */
+#define DEBUG
 
 /*
  * Copyright (c) 1996
@@ -251,6 +252,7 @@ cpu_fork(p1, p2, stack, stacksize, func, arg)
 #endif
 	if (p1 == curproc) {
 		write_user_windows();
+		rwindow_save(p1);
 
 		/*
 		 * We're in the kernel, so we don't really care about
@@ -266,6 +268,9 @@ cpu_fork(p1, p2, stack, stacksize, func, arg)
 #ifdef DEBUG
 	/* prevent us from having NULL lastcall */
 	opcb->lastcall = cpu_forkname;
+	if (opcb->pcb_nsaved) printf("cpu_fork: nsaved %d\n", opcb->pcb_nsaved);
+#else
+	opcb->lastcall = NULL;
 #endif
 	bcopy((caddr_t)opcb, (caddr_t)npcb, sizeof(struct pcb));
        	if (p1->p_md.md_fpstate) {
