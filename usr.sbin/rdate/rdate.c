@@ -1,4 +1,4 @@
-/*	$NetBSD: rdate.c,v 1.8 1997/10/18 03:51:03 lukem Exp $	*/
+/*	$NetBSD: rdate.c,v 1.9 1997/10/18 11:23:19 lukem Exp $	*/
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -39,7 +39,7 @@
  */
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: rdate.c,v 1.8 1997/10/18 03:51:03 lukem Exp $");
+__RCSID("$NetBSD: rdate.c,v 1.9 1997/10/18 11:23:19 lukem Exp $");
 #endif/* lint */
 
 #include <sys/types.h>
@@ -137,7 +137,7 @@ main(argc, argv)
 	if ((s = socket(AF_INET, SOCK_STREAM, pp->p_proto)) == -1)
 		err(1, "Could not create socket");
 
-	bzero(&sa, sizeof sa);
+	memset(&sa, 0, sizeof sa);
 	sa.sin_family = AF_INET;
 	sa.sin_port = sp->s_port;
 
