@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc.c,v 1.194 2004/08/12 14:36:46 mycroft Exp $ */
+/*	$NetBSD: wdc.c,v 1.195 2004/08/12 20:59:27 thorpej Exp $ */
 
 /*
  * Copyright (c) 1998, 2001, 2003 Manuel Bouyer.  All rights reserved.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.194 2004/08/12 14:36:46 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.195 2004/08/12 20:59:27 thorpej Exp $");
 
 #ifndef WDCDEBUG
 #define WDCDEBUG
@@ -433,7 +433,7 @@ atabusconfig(struct atabus_softc *atabus_sc)
 	/* now that we know the drives, the controller can set its modes */
 	if (wdc->cap & WDC_CAPABILITY_MODE) {
 		wdc->set_modes(chp);
-		wdc_print_modes(chp);
+		ata_print_modes(chp);
 	}
 #if NATARAID > 0
 	if (wdc->cap & WDC_CAPABILITY_RAID)
@@ -1696,7 +1696,7 @@ wdc_downgrade_mode(struct ata_drive_datas *drvp, int flags)
 		return 0;
 
 	wdc->set_modes(chp);
-	wdc_print_modes(chp);
+	ata_print_modes(chp);
 	/* reset the channel, which will shedule all drives for setup */
 	wdc_reset_channel(chp, flags | AT_RST_NOCMD);
 	return 1;
@@ -2230,40 +2230,6 @@ wdc_delref(struct wdc_channel *chp)
 	    adapt->adapt_enable != NULL)
 		(void) (*adapt->adapt_enable)(&wdc->sc_dev, 0);
 	splx(s);
-}
-
-void
-wdc_print_modes(struct wdc_channel *chp)
-{
-	struct wdc_softc *wdc = chp->ch_wdc;
-	int drive;
-	struct ata_drive_datas *drvp;
-
-	for (drive = 0; drive < 2; drive++) {
-		drvp = &chp->ch_drive[drive];
-		if ((drvp->drive_flags & DRIVE) == 0)
-			continue;
-		aprint_normal("%s(%s:%d:%d): using PIO mode %d",
-			drvp->drv_softc->dv_xname,
-			wdc->sc_dev.dv_xname,
-			chp->ch_channel, drive, drvp->PIO_mode);
-		if (drvp->drive_flags & DRIVE_DMA)
-			aprint_normal(", DMA mode %d", drvp->DMA_mode);
-		if (drvp->drive_flags & DRIVE_UDMA) {
-			aprint_normal(", Ultra-DMA mode %d", drvp->UDMA_mode);
-			if (drvp->UDMA_mode == 2)
-				aprint_normal(" (Ultra/33)");
-			else if (drvp->UDMA_mode == 4)
-				aprint_normal(" (Ultra/66)");
-			else if (drvp->UDMA_mode == 5)
-				aprint_normal(" (Ultra/100)");
-			else if (drvp->UDMA_mode == 6)
-				aprint_normal(" (Ultra/133)");
-		}
-		if (drvp->drive_flags & (DRIVE_DMA | DRIVE_UDMA))
-			aprint_normal(" (using DMA data transfers)");
-		aprint_normal("\n");
-	}
 }
 
 void

@@ -1,4 +1,4 @@
-/*      $NetBSD: ata.c,v 1.37 2004/08/12 05:02:50 thorpej Exp $      */
+/*      $NetBSD: ata.c,v 1.38 2004/08/12 20:59:27 thorpej Exp $      */
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.37 2004/08/12 05:02:50 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.38 2004/08/12 20:59:27 thorpej Exp $");
 
 #ifndef WDCDEBUG
 #define WDCDEBUG
@@ -494,6 +494,40 @@ ata_dmaerr(struct ata_drive_datas *drvp, int flags)
 	if (drvp->n_xfers > NXFER) {
 		drvp->n_dmaerrs = 1; /* just got an error */
 		drvp->n_xfers = 1; /* restart counting from this error */
+	}
+}
+
+void
+ata_print_modes(struct wdc_channel *chp)
+{
+	struct wdc_softc *wdc = chp->ch_wdc;
+	int drive;
+	struct ata_drive_datas *drvp;
+
+	for (drive = 0; drive < 2; drive++) {
+		drvp = &chp->ch_drive[drive];
+		if ((drvp->drive_flags & DRIVE) == 0)
+			continue;
+		aprint_normal("%s(%s:%d:%d): using PIO mode %d",
+			drvp->drv_softc->dv_xname,
+			wdc->sc_dev.dv_xname,
+			chp->ch_channel, drive, drvp->PIO_mode);
+		if (drvp->drive_flags & DRIVE_DMA)
+			aprint_normal(", DMA mode %d", drvp->DMA_mode);
+		if (drvp->drive_flags & DRIVE_UDMA) {
+			aprint_normal(", Ultra-DMA mode %d", drvp->UDMA_mode);
+			if (drvp->UDMA_mode == 2)
+				aprint_normal(" (Ultra/33)");
+			else if (drvp->UDMA_mode == 4)
+				aprint_normal(" (Ultra/66)");
+			else if (drvp->UDMA_mode == 5)
+				aprint_normal(" (Ultra/100)");
+			else if (drvp->UDMA_mode == 6)
+				aprint_normal(" (Ultra/133)");
+		}
+		if (drvp->drive_flags & (DRIVE_DMA | DRIVE_UDMA))
+			aprint_normal(" (using DMA data transfers)");
+		aprint_normal("\n");
 	}
 }
 
