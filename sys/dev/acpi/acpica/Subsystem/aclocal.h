@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Name: aclocal.h - Internal data types used across the ACPI subsystem
- *       xRevision: 188 $
+ *       xRevision: 189 $
  *
  *****************************************************************************/
 
@@ -390,26 +390,29 @@ typedef struct acpi_create_field_info
  *
  ****************************************************************************/
 
-/* Information about each GPE register block */
+/* Information about each particular GPE level */
 
-typedef struct acpi_gpe_block_info
+typedef struct acpi_gpe_event_info
 {
-    ACPI_GENERIC_ADDRESS    *BlockAddress;
-    UINT16                  RegisterCount;
-    UINT8                   BlockBaseNumber;
+    ACPI_NAMESPACE_NODE             *MethodNode;    /* Method node for this GPE level */
+    ACPI_GPE_HANDLER                Handler;        /* Address of handler, if any */
+    void                            *Context;       /* Context to be passed to handler */
+    struct acpi_gpe_register_info   *RegisterInfo;
+    UINT8                           Type;           /* Level or Edge */
+    UINT8                           BitMask;
 
-} ACPI_GPE_BLOCK_INFO;
+} ACPI_GPE_EVENT_INFO;
 
 /* Information about a particular GPE register pair */
 
 typedef struct acpi_gpe_register_info
 {
-    ACPI_GENERIC_ADDRESS    StatusAddress;  /* Address of status reg */
-    ACPI_GENERIC_ADDRESS    EnableAddress;  /* Address of enable reg */
-    UINT8                   Status;         /* Current value of status reg */
-    UINT8                   Enable;         /* Current value of enable reg */
-    UINT8                   WakeEnable;     /* Mask of bits to keep enabled when sleeping */
-    UINT8                   BaseGpeNumber;  /* Base GPE number for this register */
+    ACPI_GENERIC_ADDRESS            StatusAddress;  /* Address of status reg */
+    ACPI_GENERIC_ADDRESS            EnableAddress;  /* Address of enable reg */
+    UINT8                           Status;         /* Current value of status reg */
+    UINT8                           Enable;         /* Current value of enable reg */
+    UINT8                           WakeEnable;     /* Mask of bits to keep enabled when sleeping */
+    UINT8                           BaseGpeNumber;  /* Base GPE number for this register */
 
 } ACPI_GPE_REGISTER_INFO;
 
@@ -418,24 +421,21 @@ typedef struct acpi_gpe_register_info
 #define ACPI_GPE_EDGE_TRIGGERED         2
 
 
-/* Information about each particular GPE level */
+/* Information about each GPE register block */
 
-typedef struct acpi_gpe_number_info
+typedef struct acpi_gpe_block_info
 {
-    ACPI_NAMESPACE_NODE     *MethodNode;    /* Method node for this GPE level */
-    ACPI_GPE_HANDLER        Handler;        /* Address of handler, if any */
-    void                    *Context;       /* Context to be passed to handler */
-    UINT8                   Type;           /* Level or Edge */
-    UINT8                   BitMask;
+    struct acpi_gpe_block_info      *Previous;
+    struct acpi_gpe_block_info      *Next;
+    struct acpi_gpe_block_info      *NextOnInterrupt;
+    ACPI_GPE_REGISTER_INFO          *RegisterInfo;
+    ACPI_GPE_EVENT_INFO             *EventInfo;
+    ACPI_GENERIC_ADDRESS            BlockAddress;
+    UINT32                          RegisterCount;
+    UINT8                           BlockBaseNumber;
 
-} ACPI_GPE_NUMBER_INFO;
+} ACPI_GPE_BLOCK_INFO;
 
-
-typedef struct acpi_gpe_index_info
-{
-    UINT8                   NumberIndex;
-
-} ACPI_GPE_INDEX_INFO;
 
 /* Information about each particular fixed event */
 

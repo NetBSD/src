@@ -2,7 +2,7 @@
 /******************************************************************************
  *
  * Name: hwsleep.c - ACPI Hardware Sleep/Wake Interface
- *              xRevision: 49 $
+ *              xRevision: 52 $
  *
  *****************************************************************************/
 
@@ -116,7 +116,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hwsleep.c,v 1.5 2003/02/13 14:16:22 kanaoka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hwsleep.c,v 1.6 2003/03/04 17:25:21 kochi Exp $");
 
 #include "acpi.h"
 
@@ -339,7 +339,7 @@ AcpiEnterSleepState (
 
     /* Get current value of PM1A control */
 
-    Status = AcpiHwRegisterRead (ACPI_MTX_LOCK, ACPI_REGISTER_PM1_CONTROL, &PM1AControl);
+    Status = AcpiHwRegisterRead (ACPI_MTX_DO_NOT_LOCK, ACPI_REGISTER_PM1_CONTROL, &PM1AControl);
     if (ACPI_FAILURE (Status))
     {
         return_ACPI_STATUS (Status);
@@ -358,13 +358,13 @@ AcpiEnterSleepState (
 
     /* Write #1: fill in SLP_TYP data */
 
-    Status = AcpiHwRegisterWrite (ACPI_MTX_LOCK, ACPI_REGISTER_PM1A_CONTROL, PM1AControl);
+    Status = AcpiHwRegisterWrite (ACPI_MTX_DO_NOT_LOCK, ACPI_REGISTER_PM1A_CONTROL, PM1AControl);
     if (ACPI_FAILURE (Status))
     {
         return_ACPI_STATUS (Status);
     }
 
-    Status = AcpiHwRegisterWrite (ACPI_MTX_LOCK, ACPI_REGISTER_PM1B_CONTROL, PM1BControl);
+    Status = AcpiHwRegisterWrite (ACPI_MTX_DO_NOT_LOCK, ACPI_REGISTER_PM1B_CONTROL, PM1BControl);
     if (ACPI_FAILURE (Status))
     {
         return_ACPI_STATUS (Status);
@@ -379,13 +379,13 @@ AcpiEnterSleepState (
 
     ACPI_FLUSH_CPU_CACHE ();
 
-    Status = AcpiHwRegisterWrite (ACPI_MTX_LOCK, ACPI_REGISTER_PM1A_CONTROL, PM1AControl);
+    Status = AcpiHwRegisterWrite (ACPI_MTX_DO_NOT_LOCK, ACPI_REGISTER_PM1A_CONTROL, PM1AControl);
     if (ACPI_FAILURE (Status))
     {
         return_ACPI_STATUS (Status);
     }
 
-    Status = AcpiHwRegisterWrite (ACPI_MTX_LOCK, ACPI_REGISTER_PM1B_CONTROL, PM1BControl);
+    Status = AcpiHwRegisterWrite (ACPI_MTX_DO_NOT_LOCK, ACPI_REGISTER_PM1B_CONTROL, PM1BControl);
     if (ACPI_FAILURE (Status))
     {
         return_ACPI_STATUS (Status);
@@ -403,7 +403,7 @@ AcpiEnterSleepState (
          */
         AcpiOsStall (10000000);
 
-        Status = AcpiHwRegisterWrite (ACPI_MTX_LOCK, ACPI_REGISTER_PM1_CONTROL,
+        Status = AcpiHwRegisterWrite (ACPI_MTX_DO_NOT_LOCK, ACPI_REGISTER_PM1_CONTROL,
                     SleepEnableRegInfo->AccessBitMask);
         if (ACPI_FAILURE (Status))
         {
@@ -415,7 +415,7 @@ AcpiEnterSleepState (
 
     do
     {
-        Status = AcpiGetRegister (ACPI_BITREG_WAKE_STATUS, &InValue, ACPI_MTX_LOCK);
+        Status = AcpiGetRegister (ACPI_BITREG_WAKE_STATUS, &InValue, ACPI_MTX_DO_NOT_LOCK);
         if (ACPI_FAILURE (Status))
         {
             return_ACPI_STATUS (Status);
@@ -425,7 +425,7 @@ AcpiEnterSleepState (
 
     } while (!InValue);
 
-    Status = AcpiSetRegister (ACPI_BITREG_ARB_DISABLE, 0, ACPI_MTX_LOCK);
+    Status = AcpiSetRegister (ACPI_BITREG_ARB_DISABLE, 0, ACPI_MTX_DO_NOT_LOCK);
     if (ACPI_FAILURE (Status))
     {
         return_ACPI_STATUS (Status);
@@ -433,6 +433,52 @@ AcpiEnterSleepState (
 
     return_ACPI_STATUS (AE_OK);
 }
+
+
+/******************************************************************************
+ *
+ * FUNCTION:    AcpiEnterSleepStateS4bios
+ *
+ * PARAMETERS:  None
+ *
+ * RETURN:      Status
+ *
+ * DESCRIPTION: Perform a S4 bios request.
+ *              THIS FUNCTION MUST BE CALLED WITH INTERRUPTS DISABLED
+ *
+ ******************************************************************************/
+
+ACPI_STATUS
+AcpiEnterSleepStateS4bios (
+    void)
+{
+    UINT32                  InValue;
+    ACPI_STATUS             Status;
+
+
+    ACPI_FUNCTION_TRACE ("AcpiEnterSleepStateS4bios");
+
+    AcpiSetRegister (ACPI_BITREG_WAKE_STATUS, 1, ACPI_MTX_DO_NOT_LOCK);
+    AcpiHwClearAcpiStatus();
+
+    AcpiHwDisableNonWakeupGpes();
+
+    ACPI_FLUSH_CPU_CACHE();
+
+    Status = AcpiOsWritePort (AcpiGbl_FADT->SmiCmd, (ACPI_INTEGER) AcpiGbl_FADT->S4BiosReq, 8);
+
+    do {
+        AcpiOsStall(1000);
+        Status = AcpiGetRegister (ACPI_BITREG_WAKE_STATUS, &InValue, ACPI_MTX_DO_NOT_LOCK);
+        if (ACPI_FAILURE (Status))
+        {
+            return_ACPI_STATUS (Status);
+        }
+    } while (!InValue);
+
+    return_ACPI_STATUS (AE_OK);
+}
+
 
 /******************************************************************************
  *
