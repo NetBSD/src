@@ -1,4 +1,4 @@
-/*	$NetBSD: vga_raster.c,v 1.12 2003/07/14 15:47:12 lukem Exp $	*/
+/*	$NetBSD: vga_raster.c,v 1.13 2004/07/30 21:46:01 jmmv Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Bang Jun-Young
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vga_raster.c,v 1.12 2003/07/14 15:47:12 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vga_raster.c,v 1.13 2004/07/30 21:46:01 jmmv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1329,17 +1329,23 @@ vga_raster_eraserows(void *id, int startrow, int nrows, long fillattr)
 	rascount = count * scr->type->fontheight;
 
 	if (scr->active) {
+		u_int8_t bgcolor = (fillattr >> 4) & 0x0F;
+
 		/* Paint background. */
 		vga_gdc_write(vh, mode, 0x02);
-		if (scr->type->ncols % 4 == 0)
+		if (scr->type->ncols % 4 == 0) {
+			u_int32_t fill = bgcolor | (bgcolor << 8) |
+			    (bgcolor << 16) | (bgcolor << 24);
 			/* We can speed up I/O */
 			for (i = rasoff; i < rasoff + rascount; i += 4)
 				bus_space_write_4(memt, memh,
-				    scr->dispoffset + i, fillattr >> 4);
-		else
+				    scr->dispoffset + i, fill);
+		} else {
+			u_int16_t fill = bgcolor | (bgcolor << 8);
 			for (i = rasoff; i < rasoff + rascount; i += 2)
 				bus_space_write_2(memt, memh,
-				    scr->dispoffset + i, fillattr >> 4);
+				    scr->dispoffset + i, fill);
+		}
 	}
 	for (i = 0; i < count; i++) {
 		scr->mem[off + i].ch = ' ';
