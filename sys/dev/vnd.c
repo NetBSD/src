@@ -191,7 +191,7 @@ vnstrategy(bp)
 		return;
 	}
 	bn = dbtob(bn);
-#ifdef BSD44
+#if (BSD > 199103)
  	bsize = vn->sc_vp->v_mount->mnt_stat.f_iosize;
 #else
 	bsize = vn->sc_vp->v_mount->mnt_stat.f_bsize;
@@ -206,7 +206,7 @@ vnstrategy(bp)
 		nbp = getvnbuf();
 		off = bn % bsize;
 		sz = min(bsize - off, resid);
-#ifdef BSD44
+#if (BSD > 199103)
 		(void) VOP_BMAP(vn->sc_vp, bn / bsize, &vp, &nbn, NULL);
 #else
 		(void) VOP_BMAP(vn->sc_vp, bn / bsize, &vp, &nbn);
@@ -232,9 +232,9 @@ vnstrategy(bp)
 		nbp->b_pfcent = (int) bp;	/* XXX */
 		nbp->b_rcred = vn->sc_cred;	/* XXX crdup? */
 		nbp->b_wcred = vn->sc_cred;	/* XXX crdup? */
-#ifdef BSD44
 		nbp->b_dirtyoff = bp->b_dirtyoff;
 		nbp->b_dirtyend = bp->b_dirtyend;
+#if (BSD > 199103)
 		nbp->b_validoff = bp->b_validoff;
 		nbp->b_validend = bp->b_validend;
 #endif
@@ -404,7 +404,7 @@ vnioctl(dev, cmd, data, flag, p)
 		 * weed out directories, sockets, etc. so we don't
 		 * have to worry about them.
 		 */
-#ifdef BSD44
+#if (BSD > 199103)
 		NDINIT(&nd, LOOKUP, FOLLOW, UIO_USERSPACE, vio->vn_file, p);
 		if (error = vn_open(&nd, FREAD|FWRITE, 0))
 			return(error);
@@ -488,7 +488,7 @@ vnthrottle(vn, vp)
 	struct vnode *vp;
 {
 #ifdef NFSCLIENT
-#ifdef BSD44
+#if (BSD > 199103)
 	extern int (**nfsv2_vnodeop_p)();
 	if (vp->v_op == nfsv2_vnodeop_p)
 #else
