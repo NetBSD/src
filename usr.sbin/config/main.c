@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.49 2000/10/02 19:57:23 cgd Exp $	*/
+/*	$NetBSD: main.c,v 1.50 2000/10/08 11:33:40 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -72,7 +72,9 @@ int	vflag;				/* verbose output */
 
 int	yyparse(void);
 
+#ifndef MAKE_BOOTSTRAP
 extern int yydebug;
+#endif
 
 static struct hashtab *mkopttab;
 static struct nvlist **nextopt;
@@ -115,9 +117,11 @@ main(int argc, char **argv)
 	while ((ch = getopt(argc, argv, "Dgpvb:s:")) != -1) {
 		switch (ch) {
 
+#ifndef MAKE_BOOTSTRAP
 		case 'D':
 			yydebug = 1;
 			break;
+#endif
 
 		case 'g':
 			/*
