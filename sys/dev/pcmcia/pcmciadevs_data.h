@@ -1,10 +1,10 @@
-/*	$NetBSD: pcmciadevs_data.h,v 1.159 2002/01/17 09:56:44 joda Exp $	*/
+/*	$NetBSD: pcmciadevs_data.h,v 1.160 2002/01/30 11:24:22 is Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcmciadevs,v 1.157 2002/01/13 10:38:47 aymeric Exp 
+ *	NetBSD: pcmciadevs,v 1.160 2002/01/30 11:20:23 is Exp 
  */
 /* $FreeBSD: src/sys/dev/pccard/pccarddevs,v 1.20 2001/11/19 05:02:55 imp Exp $*/
 
@@ -1177,6 +1177,13 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    "IO-DATA PCLA/T",	}
 	,
 	{
+	    PCMCIA_VENDOR_UNKNOWN, PCMCIA_PRODUCT_LANTECH_FASTNETTX,
+	    PCMCIA_CIS_LANTECH_FASTNETTX,
+	    0,
+	    "Lantech Computer Company",
+	    "Lantex Fastnet/TX",	}
+	,
+	{
 	    PCMCIA_VENDOR_UNKNOWN, PCMCIA_PRODUCT_LINKSYS_ECARD_2,
 	    PCMCIA_CIS_LINKSYS_ECARD_2,
 	    0,
@@ -1709,6 +1716,14 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    NULL,
 	},
 	{
+	    PCMCIA_VENDOR_LINKSYS2,
+	    PCMCIA_KNOWNDEV_NOPROD,
+	    PCMCIA_CIS_INVALID,
+	    0,
+	    "The Linksys Group",
+	    NULL,
+	},
+	{
 	    PCMCIA_VENDOR_IODATA2,
 	    PCMCIA_KNOWNDEV_NOPROD,
 	    PCMCIA_CIS_INVALID,
@@ -1762,6 +1777,14 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    PCMCIA_CIS_INVALID,
 	    0,
 	    "Dual",
+	    NULL,
+	},
+	{
+	    PCMCIA_VENDOR_EDIMAX,
+	    PCMCIA_KNOWNDEV_NOPROD,
+	    PCMCIA_CIS_INVALID,
+	    0,
+	    "Edimax Technology Inc.",
 	    NULL,
 	},
 	{
@@ -1853,27 +1876,11 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    NULL,
 	},
 	{
-	    PCMCIA_VENDOR_LINKSYS2,
-	    PCMCIA_KNOWNDEV_NOPROD,
-	    PCMCIA_CIS_INVALID,
-	    0,
-	    "The Linksys Group",
-	    NULL,
-	},
-	{
 	    PCMCIA_VENDOR_ELSA,
 	    PCMCIA_KNOWNDEV_NOPROD,
 	    PCMCIA_CIS_INVALID,
 	    0,
 	    "Elsa",
-	    NULL,
-	},
-	{
-	    PCMCIA_VENDOR_EDIMAX,
-	    PCMCIA_KNOWNDEV_NOPROD,
-	    PCMCIA_CIS_INVALID,
-	    0,
-	    "Edimax Technology Inc.",
 	    NULL,
 	},
 	{
@@ -1978,6 +1985,14 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    PCMCIA_CIS_INVALID,
 	    0,
 	    "Intersil",
+	    NULL,
+	},
+	{
+	    PCMCIA_VENDOR_LANTECH,
+	    PCMCIA_KNOWNDEV_NOPROD,
+	    PCMCIA_CIS_INVALID,
+	    0,
+	    "Lantech Computer Company",
 	    NULL,
 	},
 	{

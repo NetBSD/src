@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ne_pcmcia.c,v 1.85 2002/01/13 10:41:11 aymeric Exp $	*/
+/*	$NetBSD: if_ne_pcmcia.c,v 1.86 2002/01/30 11:24:22 is Exp $	*/
 
 /*
  * Copyright (c) 1997 Marc Horowitz.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ne_pcmcia.c,v 1.85 2002/01/13 10:41:11 aymeric Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ne_pcmcia.c,v 1.86 2002/01/30 11:24:22 is Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -233,6 +233,11 @@ static const struct ne2000dev {
      * match with this.  FNW-3700T won't match above entries due to
      * MAC address check.
      */
+    { PCMCIA_STR_LANTECH_FASTNETTX,
+      PCMCIA_VENDOR_LANTECH, PCMCIA_PRODUCT_LANTECH_FASTNETTX,
+      PCMCIA_CIS_LANTECH_FASTNETTX,
+      0, -1, { 0x00, 0x04, 0x1c }, NE2000DVF_AX88190 },
+
     { PCMCIA_STR_PLANEX_FNW3700T, 
       PCMCIA_VENDOR_LINKSYS, PCMCIA_PRODUCT_LINKSYS_COMBO_ECARD,
       PCMCIA_CIS_PLANEX_FNW3700T, 
