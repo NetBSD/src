@@ -27,9 +27,9 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\"	$NetBSD: intro.4,v 1.9 2001/08/26 14:23:26 wiz Exp $
+.\"	$NetBSD: intro.4,v 1.10 2001/09/12 05:34:39 gmcgarry Exp $
 .\"
-.Dd August 26, 2001
+.Dd September 12, 2001
 .Dt INTRO 4 pmax
 .Os
 .Sh NAME
@@ -96,6 +96,8 @@ The following systems are supported:
 .Bl -tag -width speaker -offset indent -compact
 .It DECstation 2100 and 3100
 also known as "pmax". The 2100 and 3100 differ only in CPU clock speed.
+.It DECsystem 5100
+also known as "MIPSMATE".
 .It DECstation 5000/200
 also known as "3MAX".
 The 5000/200 has a 25 MHz R3000 and is the first-generation TurboChannel
@@ -119,10 +121,8 @@ The 5900 is an expanded-cabinet version of the 5000/240.
 .Pp
 TurboChannel systems (except the 5000/200) can be upgraded to an
 R4000 or R4400 CPU by upgrading the CPU daughterboard.
-These systems (5000/150, 5000/50, and 5000/260) are not supported.
 .Pp
-The DECstation 5100 and the Qbus-based DECsystem 5400 and 5500 are
-not supported.
+The Qbus-based DECsystem 5400 and 5500 are not supported.
 .Pp
 The multi-processor XMI-bus DECsystem 5800 is not supported.
 .Sh LIST OF DEVICES
@@ -134,6 +134,8 @@ Not all supported devices are listed.
 .It asc
 NCR 53c94-based SCSI interface, either on DECstation 5000-series
 baseboard or PMAZ-AA SCSI option card.
+.It bba
+baseboard audio on 5000/xx systems.
 .It dc
 serial driver for DEC custom four-port serial device (dc7085 DZ-11 clone)
 on the baseboard of DECstation 2100/31000, 5100, and 5000/200 systems.
@@ -179,8 +181,8 @@ either documentation or sample hardware:
 .It LoFi	DEC Western Research Labs audio card
 .El
 .Pp
-The floppy-disk drive and sound hardware on the MAXINE baseboard
-are currently not supported.
+The floppy-disk drive on the MAXINE baseboard is currently not
+supported.
 .Sh HISTORY
 This
 .Tn pmax
