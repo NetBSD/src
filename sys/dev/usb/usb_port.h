@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_port.h,v 1.20 2000/01/16 15:36:28 augustss Exp $	*/
+/*	$NetBSD: usb_port.h,v 1.21 2000/02/02 07:34:00 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_port.h,v 1.21 1999/11/17 22:33:47 n_hibma Exp $	*/
 
 /*
@@ -69,6 +69,7 @@ typedef struct device *device_ptr_t;
 #define USBBASEDEVICE struct device
 #define USBDEV(bdev) (&(bdev))
 #define USBDEVNAME(bdev) ((bdev).dv_xname)
+#define USBDEVUNIT(bdev) ((bdev).dv_unit)
 #define USBDEVPTRNAME(bdevptr) ((bdevptr)->dv_xname)
 #define USBGETSOFTC(d) ((void *)(d))
 
@@ -197,6 +198,7 @@ typedef struct device device_ptr_t;
 #define USBBASEDEVICE struct device
 #define USBDEV(bdev) (&(bdev))
 #define USBDEVNAME(bdev) ((bdev).dv_xname)
+#define USBDEVUNIT(bdev) ((bdev).dv_unit)
 #define USBDEVPTRNAME(bdevptr) ((bdevptr)->dv_xname)
 #define USBGETSOFTC(d) ((void *)(d))
 
@@ -292,6 +294,7 @@ __CONCAT(dname,_detach)(self, flags) \
 #define USBBASEDEVICE device_t
 #define USBDEV(bdev) (bdev)
 #define USBDEVNAME(bdev) device_get_nameunit(bdev)
+#define USBDEVUNIT(bdev) device_get_unit(bdev)
 #define USBDEVPTRNAME(bdev) device_get_nameunit(bdev)
 #define USBGETSOFTC(bdev) (device_get_softc(bdev))
 
