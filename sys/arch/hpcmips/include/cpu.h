@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.1.1.1 1999/09/16 12:23:22 takemura Exp $	*/
+/*	$NetBSD: cpu.h,v 1.2 1999/11/21 07:04:33 uch Exp $	*/
 
 #ifndef __HPCMIPS_CPU_H
 #define __HPCMIPS_CPU_H
@@ -12,9 +12,10 @@
 #include <mips/cpu.h>
 #include <mips/cpuregs.h> /* XXX */
 
-#if 0
-#define	INT_MASK_REAL_DEV	MIPS_HARD_INT_MASK	/* XXX */
-#endif
+#ifdef ENABLE_MIPS_TX3900
+#define	INT_MASK_REAL_DEV	MIPS_HARD_INT_MASK
+#else
 #define	INT_MASK_REAL_DEV	MIPS3_HARD_INT_MASK	/* XXX */
+#endif
 
 #endif __HPCMIPS_CPU_H

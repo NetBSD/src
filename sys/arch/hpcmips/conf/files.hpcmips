@@ -1,4 +1,4 @@
-#	$NetBSD: files.hpcmips,v 1.5 1999/11/04 13:11:23 takemura Exp $
+#	$NetBSD: files.hpcmips,v 1.6 1999/11/21 07:04:32 uch Exp $
 
 # maxpartitions must be first item in files.${ARCH}.
 maxpartitions 8
@@ -33,11 +33,13 @@ file arch/hpcmips/hpcmips/cpu.c		cpu
 
 # CPU support option headers
 defopt	VR41X1
+defopt	TX39XX
 
 #
 # CPU-dependent files
 #
-file	arch/hpcmips/vr/vr.c	vr41x1	# NEC VR4000 series
+file	arch/hpcmips/vr/vr.c		vr41x1	# NEC VR4000 series
+file	arch/hpcmips/tx/tx39.c		tx39xx	# TOSHIBA TX3900 series
 
 file	arch/hpcmips/hpcmips/autoconf.c
 file	arch/hpcmips/hpcmips/conf.c
@@ -110,13 +112,120 @@ file arch/hpcmips/vr/bcu_vrip.c			vrbcu
 device vrkiu: wskbddev
 attach vrkiu at vrip
 file arch/hpcmips/vr/vrkiu.c			vrkiu needs-flag
-file dev/pckbc/wskbdmap_mfii.c			vrkiu
+#
+#	XXX files.pckbc XXX
+#
+device	pckbd: wskbddev
+attach	pckbd at pckbc
+file	dev/pckbc/pckbd.c		pckbd	needs-flag
+file	dev/pckbc/wskbdmap_mfii.c		pckbd | vrkiu | cckbd
+defopt	PCKBD_LAYOUT
 
 device vrpmu
 attach vrpmu at vrip
 file arch/hpcmips/vr/vrpmu.c			vrpmu
 
-# Real-time clock (not optional)
+#
+#	TOSHIBA TX3912/3922
+#
+defopt TX39_DEBUG
+defopt TX39_WATCHDOGTIMER
+defopt TX39ICUDEBUG
+defopt USE_POLL
+defopt CCKBD_POLL
+defopt TX39BIUDEBUG
+defopt TX39IODEBUG
+defopt TX39POWERDEBUG
+defopt TX39UARTDEBUG
+defopt IT8368DEBUG
+
+device txsim { }
+device txcsbusif {[platform = -1]}
+device txcomif {[slot = -1]}
+
+attach txsim at mainbus
+file arch/hpcmips/tx/txsim.c		txsim
+
+device tx39biu: txcsbusif
+attach tx39biu at txsim
+file arch/hpcmips/tx/tx39biu.c		tx39biu
+
+device txcsbus {[regcs=-1], [regcsbase=0], [regcssize=-1], [regcswidth=-1], [iocs=-1], [iocsbase=0], [iocssize=-1], [iocswidth=-1], [memcs=-1], [memcsbase=0], [memcssize=-1], [memcswidth=-1], [irq1=-1], [irq2=-1], [irq3=-1]}
+attach txcsbus at txcsbusif
+file arch/hpcmips/tx/txcsbus.c		txcsbus
+
+device tx39icu
+attach tx39icu at txsim
+file arch/hpcmips/tx/tx39icu.c		tx39icu
+
+device tx39power
+attach tx39power at txsim
+file arch/hpcmips/tx/tx39power.c	tx39power
+
+device tx39clock
+attach tx39clock at txsim
+file arch/hpcmips/tx/tx39clock.c	tx39clock
+
+device tx3912video: mainbus	# XXX crazy XXX
+attach tx3912video at txsim
+file arch/hpcmips/tx/tx3912video.c	tx3912video
+
+device tx39io
+attach tx39io at txsim
+file arch/hpcmips/tx/tx39io.c		tx39io
+
+device tx39uart: txcomif
+attach tx39uart at txsim
+file arch/hpcmips/tx/tx39uart.c		tx39uart	needs-flag
+
+device txcom
+attach txcom at txcomif
+file arch/hpcmips/tx/txcom.c		txcom
+
+#	ITE 8368E PCMCIA controller
+device it8368e: pcmciabus
+attach it8368e at txcsbus
+file arch/hpcmips/dev/it8368.c	it8368e
+
+#	Compaq C-series keyboard
+device cckbd: wskbddev
+attach cckbd at txcsbus
+file arch/hpcmips/dev/cckbd.c		cckbd		needs-flag
+
+#	TOSHIBA TC6358E(Plum2)
+device plumif {}
+device plum: plumif
+attach plum at txcsbus
+file arch/hpcmips/dev/plum.c		plum
+
+device plumicu
+attach plumicu at plumif
+file arch/hpcmips/dev/plumicu.c		plumicu
+
+device plumpower
+attach plumpower at plumif
+file arch/hpcmips/dev/plumpower.c	plumpower
+
+device plumvideo: mainbus	# XXX crazy XXX
+attach plumvideo at plumif
+file arch/hpcmips/dev/plumvideo.c	plumvideo
+
+device plumpcmcia: pcmciabus
+attach plumpcmcia at plumif
+file arch/hpcmips/dev/plumpcmcia.c	plumpcmcia
+
+device plumiobusif {[platform = -1], [slot = -1]}
+device plumiobus: plumiobusif
+attach plumiobus at plumif
+file arch/hpcmips/dev/plumiobus.c	plumiobus
+
+device plumisab: isabus
+attach plumisab at plumiobusif
+file arch/hpcmips/isa/plumisa_machdep.c	plumisab
+
+#
+#	Real-time clock (not optional)
+#
 file	arch/hpcmips/hpcmips/clock.c
 file	dev/clock_subr.c
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.1.1.1 1999/09/16 12:23:20 takemura Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.2 1999/11/21 07:04:33 uch Exp $	*/
 
 /*-
  * Copyright (c) 1999
@@ -33,6 +33,9 @@
  * SUCH DAMAGE.
  *
  */
+
+#include "opt_vr41x1.h"
+#include "opt_tx39xx.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -82,14 +85,14 @@ bus_space_tag_t system_bus_iot; /* Serial console requires this */
 bus_space_tag_t
 mb_bus_space_init()
 {
-    bus_space_tag_t iot;
-    iot = hpcmips_alloc_bus_space_tag();
-    strcpy(iot->t_name, "System internal");
-    iot->t_base = 0x0;
-    iot->t_size = 0xffffffff;
-    iot->t_extent = 0; /* No extent for bootstraping */
-    system_bus_iot = iot;
-    return iot;
+	bus_space_tag_t iot;
+	iot = hpcmips_alloc_bus_space_tag();
+	strcpy(iot->t_name, "System internal");
+	iot->t_base = 0x0;
+	iot->t_size = 0xffffffff;
+	iot->t_extent = 0; /* No extent for bootstraping */
+	system_bus_iot = iot;
+	return iot;
 }
 
 static void
@@ -107,6 +110,9 @@ mbattach(parent, self, aux)
 	ma.ma_name = "cpu";
 	config_found(mb, &ma, mbprint);
 
+#if defined VR41X1 && defined TX39XX
+#error misconfiguration
+#elif defined VR41X1
 	/* Attach frame buffer */
 	ma.ma_name = "fb";
 	config_found(mb, &ma, mbprint);
@@ -117,6 +123,9 @@ mbattach(parent, self, aux)
 	    mb_bus_space_init();
 	hpcmips_init_bus_space_extent(system_bus_iot); /* Now prepare extent */
 	ma.ma_iot = system_bus_iot;
+#elif defined TX39XX
+	ma.ma_name = "txsim";
+#endif
 	config_found(mb, &ma, mbprint);
 }
 
