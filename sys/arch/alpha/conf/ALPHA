@@ -1,4 +1,4 @@
-# $NetBSD: ALPHA,v 1.123 2000/05/23 02:04:28 thorpej Exp $
+# $NetBSD: ALPHA,v 1.124 2000/05/25 16:33:13 mycroft Exp $
 #
 # Alpha kernel with all the options you'd want, and more.
 
@@ -6,7 +6,7 @@ include	"arch/alpha/conf/std.alpha"
 
 maxusers 32
 
-ident		"ALPHA-$Revision: 1.123 $"
+ident		"ALPHA-$Revision: 1.124 $"
 
 # CPU Support
 #options 	DEC_2000_300	# "Jensen":	2000/300 (DECpc AXP 150)
@@ -88,6 +88,8 @@ options 	NETATALK	# AppleTalk networking protocols
 options 	PPP_BSDCOMP	# BSD-Compress compression support for PPP
 options 	PPP_DEFLATE	# Deflate compression support for PPP
 options 	PPP_FILTER	# Active filter support for PPP (requires bpf)
+options 	PFIL_HOOKS	# pfil(9) packet filter hooks
+options 	IPFILTER_LOG	# ipmon(8) log support
 
 # Compatibility with 4.2BSD implementation of TCP/IP.  Not suggested.
 #options 	TCP_COMPAT_42
