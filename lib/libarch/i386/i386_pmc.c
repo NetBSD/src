@@ -1,4 +1,4 @@
-/*	$NetBSD: i386_pmc.c,v 1.2 2000/09/13 05:20:47 thorpej Exp $	*/
+/*	$NetBSD: i386_pmc.c,v 1.3 2000/09/13 05:22:12 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000 Zembu Labs, Inc.
@@ -37,7 +37,7 @@
  * Interface to x86 CPU Performance Counters.
  */
 
-#include <sys/param.h>
+#include <sys/types.h>
 
 #include <machine/sysarch.h>
 
