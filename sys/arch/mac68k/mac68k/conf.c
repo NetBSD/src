@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.29 1995/11/21 03:39:45 briggs Exp $	*/
+/*	$NetBSD: conf.c,v 1.30 1996/03/14 21:28:46 christos Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -169,6 +169,7 @@ cdev_decl(ccd);
 cdev_decl(bpf);
 #include "tun.h"
 cdev_decl(tun);
+dev_decl(filedesc,open);
 
 #ifdef LKM
 #define NLKM	1
@@ -202,7 +203,7 @@ struct cdevsw	cdevsw[] =
 	cdev_notdef(),			/* 18 */
 	cdev_disk_init(NVND,vnd),	/* 19: vnode disk driver */
 	cdev_disk_init(NCCD,ccd),	/* 20: concatenated disk driver */
-	cdev_fd_init(1,fd),		/* 21: file descriptor pseudo-device */
+	cdev_fd_init(1,filedesc),	/* 21: file descriptor pseudo-device */
 	cdev_bpftun_init(NBPFILTER,bpf),/* 22: Berkeley packet filter */
 	cdev_mouse_init(NADB,adb),	/* 23: ADB event interface */
 	cdev_bpftun_init(NTUN,tun),	/* 24: network tunnel */

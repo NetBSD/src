@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.9 1995/08/17 17:40:42 thorpej Exp $	*/
+/*	$NetBSD: conf.c,v 1.10 1996/03/14 21:20:59 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -103,7 +103,7 @@ cdev_decl(tun);
 cdev_decl(sd);
 cdev_decl(vnd);
 cdev_decl(ccd);
-dev_type_open(fdopen);
+dev_type_open(filedescopen);
 #include "bpfilter.h"
 cdev_decl(bpf);
 cdev_decl(st);
@@ -139,7 +139,7 @@ struct cdevsw	cdevsw[] =
 	cdev_bpftun_init(NTUN,tun),	/* 7: network tunnel */
 	cdev_disk_init(NSD,sd),		/* 8: SCSI disk */
 	cdev_disk_init(NVND,vnd),	/* 9: vnode disk driver */
-	cdev_fd_init(1,fd),		/* 10: file descriptor pseudo-dev */
+	cdev_fd_init(1,filedesc),	/* 10: file descriptor pseudo-dev */
 	cdev_bpftun_init(NBPFILTER,bpf),/* 11: Berkeley packet filter */
 	cdev_tape_init(NST,st),		/* 12: SCSI tape */
 	cdev_disk_init(NCD,cd),		/* 13: SCSI CD-ROM */
