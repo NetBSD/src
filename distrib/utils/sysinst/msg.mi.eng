@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.eng,v 1.37 1999/04/09 10:24:38 bouyer Exp $	*/
+/*	$NetBSD: msg.mi.eng,v 1.38 1999/04/11 22:40:21 bouyer Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -122,6 +122,11 @@ message badname
 The following disks are available: %s
 \nOn which disk do you want to install NetBSD? }
 
+message disktoosmall
+{Your hard disk is too small for a standard install. You will have to enter
+the partitions size by hand.
+}
+
 message pleasemountroot
 {The root device is not mounted.  Please mount it.
 
@@ -194,6 +199,15 @@ choose partition sizes that are exact multiples of your actual
 cylinder size, which is %d sectors.
 }
 
+message startoutsidedisk
+{The start value you specified is beyond the end of the disk.
+}
+
+message endoutsidedisk
+{With this value, the partition end is beyond the end of the disk. Your
+partition size has been truncated to %d %s.
+}
+
 message fspart
 {We now have your BSD-disklabel partitions as (Size and Offset in %s):
 }
@@ -241,8 +255,9 @@ message nomount
 {Partition %c's type is not 4.2BSD or msdos and therefore does not have
 a mount point.}
 
-message donewfs
-{Creating the new file systems on all 4.2BSD partitions...\n}
+message mountfail
+{mount of device %s on %s failed.
+}
 
 message dotar
 {Populating filesystems with bootstrapping binaries and config files...\n}
@@ -557,10 +572,6 @@ message netnotup
 {There was a problem in setting up the network.  Either your gateway
 or your nameserver was not reachable by a ping.  Do you want to
 configure your network again?  (No aborts the install process.)
-}
-
-message extracting
-{Extracting file %s ...
 }
 
 message makedev

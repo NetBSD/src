@@ -1,4 +1,4 @@
-/*	$NetBSD: install.c,v 1.14 1999/04/09 10:24:38 bouyer Exp $	*/
+/*	$NetBSD: install.c,v 1.15 1999/04/11 22:40:20 bouyer Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -74,11 +74,13 @@ do_install()
 
 	if (!md_get_info()) {
 		msg_display(MSG_abort);
+		process_menu(MENU_ok);
 		return;
 	}
 
 	if (md_make_bsd_partitions() == 0) {
 		msg_display(MSG_abort);
+		process_menu(MENU_ok);
 		return;
 	}
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.35 1999/04/09 10:24:39 bouyer Exp $	*/
+/*	$NetBSD: util.c,v 1.36 1999/04/11 22:40:22 bouyer Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -457,6 +457,8 @@ ask_verbose_dist()
 		msg_display(MSG_verboseextract);
 		process_menu(MENU_noyes);
 		verbose = yesno;
+		wclear(stdscr);
+		wrefresh(stdscr);
 	}
 }
 
@@ -481,7 +483,6 @@ extract_file(path)
 	target_chdir_or_die("/");	
 
 	/* now extract set files files into "./". */
-	(void)printf(msg_string(MSG_extracting), path);
 	tarexit = run_prog(0, 1, NULL,
 	    "pax -zr%spe -f %s", verbose ? "v" : "", path);
 
@@ -718,4 +719,3 @@ int askyesno(int reverse)
 	refresh();
 	return(found);
 }
-

@@ -1,4 +1,4 @@
-/*	$NetBSD: menus.md.eng,v 1.18 1999/03/31 00:44:49 fvdl Exp $	*/
+/*	$NetBSD: menus.md.eng,v 1.19 1999/04/11 22:40:26 bouyer Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -162,7 +162,7 @@ menu cyl1024;
 		c1024_resp = 3;
 	};
 
-menu editfsparts, y=12, exit;
+menu editfsparts, y=13, exit;
 	display action  {
 			ask_sizemult();
 			msg_display(MSG_fspart, multname);

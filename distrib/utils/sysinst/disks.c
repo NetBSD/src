@@ -1,4 +1,4 @@
-/*	$NetBSD: disks.c,v 1.24 1999/04/09 10:24:38 bouyer Exp $ */
+/*	$NetBSD: disks.c,v 1.25 1999/04/11 22:40:19 bouyer Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -248,7 +248,6 @@ int make_filesystems(void)
 	int error;
 
 	/* Making new file systems and mounting them*/
-	msg_display(MSG_donewfs);
 	for (i = 0; i < getmaxpartitions(); i++) {
 		/*
 		 * newfs and mount. For now, process only BSD filesystems. 
@@ -284,6 +283,10 @@ do_ffs_newfs(const char *partname, int partno, const char *mountpoint)
 		} else
 			error = target_mount("-v -o async",
 			    devname, mountpoint);
+		if (error) {
+			msg_display(MSG_mountfail, devname, mountpoint);
+			process_menu (MENU_ok);
+		}
 	}
 	return error;
 }
@@ -307,7 +310,7 @@ int make_fstab(void)
 		if (logging)
 			(void)fprintf(log, "Failed to make /etc/fstab!\n");
 		process_menu(MENU_ok);
-		exit(1);
+		return 1;
 #else
 		f = stdout;
 #endif		
