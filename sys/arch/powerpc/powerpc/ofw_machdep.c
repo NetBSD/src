@@ -1,4 +1,4 @@
-/*	$NetBSD: ofw_machdep.c,v 1.9 2001/07/22 11:29:46 wiz Exp $	*/
+/*	$NetBSD: ofw_machdep.c,v 1.10 2001/07/22 13:21:04 wiz Exp $	*/
 
 /*
  * Copyright (C) 1996 Wolfgang Solfrank.
@@ -78,8 +78,8 @@ mem_regions(memp, availp)
 	cnt /= sizeof OFmem[0];
 	for (i = 0; i < cnt; )
 		if (OFmem[i].size == 0) {
-			memcpy(&OFmem[i], &OFmem[i + 1],
-			      (cnt - i) * sizeof OFmem[0]);
+			memmove(&OFmem[i], &OFmem[i + 1],
+				(cnt - i) * sizeof OFmem[0]);
 			cnt--;
 		} else
 			i++;
@@ -93,8 +93,8 @@ mem_regions(memp, availp)
 	cnt /= sizeof OFavail[0];
 	for (i = 0; i < cnt; )
 		if (OFavail[i].size == 0) {
-			memcpy(&OFavail[i], &OFavail[i + 1],
-			      (cnt - i) * sizeof OFavail[0]);
+			memmove(&OFavail[i], &OFavail[i + 1],
+				(cnt - i) * sizeof OFavail[0]);
 			cnt--;
 		} else
 			i++;
