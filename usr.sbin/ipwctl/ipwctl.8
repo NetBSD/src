@@ -1,4 +1,4 @@
-.\" $NetBSD: ipwctl.8,v 1.7 2004/08/27 06:01:28 lukem Exp $
+.\" $NetBSD: ipwctl.8,v 1.7.2.1 2005/03/22 09:35:45 tron Exp $
 .\" Id: ipwctl.8,v 1.1.2.1 2004/08/19 16:24:50 damien Exp
 .\"
 .\" Copyright (c) 2004
@@ -26,7 +26,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd August 27, 2004
+.Dd March 21, 2005
 .Os
 .Dt IPWCTL 8
 .Sh NAME
@@ -66,6 +66,9 @@ Display adapter's internal statistics.
 Download firmware binary image
 .Ar firmware
 to the driver.
+Firmware binary images can be found in the
+.Pa pkgsrc/sysutils/ipw-firmware
+package.
 .It Fl i Ar iface Fl k
 Kill (remove) the firmware and reset the adapter.
 .It Fl i Ar iface Fl r
@@ -90,7 +93,8 @@ Monitor mode firmware
 .El
 .Sh SEE ALSO
 .Xr ipw 4 ,
-.Xr ifconfig 8
+.Xr ifconfig 8 ,
+.Pa pkgsrc/sysutils/ipw-firmware
 .Sh AUTHORS
 The
 .Nm
