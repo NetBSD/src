@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)pcb.h	5.10 (Berkeley) 5/12/91
- *	$Id: pcb.h,v 1.7 1993/09/16 03:24:45 brezak Exp $
+ *	pcb.h,v 1.6 1993/06/27 04:50:12 andrew Exp
  */
 
 #ifndef _I386_PCB_H_
@@ -58,6 +58,8 @@ struct pcb {
 #ifdef	notyet
 	u_char	pcb_iomap[NPORT/sizeof(u_char)]; /* i/o port bitmap */
 #endif
+        caddr_t	pcb_ldt;		/* per process (user) LDT */
+        int	pcb_ldt_len;		/*      number of LDT entries */
 	struct	save87	pcb_savefpu;	/* floating point state for 287/387 */
 	struct	emcsts	pcb_saveemc;	/* Cyrix EMC state */
 /*
