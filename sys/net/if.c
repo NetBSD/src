@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.127 2003/08/09 18:13:03 christos Exp $	*/
+/*	$NetBSD: if.c,v 1.128 2003/08/14 00:13:34 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.127 2003/08/09 18:13:03 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.128 2003/08/14 00:13:34 itojun Exp $");
 
 #include "opt_inet.h"
 
@@ -797,31 +797,37 @@ if_clone_lookup(name, unitp)
 	struct if_clone *ifc;
 	const char *cp;
 	size_t i;
+	int unit;
 
-	for (ifc = LIST_FIRST(&if_cloners); ifc != NULL;) {
-		for (cp = name, i = 0; i < ifc->ifc_namelen; i++, cp++) {
-			if (ifc->ifc_name[i] != *cp)
-				goto next_ifc;
-		}
-		goto found_name;
- next_ifc:
-		ifc = LIST_NEXT(ifc, ifc_list);
+	/* separate interface name from unit */
+	for (cp = name;
+	    cp - name < IFNAMSIZ && *cp && *cp < '0' && *cp > '9';
+	    cp++)
+		continue;
+
+	if (cp == name || cp - name == IFNAMSIZ || !*cp)
+		return (NULL);	/* No name or unit number */
+
+	LIST_FOREACH(ifc, &if_cloners, ifc_list) {
+		if (strlen(ifc->ifc_name) == cp - name &&
+		    !strncmp(name, ifc->ifc_name, cp - name))
+			break;
 	}
 
-	/* No match. */
-	return (NULL);
+	if (ifc == NULL)
+		return (NULL);
 
- found_name:
-	for (i = 0; *cp != '\0'; cp++) {
+	unit = 0;
+	while (cp - name < IFNAMSIZ && *cp && unit * 10 < INT_MAX) {
 		if (*cp < '0' || *cp > '9') {
 			/* Bogus unit number. */
 			return (NULL);
 		}
-		i = (i * 10) + (*cp - '0');
+		unit = (unit * 10) + (*cp++ - '0');
 	}
 
 	if (unitp != NULL)
-		*unitp = i;
+		*unitp = unit;
 	return (ifc);
 }
 
