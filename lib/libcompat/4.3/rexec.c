@@ -1,3 +1,5 @@
+/*	$NetBSD: rexec.c,v 1.9 1999/05/04 17:13:57 christos Exp $	*/
+
 /*
  * Copyright (c) 1980, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -36,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)rexec.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: rexec.c,v 1.8 1998/08/10 02:44:04 perry Exp $");
+__RCSID("$NetBSD: rexec.c,v 1.9 1999/05/04 17:13:57 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -50,6 +52,7 @@ __RCSID("$NetBSD: rexec.c,v 1.8 1998/08/10 02:44:04 perry Exp $");
 #include <string.h>
 #include <errno.h>
 #include <unistd.h>
+#include <err.h>
 
 int	rexecoptions;
 
@@ -66,76 +69,84 @@ rexec(ahost, rport, name, pass, cmd, fd2p)
 	struct sockaddr_in sin, sin2, from;
 	struct hostent *hp;
 	u_short port;
-	int s, timo = 1, s3;
+	size_t len;
+	unsigned int timo = 1;
+	int s, s3;
 	char c;
 
 	hp = gethostbyname(*ahost);
 	if (hp == 0) {
-		herror(*ahost);
-		return (-1);
+		warnx("Error resolving %s (%s)", *ahost, hstrerror(h_errno));
+		return -1;
 	}
 	*ahost = hp->h_name;
 	(void)ruserpass(hp->h_name, &name, &pass);
 retry:
-	s = socket(AF_INET, SOCK_STREAM, 0);
-	if (s < 0) {
-		perror("rexec: socket");
+	if ((s = socket(AF_INET, SOCK_STREAM, 0)) == -1) {
+		warn("Cannot create socket");
 		return (-1);
 	}
 	sin.sin_family = hp->h_addrtype;
 	sin.sin_len = sizeof(sin);
 	sin.sin_port = rport;
-	memcpy((caddr_t)&sin.sin_addr, hp->h_addr, hp->h_length);
-	if (connect(s, (struct sockaddr *)&sin, sizeof(sin)) < 0) {
+	/* Avoid data corruption from bogus DNS results */
+	if (hp->h_length > sizeof(sin.sin_addr))
+		len = sizeof(sin.sin_addr);
+	else
+		len = hp->h_length;
+	memcpy(&sin.sin_addr, hp->h_addr, len);
+	if (connect(s, (struct sockaddr *)(void *)&sin, sizeof(sin)) == -1) {
 		if (errno == ECONNREFUSED && timo <= 16) {
-			(void) close(s);
+			(void)close(s);
 			sleep(timo);
 			timo *= 2;
 			goto retry;
 		}
-		perror(hp->h_name);
-		return (-1);
+		warn("Cannot connect to %s", hp->h_name);
+		return -1;
 	}
 	port = 0;
 	if (fd2p == 0) {
-		(void) write(s, "", 1);
+		(void)write(s, "", 1);
 	} else {
 		char num[8];
-		int s2, sin2len;
+		int s2;
+		socklen_t sin2len;
 		
 		s2 = socket(AF_INET, SOCK_STREAM, 0);
-		if (s2 < 0) {
-			(void) close(s);
-			return (-1);
+		if (s2 == -1) {
+			warn("Error creating socket");
+			(void)close(s);
+			return -1;
 		}
 		listen(s2, 1);
-		sin2len = sizeof (sin2);
-		if (getsockname(s2, (struct sockaddr *)&sin2, &sin2len) < 0 ||
-		  sin2len != sizeof (sin2)) {
-			perror("getsockname");
-			(void) close(s2);
+		sin2len = sizeof(sin2);
+		if (getsockname(s2, (struct sockaddr *)(void *)&sin2,
+		    &sin2len) == -1 || sin2len != sizeof(sin2)) {
+			warn("Failed to get socket name");
+			(void)close(s2);
 			goto bad;
 		}
 		port = ntohs((u_short)sin2.sin_port);
-		(void)snprintf(num, sizeof num, "%u", port);
-		(void) write(s, num, strlen(num)+1);
-		{ int len = sizeof (from);
-		  s3 = accept(s2, (struct sockaddr *)&from, &len);
-		  close(s2);
-		  if (s3 < 0) {
-			perror("accept");
+		(void)snprintf(num, sizeof(num), "%u", port);
+		(void)write(s, num, strlen(num)+1);
+
+		len = sizeof(from);
+		s3 = accept(s2, (struct sockaddr *)(void *)&from, &len);
+		(void)close(s2);
+		if (s3 == -1) {
+			warn("Error accepting connection");
 			port = 0;
 			goto bad;
-		  }
 		}
 		*fd2p = s3;
 	}
-	(void) write(s, name, strlen(name) + 1);
+	(void)write(s, name, strlen(name) + 1);
 	/* should public key encypt the password here */
-	(void) write(s, pass, strlen(pass) + 1);
-	(void) write(s, cmd, strlen(cmd) + 1);
+	(void)write(s, pass, strlen(pass) + 1);
+	(void)write(s, cmd, strlen(cmd) + 1);
 	if (read(s, &c, 1) != 1) {
-		perror(*ahost);
+		warn("Error reading from %s", *ahost);
 		goto bad;
 	}
 	if (c != 0) {
@@ -146,10 +157,10 @@ retry:
 		}
 		goto bad;
 	}
-	return (s);
+	return s;
 bad:
 	if (port)
-		(void) close(*fd2p);
-	(void) close(s);
-	return (-1);
+		(void)close(*fd2p);
+	(void)close(s);
+	return -1;
 }
