@@ -1,10 +1,10 @@
-/*	$NetBSD: usbdevs.h,v 1.60 1999/11/12 00:26:39 augustss Exp $	*/
+/*	$NetBSD: usbdevs.h,v 1.61 1999/11/17 22:59:30 augustss Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: usbdevs,v 1.60 1999/11/12 00:26:13 augustss Exp 
+ *	NetBSD: usbdevs,v 1.61 1999/11/17 22:59:04 augustss Exp 
  */
 
 /*
@@ -135,6 +135,7 @@
 #define	USB_PRODUCT_KODAK_DC280	0x0130		/* Digital Science DC280 */
 
 /* CATC products */
+#define	USB_PRODUCT_CATC_CHIEF	0x000d		/* USB Chief Bus & Protocol Analyzer */
 #define	USB_PRODUCT_CATC_ANDROMEDA	0x1237		/* Andromeda hub */
 
 /* Gravis products */
