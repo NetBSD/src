@@ -1,4 +1,4 @@
-/*	$NetBSD: compare.c,v 1.24 2001/03/09 03:09:45 simonb Exp $	*/
+/*	$NetBSD: compare.c,v 1.25 2001/07/18 04:51:54 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)compare.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: compare.c,v 1.24 2001/03/09 03:09:45 simonb Exp $");
+__RCSID("$NetBSD: compare.c,v 1.25 2001/07/18 04:51:54 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -59,7 +59,7 @@ __RCSID("$NetBSD: compare.c,v 1.24 2001/03/09 03:09:45 simonb Exp $");
 
 extern int iflag, mflag, tflag, uflag;
 
-static char *ftype(u_int);
+static const char *ftype(u_int);
 
 #define	INDENTNAMELEN	8
 #define MARK                                                                  \
@@ -114,11 +114,12 @@ do {                                                                          \
 } while (0)
 
 int
-compare(char *name, NODE *s, FTSENT *p)
+compare(const char *name, NODE *s, FTSENT *p)
 {
 	u_int32_t len, val, flags;
 	int fd, label;
-	char *cp, *tab;
+	const char *cp;
+	char *tab;
 	char md5buf[35];
 
 	tab = NULL;
@@ -349,23 +350,37 @@ typeerr:		LABEL;
 	return (label);
 }
 
-char *
+const char *
 inotype(u_int type)
 {
 
-	switch(type & S_IFMT) {
+	return (ftype(type & S_IFMT));
+}
+
+static const char *
+ftype(u_int type)
+{
+
+	switch(type) {
+	case F_BLOCK:
 	case S_IFBLK:
 		return ("block");
+	case F_CHAR:
 	case S_IFCHR:
 		return ("char");
+	case F_DIR:
 	case S_IFDIR:
 		return ("dir");
+	case F_FIFO:
 	case S_IFIFO:
 		return ("fifo");
+	case F_FILE:
 	case S_IFREG:
 		return ("file");
+	case F_LINK:
 	case S_IFLNK:
 		return ("link");
+	case F_SOCK:
 	case S_IFSOCK:
 		return ("socket");
 	default:
@@ -374,33 +389,8 @@ inotype(u_int type)
 	/* NOTREACHED */
 }
 
-static char *
-ftype(u_int type)
-{
-
-	switch(type) {
-	case F_BLOCK:
-		return ("block");
-	case F_CHAR:
-		return ("char");
-	case F_DIR:
-		return ("dir");
-	case F_FIFO:
-		return ("fifo");
-	case F_FILE:
-		return ("file");
-	case F_LINK:
-		return ("link");
-	case F_SOCK:
-		return ("socket");
-	default:
-		return ("unknown");
-	}
-	/* NOTREACHED */
-}
-
-char *
-rlink(char *name)
+const char *
+rlink(const char *name)
 {
 	static char lbuf[MAXPATHLEN];
 	int len;

@@ -1,4 +1,4 @@
-/*	$NetBSD: spec.c,v 1.22 2001/03/25 20:02:01 christos Exp $	*/
+/*	$NetBSD: spec.c,v 1.23 2001/07/18 04:51:54 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)spec.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: spec.c,v 1.22 2001/03/25 20:02:01 christos Exp $");
+__RCSID("$NetBSD: spec.c,v 1.23 2001/07/18 04:51:54 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -114,19 +114,15 @@ spec(void)
 		if ((p = strtok(p, "\n\t ")) == NULL)
 			mtree_err("missing field");
 
-		if (p[0] == '/')
-			switch(p[1]) {
-			case 's':
-				if (strcmp(p + 1, "set"))
-					break;
+		if (p[0] == '/') {
+			if (strcmp(p + 1, "set") == 0)
 				set(NULL, &ginfo);
-				continue;
-			case 'u':
-				if (strcmp(p + 1, "unset"))
-					break;
+			else if (strcmp(p + 1, "unset") == 0)
 				unset(NULL, &ginfo);
-				continue;
-			}
+			else
+				mtree_err("invalid specification `%s'", p);
+			continue;
+		}
 
 		if (strchr(p, '/'))
 			mtree_err("slash character in file name");
@@ -251,36 +247,7 @@ set(char *t, NODE *ip)
 				mtree_err("invalid time `%s'", val);
 			break;
 		case F_TYPE:
-			switch(*val) {
-			case 'b':
-				if (!strcmp(val, "block"))
-					ip->type = F_BLOCK;
-				break;
-			case 'c':
-				if (!strcmp(val, "char"))
-					ip->type = F_CHAR;
-				break;
-			case 'd':
-				if (!strcmp(val, "dir"))
-					ip->type = F_DIR;
-				break;
-			case 'f':
-				if (!strcmp(val, "file"))
-					ip->type = F_FILE;
-				if (!strcmp(val, "fifo"))
-					ip->type = F_FIFO;
-				break;
-			case 'l':
-				if (!strcmp(val, "link"))
-					ip->type = F_LINK;
-				break;
-			case 's':
-				if (!strcmp(val, "socket"))
-					ip->type = F_SOCK;
-				break;
-			default:
-				mtree_err("unknown file type `%s'", val);
-			}
+			ip->type = parsetype(val);
 			break;
 		case F_UID:
 			ip->st_uid = (uid_t)strtoul(val, &ep, 10);

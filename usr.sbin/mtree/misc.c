@@ -1,4 +1,4 @@
-/*	$NetBSD: misc.c,v 1.9 2001/03/09 03:09:45 simonb Exp $	*/
+/*	$NetBSD: misc.c,v 1.10 2001/07/18 04:51:54 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: misc.c,v 1.9 2001/03/09 03:09:45 simonb Exp $");
+__RCSID("$NetBSD: misc.c,v 1.10 2001/07/18 04:51:54 lukem Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -53,14 +53,14 @@ __RCSID("$NetBSD: misc.c,v 1.9 2001/03/09 03:09:45 simonb Exp $");
 extern int lineno;
 
 typedef struct _key {
-	char *name;			/* key name */
-	u_int val;			/* value */
+	const char	*name;		/* key name */
+	u_int		val;		/* value */
 
 #define	NEEDVALUE	0x01
-	u_int flags;
+	u_int		flags;
 } KEY;
 
-/* NB: the following table must be sorted lexically. */
+/* NB: the following tables must be sorted lexically. */
 static KEY keylist[] = {
 	{"cksum",	F_CKSUM,	NEEDVALUE},
 	{"flags",	F_FLAGS,	NEEDVALUE},
@@ -79,10 +79,20 @@ static KEY keylist[] = {
 	{"uname",	F_UNAME,	NEEDVALUE}
 };
 
+static KEY typelist[] = {
+	{"block",	F_BLOCK,	},
+	{"char",	F_CHAR,		},
+	{"dir",		F_DIR,		},
+	{"fifo",	F_FIFO,		},
+	{"file",	F_FILE,		},
+	{"link",	F_LINK,		},
+	{"socket",	F_SOCK,		},
+};
+
 int keycompare(const void *, const void *);
 
 u_int
-parsekey(char *name, int *needvaluep)
+parsekey(const char *name, int *needvaluep)
 {
 	KEY *k, tmp;
 
@@ -94,6 +104,20 @@ parsekey(char *name, int *needvaluep)
 
 	if (needvaluep)
 		*needvaluep = k->flags & NEEDVALUE ? 1 : 0;
+
+	return (k->val);
+}
+
+u_int
+parsetype(const char *name)
+{
+	KEY *k, tmp;
+
+	tmp.name = name;
+	k = (KEY *)bsearch(&tmp, typelist, sizeof(typelist) / sizeof(KEY),
+	    sizeof(KEY), keycompare);
+	if (k == NULL)
+		mtree_err("unknown file type %s", name);
 
 	return (k->val);
 }
