@@ -1,4 +1,4 @@
-/*	$NetBSD: makewhatis.c,v 1.34 2005/04/03 21:32:45 christos Exp $	*/
+/*	$NetBSD: makewhatis.c,v 1.35 2005/04/04 08:13:52 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
 #if !defined(lint)
 __COPYRIGHT("@(#) Copyright (c) 1999 The NetBSD Foundation, Inc.\n\
 	All rights reserved.\n");
-__RCSID("$NetBSD: makewhatis.c,v 1.34 2005/04/03 21:32:45 christos Exp $");
+__RCSID("$NetBSD: makewhatis.c,v 1.35 2005/04/04 08:13:52 wiz Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -151,7 +151,7 @@ main(int argc, char *const *argv)
 			dowarn++;
 			break;
 		default:
-			fprintf(stderr, "Usage: %s [-C file] [-wf] [path ...]\n",
+			fprintf(stderr, "Usage: %s [-fw] [-C file] [manpath ...]\n",
 				getprogname());
 			exit(EXIT_FAILURE);
 		}
