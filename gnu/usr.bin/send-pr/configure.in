@@ -13,22 +13,17 @@ AC_ECHON
 AC_LISPDIR
 AC_PASSWD
 
-GNATS_SITE=cygnus
-SUBMITTER=unknown
-GNATS_ADDR=bugs@cygnus.com
+GNATS_SITE=sun-lamp
+SUBMITTER=net
+GNATS_ADDR=gnats-bugs@sun-lamp.cs.berkeley.edu
 DEFAULT_ORGANIZATION=
+DEFAULT_RELEASE=
 
 AC_FIND_PROGRAM(SENDMAIL,sendmail,/usr/lib:/usr/sbin:/usr/ucblib)
 if test -n "$SENDMAIL" ; then
 	MAIL_AGENT="$SENDMAIL -oi -t"
 else
 	MAIL_AGENT=false
-fi
-
-if test -f ${srcdir}/../release-info ; then
-	DEFAULT_RELEASE=`. ${srcdir}/../release-info ; echo ${RELEASE_TAG}`
-else
-	DEFAULT_RELEASE='gnats-$(VERSION)'
 fi
 
 # Get GNATS_ROOT from environment, if possible

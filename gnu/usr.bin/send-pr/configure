@@ -145,7 +145,8 @@ echo checking for Emacs Lisp files
 if test -n "$with_lispdir"; then
   LISPDIR=${with_lispdir}
 else
-  for f in ${prefix}/lib/emacs/site-lisp ${prefix}/lib/emacs/lisp; do
+  for f in ${prefix-/usr/local}/lib/emacs/site-lisp \
+	   ${prefix-/usr/local}/lib/emacs/lisp; do
     if test -d $f; then
       LISPDIR=$f
       break
@@ -153,7 +154,7 @@ else
   done
 fi
 if test -z "$LISPDIR"; then
-  LISPDIR=${prefix-/usr/local}/lib/emacs/lisp
+  LISPDIR='$(prefix)/lib/emacs/lisp'
 fi
 test -n "$verbose" && echo "	setting LISPDIR to ${LISPDIR}"
 
@@ -174,6 +175,7 @@ GNATS_SITE=sun-lamp
 SUBMITTER=net
 GNATS_ADDR=gnats-bugs@sun-lamp.cs.berkeley.edu
 DEFAULT_ORGANIZATION=
+DEFAULT_RELEASE=
 
 if test x/usr/lib:/usr/sbin:/usr/ucblib = x; then _PATH=$PATH; else _PATH=/usr/lib:/usr/sbin:/usr/ucblib; fi
 if test -z "$SENDMAIL"; then
@@ -196,12 +198,6 @@ if test -n "$SENDMAIL" ; then
 	MAIL_AGENT="$SENDMAIL -oi -t"
 else
 	MAIL_AGENT=false
-fi
-
-if test -f ${srcdir}/../release-info ; then
-	DEFAULT_RELEASE=`. ${srcdir}/../release-info ; echo ${RELEASE_TAG}`
-else
-	DEFAULT_RELEASE='gnats-$(VERSION)'
 fi
 
 # Get GNATS_ROOT from environment, if possible
