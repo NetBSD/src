@@ -1,4 +1,4 @@
-.\"	$NetBSD: installboot.8,v 1.1.1.1 1996/02/29 11:35:46 leo Exp $
+.\"	$NetBSD: installboot.8,v 1.2 1996/06/20 19:41:01 leo Exp $
 .\"
 .\" Copyright (c) 1995 Paul Kranenburg
 .\" All rights reserved.
@@ -79,7 +79,9 @@ For backwards compatibility with the vendor specific AHDI disk
 label, a\ special first-stage boot program is provided in
 .Pa /usr/mdec/xxboot.ahdi .
 Together with the general second-stage boot program, it is installed
-in the AHDI partition where the NetBSD disk label lives. Furthermore,
+in the AHDI partition where the
+.Tn NetBSD
+disk label lives. Furthermore,
 the AHDI specifications require an additional bootstrap, which is
 written into the AHDI root sector
 .Pq disk block zero .
@@ -122,6 +124,14 @@ Because neither the floppy disk driver nor
 are capable of creating a disk pack label on a floppy disk,
 .Nm
 has to create a\ fictitious label, that is not used by the kernel.
+.Pp
+Except for installation of the bootcode on floppy,
+.Nm
+automatically sets the boot preference in NVRAM to
+.Tn NetBSD.
+.Sh BUGS
+There is currently no easy way to change the NVRAM preference from within
+.Tn NetBSD.
 .Sh "SEE ALSO"
 .Xr disklabel 8
 .Sh HISTORY
