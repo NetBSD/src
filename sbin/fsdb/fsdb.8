@@ -1,4 +1,4 @@
-.\"	$NetBSD: fsdb.8,v 1.8 1998/05/22 18:27:51 msaitoh Exp $
+.\"	$NetBSD: fsdb.8,v 1.9 1999/03/09 16:11:47 bouyer Exp $
 .\"
 .\" Copyright (c) 1996 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -43,6 +43,7 @@
 .Sh SYNOPSIS
 .Nm
 .Op Fl d
+.Op Fl n
 .Fl f Ar fsname
 .Sh DESCRIPTION
 .Nm
@@ -67,6 +68,11 @@ The
 option enables additional debugging output (which comes primarily from
 .Xr fsck 8 -derived
 code).
+.Pp
+The
+.Fl n
+option disable writing to the device, preventing any changes from being made
+to the filesystem.
 .Sh COMMANDS
 Besides the built-in 
 .Xr editline 3
@@ -119,6 +125,9 @@ Set the active inode's link count to
 .It Cm ls
 List the current inode's directory entries.  This command is valid only
 if the current inode is a directory. 
+.Pp
+.It Cm blks
+List the current inode's blocks numbers.
 .Pp
 .It Cm rm Ar name
 .It Cm del Ar name

@@ -1,4 +1,4 @@
-/*	$NetBSD: fsdb.c,v 1.15 1998/05/20 10:01:11 enami Exp $	*/
+/*	$NetBSD: fsdb.c,v 1.16 1999/03/09 16:11:47 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: fsdb.c,v 1.15 1998/05/20 10:01:11 enami Exp $");
+__RCSID("$NetBSD: fsdb.c,v 1.16 1999/03/09 16:11:47 bouyer Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -80,6 +80,8 @@ static int dolookup __P((char *));
 static int chinumfunc __P((struct inodesc *));
 static int chnamefunc __P((struct inodesc *));
 static int dotime __P((char *, int32_t *, int32_t *));
+static void print_blks __P((ufs_daddr_t *buf, int size, int *blknum));
+static void print_indirblks __P((daddr_t blk, int ind_level, int *blknum));
 
 int     returntosingle = 0;
 struct dinode *curinode;
@@ -88,7 +90,7 @@ ino_t   curinum;
 static void
 usage()
 {
-	errx(1, "usage: %s [-d] -f <fsname>", __progname);
+	errx(1, "usage: %s [-d] [-n] -f <fsname>", __progname);
 }
 /*
  * We suck in lots of fsck code, and just pick & choose the stuff we want.
@@ -104,13 +106,16 @@ main(argc, argv)
 	int     ch, rval;
 	char   *fsys = NULL;
 
-	while ((ch = getopt(argc, argv, "f:d")) != -1) {
+	while ((ch = getopt(argc, argv, "f:dn")) != -1) {
 		switch (ch) {
 		case 'f':
 			fsys = optarg;
 			break;
 		case 'd':
 			debug++;
+			break;
+		case 'n':
+			nflag++;
 			break;
 		default:
 			usage();
@@ -124,6 +129,8 @@ main(argc, argv)
 	printf("Editing file system `%s'\nLast Mounted on %s\n", fsys,
 	    sblock->fs_fsmnt);
 	rval = cmdloop();
+	if (nflag)
+		exit(rval);
 	sblock->fs_clean = 0;	/* mark it dirty */
 	sbdirty();
 	markclean = 0;
@@ -149,6 +156,7 @@ CMDFUNC(downlink);		/* decr link */
 CMDFUNC(linkcount);		/* set link count */
 CMDFUNC(quit);			/* quit */
 CMDFUNC(ls);			/* list directory */
+CMDFUNC(blks);			/* list blocks */
 CMDFUNC(rm);			/* remove name */
 CMDFUNC(ln);			/* add name */
 CMDFUNC(newtype);		/* change type */
@@ -179,6 +187,7 @@ static struct cmdtable cmds[] = {
 	{"downlink", "Decrement link count", 1, 1, downlink},
 	{"linkcount", "Set link count to COUNT", 2, 2, linkcount},
 	{"ls", "List current inode as directory", 1, 1, ls},
+	{"blks", "List current inode's data blocks", 1, 1, blks},
 	{"rm", "Remove NAME from current inode directory", 2, 2, rm},
 	{"del", "Remove NAME from current inode directory", 2, 2, rm},
 	{"ln", "Hardlink INO into current inode directory as NAME", 3, 3, ln},
@@ -427,6 +436,88 @@ CMDFUNCSTART(ls)
 	curinode = ginode(curinum);
 
 	return 0;
+}
+
+CMDFUNCSTART(blks)
+{
+	int blkno = 0;
+	int i, type;
+	if (!curinode) {
+		warnx("no current inode\n");
+		return 0;
+	}
+	type = iswap16(curinode->di_mode) & IFMT;
+	if (type != IFDIR && type != IFREG) {
+		warnx("inode %d not a file or directory", curinum);
+		return 0;
+	}
+	printf("I=%d %d block%c\n", curinum,
+		(iswap32(curinode->di_blocks) + NSPB(sblock) -1) /
+		    NSPB(sblock),
+		(iswap32(curinode->di_blocks) > NSPB(sblock)) ? 's' : ' ');
+	printf("Direct blocks:\n");
+	print_blks(curinode->di_db, NDADDR, &blkno);
+	for (i = 0; i < NIADDR; i++) {
+		if (curinode->di_ib[i] != 0)
+			print_indirblks(iswap32(curinode->di_ib[i]), i,
+			    &blkno);
+	}
+	return 0;
+}
+
+static void
+print_blks(buf, size, blknum)
+	ufs_daddr_t *buf;
+	int size;
+	int *blknum;
+{
+#define CHARS_PER_LINES 70
+	int chars;
+	char prbuf[CHARS_PER_LINES+1];
+	int blk;
+ 
+	chars = 0;
+	for(blk = 0; blk < size; blk++, (*blknum)++) {
+		if (buf[blk] == 0)
+			continue;
+		snprintf(prbuf, CHARS_PER_LINES, "%d ", iswap32(buf[blk]));
+		if ((chars + strlen(prbuf)) > CHARS_PER_LINES) {
+			printf("\n");
+			chars = 0;
+		}
+		if (chars == 0)
+			printf("%d: ", *blknum);
+		printf(prbuf);
+		chars += strlen(prbuf);
+	}
+	printf("\n");
+#undef CHARS_PER_LINES
+}
+
+static void
+print_indirblks(blk,ind_level, blknum)
+	daddr_t blk;
+	int ind_level;
+	int *blknum;
+{
+#define MAXNINDIR	(MAXBSIZE / sizeof(daddr_t))
+	daddr_t idblk[MAXNINDIR];
+	int i;
+ 
+	printf("Indirect block %d (level %d):\n", blk, ind_level+1);
+	bread(fsreadfd, (char *)idblk, fsbtodb(sblock, blk),
+	    (int)sblock->fs_bsize);
+	if (ind_level <= 0) {
+		print_blks(idblk, sblock->fs_bsize / sizeof(daddr_t), blknum);
+	} else {
+		ind_level--;
+		for (i = 0; i < sblock->fs_bsize / sizeof(daddr_t); i++) {
+			if(idblk[i] != 0)
+				print_indirblks(iswap32(idblk[i]),
+				    ind_level, blknum);
+		}
+	}
+#undef MAXNINDIR
 }
 
 static int
