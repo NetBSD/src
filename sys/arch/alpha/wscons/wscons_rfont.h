@@ -1,4 +1,4 @@
-/*	$NetBSD: wscons_rfont.h,v 1.1 1996/04/12 02:00:52 cgd Exp $ */
+/* $NetBSD: wscons_rfont.h,v 1.2 1997/04/06 20:08:33 cgd Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
