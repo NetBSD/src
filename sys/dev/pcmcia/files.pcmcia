@@ -1,4 +1,4 @@
-#	$NetBSD: files.pcmcia,v 1.40 2001/09/29 18:46:16 augustss Exp $
+#	$NetBSD: files.pcmcia,v 1.41 2001/11/26 11:17:34 yamt Exp $
 #
 # Config.new file and device description for machine-independent PCMCIA code.
 # Included by ports that need it.
@@ -102,6 +102,10 @@ file	dev/pcmcia/if_xi.c			xi_pcmcia
 attach	tr at pcmcia with tr_pcmcia
 file	dev/pcmcia/if_tr_pcmcia.c		tr_pcmcia
 
+# Crystal Semiconductor CS8920 based cards
+attach	cs at pcmcia with cs_pcmcia
+file	dev/pcmcia/if_cs_pcmcia.c		cs_pcmcia
+
 # Aironet PC4500/PC4800
 attach	an at pcmcia with an_pcmcia
 file	dev/pcmcia/if_an_pcmcia.c		an_pcmcia
@@ -109,6 +113,10 @@ file	dev/pcmcia/if_an_pcmcia.c		an_pcmcia
 # ISDN devices
 attach	isic at pcmcia with isic_pcmcia
 file	dev/pcmcia/isic_pcmcia.c		isic_pcmcia
+
+# TMC18C30/18C50
+attach	stg at pcmcia with stg_pcmcia
+file	dev/pcmcia/tmc18c30_pcmcia.c	stg_pcmcia
 
 defopt	opt_isicpcmcia.h	ISICPCMCIA_AVM_A1 ISICPCMCIA_ELSA_ISDNMC
 				ISICPCMCIA_ELSA_MCALL ISICPCMCIA_SBSPEEDSTAR2
@@ -127,3 +135,4 @@ file	dev/pcmcia/esl.c			esl
 
 attach	opl at esl with opl_esl
 file	dev/pcmcia/opl_esl.c			opl_esl
+
