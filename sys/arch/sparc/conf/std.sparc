@@ -1,14 +1,10 @@
-#	$NetBSD: std.sparc,v 1.19 1999/11/15 19:00:30 fvdl Exp $
+#	$NetBSD: std.sparc,v 1.19.4.1 2000/06/23 14:36:14 fvdl Exp $
 
 #
 # Mandatory NetBSD/sparc kernel options.
 #
 
 machine		sparc		# Machine architecture; required by config(8)
-
-prefix ../gnu/sys
-cinclude "conf/files.softdep"
-prefix
 
 options 	EXEC_AOUT	# execve(2) support for a.out binaries
 options 	EXEC_ELF32	# execve(2) support for ELF binaries

@@ -1,11 +1,11 @@
-#	$NetBSD: GENERIC,v 1.10 2000/06/14 22:02:34 veego Exp $
+#	$NetBSD: GENERIC,v 1.10.2.1 2000/06/23 14:36:13 fvdl Exp $
 #
 # GENERIC: generic kernel for most machines
 #
 
 include	"arch/pc532/conf/std.pc532"
 
-#ident 		"GENERIC-$Revision: 1.10 $"
+#ident 		"GENERIC-$Revision: 1.10.2.1 $"
 
 maxusers	8			# estimated number of users
 
@@ -40,7 +40,7 @@ file-system	NFS			# Network File System client
 options 	NFSSERVER		# Network File System server
 #options 	QUOTA			# file system quotas
 #options 	FFS_EI			# FFS Endian Independant support
-#options 	SOFTDEP         # FFS soft updates support.
+options 	SOFTDEP         # FFS soft updates support.
 
 # networking options
 #options 	GATEWAY			# packet forwarding

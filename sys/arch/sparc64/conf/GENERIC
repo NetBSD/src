@@ -1,8 +1,8 @@
-# 	$NetBSD: GENERIC,v 1.35 2000/06/19 23:30:32 eeh Exp $
+# 	$NetBSD: GENERIC,v 1.35.2.1 2000/06/23 14:36:14 fvdl Exp $
 
 include "arch/sparc64/conf/std.sparc64"
 
-#ident 		"GENERIC-$Revision: 1.35 $"
+#ident 		"GENERIC-$Revision: 1.35.2.1 $"
 
 maxusers	32
 
@@ -159,7 +159,7 @@ file-system	MSDOSFS		# MS-DOS FAT filesystem(s).
 options 	NFSSERVER	# Sun NFS-compatible filesystem server
 options 	QUOTA		# FFS quotas
 #options 	FFS_EI		# FFS Endian Independent support
-#options 	SOFTDEP         # FFS soft updates support.
+options 	SOFTDEP         # FFS soft updates support.
 
 ## Network protocol support.  In most environments, INET is required.
 options 	INET		# IP (Internet Protocol) v4
