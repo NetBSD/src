@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.c,v 1.56 2002/03/20 00:23:23 christos Exp $	*/
+/*	$NetBSD: sysctl.c,v 1.57 2002/03/20 00:29:24 christos Exp $	*/
 
 /*
  * Copyright (c) 1993
@@ -44,7 +44,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)sysctl.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: sysctl.c,v 1.56 2002/03/20 00:23:23 christos Exp $");
+__RCSID("$NetBSD: sysctl.c,v 1.57 2002/03/20 00:29:24 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -1077,7 +1077,6 @@ sysctl_linux(char *string, char **bufpp, int mib[], int flags, int *typep)
 	int indx;
 	char name[BUFSIZ], *cp;
 
-	printf("zoot\n");
 	if (*bufpp == NULL) {
 		(void)strcpy(name, string);
 		cp = &name[strlen(name)];
