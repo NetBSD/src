@@ -1,4 +1,4 @@
-/*	$NetBSD: clnt_generic.c,v 1.5 1995/04/14 19:48:23 jtc Exp $	*/
+/*	$NetBSD: clnt_generic.c,v 1.6 1995/06/03 22:37:21 mycroft Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -32,7 +32,7 @@
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char *sccsid = "from: @(#)clnt_generic.c 1.4 87/08/11 (C) 1987 SMI";*/
 /*static char *sccsid = "from: @(#)clnt_generic.c	2.2 88/08/01 4.0 RPCSRC";*/
-static char *rcsid = "$NetBSD: clnt_generic.c,v 1.5 1995/04/14 19:48:23 jtc Exp $";
+static char *rcsid = "$NetBSD: clnt_generic.c,v 1.6 1995/06/03 22:37:21 mycroft Exp $";
 #endif
 
 /*
@@ -77,6 +77,7 @@ clnt_create(hostname, prog, vers, proto)
 		return (NULL);
 	}
 	memset(&sin, 0, sizeof(sin));
+	sin.sin_len = sizeof(struct sockaddr_in);
 	sin.sin_family = h->h_addrtype;
 	sin.sin_port = 0;
 	bcopy(h->h_addr, (char*)&sin.sin_addr, h->h_length);

@@ -1,4 +1,4 @@
-/*	$NetBSD: ftpd.c,v 1.14 1995/04/11 02:58:40 cgd Exp $	*/
+/*	$NetBSD: ftpd.c,v 1.15 1995/06/03 22:46:47 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1985, 1988, 1990, 1992, 1993, 1994
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)ftpd.c	8.4 (Berkeley) 4/16/94";
 #else
-static char rcsid[] = "$NetBSD: ftpd.c,v 1.14 1995/04/11 02:58:40 cgd Exp $";
+static char rcsid[] = "$NetBSD: ftpd.c,v 1.15 1995/06/03 22:46:47 mycroft Exp $";
 #endif
 #endif /* not lint */
 
@@ -826,6 +826,7 @@ getdatasock(mode)
 	    (char *) &on, sizeof(on)) < 0)
 		goto bad;
 	/* anchor socket to avoid multi-homing problems */
+	data_source.sin_len = sizeof(struct sockaddr_in);
 	data_source.sin_family = AF_INET;
 	data_source.sin_addr = ctrl_addr.sin_addr;
 	for (tries = 1; ; tries++) {

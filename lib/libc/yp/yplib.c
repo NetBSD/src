@@ -1,4 +1,4 @@
-/*	$NetBSD: yplib.c,v 1.14 1995/02/27 13:00:53 cgd Exp $	*/
+/*	$NetBSD: yplib.c,v 1.15 1995/06/03 22:43:09 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993 Theo de Raadt <deraadt@fsa.ca>
@@ -32,7 +32,7 @@
  */
 
 #ifndef LINT
-static char *rcsid = "$NetBSD: yplib.c,v 1.14 1995/02/27 13:00:53 cgd Exp $";
+static char *rcsid = "$NetBSD: yplib.c,v 1.15 1995/06/03 22:43:09 mycroft Exp $";
 #endif
 
 #include <sys/param.h>
@@ -253,12 +253,12 @@ again:
 			}
 
 			memset(&ysd->dom_server_addr, 0, sizeof ysd->dom_server_addr);
-			ysd->dom_server_addr.sin_family = AF_INET;
 			ysd->dom_server_addr.sin_len = sizeof(struct sockaddr_in);
-			ysd->dom_server_addr.sin_addr =
-			    ybr.ypbind_respbody.ypbind_bindinfo.ypbind_binding_addr;
+			ysd->dom_server_addr.sin_family = AF_INET;
 			ysd->dom_server_addr.sin_port =
 			    ybr.ypbind_respbody.ypbind_bindinfo.ypbind_binding_port;
+			ysd->dom_server_addr.sin_addr =
+			    ybr.ypbind_respbody.ypbind_bindinfo.ypbind_binding_addr;
 
 			ysd->dom_server_port = ysd->dom_server_addr.sin_port;
 			close(fd);
@@ -274,6 +274,7 @@ again:
 trynet:
 	if(ysd->dom_vers==-1 || ysd->dom_vers==0) {
 		memset(&clnt_sin, 0, sizeof clnt_sin);
+		clnt_sin.sin_len = sizeof(struct sockaddr_in);
 		clnt_sin.sin_family = AF_INET;
 		clnt_sin.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
 
@@ -304,6 +305,7 @@ trynet:
 		clnt_destroy(client);
 
 		memset(&ysd->dom_server_addr, 0, sizeof ysd->dom_server_addr);
+		ysd->dom_server_addr.sin_len = sizeof(struct sockaddr_in);
 		ysd->dom_server_addr.sin_family = AF_INET;
 		ysd->dom_server_addr.sin_port =
 			ypbr.ypbind_respbody.ypbind_bindinfo.ypbind_binding_port;
