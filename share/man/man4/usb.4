@@ -1,4 +1,4 @@
-.\" $NetBSD: usb.4,v 1.53 2002/07/25 21:30:34 wiz Exp $
+.\" $NetBSD: usb.4,v 1.54 2002/08/11 13:24:55 isaki Exp $
 .\"
 .\" Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -49,6 +49,7 @@
 .Cd "usb*    at ehci? flags X"
 .Cd "usb*    at ohci? flags X"
 .Cd "usb*    at uhci? flags X"
+.Cd "usb*    at slhci? flags X"
 .Cd "uhub*   at usb?"
 .Cd "uhub*   at uhub? port ? configuration ? interface ? vendor ? product ? release ?"
 .Cd "XX*     at uhub? port ? configuration ? interface ? vendor ? product ? release ?"
@@ -480,6 +481,7 @@ specifications can be found at:
 .Xr kue 4 ,
 .Xr ohci 4 ,
 .Xr pci 4 ,
+.Xr slhci 4 ,
 .Xr uaudio 4 ,
 .Xr ucom 4 ,
 .Xr udsbr 4 ,
