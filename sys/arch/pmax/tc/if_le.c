@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le.c,v 1.12 1996/04/22 02:27:01 christos Exp $	*/
+/*	$NetBSD: if_le.c,v 1.13 1996/05/07 01:23:31 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
@@ -57,6 +57,9 @@
 
 #include <machine/autoconf.h>
 
+#include <dev/ic/am7990reg.h>
+#include <dev/ic/am7990var.h>
+
 #include <dev/tc/tcvar.h>
 #include <dev/tc/ioasicvar.h>
 #include <dev/tc/if_levar.h>
@@ -75,13 +78,6 @@ extern struct cfdriver mainbus_cd;	/* XXX really 3100/5100 b'board */
 #include <machine/rpb.h>
 #endif  /* Alpha */
 
-
-#include <dev/ic/am7990reg.h>
-#define LE_NEED_BUF_CONTIG
-#define LE_NEED_BUF_GAP2
-#define LE_NEED_BUF_GAP16
-#include <dev/ic/am7990var.h>
-
 /* access LANCE registers */
 void lewritereg();
 #define	LERDWR(cntl, src, dst)	{ (dst) = (src); wbflush(); }
@@ -93,46 +89,44 @@ void lewritereg();
 
 extern caddr_t le_iomem;
 
-#define	LE_SOFTC(unit)	le_cd.cd_devs[unit]
-#define	LE_DELAY(x)	DELAY(x)
+int le_pmax_match __P((struct device *, void *, void *));
+void le_pmax_attach __P((struct device *, struct device *, void *));
 
-int le_tc_match __P((struct device *, void *, void *));
-void le_tc_attach __P((struct device *, struct device *, void *));
+hide void le_pmax_copytobuf_gap2 __P((struct am7990_softc *, void *,
+	    int, int));
+hide void le_pmax_copyfrombuf_gap2 __P((struct am7990_softc *, void *,
+	    int, int));
 
-int leintr __P((void *sc));
+hide void le_pmax_copytobuf_gap16 __P((struct am7990_softc *, void *,
+	    int, int));
+hide void le_pmax_copyfrombuf_gap16 __P((struct am7990_softc *, void *,
+	    int, int));
+hide void le_pmax_zerobuf_gap16 __P((struct am7990_softc *, int, int));
 
-
-struct cfattach le_tc_ca = {
-	sizeof(struct le_softc), le_tc_match, le_tc_attach
+struct cfattach le_pmax_ca = {
+	sizeof(struct le_softc), le_pmax_match, le_pmax_attach
 };
 
-struct cfdriver le_cd = {
-	NULL, "le", DV_IFNET
-};
+hide void le_pmax_wrcsr __P((struct am7990_softc *, u_int16_t, u_int16_t));
+hide u_int16_t le_pmax_rdcsr __P((struct am7990_softc *, u_int16_t));  
 
-integrate void
-lehwinit(sc)
-	struct le_softc *sc;
-{
-}
-
-integrate void
-lewrcsr(sc, port, val)
-	struct le_softc *sc;
+hide void
+le_pmax_wrcsr(sc, port, val)
+	struct am7990_softc *sc;
 	u_int16_t port, val;
 {
-	struct lereg1 *ler1 = sc->sc_r1;
+	struct lereg1 *ler1 = ((struct le_softc *)sc)->sc_r1;
 
 	LEWREG(port, ler1->ler1_rap);
 	LERDWR(port, val, ler1->ler1_rdp);
 }
 
-integrate u_int16_t
-lerdcsr(sc, port)
-	struct le_softc *sc;
+hide u_int16_t
+le_pmax_rdcsr(sc, port)
+	struct am7990_softc *sc;
 	u_int16_t port;
 {
-	struct lereg1 *ler1 = sc->sc_r1;
+	struct lereg1 *ler1 = ((struct le_softc *)sc)->sc_r1;
 	u_int16_t val;
 
 	LEWREG(port, ler1->ler1_rap);
@@ -141,7 +135,7 @@ lerdcsr(sc, port)
 }
 
 int
-le_tc_match(parent, match, aux)
+le_pmax_match(parent, match, aux)
 	struct device *parent;
 	void *match, *aux;
 {
@@ -178,11 +172,12 @@ le_tc_match(parent, match, aux)
 }
 
 void
-le_tc_attach(parent, self, aux)
+le_pmax_attach(parent, self, aux)
 	struct device *parent, *self;
 	void *aux;
 {
-	register struct le_softc *sc = (void *)self;
+	register struct le_softc *lesc = (void *)self;
+	register struct am7990_softc *sc = &lesc->sc_am7990;
 	struct confargs *ca = aux;
 	u_char *cp;	/* pointer to MAC address */
 	int i;
@@ -192,19 +187,19 @@ le_tc_attach(parent, self, aux)
 		volatile u_int *ldp;
 		tc_addr_t dma_mask;
 
-		sc->sc_r1 = (struct lereg1 *)
+		lesc->sc_r1 = (struct lereg1 *)
 		    MACH_PHYS_TO_UNCACHED(ca->ca_addr);
 #ifdef alpha
-		sc->sc_r1 = TC_DENSE_TO_SPARSE(sc->sc_r1);
+		lesc->sc_r1 = TC_DENSE_TO_SPARSE(sc->sc_r1);
 #endif
 		sc->sc_mem = (void *)MACH_PHYS_TO_UNCACHED(le_iomem);
 /* XXX */	cp = (u_char *)IOASIC_SYS_ETHER_ADDRESS(ioasic_base);
 
-		sc->sc_copytodesc = am7990_copytobuf_gap2;
-		sc->sc_copyfromdesc = am7990_copyfrombuf_gap2;
-		sc->sc_copytobuf = am7990_copytobuf_gap16;
-		sc->sc_copyfrombuf = am7990_copyfrombuf_gap16;
-		sc->sc_zerobuf = am7990_zerobuf_gap16;
+		sc->sc_copytodesc = le_pmax_copytobuf_gap2;
+		sc->sc_copyfromdesc = le_pmax_copyfrombuf_gap2;
+		sc->sc_copytobuf = le_pmax_copytobuf_gap16;
+		sc->sc_copyfrombuf = le_pmax_copyfrombuf_gap16;
+		sc->sc_zerobuf = le_pmax_zerobuf_gap16;
 
 		/*
 		 * And enable Lance dma through the asic.
@@ -224,7 +219,7 @@ le_tc_attach(parent, self, aux)
 	else
 	if (parent->dv_cfdata->cf_driver == &tc_cd) {
 		/* It's on the turbochannel proper, or on KN02 baseboard. */
-		sc->sc_r1 = (struct lereg1 *)
+		lesc->sc_r1 = (struct lereg1 *)
 		    (ca->ca_addr + LE_OFFSET_LANCE);
 		sc->sc_mem = (void *)
 		    (ca->ca_addr + LE_OFFSET_RAM);
@@ -240,17 +235,21 @@ le_tc_attach(parent, self, aux)
 	 else if (parent->dv_cfdata->cf_driver == &mainbus_cd) {
 		/* It's on the baseboard, attached directly to mainbus. */
 
-		sc->sc_r1 = (struct lereg1 *)(ca->ca_addr);
+		lesc->sc_r1 = (struct lereg1 *)(ca->ca_addr);
 /*XXX*/		sc->sc_mem = (void *)MACH_PHYS_TO_UNCACHED(0x19000000);
 /*XXX*/		cp = (u_char *)(MACH_PHYS_TO_UNCACHED(KN01_SYS_CLOCK) + 1);
 
-		sc->sc_copytodesc = am7990_copytobuf_gap2;
-		sc->sc_copyfromdesc = am7990_copyfrombuf_gap2;
-		sc->sc_copytobuf = am7990_copytobuf_gap2;
-		sc->sc_copyfrombuf = am7990_copyfrombuf_gap2;
-		sc->sc_zerobuf = am7990_zerobuf_gap2;
+		sc->sc_copytodesc = le_pmax_copytobuf_gap2;
+		sc->sc_copyfromdesc = le_pmax_copyfrombuf_gap2;
+		sc->sc_copytobuf = le_pmax_copytobuf_gap2;
+		sc->sc_copyfrombuf = le_pmax_copyfrombuf_gap2;
+		sc->sc_zerobuf = le_pmax_zerobuf_gap2;
 	}
 #endif
+
+	sc->sc_rdcsr = le_pmax_rdcsr;
+	sc->sc_wrcsr = le_pmax_wrcsr;
+	sc->sc_hwinit = NULL;
 
 	sc->sc_conf3 = 0;
 	sc->sc_addr = 0;
@@ -264,11 +263,9 @@ le_tc_attach(parent, self, aux)
 		cp += 4;
 	}
 
-	sc->sc_arpcom.ac_if.if_name = le_cd.cd_name;
-	leconfig(sc);
+	am7990_config(sc);
 
-
-	BUS_INTR_ESTABLISH(ca, leintr, sc);
+	BUS_INTR_ESTABLISH(ca, am7990_intr, sc);
 
 	if (parent->dv_cfdata->cf_driver == &ioasic_cd) {
 		/* XXX YEECH!!! */
@@ -315,4 +312,144 @@ lewritereg(regptr, val)
  * The buffer offset is the logical byte offset, assuming contiguous storage.
  */
 
-#include <dev/ic/am7990.c>
+/*
+ * gap2: two bytes of data followed by two bytes of pad.
+ *
+ * Buffers must be 4-byte aligned.  The code doesn't worry about
+ * doing an extra byte.
+ */
+
+void
+le_pmax_copytobuf_gap2(sc, fromv, boff, len)
+	struct am7990_softc *sc;  
+	void *fromv;
+	int boff;
+	register int len;
+{
+	volatile caddr_t buf = sc->sc_mem;
+	register caddr_t from = fromv;
+	register volatile u_int16_t *bptr;  
+
+	if (boff & 0x1) {
+		/* handle unaligned first byte */
+		bptr = ((volatile u_int16_t *)buf) + (boff - 1);
+		*bptr = (*from++ << 8) | (*bptr & 0xff);
+		bptr += 2;  
+		len--;
+	} else
+		bptr = ((volatile u_int16_t *)buf) + boff;
+	while (len > 1) {
+		*bptr = (from[1] << 8) | (from[0] & 0xff);
+		bptr += 2;
+		from += 2;
+		len -= 2;
+	}
+	if (len == 1)
+		*bptr = (u_int16_t)*from;
+}
+
+void
+le_pmax_copyfrombuf_gap2(sc, tov, boff, len)
+	struct am7990_softc *sc;
+	void *tov;
+	int boff, len;
+{
+	volatile caddr_t buf = sc->sc_mem;
+	register caddr_t to = tov;
+	register volatile u_int16_t *bptr;
+	register u_int16_t tmp;
+
+	if (boff & 0x1) {
+		/* handle unaligned first byte */
+		bptr = ((volatile u_int16_t *)buf) + (boff - 1);
+		*to++ = (*bptr >> 8) & 0xff;
+		bptr += 2;
+		len--;
+	} else
+		bptr = ((volatile u_int16_t *)buf) + boff;
+	while (len > 1) {
+		tmp = *bptr;
+		*to++ = tmp & 0xff;
+		*to++ = (tmp >> 8) & 0xff;
+		bptr += 2;
+		len -= 2;
+	}
+	if (len == 1)
+		*to = *bptr & 0xff;
+}
+
+/*
+ * gap16: 16 bytes of data followed by 16 bytes of pad.
+ *
+ * Buffers must be 32-byte aligned.
+ */
+
+void
+le_pmax_copytobuf_gap16(sc, fromv, boff, len)
+	struct am7990_softc *sc;
+	void *fromv;
+	int boff;
+	register int len;
+{
+	volatile caddr_t buf = sc->sc_mem;
+	register caddr_t from = fromv;
+	register caddr_t bptr;
+	register int xfer;
+
+	bptr = buf + ((boff << 1) & ~0x1f);
+	boff &= 0xf;
+	xfer = min(len, 16 - boff);
+	while (len > 0) {
+		bcopy(from, bptr + boff, xfer);
+		from += xfer;
+		bptr += 32;
+		boff = 0;
+		len -= xfer;
+		xfer = min(len, 16);
+	}
+}
+
+void
+le_pmax_copyfrombuf_gap16(sc, tov, boff, len)
+	struct am7990_softc *sc;
+	void *tov;
+	int boff, len;
+{
+	volatile caddr_t buf = sc->sc_mem;
+	register caddr_t to = tov;
+	register caddr_t bptr;
+	register int xfer;
+
+	bptr = buf + ((boff << 1) & ~0x1f);
+	boff &= 0xf;
+	xfer = min(len, 16 - boff);
+	while (len > 0) {
+		bcopy(bptr + boff, to, xfer);
+		to += xfer;
+		bptr += 32;
+		boff = 0;
+		len -= xfer;
+		xfer = min(len, 16);
+	}
+}
+
+void
+le_pmax_zerobuf_gap16(sc, boff, len)
+	struct am7990_softc *sc;
+	int boff, len;
+{
+	volatile caddr_t buf = sc->sc_mem;
+	register caddr_t bptr;
+	register int xfer;
+
+	bptr = buf + ((boff << 1) & ~0x1f);
+	boff &= 0xf;
+	xfer = min(len, 16 - boff);
+	while (len > 0) {
+		bzero(bptr + boff, xfer);
+		bptr += 32;
+		boff = 0;
+		len -= xfer;
+		xfer = min(len, 16);
+	}
+}
