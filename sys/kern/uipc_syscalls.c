@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_syscalls.c,v 1.25.8.2 1998/01/29 10:45:30 mellon Exp $	*/
+/*	$NetBSD: uipc_syscalls.c,v 1.25.8.3 1998/02/07 08:28:11 mellon Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1990, 1993
@@ -724,7 +724,7 @@ recvit(p, s, mp, namelenp, retsize)
 			struct mbuf *m = control;
 			caddr_t p = (caddr_t)mp->msg_control;
 
-			while (m) {
+			do {
 				i = m->m_len;
 				if (len < i) {
 					mp->msg_flags |= MSG_CTRUNC;
@@ -732,12 +732,13 @@ recvit(p, s, mp, namelenp, retsize)
 				}
 				error = copyout(mtod(m, caddr_t), p,
 				    (unsigned)i);
+				if (m->m_next)
+					i = ALIGN(i);
 				p += i;
 				len -= i;
 				if (error != 0 || len <= 0)
 					break;
-				m = m->m_next;
-			}
+			} while ((m = m->m_next) != NULL);
 			len = p - (caddr_t)mp->msg_control;
 		}
 		mp->msg_controllen = len;
