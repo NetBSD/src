@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.11 1998/04/10 08:20:05 leo Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.12 1998/05/25 10:43:05 leo Exp $	*/
 
 /*
  * Copyright (c) 1996 Leo Weppelman.  All rights reserved.
@@ -360,7 +360,7 @@ int	sr;
 	 */
 	MFP2->mf_imrb  &= ~iinfo_p->imask;
 
-	if ((sr & PSL_IPL) >= iinfo_p->ipl) {
+	if ((sr & PSL_IPL) >= (iinfo_p->ipl & PSL_IPL)) {
 		/*
 		 * We're running at a too high priority now.
 		 */
