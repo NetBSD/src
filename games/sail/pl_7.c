@@ -33,7 +33,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)pl_7.c	5.7 (Berkeley) 2/28/91";*/
-static char rcsid[] = "$Id: pl_7.c,v 1.3 1993/08/10 02:15:07 mycroft Exp $";
+static char rcsid[] = "$Id: pl_7.c,v 1.4 1993/08/10 02:20:52 mycroft Exp $";
 #endif /* not lint */
 
 #include "player.h"
@@ -236,7 +236,7 @@ register n;
 				*p++ = c;
 				(void) waddch(scroll_w, c);
 			} else
-				(void) putchar(CTRL('g'));
+				(void) putchar('\a');
 		}
 	}
 }
