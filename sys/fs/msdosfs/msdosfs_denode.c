@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_denode.c,v 1.56 2002/06/05 02:07:48 chs Exp $	*/
+/*	$NetBSD: msdosfs_denode.c,v 1.1 2002/12/26 12:31:34 jdolecek Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_denode.c,v 1.56 2002/06/05 02:07:48 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_denode.c,v 1.1 2002/12/26 12:31:34 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -64,11 +64,11 @@ __KERNEL_RCSID(0, "$NetBSD: msdosfs_denode.c,v 1.56 2002/06/05 02:07:48 chs Exp 
 
 #include <uvm/uvm_extern.h>
 
-#include <msdosfs/bpb.h>
-#include <msdosfs/msdosfsmount.h>
-#include <msdosfs/direntry.h>
-#include <msdosfs/denode.h>
-#include <msdosfs/fat.h>
+#include <fs/msdosfs/bpb.h>
+#include <fs/msdosfs/msdosfsmount.h>
+#include <fs/msdosfs/direntry.h>
+#include <fs/msdosfs/denode.h>
+#include <fs/msdosfs/fat.h>
 
 LIST_HEAD(ihashhead, denode) *dehashtbl;
 u_long dehash;			/* size of hash table - 1 */

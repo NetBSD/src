@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_fat.c,v 1.38 2001/11/10 13:26:45 lukem Exp $	*/
+/*	$NetBSD: msdosfs_fat.c,v 1.1 2002/12/26 12:31:34 jdolecek Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_fat.c,v 1.38 2001/11/10 13:26:45 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_fat.c,v 1.1 2002/12/26 12:31:34 jdolecek Exp $");
 
 /*
  * kernel include files.
@@ -66,11 +66,11 @@ __KERNEL_RCSID(0, "$NetBSD: msdosfs_fat.c,v 1.38 2001/11/10 13:26:45 lukem Exp $
 /*
  * msdosfs include files.
  */
-#include <msdosfs/bpb.h>
-#include <msdosfs/msdosfsmount.h>
-#include <msdosfs/direntry.h>
-#include <msdosfs/denode.h>
-#include <msdosfs/fat.h>
+#include <fs/msdosfs/bpb.h>
+#include <fs/msdosfs/msdosfsmount.h>
+#include <fs/msdosfs/direntry.h>
+#include <fs/msdosfs/denode.h>
+#include <fs/msdosfs/fat.h>
 
 /*
  * Fat cache stats.
