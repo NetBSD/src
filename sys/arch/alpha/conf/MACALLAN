@@ -1,4 +1,4 @@
-#	$NetBSD: MACALLAN,v 1.1 1995/03/03 01:35:03 cgd Exp $
+#	$NetBSD: MACALLAN,v 1.2 1995/03/08 00:38:58 cgd Exp $
 #
 # Kernel for macallan.dssc.cs.cmu.edu.
 
@@ -8,9 +8,6 @@ makeoptions	CC="gcc -Werror"
 makeoptions	DEBUG="-g"
 
 maxusers 8
-
-# does not really do anything anymore, but this replaces "ident GENERIC"
-options		GENERIC
 
 # CPU Support
 options		DEC_3000_500		# 3000/[4-9]00

@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.3 1995/03/03 01:33:03 cgd Exp $
+#	$NetBSD: GENERIC,v 1.4 1995/03/08 00:38:56 cgd Exp $
 #
 # Generic Alpha kernel.  Enough to get booted, etc., but not much more.
 
@@ -13,7 +13,10 @@ maxusers 8
 options		GENERIC
 
 # CPU Support
-options		DEC_3000_500		# 3000/[4-9]00
+options		DEC_3000_500	# Flamingo family:	3000/[4-9]00*
+options		DEC_2000_300	# "Jensen":		2000/300
+options		DEC_3000_300	# Pelican family:	3000/300*
+options		DEC_2100_A50	# "Avanti":		AlphaStation 400 4/233
 
 # needs to be set per system
 options		TIMEZONE="5*60"		# Minutes west of GMT (for param.c)
@@ -39,7 +42,7 @@ options		COMPAT_43
 # OSF/1 binary compatibility
 options		COMPAT_OSF1
 
-# Loadable Kernel Modules
+# Loadable kernel modules
 options		LKM
 
 config		netbsd	swap generic

@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.1 1995/02/13 23:06:55 cgd Exp $	*/
+/*	$NetBSD: cpu.c,v 1.2 1995/03/08 00:38:48 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -62,11 +62,68 @@ cpuattach(parent, dev, aux)
 	void *aux;
 {
         struct pcs *p;
+	char *cpu_major[] = {
+		"UNKNOWN MAJOR TYPE (0)",
+		"EV3",
+		"EV4 (21064)",
+		"UNKNOWN MAJOR TYPE (3)",
+		"LCA4 (21066/21068)",
+	};
+	char *cpu_minor[] = {
+		"Pass 2 or 2.1",
+		"Pass 3",
+		"UNKOWN MINOR TYPE (2)",
+		"Simulated",
+	};
+	int ncpu_major = sizeof(cpu_major) / sizeof(cpu_major[0]);
+	int ncpu_minor = sizeof(cpu_minor) / sizeof(cpu_minor[0]);
+	u_int32_t major, minor;
+	int needcomma, needrev, i;
 
         p = (struct pcs*)((char *)hwrpb + hwrpb->rpb_pcs_off +
 	    (dev->dv_unit * hwrpb->rpb_pcs_size));
-	printf(": 0x%lx 0x%lx, type 0x%lx, var 0x%lx, rev 0x%lx\n",
-	    (long)(p->pcs_proc_sn[0]), (long)(p->pcs_proc_sn[8]), 
-	    (long)p->pcs_proc_type, *((long *)&p->pcs_proc_var),
-	    *((long *)p->pcs_proc_revision));
+	printf(": ");
+
+	major = (p->pcs_proc_type & PCS_PROC_MAJOR) >> PCS_PROC_MAJORSHIFT;
+	minor = (p->pcs_proc_type & PCS_PROC_MINOR) >> PCS_PROC_MINORSHIFT;
+
+	if (major < ncpu_major)
+		printf("%s", cpu_major[major]);
+	else
+		printf("UNKNOWN MAJOR TYPE (%d)", major);
+
+	printf(", ");
+
+	if (minor < ncpu_minor)
+		printf("%s", cpu_minor[minor]);
+	else
+		printf("UNKNOWN MINOR TYPE (%d)", minor);
+
+	if (p->pcs_proc_revision[0] != 0) {		/* XXX bad test? */
+		printf(", ");
+
+		printf("Revision %c%c%c%c", p->pcs_proc_revision[0],
+		    p->pcs_proc_revision[1], p->pcs_proc_revision[2],
+		    p->pcs_proc_revision[3]);
+	}
+
+	printf("\n");
+
+	if (p->pcs_proc_var != 0) {
+		printf("cpu%d: ", dev->dv_unit);
+
+		needcomma = 0;
+		if (p->pcs_proc_var & PCS_VAR_VAXFP) {
+			printf("VAX FP support");
+			needcomma = 1;
+		}
+		if (p->pcs_proc_var & PCS_VAR_IEEEFP) {
+			printf("%sIEEE FP support", needcomma ? ", " : "");
+			needcomma = 1;
+		}
+		if (p->pcs_proc_var & PCS_VAR_RESERVED)
+			printf("%sreserved bits: 0x%lx", needcomma ? ", " : "",
+			    p->pcs_proc_var & PCS_VAR_RESERVED);
+		printf("\n");
+	}
 }
