@@ -3,7 +3,7 @@
    Contributed by Pieter `Tiggr' Schoenmakers (rcpieter@win.tue.nl)
    and Martin Simmons (@harleqn.co.uk).
    More major hacks by Richard Earnshaw (rwe11@cl.cam.ac.uk)
-   
+
 This file is part of GNU CC.
 
 GNU CC is free software; you can redistribute it and/or modify
@@ -27,6 +27,8 @@ Boston, MA 02111-1307, USA.  */
 
 extern void output_func_prologue ();
 extern void output_func_epilogue ();
+extern output_pic_addr_const();
+extern int label_operand();
 extern char *output_add_immediate ();
 extern char *output_call ();
 extern char *output_call_mem ();
@@ -128,7 +130,7 @@ extern int target_flags;
    get the condition code clobbering attribute right when we are running on
    an arm 6 */
 
-enum processor_type 
+enum processor_type
 {
   PROCESSOR_ARM2,
   PROCESSOR_ARM3,
@@ -160,23 +162,7 @@ extern enum floating_point_type arm_fpu;
 
 #define TARGET_MEM_FUNCTIONS 1
 
-/* OVERRIDE_OPTIONS takes care of the following:
-   - if -mpoke-function-name, then -mapcs.
-   - if doing debugging, then -mapcs; if RISCOS, then -mpoke-function-name.
-   - if floating point is done by emulation, forget about instruction
-     scheduling.  Note that this only saves compilation time; it doesn't
-     matter for the final code.  */
-
-#define OVERRIDE_OPTIONS  \
-{								\
-  if (write_symbols != NO_DEBUG && flag_omit_frame_pointer)	\
-    warning ("-g without a frame pointer may not give sensible debugging");\
-  if (TARGET_POKE_FUNCTION_NAME)				\
-    target_flags |= 1;						\
-  if (TARGET_FPE)						\
-    flag_schedule_insns = flag_schedule_insns_after_reload = 0;	\
-  arm_cpu = TARGET_6 ? PROCESSOR_ARM6: PROCESSOR_ARM2;		\
-}
+#define OVERRIDE_OPTIONS  arm_override_options ()
 
 /* Target machine storage Layout.  */
 
@@ -188,6 +174,7 @@ extern enum floating_point_type arm_fpu;
    extension may differ from that of the type.  */
 
 /* It is far faster to zero extend chars than to sign extend them */
+#define PROMOTE_FUNCTION_ARGS
 
 #define PROMOTE_MODE(MODE,UNSIGNEDP,TYPE)  \
   if (GET_MODE_CLASS (MODE) == MODE_INT		\
@@ -226,7 +213,7 @@ extern enum floating_point_type arm_fpu;
    in instructions that operate on numbered bit-fields.  */
 #define BITS_BIG_ENDIAN  0
 
-/* Define this if most significant byte of a word is the lowest numbered.  
+/* Define this if most significant byte of a word is the lowest numbered.
    Most ARM processors are run in little endian mode, so that is the default.
    If you want to have it run-time selectable, change the definition in a
    cover file to be TARGET_BIG_ENDIAN.  */
@@ -353,7 +340,7 @@ extern enum floating_point_type arm_fpu;
    The latter must include the registers where values are returned
    and the register where structure-value addresses are passed.
    Aside from that, you can include as many other registers as you like.
-   The CC is not preserved over function calls on the ARM 6, so it is 
+   The CC is not preserved over function calls on the ARM 6, so it is
    easier to assume this for all.  SFP is preserved, since FP is. */
 #define CALL_USED_REGISTERS  \
 {                            \
@@ -377,7 +364,22 @@ extern enum floating_point_type arm_fpu;
       for (regno = 16; regno < 24; ++regno)		\
 	fixed_regs[regno] = call_used_regs[regno] = 1;	\
     }							\
+ if (flag_pic)						\
+    {							\
+      fixed_regs[arm_pic_register] = 1;		\
+      call_used_regs[arm_pic_register] = 1;	\
+    }							\
 }
+
+/* indicate that the pic register is not avail for allocation
+*  fixed_regs[n] ==1     implies that n can not be allocated
+*  call_used_regs[n] ==1 implies that n cannot be allocated over a call
+*  every element of fixed_regs must also be an element of call_used_regs
+*  if(n is not in call_used_regs) and n is used in the proceedure then n mustbe
+*   saved and restored at proc entry/exit
+*/
+
+
 
 /* Return number of consecutive hard regs needed starting at reg REGNO
    to hold something of mode MODE.
@@ -427,7 +429,7 @@ extern enum floating_point_type arm_fpu;
 
 /* Value should be nonzero if functions must have frame pointers.
    Zero means the frame pointer need not be set up (and parms may be accessed
-   via the stack pointer) in functions that seem suitable.  
+   via the stack pointer) in functions that seem suitable.
    If we have to have a frame pointer we might as well make use of it.
    APCS says that the frame pointer does not need to be pushed in leaf
    functions.  */
@@ -452,7 +454,7 @@ extern enum floating_point_type arm_fpu;
 /* The order in which register should be allocated.  It is good to use ip
    since no saving is required (though calls clobber it) and it never contains
    function parameters.  It is quite good to use lr since other calls may
-   clobber it anyway.  Allocate r0 through r3 in reverse order since r3 is 
+   clobber it anyway.  Allocate r0 through r3 in reverse order since r3 is
    least likely to contain a function parameter; in addition results are
    returned in r0.
    */
@@ -523,9 +525,9 @@ enum reg_class
    C is the letter, and VALUE is a constant value.
    Return 1 if VALUE is in the range specified by C.
 	I: immediate arithmetic operand (i.e. 8 bits shifted as required).
-	J: valid indexing constants.  
+	J: valid indexing constants.
 	K: ~value ok in rhs argument of data operand.
-	L: -value ok in rhs argument of data operand. 
+	L: -value ok in rhs argument of data operand.
         M: 0..32, or a power of 2  (for shifts, or mult done by shift).  */
 #define CONST_OK_FOR_LETTER_P(VALUE, C)  		\
   ((C) == 'I' ? const_ok_for_arm (VALUE) :		\
@@ -537,19 +539,19 @@ enum reg_class
    : 0)
 
 /* For the ARM, `Q' means that this is a memory operand that is just
-   an offset from a register.  
+   an offset from a register.
    `S' means any symbol that has the SYMBOL_REF_FLAG set or a CONSTANT_POOL
    address.  This means that the symbol is in the text segment and can be
    accessed without using a load. */
 
-#define EXTRA_CONSTRAINT(OP, C)                                         \
-  ((C) == 'Q' ? GET_CODE (OP) == MEM && GET_CODE (XEXP (OP, 0)) == REG  \
+#define EXTRA_CONSTRAINT(OP, C) \
+((C) == 'Q' ? GET_CODE (OP) == MEM && GET_CODE (XEXP (OP, 0)) == REG  \
    : (C) == 'R' ? (GET_CODE (OP) == MEM					\
 		   && GET_CODE (XEXP (OP, 0)) == SYMBOL_REF		\
-		   && CONSTANT_POOL_ADDRESS_P (XEXP (OP, 0)))		\
-   : (C) == 'S' ? (optimize > 0 && CONSTANT_ADDRESS_P (OP)) : 0)
+		   && CONSTANT_POOL_ADDRESS_P (XEXP (OP, 0)))  \
+ : (C) == 'S' ? (optimize > 0 && CONSTANT_ADDRESS_P (OP)) : 0)
 
-/* Constant letter 'G' for the FPU immediate constants. 
+/* Constant letter 'G' for the FPU immediate constants.
    'H' means the same constant negated.  */
 #define CONST_DOUBLE_OK_FOR_LETTER_P(X,C)			\
     ((C) == 'G' ? const_double_rtx_ok_for_fpu (X) 		\
@@ -572,8 +574,9 @@ enum reg_class
 
 /* If we need to load shorts byte-at-a-time, then we need a scratch. */
 #define SECONDARY_INPUT_RELOAD_CLASS(CLASS,MODE,X)			\
-  (((MODE) == HImode && TARGET_SHORT_BY_BYTES && true_regnum (X) == -1)	\
-   ? GENERAL_REGS : NO_REGS)
+  arm_secondary_input_reload_cloass(CLASS,MODE,X)
+
+
 
 /* Return the maximum number of consecutive registers
    needed to represent mode MODE in a register of class CLASS.
@@ -730,7 +733,7 @@ enum reg_class
   output_func_prologue ((STREAM), (SIZE))
 
 /* Call the function profiler with a given profile label.  The Acorn compiler
-   puts this BEFORE the prolog but gcc pust it afterwards.  The ``mov ip,lr''
+   puts this BEFORE the prolog but gcc puts it afterwards.  The ``mov ip,lr''
    seems like a good idea to stick with cc convention.  ``prof'' doesn't seem
    to mind about this!  */
 #define FUNCTION_PROFILER(STREAM,LABELNO)  				    \
@@ -776,6 +779,8 @@ enum reg_class
  {FRAME_POINTER_REGNUM, STACK_POINTER_REGNUM},		\
  {FRAME_POINTER_REGNUM, HARD_FRAME_POINTER_REGNUM}}
 
+extern int arm_preserved_register(int n);
+
 /* Given FROM and TO register numbers, say whether this elimination is allowed.
    Frame pointer elimination is automatically handled.
 
@@ -804,10 +809,10 @@ enum reg_class
       if (! volatile_func)						\
         {								\
           for (regno = 0; regno <= 10; regno++)				\
-	    if (regs_ever_live[regno] && ! call_used_regs[regno])	\
+	    if (regs_ever_live[regno] && arm_preserved_register(regno))	\
 	      saved_hard_reg = 1, offset += 4;				\
           for (regno = 16; regno <=23; regno++)				\
-	    if (regs_ever_live[regno] && ! call_used_regs[regno])	\
+	    if (regs_ever_live[regno] && arm_preserved_register(regno))	\
 	      offset += 12;						\
 	}								\
       if ((FROM) == FRAME_POINTER_REGNUM)				\
@@ -892,31 +897,36 @@ enum reg_class
 
 /* Recognize any constant value that is a valid address.  */
 /* XXX We can address any constant, eventually...  */
-#if 0
-#define CONSTANT_ADDRESS_P(X)	\
-    ( GET_CODE(X) == LABEL_REF	\
-  ||  GET_CODE(X) == SYMBOL_REF \
-  ||  GET_CODE(X) == CONST_INT	\
-  ||  GET_CODE(X) == CONST )
-#endif
+
+#ifdef AOF_ASSEMBLER
+
+#define CONSTANT_ADDRESS_P(X)		\
+  (GET_CODE (X) == SYMBOL_REF		\
+   && CONSTANT_POOL_ADDRESS_P (X))
+
+#else
 
 #define CONSTANT_ADDRESS_P(X)  			\
   (GET_CODE (X) == SYMBOL_REF 			\
    && (CONSTANT_POOL_ADDRESS_P (X)		\
        || (optimize > 0 && SYMBOL_REF_FLAG (X))))
 
+#endif /* AOF_ASSEMBLER */
+
+
 /* Nonzero if the constant value X is a legitimate general operand.
    It is given that X satisfies CONSTANT_P or is a CONST_DOUBLE.
 
-   On the ARM, allow any integer (invalid ones are removed later by insn
-   patterns), nice doubles and symbol_refs which refer to the function's
-   constant pool XXX.  */
-#define LEGITIMATE_CONSTANT_P(X)				\
-  (GET_CODE (X) == CONST_INT					\
-   || (GET_CODE (X) == CONST_DOUBLE				\
-       && (const_double_rtx_ok_for_fpu (X)			\
-	   || neg_const_double_rtx_ok_for_fpu (X)))		\
-   || CONSTANT_ADDRESS_P (X))
+on the arm - we make all constants that are not label refs legal
+later we move them into a set of constant pools
+- As far as I can see we need to do this to get multiple constant pools
+with limited addressing
+*/
+
+// #define LEGITIMATE_CONSTANT_P(X)	((GET_CODE(X) == LABEL_REF) || (!
+//    label_mentioned_p (X))   )
+#define LEGITIMATE_CONSTANT_P(X)	(! label_mentioned_p (X))
+
 
 /* Symbols in the text segment can be accessed without indirecting via the
    constant pool; it may take an extra binary operation, but this is still
@@ -1048,6 +1058,16 @@ do									\
 	   && GET_CODE (XEXP (X, 0)) == REG				\
 	   && REG_OK_FOR_PRE_POST_P (XEXP (X, 0)))			\
     goto LABEL;								\
+      else if (GET_MODE_SIZE (MODE) >= 4 && reload_completed		\
+	   && (GET_CODE (X) == LABEL_REF				\
+	       || (GET_CODE (X) == CONST				\
+		   && GET_CODE (XEXP ((X), 0)) == PLUS			\
+		   && GET_CODE (XEXP (XEXP ((X), 0), 0)) == LABEL_REF	\
+		   && GET_CODE (XEXP (XEXP ((X), 0), 1)) == CONST_INT)))\
+    goto LABEL;								\
+    if (GET_MODE_SIZE (MODE) == 4                                	\
+        && (GET_CODE (X) == LABEL_REF)	)			\
+    goto LABEL;								\
   else if ((MODE) == TImode)						\
     ;									\
   else if (GET_CODE (X) == PLUS)					\
@@ -1094,6 +1114,8 @@ do									\
    On the ARM, try to convert [REG, #BIGCONST]
    into ADD BASE, REG, #UPPERCONST and [BASE, #VALIDCONST],
    where VALIDCONST == 0 in case of TImode.  */
+extern struct rtx_def *legitimize_pic_address ();
+
 #define LEGITIMIZE_ADDRESS(X, OLDX, MODE, WIN)				 \
 {									 \
   if (GET_CODE (X) == PLUS)						 \
@@ -1101,9 +1123,9 @@ do									\
       rtx xop0 = XEXP (X, 0);						 \
       rtx xop1 = XEXP (X, 1);						 \
 									 \
-      if (CONSTANT_P (xop0) && ! LEGITIMATE_CONSTANT_P (xop0))		 \
+      if (CONSTANT_P (xop0) && ! symbol_mentioned_p (xop0))		 \
 	xop0 = force_reg (SImode, xop0);				 \
-      if (CONSTANT_P (xop1) && ! LEGITIMATE_CONSTANT_P (xop1))		 \
+      if (CONSTANT_P (xop1) && ! symbol_mentioned_p (xop1))		 \
 	xop1 = force_reg (SImode, xop1);				 \
       if (BASE_REGISTER_RTX_P (xop0) && GET_CODE (xop1) == CONST_INT)	 \
 	{								 \
@@ -1144,15 +1166,16 @@ do									\
 									 \
       if (CONSTANT_P (xop0))						 \
 	xop0 = force_reg (SImode, xop0);				 \
-      if (CONSTANT_P (xop1) && ! LEGITIMATE_CONSTANT_P (xop1))		 \
+      if (CONSTANT_P (xop1) && ! symbol_mentioned_p (xop1))		 \
 	xop1 = force_reg (SImode, xop1);				 \
       if (xop0 != XEXP (X, 0) || xop1 != XEXP (X, 1))			 \
 	(X) = gen_rtx (MINUS, SImode, xop0, xop1);			 \
-    }									 \
+    }                                                                    \
+    if (flag_pic)                                                        \
+    (X) = legitimize_pic_address (OLDX, MODE, NULL_RTX);		 \
   if (memory_address_p (MODE, X))					 \
     goto WIN;								 \
 }
-
 
 /* Go to LABEL if ADDR (a legitimate address expression)
    has an effect that depends on the machine mode it is used for.  */
@@ -1297,8 +1320,8 @@ do									\
 			   || GET_RTX_CLASS (GET_CODE (XEXP (X, 1))) == 'c') \
 			  ? 1 : 0))					     \
 		: 4)))))
-	 
-   
+	
+
 
 /* Try to generate sequences that don't involve branches, we can then use
    conditional instructions */
@@ -1306,7 +1329,7 @@ do									\
 
 /* Condition code information. */
 /* Given a comparison code (EQ, NE, etc.) and the first operand of a COMPARE,
-   return the mode to be used for the comparison. 
+   return the mode to be used for the comparison.
    CCFPEmode should be used with floating inequalities,
    CCFPmode should be used with floating equalities.
    CC_NOOVmode should be used with SImode integer equalities.
@@ -1461,7 +1484,7 @@ do {									\
   text_section ();							\
   ASM_OUTPUT_INTERNAL_LABEL (STREAM, "Ltext", 0);			\
 } while (0)
-  
+
 /* Output a label definition.  */
 #define ASM_OUTPUT_LABEL(STREAM,NAME)  \
   arm_asm_output_label ((STREAM), (NAME))
@@ -1524,7 +1547,7 @@ do {									\
 /* Output a relative address. Not needed since jump tables are absolute
    but we must define it anyway.  */
 #define ASM_OUTPUT_ADDR_DIFF_ELT(STREAM,VALUE,REL)  \
-  fputs ("- - - ASM_OUTPUT_ADDR_DIFF_ELT called!\n", STREAM)
+   fprintf (STREAM, "\tb L%d\n", VALUE)
 
 /* Output an element of a dispatch table.  */
 #define ASM_OUTPUT_ADDR_VEC_ELT(STREAM,VALUE)  \
@@ -1549,7 +1572,7 @@ do { char dstr[30];							\
 		l[0], l[1], l[2], ASM_COMMENT_START, dstr);		\
    } while (0)
 
-    
+
 #define ASM_OUTPUT_DOUBLE(STREAM, VALUE)  				\
 do { char dstr[30];							\
      long l[2];								\
@@ -1579,10 +1602,14 @@ do { char dstr[30];							\
    } while (0);
 
 #define ASM_OUTPUT_INT(STREAM, EXP)	\
-  (fprintf (STREAM, "\t.word\t"),	\
-   output_addr_const (STREAM, (EXP)),	\
-   arm_increase_location (4),		\
-   fputc ('\n', STREAM))
+  {fprintf (STREAM, "\t.word\t");	\
+   if (flag_pic && GET_CODE(EXP) == CONST && is_pic(EXP))		\
+       {								\
+        output_pic_addr_const(STREAM, EXP);                     	\
+      }									\
+    else output_addr_const(STREAM, EXP);				\
+   arm_increase_location (4);		\
+   fputc ('\n', STREAM);}
 
 #define ASM_OUTPUT_SHORT(STREAM, EXP)  \
   (fprintf (STREAM, "\t.short\t"),     \
@@ -1669,6 +1696,7 @@ do { char dstr[30];							\
 #define PRINT_OPERAND_PUNCT_VALID_P(CODE)	\
   ((CODE) == '?' || (CODE) == '|' || (CODE) == '@')
 /* Output an operand of an instruction.  */
+
 #define PRINT_OPERAND(STREAM, X, CODE)  \
   arm_print_operand (STREAM, X, CODE)
 
@@ -1681,79 +1709,44 @@ do { char dstr[30];							\
        : 0))))
 
 /* Output the address of an operand.  */
-#define PRINT_OPERAND_ADDRESS(STREAM,X)  \
-{									\
-    int is_minus = GET_CODE (X) == MINUS;				\
-									\
-    if (GET_CODE (X) == REG)						\
-	fprintf (STREAM, "[%s%s, #0]", REGISTER_PREFIX,			\
-		 reg_names[REGNO (X)]);					\
-    else if (GET_CODE (X) == PLUS || is_minus)				\
+
+/* Handles PIC addr specially */
+#define OUTPUT_INT_ADDR_CONST(STREAM,X) \
+  {									\
+    if (flag_pic && GET_CODE(X) == CONST && is_pic(X))			\
       {									\
-	rtx base = XEXP (X, 0);						\
-	rtx index = XEXP (X, 1);					\
-	char *base_reg_name;						\
-	HOST_WIDE_INT offset = 0;					\
-	if (GET_CODE (base) != REG)					\
-	  {								\
-	    /* Ensure that BASE is a register (one of them must be). */	\
-	    rtx temp = base;						\
-	    base = index;						\
-	    index = temp;						\
-	  }								\
-	base_reg_name = reg_names[REGNO (base)];			\
-	switch (GET_CODE (index))					\
-	  {								\
-	  case CONST_INT:						\
-	    offset = INTVAL (index);					\
-	    if (is_minus)						\
-	      offset = -offset;						\
-	    fprintf (STREAM, "[%s%s, #%d]", REGISTER_PREFIX,		\
-		     base_reg_name, offset);				\
-	    break;							\
-									\
-	  case REG:							\
-	    fprintf (STREAM, "[%s%s, %s%s%s]", REGISTER_PREFIX,		\
-		     base_reg_name, is_minus ? "-" : "",		\
-		     REGISTER_PREFIX, reg_names[REGNO (index)] );	\
-	    break;							\
-									\
-	  case MULT:							\
-	  case ASHIFTRT:						\
-	  case LSHIFTRT:						\
-	  case ASHIFT:							\
-	  case ROTATERT:						\
-	  {								\
-	    fprintf (STREAM, "[%s%s, %s%s%s", REGISTER_PREFIX,		\
-		     base_reg_name, is_minus ? "-" : "", REGISTER_PREFIX,\
-		     reg_names[REGNO (XEXP (index, 0))]);		\
-	    arm_print_operand (STREAM, index, 'S');			\
-	    fputs ("]", STREAM);					\
-	    break;							\
-	  }								\
-	    								\
-	  default:							\
-	    abort();							\
-	}								\
-    }							        	\
-  else if (GET_CODE (X) == PRE_INC || GET_CODE (X) == POST_INC		\
-	   || GET_CODE (X) == PRE_DEC || GET_CODE (X) == POST_DEC)	\
-    {									\
-      extern int output_memory_reference_mode;				\
-      									\
-      if (GET_CODE (XEXP (X, 0)) != REG)				\
-	abort ();							\
-									\
-      if (GET_CODE (X) == PRE_DEC || GET_CODE (X) == PRE_INC)		\
-	fprintf (STREAM, "[%s%s, #%s%d]!", REGISTER_PREFIX,		\
-		 reg_names[REGNO (XEXP (X, 0))],			\
-		 GET_CODE (X) == PRE_DEC ? "-" : "",			\
-		 GET_MODE_SIZE (output_memory_reference_mode));		\
-      else								\
-	fprintf (STREAM, "[%s%s], #%s%d", REGISTER_PREFIX,		\
-		 reg_names[REGNO (XEXP (X, 0))],			\
-		 GET_CODE (X) == POST_DEC ? "-" : "",			\
-		 GET_MODE_SIZE (output_memory_reference_mode));		\
-    }									\
-  else output_addr_const(STREAM, X);					\
-}
+	output_addr_const(STREAM, XEXP (XEXP (XEXP (X, 0), 0), 0));	\
+	fputs(" - (", STREAM);						\
+	output_addr_const(STREAM, XEXP (XEXP (XEXP (X, 0), 1), 0));	\
+	fputs(")", STREAM);						\
+      }									\
+    else output_addr_const(STREAM, X);					\
+  }
+
+extern arm_print_operand_address();
+
+#define PRINT_OPERAND_ADDRESS(STREAM,X)  arm_print_operand_address(STREAM,X)
+
+/* Position Independent Code.  */
+/* We decide which register to use based on the compilation options and
+   the assembler in use; this is more general than the APCS restriction of
+   using sb (r9) all the time.  */
+extern int arm_pic_register;
+
+/* The register number of the register used to address a table of static
+   data addresses in memory.  */
+#define PIC_OFFSET_TABLE_REGNUM arm_pic_register
+#define PIC_CASE_VECTOR_ADDRESS(index) index
+
+#define FINALIZE_PIC arm_finalize_pic ()
+
+#define LEGITIMATE_PIC_OPERAND_P(X) (! symbol_mentioned_p (X))
+extern struct rtx_def *aof_pic_entry ();
+
+/* Gcc puts the pool in the wrong place for ARM, since we can only
+   load addresses a limited distance around the pc.  We do some
+   special munging to move the constant pool values to the correct
+   point in the code.  */
+#define MACHINE_DEPENDENT_REORG(INSN)	arm_reorg ((INSN))
+
+
