@@ -1,4 +1,4 @@
-/*	$NetBSD: iq80310_intr.h,v 1.2 2002/10/09 00:03:42 thorpej Exp $	*/
+/*	$NetBSD: iq80310_intr.h,v 1.3 2004/01/13 23:18:54 he Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -78,6 +78,9 @@ iq80310_splraise(int ipl)
 	old = current_spl_level;
 	current_spl_level |= iq80310_imask[ipl];
 
+	/* Don't let the compiler re-order this code with subsequent code */
+	__insn_barrier();
+
 	return (old);
 }
 
@@ -87,6 +90,9 @@ iq80310_splx(int new)
 	extern __volatile int iq80310_ipending;
 	extern __volatile int current_spl_level;
 	int old;
+
+	/* Don't let the compiler re-order this code with preceding code */
+	__insn_barrier();
 
 	old = current_spl_level;
 	current_spl_level = new;
