@@ -1,4 +1,4 @@
-/*	$NetBSD: portal_vnops.c,v 1.25 1997/05/09 04:05:01 mycroft Exp $	*/
+/*	$NetBSD: portal_vnops.c,v 1.26 1997/06/24 19:12:57 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -271,9 +271,13 @@ portal_connect(so, so2)
 
 	unp2 = sotounpcb(so2);
 	unp3 = sotounpcb(so3);
-	if (unp2->unp_addr)
-		unp3->unp_addr = mtod(m_copy(dtom(unp2->unp_addr), 0,
-		    (int)M_COPYALL), struct sockaddr_un *);
+	if (unp2->unp_addr) {
+		unp3->unp_addr = malloc(unp2->unp_addrlen,
+		    M_SONAME, M_WAITOK);
+		bcopy(unp2->unp_addr, unp3->unp_addr,
+		    unp2->unp_addrlen);
+		unp3->unp_addrlen = unp2->unp_addrlen;
+	}
 
 	so2 = so3;
 
