@@ -1,4 +1,4 @@
-/*	$NetBSD: scsi_base.c,v 1.53 1997/10/08 17:17:09 mjacob Exp $	*/
+/*	$NetBSD: scsi_base.c,v 1.54 1997/10/08 21:39:25 mjacob Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1997 Charles M. Hannum.  All rights reserved.
@@ -646,7 +646,7 @@ scsi_print_sense(xs, verbosity)
 		printf("\n     FRU CODE:  0x%x\n", s[14] & 0xff);
 	sbs = scsi_decode_sense(s, 3);
 	if (sbs)
-		printf("\n         SKSV:  %s", sbs);
+		printf("         SKSV:  %s", sbs);
 	printf("\n");
 	if (verbosity == 0) {
 		printf("\n");
