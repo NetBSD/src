@@ -1,4 +1,4 @@
-/* $NetBSD: cpuvar.h,v 1.1.2.3 2000/02/21 18:54:07 sommerfeld Exp $ */
+/* $NetBSD: cpuvar.h,v 1.1.2.4 2000/08/18 03:33:45 sommerfeld Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -71,8 +71,9 @@
  */
 
 struct cpu_functions {
-    int (*start) __P((struct cpu_info *));
-    int (*stop) __P((struct cpu_info *));
+	int (*start) __P((struct cpu_info *));
+	int (*stop) __P((struct cpu_info *));
+	void (*cleanup) __P((struct cpu_info *));
 };
 
 #define CPU_ROLE_SP	0

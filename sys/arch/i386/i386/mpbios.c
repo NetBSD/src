@@ -95,7 +95,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: mpbios.c,v 1.1.2.5 2000/08/07 01:08:44 sommerfeld Exp $
+ *	$Id: mpbios.c,v 1.1.2.6 2000/08/18 03:33:46 sommerfeld Exp $
  */
 
 /*
@@ -164,6 +164,7 @@ struct mp_map
 int mp_print __P((void *, const char *));
 int mp_match __P((struct device *,struct cfdata *,void *));
 int mpbios_cpu_start __P((struct cpu_info *));
+void mpbios_cpu_start_cleanup __P((struct cpu_info *));
 static const void *mpbios_search __P((struct device *, paddr_t, int,
     struct mp_map *));
 static inline int mpbios_cksum __P((const void *,int));
@@ -200,7 +201,7 @@ int mp_verbose = 1;
 int mp_verbose = 0;
 #endif
 	
-struct cpu_functions mpbios_cpu_funcs = { mpbios_cpu_start, NULL };
+struct cpu_functions mpbios_cpu_funcs = { mpbios_cpu_start, NULL, mpbios_cpu_start_cleanup };
 
 int
 mp_print(aux, pnp)
@@ -1118,5 +1119,16 @@ mpbios_cpu_start(struct cpu_info *ci)
 		}
 	}
 	return 0;
+}
+
+void
+mpbios_cpu_start_cleanup(struct cpu_info *ci)
+{
+	/*
+	 * Ensure the NVRAM reset byte contains something vaguely sane.
+	 */
+
+	outb(IO_RTC, NVRAM_RESET);
+	outb(IO_RTC+1, NVRAM_RESET_RST);
 }
 

@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.1.2.9 2000/08/12 17:53:02 sommerfeld Exp $ */
+/* $NetBSD: cpu.c,v 1.1.2.10 2000/08/18 03:33:46 sommerfeld Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -374,7 +374,8 @@ cpu_boot_secondary (ci)
 		printf("cpu failed to become ready\n");
 		Debugger();
 	}
-	
+
+	CPU_START_CLEANUP(ci);
 }
 
 /*
@@ -390,9 +391,12 @@ cpu_hatch(void *v)
 {
 	struct cpu_info *ci = (struct cpu_info *)v;
 	int s;
-
+	
 	cpu_init_idt();
 	gdt_init_cpu();
+	if (ci->ci_flags & CPUF_RUNNING) {
+		panic("%s: already running!?", ci->ci_dev.dv_xname);
+	}
 	lapic_enable();
 	lapic_set_lvt();
 
@@ -404,6 +408,30 @@ cpu_hatch(void *v)
 	printf("%s: CPU %d running\n",ci->ci_dev.dv_xname, cpu_number());
 	splx(s);
 }
+
+extern void cpu_debug_dump(void);
+
+void
+cpu_debug_dump(void)
+{
+	int i;
+	struct cpu_info *ci;
+	
+	printf("addr		dev	id	flags	ipis	curproc		fpcurproc\n");
+	for (i=0; i < I386_MAXPROCS; i++) {
+		ci = cpu_info[i];
+		if (ci == NULL)
+			continue;
+		printf("%p	%s	%ld	%x	%x	%10p	%10p\n",
+		    ci,
+		    ci->ci_dev.dv_xname, ci->ci_cpuid,
+		    ci->ci_flags, ci->ci_ipis,
+		    ci->ci_curproc,
+		    ci->ci_fpcurproc);
+	}
+	
+}
+
 
 static void
 cpu_copy_trampoline()
