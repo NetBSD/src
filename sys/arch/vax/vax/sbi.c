@@ -1,4 +1,4 @@
-/*	$NetBSD: sbi.c,v 1.24 2002/09/27 20:36:57 thorpej Exp $ */
+/*	$NetBSD: sbi.c,v 1.25 2002/10/01 05:19:03 thorpej Exp $ */
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -127,10 +127,8 @@ sbi_attach(struct device *parent, struct device *self, void *aux)
 	}
 }
 
-const struct cfattach sbi_mainbus_ca = {
-	sizeof(struct device), sbi_match, sbi_attach
-};
+CFATTACH_DECL(sbi_mainbus, sizeof(struct device),
+    sbi_match, sbi_attach, NULL, NULL)
 
-const struct cfattach sbi_abus_ca = {
-	sizeof(struct device), sbi_match_abus, sbi_attach
-};
+CFATTACH_DECL(sbi_abus, sizeof(struct device),
+    sbi_match_abus, sbi_attach, NULL, NULL)

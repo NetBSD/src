@@ -1,4 +1,4 @@
-/*	$NetBSD: vsbus.c,v 1.37 2002/09/27 20:37:05 thorpej Exp $ */
+/*	$NetBSD: vsbus.c,v 1.38 2002/10/01 05:19:04 thorpej Exp $ */
 /*
  * Copyright (c) 1996, 1999 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -97,9 +97,8 @@ static struct vax_bus_dma_tag vsbus_bus_dma_tag = {
 extern struct vax_bus_space vax_mem_bus_space;
 static SIMPLEQ_HEAD(, vsbus_dma) vsbus_dma;
 
-const struct cfattach vsbus_ca = { 
-	sizeof(struct vsbus_softc), vsbus_match, vsbus_attach
-};
+CFATTACH_DECL(vsbus, sizeof(struct vsbus_softc),
+    vsbus_match, vsbus_attach, NULL, NULL)
 
 int
 vsbus_print(aux, name)

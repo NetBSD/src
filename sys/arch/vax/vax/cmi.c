@@ -1,4 +1,4 @@
-/*	$NetBSD: cmi.c,v 1.4 2002/09/27 20:36:52 thorpej Exp $ */
+/*	$NetBSD: cmi.c,v 1.5 2002/10/01 05:19:02 thorpej Exp $ */
 /*
  * Copyright (c) 1999 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -44,9 +44,8 @@ static	int cmi_print(void *, const char *);
 static	int cmi_match(struct device *, struct cfdata *, void *);
 static	void cmi_attach(struct device *, struct device *, void*);
 
-const struct cfattach cmi_ca = {
-	sizeof(struct device), cmi_match, cmi_attach
-};
+CFATTACH_DECL(cmi, sizeof(struct device),
+    cmi_match, cmi_attach, NULL, NULL)
 
 int
 cmi_print(void *aux, const char *name)

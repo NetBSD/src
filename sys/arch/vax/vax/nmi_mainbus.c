@@ -1,4 +1,4 @@
-/*	$NetBSD: nmi_mainbus.c,v 1.2 2002/09/27 20:36:56 thorpej Exp $	   */
+/*	$NetBSD: nmi_mainbus.c,v 1.3 2002/10/01 05:19:03 thorpej Exp $	   */
 /*
  * Copyright (c) 2000 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -118,6 +118,5 @@ nmi_mainbus_attach(struct device *parent, struct device *self, void *aux)
 	}
 }
 
-const struct cfattach nmi_mainbus_ca = {
-	sizeof(struct device), nmi_mainbus_match, nmi_mainbus_attach
-};
+CFATTACH_DECL(nmi_mainbus, sizeof(struct device),
+    nmi_mainbus_match, nmi_mainbus_attach, NULL, NULL)
