@@ -1,4 +1,4 @@
-$NetBSD: pcmciadevs,v 1.93.2.3 2000/08/09 23:15:58 gmcgarry Exp $
+$NetBSD: pcmciadevs,v 1.93.2.4 2001/03/16 19:35:14 he Exp $
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -256,6 +256,7 @@ vendor ICOM			-1	ICOM Inc
 vendor BILLIONTON		-1	Billionton Systems Inc.
 vendor AMD			-1	AMD
 vendor INTERSIL			-1	Intersil
+vendor SYNERGY21		-1	Synergy 21
 
 product MEGAHERTZ XJ2288 	{ "MEGAHERTZ", "MODEM&spXJ2288", NULL, NULL } Megahertz XJ2288 Modem
 product PREMAX PE200		{ "PMX&sp&sp&sp", "PE-200", NULL, NULL } PreMax PE-200
@@ -296,3 +297,4 @@ product XIRCOM CFE_10		{ "Xircom", "CompactCard&spEthernet", "CFE-10", "1.00" } 
 product BILLIONTON LNT10TN	{ "PCMCIA", "LNT-10TN", NULL, NULL } Billionton Systems Inc. LNT-10TN NE2000 Compatible Card
 product NDC ND5100_E		{ "NDC", "Ethernet", "A", NULL } Sohoware ND5100E NE2000 Compatible Card
 product INTERSIL PRISM2		{ "INTERSIL", "HFA384x/IEEE", "Version 01.02", NULL} Intersil Prism II
+product SYNERGY21 S21810	{ "PCMCIA", "Ethernet", "A", "004743118001" } Synergy 21 S21810+ NE2000 Compatible Card
