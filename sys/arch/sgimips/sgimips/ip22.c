@@ -1,4 +1,4 @@
-/*	$NetBSD: ip22.c,v 1.3 2001/05/11 04:56:09 thorpej Exp $	*/
+/*	$NetBSD: ip22.c,v 1.4 2001/06/08 00:02:41 rafal Exp $	*/
 
 /*
  * Copyright (c) 2001 Rafal K. Boni
@@ -63,6 +63,7 @@ unsigned long	ip22_cal_timer(u_int32_t, u_int32_t);
 void 
 ip22_init(void)
 {
+	int i;
 	u_int32_t sysid;
 	u_int32_t int23addr;
 	unsigned long cps;
@@ -135,10 +136,10 @@ ip22_init(void)
 	platform.bus_reset = ip22_bus_reset;
 	platform.intr_establish = ip22_intr_establish;
 
-	biomask = 0x0400;
-	netmask = 0x0400;
-	ttymask = 0x0c00;
-	clockmask = 0xbc00;
+	biomask = 0x0700;
+	netmask = 0x0700;
+	ttymask = 0x0f00;
+	clockmask = 0xbf00;
 
 	/* Hardcode interrupts 7, 11 to mappable interrupt 0,1 handlers */
 	intrtab[7].ih_fun = ip22_mappable_intr;
@@ -150,10 +151,16 @@ ip22_init(void)
 	/* Prime cache */
 	ip22_cal_timer(int23addr + 0x3c, int23addr + 0x38);
 
-	ctrdiff[0] = ip22_cal_timer(int23addr + 0x3c, int23addr + 0x38);
-	ctrdiff[1] = ip22_cal_timer(int23addr + 0x3c, int23addr + 0x38);
-	ctrdiff[2] = ip22_cal_timer(int23addr + 0x3c, int23addr + 0x38);
-	cps = (ctrdiff[0] + ctrdiff[1] + ctrdiff[2]) / 3;
+	cps = 0;
+	for(i = 0; i < sizeof(ctrdiff) / sizeof(ctrdiff[0]); i++) {
+	    do {
+		ctrdiff[i] = ip22_cal_timer(int23addr + 0x3c, int23addr + 0x38);
+	    } while (ctrdiff[i] == 0);
+
+	    cps += ctrdiff[i];
+	}
+
+	cps = cps / (sizeof(ctrdiff) / sizeof(ctrdiff[0]));
 
 	printf("Timer calibration, got %lu cycles (%lu, %lu, %lu)\n", cps, 
 				ctrdiff[0], ctrdiff[1], ctrdiff[2]);
@@ -182,6 +189,7 @@ ip22_intr(status, cause, pc, ipending)
 	struct clockframe cf;
 
 	/* XXXrkb Tickle Indy/I2 MC watchdog timer */ 
+	*(volatile u_int32_t *)MIPS_PHYS_TO_KSEG1(0x1fa00004) |= 0x100;
 	*(volatile u_int32_t *)MIPS_PHYS_TO_KSEG1(0x1fa00014) = 0;
 
 	nested++;
