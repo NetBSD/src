@@ -1,4 +1,4 @@
-/*	$NetBSD: acl.c,v 1.4 1997/10/15 05:01:18 lukem Exp $	*/
+/*	$NetBSD: acl.c,v 1.5 1999/01/18 23:42:38 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: acl.c,v 1.4 1997/10/15 05:01:18 lukem Exp $");
+__RCSID("$NetBSD: acl.c,v 1.5 1999/01/18 23:42:38 lukem Exp $");
 #endif
 
 #include <sys/types.h>
@@ -340,7 +340,7 @@ acl_translate(str, atype, res)
 	 */
 	np = getnetbyname(str);
 	if (np == NULL)
-		errx(1, "known net `%s' at line %d",
+		errx(1, "unknown net `%s' at line %d",
 		    str, acl_line());
 
 	/* Sanity. */
