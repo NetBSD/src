@@ -77,7 +77,7 @@
 
 /*
  *      @(#)nameser.h	8.1 (Berkeley) 6/2/93
- *	$NetBSD: nameser.h,v 1.12 1998/10/19 02:58:31 matt Exp $
+ *	$NetBSD: nameser.h,v 1.13 1998/11/13 15:45:10 christos Exp $
  */
 
 #ifndef _ARPA_NAMESER_H_
@@ -354,19 +354,19 @@ extern	u_int32_t	_getlong __P((const u_char *));
  * portable or it can be elegant but rarely both.
  */
 #define GETSHORT(s, cp) { \
-	register u_char *t_cp = (u_char *)(cp); \
-	(s) = ((u_int16_t)t_cp[0] << 8) \
-	    | ((u_int16_t)t_cp[1]) \
+	register const u_char *t_cp = (const u_char *)(cp); \
+	(s) = ((const u_int16_t)t_cp[0] << 8) \
+	    | ((const u_int16_t)t_cp[1]) \
 	    ; \
 	(cp) += INT16SZ; \
 }
 
 #define GETLONG(l, cp) { \
-	register u_char *t_cp = (u_char *)(cp); \
-	(l) = ((u_int32_t)t_cp[0] << 24) \
-	    | ((u_int32_t)t_cp[1] << 16) \
-	    | ((u_int32_t)t_cp[2] << 8) \
-	    | ((u_int32_t)t_cp[3]) \
+	register const u_char *t_cp = (const u_char *)(cp); \
+	(l) = ((const u_int32_t)t_cp[0] << 24) \
+	    | ((const u_int32_t)t_cp[1] << 16) \
+	    | ((const u_int32_t)t_cp[2] << 8) \
+	    | ((const u_int32_t)t_cp[3]) \
 	    ; \
 	(cp) += INT32SZ; \
 }
@@ -374,7 +374,7 @@ extern	u_int32_t	_getlong __P((const u_char *));
 #define PUTSHORT(s, cp) { \
 	register u_int16_t t_s = (u_int16_t)(s); \
 	register u_char *t_cp = (u_char *)(cp); \
-	*t_cp++ = t_s >> 8; \
+	*t_cp++ = (u_int32_t)t_s >> 8; \
 	*t_cp   = t_s; \
 	(cp) += INT16SZ; \
 }
