@@ -1,7 +1,7 @@
-/*	$NetBSD: obio.c,v 1.3 2003/05/23 05:47:11 briggs Exp $	*/
+/*	$NetBSD: obio.c,v 1.4 2003/06/15 19:03:46 thorpej Exp $	*/
 
 /*
- * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
+ * Copyright (c) 2001, 2002, 2003 Wasabi Systems, Inc.
  * All rights reserved.
  *
  * Written by Jason R. Thorpe for Wasabi Systems, Inc.
@@ -110,8 +110,10 @@ obio_print(void *aux, const char *pnp)
 	struct obio_attach_args *oba = aux;
 
 	aprint_normal(" addr 0x%08lx", oba->oba_addr);
-	if (oba->oba_irq != -1)
+	if (oba->oba_irq != OBIOCF_IRQ_DEFAULT)
 		aprint_normal(" irq %d", oba->oba_irq);
+	if (oba->oba_width != OBIOCF_WIDTH_DEFAULT)
+		aprint_normal(" width %d", oba->oba_width);
 
 	return (UNCONF);
 }
@@ -125,6 +127,7 @@ obio_search(struct device *parent, struct cfdata *cf, void *aux)
 
 	oba.oba_addr = cf->cf_loc[OBIOCF_ADDR];
 	oba.oba_irq = cf->cf_loc[OBIOCF_IRQ];
+	oba.oba_width = cf->cf_loc[OBIOCF_WIDTH];
 
 	if (config_match(parent, cf, &oba) > 0)
 		config_attach(parent, cf, &oba, obio_print);
