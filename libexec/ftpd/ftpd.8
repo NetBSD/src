@@ -1,4 +1,4 @@
-.\"	$NetBSD: ftpd.8,v 1.27 1998/06/26 18:12:00 msaitoh Exp $
+.\"	$NetBSD: ftpd.8,v 1.28 1998/06/30 20:18:52 tv Exp $
 .\"
 .\" Copyright (c) 1985, 1988, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -404,6 +404,12 @@ disable this.
 Otherwise, each time the user enters a new directory,
 notify the user of any files matching
 .Ar fileglob .
+.It Sy passive Ar class Op Sy off
+If class is
+.Dq none
+or
+.Sy off
+is given, disallow passive (PASV) connections.  Otherwise, enable them.
 .It Sy timeout Ar class Ar time
 Set the inactivity timeout period.
 (the default is fifteen minutes).
@@ -452,6 +458,7 @@ maxtimeout    all    7200   # 2 hours
 modify        all
 modify        guest  off
 notify        none
+passive       all
 timeout       all    900    # 15 minutes
 umask         all    027
 umask         guest  0707
