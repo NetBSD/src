@@ -1,11 +1,11 @@
-/*	$NetBSD: pthread_switch.S,v 1.1 2003/01/19 23:20:14 matt Exp $	*/
+/*	$NetBSD: pthread_switch.S,v 1.2 2003/01/20 01:08:03 matt Exp $	*/
 
 /*-
- * Copyright (c) 2001 The NetBSD Foundation, Inc.
+ * Copyright (c) 2001, 2003 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Nathan J. Williams.
+ * by Nathan J. Williams and Matt Thomas.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
