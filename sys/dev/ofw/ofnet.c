@@ -1,4 +1,4 @@
-/*	$NetBSD: ofnet.c,v 1.31 2003/01/15 22:01:57 bouyer Exp $	*/
+/*	$NetBSD: ofnet.c,v 1.32 2005/01/30 19:24:05 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofnet.c,v 1.31 2003/01/15 22:01:57 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofnet.c,v 1.32 2005/01/30 19:24:05 thorpej Exp $");
 
 #include "ofnet.h"
 #include "opt_inet.h"
@@ -166,7 +166,7 @@ ofnet_attach(struct device *parent, struct device *self, void *aux)
 	ether_ifattach(ifp, myaddr);
 }
 
-static char buf[ETHERMTU + sizeof(struct ether_header)];
+static char buf[ETHER_MAX_LEN];
 
 static void
 ofnet_read(struct ofnet_softc *of)
@@ -190,6 +190,17 @@ ofnet_read(struct ofnet_softc *of)
 		}
 		bufp = buf;
 
+		/*
+		 * We don't know if the interface included the FCS
+		 * or not.  For now, assume that it did if we got
+		 * a packet length that looks like it could include
+		 * the FCS.
+		 *
+		 * XXX Yuck.
+		 */
+		if (len > ETHER_MAX_LEN - ETHER_CRC_LEN)
+			len = ETHER_MAX_LEN - ETHER_CRC_LEN;
+
 		/* Allocate a header mbuf */
 		MGETHDR(m, M_DONTWAIT, MT_DATA);
 		if (m == 0) {
@@ -198,18 +209,6 @@ ofnet_read(struct ofnet_softc *of)
 		}
 		m->m_pkthdr.rcvif = ifp;
 		m->m_pkthdr.len = len;
-
-		/*
-		 * We don't know if the interface included the FCS
-		 * or not.  For now, assume that it did if we got
-		 * a packet length that looks like it could include
-		 * the FCS.
- 		 *
-		 * XXX Yuck.
-		 */
-
-		if (len > (ETHER_MAX_LEN - ETHER_CRC_LEN))
-			m->m_flags |= M_HASFCS;
 
 		l = MHLEN;
 		head = 0;
