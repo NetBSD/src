@@ -1,4 +1,4 @@
-/*	$NetBSD: fault.c,v 1.48 2000/12/12 19:41:50 mycroft Exp $	*/
+/*	$NetBSD: fault.c,v 1.49 2001/01/12 13:43:13 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1994-1997 Mark Brinicombe.
@@ -64,7 +64,7 @@
 #include <machine/db_machdep.h>
 #endif
 
-#include <arm32/arm32/disassem.h>
+#include <arch/arm/arm/disassem.h>
 
 #ifdef PMAP_DEBUG
 extern int pmap_debug_level;

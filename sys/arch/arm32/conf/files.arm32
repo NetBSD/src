@@ -1,4 +1,4 @@
-#	$NetBSD: files.arm32,v 1.84 2001/01/11 23:27:27 bjh21 Exp $
+#	$NetBSD: files.arm32,v 1.85 2001/01/12 13:43:13 bjh21 Exp $
 #
 # First try for arm-specific configuration info
 #
@@ -372,9 +372,6 @@ file	arch/arm32/kshell/kshell_shell.c	kshell
 file	arch/arm32/kshell/kshell_disassem.c	kshell
 file	arch/arm32/kshell/kshell_dumphex.c	kshell
 file	arch/arm32/kshell/kshell_debug.c	kshell
-
-# files related to debugging
-file	arch/arm32/arm32/disassem.c
 
 file    dev/cons.c
 file	dev/cninit.c				!footbridge
