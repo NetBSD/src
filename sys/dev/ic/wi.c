@@ -1,4 +1,4 @@
-/*	$NetBSD: wi.c,v 1.67 2002/04/05 00:54:51 ichiro Exp $	*/
+/*	$NetBSD: wi.c,v 1.68 2002/04/05 00:59:38 ichiro Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.67 2002/04/05 00:54:51 ichiro Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.68 2002/04/05 00:59:38 ichiro Exp $");
 
 #define WI_HERMES_AUTOINC_WAR	/* Work around data write autoinc bug. */
 #define WI_HERMES_STATS_WAR	/* Work around stats counter bug. */
@@ -2004,7 +2004,7 @@ wi_get_id(sc)
 	}
 
 	/* get primary firmware version (Only Prism chips) */
-	if (sc->sc_firware_type != WI_LUCENT) {
+	if (sc->sc_firmware_type != WI_LUCENT) {
 		memset(&ver, 0, sizeof(ver));
 		ver.wi_type = WI_RID_PRI_IDENTITY;
 		ver.wi_len = 5;
