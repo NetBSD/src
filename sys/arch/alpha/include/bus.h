@@ -1,4 +1,4 @@
-/* $NetBSD: bus.h,v 1.30 1999/12/08 23:40:36 thorpej Exp $ */
+/* $NetBSD: bus.h,v 1.31 2000/01/25 22:13:17 drochner Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -280,6 +280,7 @@ do {									\
 
 #define	BUS_SPACE_MAP_CACHEABLE		0x01
 #define	BUS_SPACE_MAP_LINEAR		0x02
+#define	BUS_SPACE_MAP_PREFETCHABLE     	0x04
 
 /*
  * Allocation and deallocation operations.

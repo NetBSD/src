@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.20 2000/01/19 13:13:07 leo Exp $	*/
+/*	$NetBSD: bus.h,v 1.21 2000/01/25 22:13:19 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -87,8 +87,9 @@ typedef u_long	bus_size_t;
 typedef struct atari_bus_space	*bus_space_tag_t;
 typedef caddr_t			bus_space_handle_t;
 
-#define	BUS_SPACE_MAP_CACHEABLE	0x01
-#define	BUS_SPACE_MAP_LINEAR	0x02
+#define	BUS_SPACE_MAP_CACHEABLE		0x01
+#define	BUS_SPACE_MAP_LINEAR		0x02
+#define	BUS_SPACE_MAP_PREFETCHABLE	0x04
 
 int	bus_space_alloc __P((bus_space_tag_t, bus_addr_t, bus_addr_t,
 				bus_size_t, bus_size_t, bus_size_t, int,

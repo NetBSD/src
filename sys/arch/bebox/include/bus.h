@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.19 1999/06/18 04:49:25 cgd Exp $	*/
+/*	$NetBSD: bus.h,v 1.20 2000/01/25 22:13:20 drochner Exp $	*/
 /*	$OpenBSD: bus.h,v 1.1 1997/10/13 10:53:42 pefo Exp $	*/
 
 /*-
@@ -129,6 +129,7 @@ typedef	u_int32_t bus_space_tag_t;
 
 #define BUS_SPACE_MAP_CACHEABLE         0x01
 #define BUS_SPACE_MAP_LINEAR            0x02
+#define BUS_SPACE_MAP_PREFETCHABLE      0x04
 
 #ifdef __STDC__
 #define CAT(a,b)	a##b
