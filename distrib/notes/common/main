@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.200 2002/07/19 07:17:46 scottr Exp $
+.\"	$NetBSD: main,v 1.201 2002/07/19 15:43:37 lukem Exp $
 .\"
 .\" Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -334,7 +334,7 @@ For third-party programs which are not part of the base
 .Nx
 distribution, you will want to explore the
 .Ic pkgsrc
-system with its more than 2700 program packages.
+system with its more than 3000 program packages.
 .El
 .\}
 .Ss "What is NetBSD?"
@@ -792,7 +792,7 @@ Many new packages in the
 .Em pkgsrc
 system, including the latest open source desktop KDE3, OpenOffice,
 perl, Apache and many more.
-At the time of writing, there are almost 3000 third party packages
+At the time of writing, there are over 3000 third party packages
 available in pkgsrc.
 .It
 Added AGP GART driver
