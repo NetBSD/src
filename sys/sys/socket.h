@@ -1,4 +1,4 @@
-/*	$NetBSD: socket.h,v 1.48 1999/12/20 06:18:45 itojun Exp $	*/
+/*	$NetBSD: socket.h,v 1.49 2000/02/03 09:23:03 enami Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -223,7 +223,6 @@ struct sockaddr_storage {
 #define	PF_LOCAL	AF_LOCAL
 #define	PF_UNIX		PF_LOCAL	/* backward compatibility */
 #define	PF_INET		AF_INET
-#define	PF_INET6	AF_INET6
 #define	PF_IMPLINK	AF_IMPLINK
 #define	PF_PUP		AF_PUP
 #define	PF_CHAOS	AF_CHAOS
