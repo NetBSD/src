@@ -1,3 +1,5 @@
+/*	$Id: kbdmap.h,v 1.2 1993/08/02 18:33:38 mycroft Exp $ */
+
 #define NUL	0
 #define SOH	1
 #define STX	2

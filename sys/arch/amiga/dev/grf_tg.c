@@ -1,3 +1,5 @@
+/*	$Id: grf_tg.c,v 1.2 1993/08/02 18:33:34 mycroft Exp $ */
+
 #include "errno.h"
 
 /* to be written.. */

@@ -1,3 +1,5 @@
+/*	$Id: kbdmap.c,v 1.2 1993/08/02 18:33:37 mycroft Exp $ */
+
 #include "kbdmap.h"
 
 /* define a default keymap. This can be changed by keyboard ioctl's 

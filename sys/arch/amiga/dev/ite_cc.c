@@ -1,3 +1,5 @@
+/*	$Id: ite_cc.c,v 1.2 1993/08/02 18:33:34 mycroft Exp $ */
+
 #include "ite.h"
 #if NITE > 0
 

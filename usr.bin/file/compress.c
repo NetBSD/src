@@ -2,8 +2,12 @@
  * compress routines:
  *	is_compress() returns 0 if uncompressed, number of bits if compressed.
  *	uncompress(old, n, newch) - uncompress old into new, return sizeof new
- * $Id: compress.c,v 1.1 1993/06/10 00:38:05 jtc Exp $
  */
+
+#ifndef lint
+static char rcsid[] = "$Id: compress.c,v 1.2 1993/08/02 18:35:01 mycroft Exp $";
+#endif /* not lint */
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>

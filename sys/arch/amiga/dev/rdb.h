@@ -1,3 +1,5 @@
+/*	$Id: rdb.h,v 1.2 1993/08/02 18:33:40 mycroft Exp $ */
+
 #ifndef _amiga_rdb_h
 #define _amiga_rdb_h
 
