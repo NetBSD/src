@@ -1,4 +1,4 @@
-/*	$NetBSD: mloop.c,v 1.5 1996/02/08 20:45:03 mycroft Exp $	*/
+/*	$NetBSD: mloop.c,v 1.6 1997/11/21 08:36:08 lukem Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -36,17 +36,20 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)mloop.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$NetBSD: mloop.c,v 1.5 1996/02/08 20:45:03 mycroft Exp $";
+__RCSID("$NetBSD: mloop.c,v 1.6 1997/11/21 08:36:08 lukem Exp $");
 #endif
 #endif /* not lint */
 
 #include <sys/param.h>
+#include <unistd.h>
 #include "defs.h"
 
+void
 mloop()
 {
 	while (!quit) {
@@ -60,9 +63,9 @@ mloop()
 				(void) wwgetc();
 			error("Process died.");
 		} else {
-			register struct ww *w = wwcurwin;
-			register char *p;
-			register n;
+			struct ww *w = wwcurwin;
+			char *p;
+			int n;
 
 			if (wwibp >= wwibq) {
 				wwibp = wwibq = wwib;

@@ -1,4 +1,4 @@
-/*	$NetBSD: wwinsline.c,v 1.3 1995/09/28 10:35:36 tls Exp $	*/
+/*	$NetBSD: wwinsline.c,v 1.4 1997/11/21 08:37:29 lukem Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -36,23 +36,25 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)wwinsline.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$NetBSD: wwinsline.c,v 1.3 1995/09/28 10:35:36 tls Exp $";
+__RCSID("$NetBSD: wwinsline.c,v 1.4 1997/11/21 08:37:29 lukem Exp $");
 #endif
 #endif /* not lint */
 
 #include "ww.h"
 
+void
 wwinsline(w, row)
-register struct ww *w;
-int row;
+	struct ww *w;
+	int row;
 {
-	register i;
-	register union ww_char **cpp, **cqq;
-	register union ww_char *cp;
+	int i;
+	union ww_char **cpp, **cqq;
+	union ww_char *cp;
 	int row1, row2;
 	char deleted;
 	int visible;

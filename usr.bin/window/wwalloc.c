@@ -1,4 +1,4 @@
-/*	$NetBSD: wwalloc.c,v 1.3 1995/09/28 10:35:10 tls Exp $	*/
+/*	$NetBSD: wwalloc.c,v 1.4 1997/11/21 08:36:57 lukem Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -36,21 +36,24 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)wwalloc.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$NetBSD: wwalloc.c,v 1.3 1995/09/28 10:35:10 tls Exp $";
+__RCSID("$NetBSD: wwalloc.c,v 1.4 1997/11/21 08:36:57 lukem Exp $");
 #endif
 #endif /* not lint */
 
+#include <stdlib.h>
 #include "ww.h"
 
 char **
 wwalloc(row, col, nrow, ncol, size)
+	int row, col, nrow, ncol, size;
 {
-	register char *p, **pp;
-	register int i;
+	char *p, **pp;
+	int i;
 
 	/* fast, call malloc only once */
 	pp = (char **)
@@ -70,8 +73,10 @@ wwalloc(row, col, nrow, ncol, size)
 	return pp - row;
 }
 
+void
 wwfree(p, row)
-register char **p;
+	char **p;
+	int row;
 {
 	free((char *)(p + row));
 }

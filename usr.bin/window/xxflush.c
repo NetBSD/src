@@ -1,4 +1,4 @@
-/*	$NetBSD: xxflush.c,v 1.3 1995/09/28 10:36:05 tls Exp $	*/
+/*	$NetBSD: xxflush.c,v 1.4 1997/11/21 08:38:05 lukem Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -36,11 +36,12 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)xxflush.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$NetBSD: xxflush.c,v 1.3 1995/09/28 10:36:05 tls Exp $";
+__RCSID("$NetBSD: xxflush.c,v 1.4 1997/11/21 08:38:05 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -48,10 +49,11 @@ static char rcsid[] = "$NetBSD: xxflush.c,v 1.3 1995/09/28 10:36:05 tls Exp $";
 #include "xx.h"
 #include "tt.h"
 
+void
 xxflush(intr)
-	register intr;
+	int intr;
 {
-	register struct xx *xp, *xq;
+	struct xx *xp, *xq;
 
 	for (xp = xx_head; xp != 0 && !(intr && wwinterrupt()); xp = xq) {
 		switch (xp->cmd) {
@@ -102,10 +104,11 @@ xxflush(intr)
 	ttflush();
 }
 
+void
 xxflush_scroll(xp)
-	register struct xx *xp;
+	struct xx *xp;
 {
-	register struct xx *xq;
+	struct xx *xq;
 
  top:
 	if (xp->arg0 == 0)

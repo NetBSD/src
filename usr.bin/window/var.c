@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.4 1995/09/28 10:35:01 tls Exp $	*/
+/*	$NetBSD: var.c,v 1.5 1997/11/21 08:36:45 lukem Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -36,27 +36,28 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)var.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$NetBSD: var.c,v 1.4 1995/09/28 10:35:01 tls Exp $";
+__RCSID("$NetBSD: var.c,v 1.5 1997/11/21 08:36:45 lukem Exp $");
 #endif
 #endif /* not lint */
 
+#include <stdlib.h>
 #include "value.h"
 #include "var.h"
 #include "string.h"
-#include <stdlib.h>
 
 struct var *
 var_set1(head, name, v)
-struct var **head;
-char *name;
-struct value *v;
+	struct var **head;
+	char *name;
+	struct value *v;
 {
-	register struct var **p;
-	register struct var *r;
+	struct var **p;
+	struct var *r;
 	struct value val;
 
 	/* do this first, easier to recover */
@@ -87,9 +88,9 @@ struct value *v;
 
 struct var *
 var_setstr1(head, name, str)
-struct var **head;
-char *name;
-char *str;
+	struct var **head;
+	char *name;
+	char *str;
 {
 	struct value v;
 
@@ -100,9 +101,9 @@ char *str;
 
 struct var *
 var_setnum1(head, name, num)
-struct var **head;
-char *name;
-int num;
+	struct var **head;
+	char *name;
+	int num;
 {
 	struct value v;
 
@@ -111,12 +112,13 @@ int num;
 	return var_set1(head, name, &v);
 }
 
+int
 var_unset1(head, name)
-struct var **head;
-char *name;
+	struct var **head;
+	char *name;
 {
-	register struct var **p;
-	register struct var *r;
+	struct var **p;
+	struct var *r;
 
 	if (*(p = var_lookup1(head, name)) == 0)
 		return -1;
@@ -133,10 +135,10 @@ char *name;
 
 struct var **
 var_lookup1(p, name)
-register struct var **p;
-register char *name;
+	struct var **p;
+	char *name;
 {
-	register cmp;
+	int cmp;
 
 	while (*p != 0) {
 		if ((cmp = strcmp(name, (*p)->r_name)) < 0)
@@ -149,10 +151,11 @@ register char *name;
 	return p;
 }
 
+int
 var_walk1(r, func, a)
-register struct var *r;
-int (*func)();
-long a;
+	struct var *r;
+	int (*func) __P((void *, struct var *));
+	void *a;
 {
 	if (r == 0)
 		return 0;

@@ -1,4 +1,4 @@
-/*	$NetBSD: wwprintf.c,v 1.3 1995/09/28 10:35:44 tls Exp $	*/
+/*	$NetBSD: wwprintf.c,v 1.4 1997/11/21 08:37:38 lukem Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -36,28 +36,45 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)wwprintf.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$NetBSD: wwprintf.c,v 1.3 1995/09/28 10:35:44 tls Exp $";
+__RCSID("$NetBSD: wwprintf.c,v 1.4 1997/11/21 08:37:38 lukem Exp $");
 #endif
 #endif /* not lint */
 
 #include "ww.h"
-#include <varargs.h>
 
-/*VARARGS2*/
+void
+#if __STDC__
+wwprintf(struct ww *w, const char *fmt, ...)
+#else
 wwprintf(w, fmt, va_alist)
-struct ww *w;
-char *fmt;
-va_dcl
+	struct ww *w;
+	char *fmt;
+	va_dcl
+#endif
 {
-	char buf[1024];
 	va_list ap;
 
+#if __STDC__
+	va_start(ap, fmt);
+#else
 	va_start(ap);
-	/* buffer can overflow */
-	(void) wwwrite(w, buf, vsprintf(buf, fmt, ap));
+#endif
+	(void) wwvprintf(w, fmt, ap);
 	va_end(ap);
+}
+
+void
+wwvprintf(w, fmt, ap)
+	struct ww *w;
+	const char *fmt;
+	va_list ap;
+{
+	char buf[1024];
+
+	(void) wwwrite(w, buf, vsnprintf(buf, sizeof(buf), fmt, ap));
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: wwclreol.c,v 1.4 1996/02/08 21:48:58 mycroft Exp $	*/
+/*	$NetBSD: wwclreol.c,v 1.5 1997/11/21 08:37:03 lukem Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -36,11 +36,12 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)wwclreol.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$NetBSD: wwclreol.c,v 1.4 1996/02/08 21:48:58 mycroft Exp $";
+__RCSID("$NetBSD: wwclreol.c,v 1.5 1997/11/21 08:37:03 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -51,18 +52,19 @@ static char rcsid[] = "$NetBSD: wwclreol.c,v 1.4 1996/02/08 21:48:58 mycroft Exp
  * Clear w to the end of line.
  * If cleared is true, then the screen line has already been cleared.
  */
+void
 wwclreol1(w, row, col, cleared)
-register struct ww *w;
-int row, col;
-char cleared;
+	struct ww *w;
+	int row, col;
+	char cleared;
 {
-	register i;
+	int i;
 
 	/*
 	 * Clear the buffer right off
 	 */
 	{
-		register union ww_char *buf;
+		union ww_char *buf;
 
 		buf = &w->ww_buf[row][col]; 
 		for (i = w->ww_b.r - col; --i >= 0;)
@@ -83,9 +85,9 @@ char cleared;
 	 * Now fix wwns.
 	 */
 	{
-		register union ww_char *s;
-		register unsigned char *smap;
-		register char *win;
+		union ww_char *s;
+		unsigned char *smap;
+		char *win;
 
 		i = col;
 		smap = &wwsmap[row][i];

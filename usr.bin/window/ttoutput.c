@@ -1,4 +1,4 @@
-/*	$NetBSD: ttoutput.c,v 1.3 1995/09/28 10:34:51 tls Exp $	*/
+/*	$NetBSD: ttoutput.c,v 1.4 1997/11/21 08:36:34 lukem Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -36,28 +36,31 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)ttoutput.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$NetBSD: ttoutput.c,v 1.3 1995/09/28 10:34:51 tls Exp $";
+__RCSID("$NetBSD: ttoutput.c,v 1.4 1997/11/21 08:36:34 lukem Exp $");
 #endif
 #endif /* not lint */
 
+#include <errno.h>
+#include <string.h>
+#include <unistd.h>
 #include "ww.h"
 #include "tt.h"
-#include <sys/errno.h>
 
 /*
  * Buffered output package.
  * We need this because stdio fails on non-blocking writes.
  */
 
+void
 ttflush()
 {
-	register char *p;
-	register n = tt_obp - tt_ob;
-	extern errno;
+	char *p;
+	int n = tt_obp - tt_ob;
 
 	if (n == 0)
 		return;
@@ -88,16 +91,18 @@ ttflush()
 	tt_obp = tt_ob;
 }
 
+void
 ttputs(s)
-register char *s;
+	char *s;
 {
 	while (*s)
 		ttputc(*s++);
 }
 
+void
 ttwrite(s, n)
-	register char *s;
-	register n;
+	char *s;
+	int n;
 {
 	switch (n) {
 	case 0:
@@ -137,13 +142,13 @@ ttwrite(s, n)
 		break;
 	default:
 		while (n > 0) {
-			register m;
+			int m;
 
 			while ((m = tt_obe - tt_obp) == 0)
 				ttflush();
 			if ((m = tt_obe - tt_obp) > n)
 				m = n;
-			bcopy(s, tt_obp, m);
+			memmove(tt_obp, s, m);
 			tt_obp += m;
 			s += m;
 			n -= m;

@@ -1,4 +1,4 @@
-/*	$NetBSD: wwlabel.c,v 1.4 1996/02/08 21:49:11 mycroft Exp $	*/
+/*	$NetBSD: wwlabel.c,v 1.5 1997/11/21 08:37:32 lukem Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -36,11 +36,12 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)wwlabel.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$NetBSD: wwlabel.c,v 1.4 1996/02/08 21:49:11 mycroft Exp $";
+__RCSID("$NetBSD: wwlabel.c,v 1.5 1997/11/21 08:37:32 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -52,19 +53,22 @@ static char rcsid[] = "$NetBSD: wwlabel.c,v 1.4 1996/02/08 21:49:11 mycroft Exp 
  * at 1 line above w and 'where' columns from it's left edge.
  * Gross, but it works.
  */
+void
 wwlabel(w, f, where, l, mode)
-struct ww *w;
-struct ww *f;
-char *l;
+	struct ww *w;
+	struct ww *f;
+	int where;
+	char *l;
+	int mode;
 {
 	int row;
-	register j;
+	int j;
 	int jj;
-	register char *win;
-	register union ww_char *buf;
-	register union ww_char *ns;
-	register char *fmap;
-	register unsigned char *smap;
+	char *win;
+	union ww_char *buf;
+	union ww_char *ns;
+	char *fmap;
+	unsigned char *smap;
 	char touched;
 	char *p;
 

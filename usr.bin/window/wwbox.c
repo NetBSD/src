@@ -1,4 +1,4 @@
-/*	$NetBSD: wwbox.c,v 1.3 1995/09/28 10:35:11 tls Exp $	*/
+/*	$NetBSD: wwbox.c,v 1.4 1997/11/21 08:36:58 lukem Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -36,24 +36,26 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)wwbox.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$NetBSD: wwbox.c,v 1.3 1995/09/28 10:35:11 tls Exp $";
+__RCSID("$NetBSD: wwbox.c,v 1.4 1997/11/21 08:36:58 lukem Exp $");
 #endif
 #endif /* not lint */
 
 #include "ww.h"
 #include "tt.h"
 
+void
 wwbox(w, r, c, nr, nc)
-register struct ww *w;
-register r, c;
-int nr, nc;
+	struct ww *w;
+	int r, c;
+	int nr, nc;
 {
-	register r1, c1;
-	register i;
+	int r1, c1;
+	int i;
 
 	r1 = r + nr - 1;
 	c1 = c + nc - 1;

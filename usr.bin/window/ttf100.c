@@ -1,4 +1,4 @@
-/*	$NetBSD: ttf100.c,v 1.3 1995/09/28 10:34:44 tls Exp $	*/
+/*	$NetBSD: ttf100.c,v 1.4 1997/11/21 08:36:27 lukem Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -36,11 +36,12 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)ttf100.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$NetBSD: ttf100.c,v 1.3 1995/09/28 10:34:44 tls Exp $";
+__RCSID("$NetBSD: ttf100.c,v 1.4 1997/11/21 08:36:27 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -60,6 +61,7 @@ short f100_frame[16] = {
 };
 extern struct tt_str *gen_AE, *gen_AS;
 
+int
 tt_f100()
 {
 	static struct tt_str ae = { "\033%", 2 };

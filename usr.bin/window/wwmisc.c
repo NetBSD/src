@@ -1,4 +1,4 @@
-/*	$NetBSD: wwmisc.c,v 1.4 1996/02/08 20:45:10 mycroft Exp $	*/
+/*	$NetBSD: wwmisc.c,v 1.5 1997/11/21 08:37:34 lukem Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -36,11 +36,12 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)wwmisc.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$NetBSD: wwmisc.c,v 1.4 1996/02/08 20:45:10 mycroft Exp $";
+__RCSID("$NetBSD: wwmisc.c,v 1.5 1997/11/21 08:37:34 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -51,11 +52,12 @@ static char rcsid[] = "$NetBSD: wwmisc.c,v 1.4 1996/02/08 20:45:10 mycroft Exp $
 /*
  * Sufficient but not necessary test for total visibility.
  */
+int
 wwvisible(w)
-register struct ww *w;
+	struct ww *w;
 {
-	register i;
-	register nvis = 0;
+	int i;
+	int nvis = 0;
 
 	for (i = w->ww_i.t; i < w->ww_i.b; i++)
 		nvis += w->ww_nvis[i];
@@ -67,6 +69,7 @@ register struct ww *w;
 	return nvis == w->ww_i.nr * w->ww_i.nc;
 }
 
+void
 wwbell()
 {
 	ttputc(ctrl('g'));

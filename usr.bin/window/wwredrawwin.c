@@ -1,4 +1,4 @@
-/*	$NetBSD: wwredrawwin.c,v 1.4 1996/02/08 21:49:15 mycroft Exp $	*/
+/*	$NetBSD: wwredrawwin.c,v 1.5 1997/11/21 08:37:45 lukem Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -36,26 +36,28 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)wwredrawwin.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$NetBSD: wwredrawwin.c,v 1.4 1996/02/08 21:49:15 mycroft Exp $";
+__RCSID("$NetBSD: wwredrawwin.c,v 1.5 1997/11/21 08:37:45 lukem Exp $");
 #endif
 #endif /* not lint */
 
 #include "ww.h"
 
+void
 wwredrawwin1(w, row1, row2, offset)
-register struct ww *w;
-int row1, row2, offset;
+	struct ww *w;
+	int row1, row2, offset;
 {
 	int row;
-	register col;
-	register unsigned char *smap;
-	register union ww_char *buf;
-	register char *win;
-	register union ww_char *ns;
+	int col;
+	unsigned char *smap;
+	union ww_char *buf;
+	char *win;
+	union ww_char *ns;
 	int x;
 	int nchanged;
 

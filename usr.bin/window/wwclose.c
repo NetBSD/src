@@ -1,4 +1,4 @@
-/*	$NetBSD: wwclose.c,v 1.3 1995/09/28 10:35:14 tls Exp $	*/
+/*	$NetBSD: wwclose.c,v 1.4 1997/11/21 08:37:01 lukem Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -36,18 +36,22 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)wwclose.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$NetBSD: wwclose.c,v 1.3 1995/09/28 10:35:14 tls Exp $";
+__RCSID("$NetBSD: wwclose.c,v 1.4 1997/11/21 08:37:01 lukem Exp $");
 #endif
 #endif /* not lint */
 
+#include <stdlib.h>
+#include <unistd.h>
 #include "ww.h"
 
+void
 wwclose(w)
-register struct ww *w;
+	struct ww *w;
 {
 	wwindex[w->ww_index] = 0;
 	if (w->ww_pty >= 0)

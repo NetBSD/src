@@ -1,4 +1,4 @@
-/*	$NetBSD: wwiomux.c,v 1.5 1996/02/08 20:45:09 mycroft Exp $	*/
+/*	$NetBSD: wwiomux.c,v 1.6 1997/11/21 08:37:30 lukem Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -36,21 +36,24 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)wwiomux.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$NetBSD: wwiomux.c,v 1.5 1996/02/08 20:45:09 mycroft Exp $";
+__RCSID("$NetBSD: wwiomux.c,v 1.6 1997/11/21 08:37:30 lukem Exp $");
 #endif
 #endif /* not lint */
 
-#include "ww.h"
-#include <sys/time.h>
 #include <sys/types.h>
 #if !defined(OLD_TTY) && !defined(TIOCPKT_DATA)
 #include <sys/ioctl.h>
 #endif
+#include <sys/time.h>
 #include <fcntl.h>
+#include <string.h>
+#include <unistd.h>
+#include "ww.h"
 
 /*
  * Multiple window output handler.
@@ -61,12 +64,13 @@ static char rcsid[] = "$NetBSD: wwiomux.c,v 1.5 1996/02/08 20:45:09 mycroft Exp 
  * When there's nothing to do, we sleep in a select().
  * The history of this routine is interesting.
  */
+void
 wwiomux()
 {
-	register struct ww *w;
+	struct ww *w;
 	fd_set imask;
-	register n;
-	register char *p;
+	volatile int n;
+	char *p;
 	char c;
 	struct timeval tv;
 	char noblock = 0;

@@ -1,4 +1,4 @@
-/*	$NetBSD: xx.h,v 1.3 1995/09/28 10:36:04 tls Exp $	*/
+/*	$NetBSD: xx.h,v 1.4 1997/11/21 08:38:03 lukem Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -49,8 +49,6 @@ struct xx {
 	struct xx *link;
 };
 
-struct xx *xxalloc();
-
 struct xx *xx_head, *xx_tail;
 struct xx *xx_freelist;
 
@@ -58,3 +56,22 @@ char *xxbuf, *xxbufp, *xxbufe;
 int xxbufsize;
 
 #define char_sep '\0'
+
+struct xx *xxalloc __P((void));
+void	xxclear __P((void));
+void	xxclreol __P((int, int));
+void	xxclreos __P((int, int));
+void	xxdelchar __P((int, int));
+void	xxend __P((void));
+void	xxflush __P((int));
+void	xxflush_scroll __P((struct xx *));
+void	xxfree __P((struct xx *));
+int	xxinit __P((void));
+void	xxinschar __P((int, int, int, int));
+void	xxinsspace __P((int, int));
+void	xxmove __P((int, int));
+void	xxreset __P((void));
+void	xxreset1 __P((void));
+void	xxscroll __P((int, int, int));
+void	xxstart __P((void));
+void	xxwrite __P((int, int, char *, int, int));

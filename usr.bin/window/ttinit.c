@@ -1,4 +1,4 @@
-/*	$NetBSD: ttinit.c,v 1.3 1995/09/28 10:34:50 tls Exp $	*/
+/*	$NetBSD: ttinit.c,v 1.4 1997/11/21 08:36:32 lukem Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -36,26 +36,20 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)ttinit.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$NetBSD: ttinit.c,v 1.3 1995/09/28 10:34:50 tls Exp $";
+__RCSID("$NetBSD: ttinit.c,v 1.4 1997/11/21 08:36:32 lukem Exp $");
 #endif
 #endif /* not lint */
 
+#include <stdlib.h>
+#include <string.h>
 #include "ww.h"
 #include "tt.h"
 
-int tt_h19();
-int tt_h29();
-int tt_f100();
-int tt_tvi925();
-int tt_wyse75();
-int tt_wyse60();
-int tt_zapple();
-int tt_zentec();
-int tt_generic();
 struct tt_tab tt_tab[] = {
 	{ "h19",	3, tt_h19 },
 	{ "h29",	3, tt_h29 },
@@ -67,15 +61,16 @@ struct tt_tab tt_tab[] = {
 	{ "zapple",	6, tt_zapple },
 	{ "zentec",	6, tt_zentec },
 	{ "generic",	0, tt_generic },
-	0
+	{ 0,		0, 0 }
 };
 
+int
 ttinit()
 {
 	int i;
-	register struct tt_tab *tp;
-	register char *p, *q;
-	register char *t;
+	struct tt_tab *tp;
+	char *p, *q;
+	char *t;
 
 	tt_strp = tt_strings;
 

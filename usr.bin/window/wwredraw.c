@@ -1,4 +1,4 @@
-/*	$NetBSD: wwredraw.c,v 1.3 1995/09/28 10:35:49 tls Exp $	*/
+/*	$NetBSD: wwredraw.c,v 1.4 1997/11/21 08:37:44 lukem Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -36,21 +36,24 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)wwredraw.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$NetBSD: wwredraw.c,v 1.3 1995/09/28 10:35:49 tls Exp $";
+__RCSID("$NetBSD: wwredraw.c,v 1.4 1997/11/21 08:37:44 lukem Exp $");
 #endif
 #endif /* not lint */
 
 #include "ww.h"
 #include "tt.h"
+#include "xx.h"
 
+void
 wwredraw()
 {
-	register i, j;
-	register union ww_char *os;
+	int i, j;
+	union ww_char *os;
 
 	xxclear();
 	for (i = 0; i < wwnrow; i++) {

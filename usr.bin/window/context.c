@@ -1,4 +1,4 @@
-/*	$NetBSD: context.c,v 1.3 1995/09/28 10:34:15 tls Exp $	*/
+/*	$NetBSD: context.c,v 1.4 1997/11/21 08:35:58 lukem Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -36,28 +36,31 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)context.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$NetBSD: context.c,v 1.3 1995/09/28 10:34:15 tls Exp $";
+__RCSID("$NetBSD: context.c,v 1.4 1997/11/21 08:35:58 lukem Exp $");
 #endif
 #endif /* not lint */
 
-#include "value.h"
+#include <fcntl.h>
+#include <stdlib.h>
+#include "defs.h"
 #include "string.h"
 #include "context.h"
-#include <fcntl.h>
 
 /*
  * Context push/pop for nested command files.
  */
+int	cx_alloc __P((void));
+void	cx_free __P((void));
 
-char *malloc();
-
+int
 cx_alloc()
 {
-	register struct context *xp;
+	struct context *xp;
 
 	if (cx.x_type != 0) {
 		xp = (struct context *)
@@ -74,6 +77,7 @@ cx_alloc()
 	return 0;
 }
 
+void
 cx_free()
 {
 	struct context *xp;
@@ -85,8 +89,9 @@ cx_free()
 		cx.x_type = 0;
 }
 
+int
 cx_beginfile(filename)
-char *filename;
+	char *filename;
 {
 	if (cx_alloc() < 0)
 		return -1;
@@ -109,10 +114,11 @@ bad:
 	return -1;
 }
 
+int
 cx_beginbuf(buf, arg, narg)
-char *buf;
-struct value *arg;
-int narg;
+	char *buf;
+	struct value *arg;
+	int narg;
 {
 	if (cx_alloc() < 0)
 		return -1;
@@ -123,6 +129,7 @@ int narg;
 	return 0;
 }
 
+void
 cx_end()
 {
 	switch (cx.x_type) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: wwend.c,v 1.3 1995/09/28 10:35:26 tls Exp $	*/
+/*	$NetBSD: wwend.c,v 1.4 1997/11/21 08:37:16 lukem Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -36,19 +36,23 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)wwend.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$NetBSD: wwend.c,v 1.3 1995/09/28 10:35:26 tls Exp $";
+__RCSID("$NetBSD: wwend.c,v 1.4 1997/11/21 08:37:16 lukem Exp $");
 #endif
 #endif /* not lint */
 
+#include <unistd.h>
 #include "ww.h"
 #include "tt.h"
+#include "xx.h"
 
-/*ARGSUSED*/
+void
 wwend(exit)
+	int exit;
 {
 	if (tt.tt_checkpoint) {
 		(void) alarm(0);
@@ -63,7 +67,8 @@ wwend(exit)
 }
 
 void
-wwquit()
+wwquit(dummy)
+	int dummy;
 {
 	wwend(1);
 	exit(1);

@@ -34,16 +34,21 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
+#if 0
 static char sccsid[] = "@(#)wwterminfo.c	8.1 (Berkeley) 6/6/93";
+#else
+__RCSID("$NetBSD: wwterminfo.c,v 1.2 1997/11/21 08:37:54 lukem Exp $");
+#endif
 #endif /* not lint */
 
 #ifdef TERMINFO
 
-#include "ww.h"
 #include <stdio.h>
 #include <paths.h>
 #include "local.h"
+#include "ww.h"
 
 /*
  * Terminfo support

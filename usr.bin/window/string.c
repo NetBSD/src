@@ -1,4 +1,4 @@
-/*	$NetBSD: string.c,v 1.5 1995/09/29 00:44:06 cgd Exp $	*/
+/*	$NetBSD: string.c,v 1.6 1997/11/21 08:36:20 lukem Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -36,41 +36,43 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)string.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$NetBSD: string.c,v 1.5 1995/09/29 00:44:06 cgd Exp $";
+__RCSID("$NetBSD: string.c,v 1.6 1997/11/21 08:36:20 lukem Exp $");
 #endif
 #endif /* not lint */
 
-#include "string.h"
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include "string.h"
 
 char *
 str_cpy(s)
-register char *s;
+	char *s;
 {
 	char *str;
-	register char *p;
+	char *p;
 
 	str = p = str_alloc(strlen(s) + 1);
 	if (p == 0)
 		return 0;
-	while (*p++ = *s++)
+	while ((*p++ = *s++))
 		;
 	return str;
 }
 
 char *
 str_ncpy(s, n)
-register char *s;
-register n;
+	char *s;
+	int n;
 {
 	int l = strlen(s);
 	char *str;
-	register char *p;
+	char *p;
 
 	if (n > l)
 		n = l;
@@ -85,27 +87,27 @@ register n;
 
 char *
 str_itoa(i)
-int i;
+	int i;
 {
 	char buf[30];
 
-	(void) sprintf(buf, "%d", i);
+	(void) snprintf(buf, sizeof(buf), "%d", i);
 	return str_cpy(buf);
 }
 
 char *
 str_cat(s1, s2)
-char *s1, *s2;
+	char *s1, *s2;
 {
 	char *str;
-	register char *p, *q;
+	char *p, *q;
 
 	str = p = str_alloc(strlen(s1) + strlen(s2) + 1);
 	if (p == 0)
 		return 0;
-	for (q = s1; *p++ = *q++;)
+	for (q = s1; (*p++ = *q++);)
 		;
-	for (q = s2, p--; *p++ = *q++;)
+	for (q = s2, p--; (*p++ = *q++);)
 		;
 	return str;
 }
@@ -114,23 +116,24 @@ char *s1, *s2;
  * match s against p.
  * s can be a prefix of p with at least min characters.
  */
+int
 str_match(s, p, min)
-register char *s, *p;
-register min;
+	char *s, *p;
+	int min;
 {
 	for (; *s && *p && *s == *p; s++, p++, min--)
 		;
-	return *s == *p || *s == 0 && min <= 0;
+	return *s == *p || (*s == 0 && min <= 0);
 }
 
 #ifdef STR_DEBUG
 char *
 str_alloc(l)
-int l;
+	size_t l;
 {
-	register struct string *s;
+	struct string *s;
 
-	s = (struct string *) malloc((unsigned)l + str_offset);
+	s = (struct string *) malloc(l + str_offset);
 	if (s == 0)
 		return 0;
 	if (str_head.s_forw == 0)
@@ -142,10 +145,11 @@ int l;
 	return s->s_data;
 }
 
+void
 str_free(str)
-char *str;
+	char *str;
 {
-	register struct string *s;
+	struct string *s;
 
 	for (s = str_head.s_forw; s != &str_head && s->s_data != str;
 	     s = s->s_forw)

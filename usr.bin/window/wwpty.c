@@ -1,4 +1,4 @@
-/*	$NetBSD: wwpty.c,v 1.3 1995/09/28 10:35:45 tls Exp $	*/
+/*	$NetBSD: wwpty.c,v 1.4 1997/11/21 08:37:40 lukem Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -36,24 +36,27 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)wwpty.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$NetBSD: wwpty.c,v 1.3 1995/09/28 10:35:45 tls Exp $";
+__RCSID("$NetBSD: wwpty.c,v 1.4 1997/11/21 08:37:40 lukem Exp $");
 #endif
 #endif /* not lint */
 
-#include "ww.h"
-#include <fcntl.h>
 #if !defined(OLD_TTY) && !defined(TIOCPKT)
 #include <sys/ioctl.h>
 #endif
+#include <fcntl.h>
+#include <unistd.h>
+#include "ww.h"
 
+int
 wwgetpty(w)
-register struct ww *w;
+	struct ww *w;
 {
-	register char c, *p;
+	char c, *p;
 	int tty;
 	int on = 1;
 #define PTY "/dev/XtyXX"

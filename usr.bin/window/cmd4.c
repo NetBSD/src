@@ -1,4 +1,4 @@
-/*	$NetBSD: cmd4.c,v 1.3 1995/09/28 10:34:08 tls Exp $	*/
+/*	$NetBSD: cmd4.c,v 1.4 1997/11/21 08:35:50 lukem Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -36,16 +36,18 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)cmd4.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$NetBSD: cmd4.c,v 1.3 1995/09/28 10:34:08 tls Exp $";
+__RCSID("$NetBSD: cmd4.c,v 1.4 1997/11/21 08:35:50 lukem Exp $");
 #endif
 #endif /* not lint */
 
 #include "defs.h"
 
+void
 c_colon()
 {
 	char oldterse = terse;

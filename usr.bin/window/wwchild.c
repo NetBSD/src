@@ -1,4 +1,4 @@
-/*	$NetBSD: wwchild.c,v 1.3 1995/09/28 10:35:13 tls Exp $	*/
+/*	$NetBSD: wwchild.c,v 1.4 1997/11/21 08:37:00 lukem Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -36,24 +36,26 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)wwchild.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$NetBSD: wwchild.c,v 1.3 1995/09/28 10:35:13 tls Exp $";
+__RCSID("$NetBSD: wwchild.c,v 1.4 1997/11/21 08:37:00 lukem Exp $");
 #endif
 #endif /* not lint */
 
-#include "ww.h"
 #include <sys/types.h>
 #include <sys/wait.h>
+#include <errno.h>
+#include "ww.h"
 
 void
-wwchild()
+wwchild(dummy)
+	int dummy;
 {
-	extern errno;
 	int olderrno;
-	register struct ww **wp;
+	struct ww **wp;
 	union wait w;
 	int pid;
 	char collected = 0;

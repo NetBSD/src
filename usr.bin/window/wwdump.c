@@ -1,4 +1,4 @@
-/*	$NetBSD: wwdump.c,v 1.5 1995/09/29 00:44:09 cgd Exp $	*/
+/*	$NetBSD: wwdump.c,v 1.6 1997/11/21 08:37:14 lukem Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -36,24 +36,27 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)wwdump.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$NetBSD: wwdump.c,v 1.5 1995/09/29 00:44:09 cgd Exp $";
+__RCSID("$NetBSD: wwdump.c,v 1.6 1997/11/21 08:37:14 lukem Exp $");
 #endif
 #endif /* not lint */
 
+#include <stdio.h>
+#include <string.h>
 #include "ww.h"
 #include "tt.h"
-#include <string.h>
 
 static char cmap[] = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";
 
+void
 wwdumpwin(w)
-register struct ww *w;
+	struct ww *w;
 {
-	register i, j;
+	int i, j;
 
 	tt.tt_nmodes = 0;
 	(*tt.tt_clear)();
@@ -64,10 +67,11 @@ register struct ww *w;
 	}
 }
 
+void
 wwdumpnvis(w)
-register struct ww *w;
+	struct ww *w;
 {
-	register i;
+	int i;
 	char buf[20];
 
 	tt.tt_nmodes = 0;
@@ -79,9 +83,10 @@ register struct ww *w;
 	}
 }
 
+void
 wwdumpsmap()
 {
-	register i, j;
+	int i, j;
 
 	tt.tt_nmodes = 0;
 	(*tt.tt_clear)();
@@ -92,9 +97,10 @@ wwdumpsmap()
 	}
 }
 
+void
 wwdumpns()
 {
-	register i, j;
+	int i, j;
 
 	(*tt.tt_clear)();
 	for (i = 0; i < wwnrow; i++) {
@@ -106,9 +112,10 @@ wwdumpns()
 	}
 }
 
+void
 wwdumpos()
 {
-	register i, j;
+	int i, j;
 
 	(*tt.tt_clear)();
 	for (i = 0; i < wwnrow; i++) {

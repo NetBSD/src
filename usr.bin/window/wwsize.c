@@ -1,4 +1,4 @@
-/*	$NetBSD: wwsize.c,v 1.5 1996/02/08 20:45:11 mycroft Exp $	*/
+/*	$NetBSD: wwsize.c,v 1.6 1997/11/21 08:37:49 lukem Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -36,24 +36,28 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)wwsize.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$NetBSD: wwsize.c,v 1.5 1996/02/08 20:45:11 mycroft Exp $";
+__RCSID("$NetBSD: wwsize.c,v 1.6 1997/11/21 08:37:49 lukem Exp $");
 #endif
 #endif /* not lint */
 
+#include <stdlib.h>
 #include "ww.h"
 
 /*
  * Resize a window.  Should be unattached.
  */
+int
 wwsize(w, nrow, ncol)
-register struct ww *w;
+	struct ww *w;
+	int nrow, ncol;
 {
-	register i, j;
-	int nline;
+	int i, j;
+	int nline = 0;
 	union ww_char **buf = 0;
 	char **win = 0;
 	short *nvis = 0;

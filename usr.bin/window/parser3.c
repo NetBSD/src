@@ -1,4 +1,4 @@
-/*	$NetBSD: parser3.c,v 1.3 1995/09/28 10:34:33 tls Exp $	*/
+/*	$NetBSD: parser3.c,v 1.4 1997/11/21 08:36:14 lukem Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -36,14 +36,16 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)parser3.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$NetBSD: parser3.c,v 1.3 1995/09/28 10:34:33 tls Exp $";
+__RCSID("$NetBSD: parser3.c,v 1.4 1997/11/21 08:36:14 lukem Exp $");
 #endif
 #endif /* not lint */
 
+#include "defs.h"
 #include "parser.h"
 
 /*
@@ -61,9 +63,10 @@ static char rcsid[] = "$NetBSD: parser3.c,v 1.3 1995/09/28 10:34:33 tls Exp $";
  * * / %
  * unary - + ~ !
  */
+int
 p_expr(v, flag)
-register struct value *v;
-char flag;
+	struct value *v;
+	char flag;
 {
 	struct value t;
 	int ret;
@@ -91,12 +94,13 @@ char flag;
 /*
  * ? :
  */
+int
 p_expr0(v, flag)
-register struct value *v;
-char flag;
+	struct value *v;
+	char flag;
 {
 	struct value t;
-	char true;
+	char true = 0;
 
 	if (p_expr1(v, flag) < 0)
 		return -1;
@@ -130,9 +134,10 @@ char flag;
 /*
  * ||
  */
+int
 p_expr1(v, flag)
-register struct value *v;
-char flag;
+	struct value *v;
+	char flag;
 {
 	char true = 0;
 
@@ -164,9 +169,10 @@ char flag;
 /*
  * &&
  */
+int
 p_expr2(v, flag)
-register struct value *v;
-char flag;
+	struct value *v;
+	char flag;
 {
 	char true = 1;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: xx.c,v 1.3 1995/09/28 10:36:03 tls Exp $	*/
+/*	$NetBSD: xx.c,v 1.4 1997/11/21 08:38:02 lukem Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -36,18 +36,22 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)xx.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$NetBSD: xx.c,v 1.3 1995/09/28 10:36:03 tls Exp $";
+__RCSID("$NetBSD: xx.c,v 1.4 1997/11/21 08:38:02 lukem Exp $");
 #endif
 #endif /* not lint */
 
-#include "ww.h"
+#include <stdlib.h>
+#include <string.h>
+#include "defs.h"
 #include "xx.h"
 #include "tt.h"
 
+int
 xxinit()
 {
 	if (ttinit() < 0)
@@ -66,6 +70,7 @@ xxinit()
 	return 0;
 }
 
+void
 xxstart()
 {
 	(*tt.tt_start)();
@@ -74,6 +79,7 @@ xxstart()
 	xxreset1();			/* might be a restart */
 }
 
+void
 xxreset()
 {
 	if (tt.tt_ntoken > 0)
@@ -82,9 +88,10 @@ xxreset()
 	(*tt.tt_reset)();
 }
 
+void
 xxreset1()
 {
-	register struct xx *xp, *xq;
+	struct xx *xp, *xq;
 
 	for (xp = xx_head; xp != 0; xp = xq) {
 		xq = xp->link;
@@ -94,6 +101,7 @@ xxreset1()
 	xxbufp = xxbuf;
 }
 
+void
 xxend()
 {
 	if (tt.tt_scroll_top != 0 || tt.tt_scroll_bot != tt.tt_nrow - 1)
@@ -113,7 +121,7 @@ xxend()
 struct xx *
 xxalloc()
 {
-	register struct xx *xp;
+	struct xx *xp;
 
 	if (xxbufp > xxbufe)
 		abort();
@@ -131,16 +139,19 @@ xxalloc()
 	return xp;
 }
 
+void
 xxfree(xp)
-	register struct xx *xp;
+	struct xx *xp;
 {
 	xp->link = xx_freelist;
 	xx_freelist = xp;
 }
 
+void
 xxmove(row, col)
+	int row, col;
 {
-	register struct xx *xp = xx_tail;
+	struct xx *xp = xx_tail;
 
 	if (xp == 0 || xp->cmd != xc_move) {
 		xp = xxalloc();
@@ -150,13 +161,15 @@ xxmove(row, col)
 	xp->arg1 = col;
 }
 
+void
 xxscroll(dir, top, bot)
+	int dir, top, bot;
 {
-	register struct xx *xp = xx_tail;
+	struct xx *xp = xx_tail;
 
 	if (xp != 0 && xp->cmd == xc_scroll &&
 	    xp->arg1 == top && xp->arg2 == bot &&
-	    (xp->arg0 < 0 && dir < 0 || xp->arg0 > 0 && dir > 0)) {
+	    ((xp->arg0 < 0 && dir < 0) || (xp->arg0 > 0 && dir > 0))) {
 		xp->arg0 += dir;
 		return;
 	}
@@ -167,9 +180,11 @@ xxscroll(dir, top, bot)
 	xp->arg2 = bot;
 }
 
+void
 xxinschar(row, col, c, m)
+	int row, col, c, m;
 {
-	register struct xx *xp;
+	struct xx *xp;
 
 	xp = xxalloc();
 	xp->cmd = xc_inschar;
@@ -179,9 +194,11 @@ xxinschar(row, col, c, m)
 	xp->arg3 = m;
 }
 
+void
 xxinsspace(row, col)
+	int row, col;
 {
-	register struct xx *xp = xx_tail;
+	struct xx *xp = xx_tail;
 
 	if (xp != 0 && xp->cmd == xc_insspace && xp->arg0 == row &&
 	    col >= xp->arg1 && col <= xp->arg1 + xp->arg2) {
@@ -195,9 +212,11 @@ xxinsspace(row, col)
 	xp->arg2 = 1;
 }
 
+void
 xxdelchar(row, col)
+	int row, col;
 {
-	register struct xx *xp = xx_tail;
+	struct xx *xp = xx_tail;
 
 	if (xp != 0 && xp->cmd == xc_delchar &&
 	    xp->arg0 == row && xp->arg1 == col) {
@@ -211,37 +230,45 @@ xxdelchar(row, col)
 	xp->arg2 = 1;
 }
 
+void
 xxclear()
 {
-	register struct xx *xp;
+	struct xx *xp;
 
 	xxreset1();
 	xp = xxalloc();
 	xp->cmd = xc_clear;
 }
 
+void
 xxclreos(row, col)
+	int row, col;
 {
-	register struct xx *xp = xxalloc();
+	struct xx *xp = xxalloc();
 
 	xp->cmd = xc_clreos;
 	xp->arg0 = row;
 	xp->arg1 = col;
 }
 
+void
 xxclreol(row, col)
+	int row, col;
 {
-	register struct xx *xp = xxalloc();
+	struct xx *xp = xxalloc();
 
 	xp->cmd = xc_clreol;
 	xp->arg0 = row;
 	xp->arg1 = col;
 }
 
+void
 xxwrite(row, col, p, n, m)
+	int row, col;
 	char *p;
+	int n, m;
 {
-	register struct xx *xp;
+	struct xx *xp;
 
 	if (xxbufp + n + 1 > xxbufe)
 		xxflush(0);
@@ -252,7 +279,7 @@ xxwrite(row, col, p, n, m)
 	xp->arg2 = n;
 	xp->arg3 = m;
 	xp->buf = xxbufp;
-	bcopy(p, xxbufp, n);
+	memmove(xxbufp, p, n);
 	xxbufp += n;
 	*xxbufp++ = char_sep;
 }

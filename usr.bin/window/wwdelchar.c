@@ -1,4 +1,4 @@
-/*	$NetBSD: wwdelchar.c,v 1.4 1996/02/08 21:49:00 mycroft Exp $	*/
+/*	$NetBSD: wwdelchar.c,v 1.5 1997/11/21 08:37:10 lukem Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -36,28 +36,32 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)wwdelchar.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$NetBSD: wwdelchar.c,v 1.4 1996/02/08 21:49:00 mycroft Exp $";
+__RCSID("$NetBSD: wwdelchar.c,v 1.5 1997/11/21 08:37:10 lukem Exp $");
 #endif
 #endif /* not lint */
 
 #include "ww.h"
 #include "tt.h"
+#include "xx.h"
 
+void
 wwdelchar(w, row, col)
-register struct ww *w;
+	struct ww *w;
+	int row, col;
 {
-	register i;
+	int i;
 	int nvis;
 
 	/*
 	 * First, shift the line.
 	 */
 	{
-		register union ww_char *p, *q;
+		union ww_char *p, *q;
 
 		p = &w->ww_buf[row][col];
 		q = p + 1;
@@ -80,10 +84,10 @@ register struct ww *w;
 	 * Now find out how much is actually changed, and fix wwns.
 	 */
 	{
-		register union ww_char *buf;
-		register char *win;
-		register union ww_char *ns;
-		register unsigned char *smap;
+		union ww_char *buf;
+		char *win;
+		union ww_char *ns;
+		unsigned char *smap;
 		char touched;
 
 		nvis = 0;
@@ -117,7 +121,7 @@ register struct ww *w;
 	 * Can/Should we use delete character?
 	 */
 	if (tt.tt_delchar != 0 && nvis > (wwncol - col) / 2) {
-		register union ww_char *p, *q;
+		union ww_char *p, *q;
 
 		xxdelchar(row, col);
 		p = &wwos[row][col];

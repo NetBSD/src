@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.6 1996/02/08 20:45:01 mycroft Exp $	*/
+/*	$NetBSD: main.c,v 1.7 1997/11/21 08:36:06 lukem Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -36,88 +36,86 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
-char copyright[] =
-"@(#) Copyright (c) 1983, 1993\n\
-	The Regents of the University of California.  All rights reserved.\n";
+__COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
+	The Regents of the University of California.  All rights reserved.\n");
 #endif /* not lint */
 
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)main.c	8.2 (Berkeley) 4/2/94";
 #else
-static char rcsid[] = "$NetBSD: main.c,v 1.6 1996/02/08 20:45:01 mycroft Exp $";
+__RCSID("$NetBSD: main.c,v 1.7 1997/11/21 08:36:06 lukem Exp $");
 #endif
 #endif /* not lint */
 
-#include "defs.h"
+#include <err.h>
 #include <paths.h>
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include "defs.h"
 #include "string.h"
 #include "char.h"
 #include "local.h"
 
-#define next(a) (*++*(a) ? *(a) : (*++(a) ? *(a) : (char *)(long)usage()))
+int	main __P((int, char **));
+void	usage __P((void));
 
-/*ARGSUSED*/
+extern char *__progname;	/* from crt0.o */
+
+int
 main(argc, argv)
-char **argv;
+	int argc;
+	char **argv;
 {
-	register char *p;
+	char *p;
 	char fflag = 0;
 	char dflag = 0;
 	char xflag = 0;
 	char *cmd = 0;
 	char tflag = 0;
+	int ch;
 
 	escapec = ESCAPEC;	
-	if (p = rindex(*argv, '/'))
-		p++;
-	else
-		p = *argv;
-	debug = strcmp(p, "a.out") == 0;
-	while (*++argv) {
-		if (**argv == '-') {
-			switch (*++*argv) {
-			case 'f':
-				fflag++;
-				break;
-			case 'c':
-				if (cmd != 0) {
-					(void) fprintf(stderr,
-						"Only one -c allowed.\n");
-					(void) usage();
-				}
-				cmd = next(argv);
-				break;
-			case 'e':
-				setescape(next(argv));
-				break;
-			case 't':
-				tflag++;
-				break;
-			case 'd':
-				dflag++;
-				break;
-			case 'D':
-				debug = !debug;
-				break;
-			case 'x':
-				xflag++;
-				break;
-			default:
-				(void) usage();
+	debug = strcmp(__progname, "a.out") == 0;
+	while ((ch = getopt(argc, argv, "fc:e:tdDx")) != -1) {
+		switch (ch) {
+		case 'f':
+			fflag++;
+			break;
+		case 'c':
+			if (cmd != 0) {
+				warnx("Only one -c allowed");
+				usage();
 			}
-		} else
-			(void) usage();
+			cmd = optarg;
+			break;
+		case 'e':
+			setescape(optarg);
+			break;
+		case 't':
+			tflag++;
+			break;
+		case 'd':
+			dflag++;
+			break;
+		case 'D':
+			debug = !debug;
+			break;
+		case 'x':
+			xflag++;
+			break;
+		default:
+			usage();
+		}
 	}
 	if ((p = getenv("SHELL")) == 0)
 		p = _PATH_BSHELL;
-	if ((default_shellfile = str_cpy(p)) == 0) {
-		(void) fprintf(stderr, "Out of memory.\n");
-		exit(1);
-	}
-	if (p = rindex(default_shellfile, '/'))
+	if ((default_shellfile = str_cpy(p)) == 0)
+		errx(1, "Out of memory.");
+	if ((p = strrchr(default_shellfile, '/')))
 		p++;
 	else
 		p = default_shellfile;
@@ -126,10 +124,8 @@ char **argv;
 	default_nline = NLINE;
 	default_smooth = 1;
 	(void) gettimeofday(&starttime, (struct timezone *)0);
-	if (wwinit() < 0) {
-		(void) fprintf(stderr, "%s.\n", wwerror());
-		exit(1);
-	}
+	if (wwinit() < 0)
+		errx(1, "%s", wwerror());
 
 #ifdef OLD_TTY
 	if (debug)
@@ -158,7 +154,7 @@ char **argv;
 	if ((cmdwin = wwopen(WWT_INTERNAL, wwbaud > 2400 ? WWO_REVERSE : 0, 1,
 			     wwncol, 0, 0, 0)) == 0) {
 		wwflush();
-		(void) fprintf(stderr, "%s.\r\n", wwerror());
+		warnx("%s.\r", wwerror());
 		goto bad;
 	}
 	SET(cmdwin->ww_wflags,
@@ -166,14 +162,14 @@ char **argv;
 	if ((framewin = wwopen(WWT_INTERNAL, WWO_GLASS|WWO_FRAME, wwnrow,
 			       wwncol, 0, 0, 0)) == 0) {
 		wwflush();
-		(void) fprintf(stderr, "%s.\r\n", wwerror());
+		warnx("%s.\r", wwerror());
 		goto bad;
 	}
 	wwadd(framewin, &wwhead);
 	if ((boxwin = wwopen(WWT_INTERNAL, WWO_GLASS, wwnrow, wwncol, 0, 0, 0))
 	    == 0) {
 		wwflush();
-		(void) fprintf(stderr, "%s.\r\n", wwerror());
+		warnx("%s.\r", wwerror());
 		goto bad;
 	}
 	fgwin = framewin;
@@ -199,9 +195,11 @@ bad:
 	return 0;
 }
 
+void
 usage()
 {
-	(void) fprintf(stderr, "Usage: window [-e escape-char] [-c command] [-t] [-f] [-d]\n");
+	(void) fprintf(stderr,
+	    "Usage: %s [-e escape-char] [-c command] [-t] [-f] [-d]\n",
+	    __progname);
 	exit(1);
-	return 0;			/* for lint */
 }

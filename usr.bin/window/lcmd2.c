@@ -1,4 +1,4 @@
-/*	$NetBSD: lcmd2.c,v 1.7 1995/09/29 00:44:04 cgd Exp $	*/
+/*	$NetBSD: lcmd2.c,v 1.8 1997/11/21 08:36:05 lukem Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -36,29 +36,34 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)lcmd2.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$NetBSD: lcmd2.c,v 1.7 1995/09/29 00:44:04 cgd Exp $";
+__RCSID("$NetBSD: lcmd2.c,v 1.8 1997/11/21 08:36:05 lukem Exp $");
 #endif
 #endif /* not lint */
 
+#include <sys/types.h>
+#include <sys/time.h>
+#include <sys/resource.h>
+#include <string.h>
 #include "defs.h"
 #include "string.h"
-#include "value.h"
 #include "var.h"
 #include "lcmd.h"
 #include "alias.h"
-#include <sys/types.h>
-#include <sys/resource.h>
-#include <string.h>
 
-/*ARGSUSED*/
+int	printalias __P((void *, struct var *));
+int	printvar __P((void *, struct var *));
+char	*strtime __P((struct timeval *t));
+
+void
 l_iostat(v, a)
-struct value *v, *a;
+	struct value *v, *a;
 {
-	register struct ww *w;
+	struct ww *w;
 
 	if ((w = openiwin(16, "IO Statistics")) == 0) {
 		error("Can't open statistics window: %s.", wwerror());
@@ -104,18 +109,16 @@ struct value *v, *a;
 
 struct lcmd_arg arg_time[] = {
 	{ "who",	1,	ARG_STR },
-	0
+	{ 0 }
 };
 
-/*ARGSUSED*/
+void
 l_time(v, a)
-struct value *v;
-register struct value *a;
+	struct value *v, *a;
 {
-	register struct ww *w;
+	struct ww *w;
 	struct rusage rusage;
 	struct timeval timeval;
-	char *strtime();
 
 	if ((w = openiwin(8, "Timing and Resource Usage")) == 0) {
 		error("Can't open time window: %s.", wwerror());
@@ -153,11 +156,11 @@ register struct value *a;
 
 char *
 strtime(t)
-register struct timeval *t;
+	struct timeval *t;
 {
 	char fill = 0;
 	static char buf[20];
-	register char *p = buf;
+	char *p = buf;
 
 	if (t->tv_sec > 60*60) {
 		(void) sprintf(p, "%ld:", t->tv_sec / (60*60));
@@ -180,12 +183,12 @@ register struct timeval *t;
 	return buf;
 }
 
-/*ARGSUSED*/
+void
 l_list(v, a)
-struct value *v, *a;
+	struct value *v, *a;
 {
-	register struct ww *w, *wp;
-	register i;
+	struct ww *w, *wp;
+	int i;
 	int n;
 
 	for (n = 0, i = 0; i < NWINDOW; i++)
@@ -213,26 +216,27 @@ struct value *v, *a;
 	closeiwin(w);
 }
 
-/*ARGSUSED*/
+void
 l_variable(v, a)
-struct value *v, *a;
+	struct value *v, *a;
 {
-	register struct ww *w;
-	int printvar();
+	struct ww *w;
 
 	if ((w = openiwin(wwnrow - 3, "Variables")) == 0) {
 		error("Can't open variable window: %s.", wwerror());
 		return;
 	}
-	if (var_walk(printvar, (long)w) >= 0)
+	if (var_walk(printvar, (void *)w) >= 0)
 		waitnl(w);
 	closeiwin(w);
 }
 
-printvar(w, r)
-register struct ww *w;
-register struct var *r;
+int
+printvar(vw, r)
+	void *vw;
+	struct var *r;
 {
+	struct ww *w = vw;
 	if (more(w, 0) == 2)
 		return -1;
 	wwprintf(w, "%16s    ", r->r_name);
@@ -252,21 +256,22 @@ register struct var *r;
 
 struct lcmd_arg arg_def_shell[] = {
 	{ "",	0,		ARG_ANY|ARG_LIST },
-	0
+	{ 0 }
 };
 
+void
 l_def_shell(v, a)
 	struct value *v, *a;
 {
-	register char **pp;
-	register struct value *vp;
+	char **pp;
+	struct value *vp;
 
 	if (a->v_type == V_ERR) {
 		if ((v->v_str = str_cpy(default_shellfile)) != 0)
 			v->v_type = V_STR;
 		return;
 	}
-	if (v->v_str = default_shellfile) {
+	if ((v->v_str = default_shellfile)) {
 		v->v_type = V_STR;
 		for (pp = default_shell + 1; *pp; pp++) {
 			str_free(*pp);
@@ -283,8 +288,8 @@ l_def_shell(v, a)
 			p_memerror();
 			break;
 		}
-	if (default_shellfile = *default_shell)
-		if (*default_shell = rindex(default_shellfile, '/'))
+	if ((default_shellfile = *default_shell))
+		if ((*default_shell = strrchr(default_shellfile, '/')))
 			(*default_shell)++;
 		else
 			*default_shell = default_shellfile;
@@ -293,27 +298,27 @@ l_def_shell(v, a)
 struct lcmd_arg arg_alias[] = {
 	{ "",	0,		ARG_STR },
 	{ "",	0,		ARG_STR|ARG_LIST },
-	0
+	{ 0 }
 };
 
+void
 l_alias(v, a)
 	struct value *v, *a;
 {
 	if (a->v_type == V_ERR) {
-		register struct ww *w;
-		int printalias();
+		struct ww *w;
 
 		if ((w = openiwin(wwnrow - 3, "Aliases")) == 0) {
 			error("Can't open alias window: %s.", wwerror());
 			return;
 		}
-		if (alias_walk(printalias, (long)w) >= 0)
+		if (alias_walk(printalias, (void *)w) >= 0)
 			waitnl(w);
 		closeiwin(w);
 	} else {
-		register struct alias *ap = 0;
+		struct alias *ap = 0;
 
-		if (ap = alias_lookup(a->v_str)) {
+		if ((ap = alias_lookup(a->v_str))) {
 			if ((v->v_str = str_cpy(ap->a_buf)) == 0) {
 				p_memerror();
 				return;
@@ -321,10 +326,10 @@ l_alias(v, a)
 			v->v_type = V_STR;
 		}
 		if (a[1].v_type == V_STR) {
-			register struct value *vp;
-			register char *p, *q;
+			struct value *vp;
+			char *p, *q;
 			char *str;
-			register n;
+			int n;
 
 			for (n = 0, vp = a + 1; vp->v_type != V_ERR; vp++, n++)
 				for (p = vp->v_str; *p; p++, n++)
@@ -335,7 +340,7 @@ l_alias(v, a)
 			}
 			for (q = str, vp = a + 1; vp->v_type != V_ERR;
 			     vp++, q[-1] = ' ')
-				for (p = vp->v_str; *q++ = *p++;)
+				for (p = vp->v_str; (*q++ = *p++);)
 					;
 			q[-1] = 0;
 			if ((ap = alias_set(a[0].v_str, (char *)0)) == 0) {
@@ -348,10 +353,12 @@ l_alias(v, a)
 	}
 }
 
-printalias(w, a)
-register struct ww *w;
-register struct alias *a;
+int
+printalias(vw, a)
+	void *vw;
+	struct alias *a;
 {
+	struct ww *w = vw;
 	if (more(w, 0) == 2)
 		return -1;
 	wwprintf(w, "%16s    %s\n", a->a_name, a->a_buf);
@@ -360,11 +367,12 @@ register struct alias *a;
 
 struct lcmd_arg arg_unalias[] = {
 	{ "alias",	1,	ARG_STR },
-	0
+	{ 0 }
 };
 
+void
 l_unalias(v, a)
-struct value *v, *a;
+	struct value *v, *a;
 {
 	if (a->v_type == ARG_STR)
 		v->v_num = alias_unset(a->v_str);
@@ -374,13 +382,12 @@ struct value *v, *a;
 struct lcmd_arg arg_echo[] = {
 	{ "window",	1,	ARG_NUM },
 	{ "",		0,	ARG_ANY|ARG_LIST },
-	0
+	{ 0 }
 };
 
-/*ARGSUSED*/
+void
 l_echo(v, a)
-struct value *v;
-register struct value *a;
+	struct value *v, *a;
 {
 	char buf[20];
 	struct ww *w;

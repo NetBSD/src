@@ -1,4 +1,4 @@
-/*	$NetBSD: tth29.c,v 1.3 1995/09/28 10:34:48 tls Exp $	*/
+/*	$NetBSD: tth29.c,v 1.4 1997/11/21 08:36:31 lukem Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -36,11 +36,12 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)tth29.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$NetBSD: tth29.c,v 1.3 1995/09/28 10:34:48 tls Exp $";
+__RCSID("$NetBSD: tth29.c,v 1.4 1997/11/21 08:36:31 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -64,10 +65,13 @@ kC|h29|heath-29|z29|zenith-29:\
  *
  */
 
+void	h29_setmodes __P((int));
+
+void
 h29_setmodes(new)
-register new;
+	int new;
 {
-	register modes = '0';
+	int modes = '0';
 
 	if (new & WWM_REV)
 		modes += 0x01;
@@ -90,6 +94,7 @@ register new;
 	tt.tt_modes = new;
 }
 
+int
 tt_h29()
 {
 	if (tt_h19() < 0)

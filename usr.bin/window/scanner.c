@@ -1,4 +1,4 @@
-/*	$NetBSD: scanner.c,v 1.3 1995/09/28 10:34:36 tls Exp $	*/
+/*	$NetBSD: scanner.c,v 1.4 1997/11/21 08:36:17 lukem Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -36,22 +36,28 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)scanner.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$NetBSD: scanner.c,v 1.3 1995/09/28 10:34:36 tls Exp $";
+__RCSID("$NetBSD: scanner.c,v 1.4 1997/11/21 08:36:17 lukem Exp $");
 #endif
 #endif /* not lint */
 
-#include "value.h"
+#include "defs.h"
 #include "token.h"
 #include "context.h"
 #include "string.h"
 
+int	s_getc __P((void));
+int	s_gettok1 __P((void));
+int	s_ungetc __P((int));
+
+int
 s_getc()
 {
-	register c;
+	int c;
 
 	switch (cx.x_type) {
 	case X_FILE:
@@ -70,9 +76,12 @@ s_getc()
 			return EOF;
 	}
 	/*NOTREACHED*/
+	return(0);		/* XXX: placate gcc */
 }
 
+int
 s_ungetc(c)
+	int c;
 {
 	if (c == EOF)
 		return EOF;
@@ -87,14 +96,16 @@ s_ungetc(c)
 			return EOF;
 	}
 	/*NOTREACHED*/
+	return(0);		/* XXX: placate gcc */
 }
 
+int
 s_gettok()
 {
 	char buf[100];
-	register char *p = buf;
-	register c;
-	register state = 0;
+	char *p = buf;
+	int c;
+	int state = 0;
 
 loop:
 	c = s_getc();
@@ -535,10 +546,11 @@ loop:
 	return cx.x_token;
 }
 
+int
 s_gettok1()
 {
-	register c;
-	register n;
+	int c;
+	int n;
 
 	c = s_getc();			/* got \ */
 	switch (c) {
