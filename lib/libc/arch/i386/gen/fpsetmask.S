@@ -15,7 +15,7 @@ ENTRY(fpsetmask)
 	notl %eax
 	andl $63,%eax
 
-	orl %eax,%edx
+	addl %eax,%edx
 	movl 8(%esp),%ecx
 	andl $63,%ecx
 	subl %ecx,%edx
