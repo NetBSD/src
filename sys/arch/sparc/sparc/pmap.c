@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.259 2003/06/27 16:44:03 pk Exp $ */
+/*	$NetBSD: pmap.c,v 1.260 2003/06/28 09:51:04 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -1574,6 +1574,12 @@ me_alloc(mh, newpm, newvreg, newvseg)
 	sp = &rp->rg_segmap[me->me_vseg];
 	pte = sp->sg_pte;
 
+#ifdef DEBUG
+	if (sp->sg_pmeg != me->me_cookie)
+		panic("me_alloc: wrong sg_pmeg (%d != %d)",
+				sp->sg_pmeg, me->me_cookie);
+#endif
+
 	/*
 	 * The PMEG must be mapped into some context so that we can
 	 * read its PTEs.  Use its current context if it has one;
@@ -1605,19 +1611,24 @@ me_alloc(mh, newpm, newvreg, newvseg)
 	 */
 	write_user_windows();
 	if (CTX_USABLE(pm,rp)) {
+		va = VSTOVA(me->me_vreg, me->me_vseg);
+#ifdef DEBUG
+		if (getsegmap(va) != me->me_cookie)
+			panic("me_alloc: wrong pmeg in MMU (%ld != %d)",
+				getsegmap(va), me->me_cookie);
+#endif
 		setcontext4(pm->pm_ctxnum);
 		cache_flush_segment(me->me_vreg, me->me_vseg, pm->pm_ctxnum);
-		va = VSTOVA(me->me_vreg,me->me_vseg);
 	} else {
+		va = 0;
 		setcontext4(0);
 		if (HASSUN4_MMU3L)
-			setregmap(0, tregion);
-		setsegmap(0, me->me_cookie);
+			setregmap(va, tregion);
+		setsegmap(va, me->me_cookie);
 		/*
 		 * No cache flush needed: it happened earlier when
 		 * the old context was taken.
 		 */
-		va = 0;
 	}
 
 	/*
@@ -1664,11 +1675,7 @@ me_alloc(mh, newpm, newvreg, newvseg)
  * Free an MMU entry.
  *
  * Assumes the corresponding pmap is already locked.
- * Does NOT flush cache, but does record ref and mod bits.
- * The rest of each PTE is discarded.
- * CALLER MUST SET CONTEXT to pm->pm_ctxnum (if pmap has
- * a context) or to 0 (if not).  Caller must also update
- * pm->pm_segmap and (possibly) the hardware.
+ * Caller must update hardware.
  */
 void
 me_free(pm, pmeg)
@@ -1676,11 +1683,12 @@ me_free(pm, pmeg)
 	u_int pmeg;
 {
 	struct mmuentry *me = &mmusegments[pmeg];
-	int i, va, tpte;
-	int vr;
 	struct regmap *rp;
+#ifdef DEBUG
+	int i, va, tpte, ctx;
+#endif
 
-	vr = me->me_vreg;
+	rp = &pm->pm_regmap[me->me_vreg];
 
 #ifdef DEBUG
 	if (pmapdebug & PDB_MMU_ALLOC)
@@ -1690,32 +1698,27 @@ me_free(pm, pmeg)
 		panic("me_free: wrong mmuentry");
 	if (pm != me->me_pmap)
 		panic("me_free: pm != me_pmap");
-#endif
+	if (rp->rg_segmap[me->me_vseg].sg_pmeg != pmeg &&
+	    rp->rg_segmap[me->me_vseg].sg_pmeg != seginval)
+		panic("me_free: wrong sg_pmeg (%d != %d)",
+			rp->rg_segmap[me->me_vseg].sg_pmeg, pmeg);
 
-	rp = &pm->pm_regmap[vr];
-
-	/* just like me_alloc, but no cache flush, and context already set */
-	if (CTX_USABLE(pm,rp)) {
-		va = VSTOVA(vr,me->me_vseg);
-	} else {
-#ifdef DEBUG
-if (getcontext4() != 0) panic("me_free: ctx != 0");
-#endif
-		if (HASSUN4_MMU3L)
-			setregmap(0, tregion);
-		setsegmap(0, me->me_cookie);
-		va = 0;
-	}
+	/* check for spurious mappings (using temp. mapping in context 0) */
+	ctx = getcontext4();
+	setcontext4(0);
+	if (HASSUN4_MMU3L)
+		setregmap(0, tregion);
+	setsegmap(0, me->me_cookie);
+	va = 0;
 	i = NPTESG;
 	do {
 		tpte = getpte4(va);
-		if ((tpte & (PG_V | PG_TYPE)) == (PG_V | PG_OBMEM)) {
-			struct vm_page *pg;
-			if ((pg = pvhead4_4c(tpte)) != NULL)
-				VM_MDPAGE_PVHEAD(pg)->pv_flags |= MR4_4C(tpte);
-		}
+		if ((tpte & PG_V) == PG_V)
+			panic("me_free: segment not clean (pte=%x)", tpte);
 		va += NBPG;
 	} while (--i > 0);
+	setcontext4(ctx);
+#endif /* DEBUG */
 
 	/* take mmu entry off pmap chain */
 	TAILQ_REMOVE(&pm->pm_seglist, me, me_pmchain);
