@@ -1,4 +1,5 @@
-/* $NetBSD: pvrvar.h,v 1.2 2001/01/21 22:46:22 marcus Exp $ */
+/* $NetBSD: pvrvar.h,v 1.3 2001/02/01 01:25:56 thorpej Exp $ */
+
 /*-
  * Copyright (c) 2001 Marcus Comstedt
  * All rights reserved.
@@ -31,13 +32,4 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <dev/rcons/raster.h>
-#include <dev/wscons/wscons_raster.h>
-
-#include <machine/bus.h>
-
-extern int pvr_cnattach __P((void));
-
-struct pvr_softc {
-	struct device sc_dev;
-};
+int	pvr_cnattach(void);
