@@ -34,14 +34,19 @@
 #if !defined(lint) && !defined(sgi) && !defined(__NetBSD__)
 static char sccsid[] = "@(#)rdisc.c	8.1 (Berkeley) x/y/95";
 #elif defined(__NetBSD__)
-static char rcsid[] = "$NetBSD: rdisc.c,v 1.1.1.3 1997/02/03 21:06:32 christos Exp $";
+static char rcsid[] = "$NetBSD: rdisc.c,v 1.1.1.4 1998/06/02 17:41:26 thorpej Exp $";
 #endif
-#ident "$Revision: 1.1.1.3 $"
+#ident "$Revision: 1.1.1.4 $"
 
 #include "defs.h"
 #include <netinet/in_systm.h>
 #include <netinet/ip.h>
 #include <netinet/ip_icmp.h>
+#if defined(sgi) && !defined(PRE_KUDZU)
+#include <cap_net.h>
+#else
+#define cap_socket socket
+#endif
 
 /* router advertisement ICMP packet */
 struct icmp_ad {
@@ -76,10 +81,10 @@ int	rdisc_sock = -1;		/* router-discovery raw socket */
 struct interface *rdisc_sock_mcast;	/* current multicast interface */
 
 struct timeval rdisc_timer;
-int rdisc_ok;				/* using solicited route */
+int rdisc_ok;				/* using solicted route */
 
 
-#define MAX_ADS 5
+#define MAX_ADS 16			/* at least one per interface */
 struct dr {				/* accumulated advertisements */
     struct interface *dr_ifp;
     naddr   dr_gate;			/* gateway */
@@ -89,7 +94,12 @@ struct dr {				/* accumulated advertisements */
     n_long  dr_pref;			/* preference adjusted by metric */
 } *cur_drp, drs[MAX_ADS];
 
-/* adjust preference by interface metric without driving it to infinity */
+/* convert between signed, balanced around zero,
+ * and unsigned zero-based preferences */
+#define SIGN_PREF(p) ((p) ^ MIN_PreferenceLevel)
+#define UNSIGN_PREF(p) SIGN_PREF(p)
+/* adjust unsigned preference by interface metric,
+ * without driving it to infinity */
 #define PREF(p, ifp) ((p) <= (ifp)->int_metric ? ((p) != 0 ? 1 : 0) \
 		      : (p) - ((ifp)->int_metric))
 
@@ -147,7 +157,7 @@ static void
 get_rdisc_sock(void)
 {
 	if (rdisc_sock < 0) {
-		rdisc_sock = socket(AF_INET, SOCK_RAW, IPPROTO_ICMP);
+		rdisc_sock = cap_socket(AF_INET, SOCK_RAW, IPPROTO_ICMP);
 		if (rdisc_sock < 0)
 			BADERR(1,"rdisc_sock = socket()");
 		fix_sock(rdisc_sock,"rdisc_sock");
@@ -296,7 +306,7 @@ rdisc_age(naddr bad_gate)
 
 	/* If only adverising, then do only that. */
 	if (supplier) {
-		/* if switching from client to server, get rid of old
+		/* If switching from client to server, get rid of old
 		 * default routes.
 		 */
 		if (cur_drp != 0)
@@ -336,14 +346,17 @@ rdisc_age(naddr bad_gate)
 		}
 	}
 
-	/* delete old redirected routes to keep the kernel table small
-	 */
-	sec = (cur_drp == 0) ? MaxMaxAdvertiseInterval : cur_drp->dr_life;
-	del_redirects(bad_gate, now.tv_sec-sec);
-
 	rdisc_sol();
-
 	rdisc_sort();
+
+	/* Delete old redirected routes to keep the kernel table small,
+	 * and to prevent black holes.  Check that the kernel table
+	 * matches the daemon table (i.e. has the default route).
+	 * But only if RIP is not running and we are not dealing with
+	 * a bad gateway, since otherwise age() will be called.
+	 */
+	if (rip_sock < 0 && bad_gate == 0)
+		age(0);
 }
 
 
@@ -359,10 +372,12 @@ if_bad_rdisc(struct interface *ifp)
 		if (drp->dr_ifp != ifp)
 			continue;
 		drp->dr_recv_pref = 0;
+		drp->dr_ts = 0;
 		drp->dr_life = 0;
 	}
 
-	rdisc_sort();
+	/* make a note to re-solicit, turn RIP on or off, etc. */
+	rdisc_timer.tv_sec = 0;
 }
 
 
@@ -388,10 +403,11 @@ static void
 del_rdisc(struct dr *drp)
 {
 	struct interface *ifp;
+	naddr gate;
 	int i;
 
 
-	del_redirects(drp->dr_gate, 0);
+	del_redirects(gate = drp->dr_gate, 0);
 	drp->dr_ts = 0;
 	drp->dr_life = 0;
 
@@ -410,13 +426,21 @@ del_rdisc(struct dr *drp)
 	 * then solicit a new one.
 	 * This is contrary to RFC 1256, but defends against black holes.
 	 */
-	if (i == 0
-	    && ifp->int_rdisc_cnt >= MAX_SOLICITATIONS) {
-		trace_act("discovered route is bad--re-solicit routers via %s",
-			  ifp->int_name);
+	if (i != 0) {
+		trace_act("discovered router %s via %s"
+			  " is bad--have %d remaining",
+			  naddr_ntoa(gate), ifp->int_name, i);
+	} else if (ifp->int_rdisc_cnt >= MAX_SOLICITATIONS) {
+		trace_act("last discovered router %s via %s"
+			  " is bad--re-solicit",
+			  naddr_ntoa(gate), ifp->int_name);
 		ifp->int_rdisc_cnt = 0;
 		ifp->int_rdisc_timer.tv_sec = 0;
 		rdisc_sol();
+	} else {
+		trace_act("last discovered router %s via %s"
+			  " is bad--wait to solicit",
+			  naddr_ntoa(gate), ifp->int_name);
 	}
 }
 
@@ -429,6 +453,7 @@ rdisc_sort(void)
 {
 	struct dr *drp, *new_drp;
 	struct rt_entry *rt;
+	struct rt_spare new;
 	struct interface *ifp;
 	u_int new_st;
 	n_long new_pref;
@@ -489,15 +514,13 @@ rdisc_sort(void)
 
 			if (rt != 0
 			    && (rt->rt_state & RS_RDISC)) {
+				new = rt->rt_spares[0];
+				new.rts_metric = HOPCNT_INFINITY;
+				new.rts_time = now.tv_sec - GARBAGE_TIME;
 				rtchange(rt, rt->rt_state & ~RS_RDISC,
-					 rt->rt_gate, rt->rt_router,
-					 HOPCNT_INFINITY, 0, rt->rt_ifp,
-					 now.tv_sec - GARBAGE_TIME, 0);
+					 &new, 0);
 				rtswitch(rt, 0);
 			}
-
-			/* turn on RIP if permitted */
-			rip_on(0);
 
 		} else {
 			if (cur_drp == 0) {
@@ -505,7 +528,6 @@ rdisc_sort(void)
 					  " using %s via %s",
 					  naddr_ntoa(new_drp->dr_gate),
 					  new_drp->dr_ifp->int_name);
-
 				rdisc_ok = 1;
 
 			} else {
@@ -517,26 +539,27 @@ rdisc_sort(void)
 					  new_drp->dr_ifp->int_name);
 			}
 
+			bzero(&new, sizeof(new));
+			new.rts_ifp = new_drp->dr_ifp;
+			new.rts_gate = new_drp->dr_gate;
+			new.rts_router = new_drp->dr_gate;
+			new.rts_metric = HOPCNT_INFINITY-1;
+			new.rts_time = now.tv_sec;
 			if (rt != 0) {
-				rtchange(rt, rt->rt_state | RS_RDISC,
-					 new_drp->dr_gate, new_drp->dr_gate,
-					 0,0, new_drp->dr_ifp,
-					 now.tv_sec, 0);
+				rtchange(rt, rt->rt_state | RS_RDISC, &new, 0);
 			} else {
-				rtadd(RIP_DEFAULT, 0,
-				      new_drp->dr_gate, new_drp->dr_gate,
-				      HOPCNT_INFINITY-1, 0,
-				      RS_RDISC, new_drp->dr_ifp);
+				rtadd(RIP_DEFAULT, 0, RS_RDISC, &new);
 			}
-
-			/* Now turn off RIP and delete RIP routes,
-			 * which might otherwise include the default
-			 * we just modified.
-			 */
-			rip_off();
 		}
 
 		cur_drp = new_drp;
+	}
+
+	/* turn RIP on or off */
+	if (!rdisc_ok || rip_interfaces > 1) {
+		rip_on(0);
+	} else {
+		rip_off();
 	}
 }
 
@@ -546,7 +569,7 @@ rdisc_sort(void)
 static void
 parse_ad(naddr from,
 	 naddr gate,
-	 n_long pref,
+	 n_long pref,			/* signed and in network order */
 	 u_short life,
 	 struct interface *ifp)
 {
@@ -577,9 +600,9 @@ parse_ad(naddr from,
 	/* Convert preference to an unsigned value
 	 * and later bias it by the metric of the interface.
 	 */
-	pref = ntohl(pref) ^ MIN_PreferenceLevel;
+	pref = UNSIGN_PREF(ntohl(pref));
 
-	if (pref == 0 || life == 0) {
+	if (pref == 0 || life < MinMaxAdvertiseInterval) {
 		pref = 0;
 		life = 0;
 	}
@@ -778,9 +801,13 @@ send_adv(struct interface *ifp,
 	u.ad.icmp_ad_asize = sizeof(u.ad.icmp_ad_info[0])/4;
 
 	u.ad.icmp_ad_life = stopint ? 0 : htons(ifp->int_rdisc_int*3);
-	pref = ifp->int_rdisc_pref ^ MIN_PreferenceLevel;
-	pref = PREF(pref, ifp) ^ MIN_PreferenceLevel;
-	u.ad.icmp_ad_info[0].icmp_ad_pref = htonl(pref);
+
+	/* Convert the configured preference to an unsigned value,
+	 * bias it by the interface metric, and then send it as a
+	 * signed, network byte order value.
+	 */
+	pref = UNSIGN_PREF(ifp->int_rdisc_pref);
+	u.ad.icmp_ad_info[0].icmp_ad_pref = htonl(SIGN_PREF(PREF(pref, ifp)));
 
 	u.ad.icmp_ad_info[0].icmp_ad_addr = ifp->int_addr;
 
@@ -1025,6 +1052,8 @@ read_d(void)
 			if (!supplier)
 				continue;
 			if (ifp->int_state & IS_NO_ADV_OUT)
+				continue;
+			if (stopint)
 				continue;
 
 			/* XXX

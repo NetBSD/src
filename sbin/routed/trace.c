@@ -34,9 +34,9 @@
 #if !defined(lint) && !defined(sgi) && !defined(__NetBSD__)
 static char sccsid[] = "@(#)trace.c	8.1 (Berkeley) 6/5/93";
 #elif defined(__NetBSD__)
-static char rcsid[] = "$NetBSD: trace.c,v 1.1.1.5 1997/02/03 21:06:42 christos Exp $";
+static char rcsid[] = "$NetBSD: trace.c,v 1.1.1.6 1998/06/02 17:41:27 thorpej Exp $";
 #endif
-#ident "$Revision: 1.1.1.5 $"
+#ident "$Revision: 1.1.1.6 $"
 
 #define	RIPCMDS
 #include "defs.h"
@@ -191,8 +191,8 @@ tmsg(char *p, ...)
 }
 
 
-static void
-trace_close(void)
+void
+trace_close(int zap_stdio)
 {
 	int fd;
 
@@ -200,14 +200,17 @@ trace_close(void)
 	fflush(stdout);
 	fflush(stderr);
 
-	if (ftrace != 0 && file_trace) {
+	if (ftrace != 0 && zap_stdio) {
 		if (ftrace != stdout)
 			fclose(ftrace);
 		ftrace = 0;
 		fd = open(_PATH_DEVNULL, O_RDWR);
-		(void)dup2(fd, STDIN_FILENO);
-		(void)dup2(fd, STDOUT_FILENO);
-		(void)dup2(fd, STDERR_FILENO);
+		if (isatty(STDIN_FILENO))
+			(void)dup2(fd, STDIN_FILENO);
+		if (isatty(STDOUT_FILENO))
+			(void)dup2(fd, STDOUT_FILENO);
+		if (isatty(STDERR_FILENO))
+			(void)dup2(fd, STDERR_FILENO);
 		(void)close(fd);
 	}
 	lastlog_time.tv_sec = 0;
@@ -237,7 +240,7 @@ trace_off(char *p, ...)
 		vfprintf(ftrace, p, args);
 		(void)fputc('\n',ftrace);
 	}
-	trace_close();
+	trace_close(file_trace);
 
 	new_tracelevel = tracelevel = 0;
 }
@@ -360,8 +363,7 @@ set_tracefile(char *filename,
 
 		tmsg("switch to trace file %s", fn);
 
-		file_trace = 1;
-		trace_close();
+		trace_close(file_trace = 1);
 
 		if (fn != savetracename)
 			strncpy(savetracename, fn, sizeof(savetracename)-1);
@@ -596,6 +598,9 @@ print_rts(struct rt_spare *rts,
 	  int force_tag,		/* -1=suppress, 0=default, 1=display */
 	  int force_time)		/* 0=suppress, 1=display */
 {
+	int i;
+
+
 	if (force_metric >= 0)
 		(void)fprintf(ftrace, "metric=%-2d ", rts->rts_metric);
 	if (force_ifp >= 0)
@@ -609,8 +614,13 @@ print_rts(struct rt_spare *rts,
 		(void)fprintf(ftrace, "%s ", ts(rts->rts_time));
 	if (force_tag > 0
 	    || (force_tag == 0 && rts->rts_tag != 0))
-		(void)fprintf(ftrace, "tag=%#x ",
-			      ntohs(rts->rts_tag));
+		(void)fprintf(ftrace, "tag=%#x ", ntohs(rts->rts_tag));
+	if (rts->rts_de_ag != 0) {
+		for (i = 1; (1 << i) <= rts->rts_de_ag; i++)
+			continue;
+		(void)fprintf(ftrace, "de_ag=%d ", i);
+	}
+
 }
 
 
@@ -643,78 +653,69 @@ trace_if(char *act,
 void
 trace_upslot(struct rt_entry *rt,
 	     struct rt_spare *rts,
-	     naddr	gate,
-	     naddr	router,
-	     struct interface *ifp,
-	     int	metric,
-	     u_short	tag,
-	     time_t	new_time)
+	     struct rt_spare *new)
 {
-	struct rt_spare new;
-
 	if (!TRACEACTIONS || ftrace == 0)
 		return;
 
-	if (rts->rts_gate == gate
-	    && rts->rts_router == router
-	    && rts->rts_metric == metric
-	    && rts->rts_tag == tag)
+	if (rts->rts_gate == new->rts_gate
+	    && rts->rts_router == new->rts_router
+	    && rts->rts_metric == new->rts_metric
+	    && rts->rts_tag == new->rts_tag
+	    && rts->rts_de_ag == new->rts_de_ag)
 		return;
-	new.rts_ifp = ifp;
-	new.rts_gate = gate;
-	new.rts_router = router;
-	new.rts_metric = metric;
-	new.rts_time = new_time;
-	new.rts_tag = tag;
 
 	lastlog();
-	if (gate == 0) {
+	if (new->rts_gate == 0) {
 		(void)fprintf(ftrace, "Del #%d %-35s ",
 			      rts - rt->rt_spares,
 			      rtname(rt->rt_dst, rt->rt_mask, rts->rts_gate));
-		print_rts(&new, 0,0,0,0,
-			  rts != rt->rt_spares || AGE_RT(rt->rt_state,ifp));
+		print_rts(rts, 0,0,0,0,
+			  (rts != rt->rt_spares
+			   || AGE_RT(rt->rt_state,new->rts_ifp)));
 
 	} else if (rts->rts_gate != RIP_DEFAULT) {
 		(void)fprintf(ftrace, "Chg #%d %-35s ",
 			      rts - rt->rt_spares,
 			      rtname(rt->rt_dst, rt->rt_mask, rts->rts_gate));
 		print_rts(rts, 0,0,
-			  rts->rts_gate != gate,
-			  rts->rts_tag != tag,
+			  rts->rts_gate != new->rts_gate,
+			  rts->rts_tag != new->rts_tag,
 			  rts != rt->rt_spares || AGE_RT(rt->rt_state,
 							rt->rt_ifp));
 
 		(void)fprintf(ftrace, "\n       %19s%-16s ", "",
-			      gate != rts->rts_gate ? naddr_ntoa(gate) : "");
-		print_rts(&new,
-			  -(metric == rts->rts_metric),
-			  -(ifp == rts->rts_ifp),
+			      (new->rts_gate != rts->rts_gate
+			       ? naddr_ntoa(new->rts_gate) : ""));
+		print_rts(new,
+			  -(new->rts_metric == rts->rts_metric),
+			  -(new->rts_ifp == rts->rts_ifp),
 			  0,
-			  rts->rts_tag != tag,
-			  new_time != rts->rts_time && (rts != rt->rt_spares
-							|| AGE_RT(rt->rt_state,
-							    ifp)));
+			  rts->rts_tag != new->rts_tag,
+			  (new->rts_time != rts->rts_time
+			   && (rts != rt->rt_spares
+			       || AGE_RT(rt->rt_state, new->rts_ifp))));
 
 	} else {
 		(void)fprintf(ftrace, "Add #%d %-35s ",
 			      rts - rt->rt_spares,
-			      rtname(rt->rt_dst, rt->rt_mask, gate));
-		print_rts(&new, 0,0,0,0,
-			  rts != rt->rt_spares || AGE_RT(rt->rt_state,ifp));
+			      rtname(rt->rt_dst, rt->rt_mask, new->rts_gate));
+		print_rts(new, 0,0,0,0,
+			  (rts != rt->rt_spares
+			   || AGE_RT(rt->rt_state,new->rts_ifp)));
 	}
 	(void)fputc('\n',ftrace);
 }
 
 
-/* talk about a change made to the kernel table
+/* miscellaneous message checked by the caller
  */
 void
-trace_kernel(char *p, ...)
+trace_misc(char *p, ...)
 {
 	va_list args;
 
-	if (!TRACEKERNEL || ftrace == 0)
+	if (ftrace == 0)
 		return;
 
 	lastlog();
@@ -761,31 +762,19 @@ trace_pkt(char *p, ...)
 void
 trace_change(struct rt_entry *rt,
 	     u_int	state,
-	     naddr	gate,		/* forward packets here */
-	     naddr	router,		/* on the authority of this router */
-	     int	metric,
-	     u_short	tag,
-	     struct interface *ifp,
-	     time_t	new_time,
+	     struct	rt_spare *new,
 	     char	*label)
 {
-	struct rt_spare new;
-
 	if (ftrace == 0)
 		return;
 
-	if (rt->rt_metric == metric
-	    && rt->rt_gate == gate
-	    && rt->rt_router == router
+	if (rt->rt_metric == new->rts_metric
+	    && rt->rt_gate == new->rts_gate
+	    && rt->rt_router == new->rts_router
 	    && rt->rt_state == state
-	    && rt->rt_tag == tag)
+	    && rt->rt_tag == new->rts_tag
+	    && rt->rt_de_ag == new->rts_de_ag)
 		return;
-	new.rts_ifp = ifp;
-	new.rts_gate = gate;
-	new.rts_router = router;
-	new.rts_metric = metric;
-	new.rts_time = new_time;
-	new.rts_tag = tag;
 
 	lastlog();
 	(void)fprintf(ftrace, "%s %-35s ",
@@ -797,13 +786,15 @@ trace_change(struct rt_entry *rt,
 
 	(void)fprintf(ftrace, "\n%*s %19s%-16s ",
 		      strlen(label), "", "",
-		      rt->rt_gate != gate ? naddr_ntoa(gate) : "");
-	print_rts(&new,
-		  -(metric == rt->rt_metric),
-		  -(ifp == rt->rt_ifp),
+		      (rt->rt_gate != new->rts_gate
+		       ? naddr_ntoa(new->rts_gate) : ""));
+	print_rts(new,
+		  -(new->rts_metric == rt->rt_metric),
+		  -(new->rts_ifp == rt->rt_ifp),
 		  0,
-		  rt->rt_tag != tag,
-		  rt->rt_time != new_time && AGE_RT(rt->rt_state,ifp));
+		  rt->rt_tag != new->rts_tag,
+		  (rt->rt_time != new->rts_time
+		   && AGE_RT(rt->rt_state,new->rts_ifp)));
 	if (rt->rt_state != state)
 		trace_bits(rs_bits, state, 1);
 	(void)fputc('\n',ftrace);
