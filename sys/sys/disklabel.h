@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)disklabel.h	7.19 (Berkeley) 5/7/91
- *	$Id: disklabel.h,v 1.8.2.2 1993/09/30 04:25:30 deraadt Exp $
+ *	$Id: disklabel.h,v 1.8.2.3 1994/01/16 01:58:47 deraadt Exp $
  */
 
 #ifndef _SYS_DISKLABEL_H_
@@ -330,6 +330,8 @@ struct cpu_disklabel {
 #if defined(sun3)
 #endif
 #if defined(sparc)
+#endif
+#if defined(pmax)
 #endif
 #if defined(i386)
 	struct dos_partition dosparts[NDOSPART];
