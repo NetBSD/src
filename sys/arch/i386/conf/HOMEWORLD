@@ -1,4 +1,4 @@
-#	$NetBSD: HOMEWORLD,v 1.28 1998/02/06 11:20:33 mrg Exp $
+#	$NetBSD: HOMEWORLD,v 1.29 1998/03/22 18:18:45 drochner Exp $
 #
 #	HOMEWORLD - Mail, CVS, and GNATS server
 #
@@ -140,7 +140,7 @@ com2	at isa? port 0x3e8 irq 5
 #lms1	at isa? port 0x238 irq 5
 #mms0	at isa? port 0x23c irq 5	# Microsoft InPort mouse
 #mms1	at isa? port 0x238 irq 5
-#pms0	at pckbd? irq 12		# PS/2 auxiliary port mouse
+#pms0	at pc? irq 12		# PS/2 auxiliary port mouse
 
 #aha0	at isa? port 0x330 irq ? drq ?	# Adaptec 154[02] SCSI controllers
 #aha1	at isa? port 0x334 irq ? drq ?	# Adaptec 154[02] SCSI controllers
@@ -222,7 +222,7 @@ ne0	at isa? port 0x300 irq 9		# NE2000 ethernet
 #audio*	at pas0
 #gus0	at isa? port 0x220 irq 7 drq 1 flags 6 # Gravis Ultra Sound (flags is record drq for full-duplex)
 #audio*	at gus0
-#spkr0	at pckbd? port 0x61
+#spkr0	at pc? port 0x61
 
 # Joystick driver. Probe is a little strange; add only if you have one.
 #joy0	at isa? port 0x201

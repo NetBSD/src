@@ -1,4 +1,4 @@
-#	$NetBSD: DISKLESS,v 1.60 1998/03/01 20:45:26 augustss Exp $
+#	$NetBSD: DISKLESS,v 1.61 1998/03/22 18:18:45 drochner Exp $
 #
 # DISKLESS -- Generic machine setup for diskless boot.
 # This kernel can be loaded from a bootable floppy (i.e. kernel-copy)
@@ -147,7 +147,7 @@ lms0	at isa? port 0x23c irq 5	# Logitech bus mouse
 lms1	at isa? port 0x238 irq 5
 mms0	at isa? port 0x23c irq 5	# Microsoft InPort mouse
 mms1	at isa? port 0x238 irq 5
-#pms0	at pckbd? irq 12		# PS/2 auxiliary port mouse
+#pms0	at pc? irq 12		# PS/2 auxiliary port mouse
 
 #aha0	at isa? port 0x330 irq ? drq ?	# Adaptec 154[02] SCSI controllers
 #aha1	at isa? port 0x334 irq ? drq ?	# Adaptec 154[02] SCSI controllers
@@ -240,7 +240,7 @@ ne*	at pci? dev ? function ?		# NE2000-compatible eth cards
 #audio*	at pas0
 #gus0	at isa? port 0x220 irq 7 drq 1 drq2 6 # Gravis Ultra Sound
 #audio*	at gus0
-#spkr0	at pckbd? port 0x61
+#spkr0	at pc? port 0x61
 
 # Joystick driver. Probe is a little strange; add only if you have one.
 #joy0	at isa? port 0x201
