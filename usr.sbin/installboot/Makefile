@@ -1,8 +1,9 @@
-#	$NetBSD: Makefile,v 1.9 2002/04/06 15:27:55 bjh21 Exp $
+#	$NetBSD: Makefile,v 1.10 2002/04/11 07:56:13 lukem Exp $
 #
 
 PROG=	installboot
-SRCS=	installboot.c sum.c machines.c
+SRCS=	installboot.c sum.c machines.c \
+	alpha.c pmax.c sparc64.c vax.c
 MAN=	installboot.8
 
 WARNS?=	3
@@ -10,16 +11,11 @@ WARNS?=	3
 CPPFLAGS+=	-I${.CURDIR}
 .PATH:		${.CURDIR}/arch
 
-# list of MACHINEs to enable MD back-ends for
-#
-IB_MACHINES?=	alpha pmax sparc64 vax
-
-SRCS+=		${IB_MACHINES:S/$/.c/}
-
-
 .ifndef HOSTPROG
 # list of MACHINEs to enable the compat symlink /usr/mdec/installboot
-# XXX: eventually this should be done for all machines in ${IB_MACHINES}
+# XXX: eventually this should be done for all machines.
+# XXX: or /usr/mdec/installboot is replaced with a shell script that
+# XXX: tells the user to use /usr/sbin/installboot instead
 #
 COMPATLINKS?=	pmax
 afterinstall:
@@ -29,13 +25,6 @@ afterinstall:
 	    ${BINDIR}/${PROG} ${DESTDIR}/usr/mdec/${PROG}
 .endif
 .endfor
-
-
-regenmachines: mkmachines.awk Makefile
-	-mv -f ${.CURDIR}/machines.c ${.CURDIR}/machines.c.bak
-	awk -f ${.CURDIR}/mkmachines.awk ${IB_MACHINES} > ${.TARGET}
-	mv ${.TARGET} ${.CURDIR}/machines.c
-
 
 .include <bsd.prog.mk>
 .endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: sparc64.c,v 1.4 2002/04/04 15:36:44 mrg Exp $	*/
+/*	$NetBSD: sparc64.c,v 1.5 2002/04/11 07:56:14 lukem Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: sparc64.c,v 1.4 2002/04/04 15:36:44 mrg Exp $");
+__RCSID("$NetBSD: sparc64.c,v 1.5 2002/04/11 07:56:14 lukem Exp $");
 #endif	/* !__lint */
 
 #include <sys/param.h>
@@ -82,18 +82,8 @@ __RCSID("$NetBSD: sparc64.c,v 1.4 2002/04/04 15:36:44 mrg Exp $");
 
 #include "installboot.h"
 
-int	sparc64_parseopt(ib_params *, const char *);
 int	sparc64_setboot(ib_params *);
 int	sparc64_clearboot(ib_params *);
-
-int
-sparc64_parseopt(ib_params *params, const char *option)
-{
-
-	/* all options are unknown */
-	warnx("Unknown -o option `%s'", option);
-	return (0);
-}
 
 #define SPARC64_BOOT_BLOCK_OFFSET	DEV_BSIZE
 #define SPARC64_BOOT_BLOCK_BLOCKSIZE	DEV_BSIZE
