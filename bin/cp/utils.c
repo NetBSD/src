@@ -1,4 +1,4 @@
-/* $NetBSD: utils.c,v 1.26 2003/09/14 19:20:18 jschauma Exp $ */
+/* $NetBSD: utils.c,v 1.27 2004/01/04 16:04:18 jschauma Exp $ */
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)utils.c	8.3 (Berkeley) 4/1/94";
 #else
-__RCSID("$NetBSD: utils.c,v 1.26 2003/09/14 19:20:18 jschauma Exp $");
+__RCSID("$NetBSD: utils.c,v 1.27 2004/01/04 16:04:18 jschauma Exp $");
 #endif
 #endif /* not lint */
 
@@ -51,7 +51,6 @@ __RCSID("$NetBSD: utils.c,v 1.26 2003/09/14 19:20:18 jschauma Exp $");
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-#include <vis.h>
 
 #include "extern.h"
 
