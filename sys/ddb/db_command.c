@@ -1,4 +1,4 @@
-/*	$NetBSD: db_command.c,v 1.39 2000/05/15 19:56:43 jhawk Exp $	*/
+/*	$NetBSD: db_command.c,v 1.40 2000/05/20 03:08:41 jhawk Exp $	*/
 
 /* 
  * Mach Operating System
@@ -27,6 +27,7 @@
  */
 
 #include "opt_ddb.h"
+#include "opt_inet.h"
 
 /*
  * Command dispatcher.
@@ -441,6 +442,9 @@ struct db_command db_show_all_cmds[] = {
 
 struct db_command db_show_cmds[] = {
 	{ "all",	NULL,			0,	db_show_all_cmds },
+#ifdef INET
+	{ "arptab",	db_show_arptab,		0,	NULL },
+#endif
 	{ "breaks",	db_listbreak_cmd, 	0,	NULL },
 	{ "map",	db_map_print_cmd,	0,	NULL },
 	{ "object",	db_object_print_cmd,	0,	NULL },

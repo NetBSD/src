@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.h,v 1.3 1998/09/05 14:42:43 christos Exp $	*/
+/*	$NetBSD: db_interface.h,v 1.4 2000/05/20 03:08:41 jhawk Exp $	*/
 
 /*-
  * Copyright (c) 1995 The NetBSD Foundation, Inc.
@@ -39,11 +39,14 @@
 #ifndef _DDB_DB_INTERFACE_H_
 #define _DDB_DB_INTERFACE_H_
 
-/* arch/<arch>/<arch>/db_trace.c */
-void db_stack_trace_cmd __P((db_expr_t, int, db_expr_t, char *));
-
 /* arch/<arch>/<arch>/db_disasm.c */
 db_addr_t db_disasm __P((db_addr_t, boolean_t));
+
+/* arch/<arch>/<arch>/db_interface.c */
+void db_machine_init __P((void));
+
+/* arch/<arch>/<arch>/db_trace.c */
+void db_stack_trace_cmd __P((db_expr_t, int, db_expr_t, char *));
 
 /* kern/kern_proc.c */
 void db_kill_proc __P((db_expr_t, int, db_expr_t, char *));
@@ -52,7 +55,7 @@ void db_show_all_procs __P((db_expr_t, int, db_expr_t, char *));
 /* kern/kern_clock.c */
 void db_show_callout __P((db_expr_t, int, db_expr_t, char *));
 
-/* arch/<arch>/<arch>/db_interface.c */
-void db_machine_init __P((void));
+/* netinet/if_arp.c */
+void db_show_arptab __P((db_expr_t, int, db_expr_t, char *));
 
 #endif /* _DDB_DB_INTERFACE_H_ */
