@@ -39,13 +39,14 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)sleep.c	5.5 (Berkeley) 4/8/91";*/
-static char rcsid[] = "$Id: sleep.c,v 1.4 1993/08/01 18:57:43 mycroft Exp $";
+static char rcsid[] = "$Id: sleep.c,v 1.5 1993/09/10 18:52:27 jtc Exp $";
 #endif /* not lint */
 
 #include <unistd.h>
 #include <stdio.h>
 #include <stdlib.h>
 
+int
 main(argc, argv)
 	int argc;
 	char **argv;
