@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.hpcmips,v 1.18 2000/05/21 02:50:11 soren Exp $
+#	$NetBSD: Makefile.hpcmips,v 1.18.4.1 2002/02/14 19:55:23 he Exp $
 
 # Makefile for NetBSD
 #
@@ -59,7 +59,7 @@ CWARNFLAGS+=	-Wno-uninitialized
 .if (${HAVE_EGCS} != "")
 CWARNFLAGS+=	-Wno-main
 .endif
-GP?=		-G 20
+GP?=		-G 8
 CFLAGS=		${DEBUG} ${COPTS} ${CWARNFLAGS} ${GP} \
 		-mno-abicalls -mno-half-pic
 AFLAGS=		-x assembler-with-cpp -traditional-cpp -D_LOCORE
