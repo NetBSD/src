@@ -1,4 +1,4 @@
-/*	$NetBSD: wdcreg.h,v 1.17 1998/04/26 05:28:24 mycroft Exp $	*/
+/*	$NetBSD: wdcreg.h,v 1.18 1998/10/12 16:09:18 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -46,7 +46,7 @@
 #define	wd_data		0	/* data register (R/W - 16 bits) */
 #define	wd_error	1	/* error register (R) */
 #define	wd_precomp	1	/* write precompensation (W) */
-#define	wd_features	1	/* features (W) */
+#define	wd_features	1	/* features (W), same as wd_precomp */
 #define	wd_seccnt	2	/* sector count (R/W) */
 #define	wd_ireason	2	/* interrupt reason (R/W) (for atapi) */
 #define	wd_sector	3	/* first sector number (R/W) */
@@ -95,6 +95,7 @@
 /*
  * Commands for Disk Controller.
  */
+#define WDCC_NOP	0x00	/* NOP - Always fail with "aborted command" */
 #define	WDCC_RECAL	0x10	/* disk restore code -- resets cntlr */
 
 #define	WDCC_READ	0x20	/* disk read code */
@@ -118,23 +119,45 @@
 #define	WDCC_UNLOCK	0xdf	/* unlock drawer */
 
 #define	WDCC_IDENTIFY	0xec	/* read parameters from controller */
-#define	WDCC_CACHEC	0xef	/* cache control */
+#define SET_FEATURES	0xef	/* set features */
 
+/* Subcommands for SET_FEATURES (features register ) */
+#define WDSF_EN_WR_CACHE	0x02
+#define WDSF_SET_MODE    	0x03
+#define WDSF_REASSIGN_EN	0x04
+#define WDSF_RETRY_DS		0x33
+#define WDSF_SET_CACHE_SGMT	0x54
+#define WDSF_READAHEAD_DS	0x55
+#define WDSF_POD_DS		0x66
+#define WDSF_ECC_DS		0x77
+#define WDSF_WRITE_CACHE_DS	0x82
+#define WDSF_REASSIGN_DS	0x84
+#define WDSF_ECC_EN		0x88
+#define WDSF_RETRY_EN		0x99
+#define WDSF_SET_CURRENT	0x9A
+#define WDSF_READAHEAD_EN	0xAA
+#define WDSF_PREFETCH_SET	0xAB
+#define WDSF_POD_EN             0xCC
+
+/* parameters uploaded to device/heads register */
 #define	WDSD_IBM	0xa0	/* forced to 512 byte sector, ecc */
 #define	WDSD_CHS	0x00	/* cylinder/head/sector addressing */
 #define	WDSD_LBA	0x40	/* logical block addressing */
 
 /* Commands for ATAPI devices */
-#define ATAPI_CHECK_POWER_MODE      0xe5 
-#define ATAPI_EXEC_DRIVE_DIAGS      0x90
-#define ATAPI_IDLE_IMMEDIATE        0xe1
-#define ATAPI_NOP           0x00
-#define ATAPI_PACKET_COMMAND        0xa0 
-#define ATAPI_IDENTIFY_DEVICE       0xa1 
-#define ATAPI_SOFT_RESET        0x08
-#define ATAPI_SET_FEATURES      0xef
-#define ATAPI_SLEEP         0xe6
-#define ATAPI_STANDBY_IMMEDIATE     0xe0
+#define ATAPI_CHECK_POWER_MODE	0xe5 
+#define ATAPI_EXEC_DRIVE_DIAGS	0x90
+#define ATAPI_IDLE_IMMEDIATE	0xe1
+#define ATAPI_NOP		0x00
+#define ATAPI_PKT_CMD		0xa0 
+#define ATAPI_IDENTIFY_DEVICE	0xa1 
+#define ATAPI_SOFT_RESET	0x08
+#define ATAPI_SLEEP		0xe6
+#define ATAPI_STANDBY_IMMEDIATE	0xe0
+
+/* Bytes used by ATAPI_PACKET_COMMAND ( feature register) */
+#define ATAPI_PKT_CMD_FTRE_DMA 0x01
+#define ATAPI_PKT_CMD_FTRE_OVL 0x02
 
 /* ireason */
 #define WDCI_CMD         0x01    /* command(1) or data(0) */
@@ -147,56 +170,3 @@
 #define PHASE_COMPLETED (WDCI_IN | WDCI_CMD)
 #define PHASE_ABORTED   0
 
-
-#ifdef _KERNEL
-/*
- * read parameters command returns this:
- */
-struct wdparams {
-	/* drive info */
-	u_short	wdp_config;		/* general configuration */
-#define	WD_CFG_REMOVABLE	0x0080
-#define	WD_CFG_FIXED		0x0040
-	u_short	wdp_cylinders;		/* number of non-removable cylinders */
-	u_short	__reserved1;
-	u_short	wdp_heads;		/* number of heads */
-	u_short	__retired1[2];		/* number of unformatted bytes/track */
-	u_short	wdp_sectors;		/* number of sectors */
-	u_short	__retired2[3];
-	char	wdp_serial[20];		/* serial number */
-	u_short	__retired3[2];
-	u_short	__obsolete1;
-	char	wdp_revision[8];	/* firmware revision */
-	char	wdp_model[40];		/* model name */
-	u_short	wdp_multi;		/* maximum sectors per interrupt */
-	u_short	__reserved2;
-	u_short	wdp_capabilities1;	/* capability flags */
-#define	WD_CAP_LBA	0x0200
-#define	WD_CAP_DMA	0x0100
-	u_short wdp_capabilities2;
-	char	__junk2;
-	char	wdp_oldpiotiming;	/* PIO timing mode */
-	char	__junk3;
-	char	wdp_olddmatiming;	/* DMA timing mode */
-	u_short	wdp_extensions;
-	u_short	wdp_curcylinders;
-	u_short	wdp_curheads;
-	u_short	wdp_cursectors;
-	u_short	wdp_curcapacity[2];
-	u_short	wdp_curmulti;
-	u_short	wdp_capacity[2];
-	u_short	__retired4;
-	u_short	wdp_dmamode;
-	u_short	wdp_piomode;
-	u_short	wdp_dmatiming[2];
-	u_short	wdp_piotiming[2];
-	u_short	__reserved3[6];
-	u_short	wdp_queuedepth;
-	u_short	__reserved4[4];
-	u_short	wdp_ataversion;
-#define	WD_VER_ATA1	0x0002
-#define	WD_VER_ATA2	0x0004
-#define	WD_VER_ATA3	0x0008
-#define	WD_VER_ATA4	0x0010
-};
-#endif /* _KERNEL */

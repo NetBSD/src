@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipiconf.h,v 1.19 1998/10/10 00:36:13 thorpej Exp $	*/
+/*	$NetBSD: scsipiconf.h,v 1.20 1998/10/12 16:09:25 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -216,19 +216,17 @@ struct scsipi_link {
 			int max_target;		/* XXX max target supported
 						   by adapter */
 		} scsipi_scsi;
-		struct atapi_link {		/* XXX this must be in sync
-						   with wd_link */
-			u_int8_t type;		/* 0 = ATA, 1 = ATAPI, from
-						   wdlink.h */
+		struct atapi_link {
+			u_int8_t drive; 	/* drive number on the bus */
 			u_int8_t channel;	/* channel, i.e. bus # on
 						   controller */
-			u_int8_t drive; 	/* drive number on the bus */
 			u_int8_t atapibus;
 			u_int8_t cap;		/* drive capability */
 #define ACAP_DRQ_MPROC      0x0000  /* microprocessor DRQ */
-#define ACAP_DRQ_INTR       0x0100  /* interrupt DRQ */
-#define ACAP_DRQ_ACCEL      0x0200  /* accelerated DRQ */
-#define ACAP_LEN            0x0400  /* 16 bit commands */
+#define ACAP_DRQ_INTR       0x0200  /* interrupt DRQ */
+#define ACAP_DRQ_ACCEL      0x0400  /* accelerated DRQ */
+#define ACAP_DRQ_MASK	    0x0600  /* same as in ataparams */
+#define ACAP_LEN            0x0100  /* 16 bit commands */
 		} scsipi_atapi;
 	} _scsipi_link;
 	int (*scsipi_cmd) __P((struct scsipi_link *, struct scsipi_generic *,

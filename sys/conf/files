@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.248 1998/09/26 16:28:16 dante Exp $
+#	$NetBSD: files,v 1.249 1998/10/12 16:09:14 bouyer Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -103,9 +103,10 @@ devclass tty
 define	audio { }
 define	midibus { }
 define	midisyn
+define  wdc_base
 define	scsi {[channel = -1]}
-define	ata {[drive = -1]}
-define	atapi { }
+define	ata {[channel = -1], [drive = -1]}
+define	atapi {[channel = -1]}
 define  mii {[phy = -1]}
 
 # audio device attributes
@@ -303,10 +304,9 @@ file	dev/ic/lsi64854.c		lsi64854
 # XXX THE FOLLOWING BLOCK SHOULD BE UNCOMMENTED, BUT CANNOT
 # XXX BECAUSE NOT ALL PORTS USE THE MI wdc DRIVER YET.
 #
-# # ESDI/IDE/etc. controllers
-# device  wdc: ata, atapi
-# file    dev/ic/wdc.c
-#				wdc & (wd | !wd) needs-flag # XXX
+# device  wdc: ata, atapi, wdc_base
+# # Common code for ESDI/IDE/etc. controllers
+file    dev/ic/wdc.c wdc_base
 
 # Definitions for wscons
 # device attributes: display, display with emulator, keyboard, and mouse

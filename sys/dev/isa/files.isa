@@ -1,4 +1,4 @@
-#	$NetBSD: files.isa,v 1.76 1998/08/26 13:33:59 augustss Exp $
+#	$NetBSD: files.isa,v 1.77 1998/10/12 16:09:19 bouyer Exp $
 #
 # Config file and device description for machine-independent ISA code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -121,9 +121,7 @@ file	dev/isa/scd.c			scd needs-flag
 # XXX BECAUSE NOT ALL PORTS USE THE MI DRIVER YET.
 
 # ESDI/IDE/etc. controllers
-device  wdc: ata, atapi
-file    dev/ic/wdc.c
-				wdc & (wd | !wd) needs-flag # XXX
+device  wdc: ata, atapi, wdc_base
 
 attach	wdc at isa with wdc_isa: isadma
 file    dev/isa/wdc_isa.c           	wdc_isa

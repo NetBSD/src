@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_isapnp.c,v 1.7 1998/09/12 21:40:22 wrstuden Exp $	*/
+/*	$NetBSD: wdc_isapnp.c,v 1.8 1998/10/12 16:09:19 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -40,6 +40,7 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
+#include <sys/malloc.h>
 
 #include <machine/bus.h>
 #include <machine/intr.h>
@@ -51,12 +52,13 @@
 #include <dev/isapnp/isapnpvar.h>
 #include <dev/isapnp/isapnpdevs.h>
 
+#include <dev/ata/atavar.h>
 #include <dev/ic/wdcreg.h>
 #include <dev/ic/wdcvar.h>
 
 struct wdc_isapnp_softc {
 	struct	wdc_softc sc_wdcdev;
-	struct	wdc_attachment_data sc_ad;
+	struct	channel_softc wdc_channel;
 	isa_chipset_tag_t sc_ic;
 	void	*sc_ih;
 	int	sc_drq;
@@ -70,7 +72,7 @@ struct cfattach wdc_isapnp_ca = {
 };
 
 #ifdef notyet
-static void	wdc_isapnp_dma_setup __P((void *));
+static void	wdc_isapnp_dma_setup __P((struct wdc_isapnp_softc *));
 static void	wdc_isapnp_dma_start __P((void *, void *, size_t, int));
 static void	wdc_isapnp_dma_finish __P((void *));
 #endif
@@ -113,51 +115,64 @@ wdc_isapnp_attach(parent, self, aux)
 	printf("%s: %s %s\n", sc->sc_wdcdev.sc_dev.dv_xname, ipa->ipa_devident,
 	    ipa->ipa_devclass);
 
-	sc->sc_ad.iot = ipa->ipa_iot;
-	sc->sc_ad.auxiot = ipa->ipa_iot;
+	sc->wdc_channel.cmd_iot = ipa->ipa_iot;
+	sc->wdc_channel.ctl_iot = ipa->ipa_iot;
 	/*
 	 * An IDE controller can feed us the regions in any order. Pass
 	 * them along with the 8-byte region in sc_ad.ioh, and the other
 	 * (2 byte) region in auxioh.
 	 */
 	if (ipa->ipa_io[0].length == 8) {
-		sc->sc_ad.ioh = ipa->ipa_io[0].h;
-		sc->sc_ad.auxioh = ipa->ipa_io[1].h;
+		sc->wdc_channel.cmd_ioh = ipa->ipa_io[0].h;
+		sc->wdc_channel.ctl_ioh = ipa->ipa_io[1].h;
 	} else {
-		sc->sc_ad.ioh = ipa->ipa_io[1].h;
-		sc->sc_ad.auxioh = ipa->ipa_io[0].h;
+		sc->wdc_channel.cmd_ioh = ipa->ipa_io[1].h;
+		sc->wdc_channel.ctl_ioh = ipa->ipa_io[0].h;
 	}
-	sc->sc_ic = ipa->ipa_ic;
+	sc->wdc_channel.data32iot = sc->wdc_channel.cmd_iot;
+	sc->wdc_channel.data32ioh = sc->wdc_channel.cmd_ioh;
 
+	sc->sc_ic = ipa->ipa_ic;
 	sc->sc_ih = isa_intr_establish(ipa->ipa_ic, ipa->ipa_irq[0].num,
-	    ipa->ipa_irq[0].type, IPL_BIO, wdcintr, sc);
+	    ipa->ipa_irq[0].type, IPL_BIO, wdcintr, &sc->wdc_channel);
 
 #ifdef notyet
 	if (ipa->ipa_ndrq > 0) {
 		sc->sc_drq = ipa->ipa_drq[0].num;
 
 		sc->sc_ad.cap |= WDC_CAPABILITY_DMA;
-		sc->sc_ad.dma_setup = &wdc_isapnp_dma_setup;
 		sc->sc_ad.dma_start = &wdc_isapnp_dma_start;
 		sc->sc_ad.dma_finish = &wdc_isapnp_dma_finish;
+		wdc_isapnp_dma_setup(sc);
 	}
 #endif
-
-	wdcattach(&sc->sc_wdcdev, &sc->sc_ad);
+	sc->sc_wdcdev.cap |= WDC_CAPABILITY_DATA16 | WDC_CAPABILITY_DATA32;
+	sc->sc_wdcdev.pio_mode = 0;
+	sc->sc_wdcdev.channels = &sc->wdc_channel;
+	sc->sc_wdcdev.nchannels = 1;
+	sc->wdc_channel.channel = 0;
+	sc->wdc_channel.wdc = &sc->sc_wdcdev;
+	sc->wdc_channel.ch_queue = malloc(sizeof(struct channel_queue),
+	    M_DEVBUF, M_NOWAIT);
+	if (sc->wdc_channel.ch_queue == NULL) {
+	    printf("%s: can't allocate memory for command queue",
+		sc->sc_wdcdev.sc_dev.dv_xname);
+	    return;
+	}
+	wdcattach(&sc->wdc_channel);
 }
 
 #ifdef notyet
 static void
-wdc_isapnp_dma_setup(scv)
-	void *scv;
+wdc_isapnp_dma_setup(sc)
+	struct wdc_isapnp_softc *sc;
 {
-	struct wdc_isapnp_softc *sc = scv;
 
 	if (isa_dmamap_create(sc->sc_ic, sc->sc_drq,
 	    MAXPHYS, BUS_DMA_NOWAIT|BUS_DMA_ALLOCNOW)) {
 		printf("%s: can't create map for drq %d\n",
 		    sc->sc_wdcdev.sc_dev.dv_xname, sc->sc_drq);
-		sc->sc_ad.cap &= ~WDC_CAPABILITY_DMA;
+		sc->sc_wdcdev.cap &= ~WDC_CAPABILITY_DMA;
 	}
 }
 
