@@ -1,4 +1,4 @@
-/*	$NetBSD: readline.c,v 1.32 2003/09/14 21:48:54 christos Exp $	*/
+/*	$NetBSD: readline.c,v 1.33 2003/09/14 21:55:39 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include "config.h"
 #if !defined(lint) && !defined(SCCSID)
-__RCSID("$NetBSD: readline.c,v 1.32 2003/09/14 21:48:54 christos Exp $");
+__RCSID("$NetBSD: readline.c,v 1.33 2003/09/14 21:55:39 christos Exp $");
 #endif /* not lint && not SCCSID */
 
 #include <sys/types.h>
@@ -102,9 +102,10 @@ int rl_already_prompted = 0;
 int rl_filename_completion_desired = 0;
 int rl_ignore_completion_duplicates = 0;
 VFunction *rl_redisplay_function = NULL;
+Function *rl_startup_hook = NULL;
 Function *rl_completion_display_matches_hook = NULL;
-Function *rl_prep_term_function = NULL;
-Function *rl_deprep_term_function = NULL;
+VFunction *rl_prep_term_function = NULL;
+VFunction *rl_deprep_term_function = NULL;
 
 /*
  * The current prompt string.
