@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_timer.c,v 1.40 1998/06/02 17:22:26 thorpej Exp $	*/
+/*	$NetBSD: tcp_timer.c,v 1.41 1998/07/17 22:18:49 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -323,6 +323,7 @@ tcp_timers(tp, timer)
 		u_int win = min(tp->snd_wnd, tp->snd_cwnd) / 2 / tp->t_segsz;
 		if (win < 2)
 			win = 2;
+		/* Loss Window MUST be one segment. */
 		tp->snd_cwnd = tp->t_segsz;
 		tp->snd_ssthresh = win * tp->t_segsz;
 		tp->t_dupacks = 0;
