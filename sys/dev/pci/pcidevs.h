@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.701 2005/03/16 03:08:44 uwe Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.702 2005/03/16 07:01:07 xtraeme Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.700 2005/03/16 03:07:44 uwe Exp
+ *	NetBSD: pcidevs,v 1.701 2005/03/16 06:58:56 xtraeme Exp
  */
 
 /*
@@ -2833,6 +2833,7 @@
 
 /* VIA Technologies products, from http://www.via.com.tw/ */
 #define	PCI_PRODUCT_VIATECH_VT6305	0x0130		/* VT6305 IEEE 1394 Host Controller */
+#define	PCI_PRODUCT_VIATECH_KT880	0x0269		/* KT880 CPU to PCI Bridge */
 #define	PCI_PRODUCT_VIATECH_VT8363_HB	0x0305		/* VT8363 (Apollo KT133) Host Bridge */
 #define	PCI_PRODUCT_VIATECH_VT8371_HB	0x0391		/* VT8371 (Apollo KX133) Host Bridge */
 #define	PCI_PRODUCT_VIATECH_VT8501_MVP4	0x0501		/* VT8501 (Apollo MVP4) Host Bridge */
@@ -2853,8 +2854,10 @@
 #define	PCI_PRODUCT_VIATECH_VT86C926	0x0926		/* VT86C926 Amazon PCI-Ethernet Controller */
 #define	PCI_PRODUCT_VIATECH_VT82C570M	0x1000		/* VT82C570M (Apollo) Host-PCI Bridge */
 #define	PCI_PRODUCT_VIATECH_VT82C570MV	0x1006		/* VT82C570M (Apollo) PCI-ISA Bridge */
+#define	PCI_PRODUCT_VIATECH_KT880_1	0x1269		/* KT880 CPU to PCI Bridge */
 #define	PCI_PRODUCT_VIATECH_VT82C586_IDE	0x1571		/* VT82C586 IDE Controller */
 #define	PCI_PRODUCT_VIATECH_VT82C595_2	0x1595		/* VT82C595 (Apollo VP2) Host-PCI Bridge */
+#define	PCI_PRODUCT_VIATECH_KT880_2	0x2269		/* KT880 CPU to PCI Bridge */
 #define	PCI_PRODUCT_VIATECH_VT83C572	0x3038		/* VT83C572 USB Controller */
 #define	PCI_PRODUCT_VIATECH_VT82C586_PWR	0x3040		/* VT82C586 Power Management Controller */
 #define	PCI_PRODUCT_VIATECH_VT3043	0x3043		/* VT3043 (Rhine) 10/100 Ethernet */
@@ -2875,12 +2878,15 @@
 #define	PCI_PRODUCT_VIATECH_VT8233A	0x3147		/* VT8233A PCI-ISA Bridge */
 #define	PCI_PRODUCT_VIATECH_VT8237_SATA	0x3149		/* VT8237 Integrated SATA Controller */
 #define	PCI_PRODUCT_VIATECH_VT6421_RAID	0x3249		/* VT6421 Serial RAID Controller */
+#define	PCI_PRODUCT_VIATECH_KT880_3	0x3269		/* KT880 CPU to PCI bridge */
 #define	PCI_PRODUCT_VIATECH_VT8235	0x3177		/* VT8235 (Apollo KT400) PCI-ISA Bridge */
 #define	PCI_PRODUCT_VIATECH_VT8377	0x3189		/* VT8377 Apollo KT400 CPU to PCI Bridge */
 #define	PCI_PRODUCT_VIATECH_VT8378	0x3205		/* VT8378 Apollo KM400 CPU to PCI Bridge */
 #define	PCI_PRODUCT_VIATECH_VT8237	0x3227		/* VT8237 (Apollo KT600) PCI-ISA Bridge */
+#define	PCI_PRODUCT_VIATECH_KT880_4	0x4269		/* KT880 CPU to PCI Bridge */
 #define	PCI_PRODUCT_VIATECH_VT86C100A	0x6100		/* VT86C100A (Rhine-II) 10/100 Ethernet */
 #define	PCI_PRODUCT_VIATECH_VT8378_IG	0x7205		/* VT8378 KM400 UniChrome Integrated Graphics */
+#define	PCI_PRODUCT_VIATECH_KT880_5	0x7269		/* KT880 CPU to PCI Bridge */
 #define	PCI_PRODUCT_VIATECH_VT8231	0x8231		/* VT8231 IDE Controller */
 #define	PCI_PRODUCT_VIATECH_VT8231_PWR	0x8235		/* VT8231 Power Management Controller */
 #define	PCI_PRODUCT_VIATECH_VT8363_PPB	0x8305		/* VT8363 (Apollo KT133) PCI to AGP Bridge */

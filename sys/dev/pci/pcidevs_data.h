@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.699 2005/03/16 03:08:44 uwe Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.700 2005/03/16 07:01:07 xtraeme Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.700 2005/03/16 03:07:44 uwe Exp
+ *	NetBSD: pcidevs,v 1.701 2005/03/16 06:58:56 xtraeme Exp
  */
 
 /*
@@ -9388,6 +9388,10 @@ const struct pci_product pci_products[] = {
 	    "VT6305 IEEE 1394 Host Controller",
 	},
 	{
+	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_KT880,
+	    "KT880 CPU to PCI Bridge",
+	},
+	{
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT8363_HB,
 	    "VT8363 (Apollo KT133) Host Bridge",
 	},
@@ -9468,12 +9472,20 @@ const struct pci_product pci_products[] = {
 	    "VT82C570M (Apollo) PCI-ISA Bridge",
 	},
 	{
+	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_KT880_1,
+	    "KT880 CPU to PCI Bridge",
+	},
+	{
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT82C586_IDE,
 	    "VT82C586 IDE Controller",
 	},
 	{
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT82C595_2,
 	    "VT82C595 (Apollo VP2) Host-PCI Bridge",
+	},
+	{
+	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_KT880_2,
+	    "KT880 CPU to PCI Bridge",
 	},
 	{
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT83C572,
@@ -9556,6 +9568,10 @@ const struct pci_product pci_products[] = {
 	    "VT6421 Serial RAID Controller",
 	},
 	{
+	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_KT880_3,
+	    "KT880 CPU to PCI bridge",
+	},
+	{
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT8235,
 	    "VT8235 (Apollo KT400) PCI-ISA Bridge",
 	},
@@ -9572,12 +9588,20 @@ const struct pci_product pci_products[] = {
 	    "VT8237 (Apollo KT600) PCI-ISA Bridge",
 	},
 	{
+	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_KT880_4,
+	    "KT880 CPU to PCI Bridge",
+	},
+	{
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT86C100A,
 	    "VT86C100A (Rhine-II) 10/100 Ethernet",
 	},
 	{
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT8378_IG,
 	    "VT8378 KM400 UniChrome Integrated Graphics",
+	},
+	{
+	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_KT880_5,
+	    "KT880 CPU to PCI Bridge",
 	},
 	{
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT8231,
@@ -10092,4 +10116,4 @@ const struct pci_product pci_products[] = {
 	    "Video Controller",
 	},
 };
-const int pci_nproducts = 1944;
+const int pci_nproducts = 1950;
