@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_time.c,v 1.58 2001/11/12 15:25:18 lukem Exp $	*/
+/*	$NetBSD: kern_time.c,v 1.59 2001/11/13 00:34:21 christos Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.58 2001/11/12 15:25:18 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.59 2001/11/13 00:34:21 christos Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -273,7 +273,7 @@ sys_nanosleep(p, v, retval)
 		return (error);
 
 	TIMESPEC_TO_TIMEVAL(&atv,&rqt)
-	if (itimerfix(&atv))
+	if (itimerfix(&atv) || atv.tv_sec > 1000000000)
 		return (EINVAL);
 
 	s = splclock();
@@ -646,8 +646,7 @@ itimerfix(tv)
 	struct timeval *tv;
 {
 
-	if (tv->tv_sec < 0 || tv->tv_sec > 1000000000 ||
-	    tv->tv_usec < 0 || tv->tv_usec >= 1000000)
+	if (tv->tv_sec < 0 || tv->tv_usec < 0 || tv->tv_usec >= 1000000)
 		return (EINVAL);
 	if (tv->tv_sec == 0 && tv->tv_usec != 0 && tv->tv_usec < tick)
 		tv->tv_usec = tick;
