@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_fil.c,v 1.58 2000/08/09 21:00:41 veego Exp $	*/
+/*	$NetBSD: ip_fil.c,v 1.59 2000/08/22 16:02:16 sommerfeld Exp $	*/
 
 /*
  * Copyright (C) 1993-2000 by Darren Reed.
@@ -9,7 +9,7 @@
  */
 #if !defined(lint)
 #if defined(__NetBSD__)
-static const char rcsid[] = "$NetBSD: ip_fil.c,v 1.58 2000/08/09 21:00:41 veego Exp $";
+static const char rcsid[] = "$NetBSD: ip_fil.c,v 1.59 2000/08/22 16:02:16 sommerfeld Exp $";
 #else
 static const char sccsid[] = "@(#)ip_fil.c	2.41 6/5/96 (C) 1993-2000 Darren Reed";
 static const char rcsid[] = "@(#)Id: ip_fil.c,v 2.42.2.15 2000/08/05 14:49:08 darrenr Exp";
@@ -1216,6 +1216,9 @@ int dst;
 	icmp->icmp_type = type;
 	icmp->icmp_code = fin->fin_icode;
 	icmp->icmp_cksum = 0;
+	if (type == ICMP_UNREACH &&
+	    fin->fin_icode == ICMP_UNREACH_NEEDFRAG && ifp)
+		icmp->icmp_nextmtu = htons(((struct ifnet *) ifp)->if_mtu);
 	if (avail) {
 		bcopy((char *)oip, (char *)&icmp->icmp_ip, MIN(ohlen, avail));
 		avail -= MIN(ohlen, avail);
