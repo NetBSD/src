@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.10 2001/09/29 03:45:13 minoura Exp $
+#	$NetBSD: Makefile,v 1.11 2001/12/02 14:41:21 minoura Exp $
 
 BOOT=	xxboot
 VERSION=0.3
@@ -21,6 +21,8 @@ STRIP?=		strip
 
 SRCS=	xxboot.S bootufs.c unzip.c
 .PATH:	${.CURDIR}/gunzip
+
+.include <bsd.own.mk>
 
 CFLAGS=	-O -fomit-frame-pointer
 CFLAGS+= -W -Wall -Wconversion -Wstrict-prototypes -Wmissing-prototypes
