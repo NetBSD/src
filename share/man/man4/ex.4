@@ -1,9 +1,9 @@
-.\"	$NetBSD: ex.4,v 1.7 2001/05/08 21:55:37 he Exp $
+.\"	$NetBSD: ex.4,v 1.8 2001/06/02 17:08:47 thorpej Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
 .\"
-.Dd April 1, 1999
+.Dd June 2, 2001
 .Dt EX 4
 .Os
 .Sh NAME
@@ -73,6 +73,13 @@ driver include:
 .It
 3cSOHO100-TX 10/100 Ethernet
 .El
+.Pp
+All versions of the Etherlink XL (except the older 3c900 and 3c905)
+support IPv4/TCP/UDP checksumming in hardware.  The
+.Nm
+driver supports this feature of the chip.  See
+.Xr ifconfig 8
+for information on how to enable this feature.
 .Sh MEDIA SELECTION
 See
 .Xr ifmedia 4 .
