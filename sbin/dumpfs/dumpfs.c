@@ -39,7 +39,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)dumpfs.c	8.2 (Berkeley) 2/2/94";*/
-static char *rcsid = "$Id: dumpfs.c,v 1.7 1994/09/23 02:18:35 mycroft Exp $";
+static char *rcsid = "$Id: dumpfs.c,v 1.8 1994/12/26 22:11:31 glass Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -116,6 +116,13 @@ dumpfs(name)
 		goto err;
 	if (read(fd, &afs, SBSIZE) != SBSIZE)
 		goto err;
+
+ 	if (afs.fs_magic != FS_MAGIC) {
+		warnx("%s: superblock has bad magic number, skipping.",
+		     name);
+		(void) close(fd);
+ 		return (1);
+ 	}
 
 	if (afs.fs_postblformat == FS_42POSTBLFMT)
 		afs.fs_nrpos = 8;
