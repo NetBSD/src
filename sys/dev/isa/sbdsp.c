@@ -1,4 +1,4 @@
-/*	$NetBSD: sbdsp.c,v 1.52 1997/05/23 21:20:11 augustss Exp $	*/
+/*	$NetBSD: sbdsp.c,v 1.53 1997/05/26 16:13:59 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -1143,6 +1143,11 @@ sbdsp_dma_input(addr, p, cc, intr, arg)
 	sc->dmaaddr = p;
 	sc->dmacnt = loop ? (NBPG/cc)*cc : cc;
 	sc->dmachan = sc->sc_imodep->precision == 16 ? sc->sc_drq16 : sc->sc_drq8;
+#ifdef AUDIO_DEBUG
+	if (sbdspdebug > 1)
+		Dprintf("sbdsp_dma_input: dmastart %x %p %d %d\n", 
+			sc->dmaflags, sc->dmaaddr, sc->dmacnt, sc->dmachan);
+#endif
 	isa_dmastart(sc->dmaflags, sc->dmaaddr, sc->dmacnt, sc->dmachan);
 	sc->sc_intr = intr;
 	sc->sc_arg = arg;
@@ -1161,15 +1166,17 @@ sbdsp_dma_input(addr, p, cc, intr, arg)
 		}
 	} else {
 		if (loop) {
+			DPRINTF(("sbdsp_dma_input: set blocksize=%d\n", cc));
 			if (sbdsp_wdsp(sc, SB_DSP_BLOCKSIZE) < 0 ||
 			    sbdsp_wdsp(sc, cc) < 0 ||
 			    sbdsp_wdsp(sc, cc >> 8) < 0) {
 				DPRINTF(("sbdsp_dma_input: SB2 DMA start failed\n"));
 				goto giveup;
 			}
-			if (sbdsp_wdsp(sc, sc->sc_imodep->cmd) < 0)
+			if (sbdsp_wdsp(sc, sc->sc_imodep->cmd) < 0) {
 				DPRINTF(("sbdsp_dma_input: SB2 DMA restart failed\n"));
-			goto giveup;
+				goto giveup;
+			}
 		} else {
 			if (sbdsp_wdsp(sc, sc->sc_imodep->cmd) < 0 ||
 			    sbdsp_wdsp(sc, cc) < 0 ||
@@ -1296,8 +1303,9 @@ sbdsp_dma_output(addr, p, cc, intr, arg)
 giveup:
 	sbdsp_reset(sc);
 	return EIO;
+
 badmode:
-	DPRINTF(("sbdsp_dma_input: can't set mode\n"));
+	DPRINTF(("sbdsp_dma_output: can't set mode\n"));
 	return EIO;
 }
 
