@@ -1,4 +1,4 @@
-/*	$NetBSD: ping.c,v 1.64 2002/05/31 01:10:53 itojun Exp $	*/
+/*	$NetBSD: ping.c,v 1.65 2002/08/01 08:56:59 itojun Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -62,7 +62,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ping.c,v 1.64 2002/05/31 01:10:53 itojun Exp $");
+__RCSID("$NetBSD: ping.c,v 1.65 2002/08/01 08:56:59 itojun Exp $");
 #endif
 
 #include <stdio.h>
@@ -230,7 +230,7 @@ static void timevaladd(struct timeval *, struct timeval *);
 static void sec_to_timeval(const double, struct timeval *);
 static double timeval_to_sec(const struct timeval *);
 static void pr_pack(u_char *, int, struct sockaddr_in *);
-static u_short in_cksum(u_short *, u_int);
+static u_int16_t in_cksum(u_int16_t *, u_int);
 static void pr_saddr(u_char *);
 static char *pr_addr(struct in_addr *);
 static void pr_iph(struct icmp *, int);
@@ -822,7 +822,7 @@ pinger(void)
 	int i, cc, sw;
 
 	opack_icmp.icmp_code = 0;
-	opack_icmp.icmp_seq = htons((u_short)(ntransmitted));
+	opack_icmp.icmp_seq = htons((u_int16_t)(ntransmitted));
 
 	/* clear the cached route in the kernel after an ICMP
 	 * response such as a Redirect is seen to stop causing
@@ -834,8 +834,8 @@ pinger(void)
 		opack_icmp.icmp_type = ICMP_ECHOREPLY;
 		opack_icmp.icmp_id = ~ident;
 		opack_icmp.icmp_cksum = 0;
-		opack_icmp.icmp_cksum = in_cksum((u_short*)&opack_icmp,
-						 PHDR_LEN);
+		opack_icmp.icmp_cksum = in_cksum((u_int16_t *)&opack_icmp,
+		    PHDR_LEN);
 		sw = 0;
 		if (setsockopt(sloop,IPPROTO_IP,IP_HDRINCL,
 			       (char *)&sw,sizeof(sw)) < 0)
@@ -866,7 +866,7 @@ pinger(void)
 		(void) memcpy(&opack_icmp.icmp_data[0], &now, sizeof(now));
 	cc = datalen+PHDR_LEN;
 	opack_icmp.icmp_cksum = 0;
-	opack_icmp.icmp_cksum = in_cksum((u_short*)&opack_icmp, cc);
+	opack_icmp.icmp_cksum = in_cksum((u_int16_t *)&opack_icmp, cc);
 
 	cc += opack_ip->ip_hl<<2;
 	opack_ip->ip_len = cc;
@@ -964,7 +964,7 @@ pr_pack(u_char *buf,
 #define PR_PACK_SUB() {if (!dumped) {			\
 	dumped = 1;					\
 	pr_pack_sub(net_len, inet_ntoa(from->sin_addr),	\
-		    ntohs((u_short)icp->icmp_seq),	\
+		    ntohs((u_int16_t)icp->icmp_seq),	\
 		    dupflag, ip->ip_ttl, triptime);}}
 
 	/* Check the IP header */
@@ -985,7 +985,7 @@ pr_pack(u_char *buf,
 	icp = (struct icmp *)(buf + hlen);
 	if (icp->icmp_type == ICMP_ECHOREPLY
 	    && icp->icmp_id == ident) {
-		if (icp->icmp_seq == htons((u_short)(ntransmitted-1)))
+		if (icp->icmp_seq == htons((u_int16_t)(ntransmitted-1)))
 			lastrcvd = 1;
 		last_rx = now;
 		if (first_rx.tv_sec == 0)
@@ -1003,11 +1003,11 @@ pr_pack(u_char *buf,
 				tmax = triptime;
 		}
 
-		if (TST(ntohs((u_short)icp->icmp_seq))) {
+		if (TST(ntohs((u_int16_t)icp->icmp_seq))) {
 			nrepeats++, nreceived--;
 			dupflag=1;
 		} else {
-			SET(ntohs((u_short)icp->icmp_seq));
+			SET(ntohs((u_int16_t)icp->icmp_seq));
 		}
 
 		if (tot_len != opack_ip->ip_len) {
@@ -1165,11 +1165,10 @@ pr_pack(u_char *buf,
 /* Compute the IP checksum
  *	This assumes the packet is less than 32K long.
  */
-static u_short
-in_cksum(u_short *p,
-	 u_int len)
+static u_int16_t
+in_cksum(u_int16_t *p, u_int len)
 {
-	u_int sum = 0;
+	u_int32_t sum = 0;
 	int nwords = len >> 1;
 
 	while (nwords-- != 0)
@@ -1177,8 +1176,8 @@ in_cksum(u_short *p,
 
 	if (len & 1) {
 		union {
-			u_short w;
-			u_char c[2];
+			u_int16_t w;
+			u_int8_t c[2];
 		} u;
 		u.c[0] = *(u_char *)p;
 		u.c[1] = 0;
@@ -1698,11 +1697,11 @@ pr_retip(struct icmp *icp,
 		if (icp2.icmp_type == ICMP_ECHO) {
 			if (pingflags & F_VERBOSE)
 				(void)printf("\n  ID=%u icmp_seq=%u",
-					     ntohs((u_short)icp2.icmp_id),
-					     ntohs((u_short)icp2.icmp_seq));
+					     ntohs((u_int16_t)icp2.icmp_id),
+					     ntohs((u_int16_t)icp2.icmp_seq));
 			else
 				(void)printf(" for icmp_seq=%u",
-					     ntohs((u_short)icp2.icmp_seq));
+					     ntohs((u_int16_t)icp2.icmp_seq));
 		}
 	}
 }
