@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: postinstall,v 1.28 2002/09/04 08:00:01 itojun Exp $
+# $NetBSD: postinstall,v 1.29 2002/09/04 13:05:27 lukem Exp $
 #
 # Copyright (c) 2002 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -49,6 +49,9 @@
 #	- support quiet/verbose mode ?
 #	- check obsolete file lists -- need to remove non obsolete files from
 #	  the sets first.
+#	- makedev and postinstall should work if run from an extracted
+#	  etc.tgz (versus from the source tree) - postinstall does work in
+#	  the former in -1-6 ?
 #
 
 #
@@ -535,6 +538,7 @@ do_postfix()
 
 	compare_dir ${op} ${SRC_DIR}/gnu/dist/postfix/conf \
 		${DEST_DIR}/etc/postfix 555 postfix-script
+	failed=$(( ${failed} + $? ))
 	compare_dir ${op} ${SRC_DIR}/gnu/dist/postfix/conf \
 		${DEST_DIR}/etc/postfix 444 post-install postfix-files
 	failed=$(( ${failed} + $? ))
