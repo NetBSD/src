@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.h,v 1.1 1996/01/31 23:22:33 mark Exp $ */
+/* $NetBSD: pmap.h,v 1.2 1996/02/12 21:25:18 christos Exp $ */
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe.
@@ -31,7 +31,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: pmap.h,v 1.1 1996/01/31 23:22:33 mark Exp $
+ *	$Id: pmap.h,v 1.2 1996/02/12 21:25:18 christos Exp $
  */
 
 #ifndef	_ARM32_PMAP_H_
@@ -120,7 +120,6 @@ extern struct pmap	kernel_pmap_store;
 
 boolean_t pmap_testbit __P((vm_offset_t, int));
 void pmap_changebit __P((vm_offset_t, int, int));
-int pmap_page_index __P((vm_offset_t));
 
 static __inline vm_offset_t
 pmap_phys_address(int ppn)
