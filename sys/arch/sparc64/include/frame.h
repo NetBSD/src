@@ -1,4 +1,4 @@
-/*       $NetBSD: frame.h,v 1.12 2003/10/26 08:06:56 christos Exp $        */
+/*       $NetBSD: frame.h,v 1.13 2003/10/27 00:16:42 christos Exp $        */
 
 #include <sparc/frame.h>
 
@@ -8,5 +8,4 @@ void sendsig_sigcontext(const ksiginfo_t *, const sigset_t *);
 #endif
 
 void *getframe(struct lwp *, int, int *);
-void buildcontext(struct lwp *, void *, const void *, void *);
 #endif
