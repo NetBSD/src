@@ -1,4 +1,4 @@
-#	$NetBSD: files.dec,v 1.1 1997/07/22 04:32:20 jonathan Exp $
+#	$NetBSD: files.dec,v 1.2 1997/07/22 04:48:35 jonathan Exp $
 #
 # Config file and device description for  machine-independent
 # code for devices for Digital Equipment Corp. systems.
@@ -9,4 +9,4 @@
 define	le_dec_subr
 
 #  DMA copy functions.  Lance attachments qhich Decices
-file	dev/tc/if_le_dec.c		le_dec_subr
+file	dev/dec/if_le_dec.c		le_dec_subr
