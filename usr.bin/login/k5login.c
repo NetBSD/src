@@ -1,4 +1,4 @@
-/*	$NetBSD: k5login.c,v 1.5 1997/08/19 17:26:14 mycroft Exp $	*/
+/*	$NetBSD: k5login.c,v 1.6 1997/10/12 14:07:06 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)klogin.c	5.11 (Berkeley) 7/12/92";
 #endif
-__RCSID("$NetBSD: k5login.c,v 1.5 1997/08/19 17:26:14 mycroft Exp $");
+__RCSID("$NetBSD: k5login.c,v 1.6 1997/10/12 14:07:06 mycroft Exp $");
 #endif /* not lint */
 
 #ifdef KERBEROS5
@@ -92,15 +92,6 @@ klogin(pw, instance, localhost, password)
 	char *realm, *client_name;
 	char *principal;
 	
-#ifdef SKEY
-	/*
-	 * We don't do s/key challenge and Kerberos at the same time
-	 */
-	if (strcasecmp(password, "s/key") == 0) {
-	    return (1);
-	}
-#endif
-
 	krb5_init_ets(kcontext);
 
 	/*
