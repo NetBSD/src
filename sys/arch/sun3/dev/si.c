@@ -31,7 +31,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * $Id: si.c,v 1.3 1994/05/16 23:11:42 gwr Exp $
+ * $Id: si.c,v 1.4 1994/05/28 15:40:25 gwr Exp $
  */
 
 /* #define DEBUG 1 */
@@ -53,7 +53,6 @@ static int si_debug=0;
 
 #include <machine/autoconf.h>
 #include <machine/isr.h>
-#include <machine/mtpr.h>
 #include <machine/obio.h>
 
 #include <scsi/scsi_all.h>
@@ -238,7 +237,7 @@ ncr5380_minphys(struct buf *bp)
 }
 #undef MIN_PHYS
 
-static int
+static int									/* si_attach+0x190 */
 ncr5380_scsi_cmd(struct scsi_xfer *xs)
 {
 	int flags, s, r;
