@@ -341,9 +341,8 @@ fetch_core_registers (core_reg_sect, core_reg_size, which, reg_addr)
       *(long *)&registers[REGISTER_BYTE (CCR_REGNUM)] = 
 	      ((tf->tf_tstate&TSTATE_CCR)>>TSTATE_CCR_SHIFT);
 
- 
   /* Clear out the G0 slot (see reg.h) */
-  *(int *)&registers[REGISTER_BYTE(G0_REGNUM)] = 0;
+  *(long *)&registers[REGISTER_BYTE(G0_REGNUM)] = 0;
 
   /* My best guess at where to get the locals and input
      registers is exactly where they usually are, right above
