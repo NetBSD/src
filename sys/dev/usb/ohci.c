@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci.c,v 1.68 2000/01/31 20:17:25 augustss Exp $	*/
+/*	$NetBSD: ohci.c,v 1.69 2000/01/31 22:09:13 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ohci.c,v 1.22 1999/11/17 22:33:40 n_hibma Exp $	*/
 
 /*
@@ -415,6 +415,7 @@ ohci_alloc_std(sc)
 	usbd_status err;
 	int i, offs;
 	usb_dma_t dma;
+	int s;
 
 	if (sc->sc_freetds == NULL) {
 		DPRINTFN(2, ("ohci_alloc_std: allocating chunk\n"));
@@ -422,6 +423,7 @@ ohci_alloc_std(sc)
 			  OHCI_TD_ALIGN, &dma);
 		if (err)
 			return (0);
+		s = splusb();
 		for(i = 0; i < OHCI_STD_CHUNK; i++) {
 			offs = i * OHCI_STD_SIZE;
 			std = (ohci_soft_td_t *)((char *)KERNADDR(&dma) +offs);
@@ -429,11 +431,18 @@ ohci_alloc_std(sc)
 			std->nexttd = sc->sc_freetds;
 			sc->sc_freetds = std;
 		}
+		splx(s);
 	}
+
+	s = splusb();
 	std = sc->sc_freetds;
 	sc->sc_freetds = std->nexttd;
 	memset(&std->td, 0, sizeof(ohci_td_t));
 	std->nexttd = 0;
+
+	ohci_hash_add_td(sc, std);
+	splx(s);
+
 	return (std);
 }
 
@@ -442,8 +451,14 @@ ohci_free_std(sc, std)
 	ohci_softc_t *sc;
 	ohci_soft_td_t *std;
 {
+	int s;
+
+	s = splusb();
+	ohci_hash_rem_td(sc, std);
+
 	std->nexttd = sc->sc_freetds;
 	sc->sc_freetds = std;
+	splx(s);
 }
 
 usbd_status
@@ -788,7 +803,6 @@ ohci_init(sc)
 	sc->sc_bus.pipe_size = sizeof(struct ohci_pipe);
 
 	sc->sc_powerhook = powerhook_establish(ohci_power, sc);
-
 	sc->sc_shutdownhook = shutdownhook_establish(ohci_shutdown, sc);
 
 	return (USBD_NORMAL_COMPLETION);
@@ -1082,7 +1096,7 @@ ohci_process_done(sc, done)
 	DPRINTFN(10,("ohci_process_done: done=0x%08lx\n", (u_long)done));
 
 	/* Reverse the done list. */
-	for (sdone = 0; done; done = LE(std->td.td_nexttd)) {
+	for (sdone = NULL; done != 0; done = LE(std->td.td_nexttd)) {
 		std = ohci_hash_find_td(sc, done);
 		std->dnext = sdone;
 		sdone = std;
@@ -1099,7 +1113,7 @@ ohci_process_done(sc, done)
 		xfer = std->xfer;
 		stdnext = std->dnext;
 		DPRINTFN(10, ("ohci_process_done: std=%p xfer=%p hcpriv=%p\n",
-				std, xfer, xfer->hcpriv));
+				std, xfer, xfer ? xfer->hcpriv : 0));
 		cc = OHCI_TD_GET_CC(LE(std->td.td_flags));
 		usb_untimeout(ohci_timeout, xfer, xfer->timo_handle);
 		if (xfer->status == USBD_CANCELLED ||
@@ -1118,7 +1132,6 @@ ohci_process_done(sc, done)
 				xfer->status = USBD_NORMAL_COMPLETION;
 				usb_transfer_complete(xfer);
 			}
-			ohci_hash_rem_td(sc, std);
 			ohci_free_std(sc, std);
 		} else {
 			/*
@@ -1137,7 +1150,6 @@ ohci_process_done(sc, done)
 			/* remove TDs */
 			for (p = std; p->xfer == xfer; p = n) {
 				n = p->nexttd;
-				ohci_hash_rem_td(sc, p);
 				ohci_free_std(sc, p);
 			}
 
@@ -1207,7 +1219,6 @@ ohci_device_intr_done(xfer)
 		xfer->hcpriv = data;
 		xfer->actlen = 0;
 
-		ohci_hash_add_td(sc, data);
 		sed->ed.ed_tailp = LE(tail->physaddr);
 		opipe->tail.td = tail;
 	}
@@ -1429,10 +1440,6 @@ ohci_device_request(xfer)
 
 	/* Insert ED in schedule */
 	s = splusb();
-	ohci_hash_add_td(sc, setup);
-	if (len != 0)
-		ohci_hash_add_td(sc, data);
-	ohci_hash_add_td(sc, stat);
 	sed->ed.ed_tailp = LE(tail->physaddr);
 	opipe->tail.td = tail;
 	OWRITE4(sc, OHCI_COMMAND_STATUS, OHCI_CLF);
@@ -1822,7 +1829,6 @@ ohci_abort_xfer_end(v)
 #endif
 	for (; p->xfer == xfer; p = n) {
 		n = p->nexttd;
-		ohci_hash_rem_td(sc, p);
 		ohci_free_std(sc, p);
 	}
 
@@ -2466,7 +2472,6 @@ ohci_device_bulk_start(xfer)
 	s = splusb();
 	for (tdp = data; tdp != tail; tdp = tdp->nexttd) {
 		tdp->xfer = xfer;
-		ohci_hash_add_td(sc, tdp);
 	}
 	sed->ed.ed_tailp = LE(tail->physaddr);
 	opipe->tail.td = tail;
@@ -2586,7 +2591,6 @@ ohci_device_intr_start(xfer)
 
 	/* Insert ED in schedule */
 	s = splusb();
-	ohci_hash_add_td(sc, data);
 	sed->ed.ed_tailp = LE(tail->physaddr);
 	opipe->tail.td = tail;
 	sed->ed.ed_flags &= LE(~OHCI_ED_SKIP);
