@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_fork.c,v 1.63 2000/03/30 09:27:11 augustss Exp $	*/
+/*	$NetBSD: kern_fork.c,v 1.64 2000/05/08 19:59:21 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -136,7 +136,8 @@ fork1(p1, flags, exitsig, stack, stacksize, retval, rnewprocp)
 	 * processes, maxproc is the limit.
 	 */
 	uid = p1->p_cred->p_ruid;
-	if ((nprocs >= maxproc - 1 && uid != 0) || nprocs >= maxproc) {
+	if (__predict_false((nprocs >= maxproc - 1 && uid != 0) ||
+			    nprocs >= maxproc)) {
 		tablefull("proc");
 		return (EAGAIN);
 	}
@@ -146,7 +147,8 @@ fork1(p1, flags, exitsig, stack, stacksize, retval, rnewprocp)
 	 * a nonprivileged user to exceed their current limit.
 	 */
 	count = chgproccnt(uid, 1);
-	if (uid != 0 && count > p1->p_rlimit[RLIMIT_NPROC].rlim_cur) {
+	if (__predict_false(uid != 0 && count >
+			    p1->p_rlimit[RLIMIT_NPROC].rlim_cur)) {
 		(void)chgproccnt(uid, -1);
 		return (EAGAIN);
 	}
@@ -158,7 +160,7 @@ fork1(p1, flags, exitsig, stack, stacksize, retval, rnewprocp)
 	 * be allocated and wired in vm_fork().
 	 */
 	uaddr = uvm_km_valloc(kernel_map, USPACE);
-	if (uaddr == 0) {
+	if (__predict_false(uaddr == 0)) {
 		(void)chgproccnt(uid, -1);
 		return (ENOMEM);
 	}
