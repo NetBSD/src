@@ -1,4 +1,4 @@
-/*	$NetBSD: platid_mask.c,v 1.3 2001/02/21 15:04:40 uch Exp $	*/
+/*	$NetBSD: platid_mask.c,v 1.4 2001/03/03 12:56:38 takemura Exp $	*/
 
 /*-
  * Copyright (c) 1999-2001
@@ -245,6 +245,8 @@ platid_t platid_mask_MACH_NEC_MCR_730A = {{
 	PLATID_CPU_MIPS_VR_4121,
 	PLATID_MACH_NEC_MCR_730A
 }};
+#endif /* hpcmips */
+#ifdef hpcmips
 platid_t platid_mask_MACH_EVEREX = {{
 	PLATID_WILD,
 	PLATID_MACH_EVEREX
@@ -269,6 +271,8 @@ platid_t platid_mask_MACH_EVEREX_FREESTYLE_A20 = {{
 	PLATID_CPU_MIPS_VR_4111,
 	PLATID_MACH_EVEREX_FREESTYLE_A20
 }};
+#endif /* hpcmips */
+#ifdef hpcmips
 platid_t platid_mask_MACH_CASIO = {{
 	PLATID_WILD,
 	PLATID_MACH_CASIO
@@ -325,6 +329,8 @@ platid_t platid_mask_MACH_CASIO_CASSIOPEIAE_E507 = {{
 	PLATID_CPU_MIPS_VR_4121,
 	PLATID_MACH_CASIO_CASSIOPEIAE_E507
 }};
+#endif /* hpcmips */
+#ifdef hpcmips
 platid_t platid_mask_MACH_SHARP = {{
 	PLATID_WILD,
 	PLATID_MACH_SHARP
@@ -377,6 +383,8 @@ platid_t platid_mask_MACH_SHARP_MOBILON_HC1200 = {{
 	PLATID_CPU_MIPS_TX_3912,
 	PLATID_MACH_SHARP_MOBILON_HC1200
 }};
+#endif /* hpcmips */
+#ifdef hpcmips
 platid_t platid_mask_MACH_FUJITSU = {{
 	PLATID_WILD,
 	PLATID_MACH_FUJITSU
@@ -397,6 +405,8 @@ platid_t platid_mask_MACH_FUJITSU_INTERTOP_IT310 = {{
 	PLATID_CPU_MIPS_VR_4121,
 	PLATID_MACH_FUJITSU_INTERTOP_IT310
 }};
+#endif /* hpcmips */
+#ifdef hpcmips
 platid_t platid_mask_MACH_PHILIPS = {{
 	PLATID_WILD,
 	PLATID_MACH_PHILIPS
@@ -413,10 +423,12 @@ platid_t platid_mask_MACH_PHILIPS_NINO_312 = {{
 	PLATID_CPU_MIPS_TX_3912,
 	PLATID_MACH_PHILIPS_NINO_312
 }};
+#endif /* hpcmips */
 platid_t platid_mask_MACH_COMPAQ = {{
 	PLATID_WILD,
 	PLATID_MACH_COMPAQ
 }};
+#ifdef hpcmips
 platid_t platid_mask_MACH_COMPAQ_C = {{
 	PLATID_WILD,
 	PLATID_MACH_COMPAQ_C
@@ -481,6 +493,18 @@ platid_t platid_mask_MACH_COMPAQ_PRESARIO_213 = {{
 	PLATID_CPU_MIPS_VR_4111,
 	PLATID_MACH_COMPAQ_PRESARIO_213
 }};
+#endif /* hpcmips */
+#ifdef hpcarm
+platid_t platid_mask_MACH_COMPAQ_IPAQ = {{
+	PLATID_WILD,
+	PLATID_MACH_COMPAQ_IPAQ
+}};
+platid_t platid_mask_MACH_COMPAQ_IPAQ_H3600 = {{
+	PLATID_CPU_ARM_STRONGARM_SA1110,
+	PLATID_MACH_COMPAQ_IPAQ_H3600
+}};
+#endif /* hpcarm */
+#ifdef hpcmips
 platid_t platid_mask_MACH_VICTOR = {{
 	PLATID_WILD,
 	PLATID_MACH_VICTOR
@@ -497,6 +521,8 @@ platid_t platid_mask_MACH_VICTOR_INTERLINK_MPC101 = {{
 	PLATID_CPU_MIPS_TX_3922,
 	PLATID_MACH_VICTOR_INTERLINK_MPC101
 }};
+#endif /* hpcmips */
+#ifdef hpcmips
 platid_t platid_mask_MACH_IBM = {{
 	PLATID_WILD,
 	PLATID_MACH_IBM
@@ -513,6 +539,8 @@ platid_t platid_mask_MACH_IBM_WORKPAD_26011AU = {{
 	PLATID_CPU_MIPS_VR_4121,
 	PLATID_MACH_IBM_WORKPAD_26011AU
 }};
+#endif /* hpcmips */
+#ifdef hpcmips
 platid_t platid_mask_MACH_VADEM = {{
 	PLATID_WILD,
 	PLATID_MACH_VADEM
@@ -534,11 +562,11 @@ platid_t platid_mask_MACH_VADEM_CLIO_C1050 = {{
 	PLATID_MACH_VADEM_CLIO_C1050
 }};
 #endif /* hpcmips */
-#ifdef hpcsh
 platid_t platid_mask_MACH_HP = {{
 	PLATID_WILD,
 	PLATID_MACH_HP
 }};
+#ifdef hpcsh
 platid_t platid_mask_MACH_HP_LX = {{
 	PLATID_WILD,
 	PLATID_MACH_HP_LX
@@ -551,10 +579,12 @@ platid_t platid_mask_MACH_HP_LX_620JP = {{
 	PLATID_CPU_SH_3_7709,
 	PLATID_MACH_HP_LX_620JP
 }};
+#endif /* hpcsh */
 platid_t platid_mask_MACH_HP_JORNADA = {{
 	PLATID_WILD,
 	PLATID_MACH_HP_JORNADA
 }};
+#ifdef hpcsh
 platid_t platid_mask_MACH_HP_JORNADA_6XX = {{
 	PLATID_WILD,
 	PLATID_MACH_HP_JORNADA_6XX
@@ -575,39 +605,19 @@ platid_t platid_mask_MACH_HP_JORNADA_690JP = {{
 	PLATID_CPU_SH_3_7709A,
 	PLATID_MACH_HP_JORNADA_690JP
 }};
-platid_t platid_mask_MACH_HITACHI = {{
-	PLATID_WILD,
-	PLATID_MACH_HITACHI
-}};
-platid_t platid_mask_MACH_HITACHI_PERSONA = {{
-	PLATID_WILD,
-	PLATID_MACH_HITACHI_PERSONA
-}};
-platid_t platid_mask_MACH_HITACHI_PERSONA_HPW230JC = {{
-	PLATID_CPU_SH_3_7709,
-	PLATID_MACH_HITACHI_PERSONA_HPW230JC
-}};
-platid_t platid_mask_MACH_LGE = {{
-	PLATID_WILD,
-	PLATID_MACH_LGE
-}};
-platid_t platid_mask_MACH_LGE_PHENOM = {{
-	PLATID_WILD,
-	PLATID_MACH_LGE_PHENOM
-}};
-platid_t platid_mask_MACH_LGE_PHENOM_H220C = {{
-	PLATID_CPU_SH_3_7709,
-	PLATID_MACH_LGE_PHENOM_H220C
-}};
 #endif /* hpcsh */
 #ifdef hpcarm
-platid_t platid_mask_MACH_HP = {{
+platid_t platid_mask_MACH_HP_JORNADA_7XX = {{
 	PLATID_WILD,
-	PLATID_MACH_HP
+	PLATID_MACH_HP_JORNADA_7XX
 }};
-platid_t platid_mask_MACH_HP_JORNADA = {{
-	PLATID_WILD,
-	PLATID_MACH_HP_JORNADA
+platid_t platid_mask_MACH_HP_JORNADA_720 = {{
+	PLATID_CPU_ARM_STRONGARM_SA1110,
+	PLATID_MACH_HP_JORNADA_720
+}};
+platid_t platid_mask_MACH_HP_JORNADA_720JP = {{
+	PLATID_CPU_ARM_STRONGARM_SA1110,
+	PLATID_MACH_HP_JORNADA_720JP
 }};
 platid_t platid_mask_MACH_HP_JORNADA_8XX = {{
 	PLATID_WILD,
@@ -621,28 +631,32 @@ platid_t platid_mask_MACH_HP_JORNADA_820JP = {{
 	PLATID_CPU_ARM_STRONGARM_SA1100,
 	PLATID_MACH_HP_JORNADA_820JP
 }};
-platid_t platid_mask_MACH_HP_JORNADA_7XX = {{
-	PLATID_WILD,
-	PLATID_MACH_HP_JORNADA_7XX
-}};
-platid_t platid_mask_MACH_HP_JORNADA_720 = {{
-	PLATID_CPU_ARM_STRONGARM_SA1110,
-	PLATID_MACH_HP_JORNADA_720
-}};
-platid_t platid_mask_MACH_HP_JORNADA_720JP = {{
-	PLATID_CPU_ARM_STRONGARM_SA1110,
-	PLATID_MACH_HP_JORNADA_720JP
-}};
-platid_t platid_mask_MACH_COMPAQ = {{
-	PLATID_WILD,
-	PLATID_MACH_COMPAQ
-}};
-platid_t platid_mask_MACH_COMPAQ_IPAQ = {{
-	PLATID_WILD,
-	PLATID_MACH_COMPAQ_IPAQ
-}};
-platid_t platid_mask_MACH_COMPAQ_IPAQ_H3600 = {{
-	PLATID_CPU_ARM_STRONGARM_SA1110,
-	PLATID_MACH_COMPAQ_IPAQ_H3600
-}};
 #endif /* hpcarm */
+#ifdef hpcsh
+platid_t platid_mask_MACH_HITACHI = {{
+	PLATID_WILD,
+	PLATID_MACH_HITACHI
+}};
+platid_t platid_mask_MACH_HITACHI_PERSONA = {{
+	PLATID_WILD,
+	PLATID_MACH_HITACHI_PERSONA
+}};
+platid_t platid_mask_MACH_HITACHI_PERSONA_HPW230JC = {{
+	PLATID_CPU_SH_3_7709,
+	PLATID_MACH_HITACHI_PERSONA_HPW230JC
+}};
+#endif /* hpcsh */
+#ifdef hpcsh
+platid_t platid_mask_MACH_LGE = {{
+	PLATID_WILD,
+	PLATID_MACH_LGE
+}};
+platid_t platid_mask_MACH_LGE_PHENOM = {{
+	PLATID_WILD,
+	PLATID_MACH_LGE_PHENOM
+}};
+platid_t platid_mask_MACH_LGE_PHENOM_H220C = {{
+	PLATID_CPU_SH_3_7709,
+	PLATID_MACH_LGE_PHENOM_H220C
+}};
+#endif /* hpcsh */
