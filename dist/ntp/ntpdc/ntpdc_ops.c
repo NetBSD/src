@@ -1,4 +1,4 @@
-/*	$NetBSD: ntpdc_ops.c,v 1.4 2003/12/04 17:10:34 drochner Exp $	*/
+/*	$NetBSD: ntpdc_ops.c,v 1.5 2003/12/04 17:13:11 drochner Exp $	*/
 
 /*
  * ntpdc_ops.c - subroutines which are called to perform operations by xntpdc
@@ -303,7 +303,7 @@ again:
 		goto again;
 	}
 
-	if (res != 0 && items == 0)
+	if (res != 0)
 	    return;
 
 	if (!checkitems(items, fp))
@@ -393,7 +393,7 @@ again:
 		goto again;
 	}
 
-	if (res != 0 && items == 0)
+	if (res != 0)
 	    return;
 
 	if (!checkitems(items, fp))
@@ -676,7 +676,7 @@ again:
 		goto again;
 	}
 
-	if (res != 0 && items == 0)
+	if (res != 0)
 	    return;
 
 	if (!checkitems(items, fp))
@@ -750,7 +750,7 @@ again:
 		goto again;
 	}
 
-	if (res != 0 && items == 0)
+	if (res != 0)
 	    return;
 
 	if (!checkitems(items, fp))
@@ -848,7 +848,7 @@ again:
 		goto again;
 	}
 
-	if (res != 0 && items == 0)
+	if (res != 0)
 	    return;
 
 	if (!check1item(items, fp))
@@ -911,7 +911,7 @@ again:
 		goto again;
 	}
 
-	if (res != 0 && items == 0)
+	if (res != 0)
 	    return;
 
 	if (!check1item(items, fp))
@@ -1008,7 +1008,7 @@ again:
 		goto again;
 	}
 
-	if (res != 0 && items == 0)
+	if (res != 0)
 	    return;
 
 	if (!check1item(items, fp))
@@ -1074,7 +1074,7 @@ again:
 		goto again;
 	}
 
-	if (res != 0 && items == 0)
+	if (res != 0)
 	    return;
 
 	if (!check1item(items, fp))
@@ -1136,7 +1136,7 @@ again:
 		goto again;
 	}
 
-	if (res != 0 && items == 0)
+	if (res != 0)
 	    return;
 
 	if (!check1item(items, fp))
@@ -1195,7 +1195,7 @@ again:
 		goto again;
 	}
 
-	if (res != 0 && items == 0)
+	if (res != 0)
 	    return;
 
 	if (!check1item(items, fp))
@@ -1616,7 +1616,7 @@ again:
 		goto again;
 	}
 
-	if (res != 0 && items == 0)
+	if (res != 0)
 	    return;
 
 	if (!checkitems(items, fp))
@@ -1901,7 +1901,7 @@ again:
 			  &items, &itemsize, &struct_star, 0, 
 			  sizeof(struct info_monitor));
 	
-	if (res != 0 && items == 0)
+	if (res != 0)
 	    return;
 
 	if (!checkitems(items, fp))
@@ -2270,7 +2270,7 @@ again:
 		goto again;
 	}
 
-	if (res != 0 && items == 0)
+	if (res != 0)
 	    return;
 
 	if (!check1item(items, fp))
@@ -2328,7 +2328,7 @@ again:
 		goto again;
 	}
 
-	if (res != 0 && items == 0)
+	if (res != 0)
 	    return;
 
 	if (!checkitems(items, fp))
@@ -2569,7 +2569,7 @@ again:
 		goto again;
 	}
 
-	if (res != 0 && items == 0)
+	if (res != 0)
 	    return;
 
 	if (!check1item(items, fp))
@@ -2644,7 +2644,7 @@ again:
 		goto again;
 	}
 
-	if (res != 0 && items == 0)
+	if (res != 0)
 	    return;
 
 	if (!checkitems(items, fp))
@@ -2817,7 +2817,7 @@ again:
 		goto again;
 	}
 
-	if (res != 0 && items == 0)
+	if (res != 0)
 	    return;
 
 	if (!checkitems(items, fp))
@@ -2905,7 +2905,7 @@ again:
 		goto again;
 	}
 
-	if (res != 0 && items == 0)
+	if (res != 0)
 	    return;
 	if (!check1item(items, fp))
 	    return;
