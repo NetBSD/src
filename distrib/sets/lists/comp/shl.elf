@@ -2,7 +2,6 @@
 ./usr/lib/crtbeginS.o
 ./usr/lib/crtend.o
 ./usr/lib/crtendS.o
-./usr/lib/libbfd.so
 ./usr/lib/libbz2.so
 ./usr/lib/libc.so
 ./usr/lib/libcrypt.so
