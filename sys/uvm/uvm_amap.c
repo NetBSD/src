@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_amap.c,v 1.8 1998/05/05 20:51:04 kleink Exp $	*/
+/*	$NetBSD: uvm_amap.c,v 1.9 1998/05/14 13:51:28 chuck Exp $	*/
 
 /*
  * XXXCDC: "ROUGH DRAFT" QUALITY UVM PRE-RELEASE FILE!   
@@ -523,6 +523,10 @@ amap_wipeout(amap)
  * => the map that the map entry belongs to must be locked by caller.
  * => the amap currently attached to "entry" (if any) must be unlocked.
  * => if canchunk is true, then we may clip the entry into a chunk
+ * => "startva" and "endva" are used only if canchunk is true.  they are
+ *     used to limit chunking (e.g. if you have a large space that you
+ *     know you are going to need to allocate amaps for, there is no point
+ *     in allowing that to be chunked)
  */
 
 void
@@ -561,7 +565,9 @@ amap_copy(map, entry, waitf, canchunk, startva, endva)
 			    "to 0x%x->0x%x", entry->start, entry->end, startva,
 			    endva);
 			UVM_MAP_CLIP_START(map, entry, startva);
-			UVM_MAP_CLIP_END(map, entry, endva);
+			/* watch out for endva wrap-around! */
+			if (endva >= startva)
+				UVM_MAP_CLIP_END(map, entry, endva);
 		}
 
 		UVMHIST_LOG(maphist, "<- done [creating new amap 0x%x->0x%x]", 
