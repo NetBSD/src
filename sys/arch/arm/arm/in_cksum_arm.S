@@ -1,4 +1,4 @@
-/*	$NetBSD: in_cksum_arm.S,v 1.2 2003/09/23 10:01:36 scw Exp $	*/
+/*	$NetBSD: in_cksum_arm.S,v 1.3 2003/11/26 10:31:53 rearnsha Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -120,12 +120,12 @@ ENTRY(in4_cksum)
 	ands	r4, r4, #0x03
 	add	r8, r1, r3		/* sum = nxt + len */
 	addne	pc, pc, r4, lsl #5	/* Handle alignment of pseudo header */
-	nop
 
 	/* 0x00: Data 32-bit aligned */
 	ldr	r5, [r6, #(IP_SRC)]
 	ldr	r4, [r6, #(IP_DST)]
 	b	.Lin4_cksum_add_ips
+	nop
 	nop
 	nop
 	nop
@@ -407,7 +407,6 @@ ASENTRY_NP(L_cksumdata)
 	sub	r1, r1, r3
 	adds	r4, r4, r4, lsr #1	/* Side effect: Clear carry flag */
 	addne	pc, pc, r4
-	nop
 
 /*
  * Note: We use ldm here, even on Xscale, since the combined issue/result
@@ -415,6 +414,7 @@ ASENTRY_NP(L_cksumdata)
  */
 	/* At least 24 bytes remaining... */
 	ldmia	r0!, {r4, r5}
+	nop
 	adcs	r2, r2, r4
 	adcs	r2, r2, r5
 
