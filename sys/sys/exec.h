@@ -1,4 +1,4 @@
-/*	$NetBSD: exec.h,v 1.71 2000/09/24 02:40:29 sommerfeld Exp $	*/
+/*	$NetBSD: exec.h,v 1.72 2000/09/28 19:05:07 eeh Exp $	*/
 
 /*-
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -63,6 +63,12 @@ struct ps_strings {
 /*
  * Address of ps_strings structure.  We only use this as a default in user
  * space; normal access is done through __ps_strings.
+ *
+ * XXXX PS_STRINGS is deprecated since it can move around for different
+ * processes or emulations.
+ * In the kernel use p->p_psstr.
+ * In userland you should use what's passed in to crt0.s or system calls.
+ *
  */
 #define	PS_STRINGS \
 	((struct ps_strings *)(USRSTACK - sizeof(struct ps_strings)))
@@ -72,6 +78,9 @@ struct ps_strings {
  * (used to copyin/copyout various emulation data structures).
  */
 #define	STACKGAPLEN	400	/* plenty enough for now */
+/*
+ * XXXX The following are deprecated.  Use p->p_psstr instead of PS_STRINGS.
+ */
 #define	STACKGAPBASE_UNALIGNED	\
 	((caddr_t)PS_STRINGS - szsigcode - STACKGAPLEN)
 #define	STACKGAPBASE		\
