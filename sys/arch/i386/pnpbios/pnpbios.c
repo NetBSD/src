@@ -1,4 +1,4 @@
-/* $NetBSD: pnpbios.c,v 1.9 2000/01/16 03:30:23 drochner Exp $ */
+/* $NetBSD: pnpbios.c,v 1.10 2000/02/20 21:42:26 soren Exp $ */
 /*
  * Copyright (c) 1999
  * 	Matthias Drochner.  All rights reserved.
@@ -23,6 +23,14 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
+ */
+
+/*
+ * PnP BIOS documentation is available at the following locations.
+ *
+ * http://www.microsoft.com/hwdev/download/respec/pnpbios.zip
+ * http://www.microsoft.com/hwdev/download/respec/biosclar.zip
+ * http://www.microsoft.com/hwdev/download/respec/devids.txt
  */
 
 #include <sys/param.h>
