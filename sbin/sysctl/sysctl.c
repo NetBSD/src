@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.c,v 1.25 2000/02/12 18:00:58 thorpej Exp $	*/
+/*	$NetBSD: sysctl.c,v 1.26 2000/02/17 08:54:16 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1993
@@ -44,7 +44,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)sysctl.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: sysctl.c,v 1.25 2000/02/12 18:00:58 thorpej Exp $");
+__RCSID("$NetBSD: sysctl.c,v 1.26 2000/02/17 08:54:16 fvdl Exp $");
 #endif
 #endif /* not lint */
 
@@ -156,6 +156,7 @@ int	Aflag, aflag, nflag, wflag;
 #define	CLOCK		0x00000001
 #define	BOOTTIME	0x00000002
 #define	CONSDEV		0x00000004
+#define DISKINFO	0x00000008
 
 /*
  * A dummy type for limits, which requires special parsing
@@ -432,6 +433,10 @@ parse(string, flags)
 		if (mib[1] == CPU_CONSDEV)
 			special |= CONSDEV;
 #endif
+#ifdef CPU_DISKINFO
+		if (mib[1] == CPU_DISKINFO)
+			special |= DISKINFO;
+#endif
 		break;
 
 	case CTL_VFS:
@@ -543,6 +548,11 @@ parse(string, flags)
 			fprintf(stdout, "0x%x\n", dev);
 		return;
 	}
+	if (special & DISKINFO) {
+		/* Don't know a good way to deal with this i386 specific one */
+		return;
+	}
+		
 	switch (type) {
 	case CTLTYPE_INT:
 		if (newsize == 0) {
