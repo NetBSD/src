@@ -1,4 +1,4 @@
-/*	$NetBSD: options.c,v 1.58 2003/01/09 17:26:21 christos Exp $	*/
+/*	$NetBSD: options.c,v 1.59 2003/01/15 21:56:46 kristerw Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)options.c	8.2 (Berkeley) 4/18/94";
 #else
-__RCSID("$NetBSD: options.c,v 1.58 2003/01/09 17:26:21 christos Exp $");
+__RCSID("$NetBSD: options.c,v 1.59 2003/01/15 21:56:46 kristerw Exp $");
 #endif
 #endif /* not lint */
 
@@ -650,7 +650,7 @@ pax_options(int argc, char **argv)
 		--argc;
 		dirptr = argv[argc];
 		if (mkpath(dirptr) < 0)
-			cpio_usage();
+			pax_usage();
 		/* FALLTHROUGH */
 	case ARCHIVE:
 	case APPND:
@@ -1483,7 +1483,7 @@ cpio_options(int argc, char **argv)
 			 */
 			if ((blksz = (int)str_offt(optarg)) <= 0) {
 				tty_warn(1, "Invalid block size %s", optarg);
-				tar_usage();
+				cpio_usage();
 			}
 			break;
 		case 'E':
@@ -1520,7 +1520,7 @@ cpio_options(int argc, char **argv)
 			for (i = 0; i < (sizeof(fsub)/sizeof(FSUB)); ++i)
 				(void)fprintf(stderr, " %s", fsub[i].name);
 			(void)fputs("\n\n", stderr);
-			tar_usage();
+			cpio_usage();
 			break;
 		case 'I':
 		case 'O':
