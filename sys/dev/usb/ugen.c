@@ -1,4 +1,4 @@
-/*	$NetBSD: ugen.c,v 1.25 1999/10/13 08:10:55 augustss Exp $	*/
+/*	$NetBSD: ugen.c,v 1.26 1999/10/28 07:28:51 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -293,8 +293,6 @@ ugenopen(dev, flag, mode, p)
 		DPRINTFN(5, ("ugenopen: sc=%p, endpt=%d, dir=%d, sce=%p\n", 
 			     sc, endpt, dir, sce));
 		edesc = sce->edesc;
-		if (!edesc)
-			return (ENXIO);
 		switch (edesc->bmAttributes & UE_XFERTYPE) {
 		case UE_INTERRUPT:
 			isize = UGETW(edesc->wMaxPacketSize);
@@ -404,8 +402,12 @@ ugen_do_read(sc, endpt, uio, flag)
 #ifdef __NetBSD__
 	DPRINTFN(5, ("ugenread: %d:%d\n", sc->sc_dev.dv_unit, endpt));
 #endif
+
 	if (sc->sc_dying)
 		return (EIO);
+
+	if (endpt == USB_CONTROL_ENDPOINT)
+		return (ENODEV);
 
 #ifdef DIAGNOSTIC
 	if (!sce->edesc) {
@@ -522,8 +524,15 @@ ugen_do_write(sc, endpt, uio, flag)
 	usbd_request_handle reqh;
 	usbd_status r;
 
+#ifdef __NetBSD__
+	DPRINTFN(5, ("ugenwrite: %d:%d\n", sc->sc_dev.dv_unit, endpt));
+#endif
+
 	if (sc->sc_dying)
 		return (EIO);
+
+	if (endpt == USB_CONTROL_ENDPOINT)
+		return (ENODEV);
 
 #ifdef DIAGNOSTIC
 	if (!sce->edesc) {
@@ -536,7 +545,6 @@ ugen_do_write(sc, endpt, uio, flag)
 	}
 #endif
 
-	DPRINTF(("ugenwrite\n"));
 	switch (sce->edesc->bmAttributes & UE_XFERTYPE) {
 	case UE_BULK:
 		reqh = usbd_alloc_request(sc->sc_udev);
