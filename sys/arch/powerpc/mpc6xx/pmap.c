@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.51 2002/07/25 23:33:04 matt Exp $	*/
+/*	$NetBSD: pmap.c,v 1.52 2002/07/28 07:03:47 chs Exp $	*/
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -280,14 +280,6 @@ unsigned int pmapdebug = 0;
 #define	MFPVR()		mfpvr()
 #define	MFSRIN(va)	mfsrin(va)
 #define	MFTB()		mftb()
-
-static __inline u_int32_t
-mfmsr(void)
-{
-	u_int psl;
-	__asm __volatile("mfmsr %0" : "=r"(psl) : );
-	return psl;
-}
 
 static __inline u_int
 mftb(void)
@@ -1408,8 +1400,11 @@ pmap_enter(pmap_t pm, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 	 * If this is a managed page, and it's the first reference to the
 	 * page clear the execness of the page.  Otherwise fetch the execness.
 	 */
+#ifndef MULTIPROCESSOR
+	/* XXX more is needed for MP */
 	if (pg != NULL)
 		was_exec = pmap_attr_fetch(pg) & PTE_EXEC;
+#endif
 
 	DPRINTFN(ENTER, (" was_exec=%d", was_exec));
 
@@ -1459,8 +1454,8 @@ pmap_enter(pmap_t pm, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 
 	/* 
 	 * Flush the real page from the instruction cache if this page is
-	 * mapped executable and cacheable and was not previously mapped
-	 * (or was not mapped executable).
+	 * mapped executable and cacheable and has not been flushed since
+	 * the last time it was modified.
 	 */
 	if (error == 0 &&
             (flags & VM_PROT_EXECUTE) &&
@@ -1513,13 +1508,14 @@ pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot)
 
 	s = splvm();
 	msr = pmap_interrupts_off();
-	error = pmap_pvo_enter(pmap_kernel(), &pmap_upvo_pool, &pmap_pvo_kunmanaged,
-	    va, pa, pte_lo, prot|PMAP_WIRED);
+	error = pmap_pvo_enter(pmap_kernel(), &pmap_upvo_pool,
+	    &pmap_pvo_kunmanaged, va, pa, pte_lo, prot|PMAP_WIRED);
 	pmap_interrupts_restore(msr);
 	splx(s);
 
 	if (error != 0)
-		panic("pmap_kenter_pa: failed to enter va %#lx pa %#lx: %d", va, pa, error);
+		panic("pmap_kenter_pa: failed to enter va %#lx pa %#lx: %d",
+		      va, pa, error);
 
 	/* 
 	 * Flush the real memory from the instruction cache.
@@ -2627,7 +2623,6 @@ pmap_bootstrap(paddr_t kernelstart, paddr_t kernelend,
 	 */
 	msgbuf_paddr = (paddr_t) pmap_boot_find_memory(MSGBUFSIZE, NBPG, 1);
 #endif
-
 
 #ifdef __HAVE_PMAP_PHYSSEG
 	{
