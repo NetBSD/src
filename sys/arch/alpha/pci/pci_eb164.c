@@ -1,4 +1,4 @@
-/* $NetBSD: pci_eb164.c,v 1.10 1997/09/02 20:10:30 thorpej Exp $ */
+/* $NetBSD: pci_eb164.c,v 1.11 1998/04/14 22:20:59 thorpej Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pci_eb164.c,v 1.10 1997/09/02 20:10:30 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_eb164.c,v 1.11 1998/04/14 22:20:59 thorpej Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -111,7 +111,7 @@ pci_eb164_pickintr(ccp)
 			PCI_STRAY_MAX);
 
 #if NSIO
-	sio_intr_setup(iot);
+	sio_intr_setup(pc, iot);
 	eb164_intr_enable(EB164_SIO_IRQ);
 #endif
 

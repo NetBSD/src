@@ -1,4 +1,4 @@
-/* $NetBSD: pci_axppci_33.c,v 1.16 1997/09/02 20:10:29 thorpej Exp $ */
+/* $NetBSD: pci_axppci_33.c,v 1.17 1998/04/14 22:20:59 thorpej Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pci_axppci_33.c,v 1.16 1997/09/02 20:10:29 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_axppci_33.c,v 1.17 1998/04/14 22:20:59 thorpej Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -88,7 +88,7 @@ pci_axppci_33_pickintr(lcp)
 	pc->pc_intr_disestablish = dec_axppci_33_intr_disestablish;
 
 #if NSIO
-	sio_intr_setup(iot);
+	sio_intr_setup(pc, iot);
 	set_iointr(&sio_iointr);
 #else
 	panic("pci_axppci_33_pickintr: no I/O interrupt handler (no sio)");
