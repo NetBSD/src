@@ -37,14 +37,12 @@
  *
  *	from: Utah Hdr: hpux_sig.c 1.1 90/07/09
  *	from: @(#)hpux_sig.c	7.8 (Berkeley) 4/20/91
- *	$Id: hpux_sig.c,v 1.5 1994/05/04 03:47:24 mycroft Exp $
+ *	$Id: hpux_sig.c,v 1.6 1994/05/04 04:09:37 mycroft Exp $
  */
 
 /*
  * Signal related HPUX compatibility routines
  */
-
-#ifdef HPUXCOMPAT
 
 #include "param.h"
 #include "systm.h"
@@ -453,4 +451,3 @@ bsdtohpuxmask(mask)
 			nmask |= sigmask(nsig);
 	return(nmask);
 }
-#endif

@@ -37,14 +37,12 @@
  *
  *	from: Utah Hdr: hpux_compat.c 1.41 91/04/06
  *	from: @(#)hpux_compat.c	7.16 (Berkeley) 5/30/91
- *	$Id: hpux_compat.c,v 1.5 1994/04/26 22:33:28 mycroft Exp $
+ *	$Id: hpux_compat.c,v 1.6 1994/05/04 04:09:34 mycroft Exp $
  */
 
 /*
  * Various HPUX compatibility routines
  */
-
-#ifdef HPUXCOMPAT
 
 #include "param.h"
 #include "systm.h"
@@ -1367,7 +1365,7 @@ hpuxdumpu(vp, cred)
 /*
  * The remaining routines are essentially the same as those in kern_xxx.c
  * and vfs_xxx.c as defined under "#ifdef COMPAT".  We replicate them here
- * to avoid HPUXCOMPAT dependencies in those files and to make sure that
+ * to avoid COMPAT_HPUX dependencies in those files and to make sure that
  * HP-UX compatibility still works even when COMPAT is not defined.
  */
 /* #ifdef COMPAT */
@@ -1691,5 +1689,3 @@ ohpux_stat1(vp, ub)
 	return (copyout((caddr_t)&ds, (caddr_t)ub, sizeof(ds)));
 }
 /* #endif */
-
-#endif
