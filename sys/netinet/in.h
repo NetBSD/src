@@ -1,4 +1,4 @@
-/*	$NetBSD: in.h,v 1.14 1995/04/13 06:27:30 cgd Exp $	*/
+/*	$NetBSD: in.h,v 1.15 1995/05/31 07:39:33 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -50,6 +50,7 @@
 #define	IPPROTO_ICMP		1		/* control message protocol */
 #define	IPPROTO_IGMP		2		/* group mgmt protocol */
 #define	IPPROTO_GGP		3		/* gateway^2 (deprecated) */
+#define	IPPROTO_IPIP		4		/* IP inside IP */
 #define	IPPROTO_TCP		6		/* tcp */
 #define	IPPROTO_EGP		8		/* exterior gateway protocol */
 #define	IPPROTO_PUP		12		/* pup */
@@ -159,7 +160,7 @@ struct ip_opts {
 #define	IP_RECVRETOPTS		6    /* bool; receive IP opts for response */
 #define	IP_RECVDSTADDR		7    /* bool; receive IP dst addr w/dgram */
 #define	IP_RETOPTS		8    /* ip_opts; set/get IP options */
-#define	IP_MULTICAST_IF		9    /* u_char; set/get IP multicast i/f  */
+#define	IP_MULTICAST_IF		9    /* in_addr; set/get IP multicast i/f  */
 #define	IP_MULTICAST_TTL	10   /* u_char; set/get IP multicast ttl */
 #define	IP_MULTICAST_LOOP	11   /* u_char; set/get IP multicast loopback */
 #define	IP_ADD_MEMBERSHIP	12   /* ip_mreq; add an IP group membership */
