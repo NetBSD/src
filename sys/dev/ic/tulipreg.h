@@ -1,4 +1,4 @@
-/*	$NetBSD: tulipreg.h,v 1.21 2000/08/03 03:07:30 castor Exp $	*/
+/*	$NetBSD: tulipreg.h,v 1.22 2000/08/25 08:03:10 jeffs Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -816,7 +816,7 @@ struct tulip_desc {
 						   enable */
 #define	SIATXRX_LTE		0x00001000	/* link test enable */
 #define	SIATXRX_APE		0x00002000	/* auto-polarity enable */
-#define	SIATXRX_SPP		0x00004000	/* set plarity plus */
+#define	SIATXRX_SPP		0x00004000	/* set polarity plus */
 #define	SIATXRX_TAS		0x00008000	/* 10base-T/AUI autosensing
 						   enable (21041/21142) */
 #define	SIATXRX_THX		0x00010000	/* 100baseTX-HDX (21142) */
