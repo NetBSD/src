@@ -459,6 +459,7 @@ swapout(p)
 #endif
 	size = round_page(ctob(UPAGES));
 	addr = (vm_offset_t) p->p_addr;
+	p->p_stats->p_ru.ru_nswap++;	/* record that it got swapped out */
 #ifdef notyet
 #ifdef hp300
 	/*
