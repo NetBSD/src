@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)machdep.c	7.4 (Berkeley) 6/3/91
- *	$Id: machdep.c,v 1.47.2.14 1993/10/27 16:40:17 mycroft Exp $
+ *	$Id: machdep.c,v 1.47.2.15 1993/10/29 02:15:56 cgd Exp $
  */
 
 #include <stddef.h>
@@ -137,6 +137,7 @@ cpu_startup()
 	printf(version);
 	identifycpu();
 	printf("real mem  = %d\n", ctob(physmem));
+/* XXX */ panic("got this far");
 
 	/*
 	 * Find out how much space we need, allocate it,
@@ -758,35 +759,6 @@ microtime(tvp)
 	}
 }
 #endif /* HZ */
-
-physstrat(bp, strat, prio)
-	struct buf *bp;
-	int (*strat)(), prio;
-{
-	register int s;
-	caddr_t baddr;
-
-	/*
-	 * vmapbuf clobbers b_addr so we must remember it so that it
-	 * can be restored after vunmapbuf.  This is truely rude, we
-	 * should really be storing this in a field in the buf struct
-	 * but none are available and I didn't want to add one at
-	 * this time.  Note that b_addr for dirty page pushes is 
-	 * restored in vunmapbuf. (ugh!)
-	 */
-	baddr = bp->b_un.b_addr;
-	vmapbuf(bp);
-	(*strat)(bp);
-	/* pageout daemon doesn't wait for pushed pages */
-	if (bp->b_flags & B_DIRTY)
-		return;
-	s = splbio();
-	while ((bp->b_flags & B_DONE) == 0)
-		sleep((caddr_t)bp, prio);
-	splx(s);
-	vunmapbuf(bp);
-	bp->b_un.b_addr = baddr;
-}
 
 /*
  * Clear registers on exec
