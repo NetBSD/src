@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.13 1998/07/28 18:34:55 thorpej Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.14 1998/08/16 15:33:48 scw Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -65,6 +65,7 @@
 #include <machine/cpu.h>
 #include <machine/pte.h>
 #include <machine/reg.h>
+#include <m68k/cacheops.h>
 
 /*
  * Finish a fork operation, with process p2 nearly set up.
