@@ -1,4 +1,4 @@
-/*	$NetBSD: md.h,v 1.8 1997/11/25 20:35:08 phil Exp $	*/
+/*	$NetBSD: md.h,v 1.9 1997/12/16 01:13:58 phil Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -74,7 +74,7 @@ EXTERN distinfo dist_list[]
     {"comp",	1, "bd", "Compiler     : "},
     {"games",	1, "am", "Games        : "},
     {"man",	1, "ak", "Manuals      : "},
-    {"misc",	1, "ai", "Miscellaneous: "},
+    {"misc",	1, "aj", "Miscellaneous: "},
     {"text",	1, "ae", "Text tools   : "},
     {NULL, 0, NULL, NULL }
 }
