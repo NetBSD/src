@@ -1,4 +1,4 @@
-/*	$NetBSD: session.c,v 1.35 2003/09/17 23:19:02 christos Exp $	*/
+/*	$NetBSD: session.c,v 1.36 2004/11/10 16:55:55 christos Exp $	*/
 /*
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
  *                    All rights reserved
@@ -35,7 +35,7 @@
 
 #include "includes.h"
 RCSID("$OpenBSD: session.c,v 1.154 2003/03/05 22:33:43 markus Exp $");
-__RCSID("$NetBSD: session.c,v 1.35 2003/09/17 23:19:02 christos Exp $");
+__RCSID("$NetBSD: session.c,v 1.36 2004/11/10 16:55:55 christos Exp $");
 
 #include "ssh.h"
 #include "ssh1.h"
@@ -1862,9 +1862,18 @@ session_tty_list(void)
 	for (i = 0; i < MAX_SESSIONS; i++) {
 		Session *s = &sessions[i];
 		if (s->used && s->ttyfd != -1) {
+			char *p;
 			if (buf[0] != '\0')
 				strlcat(buf, ",", sizeof buf);
-			strlcat(buf, strrchr(s->tty, '/') + 1, sizeof buf);
+			if ((p = strstr(s->tty, "/pts/")) != NULL)
+				p++;
+			else {
+				if ((p = strrchr(s->tty, '/')) != NULL)
+					p++;
+				else
+					p = s->tty;
+			}
+			strlcat(buf, p, sizeof buf);
 		}
 	}
 	if (buf[0] == '\0')
