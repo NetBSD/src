@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_input.c,v 1.184 2003/11/19 18:39:34 jonathan Exp $	*/
+/*	$NetBSD: ip_input.c,v 1.185 2003/11/19 22:40:55 fvdl Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.184 2003/11/19 18:39:34 jonathan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.185 2003/11/19 22:40:55 fvdl Exp $");
 
 #include "opt_inet.h"
 #include "opt_gateway.h"
@@ -2077,7 +2077,7 @@ ip_sysctl(name, namelen, oldp, oldlenp, newp, newlen)
 		return (sysctl_int(oldp, oldlenp, newp, newlen,
 		    &ip_do_randomid));
 #else
-		return (sysctl_rdint(oldp, oldlenp, newp, newlen, 0));
+		return (sysctl_rdint(oldp, oldlenp, newp, 0));
 #endif
 
 	default:
