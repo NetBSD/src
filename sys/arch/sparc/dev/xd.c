@@ -1,4 +1,4 @@
-/* $NetBSD: xd.c,v 1.4 1995/08/01 21:06:55 pk Exp $ */
+/* $NetBSD: xd.c,v 1.5 1995/08/18 22:03:59 pk Exp $ */
 
 /*
  *
@@ -36,7 +36,7 @@
  * x d . c   x y l o g i c s   7 5 3 / 7 0 5 3   v m e / s m d   d r i v e r
  *
  * author: Chuck Cranor <chuck@ccrc.wustl.edu>
- * id: $Id: xd.c,v 1.4 1995/08/01 21:06:55 pk Exp $
+ * id: $Id: xd.c,v 1.5 1995/08/18 22:03:59 pk Exp $
  * started: 27-Feb-95
  * references: [1] Xylogics Model 753 User's Manual
  *                 part number: 166-753-001, Revision B, May 21, 1988.
@@ -423,10 +423,17 @@ xdcattach(parent, self, aux)
 	xa.dvmabuf = (char *) dvma_malloc(XDFM_BPS);
 	xa.fullmode = XD_SUB_POLL;
 	xa.booting = 1;
+
+	if (ca->ca_ra.ra_bp && ca->ca_ra.ra_bp->val[0] == -1 &&
+	    ca->ca_ra.ra_bp->val[1] == xdc->sc_dev.dv_unit) {
+		bootpath_store(1, ca->ca_ra.ra_bp + 1); /* advance bootpath */
+	}
+
 	for (xa.driveno = 0; xa.driveno < XDC_MAXDEV; xa.driveno++)
 		(void) config_found(self, (void *) &xa, NULL);
 
 	dvma_free(xa.dvmabuf, XDFM_BPS);
+	bootpath_store(1, NULL);
 
 	/* start the watchdog clock */
 	timeout(xdc_tick, xdc, XDC_TICKCNT);
@@ -475,6 +482,7 @@ xdattach(parent, self, aux)
 	int     rqno, err, spt, mb, blk, lcv, fmode, s, newstate;
 	struct xd_iopb_drive *driopb;
 	struct dkbad *dkb;
+	struct bootpath *bp;
 
 	/* if booting, init the xd_softc */
 
@@ -646,6 +654,13 @@ xdattach(parent, self, aux)
 
 	if (xa->booting)
 		xd->sc_dk.dk_driver = &xddkdriver;	/* link in dkdriver */
+
+	/* restore bootpath! (do this via attach_args again?)*/
+	bp = bootpath_store(0, NULL);
+	if (bp && strcmp("xd", bp->name) == 0 && xd->xd_drive == bp->val[0])
+		bootdv = &xd->sc_dev;
+
+	dk_establish(&xd->sc_dk, &xd->sc_dev);
 
 done:
 	xd->state = newstate;
