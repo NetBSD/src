@@ -1,4 +1,4 @@
-$NetBSD: pcmciadevs,v 1.64 2000/01/08 07:34:49 augustss Exp $
+$NetBSD: pcmciadevs,v 1.65 2000/01/09 16:00:29 joda Exp $
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -43,19 +43,23 @@ $NetBSD: pcmciadevs,v 1.64 2000/01/08 07:34:49 augustss Exp $
 vendor FUJITSU			0x0004  Fujitsu Corporation
 vendor SANDISK			0x0045	Sandisk Corporation
 vendor NEWMEDIA			0x0057	New Media Corporation
+vendor INTEL			0x0089	Intel
 vendor IBM			0x00a4	IBM Corporation
 vendor MOTOROLA			0x0109	Motorola Corporation
 vendor 3COM			0x0101	3Com Corporation
 vendor MEGAHERTZ		0x0102	Megahertz Corporation
 vendor SOCKET			0x0104	Socket Communications
 vendor TDK			0x0105	TDK Corporation
+vendor XIRCOM			0x0105	Xircom
 vendor SMC			0x0108	Standard Microsystems Corporation
 vendor USROBOTICS		0x0115	US Robotics Corporation
 vendor MEGAHERTZ2		0x0128	Megahertz Corporation
 vendor ADAPTEC			0x012f	Adaptec Corporation
+vendor COMPAQ			0x0138	Compaq
 vendor LINKSYS			0x0149	Linksys Corporation
 vendor SIMPLETECH		0x014d	Simple Technology
 vendor LUCENT			0x0156	Lucent Technologies
+vendor COMPAQ2			0x0183	Compaq
 vendor DAYNA			0x0194	Dayna Corporation
 vendor WEBGEAR			0x01a6	WebGear
 vendor BAY			0x01eb  Bay Networks
