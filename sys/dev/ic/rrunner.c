@@ -1,4 +1,4 @@
-/*	$NetBSD: rrunner.c,v 1.2 1998/05/17 16:46:28 kml Exp $	*/
+/*	$NetBSD: rrunner.c,v 1.3 1998/06/08 07:11:51 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -151,7 +151,7 @@ eshconfig(sc)
 	int error;
 	int i;
 
-	(volatile) sc->sc_flags = 0;
+	sc->sc_flags = 0;
 
 	/* 
 	 * Allocate and divvy up some host side memory that can hold
@@ -633,7 +633,7 @@ eshinit(sc)
 	 * so set initialized flag, but don't start sending.
 	 */
 
-	(volatile) sc->sc_flags = ESH_FL_INITIALIZED;
+	sc->sc_flags = ESH_FL_INITIALIZED;
 }
 
 
@@ -691,7 +691,7 @@ eshintr(arg)
 		switch(event->re_code) {
 		case RR_EC_RUNCODE_UP:
 			printf("%s:  firmware up\n", sc->sc_dev.dv_xname);
-			(volatile) sc->sc_flags |= ESH_FL_RUNCODE_UP;
+			sc->sc_flags |= ESH_FL_RUNCODE_UP;
 			esh_send_cmd(sc, RR_CC_WATCHDOG, 0, 0);
 			esh_send_cmd(sc, RR_CC_UPDATE_STATS, 0, 0);
 			esh_init_snap_ring(sc);
@@ -712,11 +712,11 @@ eshintr(arg)
 
 		case RR_EC_LINK_ON:
 			printf("%s:  link up\n", sc->sc_dev.dv_xname);
-			(volatile) sc->sc_flags |= ESH_FL_LINK_UP;
+			sc->sc_flags |= ESH_FL_LINK_UP;
 
 			esh_send_cmd(sc, RR_CC_WATCHDOG, 0, 0);
 			esh_send_cmd(sc, RR_CC_UPDATE_STATS, 0, 0);
-			if (((volatile) sc->sc_flags) & ESH_FL_RRING_UP) {
+			if ((sc->sc_flags) & ESH_FL_RRING_UP) {
 				/* Interface is now `running', with no output active. */
 				ifp->if_flags |= IFF_RUNNING;
 				ifp->if_flags &= ~IFF_OACTIVE;
@@ -727,7 +727,7 @@ eshintr(arg)
 			break;
 
 		case RR_EC_LINK_OFF:
-			(volatile) sc->sc_flags &= ~ESH_FL_LINK_UP;
+			sc->sc_flags &= ~ESH_FL_LINK_UP;
 			break;
 
 			/* 
@@ -794,13 +794,13 @@ eshintr(arg)
 			/* Receive events */
 
 		case RR_EC_RING_ENABLED:
-			(volatile) sc->sc_flags |= ESH_FL_RRING_UP;
+			sc->sc_flags |= ESH_FL_RRING_UP;
 			assert(event->re_ring == HIPPI_ULP_802);
 
 			/* XXX: need to pass in rc consumer: */
 			esh_fill_snap_ring(sc);
 
-			if ((volatile) sc->sc_flags & ESH_FL_LINK_UP) {
+			if (sc->sc_flags & ESH_FL_LINK_UP) {
 				/* 
 				 * Interface is now `running', with no 
 				 * output active. 
@@ -1667,8 +1667,9 @@ eshioctl(ifp, cmd, data)
 
 	s = splnet();
 
-	while ((volatile) sc->sc_flags & ESH_FL_EEPROM_BUSY) {
-		error = tsleep(&sc->sc_flags, PCATCH | PRIBIO, "esheeprom", 0);
+	while (sc->sc_flags & ESH_FL_EEPROM_BUSY) {
+		error = tsleep((void *)&sc->sc_flags, PCATCH | PRIBIO,
+		    "esheeprom", 0);
 		if (error != 0)
 			goto ioctl_done;
 	}
@@ -1836,7 +1837,7 @@ eshioctl(ifp, cmd, data)
 			if (cmd == EIOCSEEPROM) {
 				printf("%s:  writing EEPROM\n", 
 				       sc->sc_dev.dv_xname);
-				(volatile) sc->sc_flags |= ESH_FL_EEPROM_BUSY;
+				sc->sc_flags |= ESH_FL_EEPROM_BUSY;
 				splx(s);
 			}
 
@@ -1877,8 +1878,8 @@ eshioctl(ifp, cmd, data)
 					 */
 
 					if (i % 40 == 0) {
-						tsleep(&sc->sc_flags, PRIBIO,
-						       "eshweeprom", 1);
+						tsleep((void *)&sc->sc_flags,
+						    PRIBIO, "eshweeprom", 1);
 					}
 			
 					address += RR_EE_WORD_LEN;
@@ -1888,8 +1889,8 @@ eshioctl(ifp, cmd, data)
 			bus_space_write_4(iot, ioh, RR_MISC_LOCAL_CTL, 
 					  misc_local_ctl);
 			if (cmd == EIOCSEEPROM) {
-				(volatile) sc->sc_flags &= ~ESH_FL_EEPROM_BUSY;
-				wakeup(&sc->sc_flags);
+				sc->sc_flags &= ~ESH_FL_EEPROM_BUSY;
+				wakeup((void *)&sc->sc_flags);
 				s = splnet();
 				printf("%s:  done writing EEPROM\n", 
 				       sc->sc_dev.dv_xname);
@@ -1974,7 +1975,7 @@ eshstop(sc)
 	struct esh_ring_ctl *ring_ctl;
 	u_int32_t misc_host_ctl;
 
-	if (!((volatile) sc->sc_flags & ESH_FL_INITIALIZED))
+	if (!(sc->sc_flags & ESH_FL_INITIALIZED))
 		return;
 
 	/* Just shut it all down.  This isn't pretty, but it works */
@@ -2022,7 +2023,7 @@ eshstop(sc)
 				NEXT_SEND(ring_ctl->ec_consumer);
 	}
 
-	(volatile) sc->sc_flags = 0;
+	sc->sc_flags = 0;
 	ifp->if_timer = 0;  /* turn off watchdog timer */
 }
 
