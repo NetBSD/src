@@ -1,4 +1,4 @@
-/*	$NetBSD: audio_if.h,v 1.55 2005/01/10 22:01:37 kent Exp $	*/
+/*	$NetBSD: audio_if.h,v 1.55.2.1 2005/02/13 04:36:16 kent Exp $	*/
 
 /*
  * Copyright (c) 1994 Havard Eidnes.
@@ -230,6 +230,8 @@ struct audio_hw_if {
 	paddr_t	(*mappage)(void *, void *, off_t, int);
 
 	int	(*get_props)(void *); /* device properties */
+#define	AUDIO_PROP_PLAY		0x80000000
+#define	AUDIO_PROP_RECORD	0x40000000
 
 	int	(*trigger_output)(void *, void *, void *, int,
 		    void (*)(void *), void *, const audio_params_t *);

@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.187.2.2 2005/02/04 15:01:48 kent Exp $	*/
+/*	$NetBSD: audio.c,v 1.187.2.3 2005/02/13 04:36:15 kent Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.187.2.2 2005/02/04 15:01:48 kent Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.187.2.3 2005/02/13 04:36:15 kent Exp $");
 
 #include "audio.h"
 #include "opt_audio.h"
@@ -1279,7 +1279,7 @@ chan_open(dev_t dev, struct audio_softc *sc, int flags, int ifmt,
 	/* initialize chan */
 	chan = malloc(sizeof(chan_softc_t), M_DEVBUF, M_WAITOK | M_ZERO);
 	chan->master = sc;
-	/* register the vchan to the master */
+	/* register the chan to the master */
 	LIST_INSERT_HEAD(&sc->sc_chans, chan, list);
 	sc->sc_nchan++;
 	return fdclone(p, file, fd, &chan_fileops, chan);
@@ -1316,9 +1316,10 @@ static int
 audio_open(dev_t dev, struct audio_softc *sc, int flags, int ifmt,
 	   struct proc *p)
 {
+	const struct audio_hw_if *hw;
 	int error;
 	u_int mode;
-	const struct audio_hw_if *hw;
+	int prop;
 
 	hw = sc->hw_if;
 	if (hw == NULL)
@@ -1327,8 +1328,26 @@ audio_open(dev_t dev, struct audio_softc *sc, int flags, int ifmt,
 	DPRINTF(("audio_open: flags=0x%x sc=%p hdl=%p\n",
 		 flags, sc, sc->hw_hdl));
 
-	if ((sc->sc_open & (AUOPEN_READ|AUOPEN_WRITE)) != 0)
-		return EBUSY;
+	prop = hw->get_propps(sc->hw_hdl);
+	if (flags & FREAD && (prop & AUDIO_PROP_RECORD) == 0) {
+		DPRINTF(("%s: the HW does not support recording.\n"));
+		return EACCESS;
+	}
+	if (flags & FWRITE && (prop & AUDIO_PROP_PLAY) == 0) {
+		DPRINTF(("%s: the HW does not support playback.\n"));
+		return EACCESS;
+	}
+
+	/*
+	 * Our drivers has just one open() method, and we can not call open()
+	 * for playback and open() for record independently.  So, the
+	 * audio_open() calls open() as playback and record if possible in
+	 * order to accept later open requests.
+	 */
+	if (prop & AUDIO_PROP_RECORD)
+		flags |= FREAD;
+	if (prop & AUDIO_PROP_PLAY)
+		flags |= FWRITE;
 
 	if (hw->open != NULL) {
 		error = hw->open(sc->hw_hdl, flags);
@@ -1353,13 +1372,12 @@ audio_open(dev_t dev, struct audio_softc *sc, int flags, int ifmt,
 
 	mode = 0;
 	if (flags & FREAD) {
-		sc->sc_open |= AUOPEN_READ;
 		mode |= AUMODE_RECORD;
 	}
 	if (flags & FWRITE) {
-		sc->sc_open |= AUOPEN_WRITE;
 		mode |= AUMODE_PLAY | AUMODE_PLAY_ALL;
 	}
+	sc->sc_open = flags;
 
 	/*
 	 * Multiplex device: /dev/audio (MU-Law) and /dev/sound (linear)
@@ -1518,7 +1536,7 @@ audio_close(struct audio_softc *sc, int flags, int ifmt, struct proc *p)
 	hw = sc->hw_if;
 	s = splaudio();
 	/* Stop recording. */
-	if ((flags & FREAD) && sc->sc_rbus) {
+	if ((sc->sc_open & FREAD) && sc->sc_rbus) {
 		/*
 		 * XXX Some drivers (e.g. SB) use the same routine
 		 * to halt input and output so don't halt input if
@@ -1536,7 +1554,7 @@ audio_close(struct audio_softc *sc, int flags, int ifmt, struct proc *p)
 	 * If there is pending output, let it drain (unless
 	 * the output is paused).
 	 */
-	if ((flags & FWRITE) && sc->sc_pbus) {
+	if ((sc->sc_open & FWRITE) && sc->sc_pbus) {
 		if (!sc->sc_pr.pause && !audio_drain(sc) && hw->drain)
 			(void)hw->drain(sc->hw_hdl);
 		hw->halt_output(sc->hw_hdl);
@@ -1546,15 +1564,8 @@ audio_close(struct audio_softc *sc, int flags, int ifmt, struct proc *p)
 	if (hw->close != NULL)
 		hw->close(sc->hw_hdl);
 
-	if (flags & FREAD) {
-		sc->sc_open &= ~AUOPEN_READ;
-		sc->sc_mode &= ~AUMODE_RECORD;
-	}
-	if (flags & FWRITE) {
-		sc->sc_open &= ~AUOPEN_WRITE;
-		sc->sc_mode &= ~(AUMODE_PLAY|AUMODE_PLAY_ALL);
-	}
-
+	sc->sc_mode = 0;
+	sc->sc_open = 0;
 	sc->sc_async_audio = 0;
 	sc->sc_full_duplex = 0;
 	splx(s);
@@ -2159,7 +2170,8 @@ audio_ioctl(struct audio_softc *sc, u_long cmd, caddr_t addr, int flag,
 
 	case AUDIO_GETPROPS:
 		DPRINTF(("AUDIO_GETPROPS\n"));
-		*(int *)addr = hw->get_props(sc->hw_hdl);
+		*(int *)addr = hw->get_props(sc->hw_hdl)
+		    & ~(AUDIO_PROP_PLAY | AUDIO_PROP_RECORD);
 		break;
 
 	default:
@@ -2520,7 +2532,7 @@ audio_pint(void *v)
 	int error;
 
 	sc = v;
-	if (!sc->sc_open)
+	if (sc->sc_open == 0)
 		return;		/* ignore interrupt if not open */
 
 	hw = sc->hw_if;
@@ -2667,7 +2679,7 @@ audio_rint(void *v)
 
 	sc = v;
 	cb = &sc->sc_rr;
-	if (!sc->sc_open)
+	if (sc->sc_open == 0)
 		return;		/* ignore interrupt if not open */
 
 	hw = sc->hw_if;
@@ -3571,8 +3583,8 @@ audiogetinfo(struct audio_softc *sc, struct audio_info *ai)
 
 	p->waiting = r->waiting = 0;		/* open never hangs */
 
-	p->open = (sc->sc_open & AUOPEN_WRITE) != 0;
-	r->open = (sc->sc_open & AUOPEN_READ) != 0;
+	p->open = (sc->sc_open & FWRITE) != 0;
+	r->open = (sc->sc_open & FREAD) != 0;
 
 	p->active = sc->sc_pbus;
 	r->active = sc->sc_rbus;

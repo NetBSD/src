@@ -1,4 +1,4 @@
-/*	$NetBSD: audiovar.h,v 1.32.2.1 2005/02/04 14:53:53 kent Exp $	*/
+/*	$NetBSD: audiovar.h,v 1.32.2.2 2005/02/13 04:36:16 kent Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -131,9 +131,7 @@ struct audio_softc {
 	void		*hw_hdl;	/* Hardware driver handle */
 	const struct audio_hw_if *hw_if; /* Hardware interface */
 	struct	device	*sc_dev;	/* Hardware device struct */
-	u_char		sc_open;	/* single use device */
-#define AUOPEN_READ	0x01
-#define AUOPEN_WRITE	0x02
+	int		sc_open;	/* open flags */
 	u_char		sc_mode;	/* bitmask for RECORD/PLAY */
 
 	struct	selinfo sc_wsel; /* write selector */
@@ -208,7 +206,7 @@ struct audio_softc {
 
 	int		sc_refcnt;
 	boolean_t	sc_dying;
-	int		sc_nchan; /* number of vchan instances */
+	int		sc_nchan; /* number of chan instances */
 	LIST_HEAD(, chan_softc)	sc_chans;
 
 #ifdef AUDIO_INTR_TIME
