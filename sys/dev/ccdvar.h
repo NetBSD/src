@@ -1,4 +1,4 @@
-/*	$NetBSD: ccdvar.h,v 1.23 2003/08/07 16:30:50 agc Exp $	*/
+/*	$NetBSD: ccdvar.h,v 1.24 2003/10/17 05:16:15 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -215,6 +215,8 @@ struct ccd_softc {
 
 /* sc_flags */
 #define	CCDF_UNIFORM	0x002	/* use LCCD of sizes for uniform interleave */
+#define	CCDF_NOLABEL	0x004	/* ignore on-disk (raw) disklabel */
+
 #define CCDF_INITED	0x010	/* unit has been initialized */
 #define CCDF_WLABEL	0x020	/* label area is writable */
 #define CCDF_LABELLING	0x040	/* unit is currently being labelled */
@@ -222,7 +224,7 @@ struct ccd_softc {
 #define	CCDF_VLABEL	0x100	/* label is valid */
 
 /* Mask of user-settable ccd flags. */
-#define CCDF_USERMASK	(CCDF_UNIFORM)
+#define CCDF_USERMASK	(CCDF_UNIFORM|CCDF_NOLABEL)
 
 /*
  * Before you can use a unit, it must be configured with CCDIOCSET.
