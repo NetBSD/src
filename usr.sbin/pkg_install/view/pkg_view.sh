@@ -1,6 +1,6 @@
 #! /bin/sh
 
-# $NetBSD: pkg_view.sh,v 1.1.2.13 2003/07/24 23:14:53 jlam Exp $
+# $NetBSD: pkg_view.sh,v 1.1.2.14 2003/07/24 23:38:59 jlam Exp $
 
 #
 # Copyright (c) 2001 Alistair G. Crooks.  All rights reserved.
@@ -121,7 +121,7 @@ esac
 while [ $# -gt 0 ]; do
 	case $action in
 	add)
-		if [ -f ${pkg_dbdir}/$1/+DEPOT]; then
+		if [ -f ${pkg_dbdir}/$1/+DEPOT ]; then
 			echo "Package $1 already exists in $viewstr."
 		else
 			dbs=`(cd ${depot_pkg_dbdir}/$1; echo +*)`
