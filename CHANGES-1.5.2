@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.5.2,v 1.1.2.11 2001/08/16 15:15:03 tv Exp $
+#	$NetBSD: CHANGES-1.5.2,v 1.1.2.12 2001/08/16 15:22:32 tv Exp $
 
 A complete list of changes from NetBSD 1.5.1 to NetBSD 1.5.2:
 
@@ -182,4 +182,8 @@ sys/kern/sysv_sem.c				1.41
 
 sys/ufs/lfs/lfs_syscalls.c			1.58 via patch
 
-  Constrain "blkcnt" of lfs_markv() syscall by 64KB.
+  Constrain "cnt" of lfs_markv() syscall to 64KB.
+
+sys/coda/coda_venus.c				1.9
+
+  Bounds check vi.in_size in venus_ioctl().
