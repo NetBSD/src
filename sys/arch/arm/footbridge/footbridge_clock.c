@@ -1,4 +1,4 @@
-/*	$NetBSD: footbridge_clock.c,v 1.11 2002/10/05 12:22:55 chris Exp $	*/
+/*	$NetBSD: footbridge_clock.c,v 1.12 2002/10/10 10:12:27 chris Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe.
@@ -378,6 +378,32 @@ calibrate_delay(void)
 {
      delay_clock_count = load_timer(TIMER_3_BASE, 100);
      delay_count_per_usec = delay_clock_count/10000;
+#ifdef VERBOSE_DELAY_CALIBRATION
+     printf("delay calibration: delay_cc = %d, delay_c/us=%d\n",
+		     delay_clock_count, delay_count_per_usec);
+     
+     printf("0..");
+     delay(1000000);
+     printf("1..");
+     delay(1000000);
+     printf("2..");
+     delay(1000000);
+     printf("3..");
+     delay(1000000);
+     printf("4..");
+      delay(1000000);
+     printf("5..");
+      delay(1000000);
+     printf("6..");
+      delay(1000000);
+     printf("7..");
+      delay(1000000);
+     printf("8..");
+      delay(1000000);
+     printf("9..");
+      delay(1000000);
+     printf("10\n");
+#endif
 }
 
 int delaycount = 500;
@@ -401,8 +427,11 @@ delay(n)
 	    }
 	    return;	
 	}
-	last = bus_space_read_4(clock_sc->sc_iot, clock_sc->sc_ioh,
-		TIMER_3_VALUE);
+	last = delay_clock_count;
+	 
+	/* reset timer */
+	bus_space_write_4(clock_sc->sc_iot, clock_sc->sc_ioh,
+			TIMER_3_CLEAR, 0);
 
 	delta = usecs = 0;
 
@@ -416,9 +445,9 @@ delay(n)
 	    else
 		delta += (last - cur);
 	    
-	    if (last == 0 && cur == 0)
+	    if (cur == 0)
 	    {
-		/* reset the timer, not sure this is really needed */
+		/* reset the timer */
 		bus_space_write_4(clock_sc->sc_iot, clock_sc->sc_ioh,
 			TIMER_3_CLEAR, 0);
 	    }
