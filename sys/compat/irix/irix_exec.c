@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_exec.c,v 1.22 2002/10/14 21:14:23 manu Exp $ */
+/*	$NetBSD: irix_exec.c,v 1.23 2002/11/01 19:26:25 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 2001-2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_exec.c,v 1.22 2002/10/14 21:14:23 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_exec.c,v 1.23 2002/11/01 19:26:25 jdolecek Exp $");
 
 #ifndef ELFSIZE
 #define ELFSIZE		32	/* XXX should die */
@@ -90,7 +90,7 @@ const struct emul emul_irix_o32 = {
 	0,
 	native_to_irix_errno,
 	IRIX_SYS_syscall,
-	IRIX_SYS_MAXSYSCALL,
+	IRIX_SYS_NSYSENT,
 #endif
 	irix_sysent,
 #ifdef SYSCALL_DEBUG
