@@ -1,4 +1,4 @@
-/*	$NetBSD: ms.c,v 1.4 1994/11/20 20:52:24 deraadt Exp $ */
+/*	$NetBSD: ms.c,v 1.5 1995/08/29 22:15:35 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -86,8 +86,8 @@ struct ms_softc {
 
 /*
  * Attach the mouse serial (down-link) interface.
- * Do we need to set it to 1200 baud, 8 bits?
- * Test by power cycling and not booting SunOS before BSD?
+ * The Sun 4 needs to have the baud rate set explicitly, but we handle
+ * that in ms_open().
  */
 void
 ms_serial(tp, iopen, iclose)
@@ -248,8 +248,17 @@ msopen(dev, flags, mode, p)
 		return (EBUSY);
 	ms_softc.ms_events.ev_io = p;
 	ev_init(&ms_softc.ms_events);	/* may cause sleep */
-	ms_softc.ms_ready = 1;		/* start accepting events */
+
+#if defined(SUN4)
+	if (cputyp == CPU_SUN4) {
+		/* We need to set the baud rate on the mouse. */
+		ms_softc.ms_mouse->t_ispeed =
+		    ms_softc.ms_mouse->t_ospeed = 1200;
+	}
+#endif
+
 	(*ms_softc.ms_open)(ms_softc.ms_mouse);
+	ms_softc.ms_ready = 1;		/* start accepting events */
 	return (0);
 }
 
