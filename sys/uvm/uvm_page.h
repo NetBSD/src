@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.h,v 1.7 1998/03/22 21:29:30 chuck Exp $	*/
+/*	$NetBSD: uvm_page.h,v 1.8 1998/05/28 15:31:31 chuck Exp $	*/
 
 /*
  * XXXCDC: "ROUGH DRAFT" QUALITY UVM PRE-RELEASE FILE!
@@ -100,14 +100,18 @@
 #endif /* UVM_PAGE_INLINE */
 
 /*
- * prototypes: the following prototypes define the interface to amaps
+ * prototypes: the following prototypes define the interface to pages
  */
 
 void uvm_page_init __P((vm_offset_t *, vm_offset_t *));
 #if defined(UVM_PAGE_TRKOWN)
 void uvm_page_own __P((struct vm_page *, char *));
 #endif
+#if !defined(PMAP_STEAL_MEMORY)
+boolean_t uvm_page_physget __P((vm_offset_t *));
+#endif
 void uvm_page_rehash __P((void));
+
 PAGE_INLINE void uvm_pageactivate __P((struct vm_page *));
 vm_offset_t uvm_pageboot_alloc __P((vm_size_t));
 PAGE_INLINE void uvm_pagecopy __P((struct vm_page *, struct vm_page *));
