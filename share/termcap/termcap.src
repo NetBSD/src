@@ -825,7 +825,8 @@ pcvtXX|pcvt vt200 emulator (DEC VT220):\
 	:md=\E[1m:me=\E[m:mr=\E[7m:nd=\E[C:nw=\EE:\
 	:r1=\Ec\E>\E[?3l\E[?4l\E[?5l\E[?7h\E[?8h:rc=\E8:\
 	:rf=/usr/share/tabset/vt100:sc=\E7:se=\E[27m:sf=\ED:\
-	:so=\E[7m:sr=\EM:st=\EH:ta=^I:ue=\E[24m:up=\E[A:us=\E[4m:
+	:so=\E[7m:sr=\EM:st=\EH:ta=^I:ue=\E[24m:up=\E[A:us=\E[4m:\
+	:ve=\E[?25h:vi=\E[?25l:
 
 #	NetBSD/FreeBSD vt220 terminal emulator console (pc keyboard & monitor)
 #	termcap entries for pure VT220-Emulation and 25, 28, 35, 40, 43 and
