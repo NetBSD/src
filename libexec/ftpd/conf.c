@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.41 2001/04/25 01:46:25 lukem Exp $	*/
+/*	$NetBSD: conf.c,v 1.42 2001/05/25 23:40:25 kristerw Exp $	*/
 
 /*-
  * Copyright (c) 1997-2001 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: conf.c,v 1.41 2001/04/25 01:46:25 lukem Exp $");
+__RCSID("$NetBSD: conf.c,v 1.42 2001/05/25 23:40:25 kristerw Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -628,7 +628,8 @@ int
 display_file(const char *file, int code)
 {
 	FILE   *f;
-	char   *buf, *p, *cwd;
+	char   *buf, *p;
+	char	cwd[MAXPATHLEN];
 	size_t	len;
 	off_t	lastnum;
 	time_t	now;
