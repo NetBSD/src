@@ -1,4 +1,4 @@
-.\"	$NetBSD: wd.4,v 1.2 1998/01/09 08:04:37 perry Exp $
+.\"	$NetBSD: wd.4,v 1.1 1998/10/19 12:44:15 bouyer Exp $
 .\"
 .\"
 .\" Copyright (c) 1994 James A. Jegers
@@ -23,23 +23,23 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd November 29, 1994
-.Dt WD 4 i386
+.Dd October 15, 1998
+.Dt WD 4 
 .Os NetBSD 
 .Sh NAME
 .Nm wd 
 .Nd WD100x compatible hard disk driver
 .Sh SYNOPSIS
-.Cd "wdc0 at isa? port 0x1f0 irq 14"
-.Cd "wd* at wdc? drive ?"
+.Cd "wd* at wdc? channel ? drive ?"
+.Cd "wd* at pciide? channel ? drive ?"
 .Sh DESCRIPTION
 The
 .Nm wd 
-driver supports hard disk controllers which emulate the Western
-Digital WD100x.  This includes standard MFM, RLL, ESDI and IDE
-controllers.
-.Pp
-Support for extended EIDE controllers is
-.Ud .
+driver supports hard disk which emulate the Western
+Digital WD100x.  This includes standard MFM, RLL, ESDI, IDE and EIDE
+drives.
 .Sh SEE ALSO
 .Xr intro 4
+.Xr wdc 4
+.Xr pciide 4
+.Xr scsi 4
