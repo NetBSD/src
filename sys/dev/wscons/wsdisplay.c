@@ -1,4 +1,4 @@
-/* $NetBSD: wsdisplay.c,v 1.6 1998/06/11 22:13:52 drochner Exp $ */
+/* $NetBSD: wsdisplay.c,v 1.7 1998/06/12 18:15:27 drochner Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -33,7 +33,7 @@
 static const char _copyright[] __attribute__ ((unused)) =
     "Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.";
 static const char _rcsid[] __attribute__ ((unused)) =
-    "$NetBSD: wsdisplay.c,v 1.6 1998/06/11 22:13:52 drochner Exp $";
+    "$NetBSD: wsdisplay.c,v 1.7 1998/06/12 18:15:27 drochner Exp $";
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -164,6 +164,11 @@ static void wsdisplay_common_attach __P((struct wsdisplay_softc *sc,
 	    int console, const struct wsscreen_list *,
 	    const struct wsdisplay_accessops *accessops,
 	    void *accesscookie));
+
+#ifdef WSDISPLAY_COMPAT_RAWKBD
+int wsdisplay_update_rawkbd __P((struct wsdisplay_softc *,
+				 struct wsscreen *));
+#endif
 
 static int wsdisplay_console_initted;
 static struct wsdisplay_softc *wsdisplay_console_device;
@@ -691,11 +696,7 @@ wsdisplay_internal_ioctl(sc, scr, cmd, data, flag, p)
 		switch (cmd) {
 		    case WSKBDIO_SETMODE:
 			scr->scr_rawkbd = (*(int *)data == WSKBD_RAW);
-			if (scr != sc->sc_focus ||
-			    sc->sc_rawkbd == scr->scr_rawkbd)
-				return (0);
-			sc->sc_rawkbd = scr->scr_rawkbd;
-			break;
+			return (wsdisplay_update_rawkbd(sc, scr));
 		    case WSKBDIO_GETMODE:
 			*(int *)data = (scr->scr_rawkbd ?
 					WSKBD_RAW : WSKBD_TRANSLATED);
@@ -943,6 +944,32 @@ wsdisplay_kbdinput(dev, data, count)
 		(*linesw[tp->t_line].l_rint)(*data++, tp);
 }
 
+#ifdef WSDISPLAY_COMPAT_RAWKBD
+int
+wsdisplay_update_rawkbd(sc, scr)
+	struct wsdisplay_softc *sc;
+	struct wsscreen *scr;
+{
+	int s, data, error;
+	s = spltty();
+
+	if (!sc->sc_kbddv ||
+	    scr != sc->sc_focus ||
+	    sc->sc_rawkbd == scr->scr_rawkbd) {
+		splx(s);
+		return (0);
+	}
+
+	data = (scr->scr_rawkbd ? WSKBD_RAW : WSKBD_TRANSLATED);
+	error = wskbd_displayioctl(sc->sc_kbddv, WSKBDIO_SETMODE,
+				   (caddr_t)&data, 0, 0);
+	if (!error)
+		sc->sc_rawkbd = scr->scr_rawkbd;
+	splx(s);
+	return (error);
+}
+#endif
+
 int
 wsdisplay_switch1(arg, waitok)
 	void *arg;
@@ -973,12 +1000,7 @@ wsdisplay_switch1(arg, waitok)
 	sc->sc_focus = scr;
 
 #ifdef WSDISPLAY_COMPAT_RAWKBD
-	if (sc->sc_rawkbd != scr->scr_rawkbd) {
-		int m = (scr->scr_rawkbd ? WSKBD_RAW : WSKBD_TRANSLATED);
-		(void) wsdisplay_internal_ioctl(sc, scr, WSKBDIO_SETMODE,
-						(caddr_t)&m, 0, 0);
-		/* this sets sc->sc_rawkbd because scr has focus */
-	}
+	(void) wsdisplay_update_rawkbd(sc, scr);
 #endif
 	/* keyboard map??? */
 
