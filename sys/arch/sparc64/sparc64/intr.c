@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.19 2000/02/09 05:48:34 shin Exp $ */
+/*	$NetBSD: intr.c,v 1.20 2000/02/21 20:38:51 erh Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -179,42 +179,16 @@ soft01intr(fp)
 			netisr = 0;
 			splx(s);
 			sir.sir_which[SIR_NET] = 0;
-#ifdef INET
-#if NARP > 0
-			if (n & (1 << NETISR_ARP))
-				arpintr();
-#endif
-			if (n & (1 << NETISR_IP))
-				ipintr();
-#endif
-#ifdef INET6
-			if (n & (1 << NETISR_IPV6))
-				ip6intr();
-#endif
-#ifdef NETATALK
-			if (n & (1 << NETISR_ATALK))
-				atintr();
-#endif
-#ifdef NS
-			if (n & (1 << NETISR_NS))
-				nsintr();
-#endif
-#ifdef ISO
-			if (n & (1 << NETISR_ISO))
-				clnlintr();
-#endif
-#ifdef NATM
-			if (n & (1 << NETISR_NATM))
-				natmintr();
-#endif
-#ifdef CCITT
-			if (n & (1 << NETISR_CCITT))
-				ccittintr();
-#endif
-#if NPPP > 0
-			if (n & (1 << NETISR_PPP))
-				pppintr();
-#endif
+
+#define DONETISR(bit, fn) do {		\
+	if (n & (1 << bit))		\
+		fn();			\
+} while (0)
+
+#include <net/netisr_dispatch.h>
+
+#undef DONETISR
+
 		}
 		if (sir.sir_which[SIR_CLOCK]) {
 			sir.sir_which[SIR_CLOCK] = 0;

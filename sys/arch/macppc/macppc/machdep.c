@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.68 2000/02/09 05:48:31 shin Exp $	*/
+/*	$NetBSD: machdep.c,v 1.69 2000/02/21 20:38:49 erh Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -687,48 +687,15 @@ softnet()
 	isr = netisr;
 	netisr = 0;
 
-#ifdef	INET
-#include "arp.h"
-#if NARP > 0
-	if (isr & (1 << NETISR_ARP))
-		arpintr();
-#endif
-	if (isr & (1 << NETISR_IP))
-		ipintr();
-#endif
-#ifdef	INET6
-	if (isr & (1 << NETISR_IPV6))
-		ip6intr();
-#endif
-#ifdef	IMP
-	if (isr & (1 << NETISR_IMP))
-		impintr();
-#endif
-#ifdef	NS
-	if (isr & (1 << NETISR_NS))
-		nsintr();
-#endif
-#ifdef	ISO
-	if (isr & (1 << NETISR_ISO))
-		clnlintr();
-#endif
-#ifdef	CCITT
-	if (isr & (1 << NETISR_CCITT))
-		ccittintr();
-#endif
-#ifdef	NATM
-	if (isr & (1 << NETISR_NATM))
-		natmintr();
-#endif
-#ifdef	NETATALK
-	if (isr & (1 << NETISR_ATALK))
-		atintr();
-#endif
-#include "ppp.h"
-#if NPPP > 0
-	if (isr & (1 << NETISR_PPP))
-		pppintr();
-#endif
+#define DONETISR(bit, fn) do {		\
+	if (isr & (1 << bit))		\
+		fn();			\
+} while (0)
+
+#include <net/netisr_dispatch.h>
+
+#undef DONETISR
+
 }
 
 #include "zsc.h"

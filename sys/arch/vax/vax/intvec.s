@@ -1,4 +1,4 @@
-/*	$NetBSD: intvec.s,v 1.40 2000/01/17 04:55:26 matt Exp $   */
+/*	$NetBSD: intvec.s,v 1.41 2000/02/21 20:38:51 erh Exp $   */
 
 /*
  * Copyright (c) 1994, 1997 Ludd, University of Lule}, Sweden.
@@ -284,30 +284,14 @@ ENTRY(sbiflt);
 
 ENTRY(netint)
 	PUSHR
-#ifdef INET
-#if NARP > 0
-	bbcc	$NETISR_ARP,_netisr,1f; calls $0,_arpintr; 1:
-#endif
-	bbcc	$NETISR_IP,_netisr,1f; calls $0,_ipintr; 1:
-#endif
-#ifdef INET6
-	bbcc	$NETISR_IPV6,_netisr,1f; calls $0,_ip6intr; 1:
-#endif
-#ifdef NETATALK
-	bbcc	$NETISR_ATALK,_netisr,1f; calls $0,_atintr; 1:
-#endif
-#ifdef NS
-	bbcc	$NETISR_NS,_netisr,1f; calls $0,_nsintr; 1:
-#endif
-#ifdef ISO
-	bbcc	$NETISR_ISO,_netisr,1f; calls $0,_clnlintr; 1:
-#endif
-#ifdef CCITT
-	bbcc	$NETISR_CCITT,_netisr,1f; calls $0,_ccittintr; 1:
-#endif
-#if NPPP > 0
-	bbcc	$NETISR_PPP,_netisr,1f; calls $0,_pppintr; 1:
-#endif
+
+#define DONETISR(bit, fn) \
+	bbcc	$bit,_netisr,1f; calls $0,__CONCAT(_,fn); 1:
+
+#include <net/netisr_dispatch.h>
+
+#undef DONETISR
+
 	POPR
 	rei
 
