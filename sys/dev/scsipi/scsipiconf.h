@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipiconf.h,v 1.32.2.11 2001/03/27 15:32:16 bouyer Exp $	*/
+/*	$NetBSD: scsipiconf.h,v 1.32.2.12 2001/04/03 15:27:18 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -405,6 +405,7 @@ struct scsipi_periph {
 #define	PERIPH_RECOVERY_ACTIVE	0x0100	/* a recovery command is active */
 #define PERIPH_KEEP_LABEL	0x0200	/* retain label after 'full' close */
 #define	PERIPH_SENSE		0x0400	/* periph has sense pending */
+#define PERIPH_UNTAG		0x0800	/* untagged command running */
 
 /* periph_quirks */
 #define	PQUIRK_AUTOSAVE		0x00000001	/* do implicit SAVE POINTERS */
