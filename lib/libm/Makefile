@@ -1,4 +1,5 @@
-#	@(#)Makefile	5.7.1.1 (Berkeley) 5/7/91
+#	from: @(#)Makefile	5.7.1.1 (Berkeley) 5/7/91
+#	$Id: Makefile,v 1.2 1993/08/01 05:40:21 mycroft Exp $
 #
 # ieee		- for most IEEE machines, we hope.
 # mc68881	- the, ahem, mc68881.

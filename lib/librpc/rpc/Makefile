@@ -1,4 +1,6 @@
-#	@(#)Makefile	5.11 (Berkeley) 9/6/90
+#	from: @(#)Makefile	5.11 (Berkeley) 9/6/90
+#	$Id: Makefile,v 1.6 1993/08/01 05:40:05 mycroft Exp $
+
 CFLAGS+=-DYP
 
 LIB=	rpc

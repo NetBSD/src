@@ -1,4 +1,5 @@
-#	@(#)Makefile	6.1 (Berkeley) 3/3/91
+#	from: @(#)Makefile	6.1 (Berkeley) 3/3/91
+#	$Id: Makefile,v 1.2 1993/08/01 05:42:28 mycroft Exp $
 
 PROG=		as
 SRCS=		app.c append.c as.c atof-generic.c bignum-copy.c \

@@ -1,7 +1,6 @@
-#	@(#)Makefile	5.12 (Berkeley) 3/7/91
+#	from: @(#)Makefile	5.12 (Berkeley) 3/7/91
+#	$Id: Makefile,v 1.8 1993/08/01 05:38:14 mycroft Exp $
 #
-#	$Header: /cvsroot/src/sbin/dump/Makefile,v 1.7 1993/07/18 19:18:03 mycroft Exp $
-
 #	dump.h			header file
 #	dumpitime.c		reads /etc/dumpdates
 #	dumpmain.c		driver

@@ -1,4 +1,5 @@
-#	@(#)Makefile	5.10 (Berkeley) 12/8/90
+#	from: @(#)Makefile	5.10 (Berkeley) 12/8/90
+#	$Id: Makefile,v 1.4 1993/08/01 05:45:13 mycroft Exp $
 
 PROG=	hack
 SRCS=	alloc.c hack.Decl.c hack.apply.c hack.bones.c hack.c hack.cmd.c \

@@ -1,4 +1,5 @@
-#	@(#)Makefile	5.10 (Berkeley) 6/1/90
+#	from: @(#)Makefile	5.10 (Berkeley) 6/1/90
+#	$Id: Makefile,v 1.3 1993/08/01 05:39:54 mycroft Exp $
 
 LIB=	termcap
 CFLAGS+=-DCM_N -DCM_GT -DCM_B -DCM_D

@@ -1,4 +1,5 @@
-#	@(#)Makefile	5.7 (Berkeley) 4/8/91
+#	from: @(#)Makefile	5.7 (Berkeley) 4/8/91
+#	$Id: Makefile,v 1.2 1993/08/01 05:45:35 mycroft Exp $
 
 PROG=	factor
 SRCS=	factor.c pr_tbl.c

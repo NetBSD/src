@@ -1,6 +1,5 @@
-#	@(#)Makefile	5.6 (Berkeley) 4/1/91
-#
-#	$Header: /cvsroot/src/sbin/disklabel/Makefile,v 1.6 1993/07/18 19:18:29 mycroft Exp $
+#	from: @(#)Makefile	5.6 (Berkeley) 4/1/91
+#	$Id: Makefile,v 1.7 1993/08/01 05:38:22 mycroft Exp $
 
 PROG=	disklabel
 SRCS=	disklabel.c dkcksum.c

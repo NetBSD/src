@@ -1,4 +1,5 @@
-#	@(#)Makefile.inc	5.3 (Berkeley) 2/20/91
+#	from: @(#)Makefile.inc	5.3 (Berkeley) 2/20/91
+#	$Id: Makefile.inc,v 1.3 1993/08/01 05:40:47 mycroft Exp $
 
 # librpc sources
 .PATH:	${.CURDIR}/../librpc/rpc

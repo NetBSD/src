@@ -1,4 +1,5 @@
-#	@(#)Makefile	5.5 (Berkeley) 5/11/90
+#	from: @(#)Makefile	5.5 (Berkeley) 5/11/90
+#	$Id: Makefile,v 1.5 1993/08/01 05:45:00 mycroft Exp $
 
 PROG=	monop
 SRCS=	monop.c cards.c execute.c getinp.c houses.c jail.c misc.c morg.c \

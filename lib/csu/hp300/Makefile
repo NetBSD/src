@@ -1,7 +1,8 @@
-#	@(#)Makefile	5.5 (Berkeley) 5/21/91
+#	from: @(#)Makefile	5.5 (Berkeley) 5/21/91
+#	$Id: Makefile,v 1.2 1993/08/01 05:41:46 mycroft Exp $
 
-CFLAGS=	-O -DLIBC_SCCS
-OBJS=	crt0.o gcrt0.o
+CFLAGS+=	-DLIBC_SCCS
+OBJS=		crt0.o gcrt0.o
 CLEANFILES+=	gmon.o mon.o moncrt0.o core a.out
 
 all: ${OBJS}

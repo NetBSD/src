@@ -1,4 +1,5 @@
-#	@(#)Makefile.inc	5.11 (Berkeley) 6/23/91
+#	from: @(#)Makefile.inc	5.11 (Berkeley) 6/23/91
+#	$Id: Makefile.inc,v 1.4 1993/08/01 05:40:35 mycroft Exp $
 
 # sys sources
 .PATH: ${.CURDIR}/${MACHINE}/sys ${.CURDIR}/sys

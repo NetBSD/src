@@ -1,6 +1,5 @@
-#	@(#)Makefile	5.4 (Berkeley) 10/21/90
-#
-#	$Header: /cvsroot/src/bin/rcp/Makefile,v 1.3 1993/03/23 00:26:53 cgd Exp $
+#	from: @(#)Makefile	5.4 (Berkeley) 10/21/90
+#	$Id: Makefile,v 1.4 1993/08/01 05:47:03 mycroft Exp $
 
 PROG=	rcp
 SRCS=	rcp.c 
