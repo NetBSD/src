@@ -1,4 +1,4 @@
-/* 	$NetBSD: rasops.h,v 1.9 1999/12/02 22:57:13 drochner Exp $ */
+/* 	$NetBSD: rasops.h,v 1.10 1999/12/14 22:20:28 ad Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@ struct rasops_info {
 	 */
 	struct	wsdisplay_font *ri_font;
 	int	ri_wsfcookie;	/* wsfont cookie */
-	void	*ri_priv;	/* driver private data */
+	void	*ri_hw;		/* driver private data; ignored by rasops */
 	int	ri_crow;	/* cursor row */
 	int	ri_ccol;	/* cursor column */
 	int	ri_flg;		/* various operational flags */
@@ -104,8 +104,6 @@ struct rasops_info {
 	
 	/* Callbacks so we can share some code */
 	void	(*ri_do_cursor) __P((struct rasops_info *));
-
-	void	*ri_hw;		/* for driver use, ignored by rasops */
 };
 
 #define DELTA(p, d, cast) ((p) = (cast)((caddr_t)(p) + (d)))
