@@ -25,11 +25,11 @@
  * any improvements or extensions that they make and grant Carnegie Mellon
  * the rights to redistribute these changes.
  *
- *	$Id: sys.c,v 1.2 1993/08/02 17:52:17 mycroft Exp $
+ *	$Id: sys.c,v 1.3 1993/12/17 00:41:23 deraadt Exp $
  */
 
 #include "boot.h"
-#include <sys/dir.h>
+#include <sys/dirent.h>
 #include <sys/reboot.h>
 
 /* #define BUFSIZE 4096 */
@@ -91,7 +91,7 @@ find(path)
 {
 	char *rest, ch;
 	int block, off, loc, ino = ROOTINO;
-	struct direct *dp;
+	struct dirent *dp;
 loop:	iodest = iobuf;
 	cnt = fs->fs_bsize;
 	bnum = fsbtodb(fs,itod(fs,ino)) + boff;
@@ -118,10 +118,10 @@ loop:	iodest = iobuf;
 			iodest = iobuf;
 			devread();
 		}
-		dp = (struct direct *)(iodest + off);
+		dp = (struct dirent *)(iodest + off);
 		loc += dp->d_reclen;
-	} while (!dp->d_ino || strcmp(path, dp->d_name));
-	ino = dp->d_ino;
+	} while (!dp->d_fileno || strcmp(path, dp->d_name));
+	ino = dp->d_fileno;
 	*(path = rest) = ch;
 	goto loop;
 }
