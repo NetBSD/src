@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.102.4.1 2000/08/22 07:53:07 kleink Exp $
+#	$NetBSD: Makefile.inc,v 1.102.4.2 2000/09/29 09:08:09 kleink Exp $
 #	@(#)Makefile.inc	8.3 (Berkeley) 10/24/94
 
 # sys sources
@@ -35,7 +35,7 @@ SRCS+=	timer_create.c timer_delete.c timer_gettime.c timer_settime.c \
 	timer_getoverrun.c
 
 # namespace purity wrappers
-SRCS+=	_brk.c _fork.c _sbrk.c
+SRCS+=	_brk.c _fork.c _pipe.c _sbrk.c
 
 # modules with default implementations on all architectures:
 ASM=	accept.o access.o acct.o adjtime.o bind.o chdir.o chflags.o \
