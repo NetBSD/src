@@ -1,4 +1,4 @@
-/*	$NetBSD: icpsp.c,v 1.10 2005/02/21 00:29:07 thorpej Exp $	*/
+/*	$NetBSD: icpsp.c,v 1.11 2005/02/27 00:27:01 perry Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: icpsp.c,v 1.10 2005/02/21 00:29:07 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: icpsp.c,v 1.11 2005/02/27 00:27:01 perry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -251,7 +251,7 @@ icpsp_scsipi_request(struct scsipi_channel *chan, scsipi_adapter_req_t req,
 
 				/*
 				 * XXX We're now in a bad way, because we
-				 * don't know how to abort the command. 
+				 * don't know how to abort the command.
 				 * That shouldn't matter too much, since
 				 * polled commands won't be used while the
 				 * system is running.

@@ -1,4 +1,4 @@
-/*	$NetBSD: rgephy.c,v 1.4 2005/02/08 05:52:31 yamt Exp $	*/
+/*	$NetBSD: rgephy.c,v 1.5 2005/02/27 00:27:31 perry Exp $	*/
 
 /*
  * Copyright (c) 2003
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rgephy.c,v 1.4 2005/02/08 05:52:31 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rgephy.c,v 1.5 2005/02/27 00:27:31 perry Exp $");
 
 
 /*
@@ -143,7 +143,7 @@ rgephy_attach(struct device *parent, struct device *self, void *aux)
 
 	/*
 	 * FreeBSD does not check EXSTAT, but instead adds gigabit
-	 * media explicitly. Why? 
+	 * media explicitly. Why?
 	 */
 	aprint_normal("%s: ", sc->mii_dev.dv_xname);
 #ifdef __FreeBSD__
@@ -239,7 +239,7 @@ setit:
 			PHY_WRITE(sc, RGEPHY_MII_BMCR, speed);
 			PHY_WRITE(sc, RGEPHY_MII_ANAR, RGEPHY_SEL_TYPE);
 
-			if (IFM_SUBTYPE(ife->ifm_media) != IFM_1000_T) 
+			if (IFM_SUBTYPE(ife->ifm_media) != IFM_1000_T)
 				break;
 
 			PHY_WRITE(sc, RGEPHY_MII_1000CTL, gig);
@@ -306,7 +306,7 @@ setit:
 		 */
 		if (++sc->mii_ticks <= 5/*10*/)
 			break;
-		
+
 		sc->mii_ticks = 0;
 		rgephy_mii_phy_auto(sc);
 		return (0);
@@ -320,7 +320,7 @@ setit:
 	 * the DSP on the RealTek PHYs if the media changes.
 	 *
 	 */
-	if (sc->mii_media_active != mii->mii_media_active || 
+	if (sc->mii_media_active != mii->mii_media_active ||
 	    sc->mii_media_status != mii->mii_media_status ||
 	    cmd == MII_MEDIACHG) {
 	  	/* XXX only for v0/v1 phys. */
@@ -521,7 +521,7 @@ rgephy_load_dspcode(struct mii_softc *sc)
 	PHY_WRITE(sc, 0x0b, 0x0000);
 
 #endif
-	
+
 	DELAY(40);
 }
 

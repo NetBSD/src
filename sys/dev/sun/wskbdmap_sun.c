@@ -1,4 +1,4 @@
-/*	$NetBSD: wskbdmap_sun.c,v 1.4 2005/02/25 16:04:36 martin Exp $	*/
+/*	$NetBSD: wskbdmap_sun.c,v 1.5 2005/02/27 00:27:49 perry Exp $	*/
 /*	$OpenBSD: sunkbd.c,v 1.9 2002/09/08 23:22:00 miod Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wskbdmap_sun.c,v 1.4 2005/02/25 16:04:36 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wskbdmap_sun.c,v 1.5 2005/02/27 00:27:49 perry Exp $");
 
 #include <sys/types.h>
 #include <dev/wscons/wsksymdef.h>
@@ -170,7 +170,7 @@ static const keysym_t wssun_keydesctab_us [] = {
 
 const keysym_t wssun_keydesctab_sv[] = {
     KC(0x0d),		KS_Multi_key,
-    KC(0x0f),		KS_asciitilde,	KS_asciicircum, 
+    KC(0x0f),		KS_asciitilde,	KS_asciicircum,
     KC(0x1f),		KS_2,		KS_quotedbl,	KS_at,
     KC(0x20),		KS_3,		KS_numbersign,	KS_sterling,
     KC(0x21),		KS_4,		KS_currency,	KS_dollar,

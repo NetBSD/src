@@ -1,4 +1,4 @@
-/*	$NetBSD: slide.c,v 1.9 2004/08/21 00:28:34 thorpej Exp $	*/
+/*	$NetBSD: slide.c,v 1.10 2005/02/27 00:27:34 perry Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -170,7 +170,7 @@ sl82c105_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 	for (channel = 0; channel < sc->sc_wdcdev.sc_atac.atac_nchannels;
 	     channel++) {
 		cp = &sc->pciide_channels[channel];
-		if (pciide_chansetup(sc, channel, interface) == 0) 
+		if (pciide_chansetup(sc, channel, interface) == 0)
 			continue;
 		if ((channel == 0 && (idecr & IDECR_P0EN) == 0) ||
 		    (channel == 1 && (idecr & IDECR_P1EN) == 0)) {

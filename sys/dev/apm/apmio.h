@@ -1,4 +1,4 @@
-/*	$NetBSD: apmio.h,v 1.1 2002/10/14 02:08:40 takemura Exp $	*/
+/*	$NetBSD: apmio.h,v 1.2 2005/02/27 00:26:58 perry Exp $	*/
 /*-
  * Copyright (c) 1995 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -49,7 +49,7 @@ struct apm_power_info {
 	u_char battery_life;
 	u_char spare1;
 	u_int minutes_left;		/* estimate */
-	u_int nbattery;		
+	u_int nbattery;
 	u_int batteryid;
 	u_int spare2[4];
 };

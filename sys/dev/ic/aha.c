@@ -1,4 +1,4 @@
-/*	$NetBSD: aha.c,v 1.46 2005/02/21 00:29:07 thorpej Exp $	*/
+/*	$NetBSD: aha.c,v 1.47 2005/02/27 00:27:00 perry Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aha.c,v 1.46 2005/02/21 00:29:07 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aha.c,v 1.47 2005/02/27 00:27:00 perry Exp $");
 
 #include "opt_ddb.h"
 
@@ -385,7 +385,7 @@ AGAIN:
 		    BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
 		aha_nextmbx(wmbi, wmbx, mbi);
 		bus_dmamap_sync(sc->sc_dmat, sc->sc_dmamap_control,
-		    AHA_MBI_OFF(wmbi), sizeof(struct aha_mbx_in), 
+		    AHA_MBI_OFF(wmbi), sizeof(struct aha_mbx_in),
 		    BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
 	} while (wmbi->stat != AHA_MBI_FREE);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: iopvar.h,v 1.14 2004/09/13 12:55:47 drochner Exp $	*/
+/*	$NetBSD: iopvar.h,v 1.15 2005/02/27 00:27:00 perry Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001, 2002 The NetBSD Foundation, Inc.
@@ -60,14 +60,14 @@ struct iop_msg {
 	void			*im_dvcontext;	/* Un*x device context */
 	struct i2o_reply	*im_rb;		/* Reply buffer */
 	u_int			im_reqstatus;	/* Status from reply */
-	u_int			im_detstatus;	/* Detailed status code */ 
+	u_int			im_detstatus;	/* Detailed status code */
 	struct iop_xfer		im_xfer[IOP_MAX_MSG_XFERS];
 };
 #define	IM_SYSMASK		0x00ff
 #define	IM_REPLIED		0x0001	/* Message has been replied to */
 #define	IM_ALLOCED		0x0002	/* This message wrapper is allocated */
 #define	IM_SGLOFFADJ		0x0004	/* S/G list offset adjusted */
-#define	IM_FAIL			0x0008	/* Transaction error returned */	
+#define	IM_FAIL			0x0008	/* Transaction error returned */
 
 #define	IM_USERMASK		0xff00
 #define	IM_WAIT			0x0100	/* Wait (sleep) for completion */

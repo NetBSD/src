@@ -1,4 +1,4 @@
-/*	$NetBSD: if_atu.c,v 1.4 2005/02/25 14:47:19 joff Exp $ */
+/*	$NetBSD: if_atu.c,v 1.5 2005/02/27 00:27:51 perry Exp $ */
 /*	$OpenBSD: if_atu.c,v 1.48 2004/12/30 01:53:21 dlg Exp $ */
 /*
  * Copyright (c) 2003, 2004
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_atu.c,v 1.4 2005/02/25 14:47:19 joff Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_atu.c,v 1.5 2005/02/27 00:27:51 perry Exp $");
 
 #include "bpfilter.h"
 
@@ -150,7 +150,7 @@ struct atu_radfirm {
 	unsigned char	*atur_external;
 	size_t		atur_external_sz;
 } atu_radfirm[] = {
-	{ RadioRFMD,		
+	{ RadioRFMD,
 	  atmel_fw_rfmd_int,		sizeof(atmel_fw_rfmd_int),
 	  atmel_fw_rfmd_ext,		sizeof(atmel_fw_rfmd_ext) },
 	{ RadioRFMD2958,

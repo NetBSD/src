@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_decluster.h,v 1.4 2001/10/04 15:58:52 oster Exp $	*/
+/*	$NetBSD: rf_decluster.h,v 1.5 2005/02/27 00:27:44 perry Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -92,23 +92,23 @@ struct RF_DeclusteredConfigInfo_s {
 							 * kernel */
 };
 
-int 
+int
 rf_ConfigureDeclustered(RF_ShutdownList_t ** listp, RF_Raid_t * raidPtr,
     RF_Config_t * cfgPtr);
-int 
+int
 rf_ConfigureDeclusteredDS(RF_ShutdownList_t ** listp, RF_Raid_t * raidPtr,
     RF_Config_t * cfgPtr);
 
-void 
+void
 rf_MapSectorDeclustered(RF_Raid_t * raidPtr, RF_RaidAddr_t raidSector,
     RF_RowCol_t * row, RF_RowCol_t * col, RF_SectorNum_t * diskSector, int remap);
-void 
+void
 rf_MapParityDeclustered(RF_Raid_t * raidPtr, RF_RaidAddr_t raidSector,
     RF_RowCol_t * row, RF_RowCol_t * col, RF_SectorNum_t * diskSector, int remap);
-void 
+void
 rf_IdentifyStripeDeclustered(RF_Raid_t * raidPtr, RF_RaidAddr_t addr,
     RF_RowCol_t ** diskids, RF_RowCol_t * outRow);
-void 
+void
 rf_MapSIDToPSIDDeclustered(RF_RaidLayout_t * layoutPtr,
     RF_StripeNum_t stripeID, RF_StripeNum_t * psID,
     RF_ReconUnitNum_t * which_ru);
@@ -118,11 +118,11 @@ void    rf_FreeSpareTable(RF_Raid_t * raidPtr);
 RF_HeadSepLimit_t rf_GetDefaultHeadSepLimitDeclustered(RF_Raid_t * raidPtr);
 int     rf_GetDefaultNumFloatingReconBuffersDeclustered(RF_Raid_t * raidPtr);
 
-void 
+void
 rf_decluster_adjust_params(RF_RaidLayout_t * layoutPtr,
     RF_StripeNum_t * SUID, RF_StripeCount_t * sus_per_fulltable,
     RF_StripeCount_t * fulltable_depth, RF_StripeNum_t * base_suid);
-void 
+void
 rf_remap_to_spare_space(
     RF_RaidLayout_t * layoutPtr,
     RF_DeclusteredConfigInfo_t * info, RF_RowCol_t row, RF_StripeNum_t FullTableID,

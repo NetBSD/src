@@ -1,4 +1,4 @@
-/*	$NetBSD: raidframeio.h,v 1.1 2001/10/04 15:43:57 oster Exp $ */
+/*	$NetBSD: raidframeio.h,v 1.2 2005/02/27 00:27:44 perry Exp $ */
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -113,8 +113,8 @@
 									 * for device */
 #define RAIDFRAME_KEEP_ACCTOTALS    _IOW ('r', 18, int)	/* turn AccTotals on or
 							 * off for device */
-#define RAIDFRAME_GET_COMPONENT_LABEL _IOWR ('r', 19, RF_ComponentLabel_t *) 
-#define RAIDFRAME_SET_COMPONENT_LABEL _IOW ('r', 20, RF_ComponentLabel_t) 
+#define RAIDFRAME_GET_COMPONENT_LABEL _IOWR ('r', 19, RF_ComponentLabel_t *)
+#define RAIDFRAME_SET_COMPONENT_LABEL _IOW ('r', 20, RF_ComponentLabel_t)
 
 #define RAIDFRAME_INIT_LABELS _IOW ('r', 21, RF_ComponentLabel_t)
 #define RAIDFRAME_ADD_HOT_SPARE     _IOW ('r', 22, RF_SingleComponent_t)

@@ -1,5 +1,5 @@
 /*
- *   Copyright (c) 1996, 1998 Gary Jennejohn. All rights reserved. 
+ *   Copyright (c) 1996, 1998 Gary Jennejohn. All rights reserved.
  *
  *   Redistribution and use in source and binary forms, with or without
  *   modification, are permitted provided that the following conditions
@@ -15,7 +15,7 @@
  *      without specific prior written permission.
  *   4. Altered versions must be plainly marked as such, and must not be
  *      misrepresented as being the original software and/or documentation.
- *   
+ *
  *   THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
  *   ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  *   IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -30,7 +30,7 @@
  *
  *---------------------------------------------------------------------------
  *
- *	$Id: isac.h,v 1.1 2001/02/20 22:24:36 martin Exp $ 
+ *	$Id: isac.h,v 1.2 2005/02/27 00:27:01 perry Exp $
  *
  *      last edit-date: [Sun Feb 14 10:27:13 1999]
  *
@@ -38,7 +38,7 @@
  *
  *---------------------------------------------------------------------------
  */
- 
+
 #ifndef I4B_ISAC_H_
 #define I4B_ISAC_H_
 
@@ -56,7 +56,7 @@
 #warning "I4B_ISAC_CMDRWRDELAY set to 0!"
 #define ISACCMDRWRDELAY()
 #endif
- 
+
 enum ISAC_VERSIONS {
 	ISAC_VA,	/* 2085 A1 or A2, 2086/2186 V1.1	*/
 	ISAC_VB1,	/* 2085 B1				*/
@@ -70,7 +70,7 @@ enum ISAC_VERSIONS {
 /*
  * definitions of registers and bits for the ISAC ISDN chip.
  */
- 
+
 typedef struct isac_reg {
 
 	/* 32 byte deep FIFO always first */

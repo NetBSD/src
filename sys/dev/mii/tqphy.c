@@ -1,4 +1,4 @@
-/*	$NetBSD: tqphy.c,v 1.24 2004/08/23 06:16:07 thorpej Exp $	*/
+/*	$NetBSD: tqphy.c,v 1.25 2005/02/27 00:27:31 perry Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tqphy.c,v 1.24 2004/08/23 06:16:07 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tqphy.c,v 1.25 2005/02/27 00:27:31 perry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -242,19 +242,19 @@ tqphy_status(struct mii_softc *sc)
 	    PHY_READ(sc, MII_BMSR);
 	if (bmsr & BMSR_LINK)
 		mii->mii_media_status |= IFM_ACTIVE;
- 
+
 	bmcr = PHY_READ(sc, MII_BMCR);
 	if (bmcr & BMCR_ISO) {
 		mii->mii_media_active |= IFM_NONE;
 		mii->mii_media_status = 0;
 		return;
 	}
- 
+
 	if (bmcr & BMCR_LOOP)
 		mii->mii_media_active |= IFM_LOOP;
- 
+
 	if (bmcr & BMCR_AUTOEN) {
-		if ((bmsr & BMSR_ACOMP) == 0) { 
+		if ((bmsr & BMSR_ACOMP) == 0) {
 			/* Erg, still trying, I guess... */
 			mii->mii_media_active |= IFM_NONE;
 			return;
@@ -266,6 +266,6 @@ tqphy_status(struct mii_softc *sc)
 			mii->mii_media_active |= IFM_10_T;
 		if (diag & DIAG_DPLX)
 			mii->mii_media_active |= IFM_FDX;
-	} else 
+	} else
 		mii->mii_media_active = ife->ifm_media;
 }

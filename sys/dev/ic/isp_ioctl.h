@@ -1,4 +1,4 @@
-/* $NetBSD: isp_ioctl.h,v 1.5 2002/08/12 21:33:40 mjacob Exp $ */
+/* $NetBSD: isp_ioctl.h,v 1.6 2005/02/27 00:27:01 perry Exp $ */
 /*
  * Copyright (c) 2001 by Matthew Jacob
  *
@@ -165,7 +165,7 @@ struct isp_hba_device {
  * Known parameters are:
  *
  *	Name				Value Range
- *	
+ *
  *	"framelength"			512,1024,2048
  *	"exec_throttle"			16..255
  *	"fullduplex"			0,1

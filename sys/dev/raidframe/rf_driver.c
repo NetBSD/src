@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_driver.c,v 1.106 2005/02/13 20:27:48 oster Exp $	*/
+/*	$NetBSD: rf_driver.c,v 1.107 2005/02/27 00:27:44 perry Exp $	*/
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -73,7 +73,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_driver.c,v 1.106 2005/02/13 20:27:48 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_driver.c,v 1.107 2005/02/27 00:27:44 perry Exp $");
 
 #include "opt_raid_diagnostic.h"
 
@@ -159,7 +159,7 @@ static int rf_AllocEmergBuffers(RF_Raid_t *);
 static void rf_FreeEmergBuffers(RF_Raid_t *);
 
 /* called at system boot time */
-int     
+int
 rf_BootRaidframe()
 {
 
@@ -176,7 +176,7 @@ rf_BootRaidframe()
 /*
  * Called whenever an array is shutdown
  */
-static void 
+static void
 rf_UnconfigureArray()
 {
 
@@ -201,7 +201,7 @@ rf_UnconfigureArray()
 /*
  * Called to shut down an array.
  */
-int 
+int
 rf_Shutdown(RF_Raid_t *raidPtr)
 {
 
@@ -282,7 +282,7 @@ rf_Shutdown(RF_Raid_t *raidPtr)
 	rf_mutex_init((_m_)); \
 }
 
-int 
+int
 rf_Configure(RF_Raid_t *raidPtr, RF_Config_t *cfgPtr, RF_AutoConfig_t *ac)
 {
 	RF_RowCol_t col;
@@ -299,7 +299,7 @@ rf_Configure(RF_Raid_t *raidPtr, RF_Config_t *cfgPtr, RF_AutoConfig_t *ac)
 
 		/*
 	         * Yes, this does make debugging general to the whole
-	         * system instead of being array specific. Bummer, drag.  
+	         * system instead of being array specific. Bummer, drag.
 		 */
 		rf_ConfigureDebug(cfgPtr);
 		DO_INIT_CONFIGURE(rf_ConfigureDebugMem);
@@ -340,7 +340,7 @@ rf_Configure(RF_Raid_t *raidPtr, RF_Config_t *cfgPtr, RF_AutoConfig_t *ac)
 
 	raidPtr->status = rf_rs_optimal;
 	raidPtr->reconControl = NULL;
-	
+
 	TAILQ_INIT(&(raidPtr->iodone));
 	simple_lock_init(&(raidPtr->iodone_lock));
 
@@ -388,7 +388,7 @@ rf_Configure(RF_Raid_t *raidPtr, RF_Config_t *cfgPtr, RF_AutoConfig_t *ac)
 	raidPtr->recon_in_progress = 0;
 	raidPtr->maxOutstanding = cfgPtr->maxOutstandingDiskReqs;
 
-	/* autoconfigure and root_partition will actually get filled in 
+	/* autoconfigure and root_partition will actually get filled in
 	   after the config is done */
 	raidPtr->autoconfigure = 0;
 	raidPtr->root_partition = 0;
@@ -402,7 +402,7 @@ rf_Configure(RF_Raid_t *raidPtr, RF_Config_t *cfgPtr, RF_AutoConfig_t *ac)
 	/* Allocate a bunch of buffers to be used in low-memory conditions */
 	raidPtr->iobuf = NULL;
 
-	rc = rf_AllocEmergBuffers(raidPtr); 
+	rc = rf_AllocEmergBuffers(raidPtr);
 	if (rc) {
 		printf("raid%d: Unable to allocate emergency buffers.\n",
 		       raidPtr->raidid);
@@ -426,7 +426,7 @@ rf_Configure(RF_Raid_t *raidPtr, RF_Config_t *cfgPtr, RF_AutoConfig_t *ac)
 	printf("raid%d: Total Sectors: %lu (%lu MB)\n",
 	       raidPtr->raidid,
 	       (unsigned long) raidPtr->totalSectors,
-	       (unsigned long) (raidPtr->totalSectors / 1024 * 
+	       (unsigned long) (raidPtr->totalSectors / 1024 *
 				(1 << raidPtr->logBytesPerSector) / 1024));
 
 	return (0);
@@ -437,11 +437,11 @@ rf_Configure(RF_Raid_t *raidPtr, RF_Config_t *cfgPtr, RF_AutoConfig_t *ac)
 
   Routines to allocate and free the "emergency buffers" for a given
   RAID set.  These emergency buffers will be used when the kernel runs
-  out of kernel memory. 
-  
+  out of kernel memory.
+
  */
 
-static int 
+static int
 rf_AllocEmergBuffers(RF_Raid_t *raidPtr)
 {
 	void *tmpbuf;
@@ -453,13 +453,13 @@ rf_AllocEmergBuffers(RF_Raid_t *raidPtr)
 #if DEBUG
 	printf("raid%d: allocating %d buffers of %d bytes.\n",
 	       raidPtr->raidid,
-	       raidPtr->numEmergencyBuffers, 
-	       (int)(raidPtr->Layout.sectorsPerStripeUnit << 
+	       raidPtr->numEmergencyBuffers,
+	       (int)(raidPtr->Layout.sectorsPerStripeUnit <<
 	       raidPtr->logBytesPerSector));
 #endif
 	for (i = 0; i < raidPtr->numEmergencyBuffers; i++) {
-		tmpbuf = malloc( raidPtr->Layout.sectorsPerStripeUnit << 
-				 raidPtr->logBytesPerSector, 
+		tmpbuf = malloc( raidPtr->Layout.sectorsPerStripeUnit <<
+				 raidPtr->logBytesPerSector,
 				 M_RAIDFRAME, M_NOWAIT);
 		if (tmpbuf) {
 			vple = rf_AllocVPListElem();
@@ -492,7 +492,7 @@ rf_AllocEmergBuffers(RF_Raid_t *raidPtr)
 			break;
                 }
         }
-	
+
 	return (0);
 }
 
@@ -519,13 +519,13 @@ rf_FreeEmergBuffers(RF_Raid_t *raidPtr)
 }
 
 
-static void 
+static void
 rf_ShutdownRDFreeList(void *ignored)
 {
 	pool_destroy(&rf_pools.rad);
 }
 
-static int 
+static int
 rf_ConfigureRDFreeList(RF_ShutdownList_t **listp)
 {
 
@@ -586,7 +586,7 @@ rf_AllocRaidAccDesc(RF_Raid_t *raidPtr, RF_IoType_t type,
 	return (desc);
 }
 
-void 
+void
 rf_FreeRaidAccDesc(RF_RaidAccessDesc_t *desc)
 {
 	RF_Raid_t *raidPtr = desc->raidPtr;
@@ -633,7 +633,7 @@ rf_FreeRaidAccDesc(RF_RaidAccessDesc_t *desc)
  * RF_FALSE bp_in is a buf pointer.  void * to facilitate ignoring it
  * outside the kernel
  ********************************************************************/
-int 
+int
 rf_DoAccess(RF_Raid_t * raidPtr, RF_IoType_t type, int async_flag,
 	    RF_RaidAddr_t raidAddress, RF_SectorCount_t numBlocks,
 	    caddr_t bufPtr, struct buf *bp, RF_RaidAccessFlags_t flags)
@@ -676,7 +676,7 @@ rf_DoAccess(RF_Raid_t * raidPtr, RF_IoType_t type, int async_flag,
 }
 #if 0
 /* force the array into reconfigured mode without doing reconstruction */
-int 
+int
 rf_SetReconfiguredMode(RF_Raid_t *raidPtr, int col)
 {
 	if (!(raidPtr->Layout.map->flags & RF_DISTRIBUTE_SPARE)) {
@@ -697,12 +697,12 @@ rf_SetReconfiguredMode(RF_Raid_t *raidPtr, int col)
 }
 #endif
 
-int 
+int
 rf_FailDisk(RF_Raid_t *raidPtr, int fcol, int initRecon)
 {
 
 	/* need to suspend IO's here -- if there are DAGs in flight
-	   and we pull the rug out from under ci_vp, Bad Things 
+	   and we pull the rug out from under ci_vp, Bad Things
 	   can happen.  */
 
 	rf_SuspendNewRequestsAndWait(raidPtr);
@@ -710,17 +710,17 @@ rf_FailDisk(RF_Raid_t *raidPtr, int fcol, int initRecon)
 	RF_LOCK_MUTEX(raidPtr->mutex);
 	if (raidPtr->Disks[fcol].status != rf_ds_failed) {
 		/* must be failing something that is valid, or else it's
-		   already marked as failed (in which case we don't 
+		   already marked as failed (in which case we don't
 		   want to mark it failed again!) */
 		raidPtr->numFailures++;
 		raidPtr->Disks[fcol].status = rf_ds_failed;
-		raidPtr->status = rf_rs_degraded;		
+		raidPtr->status = rf_rs_degraded;
 	}
 	RF_UNLOCK_MUTEX(raidPtr->mutex);
-	
+
 	rf_update_component_labels(raidPtr, RF_NORMAL_COMPONENT_UPDATE);
-	
-	/* Close the component, so that it's not "locked" if someone 
+
+	/* Close the component, so that it's not "locked" if someone
 	   else want's to use it! */
 
 	rf_close_component(raidPtr, raidPtr->raid_cinfo[fcol].ci_vp,
@@ -729,7 +729,7 @@ rf_FailDisk(RF_Raid_t *raidPtr, int fcol, int initRecon)
 	RF_LOCK_MUTEX(raidPtr->mutex);
 	raidPtr->raid_cinfo[fcol].ci_vp = NULL;
 
-	/* Need to mark the component as not being auto_configured 
+	/* Need to mark the component as not being auto_configured
 	   (in case it was previously). */
 
 	raidPtr->Disks[fcol].auto_configured = 0;
@@ -746,12 +746,12 @@ rf_FailDisk(RF_Raid_t *raidPtr, int fcol, int initRecon)
 /* releases a thread that is waiting for the array to become quiesced.
  * access_suspend_mutex should be locked upon calling this
  */
-void 
+void
 rf_SignalQuiescenceLock(RF_Raid_t *raidPtr)
 {
 #if RF_DEBUG_QUIESCE
 	if (rf_quiesceDebug) {
-		printf("raid%d: Signalling quiescence lock\n", 
+		printf("raid%d: Signalling quiescence lock\n",
 		       raidPtr->raidid);
 	}
 #endif
@@ -762,7 +762,7 @@ rf_SignalQuiescenceLock(RF_Raid_t *raidPtr)
 	}
 }
 /* suspends all new requests to the array.  No effect on accesses that are in flight.  */
-int 
+int
 rf_SuspendNewRequestsAndWait(RF_Raid_t *raidPtr)
 {
 #if RF_DEBUG_QUIESCE
@@ -792,7 +792,7 @@ rf_SuspendNewRequestsAndWait(RF_Raid_t *raidPtr)
 	return (raidPtr->waiting_for_quiescence);
 }
 /* wake up everyone waiting for quiescence to be released */
-void 
+void
 rf_ResumeNewRequests(RF_Raid_t *raidPtr)
 {
 	RF_CallbackDesc_t *t, *cb;
@@ -824,7 +824,7 @@ rf_ResumeNewRequests(RF_Raid_t *raidPtr)
  *
  ****************************************************************************************/
 
-static void 
+static void
 set_debug_option(char *name, long val)
 {
 	RF_DebugName_t *p;
@@ -842,7 +842,7 @@ set_debug_option(char *name, long val)
 
 /* would like to use sscanf here, but apparently not available in kernel */
 /*ARGSUSED*/
-static void 
+static void
 rf_ConfigureDebug(RF_Config_t *cfgPtr)
 {
 	char   *val_p, *name_p, *white_p;

@@ -1,4 +1,4 @@
-/*	$NetBSD: st_scsi.c,v 1.20 2005/02/21 00:29:08 thorpej Exp $ */
+/*	$NetBSD: st_scsi.c,v 1.21 2005/02/27 00:27:48 perry Exp $ */
 
 /*-
  * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: st_scsi.c,v 1.20 2005/02/21 00:29:08 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: st_scsi.c,v 1.21 2005/02/27 00:27:48 perry Exp $");
 
 #include "opt_scsi.h"
 #include "rnd.h"
@@ -276,7 +276,7 @@ st_scsibus_mode_select(struct st_softc *st, int flags)
 	/*
 	 * do the command
 	 */
-	return scsipi_mode_select(periph, 0, &scsi_select.header, 
+	return scsipi_mode_select(periph, 0, &scsi_select.header,
 	    scsi_select_len, flags | XS_CTL_DATA_ONSTACK,
 	    ST_RETRIES, ST_CTL_TIME);
 }
@@ -298,7 +298,7 @@ st_scsibus_cmprss(struct st_softc *st, int flags, int onoff)
 	int error, ison;
 
 	scsi_dlen = sizeof(scsi_pdata);
-	/*  
+	/*
 	 * Do DATA COMPRESSION page first.
 	 */
 	page = SMS_PCTRL_CURRENT | 0xf;

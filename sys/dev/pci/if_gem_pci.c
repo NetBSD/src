@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gem_pci.c,v 1.18 2005/02/04 02:10:45 perry Exp $ */
+/*	$NetBSD: if_gem_pci.c,v 1.19 2005/02/27 00:27:33 perry Exp $ */
 
 /*
  *
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gem_pci.c,v 1.18 2005/02/04 02:10:45 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gem_pci.c,v 1.19 2005/02/27 00:27:33 perry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -189,7 +189,7 @@ gem_attach_pci(parent, self, aux)
 		aprint_error("%s: unable to map interrupt\n",
 		    sc->sc_dev.dv_xname);
 		return;
-	}	
+	}
 	intrstr = pci_intr_string(pa->pa_pc, ih);
 	gsc->gsc_ih = pci_intr_establish(pa->pa_pc, ih, IPL_NET, gem_intr, sc);
 	if (gsc->gsc_ih == NULL) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: z8530tty.c,v 1.96 2005/02/04 02:10:37 perry Exp $	*/
+/*	$NetBSD: z8530tty.c,v 1.97 2005/02/27 00:27:03 perry Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1996, 1997, 1998, 1999
@@ -137,7 +137,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: z8530tty.c,v 1.96 2005/02/04 02:10:37 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: z8530tty.c,v 1.97 2005/02/27 00:27:03 perry Exp $");
 
 #include "opt_kgdb.h"
 #include "opt_ntp.h"
@@ -183,7 +183,7 @@ u_int zstty_rbuf_size = ZSTTY_RING_SIZE;
 u_int zstty_rbuf_hiwat = (ZSTTY_RING_SIZE * 1) / 4;
 u_int zstty_rbuf_lowat = (ZSTTY_RING_SIZE * 3) / 4;
 
-static int zsppscap = 
+static int zsppscap =
 	PPS_TSFMT_TSPEC |
 	PPS_CAPTUREASSERT |
 	PPS_CAPTURECLEAR |
@@ -294,7 +294,7 @@ static void zstty_softint(struct zs_chanstate *);
 /*
  * zstty_match: how is this zs channel configured?
  */
-int 
+int
 zstty_match(parent, cf, aux)
 	struct device *parent;
 	struct cfdata *cf;
@@ -313,7 +313,7 @@ zstty_match(parent, cf, aux)
 	return 0;
 }
 
-void 
+void
 zstty_attach(parent, self, aux)
 	struct device *parent, *self;
 	void   *aux;
@@ -1032,7 +1032,7 @@ zsstart(tp)
 
 		tba = tp->t_outq.c_cf;
 		tbc = ndqb(&tp->t_outq, 0);
-	
+
 		(void) splzs();
 		simple_lock(&cs->cs_lock);
 

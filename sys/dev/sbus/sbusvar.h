@@ -1,4 +1,4 @@
-/*	$NetBSD: sbusvar.h,v 1.21 2005/02/04 02:10:47 perry Exp $ */
+/*	$NetBSD: sbusvar.h,v 1.22 2005/02/27 00:27:48 perry Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -85,7 +85,7 @@ struct sbus_attach_args {
 };
 
 /* sbus_attach_internal() is also used from obio.c */
-void	sbus_attach_common(struct sbus_softc *, char *, int, 
+void	sbus_attach_common(struct sbus_softc *, char *, int,
 				const char * const *);
 int	sbus_print(void *, const char *);
 
@@ -103,7 +103,7 @@ void	sbus_destroy_attach_args(struct sbus_attach_args *);
 #define sbus_bus_map(tag, slot, offset, sz, flags, hp) \
 	bus_space_map(tag, BUS_ADDR(slot,offset), sz, flags, hp)
 bus_addr_t	sbus_bus_addr(bus_space_tag_t, u_int, u_int);
-void	sbus_promaddr_to_handle(bus_space_tag_t, u_int, 
+void	sbus_promaddr_to_handle(bus_space_tag_t, u_int,
 	bus_space_handle_t *);
 
 #if notyet

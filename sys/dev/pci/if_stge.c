@@ -1,4 +1,4 @@
-/*	$NetBSD: if_stge.c,v 1.23 2005/02/20 15:56:03 jdolecek Exp $	*/
+/*	$NetBSD: if_stge.c,v 1.24 2005/02/27 00:27:33 perry Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_stge.c,v 1.23 2005/02/20 15:56:03 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_stge.c,v 1.24 2005/02/27 00:27:33 perry Exp $");
 
 #include "bpfilter.h"
 
@@ -665,29 +665,29 @@ stge_attach(struct device *parent, struct device *self, void *aux)
 	    NULL, sc->sc_dev.dv_xname, "txdmaintr");
 	evcnt_attach_dynamic(&sc->sc_ev_txindintr, EVCNT_TYPE_INTR,
 	    NULL, sc->sc_dev.dv_xname, "txindintr");
-	evcnt_attach_dynamic(&sc->sc_ev_rxintr, EVCNT_TYPE_INTR,        
+	evcnt_attach_dynamic(&sc->sc_ev_rxintr, EVCNT_TYPE_INTR,
 	    NULL, sc->sc_dev.dv_xname, "rxintr");
 
-	evcnt_attach_dynamic(&sc->sc_ev_txseg1, EVCNT_TYPE_MISC,       
-	    NULL, sc->sc_dev.dv_xname, "txseg1");                      
-	evcnt_attach_dynamic(&sc->sc_ev_txseg2, EVCNT_TYPE_MISC,       
-	    NULL, sc->sc_dev.dv_xname, "txseg2");                      
-	evcnt_attach_dynamic(&sc->sc_ev_txseg3, EVCNT_TYPE_MISC,       
-	    NULL, sc->sc_dev.dv_xname, "txseg3");                      
-	evcnt_attach_dynamic(&sc->sc_ev_txseg4, EVCNT_TYPE_MISC,       
-	    NULL, sc->sc_dev.dv_xname, "txseg4");                      
-	evcnt_attach_dynamic(&sc->sc_ev_txseg5, EVCNT_TYPE_MISC,       
-	    NULL, sc->sc_dev.dv_xname, "txseg5");                      
-	evcnt_attach_dynamic(&sc->sc_ev_txsegmore, EVCNT_TYPE_MISC,       
-	    NULL, sc->sc_dev.dv_xname, "txsegmore");                      
-	evcnt_attach_dynamic(&sc->sc_ev_txcopy, EVCNT_TYPE_MISC,       
-	    NULL, sc->sc_dev.dv_xname, "txcopy");                      
+	evcnt_attach_dynamic(&sc->sc_ev_txseg1, EVCNT_TYPE_MISC,
+	    NULL, sc->sc_dev.dv_xname, "txseg1");
+	evcnt_attach_dynamic(&sc->sc_ev_txseg2, EVCNT_TYPE_MISC,
+	    NULL, sc->sc_dev.dv_xname, "txseg2");
+	evcnt_attach_dynamic(&sc->sc_ev_txseg3, EVCNT_TYPE_MISC,
+	    NULL, sc->sc_dev.dv_xname, "txseg3");
+	evcnt_attach_dynamic(&sc->sc_ev_txseg4, EVCNT_TYPE_MISC,
+	    NULL, sc->sc_dev.dv_xname, "txseg4");
+	evcnt_attach_dynamic(&sc->sc_ev_txseg5, EVCNT_TYPE_MISC,
+	    NULL, sc->sc_dev.dv_xname, "txseg5");
+	evcnt_attach_dynamic(&sc->sc_ev_txsegmore, EVCNT_TYPE_MISC,
+	    NULL, sc->sc_dev.dv_xname, "txsegmore");
+	evcnt_attach_dynamic(&sc->sc_ev_txcopy, EVCNT_TYPE_MISC,
+	    NULL, sc->sc_dev.dv_xname, "txcopy");
 
-	evcnt_attach_dynamic(&sc->sc_ev_rxipsum, EVCNT_TYPE_MISC,       
-	    NULL, sc->sc_dev.dv_xname, "rxipsum");                      
-	evcnt_attach_dynamic(&sc->sc_ev_rxtcpsum, EVCNT_TYPE_MISC,      
+	evcnt_attach_dynamic(&sc->sc_ev_rxipsum, EVCNT_TYPE_MISC,
+	    NULL, sc->sc_dev.dv_xname, "rxipsum");
+	evcnt_attach_dynamic(&sc->sc_ev_rxtcpsum, EVCNT_TYPE_MISC,
 	    NULL, sc->sc_dev.dv_xname, "rxtcpsum");
-	evcnt_attach_dynamic(&sc->sc_ev_rxudpsum, EVCNT_TYPE_MISC,      
+	evcnt_attach_dynamic(&sc->sc_ev_rxudpsum, EVCNT_TYPE_MISC,
 	    NULL, sc->sc_dev.dv_xname, "rxudpsum");
 	evcnt_attach_dynamic(&sc->sc_ev_txipsum, EVCNT_TYPE_MISC,
 	    NULL, sc->sc_dev.dv_xname, "txipsum");
@@ -1030,7 +1030,7 @@ stge_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 
 	default:
 		error = ether_ioctl(ifp, cmd, data);
-		if (error == ENETRESET) { 
+		if (error == ENETRESET) {
 			/*
 			 * Multicast list has changed; set the hardware filter
 			 * accordingly.
@@ -1805,7 +1805,7 @@ stge_add_rxbuf(struct stge_softc *sc, int idx)
 	int error;
 
 	MGETHDR(m, M_DONTWAIT, MT_DATA);
-	if (m == NULL)  
+	if (m == NULL)
 		return (ENOBUFS);
 
 	MCLGET(m, M_DONTWAIT);

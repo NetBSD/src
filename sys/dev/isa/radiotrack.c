@@ -1,4 +1,4 @@
-/* $NetBSD: radiotrack.c,v 1.10 2004/10/29 12:57:17 yamt Exp $ */
+/* $NetBSD: radiotrack.c,v 1.11 2005/02/27 00:27:17 perry Exp $ */
 /* $OpenBSD: radiotrack.c,v 1.1 2001/12/05 10:27:06 mickey Exp $ */
 /* $RuOBSD: radiotrack.c,v 1.3 2001/10/18 16:51:36 pva Exp $ */
 
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: radiotrack.c,v 1.10 2004/10/29 12:57:17 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radiotrack.c,v 1.11 2005/02/27 00:27:17 perry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -302,7 +302,7 @@ rt_state(bus_space_tag_t iot, bus_space_handle_t ioh)
 		ret = RADIO_INFO_SIGNAL;
 		break;
 	}
-	
+
 	return ret;
 }
 

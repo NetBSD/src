@@ -1,4 +1,4 @@
-/*	$NetBSD: pciconf.c,v 1.24 2005/02/11 06:21:21 simonb Exp $	*/
+/*	$NetBSD: pciconf.c,v 1.25 2005/02/27 00:27:33 perry Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pciconf.c,v 1.24 2005/02/11 06:21:21 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pciconf.c,v 1.25 2005/02/27 00:27:33 perry Exp $");
 
 #include "opt_pci.h"
 
@@ -1063,7 +1063,7 @@ configure_bus(pciconf_bus_t *pb)
  *	    Header type, Latency timer, Cache line size) register
  *
  * The command register is set to enable fast back-to-back transactions
- * if the host bridge says it can handle it.  We also configure 
+ * if the host bridge says it can handle it.  We also configure
  * Master Enable, SERR enable, parity enable, and (if this is not a
  * PCI-PCI bridge) the I/O and Memory spaces.  Apparently some devices
  * will not report some I/O space.

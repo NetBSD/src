@@ -27,14 +27,14 @@
  *	i4b_isac.c - i4b siemens isdn chipset driver ISAC handler
  *	---------------------------------------------------------
  *
- *	$Id: isac.c,v 1.18 2002/09/27 15:37:18 provos Exp $ 
+ *	$Id: isac.c,v 1.19 2005/02/27 00:27:01 perry Exp $
  *
  *      last edit-date: [Fri Jan  5 11:36:10 2001]
  *
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isac.c,v 1.18 2002/09/27 15:37:18 provos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isac.c,v 1.19 2005/02/27 00:27:01 perry Exp $");
 
 #ifdef __FreeBSD__
 #include "opt_i4b.h"
@@ -105,32 +105,32 @@ isic_isac_irq(struct isic_softc *sc, int ista)
 		if (sc->sc_intr_valid == ISIC_INTR_VALID)
 			c |= isic_isac_exir_hdlr(sc, exirstat);
 	}
-	
+
 	if(ista & ISAC_ISTA_RME)	/* receive message end */
 	{
 		register int rest;
 		u_char rsta;
 
 		/* get rx status register */
-		
+
 		rsta = ISAC_READ(I_RSTA);
 
 		if((rsta & ISAC_RSTA_MASK) != 0x20)
 		{
 			int error = 0;
-			
+
 			if(!(rsta & ISAC_RSTA_CRC))	/* CRC error */
 			{
 				error++;
 				NDBGL1(L1_I_ERR, "%s: CRC error", sc->sc_dev.dv_xname);
 			}
-	
+
 			if(rsta & ISAC_RSTA_RDO)	/* ReceiveDataOverflow */
 			{
 				error++;
 				NDBGL1(L1_I_ERR, "%s: Data Overrun error", sc->sc_dev.dv_xname);
 			}
-	
+
 			if(rsta & ISAC_RSTA_RAB)	/* ReceiveABorted */
 			{
 				error++;
@@ -140,7 +140,7 @@ isic_isac_irq(struct isic_softc *sc, int ista)
 			if(error == 0)
 			{
 				NDBGL1(L1_I_ERR, "%s: RME unknown error, RSTA = 0x%02x!", sc->sc_dev.dv_xname, rsta);
-			}				
+			}
 
 			i4b_Dfreembuf(sc->sc_ibuf);
 
@@ -174,7 +174,7 @@ isic_isac_irq(struct isic_softc *sc, int ista)
 		{
 			ISAC_RDFIFO(sc->sc_ib, rest);
 			sc->sc_ilen += rest;
-			
+
 			sc->sc_ibuf->m_pkthdr.len =
 				sc->sc_ibuf->m_len = sc->sc_ilen;
 
@@ -226,7 +226,7 @@ isic_isac_irq(struct isic_softc *sc, int ista)
 		if(sc->sc_ilen <= (MAX_DFRAME_LEN - ISAC_FIFO_LEN))
 		{
 			ISAC_RDFIFO(sc->sc_ib, ISAC_FIFO_LEN);
-			sc->sc_ilen += ISAC_FIFO_LEN;			
+			sc->sc_ilen += ISAC_FIFO_LEN;
 			sc->sc_ib += ISAC_FIFO_LEN;
 			c |= ISAC_CMDR_RMC;
 		}
@@ -237,7 +237,7 @@ isic_isac_irq(struct isic_softc *sc, int ista)
 			sc->sc_ibuf = NULL;
 			sc->sc_ib = NULL;
 			sc->sc_ilen = 0;
-			c |= ISAC_CMDR_RMC|ISAC_CMDR_RRES;			
+			c |= ISAC_CMDR_RMC|ISAC_CMDR_RRES;
 		}
 	}
 
@@ -250,13 +250,13 @@ isic_isac_irq(struct isic_softc *sc, int ista)
 			sc->sc_op = sc->sc_obuf->m_data;
 			sc->sc_ol = sc->sc_obuf->m_len;
 			sc->sc_obuf2 = NULL;
-#ifdef NOTDEF			
+#ifdef NOTDEF
 			printf("ob2=%x, op=%x, ol=%d, f=%d #",
 				sc->sc_obuf,
 				sc->sc_op,
 				sc->sc_ol,
 				sc->sc_state);
-#endif				
+#endif
 		}
 		else
 		{
@@ -267,12 +267,12 @@ isic_isac_irq(struct isic_softc *sc, int ista)
 				sc->sc_ol,
 				sc->sc_state);
 #endif
-		}			
-		
+		}
+
 		if(sc->sc_obuf)
-		{			
+		{
 			ISAC_WRFIFO(sc->sc_op, min(sc->sc_ol, ISAC_FIFO_LEN));
-	
+
 			if(sc->sc_ol > ISAC_FIFO_LEN)	/* length > 32 ? */
 			{
 				sc->sc_op += ISAC_FIFO_LEN; /* bufferptr+32 */
@@ -289,7 +289,7 @@ isic_isac_irq(struct isic_softc *sc, int ista)
 				sc->sc_obuf = NULL;
 				sc->sc_op = NULL;
 				sc->sc_ol = 0;
-	
+
 				c |= ISAC_CMDR_XTF | ISAC_CMDR_XME;
 			}
 		}
@@ -298,26 +298,26 @@ isic_isac_irq(struct isic_softc *sc, int ista)
 			sc->sc_state &= ~ISAC_TX_ACTIVE;
 		}
 	}
-	
+
 	if(ista & ISAC_ISTA_CISQ)	/* channel status change CISQ */
 	{
 		register u_char ci;
-	
+
 		/* get command/indication rx register*/
-	
+
 		ci = ISAC_READ(I_CIRR);
 
 		/* if S/Q IRQ, read SQC reg to clr SQC IRQ */
-	
+
 		if(ci & ISAC_CIRR_SQC)
 			(void) ISAC_READ(I_SQRR);
 
 		/* C/I code change IRQ (flag already cleared by CIRR read) */
-	
+
 		if(ci & ISAC_CIRR_CIC0)
 			isic_isac_ind_hdlr(sc, (ci >> 2) & 0xf);
 	}
-	
+
 	if(c)
 	{
 		ISAC_WRITE(I_CMDR, c);
@@ -332,14 +332,14 @@ static u_char
 isic_isac_exir_hdlr(register struct isic_softc *sc, u_char exir)
 {
 	u_char c = 0;
-	
+
 	if(exir & ISAC_EXIR_XMR)
 	{
 		NDBGL1(L1_I_ERR, "EXIRQ Tx Message Repeat");
 
 		c |= ISAC_CMDR_XRES;
 	}
-	
+
 	if(exir & ISAC_EXIR_XDU)
 	{
 		NDBGL1(L1_I_ERR, "EXIRQ Tx Data Underrun");
@@ -372,7 +372,7 @@ isic_isac_exir_hdlr(register struct isic_softc *sc, u_char exir)
 	if(exir & ISAC_EXIR_SAW)
 	{
 		/* cannot happen, STCR:TSF is set to 0 */
-		
+
 		NDBGL1(L1_I_ERR, "EXIRQ Subscriber Awake");
 	}
 
@@ -393,7 +393,7 @@ static void
 isic_isac_ind_hdlr(register struct isic_softc *sc, int ind)
 {
 	register int event;
-	
+
 	switch(ind)
 	{
 		case ISAC_CIRR_IAI8:
@@ -403,7 +403,7 @@ isic_isac_ind_hdlr(register struct isic_softc *sc, int ind)
 			event = EV_INFO48;
 			isdn_layer2_status_ind(&sc->sc_l2, sc->sc_l3token, STI_L1STAT, LAYER_ACTIVE);
 			break;
-			
+
 		case ISAC_CIRR_IAI10:
 			NDBGL1(L1_I_CICO, "rx AI10 in state %s", isic_printstate(sc));
 			if(sc->sc_bustyp == BUS_TYPE_IOM2)
@@ -425,9 +425,9 @@ isic_isac_ind_hdlr(register struct isic_softc *sc, int ind)
 		case ISAC_CIRR_IDR:
 			NDBGL1(L1_I_CICO, "rx DR in state %s", isic_printstate(sc));
 			isic_isac_l1_cmd(sc, CMD_DIU);
-			event = EV_DR;			
+			event = EV_DR;
 			break;
-			
+
 		case ISAC_CIRR_IDID:
 			NDBGL1(L1_I_CICO, "rx DID in state %s", isic_printstate(sc));
 			event = EV_INFO0;
@@ -464,7 +464,7 @@ isic_isac_ind_hdlr(register struct isic_softc *sc, int ind)
 			NDBGL1(L1_I_CICO, "rx SD in state %s", isic_printstate(sc));
 			event = EV_INFO0;
 			break;
-		
+
 		default:
 			NDBGL1(L1_I_ERR, "UNKNOWN Indication 0x%x in state %s", ind, isic_printstate(sc));
 			event = EV_INFO0;
@@ -475,7 +475,7 @@ isic_isac_ind_hdlr(register struct isic_softc *sc, int ind)
 
 /*---------------------------------------------------------------------------*
  *	execute a layer 1 command
- *---------------------------------------------------------------------------*/	
+ *---------------------------------------------------------------------------*/
 void
 isic_isac_l1_cmd(struct isic_softc *sc, int command)
 {
@@ -484,7 +484,7 @@ isic_isac_l1_cmd(struct isic_softc *sc, int command)
 #ifdef I4B_SMP_WORKAROUND
 
 	/* XXXXXXXXXXXXXXXXXXX */
-	
+
 	/*
 	 * patch from Wolfgang Helbig:
 	 *
@@ -493,7 +493,7 @@ isic_isac_l1_cmd(struct isic_softc *sc, int command)
 	 * This is a gross workaround, but anyway it works *and* provides
 	 * some information as how to finally fix this problem.
 	 */
-	
+
 	HSCX_WRITE(0, H_MASK, 0xff);
 	HSCX_WRITE(1, H_MASK, 0xff);
 	ISAC_WRITE(I_MASK, 0xff);
@@ -503,7 +503,7 @@ isic_isac_l1_cmd(struct isic_softc *sc, int command)
 	ISAC_WRITE(I_MASK, ISAC_IMASK);
 
 	/* XXXXXXXXXXXXXXXXXXX */
-	
+
 #endif /* I4B_SMP_WORKAROUND */
 
 	if(command < 0 || command > CMD_ILL)
@@ -511,7 +511,7 @@ isic_isac_l1_cmd(struct isic_softc *sc, int command)
 		NDBGL1(L1_I_ERR, "illegal cmd 0x%x in state %s", command, isic_printstate(sc));
 		return;
 	}
-                                           
+
 	if(sc->sc_bustyp == BUS_TYPE_IOM2)
 		cmd = ISAC_CIX0_LOW;
 	else
@@ -561,7 +561,7 @@ isic_isac_init(struct isic_softc *sc)
 	{
 		NDBGL1(L1_I_SETUP, "configuring for IOM-1 mode");
 
-		/* ADF2: Select mode IOM-1 */		
+		/* ADF2: Select mode IOM-1 */
 		ISAC_WRITE(I_ADF2, 0x00);
 
 		/* SPCR: serial port control register:
@@ -586,7 +586,7 @@ isic_isac_init(struct isic_softc *sc)
 		 *	CFS - IOM clock/frame always active
 		 *	FSC1/2 - polarity of 8kHz strobe
 		 *	ITF - interframe fill = idle
-		 */	
+		 */
 		ISAC_WRITE(I_ADF1, ISAC_ADF1_FC2);	/* ADF1 */
 
 		/* STCR: sync transfer control reg:
@@ -600,7 +600,7 @@ isic_isac_init(struct isic_softc *sc)
 	{
 		NDBGL1(L1_I_SETUP, "configuring for IOM-2 mode");
 
-		/* ADF2: Select mode IOM-2 */		
+		/* ADF2: Select mode IOM-2 */
 		ISAC_WRITE(I_ADF2, ISAC_ADF2_IMS);
 
 		/* SPCR: serial port control register:
@@ -626,7 +626,7 @@ isic_isac_init(struct isic_softc *sc)
 		 *	PFS - pre-filter = 0
 		 *	IOF - IOM i/f off = 0
 		 *	ITF - interframe fill = idle
-		 */	
+		 */
 		ISAC_WRITE(I_ADF1, 0x00);
 
 		/* STCR: sync transfer control reg:
@@ -636,7 +636,7 @@ isic_isac_init(struct isic_softc *sc)
 		 */
 		ISAC_WRITE(I_STCR, ISAC_STCR_TBA2|ISAC_STCR_TBA1|ISAC_STCR_TBA0);
 	}
-	
+
 
 	/* MODE: Mode Register:
 	 *	MDSx - transparent mode 2
@@ -674,7 +674,7 @@ void
 isic_recover(struct isic_softc *sc)
 {
 	u_char byte;
-	
+
 	/* get hscx irq status from hscx b ista */
 
 	byte = HSCX_READ(HSCX_CH_B, H_ISTA);
@@ -695,16 +695,16 @@ isic_recover(struct isic_softc *sc)
 	byte = ISAC_READ(I_ISTA);
 
 	NDBGL1(L1_ERROR, "  ISAC: ISTA = 0x%x", byte);
-	
+
 	if(byte & ISAC_ISTA_EXI)
 		NDBGL1(L1_ERROR, "  ISAC: EXIR = 0x%x", (u_char)ISAC_READ(I_EXIR));
 
 	if(byte & ISAC_ISTA_CISQ)
 	{
 		byte = ISAC_READ(I_CIRR);
-	
+
 		NDBGL1(L1_ERROR, "  ISAC: CISQ = 0x%x", byte);
-		
+
 		if(byte & ISAC_CIRR_SQC)
 			NDBGL1(L1_ERROR, "  ISAC: SQRR = 0x%x", (u_char)ISAC_READ(I_SQRR));
 	}
@@ -714,14 +714,14 @@ isic_recover(struct isic_softc *sc)
 
 	HSCX_WRITE(0, H_MASK, 0xff);
 	HSCX_WRITE(1, H_MASK, 0xff);
-	DELAY(100);	
+	DELAY(100);
 	HSCX_WRITE(0, H_MASK, HSCX_A_IMASK);
 	HSCX_WRITE(1, H_MASK, HSCX_B_IMASK);
 	DELAY(100);
 
 	NDBGL1(L1_ERROR, "  ISAC: IMASK = 0x%x", ISAC_IMASK);
 
-	ISAC_WRITE(I_MASK, 0xff);	
+	ISAC_WRITE(I_MASK, 0xff);
 	DELAY(100);
 	ISAC_WRITE(I_MASK, ISAC_IMASK);
 }

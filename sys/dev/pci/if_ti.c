@@ -1,4 +1,4 @@
-/* $NetBSD: if_ti.c,v 1.65 2005/02/20 15:48:35 jdolecek Exp $ */
+/* $NetBSD: if_ti.c,v 1.66 2005/02/27 00:27:33 perry Exp $ */
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -38,7 +38,7 @@
  * Alteon Networks Tigon PCI gigabit ethernet driver for FreeBSD.
  * Manuals, sample driver and firmware source kits are available
  * from http://www.alteon.com/support/openkits.
- * 
+ *
  * Written by Bill Paul <wpaul@ctr.columbia.edu>
  * Electrical Engineering Department
  * Columbia University, New York City
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ti.c,v 1.65 2005/02/20 15:48:35 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ti.c,v 1.66 2005/02/27 00:27:33 perry Exp $");
 
 #include "bpfilter.h"
 #include "opt_inet.h"
@@ -643,7 +643,7 @@ static int ti_alloc_jumbo_mem(sc)
 	for (i = 0; i < TI_JSLOTS; i++) {
 		sc->ti_cdata.ti_jslots[i] = ptr;
 		ptr += TI_JLEN;
-		entry = malloc(sizeof(struct ti_jpool_entry), 
+		entry = malloc(sizeof(struct ti_jpool_entry),
 			       M_DEVBUF, M_NOWAIT);
 		if (entry == NULL) {
 			free(sc->ti_cdata.ti_jumbo_buf, M_DEVBUF);
@@ -667,9 +667,9 @@ static void *ti_jalloc(sc)
 	struct ti_softc		*sc;
 {
 	struct ti_jpool_entry   *entry;
-	
+
 	entry = SIMPLEQ_FIRST(&sc->ti_jfree_listhead);
-	
+
 	if (entry == NULL) {
 		printf("%s: no free jumbo buffers\n", sc->sc_dev.dv_xname);
 		return(NULL);
@@ -1384,9 +1384,9 @@ static int ti_chipinit(sc)
 	/*
 	 * From the Alteon sample driver:
 	 * Must insure that we do not cross an 8K (bytes) boundary
-	 * for DMA reads.  Our highest limit is 1K bytes.  This is a 
-	 * restriction on some ALPHA platforms with early revision 
-	 * 21174 PCI chipsets, such as the AlphaPC 164lx 
+	 * for DMA reads.  Our highest limit is 1K bytes.  This is a
+	 * restriction on some ALPHA platforms with early revision
+	 * 21174 PCI chipsets, such as the AlphaPC 164lx
 	 */
 	TI_SETBIT(sc, TI_PCI_STATE, pci_writemax|TI_PCI_READMAX_1024);
 #else
@@ -1696,7 +1696,7 @@ static void ti_attach(parent, self, aux)
 	}
 	if (nolinear == 0)
 		sc->ti_vhandle = bus_space_vaddr(sc->ti_btag, sc->ti_bhandle);
-	else 
+	else
 		sc->ti_vhandle = NULL;
 
 	command = pci_conf_read(pc, pa->pa_tag, PCI_COMMAND_STATUS_REG);
@@ -1723,7 +1723,7 @@ static void ti_attach(parent, self, aux)
 	 * Add shutdown hook so that DMA is disabled prior to reboot. Not
 	 * doing do could allow DMA to corrupt kernel memory during the
 	 * reboot before the driver initializes.
-	 */ 
+	 */
 	(void) shutdownhook_establish(ti_shutdown, sc);
 
 	if (ti_chipinit(sc)) {
@@ -2766,7 +2766,7 @@ ti_ether_ioctl(ifp, cmd, data)
 		ifp->if_flags |= IFF_UP;
 		ti_init(sc);
 	}
-		
+
 	switch (cmd) {
 	case SIOCSIFADDR:
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: cac_pci.c,v 1.17 2003/01/31 00:07:40 thorpej Exp $	*/
+/*	$NetBSD: cac_pci.c,v 1.18 2005/02/27 00:27:32 perry Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cac_pci.c,v 1.17 2003/01/31 00:07:40 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cac_pci.c,v 1.18 2005/02/27 00:27:32 perry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -119,7 +119,7 @@ cac_pci_findtype(struct pci_attach_args *pa)
 	cp = cac_pci_product;
 	i = 0;
 	while (i < sizeof(cac_pci_product) / sizeof(cac_pci_product[0])) {
-		if (PCI_VENDOR(pa->pa_id) == cp->cp_vendor && 
+		if (PCI_VENDOR(pa->pa_id) == cp->cp_vendor &&
 		    PCI_PRODUCT(pa->pa_id) == cp->cp_product)
 		    	break;
 		cp++;
@@ -251,7 +251,7 @@ cac_pci_l0_completed(struct cac_softc *sc)
 	if ((off = cac_inl(sc, CAC_42REG_DONE_FIFO)) == 0xffffffffU)
 		return (NULL);
 
-	cac_outl(sc, CAC_42REG_DONE_FIFO, 0);	
+	cac_outl(sc, CAC_42REG_DONE_FIFO, 0);
 
 	if ((off & 3) != 0)
 		printf("%s: failed command list returned: %lx\n",

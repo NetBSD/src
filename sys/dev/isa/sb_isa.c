@@ -1,4 +1,4 @@
-/*	$NetBSD: sb_isa.c,v 1.30 2005/02/04 02:10:41 perry Exp $	*/
+/*	$NetBSD: sb_isa.c,v 1.31 2005/02/27 00:27:17 perry Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sb_isa.c,v 1.30 2005/02/04 02:10:41 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sb_isa.c,v 1.31 2005/02/27 00:27:17 perry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -172,7 +172,7 @@ sb_isa_attach(parent, self, aux)
 	struct sbdsp_softc *sc = (struct sbdsp_softc *)self;
 	struct isa_attach_args *ia = aux;
 
-	if (!sbfind(parent, sc, 0, ia) || 
+	if (!sbfind(parent, sc, 0, ia) ||
 	    bus_space_map(sc->sc_iot, ia->ia_io[0].ir_addr,
 	    ia->ia_io[0].ir_size, 0, &sc->sc_ioh)) {
 		printf("%s: sbfind failed\n", sc->sc_dev.dv_xname);

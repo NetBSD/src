@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ex_cardbus.c,v 1.34 2005/02/04 02:10:36 perry Exp $	*/
+/*	$NetBSD: if_ex_cardbus.c,v 1.35 2005/02/27 00:26:59 perry Exp $	*/
 
 /*
  * CardBus specific routines for 3Com 3C575-family CardBus ethernet adapter
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ex_cardbus.c,v 1.34 2005/02/04 02:10:36 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ex_cardbus.c,v 1.35 2005/02/27 00:26:59 perry Exp $");
 
 /* #define EX_DEBUG 4 */	/* define to report information for debugging */
 
@@ -48,7 +48,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_ex_cardbus.c,v 1.34 2005/02/04 02:10:36 perry Exp
 #include <sys/ioctl.h>
 #include <sys/errno.h>
 #include <sys/syslog.h>
-#include <sys/select.h> 
+#include <sys/select.h>
 #include <sys/device.h>
 
 #include <net/if.h>
@@ -110,7 +110,7 @@ struct ex_cardbus_softc {
 	bus_size_t sc_funcsize;
 
 	bus_size_t sc_mapsize;		/* the size of mapped bus space region */
-	
+
 	cardbustag_t sc_tag;
 
 	int	sc_csr;			/* CSR bits */
@@ -118,7 +118,7 @@ struct ex_cardbus_softc {
 	pcireg_t sc_bar_val;		/* value of the BAR */
 	int	sc_bar_reg1;		/* which BAR to use */
 	pcireg_t sc_bar_val1;		/* value of the BAR */
-	
+
 };
 
 CFATTACH_DECL(ex_cardbus, sizeof(struct ex_cardbus_softc),
@@ -265,7 +265,7 @@ ex_cardbus_attach(parent, self, aux)
 
 		if (csc->sc_cardtype == EX_CB_CYCLONE) {
 			/* Map CardBus function status window. */
-			if (Cardbus_mapreg_map(ct, 
+			if (Cardbus_mapreg_map(ct,
 				CARDBUS_3C575BTX_FUNCSTAT_PCIREG,
 		    		CARDBUS_MAPREG_TYPE_MEM, 0,
 				 &csc->sc_funct, &csc->sc_funch,
@@ -308,7 +308,7 @@ ex_cardbus_attach(parent, self, aux)
 		bus_space_write_4(csc->sc_funct, csc->sc_funch,
 		    EX_CB_INTR, EX_CB_INTR_ACK);
 
-	Cardbus_function_disable(csc->sc_ct);  
+	Cardbus_function_disable(csc->sc_ct);
 }
 
 void
@@ -395,7 +395,7 @@ ex_cardbus_disable(sc)
 
 }
 
-void 
+void
 ex_cardbus_power(sc, why)
 	struct ex_softc *sc;
 	int why;
@@ -415,7 +415,7 @@ ex_cardbus_power(sc, why)
 	}
 }
 
-void 
+void
 ex_cardbus_setup(csc)
 	struct ex_cardbus_softc *csc;
 {
@@ -430,13 +430,13 @@ ex_cardbus_setup(csc)
 
 	/* Program the BAR */
 	cardbus_conf_write(cc, cf, csc->sc_tag,
-		csc->sc_bar_reg, csc->sc_bar_val); 
+		csc->sc_bar_reg, csc->sc_bar_val);
 	/* Make sure the right access type is on the CardBus bridge. */
 	(ct->ct_cf->cardbus_ctrl)(cc, CARDBUS_IO_ENABLE);
 	if (csc->sc_cardtype == EX_CB_CYCLONE) {
 		/* Program the BAR */
 		cardbus_conf_write(cc, cf, csc->sc_tag,
-			csc->sc_bar_reg1, csc->sc_bar_val1); 
+			csc->sc_bar_reg1, csc->sc_bar_val1);
 		/*
 		 * Make sure CardBus brigde can access memory space.  Usually
 		 * memory access is enabled by BIOS, but some BIOSes do not
@@ -452,7 +452,7 @@ ex_cardbus_setup(csc)
 	reg |= csc->sc_csr;
 	cardbus_conf_write(cc, cf, csc->sc_tag, CARDBUS_COMMAND_STATUS_REG,
 	    reg);
-  
+
  	/*
 	 * set latency timer
 	 */

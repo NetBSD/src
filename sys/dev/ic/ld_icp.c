@@ -1,4 +1,4 @@
-/*	$NetBSD: ld_icp.c,v 1.10 2005/02/08 05:16:17 briggs Exp $	*/
+/*	$NetBSD: ld_icp.c,v 1.11 2005/02/27 00:27:01 perry Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld_icp.c,v 1.10 2005/02/08 05:16:17 briggs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld_icp.c,v 1.11 2005/02/27 00:27:01 perry Exp $");
 
 #include "rnd.h"
 
@@ -172,7 +172,7 @@ ld_icp_attach(struct device *parent, struct device *self, void *aux)
 		str = "optimal";
 		ld->sc_flags = LDF_ENABLED;
 	}
-		
+
 	aprint_normal("status: %s\n", str);
 
  out:

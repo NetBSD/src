@@ -1,4 +1,4 @@
-#	$NetBSD: files.pci,v 1.231 2005/02/20 18:34:33 jdolecek Exp $
+#	$NetBSD: files.pci,v 1.232 2005/02/27 00:27:32 perry Exp $
 #
 # Config file and device description for machine-independent PCI code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -307,7 +307,7 @@ device	ppb: pcibus
 attach	ppb at pci
 file	dev/pci/ppb.c			ppb
 
-# Cyclades Cyclom-8/16/32 
+# Cyclades Cyclom-8/16/32
 attach	cy at pci with cy_pci
 file	dev/pci/cy_pci.c		cy_pci
 
@@ -617,7 +617,7 @@ device	ste: ether, ifnet, arp, mii, mii_bitbang
 attach	ste at pci
 file	dev/pci/if_ste.c		ste
 
-# YENTA PCI-Cardbus bridge 
+# YENTA PCI-Cardbus bridge
 #device	cbb: cbbus, pcmciabus
 device	cbb: pcmciaslot
 attach	cbb at pci with cbb_pci
@@ -648,7 +648,7 @@ device	amdpm {}
 attach	amdpm at pci
 file	dev/pci/amdpm.c			amdpm
 
-# Hi/fn 7751 
+# Hi/fn 7751
 device	hifn: opencrypto
 attach	hifn at pci
 file	dev/pci/hifn7751.c		hifn

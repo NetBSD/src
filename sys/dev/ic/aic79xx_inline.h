@@ -1,4 +1,4 @@
-/*	$NetBSD: aic79xx_inline.h,v 1.9 2003/11/02 11:07:44 wiz Exp $	*/
+/*	$NetBSD: aic79xx_inline.h,v 1.10 2005/02/27 00:27:00 perry Exp $	*/
 
 /*
  * Inline routines shareable across OS platforms.
@@ -310,7 +310,7 @@ ahd_setup_data_scb(struct ahd_softc *ahd, struct scb *scb)
 	}
 	/*
 	 * Note where to find the SG entries in bus space.
-	 * We also set the full residual flag which the 
+	 * We also set the full residual flag which the
 	 * sequencer will clear as soon as a data transfer
 	 * occurs.
 	 */
@@ -372,7 +372,7 @@ ahd_sg_virt_to_bus(struct ahd_softc *ahd, struct scb *scb, void *sg)
 static __inline void
 ahd_sync_scb(struct ahd_softc *ahd, struct scb *scb, int op)
 {
-	ahd_dmamap_sync(ahd, ahd->parent_dmat, scb->hscb_map->dmamap, 
+	ahd_dmamap_sync(ahd, ahd->parent_dmat, scb->hscb_map->dmamap,
 			/*offset*/(uint8_t*)scb->hscb - scb->hscb_map->vaddr,
 			/*len*/sizeof(*scb->hscb), op);
 }
@@ -391,7 +391,7 @@ ahd_sync_sglist(struct ahd_softc *ahd, struct scb *scb, int op)
 static __inline void
 ahd_sync_sense(struct ahd_softc *ahd, struct scb *scb, int op)
 {
-	ahd_dmamap_sync(ahd, ahd->parent_dmat, 
+	ahd_dmamap_sync(ahd, ahd->parent_dmat,
 			scb->sense_map->dmamap,
 			/*offset*/scb->sense_busaddr,
 			/*len*/AHD_SENSE_BUFSIZE, op);
@@ -455,7 +455,7 @@ ahd_post_scb(struct ahd_softc *ahd, struct scb *scb)
 	sgptr = ahd_le32toh(scb->hscb->sgptr);
 	if ((sgptr & SG_STATUS_VALID) != 0)
 		ahd_handle_scb_status(ahd, scb);
-	else 
+	else
         	ahd_done(ahd, scb);
 }
 
@@ -467,7 +467,7 @@ ahd_complete_scb(struct ahd_softc *ahd, struct scb *scb)
 	sgptr = ahd_le32toh(scb->hscb->sgptr);
 	if ((sgptr & SG_STATUS_VALID) != 0)
 		ahd_handle_scb_status(ahd, scb);
-	else 
+	else
 		ahd_done(ahd, scb);
 }
 

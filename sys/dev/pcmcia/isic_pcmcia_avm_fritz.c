@@ -15,7 +15,7 @@
  *      without specific prior written permission.
  *   4. Altered versions must be plainly marked as such, and must not be
  *      misrepresented as being the original software and/or documentation.
- *   
+ *
  *   THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
  *   ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  *   IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -33,7 +33,7 @@
  *	Fritz!Card pcmcia specific routines for isic driver
  *	---------------------------------------------------
  *
- *	$Id: isic_pcmcia_avm_fritz.c,v 1.7 2005/02/04 02:10:45 perry Exp $ 
+ *	$Id: isic_pcmcia_avm_fritz.c,v 1.8 2005/02/27 00:27:43 perry Exp $
  *
  *      last edit-date: [Fri Jan  5 11:39:32 2001]
  *
@@ -43,7 +43,7 @@
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isic_pcmcia_avm_fritz.c,v 1.7 2005/02/04 02:10:45 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isic_pcmcia_avm_fritz.c,v 1.8 2005/02/27 00:27:43 perry Exp $");
 
 #include "opt_isicpcmcia.h"
 #ifdef ISICPCMCIA_AVM_A1
@@ -148,7 +148,7 @@ static void avma1_pcmcia_write_fifo(struct isic_softc *sc, int what, const void 
  *---------------------------------------------------------------------------*/
 #ifdef __FreeBSD__
 static int PCMCIA_IO_BASE = 0;		/* ap: XXX hack */
-static void		
+static void
 avma1_pcmcia_read_fifo(void *buf, const void *base, size_t len)
 {
 	outb(PCMCIA_IO_BASE + ADDR_REG_OFFSET, (int)base - 0x20);
@@ -249,15 +249,15 @@ isic_probe_avma1_pcmcia(struct isa_device *dev)
 	u_char byte;
 	int i;
 	u_int cardinfo;
-	
+
 	/* check max unit range */
-	
+
 	if(dev->id_unit > 1)
 	{
 		printf("isic%d: Error, unit %d > MAXUNIT for AVM PCMCIA Fritz!Card\n",
 				dev->id_unit, dev->id_unit);
-		return(0);	
-	}	
+		return(0);
+	}
 	sc->sc_unit = dev->id_unit;
 
 	/*
@@ -279,7 +279,7 @@ isic_probe_avma1_pcmcia(struct isa_device *dev)
 			break;
 	}
 	sc->sc_port = dev->id_iobase;
-	
+
 	/* ResetController */
 
 	outb(dev->id_iobase + STAT0_OFFSET, 0x00);
@@ -299,16 +299,16 @@ isic_probe_avma1_pcmcia(struct isa_device *dev)
 	{
 		printf("isic%d: Error, ISAC STAR for AVM PCMCIA is 0x%0x (should be 0x48)\n",
 				dev->id_unit, byte);
-		return(0);	
-	}	
+		return(0);
+	}
 
 	outb(dev->id_iobase + ADDR_REG_OFFSET, 0xa1);	/* HSCX STAR */
 	if ( (byte=inb(dev->id_iobase + DATA_REG_OFFSET) & 0xfd) != 0x48 )
 	{
 		printf("isic%d: Error, HSCX STAR for AVM PCMCIA is 0x%0x (should be 0x48)\n",
 				dev->id_unit, byte);
-		return(0);	
-	}	
+		return(0);
+	}
 
 	byte = ASL_TESTBIT;
 	for (i=0; i<256; i++)	{
@@ -329,12 +329,12 @@ isic_probe_avma1_pcmcia(struct isa_device *dev)
 	sc->writefifo = avma1_pcmcia_write_fifo;
 
 	/* setup IOM bus type */
-	
+
 	sc->sc_bustyp = BUS_TYPE_IOM2; 			/* ap: XXX ??? */
 
 	sc->sc_ipac = 0;
 	sc->sc_bfifolen = HSCX_FIFO_LEN;
-	
+
 	/* setup ISAC and HSCX base addr */
 	/*
 	 * NOTE: for PCMCIA these are no real addrs; they are
@@ -345,14 +345,14 @@ isic_probe_avma1_pcmcia(struct isa_device *dev)
 	 * therefore we also must have the base addr in some static
 	 * space or struct; XXX better solution?
 	 */
-	
+
 	PCMCIA_IO_BASE = dev->id_iobase;
 	ISAC_BASE      = (caddr_t)0x20;
 
 	HSCX_A_BASE    = (caddr_t)0xA0;
 	HSCX_B_BASE    = (caddr_t)0xE0;
 
-	/* 
+	/*
 	 * Read HSCX A/B VSTR.
 	 * Expected value for AVM A1 is 0x04 or 0x05 and for the
 	 * AVM Fritz!Card is 0x05 in the least significant bits.
@@ -361,7 +361,7 @@ isic_probe_avma1_pcmcia(struct isa_device *dev)
 	if( (((HSCX_READ(0, H_VSTR) & 0xf) != 0x5) &&
 	     ((HSCX_READ(0, H_VSTR) & 0xf) != 0x4))	||
             (((HSCX_READ(1, H_VSTR) & 0xf) != 0x5) &&
-	     ((HSCX_READ(1, H_VSTR) & 0xf) != 0x4)) )  
+	     ((HSCX_READ(1, H_VSTR) & 0xf) != 0x4)) )
 	{
 		printf("isic%d: HSCX VSTR test failed for AVM PCMCIA Fritz!Card\n",
 			dev->id_unit);
@@ -370,7 +370,7 @@ isic_probe_avma1_pcmcia(struct isa_device *dev)
 		printf("isic%d: HSC1: VSTR: 0x%0x\n",
 			dev->id_unit, HSCX_READ(1, H_VSTR));
 		return (0);
-	}                   
+	}
 
 	/*
 	 * seems we really have an AVM PCMCIA Fritz!Card controller
@@ -467,12 +467,12 @@ isic_attach_fritzpcmcia(struct pcmcia_isic_softc *psc, struct pcmcia_config_entr
 	sc->writefifo = avma1_pcmcia_write_fifo;
 
 	/* setup IOM bus type */
-	
+
 	sc->sc_bustyp = BUS_TYPE_IOM2;
 
 	sc->sc_ipac = 0;
 	sc->sc_bfifolen = HSCX_FIFO_LEN;
-	
+
 	/* Reset controller again just to make sure... */
 
 	bus_space_write_1(t, h, STAT0_OFFSET, 0x00);

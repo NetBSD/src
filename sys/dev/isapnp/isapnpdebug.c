@@ -1,4 +1,4 @@
-/*	$NetBSD: isapnpdebug.c,v 1.7 2003/01/06 20:30:37 wiz Exp $	*/
+/*	$NetBSD: isapnpdebug.c,v 1.8 2005/02/27 00:27:21 perry Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isapnpdebug.c,v 1.7 2003/01/06 20:30:37 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isapnpdebug.c,v 1.8 2005/02/27 00:27:21 perry Exp $");
 
 #ifdef DEBUG_ISAPNP
 
@@ -202,7 +202,7 @@ isapnp_print_dep_start(str, pref)
 	case ISAPNP_DEP_PREFERRED:
 		printf("preferred\n");
 		break;
-	
+
 	case ISAPNP_DEP_ACCEPTABLE:
 		printf("acceptable\n");
 		break;

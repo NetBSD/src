@@ -1,4 +1,4 @@
-$NetBSD: isapnpdevs,v 1.55 2004/01/28 19:31:07 jdolecek Exp $
+$NetBSD: isapnpdevs,v 1.56 2005/02/27 00:27:21 perry Exp $
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -103,7 +103,7 @@ devlogic	com	USR3031		0	USR 56k Faxmodem
 devlogic 	com	USR3090		0	USR 56K Voice INT
 devlogic	com	USR9190		0	USR 56k Voice INT
 devlogic	com	ZTIF761		0	Zoom ComStar 33.6
-devlogic	com	CIR3000		0	Cirrus Logic V43 
+devlogic	com	CIR3000		0	Cirrus Logic V43
 devlogic	com	MOT0000		0	Motorola ModemSurfr
 devlogic	com	SMM00C1		0	Leopard 56k PnP
 devlogic	com	SUP1650		0	Supra 336i Sp Intl
@@ -183,7 +183,7 @@ devlogic	mpu	CSC0003		0	CS4235 MPU401 MIDI
  * ne
  */
 devcompat	ne	PNP80D6		0	Digital DE305 ISAPnP
-devlogic	ne	@@@1980		0	OvisLink LE-8019R	
+devlogic	ne	@@@1980		0	OvisLink LE-8019R
 
 /*
  * pcic

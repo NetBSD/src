@@ -1,4 +1,4 @@
-/*	$NetBSD: uhub.c,v 1.72 2005/01/24 01:30:38 joff Exp $	*/
+/*	$NetBSD: uhub.c,v 1.73 2005/02/27 00:27:51 perry Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhub.c,v 1.18 1999/11/17 22:33:43 n_hibma Exp $	*/
 
 /*
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhub.c,v 1.72 2005/01/24 01:30:38 joff Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhub.c,v 1.73 2005/02/27 00:27:51 perry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -166,7 +166,7 @@ USB_ATTACH(uhub)
 
 	if (UHUB_IS_HIGH_SPEED(sc)) {
 		printf("%s: %s transaction translator%s\n",
-		       USBDEVNAME(sc->sc_dev), 
+		       USBDEVNAME(sc->sc_dev),
 		       UHUB_IS_SINGLE_TT(sc) ? "single" : "multiple",
 		       UHUB_IS_SINGLE_TT(sc) ? "" : "s");
 	}

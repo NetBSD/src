@@ -1,4 +1,4 @@
-/*	$NetBSD: pciidereg.h,v 1.8 2005/02/15 03:18:22 briggs Exp $	*/
+/*	$NetBSD: pciidereg.h,v 1.9 2005/02/27 00:27:33 perry Exp $	*/
 
 /*
  * Copyright (c) 1998 Christopher G. Demetriou.  All rights reserved.
@@ -77,7 +77,7 @@
 #define PCIIDE_CHANNEL_NAME(chan)	((chan) == 0 ? "primary" : "secondary")
 
 /*
- * definitions for IDE DMA 
+ * definitions for IDE DMA
  * XXX maybe this should go elsewhere
  */
 

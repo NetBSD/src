@@ -1,4 +1,4 @@
-/*	$NetBSD: gtreg.h,v 1.1 2003/03/05 22:08:22 matt Exp $	*/
+/*	$NetBSD: gtreg.h,v 1.2 2005/02/27 00:27:21 perry Exp $	*/
 
 /*
  * Copyright (c) 2002 Allegro Networks, Inc., Wasabi Systems, Inc.
@@ -47,133 +47,133 @@
 #define	GT__INS(new, bit)		((new) << (bit))
 
 
-/* 
+/*
  * Table 30: CPU Address Decode Register Map
  */
-#define GT_SCS0_Low_Decode		0x0008 
-#define GT_SCS0_High_Decode		0x0010 
-#define GT_SCS1_Low_Decode		0x0208 
-#define GT_SCS1_High_Decode		0x0210 
-#define GT_SCS2_Low_Decode		0x0018 
-#define GT_SCS2_High_Decode		0x0020 
-#define GT_SCS3_Low_Decode		0x0218 
-#define GT_SCS3_High_Decode		0x0220 
-#define GT_CS0_Low_Decode		0x0028 
-#define GT_CS0_High_Decode		0x0030 
-#define GT_CS1_Low_Decode		0x0228 
-#define GT_CS1_High_Decode		0x0230 
-#define GT_CS2_Low_Decode		0x0248 
-#define GT_CS2_High_Decode		0x0250 
-#define GT_CS3_Low_Decode		0x0038 
-#define GT_CS3_High_Decode		0x0040 
-#define GT_BootCS_Low_Decode		0x0238 
-#define GT_BootCS_High_Decode		0x0240 
-#define GT_PCI0_IO_Low_Decode		0x0048 
-#define GT_PCI0_IO_High_Decode		0x0050 
-#define GT_PCI0_Mem0_Low_Decode		0x0058 
-#define GT_PCI0_Mem0_High_Decode	0x0060 
-#define GT_PCI0_Mem1_Low_Decode		0x0080 
-#define GT_PCI0_Mem1_High_Decode	0x0088 
-#define GT_PCI0_Mem2_Low_Decode		0x0258 
-#define GT_PCI0_Mem2_High_Decode	0x0260 
-#define GT_PCI0_Mem3_Low_Decode		0x0280 
-#define GT_PCI0_Mem3_High_Decode	0x0288 
-#define GT_PCI1_IO_Low_Decode		0x0090 
-#define GT_PCI1_IO_High_Decode		0x0098 
-#define GT_PCI1_Mem0_Low_Decode		0x00a0 
-#define GT_PCI1_Mem0_High_Decode	0x00a8 
-#define GT_PCI1_Mem1_Low_Decode		0x00b0 
-#define GT_PCI1_Mem1_High_Decode	0x00b8 
-#define GT_PCI1_Mem2_Low_Decode		0x02a0 
-#define GT_PCI1_Mem2_High_Decode	0x02a8 
-#define GT_PCI1_Mem3_Low_Decode		0x02b0 
-#define GT_PCI1_Mem3_High_Decode	0x02b8 
-#define GT_Internal_Decode		0x0068 
-#define GT_CPU0_Low_Decode		0x0290 
-#define GT_CPU0_High_Decode		0x0298 
-#define GT_CPU1_Low_Decode		0x02c0 
-#define GT_CPU1_High_Decode		0x02c8 
-#define GT_PCI0_IO_Remap		0x00f0 
-#define GT_PCI0_Mem0_Remap_Low		0x00f8 
-#define GT_PCI0_Mem0_Remap_High		0x0320 
-#define GT_PCI0_Mem1_Remap_Low		0x0100 
-#define GT_PCI0_Mem1_Remap_High		0x0328 
-#define GT_PCI0_Mem2_Remap_Low		0x02f8 
-#define GT_PCI0_Mem2_Remap_High		0x0330 
-#define GT_PCI0_Mem3_Remap_Low		0x0300 
-#define GT_PCI0_Mem3_Remap_High		0x0338 
-#define GT_PCI1_IO_Remap		0x0108 
-#define GT_PCI1_Mem0_Remap_Low		0x0110 
-#define GT_PCI1_Mem0_Remap_High		0x0340 
-#define GT_PCI1_Mem1_Remap_Low		0x0118 
-#define GT_PCI1_Mem1_Remap_High		0x0348 
-#define GT_PCI1_Mem2_Remap_Low		0x0310 
-#define GT_PCI1_Mem2_Remap_High		0x0350 
-#define GT_PCI1_Mem3_Remap_Low		0x0318 
-#define GT_PCI1_Mem3_Remap_High		0x0358 
+#define GT_SCS0_Low_Decode		0x0008
+#define GT_SCS0_High_Decode		0x0010
+#define GT_SCS1_Low_Decode		0x0208
+#define GT_SCS1_High_Decode		0x0210
+#define GT_SCS2_Low_Decode		0x0018
+#define GT_SCS2_High_Decode		0x0020
+#define GT_SCS3_Low_Decode		0x0218
+#define GT_SCS3_High_Decode		0x0220
+#define GT_CS0_Low_Decode		0x0028
+#define GT_CS0_High_Decode		0x0030
+#define GT_CS1_Low_Decode		0x0228
+#define GT_CS1_High_Decode		0x0230
+#define GT_CS2_Low_Decode		0x0248
+#define GT_CS2_High_Decode		0x0250
+#define GT_CS3_Low_Decode		0x0038
+#define GT_CS3_High_Decode		0x0040
+#define GT_BootCS_Low_Decode		0x0238
+#define GT_BootCS_High_Decode		0x0240
+#define GT_PCI0_IO_Low_Decode		0x0048
+#define GT_PCI0_IO_High_Decode		0x0050
+#define GT_PCI0_Mem0_Low_Decode		0x0058
+#define GT_PCI0_Mem0_High_Decode	0x0060
+#define GT_PCI0_Mem1_Low_Decode		0x0080
+#define GT_PCI0_Mem1_High_Decode	0x0088
+#define GT_PCI0_Mem2_Low_Decode		0x0258
+#define GT_PCI0_Mem2_High_Decode	0x0260
+#define GT_PCI0_Mem3_Low_Decode		0x0280
+#define GT_PCI0_Mem3_High_Decode	0x0288
+#define GT_PCI1_IO_Low_Decode		0x0090
+#define GT_PCI1_IO_High_Decode		0x0098
+#define GT_PCI1_Mem0_Low_Decode		0x00a0
+#define GT_PCI1_Mem0_High_Decode	0x00a8
+#define GT_PCI1_Mem1_Low_Decode		0x00b0
+#define GT_PCI1_Mem1_High_Decode	0x00b8
+#define GT_PCI1_Mem2_Low_Decode		0x02a0
+#define GT_PCI1_Mem2_High_Decode	0x02a8
+#define GT_PCI1_Mem3_Low_Decode		0x02b0
+#define GT_PCI1_Mem3_High_Decode	0x02b8
+#define GT_Internal_Decode		0x0068
+#define GT_CPU0_Low_Decode		0x0290
+#define GT_CPU0_High_Decode		0x0298
+#define GT_CPU1_Low_Decode		0x02c0
+#define GT_CPU1_High_Decode		0x02c8
+#define GT_PCI0_IO_Remap		0x00f0
+#define GT_PCI0_Mem0_Remap_Low		0x00f8
+#define GT_PCI0_Mem0_Remap_High		0x0320
+#define GT_PCI0_Mem1_Remap_Low		0x0100
+#define GT_PCI0_Mem1_Remap_High		0x0328
+#define GT_PCI0_Mem2_Remap_Low		0x02f8
+#define GT_PCI0_Mem2_Remap_High		0x0330
+#define GT_PCI0_Mem3_Remap_Low		0x0300
+#define GT_PCI0_Mem3_Remap_High		0x0338
+#define GT_PCI1_IO_Remap		0x0108
+#define GT_PCI1_Mem0_Remap_Low		0x0110
+#define GT_PCI1_Mem0_Remap_High		0x0340
+#define GT_PCI1_Mem1_Remap_Low		0x0118
+#define GT_PCI1_Mem1_Remap_High		0x0348
+#define GT_PCI1_Mem2_Remap_Low		0x0310
+#define GT_PCI1_Mem2_Remap_High		0x0350
+#define GT_PCI1_Mem3_Remap_Low		0x0318
+#define GT_PCI1_Mem3_Remap_High		0x0358
 
 
 /*
  * Table 31: CPU Control Register Map
  */
-#define GT_CPU_Cfg			0x0000 
-#define GT_CPU_Mode			0x0120 
-#define GT_CPU_Master_Ctl		0x0160 
-#define GT_CPU_If_Xbar_Ctl_Low		0x0150 
-#define GT_CPU_If_Xbar_Ctl_High		0x0158 
-#define GT_CPU_If_Xbar_Timeout		0x0168 
-#define GT_CPU_Rd_Rsp_Xbar_Ctl_Low	0x0170 
-#define GT_CPU_Rd_Rsp_Xbar_Ctl_High	0x0178 
+#define GT_CPU_Cfg			0x0000
+#define GT_CPU_Mode			0x0120
+#define GT_CPU_Master_Ctl		0x0160
+#define GT_CPU_If_Xbar_Ctl_Low		0x0150
+#define GT_CPU_If_Xbar_Ctl_High		0x0158
+#define GT_CPU_If_Xbar_Timeout		0x0168
+#define GT_CPU_Rd_Rsp_Xbar_Ctl_Low	0x0170
+#define GT_CPU_Rd_Rsp_Xbar_Ctl_High	0x0178
 
 /*
  * Table 32: CPU Sync Barrier Register Map
  */
 #define	GT_PCI_Sync_Barrier(bus)	(0x00c0 | ((bus) << 3))
-#define GT_PCI0_Sync_Barrier		0x00c0 
-#define GT_PCI1_Sync_Barrier		0x00c8 
+#define GT_PCI0_Sync_Barrier		0x00c0
+#define GT_PCI1_Sync_Barrier		0x00c8
 
 /*
  * Table 33: CPU Access Protection Register Map
  */
-#define GT_Protect_Low_0		0x0180 
-#define GT_Protect_High_0		0x0188 
-#define GT_Protect_Low_1		0x0190 
-#define GT_Protect_High_1		0x0198 
-#define GT_Protect_Low_2		0x01a0 
-#define GT_Protect_High_2		0x01a8 
-#define GT_Protect_Low_3		0x01b0 
-#define GT_Protect_High_3		0x01b8 
-#define GT_Protect_Low_4		0x01c0 
-#define GT_Protect_High_4		0x01c8 
-#define GT_Protect_Low_5		0x01d0 
-#define GT_Protect_High_5		0x01d8 
-#define GT_Protect_Low_6		0x01e0 
-#define GT_Protect_High_6		0x01e8 
-#define GT_Protect_Low_7		0x01f0 
-#define GT_Protect_High_7		0x01f8 
+#define GT_Protect_Low_0		0x0180
+#define GT_Protect_High_0		0x0188
+#define GT_Protect_Low_1		0x0190
+#define GT_Protect_High_1		0x0198
+#define GT_Protect_Low_2		0x01a0
+#define GT_Protect_High_2		0x01a8
+#define GT_Protect_Low_3		0x01b0
+#define GT_Protect_High_3		0x01b8
+#define GT_Protect_Low_4		0x01c0
+#define GT_Protect_High_4		0x01c8
+#define GT_Protect_Low_5		0x01d0
+#define GT_Protect_High_5		0x01d8
+#define GT_Protect_Low_6		0x01e0
+#define GT_Protect_High_6		0x01e8
+#define GT_Protect_Low_7		0x01f0
+#define GT_Protect_High_7		0x01f8
 
 /*
  * Table 34: Snoop Control Register Map
  */
-#define GT_Snoop_Base_0			0x0380 
-#define GT_Snoop_Top_0			0x0388 
-#define GT_Snoop_Base_1			0x0390 
-#define GT_Snoop_Top_1			0x0398 
-#define GT_Snoop_Base_2			0x03a0 
-#define GT_Snoop_Top_2			0x03a8 
-#define GT_Snoop_Base_3			0x03b0 
-#define GT_Snoop_Top_3			0x03b8 
+#define GT_Snoop_Base_0			0x0380
+#define GT_Snoop_Top_0			0x0388
+#define GT_Snoop_Base_1			0x0390
+#define GT_Snoop_Top_1			0x0398
+#define GT_Snoop_Base_2			0x03a0
+#define GT_Snoop_Top_2			0x03a8
+#define GT_Snoop_Base_3			0x03b0
+#define GT_Snoop_Top_3			0x03b8
 
 /*
  * Table 35: CPU Error Report Register Map
  */
-#define GT_CPU_Error_Address_Low	0x0070 
-#define GT_CPU_Error_Address_High	0x0078 
-#define GT_CPU_Error_Data_Low		0x0128 
-#define GT_CPU_Error_Data_High		0x0130 
-#define GT_CPU_Error_Parity		0x0138 
-#define GT_CPU_Error_Cause		0x0140 
-#define GT_CPU_Error_Mask		0x0148 
+#define GT_CPU_Error_Address_Low	0x0070
+#define GT_CPU_Error_Address_High	0x0078
+#define GT_CPU_Error_Data_Low		0x0128
+#define GT_CPU_Error_Data_High		0x0130
+#define GT_CPU_Error_Parity		0x0138
+#define GT_CPU_Error_Cause		0x0140
+#define GT_CPU_Error_Mask		0x0148
 
 #define	GT_DecodeAddr_SET(g, r, v)					\
 	do { 								\
@@ -524,7 +524,7 @@
  * 23:20 Arb13			Slice 13 of CPU Slave pizza Arbiter
  * 27:24 Arb14			Slice 14 of CPU Slave pizza Arbiter
  * 31:28 Arb15			Slice 15 of CPU Slave pizza Arbiter
- */ 
+ */
 
 /*
  * Table 105: PCI_0 Sync Barrier Virtual Register, Offset: 0x0c0
@@ -559,7 +559,7 @@
 #define GT_CPU_WrProtect			GT__BIT(17)
 #define GT_CPU_CacheProtect			GT__BIT(18)
 
-/* 
+/*
  * Table 108: CPU Protect Address 0 High, Offset: 0x188
  * Table 110: CPU Protect Address 1 High, Offset: 0x198
  * Table 112: CPU Protect Address 2 High, Offset: 0x1a8

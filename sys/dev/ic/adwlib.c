@@ -1,4 +1,4 @@
-/* $NetBSD: adwlib.c,v 1.32 2005/02/04 02:10:36 perry Exp $        */
+/* $NetBSD: adwlib.c,v 1.33 2005/02/27 00:27:00 perry Exp $        */
 
 /*
  * Low level routines for the Advanced Systems Inc. SCSI controllers chips
@@ -41,7 +41,7 @@
  */
 /*
  * advansys.c - Linux Host Driver for AdvanSys SCSI Adapters
- * 
+ *
  * Copyright (c) 1995-2000 Advanced System Products, Inc.
  * All Rights Reserved.
  *
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adwlib.c,v 1.32 2005/02/04 02:10:36 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adwlib.c,v 1.33 2005/02/27 00:27:00 perry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1740,7 +1740,7 @@ ADW_SCSI_REQ_Q	*scsiq;
 	/*
 	 * Begin of CRITICAL SECTION: Must be protected within splbio/splx pair
 	 */
-	
+
 	ccb = adw_ccb_phys_kv(sc, scsiq->ccb_ptr);
 
 	/*
@@ -1827,7 +1827,7 @@ ADW_SCSI_REQ_Q	*scsiq;
 	/*
 	 * End of CRITICAL SECTION: Must be protected within splbio/splx pair
 	 */
-	
+
 	return ADW_SUCCESS;
 }
 

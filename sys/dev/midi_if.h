@@ -1,4 +1,4 @@
-/*	$NetBSD: midi_if.h,v 1.14 2004/10/29 12:57:16 yamt Exp $	*/
+/*	$NetBSD: midi_if.h,v 1.15 2005/02/27 00:26:58 perry Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@ struct midi_hw_if {
 };
 
 void	midi_attach(struct midi_softc *, struct device *);
-struct device *midi_attach_mi(const struct midi_hw_if *, void *, 
+struct device *midi_attach_mi(const struct midi_hw_if *, void *,
 				   struct device *);
 
 int	midi_unit_count(void);

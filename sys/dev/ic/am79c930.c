@@ -1,4 +1,4 @@
-/* $NetBSD: am79c930.c,v 1.12 2004/03/11 05:59:33 jmc Exp $ */
+/* $NetBSD: am79c930.c,v 1.13 2005/02/27 00:27:00 perry Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
 
 #include <sys/cdefs.h>
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: am79c930.c,v 1.12 2004/03/11 05:59:33 jmc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: am79c930.c,v 1.13 2005/02/27 00:27:00 perry Exp $");
 #endif
 #ifdef __FreeBSD__
 __FBSDID("$FreeBSD$");
@@ -238,7 +238,7 @@ io_read_2(struct am79c930_softc *sc, u_int32_t off)
 	val = bus_space_read_1(sc->sc_iot, sc->sc_ioh, AM79C930_IODPA);
 	AM930_DELAY(1);
 	val |= bus_space_read_1(sc->sc_iot, sc->sc_ioh, AM79C930_IODPA) << 8;
-	AM930_DELAY(1);	
+	AM930_DELAY(1);
 	return val;
 }
 
@@ -255,11 +255,11 @@ io_read_4(struct am79c930_softc *sc, u_int32_t off)
 	val = bus_space_read_1(sc->sc_iot, sc->sc_ioh, AM79C930_IODPA);
 	AM930_DELAY(1);
 	val |= bus_space_read_1(sc->sc_iot, sc->sc_ioh, AM79C930_IODPA) << 8;
-	AM930_DELAY(1);	
+	AM930_DELAY(1);
 	val |= bus_space_read_1(sc->sc_iot, sc->sc_ioh, AM79C930_IODPA) << 16;
-	AM930_DELAY(1);	
+	AM930_DELAY(1);
 	val |= bus_space_read_1(sc->sc_iot, sc->sc_ioh, AM79C930_IODPA) << 24;
-	AM930_DELAY(1);	
+	AM930_DELAY(1);
 	return val;
 }
 
@@ -268,13 +268,13 @@ io_read_bytes(struct am79c930_softc *sc, u_int32_t off, u_int8_t *ptr,
     size_t len)
 {
 	int i;
-	
+
 	bus_space_write_1(sc->sc_iot, sc->sc_ioh, AM79C930_LMA_HI,
 	    ((off>>8)& 0x7f));
 	AM930_DELAY(1);
 	bus_space_write_1(sc->sc_iot, sc->sc_ioh, AM79C930_LMA_LO, (off&0xff));
 	AM930_DELAY(1);
-	for (i=0; i<len; i++) 
+	for (i=0; i<len; i++)
 		ptr[i] = bus_space_read_1(sc->sc_iot, sc->sc_ioh,
 		    AM79C930_IODPA);
 }
@@ -376,7 +376,7 @@ am79c930_gcr_setbits(struct am79c930_softc *sc, u_int8_t bits)
 	u_int8_t gcr = bus_space_read_1 (sc->sc_iot, sc->sc_ioh, AM79C930_GCR);
 
 	gcr |= bits;
-	
+
 	bus_space_write_1(sc->sc_iot, sc->sc_ioh, AM79C930_GCR, gcr);
 }
 
@@ -390,7 +390,7 @@ am79c930_gcr_clearbits(struct am79c930_softc *sc, u_int8_t bits)
 	u_int8_t gcr = bus_space_read_1 (sc->sc_iot, sc->sc_ioh, AM79C930_GCR);
 
 	gcr &= ~bits;
-	
+
 	bus_space_write_1(sc->sc_iot, sc->sc_ioh, AM79C930_GCR, gcr);
 }
 
@@ -400,7 +400,7 @@ am79c930_gcr_read(struct am79c930_softc *sc)
 	return bus_space_read_1 (sc->sc_iot, sc->sc_ioh, AM79C930_GCR);
 }
 
-#if 0 
+#if 0
 void
 am79c930_regdump(struct am79c930_softc *sc)
 {

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tlregs.h,v 1.6 2001/08/06 19:20:26 bouyer Exp $	*/
+/*	$NetBSD: if_tlregs.h,v 1.7 2005/02/27 00:27:33 perry Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.  All rights reserved.
@@ -34,7 +34,7 @@
 
 #define PCI_CFID    0x00    /* Configuration ID */
 #define PCI_CFCS    0x04    /* Configurtion Command/Status */
-#define PCI_CFRV    0x08    /* Configuration Revision */ 
+#define PCI_CFRV    0x08    /* Configuration Revision */
 #define PCI_CFLT    0x0c    /* Configuration Latency Timer */
 #define PCI_CBIO    0x10    /* Configuration Base IO Address */
 #define PCI_CBMA    0x14    /* Configuration Base Memory Address */

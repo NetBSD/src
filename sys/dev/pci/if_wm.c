@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.95 2005/02/21 02:12:48 thorpej Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.96 2005/02/27 00:27:33 perry Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -47,14 +47,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.95 2005/02/21 02:12:48 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.96 2005/02/27 00:27:33 perry Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/callout.h> 
+#include <sys/callout.h>
 #include <sys/mbuf.h>
 #include <sys/malloc.h>
 #include <sys/kernel.h>
@@ -72,11 +72,11 @@ __KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.95 2005/02/21 02:12:48 thorpej Exp $");
 #endif
 
 #include <net/if.h>
-#include <net/if_dl.h> 
+#include <net/if_dl.h>
 #include <net/if_media.h>
 #include <net/if_ether.h>
 
-#if NBPFILTER > 0 
+#if NBPFILTER > 0
 #include <net/bpf.h>
 #endif
 
@@ -2686,7 +2686,7 @@ wm_init(struct ifnet *ifp)
 	callout_reset(&sc->sc_tick_ch, hz, wm_tick, sc);
 
 	/* ...all done! */
-	ifp->if_flags |= IFF_RUNNING; 
+	ifp->if_flags |= IFF_RUNNING;
 	ifp->if_flags &= ~IFF_OACTIVE;
 
  out:

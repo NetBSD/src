@@ -1,4 +1,4 @@
-/* $NetBSD: ciphyreg.h,v 1.1 2005/02/20 16:35:56 jdolecek Exp $ */
+/* $NetBSD: ciphyreg.h,v 1.2 2005/02/27 00:27:31 perry Exp $ */
 
 /*-
  * Copyright (c) 2004
@@ -31,7 +31,7 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
  * THE POSSIBILITY OF SUCH DAMAGE.
  *
- * FreeBSD: src/sys/dev/mii/ciphyreg.h,v 1.2 2005/01/06 01:42:55 imp Exp 
+ * FreeBSD: src/sys/dev/mii/ciphyreg.h,v 1.2 2005/01/06 01:42:55 imp Exp
  */
 
 #ifndef _DEV_MII_CIPHYREG_H_

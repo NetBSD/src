@@ -1,4 +1,4 @@
-/*	$NetBSD: aic79xx_osm.h,v 1.6 2005/02/21 00:29:07 thorpej Exp $	*/
+/*	$NetBSD: aic79xx_osm.h,v 1.7 2005/02/27 00:27:00 perry Exp $	*/
 
 /*
  * NetBSD platform specific driver option settings, data structures,
@@ -32,9 +32,9 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $NetBSD: aic79xx_osm.h,v 1.6 2005/02/21 00:29:07 thorpej Exp $
+ * $NetBSD: aic79xx_osm.h,v 1.7 2005/02/27 00:27:00 perry Exp $
  *
- * //depot/aic7xxx/freebsd/dev/aic7xxx/aic79xx_osm.h#19 $$NetBSD: aic79xx_osm.h,v 1.6 2005/02/21 00:29:07 thorpej Exp $
+ * //depot/aic7xxx/freebsd/dev/aic7xxx/aic79xx_osm.h#19 $$NetBSD: aic79xx_osm.h,v 1.7 2005/02/27 00:27:00 perry Exp $
  *
  * $FreeBSD: src/sys/dev/aic7xxx/aic79xx_osm.h,v 1.9 2003/05/26 21:43:29 gibbs Exp $
  */
@@ -86,7 +86,7 @@
 	(ahd->platform_data->path)
 #define BUILD_SCSIID(ahd, sim, target_id, our_id) \
         ((((target_id) << TID_SHIFT) & TID) | (our_id))
-        
+
 
 #define SCB_GET_SIM(ahd, scb) \
 	((ahd)->platform_data->sim)
@@ -144,7 +144,7 @@ typedef pcireg_t ahd_dev_softc_t;
  * to handle any unaligned residual.  The sequencer fetches SG elements
  * in cacheline sized chucks, so make the number per-transaction an even
  * multiple of 16 which should align us on even the largest of cacheline
- * boundaries. 
+ * boundaries.
  */
 #define AHD_NSEG (roundup(btoc(MAXPHYS) + 1, 16))
 
@@ -267,7 +267,7 @@ ahd_lockinit(struct ahd_softc *ahd)
 static __inline void
 ahd_lock(struct ahd_softc *ahd, int *flags)
 {
-	*flags = splbio(); 
+	*flags = splbio();
 }
 
 static __inline void
@@ -389,7 +389,7 @@ void ahd_set_residual(struct scb *scb, u_long resid)
 static __inline
 void ahd_set_sense_residual(struct scb *scb, u_long resid)
 {
-  //scb->xs->sense.scsi_sense.extra_len = resid; /* ??? */	
+  //scb->xs->sense.scsi_sense.extra_len = resid; /* ??? */
 }
 
 
@@ -452,7 +452,7 @@ ahd_platform_abort_scbs(struct ahd_softc *ahd, int target,
 static __inline void
 ahd_platform_scb_free(struct ahd_softc *ahd, struct scb *scb)
 {
-#ifdef _FreeBSD_ 
+#ifdef _FreeBSD_
 	/* What do we do to generically handle driver resource shortages??? */
 	if ((ahd->flags & AHD_RESOURCE_SHORTAGE) != 0
 	 && scb->io_ctx != NULL

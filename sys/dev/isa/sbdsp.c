@@ -1,4 +1,4 @@
-/*	$NetBSD: sbdsp.c,v 1.116 2005/02/01 12:07:58 gson Exp $	*/
+/*	$NetBSD: sbdsp.c,v 1.117 2005/02/27 00:27:17 perry Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -17,10 +17,10 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *        This product includes software developed by the NetBSD 
+ *        This product includes software developed by the NetBSD
  *	  Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its 
- *    contributors may be used to endorse or promote products derived 
+ * 4. Neither the name of The NetBSD Foundation nor the names of its
+ *    contributors may be used to endorse or promote products derived
  *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbdsp.c,v 1.116 2005/02/01 12:07:58 gson Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbdsp.c,v 1.117 2005/02/27 00:27:17 perry Exp $");
 
 #include "midi.h"
 #include "mpu.h"
@@ -1533,7 +1533,7 @@ sbdsp_halt_input(void *addr)
 /*
  * Only the DSP unit on the sound blaster generates interrupts.
  * There are three cases of interrupt: reception of a midi byte
- * (when mode is enabled), completion of DMA transmission, or 
+ * (when mode is enabled), completion of DMA transmission, or
  * completion of a DMA reception.
  *
  * If there is interrupt sharing or a spurious interrupt occurs

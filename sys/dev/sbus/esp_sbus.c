@@ -1,4 +1,4 @@
-/*	$NetBSD: esp_sbus.c,v 1.30 2005/02/04 02:10:47 perry Exp $	*/
+/*	$NetBSD: esp_sbus.c,v 1.31 2005/02/27 00:27:48 perry Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esp_sbus.c,v 1.30 2005/02/04 02:10:47 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esp_sbus.c,v 1.31 2005/02/27 00:27:48 perry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -499,8 +499,8 @@ espattach(esc, gluep)
 
 	/*
 	 * Alas, we must now modify the value a bit, because it's
-	 * only valid when can switch on FASTCLK and FASTSCSI bits  
-	 * in config register 3... 
+	 * only valid when can switch on FASTCLK and FASTSCSI bits
+	 * in config register 3...
 	 */
 	switch (sc->sc_rev) {
 	case NCR_VARIANT_ESP100:
@@ -549,7 +549,7 @@ int esp_sbus_debug = 0;
 
 static struct {
 	char *r_name;
-	int   r_flag; 
+	int   r_flag;
 } esp__read_regnames [] = {
 	{ "TCL", 0},			/* 0/00 */
 	{ "TCM", 0},			/* 1/04 */
@@ -741,7 +741,7 @@ db_esp(addr, have_addr, count, modif)
 		if (!sc) continue;
 
 		db_printf("esp%d: nexus %p phase %x prev %x dp %p dleft %lx ify %x\n",
-			  u, sc->sc_nexus, sc->sc_phase, sc->sc_prevphase, 
+			  u, sc->sc_nexus, sc->sc_phase, sc->sc_prevphase,
 			  sc->sc_dp, sc->sc_dleft, sc->sc_msgify);
 		db_printf("\tmsgout %x msgpriq %x msgin %x:%x:%x:%x:%x\n",
 			  sc->sc_msgout, sc->sc_msgpriq, sc->sc_imess[0],
@@ -756,7 +756,7 @@ db_esp(addr, have_addr, count, modif)
 			}
 		}
 		db_printf("\n");
-		
+
 		for (t=0; t<sc->sc_ntarg; t++) {
 			LIST_FOREACH(li, &sc->sc_tinfo[t].luns, link) {
 				db_printf("t%d lun %d untagged %p busy %d used %x\n",

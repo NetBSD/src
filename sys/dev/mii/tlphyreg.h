@@ -1,5 +1,5 @@
-/*	$NetBSD: tlphyreg.h,v 1.1 1998/08/10 23:59:58 thorpej Exp $	*/
- 
+/*	$NetBSD: tlphyreg.h,v 1.2 2005/02/27 00:27:31 perry Exp $	*/
+
 /*
  * Copyright (c) 1997 Manuel Bouyer.  All rights reserved.
  *
