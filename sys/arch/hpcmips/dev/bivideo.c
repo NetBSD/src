@@ -1,4 +1,4 @@
-/*	$NetBSD: bivideo.c,v 1.6 2000/05/09 13:19:54 shin Exp $	*/
+/*	$NetBSD: bivideo.c,v 1.6.4.1 2000/06/30 16:27:24 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1999
@@ -37,7 +37,7 @@
 static const char _copyright[] __attribute__ ((unused)) =
     "Copyright (c) 1999 Shin Takemura.  All rights reserved.";
 static const char _rcsid[] __attribute__ ((unused)) =
-    "$Id: bivideo.c,v 1.6 2000/05/09 13:19:54 shin Exp $";
+    "$Id: bivideo.c,v 1.6.4.1 2000/06/30 16:27:24 simonb Exp $";
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -72,7 +72,7 @@ static const char _rcsid[] __attribute__ ((unused)) =
 int	bivideomatch __P((struct device *, struct cfdata *, void *));
 void	bivideoattach __P((struct device *, struct device *, void *));
 int	bivideo_ioctl __P((void *, u_long, caddr_t, int, struct proc *));
-int	bivideo_mmap __P((void *, off_t, int));
+paddr_t	bivideo_mmap __P((void *, off_t, int));
 
 struct bivideo_softc {
 	struct device		sc_dev;
@@ -358,7 +358,7 @@ bivideo_ioctl(v, cmd, data, flag, p)
 	return (ENOTTY);
 }
 
-int
+paddr_t
 bivideo_mmap(ctx, offset, prot)
 	void *ctx;
 	off_t offset;

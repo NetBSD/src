@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.13 2000/03/18 22:33:07 scw Exp $	*/
+/*	$NetBSD: mem.c,v 1.13.4.1 2000/06/30 16:27:31 simonb Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -201,10 +201,11 @@ unlock:
 	return (error);
 }
 
-int
+paddr_t
 mmmmap(dev, off, prot)
 	dev_t dev;
-	int off, prot;
+	off_t off;
+	int prot;
 {
 	/*
 	 * /dev/mem is the only one that makes sense through this

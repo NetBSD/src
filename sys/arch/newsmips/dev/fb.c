@@ -1,4 +1,4 @@
-/*	$NetBSD: fb.c,v 1.3 1999/02/15 04:36:33 hubertf Exp $	*/
+/*	$NetBSD: fb.c,v 1.3.18.1 2000/06/30 16:27:32 simonb Exp $	*/
 /*
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -452,15 +452,16 @@ fbioctl(dev, cmd, data, flags, p)
 	return error;
 }
 
-int
+paddr_t
 fbmmap(dev, off, prot)
 	dev_t dev;
-	int off, prot;
+	off_t off;
+	int prot;
 {
-	register int unit = FBUNIT(dev);
-	register struct fb_softc *fb = fb_cd.cd_devs[unit];
-	register struct fbreg *fbp = &fb->fbreg;
-	register int page;
+	int unit = FBUNIT(dev);
+	struct fb_softc *fb = fb_cd.cd_devs[unit];
+	struct fbreg *fbp = &fb->fbreg;
+	paddr_t page;
 
 	if (unit >= NFB)
 		return -1;

@@ -1,4 +1,4 @@
-/*	$NetBSD: asc.c,v 1.34 2000/03/23 06:39:56 thorpej Exp $	*/
+/*	$NetBSD: asc.c,v 1.34.4.1 2000/06/30 16:27:28 simonb Exp $	*/
 
 /*
  * Copyright (C) 1997 Scott Reynolds
@@ -285,10 +285,10 @@ ascpoll(dev, events, p)
 	return (events & (POLLOUT | POLLWRNORM));
 }
 
-int
+paddr_t
 ascmmap(dev, off, prot)
 	dev_t dev;
-	int off;
+	off_t off;
 	int prot;
 {
 	int unit = ASCUNIT(dev);

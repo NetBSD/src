@@ -1,4 +1,4 @@
-/*	$NetBSD: view.c,v 1.16 1998/12/20 14:32:53 thomas Exp $	*/
+/*	$NetBSD: view.c,v 1.16.18.1 2000/06/30 16:27:20 simonb Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -398,10 +398,11 @@ struct proc	*p;
 }
 
 /*ARGSUSED*/
-int
+paddr_t
 viewmmap(dev, off, prot)
-dev_t	dev;
-int	off, prot;
+	dev_t	dev;
+	off_t	off;
+	int	prot;
 {
 	struct view_softc	*vu;
 	bmap_t			*bm;
@@ -418,19 +419,19 @@ int	off, prot;
 	 * control registers
 	 */
 	if (off >= 0 && off < bm->reg_size)
-		return(((u_int)bm->hw_regs + off) >> PGSHIFT);
+		return(((paddr_t)bm->hw_regs + off) >> PGSHIFT);
 
 	/*
 	 * VGA memory
 	 */
 	if (off >= bmd_vga && off < (bmd_vga + bm->vga_mappable))
-		return(((u_int)bm->vga_address - bmd_vga + off) >> PGSHIFT);
+		return(((paddr_t)bm->vga_address - bmd_vga + off) >> PGSHIFT);
 
 	/*
 	 * frame buffer
 	 */
 	if (off >= bmd_lin && off < (bmd_lin + bm->phys_mappable))
-		return(((u_int)bmd_start - bmd_lin + off) >> PGSHIFT);
+		return(((paddr_t)bmd_start - bmd_lin + off) >> PGSHIFT);
 
 	return(-1);
 }
