@@ -1,3 +1,4 @@
+#	$NetBSD: Makefile,v 1.2 1995/02/27 17:31:26 cgd Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/4/93
 
 all: mul divrem
