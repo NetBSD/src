@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.283 2004/02/25 15:00:59 agc Exp $
+#	$NetBSD: Makefile,v 1.284 2004/03/08 05:46:44 cgd Exp $
 #	from: @(#)Makefile	8.7 (Berkeley) 5/25/95
 
 # Environment variables without default values:
@@ -507,6 +507,10 @@ GETKERNELAWK=	awk '/^config/ {print $$2; found=1} \
 # build_kernels --
 #	Configure & compile kernels listed in ${ALL_KERNELS}
 #
+# The 'sync' is so that all writes during the build are pushed back
+# to the disk.  Not having it causes problems on some host systems
+# (e.g. Linux) when building on NFS.
+#
 .if !defined(KERNELS_DONE)						# {
 .for configfile in ${ALL_KERNELS}					# {
 _KERNELS_TO_BUILD+=kern-${configfile}
@@ -517,6 +521,7 @@ kern-${configfile}: .PHONY
 	cd ${KERNOBJDIR}/${configfile:C/.*\///} && ${MAKE} distclean
 .endif
 	cd ${KERNOBJDIR}/${configfile:C/.*\///} && ${MAKE} depend && ${MAKE}
+	sync
 .endfor	# ALL_KERNELS							# }
 .endif	# KERNELS_DONE							# }
 
