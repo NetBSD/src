@@ -1,4 +1,4 @@
-/*	$NetBSD: clk_wharton.c,v 1.1.1.2 2000/04/22 14:53:06 simonb Exp $	*/
+/*	$NetBSD: clk_wharton.c,v 1.2 2001/04/21 21:57:17 thorpej Exp $	*/
 
 /*
  * /src/NTP/ntp-4/libparse/clk_wharton.c,v 4.1 1999/02/28 15:27:24 kardel RELEASE_19990228_A
@@ -136,7 +136,7 @@ inp_wharton_400a(
 {
 	unsigned int rtc;
 	
-	parseprintf(DD_PARSE, ("inp_wharton_400a(0x%x, 0x%x, ...)\n", (int)parseio, (int)ch));
+	parseprintf(DD_PARSE, ("inp_wharton_400a(0x%lx, 0x%x, ...)\n", (unsigned long)parseio, ch));
 	
 	switch (ch)
 	{
