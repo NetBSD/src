@@ -33,7 +33,7 @@
  *	pcmcia_isic.c - pcmcia bus frontend for i4b_isic driver
  *	-------------------------------------------------------
  *
- *	$Id: pcmcia_isic.c,v 1.1.1.1 2001/01/05 12:50:20 martin Exp $ 
+ *	$Id: pcmcia_isic.c,v 1.2 2001/01/18 22:14:02 martin Exp $ 
  *
  *      last edit-date: [Fri Jan  5 11:39:32 2001]
  *
@@ -127,6 +127,13 @@ static const struct isic_pcmcia_card_entry card_list[] = {
         { "ELSA", "MicroLink MC all", NULL, NULL },
         "ELSA MicroLink MCall", PCMCIA_FUNCTION_NETWORK,
 	CARD_TYPEP_ELSAMLMCALL, isic_attach_elsamcall },
+#endif
+
+#ifdef ISICPCMCIA_SBSPEEDSTAR2
+    {	0x020e, 0x0002,
+        { "SEDLBAUER", "speed star II", NULL, NULL },
+        "SEDLBAUER speed star II", PCMCIA_FUNCTION_NETWORK,
+	CARD_TYPEP_SWS, isic_attach_sbspeedstar2 },
 #endif
 
 };
