@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.391 2003/11/07 00:05:24 lukem Exp $
+#	$NetBSD: bsd.own.mk,v 1.392 2003/11/09 02:54:50 mrg Exp $
 
 .if !defined(_BSD_OWN_MK_)
 _BSD_OWN_MK_=1
@@ -66,13 +66,12 @@ USE_TOOLS_TOOLCHAIN?=yes
 #
 # not ported:
 #    ${MACHINE_ARCH} == "hppa" ||
-# in progress:
-#    ${MACHINE_ARCH} == "armeb" ||
-#    ${MACHINE_ARCH} == "m68000" ||
-# working:
+# XXX m68000 not actually tested but does build.
 .if ${MACHINE_ARCH} == "alpha" || \
     ${MACHINE_ARCH} == "arm" || \
+    ${MACHINE_ARCH} == "armeb" || \
     ${MACHINE_ARCH} == "i386" || \
+    ${MACHINE_ARCH} == "m68000" || \
     ${MACHINE_ARCH} == "m68k" || \
     ${MACHINE_ARCH} == "mipseb" || \
     ${MACHINE_ARCH} == "mipsel" || \
