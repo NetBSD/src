@@ -39,23 +39,26 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)pwd.c	5.4 (Berkeley) 2/20/91";*/
-static char rcsid[] = "$Id: pwd.c,v 1.4 1993/08/01 18:59:02 mycroft Exp $";
+static char rcsid[] = "$Id: pwd.c,v 1.5 1993/09/10 19:34:33 jtc Exp $";
 #endif /* not lint */
 
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 #include <unistd.h>
 #include <errno.h>
-#include <stdio.h>
-#include <string.h>
 
+int
 main()
 {
 	char *p;
 
 	p = getcwd((char *)NULL, 0);
-	if (p) {
-		(void)printf("%s\n", p);
-		exit(0);
+	if (!p) {
+		(void)fprintf(stderr, "pwd: %s\n", strerror(errno));
+		exit(1);
 	}
-	(void)fprintf(stderr, "pwd: %s\n", strerror(errno));
-	exit(1);
+
+	(void)printf("%s\n", p);
+	exit(0);
 }
