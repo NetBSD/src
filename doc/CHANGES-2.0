@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.60 2004/04/08 22:02:50 jmc Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.61 2004/04/09 02:31:39 jmc Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -659,3 +659,10 @@ games/mille/move.c				1.14
 	If the current player has no cards, skip to the other player.    
 	Make this compile with -DDEBUG. PR#12530
 	[jdc, ticket #101]
+
+sys/arch/macppc/pci/pci_machdep.c		1.25
+
+	Deal with OFW trees that have interrupt nodes without an #address-cells
+	property. Treat them as if they had such a property but its value was 0.
+
+	[matt, ticket #102]
