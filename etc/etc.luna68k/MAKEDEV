@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.9 2001/12/19 18:30:03 wiz Exp $
+#	$NetBSD: MAKEDEV,v 1.10 2002/01/13 14:19:42 manu Exp $
 #
 # Device "make" file.  Valid arguments:
 #	std	standard devices
@@ -20,6 +20,7 @@
 # Tapes:
 #	st*	SCSI tape
 # Special purpose devices:
+#       clockctl clock control for non root users
 #	bpf*	packet filter
 #	ch*	SCSI media changer
 #	fd	file descriptor device
@@ -44,6 +45,7 @@ all)
 	sh -$- $0 pty0 pty1 pty2 pty3 bpf0 bpf1 lkm ipl
 	sh -$- $0 wskbd wsmouse ttyE0 ttyEcfg
 	sh -$- $0 scsibus0
+	sh -$- $0 clockctl
 	;;
 std)
 	rm -f console drum mem kmem null zero io tty klog stdin stdout stderr
@@ -279,6 +281,13 @@ wsmouse*|wskbd*)
         chmod 600 wsmouse0 wskbd0
         ;;
 
+
+clockctl)
+	rm -f clockctl
+	mknod clockctl c 35 0
+	chown root.ntpd clockctl
+	chmod 660 clockctl
+	;;
 
 local)
 	umask 0
