@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.206 2000/06/28 16:39:25 mrg Exp $ */
+/*	$NetBSD: wd.c,v 1.207 2000/07/05 23:31:13 thorpej Exp $ */
 
 /*
  * Copyright (c) 1998 Manuel Bouyer.  All rights reserved.
@@ -1125,7 +1125,6 @@ wdsize(dev)
 	return (size);
 }
 
-#ifndef __BDEVSW_DUMP_OLD_TYPE
 /* #define WD_DUMP_NOT_TRUSTED if you just want to watch */
 static int wddoingadump = 0;
 static int wddumprecalibrated = 0;
@@ -1259,21 +1258,6 @@ again:
 	wddoingadump = 0;
 	return 0;
 }
-#else /* __BDEVSW_DUMP_NEW_TYPE */
-
-
-int
-wddump(dev, blkno, va, size)
-	dev_t dev;
-	daddr_t blkno;
-	caddr_t va;
-	size_t size;
-{
-
-	/* Not implemented. */
-	return ENXIO;
-}
-#endif /* __BDEVSW_DUMP_NEW_TYPE */
 
 #ifdef HAS_BAD144_HANDLING
 /*
