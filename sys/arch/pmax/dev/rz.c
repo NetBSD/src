@@ -1,4 +1,4 @@
-/*	$NetBSD: rz.c,v 1.21 1997/01/15 00:52:17 jonathan Exp $	*/
+/*	$NetBSD: rz.c,v 1.22 1997/01/31 02:00:58 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -59,6 +59,7 @@
 #include <sys/uio.h>
 #include <sys/stat.h>
 #include <sys/syslog.h>
+#include <sys/device.h>
 
 #include <ufs/ffs/fs.h>
 
@@ -144,6 +145,7 @@ struct rzstats {
 };
 
 struct	rz_softc {
+	struct	device sc_dev;		/* new config glue */
 	struct	pmax_scsi_device *sc_sd;	/* physical unit info */
 	pid_t	sc_format_pid;		/* process using "format" mode */
 	short	sc_flags;		/* see below */
@@ -156,7 +158,6 @@ struct	rz_softc {
 #define	sc_bopenpart	sc_dkdev.dk_bopenmask	/* XXX compat */
 #define	sc_copenpart	sc_dkdev.dk_copenmask	/* XXX compat */
 #define	sc_bshift	sc_dkdev.dk_blkshift	/* XXX compat */
-	char	sc_xname[8];		/* XXX external name */
 	struct	rzstats sc_stats;	/* statisic counts */
 	struct	buf sc_tab;		/* queue of pending operations */
 	struct	buf sc_buf;		/* buf for doing I/O */
@@ -356,12 +357,14 @@ rzprobe(xxxsd)
 	sc->sc_rwcmd.unitNumber = sd->sd_slave;
 
 	/* XXX set up the external name */
-	bzero(sc->sc_xname, sizeof(sc->sc_xname));	/* XXX */
-	sprintf(sc->sc_xname, "rz%d", sd->sd_unit);	/* XXX */
+	bzero(&sc->sc_dev, sizeof(sc->sc_dev));			/* XXX */
+	sprintf(sc->sc_dev.dv_xname, "rz%d", sd->sd_unit);	/* XXX */
+	sc->sc_dev.dv_unit = sd->sd_unit;			/* XXX */
+	sc->sc_dev.dv_class = DV_DISK;				/* XXX */
 
 	/* Initialize the disk structure. */
 	bzero(&sc->sc_dkdev, sizeof(sc->sc_dkdev));
-	sc->sc_dkdev.dk_name = sc->sc_xname;
+	sc->sc_dkdev.dk_name = sc->sc_dev.dv_xname;
 
 	/* try to find out what type of device this is */
 	sc->sc_format_pid = 1;		/* force use of sc_cdb */
@@ -445,6 +448,10 @@ rzprobe(xxxsd)
 	if (inqbuf.rmb)
 		sc->sc_flags |= RZF_REMOVEABLE;
 	sc->sc_buf.b_flags = 0;
+
+	sd->sd_devp = &sc->sc_dev;				/* XXX */
+	TAILQ_INSERT_TAIL(&alldevs, &sc->sc_dev, dv_list);	/* XXX */
+
 	return (1);
 
 bad:
