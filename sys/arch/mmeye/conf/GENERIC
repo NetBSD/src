@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.42 2002/07/22 15:21:05 tsutsui Exp $
+# $NetBSD: GENERIC,v 1.43 2002/09/18 02:44:03 lukem Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/mmeye/conf/std.mmeye"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.42 $"
+#ident 		"GENERIC-$Revision: 1.43 $"
 
 maxusers	16		# estimated number of users
 
@@ -54,7 +54,7 @@ options 	SYSVSHM		# System V-like memory sharing
 
 #options 	LKM		# loadable kernel modules
 
-#options 	USERCONF	# userconf(4) support
+options 	USERCONF	# userconf(4) support
 #options	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
 
 # Diagnostic/debugging support options

@@ -1,4 +1,4 @@
-#	$NetBSD: IOPENER,v 1.31 2002/07/22 11:06:03 wiz Exp $
+#	$NetBSD: IOPENER,v 1.32 2002/09/18 02:44:01 lukem Exp $
 #
 #	IOPENER -- GENERIC-like kernel for the Netpliance i-opener
 #	from: GENERIC,v 1.358 2000/07/05 04:07:25 sommerfeld Exp
@@ -8,7 +8,7 @@ include "arch/i386/conf/std.i386"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"IOPENER-$Revision: 1.31 $"
+#ident 		"IOPENER-$Revision: 1.32 $"
 
 maxusers	32		# estimated number of users
 
@@ -47,7 +47,7 @@ options 	SYSVSHM		# System V-like memory sharing
 
 #options 	LKM		# loadable kernel modules
 
-#options 	USERCONF	# userconf(4) support
+options 	USERCONF	# userconf(4) support
 #options	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
 
 # Diagnostic/debugging support options

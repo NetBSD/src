@@ -1,7 +1,7 @@
 #
 # kernel config file for debugging.
 #
-# 	$NetBSD: DEBUG,v 1.7 2002/04/25 15:06:35 atatat Exp $
+# 	$NetBSD: DEBUG,v 1.8 2002/09/18 02:44:06 lukem Exp $
 #
 
 include 	"arch/playstation2/conf/std.playstation2"
@@ -34,7 +34,7 @@ options 	MSGBUFSIZE=8192		# dmesg buffer size
 #options 	LOCKDEBUG
 options 	GPROF		# kernel profiling
 makeoptions	PROF="-pg"
-#options 	USERCONF	# userconf(4) support
+options 	USERCONF	# userconf(4) support
 #options	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
 
 #options 	USBVERBOSE	# verbose USB device autoconfig messages
