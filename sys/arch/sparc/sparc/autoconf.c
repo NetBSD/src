@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.168.4.1 2002/06/21 14:45:42 lukem Exp $ */
+/*	$NetBSD: autoconf.c,v 1.168.4.2 2002/11/22 17:40:05 tron Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -1745,8 +1745,8 @@ instance_match(dev, aux, bp)
 		    "want space %#x pa %#x have space %#x pa %#x\n",
 		     bp->val[0], bp->val[1], iom->iom_reg[0].ior_iospace,
 		     iom->iom_reg[0].ior_pa));
-		if ((u_int32_t)bp->val[0] == iom->iom_reg[0].ior_iospace &&
-		    (u_int32_t)bp->val[1] == iom->iom_reg[0].ior_pa)
+		if ((u_int32_t)bp->val[0] == iom->iom_reg[0].oa_space &&
+		    (u_int32_t)bp->val[1] == iom->iom_reg[0].oa_base)
 			return (1);
 		break;
 	case BUSCLASS_XDC:
