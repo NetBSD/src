@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_machdep.c,v 1.1 1995/01/08 21:22:19 christos Exp $	 */
+/*	$NetBSD: svr4_machdep.c,v 1.2 1995/01/15 02:12:14 mycroft Exp $	 */
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -53,7 +53,6 @@
 #include <machine/specialreg.h>
 
 extern int _ucodesel, _udatasel;
-extern int check_selectors __P((u_short, u_short, u_short, u_short));
 
 void
 svr4_getcontext(p, uc, mask, oonstack)
@@ -136,7 +135,7 @@ svr4_setcontext(p, uc)
 	register struct trapframe *tf;
 	svr4_greg_t* r = uc->uc_mcontext.greg;
 	svr4_stack_t *s = &uc->uc_stack;
-	int eflags, mask;
+	int mask;
 
 	/*
 	 * XXX:
@@ -150,24 +149,12 @@ svr4_setcontext(p, uc)
 
 	tf = (struct trapframe *)p->p_md.md_regs;
 
-	eflags = r[SVR4_X86_EFL];
-	if ((eflags & PSL_USERCLR) != 0 ||
-	    (eflags & PSL_USERSET) != PSL_USERSET ||
-	    (eflags & PSL_IOPL) > (tf->tf_eflags & PSL_IOPL))
-		return EINVAL;
-
 	/*
-	 * Sanity check the user's selectors and error if they are suspect.
-	 * We assume that swtch() has loaded the correct LDT descriptor, so
-	 * we can just use the `verr' instruction.  We further assume that
-	 * none of the segments we wish to protect are conforming.  (If they
-	 * were, this check wouldn't help much anyway.)
+	 * Check for security violations.
 	 */
-	if (check_selectors(r[SVR4_X86_CS], r[SVR4_X86_SS], r[SVR4_X86_DS],
-			    r[SVR4_X86_ES])) {
-		trapsignal(p, SIGBUS, T_PROTFLT);
-		return EINVAL;
-	}
+	if (((r[SVR4_X86_EFL] ^ tf->tf_eflags) & PSL_USERSTATIC) != 0 ||
+	    ISPL(r[SVR4_X86_CS]) != SEL_UPL)
+		return (EINVAL);
 
 	/*
 	 * restore signal stack
@@ -197,7 +184,7 @@ svr4_setcontext(p, uc)
 	tf->tf_eax = r[SVR4_X86_EAX];
 	tf->tf_eip = r[SVR4_X86_EIP];
 	tf->tf_cs = r[SVR4_X86_CS];
-	tf->tf_eflags = eflags;
+	tf->tf_eflags = r[SVR4_X86_EFL];
 	tf->tf_ss = r[SVR4_X86_SS];
 	tf->tf_esp = r[SVR4_X86_ESP];
 
