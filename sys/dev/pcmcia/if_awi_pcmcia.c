@@ -1,4 +1,4 @@
-/* $NetBSD: if_awi_pcmcia.c,v 1.10 2000/02/03 08:52:21 enami Exp $ */
+/* $NetBSD: if_awi_pcmcia.c,v 1.11 2000/02/12 19:58:35 chopps Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -357,9 +357,9 @@ awi_pcmcia_attach(parent, self, aux)
 	if (pcmcia_mem_alloc(psc->sc_pf, AM79C930_MEM_SIZE, &memh) != 0) {
 		printf("%s: unable to allocate memory space; using i/o only\n",
 		    sc->sc_dev.dv_xname);
-	} else if (pcmcia_mem_map(psc->sc_pf, PCMCIA_MEM_COMMON,
-	    AM79C930_MEM_BASE, AM79C930_MEM_SIZE,
-	    &memh, &memoff, &memwin)) {
+	} else if (pcmcia_mem_map(psc->sc_pf,
+	    PCMCIA_WIDTH_MEM8|PCMCIA_MEM_COMMON, AM79C930_MEM_BASE,
+	    AM79C930_MEM_SIZE, &memh, &memoff, &memwin)) {
 		printf("%s: unable to map memory space; using i/o only\n",
 		    sc->sc_dev.dv_xname);
 		pcmcia_mem_free(psc->sc_pf, &memh);
