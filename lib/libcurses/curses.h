@@ -1,4 +1,4 @@
-/*	$NetBSD: curses.h,v 1.71 2003/01/09 12:48:05 blymn Exp $	*/
+/*	$NetBSD: curses.h,v 1.72 2003/01/27 21:08:09 jdc Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -488,6 +488,7 @@ int	 assume_default_colors(short, short);
 int	 baudrate(void);
 int	 beep(void);
 int	 box(WINDOW *, chtype, chtype);
+bool	 can_change_color(void);
 bool	 can_change_colors(void);
 int	 cbreak(void);
 int	 clearok(WINDOW *, bool);
@@ -566,6 +567,7 @@ WINDOW	*newpad(int, int);
 SCREEN  *newterm(char *, FILE *, FILE *);
 WINDOW	*newwin(int, int, int, int);
 int	 nl(void);
+attr_t	 no_color_video(void);
 int	 nocbreak(void);
 void	 nodelay(WINDOW *, bool);
 int	 noecho(void);
