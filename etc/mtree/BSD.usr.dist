@@ -1,7 +1,7 @@
 #	fs: /usr
 #
 #	@(#)BSD.usr.dist	5.5 (Berkeley) 5/9/91
-#	$Id: BSD.usr.dist,v 1.11 1994/02/10 02:33:23 cgd Exp $
+#	$Id: BSD.usr.dist,v 1.12 1994/02/14 08:59:58 deraadt Exp $
 #
 
 .	type=dir
@@ -350,6 +350,8 @@ share	type=dir
 			..
 			i386
 			..
+			mac68k
+			..
 			sparc
 			..
 			tahoe
@@ -369,6 +371,8 @@ share	type=dir
 			hp300
 			..
 			i386
+			..
+			mac68k
 			..
 			sparc
 			..
@@ -392,6 +396,8 @@ share	type=dir
 			..
 			i386
 			..
+			mac68k
+			..
 			sparc
 			..
 			tahoe
@@ -411,6 +417,8 @@ share	type=dir
 			hp300
 			..
 			i386
+			..
+			mac68k
 			..
 			sparc
 			..
