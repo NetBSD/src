@@ -1,4 +1,4 @@
-/*	$NetBSD: telnetd.c,v 1.34 2002/09/18 20:58:56 mycroft Exp $	*/
+/*	$NetBSD: telnetd.c,v 1.35 2002/09/20 19:11:17 mycroft Exp $	*/
 
 /*
  * Copyright (C) 1997 and 1998 WIDE Project.
@@ -69,7 +69,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\n\
 #if 0
 static char sccsid[] = "@(#)telnetd.c	8.4 (Berkeley) 5/30/95";
 #else
-__RCSID("$NetBSD: telnetd.c,v 1.34 2002/09/18 20:58:56 mycroft Exp $");
+__RCSID("$NetBSD: telnetd.c,v 1.35 2002/09/20 19:11:17 mycroft Exp $");
 #endif
 #endif /* not lint */
 
@@ -1011,7 +1011,7 @@ telnet(f, p, host)
 	char	defstrs[TABBUFSIZ];
 #undef	TABBUFSIZ
 	char *HE, *HN, *IM, *IF, *ptyibuf2ptr;
-	int nfd;
+	struct pollfd set[2];
 
 	/*
 	 * Initialize the slc mapping table.
@@ -1229,9 +1229,9 @@ telnet(f, p, host)
 	startslave(host);
 #endif
 
-	nfd = ((f > p) ? f : p) + 1;
+	set[0].fd = f;
+	set[1].fd = p;
 	for (;;) {
-		struct pollfd set[2];
 		register int c;
 
 		if (ncc < 0 && pcc < 0)
@@ -1241,9 +1241,7 @@ telnet(f, p, host)
 		 * Never look for input if there's still
 		 * stuff in the corresponding output buffer
 		 */
-		set[0].fd = f;
 		set[0].events = 0;
-		set[1].fd = p;
 		set[1].events = 0;
 		if (nfrontp - nbackp || pcc > 0)
 			set[0].events |= POLLOUT;
