@@ -1,6 +1,6 @@
-.\"	$NetBSD: pmap.1,v 1.7 2003/02/14 15:59:18 grant Exp $
+.\"	$NetBSD: pmap.1,v 1.8 2003/02/22 17:45:04 atatat Exp $
 .\"
-.\" Copyright (c) 2002 The NetBSD Foundation, Inc.
+.\" Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
 .\" All rights reserved.
 .\"
 .\" This code is derived from software contributed to The NetBSD Foundation
@@ -34,7 +34,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd August 29, 2002
+.Dd February 22, 2003
 .Dt PMAP 1
 .Os
 .Sh NAME
@@ -211,7 +211,7 @@ the vm_map structure, followed by the individual map entries.
 .Bd -literal -offset indent
 $ pmap -d
 MAP 0xcf7cac84: [0x0->0xbfbfe000]
-        #ent=8, sz=34041856, ref=1, version=20, flags=0x21
+        #ent=8, sz=34041856, ref=1, version=20, flags=0x41
         pmap=0xcf44cee0(resident=<unknown>)
  - 0xcfa3a358: 0x8048000->0x80b1000: obj=0xcf45a8e8/0x0, amap=0x0/0
         submap=F, cow=T, nc=T, prot(max)=5/7, inh=1, wc=0, adv=0
@@ -227,6 +227,8 @@ the include file
 .It Dv "VM_MAP_WIREFUTURE" Ta No "0x04   future mappings are wired
 .It Dv "VM_MAP_BUSY"       Ta No "0x08   map is busy
 .It Dv "VM_MAP_WANTLOCK"   Ta No "0x10   want to write-lock
+.It Dv "VM_MAP_DYING"      Ta No "0x20   map is being destroyed
+.It Dv "VM_MAP_TOPDOWN"    Ta No "0x40   arrange map top-down
 .El
 .Pp
 The
@@ -337,6 +339,8 @@ The column labeled
 .Dq Tn I/W/A
 indicates the inheritance, wired, and advice values for the map entry,
 as previously described.
+The pointer value at the end of the output line for entries backed by
+vnodes is the address of the vnode in question.
 .Sh SEE ALSO
 .Xr ls 1 ,
 .Xr stat 1 ,
