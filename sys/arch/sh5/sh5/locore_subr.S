@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_subr.S,v 1.10 2002/09/22 20:45:31 scw Exp $	*/
+/*	$NetBSD: locore_subr.S,v 1.11 2002/10/08 15:53:04 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -994,33 +994,13 @@ ENTRY_NOPROFILE(_dtf_trap_frob)
 	.comm	Lcpu_info,SZ_CPU_INFO,8
 
 
-	.data
-	.balign 4
-
 /*
  * Interrupt counters.
- * XXXSCW: Will go away soon; kept here to keep vmstat happy
+ * XXXSCW: These need to go away when userland tools (vmstat(8)) stop
+ * grovelling for them.
  */
-GLOBAL(intrnames)
-	.asciz	"spur"
-	.asciz	"softmist"
-	.asciz	"softclock"
-	.asciz	"softnet"
-	.asciz	"softserial"
-	.asciz	"irq5"
-	.asciz	"irq6"
-	.asciz	"irq7"
-	.asciz	"irq8"
-	.asciz	"irq9"
-	.asciz	"irq10"
-	.asciz	"irq11"
-	.asciz	"irq12"
-	.asciz	"irq13"
-	.asciz	"clock"
-	.asciz	"irq15"
-GLOBAL(eintrnames)
+	.data
 	.balign 4
-
 GLOBAL(intrcnt)
 	.long	0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
 GLOBAL(eintrcnt)
