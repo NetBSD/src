@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuvar.h,v 1.14 1998/09/22 13:39:19 pk Exp $ */
+/*	$NetBSD: cpuvar.h,v 1.15 1998/10/08 22:25:42 pk Exp $ */
 
 /*
  *  Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -40,6 +40,7 @@
 #define _sparc_cpuvar_h
 
 #include <sys/device.h>
+#include <sys/lock.h>
 
 #include <sparc/sparc/cache.h>	/* for cacheinfo */
 
@@ -64,17 +65,55 @@ struct module_info {
 
 	void (*get_syncflt)__P((void));
 	int  (*get_asyncflt)__P((u_int *, u_int *));
-	void (*cache_flush)__P((caddr_t, u_int));
-	void (*vcache_flush_page)__P((int));
-	void (*vcache_flush_segment)__P((int, int));
-	void (*vcache_flush_region)__P((int));
-	void (*vcache_flush_context)__P((void));
+	void (*sp_cache_flush)__P((caddr_t, u_int));
+	void (*sp_vcache_flush_page)__P((int));
+	void (*sp_vcache_flush_segment)__P((int, int));
+	void (*sp_vcache_flush_region)__P((int));
+	void (*sp_vcache_flush_context)__P((void));
 	void (*pcache_flush_line)__P((int, int));
 	void (*pure_vcache_flush)__P((void));
 	void (*cache_flush_all)__P((void));
 	void (*memerr)__P((unsigned, u_int, u_int, struct trapframe *));
 };
 
+struct xpmsg {
+	struct simplelock	lock;
+	int tag;
+#define	XPMSG_SAVEFPU			1
+#define	XPMSG_DEMAP_TLB_PAGE		10
+#define	XPMSG_DEMAP_TLB_SEGMENT		11
+#define	XPMSG_DEMAP_TLB_REGION		12
+#define	XPMSG_DEMAP_TLB_CONTEXT		13
+#define	XPMSG_VCACHE_FLUSH_PAGE		20
+#define	XPMSG_VCACHE_FLUSH_SEGMENT	21
+#define	XPMSG_VCACHE_FLUSH_REGION	22
+#define	XPMSG_VCACHE_FLUSH_CONTEXT	23
+#define	XPMSG_VCACHE_FLUSH_RANGE	24
+
+	union {
+		struct xpmsg_flush_page {
+			int	ctx;
+			int	va;
+		} xpmsg_flush_page;
+		struct  xpmsg_flush_segment {
+			int	ctx;
+			int	vr;
+			int	vs;
+		} xpmsg_flush_segment;
+		struct  xpmsg_flush_region {
+			int	ctx;
+			int	vr;
+		} xpmsg_flush_region;
+		struct  xpmsg_flush_context {
+			int	ctx;
+		} xpmsg_flush_context;
+		struct  xpmsg_flush_range {
+			int	ctx;
+			caddr_t	va;
+			int	size;
+		} xpmsg_flush_range;
+	} u;
+};
 
 /*
  * The cpuinfo structure. This structure maintains information about one
@@ -95,12 +134,12 @@ struct cpu_info {
 	int		mmu_vers;	/* MMU version code */
 	int		master;		/* 1 if this is bootup CPU */
 
+	int		cpu_no;		/* CPU index (see cpus[] array) */
 	int		mid;		/* Module ID for MP systems */
 	int		mbus;		/* 1 if CPU is on MBus */
 	int		mxcc;		/* 1 if a MBus-level MXCC is present */
 
 	caddr_t		mailbox;	/* VA of CPU's mailbox */
-
 
 	int		mmu_ncontext;	/* Number of contexts supported */
 	int		mmu_nregion; 	/* Number of regions supported */
@@ -148,6 +187,9 @@ struct cpu_info {
 
 	/* Per processor interrupt mask register (sun4m only) */
 	struct icr_pi		*intreg_4m;
+#define raise_ipi(cpi)	do {				\
+	(cpi)->intreg_4m->pi_set = PINTR_SINTRLEV(15);	\
+} while (0)
 
 	/*
 	 * The following pointers point to processes that are somehow
@@ -180,13 +222,25 @@ struct cpu_info {
 		int	sfva;
 	} syncfltdump;
 
-	/* Cache handling functions */
+	/*
+	 * Cache handling functions.
+	 * Most cache flush function come in two flavours: one that
+	 * acts only on the CPU it executes on, and another that
+	 * uses inter-processor signals to flush the cache on
+	 * all processor modules.
+	 */
 	void	(*cache_enable) __P((void));
 	void	(*cache_flush)__P((caddr_t, u_int));
+	void	(*sp_cache_flush)__P((caddr_t, u_int));
 	void	(*vcache_flush_page)__P((int));
+	void	(*sp_vcache_flush_page)__P((int));
 	void	(*vcache_flush_segment)__P((int, int));
+	void	(*sp_vcache_flush_segment)__P((int, int));
 	void	(*vcache_flush_region)__P((int));
+	void	(*sp_vcache_flush_region)__P((int));
 	void	(*vcache_flush_context)__P((void));
+	void	(*sp_vcache_flush_context)__P((void));
+
 	void	(*pcache_flush_line)__P((int, int));
 	void	(*pure_vcache_flush)__P((void));
 	void	(*cache_flush_all)__P((void));
@@ -206,6 +260,9 @@ struct cpu_info {
 	 * unrecoverable faults end up here.
 	 */
 	void	(*memerr)__P((unsigned, u_int, u_int, struct trapframe *));
+
+	/* Inter-processor message area */
+	struct xpmsg msg;
 };
 
 /*
@@ -288,7 +345,7 @@ void getcpuinfo __P((struct cpu_info *sc, int node));
 void mmu_install_tables __P((struct cpu_info *));
 void pmap_alloc_cpu __P((struct cpu_info *));
 
-extern struct cpu_info *cpus[];
+extern struct cpu_info **cpus;
 
 #define cpuinfo	(*(struct cpu_info *)CPUINFO_VA)
 
