@@ -1,3 +1,5 @@
+/*	$NetBSD: scsi_scanner.h,v 1.4 1998/01/05 07:31:14 perry Exp $	*/
+
 /*
  * Copyright (c) 1995 Kenneth Stailey.  All rights reserved.
  *   modified for configurable scanner support by Joachim Koenig
