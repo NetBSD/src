@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.224 2002/02/07 13:52:08 augustss Exp $
+$NetBSD: usbdevs,v 1.225 2002/02/09 09:20:44 rh Exp $
 
 /*
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -650,6 +650,7 @@ product HP 6300C		0x0601	Scanjet 6300C
 product HP 840C			0x0604	DeskJet 840c
 product HP 5300C		0x0701	Scanjet 5300C
 product HP 970CSE		0x1004	Deskjet 970Cse
+product HP 5400C		0x1005	Scanjet 5400C
 product HP 930C			0x1204	DeskJet 930c
 product HP P2000U		0x1801	Inkjet P-2000U
 product HP 640C			0x2004	DeskJet 640c
