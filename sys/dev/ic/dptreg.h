@@ -1,4 +1,4 @@
-/*	$NetBSD: dptreg.h,v 1.12 2002/12/28 20:06:09 kristerw Exp $	*/
+/*	$NetBSD: dptreg.h,v 1.13 2003/01/27 23:31:19 ad Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Andrew Doran <ad@netbsd.org>
@@ -113,6 +113,11 @@ struct eata_ucp {
 	caddr_t		ucp_dataaddr;
 	caddr_t		ucp_stataddr;
 	caddr_t		ucp_senseaddr;
+	u_long		ucp_timeout;
+	u_int8_t	ucp_hstatus;
+	u_int8_t	ucp_tstatus;
+	u_int8_t	ucp_retries;
+	u_int8_t	ucp_padding;
 } __attribute__ ((__packed__));
 
 #define CP_C0_SCSI_RESET	0x01	/* Cause a bus reset */
