@@ -1,4 +1,4 @@
-/*	$NetBSD: fms.c,v 1.1 1999/11/01 20:43:12 augustss Exp $	*/
+/*	$NetBSD: fms.c,v 1.2 1999/11/01 23:26:58 augustss Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -73,7 +73,6 @@ struct fms_dma {
 
 
 
-
 int	fms_match __P((struct device *, struct cfdata *, void *));
 void	fms_attach __P((struct device *, struct device *, void *));
 int	fms_intr __P((void *));
@@ -81,7 +80,8 @@ int	fms_intr __P((void *));
 int	fms_open __P((void *, int));
 void	fms_close __P((void *));
 int	fms_query_encoding __P((void *, struct audio_encoding *));
-int	fms_set_params __P((void *, int, int, struct audio_params *, struct audio_params *));
+int	fms_set_params __P((void *, int, int, struct audio_params *, 
+			    struct audio_params *));
 int	fms_round_blocksize __P((void *, int));
 int	fms_halt_output __P((void *));
 int	fms_halt_input __P((void *));
@@ -94,8 +94,10 @@ void	fms_free __P((void *, void *, int));
 size_t	fms_round_buffersize __P((void *, int, size_t));
 int	fms_mappage __P((void *, void *, int, int));
 int	fms_get_props __P((void *));
-int	fms_trigger_output __P((void *, void *, void *, int, void (*)(void *), void *, struct audio_params *));
-int	fms_trigger_input __P((void *, void *, void *, int, void (*)(void *), void *, struct audio_params *));
+int	fms_trigger_output __P((void *, void *, void *, int, void (*)(void *),
+				void *, struct audio_params *));
+int	fms_trigger_input __P((void *, void *, void *, int, void (*)(void *),
+			       void *, struct audio_params *));
 
 struct cfattach fms_ca = {
 	sizeof (struct fms_softc), fms_match, fms_attach
@@ -142,7 +144,8 @@ int	fms_read_codec __P((void *, u_int8_t, u_int16_t *));
 int	fms_write_codec __P((void *, u_int8_t, u_int16_t));
 void	fms_reset_codec __P((void *));
 
-int	fms_allocmem __P((struct fms_softc *, size_t, size_t, struct fms_dma *));
+int	fms_allocmem __P((struct fms_softc *, size_t, size_t,
+			  struct fms_dma *));
 int	fms_freemem __P((struct fms_softc *, struct fms_dma *));
 
 #define FM_PCM_VOLUME		0x00
@@ -243,7 +246,8 @@ fms_attach(parent, self, aux)
 	
 	printf(": Forte Media FM-801\n");
 	
-	if (pci_intr_map(pc, pa->pa_intrtag, pa->pa_intrpin, pa->pa_intrline, &ih)) {
+	if (pci_intr_map(pc, pa->pa_intrtag, pa->pa_intrpin, pa->pa_intrline,
+			 &ih)) {
 		printf("%s: couldn't map interrupt\n", sc->sc_dev.dv_xname);
 		return;
 	}
@@ -251,7 +255,7 @@ fms_attach(parent, self, aux)
 	
 	sc->sc_ih = pci_intr_establish(pc, ih, IPL_AUDIO, fms_intr, sc);
 	if (sc->sc_ih == NULL) {
-		printf("%s: couldn't establish interrupt", sc->sc_dev.dv_xname);
+		printf("%s: couldn't establish interrupt",sc->sc_dev.dv_xname);
 		if (intrstr != NULL)
 			printf(" at %s", intrstr);
 		printf("\n");
@@ -262,15 +266,18 @@ fms_attach(parent, self, aux)
 	
 	printf("%s: interrupting at %s\n", sc->sc_dev.dv_xname, intrstr);
 	
-	if (pci_mapreg_map(pa, 0x10, PCI_MAPREG_TYPE_IO, 0, &sc->sc_iot, &sc->sc_ioh, &sc->sc_ioaddr, &sc->sc_iosize)) {
+	if (pci_mapreg_map(pa, 0x10, PCI_MAPREG_TYPE_IO, 0, &sc->sc_iot,
+			   &sc->sc_ioh, &sc->sc_ioaddr, &sc->sc_iosize)) {
 		printf("%s: can't map i/o space\n", sc->sc_dev.dv_xname);
 		return;
 	}
 	
-	if (bus_space_subregion(sc->sc_iot, sc->sc_ioh, 0x30, 2, &sc->sc_mpu_ioh))
+	if (bus_space_subregion(sc->sc_iot, sc->sc_ioh, 0x30, 2, 
+				&sc->sc_mpu_ioh))
 		panic("fms_attach: can't get mpu subregion handle");
 
-	if (bus_space_subregion(sc->sc_iot, sc->sc_ioh, 0x68, 4, &sc->sc_opl_ioh))
+	if (bus_space_subregion(sc->sc_iot, sc->sc_ioh, 0x68, 4,
+				&sc->sc_opl_ioh))
 		panic("fms_attach: can't get opl subregion handle");
 
 	/* Disable legacy audio (SBPro compatibility) */
@@ -278,9 +285,9 @@ fms_attach(parent, self, aux)
 	
 	/* Reset codec and AC'97 */
 	bus_space_write_2(sc->sc_iot, sc->sc_ioh, FM_CODEC_CTL, 0x0060);
-	delay(10000);
+	delay(10000);		/* XXX shouldn't delay this long */
 	bus_space_write_2(sc->sc_iot, sc->sc_ioh, FM_CODEC_CTL, 0x0000);
-	delay(10000);
+	delay(10000);		/* XXX shouldn't delay this long */
 	
 	/* Set up volume */
 	bus_space_write_2(sc->sc_iot, sc->sc_ioh, FM_PCM_VOLUME, 0x0808);
@@ -291,8 +298,12 @@ fms_attach(parent, self, aux)
 	
 	/* Unmask playback, record and mpu interrupts, mask the rest */
 	k1 = bus_space_read_2(sc->sc_iot, sc->sc_ioh, FM_INTMASK);
-	bus_space_write_2(sc->sc_iot, sc->sc_ioh, FM_INTMASK, (k1 & ~(FM_INTMASK_PLAY | FM_INTMASK_REC | FM_INTMASK_MPU)) | FM_INTMASK_VOL);
-	bus_space_write_2(sc->sc_iot, sc->sc_ioh, FM_INTSTATUS, FM_INTSTATUS_PLAY | FM_INTSTATUS_REC | FM_INTSTATUS_MPU | FM_INTSTATUS_VOL);
+	bus_space_write_2(sc->sc_iot, sc->sc_ioh, FM_INTMASK, 
+	    (k1 & ~(FM_INTMASK_PLAY | FM_INTMASK_REC | FM_INTMASK_MPU)) |
+	     FM_INTMASK_VOL);
+	bus_space_write_2(sc->sc_iot, sc->sc_ioh, FM_INTSTATUS, 
+	    FM_INTSTATUS_PLAY | FM_INTSTATUS_REC | FM_INTSTATUS_MPU | 
+	    FM_INTSTATUS_VOL);
 	
 	sc->host_if.arg = sc;
 	sc->host_if.attach = fms_attach_codec;
@@ -332,10 +343,10 @@ fms_attach(parent, self, aux)
 	aa.hwif = NULL;
 	aa.hdl = NULL;
 	sc->sc_mpu_dev = config_found(&sc->sc_dev, &aa, audioprint);
-	
 }
 
 
+#define TIMO 100
 int
 fms_read_codec(addr, reg, val)
 	void *addr;
@@ -344,22 +355,25 @@ fms_read_codec(addr, reg, val)
 {
 	struct fms_softc *sc = addr;
 	int i;
-	
+
 	/* Poll until codec is ready */
-	for (i = 0; i < 100 && bus_space_read_2(sc->sc_iot, sc->sc_ioh, FM_CODEC_CMD) & FM_CODEC_CMD_BUSY; i++)
+	for (i = 0; i < TIMO && bus_space_read_2(sc->sc_iot, sc->sc_ioh, 
+		 FM_CODEC_CMD) & FM_CODEC_CMD_BUSY; i++)
 		delay(5);
-	if (i == 100) {
+	if (i >= TIMO) {
 		printf("fms: codec busy\n");
 		return 1;
 	}
 
 	/* Write register index, read access */
-	bus_space_write_2(sc->sc_iot, sc->sc_ioh, FM_CODEC_CMD, reg | FM_CODEC_CMD_READ);
+	bus_space_write_2(sc->sc_iot, sc->sc_ioh, FM_CODEC_CMD, 
+			  reg | FM_CODEC_CMD_READ);
 	
 	/* Poll until we have valid data */
-	for (i = 0; i < 100 && !(bus_space_read_2(sc->sc_iot, sc->sc_ioh, FM_CODEC_CMD) & FM_CODEC_CMD_VALID); i++)
+	for (i = 0; i < TIMO && !(bus_space_read_2(sc->sc_iot, sc->sc_ioh, 
+		 FM_CODEC_CMD) & FM_CODEC_CMD_VALID); i++)
 		delay(5);
-	if (i == 100) {
+	if (i >= TIMO) {
 		printf("fms: no data from codec\n");
 		return 1;
 	}
@@ -379,9 +393,10 @@ fms_write_codec(addr, reg, val)
 	int i;
 	
 	/* Poll until codec is ready */
-	for (i = 0; i < 100 && bus_space_read_2(sc->sc_iot, sc->sc_ioh, FM_CODEC_CMD) & FM_CODEC_CMD_BUSY; i++)
+	for (i = 0; i < TIMO && bus_space_read_2(sc->sc_iot, sc->sc_ioh, 
+		 FM_CODEC_CMD) & FM_CODEC_CMD_BUSY; i++)
 		delay(5);
-	if (i == 100) {
+	if (i >= TIMO) {
 		printf("fms: codec busy\n");
 		return 1;
 	}
@@ -392,6 +407,7 @@ fms_write_codec(addr, reg, val)
 	bus_space_write_2(sc->sc_iot, sc->sc_ioh, FM_CODEC_CMD, reg);
 	return 0;
 }
+#undef TIMO
 
 int
 fms_attach_codec(addr, cif)
@@ -410,9 +426,9 @@ fms_reset_codec(addr)
 {
 	struct fms_softc *sc = addr;
 	bus_space_write_2(sc->sc_iot, sc->sc_ioh, FM_CODEC_CTL, 0x0060);
-	delay(10000);
+	delay(10000);		/* XXX */
 	bus_space_write_2(sc->sc_iot, sc->sc_ioh, FM_CODEC_CTL, 0x0000);
-	delay(10000);
+	delay(10000);		/* XXX */
 }
 
 int
@@ -425,10 +441,13 @@ fms_intr(arg)
 	istat = bus_space_read_2(sc->sc_iot, sc->sc_ioh, FM_INTSTATUS);
 
 	if (istat & FM_INTSTATUS_PLAY) {
-		if ((sc->sc_play_nextblk += sc->sc_play_blksize) >= sc->sc_play_end)
+		if ((sc->sc_play_nextblk += sc->sc_play_blksize) >= 
+		     sc->sc_play_end)
 			sc->sc_play_nextblk = sc->sc_play_start;
 
-		bus_space_write_4(sc->sc_iot, sc->sc_ioh, sc->sc_play_flip++ & 1 ? FM_PLAY_DMABUF2 : FM_PLAY_DMABUF1, sc->sc_play_nextblk);
+		bus_space_write_4(sc->sc_iot, sc->sc_ioh, 
+		    sc->sc_play_flip++ & 1 ? 
+		    FM_PLAY_DMABUF2 : FM_PLAY_DMABUF1, sc->sc_play_nextblk);
 
 		if (sc->sc_pintr)
 			sc->sc_pintr(sc->sc_parg);
@@ -437,10 +456,13 @@ fms_intr(arg)
 	}
 
 	if (istat & FM_INTSTATUS_REC) {
-		if ((sc->sc_rec_nextblk += sc->sc_rec_blksize) >= sc->sc_rec_end)
+		if ((sc->sc_rec_nextblk += sc->sc_rec_blksize) >= 
+		     sc->sc_rec_end)
 			sc->sc_rec_nextblk = sc->sc_rec_start;
 
-		bus_space_write_4(sc->sc_iot, sc->sc_ioh, sc->sc_rec_flip++ & 1 ? FM_REC_DMABUF2 : FM_REC_DMABUF1, sc->sc_rec_nextblk);
+		bus_space_write_4(sc->sc_iot, sc->sc_ioh, 
+		    sc->sc_rec_flip++ & 1 ? 
+		    FM_REC_DMABUF2 : FM_REC_DMABUF1, sc->sc_rec_nextblk);
 
 		if (sc->sc_rintr)
 			sc->sc_rintr(sc->sc_rarg);
@@ -451,7 +473,8 @@ fms_intr(arg)
 	if (istat & FM_INTSTATUS_MPU)
 		mpu_intr(sc->sc_mpu_dev);
 
-	bus_space_write_2(sc->sc_iot, sc->sc_ioh, FM_INTSTATUS, istat & (FM_INTSTATUS_PLAY | FM_INTSTATUS_REC));
+	bus_space_write_2(sc->sc_iot, sc->sc_ioh, FM_INTSTATUS, 
+			  istat & (FM_INTSTATUS_PLAY | FM_INTSTATUS_REC));
 	
 	return 1;
 }
@@ -571,7 +594,7 @@ fms_set_params(addr, setmode, usemode, play, rec)
 		switch(play->encoding) {
 		case AUDIO_ENCODING_ULAW:
 			play->factor = 2;
-			play->sw_code = mulaw_to_slinear16;
+			play->sw_code = mulaw_to_slinear16_le;
 			break;
 		case AUDIO_ENCODING_SLINEAR_LE:
 			if (play->precision == 8)
@@ -579,11 +602,11 @@ fms_set_params(addr, setmode, usemode, play, rec)
 			break;
 		case AUDIO_ENCODING_ULINEAR_LE:
 			if (play->precision == 16)
-				play->sw_code = change_sign16;
+				play->sw_code = change_sign16_le;
 			break;
 		case AUDIO_ENCODING_ALAW:
 			play->factor = 2;
-			play->sw_code = alaw_to_slinear16;
+			play->sw_code = alaw_to_slinear16_le;
 			break;
 		case AUDIO_ENCODING_SLINEAR_BE:
 			if (play->precision == 16)
@@ -593,7 +616,7 @@ fms_set_params(addr, setmode, usemode, play, rec)
 			break;
 		case AUDIO_ENCODING_ULINEAR_BE:
 			if (play->precision == 16)
-				play->sw_code = change_sign16_swap_bytes;
+				play->sw_code = change_sign16_swap_bytes_le;
 			break;
 		default:
 			return EINVAL;
@@ -618,7 +641,7 @@ fms_set_params(addr, setmode, usemode, play, rec)
 			break;
 		case AUDIO_ENCODING_ULINEAR_LE:
 			if (rec->precision == 16)
-				rec->sw_code = change_sign16;
+				rec->sw_code = change_sign16_le;
 			break;
 		case AUDIO_ENCODING_ALAW:
 			rec->sw_code = ulinear8_to_alaw;
@@ -631,15 +654,19 @@ fms_set_params(addr, setmode, usemode, play, rec)
 			break;
 		case AUDIO_ENCODING_ULINEAR_BE:
 			if (play->precision == 16)
-				play->sw_code = swap_bytes_change_sign16;
+				play->sw_code = swap_bytes_change_sign16_le;
 			break;
 		default:
 			return EINVAL;
 		}
-		for (i = 0; i < 10 && rec->sample_rate > fms_rates[i].limit; i++)
+		for (i = 0; i < 10 && rec->sample_rate > fms_rates[i].limit; 
+		     i++)
 			;
 		rec->sample_rate = fms_rates[i].rate;
-		sc->sc_rec_reg = (rec->channels == 2 ? FM_REC_STEREO : 0) | (rec->precision * rec->factor == 16 ? FM_REC_16BIT : 0) | (i << 8);
+		sc->sc_rec_reg = 
+		    (rec->channels == 2 ? FM_REC_STEREO : 0) | 
+		    (rec->precision * rec->factor == 16 ? FM_REC_16BIT : 0) |
+		    (i << 8);
 	}
 	
 	return 0;
@@ -661,7 +688,9 @@ fms_halt_output(addr)
 	u_int16_t k1;
 	
 	k1 = bus_space_read_2(sc->sc_iot, sc->sc_ioh, FM_PLAY_CTL);
-	bus_space_write_2(sc->sc_iot, sc->sc_ioh, FM_PLAY_CTL, (k1 & ~(FM_PLAY_STOPNOW | FM_PLAY_START)) | FM_PLAY_BUF1_LAST | FM_PLAY_BUF2_LAST);
+	bus_space_write_2(sc->sc_iot, sc->sc_ioh, FM_PLAY_CTL, 
+			  (k1 & ~(FM_PLAY_STOPNOW | FM_PLAY_START)) | 
+			  FM_PLAY_BUF1_LAST | FM_PLAY_BUF2_LAST);
 	
 	return 0;
 }
@@ -674,7 +703,9 @@ fms_halt_input(addr)
 	u_int16_t k1;
 	
 	k1 = bus_space_read_2(sc->sc_iot, sc->sc_ioh, FM_REC_CTL);
-	bus_space_write_2(sc->sc_iot, sc->sc_ioh, FM_REC_CTL, (k1 & ~(FM_REC_STOPNOW | FM_REC_START)) | FM_REC_BUF1_LAST | FM_REC_BUF2_LAST);
+	bus_space_write_2(sc->sc_iot, sc->sc_ioh, FM_REC_CTL, 
+			  (k1 & ~(FM_REC_STOPNOW | FM_REC_START)) |
+			  FM_REC_BUF1_LAST | FM_REC_BUF2_LAST);
 	
 	return 0;
 }
@@ -724,23 +755,31 @@ fms_malloc(addr, direction, size, pool, flags)
 	if (!p)
 		return 0;
 	
-	if ((error = bus_dmamem_alloc(sc->sc_dmat, size, NBPG, 0, &p->seg, 1, &rseg, BUS_DMA_NOWAIT)) != 0) {
-		printf("%s: unable to allocate dma, error = %d\n", sc->sc_dev.dv_xname, error);
+	if ((error = bus_dmamem_alloc(sc->sc_dmat, size, NBPG, 0, &p->seg, 1, 
+				      &rseg, BUS_DMA_NOWAIT)) != 0) {
+		printf("%s: unable to allocate dma, error = %d\n", 
+		       sc->sc_dev.dv_xname, error);
 		goto fail_alloc;
 	}
 	
-	if ((error = bus_dmamem_map(sc->sc_dmat, &p->seg, rseg, size, &p->addr, BUS_DMA_NOWAIT | BUS_DMA_COHERENT)) != 0) {
-		printf("%s: unable to map dma, error = %d\n", sc->sc_dev.dv_xname, error);
+	if ((error = bus_dmamem_map(sc->sc_dmat, &p->seg, rseg, size, &p->addr,
+				    BUS_DMA_NOWAIT | BUS_DMA_COHERENT)) != 0) {
+		printf("%s: unable to map dma, error = %d\n", 
+		       sc->sc_dev.dv_xname, error);
 		goto fail_map;
 	}
 	
-	if ((error = bus_dmamap_create(sc->sc_dmat, size, 1, size, 0, BUS_DMA_NOWAIT, &p->map)) != 0) {
-		printf("%s: unable to create dma map, error = %d\n", sc->sc_dev.dv_xname, error);
+	if ((error = bus_dmamap_create(sc->sc_dmat, size, 1, size, 0, 
+				       BUS_DMA_NOWAIT, &p->map)) != 0) {
+		printf("%s: unable to create dma map, error = %d\n",
+		       sc->sc_dev.dv_xname, error);
 		goto fail_create;
 	}
 	
-	if ((error = bus_dmamap_load(sc->sc_dmat, p->map, p->addr, size, NULL, BUS_DMA_NOWAIT)) != 0) {
-		printf("%s: unable to load dma map, error = %d\n", sc->sc_dev.dv_xname, error);
+	if ((error = bus_dmamap_load(sc->sc_dmat, p->map, p->addr, size, NULL,
+				     BUS_DMA_NOWAIT)) != 0) {
+		printf("%s: unable to load dma map, error = %d\n",
+		       sc->sc_dev.dv_xname, error);
 		goto fail_load;
 	}
 	
@@ -807,14 +846,16 @@ fms_mappage(addr, mem, off, prot)
 	if (!p)
 		return -1;
 	
-	return bus_dmamem_mmap(sc->sc_dmat, &p->seg, 1, off, prot, BUS_DMA_WAITOK);
+	return bus_dmamem_mmap(sc->sc_dmat, &p->seg, 1, off, prot, 
+			       BUS_DMA_WAITOK);
 }
 
 int
 fms_get_props(addr)
 	void *addr;
 {
-	return AUDIO_PROP_MMAP | AUDIO_PROP_INDEPENDENT | AUDIO_PROP_FULLDUPLEX;
+	return AUDIO_PROP_MMAP | AUDIO_PROP_INDEPENDENT | 
+	       AUDIO_PROP_FULLDUPLEX;
 }
 
 int
@@ -846,7 +887,8 @@ fms_trigger_output(addr, start, end, blksize, intr, arg, param)
 		;
 	
 	if (!p)
-		panic("fms_trigger_output: request with bad start address (%p)\n", start);
+		panic("fms_trigger_output: request with bad start "
+		      "address (%p)\n", start);
 
 	sc->sc_play_start = p->map->dm_segs[0].ds_addr;
 	sc->sc_play_end = sc->sc_play_start + ((char *)end - (char *)start);
@@ -854,9 +896,12 @@ fms_trigger_output(addr, start, end, blksize, intr, arg, param)
 	sc->sc_play_nextblk = sc->sc_play_start + sc->sc_play_blksize;	
 	sc->sc_play_flip = 0;
 	bus_space_write_2(sc->sc_iot, sc->sc_ioh, FM_PLAY_DMALEN, blksize - 1);
-	bus_space_write_4(sc->sc_iot, sc->sc_ioh, FM_PLAY_DMABUF1, sc->sc_play_start);
-	bus_space_write_4(sc->sc_iot, sc->sc_ioh, FM_PLAY_DMABUF2, sc->sc_play_nextblk);
-	bus_space_write_2(sc->sc_iot, sc->sc_ioh, FM_PLAY_CTL, FM_PLAY_START | FM_PLAY_STOPNOW | sc->sc_play_reg);
+	bus_space_write_4(sc->sc_iot, sc->sc_ioh, FM_PLAY_DMABUF1, 
+			  sc->sc_play_start);
+	bus_space_write_4(sc->sc_iot, sc->sc_ioh, FM_PLAY_DMABUF2, 
+			  sc->sc_play_nextblk);
+	bus_space_write_2(sc->sc_iot, sc->sc_ioh, FM_PLAY_CTL, 
+			  FM_PLAY_START | FM_PLAY_STOPNOW | sc->sc_play_reg);
 	return 0;
 }
 
@@ -880,7 +925,8 @@ fms_trigger_input(addr, start, end, blksize, intr, arg, param)
 		;
 	
 	if (!p)
-		panic("fms_trigger_input: request with bad start address (%p)\n", start);
+		panic("fms_trigger_input: request with bad start "
+		      "address (%p)\n", start);
 
 	sc->sc_rec_start = p->map->dm_segs[0].ds_addr;
 	sc->sc_rec_end = sc->sc_rec_start + ((char *)end - (char *)start);
@@ -888,9 +934,12 @@ fms_trigger_input(addr, start, end, blksize, intr, arg, param)
 	sc->sc_rec_nextblk = sc->sc_rec_start + sc->sc_rec_blksize;	
 	sc->sc_rec_flip = 0;
 	bus_space_write_2(sc->sc_iot, sc->sc_ioh, FM_REC_DMALEN, blksize - 1);
-	bus_space_write_4(sc->sc_iot, sc->sc_ioh, FM_REC_DMABUF1, sc->sc_rec_start);
-	bus_space_write_4(sc->sc_iot, sc->sc_ioh, FM_REC_DMABUF2, sc->sc_rec_nextblk);
-	bus_space_write_2(sc->sc_iot, sc->sc_ioh, FM_REC_CTL, FM_REC_START | FM_REC_STOPNOW | sc->sc_rec_reg);
+	bus_space_write_4(sc->sc_iot, sc->sc_ioh, FM_REC_DMABUF1, 
+			  sc->sc_rec_start);
+	bus_space_write_4(sc->sc_iot, sc->sc_ioh, FM_REC_DMABUF2, 
+			  sc->sc_rec_nextblk);
+	bus_space_write_2(sc->sc_iot, sc->sc_ioh, FM_REC_CTL, 
+			  FM_REC_START | FM_REC_STOPNOW | sc->sc_rec_reg);
 	return 0;
 }
 
