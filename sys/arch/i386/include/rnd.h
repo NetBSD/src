@@ -1,4 +1,4 @@
-/*	$NetBSD: rnd.h,v 1.1 2000/06/05 21:15:22 sommerfeld Exp $	*/
+/*	$NetBSD: rnd.h,v 1.2 2000/06/06 01:33:17 sommerfeld Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -51,7 +51,7 @@
 #ifdef _KERNEL
 
 static __inline int
-cpu_hastimestamp(void)
+cpu_hascounter(void)
 {
 #if I586_CPU || I686_CPU
 	/*
@@ -68,7 +68,7 @@ cpu_hastimestamp(void)
 }
 
 static __inline u_int32_t
-cpu_timestamp(void)
+cpu_counter(void)
 {
 	return rdtsc();
 }
