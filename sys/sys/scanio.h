@@ -1,4 +1,4 @@
-/*	$NetBSD: scanio.h,v 1.1 1996/02/18 20:33:18 mycroft Exp $	*/
+/*	$NetBSD: scanio.h,v 1.2 1998/02/10 00:25:44 perry Exp $	*/
 
 /*
  * Copyright (c) 1995 Kenneth Stailey.  All rights reserved.
@@ -33,8 +33,8 @@
  * Definitions for PINT scanner drivers
  */
 
-#ifndef _SYS_SCANIO_H
-#define _SYS_SCANIO_H
+#ifndef _SYS_SCANIO_H_
+#define _SYS_SCANIO_H_
 
 /*
  * XXX scancap make this sort of obsolete:
@@ -127,4 +127,4 @@ struct scan_io {
 #define MUSTEK_12000CX	11	/* Mustek MFS12000CX */
 #define EPSON_ES300C	12	/* epson es300c */
 
-#endif /* _SYS_SCANIO_H */
+#endif /* _SYS_SCANIO_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: telnet.h,v 1.6 1998/02/02 16:32:58 perry Exp $	*/
+/*	$NetBSD: telnet.h,v 1.7 1998/02/10 00:32:56 perry Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -35,8 +35,8 @@
  *	@(#)telnet.h	8.2 (Berkeley) 12/15/93
  */
 
-#ifndef _TELNET_H_
-#define	_TELNET_H_
+#ifndef _ARPA_TELNET_H_
+#define	_ARPA_TELNET_H_
 
 /*
  * Definitions for the TELNET protocol.
@@ -336,4 +336,4 @@ extern char *enctype_names[];
 #define	ENCTYPE_NAME_OK(x)	((unsigned int)(x) < ENCTYPE_CNT)
 #define	ENCTYPE_NAME(x)		enctype_names[x]
 
-#endif /* !_TELNET_H_ */
+#endif /* _ARPA_TELNET_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: utsname.h,v 1.6 1994/06/29 06:46:11 cgd Exp $	*/
+/*	$NetBSD: utsname.h,v 1.7 1998/02/10 00:25:46 perry Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -38,8 +38,8 @@
  *	@(#)utsname.h	8.1 (Berkeley) 1/4/94
  */
 
-#ifndef	_SYS_UTSNAME_H
-#define	_SYS_UTSNAME_H
+#ifndef	_SYS_UTSNAME_H_
+#define	_SYS_UTSNAME_H_
 
 struct utsname {
 	char	sysname[256];	/* Name of this OS. */
@@ -55,4 +55,4 @@ __BEGIN_DECLS
 int	uname __P((struct utsname *));
 __END_DECLS
 
-#endif	/* !_SYS_UTSNAME_H */
+#endif	/* !_SYS_UTSNAME_H_ */
