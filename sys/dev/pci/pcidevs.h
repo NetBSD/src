@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.70 1998/06/15 19:51:09 bouyer Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.71 1998/06/15 19:55:08 bouyer Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.64 1998/06/15 19:50:37 bouyer Exp 
+ *	NetBSD: pcidevs,v 1.65 1998/06/15 19:54:48 bouyer Exp 
  */
 
 /*
@@ -1021,9 +1021,11 @@
 #define	PCI_PRODUCT_VIATECH_VT86C926	0x0926		/* VT86C926 Amazon PCI-Ethernet Controller */
 #define	PCI_PRODUCT_VIATECH_VT82C570M	0x1000		/* VT82C570M (Apollo) Host-PCI Bridge */
 #define	PCI_PRODUCT_VIATECH_VT82C570MV	0x1006		/* VT82C570M (Apollo) PCI-ISA Bridge */
-# XXX actually 0x1571 is defined as the IDE controller of the VT82C580VP
-# This may be a typo, the author meaning 0x0571, as the PCI-ISA brige is
-# an 0x0586.
+/*
+ * XXX actually 0x1571 is defined as the IDE controller of the VT82C580VP
+ * This may be a typo, the author meaning 0x0571, as the PCI-ISA brige is
+ * an 0x0586.
+ */
 #define	PCI_PRODUCT_VIATECH_VT82C416MV	0x1571		/* VT82C416MV */
 #define	PCI_PRODUCT_VIATECH_VT82C595_2	0x1595		/* VT82C595 (Apollo VP2) Host-PCI Bridge */
 #define	PCI_PRODUCT_VIATECH_VT83C572	0x3038		/* VT83C572 USB Controller */
