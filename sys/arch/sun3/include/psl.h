@@ -1,4 +1,4 @@
-/*	$NetBSD: psl.h,v 1.7 1995/08/13 00:31:28 mycroft Exp $	*/
+/*	$NetBSD: psl.h,v 1.8 1995/10/10 21:28:00 gwr Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon W. Ross
@@ -51,18 +51,9 @@ extern __inline__ int _spl(int new)
 {
 	register int old;
 
-	/*
-	 * Get the old sr value.
-	 * Not volatile so the optimizer can toss it if
-	 * the return value of this inline is not used.
-	 */
-	__asm ("clrl %0; movw sr,%0" : "=d" (old));
-	/*
-	 * Set the new sr value (status register).
-	 * The volatile qualifier prevents the optimizer
-	 * from assuming this statement has no effect.
-	 */
-	__asm __volatile ("movw %0,sr" : : "di" (new));
+	__asm __volatile (
+		"clrl %0; movew sr,%0; movew %1,sr" :
+			"&=d" (old) : "di" (new));
 	return (old);
 }
 #endif	/* GNUC */
