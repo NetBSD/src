@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_machdep.c,v 1.110 2000/12/22 22:58:55 jdolecek Exp $	*/
+/*	$NetBSD: mips_machdep.c,v 1.111 2000/12/28 09:27:09 castor Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -52,7 +52,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.110 2000/12/22 22:58:55 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.111 2000/12/28 09:27:09 castor Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_ultrix.h"
@@ -907,15 +907,21 @@ sys___sigreturn14(p, v, retval)
 	if ((int) ksc.sc_regs[ZERO] != 0xACEDBADE)	/* magic number */
 		return (EINVAL);
 
-	/* Resture the register context. */
+	/* Restore the register context. */
 	f = (struct frame *)p->p_md.md_regs;
 	f->f_regs[PC] = ksc.sc_pc;
 	f->f_regs[MULLO] = ksc.mullo;
 	f->f_regs[MULHI] = ksc.mulhi;
 	memcpy(&f->f_regs[1], &scp->sc_regs[1],
 	    sizeof(scp->sc_regs) - sizeof(scp->sc_regs[0]));
-	if (scp->sc_fpused)
+	if (scp->sc_fpused) {
+		/* Disable the FPU to fault in FP registers. */
+		f->f_regs[SR] &= ~MIPS_SR_COP_1_BIT;
+		if (p == fpcurproc) {
+			fpcurproc = (struct proc *)0;
+		}
 		p->p_addr->u_pcb.pcb_fpregs = *(struct fpreg *)scp->sc_fpregs;
+	}
 
 	/* Restore signal stack. */
 	if (ksc.sc_onstack & SS_ONSTACK)
