@@ -1,4 +1,40 @@
-/*	$NetBSD: vnd.c,v 1.40 1997/06/08 15:59:41 pk Exp $	*/
+/*	$NetBSD: vnd.c,v 1.41 1997/06/23 21:03:55 thorpej Exp $	*/
+
+/*-
+ * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
+ * All rights reserved.
+ *
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by Jason R. Thorpe.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *	This product includes software developed by the NetBSD
+ *	Foundation, Inc. and its contributors.
+ * 4. Neither the name of The NetBSD Foundation nor the names of its
+ *    contributors may be used to endorse or promote products derived
+ *    from this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+ * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE
+ * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -81,14 +117,19 @@
 
 #include <miscfs/specfs/specdev.h>
 
-#include <dev/vndioctl.h>
+#include <dev/vndvar.h>
+
+#if defined(VNDDEBUG) && !defined(DEBUG)
+#define	DEBUG
+#endif
 
 #ifdef DEBUG
 int dovndcluster = 1;
+#define	VDB_FOLLOW	0x01
+#define	VDB_INIT	0x02
+#define	VDB_IO		0x04
+#define	VDB_LABEL	0x08
 int vnddebug = 0x00;
-#define VDB_FOLLOW	0x01
-#define VDB_INIT	0x02
-#define VDB_IO		0x04
 #endif
 
 #define b_cylin	b_resid
@@ -115,25 +156,11 @@ struct vndbuf {
 #define putvndbuf(vbp)	\
 	free((caddr_t)(vbp), M_DEVBUF)
 
-struct vnd_softc {
-	int		 sc_flags;	/* flags */
-	size_t		 sc_size;	/* size of vnd */
-	struct vnode	*sc_vp;		/* vnode */
-	struct ucred	*sc_cred;	/* credentials */
-	int		 sc_maxactive;	/* max # of active requests */
-	struct buf	 sc_tab;	/* transfer queue */
-	char		 sc_xname[8];	/* XXX external name */
-	struct disk	 sc_dkdev;	/* generic disk device info */
-};
-
-/* sc_flags */
-#define	VNF_ALIVE	0x01
-#define VNF_INITED	0x02
-#define VNF_WANTED	0x40
-#define VNF_LOCKED	0x80
-
 struct vnd_softc *vnd_softc;
 int numvnd = 0;
+
+#define	VNDLABELDEV(dev) \
+	(MAKEDISKDEV(major((dev)), vndunit((dev)), RAW_PART))
 
 /* called by main() at boot time */
 void	vndattach __P((int));
@@ -144,6 +171,8 @@ int	vndsetcred __P((struct vnd_softc *, struct ucred *));
 void	vndthrottle __P((struct vnd_softc *, struct vnode *));
 void	vndiodone __P((struct buf *));
 void	vndshutdown __P((void));
+
+void	vndgetdisklabel __P((dev_t));
 
 static	int vndlock __P((struct vnd_softc *));
 static	void vndunlock __P((struct vnd_softc *));
@@ -177,10 +206,7 @@ vndopen(dev, flags, mode, p)
 	int unit = vndunit(dev);
 	struct vnd_softc *sc;
 	int error = 0, part, pmask;
-
-	/*
-	 * XXX Should support disklabels.
-	 */
+	struct disklabel *lp;
 
 #ifdef DEBUG
 	if (vnddebug & VDB_FOLLOW)
@@ -193,8 +219,28 @@ vndopen(dev, flags, mode, p)
 	if ((error = vndlock(sc)) != 0)
 		return (error);
 
+	lp = sc->sc_dkdev.dk_label;
+
 	part = DISKPART(dev);
 	pmask = (1 << part);
+
+	/*
+	 * If we're initialized, check to see if there are any other
+	 * open partitions.  If not, then it's safe to update the
+	 * in-core disklabel.
+	 */
+	if ((sc->sc_flags & VNF_INITED) && (sc->sc_dkdev.dk_openmask == 0))
+		vndgetdisklabel(dev);
+
+	/* Check that the partitions exists. */
+	if (part != RAW_PART) {
+		if (((sc->sc_flags & VNF_INITED) == 0) ||
+		    ((part >= lp->d_npartitions) ||
+		     (lp->d_partitions[part].p_fstype == FS_UNUSED))) {
+			error = ENXIO;
+			goto done;
+		}
+	}
 
 	/* Prevent our unit from being unconfigured while open. */
 	switch (mode) {
@@ -209,8 +255,9 @@ vndopen(dev, flags, mode, p)
 	sc->sc_dkdev.dk_openmask =
 	    sc->sc_dkdev.dk_copenmask | sc->sc_dkdev.dk_bopenmask;
 
+ done:
 	vndunlock(sc);
-	return (0);
+	return (error);
 }
 
 int
@@ -269,7 +316,9 @@ vndstrategy(bp)
 	struct vndxfer *vnx;
 	int bn, bsize, resid;
 	caddr_t addr;
-	int sz, flags, error;
+	int sz, flags, error, wlabel;
+	struct disklabel *lp;
+	struct partition *pp;
 
 #ifdef DEBUG
 	if (vnddebug & VDB_FOLLOW)
@@ -278,21 +327,52 @@ vndstrategy(bp)
 	if ((vnd->sc_flags & VNF_INITED) == 0) {
 		bp->b_error = ENXIO;
 		bp->b_flags |= B_ERROR;
-		biodone(bp);
-		return;
+		goto done;
 	}
-	bn = bp->b_blkno;
-	sz = howmany(bp->b_bcount, DEV_BSIZE);
+
+	/* If it's a nil transfer, wake up the top half now. */
+	if (bp->b_bcount == 0)
+		goto done;
+
+	lp = vnd->sc_dkdev.dk_label;
+
+	/*
+	 * The transfer must be a whole number of blocks.
+	 */
+	if ((bp->b_bcount % lp->d_secsize) != 0) {
+		bp->b_error = EINVAL;
+		bp->b_flags |= B_ERROR;
+		goto done;
+	}
+
+	/*
+	 * Do bounds checking and adjust transfer.  If there's an error,
+	 * the bounds check will flag that for us.
+	 */
+	wlabel = vnd->sc_flags & (VNF_WLABEL|VNF_LABELLING);
+	if (DISKPART(bp->b_dev) != RAW_PART)
+		if (bounds_check_with_label(bp, lp, wlabel) <= 0)
+			goto done;
+
 	bp->b_resid = bp->b_bcount;
-	if (bn < 0 || bn + sz > vnd->sc_size) {
-		if (bn != vnd->sc_size) {
-			bp->b_error = EINVAL;
-			bp->b_flags |= B_ERROR;
-		}
-		biodone(bp);
-		return;
+
+	/*
+	 * Put the block number in terms of the logical blocksize
+	 * of the "device".
+	 */
+	bn = bp->b_blkno / (lp->d_secsize / DEV_BSIZE);
+
+	/*
+	 * Translate the partition-relative block number to an absolute.
+	 */
+	if (DISKPART(bp->b_dev) != RAW_PART) {
+		pp = &vnd->sc_dkdev.dk_label->d_partitions[DISKPART(bp->b_dev)];
+		bn += pp->p_offset;
 	}
-	bn = dbtob(bn);
+
+	/* ...and convert to a byte offset within the file. */
+	bn *= lp->d_secsize;
+
  	bsize = vnd->sc_vp->v_mount->mnt_stat.f_iosize;
 	addr = bp->b_data;
 	flags = bp->b_flags | B_CALL;
@@ -332,7 +412,7 @@ vndstrategy(bp)
 				bp->b_error = error;
 				bp->b_flags |= B_ERROR;
 				putvndxfer(vnx);
-				biodone(bp);
+				goto done;
 			}
 			splx(s);
 			return;
@@ -409,6 +489,10 @@ vndstrategy(bp)
 		bn += sz;
 		addr += sz;
 	}
+	return;
+
+ done:
+	biodone(bp);
 }
 
 /*
@@ -568,6 +652,7 @@ vndioctl(dev, cmd, data, flag, p)
 	struct vattr vattr;
 	struct nameidata nd;
 	int error, part, pmask;
+	size_t geomsize;
 
 #ifdef DEBUG
 	if (vnddebug & VDB_FOLLOW)
@@ -612,6 +697,74 @@ vndioctl(dev, cmd, data, flag, p)
 		VOP_UNLOCK(nd.ni_vp);
 		vnd->sc_vp = nd.ni_vp;
 		vnd->sc_size = btodb(vattr.va_size);	/* note truncation */
+
+		/*
+		 * Use pseudo-geometry specified.  If none was provided,
+		 * use "standard" Adaptec fictitious geometry.
+		 */
+		if (vio->vnd_flags & VNDIOF_HASGEOM) {
+
+			bcopy(&vio->vnd_geom, &vnd->sc_geom,
+			    sizeof(vio->vnd_geom));
+
+			/*
+			 * Sanity-check the sector size.
+			 * XXX Don't allow secsize < DEV_BSIZE.  Should
+			 * XXX we?
+			 */
+			if (vnd->sc_geom.vng_secsize < DEV_BSIZE ||
+			    (vnd->sc_geom.vng_secsize % DEV_BSIZE) != 0) {
+				(void) vn_close(nd.ni_vp, FREAD|FWRITE,
+				    p->p_ucred, p);
+				vndunlock(vnd);
+				return (EINVAL);
+			}
+
+			/*
+			 * Compute the size (in DEV_BSIZE blocks) specified
+			 * by the geometry.
+			 */
+			geomsize = (vnd->sc_geom.vng_nsectors *
+			    vnd->sc_geom.vng_ntracks *
+			    vnd->sc_geom.vng_ncylinders) *
+			    (vnd->sc_geom.vng_secsize / DEV_BSIZE);
+
+			/*
+			 * Sanity-check the size against the specified
+			 * geometry.
+			 */
+			if (vnd->sc_size < geomsize) {
+				(void) vn_close(nd.ni_vp, FREAD|FWRITE,
+				    p->p_ucred, p);
+				vndunlock(vnd);
+				return (EINVAL);
+			}
+		} else {
+			/*
+			 * Size must be at least 2048 DEV_BSIZE blocks
+			 * (1M) in order to use this geometry.
+			 */
+			if (vnd->sc_size < (32 * 64))
+				return (EINVAL);
+
+			vnd->sc_geom.vng_secsize = DEV_BSIZE;
+			vnd->sc_geom.vng_nsectors = 32;
+			vnd->sc_geom.vng_ntracks = 64;
+			vnd->sc_geom.vng_ncylinders = vnd->sc_size / (64 * 32);
+
+			/*
+			 * Compute the actual size allowed by this geometry.
+			 */
+			geomsize = 32 * 64 * vnd->sc_geom.vng_ncylinders;
+		}
+
+		/*
+		 * Truncate the size to that specified by
+		 * the geometry.
+		 * XXX Should we even bother with this?
+		 */
+		vnd->sc_size = geomsize;
+
 		if ((error = vndsetcred(vnd, p->p_ucred)) != 0) {
 			(void) vn_close(nd.ni_vp, FREAD|FWRITE, p->p_ucred, p);
 			vndunlock(vnd);
@@ -622,8 +775,12 @@ vndioctl(dev, cmd, data, flag, p)
 		vnd->sc_flags |= VNF_INITED;
 #ifdef DEBUG
 		if (vnddebug & VDB_INIT)
-			printf("vndioctl: SET vp %p size %lx\n",
-			    vnd->sc_vp, (unsigned long) vnd->sc_size);
+			printf("vndioctl: SET vp %p size %lx %d/%d/%d/%d\n",
+			    vnd->sc_vp, (unsigned long) vnd->sc_size,
+			    vnd->sc_geom.vng_secsize,
+			    vnd->sc_geom.vng_nsectors,
+			    vnd->sc_geom.vng_ntracks,
+			    vnd->sc_geom.vng_ncylinders);
 #endif
 
 		/* Attach the disk. */
@@ -631,6 +788,9 @@ vndioctl(dev, cmd, data, flag, p)
 		sprintf(vnd->sc_xname, "vnd%d", unit);		/* XXX */
 		vnd->sc_dkdev.dk_name = vnd->sc_xname;
 		disk_attach(&vnd->sc_dkdev);
+
+		/* Try and read the disklabel. */
+		vndgetdisklabel(dev);
 
 		vndunlock(vnd);
 
@@ -670,12 +830,66 @@ vndioctl(dev, cmd, data, flag, p)
 
 		break;
 
-	/*
-	 * XXX Should support disklabels.
-	 */
+	case DIOCGDINFO:
+		if ((vnd->sc_flags & VNF_INITED) == 0)
+			return (ENXIO);
+		
+		*(struct disklabel *)data = *(vnd->sc_dkdev.dk_label);
+		break;
+
+	case DIOCGPART:
+		if ((vnd->sc_flags & VNF_INITED) == 0)
+			return (ENXIO);
+
+		((struct partinfo *)data)->disklab = vnd->sc_dkdev.dk_label;
+		((struct partinfo *)data)->part =
+		    &vnd->sc_dkdev.dk_label->d_partitions[DISKPART(dev)];
+		break;
+
+	case DIOCWDINFO:
+	case DIOCSDINFO:
+		if ((vnd->sc_flags & VNF_INITED) == 0)
+			return (ENXIO);
+
+		if ((flag & FWRITE) == 0)
+			return (EBADF);
+
+		if ((error = vndlock(vnd)) != 0)
+			return (error);
+
+		vnd->sc_flags |= VNF_LABELLING;
+
+		error = setdisklabel(vnd->sc_dkdev.dk_label,
+		    (struct disklabel *)data, 0, vnd->sc_dkdev.dk_cpulabel);
+		if (error == 0) {
+			if (cmd == DIOCWDINFO)
+				error = writedisklabel(VNDLABELDEV(dev),
+				    vndstrategy, vnd->sc_dkdev.dk_label,
+				    vnd->sc_dkdev.dk_cpulabel);
+		}
+
+		vnd->sc_flags &= ~VNF_LABELLING;
+
+		vndunlock(vnd);
+
+		if (error)
+			return (error);
+		break;
+
+	case DIOCWLABEL:
+		if ((vnd->sc_flags & VNF_INITED) == 0)
+			return (ENXIO);
+
+		if ((flag & FWRITE) == 0)
+			return (EBADF);
+		if (*(int *)data != 0)
+			vnd->sc_flags |= VNF_WLABEL;
+		else
+			vnd->sc_flags &= ~VNF_WLABEL;
+		break;
 
 	default:
-		return(ENOTTY);
+		return (ENOTTY);
 	}
 
 	return (0);
@@ -773,12 +987,36 @@ int
 vndsize(dev)
 	dev_t dev;
 {
-	int unit = vndunit(dev);
-	register struct vnd_softc *vnd = &vnd_softc[unit];
+	struct vnd_softc *sc;
+	struct disklabel *lp;
+	int part, unit, omask;
+	int size;
 
-	if (unit >= numvnd || (vnd->sc_flags & VNF_INITED) == 0)
-		return(-1);
-	return(vnd->sc_size);
+	unit = vndunit(dev);
+	if (unit >= numvnd)
+		return (-1);
+	sc = &vnd_softc[unit];
+
+	if ((sc->sc_flags & VNF_INITED) == 0)
+		return (-1);
+
+	part = DISKPART(dev);
+	omask = sc->sc_dkdev.dk_openmask & (1 << part);
+	lp = sc->sc_dkdev.dk_label;
+
+	if (omask == 0 && vndopen(dev, 0, S_IFBLK, curproc))
+		return (-1);
+
+	if (lp->d_partitions[part].p_fstype != FS_SWAP)
+		size = -1;
+	else
+		size = lp->d_partitions[part].p_size *
+		    (lp->d_secsize / DEV_BSIZE);
+
+	if (omask == 0 && vndclose(dev, 0, S_IFBLK, curproc))
+		return (-1);
+
+	return (size);
 }
 
 int
@@ -791,6 +1029,75 @@ vnddump(dev, blkno, va, size)
 
 	/* Not implemented. */
 	return ENXIO;
+}
+
+/*
+ * Read the disklabel from a vnd.  If one is not present, create a fake one.
+ */
+void
+vndgetdisklabel(dev)
+	dev_t dev;
+{
+	struct vnd_softc *sc = &vnd_softc[vndunit(dev)];
+	char *errstring;
+	struct disklabel *lp = sc->sc_dkdev.dk_label;
+	struct cpu_disklabel *clp = sc->sc_dkdev.dk_cpulabel;
+	struct vndgeom *vng = &sc->sc_geom;
+	struct partition *pp;
+	int i;
+
+	bzero(lp, sizeof(*lp));
+	bzero(clp, sizeof(*clp));
+
+	lp->d_secperunit = sc->sc_size / (vng->vng_secsize / DEV_BSIZE);
+	lp->d_secsize = vng->vng_secsize;
+	lp->d_nsectors = vng->vng_nsectors;
+	lp->d_ntracks = vng->vng_ntracks;
+	lp->d_ncylinders = vng->vng_ncylinders;
+	lp->d_secpercyl = lp->d_ntracks * lp->d_nsectors;
+
+	strncpy(lp->d_typename, "vnd", sizeof(lp->d_typename));
+	lp->d_type = DTYPE_VND;
+	strncpy(lp->d_packname, "fictitious", sizeof(lp->d_packname));
+	lp->d_rpm = 3600;
+	lp->d_interleave = 1;
+	lp->d_flags = 0;
+
+	pp = &lp->d_partitions[RAW_PART];
+	pp->p_offset = 0;
+	pp->p_size = lp->d_secperunit;
+	pp->p_fstype = FS_UNUSED;
+	lp->d_npartitions = RAW_PART + 1;
+
+	lp->d_magic = DISKMAGIC;
+	lp->d_magic2 = DISKMAGIC;
+	lp->d_checksum = dkcksum(lp);
+
+	/*
+	 * Call the generic disklabel extraction routine.
+	 */
+	errstring = readdisklabel(VNDLABELDEV(dev), vndstrategy, lp, clp);
+	if (errstring) {
+		/*
+		 * Lack of disklabel is common, but we print the warning
+		 * anyway, since it might contain other useful information.
+		 */
+		printf("%s: %s\n", sc->sc_xname, errstring);
+
+		/*
+		 * For historical reasons, if there's no disklabel
+		 * present, all partitions must be FS_BSDFFS and
+		 * occupy the entire disk.
+		 */
+		for (i = 0; i < MAXPARTITIONS; i++) {
+			lp->d_partitions[i].p_size = lp->d_secperunit;
+			lp->d_partitions[i].p_offset = 0;
+			lp->d_partitions[i].p_fstype = FS_BSDFFS;
+		}
+
+		strncpy(lp->d_packname, "default label",
+		    sizeof(lp->d_packname));
+	}
 }
 
 /*
