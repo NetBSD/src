@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.260 2002/05/31 12:20:32 wiz Exp $
+#	$NetBSD: Makefile,v 1.261 2002/06/17 17:47:03 christos Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/18/93
 
 MAN=	aac.4 acphy.4 adv.4 adw.4 agp.4 ahb.4 ahc.4 amhphy.4 an.4 aria.4 \
@@ -23,8 +23,8 @@ MAN=	aac.4 acphy.4 adv.4 adw.4 agp.4 ahb.4 ahc.4 amhphy.4 an.4 aria.4 \
 	raid.4 ray.4 rcons.4 rnd.4 route.4 \
 	rtk.4 sbus.4 scc.4 scsi.4 sd.4 se.4 ses.4 sf.4 sfb.4 siop.4 \
 	sip.4 sl.4 sm.4 \
-	speaker.4 spp.4 sqphy.4 ss.4 st.4 ste.4 stge.4 sv.4 strip.4 tb.4 \
-	tc.4 tcds.4 tcp.4 \
+	speaker.4 spp.4 sqphy.4 ss.4 st.4 ste.4 stge.4 sv.4 strip.4 systrace.4 \
+	tb.4 tc.4 tcds.4 tcp.4 \
 	termios.4 tfb.4 ti.4 tl.4 tlp.4 tlphy.4 tp.4 tr.4 trm.4 tty.4 tun.4 \
 	tqphy.4 twe.4 \
 	udp.4 uha.4 uk.4 ukphy.4 unix.4 userconf.4 vga.4 vlan.4 vnd.4 \
