@@ -179,7 +179,11 @@ pcattach(struct isa_device *dev)
 #if PCVT_NETBSD || PCVT_FREEBSD
 
 #if PCVT_NETBSD > 9
+#if PCVT_NETBSD > 101
+	printf("\n%s: ", self->dv_xname);
+#else
 	printf(": ");
+#endif /* PCVT_NETBSD > 101 */
 #else
 	printf("vt%d: ", dev->id_unit);
 #endif /* PCVT_NETBSD > 9 */
