@@ -1,4 +1,4 @@
-/*	$NetBSD: clrtoeol.c,v 1.15 2002/01/02 10:38:27 blymn Exp $	*/
+/*	$NetBSD: clrtoeol.c,v 1.15.2.1 2002/08/05 07:00:26 lukem Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)clrtoeol.c	8.2 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: clrtoeol.c,v 1.15 2002/01/02 10:38:27 blymn Exp $");
+__RCSID("$NetBSD: clrtoeol.c,v 1.15.2.1 2002/08/05 07:00:26 lukem Exp $");
 #endif
 #endif				/* not lint */
 
@@ -73,8 +73,11 @@ wclrtoeol(WINDOW *win)
 	x = win->curx;
 	if (win->lines[y]->flags & __ISPASTEOL) {
 		if (y < win->maxy - 1) {
+			win->lines[y]->flags &= ~__ISPASTEOL;
 			y++;
 			x = 0;
+			win->cury = y;
+			win->curx = x;
 		} else
 			return (OK);
 	}
