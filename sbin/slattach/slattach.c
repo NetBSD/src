@@ -1,4 +1,4 @@
-/*	$NetBSD: slattach.c,v 1.18 1997/09/15 11:20:06 lukem Exp $	*/
+/*	$NetBSD: slattach.c,v 1.19 1997/10/20 08:08:20 scottr Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993\n\
 #if 0
 static char sccsid[] = "@(#)slattach.c	8.2 (Berkeley) 1/7/94";
 #else
-__RCSID("$NetBSD: slattach.c,v 1.18 1997/09/15 11:20:06 lukem Exp $");
+__RCSID("$NetBSD: slattach.c,v 1.19 1997/10/20 08:08:20 scottr Exp $");
 #endif
 #endif /* not lint */
 
@@ -91,10 +91,13 @@ main(argc, argv)
 	int ch;
 	sigset_t sigset;
 
-	while ((ch = getopt(argc, argv, "hms:t:")) != -1) {
+	while ((ch = getopt(argc, argv, "hHms:t:")) != -1) {
 		switch (ch) {
 		case 'h':
 			cflag |= CRTSCTS;
+			break;
+		case 'H':
+			cflag |= CDTRCTS;
 			break;
 		case 'm':
 			cflag &= ~HUPCL;
