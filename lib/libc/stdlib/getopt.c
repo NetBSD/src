@@ -1,4 +1,4 @@
-/*	$NetBSD: getopt.c,v 1.24 2002/06/21 09:56:33 wiz Exp $	*/
+/*	$NetBSD: getopt.c,v 1.25 2003/01/20 09:06:35 dsl Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)getopt.c	8.3 (Berkeley) 4/27/95";
 #else
-__RCSID("$NetBSD: getopt.c,v 1.24 2002/06/21 09:56:33 wiz Exp $");
+__RCSID("$NetBSD: getopt.c,v 1.25 2003/01/20 09:06:35 dsl Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -81,28 +81,35 @@ getopt(nargc, nargv, ostr)
 	_DIAGASSERT(nargv != NULL);
 	_DIAGASSERT(ostr != NULL);
 
-	if (optreset || !*place) {		/* update scanning pointer */
+	if (optreset || *place == 0) {		/* update scanning pointer */
 		optreset = 0;
-		if (optind >= nargc || *(place = nargv[optind]) != '-') {
+		place = nargv[optind];
+		if (optind >= nargc || *place++ != '-') {
+			/* Argument is absent or is not an option */
 			place = EMSG;
 			return (-1);
 		}
-		if (place[1] && *++place == '-'	/* found "--" */
-		    && place[1] == '\0') {
+		optopt = *place++;
+		if (optopt == '-' && *place == 0) {
+			/* "--" => end of options */
 			++optind;
 			place = EMSG;
 			return (-1);
 		}
-	}					/* option letter okay? */
-	if ((optopt = (int)*place++) == (int)':' ||
-	    !(oli = strchr(ostr, optopt))) {
-		/*
-		 * if the user didn't specify '-' as an option,
-		 * assume it means -1.
-		 */
-		if (optopt == (int)'-')
-			return (-1);
-		if (!*place)
+		if (optopt == 0) {
+			/* Solitary '-', treat as a '-' option
+			   if the program (eg su) is looking for it. */
+			place = EMSG;
+			if (strchr(ostr, '-') == NULL)
+				return -1;
+			optopt = '-';
+		}
+	} else
+		optopt = *place++;
+
+	/* See if option letter is one the caller wanted... */
+	if (optopt == ':' || (oli = strchr(ostr, optopt)) == NULL) {
+		if (*place == 0)
 			++optind;
 		if (opterr && *ostr != ':')
 			(void)fprintf(stderr,
@@ -110,15 +117,22 @@ getopt(nargc, nargv, ostr)
 			    optopt);
 		return (BADCH);
 	}
-	if (*++oli != ':') {			/* don't need argument */
+
+	/* Does this option need an argument? */
+	if (oli[1] != ':') {
+		/* don't need argument */
 		optarg = NULL;
-		if (!*place)
+		if (*place == 0)
 			++optind;
-	}
-	else {					/* need an argument */
-		if (*place)			/* no white space */
+	} else {
+		/* Option-argument is either the rest of this argument or the
+		   entire next argument. */
+		if (*place)
 			optarg = place;
-		else if (nargc <= ++optind) {	/* no arg */
+		else if (nargc > ++optind)
+			optarg = nargv[optind];
+		else {
+			/* option-argument absent */
 			place = EMSG;
 			if (*ostr == ':')
 				return (BADARG);
@@ -128,10 +142,8 @@ getopt(nargc, nargv, ostr)
 				    getprogname(), optopt);
 			return (BADCH);
 		}
-	 	else				/* white space */
-			optarg = nargv[optind];
 		place = EMSG;
 		++optind;
 	}
-	return (optopt);			/* dump back option letter */
+	return (optopt);			/* return option letter */
 }
