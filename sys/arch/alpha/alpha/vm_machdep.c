@@ -1,4 +1,4 @@
-/* $NetBSD: vm_machdep.c,v 1.55 2000/03/29 03:49:48 simonb Exp $ */
+/* $NetBSD: vm_machdep.c,v 1.56 2000/05/27 06:29:35 thorpej Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.55 2000/03/29 03:49:48 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.56 2000/05/27 06:29:35 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -174,9 +174,7 @@ cpu_fork(p1, p2, stack, stacksize)
 	}
 
 	/*
-	 * Copy pcb and stack from proc p1 to p2.
-	 * We do this as cheaply as possible, copying only the active
-	 * part of the stack.  The stack and pcb need to agree;
+	 * Copy pcb and user stack pointer from proc p1 to p2.
 	 */
 	p2->p_addr->u_pcb = p1->p_addr->u_pcb;
 	p2->p_addr->u_pcb.pcb_hw.apcb_usp = alpha_pal_rdusp();
@@ -275,8 +273,9 @@ cpu_set_kpc(p, pc, arg)
 
 /*
  * Finish a swapin operation.
- * We neded to update the cached PTEs for the user area in the
- * machine dependent part of the proc structure.
+ *
+ * We need to cache the physical address of the PCB, so we can
+ * swap context to it easily.
  */
 void
 cpu_swapin(p)
@@ -284,10 +283,6 @@ cpu_swapin(p)
 {
 	struct user *up = p->p_addr;
 
-	/*
-	 * Cache the physical address of the pcb, so we can swap to
-	 * it easily.
-	 */
 	p->p_md.md_pcbpaddr = (void *)vtophys((vaddr_t)&up->u_pcb);
 }
 
