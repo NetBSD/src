@@ -1,4 +1,4 @@
-.\"	$NetBSD: postinstall,v 1.14 2000/10/29 12:32:23 lukem Exp $
+.\"	$NetBSD: postinstall,v 1.15 2000/11/01 21:22:45 abs Exp $
 .\"
 .\" Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -145,6 +145,12 @@ that may require modification or setting up include
 .Pa /etc/nsswitch.conf
 and
 .Pa /etc/wscons.conf .
+.ie r_arm32 \{\
+.Pp
+For Digital DNARD machines you will need to edit
+.Pa /etc/ttys
+and change the console terminal type from vt100 to pc3.
+.\}
 .It
 Logging in
 .Pp
