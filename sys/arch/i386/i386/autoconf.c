@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.32 1999/03/08 00:12:28 fvdl Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.33 1999/03/08 01:26:00 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -64,7 +64,9 @@
 #include <machine/bootinfo.h>
 
 static int match_harddisk __P((struct device *, struct btinfo_bootdisk *));
+#ifdef PASS_GEOM
 static void matchbiosdisks __P((void));
+#endif
 void findroot __P((struct device **, int *));
 
 /*
@@ -114,7 +116,9 @@ cpu_rootconf()
 	int booted_partition;
 
 	findroot(&booted_device, &booted_partition);
+#ifdef PASS_GEOM
 	matchbiosdisks();
+#endif
 
 	printf("boot device: %s\n",
 	    booted_device ? booted_device->dv_xname : "<unknown>");
@@ -122,6 +126,7 @@ cpu_rootconf()
 	setroot(booted_device, booted_partition, i386_nam2blk);
 }
 
+#ifdef PASS_GEOM
 static void
 matchbiosdisks()
 {
@@ -129,7 +134,7 @@ matchbiosdisks()
 	struct bi_biosgeom_entry *be;
 	struct device *dv;
 	struct devnametobdevmaj *d;
-	int i, ck;
+	int i, ck, error;
 	struct vnode *tv;
 	struct buf *bp;
 	char *mbr;
@@ -159,6 +164,11 @@ matchbiosdisks()
 			if (bdevvp(MAKEDISKDEV(d->d_maj, dv->dv_unit, RAW_PART),
 			    &tv))
 				panic("matchbiosdisks: can't alloc vnode");
+			error = VOP_OPEN(tv, FREAD, NOCRED, 0);
+			if (error) {
+				vrele(tv);
+				continue;
+			}
 			bp = getblk(tv, 0, DEV_BSIZE, 0, 0);
 			bp->b_flags = B_BUSY | B_READ;
 			VOP_STRATEGY(bp);
@@ -171,6 +181,7 @@ matchbiosdisks()
 				vrele(tv);
 				continue;
 			}
+			VOP_CLOSE(tv, FREAD, NOCRED, 0);
 			mbr = (char *)bp->b_data;
 			for (ck = i = 0; i < DEV_BSIZE; i++)
 				ck += mbr[i];
@@ -204,6 +215,7 @@ matchbiosdisks()
 		}
 	}
 }
+#endif
 
 
 u_long	bootdev = 0;		/* should be dev_t, but not until 32 bits */
