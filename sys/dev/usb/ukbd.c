@@ -1,4 +1,4 @@
-/*      $NetBSD: ukbd.c,v 1.27 1999/01/10 18:36:57 augustss Exp $        */
+/*      $NetBSD: ukbd.c,v 1.28 1999/01/13 18:38:26 augustss Exp $        */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -150,7 +150,7 @@ static u_int8_t ukbd_trtab[256] = {
 	 127, 210, 199, 201, 211, 207, 209, 205, /* 48 - 4F */
 	 203, 208, 200,  69, 181,  55,  74,  78, /* 50 - 57 */
 	 156,  79,  80,  81,  75,  76,  77,  71, /* 58 - 5F */
-          72,  73,  82,  83, 221,  NN,  NN,  NN, /* 60 - 67 */
+          72,  73,  82,  83,  NN, 221,  NN,  NN, /* 60 - 67 */
           NN,  NN,  NN,  NN,  NN,  NN,  NN,  NN, /* 68 - 6F */
           NN,  NN,  NN,  NN,  NN,  NN,  NN,  NN, /* 70 - 77 */
           NN,  NN,  NN,  NN,  NN,  NN,  NN,  NN, /* 78 - 7F */
