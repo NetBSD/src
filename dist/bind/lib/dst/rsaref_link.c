@@ -1,4 +1,4 @@
-/*	$NetBSD: rsaref_link.c,v 1.1.1.3 2001/01/27 06:19:12 itojun Exp $	*/
+/*	$NetBSD: rsaref_link.c,v 1.2 2001/01/27 07:22:03 itojun Exp $	*/
 
 #ifdef RSAREF
 static const char rcsid[] = "Header: /proj/cvs/isc/bind8/src/lib/dst/rsaref_link.c,v 1.7 2000/07/17 07:36:53 vixie Exp";
