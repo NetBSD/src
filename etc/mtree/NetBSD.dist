@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist,v 1.132 2001/01/06 14:45:57 veego Exp $
+#	$NetBSD: NetBSD.dist,v 1.133 2001/01/13 19:38:51 nonaka Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 /set type=dir uname=root gname=wheel mode=0755
@@ -1833,6 +1833,11 @@ pmax
 # ./usr/share/man/cat8/pmax
 ..
 
+# ./usr/share/man/cat8/prep
+prep
+# ./usr/share/man/cat8/prep
+..
+
 # ./usr/share/man/cat8/sparc
 sparc
 # ./usr/share/man/cat8/sparc
@@ -2162,6 +2167,11 @@ pc532
 # ./usr/share/man/man8/pmax
 pmax
 # ./usr/share/man/man8/pmax
+..
+
+# ./usr/share/man/man8/prep
+prep
+# ./usr/share/man/man8/prep
 ..
 
 # ./usr/share/man/man8/sparc
