@@ -3,7 +3,7 @@
 PROG=	strip
 
 realinstall:
-	install -c -o ${BINOWN} -g ${BINOWN} -m ${BINMODE} strip \
+	install ${COPY} -o ${BINOWN} -g ${BINOWN} -m ${BINMODE} strip \
 	    ${DESTDIR}${BINDIR}
 	./strip ${DESTDIR}${BINDIR}/strip
 

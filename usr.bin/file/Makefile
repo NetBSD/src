@@ -20,7 +20,7 @@ magic:		$(MAGFILES)
 	cat $(MAGFILES) > $(.TARGET)
 
 afterinstall:
-	install -c -o $(MAGICOWN) -g $(MAGICGRP) -m $(MAGICMODE) magic \
+	install ${COPY} -o $(MAGICOWN) -g $(MAGICGRP) -m $(MAGICMODE) magic \
 		$(DESTDIR)$(MAGIC)
 
 .include <bsd.prog.mk>
