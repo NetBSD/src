@@ -1,4 +1,4 @@
-/*	$NetBSD: pm_direct.c,v 1.8 1999/09/05 05:30:30 tsubai Exp $	*/
+/*	$NetBSD: pm_direct.c,v 1.9 2000/06/08 22:10:46 tsubai Exp $	*/
 
 /*
  * Copyright (C) 1997 Takashi Hamada
@@ -223,7 +223,6 @@ struct adbCommand {
 	u_int	ack_only;	/* 1 for no special processing */
 };
 extern	void	adb_pass_up __P((struct adbCommand *));
-
 
 #if 0
 /*
@@ -481,7 +480,9 @@ pm_pmgrop_pm1(pmdata)
 				/* restore formar value */
 				via_reg(VIA1, vDirA) = via1_vDirA;
 				via_reg(VIA1, vIER) = via1_vIER;
-					return 0xffffcd38;
+				if (s != 0x81815963)
+					splx(s);
+				return 0xffffcd38;
 			}
 
 			/* send # of PM data */
@@ -523,7 +524,7 @@ pm_pmgrop_pm1(pmdata)
 			pm_buf = (u_char *)pmdata->r_buf;
 			for (i = 0; i < num_pm_data; i++) {
 				if ((rval = pm_receive_pm1(&pm_data)) != 0)
-					break;				/* timeout */
+					break;		/* timeout */
 				pm_buf[i] = pm_data;
 			}
 
@@ -1034,8 +1035,10 @@ pm_adb_op(buffer, compRout, data, command)
 	}
 
 	rval = pmgrop(&pmdata);
-	if (rval != 0)
+	if (rval != 0) {
+		splx(s);
 		return 1;
+	}
 
 	adbWaiting = 1;
 	adbWaitingCmd = command;
@@ -1054,8 +1057,10 @@ pm_adb_op(buffer, compRout, data, command)
 			(void)intr_dispatch(0x70);
 #endif
 #endif
-		if ((--delay) < 0)
+		if ((--delay) < 0) {
+			splx(s);
 			return 1;
+		}
 	}
 
 	/* this command enables the interrupt by operating ADB devices */
@@ -1143,7 +1148,7 @@ pm_adb_poll_next_device_pm1(pmdata)
 
 	/* find another existent ADB device to poll */
 	for (i = 1; i < 16; i++) {
-		ndid = (((pmdata->data[3] & 0xf0) >> 4) + i) & 0xf;
+		ndid = (ADB_CMDADDR(pmdata->data[3]) + i) & 0xf;
 		bendid <<= ndid;
 		if ((pm_existent_ADB_devices & bendid) != 0)
 			break;
