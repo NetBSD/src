@@ -1,4 +1,4 @@
-/*	$NetBSD: copypage.s,v 1.1 1997/03/17 19:44:35 gwr Exp $	*/
+/*	$NetBSD: copypage.s,v 1.2 1997/05/29 16:31:33 jtc Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -56,7 +56,7 @@
 ENTRY(copypage040)
 	movl	sp@(4),a0		| source address
 	movl	sp@(8),a1		| destiniation address
-	movl	#NBPG/32-1,d0		| number of 32 byte chunks - 1
+	movw	#NBPG/32-1,d0		| number of 32 byte chunks - 1
 Lm16loop:
 	.long	0xf6209000		| move16 a0@+,a1@+
 	.long	0xf6209000		| move16 a0@+,a1@+
@@ -72,7 +72,7 @@ Lm16loop:
 ENTRY(copypage)
 	movl	sp@(4),a0		| source address
 	movl	sp@(8),a1		| destiniation address
-	movl	#NBPG/32-1,d0		| number of 32 byte chunks - 1
+	movw	#NBPG/32-1,d0		| number of 32 byte chunks - 1
 Lmlloop:
 	movl	a0@+,a1@+
 	movl	a0@+,a1@+
@@ -92,7 +92,7 @@ Lmlloop:
  */
 ENTRY(zeropage)
 	movl	sp@(4),a0		| dest address
-	movl	#NBPG/32-1,d0		| number of 32 byte chunks - 1
+	movw	#NBPG/32-1,d0		| number of 32 byte chunks - 1
 	movq	#0,d1
 Lzloop:
 	movl	d1,a0@+
