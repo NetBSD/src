@@ -1,4 +1,4 @@
-/*	$NetBSD: psl.h,v 1.10 1998/09/05 03:50:01 mark Exp $	*/
+/*	$NetBSD: psl.h,v 1.11 1998/09/06 04:22:43 mark Exp $	*/
 
 /*
  * Copyright (c) 1995 Mark Brinicombe.
@@ -41,6 +41,8 @@
  *
  * Created      : 21/07/95
  */
+
+#include <machine/intr.h>
 
 /*
  * These are the different SPL states
