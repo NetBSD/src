@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.26 2002/10/23 09:12:32 jdolecek Exp $	*/
+/*	$NetBSD: mem.c,v 1.27 2003/04/01 15:28:41 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -149,10 +149,10 @@ mmrw(dev, uio, flags)
 			    trunc_page(v), prot, prot|PMAP_WIRED);
 			pmap_update(pmap_kernel());
 			o = v & PGOFSET;
-			c = min(uio->uio_resid, (int)(NBPG - o));
+			c = min(uio->uio_resid, (int)(PAGE_SIZE - o));
 			error = uiomove((caddr_t)vmmap + o, c, uio);
 			pmap_remove(pmap_kernel(), (vaddr_t)vmmap,
-			    (vaddr_t)vmmap + NBPG);
+			    (vaddr_t)vmmap + PAGE_SIZE);
 			pmap_update(pmap_kernel());
 			break;
 
@@ -164,7 +164,7 @@ mmrw(dev, uio, flags)
 			 * Note that we can get here from case 0 above!
 			 */
 			o = v & PGOFSET;
-			c = min(uio->uio_resid, (int)(NBPG - o));
+			c = min(uio->uio_resid, (int)(PAGE_SIZE - o));
 			rw = (uio->uio_rw == UIO_READ) ? B_READ : B_WRITE;
 			if (!(uvm_kernacc((caddr_t)v, c, rw) ||
 			      promacc((caddr_t)v, c, rw)))
@@ -198,10 +198,10 @@ mmrw(dev, uio, flags)
 			 */
 			if (devzeropage == NULL) {
 				devzeropage = (caddr_t)
-				    malloc(NBPG, M_TEMP, M_WAITOK);
-				memset(devzeropage, 0, NBPG);
+				    malloc(PAGE_SIZE, M_TEMP, M_WAITOK);
+				memset(devzeropage, 0, PAGE_SIZE);
 			}
-			c = min(iov->iov_len, NBPG);
+			c = min(iov->iov_len, PAGE_SIZE);
 			error = uiomove(devzeropage, c, uio);
 			break;
 
@@ -307,7 +307,7 @@ promacc(va, len, rw)
 
 	/* PROM data page is OK for read/write. */
 	if ((sva >= SUN3X_MONDATA) &&
-		(eva <= (SUN3X_MONDATA + NBPG)))
+		(eva <= (SUN3X_MONDATA + PAGE_SIZE)))
 		return (1);
 
 	/* otherwise, not OK to touch */

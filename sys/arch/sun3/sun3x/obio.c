@@ -1,4 +1,4 @@
-/*	$NetBSD: obio.c,v 1.20 2002/10/02 16:02:30 thorpej Exp $	*/
+/*	$NetBSD: obio.c,v 1.21 2003/04/01 15:28:41 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -39,6 +39,8 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
+
+#include <uvm/uvm_extern.h>
 
 #include <machine/autoconf.h>
 #include <machine/mon.h>
@@ -243,7 +245,7 @@ obio_find_mapping(paddr_t pa, psize_t sz)
 	sz += off;
 
 	/* The saved mappings are all one page long. */
-	if (sz > NBPG)
+	if (sz > PAGE_SIZE)
 		return (caddr_t)0;
 
 	/* Linear search for it.  The list is short. */
@@ -271,7 +273,7 @@ save_prom_mappings __P((void))
 	mon_pte = *romVectorPtr->monptaddr;
 
 	for (va = SUN3X_MON_KDB_BASE; va < SUN3X_MONEND;
-		 va += NBPG, mon_pte++)
+		 va += PAGE_SIZE, mon_pte++)
 	{
 		/* Is this a valid mapping to OBIO? */
 		/* XXX - Some macros would be nice... */

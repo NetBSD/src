@@ -1,4 +1,4 @@
-/*	$NetBSD: obio.c,v 1.43 2002/10/02 16:02:29 thorpej Exp $	*/
+/*	$NetBSD: obio.c,v 1.44 2003/04/01 15:31:12 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -39,6 +39,8 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
+
+#include <uvm/uvm_extern.h>
 
 #include <machine/autoconf.h>
 #include <machine/mon.h>
@@ -214,7 +216,7 @@ obio_find_mapping(paddr_t pa, psize_t sz)
 	sz += off;
 
 	/* The saved mappings are all one page long. */
-	if (sz > NBPG)
+	if (sz > PAGE_SIZE)
 		return (caddr_t)0;
 
 	/* Within our table? */
@@ -279,7 +281,7 @@ save_prom_mappings __P((void))
 					set_pte(pgva, pte);
 				}
 			}
-			pgva += NBPG;		/* next page */
+			pgva += PAGE_SIZE;		/* next page */
 		}
 	}
 }
@@ -306,7 +308,7 @@ make_required_mappings __P((void))
 
 	rmp = required_mappings;
 	while (*rmp != (paddr_t)-1) {
-		if (!obio_find_mapping(*rmp, NBPG)) {
+		if (!obio_find_mapping(*rmp, PAGE_SIZE)) {
 			/*
 			 * XXX - Ack! Need to create one!
 			 * I don't think this can happen, but if
