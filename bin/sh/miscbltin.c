@@ -1,4 +1,4 @@
-/*	$NetBSD: miscbltin.c,v 1.19 1997/07/04 21:02:09 christos Exp $	*/
+/*	$NetBSD: miscbltin.c,v 1.20 1997/11/05 14:05:28 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)miscbltin.c	8.4 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: miscbltin.c,v 1.19 1997/07/04 21:02:09 christos Exp $");
+__RCSID("$NetBSD: miscbltin.c,v 1.20 1997/11/05 14:05:28 kleink Exp $");
 #endif
 #endif /* not lint */
 
@@ -66,7 +66,7 @@ __RCSID("$NetBSD: miscbltin.c,v 1.19 1997/07/04 21:02:09 christos Exp $");
 #include "miscbltin.h"
 #include "mystring.h"
 
-#undef eflag
+#undef rflag
 
 extern char **argptr;		/* argument list for builtin command */
 
@@ -86,7 +86,7 @@ readcmd(argc, argv)
 	char **ap;
 	int backslash;
 	char c;
-	int eflag;
+	int rflag;
 	char *prompt;
 	char *ifs;
 	char *p;
@@ -94,13 +94,13 @@ readcmd(argc, argv)
 	int status;
 	int i;
 
-	eflag = 0;
+	rflag = 0;
 	prompt = NULL;
-	while ((i = nextopt("ep:")) != '\0') {
+	while ((i = nextopt("p:r")) != '\0') {
 		if (i == 'p')
 			prompt = optarg;
 		else
-			eflag = 1;
+			rflag = 1;
 	}
 	if (prompt && isatty(0)) {
 		out2str(prompt);
@@ -127,7 +127,7 @@ readcmd(argc, argv)
 				STPUTC(c, p);
 			continue;
 		}
-		if (eflag && c == '\\') {
+		if (!rflag && c == '\\') {
 			backslash++;
 			continue;
 		}
