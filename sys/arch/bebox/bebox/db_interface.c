@@ -1,3 +1,4 @@
+/*	$NetBSD: db_interface.c,v 1.2 1997/12/02 01:20:31 sakamoto Exp $ */
 /*	$OpenBSD: db_interface.c,v 1.2 1996/12/28 06:21:50 rahnds Exp $	*/
 
 #include <sys/param.h>
@@ -29,17 +30,6 @@ ddb_trap_glue(frame)
 		PC_REGS(DDB_REGS) = frame->srr0;
 
 		db_trap(T_BREAKPOINT, 0);
-
-#if 0
-		if ((db_addr_t)DDB_REGS->msr | SR_SINGLESTEP) {
-			asm volatile ("mfmsr %0; ori %0,%0,%1; mtmsr %0"
-				: "=r"(msr) : "K"((u_short)SR_SINGLESTEP));
-		} else {
-			asm volatile ("mfmsr %0" : "=r"(msr));
-			msr &= ~SR_SINGLESTEP;
-			asm volatile ("mtmsr %0" :: "r"(msr));
-		}
-#endif
 
 		return 1;
 	}
