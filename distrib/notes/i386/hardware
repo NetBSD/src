@@ -25,11 +25,7 @@ Supported devices include:
 			motherboards using this chip are likely to be
 			bootable, consequently.)
 		Adaptec AHA-2x4x[U][W] cards and some onboard PCI designs
-			using the AIC78X0 chip.  There is a known problem
-			using this driver with AHA-2742 cards or AIC7770 or
-			AIC78[56]0 based embedded designs and multiple
-			targets, due to resource contention which is not
-			handled well by NetBSD's higher-level SCSI subsystem.
+			using the AIC78X0 chip.
 		Adaptec AHA-3940[U][W] cards [b]
 		Buslogic 54x (Adaptec AHA-154x clones)
 		BusLogic 445, 74x, 9xx  (But not the new "FlashPoint" series
