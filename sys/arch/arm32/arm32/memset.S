@@ -1,8 +1,7 @@
-/* $NetBSD: memset.S,v 1.2 1996/06/03 21:21:35 mark Exp $ */
+/* $NetBSD: memset.S,v 1.3 1996/10/15 01:00:32 mark Exp $ */
 
 /*
  * Copyright (c) 1995 Mark Brinicombe.
- * Copyright (c) 1995 Brini.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -41,22 +40,35 @@
  * Created      : 16/05/95
  */
 
+ip	.req	r12
 sp	.req	r13
 lr	.req	r14
 pc	.req	r15
 
-.text
+	.text
+	.align	0
 
-        .global _memset
-
-/* Sets a block of memory to the specified value
+/*
+ * Sets a block of memory to the specified value
  *
- *  r0 - address
- *  r1 - byte to write
- *  r2 - number of bytes to write
+ * On entry:
+ *   r0 - dest address
+ *   r1 - byte to write
+ *   r2 - number of bytes to write
+ *
+ * On exit:
+ *   r0 - dest address
  */
 
+        .global _memset
 _memset:
+#if defined(GPROF) && defined(PROFILE_ASM)
+	stmfd	sp!, {lr}
+	mov	ip, lr
+	bl	mcount
+	ldmfd	sp!, {lr}
+#endif
+	stmfd	sp!, {r0}		/* Remember address for return value */
 	and	r1, r1, #0x000000ff	/* We write bytes */
 
 	cmp	r2, #0x00000004		/* Do we have less than 4 bytes */
@@ -123,6 +135,7 @@ memset_loop4:
 
 memset_lessthanfour:
 	cmp	r2, #0x00000000
+	ldmeqfd	sp!, {r0}
 	moveq	pc, lr			/* Zero length so exit */
 
 	cmp	r2, #0x00000002
@@ -130,4 +143,5 @@ memset_lessthanfour:
 	strgeb	r1, [r0], #0x0001	/* Set another byte */
 	strgtb	r1, [r0], #0x0001	/* and a third */
 
+	ldmfd	sp!, {r0}
 	mov	pc, lr			/* Exit */
