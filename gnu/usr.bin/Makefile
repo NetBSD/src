@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.118 2003/11/27 10:52:02 mrg Exp $
+#	$NetBSD: Makefile,v 1.119 2004/03/13 22:28:47 jdolecek Exp $
 
 # for OBJECT_FMT
 .include <bsd.own.mk>
@@ -13,8 +13,6 @@ SUBDIR+=	cvs
 .endif
 SUBDIR+=	dc diffutils grep
 SUBDIR+=	groff gzip rcs send-pr texinfo
-
-SUBDIR+=	gawk
 
 SUBDIR+=	gettext
 

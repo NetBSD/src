@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.189 2004/03/08 19:17:12 jdolecek Exp $
+#	$NetBSD: 3RDPARTY,v 1.190 2004/03/13 22:28:47 jdolecek Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -240,9 +240,8 @@ Archive Site:	ftp://ftp.gnu.org/gnu/gawk/
 Mailing List:	bug-gawk@gnu.org
 Responsible:
 Notes:
-Should look at ATT awk as a replacement for this. A download link
-is available at http://cm.bell-labs.com/who/bwk/
-See also nawk entry below.
+Replaced by nawk. gawk sources will be removed from tree
+after some grace period. 
 
 Package:	gcc
 Version:	2.95.3/3.3.2
@@ -447,7 +446,6 @@ Archive Site:	http://cm.bell-labs.com/who/bwk/
 Mailing List:
 Responsible:	jdolecek
 Notes:
-We still use gawk as the system awk. nawk is here for evaluation only for now.
 Build maketab from nawk sources and generate proctab.c.
 Remove buildwin.bat, mac.code, missing95.c, ytab.[ch], ytab?.bak, then import
 to src/dist/nawk.
