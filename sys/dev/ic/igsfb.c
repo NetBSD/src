@@ -1,4 +1,4 @@
-/*	$NetBSD: igsfb.c,v 1.14 2003/06/24 00:13:29 uwe Exp $ */
+/*	$NetBSD: igsfb.c,v 1.15 2003/08/31 14:41:15 uwe Exp $ */
 
 /*
  * Copyright (c) 2002, 2003 Valeriy E. Ushakov
@@ -31,7 +31,7 @@
  * Integraphics Systems IGA 168x and CyberPro series.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: igsfb.c,v 1.14 2003/06/24 00:13:29 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: igsfb.c,v 1.15 2003/08/31 14:41:15 uwe Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -747,7 +747,7 @@ igsfb_get_cmap(dc, p)
 
 
 /*
- * wsdisplay_accessops: ioctl(WSDISPLAYIO_SETCMAP)
+ * wsdisplay_accessops: ioctl(WSDISPLAYIO_PUTCMAP)
  *   Set the software cmap copy and propagate changed range to the device.
  */
 static int
