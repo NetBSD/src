@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.mips,v 1.4 2000/12/03 06:04:50 matt Exp $
+#	$NetBSD: Makefile.mips,v 1.5 2000/12/03 07:05:23 matt Exp $
 
 # Makefile for NetBSD
 #
@@ -42,12 +42,12 @@ TEXTADDR?=	${DEFTEXTADDR}
 .ifndef S
 S=	../../../..
 .endif
-THISMIPS=	$S/arch/${MACHINE}
+THISMIPS=	$S/arch/${TARGET_MACHINE}
 MIPS=		$S/arch/mips
 
 HAVE_EGCS!=	${CC} --version | egrep "^(2\.[89]|egcs)" ; echo
 INCLUDES=	-I. -I$S/arch -I$S -nostdinc
-CPPFLAGS=	${INCLUDES} ${IDENT} ${PARAM} -D_KERNEL -D${MACHINE}
+CPPFLAGS=	${INCLUDES} ${IDENT} ${PARAM} -D_KERNEL -D${TARGET_MACHINE}
 CWARNFLAGS?=	-Wall -Werror -Wstrict-prototypes -Wmissing-prototypes \
 		-Wpointer-arith
 # XXX Delete -Wuninitialized for now, since the compiler doesn't
@@ -61,7 +61,7 @@ CFLAGS=		${DEBUG} ${COPTS} ${CWARNFLAGS} ${GP} \
 		-mno-abicalls -mno-half-pic
 AFLAGS=		-x assembler-with-cpp -traditional-cpp -D_LOCORE
 LINKFLAGS+=	-Ttext ${TEXTADDR} -e start ${GP}
-.if (${MACHINE_ARCH} == "mipseb")
+.if (${ENDIAN} == "-EB")
 LINKFLAGS+=	-T ${MIPS}/conf/kern.ldscript.be
 CFLAGS+=	-EB
 AFLAGS+=	-EB
@@ -74,8 +74,8 @@ LD+=		-EL
 .endif
 STRIPFLAGS=	-g -X -x
 
-.if exists(${THISMIPS}/conf/Makefile.${MACHINE}.inc)
-.include "${THISMIPS}/conf/Makefile.${MACHINE}.inc"
+.if exists(${THISMIPS}/conf/Makefile.${TARGET_MACHINE}.inc)
+.include "${THISMIPS}/conf/Makefile.${TARGET_MACHINE}.inc"
 .endif
 
 %INCLUDES
@@ -203,7 +203,7 @@ links:
 	sh makelinks && rm -f dontlink
 
 SRCS=	${MIPS}/mips/locore.S \
-	${THISMIPS}/${MACHINE}/locore_machdep.S \
+	${THISMIPS}/${TARGET_MACHINE}/locore_machdep.S \
 	param.c ioconf.c ${CFILES} ${SFILES}
 .if !empty(IDENT:M-DMIPS1)
 SRCS+=	${MIPS}/mips/locore_mips1.S
@@ -227,7 +227,7 @@ depend: .depend
 .if !empty(IDENT:M-DNOFPU)
 	${MKDEP} -a ${AFLAGS} ${CPPFLAGS} ${MIPS}/mips/fp.S
 .endif
-	${MKDEP} -a ${AFLAGS} ${CPPFLAGS} ${THISMIPS}/${MACHINE}/locore_machdep.S
+	${MKDEP} -a ${AFLAGS} ${CPPFLAGS} ${THISMIPS}/${TARGET_MACHINE}/locore_machdep.S
 	${MKDEP} -a ${CFLAGS} ${CPPFLAGS} param.c ioconf.c ${CFILES}
 .if (${SFILES} != "")
 	${MKDEP} -a ${AFLAGS} ${CPPFLAGS} ${SFILES}
@@ -267,7 +267,7 @@ locore_mips3.o: ${MIPS}/mips/locore_mips3.S assym.h
 fp.o: ${MIPS}/mips/fp.S assym.h
 	${NORMAL_S}
 
-locore_machdep.o: ${THISMIPS}/${MACHINE}/locore_machdep.S assym.h
+locore_machdep.o: ${THISMIPS}/${TARGET_MACHINE}/locore_machdep.S assym.h
 	${NORMAL_S}
 
 # The install target can be redefined by putting a
