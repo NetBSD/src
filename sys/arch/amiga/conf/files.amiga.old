@@ -65,17 +65,6 @@ arch/amiga/dev/grf/grf_mode.c			optional grf view
 arch/amiga/dev/grf/grf_monitor.c		optional grf view
 arch/amiga/dev/grf/grf_view.c			optional grf view
 arch/amiga/dev/grf/grfcc.c		optional grf view
-
-arch/m68k/fpsp/fpsp.U			optional fpsp compile-with "uudecode $S/arch/m68k/fpsp/fpsp.U"
-arch/m68k/fpsp/fpspnull.s		optional not fpsp
-arch/m68k/m68k/db_disasm.c		optional ddb
-arch/m68k/m68k/db_interface.c		optional ddb
-arch/m68k/m68k/db_trace.c		optional ddb
-arch/m68k/m68k/in_cksum.c		optional inet
-arch/m68k/m68k/ns_cksum.c		optional ns
-arch/m68k/m68k/oc_cksum.s		optional inet
-arch/m68k/m68k/process_machdep.c	standard
-
 compat/sunos/sun_misc.c         optional compat_sunos
 compat/sunos/sun_sysent.c       optional compat_sunos
 compat/sunos/sun_ioctl.c        optional compat_sunos
