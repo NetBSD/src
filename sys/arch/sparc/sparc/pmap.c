@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.218 2003/01/01 15:56:11 pk Exp $ */
+/*	$NetBSD: pmap.c,v 1.219 2003/01/03 15:44:55 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -631,7 +631,7 @@ static __inline__ void
 smp_tlb_flush_page(int va, int ctx)
 {
 	INCR_COUNT(smp_tlb_fp_cnt);
-	xcall((xcall_func_t)sp_tlb_flush_page, va, ctx, 0, 0, 0);
+	XCALL2(sp_tlb_flush_page, va, ctx, CPUSET_ALL);
 }
 
 static __inline__ void
@@ -639,7 +639,7 @@ smp_tlb_flush_segment(int va, int ctx)
 {
 
 	INCR_COUNT(smp_tlb_fs_cnt);
-	xcall((xcall_func_t)sp_tlb_flush_segment, va, ctx, 0, 0, 0);
+	XCALL2(sp_tlb_flush_segment, va, ctx, CPUSET_ALL);
 }
 
 static __inline__ void
@@ -647,7 +647,7 @@ smp_tlb_flush_region(int va, int ctx)
 {
 
 	INCR_COUNT(smp_tlb_fr_cnt);
-	xcall((xcall_func_t)sp_tlb_flush_region, va, ctx, 0, 0, 0);
+	XCALL2(sp_tlb_flush_region, va, ctx, CPUSET_ALL);
 }
 
 static __inline__ void
@@ -655,7 +655,7 @@ smp_tlb_flush_context(int ctx)
 {
 
 	INCR_COUNT(smp_tlb_fc_cnt);
-	xcall((xcall_func_t)sp_tlb_flush_context, ctx, 0, 0, 0, 0);
+	XCALL1(sp_tlb_flush_context, ctx, CPUSET_ALL);
 }
 
 static __inline__ void
@@ -663,7 +663,7 @@ smp_tlb_flush_all()
 {
 
 	INCR_COUNT(smp_tlb_fa_cnt);
-	xcall((xcall_func_t)sp_tlb_flush_all, 0, 0, 0, 0, 0);
+	XCALL0(sp_tlb_flush_all, CPUSET_ALL);
 }
 #endif
 
