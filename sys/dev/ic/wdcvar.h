@@ -1,4 +1,4 @@
-/*	$NetBSD: wdcvar.h,v 1.30 2001/06/13 18:17:39 bjh21 Exp $	*/
+/*	$NetBSD: wdcvar.h,v 1.31 2001/12/01 00:00:30 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -160,6 +160,7 @@ struct wdc_xfer {
 	void *databuf;
 	int c_bcount;      /* byte count left */
 	int c_skip;        /* bytes already transferred */
+	int c_dscpoll;	   /* counter for dsc polling (ATAPI) */
 	TAILQ_ENTRY(wdc_xfer) c_xferchain;
 	void (*c_start) __P((struct channel_softc *, struct wdc_xfer *));
 	int  (*c_intr)  __P((struct channel_softc *, struct wdc_xfer *, int));
