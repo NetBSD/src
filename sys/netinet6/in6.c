@@ -1,4 +1,4 @@
-/*	$NetBSD: in6.c,v 1.76 2003/06/24 07:39:25 itojun Exp $	*/
+/*	$NetBSD: in6.c,v 1.77 2003/06/24 07:43:44 itojun Exp $	*/
 /*	$KAME: in6.c,v 1.198 2001/07/18 09:12:38 itojun Exp $	*/
 
 /*
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.76 2003/06/24 07:39:25 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.77 2003/06/24 07:43:44 itojun Exp $");
 
 #include "opt_inet.h"
 
@@ -368,7 +368,6 @@ in6_control(so, cmd, data, ifp, p)
 	struct	in6_ifaddr *ia = NULL;
 	struct	in6_aliasreq *ifra = (struct in6_aliasreq *)data;
 	struct sockaddr_in6 *sa6;
-	time_t time.tv_sec = (time_t)time.tv_sec;
 	int privileged;
 
 	privileged = 0;
@@ -811,7 +810,6 @@ in6_update_ifa(ifp, ifra, ia)
 	struct sockaddr_in6 dst6;
 	struct in6_addrlifetime *lt;
 	struct in6_multi_mship *imm;
-	time_t time.tv_sec = (time_t)time.tv_sec;
 	struct rtentry *rt;
 
 	/* Validate parameters */
