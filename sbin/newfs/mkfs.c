@@ -1,4 +1,4 @@
-/*	$NetBSD: mkfs.c,v 1.63 2002/04/10 08:27:54 mycroft Exp $	*/
+/*	$NetBSD: mkfs.c,v 1.64 2002/04/10 17:28:13 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1980, 1989, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)mkfs.c	8.11 (Berkeley) 5/3/95";
 #else
-__RCSID("$NetBSD: mkfs.c,v 1.63 2002/04/10 08:27:54 mycroft Exp $");
+__RCSID("$NetBSD: mkfs.c,v 1.64 2002/04/10 17:28:13 mycroft Exp $");
 #endif
 #endif /* not lint */
 
@@ -673,6 +673,7 @@ initcg(int cylno, time_t utime)
 	daddr_t cbase, d, dlower, dupper, dmax, blkno;
 	int32_t i;
 	struct csum *cs;
+	int cn;
 
 	/*
 	 * Determine block bounds for cylinder group.
@@ -736,15 +737,16 @@ initcg(int cylno, time_t utime)
 		 * In cylno 0, beginning space is reserved
 		 * for boot and super blocks.
 		 */
-		for (d = 0; d < dlower; d += sblock.fs_frag) {
-			blkno = d >> sblock.fs_fragshift;
+		for (d = 0, blkno = 0; d < dlower; ) {
 			setblock(&sblock, cg_blksfree(&acg, 0), blkno);
 			if (sblock.fs_contigsumsize > 0)
 				setbit(cg_clustersfree(&acg, 0), blkno);
 			acg.cg_cs.cs_nbfree++;
-			cg_blktot(&acg, 0)[cbtocylno(&sblock, d)]++;
-			cg_blks(&sblock, &acg, cbtocylno(&sblock, d), 0)
-			    [cbtorpos(&sblock, d)]++;
+			cn = cbtocylno(&sblock, d);
+			cg_blktot(&acg, 0)[cn]++;
+			cg_blks(&sblock, &acg, cn, 0)[cbtorpos(&sblock, d)]++;
+			d += sblock.fs_frag;
+			blkno++;
 		}
 		sblock.fs_dsize += dlower;
 	}
@@ -756,16 +758,17 @@ initcg(int cylno, time_t utime)
 			acg.cg_cs.cs_nffree++;
 		}
 	}
-	for (d = dupper; d + sblock.fs_frag <= dmax - cbase; ) {
-		blkno = d >> sblock.fs_fragshift;
+	for (d = dupper, blkno = dupper >> sblock.fs_fragshift;
+	     d + sblock.fs_frag <= dmax - cbase; ) {
 		setblock(&sblock, cg_blksfree(&acg, 0), blkno);
 		if (sblock.fs_contigsumsize > 0)
 			setbit(cg_clustersfree(&acg, 0), blkno);
 		acg.cg_cs.cs_nbfree++;
-		cg_blktot(&acg, 0)[cbtocylno(&sblock, d)]++;
-		cg_blks(&sblock, &acg, cbtocylno(&sblock, d), 0)
-		    [cbtorpos(&sblock, d)]++;
+		cn = cbtocylno(&sblock, d);
+		cg_blktot(&acg, 0)[cn]++;
+		cg_blks(&sblock, &acg, cn, 0)[cbtorpos(&sblock, d)]++;
 		d += sblock.fs_frag;
+		blkno++;
 	}
 	if (d < dmax - cbase) {
 		acg.cg_frsum[dmax - cbase - d]++;
