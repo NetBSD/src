@@ -1,0 +1,19 @@
+#	$NetBSD: std.smdk2800,v 1.1 2002/11/20 18:06:25 bsh Exp $
+#
+# standard NetBSD/evbarm for IQ80310 options
+
+machine	evbarm arm
+
+# Config definitions for SMDK2800/24[10]0
+include "arch/evbarm/conf/files.smdk2800"
+
+options 	EXEC_ELF32
+options 	EXEC_AOUT
+options 	EXEC_SCRIPT
+
+# To support easy transit to ../arch/arm/arm32
+options 	ARM32
+
+makeoptions	BOARDTYPE="smdk2800"
+
+options 	EVBARM_BOARDTYPE=EVBARM_BOARDTYPE_S3C2800
