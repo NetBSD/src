@@ -1,4 +1,4 @@
-/*	$NetBSD: sa11xx_pcic.c,v 1.2 2002/09/27 15:35:50 provos Exp $	*/
+/*	$NetBSD: sa11xx_pcic.c,v 1.3 2003/01/19 07:29:19 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001 IWAMOTO Toshihiro.  All rights reserved.
@@ -206,7 +206,7 @@ sapcic_delay(timo, wmesg)
 	const char *wmesg;
 {
 #ifdef DIAGNOSTIC
-	if (curproc == NULL)
+	if (curlwp == NULL)
 		panic("sapcic_delay: called in interrupt context");
 #endif
 
