@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.atari,v 1.25 1996/12/01 06:12:29 jonathan Exp $
+#	$NetBSD: Makefile.atari,v 1.26 1996/12/14 13:48:29 leo Exp $
 
 # Makefile for NetBSD
 #
@@ -37,7 +37,7 @@ INCLUDES=	-I. -I$S/arch -I$S -nostdinc
 CPPFLAGS=	${INCLUDES} ${IDENT} ${PARAM} -D_KERNEL \
 		-Dmc68020 -Datari
 CWARNFLAGS=	-Werror -Wall -Wstrict-prototypes -Wmissing-prototypes
-CFLAGS=		${DEBUG} ${COPT} ${CWARNFLAGS} -msoft-float
+CFLAGS=		${DEBUG} ${COPTS} ${CWARNFLAGS} -msoft-float
 AFLAGS=		-x assembler-with-cpp -traditional-cpp -D_LOCORE
 LINKFLAGS=	-n -Ttext 0 -e start
 STRIPFLAGS=	-d
