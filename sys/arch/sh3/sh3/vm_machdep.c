@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.23 2002/02/12 15:26:51 uch Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.24 2002/02/17 20:55:58 uch Exp $	*/
 
 /*-
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
@@ -63,6 +63,15 @@
 
 void	setredzone(u_short *, caddr_t);
 
+/* XXX XXX XXX */
+#include <sh3/mmu.h>
+#ifdef SH4
+#define	TLBFLUSH()		(cacheflush(), sh_tlb_invalidate_all())
+#else
+#define	TLBFLUSH()		sh_tlb_invalidate_all()
+#endif
+/* XXX XXX XXX */
+
 /*
  * Finish a fork operation, with process p2 nearly set up.
  * Copy and update the pcb and trap frame, making the child ready to run.
@@ -93,9 +102,8 @@ cpu_fork(struct proc *p1, struct proc *p2, void *stack,
 	printf("cpu_fork:p1(%p),p2(%p)\n", p1, p2);
 #endif
 
-#ifdef SH4
-	cacheflush();
-#endif
+	if (CPU_IS_SH4)
+		cacheflush();
 
 	p2->p_md.md_flags = p1->p_md.md_flags;
 

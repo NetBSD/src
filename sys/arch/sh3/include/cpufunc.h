@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.h,v 1.10 2002/02/12 15:26:48 uch Exp $	*/
+/*	$NetBSD: cpufunc.h,v 1.11 2002/02/17 20:55:52 uch Exp $	*/
 
 /*
  * Copyright (c) 1993 Charles Hannum.
@@ -45,7 +45,6 @@
 
 #include <sys/cdefs.h>
 #include <sys/types.h>
-#include <sh3/mmureg.h>
 
 #ifdef _KERNEL
 
@@ -56,44 +55,15 @@ static __inline void breakpoint(void);
 /*
  * memory-mapped register access method.
  */
-#define _wb_flush()	/* not required */
 #define	_reg_read_1(a)		(*(__volatile__ u_int8_t *)((vaddr_t)(a)))
 #define	_reg_read_2(a)		(*(__volatile__ u_int16_t *)((vaddr_t)(a)))
 #define	_reg_read_4(a)		(*(__volatile__ u_int32_t *)((vaddr_t)(a)))
 #define	_reg_write_1(a, v)						\
-{									\
-	*(__volatile__ u_int8_t *)(a) = (u_int8_t)(v);			\
-	_wb_flush();							\
-}
+	(*(__volatile__ u_int8_t *)(a) = (u_int8_t)(v))
 #define	_reg_write_2(a, v)						\
-{									\
-	*(__volatile__ u_int16_t *)(a) = (u_int16_t)(v);		\
-	_wb_flush();							\
-}
+	(*(__volatile__ u_int16_t *)(a) = (u_int16_t)(v))
 #define	_reg_write_4(a, v)						\
-{									\
-	*(__volatile__ u_int32_t *)(a) = (u_int32_t)(v);		\
-	_wb_flush();							\
-}
-
-static __inline void
-tlbflush(void)
-{
-#ifdef SH4
-	SHREG_MMUCR = (SHREG_MMUCR | MMUCR_TF) & MMUCR_VALIDBITS;
-	__asm __volatile("nop");
-	__asm __volatile("nop");
-	__asm __volatile("nop");
-	__asm __volatile("nop");
-	__asm __volatile("nop");
-	__asm __volatile("nop");
-	__asm __volatile("nop");
-	__asm __volatile("nop");
-#else
-	SHREG_MMUCR |= MMUCR_TF;
-#endif
-}
-
+	(*(__volatile__ u_int32_t *)(a) = (u_int32_t)(v))
 
 /* XXXX ought to be in psl.h with spl() functions */
 

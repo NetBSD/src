@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.31 2002/02/14 07:08:14 chs Exp $	*/
+/*	$NetBSD: trap.c,v 1.32 2002/02/17 20:55:58 uch Exp $	*/
 
 /*-
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
@@ -66,8 +66,9 @@
 
 #include <uvm/uvm_extern.h>
 
-#include <sh3/mmureg.h>
 #include <sh3/trapreg.h>
+#include <sh3/mmu.h>
+
 #include <machine/cpu.h>
 #include <machine/cpufunc.h>
 #include <machine/psl.h>
@@ -81,7 +82,7 @@
 #include <sys/kgdb.h>
 #endif
 
-char	*trap_type[] = {
+const char *trap_type[] = {
 	"power-on",				/* 0x000 T_POWERON */
 	"manual reset",				/* 0x020 T_RESET */
 	"TLB miss/invalid (load)",		/* 0x040 T_TLBMISSR */
@@ -99,7 +100,7 @@ char	*trap_type[] = {
 	"nonmaskable interrupt",		/* 0x1c0 T_NMI */
 	"user break point trap",		/* 0x1e0 T_USERBREAK */
 };
-int	trap_types = sizeof trap_type / sizeof trap_type[0];
+const int trap_types = sizeof trap_type / sizeof trap_type[0];
 
 extern int cpu_debug_mode;
 int	trapdebug = 1;
@@ -109,19 +110,6 @@ void trap(int, int, int, int /* dummy 4 param*/, struct trapframe);
 int trapwrite(unsigned);
 void syscall(struct trapframe *);
 void tlb_handler(int, int, int, int /* dummy 4 param  */, struct trapframe);
-void __setup_pte_sh3(vaddr_t, u_int32_t);
-void __setup_pte_sh4(vaddr_t, u_int32_t);
-
-#ifdef SH4
-#define __SETUP_PTE(v, pte)	__setup_pte_sh4((v), (pte))
-#define __PD_AREA(x)		SH3_P1SEG_TO_P2SEG(x)
-#else /* SH4 */
-#define __SETUP_PTE(v, pte)	__setup_pte_sh3((v), (pte))
-#define __PD_AREA(x)		(x)
-#endif /* SH4 */
-
-#define __PD_TOP()		((u_long *)__PD_AREA(SHREG_TTB))
-#define __PDE(pd, i)		((u_long *)__PD_AREA((pd)[(i)]))
 
 /*
  * Define the code needed before returning to user mode, for
@@ -156,37 +144,6 @@ userret(struct proc *p, int pc, u_quad_t oticks)
 
 	curcpu()->ci_schedstate.spc_curpriority = p->p_priority;
 }
-
-/*
- * PTEL, PTEA
- */
-void
-__setup_pte_sh3(vaddr_t va, u_int32_t pte)
-{
-
-	SHREG_PTEL = pte & PG_HW_BITS;
-}
-
-#ifdef SH4
-void
-__setup_pte_sh4(vaddr_t va, u_int32_t pte)
-{
-	u_int32_t ptel;
-
-	ptel = pte & PG_HW_BITS;
-
-	if (pte & _PG_PCMCIA) {
-		SHREG_PTEA = (pte >> _PG_PCMCIA_SHIFT) & SH4_PTEA_SA_MASK;
-		SHREG_PTEL = ptel & ~PG_N;
-	} else {
-		if (va >= SH3_P1SEG_BASE)
-			ptel |= PG_WT;	/* P3SEG is always write-through */
-
-		SHREG_PTEL = ptel;
-		SHREG_PTEA = 0;
-	}
-}
-#endif /* SH4 */
 
 /*
  * trap(frame):
@@ -247,7 +204,7 @@ trap(int p1, int p2, int p3, int p4,/* dummy param */  struct trapframe frame)
 		/*NOTREACHED*/
 
 	case T_TRAP|T_USER:
-		if (SHREG_TRA == (0x000000c3 << 2)) {
+		if (SH_TRA == (0x000000c3 << 2)) {
 			trapsignal(p, SIGTRAP, type &~ T_USER);
 			break;
 		} else {
@@ -257,7 +214,7 @@ trap(int p1, int p2, int p3, int p4,/* dummy param */  struct trapframe frame)
 
 	case T_INITPAGEWR:
 	case T_INITPAGEWR|T_USER:
-		va = (vaddr_t)SHREG_TEA;
+		va = (vaddr_t)SH_TEA;
 		pmap_emulate_reference(p, va, type & T_USER, 1);
 		return;
 
@@ -540,12 +497,10 @@ syscall(struct trapframe *frame)
 			error = 0;
 	}
 
-//#ifdef TRAP_DEBUG
 #ifdef SYSCALL_DEBUG
 	if (cpu_debug_mode)
 		scdebug_call(p, code, args);
 #endif
-//#endif
 #ifdef KTRACE
 	if (KTRPOINT(p, KTR_SYSCALL))
 		ktrsyscall(p, code, argsize, args);
@@ -585,12 +540,10 @@ syscall(struct trapframe *frame)
 		break;
 	}
 
-//#ifdef TRAP_DEBUG
 #ifdef SYSCALL_DEBUG
 	if (cpu_debug_mode)
 		scdebug_ret(p, code, error, rval);
 #endif
-//#endif
 	userret(p, frame->tf_spc, sticks);
 #ifdef KTRACE
 	if (KTRPOINT(p, KTR_SYSRET))
@@ -643,19 +596,19 @@ tlb_handler(int p1, int p2, int p3, int p4, struct trapframe frame)
 
 	uvmexp.traps++;
 
-	va = (vaddr_t)SHREG_TEA;
+	va = (vaddr_t)SH_TEA;
 	va = trunc_page(va);
 	pde_index = pdei(va);
-	pd_top = __PD_TOP();
-	pde = __PDE(pd_top, pde_index);
-	exptype = SHREG_EXPEVT;
+	pd_top = SH_MMU_PD_TOP();
+	pde = SH_MMU_PDE(pd_top, pde_index);
+	exptype = SH_EXPEVT;
 
 	if (((u_long)pde & PG_V) != 0 && exptype != T_TLBPRIVW) {
 		(u_long)pde &= ~PGOFSET;
 		pte_index = ptei(va);
-		pte = (u_int32_t)__PDE(pde, pte_index);
+		pte = (u_int32_t)SH_MMU_PDE(pde, pte_index);
 		if ((pte & PG_V) != 0) {
-			__SETUP_PTE(va, pte);
+			SH_MMU_PTE_SETUP(va, pte);
 			__asm __volatile ("ldtlb; nop");
 			return;
 		}
@@ -667,7 +620,7 @@ tlb_handler(int p1, int p2, int p3, int p4, struct trapframe frame)
 
 	user = !KERNELMODE(frame.tf_r15, frame.tf_ssr);
 
-	pteh_save = SHREG_PTEH;
+	pteh_save = SH_PTEH;
 	va_save = va;
 	p = curproc;
 	if (p == NULL) {
@@ -742,10 +695,10 @@ tlb_handler(int p1, int p2, int p3, int p4, struct trapframe frame)
 
 	if (rv == 0) {
 		va = va_save;
-		SHREG_PTEH = pteh_save;
+		SH_PTEH = pteh_save;
 		pde_index = pdei(va);
-		pd_top = __PD_TOP();
-		pde = __PDE(pd_top, pde_index);
+		pd_top = SH_MMU_PD_TOP();
+		pde = SH_MMU_PDE(pd_top, pde_index);
 
 		if (((u_long)pde & PG_V) != 0) {
 			(u_long)pde &= ~PGOFSET;
@@ -753,7 +706,7 @@ tlb_handler(int p1, int p2, int p3, int p4, struct trapframe frame)
 			pte = pde[pte_index];
 
 			if ((pte & PG_V) != 0)
-				__SETUP_PTE(va, pte);
+				SH_MMU_PTE_SETUP(va, pte);
 		}
 		__asm __volatile("ldtlb; nop");
 		if (user)

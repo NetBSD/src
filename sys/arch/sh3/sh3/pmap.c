@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.32 2002/02/12 15:26:50 uch Exp $	*/
+/*	$NetBSD: pmap.c,v 1.33 2002/02/17 20:55:57 uch Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -71,6 +71,16 @@
 #include <uvm/uvm.h>
 
 #include <machine/cpu.h>
+#include <sh3/cache.h>
+#include <sh3/mmu.h>
+
+/* XXX XXX XXX */
+#ifdef SH4
+#define	TLBFLUSH()		(cacheflush(), sh_tlb_invalidate_all())
+#else
+#define	TLBFLUSH()		sh_tlb_invalidate_all()
+#endif
+/* XXX XXX XXX */
 
 /*
  * general info:
@@ -409,7 +419,7 @@ pmap_is_curpmap(struct pmap *pmap)
 {
 
 	return ((pmap == pmap_kernel()) ||
-	    (pmap->pm_pdirpa == (paddr_t)SHREG_TTB));
+	    (pmap->pm_pdirpa == (paddr_t)SH_MMU_TTB_READ()));
 }
 
 /*
@@ -419,12 +429,14 @@ pmap_is_curpmap(struct pmap *pmap)
 __inline static vaddr_t
 pmap_tmpmap_pa(paddr_t pa)
 {
-#ifdef SH4
-	cacheflush(); 
-	return SH3_PHYS_TO_P2SEG(pa);
-#else
-	return SH3_PHYS_TO_P1SEG(pa);
-#endif
+	if (CPU_IS_SH3) {
+		return SH3_PHYS_TO_P1SEG(pa);
+	} else {
+		cacheflush(); 
+		return SH3_PHYS_TO_P2SEG(pa);
+	}
+
+	return (0);
 }
 
 /*
@@ -1664,7 +1676,7 @@ pmap_activate(struct proc *p)
 	pcb->pcb_pmap = pmap;
 	pcb->pageDirReg = pmap->pm_pdirpa;
 	if (p == curproc)
-		setPageDirReg(pcb->pageDirReg);
+		SH_MMU_TTB_WRITE(pcb->pageDirReg);
 }
 
 /*
@@ -1749,12 +1761,13 @@ pmap_map(vaddr_t va, paddr_t spa, paddr_t epa, vm_prot_t prot)
 void
 pmap_zero_page(paddr_t pa)
 {
-#ifdef SH4
-	cacheflush(); 
-	memset((void *)SH3_PHYS_TO_P2SEG(pa), 0, NBPG);
-#else
-	memset((void *)SH3_PHYS_TO_P1SEG(pa), 0, NBPG);
-#endif
+
+	if (CPU_IS_SH3) {
+		memset((void *)SH3_PHYS_TO_P1SEG(pa), 0, NBPG);
+	} else {
+		cacheflush(); 
+		memset((void *)SH3_PHYS_TO_P2SEG(pa), 0, NBPG);
+	}
 }
 
 /*
@@ -1764,14 +1777,15 @@ pmap_zero_page(paddr_t pa)
 void
 pmap_copy_page(paddr_t srcpa, paddr_t dstpa)
 {
-#ifdef SH4
-	cacheflush(); 
-	memcpy((void *)SH3_PHYS_TO_P2SEG(dstpa),
-	    (void *)SH3_PHYS_TO_P2SEG(srcpa), NBPG);
-#else
-	memcpy((void *)SH3_PHYS_TO_P1SEG(dstpa),
-	    (void *)SH3_PHYS_TO_P1SEG(srcpa), NBPG);
-#endif
+
+	if (CPU_IS_SH3) {
+		memcpy((void *)SH3_PHYS_TO_P1SEG(dstpa),
+		    (void *)SH3_PHYS_TO_P1SEG(srcpa), NBPG);
+	} else {
+		cacheflush(); 
+		memcpy((void *)SH3_PHYS_TO_P2SEG(dstpa),
+		    (void *)SH3_PHYS_TO_P2SEG(srcpa), NBPG);
+	}
 }
 
 /*
@@ -3441,20 +3455,66 @@ pmap_emulate_reference(struct proc *p, vaddr_t va, int user, int write)
 paddr_t
 vtophys(vaddr_t va)
 {
-#ifdef SH4
-	cacheflush();
-	if (va >= SH3_P1SEG_BASE && va <= SH3_P2SEG_END)
-		return (va|SH3_P1234SEG_SIZE);
-#else
-	if (va >= SH3_P1SEG_BASE && va <= SH3_P2SEG_END)
-		return va;
-#endif
+
+	if (CPU_IS_SH3) {
+		if (va >= SH3_P1SEG_BASE && va <= SH3_P2SEG_END)
+			return va;
+	} else {
+		cacheflush();
+		if (va >= SH3_P1SEG_BASE && va <= SH3_P2SEG_END)
+			return (va|SH3_P1234SEG_SIZE);
+	}
 
 	/* XXX P4SEG? */
 
-#ifdef SH4
-	return (*vtopte(va) & PG_FRAME) | (va & ~PG_FRAME) | SH3_P1234SEG_SIZE;
-#else
-	return (*vtopte(va) & PG_FRAME) | (va & ~PG_FRAME);
-#endif
+	return CPU_IS_SH3 ? (*vtopte(va) & PG_FRAME) | (va & ~PG_FRAME) :
+	    (*vtopte(va) & PG_FRAME) | (va & ~PG_FRAME) | SH3_P1234SEG_SIZE;
+}
+
+/*
+ * pmap_update_pg: flush one page from the TLB
+ */
+
+void
+pmap_update_pg(vaddr_t va)
+{
+	
+	if (CPU_IS_SH3) {
+		sh_tlb_invalidate_addr(0, va); /* all entries are ASID 0. */
+	} else {
+		TLBFLUSH();
+	}
+}
+
+/*
+ * pmap_update_2pg: flush two pages from the TLB
+ */
+
+void
+pmap_update_2pg(vaddr_t va, vaddr_t vb)
+{
+
+	pmap_update_pg(va);
+	pmap_update_pg(vb);
+}
+
+/*
+ * pmap_protect: change the protection of pages in a pmap
+ *
+ * => this function is a frontend for pmap_remove/pmap_write_protect
+ * => we only have to worry about making the page more protected.
+ *	unprotecting a page is done on-demand at fault time.
+ */
+
+void
+pmap_protect(struct pmap *pmap, vaddr_t sva, vaddr_t eva, vm_prot_t prot)
+{
+
+	if ((prot & VM_PROT_WRITE) == 0) {
+		if (prot & (VM_PROT_READ|VM_PROT_EXECUTE)) {
+			pmap_write_protect(pmap, sva, eva, prot);
+		} else {
+			pmap_remove(pmap, sva, eva);
+		}
+	}
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.16 2002/02/12 15:26:48 uch Exp $	*/
+/*	$NetBSD: pmap.h,v 1.17 2002/02/17 20:55:52 uch Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -354,13 +354,6 @@ extern int pmap_pg_g;			/* do we support PG_G? */
  * macros
  */
 
-/* XXX XXX XXX */
-#ifdef SH4
-#define	TLBFLUSH()			(cacheflush(), tlbflush())
-#else
-#define	TLBFLUSH()			tlbflush()
-#endif
-
 #define	pmap_kernel()			(&kernel_pmap_store)
 #define	pmap_resident_count(pmap)	((pmap)->pm_stats.resident_count)
 #define	pmap_wired_count(pmap)		((pmap)->pm_stats.wired_count)
@@ -384,14 +377,14 @@ void		pmap_bootstrap(vaddr_t);
 boolean_t	pmap_change_attrs(struct vm_page *, int, int);
 void		pmap_deactivate(struct proc *);
 void		pmap_page_remove (struct vm_page *);
-static void	pmap_protect(struct pmap *, vaddr_t,
+void		pmap_protect(struct pmap *, vaddr_t,
 				vaddr_t, vm_prot_t);
 void		pmap_remove(struct pmap *, vaddr_t, vaddr_t);
 boolean_t	pmap_test_attrs(struct vm_page *, int);
 void		pmap_transfer(struct pmap *, struct pmap *, vaddr_t,
 				   vsize_t, vaddr_t, boolean_t);
-static void	pmap_update_pg(vaddr_t);
-static void	pmap_update_2pg(vaddr_t,vaddr_t);
+void		pmap_update_pg(vaddr_t);
+void		pmap_update_2pg(vaddr_t,vaddr_t);
 void		pmap_write_protect(struct pmap *, vaddr_t,
 				vaddr_t, vm_prot_t);
 
@@ -419,82 +412,9 @@ vaddr_t reserve_dumppages(vaddr_t); /* XXX: not a pmap fn */
 #define PMAP_UNMAP_POOLPAGE(va)	(va)
 #endif
 
-/*
- * inline functions
- */
-
-/*
- * pmap_update_pg: flush one page from the TLB
- */
-
-__inline static void
-pmap_update_pg(vaddr_t va)
-{
-#ifdef SH4
-#if 1
-	tlbflush();
-	cacheflush();
-#else
-	u_int32_t *addr, data;
-
-	addr = (void *)(0xf6000080 | (va & 0x00003f00)); /* 13-8 */
-	data =         (0x00000000 | (va & 0xfffff000)); /* 31-17, 11-10 */
-	*addr = data;
-#endif
-#else
-	u_int32_t *addr, data;
-
-	addr = (void *)(0xf2000080 | (va & 0x0001f000)); /* 16-12 */
-	data =         (0x00000000 | (va & 0xfffe0c00)); /* 31-17, 11-10 */
-
-	*addr = data;
-#endif
-}
-
-/*
- * pmap_update_2pg: flush two pages from the TLB
- */
-
-__inline static void
-pmap_update_2pg(va, vb)
-	vaddr_t va, vb;
-{
-#ifdef SH4
-	tlbflush();
-	cacheflush();
-#else
-	pmap_update_pg(va);
-	pmap_update_pg(vb);
-#endif
-}
-
-/*
- * pmap_protect: change the protection of pages in a pmap
- *
- * => this function is a frontend for pmap_remove/pmap_write_protect
- * => we only have to worry about making the page more protected.
- *	unprotecting a page is done on-demand at fault time.
- */
-
-__inline static void
-pmap_protect(struct pmap *pmap, vaddr_t sva, vaddr_t eva, vm_prot_t prot)
-{
-
-	if ((prot & VM_PROT_WRITE) == 0) {
-		if (prot & (VM_PROT_READ|VM_PROT_EXECUTE)) {
-			pmap_write_protect(pmap, sva, eva, prot);
-		} else {
-			pmap_remove(pmap, sva, eva);
-		}
-	}
-}
-
 vaddr_t pmap_map(vaddr_t, paddr_t, paddr_t, vm_prot_t);
 paddr_t vtophys(vaddr_t);
 void pmap_emulate_reference(struct proc *, vaddr_t, int, int);
-
-/* XXX */
-#define PG_U 0		/* referenced bit */
 
 #endif /* _KERNEL */
 #endif /* _SH3_PMAP_H_ */
