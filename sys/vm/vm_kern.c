@@ -372,9 +372,9 @@ kmem_malloc(map, size, canwait)
 			&addr, size, TRUE) != KERN_SUCCESS) {
 		if (canwait) { /* XXX -- then we should wait */
 			if (map == kmem_map)
-				panic("kmem_malloc: kmem_map too small");
+				panic("kmem_malloc: kmem_map too small (should wait)");
 			else if (map == mb_map)
-				printf("kmem_malloc: mb_map too small (can't wait)\n");
+				panic("kmem_malloc: mb_map too small (should wait)");
 		}
 		return 0;
 	}
