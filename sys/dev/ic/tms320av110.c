@@ -1,4 +1,4 @@
-/*	$NetBSD: tms320av110.c,v 1.2 1997/10/19 07:42:15 augustss Exp $	*/
+/*	$NetBSD: tms320av110.c,v 1.3 1997/10/19 20:21:49 is Exp $	*/
 
 /*-
  * Copyright (c) 1997 Ignatios Souvatzis. All rights reserved.
@@ -126,7 +126,7 @@ tms320av110_attach_mi(sc)
 	tav_write_byte(iot, ioh, TAV_CRC_ECM, 0);
 	tav_write_byte(iot, ioh, TAV_ATTEN_L, 0);
 	tav_write_byte(iot, ioh, TAV_ATTEN_R, 0);
-	tav_write_word(iot, ioh, TAV_FREE_FORM, 0);
+	tav_write_short(iot, ioh, TAV_FREE_FORM, 0);
 	tav_write_byte(iot, ioh, TAV_SIN_EN, 0);
 	tav_write_byte(iot, ioh, TAV_SYNC_ECM, TAV_ECM_REPEAT);
 	tav_write_byte(iot, ioh, TAV_CRC_ECM, TAV_ECM_REPEAT);
