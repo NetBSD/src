@@ -1,10 +1,10 @@
-#	$NetBSD: Makefile,v 1.41 2003/12/11 09:46:27 dyoung Exp $
+#	$NetBSD: Makefile,v 1.42 2004/01/05 03:53:10 lukem Exp $
 #	@(#)Makefile	8.1 (Berkeley) 7/19/93
 
 .include <bsd.own.mk>
 
 PROG=	login
-SRCS=	login.c
+SRCS=	login.c copyrightstr.c
 DPADD+=	${LIBUTIL} ${LIBCRYPT}
 LDADD+=	-lutil -lcrypt
 BINOWN=	root
@@ -16,6 +16,17 @@ CPPFLAGS+=-DSKEY
 DPADD+= ${LIBSKEY}
 LDADD+=	-lskey
 .endif
+
+CLEANFILES+=	copyrightstr.c
+
+copyrightstr.c: ${NETBSDSRCDIR}/sys/conf/copyright
+	${_MKTARGET_CREATE}
+	rm -f ${.TARGET}
+	awk '\
+		BEGIN { print "const char copyrightstr[] =" }\
+		{ print "\""$$0"\\n\""}\
+		END { print "\"\\n\";" }\
+	' ${.ALLSRC} > ${.TARGET}
 
 .if (${USE_KERBEROS} != "no")
 SRCS+= k5login.c
