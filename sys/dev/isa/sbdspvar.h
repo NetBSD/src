@@ -1,4 +1,4 @@
-/*	$NetBSD: sbdspvar.h,v 1.46 1999/10/09 20:57:28 mycroft Exp $	*/
+/*	$NetBSD: sbdspvar.h,v 1.47 1999/10/10 00:10:26 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -34,7 +34,7 @@
  *
  */
 
-#include "midi.h"
+#include "mpu.h"
 #if NMPU > 0
 #include <dev/ic/mpuvar.h>
 #endif
