@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.46 1996/05/09 20:30:51 is Exp $	*/
+/*	$NetBSD: trap.c,v 1.47 1996/05/10 14:31:08 is Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -280,9 +280,10 @@ trapmmufault(type, code, v, fp, p, sticks)
 	struct proc *p;
 	u_quad_t sticks;
 {
+#if defined(DEBUG) && defined(M68060)
 	static u_int oldcode=0, oldv=0;
 	static struct proc *oldp=0;
-
+#endif
 	extern vm_map_t kernel_map;
 	struct vmspace *vm = NULL;
 	vm_prot_t ftype;
@@ -547,11 +548,12 @@ trap(type, code, v, frame)
 			return;
 	}
 #endif
+#ifdef DEBUG
 	if (mmudebug & 2)
 	printf("trap: t %x c %x v %x pad %x adj %x sr %x pc %x fmt %x vc %x\n",
 	    type, code, v, frame.f_pad, frame.f_stackadj, frame.f_sr,
 	    frame.f_pc, frame.f_format, frame.f_vector);
-
+#endif
 	switch (type) {
 	default:
 		panictrap(type, code, v, &frame);

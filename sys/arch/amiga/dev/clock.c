@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.14 1996/05/09 20:31:06 is Exp $	*/
+/*	$NetBSD: clock.c,v 1.15 1996/05/10 14:30:53 is Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -269,7 +269,6 @@ delay(mic)
 	int mic;
 {
 	u_int temp;
-	int s;
 
 #ifdef DRACO
 	if (is_draco()) {
