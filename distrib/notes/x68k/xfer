@@ -1,6 +1,8 @@
+	$NetBSD: xfer,v 1.1.4.1 1998/11/07 04:20:23 cgd Exp $	
+
 Installation is supported from several media types, including:
 
-	Magneto-Optical disk (MO)
+	Removable SCSI hard disk, or Magneto-Optical disk (MO)
 	Tape
 	Remote NFS partition
 	FTP
@@ -32,12 +34,18 @@ Obviously, the steps necessary to prepare the distribution sets for
 installation or upgrade depend on which installation medium you
 choose.  The steps for the various media are outlined below.
 
-To install or upgrade NetBSD using MO, the MO media MUST be of the
-IBM `Super-floppy' format.  The Human68k format is not recognized by this
-release of the NetBSD/x68k.  If you have a MS-DOS (or MS-Windows) machine
-with an MO drive connected, use it.  If you don't, and if you have
-a program to handle IBM format MO for Human68k, copy all the files in
-the subdirectory "x68k/binaries" and RENAME THEIR NAME IN UPPER CASE.
+To install or upgrade NetBSD using 
+
+To install or upgrade NetBSD using a removable SCSI harddisk or MO,
+you need to the following:
+
+	To install NetBSD from a removablethe media MUST be of the IBM
+	`Super-floppy' format.  The Human68k format is not recognized
+	by this release of the NetBSD/x68k.  If you have a MS-DOS (or
+	MS-Windows) machine with an MO drive connected, use it.  If
+	you don't, and if you have a program to handle IBM format MO
+	for Human68k, copy all the files in the subdirectory
+	"x68k/binaries" and CHANGE THEIR NAMES IN UPPER CASE.
 
 To install or upgrade NetBSD using a tape, you need to do the
 following:
@@ -55,14 +63,14 @@ following:
 	(If you can't figure it out, ask your system administrator.)
 	In the above example, "<dist_directories>" are the
 	distribution sets' directories, for the distribution sets you
-	wish to place on the tape.  For instance, to put the "base12"
-	and "etc12" distributions on tape (in order to do the absolute
+	wish to place on the tape.  For instance, to put the "base"
+	and "etc" distributions on tape (in order to do the absolute
 	minimum installation to a new disk), you would do the
 	following:
 
-		cd .../NetBSD-1.2		# the top of the tree
-		cd x68k/binary
-		tar cf <tape_device> base12 etc12
+		cd .../NetBSD-_VER		# the top of the tree
+		cd x68k/binary/sets
+		tar cf <tape_device> base.tgz etc.tgz
 
 	(Note that you still need to fill in "<tape_device>" in the
 	example.)
@@ -138,7 +146,7 @@ following:
 	Place the distribution sets you wish to upgrade somewhere in
 	your current file system tree.  At a bare minimum, you must
 	upgrade the "base" binary distribution, and so must put the
-	"base12" set somewhere in your file system.  If you wish,
+	"base.tgz" set somewhere in your file system.  If you wish,
 	you can do the other sets, as well, but you should NOT upgrade
 	the "etc" distribution; the "etc" distribution contains system
 	configuration files that you should review and update by hand.
