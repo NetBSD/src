@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.17 2003/08/12 05:06:55 matt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.18 2003/08/18 21:34:11 eeh Exp $	*/
 
 /*
  * Copyright 2001, 2002 Wasabi Systems, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.17 2003/08/12 05:06:55 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.18 2003/08/18 21:34:11 eeh Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_ddb.h"
@@ -181,9 +181,6 @@ initppc(u_int startkernel, u_int endkernel, char *args, void *info_block)
         cpu_probe_cache();
 
 	/* Save info block */
-	if (info_block == NULL)
-		/* XXX why isn't r3 set correctly?!?!? */
-		info_block = (void *)0x8e10;		
 	memcpy(&board_data, info_block, sizeof(board_data));
 
 	memset(physmemr, 0, sizeof physmemr);
