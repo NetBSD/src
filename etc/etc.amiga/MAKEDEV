@@ -31,8 +31,9 @@
 # OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 # SUCH DAMAGE.
 #
-#	amiga/MAKEDEV (1/15/94), from:
+#	$Id: MAKEDEV,v 1.5 1994/04/17 13:26:16 chopps Exp $
 #
+#	from:
 #	hp300/MAKEDEV (1/15/94), from:
 #	@(#)MAKEDEV	5.5 (Berkeley) 5/28/91
 #
@@ -80,9 +81,10 @@ do
 case $i in
 all)
 	sh MAKEDEV std st0 ite0 ite1 mouse0 mouse1 tty0 grf0 grf1 kbd
-	sh MAKEDEV sd0 sd1 sd2 sd3 sd4 sd5 sdf6 vnd0 vnd1 vnd2 vnd3 vnd4
+	sh MAKEDEV sd0 sd1 sd2 sd3 sd4 sd5 sd6 vnd0 vnd1 vnd2 vnd3 vnd4
 	sh MAKEDEV view00 view01 view02 view03 view04 view05 pty0 
-	sh MAKEDEV vnd5 vnd6 fd0 bpf0 bpf1 bpf2 bpf3 par0 lkm local
+	sh MAKEDEV vnd5 vnd6 fd0 fd1 fd2 fd3 bpf0 bpf1 bpf2 bpf3 par0
+	sh MAKEDEV lkm local
 	;;
 
 std)
@@ -264,6 +266,10 @@ mouse*)
 	case $unit in
 	0|1)
 		mknod mouse${unit} c 15 ${unit}; chmod 666 mouse${unit}
+		if [ $unit = 0 ]
+		then 
+			rm -f mouse; ln -s mouse${unit} mouse
+		fi
 		;;
 	*)
 		echo bad unit for mouse in: $i
