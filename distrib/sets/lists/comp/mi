@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.351 2001/06/21 12:10:57 wiz Exp $
+#	$NetBSD: mi,v 1.352 2001/06/28 23:04:38 itojun Exp $
 ./sys				comp-sysutil-root
 ./usr/bin/addr2line		comp-debug-bin
 ./usr/bin/ar			comp-util-bin
@@ -3056,6 +3056,7 @@
 ./usr/share/man/cat9/m_getclr.0		comp-sys-catman
 ./usr/share/man/cat9/m_gethdr.0		comp-sys-catman
 ./usr/share/man/cat9/m_prepend.0		comp-sys-catman
+./usr/share/man/cat9/m_pulldown.0		comp-sys-catman
 ./usr/share/man/cat9/m_pullup.0		comp-sys-catman
 ./usr/share/man/cat9/m_split.0		comp-sys-catman
 ./usr/share/man/cat9/malloc.0		comp-sys-catman
@@ -5036,6 +5037,7 @@
 ./usr/share/man/man9/m_getclr.9		comp-sys-man
 ./usr/share/man/man9/m_gethdr.9		comp-sys-man
 ./usr/share/man/man9/m_prepend.9		comp-sys-man
+./usr/share/man/man9/m_pulldown.9		comp-sys-man
 ./usr/share/man/man9/m_pullup.9		comp-sys-man
 ./usr/share/man/man9/m_split.9		comp-sys-man
 ./usr/share/man/man9/malloc.9		comp-sys-man
