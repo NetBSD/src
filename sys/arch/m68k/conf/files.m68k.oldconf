@@ -1,0 +1,6 @@
+#	$Id: files.m68k.oldconf,v 1.1 1994/01/08 11:15:53 cgd Exp $
+#
+arch/m68k/m68k/process_machdep.c	standard
+arch/m68k/m68k/in_cksum.c		optional inet
+arch/m68k/m68k/ns_cksum.c		optional ns
+arch/m68k/m68k/oc_cksum.s		optional inet

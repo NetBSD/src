@@ -32,17 +32,17 @@
  *
  *	from: Utah Hdr: in_cksum.c 1.1 90/07/09
  *	from: @(#)in_cksum.c	7.3 (Berkeley) 12/16/90
- *	$Id: in_cksum.c,v 1.3 1993/08/01 19:24:43 mycroft Exp $
+ *	$Id: in_cksum.c,v 1.4 1994/01/08 11:17:23 cgd Exp $
  */
 
 /*
  * in_cksum - checksum routine for the Internet Protocol family.
  */
 
-#include "sys/param.h"
-#include "sys/mbuf.h"
-#include "netinet/in.h"
-#include "netinet/in_systm.h"
+#include <sys/param.h>
+#include <sys/mbuf.h>
+#include <netinet/in.h>
+#include <netinet/in_systm.h>
 
 extern int oc_cksum();
 
