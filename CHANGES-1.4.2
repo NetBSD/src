@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.4.2,v 1.1.2.60 1999/10/18 00:06:33 cgd Exp $
+#	$NetBSD: CHANGES-1.4.2,v 1.1.2.61 1999/10/18 05:23:01 cgd Exp $
 
 A complete list of changes from NetBSD 1.4.1 to NetBSD 1.4.2:
 
@@ -769,3 +769,25 @@ sys/netinet/ip_flow.c				1.14
   Multicast storm prevention: don't attempt to forward link-level
   multicast packets which contain ip unicast packets; these packets
   would only be generated from misconfigured/buggy systems.
+
+sys/adosfs/advfsops.c				1.37
+sys/coda/coda_vnops.c				1.14
+sys/filecorefs/filecore_vfsops.c		1.8
+sys/isofs/cd9660/cd9660_vfsops.c		1.40
+sys/miscfs/specfs/spec_vnops.c			1.44
+sys/miscfs/union/union_subr.c			1.36
+sys/msdosfs/msdosfs_vfsops.c			1.63
+sys/ufs/ext2fs/ext2fs_vfsops.c			1.28
+sys/ufs/ffs/ffs_vfsops.c			1.53
+sys/uvm/uvm_swap.c				1.29
+
+  In spec_close(), call the device's close routine with the vnode
+  unlocked if the call might block. Force a non-blocking close if
+  VXLOCK is set.  This eliminates a potential deadlock situation, and
+  should eliminate the dirty buffers on reboot issue.
+
+etc/rc.conf					1.59
+
+  Add "-f /var/db/ntp.drift" to default xntpd parameters to make it
+  more likely the clock frequency error learned by NTP will be
+  retained across reboots.
