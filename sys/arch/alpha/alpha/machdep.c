@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.80 1997/06/12 15:46:19 mrg Exp $ */
+/* $NetBSD: machdep.c,v 1.81 1997/07/24 23:52:10 thorpej Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -30,7 +30,7 @@
 #include <machine/options.h>		/* Config options headers */
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.80 1997/06/12 15:46:19 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.81 1997/07/24 23:52:10 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -75,6 +75,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.80 1997/06/12 15:46:19 mrg Exp $");
 
 #include <dev/cons.h>
 
+#include <machine/autoconf.h>
 #include <machine/cpu.h>
 #include <machine/reg.h>
 #include <machine/rpb.h>
@@ -114,6 +115,14 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.80 1997/06/12 15:46:19 mrg Exp $");
 #if NPPP > 0
 #include <net/ppp_defs.h>
 #include <net/if_ppp.h>
+#endif
+
+#ifdef DDB
+#include <machine/db_machdep.h>
+#include <ddb/db_access.h>
+#include <ddb/db_sym.h>
+#include <ddb/db_extern.h>
+#include <ddb/db_interface.h>
 #endif
 
 #include "le_ioasic.h"			/* for le_iomem creation */
@@ -173,6 +182,14 @@ int		ncpus;
 char boot_flags[64];
 char booted_kernel[64];
 
+int bootinfo_valid;
+struct bootinfo bootinfo;
+
+#ifdef DDB
+/* start and end of kernel symbol table */
+void	*ksym_start, *ksym_end;
+#endif
+
 /* for cpu_sysctl() */
 int	alpha_unaligned_print = 1;	/* warn about unaligned accesses */
 int	alpha_unaligned_fix = 1;	/* fix up unaligned accesses */
@@ -186,9 +203,11 @@ void	netintr __P((void));
 void	printregs __P((struct reg *));
 
 void
-alpha_init(pfn, ptb)
+alpha_init(pfn, ptb, bim, bip)
 	u_long pfn;		/* first free PFN number */
 	u_long ptb;		/* PFN of current level 1 page table */
+	u_long bim;		/* bootinfo magic */
+	u_long bip;		/* bootinfo pointer */
 {
 	extern char _end[];
 	caddr_t start, v;
@@ -223,6 +242,27 @@ alpha_init(pfn, ptb)
 	 * until PROM mappings go away in consinit.
 	 */
 	init_prom_interface();
+
+	/*
+	 * Check for a bootinfo from the boot program.
+	 */
+	if (bim == BOOTINFO_MAGIC) {
+		/*
+		 * Have boot info.  Copy it to our own storage.
+		 * We'll sanity-check it later.
+		 */
+		bcopy((void *)bip, &bootinfo, sizeof(bootinfo));
+		switch (bootinfo.version) {
+		case 1:
+			bootinfo_valid = 1;
+			break;
+
+		default:
+			printf("warning: bogus bootinfo version %d\n",
+			    bootinfo.version);
+		}
+	} else
+		printf("warning: boot program did not pass bootinfo\n");
 
 	/*
 	 * Point interrupt/exception vectors to our own.
@@ -356,7 +396,25 @@ alpha_init(pfn, ptb)
 	if (PAGE_SIZE != 8192)
 		panic("page size %d != 8192?!", PAGE_SIZE);
 
-	v = (caddr_t)alpha_round_page(_end);
+	/*
+	 * Find the first free page.
+	 */
+#ifdef DDB
+	if (bootinfo_valid) {
+		/*
+		 * Save the kernel symbol table.
+		 */
+		switch (bootinfo.version) {
+		case 1:
+			ksym_start = (void *)bootinfo.un.v1.ssym;
+			ksym_end   = (void *)bootinfo.un.v1.esym;
+			break;
+		}
+		v = (caddr_t)alpha_round_page(ksym_end);
+	} else
+#endif
+		v = (caddr_t)alpha_round_page(_end);
+
 	/*
 	 * Init mapping for u page(s) for proc 0
 	 */
@@ -524,7 +582,8 @@ unknown_cputype:
 	 */
 	proc0paddr->u_pcb.pcb_hw.apcb_ksp =
 	    (u_int64_t)proc0paddr + USPACE - sizeof(struct trapframe);
-	proc0.p_md.md_tf = (struct trapframe *)proc0paddr->u_pcb.pcb_hw.apcb_ksp;
+	proc0.p_md.md_tf =
+	    (struct trapframe *)proc0paddr->u_pcb.pcb_hw.apcb_ksp;
 
 #ifdef NEW_PMAP
 	pmap_activate(kernel_pmap, &proc0paddr->u_pcb.pcb_hw, 0);
@@ -534,13 +593,23 @@ unknown_cputype:
 	 * Look at arguments passed to us and compute boothowto.
 	 * Also, get kernel name so it can be used in user-land.
 	 */
-	prom_getenv(PROM_E_BOOTED_OSFLAGS, boot_flags, sizeof(boot_flags));
+	if (bootinfo_valid) {
+		switch (bootinfo.version) {
+		case 1:
+			bcopy(bootinfo.un.v1.boot_flags, boot_flags,
+			    sizeof(boot_flags));
+			bcopy(bootinfo.un.v1.booted_kernel, booted_kernel,
+			    sizeof(booted_kernel));
+		}
+	} else {
+		prom_getenv(PROM_E_BOOTED_OSFLAGS, boot_flags,
+		    sizeof(boot_flags));
+		prom_getenv(PROM_E_BOOTED_FILE, booted_kernel,
+		    sizeof(booted_kernel));
+	}
+
 #if 0
 	printf("boot flags = \"%s\"\n", boot_flags);
-#endif
-	prom_getenv(PROM_E_BOOTED_FILE, booted_kernel,
-	    sizeof(booted_kernel));
-#if 0
 	printf("booted kernel = \"%s\"\n", booted_kernel);
 #endif
 
@@ -564,6 +633,13 @@ unknown_cputype:
 		case 'c': /* crash dump immediately after autoconfig */
 		case 'C':
 			boothowto |= RB_DUMP;
+			break;
+#endif
+
+#if defined(KGDB) || defined(DDB)
+		case 'd': /* break into the kernel debugger ASAP */
+		case 'D':
+			boothowto |= RB_KDB;
 			break;
 #endif
 
@@ -615,6 +691,17 @@ consinit()
 
 	(*cpu_fn_switch->cons_init)();
 	pmap_unmap_prom();
+
+#ifdef DDB
+	db_machine_init();
+	ddb_init(ksym_start, ksym_end);
+	if (boothowto & RB_KDB)
+		Debugger();
+#endif
+#ifdef KGDB
+	if (boothowto & RB_KDB)
+		kgdb_connect(0);
+#endif
 }
 
 void
