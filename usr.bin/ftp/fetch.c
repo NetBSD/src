@@ -1,4 +1,4 @@
-/*	$NetBSD: fetch.c,v 1.7 1997/04/21 18:41:03 lukem Exp $	*/
+/*	$NetBSD: fetch.c,v 1.8 1997/04/21 18:45:47 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$NetBSD: fetch.c,v 1.7 1997/04/21 18:41:03 lukem Exp $";
+static char rcsid[] = "$NetBSD: fetch.c,v 1.8 1997/04/21 18:45:47 lukem Exp $";
 #endif /* not lint */
 
 /*
@@ -436,7 +436,7 @@ auto_fetch(argc, argv)
 				goto parsed_url;
 			}
 			if (pass == host || *pass == '@') {
-bad_url:
+bad_ftp_url:
 				warnx("Bad ftp URL: %s", argv[argpos]);
 				rval = argpos + 1;
 				continue;
@@ -449,11 +449,11 @@ bad_url:
 				goto parsed_url;
 			}
 			if (EMPTYSTRING(cp) || *cp == ':')
-				goto bad_url;
+				goto bad_ftp_url;
 			*cp++ = '\0';
 			user = host;
 			if (EMPTYSTRING(user))
-				goto bad_url;
+				goto bad_ftp_url;
 			host = cp;
 			portnum = strchr(host, ':');
 			if (portnum != NULL)
