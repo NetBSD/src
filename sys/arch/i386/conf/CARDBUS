@@ -1,4 +1,4 @@
-#	$NetBSD: CARDBUS,v 1.58.4.3 2002/10/24 09:34:20 lukem Exp $
+#	$NetBSD: CARDBUS,v 1.58.4.4 2004/11/11 23:29:33 he Exp $
 #
 #	CARDBUS: GENERIC + CardBus support.  Additionally, some
 #	things typically not found on laptops have been commented out.
@@ -10,7 +10,7 @@ include "arch/i386/conf/std.i386"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"CARDBUS-$Revision: 1.58.4.3 $"
+#ident		"CARDBUS-$Revision: 1.58.4.4 $"
 
 maxusers	32		# estimated number of users
 
@@ -463,6 +463,7 @@ esp*	at pcmcia? function ?		# Qlogic ESP406/FAS408 SCSI
 # CardBus SCSI cards
 adv*	at cardbus? dev ? function ?	# AdvanSys 1200[A,B], 9xx[U,UA] SCSI
 ahc*	at cardbus? dev ? function ?	# Adaptec ADP-1480
+njs*	at cardbus? dev ? function ?	# Workbit NinjaSCSI-32
 
 # MCA SCSI cards
 #aha*	at mca? slot ?			# Adaptec AHA-1640
@@ -480,6 +481,7 @@ scsibus* at esp?
 #scsibus* at iopsp?
 #scsibus* at isp?
 #scsibus* at nca?
+scsibus* at njs?
 #scsibus* at pcscp?
 #scsibus* at sea?
 #scsibus* at siop?
