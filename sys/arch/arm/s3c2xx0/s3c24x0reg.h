@@ -1,4 +1,4 @@
-/* $NetBSD: s3c24x0reg.h,v 1.5 2003/09/03 03:12:28 mycroft Exp $ */
+/* $NetBSD: s3c24x0reg.h,v 1.6 2004/02/12 03:47:29 bsh Exp $ */
 
 /*
  * Copyright (c) 2003  Genetec corporation  All rights reserved.
@@ -38,15 +38,15 @@
  *  S3C2400 User's Manual
  */
 #ifndef _ARM_S3C2XX0_S3C24X0REG_H_
-#define _ARM_S3C2XX0_S3C24X0REG_H_
+#define	_ARM_S3C2XX0_S3C24X0REG_H_
 
 /* Memory controller */
 #define	MEMCTL_BWSCON   	0x00	/* Bus width and wait status */
 #define	 BWSCON_DW0_SHIFT	1 	/* bank0 is odd */
-#define  BWSCON_BANK_SHIFT(n)	(4*(n))	/* for bank 1..7 */
+#define	 BWSCON_BANK_SHIFT(n)	(4*(n))	/* for bank 1..7 */
 #define	 BWSCON_DW_MASK 	0x03
 #define	 BWSCON_DW_8 		0
-#define  BWSCON_DW_16 		1
+#define	 BWSCON_DW_16 		1
 #define	 BWSCON_DW_32 		2
 #define	 BWSCON_WS		0x04	/* WAIT enable for the bank */
 #define	 BWSCON_ST		0x08	/* SRAM use UB/LB for the bank */
@@ -92,79 +92,79 @@
 #define	MEMCTL_MRSRB7    	0x30
 #define	 MRSR_CL_SHIFT		4	/* CAS Latency */
 
-#define S3C24X0_MEMCTL_SIZE	0x34
+#define	S3C24X0_MEMCTL_SIZE	0x34
 
 /* USB Host controller */
 #define	S3C24X0_USBHC_SIZE	0x5c
 
 /* Interrupt controller */
 #define	INTCTL_PRIORITY 	0x0c	/* IRQ Priority control */
-#define INTCTL_INTPND   	0x10	/* Interrupt request status */
-#define INTCTL_INTOFFSET	0x14	/* Interrupt request source */
+#define	INTCTL_INTPND   	0x10	/* Interrupt request status */
+#define	INTCTL_INTOFFSET	0x14	/* Interrupt request source */
 
 /* Interrupt source */
 #define	S3C24X0_INT_ADCTC 	31	/* ADC (and TC for 2410 */
-#define S3C24X0_INT_RTC  	30	/* RTC alarm */
+#define	S3C24X0_INT_RTC  	30	/* RTC alarm */
 #define	S3C2400_INT_UTXD1	29	/* UART1 Tx INT  (2400 only) */
 #define	S3C2410_INT_SPI1	29	/* SPI 1 (2410 only) */
 #define	S3C2400_INT_UTXD0	28	/* UART0 Tx INT  (2400 only) */
 #define	S3C2410_INT_UART0	28	/* UART0 (2410 only) */
-#define S3C24X0_INT_IIC  	27
-#define S3C24X0_INT_USBH	26	/* USB Host */
-#define S3C24X0_INT_USBD	25	/* USB Device */
-#define S3C2400_INT_URXD1	24	/* UART1 Rx INT (2400 only) */
-#define S3C2400_INT_URXD0	23	/* UART0 Rx INT (2400 only) */
-#define S3C2410_INT_UART1	23	/* UART0  (2410 only) */
-#define S3C24X0_INT_SPI0  	22	/* SPI 0 */
-#define S3C2400_INT_MMC 	21
-#define S3C2410_INT_SDI 	21
-#define S3C24X0_INT_DMA3	20
-#define S3C24X0_INT_DMA2	19
-#define S3C24X0_INT_DMA1	18
-#define S3C24X0_INT_DMA0	17
-#define S3C2410_INT_LCD 	16
+#define	S3C24X0_INT_IIC  	27
+#define	S3C24X0_INT_USBH	26	/* USB Host */
+#define	S3C24X0_INT_USBD	25	/* USB Device */
+#define	S3C2400_INT_URXD1	24	/* UART1 Rx INT (2400 only) */
+#define	S3C2400_INT_URXD0	23	/* UART0 Rx INT (2400 only) */
+#define	S3C2410_INT_UART1	23	/* UART0  (2410 only) */
+#define	S3C24X0_INT_SPI0  	22	/* SPI 0 */
+#define	S3C2400_INT_MMC 	21
+#define	S3C2410_INT_SDI 	21
+#define	S3C24X0_INT_DMA3	20
+#define	S3C24X0_INT_DMA2	19
+#define	S3C24X0_INT_DMA1	18
+#define	S3C24X0_INT_DMA0	17
+#define	S3C2410_INT_LCD 	16
 
 #define	S3C2400_INT_UERR 	15	/* UART 0/1 Error int (2400) */
 #define	S3C2410_INT_UART2 	15	/* UART2 int (2410) */
-#define S3C24X0_INT_TIMER4	14
-#define S3C24X0_INT_TIMER3	13
-#define S3C24X0_INT_TIMER2	12
-#define S3C24X0_INT_TIMER1	11
-#define S3C24X0_INT_TIMER0	10
-#define S3C24X0_INT_TIMER(n)	(10+(n)) /* timer interrupt [4:0] */
-#define S3C24X0_INT_WDT 	9	/* Watch dog timer */
+#define	S3C24X0_INT_TIMER4	14
+#define	S3C24X0_INT_TIMER3	13
+#define	S3C24X0_INT_TIMER2	12
+#define	S3C24X0_INT_TIMER1	11
+#define	S3C24X0_INT_TIMER0	10
+#define	S3C24X0_INT_TIMER(n)	(10+(n)) /* timer interrupt [4:0] */
+#define	S3C24X0_INT_WDT 	9	/* Watch dog timer */
 #define	S3C24X0_INT_TICK 	8
 #define	S3C2410_INT_BFLT 	7	/* Battery fault */
-#define S3C2410_INT_8_23	5	/* Ext int 8..23 */
-#define S3C2410_INT_4_7 	4	/* Ext int 4..7 */
-#define S3C24X0_INT_EXT(n)	(n) 	/* External interrupt [7:0] for 2400,
+#define	S3C2410_INT_8_23	5	/* Ext int 8..23 */
+#define	S3C2410_INT_4_7 	4	/* Ext int 4..7 */
+#define	S3C24X0_INT_EXT(n)	(n) 	/* External interrupt [7:0] for 2400,
 					 * [3:0] for 2410 */
 /* DMA controller */
 /* XXX */
 
 /* Clock & power manager */
-#define CLKMAN_LOCKTIME 0x00	/* PLL lock time */
+#define	CLKMAN_LOCKTIME 0x00	/* PLL lock time */
 #define	CLKMAN_MPLLCON 	0x04	/* MPLL control */
 #define	CLKMAN_UPLLCON 	0x08	/* UPLL control */
-#define  PLLCON_MDIV_SHIFT	12
-#define  PLLCON_MDIV_MASK	(0xff<<PLLCON_MDIV_SHIFT)
-#define  PLLCON_PDIV_SHIFT	4
-#define  PLLCON_PDIV_MASK	(0x3f<<PLLCON_PDIV_SHIFT)
-#define  PLLCON_SDIV_SHIFT	0
-#define  PLLCON_SDIV_MASK	(0x03<<PLLCON_SDIV_SHIFT)
-#define CLKMAN_CLKCON	0x0c
+#define	 PLLCON_MDIV_SHIFT	12
+#define	 PLLCON_MDIV_MASK	(0xff<<PLLCON_MDIV_SHIFT)
+#define	 PLLCON_PDIV_SHIFT	4
+#define	 PLLCON_PDIV_MASK	(0x3f<<PLLCON_PDIV_SHIFT)
+#define	 PLLCON_SDIV_SHIFT	0
+#define	 PLLCON_SDIV_MASK	(0x03<<PLLCON_SDIV_SHIFT)
+#define	CLKMAN_CLKCON	0x0c
 
-#define CLKMAN_CLKSLOW	0x10	/* slow clock controll */
+#define	CLKMAN_CLKSLOW	0x10	/* slow clock controll */
 #define	 CLKSLOW_UCLK 	(1<<7)	/* 1=UPLL off */
 #define	 CLKSLOW_MPLL 	(1<<5)	/* 1=PLL off */
-#define  CLKSLOW_SLOW	(1<<4)	/* 1: Enable SLOW mode */
-#define  CLKSLOW_VAL_MASK  0x0f	/* divider value for slow clock */
+#define	 CLKSLOW_SLOW	(1<<4)	/* 1: Enable SLOW mode */
+#define	 CLKSLOW_VAL_MASK  0x0f	/* divider value for slow clock */
 
-#define CLKMAN_CLKDIVN	0x14	/* Software reset control */
+#define	CLKMAN_CLKDIVN	0x14	/* Software reset control */
 #define	 CLKDIVN_HDIVN	(1<<1)
 #define	 CLKDIVN_PDIVN	(1<<0)
 
-#define S3C24X0_CLKMAN_SIZE	0x18
+#define	S3C24X0_CLKMAN_SIZE	0x18
 
 /* LCD controller */
 /* XXX */
@@ -183,9 +183,9 @@
 #define	TIMER_TCON 	0x08	/* control */
 #define	 TCON_SHIFT(n)		(4 * ((n)==0 ? 0 : (n)+1))
 #define	 TCON_START(n)		(1 << TCON_SHIFT(n))
-#define  TCON_MANUALUPDATE(n)	(1 << (TCON_SHIFT(n) + 1))
-#define  TCON_INVERTER(n)	(1 << (TCON_SHIFT(n) + 2))
-#define  __TCON_AUTORELOAD(n)	(1 << (TCON_SHIFT(n) + 3)) /* n=0..3 */
+#define	 TCON_MANUALUPDATE(n)	(1 << (TCON_SHIFT(n) + 1))
+#define	 TCON_INVERTER(n)	(1 << (TCON_SHIFT(n) + 2))
+#define	 __TCON_AUTORELOAD(n)	(1 << (TCON_SHIFT(n) + 3)) /* n=0..3 */
 #define	 TCON_AUTORELOAD4 	(1<<22)	       /* stupid hardware design */
 #define	 TCON_AUTORELOAD(n)	((n)==4 ? TCON_AUTORELOAD4 : __TCON_AUTORELOAD(n))
 #define	 TCON_MASK(n)		(0x0f << TCON_SHIFT(n))
@@ -199,8 +199,8 @@
 
 /* UART */
 /* diffs to s3c2800 */
-#define  UMCON_AFC	(1<<4)	/* auto flow control */
-#define  UMSTAT_DCTS	(1<<2)	/* CTS change */
+#define	 UMCON_AFC	(1<<4)	/* auto flow control */
+#define	 UMSTAT_DCTS	(1<<2)	/* CTS change */
 #define	 ULCON_IR  	(1<<6)
 #define	 ULCON_PARITY_SHIFT  3
 
@@ -211,18 +211,18 @@
 
 /* Watch dog timer */
 #define	WDT_WTCON 	0x00	/* WDT mode */
-#define  WTCON_PRESCALE_SHIFT	8
+#define	 WTCON_PRESCALE_SHIFT	8
 #define	 WTCON_PRESCALE	(0xff<<WTCON_PRESCALE_SHIFT)
 #define	 WTCON_ENABLE   (1<<5)
-#define  WTCON_CLKSEL	(3<<3)
+#define	 WTCON_CLKSEL	(3<<3)
 #define	 WTCON_CLKSEL_16  (0<<3)
 #define	 WTCON_CLKSEL_32  (1<<3)
 #define	 WTCON_CLKSEL_64  (2<<3)
 #define	 WTCON_CLKSEL_128 (3<<3)
-#define  WTCON_ENINT    (1<<2)
-#define  WTCON_ENRST	(1<<0)
+#define	 WTCON_ENINT    (1<<2)
+#define	 WTCON_ENRST	(1<<0)
 
-#define  WTCON_WDTSTOP	0
+#define	 WTCON_WDTSTOP	0
 	
 #define	WDT_WTDAT 	0x04	/* timer data */
 #define	WDT_WTCNT 	0x08	/* timer count */
