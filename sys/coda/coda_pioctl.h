@@ -1,4 +1,4 @@
-/*	$NetBSD: coda_pioctl.h,v 1.2 1998/09/08 17:12:49 rvb Exp $	*/
+/*	$NetBSD: coda_pioctl.h,v 1.3 1998/09/12 15:05:50 rvb Exp $	*/
 
 /*
  * 
@@ -43,6 +43,10 @@
 /*
  * HISTORY
  * $Log: coda_pioctl.h,v $
+ * Revision 1.3  1998/09/12 15:05:50  rvb
+ * Change cfs/CFS in symbols, strings and constants to coda/CODA
+ * to avoid fs conflicts.
+ *
  * Revision 1.2  1998/09/08 17:12:49  rvb
  * Pass2 complete
  *
@@ -62,7 +66,7 @@
  * Sync the code for NetBSD -current; test on 1.3 later
  *
  * Revision 1.4  98/01/23  11:53:54  rvb
- * Bring RVB_CFS1_1 to HEAD
+ * Bring RVB_CODA1_1 to HEAD
  * 
  * Revision 1.3.2.1  97/12/06  17:41:29  rvb
  * Sync with peters coda.h
@@ -80,7 +84,7 @@
  * Added support for Coda MiniCache and raw inode calls (final commit)
  * 
  * Revision 1.1.2.1  1995/12/20 01:57:54  bnoble
- * Added CFS-specific files
+ * Added CODA-specific files
  *
  * Revision 2.4  90/08/30  11:51:12  bohman
  * 	Ioctl changes for STDC.

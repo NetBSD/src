@@ -1,4 +1,4 @@
-/*	$NetBSD: mount.h,v 1.68 1998/08/14 03:28:56 mark Exp $	*/
+/*	$NetBSD: mount.h,v 1.69 1998/09/12 15:05:48 rvb Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993
@@ -103,7 +103,8 @@ struct statfs {
 #define	MOUNT_UNION	"union"		/* Union (translucent) Filesystem */
 #define	MOUNT_ADOSFS	"adosfs"	/* AmigaDOS Filesystem */
 #define	MOUNT_EXT2FS	"ext2fs"	/* Second Extended Filesystem */
-#define	MOUNT_CFS	"cfs"		/* Coda Filesystem */
+#define	MOUNT_CFS	"coda"		/* Coda Filesystem */
+#define	MOUNT_CODA	"coda"		/* Coda Filesystem */
 #define	MOUNT_FILECORE	"filecore"	/* Acorn Filecore Filesystem */
 
 /*
