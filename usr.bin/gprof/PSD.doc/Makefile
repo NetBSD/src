@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 1997/12/21 15:46:33 christos Exp $
+#	$NetBSD: Makefile,v 1.5 2003/01/05 12:24:22 pooka Exp $
 #	@(#)Makefile	8.1 (Berkeley) 8/14/93
 
 DIR=	psd/18.gprof
@@ -9,6 +9,7 @@ DPADD=	${EXTRA}
 MACROS=	-me
 
 paper.ps: ${SRCS} ${DPADD}
-	${SOELIM} -I${.CURDIR} ${.ALLSRC:M*.me} | ${PIC} | ${TBL} | ${EQN} | ${ROFF} > ${.TARGET}
+	${SOELIM} -I${.CURDIR} ${.ALLSRC:M*.me} | ${PIC} | ${TBL} |	\
+	    ${EQN} | ${ROFF} ${MACROS} > ${.TARGET}
 
 .include <bsd.doc.mk>
