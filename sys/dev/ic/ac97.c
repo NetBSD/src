@@ -1,4 +1,4 @@
-/*      $NetBSD: ac97.c,v 1.15 2000/11/05 05:41:25 thorpej Exp $ */
+/*      $NetBSD: ac97.c,v 1.16 2001/01/05 03:32:11 augustss Exp $ */
 /*	$OpenBSD: ac97.c,v 1.8 2000/07/19 09:01:35 csapuntz Exp $	*/
 
 /*
@@ -293,12 +293,14 @@ static const struct ac97_codecid {
 	{ AC97_CODEC_ID('C', 'R', 'Y', 43),	"Crystal CS4294",	},
 	{ AC97_CODEC_ID('C', 'R', 'Y', 49),	"Crystal CS4299",	},
 	{ AC97_CODEC_ID('C', 'R', 'Y', 51),	"Crystal CS4298A",	},
-	{ AC97_CODEC_ID('N', 'S', 'C', 49),
-					     "National Semiconductor LM4549", },
+	{ AC97_CODEC_ID('C', 'R', 'Y', 52),	"Crystal CS4299",	},
+	{ AC97_CODEC_ID('N', 'S', 'C', 49), "National Semiconductor LM4549", },
 	{ AC97_CODEC_ID('S', 'I', 'L', 34),	"Silicon Laboratory Si3036", },
 	{ AC97_CODEC_ID('S', 'I', 'L', 35),	"Silicon Laboratory Si3038", },
 	{ AC97_CODEC_ID('T', 'R', 'A', 2),	"TriTech TR28022",	},
 	{ AC97_CODEC_ID('T', 'R', 'A', 3),	"TriTech TR28023",	},
+	{ AC97_CODEC_ID('T', 'R', 'A', 6),	"TriTech TR28026",	},
+	{ AC97_CODEC_ID('T', 'R', 'A', 8),	"TriTech TR28028",	},
 	{ AC97_CODEC_ID('T', 'R', 'A', 35),	"TriTech unknown",	},
 	{ AC97_CODEC_ID('W', 'M', 'L', 0),	"Wolfson WM9704",	},
 	{ AC97_CODEC_ID('W', 'M', 'L', 3),	"Wolfson WM9707",	},
