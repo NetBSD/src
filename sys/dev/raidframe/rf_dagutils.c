@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_dagutils.c,v 1.16 2002/09/19 23:29:03 oster Exp $	*/
+/*	$NetBSD: rf_dagutils.c,v 1.17 2002/09/21 00:56:57 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -33,7 +33,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_dagutils.c,v 1.16 2002/09/19 23:29:03 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_dagutils.c,v 1.17 2002/09/21 00:56:57 oster Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -174,23 +174,6 @@ rf_FreeDAG(dag_h)
 	}
 }
 
-RF_PropHeader_t *
-rf_MakePropListEntry(
-    RF_DagHeader_t * dag_h,
-    int resultNum,
-    int paramNum,
-    RF_PropHeader_t * next,
-    RF_AllocListElem_t * allocList)
-{
-	RF_PropHeader_t *p;
-
-	RF_CallocAndAdd(p, 1, sizeof(RF_PropHeader_t),
-	    (RF_PropHeader_t *), allocList);
-	p->resultNum = resultNum;
-	p->paramNum = paramNum;
-	p->next = next;
-	return (p);
-}
 
 static RF_FreeList_t *rf_dagh_freelist;
 

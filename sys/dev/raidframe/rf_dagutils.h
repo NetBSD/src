@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_dagutils.h,v 1.4 2001/10/04 15:58:52 oster Exp $	*/
+/*	$NetBSD: rf_dagutils.h,v 1.5 2002/09/21 00:56:57 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -61,9 +61,6 @@ rf_InitNode(RF_DagNode_t * node, RF_NodeStatus_t initstatus,
     RF_DagHeader_t * hdr, char *name, RF_AllocListElem_t * alist);
 
 	void    rf_FreeDAG(RF_DagHeader_t * dag_h);
-
-	RF_PropHeader_t *rf_MakePropListEntry(RF_DagHeader_t * dag_h, int resultNum,
-            int paramNum, RF_PropHeader_t * next, RF_AllocListElem_t * allocList);
 
 	int     rf_ConfigureDAGs(RF_ShutdownList_t ** listp);
 
