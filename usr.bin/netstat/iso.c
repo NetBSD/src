@@ -33,7 +33,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)iso.c	5.6 (Berkeley) 4/27/91";*/
-static char rcsid[] = "$Id: iso.c,v 1.7 1994/03/28 10:29:43 cgd Exp $";
+static char rcsid[] = "$Id: iso.c,v 1.8 1994/04/01 09:18:11 cgd Exp $";
 #endif /* not lint */
 
 /*******************************************************************************
@@ -140,7 +140,7 @@ char *tp_estring[] = {
  *	Dump esis stats
  */
 esis_stats(off, name)
-	off_t	off;
+	u_long off;
 	char	*name;
 {
 	struct esis_stat esis_stat;
@@ -169,7 +169,7 @@ esis_stats(off, name)
  * Dump clnp statistics structure.
  */
 clnp_stats(off, name)
-	off_t off;
+	u_long off;
 	char *name;
 {
 	struct clnp_stat clnp_stat;
@@ -203,7 +203,7 @@ clnp_stats(off, name)
  * Dump CLTP statistics structure.
  */
 cltp_stats(off, name)
-	off_t off;
+	u_long off;
 	char *name;
 {
 	struct cltpstat cltpstat;
@@ -241,7 +241,7 @@ static	int first = 1;
  * -a (all) flag is specified.
  */
 iso_protopr(off, name)
-	off_t off;
+	u_long off;
 	char *name;
 {
 	struct isopcb cb;
@@ -427,7 +427,7 @@ isonetprint(iso, sufx, sufxlen, islocal)
 
 #ifdef notdef
 x25_protopr(off, name)
-	off_t off;
+	u_long off;
 	char *name;
 {
 	static char *xpcb_states[] = {
@@ -453,12 +453,12 @@ x25_protopr(off, name)
 		return;
 	while (xpcb.x_next != (struct isopcb *)off) {
 		next = isopcb.isop_next;
-		kvm_read((off_t)next, &xpcb, sizeof (struct x25_pcb));
+		kvm_read(next, &xpcb, sizeof (struct x25_pcb));
 		if (xpcb.x_prev != prev) {
 			printf("???\n");
 			break;
 		}
-		kvm_read((off_t)xpcb.x_socket, &sockb, sizeof (sockb));
+		kvm_read(xpcb.x_socket, &sockb, sizeof (sockb));
 
 		if (!aflag &&
 			xpcb.x_state == LISTENING ||

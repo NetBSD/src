@@ -33,7 +33,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)unix.c	5.11 (Berkeley) 7/1/91";*/
-static char rcsid[] = "$Id: unix.c,v 1.8 1994/03/28 10:30:03 cgd Exp $";
+static char rcsid[] = "$Id: unix.c,v 1.9 1994/04/01 09:18:17 cgd Exp $";
 #endif /* not lint */
 
 /*
@@ -62,7 +62,7 @@ int	Aflag;
 extern	char *calloc();
 
 unixpr(fileheadaddr, nfilesaddr, unixsw)
-	off_t fileheadaddr, nfilesaddr;
+	u_long fileheadaddr, nfilesaddr;
 	struct protosw *unixsw;
 {
 	register struct file *fp, *lfp;

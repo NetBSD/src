@@ -33,7 +33,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)ns.c	5.13 (Berkeley) 3/1/91";*/
-static char rcsid[] = "$Id: ns.c,v 1.5 1994/03/28 10:29:55 cgd Exp $";
+static char rcsid[] = "$Id: ns.c,v 1.6 1994/04/01 09:18:15 cgd Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -84,7 +84,7 @@ static	int first = 1;
  */
 
 nsprotopr(off, name)
-	off_t off;
+	u_long off;
 	char *name;
 {
 	struct nspcb cb;
@@ -100,7 +100,7 @@ nsprotopr(off, name)
 	if (nspcb.nsp_next == (struct nspcb *)(long)off)
 		return;
 	for (;nspcb.nsp_next != (struct nspcb *)(long)off; prev = next) {
-		off_t ppcb;
+		u_long ppcb;
 
 		next = nspcb.nsp_next;
 		kvm_read(next, (char *)&nspcb, sizeof (nspcb));
@@ -113,7 +113,7 @@ nsprotopr(off, name)
 		}
 		kvm_read(nspcb.nsp_socket,
 				(char *)&sockb, sizeof (sockb));
-		ppcb = (off_t)(long)nspcb.nsp_pcb;
+		ppcb = (long)nspcb.nsp_pcb;
 		if (ppcb) {
 			if (isspp) {
 				kvm_read((void *)(long)ppcb, (char *)&sppcb,
@@ -159,7 +159,7 @@ nsprotopr(off, name)
  * Dump SPP statistics structure.
  */
 spp_stats(off, name)
-	off_t off;
+	u_long off;
 	char *name;
 {
 	struct spp_istat spp_istat;
@@ -236,7 +236,7 @@ spp_stats(off, name)
  * Dump IDP statistics structure.
  */
 idp_stats(off, name)
-	off_t off;
+	u_long off;
 	char *name;
 {
 	struct idpstat idpstat;
@@ -271,7 +271,7 @@ static	struct {
  */
 /*ARGSUSED*/
 nserr_stats(off, name)
-	off_t off;
+	u_long off;
 	char *name;
 {
 	struct ns_errstat ns_errstat;

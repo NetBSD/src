@@ -39,7 +39,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)main.c	5.23 (Berkeley) 7/1/91";*/
-static char rcsid[] = "$Id: main.c,v 1.4 1994/01/11 19:42:53 brezak Exp $";
+static char rcsid[] = "$Id: main.c,v 1.5 1994/04/01 09:18:12 cgd Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -358,7 +358,7 @@ main(argc, argv)
 		exit(1);
 	}
 	if (mflag) {
-		mbpr((off_t)nl[N_MBSTAT].n_value);
+		mbpr(nl[N_MBSTAT].n_value);
 		exit(0);
 	}
 	if (pflag) {
@@ -389,22 +389,22 @@ main(argc, argv)
 	}
 	if (rflag) {
 		if (sflag)
-			rt_stats((off_t)nl[N_RTSTAT].n_value);
+			rt_stats(nl[N_RTSTAT].n_value);
 		else
-			routepr((off_t)nl[N_RTHOST].n_value, 
-				(off_t)nl[N_RTNET].n_value,
-				(off_t)nl[N_RTHASHSIZE].n_value,
-				(off_t)nl[N_RTREE].n_value);
+			routepr(nl[N_RTHOST].n_value, 
+				nl[N_RTNET].n_value,
+				nl[N_RTHASHSIZE].n_value,
+				nl[N_RTREE].n_value);
 		exit(0);
 	}
 	if (Mflag) {
 		if (sflag)
-			mrt_stats((off_t)nl[N_MRTPROTO].n_value,
-				  (off_t)nl[N_MRTSTAT].n_value);
+			mrt_stats(nl[N_MRTPROTO].n_value,
+				  nl[N_MRTSTAT].n_value);
 		else
-			mroutepr((off_t)nl[N_MRTPROTO].n_value,
-				 (off_t)nl[N_MRTTABLE].n_value,
-				 (off_t)nl[N_VIFTABLE].n_value);
+			mroutepr(nl[N_MRTPROTO].n_value,
+				 nl[N_MRTTABLE].n_value,
+				 nl[N_VIFTABLE].n_value);
 		exit(0);
 	}
 
@@ -458,7 +458,7 @@ main(argc, argv)
 #endif
     }
     if ((af == AF_UNIX || af == AF_UNSPEC) && !sflag)
-	    unixpr((off_t)nl[N_FILEHEAD].n_value, (off_t)nl[N_FILES].n_value,
+	    unixpr(nl[N_FILEHEAD].n_value, nl[N_FILES].n_value,
 		(struct protosw *)nl[N_UNIXSW].n_value);
     if (af == AF_UNSPEC && sflag)
 #ifdef IMP
