@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.413 2001/12/05 12:45:36 ad Exp $
+#	$NetBSD: mi,v 1.414 2001/12/07 11:56:14 yamt Exp $
 ./sys				comp-sysutil-root
 ./usr/bin/addr2line		comp-debug-bin
 ./usr/bin/ar			comp-util-bin
@@ -1751,6 +1751,7 @@
 ./usr/share/man/cat3/fgetln.0	comp-c-catman
 ./usr/share/man/cat3/fgetpos.0	comp-c-catman
 ./usr/share/man/cat3/fgets.0	comp-c-catman
+./usr/share/man/cat3/fgetwc.0	comp-c-catman
 ./usr/share/man/cat3/fileno.0	comp-c-catman
 ./usr/share/man/cat3/finite.0	comp-c-catman
 ./usr/share/man/cat3/finitef.0	comp-c-catman
@@ -1796,6 +1797,7 @@
 ./usr/share/man/cat3/fpurge.0	comp-c-catman
 ./usr/share/man/cat3/fputc.0	comp-c-catman
 ./usr/share/man/cat3/fputs.0	comp-c-catman
+./usr/share/man/cat3/fputwc.0	comp-c-catman
 ./usr/share/man/cat3/fread.0	comp-c-catman
 ./usr/share/man/cat3/free.0	comp-c-catman
 ./usr/share/man/cat3/freeaddrinfo.0	comp-c-catman
@@ -1818,6 +1820,7 @@
 ./usr/share/man/cat3/fts_read.0	comp-c-catman
 ./usr/share/man/cat3/fts_set.0	comp-c-catman
 ./usr/share/man/cat3/funopen.0	comp-c-catman
+./usr/share/man/cat3/fwide.0	comp-c-catman
 ./usr/share/man/cat3/fwopen.0	comp-c-catman
 ./usr/share/man/cat3/fwrite.0	comp-c-catman
 ./usr/share/man/cat3/gai_strerror.0	comp-c-catman
@@ -1893,6 +1896,8 @@
 ./usr/share/man/cat3/getttynam.0	comp-c-catman
 ./usr/share/man/cat3/getusershell.0	comp-c-catman
 ./usr/share/man/cat3/getw.0	comp-c-catman
+./usr/share/man/cat3/getwc.0	comp-c-catman
+./usr/share/man/cat3/getwchar.0	comp-c-catman
 ./usr/share/man/cat3/getwd.0	comp-c-catman
 ./usr/share/man/cat3/gid_from_group.0	comp-c-catman
 ./usr/share/man/cat3/glob.0	comp-c-catman
@@ -2327,6 +2332,8 @@
 ./usr/share/man/cat3/putenv.0	comp-c-catman
 ./usr/share/man/cat3/puts.0	comp-c-catman
 ./usr/share/man/cat3/putw.0	comp-c-catman
+./usr/share/man/cat3/putwc.0	comp-c-catman
+./usr/share/man/cat3/putwchar.0	comp-c-catman
 ./usr/share/man/cat3/pw_abort.0	comp-c-catman
 ./usr/share/man/cat3/pw_copy.0	comp-c-catman
 ./usr/share/man/cat3/pw_edit.0	comp-c-catman
@@ -2661,6 +2668,7 @@
 ./usr/share/man/cat3/ulimit.0	comp-c-catman
 ./usr/share/man/cat3/uname.0	comp-c-catman
 ./usr/share/man/cat3/ungetc.0	comp-c-catman
+./usr/share/man/cat3/ungetwc.0	comp-c-catman
 ./usr/share/man/cat3/unsetenv.0	comp-c-catman
 ./usr/share/man/cat3/unvis.0	comp-c-catman
 ./usr/share/man/cat3/usb.0	comp-c-catman
@@ -4194,6 +4202,7 @@
 ./usr/share/man/man3/fflush.3		comp-c-man
 ./usr/share/man/man3/ffs.3		comp-c-man
 ./usr/share/man/man3/fgetc.3		comp-c-man
+./usr/share/man/man3/fgetwc.3		comp-c-man
 ./usr/share/man/man3/fgetln.3		comp-c-man
 ./usr/share/man/man3/fgetpos.3		comp-c-man
 ./usr/share/man/man3/fgets.3		comp-c-man
@@ -4242,6 +4251,7 @@
 ./usr/share/man/man3/fpurge.3		comp-c-man
 ./usr/share/man/man3/fputc.3		comp-c-man
 ./usr/share/man/man3/fputs.3		comp-c-man
+./usr/share/man/man3/fputwc.3		comp-c-man
 ./usr/share/man/man3/fread.3		comp-c-man
 ./usr/share/man/man3/free.3		comp-c-man
 ./usr/share/man/man3/freeaddrinfo.3		comp-c-man
@@ -4264,6 +4274,7 @@
 ./usr/share/man/man3/fts_read.3		comp-c-man
 ./usr/share/man/man3/fts_set.3		comp-c-man
 ./usr/share/man/man3/funopen.3		comp-c-man
+./usr/share/man/man3/fwide.3		comp-c-man
 ./usr/share/man/man3/fwopen.3		comp-c-man
 ./usr/share/man/man3/fwrite.3		comp-c-man
 ./usr/share/man/man3/gai_strerror.3		comp-c-man
@@ -4339,6 +4350,8 @@
 ./usr/share/man/man3/getttynam.3		comp-c-man
 ./usr/share/man/man3/getusershell.3		comp-c-man
 ./usr/share/man/man3/getw.3		comp-c-man
+./usr/share/man/man3/getwc.3		comp-c-man
+./usr/share/man/man3/getwchar.3		comp-c-man
 ./usr/share/man/man3/getwd.3		comp-c-man
 ./usr/share/man/man3/gid_from_group.3		comp-c-man
 ./usr/share/man/man3/glob.3		comp-c-man
@@ -4773,6 +4786,8 @@
 ./usr/share/man/man3/putenv.3		comp-c-man
 ./usr/share/man/man3/puts.3		comp-c-man
 ./usr/share/man/man3/putw.3		comp-c-man
+./usr/share/man/man3/putwc.3		comp-c-man
+./usr/share/man/man3/putwchar.3		comp-c-man
 ./usr/share/man/man3/pw_abort.3		comp-c-man
 ./usr/share/man/man3/pw_copy.3		comp-c-man
 ./usr/share/man/man3/pw_edit.3		comp-c-man
@@ -5107,6 +5122,7 @@
 ./usr/share/man/man3/ulimit.3		comp-c-man
 ./usr/share/man/man3/uname.3		comp-c-man
 ./usr/share/man/man3/ungetc.3		comp-c-man
+./usr/share/man/man3/ungetwc.3		comp-c-man
 ./usr/share/man/man3/unsetenv.3		comp-c-man
 ./usr/share/man/man3/unvis.3		comp-c-man
 ./usr/share/man/man3/usb.3		comp-c-man
