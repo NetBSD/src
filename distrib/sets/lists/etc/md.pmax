@@ -1,2 +1,2 @@
-# $NetBSD: md.pmax,v 1.5 2001/01/26 01:39:18 jwise Exp $
-./etc/fstab.rz		etc-sys-etc
+# $NetBSD: md.pmax,v 1.6 2001/09/01 02:36:51 chs Exp $
+./etc/fstab.sd		etc-sys-etc
