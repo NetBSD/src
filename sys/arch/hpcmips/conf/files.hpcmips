@@ -1,4 +1,4 @@
-#	$NetBSD: files.hpcmips,v 1.73 2002/02/11 09:21:46 takemura Exp $
+#	$NetBSD: files.hpcmips,v 1.74 2002/02/13 16:25:34 uch Exp $
 
 # maxpartitions must be first item in files.${ARCH}.
 maxpartitions 8
@@ -81,7 +81,7 @@ include "dev/hpc/files.hpctp"
 #
 # Debug utility
 #
-file	arch/hpc/hpc/debug_subr.c
+include "arch/hpc/conf/files.debug"
 
 # Console autoconfiguration code: selects between a framebuffers
 file	dev/cons.c
