@@ -1,4 +1,4 @@
-$NetBSD: UPDATING,v 1.125 2004/07/22 03:55:33 atatat Exp $
+$NetBSD: UPDATING,v 1.126 2004/08/15 16:02:59 lukem Exp $
 
 This file (UPDATING) is intended to be a brief reference to recent
 changes that might cause problems in the build process, and a guide for
@@ -50,6 +50,11 @@ Recent changes:
 	from /usr/X11R6/lib/X11/<dir> to /etc/X11/<dir>.
 	Ensure that src and xsrc is up to date, and run
 	"make cleandir" in src/x11 before your next build.
+
+	postinstall currently doesn't migrate the files from
+	/usr/X11R6/lib/X11/* to /etc/X11/* although it does
+	detect that this needs to occur, so you'll have to
+	manually move these files yourself.
 
 20040426:
 	Support for the original dynamic sysctl node structure has
