@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.eng,v 1.34 1999/03/13 23:17:04 ender Exp $	*/
+/*	$NetBSD: msg.mi.eng,v 1.35 1999/03/28 17:12:12 kleink Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -223,7 +223,7 @@ disklabel, or on some ports, for MBR slices). You must first choose a
 size unit to use.  Choosing megabytes will give partition sizes close
 to your choice, but aligned to cylinder boundaries. Choosing sectors
 will allow you to more acurately specify the sizes.  On modern ZBR disks,
-acutal cylinder size varies across the disk and there is littte real
+acutal cylinder size varies across the disk and there is little real
 gain from cylinder alignment. On older disks, it is most efficient to
 choose partition sizes that are exact multiples of your actual
 cylinder size, which is %d sectors.
