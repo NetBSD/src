@@ -1,3 +1,5 @@
+/*	$NetBSD: if_fddisubr.c,v 1.2 1995/08/19 04:35:29 cgd Exp $	*/
+
 /*
  * Copyright (c) 1995
  *	Matt Thomas.  All rights reserved.
@@ -33,25 +35,6 @@
  * SUCH DAMAGE.
  *
  *	@(#)if_fddisubr.c	8.1 (Berkeley) 6/10/93
- *
- * $Id: if_fddisubr.c,v 1.1.1.1 1995/08/19 00:59:47 cgd Exp $
- * $Log: if_fddisubr.c,v $
- * Revision 1.1.1.1  1995/08/19 00:59:47  cgd
- * Generic FDDI support by Matt Thomas.  Support for DEC "PDQ" FDDI chipset
- * and for the PCI attachment of said chipset ("if_fpa"), also from Matt Thomas.
- * Arguably, pdq* doesn't belong in sys/dev/ic, but it's going to be shared by
- * various bus attachment devices at some point in the future, and there's no
- * other place that seems to fit as well.
- *
- * Revision 1.8  1995/08/16  22:57:28  thomas
- * Add support for NetBSD
- *
- * Revision 1.7  1995/04/20  20:17:33  thomas
- * fix typo
- *
- * Revision 1.6  1995/04/20  19:21:58  thomas
- * *** empty log message ***
- *
  */
 
 #include <sys/param.h>
@@ -404,6 +387,7 @@ fddi_input(ifp, fh, m)
 {
 	register struct ifqueue *inq;
 	register struct llc *l;
+	struct arpcom *ac = (struct arpcom *)ifp;
 	int s;
 
 	if ((ifp->if_flags & IFF_UP) == 0) {
@@ -501,7 +485,7 @@ fddi_input(ifp, fh, m)
 		case LLC_TEST_P:
 		{
 			struct sockaddr sa;
-			register struct ether_header *eh2;
+			register struct ether_header *eh;
 			int i;
 			u_char c = l->llc_dsap;
 
@@ -509,17 +493,17 @@ fddi_input(ifp, fh, m)
 			l->llc_ssap = c;
 			if (m->m_flags & (M_BCAST | M_MCAST))
 				bcopy((caddr_t)ac->ac_enaddr,
-				      (caddr_t)eh->ether_dhost, 6);
+				      (caddr_t)fh->fddi_dhost, 6);
 			sa.sa_family = AF_UNSPEC;
 			sa.sa_len = sizeof(sa);
-			eh2 = (struct ether_header *)sa.sa_data;
+			eh = (struct ether_header *)sa.sa_data;
 			for (i = 0; i < 6; i++) {
-				eh2->ether_shost[i] = c = eh->fddi_dhost[i];
-				eh2->ether_dhost[i] = 
-					eh->ether_dhost[i] = eh->fddi_shost[i];
-				eh2->ether_shost[i] = c;
+				eh->ether_shost[i] = c = fh->fddi_dhost[i];
+				eh->ether_dhost[i] = 
+					eh->ether_dhost[i] = fh->fddi_shost[i];
+				eh->ether_shost[i] = c;
 			}
-			eh2->ether_type = 0;
+			eh->ether_type = 0;
 			ifp->if_output(ifp, m, &sa, NULL);
 			return;
 		}
@@ -579,7 +563,12 @@ fddi_ifattach(ifp)
 	ifp->if_addrlen = 6;
 	ifp->if_hdrlen = 21;
 	ifp->if_mtu = FDDIMTU;
+#ifdef __NetBSD__
+	for (ifa = ifp->if_addrlist.tqh_first; ifa != 0;
+	    ifa = ifa->ifa_list.tqe_next)
+#else
 	for (ifa = ifp->if_addrlist; ifa; ifa = ifa->ifa_next)
+#endif
 		if ((sdl = (struct sockaddr_dl *)ifa->ifa_addr) &&
 		    sdl->sdl_family == AF_LINK) {
 			sdl->sdl_type = IFT_FDDI;
