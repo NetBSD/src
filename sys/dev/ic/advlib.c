@@ -1,4 +1,4 @@
-/*      $NetBSD: advlib.c,v 1.10 1999/06/12 12:09:01 dante Exp $        */
+/*      $NetBSD: advlib.c,v 1.11 1999/08/07 07:20:16 thorpej Exp $        */
 
 /*
  * Low level routines for the Advanced Systems Inc. SCSI controllers chips
@@ -136,9 +136,6 @@ static int AscTestExternalLram __P((bus_space_tag_t, bus_space_handle_t));
 
 /* MicroCode routines */
 static u_int16_t AscInitMicroCodeVar __P((ASC_SOFTC *));
-static u_int32_t AscGetOnePhyAddr __P((ASC_SOFTC *, u_int8_t *, u_int32_t));
-static u_int32_t AscGetSGList __P((ASC_SOFTC *, u_int8_t *, u_int32_t,
-					ASC_SG_HEAD *));
 
 /* EEProm routines */
 static int AscWriteEEPCmdReg __P((bus_space_tag_t, bus_space_handle_t,
@@ -1236,15 +1233,10 @@ AscInitMicroCodeVar(sc)
 	AscWriteLramByte(iot, ioh, ASCV_HOSTSCSI_ID_B,
 			 ASC_TID_TO_TARGET_ID(sc->chip_scsi_id));
 
-	if ((phy_addr = AscGetOnePhyAddr(sc, sc->overrun_buf,
-					 ASC_OVERRUN_BSIZE)) == 0L) {
-		return (0);
-	} else {
-		phy_addr = (phy_addr & 0xFFFFFFF8ul) + 8;
-		AscWriteLramDWord(iot, ioh, ASCV_OVERRUN_PADDR_D, phy_addr);
-		AscWriteLramDWord(iot, ioh, ASCV_OVERRUN_BSIZE_D,
-				  ASC_OVERRUN_BSIZE - 8);
-	}
+	phy_addr = (sc->overrun_buf & 0xfffffff8) + 8;
+	AscWriteLramDWord(iot, ioh, ASCV_OVERRUN_PADDR_D, phy_addr);
+	AscWriteLramDWord(iot, ioh, ASCV_OVERRUN_BSIZE_D,
+			  ASC_OVERRUN_BSIZE - 8);
 
 	sc->mcode_date = AscReadLramWord(iot, ioh, ASCV_MC_DATE_W);
 	sc->mcode_version = AscReadLramWord(iot, ioh, ASCV_MC_VER_W);
@@ -1284,44 +1276,6 @@ AscLoadMicroCode(iot, ioh, s_addr, mcode_buf, mcode_size)
 	AscWriteLramWord(iot, ioh, ASCV_MCODE_SIZE_W, mcode_size);
 
 	return (chksum);
-}
-
-
-static u_int32_t
-AscGetOnePhyAddr(sc, buf_addr, buf_size)
-	ASC_SOFTC      *sc;
-	u_int8_t       *buf_addr;
-	u_int32_t       buf_size;
-{
-	ASC_MIN_SG_HEAD sg_head;
-
-	sg_head.entry_cnt = ASC_MIN_SG_LIST;
-	if (AscGetSGList(sc, buf_addr, buf_size, (ASC_SG_HEAD *) & sg_head) !=
-	    buf_size) {
-		return (0L);
-	}
-	if (sg_head.entry_cnt > 1) {
-		return (0L);
-	}
-	return (sg_head.sg_list[0].addr);
-}
-
-
-static u_int32_t
-AscGetSGList(sc, buf_addr, buf_len, asc_sg_head_ptr)
-	ASC_SOFTC      *sc;
-	u_int8_t       *buf_addr;
-	u_int32_t       buf_len;
-	ASC_SG_HEAD    *asc_sg_head_ptr;
-{
-	u_int32_t       buf_size;
-
-	buf_size = buf_len;
-	asc_sg_head_ptr->entry_cnt = 1;
-	asc_sg_head_ptr->sg_list[0].addr = (u_int32_t) buf_addr;
-	asc_sg_head_ptr->sg_list[0].bytes = buf_size;
-
-	return (buf_size);
 }
 
 
