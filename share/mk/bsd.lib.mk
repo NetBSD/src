@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.lib.mk,v 1.71 1996/09/23 20:23:05 abrown Exp $
+#	$NetBSD: bsd.lib.mk,v 1.72 1996/10/13 20:39:36 cgd Exp $
 #	@(#)bsd.lib.mk	5.26 (Berkeley) 5/2/91
 
 .if exists(${.CURDIR}/../Makefile.inc)
@@ -124,8 +124,14 @@ lib${LIB}_pic.a:: ${SOBJS}
 lib${LIB}.so.${SHLIB_MAJOR}.${SHLIB_MINOR}: lib${LIB}_pic.a ${DPADD}
 	@echo building shared ${LIB} library \(version ${SHLIB_MAJOR}.${SHLIB_MINOR}\)
 	@rm -f lib${LIB}.so.${SHLIB_MAJOR}.${SHLIB_MINOR}
+.if (${MACHINE_ARCH} != "alpha")
 	$(LD) -x -Bshareable -Bforcearchive \
 	    -o lib${LIB}.so.${SHLIB_MAJOR}.${SHLIB_MINOR} lib${LIB}_pic.a ${LDADD}
+.else
+	$(LD) -shared -o lib${LIB}.so.${SHLIB_MAJOR}.${SHLIB_MINOR} \
+	    -soname lib${LIB}.so.${SHLIB_MAJOR}.${SHLIB_MINOR} \
+	    --whole-archive lib${LIB}_pic.a --no-whole-archive ${LDADD}
+.endif
 
 LOBJS+=	${LSRCS:.c=.ln} ${SRCS:M*.c:.c=.ln}
 # the following looks XXX to me... -- cgd
