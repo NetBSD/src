@@ -1,4 +1,4 @@
-.\" $NetBSD: pkg_delete.1,v 1.15 2000/07/05 15:45:36 msaitoh Exp $
+.\" $NetBSD: pkg_delete.1,v 1.16 2000/07/26 15:18:09 hubertf Exp $
 .\"
 .\" FreeBSD install - a package for the installation and maintainance
 .\" of non-core utilities.
@@ -70,7 +70,8 @@ The following command line options are supported:
 .Bl -tag -width indent
 .It Ar pkg-name ...
 The named packages are deinstalled, wildcards can be used, see
-.Xr pkg_info 1 . If no version is given, the one currently installed
+.Xr pkg_info 1 . 
+If no version is given, the one currently installed
 will be removed.
 If the
 .Fl F
