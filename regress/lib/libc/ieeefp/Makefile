@@ -1,12 +1,9 @@
-#	$NetBSD: Makefile,v 1.2 1995/04/20 22:39:34 cgd Exp $
+#	$NetBSD: Makefile,v 1.3 1995/04/26 00:27:19 jtc Exp $
 
-PROG=	round
-SRCS=	round.c
-NOMAN=
+SUBDIR+= except round
+
+regress: _SUBDIRUSE
 
 install:
 
-regress: ${PROG}
-	./${PROG}
-
-.include <bsd.prog.mk>
+.include <bsd.subdir.mk>
