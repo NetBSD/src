@@ -1,10 +1,10 @@
-/*	$NetBSD: pcmciadevs.h,v 1.77 2000/02/03 08:26:33 enami Exp $	*/
+/*	$NetBSD: pcmciadevs.h,v 1.78 2000/02/09 13:33:22 enami Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcmciadevs,v 1.76 2000/02/03 08:25:55 enami Exp 
+ *	NetBSD: pcmciadevs,v 1.79 2000/02/09 13:32:23 enami Exp 
  */
 
 /*-
@@ -75,6 +75,7 @@
 #define	PCMCIA_VENDOR_LASAT	0x3401	/* Lasat Communications A/S */
 #define	PCMCIA_VENDOR_LEXARMEDIA	0x4e01	/* Lexar Media */
 #define	PCMCIA_VENDOR_COMPEX	0x8a01	/* Compex Corporation */
+#define	PCMCIA_VENDOR_MELCO	0x8a01	/* Melco Corporation */
 #define	PCMCIA_VENDOR_CONTEC	0xc001	/* Contec */
 #define	PCMCIA_VENDOR_COREGA	0xc00f	/* Corega K.K. */
 #define	PCMCIA_VENDOR_ALLIEDTELESIS	0xc00f	/* Allied Telesis K.K. */
@@ -226,6 +227,11 @@
 #define	PCMCIA_PRODUCT_MEGAHERTZ_XJEM3336	0x0006
 #define	PCMCIA_STR_MEGAHERTZ_XJEM3336	"Megahertz X-JACK Ethernet Modem"
 
+/* Melco Products */
+#define	PCMCIA_CIS_MELCO_LPC3_TX	{ NULL, NULL, NULL, NULL }
+#define	PCMCIA_PRODUCT_MELCO_LPC3_TX	0xc1ab
+#define	PCMCIA_STR_MELCO_LPC3_TX	"Melco LPC3-TX"
+
 /* US Robotics Products */
 #define	PCMCIA_CIS_USROBOTICS_WORLDPORT144	{ NULL, NULL, NULL, NULL }
 #define	PCMCIA_PRODUCT_USROBOTICS_WORLDPORT144	0x3330
@@ -280,6 +286,9 @@
 #define	PCMCIA_CIS_TDK_XIR_CE3_10_100	{ NULL, NULL, NULL, NULL }
 #define	PCMCIA_PRODUCT_TDK_XIR_CE3_10_100	0x010a
 #define	PCMCIA_STR_TDK_XIR_CE3_10_100	"Xircom CreditCard CE3 10/100 Ethernet"
+/* conflicts with above
+ * product TDK XIR_CFE_10	0x010a Xircom CompactCard CFE-10
+ */
 #define	PCMCIA_CIS_TDK_XIR_CNW_801	{ NULL, NULL, NULL, NULL }
 #define	PCMCIA_PRODUCT_TDK_XIR_CNW_801	0x0801
 #define	PCMCIA_STR_TDK_XIR_CNW_801	"Xircom CreditCard Netwave (Canada)"
@@ -353,7 +362,6 @@
 #define	PCMCIA_VENDOR_AMBICOM	-1	/* AmbiCom Inc */
 #define	PCMCIA_VENDOR_EPSON	-1	/* Seiko Epson Corporation */
 #define	PCMCIA_VENDOR_EXP	-1	/* EXP Computer Inc */
-#define	PCMCIA_VENDOR_MELCO	-1	/* Melco Inc */
 #define	PCMCIA_VENDOR_ICOM	-1	/* ICOM Inc */
 
 #define	PCMCIA_CIS_MEGAHERTZ_XJ2288	{ "MEGAHERTZ", "MODEM XJ2288", NULL, NULL }
@@ -366,12 +374,15 @@
 #define	PCMCIA_PRODUCT_PLANET_SMARTCOM2000	-1
 #define	PCMCIA_STR_PLANET_SMARTCOM2000	"Planet SmartCOM 2000"
 /*
- * vendor ID of FNW-3600-T is LINKSYS(0x0149) and product ID is 0xc1ab, but
- * it conflicts with LINKSYS Combo EthernetCard.
+ * vendor ID of both FNW-3600-T and FNW-3700-T is LINKSYS (0x0149) and
+ * product ID is 0xc1ab, but it conflicts with LINKSYS Combo EthernetCard.
  */
 #define	PCMCIA_CIS_PLANEX_FNW3600T	{ NULL, NULL, NULL, NULL }
 #define	PCMCIA_PRODUCT_PLANEX_FNW3600T	-1
 #define	PCMCIA_STR_PLANEX_FNW3600T	"Planex FNW-3600-T"
+#define	PCMCIA_CIS_PLANEX_FNW3700T	{ NULL, NULL, NULL, NULL }
+#define	PCMCIA_PRODUCT_PLANEX_FNW3700T	-1
+#define	PCMCIA_STR_PLANEX_FNW3700T	"Planex FNW-3700-T"
 #define	PCMCIA_CIS_DLINK_DE650	{ "D-Link", "DE-650", NULL, NULL }
 #define	PCMCIA_PRODUCT_DLINK_DE650	-1
 #define	PCMCIA_STR_DLINK_DE650	"D-Link DE-650"
@@ -412,7 +423,7 @@
 #define	PCMCIA_PRODUCT_SVEC_LANCARD	-1
 #define	PCMCIA_STR_SVEC_LANCARD	"SVEC PCMCIA Lan Card"
 /*
- * vendor ID of PN650TX is LINKSYS(0x0149) and product ID is 0xc1ab, but
+ * vendor ID of PN650TX is LINKSYS (0x0149) and product ID is 0xc1ab, but
  * it conflicts with LINKSYS Combo EthernetCard.
  */
 #define	PCMCIA_CIS_SVEC_PN650TX	{ NULL, NULL, NULL, NULL }
@@ -436,3 +447,6 @@
 #define	PCMCIA_CIS_ICOM_SL200	{ "Icom", "SL-200", NULL, NULL }
 #define	PCMCIA_PRODUCT_ICOM_SL200	-1
 #define	PCMCIA_STR_ICOM_SL200	"Icom SL-200"
+#define	PCMCIA_CIS_XIRCOM_CFE_10	{ "Xircom", "CompactCard Ethernet", "CFE-10", "1.00" }
+#define	PCMCIA_PRODUCT_XIRCOM_CFE_10	-1
+#define	PCMCIA_STR_XIRCOM_CFE_10	"Xircom CompactCard CFE-10"
