@@ -35,7 +35,7 @@
 #if 0
 static char sccsid[] = "@(#)pty.c	8.1 (Berkeley) 6/4/93";
 #else
-static char rcsid[] = "$NetBSD: pty.c,v 1.6 1996/05/15 21:42:33 jtc Exp $";
+static char rcsid[] = "$NetBSD: pty.c,v 1.7 1996/11/12 16:39:38 mycroft Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -66,7 +66,7 @@ openpty(amaster, aslave, name, termp, winp)
 	struct termios *termp;
 	struct winsize *winp;
 {
-	static char line[] = "/dev/ptyXX";
+	static char line[] = "/dev/XtyXX";
 	register const char *cp1, *cp2;
 	register int master, slave, ttygid;
 	struct group *gr;
@@ -76,6 +76,7 @@ openpty(amaster, aslave, name, termp, winp)
 	else
 		ttygid = -1;
 
+	line[5] = 'p';
 	for (cp1 = TTY_LETTERS; *cp1; cp1++) {
 		line[8] = *cp1;
 		for (cp2 = "0123456789abcdef"; *cp2; cp2++) {
