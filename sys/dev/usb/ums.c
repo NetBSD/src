@@ -1,4 +1,4 @@
-/*	$NetBSD: ums.c,v 1.58 2002/09/23 05:51:22 simonb Exp $	*/
+/*	$NetBSD: ums.c,v 1.59 2002/09/23 05:59:01 simonb Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ums.c,v 1.58 2002/09/23 05:51:22 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ums.c,v 1.59 2002/09/23 05:59:01 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -347,7 +347,7 @@ ums_disable(void *v)
 #endif
 
 	sc->sc_enabled = 0;
-	return (uhidev_close(&sc->sc_hdev));
+	uhidev_close(&sc->sc_hdev);
 }
 
 Static int
