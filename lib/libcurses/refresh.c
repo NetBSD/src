@@ -1,4 +1,4 @@
-/*	$NetBSD: refresh.c,v 1.21 2000/04/19 13:52:39 blymn Exp $	*/
+/*	$NetBSD: refresh.c,v 1.22 2000/04/21 15:56:35 jdc Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)refresh.c	8.7 (Berkeley) 8/13/94";
 #else
-__RCSID("$NetBSD: refresh.c,v 1.21 2000/04/19 13:52:39 blymn Exp $");
+__RCSID("$NetBSD: refresh.c,v 1.22 2000/04/21 15:56:35 jdc Exp $");
 #endif
 #endif				/* not lint */
 
@@ -49,7 +49,7 @@ __RCSID("$NetBSD: refresh.c,v 1.21 2000/04/19 13:52:39 blymn Exp $");
 
 /* the following is defined and set up in setterm.c */
 extern struct tinfo *_cursesi_genbuf;
-   
+
 static int curwin;
 static short ly, lx;
 
@@ -109,16 +109,22 @@ wrefresh(WINDOW *win)
 
 	if ((win->flags & __CLEAROK) || (curscr->flags & __CLEAROK) || curwin) {
 		if ((win->flags & __FULLWIN) || curscr->flags & __CLEAROK) {
-			if ((!(win->battr & __COLOR) ||
-			    ((win->battr & __COLOR) && BE)) &&
-			    win->bch == ' ') {
-				if (win->battr & __COLOR) {
-					if ((win->battr & __COLOR) !=
-				    	(curscr->wattr & __COLOR)) {
-						__set_color(win->battr);
+			short	wx;
+			attr_t	bcolor;
+
+			bcolor = win->lines[0]->line[0].battr & __COLOR;
+			for (wy = 0; wy < win->maxy; wy++)
+				for (wx = 0; wx < win->maxx; wx++)
+					if ((win->lines[wy]->line[wx].battr &
+					    __COLOR) != bcolor)
+						goto colorchanged;
+			if ((!bcolor || (bcolor && BE)) && win->bch == ' ') {
+				if (bcolor) {
+					if (bcolor !=
+					    (curscr->wattr & __COLOR)) {
+						__set_color(bcolor);
 						curscr->wattr &= ~__COLOR;
-						curscr->wattr |= win->battr &
-						    __COLOR;
+						curscr->wattr |= bcolor;
 					}
 				} else if (curscr->wattr & __COLOR) {
 					if (OC != NULL && CC == NULL)
@@ -151,7 +157,7 @@ wrefresh(WINDOW *win)
 				}
 				__touchwin(win);
 			} else {
-				if (!curwin)
+colorchanged:			if (!curwin)
 					curscr->flags &= ~__CLEAROK;
 				touchwin(win);
 			}
@@ -335,14 +341,14 @@ makech(win, wy)
 	nsp = &win->lines[wy]->line[wx];
 	force = win->lines[wy]->flags & __FORCEPAINT;
 	win->lines[wy]->flags &= ~__FORCEPAINT;
-	/* XXX: Check for background character here */
 	if (CE && !curwin) {
 		cp = &win->lines[wy]->line[win->maxx - 1];
 		if (cp->attr & __COLOR)
 			lspb = cp->attr & __COLOR;
 		else
 			lspb = cp->battr & __COLOR;
-		while (cp->ch == ' ' && cp->attr == lspb && cp->battr == lspb)
+		while (cp->ch == ' ' && cp->bch == ' ' && cp->attr == lspb &&
+		    cp->battr == lspb)
 			if (cp-- <= win->lines[wy]->line)
 				break;
 		nlsp = cp - win->lines[wy]->line;
@@ -740,6 +746,7 @@ quickch(win)
 	int	n, target, cur_period, bot, top, sc_region;
 	__LDATA buf[1024];
 	u_int	blank_hash;
+	attr_t	bcolor;
 
 #ifdef __GNUC__
 	curs = curw = starts = startw = 0;	/* XXX gcc -Wuninitialized */
@@ -810,6 +817,31 @@ quickch(win)
 			}
 	}
 done:
+
+	/*
+	 * Work round an xterm bug where scrolling the screen and then
+	 * setting a background colour causes subsequent lines in the
+	 * scrolled region to have the incorrect background colour.
+	 * XXX this may fail if the colour changes along the lines.
+	 */
+	if (win->lines[startw]->line[0].attr & __COLOR)
+		bcolor = win->lines[startw]->line[0].attr & __COLOR;
+	else
+		bcolor = win->lines[startw]->line[0].battr & __COLOR;
+	for (i = top, j = 0; i < (top + bsize); i++)
+		if (win->lines[i]->line[win->maxx].attr & __COLOR) {
+			if ((win->lines[i]->line[win->maxx].attr &
+			    __COLOR) != bcolor)
+				j = i;
+		} else
+			if ((win->lines[i]->line[win->maxx].battr &
+			    __COLOR) != bcolor)
+				j = i;
+	top += j;
+	starts += j;
+	startw += j;
+	bsize -= j;
+
 	/* Did not find anything */
 	if (bsize < THRESH)
 		return;
@@ -914,7 +946,7 @@ done:
 		if ((target >= startw && target < curw) || target < top
 		    || target > bot) {
 #ifdef DEBUG
-			__CTRACE("-- notdirty");
+			__CTRACE("-- notdirty\n");
 #endif
 			win->lines[target]->flags &= ~__ISDIRTY;
 		} else
@@ -925,25 +957,22 @@ done:
 					(void)memcpy(clp->line,  buf,
 					    (size_t) win->maxx * __LDATASIZE);
 #ifdef DEBUG
-					__CTRACE("-- blanked out: dirty");
+					__CTRACE("-- blanked out: dirty\n");
 #endif
 					clp->hash = blank_hash;
 					__touchline(win, target, 0, (int) win->maxx - 1, 0);
 				} else {
-					__touchline(win, target, 0, (int) win->maxx - 1, 0);
 #ifdef DEBUG
-					__CTRACE(" -- blank line already: dirty");
+					__CTRACE(" -- blank line already: dirty\n");
 #endif
+					__touchline(win, target, 0, (int) win->maxx - 1, 0);
 				}
 			} else {
 #ifdef DEBUG
-				__CTRACE(" -- dirty");
+				__CTRACE(" -- dirty\n");
 #endif
 				__touchline(win, target, 0, (int) win->maxx - 1, 0);
 			}
-#ifdef DEBUG
-		__CTRACE("\n");
-#endif
 		if (target == cur_period) {
 			i = target + 1;
 			tmp1 = curscr->lines[i];
@@ -1016,7 +1045,6 @@ scrolln(win, starts, startw, curs, bot, top)
 	 * AL/DL, otherwise use the scrolling region.  The "almost all" is a
 	 * shameless hack for vi.
 	 */
-	/* XXX: check for background colour and bce here */
 	if (n > 0) {
 		if (CS != NULL && HO != NULL && (SF != NULL ||
 		    ((AL == NULL || DL == NULL ||
