@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.8 1997/02/04 04:57:14 perry Exp $	*/
+/*	$NetBSD: machdep.c,v 1.8.2.1 1997/02/12 12:47:12 mrg Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -445,7 +445,6 @@ mips_init(argc, argv, code)
 	valloc(cfree, struct cblock, nclist);
 #endif
 	valloc(callout, struct callout, ncallout);
-	valloc(swapmap, struct map, nswapmap = maxproc * 2);
 #ifdef SYSVSHM
 	valloc(shmsegs, struct shmid_ds, shminfo.shmmni);
 #endif
