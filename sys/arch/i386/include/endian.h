@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)endian.h	7.8 (Berkeley) 4/3/91
- *	$Id: endian.h,v 1.8 1993/12/20 05:25:11 mycroft Exp $
+ *	$Id: endian.h,v 1.9 1994/02/12 07:23:49 cgd Exp $
  */
 
 #ifndef _MACHINE_ENDIAN_H_
@@ -71,49 +71,49 @@ __END_DECLS
 
 #if defined(KERNEL) && ((defined(I486_CPU) || defined(I586_CPU)) && !defined(I386_CPU))
 #define __byte_swap_long(x) \
-({ register unsigned long X = (x); \
+({ register unsigned long __x = (x); \
    asm ("bswap %1" \
-	: "=q" (X) \
-	: "0" (X)); \
-   X; })
+	: "=q" (__x) \
+	: "0" (__x)); \
+   __x; })
 #else
 #define __byte_swap_long(x) \
-({ register unsigned long X = (x); \
+({ register unsigned long __x = (x); \
    asm ("xchgb %h1, %b1\n\trorl $16, %1\n\txchgb %h1, %b1" \
-	: "=q" (X) \
-	: "0" (X)); \
-   X; })
+	: "=q" (__x) \
+	: "0" (__x)); \
+   __x; })
 #endif	/* KERNEL && ... */
 #define __byte_swap_word(x) \
-({ register unsigned short X = (x); \
+({ register unsigned short __x = (x); \
    asm ("xchgb %h1, %b1" \
-	: "=q" (X) \
-	: "0" (X)); \
-   X; })
+	: "=q" (__x) \
+	: "0" (__x)); \
+   __x; })
 
 #else	/* __GNUC__ >= 2 */
 
 #if defined(KERNEL) && ((defined(I486_CPU) || defined(I586_CPU)) && !defined(I386_CPU))
 #define __byte_swap_long(x) \
-({ register unsigned long X = (x); \
+({ register unsigned long __x = (x); \
    asm ("bswap %1" \
-	: "=r" (X) \
-	: "0" (X)); \
-   X; })
+	: "=r" (__x) \
+	: "0" (__x)); \
+   __x; })
 #else
 #define __byte_swap_long(x) \
-({ register u_long X = (x); \
+({ register u_long __x = (x); \
    asm ("rorw $8, %w1\n\trorl $16, %1\n\trorw $8, %w1" \
-	: "=r" (X) \
-	: "0" (X)); \
-   X; })
+	: "=r" (__x) \
+	: "0" (__x)); \
+   __x; })
 #endif	/* KERNEL && ... */
 #define __byte_swap_word(x) \
-({ register u_short X = (x); \
+({ register u_short __x = (x); \
    asm ("rorw $8, %w1" \
-	: "=r" (X) \
-	: "0" (X)); \
-   X; })
+	: "=r" (__x) \
+	: "0" (__x)); \
+   __x; })
 
 #endif	/* __GNUC__ >= 2 */
 
