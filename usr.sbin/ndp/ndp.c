@@ -1,4 +1,4 @@
-/*	$NetBSD: ndp.c,v 1.31 2004/02/10 14:44:32 itojun Exp $	*/
+/*	$NetBSD: ndp.c,v 1.32 2004/05/24 03:51:04 itojun Exp $	*/
 /*	$KAME: ndp.c,v 1.104 2003/06/27 07:48:39 itojun Exp $	*/
 
 /*
@@ -1427,6 +1427,7 @@ pfx_flush()
 	strlcpy(dummyif, "lo0", sizeof(dummyif)); /* dummy */
 	if (ioctl(s, SIOCSPFXFLUSH_IN6, (caddr_t)&dummyif) < 0)
 		err(1, "ioctl(SIOCSPFXFLUSH_IN6)");
+	close(s);
 }
 
 void
