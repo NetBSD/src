@@ -1,4 +1,4 @@
-/*	$NetBSD: pat_rep.c,v 1.9 1999/03/24 17:00:23 pk Exp $	*/
+/*	$NetBSD: pat_rep.c,v 1.10 1999/10/22 20:59:09 is Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)pat_rep.c	8.2 (Berkeley) 4/18/94";
 #else
-__RCSID("$NetBSD: pat_rep.c,v 1.9 1999/03/24 17:00:23 pk Exp $");
+__RCSID("$NetBSD: pat_rep.c,v 1.10 1999/10/22 20:59:09 is Exp $");
 #endif
 #endif /* not lint */
 
@@ -222,17 +222,20 @@ rep_add(str)
  *	arguments to pax in the list and read modes). If no patterns are
  *	supplied to pax, all members in the archive will be selected (and the
  *	pattern match list is empty).
+ *
+ *	if ischdir is !0, a special entry used for chdiring is created.
  * Return:
  *	0 if the pattern was added to the list, -1 otherwise
  */
 
 #if __STDC__
 int
-pat_add(char *str)
+pat_add(char *str, int ischdir)
 #else
 int
-pat_add(str)
+pat_add(str ischdir)
 	char *str;
+	int ischdir;
 #endif
 {
 	PATTERN *pt;
@@ -259,7 +262,7 @@ pat_add(str)
 	pt->pend = NULL;
 	pt->plen = strlen(str);
 	pt->fow = NULL;
-	pt->flgs = 0;
+	pt->flgs = ischdir ? PTCHDIR : 0;
 	if (pathead == NULL) {
 		pattail = pathead = pt;
 		return(0);
@@ -291,7 +294,7 @@ pat_chk()
 	 * if not complain
 	 */
 	for (pt = pathead; pt != NULL; pt = pt->fow) {
-		if (pt->flgs & MTCH)
+		if (pt->flgs & (MTCH|PTCHDIR))
 			continue;
 		if (!wban) {
 			tty_warn(1, "WARNING! These patterns were not matched:");
@@ -469,7 +472,13 @@ pat_match(arcn)
 	 * have to search down the list one at a time looking for a match.
 	 */
 	pt = pathead;
+	fchdir(curdirfd);
 	while (pt != NULL) {
+		if (pt->flgs & PTCHDIR) {
+			ar_dochdir(pt->pstr);
+			pt = pt->fow;
+			continue;
+		}
 		/*
 		 * check for a file name match unless we have DIR_MTCH set in
 		 * this pattern then we want a prefix match
