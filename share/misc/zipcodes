@@ -1,5 +1,6 @@
 # Zip Code : Location
-#	@(#)zipcodes	5.1 (Berkeley) 2/8/91
+#	$NetBSD: zipcodes,v 1.5 1997/03/26 06:31:01 mikel Exp $
+#	@(#)zipcodes	8.1 (Berkeley) 6/8/93
 00401:Pleasantville, NY
 00501:Holtsville, NY
 00544:Holtsville, NY

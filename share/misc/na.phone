@@ -1,5 +1,6 @@
-#	@(#)na.phone	5.1 (Berkeley) 2/12/90
 # Area Code : City : State/Province : State/Province Abbrev.
+#	$NetBSD: na.phone,v 1.7 1997/03/26 06:30:58 mikel Exp $
+#	@(#)na.phone	8.1 (Berkeley) 6/8/93
 201:Ashbury Park:New Jersey:NJ
 201:Newark:New Jersey:NJ
 202::District of Columbia:DC
@@ -36,7 +37,7 @@
 281:Houston:Texas:TX
 301:Frederick:Maryland:MD
 301:Silver Spring:Maryland:MD
-302::Deleware:DE
+302::Delaware:DE
 303:Aspen:Colorado:CO
 303:Boulder:Colorado:CO
 303:Denver:Colorado:CO
@@ -213,6 +214,7 @@
 707:Eureka:California:CA
 707:Napa:California:CA
 707:Santa Rosa:California:CA
+708:Chicago:Illinois:IL
 709::Newfoundland:NF
 712:Council Bluffs:Iowa:IA
 712:Sioux City:Iowa:IA
