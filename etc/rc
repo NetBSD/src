@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: rc,v 1.158 2001/06/14 07:50:06 lukem Exp $
+# $NetBSD: rc,v 1.159 2002/03/22 04:16:38 lukem Exp $
 #
 # rc --
 #	Run the scripts in /etc/rc.d with rcorder.
@@ -24,7 +24,7 @@ fi
 
 if [ "$1" = autoboot ]; then
 	autoboot=yes
-	_rc_fast_run=yes	# run_rc_command(): do fast booting
+	rc_fast=YES	# run_rc_command(): do fast booting
 fi
 
 stty status '^T'
