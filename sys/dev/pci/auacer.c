@@ -1,4 +1,4 @@
-/*	$NetBSD: auacer.c,v 1.4 2004/11/13 15:00:48 kent Exp $	*/
+/*	$NetBSD: auacer.c,v 1.5 2004/11/16 19:33:56 augustss Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 /*
  * Acer Labs M5455 audio driver
  *
- * Acer provides data sheets after signing an NDA.
+ * Acer provides data sheets after signing an NDA, so this is guess work.
  * The chip behaves somewhat like the Intel i8x0, so this driver
  * is loosely based on the auich driver.  Additional information taken from
  * the ALSA intel8x0.c driver (which handles M5455 as well).
@@ -51,7 +51,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auacer.c,v 1.4 2004/11/13 15:00:48 kent Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auacer.c,v 1.5 2004/11/16 19:33:56 augustss Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -236,7 +236,7 @@ struct audio_hw_if auacer_hw_if = {
 #define AUACER_FORMATS_4CH	1
 #define AUACER_FORMATS_6CH	2
 static const struct audio_format auacer_formats[AUACER_NFORMATS] = {
-	{NULL, AUMODE_PLAY /*| AUMODE_RECORD*/, AUDIO_ENCODING_SLINEAR_LE, 16, 16,
+	{NULL, AUMODE_PLAY | AUMODE_RECORD, AUDIO_ENCODING_SLINEAR_LE, 16, 16,
 	 2, AUFMT_STEREO, 0, {8000, 48000}},
 	{NULL, AUMODE_PLAY, AUDIO_ENCODING_SLINEAR_LE, 16, 16,
 	 4, AUFMT_SURROUND4, 0, {8000, 48000}},
@@ -1007,7 +1007,7 @@ auacer_alloc_cdata(struct auacer_softc *sc)
 	if ((error = bus_dmamap_load(sc->dmat, sc->sc_cddmamap,
 				     sc->sc_cdata, sizeof(struct auacer_cdata),
 				     NULL, 0)) != 0) {
-		printf("%s: unable tp load control data DMA map, "
+		printf("%s: unable to load control data DMA map, "
 		    "error = %d\n", sc->sc_dev.dv_xname, error);
 		goto fail_3;
 	}
