@@ -1,4 +1,4 @@
-/*	$NetBSD: eval.c,v 1.79 2004/06/30 09:32:38 mycroft Exp $	*/
+/*	$NetBSD: eval.c,v 1.80 2004/10/30 19:29:27 christos Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)eval.c	8.9 (Berkeley) 6/8/95";
 #else
-__RCSID("$NetBSD: eval.c,v 1.79 2004/06/30 09:32:38 mycroft Exp $");
+__RCSID("$NetBSD: eval.c,v 1.80 2004/10/30 19:29:27 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -605,6 +605,7 @@ syspath(void)
 {
 	static char *sys_path = NULL;
 	static int mib[] = {CTL_USER, USER_CS_PATH};
+	static char def_path[] = "PATH=/usr/bin:/bin:/usr/sbin:/sbin";
 	size_t len;
 
 	if (sys_path == NULL) {
@@ -615,7 +616,7 @@ syspath(void)
 		} else {
 			ckfree(sys_path);
 			/* something to keep things happy */
-			sys_path = "PATH=/usr/bin:/bin:/usr/sbin:/sbin";
+			sys_path = def_path;
 		}
 	}
 	return sys_path;
