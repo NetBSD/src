@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.59 1999/02/27 06:39:35 scottr Exp $	*/
+/*	$NetBSD: machdep.c,v 1.60 1999/03/05 03:26:36 lukem Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -145,6 +145,11 @@ int	nbuf = 0;
 int	bufpages = BUFPAGES;
 #else
 int	bufpages = 0;
+#endif
+#ifdef BUFCACHE
+int	bufcache = BUFCACHE;	/* % of RAM to use for buffer cache */
+#else
+int	bufcache = 0;		/* fallback to old algorithm */
 #endif
 
 int cold = 1;
@@ -601,19 +606,35 @@ allocsys(v)
 #endif
                                                                          
 	/*
-	 * Determine how many buffers to allocate.  We use 10% of the
-	 * first 2MB of memory, and 5% of the rest, with a minimum of 16
-	 * buffers.  We allocate 1/2 as many swap buffer headers as file
-	 * i/o buffers.
+	 * If necessary, determine the number of pages to use for the
+	 * buffer cache.  We allocate 1/2 as many swap buffer headers
+	 * as file I/O buffers.
 	 */
-
-	if (bufpages == 0) {
-		if (physmem < arm_byte_to_page(2 * 1024 * 1024))
-			bufpages = physmem / (10 * CLSIZE);
-		else
-			bufpages = (arm_byte_to_page(2 * 1024 * 1024)
-			         + physmem) / (20 * CLSIZE);
-	}
+	if (bufpages == 0)
+		if (bufcache == 0) {		/* use old algorithm */
+			/*
+			 * Determine how many buffers to allocate. We use 10%
+			 * of the first 2MB of memory, and 5% of the rest, with
+			 * a minimum of 16 buffers.
+			 */
+			if (physmem < arm_byte_to_page(2 * 1024 * 1024))
+				bufpages = physmem / (10 * CLSIZE);
+			else
+				bufpages = (arm_byte_to_page(2 * 1024 * 1024)
+					 + physmem) / (20 * CLSIZE);
+		} else {
+			/*
+			 * Set size of buffer cache to physmem/bufcache * 100
+			 * (i.e., bufcache % of physmem).
+			 */
+			if (bufcache < 5 || bufcache > 95) {
+				printf(
+		"warning: unable to set bufcache to %d%% of RAM, using 10%%",
+				    bufcache);
+				bufcache = 10;
+			}
+			bufpages= physmem / (CLSIZE * 100) * bufcache;
+		}
 
 #ifdef DIAGNOSTIC
 	if (bufpages == 0)
