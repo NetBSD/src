@@ -1,6 +1,6 @@
-/*	$NetBSD: spc.c,v 1.11 1997/10/09 13:00:49 oki Exp $	*/
+/*	$NetBSD: spc.c,v 1.12 1997/10/19 20:45:11 oki Exp $	*/
 
-#define	integrate	static inline
+#define	integrate	__inline static
 
 /*
  * Copyright (c) 1996 Masaru Oki.  All rights reserved.
@@ -90,8 +90,8 @@
  * may spin in the interrupt routine waiting for this byte to come.  How long?
  * This is really (SCSI) device and processor dependent.  Tuneable, I guess.
  */
-#define SPC_MSGIN_SPIN		1 	/* Will spinwait upto ?ms for a new msg byte */
-#define SPC_MSGOUT_SPIN		1
+#define SPC_MSGIN_SPIN	1 	/* Will spinwait upto ?ms for a new msg byte */
+#define SPC_MSGOUT_SPIN	1
 
 /* Include debug functions?  At the end of this file there are a bunch of
  * functions that will print out various information regarding queued SCSI
@@ -812,6 +812,9 @@ spc_select(sc, acb)
 #if 0
 	SCMD = SCMD_SET_ATN;
 #endif
+	/* XXX? */
+	do asm ("nop"); while (SSTS & (SSTS_ACTIVE|SSTS_TARGET|SSTS_BUSY));
+
 	PCTL = 0;
 	TEMP = (1 << sc->sc_initiator) | (1 << target);
 	/*
@@ -1758,13 +1761,16 @@ int
 spcintr(unit)
 	int unit;
 {
-	register struct spc_softc *sc = spc_cd.cd_devs[unit]; /* XXX */
+	struct spc_softc *sc = spc_cd.cd_devs[unit]; /* XXX */
 	u_char ints;
-	register struct spc_acb *acb;
-	register struct scsipi_link *sc_link;
+	struct spc_acb *acb;
+	struct scsipi_link *sc_link;
 	struct spc_tinfo *ti;
 	int n;
 
+	/* return if not configured */
+	if (sc == NULL)
+		return;
 	/*
 	 * 割り込み禁止にする
 	 */
