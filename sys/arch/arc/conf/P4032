@@ -1,4 +1,4 @@
-#	$NetBSD: P4032,v 1.9 2000/09/24 15:59:28 jdolecek Exp $
+#	$NetBSD: P4032,v 1.10 2001/05/21 03:37:31 soda Exp $
 #	$OpenBSD: P4032,v 1.5 1998/03/16 09:38:36 pefo Exp $
 #
 #	configuration file for Algorithmics P4032 board
@@ -68,7 +68,7 @@ file-system 	PROCFS		# /proc
 # File system options
 options 	QUOTA		# FFS quotas
 #options 	FFS_EI		# FFS Endian Independent support
-#options 	SOFTDEP		# FFS soft updates support.
+options 	SOFTDEP		# FFS soft updates support.
 options 	NFSSERVER	# Network File System server
 #options 	EXT2FS_SYSTEM_FLAGS # makes ext2fs file flags (append and
 				# immutable) behave as system flags.
@@ -163,6 +163,7 @@ pseudo-device	ipip		2	# IP Encapsulation within IP (RFC 2003)
 pseudo-device	gif		4	# IPv[46] over IPv[46] tunnel (RFC1933)
 #pseudo-device	faith		1	# IPv[46] tcp relay translation i/f
 #pseudo-device	stf		1	# 6to4 IPv6 over IPv4 encapsulation
+pseudo-device	vlan			# IEEE 802.1q encapsulation
 
 # miscellaneous pseudo-devices
 pseudo-device	pty			# pseudo-terminals
