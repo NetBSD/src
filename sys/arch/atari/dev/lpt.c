@@ -1,4 +1,4 @@
-/*	$NetBSD: lpt.c,v 1.6 1996/10/13 04:11:05 christos Exp $ */
+/*	$NetBSD: lpt.c,v 1.7 1996/11/17 13:47:21 leo Exp $ */
 
 /*
  * Copyright (c) 1996 Leo Weppelman
@@ -113,8 +113,10 @@ dev_type_ioctl(lptioctl);
 
 static void lptwakeup __P((void *arg));
 static int pushbytes __P((struct lpt_softc *));
-
+static void lptpseudointr __P((void));
 int lptintr __P((void));
+int lpthwintr __P((int));
+
 
 /*
  * Autoconfig stuff
@@ -230,11 +232,8 @@ lptwakeup(arg)
 	void *arg;
 {
 	struct lpt_softc *sc = arg;
-	int s;
 
-	s = spltty();
-	lptintr();
-	splx(s);
+	lptpseudointr();
 
 	timeout(lptwakeup, sc, STEP);
 }
@@ -312,16 +311,12 @@ pushbytes(sc)
 				sc->sc_spinmax--;
 		}
 	} else {
-		int s;
-
 		while (sc->sc_count > 0) {
 			/* if the printer is ready for a char, give it one */
 			if ((sc->sc_state & LPT_OBUSY) == 0) {
 				lprintf("%s: write %d\n", sc->sc_dev.dv_xname,
 				    sc->sc_count);
-				s = spltty();
-				(void) lptintr();
-				splx(s);
+				(void) lptpseudointr();
 			}
 			if ((error = tsleep((caddr_t)sc, LPTPRI | PCATCH,
 			     "lptwrite2", 0)) != 0)
@@ -393,6 +388,26 @@ lptintr()
 		wakeup((caddr_t)sc);
 	}
 
+	return 1;
+}
+
+static void
+lptpseudointr()
+{
+	int	s;
+
+	s = spltty();
+	lptintr();
+	splx(s);
+}
+
+int
+lpthwintr(sr)
+int	sr;
+{
+	if (!BASEPRI(sr))
+		add_sicallback((si_farg)lptpseudointr, NULL, 0);
+	else lptpseudointr();
 	return 1;
 }
 
