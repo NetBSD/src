@@ -33,8 +33,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)kernfs_vnops.c	8.6 (Berkeley) 2/10/94
- *	$Id: kernfs_vnops.c,v 1.25 1994/06/15 17:52:32 mycroft Exp $
+ *	from: @(#)kernfs_vnops.c	8.9 (Berkeley) 6/15/94
+ *	$Id: kernfs_vnops.c,v 1.26 1994/06/15 22:54:43 mycroft Exp $
  */
 
 /*
@@ -227,11 +227,11 @@ kernfs_lookup(ap)
 	}
 #endif
 
-	*vpp = NULL;
+	*vpp = NULLVP;
 
 	for (error = ENOENT, kt = kern_targets, i = 0; i < nkern_targets;
 	     kt++, i++) {
-		if (cnp->cn_namelen == strlen(kt->kt_name) &&
+		if (cnp->cn_namelen == kt->kt_namlen &&
 		    bcmp(kt->kt_name, pname, cnp->cn_namelen) == 0) {
 			error = 0;
 			break;
@@ -297,13 +297,13 @@ kernfs_access(ap)
 		struct proc *a_p;
 	} */ *ap;
 {
-	register struct vnode *vp = ap->a_vp;
-	register struct ucred *cred = ap->a_cred;
+	struct vnode *vp = ap->a_vp;
+	struct ucred *cred = ap->a_cred;
 	mode_t amode = ap->a_mode;
 	mode_t fmode =
 	    (vp->v_flag & VROOT) ? DIR_MODE : VTOKERN(vp)->kf_kt->kt_mode;
 	mode_t mask = 0;
-	register gid_t *gp;
+	gid_t *gp;
 	int i;
 
 	/* Some files are simply not modifiable. */
@@ -485,10 +485,13 @@ kernfs_readdir(ap)
 		struct vnode *a_vp;
 		struct uio *a_uio;
 		struct ucred *a_cred;
+		int *a_eofflag;
+		u_long *a_cookies;
+		int a_ncookies;
 	} */ *ap;
 {
 	struct uio *uio = ap->a_uio;
-	register struct kern_target *kt;
+	struct kern_target *kt;
 	struct dirent d;
 	int i;
 	int error;
@@ -496,23 +499,34 @@ kernfs_readdir(ap)
 	if (ap->a_vp->v_type != VDIR)
 		return (ENOTDIR);
 
+	/*
+	 * We don't allow exporting kernfs mounts, and currently local
+	 * requests do not need cookies.
+	 */
+	if (ap->a_ncookies != NULL)
+		panic("kernfs_readdir: not hungry");
+
 	i = uio->uio_offset / UIO_MX;
 	error = 0;
 	for (kt = &kern_targets[i];
 	     uio->uio_resid >= UIO_MX && i < nkern_targets; kt++, i++) {
-		register struct dirent *dp = &d;
+		struct dirent *dp = &d;
 #ifdef KERNFS_DIAGNOSTIC
 		printf("kernfs_readdir: i = %d\n", i);
 #endif
+
 		if (kt->kt_tag == KTT_DEVICE) {
-			register dev_t *dp = kt->kt_data;
+			dev_t *dp = kt->kt_data;
 			struct vnode *fvp;
+
 			if (*dp == NODEV || !vfinddev(*dp, kt->kt_vtype, &fvp))
 				continue;
 		}
+
 		bzero((caddr_t)dp, UIO_MX);
 		dp->d_namlen = kt->kt_namlen;
-		bcopy(kt->kt_name, dp->d_name, kt->kt_namlen + 1);
+		bcopy(kt->kt_name, dp->d_name, kt->kt_namlen+1);
+
 #ifdef KERNFS_DIAGNOSTIC
 		printf("kernfs_readdir: name = %s, len = %d\n",
 				dp->d_name, dp->d_namlen);

@@ -33,8 +33,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)kernfs_vfsops.c	8.4 (Berkeley) 1/21/94
- *	$Id: kernfs_vfsops.c,v 1.16 1994/06/15 03:05:26 mycroft Exp $
+ *	from: @(#)kernfs_vfsops.c	8.5 (Berkeley) 6/15/94
+ *	$Id: kernfs_vfsops.c,v 1.17 1994/06/15 22:54:40 mycroft Exp $
  */
 
 /*

@@ -34,9 +34,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: Id: procfs.h,v 3.2 1993/12/15 09:40:17 jsp Exp
- *	from: @(#)procfs.h	8.6 (Berkeley) 2/3/94
- *	$Id: procfs.h,v 1.9 1994/06/08 11:33:33 mycroft Exp $
+ *	from: @(#)procfs.h	8.7 (Berkeley) 6/15/94
+ *	$Id: procfs.h,v 1.10 1994/06/15 22:59:02 mycroft Exp $
  */
 
 /*
