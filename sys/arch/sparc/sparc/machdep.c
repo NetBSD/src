@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.128 1998/09/13 20:33:33 pk Exp $ */
+/*	$NetBSD: machdep.c,v 1.129 1998/09/17 02:24:56 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -582,12 +582,12 @@ sendsig(catcher, sig, mask, code)
 	struct sigacts *psp = p->p_sigacts;
 	struct sigframe *fp;
 	struct trapframe *tf;
-	int addr, oonstack, onstack, oldsp, newsp;
+	int addr, onstack, oldsp, newsp;
 	struct sigframe sf;
 
 	tf = p->p_md.md_tf;
 	oldsp = tf->tf_out[6];
-	oonstack = psp->ps_sigstk.ss_flags & SS_ONSTACK;
+
 	/*
 	 * Compute new user stack addresses, subtract off
 	 * one signal frame, and align.
@@ -625,7 +625,7 @@ sendsig(catcher, sig, mask, code)
 	/*
 	 * Build the signal context to be used by sigreturn.
 	 */
-	sf.sf_sc.sc_onstack = oonstack;
+	sf.sf_sc.sc_onstack = psp->ps_sigstk.ss_flags & SS_ONSTACK;
 	sf.sf_sc.sc_mask = *mask;
 #ifdef COMPAT_13
 	/* 
@@ -681,6 +681,11 @@ sendsig(catcher, sig, mask, code)
 	tf->tf_pc = addr;
 	tf->tf_npc = addr + 4;
 	tf->tf_out[6] = newsp;
+
+	/* Remember that we're now on the signal stack. */
+	if (onstack)
+		psp->ps_sigstk.ss_flags |= SS_ONSTACK;
+
 #ifdef DEBUG
 	if ((sigdebug & SDB_KSTACK) && p->p_pid == sigpid)
 		printf("sendsig: about to return to catcher\n");
