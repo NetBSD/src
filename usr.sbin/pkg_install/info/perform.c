@@ -1,11 +1,11 @@
-/*	$NetBSD: perform.c,v 1.23 1999/03/22 06:04:17 abs Exp $	*/
+/*	$NetBSD: perform.c,v 1.23.2.1 1999/08/22 18:03:34 he Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: perform.c,v 1.23 1997/10/13 15:03:53 jkh Exp";
 #else
-__RCSID("$NetBSD: perform.c,v 1.23 1999/03/22 06:04:17 abs Exp $");
+__RCSID("$NetBSD: perform.c,v 1.23.2.1 1999/08/22 18:03:34 he Exp $");
 #endif
 #endif
 
@@ -54,7 +54,7 @@ pkg_do(char *pkg)
 	char           *cp = NULL;
 	int             code = 0;
 
-	if (isURL(pkg)) {
+	if (URLlength(pkg) > 0) {
 		if ((cp = fileGetURL(NULL, pkg)) != NULL) {
 			strcpy(fname, cp);
 			isTMP = TRUE;
@@ -68,7 +68,7 @@ pkg_do(char *pkg)
 			    err(1, "fatal error during execution: getcwd");
 			}
 			len = strlen(fname);
-			snprintf(&fname[len], FILENAME_MAX - len, "/%s", pkg);
+			(void) snprintf(&fname[len], sizeof(fname) - len, "/%s", pkg);
 		} else
 			strcpy(fname, pkg);
 		cp = fname;
@@ -76,8 +76,9 @@ pkg_do(char *pkg)
 		if ((cp = fileFindByPath(NULL, pkg)) != NULL)
 			strncpy(fname, cp, FILENAME_MAX);
 	}
+	
 	if (cp) {
-		if (isURL(pkg)) {
+		if (URLlength(pkg) > 0) {
 			/* file is already unpacked by fileGetURL() */
 			strcpy(PlayPen, cp);
 		} else {
@@ -99,17 +100,32 @@ pkg_do(char *pkg)
 				goto bail;
 			}
 		}
-	}
-	/*
-	 * It's not an uninstalled package, try and find it among the
-	 * installed
-	 */
-	else {
+	} else {
+	    /*
+	     * It's not an uninstalled package, try and find it among the
+	     * installed
+	     */
 		char           *tmp;
 
-		(void) snprintf(log_dir, sizeof(log_dir), "%s/%s", (tmp = getenv(PKG_DBDIR)) ? tmp : DEF_LOG_DIR,
+		(void) snprintf(log_dir, sizeof(log_dir), "%s/%s",
+				(tmp = getenv(PKG_DBDIR)) ? tmp : DEF_LOG_DIR,
 			pkg);
 		if (!fexists(log_dir) || !isdir(log_dir)) {
+			{
+			    /* Check if the given package name matches something
+			     * with 'pkg-[0-9]*'
+			     */
+			    char try[FILENAME_MAX];
+			    snprintf(try, FILENAME_MAX, "%s-[0-9]*", pkg);
+			    if (findmatchingname(_pkgdb_getPKGDB_DIR(), try,
+						 find_fn, NULL) != 0) {
+				return 0; /* we've just appended some names to the pkgs list,
+					   * they will be processed after this package.
+					   */
+			    }
+			}
+
+			/* No match */
 			warnx("can't find package `%s' installed or in a file!", pkg);
 			return 1;
 		}
@@ -139,7 +155,7 @@ pkg_do(char *pkg)
 	if (Flags & SHOW_INDEX) {
 		char            tmp[FILENAME_MAX];
 
-		snprintf(tmp, FILENAME_MAX, "%-19s ", pkg);
+		(void) snprintf(tmp, sizeof(tmp), "%-19s ", pkg);
 		show_index(tmp, COMMENT_FNAME);
 	} else {
 		/* Start showing the package contents */
@@ -221,10 +237,21 @@ CheckForPkg(char *pkgspec, char *dbdir)
 	    return !findmatchingname(dbdir, pkgspec, foundpkg, NULL);
 	}
 	/* simple match */
-	snprintf(buf, sizeof(buf), "%s/%s", dbdir, pkgspec);
+	(void) snprintf(buf, sizeof(buf), "%s/%s", dbdir, pkgspec);
 	error = (stat(buf, &st) < 0);
 	if (!error && !Quiet) {
 		printf("%s\n", pkgspec);
+	}
+	if (error) {
+	    /* found nothing - try 'pkg-[0-9]*'
+	     */
+	    char try[FILENAME_MAX];
+	    snprintf(try, FILENAME_MAX, "%s-[0-9]*", pkgspec);
+	    if (findmatchingname(_pkgdb_getPKGDB_DIR(), try,
+				 foundpkg, NULL) != 0) {
+                error = 0;
+	    }
+	    
 	}
 	return error;
 }
@@ -279,7 +306,7 @@ pkg_perform(lpkg_head_t *pkgs)
 				    strcmp(dp->d_name, "..")==0)
 					continue;
 
-				snprintf(tmp2, FILENAME_MAX, "%s/%s",
+				(void) snprintf(tmp2, sizeof(tmp2), "%s/%s",
 					 tmp, dp->d_name);
 				if (isfile(tmp2))
 					continue;
@@ -290,6 +317,7 @@ pkg_perform(lpkg_head_t *pkgs)
 		}
 	    }
 	} else {
+	    /* Show info on individual pkg(s) */
 	    lpkg_t *lpp;
 
 	    while ((lpp = TAILQ_FIRST(pkgs))) {
