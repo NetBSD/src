@@ -1,4 +1,4 @@
-/*	$NetBSD: uaudio.c,v 1.95 2005/01/16 06:02:19 dsainty Exp $	*/
+/*	$NetBSD: uaudio.c,v 1.96 2005/01/16 12:46:00 kent Exp $	*/
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uaudio.c,v 1.95 2005/01/16 06:02:19 dsainty Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uaudio.c,v 1.96 2005/01/16 12:46:00 kent Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -2220,26 +2220,35 @@ uaudio_round_blocksize(void *addr, int blk,
 		       int mode, const audio_params_t *param)
 {
 	struct uaudio_softc *sc;
-	int bpf;
+	int b;
 
 	sc = addr;
-	DPRINTF(("uaudio_round_blocksize: p.bpf=%d r.bpf=%d\n",
-		 sc->sc_playchan.bytes_per_frame,
-		 sc->sc_recchan.bytes_per_frame));
-	if (sc->sc_playchan.bytes_per_frame > sc->sc_recchan.bytes_per_frame) {
-		bpf = sc->sc_playchan.bytes_per_frame
-		    + sc->sc_playchan.sample_size;
+	DPRINTF(("uaudio_round_blocksize: blk=%d mode=%s\n", blk,
+	    mode == AUMODE_PLAY ? "AUMODE_PLAY" : "AUMODE_RECORD"));
+
+	/* chan.bytes_per_frame can be 0. */
+	if (mode == AUMODE_PLAY || sc->sc_recchan.bytes_per_frame <= 0) {
+		b = param->sample_rate * UAUDIO_NFRAMES * UAUDIO_NCHANBUFS;
+
+		/*
+		 * This does not make accurate value in the case
+		 * of b % USB_FRAMES_PER_SECOND != 0
+		 */
+		b /= USB_FRAMES_PER_SECOND;
+
+		b *= param->precision / 8 * param->channels;
 	} else {
-		bpf = sc->sc_recchan.bytes_per_frame
-		    + sc->sc_recchan.sample_size;
+		/*
+		 * use wMaxPacketSize in bytes_per_frame.
+		 * See uaudio_set_params() and uaudio_chan_init()
+		 */
+		b = sc->sc_recchan.bytes_per_frame
+		    * UAUDIO_NFRAMES * UAUDIO_NCHANBUFS;
 	}
-	/* XXX */
-	bpf *= UAUDIO_NFRAMES * UAUDIO_NCHANBUFS;
 
-	bpf = (bpf + 15) &~ 15;
-
-	if (blk < bpf)
-		blk = bpf;
+	if (b <= 0)
+		b = 1;
+	blk = blk <= b ? b : blk / b * b;
 
 #ifdef DIAGNOSTIC
 	if (blk <= 0) {
@@ -2248,7 +2257,7 @@ uaudio_round_blocksize(void *addr, int blk,
 	}
 #endif
 
-	DPRINTFN(1,("uaudio_round_blocksize: blk=%d\n", blk));
+	DPRINTF(("uaudio_round_blocksize: resultant blk=%d\n", blk));
 	return blk;
 }
 
