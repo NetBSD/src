@@ -1,4 +1,4 @@
-	$NetBSD: INSTALL,v 1.50 1998/01/09 22:55:01 perry Exp $
+	$NetBSD: INSTALL,v 1.51 1998/03/11 23:31:26 thorpej Exp $
 
 INSTALLATION NOTES for NetBSD/_MACH _VER
 
@@ -625,6 +625,7 @@ Matthias Drochner	<drochner@NetBSD.ORG>
 Bernd Ernesti		<veego@NetBSD.ORG>
 Erik Fair		<fair@NetBSD.ORG>
 Hubert Feyrer		<hubertf@NetBSD.ORG>
+Thorsten Frueauf	<frueauf@NetBSD.ORG>
 Brian R. Gaeke		<brg@dgate.org>
 Justin Gibbs		<gibbs@NetBSD.ORG>
 Adam Glass		<glass@NetBSD.ORG>
@@ -636,6 +637,7 @@ Michael L. Hitch	<osymh@NetBSD.ORG>
 Marc Horowitz		<marc@NetBSD.ORG>
 Matthew Jacob		<mjacob@NetBSD.ORG>
 Lonhyn T. Jasinskyj	<lonhyn@NetBSD.ORG>
+Darrin Jewell		<dbj@NetBSD.ORG>
 Lawrence Kesteloot	<kesteloo@cs.unc.edu>
 Klaus Klein		<kleink@NetBSD.ORG>
 John Kohl 		<jtk@NetBSD.ORG>
@@ -643,11 +645,13 @@ Kevin Lahey		<kml@NetBSD.ORG>
 Ted Lemon		<mellon@NetBSD.ORG>
 Mike Long		<mikel@NetBSD.ORG>
 Paul Mackerras	 	<paulus@NetBSD.ORG>
+Tsubai Masanari		<tsubai@NetBSD.ORG>
 SAITOH Masanobu		<msaitoh@NetBSD.ORG>
 Neil J. McRae		<neil@NetBSD.ORG>
 Perry Metzger		<perry@NetBSD.ORG>
 Luke Mewburn		<lukem@NetBSD.ORG>
 der Mouse		<mouse@NetBSD.ORG>
+Tohru Nishimura		<nisimura@NetBSD.ORG>
 Herb Peyerl		<hpeyerl@NetBSD.ORG>
 Matthias Pfaller	<matthias@NetBSD.ORG>
 Chris Provenzano	<proven@NetBSD.ORG>
@@ -656,7 +660,9 @@ Darren Reed		<darrenr@NetBSD.ORG>
 Kazuki Sakamoto		<sakamoto@NetBSD.ORG>
 Curt Sampson		<cjs@NetBSD.ORG>
 Wilfredo Sanchez	<wsanchez@NetBSD.ORG>
+Matthias Scheler	<tron@NetBSD.ORG>
 Karl Schilke (rAT)	<rat@NetBSD.ORG>
+Chuck Silvers		<chs@NetBSD.ORG>
 Thor Lancelot Simon	<tls@NetBSD.ORG>
 Noriyuki Soda		<soda@NetBSD.ORG>
 Wolfgang Solfrank	<ws@NetBSD.ORG>
@@ -668,6 +674,7 @@ Matt Thomas		<matt@NetBSD.ORG>
 Enami Tsugutomo		<enami@NetBSD.ORG>
 Todd Vierling		<tv@NetBSD.ORG>
 Paul Vixie		<vixie@NetBSD.ORG>
+Krister Walfridsson	<kristerw@NetBSD.ORG>
 Colin Wood		<ender@NetBSD.ORG>
 Steve Woodford		<scw@NetBSD.ORG>
 
