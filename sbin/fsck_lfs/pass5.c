@@ -1,4 +1,4 @@
-/* $NetBSD: pass5.c,v 1.5.2.1 2000/09/14 18:53:21 perseant Exp $	 */
+/* $NetBSD: pass5.c,v 1.5.2.2 2001/02/03 21:45:40 he Exp $	 */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -59,13 +59,17 @@ pass5()
 	unsigned long   bb; /* total number of used blocks (lower bound) */
 	unsigned long   ubb; /* upper bound number of used blocks */
 	unsigned long   avail; /* blocks available for writing */
+	unsigned long	dmeta; /* blocks in segsums and inodes */
+	int             nclean; /* clean segments */
 
 	/*
 	 * Check segment holdings against actual holdings.  Check for
 	 * "clean" segments that contain live data.
 	 */
+	nclean = 0;
 	avail = 0;
 	bb = ubb = 0;
+	dmeta = 0;
 	for (i = 0; i < sblock.lfs_nseg; i++) {
 		su = lfs_gseguse(i, &bp);
 		if (!(su->su_flags & SEGUSE_DIRTY) &&
@@ -95,7 +99,10 @@ pass5()
 		if (su->su_flags & SEGUSE_DIRTY) {
 			bb += btodb(su->su_nbytes) + su->su_nsums;
 			ubb += btodb(su->su_nbytes) + su->su_nsums + fsbtodb(&sblock, su->su_ninos);
+			dmeta += btodb(LFS_SUMMARY_SIZE * su->su_nsums);
+			dmeta += fsbtodb(&sblock, su->su_ninos);
 		} else {
+			nclean++;
 			avail += fsbtodb(&sblock, sblock.lfs_ssize);
 			if (su->su_flags & SEGUSE_SUPERBLOCK)
 				avail -= btodb(LFS_SBPAD);
@@ -109,11 +116,27 @@ pass5()
 	avail -= fsbtodb(&sblock, sblock.lfs_ssize) *
 		(sblock.lfs_minfreeseg - (sblock.lfs_minfreeseg / 2));
 
+	if (dmeta != sblock.lfs_dmeta) { 
+		pwarn("dmeta given as %d, should be %ld\n", sblock.lfs_dmeta, 
+			dmeta); 
+		if (preen || reply("fix")) { 
+			sblock.lfs_dmeta = dmeta; 
+			sbdirty(); 
+		} 
+	}
 	if (avail != sblock.lfs_avail) {
 		pwarn("avail given as %d, should be %ld\n", sblock.lfs_avail,
 		      avail);
 		if (preen || reply("fix")) {
 			sblock.lfs_avail = avail;
+			sbdirty();
+		}
+	}
+	if (nclean != sblock.lfs_nclean) {
+		pwarn("nclean given as %d, should be %d\n", sblock.lfs_nclean,
+		      nclean);
+		if (preen || reply("fix")) {
+			sblock.lfs_nclean = nclean;
 			sbdirty();
 		}
 	}
