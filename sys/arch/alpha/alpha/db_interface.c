@@ -1,4 +1,4 @@
-/* $NetBSD: db_interface.c,v 1.1 1997/09/06 02:00:49 thorpej Exp $ */
+/* $NetBSD: db_interface.c,v 1.2 1997/09/16 19:07:19 thorpej Exp $ */
 
 /* 
  * Mach Operating System
@@ -49,7 +49,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.1 1997/09/06 02:00:49 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.2 1997/09/16 19:07:19 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -61,6 +61,7 @@ __KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.1 1997/09/06 02:00:49 thorpej Exp
 #include <dev/cons.h>
 
 #include <machine/db_machdep.h>
+#include <machine/pal.h>
 #include <machine/prom.h>
 
 #include <alpha/alpha/db_instruction.h>
@@ -385,7 +386,7 @@ db_inst_trap_return(ins)
 
 	insn.bits = ins;
 	return ((insn.pal_format.opcode == op_pal) &&
-	    (insn.pal_format.function == op_rei));
+	    (insn.pal_format.function == PAL_OSF1_rti));
 }
 
 boolean_t
@@ -431,8 +432,12 @@ db_inst_unconditional_flow_transfer(ins)
 		return (TRUE);
 
 	case op_pal:
-		return ((insn.pal_format.function == op_rei) ||
-		    (insn.pal_format.function == op_chmk));
+		switch (insn.pal_format.function) {
+		case PAL_OSF1_retsys:
+		case PAL_OSF1_rti:
+		case PAL_OSF1_callsys:
+			return (TRUE);
+		}
 	}
 
 	return (FALSE);
@@ -460,7 +465,9 @@ db_inst_load(ins)
 	insn.bits = ins;
 	
 	/* Loads. */
-	if (insn.mem_format.opcode == op_ldq_u)
+	if (insn.mem_format.opcode == op_ldbu ||
+	    insn.mem_format.opcode == op_ldq_u ||
+	    insn.mem_format.opcode == op_ldwu)
 		return (TRUE);
 	if ((insn.mem_format.opcode >= op_ldf) &&
 	    (insn.mem_format.opcode <= op_ldt))
@@ -489,7 +496,9 @@ db_inst_store(ins)
 	insn.bits = ins;
 
 	/* Stores. */
-	if (insn.mem_format.opcode == op_stq_u)
+	if (insn.mem_format.opcode == op_stw ||
+	    insn.mem_format.opcode == op_stb ||
+	    insn.mem_format.opcode == op_stq_u)
 		return (TRUE);
 	if ((insn.mem_format.opcode >= op_stf) &&
 	    (insn.mem_format.opcode <= op_stt))
