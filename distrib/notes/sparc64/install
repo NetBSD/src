@@ -1,4 +1,4 @@
-.\"	$NetBSD: install,v 1.6 2001/07/24 18:18:32 nra Exp $
+.\"	$NetBSD: install,v 1.7 2001/08/23 16:42:40 mrg Exp $
 .\"
 .\" Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -171,11 +171,36 @@ filesets. However, the easiest way is to put the
 files you want
 to install into the root directory for your client on the server.
 .Pp
-Next, unpack
+From here there are two methods of netboot install.  The first is much
+simpler and is intended for clients with local disk that will be used for
+installation.  The second is intended for clients that will use a network
+boot normally.
+.Pp
+If you are going to be installing onto local disk, unpack the
+.Pa instfs.tgz
+file, located in the
+.Pa installation/misc
+directory in the release, into the root directory for your machine, which
+contains the basic installer filesystem that is part of the normal miniroot.
+Now you need to boot your workstation from the server by entering the
+following command at the monitor prompt:
+.Pp
+.Dl "ok boot net netbsd -s"
+.Pp
+And then follow the install instructions.
+.Pp
+If you are going to be installing to NFS, be sure to read the section
+about preparing your system for installation.  If you have access to
+another
+.Nx
+machine, the
+.Xr diskless 8
+manual page contains information about diskless booting.
+Unpack the
 .Pa base.tgz
 and
 .Pa etc.tgz
-on the server in the root
+sets on the server in the root
 directory for your machine. If you elect to use a separately NFS-mounted
 file system for
 .Pa /usr
@@ -190,8 +215,7 @@ to temporarily use a loopback mount on the server, re-routing
 to your server's exported
 .Nx
 .Pa /usr
-directory. Also put the kernel and the
-install/upgrade scripts into the root directory.
+directory.
 .Pp
 A few configuration files need to be edited:
 .(tag indent
@@ -233,10 +257,8 @@ on your
 .Nx
 machine once it has booted.
 .Pp
-Boot your workstation from the server by entering the appropriate
-.Ic boot
-command at the monitor prompt. Depending on the OpenBoot PROM version in your
-machine, this command takes one of the following forms:
+Boot your workstation from the server by entering the following
+command at the monitor prompt:
 .Pp
 .Dl "ok boot net netbsd -s"
 .Pp
