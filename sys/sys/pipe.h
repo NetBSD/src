@@ -31,6 +31,9 @@
 #include <vm/vm.h>			/* for vm_page_t */
 #include <machine/param.h>		/* for PAGE_SIZE */
 #endif
+#ifdef __NetBSD__
+#include <sys/select.h>			/* for struct selinfo */
+#endif
 #endif
 
 /*
