@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.booters,v 1.55 2003/10/26 07:25:36 lukem Exp $
+#	$NetBSD: Makefile.booters,v 1.56 2003/11/07 23:44:56 dsl Exp $
 
 .include <bsd.own.mk>
 
@@ -24,7 +24,6 @@ I386_STAND_DIR?= $S/arch/i386/stand
 
 .PATH: ${I386_STAND_DIR}/lib
 
-.PATH: ${I386_STAND_DIR}/lib/crt/rom
 ROMSTART= start_rom.o
 GENPROMDIR= ${I386_STAND_DIR}/genprom
 GENPROMOBJDIR!= cd ${GENPROMDIR} && ${PRINTOBJDIR}
