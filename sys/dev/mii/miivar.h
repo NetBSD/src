@@ -1,4 +1,4 @@
-/*	$NetBSD: miivar.h,v 1.6 1998/11/05 00:19:32 thorpej Exp $	*/
+/*	$NetBSD: miivar.h,v 1.7 1998/11/05 04:08:02 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -158,6 +158,8 @@ void	mii_tick __P((struct mii_data *));
 void	mii_pollstat __P((struct mii_data *));
 void	mii_phy_probe __P((struct device *, struct mii_data *, int));
 void	mii_add_media __P((struct mii_data *, int, int));
+
+int	mii_media_from_bmcr __P((int));
 
 int	mii_phy_auto __P((struct mii_softc *));
 void	mii_phy_reset __P((struct mii_softc *));
