@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_raid1.c,v 1.21 2004/03/03 00:45:20 oster Exp $	*/
+/*	$NetBSD: rf_raid1.c,v 1.22 2004/03/03 13:29:00 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -33,7 +33,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_raid1.c,v 1.21 2004/03/03 00:45:20 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_raid1.c,v 1.22 2004/03/03 13:29:00 oster Exp $");
 
 #include "rf_raid.h"
 #include "rf_raid1.h"
@@ -638,7 +638,6 @@ rf_SubmitReconBufferRAID1(RF_ReconBuffer_t *rbuf, int keep_it,
 		cb = rf_AllocCallbackDesc();
 		cb->col = rbuf->col;
 		cb->callbackArg.v = rbuf->parityStripeID;
-		cb->callbackArg2.v = rbuf->which_ru;
 		cb->next = NULL;
 		if (reconCtrlPtr->bufferWaitList == NULL) {
 			/* we are the wait list- lucky us */
