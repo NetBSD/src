@@ -1,4 +1,4 @@
-/*	$NetBSD: macrom.c,v 1.15 1995/09/17 18:51:40 briggs Exp $	*/
+/*	$NetBSD: macrom.c,v 1.16 1995/09/17 21:28:36 briggs Exp $	*/
 
 /*-
  * Copyright (C) 1994	Bradley A. Grantham
@@ -722,7 +722,7 @@ mrg_initadbintr()
 
 	if (mac68k_machine.do_graybars)
 		printf("Got following HwCfgFlags: 0x%4x, 0x%8x, 0x%8x, 0x%8x\n",
-				HwCfgFlags, HwCfgFlags2, HwCfgFlags3, HwCfgFlags4);
+				HwCfgFlags, HwCfgFlags2, HwCfgFlags3, ADBReInit_JTBL);
 
         if ( (HwCfgFlags == 0) && (HwCfgFlags2 == 0) && (HwCfgFlags3 == 0) ){
 
@@ -814,8 +814,8 @@ mrg_fixupROMBase(obase, nbase)
 	if (IS_ROM_ADDR(mrg_InitEgret))
 		mrg_InitEgret = mrg_InitEgret - oldbase + newbase;
 
-	if (IS_ROM_ADDR(HwCfgFlags4))
-		HwCfgFlags4 = HwCfgFlags4 - oldbase + newbase;
+	if (IS_ROM_ADDR(ADBReInit_JTBL))
+		ADBReInit_JTBL = ADBReInit_JTBL - oldbase + newbase;
 }
 
 void

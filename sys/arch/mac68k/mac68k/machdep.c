@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.72 1995/09/17 05:22:57 briggs Exp $	*/
+/*	$NetBSD: machdep.c,v 1.73 1995/09/17 21:28:33 briggs Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -1961,7 +1961,7 @@ getenvvars()
 	HwCfgFlags  = getenv("HWCFGFLAGS");
 	HwCfgFlags2 = getenv("HWCFGFLAG2");
 	HwCfgFlags3 = getenv("HWCFGFLAG3");
- 	HwCfgFlags4 = getenv("HWCFGFLAG4");
+ 	ADBReInit_JTBL = getenv("ADBREINIT_JTBL");
  	mrg_ADBIntrPtr = (caddr_t) getenv("ADBINTERRUPT");
 }
 
