@@ -1,7 +1,7 @@
-/*	$NetBSD: linux_machdep.h,v 1.12 2000/06/11 09:21:16 veego Exp $	*/
+/*	$NetBSD: linux_machdep.h,v 1.12.2.1 2001/03/30 21:34:58 he Exp $	*/
 
 /*-
- * Copyright (c) 1995 The NetBSD Foundation, Inc.
+ * Copyright (c) 1995, 2000 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -103,12 +103,14 @@ __END_DECLS
 #define LINUX_KDSKBMODE   0x4b45
 #define LINUX_KDMKTONE    0x4b30
 #define LINUX_KDSETMODE   0x4b3a
+#define LINUX_KDGETMODE   0x4b3b
 #define LINUX_KDENABIO    0x4b36
 #define LINUX_KDDISABIO   0x4b37
 #define LINUX_KDGETLED    0x4b31
 #define LINUX_KDSETLED    0x4b32
-#define LINUX_KDGKBTYPE   0x4B33
-#define LINUX_KDGKBENT    0x4B46
+#define LINUX_KDGKBTYPE   0x4b33
+#define LINUX_KDGKBENT    0x4b46
+#define LINUX_KIOCSOUND   0x4b2f
 
 /*
  * Mode for KDSKBMODE which we don't have (we just use plain mode for this)
@@ -125,5 +127,20 @@ __END_DECLS
 #define LINUX_VT_RELDISP    0x5605
 #define LINUX_VT_ACTIVATE   0x5606
 #define LINUX_VT_WAITACTIVE 0x5607
+#define LINUX_VT_DISALLOCATE 0x5608
+
+/*
+ * This range used by VMWare (XXX)
+ */
+
+#define LINUX_VMWARE_NONE 200
+#define LINUX_VMWARE_LAST 237
+
+/*
+ * Range of ioctls to just pass on, so that LKMs (like VMWare) can
+ * handle them.
+ */
+#define LINUX_IOCTL_MIN_PASS  LINUX_VMWARE_NONE
+#define LINUX_IOCTL_MAX_PASS  (LINUX_VMWARE_LAST+8)
 
 #endif /* _I386_LINUX_MACHDEP_H */
