@@ -1,6 +1,6 @@
-/*	$NetBSD: uplcom.c,v 1.2 2001/01/23 02:25:02 augustss Exp $	*/
+/*	$NetBSD: uplcom.c,v 1.3 2001/01/23 02:36:17 ichiro Exp $	*/
 /*
- * Copyright (c) 2000 The NetBSD Foundation, Inc.
+ * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -205,7 +205,7 @@ USB_ATTACH(uplcom)
 			uca.bulkin = ed->bEndpointAddress;
 		} else if (UE_GET_DIR(ed->bEndpointAddress) == UE_DIR_IN &&
 		    UE_GET_XFERTYPE(ed->bmAttributes) == UE_INTERRUPT) {
-			DPRINTF(("interrupu endpoint addr = 0x%x\n",
+			DPRINTF(("interrupt endpoint addr = 0x%x\n",
 				 ed->bEndpointAddress));
 		} else if (UE_GET_DIR(ed->bEndpointAddress) == UE_DIR_OUT &&
 		    UE_GET_XFERTYPE(ed->bmAttributes) == UE_BULK) {
