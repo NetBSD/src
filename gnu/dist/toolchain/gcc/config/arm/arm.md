@@ -384,6 +384,12 @@
 ;; the operands, and we know that the use of the condition code is
 ;; either GEU or LTU, so we can use the carry flag from the addition
 ;; instead of doing the compare a second time.
+;; XXX RWE: The reload pass of GCC-2.95 makes a mess of these if one of the
+;; arguments is, or is directly derived from, an eliminable register.  In
+;; that case reload will substitue into the PLUS and then canonicalize it
+;; without regard to the the match_dup parts.  Since these are rare, I've
+;; disabled them for now, but they should be OK in 3.x (which manages the
+;; substitution without canonicalization.
 (define_insn "*addsi3_compare_op1"
   [(set (reg:CC_C 24)
 	(compare:CC_C
@@ -392,7 +398,7 @@
 	 (match_dup 1)))
    (set (match_operand:SI 0 "s_register_operand" "=r,r")
 	(plus:SI (match_dup 1) (match_dup 2)))]
-  ""
+  "0"
   "@
    add%?s\\t%0, %1, %2
    sub%?s\\t%0, %1, #%n2"
@@ -406,7 +412,7 @@
 	 (match_dup 2)))
    (set (match_operand:SI 0 "s_register_operand" "=r,r")
 	(plus:SI (match_dup 1) (match_dup 2)))]
-  ""
+  "0"
   "@
    add%?s\\t%0, %1, %2
    sub%?s\\t%0, %1, #%n2"
@@ -418,7 +424,7 @@
 	 (plus:SI (match_operand:SI 0 "s_register_operand" "r,r")
 		  (match_operand:SI 1 "arm_add_operand" "rI,L"))
 	 (match_dup 0)))]
-  ""
+  "0"
   "@
    cmn%?\\t%0, %1
    cmp%?\\t%0, #%n1"
@@ -430,7 +436,7 @@
 	 (plus:SI (match_operand:SI 0 "s_register_operand" "r,r")
 		  (match_operand:SI 1 "arm_add_operand" "rI,L"))
 	 (match_dup 1)))]
-  ""
+  "0"
   "@
    cmn%?\\t%0, %1
    cmp%?\\t%0, #%n1"
