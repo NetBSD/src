@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.32 1999/03/22 05:35:39 eeh Exp $	*/
+/*	$NetBSD: locore.s,v 1.33 1999/03/22 06:47:01 eeh Exp $	*/
 /*
  * Copyright (c) 1996, 1997, 1998 Eduardo Horvath
  * Copyright (c) 1996 Paul Kranenburg
@@ -5533,7 +5533,9 @@ _C_LABEL(sigcode):
 1:	
 	bz,pt	%icc, 2f
 	 rd	%y, %l1			! in any case, save %y
-	inc	BLOCK_SIZE, %l0
+	add	%sp, BIAS, %l0		! Generate a pointer so we can
+	andn	%l0, BLOCK_ALIGN, %l0	! do a block store
+	add	%l0, 2*BLOCK_SIZE, %l0	! and skip what we already stored
 	stda	%f32, [%l0] ASI_BLK_P
 	inc	BLOCK_SIZE, %l0
 	stda	%f48, [%l0] ASI_BLK_COMMIT_P
@@ -5555,14 +5557,16 @@ _C_LABEL(sigcode):
 
 	ldx	[%sp + CC64FSZ + BIAS + 0], %fsr
 	add	%sp, BIAS, %l0		! Generate a pointer so we can
-	andn	%l0, BLOCK_ALIGN, %l0	! do a block store
+	andn	%l0, BLOCK_ALIGN, %l0	! do a block load
 	ldda	[%l0] ASI_BLK_P, %f0
 	inc	BLOCK_SIZE, %o0
 	ldda	[%l0] ASI_BLK_P, %f16
 1:	
 	bz,pt	%icc, 2f
 	 wr	%l1, %g0, %y		! in any case, restore %y
-	inc	BLOCK_SIZE, %o0
+	add	%sp, BIAS, %l0		! Generate a pointer so we can
+	andn	%l0, BLOCK_ALIGN, %l0	! do a block load
+	inc	2*BLOCK_SIZE, %o0	! and skip what we already loaded
 	ldda	[%l0] ASI_BLK_P, %f32
 	inc	BLOCK_SIZE, %o0
 	ldda	[%l0] ASI_BLK_P, %f48	
