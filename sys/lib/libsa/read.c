@@ -1,4 +1,4 @@
-/*	$NetBSD: read.c,v 1.4 1995/02/21 06:33:24 mycroft Exp $	*/
+/*	$NetBSD: read.c,v 1.5 1995/09/14 23:45:35 pk Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -66,14 +66,14 @@
 
 #include "stand.h"
 
-int
+ssize_t
 read(fd, dest, bcount)
 	int fd;
 	void *dest;
-	u_int bcount;
+	size_t bcount;
 {
 	register struct open_file *f = &files[fd];
-	u_int resid;
+	size_t resid;
 
 	if ((unsigned)fd >= SOPEN_MAX || !(f->f_flags & F_READ)) {
 		errno = EBADF;
@@ -90,5 +90,5 @@ read(fd, dest, bcount)
 	resid = bcount;
 	if ((errno = (f->f_ops->read)(f, dest, bcount, &resid)))
 		return (-1);
-	return (bcount - resid);
+	return (ssize_t)(bcount - resid);
 }

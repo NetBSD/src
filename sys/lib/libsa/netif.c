@@ -1,4 +1,4 @@
-/*	$NetBSD: netif.c,v 1.3 1995/02/20 00:19:09 mycroft Exp $	*/
+/*	$NetBSD: netif.c,v 1.4 1995/09/14 23:45:28 pk Exp $	*/
 
 /*
  * Copyright (c) 1993 Adam Glass
@@ -219,16 +219,16 @@ netif_detach(nif)
 	drv->netif_end(nif);
 }
 
-int
+ssize_t
 netif_get(desc, pkt, len, timo)
 	struct iodesc *desc;
 	void *pkt;
-	int len;
+	size_t len;
 	time_t timo;
 {
 	struct netif *nif = desc->io_netif;
 	struct netif_driver *drv = desc->io_netif->nif_driver;
-	int rv;
+	ssize_t rv;
 
 #ifdef NETIF_DEBUG
 	if (netif_debug)
@@ -248,15 +248,15 @@ netif_get(desc, pkt, len, timo)
 	return rv;
 }
 
-int
+ssize_t
 netif_put(desc, pkt, len)
 	struct iodesc *desc;
 	void *pkt;
-	int len;
+	size_t len;
 {
 	struct netif *nif = desc->io_netif;
 	struct netif_driver *drv = desc->io_netif->nif_driver;
-	int rv;
+	ssize_t rv;
 
 #ifdef NETIF_DEBUG
 	if (netif_debug)
