@@ -1,4 +1,4 @@
-#	$NetBSD: KICKME,v 1.36 1996/11/16 01:16:45 fvdl Exp $
+#	$NetBSD: KICKME,v 1.37 1996/12/07 00:26:14 thorpej Exp $
 #
 #	KICKME -- 486Cx-33 development machine
 #
@@ -14,7 +14,7 @@ options		I486_CPU
 # Some BIOSes don't get the size of extended memory right.  If you
 # have a broken BIOS, uncomment the following and set the value
 # properly for your system.
-#options	EXTMEM_SIZE=... # size of extended memory
+#options	BIOSEXTMEM=... # size of extended memory
 
 #options	DUMMY_NOPS	# speed hack; recommended
 #options	XSERVER,UCONSOLE
