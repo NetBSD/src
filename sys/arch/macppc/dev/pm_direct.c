@@ -1,4 +1,4 @@
-/*	$NetBSD: pm_direct.c,v 1.22 2005/02/01 02:23:26 briggs Exp $	*/
+/*	$NetBSD: pm_direct.c,v 1.23 2005/02/01 02:46:00 briggs Exp $	*/
 
 /*
  * Copyright (C) 1997 Takashi Hamada
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pm_direct.c,v 1.22 2005/02/01 02:23:26 briggs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pm_direct.c,v 1.23 2005/02/01 02:46:00 briggs Exp $");
 
 #ifdef DEBUG
 #ifndef ADB_DEBUG
@@ -54,7 +54,10 @@ __KERNEL_RCSID(0, "$NetBSD: pm_direct.c,v 1.22 2005/02/01 02:23:26 briggs Exp $"
 #include <sys/systm.h>
 
 #include <machine/adbsys.h>
+#include <machine/autoconf.h>
 #include <machine/cpu.h>
+
+#include <dev/ofw/openfirm.h>
 
 #include <macppc/dev/adbvar.h>
 #include <macppc/dev/pm_direct.h>
@@ -96,6 +99,11 @@ u_short	pm_existent_ADB_devices = 0x0;	/* each bit expresses the existent ADB de
 u_int	pm_LCD_brightness = 0x0;
 u_int	pm_LCD_contrast = 0x0;
 u_int	pm_counter = 0;			/* clock count */
+
+static enum batt_type { BATT_COMET, BATT_HOOPER, BATT_SMART } pmu_batt_type;
+static int	pmu_nbatt;
+static int	strinlist(char *, char *, int);
+static enum pmu_type { PMU_UNKNOWN, PMU_OHARE, PMU_G3, PMU_KEYLARGO } pmu_type;
 
 /* these values shows that number of data returned after 'send' cmd is sent */
 signed char pm_send_cmd_type[] = {
@@ -266,6 +274,83 @@ void
 pm_setup_adb()
 {
 	pmHardware = PM_HW_PB5XX;	/* XXX */
+}
+
+static int
+strinlist(char *targ, char *list, int listlen)
+{
+	char	*str;
+	int	sl;
+
+	str = list;
+	while (listlen > 0) {
+		sl = strlen(str);
+		if (strncmp(targ, str, sl) == 0)
+			return 1;
+		str += sl+1;
+		listlen -= sl+1;
+	}
+	return 0;
+}
+
+/*
+ * Check the hardware type of the Power Manager
+ */
+void
+pm_init(void)
+{
+	uint32_t	regs[10];
+	PMData		pmdata;
+	char		compat[128];
+	int		clen, node, imask;
+
+	node = OF_peer(0);
+	if (node == -1) {
+		printf("pmu: Failed to get root");
+		return;
+	}
+	clen = OF_getprop(node, "compatible", compat, sizeof(compat));
+	if (clen <= 0) {
+		printf("pmu: failed to read root compatible data %d\n", clen);
+		return;
+	}
+
+	imask = PMU_INT_PCEJECT | PMU_INT_SNDBRT | PMU_INT_ADB | PMU_INT_TICK;
+
+	if (strinlist("AAPL,3500", compat, clen) ||
+	    strinlist("AAPL,3400/2400", compat, clen)) {
+		/* How to distinguish BATT_COMET? */
+		pmu_nbatt = 1;
+		pmu_batt_type = BATT_HOOPER;
+		pmu_type = PMU_OHARE;
+	} else if (strinlist("AAPL,PowerBook1998", compat, clen) ||
+		   strinlist("PowerBook1,1", compat, clen)) {
+		pmu_nbatt = 2;
+		pmu_batt_type = BATT_SMART;
+		pmu_type = PMU_G3;
+	} else {
+		pmu_nbatt = 1;
+		pmu_batt_type = BATT_SMART;
+		pmu_type = PMU_KEYLARGO;
+		node = getnodebyname(0, "power-mgt");
+		if (node == -1) {
+			printf("pmu: can't find power-mgt\n");
+			return;
+		}
+		clen = OF_getprop(node, "prim-info", regs, sizeof(regs));
+		if (clen < 24) {
+			printf("pmu: failed to read prim-info\n");
+			return;
+		}
+		pmu_nbatt = regs[6] >> 16;
+	}
+
+	pmdata.command = PMU_SET_IMASK;
+	pmdata.num_data = 1;
+	pmdata.s_buf = pmdata.data;
+	pmdata.r_buf = pmdata.data;
+	pmdata.data[0] = imask;	
+	pmgrop(&pmdata);
 }
 
 
@@ -568,7 +653,7 @@ pm_intr_pm1()
 	PM_VIA_CLR_INTR();				/* clear VIA1 interrupt */
 
 	/* ask PM what happend */
-	pmdata.command = 0x78;
+	pmdata.command = PMU_INT_ACK;
 	pmdata.num_data = 0;
 	pmdata.data[0] = pmdata.data[1] = 0;
 	pmdata.s_buf = &pmdata.data[2];
@@ -596,7 +681,7 @@ pm_intr_pm1()
 	} else {
 #ifdef ADB_DEBUG
 		if (adb_debug)
-			pm_printerr("driver does not supported this event.",
+			pm_printerr("driver does not support this event.",
 			    rval, pmdata.num_data, pmdata.data);
 #endif
 	}
@@ -839,7 +924,7 @@ pm_intr_pm2()
 
 	PM_VIA_CLR_INTR();			/* clear VIA1 interrupt */
 						/* ask PM what happend */
-	pmdata.command = 0x78;
+	pmdata.command = PMU_INT_ACK;
 	pmdata.num_data = 0;
 	pmdata.s_buf = &pmdata.data[2];
 	pmdata.r_buf = &pmdata.data[2];
@@ -874,7 +959,7 @@ pm_intr_pm2()
 		pm_printerr("#33", rval, pmdata.num_data, pmdata.data);
 */
 		/* this is an experimental code */
-		pmdata.command = 0x41;
+		pmdata.command = PMU_SET_BRIGHTNESS;
 		pmdata.num_data = 1;
 		pmdata.s_buf = pmdata.data;
 		pmdata.r_buf = pmdata.data;
@@ -886,7 +971,7 @@ pm_intr_pm2()
 		pmdata.data[0] = pm_LCD_brightness;
 		rval = pm_pmgrop_pm2(&pmdata);
 		break;
-	case 0x10:		/* ADB data that were requested by TALK command */
+	case 0x10:		/* ADB data requested by TALK command */
 	case 0x14:
 		pm_adb_get_TALK_result(&pmdata);
 		break;
@@ -898,7 +983,7 @@ pm_intr_pm2()
 	default:
 #ifdef ADB_DEBUG
 		if (adb_debug)
-			pm_printerr("driver does not supported this event.",
+			pm_printerr("driver does not support this event.",
 			    pmdata.data[2], pmdata.num_data,
 			    pmdata.data);
 #endif
@@ -977,7 +1062,7 @@ pm_adb_op(buffer, compRout, data, command)
 	adbCompRout = compRout;
 	adbCompData = data;
 
-	pmdata.command = 0x20;
+	pmdata.command = PMU_ADB_CMD;
 	pmdata.s_buf = pmdata.data;
 	pmdata.r_buf = pmdata.data;
 
@@ -1065,7 +1150,7 @@ pm_adb_op(buffer, compRout, data, command)
 
 	/* this command enables the interrupt by operating ADB devices */
 	if (HwCfgFlags3 & 0x00020000) {		/* PB Duo series, PB 5XX series */
-		pmdata.command = 0x20;
+		pmdata.command = PMU_ADB_CMD;
 		pmdata.num_data = 4;
 		pmdata.s_buf = pmdata.data;
 		pmdata.r_buf = pmdata.data;
@@ -1074,7 +1159,7 @@ pm_adb_op(buffer, compRout, data, command)
 		pmdata.data[2] = 0x00;	
 		pmdata.data[3] = 0x0c;	/* each bit may express the existent ADB device */
 	} else {				/* PB 1XX series */
-		pmdata.command = 0x20;
+		pmdata.command = PMU_ADB_CMD;
 		pmdata.num_data = 3;
 		pmdata.s_buf = pmdata.data;
 		pmdata.r_buf = pmdata.data;
@@ -1125,6 +1210,16 @@ pm_adb_get_ADB_data(pmdata)
 	int i;
 	struct adbCommand packet;
 
+	if (pmu_type == PMU_OHARE && pmdata->num_data == 4 &&
+	    pmdata->data[1] == 0x2c && pmdata->data[3] == 0xff &&
+	    ((pmdata->data[2] & ~1) == 0xf4)) {
+		if (pmdata->data[2] == 0xf4) {
+			pm_eject_pcmcia(0);
+		} else {
+			pm_eject_pcmcia(1);
+		}
+		return;
+	}
 	/* set up data for adb_pass_up */
 	packet.data[0] = pmdata->num_data-1;	/* number of raw data */
 	packet.data[1] = pmdata->data[3];	/* ADB command */
@@ -1155,7 +1250,7 @@ pm_adb_poll_next_device_pm1(pmdata)
 	}
 
 	/* poll the other device */
-	tmp_pmdata.command = 0x20;
+	tmp_pmdata.command = PMU_ADB_CMD;
 	tmp_pmdata.num_data = 3;
 	tmp_pmdata.s_buf = tmp_pmdata.data;
 	tmp_pmdata.r_buf = tmp_pmdata.data;
@@ -1280,8 +1375,8 @@ pm_eject_pcmcia(slot)
  * Thanks to Paul Mackerras and Fabio Riccardi's Linux implementation
  * for a clear description of the PMU results.
  */
-int
-pm_battery_info(int battery, struct pmu_battery_info *info)
+static int
+pm_battery_info_smart(int battery, struct pmu_battery_info *info)
 {
 	PMData p;
 
@@ -1328,6 +1423,90 @@ pm_battery_info(int battery, struct pmu_battery_info *info)
 	}
 
 	return 1;
+}
+
+static int
+pm_battery_info_legacy(int battery, struct pmu_battery_info *info, int ty)
+{
+	PMData p;
+	long pcharge=0, charge, vb, vmax, lmax;
+	long vmax_charging, vmax_charged, amperage, voltage;
+
+	p.command = PMU_BATTERY_STATE;
+	p.num_data = 0;
+	p.s_buf = p.r_buf = p.data;
+	pmgrop(&p);
+
+	info->flags = p.data[0];
+
+	if (info->flags & PMU_PWR_BATT_PRESENT) {
+		if (ty == BATT_COMET) {
+			vmax_charging = 213;
+			vmax_charged = 189;
+			lmax = 6500;
+		} else {
+			/* Experimental values */
+			vmax_charging = 365;
+			vmax_charged = 365;
+			lmax = 6500;
+		}
+		vmax = vmax_charged;
+		vb = (p.data[1] << 8) | p.data[2];
+		voltage = (vb * 256 + 72665) / 10;
+		amperage = (unsigned char) p.data[5];
+		if ((info->flags & PMU_PWR_AC_PRESENT) == 0) {
+			if (amperage > 200)
+				vb += ((amperage - 200) * 15)/100;
+		} else if (info->flags & PMU_PWR_BATT_CHARGING) {
+			vb = (vb * 97) / 100;
+			vmax = vmax_charging;
+		}
+		charge = (100 * vb) / vmax;
+		if (info->flags & PMU_PWR_PCHARGE_RESET) {
+			pcharge = (p.data[6] << 8) | p.data[7];
+			if (pcharge > lmax)
+				pcharge = lmax;
+			pcharge *= 100;
+			pcharge = 100 - pcharge / lmax;
+			if (pcharge < charge)
+				charge = pcharge;
+		}
+		info->cur_charge = charge;
+		info->max_charge = 100;
+		info->draw = -amperage;
+		info->voltage = voltage;
+		if (amperage > 0)
+			info->secs_remaining = (charge * 16440) / amperage;
+		else
+			info->secs_remaining = 0;
+	} else {
+		info->cur_charge = 0;
+		info->max_charge = 0;
+		info->draw = 0;
+		info->voltage = 0;
+		info->secs_remaining = 0;
+	}
+
+	return 1;
+}
+
+int
+pm_battery_info(int battery, struct pmu_battery_info *info)
+{
+
+	if (battery > pmu_nbatt)
+		return 0;
+
+	switch (pmu_batt_type) {
+	case BATT_COMET:
+	case BATT_HOOPER:
+		return pm_battery_info_legacy(battery, info, pmu_batt_type);
+
+	case BATT_SMART:
+		return pm_battery_info_smart(battery, info);
+	}
+
+	return 0;
 }
 
 int
