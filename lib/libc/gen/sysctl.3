@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysctl.3,v 1.10 1996/04/13 02:07:15 thorpej Exp $
+.\"	$NetBSD: sysctl.3,v 1.11 1996/07/17 18:06:36 explorer Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -229,6 +229,8 @@ information.
 .Bl -column "KERNXCHOWNXRESTRICTEDXXX" "struct clockrateXXX" -offset indent
 .It Sy Pa Second level name	Type	Changeable
 .It KERN\_ARGMAX	integer	no
+.It KERN\_AUTONICETIME	integer	yes
+.It KERN\_AUTONICEVAL	integer	yes
 .It KERN\_BOOTTIME	struct timeval	no
 .It KERN\_CHOWN\_RESTRICTED	integer	no
 .It KERN\_CLOCKRATE	struct clockinfo	no
@@ -267,6 +269,13 @@ information.
 .It Li KERN_ARGMAX
 The maximum bytes of argument to
 .Xr exec 2 .
+.It Li KERN_AUTONICETIME
+The number of seconds of cpu-time a non-root process may accumulate before
+having its priority lowered from the default to the value of KERN_AUTONICEVAL.
+If set to 0, automatic lowering of priority is not performed, and if set to -1
+all non-root processes are immediately lowered.
+.It Li KERN_AUTONICEVAL
+The priority assigned for automatically niced processes.
 .It Li KERN_BOOTTIME
 A
 .Va struct timeval
