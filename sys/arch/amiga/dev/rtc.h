@@ -1,4 +1,4 @@
-/*	$NetBSD: rtc.h,v 1.3 1996/04/21 21:12:19 veego Exp $	*/
+/*	$NetBSD: rtc.h,v 1.4 1997/05/25 22:08:24 veego Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -48,7 +48,7 @@ struct rtclock2000 {
 	u_int  :28, month1:4;	/* upper digit */
 	u_int  :28, year2:4;	/* lower digit */
 	u_int  :28, year1:4;	/* upper digit */
-	u_int  :28, week:4;	/* week */
+	u_int  :28, weekday:4;	/* weekday */
 	u_int  :28, control1:4;	/* control-byte 1 */
 	u_int  :28, control2:4;	/* control-byte 2 */  
 	u_int  :28, control3:4;	/* control-byte 3 */
@@ -91,15 +91,10 @@ struct rtclock3000 {
 #define A3BBC_READ_REG	0xc3
 #define A3NUM_BBC_REGS	12
 
-#define FEBRUARY	2
+/*
+ * Our clock starts at 1/1/1970, but counts the years from 1900.
+ */
 #define	STARTOFTIME	1970
-#define SECDAY		86400L
-#define SECYR		(SECDAY * 365)
-
-
-#define	leapyear(y)		((((y)%4)==0 && ((y)%100)!=0) || ((y)%400) == 0)
-#define	range_test(n, l, h)	((n) < (l) || (n) > (h))
-#define	days_in_year(a) 	(leapyear(a) ? 366 : 365)
-#define	days_in_month(a) 	(month_days[(a) - 1])
+#define	CLOCK_BASE_YEAR	1900
 
 #endif /* _RTCVAR_H_ */
