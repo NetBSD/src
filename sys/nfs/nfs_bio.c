@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_bio.c,v 1.63.2.9 2002/02/28 04:15:20 nathanw Exp $	*/
+/*	$NetBSD: nfs_bio.c,v 1.63.2.10 2002/02/28 20:51:58 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_bio.c,v 1.63.2.9 2002/02/28 04:15:20 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_bio.c,v 1.63.2.10 2002/02/28 20:51:58 nathanw Exp $");
 
 #include "opt_nfs.h"
 #include "opt_ddb.h"
@@ -819,7 +819,7 @@ again:
 			error = tsleep(&nmp->nm_bufq, slpflag | PRIBIO,
 				"nfsaio", slptimeo);
 			if (error) {
-				if (nfs_sigintr(nmp, NULL, curproc))
+				if (nfs_sigintr(nmp, NULL, curproc->l_proc))
 					return (EINTR);
 				if (slpflag == PCATCH) {
 					slpflag = 0;
@@ -1026,7 +1026,7 @@ nfs_doio(bp, p)
 			} else {
 				pushedrange = 0;
 			}
-			error = nfs_commit(vp, off, cnt, curproc);
+			error = nfs_commit(vp, off, cnt, curproc->l_proc);
 			if (error == 0) {
 				if (pushedrange) {
 					nfs_merge_commit_ranges(vp);
@@ -1065,7 +1065,7 @@ nfs_doio(bp, p)
 		if (np->n_pushhi - np->n_pushlo > nfs_commitsize) {
 			off = np->n_pushlo;
 			cnt = nfs_commitsize >> 1;
-			error = nfs_commit(vp, off, cnt, curproc);
+			error = nfs_commit(vp, off, cnt, curproc->l_proc);
 			if (!error) {
 				nfs_add_committed_range(vp, off, cnt);
 				nfs_del_tobecommitted_range(vp, off, cnt);
