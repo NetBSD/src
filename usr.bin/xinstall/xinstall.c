@@ -1,4 +1,4 @@
-/*	$NetBSD: xinstall.c,v 1.72 2002/06/08 15:02:27 yamt Exp $	*/
+/*	$NetBSD: xinstall.c,v 1.73 2002/06/09 04:16:39 lukem Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -50,7 +50,7 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1993\n\
 #if 0
 static char sccsid[] = "@(#)xinstall.c	8.1 (Berkeley) 7/21/93";
 #else
-__RCSID("$NetBSD: xinstall.c,v 1.72 2002/06/08 15:02:27 yamt Exp $");
+__RCSID("$NetBSD: xinstall.c,v 1.73 2002/06/09 04:16:39 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -922,6 +922,7 @@ metadata_log(const char *path, const char *type, struct timeval *tv,
 {
 	static const char	extra[] = { ' ', '\t', '\n', '\\', '#', '\0' };
 	char		*buf;
+	struct flock	metalog_lock;
 
 	if (!metafp)	
 		return;
@@ -930,7 +931,12 @@ metadata_log(const char *path, const char *type, struct timeval *tv,
 		warnx("%s", strerror(ENOMEM));
 		return;
 	}
-	if (flock(fileno(metafp), LOCK_EX) == -1) {	/* lock log file */
+							/* lock log file */
+	metalog_lock.l_start = 0;
+	metalog_lock.l_len = 0;
+	metalog_lock.l_whence = SEEK_SET;
+	metalog_lock.l_type = F_WRLCK;
+	if (fcntl(fileno(metafp), F_SETLKW, &metalog_lock) == -1) {
 		warn("can't lock %s", metafile);
 		return;
 	}
@@ -952,7 +958,9 @@ metadata_log(const char *path, const char *type, struct timeval *tv,
 		fprintf(metafp, " time=%ld.%ld", tv[1].tv_sec, tv[1].tv_usec);
 	fputc('\n', metafp);
 	fflush(metafp);					/* flush output */
-	if (flock(fileno(metafp), LOCK_UN) == -1) {	/* unlock log file */
+							/* unlock log file */
+	metalog_lock.l_type = F_UNLCK;
+	if (fcntl(fileno(metafp), F_SETLKW, &metalog_lock) == -1) {
 		warn("can't unlock %s", metafile);
 	}
 	free(buf);
