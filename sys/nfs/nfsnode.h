@@ -1,4 +1,4 @@
-/*	 $NetBSD: nfsnode.h,v 1.37 2002/12/01 23:02:11 matt Exp $	*/
+/*	 $NetBSD: nfsnode.h,v 1.38 2003/04/09 14:22:34 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -185,8 +185,12 @@ LIST_HEAD(nfsnodehashhead, nfsnode);
 /*
  * Queue head for nfsiod's
  */
-extern struct proc *nfs_iodwant[NFS_MAXASYNCDAEMON];
-extern struct nfsmount *nfs_iodmount[NFS_MAXASYNCDAEMON];
+struct nfs_iod {
+	struct proc *nid_proc;
+	struct proc *nid_want;
+	struct nfsmount *nid_mount;
+};
+extern struct nfs_iod nfs_asyncdaemon[NFS_MAXASYNCDAEMON];
 
 #ifdef _KERNEL
 /*
