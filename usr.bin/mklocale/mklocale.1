@@ -1,4 +1,4 @@
-.\" $NetBSD: mklocale.1,v 1.5 2001/04/04 12:07:04 wiz Exp $
+.\" $NetBSD: mklocale.1,v 1.6 2001/12/01 20:45:20 wiz Exp $
 .\" FreeBSD: src/usr.bin/mklocale/mklocale.1,v 1.6 1999/09/20 09:15:21 phantom Exp
 .\"
 .\" Copyright (c) 1993, 1994
@@ -270,6 +270,11 @@ locale definitions.
 .Xr setlocale 3 ,
 .Xr euc 4 ,
 .Xr utf8 4
+.Sh HISTORY
+The
+.Nm mklocale
+utility first appeared in
+.Bx 4.4 .
 .Sh BUGS
 The
 .Nm mklocale
@@ -278,8 +283,3 @@ utility is overly simplistic.
 We should switch to
 .Nm localedef
 and its file format, which is more standard.
-.Sh HISTORY
-The
-.Nm mklocale
-utility first appeared in
-.Bx 4.4 .
