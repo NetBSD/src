@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.90 2000/04/10 05:34:27 nisimura Exp $	*/
+/*	$NetBSD: pmap.c,v 1.91 2000/04/10 08:50:20 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.90 2000/04/10 05:34:27 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.91 2000/04/10 08:50:20 simonb Exp $");
 
 /*
  *	Manages physical address maps.
@@ -509,7 +509,8 @@ pmap_pinit(pmap)
 		vm_page_t mem;
 
 		do {
-			mem = uvm_pagealloc(NULL, 0, NULL, UVM_PGA_USERESERVE);
+			mem = uvm_pagealloc(NULL, 0, NULL,
+			    UVM_PGA_USERESERVE|UVM_PGA_ZERO);
 			if (mem == NULL) {
 				/*
 				 * XXX What else can we do?  Could we
@@ -519,7 +520,6 @@ pmap_pinit(pmap)
 			}
 		} while (mem == NULL);
 
-		pmap_zero_page(VM_PAGE_TO_PHYS(mem));
 		pmap->pm_segtab = stp = (struct segtab *)
 			MIPS_PHYS_TO_KSEG0(VM_PAGE_TO_PHYS(mem));
 		i = NBPG / sizeof(struct segtab);
@@ -1241,7 +1241,8 @@ pmap_enter(pmap, va, pa, prot, flags)
 
 	if (!(pte = pmap_segmap(pmap, va))) {
 		do {
-			mem = uvm_pagealloc(NULL, 0, NULL, UVM_PGA_USERESERVE);
+			mem = uvm_pagealloc(NULL, 0, NULL,
+			    UVM_PGA_USERESERVE|UVM_PGA_ZERO);
 			if (mem == NULL) {
 				/*
 				 * XXX What else can we do?  Could we
@@ -1251,7 +1252,6 @@ pmap_enter(pmap, va, pa, prot, flags)
 			}
 		} while (mem == NULL);
 
-		pmap_zero_page(VM_PAGE_TO_PHYS(mem));
 		pmap_segmap(pmap, va) = pte = (pt_entry_t *)
 			MIPS_PHYS_TO_KSEG0(VM_PAGE_TO_PHYS(mem));
 #ifdef PARANOIADIAG
