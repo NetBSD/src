@@ -1,12 +1,14 @@
-#	$NetBSD: Makefile,v 1.4 2000/05/02 16:06:54 sjg Exp $
+#	$NetBSD: Makefile,v 1.5 2000/08/22 14:11:07 abs Exp $
 
 TOP=		${.CURDIR}/..
 MINIROOT=	${.CURDIR}/../../miniroot
 
-.include "${TOP}/Makefile.inc"
-.include <bsd.kernobj.mk>
-
 KERN=		${KERNOBJDIR}/INSTALL/netbsd
+
+.include "${TOP}/Makefile.inc"
+
+.include <bsd.own.mk>   # So we use /etc/mk.conf.
+.include <bsd.kernobj.mk>
 
 MOUNT_POINT?=	/mnt
 VND?=		vnd0
@@ -35,7 +37,7 @@ INO_BYTES=	204800
 
 CLEANFILES+=	netbsd.ram.gz netbsd.tmp
 
-all:	netbsd.ram.gz
+${IMAGE}:	netbsd.ram.gz
 	dd if=/dev/zero of=${IMAGE} bs=1440k count=1
 	vnconfig -t ${DISKTYPE} -v -c ${VND_CDEV} ${IMAGE}
 	disklabel -rw ${VND_CDEV} ${DISKTYPE}
@@ -50,7 +52,7 @@ all:	netbsd.ram.gz
 	@echo ""
 	@echo "installing new bootblocks"
 	-rm -f ${MOUNT_POINT}/boot
-	/usr/mdec/binstall -v ffs ${MOUNT_POINT}
+	/usr/mdec/binstall -b boot.400000 -v ffs ${MOUNT_POINT}
 	umount ${MOUNT_POINT}
 	vnconfig -u ${VND_CDEV}
 
