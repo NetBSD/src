@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc.c,v 1.207 2004/08/20 06:39:38 thorpej Exp $ */
+/*	$NetBSD: wdc.c,v 1.208 2004/08/20 20:52:31 thorpej Exp $ */
 
 /*
  * Copyright (c) 1998, 2001, 2003 Manuel Bouyer.  All rights reserved.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.207 2004/08/20 06:39:38 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.208 2004/08/20 20:52:31 thorpej Exp $");
 
 #ifndef ATADEBUG
 #define ATADEBUG
@@ -409,7 +409,7 @@ atabusconfig(struct atabus_softc *atabus_sc)
 	for (i = 0; i < chp->ch_ndrive; i++) {
 		if (chp->ch_drive[i].drive_flags & DRIVE_ATAPI) {
 #if NATAPIBUS > 0
-			wdc_atapibus_attach(atabus_sc);
+			(*atac->atac_atapibus_attach)(atabus_sc);
 #else
 			/*
 			 * Fake the autoconfig "not configured" message
@@ -431,7 +431,7 @@ atabusconfig(struct atabus_softc *atabus_sc)
 			continue;
 		}
 		memset(&adev, 0, sizeof(struct ata_device));
-		adev.adev_bustype = &wdc_ata_bustype;
+		adev.adev_bustype = atac->atac_bustype_ata;
 		adev.adev_channel = chp->ch_channel;
 		adev.adev_openings = 1;
 		adev.adev_drv_data = &chp->ch_drive[i];
@@ -800,8 +800,14 @@ wdcattach(struct ata_channel *chp)
 
 	/* initialise global data */
 	callout_init(&chp->ch_callout);
+	if (atac->atac_bustype_ata == NULL)
+		atac->atac_bustype_ata = &wdc_ata_bustype;
 	if (atac->atac_probe == NULL)
 		atac->atac_probe = wdc_drvprobe;
+#if NATAPIBUS > 0
+	if (atac->atac_atapibus_attach == NULL)
+		atac->atac_atapibus_attach = wdc_atapibus_attach;
+#endif
 
 	TAILQ_INIT(&chp->ch_queue->queue_xfer);
 	chp->ch_queue->queue_freeze = 0;
