@@ -1,4 +1,4 @@
-/*	$NetBSD: xstr.c,v 1.17 2004/01/05 23:23:37 jmmv Exp $	*/
+/*	$NetBSD: xstr.c,v 1.18 2004/06/06 04:53:14 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\n\
 #if 0
 static char sccsid[] = "@(#)xstr.c	8.1 (Berkeley) 6/9/93";
 #else
-__RCSID("$NetBSD: xstr.c,v 1.17 2004/01/05 23:23:37 jmmv Exp $");
+__RCSID("$NetBSD: xstr.c,v 1.18 2004/06/06 04:53:14 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -84,7 +84,7 @@ static char	*array =	0;
 static int	cflg;
 static int	vflg;
 static int	readstd;
-static char	linebuf[BUFSIZ];
+static char	linebuf[8192];
 
 #define	BUCKETS	128
 
@@ -260,17 +260,49 @@ yankstr(char **cpp)
 {
 	char *cp = *cpp;
 	int c, ch;
-	char dbuf[BUFSIZ];
-	char *dp = dbuf;
+	char *dbuf, *dp, *edp;
 	char *tp;
+	off_t hash;
+	size_t bsiz = BUFSIZ;
+
+	if ((dp = dbuf = malloc(bsiz)) == NULL)
+		err(1, "malloc");
+	edp = dbuf + bsiz;
 
 	while ((c = *cp++) != '\0') {
 		switch (c) {
 
 		case '"':
-			cp++;
-			goto out;
-
+			/* Look for a concatenated string */
+			for (;;) {
+				while (isspace((unsigned char)*cp))
+					cp++;
+				if (*cp == '\0') {
+					if (fgets(linebuf,
+					    sizeof linebuf, stdin) == NULL) {
+						if (ferror(stdin))
+							err(1,
+							"Error reading `x.c'");
+						goto out;
+					}
+					cp = linebuf;
+				} else {
+					if (*cp == '"') {
+						cp++;
+						if (*cp == '"') {
+							cp++;
+							continue;
+						} else {
+							c = *cp++;
+							goto gotc;
+						}
+					} else {
+						cp++;
+						goto out;
+					}
+				}
+			}
+			/*NOTREACHED*/
 		case '\\':
 			c = *cp++;
 			if (c == 0)
@@ -304,12 +336,26 @@ yankstr(char **cpp)
 			break;
 		}
 gotc:
+		if (dp >= edp - 1) {
+			char *nbuf;
+			bsiz += BUFSIZ;
+			if ((nbuf = realloc(dbuf, bsiz)) == NULL) {
+				free(dbuf);
+				err(1, "realloc");
+			}
+			dp = nbuf + (dp - dbuf);
+			edp = nbuf + bsiz;
+			dbuf = nbuf;
+		}
 		*dp++ = c;
 	}
 out:
 	*cpp = --cp;
-	*dp = 0;
-	return hashit(dbuf, 1);
+	*dp = '\0';
+	fprintf(stderr, ">%s<\n", dbuf);
+	hash = hashit(dbuf, 1);
+	free(dbuf);
+	return hash;
 }
 
 static int
