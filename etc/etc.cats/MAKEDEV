@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.20 2003/03/30 17:41:52 wiz Exp $
+#	$NetBSD: MAKEDEV,v 1.21 2003/03/31 03:58:59 perry Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -99,7 +99,7 @@
 #	kbdctl	keyboard control
 #	fd	file descriptors
 #	bpf*	packet filter
-#	ipl	IP filter control
+#	ipl	IP Filter
 #	random	Random number generator
 #	lkm	loadable kernel modules interface
 #	tun*	network tunnel driver

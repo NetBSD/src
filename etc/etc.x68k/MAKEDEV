@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.60 2003/03/30 20:18:47 perry Exp $
+#	$NetBSD: MAKEDEV,v 1.61 2003/03/31 03:59:14 perry Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -101,7 +101,7 @@
 #	aconf	autoconfig information (not yet)
 #	lkm	loadable kernel modules interface
 #	bpf*	Berkeley Packet Filter
-#	ipl	IP filter
+#	ipl	IP Filter
 #	random	Random number generator
 #	audio	audio device
 #	sram	battery backuped memory

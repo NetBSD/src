@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.21 2002/10/21 04:14:54 lukem Exp $
+#	$NetBSD: MAKEDEV,v 1.22 2003/03/31 03:59:04 perry Exp $
 #
 ###########################################################################
 #
@@ -33,7 +33,7 @@
 #	bpf*	packet filter
 #	ch*	SCSI media changer
 #	fd	file descriptor device
-#	ipl	IP filter
+#	ipl	IP Filter
 #	lkm	loadable kernel modules interface
 #	random	Random number generator
 #	scsibus* SCSI busses, see scsi(4), scsictl(8)

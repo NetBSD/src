@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.50 2002/10/21 04:15:02 lukem Exp $
+#	$NetBSD: MAKEDEV,v 1.51 2003/03/31 03:59:14 perry Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -64,7 +64,7 @@
 #	cgtwo*	8-bit VME bus color frame buffer
 #	cgfour*	8-bit color frame buffer
 #	bpf*	packet filter
-#	ipl	IP filter
+#	ipl	IP Filter
 #	lkm	loadable kernel modules interface
 #	tun*	network tunnel driver
 #	random	Random number generator
