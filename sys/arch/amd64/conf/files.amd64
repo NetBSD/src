@@ -1,4 +1,4 @@
-#	$NetBSD: files.amd64,v 1.2 2003/05/03 14:24:52 fvdl Exp $
+#	$NetBSD: files.amd64,v 1.3 2003/05/11 21:39:01 fvdl Exp $
 #
 # new style config file for amd64 architecture
 #
@@ -25,7 +25,6 @@ defparam opt_realmem.h	REALBASEMEM REALEXTMEM
 
 defflag			USER_LDT
 defflag			VM86
-defflag opt_mpacpi.h MPACPI
 defflag eisa.h EISA
 
 file	arch/amd64/amd64/autoconf.c
@@ -91,7 +90,7 @@ file	arch/amd64/amd64/bios32.c		bios32 needs-flag
 #
 
 # XXX BIOS32 only if something that uses it is configured!
-device	mainbus: isabus, pcibus, mainbus, bios32
+device	mainbus: isabus, pcibus, mainbus, bios32, acpibus
 attach	mainbus at root
 file	arch/amd64/amd64/mainbus.c		mainbus
 
@@ -180,5 +179,8 @@ include	"compat/ossaudio/files.ossaudio"
 include	"dev/usb/files.usb"
 
 include	"dev/ieee1394/files.ieee1394"
+
+include "dev/acpi/files.acpi"
+file	arch/amd64/acpi/acpi_wakeup.c	acpi
 
 include	"arch/amd64/conf/majors.amd64"

@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.1 2003/04/26 18:39:29 fvdl Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.2 2003/05/11 21:39:00 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -43,12 +43,20 @@
 
 #include "pci.h"
 #include "isa.h"
+#include "isadma.h"
+#include "acpi.h"
 
+#include "opt_mpacpi.h"
 #include "opt_mpbios.h"
 
 #include <machine/cpuvar.h>
 #include <machine/i82093var.h>
 #include <machine/mpbiosvar.h>
+
+#if NACPI > 0
+#include <dev/acpi/acpivar.h>
+#include <dev/acpi/acpi_madt.h>
+#endif
 
 /*
  * XXXfvdl ACPI
@@ -67,6 +75,7 @@ union mainbus_attach_args {
 	struct pcibus_attach_args mba_pba;
 	struct isabus_attach_args mba_iba;
 	struct cpu_attach_args mba_caa;
+	struct acpibus_attach_args mba_acpi;
 	struct apic_attach_args aaa_caa;
 };
 
@@ -126,9 +135,13 @@ mainbus_attach(parent, self, aux)
 #if NPCI > 0
 	union mainbus_attach_args mba;
 #endif
+#if NACPI > 0
+	int acpi_present = 0;
+#endif
 #ifdef MPBIOS
 	int mpbios_present = 0;
 #endif
+	int mpacpi_active = 0;
 
 	printf("\n");
 
@@ -140,22 +153,61 @@ mainbus_attach(parent, self, aux)
 	pci_mode = pci_mode_detect();
 #endif
 
-#ifdef MPBIOS
-	if (mpbios_present)
-		mpbios_scan(self);
-	else
+#if NACPI > 0
+	acpi_present = acpi_probe();
+#ifdef MPACPI
+	/*
+	 * First, see if the MADT contains CPUs, and possibly I/O APICs.
+	 * Building the interrupt routing structures can only
+	 * be done later (via a callback).
+	 */
+	if (acpi_present)
+		mpacpi_active = mpacpi_scan_apics(self);
 #endif
-	{
-		struct cpu_attach_args caa;
+#endif
+
+	if (!mpacpi_active) {
+#ifdef MPBIOS
+		if (mpbios_present)
+			mpbios_scan(self);
+		else
+#endif
+		{
+			struct cpu_attach_args caa;
                         
-		memset(&caa, 0, sizeof(caa));
-		caa.caa_name = "cpu";
-		caa.cpu_number = 0;
-		caa.cpu_role = CPU_ROLE_SP;
-		caa.cpu_func = 0;
+			memset(&caa, 0, sizeof(caa));
+			caa.caa_name = "cpu";
+			caa.cpu_number = 0;
+			caa.cpu_role = CPU_ROLE_SP;
+			caa.cpu_func = 0;
                         
-		config_found(self, &caa, mainbus_print);
+			config_found(self, &caa, mainbus_print);
+		}
 	}
+
+#if NISADMA > 0 && NACPI > 0
+	/*
+	 * ACPI needs ISA DMA initialized before they start probing.
+	 */
+	isa_dmainit(&x86_isa_chipset, X86_BUS_SPACE_IO, &isa_bus_dma_tag,
+	    self);
+#endif
+
+
+#if NACPI > 0
+	if (acpi_present) {
+		mba.mba_acpi.aa_busname = "acpi";
+		mba.mba_acpi.aa_iot = X86_BUS_SPACE_IO;
+		mba.mba_acpi.aa_memt = X86_BUS_SPACE_MEM;
+		mba.mba_acpi.aa_pc = NULL;
+		mba.mba_acpi.aa_pciflags =
+		    PCI_FLAGS_IO_ENABLED | PCI_FLAGS_MEM_ENABLED |
+		    PCI_FLAGS_MRL_OKAY | PCI_FLAGS_MRM_OKAY |
+		    PCI_FLAGS_MWI_OKAY;
+		mba.mba_acpi.aa_ic = &x86_isa_chipset;
+		config_found(self, &mba.mba_acpi, mainbus_print);
+	}
+#endif
 
 #if NPCI > 0
 	if (pci_mode != 0) {
