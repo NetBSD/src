@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.58 1999/11/10 15:55:51 matt Exp $
+$NetBSD: usbdevs,v 1.59 1999/11/10 19:46:40 augustss Exp $
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -124,6 +124,7 @@ product NEC HUB_B		0x55ab	hub
 /* Kodak products */
 product KODAK DC260		0x0110	Digital Science DC260
 product KODAK DC240		0x0120	Digital Science DC240
+product KODAK DC280		0x0130	Digital Science DC280
 
 /* CATC products */
 product CATC ANDROMEDA		0x1237	Andromeda hub
@@ -272,6 +273,7 @@ product QTRONIX 980N		0x2011	Scorpion-980N keyboard
 product LOGITECH M2452		0x0203	M2452 keyboard
 product LOGITECH M4848		0x0301	M4848 mouse
 product LOGITECH QUICKCAM	0x0801	QuickCam
+product LOGITECH QUICKCAMPRO	0x0810	QuickCam Pro
 product LOGITECH N48		0xc001	N48 mouse
 product LOGITECH MBA47		0xc002	M-BA47 mouse
 
