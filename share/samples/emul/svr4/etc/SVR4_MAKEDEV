@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$NetBSD: SVR4_MAKEDEV,v 1.3 1996/04/11 12:59:45 christos Exp $
+#	$NetBSD: SVR4_MAKEDEV,v 1.4 1997/06/08 23:34:48 jonathan Exp $
 #
 # Copyright (c) 1995 Christos Zoulas
 # All rights reserved.

@@ -1,4 +1,4 @@
-#	$NetBSD: netconfig,v 1.2 1996/04/11 12:59:47 christos Exp $
+#	$NetBSD: netconfig,v 1.3 1997/06/08 23:34:49 jonathan Exp $
 # SVR4 Network configuration file
 #
 # service name	       fl family   proto device         library
