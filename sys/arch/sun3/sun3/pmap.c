@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.44 1995/03/10 02:20:40 gwr Exp $	*/
+/*	$NetBSD: pmap.c,v 1.45 1995/03/10 23:45:02 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -224,8 +224,14 @@ pa_to_pvp(pa)
  * devices but way up near the end of the address space.
  * We do not want to consider these as "main memory" so the
  * macro below treats the high bits of the PFN as type bits.
+ *
+ * Note that on the 3/60 only 16 bits of PFN are stored in the
+ * MMU and the top 3 bits read back as zero.  This means a
+ * translation entered into the mmu for physical address
+ * 0xFF000000 will look like 0x1F000000 after one reads back
+ * the pte and converts the PFN to a physical address.
  */
-#define MEM_BITS	(PG_TYPE | 0x78000)
+#define MEM_BITS	(PG_TYPE | PA_PGNUM(0xF0000000))
 #define	IS_MAIN_MEM(pte) (((pte) & MEM_BITS) == 0)
 
 
