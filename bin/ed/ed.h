@@ -1,4 +1,4 @@
-/*	$NetBSD: ed.h,v 1.26 1998/11/04 13:39:08 christos Exp $	*/
+/*	$NetBSD: ed.h,v 1.27 2000/04/04 17:07:29 thorpej Exp $	*/
 
 /* ed.h: type and constant definitions for the ed editor. */
 /*
@@ -292,6 +292,15 @@ extern char errmsg[];
 extern long first_addr;
 extern int lineno;
 extern long second_addr;
+extern long rows;
+extern int cols;
+extern int scripted;
+extern int des;
+extern int newline_added;	/* io.c */
+extern int patlock;
+extern char errmsg[];		/* re.c */
+extern long u_current_addr;	/* undo.c */
+extern long u_addr_last;	/* undo.c */
 #if defined(sun) && !defined(__SVR4)
 extern char *sys_errlist[];
 #endif

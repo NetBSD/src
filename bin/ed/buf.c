@@ -1,4 +1,4 @@
-/*	$NetBSD: buf.c,v 1.19 1998/11/04 13:41:32 christos Exp $	*/
+/*	$NetBSD: buf.c,v 1.20 2000/04/04 17:07:29 thorpej Exp $	*/
 
 /* buf.c: This file contains the scratch-file buffer rountines for the
    ed line editor. */
@@ -33,7 +33,7 @@
 #if 0
 static char *rcsid = "@(#)buf.c,v 1.4 1994/02/01 00:34:35 alm Exp";
 #else
-__RCSID("$NetBSD: buf.c,v 1.19 1998/11/04 13:41:32 christos Exp $");
+__RCSID("$NetBSD: buf.c,v 1.20 2000/04/04 17:07:29 thorpej Exp $");
 #endif
 #endif /* not lint */
 
@@ -198,8 +198,6 @@ get_addressed_line_node(n)
 	return lp;
 }
 
-
-extern int newline_added;
 
 char sfn[15] = "";				/* scratch file name */
 
