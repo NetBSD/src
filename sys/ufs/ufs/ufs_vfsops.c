@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_vfsops.c,v 1.11 2000/03/30 12:41:15 augustss Exp $	*/
+/*	$NetBSD: ufs_vfsops.c,v 1.11.12.1 2001/10/01 12:48:34 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993, 1994
@@ -231,6 +231,15 @@ ufs_init()
 	ufs_ihashinit();
 #ifdef QUOTA
 	dqinit();
+#endif
+}
+
+void
+ufs_reinit()
+{
+	ufs_ihashreinit();
+#ifdef QUOTA
+	dqreinit();
 #endif
 }
 

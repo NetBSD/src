@@ -1,4 +1,4 @@
-/*	$NetBSD: clnp_frag.c,v 1.13 2001/08/20 12:00:54 wiz Exp $	*/
+/*	$NetBSD: clnp_frag.c,v 1.13.2.1 2001/10/01 12:47:53 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -262,9 +262,9 @@ clnp_fragment(ifp, m, first_hop, total_len, segoff, flags, rt)
 #endif				/* TROLL */
 
 			/*
-			 * Tough situation: if the error occured on the last
+			 * Tough situation: if the error occurred on the last
 			 * fragment, we can not send an ER, as the if_output
-			 * routine consumed the packet. If the error occured
+			 * routine consumed the packet. If the error occurred
 			 * on any intermediate packets, we can send an ER
 			 * because we still have the original header in (m).
 			 */

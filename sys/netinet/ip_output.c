@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_output.c,v 1.87 2001/08/11 12:26:50 yamt Exp $	*/
+/*	$NetBSD: ip_output.c,v 1.87.2.1 2001/10/01 12:47:44 fvdl Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -592,7 +592,7 @@ skip_ipsec:
 		ip->ip_sum = 0;
 		m->m_pkthdr.csum_flags |= M_CSUM_IPv4;
 
-		sw_csum = m->m_pkthdr.csum_flags & ~ifp->if_csum_flags;
+		sw_csum = m->m_pkthdr.csum_flags & ~ifp->if_csum_flags_tx;
 
 		/*
 		 * Perform any checksums that the hardware can't do
@@ -607,7 +607,7 @@ skip_ipsec:
 			in_delayed_cksum(m);
 			sw_csum &= ~(M_CSUM_TCPv4|M_CSUM_UDPv4);
 		}
-		m->m_pkthdr.csum_flags &= ifp->if_csum_flags;
+		m->m_pkthdr.csum_flags &= ifp->if_csum_flags_tx;
 
 #ifdef IPSEC
 		/* clean ipsec history once it goes out of the node */

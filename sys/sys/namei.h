@@ -1,4 +1,4 @@
-/*	$NetBSD: namei.h,v 1.20 2000/11/24 07:25:52 chs Exp $	*/
+/*	$NetBSD: namei.h,v 1.20.6.1 2001/10/01 12:48:12 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1985, 1989, 1991, 1993
@@ -149,6 +149,7 @@ struct nameidata {
 	(ndp)->ni_segflg = segflg; \
 	(ndp)->ni_dirp = namep; \
 	(ndp)->ni_cnd.cn_proc = p; \
+	(ndp)->ni_cnd.cn_cred = p->p_ucred; \
 }
 #endif
 
@@ -190,6 +191,7 @@ int cache_lookup __P((struct vnode *, struct vnode **, struct componentname *));
 int cache_revlookup __P((struct vnode *, struct vnode **, char **, char *));
 void cache_enter __P((struct vnode *, struct vnode *, struct componentname *));
 void nchinit __P((void));
+void nchreinit __P((void));
 struct mount;
 void cache_purgevfs __P((struct mount *));
 void namecache_print(struct vnode *, void (*)(const char *, ...));

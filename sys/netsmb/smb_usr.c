@@ -1,4 +1,4 @@
-/*	$NetBSD: smb_usr.c,v 1.1 2000/12/07 03:48:10 deberg Exp $	*/
+/*	$NetBSD: smb_usr.c,v 1.1.8.1 2001/10/01 12:47:58 fvdl Exp $	*/
 
 /*
  * Copyright (c) 2000, Boris Popov
@@ -269,7 +269,7 @@ out:
 /*
  * Connect to the resource specified by smbioc_connect structure.
  * It may either find an existing connection or try to establish a new one.
- * If no errors occured smb_vc returned locked and referenced.
+ * If no errors occurred smb_vc returned locked and referenced.
  */
 int
 smb_usr_opensession(struct smbioc_ossn *dp, struct smb_conn *scp,

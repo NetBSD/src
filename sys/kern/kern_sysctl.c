@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sysctl.c,v 1.93.2.1 2001/09/07 04:45:37 thorpej Exp $	*/
+/*	$NetBSD: kern_sysctl.c,v 1.93.2.2 2001/10/01 12:46:53 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -74,6 +74,7 @@
 #define	__SYSCTL_PRIVATE
 #include <sys/sysctl.h>
 #include <sys/lock.h>
+#include <sys/namei.h>
 
 #include <miscfs/specfs/specdev.h>
 
@@ -353,6 +354,10 @@ kern_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp,
 		if (old_vnodes > desiredvnodes) {
 		        desiredvnodes = old_vnodes;
 			return (EINVAL);
+		}
+		if (error == 0) {
+			vfs_reinit();
+			nchreinit();
 		}
 		return (error);
 	case KERN_MAXPROC:

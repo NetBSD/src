@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_extern.h,v 1.19 2001/08/17 02:18:48 lukem Exp $	*/
+/*	$NetBSD: ffs_extern.h,v 1.19.2.1 2001/10/01 12:48:21 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -89,7 +89,7 @@ void ffs_clusteracct __P((struct fs *, struct cg *, ufs_daddr_t, int));
 
 /* ffs_balloc.c */
 int ffs_balloc __P((void *));
-int ffs_ballocn __P((void *));
+int ffs_gop_alloc __P((struct vnode *, off_t, off_t, int, struct ucred *));
 
 /* ffs_bswap.c */
 void ffs_sb_swap __P((struct fs*, struct fs *));
@@ -114,6 +114,7 @@ void ffs_setblock __P((struct fs *, u_char *, ufs_daddr_t));
 
 /* ffs_vfsops.c */
 void ffs_init __P((void));
+void ffs_reinit __P((void));
 void ffs_done __P((void));
 int ffs_mountroot __P((void));
 int ffs_mount __P((struct mount *, const char *, void *, struct nameidata *,
@@ -138,7 +139,8 @@ int ffs_read __P((void *));
 int ffs_write __P((void *));
 int ffs_fsync __P((void *));
 int ffs_reclaim __P((void *));
-int ffs_size __P((void *));
+int ffs_getpages __P((void *));
+void ffs_gop_size __P((struct vnode *, off_t, off_t *));
 __END_DECLS
 
  
@@ -146,6 +148,7 @@ __END_DECLS
  * Soft dependency function prototypes.
  */
 void	softdep_initialize __P((void));
+void	softdep_reinitialize __P((void));
 int	softdep_mount __P((struct vnode *, struct mount *, struct fs *,
 	    struct ucred *));
 int	softdep_flushfiles __P((struct mount *, int, struct proc *));

@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_extern.h,v 1.25 2001/07/13 20:30:23 perseant Exp $	*/
+/*	$NetBSD: lfs_extern.h,v 1.25.2.1 2001/10/01 12:48:27 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -183,6 +183,7 @@ struct buf *lfs_fakebuf(struct vnode *, int, size_t, caddr_t);
 
 /* lfs_vfsops.c */
 void lfs_init(void);
+void lfs_reinit(void);
 void lfs_done(void);
 int lfs_mountroot(void);
 int lfs_mount(struct mount *, const char *, void *, struct nameidata *, struct proc *);

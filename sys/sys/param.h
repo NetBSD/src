@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.129 2001/07/24 15:40:15 assar Exp $	*/
+/*	$NetBSD: param.h,v 1.129.2.1 2001/10/01 12:48:12 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -67,7 +67,7 @@
  * Don't forget to change conf/osrelease.sh too.
  */
 
-#define	__NetBSD_Version__	105240000	/* NetBSD 1.5X */
+#define	__NetBSD_Version__	105250000	/* NetBSD 1.5Y */
 
 /*
  * Historical NetBSD #define
@@ -254,6 +254,7 @@
 
 /*
  * Defaults for Unified Buffer Cache parameters.
+ * These may be overridden in <machine/param.h>.
  */
 
 #ifndef UBC_WINSHIFT

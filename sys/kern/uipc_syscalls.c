@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_syscalls.c,v 1.65 2001/07/17 11:49:41 jdolecek Exp $	*/
+/*	$NetBSD: uipc_syscalls.c,v 1.65.2.1 2001/10/01 12:46:57 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1990, 1993
@@ -234,7 +234,7 @@ sys_accept(struct proc *p, void *v, register_t *retval)
 			    (caddr_t)SCARG(uap, anamelen),
 			    sizeof(*SCARG(uap, anamelen)));
 	}
-	/* if an error occured, free the file descriptor */
+	/* if an error occurred, free the file descriptor */
 	if (error) {
 		fdremove(fdp, fd);
 		ffree(fp);

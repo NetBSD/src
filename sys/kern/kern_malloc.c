@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_malloc.c,v 1.62 2001/08/17 00:48:30 thorpej Exp $	*/
+/*	$NetBSD: kern_malloc.c,v 1.62.2.1 2001/10/01 12:46:50 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -264,8 +264,8 @@ malloc(size, type, flags)
 		else
 			allocsize = 1 << indx;
 		npg = btoc(allocsize);
-		va = (caddr_t) uvm_km_kmemalloc(kmem_map, uvmexp.kmem_object,
-				(vsize_t)ctob(npg), 
+		va = (caddr_t) uvm_km_kmemalloc(kmem_map, NULL,
+				(vsize_t)ctob(npg),
 				(flags & M_NOWAIT) ? UVM_KMF_NOWAIT : 0);
 		if (__predict_false(va == NULL)) {
 			/*
