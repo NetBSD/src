@@ -1,4 +1,4 @@
-/* $NetBSD: ciavar.h,v 1.9 1997/09/02 12:40:20 thorpej Exp $ */
+/* $NetBSD: ciavar.h,v 1.10 1997/09/02 20:07:21 thorpej Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -65,5 +65,5 @@ void	cia_init __P((struct cia_config *, int));
 void	cia_pci_init __P((pci_chipset_tag_t, void *));
 void	cia_dma_init __P((struct cia_config *));
 
-void	cia_bus_io_init __P((bus_space_tag_t, void *));
-void	cia_bus_mem_init __P((bus_space_tag_t, void *));
+void	cia_swiz_bus_io_init __P((bus_space_tag_t, void *));
+void	cia_swiz_bus_mem_init __P((bus_space_tag_t, void *));

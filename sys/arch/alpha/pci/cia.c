@@ -1,4 +1,4 @@
-/* $NetBSD: cia.c,v 1.25 1997/09/02 13:24:48 thorpej Exp $ */
+/* $NetBSD: cia.c,v 1.26 1997/09/02 20:07:20 thorpej Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: cia.c,v 1.25 1997/09/02 13:24:48 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cia.c,v 1.26 1997/09/02 20:07:20 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -107,8 +107,8 @@ cia_init(ccp, mallocsafe)
 
 	if (!ccp->cc_initted) {
 		/* don't do these twice since they set up extents */
-		cia_bus_io_init(&ccp->cc_iot, ccp);
-		cia_bus_mem_init(&ccp->cc_memt, ccp);
+		cia_swiz_bus_io_init(&ccp->cc_iot, ccp);
+		cia_swiz_bus_mem_init(&ccp->cc_memt, ccp);
 	}
 	ccp->cc_mallocsafe = mallocsafe;
 
