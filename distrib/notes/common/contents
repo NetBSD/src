@@ -1,4 +1,4 @@
-.\"	$NetBSD: contents,v 1.34 2001/05/20 23:23:30 jhawk Exp $
+.\"	$NetBSD: contents,v 1.35 2001/05/29 07:22:41 scw Exp $
 .\"
 .\" Copyright (c) 1999-2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -336,7 +336,7 @@ everything described below.
 .if r_i386 .Em 16.4 MB gzipped, 37.9 MB uncompressed
 .if r_mac68k .Em 15.7 MB gzipped, 41.6 MB uncompressed
 .if r_macppc .Em 17.1 MB gzipped, 46.2 MB uncompressed
-.if r_mvme68k .Em 15.5 MB gzipped, 41.2 MB uncompressed
+.if r_mvme68k .Em 15.9 MB gzipped, 37.5 MB uncompressed
 .if r_news68k .Em 15.6 MB gzipped, 41.3 MB uncompressed
 .if r_next68k .Em 15.1 MB gzipped, 46.0 MB uncompressed
 .if r_pc532 .Em 15.9 MB gzipped, 37.9 MB uncompressed
@@ -369,7 +369,7 @@ system call and library manual pages.
 .if r_i386 .Em 12.4 MB gzipped, 44.8 MB uncompressed
 .if r_mac68k .Em 11.8 MB gzipped, 39.7 MB uncompressed
 .if r_macppc .Em 14.4 MB gzipped, 55.4 MB uncompressed
-.if r_mvme68k .Em 11.8 MB gzipped, 39.5 MB uncompressed
+.if r_mvme68k .Em 12.8 MB gzipped, 48.1 MB uncompressed
 .if r_news68k .Em 11.8 MB gzipped, 39.5 MB uncompressed
 .if r_next68k .Em 14.3 MB gzipped, 55.1 MB uncompressed
 .if r_pc532 .Em 11.6 MB gzipped, 37.7 MB uncompressed
@@ -401,7 +401,7 @@ This set includes the games and their manual pages.
 .if r_arm26 .Em ? MB gzipped, ? MB uncompressed
 .if r_arm32 .Em 3.0 MB gzipped, 7.5 MB uncompressed
 .if r_i386 .Em 2.9 MB gzipped, 7.0 MB uncompressed
-.if r_m68k .Em 3.0 MB gzipped, 7.4 MB uncompressed
+.if r_m68k .Em 2.9 MB gzipped, 6.8 MB uncompressed
 .if r_mips .Em 3.0 MB gzipped, 7.9 MB uncompressed
 .if r_pc532 .Em 2.9 MB gzipped, 7.2 MB uncompressed
 .if r_powerpc .Em 3.0 MB gzipped, 7.2 MB uncompressed
@@ -428,7 +428,7 @@ install this distribution set.
 .if r_hpcmips .Em 1.0 MB gzipped, 2.6 MB uncompressed
 .if r_i386 .Em 2.2 MB gzipped, 4.7 MB uncompressed
 .if r_macppc .Em 1.3 MB gzipped, 3.1 MB uncompressed
-.if r_mvme68k .Em 0.7 MB gzipped, 1.4 MB uncompressed
+.if r_mvme68k .Em 0.7 MB gzipped, 1.6 MB uncompressed
 .if r_news68k .Em 0.9 MB gzipped, 1.9 MB uncompressed
 .if r_pc532 .Em 0.6 MB gzipped, 1.2 MB uncompressed
 .if r_pmax .Em 1.1 MB gzipped, 2.7 MB uncompressed
@@ -445,7 +445,7 @@ Note that it does not include any of the manual pages
 that are included in the other sets.
 .br
 .\" MI
-.Em 5.0 MB gzipped, 19.9 MB uncompressed
+.Em 6.2 MB gzipped, 24.9 MB uncompressed
 .
 .It Sy misc
 This set includes the (rather large) system dictionaries,
@@ -467,7 +467,7 @@ all related programs, and their manual pages.
 .if r_arm26 .Em ? MB gzipped, ? MB uncompressed
 .if r_arm32 .Em 1.4 MB gzipped, 4.8 MB uncompressed
 .if r_i386 .Em 1.2 MB gzipped, 4.2 MB uncompressed
-.if r_m68k .Em 1.3 MB gzipped, 4.7 MB uncompressed
+.if r_m68k .Em 1.5 MB gzipped, 5.0 MB uncompressed
 .if r_mips .Em 1.3 MB gzipped, 5.6 MB uncompressed
 .if r_pc532 .Em 1.3 MB gzipped, 4.6 MB uncompressed
 .if r_powerpc .Em 1.2 MB gzipped, 4.6 MB uncompressed
