@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.h,v 1.1 2001/02/04 18:32:12 briggs Exp $	*/
+/*	$NetBSD: conf.h,v 1.2 2001/03/21 23:42:16 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -45,12 +45,6 @@ cdev_decl(pms);
 
 bdev_decl(fd);
 cdev_decl(fd);
-
-/* open, close, read, write, ioctl, tty, mmap */
-#define cdev_pc_init(c,n) { \
-	dev_init(c,n,open), dev_init(c,n,close), dev_init(c,n,read), \
-	dev_init(c,n,write), dev_init(c,n,ioctl), dev_init(c,n,stop), \
-	dev_init(c,n,tty), ttpoll, dev_init(c,n,mmap), D_TTY }
 
 cdev_decl(pc);
 
