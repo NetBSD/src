@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ie_vme.c,v 1.9 2000/04/10 02:16:15 chs Exp $	*/
+/*	$NetBSD: if_ie_vme.c,v 1.10 2000/06/29 19:27:55 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1995 Charles D. Cranor
@@ -157,7 +157,7 @@
 #include <net/if_media.h>
 #include <net/if_ether.h>
 
-#include <vm/vm.h>
+#include <uvm/uvm_extern.h>
 
 #include <machine/bus.h>
 #include <machine/intr.h>
