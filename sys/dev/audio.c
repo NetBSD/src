@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.184.2.25 2005/01/03 16:40:26 kent Exp $	*/
+/*	$NetBSD: audio.c,v 1.184.2.26 2005/01/05 12:49:44 kent Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.184.2.25 2005/01/03 16:40:26 kent Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.184.2.26 2005/01/05 12:49:44 kent Exp $");
 
 #include "audio.h"
 #if NAUDIO > 0
@@ -87,7 +87,7 @@ __KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.184.2.25 2005/01/03 16:40:26 kent Exp $"
 
 #include <machine/endian.h>
 
-/* #define AUDIO_DEBUG 1 */
+/* #define AUDIO_DEBUG	1 */
 #ifdef AUDIO_DEBUG
 #define DPRINTF(x)	if (audiodebug) printf x
 #define DPRINTFN(n,x)	if (audiodebug>(n)) printf x
@@ -97,7 +97,7 @@ int	audiodebug = AUDIO_DEBUG;
 #define DPRINTFN(n,x)
 #endif
 
-#define ROUNDSIZE(x) x &= -16	/* round to nice boundary */
+#define ROUNDSIZE(x)	x &= -16	/* round to nice boundary */
 #define SPECIFIED(x)	(x != ~0)
 #define SPECIFIED_CH(x)	(x != (u_char)~0)
 
@@ -1076,13 +1076,14 @@ audio_init_ringbuffer(struct audio_softc *sc, struct audio_ringbuffer *rp)
 	if (blksize > rp->s.bufsize / AUMINNOBLK)
 		blksize = rp->s.bufsize / AUMINNOBLK;
 	ROUNDSIZE(blksize);
+	DPRINTF(("audio_init_ringbuffer: MI blksize=%d\n", blksize));
 	if (sc->hw_if->round_blocksize)
 		blksize = sc->hw_if->round_blocksize(sc->hw_hdl, blksize);
 	if (blksize <= 0)
 		panic("audio_init_ringbuffer: blksize");
 	nblks = rp->s.bufsize / blksize;
 
-	DPRINTF(("audio_init_ringbuffer: blksize=%d\n", blksize));
+	DPRINTF(("audio_init_ringbuffer: final blksize=%d\n", blksize));
 	rp->blksize = blksize;
 	rp->maxblks = nblks;
 	rp->s.end = rp->s.start + nblks * blksize;
@@ -1125,7 +1126,7 @@ audio_initbufs(struct audio_softc *sc)
 #define double u_long
 	sc->sc_pnintr = 0;
 	sc->sc_pblktime = (u_long)(
-man	    (double)sc->sc_pr.blksize * 100000 /
+	    (double)sc->sc_pr.blksize * 100000 /
 	    (double)(sc->sc_pparams.precision / NBBY *
 		     sc->sc_pparams.channels *
 		     sc->sc_pparams.sample_rate)) * 10;
@@ -1835,7 +1836,7 @@ audio_write(struct audio_softc *sc, struct uio *uio, int ioflag)
 		 * the copy did not fill the last block completely it needs to
 		 * be padded.
 		 */
-		if (cb->needfill &&
+		if (cb->needfill && inp < einp &&
 		    (inp  - cb->s.start) / cb->blksize ==
 		    (einp - cb->s.start) / cb->blksize) {
 			/* Figure out how many bytes to a block boundary. */
