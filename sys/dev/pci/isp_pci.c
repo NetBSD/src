@@ -1,5 +1,5 @@
-/* $NetBSD: isp_pci.c,v 1.39 1999/04/04 01:14:58 mjacob Exp $ */
-/* release_4_3_99 */
+/* $NetBSD: isp_pci.c,v 1.40 1999/05/12 18:59:23 mjacob Exp $ */
+/* release_5_11_99 */
 /*
  * PCI specific probe and attach routines for Qlogic ISP SCSI adapters.
  *
@@ -189,10 +189,8 @@ isp_pci_probe(parent, match, aux)
 #endif
 #ifndef	ISP_DISABLE_1080_SUPPORT
 	case PCI_QLOGIC_ISP1080:
-#if	0
-	case PCI_QLOGIC_ISP1240:	/* 1240 not ready yet */
+	case PCI_QLOGIC_ISP1240:
 		return (1);
-#endif
 #endif
 #ifndef	ISP_DISABLE_2100_SUPPORT
 	case PCI_QLOGIC_ISP2100:
@@ -212,6 +210,7 @@ isp_pci_attach(parent, self, aux)
 #ifdef	DEBUG
 	static char oneshot = 1;
 #endif
+	static char *nomem = "%s: no mem for sdparam table\n";
 	u_int32_t data, linesz = PCI_DFLT_LNSZ;
 	struct pci_attach_args *pa = aux;
 	struct isp_pcisoftc *pcs = (struct isp_pcisoftc *) self;
@@ -259,8 +258,7 @@ isp_pci_attach(parent, self, aux)
 		isp->isp_type = ISP_HA_SCSI_UNKNOWN;
 		isp->isp_param = malloc(sizeof (sdparam), M_DEVBUF, M_NOWAIT);
 		if (isp->isp_param == NULL) {
-			printf("%s: couldn't allocate sdparam table\n",
-			       isp->isp_name);
+			printf(nomem, isp->isp_name);
 			return;
 		}
 		bzero(isp->isp_param, sizeof (sdparam));
@@ -272,11 +270,23 @@ isp_pci_attach(parent, self, aux)
 		isp->isp_type = ISP_HA_SCSI_1080;
 		isp->isp_param = malloc(sizeof (sdparam), M_DEVBUF, M_NOWAIT);
 		if (isp->isp_param == NULL) {
-			printf("%s: couldn't allocate sdparam table\n",
-			       isp->isp_name);
+			printf(nomem, isp->isp_name);
 			return;
 		}
 		bzero(isp->isp_param, sizeof (sdparam));
+		pcs->pci_poff[DMA_BLOCK >> _BLK_REG_SHFT] =
+		    ISP1080_DMA_REGS_OFF;
+	}
+	if (pa->pa_id == PCI_QLOGIC_ISP1240) {
+		isp->isp_mdvec = &mdvec_1080;
+		isp->isp_type = ISP_HA_SCSI_12X0;
+		isp->isp_param =
+		    malloc(2 * sizeof (sdparam), M_DEVBUF, M_NOWAIT);
+		if (isp->isp_param == NULL) {
+			printf(nomem, isp->isp_name);
+			return;
+		}
+		bzero(isp->isp_param, 2 * sizeof (sdparam));
 		pcs->pci_poff[DMA_BLOCK >> _BLK_REG_SHFT] =
 		    ISP1080_DMA_REGS_OFF;
 	}
@@ -287,8 +297,7 @@ isp_pci_attach(parent, self, aux)
 		isp->isp_type = ISP_HA_FC_2100;
 		isp->isp_param = malloc(sizeof (fcparam), M_DEVBUF, M_NOWAIT);
 		if (isp->isp_param == NULL) {
-			printf("%s: couldn't allocate fcparam table\n",
-			       isp->isp_name);
+			printf(nomem, isp->isp_name);
 			return;
 		}
 		bzero(isp->isp_param, sizeof (fcparam));
