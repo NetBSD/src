@@ -1,4 +1,4 @@
-#	$NetBSD: std.arm32,v 1.14 2001/08/19 05:51:09 matt Exp $
+#	$NetBSD: std.arm32,v 1.15 2002/02/06 21:30:29 thorpej Exp $
 #
 # standard NetBSD/arm32 options
 
@@ -10,3 +10,6 @@ options 	EXEC_SCRIPT
 
 # To support easy transit to ../arch/arm/arm32
 options 	ARM32
+
+# XXX
+options 	OFW
