@@ -1,4 +1,4 @@
-/*	$NetBSD: scores.c,v 1.2 1995/04/22 07:42:38 cgd Exp $	*/
+/*	$NetBSD: scores.c,v 1.3 1997/01/13 06:51:57 tls Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -240,7 +240,7 @@ thisuser()
 	l = strlen(p);
 	if (l >= sizeof(u))
 		l = sizeof(u) - 1;
-	bcopy(p, u, l);
+	memcpy(u, p, l);
 	u[l] = '\0';
 	return (u);
 }

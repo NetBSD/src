@@ -1,4 +1,4 @@
-/*	$NetBSD: input.c,v 1.4 1995/04/27 21:22:24 mycroft Exp $	*/
+/*	$NetBSD: input.c,v 1.5 1997/01/13 06:50:25 tls Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -49,7 +49,7 @@
 #if 0
 static char sccsid[] = "@(#)input.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$NetBSD: input.c,v 1.4 1995/04/27 21:22:24 mycroft Exp $";
+static char rcsid[] = "$NetBSD: input.c,v 1.5 1997/01/13 06:50:25 tls Exp $";
 #endif
 #endif not lint
 
@@ -378,7 +378,7 @@ setplane(c)
 	pp = findplane(number(c));
 	if (pp == NULL)
 		return ("Unknown Plane");
-	bcopy(pp, &p, sizeof (p));
+	memcpy(&p, pp, sizeof (p));
 	p.delayd = 0;
 	return (NULL);
 }
