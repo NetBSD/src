@@ -1,4 +1,4 @@
-/*	$NetBSD: zs_kgdb.c,v 1.11 1997/02/12 01:07:56 gwr Exp $	*/
+/*	$NetBSD: zs_kgdb.c,v 1.11.6.1 1997/10/14 10:19:04 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -231,11 +231,12 @@ zs_kgdb_rxint(cs)
 {
 	register u_char c, rr1;
 
-	/* Read the input data ASAP. */
-	c = zs_read_data(cs);
-
-	/* Save the status register too. */
+	/*
+	 * First read the status, because reading the received char
+	 * destroys the status of this char.
+	 */
 	rr1 = zs_read_reg(cs, 1);
+	c = zs_read_data(cs);
 
 	if (rr1 & (ZSRR1_FE | ZSRR1_DO | ZSRR1_PE)) {
 		/* Clear the receive error. */

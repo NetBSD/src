@@ -1,4 +1,4 @@
-/*	$NetBSD: sram.c,v 1.4 1996/10/13 03:35:08 christos Exp $	*/
+/*	$NetBSD: sram.c,v 1.4.10.1 1997/10/14 10:20:38 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 Kazuhisa Shimizu.
@@ -40,7 +40,6 @@
 #include <machine/sram.h>
 #include <x68k/dev/sramvar.h>
 #include <x68k/x68k/iodevice.h>
-#include "sram.h"
 
 struct sram_softc sram_softc;
 
@@ -50,6 +49,11 @@ struct sram_softc sram_softc;
 #define SRAM_DEBUG_IOCTL	0x03
 int sramdebug = SRAM_DEBUG_IOCTL;
 #endif
+
+void sramattach __P((int));
+int sramopen __P((dev_t, int));
+void sramclose __P((dev_t, int));
+int sramioctl __P((dev_t, u_long, caddr_t, int, struct proc *));
 
 /* 
  *  functions for probeing.

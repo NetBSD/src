@@ -1,4 +1,4 @@
-/*	$NetBSD: ite.c,v 1.7 1997/01/26 12:17:59 oki Exp $	*/
+/*	$NetBSD: ite.c,v 1.7.8.1 1997/10/14 10:20:21 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -82,15 +82,36 @@
 
 struct consdev;
 
+__inline static void itesendch __P((int));
+__inline static void alignment_display __P((struct ite_softc *));
+__inline static void snap_cury __P((struct ite_softc *));
+__inline static void ite_dnchar __P((struct ite_softc *, int));
+static void ite_inchar __P((struct ite_softc *,	int));
+__inline static void ite_clrtoeol __P((struct ite_softc *));
+__inline static void ite_clrtobol __P((struct ite_softc *));
+__inline static void ite_clrline __P((struct ite_softc *));
+__inline static void ite_clrtoeos __P((struct ite_softc *));
+__inline static void ite_clrtobos __P((struct ite_softc *));
+__inline static void ite_clrscreen __P((struct ite_softc *));
+__inline static void ite_dnline __P((struct ite_softc *, int));
+__inline static void ite_inline __P((struct ite_softc *, int));
+__inline static void ite_index __P((struct ite_softc *));
+__inline static void ite_lf __P((struct ite_softc *));
+__inline static void ite_crlf __P((struct ite_softc *));
+__inline static void ite_cr __P((struct ite_softc *));
+__inline static void ite_rlf __P((struct ite_softc *));
 static void iteprecheckwrap __P((struct ite_softc *ip));
 static void itecheckwrap __P((struct ite_softc *ip));
 static void repeat_handler __P((void *arg));
 static int ite_argnum __P((struct ite_softc *ip));
 static int ite_zargnum __P((struct ite_softc *ip));
 static void ite_sendstr __P((struct ite_softc *ip, char *str));
-inline static int atoi __P((const char *cp));
-inline static char *index __P((const char *cp, char ch));
+__inline static int atoi __P((const char *cp));
+__inline static char *index __P((const char *cp, char ch));
 void ite_reset __P((struct ite_softc *ip));
+struct ite_softc *getitesp __P((dev_t));
+int iteon __P((dev_t, int));
+void iteoff __P((dev_t, int));
 
 struct itesw itesw[] = {
 	0,	tv_init,	tv_deinit,	0,
@@ -119,6 +140,8 @@ int	next_repeat_timeo  = 3;  /* /100: timeout when repeating for next char */
 u_char	cons_tabs[MAX_TABS];
 
 int kbd_init;
+
+cdev_decl(ite);
 
 void	itestart __P((struct tty *tp));
 
@@ -596,7 +619,7 @@ ite_reset(ip)
 
 /* Used in console at startup only */
 int
-itecnfilter(c, caller)
+ite_cnfilter(c, caller)
 	u_char c;
 	enum caller caller;
 {
@@ -725,7 +748,7 @@ repeat_handler (arg)
 		add_sicallback(ite_filter, last_char, ITEFILT_REPEATER);
 }
 
-inline static void
+__inline static void
 itesendch (ch)
 	int ch;
 {
@@ -972,7 +995,7 @@ ite_filter(c, caller)
 }
 
 /* helper functions, makes the code below more readable */
-inline static void
+__inline static void
 ite_sendstr (ip, str)
 	struct ite_softc *ip;
 	char *str;
@@ -981,7 +1004,7 @@ ite_sendstr (ip, str)
 		itesendch (*str++);
 }
 
-inline static void
+__inline static void
 alignment_display(ip)
 	struct ite_softc *ip;
 {
@@ -993,7 +1016,7 @@ alignment_display(ip)
 	attrclr(ip, 0, 0, ip->rows, ip->cols);
 }
 
-inline static void
+__inline static void
 snap_cury(ip)
 	struct ite_softc *ip;
 {
@@ -1005,7 +1028,7 @@ snap_cury(ip)
 	}
 }
 
-inline static void
+__inline static void
 ite_dnchar(ip, n)
 	struct ite_softc *ip;
 	int n;
@@ -1040,7 +1063,7 @@ ite_inchar(ip, n)
 	ip->save_char = c;
 }
 
-inline static void
+__inline static void
 ite_clrtoeol(ip)
 	struct ite_softc *ip;
 {
@@ -1051,7 +1074,7 @@ ite_clrtoeol(ip)
 	}
 }
 
-inline static void
+__inline static void
 ite_clrtobol(ip)
 	struct ite_softc *ip;
 {
@@ -1060,7 +1083,7 @@ ite_clrtobol(ip)
 	attrclr(ip, y, 0, 1, x);
 }
 
-inline static void
+__inline static void
 ite_clrline(ip)
 	struct ite_softc *ip;
 {
@@ -1069,7 +1092,7 @@ ite_clrline(ip)
 	attrclr(ip, y, 0, 1, ip->cols);
 }
 
-inline static void
+__inline static void
 ite_clrtoeos(ip)
 	struct ite_softc *ip;
 {
@@ -1080,7 +1103,7 @@ ite_clrtoeos(ip)
 	}
 }
 
-inline static void
+__inline static void
 ite_clrtobos(ip)
 	struct ite_softc *ip;
 {
@@ -1091,7 +1114,7 @@ ite_clrtobos(ip)
 	}
 }
 
-inline static void
+__inline static void
 ite_clrscreen(ip)
 	struct ite_softc *ip;
 {
@@ -1101,7 +1124,7 @@ ite_clrscreen(ip)
 
 
 
-inline static void
+__inline static void
 ite_dnline(ip, n)
 	struct ite_softc *ip;
 	int n;
@@ -1123,7 +1146,7 @@ ite_dnline(ip, n)
 	attrclr(ip, ip->bottom_margin - n + 1, 0, n, ip->cols);
 }
 
-inline static void
+__inline static void
 ite_inline(ip, n)
 	struct ite_softc *ip;
 	int n;
@@ -1148,7 +1171,7 @@ ite_inline(ip, n)
 	ip->curx = 0;
 }
 
-inline static void
+__inline static void
 ite_index (ip)
 	struct ite_softc *ip;
 {
@@ -1161,7 +1184,7 @@ ite_index (ip)
 	/*clr_attr(ip, ATTR_INV);*/
 }
 
-inline static void
+__inline static void
 ite_lf (ip)
 	struct ite_softc *ip;
 {
@@ -1184,7 +1207,7 @@ ite_lf (ip)
 	ip->save_char = 0;
 }
 
-inline static void
+__inline static void
 ite_crlf (ip)
 	struct ite_softc *ip;
 {
@@ -1192,7 +1215,7 @@ ite_crlf (ip)
 	ite_lf (ip);
 }
 
-inline static void
+__inline static void
 ite_cr (ip)
 	struct ite_softc *ip;
 {
@@ -1201,7 +1224,7 @@ ite_cr (ip)
 	}
 }
 
-inline static void
+__inline static void
 ite_rlf (ip)
 	struct ite_softc *ip;
 {
@@ -1214,7 +1237,7 @@ ite_rlf (ip)
 	clr_attr(ip, ATTR_INV);
 }
 
-inline static int
+__inline static int
 atoi (cp)
     const char *cp;
 {
@@ -1225,7 +1248,7 @@ atoi (cp)
 	return n;
 }
 
-inline static char *
+__inline static char *
 index(cp, ch)
 	const char *cp;
 	char ch;
@@ -1235,7 +1258,7 @@ index(cp, ch)
 	return *cp ? (char *) cp : 0;
 }
 
-inline static int
+__inline static int
 ite_argnum (ip)
 	struct ite_softc *ip;
 {
@@ -1253,7 +1276,7 @@ ite_argnum (ip)
 	return n;
 }
 
-inline static int
+__inline static int
 ite_zargnum (ip)
 	struct ite_softc *ip;
 {
@@ -2502,7 +2525,7 @@ itecngetc(dev)
 	}
 	do {
 		c = kbdgetcn();
-		c = itecnfilter(c, ITEFILT_CONSOLE);
+		c = ite_cnfilter(c, ITEFILT_CONSOLE);
 	} while (c == -1);
 	return (c);
 }

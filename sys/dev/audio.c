@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.57.2.4 1997/09/06 18:49:43 thorpej Exp $	*/
+/*	$NetBSD: audio.c,v 1.57.2.5 1997/10/14 10:22:04 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -1373,14 +1373,11 @@ audio_ioctl(dev, cmd, addr, flag, p)
 		error = hw->query_encoding(sc->hw_hdl, (struct audio_encoding *)addr);
 		break;
 
-#ifdef COMPAT_12
-	/* GETPROPS contains the same info (and more) */
 	case AUDIO_GETFD:
 		DPRINTF(("AUDIO_GETFD\n"));
-		*(int *)addr = 
-		  (hw->get_props(sc->hw_hdl) & AUDIO_PROP_FULLDUPLEX) != 0;
+		*(int *)addr = sc->sc_full_duplex;
 		break;
-#endif
+
 	case AUDIO_SETFD:
 		DPRINTF(("AUDIO_SETFD\n"));
 		fd = *(int *)addr;
@@ -2154,8 +2151,8 @@ audiosetinfo(sc, ai)
 		blks = ai->hiwat;
 		if (blks > sc->sc_pr.maxblks)
 			blks = sc->sc_pr.maxblks;
-		if (blks < 1)
-			blks = 1;
+		if (blks < 2)
+			blks = 2;
 		sc->sc_pr.usedhigh = blks * sc->sc_pr.blksize;
 	}
 	if (ai->lowat != ~0) {
@@ -2163,6 +2160,10 @@ audiosetinfo(sc, ai)
 		if (blks > sc->sc_pr.maxblks - 1)
 			blks = sc->sc_pr.maxblks - 1;
 		sc->sc_pr.usedlow = blks * sc->sc_pr.blksize;
+	}
+	if (ai->hiwat != ~0 || ai->lowat != ~0) {
+		if (sc->sc_pr.usedlow > sc->sc_pr.usedhigh - sc->sc_pr.blksize)
+			sc->sc_pr.usedlow = sc->sc_pr.usedhigh - sc->sc_pr.blksize;
 	}
 
 	return (0);

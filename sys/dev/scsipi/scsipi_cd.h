@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipi_cd.h,v 1.2.2.2 1997/08/27 23:33:25 thorpej Exp $	*/
+/*	$NetBSD: scsipi_cd.h,v 1.2.2.3 1997/10/14 10:25:20 thorpej Exp $	*/
 
 /*
  * Written by Julian Elischer (julian@tfs.com)
@@ -6,7 +6,7 @@
  *
  * TRW Financial Systems, in accordance with their agreement with Carnegie
  * Mellon University, makes this software available to CMU to distribute
- * or use in any manner that they see fit as long as this message is kept with 
+ * or use in any manner that they see fit as long as this message is kept with
  * the software. For this reason TFS also grants any other persons or
  * organisations permission to use or modify this software.
  *
@@ -115,34 +115,33 @@ struct scsipi_read_cd_cap_data {
 /* mod pages common to scsi and atapi */
 struct cd_audio_page {
 	u_int8_t page_code;
-#define	CD_PAGE_CODE	0x3F
-#define	AUDIO_PAGE	0x0e
-#define	CD_PAGE_PS	0x80
+#define		CD_PAGE_CODE	0x3F
+#define		AUDIO_PAGE	0x0e
+#define		CD_PAGE_PS	0x80
 	u_int8_t param_len;
 	u_int8_t flags;
 #define		CD_PA_SOTC	0x02
 #define		CD_PA_IMMED	0x04
 	u_int8_t unused[2];
 	u_int8_t format_lba; /* valid only for SCSI CDs */
-#define		CD_PA_FORMAT_LBA	0x0F
+#define		CD_PA_FORMAT_LBA 0x0F
 #define		CD_PA_APR_VALID	0x80
 	u_int8_t lb_per_sec[2];
-	struct	port_control {
-		u_int8_t channels; 
+	struct port_control {
+		u_int8_t channels;
 #define	CHANNEL 0x0F
 #define	CHANNEL_0 1
 #define	CHANNEL_1 2
 #define	CHANNEL_2 4
 #define	CHANNEL_3 8
-#define	LEFT_CHANNEL	CHANNEL_0
-#define	RIGHT_CHANNEL	CHANNEL_1
-#define MUTE_CHANNEL  0x0
-#define BOTH_CHANNEL  LEFT_CHANNEL | RIGHT_CHANNEL
+#define		LEFT_CHANNEL	CHANNEL_0
+#define		RIGHT_CHANNEL	CHANNEL_1
+#define		MUTE_CHANNEL	0x0
+#define		BOTH_CHANNEL	LEFT_CHANNEL | RIGHT_CHANNEL
 		u_int8_t volume;
 	} port[4];
 #define	LEFT_PORT	0
 #define	RIGHT_PORT	1
 };
-
 
 #endif /* _SCSI_PI_CD_H */

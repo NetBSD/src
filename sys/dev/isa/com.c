@@ -1,4 +1,4 @@
-/*	$NetBSD: com.c,v 1.102.2.3 1997/09/22 06:33:09 thorpej Exp $	*/
+/*	$NetBSD: com.c,v 1.102.2.4 1997/10/14 10:23:19 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1996, 1997
@@ -158,6 +158,8 @@ static bus_space_handle_t comconsioh;
 static int	comconsattached;
 static int comconsrate;
 static tcflag_t comconscflag;
+
+static u_char tiocm_xxx2mcr __P((int));
 
 #ifndef __GENERIC_SOFT_INTERRUPTS
 #ifdef alpha
@@ -674,6 +676,19 @@ comtty(dev)
 
 	return (tp);
 }
+
+static u_char
+tiocm_xxx2mcr(data)
+	int data;
+{
+	u_char m = 0;
+
+	if (ISSET(data, TIOCM_DTR))
+		SET(m, MCR_DTR);
+	if (ISSET(data, TIOCM_RTS))
+		SET(m, MCR_RTS);
+	return m;
+}
  
 int
 comioctl(dev, cmd, data, flag, p)
@@ -725,9 +740,42 @@ comioctl(dev, cmd, data, flag, p)
 		break;
 
 	case TIOCMSET:
+		CLR(sc->sc_mcr, MCR_DTR | MCR_RTS);
+		/*FALLTHROUGH*/
+
 	case TIOCMBIS:
+		SET(sc->sc_mcr, tiocm_xxx2mcr(*(int *)data));
+		bus_space_write_1(sc->sc_iot, sc->sc_ioh, com_mcr, sc->sc_mcr);
+		break;
+
 	case TIOCMBIC:
-	case TIOCMGET:
+		CLR(sc->sc_mcr, tiocm_xxx2mcr(*(int *)data));
+		bus_space_write_1(sc->sc_iot, sc->sc_ioh, com_mcr, sc->sc_mcr);
+		break;
+
+	case TIOCMGET: {
+		u_char m;
+		int bits = 0;
+
+		m = sc->sc_mcr;
+		if (ISSET(m, MCR_DTR))
+			SET(bits, TIOCM_DTR);
+		if (ISSET(m, MCR_RTS))
+			SET(bits, TIOCM_RTS);
+		m = sc->sc_msr;
+		if (ISSET(m, MSR_DCD))
+			SET(bits, TIOCM_CD);
+		if (ISSET(m, MSR_CTS))
+			SET(bits, TIOCM_CTS);
+		if (ISSET(m, MSR_DSR))
+			SET(bits, TIOCM_DSR);
+		if (ISSET(m, MSR_RI | MSR_TERI))
+			SET(bits, TIOCM_RI);
+		if (bus_space_read_1(sc->sc_iot, sc->sc_ioh, com_ier))
+			SET(bits, TIOCM_LE);
+		*(int *)data = bits;
+		break;
+	}
 	default:
 		return (ENOTTY);
 	}
@@ -1701,7 +1749,7 @@ int
 com_kgdb_attach(iot, iobase, rate, frequency, cflag)
 	bus_space_tag_t iot;
 	int iobase;
-	int rate;
+	int rate, frequency;
 	tcflag_t cflag;
 {
 	int res;

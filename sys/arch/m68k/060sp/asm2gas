@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$NetBSD: asm2gas,v 1.3 1994/10/26 07:48:49 cgd Exp $
+#	$NetBSD: asm2gas,v 1.3.12.1 1997/10/14 10:16:36 thorpej Exp $
 
 #
 # Copyright (c) 1994 Charles Hannum.  All rights reserved.
@@ -36,6 +36,7 @@
 cat $1 | sed -e '
   # format canonicalization
 
+  s/^#/|#/
   /[ 	]IDNT[ 	]/{s/^/|/;p;d;}
   /^\*/{s//|/;p;d;}
   s/;/|/
@@ -138,7 +139,7 @@ cat $1 | sed -e '
   s/\([^_a-zA-Z0-9]\)fpiar\([^_a-zA-Z0-9]\)/\1fpi\2/g
   s/\([^_a-zA-Z0-9]\)fpiar$/\1fpi/g
 
-  s/\$/0x/g
+  s/\$\([0-9a-fA-F]\)/0x\1/g
   s/#:/#:0x/g
 
   s/-(\([sSpPaA][pPcC0-7]\))/\1@-/g

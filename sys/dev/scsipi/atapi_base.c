@@ -1,4 +1,4 @@
-/*	$NetBSD: atapi_base.c,v 1.2.2.2 1997/08/27 23:32:53 thorpej Exp $	*/
+/*	$NetBSD: atapi_base.c,v 1.2.2.3 1997/10/14 10:24:38 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1997 Charles M. Hannum.  All rights reserved.
@@ -56,7 +56,7 @@
  *
  * THIS IS THE DEFAULT ERROR HANDLER
  */
-int 
+int
 atapi_interpret_sense(xs)
 	struct scsipi_xfer *xs;
 {
@@ -75,7 +75,7 @@ atapi_interpret_sense(xs)
 		    ("calling private err_handler()\n"));
 		error = (*sc_link->device->err_handler) (xs);
 		if (error != -1)
-			return error;		/* error >= 0  better ? */
+			return (error);		/* error >= 0  better ? */
 	}
 	/* otherwise use the default */
 	switch (key) {
@@ -90,9 +90,9 @@ atapi_interpret_sense(xs)
 			if ((sc_link->flags & SDEV_REMOVABLE) != 0)
 				sc_link->flags &= ~SDEV_MEDIA_LOADED;
 			if ((xs->flags & SCSI_IGNORE_NOT_READY) != 0)
-				return 0;
+				return (0);
 			if ((xs->flags & SCSI_SILENT) != 0)
-				return EIO;
+				return (EIO);
 			msg = "not ready";
 			error = EIO;
 			break;
@@ -106,9 +106,9 @@ atapi_interpret_sense(xs)
 			break;
 		case 0x5:	/* ILLEGAL REQUEST */
 			if ((xs->flags & SCSI_IGNORE_ILLEGAL_REQUEST) != 0)
-				return 0;
+				return (0);
 			if ((xs->flags & SCSI_SILENT) != 0)
-				return EIO;
+				return (EIO);
 			msg = "illegal request";
 			error = EINVAL;
 			break;
@@ -118,9 +118,9 @@ atapi_interpret_sense(xs)
 			if ((xs->flags & SCSI_IGNORE_MEDIA_CHANGE) != 0 ||
 			    /* XXX Should reupload any transient state. */
 			    (sc_link->flags & SDEV_REMOVABLE) == 0)
-				return ERESTART;
+				return (ERESTART);
 			if ((xs->flags & SCSI_SILENT) != 0)
-				return EIO;
+				return (EIO);
 			msg = "unit attention";
 			error = EIO;
 			break;
@@ -163,7 +163,7 @@ atapi_interpret_sense(xs)
 		}
 	}
 
-	return error;
+	return (error);
 
 }
 
@@ -193,7 +193,7 @@ atapi_print_addr(sc_link)
  * long the data is supposed to be. If we have  a buf
  * to associate with the transfer, we need that too.
  */
-int 
+int
 atapi_scsipi_cmd(sc_link, scsipi_cmd, cmdlen, data_addr, datalen,
     retries, timeout, bp, flags)
 	struct scsipi_link *sc_link;
@@ -218,17 +218,17 @@ atapi_scsipi_cmd(sc_link, scsipi_cmd, cmdlen, data_addr, datalen,
 
 	if ((xs = scsipi_make_xs(sc_link, scsipi_cmd, cmdlen, data_addr,
 	    datalen, retries, timeout, bp, flags)) == NULL)
-		return ENOMEM;
+		return (ENOMEM);
 
 	xs->cmdlen = (sc_link->scsipi_atapi.cap & ACAP_LEN) ? 16 : 12;
 
 	if ((error = scsipi_execute_xs(xs)) == EJUSTRETURN)
-		return 0;
+		return (0);
 
 	/*
 	 * we have finished with the xfer stuct, free it and
 	 * check if anyone else needs to be started up.
 	 */
 	scsipi_free_xs(xs, flags);
-	return error;
+	return (error);
 }

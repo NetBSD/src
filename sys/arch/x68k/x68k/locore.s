@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.19.4.1 1997/09/16 03:49:40 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.19.4.2 1997/10/14 10:21:03 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -54,8 +54,7 @@
 | This is for kvm_mkdb, and should be the address of the beginning
 | of the kernel text segment (not necessarily the same as kernbase).
 	.text
-	.globl	_kernel_text
-_kernel_text:
+GLOBAL(kernel_text)
 
 #include <x68k/x68k/vectors.s>
 
@@ -67,7 +66,7 @@ _kernel_text:
  */
 	.data
 	.space	NBPG
-tmpstk:
+ASLOCAL(tmpstk)
 
 	.text
 /*
@@ -329,7 +328,7 @@ Lfptnull:
 	fmovem	fpsr,sp@-	| push fpsr as code argument
 	frestore a0@		| restore state
 	movl	#T_FPERR,sp@-	| push type arg
-	jra	Ltrapnstkadj	| call trap and deal with stack cleanup
+	jra	_ASM_LABEL(faultstkadj)	| call trap and deal with stack cleanup
 
 /*
  * Other exceptions only cause four and six word stack frame and require
@@ -371,21 +370,16 @@ Ltrap1:
 	rte
 
 /*
- * Routines for traps 1 and 2.  The meaning of the two traps depends
- * on whether we are an HPUX compatible process or a native 4.3 process.
- * Our native 4.3 implementation uses trap 1 as sigreturn() and trap 2
- * as a breakpoint trap.  HPUX uses trap 1 for a breakpoint, so we have
- * to make adjustments so that trap 2 is used for sigreturn.
+ * Trap 1 - sigreturn
  */
-_trap1:
-	btst	#MDP_TRCB,mdpflag	| being traced by an HPUX process?
-	jeq	sigreturn		| no, trap1 is sigreturn
-	jra	_trace			| yes, trap1 is breakpoint
+ENTRY_NOPROFILE(trap1)
+	jra	_ASM_LABEL(sigreturn)
 
-_trap2:
-	btst	#MDP_TRCB,mdpflag	| being traced by an HPUX process?
-	jeq	_trace			| no, trap2 is breakpoint
-	jra	sigreturn		| yes, trap2 is sigreturn
+/*
+ * Trap 2 - trace trap
+ */
+ENTRY_NOPROFILE(trap2)
+	jra	_C_LABEL(trace)
 
 /*
  * Trap 12 is the entry point for the cachectl "syscall" (both HPUX & BSD)
@@ -393,25 +387,25 @@ _trap2:
  * command in d0, addr in a1, length in d1
  */
 	.globl	_cachectl
-_trap12:
+ENTRY_NOPROFILE(trap12)
 	movl	d1,sp@-			| push length
 	movl	a1,sp@-			| push addr
 	movl	d0,sp@-			| push command
-	jbsr	_cachectl		| do it
+	jbsr	_C_LABEL(cachectl)	| do it
 	lea	sp@(12),sp		| pop args
-	jra	rei			| all done
+	jra	_ASM_LABEL(rei)		| all done
 
 /*
  * Trace (single-step) trap.  Kernel-mode is special.
  * User mode traps are simply passed on to trap().
  */
-_trace:
+ENTRY_NOPROFILE(trace)
 	clrl	sp@-			| stack adjust count
 	moveml	#0xFFFF,sp@-
 	moveq	#T_TRACE,d0
 	movw	sp@(FR_HW),d1		| get PSW
 	andw	#PSL_S,d1		| from system mode?
-	jne	kbrkpt			| yes, kernel breakpoint
+	jne	Lkbrkpt			| yes, kernel breakpoint
 	jra	fault			| no, user-mode fault
 
 /*
@@ -421,16 +415,16 @@ _trace:
  *	- trace traps for SUN binaries (not fully supported yet)
  * User mode traps are simply passed to trap().
  */
-_trap15:
+ENTRY_NOPROFILE(trap15)
 	clrl	sp@-			| stack adjust count
 	moveml	#0xFFFF,sp@-
 	moveq	#T_TRAP15,d0
 	movw	sp@(FR_HW),d1		| get PSW
 	andw	#PSL_S,d1		| from system mode?
-	jne	kbrkpt			| yes, kernel breakpoint
-	jra	fault			| no, user-mode fault
+	jne	Lkbrkpt			| yes, kernel breakpoint
+	jra	_ASM_LABEL(fault)	| no, user-mode fault
 
-kbrkpt:	| Kernel-mode breakpoint or trace trap. (d0=trap_type)
+Lkbrkpt: | Kernel-mode breakpoint or trace trap. (d0=trap_type)
 	| Save the system sp rather than the user sp.
 	movw	#PSL_HIGHIPL,sr		| lock out interrupts
 	lea	sp@(FR_SIZE),a6		| Save stack pointer
@@ -523,7 +517,7 @@ Lbrkpt3:
 	/* Externs. */
 	.globl	_intrhand, _hardclock
 
-_spurintr:
+ENTRY_NOPROFILE(spurintr)	/* level 0 */
 	rte				| XXX mfpcure (x680x0 hardware bug)
 
 _zstrap:
@@ -534,7 +528,7 @@ _zstrap:
 	movw	sr,d0
 	movw	#PSL_HIGHIPL,sr
 	movw	d0,sp@-
-	jbsr	_zshard
+	jbsr	_C_LABEL(zshard)
 	addql	#4,sp
 	INTERRUPT_RESTOREREG
 #endif
@@ -557,7 +551,7 @@ _kbdtimer:
 _fdctrap:
 #if NFD > 0
 	INTERRUPT_SAVEREG
-	jbsr	_fdcintr
+	jbsr	_C_LABEL(fdcintr)
 	INTERRUPT_RESTOREREG
 #endif
 	addql	#1,_intrcnt+20
@@ -567,7 +561,7 @@ _fdctrap:
 _fdcdmatrap:
 #if NFD > 0
 	INTERRUPT_SAVEREG
-	jbsr	_fdcdmaintr
+	jbsr	_C_LABEL(fdcdmaintr)
 	INTERRUPT_RESTOREREG
 #endif
 	addql	#1,_intrcnt+20
@@ -578,7 +572,7 @@ _fdcdmatrap:
 _fdcdmaerrtrap:
 #if NFD > 0
 	INTERRUPT_SAVEREG
-	jbsr	_fdcdmaerrintr
+	jbsr	_C_LABEL(fdcdmaerrintr)
 	INTERRUPT_RESTOREREG
 #endif
 	addql	#1,_intrcnt+20
@@ -589,7 +583,7 @@ _fdcdmaerrtrap:
 _spcdmatrap:
 #if NSPC > 0
 	INTERRUPT_SAVEREG
-	jbsr	_spcdmaintr
+	jbsr	_C_LABEL(spcdmaintr)
 	INTERRUPT_RESTOREREG
 #endif
 	addql	#1,_intrcnt+20
@@ -600,7 +594,7 @@ _spcdmatrap:
 _spcdmaerrtrap:
 #if NSPC > 0
 	INTERRUPT_SAVEREG
-	jbsr	_spcdmaerrintr
+	jbsr	_C_LABEL(spcdmaerrintr)
 	INTERRUPT_RESTOREREG
 #endif
 	addql	#1,_intrcnt+20
@@ -668,7 +662,7 @@ _powtrap:
 #include "pow.h"
 #if NPOW > 0
 	INTERRUPT_SAVEREG
-	jbsr	_powintr
+	jbsr	_C_LABEL(powintr)
 	INTERRUPT_RESTOREREG
 #endif
 	addql	#1,_intrcnt+60
@@ -866,14 +860,14 @@ Ldorte:
  * through ROM until MMU is turned on at which time they will vector
  * through our table (vectors.s).
  */
-	.comm	_lowram,4
-	.comm	_esym,4
+BSS(lowram,4)
+BSS(esym,4)
 
 	.text
 	.globl	_edata
 	.globl	_etext,_end
-	.globl	start
-start:
+
+ASENTRY_NOPROFILE(start)
 	movw	#PSL_HIGHIPL,sr		| no interrupts
 
 	addql	#4,sp
@@ -1064,22 +1058,22 @@ Lmotommu2:
  */
 Lenab1:
 /* select the software page size now */
-	lea	tmpstk,sp		| temporary stack
-	jbsr	_vm_set_page_size	| select software page size
+	lea	_ASM_LABEL(tmpstk),sp	| temporary stack
+	jbsr	_C_LABEL(vm_set_page_size) | select software page size
 /* set kernel stack, user SP, and initial pcb */
-	movl	_proc0paddr,a1		| get proc0 pcb addr
+	movl	_C_LABEL(proc0paddr),a1	| get proc0 pcb addr
 	lea	a1@(USPACE-4),sp	| set kernel stack to end of area
-	lea	_proc0,a2		| initialize proc0.p_addr so that
+	lea	_C_LABEL(proc0),a2	| initialize proc0.p_addr so that
 	movl	a1,a2@(P_ADDR)		|   we don't deref NULL in trap()
 	movl	#USRSTACK-4,a2
 	movl	a2,usp			| init user SP
-	movl	a1,_curpcb		| proc0 is running
+	movl	a1,_C_LABEL(curpcb)	| proc0 is running
 
-	tstl	_fputype		| Have an FPU?
+	tstl	_C_LABEL(fputype)	| Have an FPU?
 	jeq	Lenab2			| No, skip.
 	clrl	a1@(PCB_FPCTX)		| ensure null FP context
 	movl	a1,sp@-
-	jbsr	_m68881_restore		| restore it (does not kill a1)
+	jbsr	_C_LABEL(m68881_restore) | restore it (does not kill a1)
 	addql	#4,sp
 Lenab2:
 /* flush TLB and turn on caches */

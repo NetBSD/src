@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.2 1997/06/21 11:05:34 scw Exp $	*/
+/*	$NetBSD: pmap.h,v 1.2.4.1 1997/10/14 10:17:36 thorpej Exp $	*/
 
 /* 
  * Copyright (c) 1987 Carnegie-Mellon University
@@ -143,7 +143,9 @@ extern vm_offset_t	vm_first_phys, vm_num_phys;
 
 extern struct pv_entry	*pv_table;	/* array of entries, one per page */
 
+#ifndef MACHINE_NONCONTIG
 #define pmap_page_index(pa)		atop(pa - vm_first_phys)
+#endif
 #define pa_to_pvh(pa)			(&pv_table[pmap_page_index(pa)])
 
 #define	pmap_resident_count(pmap)	((pmap)->pm_stats.resident_count)

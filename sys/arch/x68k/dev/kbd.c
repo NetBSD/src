@@ -1,4 +1,4 @@
-/*	$NetBSD: kbd.c,v 1.5 1996/11/23 09:44:55 oki Exp $	*/
+/*	$NetBSD: kbd.c,v 1.5.10.1 1997/10/14 10:20:28 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -64,6 +64,21 @@ struct kbd_softc {
 	int k_event_mode;  	 /* if true, collect events, else pass to ite */
 	struct evvar k_events; /* event queue state */
 } kbd_softc;
+
+void	kbdattach	__P((int));
+void	kbdenable	__P((void));
+int	kbdopen 	__P((dev_t, int, int, struct proc *));
+int	kbdclose	__P((dev_t, int, int, struct proc *));
+int	kbdread 	__P((dev_t, struct uio *, int));
+int	kbdwrite	__P((dev_t, struct uio *, int));
+int	kbdioctl	__P((dev_t, u_long, caddr_t, int, struct proc *));
+int	kbdpoll 	__P((dev_t, int, struct proc *));
+void	kbdintr 	__P((void));
+void	kbdsoftint	__P((void));
+void	kbd_bell	__P((int));
+int	kbdgetcn	__P((void));
+void	kbd_setLED	__P((void));
+int	kbd_send_command __P((int));
 
 /*
  * Called from main() during pseudo-device setup.  If this keyboard is

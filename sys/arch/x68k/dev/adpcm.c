@@ -30,7 +30,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: adpcm.c,v 1.1.1.1 1996/05/05 12:17:03 oki Exp $
+ *	$NetBSD: adpcm.c,v 1.1.1.1.12.1 1997/10/14 10:20:05 thorpej Exp $
  */
 
 #include "bsdaudio.h"

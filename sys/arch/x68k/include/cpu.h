@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.5 1997/02/03 22:20:32 oki Exp $	*/
+/*	$NetBSD: cpu.h,v 1.5.8.1 1997/10/14 10:20:45 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -154,17 +154,18 @@ extern unsigned char ssir;
 extern int machineid;
 extern char *intiolimit;
 
-/* autoconf.c */
+/* autoconf.c functions */
 void	configure __P((void));
+void	config_console __P((void));
 
-/* fpu.c */
+/* fpu.c functions */
 int	fpu_probe __P((void));
 
-/* machdep.c */
+/* machdep.c functions */
 void	dumpconf __P((void));
 void	dumpsys __P((void));
 
-/* locore.s */
+/* locore.s functions */
 struct pcb;
 struct fpframe;
 void	savectx __P((struct pcb *));
@@ -194,11 +195,13 @@ void	ICPL __P((vm_offset_t));
 void	ICPP __P((vm_offset_t));
 #endif
 
-/* sys_machdep.c */
+/* sys_machdep.c functions */
 int	cachectl __P((int, caddr_t, int));
 int	dma_cachectl __P((caddr_t, int));
 
-/* vm_machdep.c */
+/* vm_machdep.c functions */
+void	physaccess __P((caddr_t, caddr_t, int, int));
+void	physunaccess __P((caddr_t, int));
 int	kvtop __P((caddr_t));
 
 #endif

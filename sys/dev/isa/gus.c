@@ -1,4 +1,4 @@
-/*	$NetBSD: gus.c,v 1.35.2.4 1997/09/16 03:50:10 thorpej Exp $	*/
+/*	$NetBSD: gus.c,v 1.35.2.5 1997/10/14 10:23:32 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -26,8 +26,8 @@
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
  * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
- * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE
- * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
  * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
  * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
  * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
@@ -4122,28 +4122,28 @@ gusmax_mixer_query_devinfo(addr, dip)
 	dip->type = AUDIO_MIXER_CLASS;
 	dip->mixer_class = GUSMAX_INPUT_CLASS;
 	dip->next = dip->prev = AUDIO_MIXER_LAST;
-	strcpy(dip->label.name, AudioCInputs);
+	strcpy(dip->label.name, AudioCinputs);
 	break;
 
     case GUSMAX_OUTPUT_CLASS:			/* output class descriptor */
 	dip->type = AUDIO_MIXER_CLASS;
 	dip->mixer_class = GUSMAX_OUTPUT_CLASS;
 	dip->next = dip->prev = AUDIO_MIXER_LAST;
-	strcpy(dip->label.name, AudioCOutputs);
+	strcpy(dip->label.name, AudioCoutputs);
 	break;
 
     case GUSMAX_MONITOR_CLASS:			/* monitor class descriptor */
 	dip->type = AUDIO_MIXER_CLASS;
 	dip->mixer_class = GUSMAX_MONITOR_CLASS;
 	dip->next = dip->prev = AUDIO_MIXER_LAST;
-	strcpy(dip->label.name, AudioCMonitor);
+	strcpy(dip->label.name, AudioCmonitor);
 	break;
 	    
     case GUSMAX_RECORD_CLASS:			/* record source class */
 	dip->type = AUDIO_MIXER_CLASS;
 	dip->mixer_class = GUSMAX_RECORD_CLASS;
 	dip->next = dip->prev = AUDIO_MIXER_LAST;
-	strcpy(dip->label.name, AudioCRecord);
+	strcpy(dip->label.name, AudioCrecord);
 	break;
 
     default:
@@ -4275,21 +4275,21 @@ mute:
 		dip->type = AUDIO_MIXER_CLASS;
 		dip->mixer_class = GUSICS_INPUT_CLASS;
 		dip->next = dip->prev = AUDIO_MIXER_LAST;
-		strcpy(dip->label.name, AudioCInputs);
+		strcpy(dip->label.name, AudioCinputs);
 		break;
 
 	case GUSICS_OUTPUT_CLASS:
 		dip->type = AUDIO_MIXER_CLASS;
 		dip->mixer_class = GUSICS_OUTPUT_CLASS;
 		dip->next = dip->prev = AUDIO_MIXER_LAST;
-		strcpy(dip->label.name, AudioCOutputs);
+		strcpy(dip->label.name, AudioCoutputs);
 		break;
 
 	case GUSICS_RECORD_CLASS:
 		dip->type = AUDIO_MIXER_CLASS;
 		dip->mixer_class = GUSICS_RECORD_CLASS;
 		dip->next = dip->prev = AUDIO_MIXER_LAST;
-		strcpy(dip->label.name, AudioCRecord);
+		strcpy(dip->label.name, AudioCrecord);
 		break;
 
 	default:
@@ -4313,13 +4313,13 @@ gus_query_encoding(addr, fp)
 		fp->flags = AUDIO_ENCODINGFLAG_EMULATED;
 		break;
 	case 1:
-		strcpy(fp->name, AudioElinear);
+		strcpy(fp->name, AudioEslinear);
 		fp->encoding = AUDIO_ENCODING_SLINEAR;
 		fp->precision = 8;
 		fp->flags = 0;
 		break;
 	case 2:
-		strcpy(fp->name, AudioElinear_le);
+		strcpy(fp->name, AudioEslinear_le);
 		fp->encoding = AUDIO_ENCODING_SLINEAR_LE;
 		fp->precision = 16;
 		fp->flags = 0;
@@ -4337,7 +4337,7 @@ gus_query_encoding(addr, fp)
 		fp->flags = 0;
 		break;
 	case 5:
-		strcpy(fp->name, AudioElinear_be);
+		strcpy(fp->name, AudioEslinear_be);
 		fp->encoding = AUDIO_ENCODING_SLINEAR_BE;
 		fp->precision = 16;
 		fp->flags = AUDIO_ENCODINGFLAG_EMULATED;

@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.4 1997/05/19 10:15:20 veego Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.4.4.1 1997/10/14 10:21:11 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -70,13 +70,13 @@
  */
 void
 cpu_fork(p1, p2)
-	register struct proc *p1, *p2;
+	struct proc *p1, *p2;
 {
-	register struct pcb *pcb = &p2->p_addr->u_pcb;
-	register struct trapframe *tf;
-	register struct switchframe *sf;
+	void child_return __P((struct proc *, struct frame));
+	struct pcb *pcb = &p2->p_addr->u_pcb;
+	struct trapframe *tf;
+	struct switchframe *sf;
 	extern struct pcb *curpcb;
-	extern void child_return();
 
 	p2->p_md.md_flags = p1->p_md.md_flags & ~MDP_HPUXTRACE;
 
@@ -202,10 +202,10 @@ cpu_coredump(p, vp, cred, chdr)
  */
 void
 pagemove(from, to, size)
-	register caddr_t from, to;
+	caddr_t from, to;
 	size_t size;
 {
-	register vm_offset_t pa;
+	vm_offset_t pa;
 
 #ifdef DEBUG
 	if (size & CLOFSET)
@@ -237,10 +237,10 @@ pagemove(from, to, size)
 void
 physaccess(vaddr, paddr, size, prot)
 	caddr_t vaddr, paddr;
-	register int size, prot;
+	int size, prot;
 {
-	register pt_entry_t *pte;
-	register u_int page;
+	pt_entry_t *pte;
+	u_int page;
 
 	pte = kvtopte(vaddr);
 	page = (u_int)paddr & PG_FRAME;
@@ -254,9 +254,9 @@ physaccess(vaddr, paddr, size, prot)
 void
 physunaccess(vaddr, size)
 	caddr_t vaddr;
-	register int size;
+	int size;
 {
-	register pt_entry_t *pte;
+	pt_entry_t *pte;
 
 	pte = kvtopte(vaddr);
 	for (size = btoc(size); size; size--)
@@ -265,30 +265,11 @@ physunaccess(vaddr, size)
 }
 
 /*
- * Set a red zone in the kernel stack after the u. area.
- * We don't support a redzone right now.  It really isn't clear
- * that it is a good idea since, if the kernel stack were to roll
- * into a write protected page, the processor would lock up (since
- * it cannot create an exception frame) and we would get no useful
- * post-mortem info.  Currently, under the DEBUG option, we just
- * check at every clock interrupt to see if the current k-stack has
- * gone too far (i.e. into the "redzone" page) and if so, panic.
- * Look at _lev6intr in locore.s for more details.
- */
-/*ARGSUSED*/
-void
-setredzone(pte, vaddr)
-	pt_entry_t *pte;
-	caddr_t vaddr;
-{
-}
-
-/*
  * Convert kernel VA to physical address
  */
 int
 kvtop(addr)
-	register caddr_t addr;
+	caddr_t addr;
 {
 	vm_offset_t va;
 
@@ -308,59 +289,62 @@ extern vm_map_t phys_map;
  * is a total crock, the multiple mappings of these physical pages should
  * be reflected in the higher-level VM structures to avoid problems.
  */
-/*ARGSUSED*/
 void
-vmapbuf(bp, sz)
-	register struct buf *bp;
-	vm_size_t sz;
+vmapbuf(bp, len)
+	struct buf *bp;
+	vm_size_t len;
 {
-	register int npf;
-	register caddr_t addr;
-	register long flags = bp->b_flags;
-	struct proc *p;
-	int off;
-	vm_offset_t kva;
-	register vm_offset_t pa;
+	struct pmap *upmap, *kpmap;
+	vm_offset_t uva;	/* User VA (map from) */
+	vm_offset_t kva;	/* Kernel VA (new to) */
+	vm_offset_t pa; 	/* physical address */
+	vm_size_t off;
 
-	if ((flags & B_PHYS) == 0)
+	if ((bp->b_flags & B_PHYS) == 0)
 		panic("vmapbuf");
-	addr = bp->b_saveaddr = bp->b_data;
-	off = (int)addr & PGOFSET;
-	p = bp->b_proc;
-	npf = btoc(round_page(bp->b_bcount + off));
-	kva = kmem_alloc_wait(phys_map, ctob(npf));
+
+	uva = m68k_trunc_page(bp->b_saveaddr = bp->b_data);
+	off = (vm_offset_t)bp->b_data - uva;
+	len = m68k_round_page(off + len);
+	kva = kmem_alloc_wait(phys_map, len);
 	bp->b_data = (caddr_t)(kva + off);
-	while (npf--) {
-		pa = pmap_extract(vm_map_pmap(&p->p_vmspace->vm_map),
-		    (vm_offset_t)addr);
+
+	upmap = vm_map_pmap(&bp->b_proc->p_vmspace->vm_map);
+	kpmap = vm_map_pmap(phys_map);
+	do {
+		pa = pmap_extract(upmap, uva);
 		if (pa == 0)
 			panic("vmapbuf: null page frame");
-		pmap_enter(vm_map_pmap(phys_map), kva, trunc_page(pa),
-			   VM_PROT_READ|VM_PROT_WRITE, TRUE);
-		addr += PAGE_SIZE;
+		pmap_enter(kpmap, kva, pa, VM_PROT_READ|VM_PROT_WRITE, TRUE);
+		uva += PAGE_SIZE;
 		kva += PAGE_SIZE;
-	}
+		len -= PAGE_SIZE;
+	} while (len);
 }
 
 /*
  * Free the io map PTEs associated with this IO operation.
  */
-/*ARGSUSED*/
 void
-vunmapbuf(bp, sz)
-	register struct buf *bp;
-	vm_size_t sz;
+vunmapbuf(bp, len)
+	struct buf *bp;
+	vm_size_t len;
 {
-	register caddr_t addr;
-	register int npf;
 	vm_offset_t kva;
+	vm_size_t off;
 
 	if ((bp->b_flags & B_PHYS) == 0)
 		panic("vunmapbuf");
-	addr = bp->b_data;
-	npf = btoc(round_page(bp->b_bcount + ((int)addr & PGOFSET)));
-	kva = (vm_offset_t)((int)addr & ~PGOFSET);
-	kmem_free_wakeup(phys_map, kva, ctob(npf));
+
+	kva = m68k_trunc_page(bp->b_data);
+	off = (vm_offset_t)bp->b_data - kva;
+	len = m68k_round_page(off + len);
+
+	/*
+	 * pmap_remove() is unnecessary here, as kmem_free_wakeup()
+	 * will do it for us.
+	 */
+	kmem_free_wakeup(phys_map, kva, len);
 	bp->b_data = bp->b_saveaddr;
-	bp->b_saveaddr = NULL;
+	bp->b_saveaddr = 0;
 }

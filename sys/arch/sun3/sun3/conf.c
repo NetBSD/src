@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.55 1997/03/26 17:29:10 gwr Exp $	*/
+/*	$NetBSD: conf.c,v 1.55.4.1 1997/10/14 10:19:11 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1994 Adam Glass, Gordon W. Ross
@@ -131,6 +131,8 @@ cdev_decl(pts);
 #define	ptctty		ptytty
 #define	ptcioctl	ptyioctl
 cdev_decl(ptc);
+
+#include "rnd.h"
 
 #include "sd.h"
 bdev_decl(sd);
@@ -287,6 +289,7 @@ struct cdevsw	cdevsw[] =
 	cdev_lkm_dummy(),		/* 77 */
 	cdev_lkm_dummy(),		/* 78 */
 	cdev_notdef(),			/* 79 */
+	cdev_rnd_init(NRND,rnd),	/* 80: random source pseudo-device */
 };
 int	nchrdev = sizeof(cdevsw) / sizeof(cdevsw[0]);
 
@@ -408,6 +411,7 @@ static int chrtoblktbl[] = {
 	/* 77 */	NODEV,
 	/* 78 */	NODEV,
 	/* 79 */	NODEV,
+	/* 80 */	NODEV,
 };
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_misc.c,v 1.31.2.1 1997/08/23 07:12:30 thorpej Exp $	*/
+/*	$NetBSD: linux_misc.c,v 1.31.2.2 1997/10/14 10:21:35 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Frank van der Linden
@@ -514,6 +514,24 @@ linux_sys_mmap(p, v, retval)
 }
 
 int
+linux_sys_mremap(p, v, retval)
+	struct proc *p;
+	void *v;
+	register_t *retval;
+{
+#ifdef notyet
+	struct linux_sys_mremap_args /* {
+		syscallarg(void *) old_address;
+		syscallarg(size_t) old_size;
+		syscallarg(size_t) new_size;
+		syscallarg(u_long) flags;
+	} */ *uap = v;
+#endif
+
+	return ENOMEM;
+}
+
+int
 linux_sys_msync(p, v, retval)
 	struct proc *p;
 	void *v;
@@ -769,7 +787,7 @@ linux_sys_getdents(p, v, retval)
 	off_t off;		/* true file offset */
 	int buflen, error, eofflag, nbytes, oldcall;
 	struct vattr va;
-	u_long *cookiebuf, *cookie;
+	off_t *cookiebuf, *cookie;
 	int ncookies;
 
 	if ((error = getvnode(p->p_fd, SCARG(uap, fd), &fp)) != 0)
@@ -793,11 +811,14 @@ linux_sys_getdents(p, v, retval)
 		oldcall = 1;
 	} else {
 		buflen = min(MAXBSIZE, nbytes);
+		if (buflen < va.va_blocksize)
+			buflen = va.va_blocksize;
 		oldcall = 0;
 	}
 	buf = malloc(buflen, M_TEMP, M_WAITOK);
 	ncookies = buflen / 16;
 	cookiebuf = malloc(ncookies * sizeof(*cookiebuf), M_TEMP, M_WAITOK);
+
 	VOP_LOCK(vp);
 	off = fp->f_offset;
 again:
@@ -854,6 +875,11 @@ again:
 			idb.d_off = (linux_off_t)linux_reclen;
 			idb.d_reclen = (u_short)bdp->d_namlen;
 		} else {
+			if (sizeof (linux_off_t) < 4 && (off >> 32) != 0) {
+				compat_offseterr(vp, "linux_getdents");
+				error = EINVAL;
+				goto out;
+			}
 			idb.d_off = (linux_off_t)off;
 			idb.d_reclen = (u_short)linux_reclen;
 		}

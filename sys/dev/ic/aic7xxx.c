@@ -1,4 +1,4 @@
-/*	$NetBSD: aic7xxx.c,v 1.24.4.1 1997/08/27 23:30:25 thorpej Exp $	*/
+/*	$NetBSD: aic7xxx.c,v 1.24.4.2 1997/10/14 10:22:21 thorpej Exp $	*/
 
 /*
  * Generic driver for the aic7xxx based adaptec SCSI controllers
@@ -372,15 +372,15 @@ ahc_print_scb(scb)
 	    ,scb->control
 	    ,scb->tcl
 	    ,scb->cmdlen
-	    ,scb->cmdpointer );
+	    ,(unsigned long) scb->cmdpointer );
         printf("        datlen:%d data:0x%lx segs:0x%x segp:0x%lx\n"
 	    ,scb->datalen
-	    ,scb->data
+	    ,(unsigned long) scb->data
 	    ,scb->SG_segment_count
-	    ,scb->SG_list_pointer);
+	    ,(unsigned long) scb->SG_list_pointer);
 	printf("	sg_addr:%lx sg_len:%ld\n"
-	    ,scb->ahc_dma[0].addr
-	    ,scb->ahc_dma[0].len);
+	    ,(unsigned long) scb->ahc_dma[0].addr
+	    ,(long) scb->ahc_dma[0].len);
 }
 
 #endif
@@ -1618,7 +1618,7 @@ ahc_handle_seqint(ahc, intstat)
 
 #ifdef AHC_DEBUG
 		if((ahc_debug & AHC_SHOWSCBS)
-		   && xs->sc_link->AIC_SCSI_TARGET == DEBUGTARGET)
+		   && xs->sc_link->AIC_SCSI_TARGET == DEBUGTARG)
 			ahc_print_scb(scb);
 #endif
 		xs->status = scb->status;
@@ -1770,7 +1770,7 @@ ahc_handle_seqint(ahc, intstat)
 #ifdef AHC_DEBUG
 			if (ahc_debug & AHC_SHOWMISC) {
 				scsi_print_addr(xs->sc_link);
-				printf("Handled Residual of %ld bytes\n"
+				printf("Handled Residual of %d bytes\n"
 				       ,xs->resid);
 			}
 #endif
@@ -2129,7 +2129,7 @@ ahc_init(ahc)
 #ifdef AHC_DEBUG
 	if(ahc_debug & AHC_SHOWMISC) {
 		struct scb	test;
-		printf("%s: hardware scb %ld bytes; kernel scb; "
+		printf("%s: hardware scb %ld bytes; kernel scb %d bytes; "
 		       "ahc_dma %d bytes\n",
 			ahc_name(ahc),
 		        (u_long)&(test.next) - (u_long)(&test),

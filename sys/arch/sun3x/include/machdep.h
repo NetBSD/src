@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.h,v 1.12 1997/05/29 22:18:24 gwr Exp $	*/
+/*	$NetBSD: machdep.h,v 1.12.4.1 1997/10/14 10:19:34 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -86,13 +86,13 @@
 
 /* Prototypes... */
 
-struct cpu_kcore_hdr;
 struct frame;
 struct fpframe;
 struct mmu_rootptr;
 struct pcb;
 struct proc;
 struct reg;
+struct sun3x_kcore_hdr;
 struct trapframe;
 struct uio;
 
@@ -164,8 +164,8 @@ void	netintr __P((void));
 void	proc_trampoline __P((void));
 
 void	pmap_bootstrap __P((vm_offset_t nextva));
+void	pmap_kcore_hdr __P((struct sun3x_kcore_hdr *));
 int 	pmap_pa_exists __P((vm_offset_t pa));
-void	pmap_set_kcore_hdr __P((struct cpu_kcore_hdr *));
 
 void	savectx __P((struct pcb *));
 

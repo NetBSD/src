@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.6.2.1 1997/09/22 06:33:00 thorpej Exp $	*/
+/*	$NetBSD: param.h,v 1.6.2.2 1997/10/14 10:20:48 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -90,7 +90,7 @@
 })
 
 /* spl0 requires checking for software interrupts */
-void    spl0();
+void	spl0 __P((void));
 #define spl1()  _spl(PSL_S|PSL_IPL1)
 #define spl2()  _spl(PSL_S|PSL_IPL2)
 #define spl3()  _spl(PSL_S|PSL_IPL3)
@@ -114,7 +114,7 @@ void    spl0();
 #define splsched()      spl7()  /* disallow scheduling */
 
 /* watch out for side effects */
-#define splx(s)         (s & PSL_IPL ? _spl(s) : spl0())
+#define splx(s)         ((s) & PSL_IPL ? _spl(s) : spl0())
 
 #ifdef _KERNEL
 #ifndef _LOCORE

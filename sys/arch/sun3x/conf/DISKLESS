@@ -1,10 +1,8 @@
-#	$NetBSD: DISKLESS,v 1.7 1997/05/15 01:49:27 jeremy Exp $
+# $NetBSD: DISKLESS,v 1.7.4.1 1997/10/14 10:19:24 thorpej Exp $
 
-#
 # DISKLESS Sun3x (3/80, 3/470)
 # Root and swap on NFS
 # Includes devices needed to run as an X-terminal
-#
 
 include "arch/sun3x/conf/std.sun3x"
 
@@ -15,17 +13,35 @@ include "arch/sun3x/conf/std.sun3x"
 maxusers	4
 
 # Standard system options
-options 	KTRACE			# system call tracing support
+options 	KTRACE		# system call tracing
+options 	SYSVMSG		# System V message queues
+options 	SYSVSEM		# System V semaphores
+options 	SYSVSHM		# System V shared memory
+#options 	SHMMAXPGS=1024	# 1024 pages is the default
+#options 	LKM		# loadable kernel modules
+#options 	INSECURE	# disable kernel security level
+#options 	UCONSOLE	# Allow non-root TIOCCONS
 
-# Debugging options.  Uncomment either these:
-#options 	DDB
+# Which kernel debugger?  Uncomment either this:
+options 	DDB
 # ... or these for KGDB (gdb remote target)
-#makeoptions DEBUG="-g"			# debugging symbols for gdb
+#makeoptions DEBUG="-g"		# debugging symbols for gdb
 #options 	KGDB
-#options 	KGDBDEV=0x0C01
+#options 	KGDBDEV=0x0C01	# ttya=0C00 ttyb=0C01
+
+# Other debugging options
+#options 	DEBUG		# kernel debugging code
+#options 	DIAGNOSTIC	# extra kernel sanity checking
+#options 	KMEMSTATS	# kernel memory statistics (vmstat -m)
+#options 	PMAP_DEBUG
+
+# Compatability options
+options 	COMPAT_SUNOS	# can run SunOS 4.1.1 executables
+options 	COMPAT_43	# and 4.3BSD and ...
+options 	COMPAT_12	# NetBSD 1.2
 
 # Filesystem options
-file-system	NFS		# nfs client support
+file-system	NFS		# Sun NFS client support
 file-system	FDESC		# /dev/fd/*
 file-system	KERNFS		# /kern
 file-system	NULLFS		# loopback file system
@@ -35,23 +51,11 @@ options 	FIFO		# FIFOs; RECOMMENDED
 
 # Networking options
 options 	INET		# IP prototol stack support
+options 	TCP_COMPAT_42	# compatibility with 4.2BSD TCP/IP
 #options 	GATEWAY		# IP packet forwarding
-options 	TCP_COMPAT_42	# TCP bug compatibility with 4.2BSD
-# XXX - Work-around for root on slow servers (insurance...)
+
+# Work-around for root on slow servers (insurance...)
 options 	NFS_BOOT_RWSIZE=1024
-
-# Compatability options
-options 	COMPAT_SUNOS	# can run SunOS 4.1.1 executables
-options 	COMPAT_43	# and 4.3BSD and ...
-options 	COMPAT_12	# NetBSD 1.2
-options 	UCONSOLE	# Allow non-root TIOCCONS
-
-# Sun3x-specific debugging options
-#options 	PMAP_DEBUG
-#options 	VMFAULT_TRACE
-#options 	SYSCALL_DEBUG
-#options 	EXEC_DEBUG
-#options 	DIAGNOSTIC
 
 config		netbsd root on ? type nfs
 
@@ -68,6 +72,9 @@ ms0	at zsc0 channel 1	# mouse
 # Network devices
 #
 
+# Intel Ethernet
+ie0 at obio0 addr 0x65000000 ipl 3
+
 # Lance Ethernet (only onboard)
 le0 at obio0 addr 0x65002000 ipl 3
 
@@ -75,9 +82,12 @@ le0 at obio0 addr 0x65002000 ipl 3
 # Frame buffer devices
 #
 
+# bwtwo - Monochrome frame buffer.
 bwtwo0 at obmem0 addr 0x50400000 ipl 4
 
 # Misc.
 pseudo-device	loop		1	# network loopback
+pseudo-device	sl		2	# CSLIP
+pseudo-device	ppp		2	# PPP
 
 pseudo-device	pty		32	# pseudo-terminals

@@ -1,4 +1,4 @@
-/*	$NetBSD: iodevice.h,v 1.2 1997/01/18 21:04:34 oki Exp $	*/
+/*	$NetBSD: iodevice.h,v 1.2.8.1 1997/10/14 10:21:02 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1995 Masaru Oki
@@ -367,3 +367,12 @@ volatile struct IODEVICE *IODEVbase;
 #define PPI	(IODEVbase->io_joyport)
 #define	ioctlr	(IODEVbase->io_ctlr)
 #endif
+
+/* 
+ * devices that need to configure before console use this
+ * *and know it* (i.e. everything is really tight certain params won't be 
+ * passed in some cases and the devices will deal with it)
+ */
+#include <sys/device.h>
+int x68k_config_found __P((struct cfdata *, struct device *,
+			   void *, cfprint_t));

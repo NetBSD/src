@@ -1,4 +1,4 @@
-/*	$NetBSD: vnd.c,v 1.44.4.2 1997/08/27 23:29:50 thorpej Exp $	*/
+/*	$NetBSD: vnd.c,v 1.44.4.3 1997/10/14 10:22:12 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -26,8 +26,8 @@
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
  * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
- * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE
- * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
  * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
  * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
  * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
@@ -172,6 +172,7 @@ void	vndthrottle __P((struct vnd_softc *, struct vnode *));
 void	vndiodone __P((struct buf *));
 void	vndshutdown __P((void));
 
+void	vndgetdefaultlabel __P((struct vnd_softc *, struct disklabel *));
 void	vndgetdisklabel __P((dev_t));
 
 static	int vndlock __P((struct vnd_softc *));
@@ -410,6 +411,7 @@ vndstrategy(bp)
 				bp->b_error = error;
 				bp->b_flags |= B_ERROR;
 				putvndxfer(vnx);
+				splx(s);
 				goto done;
 			}
 			splx(s);
@@ -685,6 +687,7 @@ vndioctl(dev, cmd, data, flag, p)
 	case DIOCWDINFO:
 	case DIOCGPART:
 	case DIOCWLABEL:
+	case DIOCGDEFLABEL:
 		if ((vnd->sc_flags & VNF_INITED) == 0)
 			return (ENXIO);
 	}
@@ -891,6 +894,10 @@ vndioctl(dev, cmd, data, flag, p)
 			vnd->sc_flags &= ~VNF_WLABEL;
 		break;
 
+	case DIOCGDEFLABEL:
+		vndgetdefaultlabel(vnd, (struct disklabel *)data);
+		break;
+
 	default:
 		return (ENOTTY);
 	}
@@ -1034,23 +1041,15 @@ vnddump(dev, blkno, va, size)
 	return ENXIO;
 }
 
-/*
- * Read the disklabel from a vnd.  If one is not present, create a fake one.
- */
 void
-vndgetdisklabel(dev)
-	dev_t dev;
+vndgetdefaultlabel(sc, lp)
+	struct vnd_softc *sc;
+	struct disklabel *lp;
 {
-	struct vnd_softc *sc = &vnd_softc[vndunit(dev)];
-	char *errstring;
-	struct disklabel *lp = sc->sc_dkdev.dk_label;
-	struct cpu_disklabel *clp = sc->sc_dkdev.dk_cpulabel;
 	struct vndgeom *vng = &sc->sc_geom;
 	struct partition *pp;
-	int i;
 
 	bzero(lp, sizeof(*lp));
-	bzero(clp, sizeof(*clp));
 
 	lp->d_secperunit = sc->sc_size / (vng->vng_secsize / DEV_BSIZE);
 	lp->d_secsize = vng->vng_secsize;
@@ -1075,6 +1074,24 @@ vndgetdisklabel(dev)
 	lp->d_magic = DISKMAGIC;
 	lp->d_magic2 = DISKMAGIC;
 	lp->d_checksum = dkcksum(lp);
+}
+
+/*
+ * Read the disklabel from a vnd.  If one is not present, create a fake one.
+ */
+void
+vndgetdisklabel(dev)
+	dev_t dev;
+{
+	struct vnd_softc *sc = &vnd_softc[vndunit(dev)];
+	char *errstring;
+	struct disklabel *lp = sc->sc_dkdev.dk_label;
+	struct cpu_disklabel *clp = sc->sc_dkdev.dk_cpulabel;
+	int i;
+
+	bzero(clp, sizeof(*clp));
+
+	vndgetdefaultlabel(sc, lp);
 
 	/*
 	 * Call the generic disklabel extraction routine.
@@ -1100,6 +1117,8 @@ vndgetdisklabel(dev)
 
 		strncpy(lp->d_packname, "default label",
 		    sizeof(lp->d_packname));
+
+		lp->d_checksum = dkcksum(lp);
 	}
 }
 

@@ -1,4 +1,4 @@
-# 	$NetBSD: GENERIC,v 1.45.2.2 1997/08/27 22:39:20 thorpej Exp $
+# 	$NetBSD: GENERIC,v 1.45.2.3 1997/10/14 10:18:20 thorpej Exp $
 
 include "arch/sparc/conf/std.sparc"
 
@@ -70,6 +70,7 @@ options 	TCP_COMPAT_42	# compatibility with 4.2BSD TCP/IP
 
 # Options for SPARCstation hardware
 options 	RASTERCONSOLE	# fast rasterop console
+#options 	BLINK		# blink the led on supported machines
 
 # Generic swap; second partition of root disk or network.
 config		netbsd	root on ? type ?

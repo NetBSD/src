@@ -1,4 +1,4 @@
-/*	$NetBSD: cacheops_20.h,v 1.1 1997/06/02 20:26:39 leo Exp $	*/
+/*	$NetBSD: cacheops_20.h,v 1.1.4.1 1997/10/14 10:16:44 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -49,10 +49,10 @@ TBIA_20()
 /*
  * Invalidate any TLB entry for given VA (TB Invalidate Single)
  */
-void TBIS_20 __P((void *));
+void TBIS_20 __P((vm_offset_t));
 extern inline void
 TBIS_20(va)
-	void	*va;
+	vm_offset_t	va;
 {
 
 	__asm __volatile (" pflushs	#0,#0,%0@" : : "a" (va) );
@@ -105,7 +105,9 @@ ICPA_20()
 #define	DCIA_20()
 #define	DCIS_20()
 #define	DCIU_20()
-#define	DCIAS_20()
+#define	DCIAS_20(va)
+#define	DCFA_20()
+#define	DCPA_20()
 
 void PCIA_20 __P((void));
 extern inline void

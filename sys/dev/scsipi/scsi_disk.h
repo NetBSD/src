@@ -1,4 +1,4 @@
-/*	$NetBSD: scsi_disk.h,v 1.11.2.2 1997/08/27 23:33:15 thorpej Exp $	*/
+/*	$NetBSD: scsi_disk.h,v 1.11.2.3 1997/10/14 10:25:06 thorpej Exp $	*/
 
 /*
  * SCSI-specific interface description
@@ -13,7 +13,7 @@
  * Grenoble, FRANCE
  *
  * 		All Rights Reserved
- * 
+ *
  *   Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby granted,
  * provided that the above copyright notice appears in all copies and
@@ -22,7 +22,7 @@
  * Foundation not be used in advertising or publicity pertaining to
  * distribution of the software without specific, written prior
  * permission.
- * 
+ *
  *   OSF DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE
  * INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS,
  * IN NO EVENT SHALL OSF BE LIABLE FOR ANY SPECIAL, INDIRECT, OR
@@ -38,7 +38,7 @@
  *
  * TRW Financial Systems, in accordance with their agreement with Carnegie
  * Mellon University, makes this software available to CMU to distribute
- * or use in any manner that they see fit as long as this message is kept with 
+ * or use in any manner that they see fit as long as this message is kept with
  * the software. For this reason TFS also grants any other persons or
  * organisations permission to use or modify this software.
  *
@@ -66,6 +66,17 @@ struct scsi_reassign_blocks {
 	u_int8_t opcode;
 	u_int8_t byte2;
 	u_int8_t unused[3];
+	u_int8_t control;
+};
+
+/*
+ * XXX Is this also used by ATAPI?
+ */
+#define	SCSI_REZERO_UNIT		0x01
+struct scsi_rezero_unit {
+	u_int8_t opcode;
+	u_int8_t byte2;
+	u_int8_t reserved[3];
 	u_int8_t control;
 };
 

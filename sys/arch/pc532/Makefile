@@ -1,25 +1,19 @@
-#	$NetBSD: Makefile,v 1.3 1996/12/23 08:38:02 matthias Exp $
+#	$NetBSD: Makefile,v 1.3.10.1 1997/10/14 10:17:52 thorpej Exp $
 
-#	@(#)Makefile	7.3 (Berkeley) 6/9/91
-
-COMM=	../net/*.[ch] ../netimp/*.[ch] ../netinet/*.[ch] ../netns/*.[ch] \
-	../netiso/*.[ch] ../netccitt/*.[ch] \
-	../kern/*.c ../ufs/*.[ch] ../nfs/*.[ch] ../vm/*.[ch] ../sys/*.h
-
-# Makefile for pc532 tags file
-
-SUBDIR= stand
+# Makefile for pc532 tags file and boot blocks
 
 TPC532=	../pc532/tags
 SPC532=	../pc532/pc532/*.[ch] ../pc532/include/*.h \
 	../pc532/dev/*.[ch] ../pc532/scsi/*.[ch]
 APC532=	../pc532/pc532/*.s
 
-# Directories in which to place pc532 tags links
+# Directories in which to place tags links
 DPC532=	dev include
 
+.include "../../kern/Make.tags.inc"
+
 tags:
-	-ctags -dtf ${TPC532} ${COMM} ${SPC532}
+	-ctags -wdtf ${TPC532} ${SPC532} ${COMM}
 	egrep "^ENTRY(.*)|^ALTENTRY(.*)" ${APC532} | \
 	    sed "s;\([^:]*\):\([^(]*\)(\([^, )]*\)\(.*\);\3 \1 /^\2(\3\4$$/;" \
 		>> ${TPC532}
@@ -29,4 +23,7 @@ links:
 	-for i in ${DPC532}; do \
 	    cd ../$$i && rm -f tags; ln -s ../tags tags; done
 
-.include <bsd.prog.mk>
+
+SUBDIR= stand
+
+.include <bsd.subdir.mk>

@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.8 1997/06/18 13:19:33 jonathan Exp $	*/
+/*	$NetBSD: conf.c,v 1.8.4.1 1997/10/14 10:17:59 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -145,6 +145,7 @@ cdev_decl(pms);
 cdev_decl(cd);
 dev_decl(filedesc,open);
 #include "ipfilter.h"
+#include "rnd.h"
 
 struct cdevsw	cdevsw[] =
 {
@@ -182,6 +183,7 @@ struct cdevsw	cdevsw[] =
 	cdev_notdef(),			/* 29: */
 	cdev_notdef(),			/* 30: */
 	cdev_ipf_init(NIPFILTER,ipl),	/* 31: ip-filter device */
+	cdev_rnd_init(NRND,rnd),	/* 32: random source pseudo-device */
 };
 
 int	nchrdev = sizeof (cdevsw) / sizeof (cdevsw[0]);

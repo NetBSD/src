@@ -1,4 +1,4 @@
-/*	$NetBSD: spc.c,v 1.9.10.1 1997/08/27 23:16:23 thorpej Exp $	*/
+/*	$NetBSD: spc.c,v 1.9.10.2 1997/10/14 10:20:36 thorpej Exp $	*/
 
 #define	integrate	static inline
 
@@ -361,9 +361,20 @@ void	spc_timeout	__P((void *));
 void	spc_sched	__P((struct spc_softc *));
 void	spc_scsi_reset	__P((struct spc_softc *));
 void	spc_reset	__P((struct spc_softc *));
+void	spc_free_acb	__P((struct spc_softc *, struct spc_acb *, int));
+struct spc_acb * spc_get_acb __P((struct spc_softc *, int));
+int	spc_reselect	__P((struct spc_softc *, u_char));
+void	spc_sense	__P((struct spc_softc *, struct spc_acb *));
+void	spc_msgin	__P((struct spc_softc *));
+void	spc_msgout	__P((struct spc_softc *));
+int	spc_dataout_pio	__P((struct spc_softc *, u_char *, int));
+int	spc_datain_pio	__P((struct spc_softc *, u_char *, int));
+void	spc_abort	__P((struct spc_softc *, struct spc_acb *));
 #if SPC_DEBUG
-void	spc_print_active_acb();
-void	spc_dump_driver();
+void	spc_print_acb	__P((struct spc_acb *));
+void	spc_dump_driver __P((struct spc_softc *));
+void	spc_show_scsi_cmd __P((struct spc_acb *));
+void	spc_print_active_acb __P((void));
 #endif
 volatile void *	spc_find	__P((int));
 
