@@ -1,4 +1,4 @@
-#	$NetBSD: files.i386,v 1.197 2001/09/19 01:26:18 thorpej Exp $
+#	$NetBSD: files.i386,v 1.198 2001/09/28 02:06:55 thorpej Exp $
 #
 # new style config file for i386 architecture
 #
@@ -140,7 +140,7 @@ file	arch/i386/i386/bios32.c		bios32 needs-flag
 
 define	mainbus { }
 # XXX BIOS32 only if something that uses it is configured!
-device	mainbus: isabus, eisabus, mcabus, pcibus, mainbus, bios32
+device	mainbus: isabus, eisabus, mcabus, pcibus, mainbus, bios32, acpibus
 attach	mainbus at root
 file	arch/i386/i386/mainbus.c	mainbus
 
@@ -445,3 +445,6 @@ include	"dev/usb/files.usb"
 include	"dev/ieee1394/files.ieee1394"
 
 include	"arch/i386/pnpbios/files.pnpbios"
+
+include "dev/acpi/files.acpi"
+file	arch/i386/i386/acpi_machdep.c	acpi
