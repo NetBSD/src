@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_lookup.c,v 1.26 1996/03/07 13:30:46 ws Exp $	*/
+/*	$NetBSD: msdosfs_lookup.c,v 1.26.4.1 1997/01/26 01:41:10 rat Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995 Wolfgang Solfrank.
@@ -605,8 +605,11 @@ createde(dep, ddep, depp, cnp)
 		diroffset = ddep->de_fndoffset + sizeof(struct direntry)
 		    - ddep->de_FileSize;
 		dirclust = de_clcount(pmp, diroffset);
-		if ((error = extendfile(ddep, dirclust, 0, 0, DE_CLEAR)) != 0)
+		if ((error = extendfile(ddep, dirclust, 0, 0, DE_CLEAR)) != 0) {
+			(void)detrunc(ddep, ddep->de_FileSize, 0, NOCRED, NULL);
 			return error;
+		}
+
 		/*
 		 * Update the size of the directory
 		 */
