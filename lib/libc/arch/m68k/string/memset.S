@@ -38,7 +38,7 @@
 #if defined(LIBC_SCCS) && !defined(lint)
 	.text
 	/*.asciz "from: @(#)bzero.s	5.1 (Berkeley) 5/12/90"*/
-	.asciz "$Id: memset.S,v 1.2 1993/12/06 23:45:51 mycroft Exp $"
+	.asciz "$Id: memset.S,v 1.3 1993/12/07 06:58:35 mycroft Exp $"
 #endif /* LIBC_SCCS and not lint */
 
 #include "DEFS.h"
@@ -55,9 +55,9 @@
 ENTRY(memset)
 	movl	d2,sp@-
 	movl	sp@(8),a0	/* destination */
-	movb	sp@(15),d2	/* character */
 	movl	sp@(16),d0	/* count */
 	jeq	bzdone		/* nothing to do */
+	movb	sp@(15),d2	/* character */
 	movl	a0,d1
 	btst	#0,d1		/* address odd? */
 	jeq	bzeven		/* no, skip alignment */
@@ -65,20 +65,30 @@ ENTRY(memset)
 	subql	#1,d0		/* adjust count */
 	jeq	bzdone		/* if zero, all done */
 bzeven:
-	movl	d0,d1
-	lsrl	#2,d1		/* convert to longword count */
-	cmpl	#3,d1
+	cmpl	#15,d0
 	jle	bzbloop		/* too small to be worthwhile */
 	clrl	d1		/* replicate byte to fill longword */
 	movb	d2,d1
+	movl	d1,d2
 	lsll	#8,d1
 	orl	d1,d2
 	lsll	#8,d1
 	orl	d1,d2
 	lsll	#8,d1
 	orl	d1,d2
-	movl	d0,d1
-	lsrl	#2,d1		/* recalculate longword count */
+	movl	d0,d1		/* convert to longword count */
+	lsrl	#2,d1
+#ifdef DEBUG
+	moveml	#0xffff,sp@-
+	movl	d2,sp@-
+	movl	d1,sp@-
+	movl	d0,sp@-
+	movl	a0,sp@-
+	movl	#foo,sp@-
+	jsr	_printf
+	addl	#20,sp
+	moveml	sp@+,#0xffff
+#endif
 bzlloop:
 	movl	d2,a0@+		/* set one longword */
 	subql	#1,d1		/* adjust count */
@@ -93,3 +103,9 @@ bzdone:
 	movl	sp@(8),d0	/* return destination */
 	movl	sp@+,d2
 	rts
+
+#ifdef DEBUG
+	.globl	_printf
+foo:
+	.asciz	"a0=%08x d0=%08x d1=%08x d2=%08x\n"
+#endif
