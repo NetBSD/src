@@ -1,5 +1,5 @@
 #	from: @(#)Makefile	8.1 (Berkeley) 6/7/93
-#	$Id: Makefile,v 1.6 1993/07/30 21:40:28 mycroft Exp $
+#	$Id: Makefile,v 1.7 1993/08/09 23:59:20 mycroft Exp $
 
 PROG=	sendmail
 
@@ -20,8 +20,8 @@ SRCS=	alias.c arpadate.c clock.c collect.c conf.c convtime.c daemon.c \
 	mci.c parseaddr.c queue.c readcf.c recipient.c savemail.c srvrsmtp.c \
 	stab.c stats.c sysexits.c trace.c udb.c usersmtp.c \
 	util.c version.c
-DPADD=	${LIBDBM} ${LIBCOMPAT} ${LIBUTIL}
-LDADD=	${LIBUTIL}
+DPADD+=	${LIBDBM} ${LIBCOMPAT} ${LIBUTIL}
+LDADD+=	-lutil
 MAN1=	newaliases.0
 MAN5=	aliases.0
 MAN8=	sendmail.0 
