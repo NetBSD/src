@@ -1,4 +1,4 @@
-/*	$NetBSD: armreg.h,v 1.3 2001/02/25 17:49:34 bjh21 Exp $	*/
+/*	$NetBSD: armreg.h,v 1.4 2001/02/25 19:10:28 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Ben Harris
@@ -162,8 +162,9 @@
 #define CPU_ID_ARM620		0x41560620
 
 /* ARM7 CPUs -- [15:12] == 7 */
+#define CPU_ID_ARM700		0x41007000 /* XXX This is a guess. */
 #define CPU_ID_ARM710		0x41007100
-#define CPU_ID_ARM7500		0x41027100 /* XXX This is a guess */
+#define CPU_ID_ARM7500		0x41027100 /* XXX This is a guess. */
 #define CPU_ID_ARM7100		0x41047100
 #define CPU_ID_ARM710T		0x41807100
 #define CPU_ID_ARM720T		0x41807200
@@ -182,8 +183,6 @@
 #define CPU_ID_SA1100		0x4401a110
 #define CPU_ID_SA1110		0x6901b110
 #define CPU_ID_I80200		0x69052000 /* XScale core */
-
-#define CPU_ID_ARM700		0x00007000
 
 /* ARM3-specific coprocessor 15 registers */
 #define ARM3_CP15_FLUSH		1
