@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: dhclient-script,v 1.2 2002/04/02 17:39:47 christos Exp $
+# $NetBSD: dhclient-script,v 1.3 2002/04/02 19:16:59 christos Exp $
 
 ENTERHOOKS=/etc/dhclient-enter-hooks
 EXITHOOKS=/etc/dhclient-exit-hooks
@@ -18,7 +18,10 @@ make_resolv_conf() {
 			fi
 		fi
 		echo "$SIGNATURE$(date)" > $RESOLV
-		echo search $new_domain_name >> $RESOLV
+		if [ ! -z "$new_domain_name" ]
+		then
+			echo search $new_domain_name >> $RESOLV
+		fi
 		for nameserver in $new_domain_name_servers; do
 			echo nameserver $nameserver
 		done >> $RESOLV
