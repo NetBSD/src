@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.pmax,v 1.61.2.1 1998/10/15 01:30:23 nisimura Exp $
+#	$NetBSD: Makefile.pmax,v 1.61.2.2 1998/10/19 19:24:11 drochner Exp $
 
 # Makefile for NetBSD
 #
@@ -100,7 +100,7 @@ SYSTEM_OBJ+=    locore_mips1.o
 .if !empty(IDENT:M-DMIPS3)
 SYSTEM_OBJ+=    locore_mips3.o
 .endif
-SYSTEM_OBJ+=	fp.o param.o ioconf.o ${OBJS} ${LIBKERN} ${LIBCOMPAT}
+SYSTEM_OBJ+=	fp.o param.o ioconf.o ${OBJS} ${LIBCOMPAT} ${LIBKERN}
 SYSTEM_DEP=	Makefile ${SYSTEM_OBJ}
 SYSTEM_LD_HEAD=	@rm -f $@
 SYSTEM_LD=	@echo ${LD} ${LINKFLAGS} -o $@ '$${SYSTEM_OBJ}' vers.o ; \
