@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.60 1999/05/18 01:36:51 nisimura Exp $	*/
+/*	$NetBSD: pmap.c,v 1.61 1999/05/20 05:32:06 nisimura Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.60 1999/05/18 01:36:51 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.61 1999/05/20 05:32:06 nisimura Exp $");
 
 /*
  *	Manages physical address maps.
@@ -188,7 +188,7 @@ struct segtab	*free_segtab;		/* free list kept locally */
 pt_entry_t	*Sysmap;		/* kernel pte table */
 unsigned	Sysmapsize;		/* number of pte's in Sysmap */
 unsigned pmap_next_asid = 2;		/* next available ASID */
-unsigned pmap_asid_generation = 1;	/* ASID generation count */
+unsigned pmap_asid_generation = 0;	/* ASID generation count */
 
 boolean_t	pmap_initialized = FALSE;
 
@@ -655,11 +655,13 @@ void
 pmap_activate(p)
 	struct proc *p;
 {
-	pmap_t pmap = p->p_vmspace->vm_map.pmap;
+	pmap_t pmap;
+	int asid;
 
-        p->p_addr->u_pcb.pcb_segtab = pmap->pm_segtab;
+	pmap = p->p_vmspace->vm_map.pmap;
+
+	asid = pmap_alloc_asid(p);
         if (p == curproc) {
-                int asid = pmap_alloc_asid(p);
                 MachSetPID(asid);
 #ifdef	MIPS3
 		if (CPUISMIPS3) {
@@ -667,6 +669,7 @@ pmap_activate(p)
 		}
 #endif
         }
+	p->p_addr->u_pcb.pcb_segtab = pmap->pm_segtab; /* XXX */
 }
 
 /*
@@ -1785,15 +1788,13 @@ pmap_alloc_asid(p)
 	pmap_t pmap;
 
 	pmap = p->p_vmspace->vm_map.pmap;
-	if (pmap->pm_asidgen == pmap_asid_generation)
+	if (pmap->pm_asid != 0 && pmap->pm_asidgen == pmap_asid_generation)
 		;
 	else {
 		if (pmap_next_asid == MIPS_TLB_NUM_PIDS) {
 			MachTLBFlush();
-			/* reserve == 0 to always mean invalid */
-			if (++pmap_asid_generation == 0)
-				pmap_asid_generation = 1;
-			pmap_next_asid = 1;
+			pmap_next_asid = 1;	/* 0 means invalid */
+			pmap_asid_generation++; /* ok to wrap to 0 */
 		}
 		pmap->pm_asid = pmap_next_asid++;
 		pmap->pm_asidgen = pmap_asid_generation;
