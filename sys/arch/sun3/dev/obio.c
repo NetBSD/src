@@ -28,7 +28,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Header: /cvsroot/src/sys/arch/sun3/dev/Attic/obio.c,v 1.6 1994/03/01 08:07:15 glass Exp $
+ * $Header: /cvsroot/src/sys/arch/sun3/dev/Attic/obio.c,v 1.7 1994/03/16 04:35:37 glass Exp $
+ * Added stub for obio_probe_byte() -gwr
  */
 #include <sys/systm.h>
 #include <sys/device.h>
@@ -153,3 +154,10 @@ caddr_t obio_alloc(obio_addr, obio_size, obio_flags)
     return (caddr_t) va;
 }
 
+int
+obio_probe_byte(oba)
+	caddr_t oba;	/* OBIO address to probe */
+{
+	/* XXX - Not yet... */
+	return 0;
+}
