@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.21 1997/04/27 16:58:22 thorpej Exp $	*/
+/*	$NetBSD: route.c,v 1.22 1997/09/02 00:30:49 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1983, 1989, 1991, 1993
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)route.c	8.3 (Berkeley) 3/19/94";
 #else
-static char rcsid[] = "$NetBSD: route.c,v 1.21 1997/04/27 16:58:22 thorpej Exp $";
+static char rcsid[] = "$NetBSD: route.c,v 1.22 1997/09/02 00:30:49 thorpej Exp $";
 #endif
 #endif /* not lint */
 
@@ -281,6 +281,8 @@ bad:			usage(*argv);
 	mib[5] = 0;		/* no flags */
 	if (sysctl(mib, 6, NULL, &needed, NULL, 0) < 0)
 		quit("route-sysctl-estimate");
+	if (needed == 0)
+		return;
 	if ((buf = malloc(needed)) == NULL)
 		quit("malloc");
 	if (sysctl(mib, 6, buf, &needed, NULL, 0) < 0)
