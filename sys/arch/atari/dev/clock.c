@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.25 2001/04/24 06:26:48 leo Exp $	*/
+/*	$NetBSD: clock.c,v 1.26 2001/06/18 11:23:00 wiz Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -115,7 +115,7 @@ static int	divisor;	/* Systemclock divisor	*/
  * be a power of 2. Since this gives us an even number, not an odd number,
  * we discard one case and compensate. That is, a variance of 64 would
  * give us offsets in [0..63]. Instead, we take offsets in [1..63].
- * This is symetric around the point 32, or statvar/2, and thus averages
+ * This is symmetric around the point 32, or statvar/2, and thus averages
  * to that value (assuming uniform random numbers).
  */
 #ifdef STATCLOCK

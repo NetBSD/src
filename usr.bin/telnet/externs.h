@@ -1,4 +1,4 @@
-/*	$NetBSD: externs.h,v 1.20 2001/01/04 05:58:41 itojun Exp $	*/
+/*	$NetBSD: externs.h,v 1.21 2001/06/18 11:23:01 wiz Exp $	*/
 
 /*
  * Copyright (c) 1988, 1990, 1993
@@ -209,7 +209,7 @@ extern int (*decrypt_input) P((int));
 #define	set_my_want_state_wont(opt)	{options[opt] &= ~MY_WANT_STATE_WILL;}
 
 /*
- * Make everything symetrical
+ * Make everything symmetrical
  */
 
 #define	HIS_STATE_WILL			MY_STATE_DO
