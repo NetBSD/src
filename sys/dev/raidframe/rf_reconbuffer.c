@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_reconbuffer.c,v 1.7 2002/01/09 03:10:20 oster Exp $	*/
+/*	$NetBSD: rf_reconbuffer.c,v 1.8 2002/09/11 02:22:49 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -33,14 +33,13 @@
  ***************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_reconbuffer.c,v 1.7 2002/01/09 03:10:20 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_reconbuffer.c,v 1.8 2002/09/11 02:22:49 oster Exp $");
 
 #include "rf_raid.h"
 #include "rf_reconbuffer.h"
 #include "rf_acctrace.h"
 #include "rf_etimer.h"
 #include "rf_general.h"
-#include "rf_debugprint.h"
 #include "rf_revent.h"
 #include "rf_reconutil.h"
 #include "rf_nwayxor.h"
