@@ -1,4 +1,4 @@
-/*	$NetBSD: vidcaudio.c,v 1.16 2003/12/06 19:59:32 bjh21 Exp $	*/
+/*	$NetBSD: vidcaudio.c,v 1.17 2003/12/29 16:11:38 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1995 Melvin Tang-Richardson
@@ -38,7 +38,7 @@
 
 #include <sys/param.h>	/* proc.h */
 
-__KERNEL_RCSID(0, "$NetBSD: vidcaudio.c,v 1.16 2003/12/06 19:59:32 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vidcaudio.c,v 1.17 2003/12/29 16:11:38 bjh21 Exp $");
 
 #include <sys/conf.h>   /* autoconfig functions */
 #include <sys/device.h> /* device calls */
@@ -90,38 +90,36 @@ struct vidcaudio_softc {
 	int open;
 };
 
-int  vidcaudio_probe	__P((struct device *parent, struct cfdata *cf, void *aux));
-void vidcaudio_attach	__P((struct device *parent, struct device *self, void *aux));
-int  vidcaudio_open	__P((void *addr, int flags));
-void vidcaudio_close	__P((void *addr));
+int  vidcaudio_probe(struct device *parent, struct cfdata *cf, void *aux);
+void vidcaudio_attach(struct device *parent, struct device *self, void *aux);
+int  vidcaudio_open(void *addr, int flags);
+void vidcaudio_close(void *addr);
 
-int vidcaudio_intr	__P((void *arg));
-int vidcaudio_dma_program	__P((vaddr_t cur, vaddr_t end, void (*intr)(void *), void *arg));
-void vidcaudio_dummy_routine	__P((void *arg));
-int vidcaudio_stereo	__P((int channel, int position));
-int vidcaudio_rate	__P((int rate));
-void vidcaudio_shutdown	__P((void));
+int vidcaudio_intr(void *arg);
+int vidcaudio_dma_program(vaddr_t cur, vaddr_t end, void (*intr)(void *), void *arg);
+void vidcaudio_dummy_routine(void *arg);
+int vidcaudio_stereo(int channel, int position);
+int vidcaudio_rate(int rate);
+void vidcaudio_shutdown(void);
 
 static int sound_dma_intr;
 
 CFATTACH_DECL(vidcaudio, sizeof(struct vidcaudio_softc),
     vidcaudio_probe, vidcaudio_attach, NULL, NULL);
 
-int    vidcaudio_query_encoding  __P((void *, struct audio_encoding *));
-int    vidcaudio_set_params	 __P((void *, int, int, struct audio_params *, struct audio_params *));
-int    vidcaudio_round_blocksize __P((void *, int));
-int    vidcaudio_start_output	 __P((void *, void *, int, void (*)(void *),
-					 void *));
-int    vidcaudio_start_input	 __P((void *, void *, int, void (*)(void *),
-					 void *));
-int    vidcaudio_halt_output	 __P((void *));
-int    vidcaudio_halt_input 	 __P((void *));
-int    vidcaudio_speaker_ctl	 __P((void *, int));
-int    vidcaudio_getdev		 __P((void *, struct audio_device *));
-int    vidcaudio_set_port	 __P((void *, mixer_ctrl_t *));
-int    vidcaudio_get_port	 __P((void *, mixer_ctrl_t *));
-int    vidcaudio_query_devinfo	 __P((void *, mixer_devinfo_t *));
-int    vidcaudio_get_props	 __P((void *));
+int    vidcaudio_query_encoding(void *, struct audio_encoding *);
+int    vidcaudio_set_params(void *, int, int, struct audio_params *, struct audio_params *);
+int    vidcaudio_round_blocksize(void *, int);
+int    vidcaudio_start_output(void *, void *, int, void (*)(void *), void *);
+int    vidcaudio_start_input(void *, void *, int, void (*)(void *), void *);
+int    vidcaudio_halt_output(void *);
+int    vidcaudio_halt_input(void *);
+int    vidcaudio_speaker_ctl(void *, int);
+int    vidcaudio_getdev(void *, struct audio_device *);
+int    vidcaudio_set_port(void *, mixer_ctrl_t *);
+int    vidcaudio_get_port(void *, mixer_ctrl_t *);
+int    vidcaudio_query_devinfo(void *, mixer_devinfo_t *);
+int    vidcaudio_get_props(void *);
 
 struct audio_device vidcaudio_device = {
 	"VidcAudio 8-bit",
@@ -161,7 +159,7 @@ struct audio_hw_if vidcaudio_hw_if = {
 
 
 void
-vidcaudio_beep_generate()
+vidcaudio_beep_generate(void)
 {
 	vidcaudio_dma_program(ag.silence, ag.silence+sizeof(beep_waveform)-16,
 	    vidcaudio_dummy_routine, NULL);
@@ -169,10 +167,7 @@ vidcaudio_beep_generate()
 
 
 int
-vidcaudio_probe(parent, cf, aux)
-	struct device *parent;
-	struct cfdata* cf;
-	void *aux;
+vidcaudio_probe(struct device *parent, struct cfdata *cf, void *aux)
 {
 	int id;
 
@@ -197,10 +192,7 @@ vidcaudio_probe(parent, cf, aux)
 
 
 void
-vidcaudio_attach(parent, self, aux)
-	struct device *parent;
-	struct device *self;
-	void *aux;
+vidcaudio_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct vidcaudio_softc *sc = (void *)self;
 	int id;
@@ -266,9 +258,7 @@ vidcaudio_attach(parent, self, aux)
 }
 
 int
-vidcaudio_open(addr, flags)
-	void *addr;
-	int flags;
+vidcaudio_open(void *addr, int flags)
 {
 	struct vidcaudio_softc *sc = addr;
 
@@ -286,8 +276,7 @@ vidcaudio_open(addr, flags)
 }
  
 void
-vidcaudio_close(addr)
-	void *addr;
+vidcaudio_close(void *addr)
 {
 	struct vidcaudio_softc *sc = addr;
 
@@ -306,9 +295,7 @@ vidcaudio_close(addr)
  * ************************************************************************* */
 
 int
-vidcaudio_query_encoding(addr, fp)
-	void *addr;
-	struct audio_encoding *fp;
+vidcaudio_query_encoding(void *addr, struct audio_encoding *fp)
 {
 	switch (fp->index) {
 	case 0:
@@ -325,10 +312,8 @@ vidcaudio_query_encoding(addr, fp)
 }
 
 int
-vidcaudio_set_params(addr, setmode, usemode, p, r)
-	void *addr;
-	int setmode, usemode;
-	struct audio_params *p, *r;
+vidcaudio_set_params(void *addr, int setmode, int usemode,
+    struct audio_params *p, struct audio_params *r)
 {
 	if (p->encoding != AUDIO_ENCODING_ULAW)
 		return EINVAL;
@@ -339,9 +324,7 @@ vidcaudio_set_params(addr, setmode, usemode, p, r)
 }
 
 int
-vidcaudio_round_blocksize(addr, blk)
-	void *addr;
-	int blk;
+vidcaudio_round_blocksize(void *addr, int blk)
 {
 	if (blk > PAGE_SIZE)
 		blk = PAGE_SIZE;
@@ -351,12 +334,8 @@ vidcaudio_round_blocksize(addr, blk)
 #define ROUND(s)  ( ((int)s) & (~(PAGE_SIZE-1)) )
 
 int
-vidcaudio_start_output(addr, p, cc, intr, arg)
-	void *addr;
-	void *p;
-	int cc;
-	void (*intr)(void *);
-	void *arg;
+vidcaudio_start_output(void *addr, void *p, int cc, void (*intr)(void *),
+    void *arg)
 {
 	/* I can only DMA inside 1 page */
 
@@ -397,19 +376,14 @@ vidcaudio_start_output(addr, p, cc, intr, arg)
 }
 
 int
-vidcaudio_start_input(addr, p, cc, intr, arg)
-	void *addr;
-	void *p;
-	int cc;
-	void (*intr)(void *);
-	void *arg;
+vidcaudio_start_input(void *addr, void *p, int cc, void (*intr)(void *),
+    void *arg)
 {
 	return EIO;
 }
 
 int
-vidcaudio_halt_output(addr)
-	void *addr;
+vidcaudio_halt_output(void *addr)
 {
 #ifdef DEBUG
 	printf("DEBUG: vidcaudio_halt_output\n");
@@ -418,8 +392,7 @@ vidcaudio_halt_output(addr)
 }
 
 int
-vidcaudio_halt_input(addr)
-	void *addr;
+vidcaudio_halt_input(void *addr)
 {
 #ifdef DEBUG
 	printf("DEBUG: vidcaudio_halt_input\n");
@@ -428,9 +401,7 @@ vidcaudio_halt_input(addr)
 }
 
 int
-vidcaudio_speaker_ctl(addr, newstate)
-	void *addr;
-	int newstate;
+vidcaudio_speaker_ctl(void *addr, int newstate)
 {
 #ifdef DEBUG
 	printf("DEBUG: vidcaudio_speaker_ctl\n");
@@ -439,9 +410,7 @@ vidcaudio_speaker_ctl(addr, newstate)
 }
 
 int
-vidcaudio_getdev(addr, retp)
-	void *addr;
-	struct audio_device *retp;
+vidcaudio_getdev(void *addr, struct audio_device *retp)
 {
 	*retp = vidcaudio_device;
 	return 0;
@@ -449,38 +418,30 @@ vidcaudio_getdev(addr, retp)
 
 
 int
-vidcaudio_set_port(addr, cp)
-	void *addr;
-	mixer_ctrl_t *cp;
+vidcaudio_set_port(void *addr, mixer_ctrl_t *cp)
 {
 	return EINVAL;
 }
 
 int
-vidcaudio_get_port(addr, cp)
-	void *addr;
-	mixer_ctrl_t *cp;
+vidcaudio_get_port(void *addr, mixer_ctrl_t *cp)
 {
 	return EINVAL;
 }
 
 int
-vidcaudio_query_devinfo(addr, dip)
-	void *addr;
-	mixer_devinfo_t *dip;
+vidcaudio_query_devinfo(void *addr, mixer_devinfo_t *dip)
 {
 	return ENXIO;
 }
 
 int
-vidcaudio_get_props(addr)
-	void *addr;
+vidcaudio_get_props(void *addr)
 {
 	return 0;
 }
 void
-vidcaudio_dummy_routine(arg)
-	void *arg;
+vidcaudio_dummy_routine(void *arg)
 {
 #ifdef DEBUG
 	printf("vidcaudio_dummy_routine\n");
@@ -488,17 +449,14 @@ vidcaudio_dummy_routine(arg)
 }
 
 int
-vidcaudio_rate(rate)
-	int rate;
+vidcaudio_rate(int rate)
 {
 	WriteWord(vidc_base, VIDC_SFR | rate);
 	return 0;
 }
 
 int
-vidcaudio_stereo(channel, position)
-	int channel;
-	int position;
+vidcaudio_stereo(int channel, int position)
 {
 	if (channel < 0) return EINVAL;
 	if (channel > 7) return EINVAL;
@@ -517,11 +475,8 @@ vidcaudio_stereo(channel, position)
 #define FLAGS (0)
 
 int
-vidcaudio_dma_program(cur, end, intr, arg)
-	vaddr_t cur;
-	vaddr_t end;
-	void (*intr)(void *);
-	void *arg;
+vidcaudio_dma_program(vaddr_t cur, vaddr_t end, void (*intr)(void *),
+    void *arg)
 {
 	paddr_t pa1, pa2;
 
@@ -600,8 +555,7 @@ vidcaudio_shutdown(void)
 }
 
 int
-vidcaudio_intr(arg)
-	void *arg;
+vidcaudio_intr(void *arg)
 {
 	int status = IOMD_READ_BYTE(IOMD_SD0ST);
 	void (*nintr)(void *);
