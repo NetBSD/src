@@ -23,12 +23,16 @@
  * any improvements or extensions that they make and grant Carnegie the
  * rights to redistribute these changes.
  *
- *	$Id: db_disasm.c,v 1.2 1993/05/22 07:59:42 cgd Exp $
+ *	$Id: db_disasm.c,v 1.3 1993/07/17 12:28:47 cgd Exp $
  */
 /*
  * HISTORY
  * $Log: db_disasm.c,v $
- * Revision 1.2  1993/05/22 07:59:42  cgd
+ * Revision 1.3  1993/07/17 12:28:47  cgd
+ * Fixed two occarances of ldos which should have been lods.
+ * (From Christoph Robitschko)
+ *
+ * Revision 1.2  1993/05/22  07:59:42  cgd
  * add rcsids to everything and clean up headers
  *
  * Revision 1.1.1.1  1993/03/21  09:45:52  cgd
@@ -727,8 +731,8 @@ struct inst db_inst_table[256] = {
 /*a9*/	{ "test",  FALSE, LONG,  op2(I, A),   0 },
 /*aa*/	{ "stos",  FALSE, BYTE,  op1(DI),     0 },
 /*ab*/	{ "stos",  FALSE, LONG,  op1(DI),     0 },
-/*ac*/	{ "ldos",  FALSE, BYTE,  op1(SI),     0 },
-/*ad*/	{ "ldos",  FALSE, LONG,  op1(SI),     0 },
+/*ac*/	{ "lods",  FALSE, BYTE,  op1(SI),     0 },
+/*ad*/	{ "lods",  FALSE, LONG,  op1(SI),     0 },
 /*ae*/	{ "scas",  FALSE, BYTE,  op1(SI),     0 },
 /*af*/	{ "scas",  FALSE, LONG,  op1(SI),     0 },
 
