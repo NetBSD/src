@@ -1,11 +1,9 @@
-#	$NetBSD: Makefile,v 1.20 1996/06/26 17:44:21 thorpej Exp $
+#	$NetBSD: Makefile,v 1.21 1996/10/07 04:45:41 thorpej Exp $
 
 #	@(#)Makefile	8.1 (Berkeley) 6/10/93
 
 NOPROG=	noprog
 NOMAN=	noman
-
-SUBDIR=	libsa
 
 # RELOC=FFF00000 allows for boot prog up to FF000 (1044480) bytes long
 RELOC=	FFF00000
@@ -39,7 +37,8 @@ LIBSA=	${SA_LIB}
 
 LIBS=	${OBJS} libdrive.a ${LIBSA} ${LIBKERN}
 
-BOOTS=	uboot inst
+BOOTS=	uboot.lif inst.lif
+BOOTAOUTS=uboot inst
 ALL=	${BOOTS} mkboot installboot
 
 all: ${ALL}
@@ -63,6 +62,9 @@ srt0.o: ${.CURDIR}/srt0.s
 	${CC} ${INCPATH} ${DEFS} -c ${.CURDIR}/srt0.s
 
 # unified boot program (disk, network, tape)
+uboot.lif: uboot mkboot
+	./mkboot uboot $@
+
 uboot:	srt0.o uboot.o tgets.o netio.o clock.o conf.o ${LIBS}
 	${LD} -N -T ${RELOC} -e begin srt0.o uboot.o tgets.o netio.o clock.o \
 	    conf.o ${LIBS} -o $@
@@ -70,6 +72,9 @@ uboot:	srt0.o uboot.o tgets.o netio.o clock.o conf.o ${LIBS}
 	@echo $@ total size should not exceed 1044480 bytes
 
 # miniroot installation program
+inst.lif: inst mkboot
+	./mkboot inst $@
+
 inst: srt0.o inst.o clock.o conf.o netio.o tgets.o ${LIBS}
 	${LD} -N -T ${RELOC} -e begin srt0.o inst.o clock.o conf.o netio.o \
 	    tgets.o ${LIBS} -o $@
@@ -88,12 +93,10 @@ installboot: ${.CURDIR}/installboot.sh
 
 clean::
 	rm -f *.o *.i
-	rm -f a.out ${BOOTS}
-	rm -f libdrive.a mkboot installboot *.lif
+	rm -f a.out ${BOOTS} ${BOOTAOUTS}
+	rm -f libdrive.a mkboot installboot
 
-install: mkboot installboot ${ALL}
-	./mkboot uboot uboot.lif
-	./mkboot inst inst.lif
+install:
 	install -d -m 755 -o ${BINOWN} -g ${BINGRP} ${DESTDIR}/usr/mdec/rbootd
 	install -c -o ${BINOWN} -g ${BINGRP} -m 555 installboot \
 	    ${DESTDIR}/usr/mdec
@@ -114,7 +117,8 @@ install: mkboot installboot ${ALL}
 	rm -f ${DESTDIR}/usr/mdec/rbootd/SYS_UBOOT
 	ln ${DESTDIR}/usr/mdec/uboot.lif ${DESTDIR}/usr/mdec/rbootd/SYS_UBOOT
 	install -c -o ${BINOWN} -g ${BINGRP} -m 444 inst.lif \
-	    ${DESTDIR}/usr/mdec/rbootd/SYS_INST
+	    ${DESTDIR}/usr/mdec
+	rm -f ${DESTDIR}/usr/mdec/rbootd/SYS_INST
+	ln ${DESTDIR}/usr/mdec/inst.lif ${DESTDIR}/usr/mdec/rbootd/SYS_INST
 
 .include <bsd.prog.mk>
-.include <bsd.subdir.mk>
