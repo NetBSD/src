@@ -1,7 +1,7 @@
-/*	$NetBSD: plumiobus.c,v 1.2 1999/12/07 17:37:21 uch Exp $ */
+/*	$NetBSD: plumiobus.c,v 1.3 2000/02/27 16:28:13 uch Exp $ */
 
 /*
- * Copyright (c) 1999, by UCHIYAMA Yasushi
+ * Copyright (c) 1999, 2000 by UCHIYAMA Yasushi
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -25,7 +25,7 @@
  * SUCH DAMAGE.
  *
  */
-
+#define PLUMIOBUSDEBUG
 #include "opt_tx39_debug.h"
 
 #include <sys/param.h>
@@ -44,6 +44,15 @@
 #include <hpcmips/dev/plumiobusvar.h>
 
 #include "locators.h"
+
+#ifdef PLUMIOBUSDEBUG
+int	plumiobus_debug = 0;
+#define	DPRINTF(arg) if (plumiobus_debug) printf arg;
+#define	DPRINTFN(n, arg) if (plumiobus_debug > (n)) printf arg;
+#else
+#define	DPRINTF(arg)
+#define DPRINTFN(n, arg)
+#endif
 
 int	plumiobus_match __P((struct device*, struct cfdata*, void*));
 void	plumiobus_attach __P((struct device*, struct device*, void*));
@@ -70,8 +79,11 @@ struct cfattach plumiobus_ca = {
 	sizeof(struct plumiobus_softc), plumiobus_match, plumiobus_attach
 };
 
+bus_space_tag_t __plumiobus_subregion __P((bus_space_tag_t, bus_addr_t,
+					   bus_size_t));
+#ifdef PLUMIOBUSDEBUG
 void	plumiobus_dump __P((struct plumiobus_softc*));
-bus_space_tag_t __plumiobus_subregion __P((bus_space_tag_t, bus_addr_t, bus_size_t));
+#endif 
 
 int
 plumiobus_match(parent, cf, aux)
@@ -79,7 +91,7 @@ plumiobus_match(parent, cf, aux)
 	struct cfdata *cf;
 	void *aux;
 {
-	return 1;
+	return (1);
 }
 
 void
@@ -148,8 +160,9 @@ plumiobus_attach(parent, self, aux)
 		PLUM_IOBUS_IOBASE + PLUM_IOBUS_IO5CS5BASE,
 		PLUM_IOBUS_IO5SIZE);
 
-
+#ifdef PLUMIOBUSDEBUG
 	plumiobus_dump(sc);
+#endif
 
 	config_search(plumiobus_search, self, plumiobus_print);
 }
@@ -171,7 +184,7 @@ __plumiobus_subregion(t, ofs, size)
 	hbs->t_base += ofs;
 	hbs->t_size = size;
 	
-	return hbs;
+	return (hbs);
 }
 
 int
@@ -187,7 +200,7 @@ plumiobus_search(parent, cf, aux)
 	/* Disallow wildcarded IO5CS slot */
 	if (cf->cf_loc[PLUMIOBUSIFCF_SLOT] == PLUMIOBUSIFCF_SLOT_DEFAULT) {
 		printf("plumiobus_search: wildcarded slot, skipping\n");
-		return 0;
+		return (0);
 	}
 	slot = pba.pba_slot = cf->cf_loc[PLUMIOBUSIFCF_SLOT];
 
@@ -202,7 +215,7 @@ plumiobus_search(parent, cf, aux)
 		sc->sc_isa[slot].pr_enabled = 1;
 	}
 
-	return 0;
+	return (0);
 }
 
 int
@@ -210,9 +223,10 @@ plumiobus_print(aux, pnp)
 	void *aux;
 	const char *pnp;
 {
-	return pnp ? QUIET : UNCONF;
+	return (pnp ? QUIET : UNCONF);
 }
 
+#ifdef PLUMIOBUSDEBUG
 void
 plumiobus_dump(sc)
 	struct plumiobus_softc *sc;
@@ -252,6 +266,5 @@ plumiobus_dump(sc)
 	if (reg & PLUM_IOBUS_IDEMODE) {
 		printf("IO5CS3,4 IDE mode\n");
 	}
-	
 }
-
+#endif /* PLUMIOBUSDEBUG */
