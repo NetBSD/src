@@ -1,4 +1,4 @@
-/*	$NetBSD: if_el.c,v 1.47 1997/04/28 17:04:15 mycroft Exp $	*/
+/*	$NetBSD: if_el.c,v 1.48 1997/09/10 05:40:23 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994, Matthew E. Kimmel.  Permission is hereby granted
@@ -131,11 +131,11 @@ elprobe(parent, match, aux)
 	rval = 0;
 
 	/* First check the base. */
-	if (iobase < 0x280 || iobase > 0x3f0)
+	if (iobase < 0x200 || iobase > 0x3f0)
 		return 0;
 
 	/* Map i/o space. */
-	if (bus_space_map(iot, iobase, 4, 0, &ioh))
+	if (bus_space_map(iot, iobase, 16, 0, &ioh))
 		return 0;
 
 	/*
@@ -169,12 +169,12 @@ elprobe(parent, match, aux)
 	}
 	DPRINTF(("Vendor code ok.\n"));
 
-	ia->ia_iosize = 4;	/* XXX */
+	ia->ia_iosize = 16;
 	ia->ia_msize = 0;
 	rval = 1;
 
  out:
-	bus_space_unmap(iot, ioh, 4);
+	bus_space_unmap(iot, ioh, 16);
 	return rval;
 }
 
