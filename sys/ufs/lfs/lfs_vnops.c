@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vnops.c,v 1.35 2000/03/30 12:41:14 augustss Exp $	*/
+/*	$NetBSD: lfs_vnops.c,v 1.36 2000/05/13 23:43:15 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -277,7 +277,7 @@ lfs_fsync(v)
 	} */ *ap = v;
 	
 	return (VOP_UPDATE(ap->a_vp, NULL, NULL,
-			   (ap->a_flags & FSYNC_WAIT) != 0 ? LFS_SYNC : 0)); /* XXX */
+			   (ap->a_flags & FSYNC_WAIT) != 0 ? UPDATE_WAIT : 0)); /* XXX */
 }
 
 /*

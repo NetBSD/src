@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vnops.c,v 1.26 2000/03/30 12:41:13 augustss Exp $	*/
+/*	$NetBSD: ffs_vnops.c,v 1.27 2000/05/13 23:43:14 perseant Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -340,7 +340,8 @@ loop:
         }
         splx(s);
 	TIMEVAL_TO_TIMESPEC(&time, &ts);
-	return (VOP_UPDATE(vp, &ts, &ts, ap->a_flags & FSYNC_WAIT));
+	return (VOP_UPDATE(vp, &ts, &ts,
+	    (ap->a_flags & FSYNC_WAIT) ? UPDATE_WAIT : 0));
 }
 
 /*
