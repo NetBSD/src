@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.70 2004/04/09 23:07:44 jmc Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.71 2004/04/09 23:09:24 jmc Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -736,3 +736,9 @@ usr.sbin/racoon/Makefile			1.3
 	latter depends on the existence of the result of the former.
 
 	[he, ticket #111]
+
+sys/ufs/lfs/lfs_inode.c				1.83
+
+	If we bail out due to an error, we need 'unreserve' the space that
+	we'd reserved earlier.
+	[oster, ticket #112]
