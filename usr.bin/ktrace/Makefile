@@ -1,8 +1,9 @@
-#	$NetBSD: Makefile,v 1.6 1997/01/09 20:20:28 tls Exp $
-#	from: @(#)Makefile	8.1 (Berkeley) 6/6/93
+#	$NetBSD: Makefile,v 1.7 1997/07/23 05:44:09 mikel Exp $
+#	@(#)Makefile	8.1 (Berkeley) 6/6/93
 
-LDSTATIC=-static
 PROG=	ktrace
 SRCS=	ktrace.c subr.c
+WARNS?=	1
+LDSTATIC=-static
 
 .include <bsd.prog.mk>
