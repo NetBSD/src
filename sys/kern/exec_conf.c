@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_conf.c,v 1.66 2002/02/21 21:53:00 manu Exp $	*/
+/*	$NetBSD: exec_conf.c,v 1.67 2002/03/18 07:11:06 oki Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Christopher G. Demetriou
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exec_conf.c,v 1.66 2002/02/21 21:53:00 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exec_conf.c,v 1.67 2002/03/18 07:11:06 oki Exp $");
 
 #include "opt_execfmt.h"
 #include "opt_compat_freebsd.h"
@@ -576,10 +576,10 @@ const struct execsw execsw_builtin[] = {
 
 #ifdef COMPAT_PECOFF
 	/* Win32/WinCE PE/COFF (native word size) */
-	{ sizeof(struct exec),
+	{ PECOFF_HDR_SIZE,
 	  exec_pecoff_makecmds,
 	  { NULL },
-	  &emul_netbsd,		/* XXX emul_pecoff once it's different */
+	  &emul_pecoff,
 	  EXECSW_PRIO_ANY,
 	  howmany(sizeof(struct pecoff_args), sizeof(char *)),
 	  pecoff_copyargs,
