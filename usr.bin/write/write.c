@@ -1,4 +1,4 @@
-/*	$NetBSD: write.c,v 1.11 1998/07/06 06:57:02 mrg Exp $	*/
+/*	$NetBSD: write.c,v 1.12 1998/07/06 11:17:30 mrg Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\n\
 #if 0
 static char sccsid[] = "@(#)write.c	8.2 (Berkeley) 4/27/95";
 #else
-__RCSID("$NetBSD: write.c,v 1.11 1998/07/06 06:57:02 mrg Exp $");
+__RCSID("$NetBSD: write.c,v 1.12 1998/07/06 11:17:30 mrg Exp $");
 #endif
 #endif /* not lint */
 
@@ -206,6 +206,7 @@ search_utmp(user, tty, mytty, myuid, ttylen)
 			if (atime > bestatime) {
 				bestatime = atime;
 				(void)strncpy(tty, atty, ttylen - 1);
+				tty[ttylen - 1] = '\0';
 			}
 		}
 
@@ -215,6 +216,7 @@ search_utmp(user, tty, mytty, myuid, ttylen)
 	if (nttys == 0) {
 		if (user_is_me) {		/* ok, so write to yourself! */
 			(void)strncpy(tty, mytty, ttylen - 1);
+			tty[ttylen - 1] = '\0';
 			return;
 		}
 		errx(1, "%s has messages disabled", user);
@@ -242,7 +244,7 @@ term_chk(tty, msgsokP, atimeP, showerror)
 			warn("%s", path);
 		return(1);
 	}
-	*msgsokP = (s.st_mode & (S_IWRITE >> 3)) != 0;	/* group write bit */
+	*msgsokP = (s.st_mode & S_IWGRP) != 0;	/* group write bit */
 	*atimeP = s.st_atime;
 	return(0);
 }
@@ -277,7 +279,8 @@ do_write(tty, mytty, myuid)
 	/* print greeting */
 	if (gethostname(host, sizeof(host)) < 0)
 		(void)strncpy(host, "???", sizeof(host) - 1);
-	host[sizeof(host) - 1] = '\0';
+	else
+		host[sizeof(host) - 1] = '\0';
 	now = time((time_t *)NULL);
 	nows = ctime(&now);
 	nows[16] = '\0';
@@ -295,6 +298,7 @@ void
 done(dummy)
 	int dummy;
 {
+
 	(void)printf("EOF\r\n");
 	exit(0);
 }
