@@ -1,4 +1,4 @@
-/*	$NetBSD: pci.c,v 1.14 1996/03/14 02:35:32 cgd Exp $	*/
+/*	$NetBSD: pci.c,v 1.15 1996/03/14 04:03:01 cgd Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou.  All rights reserved.
@@ -41,18 +41,11 @@
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>
 
-struct pci_softc {
-	struct device	sc_dev;
-
-	int		sc_bus;
-	bus_chipset_tag_t sc_bc;
-};
-
 int pcimatch __P((struct device *, void *, void *));
 void pciattach __P((struct device *, struct device *, void *));
 
 struct cfdriver pcicd = {
-	NULL, "pci", pcimatch, pciattach, DV_DULL, sizeof(struct pci_softc)
+	NULL, "pci", pcimatch, pciattach, DV_DULL, sizeof(struct device)
 };
 
 int	pciprint __P((void *, char *));
@@ -90,15 +83,11 @@ pciattach(parent, self, aux)
 	struct device *parent, *self;
 	void *aux;
 {
-	struct pci_softc *sc = (struct pci_softc *)self;
 	struct pcibus_attach_args *pba = aux;
 	bus_chipset_tag_t bc;
 	int device, function, nfunctions;
 
-	sc->sc_bus = pba->pba_bus;
-	sc->sc_bc = bc = pba->pba_bc;
-
-	pci_md_attach_hook(parent, sc, pba);
+	pci_md_attach_hook(parent, self, pba);
 	printf("\n");
 
 	for (device = 0; device < PCI_MAX_DEVICE_NUMBER; device++) {
@@ -108,7 +97,7 @@ pciattach(parent, self, aux)
 		struct cfdata *cf;
 		int supported;
 
-		tag = pci_make_tag(sc->sc_bus, device, 0);
+		tag = pci_make_tag(pba->pba_bus, device, 0);
 		id = pci_conf_read(tag, PCI_ID_REG);
 		if (id == 0 || id == 0xffffffff)
 			continue;
@@ -116,13 +105,13 @@ pciattach(parent, self, aux)
 		nfunctions = 1;				/* XXX */
 
 		for (function = 0; function < nfunctions; function++) {
-			tag = pci_make_tag(sc->sc_bus, device, function);
+			tag = pci_make_tag(pba->pba_bus, device, function);
 			id = pci_conf_read(tag, PCI_ID_REG);
 			if (id == 0 || id == 0xffffffff)
 				continue;
 			class = pci_conf_read(tag, PCI_CLASS_REG);
 
-			pa.pa_bc = bc;
+			pa.pa_bc = pba->pba_bc;
 			pa.pa_device = device;
 			pa.pa_function = function;
 			pa.pa_tag = tag;

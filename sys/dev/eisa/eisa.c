@@ -1,4 +1,4 @@
-/*	$NetBSD: eisa.c,v 1.6 1996/03/08 20:39:32 cgd Exp $	*/
+/*	$NetBSD: eisa.c,v 1.7 1996/03/14 04:02:58 cgd Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -48,17 +48,11 @@
 #include <dev/eisa/eisavar.h>
 #include <dev/eisa/eisadevs.h>
 
-struct eisa_softc {
-	struct	device sc_dev;
-
-	bus_chipset_tag_t sc_bc;
-};
-
 int	eisamatch __P((struct device *, void *, void *));
 void	eisaattach __P((struct device *, struct device *, void *));
 
 struct cfdriver eisacd = {
-        NULL, "eisa", eisamatch, eisaattach, DV_DULL, sizeof(struct eisa_softc)
+        NULL, "eisa", eisamatch, eisaattach, DV_DULL, sizeof(struct device)
 };
 
 int	eisasubmatch __P((struct device *, void *, void *));
@@ -116,14 +110,13 @@ eisaattach(parent, self, aux)
         struct device *parent, *self;
         void *aux;
 {
-	struct eisa_softc *sc = (struct eisa_softc *)self;
 	struct eisabus_attach_args *eba = aux;
 	bus_chipset_tag_t bc;
 	int slot;
 
 	printf("\n");
 
-	sc->sc_bc = bc = eba->eba_bc;
+	bc = eba->eba_bc;
 
 	/*
 	 * Search for and attach subdevices.
@@ -160,7 +153,7 @@ eisaattach(parent, self, aux)
 		/* Check for device existence */
 		if (EISA_VENDID_NODEV(ea.ea_vid)) {
 #if 0
-			printf("no device at %s slot %d\n", sc->sc_dev.dv_xname,
+			printf("no device at %s slot %d\n", self->dv_xname,
 			    slot);
 			printf("\t(0x%x, 0x%x)\n", ea.ea_vid[0],
 			    ea.ea_vid[1]);
