@@ -1,3 +1,4 @@
+#	$NetBSD: dot.login,v 1.2 1997/10/17 09:26:59 mrg Exp $
 #csh .login file
 
 setenv SHELL /bin/csh
