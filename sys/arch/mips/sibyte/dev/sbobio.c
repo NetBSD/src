@@ -1,4 +1,4 @@
-/* $NetBSD: sbobio.c,v 1.1 2002/03/05 23:46:42 simonb Exp $ */
+/* $NetBSD: sbobio.c,v 1.2 2002/06/01 13:56:56 simonb Exp $ */
 
 /*
  * Copyright 2000, 2001
@@ -37,6 +37,7 @@
 #include <sys/device.h>
 #include <sys/systm.h>
 
+#include <mips/sibyte/include/sb1250_regs.h>
 #include <mips/sibyte/include/zbbusvar.h>
 #include <mips/sibyte/dev/sbobiovar.h>
 
@@ -54,7 +55,8 @@ static int	sbobio_submatch(struct device *, struct cfdata *, void *);
 static const char *sbobio_device_type_name(enum sbobio_device_type type);
 
 static const struct sbobio_attach_locs sb1250_sbobio_devs[] = {
-	{ 0x0000, {6,7},	SBOBIO_DEVTYPE_SMBUS		},
+	{ 0x0000, {6,-1},	SBOBIO_DEVTYPE_SMBUS		},
+	{ 0x0008, {7,-1},	SBOBIO_DEVTYPE_SMBUS		},
 	{ 0x0100, {8,9},	SBOBIO_DEVTYPE_DUART		},
 	{ 0x0400, {10,-1},	SBOBIO_DEVTYPE_SYNCSERIAL	},
 	{ 0x0800, {11,-1},	SBOBIO_DEVTYPE_SYNCSERIAL	},
@@ -89,7 +91,7 @@ sbobio_attach(struct device *parent, struct device *self, void *aux)
 
 	for (i = 0; i < sb1250_sbobio_dev_count; i++) {
 		memset(&sa, 0, sizeof sa);
-		sa.sa_base = 0x10060000;			/* XXXCGD */
+		sa.sa_base = A_PHYS_IO_SYSTEM;
 		sa.sa_locs = sb1250_sbobio_devs[i];
 		config_found_sm(self, &sa, sbobio_print, sbobio_submatch);
 	}
@@ -107,7 +109,7 @@ sbobio_print(void *aux, const char *pnp)
 		    sbobio_device_type_name(sap->sa_locs.sa_type), pnp);
 	printf(" offset 0x%lx", (long)sap->sa_locs.sa_offset);
 	for (i = 0; i < 2; i++) {
-		if (sap->sa_locs.sa_intr[i] != -1)
+		if (sap->sa_locs.sa_intr[i] != SBOBIOCF_INTR_DEFAULT)
 			printf("%s%ld", i == 0 ? " intr " : ",",
 			    (long)sap->sa_locs.sa_intr[i]);
 	}
