@@ -273,6 +273,7 @@ static int qmgr_message_read(QMGR_MESSAGE *message)
 		       "queue %s", message->queue_name);
 	    }
 	} else if (rec_type == REC_TYPE_RCPT) {
+	    /* See also below for code setting orig_rcpt. */
 #define FUDGE(x)	((x) * (var_qmgr_fudge / 100.0))
 	    if (message->rcpt_list.len < FUDGE(var_qmgr_rcpt_limit)) {
 		qmgr_rcpt_list_add(&message->rcpt_list, curr_offset,
@@ -347,7 +348,9 @@ static int qmgr_message_read(QMGR_MESSAGE *message)
 	    orig_rcpt = 0;
 	}
 	if (rec_type == REC_TYPE_ORCP)
-	    orig_rcpt = mystrdup(start);
+	    /* See also above for code clearing orig_rcpt. */
+	    if (message->rcpt_offset == 0)
+		orig_rcpt = mystrdup(start);
     } while (rec_type > 0 && rec_type != REC_TYPE_END);
 
     /*

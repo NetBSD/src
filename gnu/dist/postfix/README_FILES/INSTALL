@@ -144,15 +144,19 @@ configuration directory other than /etc/postfix, use:
 
 Be sure to get the quotes right. These details matter a lot.
 
-Other parameters whose defaults can be specified in this way are:
+Parameters whose defaults can be specified in this way are:
 
-    Macro name          default value for
-    -------------------------------------
-    DEF_COMMAND_DIR     command_directory
-    DEF_DAEMON_DIR      daemon_directory
-    DEF_SENDMAIL_PATH   sendmail_path
-    DEF_MAILQ_PATH      mailq_path
-    DEF_NEWALIAS_PATH   newaliases_path
+    Macro name          default value for  typical default
+    -----------------------------------------------------------
+    DEF_COMMAND_DIR     command_directory /usr/sbin
+    DEF_CONFIG_DIR      config_directory  /etc/postfix
+    DEF_DAEMON_DIR      daemon_directory  /usr/libexec/postfix
+    DEF_MAILQ_PATH      mailq_path        /usr/bin/mailq
+    DEF_MANPAGE_DIR     manpage_directory /usr/local/man
+    DEF_NEWALIAS_PATH   newaliases_path   /usr/bin/newaliases
+    DEF_README_DIR      readme_directory  no (do not install)
+    DEF_SAMPLE_DIR      sample_directory  /etc/postfix
+    DEF_SENDMAIL_PATH   sendmail_path     /usr/sbin/sendmail
 
 In order to build Postfix for very large applications, where you
 expect to run more than 1000 delivery processes, you may need to

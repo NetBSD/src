@@ -1,4 +1,4 @@
-#	$NetBSD: sample-regexp-access.cf,v 1.2 2002/12/24 21:37:45 perry Exp $
+#	$NetBSD: sample-regexp-access.cf,v 1.3 2004/03/27 16:31:19 heas Exp $
 #
 # Sample regexp SMTPD access lookup "table". See regexp_table(5)
 # and access(5) for a description of the syntax.
@@ -17,8 +17,8 @@
 #
 # A block of table entries may be "enclosed" by a line with `if
 # /pattern/flags' or `if !/pattern/flags' and a line with `endif'.
-# This causes the block of table entries to be examined only when
-# the pattern produces a successful (non)match. The `if..endif' may
+# This causes the block of table entries to be examined only when the
+# search string produces a successful (non)match. The `if..endif' may
 # be nested. There currently is no `else' operator.
 #
 # The syntax of access table results is described in the Postfix
@@ -32,4 +32,6 @@
 /^postmaster@/				OK
 
 # Protect your outgoing majordomo exploders
-/^(.*)-outgoing@(.*)$/!/^owner-.*/	550 Use ${1}@${2} instead
+if !/^owner-.*/
+/^(.*)-outgoing@(.*)$/			550 Use ${1}@${2} instead
+endif

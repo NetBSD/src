@@ -112,6 +112,7 @@
 #include <timed_connect.h>
 #include <stringops.h>
 #include <host_port.h>
+#include <sane_connect.h>
 
 /* Global library. */
 
@@ -208,7 +209,7 @@ static SMTP_SESSION *smtp_connect_addr(DNS_RR *addr, unsigned port,
 	non_blocking(sock, BLOCKING);
 	errno = saved_errno;
     } else {
-	conn_stat = connect(sock, (struct sockaddr *) & sin, sizeof(sin));
+	conn_stat = sane_connect(sock, (struct sockaddr *) & sin, sizeof(sin));
     }
     if (conn_stat < 0) {
 	vstring_sprintf(why, "connect to %s[%s]: %m",
@@ -345,7 +346,7 @@ static char *smtp_parse_destination(char *destination, char *def_service,
     /*
      * Convert service to port number, network byte order.
      */
-    if ((port = atoi(service)) != 0) {
+    if (alldig(service) && (port = atoi(service)) != 0) {
 	*portp = htons(port);
     } else {
 	if ((sp = getservbyname(service, protocol)) == 0)

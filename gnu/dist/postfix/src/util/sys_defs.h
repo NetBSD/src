@@ -98,7 +98,9 @@
 #define NORETURN	void
 #define PRINTFLIKE(x,y)
 #define SCANFLIKE(x,y)
+#ifndef NO_NETINFO
 #define HAS_NETINFO
+#endif
 #define NATIVE_SENDMAIL_PATH "/usr/sbin/sendmail"
 #define NATIVE_MAILQ_PATH "/usr/bin/mailq"
 #define NATIVE_NEWALIAS_PATH "/usr/bin/newaliases"
@@ -185,6 +187,7 @@ extern int opterr;			/* XXX use <getopt.h> */
 #define USE_STATFS
 #define STATFS_IN_SYS_MOUNT_H
 #define HAS_POSIX_REGEXP
+#define BROKEN_WRITE_SELECT_ON_NON_BLOCKING_PIPE
 #endif
 
  /*
@@ -260,6 +263,7 @@ extern int opterr;
 #define LOCAL_CONNECT	stream_connect
 #define LOCAL_TRIGGER	stream_trigger
 #define HAS_VOLATILE_LOCKS
+#define BROKEN_READ_SELECT_ON_TCP_SOCKET
 /*
  * Allow build environment to override paths.
  */
@@ -463,6 +467,7 @@ extern int initgroups(const char *, int);
 #define DBM_NO_TRAILING_NULL		/* XXX check */
 #define USE_STATVFS
 #define STATVFS_IN_SYS_STATVFS_H
+#define BROKEN_WRITE_SELECT_ON_NON_BLOCKING_PIPE
 #endif
 
 #if defined(IRIX5)

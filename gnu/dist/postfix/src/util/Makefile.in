@@ -26,7 +26,7 @@ SRCS	= alldig.c argv.c argv_split.c attr_print0.c attr_print64.c \
 	unix_connect.c unix_listen.c unix_trigger.c unsafe.c username.c \
 	valid_hostname.c vbuf.c vbuf_print.c vstream.c vstream_popen.c \
 	vstring.c vstring_vstream.c watchdog.c writable.c write_buf.c \
-	write_wait.c strcasecmp.c nvtable.c host_port.c
+	write_wait.c strcasecmp.c nvtable.c host_port.c sane_connect.c
 OBJS	= alldig.o argv.o argv_split.o attr_print0.o attr_print64.o \
 	attr_scan0.o attr_scan64.o base64_code.o basename.o binhash.o \
 	chroot_uid.o clean_env.o close_on_exec.o concatenate.o ctable.o \
@@ -54,7 +54,7 @@ OBJS	= alldig.o argv.o argv_split.o attr_print0.o attr_print64.o \
 	unix_connect.o unix_listen.o unix_trigger.o unsafe.o username.o \
 	valid_hostname.o vbuf.o vbuf_print.o vstream.o vstream_popen.o \
 	vstring.o vstring_vstream.o watchdog.o writable.o write_buf.o \
-	write_wait.o nvtable.o $(STRCASE) host_port.o
+	write_wait.o nvtable.o host_port.o sane_connect.o $(STRCASE)
 HDRS	= argv.h attr.h base64_code.h binhash.h chroot_uid.h clean_env.h \
 	connect.h ctable.h dict.h dict_db.h dict_dbm.h dict_env.h \
 	dict_ht.h dict_ldap.h dict_mysql.h dict_ni.h dict_nis.h \
@@ -72,7 +72,7 @@ HDRS	= argv.h attr.h base64_code.h binhash.h chroot_uid.h clean_env.h \
 	split_at.h stat_as.h stringops.h sys_defs.h timed_connect.h \
 	timed_wait.h trigger.h username.h valid_hostname.h vbuf.h \
 	vbuf_print.h vstream.h vstring.h vstring_vstream.h watchdog.h \
-	nvtable.h host_port.h
+	nvtable.h host_port.h sane_connect.h
 TESTSRC	= fifo_open.c fifo_rdwr_bug.c fifo_rdonly_bug.c select_bug.c \
 	stream_test.c dup2_pass_on_exec.c
 WARN	= -W -Wformat -Wimplicit -Wmissing-prototypes \
@@ -739,6 +739,9 @@ file_limit.o: iostuff.h
 find_inet.o: find_inet.c
 find_inet.o: sys_defs.h
 find_inet.o: msg.h
+find_inet.o: stringops.h
+find_inet.o: vstring.h
+find_inet.o: vbuf.h
 find_inet.o: find_inet.h
 fsspace.o: fsspace.c
 fsspace.o: sys_defs.h
@@ -805,6 +808,7 @@ inet_connect.o: msg.h
 inet_connect.o: find_inet.h
 inet_connect.o: inet_util.h
 inet_connect.o: iostuff.h
+inet_connect.o: sane_connect.h
 inet_connect.o: connect.h
 inet_connect.o: timed_connect.h
 inet_listen.o: inet_listen.c
@@ -916,6 +920,7 @@ msg_syslog.o: stringops.h
 msg_syslog.o: msg.h
 msg_syslog.o: msg_output.h
 msg_syslog.o: msg_syslog.h
+msg_syslog.o: safe.h
 msg_vstream.o: msg_vstream.c
 msg_vstream.o: sys_defs.h
 msg_vstream.o: vstream.h
@@ -1036,6 +1041,10 @@ sane_accept.o: sane_accept.c
 sane_accept.o: sys_defs.h
 sane_accept.o: msg.h
 sane_accept.o: sane_accept.h
+sane_connect.o: sane_connect.c
+sane_connect.o: sys_defs.h
+sane_connect.o: msg.h
+sane_connect.o: sane_connect.h
 sane_link.o: sane_link.c
 sane_link.o: sys_defs.h
 sane_link.o: msg.h
@@ -1143,9 +1152,11 @@ timed_connect.o: timed_connect.c
 timed_connect.o: sys_defs.h
 timed_connect.o: msg.h
 timed_connect.o: iostuff.h
+timed_connect.o: sane_connect.h
 timed_connect.o: timed_connect.h
 timed_read.o: timed_read.c
 timed_read.o: sys_defs.h
+timed_read.o: msg.h
 timed_read.o: iostuff.h
 timed_wait.o: timed_wait.c
 timed_wait.o: sys_defs.h
@@ -1154,6 +1165,7 @@ timed_wait.o: posix_signals.h
 timed_wait.o: timed_wait.h
 timed_write.o: timed_write.c
 timed_write.o: sys_defs.h
+timed_write.o: msg.h
 timed_write.o: iostuff.h
 translit.o: translit.c
 translit.o: sys_defs.h
@@ -1174,6 +1186,7 @@ unix_connect.o: unix_connect.c
 unix_connect.o: sys_defs.h
 unix_connect.o: msg.h
 unix_connect.o: iostuff.h
+unix_connect.o: sane_connect.h
 unix_connect.o: connect.h
 unix_connect.o: timed_connect.h
 unix_listen.o: unix_listen.c

@@ -1210,6 +1210,7 @@ tok822_parse.o: ../../include/sys_defs.h
 tok822_parse.o: ../../include/vstring.h
 tok822_parse.o: ../../include/vbuf.h
 tok822_parse.o: ../../include/msg.h
+tok822_parse.o: ../../include/stringops.h
 tok822_parse.o: lex_822.h
 tok822_parse.o: quote_822_local.h
 tok822_parse.o: quote_flags.h

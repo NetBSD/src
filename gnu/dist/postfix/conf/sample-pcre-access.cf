@@ -1,4 +1,4 @@
-#	$NetBSD: sample-pcre-access.cf,v 1.2 2002/12/24 21:37:45 perry Exp $
+#	$NetBSD: sample-pcre-access.cf,v 1.3 2004/03/27 16:31:19 heas Exp $
 #
 # 
 #	Sample pcre (PERL-compatible regular expression) map file for
@@ -20,7 +20,7 @@
 #       A block of table entries may be "enclosed" by a line with    
 #       `if /pattern/flags' and a line with `endif'.  This causes
 #       the block of table entries to be examined only when the
-#       pattern produces a successful match. The `if..endif' may
+#       search string matches the pattern. The `if..endif' may
 #       be nested. There currently is no `else' operator.
 #
 #	The second field is the "replacement" string - the text
@@ -47,7 +47,7 @@
 
 # Protect your outgoing majordomo exploders
 #
-/^(?!owner-)(.*)-outgoing@/		550 Use ${1}@${2} instead
+/^(?!owner-)(.*)-outgoing@(.*)/		550 Use ${1}@${2} instead
 
 
 # Bounce friend@whatever, except when whatever is our domain (you would

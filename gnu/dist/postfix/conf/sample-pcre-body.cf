@@ -1,4 +1,4 @@
-#	$NetBSD: sample-pcre-body.cf,v 1.3 2003/03/08 19:43:58 perry Exp $
+#	$NetBSD: sample-pcre-body.cf,v 1.4 2004/03/27 16:31:19 heas Exp $
 #
 #
 #	Sample pcre (PERL-compatible regular expression) map file for
@@ -22,7 +22,7 @@
 #       A block of table entries may be "enclosed" by a line with    
 #       `if /pattern/flags' and a line with `endif'.  This causes
 #       the block of table entries to be examined only when the
-#       pattern produces a successful match. The `if..endif' may
+#       search string matches the pattern. The `if..endif' may
 #       be nested. There currently is no `else' operator.
 #
 #	The second field is the "replacement" string - the text
@@ -31,10 +31,11 @@
 #	REJECT [optional text...]
 #			Reject the entire message. The optional text is sent to
 #			the originator and is logged to the maillog file.
+#	OK		Skip all further body patterns for this body line.
 #	IGNORE		Silently discard the body line.
 #	WARN [optional text...]
 #			Log the body line and the optional text. This is
-#			useful for testing. When the pattern is OK, change the
+#			useful for testing. When the pattern is good, change the
 #			WARN into a REJECT or into a DISCARD.
 #	HOLD [optional text...]
 #			Place the message on the hold queue. Mail on hold can

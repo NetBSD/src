@@ -126,6 +126,7 @@
 
 #include <vstring.h>
 #include <msg.h>
+#include <stringops.h>
 
 /* Global library. */
 
@@ -250,7 +251,7 @@ static void strip_address(VSTRING *vp, int start, TOK822 *addr)
      * Emit plain <address>. Discard any comments or phrases.
      */
     msg_warn("stripping too many comments from address: %.100s...",
-	     vstring_str(vp) + start);
+	     printable(vstring_str(vp) + start, '?'));
     vstring_truncate(vp, start);
     VSTRING_ADDCH(vp, '<');
     if (addr) {
@@ -262,7 +263,6 @@ static void strip_address(VSTRING *vp, int start, TOK822 *addr)
     }
     VSTRING_ADDCH(vp, '>');
 }
-
 
 /* tok822_externalize - token tree to string, external form */
 

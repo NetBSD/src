@@ -234,9 +234,25 @@ MASTER_SERV *get_master_ent()
     int     n;
     char   *bufp;
     char   *atmp;
+    static char *saved_interfaces = 0;
 
     if (master_fp == 0)
 	msg_panic("get_master_ent: config file not open");
+
+    /*
+     * XXX We cannot change the inet_interfaces setting for a running master
+     * process. Listening sockets are inherited by child processes so that
+     * closing and reopening those sockets in the master does not work.
+     * 
+     * Another problem is that library routines still cache results that are
+     * based on the old inet_interfaces setting. It is too much trouble to
+     * recompute everything.
+     * 
+     * In order to keep our data structures consistent we ignore changes in
+     * inet_interfaces settings, and issue a warning instead.
+     */
+    if (saved_interfaces == 0)
+	saved_interfaces = mystrdup(var_inet_interfaces);
 
     /*
      * Skip blank lines and comment lines.
@@ -274,6 +290,12 @@ MASTER_SERV *get_master_ent()
 
     transport = get_str_ent(&bufp, "transport type", (char *) 0);
     if (STR_SAME(transport, MASTER_XPORT_NAME_INET)) {
+	if (!STR_SAME(saved_interfaces, var_inet_interfaces)) {
+	    msg_warn("service %s: ignoring %s change",
+		     name, VAR_INET_INTERFACES);
+	    msg_warn("to change %s, stop and start Postfix",
+		     VAR_INET_INTERFACES);
+	}
 	serv->type = MASTER_SERV_TYPE_INET;
 	atmp = inet_parse(name, &host, &port);
 	if (*host) {
@@ -281,10 +303,12 @@ MASTER_SERV *get_master_ent()
 	    MASTER_INET_ADDRLIST(serv) = (INET_ADDR_LIST *)
 		mymalloc(sizeof(*MASTER_INET_ADDRLIST(serv)));
 	    inet_addr_list_init(MASTER_INET_ADDRLIST(serv));
-	    inet_addr_host(MASTER_INET_ADDRLIST(serv), host);
+	    if (inet_addr_host(MASTER_INET_ADDRLIST(serv), host) == 0)
+		msg_fatal("%s: line %d: bad hostname or network address: %s",
+			  VSTREAM_PATH(master_fp), master_line, host);
 	    inet_addr_list_uniq(MASTER_INET_ADDRLIST(serv));
 	    serv->listen_fd_count = MASTER_INET_ADDRLIST(serv)->used;
-	} else if (strcasecmp(var_inet_interfaces, DEF_INET_INTERFACES) == 0) {
+	} else if (strcasecmp(saved_interfaces, DEF_INET_INTERFACES) == 0) {
 	    MASTER_INET_ADDRLIST(serv) = 0;	/* wild-card */
 	    serv->listen_fd_count = 1;
 	} else {

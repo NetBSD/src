@@ -121,7 +121,7 @@ this also breaks majordomo approval requests when the included
 request contains valid 8-bit MIME mail, and it breaks bounces from
 mailers that do not properly encapsulate 8-bit content (for example,
 bounces from qmail or from old versions of Postfix).
-.IP \fBstrict_mime_domain_encoding\fR
+.IP \fBstrict_mime_encoding_domain\fR
 Reject mail with invalid \fBContent-Transfer-Encoding:\fR
 information for message/* or multipart/*. This blocks mail
 from poorly written software.
@@ -173,7 +173,7 @@ Limits the number of envelope recipients that are remembered.
 .IP \fBheader_address_token_limit\fR
 Limits the number of address tokens used to process a message header.
 .IP \fBheader_size_limit\fR
-Limits the amount of memory in bytes used to process a message header.
+Limits the amount of memory in bytes used to store a message header.
 .IP \fBin_flow_delay\fR
 Amount of time to pause before accepting a message, when the
 message arrival rate exceeds the message delivery rate.

@@ -1,10 +1,16 @@
-#	$NetBSD: master.cf,v 1.6 2004/03/27 00:03:16 dan Exp $
+#	$NetBSD: master.cf,v 1.7 2004/03/27 16:31:19 heas Exp $
 #
 #
-# Postfix master process configuration file.  Each line describes how
-# a mailer component program should be run. The fields that make up
-# each line are described below. A "-" field value requests that a
-# default value be used for that field.
+# Postfix master process configuration file.  Each logical line
+# describes how a Postfix daemon program should be run.
+#
+# A logical line starts with non-whitespace, non-comment text. 
+# Empty lines and whitespace-only lines are ignored, as are comment
+# lines whose first non-whitespace character is a `#'.
+# A line that starts with whitespace continues a logical line.
+#
+# The fields that make up each line are described below. A "-" field
+# value requests that a default value be used for that field.
 #
 # Service: any name that is valid for the specified transport type
 # (the next field).  With INET transports, a service is specified as
@@ -60,12 +66,6 @@
 #
 # SPECIFY ONLY PROGRAMS THAT ARE WRITTEN TO RUN AS POSTFIX DAEMONS.
 # ALL DAEMONS SPECIFIED HERE MUST SPEAK A POSTFIX-INTERNAL PROTOCOL.
-#
-# DO NOT CHANGE THE ZERO PROCESS LIMIT FOR CLEANUP/BOUNCE/DEFER OR
-# POSTFIX WILL BECOME STUCK UP UNDER HEAVY LOAD
-#
-# DO NOT CHANGE THE ONE PROCESS LIMIT FOR PICKUP/QMGR OR POSTFIX WILL
-# DELIVER MAIL MULTIPLE TIMES.
 #
 # DO NOT SHARE THE POSTFIX QUEUE BETWEEN MULTIPLE POSTFIX INSTANCES.
 #
