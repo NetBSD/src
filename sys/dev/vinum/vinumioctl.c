@@ -41,7 +41,7 @@
  * otherwise) arising in any way out of the use of this software, even if
  * advised of the possibility of such damage.
  *
- * $Id: vinumioctl.c,v 1.1.1.1 2003/10/10 03:08:38 grog Exp $
+ * $Id: vinumioctl.c,v 1.1.1.1.2.1 2004/09/18 16:48:07 he Exp $
  * $FreeBSD$
  */
 
@@ -92,7 +92,7 @@ vinumioctl(dev_t dev,
 	    switch (cmd) {
 	    case DIOCGDINFO:				    /* get disk label */
 		get_volume_label(sd->name, 1, sd->sectors, (struct disklabel *) data);
-		break;
+		return 0;
 
 		/*
 		 * We don't have this stuff on hardware,
@@ -106,8 +106,7 @@ vinumioctl(dev_t dev,
 	    default:
 		return ENOTTY;				    /* not my kind of ioctl */
 	    }
-
-	    return 0;					    /* pretend we did it */
+	    break;
 
 	case VINUM_PLEX_TYPE:
 	    objno = Plexno(dev);
@@ -117,7 +116,7 @@ vinumioctl(dev_t dev,
 	    switch (cmd) {
 	    case DIOCGDINFO:				    /* get disk label */
 		get_volume_label(plex->name, 1, plex->length, (struct disklabel *) data);
-		break;
+		return 0;
 
 		/*
 		 * We don't have this stuff on hardware,
@@ -131,8 +130,7 @@ vinumioctl(dev_t dev,
 	    default:
 		return ENOTTY;				    /* not my kind of ioctl */
 	    }
-
-	    return 0;					    /* pretend we did it */
+	    break;
 
 	case VINUM_VOLUME_TYPE:
 	    objno = Volno(dev);
@@ -146,7 +144,7 @@ vinumioctl(dev_t dev,
 	    switch (cmd) {
 	    case DIOCGDINFO:				    /* get disk label */
 		get_volume_label(vol->name, vol->plexes, vol->size, (struct disklabel *) data);
-		break;
+		return 0;
 
 		/*
 		 * Care!  DIOCGPART returns *pointers* to
@@ -157,7 +155,8 @@ vinumioctl(dev_t dev,
 		get_volume_label(vol->name, vol->plexes, vol->size, &vol->label);
 		((struct partinfo *) data)->disklab = &vol->label;
 		((struct partinfo *) data)->part = &vol->label.d_partitions[0];
-		break;
+		return 0;
+
 		/*
 		 * We don't have this stuff on hardware,
 		 * so just pretend to do it so that
@@ -181,7 +180,8 @@ vinumioctl(dev_t dev,
 	    }
 	    break;
 	}
-    return 0;						    /* XXX */
+
+    return EINVAL;
 }
 
 /* Handle ioctls for the super device */
@@ -423,10 +423,9 @@ vinum_super_ioctl(dev_t dev,
 	return 0;
 
     default:
-	/* FALLTHROUGH */
-	break;
+	/* unsupported ioctl */
+	return EINVAL;
     }
-    return 0;						    /* to keep the compiler happy */
 }
 
 /*
