@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_32_sockio.c,v 1.1.4.3 2002/08/01 02:44:28 nathanw Exp $	 */
+/*	$NetBSD: svr4_32_sockio.c,v 1.1.4.4 2002/08/23 02:39:16 petrov Exp $	 */
 
 /*-
  * Copyright (c) 1995 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_32_sockio.c,v 1.1.4.3 2002/08/01 02:44:28 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_32_sockio.c,v 1.1.4.4 2002/08/23 02:39:16 petrov Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -91,14 +91,15 @@ bsd_to_svr4_flags(bf)
 }
 
 int
-svr4_32_sock_ioctl(fp, p, retval, fd, cmd, data)
+svr4_32_sock_ioctl(fp, l, retval, fd, cmd, data)
 	struct file *fp;
-	struct proc *p;
+	struct lwp *l;
 	register_t *retval;
 	int fd;
 	u_long cmd;
 	caddr_t data;
 {
+	struct proc *p = l->l_proc;
 	int error;
 	int (*ctl) __P((struct file *, u_long,  caddr_t, struct proc *)) =
 			fp->f_ops->fo_ioctl;
