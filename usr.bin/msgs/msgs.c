@@ -1,6 +1,8 @@
+/*	$NetBSD: msgs.c,v 1.7 1995/09/28 06:57:40 tls Exp $	*/
+
 /*-
- * Copyright (c) 1980 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1980, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,14 +34,17 @@
  */
 
 #ifndef lint
-char copyright[] =
-"@(#) Copyright (c) 1980 The Regents of the University of California.\n\
- All rights reserved.\n";
+static char copyright[] =
+"@(#) Copyright (c) 1980, 1993\n\
+	The Regents of the University of California.  All rights reserved.\n";
 #endif /* not lint */
 
 #ifndef lint
-/*static char sccsid[] = "from: @(#)msgs.c	5.8 (Berkeley) 2/4/91";*/
-static char rcsid[] = "$Id: msgs.c,v 1.6 1994/02/19 09:11:33 cgd Exp $";
+#if 0
+static char sccsid[] = "@(#)msgs.c	8.2 (Berkeley) 4/28/95";
+#else
+static char rcsid[] = "$NetBSD: msgs.c,v 1.7 1995/09/28 06:57:40 tls Exp $";
+#endif
 #endif /* not lint */
 
 /*
@@ -65,22 +70,23 @@ static char rcsid[] = "$Id: msgs.c,v 1.6 1994/02/19 09:11:33 cgd Exp $";
 
 #define V7		/* will look for TERM in the environment */
 #define OBJECT		/* will object to messages without Subjects */
-#define REJECT		/* will reject messages without Subjects
+#define REJECT	/* will reject messages without Subjects
 			   (OBJECT must be defined also) */
 /* #define UNBUFFERED	/* use unbuffered output */
 
 #include <sys/param.h>
+#include <sys/ioctl.h>
 #include <sys/stat.h>
 #include <dirent.h>
 #include <ctype.h>
 #include <errno.h>
 #include <pwd.h>
 #include <setjmp.h>
-#include <sgtty.h>
 #include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <termios.h>
 #include <time.h>
 #include <unistd.h>
 #include "pathnames.h"
@@ -123,6 +129,7 @@ bool	mailing = NO;
 bool	quitit = NO;
 bool	sending = NO;
 bool	intrpflg = NO;
+bool	restricted = NO;
 int	uid;
 int	msg;
 int	prevmsg;
@@ -131,7 +138,6 @@ int	nlines;
 int	Lpp = 0;
 time_t	t;
 time_t	keep;
-struct	sgttyb	otty;
 
 char	*mktemp();
 char	*nxtfld();
@@ -147,7 +153,6 @@ bool	locomode = NO;
 bool	use_pager = NO;
 bool	clean = NO;
 bool	lastcmd = NO;
-bool	restricted = NO;
 jmp_buf	tstpbuf;
 
 main(argc, argv)
@@ -164,7 +169,6 @@ int argc; char *argv[];
 	setbuf(stdout, NULL);
 #endif
 
-	gtty(fileno(stdout), &otty);
 	time(&t);
 	setuid(uid = getuid());
 	ruptible = (signal(SIGINT, SIG_IGN) == SIG_DFL);
@@ -218,9 +222,10 @@ int argc; char *argv[];
 				qopt = YES;
 				break;
 
-			case 'r':		/* restricted */
-				restricted = YES;
-				break;
+                        case 'r':               /* restricted */
+                                restricted = YES;
+                                break;
+ 
 
 			case 's':		/* sending TO msgs */
 				send_msg = YES;
@@ -261,6 +266,7 @@ int argc; char *argv[];
 			perror(_PATH_MSGS);
 			exit(errno);
 		}
+		chmod(fname, CMODE);
 
 		firstmsg = 32767;
 		lastmsg = 0;
@@ -329,7 +335,6 @@ int argc; char *argv[];
 			perror(fname);
 			exit(errno);
 		}
-		chmod(fname, CMODE);
 
 		nextmsg = lastmsg + 1;
 		sprintf(fname, "%s/%d", _PATH_MSGS, nextmsg);
@@ -393,9 +398,9 @@ int argc; char *argv[];
 	msgsrc = fopen(fname, "r");
 	if (msgsrc) {
 		newrc = NO;
-		fscanf(msgsrc, "%d\n", &nextmsg);
-		fclose(msgsrc);
-		if (nextmsg > lastmsg+1) {
+                fscanf(msgsrc, "%d\n", &nextmsg);
+                fclose(msgsrc);
+                if (nextmsg > lastmsg+1) {
 			printf("Warning: bounds have been reset (%d, %d)\n",
 				firstmsg, lastmsg);
 			truncate(fname, (off_t)0);
@@ -404,11 +409,11 @@ int argc; char *argv[];
 		else if (!rcfirst)
 			rcfirst = nextmsg - rcback;
 	}
-	else
-		newrc = YES;
-	msgsrc = fopen(fname, "r+");
-	if (msgsrc == NULL)
-		msgsrc = fopen(fname, "w");
+        else
+        	newrc = YES;
+        msgsrc = fopen(fname, "r+");
+        if (msgsrc == NULL)
+               msgsrc = fopen(fname, "w");
 	if (msgsrc == NULL) {
 		perror(fname);
 		exit(errno);
@@ -610,11 +615,11 @@ int length;
 	if (use_pager && length > Lpp) {
 		signal(SIGPIPE, SIG_IGN);
 		signal(SIGQUIT, SIG_IGN);
-		if ((env_pager = getenv("PAGER")) == NULL) {
-			sprintf(cmdbuf, _PATH_PAGER, Lpp);
-		} else {
-			strcpy(cmdbuf, env_pager);
-		}
+                if ((env_pager = getenv("PAGER")) == NULL) {
+                        sprintf(cmdbuf, _PATH_PAGER, Lpp);
+                } else {
+                        strcpy(cmdbuf, env_pager);
+                }
 		outf = popen(cmdbuf, "w");
 		if (!outf)
 			outf = stdout;
@@ -645,7 +650,7 @@ int length;
 	}
 
 	/* trick to force wait on output */
-	stty(fileno(stdout), &otty);
+	tcdrain(fileno(stdout));
 }
 
 void
@@ -728,7 +733,7 @@ char *prompt;
 	/*
 	 * Handle 'mail' and 'save' here.
 	 */
-	if (((inch = inbuf[0]) == 's' || inch == 'm') && !restricted) {
+        if (((inch = inbuf[0]) == 's' || inch == 'm') && !restricted) {
 		if (inbuf[1] == '-')
 			cmsg = prevmsg;
 		else if (isdigit(inbuf[1]))
