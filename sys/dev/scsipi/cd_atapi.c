@@ -1,4 +1,4 @@
-/*	$NetBSD: cd_atapi.c,v 1.1.2.4 1997/07/01 22:08:20 thorpej Exp $	*/
+/*	$NetBSD: cd_atapi.c,v 1.1.2.5 1997/07/01 22:23:01 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.  All rights reserved.
@@ -76,7 +76,7 @@ int	cd_atapibus_set_mode __P((struct cd_softc *, struct atapi_mode_data *,
 int	cd_atapibus_get_mode __P((struct cd_softc *, struct atapi_mode_data *,
 	    int, int, int));
 
-struct cfattach cd_atapi_ca = {
+struct cfattach cd_atapibus_ca = {
 	sizeof(struct cd_softc), cd_atapibus_match, cd_atapibus_attach
 };
 
