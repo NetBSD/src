@@ -1,4 +1,4 @@
-/*      $NetBSD: cmds.c,v 1.12 1996/12/25 16:00:38 christos Exp $      */
+/*      $NetBSD: cmds.c,v 1.13 1996/12/29 04:05:29 lukem Exp $      */
 
 /*
  * Copyright (c) 1985, 1989, 1993, 1994
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)cmds.c	8.6 (Berkeley) 10/9/94";
 #else
-static char rcsid[] = "$NetBSD: cmds.c,v 1.12 1996/12/25 16:00:38 christos Exp $";
+static char rcsid[] = "$NetBSD: cmds.c,v 1.13 1996/12/29 04:05:29 lukem Exp $";
 #endif
 #endif /* not lint */
 
@@ -658,7 +658,7 @@ usage:
 			if (ret == 0) {
 				time_t mtime;
 
-				mtime = remotemodtime(argv[1]);
+				mtime = remotemodtime(argv[1], 0);
 				if (mtime == -1)
 					return(0);
 				if (stbuf.st_mtime >= mtime)
@@ -760,7 +760,7 @@ remglob(argv, doswitch)
 	char *argv[];
 	int doswitch;
 {
-	char temp[16];
+	char temp[MAXPATHLEN];
 	static char buf[MAXPATHLEN];
 	static FILE *ftemp = NULL;
 	static char **args;
@@ -787,14 +787,10 @@ remglob(argv, doswitch)
 		return (cp);
 	}
 	if (ftemp == NULL) {
-		(void) strcpy(temp, _PATH_TMP);
-		(void) mktemp(temp);
-		/* create a zero-length version of the file so that
-		 * people can't play symlink games.
-		 */
-		fd = open (temp, O_CREAT | O_EXCL | O_WRONLY, 600);
+		(void) snprintf(temp, sizeof(temp), "%s%s", _PATH_TMP, TMPFILE);
+		fd = mkstemp(temp);
 		if (fd < 0) {
-			printf("Temporary file %s already exists\n", temp);
+			warn("unable to create temporary file %s", temp);
 			return (NULL);
 		}
 		close(fd);
@@ -1335,7 +1331,7 @@ shell(argc, argv)
 {
 	pid_t pid;
 	sig_t old1, old2;
-	char shellnam[40], *shell, *namep;
+	char shellnam[MAXPATHLEN], *shell, *namep;
 	union wait status;
 
 	old1 = signal (SIGINT, SIG_IGN);
@@ -1351,8 +1347,8 @@ shell(argc, argv)
 		namep = strrchr(shell, '/');
 		if (namep == NULL)
 			namep = shell;
-		(void) strcpy(shellnam, "-");
-		(void) strcat(shellnam, ++namep);
+		shellnam[0] = '-';
+		(void) strncpy(shellnam + 1, ++namep, sizeof(shellnam) - 1);
 		if (strcmp(namep, "sh") != 0)
 			shellnam[0] = '+';
 		if (debug) {
@@ -1558,13 +1554,14 @@ quote1(initial, argc, argv)
 	int i, len;
 	char buf[BUFSIZ];		/* must be >= sizeof(line) */
 
-	(void) strcpy(buf, initial);
+	(void) strncpy(buf, initial, sizeof(buf));
 	if (argc > 1) {
 		len = strlen(buf);
-		len += strlen(strcpy(&buf[len], argv[1]));
+		len += strlen(strncpy(&buf[len], argv[1], sizeof(buf) - len));
 		for (i = 2; i < argc; i++) {
 			buf[len++] = ' ';
-			len += strlen(strcpy(&buf[len], argv[i]));
+			len += strlen(strncpy(&buf[len], argv[i],
+			    sizeof(buf) - len));
 		}
 	}
 	if (command(buf) == PRELIM) {
@@ -1740,23 +1737,17 @@ account(argc, argv)
 	int argc;
 	char *argv[];
 {
-	char acct[50], *ap;
+	char *ap;
 
-	if (argc > 1) {
-		++argv;
-		--argc;
-		(void) strncpy(acct, *argv, 49);
-		acct[49] = '\0';
-		while (argc > 1) {
-			--argc;
-			++argv;
-			(void) strncat(acct, *argv, 49-strlen(acct));
-		}
-		ap = acct;
+	if (argc > 2) {
+		printf("usage: %s [password]\n", argv[0]);
+		code = -1;
+		return;
 	}
-	else {
+	else if (argc == 2)
+		ap = argv[1];
+	else
 		ap = getpass("Account:");
-	}
 	(void) command("ACCT %s", ap);
 }
 
@@ -2245,8 +2236,9 @@ macdef(argc, argv)
  * determine size of remote file
  */
 off_t
-remotesize(file)
+remotesize(file, noisy)
 	const char *file;
+	int noisy;
 {
 	int overbose;
 	off_t size;
@@ -2257,7 +2249,7 @@ remotesize(file)
 		verbose = -1;
 	if (command("SIZE %s", file) == COMPLETE)
 		sscanf(reply_string, "%*s %qd", &size);
-	else if (debug != 0)
+	else if (noisy && debug == 0)
 		printf("%s\n", reply_string);
 	verbose = overbose;
 	return (size);
@@ -2278,7 +2270,7 @@ sizecmd(argc, argv)
 		code = -1;
 		return;
 	}
-	size = remotesize(argv[1]);
+	size = remotesize(argv[1], 1);
 	if (size != -1)
 		printf("%s\t%qd\n", argv[1], size);
 	code = size;
@@ -2288,8 +2280,9 @@ sizecmd(argc, argv)
  * determine last modification time (in GMT) of remote file
  */
 time_t
-remotemodtime(file)
+remotemodtime(file, noisy)
 	const char *file;
+	int noisy;
 {
 	int overbose;
 	time_t rtime;
@@ -2312,11 +2305,11 @@ remotemodtime(file)
 		timebuf.tm_year = yy - 1900;
 		timebuf.tm_isdst = -1;
 		rtime = mktime(&timebuf);
-		if (rtime == -1)
+		if (rtime == -1 && (noisy || debug != 0))
 			printf("Can't convert %s to a time\n", reply_string);
 		else
 			rtime += timebuf.tm_gmtoff;	/* conv. local -> GMT */
-	} else if (debug != 0)
+	} else if (noisy && debug == 0)
 		printf("%s\n", reply_string);
 	verbose = overbose;
 	return(rtime);
@@ -2337,7 +2330,7 @@ modtime(argc, argv)
 		code = -1;
 		return;
 	}
-	mtime = remotemodtime(argv[1]);
+	mtime = remotemodtime(argv[1], 1);
 	if (mtime != -1)
 		printf("%s\t%s", argv[1], asctime(localtime(&mtime)));
 	code = mtime;
