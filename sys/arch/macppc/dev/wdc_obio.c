@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_obio.c,v 1.30 2003/12/03 12:09:32 bouyer Exp $	*/
+/*	$NetBSD: wdc_obio.c,v 1.31 2003/12/27 13:34:36 mjl Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc_obio.c,v 1.30 2003/12/03 12:09:32 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc_obio.c,v 1.31 2003/12/27 13:34:36 mjl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -292,8 +292,8 @@ adjust_timing(chp)
 {
 	struct wdc_obio_softc *sc = (struct wdc_obio_softc *)chp->wdc;
 	int drive;
-	int min_cycle, min_active;
-	int cycle_tick, act_tick, inact_tick, half_tick;
+	int min_cycle = 0, min_active = 0;
+	int cycle_tick = 0, act_tick = 0, inact_tick = 0, half_tick;
 
 	for (drive = 0; drive < 2; drive++) {
 		u_int conf = 0;
@@ -359,8 +359,8 @@ ata4_adjust_timing(chp)
 {
 	struct wdc_obio_softc *sc = (struct wdc_obio_softc *)chp->wdc;
 	int drive;
-	int min_cycle, min_active;
-	int cycle_tick, act_tick, inact_tick;
+	int min_cycle = 0, min_active = 0;
+	int cycle_tick = 0, act_tick = 0, inact_tick = 0;
 
 	for (drive = 0; drive < 2; drive++) {
 		u_int conf = 0;
