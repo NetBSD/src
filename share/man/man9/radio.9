@@ -1,4 +1,4 @@
-.\"	$NetBSD: radio.9,v 1.1 2002/01/01 22:09:42 augustss Exp $
+.\"	$NetBSD: radio.9,v 1.2 2002/01/02 02:08:03 augustss Exp $
 .\"	$OpenBSD: radio.9,v 1.2 2001/10/08 08:52:50 mpech Exp $
 .\"	
 .\" Copyright (c) Maxim Tsyplakov <tm@oganer.net>
@@ -39,9 +39,11 @@ The interface between these is the
 structure.
 .Bd -literal
 struct radio_hw_if {
-	int	*open(dev_t, int, int, struct proc *);
-	void	*close(dev_t, int, int, struct proc *);
-	int	*ioctl(dev_t, u_long, caddr_t, int, struct proc *);
+	int	(*open)(void *, int, int, struct proc *);	
+	int	(*close)(void *, int, int, struct proc *);
+	int     (*get_info)(void *, struct radio_info *);
+	int     (*set_info)(void *, struct radio_info *);
+	int     (*search)(void *, int);
 };
 .Ed
 .Pp
@@ -63,8 +65,7 @@ struct is as shown above.
 The
 .Va hdlp
 argument is a handle to some low level data structure.
-It is reserved field for future usage, and actually not used in any 
-low-level driver functions. 
+It is sent as the first argument to all the functions in
 .Va radio_hw_if
 when the high level driver calls them.
 .Va dev
@@ -74,16 +75,25 @@ The fields of
 .Va radio_hw_if
 are described in some more detail below.
 .Bd -literal
-int open (dev_t dev, int flags, int fmt, struct proc *p);
+int open (void *, int flags, int fmt, struct proc *p);
+  Optional.
   Is called when the radio device is opened.
   Returns 0 on success, otherwise an error code.
 
-int close (dev_t dev, int flags, int fmt, struct proc *p);
+int close (void *, int flags, int fmt, struct proc *p);
+  Optional.
   Is called when the radio device is closed.
   Returns 0 on success, otherwise an error code.
 
-int ioctl (dev_t dev, u_long cmd, caddr_t data, int flags, struct proc *p);
-  Is ioctl requests handler function.
+int get_info (void *, struct radio_info *);
+  Fill the radio_info struct.
+  Returns 0 on success, otherwise an error code.
+
+int set_info (void *, struct radio_info *);
+  Set values from the radio_info struct.
+  Returns 0 on success, otherwise an error code.
+
+int search (void *, int);
   Returns 0 on success, otherwise an error code.
 .Ed
 .Sh SEE ALSO
