@@ -1,4 +1,4 @@
-/*	$NetBSD: n_sincos.S,v 1.5 2002/02/24 01:06:21 matt Exp $	*/
+/*	$NetBSD: n_sincos.S,v 1.6 2002/07/14 19:55:24 matt Exp $	*/
 /*
  * Copyright (c) 1985, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -50,6 +50,12 @@
  */
 #include <machine/asm.h>
 
+ENTRY(sinf, 0)
+	cvtfd	4(%ap),-(sp)
+	calls	$2,sin
+	cvtdf	r0,r0
+	ret
+
 ENTRY(sin, 0xfc0)
 	movq	4(%ap),%r0
 	bicw3	$0x807f,%r0,%r2
@@ -78,6 +84,12 @@ ENTRY(sin, 0xfc0)
  * method: true range reduction to [-pi/4,pi/4], P. Tang  &  B. Corbett
  * S. McDonald, April 4,  1985
  */
+
+ENTRY(cosf, 0)
+	cvtfd	4(%ap),-(sp)
+	calls	$2,cos
+	cvtdf	r0,r0
+	ret
 
 ENTRY(cos, 0x0fc0)
 	movq	4(%ap),%r0
