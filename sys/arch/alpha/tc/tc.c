@@ -1,4 +1,4 @@
-/*	$NetBSD: tc.c,v 1.1 1995/02/13 23:09:06 cgd Exp $	*/
+/*	$NetBSD: tc.c,v 1.2 1995/03/08 00:39:05 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -55,6 +55,9 @@ int	tc_matchname __P((struct confargs *, char *));
 
 extern int cputype;
 
+#ifdef DEC_3000_300
+extern struct tc_cpu_desc	dec_3000_300_cpu;
+#endif
 #ifdef DEC_3000_500
 extern struct tc_cpu_desc	dec_3000_500_cpu;
 #endif
@@ -71,7 +74,11 @@ struct tc_cpu_desc *tc_cpu_devs[] = {
 #endif
         NULL,                   /* Unused  */
         NULL,                   /* ST_DEC_2000_300 */
-        NULL,                   /* ST_DEC_3000_300 */
+#ifdef DEC_3000_300
+        &dec_3000_300_cpu,      /* ST_DEC_3000_300 */
+#else
+        NULL,
+#endif
 };
 int ntc_cpu_devs = sizeof tc_cpu_devs / sizeof tc_cpu_devs[0];
 

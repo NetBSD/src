@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.old.c,v 1.1 1995/02/13 23:07:07 cgd Exp $	*/
+/*	$NetBSD: pmap.old.c,v 1.2 1995/03/08 00:38:53 cgd Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -296,8 +296,9 @@ pmap_bootstrap(firstaddr, ptaddr)
 	/* must be page aligned */
 	start = firstaddr = alpha_round_page(firstaddr);
 
-#define valloc(name, type, num) \
-	    (name) = (type *)firstaddr; firstaddr = (vm_offset_t)((name)+(num))
+#define valloc(name, type, num)					\
+	    (name) = (type *)firstaddr;				\
+	    firstaddr = ALIGN((vm_offset_t)((name)+(num)))
 
 	/*
 	 * Allocate an empty prototype segment map for processes.
