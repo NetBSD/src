@@ -1,4 +1,4 @@
-/*	$NetBSD: bmtphy.c,v 1.12 2003/04/29 01:49:33 thorpej Exp $	*/
+/*	$NetBSD: bmtphy.c,v 1.13 2003/05/02 19:42:35 scw Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bmtphy.c,v 1.12 2003/04/29 01:49:33 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bmtphy.c,v 1.13 2003/05/02 19:42:35 scw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -111,6 +111,8 @@ const struct mii_phydesc bmtphys[] = {
 	  MII_STR_xxBROADCOM_3C905C },
 	{ MII_OUI_xxBROADCOM,		MII_MODEL_xxBROADCOM_BCM5201,
 	  MII_STR_xxBROADCOM_BCM5201 },
+	{ MII_OUI_xxBROADCOM,		MII_MODEL_xxBROADCOM_BCM5214,
+	  MII_STR_xxBROADCOM_BCM5214 },
 	{ MII_OUI_xxBROADCOM,		MII_MODEL_xxBROADCOM_BCM5221,
 	  MII_STR_xxBROADCOM_BCM5221 },
 
