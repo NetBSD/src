@@ -1,4 +1,4 @@
-/*	$NetBSD: ld_ataraid.c,v 1.8 2003/07/14 15:47:02 lukem Exp $	*/
+/*	$NetBSD: ld_ataraid.c,v 1.9 2003/12/14 02:46:34 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld_ataraid.c,v 1.8 2003/07/14 15:47:02 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld_ataraid.c,v 1.9 2003/12/14 02:46:34 thorpej Exp $");
 
 #include "rnd.h"
 
@@ -147,17 +147,17 @@ ld_ataraid_attach(struct device *parent, struct device *self, void *aux)
 		break;
 
 	case AAI_L_RAID0:
-		level = "RAID0";
+		level = "RAID-0";
 		ld->sc_start = ld_ataraid_start_raid0;
 		sc->sc_iodone = ld_ataraid_iodone_raid0;
 		break;
 
 	case AAI_L_RAID1:
-		level = "RAID1";
+		level = "RAID-1";
 		break;
 
 	case AAI_L_RAID0 | AAI_L_RAID1:
-		level = "RAID0+1";
+		level = "RAID-10";
 		break;
 
 	default:
