@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_misc.c,v 1.130 2004/09/17 14:11:24 skrll Exp $	*/
+/*	$NetBSD: linux_misc.c,v 1.131 2004/09/19 16:50:11 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 1999 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_misc.c,v 1.130 2004/09/17 14:11:24 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_misc.c,v 1.131 2004/09/19 16:50:11 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -296,10 +296,9 @@ linux_sys_brk(l, v, retval)
 }
 
 /*
- * Convert BSD statfs structure to Linux statfs structure.
- * The Linux structure has less fields, and it also wants
- * the length of a name in a dir entry in a field, which
- * we fake (probably the wrong way).
+ * Convert NetBSD statvfs structure to Linux statfs structure.
+ * Linux doesn't have f_flag, and we can't set f_frsize due
+ * to glibc statvfs() bug (see below).
  */
 static void
 bsd_to_linux_statfs(bsp, lsp)
@@ -320,7 +319,20 @@ bsd_to_linux_statfs(bsp, lsp)
 		lsp->l_ftype = fstypes[i].linux;
 	}
 
+	/*
+	 * The sizes are expressed in number of blocks. The block
+	 * size used for the size is f_frsize for POSIX-compliant
+	 * statvfs. Linux statfs uses f_bsize as the block size
+	 * (f_frsize used to not be available in Linux struct statfs).
+	 * However, glibc 2.3.3 statvfs() wrapper fails to adjust the block
+	 * counts for different f_frsize if f_frsize is provided by the kernel.
+	 * POSIX conforming apps thus get wrong size if f_frsize
+	 * is different to f_bsize. Thus, we just pretend we don't
+	 * support f_frsize.
+	 */
+
 	lsp->l_fbsize = bsp->f_frsize;
+	lsp->l_ffrsize = 0;			/* compat */
 	lsp->l_fblocks = bsp->f_blocks;
 	lsp->l_fbfree = bsp->f_bfree;
 	lsp->l_fbavail = bsp->f_bavail;
