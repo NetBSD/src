@@ -1,4 +1,4 @@
-/*	$NetBSD: swapctl.c,v 1.9 1998/07/26 20:23:15 mycroft Exp $	*/
+/*	$NetBSD: swapctl.c,v 1.10 1999/02/23 17:00:53 mrg Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997 Matthew R. Green
@@ -30,7 +30,9 @@
 
 /*
  * swapctl command:
- *	-A		add all devices listed as `sw' in /etc/fstab
+ *	-A		add all devices listed as `sw' in /etc/fstab (also
+ *			(sets the the dump device, if listed in fstab)
+ *	-D <dev>	set dumpdev to <dev>
  *	-t [blk|noblk]	if -A, add either all block device or all non-block
  *			devices
  *	-a <dev>	add this device
@@ -70,11 +72,12 @@ int	command;
  * Commands for swapctl(8).  These are mutually exclusive.
  */
 #define	CMD_A		0x01	/* process /etc/fstab */
-#define	CMD_a		0x02	/* add a swap file/device */
-#define	CMD_c		0x04	/* change priority of a swap file/device */
-#define	CMD_d		0x08	/* delete a swap file/device */
-#define	CMD_l		0x10	/* list swap files/devices */
-#define	CMD_s		0x20	/* summary of swap files/devices */
+#define	CMD_D		0x02	/* set dumpdev */
+#define	CMD_a		0x04	/* add a swap file/device */
+#define	CMD_c		0x08	/* change priority of a swap file/device */
+#define	CMD_d		0x10	/* delete a swap file/device */
+#define	CMD_l		0x20	/* list swap files/devices */
+#define	CMD_s		0x40	/* summary of swap files/devices */
 
 #define	SET_COMMAND(cmd) \
 do { \
@@ -87,7 +90,7 @@ do { \
  * Commands that require a "path" argument at the end of the command
  * line, and the ones which require that none exist.
  */
-#define	REQUIRE_PATH	(CMD_a | CMD_c | CMD_d)
+#define	REQUIRE_PATH	(CMD_D | CMD_a | CMD_c | CMD_d)
 #define	REQUIRE_NOPATH	(CMD_A | CMD_l | CMD_s)
 
 /*
@@ -104,9 +107,10 @@ char	*tflag;		/* swap device type (blk or noblk) */
 
 int	pri;		/* uses 0 as default pri */
 
-static	void change_priority __P((char *));
-static	void add_swap __P((char *));
-static	void del_swap __P((char *));
+static	void change_priority __P((const char *));
+static	void add_swap __P((const char *));
+static	void del_swap __P((const char *));
+static	void set_dumpdev __P((const char *));
 	int  main __P((int, char *[]));
 static	void do_fstab __P((void));
 static	void usage __P((void));
@@ -136,10 +140,14 @@ main(argc, argv)
 	}
 #endif
 
-	while ((c = getopt(argc, argv, "Aacdlkp:st:")) != -1) {
+	while ((c = getopt(argc, argv, "ADacdlkp:st:")) != -1) {
 		switch (c) {
 		case 'A':
 			SET_COMMAND(CMD_A);
+			break;
+
+		case 'D':
+			SET_COMMAND(CMD_D);
 			break;
 
 		case 'a':
@@ -244,6 +252,10 @@ main(argc, argv)
 	case CMD_A:
 		do_fstab();
 		break;
+
+	case CMD_D:
+		set_dumpdev(argv[0]);
+		break;
 	}
 
 	exit(0);
@@ -309,7 +321,7 @@ swapon_command(argc, argv)
  */
 void
 change_priority(path)
-	char	*path;
+	const char	*path;
 {
 
 	if (swapctl(SWAP_CTL, path, pri) < 0)
@@ -321,10 +333,20 @@ change_priority(path)
  */
 void
 add_swap(path)
-	char *path;
+	const char *path;
 {
+	struct stat sb;
+
+	if (stat(path, &sb) < 0)
+		goto oops;
+
+	if (sb.st_mode & S_IROTH) 
+		warnx("%s is readable by the world", path);
+	if (sb.st_mode & S_IWOTH)
+		warnx("%s is writable by the world", path);
 
 	if (swapctl(SWAP_ON, path, pri) < 0)
+oops:
 		err(1, "%s", path);
 }
 
@@ -333,11 +355,22 @@ add_swap(path)
  */
 void
 del_swap(path)
-	char *path;
+	const char *path;
 {
 
 	if (swapctl(SWAP_OFF, path, pri) < 0)
 		err(1, "%s", path);
+}
+
+void
+set_dumpdev(path)
+	const char *path;
+{
+
+	if (swapctl(SWAP_DUMPDEV, path, NULL) == -1)
+		warn("could not set dump device to %s", path);
+	else
+		printf("%s: setting dump device to %s\n", __progname, path);
 }
 
 void
@@ -356,10 +389,15 @@ do_fstab()
 	while ((fp = getfsent()) != NULL) {
 		const char *spec;
 
+		spec = fp->fs_spec;
+
+		if (strcmp(fp->fs_type, "dp") == 0) {
+			set_dumpdev(spec);
+			continue;
+		}
+
 		if (strcmp(fp->fs_type, "sw") != 0)
 			continue;
-
-		spec = fp->fs_spec;
 		isblk = 0;
 
 		if ((s = strstr(fp->fs_mntops, PRIORITYEQ)) != NULL) {
