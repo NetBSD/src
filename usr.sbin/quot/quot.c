@@ -1,4 +1,4 @@
-/*	$NetBSD: quot.c,v 1.20 2004/01/05 23:23:38 jmmv Exp $	*/
+/*	$NetBSD: quot.c,v 1.21 2004/01/06 13:30:56 wiz Exp $	*/
 
 /*
  * Copyright (C) 1991, 1994 Wolfgang Solfrank.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: quot.c,v 1.20 2004/01/05 23:23:38 jmmv Exp $");
+__RCSID("$NetBSD: quot.c,v 1.21 2004/01/06 13:30:56 wiz Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -530,7 +530,6 @@ usage()
 	exit(1);
 }
 
-#define	max(a,b)	MAX((a),(b))
 /*
  * Sanity checks for old file systems.
  * Stolen from <sys/lib/libsa/ufs.c>
