@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.380 2001/12/16 22:00:41 thorpej Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.381 2001/12/20 03:24:58 thorpej Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.375 2001/12/16 21:59:47 thorpej Exp 
+ *	NetBSD: pcidevs,v 1.376 2001/12/20 03:24:22 thorpej Exp 
  */
 
 /*
@@ -1701,6 +1701,7 @@
 #define	PCI_PRODUCT_SIS_530HB	0x0530		/* 530 Host to PCI Bridge */
 #define	PCI_PRODUCT_SIS_85C601	0x0601		/* 85C601 */
 #define	PCI_PRODUCT_SIS_645	0x0645		/* SiS 645 Host Bridge */
+#define	PCI_PRODUCT_SIS_630	0x0630		/* SiS 630 Host Bridge */
 #define	PCI_PRODUCT_SIS_650	0x0650		/* SiS 650 Host Bridge */
 #define	PCI_PRODUCT_SIS_730	0x0730		/* SiS 730 Host Bridge */
 #define	PCI_PRODUCT_SIS_735	0x0735		/* SiS 735 Host Bridge */
