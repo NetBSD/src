@@ -1,4 +1,4 @@
-/*	$NetBSD: cardbus.c,v 1.29 2001/03/28 01:53:14 enami Exp $	*/
+/*	$NetBSD: cardbus.c,v 1.30 2001/03/28 01:55:55 enami Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999 and 2000
@@ -148,6 +148,7 @@ cardbus_read_tuples(struct cardbus_attach_args *ca, cardbusreg_t cis_ptr,
 	cardbus_function_tag_t cf = ca->ca_ct->ct_cf;
 	cardbustag_t tag = ca->ca_tag;
 	cardbusreg_t command;
+	bus_space_tag_t bar_tag;
 	bus_space_handle_t bar_memh;
 	bus_size_t bar_size;
 	bus_addr_t bar_addr;
@@ -202,7 +203,7 @@ cardbus_read_tuples(struct cardbus_attach_args *ca, cardbusreg_t cis_ptr,
 		cardbus_conf_write(cc, cf, tag, reg, 0);
 		if (Cardbus_mapreg_map(ca->ca_ct, reg,
 		    CARDBUS_MAPREG_TYPE_MEM | PCI_MAPREG_MEM_TYPE_32BIT,
-		    0, NULL, &bar_memh, &bar_addr, &bar_size)) {
+		    0, &bar_tag, &bar_memh, &bar_addr, &bar_size)) {
 			printf("%s: failed to map memory\n",
 			    sc->sc_dev.dv_xname);
 			return (1);
@@ -264,12 +265,9 @@ cardbus_read_tuples(struct cardbus_attach_args *ca, cardbusreg_t cis_ptr,
 		cardbus_conf_write(cc, cf, tag, CARDBUS_COMMAND_STATUS_REG,
 		    command & ~CARDBUS_COMMAND_MEM_ENABLE);
 		cardbus_conf_write(cc, cf, tag, reg, 0);
-#if 0
-		/* XXX unmap memory */
-		(*ca->ca_ct->ct_cf->cardbus_space_free)(ca->ca_ct,
-		    ca->ca_ct->ct_sc->sc_rbus_memt,
-		    bar_memh, bar_size);
-#endif
+
+		Cardbus_mapreg_unmap(ca->ca_ct, reg, bar_tag, bar_memh,
+		    bar_size);
 		break;
 
 #ifdef DIAGNOSTIC
@@ -516,8 +514,6 @@ cardbus_attach_card(struct cardbus_softc *sc)
 		ca.ca_class = class;
 
 		ca.ca_intrline = sc->sc_intrline;
-
-		bzero(tuple, 2048);
 
 		if (cardbus_read_tuples(&ca, cis_ptr, tuple, sizeof(tuple))) {
 			printf("cardbus_attach_card: failed to read CIS\n");
