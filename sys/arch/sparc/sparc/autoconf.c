@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.134 2000/03/05 08:21:57 mrg Exp $ */
+/*	$NetBSD: autoconf.c,v 1.135 2000/03/21 12:48:46 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -1137,88 +1137,6 @@ struct cfattach mainbus_ca = {
 	sizeof(struct device), mainbus_match, mainbus_attach
 };
 
-/*
- * findzs() is called from the zs driver (which is, at least in theory,
- * generic to any machine with a Zilog ZSCC chip).  It should return the
- * address of the corresponding zs channel.  It may not fail, and it
- * may be called before the VM code can be used.  Here we count on the
- * FORTH PROM to map in the required zs chips.
- */
-void *
-findzs(zs)
-	int zs;
-{
-
-#if defined(SUN4)
-#define ZS0_PHYS	0xf1000000
-#define ZS1_PHYS	0xf0000000
-#define ZS2_PHYS	0xe0000000
-
-	if (CPU_ISSUN4) {
-		bus_space_handle_t bh;
-		bus_addr_t paddr;
-
-		switch (zs) {
-		case 0:
-			paddr = ZS0_PHYS;
-			break;
-		case 1:
-			paddr = ZS1_PHYS;
-			break;
-		case 2:
-			paddr = ZS2_PHYS;
-			break;
-		default:
-			panic("findzs: unknown zs device %d", zs);
-		}
-
-		if (cpuinfo.cpu_type == CPUTYP_4_100)
-			/* Clear top bits of physical address on 4/100 */
-			paddr &= ~0xf0000000;
-
-		if (obio_find_rom_map(paddr, PMAP_OBIO, NBPG, &bh) != 0)
-			panic("findzs: can't map zs%d registers", zs);
-
-		return ((void *)bh);
-	}
-#endif
-
-#if defined(SUN4C) || defined(SUN4M)
-	if (CPU_ISSUN4COR4M) {
-		int node;
-
-		node = firstchild(findroot());
-		if (CPU_ISSUN4M) { /* zs is in "obio" tree on Sun4M */
-			node = findnode(node, "obio");
-			if (node == 0)
-				panic("findzs: no obio node");
-			node = firstchild(node);
-		}
-		while ((node = findnode(node, "zs")) != 0) {
-			int nvaddrs, *vaddrs, vstore[10];
-
-			if (getpropint(node, "slave", -1) != zs) {
-				node = nextsibling(node);
-				continue;
-			}
-
-			/*
-			 * On some machines (e.g. the Voyager), the zs
-			 * device has multi-valued register properties.
-			 */
-			vaddrs = vstore;
-			nvaddrs = sizeof(vstore)/sizeof(vstore[0]);
-			if (getprop(node, "address", sizeof(int),
-				    &nvaddrs, (void **)&vaddrs) != 0) {
-				panic("findzs: zs%d not mapped by PROM", zs);
-			}
-			return ((void *)vaddrs[0]);
-		}
-	}
-#endif
-	panic("findzs: cannot find zs%d", zs);
-	/* NOTREACHED */
-}
 
 int
 makememarr(ap, max, which)
