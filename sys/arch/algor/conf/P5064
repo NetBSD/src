@@ -1,11 +1,11 @@
-#	$NetBSD: P5064,v 1.4 2001/06/10 05:02:33 thorpej Exp $
+#	$NetBSD: P5064,v 1.5 2001/06/10 08:45:09 thorpej Exp $
 #
 # Algorithmics P-5064 kernel.
 #
 
 include	"arch/algor/conf/std.algor"
 
-#ident 		"P5064-$Revision: 1.4 $"
+#ident 		"P5064-$Revision: 1.5 $"
 
 maxusers 32
 
@@ -225,20 +225,20 @@ fdc0	at	isa? port 0x3f0 irq 6 drq 2	# floppy controller
 #bha*	at	isa? port 0x334 irq ? drq ?	# BusLogic [57]4X SCSI (unt.)
 #uha*	at	isa? port 0x330 irq ? drq ?	# UltraStor [13]4f SCSI (unt.)
 #uha*	at	isa? port 0x334 irq ? drq ?	# UltraStor [13]4f SCSI (unt.)
-#pcic0	at	isa? port 0x3e0 iomem 0xd0000 iosiz 0x10000
-#pcic1	at	isa? port 0x3e2 iomem 0xcc000 iosiz 0x10000
-#pcmcia*	at	pcic? controller ? socket ?
+pcic0	at	isa? port 0x3e0 iomem 0xd0000 iosiz 0x10000
+pcic1	at	isa? port 0x3e2 iomem 0xcc000 iosiz 0x10000
+pcmcia*	at	pcic? controller ? socket ?
 
 # PCMCIA device
-#aic*	at	pcmcia? function ?		# Adaptec APA-1460 SCSI
-#com*	at	pcmcia? function ?		# Modems and serial cards
-#wdc*	at	pcmcia? function ?		# PCMCIA IDE controllers
-#ep*	at	pcmcia? function ?		# 3Com 3c589 and 3c562 Eth.
-#mbe*	at	pcmcia? function ?		# MB8696x based Ethernet
-#ne*	at	pcmcia? function ?		# NE2000-compatible Eth.
-#sm*	at	pcmcia? function ?		# Megahertz Ethernet
-#ray*	at	pcmcia? function ?		# Raytheon Raylink (802.11)
-#wi*	at	pcmcia? function ?		# Lucent WaveLAN/IEEE
+aic*	at	pcmcia? function ?		# Adaptec APA-1460 SCSI
+com*	at	pcmcia? function ?		# Modems and serial cards
+wdc*	at	pcmcia? function ?		# PCMCIA IDE controllers
+ep*	at	pcmcia? function ?		# 3Com 3c589 and 3c562 Eth.
+mbe*	at	pcmcia? function ?		# MB8696x based Ethernet
+ne*	at	pcmcia? function ?		# NE2000-compatible Eth.
+sm*	at	pcmcia? function ?		# Megahertz Ethernet
+ray*	at	pcmcia? function ?		# Raytheon Raylink (802.11)
+wi*	at	pcmcia? function ?		# Lucent WaveLAN/IEEE
 
 # SCSI bus support
 #scsibus* at	adv?
@@ -246,7 +246,7 @@ fdc0	at	isa? port 0x3f0 irq 6 drq 2	# floppy controller
 #scsibus* at	aha?
 #scsibus* at	ahb?
 #scsibus* at	ahc?
-#scsibus* at	aic?
+scsibus* at	aic?
 #scsibus* at	bha?
 #scsibus* at	dpt?
 #scsibus* at	isp?
@@ -261,11 +261,11 @@ sd*	at	scsibus? target ? lun ?		# SCSI disk drives
 
 # ST506/ESDI/IDE devices
 wd*	at	pciide? channel ?
-#wd*	at	wdc? drive ?
+wd*	at	wdc? drive ?
 
 # ATAPI bus support
 atapibus* at	pciide? channel ?
-#atapibus* at	wdc?
+atapibus* at	wdc?
 
 # ATAPI devices
 sd*	at	atapibus? drive ?		# ATAPI disk devices
