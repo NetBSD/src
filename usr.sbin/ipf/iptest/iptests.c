@@ -1,7 +1,7 @@
-/*	$NetBSD: iptests.c,v 1.4.2.2 1998/07/23 01:44:38 mellon Exp $	*/
+/*	$NetBSD: iptests.c,v 1.4.2.3 1998/11/24 07:22:38 cgd Exp $	*/
 
 /*
- * Copyright (C) 1993-1997 by Darren Reed.
+ * Copyright (C) 1993-1998 by Darren Reed.
  *
  * Redistribution and use in source and binary forms are permitted
  * provided that this notice is preserved and due credit is given
@@ -9,7 +9,7 @@
  */
 #if !defined(lint)
 static const char sccsid[] = "%W% %G% (C)1995 Darren Reed";
-static const char rcsid[] = "@(#)Id: iptests.c,v 2.0.2.13.2.2 1997/12/21 12:17:38 darrenr Exp ";
+static const char rcsid[] = "@(#)Id: iptests.c,v 2.0.2.13.2.3 1998/11/22 01:51:17 darrenr Exp ";
 #endif
 #include <stdio.h>
 #include <unistd.h>
