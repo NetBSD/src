@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_fault.c,v 1.21 1998/01/31 04:02:39 ross Exp $	*/
+/*	$NetBSD: vm_fault.c,v 1.22 1998/02/23 14:37:00 drochner Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -920,6 +920,10 @@ vm_fault_unwire(map, start, end)
 		if (pa == (vm_offset_t) 0) {
 			panic("unwire: page not in pmap");
 		}
+#ifdef DIAGNOSTIC
+		if (!IS_VM_PHYSADDR(pa))
+			panic("vm_fault_unwire: unmanaged page");
+#endif
 		pmap_change_wiring(pmap, va, FALSE);
 		vm_page_unwire(PHYS_TO_VM_PAGE(pa));
 	}
