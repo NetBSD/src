@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.13 2000/11/01 07:57:59 garbled Exp $
+#	$NetBSD: Makefile,v 1.14 2000/11/27 15:11:36 tsubai Exp $
 
 TOP=		${.CURDIR}/..
 
@@ -47,11 +47,13 @@ unconfig:
 ${CBIN}.mk ${CBIN}.cache ${CBIN}.c: ${CRUNCHCONF}
 	${CRUNCHGEN} -D ${TOP}/../../.. -L ${DESTDIR}/usr/lib ${.ALLSRC}
 
-${CBIN}: ${CBIN}.mk ${CBIN}.cache ${CBIN}.c #libhack.o
+${CBIN}: ${CBIN}.mk ${CBIN}.cache ${CBIN}.c libhack.o
 	${MAKE} -f ${CBIN}.mk DBG="${DBG}" all
 
-#HACKSRC=${TOP}/../../utils/libhack
-#.include "${HACKSRC}/Makefile.inc"
+HACKSRC=${TOP}/../../utils/libhack
+.include "${HACKSRC}/Makefile.inc"
+HACKOBJS= gethost.o getnet.o getpwent.o localeconv.o perror.o \
+	setlocale.o strerror.o strsignal.o utmp.o yplib.o
 
 clean cleandir distclean:
 	rm -f ${IMAGE} ${CBIN} ${CBIN}.mk ${CBIN}.cache
