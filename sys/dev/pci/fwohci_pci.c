@@ -128,5 +128,9 @@ fwohci_pci_attach(struct device *parent, struct device *self, void *aux)
 	}
 	printf("%s: interrupting at %s\n", self->dv_xname, intrstr);
 
-	fwohci_init(&psc->psc_sc);
+	if (fwohci_init(&psc->psc_sc) != 0) {
+		pci_intr_disestablish(pa->pa_pc, psc->psc_ih);
+		bus_space_unmap(psc->psc_sc.sc_memt, psc->psc_sc.sc_memh,
+		    psc->psc_sc.sc_memsize);
+	}
 }
