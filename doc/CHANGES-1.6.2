@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.2,v 1.1.2.218 2003/10/26 13:35:14 tron Exp $
+#	$NetBSD: CHANGES-1.6.2,v 1.1.2.219 2003/10/26 18:19:52 cyber Exp $
 
 A complete list of changes from NetBSD 1.6.1 to NetBSD 1.6.2:
 
@@ -2664,4 +2664,10 @@ share/termcap/termcap.src			1.84
 	Added xterm-color entry from ESR's / ncurses termcap.src for,
 	primarily, Mac OS X 10.3.
 	[jklos, ticket #1539]
+
+distrib/sets/lists/xserver4/md.cats		1.3
+
+	"./usr/X11R6/lib/libXxf86dga.a" belongs into "xcomp" and not into
+	"xserver" set.
+	[tron, ticket #1540]
 
