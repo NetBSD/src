@@ -395,13 +395,13 @@
 #define PACKAGE_NAME "Concurrent Versions System (CVS)"
 
 /* Define to the full name and version of this package. */
-#define PACKAGE_STRING "Concurrent Versions System (CVS) 1.11.4"
+#define PACKAGE_STRING "Concurrent Versions System (CVS) 1.11.5"
 
 /* Define to the one symbol short name of this package. */
 #define PACKAGE_TARNAME "cvs"
 
 /* Define to the version of this package. */
-#define PACKAGE_VERSION "1.11.4"
+#define PACKAGE_VERSION "1.11.5"
 
 /* Path to the pr utility */
 #define PR_PROGRAM "/usr/bin/pr"
