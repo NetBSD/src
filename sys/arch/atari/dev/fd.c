@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.32 2000/02/07 20:16:50 thorpej Exp $	*/
+/*	$NetBSD: fd.c,v 1.33 2000/02/15 09:00:07 leo Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -729,7 +729,7 @@ static void
 fddone(sc)
 register struct fd_softc	*sc;
 {
-	struct buf	*bp, *dp;
+	struct buf	*bp;
 	struct fd_softc	*sc1;
 	int		i, sps;
 
