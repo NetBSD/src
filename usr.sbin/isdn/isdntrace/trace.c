@@ -35,7 +35,7 @@
  *	trace.c - print traces of D (B) channel activity for isdn4bsd
  *	-------------------------------------------------------------
  *
- *	$Id: trace.c,v 1.3 2002/03/24 20:37:49 martin Exp $ 
+ *	$Id: trace.c,v 1.4 2003/05/08 08:32:39 martin Exp $ 
  *
  * $FreeBSD$
  *
@@ -473,8 +473,9 @@ fmt_hdr(struct i4b_trace_hdr *hdr, int frm_len)
 	struct tm *s;
 	static char hbuf[256];
 	int i = 0;
+	time_t secs = hdr->time.tv_sec;
 
-	s = localtime((time_t *)&(hdr->time.tv_sec));
+	s = localtime(&secs);
 
 	if(hdr->type == TRC_CH_I)		/* Layer 1 INFO's */
 	{
