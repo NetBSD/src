@@ -1,4 +1,4 @@
-/*	$NetBSD: ahc_isa.c,v 1.9 1997/10/20 20:07:57 thorpej Exp $	*/
+/*	$NetBSD: ahc_isa.c,v 1.10 1998/03/09 06:20:26 mikel Exp $	*/
 
 /*
  * Product specific probe and attach routines for:
@@ -214,7 +214,7 @@ ahc_isa_irq(iot, ioh)
 	case 15:
 		break;
 	default:
-		printf("ahc_isa_irq: illegal irq setting %d\n", intdef);
+		printf("ahc_isa_irq: illegal irq setting %d\n", irq);
 		return -1;
 	}
 
