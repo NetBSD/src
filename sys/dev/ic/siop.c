@@ -1,4 +1,4 @@
-/*	$NetBSD: siop.c,v 1.11 2000/05/05 09:32:48 bouyer Exp $	*/
+/*	$NetBSD: siop.c,v 1.12 2000/05/06 00:44:00 soren Exp $	*/
 
 /*
  * Copyright (c) 2000 Manuel Bouyer.
@@ -84,7 +84,7 @@ typedef struct scr_table {
 
 /*
  * This structure interfaces the SCRIPT with the driver; it describes a full
- * transfert. It lives in the same chunk of DMA-safe memory as the script.
+ * transfer. It lives in the same chunk of DMA-safe memory as the script.
  */
 struct siop_xfer {
 	u_int8_t msg_out[8];	/* 0 */
@@ -1740,7 +1740,7 @@ siop_timeout(v)
 	delay(100);
 	bus_space_write_1(sc->sc_rt, sc->sc_rh, SIOP_SCNTL1, scntl1);
 
-	/* desactivate callout */
+	/* deactivate callout */
 	callout_stop(&siop_cmd->xs->xs_callout);
 	/* mark command has being timed out; siop_intr will handle it */
 	/*
