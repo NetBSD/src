@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.20 1995/09/16 15:09:28 briggs Exp $	*/
+/*	$NetBSD: pmap.c,v 1.21 1995/10/10 04:14:30 briggs Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -345,7 +345,7 @@ pmap_bootstrap_alloc(size)
 	/* XXX hope this doesn't pop it into the next range: */
 	avail_next += size;
 
-	blkclr ((caddr_t) val, size);
+	bzero ((caddr_t) val, size);
 	return ((void *) val);
 }
 
