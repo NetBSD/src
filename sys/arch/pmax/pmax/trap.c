@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.36 1996/05/19 17:58:20 jonathan Exp $	*/
+/*	$NetBSD: trap.c,v 1.37 1996/05/20 23:24:00 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -42,6 +42,10 @@
  *	@(#)trap.c	8.5 (Berkeley) 1/11/94
  */
 
+#if #defined(CPU_R4000) && !defined(CPU_R3000)
+#error Must define at least one of CPU_R3000 or CPU_R4000.
+#endif
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
@@ -70,6 +74,14 @@
 
 #include <sys/cdefs.h>
 #include <sys/syslog.h>
+#include <miscfs/procfs/procfs.h>
+
+/* all this to get prototypes for ipintr() and arpintr() */
+#include <sys/socket.h>
+#include <net/if.h>
+#include <netinet/in.h>
+#include <netinet/if_ether.h>
+#include <netinet/ip_var.h>
 
 struct	proc *machFPCurProcPtr;		/* pointer to last proc to use FP */
 
@@ -500,7 +512,7 @@ trap(statusReg, causeReg, vadr, pc, args)
 			rv = vm_fault(kernel_map, va, ftype, FALSE);
 			if (rv == KERN_SUCCESS)
 				return (pc);
-			if (i = ((struct pcb *)UADDR)->pcb_onfault) {
+			if ((i = ((struct pcb *)UADDR)->pcb_onfault) != 0) {
 				((struct pcb *)UADDR)->pcb_onfault = 0;
 				return (onfault_table[i]);
 			}
@@ -561,7 +573,7 @@ trap(statusReg, causeReg, vadr, pc, args)
 			goto out;
 		}
 		if (!USERMODE(statusReg)) {
-			if (i = ((struct pcb *)UADDR)->pcb_onfault) {
+			if ((i = ((struct pcb *)UADDR)->pcb_onfault) != 0) {
 				((struct pcb *)UADDR)->pcb_onfault = 0;
 				return (onfault_table[i]);
 			}
@@ -853,7 +865,7 @@ trap(statusReg, causeReg, vadr, pc, args)
 	case T_ADDR_ERR_LD:	/* misaligned access */
 	case T_ADDR_ERR_ST:	/* misaligned access */
 	case T_BUS_ERR_LD_ST:	/* BERR asserted to cpu */
-		if (i = ((struct pcb *)UADDR)->pcb_onfault) {
+		if ((i = ((struct pcb *)UADDR)->pcb_onfault) != 0) {
 			((struct pcb *)UADDR)->pcb_onfault = 0;
 			return (onfault_table[i]);
 		}
@@ -962,7 +974,7 @@ interrupt(statusReg, causeReg, pc /* XXX what, args */ )
 	unsigned pc;		/* program counter where to continue */
 {
 	register unsigned mask;
-	struct clockframe cf;
+	/*struct clockframe cf;*/
 
 #ifdef DEBUG
 	trp->status = statusReg;
@@ -994,6 +1006,7 @@ interrupt(statusReg, causeReg, pc /* XXX what, args */ )
 	}
 
 	/* process network interrupt if we trapped or will very soon */
+	/* XXX fixme: operator precedence botch? */
 	if ((mask & MACH_SOFT_INT_MASK_1) ||
 	    netisr && (statusReg & MACH_SOFT_INT_MASK_1)) {
 		clearsoftnet();
@@ -1470,10 +1483,10 @@ specialframe:
 
 	/* Backtraces should contine through interrupts from kernel mode */
 #ifdef CPU_R3000
-	if (pcBetween(mips_r4000_KernIntr, mips_r4000_UserIntr)) {
+	if (pcBetween(mips_r2000_KernIntr, mips_r2000_UserIntr)) {
 		/* NOTE: the offsets depend on the code in locore.s */
 		(*printfn)("r3000 KernIntr+%x: (%x, %x ,%x) -------\n",
-		       pc-(unsigned)mips_r3000_KernIntr, a0, a1, a2);
+		       pc-(unsigned)mips_r2000_KernIntr, a0, a1, a2);
 		a0 = kdbpeek(sp + 36);
 		a1 = kdbpeek(sp + 40);
 		a2 = kdbpeek(sp + 44);
@@ -1527,7 +1540,7 @@ specialframe:
 		subr = (unsigned) mips_r2000_UserIntr;
 
 	/* R4000  exception handlers */
-#ifdef CPU_4000
+#ifdef CPU_R4000
 	else if (pcBetween(mips_r4000_KernGenException, mips_r4000_UserGenException))
 		subr = (unsigned) mips_r4000_KernGenException;
 	else if (pcBetween(mips_r4000_UserGenException,mips_r4000_KernIntr))
@@ -1557,7 +1570,12 @@ specialframe:
 
 	/* check for bad PC */
 	if (pc & 3 || pc < 0x80000000 || pc >= (unsigned)edata) {
-		(*printfn)("PC 0x%x: not in kernel\n", pc);
+		(*printfn)("PC 0x%x: not in kernel space\n", pc);
+		ra = 0;
+		goto done;
+	}
+	if (!pcBetween(start, (unsigned) edata)) {
+		(*printfn)("PC 0x%x: not in kernel text\n", pc);
 		ra = 0;
 		goto done;
 	}
@@ -1581,7 +1599,9 @@ specialframe:
 	 * Jump here for locore entry pointsn for which the preceding
 	 * function doesn't end in "j ra"
 	 */
+#if 0
 stackscan:
+#endif
 	/* scan forwards to find stack size and any saved registers */
 	stksize = 0;
 	more = 3;
