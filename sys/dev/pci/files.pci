@@ -1,4 +1,4 @@
-#	$NetBSD: files.pci,v 1.181 2002/10/11 00:57:59 thorpej Exp $
+#	$NetBSD: files.pci,v 1.182 2002/10/24 18:15:57 junyoung Exp $
 #
 # Config file and device description for machine-independent PCI code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -580,3 +580,8 @@ file	dev/pci/weasel_pci.c		weasel
 # Game adapter (joystick)
 attach	joy at pci with joy_pci
 file	dev/pci/joy_pci.c		joy_pci
+
+# ATI Mach64 framebuffer console driver
+device	machfb: wsemuldisplaydev, rasops8
+attach	machfb at pci
+file	dev/pci/machfb.c		machfb
