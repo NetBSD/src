@@ -1,4 +1,4 @@
-/*	$NetBSD: mksyntax.c,v 1.11 1995/05/11 21:29:37 christos Exp $	*/
+/*	$NetBSD: mksyntax.c,v 1.12 1996/10/16 14:46:35 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -46,7 +46,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)mksyntax.c	8.2 (Berkeley) 5/4/95";
 #else
-static char rcsid[] = "$NetBSD: mksyntax.c,v 1.11 1995/05/11 21:29:37 christos Exp $";
+static char rcsid[] = "$NetBSD: mksyntax.c,v 1.12 1996/10/16 14:46:35 christos Exp $";
 #endif
 #endif /* not lint */
 
@@ -171,6 +171,7 @@ main(argc, argv)
 	}
 
 	fputs("#include <sys/cdefs.h>\n", hfile);
+	fputs("#include <ctype.h>\n", hfile);
 
 	/* Generate the #define statements in the header file */
 	fputs("/* Syntax classes */\n", hfile);
@@ -349,15 +350,15 @@ print(name)
 
 static char *macro[] = {
 	"#define is_digit(c)\t((is_type+SYNBASE)[c] & ISDIGIT)",
-	"#define is_alpha(c)\t((is_type+SYNBASE)[c] & (ISUPPER|ISLOWER))",
-	"#define is_name(c)\t((is_type+SYNBASE)[c] & (ISUPPER|ISLOWER|ISUNDER))",
-	"#define is_in_name(c)\t((is_type+SYNBASE)[c] & (ISUPPER|ISLOWER|ISUNDER|ISDIGIT))",
+	"#define is_alpha(c)\t((c) != PEOF && ((c) < CTLESC || (c) > CTLENDARI) && isalpha((unsigned char) (c)))",
+	"#define is_name(c)\t((c) != PEOF && ((c) < CTLESC || (c) > CTLENDARI) && ((c) == '_' || isalpha((unsigned char) (c))))",
+	"#define is_in_name(c)\t((c) != PEOF && ((c) < CTLESC || (c) > CTLENDARI) && ((c) == '_' || isalnum((unsigned char) (c))))",
 	"#define is_special(c)\t((is_type+SYNBASE)[c] & (ISSPECL|ISDIGIT))",
 	NULL
 };
 
 static void
-output_type_macros() 
+output_type_macros()
 {
 	char **pp;
 
@@ -378,7 +379,7 @@ output_type_macros()
  */
 
 static void
-digit_convert() 
+digit_convert()
 {
 	int maxdigit;
 	static char digit[] = "0123456789";
