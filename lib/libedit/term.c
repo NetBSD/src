@@ -68,6 +68,7 @@ static char sccsid[] = "@(#)term.c	8.1 (Berkeley) 6/4/93";
 #define Str(a) el->el_term.t_str[a]
 #define Val(a) el->el_term.t_val[a]
 
+#ifdef notdef
 private struct {
     char   *b_name;
     int     b_rate;
@@ -137,6 +138,7 @@ private struct {
 #endif
     { NULL, 0 }
 };
+#endif
 
 private struct termcapstr {
     char   *name;
@@ -834,10 +836,10 @@ term_set(el, term)
 
     if (i <= 0) {
 	if (i == -1) 
-	    (void) fprintf(el->el_errfile, "Cannot open /etc/termcap.\n");
+	    (void) fprintf(el->el_errfile, "Cannot read termcap database;\n");
 	else if (i == 0) 
 	    (void) fprintf(el->el_errfile, 
-			   "No entry for terminal type \"%s\"\n", term);
+			   "No entry for terminal type \"%s\";\n", term);
 	(void) fprintf(el->el_errfile, "using dumb terminal settings.\n");
 	Val(T_co) = 80;		/* do a dumb terminal */
 	Val(T_pt) = Val(T_km) = Val(T_li) = 0;
@@ -1310,6 +1312,7 @@ term_echotc(el, argc, argv)
     }
 #endif
     else if (strcmp(*argv, "baud") == 0) {
+#ifdef notdef
 	int     i;
 
 	for (i = 0; baud_rate[i].b_name != NULL; i++)
@@ -1318,6 +1321,9 @@ term_echotc(el, argc, argv)
 		return 0;
 	    }
 	(void) fprintf(el->el_outfile, fmtd, 0);
+#else
+	(void) fprintf(el->el_outfile, fmtd, el->el_tty.t_speed);
+#endif
 	return 0;
     }
     else if (strcmp(*argv, "rows") == 0 || strcmp(*argv, "lines") == 0) {
