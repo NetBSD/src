@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_input.c,v 1.120 2000/11/08 14:28:15 ad Exp $	*/
+/*	$NetBSD: ip_input.c,v 1.121 2000/11/11 00:52:38 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -205,6 +205,10 @@ struct	ifqueue ipintrq;
 struct	ipstat	ipstat;
 u_int16_t	ip_id;
 
+#ifdef PFIL_HOOKS
+struct pfil_head inet_pfil_hook;
+#endif
+
 struct ipqhead ipq;
 int	ipq_locked;
 
@@ -312,6 +316,16 @@ ip_init()
 #ifdef GATEWAY
 	ipflow_init();
 #endif
+
+#ifdef PFIL_HOOKS
+	/* Register our Packet Filter hook. */
+	inet_pfil_hook.ph_key = (void *)(u_long) AF_INET;
+	inet_pfil_hook.ph_dlt = DLT_RAW;
+	i = pfil_head_register(&inet_pfil_hook);
+	if (i != 0)
+		printf("ip_init: WARNING: unable to register pfil hook, "
+		    "error %d\n", i);
+#endif /* PFIL_HOOKS */
 }
 
 struct	sockaddr_in ipaddr = { sizeof(ipaddr), AF_INET };
@@ -350,11 +364,6 @@ ip_input(struct mbuf *m)
 	struct ipqent *ipqe;
 	int hlen = 0, mff, len;
 	int downmatch;
-#ifdef PFIL_HOOKS
-	struct packet_filter_hook *pfh;
-	struct mbuf *m0;
-	int rv;
-#endif /* PFIL_HOOKS */
 
 #ifdef	DIAGNOSTIC
 	if ((m->m_flags & M_PKTHDR) == 0)
@@ -414,12 +423,8 @@ ip_input(struct mbuf *m)
 		goto bad;
 	}
 
-	/*
-	 * Convert fields to host representation.
-	 */
-	NTOHS(ip->ip_len);
-	NTOHS(ip->ip_off);
-	len = ip->ip_len;
+	/* Retrieve the packet length. */
+	len = ntohs(ip->ip_len);
 
 	/*
 	 * Check for additional length bogosity
@@ -466,20 +471,19 @@ ip_input(struct mbuf *m)
 	 * Note that filters must _never_ set this flag, as another filter
 	 * in the list may have previously cleared it.
 	 */
-	m0 = m;
-	pfh = pfil_hook_get(PFIL_IN, &inetsw[ip_protox[IPPROTO_IP]].pr_pfh);
-	for (; pfh; pfh = pfh->pfil_link.tqe_next)
-		if (pfh->pfil_func) {
-			rv = pfh->pfil_func(ip, hlen,
-					    m->m_pkthdr.rcvif, 0, &m0);
-			if (rv)
-				return;
-			m = m0;
-			if (m == NULL)
-				return;
-			ip = mtod(m, struct ip *);
-		}
+	if (pfil_run_hooks(&inet_pfil_hook, &m, m->m_pkthdr.rcvif,
+			   PFIL_IN) != 0)
+		return;
+	if (m == NULL)
+		return;
+	ip = mtod(m, struct ip *);
 #endif /* PFIL_HOOKS */
+
+	/*
+	 * Convert fields to host representation.
+	 */
+	NTOHS(ip->ip_len);
+	NTOHS(ip->ip_off);
 
 	/*
 	 * Process options and, if not destined for us,
