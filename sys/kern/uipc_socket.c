@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_socket.c,v 1.65 2002/05/03 00:35:14 thorpej Exp $	*/
+/*	$NetBSD: uipc_socket.c,v 1.66 2002/05/07 08:06:35 enami Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.65 2002/05/03 00:35:14 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.66 2002/05/07 08:06:35 enami Exp $");
 
 #include "opt_sock_counters.h"
 #include "opt_sosend_loan.h"
@@ -798,8 +798,6 @@ soreceive(struct socket *so, struct mbuf **paddr, struct uio *uio,
 	struct protosw	*pr;
 	struct mbuf	*nextrecord;
 
-	sodopendfree(so);
-
 	pr = so->so_proto;
 	mp = mp0;
 	type = 0;
@@ -812,6 +810,10 @@ soreceive(struct socket *so, struct mbuf **paddr, struct uio *uio,
 		flags = *flagsp &~ MSG_EOR;
 	else
 		flags = 0;
+
+	if ((flags & MSG_DONTWAIT) == 0)
+		sodopendfree(so);
+
 	if (flags & MSG_OOB) {
 		m = m_get(M_WAIT, MT_DATA);
 		error = (*pr->pr_usrreq)(so, PRU_RCVOOB, m,
