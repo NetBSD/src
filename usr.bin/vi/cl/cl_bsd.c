@@ -1,4 +1,4 @@
-/*	$NetBSD: cl_bsd.c,v 1.3 2000/05/30 11:50:47 blymn Exp $	*/
+/*	$NetBSD: cl_bsd.c,v 1.4 2000/05/31 05:08:55 matt Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1996
@@ -269,7 +269,8 @@ tigetstr(name)
 {
 	static char sbuf[256];
 	TL *tlp;
-	int n, limit;
+	int n;
+	size_t limit;
 	char *p, keyname[3];
 
 	if ((tlp = bsearch(name,
