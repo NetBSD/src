@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.17 2003/02/07 01:52:53 lukem Exp $
+#	$NetBSD: Makefile,v 1.18 2003/06/14 17:18:16 wiz Exp $
 
 MODULE=		groff
 
@@ -65,7 +65,7 @@ afterinstall: install.grofflinks
 install.grofflinks:
 	@cd ${.CURDIR} && ${MAKE} install.grofflinks.recurse
 
-.for F in eqn groff indxbib pic refer soelim tbl
+.for F in eqn groff indxbib nroff pic refer soelim tbl
 install.grofflinks.recurse: ${TOOLDIR}/bin/${_TOOL_PREFIX}${F}
 .if exists(${TOOLDIR}/lib/groff/g${F})
 ${TOOLDIR}/bin/${_TOOL_PREFIX}${F}: ${TOOLDIR}/lib/groff/g${F}
@@ -74,4 +74,3 @@ ${TOOLDIR}/bin/${_TOOL_PREFIX}${F}: ${TOOLDIR}/lib/groff/${F}
 .endif
 	ln -f ${.ALLSRC} ${.TARGET}
 .endfor
-
