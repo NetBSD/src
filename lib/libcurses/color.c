@@ -1,4 +1,4 @@
-/*	$NetBSD: color.c,v 1.21 2002/11/25 09:11:18 jdc Exp $	*/
+/*	$NetBSD: color.c,v 1.22 2003/01/27 21:06:16 jdc Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: color.c,v 1.21 2002/11/25 09:11:18 jdc Exp $");
+__RCSID("$NetBSD: color.c,v 1.22 2003/01/27 21:06:16 jdc Exp $");
 #endif				/* not lint */
 
 #include "curses.h"
@@ -56,9 +56,6 @@ struct __pair	__default_pair = {COLOR_WHITE, COLOR_BLACK, 0};
 /* Default colour values */
 /* Flags for colours and pairs */
 #define	__USED		0x01
-
-/* Attributes that clash with colours */
-attr_t	__nca;
 
 static void
 __change_pair(short);
@@ -79,16 +76,27 @@ has_colors(void)
 }
 
 /*
- * can_change_colors --
+ * can_change_color --
  *	Check if terminal can change colours.
  */
 bool
-can_change_colors(void)
+can_change_color(void)
 {
 	if (__tc_cc)
 		return(TRUE);
 	else
 		return(FALSE);
+}
+
+/*
+ * can_change_colors --
+ *	Alias for can_change_color().
+ *	To be removed at next major number increment.
+ */
+bool
+can_change_colors(void)
+{
+	return can_change_color();
 }
 
 /*
@@ -194,7 +202,8 @@ start_color(void)
 			_cursesi_screen->nca |= __ALTCHARSET;
 	}
 #ifdef DEBUG
-	__CTRACE ("start_color: __nca = %d\n", _cursesi_screen->nca);
+	__CTRACE ("start_color: _cursesi_screen->nca = %08x\n",
+	    _cursesi_screen->nca);
 #endif
 
 	/* Set up initial 8 colours */
@@ -405,6 +414,15 @@ assume_default_colors(short fore, short back)
 	return(OK);
 }
 
+/*
+ * no_color_video --
+ *	Return attributes that cannot be combined with color.
+ */
+attr_t
+no_color_video(void)
+{
+	return(_cursesi_screen->nca);
+}
 
 /*
  * __set_color --
