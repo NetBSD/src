@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.37 1997/06/08 10:30:08 veego Exp $
+#	$NetBSD: Makefile,v 1.38 1997/06/12 07:07:32 veego Exp $
 #	from: @(#)Makefile	5.25.1.1 (Berkeley) 5/7/91
 
 .include <bsd.own.mk>			# for EXPORTABLE_SYSTEM definition
@@ -11,7 +11,7 @@ SUBDIR=	csu libarch libc libcompat libcrypt libcurses libedit libl \
 SUBDIR+=	libkvm libkvm.old libtelnet
 .else
 
-# XXX Temporary until this ports are able to use libkvm (leo/veego)
+# XXX Temporary until these ports are able to use libkvm
 .if	(${MACHINE} == "arm32")  || \
 	(${MACHINE} == "i386")   || \
 	(${MACHINE} == "pica")   || \
