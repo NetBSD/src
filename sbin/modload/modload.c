@@ -1,4 +1,4 @@
-/*	$NetBSD: modload.c,v 1.30 2001/11/08 15:33:15 christos Exp $	*/
+/*	$NetBSD: modload.c,v 1.31 2002/09/13 15:30:36 gehenna Exp $	*/
 
 /*
  * Copyright (c) 1993 Terrence R. Lambert.
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: modload.c,v 1.30 2001/11/08 15:33:15 christos Exp $");
+__RCSID("$NetBSD: modload.c,v 1.31 2002/09/13 15:30:36 gehenna Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -454,21 +454,26 @@ main(int argc, char **argv)
 	 */
 	if (post) {
 		struct lmc_stat sbuf;
-		char id[16], type[16], offset[16];
+		char id[16], type[16];
 
 		sbuf.id = resrv.slot;
 		if (ioctl(devfd, LMSTAT, &sbuf) == -1)
 			err(15, "error fetching module stats for post-install");
 		(void)snprintf(id, sizeof(id), "%d", sbuf.id);
 		(void)snprintf(type, sizeof(type), "0x%x", sbuf.type);
-		(void)snprintf(offset, sizeof(offset), "%ld",
-		    (long)sbuf.offset);
-		/*
-		 * XXX
-		 * The modload docs say that drivers can install bdevsw &
-		 * cdevsw, but the interface only supports one at a time.
-		 */
-		execl(post, post, id, type, offset, 0);
+		if (sbuf.type == LM_DEV) {
+			char arg3[16], arg4[16];
+			int bmajor = block_major(sbuf.offset);
+			int cmajor = char_major(sbuf.offset);
+			(void)snprintf(arg3, sizeof(arg3), "%d", cmajor);
+			(void)snprintf(arg4, sizeof(arg4), "%d", bmajor);
+			execl(post, post, id, type, arg3, arg4, 0);
+		} else {
+			char arg3[16];
+			(void)snprintf(arg3, sizeof(arg3), "%ld",
+			    (long)sbuf.offset);
+			execl(post, post, id, type, arg3, 0);
+		}
 		err(16, "can't exec `%s'", post);
 	}
 
