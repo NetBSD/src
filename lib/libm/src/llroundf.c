@@ -1,4 +1,9 @@
-/* $NetBSD: llroundf.c,v 1.1 2004/07/01 16:09:21 drochner Exp $ */
+/* $NetBSD: llroundf.c,v 1.2 2004/10/13 15:18:32 drochner Exp $ */
+
+/*
+ * Written by Matthias Drochner <drochner@NetBSD.org>.
+ * Public domain.
+ */
 
 #define LROUNDNAME llroundf
 #define RESTYPE long long int

@@ -1,4 +1,9 @@
-/* $NetBSD: lrint.S,v 1.1 2004/07/01 17:30:48 drochner Exp $ */
+/* $NetBSD: lrint.S,v 1.2 2004/10/13 15:18:32 drochner Exp $ */
+
+/*
+ * Written by Matthias Drochner <drochner@NetBSD.org>.
+ * Public domain.
+ */
 
 #include <machine/asm.h>
 
