@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.153 2004/05/21 17:15:42 kleink Exp $
+#	$NetBSD: Makefile.inc,v 1.154 2005/01/02 16:43:26 thorpej Exp $
 #	@(#)Makefile.inc	8.3 (Berkeley) 10/24/94
 
 # sys sources
@@ -44,6 +44,11 @@ SRCS+=	_brk.c _fork.c _getcontext.c _pipe.c _sbrk.c
 ASM=	access.S acct.S bind.S chdir.S chflags.S \
 	chmod.S chown.S chroot.S clock_getres.S clock_gettime.S \
 	dup.S dup2.S  \
+	extattrctl.S \
+	extattr_delete_fd.S extattr_delete_file.S extattr_delete_link.S \
+	extattr_get_fd.S extattr_get_file.S extattr_get_link.S \
+	extattr_list_fd.S extattr_list_file.S extattr_list_link.S \
+	extattr_set_fd.S extattr_set_file.S extattr_set_link.S \
 	fchdir.S fchflags.S fchmod.S fchown.S fchroot.S \
 	fhopen.S fhstat.S fhstatvfs1.S \
 	fktrace.S flock.S fpathconf.S __fstat13.S fstatvfs1.S \
@@ -137,7 +142,8 @@ LintSysPseudoNoerr.c: ${.CURDIR}/sys/makelintstub \
 
 MAN+=	accept.2 access.2 acct.2 adjtime.2 bind.2 brk.2 chdir.2 \
 	chflags.2 chmod.2 chown.2 chroot.2 clock_settime.2 clone.2 close.2 \
-	connect.2 dup.2 execve.2 _exit.2 fcntl.2 fdatasync.2 fhopen.2 \
+	connect.2 dup.2 execve.2 _exit.2 extattr_get_file.2 \
+	fcntl.2 fdatasync.2 fhopen.2 \
 	flock.2 fork.2 fsync.2 getcontext.2 getdents.2 getdirentries.3 \
 	getfh.2 getvfsstat.2 getgid.2 getgroups.2 \
 	getitimer.2 getlogin.2 getpeername.2 getpgrp.2 getpid.2 \
@@ -177,6 +183,17 @@ MLINKS+=chown.2 fchown.2 chown.2 lchown.2
 MLINKS+=chroot.2 fchroot.2
 MLINKS+=clock_settime.2 clock_gettime.2
 MLINKS+=clock_settime.2 clock_getres.2
+MLINKS+=extattr_get_file.2 extattr_set_file.2 \
+	extattr_get_file.2 extattr_delete_file.2 \
+	extattr_get_file.2 extattr_list_file.2 \
+	extattr_get_file.2 extattr_get_fd.2 \
+	extattr_get_file.2 extattr_set_fd.2 \
+	extattr_get_file.2 extattr_delete_fd.2 \
+	extattr_get_file.2 extattr_list_fd.2 \
+	extattr_get_file.2 extattr_get_link.2 \
+	extattr_get_file.2 extattr_set_link.2 \
+	extattr_get_file.2 extattr_delete_link.2 \
+	extattr_get_file.2 extattr_list_link.2
 MLINKS+=fhopen.2 fhstat.2 fhopen.2 fhstatvfs.2 fhopen.2 fhstatvfs1.2
 MLINKS+=fsync.2 fsync_range.2
 MLINKS+=getcontext.2 setcontext.2
