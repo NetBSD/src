@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_stat.h,v 1.17 2000/04/11 02:34:19 chs Exp $	*/
+/*	$NetBSD: uvm_stat.h,v 1.18 2000/04/11 08:12:14 pk Exp $	*/
 
 /*
  *
@@ -197,7 +197,7 @@ do { \
 
 #define UVMHIST_LOG(NAME,FMT,A,B,C,D) \
 do { \
-	int i, s = splhigh(); \
+	int _i_, _s_ = splhigh(); \
 	simple_lock(&(NAME).l); \
 	_i_ = (NAME).f; \
 	(NAME).f = (_i_ + 1) % (NAME).n; \
