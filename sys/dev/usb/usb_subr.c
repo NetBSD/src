@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_subr.c,v 1.59 1999/12/15 20:05:08 augustss Exp $	*/
+/*	$NetBSD: usb_subr.c,v 1.60 1999/12/15 23:00:05 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_subr.c,v 1.18 1999/11/17 22:33:47 n_hibma Exp $	*/
 
 /*
@@ -773,6 +773,7 @@ usbd_probe_and_attach(parent, dev, port, addr)
 	uaa.release = UGETW(dd->bcdDevice);
 
 	/* First try with device specific drivers. */
+	DPRINTF(("usbd_probe_and_attach: trying device specific drivers\n"));
 	dv = USB_DO_ATTACH(dev, bdev, parent, &uaa, usbd_print, usbd_submatch);
 	if (dv) {
 		dev->subdevs = malloc(2 * sizeof dv, M_USB, M_NOWAIT);
@@ -785,6 +786,8 @@ usbd_probe_and_attach(parent, dev, port, addr)
 
 	DPRINTF(("usbd_probe_and_attach: no device specific driver found\n"));
 
+	DPRINTF(("usbd_probe_and_attach: looping over %d configurations\n",
+		 dd->bNumConfigurations));
 	/* Next try with interface drivers. */
 	for (confi = 0; confi < dd->bNumConfigurations; confi++) {
 		DPRINTFN(1,("usbd_probe_and_attach: trying config idx=%d\n",
