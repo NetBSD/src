@@ -1,4 +1,4 @@
-$NetBSD: pcmciadevs,v 1.92 2000/06/09 13:05:03 onoe Exp $
+$NetBSD: pcmciadevs,v 1.93 2000/06/13 02:18:00 soren Exp $
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -125,13 +125,13 @@ product FUJITSU LA501		0x2000 Fujitsu Towa LA501 Ethernet
 product FUJITSU LA10S		0x1003 Fujitsu Compact Flash Ethernet
 
 /* IBM Products */
-product IBM 3270		0x0001 3270 Emulation
-product IBM INFOMOVER		0x0002 National Semiconductor InfoMover
-product IBM 5250		0x000b 5250 Emulation
-product IBM TROPIC		0x001e Token Ring 4/16
+product IBM 3270		0x0001 IBM 3270 Emulation
+product IBM INFOMOVER		0x0002 IBM InfoMover
+product IBM 5250		0x000b IBM 5250 Emulation
+product IBM TROPIC		0x001e IBM Token Ring 4/16
+product IBM PORTABLE_CDROM	0x002d IBM PCMCIA Portable CD-ROM Drive
 product IBM HOME_AND_AWAY	0x002e IBM Home and Away Modem
-product IBM WIRELESS_LAN_ENTRY	0x0032 Wireless LAN Entry 
-product IBM PORTABLE_CDROM	0x002d PCMCIA Portable CD-ROM Drive
+product IBM WIRELESS_LAN_ENTRY	0x0032 IBM Wireless LAN Entry 
 product IBM ETHERJET		0x003f IBM EtherJet Ethernet
 
 /* Intel Products */
