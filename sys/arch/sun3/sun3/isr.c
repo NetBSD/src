@@ -28,7 +28,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Id: isr.c,v 1.9 1994/06/28 22:05:49 gwr Exp $
+ * $Id: isr.c,v 1.10 1994/07/25 18:28:04 gwr Exp $
  */
 
 #include <sys/param.h>
@@ -189,7 +189,7 @@ void isr_soft_clear(level)
     splx(s);
 }
 
-int intrcnt[8];
+extern int intrcnt[];
 void intrhand(ipl)
 	int ipl;
 {
