@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.vax,v 1.42 1998/05/31 23:25:43 thorpej Exp $
+#	$NetBSD: Makefile.vax,v 1.43 1998/08/22 09:16:45 ragge Exp $
 
 # Makefile for NetBSD
 #
@@ -52,7 +52,7 @@ CWARNFLAGS+=	-Wno-main
 .endif
 CFLAGS=		${DEBUG} ${COPTS} ${CWARNFLAGS}
 AFLAGS=		-x assembler-with-cpp -traditional-cpp -D_LOCORE
-LINKFLAGS=	-Z -Ttext 80000000 -e start
+LINKFLAGS=	-N -Ttext 80000000 -e start
 STRIPFLAGS=	-d
 
 HOSTED_CC=	${CC}

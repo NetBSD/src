@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.8 1998/07/01 10:52:11 ragge Exp $ */
+/*	$NetBSD: boot.c,v 1.9 1998/08/22 09:16:45 ragge Exp $ */
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
  * All rights reserved.
@@ -105,7 +105,7 @@ copyunix(howto, devtype, aio)
 {
 	register int esym;		/* must be r9 */
 	struct exec x;
-	register int io = aio, i;
+	register int io = aio, i, sek;
 	char *addr;
 
 	if (read(io, (char *)&x, sizeof(x)) != sizeof(x) || N_BADMAG(x)) {
@@ -113,13 +113,16 @@ copyunix(howto, devtype, aio)
 		return;
 	}
 	printf("%d", x.a_text);
-	if (N_GETMAGIC(x) == ZMAGIC && lseek(io, 0x400, SEEK_SET) == -1)
+	sek = 0x400; /* Old bin offset */
+	if (N_GETMID(x) == MID_VAX)
+		sek = sizeof(struct exec);
+	if (N_GETMAGIC(x) == ZMAGIC && lseek(io, sek, SEEK_SET) == -1)
 		goto shread;
 	if (read(io, (char *)0, x.a_text) != x.a_text)
 		goto shread;
 	addr = (char *)x.a_text;
 	if (N_GETMAGIC(x) == ZMAGIC || N_GETMAGIC(x) == NMAGIC)
-		while ((int)addr & CLOFSET)
+		while ((int)addr & (sek == 0x400 ? (sek-1) : CLOFSET))
 			*addr++ = 0;
 	printf("+%d", x.a_data);
 	if (read(io, addr, x.a_data) != x.a_data)
@@ -148,8 +151,6 @@ copyunix(howto, devtype, aio)
 		x.a_bss = 0;
 	} else
 		howto &= ~RB_KDB;
-	for (i = 0; i < 128*512; i++)	/* slop */
-		*addr++ = 0;
 	printf(" start 0x%x\n", (x.a_entry&0x7fffffff));
 	hoppabort((x.a_entry&0x7fffffff),howto, devtype, esym);
 	return;
