@@ -1,4 +1,4 @@
-/*	$NetBSD: kernfs_vnops.c,v 1.79.10.1 2002/07/21 00:52:37 lukem Exp $	*/
+/*	$NetBSD: kernfs_vnops.c,v 1.79.10.2 2002/10/14 00:06:29 lukem Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kernfs_vnops.c,v 1.79.10.1 2002/07/21 00:52:37 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kernfs_vnops.c,v 1.79.10.2 2002/10/14 00:06:29 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -497,7 +497,7 @@ kernfs_getattr(v)
 		vap->va_size = DEV_BSIZE;
 	} else {
 		const struct kern_target *kt = VTOKERN(vp)->kf_kt;
-		size_t total;
+		size_t nread, total;
 #ifdef KERNFS_DIAGNOSTIC
 		printf("kernfs_getattr: stat target %s\n", kt->kt_name);
 #endif
@@ -505,10 +505,14 @@ kernfs_getattr(v)
 		vap->va_mode = kt->kt_mode;
 		vap->va_nlink = 1;
 		vap->va_fileid = 1 + (kt - kern_targets);
-		buf = strbuf;
-		if (0 == (error = kernfs_xread(kt, 0, &buf,
-				sizeof(strbuf), &total)))
-			vap->va_size = total;
+		total = 0;
+		do {
+			buf = strbuf;
+			error = kernfs_xread(kt, total, &buf,
+				sizeof(strbuf), &nread);
+			total += nread;
+		} while (error == 0 && nread != 0);
+		vap->va_size = total;
 	}
 
 #ifdef KERNFS_DIAGNOSTIC
