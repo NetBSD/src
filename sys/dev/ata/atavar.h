@@ -1,4 +1,4 @@
-/*	$NetBSD: atavar.h,v 1.51 2004/08/12 20:59:27 thorpej Exp $	*/
+/*	$NetBSD: atavar.h,v 1.52 2004/08/12 21:05:09 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.
@@ -300,8 +300,6 @@ struct ata_device {
 int	atabusprint(void *aux, const char *);
 int	ataprint(void *aux, const char *);
 
-int	wdc_downgrade_mode(struct ata_drive_datas *, int);
-
 struct ataparams;
 int	ata_get_params(struct ata_drive_datas *, u_int8_t, struct ataparams *);
 int	ata_set_mode(struct ata_drive_datas *, u_int8_t, u_int8_t);
@@ -311,6 +309,7 @@ int	ata_set_mode(struct ata_drive_datas *, u_int8_t, u_int8_t);
 #define CMD_AGAIN 2
 
 void	ata_print_modes(struct wdc_channel *);
+int	ata_downgrade_mode(struct ata_drive_datas *, int);
 
 void	ata_dmaerr(struct ata_drive_datas *, int);
 #endif /* _KERNEL */
