@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.9 2001/12/30 17:21:19 mrg Exp $
+#	$NetBSD: Makefile,v 1.10 2002/08/19 09:46:42 lukem Exp $
 
 # Makefile for _G_config.h, a machine-dependent automatically generated
 # configuration file.
@@ -17,7 +17,7 @@ INCSDIR=	/usr/include/${MACHINE}
 
 DPSRCS=		_G_config.h
 CLEANFILES=	dummy.c dummy.h dummy.C _G_config.h
-DIST=		${.CURDIR}/../../../dist
+DIST=		${NETBSDSRCDIR}/gnu/dist
 
 .ifdef DESTDIR
 LDPRE=	-nostdlib -L${DESTDIR}${SHLIBDIR} -L${DESTDIR}/usr/lib \
