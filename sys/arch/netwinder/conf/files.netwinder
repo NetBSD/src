@@ -1,4 +1,4 @@
-#	$NetBSD: files.netwinder,v 1.19 2001/11/28 10:21:17 lukem Exp $
+#	$NetBSD: files.netwinder,v 1.20 2002/02/02 18:37:43 jdolecek Exp $
 #
 # First try for arm-specific configuration info
 #
@@ -45,13 +45,8 @@ major	{wd = 16}
 # ISA DMA glue
 file	arch/arm32/isa/isadma_machdep.c		isadma
 
-# XXX ISA joystick driver
-device	joy
-file	arch/arm32/isa/joy.c			joy needs-flag
-attach	joy at isa with joy_isa
-file	arch/arm32/isa/joy_isa.c		joy_isa
-attach	joy at isapnp with joy_isapnp
-file	arch/arm32/isa/joy_isapnp.c		joy_isapnp
+# Game adapter (joystick)
+file	arch/arm32/isa/joy_timer.c		joy
 
 # Memory disk driver
 file	arch/arm32/dev/md_hooks.c		md & memory_disk_hooks

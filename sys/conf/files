@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.492 2002/01/27 10:28:20 jdolecek Exp $
+#	$NetBSD: files,v 1.493 2002/02/02 18:37:44 jdolecek Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -1484,3 +1484,7 @@ file	netisdn/i4b_i4bdrv.c		i4b			needs-flag
 file	netisdn/i4b_l4.c		isdn			needs-flag
 file	netisdn/i4b_l4mgmt.c		isdn			needs-flag
 file	netisdn/i4b_l4timer.c		isdn			needs-flag
+
+# Game adapter (joystick)
+device	joy
+file	dev/ic/joy.c			joy needs-flag

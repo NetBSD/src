@@ -1,4 +1,4 @@
-/*	$NetBSD: joyvar.h,v 1.2 2001/06/13 10:46:01 wiz Exp $	*/
+/*	$NetBSD: joy_timer.c,v 1.1 2002/02/02 18:37:41 jdolecek Exp $	*/
 
 /*
  * XXX This _really_ should be rewritten such that it doesn't
@@ -36,21 +36,40 @@
  *
  */
 
-#ifndef _I386_ISA_JOYVAR_H_
-#define _I386_ISA_JOYVAR_H_
+#include <sys/param.h>
+#include <sys/systm.h>
+#include <sys/kernel.h>
+#include <sys/device.h>
+#include <sys/errno.h>
 
-/*
- * Data structures and prototypes used by the i386 ISA joystick driver.
- */
+#include <machine/bus.h>
 
-struct joy_softc {
-	struct	device sc_dev;
-	bus_space_tag_t sc_iot;
-	bus_space_handle_t sc_ioh;
-	int	x_off[2], y_off[2];
-	int	timeout[2];
-};
+#include <machine/cpu.h>
+#include <machine/pio.h>
+#include <machine/joystick.h>
+#include <machine/conf.h>
 
-void	joyattach __P((struct joy_softc *));
+#include <dev/isa/isavar.h>
+#include <dev/isa/isareg.h>
 
-#endif /* ! _I386_ISA_JOYVAR_H_ */
+#include <dev/ic/i8253reg.h>
+
+#include <dev/ic/joyvar.h>
+
+int
+joy_get_tick()
+{
+	int low, high;
+
+	isa_outb(IO_TIMER1 + TIMER_MODE, TIMER_SEL0);
+	low = isa_inb(IO_TIMER1 + TIMER_CNTR0);
+	high = isa_inb(IO_TIMER1 + TIMER_CNTR0);
+
+	return (high << 8) | low;
+}
+
+int
+joy_timer_freq()
+{
+	return (TIMER_FREQ);
+}
