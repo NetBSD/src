@@ -1,4 +1,4 @@
-/*	$NetBSD: tc_subr.c,v 1.14 1997/09/24 02:45:12 mhitch Exp $	*/
+/*	$NetBSD: tc_subr.c,v 1.14.2.1 1997/11/09 20:06:34 mellon Exp $	*/
 
 /*
  * Copyright 1996 The Board of Trustees of The Leland Stanford
@@ -12,6 +12,9 @@
  * software for any purpose.  It is provided "as is" without
  * express or implied warranty.
  */
+
+#include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
+__KERNEL_RCSID(0, "$NetBSD: tc_subr.c,v 1.14.2.1 1997/11/09 20:06:34 mellon Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>			/* printf() */
@@ -453,11 +456,6 @@ tc_ds_intr_establish(dev, cookie, level, handler, val)
     intr_handler_t handler;
     void *val;
 {
-
-	/* Never tested on these processors */
-	if (cputype == DS_3MIN || cputype == DS_MAXINE)
-	    printf("tc_enable %s sc %x slot %p\n",
-		   dev->dv_xname, (int)val, cookie);
 
 #ifdef DIAGNOSTIC
 	if (tc_enable_interrupt == NULL)
