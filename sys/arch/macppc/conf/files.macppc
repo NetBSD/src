@@ -1,4 +1,4 @@
-#	$NetBSD: files.macppc,v 1.56 2003/03/04 13:29:12 soren Exp $
+#	$NetBSD: files.macppc,v 1.57 2003/03/05 05:43:43 matt Exp $
 #
 # macppc-specific configuration info
 
@@ -15,8 +15,9 @@ file arch/macppc/macppc/clock.c
 file arch/macppc/macppc/disksubr.c		disk
 file arch/macppc/macppc/extintr.c
 file arch/macppc/macppc/machdep.c
-file arch/macppc/macppc/procfs_machdep.c	procfs
 file arch/macppc/dev/dbdma.c
+
+file arch/powerpc/powerpc/procfs_machdep.c	procfs
 file dev/cons.c
 
 #
