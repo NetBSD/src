@@ -1,4 +1,4 @@
-.\" $NetBSD: irframe.4,v 1.4 2001/12/03 23:23:47 augustss Exp $
+.\" $NetBSD: irframetty.4,v 1.1 2001/12/03 23:23:47 augustss Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -34,30 +34,27 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd December 2, 2001
-.Dt IRFRAME 4
+.Dd December 3, 2001
+.Dt IRFRAMETTY 4
 .Os
 .Sh NAME
-.Nm irframe
-.Nd IrDA frame level driver
+.Nm irframetty
+.Nd IrDA frame over serial line driver
 .Sh SYNOPSIS
-.Cd "irframe* at oboe?"
 .Cd "pseudo-device irframetty"
 .Sh DESCRIPTION
 The
 .Nm
-driver provides support for IrDA frame level transmission.
-It does not contain the IrDA protocol stack per se, but the stack
-can be built on top of the
-.Nm
+driver provides a
+.Xr tty 4
+line discipline to send and receive IrDA frames over a serial line
+via an IrDA dongle.
+.Pp
+Access to the frames is via the
+.Xr irframe 4
 driver.
 .Sh SEE ALSO
-.Xr cir 4 ,
-.Xr irframetty 4 ,
-.Xr oboe 4
-.\" .Xr smccir 4 ,
-.\" .Xr ircomm 8 ,
-.\" .Xr irobex 8
+.Xr irframe 4
 .Sh HISTORY
 The
 .Nm
@@ -65,6 +62,4 @@ driver
 appeared in
 .Nx 1.6 .
 .Sh BUGS
-This man page lacks a description of the device API.
-.Pp
-There is no access to IrDA devices via ttys.
+This man page is incomplete.
