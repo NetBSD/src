@@ -1,4 +1,4 @@
-/*	$NetBSD: umass.c,v 1.54 2001/04/01 14:41:39 augustss Exp $	*/
+/*	$NetBSD: umass.c,v 1.55 2001/04/01 19:04:52 augustss Exp $	*/
 /*-
  * Copyright (c) 1999 MAEKAWA Masahide <bishop@rr.iij4u.or.jp>,
  *		      Nick Hibma <n_hibma@freebsd.org>
@@ -689,8 +689,11 @@ umass_match_proto(struct umass_softc *sc, usbd_interface_handle iface,
 	product = UGETW(dd->idProduct);
 
 	if (vendor == USB_VENDOR_SHUTTLE &&
-	    product == USB_PRODUCT_SHUTTLE_EUSB) {
-		sc->drive = SHUTTLE_EUSB;
+	    (product == USB_PRODUCT_SHUTTLE_EUSB ||
+	     product == USB_PRODUCT_SHUTTLE_ZIOMMC)
+	    ) {
+		if (product == USB_PRODUCT_SHUTTLE_EUSB)
+			sc->drive = SHUTTLE_EUSB;
 #if CBI_I
 		sc->proto = PROTO_ATAPI | PROTO_CBI_I;
 #else
