@@ -1,4 +1,4 @@
-/*	$NetBSD: syslogd.c,v 1.37 2000/06/30 18:22:54 jwise Exp $	*/
+/*	$NetBSD: syslogd.c,v 1.38 2000/06/30 18:45:04 jwise Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1988, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)syslogd.c	8.3 (Berkeley) 4/4/94";
 #else
-__RCSID("$NetBSD: syslogd.c,v 1.37 2000/06/30 18:22:54 jwise Exp $");
+__RCSID("$NetBSD: syslogd.c,v 1.38 2000/06/30 18:45:04 jwise Exp $");
 #endif
 #endif /* not lint */
 
@@ -187,7 +187,7 @@ struct	filed consfile;
 int	Debug;			/* debug flag */
 char	LocalHostName[MAXHOSTNAMELEN+1];	/* our hostname */
 char	*LocalDomain;		/* our local domain name */
-int	*finet;			/* Internet datagram sockets */
+int	*finet = NULL;			/* Internet datagram sockets */
 int	Initialized = 0;	/* set when we have initialized ourselves */
 int	MarkInterval = 20 * 60;	/* interval between marks in seconds */
 int	MarkSeq = 0;		/* mark sequence number */
@@ -321,19 +321,6 @@ main(argc, argv)
 	}
 
 	init(0);
-	finet = socksetup(PF_UNSPEC);
-	if (finet) {
-		if (SecureMode) {
-			for (j = 0; j < *finet; j++) {
-				if (shutdown(finet[j+1], SHUT_RD) < 0) {
-					logerror("shutdown");
-					die(0);
-				}
-			}
-		} else
-			dprintf("listening on inet and/or inet6 socket\n");
-		dprintf("sending on inet and/or inet6 socket\n");
-	}
 
 	if ((fklog = open(_PATH_KLOG, O_RDONLY, 0)) < 0) {
 		dprintf("can't open %s (%d)\n", _PATH_KLOG, errno);
@@ -1074,6 +1061,19 @@ init(signo)
 	Files = NULL;
 	nextp = &Files;
 
+	/*
+	 *  Close all open sockets
+	 */
+
+	if (finet) {
+		for (i = 0; i < *finet; i++) {
+			if (close(finet[i+1]) < 0) {
+				logerror("close");
+				die(0);
+			}
+		}
+	}
+
 	/* open the configuration file */
 	if ((cf = fopen(ConfFile, "r")) == NULL) {
 		dprintf("cannot open %s\n", ConfFile);
@@ -1139,6 +1139,20 @@ init(signo)
 			}
 			printf("\n");
 		}
+	}
+
+	finet = socksetup(PF_UNSPEC);
+	if (finet) {
+		if (SecureMode) {
+			for (i = 0; i < *finet; i++) {
+				if (shutdown(finet[i+1], SHUT_RD) < 0) {
+					logerror("shutdown");
+					die(0);
+				}
+			}
+		} else
+			dprintf("listening on inet and/or inet6 socket\n");
+		dprintf("sending on inet and/or inet6 socket\n");
 	}
 
 	logmsg(LOG_SYSLOG|LOG_INFO, "syslogd: restart", LocalHostName, ADDDATE);
