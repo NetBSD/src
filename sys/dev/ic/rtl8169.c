@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl8169.c,v 1.2 2004/12/26 06:48:13 kanaoka Exp $	*/
+/*	$NetBSD: rtl8169.c,v 1.3 2004/12/26 07:27:41 kanaoka Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998-2003
@@ -174,8 +174,7 @@ static void re_tick		(void *);
 static void re_start		(struct ifnet *);
 static int re_ioctl		(struct ifnet *, u_long, caddr_t);
 static int re_init		(struct ifnet *);
-static void re_stop		(struct rtk_softc *);
-static void re_ifstop		(struct ifnet *, int);
+static void re_stop		(struct ifnet *, int);
 static void re_watchdog		(struct ifnet *);
 #if 0
 static int re_suspend		(device_t);
@@ -476,7 +475,7 @@ re_diag(struct rtk_softc *sc)
 	ifp->if_flags |= IFF_PROMISC;
 	sc->rtk_testmode = 1;
 	re_init(ifp);
-	re_stop(sc);
+	re_stop(ifp,1);
 	DELAY(100000);
 	re_init(ifp);
 
@@ -573,7 +572,7 @@ done:
 
 	sc->rtk_testmode = 0;
 	ifp->if_flags &= ~IFF_PROMISC;
-	re_stop(sc);
+	re_stop(ifp,1);
 	if (m0 != NULL)
 		m_freem(m0);
 
@@ -750,7 +749,7 @@ re_attach(struct rtk_softc *sc)
 	sc->ethercom.ec_capabilities |=
 	    ETHERCAP_VLAN_MTU | ETHERCAP_VLAN_HWTAGGING;
 	ifp->if_start = re_start;
-	ifp->if_stop = re_ifstop;
+	ifp->if_stop = re_stop;
 	ifp->if_capabilities |=
 	    IFCAP_CSUM_IPv4 | IFCAP_CSUM_TCPv4 | IFCAP_CSUM_UDPv4;
 	ifp->if_watchdog = re_watchdog;
@@ -819,10 +818,6 @@ re_attach(struct rtk_softc *sc)
 
 	sc->sc_flags |= RTK_ATTACHED;
 
-	/* XXX: used to establish interrupt here. */
-
-	re_init(ifp);
-
 fail:
 #if 0
 	if (error)
@@ -853,7 +848,7 @@ re_detach(struct device *self, int flags)
 
 	/* These should only be active if attach succeeded */
 	if (device_is_attached(dev)) {
-		re_stop(sc);
+		re_stop(ifp, 0);
 		/*
 		 * Force off the IFF_UP flag here, in case someone
 		 * still had a BPF descriptor attached to this
@@ -1043,7 +1038,7 @@ re_power(int why, void *arg)
 	switch (why) {
 	case PWR_SUSPEND:
 	case PWR_STANDBY:
-		re_stop(sc);
+		re_stop(ifp, 0);
 		if (sc->sc_power != NULL)
 			(*sc->sc_power)(sc, why);
 		break;
@@ -1443,7 +1438,7 @@ re_shutdown(void *vsc)
 {
 	struct rtk_softc	*sc = (struct rtk_softc *)vsc;
 
-	re_stop(sc);
+	re_stop(&sc->ethercom.ec_if, 0);
 }
 
 
@@ -1523,13 +1518,8 @@ re_intr(void *arg)
 #endif
 	ifp = &sc->ethercom.ec_if;
 
-	/* For Cardbus, re_attach() incurs an interrupt indicating Tx-done
-	 * and Rx-done,  immediately after re_init() enablees interrupts.
-	 */
-#ifdef notyet
 	if (!(ifp->if_flags & IFF_UP))
 		return 0;
-#endif
 
 #ifdef DEVICE_POLLING
 	if  (ifp->if_flags & IFF_POLLING)
@@ -1789,7 +1779,7 @@ re_init(struct ifnet *ifp)
 	/*
 	 * Cancel pending I/O and free all RX/TX buffers.
 	 */
-	re_stop(sc);
+	re_stop(ifp, 0);
 
 	/*
 	 * Enable C+ RX and TX mode, as well as VLAN stripping and
@@ -2020,15 +2010,6 @@ re_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 			error = EINVAL;
 		ifp->if_mtu = ifr->ifr_mtu;
 		break;
-	case SIOCSIFFLAGS:
-		if (ifp->if_flags & IFF_UP) {
-			re_init(ifp);
-		} else {
-			if (ifp->if_flags & IFF_RUNNING)
-				re_stop(sc);
-		}
-		error = 0;
-		break;
 	case SIOCGIFMEDIA:
 	case SIOCSIFMEDIA:
 		error = ifmedia_ioctl(ifp, ifr, &sc->mii.mii_media, command);
@@ -2072,19 +2053,18 @@ re_watchdog(struct ifnet *ifp)
  * RX and TX lists.
  */
 static void
-re_stop(struct rtk_softc *sc)
+re_stop(struct ifnet *ifp, int disable)
 {
 	register int		i;
-	struct ifnet		*ifp;
-
-	ifp = &sc->ethercom.ec_if;
-	ifp->if_timer = 0;
+	struct rtk_softc *sc = ifp->if_softc;
 
 	callout_stop(&sc->rtk_tick_ch);
-	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
+
 #ifdef DEVICE_POLLING
 	ether_poll_deregister(ifp);
 #endif /* DEVICE_POLLING */
+
+	mii_down(&sc->mii);
 
 	CSR_WRITE_1(sc, RTK_COMMAND, 0x00);
 	CSR_WRITE_2(sc, RTK_IMR, 0x0000);
@@ -2095,7 +2075,6 @@ re_stop(struct rtk_softc *sc)
 	}
 
 	/* Free the TX list buffers. */
-
 	for (i = 0; i < RTK_TX_DESC_CNT; i++) {
 		if (sc->rtk_ldata.rtk_tx_mbuf[i] != NULL) {
 			bus_dmamap_unload(sc->sc_dmat,
@@ -2106,7 +2085,6 @@ re_stop(struct rtk_softc *sc)
 	}
 
 	/* Free the RX list buffers. */
-
 	for (i = 0; i < RTK_RX_DESC_CNT; i++) {
 		if (sc->rtk_ldata.rtk_rx_mbuf[i] != NULL) {
 			bus_dmamap_unload(sc->sc_dmat,
@@ -2116,18 +2094,15 @@ re_stop(struct rtk_softc *sc)
 		}
 	}
 
+	if (disable)
+		re_disable(sc);
+
+	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
+	ifp->if_timer = 0;	
+
 	return;
 }
 
-static void
-re_ifstop(struct ifnet *ifp, int disable)
-{
-	struct rtk_softc *sc = ifp->if_softc;
-
-	re_stop(sc);
-	if (disable)
-	 	re_disable(sc);
-}
 
 
 #if 0

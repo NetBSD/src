@@ -1,4 +1,4 @@
-/*	$NetBSD: if_re_cardbus.c,v 1.1 2004/12/23 06:26:30 jonathan Exp $	*/
+/*	$NetBSD: if_re_cardbus.c,v 1.2 2004/12/26 07:27:41 kanaoka Exp $	*/
 
 /*
  * Copyright (c) 2004 Jonathan Stone
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_re_cardbus.c,v 1.1 2004/12/23 06:26:30 jonathan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_re_cardbus.c,v 1.2 2004/12/26 07:27:41 kanaoka Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"
@@ -243,12 +243,10 @@ re_cardbus_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_dmat = ca->ca_dmat;
 	re_attach(sc);
 
-#ifdef notyet	/* XXX device times out if we disable, so for now, don't. */
 	/*
 	 * Power down the socket.
 	 */
 	Cardbus_function_disable(csc->sc_ct);
-#endif /* notyet */
 }
 
 int 
