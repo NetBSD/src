@@ -1,4 +1,4 @@
-.\" 	$NetBSD: rc.subr.8,v 1.8 2002/04/18 11:14:33 lukem Exp $
+.\" 	$NetBSD: rc.subr.8,v 1.9 2002/07/08 16:14:55 atatat Exp $
 .\"
 .\" Copyright (c) 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -418,6 +418,18 @@ as.
 Comma separated list of supplementary groups to run the chrooted
 .Sy command
 with.
+.It Sy ${name}_systrace
+Flags passed to
+.Xr systrace 1 ,
+if it is used.
+Setting this variable enables systracing
+of the given program.  The use of
+.Sq -a
+is
+recommended so that the boot process is not
+stalled.  In order to pass no flags to
+systrace, set this variable to
+.Sq -- .
 .It Ar argument Ns Sy _cmd
 Shell commands which override the default method for
 .Ar argument .
