@@ -1,4 +1,4 @@
-/*	$NetBSD: ftp.c,v 1.115 2001/12/20 05:45:37 lukem Exp $	*/
+/*	$NetBSD: ftp.c,v 1.116 2001/12/23 12:23:02 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1996-2000 The NetBSD Foundation, Inc.
@@ -103,7 +103,7 @@
 #if 0
 static char sccsid[] = "@(#)ftp.c	8.6 (Berkeley) 10/27/94";
 #else
-__RCSID("$NetBSD: ftp.c,v 1.115 2001/12/20 05:45:37 lukem Exp $");
+__RCSID("$NetBSD: ftp.c,v 1.116 2001/12/23 12:23:02 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -180,7 +180,7 @@ hookup(char *host, char *port)
 	memset(&hints, 0, sizeof(hints));
 	portnum = parseport(port, FTP_PORT);
 	hints.ai_flags = AI_CANONNAME;
-	hints.ai_family = AF_UNSPEC;
+	hints.ai_family = family;
 	hints.ai_socktype = SOCK_STREAM;
 	hints.ai_protocol = 0;
 	error = getaddrinfo(host, NULL, &hints, &res0);
