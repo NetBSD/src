@@ -1,4 +1,4 @@
-/*	$NetBSD: ipc.h,v 1.16 1998/03/01 02:24:12 fvdl Exp $	*/
+/*	$NetBSD: ipc.h,v 1.17 1998/05/07 16:16:51 kleink Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -61,12 +61,7 @@ struct ipc_perm {
 	key_t	key;	/* user specified msg/sem/shm key */
 };
 
-/* common mode bits */
-#define	IPC_R		000400	/* read permission */
-#define	IPC_W		000200	/* write/alter permission */
-#define	IPC_M		010000	/* permission to change control info */
-
-/* SVID required constants (same values as system 5) */
+/* X/Open required constants (same values as system 5) */
 #define	IPC_CREAT	001000	/* create entry if key does not exist */
 #define	IPC_EXCL	002000	/* fail if key exists */
 #define	IPC_NOWAIT	004000	/* error if request must wait */
@@ -82,6 +77,11 @@ struct ipc_perm {
 #define	IPCID_TO_IX(id)		((id) & 0xffff)
 #define	IPCID_TO_SEQ(id)	(((id) >> 16) & 0xffff)
 #define	IXSEQ_TO_IPCID(ix,perm)	(((perm.seq) << 16) | (ix & 0xffff))
+
+/* Common access type bits, used with ipcperm(). */
+#define	IPC_R		000400	/* read permission */
+#define	IPC_W		000200	/* write/alter permission */
+#define	IPC_M		010000	/* permission to change control info */
 
 int ipcperm __P((struct ucred *, struct ipc_perm *, int));
 #endif /* _KERNEL */
