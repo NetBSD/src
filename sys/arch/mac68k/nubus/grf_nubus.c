@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_nubus.c,v 1.35 1997/10/25 23:18:01 briggs Exp $	*/
+/*	$NetBSD: grf_nubus.c,v 1.36 1997/11/30 01:02:44 briggs Exp $	*/
 
 /*
  * Copyright (c) 1995 Allen Briggs.  All rights reserved.
@@ -61,6 +61,7 @@ static void	grfmv_intr_cmax __P((void *vsc, int slot));
 static void	grfmv_intr_cti __P((void *vsc, int slot));
 static void	grfmv_intr_radius __P((void *vsc, int slot));
 static void	grfmv_intr_supermacgfx __P((void *vsc, int slot));
+static void	grfmv_intr_lapis __P((void *vsc, int slot));
 
 static int	grfmv_mode __P((struct grf_softc *gp, int cmd, void *arg));
 static caddr_t	grfmv_phys __P((struct grf_softc *gp));
@@ -280,6 +281,9 @@ bad:
 		break;
 	case NUBUS_DRHW_SUPRGFX:
 		add_nubus_intr(na->slot, grfmv_intr_supermacgfx, sc);
+		break;
+	case NUBUS_DRHW_LAPIS:
+		add_nubus_intr(na->slot, grfmv_intr_lapis, sc);
 		break;
 	case NUBUS_DRHW_MICRON:
 		/* What do we know about this one? */
@@ -576,4 +580,19 @@ grfmv_intr_cmax(vsc, slot)
 
 	dummy = bus_space_read_4(sc->sc_tag, sc->sc_handle, 0xf501c);
 	dummy = bus_space_read_4(sc->sc_tag, sc->sc_handle, 0xf5018);
+}
+
+/*
+ * Routine to clear interrupts for the Sigma Designs ColorMax card.
+ */
+/*ARGSUSED*/
+static void
+grfmv_intr_lapis(vsc, slot)
+	void	*vsc;
+	int	slot;
+{
+	struct grfbus_softc *sc = (struct grfbus_softc *)vsc;
+
+	bus_space_write_1(sc->sc_tag, sc->sc_handle, 0xff7000, 0x08);
+	bus_space_write_1(sc->sc_tag, sc->sc_handle, 0xff7000, 0x0C);
 }
