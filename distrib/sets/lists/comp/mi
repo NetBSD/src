@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.602 2003/07/25 15:11:39 he Exp $
+#	$NetBSD: mi,v 1.603 2003/07/25 15:23:11 he Exp $
 ./usr/bin/addr2line		comp-debug-bin
 ./usr/bin/ar			comp-util-bin
 ./usr/bin/as			comp-util-bin
@@ -597,7 +597,6 @@
 ./usr/include/openssl/rc5.h		comp-c-include
 ./usr/include/openssl/ripemd.h		comp-c-include
 ./usr/include/openssl/rsa.h		comp-c-include
-./usr/include/openssl/rsaref.h		comp-c-include
 ./usr/include/openssl/safestack.h	comp-c-include
 ./usr/include/openssl/sha.h		comp-c-include
 ./usr/include/openssl/ssl.h		comp-c-include
