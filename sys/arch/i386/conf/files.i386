@@ -1,12 +1,10 @@
-#	$NetBSD: files.i386,v 1.92.2.2 1997/11/24 00:33:56 thorpej Exp $
+#	$NetBSD: files.i386,v 1.92.2.3 1997/11/28 08:26:03 mellon Exp $
 #
 # new style config file for i386 architecture
 #
 
 # maxpartitions must be first item in files.${ARCH}.newconf
 maxpartitions 8
-
-defopt	I486_PCI_MEM_ENABLED
 
 maxusers 2 16 64
 
