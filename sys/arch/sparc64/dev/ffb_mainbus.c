@@ -1,4 +1,4 @@
-/*	$NetBSD: ffb_mainbus.c,v 1.3 2004/03/19 21:10:31 petrov Exp $	*/
+/*	$NetBSD: ffb_mainbus.c,v 1.4 2004/05/21 21:45:04 heas Exp $	*/
 /*	$OpenBSD: creator_mainbus.c,v 1.4 2002/07/26 16:39:04 jason Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffb_mainbus.c,v 1.3 2004/03/19 21:10:31 petrov Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffb_mainbus.c,v 1.4 2004/05/21 21:45:04 heas Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -104,7 +104,14 @@ ffb_mainbus_attach(parent, self, aux)
 	if (bus_space_map(sc->sc_bt, ma->ma_reg[FFB_REG_FBC].ur_paddr,
 	    ma->ma_reg[FFB_REG_FBC].ur_len, 0, &sc->sc_fbc_h)) {
 		printf(": failed to map fbc\n");
-		goto fail;
+		goto unmap_dfb24;
+	}
+
+	if (bus_space_map(sc->sc_bt, ma->ma_reg[FFB_REG_DAC].ur_paddr,
+	    ma->ma_reg[FFB_REG_DAC].ur_len, BUS_SPACE_MAP_LINEAR,
+	    &sc->sc_dac_h)) {
+		printf(": failed to map dac\n");
+		goto unmap_fbc;
 	}
 
 	for (i = 0; i < nregs; i++) {
@@ -123,14 +130,16 @@ ffb_mainbus_attach(parent, self, aux)
 
 	return;
 
-fail:
-#if 0
-	if (sc->sc_fbc_h != 0)
-		bus_space_unmap(sc->sc_bt, sc->sc_fbc_h,
-		    ma->ma_reg[FFB_REG_FBC].ur_len);
+#if notyet
+unmap_dac:
+	bus_space_unmap(sc->sc_bt, sc->sc_dac_h,
+		    ma->ma_reg[FFB_REG_DAC].ur_len);
 #endif
-/*	if (sc->sc_pixel_h != 0) */
-		bus_space_unmap(sc->sc_bt, sc->sc_pixel_h,
+unmap_fbc:
+	bus_space_unmap(sc->sc_bt, sc->sc_fbc_h,
+		    ma->ma_reg[FFB_REG_FBC].ur_len);
+unmap_dfb24:
+	bus_space_unmap(sc->sc_bt, sc->sc_pixel_h,
 		    ma->ma_reg[FFB_REG_DFB24].ur_len);
 fail1:
 	return;

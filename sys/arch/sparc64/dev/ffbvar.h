@@ -1,4 +1,4 @@
-/*	$NetBSD: ffbvar.h,v 1.1 2003/05/23 06:51:16 petrov Exp $	*/
+/*	$NetBSD: ffbvar.h,v 1.2 2004/05/21 21:45:04 heas Exp $	*/
 /*	$OpenBSD: creatorvar.h,v 1.6 2002/07/30 19:48:15 jason Exp $	*/
 
 /*
@@ -42,6 +42,7 @@ struct ffb_softc {
 	struct device sc_dv;
 	bus_space_tag_t sc_bt;
 	bus_space_handle_t sc_pixel_h;
+	bus_space_handle_t sc_dac_h;
 	bus_space_handle_t sc_fbc_h;
 	bus_addr_t sc_addrs[FFB_NREGS];
 	bus_size_t sc_sizes[FFB_NREGS];
@@ -55,6 +56,10 @@ struct ffb_softc {
 	int32_t sc_fifo_cache, sc_fg_cache;
 };
 
+#define	DAC_WRITE(sc,r,v) \
+    bus_space_write_4((sc)->sc_bt, (sc)->sc_dac_h, (r), (v))
+#define	DAC_READ(sc,r) \
+    bus_space_read_4((sc)->sc_bt, (sc)->sc_dac_h, (r))
 #define	FBC_WRITE(sc,r,v) \
     bus_space_write_4((sc)->sc_bt, (sc)->sc_fbc_h, (r), (v))
 #define	FBC_READ(sc,r) \

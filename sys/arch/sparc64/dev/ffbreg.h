@@ -1,4 +1,4 @@
-/*	$NetBSD: ffbreg.h,v 1.2 2004/05/20 01:50:43 heas Exp $	*/
+/*	$NetBSD: ffbreg.h,v 1.3 2004/05/21 21:45:04 heas Exp $	*/
 /*	$OpenBSD: creatorreg.h,v 1.5 2002/07/29 06:21:45 jason Exp $	*/
 
 /*
@@ -57,6 +57,20 @@
 #define	FFB_DAC_VALUE		0x4
 #define	FFB_DAC_TYPE2		0x8
 #define	FFB_DAC_VALUE2		0xc
+
+/* DAC "TYPE" commands */
+#define	FFB_DAC_SCMAP		0x2000	/* set (load) cmap */
+#define	FFB_DAC_GSBLANK		0x6000	/* get/set blanking */
+#define	FFB_DAC_GVERS		0x8000	/* get DAC version */
+
+#define	FFB_DAC_BLANK_OFF		0x1
+#define	FFB_DAC_BLANK_HSYNC_DISABLE	0x4
+#define	FFB_DAC_BLANK_VSYNC_DISABLE	0x8
+
+/* DAC "TYPE2" commands */
+#define	FFB_DAC_CURSENAB	0x100	/* cursor enable */
+#define	FFB_DAC_CURSECMAP	0x102	/* set cursor colormap */
+#define	FFB_DAC_CURSEPOS	0x104	/* set cursor position */
 
 #define	FFB_FBC_ALPHA		0x00c
 #define	FFB_FBC_RED		0x010
