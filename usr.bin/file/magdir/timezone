@@ -10,3 +10,8 @@
 0	string	\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\4\0	timezone data
 0	string	\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\5\0	timezone data
 0	string	\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\6\0	timezone data
+#------------------------------------------------------------------------------
+# Starting with tzcode1997h, a new magic value is used for data files
+# compiled with zic(8).
+# From Klaus Klein <kleink@NetBSD.ORG>, July 9, 1998.
+0	string	TZif	timezone data
