@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.48 2001/04/22 18:21:49 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.49 2001/04/23 10:13:02 sato Exp $	*/
 
 /*-
  * Copyright (c) 1999 Shin Takemura, All rights reserved.
@@ -72,11 +72,13 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.48 2001/04/22 18:21:49 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.49 2001/04/23 10:13:02 sato Exp $");
 
 /* from: Utah Hdr: machdep.c 1.63 91/04/24 */
 #include "opt_vr41xx.h"
 #include "opt_tx39xx.h"
+#include "opt_boot_standalone.h"
+#include "opt_spec_platform.h"
 #include "biconsdev.h"
 #include "fs_mfs.h"
 #include "opt_ddb.h"
@@ -287,6 +289,14 @@ mach_init(argc, argv, bi)
 		memset(edata, 0, kernend - edata);
 	}
 
+#if defined(BOOT_STANDALONE)
+#if !defined (SPEC_PLATFORM) || SPEC_PLATFORM == 1
+#error specify SPEC_PLATFORM=platid_mask_MACH_xxx_yyy in BOOT_STANDALONE case.
+#error see platid_mask.c for platid_mask_MACH_xxx_yyy.
+#else
+	memcpy(platid, &SPEC_PLATFORM, sizeof(platid));
+#endif
+#endif /* defined(BOOT_STANDALONE) && defined(SPEC_PLATFORM) */
 	/*
 	 *  Arguments are set up by boot loader.
 	 */
