@@ -1,4 +1,4 @@
-/*	$NetBSD: smbfs_vfsops.c,v 1.8 2003/02/18 10:27:17 jdolecek Exp $	*/
+/*	$NetBSD: smbfs_vfsops.c,v 1.9 2003/02/18 19:40:36 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2000-2001, Boris Popov
@@ -202,7 +202,9 @@ bad:
         if (smp) {
 		if (smp->sm_hash)
 			free(smp->sm_hash, M_SMBFSHASH);
-#ifndef __NetBSD__
+#ifdef __NetBSD__
+		lockmgr(&smp->sm_hashlock, LK_DRAIN, NULL);
+#else
 		lockdestroy(&smp->sm_hashlock);
 #endif
 		free(smp, M_SMBFSDATA);
@@ -224,17 +226,26 @@ smbfs_unmount(struct mount *mp, int mntflags, struct proc *p)
 	flags = 0;
 	if (mntflags & MNT_FORCE)
 		flags |= FORCECLOSE;
-	/* There is 1 extra root vnode reference from smbfs_mount(). */
-	error = vflush(mp, NULL, flags);
-	if (error)
+#ifdef QUOTA
+#endif
+	/* Drop the extra reference to root vnode. */
+	vrele(SMBTOV(smp->sm_root));
+
+	/* Flush all vnodes. */
+	if ((error = vflush(mp, NULLVP, flags)) != 0) {
+		vref(SMBTOV(smp->sm_root));
 		return error;
+	}
+
 	smb_makescred(&scred, p, p->p_ucred);
 	smb_share_put(smp->sm_share, &scred);
 	mp->mnt_data = NULL;
 
 	if (smp->sm_hash)
 		free(smp->sm_hash, M_SMBFSHASH);
-#ifndef __NetBSD__
+#ifdef __NetBSD__
+	lockmgr(&smp->sm_hashlock, LK_DRAIN, NULL);
+#else
 	lockdestroy(&smp->sm_hashlock);
 #endif
 	free(smp, M_SMBFSDATA);
@@ -257,10 +268,6 @@ smbfs_root(struct mount *mp, struct vnode **vpp)
 	struct smb_cred scred;
 	int error;
 
-	if (smp == NULL) {
-		SMBERROR("smp == NULL (bug in umount)\n");
-		return EINVAL;
-	}
 	if (smp->sm_root) {
 		*vpp = SMBTOV(smp->sm_root);
 		return vget(*vpp, LK_EXCLUSIVE | LK_RETRY);
