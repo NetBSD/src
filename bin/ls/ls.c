@@ -42,7 +42,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)ls.c	5.69 (Berkeley) 10/17/92";*/
-static char rcsid[] = "$Id: ls.c,v 1.9 1994/01/25 20:44:58 cgd Exp $";
+static char rcsid[] = "$Id: ls.c,v 1.10 1994/04/04 19:29:42 chopps Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -371,11 +371,7 @@ display(p, list)
 	DISPLAY d;
 	NAMES *np;
 	u_long btotal, maxblock, maxinode, maxlen, maxnlink;
-#ifdef notyet
-	u_quad_t maxsize;
-#else
 	off_t maxsize;
-#endif
 	int bcfile, flen, glen, ulen, maxflags, maxgroup, maxuser;
 	int entries, needstats;
 	char *user, *group, *flags, buf[20];	/* 32 bits == 10 digits */
@@ -491,11 +487,7 @@ display(p, list)
 		d.s_inode = strlen(buf);
 		(void)snprintf(buf, sizeof(buf), "%lu", maxnlink);
 		d.s_nlink = strlen(buf);
-#ifdef notyet
 		(void)snprintf(buf, sizeof(buf), "%qu", maxsize);
-#else
-		(void)snprintf(buf, sizeof(buf), "%lu", maxsize);
-#endif
 		d.s_size = strlen(buf);
 		d.s_user = maxuser;
 	}
