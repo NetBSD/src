@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.65 1997/04/28 02:51:43 mycroft Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.66 1997/04/28 04:49:28 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -786,7 +786,8 @@ issignal(p)
 			 * stopped until released by the debugger.
 			 */
 			p->p_xstat = signum;
-			psignal(p->p_pptr, SIGCHLD);
+			if ((p->p_flag & P_FSTRACE) == 0)
+				psignal(p->p_pptr, SIGCHLD);
 			do {
 				stop(p);
 				mi_switch();
