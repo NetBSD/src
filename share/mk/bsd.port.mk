@@ -1,7 +1,7 @@
 #-*- mode: Fundamental; tab-width: 4; -*-
 # ex:ts=4
 #
-#	$NetBSD: bsd.port.mk,v 1.47 1998/02/20 21:01:09 hubertf Exp $
+#	$NetBSD: bsd.port.mk,v 1.48 1998/02/20 21:31:20 hubertf Exp $
 #
 #	bsd.port.mk - 940820 Jordan K. Hubbard.
 #	This file is in the public domain.
@@ -1480,32 +1480,53 @@ distclean: pre-distclean clean
 
 # Prints out a list of files to fetch (useful to do a batch fetch)
 
+# are we called from bsd.port.subdir.mk (i.e. do we scan all dirs anyways)? XXX
+.ifdef(DIRPRFX)
+RECURSIVE_FETCH_LIST?=	NO
+.else
+RECURSIVE_FETCH_LIST?=	YES
+.endif
+
 .if !target(fetch-list)
 fetch-list:
-	@${MKDIR} ${_DISTDIR}
-	@(cd ${_DISTDIR}; \
-	 for file in ${DISTFILES}; do \
+	@${MAKE} fetch-list-recursive RECURSIVE_FETCH_LIST=${RECURSIVE_FETCH_LIST} | sort -u
+.endif # !target(fetch-list)
+
+.if !target(fetch-list-recursive)
+fetch-list-recursive:
+	@${MAKE} fetch-list-one-pkg
+.if ${RECURSIVE_FETCH_LIST} != "NO"
+	@for dir in `${ECHO} ${FETCH_DEPENDS} ${BUILD_DEPENDS} ${LIB_DEPENDS}  ${RUN_DEPENDS} | ${TR} '\040' '\012' | ${SED} -e 's/^[^:]*://' -e 's/:.*//' | sort -u` `${ECHO} ${DEPENDS} | ${TR} '\040' '\012' | ${SED} -e 's/:.*//' | sort -u`; do \
+		(cd $$dir; ${MAKE} fetch-list-recursive; ); \
+	done
+.endif # ${RECURSIVE_FETCH_LIST} != "NO"
+.endif # !target(fetch-list-recursive)
+
+.if !target(fetch-list-one-pkg)
+fetch-list-one-pkg:
+	@for file in ${DISTFILES}; do \
+		[ -z "${DIST_SUBDIR}" ] || ${ECHO} -n "${MKDIR} ${DIST_SUBDIR} && cd ${DIST_SUBDIR} && " ; \
 		if [ ! -f $$file -a ! -f `${BASENAME} $$file` ]; then \
-			for site in ${MASTER_SITES}; do \
-				${ECHO} -n ${FETCH_CMD} ${FETCH_BEFORE_ARGS} $${site}$${file} "${FETCH_AFTER_ARGS}" '||' ; \
-					break; \
+			${ECHO} -n "[ -f $$file -o -f `${BASENAME} $$file` ] || " ; \
+			for site in ${MASTER_SITES} ; do \
+				${ECHO} -n ${FETCH_CMD} ${FETCH_BEFORE_ARGS} $${site}$${file} "${FETCH_AFTER_ARGS}" '|| ' ; \
+			done; \
+			${ECHO} "echo $${file} not fetched" ; \
+		fi \
+	done
+.if defined(PATCHFILES)
+	@(cd ${_DISTDIR}; \
+	for file in ${PATCHFILES}; do \
+		if [ ! -f $$file -a ! -f `${BASENAME} $$file` ]; then \
+			${ECHO} -n "[ -f $$file -o -f `${BASENAME} $$file` ] || " ; \
+			for site in ${PATCH_SITES}; do \
+				${ECHO} -n ${FETCH_CMD} ${FETCH_BEFORE_ARGS} $${site}$${file} "${FETCH_AFTER_ARGS}" '|| ' ; \
 			done; \
 			${ECHO} "echo $${file} not fetched" ; \
 		fi \
 	done)
-.if defined(PATCHFILES)
-	@(cd ${_DISTDIR}; \
-	 for file in ${PATCHFILES}; do \
-		if [ ! -f $$file -a ! -f `${BASENAME} $$file` ]; then \
-			for site in ${PATCH_SITES}; do \
-				${ECHO} -n ${FETCH_CMD} ${FETCH_BEFORE_ARGS} $${site}$${file} "${FETCH_AFTER_ARGS}" '||' ; \
-					break; \
-			done; \
-			${ECHO} "echo $${file} not fetched" ; \
-		fi \
-	 done)
-.endif
-.endif
+.endif # defined(PATCHFILES)
+.endif # !target(fetch-list-one-pkg)
 
 # Checksumming utilities
 
