@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vr.c,v 1.9 1999/02/05 01:10:30 thorpej Exp $	*/
+/*	$NetBSD: if_vr.c,v 1.10 1999/02/05 01:17:24 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -93,6 +93,8 @@
 #include <machine/bus.h>
 #include <machine/intr.h>
 
+#include <dev/mii/mii.h>
+
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcidevs.h>
@@ -150,14 +152,6 @@ struct vr_mii_frame {
 	u_int8_t		mii_turnaround;
 	u_int16_t		mii_data;
 };
-
-/*
- * MII constants
- */
-#define	VR_MII_STARTDELIM	0x01
-#define	VR_MII_READOP		0x02
-#define	VR_MII_WRITEOP		0x01
-#define	VR_MII_TURNAROUND	0x02
 
 #define	VR_FLAG_FORCEDELAY	1
 #define	VR_FLAG_SCHEDDELAY	2
@@ -363,8 +357,8 @@ static int vr_mii_readreg(sc, frame)
 	/*
 	 * Set up frame for RX.
 	 */
-	frame->mii_stdelim = VR_MII_STARTDELIM;
-	frame->mii_opcode = VR_MII_READOP;
+	frame->mii_stdelim = MII_COMMAND_START;
+	frame->mii_opcode = MII_COMMAND_READ;
 	frame->mii_turnaround = 0;
 	frame->mii_data = 0;
 
@@ -460,9 +454,9 @@ static int vr_mii_writereg(sc, frame)
 	 * Set up frame for TX.
 	 */
 
-	frame->mii_stdelim = VR_MII_STARTDELIM;
-	frame->mii_opcode = VR_MII_WRITEOP;
-	frame->mii_turnaround = VR_MII_TURNAROUND;
+	frame->mii_stdelim = MII_COMMAND_START;
+	frame->mii_opcode = MII_COMMAND_WRITE;
+	frame->mii_turnaround = MII_COMMAND_ACK;
 
 	/*
 	 * Turn on data output.
