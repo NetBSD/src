@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_alloc.c,v 1.47.2.2 2001/06/29 03:56:39 perseant Exp $	*/
+/*	$NetBSD: lfs_alloc.c,v 1.47.2.3 2001/06/29 06:02:58 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -478,7 +478,8 @@ lfs_vfree(void *v)
 				 int a_mode;
 				 } */ *ap = v;
 	SEGUSE *sup;
-	struct buf *bp;
+	CLEANERINFO *cip;
+	struct buf *cbp, *bp;
 	struct ifile *ifp;
 	struct inode *ip;
 	struct vnode *vp;
@@ -524,8 +525,8 @@ lfs_vfree(void *v)
 	old_iaddr = ifp->if_daddr;
 	ifp->if_daddr = LFS_UNUSED_DADDR;
 	++ifp->if_version;
-	ifp->if_nextfree = fs->lfs_free;
-	fs->lfs_free = ino;
+	LFS_GET_FREEINUM(fs, cip, cbp, &(ifp->if_nextfree));
+	LFS_PUT_FREEINUM(fs, cip, cbp, ino);
 	(void) VOP_BWRITE(bp); /* Ifile */
 #ifdef DIAGNOSTIC
 	if(fs->lfs_free == LFS_UNUSED_INUM) {
