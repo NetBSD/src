@@ -1,4 +1,4 @@
-/*	$NetBSD: res_query.c,v 1.8 1995/02/25 06:20:59 cgd Exp $	*/
+/*	$NetBSD: res_query.c,v 1.9 1995/02/25 06:58:58 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -58,7 +58,7 @@
 static char sccsid[] = "@(#)res_query.c	8.1 (Berkeley) 6/4/93";
 static char rcsid[] = "$Id: res_query.c,v 1.1 1993/06/01 09:42:14 vixie Exp vixie ";
 #else
-static char rcsid[] = "$NetBSD: res_query.c,v 1.8 1995/02/25 06:20:59 cgd Exp $";
+static char rcsid[] = "$NetBSD: res_query.c,v 1.9 1995/02/25 06:58:58 cgd Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -183,7 +183,7 @@ res_search(name, class, type, answer, anslen)
 	errno = 0;
 	h_errno = HOST_NOT_FOUND;	/* default, if we never query */
 	dots = 0;
-	for (cp = name, n = 0; *cp; cp++)
+	for (cp = (char *)name; *cp; cp++) {
 		if (*cp == '.')
 			dots++;
 	}
