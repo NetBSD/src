@@ -1,4 +1,4 @@
-.\"	$NetBSD: postinstall,v 1.12 2000/10/10 12:10:08 lukem Exp $
+.\"	$NetBSD: postinstall,v 1.13 2000/10/11 12:59:22 simonb Exp $
 .\"
 .\" Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -72,9 +72,9 @@ More complete documentation can be found in
 .Pp
 If your
 .Pa /usr No directory is on a separate partition
-and you do not know how to use 'ed' or 'ex', you will have to mount your
+and you do not know how to use 'ed', you will have to mount your
 .Pa /usr
-partition to gain access to 'vi'. Do the following:
+partition to gain access to 'ex' or 'vi'. Do the following:
 .ie r_pmax \{\
 .D1 Ic "mount /usr
 .D1 Ic "export TERM=termtype
