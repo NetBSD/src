@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.594 2003/12/05 04:28:47 grant Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.595 2003/12/06 11:20:55 jdolecek Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.596 2003/12/05 04:28:04 grant Exp 
+ *	NetBSD: pcidevs,v 1.597 2003/12/06 11:19:17 jdolecek Exp 
  */
 
 /*
@@ -1957,6 +1957,8 @@
 #define	PCI_PRODUCT_NETGEAR_MA301	0x4100		/* MA301 PCI IEEE 802.11b */
 
 /* Netmos products */
+#define	PCI_PRODUCT_NETMOS_NM9805	0x9805		/* 1284 Printer port */
+#define	PCI_PRODUCT_NETMOS_NM9815	0x9815		/* Dual 1284 Printer port */
 #define	PCI_PRODUCT_NETMOS_NM9835	0x9835		/* Dual UART and 1284 Printer port */
 #define	PCI_PRODUCT_NETMOS_NM9845	0x9845		/* Quad UART and 1284 Printer port */
 
