@@ -1,11 +1,11 @@
-/*	$NetBSD: umap_subr.c,v 1.16 2000/03/13 23:52:41 soren Exp $	*/
+/*	$NetBSD: umap_subr.c,v 1.17 2001/06/07 13:44:49 wiz Exp $	*/
 
 /*
  * Copyright (c) 1999 National Aeronautics & Space Administration
  * All rights reserved.
  *
  * This software was written by William Studenmund of the
- * Numerical Aerospace Similation Facility, NASA Ames Research Center.
+ * Numerical Aerospace Simulation Facility, NASA Ames Research Center.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
