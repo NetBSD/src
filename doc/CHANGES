@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.17 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.18 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -30,7 +30,7 @@ Changes from NetBSD 1.6 to NetBSD 1.7:
 		[itojun 20020609]
 	netinet: path MTU discovery is turned on by default (currently used
 		for TCP only).  [itojun 20020613]
-	amd(8): add new mount option ""xlatecookie" to support NFS v3 mounts
+	amd(8): add new mount option "xlatecookie" to support NFS v3 mounts
 		with cookie translation.  [tron 20020614]
 	factor(6): Use a Pollard Rho algorithm to factor arbitrary sized
 		numbers.  [simonb 20020615]
