@@ -44,7 +44,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1990, 1993\n\
 #if 0
 static char sccsid[] = "from: @(#)edquota.c	8.3 (Berkeley) 4/27/95";
 #else
-__RCSID("$NetBSD: edquota.c,v 1.15 1997/10/17 02:25:08 lukem Exp $");
+__RCSID("$NetBSD: edquota.c,v 1.16 1997/10/21 06:40:40 mrg Exp $");
 #endif
 #endif /* not lint */
 
@@ -732,6 +732,7 @@ hasquota(fs, type, qfnamep)
 		initname = 1;
 	}
 	strcpy(buf, fs->fs_mntops);
+	cp = NULL;
 	for (opt = strtok(buf, ","); opt; opt = strtok(NULL, ",")) {
 		if ((cp = strchr(opt, '=')) != NULL)
 			*cp++ = '\0';
