@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.105 2003/10/09 13:46:43 yamt Exp $	*/
+/*	$NetBSD: cpu.h,v 1.106 2003/10/10 06:27:15 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -54,7 +54,11 @@
 #include <sys/lock.h>			/* will also get LOCKDEBUG */
 #include <sys/sched.h>
 
+#ifdef _KERNEL
 #include <lib/libkern/libkern.h>	/* offsetof */
+#else
+#include <stddef.h>			/* offsetof */
+#endif
 
 struct intrsource;
 
