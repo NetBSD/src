@@ -1,4 +1,4 @@
-/*	$NetBSD: usbhid.c,v 1.1 1998/07/13 11:14:04 augustss Exp $	*/
+/*	$NetBSD: usbhid.c,v 1.2 1998/07/13 20:44:04 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -150,19 +150,15 @@ getdata(u_char *buf, int hpos, int hsize, int sign)
 	int i, size, s;
 
 	data = 0;
-/*printf("hpos=%d hsize=%d bytes=%d\n", hpos, hsize, (hsize+14)/8);*/
 	s = hpos/8; 
-	for (i = hpos; i < hpos+hsize; i += 8) {
-/*printf("data=%x i=%d buf[i/8]=%x %x ndata=%x\n",data, i, buf[i/8], buf[i/8] << (i/8)*8, data | buf[i/8] << (i/8)*8);*/
-		data |= buf[i / 8] << (i/8-s)*8;
-	}
+	for (i = hpos; i < hpos+hsize; i += 8)
+		data |= buf[i / 8] << ((i/8-s) * 8);
 	data >>= (hpos % 8);
 	data &= (1 << hsize) - 1;
 	size = 32 - hsize;
-	if (sign) {
+	if (sign)
 		/* Need to sign extend */
 		data = ((long)data << size) >> size;
-	}
 	return data;
 }
 
@@ -172,7 +168,6 @@ prdata(u_char *buf, struct hid_item *h)
 	u_long data;
 	int i, pos;
 
-/*for(i =0; i < 8; i++)printf(" %02x", buf[i]); */
 	pos = h->pos;
 	for (i = 0; i < h->report_count; i++) {
 		data = getdata(buf, pos, h->report_size, 
@@ -205,7 +200,6 @@ dumpdata(int f, u_char *buf, int len, int loop)
 			--sp;
 		if (h.kind != hid_input || (h.flags & HIO_CONST))
 			continue;
-		/*printf("pos=%d %d\n", h.pos, h.report_size);*/
 		h.next = hids;
 		h.collection = colls[sp];
 		hids = malloc(sizeof *hids);
@@ -224,10 +218,10 @@ dumpdata(int f, u_char *buf, int len, int loop)
 			err(1, "bad read %d != %d", r, dlen);
 		}
 		for (n = hids; n; n = n->next) {
-			printf("%s.%s.",
+			printf("%s:%s.",
 			       usage_page(HID_PAGE(n->collection)),
 			       usage_in_page(n->collection));
-			printf("%s.%s=",
+			printf("%s:%s=",
 			       usage_page(HID_PAGE(n->usage)),
 			       usage_in_page(n->usage));
 			prdata(dbuf, n);
