@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap3.h,v 1.20 1997/02/18 21:21:11 gwr Exp $	*/
+/*	$NetBSD: pmap3.h,v 1.21 1997/02/28 19:57:35 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -82,6 +82,9 @@ extern segsz_t pmap_wired_pages(pmap_t);
 
 /* We use the PA plus some low bits for device mmap. */
 #define pmap_phys_address(addr) 	(addr)
+
+/* Our memory is contiguous (or nearly so). */
+#define pmap_page_index(pa) (atop(pa))
 
 /*
  * Since PTEs also contain type bits, we have to have some way
