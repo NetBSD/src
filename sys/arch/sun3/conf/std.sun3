@@ -1,4 +1,4 @@
-#	$NetBSD: std.sun3,v 1.19 1996/11/19 21:04:50 gwr Exp $
+#	$NetBSD: std.sun3,v 1.20 1997/01/18 19:09:15 gwr Exp $
 
 # Standard information for sun3's.
 machine	sun3 m68k
@@ -29,10 +29,6 @@ intreg0 at obio0 addr 0x0A0000
 options		EXEC_AOUT
 options		EXEC_SCRIPT
 options 	SWAPPAGER, VNODEPAGER, DEVPAGER
-
-# XXX - Still needed?
-options 	NEWCONFIG
-options 	MACHINE_NONCONTIG
 
 # All Sun3 machines with an "le" (3/50, 3/60) should be
 # presumed to have the old, buggy LANCE chip. (Rev. C)
