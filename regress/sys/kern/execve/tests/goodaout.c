@@ -1,3 +1,5 @@
+/*	$NetBSD: goodaout.c,v 1.3 1995/04/20 22:44:20 cgd Exp $	*/
+
 /*
  * Copyright (c) 1993 Christopher G. Demetriou
  * All rights reserved.
@@ -26,8 +28,6 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- *	$Id: goodaout.c,v 1.2 1994/01/29 01:54:07 jtc Exp $
  */
 
 #include <stdio.h>

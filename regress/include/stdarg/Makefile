@@ -1,4 +1,4 @@
-#	$Id: Makefile,v 1.1 1994/12/28 22:12:36 cgd Exp $
+#	$NetBSD: Makefile,v 1.2 1995/04/20 22:38:00 cgd Exp $
 
 PROG=	stdargtest
 SRCS=	argtest.c

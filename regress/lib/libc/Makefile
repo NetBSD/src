@@ -1,4 +1,4 @@
-#	$Id: Makefile,v 1.4 1995/04/18 19:24:21 jtc Exp $
+#	$NetBSD: Makefile,v 1.5 1995/04/20 22:38:32 cgd Exp $
 
 SUBDIR+= _setjmp db regex setjmp sigsetjmp
 .if (${MACHINE_ARCH} != "vax")

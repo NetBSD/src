@@ -1,4 +1,4 @@
-#	$Id: Makefile,v 1.4 1995/01/06 04:57:56 cgd Exp $
+#	$NetBSD: Makefile,v 1.5 1995/04/20 22:37:33 cgd Exp $
 
 # missing files: stdarg varargs
 SUBDIR+= bitstring

@@ -1,6 +1,4 @@
-#ifndef lint
-static char rcsid[] = "$Id: bitstring_test.c,v 1.2 1993/08/02 17:50:58 mycroft Exp $";
-#endif /* not lint */
+/*	$NetBSD: bitstring_test.c,v 1.3 1995/04/20 22:37:55 cgd Exp $	*/
 
 /*
  * this is a simple program to test bitstring.h

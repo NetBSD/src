@@ -1,5 +1,5 @@
-#	from: @(#)Makefile	8.1 (Berkeley) 6/4/93
-#	$Id: Makefile,v 1.9 1994/08/18 00:38:04 cgd Exp $
+#	$NetBSD: Makefile,v 1.10 1995/04/20 22:39:11 cgd Exp $
+#	@(#)Makefile	8.1 (Berkeley) 6/4/93
 
 PROG=	dbtest
 

@@ -1,4 +1,4 @@
-#	$Id: Makefile,v 1.1 1995/04/18 19:24:27 jtc Exp $
+#	$NetBSD: Makefile,v 1.2 1995/04/20 22:39:34 cgd Exp $
 
 PROG=	round
 SRCS=	round.c
