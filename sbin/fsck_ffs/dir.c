@@ -1,4 +1,4 @@
-/*	$NetBSD: dir.c,v 1.39 2004/01/10 14:28:37 mrg Exp $	*/
+/*	$NetBSD: dir.c,v 1.40 2004/07/20 15:05:32 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)dir.c	8.8 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: dir.c,v 1.39 2004/01/10 14:28:37 mrg Exp $");
+__RCSID("$NetBSD: dir.c,v 1.40 2004/07/20 15:05:32 mycroft Exp $");
 #endif
 #endif /* not lint */
 
@@ -98,7 +98,7 @@ propagate(inumber)
 		else if (inp->i_sibling)
 			inp = inp->i_sibling;
 		else
-			inp = inp->i_parentp;
+			inp = getinoinfo(inp->i_parent);
 	}
 
 	for (;;) {
@@ -111,7 +111,7 @@ propagate(inumber)
 		else if (inp->i_sibling)
 			inp = inp->i_sibling;
 		else
-			inp = inp->i_parentp;
+			inp = getinoinfo(inp->i_parent);
 	}
 }
 
@@ -124,7 +124,6 @@ reparent(inumber, parent)
 	inp = getinoinfo(inumber);
 	inp->i_parent = inp->i_dotdot = parent;
 	pinp = getinoinfo(parent);
-	inp->i_parentp = pinp;
 	inp->i_sibling = pinp->i_child;
 	pinp->i_child = inp;
 	propagate(inumber);
