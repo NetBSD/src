@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.652 2004/01/29 02:00:02 tsarna Exp $
+#	$NetBSD: files,v 1.653 2004/02/03 19:46:18 tsarna Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -456,7 +456,7 @@ file	dev/ic/uha.c			uha
 
 # Aironet PC4500/PC4800
 #
-device	an: arp, ether, ifnet
+device	an: arp, wlan, ifnet
 file	dev/ic/an.c			an
 
 # AMD 79c930-based 802.11 cards
