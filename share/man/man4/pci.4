@@ -1,4 +1,4 @@
-.\"	$NetBSD: pci.4,v 1.25 2000/02/14 00:01:35 augustss Exp $
+.\"	$NetBSD: pci.4,v 1.26 2000/03/20 18:16:16 ad Exp $
 .\"
 .\" Copyright (c) 1997 Jason R. Thorpe.  All rights reserved.
 .\" Copyright (c) 1997 Jonathan Stone
@@ -173,6 +173,8 @@ S3 SonicVibes sound device.
 .Pp
 .Ss Miscellaneous devices
 .Bl -tag -width speaker -offset indent
+.It cac
+Compaq array controller.
 .It cbb
 .Tn PCI
 Yenta compatible
@@ -206,6 +208,7 @@ USB UHCI host controller
 .Xr intro 4 ,
 .Xr ahc 4 ,
 .Xr bha 4 ,
+.Xr cac 4 ,
 .Xr clcs 4 ,
 .Xr cy 4 ,
 .Xr de 4 ,
