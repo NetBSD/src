@@ -1,4 +1,4 @@
-/*	$NetBSD: sbdspvar.h,v 1.26.2.2 1997/08/27 23:31:57 thorpej Exp $	*/
+/*	$NetBSD: sbdspvar.h,v 1.26.2.3 1997/09/01 20:26:48 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -102,6 +102,8 @@ struct sbdsp_softc {
 	struct	device *sc_isa;		/* pointer to ISA parent */
 
 	u_short	sc_open;		/* reference count of open calls */
+	int	sc_openflags;		/* flags used on open */
+	u_char	sc_fullduplex;		/* can do full duplex */
 
 	u_char	gain[SB_NDEVS][2];	/* kept in input levels */
 #define SB_LEFT 0
@@ -115,30 +117,25 @@ struct sbdsp_softc {
 
 	u_int	spkr_state;		/* non-null is on */
 	
-	u_int	sc_irate;		/* Sample rate for input */
-	u_int	sc_orate;		/* ...and output */
-	u_char	sc_itc;
-	u_char	sc_otc;
-
-	struct	sbmode *sc_imodep;
-	struct	sbmode *sc_omodep;
-	u_char	sc_ibmode;
-	u_char	sc_obmode;
+	struct sbdsp_state {
+		u_int	rate;		/* Sample rate */
+		u_char	tc;		/* Time constant */
+		struct	sbmode *modep;
+		u_char	bmode;
+		int	dmachan;	/* DMA channel */
+		u_char	run;
+#define SB_NOTRUNNING 0		/* Not running, not initialized */
+#define SB_DMARUNNING 1		/* DMA has been initialized */
+#define SB_PCMRUNNING 2		/* DMA&PCM running (looping mode) */
+#define SB_RUNNING 3		/* non-looping mode */
+	} sc_i, sc_o;			/* Input and output state */
 
 	u_long	sc_interrupts;		/* number of interrupts taken */
-	void	(*sc_intr)(void*);	/* dma completion intr handler */
+	void	(*sc_intr8)(void*);	/* dma completion intr handler */
+	void	*sc_arg8;		/* arg for sc_intr8() */
+	void	(*sc_intr16)(void*);	/* dma completion intr handler */
+	void	*sc_arg16;		/* arg for sc_intr16() */
 	void	(*sc_mintr)(void*, int);/* midi input intr handler */
-	void	*sc_arg;		/* arg for sc_intr() */
-
-	int	dmaflags;
-	caddr_t	dmaaddr;
-	vm_size_t	dmacnt;
-	int	dmachan;		/* active DMA channel */
-
-	int	sc_dmadir;		/* DMA direction */
-#define	SB_DMA_NONE	0
-#define	SB_DMA_IN	1
-#define	SB_DMA_OUT	2
 
 	u_int	sc_mixer_model;
 #define SBM_NONE	0
@@ -196,6 +193,7 @@ int	sbdsp_get_avail_in_ports __P((void *));
 int	sbdsp_get_avail_out_ports __P((void *));
 int	sbdsp_speaker_ctl __P((void *, int));
 
+int	sbdsp_commit __P((void *));
 int	sbdsp_dma_init_input __P((void *, void *, int));
 int	sbdsp_dma_init_output __P((void *, void *, int));
 int	sbdsp_dma_output __P((void *, void *, int, void (*)(void *), void*));
