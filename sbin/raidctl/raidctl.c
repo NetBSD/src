@@ -1,3 +1,4 @@
+/*      $NetBSD: raidctl.c,v 1.4 1999/02/04 14:50:31 oster Exp $   */
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.

@@ -1,3 +1,4 @@
+/*      $NetBSD: rf_configure.c,v 1.5 1999/02/04 14:50:31 oster Exp $   */
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
