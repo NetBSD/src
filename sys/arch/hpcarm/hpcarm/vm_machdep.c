@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.6 2001/06/29 02:40:28 toshii Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.7 2001/09/03 19:38:14 matt Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -276,11 +276,12 @@ pagemove(from, to, size)
 	register pt_entry_t *fpte, *tpte;
 
 	if (size % NBPG)
-		panic("pagemove: size=%08x", size);
+		panic("pagemove: size=%08lx", (u_long) size);
 
 #ifdef PMAP_DEBUG
 	if (pmap_debug_level >= 0)
-		printf("pagemove: V%p to %p size %08x\n", from, to, size);
+		printf("pagemove: V%p to %p size %08lx\n",
+		    from, to, (u_long) size);
 #endif	/* PMAP_DEBUG */
 
 	fpte = vtopte(from);
