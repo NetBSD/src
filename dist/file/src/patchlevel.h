@@ -1,13 +1,29 @@
-/*	$NetBSD: patchlevel.h,v 1.1.1.1 2003/03/25 22:30:20 pooka Exp $	*/
+/*	$NetBSD: patchlevel.h,v 1.1.1.2 2003/05/25 21:28:08 pooka Exp $	*/
 
 #define	FILE_VERSION_MAJOR	4
-#define	patchlevel		0
+#define	patchlevel		3
 
 /*
  * Patchlevel file for Ian Darwin's MAGIC command.
- * Id: patchlevel.h,v 1.44 2003/03/23 22:23:31 christos Exp
+ * Id: patchlevel.h,v 1.47 2003/05/23 21:38:21 christos Exp
  *
  * Log: patchlevel.h,v
+ * Revision 1.47  2003/05/23 21:38:21  christos
+ * welcome to 4.03
+ *
+ * Revision 1.46  2003/04/02 18:57:43  christos
+ * prepare for 4.02
+ *
+ * Revision 1.45  2003/03/26 15:37:25  christos
+ * - Pass lint
+ * - make NULL in magic_file mean stdin
+ * - Fix "-" argument to file to pass NULL to magic_file
+ * - avoid pointer casts by using memcpy
+ * - rename magic_buf -> magic_buffer
+ * - keep only the first error
+ * - manual page: new sentence, new line
+ * - fix typo in api function (magic_buf -> magic_buffer)
+ *
  * Revision 1.44  2003/03/23 22:23:31  christos
  * finish librarification.
  *
