@@ -1,5 +1,5 @@
-.\" Copyright (c) 1985, 1990, 1993
-.\"	The Regents of the University of California.  All rights reserved.
+.\" Copyright (c) 1983, 1990 The Regents of the University of California.
+.\" All rights reserved.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
 .\" modification, are permitted provided that the following conditions
@@ -29,29 +29,43 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"     @(#)newaliases.1	8.1 (Berkeley) 6/7/93
+.\"	@(#)rmail.8	6.10 (Berkeley) 4/29/93
 .\"
-.Dd June 7, 1993
-.Dt NEWALIASES 1
-.Os BSD 4
+.Dd April 29, 1993
+.Dt RMAIL 8
+.Os BSD 4.2
 .Sh NAME
-.Nm newaliases
-.Nd rebuild the data base for the mail aliases file
+.Nm rmail
+.Nd handle remote mail received via uucp
 .Sh SYNOPSIS
-.Nm newaliases
+.Nm rmail
+.Ar user ...
 .Sh DESCRIPTION
-.Nm Newaliases
-rebuilds the random access data base for the mail aliases file
-.Pa /etc/aliases .
-It must be run each time
-.Pa /etc/aliases
-is changed in order
-for the change to take effect.
+.Nm Rmail
+interprets incoming mail received via
+.Xr uucp 1 ,
+collapsing ``From'' lines in the form generated
+by
+.Xr mail.local 8
+into a single line of the form ``return-path!sender'',
+and passing the processed mail on to
+.Xr sendmail  8  .
+.Pp
+.Nm Rmail
+is explicitly designed for use with
+.Xr uucp
+and
+.Xr sendmail  .
 .Sh SEE ALSO
-.\" .Xr aliases 5 ,
+.Xr uucp 1 ,
+.Xr mail.local 8 ,
 .Xr sendmail 8
 .Sh HISTORY
 The
-.Nm newaliases
-command appeared in
-.Bx 4.0 .
+.Nm rmail
+program appeared in
+.Bx 4.2 .
+.Sh BUGS
+.Nm Rmail
+should not reside in
+.Pa /bin .
