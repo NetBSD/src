@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.221 2003/06/29 22:31:17 fvdl Exp $	*/
+/*	$NetBSD: init_main.c,v 1.222 2003/07/30 18:45:32 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1995 Christopher G. Demetriou.  All rights reserved.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.221 2003/06/29 22:31:17 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.222 2003/07/30 18:45:32 jonathan Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfsserver.h"
@@ -54,6 +54,7 @@ __KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.221 2003/06/29 22:31:17 fvdl Exp $")
 #include "opt_systrace.h"
 #include "opt_posix.h"
 
+#include "opencrypto.h"
 #include "rnd.h"
 
 #include <sys/param.h>
@@ -101,6 +102,9 @@ __KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.221 2003/06/29 22:31:17 fvdl Exp $")
 #include <sys/domain.h>
 #include <sys/mbuf.h>
 #include <sys/namei.h>
+#if NOPENCRYPTO > 0
+#include <opencrypto/cryptodev.h>	/* XXX really  the framework */
+#endif
 #if NRND > 0
 #include <sys/rnd.h>
 #endif
@@ -243,7 +247,10 @@ main(void)
 #if NRND > 0
 	rnd_init();		/* initialize RNG */
 #endif
-
+#if NOPENCRYPTO > 0
+	/* Initialize crypto subsystem before configuring crypto hardware. */
+	(void)crypto_init();
+#endif
 	/* Initialize the sysctl subsystem. */
 	sysctl_init();
 
