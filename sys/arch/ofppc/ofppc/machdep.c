@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.5 1997/03/26 22:43:03 gwr Exp $	*/
+/*	$NetBSD: machdep.c,v 1.6 1997/03/27 21:01:48 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -390,11 +390,8 @@ cpu_startup()
 				 VM_PHYS_SIZE, TRUE);
 	
 	/*
-	 * Allocate mbuf pool.
+	 * Finally, allocate mbuf cluster submap.
 	 */
-	mclrefcnt = (char *)malloc(NMBCLUSTERS + CLBYTES/MCLBYTES,
-				   M_MBUF, M_NOWAIT);
-	bzero(mclrefcnt, NMBCLUSTERS + CLBYTES/MCLBYTES);
 	mb_map = kmem_suballoc(kernel_map, (vm_offset_t *)&mbutl, &maxaddr,
 			       VM_MBUF_SIZE, FALSE);
 	
