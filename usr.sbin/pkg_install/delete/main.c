@@ -1,11 +1,11 @@
-/*	$NetBSD: main.c,v 1.32 2004/11/02 00:38:23 erh Exp $	*/
+/*	$NetBSD: main.c,v 1.33 2004/11/03 14:01:04 wiz Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char *rcsid = "from FreeBSD Id: main.c,v 1.11 1997/10/08 07:46:48 charnier Exp";
 #else
-__RCSID("$NetBSD: main.c,v 1.32 2004/11/02 00:38:23 erh Exp $");
+__RCSID("$NetBSD: main.c,v 1.33 2004/11/03 14:01:04 wiz Exp $");
 #endif
 #endif
 
@@ -34,7 +34,7 @@ __RCSID("$NetBSD: main.c,v 1.32 2004/11/02 00:38:23 erh Exp $");
 #include "lib.h"
 #include "delete.h"
 
-static char Options[] = "DFK:NORVdfhnp:rv";
+static char Options[] = "DdFfhK:NnOp:RrVv";
 
 char   *Prefix = NULL;
 char   *ProgramPath = NULL;
@@ -50,7 +50,7 @@ lpkg_head_t pkgs;
 static void
 usage(void)
 {
-	fprintf(stderr, "usage: pkg_delete [-vVDdnFfOrR] [-p prefix] pkg-name ...\n");
+	fprintf(stderr, "usage: pkg_delete [-DdFfNnORrVv] [-K pkg_dbdir] [-p prefix] pkg-name ...\n");
 	exit(1);
 }
 
@@ -87,14 +87,14 @@ main(int argc, char **argv)
 			_pkgdb_setPKGDB_DIR(optarg);
 			break;
 
-		case 'n':
-			Fake = TRUE;
-			Verbose = TRUE;
-			break;
-
 		case 'N':
 			NoDeleteFiles = TRUE;
 			NoDeInstall = TRUE;
+			break;
+
+		case 'n':
+			Fake = TRUE;
+			Verbose = TRUE;
 			break;
 
 		case 'O':
