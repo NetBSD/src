@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.buildboot,v 1.3 2002/05/05 10:01:26 bjh21 Exp $
+#	$NetBSD: Makefile.buildboot,v 1.3.4.1 2002/06/21 15:01:16 lukem Exp $
 
 S?=	${.CURDIR}/../../../..
 
@@ -18,7 +18,7 @@ CLEANFILES+=	vers.c
 vers.c: ${.CURDIR}/version
 	sh ${S}/conf/newvers_stand.sh ${.CURDIR}/version ${MACHINE} ${NEWVERSWHAT}
 
-CPPFLAGS+=	-D_STANDALONE -DHIMEM=0x20000
+CPPFLAGS+=	-D_STANDALONE -DHIMEM=0x28000
 CPPFLAGS+=	-I. -I${.CURDIR}/../../.. -I${.CURDIR}/../../../..
 CPPFLAGS+=	-I${.CURDIR}/../lib
 CFLAGS=		-O2
@@ -51,7 +51,11 @@ LIBZ=		${ZLIB}
 ### find out what to use for libsa
 SA_AS=		library
 SAMISCMAKEFLAGS+= SA_INCLUDE_NET=no SA_USE_LOADFILE=yes SA_USE_CREAD=yes
-CPPFLAGS += -DLIBSA_SINGLE_FILESYSTEM=riscos -DHEAP_VARIABLE
+CPPFLAGS+=	-DLIBSA_NO_RAW_ACCESS \
+		-DLIBSA_SINGLE_FILESYSTEM=riscos \
+		-DLIBSA_NO_FS_WRITE \
+		-DLIBSA_USE_MEMCPY -DLIBSA_USE_MEMSET \
+		-DHEAP_VARIABLE
 .include "${S}/lib/libsa/Makefile.inc"
 LIBSA=		${SALIB}
 
