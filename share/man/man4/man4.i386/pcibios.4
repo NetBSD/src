@@ -1,0 +1,86 @@
+.\" $NetBSD: pcibios.4,v 1.1 2000/02/27 17:09:39 augustss Exp $
+.\"
+.\" Copyright (c) 1999 The NetBSD Foundation, Inc.
+.\" All rights reserved.
+.\"
+.\" This code is derived from software contributed to The NetBSD Foundation
+.\" by Lennart Augustsson.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\" 3. All advertising materials mentioning features or use of this software
+.\"    must display the following acknowledgement:
+.\"        This product includes software developed by the NetBSD
+.\"        Foundation, Inc. and its contributors.
+.\" 4. Neither the name of The NetBSD Foundation nor the names of its
+.\"    contributors may be used to endorse or promote products derived
+.\"    from this software without specific prior written permission.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+.\" ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+.\" TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+.\" PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+.\" BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+.\" CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+.\" SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+.\" INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+.\" CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+.\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+.\" POSSIBILITY OF SUCH DAMAGE.
+.\"
+.Dd February 27, 2000
+.Dt PCIBIOS 4
+.Os
+.Sh NAME
+.Nm pcibios
+.Nd introduction to PCI BIOS support
+.Sh SYNOPSIS
+.Cd "options   PCIBIOS"
+.Cd "#options  PCIBIOSVERBOSE"
+.Cd "options   PCIBIOS_INTR_FIXUP"
+.Cd "#options  PCIINTR_DEBUG"
+.Cd "options   PCIBIOS_BUS_FIXUP"
+.Pp
+.Sh INTRODUCTION
+.Nx
+provides support for setting up PCI controllers, bridges, and devices
+using information extracted from the BIOS.
+.Pp
+Ideally, the boot firmware of a machine (a.k.a. BIOS) should set
+up all PCI devices; assigning them I/O and memory addresses and
+interrupts.  Alas, this does not always happen, so there is some
+PC specific code that can do the initialization when
+.Nx
+boots.
+.Pp
+Options:
+.Bl -tag -width PCIBIOS_INTR_FIXUP -offset 3n -compact
+.It Nm PCIBIOS
+turn on the PCI BIOS support.
+.It Nm PCIBIOSVERBOSE
+make the setup procedure verbose.
+.It Nm PCIBIOS_INTR_FIXUP
+fixup PCI interrupt routing.
+.It Nm PCIINTR_DEBUG
+super-verbse PCI interrupt fixup.
+.It Nm PCIBIOS_BUS_FIXUP
+fixup PCI bus numbering; needed for many 
+.Xr cardbus 4
+bridges.
+.El
+.Sh BUGS
+The PCI BIOS support does not yet assign I/O and memory addresses.
+.Sh SEE ALSO
+.Xr cardbus 4 ,
+.Xr pci 4
+.Sh HISTORY
+The
+.Nm
+code appeared in
+.Nx 1.5 .
