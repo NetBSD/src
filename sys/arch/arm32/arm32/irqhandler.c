@@ -1,4 +1,4 @@
-/* $NetBSD: irqhandler.c,v 1.11 1996/11/06 18:18:41 mark Exp $ */
+/* $NetBSD: irqhandler.c,v 1.12 1996/12/27 02:01:02 mark Exp $ */
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -489,6 +489,9 @@ dosoftints()
 	softints = soft_interrupts & spl_mask;
 	if (softints == 0) return;
 
+	if (current_intr_depth > 1)
+		return;
+
 	s = splsoft();
 
 	/*
@@ -558,7 +561,7 @@ dosoftints()
 		}
 #endif
 #include "ppp.h"
-#ifdef NPPP
+#if NPPP > 0
 		if (netisr & (1 << NETISR_PPP)) {
 			atomic_clear_bit(&netisr, (1 << NETISR_PPP));
 			pppintr();
