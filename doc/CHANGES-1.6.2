@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.2,v 1.1.2.37 2003/06/19 00:23:23 grant Exp $
+#	$NetBSD: CHANGES-1.6.2,v 1.1.2.38 2003/06/19 00:35:15 grant Exp $
 
 A complete list of changes from NetBSD 1.6.1 to NetBSD 1.6.2:
 
@@ -535,3 +535,14 @@ usr.bin/du/du.c					1.21 (via patch)
 	where du shows up in ps as ". fts_open `%s'" (and shorter or longer
 	combinations of that depending in what argc was).
 	[simonb, ticket #1284]
+
+distrib/sets/lists/base/shl.mi			1.211 (via patch)
+lib/libc/arch/powerpc/net/Makefile.inc		1.2
+lib/libc/shlib_version				1.131 (via patch)
+
+	Build {h,n}to{n,h}{l,s}() into object code; addresses PR
+	port-macppc/21541 from Tsuyoshi MOMOSE.
+
+	Bump to libc.so.12.83.2, due to addition of {h,n}to{n,h}{l,s}() on
+	PowerPC.
+	[kleink, ticket #1288]
