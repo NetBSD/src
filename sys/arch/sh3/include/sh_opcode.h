@@ -1,9 +1,9 @@
-/* $NetBSD: sh_opcode.h,v 1.1 1999/09/13 10:31:22 itojun Exp $ */
+/* $NetBSD: sh_opcode.h,v 1.2 2000/08/02 11:32:43 msaitoh Exp $ */
 
 typedef union {
 	unsigned word;
 
-#if BYTE_ORDER == BIG_ENDIAN
+#if _BYTE_ORDER == BIG_ENDIAN
 	struct {
 		unsigned op: 16;
 	} oType;
@@ -73,7 +73,7 @@ typedef union {
 		unsigned i: 8;
 	} niType;
 #endif
-#if BYTE_ORDER == LITTLE_ENDIAN
+#if _BYTE_ORDER == LITTLE_ENDIAN
 struct {
 		unsigned op: 16;
 	} oType;

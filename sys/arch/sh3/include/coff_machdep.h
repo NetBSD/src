@@ -1,4 +1,4 @@
-/*	$NetBSD: coff_machdep.h,v 1.3 2000/06/04 16:24:01 mycroft Exp $	*/
+/*	$NetBSD: coff_machdep.h,v 1.4 2000/08/02 11:32:41 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Scott Bartram
@@ -51,14 +51,14 @@
 #define COFF_SEGMENT_ALIGNMENT(fp, ap) \
     (((fp)->f_flags & COFF_F_EXEC) == 0 ? 4 : 16)
 
-#ifndef BYTE_ORDER
-#error Define BYTE_ORDER!
+#ifndef _BYTE_ORDER
+#error Define _BYTE_ORDER!
 #endif
 
-#if BYTE_ORDER == BIG_ENDIAN
+#if _BYTE_ORDER == BIG_ENDIAN
 #define COFF_BADMAG(ex) ((ex)->f_magic != COFF_MAGIC_SH3_BIG)
 #endif
-#if BYTE_ORDER == LITTLE_ENDIAN
+#if _BYTE_ORDER == LITTLE_ENDIAN
 #define COFF_BADMAG(ex) ((ex)->f_magic != COFF_MAGIC_SH3_LITTLE)
 #endif
 
