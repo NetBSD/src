@@ -1,4 +1,4 @@
-/*	$NetBSD: obio.c,v 1.5 2002/02/08 01:41:48 briggs Exp $	*/
+/*	$NetBSD: obio.c,v 1.6 2002/02/08 02:30:12 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -123,21 +123,30 @@ obio_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct obio_attach_args oba;
 	int i;
-	uint8_t board_rev, cpld_rev, backplane;
 
 	obio_found = 1;
 
+#if defined(IOP310_TEAMASA_NPWR)
+	/*
+	 * These boards don't have revision/backplane detect registers.
+	 * Just ignore it.
+	 */
+	printf("\n");
+#else /* Default to stock IQ80310 */
+    {
 	/*
 	 * Yes, we're using knowledge of the obio bus space internals,
 	 * here.
 	 */
-	board_rev = CPLD_READ(IQ80310_BOARD_REV);
-	cpld_rev = CPLD_READ(IQ80310_CPLD_REV);
-	backplane = CPLD_READ(IQ80310_BACKPLANE_DET);
+	uint8_t board_rev = CPLD_READ(IQ80310_BOARD_REV);
+	uint8_t cpld_rev = CPLD_READ(IQ80310_CPLD_REV);
+	uint8_t backplane = CPLD_READ(IQ80310_BACKPLANE_DET);
 
 	printf(": board rev. %c, CPLD rev. %c, backplane %spresent\n",
 	    BOARD_REV(board_rev), CPLD_REV(cpld_rev),
 	    (backplane & 1) ? "" : "not ");
+    }
+#endif /* list of IQ80310-based designs */
 
 	for (i = 0; obio_devices[i].od_name != NULL; i++) {
 		oba.oba_name = obio_devices[i].od_name;
