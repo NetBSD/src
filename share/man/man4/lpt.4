@@ -1,4 +1,4 @@
-.\" $NetBSD: lpt.4,v 1.4 2004/01/23 15:59:18 wiz Exp $
+.\" $NetBSD: lpt.4,v 1.5 2004/01/28 19:54:15 jdolecek Exp $
 .\"
 .\"
 .\" Copyright (c) 1993 Christopher G. Demetriou
@@ -29,7 +29,7 @@
 .\"
 .\" $FreeBSD: src/share/man/man4/lpt.4,v 1.9.2.2 2001/08/17 13:08:38 ru Exp $
 .\"
-.Dd December 24, 2003
+.Dd January 28, 2004
 .Dt LPT 4
 .Os
 .Sh NAME
@@ -46,19 +46,8 @@ driver is the port of the lpt driver to the
 .Xr ppbus 4
 system.
 .Pp
-One purpose of this port was to allow parallel port sharing with
+The purpose of this driver is to allow parallel port sharing with
 other parallel devices.
-Secondly,
-.Fn inb
-and
-.Fn outb
-calls have been replaced by
-.Xr ppbus 4
-function calls.
-.Nm
-is now arch-independent thanks to the
-.Xr ppbus 4
-interface.
 See
 .Xr ppbus 4
 for more information about the parallel port bus system.
