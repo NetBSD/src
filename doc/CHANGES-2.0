@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.430 2004/09/05 20:37:04 tron Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.431 2004/09/10 02:44:36 jmc Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -7118,3 +7118,9 @@ sys/dev/vinum/vinumvar.h			1.2
 	to vinum now. Fixes PR kern/26855 by Andreas Wiese.
 	[jdolecek, ticket #811]
 
+
+distrib/sets/lists/man/mi			1.723
+distrib/sets/lists/misc/mi			1.105
+
+	Add missing postfix docs
+	[lukem, ticket #812]
