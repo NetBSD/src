@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.148 2002/03/15 07:02:24 eeh Exp $	*/
+/*	$NetBSD: locore.s,v 1.149 2002/03/16 15:15:33 mrg Exp $	*/
 
 /*
  * Copyright (c) 1996-2001 Eduardo Horvath
@@ -121,6 +121,9 @@
 	.align	4
 	.word	0x0400000
 #endif
+
+	.register	%g2,#scratch
+	.register	%g3,#scratch
 
 /*
  * Here are some defines to try to maintain consistency but still
