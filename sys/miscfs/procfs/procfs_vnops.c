@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_vnops.c,v 1.102 2003/04/18 21:55:35 christos Exp $	*/
+/*	$NetBSD: procfs_vnops.c,v 1.103 2003/05/28 18:03:16 christos Exp $	*/
 
 /*
  * Copyright (c) 1993 Jan-Simon Pendry
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_vnops.c,v 1.102 2003/04/18 21:55:35 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_vnops.c,v 1.103 2003/05/28 18:03:16 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -98,6 +98,7 @@ static const struct proc_target {
 	{ DT_REG, N("regs"),	Pregs,		procfs_validregs },
 	{ DT_REG, N("fpregs"),	Pfpregs,	procfs_validfpregs },
 	{ DT_REG, N("ctl"),	Pctl,		NULL },
+	{ DT_REG, N("stat"),	Pstat,		procfs_validfile_linux },
 	{ DT_REG, N("status"),	Pstatus,	NULL },
 	{ DT_REG, N("note"),	Pnote,		NULL },
 	{ DT_REG, N("notepg"),	Pnotepg,	NULL },
@@ -532,6 +533,7 @@ procfs_getattr(v)
 		/* FALLTHROUGH */
 	case Pctl:
 	case Pstatus:
+	case Pstat:
 	case Pnote:
 	case Pnotepg:
 	case Pmap:
@@ -646,6 +648,7 @@ procfs_getattr(v)
 
 	case Pctl:
 	case Pstatus:
+	case Pstat:
 	case Pnote:
 	case Pnotepg:
 	case Pcmdline:
