@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ppp.c,v 1.93 2004/12/05 13:32:03 he Exp $	*/
+/*	$NetBSD: if_ppp.c,v 1.94 2004/12/05 15:00:47 peter Exp $	*/
 /*	Id: if_ppp.c,v 1.6 1997/03/04 03:33:00 paulus Exp 	*/
 
 /*
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ppp.c,v 1.93 2004/12/05 13:32:03 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ppp.c,v 1.94 2004/12/05 15:00:47 peter Exp $");
 
 #include "ppp.h"
 
@@ -336,6 +336,9 @@ ppp_clone_destroy(struct ifnet *ifp)
     LIST_REMOVE(sc, sc_iflist);
     simple_unlock(&ppp_list_mutex);
 
+#if NBPFILTER > 0
+    bpfdetach(ifp);
+#endif
     if_detach(ifp);
 
     FREE(sc, M_DEVBUF);

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sl.c,v 1.88 2004/12/05 14:56:50 he Exp $	*/
+/*	$NetBSD: if_sl.c,v 1.89 2004/12/05 15:00:47 peter Exp $	*/
 
 /*
  * Copyright (c) 1987, 1989, 1992, 1993
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sl.c,v 1.88 2004/12/05 14:56:50 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sl.c,v 1.89 2004/12/05 15:00:47 peter Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -197,11 +197,11 @@ static struct mbuf *sl_btom __P((struct sl_softc *, int));
 void
 slattach(void)
 {
-    LIST_INIT(&sl_softc_list);
-    if_clone_attach(&sl_cloner);
+	LIST_INIT(&sl_softc_list);
+	if_clone_attach(&sl_cloner);
 }
 
-int
+static int
 sl_clone_create(struct if_clone *ifc, int unit)
 {
 	struct sl_softc *sc;
@@ -212,8 +212,7 @@ sl_clone_create(struct if_clone *ifc, int unit)
 	    "%s%d", ifc->ifc_name, unit);
 	sc->sc_if.if_softc = sc;
 	sc->sc_if.if_mtu = SLMTU;
-	sc->sc_if.if_flags =
-	    IFF_POINTOPOINT | SC_AUTOCOMP | IFF_MULTICAST;
+	sc->sc_if.if_flags = IFF_POINTOPOINT | SC_AUTOCOMP | IFF_MULTICAST;
 	sc->sc_if.if_type = IFT_SLIP;
 	sc->sc_if.if_ioctl = slioctl;
 	sc->sc_if.if_output = sloutput;
@@ -232,17 +231,20 @@ sl_clone_create(struct if_clone *ifc, int unit)
 static int
 sl_clone_destroy(struct ifnet *ifp)
 {
-    struct sl_softc *sc = (struct sl_softc *)ifp->if_softc;
+	struct sl_softc *sc = (struct sl_softc *)ifp->if_softc;
 
-    if (sc->sc_ttyp != NULL)
-	return EBUSY; /* Not removing it */
+	if (sc->sc_ttyp != NULL)
+		return EBUSY;	/* Not removing it */
 
-    LIST_REMOVE(sc, sc_iflist);
+	LIST_REMOVE(sc, sc_iflist);
 
-    if_detach(ifp);
+#if NBPFILTER > 0
+	bpfdetach(ifp);
+#endif
+	if_detach(ifp);
 
-    FREE(sc, M_DEVBUF);
-    return 0;
+	FREE(sc, M_DEVBUF);
+	return 0;
 }
 
 static int
