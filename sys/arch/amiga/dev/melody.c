@@ -1,4 +1,4 @@
-/*	$NetBSD: melody.c,v 1.2 1998/01/12 10:39:58 thorpej Exp $	*/
+/*	$NetBSD: melody.c,v 1.3 1999/01/10 12:37:17 tron Exp $	*/
 
 /*-
  * Copyright (c) 1997 Ignatios Souvatzis. All rights reserved.
@@ -97,7 +97,7 @@ melody_attach(parent, self, aux)
 
 	sc->sc_bst_leftbyte.base = (u_long)zap->va + 0;
 	sc->sc_bst_leftbyte.stride = 1;
-	sc->sc_intack = zap->va + 0xc000;
+	sc->sc_intack = (caddr_t)zap->va + 0xc000;
 
 	/* set up board specific part in sc_tav */
 
