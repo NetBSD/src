@@ -1,4 +1,4 @@
-/*	$NetBSD: auth.c,v 1.12 2002/04/22 07:59:36 itojun Exp $	*/
+/*	$NetBSD: auth.c,v 1.12.2.1 2002/05/28 19:27:28 tv Exp $	*/
 /*
  * Copyright (c) 2000 Markus Friedl.  All rights reserved.
  *
@@ -41,6 +41,8 @@ RCSID("$OpenBSD: auth.c,v 1.41 2002/03/19 15:31:47 markus Exp $");
 #include "uidswap.h"
 #include "tildexpand.h"
 #include "misc.h"
+#include "bufaux.h"
+#include "packet.h"
 
 #ifdef HAVE_LOGIN_CAP
 #include <login_cap.h>
@@ -48,6 +50,10 @@ RCSID("$OpenBSD: auth.c,v 1.41 2002/03/19 15:31:47 markus Exp $");
 
 /* import */
 extern ServerOptions options;
+
+/* Debugging messages */
+Buffer auth_debug;
+int auth_debug_init;
 
 /*
  * Check if the user is allowed to log in via ssh. If user is listed
@@ -517,7 +523,7 @@ getpwnamallow(const char *user)
 	}
 #ifdef BSD_AUTH
 	if ((as = auth_open()) == NULL || auth_setpwd(as, pw) != 0 ||
-	    auth_approval(NULL, lc, pw->pw_name, "ssh") <= 0) {
+	    auth_approval(as, lc, pw->pw_name, "ssh") <= 0) {
 		debug("Approval failure for %s", user);
 		pw = NULL;
 	}
@@ -528,4 +534,44 @@ getpwnamallow(const char *user)
 	if (pw != NULL)
 		return (pwcopy(pw));
 	return (NULL);
+}
+
+void
+auth_debug_add(const char *fmt,...)
+{
+	char buf[1024];
+	va_list args;
+
+	if (!auth_debug_init)
+		return;
+
+	va_start(args, fmt);
+	vsnprintf(buf, sizeof(buf), fmt, args);
+	va_end(args);
+	buffer_put_cstring(&auth_debug, buf);
+}
+
+void
+auth_debug_send(void)
+{
+	char *msg;
+
+	if (!auth_debug_init)
+		return;
+	while (buffer_len(&auth_debug)) {
+		msg = buffer_get_string(&auth_debug, NULL);
+		packet_send_debug("%s", msg);
+		xfree(msg);
+	}
+}
+
+void
+auth_debug_reset(void)
+{
+	if (auth_debug_init)
+		buffer_clear(&auth_debug);
+	else {
+		buffer_init(&auth_debug);
+		auth_debug_init = 1;
+	}
 }
