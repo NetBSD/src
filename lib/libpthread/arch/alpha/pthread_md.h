@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_md.h,v 1.1.2.2 2001/11/14 15:27:10 briggs Exp $	*/
+/*	$NetBSD: pthread_md.h,v 1.1.2.3 2001/12/17 22:07:29 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -49,8 +49,8 @@ pthread__sp(void)
 	return ret;
 }
 
-#define pthread__uc_sp(ucp) ((ucp)->uc_mcontext.sc_regs[30])
-#define pthread__uc_pc(ucp) ((ucp)->uc_mcontext.sc_pc)
+#define pthread__uc_sp(ucp) ((ucp)->uc_mcontext.__gregs[_REG_SP])
+#define pthread__uc_pc(ucp) ((ucp)->uc_mcontext.__gregs[_REG_PC])
 
 #define STACKSPACE 32	/* 4 quad values */
 

@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.1.2.1 2001/09/25 19:49:05 nathanw Exp $
+#	$NetBSD: genassym.cf,v 1.1.2.2 2001/12/17 22:07:29 nathanw Exp $
 
 #
 # Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -53,20 +53,22 @@ define PT_HELDLOCK      offsetof(struct pthread_st, pt_heldlock)
 define PT_UC            offsetof(struct pthread_st, pt_uc)
 define CONTEXTSIZE      sizeof(ucontext_t)
 define UC_FLAGS		offsetof(ucontext_t, uc_flags)
-define UC_PC            offsetof(ucontext_t, uc_mcontext.sc_pc)
-define UC_REGS		offsetof(ucontext_t, uc_mcontext.sc_regs)
+define UC_GREGS		offsetof(ucontext_t, uc_mcontext.__gregs)
+define UC_FPREGS	offsetof(ucontext_t, uc_mcontext.__fpregs)
 define PT_STATE_RECYCLABLE      PT_STATE_RECYCLABLE
 define STACKSPACE       STACKSPACE
 define _UC_USER_BIT	_UC_USER_BIT
 define _UC_CPU		_UC_CPU
 define _UC_FPU		_UC_FPU
 
-define R_S0		R_S0
-define R_S1		R_S1
-define R_S2		R_S2
-define R_S3		R_S3
-define R_S4		R_S4
-define R_S5		R_S5
-define R_S6		R_S6
-define R_SP		R_SP
-define R_RA		R_RA
+define _REG_S0		_REG_S0
+define _REG_S1		_REG_S1
+define _REG_S2		_REG_S2
+define _REG_S3		_REG_S3
+define _REG_S4		_REG_S4
+define _REG_S5		_REG_S5
+define _REG_S6		_REG_S6
+define _REG_SP		_REG_SP
+define _REG_RA		_REG_RA
+define _REG_PC		_REG_PC
+define _REG_PS		_REG_PS
