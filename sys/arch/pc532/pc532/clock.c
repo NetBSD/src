@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.11 1995/05/16 07:30:46 phil Exp $	*/
+/*	$NetBSD: clock.c,v 1.12 1996/01/31 21:33:47 phil Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -80,13 +80,6 @@ void
 spinwait(int millisecs)
 {
 	DELAY(5000 * millisecs);
-}
-
-DELAY(n)
-{
-	volatile int N = (n);
-	while (--N > 0)
-		;
 }
 
 void
