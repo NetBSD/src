@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_compat_09.c,v 1.9 2003/01/18 08:28:25 thorpej Exp $	*/
+/*	$NetBSD: netbsd32_compat_09.c,v 1.10 2003/06/29 10:39:51 martin Exp $	*/
 
 /*
  * Copyright (c) 1998 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_09.c,v 1.9 2003/01/18 08:28:25 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_09.c,v 1.10 2003/06/29 10:39:51 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -54,14 +54,13 @@ compat_09_netbsd32_ogetdomainname(l, v, retval)
 		syscallarg(netbsd32_charp) domainname;
 		syscallarg(int) len;
 	} */ *uap = v;
-	struct proc *p = l->l_proc;
 	int name;
 	size_t sz;
 
 	name = KERN_DOMAINNAME;
 	sz = SCARG(uap, len);
 	return (kern_sysctl(&name, 1,
-	    (char *)NETBSD32PTR64(SCARG(uap, domainname)), &sz, 0, 0, p));
+	    (char *)NETBSD32PTR64(SCARG(uap, domainname)), &sz, 0, 0, l));
 }
 
 int
@@ -74,15 +73,14 @@ compat_09_netbsd32_osetdomainname(l, v, retval)
 		syscallarg(netbsd32_charp) domainname;
 		syscallarg(int) len;
 	} */ *uap = v;
-	struct proc *p = l->l_proc;
 	int name;
 	int error;
 
-	if ((error = suser(p->p_ucred, &p->p_acflag)) != 0)
+	if ((error = suser(l->l_proc->p_ucred, &l->l_proc->p_acflag)) != 0)
 		return (error);
 	name = KERN_DOMAINNAME;
 	return (kern_sysctl(&name, 1, 0, 0,
-	    (char *)NETBSD32PTR64(SCARG(uap, domainname)), SCARG(uap, len), p));
+	    (char *)NETBSD32PTR64(SCARG(uap, domainname)), SCARG(uap, len), l));
 }
 
 int

@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_compat_43.c,v 1.25 2003/06/28 14:21:24 darrenr Exp $	*/
+/*	$NetBSD: netbsd32_compat_43.c,v 1.26 2003/06/29 10:39:51 martin Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_43.c,v 1.25 2003/06/28 14:21:24 darrenr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_43.c,v 1.26 2003/06/29 10:39:51 martin Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_43.h"
@@ -327,7 +327,7 @@ compat_43_netbsd32_ogethostname(l, v, retval)
 	name = KERN_HOSTNAME;
 	sz = SCARG(uap, len);
 	return (kern_sysctl(&name, 1,
-	    (char *)NETBSD32PTR64(SCARG(uap, hostname)), &sz, 0, 0, l->l_proc));
+	    (char *)NETBSD32PTR64(SCARG(uap, hostname)), &sz, 0, 0, l));
 }
 
 int
@@ -336,7 +336,6 @@ compat_43_netbsd32_osethostname(l, v, retval)
 	void *v;
 	register_t *retval;
 {
-	struct proc *p = l->l_proc;
 	struct compat_43_netbsd32_osethostname_args /* {
 		syscallarg(netbsd32_charp) hostname;
 		syscallarg(u_int) len;
@@ -344,11 +343,11 @@ compat_43_netbsd32_osethostname(l, v, retval)
 	int name;
 	int error;
 
-	if ((error = suser(p->p_ucred, &p->p_acflag)) != 0)
+	if ((error = suser(l->l_proc->p_ucred, &l->l_proc->p_acflag)) != 0)
 		return (error);
 	name = KERN_HOSTNAME;
 	return (kern_sysctl(&name, 1, 0, 0, (char *)NETBSD32PTR64(SCARG(uap,
-	    hostname)), SCARG(uap, len), p));
+	    hostname)), SCARG(uap, len), l));
 }
 
 int
