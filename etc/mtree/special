@@ -1,4 +1,4 @@
-#	$NetBSD: special,v 1.55 2002/03/27 07:15:57 lukem Exp $
+#	$NetBSD: special,v 1.56 2002/04/29 07:28:27 lukem Exp $
 #	@(#)special	8.2 (Berkeley) 1/23/94
 #
 # Hand-crafted mtree specification for the dangerous files.
@@ -115,6 +115,7 @@
 ./etc/postfix/main.cf		type=file mode=0444 uname=root gname=wheel optional
 ./etc/postfix/master.cf		type=file mode=0444 uname=root gname=wheel optional
 ./etc/postfix/postfix-script	type=file mode=0555 uname=root gname=wheel optional
+./etc/postinstall		type=file mode=0555 optional
 ./etc/ppp			type=dir  mode=0755 optional
 ./etc/ppp/options		type=file mode=0644 optional
 ./etc/printcap			type=file mode=0644
