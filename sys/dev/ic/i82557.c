@@ -1,4 +1,4 @@
-/*	$NetBSD: i82557.c,v 1.71 2003/01/31 00:26:30 thorpej Exp $	*/
+/*	$NetBSD: i82557.c,v 1.72 2003/02/04 17:50:53 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2001, 2002 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i82557.c,v 1.71 2003/01/31 00:26:30 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i82557.c,v 1.72 2003/02/04 17:50:53 thorpej Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -1841,8 +1841,8 @@ fxp_add_rfabuf(struct fxp_softc *sc, bus_dmamap_t rxmap, int unload)
 
 	M_SETCTX(m, rxmap);
 
-	error = bus_dmamap_load(sc->sc_dmat, rxmap,
-	    m->m_ext.ext_buf, m->m_ext.ext_size, NULL,
+	m->m_len = m->m_pkthdr.len = m->m_ext.ext_size;
+	error = bus_dmamap_load_mbuf(sc->sc_dmat, rxmap, m,
 	    BUS_DMA_READ|BUS_DMA_NOWAIT);
 	if (error) {
 		printf("%s: can't load rx DMA map %d, error = %d\n",
