@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.36 2002/02/18 15:35:53 pk Exp $
+#	$NetBSD: Makefile,v 1.37 2002/02/23 21:32:27 gmcgarry Exp $
 
 # XXX Note: NO_DBSYM is a stopgap temporary variable for use
 # with the development of non-NetBSD hosting support.  This will go away.
@@ -31,6 +31,11 @@ SUBDIR+=	autoconf
 .if ${MACHINE} == sparc || ${MACHINE} == sparc64
 SUBDIR+=	sparc-installboot
 .endif
+
+.if (${MACHINE_ARCH} == "mipsel" || ${MACHINE_ARCH} == "mipseb")
+SUBDIR+=	mips-elf2ecoff
+.endif
+
 .endif
 
 .if ${MKTOOLS:Uyes} == "no" || ${USETOOLS} != "yes"
