@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: makeflist,v 1.2.4.3 1997/11/06 22:05:32 mellon Exp $
+# $NetBSD: makeflist,v 1.2.4.4 1997/11/09 21:03:17 mellon Exp $
 #
 # Print out the files in some or all lists.  Usage:
 # makeflist [-arch arch] [-setd setsdir] [-x11] [setname ...]
@@ -19,6 +19,7 @@ do
 	-arch)	arch=$2; shift;;
 	-setd)	setd=$2; shift;;
 	-x11)	lists=$xlists;;
+	-both)  lists="$xlists $lists";;
 	-*)	echo "bad option"; exit 1;;
 	*)	break;;
 	esac
