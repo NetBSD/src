@@ -1,7 +1,7 @@
-/*	$NetBSD: obio_space.c,v 1.1 2002/03/27 21:51:30 thorpej Exp $	*/
+/*	$NetBSD: obio_space.c,v 1.2 2002/04/12 19:02:31 thorpej Exp $	*/
 
 /*
- * Copyright (c) 2001 Wasabi Systems, Inc.
+ * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
  * All rights reserved.
  *
  * Written by Jason R. Thorpe for Wasabi Systems, Inc.
@@ -48,6 +48,7 @@
 
 /* Prototypes for all the bus_space structure functions */
 bs_protos(obio);
+bs_protos(generic);
 bs_protos(bs_notimpl);
 
 /*
@@ -77,13 +78,13 @@ struct bus_space obio_bs_tag = {
 	obio_bs_barrier,
 
 	/* read (single) */
-	obio_bs_r_1,
+	generic_bs_r_1,
 	bs_notimpl_bs_r_2,
-	obio_bs_r_4,
+	generic_bs_r_4,
 	bs_notimpl_bs_r_8,
 
 	/* read multiple */
-	obio_bs_rm_1,
+	generic_bs_rm_1,
 	bs_notimpl_bs_rm_2,
 	bs_notimpl_bs_rm_4,
 	bs_notimpl_bs_rm_8,
@@ -95,13 +96,13 @@ struct bus_space obio_bs_tag = {
 	bs_notimpl_bs_rr_8,
 
 	/* write (single) */
-	obio_bs_w_1,
+	generic_bs_w_1,
 	bs_notimpl_bs_w_2,
-	obio_bs_w_4,
+	generic_bs_w_4,
 	bs_notimpl_bs_w_8,
 
 	/* write multiple */
-	obio_bs_wm_1,
+	generic_bs_wm_1,
 	bs_notimpl_bs_wm_2,
 	bs_notimpl_bs_wm_4,
 	bs_notimpl_bs_wm_8,
