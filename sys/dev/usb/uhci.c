@@ -1,4 +1,4 @@
-/*	$NetBSD: uhci.c,v 1.31 1999/06/30 06:44:23 augustss Exp $	*/
+/*	$NetBSD: uhci.c,v 1.32 1999/07/12 05:22:50 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -83,7 +83,7 @@
 struct uhci_pipe {
 	struct usbd_pipe pipe;
 	uhci_intr_info_t *iinfo;
-	int newtoggle;
+	int nexttoggle;
 	/* Info needed for different pipe kinds. */
 	union {
 		/* Control pipe */
@@ -812,7 +812,7 @@ uhci_check_intr(sc, ii)
  done:
 	usb_untimeout(uhci_timeout, ii, ii->timeout_handle);
 	upipe = (struct uhci_pipe *)ii->reqh->pipe;
-	upipe->pipe.endpoint->toggle = upipe->newtoggle;
+	upipe->pipe.endpoint->toggle = upipe->nexttoggle;
 	uhci_ii_done(ii, 0);
 }
 
@@ -1184,7 +1184,7 @@ uhci_alloc_std_chain(upipe, sc, len, rd, spd, dma, sp, ep)
 	tog = upipe->pipe.endpoint->toggle;
 	if (ntd % 2 == 0)
 		tog ^= 1;
-	upipe->newtoggle = tog ^ 1;
+	upipe->nexttoggle = tog ^ 1;
 	lastp = 0;
 	lastlink = UHCI_PTR_T;
 	ntd--;
@@ -1220,7 +1220,7 @@ uhci_alloc_std_chain(upipe, sc, len, rd, spd, dma, sp, ep)
 	*sp = lastp;
 	/*upipe->pipe.endpoint->toggle = tog;*/
 	DPRINTFN(10, ("uhci_alloc_std_chain: oldtog=%d newtog=%d\n", 
-		      upipe->pipe.endpoint->toggle, upipe->newtoggle));
+		      upipe->pipe.endpoint->toggle, upipe->nexttoggle));
 	return (USBD_NORMAL_COMPLETION);
 }
 
@@ -1970,23 +1970,30 @@ uhci_bulk_done(ii)
 	uhci_softc_t *sc = ii->sc;
 	usbd_request_handle reqh = ii->reqh;
 	struct uhci_pipe *upipe = (struct uhci_pipe *)reqh->pipe;
-	u_int len = upipe->u.bulk.length;
+	uhci_soft_td_t *std;
+	u_int datalen = upipe->u.bulk.length;
 	usb_dma_t *dma;
-	uhci_td_t *htd = ii->stdstart->td;
 
 	LIST_REMOVE(ii, list);	/* remove from active list */
 
 	uhci_remove_bulk(sc, upipe->u.bulk.sqh);
 
-	if (len != 0) {
-		dma = &upipe->u.bulk.datadma;
-		if (upipe->u.bulk.isread)
-			memcpy(reqh->buffer, KERNADDR(dma), len);
-		uhci_free_std_chain(sc, htd->link.std, 0);
-		usb_freemem(sc->sc_dmatag, dma);
+	/* find the toggle for the last transfer and invert it */
+	for (std = ii->stdstart; std; std = std->td->link.std) {
+		if (std->td->td_status & UHCI_TD_ACTIVE)
+			break;
+		upipe->nexttoggle = UHCI_TD_GET_DT(std->td->td_token);
 	}
+	upipe->nexttoggle ^= 1;
+
+	/* copy the data from dma memory to userland storage */
+	dma = &upipe->u.bulk.datadma;
+	if (upipe->u.bulk.isread)
+		memcpy(reqh->buffer, KERNADDR(dma), datalen);
+	uhci_free_std_chain(sc, ii->stdstart, 0);
+	usb_freemem(sc->sc_dmatag, dma);
+
 	DPRINTFN(4, ("uhci_bulk_done: length=%d\n", reqh->actlen));
-	/* XXX compute new toggle */
 }
 
 /* Add interrupt QH, called with vflock. */
