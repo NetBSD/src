@@ -1,4 +1,4 @@
-/*	$NetBSD: if_lereg.h,v 1.3 1996/05/08 05:55:05 thorpej Exp $	*/
+/*	$NetBSD: if_lereg.h,v 1.4 2000/03/18 22:33:03 scw Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1992, 1993
@@ -36,9 +36,7 @@
  */
 
 /*
- * LANCE registers.
+ * LANCE register offsets
  */
-struct lereg1 {
-	volatile u_int16_t	ler1_rdp;	/* data port */
-	volatile u_int16_t	ler1_rap;	/* register select port */
-};
+#define LEPCC_RDP	0
+#define LEPCC_RAP	2

@@ -1,4 +1,4 @@
-/*      $NetBSD: clock.c,v 1.11 2000/01/19 02:52:19 msaitoh Exp $	*/
+/*      $NetBSD: clock.c,v 1.12 2000/03/18 22:33:06 scw Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -49,20 +49,17 @@
 #include <sys/systm.h>
 #include <sys/device.h>
 
+#include <machine/psl.h>
+#include <machine/bus.h>
+
 #include <mvme68k/mvme68k/clockreg.h>
 #include <mvme68k/mvme68k/clockvar.h>
-
-#include <machine/psl.h>
-#include <machine/cpu.h>
 
 #if defined(GPROF)
 #include <sys/gmon.h>
 #endif
 
-static	struct clockreg *RTCbase = NULL;
-static	caddr_t NVRAMbase = NULL;
-static	int NVRAMsize;
-static	void (*cpu_initclocks_hook) __P((int, int));
+static	struct clock_attach_args *clock_args;
 
 struct	evcnt clock_profcnt;
 struct	evcnt clock_statcnt;
@@ -100,30 +97,20 @@ static long chiptotime __P((int, int, int, int, int, int));
  * Common parts of clock autoconfiguration.
  */
 void
-clock_config(dev, clockregs, nvram, nvramsize, initfunc)
+clock_config(dev, ca)
 	struct device *dev;
-	caddr_t clockregs, nvram;
-	int nvramsize;
-	void (*initfunc) __P((int, int));
+	struct clock_attach_args *ca;
 {
 	extern int delay_divisor;	/* from machdep.c */
 
-	if (RTCbase || NVRAMbase)
-		panic("clock_config: too many clocks configured");
-
 	/* Hook up that which we need. */
-	RTCbase = (struct clockreg *)clockregs;
-	NVRAMbase = nvram;
-	NVRAMsize = nvramsize;
-	cpu_initclocks_hook = initfunc;
+	clock_args = ca;
 
 	evcnt_attach(dev, "profint", &clock_profcnt);
 	evcnt_attach(dev, "statint", &clock_statcnt);
 
 	/* Print info about the clock. */
-	printf(": Mostek MK48T0%d, %d bytes of NVRAM\n", (nvramsize / 1024),
-	    nvramsize);
-	printf("%s: delay_divisor %d\n", dev->dv_xname, delay_divisor);
+	printf(": delay_divisor %d\n", delay_divisor);
 }
 
 /*
@@ -137,7 +124,7 @@ cpu_initclocks()
 {
 	int statint, minint;
 
-	if (RTCbase == NULL)
+	if (clock_args == NULL)
 		panic("clock not configured");
 
 	if (1000000 % hz) {
@@ -161,7 +148,7 @@ cpu_initclocks()
 	clock_statmin = statint - (clock_statvar >> 1);
 
 	/* Call the machine-specific initclocks hook. */
-	(*cpu_initclocks_hook)(tick, statint);
+	(*clock_args->ca_initfunc)(clock_args->ca_arg, tick, statint);
 }
 
 void
@@ -191,7 +178,6 @@ microtime(tvp)
 	static struct timeval lasttime;
 
 	*tvp = time;
-	tvp->tv_usec;
 	while (tvp->tv_usec >= 1000000) {
 		tvp->tv_sec++;
 		tvp->tv_usec -= 1000000;
@@ -295,6 +281,12 @@ timetochip(c)
         c->year = TOBCD(c->year - YEAR0);
 }
 
+
+#define	rtc_read(r)	bus_space_read_1(clock_args->ca_bust, \
+					 clock_args->ca_bush, (r))
+#define	rtc_write(r,v)	bus_space_write_1(clock_args->ca_bust, \
+					  clock_args->ca_bush, (r), (v))
+
 /*
  * Set up the system's time, given a `reasonable' time value.
  */
@@ -302,7 +294,6 @@ void
 inittodr(base)
         time_t base;
 {
-        struct clockreg *cl = RTCbase;
         int sec, min, hour, day, mon, year;
         int badbase = 0, waszero = base == 0;
 
@@ -317,14 +308,20 @@ inittodr(base)
                 base = 21*SECYR + 186*SECDAY + SECDAY/2;
                 badbase = 1;
         }
-        cl->cl_csr |= CLK_READ;         /* enable read (stop time) */
-        sec = cl->cl_sec;
-        min = cl->cl_min;
-        hour = cl->cl_hour;
-        day = cl->cl_mday;
-        mon = cl->cl_month;
-        year = cl->cl_year;
-        cl->cl_csr &= ~CLK_READ;        /* time wears on */
+
+        /* enable read (stop time) */
+	rtc_write(MK48TREG_CSR, rtc_read(MK48TREG_CSR) | CLK_READ);
+
+        sec = rtc_read(MK48TREG_SEC);
+        min = rtc_read(MK48TREG_MIN);
+        hour = rtc_read(MK48TREG_HOUR);
+        day = rtc_read(MK48TREG_MDAY);
+        mon = rtc_read(MK48TREG_MONTH);
+        year = rtc_read(MK48TREG_YEAR);
+
+        /* time wears on */
+	rtc_write(MK48TREG_CSR, rtc_read(MK48TREG_CSR) & ~CLK_READ);
+
         if ((time.tv_sec = chiptotime(sec, min, hour, day, mon, year)) == 0) {
                 printf("WARNING: bad date in battery clock");
                 /*
@@ -357,19 +354,24 @@ inittodr(base)
 void
 resettodr()
 {
-        struct clockreg *cl;
         struct chiptime c;
 
-        if (!time.tv_sec || (cl = RTCbase) == NULL)
+        if (!time.tv_sec)
                 return;
+
         timetochip(&c);
-        cl->cl_csr |= CLK_WRITE;        /* enable write */
-        cl->cl_sec = c.sec;
-        cl->cl_min = c.min;
-        cl->cl_hour = c.hour;
-        cl->cl_wday = c.wday;
-        cl->cl_mday = c.day;
-        cl->cl_month = c.mon;
-        cl->cl_year = c.year;
-        cl->cl_csr &= ~CLK_WRITE;       /* load them up */
+
+        /* enable write */
+	rtc_write(MK48TREG_CSR, rtc_read(MK48TREG_CSR) | CLK_WRITE);
+
+        rtc_write(MK48TREG_SEC, c.sec);
+        rtc_write(MK48TREG_MIN, c.min);
+        rtc_write(MK48TREG_HOUR, c.hour);
+        rtc_write(MK48TREG_WDAY, c.wday);
+        rtc_write(MK48TREG_MDAY, c.day);
+        rtc_write(MK48TREG_MONTH, c.mon);
+        rtc_write(MK48TREG_YEAR, c.year);
+
+        /* load them up */
+	rtc_write(MK48TREG_CSR, rtc_read(MK48TREG_CSR) & ~CLK_WRITE);
 }
