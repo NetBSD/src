@@ -1,4 +1,4 @@
-/* $NetBSD: lib.h,v 1.6 1998/07/06 07:03:56 mrg Exp $ */
+/* $NetBSD: lib.h,v 1.7 1998/08/27 23:37:36 hubertf Exp $ */
 
 /* from FreeBSD Id: lib.h,v 1.25 1997/10/08 07:48:03 charnier Exp */
 
@@ -126,6 +126,7 @@ char		*strconcat(char *, char *);
 /* File */
 Boolean		fexists(char *);
 Boolean		isdir(char *);
+Boolean		islinktodir(char *);
 Boolean		isemptydir(char *fname);
 Boolean		isemptyfile(char *fname);
 Boolean         isfile(char *);

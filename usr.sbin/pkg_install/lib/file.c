@@ -1,11 +1,11 @@
-/*	$NetBSD: file.c,v 1.13 1998/07/09 16:47:26 hubertf Exp $	*/
+/*	$NetBSD: file.c,v 1.14 1998/08/27 23:37:36 hubertf Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: file.c,v 1.29 1997/10/08 07:47:54 charnier Exp";
 #else
-__RCSID("$NetBSD: file.c,v 1.13 1998/07/09 16:47:26 hubertf Exp $");
+__RCSID("$NetBSD: file.c,v 1.14 1998/08/27 23:37:36 hubertf Exp $");
 #endif
 #endif
 
@@ -63,11 +63,26 @@ isdir(char *fname)
 	return FALSE;
 }
 
+/* Check if something is a link to a directory */
+Boolean
+islinktodir(char *fname)
+{
+    struct stat sb;
+
+    if (lstat(fname, &sb) != FAIL && S_ISLNK(sb.st_mode))
+        if (stat(fname, &sb) != FAIL && S_ISDIR(sb.st_mode))
+	    return TRUE; /* link to dir! */
+        else
+	    return FALSE; /* link to non-dir */
+    else
+        return FALSE;  /* non-link */
+}
+
 /* Check to see if file is a dir, and is empty */
 Boolean
 isemptydir(char *fname)
 {
-    if (isdir(fname)) {
+    if (isdir(fname) || islinktodir(fname)) {
 	DIR *dirp;
 	struct dirent *dp;
 
