@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6.c,v 1.80 2003/02/25 22:17:47 he Exp $	*/
+/*	$NetBSD: nd6.c,v 1.81 2003/05/04 13:43:09 christos Exp $	*/
 /*	$KAME: nd6.c,v 1.279 2002/06/08 11:16:51 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.80 2003/02/25 22:17:47 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.81 2003/05/04 13:43:09 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -212,9 +212,10 @@ nd6_setmtu0(ifp, ndi)
 	 * log to the case of changing the MTU, not initializing it.
 	 */
 	if (omaxmtu >= IPV6_MMTU && ndi->maxmtu < IPV6_MMTU) {
-		log(LOG_NOTICE, "nd6_setmtu0: "
-		    "new link MTU on %s (%lu) is too small for IPv6\n",
-		    if_name(ifp), (unsigned long)ndi->maxmtu);
+		log(LOG_NOTICE, "nd6_setmtu0: new link MTU on %s (%lu) is too"
+		    " small for IPv6 which needs %lu\n",
+		    if_name(ifp), (unsigned long)ndi->maxmtu, (unsigned long)
+		    IPV6_MMTU);
 	}
 
 	if (ndi->maxmtu > in6_maxmtu)
