@@ -1,4 +1,4 @@
-/* 	$NetBSD: mountd.c,v 1.89 2004/11/16 05:59:32 itojun Exp $	 */
+/* 	$NetBSD: mountd.c,v 1.90 2005/01/14 16:12:46 thorpej Exp $	 */
 
 /*
  * Copyright (c) 1989, 1993
@@ -47,7 +47,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\n\
 #if 0
 static char     sccsid[] = "@(#)mountd.c  8.15 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: mountd.c,v 1.89 2004/11/16 05:59:32 itojun Exp $");
+__RCSID("$NetBSD: mountd.c,v 1.90 2005/01/14 16:12:46 thorpej Exp $");
 #endif
 #endif				/* not lint */
 
@@ -271,6 +271,12 @@ static void SYSLOG __P((int, const char *,...));
 int main __P((int, char *[]));
 
 /*
+ * If this is non-zero, -noresvport and -noresvmnt are implied for
+ * each export.
+ */
+static int noprivports;
+
+/*
  * Mountd server for NFS mount protocol as described in:
  * NFS: Network File System Protocol Specification, RFC1094, Appendix A
  * The optional arguments are the exports file name
@@ -296,7 +302,7 @@ main(argc, argv)
 #define ADDOPTS
 #endif
 
-	while ((c = getopt(argc, argv, "dnr" ADDOPTS)) != -1)
+	while ((c = getopt(argc, argv, "dNnr" ADDOPTS)) != -1)
 		switch (c) {
 #ifdef IPSEC
 		case 'P':
@@ -306,6 +312,9 @@ main(argc, argv)
 #endif
 		case 'd':
 			debug = 1;
+			break;
+		case 'N':
+			noprivports = 1;
 			break;
 			/* Compatibility */
 		case 'n':
@@ -1052,6 +1061,11 @@ get_exportlist(n)
 		got_nondir = 0;
 		opt_flags = 0;
 		ep = NULL;
+
+		if (noprivports) {
+			opt_flags |= OP_NORESMNT | OP_NORESPORT;
+			exflags |= MNT_EXNORESPORT;
+		}
 
 		/*
 		 * Create new exports list entry

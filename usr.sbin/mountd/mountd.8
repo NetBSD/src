@@ -1,4 +1,4 @@
-.\"	$NetBSD: mountd.8,v 1.26 2003/09/07 16:22:25 wiz Exp $
+.\"	$NetBSD: mountd.8,v 1.27 2005/01/14 16:12:46 thorpej Exp $
 .\"
 .\" Copyright (c) 1989, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -70,6 +70,14 @@ a separator. If conflicting policy strings are found in a single line,
 the last string will take effect. If an invalid IPsec policy string is used
 .Nm
 logs an error message and terminates itself.
+.It Fl N
+Do not require privileged ports for mount or NFS RPC calls.
+This option is equivalent to specifying
+.Dq -noresvport -noresvmnt
+on every export.
+See
+.Xr exports 5
+for more information.
 .It Fl d
 Enable debugging mode.
 .Nm
