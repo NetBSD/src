@@ -1,4 +1,4 @@
-.\"	$NetBSD: chroot.2,v 1.17 2003/01/18 11:33:02 thorpej Exp $
+.\"	$NetBSD: chroot.2,v 1.18 2003/01/22 15:24:03 kleink Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -123,6 +123,19 @@ does not reference a directory.
 .El
 .Sh SEE ALSO
 .Xr chdir 2
+.Sh STANDARDS
+The
+.Fn chroot
+function conforms to
+.St -xsh5 ,
+with the restriction that the calling process' working directory must be at
+or under the new root directory.
+Otherwise, the working directory is silently set to the new root directory;
+this is an extension to the standard.
+.Pp
+.Fn chroot
+was declared a legacy interface, and subsequently removed in
+.St -p1003.1-2001 .
 .Sh HISTORY
 The
 .Fn chroot
