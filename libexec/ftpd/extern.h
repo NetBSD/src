@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.34 2000/11/15 02:32:30 lukem Exp $	*/
+/*	$NetBSD: extern.h,v 1.35 2000/11/16 13:15:13 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -100,6 +100,24 @@
  * SUCH DAMAGE.
  */
 
+#ifdef NO_LONG_LONG
+# define LLF		"%ld"
+# define LLFP(x)	"%" x "ld"
+# define LLT		long
+# define ULLF		"%lu"
+# define ULLFP(x)	"%" x "lu"
+# define ULLT		unsigned long
+# define STRTOLL(x,y,z)	strtol(x,y,z)
+#else
+# define LLF		"%lld"
+# define LLFP(x)	"%" x "lld"
+# define LLT		long long
+# define ULLF		"%llu"
+# define ULLFP(x)	"%" x "llu"
+# define ULLT		unsigned long long
+# define STRTOLL(x,y,z)	strtoll(x,y,z)
+#endif
+
 void	blkfree(char **);
 void	closedataconn(FILE *);
 char   *conffilename(const char *);
@@ -152,16 +170,10 @@ void	sizecmd(const char *);
 void	statcmd(void);
 void	statfilecmd(const char *);
 void	store(const char *, const char *, int);
-int	strsuftoi(const char *);
+LLT	strsuftoll(const char *);
 void	user(const char *);
 char   *xstrdup(const char *);
 void	yyerror(char *);
-
-typedef enum {
-	CLASS_GUEST,
-	CLASS_CHROOT,
-	CLASS_REAL
-} class_ft;
 
 struct tab {
 	char	*name;
@@ -180,32 +192,48 @@ struct ftpconv {
 	char		*command;	/* Command to do the conversion */
 };
 
+typedef enum {
+	CLASS_GUEST,
+	CLASS_CHROOT,
+	CLASS_REAL
+} class_ft;
+
+typedef enum {
+	FLAG_checkportcmd =	1<<0,	/* Check port commands */
+	FLAG_modify =		1<<1,	/* Allow CHMOD, DELE, MKD, RMD, RNFR,
+					   UMASK */
+	FLAG_passive =		1<<2,	/* Allow PASV mode */
+	FLAG_sanenames =	1<<3,	/* Restrict names of uploaded files */ 
+	FLAG_upload =		1<<4	/* As per modify, but also allow
+					   APPE, STOR, STOU */
+} classflag_t;
+
+#define CURCLASS_FLAGS_SET(x)	(curclass.flags |=  (FLAG_ ## x))
+#define CURCLASS_FLAGS_CLR(x)	(curclass.flags &= ~(FLAG_ ## x))
+#define CURCLASS_FLAGS_ISSET(x)	(curclass.flags &   (FLAG_ ## x))
+
 struct ftpclass {
-	int		 checkportcmd;	/* Check PORT commands are valid */
 	char		*chroot;	/* Directory to chroot(2) to at login */
 	char		*classname;	/* Current class */
 	struct ftpconv	*conversions;	/* List of conversions */
-	char		*display;	/* Files to display upon chdir */
+	char		*display;	/* File to display upon chdir */
 	char		*homedir;	/* Directory to chdir(2) to at login */
+	classflag_t	 flags;		/* Flags; see classflag_t above */
 	int	 	 limit;		/* Max connections (-1 = unlimited) */
 	char		*limitfile;	/* File to display if limit reached */
-	int		 maxrateget;	/* Maximum get transfer rate throttle */
-	int		 maxrateput;	/* Maximum put transfer rate throttle */
+	LLT		 maxfilesize;	/* Maximum file size of uploads */
+	LLT		 maxrateget;	/* Maximum get transfer rate throttle */
+	LLT		 maxrateput;	/* Maximum put transfer rate throttle */
 	unsigned int	 maxtimeout;	/* Maximum permitted timeout */
-	int		 modify;	/* Allow CHMOD, DELE, MKD, RMD, RNFR,
-					   UMASK */
 	char		*motd;		/* MotD file to display after login */
 	char		*notify;	/* Files to notify about upon chdir */
-	int		 passive;	/* Allow PASV mode */
 	int		 portmin;	/* Minumum port for passive mode */
 	int		 portmax;	/* Maximum port for passive mode */
-	int		 rateget;	/* Get (RETR) transfer rate throttle */
-	int		 rateput;	/* Put (STOR) transfer rate throttle */
+	LLT		 rateget;	/* Get (RETR) transfer rate throttle */
+	LLT		 rateput;	/* Put (STOR) transfer rate throttle */
 	unsigned int	 timeout;	/* Default timeout */
 	class_ft	 type;		/* Class type */
 	mode_t		 umask;		/* Umask to use */
-	int		 upload;	/* As per modify, but also allow
-					   APPE, STOR, STOU */
 };
 
 #include <netinet/in.h>
@@ -255,6 +283,7 @@ GLOBAL	int		connections;
 GLOBAL	struct ftpclass	curclass;
 GLOBAL	int		debug;
 GLOBAL	jmp_buf		errcatch;
+GLOBAL	char		*emailaddr;
 GLOBAL	int		form;
 GLOBAL	int		gidcount;	/* number of entries in gidlist[] */
 GLOBAL	gid_t		gidlist[NGROUPS_MAX];
@@ -318,22 +347,4 @@ extern	struct tab	cmdtab[];
 
 #ifndef IPPORT_ANONMAX
 # define IPPORT_ANONMAX	65535
-#endif
-
-#ifdef NO_LONG_LONG
-# define LLF		"%ld"
-# define LLFP(x)	"%" x "ld"
-# define LLT		long
-# define ULLF		"%lu"
-# define ULLFP(x)	"%" x "lu"
-# define ULLT		unsigned long
-# define STRTOLL(x,y,z)	strtol(x,y,z)
-#else
-# define LLF		"%lld"
-# define LLFP(x)	"%" x "lld"
-# define LLT		long long
-# define ULLF		"%llu"
-# define ULLFP(x)	"%" x "llu"
-# define ULLT		unsigned long long
-# define STRTOLL(x,y,z)	strtoll(x,y,z)
 #endif
