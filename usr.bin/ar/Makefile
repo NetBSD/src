@@ -1,5 +1,5 @@
-#	from: @(#)Makefile	8.1 (Berkeley) 6/6/93
-#	$Id: Makefile,v 1.6 1994/12/22 12:29:28 cgd Exp $
+#	$NetBSD: Makefile,v 1.7 1995/03/25 06:39:33 glass Exp $
+#	@(#)Makefile	8.1 (Berkeley) 6/6/93
 
 PROG=	ar
 CFLAGS+=-I${.CURDIR}

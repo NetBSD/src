@@ -1,3 +1,5 @@
+/*	$NetBSD: pathnames.h,v 1.4 1995/03/25 06:39:50 glass Exp $	*/
+
 /*-
  * Copyright (c) 1991, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -33,8 +35,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)pathnames.h	8.1 (Berkeley) 6/6/93
- *	$Id: pathnames.h,v 1.3 1994/09/19 03:34:18 mycroft Exp $
+ *	@(#)pathnames.h	8.1 (Berkeley) 6/6/93
  */
 
 #define	_NAME_ARTMP	"ar.XXXXXX"
