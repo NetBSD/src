@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.3 2002/04/12 18:50:30 thorpej Exp $ */
+/* $NetBSD: pmap.c,v 1.4 2002/08/16 21:16:48 bjh21 Exp $ */
 /*-
  * Copyright (c) 1997, 1998, 2000 Ben Harris
  * All rights reserved.
@@ -102,7 +102,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.3 2002/04/12 18:50:30 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.4 2002/08/16 21:16:48 bjh21 Exp $");
 
 #include <sys/kernel.h> /* for cold */
 #include <sys/malloc.h>
@@ -1070,30 +1070,19 @@ pmap_find(paddr_t pa)
 void
 pmap_zero_page(paddr_t pa)
 {
-	int ppn;
 	UVMHIST_FUNC("pmap_zero_page");
 
 	UVMHIST_CALLED(pmaphist);
 	bzero(pmap_find(pa), PAGE_SIZE);
-	ppn = atop(pa);
-	pv_table[ppn].pv_pflags |= PV_MODIFIED | PV_REFERENCED;
-	pmap_update_page(ppn);
 }
 
 void
 pmap_copy_page(paddr_t src, paddr_t dest)
 {
-	int sppn, dppn;
 	UVMHIST_FUNC("pmap_copy_page");
 
 	UVMHIST_CALLED(pmaphist);
 	memcpy(pmap_find(dest), pmap_find(src), PAGE_SIZE);
-	sppn = atop(src);
-	dppn = atop(dest);
-	pv_table[sppn].pv_pflags |= PV_REFERENCED;
-	pmap_update_page(sppn);
-	pv_table[dppn].pv_pflags |= PV_MODIFIED | PV_REFERENCED;
-	pmap_update_page(dppn);
 }
 
 #ifdef PMAP_DEBUG_MODIFIED
