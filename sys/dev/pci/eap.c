@@ -1,4 +1,4 @@
-/*	$NetBSD: eap.c,v 1.73 2004/10/29 12:57:18 yamt Exp $	*/
+/*	$NetBSD: eap.c,v 1.74 2004/11/09 16:28:14 kent Exp $	*/
 /*      $OpenBSD: eap.c,v 1.6 1999/10/05 19:24:42 csapuntz Exp $ */
 
 /*
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: eap.c,v 1.73 2004/10/29 12:57:18 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: eap.c,v 1.74 2004/11/09 16:28:14 kent Exp $");
 
 #include "midi.h"
 #include "joy_eap.h"
@@ -767,26 +767,6 @@ eap_attach(struct device *parent, struct device *self, void *aux)
 			return;
 
 		eap_hw_if = &eap1371_hw_if;
-
-		/* Just enable the DAC and master volumes by default */
-		ctl.type = AUDIO_MIXER_ENUM;
-		ctl.un.ord = 0;  /* off */
-		ctl.dev = eap1371_get_portnum_by_name(sc, AudioCoutputs,
-		       AudioNmaster, AudioNmute);
-		eap1371_mixer_set_port(&sc->sc_ei[EAP_I1], &ctl);
-		ctl.dev = eap1371_get_portnum_by_name(sc, AudioCinputs,
-		       AudioNdac, AudioNmute);
-		eap1371_mixer_set_port(&sc->sc_ei[EAP_I1], &ctl);
-		ctl.dev = eap1371_get_portnum_by_name(sc, AudioCrecord,
-		       AudioNvolume, AudioNmute);
-		eap1371_mixer_set_port(&sc->sc_ei[EAP_I1], &ctl);
-		
-		ctl.dev = eap1371_get_portnum_by_name(sc, AudioCrecord,
-		       AudioNsource, NULL);
-		ctl.type = AUDIO_MIXER_ENUM;
-		ctl.un.ord = 0;
-		eap1371_mixer_set_port(&sc->sc_ei[EAP_I1], &ctl);
-
 	}
 
 	sc->sc_ei[EAP_I1].ei_audiodev =
