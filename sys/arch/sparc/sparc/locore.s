@@ -42,7 +42,7 @@
  *	@(#)locore.s	8.4 (Berkeley) 12/10/93
  *
  * from: Header: locore.s,v 1.51 93/04/21 06:19:37 torek Exp
- * $Id: locore.s,v 1.21 1994/11/02 04:57:02 deraadt Exp $
+ * $Id: locore.s,v 1.22 1994/11/14 04:16:15 deraadt Exp $
  */
 
 #define	LOCORE
@@ -3787,13 +3787,15 @@ ENTRY(probeset)
 	 st	%g0, [%o2 + PCB_ONFAULT]
 
 /*
- * int ldcontrolb(caddr_t)
+ * int xldcontrolb(caddr_t, pcb)
+ *		    %o0     %o1
  *
  * read a byte from the specified address in ASI_CONTROL space.
  */
-ENTRY(ldcontrolb)
-	sethi	%hi(_cpcb), %o2
-	ld	[%o2 + %lo(_cpcb)], %o2	! cpcb->pcb_onfault = Lfsbail;
+ENTRY(xldcontrolb)
+	!sethi	%hi(_cpcb), %o2
+	!ld	[%o2 + %lo(_cpcb)], %o2	! cpcb->pcb_onfault = Lfsbail;
+	or	%o1, %g0, %o2		! %o2 = %o1
 	set	_Lfsbail, %o5
 	st	%o5, [%o2 + PCB_ONFAULT]
 	lduba	[%o0] ASI_CONTROL, %o0	! read

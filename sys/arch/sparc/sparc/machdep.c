@@ -42,7 +42,7 @@
  *	@(#)machdep.c	8.1 (Berkeley) 6/11/93
  *
  * from: Header: machdep.c,v 1.41 93/05/27 04:39:05 torek Exp 
- * $Id: machdep.c,v 1.32 1994/11/05 09:31:05 deraadt Exp $
+ * $Id: machdep.c,v 1.33 1994/11/14 04:16:12 deraadt Exp $
  */
 
 #include <sys/param.h>
@@ -992,3 +992,26 @@ oldmon_w_cmd(va, ar)
 	}
 }
 #endif /* SUN4 */
+
+u_int
+ldcontrolb(addr)
+caddr_t addr;
+{
+	struct pcb *xpcb;
+	extern struct user *proc0paddr;
+	u_long saveonfault, res;
+	int s;
+
+	s = splhigh();
+	if (curproc == NULL)
+		xpcb = (struct pcb *)proc0paddr;
+	else
+		xpcb = &curproc->p_addr->u_pcb;
+
+	saveonfault = (u_long)xpcb->pcb_onfault;
+	res = xldcontrolb(addr, xpcb);
+	xpcb->pcb_onfault = (caddr_t)saveonfault;
+
+	splx(s);
+	return (res);
+}
