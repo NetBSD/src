@@ -23,7 +23,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: sshconnect2.c,v 1.43 2001/02/08 10:47:05 itojun Exp $");
+RCSID("$OpenBSD: sshconnect2.c,v 1.47 2001/02/11 12:59:25 markus Exp $");
 
 #include <openssl/bn.h>
 #include <openssl/md5.h>
@@ -84,11 +84,15 @@ ssh_kex2(char *host, struct sockaddr *hostaddr)
 		myproposal[PROPOSAL_ENC_ALGS_STOC] = options.ciphers;
 	}
 	if (options.compression) {
-		myproposal[PROPOSAL_COMP_ALGS_CTOS] = "zlib";
+		myproposal[PROPOSAL_COMP_ALGS_CTOS] =
 		myproposal[PROPOSAL_COMP_ALGS_STOC] = "zlib";
 	} else {
-		myproposal[PROPOSAL_COMP_ALGS_CTOS] = "none";
+		myproposal[PROPOSAL_COMP_ALGS_CTOS] =
 		myproposal[PROPOSAL_COMP_ALGS_STOC] = "none";
+	}
+	if (options.macs != NULL) {
+		myproposal[PROPOSAL_MAC_ALGS_CTOS] =
+		myproposal[PROPOSAL_MAC_ALGS_STOC] = options.macs;
 	}
 
 	/* buffers with raw kexinit messages */
@@ -601,13 +605,13 @@ input_userauth_failure(int type, int plen, void *ctxt)
 	packet_done();
 
 	if (partial != 0)
-		debug("partial success");
+		log("Authenticated with partial success.");
 	debug("authentications that can continue: %s", authlist);
 
 	for (;;) {
 		method = authmethod_get(authlist);
 		if (method == NULL)
-			fatal("Unable to find an authentication method");
+			fatal("Permission denied (%s).", authlist);
 		authctxt->method = method;
 		if (method->userauth(authctxt) != 0) {
 			debug2("we sent a %s packet, wait for reply", method->name);
@@ -884,18 +888,13 @@ userauth_kbdint(Authctxt *authctxt)
 }
 
 /*
- * parse SSH2_MSG_USERAUTH_INFO_REQUEST, prompt user and send
- * SSH2_MSG_USERAUTH_INFO_RESPONSE
+ * parse INFO_REQUEST, prompt user and send INFO_RESPONSE
  */
 void
 input_userauth_info_req(int type, int plen, void *ctxt)
 {
 	Authctxt *authctxt = ctxt;
-	char *name = NULL;
-	char *inst = NULL;
-	char *lang = NULL;
-	char *prompt = NULL;
-	char *response = NULL;
+	char *name, *inst, *lang, *prompt, *response;
 	u_int num_prompts, i;
 	int echo = 0;
 
@@ -907,15 +906,13 @@ input_userauth_info_req(int type, int plen, void *ctxt)
 	name = packet_get_string(NULL);
 	inst = packet_get_string(NULL);
 	lang = packet_get_string(NULL);
-
 	if (strlen(name) > 0)
 		cli_mesg(name);
-	xfree(name);
-
 	if (strlen(inst) > 0)
 		cli_mesg(inst);
+	xfree(name);
 	xfree(inst);
-	xfree(lang); 				/* unused */
+	xfree(lang);
 
 	num_prompts = packet_get_int();
 	/*
@@ -972,7 +969,7 @@ authmethod_clear(void)
 	}
 	if (authname_current != NULL) {
 		xfree(authname_current);
-		authlist_state = NULL;
+		authname_current = NULL;
 	}
 	if (authlist_state != NULL)
 		authlist_state = NULL;

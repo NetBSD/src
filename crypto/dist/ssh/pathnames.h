@@ -1,4 +1,4 @@
-/*	$OpenBSD: pathnames.h,v 1.3 2001/02/08 00:04:52 markus Exp $	*/
+/*	$OpenBSD: pathnames.h,v 1.4 2001/02/08 22:28:07 stevesk Exp $	*/
 
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -107,6 +107,7 @@
 
 /* for sftp */
 #define _PATH_SFTP_SERVER		"/usr/libexec/sftp-server"
+#define _PATH_LS			"ls"
 
 #define _PATH_RSH			"/usr/bin/rsh"
 #define _PATH_URANDOM			"/dev/urandom"
