@@ -1,4 +1,4 @@
-/*	$NetBSD: socketvar.h,v 1.31 1998/08/02 04:53:11 thorpej Exp $	*/
+/*	$NetBSD: socketvar.h,v 1.32 1998/12/16 00:24:10 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -132,6 +132,8 @@ struct socket {
 #define	SS_NBIO			0x080	/* non-blocking ops */
 #define	SS_ASYNC		0x100	/* async i/o notify */
 #define	SS_ISCONFIRMING		0x200	/* deciding to accept connection req */
+#define	SS_MORETOCOME		0x400	/* hint from sosend to lower layer;
+					   more data coming */
 
 
 /*
