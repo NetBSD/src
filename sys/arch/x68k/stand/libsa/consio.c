@@ -1,4 +1,4 @@
-/*	$NetBSD: consio.c,v 1.2 2001/09/28 15:11:20 minoura Exp $	*/
+/*	$NetBSD: consio.c,v 1.3 2001/09/30 15:54:38 minoura Exp $	*/
 
 /*
  * Copyright (c) 2001 MINOURA Makoto.
@@ -26,6 +26,7 @@
  */
 
 #include <machine/stdarg.h>
+#include <lib/libkern/libkern.h>
 #include <lib/libsa/stand.h>
 
 #include "libx68k.h"
@@ -144,15 +145,42 @@ panic(const char *fmt,...)
 	exit(1);
 }
 
+extern void put_image(int, int);
+
 void
 print_title(const char *fmt, ...)
 {
 	va_list ap;
 
-	/* Print the logo image here */
+	if (x68k_console_device == ITE) {
+		int y, y1;
+		char *buf = alloca(240); /* about 3 lines */
+		char *p;
 
-	va_start(ap, fmt);
-	vprintf(fmt, ap);
-	va_end(ap);
-	printf("\n");
+		y = y1 = (IOCS_B_LOCATE(-1, -1) & 0xffff) + 1;
+		put_image (8, y*16-8);
+		IOCS_B_LOCATE(0, y+3);
+		IOCS_B_PRINT("\360(\360C\360)\3601\3609\3609\3608\360 "
+			     "\360b\360y\360 "
+			     "\360M\360a\360r\360s\360h\360a\360l\360l\360 "
+			     "\360K\360i\360r\360k\360 "
+			     "\360M\360c\360K\360u\360s\360i\360c\360k\360.");
+		va_start(ap, fmt);
+		vsnprintf(buf, 240, fmt, ap);
+		va_end(ap);
+		while ((p = strchr(buf, '\n')) != 0) {
+			*p = 0;
+			IOCS_B_LOCATE(9, y++);
+			IOCS_B_PRINT(p);
+			buf = p+1;
+		}
+		IOCS_B_LOCATE(9, y++);
+		IOCS_B_PRINT(buf);
+		IOCS_B_LOCATE(0, y1+4);
+	} else {
+		va_start(ap, fmt);
+		vprintf(fmt, ap);
+		va_end(ap);
+		printf("\n");
+	}
 }
