@@ -1,4 +1,4 @@
-/*	$NetBSD: mdsetimage.c,v 1.2 1997/01/02 00:33:35 pk Exp $	*/
+/*	$NetBSD: mdsetimage.c,v 1.3 1997/02/11 22:26:14 pk Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -36,7 +36,7 @@ static char copyright[] =
 #endif /* not lint */
 
 #ifndef lint
-static char *rcsid = "$NetBSD: mdsetimage.c,v 1.2 1997/01/02 00:33:35 pk Exp $";
+static char *rcsid = "$NetBSD: mdsetimage.c,v 1.3 1997/02/11 22:26:14 pk Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -126,8 +126,8 @@ main(argc, argv)
 	if (fssb.st_size > SIZE_T_MAX)
 		errx(1, "fs image is too big");
 	if (fssb.st_size > md_root_size)
-		errx(1, "fs image (%ld bytes) too big for buffer (%d bytes)",
-		   fssb.st_size, md_root_size);
+		errx(1, "fs image (%qd bytes) too big for buffer (%ld bytes)",
+		     fssb.st_size, (unsigned long)md_root_size);
 
 	if (verbose)
 		fprintf(stderr, "copying image from %s into %s\n", fsfile,
@@ -213,7 +213,8 @@ find_md_root(fname, mappedfile, mappedsize, nl, rootoffp, rootsizep)
 	}
 	if (verbose)
 		fprintf(stderr, "%s is at offset %#lx in %s\n",
-		    nl[X_MD_ROOT_SIZE].n_name, rootsizeoff, fname);
+			nl[X_MD_ROOT_SIZE].n_name,
+			(unsigned long)rootsizeoff, fname);
 	*rootsizep = *(u_int32_t *)&mappedfile[rootsizeoff];
 	if (verbose)
 		fprintf(stderr, "%s has value %#x\n",
@@ -227,7 +228,8 @@ find_md_root(fname, mappedfile, mappedsize, nl, rootoffp, rootsizep)
 	}
 	if (verbose)
 		fprintf(stderr, "%s is at offset %#lx in %s\n",
-		    nl[X_MD_ROOT_IMAGE].n_name, *rootoffp, fname);
+			nl[X_MD_ROOT_IMAGE].n_name,
+			(unsigned long)(*rootoffp), fname);
 
 	return (0);
 }
