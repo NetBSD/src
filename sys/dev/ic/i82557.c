@@ -1,4 +1,4 @@
-/*	$NetBSD: i82557.c,v 1.14 1999/12/04 02:02:30 sommerfeld Exp $	*/
+/*	$NetBSD: i82557.c,v 1.15 1999/12/12 17:46:36 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -85,6 +85,8 @@
 #include <sys/ioctl.h>
 #include <sys/errno.h>
 #include <sys/device.h>
+
+#include <machine/endian.h>
 
 #include <vm/vm.h>		/* for PAGE_SIZE */
 
@@ -757,9 +759,9 @@ fxp_start(ifp)
 		/* Initialize the fraglist. */
 		for (seg = 0; seg < dmamap->dm_nsegs; seg++) {
 			tbd->tbd_d[seg].tb_addr =
-			    dmamap->dm_segs[seg].ds_addr;
+			    htole32(dmamap->dm_segs[seg].ds_addr);
 			tbd->tbd_d[seg].tb_size =
-			    dmamap->dm_segs[seg].ds_len;
+			    htole32(dmamap->dm_segs[seg].ds_len);
 		}
 
 		FXP_CDTBDSYNC(sc, nexttx, BUS_DMASYNC_PREWRITE);
@@ -776,9 +778,10 @@ fxp_start(ifp)
 		/*
 		 * Initialize the transmit descriptor.
 		 */
+		/* BIG_ENDIAN: no need to swap to store 0 */
 		txd->cb_status = 0;
 		txd->cb_command =
-		    FXP_CB_COMMAND_XMIT | FXP_CB_COMMAND_SF;
+		    htole16(FXP_CB_COMMAND_XMIT | FXP_CB_COMMAND_SF);
 		txd->tx_threshold = tx_threshold;
 		txd->tbd_number = dmamap->dm_nsegs;
 
@@ -817,7 +820,7 @@ fxp_start(ifp)
 		 * has been transmitted.
 		 */
 		FXP_CDTX(sc, sc->sc_txlast)->cb_command |=
-		    FXP_CB_COMMAND_I | FXP_CB_COMMAND_S;
+		    htole16(FXP_CB_COMMAND_I | FXP_CB_COMMAND_S);
 		FXP_CDTXSYNC(sc, sc->sc_txlast,
 		    BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
 
@@ -827,7 +830,7 @@ fxp_start(ifp)
 		 */
 		FXP_CDTXSYNC(sc, lasttx,
 		    BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
-		FXP_CDTX(sc, lasttx)->cb_command &= ~FXP_CB_COMMAND_S;
+		FXP_CDTX(sc, lasttx)->cb_command &= htole16(~FXP_CB_COMMAND_S);
 		FXP_CDTXSYNC(sc, lasttx,
 		    BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
 
@@ -858,7 +861,7 @@ fxp_intr(arg)
 	struct fxp_rfa *rfa;
 	struct ether_header *eh;
 	int i, claimed = 0;
-	u_int16_t len;
+	u_int16_t len, rxstat, txstat;
 	u_int8_t statack;
 
 	/*
@@ -896,7 +899,9 @@ fxp_intr(arg)
 			FXP_RFASYNC(sc, m,
 			    BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
 
-			if ((rfa->rfa_status & FXP_RFA_STATUS_C) == 0) {
+			rxstat = le16toh(rfa->rfa_status);
+
+			if ((rxstat & FXP_RFA_STATUS_C) == 0) {
 				/*
 				 * We have processed all of the
 				 * receive buffers.
@@ -908,7 +913,8 @@ fxp_intr(arg)
 
 			FXP_RXBUFSYNC(sc, m, BUS_DMASYNC_POSTREAD);
 
-			len = rfa->actual_size & (m->m_ext.ext_size - 1);
+			len = le16toh(rfa->actual_size) &
+			    (m->m_ext.ext_size - 1);
 
 			if (len < sizeof(struct ether_header)) {
 				/*
@@ -959,8 +965,7 @@ fxp_intr(arg)
 				bpf_mtap(ifp->if_bpf, m);
 
 				if ((ifp->if_flags & IFF_PROMISC) != 0 &&
-				    (rfa->rfa_status &
-				     FXP_RFA_STATUS_IAMATCH) != 0 &&
+				    (rxstat & FXP_RFA_STATUS_IAMATCH) != 0 &&
 				    (eh->ether_dhost[0] & 1) == 0) {
 					m_freem(m);
 					goto rcvloop;
@@ -997,7 +1002,9 @@ fxp_intr(arg)
 				FXP_CDTXSYNC(sc, i,
 				    BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
 
-				if ((txd->cb_status & FXP_CB_STATUS_C) == 0)
+				txstat = le16toh(txd->cb_status);
+
+				if ((txstat & FXP_CB_STATUS_C) == 0)
 					break;
 
 				FXP_CDTBDSYNC(sc, i, BUS_DMASYNC_POSTWRITE);
@@ -1063,25 +1070,25 @@ fxp_tick(arg)
 
 	s = splnet();
 
-	ifp->if_opackets += sp->tx_good;
-	ifp->if_collisions += sp->tx_total_collisions;
+	ifp->if_opackets += le32toh(sp->tx_good);
+	ifp->if_collisions += le32toh(sp->tx_total_collisions);
 	if (sp->rx_good) {
-		ifp->if_ipackets += sp->rx_good;
+		ifp->if_ipackets += le32toh(sp->rx_good);
 		sc->sc_rxidle = 0;
 	} else {
 		sc->sc_rxidle++;
 	}
 	ifp->if_ierrors +=
-	    sp->rx_crc_errors +
-	    sp->rx_alignment_errors +
-	    sp->rx_rnr_errors +
-	    sp->rx_overrun_errors;
+	    le32toh(sp->rx_crc_errors) +
+	    le32toh(sp->rx_alignment_errors) +
+	    le32toh(sp->rx_rnr_errors) +
+	    le32toh(sp->rx_overrun_errors);
 	/*
 	 * If any transmit underruns occured, bump up the transmit
 	 * threshold by another 512 bytes (64 * 8).
 	 */
 	if (sp->tx_underruns) {
-		ifp->if_oerrors += sp->tx_underruns;
+		ifp->if_oerrors += le32toh(sp->tx_underruns);
 		if (tx_threshold < 192)
 			tx_threshold += 64;
 	}
@@ -1118,6 +1125,7 @@ fxp_tick(arg)
 		 * Just zero our copy of the stats and wait for the
 		 * next timer event to update them.
 		 */
+		/* BIG_ENDIAN: no swap required to store 0 */
 		sp->tx_good = 0;
 		sp->tx_underruns = 0;
 		sp->tx_total_collisions = 0;
@@ -1297,9 +1305,12 @@ fxp_init(sc)
 	 */
 	memcpy(cbp, fxp_cb_config_template, sizeof(fxp_cb_config_template));
 
+	/* BIG_ENDIAN: no need to swap to store 0 */
 	cbp->cb_status =	0;
-	cbp->cb_command =	FXP_CB_COMMAND_CONFIG | FXP_CB_COMMAND_EL;
-	cbp->link_addr =	-1;	/* (no) next command */
+	cbp->cb_command =	htole16(FXP_CB_COMMAND_CONFIG |
+				    FXP_CB_COMMAND_EL);
+	/* BIG_ENDIAN: no need to swap to store 0xffffffff */
+	cbp->link_addr =	0xffffffff; /* (no) next command */
 	cbp->byte_count =	22;	/* (22) bytes to config */
 	cbp->rx_fifo_limit =	8;	/* rx fifo threshold (32 bytes) */
 	cbp->tx_fifo_limit =	0;	/* tx fifo threshold (0 bytes) */
@@ -1349,9 +1360,11 @@ fxp_init(sc)
 	 * Initialize the station address.
 	 */
 	cb_ias = &sc->sc_control_data->fcd_iascb;
+	/* BIG_ENDIAN: no need to swap to store 0 */
 	cb_ias->cb_status = 0;
-	cb_ias->cb_command = FXP_CB_COMMAND_IAS | FXP_CB_COMMAND_EL;
-	cb_ias->link_addr = -1;
+	cb_ias->cb_command = htole16(FXP_CB_COMMAND_IAS | FXP_CB_COMMAND_EL);
+	/* BIG_ENDIAN: no need to swap to store 0xffffffff */
+	cb_ias->link_addr = 0xffffffff;
 	memcpy((void *)cb_ias->macaddr, LLADDR(ifp->if_sadl), ETHER_ADDR_LEN);
 
 	FXP_CDIASSYNC(sc, BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
@@ -1376,9 +1389,10 @@ fxp_init(sc)
 	for (i = 0; i < FXP_NTXCB; i++) {
 		txd = FXP_CDTX(sc, i);
 		memset(txd, 0, sizeof(struct fxp_cb_tx));
-		txd->cb_command = FXP_CB_COMMAND_NOP | FXP_CB_COMMAND_S;
-		txd->tbd_array_addr = FXP_CDTBDADDR(sc, i);
-		txd->link_addr = FXP_CDTXADDR(sc, FXP_NEXTTX(i));
+		txd->cb_command =
+		    htole16(FXP_CB_COMMAND_NOP | FXP_CB_COMMAND_S);
+		txd->tbd_array_addr = htole32(FXP_CDTBDADDR(sc, i));
+		txd->link_addr = htole32(FXP_CDTXADDR(sc, FXP_NEXTTX(i)));
 		FXP_CDTXSYNC(sc, i, BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
 	}
 	sc->sc_txpending = 0;
@@ -1788,10 +1802,11 @@ fxp_mc_setup(sc)
 		ETHER_NEXT_MULTI(step, enm);
 	}
 
+	/* BIG_ENDIAN: no need to swap to store 0 */
 	mcsp->cb_status = 0;
-	mcsp->cb_command = FXP_CB_COMMAND_MCAS | FXP_CB_COMMAND_EL;
-	mcsp->link_addr = FXP_CDTXADDR(sc, FXP_NEXTTX(sc->sc_txlast));
-	mcsp->mc_cnt = nmcasts * ETHER_ADDR_LEN;
+	mcsp->cb_command = htole16(FXP_CB_COMMAND_MCAS | FXP_CB_COMMAND_EL);
+	mcsp->link_addr = htole32(FXP_CDTXADDR(sc, FXP_NEXTTX(sc->sc_txlast)));
+	mcsp->mc_cnt = htole16(nmcasts * ETHER_ADDR_LEN);
 
 	FXP_CDMCSSYNC(sc, BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fxp_pci.c,v 1.2 1999/10/30 16:07:59 sommerfeld Exp $	*/
+/*	$NetBSD: if_fxp_pci.c,v 1.3 1999/12/12 17:46:37 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -60,6 +60,8 @@
 #if NRND > 0
 #include <sys/rnd.h>
 #endif
+
+#include <machine/endian.h>
 
 #include <net/if.h>
 #include <net/if_dl.h>
