@@ -27,7 +27,7 @@
  *	i4b_debug.h - i4b debug header file
  *	-----------------------------------
  *
- *	$Id: i4b_debug.h,v 1.3 2002/04/09 20:48:21 martin Exp $ 
+ *	$Id: i4b_debug.h,v 1.4 2003/09/25 15:54:41 pooka Exp $ 
  *
  * $FreeBSD$
  *
@@ -176,6 +176,7 @@ extern unsigned int i4b_l4_debug;
 #define L4_TINAMSG	0x0200		/* tina driver messages		*/
 #define L4_TINAERR	0x0400		/* tina driver error messages	*/
 #define L4_INGDBG	0x0800		/* ing driver debug messages	*/
+#define L4_IAVCDBG	0x1000		/* iavc driver debug messages	*/
 
 #define L4_DEBUG_MAX	0x0fff		/* all messages on	*/
 #define L4_DEBUG_ERR	(L4_ERR | L4_TINADBG |  L4_TINAMSG | L4_TINAERR)
