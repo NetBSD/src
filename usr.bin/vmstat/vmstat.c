@@ -1,4 +1,4 @@
-/* $NetBSD: vmstat.c,v 1.127 2005/01/26 13:42:07 wiz Exp $ */
+/* $NetBSD: vmstat.c,v 1.128 2005/01/30 23:38:17 simonb Exp $ */
 
 /*-
  * Copyright (c) 1998, 2000, 2001 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1986, 1991, 1993\n\
 #if 0
 static char sccsid[] = "@(#)vmstat.c	8.2 (Berkeley) 3/1/95";
 #else
-__RCSID("$NetBSD: vmstat.c,v 1.127 2005/01/26 13:42:07 wiz Exp $");
+__RCSID("$NetBSD: vmstat.c,v 1.128 2005/01/30 23:38:17 simonb Exp $");
 #endif
 #endif /* not lint */
 
@@ -1125,7 +1125,6 @@ dopool(int verbose, int wide)
 		} else {
 			inuse += this_inuse;
 			total += this_total;
-
 		}
 		if (wide) {
 			if (this_total == 0)
