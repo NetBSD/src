@@ -1,4 +1,4 @@
-/*	$NetBSD: sd.c,v 1.138 1998/12/08 00:18:46 thorpej Exp $	*/
+/*	$NetBSD: sd.c,v 1.139 1999/01/19 10:57:11 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -161,12 +161,9 @@ sdattach(parent, sd, sc_link, ops)
 	 */
 	printf("\n");
 
-	if ((sd->sc_link->quirks & SDEV_NOSTARTUNIT) == 0) {
-		error = scsipi_start(sd->sc_link, SSS_START,
-		    SCSI_AUTOCONF | SCSI_IGNORE_ILLEGAL_REQUEST |
-		    SCSI_IGNORE_MEDIA_CHANGE | SCSI_SILENT);
-	} else
-		error = 0;
+	error = scsipi_start(sd->sc_link, SSS_START,
+	    SCSI_AUTOCONF | SCSI_IGNORE_ILLEGAL_REQUEST |
+	    SCSI_IGNORE_MEDIA_CHANGE | SCSI_SILENT);
 
 	if (error)
 		result = SDGP_RESULT_OFFLINE;
@@ -310,13 +307,11 @@ sdopen(dev, flag, fmt, p)
 			goto bad3;
 
 		/* Start the pack spinning if necessary. */
-		if ((sc_link->quirks & SDEV_NOSTARTUNIT) == 0) {
-			error = scsipi_start(sc_link, SSS_START,
-			    SCSI_IGNORE_ILLEGAL_REQUEST |
-			    SCSI_IGNORE_MEDIA_CHANGE | SCSI_SILENT);
-			if (error)
-				goto bad3;
-		}
+		error = scsipi_start(sc_link, SSS_START,
+		    SCSI_IGNORE_ILLEGAL_REQUEST |
+		    SCSI_IGNORE_MEDIA_CHANGE | SCSI_SILENT);
+		if (error)
+			goto bad3;
 
 		sc_link->flags |= SDEV_OPEN;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: atapiconf.c,v 1.20 1999/01/19 09:31:58 bouyer Exp $	*/
+/*	$NetBSD: atapiconf.c,v 1.21 1999/01/19 10:57:11 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1996 Manuel Bouyer.  All rights reserved.
@@ -73,31 +73,33 @@ int atapibusprint __P((void *, const char *));
 
 struct scsi_quirk_inquiry_pattern atapi_quirk_patterns[] = {
 	{{T_CDROM, T_REMOV,
-	 "GCD-R580B", "", "1.00"},                ADEV_LITTLETOC}, /* Goldstar */
+	 "ALPS ELECTRIC CO.,LTD. DC544C", "", "SW03D"},	ADEV_NOTUR},
 	{{T_CDROM, T_REMOV,
-	 "SANYO CRD-256P", "", "1.02"},           ADEV_NOCAPACITY},
-	{{T_CDROM, T_REMOV,
-	 "SANYO CRD-254P", "", "1.02"},           ADEV_NOCAPACITY},
-	{{T_CDROM, T_REMOV,
-	 "SANYO CRD-S54P", "", "1.08"},           ADEV_NOCAPACITY},
-	{{T_CDROM, T_REMOV,
-	 "CD-ROM  CDR-S1", "", "1.70"},           ADEV_NOCAPACITY}, /* Sanyo */
-	{{T_CDROM, T_REMOV,
-	 "CD-ROM  CDR-N16", "", "1.25"},          ADEV_NOCAPACITY}, /* Sanyo */
-	{{T_CDROM, T_REMOV,
-	 "UJDCD8730", "", "1.14"},                ADEV_NODOORLOCK}, /* Acer */
-	{{T_CDROM, T_REMOV,
-	 "ALPS ELECTRIC CO.,LTD. DC544C", "", "SW03D"}, ADEV_NOTUR},
-	{{T_CDROM, T_REMOV,
-	 "NEC                 CD-ROM DRIVE:273", "", "4.21"}, ADEV_NOTUR},
-	{{T_CDROM, T_REMOV,
-	 "MATSHITA CR-574", "", "1.06"},	ADEV_NOCAPACITY},
-	{{T_CDROM, T_REMOV,
-	 "MATSHITA CR-574", "", "1.02"},	ADEV_NOCAPACITY},
+	 "BCD-16X 1997-04-25", "", "VER 2.2"},	SDEV_NOSTARTUNIT},
 	{{T_CDROM, T_REMOV,
 	 "FX320S", "", "q01"},			ADEV_NOSENSE},
 	{{T_CDROM, T_REMOV,
+	 "GCD-R580B", "", "1.00"},		ADEV_LITTLETOC},
+	{{T_CDROM, T_REMOV,
+	 "MATSHITA CR-574", "", "1.02"},	ADEV_NOCAPACITY},
+	{{T_CDROM, T_REMOV,
+	 "MATSHITA CR-574", "", "1.06"},	ADEV_NOCAPACITY},
+	{{T_CDROM, T_REMOV,
 	 "Memorex CRW-2642", "", "1.0g"},	ADEV_NOSENSE},
+	{{T_CDROM, T_REMOV,
+	 "NEC                 CD-ROM DRIVE:273", "", "4.21"}, ADEV_NOTUR},
+	{{T_CDROM, T_REMOV,
+	 "SANYO CRD-256P", "", "1.02"},		ADEV_NOCAPACITY},
+	{{T_CDROM, T_REMOV,
+	 "SANYO CRD-254P", "", "1.02"},		ADEV_NOCAPACITY},
+	{{T_CDROM, T_REMOV,
+	 "SANYO CRD-S54P", "", "1.08"},		ADEV_NOCAPACITY},
+	{{T_CDROM, T_REMOV,
+	 "CD-ROM  CDR-S1", "", "1.70"},		ADEV_NOCAPACITY}, /* Sanyo */
+	{{T_CDROM, T_REMOV,
+	 "CD-ROM  CDR-N16", "", "1.25"},	ADEV_NOCAPACITY}, /* Sanyo */
+	{{T_CDROM, T_REMOV,
+	 "UJDCD8730", "", "1.14"},		ADEV_NODOORLOCK}, /* Acer */
 };
 
 int
