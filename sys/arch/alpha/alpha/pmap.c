@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.96 1999/05/23 16:54:43 thorpej Exp $ */
+/* $NetBSD: pmap.c,v 1.97 1999/05/23 17:49:07 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -155,7 +155,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.96 1999/05/23 16:54:43 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.97 1999/05/23 17:49:07 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -496,7 +496,7 @@ void	pmap_l1pt_delref __P((pmap_t, pt_entry_t *, long));
 /*
  * PV table management functions.
  */
-void	pmap_pv_enter __P((pmap_t, paddr_t, vaddr_t, boolean_t));
+void	pmap_pv_enter __P((pmap_t, paddr_t, vaddr_t, pt_entry_t *, boolean_t));
 void	pmap_pv_remove __P((pmap_t, paddr_t, vaddr_t, boolean_t,
 	    struct pv_entry **));
 struct	pv_entry *pmap_pv_alloc __P((void));
@@ -1395,20 +1395,17 @@ pmap_page_protect(pa, prot)
 	simple_lock(&pvh->pvh_slock);
 	s = splimp();			/* XXX needed w/ PMAP_NEW? */
 	for (pv = LIST_FIRST(&pvh->pvh_list); pv != NULL; pv = nextpv) {
-		pt_entry_t *pte;
-
 		nextpv = LIST_NEXT(pv, pv_list);
 
 		simple_lock(&pv->pv_pmap->pm_slock);
-		pte = pmap_l3pte(pv->pv_pmap, pv->pv_va, NULL);
 #ifdef DEBUG
 		if (pmap_pte_v(pmap_l2pte(pv->pv_pmap, pv->pv_va, NULL)) == 0 ||
-		    pmap_pte_pa(pte) != pa)
+		    pmap_pte_pa(pv->pv_pte) != pa)
 			panic("pmap_page_protect: bad mapping");
 #endif
-		if (!pmap_pte_w(pte))
+		if (pmap_pte_w(pv->pv_pte) == 0)
 			needisync |= pmap_remove_mapping(pv->pv_pmap,
-			    pv->pv_va, pte, FALSE, cpu_id, NULL);
+			    pv->pv_va, pv->pv_pte, FALSE, cpu_id, NULL);
 #ifdef DEBUG
 		else {
 			if (pmapdebug & PDB_PARANOIA) {
@@ -1723,7 +1720,7 @@ pmap_enter(pmap, va, pa, prot, wired, access_type)
 	 */
 	if (managed) {
 		int s = splimp();	/* XXX needed w/ PMAP_NEW? */
-		pmap_pv_enter(pmap, pa, va, TRUE);
+		pmap_pv_enter(pmap, pa, va, pte, TRUE);
 		splx(s);
 	}
 
@@ -2753,7 +2750,7 @@ pmap_changebit(pa, set, mask, cpu_id)
 
 		simple_lock(&pv->pv_pmap->pm_slock);
 
-		pte = pmap_l3pte(pv->pv_pmap, va, NULL);
+		pte = pv->pv_pte;
 		npte = (*pte | set) & mask;
 		if (*pte != npte) {
 			hadasm = (pmap_pte_asm(pte) != 0);
@@ -2987,10 +2984,11 @@ vtophys(vaddr)
  *	Add a physical->virtual entry to the pv_table.
  */
 void
-pmap_pv_enter(pmap, pa, va, dolock)
+pmap_pv_enter(pmap, pa, va, pte, dolock)
 	pmap_t pmap;
 	paddr_t pa;
 	vaddr_t va;
+	pt_entry_t *pte;
 	boolean_t dolock;
 {
 	struct pv_head *pvh;
@@ -3002,6 +3000,7 @@ pmap_pv_enter(pmap, pa, va, dolock)
 	newpv = pmap_pv_alloc();
 	newpv->pv_va = va;
 	newpv->pv_pmap = pmap;
+	newpv->pv_pte = pte;
 
 	pvh = pa_to_pvh(pa);
 
@@ -3134,7 +3133,7 @@ pmap_pv_alloc()
 				if (simple_lock_try(&pvpmap->pm_slock) == 0)
 					continue;
 
-				pte = pmap_l3pte(pvpmap, pv->pv_va, NULL);
+				pte = pv->pv_pte;
 
 				/* Don't steal wired mappings. */
 				if (pmap_pte_w(pte)) {
