@@ -1,0 +1,29 @@
+alpha3.1 release.
+Sat Aug 14 01:38:38 EDT 1993
+henry@zoo.toronto.edu
+
+See WHATSNEW for change listing.
+
+installation notes:
+--------
+Read the comments at the beginning of Makefile before running.
+
+Utils.h contains some things that just might have to be modified on
+some systems, as well as a nested include (ugh) of <assert.h>.
+
+Split.c is used for regression testing but is not part of the RE routines
+themselves.
+
+"make h" builds regex.h, which is needed for everything else.  You may need
+to "chmod +x mkh" first.
+
+After that, just "make" will build regcomp.o, regexec.o, regfree.o,
+and regerror.o (the actual routines), bundle them together into a test
+program, and run regression tests on them.  No output is good output.
+
+"make o" builds just the .o files for the actual routines (e.g. when
+you're happy with testing, have adjusted CFLAGS for production compile,
+have done "make clean", and want to build just the library .o files).
+
+Regex.h goes in /usr/include.  All other .h files are internal only.
+--------
