@@ -1,4 +1,4 @@
-/*	$NetBSD: i82365.c,v 1.43 2000/02/04 10:18:28 joda Exp $	*/
+/*	$NetBSD: i82365.c,v 1.44 2000/02/04 11:04:46 enami Exp $	*/
 
 #define	PCICDEBUG
 
@@ -931,7 +931,7 @@ pcic_chip_do_mem_map(h, win)
 	pcic_write(h, mem_map_index[win].sysmem_start_msb,
 	    ((h->mem[win].addr >> (PCIC_SYSMEM_ADDRX_SHIFT + 8)) &
 	    PCIC_SYSMEM_ADDRX_START_MSB_ADDR_MASK) |
-	    (mem8 ? 0 : PCIC_SYSTEM_ADDRX_START_MSB_DATASIZE_16BIT));
+	    (mem8 ? 0 : PCIC_SYSMEM_ADDRX_START_MSB_DATASIZE_16BIT));
 
 	pcic_write(h, mem_map_index[win].sysmem_stop_lsb,
 	    ((h->mem[win].addr + h->mem[win].size) >>
