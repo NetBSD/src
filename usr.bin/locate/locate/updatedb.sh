@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-#	$NetBSD: updatedb.sh,v 1.1 2000/04/20 15:40:28 jdolecek Exp $
+#	$NetBSD: updatedb.sh,v 1.2 2000/04/29 21:41:19 mycroft Exp $
 #
 # Copyright (c) 1989, 1993
 #	The Regents of the University of California.  All rights reserved.
@@ -42,33 +42,28 @@
 SRCHPATHS="/"				# directories to be put in the database
 LIBDIR="/usr/libexec"			# for subprograms
 					# for temp files
-TMPDIR="${TMPDIR:-/tmp}"
-export TMPDIR
+export TMPDIR="${TMPDIR:-/tmp}"
 FCODES="/var/db/locate.database"	# the database
 
 PATH="/bin:/usr/bin"
 FILELIST="$TMPDIR/locate.list.$$"
-
-# remove temporary file if ended prematurely
-trap 'echo $0: KILLED; /bin/rm -f $FILELIST; exit 1' 2 15
+trap 'rm -f $FILELIST; exit 1' 0 2 15
 
 # Make a file list and compute common bigrams.
 # Entries of each directory shall be sorted (find -s).
 
 # search locally or everything
-# find -s ${SRCHPATHS} -print \
-find -s ${SRCHPATHS} \( ! -fstype local -o -fstype fdesc -o -fstype kernfs \) \
+# find -s $SRCHPATHS -print \
+find -s $SRCHPATHS \( ! -fstype local -o -fstype fdesc -o -fstype kernfs \) \
 		-a -prune -o -print \
-	> $FILELIST
+	>$FILELIST
 
-BIGRAMS=`$LIBDIR/locate.bigram < $FILELIST`
+BIGRAMS="`$LIBDIR/locate.bigram <$FILELIST`"
 
 # code the file list
 if [ -z "$BIGRAMS" ]; then
 	echo 'locate: updatedb failed' >&2
 else
-	$LIBDIR/locate.code $BIGRAMS < $FILELIST > $FCODES
+	$LIBDIR/locate.code "$BIGRAMS" <$FILELIST >$FCODES
 	chmod 644 $FCODES
 fi
-
-rm -f $FILELIST
