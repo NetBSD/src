@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_extern.h,v 1.42 2003/02/23 00:22:34 perseant Exp $	*/
+/*	$NetBSD: lfs_extern.h,v 1.43 2003/02/24 08:42:49 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -115,6 +115,7 @@ struct dlfs;
 struct lfs;
 struct segment;
 struct ucred;
+struct block_info;
 
 extern int lfs_allclean_wakeup;
 extern struct pool lfs_inode_pool;	/* memory pool for inodes */
@@ -182,6 +183,7 @@ void lfs_vunref_head(struct vnode *);
 
 /* lfs_subr.c */
 void lfs_setup_resblks(struct lfs *);
+void lfs_pad_check(unsigned char *, int, char *, int);
 void lfs_free_resblks(struct lfs *);
 void *lfs_malloc(struct lfs *, size_t, int);
 void lfs_free(struct lfs *, void *, int);
@@ -193,6 +195,9 @@ int lfs_fastvget(struct mount *, ino_t, daddr_t, struct vnode **, struct dinode 
 struct buf *lfs_fakebuf(struct lfs *, struct vnode *, int, size_t, caddr_t);
 int lfs_do_segclean(struct lfs *, unsigned long);
 void lfs_fakebuf_iodone(struct buf *);
+int lfs_segwait(fsid_t *, struct timeval *);
+int lfs_bmapv(struct proc *, fsid_t *, struct block_info *, int);
+int lfs_markv(struct proc *, fsid_t *, struct block_info *, int);
 
 /* lfs_vfsops.c */
 void lfs_init(void);
@@ -240,6 +245,7 @@ int lfs_setattr	 (void *);
 int lfs_close	 (void *);
 int lfsspec_close(void *);
 int lfsfifo_close(void *);
+int lfs_ioctl	 (void *);
 int lfs_inactive (void *);
 int lfs_reclaim	 (void *);
 int lfs_write	 (void *);
