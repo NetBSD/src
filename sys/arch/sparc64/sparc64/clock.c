@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.13 1999/06/10 04:31:20 eeh Exp $ */
+/*	$NetBSD: clock.c,v 1.14 1999/06/21 06:28:33 mrg Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -201,9 +201,9 @@ clock_map(bh, model)
 	char *model;
 {
 	struct clockreg *cl;
+#if 0
 	paddr_t pa;
 
-#if 0
 	pa = pmap_extract(pmap_kernel(), (vaddr_t)bh);
 	pmap_enter(pmap_kernel(), (vaddr_t)bh, pa, VM_PROT_READ, 1, VM_PROT_READ);
 #endif
