@@ -1,4 +1,4 @@
-/* $NetBSD: osf1.h,v 1.11 1999/04/29 05:54:13 cgd Exp $ */
+/* $NetBSD: osf1.h,v 1.12 1999/04/30 02:12:03 cgd Exp $ */
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -194,7 +194,7 @@ struct osf1_auxv {
 #define OSF1_IOCPARM_MASK	0x1fff
 #define OSF1_IOCPARM_LEN(x)	(((x) >> 16) & OSF1_IOCPARM_MASK)
 #define OSF1_IOCGROUP(x)	(((x) >> 8) & 0xff)
-#define OSF1_IOCCMD(x)          ((x) & 0xff)
+#define OSF1_IOCCMD(x)		((x) & 0xff)
 
 #define OSF1_IOCPARM_MAX	8192
 #define OSF1_IOC_VOID		0x20000000
@@ -462,6 +462,22 @@ struct osf1_stat {
 };
 
 
+/* systeminfo.h */
+
+#define OSF1_SI_SYSNAME		1
+#define OSF1_SI_HOSTNAME	2
+#define OSF1_SI_RELEASE		3
+#define OSF1_SI_VERSION		4
+#define OSF1_SI_MACHINE		5
+#define OSF1_SI_ARCHITECTURE	6
+#define OSF1_SI_HW_SERIAL	7
+#define OSF1_SI_HW_PROVIDER	8
+#define OSF1_SI_SRPC_DOMAIN	9
+#define OSF1_SI_SET_HOSTNAME	258
+#define OSF1_SI_SET_SYSNAME	259
+#define OSF1_SI_SET_SRPC_DOMAIN	265
+
+
 /* time.h */
 
 struct osf1_itimerval {
@@ -500,14 +516,24 @@ struct osf1_iovec {
 
 /* utsname.h */
 
-#define	OSF1__SYS_NMLN			32
+#define	OSF1__SYS_NMLN		32
 
 struct osf1_utsname {
-        char    sysname[OSF1__SYS_NMLN];
-        char    nodename[OSF1__SYS_NMLN];
-        char    release[OSF1__SYS_NMLN];
-        char    version[OSF1__SYS_NMLN];
-        char    machine[OSF1__SYS_NMLN];
+	char		sysname[OSF1__SYS_NMLN];
+	char		nodename[OSF1__SYS_NMLN];
+	char		release[OSF1__SYS_NMLN];
+	char		version[OSF1__SYS_NMLN];
+	char		machine[OSF1__SYS_NMLN];
 };
+
+
+/* wait.h */
+
+/* wait3() and wait4() options. */
+#define	OSF1_WNOHANG		0x01
+#define	OSF1_WUNTRACED		0x02
+
+/* XXX should have status word bits */
+
 
 #endif /* _COMPAT_OSF1_OSF1_H_ */
