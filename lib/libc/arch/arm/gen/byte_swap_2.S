@@ -1,4 +1,4 @@
-/*	$NetBSD: byte_swap_2.S,v 1.2 2002/07/01 19:07:18 bjh21 Exp $	*/
+/*	$NetBSD: byte_swap_2.S,v 1.3 2003/04/05 23:08:51 bjh21 Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -45,8 +45,4 @@ _PROF_PROLOGUE
 	and		r1, r0, #0xff
 	mov		r0, r0, lsr #8
 	orr		r0, r0, r1, lsl #8
-#ifdef __APCS_26__
-	movs		pc, lr
-#else
 	mov		pc, lr  
-#endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: swapcontext.S,v 1.2 2003/01/18 11:06:25 thorpej Exp $	*/
+/*	$NetBSD: swapcontext.S,v 1.3 2003/04/05 23:08:51 bjh21 Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 #include "SYS.h"
 
 #if defined(LIBC_SCCS) && !defined(lint)
-        RCSID("$NetBSD: swapcontext.S,v 1.2 2003/01/18 11:06:25 thorpej Exp $")
+        RCSID("$NetBSD: swapcontext.S,v 1.3 2003/04/05 23:08:51 bjh21 Exp $")
 #endif /* LIBC_SCCS && !lint */
 
 ENTRY(swapcontext)
@@ -47,19 +47,11 @@ ENTRY(swapcontext)
 	bl	PIC_SYM(_C_LABEL(_getcontext), PLT)  /* getcontext(oucp) */
 	cmp	r0, #0
 	ldmfd	sp!, {r0-r1, lr}
-#ifdef __APCS_26__
-	movnes	pc, lr
-#else
 	movne	pc, lr
-#endif
 	str	lr, [r0, #(36 + 15*4)]	/* Adjust saved PC. */
 #ifdef SOFTFLOAT
 	/* Ahem. */
 #endif
 	mov	r0, r1
 	bl	PIC_SYM(_C_LABEL(setcontext), PLT)
-#ifdef __APCS_26__
-	movs	pc, lr
-#else
 	mov	pc, lr
-#endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: sigprocmask.S,v 1.3 2001/07/16 05:50:07 matt Exp $	*/
+/*	$NetBSD: sigprocmask.S,v 1.4 2003/04/05 23:08:53 bjh21 Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -50,8 +50,4 @@ ENTRY(sigprocmask)
 	teq	r2, #0x00000000
 	strne	r0, [r2]
 	mov	r0, #0x00000000
-#ifdef __APCS_26__
-	movs	r15, r14
-#else
 	mov	r15, r14
-#endif

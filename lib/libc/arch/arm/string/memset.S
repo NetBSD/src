@@ -1,4 +1,4 @@
-/*	$NetBSD: memset.S,v 1.2 2002/08/17 19:54:31 thorpej Exp $	*/
+/*	$NetBSD: memset.S,v 1.3 2003/04/05 23:08:52 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1995 Mark Brinicombe.
@@ -115,11 +115,7 @@ ENTRY(memset)
 .Lmemset_lessthanfour:
 	cmp	r2, #0x00000000
 	ldmeqfd	sp!, {r0}
-#ifdef __APCS_26__
-	moveqs	pc, lr			/* Zero length so exit */
-#else
 	moveq	pc, lr			/* Zero length so exit */
-#endif
 
 	cmp	r2, #0x00000002
 	strb	r1, [r0], #0x0001	/* Set 1 byte */
@@ -127,8 +123,4 @@ ENTRY(memset)
 	strgtb	r1, [r0], #0x0001	/* and a third */
 
 	ldmfd	sp!, {r0}
-#ifdef __APCS_26__
-	movs	pc, lr			/* Exit */
-#else
 	mov	pc, lr			/* Exit */
-#endif
