@@ -1,4 +1,4 @@
-/*	$NetBSD: mbuf.h,v 1.30 1997/10/05 18:43:24 thorpej Exp $	*/
+/*	$NetBSD: mbuf.h,v 1.31 1998/02/06 20:53:47 matt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -465,6 +465,13 @@ union mcluster {
 
 /* compatibility with 4.3 */
 #define  m_copy(m, o, l)	m_copym((m), (o), (l), M_DONTWAIT)
+
+/*
+ * Allow drivers and/or protocols to use the rcvif member of
+ * PKTHDR mbufs to store private context information.
+ */
+#define	M_GETCTX(m, t)		((t) (m)->m_pkthdr.rcvif + 0)
+#define	M_SETCTX(m, c)		((void) ((m)->m_pkthdr.rcvif = (void *) (c)))
 
 /*
  * Mbuf statistics.
