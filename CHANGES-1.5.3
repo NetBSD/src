@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.5.3,v 1.1.2.57 2002/03/28 23:59:11 he Exp $
+#	$NetBSD: CHANGES-1.5.3,v 1.1.2.58 2002/03/29 23:23:41 he Exp $
 
 A complete list of changes from NetBSD 1.5.2 to NetBSD 1.5.3:
 
@@ -2606,3 +2606,25 @@ distrib/notes/common/sysinst			1.30
 
   Switch to constant-width font before the sysinst menu, to improve
   formatting.
+
+distrib/notes/common/sysinst			1.31
+
+  Make sure sysinst menu stays on one page.
+
+distrib/notes/common/sysinst			patch
+
+  Make the sysinst example menu say 1.5.3.
+
+distrib/notes/i386/hardware			1.103
+
+  Expand tabulators for reasonable .html formatting.
+
+distrib/notes/common/main			patch
+
+  Note that the network device driver fixes are ``various different''.
+
+lib/libc/gen/syslog.c				1.27
+
+  Add a single retry into syslog(), to cope with a restarted syslogd,
+  so that log messages don't get lost.  Most useful for long-running
+  programs.
