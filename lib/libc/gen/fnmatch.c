@@ -36,7 +36,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 /* from: static char sccsid[] = "@(#)fnmatch.c	8.1 (Berkeley) 6/4/93"; */
-static char *rcsid = "$Id: fnmatch.c,v 1.8 1993/11/11 03:21:24 jtc Exp $";
+static char *rcsid = "$Id: fnmatch.c,v 1.9 1993/11/11 19:04:25 jtc Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -51,6 +51,7 @@ static char *rcsid = "$Id: fnmatch.c,v 1.8 1993/11/11 03:21:24 jtc Exp $";
 
 static const char *rangematch __P((const char *, int, int));
 
+int
 fnmatch(pattern, string, flags)
 	register const char *pattern, *string;
 	int flags;

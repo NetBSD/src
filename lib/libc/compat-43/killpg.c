@@ -33,7 +33,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char *sccsid = "from: @(#)killpg.c	5.3 (Berkeley) 2/24/91";*/
-static char *rcsid = "$Id: killpg.c,v 1.3 1993/08/26 00:43:06 jtc Exp $";
+static char *rcsid = "$Id: killpg.c,v 1.4 1993/11/11 19:04:06 jtc Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -43,6 +43,7 @@ static char *rcsid = "$Id: killpg.c,v 1.3 1993/08/26 00:43:06 jtc Exp $";
 /*
  * Backwards-compatible killpg().
  */
+int
 #if __STDC__
 killpg(pid_t pgid, int sig)
 #else

@@ -33,12 +33,13 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char *sccsid = "from: @(#)sigcompat.c	5.3 (Berkeley) 2/24/91";*/
-static char *rcsid = "$Id: sigcompat.c,v 1.3 1993/08/26 00:43:07 jtc Exp $";
+static char *rcsid = "$Id: sigcompat.c,v 1.4 1993/11/11 19:04:08 jtc Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
 #include <signal.h>
 
+int
 sigvec(signo, sv, osv)
 	int signo;
 	struct sigvec *sv, *osv;
@@ -53,6 +54,7 @@ sigvec(signo, sv, osv)
 	return (ret);
 }
 
+int
 sigsetmask(mask)
 	int mask;
 {
@@ -64,6 +66,7 @@ sigsetmask(mask)
 	return (omask);
 }
 
+int
 sigblock(mask)
 	int mask;
 {
@@ -75,6 +78,7 @@ sigblock(mask)
 	return (omask);
 }
 
+int
 sigpause(mask)
 	int mask;
 {
