@@ -1,4 +1,4 @@
-#	$NetBSD: files.sun3,v 1.52 1999/04/19 21:23:01 kleink Exp $
+#	$NetBSD: files.sun3,v 1.53 1999/05/14 06:42:02 mrg Exp $
 
 #
 # sun3-specific configuration info
@@ -238,13 +238,15 @@ define zsevent
 file dev/sun/event.c			zsevent
 
 device kbd: zsevent
-attach kbd at zsc
+attach kbd at zsc with kbd_zs
+file dev/sun/kbd_zs.c			kbd_zs
 file dev/sun/kbd.c			kbd needs-flag
 file dev/sun/kbd_tables.c 		kbd
 file arch/sun3/dev/kd.c 		kbd
 
 device ms: zsevent
-attach ms at zsc
+attach ms at zsc with ms_zs
+file dev/sun/ms_zs.c			ms_zs
 file dev/sun/ms.c			ms needs-flag
 
 
