@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_types.h,v 1.1.2.10 2002/12/30 22:24:35 thorpej Exp $	*/
+/*	$NetBSD: pthread_types.h,v 1.1.2.11 2003/01/06 19:56:19 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -83,6 +83,7 @@ struct	pthread_attr_st {
 	unsigned int	pta_magic;
 
 	int	pta_flags;
+	void	*pta_private;
 };
 
 struct	pthread_mutex_st {
@@ -101,6 +102,7 @@ struct	pthread_mutex_st {
 	pthread_spin_t	ptm_interlock;
 	pthread_t	ptm_owner;
 	struct pthread_queue_t	ptm_blocked;
+	void	*ptm_private;
 };
 
 #define	_PT_MUTEX_MAGIC	0x33330003
@@ -110,12 +112,14 @@ struct	pthread_mutex_st {
 				    __SIMPLELOCK_UNLOCKED,		\
 				    __SIMPLELOCK_UNLOCKED,		\
 				    NULL,				\
-				    {NULL, NULL}			\
+				    {NULL, NULL},			\
+				    NULL				\
 				  }
 	
 
 struct	pthread_mutexattr_st {
 	unsigned int	ptma_magic;
+	void	*ptma_private;
 };
 
 #define _PT_MUTEXATTR_MAGIC	0x44440004
@@ -130,6 +134,7 @@ struct	pthread_cond_st {
 	struct pthread_queue_t	ptc_waiters;
 
 	pthread_mutex_t	*ptc_mutex;	/* Current mutex */
+	void	*ptc_private;
 };
 
 #define	_PT_COND_MAGIC	0x55550005
@@ -138,11 +143,13 @@ struct	pthread_cond_st {
 #define PTHREAD_COND_INITIALIZER { _PT_COND_MAGIC,			\
 				   __SIMPLELOCK_UNLOCKED,		\
 				   {NULL, NULL},			\
-				   NULL					\
+				   NULL,				\
+				   NULL  				\
 				 }
 
 struct	pthread_condattr_st {
 	unsigned int	ptca_magic;
+	void	*ptca_private;
 };
 
 #define	_PT_CONDATTR_MAGIC	0x66660006
@@ -181,6 +188,7 @@ struct	pthread_rwlock_st {
 	struct pthread_queue_t	ptr_wblocked;
 	unsigned int	ptr_nreaders;
 	pthread_t	ptr_writer;
+	void	*ptr_private;
 };
 
 #define	_PT_RWLOCK_MAGIC	0x99990009
@@ -191,11 +199,13 @@ struct	pthread_rwlock_st {
 				     {NULL, NULL},			\
 				     {NULL, NULL},			\
 				     0,					\
-				     NULL				\
+				     NULL,				\
+				     NULL,				\
 				   }
 
 struct	pthread_rwlockattr_st {
 	unsigned int	ptra_magic;
+	void *ptra_private;
 };
 
 #define _PT_RWLOCKATTR_MAGIC	0x99990909
