@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.4 2004/03/22 17:02:57 skrll Exp $
+#	$NetBSD: Makefile.inc,v 1.5 2004/03/22 17:08:23 skrll Exp $
 
 .if exists(${.CURDIR}/arch/${MACHINE_ARCH}.mk) && ${MKGCC} != "no"
 .include "${.CURDIR}/arch/${MACHINE_ARCH}.mk"
@@ -76,9 +76,17 @@ ${LIB2_EH:.c=.o}:
 	${_MKTARGET_COMPILE}
 	${COMPILE.c} -fexceptions -o ${.TARGET} ${.IMPSRC}
 
+${LIB2_EH:.c=.so}:
+	${_MKTARGET_COMPILE}
+	${COMPILE.c} ${CPICFLAGS} -fexceptions -o ${.TARGET} ${.IMPSRC}
+
 ${G_LIB2_DIVMOD_FUNCS:=.o}:
 	${_MKTARGET_COMPILE}
 	${COMPILE.c} -fexceptions -fnon-call-exceptions -o ${.TARGET} ${.IMPSRC}
+
+${G_LIB2_DIVMOD_FUNCS:=.so}:
+	${_MKTARGET_COMPILE}
+	${COMPILE.c} ${CPICFLAGS} -fexceptions -fnon-call-exceptions -o ${.TARGET} ${.IMPSRC}
 
 dp-bit.c: ${.CURDIR}/Makefile
 	${_MKTARGET_CREATE}
