@@ -1,4 +1,4 @@
-/*	$NetBSD: common_vars.c,v 1.2 2003/08/07 11:25:25 agc Exp $	*/
+/*	$NetBSD: common_vars.c,v 1.3 2004/04/24 02:59:19 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: common_vars.c,v 1.2 2003/08/07 11:25:25 agc Exp $");
+__RCSID("$NetBSD: common_vars.c,v 1.3 2004/04/24 02:59:19 christos Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -47,5 +47,5 @@ char	*name;			/* program name */
 char	*printer;		/* printer name */
 char	host[MAXHOSTNAMELEN+1];	/* host machine name */
 char	*from = host;		/* client's machine name */
-char	*printcapdb[2] = { _PATH_PRINTCAP, 0 };
+const char *printcapdb[2] = { _PATH_PRINTCAP, 0 };
 char	*bp;			/* pointer into printcap buffer. */
