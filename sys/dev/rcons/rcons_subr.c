@@ -1,4 +1,4 @@
-/*	$NetBSD: rcons_subr.c,v 1.6 1999/08/26 20:48:09 thorpej Exp $ */
+/*	$NetBSD: rcons_subr.c,v 1.7 2000/04/16 21:49:49 pk Exp $ */
 
 /*
  * Copyright (c) 1991, 1993
@@ -100,6 +100,7 @@ rcons_init_ops(rc)
 	
 	rc->rc_wsflg = 0;
 	rcons_setcolor(rc, rc->rc_deffgcolor, rc->rc_defbgcolor);
+	rc->rc_defattr = rc->rc_attr;
 }
 
 /* Output (or at least handle) a string sent to the console */
@@ -277,7 +278,9 @@ rcons_sgresc(rc, c)
 	/* Clear all attributes || End underline */
 	case 0:
 		rc->rc_wsflg = 0;
-		rcons_setcolor(rc, rc->rc_deffgcolor, rc->rc_defbgcolor);
+		rc->rc_fgcolor = rc->rc_deffgcolor;
+		rc->rc_bgcolor = rc->rc_defbgcolor;
+		rc->rc_attr = rc->rc_defattr;
 		break;
 
 	/* ANSI foreground color */
@@ -426,14 +429,18 @@ rcons_doesc(rc, c)
 
 		break;
 
+	/*
+	 * XXX: setting SUNBOW and SUNWOB should probably affect
+	 * deffgcolor, defbgcolor and defattr too.
+	 */
 	case 'p':
 		/* Black On White (SUNBOW) */
-		rcons_invert(rc, 0);
+		rcons_setcolor(rc, WSCOL_BLACK, WSCOL_WHITE);
 		break;
 
 	case 'q':
 		/* White On Black (SUNWOB) */
-		rcons_invert(rc, 1);
+		rcons_setcolor(rc, WSCOL_WHITE, WSCOL_BLACK);
 		break;
 
 	case 'r':
@@ -450,7 +457,9 @@ rcons_doesc(rc, c)
 		rc->rc_wsflg = 0;
 		rc->rc_scroll = 0;
 		rc->rc_bits &= ~FB_NO_CURSOR;
-		rcons_setcolor(rc, rc->rc_deffgcolor, rc->rc_defbgcolor);
+		rc->rc_fgcolor = rc->rc_deffgcolor;
+		rc->rc_bgcolor = rc->rc_defbgcolor;
+		rc->rc_attr = rc->rc_defattr;
 
 		if (rc->rc_bits & FB_INVERT)
 			rcons_invert(rc, 0);
@@ -513,8 +522,11 @@ rcons_setcolor(rc, fg, bg)
 		fg = flg;
 	}
 	
-	/* Mask out unsupported flags and get attribute */
-	flg = rc->rc_wsflg & rc->rc_supwsflg;
+	/*
+	 * Mask out unsupported flags and get attribute
+	 * XXX - always ask for WSCOLORS if supported (why shouldn't we?)
+	 */
+	flg = (rc->rc_wsflg | WSATTR_WSCOLORS) & rc->rc_supwsflg;
 	rc->rc_bgcolor = bg;
 	rc->rc_fgcolor = fg;
 	rc->rc_ops->alloc_attr(rc->rc_cookie, fg, bg, flg, &rc->rc_attr);
