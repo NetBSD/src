@@ -27,6 +27,4 @@
 /* Remote sftp filename globbing */
 
 int
-remote_glob(int fd_in, int fd_out, const char *pattern, int flags, 
-    int (*errfunc)(const char *, int), glob_t *pglob);
-
+remote_glob(int, int, const char *, int, int (*)(const char *, int), glob_t *);
