@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.26 1994/10/26 07:26:02 cgd Exp $	*/
+/*	$NetBSD: trap.c,v 1.27 1995/01/18 07:37:06 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -280,9 +280,9 @@ copyfault:
 	 * The user has most likely trashed the RTE or FP state info
 	 * in the stack frame of a signal handler.
 	 */
-		type |= T_USER;
 		printf("pid %d: kernel %s exception\n", p->p_pid,
 		       type==T_COPERR ? "coprocessor" : "format");
+		type |= T_USER;
 		p->p_sigacts->ps_sigact[SIGILL] = SIG_DFL;
 		i = sigmask(SIGILL);
 		p->p_sigignore &= ~i;
