@@ -1,5 +1,5 @@
 #
-# $NetBSD: miniroot.list,v 1.4 1997/12/15 17:34:17 gwr Exp $
+# $NetBSD: miniroot.list,v 1.5 2000/06/10 04:05:50 tsutsui Exp $
 #
 
 # These are scripts:
@@ -34,7 +34,7 @@ SYMLINK	/tmp/hosts			etc/hosts
 # copy the MAKEDEV script and make some devices
 COPY	${DESTDIR}/dev/MAKEDEV		dev
 COPY	${DESTDIR}/dev/MAKEDEV.local	dev
-SPECIAL	cd dev; sh MAKEDEV std md0 cd0 st0 st1 sd0 sd1 sd2 xd0 xy0
+SPECIAL	cd dev; sh MAKEDEV std md0 cd0 st0 st1 sd0 sd1 sd2 xd0 xy0 fd0
 
 # copy the miniroot installation tools
 COPY	${TOPDIR}/common/mr.profile	.profile
