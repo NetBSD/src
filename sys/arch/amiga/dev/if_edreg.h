@@ -1,3 +1,5 @@
+/*	$NetBSD: if_edreg.h,v 1.2 1994/10/26 02:03:47 cgd Exp $	*/
+
 /*
  * Copyright (c) 1994 Timo Rossi
  * All rights reserved.
@@ -26,9 +28,8 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- *	$Id: if_edreg.h,v 1.1 1994/07/16 02:27:45 chopps Exp $
  */
+
 /*
  * The Hydra Systems card uses the National Semiconductor
  * 8390 NIC (Network Interface Controller) chip, located

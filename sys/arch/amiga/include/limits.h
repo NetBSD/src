@@ -1,6 +1,5 @@
-/*
- *	$Id: limits.h,v 1.7 1994/04/10 02:28:26 chopps Exp $
- */
+/*	$NetBSD: limits.h,v 1.8 1994/10/26 02:06:16 cgd Exp $	*/
+
 #ifndef _MACHINE_LIMITS_H_
 #define _MACHINE_LIMITS_H_
 

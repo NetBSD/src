@@ -1,3 +1,5 @@
+/*	$NetBSD: viewvar.h,v 1.3 1994/10/26 02:05:08 cgd Exp $	*/
+
 /*
  * Copyright (c) 1994 Christian E. Hopps
  * All rights reserved.
@@ -26,8 +28,6 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- *	$Id: viewvar.h,v 1.2 1994/01/29 06:59:41 chopps Exp $
  */
 
 /* The view major device is a placeholder device.  It serves

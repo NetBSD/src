@@ -1,3 +1,5 @@
+/*	$NetBSD: grfvar.h,v 1.9 1994/10/26 02:03:33 cgd Exp $	*/
+
 /*
  * Copyright (c) 1988 University of Utah.
  * Copyright (c) 1990 The Regents of the University of California.
@@ -38,7 +40,6 @@
  * from: Utah $Hdr: grfvar.h 1.9 91/01/21$
  *
  *	@(#)grfvar.h	7.3 (Berkeley) 5/7/91
- *	$Id: grfvar.h,v 1.8 1994/06/05 07:45:13 chopps Exp $
  */
 
 struct ite_softc;

@@ -1,3 +1,5 @@
+/*	$NetBSD: proc.h,v 1.10 1994/10/26 02:06:27 cgd Exp $	*/
+
 /*
  * Copyright (c) 1991 Regents of the University of California.
  * All rights reserved.
@@ -31,7 +33,6 @@
  * SUCH DAMAGE.
  *
  *	@(#)proc.h	7.1 (Berkeley) 5/15/91
- *	$Id: proc.h,v 1.9 1994/05/08 05:53:59 chopps Exp $
  */
 #ifndef _MACHINE_PROC_H_
 #define _MACHINE_PROC_H_

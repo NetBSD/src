@@ -1,3 +1,5 @@
+/*	$NetBSD: genassym.c,v 1.16 1994/10/26 02:01:52 cgd Exp $	*/
+
 /*
  * Copyright (c) 1982, 1990 The Regents of the University of California.
  * All rights reserved.
@@ -31,7 +33,6 @@
  * SUCH DAMAGE.
  *
  *	@(#)genassym.c	7.8 (Berkeley) 5/7/91
- *	$Id: genassym.c,v 1.15 1994/06/04 11:58:46 chopps Exp $
  */
 
 #define KERNEL

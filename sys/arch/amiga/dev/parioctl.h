@@ -1,3 +1,5 @@
+/*	$NetBSD: parioctl.h,v 1.4 1994/10/26 02:04:29 cgd Exp $	*/
+
 /*
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
@@ -31,7 +33,6 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)ppiioctl.h	7.2 (Berkeley) 12/16/90
- *	$Id: parioctl.h,v 1.3 1994/01/26 21:06:07 mw Exp $
  */
 
 #ifndef _IOCTL_

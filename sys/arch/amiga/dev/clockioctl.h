@@ -1,3 +1,5 @@
+/*	$NetBSD: clockioctl.h,v 1.2 1994/10/26 02:02:54 cgd Exp $	*/
+
 /*
  * Copyright (c) 1989 University of Utah.
  * Copyright (c) 1990 The Regents of the University of California.
@@ -38,7 +40,6 @@
  * from: Utah $Hdr: clockioctl.h 1.1 90/07/09$
  *
  *	@(#)clockioctl.h	7.2 (Berkeley) 11/2/90
- *	$Id: clockioctl.h,v 1.1 1994/05/08 05:53:00 chopps Exp $
  */
 
 #define	CLOCKMAP	_IOWR('C', 1, int)

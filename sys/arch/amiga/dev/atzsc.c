@@ -1,3 +1,5 @@
+/*	$NetBSD: atzsc.c,v 1.7 1994/10/26 02:02:48 cgd Exp $	*/
+
 /*
  * Copyright (c) 1994 Christian E. Hopps
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -32,7 +34,6 @@
  * SUCH DAMAGE.
  *
  *	@(#)dma.c
- *	$Id: atzsc.c,v 1.6 1994/07/16 19:45:44 chopps Exp $
  */
 #include <sys/param.h>
 #include <sys/systm.h>

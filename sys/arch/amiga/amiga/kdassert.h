@@ -1,6 +1,4 @@
-/* 
- *	$Id: kdassert.h,v 1.1 1994/02/17 09:09:24 chopps Exp $
- */
+/*	$NetBSD: kdassert.h,v 1.2 1994/10/26 02:01:54 cgd Exp $	*/
 
 #if ! defined (_KDASSERT_H)
 #define _KDASSERT_H

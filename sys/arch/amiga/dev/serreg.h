@@ -1,3 +1,5 @@
+/*	$NetBSD: serreg.h,v 1.7 1994/10/26 02:04:54 cgd Exp $	*/
+
 /*
  * Copyright (c) 1982, 1986, 1990 Regents of the University of California.
  * All rights reserved.
@@ -31,7 +33,6 @@
  * SUCH DAMAGE.
  *
  *	@(#)dcareg.h	7.3 (Berkeley) 5/7/91
- *	$Id: serreg.h,v 1.6 1994/05/08 05:53:46 chopps Exp $
  */
 
 struct serdevice {

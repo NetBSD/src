@@ -1,6 +1,4 @@
-/*
- *	$Id: din-kbdmap.c,v 1.2 1994/02/11 07:03:04 chopps Exp $
- */
+/*	$NetBSD: din-kbdmap.c,v 1.3 1994/10/26 02:07:06 cgd Exp $	*/
 
 #include "../../dev/kbdmap.h"
 

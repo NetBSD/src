@@ -1,4 +1,4 @@
-#	$Id: Makefile,v 1.1 1994/08/05 23:34:58 chopps Exp $
+#	$NetBSD: Makefile,v 1.2 1994/10/26 02:05:50 cgd Exp $
 
 SRCDIR=	${.CURDIR}/../../../../../gnu/usr.bin/tar
 
