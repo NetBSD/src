@@ -1,4 +1,4 @@
-/*	$NetBSD: adosfs.h,v 1.14 1998/08/09 17:54:50 kleink Exp $	*/
+/*	$NetBSD: adosfs.h,v 1.15 1998/09/01 03:33:26 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -143,6 +143,8 @@ struct adosfsmount {
 #define BST_LFILE	((u_int32_t)-4)
 
 #define	OFS_DATA_OFFSET	(24)
+
+extern struct pool adosfs_node_pool;
 
 /*
  * utility protos
