@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_ctl.c,v 1.21 2001/12/05 00:58:05 thorpej Exp $	*/
+/*	$NetBSD: procfs_ctl.c,v 1.22 2002/01/11 22:02:56 christos Exp $	*/
 
 /*
  * Copyright (c) 1993 Jan-Simon Pendry
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_ctl.c,v 1.21 2001/12/05 00:58:05 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_ctl.c,v 1.22 2002/01/11 22:02:56 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -108,10 +108,16 @@ procfs_control(curp, p, op, sig)
 	int s, error;
 
 	/*
+	 * You cannot do anything to the process if it is currently exec'ing
+	 */
+	if (ISSET(p->p_flag, P_INEXEC))
+		return (EAGAIN);
+
+	switch (op) {
+	/*
 	 * Attach - attaches the target process for debugging
 	 * by the calling process.
 	 */
-	switch (op) {
 	case PROCFS_CTL_ATTACH:
 		/* 
 		 * You can't attach to a process if:
