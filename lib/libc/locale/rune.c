@@ -1,4 +1,4 @@
-/*	$NetBSD: rune.c,v 1.18 2003/03/02 22:18:15 tshiozak Exp $	*/
+/*	$NetBSD: rune.c,v 1.19 2003/03/03 06:33:38 tshiozak Exp $	*/
 
 /*-
  * Copyright (c)1999 Citrus Project,
@@ -67,7 +67,7 @@
 #if 0
 static char sccsid[] = "@(#)rune.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: rune.c,v 1.18 2003/03/02 22:18:15 tshiozak Exp $");
+__RCSID("$NetBSD: rune.c,v 1.19 2003/03/03 06:33:38 tshiozak Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -85,6 +85,7 @@ __RCSID("$NetBSD: rune.c,v 1.18 2003/03/02 22:18:15 tshiozak Exp $");
 
 static int readrange __P((_RuneLocale *, _RuneRange *, _FileRuneRange *, void *, FILE *));
 static void _freeentry __P((_RuneRange *));
+static void _wctype_init __P((_RuneLocale *rl));
 
 static int
 readrange(_RuneLocale *rl, _RuneRange *rr, _FileRuneRange *frr, void *lastp,
