@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.GLcore,v 1.1 2003/12/21 03:07:01 rtr Exp $
+#	$NetBSD: Makefile.GLcore,v 1.2 2003/12/21 11:12:32 rtr Exp $
 
 .include <bsd.own.mk>
 
@@ -50,9 +50,6 @@ SRCS+=		t_array_api.c t_array_import.c t_context.c t_eval_api.c \
 .PATH:		${X11SRCDIR.xc}/lib/GL/glx
 SRCS+=		compsize.c xf86glx.c xf86glx_util.c xm_api.c xm_dd.c \
 		xm_line.c xm_span.c xm_tri.c
-
-.PATH:		${X11SRCDIR.xc}/programs/Xserver/GL/mesa/GLcore
-SRCS+=		GLcoremodule.c
 
 XSERVERINCDIR!=	cd ${NETBSDSRCDIR}/x11/Xserver/include && ${PRINTOBJDIR}
 
