@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.mdset,v 1.5 2002/04/13 17:27:07 thorpej Exp $
+#	$NetBSD: Makefile.mdset,v 1.6 2002/04/14 01:41:25 lukem Exp $
 #
 # Makefile snippet to ${MDSETIMAGE} file system images into kernels
 #
@@ -11,11 +11,21 @@
 #			The kernel ${KERNOBJDIR}/${KERNEL}/netbsd is
 #			${MDSETIMAGE} with ${IMAGE}, ${STRIP}ped,
 #			and gzipped into ${FILENAME}.gz.
-#			If FILENAME is "-", use "netbsd.${KERNEL}"
+#			If FILENAME is "-", use "netbsd.${KERNEL}" as
+#			the target name.
 #
 # Optional variables:
-#	MDSETDIR		where to install kernels with "release" target
-#	${FILENAME}.post	run after ${STRIP}; kernel is netbsd.tmp
+#	MDSETDIR			Where to install release kernels.
+#	MDSET.${FILENAME}.post		For each kernel named ${FILENAME},
+#					execute this after ${NM} / ${STRIP}.
+#					Kernel is available as netbsd.tmp.
+#					If MDSET.${FILENAME}.suffixes uses
+#					this to build extra kernels, the
+#					resultant file must be gzipped as
+#					"netbsd.${suffix}.gz"
+#	MDSET.${FILENAME}.suffixes	List of extra install kernel suffixes.
+#					The extra kernels are usually created
+#					by MDSET.${FILENAME}.post.
 #
 # Variables modified by this:
 #	KERNELS			List of kernel .gz files to build
@@ -25,34 +35,39 @@
 
 .include <bsd.kernobj.mk>
 
-.for _K _I _F in ${MDSETTARGETS}	# {
-_FREAL:=${_F}			# work around obscure issue in make(1)
-.if ${_FREAL} == "-"
+.for _K _I _F in ${MDSETTARGETS}			# {
+_FILENAME:=${_F}		# work around obscure issue in make(1)
+.if ${_FILENAME} == "-"
 _KERNEL.${_K}:=	netbsd.${_K}
 .else
 _KERNEL.${_K}:=	${_F}
 .endif
 
-KERNELS+=	${_KERNEL.${_K}}.gz
-.for suf in ${MDEXTRA_SUFFIXES.${_K}}
-KERNELS+=	${_KERNEL.${_K}}.${suf}.gz
+KERNELS+=	${_KERNEL.${_K}}.gz .WAIT
+.for suf in ${MDSET.${_FILENAME}.suffixes}
+KERNELS+=	${_KERNEL.${_K}}.${suf}.gz .WAIT
+CLEANFILES+=	netbsd.${suf} netbsd.${suf}.gz
 .endfor
 KERNELSYMS+=	${_KERNEL.${_K}}.symbols.gz
 
+.if defined(MDSET.${_FILENAME}.post)
+_POST.${_KERNEL.${_K}}:= ${MDSET.${_FILENAME}.post}
+.endif
+
 ${_KERNEL.${_K}}.gz: .NOTMAIN ${KERNOBJDIR}/${_K}/netbsd ${_I}
 	@echo "Populating ${_K} with ${_I} into ${.TARGET}"
-	rm -f netbsd.tmp ${_KERNEL.${_K}}.symbols.gz
-	cp ${KERNOBJDIR}/${_K}/netbsd netbsd.tmp
+	@rm -f netbsd.tmp ${_KERNEL.${_K}}.symbols.gz
+	@cp ${KERNOBJDIR}/${_K}/netbsd netbsd.tmp
 	${MDSETIMAGE} -v netbsd.tmp ${_I}
 	${NM} netbsd.tmp | gzip -9 > ${_KERNEL.${_K}}.symbols.gz
 	${STRIP} netbsd.tmp
-.if defined(${_KERNEL.${_K}}.post)
-	${${_KERNEL.${_K}}.post}
+.if defined(_POST.${_KERNEL.${_K}})
+	${_POST.${_KERNEL.${_K}}}
 .endif
-	gzip -9f netbsd.tmp
+	@gzip -9f netbsd.tmp
 	mv netbsd.tmp.gz ${.TARGET}
 
-.for suf in ${MDEXTRA_SUFFIXES.${_K}}
+.for suf in ${MDSET.${_FILENAME}.suffixes}
 ${_KERNEL.${_K}}.${suf}.gz: .NOTMAIN ${_KERNEL.${_K}}.gz
 	mv netbsd.${suf}.gz ${.TARGET}
 .endfor
