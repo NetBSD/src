@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_layout.c,v 1.12 2002/08/03 00:58:09 oster Exp $	*/
+/*	$NetBSD: rf_layout.c,v 1.13 2002/09/23 02:35:24 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_layout.c,v 1.12 2002/08/03 00:58:09 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_layout.c,v 1.13 2002/09/23 02:35:24 oster Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -437,7 +437,6 @@ rf_ConfigureLayout(
 	if (retval)
 		return (retval);
 
-	layoutPtr->dataBytesPerStripe = layoutPtr->dataSectorsPerStripe << raidPtr->logBytesPerSector;
 	raidPtr->sectorsPerDisk = layoutPtr->stripeUnitsPerDisk * layoutPtr->sectorsPerStripeUnit;
 
 	if (rf_forceNumFloatingReconBufs >= 0) {
