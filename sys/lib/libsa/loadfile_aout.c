@@ -1,4 +1,4 @@
-/* $NetBSD: loadfile.c,v 1.18 2001/10/30 23:51:03 thorpej Exp $ */
+/* $NetBSD: loadfile_aout.c,v 1.1 2001/10/30 23:51:03 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -75,119 +75,188 @@
  *	@(#)boot.c	8.1 (Berkeley) 6/10/93
  */
 
-#ifdef _STANDALONE
-#include <lib/libsa/stand.h>
-#include <lib/libkern/libkern.h>
-#else
-#include <stdio.h>
-#include <string.h>
-#include <errno.h>
-#include <stdlib.h>
-#include <unistd.h>
-#include <fcntl.h>
-#include <err.h>
-#endif
-
-#include <sys/param.h>
-#include <sys/exec.h>
-
-#include "loadfile.h"
-
-#ifdef BOOT_ECOFF
-#include <sys/exec_ecoff.h>
-static int coff_exec __P((int, struct ecoff_exechdr *, u_long *, int));
-#endif
-
-#ifdef BOOT_ELF
-#include <sys/exec_elf.h>
-static int elf_exec __P((int, Elf_Ehdr *, u_long *, int));
-#endif
-
-#ifdef BOOT_AOUT
-#include <sys/exec_aout.h>
-static int aout_exec __P((int, struct exec *, u_long *, int));
-#endif
-
-/*
- * Open 'filename', read in program and and return 0 if ok 1 on error.
- * Fill in marks
- */
-int
-loadfile(fname, marks, flags)
-	const char *fname;
+static int
+aout_exec(fd, x, marks, flags)
+	int fd;
+	struct exec *x;
 	u_long *marks;
 	int flags;
 {
-	union {
-#ifdef BOOT_ECOFF
-		struct ecoff_exechdr coff;
-#endif
-#ifdef BOOT_ELF
-		Elf_Ehdr elf;
-#endif
-#ifdef BOOT_AOUT
-		struct exec aout;
-#endif
-		
-	} hdr;
-	ssize_t nr;
-	int fd, rval;
+	u_long entry = x->a_entry;
+	paddr_t aoutp = 0;
+	paddr_t minp, maxp;
+	int cc;
+	paddr_t offset = marks[MARK_START];
+	u_long magic = N_GETMAGIC(*x);
+	int sub;
 
-	/* Open the file. */
-	if ((fd = open(fname, 0)) < 0) {
-		WARN(("open %s", fname ? fname : "<default>"));
-		return -1;
+	/* In OMAGIC and NMAGIC, exec header isn't part of text segment */
+	if (magic == OMAGIC || magic == NMAGIC)
+		sub = 0;
+	else
+		sub = sizeof(*x);
+	
+	minp = maxp = ALIGNENTRY(entry);
+
+	if (lseek(fd, sizeof(*x), SEEK_SET) == -1)  {
+		WARN(("lseek text"));
+		return 1;
 	}
 
-	/* Read the exec header. */
-	if ((nr = read(fd, &hdr, sizeof(hdr))) != sizeof(hdr)) {
-		WARN(("read header"));
-		goto err;
+	/*
+	 * Leave a copy of the exec header before the text.
+	 * The kernel may use this to verify that the
+	 * symbols were loaded by this boot program.
+	 */
+	if (magic == OMAGIC || magic == NMAGIC) {
+		if (flags & LOAD_HDR && maxp >= sizeof(*x))
+			BCOPY(x, maxp - sizeof(*x), sizeof(*x));
+	}
+	else {
+		if (flags & LOAD_HDR)
+			BCOPY(x, maxp, sizeof(*x));
+		if (flags & (LOAD_HDR|COUNT_HDR))
+			maxp += sizeof(*x);
 	}
 
-#ifdef BOOT_ECOFF
-	if (!ECOFF_BADMAG(&hdr.coff)) {
-		rval = coff_exec(fd, &hdr.coff, marks, flags);
-	} else
-#endif
-#ifdef BOOT_ELF
-	if (memcmp(hdr.elf.e_ident, ELFMAG, SELFMAG) == 0 &&
-	    hdr.elf.e_ident[EI_CLASS] == ELFCLASS) {
-		rval = elf_exec(fd, &hdr.elf, marks, flags);
-	} else
-#endif
-#ifdef BOOT_AOUT
-	if (OKMAGIC(N_GETMAGIC(hdr.aout))
-#ifndef NO_MID_CHECK
-	    && N_GETMID(hdr.aout) == MID_MACHINE
-#endif
-	    ) {
-		rval = aout_exec(fd, &hdr.aout, marks, flags);
-	} else
-#endif
-	{
-		rval = 1;
-		errno = EFTYPE;
-		WARN(("%s", fname ? fname : "<default>"));
+	/*
+	 * Read in the text segment.
+	 */
+	if (flags & LOAD_TEXT) {
+		PROGRESS(("%ld", x->a_text));
+
+		if (READ(fd, maxp, x->a_text - sub) != x->a_text - sub) {
+			WARN(("read text"));
+			return 1;
+		}
+	} else {
+		if (lseek(fd, x->a_text - sub, SEEK_CUR) == -1) {
+			WARN(("seek text"));
+			return 1;
+		}
+	}
+	if (flags & (LOAD_TEXT|COUNT_TEXT))
+		maxp += x->a_text - sub;
+
+	/*
+	 * Provide alignment if required
+	 */
+	if (magic == ZMAGIC || magic == NMAGIC) {
+		int size = -(unsigned int)maxp & (__LDPGSZ - 1);
+
+		if (flags & LOAD_TEXTA) {
+			PROGRESS(("/%d", size));
+			BZERO(maxp, size);
+		}
+
+		if (flags & (LOAD_TEXTA|COUNT_TEXTA))
+			maxp += size;
 	}
 
-	if (rval == 0) {
-		PROGRESS(("=0x%lx\n", marks[MARK_END] - marks[MARK_START]));
-		return fd;
+	/*
+	 * Read in the data segment.
+	 */
+	if (flags & LOAD_DATA) {
+		PROGRESS(("+%ld", x->a_data));
+
+		if (READ(fd, maxp, x->a_data) != x->a_data) {
+			WARN(("read data"));
+			return 1;
+		}
 	}
-err:
-	(void)close(fd);
-	return -1;
+	else {
+		if (lseek(fd, x->a_data, SEEK_CUR) == -1) {
+			WARN(("seek data"));
+			return 1;
+		}
+	}
+	if (flags & (LOAD_DATA|COUNT_DATA))
+		maxp += x->a_data;
+
+	/*
+	 * Zero out the BSS section.
+	 * (Kernel doesn't care, but do it anyway.)
+	 */
+	if (flags & LOAD_BSS) {
+		PROGRESS(("+%ld", x->a_bss));
+
+		BZERO(maxp, x->a_bss);
+	}
+
+	if (flags & (LOAD_BSS|COUNT_BSS))
+		maxp += x->a_bss;
+
+	/*
+	 * Read in the symbol table and strings.
+	 * (Always set the symtab size word.)
+	 */
+	if (flags & LOAD_SYM)
+		BCOPY(&x->a_syms, maxp, sizeof(x->a_syms));
+
+	if (flags & (LOAD_SYM|COUNT_SYM)) {
+		maxp += sizeof(x->a_syms);
+		aoutp = maxp;
+	}
+
+	if (x->a_syms > 0) {
+		/* Symbol table and string table length word. */
+
+		if (flags & LOAD_SYM) {
+			PROGRESS(("+[%ld", x->a_syms));
+
+			if (READ(fd, maxp, x->a_syms) != x->a_syms) {
+				WARN(("read symbols"));
+				return 1;
+			}
+		} else  {
+			if (lseek(fd, x->a_syms, SEEK_CUR) == -1) {
+				WARN(("seek symbols"));
+				return 1;
+			}
+		}
+		if (flags & (LOAD_SYM|COUNT_SYM))
+			maxp += x->a_syms;
+
+		if (read(fd, &cc, sizeof(cc)) != sizeof(cc)) {
+			WARN(("read string table"));
+			return 1;
+		}
+
+		if (flags & LOAD_SYM) {
+			BCOPY(&cc, maxp, sizeof(cc));
+
+			/* String table. Length word includes itself. */
+
+			PROGRESS(("+%d]", cc));
+		}
+		if (flags & (LOAD_SYM|COUNT_SYM))
+			maxp += sizeof(cc);
+
+		cc -= sizeof(int);
+		if (cc <= 0) {
+			WARN(("symbol table too short"));
+			return 1;
+		}
+
+		if (flags & LOAD_SYM) {
+			if (READ(fd, maxp, cc) != cc) {
+				WARN(("read strings"));
+				return 1;
+			}
+		} else {
+			if (lseek(fd, cc, SEEK_CUR) == -1) {
+				WARN(("seek strings"));
+				return 1;
+			}
+		}
+		if (flags & (LOAD_SYM|COUNT_SYM))
+			maxp += cc;
+	}
+
+	marks[MARK_START] = LOADADDR(minp);
+	marks[MARK_ENTRY] = LOADADDR(entry);
+	marks[MARK_NSYM] = x->a_syms;
+	marks[MARK_SYM] = LOADADDR(aoutp);
+	marks[MARK_END] = LOADADDR(maxp);
+	return 0;
 }
-
-#ifdef BOOT_ECOFF
-#include "loadfile_ecoff.c"
-#endif
-
-#ifdef BOOT_ELF
-#include "loadfile_elf32.c"
-#endif
-
-#ifdef BOOT_AOUT
-#include "loadfile_aout.c"
-#endif
