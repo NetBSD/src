@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gif.c,v 1.10.4.3 2000/11/19 20:21:09 tv Exp $	*/
+/*	$NetBSD: if_gif.c,v 1.10.4.4 2002/04/11 21:30:35 he Exp $	*/
 /*	$KAME: if_gif.c,v 1.34 2000/10/07 03:58:53 itojun Exp $	*/
 
 /*
@@ -368,11 +368,11 @@ gif_input(m, af, gifp)
 		 * try to free it or keep a pointer a to it).
 		 */
 		struct mbuf m0;
-		u_int af = AF_INET6;
+		u_int32_t af1 = af;
 		
 		m0.m_next = m;
 		m0.m_len = 4;
-		m0.m_data = (char *)&af;
+		m0.m_data = (char *)&af1;
 		
 #ifdef HAVE_OLD_BPF
 		bpf_mtap(gifp, &m0);
