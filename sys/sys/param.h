@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.78 1999/12/04 21:13:19 ragge Exp $	*/
+/*	$NetBSD: param.h,v 1.79 1999/12/22 21:26:15 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -81,12 +81,15 @@
 
 #define NetBSD	199905		/* NetBSD version (year & month). */
 
+#ifdef _KERNEL
 #ifndef NULL
 #define	NULL	0
-#endif
+#endif /* NULL */
+#else
+#include <null.h>
+#endif /* _KERNEL */
 
 #ifndef _LOCORE
-#include <sys/inttypes.h>
 #include <sys/types.h>
 #endif
 
