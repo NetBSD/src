@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: daily,v 1.36 2001/06/18 10:54:02 lukem Exp $
+#	$NetBSD: daily,v 1.37 2001/08/09 15:30:30 lukem Exp $
 #	@(#)daily	8.2 (Berkeley) 1/25/94
 #
 
@@ -196,7 +196,7 @@ fi
 if checkyesno run_fsck; then
 	echo ""
 	echo "Checking filesystems:"
-	fsck -n | grep -v '^\*\* Phase'
+	fsck -n -f | grep -v '^\*\* Phase'
 fi
 
 echo ""
