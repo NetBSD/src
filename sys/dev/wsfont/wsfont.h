@@ -1,4 +1,4 @@
-/* 	$NetBSD: wsfont.h,v 1.12 2000/06/13 13:37:07 ad Exp $	*/
+/* 	$NetBSD: wsfont.h,v 1.13 2001/02/02 06:00:38 marcus Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -80,5 +80,6 @@ void	wsfont_enum __P((void (*) __P((char *, int, int, int))));
 int	wsfont_lock __P((int, struct wsdisplay_font **, int, int));
 int	wsfont_unlock __P((int));
 int	wsfont_getflg __P((int, int *, int *));
+int	wsfont_map_unichar __P((struct wsdisplay_font *, int));
 
 #endif	/* !_WSFONT_H_ */

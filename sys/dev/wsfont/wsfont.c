@@ -1,4 +1,4 @@
-/* 	$NetBSD: wsfont.c,v 1.15 2000/11/24 15:47:15 tsutsui Exp $	*/
+/* 	$NetBSD: wsfont.c,v 1.16 2001/02/02 06:00:38 marcus Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsfont.c,v 1.15 2000/11/24 15:47:15 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsfont.c,v 1.16 2001/02/02 06:00:38 marcus Exp $");
 
 #include "opt_wsfont.h"
 
@@ -511,4 +511,293 @@ wsfont_unlock(cookie)
 	
 	splx(s);
 	return (lc);
+}
+
+
+/*
+ * Unicode to font encoding mappings
+ */
+
+/*
+ * To save memory, font encoding tables use a two level lookup.
+ * First the high byte of the Unicode is used to lookup the level 2
+ * table, then the low byte indexes that table.  Level 2 tables that are
+ * not needed are omitted (NULL), and both level 1 and level 2 tables
+ * have base and size attributes to keep their size down.
+ */
+
+struct wsfont_level1_glyphmap {
+	struct wsfont_level2_glyphmap **level2;
+	int base;	/* High byte for first level2 entry	*/
+	int size;	/* Number of level2 entries		*/
+};
+
+struct wsfont_level2_glyphmap {
+	int base;	/* Low byte for first character		*/
+	int size;	/* Number of characters			*/
+	void *chars;	/* Pointer to character number entries  */
+	int width;	/* Size of each entry in bytes (1,2,4)  */
+};
+
+#define null16			\
+	NULL, NULL, NULL, NULL,	\
+	NULL, NULL, NULL, NULL,	\
+	NULL, NULL, NULL, NULL,	\
+	NULL, NULL, NULL, NULL
+
+/*
+ * IBM 437 maps
+ */
+
+static u_int8_t
+ibm437_chars_0[] = {
+	 0,  1,  2,  3,  4,  5,  6,  7,  8,  9, 10, 11, 12, 13, 14, 15,
+	16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31,
+	32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47,
+	48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63,
+	64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79,
+	80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95,
+	96, 97, 98, 99, 100,101,102,103,104,105,106,107,108,109,110,111,
+	112,113,114,115,116,117,118,119,120,121,122,123,124,125,126,127,
+	 0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
+	 0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
+	255,173,155,156, 0, 157, 0,  0,  0,  0, 166,174,170, 0,  0,  0,
+	 0, 241,253, 0,  0,  0,  0, 249, 0,  0, 167,175,172,171, 0, 168,
+	 0,  0,  0,  0, 142,143,146,128, 0, 144, 0,  0,  0,  0,  0,  0,
+	 0, 165, 0,  0,  0,  0, 153, 0,  0,  0,  0,  0, 154, 0,  0,  0,
+	133,160,131, 0, 132,134,145,135,138,130,136,137,141,161,140,139,
+	 0, 164,149,162,147, 0, 148,246, 0, 151,163,150,129, 0,  0, 152
+},
+ibm437_chars_1[] = {
+	159
+},
+ibm437_chars_3[] = {
+	226, 0,  0,  0,  0, 233, 0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
+	228, 0,  0, 232, 0,  0, 234, 0,  0,  0,  0,  0,  0,  0, 224,225,
+	 0, 235,238, 0,  0,  0,  0,  0,  0, 230, 0,  0,  0, 227, 0,  0,
+	229,231
+},
+ibm437_chars_32[] = {
+	252, 0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
+	 0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
+	 0,  0,  0,  0,  0,  0,  0,  0, 158
+},
+ibm437_chars_34[] = {
+	237, 0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
+	 0,  0,  0, 248,250,251, 0,  0,  0, 236, 0,  0,  0,  0,  0,  0,
+	 0,  0,  0,  0, 239, 0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
+	 0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
+	 0,  0,  0, 247, 0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
+	 0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,240,  0,  0,243,
+	242
+},
+ibm437_chars_35[] = {
+	169, 0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
+	244,245
+},
+ibm437_chars_37[] = {
+	196,205,179,186, 0,  0,  0,  0,  0,  0,  0,  0, 218,213,214,201,
+	191,184,183,187,192,212,211,200,217,190,189,188,195,198, 0,  0,
+	199, 0,  0, 204,180,181, 0,  0, 182, 0,  0, 185,194, 0,  0, 209,
+	210, 0,  0, 203,193, 0,  0, 207,208, 0,  0, 202,197, 0,  0, 216,
+	 0,  0, 215, 0,  0,  0,  0,  0,  0,  0,  0, 206, 0,  0,  0,  0,
+	 0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
+	 0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
+	 0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
+	223, 0,  0,  0, 220, 0,  0,  0, 219, 0,  0,  0, 221, 0,  0,  0,
+	222,176,177,178, 0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
+	254
+};
+
+static struct wsfont_level2_glyphmap
+ibm437_level2_0 = { 0, 256, ibm437_chars_0, 1 },
+ibm437_level2_1 = { 146, 1, ibm437_chars_1, 1 },
+ibm437_level2_3 = { 147, 50, ibm437_chars_3, 1 },
+ibm437_level2_32 = { 127, 41, ibm437_chars_32, 1 },
+ibm437_level2_34 = { 5, 97, ibm437_chars_34, 1 },
+ibm437_level2_35 = { 16, 18, ibm437_chars_35, 1 },
+ibm437_level2_37 = { 0, 161, ibm437_chars_37, 1 };
+
+static struct wsfont_level2_glyphmap *ibm437_level1[] = {
+	&ibm437_level2_0, &ibm437_level2_1, NULL, &ibm437_level2_3,
+	NULL, NULL, NULL, NULL,
+	NULL, NULL, NULL, NULL,
+	NULL, NULL, NULL, NULL,
+	NULL, NULL, NULL, NULL,
+	NULL, NULL, NULL, NULL,
+	NULL, NULL, NULL, NULL,
+	NULL, NULL, NULL, NULL,
+	&ibm437_level2_32, NULL, &ibm437_level2_34, &ibm437_level2_35,
+	NULL, &ibm437_level2_37
+};
+
+
+/*
+ * ISO-8859-7 maps
+ */
+
+static u_int8_t
+iso7_chars_0[] = {
+	 0,  1,  2,  3,  4,  5,  6,  7,  8,  9, 10, 11, 12, 13, 14, 15,
+	16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31,
+	32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47,
+	48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63,
+	64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79,
+	80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95,
+	96, 97, 98, 99, 100,101,102,103,104,105,106,107,108,109,110,111,
+	112,113,114,115,116,117,118,119,120,121,122,123,124,125,126,127,
+	128,129,130,131,132,133,134,135,136,137,138,139,140,141,142,143,
+	144,145,146,147,148,149,150,151,152,153,154,155,156,157,158,159,
+	160, 0,  0, 163, 0,  0, 166,167,168,169, 0, 171,172,173, 0,  0,
+	176,177,178,179,180, 0,  0, 183, 0,  0,  0, 187, 0, 189
+},
+iso7_chars_3[] = {
+	182, 0, 184,185,186, 0, 188, 0, 190,191,192,193,194,195,196,197,
+	198,199,200,201,202,203,204,205,206,207,208,209, 0, 211,212,213,
+	214,215,216,217,218,219,220,221,222,223,224,225,226,227,228,229,
+	230,231,232,233,234,235,236,237,238,239,240,241,242,243,244,245,
+	246,247,248,249,250,251,252,253,254, 0,  0,  0,  0,  0,  0,  0,
+	 0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
+	 0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0, 181
+},
+iso7_chars_32[] = {
+	175, 0,  0,  0,  0, 162, 0, 161
+};
+
+static struct wsfont_level2_glyphmap
+iso7_level2_0 = { 0, 190, iso7_chars_0, 1 },
+iso7_level2_3 = { 134, 111, iso7_chars_3, 1 },
+iso7_level2_32 = { 20, 8, iso7_chars_32, 1 };
+
+static struct wsfont_level2_glyphmap *iso7_level1[] = {
+	&iso7_level2_0, NULL, NULL, &iso7_level2_3,
+	NULL, NULL, NULL, NULL,
+	NULL, NULL, NULL, NULL,
+	NULL, NULL, NULL, NULL,
+	NULL, NULL, NULL, NULL,
+	NULL, NULL, NULL, NULL,
+	NULL, NULL, NULL, NULL,
+	NULL, NULL, NULL, NULL,
+	&iso7_level2_32
+};
+
+
+/*
+ * SONY maps
+ */
+
+static u_int8_t
+sony_chars_0[] = {
+	 0,  1,  2,  3,  4,  5,  6,  7,  8,  9, 10, 11, 12, 13, 14, 15,
+	16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31,
+	32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47,
+	48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63,
+	64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79,
+	80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95,
+	96, 97, 98, 99, 100,101,102,103,104,105,106,107,108,109,110,111,
+	112,113,114,115,116,117,118,119,120,121,122,123,124,125,126,127,
+	 0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
+	 0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
+	128,129,130,131,132,133,134,135,136,137,138,139,140,141,142,143,
+	144,145,146,147,148,149,150,151,152,153,154,155,156,157,158,159,
+	160,161,162,163,164,165,166,167,168,169,170,171,172,173,174,175,
+	176,177,178,179,180,181,182,183,184,185,186,187,188,189,190,191,
+	192,193,194,195,196,197,198,199,200,201,202,203,204,205,206,207,
+	208,209,210,211,212,213,214,215,216,217,218,219,220,221,222,223
+};
+static u_int16_t
+sony_chars_255[] = {
+	225,226,227,228,229,230,231,232,233,234,235,236,237,238,239,240,
+	241,242,243,244,245,246,247,248,249,250,251,252,253,254,255,256,
+	257,258,259,260,261,262,263,264,265,266,267,268,269,270,271,272,
+	273,274,275,276,277,278,279,280,281,282,283,284,285,286,287
+};
+
+static struct wsfont_level2_glyphmap
+sony_level2_0 = { 0, 256, sony_chars_0, 1 },
+sony_level2_255 = { 97, 63, sony_chars_255, 2 };
+
+static struct wsfont_level2_glyphmap *sony_level1[] = {
+	&sony_level2_0, NULL, NULL, NULL,
+	NULL, NULL, NULL, NULL,
+	NULL, NULL, NULL, NULL,
+	NULL, NULL, NULL, NULL,
+	null16, null16, null16, null16,
+	null16, null16, null16, null16,
+	null16, null16, null16, null16,
+	null16, null16,
+	NULL, NULL, NULL, NULL,
+	NULL, NULL, NULL, NULL,
+	NULL, NULL, NULL, NULL,
+	NULL, NULL, NULL, &sony_level2_255
+};
+
+static struct wsfont_level1_glyphmap encodings[] = {
+	{ NULL, 0, 0 },			/* WSDISPLAY_FONTENC_ISO */
+	{ ibm437_level1, 0, 38 },	/* WSDISPLAY_FONTENC_IBM */
+	{ NULL, 0, 0 },			/* WSDISPLAY_FONTENC_PCVT */
+	{ iso7_level1, 0, 33 },		/* WSDISPLAY_FONTENC_ISO7 */
+	{ sony_level1, 0, 256 },	/* WSDISPLAY_FONTENC_SONY */
+};
+
+#define MAX_ENCODING WSDISPLAY_FONTENC_SONY
+
+/*
+ * Remap Unicode character to glyph
+ */
+int
+wsfont_map_unichar(font, c)
+	struct wsdisplay_font *font;
+	int c;
+{
+	if (font->encoding == WSDISPLAY_FONTENC_ISO) {
+
+		return c;
+
+	} else if (font->encoding < 0 || font->encoding > MAX_ENCODING) {
+
+		return (-1);
+
+	} else {
+
+		int hi = (c >> 8), lo = c & 255;
+		struct wsfont_level1_glyphmap *map1 =
+			&encodings[font->encoding];
+
+		if (hi >= map1->base && hi < map1->base + map1->size) {
+			struct wsfont_level2_glyphmap *map2 =
+			  map1->level2[hi - map1->base];
+
+			if (map2 != NULL &&
+			    lo >= map2->base && hi < map2->base + map2->size) {
+
+			  	lo -= map2->base;
+
+				switch(map2->width) {
+				 case 1:
+				   c = (((u_int8_t *)map2->chars)[lo]);
+				   break;
+				 case 2:
+				   c = (((u_int16_t *)map2->chars)[lo]);
+				   break;
+				 case 4:
+				   c = (((u_int32_t *)map2->chars)[lo]);
+				   break;
+				}
+
+				if (c == 0 && lo != 0)
+					return (-1);
+				else
+					return (c);
+
+			} else {
+				return (-1);
+			}
+
+		} else {
+			return (-1);
+		}
+
+	}
+
 }
