@@ -1,4 +1,4 @@
-| $NetBSD: SRT0.S,v 1.5 2001/02/22 07:11:10 chs Exp $
+| $NetBSD: SRT0.S,v 1.6 2001/05/10 16:50:22 fredette Exp $
 
 | Copyright (c) 1998 The NetBSD Foundation, Inc.
 | All rights reserved.
@@ -143,7 +143,7 @@ ENTRY(longjmp)
 	moveml	%a0@+,#0xFCFC	| restore d2-d7/a2-a7
 	| Note: just changed sp!
 	movl	%a0@,%sp@	| and return address
-	movl	#1,%a0		| return 1
+	movl	#1,%d0		| return 1
 	rts
 
 | The end.
