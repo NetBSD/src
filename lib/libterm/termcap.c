@@ -33,7 +33,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)termcap.c	5.5 (Berkeley) 6/1/90";*/
-static char rcsid[] = "$Id: termcap.c,v 1.2 1993/08/01 18:32:09 mycroft Exp $";
+static char rcsid[] = "$Id: termcap.c,v 1.3 1994/01/13 22:24:06 glass Exp $";
 #endif /* not lint */
 
 #define	BUFSIZ		1024
@@ -63,9 +63,9 @@ static	int hopcount;	/* detect infinite loops in termcap, init 0 */
 static	char pathbuf[PBUFSIZ];		/* holds raw path of filenames */
 static	char *pathvec[PVECSIZ];		/* to point to names in pathbuf */
 static	char **pvec;			/* holds usable tail of path vector */
-char	*tskip();
-char	*tgetstr();
-char	*tdecode();
+static  char *tskip();
+static  char *tdecode();
+char    *tgetstr();
 char	*getenv();
 
 /*
