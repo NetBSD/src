@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.18 1998/05/13 19:21:37 tv Exp $
+#	$NetBSD: Makefile,v 1.19 1998/09/13 15:22:59 hubertf Exp $
 #	@(#)Makefile	8.1 (Berkeley) 5/31/93
 
 PROG=	atc
@@ -9,7 +9,7 @@ YHEADER=1
 MAN=	atc.6
 LDADD=	-ll -lm -lcurses
 DPADD=	${LIBL} ${LIBM} ${LIBCURSES}
-GAMES=	ATC_scores Game_List Killer crossover default easy game_2 \
+GAMES=	Game_List Killer crossover default easy game_2 \
 	Atlantis OHare Tic-Tac-Toe airports box crosshatch game_3 \
 	game_4 novice two-corners
 HIDEGAME=hidegame
