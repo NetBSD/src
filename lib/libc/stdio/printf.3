@@ -1,4 +1,4 @@
-.\"	$NetBSD: printf.3,v 1.32 2003/05/03 19:46:23 wiz Exp $
+.\"	$NetBSD: printf.3,v 1.33 2003/05/11 16:15:07 kleink Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -37,7 +37,7 @@
 .\"
 .\"     @(#)printf.3	8.1 (Berkeley) 6/4/93
 .\"
-.Dd December 2, 2001
+.Dd May 11, 2003
 .Dt PRINTF 3
 .Os
 .Sh NAME
@@ -642,6 +642,58 @@ The complete conversion specification is
 In no case does a non-existent or small field width cause truncation of
 a field; if the result of a conversion is wider than the field width, the
 field is expanded to contain the conversion result.
+.Sh RETURN VALUES
+Upon successful completion
+.Fn printf ,
+.Fn fprintf ,
+.Fn vprintf ,
+and
+.Fn vfprintf
+return the number of characters printed.
+Otherwise \-1 is returned and
+.Dv errno
+is set to indicate the error.
+.Pp
+Upon successful completion
+.Fn sprintf
+and
+.Fn vsprintf
+return the number of characters written to
+.Fa str ,
+excluding the terminating
+.Dv NUL
+character.
+Otherwise \-1 is returned and
+.Dv errno
+is set to indicate the error.
+.Pp
+Upon successful completion
+.Fn snprintf
+and 
+.Fn vsnprintf
+return the number of character that would have been written
+to a sufficiently sized
+.Fa str ,
+excluding the terminating
+.Dv NUL
+character.
+.Pp
+Upon succesful completion
+.Fn asprintf
+and
+.Fn vasprintf
+return the number of characters written to
+.Fa ret ,
+excluding the terminating
+.Dv NUL
+character.
+Otherwise \-1 is returned,
+.Fa ret
+is set to
+.Dv NULL ,
+and
+.Dv errno
+is set to indicate the error.
 .Sh EXAMPLES
 .br
 To print a date and time in the form `Sunday, July 3, 10:02',
