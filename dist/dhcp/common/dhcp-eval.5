@@ -194,7 +194,7 @@ bytes.  \fIOffset\fR and \fIlength\fR are both numeric expressions.
 If \fIdata-expr\fR, \fIoffset\fR or \fIlength\fR evaluate to null,
 then the result is also null.  If \fIoffset\fR is greater than or
 equal to the length of the evaluated data, then a zero-length data
-string is returned.  If \fIlength\fI is greater than the remaining
+string is returned.  If \fIlength\fR is greater than the remaining
 length of the evaluated data after \fIoffset\fR, then a data string
 containing all data from \fIoffset\fR to the end of the evaluated data
 is returned.
@@ -246,11 +246,11 @@ contents packet as in the \fBsubstring\fR operator.
 .RS 0.25i
 A string, enclosed in quotes, may be specified as a data expression,
 and returns the text between the quotes, encoded in ASCII.   The
-backslash ('\\') character is treated specially, as in C programming:
-'\\t' means TAB, '\\r' means carriage return, '\\n' means newline, and
-'\\b' means bell.   Any octal value can be specified with '\\nnn',
+backslash ('\e') character is treated specially, as in C programming: '\et'
+means TAB, '\er' means carriage return, '\en' means newline, and '\eb'
+means bell.   Any octal value can be specified with '\ennn',
 where nnn is any positive octal number less than 0400.  Any
-hexadecimal value can be specified with '\xnn', where nn is any
+hexadecimal value can be specified with '\exnn', where nn is any
 positive hexadecimal number less than 0xff.
 .RE
 .PP
@@ -441,7 +441,7 @@ Logging statements may be used to send information to the standard logging
 channels.  A logging statement includes an optional priority (\fBfatal\fR,
 \fBerror\fR, \fBinfo\fR, or \fBdebug\fR), and a data expression.
 .PP
-.B log (\fIpriority\fB, \fIdata-expr\FB)\fR
+.B log (\fIpriority\fB, \fIdata-expr\fB)\fR
 .PP
 Logging statements take only a single data expression argument, so if you
 want to output multiple data values, you will need to use the \fBconcat\fR
