@@ -1,4 +1,4 @@
-/*	$NetBSD: pte.h,v 1.9 2002/07/25 23:33:04 matt Exp $	*/
+/*	$NetBSD: pte.h,v 1.1 2003/02/03 17:10:05 matt Exp $	*/
 
 /*-
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -31,8 +31,8 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef	_MPC6XX_PTE_H_
-#define	_MPC6XX_PTE_H_
+#ifndef	_POWERPC_OEA_PTE_H_
+#define	_POWERPC_OEA_PTE_H_
 
 #include <sys/queue.h>
 
@@ -84,4 +84,4 @@ typedef	struct pte pte_t;
 #define	ADDR_API_SHFT	22
 #define	ADDR_POFF	0x00000fff
 
-#endif	/* _MPC6XX_PTE_H_ */
+#endif	/* _POWERPC_OEA_PTE_H_ */

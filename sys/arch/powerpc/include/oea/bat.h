@@ -1,4 +1,4 @@
-/*	$NetBSD: bat.h,v 1.5 2002/07/05 18:45:21 matt Exp $	*/
+/*	$NetBSD: bat.h,v 1.1 2003/02/03 17:10:05 matt Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -67,8 +67,8 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef	_MPC6XX_BAT_H_
-#define	_MPC6XX_BAT_H_
+#ifndef	_POWERPC_OEA_BAT_H_
+#define	_POWERPC_OEA_BAT_H_
 
 struct bat {
 	u_int32_t batu;
@@ -178,9 +178,9 @@ struct bat {
 	((batl) & BAT601_V)
 
 #ifdef	_KERNEL
-void mpc6xx_batinit(paddr_t, ...);
-void mpc6xx_iobat_add(paddr_t, register_t);
+void oea_batinit(paddr_t, ...);
+void oea_iobat_add(paddr_t, register_t);
 extern struct bat battable[];
 #endif
 
-#endif	/* _MPC6XX_BAT_H_ */
+#endif	/* _POWERPC_OEA_BAT_H_ */

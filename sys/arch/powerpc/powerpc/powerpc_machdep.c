@@ -1,4 +1,4 @@
-/*	$NetBSD: powerpc_machdep.c,v 1.17 2003/02/02 20:43:24 matt Exp $	*/
+/*	$NetBSD: powerpc_machdep.c,v 1.18 2003/02/03 17:10:11 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -48,7 +48,7 @@
 
 int cpu_timebase;
 int cpu_printfataltraps;
-#ifdef PPC_MPC6XX
+#ifdef PPC_OEA
 extern int powersave;
 #endif
 
@@ -138,7 +138,7 @@ cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 		return sysctl_rdstruct(oldp, oldlenp, newp,
 			&curcpu()->ci_ci, 
 			sizeof(curcpu()->ci_ci));
-#ifdef PPC_MPC6XX
+#ifdef PPC_OEA
 	case CPU_POWERSAVE:
 		if (powersave < 0)
 			return sysctl_rdint(oldp, oldlenp, newp, powersave);

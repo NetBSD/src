@@ -1,4 +1,4 @@
-/*	$NetBSD: extintr.c,v 1.35 2003/02/02 20:43:20 matt Exp $	*/
+/*	$NetBSD: extintr.c,v 1.36 2003/02/03 17:09:57 matt Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 Tsubai Masanari.
@@ -842,7 +842,7 @@ openpic_init()
 
 	/* XXX set spurious intr vector */
 
-	mpc6xx_install_extint(ext_intr_openpic);
+	oea_install_extint(ext_intr_openpic);
 }
 
 void
@@ -855,7 +855,7 @@ legacy_int_init()
 		out32rb(INT_CLEAR_REG_H, 0xffffffff);
 	}
 
-	mpc6xx_install_extint(ext_intr);
+	oea_install_extint(ext_intr);
 }
 
 #define HEATHROW_FCR_OFFSET	0x38		/* XXX should not here */

@@ -1,4 +1,4 @@
-/*	$NetBSD: altivec.c,v 1.8 2003/02/02 20:43:23 matt Exp $	*/
+/*	$NetBSD: altivec.c,v 1.1 2003/02/03 17:10:09 matt Exp $	*/
 
 /*
  * Copyright (C) 1996 Wolfgang Solfrank.

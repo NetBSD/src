@@ -1,4 +1,4 @@
-/*	$NetBSD: sr_601.h,v 1.2 2003/01/22 21:44:55 kleink Exp $	*/
+/*	$NetBSD: sr_601.h,v 1.1 2003/02/03 17:10:06 matt Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -36,8 +36,8 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _MPC6XX_SR_601_H_
-#define _MPC6XX_SR_601_H_
+#ifndef _POWERPC_OEA_SR_601_H_
+#define _POWERPC_OEA_SR_601_H_
 
 /*
  * I/O Controller Interface Address Translation segment register
@@ -69,4 +69,4 @@
 void mpc601_ioseg_add(paddr_t, register_t);
 #endif
 
-#endif /* !_MPC6XX_SR_601_H_ */
+#endif /* !_POWERPC_OEA_SR_601_H_ */
