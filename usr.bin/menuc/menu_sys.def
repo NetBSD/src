@@ -1,4 +1,4 @@
-/*	$NetBSD: menu_sys.def,v 1.29 2002/04/04 14:11:23 blymn Exp $	*/
+/*	$NetBSD: menu_sys.def,v 1.29.2.1 2003/12/24 04:33:36 jmc Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -595,6 +595,14 @@ process_menu (int num)
 			}
 			if (m->opts[sel].opt_action)
 				done = (*m->opts[sel].opt_action)(m);
+
+			/*      
+			 * The opt_action function may allocate new menus,
+			 * which may make m a stale pointer into the old  
+			 * menus array. So re-target it.
+			 */
+			m = &menus[num];
+
 			if (m->opts[sel].opt_menu != -1) {
 				if (m->opts[sel].opt_flags & OPT_SUB)
 					process_menu (m->opts[sel].opt_menu);
