@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.13 1997/07/06 22:38:26 ragge Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.14 1998/01/03 00:24:42 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -271,7 +271,7 @@ disk_reallymapin(bp, map, reg, flag)
 	if ((bp->b_flags & B_PHYS) == 0) {
 		pte = kvtopte(addr);
 	} else {
-		pcb = bp->b_proc->p_vmspace->vm_map.pmap->pm_pcb;
+		pcb = &bp->b_proc->p_addr->u_pcb;
 		pte = uvtopte(addr, pcb);
 	}
 
