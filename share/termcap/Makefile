@@ -15,7 +15,7 @@ termcap: reorder termcap.src
 termcap.db: termcap
 	cap_mkdb termcap
 
-clean:
+clean cleandir:
 	rm -f termcap termcap.db
 
 beforeinstall:
