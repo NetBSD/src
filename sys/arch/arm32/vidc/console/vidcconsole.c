@@ -1,4 +1,4 @@
-/* $NetBSD: vidcconsole.c,v 1.8 1996/04/26 20:59:09 mark Exp $ */
+/* $NetBSD: vidcconsole.c,v 1.9 1996/05/06 00:45:09 mark Exp $ */
 
 /*
  * Copyright (c) 1996 Robert Black
@@ -479,25 +479,33 @@ vidcconsole_mode(vc, mode)
 		acc+=vidc_currentmode->vber;	vidc_write(VIDC_VBER,(acc  - 1 ));
 		acc+=vidc_currentmode->vcr;		vidc_write(VIDC_VCR ,(acc  - 1 ));
 
+#ifdef RC7500
+		vidc_write(VIDC_DCTL, vidc_currentmode->hder>>2 | 1<<16 | 1<<12);
+		if (vidc_currentmode->hder>=800)
+			vidc_write(VIDC_EREG, 0x41<<12);
+		else
+			vidc_write(VIDC_EREG, 0x51<<12);
+#else
 		WriteWord(IOMD_FSIZE, vidc_currentmode->vcr
 		    + vidc_currentmode->vswr
 		    + vidc_currentmode->vber
-		    + vidc_currentmode->vbsr - 1 );
+		    + vidc_currentmode->vbsr - 1);
 
-		if ( dispsize==1024*1024 )
-			vidc_write ( VIDC_DCTL, vidc_currentmode->hder>>2 | 1<<16 | 1<<12);
+		if (dispsize == 1024*1024)
+			vidc_write(VIDC_DCTL, vidc_currentmode->hder>>2 | 1<<16 | 1<<12);
 		else
-			vidc_write ( VIDC_DCTL, vidc_currentmode->hder>>2 | 3<<16 | 1<<12);
+			vidc_write(VIDC_DCTL, vidc_currentmode->hder>>2 | 3<<16 | 1<<12);
 
-		vidc_write ( VIDC_EREG, 1<<12 );
-		if ( dispsize>1024*1024) {
-			if ( vidc_currentmode->hder>=800 )
- 				vidc_write ( VIDC_CONREG, 7<<8 | bpp_mask<<5);
+		vidc_write(VIDC_EREG, 1<<12);
+		if (dispsize > 1024*1024) {
+			if (vidc_currentmode->hder >= 800)
+ 				vidc_write(VIDC_CONREG, 7<<8 | bpp_mask<<5);
 			else
-				vidc_write ( VIDC_CONREG, 6<<8 | bpp_mask<<5);
+				vidc_write(VIDC_CONREG, 6<<8 | bpp_mask<<5);
 		} else {
-			vidc_write ( VIDC_CONREG, 7<<8 | bpp_mask<<5);
+			vidc_write(VIDC_CONREG, 7<<8 | bpp_mask<<5);
 		}
+#endif
 	}
 
 	R_DATA->mode = *vidc_currentmode;
