@@ -1,4 +1,4 @@
-#	$NetBSD: files.pci,v 1.50 1998/12/10 18:47:18 augustss Exp $
+#	$NetBSD: files.pci,v 1.51 1999/01/06 23:25:53 thorpej Exp $
 #
 # Config file and device description for machine-independent PCI code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -32,6 +32,11 @@ attach  adw at pci with adw_pci
 file    dev/pci/adw_pci.c               adw_pci
 file    dev/ic/adwlib.c                 adw_pci
 file    dev/ic/adwmcode.c               adw_pci
+
+# AMD Am53c974 PCscsi-PCI SCSI controllers
+device	pcscp: scsi, ncr53c9x
+attach	pcscp at pci
+file	dev/pci/pcscp.c			pcscp
 
 # BusLogic BT-9xx PCI family
 # device declaration in sys/conf/files
