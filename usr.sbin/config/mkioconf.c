@@ -1,4 +1,4 @@
-/*	$NetBSD: mkioconf.c,v 1.53 2000/10/02 19:48:35 cgd Exp $	*/
+/*	$NetBSD: mkioconf.c,v 1.54 2000/11/18 00:51:29 cgd Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -227,6 +227,9 @@ emitloc(FILE *fp)
 {
 	int i;
 
+	if (locators.used == 0)
+		return (0);
+
 	if (fprintf(fp, "\n/* locators */\n\
 static int loc[%d] = {", locators.used) < 0)
 		return (1);
@@ -246,6 +249,9 @@ static int
 emitpv(FILE *fp)
 {
 	int i;
+
+	if (parents.used == 0)
+		return (0);
 
 	if (fprintf(fp, "\n/* parent vectors */\n\
 static short pv[%d] = {", parents.used) < 0)
