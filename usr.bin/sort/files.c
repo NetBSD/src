@@ -1,4 +1,4 @@
-/*	$NetBSD: files.c,v 1.2 2000/10/07 18:37:10 bjh21 Exp $	*/
+/*	$NetBSD: files.c,v 1.3 2000/10/07 20:37:06 bjh21 Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -40,7 +40,7 @@
 #include "fsort.h"
 
 #ifndef lint
-__RCSID("$NetBSD: files.c,v 1.2 2000/10/07 18:37:10 bjh21 Exp $");
+__RCSID("$NetBSD: files.c,v 1.3 2000/10/07 20:37:06 bjh21 Exp $");
 __SCCSID("@(#)files.c	8.1 (Berkeley) 6/6/93");
 #endif /* not lint */
 
@@ -63,12 +63,12 @@ getnext(binno, infl0, nfiles, pos, end, dummy)
 	static long nleft = 0;
 	static int cnt = 0, flag = -1;
 	static u_char maxb = 0;
-	static FILE *fd;
+	static FILE *fp;
 
 	if (nleft == 0) {
 		if (binno < 0)	/* reset files. */ {
 			for (i = 0; i < nfiles; i++) {
-				rewind(fstack[infl0.top + i].fd);
+				rewind(fstack[infl0.top + i].fp);
 				fstack[infl0.top + i].max_o = 0;
 			}
 			flag = -1;
@@ -81,24 +81,24 @@ getnext(binno, infl0, nfiles, pos, end, dummy)
 				cnt = 0;
 				return (EOF);
 			}
-			fd = fstack[infl0.top + cnt].fd;
+			fp = fstack[infl0.top + cnt].fp;
 			hp = (u_char *) &nleft;
 			for (i = sizeof(TRECHEADER); i; --i)
-				*hp++ = getc(fd);
+				*hp++ = getc(fp);
 			if (binno < maxb)
 				fstack[infl0.top+cnt].max_o
 					+= sizeof(nleft) + nleft;
 			else if (binno == maxb) {
 				if (binno != fstack[infl0.top].lastb) {
-					fseek(fd, fstack[infl0.top+
+					fseek(fp, fstack[infl0.top+
 						cnt].max_o, SEEK_SET);
-					fread(&nleft, sizeof(nleft), 1, fd);
+					fread(&nleft, sizeof(nleft), 1, fp);
 				}
 				if (nleft == 0)
-					fclose(fd);
+					fclose(fp);
 			} else if (binno == maxb + 1) {		/* skip a bin */
-				fseek(fd, nleft, SEEK_CUR);
-				fread(&nleft, sizeof(nleft), 1, fd);
+				fseek(fp, nleft, SEEK_CUR);
+				fread(&nleft, sizeof(nleft), 1, fp);
 				flag = cnt;
 			}
 		}
@@ -107,16 +107,16 @@ getnext(binno, infl0, nfiles, pos, end, dummy)
 		return (BUFFEND);
 	hp = (u_char *) pos;
 	for (i = sizeof(TRECHEADER); i ; --i)
-		*hp++ = (u_char) getc(fd);
+		*hp++ = (u_char) getc(fp);
 	if (end - pos->data < pos->length) {
 		for (i = sizeof(TRECHEADER); i ;  i--)
-			ungetc(*--hp, fd);
+			ungetc(*--hp, fp);
 		return (BUFFEND);
 	}
-	fread(pos->data, pos->length, 1, fd);
+	fread(pos->data, pos->length, 1, fp);
 	nleft -= pos->length + sizeof(TRECHEADER);
 	if (nleft == 0 && binno == fstack[infl0.top].maxb)
-		fclose(fd);
+		fclose(fp);
 	return (0);
 }
 
@@ -135,7 +135,7 @@ makeline(flno, filelist, nfiles, buffer, bufend, dummy2)
 	static char *opos;
 	register char *end, *pos;
 	static int fileno = 0, overflow = 0;
-	static FILE *fd = 0;
+	static FILE *fp = 0;
 	register int c;
 
 	pos = (char *) buffer->data;
@@ -147,15 +147,15 @@ makeline(flno, filelist, nfiles, buffer, bufend, dummy2)
 	}
 	for (;;) {
 		if (flno >= 0) {
-			if (!(fd = fstack[flno].fd))
+			if (!(fp = fstack[flno].fp))
 				return (EOF);
-		} else if (!fd) {
+		} else if (!fp) {
 			if (fileno  >= nfiles) return(EOF);
-			if (!(fd = fopen(filelist.names[fileno], "r")))
+			if (!(fp = fopen(filelist.names[fileno], "r")))
 				err(2, "%s", filelist.names[fileno]);
 			++fileno;
 		}
-		while ((pos < end) && ((c = getc(fd)) != EOF)) {
+		while ((pos < end) && ((c = getc(fp)) != EOF)) {
 			if ((*pos++ = c) == REC_D) {
 				buffer->offset = 0;
 				buffer->length = pos - (char *) buffer->data;
@@ -176,9 +176,9 @@ makeline(flno, filelist, nfiles, buffer, bufend, dummy2)
 				buffer->length = pos - (char *) buffer->data;
 				return(0);
 			}
-			FCLOSE(fd);
-			fd = 0;
-			if(flno >= 0) fstack[flno].fd = 0;
+			FCLOSE(fp);
+			fp = 0;
+			if(flno >= 0) fstack[flno].fp = 0;
 		} else {
 			buffer->data[100] = '\000';
 			warnx("line too long:ignoring %s...", buffer->data);
@@ -211,7 +211,7 @@ makekey(flno, filelist, nfiles, buffer, bufend, ftbl)
 	for (;;) {
 		if (flno >= 0) {
 			get = seq;
-			if (!(dbdesc = fstack[flno].fd))
+			if (!(dbdesc = fstack[flno].fp))
 				return(EOF);
 		} else if (!dbdesc) {
 			if (fileno  >= nfiles)
@@ -236,7 +236,7 @@ makekey(flno, filelist, nfiles, buffer, bufend, ftbl)
 		if (c == EOF) {
 			FCLOSE(dbdesc);
 			dbdesc = 0;
-			if (flno >= 0) fstack[flno].fd = 0;
+			if (flno >= 0) fstack[flno].fp = 0;
 		} else {
 			
 			((char *) line->data)[60] = '\000';
@@ -248,11 +248,11 @@ makekey(flno, filelist, nfiles, buffer, bufend, ftbl)
 }
 
 /*
- * get a key/line pair from fd
+ * get a key/line pair from fp
  */
 int
-seq(fd, line, key)
-	FILE *fd;
+seq(fp, line, key)
+	FILE *fp;
 	DBT *key, *line;
 {
 	static char *buf, flag = 1;
@@ -265,7 +265,7 @@ seq(fd, line, key)
 		line->data = buf;
 	}
 	pos = buf;
-	while ((c = getc(fd)) != EOF) {
+	while ((c = getc(fp)) != EOF) {
 		if ((*pos++ = c) == REC_D) {
 			line->size = pos - buf;
 			return (0);
@@ -273,7 +273,7 @@ seq(fd, line, key)
 		if (pos == end) {
 			line->size = MAXLLEN;
 			*--pos = REC_D;
-			while ((c = getc(fd)) != EOF) {
+			while ((c = getc(fp)) != EOF) {
 				if (c == REC_D)
 					return (BUFFEND);
 			}
@@ -292,22 +292,22 @@ seq(fd, line, key)
  * write a key/line pair to a temporary file
  */
 void
-putrec(rec, fd)
+putrec(rec, fp)
 	register struct recheader *rec;
-	register FILE *fd;
+	register FILE *fp;
 {
-	EWRITE(rec, 1, rec->length + sizeof(TRECHEADER), fd);
+	EWRITE(rec, 1, rec->length + sizeof(TRECHEADER), fp);
 }
 
 /*
  * write a line to output
  */
 void
-putline(rec, fd)
+putline(rec, fp)
 	register struct recheader *rec;
-	register FILE *fd;
+	register FILE *fp;
 {
-	EWRITE(rec->data+rec->offset, 1, rec->length - rec->offset, fd);
+	EWRITE(rec->data+rec->offset, 1, rec->length - rec->offset, fp);
 }
 
 /*
@@ -322,20 +322,20 @@ geteasy(flno, filelist, nfiles, rec, end, dummy2)
 	struct field *dummy2;
 {
 	int i;
-	FILE *fd;
-	fd = fstack[flno].fd;
+	FILE *fp;
+	fp = fstack[flno].fp;
 	if ((u_char *) rec > end - sizeof(TRECHEADER))
 		return (BUFFEND);
-	if (!fread(rec, 1, sizeof(TRECHEADER), fd)) {
-		fclose(fd);
-		fstack[flno].fd = 0;
+	if (!fread(rec, 1, sizeof(TRECHEADER), fp)) {
+		fclose(fp);
+		fstack[flno].fp = 0;
 		return (EOF);
 	}
 	if (end - rec->data < rec->length) {
 		for (i = sizeof(TRECHEADER) - 1; i >= 0;  i--)
-			ungetc(*((char *) rec + i), fd);
+			ungetc(*((char *) rec + i), fp);
 		return (BUFFEND);
 	}
-	fread(rec->data, rec->length, 1, fd);
+	fread(rec->data, rec->length, 1, fp);
 	return (0);
 }

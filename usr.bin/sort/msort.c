@@ -1,4 +1,4 @@
-/*	$NetBSD: msort.c,v 1.2 2000/10/07 18:37:10 bjh21 Exp $	*/
+/*	$NetBSD: msort.c,v 1.3 2000/10/07 20:37:06 bjh21 Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -40,7 +40,7 @@
 #include "fsort.h"
 
 #ifndef lint
-__RCSID("$NetBSD: msort.c,v 1.2 2000/10/07 18:37:10 bjh21 Exp $");
+__RCSID("$NetBSD: msort.c,v 1.3 2000/10/07 20:37:06 bjh21 Exp $");
 __SCCSID("@(#)msort.c	8.1 (Berkeley) 6/6/93");
 #endif /* not lint */
 
@@ -69,12 +69,12 @@ static int cmp __P((struct recheader *, struct recheader *));
 static int insert __P((struct mfile **, struct mfile **, int, int));
 
 void
-fmerge(binno, files, nfiles, get, outfd, fput, ftbl)
+fmerge(binno, files, nfiles, get, outfp, fput, ftbl)
 	union f_handle files;
 	int binno, nfiles;
 	int (*get) __P((int, union f_handle, int, struct recheader *, u_char *,
 	    struct field *));
-	FILE *outfd;
+	FILE *outfp;
 	void (*fput) __P((struct recheader *, FILE *));
 	struct field *ftbl;
 {
@@ -106,7 +106,7 @@ fmerge(binno, files, nfiles, get, outfd, fput, ftbl)
 		put = putrec;
 		for (j = 0; j < nfiles; j += 16) {
 			if (nfiles <= 16) {
-				tout = outfd;
+				tout = outfp;
 				put = fput;
 			}
 			else
@@ -114,17 +114,17 @@ fmerge(binno, files, nfiles, get, outfd, fput, ftbl)
 			last = min(16, nfiles - j);
 			if (binno < 0) {
 				for (i = 0; i < last; i++)
-					if (!(l_fstack[i+MAXFCT-1-16].fd =
+					if (!(l_fstack[i+MAXFCT-1-16].fp =
 					    fopen(files.names[j + i], "r")))
 						err(2, "%s", files.names[j+i]);
 				merge(MAXFCT-1-16, last, get, tout, put, ftbl);
 			}
 			else {
 				for (i = 0; i< last; i++)
-					rewind(l_fstack[i+j].fd);
+					rewind(l_fstack[i+j].fp);
 				merge(files.top+j, last, get, tout, put, ftbl);
 			}
-			if (nfiles > 16) l_fstack[j/16].fd = tout;
+			if (nfiles > 16) l_fstack[j/16].fp = tout;
 		}
 		nfiles = (nfiles + 15) / 16;
 		if (nfiles == 1)
@@ -138,12 +138,12 @@ fmerge(binno, files, nfiles, get, outfd, fput, ftbl)
 }
 
 void
-merge(infl0, nfiles, get, outfd, put, ftbl)
+merge(infl0, nfiles, get, outfp, put, ftbl)
 	int infl0, nfiles;
 	int (*get) __P((int, union f_handle, int, struct recheader *, u_char *,
 	    struct field *));
 	void (*put)(struct recheader *, FILE *);
-	FILE *outfd;
+	FILE *outfp;
 	struct field *ftbl;
 {
 	int c, i, j;
@@ -175,14 +175,14 @@ merge(infl0, nfiles, get, outfd, put, ftbl)
 		for (c = 1; c == 1;) {
 			if (EOF == (c = get(cfile->flno, dummy, nfiles,
 			   cfile->rec, cfile->end, ftbl))) {
-				put(flist[0]->rec, outfd);
+				put(flist[0]->rec, outfp);
 				memmove(flist, flist + 1,
 				    sizeof(MFILE *) * (--nfiles));
 				cfile->flno = flist[0]->flno;
 				break;
 			}
 			if (!(c = insert(flist, &cfile, nfiles, DELETE)))
-				put(cfile->rec, outfd);
+				put(cfile->rec, outfp);
 		}
 	}	
 }
