@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: nls.c,v 1.5 2004/03/01 07:46:33 jdolecek Exp $");
+__RCSID("$NetBSD: nls.c,v 1.6 2004/08/01 16:40:58 tshiozak Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -110,7 +110,7 @@ nls_str_toloc(char *dst, const char *src)
 		return strcpy(dst, src);
 	inlen = outlen = strlen(src);
 	iconv(nls_toloc, NULL, NULL, &p, &outlen);
-	while (iconv(nls_toloc, &src, &inlen, &p, &outlen) == -1) {
+	while (iconv(nls_toloc, (char **)&src, &inlen, &p, &outlen) == -1) {
 		*p++ = *src++;
 		inlen--;
 		outlen--;
@@ -129,7 +129,7 @@ nls_str_toext(char *dst, const char *src)
 		return strcpy(dst, src);
 	inlen = outlen = strlen(src);
 	iconv(nls_toext, NULL, NULL, &p, &outlen);
-	while (iconv(nls_toext, &src, &inlen, &p, &outlen) == -1) {
+	while (iconv(nls_toext, (char **)&src, &inlen, &p, &outlen) == -1) {
 		*p++ = *src++;
 		inlen--;
 		outlen--;
@@ -152,7 +152,7 @@ nls_mem_toloc(void *dst, const void *src, size_t size)
 		return memcpy(dst, src, size);
 	inlen = outlen = size;
 	iconv(nls_toloc, NULL, NULL, &p, &outlen);
-	while (iconv(nls_toloc, &s, &inlen, &p, &outlen) == -1) {
+	while (iconv(nls_toloc, (char **)&s, &inlen, &p, &outlen) == -1) {
 		*p++ = *s++;
 		inlen--;
 		outlen--;
@@ -175,7 +175,7 @@ nls_mem_toext(void *dst, const void *src, size_t size)
 
 	inlen = outlen = size;
 	iconv(nls_toext, NULL, NULL, &p, &outlen);
-	while (iconv(nls_toext, &s, &inlen, &p, &outlen) == -1) {
+	while (iconv(nls_toext, (char **)&s, &inlen, &p, &outlen) == -1) {
 		*p++ = *s++;
 		inlen--;
 		outlen--;
