@@ -1,4 +1,4 @@
-/*	$NetBSD: leave.c,v 1.10 2002/01/20 03:53:53 fair Exp $	*/
+/*	$NetBSD: leave.c,v 1.11 2003/04/02 19:43:02 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1988, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1988, 1993\n\
 #if 0
 static char sccsid[] = "@(#)leave.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: leave.c,v 1.10 2002/01/20 03:53:53 fair Exp $");
+__RCSID("$NetBSD: leave.c,v 1.11 2003/04/02 19:43:02 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -53,6 +53,7 @@ __RCSID("$NetBSD: leave.c,v 1.10 2002/01/20 03:53:53 fair Exp $");
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
+#include <err.h>
 #include <unistd.h>
 
 #define	SECOND	1
@@ -67,30 +68,27 @@ __RCSID("$NetBSD: leave.c,v 1.10 2002/01/20 03:53:53 fair Exp $");
  * It nags you like a mother hen.
  */
 
-int	main __P((int argc, char **argv));
-void	doalarm __P((u_int));
-void	usage __P((void));
+int main(int argc, char **argv);
+
+static void doalarm(u_int);
+static void usage(void);
 
 int
-main(argc, argv)
-	int argc;
-	char **argv;
+main(int argc, char **argv)
 {
-	register u_int secs;
-	register int hours, minutes;
-	register char c, *cp;
-	struct tm *t;
+	u_int secs;
+	int hours, minutes;
+	char c, *cp;
+	struct tm *t = NULL;
 	time_t now;
 	int plusnow;
 	char buf[50];
 
-#ifdef __GNUC__
-	t = NULL;		/* XXX gcc -Wuninitialized */
-#endif
+	if (setvbuf(stdout, NULL, _IONBF, 0) != 0)
+		errx(1, "Cannot set stdout to unbuffered.");
 
 	if (argc < 2) {
-#define	MSG1	"When do you have to leave? "
-		(void)write(STDOUT_FILENO, MSG1, sizeof(MSG1) - 1);
+		(void)puts("When do you have to leave? ");
 		cp = fgets(buf, sizeof(buf), stdin);
 		if (cp == NULL || *cp == '\n')
 			exit(0);
@@ -135,62 +133,59 @@ main(argc, argv)
 	exit(0);
 }
 
-void
-doalarm(secs)
-	u_int secs;
+static void
+doalarm(u_int secs)
 {
-	register int bother;
+	int bother;
 	time_t daytime;
-	int pid;
 
-	if ((pid = fork()) != 0) {
-		(void)time(&daytime);
-		daytime += secs;
-		printf("Alarm set for %.16s. (pid %d)\n",
-		    ctime(&daytime), pid);
+	switch (fork()) {
+	case 0:
+		break;
+	case -1:
+		err(1, "Fork failed");
+		/*NOTREACHED*/
+	default:
 		exit(0);
 	}
-	sleep((u_int)2);		/* let parent print set message */
+
+	(void)time(&daytime);
+	daytime += secs;
+	printf("Alarm set for %.16s. (pid %u)\n",
+	    ctime(&daytime), (unsigned)getpid());
 
 	/*
 	 * if write fails, we've lost the terminal through someone else
 	 * causing a vhangup by logging in.
 	 */
 #define	FIVEMIN	(5 * MINUTE)
-#define	MSG2	"\07\07You have to leave in 5 minutes.\n"
 	if (secs >= FIVEMIN) {
 		sleep(secs - FIVEMIN);
-		if (write(STDOUT_FILENO, MSG2, sizeof(MSG2) - 1) !=
-		    sizeof(MSG2) - 1)
+		if (puts("\07\07You have to leave in 5 minutes.\n") == EOF)
 			exit(0);
 		secs = FIVEMIN;
 	}
 
 #define	ONEMIN	(MINUTE)
-#define	MSG3	"\07\07Just one more minute!\n"
 	if (secs >= ONEMIN) {
 		sleep(secs - ONEMIN);
-		if (write(STDOUT_FILENO, MSG3, sizeof(MSG3) - 1) !=
-		    sizeof(MSG3) - 1)
+		if (puts("\07\07Just one more minute!\n") == EOF)
 			exit(0);
 	}
 
-#define	MSG4	"\07\07Time to leave!\n"
 	for (bother = 10; bother--;) {
 		sleep((u_int)ONEMIN);
-		if (write(STDOUT_FILENO, MSG4, sizeof(MSG4) - 1) !=
-		    sizeof(MSG4) - 1)
+		if (puts("\07\07Time to leave!\n") == EOF)
 			exit(0);
 	}
 
-#define	MSG5	"\07\07That was the last time I'll tell you.  Bye.\n"
-	(void)write(STDOUT_FILENO, MSG5, sizeof(MSG5) - 1);
+	(void)puts("\07\07That was the last time I'll tell you.  Bye.\n");
 	exit(0);
 }
 
-void
-usage()
+static void
+usage(void)
 {
-	fprintf(stderr, "usage: leave [[+]hhmm]\n");
+	(void)fprintf(stderr, "Usage: %s [[+]hhmm]\n", getprogname());
 	exit(1);
 }
