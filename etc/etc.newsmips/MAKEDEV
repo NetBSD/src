@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.13 2001/02/01 05:50:30 tsutsui Exp $
+#	$NetBSD: MAKEDEV,v 1.14 2001/09/10 21:23:56 augustss Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -65,6 +65,7 @@
 #	ipl	ip filter
 #	random	Random number generator
 #	scsibus* SCSI busses
+#	wsmux*	wscons event multiplexor
 
 PATH=/sbin:/usr/sbin:/bin:/usr/bin
 umask 77
@@ -303,6 +304,16 @@ wsmux|wsmouse|wskbd)
 	mknod wskbd c 63 1
 	chown root.wheel wsmouse wskbd
 	chmod 600 wsmouse wskbd
+	;;
+
+wsmux*)
+	unit=${i#wsmux}
+	wsmux=wsmux$unit
+	major=63
+	rm -f $wsmux
+	mknod $wsmux c $major $unit
+	chown root.wheel $wsmux
+	chmod 600 $wsmux
 	;;
 
 pty*)

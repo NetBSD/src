@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$NetBSD: MAKEDEV,v 1.72 2001/04/17 01:30:30 ross Exp $
+#	$NetBSD: MAKEDEV,v 1.73 2001/09/10 21:23:53 augustss Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -116,6 +116,7 @@
 #	uk*	SCSI unknown
 #	mlx*	Mylex DAC960 control interface
 #	altq	ALTQ control device
+#	wsmux*	wscons event multiplexor
 
 dialin=0
 dialout=524288
@@ -166,6 +167,16 @@ wsmux|wsmouse|wskbd)
 	mknod wskbd c 56 1
 	chown root.wheel wsmouse wskbd
 	chmod 600 wsmouse wskbd
+	;;
+
+wsmux*)
+	unit=${i#wsmux}
+	wsmux=wsmux$unit
+	major=56
+	rm -f $wsmux
+	mknod $wsmux c $major $unit
+	chown root.wheel $wsmux
+	chmod 600 $wsmux
 	;;
 
 usbs)
