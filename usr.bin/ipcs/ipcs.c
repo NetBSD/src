@@ -1,7 +1,7 @@
 /*
  *	Simplified implementation of SYSV ipcs.
  *
- *	$Id: ipcs.c,v 1.1 1993/11/14 16:17:58 cgd Exp $
+ *	$Id: ipcs.c,v 1.2 1994/04/01 03:32:38 cgd Exp $
  */
 
 #include <nlist.h>
@@ -75,7 +75,7 @@ getlocation(void *addr, void *dptr, int len)
 		}
 	}
 
-	lseek(kmem_fd, (long) addr, SEEK_SET);
+	lseek(kmem_fd, (off_t)(long) addr, SEEK_SET);
 	if ((rlen = read(kmem_fd, dptr, len)) != len) {
 		fprintf(stderr,"ipcs(getlocation):  can't fetch location %08x from /dev/kmem\n",
 		    addr);
