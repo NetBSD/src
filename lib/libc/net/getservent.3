@@ -1,4 +1,4 @@
-.\"	$NetBSD: getservent.3,v 1.5 1997/03/08 13:41:06 mouse Exp $
+.\"	$NetBSD: getservent.3,v 1.6 1997/05/12 06:48:38 mikel Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -84,7 +84,7 @@ The official name of the service.
 A zero terminated list of alternative names for the service.
 .It Fa s_port
 The port number at which the service resides.
-Port numbers are returned in network byte order.
+Port numbers must be given and are returned in network byte order.
 .It Fa s_proto
 The name of the protocol to use when contacting the
 service.
