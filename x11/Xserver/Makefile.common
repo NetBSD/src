@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.common,v 1.15 2004/03/14 08:08:46 jdc Exp $
+#	$NetBSD: Makefile.common,v 1.16 2004/03/28 15:28:24 jdc Exp $
 
 # These define parts of the Xserver tree that are to be
 # conditionally compiled for different platforms.  See
@@ -26,6 +26,11 @@ XSERVER_XARM32VIDC=	yes
 
 .if ${MACHINE} == "alpha" || ${MACHINE} == "pmax"
 XSERVER_XDECNETBSD=	yes
+.endif
+
+.if ${MACHINE} == "atari"
+XSERVER_HAS_IPLAN?=	yes
+#XSERVER_XFREE68=	yes
 .endif
 
 .if ${MACHINE} == "dreamcast"
@@ -81,6 +86,8 @@ XSERVER_HAS_CFB?=	yes
 XSERVER_HAS_FB?=	yes
 # Does this server use afb library?
 XSERVER_HAS_AFB?=	no
+# Does this server use iplan2p? libraries?
+XSERVER_HAS_IPLAN?=	no
 
 # Does this platform build X68k X servers?
 XSERVER_X68K?=	no
@@ -94,6 +101,8 @@ XSERVER_XARM32VIDC?=	no
 XSERVER_XDECNETBSD?=	no
 # Does this platform build the Xdreamcast server?
 XSERVER_XDREAMCAST?=	no
+# Does this platform build the Xfree68 servers?
+XSERVER_XFREE68?=	no
 # Does this platform build XFree86 X server?
 XSERVER_XFREE86?=	no
 # Does this platform build Xhpc X servers?

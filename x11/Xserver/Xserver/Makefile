@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.13 2004/03/14 08:08:45 jdc Exp $
+#	$NetBSD: Makefile,v 1.14 2004/03/28 15:28:24 jdc Exp $
 
 .include <bsd.own.mk>
 
@@ -28,6 +28,12 @@ SUBDIR+=	XdecNetBSD
 
 .if ${XSERVER_XDREAMCAST} != "no"
 SUBDIR+=	Xdreamcast
+.endif
+
+.if ${XSERVER_XFREE68} != "no" 
+SUBDIR+=	XF68_FBDev
+SUBDIR+=	XF68_SVGA
+SUBDIR+=	XF68_W32
 .endif
 
 .if ${XSERVER_XFREE86} != "no" 
