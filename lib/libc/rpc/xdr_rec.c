@@ -29,7 +29,7 @@
 #if defined(LIBC_SCCS) && !defined(lint) 
 /*static char *sccsid = "from: @(#)xdr_rec.c 1.21 87/08/11 Copyr 1984 Sun Micro";*/
 /*static char *sccsid = "from: @(#)xdr_rec.c	2.2 88/08/01 4.0 RPCSRC";*/
-static char *rcsid = "$Id: xdr_rec.c,v 1.2 1994/03/28 02:19:44 cgd Exp $";
+static char *rcsid = "$Id: xdr_rec.c,v 1.3 1994/04/01 03:53:29 cgd Exp $";
 #endif
 
 /*
@@ -299,7 +299,7 @@ xdrrec_getpos(xdrs)
 	register RECSTREAM *rstrm = (RECSTREAM *)xdrs->x_private;
 	register long pos;
 
-	pos = lseek((int)rstrm->tcp_handle, (long) 0, 1);
+	pos = lseek((int)rstrm->tcp_handle, 0, 1);
 	if (pos != -1)
 		switch (xdrs->x_op) {
 
