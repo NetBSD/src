@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_synch.c,v 1.114 2002/09/29 21:11:36 gmcgarry Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.115 2002/11/03 13:59:12 nisimura Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.114 2002/09/29 21:11:36 gmcgarry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.115 2002/11/03 13:59:12 nisimura Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ktrace.h"
@@ -1068,6 +1068,15 @@ suspendsched()
  */
 
 #ifndef __HAVE_MD_RUNQUEUE
+
+/*      
+ * The primitives that manipulate the run queues.  whichqs tells which
+ * of the 32 queues qs have processes in them.  Setrunqueue puts processes
+ * into queues, remrunqueue removes them from queues.  The running process is
+ * on no queue, other processes are on a queue related to p->p_priority,
+ * divided by 4 actually to shrink the 0-127 range of priorities into the 32
+ * available queues.
+ */     
 
 void
 setrunqueue(struct proc *p)
