@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.4.3,v 1.1.2.25 2000/06/28 22:22:36 he Exp $
+#	$NetBSD: CHANGES-1.4.3,v 1.1.2.26 2000/06/29 16:13:55 he Exp $
 
 A complete list of changes from NetBSD 1.4.2 to NetBSD 1.4.3:
 
@@ -677,6 +677,15 @@ usr.sbin/dhcp/common/options.c			patch
   Quote user-supplied shell meta-characters properly in generated
   scripts.
 
-usr.sbin/mopd/mopd/process.c			1.7
+usr.sbin/mopd/mopd/process.c			1.6-1.7
 
-  Allow "big" VAXes to be mop-booted.
+  Fix bug which caused first load to fail.  Allow "big" VAXes to
+  be mop-booted.
+
+src/lib/libedit/el.c				1.17 via patch
+
+  Only read .editrc from home directory.
+
+sys/dev/raidframe/rf_map.c			1.5
+
+  Remove an incorrect printf.
