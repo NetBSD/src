@@ -1,5 +1,5 @@
 #
-#	$NetBSD: FALCON,v 1.20 1997/04/04 08:17:30 leo Exp $
+#	$NetBSD: FALCON,v 1.21 1997/05/07 00:23:46 lukem Exp $
 #
 # ATARI-FALCON
 #
@@ -16,26 +16,26 @@ maxusers	16
 #
 # processors this kernel should support
 #
-options		"M68030"	# support for 030
-# options	"M68040"	# support for 040
+options 	M68030		# support for 030
+#options 	M68040		# support for 040
 
-options		HZ=64		# Set the clock-rate (48/64/96)
+options 	HZ=64		# Set the clock-rate (48/64/96)
 
 #
 # X11R6 related options
 #
-options		UCONSOLE	# Allow xconsole to work
+options 	UCONSOLE	# Allow xconsole to work
 
 #
 # Floating-point options
 #
-options		FPU_EMULATE	# Support for MC68881/MC68882 emulator
-# options	FPSP			# 68040 Floatingpoint support
+options 	FPU_EMULATE	# Support for MC68881/MC68882 emulator
+#options 	FPSP		# 68040 Floatingpoint support
 
 #
 # Networking options
 #
-options		INET		# Basic networking support
+options 	INET		# Basic networking support
 
 # File systems
 file-system 	FFS		# Berkeley fast file system
@@ -47,54 +47,54 @@ file-system 	MSDOSFS		# MSDOS filesystem
 file-system 	CD9660		# ISO 9660 filesystem with Rock Ridge
 
 # File system options
-options		FIFO		# FIFO operations on vnodes
+options 	FIFO		# FIFO operations on vnodes
 
 #
 # Misc. debuging options
 #
-options		PANICWAIT	# Require keystroke to dump/reboot
-options		DDB		# Kernel debugger
+options 	PANICWAIT	# Require keystroke to dump/reboot
+options 	DDB		# Kernel debugger
 
 #
 # Compatability options for various existing systems
 #
-options		COMPAT_43	# 4.3 BSD compatible system calls (required)
-options		COMPAT_10	# Compatibility to NetBSD1.0
-options		COMPAT_11	# Compatibility to NetBSD1.1
-options		COMPAT_12	# Compatibility to NetBSD1.2
+options 	COMPAT_43	# 4.3 BSD compatible system calls (required)
+options 	COMPAT_10	# Compatibility to NetBSD1.0
+options 	COMPAT_11	# Compatibility to NetBSD1.1
+options 	COMPAT_12	# Compatibility to NetBSD1.2
 
 #
 # Support for various kernel options
 #
-options		KTRACE			# Add kernel tracing system call
-options		DIAGNOSTIC		# Add additional error checking code
-options		"NKMEMCLUSTERS=256"	# Size of kernel malloc area
+options 	KTRACE			# Add kernel tracing system call
+options 	DIAGNOSTIC		# Add additional error checking code
+options 	NKMEMCLUSTERS=256	# Size of kernel malloc area
 
 #
 # Atari specific kernel options:
 #
-options		FALCON_SCSI		# SCSI-support for FACLON only
-options		FALCON_VIDEO		# Graphics support for FALCON
-options		MEMORY_DISK_HOOKS	# Boot RAM-disk
-options		DISKLABEL_NBDA		# NetBSD disklabels (required)
-options		DISKLABEL_AHDI		# NetBSD/AHDI disklabels
+options 	FALCON_SCSI		# SCSI-support for FACLON only
+options 	FALCON_VIDEO		# Graphics support for FALCON
+options 	MEMORY_DISK_HOOKS	# Boot RAM-disk
+options 	DISKLABEL_NBDA		# NetBSD disklabels (required)
+options 	DISKLABEL_AHDI		# NetBSD/AHDI disklabels
 
 #
 # Build one kernel that can boot from any disk.
 #
 config		netbsd root on ? type ?
 
-pseudo-device	mouse	1	# mouse
-pseudo-device	view	2	# View (graphics mapping)
-pseudo-device	sl		# Slip
-pseudo-device	ppp		# ppp
-pseudo-device	pty	16	# Pseudo-tty support
-pseudo-device	loop		# Loopback network
-pseudo-device	vnd	3	# 3 pseudo disks (see vnconfig)
-pseudo-device	md	1	# Boot memory disk
+pseudo-device	mouse		1	# mouse
+pseudo-device	view		2	# View (graphics mapping)
+pseudo-device	sl			# Slip
+pseudo-device	ppp			# ppp
+pseudo-device	pty		16	# Pseudo-tty support
+pseudo-device	loop			# Loopback network
+pseudo-device	vnd		3	# 3 pseudo disks (see vnconfig)
+pseudo-device	md		1	# Boot memory disk
 
 #
-#The following sections describe various hardware options.
+# The following sections describe various hardware options.
 #
 fd0	at fdc0 unit 0		# builtin floppy drive
 fd1	at fdc0 unit 1		# external floppy drive
@@ -103,5 +103,5 @@ grfcc1	at grfbus0		# second graphics driver
 ite*	at grfcc1		# second tty
 nvr0	at mainbus0		# nvram driver
 lpt0	at mainbus0		# centronics printer
-idec0   at mainbus0             # IDE bus
-ide*    at idec? drive ?	#  ... and drives
+idec0	at mainbus0		# IDE bus
+ide*	at idec? drive ?	# ... and drives
