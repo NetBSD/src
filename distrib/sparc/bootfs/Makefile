@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.27 2001/02/19 06:25:39 jmc Exp $
+#	$NetBSD: Makefile,v 1.28 2001/10/21 23:21:53 jmc Exp $
 #
 # boot.fs is the image for disk 1 of the two-set floppy based installation
 # method.
@@ -27,6 +27,7 @@ FD?=		fd0
 FD_RDEV=	/dev/r${FD}a
 IMAGE?=		boot.fs
 MDEC=		${DESTDIR}/usr/mdec
+OBJCOPY?=	objcopy
 
 LISTS=		${.CURDIR}/list
 RAMDISK!=	cd ${TOP}/ramdisk/; \
@@ -80,7 +81,7 @@ netbsd.ram: ${KERN} ${RAMDISK}
 SUN_MAGIC_HEADER='\01\03\01\07\060\200\0\07\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0'
 
 netbsd.ram.aout: netbsd.ram
-	objcopy -O binary ${.ALLSRC} netbsd.ram.raw
+	${OBJCOPY} -O binary ${.ALLSRC} netbsd.ram.raw
 	(printf ${SUN_MAGIC_HEADER}; cat netbsd.ram.raw)  > ${.TARGET}
 	rm -f netbsd.ram.raw
 
