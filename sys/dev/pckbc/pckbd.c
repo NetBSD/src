@@ -1,4 +1,4 @@
-/* $NetBSD: pckbd.c,v 1.15 1998/09/17 18:21:04 drochner Exp $ */
+/* $NetBSD: pckbd.c,v 1.16 1999/01/26 11:07:25 drochner Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -358,7 +358,7 @@ pckbd_enable(v, on)
 
 		cmd[0] = KBC_ENABLE;
 		res = pckbc_enqueue_cmd(sc->id->t_kbctag, sc->id->t_kbcslot,
-					cmd, 1, 0, 1, 0);
+					cmd, 1, 0, 0, 0);
 		if (res) {
 			printf("pckbd_enable: command error\n");
 			return (res);
@@ -375,7 +375,7 @@ pckbd_enable(v, on)
 
 		cmd[0] = KBC_DISABLE;
 		res = pckbc_enqueue_cmd(sc->id->t_kbctag, sc->id->t_kbcslot,
-					cmd, 1, 0, 1, 0);
+					cmd, 1, 0, 0, 0);
 		if (res) {
 			printf("pckbd_disable: command error\n");
 			return (res);
