@@ -1,4 +1,4 @@
-/*	$NetBSD: rexecd.c,v 1.15 2003/03/03 18:57:53 dsl Exp $	*/
+/*	$NetBSD: rexecd.c,v 1.16 2003/05/17 22:56:31 itojun Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -40,7 +40,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "from: @(#)rexecd.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: rexecd.c,v 1.15 2003/03/03 18:57:53 dsl Exp $");
+__RCSID("$NetBSD: rexecd.c,v 1.16 2003/05/17 22:56:31 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -273,11 +273,11 @@ doit(f, fromp)
 			    user);
 		exit(1);
 	}
-	(void)strcat(path, _PATH_DEFPATH);
+	(void)strlcat(path, _PATH_DEFPATH, sizeof(path));
 	environ = envinit;
-	strncat(homedir, pwd->pw_dir, sizeof(homedir) - 6);
-	strncat(shell, pwd->pw_shell, sizeof(shell) - 7);
-	strncat(username, pwd->pw_name, sizeof(username) - 6);
+	strlcat(homedir, pwd->pw_dir, sizeof(homedir));
+	strlcat(shell, pwd->pw_shell, sizeof(shell));
+	strlcat(username, pwd->pw_name, sizeof(username));
 	cp = strrchr(pwd->pw_shell, '/');
 	if (cp)
 		cp++;
