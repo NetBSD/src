@@ -1,4 +1,4 @@
-/*	$NetBSD: vmstat.c,v 1.41 2002/08/08 17:06:32 abs Exp $	*/
+/*	$NetBSD: vmstat.c,v 1.42 2002/09/25 13:50:40 christos Exp $	*/
 
 /*-
  * Copyright (c) 1983, 1989, 1992, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)vmstat.c	8.2 (Berkeley) 1/12/94";
 #endif
-__RCSID("$NetBSD: vmstat.c,v 1.41 2002/08/08 17:06:32 abs Exp $");
+__RCSID("$NetBSD: vmstat.c,v 1.42 2002/09/25 13:50:40 christos Exp $");
 #endif /* not lint */
 
 /*
@@ -241,7 +241,7 @@ labelvmstat(void)
 
 	clear();
 	mvprintw(STATROW, STATCOL + 4, "users    Load");
-	mvprintw(MEMROW, MEMCOL,     "          memory totals (in KB)");
+	mvprintw(MEMROW, MEMCOL,     "          memory totals (in kB)");
 	mvprintw(MEMROW + 1, MEMCOL, "         real   virtual    free");
 	mvprintw(MEMROW + 2, MEMCOL, "Active");
 	mvprintw(MEMROW + 3, MEMCOL, "All");
@@ -630,7 +630,7 @@ dinfo(int dn, int c)
 	atime = (double)cur.dk_time[dn].tv_sec +
 		((double)cur.dk_time[dn].tv_usec / (double)1000000);
 
-	words = cur.dk_bytes[dn] / 1024.0;	/* # of K transferred */
+	words = cur.dk_bytes[dn] / 1024.0;	/* # of k transferred */
 
 	putint((int)((float)cur.dk_seek[dn]/etime+0.5), DISKROW + 1, c, 5);
 	putint((int)((float)cur.dk_xfer[dn]/etime+0.5), DISKROW + 2, c, 5);
