@@ -1,4 +1,4 @@
-.\"	$NetBSD: mtree.8,v 1.15 2001/09/22 03:56:29 perry Exp $
+.\"	$NetBSD: mtree.8,v 1.16 2001/10/01 02:30:40 lukem Exp $
 .\"
 .\" Copyright (c) 1989, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -33,7 +33,7 @@
 .\"
 .\"     @(#)mtree.8	8.2 (Berkeley) 12/11/93
 .\"
-.Dd December 11, 1993
+.Dd October 1, 2001
 .Dt MTREE 8
 .Os
 .Sh NAME
@@ -41,7 +41,7 @@
 .Nd map a directory hierarchy
 .Sh SYNOPSIS
 .Nm ""
-.Op Fl cdelrUux
+.Op Fl cdDelrUux
 .Bk -words
 .Op Fl i | Fl m
 .Ek
@@ -49,13 +49,16 @@
 .Op Fl f Ar spec
 .Ek
 .Bk -words
-.Op Fl K Ar keywords
+.Op Fl p Ar path
 .Ek
 .Bk -words
 .Op Fl k Ar keywords
 .Ek
 .Bk -words
-.Op Fl p Ar path
+.Op Fl K Ar keywords
+.Ek
+.Bk -words
+.Op Fl R Ar keywords
 .Ek
 .Bk -words
 .Op Fl s Ar seed
@@ -75,6 +78,18 @@ The options are as follows:
 Print a specification for the file hierarchy to the standard output.
 .It Fl d
 Ignore everything except directory type files.
+.It Fl D
+Print
+.Pq Sq dump
+the specification as provided by
+.Fl f Ar spec
+in a format that's easier to parse with various tools.
+The name is always printed as the last field, and
+.Fl k ,
+.Fl K ,
+and
+.Fl R
+can be used to control which other keywords are printed.
 .It Fl e
 Don't complain about files that are in the file hierarchy, but not in the
 specification.
@@ -118,6 +133,9 @@ instead of the current directory.
 .It Fl r
 Remove any files in the file hierarchy that are not described in the
 specification.
+.It Fl R
+Remove the specified (whitespace or comma separated) keywords from the current
+set of keywords.
 .It Fl s
 Display a single checksum to the standard error output that represents all
 of the files for which the keyword

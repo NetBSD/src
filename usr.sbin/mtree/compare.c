@@ -1,4 +1,4 @@
-/*	$NetBSD: compare.c,v 1.26 2001/09/22 03:56:29 perry Exp $	*/
+/*	$NetBSD: compare.c,v 1.27 2001/10/01 02:30:40 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)compare.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: compare.c,v 1.26 2001/09/22 03:56:29 perry Exp $");
+__RCSID("$NetBSD: compare.c,v 1.27 2001/10/01 02:30:40 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -58,8 +58,6 @@ __RCSID("$NetBSD: compare.c,v 1.26 2001/09/22 03:56:29 perry Exp $");
 #include "extern.h"
 
 extern int iflag, lflag, mflag, tflag, uflag;
-
-static const char *ftype(u_int);
 
 #define	INDENTNAMELEN	8
 #define MARK                                                                  \
@@ -153,7 +151,7 @@ compare(const char *name, NODE *s, FTSENT *p)
 		if (!S_ISSOCK(p->fts_statp->st_mode)) {
 typeerr:		LABEL;
 			(void)printf("\ttype (%s, %s)\n",
-			    ftype(s->type), inotype(p->fts_statp->st_mode));
+			    nodetype(s->type), inotype(p->fts_statp->st_mode));
 		}
 		break;
 	}
@@ -371,11 +369,11 @@ const char *
 inotype(u_int type)
 {
 
-	return (ftype(type & S_IFMT));
+	return (nodetype(type & S_IFMT));
 }
 
-static const char *
-ftype(u_int type)
+const char *
+nodetype(u_int type)
 {
 
 	switch(type) {

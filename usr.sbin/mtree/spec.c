@@ -1,4 +1,4 @@
-/*	$NetBSD: spec.c,v 1.24 2001/09/10 03:22:24 lukem Exp $	*/
+/*	$NetBSD: spec.c,v 1.25 2001/10/01 02:30:40 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -38,11 +38,11 @@
 #if 0
 static char sccsid[] = "@(#)spec.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: spec.c,v 1.24 2001/09/10 03:22:24 lukem Exp $");
+__RCSID("$NetBSD: spec.c,v 1.25 2001/10/01 02:30:40 lukem Exp $");
 #endif
 #endif /* not lint */
 
-#include <sys/types.h>
+#include <sys/param.h>
 #include <sys/stat.h>
 
 #include <ctype.h>
@@ -148,13 +148,63 @@ noparent:		mtree_err("no parent node");
 	return (root);
 }
 
+/*
+ * dump_nodes --
+ *	dump the NODEs from `cur', based in the directory `dir'
+ */
+void
+dump_nodes(const char *dir, NODE *root)
+{
+	NODE	*cur;
+	char	path[MAXPATHLEN + 1];
+	extern int keys;
+
+	for (cur = root; cur != NULL; cur = cur->next) {
+		if (snprintf(path, sizeof(path), "%s%s%s",
+		    dir, *dir ? "/" : "", cur->name)
+		    >= sizeof(path))
+			mtree_err("Pathname too long.");
+		if (keys & F_TYPE)
+			printf("type=%s ", nodetype(cur->type));
+		if (keys & F_UID)
+			printf("uid=%u ", cur->st_uid);
+		if (keys & F_UNAME)
+			printf("uname=%s ", user_from_uid(cur->st_uid, 0));
+		if (keys & F_GID)
+			printf("gid=%u ", cur->st_uid);
+		if (keys & F_MODE)
+			printf("mode=%#o ", cur->st_mode);
+		if (keys & F_NLINK && cur->type != F_DIR &&
+		    cur->st_nlink != 1)
+			printf("nlink=%d ", cur->st_nlink);
+		if (keys & F_SLINK && cur->slink != NULL)
+			printf("link=%s ", cur->slink);
+		if (keys & F_SIZE && cur->type == F_FILE)
+			printf("size=%lld ", (long long)cur->st_size);
+		if (keys & F_TIME)
+			printf("time=%ld.%ld ", (long)cur->st_mtimespec.tv_sec,
+			    cur->st_mtimespec.tv_nsec);
+		if (keys & F_CKSUM && cur->type == F_FILE)
+			printf("cksum=%lu ", cur->cksum);
+		if (keys & F_MD5 && cur->type == F_FILE)
+			printf("md5=%s ", cur->md5sum);
+		if (keys & F_FLAGS)
+			printf("flags=%s ",
+			    flags_to_string(cur->st_flags, "none"));
+		puts(path);
+
+		if (cur->child)
+			dump_nodes(path, cur->child);
+	}
+}
+
 static void
 set(char *t, NODE *ip)
 {
 	int type;
+	gid_t gid;
+	uid_t uid;
 	char *kw, *val, *md;
-	struct group *gr;
-	struct passwd *pw;
 	void *m;
 	int value;
 	char *ep;
@@ -182,9 +232,9 @@ set(char *t, NODE *ip)
 				mtree_err("invalid gid `%s'", val);
 			break;
 		case F_GNAME:
-			if ((gr = getgrnam(val)) == NULL)
+			if (gid_from_group(val, &gid) == -1)
 			    mtree_err("unknown group `%s'", val);
-			ip->st_gid = gr->gr_gid;
+			ip->st_gid = gid;
 			break;
 		case F_IGN:
 			/* just set flag bit */
@@ -236,9 +286,9 @@ set(char *t, NODE *ip)
 				mtree_err("invalid uid `%s'", val);
 			break;
 		case F_UNAME:
-			if ((pw = getpwnam(val)) == NULL)
+			if (uid_from_user(val, &uid) == -1)
 			    mtree_err("unknown user `%s'", val);
-			ip->st_uid = pw->pw_uid;
+			ip->st_uid = uid;
 			break;
 		}
 	}
