@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.413 2002/03/01 13:49:00 kleink Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.414 2002/03/11 23:19:02 joda Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.410 2002/03/01 13:47:30 kleink Exp 
+ *	NetBSD: pcidevs,v 1.411 2002/03/11 23:17:37 joda Exp 
  */
 
 /*
@@ -1346,6 +1346,30 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "ATI Technologies",
 	    "Rage 128 Pro AGP 4x (TMDS)",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_7200,
+	    0,
+	    "ATI Technologies",
+	    "Radeon 7200",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_8500,
+	    0,
+	    "ATI Technologies",
+	    "Radeon 8500",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_7500,
+	    0,
+	    "ATI Technologies",
+	    "Radeon 7500",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_7000,
+	    0,
+	    "ATI Technologies",
+	    "Radeon 7000/VE",
 	},
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RAGEGLPCI,
@@ -3206,6 +3230,18 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Intel",
 	    "82840 PCI",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82845_HB,
+	    0,
+	    "Intel",
+	    "82845 Host",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82845_AGP,
+	    0,
+	    "Intel",
+	    "82845 AGP",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801AA_LPC,
