@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.124 1998/07/31 21:59:55 thorpej Exp $	*/
+/*	$NetBSD: init_main.c,v 1.125 1998/07/31 22:50:49 perry Exp $	*/
 
 /*
  * Copyright (c) 1995 Christopher G. Demetriou.  All rights reserved.
@@ -239,7 +239,7 @@ main()
 	p->p_stat = SRUN;
 	p->p_nice = NZERO;
 	p->p_emul = &emul_netbsd;
-	bcopy("swapper", p->p_comm, sizeof ("swapper"));
+	bcopy("swapper", p->p_comm, sizeof("swapper"));
 
 	/* Create credentials. */
 	cred0.p_refcnt = 1;
@@ -582,7 +582,7 @@ start_pagedaemon(p)
 	 * Now in process 2.
 	 */
 	p->p_flag |= P_INMEM | P_SYSTEM;	/* XXX */
-	bcopy("pagedaemon", curproc->p_comm, sizeof ("pagedaemon"));
+	bcopy("pagedaemon", curproc->p_comm, sizeof("pagedaemon"));
 #if defined(UVM)
 	uvm_pageout();
 #else

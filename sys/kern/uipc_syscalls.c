@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_syscalls.c,v 1.33 1998/07/29 02:07:19 thorpej Exp $	*/
+/*	$NetBSD: uipc_syscalls.c,v 1.34 1998/07/31 22:50:53 perry Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1990, 1993
@@ -158,7 +158,7 @@ sys_accept(p, v, retval)
 	register struct socket *so;
 
 	if (SCARG(uap, name) && (error = copyin((caddr_t)SCARG(uap, anamelen),
-	    (caddr_t)&namelen, sizeof (namelen))))
+	    (caddr_t)&namelen, sizeof(namelen))))
 		return (error);
 	if ((error = getsock(p->p_fd, SCARG(uap, s), &fp)) != 0)
 		return (error);
@@ -214,7 +214,7 @@ sys_accept(p, v, retval)
 		    (caddr_t)SCARG(uap, name), (u_int)namelen)) == 0)
 			error = copyout((caddr_t)&namelen,
 			    (caddr_t)SCARG(uap, anamelen),
-			    sizeof (*SCARG(uap, anamelen)));
+			    sizeof(*SCARG(uap, anamelen)));
 	}
 	m_freem(nam);
 	splx(s);
@@ -323,7 +323,7 @@ sys_socketpair(p, v, retval)
 			goto free4;
 	}
 	error = copyout((caddr_t)sv, (caddr_t)SCARG(uap, rsv),
-	    2 * sizeof (int));
+	    2 * sizeof(int));
 	return (error);
 free4:
 	ffree(fp2);
@@ -383,7 +383,7 @@ sys_sendmsg(p, v, retval)
 	struct iovec aiov[UIO_SMALLIOV], *iov;
 	int error;
 
-	error = copyin(SCARG(uap, msg), (caddr_t)&msg, sizeof (msg));
+	error = copyin(SCARG(uap, msg), (caddr_t)&msg, sizeof(msg));
 	if (error)
 		return (error);
 	if ((u_int)msg.msg_iovlen >= UIO_SMALLIOV) {
@@ -396,7 +396,7 @@ sys_sendmsg(p, v, retval)
 		iov = aiov;
 	if (msg.msg_iovlen &&
 	    (error = copyin((caddr_t)msg.msg_iov, (caddr_t)iov,
-	    (unsigned)(msg.msg_iovlen * sizeof (struct iovec)))))
+	    (unsigned)(msg.msg_iovlen * sizeof(struct iovec)))))
 		goto done;
 	msg.msg_iov = iov;
 #ifdef COMPAT_OLDSOCK
@@ -493,7 +493,7 @@ sendit(p, s, mp, flags, retsize)
 		control = 0;
 #ifdef KTRACE
 	if (KTRPOINT(p, KTR_GENIO)) {
-		int iovlen = auio.uio_iovcnt * sizeof (struct iovec);
+		int iovlen = auio.uio_iovcnt * sizeof(struct iovec);
 
 		MALLOC(ktriov, struct iovec *, iovlen, M_TEMP, M_WAITOK);
 		bcopy((caddr_t)auio.uio_iov, (caddr_t)ktriov, iovlen);
@@ -546,7 +546,7 @@ sys_recvfrom(p, v, retval)
 	if (SCARG(uap, fromlenaddr)) {
 		error = copyin((caddr_t)SCARG(uap, fromlenaddr),
 			       (caddr_t)&msg.msg_namelen,
-			       sizeof (msg.msg_namelen));
+			       sizeof(msg.msg_namelen));
 		if (error)
 			return (error);
 	} else
@@ -578,7 +578,7 @@ sys_recvmsg(p, v, retval)
 	register int error;
 
 	error = copyin((caddr_t)SCARG(uap, msg), (caddr_t)&msg,
-		       sizeof (msg));
+		       sizeof(msg));
 	if (error)
 		return (error);
 	if ((u_int)msg.msg_iovlen >= UIO_SMALLIOV) {
@@ -597,7 +597,7 @@ sys_recvmsg(p, v, retval)
 	uiov = msg.msg_iov;
 	msg.msg_iov = iov;
 	error = copyin((caddr_t)uiov, (caddr_t)iov,
-		       (unsigned)(msg.msg_iovlen * sizeof (struct iovec)));
+		       (unsigned)(msg.msg_iovlen * sizeof(struct iovec)));
 	if (error)
 		goto done;
 	if ((error = recvit(p, SCARG(uap, s), &msg, (caddr_t)0, retval)) == 0) {
@@ -657,7 +657,7 @@ recvit(p, s, mp, namelenp, retsize)
 	}
 #ifdef KTRACE
 	if (KTRPOINT(p, KTR_GENIO)) {
-		int iovlen = auio.uio_iovcnt * sizeof (struct iovec);
+		int iovlen = auio.uio_iovcnt * sizeof(struct iovec);
 
 		MALLOC(ktriov, struct iovec *, iovlen, M_TEMP, M_WAITOK);
 		bcopy((caddr_t)auio.uio_iov, (caddr_t)ktriov, iovlen);
@@ -703,7 +703,7 @@ recvit(p, s, mp, namelenp, retsize)
 		}
 		mp->msg_namelen = len;
 		if (namelenp &&
-		    (error = copyout((caddr_t)&len, namelenp, sizeof (int)))) {
+		    (error = copyout((caddr_t)&len, namelenp, sizeof(int)))) {
 #ifdef COMPAT_OLDSOCK
 			if (mp->msg_flags & MSG_COMPAT)
 				error = 0;	/* old recvfrom didn't check */
@@ -729,8 +729,8 @@ recvit(p, s, mp, namelenp, retsize)
 				mp->msg_controllen = 0;
 				goto out;
 			}
-			control->m_len -= sizeof (struct cmsghdr);
-			control->m_data += sizeof (struct cmsghdr);
+			control->m_len -= sizeof(struct cmsghdr);
+			control->m_data += sizeof(struct cmsghdr);
 		}
 #endif
 		len = mp->msg_controllen;
@@ -844,7 +844,7 @@ sys_getsockopt(p, v, retval)
 		return (error);
 	if (SCARG(uap, val)) {
 		error = copyin((caddr_t)SCARG(uap, avalsize),
-			       (caddr_t)&valsize, sizeof (valsize));
+			       (caddr_t)&valsize, sizeof(valsize));
 		if (error)
 			return (error);
 	} else
@@ -858,7 +858,7 @@ sys_getsockopt(p, v, retval)
 		    (u_int)valsize);
 		if (error == 0)
 			error = copyout((caddr_t)&valsize,
-			    (caddr_t)SCARG(uap, avalsize), sizeof (valsize));
+			    (caddr_t)SCARG(uap, avalsize), sizeof(valsize));
 	}
 	if (m != NULL)
 		(void) m_free(m);
@@ -933,7 +933,7 @@ sys_getsockname(p, v, retval)
 
 	if ((error = getsock(p->p_fd, SCARG(uap, fdes), &fp)) != 0)
 		return (error);
-	error = copyin((caddr_t)SCARG(uap, alen), (caddr_t)&len, sizeof (len));
+	error = copyin((caddr_t)SCARG(uap, alen), (caddr_t)&len, sizeof(len));
 	if (error)
 		return (error);
 	so = (struct socket *)fp->f_data;
@@ -947,7 +947,7 @@ sys_getsockname(p, v, retval)
 	error = copyout(mtod(m, caddr_t), (caddr_t)SCARG(uap, asa), (u_int)len);
 	if (error == 0)
 		error = copyout((caddr_t)&len, (caddr_t)SCARG(uap, alen),
-		    sizeof (len));
+		    sizeof(len));
 bad:
 	m_freem(m);
 	return (error);
@@ -978,7 +978,7 @@ sys_getpeername(p, v, retval)
 	so = (struct socket *)fp->f_data;
 	if ((so->so_state & (SS_ISCONNECTED|SS_ISCONFIRMING)) == 0)
 		return (ENOTCONN);
-	error = copyin((caddr_t)SCARG(uap, alen), (caddr_t)&len, sizeof (len));
+	error = copyin((caddr_t)SCARG(uap, alen), (caddr_t)&len, sizeof(len));
 	if (error)
 		return (error);
 	m = m_getclr(M_WAIT, MT_SONAME);
@@ -991,7 +991,7 @@ sys_getpeername(p, v, retval)
 	error = copyout(mtod(m, caddr_t), (caddr_t)SCARG(uap, asa), (u_int)len);
 	if (error)
 		goto bad;
-	error = copyout((caddr_t)&len, (caddr_t)SCARG(uap, alen), sizeof (len));
+	error = copyout((caddr_t)&len, (caddr_t)SCARG(uap, alen), sizeof(len));
 bad:
 	m_freem(m);
 	return (error);
