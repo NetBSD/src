@@ -1,4 +1,4 @@
-/*	$NetBSD: dkctl.c,v 1.1 2002/01/09 22:30:14 thorpej Exp $	*/
+/*	$NetBSD: dkctl.c,v 1.2 2002/07/01 18:49:57 yamt Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -51,6 +51,14 @@
 #include <unistd.h>
 #include <util.h>
 
+#define	YES	1
+#define	NO	0
+
+/* I don't think nl_langinfo is suitable in this case */
+#define	YES_STR	"yes"
+#define	NO_STR	"no"
+#define YESNO_ARG	YES_STR " | " NO_STR
+
 struct command {
 	const char *cmd_name;
 	const char *arg_names;
@@ -67,9 +75,12 @@ char	dvname_store[MAXPATHLEN];	/* for opendisk(3) */
 const	char *cmdname;			/* command user issued */
 const	char *argnames;			/* helpstring; expected arguments */
 
+int yesno(const char *);
+
 void	disk_getcache(int, char *[]);
 void	disk_setcache(int, char *[]);
 void	disk_synccache(int, char *[]);
+void	disk_keeplabel(int, char *[]);
 
 struct command commands[] = {
 	{ "getcache",
@@ -85,6 +96,11 @@ struct command commands[] = {
 	{ "synccache",
 	  "[force]",
 	  disk_synccache,
+	  O_RDWR },
+
+	{ "keeplabel",
+	  YESNO_ARG,
+	  disk_keeplabel,
 	  O_RDWR },
 
 	{ NULL,
@@ -224,4 +240,37 @@ disk_synccache(int argc, char *argv[])
 
 	if (ioctl(fd, DIOCCACHESYNC, &force) == -1)
 		err(1, "%s: sync cache", dvname);
+}
+
+void
+disk_keeplabel(int argc, char *argv[])
+{
+	int keep;
+	int yn;
+
+	if (argc != 1)
+		usage();
+
+	yn = yesno(argv[0]);
+	if (yn < 0)
+		usage();
+
+	keep = yn == YES;
+
+	if (ioctl(fd, DIOCKLABEL, &keep) == -1)
+		err(1, "%s: keep label", dvname);
+}
+
+/*
+ * return YES, NO or -1.
+ */
+int
+yesno(const char *p)
+{
+
+	if (!strcmp(p, YES_STR))
+		return YES;
+	if (!strcmp(p, NO_STR))
+		return NO;
+	return -1;
 }
