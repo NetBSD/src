@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.15 2001/07/01 16:23:42 itojun Exp $
+#	$NetBSD: Makefile,v 1.16 2002/06/09 19:59:55 itojun Exp $
 #	from: @(#)Makefile	8.1 (Berkeley) 6/6/93
 
 PROG=	syslogd
@@ -8,9 +8,6 @@ LDADD+=-lutil
 #make symlink to old socket location for transitional period
 SYMLINKS=	/var/run/log /dev/log
 CPPFLAGS+=-DINET6
-
-# KAME scopeid hack
-#CPPFLAGS+=-DKAME_SCOPEID
 
 CPPFLAGS+=-DLIBWRAP
 LDADD+=	-lwrap
