@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.5 2000/08/25 01:04:08 thorpej Exp $	*/
+/*	$NetBSD: cpu.h,v 1.6 2000/10/04 16:26:43 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -270,5 +270,11 @@ void child_return __P((void *));
 	((u_int)(pa) >= intiobase_phys && (u_int)(pa) < intiotop_phys)
 #define IIOP(va)	(((u_int)(va) - (u_int)intiobase) + intiobase_phys)
 #define IIOPOFF(pa)	((u_int)(pa) - intiobase_phys)
+
+/* XXX EIO space mapping should be modified like hp300 XXX */
+#define	EIOSIZE		(extiotop_phys - extiobase_phys)
+#define ISEIOVA(va) \
+	((char *)(va) >= extiobase && (char *)(va) < (char *)EIOSIZE)
+#define EIOV(pa)	(((u_int)(pa) - extiobase_phys) + (u_int)extiobase)
 
 #endif /* !_NEWS68K_CPU_H_ */
