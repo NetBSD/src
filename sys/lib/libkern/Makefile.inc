@@ -1,18 +1,29 @@
-#	$NetBSD: Makefile.inc,v 1.23 1996/12/26 21:32:37 christos Exp $
+#	$NetBSD: Makefile.inc,v 1.24 1997/01/23 22:29:07 cgd Exp $
 #
-#	NOTE: $S must correspond to the top of the 'sys' tree
+#	Configuration variables (default values are below):
+#
+#	S	must be set to the top of the 'sys' tree.
+#	KERNDST	may be set to the location of the directory where library
+#		objects are to be built.  Defaults to ${.OBJDIR}/lib/kern.
+#	KERN_AS	may be set to 'obj' to build a object from the library's
+#		object files.  (Otherwise, a library will be built.)
+#		Defaults to 'library'.
+#	KERNMISCMAKEFLAGS
+#		Miscellaneous flags to be passed to the library's Makefile when
+#		building.  See library's Makefile for more details about
+#		supported flags and their default values.
 
-KERNDIR=	$S/lib/libkern
-
+# Default values:
 KERNDST?=	${.OBJDIR}/lib/kern
 KERN_AS?=	obj
 
-.if (${KERN_AS} == "library")
-KERNLIB=	${KERNDST}/libkern.a
-KERNLIB_PROF=	${KERNDST}/libkern_p.a
-.else
+KERNDIR=	$S/lib/libkern
+.if (${KERN_AS} == "obj")
 KERNLIB=	${KERNDST}/libkern.o
 KERNLIB_PROF=	${KERNDST}/libkern.po
+.else
+KERNLIB=	${KERNDST}/libkern.a
+KERNLIB_PROF=	${KERNDST}/libkern_p.a
 .endif
 
 KERNMAKE= \
@@ -21,7 +32,8 @@ KERNMAKE= \
 	    AS=${AS:Q} AFLAGS=${AFLAGS:Q} \
 	    LD=${LD:Q} STRIP=${STRIP:Q} \
 	    MACHINE=${MACHINE} MACHINE_ARCH=${MACHINE_ARCH:Q} \
-	    KERNCPPFLAGS=${CPPFLAGS:S@^-I.@-I../../.@g:Q}
+	    KERNCPPFLAGS=${CPPFLAGS:S@^-I.@-I../../.@g:Q} \
+	    ${KERNMISCMAKEFLAGS}
 
 ${KERNLIB}:		.NOTMAIN __always_make_kernlib
 	@echo making sure the kern library is up to date...
@@ -39,11 +51,18 @@ ${KERNLIB_PROF}:	.NOTMAIN __always_make_kernlib
 	@${KERNMAKE} libkern.po
 .endif
 
-clean:: 		.NOTMAIN __always_make_kernlib
+clean:			.NOTMAIN cleankernlib
+cleankernlib:		.NOTMAIN __always_make_kernlib
 	@echo cleaning the kern library objects
 	@${KERNMAKE} clean
 
-depend:: 		.NOTMAIN __always_make_kernlib
+cleandir:		.NOTMAIN cleandirkernlib
+cleandirkernlib:	.NOTMAIN __always_make_kernlib
+	@echo cleandiring the kern library objects
+	@${KERNMAKE} cleandir
+
+depend:			.NOTMAIN dependkernlib
+dependkernlib:		.NOTMAIN __always_make_kernlib
 	@echo depending the kern library objects
 	@${KERNMAKE} depend
 
