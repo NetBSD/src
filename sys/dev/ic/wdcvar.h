@@ -1,4 +1,4 @@
-/*	$NetBSD: wdcvar.h,v 1.20 1999/10/20 15:22:26 enami Exp $	*/
+/*	$NetBSD: wdcvar.h,v 1.21 2000/03/20 22:53:36 enami Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -103,7 +103,6 @@ struct wdc_softc { /* Per controller state */
 	 * The reference count here is used for both IDE and ATAPI devices.
 	 */
 	struct scsipi_adapter sc_atapi_adapter;
-	int		sc_dying;
 
 	/* if WDC_CAPABILITY_DMA set in 'cap' */
 	void            *dma_arg;

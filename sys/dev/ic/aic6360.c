@@ -1,4 +1,4 @@
-/*	$NetBSD: aic6360.c,v 1.65 1999/10/30 00:58:32 enami Exp $	*/
+/*	$NetBSD: aic6360.c,v 1.66 2000/03/20 22:53:36 enami Exp $	*/
 
 #include "opt_ddb.h"
 #ifdef DDB
@@ -322,11 +322,8 @@ aic_activate(self, act)
 		break;
 
 	case DVACT_DEACTIVATE:
-		if (sc->sc_child != NULL && !sc->sc_dying) {
+		if (sc->sc_child != NULL)
 			rv = config_deactivate(sc->sc_child);
-			if (rv == 0)
-				sc->sc_dying = 1;
-		}
 		break;
 	}
 	splx(s);
@@ -566,7 +563,7 @@ aic_scsi_cmd(xs)
 	AIC_CMDS(("[0x%x, %d]->%d ", (int)xs->cmd->opcode, xs->cmdlen,
 	    sc_link->scsipi_scsi.target));
 
-	if (sc->sc_dying) {
+	if ((sc->sc_dev.dv_flags & DVF_ACTIVE) == 0) {
 		xs->xs_status |= XS_STS_DONE;
 		xs->error = XS_DRIVER_STUFFUP;
 		scsipi_done(xs);
@@ -814,7 +811,7 @@ aic_sched(sc)
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
 
-	if (sc->sc_dying)
+	if ((sc->sc_dev.dv_flags & DVF_ACTIVE) == 0)
 		return;
 
 	/*
@@ -1726,7 +1723,7 @@ aicintr(arg)
 	struct aic_tinfo *ti;
 	int n;
 
-	if (sc->sc_dying)
+	if ((sc->sc_dev.dv_flags & DVF_ACTIVE) == 0)
 		return (0);
 
 	/*
