@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.14.4.1 1998/01/27 19:51:17 gwr Exp $	*/
+/*	$NetBSD: clock.c,v 1.14.4.2 1998/01/27 20:58:47 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -79,7 +79,7 @@
 #include <sun3/sun3/machdep.h>
 #include <sun3/sun3/interreg.h>
 
-#include <sun3/sun3x/mostek48t02.h>
+#include <sun3/sun3x/mk48t02.h>
 
 #define SUN3_470	Yes
 
