@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.276 1999/02/27 06:39:34 scottr Exp $
+#	$NetBSD: files,v 1.277 1999/02/28 22:24:30 carrel Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -174,7 +174,8 @@ device	aic: scsi
 file	dev/ic/aic6360.c		aic
 
 # Adaptec 2[789]4X, 394X, aic7770 and aic78[5678]0 SCSI controllers
-defopt	opt_ahc.h	AHC_BROKEN_CACHE AHC_DEBUG AHC_TAGENABLE 
+defopt	opt_ahc.h	AHC_BROKEN_CACHE AHC_DEBUG AHC_TAGENABLE
+			AHC_SCBPAGING_ENABLE
 device	ahc: scsi
 file	dev/ic/aic7xxx.c		ahc
 
