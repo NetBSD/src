@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.306 2002/02/12 02:09:12 thorpej Exp $
+# $NetBSD: mi,v 1.307 2002/02/13 07:55:20 yamt Exp $
 .			base-sys-root
 ./altroot		base-sys-root
 ./bin			base-sys-root
@@ -1416,6 +1416,7 @@
 ./usr/share/mk/sys.mk			base-util-share
 ./usr/share/ms				base-groff-share
 ./usr/share/nls				base-locale-share
+./usr/share/nls/nls.alias		base-locale-share
 # C locale is required by POSIX, so is installed if any locales are.
 ./usr/share/nls/C			base-locale-share
 ./usr/share/nls/C/libc.cat		base-locale-share
