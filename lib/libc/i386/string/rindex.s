@@ -27,8 +27,12 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: rindex.s,v 1.3 1993/08/02 17:49:51 mycroft Exp $
+ *	$Id: rindex.s,v 1.4 1993/08/16 17:06:36 jtc Exp $
  */
+
+#if defined(LIBC_RCS) && !defined(lint)
+        .asciz "$Id: rindex.s,v 1.4 1993/08/16 17:06:36 jtc Exp $"
+#endif /* LIBC_RCS and not lint */
 
 #include "DEFS.h"
 
@@ -46,7 +50,6 @@
  *	J.T. Conklin (jtc@wimsey.com), Winning Strategies, Inc.
  */
  
-
 ENTRY(rindex)
 	pushl	%ebx
 	movl	8(%esp),%edx
