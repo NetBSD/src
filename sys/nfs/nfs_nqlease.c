@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_nqlease.c,v 1.35 2000/11/24 23:30:02 chs Exp $	*/
+/*	$NetBSD: nfs_nqlease.c,v 1.36 2001/02/06 11:40:02 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -981,7 +981,7 @@ nqnfs_callback(nmp, mrep, md, dpos)
 			CIRCLEQ_INSERT_HEAD(&nmp->nm_timerhead, np, n_timer);
 		}
 	}
-	vrele(vp);
+	vput(vp);
 	nfsm_srvdone;
 }
 #endif /* NFS && !NFS_V2_ONLY */
@@ -1101,7 +1101,7 @@ nqnfs_clientd(nmp, cred, ncd, flag, argp, p)
 					}
 				}
 			      }
-			      vrele(vp);
+			      vput(vp);
 			      nmp->nm_inprog = NULLVP;
 			    }
 			} else if ((np->n_expiry - NQ_RENEWAL) < time.tv_sec) {
@@ -1112,7 +1112,7 @@ nqnfs_clientd(nmp, cred, ncd, flag, argp, p)
 				 if (vpid == vp->v_id &&
 				     nqnfs_getlease(vp, ND_WRITE, cred, p)==0)
 					np->n_brev = np->n_lrev;
-				 vrele(vp);
+				 vput(vp);
 				 nmp->nm_inprog = NULLVP;
 			    }
 			} else
