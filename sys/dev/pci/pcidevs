@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.173 1999/12/04 04:40:57 thorpej Exp $
+$NetBSD: pcidevs,v 1.174 1999/12/04 05:41:08 castor Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -523,6 +523,7 @@ vendor SOLIDUM          0x1588  Solidum Systems Corp. www.solidum.com/pcisig.htm
 vendor GEOCAST		0x15a1	Geocast Network Systems
 vendor SYMPHONY2	0x1c1c	Symphony Labs (2nd PCI Vendor ID)
 vendor TEKRAM2		0x1de1	Tekram Technology (2nd PCI Vendor ID)
+vendor LAVA		0x1407	Lava Semiconductor Manufacturing, Inc.
 vendor 3DLABS		0x3d3d	3D Labs
 vendor AVANCE2		0x4005	Avance Logic (2nd PCI Vendor ID)
 vendor ADDTRON		0x4033	Addtron Technology
