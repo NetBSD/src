@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)com.c	7.5 (Berkeley) 5/16/91
- *	$Id: scn.c,v 1.9 1994/04/19 17:10:37 phil Exp $
+ *	$Id: scn.c,v 1.10 1994/04/21 22:31:32 phil Exp $
  */
 
 #include "scn.h"
@@ -439,7 +439,6 @@ scnopen(dev_t dev, int flag, int mode, struct proc *p)
 	int error = 0;
 	int x;
 
-if (unit==1) printf ("scnopen 1\n"); 
 	if (unit >= NLINES || (scn_active & (1 << unit)) == 0)
 		return (ENXIO);
 
@@ -493,7 +492,6 @@ if (unit==1) printf ("scnopen 1\n");
 				return error;
 			}
 		}
-if (unit==1) printf ("scnopen end\n");
 	splx(x);
 		
 	return (*linesw[tp->t_line].l_open)(dev, tp);
@@ -658,7 +656,6 @@ scnintr(int uart_no)
 	}
 	if ((rs_stat & IMR_TXB_INT)  && (tp1 != NULL)
 	     && (tp1->t_state & TS_BUSY)) {
-if (line1==1)printf ("tty1 tx int");
 		/* output char done. */
 		tp1->t_state &= ~(TS_BUSY|TS_FLUSH);
 		tx_ints_off(rs1);
@@ -667,10 +664,8 @@ if (line1==1)printf ("tty1 tx int");
 		else
 			scnstart(tp1);
 	 	rs_work = TRUE;
-if (line1==1)printf ("\n");
 	}
 	if (rs_stat & IMR_BRKB_INT && (tp1 != NULL)) {
-if (line1==1)printf ("tty1 brk int\n");
 		/* A break interrupt! */
 		rs1->lstatus = RD_ADR(u_char, rs1->stat_port);
 		if (rs1->lstatus & SR_BREAK) {
@@ -682,12 +677,10 @@ if (line1==1)printf ("tty1 brk int\n");
 		rs_work = TRUE;
 	}
 	if (rs_stat & IMR_RXB_INT && (tp1 != NULL)) {
-if (line1==1)printf ("tty1 rx int");
 		ch = RD_ADR(u_char, rs1->recv_port);
 		if (tp1->t_state & TS_ISOPEN) 
 			(*linesw[tp1->t_line].l_rint)(ch, tp1);
 		rs_work = TRUE;
-if (line1==1)printf ("\n");
 	}
 	if (rs_stat & IMR_IP_INT) {
 		rs_work = TRUE;
