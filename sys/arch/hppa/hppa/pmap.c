@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.13 2004/05/16 17:07:07 chs Exp $	*/
+/*	$NetBSD: pmap.c,v 1.14 2004/07/18 23:21:35 chs Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -171,7 +171,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.13 2004/05/16 17:07:07 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.14 2004/07/18 23:21:35 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -280,9 +280,6 @@ u_int	kern_prot[8], user_prot[8];
 
 vaddr_t	hpt_base;
 vsize_t	hpt_mask;
-
-#define	pmap_sid(pmap, va) \
-	(((va & 0xc0000000) != 0xc0000000)? pmap->pmap_space : HPPA_SID_KERNEL)
 
 /*
  * Page 3-6 of the "PA-RISC 1.1 Architecture and Instruction Set 

@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.9 2004/07/18 20:27:11 chs Exp $	*/
+/*	$NetBSD: locore.S,v 1.10 2004/07/18 23:21:35 chs Exp $	*/
 
 /*	$OpenBSD: locore.S,v 1.46 2001/09/20 18:33:03 mickey Exp $	*/
 
@@ -745,12 +745,17 @@ EXIT(microtime)
 /* Include the support functions. */
 #include <hppa/hppa/support.S>
 
+/* 
+ * cpu_switchto(struct lwp *cur, struct lwp *new)
+ */
 	.align	32
 ENTRY(cpu_switchto,128)
+	b	switchto
+	copy	%arg0, %arg2
 EXIT(cpu_switchto)
 
 /*
- * cpu_switch()
+ * cpu_switch(struct lwp *curlwp)
  * Find the highest priority LWP and resume it.
  */
 	.align	32
@@ -872,6 +877,7 @@ Lcspstr:
 	.align	8
 link_ok:
 #endif
+	/* take new lwp off its runq */
 	ldw	L_FORW(%arg1), %arg0
 	stw	%arg0, L_FORW(%t2)
 	stw	%t2, L_BACK(%arg0)
@@ -884,6 +890,13 @@ link_ok:
 	stw	%t3, R%sched_whichqs(%t1)
 
 	/* don't need &sched_whichqs (t1) starting here */
+	/*
+	 * register usage from here:
+	 * %arg1	new lwp
+	 * %arg2	old lwp
+	 */
+
+switchto:
 sw_qnempty:
 	ldil	L%want_resched, %t3
 	stw	%r0, R%want_resched(%t3)
@@ -1004,6 +1017,43 @@ switch_exited:
 	copy	%t2, %sp
 
 	/*
+	 * Check for restartable atomic sequences (RAS)
+	 * We save and restore %arg3 (containing %eiem value)
+	 * and %arg0, %t3 (in case we're doing a trampoline).
+	 */
+
+	ldw	L_PROC(%arg1), %t1
+	ldw	P_RASLIST(%t1), %t1
+	comb,=	%r0, %t1, noras
+
+	/* start stack calling convention */
+	stw	%rp, HPPA_FRAME_CRP(%sp)
+	stw	%arg0, HPPA_FRAME_ARG(0)(%sp)
+	stw	%t3, HPPA_FRAME_ARG(1)(%sp)
+	stw	%arg3, HPPA_FRAME_ARG(3)(%sp)
+	copy	%r3, %r1
+	copy	%sp, %r3
+	stw,ma	%r1, HPPA_FRAME_SIZE(%sp)
+
+	copy	%rp, %arg2
+	copy	%r3, %arg3
+
+	.import	hppa_ras, code
+	.call
+	bl	hppa_ras, %rp
+	copy	%arg1, %arg0
+
+	/* end stack calling convention */
+	ldw	HPPA_FRAME_CRP(%r3), %rp
+	ldw	HPPA_FRAME_ARG(3)(%r3), %arg3
+	ldw	HPPA_FRAME_ARG(1)(%r3), %t3
+	ldw	HPPA_FRAME_ARG(0)(%r3), %arg0
+	ldo	HPPA_FRAME_SIZE(%r3), %sp
+	ldw,mb	-HPPA_FRAME_SIZE(%sp), %r3
+
+noras:
+
+	/*
 	 * As an optimization, hppa_fpu_bootstrap
 	 * replaces this branch instruction with a
 	 * nop if there is a hardware FPU.
@@ -1036,8 +1086,7 @@ EXIT(cpu_switch)
 
 /*
  * switch_exit(struct lwp *l, void (*)(struct lwp *)))
- * restore lwp0 context and go into cpu_switch to select the next runable
- * LWP.
+ * restore lwp0 context and go into cpu_switch to select the next runable LWP.
  */
 	.import	kernel_map, data
 	.import	uvmspace_free, code
@@ -1057,6 +1106,11 @@ ENTRY(switch_exit,0)
 	ldi	HPPA_PID_KERNEL, %t4
 	mtctl	%t4, %pidr2
 
+	/* zero curlwp since it's not going to be valid anymore */
+	ldil	L%curlwp, %t4
+	ldw	R%curlwp(%t4), %arg2
+	stw	%r0, R%curlwp(%t4)
+
 	/* switch onto the temporary stack */
 	ldil	L%exit_stack, %t4
 	ldo	R%exit_stack(%t4), %t4
@@ -1071,12 +1125,9 @@ ENTRY(switch_exit,0)
 	stw	%r3, HPPA_FRAME_PSP(%sp)
 
 	/* arg0 -- oldproc */
-	.import lwp_exit2, code
-	ldil	L%lwp_exit2, %t2
-	ldo	R%lwp_exit2(%t2), %t2
 	.call
 	blr	%r0, %rp
-	bv,n	%r0(%t2)
+	bv,n	%r0(%arg1)
 	nop
 
 #if defined(LOCKDEBUG)
@@ -1094,12 +1145,12 @@ EXIT(switch_exit)
 /*
  * This is the first code run in a new LWP after
  * cpu_switch() has switched to it for the first time.
- * This happens courtesy of the setup in cpu_fork(),
+ * This happens courtesy of the setup in cpu_lwp_fork(),
  * which also makes sure that %t3 is the address of
  * the first kernel function to call, and %arg0 is
  * its argument.
  */
-ENTRY(switch_trampoline,64)
+ENTRY(switch_trampoline, HPPA_FRAME_SIZE)
 
 	/* no return point */
 	copy	%r0, %rp
