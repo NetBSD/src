@@ -1,4 +1,4 @@
-/*	$NetBSD: pdq.c,v 1.27 1999/12/23 18:14:59 matt Exp $	*/
+/*	$NetBSD: pdq.c,v 1.28 1999/12/27 22:41:04 matt Exp $	*/
 
 /*-
  * Copyright (c) 1995,1996 Matt Thomas <matt@3am-software.com>
@@ -81,6 +81,7 @@ static const char * const pdq_entities[] = {
 };
 
 static const char * const pdq_station_events[] = {
+    "Unknown Event #0",
     "Trace Received"
 };
 
