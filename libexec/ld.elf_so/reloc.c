@@ -1,4 +1,4 @@
-/*	$NetBSD: reloc.c,v 1.77 2002/11/25 19:49:25 mycroft Exp $	 */
+/*	$NetBSD: reloc.c,v 1.78 2002/12/14 09:13:00 junyoung Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -55,15 +55,6 @@
 #ifndef RTLD_INHIBIT_COPY_RELOCS
 static int _rtld_do_copy_relocation __P((const Obj_Entry *, const Elf_Rela *));
 
-/*
- * XXX: These don't work for the alpha and i386; don't know about powerpc
- *	The alpha and the i386 avoid the problem by compiling everything PIC.
- *	These relocation are supposed to be writing the address of the
- *	function to be called on the bss.rel or bss.rela segment, but:
- *		- st_size == 0
- *		- on the i386 at least the call instruction is a direct call
- *		  not an indirect call.
- */
 static int
 _rtld_do_copy_relocation(dstobj, rela)
 	const Obj_Entry *dstobj;
