@@ -1,4 +1,4 @@
-/*	$NetBSD: conv.c,v 1.4 1995/03/21 09:04:01 cgd Exp $	*/
+/*	$NetBSD: conv.c,v 1.5 1995/10/08 23:01:23 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)conv.c	8.3 (Berkeley) 4/2/94";
 #else
-static char rcsid[] = "$NetBSD: conv.c,v 1.4 1995/03/21 09:04:01 cgd Exp $";
+static char rcsid[] = "$NetBSD: conv.c,v 1.5 1995/10/08 23:01:23 gwr Exp $";
 #endif
 #endif /* not lint */
 
@@ -94,6 +94,16 @@ def_close()
 	if (in.dbcnt)
 		out.dbcnt = in.dbcnt;
 }
+
+#ifdef	NO_CONV
+/* Build a smaller version (i.e. for a miniroot) */
+/* These can not be called, but just in case...  */
+static char no_block[] = "unblock and -DNO_CONV?";
+void block()       { errx(1, no_block + 2); }
+void block_close() { errx(1, no_block + 2); }
+void unblock()       { errx(1, no_block); }
+void unblock_close() { errx(1, no_block); }
+#else	/* NO_CONV */
 
 /*
  * Copy variable length newline terminated records with a max size cbsz
@@ -264,3 +274,5 @@ unblock_close()
 		*out.dbp++ = '\n';
 	}
 }
+
+#endif	/* NO_CONV */
