@@ -1,11 +1,11 @@
-/*	$NetBSD: main.c,v 1.5 1997/10/17 14:54:02 lukem Exp $	*/
+/*	$NetBSD: main.c,v 1.5.2.1 1998/11/06 20:40:55 cgd Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char *rcsid = "from FreeBSD Id: main.c,v 1.11 1997/10/08 07:46:48 charnier Exp";
 #else
-__RCSID("$NetBSD: main.c,v 1.5 1997/10/17 14:54:02 lukem Exp $");
+__RCSID("$NetBSD: main.c,v 1.5.2.1 1998/11/06 20:40:55 cgd Exp $");
 #endif
 #endif
 
@@ -40,7 +40,12 @@ char	*Prefix		= NULL;
 Boolean	NoDeInstall	= FALSE;
 Boolean	CleanDirs	= FALSE;
 
-static void usage __P((void));
+static void
+usage(void)
+{
+    fprintf(stderr, "usage: pkg_delete [-vDdnf] [-p prefix] pkg-name ...\n");
+    exit(1);
+}
 
 int
 main(int argc, char **argv)
@@ -104,11 +109,4 @@ main(int argc, char **argv)
     }
     else
 	return 0;
-}
-
-static void
-usage()
-{
-    fprintf(stderr, "usage: pkg_delete [-vDdnf] [-p prefix] pkg-name ...\n");
-    exit(1);
 }
