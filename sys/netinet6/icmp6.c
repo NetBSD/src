@@ -1,4 +1,4 @@
-/*	$NetBSD: icmp6.c,v 1.36 2000/07/07 15:54:17 itojun Exp $	*/
+/*	$NetBSD: icmp6.c,v 1.37 2000/07/09 06:44:58 itojun Exp $	*/
 /*	$KAME: icmp6.c,v 1.120 2000/07/06 11:47:20 itojun Exp $	*/
 
 /*
@@ -115,6 +115,7 @@ extern struct timeval icmp6errratelim;
 static struct timeval icmp6errratelim_last;
 extern int icmp6errppslim;
 static int icmp6errpps_count = 0;
+static struct timeval icmp6errppslim_last;
 extern int icmp6_nodeinfo;
 static struct rttimer_queue *icmp6_mtudisc_timeout_q = NULL;
 extern int pmtu_expire;
@@ -1953,9 +1954,6 @@ icmp6_fasttimo()
 {
 
 	mld6_fasttimeo();
-
-	/* reset ICMPv6 pps limit */
-	icmp6errpps_count = 0;
 }
 
 static const char *
@@ -2558,9 +2556,9 @@ icmp6_ratelimit(dst, type, code)
 	ret = 0;	/*okay to send*/
 
 	/* PPS limit */
-	icmp6errpps_count++;
-	if (icmp6errppslim && icmp6errpps_count > icmp6errppslim / 5) {
-		/* The packet is subject to pps limit */
+	if (!ppsratecheck(&icmp6errppslim_last, &icmp6errpps_count,
+	    icmp6errppslim)) {
+		/* The packet is subject to rate limit */
 		ret++;
 	}
 
