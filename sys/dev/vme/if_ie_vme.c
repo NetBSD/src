@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ie_vme.c,v 1.1 1997/11/01 22:56:21 pk Exp $	*/
+/*	$NetBSD: if_ie_vme.c,v 1.2 1998/01/25 19:57:27 pk Exp $	*/
 
 /*-
  * Copyright (c) 1995 Charles D. Cranor
@@ -94,28 +94,47 @@
  *
  *   VME/multibus interface:
  * 	for the multibus interface the board ignores the top 4 bits
- * 	of the chip address.   the multibus interface seems to have its
- * 	own MMU like page map (without protections or valid bits, etc).
+ * 	of the chip address.   the multibus interface has its own
+ * 	MMU like page map (without protections or valid bits, etc).
  * 	there are 256 pages of physical memory on the board (each page
- * 	is 1024 bytes).   there are 1024 slots in the page map.  so,
+ * 	is 1024 bytes).   There are 1024 slots in the page map.  so,
  * 	a 1024 byte page takes up 10 bits of address for the offset,
  * 	and if there are 1024 slots in the page that is another 10 bits
- * 	of the address.   that makes a 20 bit address, and as stated
+ * 	of the address.   That makes a 20 bit address, and as stated
  * 	earlier the board ignores the top 4 bits, so that accounts
  * 	for all 24 bits of address.
  *
- * 	note that the last entry of the page map maps the top of the
+ * 	Note that the last entry of the page map maps the top of the
  * 	24 bit address space and that the SCP is supposed to be at
  * 	0xfffff4 (taking into account allignment).   so,
  *	for multibus, that entry in the page map has to be used for the SCP.
  *
- * 	the page map effects BOTH how the ie chip sees the
+ * 	The page map effects BOTH how the ie chip sees the
  * 	memory, and how the host sees it.
  *
- * 	the page map is part of the "register" area of the board
+ * 	The page map is part of the "register" area of the board
+ *
+ *	The page map to control where ram appears in the address space.
+ *	We choose to have RAM start at 0 in the 24 bit address space.
+ * 
+ *	to get the phyiscal address of the board's RAM you must take the
+ *	top 12 bits of the physical address of the register address and
+ *	or in the 4 bits from the status word as bits 17-20 (remember that
+ *	the board ignores the chip's top 4 address lines). For example:
+ *	if the register is @ 0xffe88000, then the top 12 bits are 0xffe00000.
+ *	to get the 4 bits from the the status word just do status & IEVME_HADDR.
+ *	suppose the value is "4".   Then just shift it left 16 bits to get
+ *	it into bits 17-20 (e.g. 0x40000).    Then or it to get the
+ *	address of RAM (in our example: 0xffe40000).   see the attach routine!
+ *
  *
  *   on-board interface:
  *
+ *	on the onboard ie interface the 24 bit address space is hardwired
+ *	to be 0xff000000 -> 0xffffffff of KVA.   this means that sc_iobase
+ *	will be 0xff000000.   sc_maddr will be where ever we allocate RAM
+ *	in KVA.    note that since the SCP is at a fixed address it means
+ *	that we have to allocate a fixed KVA for the SCP.
  *	<fill in useful info later>
  *
  *
@@ -135,6 +154,7 @@
 #include <net/if.h>
 #include <net/if_types.h>
 #include <net/if_dl.h>
+#include <net/if_media.h>
 #include <net/if_ether.h>
 
 #include <vm/vm.h>
@@ -142,6 +162,7 @@
 #include <machine/bus.h>
 #include <dev/vme/vmevar.h>
 
+#define _NEW_I82586	/* remove after all old drivers are converted */
 #include <dev/ic/i82586reg.h>
 #include <dev/ic/i82586var.h>
 
@@ -196,17 +217,21 @@ struct ievme {
 #define IEVME_PAREND 0x0040	/* which end of the data got the error */
 #define IEVME_PARADR 0x000f	/* mask to get bits 17-20 of parity address */
 
+/* Supported media */
+static int media[] = {
+	IFM_ETHER | IFM_10_2,
+};      
+#define NMEDIA	(sizeof(media) / sizeof(media[0]))
 
 /*
  * the 3E board not supported (yet?)
  */
 
 
-static void ie_vmereset __P((struct ie_softc *));
+static void ie_vmereset __P((struct ie_softc *, int));
 static void ie_vmeattend __P((struct ie_softc *));
 static void ie_vmerun __P((struct ie_softc *));
-static int  ie_vmeintr __P((struct ie_softc *));
-static caddr_t ie_align __P((caddr_t));
+static int  ie_vmeintr __P((struct ie_softc *, int));
 
 int ie_vme_match __P((struct device *, struct cfdata *, void *));
 void ie_vme_attach __P((struct device *, struct device *, void *));
@@ -215,12 +240,14 @@ struct cfattach ie_vme_ca = {
 	sizeof(struct ie_softc), ie_vme_match, ie_vme_attach
 };
 
+
 /*
  * MULTIBUS/VME support routines
  */
 void
-ie_vmereset(sc)
+ie_vmereset(sc, what)
 	struct ie_softc *sc;
+	int what;
 {
 	volatile struct ievme *iev = (struct ievme *) sc->sc_reg;
 	iev->status = IEVME_RESET;
@@ -248,10 +275,14 @@ ie_vmerun(sc)
 }
 
 int
-ie_vmeintr(sc)
+ie_vmeintr(sc, where)
 	struct ie_softc *sc;
+	int where;
 {
 	volatile struct ievme *iev = (volatile struct ievme *)sc->sc_reg;
+
+	if (where != INTR_ENTER)
+		return (0);
 
         /*
          * check for parity error
@@ -265,14 +296,77 @@ ie_vmeintr(sc)
 	return (0);
 }
 
-caddr_t
-ie_align(ptr)
-        caddr_t ptr;
-{
-        u_long  l = (u_long)ptr;
+void ie_memcopyin __P((struct ie_softc *, void *, int, size_t));
+void ie_memcopyout __P((struct ie_softc *, const void *, int, size_t));
 
-        l = (l + 3) & ~3L;
-        return (caddr_t)l;
+/*
+ * Copy board memory to kernel.
+ */
+void
+ie_memcopyin(sc, p, offset, size)
+	struct ie_softc	*sc;
+	void *p;
+	int offset;
+	size_t size;
+{
+	void *addr = (void *)((u_long)sc->bh + offset);/*XXX - not MI!*/
+	wcopy(addr, p, size);
+}
+
+/*
+ * Copy from kernel space to naord memory.
+ */
+void
+ie_memcopyout(sc, p, offset, size)
+	struct ie_softc	*sc;
+	const void *p;
+	int offset;
+	size_t size;
+{
+	void *addr = (void *)((u_long)sc->bh + offset);/*XXX - not MI!*/
+	wcopy(p, addr, size);
+}
+
+/* read a 16-bit value at BH offset */
+u_int16_t ie_vme_read16 __P((struct ie_softc *, int offset));
+/* write a 16-bit value at BH offset */
+void ie_vme_write16 __P((struct ie_softc *, int offset, u_int16_t value));
+void ie_vme_write24 __P((struct ie_softc *, int offset, int addr));
+
+u_int16_t
+ie_vme_read16(sc, offset)
+	struct ie_softc *sc;
+	int offset;
+{
+	u_int16_t v;
+
+	bus_space_barrier(sc->bt, sc->bh, offset, 2, BUS_SPACE_BARRIER_READ);
+	v = bus_space_read_2(sc->bt, sc->bh, offset);
+	return (((v&0xff)<<8) | ((v>>8)&0xff));
+}
+
+void
+ie_vme_write16(sc, offset, v)
+	struct ie_softc *sc;	
+	int offset;
+	u_int16_t v;
+{
+	int v0 = ((((v)&0xff)<<8) | (((v)>>8)&0xff));
+	bus_space_write_2(sc->bt, sc->bh, offset, v0);
+	bus_space_barrier(sc->bt, sc->bh, offset, 2, BUS_SPACE_BARRIER_WRITE);
+}
+
+void
+ie_vme_write24(sc, offset, addr)
+	struct ie_softc *sc;	
+	int offset;
+	int addr;
+{
+	u_char *f = (u_char *)&addr;
+	u_char *t = (u_char *)(sc->bh + offset);
+
+	t[0] = f[3]; t[1] = f[2]; t[2] = f[1]; /*_t[3] = _f[0];*/
+	bus_space_barrier(sc->bt, sc->bh, offset, 4, BUS_SPACE_BARRIER_WRITE);
 }
 
 int
@@ -321,18 +415,17 @@ ie_vme_attach(parent, self, aux)
 	 */
 	mod = VMEMOD_A24 | VMEMOD_S | VMEMOD_D;
 
-#if 0
-	sc->dmat = va->vma_dmatag;
-#endif
 	sc->bt = bt;
 
 	sc->hwreset = ie_vmereset;
 	sc->hwinit = ie_vmerun;
 	sc->chan_attn = ie_vmeattend;
-	sc->align = ie_align;
 	sc->intrhook = ie_vmeintr;
-	sc->memcopy = wcopy;
-	sc->memzero = wzero;
+	sc->memcopyout = ie_memcopyout;
+	sc->memcopyin = ie_memcopyin;
+	sc->ie_bus_read16 = ie_vme_read16;
+	sc->ie_bus_write16 = ie_vme_write16;
+	sc->ie_bus_write24 = ie_vme_write24;
 	sc->sc_msize = 4*65536;	/* XXX */
 
 	sz = sizeof(struct ievme);
@@ -350,8 +443,7 @@ ie_vme_attach(parent, self, aux)
 	if (vme_bus_map(ct, rampaddr, sz, mod, bt, &bh) != 0)
 		panic("if_ie: vme_map");
 
-	sc->sc_maddr = (caddr_t)bh;
-	sc->sc_iobase = sc->sc_maddr;
+	sc->bh = bh;
 
 	iev->pectrl = iev->pectrl | IEVME_PARACK; /* clear to start */
 
@@ -364,32 +456,45 @@ ie_vme_attach(parent, self, aux)
 	iev->pgmap[IEVME_MAPSZ - 1] = IEVME_SBORDR | IEVME_OBMEM | 0;
 
 	/* Clear all ram */
-	(sc->memzero)(sc->sc_maddr, sc->sc_msize);
+	bus_space_set_multi_2(sc->bt, sc->bh, 0, 0, sc->sc_msize/2);
 
 	/*
-	 * set up pointers to data structures and buffer area.
-	 * scp is in double mapped page... get offset into page
-	 * and add to sc_maddr.
+	 * We use the first page to set up SCP, ICSP and SCB data
+	 * structures. The remaining pages become the buffer area
+	 * (managed in i82586.c).
+	 * SCP is in double-mapped page, so the 586 can see it at
+	 * the mandatory magic address (IE_SCP_ADDR).
 	 */
-	sc->scp = (volatile struct ie_sys_conf_ptr *)
-		(sc->sc_maddr + (IE_SCP_ADDR & (IEVME_PAGESIZE - 1)));
+	sc->scp = (IE_SCP_ADDR & (IEVME_PAGESIZE - 1));
 
 	/* iscp at location zero */
-	sc->iscp = (volatile struct ie_int_sys_conf_ptr *)sc->sc_maddr;
+	sc->iscp = 0;
 
 	/* scb follows iscp */
-	sc->scb = (volatile struct ie_sys_ctl_block *)
-		sc->sc_maddr + sizeof(struct ie_int_sys_conf_ptr);
+	sc->scb = IE_ISCP_SZ;
+
+	ie_vme_write16(sc, IE_ISCP_SCB((long)sc->iscp), sc->scb);
+	ie_vme_write16(sc, IE_ISCP_BASE((u_long)sc->iscp), 0);
+	ie_vme_write24(sc, IE_SCP_ISCP((u_long)sc->scp), 0);
+
+	if (i82586_proberam(sc) == 0) {
+		printf(": memory probe failed\n");
+		return;
+	}
 
 	/*
 	 * Rest of first page is unused; rest of ram for buffers.
 	 */
-	sc->buf_area = sc->sc_maddr + IEVME_PAGESIZE;
+	sc->buf_area = IEVME_PAGESIZE;
 	sc->buf_area_sz = sc->sc_msize - IEVME_PAGESIZE;
 
+	sc->do_xmitnopchain = 0;
+
 	myetheraddr(myaddr);
-	ie_attach(sc, "multibus/vme", myaddr);
+	i82586_attach(sc, "multibus/vme", myaddr, media, NMEDIA, media[0]);
 
 	vme_intr_map(ct, va->vma_vec, va->vma_pri, &ih);
-	vme_intr_establish(ct, ih, ieintr, sc);
+	vme_intr_establish(ct, ih, i82586_intr, sc);
+
+	vme_bus_establish(ct, &sc->sc_dev);
 }
