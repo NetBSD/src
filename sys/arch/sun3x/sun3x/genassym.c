@@ -1,4 +1,4 @@
-/*	$NetBSD: genassym.c,v 1.5 1997/02/03 19:33:42 gwr Exp $	*/
+/*	$NetBSD: genassym.c,v 1.6 1997/02/11 19:02:30 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Gordon W. Ross
@@ -119,6 +119,7 @@ struct nv assyms[] = {
 	/* kernel-isms */
 	def1(KERNBASE),
 	def1(USPACE),
+	def1(NBPG),
 
 	/* system calls */
 	def1(SYS_sigreturn),
