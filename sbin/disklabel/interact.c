@@ -1,4 +1,4 @@
-/*	$NetBSD: interact.c,v 1.3 1997/03/09 00:35:44 christos Exp $	*/
+/*	$NetBSD: interact.c,v 1.4 1997/03/18 21:26:44 christos Exp $	*/
 
 /*
  * Copyright (c) 1997 Christos Zoulas.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$NetBSD: interact.c,v 1.3 1997/03/09 00:35:44 christos Exp $";
+static char rcsid[] = "$NetBSD: interact.c,v 1.4 1997/03/18 21:26:44 christos Exp $";
 #endif /* lint */
 
 #include <stdio.h>
@@ -155,7 +155,7 @@ cmd_part(lp, s, fd)
 	int part = *s - 'a';
 	struct partition *p = &lp->d_partitions[part];
 
-	if (part > lp->d_npartitions)
+	if (part >= lp->d_npartitions)
 		lp->d_npartitions = part + 1;
 
 	for (;;) {
