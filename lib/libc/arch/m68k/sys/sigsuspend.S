@@ -1,4 +1,4 @@
-/*	$NetBSD: sigsuspend.S,v 1.4 1995/12/13 22:18:18 thorpej Exp $	*/
+/*	$NetBSD: sigsuspend.S,v 1.5 1998/10/05 02:34:21 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -43,14 +43,14 @@
 #if 0
 	RCSID("from: @(#)sigsuspend.s	5.2 (Berkeley) 6/6/90")
 #else
-	RCSID("$NetBSD: sigsuspend.S,v 1.4 1995/12/13 22:18:18 thorpej Exp $")
+	RCSID("$NetBSD: sigsuspend.S,v 1.5 1998/10/05 02:34:21 thorpej Exp $")
 #endif
 #endif /* LIBC_SCCS and not lint */
 
 ENTRY(sigsuspend)
 	movl	sp@(4),a0
 	movl	a0@,sp@(4)		/* indirect to mask arg */
-	movl	#SYS_sigsuspend,d0
+	movl	#SYS_compat_13_sigsuspend13,d0
 	trap	#0
 	jcs	err
 	clrl	d0			/* shouldn't happen */
