@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_subr.c,v 1.110 2004/02/25 21:52:59 drochner Exp $	*/
+/*	$NetBSD: usb_subr.c,v 1.111 2004/03/15 10:35:04 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_subr.c,v 1.18 1999/11/17 22:33:47 n_hibma Exp $	*/
 
 /*
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb_subr.c,v 1.110 2004/02/25 21:52:59 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb_subr.c,v 1.111 2004/03/15 10:35:04 augustss Exp $");
 
 #include "opt_usbverbose.h"
 
@@ -1039,6 +1039,21 @@ usbd_new_device(device_ptr_t parent, usbd_bus_handle bus, int depth,
 	}
 
 	up->device = dev;
+
+	/* Set the address.  Do this early; some devices need that. */
+	err = usbd_set_address(dev, addr);
+	DPRINTFN(5,("usbd_new_device: setting device address=%d\n", addr));
+	if (err) {
+		DPRINTFN(-1,("usb_new_device: set address %d failed\n", addr));
+		err = USBD_SET_ADDR_FAILED;
+		usbd_remove_device(dev, up);
+		return (err);
+	}
+	/* Allow device time to set new address */
+	usbd_delay_ms(dev, USB_SET_ADDRESS_SETTLE);
+	dev->address = addr;	/* New device address now */
+	bus->devices[addr] = dev;
+
 	dd = &dev->ddesc;
 	/* Try a few times in case the device is slow (i.e. outside specs.) */
 	for (i = 0; i < 10; i++) {
@@ -1097,21 +1112,6 @@ usbd_new_device(device_ptr_t parent, usbd_bus_handle bus, int depth,
 		usbd_remove_device(dev, up);
 		return (err);
 	}
-
-	/* Set the address */
-	err = usbd_set_address(dev, addr);
-	DPRINTFN(5,("usbd_new_device: setting device address=%d\n", addr));
-	if (err) {
-		DPRINTFN(-1,("usb_new_device: set address %d failed\n", addr));
-		err = USBD_SET_ADDR_FAILED;
-		usbd_remove_device(dev, up);
-		return (err);
-	}
-	/* Allow device time to set new address */
-	usbd_delay_ms(dev, USB_SET_ADDRESS_SETTLE);
-
-	dev->address = addr;	/* New device address now */
-	bus->devices[addr] = dev;
 
 	/* Assume 100mA bus powered for now. Changed when configured. */
 	dev->power = USB_MIN_POWER;
