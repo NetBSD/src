@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_clock.c,v 1.69 2000/08/22 17:28:28 thorpej Exp $	*/
+/*	$NetBSD: kern_clock.c,v 1.70 2000/08/26 03:34:37 sommerfeld Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -313,7 +313,7 @@ int	stathz;
 int	profhz;
 int	profprocs;
 int	softclock_running;		/* 1 => softclock() is running */
-static int psdiv, pscnt;		/* prof => stat divider */
+static int psdiv;			/* prof => stat divider */
 int	psratio;			/* ratio: prof / stat */
 int	tickfix, tickfixinterval;	/* used if tick not really integral */
 #ifndef NTP
@@ -406,16 +406,17 @@ initclocks(void)
 	 * Set divisors to 1 (normal case) and let the machine-specific
 	 * code do its bit.
 	 */
-	psdiv = pscnt = 1;
+	psdiv = 1;
 	cpu_initclocks();
 
 	/*
-	 * Compute profhz/stathz, and fix profhz if needed.
+	 * Compute profhz/stathz/rrticks, and fix profhz if needed.
 	 */
 	i = stathz ? stathz : hz;
 	if (profhz == 0)
 		profhz = i;
 	psratio = profhz / i;
+	rrticks = hz / 10;
 
 #ifdef NTP
 	switch (hz) {
@@ -498,6 +499,7 @@ hardclock(struct clockframe *frame)
 	int delta;
 	extern int tickdelta;
 	extern long timedelta;
+	struct cpu_info *ci = curcpu();
 #ifdef NTP
 	int time_update;
 	int ltemp;
@@ -525,13 +527,15 @@ hardclock(struct clockframe *frame)
 	 */
 	if (stathz == 0)
 		statclock(frame);
-
+	if ((--ci->ci_schedstate.spc_rrticks) <= 0)
+		roundrobin();
+	
 #if defined(MULTIPROCESSOR)
 	/*
 	 * If we are not the primary CPU, we're not allowed to do
 	 * any more work.
 	 */
-	if (CPU_IS_PRIMARY(curcpu()) == 0)
+	if (CPU_IS_PRIMARY(ci) == 0)
 		return;
 #endif
 
@@ -1206,16 +1210,11 @@ hzto(struct timeval *tv)
 void
 startprofclock(struct proc *p)
 {
-	int s;
 
 	if ((p->p_flag & P_PROFIL) == 0) {
 		p->p_flag |= P_PROFIL;
-		if (++profprocs == 1 && stathz != 0) {
-			s = splstatclock();
-			psdiv = pscnt = psratio;
-			setstatclockrate(profhz);
-			splx(s);
-		}
+		if (++profprocs == 1 && stathz != 0)
+			psdiv = psratio;
 	}
 }
 
@@ -1225,16 +1224,11 @@ startprofclock(struct proc *p)
 void
 stopprofclock(struct proc *p)
 {
-	int s;
 
 	if (p->p_flag & P_PROFIL) {
 		p->p_flag &= ~P_PROFIL;
-		if (--profprocs == 0 && stathz != 0) {
-			s = splstatclock();
-			psdiv = pscnt = 1;
-			setstatclockrate(stathz);
-			splx(s);
-		}
+		if (--profprocs == 0 && stathz != 0)
+			psdiv = 1;
 	}
 }
 
@@ -1253,11 +1247,24 @@ statclock(struct clockframe *frame)
 	struct schedstate_percpu *spc = &ci->ci_schedstate;
 	struct proc *p;
 
+	/*
+	 * Notice changes in divisor frequency, and adjust clock
+	 * frequency accordingly.
+	 */
+	if (spc->spc_psdiv != psdiv) {
+		spc->spc_psdiv = psdiv;
+		spc->spc_pscnt = psdiv;
+		if (psdiv == 1) {
+			setstatclockrate(stathz);
+		} else {
+			setstatclockrate(profhz);			
+		}
+	}
 	if (CLKF_USERMODE(frame)) {
 		p = curproc;
 		if (p->p_flag & P_PROFIL)
 			addupc_intr(p, CLKF_PC(frame), 1);
-		if (--pscnt > 0)
+		if (--spc->spc_pscnt > 0)
 			return;
 		/*
 		 * Came from user mode; CPU was in user state.
@@ -1282,7 +1289,7 @@ statclock(struct clockframe *frame)
 			}
 		}
 #endif
-		if (--pscnt > 0)
+		if (--spc->spc_pscnt > 0)
 			return;
 		/*
 		 * Came from kernel mode, so we were:
@@ -1307,7 +1314,7 @@ statclock(struct clockframe *frame)
 		} else
 			spc->spc_cp_time[CP_IDLE]++;
 	}
-	pscnt = psdiv;
+	spc->spc_pscnt = psdiv;
 
 	if (p != NULL) {
 		++p->p_cpticks;

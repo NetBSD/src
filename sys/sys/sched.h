@@ -1,4 +1,4 @@
-/* $NetBSD: sched.h,v 1.7 2000/08/21 02:07:18 thorpej Exp $ */
+/* $NetBSD: sched.h,v 1.8 2000/08/26 03:34:36 sommerfeld Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -143,6 +143,9 @@ struct schedstate_percpu {
 	u_int spc_schedticks;		/* ticks for schedclock() */
 	u_int64_t spc_cp_time[CPUSTATES]; /* CPU state statistics */
 	u_char spc_curpriority;		/* usrpri of curproc */
+	int spc_rrticks;		/* ticks until roundrobin() */
+	int spc_pscnt;			/* prof/stat counter */
+	int spc_psdiv;			/* prof/stat divisor */	
 };
 
 /* spc_flags */
@@ -160,6 +163,7 @@ struct schedstate_percpu {
 #define	ESTCPULIM(e) min((e), NICE_WEIGHT * PRIO_MAX - PPQ)
 
 int	schedhz;			/* ideally: 16 */
+int	rrticks;			/* ticks per roundrobin() */
 
 /*
  * Global scheduler state.  We would like to group these all together
@@ -179,6 +183,7 @@ struct proc;
 
 void schedclock(struct proc *p);
 void sched_wakeup(void *);
+void roundrobin(void);
 
 /*
  * scheduler_fork_hook:
