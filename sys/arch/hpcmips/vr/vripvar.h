@@ -1,4 +1,4 @@
-/*	$NetBSD: vripvar.h,v 1.1.1.1 1999/09/16 12:23:33 takemura Exp $	*/
+/*	$NetBSD: vripvar.h,v 1.2 1999/12/04 14:23:37 takemura Exp $	*/
 
 /*-
  * Copyright (c) 1999
@@ -55,6 +55,7 @@ struct vrip_softc {
 	vrcmu_chipset_tag_t sc_cc;
 	vrcmu_function_tag_t sc_cf;
 	int sc_pri; /* attaching device priority */
+	u_int32_t sc_intrmask;
 };
 
 /* 
@@ -85,6 +86,8 @@ void vrip_intr_disestablish __P((vrip_chipset_tag_t, void*));
 void vrip_intr_setmask1 __P((vrip_chipset_tag_t, void*, int));
 void vrip_intr_setmask2 __P((vrip_chipset_tag_t, void*, u_int32_t, int));
 void vrip_intr_get_status2 __P((vrip_chipset_tag_t, void*, u_int32_t*));
+void vrip_intr_suspend(void);
+void vrip_intr_resume(void);
 /*
  * CMU/GIU interface.
  */

@@ -1,4 +1,4 @@
-/*	$NetBSD: vr.c,v 1.7 1999/12/04 10:55:18 takemura Exp $	*/
+/*	$NetBSD: vr.c,v 1.8 1999/12/04 14:23:36 takemura Exp $	*/
 
 /*-
  * Copyright (c) 1999
@@ -56,6 +56,11 @@
 #include <hpcmips/vr/rtcreg.h>
 #include <hpcmips/hpcmips/machdep.h>	/* XXXjrs replace with vectors */
 #include <machine/bootinfo.h>
+
+#include "vrip.h"
+#if NVRIP > 0
+#include <hpcmips/vr/vripvar.h>
+#endif
 
 #include "vrdsu.h"
 #if NVRDSU > 0
@@ -296,20 +301,15 @@ vr_reboot(howto, bootstr)
 		vr_reboot(howto&~RB_HALT, bootstr);
 	}
 	/*
-	 * reset
-	 */
-	if (!(howto & RB_HALT)) {
-#if NVRDSU
-		vrdsu_reset();
-#else
-		printf("%s(%d): There is no DSU.", __FILE__, __LINE__);
-#endif
-	}
-	/*
 	 * halt
 	 */
-	splhigh();
-	while (1) {
+	if (howto & RB_HALT) {
+#if NVRIP > 0
+		_spllower(~MIPS_INT_MASK_0);
+		vrip_intr_suspend();
+#else
+		splhigh();
+#endif
 		__asm(".set noreorder");
 		__asm(__CONCAT(".word	",___STRING(VR_OPCODE_SUSPEND)));
 		__asm("nop");
@@ -318,7 +318,18 @@ vr_reboot(howto, bootstr)
 		__asm("nop");
 		__asm("nop");
 		__asm(".set reorder");
+#if NVRIP > 0
+		vrip_intr_resume();
+#endif
 	}
+	/*
+	 * reset
+	 */
+#if NVRDSU
+	vrdsu_reset();
+#else
+	printf("%s(%d): There is no DSU.", __FILE__, __LINE__);
+#endif
 }
 
 void *
