@@ -1,13 +1,15 @@
 ./bin/ed
 ./sbin/init
 ./usr/bin/bdes
+./usr/bin/compile_et
 ./usr/bin/kdestroy
 ./usr/bin/kinit
 ./usr/bin/klist
-./usr/bin/login
+./usr/bin/mk_cmds
 ./usr/bin/passwd
 ./usr/bin/telnet
-./usr/bin/tn3270
+./usr/bin/yppasswd
+./usr/include/kerberosIV
 ./usr/include/kerberosIV/adm_locl.h
 ./usr/include/kerberosIV/com_err.h
 ./usr/include/kerberosIV/des.h
@@ -52,6 +54,8 @@
 ./usr/lib/libkrb_p.a
 ./usr/lib/libkstream.a
 ./usr/lib/libkstream_p.a
+./usr/lib/libntp.a
+./usr/lib/libntp_p.a
 ./usr/lib/libss.a
 ./usr/lib/libss_p.a
 ./usr/lib/libtelnet.a
@@ -70,10 +74,15 @@
 ./usr/sbin/ksrvutil
 ./usr/sbin/kstash
 ./usr/share/man/cat1/bdes.0
+./usr/share/man/cat1/compile_et.0
+./usr/share/man/cat1/ed.0
 ./usr/share/man/cat1/kdestroy.0
 ./usr/share/man/cat1/kerberos.0
 ./usr/share/man/cat1/kinit.0
 ./usr/share/man/cat1/klist.0
+./usr/share/man/cat1/passwd.0
+./usr/share/man/cat1/telnet.0
+./usr/share/man/cat1/yppasswd.0
 ./usr/share/man/cat3/acl_add.0
 ./usr/share/man/cat3/acl_canonicalize_principal.0
 ./usr/share/man/cat3/acl_check.0
@@ -127,6 +136,7 @@
 ./usr/share/man/cat5/krb.conf.0
 ./usr/share/man/cat5/krb.realms.0
 ./usr/share/man/cat8/ext_srvtab.0
+./usr/share/man/cat8/init.0
 ./usr/share/man/cat8/kadmin.0
 ./usr/share/man/cat8/kadmind.0
 ./usr/share/man/cat8/kdb_destroy.0
@@ -136,4 +146,5 @@
 ./usr/share/man/cat8/kerberos.0
 ./usr/share/man/cat8/ksrvutil.0
 ./usr/share/man/cat8/kstash.0
+./usr/share/man/cat8/telnetd.0
 ./usr/share/man/whatis.db
