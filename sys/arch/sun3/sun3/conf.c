@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.41 1995/07/04 07:17:14 mycroft Exp $	*/
+/*	$NetBSD: conf.c,v 1.42 1995/08/17 17:41:02 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1994 Adam Glass, Gordon W. Ross
@@ -55,6 +55,8 @@ bdev_decl(sd);
 bdev_decl(st);
 #include "cd.h"
 bdev_decl(cd);
+#inclide "ccd.h"
+bdev_decl(ccd);
 
 struct bdevsw	bdevsw[] =
 {
@@ -67,7 +69,7 @@ struct bdevsw	bdevsw[] =
 	bdev_notdef(),			/* 6 */
 	bdev_disk_init(NSD,sd),		/* 7: SCSI disk */
 	bdev_notdef(),			/* 8: Xylogics tape */
-	bdev_notdef(),			/* 9 */
+	bdev_disk_init(NCCD,ccd),	/* 9: concatenated disk driver */
 	bdev_notdef(),			/* 10: SMD disk on Xylogics 7053 */
 	bdev_tape_init(NST,st),		/* 11: SCSI tape */
 	bdev_notdef(),			/* 12: Sun ns? */
@@ -126,6 +128,7 @@ cdev_decl(cg4);
 
 cdev_decl(log);
 cdev_decl(vnd);
+cdev_decl(ccd);
 cdev_decl(fd);
 
 #include "bpfilter.h"
@@ -169,7 +172,7 @@ struct cdevsw	cdevsw[] =
 	cdev_notdef(),			/* 30: Xylogics tape */
 	cdev_fb_init(NCGTWO,cg2),	/* 31: cgtwo */
 	cdev_notdef(),			/* 32: /dev/gpone */
-	cdev_notdef(),			/* 33 */
+	cdev_disk_init(NCCD,ccd),	/* 33: concatenated disk driver */
 	cdev_notdef(),			/* 34: floating point accelerator */
 	cdev_notdef(),			/* 35 */
 	cdev_bpftun_init(NBPFILTER,bpf),/* 36: Berkeley packet filter */
@@ -280,7 +283,7 @@ static int chrtoblktbl[] = {
 	/* 30 */	8,
 	/* 31 */	NODEV,
 	/* 32 */	NODEV,
-	/* 33 */	NODEV,
+	/* 33 */	9,
 	/* 34 */	NODEV,
 	/* 35 */	NODEV,
 	/* 36 */	NODEV,

@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.33 1995/07/05 15:53:22 pk Exp $ */
+/*	$NetBSD: conf.c,v 1.34 1995/08/17 17:41:00 thorpej Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -75,6 +75,8 @@ bdev_decl(vnd);
 #include "fd.h"
 bdev_decl(fd);
 #undef  fdopen
+#include "ccd.h"
+bdev_decl(ccd);
 
 struct bdevsw	bdevsw[] =
 {
@@ -87,7 +89,7 @@ struct bdevsw	bdevsw[] =
 	bdev_notdef(),			/* 6 */
 	bdev_disk_init(NSD,sd),		/* 7: SCSI disk */
 	bdev_disk_init(NVND,vnd),	/* 8: vnode disk driver */
-	bdev_notdef(),			/* 9 */
+	bdev_disk_init(NCCD,ccd),	/* 9: concatenated disk driver */
 	bdev_disk_init(NXD,xd),		/* 10: SMD disk */
 	bdev_tape_init(NST,st),		/* 11: SCSI tape */
 	bdev_notdef(),			/* 12 */
@@ -162,6 +164,7 @@ cdev_decl(openprom);
 #include "bpfilter.h"
 cdev_decl(bpf);
 cdev_decl(vnd);
+cdev_decl(ccd);
 #include "tun.h"
 cdev_decl(tun);
 cdev_decl(svr4_net);
@@ -197,7 +200,7 @@ struct cdevsw	cdevsw[] =
 	cdev_tty_init(NPTY,pts),	/* 20: pseudo-tty slave */
 	cdev_ptc_init(NPTY,ptc),	/* 21: pseudo-tty master */
 	cdev_fb_init(1,fb),		/* 22: /dev/fb indirect driver */
-	cdev_notdef(),			/* 23 */
+	cdev_disk_init(NCCD,ccd),	/* 23: concatenated disk driver */
 	cdev_fd_init(1,fd),		/* 24: file descriptor pseudo-device */
 	cdev_notdef(),			/* 25 */
 	cdev_notdef(),			/* 26 */
@@ -359,7 +362,7 @@ static int chrtoblktbl[] = {
 	/* 20 */	NODEV,
 	/* 21 */	NODEV,
 	/* 22 */	NODEV,
-	/* 23 */	NODEV,
+	/* 23 */	9,
 	/* 24 */	NODEV,
 	/* 25 */	NODEV,
 	/* 26 */	NODEV,

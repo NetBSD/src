@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.8 1995/08/03 00:55:27 cgd Exp $	*/
+/*	$NetBSD: conf.c,v 1.9 1995/08/17 17:40:42 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -60,6 +60,8 @@ bdev_decl(cd);
 bdev_decl(sd);
 #include "vnd.h"
 bdev_decl(vnd);
+#include "ccd.h"
+bdev_decl(ccd);
 
 struct bdevsw	bdevsw[] =
 {
@@ -70,7 +72,7 @@ struct bdevsw	bdevsw[] =
 	bdev_notdef(),			/* 4 */
 	bdev_notdef(),			/* 5 */
 	bdev_notdef(),			/* 6 */
-	bdev_notdef(),			/* 7 */
+	bdev_disk_init(NCCD,ccd),	/* 7: concatenated disk driver */
 	bdev_disk_init(NSD,sd),		/* 8: SCSI disk */
 	bdev_disk_init(NVND,vnd),	/* 9: vnode disk driver */
 	bdev_lkm_dummy(),		/* 10 */
@@ -100,6 +102,7 @@ cdev_decl(log);
 cdev_decl(tun);
 cdev_decl(sd);
 cdev_decl(vnd);
+cdev_decl(ccd);
 dev_type_open(fdopen);
 #include "bpfilter.h"
 cdev_decl(bpf);
@@ -153,6 +156,7 @@ struct cdevsw	cdevsw[] =
 	cdev_audio_init(NAUDIO,audio),	/* 24: generic audio I/O */
 	cdev_tty_init(NWSC,wsc),	/* 25: workstation console */
 	cdev_tty_init(NCOM,com),	/* 26: ns16550 UART */
+	cdev_disk_init(NCCD,ccd),	/* 27: concatenated disk driver */
 };
 int	nchrdev = sizeof (cdevsw) / sizeof (cdevsw[0]);
 
@@ -219,6 +223,7 @@ static int chrtoblktbl[] = {
 	/* 24 */	NODEV,
 	/* 25 */	NODEV,
 	/* 26 */	NODEV,
+	/* 27 */	7,
 };
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.16 1995/08/02 19:36:45 jonathan Exp $	*/
+/*	$NetBSD: conf.c,v 1.17 1995/08/17 17:40:58 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -53,6 +53,8 @@ bdev_decl(vnd);
 bdev_decl(sw);
 #include "rz.h"
 bdev_decl(rz);
+#include "ccd.h"
+bdev_decl(ccd);
 
 struct bdevsw	bdevsw[] =
 {
@@ -80,6 +82,7 @@ struct bdevsw	bdevsw[] =
 	bdev_disk_init(NRZ,rz),		/* 21: SCSI disk */
 	bdev_notdef(),			/* 22: ?? */
 	bdev_notdef(),			/* 23: mscp */
+	bdev_disk_init(NCCD,ccd),	/* 24: concatenated disk driver */
 };
 int	nblkdev = sizeof(bdevsw) / sizeof(bdevsw[0]);
 
@@ -113,6 +116,7 @@ cdev_decl(fd);
 #include "tz.h"
 cdev_decl(tz);
 cdev_decl(vnd);
+cdev_decl(ccd);
 #include "bpfilter.h"
 cdev_decl(bpf);
 #include "dtop.h"
@@ -237,6 +241,7 @@ struct cdevsw	cdevsw[] =
 	cdev_notdef(),		/* 84: DTi */
 	cdev_tty_init(NRCONS,rcons),	/* 85: raster console pseudo-device */
 	cdev_fbm_init(NFB,fb),	/* 86: frame buffer pseudo-device */
+	cdev_disk_init(NCCD,ccd),	/* 87: concatenated disk driver */
 };
 int	nchrdev = sizeof(cdevsw) / sizeof(cdevsw[0]);
 
@@ -362,6 +367,7 @@ static int chrtoblktbl[] =  {
 	/* 84 */	NODEV,
 	/* 85 */	NODEV,
 	/* 86 */	NODEV,
+	/* 87 */	24,
 };
 
 /*

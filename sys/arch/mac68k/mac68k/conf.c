@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.27 1995/07/04 07:16:37 mycroft Exp $	*/
+/*	$NetBSD: conf.c,v 1.28 1995/08/17 17:40:52 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -92,6 +92,8 @@ bdev_decl(cd);
 bdev_decl(ch);
 #include "vnd.h"
 bdev_decl(vnd);
+#include "ccd.h"
+bdev_decl(ccd);
 
 #ifdef LKM
 int	lkmenodev();
@@ -110,7 +112,7 @@ struct bdevsw	bdevsw[] =
 	bdev_disk_init(NCD,cd),		/* 6: SCSI CD-ROM */
 	bdev_notdef(),        	 	/* 7 */
 	bdev_disk_init(NVND,vnd),	/* 8: vnode disk driver */
-	bdev_notdef(),			/* 9 */
+	bdev_disk_init(NCCD,ccd),	/* 9: concatenated disk driver */
 	bdev_lkm_dummy(),		/* 10 */
 	bdev_lkm_dummy(),		/* 11 */
 	bdev_lkm_dummy(),		/* 12 */
@@ -155,6 +157,7 @@ cdev_decl(adb);
 cdev_decl(ser);
 cdev_decl(cd);
 cdev_decl(vnd);
+cdev_decl(ccd);
 #include "bpfilter.h"
 cdev_decl(bpf);
 #include "tun.h"
@@ -191,7 +194,7 @@ struct cdevsw	cdevsw[] =
 	cdev_notdef(),			/* 17: until we find chstrategy... */
 	cdev_notdef(),			/* 18 */
 	cdev_disk_init(NVND,vnd),	/* 19: vnode disk driver */
-	cdev_notdef(),			/* 20 */
+	cdev_disk_init(NCCD,ccd),	/* 20: concatenated disk driver */
 	cdev_fd_init(1,fd),		/* 21: file descriptor pseudo-device */
 	cdev_bpftun_init(NBPFILTER,bpf),/* 22: Berkeley packet filter */
 	cdev_mouse_init(NADB,adb),	/* 23: ADB event interface */
@@ -263,7 +266,7 @@ static int chrtoblktab[] = {
 	/* 17 */	NODEV,
 	/* 18 */	NODEV,
 	/* 19 */	8,
-	/* 20 */	NODEV,
+	/* 20 */	9,
 	/* 21 */	NODEV,
 	/* 22 */	NODEV,
 	/* 23 */	NODEV,
