@@ -1,4 +1,4 @@
-.\" $NetBSD: main,v 1.28 1999/12/05 05:46:30 cgd Exp $
+.\" $NetBSD: main,v 1.29 1999/12/05 23:28:57 dmcmahill Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -856,6 +856,7 @@ them, and would like to mentioned, tell us!)
 .It Ta Mike Long Ta Mt mikel@NetBSD.ORG
 .It Ta Brett Lymn Ta Mt blymn@NetBSD.ORG
 .It Ta Paul Mackerras Ta Mt paulus@NetBSD.ORG
+.It Ta Dan McMahill Ta Mt dmcmahill@NetBSD.ORG
 .It Ta Neil J. McRae Ta Mt neil@NetBSD.ORG
 .It Ta Perry Metzger Ta Mt perry@NetBSD.ORG
 .It Ta der Mouse Ta Mt mouse@NetBSD.ORG
