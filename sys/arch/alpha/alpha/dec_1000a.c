@@ -1,4 +1,4 @@
-/* $NetBSD: dec_1000a.c,v 1.6 1999/12/03 22:48:22 thorpej Exp $ */
+/* $NetBSD: dec_1000a.c,v 1.7 2000/05/22 20:13:31 thorpej Exp $ */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_1000a.c,v 1.6 1999/12/03 22:48:22 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_1000a.c,v 1.7 2000/05/22 20:13:31 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -241,7 +241,8 @@ dec_1000a_device_register(dev, aux)
 
 	if (!initted) {
 		scsiboot = (strcmp(b->protocol, "SCSI") == 0);
-		netboot = (strcmp(b->protocol, "BOOTP") == 0);
+		netboot = (strcmp(b->protocol, "BOOTP") == 0) ||
+		    (strcmp(b->protocol, "MOP") == 0);
 #if 0
 		printf("scsiboot = %d, netboot = %d\n", scsiboot, netboot);
 #endif
