@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_machdep.c,v 1.19.2.1 1997/05/13 02:56:03 thorpej Exp $	*/
+/*	$NetBSD: isa_machdep.c,v 1.19.2.2 1997/05/17 00:28:59 thorpej Exp $	*/
 
 #define ISA_DMA_STATS
 
@@ -129,8 +129,8 @@ void	_isa_bus_dmamap_unload __P((bus_dma_tag_t, bus_dmamap_t));
 void	_isa_bus_dmamap_sync __P((bus_dma_tag_t, bus_dmamap_t,
 	    bus_dmasync_op_t));
 
-int	_isa_bus_dmamem_alloc __P((bus_dma_tag_t, bus_size_t,
-	    bus_dma_segment_t *, int, int *, int));
+int	_isa_bus_dmamem_alloc __P((bus_dma_tag_t, bus_size_t, bus_size_t,
+	    bus_size_t, bus_dma_segment_t *, int, int *, int));
 void	_isa_bus_dmamem_free __P((bus_dma_tag_t,
 	    bus_dma_segment_t *, int));
 int	_isa_bus_dmamem_map __P((bus_dma_tag_t, bus_dma_segment_t *,
@@ -807,9 +807,9 @@ _isa_bus_dmamap_sync(t, map, op)
  * Allocate memory safe for ISA DMA.
  */
 int
-_isa_bus_dmamem_alloc(t, size, segs, nsegs, rsegs, flags)
+_isa_bus_dmamem_alloc(t, size, alignment, boundary, segs, nsegs, rsegs, flags)
 	bus_dma_tag_t t;
-	bus_size_t size;
+	bus_size_t size, alignment, boundary;
 	bus_dma_segment_t *segs;
 	int nsegs;
 	int *rsegs;
@@ -822,8 +822,8 @@ _isa_bus_dmamem_alloc(t, size, segs, nsegs, rsegs, flags)
 	else
 		high = trunc_page(avail_end);
 
-	return (_bus_dmamem_alloc_range(t, size, segs, nsegs, rsegs,
-	    flags, 0, high));
+	return (_bus_dmamem_alloc_range(t, size, alignment, boundary,
+	    segs, nsegs, rsegs, flags, 0, high));
 }
 
 /*
@@ -956,8 +956,8 @@ _isa_dma_alloc_bouncebuf(t, map, size, flags)
 
 	cookie->id_bouncebuflen = round_page(size);
 	error = _isa_bus_dmamem_alloc(t, cookie->id_bouncebuflen,
-	    cookie->id_bouncesegs, map->_dm_segcnt,
-	    &cookie->id_nbouncesegs, flags);
+	    NBPG, map->_dm_boundary, cookie->id_bouncesegs,
+	    map->_dm_segcnt, &cookie->id_nbouncesegs, flags);
 	if (error)
 		goto out;
 	error = _isa_bus_dmamem_map(t, cookie->id_bouncesegs,
