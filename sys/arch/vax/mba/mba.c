@@ -1,4 +1,4 @@
-/*	$NetBSD: mba.c,v 1.13 1998/01/24 14:16:50 ragge Exp $ */
+/*	$NetBSD: mba.c,v 1.14 1998/05/21 13:16:14 ragge Exp $ */
 /*
  * Copyright (c) 1994, 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -53,6 +53,7 @@
 #include <machine/pte.h>
 #include <machine/pcb.h>
 #include <machine/sid.h>
+#include <machine/cpu.h>
 
 #include <vax/mba/mbareg.h>
 #include <vax/mba/mbavar.h>
