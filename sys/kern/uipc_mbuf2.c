@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_mbuf2.c,v 1.10 2002/05/23 05:45:34 itojun Exp $	*/
+/*	$NetBSD: uipc_mbuf2.c,v 1.11 2002/10/22 03:29:51 simonb Exp $	*/
 /*	$KAME: uipc_mbuf2.c,v 1.29 2001/02/14 13:42:10 itojun Exp $	*/
 
 /*
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf2.c,v 1.10 2002/05/23 05:45:34 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf2.c,v 1.11 2002/10/22 03:29:51 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -281,7 +281,6 @@ m_aux_delete(m, victim)
 	struct mbuf *victim;
 {
 	struct mbuf *n, *prev, *next;
-	struct mauxtag *t;
 
 	if ((m->m_flags & M_PKTHDR) == 0)
 		return;
@@ -289,7 +288,6 @@ m_aux_delete(m, victim)
 	prev = NULL;
 	n = m->m_pkthdr.aux;
 	while (n) {
-		t = (struct mauxtag *)n->m_dat;
 		next = n->m_next;
 		if (n == victim) {
 			if (prev)
