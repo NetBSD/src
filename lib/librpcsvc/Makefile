@@ -1,17 +1,20 @@
 #       @(#)Makefile    5.10 (Berkeley) 6/24/90
 
 .PATH: ${.CURDIR}/../../include/rpcsvc /usr/src/include/rpcsvc
+
 LIB=    rpcsvc
+
 RPCSRCS= rstat.x rnusers.x rwall.x
-CFLAGS+= -I/usr/include/rpcsvc
 
 RPCCOM = rpcgen
 
+CFLAGS+= -I/usr/include/rpcsvc
+
 SRCS= ${RPCSRCS:R:S/$/_xdr.c/g}
 
-NOMAN= noman
+CLEANFILES+= ${SRCS} ${RPCSRCS}
 
-CLEANFILES+= ${RPCSRCS:R:S/$/_xdr.c/g}
+NOMAN= noman
 
 .include <bsd.lib.mk>
 
@@ -19,7 +22,7 @@ CLEANFILES+= ${RPCSRCS:R:S/$/_xdr.c/g}
 
 .x_xdr.c:
 	@echo generating $@...
-	@PWD=`pwd` ; cd ${.CURDIR} ; if cmp -s ${.IMPSRC} ${*F}.x > /dev/null; then :; else cp -f ${.IMPSRC} .; fi
-	@PWD=`pwd` ; cd ${.CURDIR} ; ${RPCCOM} -c ${*F}.x -o $$PWD/${.TARGET}
+	@PWD=`pwd` ; cd ${.CURDIR} ; if cmp -s ${.IMPSRC} ${*F}.x > /dev/null; then :; else cp -f ${.IMPSRC} $$PWD/${*F}.x ; fi
+	@${RPCCOM} -c ${*F}.x -o ${.TARGET}
 
 OBJS+= ${RPCSRCS:R:S/$/_xdr.o/g}
