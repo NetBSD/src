@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.30 1995/10/04 03:42:18 briggs Exp $
+#	$NetBSD: GENERIC,v 1.31 1995/10/04 11:05:25 briggs Exp $
 #
 # GENERIC
 
@@ -78,6 +78,6 @@ ch*	at scsibus? target ? lun ?
 pseudo-device	pty		16
 pseudo-device	bpfilter	12
 pseudo-device	vnd		2
+pseudo-device	ppp		2
 pseudo-device	loop
-pseudo-device	ppp
 pseudo-device	sl
