@@ -1,4 +1,4 @@
-.\"	$NetBSD: disklabel.8,v 1.10 1996/01/16 06:41:20 hpeyerl Exp $
+.\"	$NetBSD: disklabel.8,v 1.11 1996/06/29 15:50:18 pk Exp $
 .\"
 .\" Copyright (c) 1987, 1988, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -181,6 +181,16 @@ and used to rewrite the disk label.
 Existing bootstrap code is unchanged regardless of whether
 .Fl r
 was specified.
+The
+.Fl C
+flag causes the partition offset and size values to be displayed in
+.Aq cylinder/track/sector
+format. Note that, regardless of whether
+.Fl C
+was specified, this format is always excepted by
+.Nm
+on input with either the
+.Fl e No or Fl R No flag.
 .Pp
 With the
 .Fl R
