@@ -24,7 +24,7 @@
  * rights to redistribute these changes.
  *
  *	From: db_interface.c,v 2.4 1991/02/05 17:11:13 mrt (CMU)
- *	$Id: db_interface.c,v 1.7 1994/01/09 22:53:31 mycroft Exp $
+ *	$Id: db_interface.c,v 1.8 1994/08/15 14:46:45 mycroft Exp $
  */
 
 /*
@@ -166,7 +166,7 @@ db_read_bytes(addr, size, data)
 		*data++ = *src++;
 }
 
-struct pte *pmap_pte(pmap_t, vm_offset_t);
+pt_entry_t *pmap_pte __P((pmap_t, vm_offset_t));
 
 /*
  * Write bytes to kernel address space for debugger.

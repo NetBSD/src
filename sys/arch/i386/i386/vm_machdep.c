@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)vm_machdep.c	7.3 (Berkeley) 5/13/91
- *	$Id: vm_machdep.c,v 1.29 1994/06/29 02:32:56 mycroft Exp $
+ *	$Id: vm_machdep.c,v 1.30 1994/08/15 14:46:53 mycroft Exp $
  */
 
 /*
@@ -229,7 +229,7 @@ pagemove(from, to, size)
 	register caddr_t from, to;
 	int size;
 {
-	register struct pte *fpte, *tpte;
+	register pt_entry_t *fpte, *tpte;
 
 	if (size % CLBYTES)
 		panic("pagemove");
@@ -237,7 +237,7 @@ pagemove(from, to, size)
 	tpte = kvtopte(to);
 	while (size > 0) {
 		*tpte++ = *fpte;
-		*(int *)fpte++ = 0;
+		*fpte++ = 0;
 		from += NBPG;
 		to += NBPG;
 		size -= NBPG;
@@ -302,14 +302,14 @@ kernacc(addr, count, rw)
 	register u_int addr;
 	int count, rw;
 {
-	register struct pde *pde;
-	register struct pte *pte;
+	register pd_entry_t *pde;
+	register pt_entry_t *pte;
 	register int ix, cnt;
 	extern long Syssize;
 
 	if (count <= 0)
 		return(0);
-	pde = (struct pde *)((u_int)u.u_procp->p_p0br + u.u_procp->p_szpt * NBPG);
+	pde = (pd_entry_t *)((u_int)u.u_procp->p_p0br + u.u_procp->p_szpt * NBPG);
 	ix = (addr & PD_MASK) >> PDSHIFT;
 	cnt = ((addr + count + (1 << PDSHIFT) - 1) & PD_MASK) >> PDSHIFT;
 	cnt -= ix;
@@ -374,8 +374,8 @@ vmapbuf(bp, len)
 	vm_size_t len;
 {
 	vm_offset_t faddr, taddr, off;
-	struct pte *fpte, *tpte;
-	struct pte *pmap_pte __P((pmap_t, vm_offset_t));
+	pt_entry_t *fpte, *tpte;
+	pt_entry_t *pmap_pte __P((pmap_t, vm_offset_t));
 
 	if ((bp->b_flags & B_PHYS) == 0)
 		panic("vmapbuf");

@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)pmap.c	7.7 (Berkeley)	5/12/91
- *	$Id: pmap.c,v 1.17 1994/05/23 03:02:41 cgd Exp $
+ *	$Id: pmap.c,v 1.18 1994/08/15 14:46:48 mycroft Exp $
  */
 
 /*
@@ -153,19 +153,19 @@ int pmapvacflush = 0;
  */
 #define	pmap_pde(m, v)	(&((m)->pm_pdir[((vm_offset_t)(v) >> PDSHIFT)&1023]))
 
-#define	pmap_pte_pa(pte)		(*(int *)(pte) & PG_FRAME)
+#define	pmap_pte_pa(pte)		(*(pte) & PG_FRAME)
 
 /*
  * Empty PTEs and PDEs are always 0, but checking only the valid bit allows
  * the compiler to generate `testb' rather than `testl'.
  */
-#define	pmap_pde_v(pde)			((pde)->pd_v)
-#define	pmap_pte_w(pte)			((pte)->pg_w)
-#define	pmap_pte_m(pte)			((pte)->pg_m)
-#define	pmap_pte_u(pte)			((pte)->pg_u)
-#define	pmap_pte_v(pte)			((pte)->pg_v)
-#define	pmap_pte_set_w(pte, v)		((pte)->pg_w = (v))
-#define	pmap_pte_set_prot(pte, v)	((pte)->pg_prot = (v) >> 1)
+#define	pmap_pde_v(pde)			(*(pde) & PG_V)
+#define	pmap_pte_w(pte)			(*(pte) & PG_W)
+#define	pmap_pte_m(pte)			(*(pte) & PG_M)
+#define	pmap_pte_u(pte)			(*(pte) & PG_U)
+#define	pmap_pte_v(pte)			(*(pte) & PG_V)
+#define	pmap_pte_set_w(pte, v)		((v) ? (*(pte) |= PG_W) : (*(pte) &= ~PG_W))
+#define	pmap_pte_set_prot(pte, v)	((*(pte) &= ~PG_PROT), (*(pte) |= (v)))
 
 /*
  * Given a map and a machine independent protection code,
@@ -186,6 +186,7 @@ char		*pmap_attributes;	/* reference and modify bits */
 
 boolean_t pmap_testbit __P((vm_offset_t, int));
 void pmap_changebit __P((vm_offset_t, int, int));
+pt_entry_t *pmap_pte __P((pmap_t, vm_offset_t));
 
 /* XXX should be in a .h file somewhere */
 #define	PMAP_COPY_ON_WRITE(pa)		pmap_changebit(pa, PG_RO, ~PG_RW)
@@ -202,9 +203,9 @@ void pmap_changebit __P((vm_offset_t, int, int));
 /*
  * All those kernel PT submaps that BSD is so fond of
  */
-struct pte	*CMAP1, *CMAP2, *XXX_mmap;
+pt_entry_t	*CMAP1, *CMAP2, *XXX_mmap;
 caddr_t		CADDR1, CADDR2, vmmap;
-struct pte	*msgbufmap;
+pt_entry_t	*msgbufmap;
 #endif	/* BSDVM_COMPAT */
 
 /*
@@ -218,7 +219,6 @@ struct pte	*msgbufmap;
  *	from the linked base (virtual) address to the actual (physical)
  *	address starting relative to 0]
  */
-struct pte *pmap_pte();
 
 void
 pmap_bootstrap(virtual_start)
@@ -226,7 +226,7 @@ pmap_bootstrap(virtual_start)
 {
 #if BSDVM_COMPAT
 	vm_offset_t va;
-	struct pte *pte;
+	pt_entry_t *pte;
 #endif
 	extern int physmem;
 #if notyet
@@ -263,10 +263,10 @@ pmap_bootstrap(virtual_start)
 
 	firstaddr += NBPG;
 	for (x = i386_btod(VM_MIN_KERNEL_ADDRESS);
-		x < i386_btod(VM_MIN_KERNEL_ADDRESS)+NKPDE; x++) {
-			struct pde *pde;
+	    x < i386_btod(VM_MIN_KERNEL_ADDRESS) + NKPDE; x++) {
+		pd_entry_t *pde;
 		pde = kernel_pmap->pm_pdir + x;
-		*(int *)pde = firstaddr + x*NBPG | PG_V | PG_KW;
+		*pde = (firstaddr + x*NBPG) | PG_V | PG_KW;
 	}
 #else
 	kernel_pmap->pm_pdir = (pd_entry_t *)(KERNBASE + IdlePTD);
@@ -308,7 +308,7 @@ pmap_bootstrap(virtual_start)
 #endif
 
 	/* XXX undo temporary double mapping */
-	*(int *)PTD = 0;
+	*PTD = 0;
 	tlbflush();
 }
 
@@ -444,9 +444,8 @@ pmap_pinit(pmap)
 	bcopy(PTD + KPTDI, pmap->pm_pdir + KPTDI, NKPDE * sizeof(pd_entry_t));
 
 	/* install self-referential address mapping entry */
-	*(int *)(pmap->pm_pdir + PTDPTDI) =
-		(int)pmap_extract(kernel_pmap, (int)pmap->pm_pdir) \
-		    | PG_V | PG_KW;
+	*(pmap->pm_pdir + PTDPTDI) =
+	    pmap_extract(kernel_pmap, (vm_offset_t)pmap->pm_pdir) | PG_V | PG_KW;
 
 	pmap->pm_count = 1;
 	simple_lock_init(&pmap->pm_lock);
@@ -609,11 +608,10 @@ pmap_remove(pmap, sva, eva)
 		 */
 #ifdef DEBUG
 		if (pmapdebug & PDB_REMOVE)
-			printf("remove: inv pte at %x(%x) ",
-			       pte, *(int *)pte);
+			printf("remove: inv pte at %x(%x) ", pte, *pte);
 #endif
-		bits = *(int *)pte & (PG_U|PG_M);
-		*(int *)pte = 0;
+		bits = *pte & (PG_U|PG_M);
+		*pte = 0;
 
 #ifdef needednotdone
 reduce wiring count on page table pages as references drop
@@ -858,7 +856,7 @@ pmap_enter(pmap, va, pa, prot, wired)
 
 #ifdef DEBUG
 	if (pmapdebug & PDB_ENTER)
-		printf("enter: pte %x, *pte %x ", pte, *(int *)pte);
+		printf("enter: pte %x, *pte %x ", pte, *pte);
 #endif
 
 	if (pmap_pte_v(pte)) {
@@ -991,7 +989,7 @@ validate:
 	 * I386 pages in a MACH page.
 	 */
 	npte = (pa & PG_FRAME) | pte_prot(pmap, prot) | PG_V;
-	npte |= *(int *)pte & (PG_M|PG_U);
+	npte |= *pte & (PG_M | PG_U);
 	if (wired)
 		npte |= PG_W;
 
@@ -1011,8 +1009,8 @@ validate:
 		printf("enter: new pte value %x ", npte);
 #endif
 
-	if (*(int *)pte != npte) {
-		*(int *)pte = npte;
+	if (*pte != npte) {
+		*pte = npte;
 		tlbflush();
 	}
 }
@@ -1097,12 +1095,12 @@ pmap_change_wiring(pmap, va, wired)
  *		with the given map/virtual_address pair.
  * [ what about induced faults -wfj]
  */
-struct pte *
+pt_entry_t *
 pmap_pte(pmap, va)
 	register pmap_t pmap;
 	vm_offset_t va;
 {
-	struct pte *ptp;
+	pt_entry_t *ptp;
 
 #ifdef DEBUG
 	if (pmapdebug & PDB_FOLLOW)
@@ -1112,13 +1110,13 @@ pmap_pte(pmap, va)
 	if (!pmap || !pmap_pde_v(pmap_pde(pmap, va)))
 		return NULL;
 
-	if (pmap->pm_pdir[PTDPTDI].pd_pfnum == PTDpde.pd_pfnum ||
+	if ((pmap->pm_pdir[PTDPTDI] & PG_FRAME) == (PTDpde & PG_FRAME) ||
 	    pmap == kernel_pmap)
 		/* current address space or kernel */
 		ptp = PTmap;
 	else {
 		/* alternate address space */
-		if (pmap->pm_pdir[PTDPTDI].pd_pfnum != APTDpde.pd_pfnum) {
+		if ((pmap->pm_pdir[PTDPTDI] & PG_FRAME) != (APTDpde & PG_FRAME)) {
 			APTDpde = pmap->pm_pdir[PTDPTDI];
 			tlbflush();
 		}
@@ -1139,7 +1137,7 @@ pmap_extract(pmap, va)
 	register pmap_t pmap;
 	vm_offset_t va;
 {
-	register struct pte *pte;
+	register pt_entry_t *pte;
 	register vm_offset_t pa;
 
 #ifdef DEBUGx
@@ -1219,7 +1217,7 @@ pmap_collect(pmap)
 {
 	register vm_offset_t pa;
 	register pv_entry_t pv;
-	register int *pte;
+	register pt_entry_t *pte;
 	vm_offset_t kpa;
 	int s;
 
@@ -1272,7 +1270,7 @@ pmap_zero_page(phys)
 		printf("pmap_zero_page(%x)", phys);
 #endif
 
-	*(int *)CMAP2 = (phys & PG_FRAME) | PG_V | PG_KW /*| PG_N*/;
+	*CMAP2 = (phys & PG_FRAME) | PG_V | PG_KW /*| PG_N*/;
 	tlbflush();
 	bzero(CADDR2, NBPG);
 }
@@ -1292,8 +1290,8 @@ pmap_copy_page(src, dst)
 		printf("pmap_copy_page(%x, %x)", src, dst);
 #endif
 
-	*(int *)CMAP1 = (src & PG_FRAME) | PG_V | PG_KW;
-	*(int *)CMAP2 = (dst & PG_FRAME) | PG_V | PG_KW /*| PG_N*/;
+	*CMAP1 = (src & PG_FRAME) | PG_V | PG_KW;
+	*CMAP2 = (dst & PG_FRAME) | PG_V | PG_KW /*| PG_N*/;
 	tlbflush();
 	bcopy(CADDR1, CADDR2, NBPG);
 }
@@ -1335,7 +1333,7 @@ pmap_pageable(pmap, sva, eva, pageable)
 	 */
 	if (pmap == kernel_pmap && pageable && sva + NBPG == eva) {
 		register vm_offset_t pa;
-		register struct pte *pte;
+		register pt_entry_t *pte;
 
 #ifdef DEBUG
 		register pv_entry_t pv;
@@ -1373,7 +1371,7 @@ pmap_pageable(pmap, sva, eva, pageable)
 #ifdef needsomethinglikethis
 		if (pmapdebug & PDB_PTPAGE)
 			printf("pmap_pageable: PT page %x(%x) unmodified\n",
-			       sva, *(int *)pmap_pte(pmap, sva));
+			       sva, *pmap_pte(pmap, sva));
 		if (pmapdebug & PDB_WIRING)
 			pmap_check_wiring("pageable", sva);
 #endif
@@ -1477,7 +1475,7 @@ pmap_testbit(pa, setbits)
 	int setbits;
 {
 	register pv_entry_t pv;
-	register int *pte;
+	register pt_entry_t *pte;
 	int s;
 
 	if (!pmap_valid_page(pa))
@@ -1498,7 +1496,7 @@ pmap_testbit(pa, setbits)
 	 */
 	if (pv->pv_pmap != NULL) {
 		for (; pv; pv = pv->pv_next) {
-			pte = (int *) pmap_pte(pv->pv_pmap, pv->pv_va);
+			pte = pmap_pte(pv->pv_pmap, pv->pv_va);
 			if (*pte & setbits) {
 				splx(s);
 				return TRUE;
@@ -1520,7 +1518,7 @@ pmap_changebit(pa, setbits, maskbits)
 	int setbits, maskbits;
 {
 	register pv_entry_t pv;
-	register int *pte, npte;
+	register pt_entry_t *pte, npte;
 	vm_offset_t va;
 	int s;
 
@@ -1565,7 +1563,7 @@ pmap_changebit(pa, setbits, maskbits)
 					continue;
 			}
 
-			pte = (int *) pmap_pte(pv->pv_pmap, va);
+			pte = pmap_pte(pv->pv_pmap, va);
 			npte = (*pte & maskbits) | setbits;
 			if (*pte != npte) {
 				*pte = npte;
@@ -1636,7 +1634,7 @@ pads(pm)
 	pmap_t pm;
 {
 	unsigned va, i, j;
-	register struct pte *pte;
+	register pt_entry_t *pte;
 
 	if (pm == kernel_pmap)
 		return;
@@ -1652,7 +1650,7 @@ pads(pm)
 					continue;
 				pte = pmap_pte(pm, va);
 				if (pmap_pte_v(pte)) 
-					printf("%x:%x ", va, *(int *)pte); 
+					printf("%x:%x ", va, *pte); 
 			}
 }
 #endif
