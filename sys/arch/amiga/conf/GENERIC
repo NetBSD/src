@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.102 1998/03/18 16:34:42 bouyer Exp $
+#	$NetBSD: GENERIC,v 1.103 1998/03/22 23:12:50 is Exp $
 
 #
 # GENERIC AMIGA
@@ -129,7 +129,6 @@ options 	DIAGNOSTIC	# Extra kernel sanity checks
                                 # increase NKPTADD if you get "out of PT pages"
                                 # panics.
 
-options 	MACHINE_NONCONTIG # Non-contiguous memory support
 # ATTENTION: There is NO WARRANTY AT ALL that the sync will be complete
 # before the 10 secondinterval ends, or that KBDRESET does work at all.
 #options 	KBDRESET	# sync on Ctrl-Amiga-Amiga
