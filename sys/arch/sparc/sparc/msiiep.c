@@ -1,4 +1,4 @@
-/*	$NetBSD: msiiep.c,v 1.4 2002/03/28 11:54:17 pk Exp $ */
+/*	$NetBSD: msiiep.c,v 1.5 2002/03/28 11:59:56 pk Exp $ */
 
 /*
  * Copyright (c) 2001 Valeriy E. Ushakov
@@ -288,7 +288,7 @@ msiiep_swap_endian(on)
  * Get the PIL currently assigned for this interrupt input line.
  */
 int
-msiiep_assigned_intterupt(line)
+msiiep_assigned_interrupt(line)
 	int line;
 {
 	unsigned int intrmap;
@@ -359,7 +359,7 @@ msiiep_intr_establish(t, line, ipl, flags, handler, arg)
 		return (NULL);
 
 	/* use pil set-up by prom */
-	pil = msiiep_assigned_intterupt(line);
+	pil = msiiep_assigned_interrupt(line);
 	if (pil == -1)
 		panic("msiiep_intr_establish: line %d", line);
 
