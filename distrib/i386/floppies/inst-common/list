@@ -1,4 +1,4 @@
-#	$Id: list,v 1.6 1996/05/02 23:17:03 cgd Exp $
+#	$NetBSD: list,v 1.7 1996/05/07 18:45:21 thorpej Exp $
 
 # copy the crunched binary, link to it, and kill it
 COPY	${OBJDIR}/instbin	instbin
