@@ -40,7 +40,8 @@ EXTRA_DIST = \
 	cvsnt.dsp \
 	cvsnt.dsw \
 	cvsnt.mak \
-	cvs.spec
+	cvs.spec \
+	mktemp.sh
 
 
 ## MAINTAINER Targets

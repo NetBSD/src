@@ -701,17 +701,18 @@ history (argc, argv)
 void
 history_write (type, update_dir, revs, name, repository)
     int type;
-    char *update_dir;
-    char *revs;
-    char *name;
-    char *repository;
+    const char *update_dir;
+    const char *revs;
+    const char *name;
+    const char *repository;
 {
     char *fname;
     char *workdir;
     char *username = getcaller ();
     int fd;
     char *line;
-    char *slash = "", *cp, *cp2, *repos;
+    char *slash = "", *cp;
+    const char *cp2, *repos;
     int i;
     static char *tilde = "";
     static char *PrCurDir = NULL;

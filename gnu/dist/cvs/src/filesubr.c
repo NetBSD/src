@@ -379,7 +379,7 @@ mkdir_if_needed (name)
  */
 void
 xchmod (fname, writable)
-    char *fname;
+    const char *fname;
     int writable;
 {
     struct stat sb;
@@ -879,15 +879,6 @@ FILE *cvs_temp_file (filename)
     return fp;
 }
 
-/* Return non-zero iff FILENAME is absolute.
-   Trivial under Unix, but more complicated under other systems.  */
-int
-isabsolute (filename)
-    const char *filename;
-{
-    return filename[0] == '/';
-}
-
 
 
 #ifdef HAVE_READLINK
@@ -969,7 +960,7 @@ xresolvepath ( path )
     if ( CVS_CHDIR ( path ) < 0)
 	error ( 1, errno, "cannot chdir to %s", path );
     if ( ( hardpath = xgetwd() ) == NULL )
-	error (1, errno, "cannot readlink %s", hardpath);
+	error (1, errno, "cannot getwd in %s", path);
     if ( CVS_CHDIR ( owd ) < 0)
 	error ( 1, errno, "cannot chdir to %s", owd );
     free (owd);
@@ -979,11 +970,11 @@ xresolvepath ( path )
 
 
 /* Return a pointer into PATH's last component.  */
-char *
+const char *
 last_component (path)
-    char *path;
+    const char *path;
 {
-    char *last = strrchr (path, '/');
+    const char *last = strrchr (path, '/');
     
     if (last && (last != path))
         return last + 1;
@@ -1104,8 +1095,3 @@ cvs_casecmp (str1, str2)
     return pqdiff;
 }
 #endif /* SERVER_SUPPORT */
-
-
-
-/* vim:tabstop=8:shiftwidth=4
- */

@@ -13,14 +13,16 @@
 
 static int find_type PROTO((Node * p, void *closure));
 static int fmt_proc PROTO((Node * p, void *closure));
-static int logfile_write PROTO((char *repository, char *filter,
-			  char *message, FILE * logfp, List * changes));
-static int rcsinfo_proc PROTO((char *repository, char *template));
+static int logfile_write PROTO((const char *repository, const char *filter,
+                                const char *message, FILE * logfp,
+                                List * changes));
+static int rcsinfo_proc PROTO((const char *repository, const char *template));
 static int title_proc PROTO((Node * p, void *closure));
-static int update_logfile_proc PROTO((char *repository, char *filter));
+static int update_logfile_proc PROTO((const char *repository,
+                                      const char *filter));
 static void setup_tmpfile PROTO((FILE * xfp, char *xprefix, List * changes));
-static int editinfo_proc PROTO((char *repository, char *template));
-static int verifymsg_proc PROTO((char *repository, char *script));
+static int editinfo_proc PROTO((const char *repository, const char *template));
+static int verifymsg_proc PROTO((const char *repository, const char *script));
 
 static FILE *fp;
 static char *str_list;
@@ -104,9 +106,8 @@ find_type (p, closure)
     Node *p;
     void *closure;
 {
-    struct logfile_info *li;
+    struct logfile_info *li = p->data;
 
-    li = (struct logfile_info *) p->data;
     if (li->type == type)
 	return (1);
     else
@@ -125,7 +126,7 @@ fmt_proc (p, closure)
 {
     struct logfile_info *li;
 
-    li = (struct logfile_info *) p->data;
+    li = p->data;
     if (li->type == type)
     {
         if (li->tag == NULL
@@ -182,9 +183,9 @@ fmt_proc (p, closure)
  */
 void
 do_editor (dir, messagep, repository, changes)
-    char *dir;
+    const char *dir;
     char **messagep;
-    char *repository;
+    const char *repository;
     List *changes;
 {
     static int reuse_log_message = 0;
@@ -415,7 +416,7 @@ do_editor (dir, messagep, repository, changes)
 void
 do_verify (messagep, repository)
     char **messagep;
-    char *repository;
+    const char *repository;
 {
     FILE *fp;
     char *fname;
@@ -555,6 +556,7 @@ do_verify (messagep, repository)
 	error (0, errno, "cannot remove %s", fname);
     free (fname);
     free( verifymsg_script );
+    verifymsg_script = NULL;
 }
 
 /*
@@ -565,8 +567,8 @@ do_verify (messagep, repository)
 /* ARGSUSED */
 static int
 rcsinfo_proc (repository, template)
-    char *repository;
-    char *template;
+    const char *repository;
+    const char *template;
 {
     static char *last_template;
     FILE *tfp;
@@ -607,13 +609,13 @@ rcsinfo_proc (repository, template)
  * specified program as standard input.
  */
 static FILE *logfp;
-static char *message;
+static const char *message;
 static List *changes;
 
 void
 Update_Logfile (repository, xmessage, xlogfp, xchanges)
-    char *repository;
-    char *xmessage;
+    const char *repository;
+    const char *xmessage;
     FILE *xlogfp;
     List *xchanges;
 {
@@ -630,16 +632,20 @@ Update_Logfile (repository, xmessage, xlogfp, xchanges)
     (void) Parse_Info (CVSROOTADM_LOGINFO, repository, update_logfile_proc, 1);
 }
 
+
+
 /*
  * callback proc to actually do the logfile write from Update_Logfile
  */
 static int
 update_logfile_proc (repository, filter)
-    char *repository;
-    char *filter;
+    const char *repository;
+    const char *filter;
 {
-    return (logfile_write (repository, filter, message, logfp, changes));
+    return logfile_write (repository, filter, message, logfp, changes);
 }
+
+
 
 /*
  * concatenate each filename/version onto str_list
@@ -649,10 +655,9 @@ title_proc (p, closure)
     Node *p;
     void *closure;
 {
-    struct logfile_info *li;
     char *c;
+    struct logfile_info *li = p->data;
 
-    li = (struct logfile_info *) p->data;
     if (li->type == type)
     {
 	/* Until we decide on the correct logging solution when we add
@@ -741,9 +746,9 @@ title_proc (p, closure)
  */
 static int
 logfile_write (repository, filter, message, logfp, changes)
-    char *repository;
-    char *filter;
-    char *message;
+    const char *repository;
+    const char *filter;
+    const char *message;
     FILE *logfp;
     List *changes;
 {
@@ -810,7 +815,7 @@ logfile_write (repository, filter, message, logfp, changes)
     if (fmt_percent)
     {
 	int len;
-	char *srepos;
+	const char *srepos;
 	char *fmt_begin, *fmt_end;	/* beginning and end of the
 					   format string specified in
 					   filter. */
@@ -965,8 +970,8 @@ logfile_write (repository, filter, message, logfp, changes)
 /* ARGSUSED */
 static int
 editinfo_proc(repository, editor)
-    char *repository;
-    char *editor;
+    const char *repository;
+    const char *editor;
 {
     /* nothing to do if the last match is the same as this one */
     if (editinfo_editor && strcmp (editinfo_editor, editor) == 0)
@@ -983,8 +988,8 @@ editinfo_proc(repository, editor)
  */
 static int
 verifymsg_proc (repository, script)
-    char *repository;
-    char *script;
+    const char *repository;
+    const char *script;
 {
     if (verifymsg_script && strcmp (verifymsg_script, script) == 0)
 	return (0);
