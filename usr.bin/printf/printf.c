@@ -1,4 +1,4 @@
-/*	$NetBSD: printf.c,v 1.15 1997/01/14 19:20:09 cgd Exp $	*/
+/*	$NetBSD: printf.c,v 1.16 1997/07/04 21:25:17 christos Exp $	*/
 
 /*
  * Copyright (c) 1989 The Regents of the University of California.
@@ -33,17 +33,21 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if !defined(SHELL) && !defined(BUILTIN)
-char copyright[] =
+__COPYRIGHT(
 "@(#) Copyright (c) 1989 The Regents of the University of California.\n\
- All rights reserved.\n";
+ All rights reserved.\n");
 #endif
 #endif /* not lint */
 
 #ifndef lint
-/*static char sccsid[] = "from: @(#)printf.c	5.9 (Berkeley) 6/1/90";*/
-static char rcsid[] = "$NetBSD: printf.c,v 1.15 1997/01/14 19:20:09 cgd Exp $";
+#if 0
+static char sccsid[] = "@(#)printf.c	5.9 (Berkeley) 6/1/90";
+#else
+__RCSID("$NetBSD: printf.c,v 1.16 1997/07/04 21:25:17 christos Exp $");
+#endif
 #endif /* not lint */
 
 #include <ctype.h>
@@ -71,6 +75,12 @@ static void	 usage __P((void));
 static int	rval;
 static char  **gargv;
 
+#ifdef BUILTIN
+int progprintf __P((int, char **));
+#else
+int main __P((int, char **));
+#endif
+
 #define isodigit(c)	((c) >= '0' && (c) <= '7')
 #define octtobin(c)	((c) - '0')
 #define hextobin(c)	((c) >= 'A' && (c) <= 'F' ? c - 'A' + 10 : (c) >= 'a' && (c) <= 'f' ? c - 'a' + 10 : c - '0')
@@ -84,6 +94,8 @@ static char  **gargv;
 #else
 #include <vararg.h>
 #endif
+
+static void warnx __P((const char *fmt, ...));
 
 static void 
 #ifdef __STDC__
