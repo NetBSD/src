@@ -1,4 +1,4 @@
-/*	$NetBSD: dec_3100.c,v 1.2 1998/03/26 06:32:37 thorpej Exp $	*/
+/*	$NetBSD: dec_3100.c,v 1.3 1998/03/26 12:46:34 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -89,9 +89,6 @@
 #include <pmax/pmax/clockreg.h>
 #include <pmax/pmax/turbochannel.h> 
 #include <pmax/pmax/pmaxtype.h> 
-#include <pmax/pmax/trap.h>		/* mboard-specific interrupt fns */
-#include <pmax/pmax/cons.h>
-
 #include <pmax/pmax/machdep.h>		/* XXXjrs replace with vectors */
 
 #include <pmax/pmax/kn01var.h>
