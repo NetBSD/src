@@ -1,4 +1,4 @@
-/*      $NetBSD: vm_machdep.c,v 1.21 1996/02/11 13:39:54 ragge Exp $       */
+/*      $NetBSD: vm_machdep.c,v 1.22 1996/02/24 15:17:37 ragge Exp $       */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -90,7 +90,7 @@ pagemove(from, to, size)
  * No need for either double-map kernel stack or relocate it when
  * forking.
  */
-int
+void
 cpu_fork(p1, p2)
 	struct proc *p1, *p2;
 {
@@ -140,7 +140,7 @@ cpu_fork(p1, p2)
 	nyproc->R[0] = p1->p_pid; /* parent pid. (shouldn't be needed) */
 	nyproc->R[1] = 1;
 
-	return 0; /* Child is ready. Parent, return! */
+	return; /* Child is ready. Parent, return! */
 
 }
 
