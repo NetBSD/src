@@ -1,4 +1,4 @@
-/* $NetBSD: ibus_pmax.c,v 1.1.2.3 1999/11/19 11:06:24 nisimura Exp $ */
+/* $NetBSD: ibus_pmax.c,v 1.1.2.4 1999/11/19 11:18:19 nisimura Exp $ */
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: ibus_pmax.c,v 1.1.2.3 1999/11/19 11:06:24 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ibus_pmax.c,v 1.1.2.4 1999/11/19 11:18:19 nisimura Exp $");
 
 #include "opt_dec_3100.h"
 #include "opt_dec_5100.h"
@@ -65,8 +65,8 @@ static struct ibus_attach_args kn01_devs[] = {
 	{ "lance",	KV(KN01_SYS_LANCE),	C(SYS_DEV_LANCE)	},
 	{ "sii",	KV(KN01_SYS_SII),	C(SYS_DEV_SCSI)		},
 	{ "pm",		KV(KN01_PHYS_FBUF_START), C(SYS_DEV_BOGUS)	},
-	{ "dc",  	KV(0x15000000),		C(SYS_DEV_SCC1)		},
-	{ "dc",  	KV(0x15200000),		C(SYS_DEV_SCC2)		},
+	{ "dc",  	KV(0x15000000),		C(SYS_DEV_OPT0)		},
+	{ "dc",  	KV(0x15200000),		C(SYS_DEV_OPT1)		},
 #ifdef notyet
 	/*
 	 * XXX Ultrix configures at 0x86400400. the first 0x400 byte are
