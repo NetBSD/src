@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.425 2000/12/22 22:58:53 jdolecek Exp $	*/
+/*	$NetBSD: machdep.c,v 1.426 2001/01/01 22:13:54 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -2443,7 +2443,7 @@ cpu_reset()
 	 * entire address space and doing a TLB flush.
 	 */
 	memset((caddr_t)PTD, 0, PAGE_SIZE);
-	pmap_update(); 
+	tlbflush(); 
 #endif
 
 	for (;;);
