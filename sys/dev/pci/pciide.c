@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide.c,v 1.125 2001/07/28 12:07:11 tsutsui Exp $	*/
+/*	$NetBSD: pciide.c,v 1.126 2001/08/01 16:29:21 tsutsui Exp $	*/
 
 
 /*
@@ -559,7 +559,6 @@ void	pciide_mapchan __P((struct pci_attach_args *,
 int	pciide_chan_candisable __P((struct pciide_channel *));
 void	pciide_map_compat_intr __P(( struct pci_attach_args *,
 	    struct pciide_channel *, int, int));
-int	pciide_print __P((void *, const char *pnp));
 int	pciide_compat_intr __P((void *));
 int	pciide_pci_intr __P((void *));
 const struct pciide_product_desc* pciide_lookup_product __P((u_int32_t));
