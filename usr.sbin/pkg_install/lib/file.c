@@ -1,11 +1,11 @@
-/*	$NetBSD: file.c,v 1.64 2003/09/23 09:36:06 wiz Exp $	*/
+/*	$NetBSD: file.c,v 1.65 2003/09/23 14:18:01 agc Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: file.c,v 1.29 1997/10/08 07:47:54 charnier Exp";
 #else
-__RCSID("$NetBSD: file.c,v 1.64 2003/09/23 09:36:06 wiz Exp $");
+__RCSID("$NetBSD: file.c,v 1.65 2003/09/23 14:18:01 agc Exp $");
 #endif
 #endif
 
@@ -30,6 +30,8 @@ __RCSID("$NetBSD: file.c,v 1.64 2003/09/23 09:36:06 wiz Exp $");
  */
 
 #include "lib.h"
+
+#include <sys/wait.h>
 
 #include <assert.h>
 #include <err.h>
