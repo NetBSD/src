@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.45 2004/03/28 09:31:21 nakayama Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.46 2004/04/04 11:53:40 nakayama Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Matthew R. Green
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.45 2004/03/28 09:31:21 nakayama Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.46 2004/04/04 11:53:40 nakayama Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -120,7 +120,7 @@ pci_make_tag(pc, b, d, f)
 	int f;
 {
 	struct psycho_pbm *pp = pc->cookie;
-	struct ofw_pci_register reg, *regp;
+	struct ofw_pci_register reg;
 	pcitag_t tag;
 	int (*valid) __P((void *));
 	int node, len;
@@ -228,16 +228,11 @@ pci_make_tag(pc, b, d, f)
 		 * need it.  Otherwise we could malloc() it, but
 		 * that gets more complicated.
 		 */
-		regp = &reg;
-		len = sizeof reg;
-		switch (prom_getprop(node, "reg", sizeof(reg), &len, &regp)) {
-		default:
-			panic("pci_probe_bus: OF_getprop len botch");
-		case ENOENT:
+		len = prom_getproplen(node, "reg");
+		if (len < sizeof(reg))
 			continue;
-		case 0:
-			break;
-		}
+		if (OF_getprop(node, "reg", (void *)&reg, sizeof(reg)) != len)
+			panic("pci_probe_bus: OF_getprop len botch");
 
 		if (b != OFW_PCI_PHYS_HI_BUS(reg.phys_hi))
 			continue;
