@@ -1,4 +1,4 @@
-/*	$NetBSD: eval.c,v 1.75 2003/11/14 10:27:10 dsl Exp $	*/
+/*	$NetBSD: eval.c,v 1.76 2004/04/30 06:27:59 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)eval.c	8.9 (Berkeley) 6/8/95";
 #else
-__RCSID("$NetBSD: eval.c,v 1.75 2003/11/14 10:27:10 dsl Exp $");
+__RCSID("$NetBSD: eval.c,v 1.76 2004/04/30 06:27:59 dsl Exp $");
 #endif
 #endif /* not lint */
 
@@ -45,6 +45,7 @@ __RCSID("$NetBSD: eval.c,v 1.75 2003/11/14 10:27:10 dsl Exp $");
 #include <signal.h>
 #include <stdio.h>
 #include <unistd.h>
+#include <sys/fcntl.h>
 #include <sys/times.h>
 #include <sys/param.h>
 #include <sys/types.h>
@@ -125,6 +126,31 @@ SHELLPROC {
 }
 #endif
 
+static int
+sh_pipe(int fds[2])
+{
+	int nfd;
+
+	if (pipe(fds))
+		return -1;
+
+	if (fds[0] < 3) {
+		nfd = fcntl(fds[0], F_DUPFD, 3);
+		if (nfd != -1) {
+			close(fds[0]);
+			fds[0] = nfd;
+		}
+	}
+
+	if (fds[1] < 3) {
+		nfd = fcntl(fds[1], F_DUPFD, 3);
+		if (nfd != -1) {
+			close(fds[1]);
+			fds[1] = nfd;
+		}
+	}
+	return 0;
+}
 
 
 /*
@@ -476,7 +502,7 @@ evalpipe(union node *n)
 		prehash(lp->n);
 		pip[1] = -1;
 		if (lp->next) {
-			if (pipe(pip) < 0) {
+			if (sh_pipe(pip) < 0) {
 				close(prevfd);
 				error("Pipe call failed");
 			}
@@ -548,7 +574,7 @@ evalbackcmd(union node *n, struct backcmd *result)
 #endif
 	{
 		INTOFF;
-		if (pipe(pip) < 0)
+		if (sh_pipe(pip) < 0)
 			error("Pipe call failed");
 		jp = makejob(n, 1);
 		if (forkshell(jp, n, FORK_NOJOB) == 0) {
@@ -800,7 +826,7 @@ evalcommand(union node *cmd, int flags, struct backcmd *backcmd)
 		mode = cmd->ncmd.backgnd;
 		if (flags & EV_BACKCMD) {
 			mode = FORK_NOJOB;
-			if (pipe(pip) < 0)
+			if (sh_pipe(pip) < 0)
 				error("Pipe call failed");
 		}
 #ifdef DO_SHAREDVFORK
