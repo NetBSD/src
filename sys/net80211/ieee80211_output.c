@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_output.c,v 1.5 2003/09/28 02:35:20 dyoung Exp $	*/
+/*	$NetBSD: ieee80211_output.c,v 1.6 2003/10/13 04:22:55 dyoung Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002, 2003 Sam Leffler, Errno Consulting
@@ -35,10 +35,14 @@
 #ifdef __FreeBSD__
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211_output.c,v 1.5 2003/09/01 02:55:09 sam Exp $");
 #else
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_output.c,v 1.5 2003/09/28 02:35:20 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_output.c,v 1.6 2003/10/13 04:22:55 dyoung Exp $");
 #endif
 
 #include "opt_inet.h"
+
+#ifdef __NetBSD__
+#include "bpfilter.h"
+#endif /* __NetBSD__ */
 
 #include <sys/param.h>
 #include <sys/systm.h> 
@@ -73,7 +77,9 @@ __KERNEL_RCSID(0, "$NetBSD: ieee80211_output.c,v 1.5 2003/09/28 02:35:20 dyoung 
 #include <net80211/ieee80211_var.h>
 #include <net80211/ieee80211_compat.h>
 
+#if NBPFILTER > 0
 #include <net/bpf.h>
+#endif
 
 #ifdef INET
 #include <netinet/in.h> 
@@ -409,6 +415,35 @@ ieee80211_send_mgmt(struct ieee80211com *ic, struct ieee80211_node *ni,
 				ic->ic_bss->ni_esslen);
 		frm = ieee80211_add_rates(frm, &ic->ic_bss->ni_rates);
 
+                switch (ic->ic_phytype) {
+                case IEEE80211_T_FH:
+                        *frm++ = IEEE80211_ELEMID_FHPARMS;
+                        *frm++ = 5;
+                        *frm++ = ni->ni_fhdwell & 0x00ff;
+                        *frm++ = (ni->ni_fhdwell >> 8) & 0x00ff;
+                        *frm++ = IEEE80211_FH_CHANSET(
+			    ieee80211_chan2ieee(ic, ni->ni_chan));
+                        *frm++ = IEEE80211_FH_CHANPAT(
+			    ieee80211_chan2ieee(ic, ni->ni_chan));
+                        *frm++ = ni->ni_fhindex;
+                        break;
+		case IEEE80211_T_OFDM:	/* probably multi-mode */
+		default:
+			if (ieee80211_chan2mode(ic, ni->ni_chan) !=
+			    IEEE80211_MODE_11B) {
+				if_printf(ifp, "unhandled mode %d for %s\n",
+				    ieee80211_chan2mode(ic, ni->ni_chan),
+				    ether_sprintf(ni->ni_macaddr));
+				break;
+			}
+			/*FALLTHROUGH*/
+                case IEEE80211_T_DS:
+                        *frm++ = IEEE80211_ELEMID_DSPARMS;
+                        *frm++ = 1;
+                        *frm++ = ieee80211_chan2ieee(ic, ni->ni_chan);
+                        break;
+                }
+
 		if (ic->ic_opmode == IEEE80211_M_IBSS) {
 			*frm++ = IEEE80211_ELEMID_IBSSPARMS;
 			*frm++ = 2;
@@ -576,3 +611,28 @@ bad:
 	return ret;
 #undef senderr
 }
+
+void
+ieee80211_pwrsave(struct ieee80211com *ic, struct ieee80211_node *ni, 
+		  struct mbuf *m)
+{
+	/* Store the new packet on our queue, changing the TIM if necessary */
+
+	if (IF_IS_EMPTY(&ni->ni_savedq)) {
+		ic->ic_set_tim(ic, ni->ni_associd, 1);
+	}
+	if (ni->ni_savedq.ifq_len >= IEEE80211_PS_MAX_QUEUE) {
+		IF_DROP(&ni->ni_savedq);
+		m_freem(m);
+		if (ic->ic_if.if_flags & IFF_DEBUG)
+			printf("%s: station %s power save queue overflow"
+			       " of size %d drops %d\n",
+			       ic->ic_if.if_xname, 
+			       ether_sprintf(ni->ni_macaddr), 
+			       IEEE80211_PS_MAX_QUEUE,
+			       ni->ni_savedq.ifq_drops);
+	} else {
+		IF_ENQUEUE(&ni->ni_savedq, m);
+	}
+}
+
