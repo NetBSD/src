@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.86 1999/12/03 06:10:01 itojun Exp $	*/
+/*	$NetBSD: util.c,v 1.87 2000/01/25 06:11:00 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1997-1999 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: util.c,v 1.86 1999/12/03 06:10:01 itojun Exp $");
+__RCSID("$NetBSD: util.c,v 1.87 2000/01/25 06:11:00 lukem Exp $");
 #endif /* not lint */
 
 /*
@@ -645,25 +645,52 @@ remotemodtime(file, noisy)
 		verbose = -1;
 	if (command("MDTM %s", file) == COMPLETE) {
 		struct tm timebuf;
-		int yy, mo, day, hour, min, sec;
-		sscanf(reply_string, "%*s %04d%02d%02d%02d%02d%02d", &yy, &mo,
-			&day, &hour, &min, &sec);
-		memset(&timebuf, 0, sizeof(timebuf));
-		timebuf.tm_sec = sec;
-		timebuf.tm_min = min;
-		timebuf.tm_hour = hour;
-		timebuf.tm_mday = day;
-		timebuf.tm_mon = mo - 1;
-		timebuf.tm_year = yy - TM_YEAR_BASE;
-		timebuf.tm_isdst = -1;
+		char *timestr, *frac;
+
+		/*
+		 * time-val = 14DIGIT [ "." 1*DIGIT ]
+		 *		YYYYMMDDHHMMSS[.sss]
+		 * mdtm-response = "213" SP time-val CRLF / error-response
+		 */
+		timestr = reply_string + 4;
+
+					/*
+					 * parse fraction.
+					 * XXX: ignored for now
+					 */
+		frac = strchr(timestr, '\r');
+		if (frac != NULL)
+			*frac = '\0';
+		frac = strchr(timestr, '.');
+		if (frac != NULL)
+			*frac++ = '\0';
+		if (strlen(timestr) == 15 && strncmp(timestr, "191", 3) == 0) {
+			/*
+			 * workaround lame ftpd's that return `19100'
+			 * instead of `2000'
+			 */
+			fprintf(ttyout,
+	    "Y2K warning! Incorrect time-val `%s' received from server.\n",
+			    timestr);
+			timestr++;
+			timestr[0] = '2';
+			timestr[1] = '0';
+			fprintf(ttyout, "Converted to `%s'\n", timestr);
+		}
+		if (strlen(timestr) != 14 ||
+		    strptime(timestr, "%Y%m%d%H%M%S", &timebuf) == NULL) {
+ bad_parse_time:
+			fprintf(ttyout, "Can't parse time %s.\n", timestr);
+			goto cleanup_parse_time;
+		}
 		rtime = timegm(&timebuf);
 		if (rtime == -1 && (noisy || debug != 0))
-			fprintf(ttyout, "Can't convert %s to a time.\n",
-			    reply_string);
+			goto bad_parse_time;
 	} else if (noisy && debug == 0) {
 		fputs(reply_string, ttyout);
 		putc('\n', ttyout);
 	}
+ cleanup_parse_time:
 	verbose = overbose;
 	if (rtime == -1)
 		code = ocode;
