@@ -1,4 +1,4 @@
-#	$NetBSD: files.evbarm,v 1.10 2002/01/30 03:59:40 thorpej Exp $
+#	$NetBSD: files.evbarm,v 1.11 2002/02/19 17:41:15 briggs Exp $
 #
 # First try for arm-specific configuration info
 #
@@ -21,7 +21,7 @@ include "dev/ata/files.ata"
 major	{wd = 16}
 
 # Memory disk driver
-file	arch/arm32/dev/md_hooks.c		md & memory_disk_hooks
+file	dev/md_root.c				md & memory_disk_hooks
 major	{md = 18}
 
 # RAIDframe
