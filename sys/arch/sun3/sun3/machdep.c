@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.50 1995/03/26 19:38:25 gwr Exp $	*/
+/*	$NetBSD: machdep.c,v 1.51 1995/04/07 04:44:05 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -135,14 +135,15 @@ int	bufpages = 0;
 int *nofault;
 
 extern vm_offset_t u_area_va;
+extern	char version[];
 caddr_t allocsys __P((caddr_t));
-  
+
 /*
  * Info for CTL_HW
  */
 char	machine[] = "sun3";		/* cpu "architecture" */
 char	cpu_model[120];
-extern	char version[];
+vm_offset_t vmempage;
 
 
 void
@@ -302,6 +303,13 @@ void cpu_startup()
     printf("avail mem = %d\n", ptoa(cnt.v_free_count));
     printf("using %d buffers containing %d bytes of memory\n",
 	   nbuf, bufpages * CLBYTES);
+
+	/*
+	 * Allocate vmempage (for use by /dev/mem)
+	 * This page is handed to pmap_enter() therefore
+	 * it has to be in the normal kernel VA range.
+	 */
+	vmempage = kmem_alloc_wait(kernel_map, NBPG);
 
     /*    initcpu();*/
     /*
