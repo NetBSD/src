@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_subr.c,v 1.12 1994/06/29 06:32:43 cgd Exp $	*/
+/*	$NetBSD: kern_subr.c,v 1.13 1995/02/08 15:06:48 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -75,7 +75,6 @@ uiomove(cp, n, uio)
 		switch (uio->uio_segflg) {
 
 		case UIO_USERSPACE:
-		case UIO_USERISPACE:
 			if (uio->uio_rw == UIO_READ)
 				error = copyout(cp, iov->iov_base, cnt);
 			else
@@ -132,11 +131,6 @@ again:
 	case UIO_SYSSPACE:
 		*iov->iov_base = c;
 		break;
-
-	case UIO_USERISPACE:
-		if (suibyte(iov->iov_base, c) < 0)
-			return (EFAULT);
-		break;
 	}
 	iov->iov_base++;
 	iov->iov_len--;
@@ -176,10 +170,6 @@ again:
 
 	case UIO_SYSSPACE:
 		c = *(u_char *) iov->iov_base;
-		break;
-
-	case UIO_USERISPACE:
-		c = fuibyte(iov->iov_base);
 		break;
 	}
 	if (c < 0)
