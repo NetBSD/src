@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.19 2000/11/27 08:19:50 chs Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.20 2001/02/18 00:56:42 reinoud Exp $	*/
 
 /*
  * Copyright (c) 1988 The Regents of the University of California.
@@ -122,10 +122,10 @@
 #define	KERNEL_VM_SIZE		0x04000000
 #else
 /*
- * The range 0xf1000000 - 0xf3ffffff is available for kernel VM space
- * Fixed mappings exist from 0xf4000000 - 0xffffffff
+ * The range 0xf1000000 - 0xf5ffffff is available for kernel VM space
+ * Fixed mappings exist from 0xf6000000 - 0xffffffff
  */
-#define	KERNEL_VM_SIZE		0x03000000
+#define	KERNEL_VM_SIZE		0x05000000
 #endif
 #define	PROCESS_PAGE_TBLS_BASE	PAGE_TABLE_SPACE_START
 
@@ -188,11 +188,13 @@
  *
  *	- DEFAULT for all systems
  *	- ISADMA for the ISA DMA range on Sharks only
+ *	- RPCDMA for the DMA range on RiscPC's + Kinetic cards
  */
 
 #define	VM_NFREELIST		2
 #define	VM_FREELIST_DEFAULT	0
 #define	VM_FREELIST_ISADMA	1
+#define VM_FREELIST_RPCDMA	1
 
 /*
  * define structure pmap_physseg: there is one of these structures
