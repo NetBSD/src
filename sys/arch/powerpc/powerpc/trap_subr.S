@@ -1,4 +1,4 @@
-/*	$NetBSD: trap_subr.S,v 1.10 2001/06/30 01:24:13 matt Exp $	*/
+/*	$NetBSD: trap_subr.S,v 1.11 2001/08/30 22:00:48 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -542,6 +542,8 @@ _C_LABEL(ipkdbsize) = .-_C_LABEL(ipkdblow)
 /* Restore user & kernel access SR: */					\
 	lis	2,_C_LABEL(curpm)@ha;	/* get real address of pmap */	\
 	lwz	2,_C_LABEL(curpm)@l(2);					\
+	lwz	3,PM_SR+0(2);						\
+	mtsr	0,3;			/* restore SR0 */		\
 	lwz	3,PM_SR+4(2);						\
 	mtsr	1,3;			/* restore SR1 */		\
 	lwz	3,PM_SR+8(2);						\
@@ -805,6 +807,8 @@ intr_exit:
 	bc	4,17,1f			/* branch if PSL_PR is false */
 	lis	3,_C_LABEL(curpm)@ha	/* get current pmap real address */
 	lwz	3,_C_LABEL(curpm)@l(3)
+	lwz	4,PM_SR+0(3)
+	mtsr	0,4			/* Restore SR0 */
 	lwz	4,PM_SR+4(3)
 	mtsr	1,4			/* Restore SR1 */
 	lwz	4,PM_SR+8(3)
