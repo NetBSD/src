@@ -1,5 +1,5 @@
 #	from: @(#)Makefile	5.8 (Berkeley) 9/2/92
-#	$Id: Makefile,v 1.8 1993/08/10 02:46:49 mycroft Exp $
+#	$Id: Makefile,v 1.9 1993/11/08 04:45:57 cgd Exp $
 
 PROG=	monop
 SRCS=	monop.c cards.c execute.c getinp.c houses.c jail.c misc.c morg.c \
@@ -16,7 +16,7 @@ cards.pck: initdeck
 	./initdeck ${.CURDIR}/cards.inp
 
 initdeck: initdeck.c
-	${CC} ${CFLAGS} ${LDFLAGS} -o ${.TARGET} ${.CURDIR}/initdeck.c ${LDADD}
+	${CC} ${CFLAGS} ${LDFLAGS} ${LDSTATIC} -o ${.TARGET} ${.CURDIR}/initdeck.c ${LDADD}
 
 beforeinstall:
 	install -c -o ${BINOWN} -g ${BINGRP} -m 444 cards.pck \
