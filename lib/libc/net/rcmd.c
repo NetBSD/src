@@ -1,4 +1,4 @@
-/*	$NetBSD: rcmd.c,v 1.15 1996/12/17 03:35:52 mrg Exp $	*/
+/*	$NetBSD: rcmd.c,v 1.16 1996/12/18 04:53:11 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993, 1994
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)rcmd.c	8.3 (Berkeley) 3/26/94";
 #else
-static char *rcsid = "$NetBSD: rcmd.c,v 1.15 1996/12/17 03:35:52 mrg Exp $";
+static char *rcsid = "$NetBSD: rcmd.c,v 1.16 1996/12/18 04:53:11 thorpej Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -158,7 +158,8 @@ rcmd(ahost, rport, locuser, remuser, cmd, fd2p)
 		reads[0].events = reads[1].events = reads[0].revents =
 						    reads[1].revents = POLLIN;
 		errno = 0;
-		if (poll(reads, 2, 0) < 1 || (reads[1].revents & POLLIN) == 0) {
+		if (poll(reads, 2, INFTIM) < 1 ||
+		    (reads[1].revents & POLLIN) == 0) {
 			if (errno != 0)
 				(void)fprintf(stderr,
 				    "rcmd: poll (setting up stderr): %s\n",
