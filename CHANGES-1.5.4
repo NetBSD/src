@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.5.4,v 1.1.2.105 2003/06/25 08:46:12 itojun Exp $
+#	$NetBSD: CHANGES-1.5.4,v 1.1.2.106 2003/07/01 23:59:30 msaitoh Exp $
 
 A complete list of changes from NetBSD 1.5.3 to NetBSD 1.5.4:
 
@@ -2089,6 +2089,13 @@ sys/netinet6/ip6_mroute.c		1.47
 
 	Don't try to forward multicast packet to mif that went away.
 	[itojun, ticket #47]
+
+sys/net/rtsock.c			1.61
+
+	recover code that requires exact match on rtm_change/lock (lost in
+	1.16). without it "route change X" would change less-specific route by
+	mistake.  reported by jinmei@kame
+	[itojun, ticket #48]
 
 usr.bin/mkdep/mkdep.c			1.16
 
