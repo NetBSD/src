@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.1,v 1.1.2.44 2005/04/02 22:34:56 he Exp $
+#	$NetBSD: CHANGES-2.1,v 1.1.2.45 2005/04/06 10:19:40 he Exp $
 
 A complete list of changes from the NetBSD 2.0 release to the NetBSD 2.1 
 release
@@ -1005,3 +1005,30 @@ tools/hp300-mkboot/Makefile			1.1 (new)
 	Convert mkboot into a full cross tool.  Last hurdle for
 	hp300 to building on non NetBSD/bsd hosts.
 	[jmc, ticket #1025]
+
+lib/libc/stdlib/heapsort.c			1.15
+share/mk/bsd.own.mk				1.426
+sys/arch/amiga/stand/bootblock/Makefile.booters	1.5
+sys/arch/amiga/stand/bootblock/Makefile.inc	1.1 (new)
+sys/arch/amiga/stand/bootblock/aout2bb/Makefile	1.6
+sys/arch/amiga/stand/bootblock/aout2bb/aout2bb.c 1.10
+sys/arch/amiga/stand/bootblock/aout2bb/chksum.c	1.4
+sys/arch/amiga/stand/bootblock/elf2bb/Makefile	1.2
+sys/arch/amiga/stand/bootblock/elf2bb/chksum.c	1.2
+sys/arch/amiga/stand/bootblock/elf2bb/elf2bb.c	1.9
+sys/arch/amiga/stand/bootblock/txlt/Makefile	1.7
+tools/Makefile					1.85
+tools/amiga-aout2bb/Makefile			1.1 (new)
+tools/amiga-aout2bb/machine/aout_machdep.h	1.1 (new)
+tools/amiga-aout2bb/sys/exec_aout.h		1.1 (new)
+tools/amiga-elf2bb/Makefile			1.1 (new)
+tools/amiga-elf2bb/sys/exec_elf.h		1.1 (new)
+tools/amiga-txlt/Makefile			1.1 (new)
+tools/compat/Makefile				1.32
+tools/compat/compat_defs.h			1.44
+tools/compat/configure				1.49 (via patch)
+tools/compat/configure.ac			1.48 (via patch)
+
+	Convert remaining host tools for amiga to correct cross tools.
+	Now allows complete amiga builds on non-NetBSD and non-BSD hosts.
+	[jmc, ticket #1026]
