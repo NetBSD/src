@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-#	$NetBSD: install.sh,v 1.7 1996/10/09 00:13:36 jtc Exp $
+#	$NetBSD: install.sh,v 1.8 1996/10/26 19:03:47 perry Exp $
 #
 # Copyright (c) 1994 Christopher G. Demetriou
 # All rights reserved.
@@ -39,7 +39,7 @@ DT=/etc/disktab				# /etc/disktab
 FSTABDIR=/mnt/etc			# /mnt/etc
 #DONTDOIT=echo
 
-VERSION=1.2
+VERSION=1.2B
 FSTAB=${FSTABDIR}/fstab
 
 getresp() {
