@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.35 1996/09/05 15:46:40 mycroft Exp $	*/
+/*	$NetBSD: conf.c,v 1.36 1996/09/07 12:40:36 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -88,11 +88,11 @@ struct bdevsw	bdevsw[] =
 };
 int	nblkdev = sizeof(bdevsw) / sizeof(bdevsw[0]);
 
-/* open, close, ioctl, select, mmap -- XXX should be a map device */
+/* open, close, ioctl, poll, mmap -- XXX should be a map device */
 #define	cdev_grf_init(c,n) { \
 	dev_init(c,n,open), dev_init(c,n,close), (dev_type_read((*))) nullop, \
 	(dev_type_write((*))) nullop, dev_init(c,n,ioctl), \
-	(dev_type_stop((*))) enodev, 0, dev_init(c,n,select), \
+	(dev_type_stop((*))) enodev, 0, dev_init(c,n,poll), \
 	dev_init(c,n,mmap) }
 
 cdev_decl(cn);

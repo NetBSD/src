@@ -1,4 +1,4 @@
-/*	$NetBSD: ppp_tty.c,v 1.7 1996/06/14 22:22:02 cgd Exp $	*/
+/*	$NetBSD: ppp_tty.c,v 1.8 1996/09/07 12:41:27 mycroft Exp $	*/
 
 /*
  * ppp_tty.c - Point-to-Point Protocol (PPP) driver for asynchronous
@@ -514,7 +514,7 @@ pppasyncctlp(sc)
     struct tty *tp;
     int s;
 
-    /* Put a placeholder byte in canq for ttselect()/ttnread(). */
+    /* Put a placeholder byte in canq for ttpoll()/ttnread(). */
     s = spltty();
     tp = (struct tty *) sc->sc_devp;
     putc(0, &tp->t_canq);

@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_socket.c,v 1.14 1996/05/22 13:54:55 mycroft Exp $	*/
+/*	$NetBSD: sys_socket.c,v 1.15 1996/09/07 12:41:00 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -44,12 +44,13 @@
 #include <sys/socketvar.h>
 #include <sys/ioctl.h>
 #include <sys/stat.h>
+#include <sys/poll.h>
 
 #include <net/if.h>
 #include <net/route.h>
 
 struct	fileops socketops =
-    { soo_read, soo_write, soo_ioctl, soo_select, soo_close };
+    { soo_read, soo_write, soo_ioctl, soo_poll, soo_close };
 
 /* ARGSUSED */
 int
@@ -135,45 +136,41 @@ soo_ioctl(fp, cmd, data, p)
 }
 
 int
-soo_select(fp, which, p)
+soo_poll(fp, events, p)
 	struct file *fp;
-	int which;
+	int events;
 	struct proc *p;
 {
 	register struct socket *so = (struct socket *)fp->f_data;
+	int revents = 0;
 	register int s = splsoftnet();
 
-	switch (which) {
+	if (events & (POLLIN | POLLRDNORM))
+		if (soreadable(so))
+			revents |= events & (POLLIN | POLLRDNORM);
 
-	case FREAD:
-		if (soreadable(so)) {
-			splx(s);
-			return (1);
-		}
-		selrecord(p, &so->so_rcv.sb_sel);
-		so->so_rcv.sb_flags |= SB_SEL;
-		break;
+	if (events & (POLLOUT | POLLWRNORM))
+		if (sowriteable(so))
+			revents |= events & (POLLOUT | POLLWRNORM);
 
-	case FWRITE:
-		if (sowriteable(so)) {
-			splx(s);
-			return (1);
-		}
-		selrecord(p, &so->so_snd.sb_sel);
-		so->so_snd.sb_flags |= SB_SEL;
-		break;
+	if (events & (POLLPRI | POLLRDBAND))
+		if (so->so_oobmark || (so->so_state & SS_RCVATMARK))
+			revents |= events & (POLLPRI | POLLRDBAND);
 
-	case 0:
-		if (so->so_oobmark || (so->so_state & SS_RCVATMARK)) {
-			splx(s);
-			return (1);
+	if (revents == 0) {
+		if (events & (POLLIN | POLLPRI | POLLRDNORM | POLLRDBAND)) {
+			selrecord(p, &so->so_rcv.sb_sel);
+			so->so_rcv.sb_flags |= SB_SEL;
 		}
-		selrecord(p, &so->so_rcv.sb_sel);
-		so->so_rcv.sb_flags |= SB_SEL;
-		break;
+
+		if (events & (POLLOUT | POLLWRNORM)) {
+			selrecord(p, &so->so_snd.sb_sel);
+			so->so_snd.sb_flags |= SB_SEL;
+		}
 	}
+
 	splx(s);
-	return (0);
+	return (revents);
 }
 
 int

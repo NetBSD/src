@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf.c,v 1.29 1996/06/14 22:21:54 cgd Exp $	*/
+/*	$NetBSD: bpf.c,v 1.30 1996/09/07 12:41:25 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993
@@ -62,17 +62,18 @@
 
 #include <sys/protosw.h>
 #include <sys/socket.h>
+#include <sys/errno.h>
+#include <sys/kernel.h>
+#include <sys/poll.h>
+
 #include <net/if.h>
 
 #include <net/bpf.h>
 #include <net/bpfdesc.h>
 
-#include <sys/errno.h>
-
 #include <netinet/in.h>
 #include <netinet/if_arc.h>
 #include <netinet/if_ether.h>
-#include <sys/kernel.h>
 
 /*
  * Older BSDs don't have kernel malloc.
@@ -127,9 +128,7 @@ static int	bpf_movein __P((struct uio *, int,
 static void	bpf_attachd __P((struct bpf_d *, struct bpf_if *));
 static void	bpf_detachd __P((struct bpf_d *));
 static int	bpf_setif __P((struct bpf_d *, struct ifreq *));
-#if BSD >= 199103
-int		bpfselect __P((dev_t, int, struct proc *));
-#endif
+int		bpfpoll __P((dev_t, int, struct proc *));
 static __inline void
 		bpf_wakeup __P((struct bpf_d *));
 static void	catchpacket __P((struct bpf_d *, u_char *, size_t, size_t,
@@ -975,68 +974,32 @@ bpf_ifname(ifp, ifr)
 }
 
 /*
- * The new select interface passes down the proc pointer; the old select
- * stubs had to grab it out of the user struct.  This glue allows either case.
- */
-#if BSD >= 199103
-#define bpf_select bpfselect
-#else
-int
-bpfselect(dev, rw)
-	register dev_t dev;
-	int rw;
-{
-	return (bpf_select(dev, rw, u.u_procp));
-}
-#endif
-
-/*
  * Support for select() system call
  *
  * Return true iff the specific operation will not block indefinitely.
  * Otherwise, return false but make a note that a selwakeup() must be done.
  */
 int
-bpf_select(dev, rw, p)
+bpfpoll(dev, events, p)
 	register dev_t dev;
-	int rw;
+	int events;
 	struct proc *p;
 {
-	register struct bpf_d *d;
-	register int s;
+	register struct bpf_d *d = &bpf_dtab[minor(dev)];
+	int revents = 0;
+	register int s = splimp();
 
-	if (rw != FREAD)
-		return (0);
 	/*
 	 * An imitation of the FIONREAD ioctl code.
 	 */
-	d = &bpf_dtab[minor(dev)];
+	if (events & (POLLIN | POLLRDNORM))
+		if (d->bd_hlen != 0 || (d->bd_immediate && d->bd_slen != 0))
+			revents |= events & (POLLIN | POLLRDNORM);
+		else
+			selrecord(p, &d->bd_sel);
 
-	s = splimp();
-	if (d->bd_hlen != 0 || (d->bd_immediate && d->bd_slen != 0)) {
-		/*
-		 * There is data waiting.
-		 */
-		splx(s);
-		return (1);
-	}
-#if BSD >= 199103
-	selrecord(p, &d->bd_sel);
-#else
-	/*
-	 * No data ready.  If there's already a select() waiting on this
-	 * minor device then this is a collision.  This shouldn't happen
-	 * because minors really should not be shared, but if a process
-	 * forks while one of these is open, it is possible that both
-	 * processes could select on the same descriptor.
-	 */
-	if (d->bd_selproc && d->bd_selproc->p_wchan == (caddr_t)&selwait)
-		d->bd_selcoll = 1;
-	else
-		d->bd_selproc = p;
-#endif
 	splx(s);
-	return (0);
+	return (revents);
 }
 
 /*

@@ -1,4 +1,4 @@
-#	$NetBSD: vnode_if.src,v 1.10 1996/05/11 18:26:27 mycroft Exp $
+#	$NetBSD: vnode_if.src,v 1.11 1996/09/07 12:41:06 mycroft Exp $
 #
 # Copyright (c) 1992, 1993
 #	The Regents of the University of California.  All rights reserved.
@@ -111,12 +111,9 @@ vop_ioctl {
 	IN struct proc *p;
 };
 
-# Needs work?  (fflags)
-vop_select {
+vop_poll {
 	IN struct vnode *vp;
-	IN int which;
-	IN int fflags;
-	IN struct ucred *cred;
+	IN int events;
 	IN struct proc *p;
 };
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_vnops.c,v 1.41 1996/09/01 23:48:22 mycroft Exp $	*/
+/*	$NetBSD: procfs_vnops.c,v 1.42 1996/09/07 12:41:18 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1993 Jan-Simon Pendry
@@ -107,7 +107,7 @@ int	procfs_setattr	__P((void *));
 #define	procfs_read	procfs_rw
 #define	procfs_write	procfs_rw
 #define	procfs_ioctl	genfs_eopnotsupp
-#define	procfs_select	genfs_select
+#define	procfs_poll	genfs_poll
 #define	procfs_mmap	genfs_eopnotsupp
 #define	procfs_fsync	genfs_nullop
 #define	procfs_seek	genfs_nullop
@@ -156,7 +156,7 @@ struct vnodeopv_entry_desc procfs_vnodeop_entries[] = {
 	{ &vop_read_desc, procfs_read },		/* read */
 	{ &vop_write_desc, procfs_write },		/* write */
 	{ &vop_ioctl_desc, procfs_ioctl },		/* ioctl */
-	{ &vop_select_desc, procfs_select },		/* select */
+	{ &vop_poll_desc, procfs_poll },		/* poll */
 	{ &vop_mmap_desc, procfs_mmap },		/* mmap */
 	{ &vop_fsync_desc, procfs_fsync },		/* fsync */
 	{ &vop_seek_desc, procfs_seek },		/* seek */

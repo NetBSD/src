@@ -1,4 +1,4 @@
-/*	$NetBSD: mfsnode.h,v 1.4 1996/09/01 23:49:37 mycroft Exp $	*/
+/*	$NetBSD: mfsnode.h,v 1.5 1996/09/07 12:41:42 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -63,7 +63,7 @@ struct mfsnode {
 #define	mfs_setattr	genfs_badop
 #define	mfs_read	genfs_badop
 #define	mfs_write	genfs_badop
-#define	mfs_select	genfs_badop
+#define	mfs_poll	genfs_badop
 #define	mfs_mmap	genfs_badop
 #define	mfs_seek	genfs_badop
 #define	mfs_remove	genfs_badop

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tun.c,v 1.26 1996/06/25 22:15:13 pk Exp $	*/
+/*	$NetBSD: if_tun.c,v 1.27 1996/09/07 12:41:26 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1988, Julian Onions <jpo@cs.nott.ac.uk>
@@ -10,7 +10,7 @@
  * This driver takes packets off the IP i/f and hands them up to a
  * user process to have its wicked way with. This driver has its
  * roots in a similar driver written by Phil Cockcroft (formerly) at
- * UCL. This driver is based much more on read/write/select mode of
+ * UCL. This driver is based much more on read/write/poll mode of
  * operation though.
  */
 
@@ -28,6 +28,7 @@
 #include <sys/errno.h>
 #include <sys/syslog.h>
 #include <sys/select.h>
+#include <sys/poll.h>
 #include <sys/file.h>
 #include <sys/signalvar.h>
 #include <sys/conf.h>
@@ -604,40 +605,39 @@ tunwrite(dev, uio, ioflag)
 }
 
 /*
- * tunselect - the select interface, this is only useful on reads
+ * tunpoll - the poll interface, this is only useful on reads
  * really. The write detect always returns true, write never blocks
  * anyway, it either accepts the packet or drops it.
  */
 int
-tunselect(dev, rw, p)
+tunpoll(dev, events, p)
 	dev_t		dev;
-	int		rw;
+	int		events;
 	struct proc	*p;
 {
 	int		unit = minor(dev), s;
 	struct tun_softc *tp = &tunctl[unit];
 	struct ifnet	*ifp = &tp->tun_if;
+	int		revents = 0;
 
 	s = splimp();
-	TUNDEBUG("%s: tunselect\n", ifp->if_xname);
+	TUNDEBUG("%s: tunpoll\n", ifp->if_xname);
 
-	switch (rw) {
-	case FREAD:
+	if (events & (POLLIN | POLLRDNORM))
 		if (ifp->if_snd.ifq_len > 0) {
-			splx(s);
-			TUNDEBUG("%s: tunselect q=%d\n", ifp->if_xname,
+			TUNDEBUG("%s: tunpoll q=%d\n", ifp->if_xname,
 			    ifp->if_snd.ifq_len);
-			return (1);
+			revents |= events & (POLLIN | POLLRDNORM);
+		} else {
+			TUNDEBUG("%s: tunpoll waiting\n", ifp->if_xname);
+			selrecord(p, &tp->tun_rsel);
 		}
-		selrecord(p, &tp->tun_rsel);
-		break;
-	case FWRITE:
-		splx(s);
-		return (1);
-	}
+
+	if (events & (POLLOUT | POLLWRNORM))
+		revents |= events & (POLLOUT | POLLWRNORM);
+
 	splx(s);
-	TUNDEBUG("%s: tunselect waiting\n", ifp->if_xname);
-	return (0);
+	return (revents);
 }
 
 #endif  /* NTUN */

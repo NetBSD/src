@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.24 1996/09/05 15:46:59 mycroft Exp $	*/
+/*	$NetBSD: conf.c,v 1.25 1996/09/07 12:40:40 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
@@ -174,17 +174,17 @@ struct	consdev constab[]={
 /* Special for console storage */
 #define dev_type_rw(n)	int n __P((dev_t, int, int, struct proc *))
 
-/* plotters - open, close, write, ioctl, select */
+/* plotters - open, close, write, ioctl, poll */
 #define cdev_plotter_init(c,n) { \
 	dev_init(c,n,open), dev_init(c,n,close), (dev_type_read((*))) enodev, \
 	dev_init(c,n,write), dev_init(c,n,ioctl), (dev_type_stop((*))) enodev, \
-	0, dev_init(c,n,select), (dev_type_mmap((*))) enodev }
+	0, dev_init(c,n,poll), (dev_type_mmap((*))) enodev }
 
 /* console mass storage - open, close, read/write */
 #define cdev_cnstore_init(c,n) { \
 	dev_init(c,n,open), dev_init(c,n,close), dev_init(c,n,read), \
 	dev_init(c,n,write), (dev_type_ioctl((*))) enodev, \
-	(dev_type_stop((*))) enodev, 0, (dev_type_select((*))) enodev, \
+	(dev_type_stop((*))) enodev, 0, (dev_type_poll((*))) enodev, \
 	(dev_type_mmap((*))) enodev }
 
 #define cdev_lp_init(c,n) { \
@@ -196,13 +196,13 @@ struct	consdev constab[]={
 #define cdev_graph_init(c,n) { \
 	dev_init(c,n,open), dev_init(c,n,close), dev_init(c,n,read), \
 	dev_init(c,n,write), dev_init(c,n,ioctl), dev_init(c,n,stop), \
-	0, dev_init(c,n,select), (dev_type_mmap((*))) enodev }
+	0, dev_init(c,n,poll), (dev_type_mmap((*))) enodev }
 
 /* Ingres */
 #define cdev_ingres_init(c,n) { \
 	dev_init(c,n,open), dev_init(c,n,close), (dev_type_read((*))) nullop, \
 	(dev_type_write((*))) nullop, dev_init(c,n,ioctl), \
-	(dev_type_stop((*))) nullop, 0, (dev_type_select((*))) nullop, \
+	(dev_type_stop((*))) nullop, 0, (dev_type_poll((*))) nullop, \
 	(dev_type_mmap((*))) enodev }
 
 
