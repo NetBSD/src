@@ -1,4 +1,4 @@
-/*	$NetBSD: vrpmureg.h,v 1.3 1999/12/13 06:53:01 sato Exp $	*/
+/*	$NetBSD: vrpmureg.h,v 1.4 2001/06/11 06:02:21 enami Exp $	*/
 
 /*-
  * Copyright (c) 1999 SATO Kazumi. All rights reserved.
@@ -36,7 +36,8 @@
 
 /*
  *	PMU (Power Management Unit) Registers definitions.
- *		start 0xB0000A0
+ *		start 0xB0000A0 (??????)
+ *		start 0xF0000C0 (vr4122)
  */
 
 #define	PMUINT_REG_W	0x000	/* PMU interrupt/Status Register */
@@ -52,7 +53,8 @@
 #define		PMUINT_RTCRST		(1<<4)		/* RTC Reset */
 #define		PMUINT_RSTSWRST		(1<<3)		/* Reset SW */
 #define		PMUINT_DMSWRST		(1<<2)		/* Deadman's SW */
-#define		PMUINT_BATTINTR		(1<<1)		/* Low batt during normal operation */
+#define		PMUINT_BATTINTR		(1<<1)		/* Low batt during
+							   normal operation */
 #define		PMUINT_POWERSW		(1)		/* Power Switch */
 
 #define		PMUINT_ALL		(PMUINT_GPIO3|PMUINT_GPIO2|\
@@ -149,5 +151,7 @@
 #define		PMUWAIT_DEFAULT		0x2c00		/* 343.75ms */
 
 #define	PMUDIV_REG_W	0x00C	/* PMU Div Mode Register (>= vr4121) */ 
+#define	PMUINTRCLKDIV_REG_W 0x00E /* PMU IntrClk Div Mode Register
+				     (= vr4122) */
 
 /* END vrpmureg.h */
