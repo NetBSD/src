@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vnops.c,v 1.17 1994/07/19 04:30:06 mycroft Exp $	*/
+/*	$NetBSD: msdosfs_vnops.c,v 1.18 1994/07/19 11:20:40 ws Exp $	*/
 
 /*-
  * Copyright (C) 1994 Wolfgang Solfrank.
@@ -1372,19 +1372,22 @@ msdosfs_symlink(ap)
 struct dos_dirent {
 	u_long d_fileno;
 	u_short d_reclen;
-	u_short d_namlen;
+	u_char d_type;
+	u_char d_namlen;
 	u_char d_name[24];
 }          rootdots[2] = {
 
 	{
 		1,		/* d_fileno			 */
 		sizeof(struct direntry),	/* d_reclen			 */
+		DT_DIR,		/* d_type			 */
 		1,		/* d_namlen			 */
 		"."		/* d_name			 */
 	},
 	{
 		1,		/* d_fileno			 */
 		sizeof(struct direntry),	/* d_reclen			 */
+		DT_DIR,		/* d_type			 */
 		2,		/* d_namlen			 */
 		".."		/* d_name			 */
 	}
@@ -1543,6 +1546,7 @@ msdosfs_readdir(ap)
 					prev = crnt;
 					prev->d_fileno = 0;
 					prev->d_reclen = sizeof(struct direntry);
+					prev->d_type = DT_UNKNOWN;
 					prev->d_namlen = 0;
 					prev->d_name[0] = 0;
 				}
@@ -1569,6 +1573,8 @@ msdosfs_readdir(ap)
 				}
 				crnt->d_fileno = fileno;
 				crnt->d_reclen = sizeof(struct direntry);
+				crnt->d_type = (dentp->deAttributes & ATTR_DIRECTORY)
+					         ? DT_DIR : DT_REG;
 				crnt->d_namlen = dos2unixfn(dentp->deName,
 							    (u_char *)crnt->d_name);
 				/*
