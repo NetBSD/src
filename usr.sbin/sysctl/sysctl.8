@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysctl.8,v 1.29 1999/05/23 20:33:51 ad Exp $
+.\"	$NetBSD: sysctl.8,v 1.30 1999/07/02 08:58:22 itojun Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -100,7 +100,7 @@ For a detailed description of these variable see
 .Xr sysctl 3 .
 The changeable column indicates whether a process with appropriate
 privilege can change the value.
-.Bl -column net.inet.ip.forwardingxxxxxx integerxxx
+.Bl -column net.inet6.tcp6.syn_cache_intervalxxxxxx integerxxx
 .It Sy Name	Type	Changeable
 .It kern.ostype	string	no
 .It kern.osrelease	string	no
@@ -184,6 +184,71 @@ privilege can change the value.
 .It net.inet.udp.checksum	integer	yes
 .It net.inet.udp.sendspace	integer	yes
 .It net.inet.udp.recvspace	integer	yes
+.It net.inet.ipsec.def_policy	integer	yes
+.It net.inet.ipsec.esp_trans_deflev	integer	yes
+.It net.inet.ipsec.esp_net_deflev	integer	yes
+.It net.inet.ipsec.ah_trans_deflev	integer	yes
+.It net.inet.ipsec.ah_net_deflev	integer	yes
+.It net.inet.ipsec.inbound_call_ike	integer	yes
+.It net.inet.ipsec.ah_cleartos	integer	yes
+.It net.inet.ipsec.ah_offsetmask	integer	yes
+.It net.inet.ipsec.dfbit	integer	yes
+.It net.inet.ipsec.ecn	integer	yes
+.It net.inet6.tcp6.mssdflt	integer	yes
+.It net.inet6.tcp6.do_rfc1323	integer	yes
+.It net.inet6.tcp6.keepidle	integer	yes
+.It net.inet6.tcp6.keepinterval	integer	yes
+.It net.inet6.tcp6.keepcount	integer	yes
+.It net.inet6.tcp6.maxpersistidle	integer	yes
+.It net.inet6.tcp6.sendspace	integer	yes
+.It net.inet6.tcp6.recvspace	integer	yes
+.It net.inet6.tcp6.conntimeo	integer	yes
+.It net.inet6.tcp6.pmtu	integer	yes
+.It net.inet6.tcp6.pmtu_expire	integer	yes
+.It net.inet6.tcp6.pmtu_probe	integer	yes
+.It net.inet6.tcp6.43maxseg	integer	yes
+.It net.inet6.tcp6.syn_cache_limit	integer	yes
+.It net.inet6.tcp6.syn_bucket_limit	integer	yes
+.It net.inet6.tcp6.syn_cache_interval	integer	yes
+.It net.inet6.udp6.sendmax	integer	yes
+.It net.inet6.udp6.recvspace	integer	yes
+.It net.inet6.ip6.forwarding	integer	yes
+.It net.inet6.ip6.redirect	integer	yes
+.It net.inet6.ip6.hlim	integer	yes
+.It net.inet6.ip6.maxfragpackets	integer	yes
+.It net.inet6.ip6.accept_rtadv	integer	yes
+.It net.inet6.ip6.keepfaith	integer	yes
+.It net.inet6.ip6.log_interval	integer	yes
+.It net.inet6.ip6.hdrnestlimit	integer	yes
+.It net.inet6.ip6.dad_count	integer	yes
+.It net.inet6.ip6.auto_flowlabel	integer	yes
+.It net.inet6.ip6.defmcasthlim	integer	yes
+.It net.inet6.ip6.gif_hlim	integer	yes
+.It net.inet6.ip6.kame_version	string	no
+.It net.inet6.ipsec6.def_policy	integer	yes
+.It net.inet6.ipsec6.esp_trans_deflev	integer	yes
+.It net.inet6.ipsec6.esp_net_deflev	integer	yes
+.It net.inet6.ipsec6.ah_trans_deflev	integer	yes
+.It net.inet6.ipsec6.ah_net_deflev	integer	yes
+.It net.inet6.ipsec6.inbound_call_ike	integer	yes
+.It net.inet6.ipsec6.ecn	integer	yes
+.It net.inet6.icmp6.rediraccept	integer	yes
+.It net.inet6.icmp6.redirtimeout	integer	yes
+.It net.inet6.icmp6.errratelimit	integer	yes
+.It net.inet6.icmp6.nd6_prune	integer	yes
+.It net.inet6.icmp6.nd6_delay	integer	yes
+.It net.inet6.icmp6.nd6_umaxtries	integer	yes
+.It net.inet6.icmp6.nd6_mmaxtries	integer	yes
+.It net.inet6.icmp6.nd6_useloopback	integer	yes
+.It net.inet6.icmp6.nd6_proxyall	integer	yes
+.It net.key.debug	integer	yes
+.It net.key.spi_try	integer	yes
+.It net.key.spi_min_value	integer	yes
+.It net.key.spi_max_value	integer	yes
+.It net.key.random_int	integer	yes
+.It net.key.kill_int	integer	yes
+.It net.key.acq_exp_int	integer	yes
+.It net.key.acq_maxtime	integer	yes
 .It hw.machine	string	no
 .It hw.model	string	no
 .It hw.ncpu	integer	no
