@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_cksum.c,v 1.23 2003/08/07 16:34:35 agc Exp $	*/
+/*	$NetBSD: lfs_cksum.c,v 1.24 2004/03/09 07:43:49 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_cksum.c,v 1.23 2003/08/07 16:34:35 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_cksum.c,v 1.24 2004/03/09 07:43:49 yamt Exp $");
 
 #include <sys/param.h>
 #ifdef _KERNEL
@@ -89,16 +89,22 @@ __KERNEL_RCSID(0, "$NetBSD: lfs_cksum.c,v 1.23 2003/08/07 16:34:35 agc Exp $");
  * Use the TCP/IP checksum instead.
  */
 u_int32_t
-cksum(void *str, size_t len)
+lfs_cksum_part(void *str, size_t len, u_int32_t sum)
 {
-	u_int32_t sum;
 	
 	len &= ~(sizeof(u_int16_t) - 1);
-	for (sum = 0; len; len -= sizeof(u_int16_t)) {
+	for (; len; len -= sizeof(u_int16_t)) {
 		sum ^= *(u_int16_t *)str;
 		str = (void *)((u_int16_t *)str + 1);
 	}
 	return (sum);
+}
+
+u_int32_t
+cksum(void *str, size_t len)
+{
+
+	return lfs_cksum_fold(lfs_cksum_part(str, len, 0));
 }
 
 u_int32_t
