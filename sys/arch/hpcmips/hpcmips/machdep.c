@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.55 2001/06/02 18:09:13 chs Exp $	*/
+/*	$NetBSD: machdep.c,v 1.56 2001/06/13 06:03:11 enami Exp $	*/
 
 /*-
  * Copyright (c) 1999 Shin Takemura, All rights reserved.
@@ -72,7 +72,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.55 2001/06/02 18:09:13 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.56 2001/06/13 06:03:11 enami Exp $");
 
 /* from: Utah Hdr: machdep.c 1.63 91/04/24 */
 #include "opt_vr41xx.h"
@@ -792,77 +792,6 @@ consinit()
 	 *	Nothing to do.
 	 *	Console is alredy initialized in platform.cons_init().
 	 */
-
-	return;
-}
-
-void
-cpu_intr(status, cause, pc, ipending)
-	u_int32_t status;
-	u_int32_t cause;
-	u_int32_t pc;
-	u_int32_t ipending;
-{
-	uvmexp.intrs++;
-
-#ifdef VR41XX
-#ifdef TX39XX
-	if (CPUISMIPS3)
-#endif /* TX39XX */
-	if (ipending & MIPS_INT_MASK_5){
-		/*
-		 *  Writing a value to the Compare register,
-		 *  as a side effect, clears the timer interrupt request.
-		 */
-		mips3_cp0_compare_write(mips3_cp0_count_read());
-	}
-#endif
-
-	/* device interrupts */
-#if defined(VR41XX)
-#if defined(TX39XX)
-	if (CPUISMIPS3)
-#endif /* TX39XX */
-		if (ipending & MIPS3_HARD_INT_MASK) {
-			_splset((*platform.iointr)(status, cause, pc, ipending));
-		}
-#endif /* VR41XX */
-#if defined(TX39XX)
-#if defined(VR41XX)
-	if (CPUISMIPS1)
-#endif /* VR41XX */
-		if (ipending & MIPS_HARD_INT_MASK) {
-			_splset((*platform.iointr)(status, cause, pc, ipending));
-		}
-#endif /* TX39XX */
-
-	/* software simulated interrupt */
-	if ((ipending & MIPS_SOFT_INT_MASK_1)
-	        || (ssir && (status & MIPS_SOFT_INT_MASK_1))) {
-
-#define DO_SIR(bit, fn)						\
-	do {							\
-		if (n & (bit)) {				\
-			uvmexp.softs++;				\
-			fn;					\
-		}						\
-	} while (0)
-
-		unsigned n;
-		n = ssir; ssir = 0;
-		_clrsoftintr(MIPS_SOFT_INT_MASK_1);
-
-		DO_SIR(SIR_NET, netintr());
-#undef DO_SIR
-		}
-
-	/* 'softclock' interrupt */
-	if (ipending & MIPS_SOFT_INT_MASK_0) {
-		_clrsoftintr(MIPS_SOFT_INT_MASK_0);
-		uvmexp.softs++;
-		intrcnt[SOFTCLOCK_INTR]++;
-		softclock(NULL);
-	}
 
 	return;
 }

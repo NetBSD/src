@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.7 2000/06/01 15:38:24 matt Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.8 2001/06/13 06:03:10 enami Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.7 2000/06/01 15:38:24 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.8 2001/06/13 06:03:10 enami Exp $");
 
 /*
  * Setup the system to run on the current machine.
@@ -88,6 +88,9 @@ static void get_device __P((char *name));
 void
 cpu_configure()
 {
+
+	softintr_init();
+
 	/* Kick off autoconfiguration. */
 	(void)splhigh();
 
