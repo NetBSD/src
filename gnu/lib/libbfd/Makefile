@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.27 2002/06/18 08:48:29 itojun Exp $
+#	$NetBSD: Makefile,v 1.28 2002/06/19 16:10:48 itojun Exp $
 
 LIB=		bfd
 
@@ -28,8 +28,10 @@ GSRCS=		${G_libbfd_la_OBJECTS:libbfd.lo=lib_bfd.lo} \
 		${G_libbfd_la_DEPENDENCIES:M*.lo} ${G_BFD_MACHINES}
 SRCS=		${GSRCS:.lo=.c} ${G_libopcodes_la_SOURCES}
 
-DPSRCS+=	elf32-target.h elf64-target.h targmatch.h
-CLEANFILES+=	elf32-target.h elf64-target.h targmatch.h
+DPSRCS+=	elf32-target.h elf64-target.h targmatch.h \
+		elf32-ia64.c elf64-ia64.c peigen.c pepigen.c
+CLEANFILES+=	elf32-target.h elf64-target.h targmatch.h \
+		elf32-ia64.c elf64-ia64.c peigen.c pepigen.c
 
 TEXINFO=	bfd.texinfo
 INFOFLAGS=	-I${DIST}/bfd/doc
@@ -91,8 +93,10 @@ CPPFLAGS+= 	-DHAVE_CONFIG_H -I. -I${.CURDIR} \
 		-DDEFAULT_VECTOR=${DEFAULT_VEC.${MACHINE_ARCH}} \
 		-DSELECT_VECS="${SELECT_VECS:S/^/,\&/:S/^,//1}"
 
-DPSRCS+=	bfd.h elf32-target.h elf64-target.h targmatch.h
-CLEANFILES+=	bfd.h elf32-target.h elf64-target.h targmatch.h
+DPSRCS+=	bfd.h elf32-target.h elf64-target.h targmatch.h \
+		elf32-ia64.c elf64-ia64.c peigen.c pepigen.c
+CLEANFILES+=	bfd.h elf32-target.h elf64-target.h targmatch.h \
+		elf32-ia64.c elf64-ia64.c peigen.c pepigen.c
 
 TEXINFO=	bfd.texinfo
 INFOFLAGS=	-I${DIST}/bfd/doc
