@@ -1,4 +1,4 @@
-/*	$NetBSD: record.c,v 1.34 2003/07/21 00:55:59 mrg Exp $	*/
+/*	$NetBSD: record.c,v 1.35 2003/08/07 10:04:21 wiz Exp $	*/
 
 /*
  * Copyright (c) 1999, 2002 Matthew R. Green
@@ -34,7 +34,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: record.c,v 1.34 2003/07/21 00:55:59 mrg Exp $");
+__RCSID("$NetBSD: record.c,v 1.35 2003/08/07 10:04:21 wiz Exp $");
 #endif
 
 
@@ -761,14 +761,14 @@ usage()
 	fprintf(stderr, "Usage: %s [-afhqV] [options] {files ...|-}\n",
 	    getprogname());
 	fprintf(stderr, "Options:\n\t"
-	    "-F format\n\t"
 	    "-b balance (0-63)\n\t"
 	    "-c channels\n\t"
 	    "-d audio device\n\t"
 	    "-e encoding\n\t"
+	    "-F format\n\t"
 	    "-i header information\n\t"
 	    "-m monitor volume\n\t"
-	    "-P precision bits (4, 8, 16, 24 or 32)\n\t"
+	    "-P precision (4, 8, 16, 24, or 32 bits)\n\t"
 	    "-p input port\n\t"
 	    "-s sample rate\n\t"
 	    "-t recording time\n\t"
