@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.3 2003/03/31 21:30:56 thorpej Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.4 2003/05/14 12:45:06 wiz Exp $	*/
 
 /*
  * Copyright (c) 1988 The Regents of the University of California.
@@ -38,7 +38,7 @@
 
 /*
  * Page size on the 26-bit ARM CPUs is not variable in the traditional
- * sense.  We override the PAGE_* definitions to compile-time costants.
+ * sense.  We override the PAGE_* definitions to compile-time constants.
  */
 #define	PAGE_SHIFT	15
 #define	PAGE_SIZE	(1 << PAGE_SHIFT)
