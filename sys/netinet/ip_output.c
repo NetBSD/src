@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_output.c,v 1.103 2003/02/26 06:31:15 matt Exp $	*/
+/*	$NetBSD: ip_output.c,v 1.104 2003/05/26 15:12:11 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.103 2003/02/26 06:31:15 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.104 2003/05/26 15:12:11 yamt Exp $");
 
 #include "opt_pfil_hooks.h"
 #include "opt_ipsec.h"
@@ -595,6 +595,8 @@ skip_ipsec:
 	ip = mtod(m, struct ip *);
 #endif /* PFIL_HOOKS */
 
+	m->m_pkthdr.csum_flags |= M_CSUM_IPv4;
+	sw_csum = m->m_pkthdr.csum_flags & ~ifp->if_csum_flags_tx;
 	/*
 	 * If small enough for mtu of path, can just send directly.
 	 */
@@ -613,9 +615,6 @@ skip_ipsec:
 		 * checksumming requires this.
 		 */
 		ip->ip_sum = 0;
-		m->m_pkthdr.csum_flags |= M_CSUM_IPv4;
-
-		sw_csum = m->m_pkthdr.csum_flags & ~ifp->if_csum_flags_tx;
 
 		/*
 		 * Perform any checksums that the hardware can't do
@@ -624,13 +623,14 @@ skip_ipsec:
 		 * XXX Does any hardware require the {th,uh}_sum
 		 * XXX fields to be 0?
 		 */
-		if (sw_csum & M_CSUM_IPv4)
+		if (sw_csum & M_CSUM_IPv4) {
 			ip->ip_sum = in_cksum(m, hlen);
+			m->m_pkthdr.csum_flags &= ~M_CSUM_IPv4;
+		}
 		if (sw_csum & (M_CSUM_TCPv4|M_CSUM_UDPv4)) {
 			in_delayed_cksum(m);
-			sw_csum &= ~(M_CSUM_TCPv4|M_CSUM_UDPv4);
+			m->m_pkthdr.csum_flags &= ~(M_CSUM_TCPv4|M_CSUM_UDPv4);
 		}
-		m->m_pkthdr.csum_flags &= ifp->if_csum_flags_tx;
 
 #ifdef IPSEC
 		/* clean ipsec history once it goes out of the node */
@@ -718,7 +718,12 @@ skip_ipsec:
 		m->m_pkthdr.len = mhlen + len;
 		m->m_pkthdr.rcvif = (struct ifnet *)0;
 		mhip->ip_sum = 0;
-		mhip->ip_sum = in_cksum(m, mhlen);
+		if (sw_csum & M_CSUM_IPv4) {
+			mhip->ip_sum = in_cksum(m, mhlen);
+			KASSERT((m->m_pkthdr.csum_flags & M_CSUM_IPv4) == 0);
+		} else {
+			m->m_pkthdr.csum_flags |= M_CSUM_IPv4;
+		}
 		ipstat.ips_ofragments++;
 		fragments++;
 	}
@@ -732,7 +737,12 @@ skip_ipsec:
 	ip->ip_len = htons((u_int16_t)m->m_pkthdr.len);
 	ip->ip_off |= htons(IP_MF);
 	ip->ip_sum = 0;
-	ip->ip_sum = in_cksum(m, hlen);
+	if (sw_csum & M_CSUM_IPv4) {
+		ip->ip_sum = in_cksum(m, hlen);
+		m->m_pkthdr.csum_flags &= ~M_CSUM_IPv4;
+	} else {
+		KASSERT(m->m_pkthdr.csum_flags & M_CSUM_IPv4);
+	}
 sendorfree:
 	/*
 	 * If there is no room for all the fragments, don't queue
@@ -761,6 +771,8 @@ sendorfree:
 			/* clean ipsec history once it goes out of the node */
 			ipsec_delaux(m);
 #endif
+			KASSERT((m->m_pkthdr.csum_flags &
+			    (M_CSUM_UDPv4 | M_CSUM_TCPv4)) == 0);
 			error = (*ifp->if_output)(ifp, m, sintosa(dst),
 			    ro->ro_rt);
 		} else
