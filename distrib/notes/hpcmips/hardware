@@ -1,4 +1,4 @@
-.\"	$NetBSD: hardware,v 1.1 2000/02/20 15:45:34 jun Exp $
+.\"	$NetBSD: hardware,v 1.2 2000/02/22 05:01:40 jun Exp $
 A H/PC machine contains a keyboard and a touch screen and
 generally has 8MB or more of RAM.  The port supports the HPC
 form factor, as well as the H/PC Pro and PsPC (Palmsized PC)
@@ -17,18 +17,58 @@ The following WindowsCE hardware is supported:
 \\$*
 ..
 .Bl -tag -width Disks
+.	It Em supported machines:
+.	br
+.	Bl -bullet -compact 
+.		section Everex
+.			item FreeStyle A-15
+.			item FreeStyle A-20
+.		section Fujitsu
+.			item INTERTOP CX300
+.		section NEC
+.			item MobileGearII MC-R300
+.			item MobileGearII MC-R320
+.			item MobileGearII MC-R330
+.			item MobileGearII for DoCoMo
+.			item MobileGearII MC/R430
+.			item MobileGearII MC-R500
+.			item MobileGearII MC-R510
+.			item MobileGearII MC-R520
+.			item MobileGearII MC/R530
+.			item MobileGearII MC-R700
+.			item MobileGearII MC/R730
+.			item MobilePro 750C
+.			item MobilePro 770
+.			item MobilePro 800
+.		section IBM
+.			item WorkPad z50
+.		section Sharp
+.			item mobilon TRIPAD PV-6000
+.		section Vadem
+.			item Clio C-1000
+.	El
+
 .	It Em CPUs:
 .	br
 .	Bl -bullet -compact 
 .		item VR4102-based: 
 .		item VR4111-based: 
 .		item VR4121-based: 
-.		item TX3912-based: 
-.		item TX3922-based: 
-.	section RS232 interfaces:
-.		item built in serial port (com).
+.		item TX3912-based: TX3912 machines are not supported with installation kernel. use special kernel for TX3912.
+.		item TX3922-based:  TX3922 machines are not supported with installation kernel. use special kernel for TX3922
+.	section console device
+.		item built-in LCD screen
+.		item built-in keyboard
+.		item serial port (with kernel option 'h')
+.	section storage device
+.		item Flash ATA card, CF card (wd)
+.		item SCSI disk (sd)
+.		item Adaptec APA-1460[Slim SCSI](aic)
 .	section Network interfaces:
-.		item PCMCIA ethernet card (ep/ne).
+.		item 3Com 3c589 and 3c562 Ethernet (ep)
+.		item MB8696x based Ethernet (mbe)
+.		item NE2000-compatible Ethernet (ne)
+.		item Megahertz Ethernet (sm)
 .	section Displays:
 .		item LCD Display
 .	section Input devices:
