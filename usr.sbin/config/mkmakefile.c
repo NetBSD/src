@@ -1,4 +1,4 @@
-/*	$NetBSD: mkmakefile.c,v 1.31 1996/08/31 20:58:25 mycroft Exp $	*/
+/*	$NetBSD: mkmakefile.c,v 1.32 1996/09/23 05:04:23 ghudson Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -195,11 +195,15 @@ emitdefs(fp)
 		return (1);
 	if (fprintf(fp, "PARAM=-DMAXUSERS=%d\n", maxusers) < 0)
 		return (1);
-	if (*srcdir == '/') {
+	if (*srcdir == '/' || *srcdir == '.') {
 		if (fprintf(fp, "S=\t%s\n", srcdir) < 0)
 			return (1);
 	} else {
-		if (fprintf(fp, "S!=\tcd %s; pwd\n", srcdir) < 0)
+		/*
+		 * libkern and libcompat "Makefile.inc"s want relative S
+		 * specification to begin with '.'.
+		 */
+		if (fprintf(fp, "S=\t./%s\n", srcdir) < 0)
 			return (1);
 	}
 	for (nv = mkoptions; nv != NULL; nv = nv->nv_next)
