@@ -27,67 +27,72 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: cloak.c,v 1.2 1995/09/26 21:25:03 phil Exp $
+ *	$Id: inject.c,v 1.1 1995/09/26 21:25:07 phil Exp $
  */
 
 #include <stdio.h>
 #include <unistd.h>
-#include <a.out.h>
-#include <sys/param.h>
+#include <fcntl.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <sys/mman.h>
+#include <bm.h>
 
-#define SYM_DATA "_input_data"
-#define SYM_LEN "_input_len"
-void
-writex(int fd, void *buf, int cnt, char *prog)
+void *map(char *file, int mode, int *len)
 {
-	if (write(fd, buf, cnt) != cnt) {
-		perror(prog);
+	int fd;
+	struct stat sb;
+	void *p;
+
+	fd = open(file, mode);
+	if (fd < 0) {
+		perror(file);
 		exit(1);
 	}
+	if (fstat(fd, &sb) < 0) {
+		perror("fstat");
+		exit(1);
+	}
+	*len = sb.st_size;
+	p = mmap(NULL, *len, PROT_READ | (mode == O_RDWR ? PROT_WRITE : 0),
+			MAP_SHARED, fd, 0);
+	if (p == NULL) {
+		perror("mmap");
+		exit(1);
+	}
+	madvise(p, *len, MADV_SEQUENTIAL);
+	close(fd);
+	return(p);
 }
 
 main(int argc, char **argv)
 {
-	int n, data_len = 0;
-	static struct exec exec;
-	static struct nlist nlist[2];
-	static char buf[10240];
+	void *kern, *filesys, *ramdisk;
+	int kernlen, filesyslen;
+	bm_pat *bm;
+	static char pattern[] = "Ramdiskorigin";
 
-	if (argc != 1) {
-		fprintf(stderr, "usage: %s <file1 >file2", argv[0]);
+	if (argc != 3) {
+		fprintf(stderr, "usage: %s kernel filesystem", argv[0]);
 		exit(1);
 	}
-	writex(1, &exec, sizeof(exec), argv[0]);
-	while ((n = read(0, buf, sizeof(buf))) > 0) {
-		data_len += n;
-		writex(1, buf, n, argv[0]);
+
+	kern = map(argv[1], O_RDWR, &kernlen);
+	filesys = map(argv[2], O_RDONLY, &filesyslen);
+
+	bm = bm_comp(pattern, sizeof(pattern), NULL);
+	ramdisk = bm_exec(bm, kern, kernlen);
+	if (!ramdisk) {
+		fprintf(stderr, "Origin of ramdisk not found in kernel\n");
+		exit(1);
 	}
-
-	memset(buf, 0, sizeof(buf));
-	if (ALIGN(data_len) - data_len)
-		writex(1, buf, ALIGN(data_len) - data_len, argv[0]);
-	writex(1, (void *)&data_len, sizeof(data_len), argv[0]);
-
-	n = sizeof(SYM_DATA) + sizeof(SYM_LEN) + sizeof(n);
-	nlist[0].n_un.n_strx  = sizeof(n);
-	nlist[0].n_type  = N_TEXT | N_EXT;
-	nlist[0].n_value = 0;
-	nlist[1].n_un.n_strx  = nlist[0].n_un.n_strx + sizeof(SYM_DATA);
-	nlist[1].n_type  = N_TEXT | N_EXT;
-	nlist[1].n_value = ALIGN(data_len);
-	writex(1, nlist, sizeof(nlist), argv[0]);
-	writex(1, &n, sizeof(n), argv[0]);
-	writex(1, SYM_DATA, sizeof(SYM_DATA), argv[0]);
-	writex(1, SYM_LEN, sizeof(SYM_LEN), argv[0]);
-
-	N_SETMAGIC(exec, OMAGIC, MID_MACHINE, 0);
-	exec.a_text   = ALIGN(data_len) + sizeof(data_len);
-	exec.a_data   = 0;
-	exec.a_bss    = 0;
-	exec.a_syms   = sizeof(nlist);
-	exec.a_trsize = 0;
-	exec.a_drsize = 0;
-	lseek(1, (off_t)0, SEEK_SET);
-	writex(1, &exec, sizeof(exec), argv[0]);
+	if ((kernlen - (ramdisk - kern)) < filesyslen) {
+		fprintf(stderr, "Kernel image to small\n");
+		exit(1);
+	}
+	memcpy(ramdisk, filesys, filesyslen);
+	msync(kern, kernlen);
+	munmap(kern, kernlen);
+	munmap(filesys, filesyslen);
 	exit(0);
 }

@@ -1,4 +1,4 @@
-#	$Id: Makefile.inc,v 1.1.1.1 1995/09/10 06:13:44 phil Exp $
+#	$Id: Makefile.inc,v 1.2 1995/09/26 21:25:02 phil Exp $
 
 # TOP is assumed to be defined by Makefile including this one.
 
@@ -7,22 +7,34 @@ COMMONDIR=	${TOP}/inst-common
 
 MOUNT_POINT?=	/mnt
 VND?=		vnd0
-VND_DEV=	/dev/${VND}c
-VND_RDEV=	/dev/r${VND}c
+VND_DEV=	/dev/${VND}a
+VND_RDEV=	/dev/r${VND}a
 IMAGE?=		xxx-${REV}.fs
 MDEC=		${DESTDIR}/usr/mdec
 
 LISTS=		${COMMONDIR}/list ${.CURDIR}/list
 CRUNCHCONF=	${COMMONDIR}/${CBIN}.conf
 MTREE=		${COMMONDIR}/mtree.conf
-ADIR=		${.CURDIR}/../../../../sys/arch/pc532
+ADIR=		${TOP}/../../../sys/arch/pc532
 
-all: ${CBIN} netbsd
+all: netbsd
 	dd if=/dev/zero of=${IMAGE} bs=18k count=80
-	disklabel -r -w ${.OBJDIR}/${IMAGE} boot3
-	-yes|bim -c init -c "add ${MDEC}/boot boot" -c "default 0" -c "exit" ${.OBJDIR}/${IMAGE}
+	disklabel -r -w ${.OBJDIR}/${IMAGE} boot3 2>/dev/null
+	-yes|bim -c init -c "add ${MDEC}/boot boot" -c "default 0" \
+	    -c "exit" ${.OBJDIR}/${IMAGE} 2>/dev/null >/dev/null
 	vnconfig -v -c ${VND_DEV} ${IMAGE}
-	newfs -O -m 0 -o space -i 7168 -c 80 ${VND_RDEV} boot3
+	newfs -b 8192 -f 1024 -O -m 0 -o space -i 204800 -c 80 ${VND_RDEV} boot3
+	mount ${VND_DEV} ${MOUNT_POINT}
+	cp netbsd ${MOUNT_POINT}/netbsd
+	@df -i ${MOUNT_POINT}
+	@echo ""
+	umount ${MOUNT_POINT}
+	vnconfig -u ${VND_DEV}
+
+inject.fs: ${CBIN} ${LISTS} netbsd.gz
+	dd if=/dev/zero of=${.TARGET} bs=128k count=16
+	vnconfig -v -c ${VND_DEV} ${.TARGET}
+	newfs -b 8192 -f 1024 -O -m 0 -o space -i 7168 ${VND_RDEV} rd
 	mount ${VND_DEV} ${MOUNT_POINT}
 	mtree -def ${MTREE} -p ${MOUNT_POINT}/ -u
 	TOPDIR=${TOP} CURDIR=${.CURDIR} OBJDIR=${.OBJDIR} \
@@ -32,7 +44,6 @@ all: ${CBIN} netbsd
 	@echo ""
 	umount ${MOUNT_POINT}
 	vnconfig -u ${VND_DEV}
-	cat /*bin/* > /dev/null
 
 unconfig:
 	-umount -f ${MOUNT_POINT}
@@ -47,14 +58,26 @@ ${CBIN}: ${CBIN}.mk ${CBIN}.cache ${CBIN}.c
 
 cloak: ${COMMONDIR}/cloak.c
 
-netbsd.o: cloak
-	cp ${ADIR}/compile/INSTALL/netbsd /tmp/$$$$; \
-		strip /tmp/$$$$; \
-		gzip -9 </tmp/$$$$ | ./cloak >netbsd.o; \
-		rm /tmp/$$$$
+inject: ${COMMONDIR}/inject.c
 
-netbsd: netbsd.o
-	ld -s -z -T 380000 -e begin ${MDEC}/zboot.o netbsd.o -o netbsd
+netbsd.gz:
+	gzip -9 <${ADIR}/compile/DEFAULT/netbsd >netbsd.gz
+#	cp ${ADIR}/compile/DEFAULT/netbsd /var/tmp/$$$$; \
+#		strip /var/tmp/$$$$; \
+#		gzip -9 </var/tmp/$$$$ >netbsd.gz; \
+#		rm /var/tmp/$$$$
+
+netbsd.o: inject cloak inject.fs
+	cp ${ADIR}/compile/INSTALL/netbsd /var/tmp/$$$$; \
+		strip /var/tmp/$$$$; \
+		./inject /var/tmp/$$$$ inject.fs; \
+		gzip -9 </var/tmp/$$$$ | ./cloak >netbsd.o; \
+		rm /var/tmp/$$$$
+
+go.o: ${COMMONDIR}/go.c
+
+netbsd: netbsd.o go.o
+	ld -s -z -T 240000 -e _go go.o netbsd.o ${MDEC}/zboot.o -o netbsd
 
 clean cleandir:
 	/bin/rm -f core ${IMAGE} ${CBIN} ${CBIN}.mk ${CBIN}.cache *.o *.lo *.c

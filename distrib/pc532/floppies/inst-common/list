@@ -1,21 +1,24 @@
-#	$Id: list,v 1.1.1.1 1995/09/10 06:13:44 phil Exp $
+#	$Id: list,v 1.2 1995/09/26 21:25:09 phil Exp $
 
 # copy the crunched binary, link to it, and kill it
+COPY	${OBJDIR}/netbsd.gz	netbsd.gz
 COPY	${OBJDIR}/instbin	instbin
-COPY	${OBJDIR}/netbsd	netbsd
 LINK	instbin			bin/cat
 LINK	instbin			bin/chmod
 LINK	instbin			bin/cp
 LINK	instbin			bin/dd
 LINK	instbin			bin/df
-LINK	instbin			bin/ed
 LINK	instbin			bin/expr
 LINK	instbin			bin/ln
 LINK	instbin			bin/ls
 LINK	instbin			bin/mkdir
+LINK	instbin			bin/mt
 LINK	instbin			bin/mv
+LINK	instbin			bin/pax
 LINK	instbin			bin/pwd
+LINK	instbin			bin/rcp
 LINK	instbin			bin/rm
+LINK	instbin			bin/rmdir
 LINK	instbin			bin/sh
 LINK	instbin			bin/stty
 LINK	instbin			bin/sync
@@ -23,6 +26,7 @@ LINK	instbin			bin/test
 LINK	instbin			bin/[
 LINK	instbin			sbin/bim
 LINK	instbin			sbin/disklabel
+LINK	instbin			sbin/dump
 LINK	instbin			sbin/fsck
 LINK	instbin			sbin/halt
 LINK	instbin			sbin/ifconfig
@@ -30,28 +34,41 @@ LINK	instbin			sbin/init
 LINK	instbin			sbin/mknod
 LINK	instbin			sbin/mount
 LINK	instbin			sbin/mount_cd9660
+LINK	instbin			sbin/mount_ffs
 LINK	instbin			sbin/mount_msdos
 LINK	instbin			sbin/mount_nfs
 LINK	instbin			sbin/newfs
 LINK	instbin			sbin/ping
 LINK	instbin			sbin/reboot
+LINK	instbin			sbin/restore
 LINK	instbin			sbin/route
 LINK	instbin			sbin/shutdown
 LINK	instbin			sbin/slattach
 LINK	instbin			sbin/umount
 SYMLINK	/bin/cat		usr/bin/awk
 SYMLINK	/bin/cat		usr/bin/chgrp
+SYMLINK /bin/cat		usr/bin/hexdump
+SYMLINK /bin/cat		usr/bin/ex
+SYMLINK	/bin/cat		usr/bin/find
 SYMLINK	/bin/cat		usr/bin/ftp
 SYMLINK	/bin/cat		usr/bin/gunzip
 SYMLINK	/bin/cat		usr/bin/gzcat
 SYMLINK	/bin/cat		usr/bin/gzip
 SYMLINK	/bin/cat		usr/bin/more
+SYMLINK	/bin/cat		usr/bin/netstat
 SYMLINK	/bin/cat		usr/bin/sed
 SYMLINK	/bin/cat		usr/bin/strings
 SYMLINK	/bin/cat		usr/bin/tar
 SYMLINK	/bin/cat		usr/bin/tip
+SYMLINK /bin/cat		usr/bin/vi
+SYMLINK /bin/cat		usr/bin/view
+SYMLINK /bin/cat		usr/games/factor
+SYMLINK	/bin/cat		usr/sbin/chat
 SYMLINK	/bin/cat		usr/sbin/chown
 SYMLINK	/bin/cat		usr/sbin/chroot
+SYMLINK	/bin/cat		usr/sbin/pppd
+SYMLINK	/bin/cat		usr/sbin/pppstats
+SYMLINK	/bin/cat		usr/sbin/traceroute
 SYMLINK	/bin/cat		usr/sbin/update
 SPECIAL	/bin/rm instbin
 
@@ -71,6 +88,7 @@ COPY	${DESTDIR}/etc/protocols	etc
 COPY	${DESTDIR}/etc/pwd.db		etc
 COPY	${DESTDIR}/etc/services		etc
 COPY	${DESTDIR}/etc/spwd.db		etc
+SPECIAL >etc/ppp/options
 
 # and the common installation tools
 COPY	${TOPDIR}/inst-common/dot.commonutils	.commonutils
