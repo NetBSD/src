@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.26 2001/06/02 18:09:21 chs Exp $	*/
+/*	$NetBSD: trap.c,v 1.27 2001/06/24 05:34:07 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
@@ -186,11 +186,7 @@ trap(p1, p2, p3, p4, frame)
 	}
 #endif
 
-#if 1
-	if (!KERNELMODE(frame.tf_r15)) {
-#else
-	if (!KERNELMODE(frame.tf_spc, frame.tf_ssr)) {
-#endif
+	if (!KERNELMODE(frame.tf_r15, frame.tf_ssr)) {
 		type |= T_USER;
 		sticks = p->p_sticks;
 		p->p_md.md_regs = &frame;
@@ -425,11 +421,7 @@ syscall(frame)
 	u_quad_t sticks;
 
 	uvmexp.syscalls++;
-#if 1
-	if (KERNELMODE(frame->tf_r15))
-#else
-	if (!USERMODE(frame->tf_spc, frame->tf_ssr))
-#endif
+	if (KERNELMODE(frame->tf_r15, frame->tf_ssr))
 		panic("syscall");
 	p = curproc;
 	sticks = p->p_sticks;
@@ -708,7 +700,7 @@ tlb_handler(p1, p2, p3, p4, frame)
 		printf("tlb_handler#:va(0x%lx),curproc(%p)\n", va, curproc);
 #endif
 
-	user = !KERNELMODE(frame.tf_r15);
+	user = !KERNELMODE(frame.tf_r15, frame.tf_ssr);
 
 	pteh_save = SHREG_PTEH;
 	va_save = va;
