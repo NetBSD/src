@@ -1,4 +1,4 @@
-/*	$NetBSD: if.h,v 1.56 2000/12/14 00:07:35 thorpej Exp $	*/
+/*	$NetBSD: if.h,v 1.57 2000/12/14 00:19:42 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -358,11 +358,14 @@ struct ifnet {				/* and the entries */
 #define	IF_PURGE(ifq)							\
 do {									\
 	struct mbuf *__m0;						\
-	IF_DEQUEUE((ifq), __m0);					\
-	if (__m0 == NULL)						\
-		break;							\
-	else								\
-		m_freem(__m0);						\
+									\
+	for (;;) {							\
+		IF_DEQUEUE((ifq), __m0);				\
+		if (__m0 == NULL)					\
+			break;						\
+		else							\
+			m_freem(__m0);					\
+	}								\
 } while (0)
 #define	IF_IS_EMPTY(ifq)	((ifq)->ifq_len == 0)
 
