@@ -1,4 +1,4 @@
-/*	$NetBSD: clean.h,v 1.7 1999/03/10 00:57:16 perseant Exp $	*/
+/*	$NetBSD: clean.h,v 1.7.2.1 1999/11/09 21:49:25 he Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -94,7 +94,7 @@ typedef struct fs_info {
 #define seg_size(fs) ((fs)->lfs_ssize << (fs)->lfs_bshift)
 
 /* daddr -> byte offset */
-#define datobyte(fs, da) ((da) << (fs)->fi_daddr_shift)
+#define datobyte(fs, da) (((off_t)(da)) << (fs)->fi_daddr_shift)
 #define bytetoda(fs, byte) ((byte) >> (fs)->fi_daddr_shift)
 
 #define CLEANSIZE(fsp)	(fsp->fi_lfs.lfs_cleansz << fsp->fi_lfs.lfs_bshift)
