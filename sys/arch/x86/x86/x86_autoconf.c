@@ -1,4 +1,4 @@
-/*	$NetBSD: x86_autoconf.c,v 1.2 2004/10/23 17:20:59 thorpej Exp $	*/
+/*	$NetBSD: x86_autoconf.c,v 1.3 2004/10/26 01:09:25 xtraeme Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -330,7 +330,7 @@ match_bootdisk(struct device *dv, struct btinfo_bootdisk *bid)
 		 * XXX Can't happen -- open() would have errored out
 		 * or faked one up.
 		 */
-		printf("findroot: can't get labe for dev %s (%d)\n",
+		printf("findroot: can't get label for dev %s (%d)\n",
 		    dv->dv_xname, error);
 		goto closeout;
 	}
