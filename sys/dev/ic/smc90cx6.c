@@ -1,4 +1,4 @@
-/*	$NetBSD: smc90cx6.c,v 1.7 1995/04/15 10:35:24 cgd Exp $ */
+/*	$NetBSD: smc90cx6.c,v 1.8 1995/06/07 00:16:54 cgd Exp $ */
 
 /*
  * Copyright (c) 1994, 1995 Ignatios Souvatzis
@@ -172,7 +172,7 @@ struct bah_softc {
 
 int	bahmatch __P((struct device *, void *, void *));
 void	bahattach __P((struct device *, struct device *, void *));
-void	bah_ini __P((struct bah_softc *));
+void	bah_init __P((struct bah_softc *));
 void	bah_reset __P((struct bah_softc *));
 void	bah_stop __P((struct bah_softc *));
 void	bah_start __P((struct ifnet *));
@@ -766,7 +766,7 @@ bah_srint(sc, dummy)
 	struct bah_softc *sc;
 	void *dummy;
 {
-	int buffer, buffer1, len, len1, amount, offset, s, i;
+	int buffer, buffer1, len, len1, amount, offset, s, i, type;
 	u_char __volatile *bah_ram_ptr;
 	struct mbuf *m, *dst, *head;
 	struct arc_header *ah;
@@ -816,25 +816,15 @@ bah_srint(sc, dummy)
 	}
 			
 	m->m_pkthdr.rcvif = ifp;
-	m->m_len = 0;
 
 	/*
 	 * Align so that IP packet will be longword aligned. Here we
 	 * assume that m_data of new packet is longword aligned.
-	 * When implementing RFC1201, we might have to change it to 2,
-	 * (2*sizeof(ulong) - ARC_HDRLEN - sizeof(splitflag) - sizeof(pckid))
-	 * possibly packet type dependent.
+	 * When implementing PHDS, we might have to change it to 2,
+	 * (2*sizeof(ulong) - ARC_HDRNEWLEN)), packet type dependent.
 	 */
 
-	m->m_data += 1;		/* sizeof(u_long) - ARC_HDRLEN */
-
-	head = m;
-
-	ah = mtod(head, struct arc_header *);
 	bah_ram_ptr = sc->sc_base->buffers + buffer*512*2;
-		
-	ah->arc_shost = bah_ram_ptr[0*2];
-	ah->arc_dhost = bah_ram_ptr[1*2];
 	offset = bah_ram_ptr[2*2];
 	if (offset)
 		len = 256 - offset;
@@ -842,9 +832,18 @@ bah_srint(sc, dummy)
 		offset = bah_ram_ptr[3*2];
 		len = 512 - offset;
 	}
-	m->m_pkthdr.len = len+2;        /* whole packet length */
-	m->m_len += 2; 		    	/* mbuf filled with ARCnet addresses */
-	bah_ram_ptr += offset*2;	/* ram buffer continues there */
+	type = bah_ram_ptr[offset*2];
+	m->m_data += 1 + arc_isphds(type);
+
+	head = m;
+	ah = mtod(head, struct arc_header *);
+		
+	ah->arc_shost = bah_ram_ptr[0*2];
+	ah->arc_dhost = bah_ram_ptr[1*2];
+
+	m->m_pkthdr.len = len+2; /* whole packet length */
+	m->m_len = 2;		 /* mbuf filled with ARCnet addresses */
+	bah_ram_ptr += offset*2; /* ram buffer continues there */
 
 	while (len > 0) {
 	

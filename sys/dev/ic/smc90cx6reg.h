@@ -1,4 +1,4 @@
-/*	$NetBSD: smc90cx6reg.h,v 1.3 1995/03/02 09:12:45 chopps Exp $ */
+/*	$NetBSD: smc90cx6reg.h,v 1.4 1995/06/07 00:16:59 cgd Exp $ */
 
 /*
  * Copyright (c) 1994, 1995 Ignatios Souvatzis
@@ -48,16 +48,16 @@
 #define PRODUCT_2         9
 
 struct a2060 {
-	volatile	u_char	kick1;
-	u_char	pad1[16383];
-	volatile	u_char	status;		/* also intmask */
-	u_char	pad2;
-	volatile	u_char	command;
-	u_char	pad3[16381];
-	volatile	u_char	buffers[4096];	/* even bytes only */
-	u_char	pad4[12228];
-	volatile	u_char	kick2;
-	u_char	pad5[16383];
+	volatile u_int8_t kick1;
+	u_int8_t	  pad1[16383];
+	volatile u_int8_t status;		/* also intmask */
+	u_int8_t	  pad2;
+	volatile u_int8_t command;
+	u_int8_t	  pad3[16381];
+	volatile u_int8_t buffers[4096];	/* even bytes only */
+	u_int8_t	  pad4[12228];
+	volatile u_int8_t kick2;
+	u_int8_t	  pad5[16383];
 };
 
 #define checkbyte	buffers[0]
