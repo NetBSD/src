@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.h,v 1.35 1997/01/22 07:09:28 mikel Exp $	*/
+/*	$NetBSD: tty.h,v 1.36 1997/02/07 06:35:44 mikel Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1993
@@ -75,7 +75,7 @@ struct clist {
 	u_char	*c_cf;		/* Pointer to the first cblock. */
 	u_char	*c_cl;		/* Pointer to the last cblock. */
 };
-#endif
+#endif /* !REAL_CLISTS */
 
 /*
  * Per-tty structure.
@@ -121,10 +121,8 @@ struct tty {
 #define	t_iflag		t_termios.c_iflag
 #define	t_ispeed	t_termios.c_ispeed
 #define	t_lflag		t_termios.c_lflag
-#define	t_min		t_termios.c_min
 #define	t_oflag		t_termios.c_oflag
 #define	t_ospeed	t_termios.c_ospeed
-#define	t_time		t_termios.c_time
 
 #define	TTIPRI	25			/* Sleep priority for tty reads. */
 #define	TTOPRI	26			/* Sleep priority for tty writes. */
@@ -138,7 +136,7 @@ struct tty {
 #define	TTMINHIWAT	roundup(100, CBSIZE)
 #define	TTMAXLOWAT	256
 #define	TTMINLOWAT	32
-#endif
+#endif /* _KERNEL */
 
 /* These flags are kept in t_state. */
 #define	TS_ASLEEP	0x00001		/* Process waiting for tty. */
@@ -250,12 +248,13 @@ int	 ttysleep __P((struct tty *tp,
 int	 ttywait __P((struct tty *tp));
 int	 ttywflush __P((struct tty *tp));
 
-void	tty_init __P((void));
-void	tty_attach __P((struct tty *));
-void	tty_detach __P((struct tty *));
-struct tty *ttymalloc __P((void));
+void	 tty_init __P((void));
+void	 tty_attach __P((struct tty *));
+void	 tty_detach __P((struct tty *));
+struct tty
+	*ttymalloc __P((void));
 void	 ttyfree __P((struct tty *));
-u_char	*firstc           __P((struct clist *clp, int *c));
+u_char	*firstc __P((struct clist *clp, int *c));
 
 int	cttyopen __P((dev_t, int, int, struct proc *));
 int	cttyread __P((dev_t, struct uio *, int));
