@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_reconmap.h,v 1.7 2003/12/29 02:38:18 oster Exp $	*/
+/*	$NetBSD: rf_reconmap.h,v 1.8 2004/03/04 03:14:02 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -62,24 +62,13 @@ struct RF_ReconMapListElem_s {
 	RF_ReconMapListElem_t *next;	/* next element in list */
 };
 
-RF_ReconMap_t *
-rf_MakeReconMap(RF_Raid_t * raidPtr, RF_SectorCount_t ru_sectors,
-    RF_SectorCount_t disk_sectors, RF_ReconUnitCount_t spareUnitsPerDisk);
-
-void 
-rf_ReconMapUpdate(RF_Raid_t * raidPtr, RF_ReconMap_t * mapPtr,
-    RF_SectorNum_t startSector, RF_SectorNum_t stopSector);
-
-void    rf_FreeReconMap(RF_ReconMap_t * mapPtr);
-
-int     rf_CheckRUReconstructed(RF_ReconMap_t * mapPtr, RF_SectorNum_t startSector);
-
-RF_ReconUnitCount_t rf_UnitsLeftToReconstruct(RF_ReconMap_t * mapPtr);
-
-void 
-rf_PrintReconMap(RF_Raid_t * raidPtr, RF_ReconMap_t * mapPtr,
-    RF_RowCol_t fcol);
-
-void    rf_PrintReconSchedule(RF_ReconMap_t * mapPtr, struct timeval * starttime);
+RF_ReconMap_t *rf_MakeReconMap(RF_Raid_t *, RF_SectorCount_t,
+			       RF_SectorCount_t, RF_ReconUnitCount_t);
+void rf_ReconMapUpdate(RF_Raid_t *, RF_ReconMap_t *, RF_SectorNum_t, RF_SectorNum_t);
+void rf_FreeReconMap(RF_ReconMap_t *);
+int rf_CheckRUReconstructed(RF_ReconMap_t *, RF_SectorNum_t);
+RF_ReconUnitCount_t rf_UnitsLeftToReconstruct(RF_ReconMap_t *);
+void rf_PrintReconMap(RF_Raid_t *, RF_ReconMap_t *, RF_RowCol_t);
+void rf_PrintReconSchedule(RF_ReconMap_t *, struct timeval *);
 
 #endif				/* !_RF__RF_RECONMAP_H_ */
