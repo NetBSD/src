@@ -1,4 +1,4 @@
-#	$NetBSD: std.pc532,v 1.8 1999/03/24 06:06:11 mrg Exp $
+#	$NetBSD: std.pc532,v 1.9 1999/06/17 00:22:41 thorpej Exp $
 #
 # Standard configuration info for NetBSD/pc532.
 
@@ -27,7 +27,8 @@ scn5		at mainbus? flags 0x0 # addr 0x28000028
 scn6		at mainbus? flags 0x0 # addr 0x28000030
 scn7		at mainbus? flags 0x0 # addr 0x28000038
 
-# UVM is the standard VM system on NetBSD/i386.
+# NOTE: PMAP_NEW is no longer optional on the pc532 -- the old pmap
+# no longer works, and has been deleted from the source tree.
 options 	PMAP_NEW	# UVM's new pmap interface
 
 options 	EXEC_AOUT	# #! scripts
