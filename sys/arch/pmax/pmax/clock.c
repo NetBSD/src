@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.6 1995/01/18 06:43:47 mellon Exp $	*/
+/*	$NetBSD: clock.c,v 1.7 1995/08/10 05:17:10 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -44,7 +44,10 @@
 
 #include <sys/param.h>
 #include <sys/kernel.h>
+#include <sys/systm.h>
+#include <sys/device.h>
 
+#include <machine/autoconf.h>
 #include <machine/machConst.h>
 #include <pmax/pmax/clockreg.h>
 
@@ -63,21 +66,175 @@
 
 volatile struct chiptime *Mach_clock_addr;
 
+
+/* Some values for rates for the RTC interrupt */
+#define RATE_32_HZ	0xB	/* 31.250 ms */
+#define RATE_64_HZ	0xA	/* 15.625 ms */
+#define RATE_128_HZ	0x9	/* 7.8125 ms */
+#define RATE_256_HZ	0x8	/* 3.90625 ms */
+#define RATE_512_HZ	0x7	/* 1953.125 us*/
+#define RATE_1024_HZ	0x6	/* 976.562 us */
+#define RATE_2048_HZ	0x5	/* 488.281 usecs/interrupt */
+
+#undef SELECTED_RATE
+
+/*
+ * RTC interrupt rate: pick one of 64, 128, 256, 512, 1024, 2048.
+ * The appropriate rate is machine-dependent, or even model-dependent.
+ *
+ * Unless a machine has a hardware free-running clock, the RTC interrupt
+ * rate is an upper limit on gettimeofday(), context switch interval,
+ * and generally the resolution of real-time.  The standard 4.4bsd pmax
+ * RTC tick rate is 64Hz, which has low overhead but is ludicrous when
+ * doing serious performance measurement.  For machines faster than 3100s,
+ * 1024Hz gives millisecond resolution.   Alphas have an on-chip counter,
+ * and at least some IOASIC Decstations have  a turbochannel cycle-counter,
+ * either of which which can be interpolated between RTC interrupts, to
+ * give resolution in ns or tens of ns.
+ */
+
+#ifndef RTC_HZ
+#ifdef __mips__
+#define RTC_HZ 64
+#else
+# error Kernel config parameter RTC_HZ not defined
+#endif
+#endif
+
+/* Compute value to program clock with, given config parameter RTC_HZ */
+
+#if (RTC_HZ == 128)
+# define SELECTED_RATE RATE_128_HZ
+#else	/* !128 Hz */
+#if (RTC_HZ == 256)
+# define SELECTED_RATE RATE_256_HZ
+#else /*!256Hz*/
+#if (RTC_HZ == 512)
+# define SELECTED_RATE RATE_512_HZ
+#else /*!512hz*/
+#if (RTC_HZ == 1024)
+# define SELECTED_RATE RATE_1024_HZ
+#else /* !1024hz*/
+# if (RTC_HZ == 64)
+# define SELECTED_RATE RATE_64_HZ	/* 4.4bsd default on pmax */
+# else
+# error RTC interrupt rate RTC_HZ not recognised; must be a power of 2
+#endif /*!64Hz*/
+#endif /*!1024Hz*/
+#endif /*!512 Hz*/
+#endif /*!256 Hz*/
+#endif /*!128Hz*/
+
+
+/* Definition of the driver for autoconfig. */
+static int	clockmatch __P((struct device *, void *, void *));
+static void	clockattach __P((struct device *, struct device *, void *));
+struct cfdriver clockcd = {
+	NULL, "clock", clockmatch, clockattach, DV_DULL, sizeof(struct device),
+};
+
+static void	clock_startintr __P((void *));
+static void	clock_stopintr __P((void *));
+
+volatile struct chiptime *Mach_clock_addr;
+
+static int
+clockmatch(parent, cfdata, aux)
+	struct device *parent;
+	void *cfdata;
+	void *aux;
+{
+	struct cfdata *cf = cfdata;
+	struct confargs *ca = aux;
+#ifdef notdef /* XXX */
+	struct tc_cfloc *asic_locp = (struct asic_cfloc *)cf->cf_loc;
+#endif
+	register volatile struct chiptime *c;
+	int vec, ipl;
+	int nclocks;
+
+	/* make sure that we're looking for this type of device. */
+	if (!BUS_MATCHNAME(ca, "dallas_rtc"))
+		return (0);
+
+	/* All known decstations have a Dallas RTC */
+#ifdef pmax
+	nclocks = 1;
+#else      
+	/*See how many clocks this system has */	
+	switch (hwrpb->rpb_type) {
+	case ST_DEC_3000_500:
+	case ST_DEC_3000_300:
+		nclocks = 1;
+		break;
+	default:
+		nclocks = 0;
+	}
+#endif
+
+	/* if it can't have the one mentioned, reject it */
+	if (cf->cf_unit >= nclocks)
+		return (0);
+
+	return (1);
+}
+
+static void
+clockattach(parent, self, aux)
+	struct device *parent;
+	struct device *self;
+	void *aux;
+{
+	register volatile struct chiptime *c;
+	struct confargs *ca = aux;
+
+	Mach_clock_addr = (struct chiptime *)
+		MACH_PHYS_TO_UNCACHED(BUS_CVTADDR(ca));
+
+#ifdef pmax
+	return;
+#endif
+
+#ifndef pmax	/* Turn interrupts off, just in case. */
+	
+	c = Mach_clock_addr;
+	c->regb = REGB_DATA_MODE | REGB_HOURS_FORMAT;
+	MachEmptyWriteBuffer();
+#endif
+
+#ifdef notyet /*XXX*/ /*FIXME*/
+	BUS_INTR_ESTABLISH(ca, (intr_handler_t)hardclock, NULL);
+#endif
+}
+
 /*
  * Start the real-time and statistics clocks. Leave stathz 0 since there
  * are no other timers available.
  */
+void
 cpu_initclocks()
 {
 	register volatile struct chiptime *c;
 	extern int tickadj;
 
-	tick = 15625;		/* number of micro-seconds between interrupts */
-	hz = 1000000 / 15625;	/* 64 Hz */
-	tickadj = 240000 / (60000000 / 15625);
+	if (Mach_clock_addr == NULL)
+		panic("cpu_initclocks: no clock to initialize");
+
+	hz = RTC_HZ;		/* Clock Hz is a configuration parameter */
+	tick = 1000000 / hz;	/* number of microseconds between interrupts */
+	tickfix = 1000000 - (hz * tick);
+	if (tickfix) {
+		int ftp;
+
+		ftp = min(ffs(tickfix), ffs(hz));
+		tickfix >>= (ftp - 1);
+		tickfixinterval = hz >> (ftp - 1);
+        }
+
 	c = Mach_clock_addr;
 	c->rega = REGA_TIME_BASE | SELECTED_RATE;
 	c->regb = REGB_PER_INT_ENA | REGB_DATA_MODE | REGB_HOURS_FORMAT;
+	MachEmptyWriteBuffer();		/* Alpha needs this */
 }
 
 /*
@@ -89,6 +246,7 @@ void
 setstatclockrate(newhz)
 	int newhz;
 {
+	/* nothing we can do */
 }
 
 /*
@@ -106,7 +264,7 @@ static short dayyr[12] = {
 };
 
 /*
- * Initialze the time of day register, based on the time base which is, e.g.
+ * Initialize the time of day register, based on the time base which is, e.g.
  * from a filesystem.  Base provides the time to within six months,
  * and the time of year clock (if any) provides the rest.
  */
@@ -188,6 +346,7 @@ bad:
  * TODRZERO + 100*(SECYEAR+2*SECDAY) (e.g. on Jan 2 just after midnight)
  * to wrap the TODR around.
  */
+void
 resettodr()
 {
 	register volatile struct chiptime *c;
@@ -235,4 +394,16 @@ resettodr()
 	c->regb = t;
 	MachEmptyWriteBuffer();
 	splx(s);
+}
+
+/*XXX*/
+/*
+ * Wait "n" microseconds.
+ * (scsi code needs this).
+*/
+void
+delay(n)
+	int n;
+{
+	DELAY(n);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.9 1995/08/04 01:14:17 jonathan Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.10 1995/08/10 05:17:09 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -144,53 +144,6 @@ cpu_configure()
 
 }
 
-#ifdef DS5000
-/*
- * Autoconfigure a single turbochannel slot.
- * Return 1 if we succeed in configuring the slot.
- */
-int
-tc_config_slot(cp, drp)
-	register struct pmax_ctlr *cp;
-	register struct driver *drp;
-{
-	register int i;
-
-	/*
-	 * If the device is still in an unknown slot,
-	 * then it was not found by tc_find_all_options().
-	 */
-	if (cp->pmax_addr == (char *)QUES)
-	    return 0;
-
-	if (!(*drp->d_init)(cp)) {
-		cp->pmax_alive = 0;
-		return 0;
-	}
-
-	/*
-	 * Only enable interrupts if there is an interrupt handler for it.
-	 * (e.g., PMAG-BA  can't disable the vertical retrace interrupt,
-	 * and we might want to ignore it).
-	 */
-	if (drp->d_intr && (i = cp->pmax_pri) >= 0) {
-		if (tc_slot_info[i].intr == drp->d_intr)
-		    printf("%s: slot %d already set\n",
-			   drp->d_name, i);
-		else if (tc_slot_info[i].intr)
-		    printf("%s: slot %d already in use\n", drp->d_name, i);
-		tc_slot_info[i].intr = drp->d_intr;
-		tc_slot_info[i].unit = cp->pmax_unit;
-		
-#if defined(DIAGNOSTIC) || defined(NEWCONF)
-		printf("enable %s%d pri %d\n", drp->d_name, cp->pmax_unit, i);
-#endif
-		(*tc_enable_interrupt)(i, drp->d_intr, cp->pmax_unit, 1);
-	}
-
-	return 1;
-}
-#endif /* DS5000 */
 
 /*
  * Determine mass storage and memory configuration for a machine.
@@ -214,47 +167,15 @@ configure()
 	 */
 	cputype = pmax_boardtype;		/*XXX*/
 
-	/* print what type of CPU and FPU we have */
-	cpu_configure();
 
-
-#ifdef NEWCONF
-	/* start new-style config */
+	/*
+	 * Kick off autoconfiguration
+	 */
 	(void)splhigh();
 	if (config_rootfound("mainbus", "mainbus") == 0)
 	    panic("no mainbus found");
 
-	/*if (0)*/
-#endif /*NEWCONF*/
-
-	/* probe and initialize controllers */
-	for (cp = pmax_cinit; drp = cp->pmax_driver; cp++) {
-		switch (pmax_boardtype) {
-		case DS_PMAX:
-			if (cp->pmax_addr == (char *)QUES)
-				continue;
-			if (!(*drp->d_init)(cp))
-				continue;
-			break;
-		default:
-			panic("configure: unknown boardtype 0x%x\n",
-			      pmax_boardtype);
-			break;
-
-#ifdef DS5000
-		case DS_3MAX:
-		case DS_3MIN:
-		case DS_MAXINE:
-		case DS_3MAXPLUS:
-			if (!tc_config_slot(cp, drp)) continue;
-			break;
-#endif
-		};
-
-		cp->pmax_alive = 1;
-
-
-	}
+	xconsinit();	/* do console init */
 
 	initcpu(); 	/* causes panic on 3MAX? old-conf wedge on 3max+ */
 
@@ -262,8 +183,11 @@ configure()
 	spl0();
 
 	/*
-	 * Probe scsi bus. (there is no polled scsi?)
+	 * Probe SCSI bus using old-style pmax configuration table.
+	 * We do not yet have machine-independent SCSI support or polled
+	 * SCSI.
 	 */
+	printf("Beginning old-style SCSI device autoconfiguration\n");
 	configure_scsi();
 
 #ifdef GENERIC
@@ -275,6 +199,33 @@ configure()
 #endif
 	swapconf();
 	cold = 0;
+}
+
+static int nscsi;
+static struct pmax_ctlr pmax_scsi_table[4] = {
+/*	driver,		unit,	addr,		flags */
+
+	{ NULL, },
+	{ NULL, }, { NULL, },	{ NULL, },	{ NULL, }
+
+};
+
+/*
+ * Construct an old-style pmax autoconfiguration table entry for a
+ * DECstation SCSI driver, and add it to the table of known
+ * SCSI drivers.  Needed for old-style pmax SCSI-bus probing.
+ */
+void
+pmax_add_scsi(dp, unit)
+	struct driver *dp;
+	int unit;
+{
+	struct pmax_ctlr *cp  = &pmax_scsi_table[nscsi++];
+	if (nscsi > 4) {
+		panic("Too many old-style SCSI adaptors\n");
+	}
+	cp->pmax_driver = dp;
+	cp->pmax_unit = unit;
 }
 
 /*
@@ -289,15 +240,8 @@ configure_scsi()
 	register struct driver *drp;
 
 
-#ifdef DIAGNOSTIC
-	printf("Probing scsi\n");
-#endif
-
 	/* probe and initialize SCSI buses */
-	for (cp = pmax_cinit; drp = cp->pmax_driver; cp++) {
-
-		if (!cp->pmax_alive)
-		    continue;
+	for (cp = &pmax_scsi_table[0]; drp = cp->pmax_driver; cp++) {
 
 		/* probe and initialize devices connected to controller */
 		for (dp = scsi_dinit; drp = dp->sd_driver; dp++) {
