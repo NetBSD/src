@@ -1,6 +1,7 @@
 # Makefile
 #
-# Copyright (c) 1996 The Internet Software Consortium.  All rights reserved.
+# Copyright (c) 1996, 1997 The Internet Software Consortium.
+# All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions
@@ -31,6 +32,6 @@
 
 SRCS   = dhcpd.c dhcp.c bootp.c confpars.c db.c
 PROG   = dhcpd
-MAN    = dhcpd.8 dhcpd.conf.5
+MAN    = dhcpd.8 dhcpd.conf.5 dhcpd.leases.5
 
 .include <bsd.prog.mk>
