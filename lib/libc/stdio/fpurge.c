@@ -1,4 +1,4 @@
-/*	$NetBSD: fpurge.c,v 1.5 1997/07/13 20:15:01 christos Exp $	*/
+/*	$NetBSD: fpurge.c,v 1.6 1998/01/19 07:38:45 jtc Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)fpurge.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: fpurge.c,v 1.5 1997/07/13 20:15:01 christos Exp $");
+__RCSID("$NetBSD: fpurge.c,v 1.6 1998/01/19 07:38:45 jtc Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -49,6 +49,7 @@ __RCSID("$NetBSD: fpurge.c,v 1.5 1997/07/13 20:15:01 christos Exp $");
 #include <stdio.h>
 #include <stdlib.h>
 #include "local.h"
+#include "reentrant.h"
 
 /*
  * fpurge: like fflush, but without writing anything: leave the
@@ -58,8 +59,10 @@ int
 fpurge(fp)
 	register FILE *fp;
 {
+	FLOCKFILE(fp);
 	if (!fp->_flags) {
 		errno = EBADF;
+		FUNLOCKFILE(fp);
 		return(EOF);
 	}
 
@@ -68,5 +71,6 @@ fpurge(fp)
 	fp->_p = fp->_bf._base;
 	fp->_r = 0;
 	fp->_w = fp->_flags & (__SLBF|__SNBF) ? 0 : fp->_bf._size;
+	FUNLOCKFILE(fp);
 	return (0);
 }

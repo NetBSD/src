@@ -1,4 +1,4 @@
-/*	$NetBSD: fputs.c,v 1.6 1997/07/13 20:15:02 christos Exp $	*/
+/*	$NetBSD: fputs.c,v 1.7 1998/01/19 07:38:46 jtc Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -41,13 +41,14 @@
 #if 0
 static char sccsid[] = "@(#)fputs.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: fputs.c,v 1.6 1997/07/13 20:15:02 christos Exp $");
+__RCSID("$NetBSD: fputs.c,v 1.7 1998/01/19 07:38:46 jtc Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
 #include <stdio.h>
 #include <string.h>
 #include "fvwrite.h"
+#include "reentrant.h"
 
 /*
  * Write the given string to the given file.
@@ -59,10 +60,14 @@ fputs(s, fp)
 {
 	struct __suio uio;
 	struct __siov iov;
+	int r;
 
 	iov.iov_base = (void *)s;
 	iov.iov_len = uio.uio_resid = strlen(s);
 	uio.uio_iov = &iov;
 	uio.uio_iovcnt = 1;
-	return (__sfvwrite(fp, &uio));
+	FLOCKFILE(fp);
+	r = __sfvwrite(fp, &uio);
+	FUNLOCKFILE(fp);
+	return r;
 }
