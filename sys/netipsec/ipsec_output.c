@@ -1,9 +1,9 @@
-/*	$NetBSD: ipsec_output.c,v 1.2 2003/08/15 03:42:07 jonathan Exp $	*/
+/*	$NetBSD: ipsec_output.c,v 1.3 2003/08/15 17:14:31 jonathan Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/ipsec_output.c,v 1.3.2.1 2003/01/24 05:11:35 sam Exp $	*/
 /*	$KAME: ipsec.c,v 1.103 2001/05/24 07:14:18 sakane Exp $	*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec_output.c,v 1.2 2003/08/15 03:42:07 jonathan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec_output.c,v 1.3 2003/08/15 17:14:31 jonathan Exp $");
 
 /*
  * IPsec output processing.
@@ -355,7 +355,12 @@ ipsec4_process_packet(
 				setdf = ip4_ipsec_dfbit;
 				break;
 			default:		/* propagate to outer header */
-				setdf = ntohs(ip->ip_off & IP_DF);
+				setdf = ip->ip_off;
+#ifndef __FreeBSD__
+		/* On FreeBSD, ip_off and ip_len assumed in host endian. */
+				setdf = ntohs(setdf);
+#endif
+				setdf = htons(setdf & IP_DF);
 				break;
 			}
 		} else {
