@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: network,v 1.37 2002/04/29 12:13:14 lukem Exp $
+# $NetBSD: network,v 1.38 2002/05/04 13:53:02 tron Exp $
 #
 
 # PROVIDE: network
@@ -308,6 +308,11 @@ network_start()
 		fi
 	fi
 
+	# resync ipf(4)
+	if checkyesno ipfilter; then
+		/sbin/ipf -y
+	fi
+
 	# XXX this must die
 	if [ -s /etc/netstart.local ]; then
 		sh /etc/netstart.local start
@@ -363,6 +368,11 @@ network_stop()
 	# flush routes
 	#
 	route -n flush
+
+	# resync ipf(4)
+	if checkyesno ipfilter; then
+		/sbin/ipf -y
+	fi
 
 }
 
