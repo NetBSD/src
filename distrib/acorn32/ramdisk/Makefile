@@ -1,13 +1,10 @@
-#	$NetBSD: Makefile,v 1.1 2002/01/25 15:28:45 reinoud Exp $
+#	$NetBSD: Makefile,v 1.2 2002/01/30 23:02:21 reinoud Exp $
 
 TOP=		${.CURDIR}/..
 
 .include "${TOP}/Makefile.inc"
 IMAGEDIR=	${.OBJDIR}/ramdisk-image
 IMAGE=		${.OBJDIR}/ramdisk-${REV}.fs
-
-AUXTARGETS=	install.sh upgrade.sh start.sh
-AUXCLEAN=	${AUXTARGETS}
 
 CBIN=		ramdiskbin
 
@@ -21,16 +18,7 @@ MTREE?=		mtree
 DISKTYPE=	install-ramdisk
 RDSIZE=		3800
 
-install.sh: install.tmpl
-	sed "s/@@VERSION@@/${VER}/" < ${.ALLSRC} > ${.TARGET}
-
-upgrade.sh: upgrade.tmpl
-	sed "s/@@VERSION@@/${VER}/" < ${.ALLSRC} > ${.TARGET}
-
-start.sh: start.tmpl
-	sed "s/@@VERSION@@/${VER}/" < ${.ALLSRC} > ${.TARGET}
-
-all: ${AUXTARGETS} ${CBIN} 
+all: ${CBIN} 
 	rm -rf ${IMAGEDIR}
 	mkdir ${IMAGEDIR}
 	${MTREE} -def ${.CURDIR}/${MTREECONF} -p ${IMAGEDIR} -u
