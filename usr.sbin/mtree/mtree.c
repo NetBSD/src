@@ -1,4 +1,4 @@
-/*	$NetBSD: mtree.c,v 1.8 1997/08/20 15:14:52 agc Exp $	*/
+/*	$NetBSD: mtree.c,v 1.9 1997/10/17 11:46:51 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1990, 1993
@@ -33,17 +33,17 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
-static char copyright[] =
-"@(#) Copyright (c) 1989, 1990, 1993\n\
-	The Regents of the University of California.  All rights reserved.\n";
+__COPYRIGHT("@(#) Copyright (c) 1989, 1990, 1993\n\
+	The Regents of the University of California.  All rights reserved.\n");
 #endif /* not lint */
 
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)mtree.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$NetBSD: mtree.c,v 1.8 1997/08/20 15:14:52 agc Exp $";
+__RCSID("$NetBSD: mtree.c,v 1.9 1997/10/17 11:46:51 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -63,22 +63,21 @@ int cflag, dflag, eflag, rflag, sflag, tflag, uflag, Uflag;
 u_short keys;
 char fullpath[MAXPATHLEN];
 
-static void usage __P((void));
+	int	main __P((int, char **));
+static	void	usage __P((void));
 
 int
 main(argc, argv)
 	int argc;
 	char *argv[];
 {
-	extern int optind;
-	extern char *optarg;
 	int ch;
 	char *dir, *p;
 	int status;
 
 	dir = NULL;
 	keys = KEYDEFAULT;
-	while ((ch = getopt(argc, argv, "cdef:K:k:p:rs:tUux")) != EOF)
+	while ((ch = getopt(argc, argv, "cdef:K:k:p:rs:tUux")) != -1)
 		switch((char)ch) {
 		case 'c':
 			cflag = 1;

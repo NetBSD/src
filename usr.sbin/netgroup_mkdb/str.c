@@ -1,4 +1,4 @@
-/*	$NetBSD: str.c,v 1.3 1996/10/04 05:15:30 christos Exp $	*/
+/*	$NetBSD: str.c,v 1.4 1997/10/17 11:49:10 lukem Exp $	*/
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -31,8 +31,9 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
-static char *rcsid = "$NetBSD: str.c,v 1.3 1996/10/04 05:15:30 christos Exp $";
+__RCSID("$NetBSD: str.c,v 1.4 1997/10/17 11:49:10 lukem Exp $");
 #endif
 
 /*

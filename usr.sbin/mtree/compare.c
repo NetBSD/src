@@ -1,4 +1,4 @@
-/*	$NetBSD: compare.c,v 1.12 1997/07/11 07:05:29 mikel Exp $	*/
+/*	$NetBSD: compare.c,v 1.13 1997/10/17 11:46:30 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -33,11 +33,12 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)compare.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$NetBSD: compare.c,v 1.12 1997/07/11 07:05:29 mikel Exp $";
+__RCSID("$NetBSD: compare.c,v 1.13 1997/10/17 11:46:30 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -72,13 +73,14 @@ static char *ftype __P((u_int));
 int
 compare(name, s, p)
 	char *name;
-	register NODE *s;
-	register FTSENT *p;
+	NODE *s;
+	FTSENT *p;
 {
 	u_long len, val;
 	int fd, label;
 	char *cp, *tab;
 
+	tab = NULL;
 	label = 0;
 	switch(s->type) {
 	case F_BLOCK:
@@ -285,7 +287,7 @@ rlink(name)
 	char *name;
 {
 	static char lbuf[MAXPATHLEN];
-	register int len;
+	int len;
 
 	if ((len = readlink(name, lbuf, sizeof(lbuf))) == -1)
 		err("%s: %s", name, strerror(errno));
