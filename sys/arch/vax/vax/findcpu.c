@@ -1,4 +1,4 @@
-/*	$NetBSD: findcpu.c,v 1.9 2000/07/26 11:50:51 ragge Exp $	*/
+/*	$NetBSD: findcpu.c,v 1.10 2001/04/24 20:16:36 ragge Exp $	*/
 /*
  * Copyright (c) 1994, 1998 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -105,6 +105,7 @@ findcpu(void)
 		case VAX_BTYP_660:
 		case VAX_BTYP_60:
 		case VAX_BTYP_680:
+		case VAX_BTYP_681:
 		case VAX_BTYP_630:
 		case VAX_BTYP_650:
 		case VAX_BTYP_53:
