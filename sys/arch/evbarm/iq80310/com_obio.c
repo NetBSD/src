@@ -1,4 +1,4 @@
-/*	$NetBSD: com_obio.c,v 1.3 2002/04/12 03:01:57 briggs Exp $	*/
+/*	$NetBSD: com_obio.c,v 1.4 2002/04/12 19:32:31 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -84,9 +84,7 @@ com_obio_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_iot = oba->oba_st;
 	sc->sc_iobase = oba->oba_addr;
 	sc->sc_frequency = COM_FREQ;
-#if defined(IOP310_TEAMASA_NPWR)
-	sc->sc_hwflags |= COM_HW_TXFIFO_DISABLE;
-#endif
+	sc->sc_hwflags = COM_HW_NO_TXPRELOAD;
 	error = bus_space_map(sc->sc_iot, oba->oba_addr, 8, 0, &sc->sc_ioh);
 
 	if (error) {
