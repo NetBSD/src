@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.104.2.3 1998/05/05 09:51:42 mycroft Exp $	*/
+/*	$NetBSD: trap.c,v 1.104.2.4 1998/11/03 17:37:53 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
@@ -544,6 +544,9 @@ syscall(frame)
 	size_t argsize;
 	register_t code, args[8], rval[2];
 	u_quad_t sticks;
+#ifdef COMPAT_LINUX
+	int linux;
+#endif /* COMPAT_LINUX */
 
 	cnt.v_syscall++;
 	if (!USERMODE(frame.tf_cs, frame.tf_eflags))
@@ -557,12 +560,22 @@ syscall(frame)
 	nsys = p->p_emul->e_nsysent;
 	callp = p->p_emul->e_sysent;
 
+#ifdef COMPAT_LINUX
+	linux = 0
+# ifdef EXEC_AOUT
+	    || (p->p_emul == &emul_linux_aout)
+# endif /* EXEC_AOUT */
+# ifdef EXEC_ELF32
+	    || (p->p_emul == &emul_linux_elf)
+# endif /* EXEC_ELF32 */
+	    ;
+#endif /* COMPAT_LINUX */
 #ifdef COMPAT_IBCS2
 	if (p->p_emul == &emul_ibcs2_coff || p->p_emul == &emul_ibcs2_elf ||
 	    p->p_emul == &emul_ibcs2_xout)
 		if (IBCS2_HIGH_SYSCALL(code))
 			code = IBCS2_CVT_HIGH_SYSCALL(code);
-#endif
+#endif /* COMPAT_IBCS2 */
 	params = (caddr_t)frame.tf_esp + sizeof(int);
 
 #ifdef VM86
@@ -574,16 +587,15 @@ syscall(frame)
 	if (frame.tf_eflags & PSL_VM)
 		code = -1;
 	else
-#endif
+#endif /* VM86 */
 
 	switch (code) {
 	case SYS_syscall:
 #ifdef COMPAT_LINUX
 		/* Linux has a special system setup call as number 0 */
-		if (p->p_emul == &emul_linux_aout ||
-		    p->p_emul == &emul_linux_elf)
+		if (linux)
 			break;
-#endif
+#endif /* COMPAT_LINUX */
 		/*
 		 * Code is first argument, followed by actual args.
 		 */
@@ -598,10 +610,11 @@ syscall(frame)
 #ifdef COMPAT_FREEBSD
 		/* FreeBSD has a same function in SYS___syscall */
 		if (callp != sysent && p->p_emul != &emul_freebsd)
+			break;
 #else
 		if (callp != sysent)
-#endif
 			break;
+#endif /* COMPAT_FREEBSD */
 		code = fuword(params + _QUAD_LOWWORD * sizeof(int));
 		params += sizeof(quad_t);
 		break;
@@ -613,48 +626,46 @@ syscall(frame)
 	else
 		callp += code;
 	argsize = callp->sy_argsize;
+	if (argsize) {
 #ifdef COMPAT_LINUX
-	/* XXX extra if() for every emul type.. */
-	if (p->p_emul == &emul_linux_aout || p->p_emul == &emul_linux_elf) {
-		/*
-		 * Linux passes the args in ebx, ecx, edx, esi, edi, in
-		 * increasing order.
-		 */
-		switch (argsize) {
-		case 20:
-			args[4] = frame.tf_edi;
-		case 16:
-			args[3] = frame.tf_esi;
-		case 12:
-			args[2] = frame.tf_edx;
-		case 8:
-			args[1] = frame.tf_ecx;
-		case 4:
-			args[0] = frame.tf_ebx;
-		case 0:
-			break;
-		default:
-			panic("linux syscall with weird argument size %d",
-			    argsize);
-			break;
+		if (linux) {
+			/*
+			 * Linux passes the args in ebx, ecx, edx, esi, edi, in
+			 * increasing order.
+			 */
+			switch (argsize >> 2) {
+			case 5:
+				args[4] = frame.tf_edi;
+			case 4:
+				args[3] = frame.tf_esi;
+			case 3:
+				args[2] = frame.tf_edx;
+			case 2:
+				args[1] = frame.tf_ecx;
+			case 1:
+				args[0] = frame.tf_ebx;
+				break;
+			default:
+				panic("linux syscall bogus argument size %d",
+				    argsize);
+				break;
+			}
 		}
-		error = 0;
+		else
+#endif /* COMPAT_LINUX */
+		{
+			error = copyin(params, (caddr_t)args, argsize);
+			if (error)
+				goto bad;
+		}
 	}
-	else
-#endif
-	if (argsize)
-		error = copyin(params, (caddr_t)args, argsize);
-	else
-		error = 0;
 #ifdef SYSCALL_DEBUG
 	scdebug_call(p, code, args);
-#endif
+#endif /* SYSCALL_DEBUG */
 #ifdef KTRACE
 	if (KTRPOINT(p, KTR_SYSCALL))
 		ktrsyscall(p->p_tracep, code, argsize, args);
-#endif
-	if (error)
-		goto bad;
+#endif /* KTRACE */
 	rval[0] = 0;
 	rval[1] = frame.tf_edx;
 	error = (*callp->sy_call)(p, args, rval);
@@ -666,7 +677,10 @@ syscall(frame)
 		 */
 		p = curproc;
 		frame.tf_eax = rval[0];
-		frame.tf_edx = rval[1];
+#ifdef COMPAT_LINUX
+		if (!linux)
+#endif /* COMPAT_LINUX */
+			frame.tf_edx = rval[1];
 		frame.tf_eflags &= ~PSL_C;	/* carry bit */
 		break;
 	case ERESTART:
@@ -691,12 +705,12 @@ syscall(frame)
 
 #ifdef SYSCALL_DEBUG
 	scdebug_ret(p, code, error, rval);
-#endif
+#endif /* SYSCALL_DEBUG */
 	userret(p, frame.tf_eip, sticks);
 #ifdef KTRACE
 	if (KTRPOINT(p, KTR_SYSRET))
 		ktrsysret(p->p_tracep, code, error, rval[0]);
-#endif
+#endif /* KTRACE */
 }
 
 void
