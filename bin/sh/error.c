@@ -1,4 +1,4 @@
-/*	$NetBSD: error.c,v 1.15 1996/10/16 14:35:42 christos Exp $	*/
+/*	$NetBSD: error.c,v 1.16 1997/04/11 23:06:51 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -40,7 +40,7 @@
 #if 0
 static char sccsid[] = "@(#)error.c	8.2 (Berkeley) 5/4/95";
 #else
-static char rcsid[] = "$NetBSD: error.c,v 1.15 1996/10/16 14:35:42 christos Exp $";
+static char rcsid[] = "$NetBSD: error.c,v 1.16 1997/04/11 23:06:51 christos Exp $";
 #endif
 #endif /* not lint */
 
@@ -148,7 +148,7 @@ exverror(cond, msg, ap)
 }
 
 
-#if __STDC__
+#ifdef __STDC__
 void
 error(char *msg, ...)
 #else
@@ -157,11 +157,11 @@ error(va_alist)
 	va_dcl
 #endif
 {
-#if !__STDC__
+#ifndef __STDC__
 	char *msg;
 #endif
 	va_list ap;
-#if __STDC__
+#ifdef __STDC__
 	va_start(ap, msg);
 #else
 	va_start(ap);
@@ -172,7 +172,7 @@ error(va_alist)
 }
 
 
-#if __STDC__
+#ifdef __STDC__
 void
 exerror(int cond, char *msg, ...)
 #else
@@ -181,12 +181,12 @@ exerror(va_alist)
 	va_dcl
 #endif
 {
-#if !__STDC__
+#ifndef __STDC__
 	int cond;
 	char *msg;
 #endif
 	va_list ap;
-#if __STDC__
+#ifdef __STDC__
 	va_start(ap, msg);
 #else
 	va_start(ap);
