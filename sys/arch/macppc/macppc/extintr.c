@@ -1,4 +1,4 @@
-/*	$NetBSD: extintr.c,v 1.18 2000/12/17 23:16:22 tsubai Exp $	*/
+/*	$NetBSD: extintr.c,v 1.19 2000/12/17 23:24:25 tsubai Exp $	*/
 
 /*-
  * Copyright (c) 1995 Per Fogelstrom
@@ -77,7 +77,7 @@ static __inline void openpic_eoi __P((int));
 static void do_pending_int __P((void));
 
 unsigned int imen = 0xffffffff;
-volatile int cpl, ipending, astpending;
+volatile int cpl, ipending;
 int imask[NIPL];
 
 int intrtype[NIRQ], intrmask[NIRQ], intrlevel[NIRQ];
