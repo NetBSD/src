@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le.c,v 1.6 1996/04/08 20:09:56 jonathan Exp $	*/
+/*	$NetBSD: if_le.c,v 1.7 1996/04/18 00:25:37 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
@@ -221,11 +221,11 @@ le_tc_attach(parent, self, aux)
 		sc->sc_mem = (void *)TC_PHYS_TO_UNCACHED(le_iomem);
 		cp = ioasic_lance_ether_address();
 
-		sc->sc_copytodesc = copytobuf_gap2;
-		sc->sc_copyfromdesc = copyfrombuf_gap2;
-		sc->sc_copytobuf = copytobuf_gap16;
-		sc->sc_copyfrombuf = copyfrombuf_gap16;
-		sc->sc_zerobuf = zerobuf_gap16;
+		sc->sc_copytodesc = am7990_copytobuf_gap2;
+		sc->sc_copyfromdesc = am7990_copyfrombuf_gap2;
+		sc->sc_copytobuf = am7990_copytobuf_gap16;
+		sc->sc_copyfrombuf = am7990_copyfrombuf_gap16;
+		sc->sc_zerobuf = am7990_zerobuf_gap16;
 
 		ioasic_lance_dma_setup(le_iomem);	/* XXX more thought */
 		ie_fn = ioasic_intr_establish;
@@ -244,11 +244,11 @@ le_tc_attach(parent, self, aux)
 		sc->sc_mem = (void *)(d->ta_addr + LE_OFFSET_RAM);
 		cp = (u_char *)(d->ta_addr + LE_OFFSET_ROM + 2);
 
-		sc->sc_copytodesc = copytobuf_contig;
-		sc->sc_copyfromdesc = copyfrombuf_contig;
-		sc->sc_copytobuf = copytobuf_contig;
-		sc->sc_copyfrombuf = copyfrombuf_contig;
-		sc->sc_zerobuf = zerobuf_contig;
+		sc->sc_copytodesc = am7990_copytobuf_contig;
+		sc->sc_copyfromdesc = am7990_copyfrombuf_contig;
+		sc->sc_copytobuf = am7990_copytobuf_contig;
+		sc->sc_copyfrombuf = am7990_copyfrombuf_contig;
+		sc->sc_zerobuf = am7990_zerobuf_contig;
 
 		sc->sc_cookie = d->ta_cookie;
 		/*
@@ -270,11 +270,11 @@ le_tc_attach(parent, self, aux)
 /*XXX*/		sc->sc_mem = (void *)TC_PHYS_TO_UNCACHED(0x19000000);
 /*XXX*/		cp = (u_char *)(TC_PHYS_TO_UNCACHED(KN01_SYS_CLOCK) + 1);
 
-		sc->sc_copytodesc = copytobuf_gap2;
-		sc->sc_copyfromdesc = copyfrombuf_gap2;
-		sc->sc_copytobuf = copytobuf_gap2;
-		sc->sc_copyfrombuf = copyfrombuf_gap2;
-		sc->sc_zerobuf = zerobuf_gap2;
+		sc->sc_copytodesc = am7990_copytobuf_gap2;
+		sc->sc_copyfromdesc = am7990_copyfrombuf_gap2;
+		sc->sc_copytobuf = am7990_copytobuf_gap2;
+		sc->sc_copyfrombuf = am7990_copyfrombuf_gap2;
+		sc->sc_zerobuf = am7990_zerobuf_gap2;
 
 		sc->sc_cookie = (void *)ca->ca_slotpri; /*XXX more thought */
 		ie_fn = (ie_fn_t) kn01_intr_establish;

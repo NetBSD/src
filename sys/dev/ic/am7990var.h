@@ -1,4 +1,4 @@
-/*	$NetBSD: am7990var.h,v 1.4 1996/03/14 19:05:09 christos Exp $	*/
+/*	$NetBSD: am7990var.h,v 1.5 1996/04/18 00:25:33 cgd Exp $	*/
 
 /*
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
@@ -62,17 +62,17 @@ integrate void leread __P((struct le_softc *, int, int));
  * for drivers that have not yet been optimized.
  */
 #ifdef LE_NEED_BUF_CONTIG
-integrate void copytobuf_contig __P((struct le_softc *, void *, int, int));
-integrate void copyfrombuf_contig __P((struct le_softc *, void *, int, int));
-integrate void zerobuf_contig __P((struct le_softc *, int, int));
+void am7990_copytobuf_contig __P((struct le_softc *, void *, int, int));
+void am7990_copyfrombuf_contig __P((struct le_softc *, void *, int, int));
+void am7990_zerobuf_contig __P((struct le_softc *, int, int));
 #endif /* LE_NEED_BUF_CONTIG */
 #ifdef LE_NEED_BUF_GAP2
-integrate void copytobuf_gap2 __P((struct le_softc *, void *, int, int));
-integrate void copyfrombuf_gap2 __P((struct le_softc *, void *, int, int));
-integrate void zerobuf_gap2 __P((struct le_softc *, int, int));
+void am7990_copytobuf_gap2 __P((struct le_softc *, void *, int, int));
+void am7990_copyfrombuf_gap2 __P((struct le_softc *, void *, int, int));
+void am7990_zerobuf_gap2 __P((struct le_softc *, int, int));
 #endif /* LE_NEED_BUF_GAP2 */
 #ifdef LE_NEED_BUF_GAP16
-integrate void copytobuf_gap16 __P((struct le_softc *, void *, int, int));
-integrate void copyfrombuf_gap16 __P((struct le_softc *, void *, int, int));
-integrate void zerobuf_gap16 __P((struct le_softc *, int, int));
+void am7990_copytobuf_gap16 __P((struct le_softc *, void *, int, int));
+void am7990_copyfrombuf_gap16 __P((struct le_softc *, void *, int, int));
+void am7990_zerobuf_gap16 __P((struct le_softc *, int, int));
 #endif /* LE_NEED_BUF_GAP16 */
