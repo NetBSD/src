@@ -1,4 +1,4 @@
-/*	$NetBSD: sha1.c,v 1.6 2000/09/17 19:55:29 eeh Exp $	*/
+/*	$NetBSD: sha1.c,v 1.6.24.1 2004/08/03 10:53:31 skrll Exp $	*/
 /*	$OpenBSD: sha1.c,v 1.9 1997/07/23 21:12:32 kstailey Exp $	*/
 
 /*
@@ -56,7 +56,13 @@ typedef union {
     u_int l[16];
 } CHAR64LONG16;
 
-#ifdef __sparc64__
+/* old sparc64 gcc could not compile this */
+#undef SPARC64_GCC_WORKAROUND
+#if defined(__sparc64__) && defined(__GNUC__) && __GNUC__ < 3
+#define SPARC64_GCC_WORKAROUND
+#endif
+
+#ifdef SPARC64_GCC_WORKAROUND
 void do_R01(u_int32_t *a, u_int32_t *b, u_int32_t *c, u_int32_t *d, u_int32_t *e, CHAR64LONG16 *);
 void do_R2(u_int32_t *a, u_int32_t *b, u_int32_t *c, u_int32_t *d, u_int32_t *e, CHAR64LONG16 *);
 void do_R3(u_int32_t *a, u_int32_t *b, u_int32_t *c, u_int32_t *d, u_int32_t *e, CHAR64LONG16 *);
@@ -134,7 +140,7 @@ void SHA1Transform(state, buffer)
     d = state[3];
     e = state[4];
 
-#ifdef __sparc64__
+#ifdef SPARC64_GCC_WORKAROUND
     do_R01(&a, &b, &c, &d, &e, block);
     do_R2(&a, &b, &c, &d, &e, block);
     do_R3(&a, &b, &c, &d, &e, block);
@@ -228,14 +234,15 @@ void SHA1Final(digest, context)
 {
     u_int i;
     u_char finalcount[8];
+    static unsigned char bs[] = "\200", zp[] = "\0";
 
     for (i = 0; i < 8; i++) {
 	finalcount[i] = (u_char)((context->count[(i >= 4 ? 0 : 1)]
 	 >> ((3-(i & 3)) * 8) ) & 255);	 /* Endian independent */
     }
-    SHA1Update(context, (u_char *)"\200", 1);
+    SHA1Update(context, bs, 1);
     while ((context->count[0] & 504) != 448)
-	SHA1Update(context, (u_char *)"\0", 1);
+	SHA1Update(context, zp, 1);
     SHA1Update(context, finalcount, 8);  /* Should cause a SHA1Transform() */
 
     if (digest) {

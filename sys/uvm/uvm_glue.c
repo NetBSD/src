@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_glue.c,v 1.66.2.1 2003/07/02 15:27:29 darrenr Exp $	*/
+/*	$NetBSD: uvm_glue.c,v 1.66.2.2 2004/08/03 10:57:06 skrll Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -67,11 +67,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_glue.c,v 1.66.2.1 2003/07/02 15:27:29 darrenr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_glue.c,v 1.66.2.2 2004/08/03 10:57:06 skrll Exp $");
 
 #include "opt_kgdb.h"
 #include "opt_kstack.h"
-#include "opt_sysv.h"
 #include "opt_uvmhist.h"
 
 /*
@@ -84,9 +83,6 @@ __KERNEL_RCSID(0, "$NetBSD: uvm_glue.c,v 1.66.2.1 2003/07/02 15:27:29 darrenr Ex
 #include <sys/resourcevar.h>
 #include <sys/buf.h>
 #include <sys/user.h>
-#ifdef SYSVSHM
-#include <sys/shm.h>
-#endif
 
 #include <uvm/uvm.h>
 
@@ -96,20 +92,18 @@ __KERNEL_RCSID(0, "$NetBSD: uvm_glue.c,v 1.66.2.1 2003/07/02 15:27:29 darrenr Ex
  * local prototypes
  */
 
-static void uvm_swapout __P((struct lwp *));
+static void uvm_swapout(struct lwp *);
 
 #define UVM_NUAREA_MAX 16
 void *uvm_uareas;
 int uvm_nuarea;
 struct simplelock uvm_uareas_slock = SIMPLELOCK_INITIALIZER;
 
+static void uvm_uarea_free(vaddr_t);
+
 /*
  * XXXCDC: do these really belong here?
  */
-
-int readbuffers = 0;		/* allow KGDB to read kern buffer pool */
-				/* XXX: see uvm_kernacc */
-
 
 /*
  * uvm_kernacc: can the kernel access a region of memory
@@ -132,45 +126,6 @@ uvm_kernacc(addr, len, rw)
 	vm_map_lock_read(kernel_map);
 	rv = uvm_map_checkprot(kernel_map, saddr, eaddr, prot);
 	vm_map_unlock_read(kernel_map);
-
-	/*
-	 * XXX there are still some things (e.g. the buffer cache) that
-	 * are managed behind the VM system's back so even though an
-	 * address is accessible in the mind of the VM system, there may
-	 * not be physical pages where the VM thinks there is.  This can
-	 * lead to bogus allocation of pages in the kernel address space
-	 * or worse, inconsistencies at the pmap level.  We only worry
-	 * about the buffer cache for now.
-	 */
-	if (!readbuffers && rv && (eaddr > (vaddr_t)buffers &&
-			     saddr < (vaddr_t)buffers + MAXBSIZE * nbuf))
-		rv = FALSE;
-	return(rv);
-}
-
-/*
- * uvm_useracc: can the user access it?
- *
- * - called from physio() and sys___sysctl().
- */
-
-boolean_t
-uvm_useracc(addr, len, rw)
-	caddr_t addr;
-	size_t len;
-	int rw;
-{
-	struct vm_map *map;
-	boolean_t rv;
-	vm_prot_t prot = rw == B_READ ? VM_PROT_READ : VM_PROT_WRITE;
-
-	/* XXX curproc */
-	map = &curproc->p_vmspace->vm_map;
-
-	vm_map_lock_read(map);
-	rv = uvm_map_checkprot(map, trunc_page((vaddr_t)addr),
-	    round_page((vaddr_t)addr + len), prot);
-	vm_map_unlock_read(map);
 
 	return(rv);
 }
@@ -295,7 +250,7 @@ uvm_lwp_fork(l1, l2, stack, stacksize, func, arg)
 	struct lwp *l1, *l2;
 	void *stack;
 	size_t stacksize;
-	void (*func) __P((void *));
+	void (*func)(void *);
 	void *arg;
 {
 	struct user *up = l2->l_addr;
@@ -317,6 +272,10 @@ uvm_lwp_fork(l1, l2, stack, stacksize, func, arg)
 		    VM_PROT_READ | VM_PROT_WRITE);
 		if (error)
 			panic("uvm_lwp_fork: uvm_fault_wire failed: %d", error);
+#ifdef PMAP_UAREA
+		/* Tell the pmap this is a u-area mapping */
+		PMAP_UAREA((vaddr_t)up);
+#endif
 		l2->l_flag |= L_INMEM;
 	}
 
@@ -338,33 +297,6 @@ uvm_lwp_fork(l1, l2, stack, stacksize, func, arg)
 }
 
 /*
- * uvm_exit: exit a virtual address space
- *
- * - the process passed to us is a dead (pre-zombie) process; we
- *   are running on a different context now (the reaper).
- * - we must run in a separate thread because freeing the vmspace
- *   of the dead process may block.
- */
-
-void
-uvm_proc_exit(p)
-	struct proc *p;
-{
-	uvmspace_free(p->p_vmspace);
-}
-
-void
-uvm_lwp_exit(l)
-	struct lwp *l;
-{
-	vaddr_t va = (vaddr_t)l->l_addr;
-
-	l->l_flag &= ~L_INMEM;
-	uvm_uarea_free(va);
-	l->l_addr = NULL;
-}
-
-/*
  * uvm_uarea_alloc: allocate a u-area
  */
 
@@ -378,8 +310,8 @@ uvm_uarea_alloc(vaddr_t *uaddrp)
 #endif
 
 	simple_lock(&uvm_uareas_slock);
-	uaddr = (vaddr_t)uvm_uareas;
-	if (uaddr) {
+	if (uvm_nuarea > 0) {
+		uaddr = (vaddr_t)uvm_uareas;
 		uvm_uareas = *(void **)uvm_uareas;
 		uvm_nuarea--;
 		simple_unlock(&uvm_uareas_slock);
@@ -393,23 +325,82 @@ uvm_uarea_alloc(vaddr_t *uaddrp)
 }
 
 /*
- * uvm_uarea_free: free a u-area
+ * uvm_uarea_free: free a u-area; never blocks
+ */
+
+static __inline__ void
+uvm_uarea_free(vaddr_t uaddr)
+{
+	simple_lock(&uvm_uareas_slock);
+	*(void **)uaddr = uvm_uareas;
+	uvm_uareas = (void *)uaddr;
+	uvm_nuarea++;
+	simple_unlock(&uvm_uareas_slock);
+}
+
+/*
+ * uvm_uarea_drain: return memory of u-areas over limit
+ * back to system
  */
 
 void
-uvm_uarea_free(vaddr_t uaddr)
+uvm_uarea_drain(boolean_t empty)
 {
+	int leave = empty ? 0 : UVM_NUAREA_MAX;
+	vaddr_t uaddr;
+
+	if (uvm_nuarea <= leave)
+		return;
 
 	simple_lock(&uvm_uareas_slock);
-	if (uvm_nuarea < UVM_NUAREA_MAX) {
-		*(void **)uaddr = uvm_uareas;
-		uvm_uareas = (void *)uaddr;
-		uvm_nuarea++;
-		simple_unlock(&uvm_uareas_slock);
-	} else {
+	while(uvm_nuarea > leave) {
+		uaddr = (vaddr_t)uvm_uareas;
+		uvm_uareas = *(void **)uvm_uareas;
+		uvm_nuarea--;
 		simple_unlock(&uvm_uareas_slock);
 		uvm_km_free(kernel_map, uaddr, USPACE);
+		simple_lock(&uvm_uareas_slock);
 	}
+	simple_unlock(&uvm_uareas_slock);
+}
+
+/*
+ * uvm_exit: exit a virtual address space
+ *
+ * - the process passed to us is a dead (pre-zombie) process; we
+ *   are running on a different context now (the reaper).
+ * - borrow proc0's address space because freeing the vmspace
+ *   of the dead process may block.
+ */
+
+void
+uvm_proc_exit(p)
+	struct proc *p;
+{
+	struct lwp *l = curlwp; /* XXX */
+	struct vmspace *ovm;
+
+	KASSERT(p == l->l_proc);
+	ovm = p->p_vmspace;
+
+	/*
+	 * borrow proc0's address space.
+	 */
+	pmap_deactivate(l);
+	p->p_vmspace = proc0.p_vmspace;
+	pmap_activate(l);
+
+	uvmspace_free(ovm);
+}
+
+void
+uvm_lwp_exit(struct lwp *l)
+{
+	vaddr_t va = (vaddr_t)l->l_addr;
+
+	l->l_flag &= ~L_INMEM;
+	uvm_uarea_free(va);
+	l->l_addr = NULL;
 }
 
 /*
@@ -431,9 +422,9 @@ uvm_init_limits(p)
 	 */
 
 	p->p_rlimit[RLIMIT_STACK].rlim_cur = DFLSSIZ;
-	p->p_rlimit[RLIMIT_STACK].rlim_max = MAXSSIZ;
+	p->p_rlimit[RLIMIT_STACK].rlim_max = maxsmap;
 	p->p_rlimit[RLIMIT_DATA].rlim_cur = DFLDSIZ;
-	p->p_rlimit[RLIMIT_DATA].rlim_max = MAXDSIZ;
+	p->p_rlimit[RLIMIT_DATA].rlim_max = maxdmap;
 	p->p_rlimit[RLIMIT_RSS].rlim_cur = ptoa(uvmexp.free);
 }
 
@@ -607,11 +598,15 @@ uvm_swapout_threads()
 	outpri = outpri2 = 0;
 	proclist_lock_read();
 	LIST_FOREACH(l, &alllwp, l_list) {
+		KASSERT(l->l_proc != NULL);
 		if (!swappable(l))
 			continue;
 		switch (l->l_stat) {
-		case LSRUN:
 		case LSONPROC:
+			KDASSERT(l->l_cpu != curcpu());
+			continue;
+
+		case LSRUN:
 			if (l->l_swtime > outpri2) {
 				outl2 = l;
 				outpri2 = l->l_swtime;
@@ -674,15 +669,14 @@ uvm_swapout(l)
 #endif
 
 	/*
-	 * Do any machine-specific actions necessary before swapout.
-	 * This can include saving floating point state, etc.
-	 */
-	cpu_swapout(l);
-
-	/*
 	 * Mark it as (potentially) swapped out.
 	 */
 	SCHED_LOCK(s);
+	if (l->l_stat == LSONPROC) {
+		KDASSERT(l->l_cpu != curcpu());
+		SCHED_UNLOCK(s);
+		return;
+	}
 	l->l_flag &= ~L_INMEM;
 	if (l->l_stat == LSRUN)
 		remrunqueue(l);
@@ -690,6 +684,12 @@ uvm_swapout(l)
 	l->l_swtime = 0;
 	p->p_stats->p_ru.ru_nswap++;
 	++uvmexp.swapouts;
+
+	/*
+	 * Do any machine-specific actions necessary before swapout.
+	 * This can include saving floating point state, etc.
+	 */
+	cpu_swapout(l);
 
 	/*
 	 * Unwire the to-be-swapped process's user struct and kernel stack.
@@ -744,7 +744,7 @@ uvm_coredump_walkmap(l, vp, cred, func, cookie)
 		state.prot = entry->protection;
 		state.flags = 0;
 
-		if (state.start >= VM_MAXUSER_ADDRESS)  
+		if (state.start >= VM_MAXUSER_ADDRESS)
 			continue;
 
 		if (state.end > VM_MAXUSER_ADDRESS)
@@ -762,7 +762,7 @@ uvm_coredump_walkmap(l, vp, cred, func, cookie)
 			state.flags |= UVM_COREDUMP_NODUMP;
 
 		if (entry->object.uvm_obj != NULL &&
-		    entry->object.uvm_obj->pgops == &uvm_deviceops)
+		    UVM_OBJ_IS_DEVICE(entry->object.uvm_obj))
 			state.flags |= UVM_COREDUMP_NODUMP;
 
 		vm_map_unlock_read(map);

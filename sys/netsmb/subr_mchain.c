@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_mchain.c,v 1.8 2003/04/04 08:20:50 jdolecek Exp $	*/
+/*	$NetBSD: subr_mchain.c,v 1.8.2.1 2004/08/03 10:56:05 skrll Exp $	*/
 
 /*
  * Copyright (c) 2000, 2001 Boris Popov
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_mchain.c,v 1.8 2003/04/04 08:20:50 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_mchain.c,v 1.8.2.1 2004/08/03 10:56:05 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -172,7 +172,7 @@ mb_fixhdr(struct mbchain *mbp)
 /*
  * Check if object of size 'size' fit to the current position and
  * allocate new mbuf if not. Advance pointers and increase length of mbuf(s).
- * Return pointer to the object placeholder or NULL if any error occured.
+ * Return pointer to the object placeholder or NULL if any error occurred.
  * Note: size should be <= MLEN 
  */
 caddr_t

@@ -1,4 +1,5 @@
-/* $NetBSD: ffs_appleufs.c,v 1.2 2002/11/02 19:31:09 dbj Exp $ */
+/*	$NetBSD: ffs_appleufs.c,v 1.2.6.1 2004/08/03 10:56:49 skrll Exp $	*/
+
 /*
  * Copyright (c) 2002 Darrin B. Jewell
  * All rights reserved.
@@ -29,9 +30,8 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_appleufs.c,v 1.2 2002/11/02 19:31:09 dbj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_appleufs.c,v 1.2.6.1 2004/08/03 10:56:49 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/time.h>
@@ -63,13 +63,13 @@ ffs_appleufs_cksum(appleufs)
 	const struct appleufslabel *appleufs;
 {
 	const u_int16_t *p = (const u_int16_t *)appleufs;
-	int len = sizeof(struct appleufslabel);
+	int len = APPLEUFS_LABEL_SIZE; /* sizeof(struct appleufslabel) */
 	long res = 0;
 	while (len > 1)  {
 		res += *p++;
 		len -= 2;
 	}
-#if 0 /* sizeof(struct appleufslabel) is guaranteed to be even */
+#if 0 /* APPLEUFS_LABEL_SIZE is guaranteed to be even */
 	if (len == 1)
 		res += htobe16(*(u_char *)p<<8);
 #endif
@@ -115,21 +115,24 @@ ffs_appleufs_validate(name,o,n)
 #endif
 		n->ul_namelen = APPLEUFS_MAX_LABEL_NAME;
 	}
-	/* if len is max, will set ul_reserved[0] */
+	/* if len is max, will set ul_unused1 */
 	n->ul_name[n->ul_namelen] = '\0';	
+
 #ifdef DEBUG
 	printf("%s: found APPLE UFS label v%d: \"%s\"\n",
-			name,n->ul_version,n->ul_name);
+	    name,n->ul_version,n->ul_name);
 #endif
+	n->ul_uuid = be64toh(o->ul_uuid);
 	
 	return 0;
 }
 
 void
-ffs_appleufs_set(appleufs,name,t)
+ffs_appleufs_set(appleufs, name, t, uuid)
 	struct appleufslabel *appleufs;
 	const char *name;
 	time_t t;
+	uint64_t uuid;
 {
 	size_t namelen;
 	if (!name) name = "untitled";
@@ -142,14 +145,22 @@ ffs_appleufs_set(appleufs,name,t)
 		(void)time(&t);
 #endif
 	}
+	if (uuid == 0) {
+#if defined(_KERNEL) && !defined(STANDALONE)
+		uuid = arc4random();
+		uuid <<= 32;
+		uuid |= arc4random();
+#endif
+	}
 	namelen = strlen(name);
 	if (namelen > APPLEUFS_MAX_LABEL_NAME)
 		namelen = APPLEUFS_MAX_LABEL_NAME;
-	memset(appleufs, 0, sizeof(*appleufs));
+	memset(appleufs, 0, APPLEUFS_LABEL_SIZE);
 	appleufs->ul_magic   = htobe32(APPLEUFS_LABEL_MAGIC);
 	appleufs->ul_version = htobe32(APPLEUFS_LABEL_VERSION);
 	appleufs->ul_time    = htobe32((u_int32_t)t);
 	appleufs->ul_namelen = htobe16(namelen);
 	strncpy(appleufs->ul_name,name,namelen);
+	appleufs->ul_uuid    = htobe64(uuid);
 	appleufs->ul_checksum = ffs_appleufs_cksum(appleufs);
 }

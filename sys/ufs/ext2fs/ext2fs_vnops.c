@@ -1,7 +1,6 @@
-/*	$NetBSD: ext2fs_vnops.c,v 1.48.2.1 2003/07/02 15:27:20 darrenr Exp $	*/
+/*	$NetBSD: ext2fs_vnops.c,v 1.48.2.2 2004/08/03 10:56:49 skrll Exp $	*/
 
 /*
- * Copyright (c) 1997 Manuel Bouyer.
  * Copyright (c) 1982, 1986, 1989, 1993
  *	The Regents of the University of California.  All rights reserved.
  * (c) UNIX System Laboratories, Inc.
@@ -18,11 +17,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -42,8 +37,40 @@
  * Modified for ext2fs by Manuel Bouyer.
  */
 
+/*
+ * Copyright (c) 1997 Manuel Bouyer.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *	This product includes software developed by Manuel Bouyer.
+ * 4. The name of the author may not be used to endorse or promote products
+ *    derived from this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+ * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+ * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ * IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+ * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+ * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+ * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+ * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ *
+ *	@(#)ufs_vnops.c	8.14 (Berkeley) 10/26/94
+ * Modified for ext2fs by Manuel Bouyer.
+ */
+
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_vnops.c,v 1.48.2.1 2003/07/02 15:27:20 darrenr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_vnops.c,v 1.48.2.2 2004/08/03 10:56:49 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -470,7 +497,8 @@ ext2fs_chown(vp, uid, gid, cred, p)
 	 * the caller must be superuser or the call fails.
 	 */
 	if ((cred->cr_uid != ip->i_e2fs_uid || uid != ip->i_e2fs_uid ||
-		(gid != ip->i_e2fs_gid && !groupmember((gid_t)gid, cred))) &&
+		(gid != ip->i_e2fs_gid &&
+		 !(cred->cr_gid == gid || groupmember((gid_t)gid, cred)))) &&
 		(error = suser(cred, &p->p_acflag)))
 		return (error);
 	ogid = ip->i_e2fs_gid;
@@ -1408,11 +1436,12 @@ bad:
 	 * Write error occurred trying to update the inode
 	 * or the directory so must deallocate the inode.
 	 */
-	PNBUF_PUT(cnp->cn_pnbuf);
-	vput(dvp);
+	tvp->v_type = VNON;	/* Stop explosion if VBLK */
 	ip->i_e2fs_nlink = 0;
 	ip->i_flag |= IN_CHANGE;
 	vput(tvp);
+	PNBUF_PUT(cnp->cn_pnbuf);
+	vput(dvp);
 	return (error);
 }
 

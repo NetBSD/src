@@ -1,4 +1,4 @@
-/*	$NetBSD: spp_debug.c,v 1.12 2001/11/13 01:08:11 lukem Exp $	*/
+/*	$NetBSD: spp_debug.c,v 1.12.16.1 2004/08/03 10:56:05 skrll Exp $	*/
 
 /*
  * Copyright (c) 1984, 1985, 1986, 1987, 1993
@@ -12,11 +12,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -36,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spp_debug.c,v 1.12 2001/11/13 01:08:11 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spp_debug.c,v 1.12.16.1 2004/08/03 10:56:05 skrll Exp $");
 
 #include "opt_inet.h"
 
@@ -64,8 +60,6 @@ __KERNEL_RCSID(0, "$NetBSD: spp_debug.c,v 1.12 2001/11/13 01:08:11 lukem Exp $")
 #define SANAMES
 #include <netns/spp_debug.h>
 
-extern char *prurequests[];
-extern char *tcpstates[];
 extern const char * const sanames[];
 extern const char * const sppnames[];
 
@@ -78,12 +72,7 @@ int	spp_debx;
  * spp debug routines
  */
 void
-spp_trace(act, ostate, sp, si, req)
-	short act;
-	u_int ostate;
-	struct sppcb *sp;
-	struct spidp *si;
-	int req;
+spp_trace(int act, u_int ostate, struct sppcb *sp, struct spidp *si, int req)
 {
 #ifdef INET
 #ifdef SPPDEBUG
@@ -95,7 +84,7 @@ spp_trace(act, ostate, sp, si, req)
 	if (spp_debx == SPP_NDEBUG)
 		spp_debx = 0;
 	sd->sd_time = iptime();
-	sd->sd_act = act;
+	sd->sd_act = (short) act;
 	sd->sd_ostate = ostate;
 	sd->sd_cb = (caddr_t)sp;
 	if (sp)

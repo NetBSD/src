@@ -1,4 +1,4 @@
-/*	$NetBSD: shm.h,v 1.34 2003/05/31 11:49:26 bjh21 Exp $	*/
+/*	$NetBSD: shm.h,v 1.34.2.1 2004/08/03 10:56:30 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -75,6 +75,7 @@
 #ifndef _SYS_SHM_H_
 #define _SYS_SHM_H_
 
+#include <sys/cdefs.h>
 #include <sys/featuretest.h>
 
 #include <sys/ipc.h>
@@ -90,7 +91,9 @@
  * page size. The value of _SC_PAGESIZE is 28 -- we hard code it so we do not
  * need to include unistd.h
  */
+__BEGIN_DECLS
 long __sysconf __P((int));
+__END_DECLS
 #define	SHMLBA		(__sysconf(28))
 #endif
 
@@ -186,8 +189,6 @@ void	shmexit __P((struct vmspace *));
 int	shmctl1 __P((struct proc *, int, int, struct shmid_ds *));
 int	shmat1 __P((struct proc *, int, const void *, int, vaddr_t *, int));
 #else /* !_KERNEL */
-
-#include <sys/cdefs.h>
 
 __BEGIN_DECLS
 void	*shmat __P((int, const void *, int));

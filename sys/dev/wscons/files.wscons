@@ -1,4 +1,4 @@
-# $NetBSD: files.wscons,v 1.28 2003/04/02 18:22:56 drochner Exp $
+# $NetBSD: files.wscons,v 1.28.2.1 2004/08/03 10:52:10 skrll Exp $
 
 #
 # "Workstation Console" glue; attaches frame buffer to emulator & keyboard,
@@ -14,8 +14,14 @@
 
 defparam opt_wsemul.h		WSEMUL_DEFAULT
 defflag	opt_wsemul.h		WSEMUL_NO_DUMB WSEMUL_SUN WSEMUL_VT100
-defparam opt_wskernattr.h	WS_KERNEL_FG WS_KERNEL_BG
+defflag opt_wsdisplay_border.h	WSDISPLAY_CUSTOM_BORDER
+defparam opt_wsdisplay_border.h	WSDISPLAY_BORDER_COLOR
+defflag opt_wsmsgattrs.h	WSDISPLAY_CUSTOM_OUTPUT
+defparam opt_wsmsgattrs.h	WS_DEFAULT_COLATTR WS_DEFAULT_MONOATTR
+				WS_DEFAULT_BG WS_DEFAULT_FG
 				WS_KERNEL_COLATTR WS_KERNEL_MONOATTR
+				WS_KERNEL_BG WS_KERNEL_FG
+				WSDISPLAY_SCROLLCOMBO
 defparam opt_wsemul.h		WSEMUL_VT100_HILIT_FG WSEMUL_VT100_UNDERLINE_FG
 				WSEMUL_VT100_HILIT_BG WSEMUL_VT100_UNDERLINE_BG
 defflag	opt_wsdisplay_compat.h	WSDISPLAY_COMPAT_USL
@@ -24,6 +30,7 @@ defflag	opt_wsdisplay_compat.h	WSDISPLAY_COMPAT_USL
 				WSDISPLAY_CHARFUNCS
 				WSCONS_SUPPORT_PCVTFONTS
 				WSCONS_SUPPORT_ISO7FONTS
+				WSDISPLAY_SCROLLSUPPORT
 defparam opt_wsdisplay_compat.h	WSCOMPAT_USL_SYNCTIMEOUT
 				WSDISPLAY_DEFAULTSCREENS
 
@@ -58,3 +65,7 @@ file	dev/wscons/wscons_rops.c	wsrasteremulops
 
 defpseudo	wsmux
 file	dev/wscons/wsmux.c		wsmux			needs-flag
+
+define	tpcalib
+file	dev/wscons/tpcalib.c		tpcalib
+file	dev/wscons/mra.c		tpcalib

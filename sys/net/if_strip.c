@@ -1,4 +1,4 @@
-/*	$NetBSD: if_strip.c,v 1.48 2003/05/01 07:52:59 itojun Exp $	*/
+/*	$NetBSD: if_strip.c,v 1.48.2.1 2004/08/03 10:54:18 skrll Exp $	*/
 /*	from: NetBSD: if_sl.c,v 1.38 1996/02/13 22:00:23 christos Exp $	*/
 
 /*
@@ -39,11 +39,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -91,7 +87,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_strip.c,v 1.48 2003/05/01 07:52:59 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_strip.c,v 1.48.2.1 2004/08/03 10:54:18 skrll Exp $");
 
 #include "strip.h"
 
@@ -274,8 +270,6 @@ int	strip_newpacket __P((struct strip_softc *sc, u_char *ptr, u_char *end));
 void	strip_send __P((struct strip_softc *sc, struct mbuf *m0));
 
 void	strip_timeout __P((void *x));
-void	stripnetisr(void);
-void	stripintr(void *);
 
 #ifdef DEBUG
 #define DPRINTF(x)	printf x
@@ -348,7 +342,8 @@ stripattach(n)
 
 	for (sc = strip_softc; i < NSTRIP; sc++) {
 		sc->sc_unit = i;		/* XXX */
-		sprintf(sc->sc_if.if_xname, "strip%d", i++);
+		snprintf(sc->sc_if.if_xname, sizeof(sc->sc_if.if_xname),
+		    "strip%d", i++);
 		callout_init(&sc->sc_timo_ch);
 		sc->sc_if.if_softc = sc;
 		sc->sc_if.if_mtu = SLMTU;
@@ -1679,7 +1674,7 @@ strip_newpacket(sc, ptr, end)
 	 * of the decoded packet.  Decode start of IP header, get the
 	 * IP header length and decode that many bytes in total.
 	 */
-	packetlen = ((u_short)sc->sc_rxbuf[2] << 8) | sc->sc_rxbuf[3];
+	packetlen = ((u_int16_t)sc->sc_rxbuf[2] << 8) | sc->sc_rxbuf[3];
 
 #ifdef DIAGNOSTIC
 #if 0
@@ -1971,8 +1966,9 @@ RecvErr(msg, sc)
 		} else if (*ptr >= 32 && *ptr <= 126)
 			*p++ = *ptr;
 		else {
-			sprintf(p, "\\%02x", *ptr);
-			p+= 3;
+			snprintf(p, sizeof(pkt_text) - (p - pkt_text),
+			    "\\%02x", *ptr);
+			p += 3;
 		}
 		ptr++;
 	}

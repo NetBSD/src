@@ -1,4 +1,4 @@
-/*	$NetBSD: specdev.h,v 1.23 2003/01/06 21:06:47 matt Exp $	*/
+/*	$NetBSD: specdev.h,v 1.23.2.1 2004/08/03 10:54:10 skrll Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -12,11 +12,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -42,12 +38,22 @@
  * special devices. It is allocated in checkalias and freed
  * in vgone.
  */
+struct spec_cow_entry {
+	SLIST_ENTRY(spec_cow_entry) ce_list;
+	int (*ce_func)(void *, struct buf *);
+	void *ce_cookie;
+};
+
 struct specinfo {
 	struct	vnode **si_hashchain;
 	struct	vnode *si_specnext;
 	struct	mount *si_mountpoint;
 	dev_t	si_rdev;
 	struct	lockf *si_lockf;
+	struct simplelock si_cow_slock;
+	SLIST_HEAD(, spec_cow_entry) si_cow_head;
+	int si_cow_req;
+	int si_cow_count;
 };
 /*
  * Exported shorthand
@@ -57,6 +63,22 @@ struct specinfo {
 #define v_specnext	v_specinfo->si_specnext
 #define v_speclockf	v_specinfo->si_lockf
 #define v_specmountpoint v_specinfo->si_mountpoint
+#define v_spec_cow_slock v_specinfo->si_cow_slock
+#define v_spec_cow_head	v_specinfo->si_cow_head
+#define v_spec_cow_req	v_specinfo->si_cow_req
+#define v_spec_cow_count v_specinfo->si_cow_count
+
+#define SPEC_COW_LOCK(si, s) \
+	do { \
+		(s) = splbio(); \
+		simple_lock(&(si)->si_cow_slock) ; \
+	} while (/*CONSTCOND*/0)
+
+#define SPEC_COW_UNLOCK(si, s) \
+	do { \
+		simple_unlock(&(si)->si_cow_slock) ; \
+		splx((s)); \
+	} while (/*CONSTCOND*/0)
 
 /*
  * Special device management

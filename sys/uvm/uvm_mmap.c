@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_mmap.c,v 1.74.2.1 2003/07/02 15:27:29 darrenr Exp $	*/
+/*	$NetBSD: uvm_mmap.c,v 1.74.2.2 2004/08/03 10:57:07 skrll Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -51,7 +51,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_mmap.c,v 1.74.2.1 2003/07/02 15:27:29 darrenr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_mmap.c,v 1.74.2.2 2004/08/03 10:57:07 skrll Exp $");
+
+#include "opt_compat_netbsd.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -74,6 +76,9 @@ __KERNEL_RCSID(0, "$NetBSD: uvm_mmap.c,v 1.74.2.1 2003/07/02 15:27:29 darrenr Ex
 #include <uvm/uvm.h>
 #include <uvm/uvm_device.h>
 
+#ifndef COMPAT_ZERODEV
+#define COMPAT_ZERODEV(dev)	(0)
+#endif
 
 /*
  * unimplemented VM system calls:
@@ -200,7 +205,7 @@ sys_mincore(l, v, retval)
 
 		if (UVM_ET_ISOBJ(entry)) {
 			KASSERT(!UVM_OBJ_IS_KERN_OBJECT(entry->object.uvm_obj));
-			if (!UVM_OBJ_IS_VNODE(entry->object.uvm_obj)) {
+			if (UVM_OBJ_IS_DEVICE(entry->object.uvm_obj)) {
 				for (/* nothing */; start < lim;
 				     start += PAGE_SIZE, vec++)
 					subyte(vec, 1);
@@ -330,6 +335,16 @@ sys_mmap(l, v, retval)
 	if ((ssize_t) size < 0)
 		return (EINVAL);			/* don't allow wrap */
 
+#ifndef pmap_wired_count
+	/*
+	 * if we're going to wire the mapping, restrict it to superuser.
+	 */
+
+	if ((flags & MAP_WIRED) != 0 &&
+	    (error = suser(p->p_ucred, &p->p_acflag)) != 0)
+		return (error);
+#endif
+
 	/*
 	 * now check (MAP_FIXED) or get (!MAP_FIXED) the "addr"
 	 */
@@ -349,7 +364,7 @@ sys_mmap(l, v, retval)
 		if (addr > addr + size)
 			return (EOVERFLOW);		/* no wrapping! */
 
-	} else if (addr == NULL || !(flags & MAP_TRYFIXED)) {
+	} else if (addr == 0 || !(flags & MAP_TRYFIXED)) {
 
 		/*
 		 * not fixed: make sure we skip over the largest
@@ -393,7 +408,8 @@ sys_mmap(l, v, retval)
 			return (EOVERFLOW);		/* no offset wrapping */
 
 		/* special case: catch SunOS style /dev/zero */
-		if (vp->v_type == VCHR && vp->v_rdev == zerodev) {
+		if (vp->v_type == VCHR
+		    && (vp->v_rdev == zerodev || COMPAT_ZERODEV(vp->v_rdev))) {
 			flags |= MAP_ANON;
 			goto is_anon;
 		}
@@ -450,7 +466,8 @@ sys_mmap(l, v, retval)
 				if ((error =
 				    VOP_GETATTR(vp, &va, p->p_ucred, l)))
 					return (error);
-				if ((va.va_flags & (IMMUTABLE|APPEND)) == 0)
+				if ((va.va_flags &
+				    (SF_SNAPSHOT|IMMUTABLE|APPEND)) == 0)
 					maxprot |= VM_PROT_WRITE;
 				else if (prot & PROT_WRITE)
 					return (EPERM);
@@ -537,11 +554,11 @@ sys___msync13(l, v, retval)
 
 	/* sanity check flags */
 	if ((flags & ~(MS_ASYNC | MS_SYNC | MS_INVALIDATE)) != 0 ||
-			(flags & (MS_ASYNC | MS_SYNC | MS_INVALIDATE)) == 0 ||
-			(flags & (MS_ASYNC | MS_SYNC)) == (MS_ASYNC | MS_SYNC))
-	  return (EINVAL);
+	    (flags & (MS_ASYNC | MS_SYNC | MS_INVALIDATE)) == 0 ||
+	    (flags & (MS_ASYNC | MS_SYNC)) == (MS_ASYNC | MS_SYNC))
+		return (EINVAL);
 	if ((flags & (MS_ASYNC | MS_SYNC)) == 0)
-	  flags |= MS_SYNC;
+		flags |= MS_SYNC;
 
 	/*
 	 * align the address to a page boundary and adjust the size accordingly.
@@ -688,7 +705,7 @@ sys_mprotect(l, v, retval)
 {
 	struct sys_mprotect_args /* {
 		syscallarg(caddr_t) addr;
-		syscallarg(int) len;
+		syscallarg(size_t) len;
 		syscallarg(int) prot;
 	} */ *uap = v;
 	struct proc *p = l->l_proc;
@@ -712,10 +729,8 @@ sys_mprotect(l, v, retval)
 	pageoff = (addr & PAGE_MASK);
 	addr -= pageoff;
 	size += pageoff;
-	size = (vsize_t)round_page(size);
+	size = round_page(size);
 
-	if ((int)size < 0)
-		return (EINVAL);
 	error = uvm_map_protect(&p->p_vmspace->vm_map, addr, addr + size, prot,
 				FALSE);
 	return error;
@@ -1140,20 +1155,19 @@ uvm_mmap(map, addr, size, prot, maxprot, flags, handle, foff, locklimit)
 			if (prot & PROT_EXEC)
 				vn_markexec(vp);
 		} else {
-			uobj = udv_attach((void *) &vp->v_rdev,
-			    (flags & MAP_SHARED) ? maxprot :
-			    (maxprot & ~VM_PROT_WRITE), foff, size);
+			int i = maxprot;
+
 			/*
 			 * XXX Some devices don't like to be mapped with
-			 * XXX PROT_EXEC, but we don't really have a
-			 * XXX better way of handling this, right now
+			 * XXX PROT_EXEC or PROT_WRITE, but we don't really
+			 * XXX have a better way of handling this, right now
 			 */
-			if (uobj == NULL && (prot & PROT_EXEC) == 0) {
-				maxprot &= ~VM_PROT_EXECUTE;
-				uobj = udv_attach((void *)&vp->v_rdev,
-				    (flags & MAP_SHARED) ? maxprot :
-				    (maxprot & ~VM_PROT_WRITE), foff, size);
-			}
+			do {
+				uobj = udv_attach((void *) &vp->v_rdev,
+				    (flags & MAP_SHARED) ? i :
+				    (i & ~VM_PROT_WRITE), foff, size);
+				i--;
+			} while ((uobj == NULL) && (i > 0));
 			advice = UVM_ADV_RANDOM;
 		}
 		if (uobj == NULL)
@@ -1175,6 +1189,8 @@ uvm_mmap(map, addr, size, prot, maxprot, flags, handle, foff, locklimit)
 	/*
 	 * POSIX 1003.1b -- if our address space was configured
 	 * to lock all future mappings, wire the one we just made.
+	 *
+	 * Also handle the MAP_WIRED flag here.
 	 */
 
 	if (prot == VM_PROT_NONE) {
@@ -1186,7 +1202,7 @@ uvm_mmap(map, addr, size, prot, maxprot, flags, handle, foff, locklimit)
 		return (0);
 	}
 	vm_map_lock(map);
-	if (map->flags & VM_MAP_WIREFUTURE) {
+	if ((flags & MAP_WIRED) != 0 || (map->flags & VM_MAP_WIREFUTURE) != 0) {
 		if ((atop(size) + uvmexp.wired) > uvmexp.wiredmax
 #ifdef pmap_wired_count
 		    || (locklimit != 0 && (size +

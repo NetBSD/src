@@ -1,4 +1,4 @@
-/* $NetBSD: infutil.c,v 1.6 2003/03/25 22:48:44 mycroft Exp $ */
+/* $NetBSD: infutil.c,v 1.6.2.1 2004/08/03 10:53:58 skrll Exp $ */
 
 /* inflate_util.c -- data and routines common to blocks and codes
  * Copyright (C) 1995-2002 Mark Adler
@@ -20,6 +20,30 @@ const uInt inflate_mask[17] = {
     0x01ff, 0x03ff, 0x07ff, 0x0fff, 0x1fff, 0x3fff, 0x7fff, 0xffff
 };
 
+
+#ifndef _ZLIB_NO_ERRMSG
+static const char *const zerrlist[] = {
+	"invalid block type"
+	"invalid stored block lengths",
+	"too many length or distance symbols",
+	"invalid bit length repeat",
+	"invalid literal/length code",
+	"invalid distance code",
+	"oversubscribed dynamic bit lengths tree",
+	"incomplete dynamic bit lengths tree",
+	"oversubscribed literal/length tree",
+	"incomplete literal/length tree",
+	"oversubscribed distance tree",
+	"incomplete distance tree",
+	"empty distance tree with lengths",
+};
+
+char *zerror(e)
+	int e;
+{
+	return __UNCONST(zerrlist[e]);
+}
+#endif
 
 /* copy as much as possible from the sliding window to the output area */
 int inflate_flush(s, z, r)

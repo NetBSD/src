@@ -1,4 +1,4 @@
-/*	$NetBSD: atapi_base.c,v 1.18 2001/11/15 09:48:16 lukem Exp $	*/
+/*	$NetBSD: atapi_base.c,v 1.18.16.1 2004/08/03 10:51:12 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atapi_base.c,v 1.18 2001/11/15 09:48:16 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atapi_base.c,v 1.18.16.1 2004/08/03 10:51:12 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -143,7 +143,11 @@ atapi_interpret_sense(xs)
 			break;
 		case SKEY_ABORTED_COMMAND:
 			msg = "command aborted";
-			error = ERESTART;
+			if (xs->xs_retries != 0) {
+				xs->xs_retries--;
+				error = ERESTART;
+			} else
+				error = EIO;
 			break;
 		default:
 			error = EIO;
@@ -162,7 +166,11 @@ atapi_interpret_sense(xs)
 		}
 		if (xs->sense.atapi_sense & 0x04) { /* Aborted command */
 			msg = "ATA command aborted";
-			error = ERESTART;
+			if (xs->xs_retries != 0) {
+				xs->xs_retries--;
+				error = ERESTART;
+			} else
+				error = EIO;
 		}
 	}
 	if (msg) {

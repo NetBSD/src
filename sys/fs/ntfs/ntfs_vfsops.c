@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_vfsops.c,v 1.10.2.1 2003/07/02 15:26:31 darrenr Exp $	*/
+/*	$NetBSD: ntfs_vfsops.c,v 1.10.2.2 2004/08/03 10:52:42 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 Semen Ustimenko
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ntfs_vfsops.c,v 1.10.2.1 2003/07/02 15:26:31 darrenr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ntfs_vfsops.c,v 1.10.2.2 2004/08/03 10:52:42 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -41,7 +41,7 @@ __KERNEL_RCSID(0, "$NetBSD: ntfs_vfsops.c,v 1.10.2.1 2003/07/02 15:26:31 darrenr
 #include <sys/buf.h>
 #include <sys/fcntl.h>
 #include <sys/malloc.h>
-#include <sys/systm.h>
+#include <sys/sysctl.h>
 #include <sys/device.h>
 #include <sys/conf.h>
 
@@ -73,11 +73,11 @@ static int	ntfs_mount __P((struct mount *, char *, caddr_t,
 static int	ntfs_mount __P((struct mount *, const char *, void *,
 				struct nameidata *, struct lwp *));
 #endif
-static int	ntfs_quotactl __P((struct mount *, int, uid_t, caddr_t,
+static int	ntfs_quotactl __P((struct mount *, int, uid_t, void *,
 				   struct lwp *));
 static int	ntfs_root __P((struct mount *, struct vnode **, struct lwp *));
 static int	ntfs_start __P((struct mount *, int, struct lwp *));
-static int	ntfs_statfs __P((struct mount *, struct statfs *,
+static int	ntfs_statvfs __P((struct mount *, struct statvfs *,
 				 struct lwp *));
 static int	ntfs_sync __P((struct mount *, int, struct ucred *,
 			       struct lwp *));
@@ -102,8 +102,6 @@ static int	ntfs_fhtovp __P((struct mount *, struct fid *,
 static int	ntfs_checkexp __P((struct mount *, struct mbuf *,
 				   int *, struct ucred **));
 static int	ntfs_mountroot __P((void));
-static int	ntfs_sysctl __P((int *, u_int, void *, size_t *, void *,
-				 size_t, struct lwp *));
 #else
 static int	ntfs_init __P((void));
 static int	ntfs_fhtovp __P((struct mount *, struct fid *,
@@ -144,18 +142,25 @@ ntfs_checkexp(mp, nam, exflagsp, credanonp)
 	return (0);
 }
 
-/*ARGSUSED*/
-static int
-ntfs_sysctl(name, namelen, oldp, oldlenp, newp, newlen, l)
-	int *name;
-	u_int namelen;
-	void *oldp;
-	size_t *oldlenp;
-	void *newp;
-	size_t newlen;
-	struct lwp *l;
+SYSCTL_SETUP(sysctl_vfs_ntfs_setup, "sysctl vfs.ntfs subtree setup")
 {
-	return (EINVAL);
+
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_NODE, "vfs", NULL,
+		       NULL, 0, NULL, 0,
+		       CTL_VFS, CTL_EOL);
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_NODE, "ntfs",
+		       SYSCTL_DESCR("NTFS file system"),
+		       NULL, 0, NULL, 0,
+		       CTL_VFS, 20, CTL_EOL);
+	/*
+	 * XXX the "20" above could be dynamic, thereby eliminating
+	 * one more instance of the "number to vfs" mapping problem,
+	 * but "20" is the order as taken from sys/mount.h
+	 */
 }
 
 static int
@@ -196,7 +201,7 @@ ntfs_mountroot()
 	simple_lock(&mountlist_slock);
 	CIRCLEQ_INSERT_TAIL(&mountlist, mp, mnt_list);
 	simple_unlock(&mountlist_slock);
-	(void)ntfs_statfs(mp, &mp->mnt_stat, l);
+	(void)ntfs_statvfs(mp, &mp->mnt_stat, l);
 	vfs_unbusy(mp);
 	return (0);
 }
@@ -304,7 +309,7 @@ ntfs_mount (
 			goto error_1;
 		}
 
-		goto dostatfs;		/* success*/
+		goto dostatvfs;		/* success*/
 
 	}
 #endif /* FreeBSD */
@@ -328,7 +333,7 @@ ntfs_mount (
 	 */
 
 	/* copy in user arguments*/
-	err = copyin(data, (caddr_t)&args, sizeof (struct ntfs_args));
+	err = copyin(data, &args, sizeof (struct ntfs_args));
 	if (err)
 		goto error_1;		/* can't get arguments*/
 
@@ -398,7 +403,7 @@ ntfs_mount (
 		 * Update device name only on success
 		 */
 		if( !err) {
-			err = set_statfs_info(NULL, UIO_USERSPACE, args.fspec,
+			err = set_statvfs_info(NULL, UIO_USERSPACE, args.fspec,
 			    UIO_USERSPACE, mp, p);
 		}
 #endif
@@ -416,7 +421,7 @@ ntfs_mount (
 		 * upper level code.
 		 */
 		/* Save "last mounted on" info for mount point (NULL pad)*/
-		err = set_statfs_info(path, UIO_USERSPACE, args.fspec,
+		err = set_statvfs_info(path, UIO_USERSPACE, args.fspec,
 		    UIO_USERSPACE, mp, l);
 		if ( !err) {
 			err = ntfs_mountfs(devvp, mp, &args, l);
@@ -427,7 +432,7 @@ ntfs_mount (
 	}
 
 #ifdef __FreeBSD__
-dostatfs:
+dostatvfs:
 #endif
 	/*
 	 * Initialize FS stat information in mount struct; uses both
@@ -435,7 +440,7 @@ dostatfs:
 	 *
 	 * This code is common to root and non-root mounts
 	 */
-	(void)VFS_STATFS(mp, &mp->mnt_stat, l);
+	(void)VFS_STATVFS(mp, &mp->mnt_stat, l);
 
 	goto success;
 
@@ -621,8 +626,9 @@ ntfs_mountfs(devvp, mp, argsp, l)
 	mp->mnt_stat.f_fsid.val[0] = dev2udev(dev);
 	mp->mnt_stat.f_fsid.val[1] = mp->mnt_vfc->vfc_typenum;
 #else
-	mp->mnt_stat.f_fsid.val[0] = dev;
-	mp->mnt_stat.f_fsid.val[1] = makefstype(MOUNT_NTFS);
+	mp->mnt_stat.f_fsidx.__fsid_val[0] = dev;
+	mp->mnt_stat.f_fsidx.__fsid_val[1] = makefstype(MOUNT_NTFS);
+	mp->mnt_stat.f_fsid = mp->mnt_stat.f_fsidx.__fsid_val[0];
 #endif
 	mp->mnt_maxsymlinklen = 0;
 	mp->mnt_flag |= MNT_LOCAL;
@@ -707,7 +713,7 @@ ntfs_unmount(
 	vinvalbuf(ntmp->ntm_devvp, V_SAVE, NOCRED, l, 0, 0);
 
 	/* lock the device vnode before calling VOP_CLOSE() */
-	VOP_LOCK(ntmp->ntm_devvp, LK_EXCLUSIVE | LK_RETRY);
+	vn_lock(ntmp->ntm_devvp, LK_EXCLUSIVE | LK_RETRY);
 	error = VOP_CLOSE(ntmp->ntm_devvp, ronly ? FREAD : FREAD|FWRITE,
 		NOCRED, l);
 	VOP_UNLOCK(ntmp->ntm_devvp, 0);
@@ -746,15 +752,19 @@ ntfs_root(
 	return (0);
 }
 
+/*
+ * Do operations associated with quotas, not supported
+ */
+/* ARGSUSED */
 static int
 ntfs_quotactl ( 
 	struct mount *mp,
 	int cmds,
 	uid_t uid,
-	caddr_t arg,
+	void *arg,
 	struct lwp *l)
 {
-	printf("\nntfs_quotactl():\n");
+
 	return EOPNOTSUPP;
 }
 
@@ -766,7 +776,7 @@ ntfs_calccfree(
 	struct vnode *vp;
 	u_int8_t *tmp;
 	int j, error;
-	long cfree = 0;
+	cn_t cfree = 0;
 	size_t bmsize, i;
 
 	vp = ntmp->ntm_sysvn[NTFS_BITMAPINO];
@@ -791,34 +801,32 @@ ntfs_calccfree(
 }
 
 static int
-ntfs_statfs(
+ntfs_statvfs(
 	struct mount *mp,
-	struct statfs *sbp,
+	struct statvfs *sbp,
 	struct lwp *l)
 {
 	struct ntfsmount *ntmp = VFSTONTFS(mp);
 	u_int64_t mftallocated;
 
-	dprintf(("ntfs_statfs():\n"));
+	dprintf(("ntfs_statvfs():\n"));
 
 	mftallocated = VTOF(ntmp->ntm_sysvn[NTFS_MFTINO])->f_allocated;
 
 #if defined(__FreeBSD__)
 	sbp->f_type = mp->mnt_vfc->vfc_typenum;
-#elif defined(__NetBSD__)
-	sbp->f_type = 0;
-#else
-	sbp->f_type = MOUNT_NTFS;
 #endif
 	sbp->f_bsize = ntmp->ntm_bps;
+	sbp->f_frsize = sbp->f_bsize; /* XXX */
 	sbp->f_iosize = ntmp->ntm_bps * ntmp->ntm_spc;
 	sbp->f_blocks = ntmp->ntm_bootfile.bf_spv;
 	sbp->f_bfree = sbp->f_bavail = ntfs_cntobn(ntmp->ntm_cfree);
-	sbp->f_ffree = sbp->f_bfree / ntmp->ntm_bpmftrec;
+	sbp->f_ffree = sbp->f_favail = sbp->f_bfree / ntmp->ntm_bpmftrec;
 	sbp->f_files = mftallocated / ntfs_bntob(ntmp->ntm_bpmftrec) +
-		       sbp->f_ffree;
-	sbp->f_flags = mp->mnt_flag;
-	copy_statfs_info(sbp, mp);
+	    sbp->f_ffree;
+	sbp->f_fresvd = sbp->f_bresvd = 0; /* XXX */
+	sbp->f_flag = mp->mnt_flag;
+	copy_statvfs_info(sbp, mp);
 	return (0);
 }
 
@@ -915,7 +923,7 @@ ntfs_vgetex(
 	struct ntnode *ip;
 	struct fnode *fp;
 	struct vnode *vp;
-	enum vtype f_type;
+	enum vtype f_type = VBAD;
 
 	dprintf(("ntfs_vgetex: ino: %d, attr: 0x%x:%s, lkf: 0x%lx, f: 0x%lx\n",
 		ino, attrtype, attrname?attrname:"", (u_long)lkflags,
@@ -1000,7 +1008,8 @@ ntfs_vgetex(
 #endif
 	fp->f_vp = vp;
 	vp->v_data = fp;
-	vp->v_type = f_type;
+	if (f_type != VBAD)
+		vp->v_type = f_type;
 
 	if (ino == NTFS_ROOTINO)
 		vp->v_flag |= VROOT;
@@ -1037,7 +1046,7 @@ static struct vfsops ntfs_vfsops = {
 	ntfs_unmount,
 	ntfs_root,
 	ntfs_quotactl,
-	ntfs_statfs,
+	ntfs_statvfs,
 	ntfs_sync,
 	ntfs_vget,
 	ntfs_fhtovp,
@@ -1061,7 +1070,7 @@ struct vfsops ntfs_vfsops = {
 	ntfs_unmount,
 	ntfs_root,
 	ntfs_quotactl,
-	ntfs_statfs,
+	ntfs_statvfs,
 	ntfs_sync,
 	ntfs_vget,
 	ntfs_fhtovp,
@@ -1069,9 +1078,10 @@ struct vfsops ntfs_vfsops = {
 	ntfs_init,
 	ntfs_reinit,
 	ntfs_done,
-	ntfs_sysctl,
+	NULL,
 	ntfs_mountroot,
 	ntfs_checkexp,
+	(int (*)(struct mount *, struct vnode *, struct timespec *)) eopnotsupp,
 	ntfs_vnodeopv_descs,
 };
 #endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: strtoul.c,v 1.6 2003/06/07 02:52:33 briggs Exp $	*/
+/*	$NetBSD: strtoul.c,v 1.6.2.1 2004/08/03 10:53:31 skrll Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -12,11 +12,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -39,7 +35,7 @@
 #if 0
 static char sccsid[] = "@(#)strtoul.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: strtoul.c,v 1.6 2003/06/07 02:52:33 briggs Exp $");
+__RCSID("$NetBSD: strtoul.c,v 1.6.2.1 2004/08/03 10:53:31 skrll Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -125,7 +121,7 @@ strtoul(nptr, endptr, base)
 		if (acc > cutoff || (acc == cutoff && c > cutlim)) {
 #if defined(_KERNEL) || defined(_STANDALONE)
 			if (endptr)
-				*endptr = (char *) nptr;
+				*endptr = __UNCONST(nptr);
 			return ULONG_MAX;
 #else
 			any = -1;
@@ -142,6 +138,6 @@ strtoul(nptr, endptr, base)
 		acc = -acc;
 	if (endptr != NULL)
 		/* LINTED interface specification */
-		*endptr = (char *)(any ? s - 1 : nptr);
+		*endptr = __UNCONST(any ? s - 1 : nptr);
 	return (acc);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_loan.c,v 1.42 2003/05/03 17:54:32 yamt Exp $	*/
+/*	$NetBSD: uvm_loan.c,v 1.42.2.1 2004/08/03 10:57:06 skrll Exp $	*/
 
 /*
  *
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_loan.c,v 1.42 2003/05/03 17:54:32 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_loan.c,v 1.42.2.1 2004/08/03 10:57:06 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -107,14 +107,15 @@ __KERNEL_RCSID(0, "$NetBSD: uvm_loan.c,v 1.42 2003/05/03 17:54:32 yamt Exp $");
  * local prototypes
  */
 
-static int	uvm_loananon __P((struct uvm_faultinfo *, void ***,
-				int, struct vm_anon *));
-static int	uvm_loanentry __P((struct uvm_faultinfo *, void ***, int));
-static int	uvm_loanuobj __P((struct uvm_faultinfo *, void ***,
-				int, vaddr_t));
-static int	uvm_loanzero __P((struct uvm_faultinfo *, void ***, int));
-static void	uvm_unloananon __P((struct vm_anon **, int));
-static void	uvm_unloanpage __P((struct vm_page **, int));
+static int	uvm_loananon(struct uvm_faultinfo *, void ***,
+			     int, struct vm_anon *);
+static int	uvm_loanentry(struct uvm_faultinfo *, void ***, int);
+static int	uvm_loanuobj(struct uvm_faultinfo *, void ***,
+			     int, vaddr_t);
+static int	uvm_loanzero(struct uvm_faultinfo *, void ***, int);
+static void	uvm_unloananon(struct vm_anon **, int);
+static void	uvm_unloanpage(struct vm_page **, int);
+static void	uvm_loanpage(struct vm_page **, int);
 
 
 /*
@@ -179,6 +180,7 @@ uvm_loanentry(ufi, output, flags)
 		} else if (UVM_ET_ISCOPYONWRITE(ufi->entry)) {
 			rv = uvm_loanzero(ufi, output, flags);
 		} else {
+			uvmfault_unlockall(ufi, aref->ar_amap, uobj, NULL);
 			rv = -1;
 		}
 		/* locked: if (rv > 0) => map, amap, uobj  [o.w. unlocked] */
@@ -293,8 +295,8 @@ uvm_loan(map, start, len, v, flags)
 		/*
 		 * done!  the map is unlocked.  advance, if possible.
 		 *
-		 * XXXCDC: could be recoded to hold the map lock with 
-		 *	   smarter code (but it only happens on map entry 
+		 * XXXCDC: could be recoded to hold the map lock with
+		 *	   smarter code (but it only happens on map entry
 		 *	   boundaries, so it isn't that bad).
 		 */
 
@@ -419,13 +421,13 @@ uvm_loananon(ufi, output, flags, anon)
 }
 
 /*
- * uvm_loanuobjpages: loan pages from a uobj out (O->K)
+ * uvm_loanpage: loan out pages to kernel (->K)
  *
- * => called with uobj locked.
+ * => page's owner should be locked.
  * => caller should own the pages.
  */
-void
-uvm_loanuobjpages(pgpp, npages)
+static void
+uvm_loanpage(pgpp, npages)
 	struct vm_page **pgpp;
 	int npages;
 {
@@ -452,6 +454,106 @@ uvm_loanuobjpages(pgpp, npages)
 		pg->flags &= ~(PG_WANTED|PG_BUSY);
 		UVM_PAGE_OWN(pg, NULL);
 	}
+}
+
+/*
+ * XXX UBC temp limit
+ * number of pages to get at once.
+ * should be <= MAX_READ_AHEAD in genfs_vnops.c
+ */
+#define	UVM_LOAN_GET_CHUNK	16
+
+/*
+ * uvm_loanuobjpages: loan pages from a uobj out (O->K)
+ *
+ * => uobj shouldn't be locked.  (we'll lock it)
+ */
+int
+uvm_loanuobjpages(uobj, pgoff, orignpages, origpgpp)
+	struct uvm_object *uobj;
+	voff_t pgoff;
+	int orignpages;
+	struct vm_page **origpgpp;
+{
+	int ndone;
+	struct vm_page **pgpp;
+	int error;
+	int i;
+	struct simplelock *slock;
+
+	pgpp = origpgpp;
+	for (ndone = 0; ndone < orignpages; ) {
+		int npages;
+		int npendloan = 0xdead; /* XXX gcc */
+reget:
+		npages = MIN(UVM_LOAN_GET_CHUNK, orignpages - ndone);
+		simple_lock(&uobj->vmobjlock);
+		error = (*uobj->pgops->pgo_get)(uobj,
+		    pgoff + (ndone << PAGE_SHIFT), pgpp, &npages, 0,
+		    VM_PROT_READ, 0, PGO_SYNCIO);
+		if (error == EAGAIN) {
+			tsleep(&lbolt, PVM, "nfsread", 0);
+			continue;
+		}
+		if (error) {
+			uvm_unloan(origpgpp, ndone, UVM_LOAN_TOPAGE);
+			return error;
+		}
+
+		KASSERT(npages > 0);
+
+		/* loan and unbusy pages */
+		slock = NULL;
+		for (i = 0; i < npages; i++) {
+			struct simplelock *nextslock; /* slock for next page */
+			struct vm_page *pg = *pgpp;
+
+			/* XXX assuming that the page is owned by uobj */
+			KASSERT(pg->uobject != NULL);
+			nextslock = &pg->uobject->vmobjlock;
+
+			if (slock != nextslock) {
+				if (slock) {
+					KASSERT(npendloan > 0);
+					uvm_loanpage(pgpp - npendloan,
+					    npendloan);
+					simple_unlock(slock);
+				}
+				slock = nextslock;
+				simple_lock(slock);
+				npendloan = 0;
+			}
+
+			if (pg->flags & PG_RELEASED) {
+				/*
+				 * release pages and try again.
+				 */
+				simple_unlock(slock);
+				for (; i < npages; i++) {
+					pg = pgpp[i];
+					slock = &pg->uobject->vmobjlock;
+
+					simple_lock(slock);
+					uvm_lock_pageq();
+					uvm_page_unbusy(&pg, 1);
+					uvm_unlock_pageq();
+					simple_unlock(slock);
+				}
+				goto reget;
+			}
+
+			npendloan++;
+			pgpp++;
+			ndone++;
+			KASSERT(pgpp - origpgpp == ndone);
+		}
+		KASSERT(slock != NULL);
+		KASSERT(npendloan > 0);
+		uvm_loanpage(pgpp - npendloan, npendloan);
+		simple_unlock(slock);
+	}
+
+	return 0;
 }
 
 /*
@@ -520,7 +622,7 @@ uvm_loanuobj(ufi, output, flags, va)
 		/* locked: <nothing> */
 
 		if (error) {
-			 if (error == EAGAIN) {
+			if (error == EAGAIN) {
 				tsleep(&lbolt, PVM, "fltagain2", 0);
 				return (0);
 			}
@@ -581,7 +683,7 @@ uvm_loanuobj(ufi, output, flags, va)
 	 */
 
 	if ((flags & UVM_LOAN_TOANON) == 0) {
-		uvm_loanuobjpages(&pg, 1);
+		uvm_loanpage(&pg, 1);
 		**output = pg;
 		(*output)++;
 		return (1);
@@ -667,6 +769,7 @@ uvm_loanzero(ufi, output, flags)
 	struct uvm_object *uobj = ufi->entry->object.uvm_obj;
 	struct vm_amap *amap = ufi->entry->aref.ar_amap;
 
+again:
 	simple_lock(&uvm_loanzero_object.vmobjlock);
 
 	/*
@@ -689,18 +792,22 @@ uvm_loanzero(ufi, output, flags)
 			if (uobj) {
 				simple_lock(&uobj->vmobjlock);
 			}
-			simple_lock(&uvm_loanzero_object.vmobjlock);
+			goto again;
 		}
 
 		/* got a zero'd page. */
 		pg->flags &= ~(PG_WANTED|PG_BUSY|PG_FAKE);
 		pg->flags |= PG_RDONLY;
+		uvm_lock_pageq();
+		uvm_pageactivate(pg);
+		uvm_unlock_pageq();
 		UVM_PAGE_OWN(pg, NULL);
 	}
 
 	if ((flags & UVM_LOAN_TOANON) == 0) {	/* loaning to kernel-page */
 		uvm_lock_pageq();
 		pg->loan_count++;
+		uvm_pagedequeue(pg);
 		uvm_unlock_pageq();
 		simple_unlock(&uvm_loanzero_object.vmobjlock);
 		**output = pg;
@@ -943,8 +1050,9 @@ struct vm_page *
 uvm_loanbreak(struct vm_page *uobjpage)
 {
 	struct vm_page *pg;
+#ifdef DIAGNOSTIC
 	struct uvm_object *uobj = uobjpage->uobject;
-	voff_t offset;
+#endif
 
 	KASSERT(uobj != NULL);
 	LOCK_ASSERT(simple_lock_held(&uobj->vmobjlock));
@@ -974,8 +1082,12 @@ uvm_loanbreak(struct vm_page *uobjpage)
 	UVM_PAGE_OWN(uobjpage, NULL);
 
 	uvm_lock_pageq();
-	offset = uobjpage->offset;
-	uvm_pagerealloc(uobjpage, NULL, 0);
+
+	/*
+	 * replace uobjpage with new page.
+	 */
+
+	uvm_pagereplace(uobjpage, pg);
 
 	/*
 	 * if the page is no longer referenced by
@@ -992,7 +1104,6 @@ uvm_loanbreak(struct vm_page *uobjpage)
 
 	/* install new page */
 	uvm_pageactivate(pg);
-	uvm_pagerealloc(pg, uobj, offset);
 	uvm_unlock_pageq();
 
 	/*

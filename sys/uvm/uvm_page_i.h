@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page_i.h,v 1.21 2002/12/01 22:58:43 matt Exp $	*/
+/*	$NetBSD: uvm_page_i.h,v 1.21.6.1 2004/08/03 10:57:08 skrll Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -152,6 +152,7 @@ PAGE_INLINE void
 uvm_pagewire(pg)
 	struct vm_page *pg;
 {
+	UVM_LOCK_ASSERT_PAGEQ();
 	if (pg->wire_count == 0) {
 		uvm_pagedequeue(pg);
 		uvmexp.wired++;
@@ -170,6 +171,7 @@ PAGE_INLINE void
 uvm_pageunwire(pg)
 	struct vm_page *pg;
 {
+	UVM_LOCK_ASSERT_PAGEQ();
 	pg->wire_count--;
 	if (pg->wire_count == 0) {
 		TAILQ_INSERT_TAIL(&uvm.page_active, pg, pageq);
@@ -192,6 +194,7 @@ PAGE_INLINE void
 uvm_pagedeactivate(pg)
 	struct vm_page *pg;
 {
+	UVM_LOCK_ASSERT_PAGEQ();
 	if (pg->pqflags & PQ_ACTIVE) {
 		TAILQ_REMOVE(&uvm.page_active, pg, pageq);
 		pg->pqflags &= ~PQ_ACTIVE;
@@ -215,6 +218,7 @@ PAGE_INLINE void
 uvm_pageactivate(pg)
 	struct vm_page *pg;
 {
+	UVM_LOCK_ASSERT_PAGEQ();
 	uvm_pagedequeue(pg);
 	if (pg->wire_count == 0) {
 		TAILQ_INSERT_TAIL(&uvm.page_active, pg, pageq);
@@ -232,10 +236,12 @@ uvm_pagedequeue(pg)
 	struct vm_page *pg;
 {
 	if (pg->pqflags & PQ_ACTIVE) {
+		UVM_LOCK_ASSERT_PAGEQ();
 		TAILQ_REMOVE(&uvm.page_active, pg, pageq);
 		pg->pqflags &= ~PQ_ACTIVE;
 		uvmexp.active--;
 	} else if (pg->pqflags & PQ_INACTIVE) {
+		UVM_LOCK_ASSERT_PAGEQ();
 		TAILQ_REMOVE(&uvm.page_inactive, pg, pageq);
 		pg->pqflags &= ~PQ_INACTIVE;
 		uvmexp.inactive--;

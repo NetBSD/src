@@ -1,4 +1,4 @@
-/* $NetBSD: infcodes.c,v 1.5 2003/03/18 20:00:47 mycroft Exp $ */
+/* $NetBSD: infcodes.c,v 1.5.2.1 2004/08/03 10:53:58 skrll Exp $ */
 
 /* infcodes.c -- process literals and length/distance pairs
  * Copyright (C) 1995-2002 Mark Adler
@@ -155,7 +155,7 @@ int r;
         break;
       }
       c->mode = BADCODE;        /* invalid code */
-      z->msg = (char*)"invalid literal/length code";
+      z->msg = _ZERROR(_ZERR_INV_LITERAL);
       r = Z_DATA_ERROR;
       LEAVE
     case LENEXT:        /* i: getting length extra (have base) */
@@ -187,7 +187,7 @@ int r;
         break;
       }
       c->mode = BADCODE;        /* invalid code */
-      z->msg = (char*)"invalid distance code";
+      z->msg = _ZERROR(_ZERR_INV_DISTANCE);
       r = Z_DATA_ERROR;
       LEAVE
     case DISTEXT:       /* i: getting distance extra */

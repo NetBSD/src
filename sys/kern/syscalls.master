@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.128 2003/03/18 18:08:49 christos Exp $
+	$NetBSD: syscalls.master,v 1.128.2.1 2004/08/03 10:52:55 skrll Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
 
@@ -86,8 +86,8 @@
 16	STD		{ int sys_chown(const char *path, uid_t uid, \
 			    gid_t gid); }
 17	STD		{ int sys_obreak(char *nsize); } break
-18	STD		{ int sys_getfsstat(struct statfs *buf, long bufsize, \
-			    int flags); }
+18	COMPAT_20	{ int sys_getfsstat(struct statfs12 *buf, \
+			    long bufsize, int flags); }
 19	COMPAT_43	{ long sys_lseek(int fd, long offset, int whence); } \
 			    olseek
 #ifdef COMPAT_43
@@ -164,7 +164,7 @@
 56	STD		{ int sys_revoke(const char *path); }
 57	STD		{ int sys_symlink(const char *path, \
 			    const char *link); }
-58	STD		{ int sys_readlink(const char *path, char *buf, \
+58	STD		{ ssize_t sys_readlink(const char *path, char *buf, \
 			    size_t count); }
 59	STD		{ int sys_execve(const char *path, \
 			    char * const *argp, char * const *envp); }
@@ -218,13 +218,13 @@
 			    fd_set *ex, struct timeval *tv); }
 94	UNIMPL		setdopt
 95	STD		{ int sys_fsync(int fd); }
-96	STD		{ int sys_setpriority(int which, int who, int prio); }
+96	STD		{ int sys_setpriority(int which, id_t who, int prio); }
 97	STD		{ int sys_socket(int domain, int type, int protocol); }
 98	STD		{ int sys_connect(int s, const struct sockaddr *name, \
 			    unsigned int namelen); }
 99	COMPAT_43	{ int sys_accept(int s, caddr_t name, \
 			    int *anamelen); } oaccept
-100	STD		{ int sys_getpriority(int which, int who); }
+100	STD		{ int sys_getpriority(int which, id_t who); }
 101	COMPAT_43	{ int sys_send(int s, caddr_t buf, int len, \
 			    int flags); } osend
 102	COMPAT_43	{ int sys_recv(int s, caddr_t buf, int len, \
@@ -250,7 +250,7 @@
 			    osendmsg
 115	OBSOL		vtrace
 116	STD		{ int sys_gettimeofday(struct timeval *tp, \
-			    struct timezone *tzp); }
+			    void *tzp); }
 117	STD		{ int sys_getrusage(int who, struct rusage *rusage); }
 118	STD		{ int sys_getsockopt(int s, int level, int name, \
 			    void *val, unsigned int *avalsize); }
@@ -260,7 +260,7 @@
 121	STD		{ ssize_t sys_writev(int fd, \
 			    const struct iovec *iovp, int iovcnt); }
 122	STD		{ int sys_settimeofday(const struct timeval *tv, \
-			    const struct timezone *tzp); }
+			    const void *tzp); }
 123	STD		{ int sys_fchown(int fd, uid_t uid, gid_t gid); }
 124	STD		{ int sys_fchmod(int fd, mode_t mode); }
 125	COMPAT_43	{ int sys_recvfrom(int s, caddr_t buf, size_t len, \
@@ -318,9 +318,9 @@
 #endif
 156	COMPAT_43	{ int sys_getdirentries(int fd, char *buf, \
 			    u_int count, long *basep); } ogetdirentries
-157	STD		{ int sys_statfs(const char *path, \
-			    struct statfs *buf); }
-158	STD		{ int sys_fstatfs(int fd, struct statfs *buf); }
+157	COMPAT_20	{ int sys_statfs(const char *path, \
+			    struct statfs12 *buf); }
+158	COMPAT_20	{ int sys_fstatfs(int fd, struct statfs12 *buf); }
 159	UNIMPL
 160	UNIMPL
 161	STD		{ int sys_getfh(const char *fname, fhandle_t *fhp); }
@@ -521,7 +521,7 @@
 ; Syscall 246 is free for any use
 ;
 246	UNIMPL
-#if defined(P1003_1B_SEMAPHORE) || !defined(_KERNEL)
+#if defined(P1003_1B_SEMAPHORE) || (!defined(_KERNEL) && defined(_LIBC))
 247	STD		{ int sys__ksem_init(unsigned int value, semid_t *idp); }
 248	STD		{ int sys__ksem_open(const char *name, int oflag, \
 			    mode_t mode, unsigned int value, semid_t *idp); }
@@ -598,7 +598,7 @@
 290	STD		{ ssize_t sys_pwritev(int fd, \
 			    const struct iovec *iovp, int iovcnt, \
 			    int pad, off_t offset); }
-291	STD		{ int sys___sigaction14(int signum, \
+291	COMPAT_16	{ int sys___sigaction14(int signum, \
 			    const struct sigaction *nsa, \
 			    struct sigaction *osa); }
 292	STD		{ int sys___sigpending14(sigset_t *set); }
@@ -606,14 +606,14 @@
 			    const sigset_t *set, \
 			    sigset_t *oset); }
 294	STD		{ int sys___sigsuspend14(const sigset_t *set); }
-295	STD		{ int sys___sigreturn14(struct sigcontext *sigcntxp); }
+295	COMPAT_16	{ int sys___sigreturn14(struct sigcontext *sigcntxp); }
 296	STD		{ int sys___getcwd(char *bufp, size_t length); }
 297	STD		{ int sys_fchroot(int fd); }
 298	STD		{ int sys_fhopen(const fhandle_t *fhp, int flags); }
 299	STD		{ int sys_fhstat(const fhandle_t *fhp, \
 			    struct stat *sb); }
-300	STD		{ int sys_fhstatfs(const fhandle_t *fhp, \
-			    struct statfs *buf); }
+300	COMPAT_20	{ int sys_fhstatfs(const fhandle_t *fhp, \
+			    struct statfs12 *buf); }
 #if defined(SYSVSEM) || !defined(_KERNEL)
 301	STD		{ int sys_____semctl13(int semid, int semnum, int cmd, \
 			    ... union __semun *arg); }
@@ -664,23 +664,24 @@
 329	UNIMPL
 ; Scheduler activation syscalls
 330	STD		{ int sys_sa_register(sa_upcall_t new, \
-				sa_upcall_t *old, int flags); }
+				sa_upcall_t *old, int flags, \
+				ssize_t stackinfo_offset); }
 331	STD		{ int sys_sa_stacks(int num, stack_t *stacks); }
 332	STD		{ int sys_sa_enable(void); }
 333	STD		{ int sys_sa_setconcurrency(int concurrency); }
 334	STD		{ int sys_sa_yield(void); }
 335	STD		{ int sys_sa_preempt(int sa_id); }
+336	OBSOL		sys_sa_unblockyield
 ;
-; Syscalls 336-339 are reserved for other scheduler activation syscalls.
+; Syscalls 337-339 are reserved for other scheduler activation syscalls.
 ;
-336	UNIMPL
 337	UNIMPL
 338	UNIMPL
 339	UNIMPL
 340	STD		{ int sys___sigaction_sigtramp(int signum, \
 			    const struct sigaction *nsa, \
 			    struct sigaction *osa, \
-			    void *tramp, int vers); }
+			    const void *tramp, int vers); }
 341	STD		{ int sys_pmc_get_info(int ctr, int op, void *args); }
 342	STD		{ int sys_pmc_control(int ctr, int op, void *args); }
 343	STD		{ int sys_rasctl(caddr_t addr, size_t len, int op); }
@@ -700,3 +701,15 @@
 351	UNIMPL		sys_sched_get_priority_max
 352	UNIMPL		sys_sched_get_priority_min
 353	UNIMPL		sys_sched_rr_get_interval
+
+354	STD		{ int sys_fsync_range(int fd, int flags, off_t start, \
+			    off_t length); }
+355	STD		{ int sys_uuidgen(struct uuid *store, int count); }
+356	STD		{ int sys_getvfsstat(struct statvfs *buf, \
+			    size_t bufsize, int flags); }
+357	STD		{ int sys_statvfs1(const char *path, \
+			    struct statvfs *buf, int flags); }
+358	STD		{ int sys_fstatvfs1(int fd, struct statvfs *buf, \
+			    int flags); }
+359	STD		{ int sys_fhstatvfs1(const fhandle_t *fhp, \
+			    struct statvfs *buf, int flags); }

@@ -1,4 +1,4 @@
-/*	$NetBSD: ufsmount.h,v 1.13 2003/05/18 12:59:06 yamt Exp $	*/
+/*	$NetBSD: ufsmount.h,v 1.13.2.1 2004/08/03 10:57:01 skrll Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -12,11 +12,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -98,10 +94,10 @@ struct ufsmount {
 	time_t	um_itime[MAXQUOTAS];		/* inode quota time limit */
 	char	um_qflags[MAXQUOTAS];		/* quota specific flags */
 	struct	netexport um_export;		/* export information */
-	u_int64_t um_savedmaxfilesize;		/* XXX - limit maxfilesize */
-#ifdef SUPPORT_42POSTBLFMT_WRITE /* untested */
-	void	*um_opostsave;			/* save 4.2 rotbl */
-#endif
+	void	*um_oldfscompat;		/* save 4.2 rotbl */
+	TAILQ_HEAD(, inode) um_snapshots;	/* list of active snapshots */
+	daddr_t	um_snaplistsize;		/* size of block hints list */
+	daddr_t	*um_snapblklist;		/* snapshot block hints list */
 };
 
 /* UFS-specific flags */

@@ -1,4 +1,4 @@
-/*	$NetBSD: qe.c,v 1.30 2003/05/03 18:11:39 wiz Exp $	*/
+/*	$NetBSD: qe.c,v 1.30.2.1 2004/08/03 10:51:05 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: qe.c,v 1.30 2003/05/03 18:11:39 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: qe.c,v 1.30.2.1 2004/08/03 10:51:05 skrll Exp $");
 
 #define QEDEBUG
 
@@ -215,7 +215,6 @@ qeattach(parent, self, aux)
 	bus_dma_segment_t seg;
 	bus_size_t size;
 	int rseg, error;
-	extern void myetheraddr __P((u_char *));
 
 	if (sa->sa_nreg < 2) {
 		printf("%s: only %d register sets\n",
@@ -243,7 +242,7 @@ qeattach(parent, self, aux)
 		return;
 	}
 
-	sc->sc_rev = PROM_getpropint(node, "mace-version", -1);
+	sc->sc_rev = prom_getpropint(node, "mace-version", -1);
 	printf(" rev %x", sc->sc_rev);
 
 	sc->sc_bustag = sa->sa_bustag;
@@ -251,14 +250,14 @@ qeattach(parent, self, aux)
 	sc->sc_qec = qec;
 	sc->sc_qr = qec->sc_regs;
 
-	sc->sc_channel = PROM_getpropint(node, "channel#", -1);
+	sc->sc_channel = prom_getpropint(node, "channel#", -1);
 	sc->sc_burst = qec->sc_burst;
 
 	qestop(sc);
 
 	/* Note: no interrupt level passed */
 	(void)bus_intr_establish(sa->sa_bustag, 0, IPL_NET, qeintr, sc);
-	myetheraddr(sc->sc_enaddr);
+	prom_getether(node, sc->sc_enaddr);
 
 	/*
 	 * Allocate descriptor ring and buffers.

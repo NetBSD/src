@@ -1,4 +1,4 @@
-/*	$NetBSD: icmp6.c,v 1.94 2003/06/24 07:54:47 itojun Exp $	*/
+/*	$NetBSD: icmp6.c,v 1.94.2.1 2004/08/03 10:55:11 skrll Exp $	*/
 /*	$KAME: icmp6.c,v 1.217 2001/06/20 15:03:29 jinmei Exp $	*/
 
 /*
@@ -42,11 +42,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -66,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: icmp6.c,v 1.94 2003/06/24 07:54:47 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: icmp6.c,v 1.94.2.1 2004/08/03 10:55:11 skrll Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -116,7 +112,7 @@ extern struct domain inet6domain;
 
 struct icmp6stat icmp6stat;
 
-extern struct in6pcb rawin6pcb;
+extern struct inpcbtable raw6cbtable;
 extern int icmp6errppslim;
 static int icmp6errpps_count = 0;
 static struct timeval icmp6errppslim_last;
@@ -448,7 +444,8 @@ icmp6_input(mp, offp, proto)
 	IP6_EXTHDR_GET(icmp6, struct icmp6_hdr *, m, off, sizeof(*icmp6));
 	if (icmp6 == NULL) {
 		icmp6stat.icp6s_tooshort++;
-		icmp6_ifstat_inc(m->m_pkthdr.rcvif, ifs6_in_error);
+		/* m is invalid */
+		/*icmp6_ifstat_inc(m->m_pkthdr.rcvif, ifs6_in_error);*/
 		return IPPROTO_DONE;
 	}
 	KASSERT(IP6_HDR_ALIGNED_P(icmp6));
@@ -1899,6 +1896,7 @@ icmp6_rip6_input(mp, off)
 {
 	struct mbuf *m = *mp;
 	struct ip6_hdr *ip6 = mtod(m, struct ip6_hdr *);
+	struct inpcb_hdr *inph;
 	struct in6pcb *in6p;
 	struct in6pcb *last = NULL;
 	struct sockaddr_in6 rip6src;
@@ -1917,10 +1915,11 @@ icmp6_rip6_input(mp, off)
 	/* KAME hack: recover scopeid */
 	(void)in6_recoverscope(&rip6src, &ip6->ip6_src, m->m_pkthdr.rcvif);
 
-	for (in6p = rawin6pcb.in6p_next;
-	     in6p != &rawin6pcb; in6p = in6p->in6p_next)
-	{
-		if (in6p->in6p_ip6_nxt != IPPROTO_ICMPV6)
+	CIRCLEQ_FOREACH(inph, &raw6cbtable.inpt_queue, inph_queue) {
+		in6p = (struct in6pcb *)inph;
+		if (in6p->in6p_af != AF_INET6)
+			continue;
+		if (in6p->in6p_ip6.ip6_nxt != IPPROTO_ICMPV6)
 			continue;
 		if (!IN6_IS_ADDR_UNSPECIFIED(&in6p->in6p_laddr) &&
 		   !IN6_ARE_ADDR_EQUAL(&in6p->in6p_laddr, &ip6->ip6_dst))
@@ -2137,10 +2136,6 @@ icmp6_reflect(m, off)
 	 */
 
 	m->m_flags &= ~(M_BCAST|M_MCAST);
-#ifdef IPSEC
-	/* Don't lookup socket */
-	(void)ipsec_setsocket(m, NULL);
-#endif /* IPSEC */
 
 	/*
 	 * To avoid a "too big" situation at an intermediate router
@@ -2148,7 +2143,9 @@ icmp6_reflect(m, off)
 	 * Note that only echo and node information replies are affected,
 	 * since the length of ICMP6 errors is limited to the minimum MTU.
 	 */
-	if (ip6_output(m, NULL, NULL, IPV6_MINMTU, NULL, &outif) != 0 && outif)
+	if (ip6_output(m, NULL, NULL, IPV6_MINMTU,
+		(struct ip6_moptions *)NULL, (struct socket *)NULL, &outif) != 0
+	    && outif)
 		icmp6_ifstat_inc(outif, ifs6_out_error);
 
 	if (outif)
@@ -2191,8 +2188,6 @@ icmp6_redirect_input(m, off)
 	int icmp6len = ntohs(ip6->ip6_plen);
 	char *lladdr = NULL;
 	int lladdrlen = 0;
-	u_char *redirhdr = NULL;
-	int redirhdrlen = 0;
 	struct rtentry *rt = NULL;
 	int is_router;
 	int is_onlink;
@@ -2314,11 +2309,6 @@ icmp6_redirect_input(m, off)
 	if (ndopts.nd_opts_tgt_lladdr) {
 		lladdr = (char *)(ndopts.nd_opts_tgt_lladdr + 1);
 		lladdrlen = ndopts.nd_opts_tgt_lladdr->nd_opt_len << 3;
-	}
-
-	if (ndopts.nd_opts_rh) {
-		redirhdrlen = ndopts.nd_opts_rh->nd_opt_rh_len;
-		redirhdr = (u_char *)(ndopts.nd_opts_rh + 1); /* xxx */
 	}
 
 	if (lladdr && ((ifp->if_addrlen + 2 + 7) & ~7) != lladdrlen) {
@@ -2620,8 +2610,8 @@ icmp6_redirect_output(m0, rt)
 		m->m_pkthdr.len = m->m_len = p - (u_char *)ip6;
 
 		/* connect m0 to m */
-		m_cat(m, m0);
 		m->m_pkthdr.len += m0->m_pkthdr.len;
+		m_cat(m, m0);
 		m0 = NULL;
 	}
 noredhdropt:
@@ -2652,11 +2642,8 @@ noredhdropt:
 		= in6_cksum(m, IPPROTO_ICMPV6, sizeof(*ip6), ntohs(ip6->ip6_plen));
 
 	/* send the packet to outside... */
-#ifdef IPSEC
-	/* Don't lookup socket */
-	(void)ipsec_setsocket(m, NULL);
-#endif /* IPSEC */
-	if (ip6_output(m, NULL, NULL, 0, NULL, NULL) != 0)
+	if (ip6_output(m, NULL, NULL, 0,
+		(struct ip6_moptions *)NULL, (struct socket *)NULL, NULL) != 0)
 		icmp6_ifstat_inc(ifp, ifs6_out_error);
 
 	icmp6_ifstat_inc(ifp, ifs6_out_msg);
@@ -2850,62 +2837,167 @@ icmp6_redirect_timeout(rt, r)
 	}
 }
 
-int
-icmp6_sysctl(name, namelen, oldp, oldlenp, newp, newlen)
-	int *name;
-	u_int namelen;
-	void *oldp;
-	size_t *oldlenp;
-	void *newp;
-	size_t newlen;
+/*
+ * sysctl helper routine for the net.inet6.icmp6.nd6 nodes.  silly?
+ */
+static int
+sysctl_net_inet6_icmp6_nd6(SYSCTLFN_ARGS)
 {
 
-	/* All sysctl names at this level are terminal. */
-	if (namelen != 1)
-		return ENOTDIR;
+	if (namelen != 0)
+		return (EINVAL);
 
-	switch (name[0]) {
+	return (nd6_sysctl(rnode->sysctl_num, oldp, oldlenp,
+	    (void*)newp, newlen));
+}
 
-	case ICMPV6CTL_REDIRACCEPT:
-		return sysctl_int(oldp, oldlenp, newp, newlen,
-				&icmp6_rediraccept);
-	case ICMPV6CTL_REDIRTIMEOUT:
-		return sysctl_int(oldp, oldlenp, newp, newlen,
-				&icmp6_redirtimeout);
-	case ICMPV6CTL_STATS:
-		return sysctl_rdstruct(oldp, oldlenp, newp,
-				&icmp6stat, sizeof(icmp6stat));
-	case ICMPV6CTL_ND6_PRUNE:
-		return sysctl_int(oldp, oldlenp, newp, newlen, &nd6_prune);
-	case ICMPV6CTL_ND6_DELAY:
-		return sysctl_int(oldp, oldlenp, newp, newlen, &nd6_delay);
-	case ICMPV6CTL_ND6_UMAXTRIES:
-		return sysctl_int(oldp, oldlenp, newp, newlen, &nd6_umaxtries);
-	case ICMPV6CTL_ND6_MMAXTRIES:
-		return sysctl_int(oldp, oldlenp, newp, newlen, &nd6_mmaxtries);
-	case ICMPV6CTL_ND6_USELOOPBACK:
-		return sysctl_int(oldp, oldlenp, newp, newlen,
-				&nd6_useloopback);
-	case ICMPV6CTL_NODEINFO:
-		return sysctl_int(oldp, oldlenp, newp, newlen, &icmp6_nodeinfo);
-	case ICMPV6CTL_ERRPPSLIMIT:
-		return sysctl_int(oldp, oldlenp, newp, newlen, &icmp6errppslim);
-	case ICMPV6CTL_ND6_MAXNUDHINT:
-		return sysctl_int(oldp, oldlenp, newp, newlen,
-				&nd6_maxnudhint);
-	case ICMPV6CTL_MTUDISC_HIWAT:
-		return sysctl_int(oldp, oldlenp, newp, newlen,
-				&icmp6_mtudisc_hiwat);
-	case ICMPV6CTL_MTUDISC_LOWAT:
-		return sysctl_int(oldp, oldlenp, newp, newlen,
-				&icmp6_mtudisc_lowat);
-	case ICMPV6CTL_ND6_DEBUG:
-		return sysctl_int(oldp, oldlenp, newp, newlen, &nd6_debug);
-	case ICMPV6CTL_ND6_DRLIST:
-	case ICMPV6CTL_ND6_PRLIST:
-		return nd6_sysctl(name[0], oldp, oldlenp, newp, newlen);
-	default:
-		return ENOPROTOOPT;
-	}
-	/* NOTREACHED */
+SYSCTL_SETUP(sysctl_net_inet6_icmp6_setup,
+	     "sysctl net.inet6.icmp6 subtree setup")
+{
+
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_NODE, "net", NULL,
+		       NULL, 0, NULL, 0,
+		       CTL_NET, CTL_EOL);
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_NODE, "inet6", NULL,
+		       NULL, 0, NULL, 0,
+		       CTL_NET, PF_INET6, CTL_EOL);
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_NODE, "icmp6",
+		       SYSCTL_DESCR("ICMPv6 related settings"),
+		       NULL, 0, NULL, 0,
+		       CTL_NET, PF_INET6, IPPROTO_ICMPV6, CTL_EOL);
+
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_STRUCT, "stats",
+		       SYSCTL_DESCR("ICMPv6 transmission statistics"),
+		       NULL, 0, &icmp6stat, sizeof(icmp6stat),
+		       CTL_NET, PF_INET6, IPPROTO_ICMPV6,
+		       ICMPV6CTL_STATS, CTL_EOL);
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+		       CTLTYPE_INT, "rediraccept",
+		       SYSCTL_DESCR("Accept and process redirect messages"),
+		       NULL, 0, &icmp6_rediraccept, 0,
+		       CTL_NET, PF_INET6, IPPROTO_ICMPV6,
+		       ICMPV6CTL_REDIRACCEPT, CTL_EOL);
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+		       CTLTYPE_INT, "redirtimeout",
+		       SYSCTL_DESCR("Redirect generated route lifetime"),
+		       NULL, 0, &icmp6_redirtimeout, 0,
+		       CTL_NET, PF_INET6, IPPROTO_ICMPV6,
+		       ICMPV6CTL_REDIRTIMEOUT, CTL_EOL);
+#if 0 /* obsoleted */
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+		       CTLTYPE_INT, "errratelimit", NULL,
+		       NULL, 0, &icmp6_errratelimit, 0,
+		       CTL_NET, PF_INET6, IPPROTO_ICMPV6,
+		       ICMPV6CTL_ERRRATELIMIT, CTL_EOL);
+#endif
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+		       CTLTYPE_INT, "nd6_prune",
+		       SYSCTL_DESCR("Neighbor discovery prune interval"),
+		       NULL, 0, &nd6_prune, 0,
+		       CTL_NET, PF_INET6, IPPROTO_ICMPV6,
+		       ICMPV6CTL_ND6_PRUNE, CTL_EOL);
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+		       CTLTYPE_INT, "nd6_delay",
+		       SYSCTL_DESCR("First probe delay time"),
+		       NULL, 0, &nd6_delay, 0,
+		       CTL_NET, PF_INET6, IPPROTO_ICMPV6,
+		       ICMPV6CTL_ND6_DELAY, CTL_EOL);
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+		       CTLTYPE_INT, "nd6_umaxtries",
+		       SYSCTL_DESCR("Number of unicast discovery attempts"),
+		       NULL, 0, &nd6_umaxtries, 0,
+		       CTL_NET, PF_INET6, IPPROTO_ICMPV6,
+		       ICMPV6CTL_ND6_UMAXTRIES, CTL_EOL);
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+		       CTLTYPE_INT, "nd6_mmaxtries",
+		       SYSCTL_DESCR("Number of multicast discovery attempts"),
+		       NULL, 0, &nd6_mmaxtries, 0,
+		       CTL_NET, PF_INET6, IPPROTO_ICMPV6,
+		       ICMPV6CTL_ND6_MMAXTRIES, CTL_EOL);
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+		       CTLTYPE_INT, "nd6_useloopback",
+		       SYSCTL_DESCR("Use loopback interface for local traffic"),
+		       NULL, 0, &nd6_useloopback, 0,
+		       CTL_NET, PF_INET6, IPPROTO_ICMPV6,
+		       ICMPV6CTL_ND6_USELOOPBACK, CTL_EOL);
+#if 0 /* obsoleted */
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+		       CTLTYPE_INT, "nd6_proxyall", NULL,
+		       NULL, 0, &nd6_proxyall, 0,
+		       CTL_NET, PF_INET6, IPPROTO_ICMPV6,
+		       ICMPV6CTL_ND6_PROXYALL, CTL_EOL);
+#endif
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+		       CTLTYPE_INT, "nodeinfo",
+		       SYSCTL_DESCR("Respond to node information requests"),
+		       NULL, 0, &icmp6_nodeinfo, 0,
+		       CTL_NET, PF_INET6, IPPROTO_ICMPV6,
+		       ICMPV6CTL_NODEINFO, CTL_EOL);
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+		       CTLTYPE_INT, "errppslimit",
+		       SYSCTL_DESCR("Maximum ICMP errors sent per second"),
+		       NULL, 0, &icmp6errppslim, 0,
+		       CTL_NET, PF_INET6, IPPROTO_ICMPV6,
+		       ICMPV6CTL_ERRPPSLIMIT, CTL_EOL);
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+		       CTLTYPE_INT, "nd6_maxnudhint",
+		       SYSCTL_DESCR("Maximum neighbor unreachable hint count"),
+		       NULL, 0, &nd6_maxnudhint, 0,
+		       CTL_NET, PF_INET6, IPPROTO_ICMPV6,
+		       ICMPV6CTL_ND6_MAXNUDHINT, CTL_EOL);
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+		       CTLTYPE_INT, "mtudisc_hiwat",
+		       SYSCTL_DESCR("Low mark on MTU Discovery route timers"),
+		       NULL, 0, &icmp6_mtudisc_hiwat, 0,
+		       CTL_NET, PF_INET6, IPPROTO_ICMPV6,
+		       ICMPV6CTL_MTUDISC_HIWAT, CTL_EOL);
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+		       CTLTYPE_INT, "mtudisc_lowat",
+		       SYSCTL_DESCR("Low mark on MTU Discovery route timers"),
+		       NULL, 0, &icmp6_mtudisc_lowat, 0,
+		       CTL_NET, PF_INET6, IPPROTO_ICMPV6,
+		       ICMPV6CTL_MTUDISC_LOWAT, CTL_EOL);
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+		       CTLTYPE_INT, "nd6_debug",
+		       SYSCTL_DESCR("Enable neighbor discovery debug output"),
+		       NULL, 0, &nd6_debug, 0,
+		       CTL_NET, PF_INET6, IPPROTO_ICMPV6,
+		       ICMPV6CTL_ND6_DEBUG, CTL_EOL);
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_STRUCT, "nd6_drlist",
+		       SYSCTL_DESCR("Default router list"),
+		       sysctl_net_inet6_icmp6_nd6, 0, NULL, 0,
+		       CTL_NET, PF_INET6, IPPROTO_ICMPV6,
+		       ICMPV6CTL_ND6_DRLIST, CTL_EOL);
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_STRUCT, "nd6_prlist",
+		       SYSCTL_DESCR("Prefix list"),
+		       sysctl_net_inet6_icmp6_nd6, 0, NULL, 0,
+		       CTL_NET, PF_INET6, IPPROTO_ICMPV6,
+		       ICMPV6CTL_ND6_PRLIST, CTL_EOL);
 }

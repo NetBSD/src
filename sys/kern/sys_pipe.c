@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_pipe.c,v 1.40.2.1 2003/07/02 15:26:41 darrenr Exp $	*/
+/*	$NetBSD: sys_pipe.c,v 1.40.2.2 2004/08/03 10:52:55 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_pipe.c,v 1.40.2.1 2003/07/02 15:26:41 darrenr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_pipe.c,v 1.40.2.2 2004/08/03 10:52:55 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -184,14 +184,16 @@ static int amountpipekva = 0;
 
 MALLOC_DEFINE(M_PIPE, "pipe", "Pipe structures");
 
-static void pipeclose(struct pipe *pipe);
+static void pipeclose(struct file *fp, struct pipe *pipe);
 static void pipe_free_kmem(struct pipe *pipe);
 static int pipe_create(struct pipe **pipep, int allockva);
 static int pipelock(struct pipe *pipe, int catch);
 static __inline void pipeunlock(struct pipe *pipe);
-static void pipeselwakeup(struct pipe *pipe, struct pipe *sigp);
+static void pipeselwakeup(struct pipe *pipe, struct pipe *sigp, void *data,
+    int code);
 #ifndef PIPE_NODIRECT
-static int pipe_direct_write(struct pipe *wpipe, struct uio *uio);
+static int pipe_direct_write(struct file *fp, struct pipe *wpipe,
+    struct uio *uio);
 #endif
 static int pipespace(struct pipe *pipe, int size);
 
@@ -200,7 +202,8 @@ static int pipe_loan_alloc(struct pipe *, int);
 static void pipe_loan_free(struct pipe *);
 #endif /* PIPE_NODIRECT */
 
-static struct pool pipe_pool;
+static POOL_INIT(pipe_pool, sizeof(struct pipe), 0, 0, 0, "pipepl",
+    &pool_allocator_nointr);
 
 /*
  * The pipe system call for the DTYPE_PIPE type of pipes
@@ -221,8 +224,8 @@ sys_pipe(l, v, retval)
 	p = l->l_proc;
 	rpipe = wpipe = NULL;
 	if (pipe_create(&rpipe, 1) || pipe_create(&wpipe, 0)) {
-		pipeclose(rpipe);
-		pipeclose(wpipe);
+		pipeclose(NULL, rpipe);
+		pipeclose(NULL, wpipe);
 		return (ENFILE);
 	}
 
@@ -265,8 +268,8 @@ free3:
 	ffree(rf);
 	fdremove(p->p_fd, retval[0]);
 free2:
-	pipeclose(wpipe);
-	pipeclose(rpipe);
+	pipeclose(NULL, wpipe);
+	pipeclose(NULL, rpipe);
 
 	return (error);
 }
@@ -313,24 +316,21 @@ pipe_create(pipep, allockva)
 	struct pipe *pipe;
 	int error;
 
-	pipe = pool_get(&pipe_pool, M_WAITOK);
-	if (pipe == NULL)
-		return (ENOMEM);
+	pipe = *pipep = pool_get(&pipe_pool, PR_WAITOK);
 
 	/* Initialize */ 
 	memset(pipe, 0, sizeof(struct pipe));
 	pipe->pipe_state = PIPE_SIGNALR;
 
-	if (allockva && (error = pipespace(pipe, PIPE_SIZE)))
-		return (error);
-
 	PIPE_TIMESTAMP(&pipe->pipe_ctime);
 	pipe->pipe_atime = pipe->pipe_ctime;
 	pipe->pipe_mtime = pipe->pipe_ctime;
 	simple_lock_init(&pipe->pipe_slock);
-	lockinit(&pipe->pipe_lock, PRIBIO | PCATCH, "pipelk", 0, 0);
+	lockinit(&pipe->pipe_lock, PSOCK | PCATCH, "pipelk", 0, 0);
 
-	*pipep = pipe;
+	if (allockva && (error = pipespace(pipe, PIPE_SIZE)))
+		return (error);
+
 	return (0);
 }
 
@@ -358,6 +358,25 @@ pipelock(pipe, catch)
 		simple_lock(&pipe->pipe_slock);
 		if (catch || (error != EINTR && error != ERESTART))
 			break;
+		/*
+		 * XXX XXX XXX
+		 * The pipe lock is initialised with PCATCH on and we cannot
+		 * override this in a lockmgr() call. Thus a pending signal
+		 * will cause lockmgr() to return with EINTR or ERESTART.
+		 * We cannot simply re-enter lockmgr() at this point since
+		 * the pending signals have not yet been posted and would
+		 * cause an immediate EINTR/ERESTART return again.
+		 * As a workaround we pause for a while here, giving the lock
+		 * a chance to drain, before trying again.
+		 * XXX XXX XXX
+		 *
+		 * NOTE: Consider dropping PCATCH from this lock; in practice
+		 * it is never held for long enough periods for having it
+		 * interruptable at the start of pipe_read/pipe_write to be
+		 * beneficial.
+		 */
+		(void) ltsleep(&lbolt, PSOCK, "rstrtpipelock", hz,
+		    &pipe->pipe_slock);
 	}
 	return (error);
 }
@@ -378,24 +397,42 @@ pipeunlock(pipe)
  * 'sigpipe' side of pipe.
  */
 static void
-pipeselwakeup(selp, sigp)
+pipeselwakeup(selp, sigp, data, code)
 	struct pipe *selp, *sigp;
+	void *data;
+	int code;
 {
-	struct proc *p;
-	pid_t pid;
+	int band;
 
-	selnotify(&selp->pipe_sel, 0);
+	selnotify(&selp->pipe_sel, NOTE_SUBMIT);
+
 	if (sigp == NULL || (sigp->pipe_state & PIPE_ASYNC) == 0)
 		return;
 
-	pid = sigp->pipe_pgid;
-	if (pid == 0)
-		return;
+	switch (code) {
+	case POLL_IN:
+		band = POLLIN|POLLRDNORM;
+		break;
+	case POLL_OUT:
+		band = POLLOUT|POLLWRNORM;
+		break;
+	case POLL_HUP:
+		band = POLLHUP;
+		break;
+#if POLL_HUP != POLL_ERR
+	case POLL_ERR:
+		band = POLLERR;
+		break;
+#endif
+	default:
+		band = 0;
+#ifdef DIAGNOSTIC
+		printf("bad siginfo code %d in pipe notification.\n", code);
+#endif
+		break;
+	}
 
-	if (pid > 0)
-		gsignal(pid, SIGIO);
-	else if ((p = pfind(-pid)) != NULL)
-		psignal(p, SIGIO);
+	fownsignal(sigp->pipe_pgid, SIGIO, code, band, selp);
 }
 
 /* ARGSUSED */
@@ -527,7 +564,8 @@ again:
 			/*
 			 * We want to read more, wake up select/poll.
 			 */
-			pipeselwakeup(rpipe, rpipe->pipe_peer);
+			pipeselwakeup(rpipe, rpipe->pipe_peer, fp->f_data,
+			    POLL_IN);
 
 			/*
 			 * If the "write-side" is blocked, wake it up now.
@@ -539,7 +577,7 @@ again:
 
 			/* Now wait until the pipe is filled */
 			rpipe->pipe_state |= PIPE_WANTR;
-			error = ltsleep(rpipe, PRIBIO | PCATCH,
+			error = ltsleep(rpipe, PSOCK | PCATCH,
 					"piperd", 0, &rpipe->pipe_slock);
 			if (error != 0)
 				goto unlocked_error;
@@ -579,7 +617,7 @@ unlocked_error:
 	 */
 	if ((bp->size - bp->cnt) >= PIPE_BUF
 	    && (ocnt != bp->cnt || (rpipe->pipe_state & PIPE_SIGNALR))) {
-		pipeselwakeup(rpipe, rpipe->pipe_peer);
+		pipeselwakeup(rpipe, rpipe->pipe_peer, fp->f_data, POLL_OUT);
 		rpipe->pipe_state &= ~PIPE_SIGNALR;
 	}
 
@@ -638,7 +676,8 @@ pipe_loan_free(wpipe)
  * Called with the long-term pipe lock held.
  */
 static int
-pipe_direct_write(wpipe, uio)
+pipe_direct_write(fp, wpipe, uio)
+	struct file *fp;
 	struct pipe *wpipe;
 	struct uio *uio;
 {
@@ -720,7 +759,7 @@ pipe_direct_write(wpipe, uio)
 		}
 
 		wpipe->pipe_state |= PIPE_WANTW;
-		error = ltsleep(wpipe, PRIBIO | PCATCH, "pipdwc", 0,
+		error = ltsleep(wpipe, PSOCK | PCATCH, "pipdwc", 0,
 				&wpipe->pipe_slock);
 		if (error == 0 && wpipe->pipe_state & PIPE_EOF)
 			error = EPIPE;
@@ -735,8 +774,8 @@ pipe_direct_write(wpipe, uio)
 			wpipe->pipe_state &= ~PIPE_WANTR;
 			wakeup(wpipe);
 		}
-		pipeselwakeup(wpipe, wpipe);
-		error = ltsleep(wpipe, PRIBIO | PCATCH, "pipdwt", 0,
+		pipeselwakeup(wpipe, wpipe, fp->f_data, POLL_IN);
+		error = ltsleep(wpipe, PSOCK | PCATCH, "pipdwt", 0,
 				&wpipe->pipe_slock);
 		if (error == 0 && wpipe->pipe_state & PIPE_EOF)
 			error = EPIPE;
@@ -755,7 +794,7 @@ pipe_direct_write(wpipe, uio)
 		pipe_loan_free(wpipe);
 
 	if (error) {
-		pipeselwakeup(wpipe, wpipe);
+		pipeselwakeup(wpipe, wpipe, fp->f_data, POLL_ERR);
 
 		/*
 		 * If nothing was read from what we offered, return error
@@ -873,7 +912,7 @@ retry:
 				wakeup(wpipe);
 			}
 			pipeunlock(wpipe);
-			error = ltsleep(wpipe, PRIBIO | PCATCH,
+			error = ltsleep(wpipe, PSOCK | PCATCH,
 					"pipbww", 0, &wpipe->pipe_slock);
 
 			(void)pipelock(wpipe, 0);
@@ -895,10 +934,10 @@ retry:
 		if ((uio->uio_iov->iov_len >= PIPE_MINDIRECT) &&
 		    (fp->f_flag & FNONBLOCK) == 0 &&
 		    (wpipe->pipe_map.kva || (amountpipekva < limitpipekva))) {
-			error = pipe_direct_write(wpipe, uio);
+			error = pipe_direct_write(fp, wpipe, uio);
 
 			/*
-			 * Break out if error occured, unless it's ENOMEM.
+			 * Break out if error occurred, unless it's ENOMEM.
 			 * ENOMEM means we failed to allocate some resources
 			 * for direct write, so we just fallback to ordinary
 			 * write. If the direct write was successful,
@@ -999,12 +1038,13 @@ retry:
 			 * wake up select/poll.
 			 */
 			if (bp->cnt)
-				pipeselwakeup(wpipe, wpipe);
+				pipeselwakeup(wpipe, wpipe, fp->f_data,
+				    POLL_OUT);
 
 			PIPE_LOCK(wpipe);
 			pipeunlock(wpipe);
 			wpipe->pipe_state |= PIPE_WANTW;
-			error = ltsleep(wpipe, PRIBIO | PCATCH, "pipewr", 0,
+			error = ltsleep(wpipe, PSOCK | PCATCH, "pipewr", 0,
 					&wpipe->pipe_slock);
 			(void)pipelock(wpipe, 0);
 			if (error != 0)
@@ -1051,7 +1091,7 @@ retry:
 	 * is only done synchronously), so check only wpipe->pipe_buffer.cnt
 	 */
 	if (bp->cnt)
-		pipeselwakeup(wpipe, wpipe);
+		pipeselwakeup(wpipe, wpipe, fp->f_data, POLL_OUT);
 
 	/*
 	 * Arrange for next read(2) to do a signal.
@@ -1074,8 +1114,7 @@ pipe_ioctl(fp, cmd, data, l)
 	struct lwp *l;
 {
 	struct pipe *pipe = (struct pipe *)fp->f_data;
-	pid_t pgid;
-	int error;
+	struct proc *p = l->l_proc;
 
 	switch (cmd) {
 
@@ -1104,18 +1143,12 @@ pipe_ioctl(fp, cmd, data, l)
 		return (0);
 
 	case TIOCSPGRP:
-		pgid = *(int *)data;
-		if (pgid != 0) {
-			error = pgid_in_session(l->l_proc, pgid);
-			if (error)
-				return error;
-		}
-		pipe->pipe_pgid = pgid;
-		return (0);
+	case FIOSETOWN:
+		return fsetown(p, &pipe->pipe_pgid, cmd, data);
 
 	case TIOCGPGRP:
-		*(int *)data = pipe->pipe_pgid;
-		return (0);
+	case FIOGETOWN:
+		return fgetown(p, pipe->pipe_pgid, cmd, data);
 
 	}
 	return (EPASSTHROUGH);
@@ -1215,7 +1248,7 @@ pipe_close(fp, l)
 	struct pipe *pipe = (struct pipe *)fp->f_data;
 
 	fp->f_data = NULL;
-	pipeclose(pipe);
+	pipeclose(fp, pipe);
 	return (0);
 }
 
@@ -1248,7 +1281,8 @@ pipe_free_kmem(pipe)
  * shutdown the pipe
  */
 static void
-pipeclose(pipe)
+pipeclose(fp, pipe)
+	struct file *fp;
 	struct pipe *pipe;
 {
 	struct pipe *ppipe;
@@ -1259,7 +1293,8 @@ pipeclose(pipe)
 retry:
 	PIPE_LOCK(pipe);
 
-	pipeselwakeup(pipe, pipe);
+	if (fp)
+		pipeselwakeup(pipe, pipe, fp->f_data, POLL_HUP);
 
 	/*
 	 * If the other side is blocked, wake it up saying that
@@ -1268,7 +1303,7 @@ retry:
 	while (pipe->pipe_busy) {
 		wakeup(pipe);
 		pipe->pipe_state |= PIPE_WANTCLOSE | PIPE_EOF;
-		ltsleep(pipe, PRIBIO, "pipecl", 0, &pipe->pipe_slock);
+		ltsleep(pipe, PSOCK, "pipecl", 0, &pipe->pipe_slock);
 	}
 
 	/*
@@ -1280,7 +1315,8 @@ retry:
 			PIPE_UNLOCK(pipe);
 			goto retry;
 		}
-		pipeselwakeup(ppipe, ppipe);
+		if (fp)
+			pipeselwakeup(ppipe, ppipe, fp->f_data, POLL_HUP);
 
 		ppipe->pipe_state |= PIPE_EOF;
 		wakeup(ppipe);
@@ -1336,7 +1372,8 @@ filt_piperead(struct knote *kn, long hint)
 	struct pipe *rpipe = (struct pipe *)kn->kn_fp->f_data;
 	struct pipe *wpipe = rpipe->pipe_peer;
 
-	PIPE_LOCK(rpipe);
+	if ((hint & NOTE_SUBMIT) == 0)
+		PIPE_LOCK(rpipe);
 	kn->kn_data = rpipe->pipe_buffer.cnt;
 	if ((kn->kn_data == 0) && (rpipe->pipe_state & PIPE_DIRECTW))
 		kn->kn_data = rpipe->pipe_map.cnt;
@@ -1345,10 +1382,12 @@ filt_piperead(struct knote *kn, long hint)
 	if ((rpipe->pipe_state & PIPE_EOF) ||
 	    (wpipe == NULL) || (wpipe->pipe_state & PIPE_EOF)) {
 		kn->kn_flags |= EV_EOF;
-		PIPE_UNLOCK(rpipe);
+		if ((hint & NOTE_SUBMIT) == 0)
+			PIPE_UNLOCK(rpipe);
 		return (1);
 	}
-	PIPE_UNLOCK(rpipe);
+	if ((hint & NOTE_SUBMIT) == 0)
+		PIPE_UNLOCK(rpipe);
 	return (kn->kn_data > 0);
 }
 
@@ -1359,19 +1398,22 @@ filt_pipewrite(struct knote *kn, long hint)
 	struct pipe *rpipe = (struct pipe *)kn->kn_fp->f_data;
 	struct pipe *wpipe = rpipe->pipe_peer;
 
-	PIPE_LOCK(rpipe);
+	if ((hint & NOTE_SUBMIT) == 0)
+		PIPE_LOCK(rpipe);
 	/* XXXSMP: race for peer */
 	if ((wpipe == NULL) || (wpipe->pipe_state & PIPE_EOF)) {
 		kn->kn_data = 0;
 		kn->kn_flags |= EV_EOF; 
-		PIPE_UNLOCK(rpipe);
+		if ((hint & NOTE_SUBMIT) == 0)
+			PIPE_UNLOCK(rpipe);
 		return (1);
 	}
 	kn->kn_data = wpipe->pipe_buffer.size - wpipe->pipe_buffer.cnt;
 	if (wpipe->pipe_state & PIPE_DIRECTW)
 		kn->kn_data = 0;
 
-	PIPE_UNLOCK(rpipe);
+	if ((hint & NOTE_SUBMIT) == 0)
+		PIPE_UNLOCK(rpipe);
 	return (kn->kn_data >= PIPE_BUF);
 }
 
@@ -1427,41 +1469,51 @@ pipe_fcntl(fp, cmd, data, l)
 /*
  * Handle pipe sysctls.
  */
-int
-sysctl_dopipe(name, namelen, oldp, oldlenp, newp, newlen)
-	int *name;
-	u_int namelen;
-	void *oldp;
-	size_t *oldlenp;
-	void *newp;
-	size_t newlen;
+SYSCTL_SETUP(sysctl_kern_pipe_setup, "sysctl kern.pipe subtree setup")
 {
-	/* All sysctl names at this level are terminal. */
-	if (namelen != 1)
-		return (ENOTDIR);		/* overloaded */
 
-	switch (name[0]) {
-	case KERN_PIPE_MAXKVASZ:
-		return (sysctl_int(oldp, oldlenp, newp, newlen, &maxpipekva));
-	case KERN_PIPE_LIMITKVA:
-		return (sysctl_int(oldp, oldlenp, newp, newlen, &limitpipekva));
-	case KERN_PIPE_MAXBIGPIPES:
-		return (sysctl_int(oldp, oldlenp, newp, newlen, &maxbigpipes));
-	case KERN_PIPE_NBIGPIPES:
-		return (sysctl_rdint(oldp, oldlenp, newp, nbigpipe));
-	case KERN_PIPE_KVASIZE:
-		return (sysctl_rdint(oldp, oldlenp, newp, amountpipekva));
-	default:
-		return (EOPNOTSUPP);
-	}
-	/* NOTREACHED */
-}
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_NODE, "kern", NULL,
+		       NULL, 0, NULL, 0,
+		       CTL_KERN, CTL_EOL);
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_NODE, "pipe",
+		       SYSCTL_DESCR("Pipe settings"),
+		       NULL, 0, NULL, 0,
+		       CTL_KERN, KERN_PIPE, CTL_EOL);
 
-/*
- * Initialize pipe structs.
- */
-void
-pipe_init(void)
-{
-	pool_init(&pipe_pool, sizeof(struct pipe), 0, 0, 0, "pipepl", NULL);
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+		       CTLTYPE_INT, "maxkvasz",
+		       SYSCTL_DESCR("Maximum amount of kernel memory to be "
+				    "used for pipes"),
+		       NULL, 0, &maxpipekva, 0,
+		       CTL_KERN, KERN_PIPE, KERN_PIPE_MAXKVASZ, CTL_EOL);
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+		       CTLTYPE_INT, "maxloankvasz",
+		       SYSCTL_DESCR("Limit for direct transfers via page loan"),
+		       NULL, 0, &limitpipekva, 0,
+		       CTL_KERN, KERN_PIPE, KERN_PIPE_LIMITKVA, CTL_EOL);
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+		       CTLTYPE_INT, "maxbigpipes",
+		       SYSCTL_DESCR("Maximum number of \"big\" pipes"),
+		       NULL, 0, &maxbigpipes, 0,
+		       CTL_KERN, KERN_PIPE, KERN_PIPE_MAXBIGPIPES, CTL_EOL);
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_INT, "nbigpipes",
+		       SYSCTL_DESCR("Number of \"big\" pipes"),
+		       NULL, 0, &nbigpipe, 0,
+		       CTL_KERN, KERN_PIPE, KERN_PIPE_NBIGPIPES, CTL_EOL);
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_INT, "kvasize",
+		       SYSCTL_DESCR("Amount of kernel memory consumed by pipe "
+				    "buffers"),
+		       NULL, 0, &amountpipekva, 0,
+		       CTL_KERN, KERN_PIPE, KERN_PIPE_KVASIZE, CTL_EOL);
 }

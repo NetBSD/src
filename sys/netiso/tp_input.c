@@ -1,4 +1,4 @@
-/*	$NetBSD: tp_input.c,v 1.14 2001/11/13 01:10:50 lukem Exp $	*/
+/*	$NetBSD: tp_input.c,v 1.14.16.1 2004/08/03 10:55:42 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -12,11 +12,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -83,7 +79,9 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tp_input.c,v 1.14 2001/11/13 01:10:50 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tp_input.c,v 1.14.16.1 2004/08/03 10:55:42 skrll Exp $");
+
+#include "opt_iso.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -102,13 +100,13 @@ __KERNEL_RCSID(0, "$NetBSD: tp_input.c,v 1.14 2001/11/13 01:10:50 lukem Exp $");
 #include <netiso/iso_errno.h>
 #include <netiso/iso_pcb.h>
 #include <netiso/tp_param.h>
+#include <netiso/tp_var.h>
 #include <netiso/tp_timer.h>
 #include <netiso/tp_stat.h>
 #include <netiso/tp_pcb.h>
 #include <netiso/argo_debug.h>
 #include <netiso/tp_trace.h>
 #include <netiso/tp_tpdu.h>
-#include <netiso/tp_var.h>
 #include <netiso/iso_var.h>
 
 #ifdef TRUE
@@ -121,12 +119,11 @@ __KERNEL_RCSID(0, "$NetBSD: tp_input.c,v 1.14 2001/11/13 01:10:50 lukem Exp $");
 
 #include <machine/stdarg.h>
 
-static struct socket *tp_newsocket __P((struct socket *, struct sockaddr *,
-					caddr_t, u_int, u_int));
+static struct socket *
+	tp_newsocket(struct socket *, struct sockaddr *, caddr_t, u_int, u_int);
 
-struct mbuf    *
-tp_inputprep(m)
-	struct mbuf *m;
+struct mbuf *
+tp_inputprep(struct mbuf *m)
 {
 	int             hdrlen;
 
@@ -138,7 +135,7 @@ tp_inputprep(m)
 
 	while (m->m_len < 1) {
 		/*
-		 * The "m_free" logic if( (m = m_free(m)) == MNULL ) return
+		 * The "m_free" logic if( (m = m_free(m)) == NULL ) return
 		 * (struct mbuf *)0; would cause a system crash if ever
 		 * executed. This logic will be executed if the first mbuf in
 		 * the chain only contains a CLNP header. The m_free routine
@@ -149,8 +146,8 @@ tp_inputprep(m)
 		 * calls "panic" if M_PKTHDR is not set. m_pullup is a cheap
 		 * way of keeping the head of the chain from being freed.
 		 */
-		if ((m = m_pullup(m, 1)) == MNULL)
-			return (MNULL);
+		if ((m = m_pullup(m, 1)) == NULL)
+			return (NULL);
 	}
 	if (((long) m->m_data) & 0x3) {
 		/*
@@ -175,7 +172,7 @@ tp_inputprep(m)
 	 * now pull up the whole tp header
 	 */
 	if (m->m_len < hdrlen) {
-		if ((m = m_pullup(m, hdrlen)) == MNULL) {
+		if ((m = m_pullup(m, hdrlen)) == NULL) {
 			IncStat(ts_recv_drop);
 			return (struct mbuf *) 0;
 		}
@@ -200,7 +197,7 @@ tp_inputprep(m)
 #define TP_LEN_CLASS_0_INDEX	2
 #define TP_MAX_DATA_INDEX 3
 
-static u_char   tpdu_info[][4] =
+static const u_char tpdu_info[][4] =
 {
 	/* length						 max data len */
 	/* reg fmt 	xtd fmt  class 0  		 	  */
@@ -265,12 +262,12 @@ static u_char   tpdu_info[][4] =
  * NOTES:
  */
 static struct socket *
-tp_newsocket(so, fname, cons_channel, class_to_use, netservice)
-	struct socket  *so;
-	struct sockaddr *fname;
-	caddr_t         cons_channel;
-	u_int          class_to_use;
-	u_int           netservice;
+tp_newsocket(
+	struct socket  *so,
+	struct sockaddr *fname,
+	caddr_t         cons_channel,
+	u_int          class_to_use,
+	u_int           netservice)
 {
 	struct tp_pcb *tpcb = sototpcb(so);	/* old tpcb, needed
 							 * below */
@@ -421,17 +418,11 @@ ok:
  * reasonable minimum.
  */
 void
-#if __STDC__
 tp_input(struct mbuf *m, ...)
-#else
-tp_input(m, va_alist)
-	struct mbuf *m;
-	va_dcl
-#endif
 {
 	struct sockaddr *faddr, *laddr;	/* NSAP addresses */
 	caddr_t         cons_channel;
-	int             (*dgout_routine) __P((struct mbuf *, ...));
+	int             (*dgout_routine) (struct mbuf *, ...);
 	int             ce_bit;
 	struct tp_pcb *tpcb;
 	struct tpdu *hdr;
@@ -459,7 +450,7 @@ tp_input(m, va_alist)
 	laddr = va_arg(ap, struct sockaddr *);
 	cons_channel = va_arg(ap, caddr_t);
 	/* XXX: Does va_arg does not work for function ptrs */
-	dgout_routine = (int (*) __P((struct mbuf *, ...))) va_arg(ap, void *);
+	dgout_routine = (int (*)(struct mbuf *, ...)) va_arg(ap, void *);
 	ce_bit = va_arg(ap, int);
 	va_end(ap);
 
@@ -511,7 +502,7 @@ again:
 				chain_length++;
 			}
 #endif
-			if (n->m_next == MNULL) {
+			if (n->m_next == NULL) {
 				break;
 			}
 			n = n->m_next;
@@ -1307,7 +1298,7 @@ again:
 #endif
 
 			/*
-			 * if called or calling suffices appeared on the CC,
+			 * if called or calling suffixes appeared on the CC,
 			 * they'd better jive with what's in the pcb
 			 */
 				if (fsufxlen) {
@@ -1591,7 +1582,7 @@ again:
 		 * prevent m_freem() after tp_driver() from throwing it all
 		 * away
 		 */
-		m = MNULL;
+		m = NULL;
 	}
 	IncStat(ts_tpdu_rcvd);
 
@@ -1601,7 +1592,7 @@ again:
 		       tpcb->tp_state, e.ev_number, m);
 		printf(" e.e_data %p\n", e.TPDU_ATTR(DT).e_data);
 		printf("takes_data 0x%x m_len 0x%x, tpdu_len 0x%x\n",
-		       takes_data, (m == MNULL) ? 0 : m->m_len, tpdu_len);
+		       takes_data, (m == NULL) ? 0 : m->m_len, tpdu_len);
 	}
 #endif
 
@@ -1640,7 +1631,7 @@ again:
 	 */
 
 	if (takes_data == 0) {
-		ASSERT(m != MNULL);
+		ASSERT(m != NULL);
 		/*
 		 * we already peeled off the prev. tp header so we can just
 		 * pull up some more and repeat
@@ -1660,7 +1651,7 @@ again:
 			goto again;
 		}
 	}
-	if (m != MNULL) {
+	if (m != NULL) {
 #ifdef ARGO_DEBUG
 		if (argo_debug[D_TPINPUT]) {
 			printf("tp_input : m_freem(%p)\n", m);
@@ -1753,9 +1744,7 @@ respond:
  * NOTES:	 It would be nice if it got the network header size as well.
  */
 int
-tp_headersize(dutype, tpcb)
-	int             dutype;
-	struct tp_pcb  *tpcb;
+tp_headersize(int dutype, struct tp_pcb *tpcb)
 {
 	int    size = 0;
 

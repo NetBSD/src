@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.c,v 1.154.2.1 2003/07/02 15:26:43 darrenr Exp $	*/
+/*	$NetBSD: tty.c,v 1.154.2.2 2004/08/03 10:52:56 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1991, 1993
@@ -17,11 +17,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -41,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.154.2.1 2003/07/02 15:26:43 darrenr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.154.2.2 2004/08/03 10:52:56 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -64,6 +60,7 @@ __KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.154.2.1 2003/07/02 15:26:43 darrenr Exp $"
 #include <sys/poll.h>
 #include <sys/kprintf.h>
 #include <sys/namei.h>
+#include <sys/sysctl.h>
 
 #include <machine/stdarg.h>
 
@@ -174,12 +171,55 @@ struct simplelock ttylist_slock = SIMPLELOCK_INITIALIZER;
 struct ttylist_head ttylist;	/* TAILQ_HEAD */
 int tty_count;
 
-struct pool tty_pool;
+POOL_INIT(tty_pool, sizeof(struct tty), 0, 0, 0, "ttypl",
+    &pool_allocator_nointr);
 
 u_int64_t tk_cancc;
 u_int64_t tk_nin;
 u_int64_t tk_nout;
 u_int64_t tk_rawcc;
+
+SYSCTL_SETUP(sysctl_kern_tkstat_setup, "sysctl kern.tkstat subtree setup")
+{
+
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_NODE, "kern", NULL,
+		       NULL, 0, NULL, 0,
+		       CTL_KERN, CTL_EOL);
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_NODE, "tkstat",
+		       SYSCTL_DESCR("Number of characters sent and and "
+				    "received on ttys"),
+		       NULL, 0, NULL, 0,
+		       CTL_KERN, KERN_TKSTAT, CTL_EOL);
+
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_QUAD, "nin",
+		       SYSCTL_DESCR("Total number of tty input characters"),
+		       NULL, 0, &tk_nin, 0,
+		       CTL_KERN, KERN_TKSTAT, KERN_TKSTAT_NIN, CTL_EOL);
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_QUAD, "nout",
+		       SYSCTL_DESCR("Total number of tty output characters"),
+		       NULL, 0, &tk_nout, 0,
+		       CTL_KERN, KERN_TKSTAT, KERN_TKSTAT_NOUT, CTL_EOL);
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_QUAD, "cancc",
+		       SYSCTL_DESCR("Number of canonical tty input characters"),
+		       NULL, 0, &tk_cancc, 0,
+		       CTL_KERN, KERN_TKSTAT, KERN_TKSTAT_CANCC, CTL_EOL);
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_QUAD, "rawcc",
+		       SYSCTL_DESCR("Number of raw tty input characters"),
+		       NULL, 0, &tk_rawcc, 0,
+		       CTL_KERN, KERN_TKSTAT, KERN_TKSTAT_RAWCC, CTL_EOL);
+}
 
 int
 ttyopen(struct tty *tp, int dialout, int nonblock)
@@ -650,6 +690,7 @@ int
 ttyinput(int c, struct tty *tp)
 {
 	int error;
+	int s;
 
 	/*
 	 * Unless the receiver is enabled, drop incoming data.
@@ -657,9 +698,11 @@ ttyinput(int c, struct tty *tp)
 	if (!ISSET(tp->t_cflag, CREAD))
 		return (0);
 
+	s = spltty();
 	TTY_LOCK(tp);
 	error = ttyinput_wlock(c, tp);
 	TTY_UNLOCK(tp);
+	splx(s);
 	return (error);
 }
 
@@ -787,6 +830,7 @@ ttioctl(struct tty *tp, u_long cmd, caddr_t data, int flag, struct lwp *l)
 	case  TIOCSETAW:
 #ifdef notdef
 	case  TIOCSPGRP:
+	case  FIOSETOWN:
 #endif
 	case  TIOCSTAT:
 	case  TIOCSTI:
@@ -897,6 +941,11 @@ ttioctl(struct tty *tp, u_long cmd, caddr_t data, int flag, struct lwp *l)
 		break;
 	case TIOCGWINSZ:		/* get window size */
 		*(struct winsize *)data = tp->t_winsize;
+		break;
+	case FIOGETOWN:
+		if (!isctty(p, tp))
+			return (ENOTTY);
+		*(int *)data = tp->t_pgrp ? -tp->t_pgrp->pg_id : 0;
 		break;
 	case TIOCGPGRP:			/* get pgrp of tty */
 		if (!isctty(p, tp))
@@ -1083,15 +1132,43 @@ ttioctl(struct tty *tp, u_long cmd, caddr_t data, int flag, struct lwp *l)
 		    (tp->t_session != p->p_session)))
 			return (EPERM);
 
-		if (tp->t_session)
-			SESSRELE(tp->t_session);
+		/*
+		 * `p_session' acquires a reference.
+		 * But note that if `t_session' is set at this point,
+		 * it must equal `p_session', in which case the session
+		 * already has the correct reference count.
+		 */
+		if (tp->t_session == NULL)
+			SESSHOLD(p->p_session);
 
-		SESSHOLD(p->p_session);
 		tp->t_session = p->p_session;
 		tp->t_pgrp = p->p_pgrp;
 		p->p_session->s_ttyp = tp;
 		p->p_flag |= P_CONTROLT;
 		break;
+	case FIOSETOWN: {		/* set pgrp of tty */
+		pid_t pgid = *(int *)data;
+		struct pgrp *pgrp;
+
+		if (!isctty(p, tp))
+			return (ENOTTY);
+
+		if (pgid < 0)
+			pgrp = pgfind(-pgid);
+		else {
+			struct proc *p1 = pfind(pgid);
+			if (!p1)
+				return (ESRCH);
+			pgrp = p1->p_pgrp;
+		}
+
+		if (pgrp == NULL)
+			return (EINVAL);
+		else if (pgrp->pg_session != p->p_session)
+			return (EPERM);
+		tp->t_pgrp = pgrp;
+		break;
+	}
 	case TIOCSPGRP: {		/* set pgrp of tty */
 		struct pgrp *pgrp = pgfind(*(int *)data);
 
@@ -1105,9 +1182,11 @@ ttioctl(struct tty *tp, u_long cmd, caddr_t data, int flag, struct lwp *l)
 		break;
 	}
 	case TIOCSTAT:			/* get load avg stats */
+		s = spltty();
 		TTY_LOCK(tp);
 		ttyinfo(tp);
 		TTY_UNLOCK(tp);
+		splx(s);
 		break;
 	case TIOCSWINSZ:		/* set window size */
 		if (memcmp((caddr_t)&tp->t_winsize, data,
@@ -1179,9 +1258,11 @@ filt_ttyread(struct knote *kn, long hint)
 
 	tp = kn->kn_hook;
 	s = spltty();
-	TTY_LOCK(tp);
+	if ((hint & NOTE_SUBMIT) == 0)
+		TTY_LOCK(tp);
 	kn->kn_data = ttnread(tp);
-	TTY_UNLOCK(tp);
+	if ((hint & NOTE_SUBMIT) == 0)
+		TTY_UNLOCK(tp);
 	splx(s);
 	return (kn->kn_data > 0);
 }
@@ -1208,10 +1289,12 @@ filt_ttywrite(struct knote *kn, long hint)
 
 	tp = kn->kn_hook;
 	s = spltty();
-	TTY_LOCK(tp);
+	if ((hint & NOTE_SUBMIT) == 0)
+		TTY_LOCK(tp);
 	kn->kn_data = tp->t_outq.c_cn - tp->t_outq.c_cc;
 	canwrite = (tp->t_outq.c_cc <= tp->t_lowat) && CONNECTED(tp);
-	TTY_UNLOCK(tp);
+	if ((hint & NOTE_SUBMIT) == 0)
+		TTY_UNLOCK(tp);
 	splx(s);
 	return (canwrite);
 }
@@ -1229,10 +1312,11 @@ ttykqfilter(dev_t dev, struct knote *kn)
 	int		s;
 	const struct cdevsw	*cdev;
 
-	cdev = cdevsw_lookup(dev);
-	if (cdev == NULL)
+        if (((cdev = cdevsw_lookup(dev)) == NULL) ||
+	    (cdev->d_tty == NULL) ||
+	    ((tp = (*cdev->d_tty)(dev)) == NULL))
 		return (ENXIO);
-	tp = (*cdev->d_tty)(dev);
+
 	switch (kn->kn_filter) {
 	case EVFILT_READ:
 		klist = &tp->t_rsel.sel_klist;
@@ -1344,7 +1428,7 @@ ttyflush(struct tty *tp, int rw)
 			(*cdev->d_stop)(tp, rw);
 		FLUSHQ(&tp->t_outq);
 		wakeup((caddr_t)&tp->t_outq);
-		selnotify(&tp->t_wsel, 0);
+		selnotify(&tp->t_wsel, NOTE_SUBMIT);
 	}
 }
 
@@ -1454,11 +1538,14 @@ ttylclose(struct tty *tp, int flag)
  * Returns 0 if the line should be turned off, otherwise 1.
  *
  * Must be called at spltty().
+ * XXX except that it is often isn't, which should be fixed.
  */
 int
 ttymodem(struct tty *tp, int flag)
 {
+	int s;
 
+	s = spltty();
 	TTY_LOCK(tp);
 	if (flag == 0) {
 		if (ISSET(tp->t_state, TS_CARR_ON)) {
@@ -1472,6 +1559,7 @@ ttymodem(struct tty *tp, int flag)
 					    SIGHUP);
 				ttyflush(tp, FREAD | FWRITE);
 				TTY_UNLOCK(tp);
+				splx(s);
 				return (0);
 			}
 		}
@@ -1485,6 +1573,7 @@ ttymodem(struct tty *tp, int flag)
 		}
 	}
 	TTY_UNLOCK(tp);
+	splx(s);
 	return (1);
 }
 
@@ -1493,11 +1582,14 @@ ttymodem(struct tty *tp, int flag)
  * Return argument flag, to turn off device on carrier drop.
  *
  * Must be called at spltty().
+ * XXX except that it is often isn't, which should be fixed.
  */
 int
 nullmodem(struct tty *tp, int flag)
 {
+	int s;
 
+	s = spltty();
 	TTY_LOCK(tp);
 	if (flag)
 		SET(tp->t_state, TS_CARR_ON);
@@ -1507,10 +1599,12 @@ nullmodem(struct tty *tp, int flag)
 			if (tp->t_session && tp->t_session->s_leader)
 				psignal(tp->t_session->s_leader, SIGHUP);
 			TTY_UNLOCK(tp);
+			splx(s);
 			return (0);
 		}
 	}
 	TTY_UNLOCK(tp);
+	splx(s);
 	return (1);
 }
 
@@ -1601,9 +1695,13 @@ ttread(struct tty *tp, struct uio *uio, int flag)
 				goto sleep;
 			goto read;
 		}
-		t *= 100000;		/* time in us */
-#define	diff(t1, t2) (((t1).tv_sec - (t2).tv_sec) * 1000000 + \
-			 ((t1).tv_usec - (t2).tv_usec))
+		t *= hz;		/* time in deca-ticks */
+/*
+ * Time difference in deca-ticks, split division to avoid numeric overflow.
+ * Ok for hz < ~200kHz
+ */
+#define	diff(t1, t2) (((t1).tv_sec - (t2).tv_sec) * 10 * hz + \
+			 ((t1).tv_usec - (t2).tv_usec) / 100 * hz / 1000)
 		if (m > 0) {
 			if (qp->c_cc <= 0)
 				goto sleep;
@@ -1636,14 +1734,16 @@ ttread(struct tty *tp, struct uio *uio, int flag)
 #undef diff
 		if (slp > 0) {
 			/*
+			 * Convert deca-ticks back to ticks.
 			 * Rounding down may make us wake up just short
 			 * of the target, so we round up.
-			 * The formula is ceiling(slp * hz/1000000).
-			 * 32-bit arithmetic is enough for hz < 169.
-			 *
-			 * Also, use plain wakeup() not ttwakeup().
+			 * Maybe we should do 'slp/10 + 1' because the
+			 * first tick maybe almost immediate.
+			 * However it is more useful for a program that sets
+			 * VTIME=10 to wakeup every second not every 1.01
+			 * seconds (if hz=100).
 			 */
-			slp = (long) (((u_long)slp * hz) + 999999) / 1000000;
+			slp = (slp + 9)/ 10;
 			goto sleep;
 		}
 	} else if ((qp = &tp->t_canq)->c_cc <= 0) {
@@ -1692,9 +1792,11 @@ ttread(struct tty *tp, struct uio *uio, int flag)
 		    ISSET(lflag, IEXTEN|ISIG) == (IEXTEN|ISIG)) {
 			pgsignal(tp->t_pgrp, SIGTSTP, 1);
 			if (first) {
+				s = spltty();
 				TTY_LOCK(tp);
 				error = ttysleep(tp, &lbolt,
 				    TTIPRI | PCATCH | PNORELOCK, ttybg, 0);
+				splx(s);
 				if (error)
 					break;
 				goto loop;
@@ -2157,7 +2259,7 @@ void
 ttwakeup(struct tty *tp)
 {
 
-	selnotify(&tp->t_rsel, 0);
+	selnotify(&tp->t_rsel, NOTE_SUBMIT);
 	if (ISSET(tp->t_state, TS_ASYNC))
 		pgsignal(tp->t_pgrp, SIGIO, 1);
 	wakeup((caddr_t)&tp->t_rawq);
@@ -2168,7 +2270,7 @@ ttwakeup(struct tty *tp)
  * used by drivers to map software speed values to hardware parameters.
  */
 int
-ttspeedtab(int speed, struct speedtab *table)
+ttspeedtab(int speed, const struct speedtab *table)
 {
 
 	for (; table->sp_speed != -1; table++)
@@ -2258,7 +2360,7 @@ ttyinfo(struct tty *tp)
 		    (long int)stime.tv_usec / 10000);
 
 #define	pgtok(a)	(((u_long) ((a) * PAGE_SIZE) / 1024))
-		/* Print percentage cpu. */
+		/* Print percentage CPU. */
 		tmp = (pick->p_pctcpu * 10000 + FSCALE / 2) >> FSHIFT;
 		ttyprintf_nolock(tp, "%d%% ", tmp / 100);
 
@@ -2281,7 +2383,7 @@ ttyinfo(struct tty *tp)
  *
  *	1) Only foreground processes are eligible - implied.
  *	2) Runnable processes are favored over anything else.  The runner
- *	   with the highest cpu utilization is picked (p_estcpu).  Ties are
+ *	   with the highest CPU utilization is picked (p_estcpu).  Ties are
  *	   broken by picking the highest pid.
  *	3) The sleeper with the shortest sleep time is next.  With ties,
  *	   we pick out just "short-term" sleepers (P_SINTR == 0).
@@ -2309,7 +2411,7 @@ proc_compare(struct proc *p1, struct proc *p2)
 		return (1);
 	case BOTH:
 		/*
-		 * tie - favor one with highest recent cpu utilization
+		 * tie - favor one with highest recent CPU utilization
 		 */
 		if (p2->p_estcpu > p1->p_estcpu)
 			return (1);
@@ -2405,9 +2507,6 @@ tty_init(void)
 
 	TAILQ_INIT(&ttylist);
 	tty_count = 0;
-
-	pool_init(&tty_pool, sizeof(struct tty), 0, 0, 0, "ttypl",
-	    &pool_allocator_nointr);
 }
 
 /*

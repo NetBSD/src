@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_clock.c,v 1.86 2003/06/23 11:02:04 martin Exp $	*/
+/*	$NetBSD: kern_clock.c,v 1.86.2.1 2004/08/03 10:52:43 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -54,11 +54,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -78,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_clock.c,v 1.86 2003/06/23 11:02:04 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_clock.c,v 1.86.2.1 2004/08/03 10:52:43 skrll Exp $");
 
 #include "opt_ntp.h"
 #include "opt_multiprocessor.h"
@@ -113,9 +109,9 @@ __KERNEL_RCSID(0, "$NetBSD: kern_clock.c,v 1.86 2003/06/23 11:02:04 martin Exp $
  * track of real time.  The second timer handles kernel and user profiling,
  * and does resource use estimation.  If the second timer is programmable,
  * it is randomized to avoid aliasing between the two clocks.  For example,
- * the randomization prevents an adversary from always giving up the cpu
+ * the randomization prevents an adversary from always giving up the CPU
  * just before its quantum expires.  Otherwise, it would never accumulate
- * cpu ticks.  The mean frequency of the second timer is stathz.
+ * CPU ticks.  The mean frequency of the second timer is stathz.
  *
  * If no second timer exists, stathz will be zero; in this case we drive
  * profiling and statistics off the main clock.  This WILL NOT be accurate;
@@ -234,6 +230,13 @@ long time_reftime = 0;		/* time at last adjustment (s) */
  *
  * pps_intcnt counts the calibration intervals for use in the interval-
  * adaptation algorithm. It's just too complicated for words.
+ *
+ * pps_kc_hardpps_source contains an arbitrary value that uniquely
+ * identifies the currently bound source of the PPS signal, or NULL
+ * if no source is bound.
+ *
+ * pps_kc_hardpps_mode indicates which transitions, if any, of the PPS
+ * signal should be reported.
  */
 struct timeval pps_time;	/* kernel time at last interval */
 long pps_tf[] = {0, 0, 0};	/* pps time offset median filter (us) */
@@ -248,6 +251,8 @@ int pps_glitch = 0;		/* pps signal glitch counter */
 int pps_count = 0;		/* calibration interval counter (s) */
 int pps_shift = PPS_SHIFT;	/* interval duration (s) (shift) */
 int pps_intcnt = 0;		/* intervals at current duration */
+void *pps_kc_hardpps_source = NULL; /* current PPS supplier's identifier */
+int pps_kc_hardpps_mode = 0;	/* interesting edges of PPS signal */
 
 /*
  * PPS signal quality monitors
@@ -322,6 +327,7 @@ int	profsrc;
 int	schedhz;
 int	profprocs;
 int	hardclock_ticks;
+static int statscheddiv; /* stat => sched divider (used if schedhz == 0) */
 static int psdiv;			/* prof => stat divider */
 int	psratio;			/* ratio: prof / stat */
 int	tickfix, tickfixinterval;	/* used if tick not really integral */
@@ -371,6 +377,12 @@ initclocks(void)
 		profhz = i;
 	psratio = profhz / i;
 	rrticks = hz / 10;
+	if (schedhz == 0) {
+		/* 16Hz is best */
+		statscheddiv = i / 16;
+		if (statscheddiv <= 0)
+			panic("statscheddiv");
+	}
 
 #ifdef NTP
 	switch (hz) {
@@ -818,7 +830,7 @@ hardclock(struct clockframe *frame)
 
 	/*
 	 * Update real-time timeout queue.
-	 * Process callouts at a very low cpu priority, so we don't keep the
+	 * Process callouts at a very low CPU priority, so we don't keep the
 	 * relatively high clock interrupt priority any longer than necessary.
 	 */
 	if (callout_hardclock()) {
@@ -1075,11 +1087,13 @@ statclock(struct clockframe *frame)
 		++p->p_cpticks;
 		/*
 		 * If no separate schedclock is provided, call it here 
-		 * at ~~12-25 Hz, ~~16 Hz is best
+		 * at about 16 Hz.
 		 */
 		if (schedhz == 0)
-			if ((++ci->ci_schedstate.spc_schedticks & 3) == 0)
+			if ((int)(--ci->ci_schedstate.spc_schedticks) <= 0) {
 				schedclock(l);
+				ci->ci_schedstate.spc_schedticks = statscheddiv;
+			}
 	}
 }
 
@@ -1413,22 +1427,3 @@ hardpps(struct timeval *tvp,		/* time at PPS */
 }
 #endif /* PPS_SYNC */
 #endif /* NTP  */
-
-/*
- * Return information about system clocks.
- */
-int
-sysctl_clockrate(void *where, size_t *sizep)
-{
-	struct clockinfo clkinfo;
-
-	/*
-	 * Construct clockinfo structure.
-	 */
-	clkinfo.tick = tick;
-	clkinfo.tickadj = tickadj;
-	clkinfo.hz = hz;
-	clkinfo.profhz = profhz;
-	clkinfo.stathz = stathz ? stathz : hz;
-	return (sysctl_rdstruct(where, sizep, NULL, &clkinfo, sizeof(clkinfo)));
-}

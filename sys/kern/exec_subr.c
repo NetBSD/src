@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_subr.c,v 1.37.2.1 2003/07/02 15:26:35 darrenr Exp $	*/
+/*	$NetBSD: exec_subr.c,v 1.37.2.2 2004/08/03 10:52:43 skrll Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1996 Christopher G. Demetriou
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exec_subr.c,v 1.37.2.1 2003/07/02 15:26:35 darrenr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exec_subr.c,v 1.37.2.2 2004/08/03 10:52:43 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -41,6 +41,7 @@ __KERNEL_RCSID(0, "$NetBSD: exec_subr.c,v 1.37.2.1 2003/07/02 15:26:35 darrenr E
 #include <sys/filedesc.h>
 #include <sys/exec.h>
 #include <sys/mman.h>
+#include <sys/resourcevar.h>
 
 #include <uvm/uvm.h>
 
@@ -49,14 +50,11 @@ __KERNEL_RCSID(0, "$NetBSD: exec_subr.c,v 1.37.2.1 2003/07/02 15:26:35 darrenr E
  * (calls, extends, kills).
  */
 
-#ifdef DEBUG
 /*
  * new_vmcmd():
  *	create a new vmcmd structure and fill in its fields based
  *	on function call arguments.  make sure objects ref'd by
  *	the vmcmd are 'held'.
- *
- * If not debugging, this is a macro, so it's expanded inline.
  */
 
 void
@@ -79,7 +77,6 @@ new_vmcmd(struct exec_vmcmd_set *evsp,
 	vcp->ev_prot = prot;
 	vcp->ev_flags = flags;
 }
-#endif /* DEBUG */
 
 void
 vmcmdset_extend(struct exec_vmcmd_set *evsp)
@@ -120,7 +117,7 @@ kill_vmcmds(struct exec_vmcmd_set *evsp)
 
 	for (i = 0; i < evsp->evs_used; i++) {
 		vcp = &evsp->evs_cmds[i];
-		if (vcp->ev_vp != NULLVP)
+		if (vcp->ev_vp != NULL)
 			vrele(vcp->ev_vp);
 	}
 	evsp->evs_used = evsp->evs_cnt = 0;
@@ -297,3 +294,61 @@ exec_read_from(struct lwp *l, struct vnode *vp, u_long off, void *buf,
 	return 0;
 }
 
+/*
+ * exec_setup_stack(): Set up the stack segment for an elf
+ * executable.
+ *
+ * Note that the ep_ssize parameter must be set to be the current stack
+ * limit; this is adjusted in the body of execve() to yield the
+ * appropriate stack segment usage once the argument length is
+ * calculated.
+ *
+ * This function returns an int for uniformity with other (future) formats'
+ * stack setup functions.  They might have errors to return.
+ */
+
+int
+exec_setup_stack(struct proc *p, struct exec_package *epp)
+{
+	u_long max_stack_size;
+	u_long access_linear_min, access_size;
+	u_long noaccess_linear_min, noaccess_size;
+
+#ifndef	USRSTACK32
+#define USRSTACK32	(0x00000000ffffffffL&~PGOFSET)
+#endif
+
+	if (epp->ep_flags & EXEC_32) {
+		epp->ep_minsaddr = USRSTACK32;
+		max_stack_size = MAXSSIZ;
+	} else {
+		epp->ep_minsaddr = USRSTACK;
+		max_stack_size = MAXSSIZ;
+	}
+	epp->ep_maxsaddr = (u_long)STACK_GROW(epp->ep_minsaddr, 
+		max_stack_size);
+	epp->ep_ssize = p->p_rlimit[RLIMIT_STACK].rlim_cur;
+
+	/*
+	 * set up commands for stack.  note that this takes *two*, one to
+	 * map the part of the stack which we can access, and one to map
+	 * the part which we can't.
+	 *
+	 * arguably, it could be made into one, but that would require the
+	 * addition of another mapping proc, which is unnecessary
+	 */
+	access_size = epp->ep_ssize;
+	access_linear_min = (u_long)STACK_ALLOC(epp->ep_minsaddr, access_size);
+	noaccess_size = max_stack_size - access_size;
+	noaccess_linear_min = (u_long)STACK_ALLOC(STACK_GROW(epp->ep_minsaddr, 
+	    access_size), noaccess_size);
+	if (noaccess_size > 0) {
+		NEW_VMCMD(&epp->ep_vmcmds, vmcmd_map_zero, noaccess_size,
+		    noaccess_linear_min, NULL, 0, VM_PROT_NONE);
+	}
+	KASSERT(access_size > 0);
+	NEW_VMCMD(&epp->ep_vmcmds, vmcmd_map_zero, access_size,
+	    access_linear_min, NULL, 0, VM_PROT_READ | VM_PROT_WRITE);
+
+	return 0;
+}

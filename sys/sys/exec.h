@@ -1,8 +1,6 @@
-/*	$NetBSD: exec.h,v 1.97.2.1 2003/07/02 15:27:14 darrenr Exp $	*/
+/*	$NetBSD: exec.h,v 1.97.2.2 2004/08/03 10:56:26 skrll Exp $	*/
 
 /*-
- * Copyright (c) 1994 Christopher G. Demetriou
- * Copyright (c) 1993 Theo de Raadt
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
  * (c) UNIX System Laboratories, Inc.
@@ -10,6 +8,60 @@
  * to the University of California by American Telephone and Telegraph
  * Co. or Unix System Laboratories, Inc. and are reproduced herein with
  * the permission of UNIX System Laboratories, Inc.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. Neither the name of the University nor the names of its contributors
+ *    may be used to endorse or promote products derived from this software
+ *    without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
+ * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+ * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+ * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+ * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+ * SUCH DAMAGE.
+ *
+ *	@(#)exec.h	8.4 (Berkeley) 2/19/95
+ */
+
+/*-
+ * Copyright (c) 1993 Theo de Raadt.  All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+ * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+ * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ * IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+ * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+ * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+ * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+ * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
+
+/*-
+ * Copyright (c) 1994 Christopher G. Demetriou
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -64,7 +116,7 @@ struct ps_strings {
  * Below the ps_strings and sigtramp, we may require a gap on the stack
  * (used to copyin/copyout various emulation data structures).
  */
-#define	STACKGAPLEN	512	/* plenty enough for now */
+#define	STACKGAPLEN	4096	/* plenty enough for now */
 
 /*
  * the following structures allow execve() to put together processes
@@ -89,7 +141,7 @@ typedef int (*exec_makecmds_fcn) __P((struct lwp *, struct exec_package *));
 
 struct execsw {
 	u_int	es_hdrsz;		/* size of header for this format */
-	exec_makecmds_fcn es_check;	/* function to check exec format */
+	exec_makecmds_fcn es_makecmds;	/* function to setup vmcmds */
 	union {				/* probe function */
 		int (*elf_probe_func) __P((struct lwp *,
 			struct exec_package *, void *, char *, vaddr_t *));
@@ -109,6 +161,7 @@ struct execsw {
 					/* Dump core */
 	int	(*es_coredump) __P((struct lwp *, struct vnode *,
 				    struct ucred *));
+	int	(*es_setup_stack) __P((struct proc *, struct exec_package *));
 };
 
 #define EXECSW_PRIO_ANY		0x000	/* default, no preference */
@@ -159,7 +212,7 @@ struct exec_package {
 #define	EXEC_HASES	0x0040		/* don't update exec switch pointer */
 
 struct exec_vmcmd {
-	int	(*ev_proc) __P((struct lwp *p, struct exec_vmcmd *cmd));
+	int	(*ev_proc) __P((struct lwp *, struct exec_vmcmd *));
 				/* procedure to run for region of vmspace */
 	u_long	ev_len;		/* length of the segment to map */
 	u_long	ev_addr;	/* address in the vmspace to place it at */
@@ -178,14 +231,14 @@ struct exec_vmcmd {
 MALLOC_DECLARE(M_EXEC);
 
 /*
- * funtions used either by execve() or the various cpu-dependent execve()
+ * funtions used either by execve() or the various CPU-dependent execve()
  * hooks.
  */
 void	kill_vmcmd		__P((struct exec_vmcmd **));
 int	exec_makecmds		__P((struct lwp *, struct exec_package *));
 int	exec_runcmds		__P((struct proc *, struct exec_package *));
 void	vmcmdset_extend		__P((struct exec_vmcmd_set *));
-void	kill_vmcmds		__P((struct exec_vmcmd_set *evsp));
+void	kill_vmcmds		__P((struct exec_vmcmd_set *));
 int	vmcmd_map_pagedvn	__P((struct lwp *, struct exec_vmcmd *));
 int	vmcmd_map_readvn	__P((struct lwp *, struct exec_vmcmd *));
 int	vmcmd_readvn		__P((struct lwp *, struct exec_vmcmd *));
@@ -205,6 +258,8 @@ int	check_exec		__P((struct lwp *, struct exec_package *));
 int	exec_init		__P((int));
 int	exec_read_from		__P((struct lwp *, struct vnode *, u_long off,
     void *, size_t));
+int	exec_setup_stack	__P((struct proc *, struct exec_package *));
+
 
 #ifdef LKM
 int	emul_register		__P((const struct emul *, int));
@@ -215,33 +270,13 @@ int	exec_add		__P((struct execsw *, const char *));
 int	exec_remove		__P((const struct execsw *));
 #endif /* LKM */
 
-#ifdef DEBUG
-void	new_vmcmd __P((struct exec_vmcmd_set *evsp,
-		    int (*proc) __P((struct lwp *l, struct exec_vmcmd *)),
-		    u_long len, u_long addr, struct vnode *vp, u_long offset,
-		    u_int prot, int flags));
+void	new_vmcmd __P((struct exec_vmcmd_set *,
+		    int (*) __P((struct lwp *, struct exec_vmcmd *)),
+		    u_long, u_long, struct vnode *, u_long, u_int, int));
 #define	NEW_VMCMD(evsp,proc,len,addr,vp,offset,prot) \
 	new_vmcmd(evsp,proc,len,addr,vp,offset,prot,0)
 #define	NEW_VMCMD2(evsp,proc,len,addr,vp,offset,prot,flags) \
 	new_vmcmd(evsp,proc,len,addr,vp,offset,prot,flags)
-#else	/* DEBUG */
-#define	NEW_VMCMD(evsp,proc,len,addr,vp,offset,prot) \
-	NEW_VMCMD2(evsp,proc,len,addr,vp,offset,prot,0)
-#define	NEW_VMCMD2(evsp,proc,len,addr,vp,offset,prot,flags) do { \
-	struct exec_vmcmd *vcp; \
-	if ((evsp)->evs_used >= (evsp)->evs_cnt) \
-		vmcmdset_extend(evsp); \
-	vcp = &(evsp)->evs_cmds[(evsp)->evs_used++]; \
-	vcp->ev_proc = (proc); \
-	vcp->ev_len = (len); \
-	vcp->ev_addr = (addr); \
-	if ((vcp->ev_vp = (vp)) != NULLVP) \
-		VREF(vp); \
-	vcp->ev_offset = (offset); \
-	vcp->ev_prot = (prot); \
-	vcp->ev_flags = (flags); \
-} while (/* CONSTCOND */ 0)
-#endif /* DEBUG */
 
 #endif /* _KERNEL */
 

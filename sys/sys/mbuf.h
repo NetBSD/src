@@ -1,4 +1,4 @@
-/*	$NetBSD: mbuf.h,v 1.84 2003/06/26 09:55:10 itojun Exp $	*/
+/*	$NetBSD: mbuf.h,v 1.84.2.1 2004/08/03 10:56:28 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1999, 2001 The NetBSD Foundation, Inc.
@@ -6,7 +6,7 @@
  *
  * This code is derived from software contributed to The NetBSD Foundation
  * by Jason R. Thorpe of the Numerical Aerospace Simulation Facility,
- * NASA Ames Research Center.
+ * NASA Ames Research Center and Matt Thomas of 3am Software Foundry.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -38,7 +38,6 @@
  */
 
 /*
- * Copyright (c) 1996 Matt Thomas.  All rights reserved.
  * Copyright (c) 1982, 1986, 1988, 1993
  *	The Regents of the University of California.  All rights reserved.
  *
@@ -50,11 +49,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -87,7 +82,7 @@
 #include <sys/queue.h>
 
 /* For offsetof() */
-#ifdef _KERNEL
+#if defined(_KERNEL) || defined(_STANDALONE)
 #include <sys/systm.h>
 #else
 #include <stddef.h>
@@ -175,6 +170,12 @@ struct	pkthdr {
 #define	M_CSUM_UDPv6		0x00000020	/* IPv6 UDP header/payload */
 #define	M_CSUM_IPv4		0x00000040	/* IPv4 header */
 #define	M_CSUM_IPv4_BAD		0x00000080	/* IPv4 header checksum bad */
+
+/* Checksum-assist quirks: keep separate from jump-table bits. */
+#define	M_CSUM_NO_PSEUDOHDR	0x80000000	/* Rx M_CSUM_DATA does not include
+						 * the UDP/TCP pseudo-hdr, and
+						 * is not yet 1s-complemented.
+						 */
 
 /*
  * Max # of pages we can attach to m_ext.  This is carefully chosen
@@ -386,7 +387,7 @@ do {									\
 #define	MCLAIM(m, mowner) 		do { } while (/* CONSTCOND */ 0)
 #define	MOWNER_ATTACH(mo)		do { } while (/* CONSTCOND */ 0)
 #define	MOWNER_DETACH(mo)		do { } while (/* CONSTCOND */ 0)
-#define	m_claim(m, mo)			do { } while (/* CONSTCOND */ 0)
+#define	m_claimm(m, mo)			do { } while (/* CONSTCOND */ 0)
 #define MBUFTRACE_ASSERT(cond)		do { } while (/* CONSTCOND */ 0)
 #endif
 
@@ -431,6 +432,7 @@ do {									\
 		(m)->m_nextpkt = (struct mbuf *)NULL;			\
 		(m)->m_data = (m)->m_pktdat;				\
 		(m)->m_flags = M_PKTHDR;				\
+		(m)->m_pkthdr.rcvif = NULL;				\
 		(m)->m_pkthdr.csum_flags = 0;				\
 		(m)->m_pkthdr.csum_data = 0;				\
 		SLIST_INIT(&(m)->m_pkthdr.tags);			\
@@ -503,11 +505,11 @@ do {									\
  * MEXTADD adds pre-allocated external storage to
  * a normal mbuf; the flag M_EXT is set upon success.
  */
-#define	MCLGET(m, how)							\
+#define	_MCLGET(m, pool_cache, size, how)				\
 do {									\
 	MBUFLOCK(							\
 		(m)->m_ext.ext_buf =					\
-		    pool_cache_get_paddr(&mclpool_cache,		\
+		    pool_cache_get_paddr((pool_cache),			\
 		        (how) == M_WAIT ? (PR_WAITOK|PR_LIMITFAIL) : 0,	\
 			&(m)->m_ext.ext_paddr);				\
 		if ((m)->m_ext.ext_buf != NULL)				\
@@ -517,13 +519,18 @@ do {									\
 		(m)->m_data = (m)->m_ext.ext_buf;			\
 		(m)->m_flags = ((m)->m_flags & ~M_EXTCOPYFLAGS) |	\
 				M_EXT|M_CLUSTER;			\
-		(m)->m_ext.ext_size = MCLBYTES;				\
+		(m)->m_ext.ext_size = (size);				\
 		(m)->m_ext.ext_free = NULL;				\
-		(m)->m_ext.ext_arg = NULL;				\
+		(m)->m_ext.ext_arg = (pool_cache);			\
 		/* ext_paddr initialized above */			\
 		MCLINITREFERENCE(m);					\
 	}								\
 } while (/* CONSTCOND */ 0)
+
+/*
+ * The standard mbuf cluster pool.
+ */
+#define	MCLGET(m, how)	_MCLGET((m), &mclpool_cache, MCLBYTES, (how))
 
 #define	MEXTMALLOC(m, size, how)					\
 do {									\
@@ -561,8 +568,8 @@ do {									\
 		_MCLDEREFERENCE(m);					\
 		splx(_ms_);						\
 	} else if ((m)->m_flags & M_CLUSTER) {				\
-		pool_cache_put_paddr(&mclpool_cache, (m)->m_ext.ext_buf,\
-		    (m)->m_ext.ext_paddr);				\
+		pool_cache_put_paddr((m)->m_ext.ext_arg,		\
+		    (m)->m_ext.ext_buf, (m)->m_ext.ext_paddr);		\
 		splx(_ms_);						\
 	} else if ((m)->m_ext.ext_free) {				\
 		/*							\
@@ -611,7 +618,7 @@ do {									\
 				_MCLDEREFERENCE(m);			\
 				pool_cache_put(&mbpool_cache, (m));	\
 			} else if ((m)->m_flags & M_CLUSTER) {		\
-				pool_cache_put_paddr(&mclpool_cache,	\
+				pool_cache_put_paddr((m)->m_ext.ext_arg,\
 				    (m)->m_ext.ext_buf,			\
 				    (m)->m_ext.ext_paddr);		\
 				pool_cache_put(&mbpool_cache, (m));	\
@@ -840,7 +847,7 @@ int	m_apply(struct mbuf *, int, int,
 		int (*)(void *, caddr_t, unsigned int), void *);
 void	m_cat(struct mbuf *,struct mbuf *);
 #ifdef MBUFTRACE
-void	m_claim(struct mbuf *, struct mowner *);
+void	m_claimm(struct mbuf *, struct mowner *);
 #endif
 void	m_clget(struct mbuf *, int);
 int	m_mballoc(int, int);
@@ -850,6 +857,9 @@ void	m_freem(struct mbuf *);
 void	m_reclaim(void *, int);
 void	mbinit(void);
 
+/* Inline routines. */
+static	u_int m_length(struct mbuf *);
+
 /* Packet tag routines */
 struct	m_tag *m_tag_get(int, int, int);
 void	m_tag_free(struct m_tag *);
@@ -857,6 +867,7 @@ void	m_tag_prepend(struct mbuf *, struct m_tag *);
 void	m_tag_unlink(struct mbuf *, struct m_tag *);
 void	m_tag_delete(struct mbuf *, struct m_tag *);
 void	m_tag_delete_chain(struct mbuf *, struct m_tag *);
+void	m_tag_delete_nonpersistent(struct mbuf *);
 struct	m_tag *m_tag_find(struct mbuf *, int, struct m_tag *);
 struct	m_tag *m_tag_copy(struct m_tag *);
 int	m_tag_copy_chain(struct mbuf *, struct mbuf *);
@@ -874,6 +885,37 @@ struct	m_tag *m_tag_next(struct mbuf *, struct m_tag *);
 #define PACKET_TAG_PF_FRAGCACHE			13 /* PF fragment cached */
 #define PACKET_TAG_PF_QID			14 /* PF queue id */
 #define PACKET_TAG_PF_TAG			15 /* PF tags */
+
+#define PACKET_TAG_IPSEC_IN_CRYPTO_DONE		16
+#define PACKET_TAG_IPSEC_IN_DONE		17
+#define PACKET_TAG_IPSEC_OUT_DONE		18
+#define	PACKET_TAG_IPSEC_OUT_CRYPTO_NEEDED	19  /* NIC IPsec crypto req'ed */
+#define	PACKET_TAG_IPSEC_IN_COULD_DO_CRYPTO	20  /* NIC notifies IPsec */
+#define	PACKET_TAG_IPSEC_PENDING_TDB		21  /* Reminder to do IPsec */
+
+#define	PACKET_TAG_IPSEC_SOCKET			22 /* IPSEC socket ref */
+#define	PACKET_TAG_IPSEC_HISTORY		23 /* IPSEC history */
+
+#define	PACKET_TAG_PF_TRANSLATE_LOCALHOST	24 /* translated to localhost */
+
+/*
+ * Return the number of bytes in the mbuf chain, m.
+ */
+static __inline u_int
+m_length(struct mbuf *m)
+{
+	struct mbuf *m0;
+	u_int pktlen;
+
+	if ((m->m_flags & M_PKTHDR) != 0) 
+		return m->m_pkthdr.len;
+
+	pktlen = 0;
+	for (m0 = m; m0 != NULL; m0 = m0->m_next)
+		pktlen += m0->m_len;
+	return pktlen;
+}
+
 #endif /* _KERNEL */
 #endif /* !_SYS_MBUF_H_ */
 

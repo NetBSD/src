@@ -1,4 +1,4 @@
-/*	$NetBSD: umass_isdata.c,v 1.5 2003/01/27 13:06:38 toshii Exp $	*/
+/*	$NetBSD: umass_isdata.c,v 1.5.2.1 2004/08/03 10:51:38 skrll Exp $	*/
 
 /*
  * TODO:
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umass_isdata.c,v 1.5 2003/01/27 13:06:38 toshii Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umass_isdata.c,v 1.5.2.1 2004/08/03 10:51:38 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -67,8 +67,6 @@ int umass_wd_attach(struct umass_softc *);
 
 #include <dev/ata/atareg.h>
 #include <dev/ata/atavar.h>
-#include <dev/ata/wdvar.h>
-#include <dev/ic/wdcreg.h>
 
 /* XXX move this */
 struct isd200_config {
@@ -115,7 +113,7 @@ int	uisdatadebug = 0;
 
 int  uisdata_bio(struct ata_drive_datas *, struct ata_bio *);
 int  uisdata_bio1(struct ata_drive_datas *, struct ata_bio *);
-void uisdata_reset_channel(struct ata_drive_datas *);
+void uisdata_reset_channel(struct ata_drive_datas *, int);
 int  uisdata_exec_command(struct ata_drive_datas *, struct wdc_command *);
 int  uisdata_get_params(struct ata_drive_datas *, u_int8_t, struct ataparams *);
 int  uisdata_addref(struct ata_drive_datas *);
@@ -260,7 +258,7 @@ uisdata_bio_cb(struct umass_softc *sc, void *priv, int residue, int status)
 		DPRINTF(("%s: wakeup %p\n", __func__, ata_bio));
 		wakeup(ata_bio);
 	} else {
-		wddone(scbus->sc_drv_data.drv_softc);
+		(*scbus->sc_drv_data.drv_done)(scbus->sc_drv_data.drv_softc);
 	}
 	splx(s);
 }
@@ -379,7 +377,7 @@ uisdata_bio1(struct ata_drive_datas *drv, struct ata_bio *ata_bio)
 }
 
 void
-uisdata_reset_channel(struct ata_drive_datas *drv)
+uisdata_reset_channel(struct ata_drive_datas *drv, int flags)
 {
 	DPRINTFN(-1,("%s\n", __func__));
 	/* XXX what? */
@@ -495,7 +493,7 @@ uisdata_kill_pending(struct ata_drive_datas *drv)
 	ata_bio->flags |= ATA_ITSDONE;
 	ata_bio->error = ERR_NODEV;
 	ata_bio->r_error = WDCE_ABRT;
-	wddone(scbus->sc_drv_data.drv_softc);
+	(*scbus->sc_drv_data.drv_done)(scbus->sc_drv_data.drv_softc);
 }
 
 int

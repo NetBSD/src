@@ -1,4 +1,4 @@
-/* $NetBSD: inftrees.c,v 1.6 2003/03/18 19:33:51 mycroft Exp $ */
+/* $NetBSD: inftrees.c,v 1.6.2.1 2004/08/03 10:53:58 skrll Exp $ */
 
 /* inftrees.c -- generate Huffman trees for efficient decoding
  * Copyright (C) 1995-2002 Mark Adler
@@ -215,7 +215,7 @@ uIntf *v;               /* working area: values in order of bit length */
 
         /* compute minimum size table less than or equal to l bits */
         z = g - w;
-        z = z > (uInt)l ? l : z;        /* table size upper limit */
+        z = z > (uInt)l ? (uInt)l : z;        /* table size upper limit */
         if ((f = 1 << (j = k - w)) > a + 1)     /* try a k-w bit table */
         {                       /* too few codes for k-w bit table */
           f -= a + 1;           /* deduct codes from patterns left */
@@ -308,10 +308,10 @@ z_streamp z;            /* for messages */
   r = huft_build(c, 19, 19, (uIntf*)Z_NULL, (uIntf*)Z_NULL,
                  tb, bb, hp, &hn, v);
   if (r == Z_DATA_ERROR)
-    z->msg = (char*)"oversubscribed dynamic bit lengths tree";
+    z->msg = _ZERROR(_ZERR_OVERSUB_DBIT);
   else if (r == Z_BUF_ERROR || *bb == 0)
   {
-    z->msg = (char*)"incomplete dynamic bit lengths tree";
+    z->msg = _ZERROR(_ZERR_INCOMPLETE_DBIT);
     r = Z_DATA_ERROR;
   }
   ZFREE(z, v);
@@ -343,10 +343,10 @@ z_streamp z;            /* for messages */
   if (r != Z_OK || *bl == 0)
   {
     if (r == Z_DATA_ERROR)
-      z->msg = (char*)"oversubscribed literal/length tree";
+      z->msg = _ZERROR(_ZERR_OVERSUB_LIT);
     else if (r != Z_MEM_ERROR)
     {
-      z->msg = (char*)"incomplete literal/length tree";
+      z->msg = _ZERROR(_ZERR_INCOMPLETE_LIT);
       r = Z_DATA_ERROR;
     }
     ZFREE(z, v);
@@ -358,18 +358,18 @@ z_streamp z;            /* for messages */
   if (r != Z_OK || (*bd == 0 && nl > 257))
   {
     if (r == Z_DATA_ERROR)
-      z->msg = (char*)"oversubscribed distance tree";
+      z->msg = _ZERROR(_ZERR_OVERSUB_DIST);
     else if (r == Z_BUF_ERROR) {
 #ifdef PKZIP_BUG_WORKAROUND
       r = Z_OK;
     }
 #else
-      z->msg = (char*)"incomplete distance tree";
+      z->msg = _ZERROR(_ZERR_INCOMPLETE_DIST);
       r = Z_DATA_ERROR;
     }
     else if (r != Z_MEM_ERROR)
     {
-      z->msg = (char*)"empty distance tree with lengths";
+      z->msg = _ZERROR(_ZERR_EMPTY_DIST);
       r = Z_DATA_ERROR;
     }
     ZFREE(z, v);

@@ -1,4 +1,4 @@
-/*	$NetBSD: ubsa.c,v 1.5 2002/11/25 00:51:33 fvdl Exp $	*/
+/*	$NetBSD: ubsa.c,v 1.5.6.1 2004/08/03 10:51:33 skrll Exp $	*/
 /*-
  * Copyright (c) 2002, Alexander Kabaev <kan.FreeBSD.org>.
  * All rights reserved.
@@ -61,6 +61,7 @@
  */
 
 #include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ubsa.c,v 1.5.6.1 2004/08/03 10:51:33 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -80,7 +81,6 @@
 #include <sys/select.h>
 #endif
 #include <sys/proc.h>
-#include <sys/vnode.h>
 #include <sys/device.h>
 #include <sys/poll.h>
 #include <sys/sysctl.h>
@@ -260,7 +260,7 @@ USB_ATTACH(ubsa)
 	struct ucom_attach_args uca;
 	int i;
 
-        usbd_devinfo(dev, 0, devinfo);
+        usbd_devinfo(dev, 0, devinfo, sizeof(devinfo));
         USB_ATTACH_SETUP;
         printf("%s: %s\n", devname, devinfo);
 
@@ -379,7 +379,6 @@ USB_ATTACH(ubsa)
 	USB_ATTACH_SUCCESS_RETURN;
 
 error:
-	free(devinfo, M_USBDEV);
 	USB_ATTACH_ERROR_RETURN;
 }
 

@@ -1,4 +1,4 @@
-/* $NetBSD: lkminit_emul.c,v 1.3 2001/11/12 23:23:03 lukem Exp $ */
+/* $NetBSD: lkminit_emul.c,v 1.3.16.1 2004/08/03 10:53:58 skrll Exp $ */
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -37,14 +37,17 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lkminit_emul.c,v 1.3 2001/11/12 23:23:03 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lkminit_emul.c,v 1.3.16.1 2004/08/03 10:53:58 skrll Exp $");
 
 #include <sys/param.h>
+#include <sys/sysctl.h>
 #include <sys/systm.h>
 #include <sys/conf.h>
 #include <sys/exec.h>
 #include <sys/proc.h>
 #include <sys/lkm.h>
+
+#include <compat/linux/common/linux_sysctl.h>
 
 extern const struct emul emul_linux;
 
@@ -56,6 +59,14 @@ int compat_linux_lkmentry __P((struct lkm_table *, int, int));
 MOD_COMPAT("compat_linux", -1, &emul_linux);
 
 /*
+ * take care of emulation specific sysctl nodes
+ */
+static int load __P((struct lkm_table *, int));
+static int unload __P((struct lkm_table *, int));
+static struct sysctllog *_compat_linux_log, *_emul_linux_log;
+extern struct sysctlnode linux_sysctl_root;
+
+/*
  * entry point
  */
 int
@@ -65,5 +76,28 @@ compat_linux_lkmentry(lkmtp, cmd, ver)
 	int ver;
 {
 
-	DISPATCH(lkmtp, cmd, ver, lkm_nofunc, lkm_nofunc, lkm_nofunc);
+	DISPATCH(lkmtp, cmd, ver, load, unload, lkm_nofunc);
+}
+
+int
+load(lkmtp, cmd)
+	struct lkm_table *lkmtp;	
+	int cmd;
+{
+
+	linux_sysctl_setup(&_compat_linux_log); /* we "own" this entire tree */
+	sysctl_emul_linux_setup(&_emul_linux_log);
+	return (0);
+}
+
+int
+unload(lkmtp, cmd)
+	struct lkm_table *lkmtp;	
+	int cmd;
+{
+
+	sysctl_teardown(&_emul_linux_log);
+	sysctl_teardown(&_compat_linux_log);
+	sysctl_free(&linux_sysctl_root); /* we "own" this entire tree */
+	return (0);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vlan.c,v 1.35 2003/01/17 08:11:56 itojun Exp $	*/
+/*	$NetBSD: if_vlan.c,v 1.35.2.1 2004/08/03 10:54:19 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -85,7 +85,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vlan.c,v 1.35 2003/01/17 08:11:56 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vlan.c,v 1.35.2.1 2004/08/03 10:54:19 skrll Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -189,6 +189,9 @@ static LIST_HEAD(, ifvlan) ifv_list;
 struct if_clone vlan_cloner =
     IF_CLONE_INITIALIZER("vlan", vlan_clone_create, vlan_clone_destroy);
 
+/* Used to pad ethernet frames with < ETHER_MIN_LEN bytes */
+static char vlan_zero_pad_buff[ETHER_MIN_LEN];
+
 void
 vlanattach(int n)
 {
@@ -230,7 +233,8 @@ vlan_clone_create(struct if_clone *ifc, int unit)
 	LIST_INSERT_HEAD(&ifv_list, ifv, ifv_list);
 	splx(s);
 
-	sprintf(ifp->if_xname, "%s%d", ifc->ifc_name, unit);
+	snprintf(ifp->if_xname, sizeof(ifp->if_xname), "%s%d", ifc->ifc_name,
+	    unit);
 	ifp->if_softc = ifv;
 	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
 	ifp->if_start = vlan_start;
@@ -740,6 +744,7 @@ vlan_start(struct ifnet *ifp)
 				continue;
 			}
 			*(u_int *)(mtag + 1) = ifv->ifv_tag;
+			m_tag_prepend(m, mtag);
 		} else {
 			/*
 			 * insert the tag ourselves
@@ -778,6 +783,25 @@ vlan_start(struct ifnet *ifp)
 				evl->evl_proto = evl->evl_encap_proto;
 				evl->evl_encap_proto = htons(ETHERTYPE_VLAN);
 				evl->evl_tag = htons(ifv->ifv_tag);
+
+				/*
+				 * To cater for VLAN-aware layer 2 ethernet
+				 * switches which may need to strip the tag
+				 * before forwarding the packet, make sure
+				 * the packet+tag is at least 68 bytes long.
+				 * This is necessary because our parent will
+				 * only pad to 64 bytes (ETHER_MIN_LEN) and
+				 * some switches will not pad by themselves
+				 * after deleting a tag.
+				 */
+				if (m->m_pkthdr.len <
+				    (ETHER_MIN_LEN + ETHER_VLAN_ENCAP_LEN)) {
+					m_copyback(m, m->m_pkthdr.len,
+					    (ETHER_MIN_LEN +
+					     ETHER_VLAN_ENCAP_LEN) -
+					     m->m_pkthdr.len,
+					    vlan_zero_pad_buff);
+				}
 				break;
 			    }
 
@@ -800,7 +824,7 @@ vlan_start(struct ifnet *ifp)
 		}
 
 		ifp->if_opackets++;
-		if ((p->if_flags & IFF_OACTIVE) == 0)
+		if ((p->if_flags & (IFF_RUNNING|IFF_OACTIVE)) == IFF_RUNNING)
 			(*p->if_start)(p);
 	}
 
@@ -809,8 +833,8 @@ vlan_start(struct ifnet *ifp)
 
 /*
  * Given an Ethernet frame, find a valid vlan interface corresponding to the
- * given source interface and tag, then run the the real packet through
- * the parent's input routine.
+ * given source interface and tag, then run the real packet through the 
+ * parent's input routine.
  */
 void
 vlan_input(struct ifnet *ifp, struct mbuf *m)
@@ -882,7 +906,7 @@ vlan_input(struct ifnet *ifp, struct mbuf *m)
 	if (ifv == NULL ||
 	    (ifv->ifv_if.if_flags & (IFF_UP|IFF_RUNNING)) !=
 	     (IFF_UP|IFF_RUNNING)) {
-		m_free(m);
+		m_freem(m);
 		ifp->if_noproto++;
 		return;
 	}

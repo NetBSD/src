@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_forward.c,v 1.34 2003/06/30 03:30:50 itojun Exp $	*/
+/*	$NetBSD: ip6_forward.c,v 1.34.2.1 2004/08/03 10:55:13 skrll Exp $	*/
 /*	$KAME: ip6_forward.c,v 1.109 2002/09/11 08:10:17 sakane Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_forward.c,v 1.34 2003/06/30 03:30:50 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_forward.c,v 1.34.2.1 2004/08/03 10:55:13 skrll Exp $");
 
 #include "opt_ipsec.h"
 #include "opt_pfil_hooks.h"
@@ -97,11 +97,12 @@ ip6_forward(m, srcrt)
 	struct ip6_hdr *ip6 = mtod(m, struct ip6_hdr *);
 	struct sockaddr_in6 *dst;
 	struct rtentry *rt;
-	int error, type = 0, code = 0;
+	int error = 0, type = 0, code = 0;
 	struct mbuf *mcopy = NULL;
 	struct ifnet *origifp;	/* maybe unnecessary */
 #ifdef IPSEC
 	struct secpolicy *sp = NULL;
+	int ipsecrt = 0;
 #endif
 
 #ifdef IPSEC
@@ -165,8 +166,8 @@ ip6_forward(m, srcrt)
 
 #ifdef IPSEC
 	/* get a security policy for this packet */
-	sp = ipsec6_getpolicybyaddr(m, IPSEC_DIR_OUTBOUND, IP_FORWARDING,
-	    &error);
+	sp = ipsec6_getpolicybyaddr(m, IPSEC_DIR_OUTBOUND,
+	    IP_FORWARDING, &error);
 	if (sp == NULL) {
 		ipsec6stat.out_inval++;
 		ip6stat.ip6s_cantforward++;
@@ -249,10 +250,19 @@ ip6_forward(m, srcrt)
 	 *      ipsec esp/tunnel/xxx-xxx/require esp/transport//require;
 	 */
 	for (isr = sp->req; isr; isr = isr->next) {
-		if (isr->saidx.mode == IPSEC_MODE_TRANSPORT)
-			goto skip_ipsec;
+		if (isr->saidx.mode == IPSEC_MODE_ANY)
+			goto doipsectunnel;
+		if (isr->saidx.mode == IPSEC_MODE_TUNNEL)
+			goto doipsectunnel;
 	}
+
+	/*
+	 * if there's no need for tunnel mode IPsec, skip.
+	 */
+	if (!isr)
+		goto skip_ipsec;
 	
+    doipsectunnel:
 	/*
 	 * All the extension headers will become inaccessible
 	 * (since they can be encrypted).
@@ -269,10 +279,6 @@ ip6_forward(m, srcrt)
 	error = ipsec6_output_tunnel(&state, sp, 0);
 
 	m = state.m;
-#if 0	/* XXX allocate a route (ro, dst) again later */
-	ro = (struct route_in6 *)state.ro;
-	dst = (struct sockaddr_in6 *)state.dst;
-#endif
 	key_freesp(sp);
 
 	if (error) {
@@ -301,6 +307,24 @@ ip6_forward(m, srcrt)
 		}
 		m_freem(m);
 		return;
+	}
+
+	if (ip6 != mtod(m, struct ip6_hdr *)) {
+		/*
+		 * now tunnel mode headers are added.  we are originating
+		 * packet instead of forwarding the packet.  
+		 */
+		ip6_output(m, NULL, NULL, IPV6_FORWARDING/*XXX*/, NULL, NULL,
+		    NULL);
+		goto freecopy;
+	}
+
+	/* adjust pointer */
+	rt = state.ro ? state.ro->ro_rt : NULL;
+	dst = (struct sockaddr_in6 *)state.dst;
+	if (dst != NULL && rt != NULL) {
+		ipsecrt = 1;
+		goto skip_routing;
 	}
     }
     skip_ipsec:
@@ -355,6 +379,9 @@ ip6_forward(m, srcrt)
 		}
 	}
 	rt = ip6_forward_rt.ro_rt;
+#ifdef IPSEC
+    skip_routing:;
+#endif /* IPSEC */
 
 	/*
 	 * Scope check: if a packet can't be delivered to its destination
@@ -364,7 +391,11 @@ ip6_forward(m, srcrt)
 	 * [draft-ietf-ipngwg-icmp-v3-00.txt, Section 3.1]
 	 */
 	if (in6_addr2scopeid(m->m_pkthdr.rcvif, &ip6->ip6_src) !=
-	    in6_addr2scopeid(rt->rt_ifp, &ip6->ip6_src)) {
+	    in6_addr2scopeid(rt->rt_ifp, &ip6->ip6_src)
+#ifdef IPSEC
+	    && !ipsecrt
+#endif
+	    ) {
 		ip6stat.ip6s_cantforward++;
 		ip6stat.ip6s_badscope++;
 		in6_ifstat_inc(rt->rt_ifp, ifs6_in_discard);
@@ -439,7 +470,10 @@ ip6_forward(m, srcrt)
 	 * Also, don't send redirect if forwarding using a route
 	 * modified by a redirect.
 	 */
-	if (rt->rt_ifp == m->m_pkthdr.rcvif && !srcrt &&
+	if (rt->rt_ifp == m->m_pkthdr.rcvif && !srcrt && ip6_sendredirects &&
+#ifdef IPSEC
+	    !ipsecrt &&
+#endif
 	    (rt->rt_flags & (RTF_DYNAMIC|RTF_MODIFIED)) == 0) {
 		if ((rt->rt_ifp->if_flags & IFF_POINTOPOINT) &&
 		    nd6_is_addr_neighbor((struct sockaddr_in6 *)&ip6_forward_rt.ro_dst, rt->rt_ifp)) {

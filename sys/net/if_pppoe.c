@@ -1,11 +1,11 @@
-/* $NetBSD: if_pppoe.c,v 1.44 2003/06/27 16:24:32 oki Exp $ */
+/* $NetBSD: if_pppoe.c,v 1.44.2.1 2004/08/03 10:54:16 skrll Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Martin Husemann <martin@netbsd.org>.
+ * by Martin Husemann <martin@NetBSD.org>.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_pppoe.c,v 1.44 2003/06/27 16:24:32 oki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_pppoe.c,v 1.44.2.1 2004/08/03 10:54:16 skrll Exp $");
 
 #include "pppoe.h"
 #include "bpfilter.h"
@@ -230,7 +230,8 @@ pppoe_clone_create(ifc, unit)
 	sc = malloc(sizeof(struct pppoe_softc), M_DEVBUF, M_WAITOK);
 	memset(sc, 0, sizeof(struct pppoe_softc));
 
-	sprintf(sc->sc_sppp.pp_if.if_xname, "pppoe%d", unit);
+	snprintf(sc->sc_sppp.pp_if.if_xname, sizeof(sc->sc_sppp.pp_if.if_xname),
+	    "pppoe%d", unit);
 	sc->sc_sppp.pp_if.if_softc = sc;
 	sc->sc_sppp.pp_if.if_mtu = PPPOE_MAXMTU;
 	sc->sc_sppp.pp_if.if_flags = IFF_SIMPLEX|IFF_POINTOPOINT|IFF_MULTICAST;
@@ -399,7 +400,7 @@ static void pppoe_dispatch_disc_pkt(struct mbuf *m, int off)
 	u_int16_t tag, len;
 	u_int16_t session, plen;
 	struct pppoe_softc *sc;
-	const char *err_msg = NULL;
+	const char *err_msg, *err_txt;
 	u_int8_t *ac_cookie;
 	size_t ac_cookie_len;
 #ifdef PPPOE_SERVER
@@ -409,9 +410,11 @@ static void pppoe_dispatch_disc_pkt(struct mbuf *m, int off)
 	struct pppoehdr *ph;
 	struct pppoetag *pt;
 	struct mbuf *n;
-	int noff;
+	int noff, err, errortag;
 	struct ether_header *eh;
 
+	err_msg = err_txt = NULL;
+	errortag = 0;
 	if (m->m_len < sizeof(*eh)) {
 		m = m_pullup(m, sizeof(*eh));
 		if (!m)
@@ -485,9 +488,9 @@ static void pppoe_dispatch_disc_pkt(struct mbuf *m, int off)
 				break;
 			n = m_pulldown(m, off + sizeof(*pt), len, &noff);
 			if (!n) {
-				err_msg = "TAG HUNIQUE ERROR";
 				m = NULL;
-				goto done;
+				err_msg = "TAG HUNIQUE ERROR";
+				break;
 			}
 #ifdef PPPOE_SERVER
 			hunique = mtod(n, caddr_t) + noff;
@@ -511,19 +514,30 @@ static void pppoe_dispatch_disc_pkt(struct mbuf *m, int off)
 			break;
 		case PPPOE_TAG_SNAME_ERR:
 			err_msg = "SERVICE NAME ERROR";
+			errortag = 1;
 			break;
 		case PPPOE_TAG_ACSYS_ERR:
 			err_msg = "AC SYSTEM ERROR";
+			errortag = 1;
 			break;
 		case PPPOE_TAG_GENERIC_ERR:
 			err_msg = "GENERIC ERROR";
+			errortag = 1;
 			break;
 		}
 		if (err_msg) {
-			printf("%s: %s\n",
-			    sc ? sc->sc_sppp.pp_if.if_xname : "pppoe",
-			    err_msg);
-			goto done;
+			err_txt = "";
+			if (errortag && len) {
+				n = m_pulldown(m, off + sizeof(*pt), len,
+				    &noff);
+				if (n)
+					err_txt = mtod(n, caddr_t) + noff;
+			}
+			printf("%s: %s: %*s\n",
+			    sc ? sc->sc_sppp.pp_if.if_xname : "pppoe*",
+			    err_msg, len, err_txt);
+			if (errortag)
+				goto done;
 		}
 		off += sizeof(*pt) + len;
 	}
@@ -632,12 +646,15 @@ breakbreak:;
 		callout_stop(&sc->sc_timeout);
 		sc->sc_padr_retried = 0;
 		sc->sc_state = PPPOE_STATE_PADR_SENT;
-		if (pppoe_send_padr(sc) == 0) 
-			callout_reset(&sc->sc_timeout,
-			    PPPOE_DISC_TIMEOUT * (1 + sc->sc_padr_retried),
-			    pppoe_timeout, sc);
-		else
-			pppoe_abort_connect(sc);
+		if ((err = pppoe_send_padr(sc)) != 0) {
+			if (sc->sc_sppp.pp_if.if_flags & IFF_DEBUG)
+				printf("%s: failed to send PADR, "
+				    "error=%d\n", sc->sc_sppp.pp_if.if_xname,
+				    err);
+		}
+		callout_reset(&sc->sc_timeout,
+		    PPPOE_DISC_TIMEOUT * (1 + sc->sc_padr_retried),
+		    pppoe_timeout, sc);
 		break;
 	case PPPOE_CODE_PADS:
 		if (sc == NULL)
@@ -791,8 +808,10 @@ pppoe_output(struct pppoe_softc *sc, struct mbuf *m)
 	struct ether_header *eh;
 	u_int16_t etype;
 
-	if (sc->sc_eth_if == NULL)
+	if (sc->sc_eth_if == NULL) {
+		m_freem(m);
 		return EIO;
+	}
 
 	memset(&dst, 0, sizeof dst);
 	dst.sa_family = AF_UNSPEC;
@@ -833,16 +852,40 @@ pppoe_ioctl(struct ifnet *ifp, unsigned long cmd, caddr_t data)
 		}
 		if (parms->ac_name) {
 			size_t s;
-			char * p = malloc(parms->ac_name_len + 1, M_DEVBUF, M_WAITOK);
-			copyinstr(parms->ac_name, p, parms->ac_name_len, &s);
+			char * p = malloc(parms->ac_name_len + 1, M_DEVBUF,
+			    M_WAITOK);
+			if (p == NULL)
+				return ENOMEM;
+			error = copyinstr(parms->ac_name, p,
+			    parms->ac_name_len+1, &s);
+			if (error != 0) {
+				free(p, M_DEVBUF);
+				return error;
+			}
+			if (s != parms->ac_name_len+1) {
+				free(p, M_DEVBUF);
+				return EINVAL;
+			}
 			if (sc->sc_concentrator_name)
 				free(sc->sc_concentrator_name, M_DEVBUF);
 			sc->sc_concentrator_name = p;
 		}
 		if (parms->service_name) {
 			size_t s;
-			char * p = malloc(parms->service_name_len + 1, M_DEVBUF, M_WAITOK);
-			copyinstr(parms->service_name, p, parms->service_name_len, &s);
+			char * p = malloc(parms->service_name_len + 1, M_DEVBUF,
+			    M_WAITOK);
+			if (p == NULL)
+				return ENOMEM;
+			error = copyinstr(parms->service_name, p,
+			    parms->service_name_len+1, &s);
+			if (error != 0) {
+				free(p, M_DEVBUF);
+				return error;
+			}
+			if (s != parms->service_name_len+1) {
+				free(p, M_DEVBUF);
+				return EINVAL;
+			}
 			if (sc->sc_service_name)
 				free(sc->sc_service_name, M_DEVBUF);
 			sc->sc_service_name = p;
@@ -935,7 +978,7 @@ static int
 pppoe_send_padi(struct pppoe_softc *sc)
 {
 	struct mbuf *m0;
-	int len, l1, l2;
+	int len, l1 = 0, l2 = 0; /* XXX: gcc */
 	u_int8_t *p;
 
 	if (sc->sc_state >PPPOE_STATE_PADI_SENT)
@@ -992,7 +1035,7 @@ pppoe_send_padi(struct pppoe_softc *sc)
 static void
 pppoe_timeout(void *arg)
 {
-	int x, retry_wait;
+	int x, retry_wait, err;
 	struct pppoe_softc *sc = (struct pppoe_softc*)arg;
 
 #ifdef PPPOE_DEBUG
@@ -1026,11 +1069,15 @@ pppoe_timeout(void *arg)
 				return;
 			}
 		}
-		if (pppoe_send_padi(sc) == 0)
-			callout_reset(&sc->sc_timeout, retry_wait,
-			    pppoe_timeout, sc);
-		else
-			pppoe_abort_connect(sc);
+		if ((err = pppoe_send_padi(sc)) != 0) {
+			sc->sc_padi_retried--;
+			if (sc->sc_sppp.pp_if.if_flags & IFF_DEBUG)
+				printf("%s: failed to transmit PADI, "
+				    "error=%d\n",
+				    sc->sc_sppp.pp_if.if_xname, err);
+		}
+		callout_reset(&sc->sc_timeout, retry_wait,
+		    pppoe_timeout, sc);
 		splx(x);
 		break;
 
@@ -1042,21 +1089,29 @@ pppoe_timeout(void *arg)
 			    sizeof(sc->sc_dest));
 			sc->sc_state = PPPOE_STATE_PADI_SENT;
 			sc->sc_padr_retried = 0;
-			if (pppoe_send_padi(sc) == 0)
-				callout_reset(&sc->sc_timeout,
-				    PPPOE_DISC_TIMEOUT * (1 + sc->sc_padi_retried),
-				    pppoe_timeout, sc);
-			else
-				pppoe_abort_connect(sc);
+			if ((err = pppoe_send_padi(sc)) != 0) {
+				if (sc->sc_sppp.pp_if.if_flags & IFF_DEBUG)
+					printf("%s: failed to send PADI"
+					    ", error=%d\n",
+					    sc->sc_sppp.pp_if.if_xname,
+					    err);
+			}
+			callout_reset(&sc->sc_timeout,
+			    PPPOE_DISC_TIMEOUT * (1 + sc->sc_padi_retried),
+			    pppoe_timeout, sc);
 			splx(x);
 			return;
 		}
-		if (pppoe_send_padr(sc) == 0) 
-			callout_reset(&sc->sc_timeout,
-			    PPPOE_DISC_TIMEOUT * (1 + sc->sc_padr_retried),
-			    pppoe_timeout, sc);
-		else
-			pppoe_abort_connect(sc);
+		if ((err = pppoe_send_padr(sc)) != 0) {
+			sc->sc_padr_retried--;
+			if (sc->sc_sppp.pp_if.if_flags & IFF_DEBUG)
+				printf("%s: failed to send PADR, "
+				    "error=%d\n", sc->sc_sppp.pp_if.if_xname,
+				    err);
+		}
+		callout_reset(&sc->sc_timeout,
+		    PPPOE_DISC_TIMEOUT * (1 + sc->sc_padr_retried),
+		    pppoe_timeout, sc);
 		splx(x);
 		break;
 	case PPPOE_STATE_CLOSING:
@@ -1071,7 +1126,7 @@ pppoe_timeout(void *arg)
 static int
 pppoe_connect(struct pppoe_softc *sc)
 {
-	int x, err, retry;
+	int x, err;
 
 	if (sc->sc_state != PPPOE_STATE_INITIAL)
 		return EBUSY;
@@ -1083,24 +1138,13 @@ pppoe_connect(struct pppoe_softc *sc)
 #endif
 	x = splnet();
 	/* save state, in case we fail to send PADI */
-	retry =	sc->sc_padr_retried;
 	sc->sc_state = PPPOE_STATE_PADI_SENT;
 	sc->sc_padr_retried = 0;
 	err = pppoe_send_padi(sc);
-	if (err != 0) {
-		/*
-		 * We failed to send a single PADI packet.
-		 * This is unfortunate, because we have no good way to recover
-		 * from here.
-		 */
-		 
-		/* recover state and return the error */
-		sc->sc_state = PPPOE_STATE_INITIAL;
-		sc->sc_padr_retried = retry;
-	} else {
-		callout_reset(&sc->sc_timeout, PPPOE_DISC_TIMEOUT,
-		    pppoe_timeout, sc);
-	}
+	if (err != 0 && sc->sc_sppp.pp_if.if_flags & IFF_DEBUG)
+		printf("%s: failed to send PADI, error=%d\n",
+		    sc->sc_sppp.pp_if.if_xname, err);
+	callout_reset(&sc->sc_timeout, PPPOE_DISC_TIMEOUT, pppoe_timeout, sc);
 	splx(x);
 	return err;
 }
@@ -1169,7 +1213,7 @@ pppoe_send_padr(struct pppoe_softc *sc)
 {
 	struct mbuf *m0;
 	u_int8_t *p;
-	size_t len, l1;
+	size_t len, l1 = 0; /* XXX: gcc */
 
 	if (sc->sc_state != PPPOE_STATE_PADR_SENT)
 		return EIO;
@@ -1345,7 +1389,7 @@ pppoe_start(struct ifnet *ifp)
 	if (sppp_isempty(ifp))
 		return;
 
-	/* are we ready to proccess data yet? */
+	/* are we ready to process data yet? */
 	if (sc->sc_state < PPPOE_STATE_SESSION) {
 		sppp_flush(&sc->sc_sppp.pp_if);
 		return;

@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6.h,v 1.35 2003/06/27 08:41:08 itojun Exp $	*/
+/*	$NetBSD: nd6.h,v 1.35.2.1 2004/08/03 10:55:16 skrll Exp $	*/
 /*	$KAME: nd6.h,v 1.95 2002/06/08 11:31:06 itojun Exp $	*/
 
 /*
@@ -380,6 +380,8 @@ int nd6_storelladdr __P((struct ifnet *, struct rtentry *, struct mbuf *,
 	struct sockaddr *, u_char *));
 int nd6_sysctl __P((int, void *, size_t *, void *, size_t));
 int nd6_need_cache __P((struct ifnet *));
+int ip6_getpmtu __P((struct route_in6 *, struct route_in6 *, struct ifnet *,
+	struct in6_addr *, u_long *, int *));
 
 /* nd6_nbr.c */
 void nd6_na_input __P((struct mbuf *, int, int));

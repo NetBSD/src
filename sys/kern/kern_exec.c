@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.169.2.1 2003/07/02 15:26:36 darrenr Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.169.2.2 2004/08/03 10:52:44 skrll Exp $	*/
 
 /*-
  * Copyright (C) 1993, 1994, 1996 Christopher G. Demetriou
@@ -33,10 +33,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.169.2.1 2003/07/02 15:26:36 darrenr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.169.2.2 2004/08/03 10:52:44 skrll Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_syscall_debug.h"
+#include "opt_compat_netbsd.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -67,6 +68,8 @@ __KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.169.2.1 2003/07/02 15:26:36 darrenr 
 
 #include <machine/cpu.h>
 #include <machine/reg.h>
+
+static int exec_sigcode_map(struct proc *, const struct emul *);
 
 #ifdef DEBUG_EXEC
 #define DPRINTF(a) uprintf a
@@ -118,8 +121,6 @@ struct execsw_entry {
 };
 #endif /* LKM */
 
-/* NetBSD emul struct */
-extern char	sigcode[], esigcode[];
 #ifdef SYSCALL_DEBUG
 extern const char * const syscallnames[];
 #endif
@@ -129,6 +130,12 @@ void syscall_intern(struct proc *);
 void syscall(void);
 #endif
 
+#ifdef COMPAT_16
+extern char	sigcode[], esigcode[];
+struct uvm_object *emul_netbsd_object;
+#endif
+
+/* NetBSD emul struct */
 const struct emul emul_netbsd = {
 	"netbsd",
 	NULL,		/* emulation path */
@@ -146,9 +153,19 @@ const struct emul emul_netbsd = {
 #endif
 	sendsig,
 	trapsignal,
+	NULL,
+#ifdef COMPAT_16
 	sigcode,
 	esigcode,
+	&emul_netbsd_object,
+#else
+	NULL,
+	NULL,
+	NULL,
+#endif
 	setregs,
+	NULL,
+	NULL,
 	NULL,
 	NULL,
 	NULL,
@@ -167,7 +184,7 @@ const struct emul emul_netbsd = {
  * This must not be static so that netbsd32 can access it, too.
  */
 struct lock exec_lock;
- 
+
 static void link_es(struct execsw_entry **, const struct execsw *);
 #endif /* LKM */
 
@@ -201,7 +218,7 @@ static void link_es(struct execsw_entry **, const struct execsw *);
 int
 #ifdef VERIFIED_EXEC
 check_exec(struct lwp *l, struct exec_package *epp, int direct_exec)
-#else 
+#else
 check_exec(struct lwp *l, struct exec_package *epp)
 #endif
 {
@@ -247,7 +264,7 @@ check_exec(struct lwp *l, struct exec_package *epp)
 	/* unlock vp, since we need it unlocked from here on out. */
 	VOP_UNLOCK(vp, 0);
 
-   
+
 #ifdef VERIFIED_EXEC
         /* Evaluate signature for file... */
         if ((error = check_veriexec(p, vp, epp, direct_exec)) != 0)
@@ -265,7 +282,7 @@ check_exec(struct lwp *l, struct exec_package *epp)
 	/*
 	 * Set up default address space limits.  Can be overridden
 	 * by individual exec packages.
-	 * 
+	 *
 	 * XXX probably should be all done in the exec pakages.
 	 */
 	epp->ep_vm_minaddr = VM_MIN_ADDRESS;
@@ -279,12 +296,12 @@ check_exec(struct lwp *l, struct exec_package *epp)
 		int newerror;
 
 		epp->ep_esch = execsw[i];
-		newerror = (*execsw[i]->es_check)(l, epp);
+		newerror = (*execsw[i]->es_makecmds)(l, epp);
 		/* make sure the first "interesting" error code is saved. */
 		if (!newerror || error == ENOEXEC)
 			error = newerror;
 
-		/* if es_check call was successful, update epp->ep_es */
+		/* if es_makecmds call was successful, update epp->ep_es */
 		if (!newerror && (epp->ep_flags & EXEC_HASES) == 0)
 			epp->ep_es = execsw[i];
 
@@ -332,6 +349,12 @@ bad1:
 	PNBUF_PUT(ndp->ni_cnd.cn_pnbuf);
 	return error;
 }
+
+#ifdef __MACHINE_STACK_GROWS_UP
+#define STACK_PTHREADSPACE NBPG
+#else
+#define STACK_PTHREADSPACE 0
+#endif
 
 /*
  * exec system call
@@ -413,7 +436,7 @@ sys_execve(struct lwp *l, void *v, register_t *retval)
 #ifdef VERIFIED_EXEC
         if ((error = check_exec(l, &pack, 1)) != 0)
         /* if ((error = check_exec(l, &pack, 0)) != 0) */
-#else 
+#else
         if ((error = check_exec(l, &pack)) != 0)
 #endif
 		goto freehdr;
@@ -467,6 +490,10 @@ sys_execve(struct lwp *l, void *v, register_t *retval)
 				error = E2BIG;
 			goto bad;
 		}
+#ifdef KTRACE
+		if (KTRPOINT(p, KTR_EXEC_ARG))
+			ktrkmem(l, KTR_EXEC_ARG, dp, len - 1);
+#endif
 		dp += len;
 		cpp++;
 		argc++;
@@ -486,6 +513,10 @@ sys_execve(struct lwp *l, void *v, register_t *retval)
 					error = E2BIG;
 				goto bad;
 			}
+#ifdef KTRACE
+			if (KTRPOINT(p, KTR_EXEC_ENV))
+				ktrkmem(l, KTR_EXEC_ENV, dp, len - 1);
+#endif
 			dp += len;
 			cpp++;
 			envc++;
@@ -501,11 +532,13 @@ sys_execve(struct lwp *l, void *v, register_t *retval)
 	if (pack.ep_flags & EXEC_32)
 		len = ((argc + envc + 2 + pack.ep_es->es_arglen) *
 		    sizeof(int) + sizeof(int) + dp + STACKGAPLEN +
-		    szsigcode + sizeof(struct ps_strings)) - argp;
+		    szsigcode + sizeof(struct ps_strings) + STACK_PTHREADSPACE)
+		    - argp;
 	else
 		len = ((argc + envc + 2 + pack.ep_es->es_arglen) *
 		    sizeof(char *) + sizeof(int) + dp + STACKGAPLEN +
-		    szsigcode + sizeof(struct ps_strings)) - argp;
+		    szsigcode + sizeof(struct ps_strings) + STACK_PTHREADSPACE)
+		    - argp;
 
 	len = ALIGN(len);	/* make the stack "safely" aligned */
 
@@ -525,12 +558,8 @@ sys_execve(struct lwp *l, void *v, register_t *retval)
 	p->p_nlwpid = 1;
 
 	/* Release any SA state. */
-	if (p->p_sa) {
-		p->p_flag &= ~P_SA;
-		free(p->p_sa->sa_stacks, M_SA);
-		pool_put(&sadata_pool, p->p_sa);
-		p->p_sa = NULL;
-	}
+	if (p->p_sa)
+		sa_release(p);
 
 	/* Remove POSIX timers */
 	timers_free(p, TIMERS_POSIX);
@@ -544,6 +573,12 @@ sys_execve(struct lwp *l, void *v, register_t *retval)
 	 * vmspace with another!
 	 */
 	uvmspace_exec(l, pack.ep_vm_minaddr, pack.ep_vm_maxaddr);
+
+	/* record proc's vnode, for use by procfs and others */
+        if (p->p_textvp)
+                vrele(p->p_textvp);
+	VREF(pack.ep_vp);
+	p->p_textvp = pack.ep_vp;
 
 	/* Now map address space */
 	vm = p->p_vmspace;
@@ -593,6 +628,10 @@ sys_execve(struct lwp *l, void *v, register_t *retval)
 	/* free the vmspace-creation commands, and release their references */
 	kill_vmcmds(&pack.ep_vmcmds);
 
+	vn_lock(pack.ep_vp, LK_EXCLUSIVE | LK_RETRY);
+	VOP_CLOSE(pack.ep_vp, FREAD, cred, l);
+	vput(pack.ep_vp);
+
 	/* if an error happened, deallocate and punt */
 	if (error) {
 		DPRINTF(("execve: vmcmd %i failed: %d\n", i - 1, error));
@@ -604,30 +643,30 @@ sys_execve(struct lwp *l, void *v, register_t *retval)
 	arginfo.ps_nenvstr = envc;
 
 	stack = (char *)STACK_ALLOC(STACK_GROW(vm->vm_minsaddr,
-		sizeof(struct ps_strings) + szsigcode),
+		STACK_PTHREADSPACE + sizeof(struct ps_strings) + szsigcode),
 		len - (sizeof(struct ps_strings) + szsigcode));
 #ifdef __MACHINE_STACK_GROWS_UP
 	/*
 	 * The copyargs call always copies into lower addresses
 	 * first, moving towards higher addresses, starting with
-	 * the stack pointer that we give.  When the stack grows 
-	 * down, this puts argc/argv/envp very shallow on the 
-	 * stack, right at the first user stack pointer, and puts 
+	 * the stack pointer that we give.  When the stack grows
+	 * down, this puts argc/argv/envp very shallow on the
+	 * stack, right at the first user stack pointer, and puts
 	 * STACKGAPLEN very deep in the stack.  When the stack
 	 * grows up, the situation is reversed.
 	 *
 	 * Normally, this is no big deal.  But the ld_elf.so _rtld()
-	 * function expects to be called with a single pointer to 
-	 * a region that has a few words it can stash values into, 
+	 * function expects to be called with a single pointer to
+	 * a region that has a few words it can stash values into,
 	 * followed by argc/argv/envp.  When the stack grows down,
 	 * it's easy to decrement the stack pointer a little bit to
 	 * allocate the space for these few words and pass the new
 	 * stack pointer to _rtld.  When the stack grows up, however,
-	 * a few words before argc is part of the signal trampoline,
+	 * a few words before argc is part of the signal trampoline, XXX
 	 * so we have a problem.
 	 *
-	 * Instead of changing how _rtld works, we take the easy way 
-	 * out and steal 32 bytes before we call copyargs.  This 
+	 * Instead of changing how _rtld works, we take the easy way
+	 * out and steal 32 bytes before we call copyargs.  This
 	 * space is effectively stolen from STACKGAPLEN.
 	 */
 	stack += 32;
@@ -643,7 +682,8 @@ sys_execve(struct lwp *l, void *v, register_t *retval)
 	stack = (char *)STACK_GROW(vm->vm_minsaddr, len);
 
 	/* fill process ps_strings info */
-	p->p_psstr = (struct ps_strings *)STACK_ALLOC(vm->vm_minsaddr,
+	p->p_psstr = (struct ps_strings *)
+	    STACK_ALLOC(STACK_GROW(vm->vm_minsaddr, STACK_PTHREADSPACE),
 	    sizeof(struct ps_strings));
 	p->p_psargv = offsetof(struct ps_strings, ps_argvstr);
 	p->p_psnargv = offsetof(struct ps_strings, ps_nargvstr);
@@ -658,25 +698,10 @@ sys_execve(struct lwp *l, void *v, register_t *retval)
 		goto exec_abort;
 	}
 
-	/* copy out the process's signal trampoline code */
-	if (szsigcode) {
-		p->p_sigctx.ps_sigcode = STACK_ALLOC(STACK_MAX(p->p_psstr,
-		    sizeof(struct ps_strings)), szsigcode);
-		if ((error = copyout((char *)pack.ep_es->es_emul->e_sigcode,
-		    p->p_sigctx.ps_sigcode, szsigcode)) != 0) {
-			DPRINTF(("execve: sig trampoline copyout failed\n"));
-			goto exec_abort;
-		}
-#ifdef PMAP_NEED_PROCWR
-		/* This is code. Let the pmap do what is needed. */
-		pmap_procwr(p, (vaddr_t)p->p_sigctx.ps_sigcode, szsigcode);
-#endif
-	}
-
 	stopprofclock(p);	/* stop profiling */
 	fdcloseexec(l);		/* handle close on exec */
 	execsigs(p);		/* reset catched signals */
-	
+
 	l->l_ctxlink = NULL;	/* reset ucontext link */
 
 	/* set command name & other accounting info */
@@ -684,12 +709,6 @@ sys_execve(struct lwp *l, void *v, register_t *retval)
 	memcpy(p->p_comm, nid.ni_cnd.cn_nameptr, len);
 	p->p_comm[len] = 0;
 	p->p_acflag &= ~AFORK;
-
-	/* record proc's vnode, for use by procfs and others */
-        if (p->p_textvp)
-                vrele(p->p_textvp);
-	VREF(pack.ep_vp);
-	p->p_textvp = pack.ep_vp;
 
 	p->p_flag |= P_EXEC;
 	if (p->p_flag & P_PPWAIT) {
@@ -748,9 +767,6 @@ sys_execve(struct lwp *l, void *v, register_t *retval)
 	uvm_km_free_wakeup(exec_map, (vaddr_t) argp, NCARGS);
 
 	PNBUF_PUT(nid.ni_cnd.cn_pnbuf);
-	vn_lock(pack.ep_vp, LK_EXCLUSIVE | LK_RETRY);
-	VOP_CLOSE(pack.ep_vp, FREAD, cred, l);
-	vput(pack.ep_vp);
 
 	/* notify others that we exec'd */
 	KNOTE(&p->p_klist, NOTE_EXEC);
@@ -759,6 +775,10 @@ sys_execve(struct lwp *l, void *v, register_t *retval)
 	(*pack.ep_es->es_emul->e_setregs)(l, &pack, (u_long) stack);
 	if (pack.ep_es->es_setregs)
 		(*pack.ep_es->es_setregs)(l, &pack, (u_long) stack);
+
+	/* map the process's signal trampoline code */
+	if (exec_sigcode_map(p, pack.ep_es->es_emul))
+		goto exec_abort;
 
 	if (p->p_flag & P_TRACED)
 		psignal(p, SIGTRAP);
@@ -810,6 +830,7 @@ sys_execve(struct lwp *l, void *v, register_t *retval)
 
 		sigminusset(&contsigmask, &p->p_sigctx.ps_siglist);
 		SCHED_LOCK(s);
+		p->p_pptr->p_nstopchild++;
 		p->p_stat = SSTOP;
 		l->l_stat = LSSTOP;
 		p->p_nrlwps--;
@@ -862,9 +883,6 @@ sys_execve(struct lwp *l, void *v, register_t *retval)
 	if (pack.ep_emul_arg)
 		FREE(pack.ep_emul_arg, M_TEMP);
 	PNBUF_PUT(nid.ni_cnd.cn_pnbuf);
-	vn_lock(pack.ep_vp, LK_EXCLUSIVE | LK_RETRY);
-	VOP_CLOSE(pack.ep_vp, FREAD, cred, l);
-	vput(pack.ep_vp);
 	uvm_km_free_wakeup(exec_map, (vaddr_t) argp, NCARGS);
 	free(pack.ep_hdr, M_EXEC);
 	exit1(l, W_EXITCODE(error, SIGABRT));
@@ -1017,11 +1035,11 @@ emul_unregister(const char *name)
 		}
 	}
 	proclist_unlock_read();
-	
+
 	if (error)
 		goto out;
 
-	
+
 	/* entry is not used, remove it */
 	LIST_REMOVE(it, el_list);
 	FREE(it, M_EXEC);
@@ -1053,7 +1071,7 @@ exec_add(struct execsw *esp, const char *e_name)
 
 	LIST_FOREACH(it, &ex_head, ex_list) {
 		/* assume tuple (makecmds, probe_func, emulation) is unique */
-		if (it->es->es_check == esp->es_check
+		if (it->es->es_makecmds == esp->es_makecmds
 		    && it->es->u.elf_probe_func == esp->u.elf_probe_func
 		    && it->es->es_emul == esp->es_emul) {
 			error = EEXIST;
@@ -1089,7 +1107,7 @@ exec_remove(const struct execsw *esp)
 
 	LIST_FOREACH(it, &ex_head, ex_list) {
 		/* assume tuple (makecmds, probe_func, emulation) is unique */
-		if (it->es->es_check == esp->es_check
+		if (it->es->es_makecmds == esp->es_makecmds
 		    && it->es->u.elf_probe_func == esp->u.elf_probe_func
 		    && it->es->es_emul == esp->es_emul)
 			break;
@@ -1196,7 +1214,7 @@ exec_init(int init_boot)
 		link_es(&list, e2->es);
 		es_sz++;
 	}
-	
+
 	/*
 	 * Now that we have sorted all execw entries, create new execsw[]
 	 * and free no longer needed memory in the process.
@@ -1221,7 +1239,7 @@ exec_init(int init_boot)
 
 	/*
 	 * Figure out the maximum size of an exec header.
-	 */ 
+	 */
 	exec_maxhdrsz = 0;
 	for (i = 0; i < nexecs; i++) {
 		if (execsw[i]->es_hdrsz > exec_maxhdrsz)
@@ -1265,3 +1283,77 @@ exec_init(int init_boot)
 
 }
 #endif /* !LKM */
+
+static int
+exec_sigcode_map(struct proc *p, const struct emul *e)
+{
+	vaddr_t va;
+	vsize_t sz;
+	int error;
+	struct uvm_object *uobj;
+
+	sz = (vaddr_t)e->e_esigcode - (vaddr_t)e->e_sigcode;
+
+	if (e->e_sigobject == NULL || sz == 0) {
+		return 0;
+	}
+
+	/*
+	 * If we don't have a sigobject for this emulation, create one.
+	 *
+	 * sigobject is an anonymous memory object (just like SYSV shared
+	 * memory) that we keep a permanent reference to and that we map
+	 * in all processes that need this sigcode. The creation is simple,
+	 * we create an object, add a permanent reference to it, map it in
+	 * kernel space, copy out the sigcode to it and unmap it.
+	 * The we map it with PROT_READ|PROT_EXEC into the process just
+	 * the way sys_mmap would map it.
+	 */
+
+	uobj = *e->e_sigobject;
+	if (uobj == NULL) {
+		uobj = uao_create(sz, 0);
+		(*uobj->pgops->pgo_reference)(uobj);
+		va = vm_map_min(kernel_map);
+		if ((error = uvm_map(kernel_map, &va, round_page(sz),
+		    uobj, 0, 0,
+		    UVM_MAPFLAG(UVM_PROT_RW, UVM_PROT_RW,
+		    UVM_INH_SHARE, UVM_ADV_RANDOM, 0)))) {
+			printf("kernel mapping failed %d\n", error);
+			(*uobj->pgops->pgo_detach)(uobj);
+			return (error);
+		}
+		memcpy((void *)va, e->e_sigcode, sz);
+#ifdef PMAP_NEED_PROCWR
+		pmap_procwr(&proc0, va, sz);
+#endif
+		uvm_unmap(kernel_map, va, va + round_page(sz));
+		*e->e_sigobject = uobj;
+	}
+
+	/* Just a hint to uvm_map where to put it. */
+	va = VM_DEFAULT_ADDRESS(p->p_vmspace->vm_daddr, round_page(sz));
+
+#ifdef __alpha__
+	/*
+	 * Tru64 puts /sbin/loader at the end of user virtual memory,
+	 * which causes the above calculation to put the sigcode at
+	 * an invalid address.  Put it just below the text instead.
+	 */
+	if (va == (vaddr_t)p->p_vmspace->vm_map.max_offset) {
+		va = (vaddr_t)p->p_vmspace->vm_taddr - round_page(sz);
+	}
+#endif
+
+	(*uobj->pgops->pgo_reference)(uobj);
+	error = uvm_map(&p->p_vmspace->vm_map, &va, round_page(sz),
+			uobj, 0, 0,
+			UVM_MAPFLAG(UVM_PROT_RX, UVM_PROT_RX, UVM_INH_SHARE,
+				    UVM_ADV_RANDOM, 0));
+	if (error) {
+		(*uobj->pgops->pgo_detach)(uobj);
+		return (error);
+	}
+	p->p_sigctx.ps_sigcode = (void *)va;
+	return (0);
+}

@@ -1,4 +1,4 @@
-/* 	$NetBSD: lwp.h,v 1.6 2003/02/04 13:41:48 yamt Exp $	*/
+/* 	$NetBSD: lwp.h,v 1.6.2.1 2004/08/03 10:56:28 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -46,13 +46,11 @@
 #include <machine/proc.h>		/* Machine-dependent proc substruct. */
 #include <sys/queue.h>
 #include <sys/callout.h>
-#include <sys/ucontext.h>
 
 struct	lwp {
 	struct	lwp *l_forw;		/* Doubly-linked run/sleep queue. */
 	struct	lwp *l_back;
 	LIST_ENTRY(lwp) l_list;		/* Entry on list of all LWPs. */
-	LIST_ENTRY(lwp) l_zlist;	/* Entry on zombie list.  */
 
 	struct proc *l_proc;	/* Process with which we are associated. */
 
@@ -72,12 +70,13 @@ struct	lwp {
 	struct callout l_tsleep_ch;	/* callout for tsleep */
 	const char *l_wmesg;	/* Reason for sleep. */
 	int	l_holdcnt;	/* If non-zero, don't swap. */
+	void	*l_ctxlink;	/* uc_link {get,set}context */
+	int	l_dupfd;	/* Sideways return value from cloning devices XXX */
+	struct sadata_vp *l_savp; /* SA "virtual processor" */
 
 #define l_endzero l_priority
 
 #define l_startcopy l_priority
-
-	void	*l_ctxlink;	/* uc_link {get,set}context */
 
 	u_char	l_priority;	/* Process priority. */
 	u_char	l_usrpri;	/* User-priority based on p_cpu and p_nice. */
@@ -85,9 +84,7 @@ struct	lwp {
 #define l_endcopy l_private
 
 	void	*l_private;	/* svr4-style lwp-private data */
-#ifdef notyet
 	void	*l_emuldata;	/* kernel lwp-private data */
-#endif
 
 	int	l_locks;       	/* DEBUG: lockmgr count of held locks */
 
@@ -99,8 +96,6 @@ struct	lwp {
 LIST_HEAD(lwplist, lwp);		/* a list of LWPs */
 
 extern struct lwplist alllwp;		/* List of all LWPs. */
-extern struct lwplist deadlwp;		/* */
-extern struct lwplist zomblwp;
 
 extern struct pool lwp_pool;		/* memory pool for LWPs */
 extern struct pool lwp_uc_pool;		/* memory pool for LWP startup args */
@@ -112,11 +107,16 @@ extern struct lwp lwp0;			/* LWP for proc0 */
 #define	L_SELECT	0x00040	/* Selecting; wakeup/waiting danger. */
 #define	L_SINTR		0x00080	/* Sleep is interruptible. */
 #define	L_TIMEOUT	0x00400	/* Timing out during sleep. */
-#define	L_BIGLOCK	0x80000	/* LWP needs kernel "big lock" to run */
+#define	L_PROCEXIT	0x00800 /* In process exit, l_proc no longer valid */
 #define	L_SA		0x100000 /* Scheduler activations LWP */
 #define	L_SA_UPCALL	0x200000 /* SA upcall is pending */
 #define	L_SA_BLOCKING	0x400000 /* Blocking in tsleep() */
 #define	L_DETACHED	0x800000 /* Won't be waited for. */
+#define	L_CANCELLED	0x2000000 /* tsleep should not sleep */
+#define	L_SA_PAGEFAULT	0x4000000 /* SA LWP in pagefault handler */
+#define	L_SA_YIELD	0x10000000 /* LWP on VP is yielding */
+#define	L_SA_IDLE	0x20000000 /* VP is idle */
+#define	L_COWINPROGRESS	0x40000000 /* UFS: doing copy on write */
 
 /*
  * Status values.
@@ -178,6 +178,7 @@ void	upcallret(struct lwp *);
 void	lwp_exit (struct lwp *);
 void	lwp_exit2 (struct lwp *);
 struct lwp *proc_representative_lwp(struct proc *);
+inline int lwp_suspend(struct lwp *, struct lwp *);
 #endif	/* _KERNEL */
 
 /* Flags for _lwp_create(), as per Solaris. */

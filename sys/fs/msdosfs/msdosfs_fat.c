@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_fat.c,v 1.1 2002/12/26 12:31:34 jdolecek Exp $	*/
+/*	$NetBSD: msdosfs_fat.c,v 1.1.4.1 2004/08/03 10:52:42 skrll Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_fat.c,v 1.1 2002/12/26 12:31:34 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_fat.c,v 1.1.4.1 2004/08/03 10:52:42 skrll Exp $");
 
 /*
  * kernel include files.
@@ -58,7 +58,7 @@ __KERNEL_RCSID(0, "$NetBSD: msdosfs_fat.c,v 1.1 2002/12/26 12:31:34 jdolecek Exp
 #include <sys/buf.h>
 #include <sys/file.h>
 #include <sys/namei.h>
-#include <sys/mount.h>		/* to define statfs structure */
+#include <sys/mount.h>		/* to define statvfs structure */
 #include <sys/vnode.h>		/* to define vattr structure */
 #include <sys/errno.h>
 #include <sys/dirent.h>
@@ -234,6 +234,11 @@ pcbmap(dep, findcn, bnp, cnp, sp)
 			bp_bn = bn;
 		}
 		prevcn = cn;
+		if (bo >= bsize) {
+			if (bp)
+				brelse(bp);
+			return (EIO);
+		}
 		if (FAT32(pmp))
 			cn = getulong(&bp->b_data[bo]);
 		else

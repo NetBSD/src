@@ -1,4 +1,4 @@
-/*	$NetBSD: uhub.c,v 1.64 2003/02/08 03:32:51 ichiro Exp $	*/
+/*	$NetBSD: uhub.c,v 1.64.2.1 2004/08/03 10:51:36 skrll Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhub.c,v 1.18 1999/11/17 22:33:43 n_hibma Exp $	*/
 
 /*
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhub.c,v 1.64 2003/02/08 03:32:51 ichiro Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhub.c,v 1.64.2.1 2004/08/03 10:51:36 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -156,7 +156,7 @@ USB_ATTACH(uhub)
 
 	DPRINTFN(1,("uhub_attach\n"));
 	sc->sc_hub = dev;
-	usbd_devinfo(dev, 1, devinfo);
+	usbd_devinfo(dev, 1, devinfo, sizeof(devinfo));
 	USB_ATTACH_SETUP;
 	printf("%s: %s\n", USBDEVNAME(sc->sc_dev), devinfo);
 
@@ -176,7 +176,7 @@ USB_ATTACH(uhub)
 	/* Get hub descriptor. */
 	req.bmRequestType = UT_READ_CLASS_DEVICE;
 	req.bRequest = UR_GET_DESCRIPTOR;
-	USETW(req.wValue, 0);
+	USETW2(req.wValue, UDESC_HUB, 0);
 	USETW(req.wIndex, 0);
 	USETW(req.wLength, USB_HUB_DESCRIPTOR_SIZE);
 	DPRINTFN(1,("usb_init_hub: getting hub descriptor\n"));
@@ -287,6 +287,7 @@ USB_ATTACH(uhub)
 			up->power = USB_MAX_POWER;
 		else
 			up->power = USB_MIN_POWER;
+		up->restartcnt = 0;
 	}
 
 	/* XXX should check for none, individual, or ganged power? */
@@ -352,7 +353,10 @@ uhub_explore(usbd_device_handle dev)
 		if (change & UPS_C_PORT_ENABLED) {
 			DPRINTF(("uhub_explore: C_PORT_ENABLED\n"));
 			usbd_clear_port_feature(dev, port, UHF_C_PORT_ENABLE);
-			if (status & UPS_PORT_ENABLED) {
+			if (change & UPS_C_CONNECT_STATUS) {
+				/* Ignore the port error if the device
+				   vanished. */
+			} else if (status & UPS_PORT_ENABLED) {
 				printf("%s: illegal enable change, port %d\n",
 				       USBDEVNAME(sc->sc_dev), port);
 			} else {

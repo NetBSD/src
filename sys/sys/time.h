@@ -1,4 +1,4 @@
-/*	$NetBSD: time.h,v 1.38 2003/04/28 23:16:31 bjh21 Exp $	*/
+/*	$NetBSD: time.h,v 1.38.2.1 2004/08/03 10:56:32 skrll Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -12,11 +12,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -188,8 +184,7 @@ struct 	ptimer {
 	} pt_data;
 	struct	sigevent pt_ev;
 	struct	itimerval pt_time;
-	/* XXX Use ksiginfo_t when it is available. */
-	siginfo_t	pt_info;
+	struct	ksiginfo pt_info;
 	int	pt_overruns;	/* Overruns currently accumulating */
 	int	pt_poverruns;	/* Overruns associated w/ a delivery */
 	int	pt_type;
@@ -215,7 +210,7 @@ struct	ptimers {
 };
 
 int	itimerfix __P((struct timeval *tv));
-int	itimerdecr __P((struct ptimer *, int usec));
+int	itimerdecr __P((struct ptimer *, int));
 void	itimerfire __P((struct ptimer *));
 void	microtime __P((struct timeval *tv));
 int	settime __P((struct timeval *));
@@ -240,13 +235,16 @@ void	realtimerexpire __P((void *));
 
 __BEGIN_DECLS
 int	adjtime __P((const struct timeval *, struct timeval *));
-int	futimes __P((int, const struct timeval *));
+int	futimes __P((int, const struct timeval [2]));
 int	getitimer __P((int, struct itimerval *));
-int	gettimeofday __P((struct timeval *, struct timezone *));
-int	lutimes __P((const char *, const struct timeval *));
-int	setitimer __P((int, const struct itimerval *, struct itimerval *));
-int	settimeofday __P((const struct timeval *, const struct timezone *));
-int	utimes __P((const char *, const struct timeval *));
+int	gettimeofday __P((struct timeval * __restrict,
+	    void * __restrict));
+int	lutimes __P((const char *, const struct timeval [2]));
+int	setitimer __P((int, const struct itimerval * __restrict,
+	    struct itimerval * __restrict));
+int	settimeofday __P((const struct timeval * __restrict,
+	    const void * __restrict));
+int	utimes __P((const char *, const struct timeval [2]));
 __END_DECLS
 #endif /* _XOPEN_SOURCE || _NETBSD_SOURCE */
 

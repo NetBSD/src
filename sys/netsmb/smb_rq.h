@@ -1,4 +1,4 @@
-/*	$NetBSD: smb_rq.h,v 1.9 2003/04/07 19:35:40 jdolecek Exp $	*/
+/*	$NetBSD: smb_rq.h,v 1.9.2.1 2004/08/03 10:56:05 skrll Exp $	*/
 
 /*
  * Copyright (c) 2000-2001, Boris Popov
@@ -119,15 +119,13 @@ struct smb_t2rq {
 	int		t2_flags;	/* SMBT2_ */
 	struct mbchain	t2_tparam;	/* parameters to transmit */
 	struct mbchain	t2_tdata;	/* data to transmit */
-	struct mdchain	t2_rparam;	/* received paramters */
+	struct mdchain	t2_rparam;	/* received parameters */
 	struct mdchain	t2_rdata;	/* received data */
 	struct smb_cred*t2_cred;
 	struct smb_connobj *t2_source;
 	struct smb_rq *	t2_rq;
 	struct smb_vc * t2_vc;
 };
-
-int  smb_rqinit(void);
 
 int  smb_rq_alloc(struct smb_connobj *layer, u_char cmd,
 	struct smb_cred *scred, struct smb_rq **rqpp);

@@ -12,11 +12,7 @@ copyright="\
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -33,7 +29,7 @@ copyright="\
  * SUCH DAMAGE.
  */
 "
-SCRIPT_ID='$NetBSD: vnode_if.sh,v 1.32.2.1 2003/07/02 15:26:48 darrenr Exp $'
+SCRIPT_ID='$NetBSD: vnode_if.sh,v 1.32.2.2 2004/08/03 10:53:04 skrll Exp $'
 
 # Script to produce VFS front-end sugar.
 #
@@ -240,8 +236,6 @@ END	{
 	argtype[0]="struct buf *";
 	argname[0]="bp";
 	arg0special="->b_vp";
-	name="vop_strategy";
-	doit();
 	name="vop_bwrite";
 	doit();
 
@@ -394,8 +388,6 @@ BEGIN	{
 	argname[0]="bp";
 	arg0special="->b_vp";
 	willrele[0]=0;
-	name="vop_strategy";
-	doit();
 	name="vop_bwrite";
 	doit();
 	printf("\n/* End of special cases */\n");
@@ -413,7 +405,6 @@ echo '
 echo '
 const struct vnodeop_desc * const vfs_op_descs[] = {
 	&vop_default_desc,	/* MUST BE FIRST */
-	&vop_strategy_desc,	/* XXX: SPECIAL CASE */
 	&vop_bwrite_desc,	/* XXX: SPECIAL CASE */
 '
 

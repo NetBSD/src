@@ -1,4 +1,4 @@
-/*	$NetBSD: memcpy.S,v 1.3 2003/04/15 22:49:50 dsl Exp $	*/
+/*	$NetBSD: memcpy.S,v 1.3.2.1 2004/08/03 10:53:42 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -15,11 +15,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -39,7 +35,7 @@
 #include <machine/asm.h>
 
 #if defined(LIBC_SCCS)
-	RCSID("$NetBSD: memcpy.S,v 1.3 2003/04/15 22:49:50 dsl Exp $")
+	RCSID("$NetBSD: memcpy.S,v 1.3.2.1 2004/08/03 10:53:42 skrll Exp $")
 #endif
 
 	/*
@@ -74,15 +70,15 @@ ENTRY(memcpy)
 	subl	%esi,%eax
 	cmpl	%ecx,%eax	/* overlapping? */
 	movl	%ecx,%eax
-	jb	backwards
+	jb	.Lbackwards
 #endif
 	cld			/* nope, copy forwards. */
 	shrl	$2,%ecx		/* copy by words */
 	rep
 	movsl
 	and	$3,%eax		/* any bytes left? */
-	jnz	trailing
-done:
+	jnz	.Ltrailing
+.Ldone:
 #if defined(MEMCPY) || defined(MEMMOVE)
 	movl	8(%esp),%eax
 #endif
@@ -90,26 +86,26 @@ done:
 	pop	%esi
 	ret
 
-trailing:
+.Ltrailing:
 	cmp	$2,%eax
 	jb	1f
 	movw	(%esi),%ax
 	movw	%ax,(%edi)
-	je	done
+	je	.Ldone
 	movb	2(%esi),%al
 	movb	%al,2(%edi)
-	jmp	done
+	jmp	.Ldone
 1:	movb	(%esi),%al
 	movb	%al,(%edi)
-	jmp	done
+	jmp	.Ldone
 
 #if !defined(NO_OVERLAP)
-backwards:
+.Lbackwards:
 	addl	%ecx,%edi	/* copy backwards. */
 	addl	%ecx,%esi
 	and	$3,%eax		/* any fractional bytes? */
-	jnz	back_align
-back_aligned:
+	jnz	.Lback_align
+.Lback_aligned:
 	shrl	$2,%ecx
 	subl	$4,%esi
 	subl	$4,%edi
@@ -117,9 +113,9 @@ back_aligned:
 	rep
 	movsl
 	cld
-	jmp	done
+	jmp	.Ldone
 
-back_align:
+.Lback_align:
 	sub	%eax,%esi
 	sub	%eax,%edi
 	cmp	$2,%eax
@@ -129,8 +125,8 @@ back_align:
 	movb	%al,2(%edi)
 2:	movw	(%esi),%ax
 	movw	%ax,(%edi)
-	jmp	back_aligned
+	jmp	.Lback_aligned
 1:	movb	(%esi),%al
 	movb	%al,(%edi)
-	jmp	back_aligned
+	jmp	.Lback_aligned
 #endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: dead_vnops.c,v 1.32 2001/12/06 04:27:40 chs Exp $	*/
+/*	$NetBSD: dead_vnops.c,v 1.32.16.1 2004/08/03 10:54:04 skrll Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -12,11 +12,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -36,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dead_vnops.c,v 1.32 2001/12/06 04:27:40 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dead_vnops.c,v 1.32.16.1 2004/08/03 10:54:04 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -238,7 +234,7 @@ dead_ioctl(v)
 	struct vop_ioctl_args /* {
 		struct vnode *a_vp;
 		u_long a_command;
-		caddr_t  a_data;
+		void *a_data;
 		int  a_fflag;
 		struct ucred *a_cred;
 		struct proc *a_p;
@@ -275,14 +271,15 @@ dead_strategy(v)
 {
 
 	struct vop_strategy_args /* {
+		struct vnode *a_vp;
 		struct buf *a_bp;
 	} */ *ap = v;
-	if (ap->a_bp->b_vp == NULL || !chkvnlock(ap->a_bp->b_vp)) {
+	if (ap->a_vp == NULL || !chkvnlock(ap->a_vp)) {
 		ap->a_bp->b_flags |= B_ERROR;
 		biodone(ap->a_bp);
 		return (EIO);
 	}
-	return (VOP_STRATEGY(ap->a_bp));
+	return (VOP_STRATEGY(ap->a_vp, ap->a_bp));
 }
 
 /*

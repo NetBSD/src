@@ -1,4 +1,4 @@
-/*	$NetBSD: softdep.h,v 1.7 2003/04/02 10:39:39 fvdl Exp $	*/
+/*	$NetBSD: softdep.h,v 1.7.2.1 2004/08/03 10:56:50 skrll Exp $	*/
 
 /*
  * Copyright 1998 Marshall Kirk McKusick. All Rights Reserved.
@@ -446,6 +446,7 @@ struct freefile {
 	ino_t	fx_oldinum;		/* inum of the unlinked file */
 	struct	vnode *fx_devvp;	/* filesystem device vnode */
 	struct	fs *fx_fs;		/* addr of superblock */
+	struct	mount *fx_mnt;		/* associated mount point */
 };
 
 /*

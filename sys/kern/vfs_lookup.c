@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_lookup.c,v 1.48.2.1 2003/07/02 15:26:46 darrenr Exp $	*/
+/*	$NetBSD: vfs_lookup.c,v 1.48.2.2 2004/08/03 10:52:59 skrll Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -17,11 +17,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -41,9 +37,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.48.2.1 2003/07/02 15:26:46 darrenr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.48.2.2 2004/08/03 10:52:59 skrll Exp $");
 
 #include "opt_ktrace.h"
+#include "opt_systrace.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -61,6 +58,9 @@ __KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.48.2.1 2003/07/02 15:26:46 darrenr 
 
 #ifdef KTRACE
 #include <sys/ktrace.h>
+#endif
+#ifdef SYSTRACE
+#include <sys/systrace.h>
 #endif
 
 struct pool pnbuf_pool;		/* pathname buffer pool */
@@ -139,6 +139,10 @@ namei(ndp)
 #ifdef KTRACE
 	if (KTRPOINT(cnp->cn_lwp->l_proc, KTR_NAMEI))
 		ktrnamei(cnp->cn_lwp, cnp->cn_pnbuf);
+#endif
+#ifdef SYSTRACE
+	if (ISSET(cnp->cn_lwp->l_proc->p_flag, P_SYSTRACE))
+		systrace_namei(ndp);
 #endif
 
 	/*
@@ -400,7 +404,7 @@ dirloop:
 	*(char *)cp = '\0';
 	printf("{%s}: ", cnp->cn_nameptr);
 	*(char *)cp = c; }
-#endif
+#endif /* NAMEI_DIAGNOSTIC */
 	ndp->ni_pathlen -= cnp->cn_namelen;
 	ndp->ni_next = cp;
 	/*
@@ -507,10 +511,10 @@ unionlookup:
 #ifdef DIAGNOSTIC
 		if (ndp->ni_vp != NULL)
 			panic("leaf `%s' should be empty", cnp->cn_nameptr);
-#endif
+#endif /* DIAGNOSTIC */
 #ifdef NAMEI_DIAGNOSTIC
 		printf("not found\n");
-#endif
+#endif /* NAMEI_DIAGNOSTIC */
 		if ((error == ENOENT) &&
 		    (dp->v_flag & VROOT) &&
 		    (dp->v_mount->mnt_flag & MNT_UNION)) {
@@ -529,9 +533,10 @@ unionlookup:
 			goto bad;
 		/*
 		 * If this was not the last component, or there were trailing
-		 * slashes, then the name must exist.
+		 * slashes, and we are not going to create a directory,
+		 * then the name must exist.
 		 */
-		if (cnp->cn_flags & REQUIREDIR) {
+		if ((cnp->cn_flags & (REQUIREDIR | CREATEDIR)) == REQUIREDIR) {
 			error = ENOENT;
 			goto bad;
 		}
@@ -556,7 +561,7 @@ unionlookup:
 	}
 #ifdef NAMEI_DIAGNOSTIC
 	printf("found\n");
-#endif
+#endif /* NAMEI_DIAGNOSTIC */
 
 	/*
 	 * Take into account any additional components consumed by the
@@ -673,10 +678,10 @@ relookup(dvp, vpp, cnp)
 	int wantparent;			/* 1 => wantparent or lockparent flag */
 	int rdonly;			/* lookup read-only flag bit */
 	int error = 0;
-#ifdef NAMEI_DIAGNOSTIC
-	int newhash;			/* DEBUG: check name hash */
+#ifdef DEBUG
+	u_long newhash;			/* DEBUG: check name hash */
 	const char *cp;			/* DEBUG: check name ptr/len */
-#endif
+#endif /* DEBUG */
 
 	/*
 	 * Setup: break out flag bits into variables.
@@ -697,17 +702,21 @@ relookup(dvp, vpp, cnp)
 	 * the name set the SAVENAME flag. When done, they assume
 	 * responsibility for freeing the pathname buffer.
 	 */
-#ifdef NAMEI_DIAGNOSTIC
+#ifdef DEBUG
 	cp = NULL;
 	newhash = namei_hash(cnp->cn_nameptr, &cp);
 	if (newhash != cnp->cn_hash)
 		panic("relookup: bad hash");
 	if (cnp->cn_namelen != cp - cnp->cn_nameptr)
 		panic ("relookup: bad len");
+	while (*cp == '/')
+		cp++;
 	if (*cp != 0)
 		panic("relookup: not last component");
+#endif /* DEBUG */
+#ifdef NAMEI_DIAGNOSTIC
 	printf("{%s}: ", cnp->cn_nameptr);
-#endif
+#endif /* NAMEI_DIAGNOSTIC */
 
 	/*
 	 * Check for degenerate name (e.g. / or "")

@@ -1,4 +1,4 @@
-/*	$NetBSD: urio.c,v 1.17.2.1 2003/07/02 15:26:24 darrenr Exp $	*/
+/*	$NetBSD: urio.c,v 1.17.2.2 2004/08/03 10:51:39 skrll Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: urio.c,v 1.17.2.1 2003/07/02 15:26:24 darrenr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: urio.c,v 1.17.2.2 2004/08/03 10:51:39 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -143,6 +143,7 @@ static const struct usb_devno urio_devs[] = {
 	{ USB_VENDOR_DIAMOND, USB_PRODUCT_DIAMOND_RIO500USB},
 	{ USB_VENDOR_DIAMOND2, USB_PRODUCT_DIAMOND2_RIO600USB},
 	{ USB_VENDOR_DIAMOND2, USB_PRODUCT_DIAMOND2_RIO800USB},
+	{ USB_VENDOR_DIAMOND2, USB_PRODUCT_DIAMOND2_PSAPLAY120},
 };
 #define urio_lookup(v, p) usb_lookup(urio_devs, v, p)
 
@@ -174,7 +175,7 @@ USB_ATTACH(urio)
 
 	DPRINTFN(10,("urio_attach: sc=%p\n", sc));
 
-	usbd_devinfo(dev, 0, devinfo);
+	usbd_devinfo(dev, 0, devinfo, sizeof(devinfo));
 	USB_ATTACH_SETUP;
 	printf("%s: %s\n", USBDEVNAME(sc->sc_dev), devinfo);
 

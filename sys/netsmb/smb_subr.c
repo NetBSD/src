@@ -1,4 +1,4 @@
-/*	$NetBSD: smb_subr.c,v 1.19.2.1 2003/07/02 15:27:06 darrenr Exp $	*/
+/*	$NetBSD: smb_subr.c,v 1.19.2.2 2004/08/03 10:56:05 skrll Exp $	*/
 
 /*
  * Copyright (c) 2000-2001 Boris Popov
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smb_subr.c,v 1.19.2.1 2003/07/02 15:27:06 darrenr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smb_subr.c,v 1.19.2.2 2004/08/03 10:56:05 skrll Exp $");
  
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -259,6 +259,7 @@ smb_maperror(int eclass, int eno)
 			return EINVAL;
 		    case ERRbadpw:
 		    case ERRpasswordExpired:
+		    case ERRbaduid:
 			return EAUTH;
 		    case ERRaccess:
 			return EACCES;

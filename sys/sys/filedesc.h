@@ -1,4 +1,4 @@
-/*	$NetBSD: filedesc.h,v 1.28.2.1 2003/07/02 15:27:16 darrenr Exp $	*/
+/*	$NetBSD: filedesc.h,v 1.28.2.2 2004/08/03 10:56:27 skrll Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -12,11 +12,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -38,6 +34,8 @@
 #ifndef _SYS_FILEDESC_H_
 #define	_SYS_FILEDESC_H_
 
+#include <sys/lock.h>
+
 /*
  * This structure is used for the management of descriptors.  It may be
  * shared by multiple processes.
@@ -54,11 +52,18 @@
  */
 #define	NDFILE		20
 #define	NDEXTENT	50		/* 250 bytes in 256-byte alloc */
+#define	NDENTRIES	32		/* 32 fds per entry */
+#define	NDENTRYMASK	(NDENTRIES - 1)
+#define	NDENTRYSHIFT	5		/* bits per entry */
+#define	NDLOSLOTS(x)	(((x) + NDENTRIES - 1) >> NDENTRYSHIFT)
+#define	NDHISLOTS(x)	((NDLOSLOTS(x) + NDENTRIES - 1) >> NDENTRYSHIFT)
 
 struct filedesc {
 	struct file	**fd_ofiles;	/* file structures for open files */
 	char		*fd_ofileflags;	/* per-process open file flags */
 	int		fd_nfiles;	/* number of open files allocated */
+	uint32_t	*fd_himap;	/* each bit points to 32 fds */
+	uint32_t	*fd_lomap;	/* bitmap of free fds */
 	int		fd_lastfile;	/* high-water mark of fd_ofiles */
 	int		fd_freefile;	/* approx. next free file */
 	int		fd_refcnt;	/* reference count */
@@ -73,6 +78,11 @@ struct filedesc {
 					 * hash table for attached
 					 * non-fd knotes
 					 */
+	struct simplelock fd_slock;	/* mutex. Note on locking order:
+					 * acquire this lock first when
+					 * also locking an associated
+					 * `struct file' lock.
+					 */
 };
 
 struct cwdinfo {
@@ -80,6 +90,7 @@ struct cwdinfo {
 	struct vnode	*cwdi_rdir;	/* root directory */
 	u_short		cwdi_cmask;	/* mask for file creation */
 	u_short		cwdi_refcnt;	/* reference count */
+	struct simplelock cwdi_slock;	/* mutex */
 };
 
 
@@ -95,6 +106,12 @@ struct filedesc0 {
 	 */
 	struct file	*fd_dfiles[NDFILE];
 	char		fd_dfileflags[NDFILE];
+	/*
+	 * These arrays are used when the number of open files is
+	 * <= 1024, and are then pointed to by the pointers above.
+	 */
+	uint32_t	fd_dhimap[NDENTRIES >> NDENTRYSHIFT];
+	uint32_t	fd_dlomap[NDENTRIES];
 };
 
 /*
@@ -111,19 +128,19 @@ struct filedesc0 {
 /*
  * Kernel global variables and routines.
  */
-int	dupfdopen(struct lwp *l, int indx, int dfd, int mode, int error);
-int	fdalloc(struct proc *p, int want, int *result);
-void	fdexpand(struct proc *p);
-int	fdavail(struct proc *p, int n);
-int	falloc(struct proc *p, struct file **resultfp, int *resultfd);
+int	dupfdopen(struct lwp *, int, int, int, int);
+int	fdalloc(struct proc *, int, int *);
+void	fdexpand(struct proc *);
+int	fdavail(struct proc *, int);
+int	falloc(struct proc *, struct file **, int *);
 void	ffree(struct file *);
-struct filedesc *fdcopy(struct proc *p);
-struct filedesc *fdinit(struct proc *p);
-void	fdshare(struct proc *p1, struct proc *p2);
-void	fdunshare(struct lwp *l);
-void	fdinit1(struct filedesc0 *newfdp);
-void	fdclear(struct lwp *l);
-void	fdfree(struct lwp *l);
+struct filedesc *fdcopy(struct proc *);
+struct filedesc *fdinit(struct proc *);
+void	fdshare(struct proc *, struct proc *);
+void	fdunshare(struct lwp *);
+void	fdinit1(struct filedesc0 *);
+void	fdclear(struct lwp *);
+void	fdfree(struct lwp *);
 void	fdremove(struct filedesc *, int);
 int	fdrelease(struct lwp *, int);
 void	fdcloseexec(struct lwp *);
@@ -134,7 +151,7 @@ struct file *fd_getfile(struct filedesc *, int);
 struct cwdinfo *cwdinit(struct proc *);
 void	cwdshare(struct proc *, struct proc *);
 void	cwdunshare(struct proc *);
-void	cwdfree(struct proc *);
+void	cwdfree(struct cwdinfo *);
 #define GETCWD_CHECK_ACCESS 0x0001
 int	getcwd_common(struct vnode *, struct vnode *, char **, char *, int,
     int, struct lwp *);

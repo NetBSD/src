@@ -1,4 +1,4 @@
-/*	$NetBSD: un.h,v 1.28.2.1 2003/07/02 15:27:18 darrenr Exp $	*/
+/*	$NetBSD: un.h,v 1.28.2.2 2004/08/03 10:56:33 skrll Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -12,11 +12,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -60,31 +56,36 @@ struct	sockaddr_un {
  */
 #if defined(_NETBSD_SOURCE)
 #define	LOCAL_CREDS	0x0001		/* pass credentials to receiver */
+#define	LOCAL_CONNWAIT	0x0002		/* connects block until accepted */
 #endif
 
 #ifdef _KERNEL
 struct unpcb;
 struct socket;
 
-int	unp_attach __P((struct socket *so));
-int	unp_bind __P((struct unpcb *unp, struct mbuf *nam, struct lwp *l));
-int	unp_connect __P((struct socket *so, struct mbuf *nam, struct lwp *l));
-int	unp_connect2 __P((struct socket *so, struct socket *so2));
-void	unp_detach __P((struct unpcb *unp));
-void	unp_discard __P((struct file *fp));
-void	unp_disconnect __P((struct unpcb *unp));
-void	unp_drop __P((struct unpcb *unp, int errno));
-void	unp_gc __P((void));
-void	unp_mark __P((struct file *fp));
-void	unp_scan __P((struct mbuf *m0, void (*op)(struct file *), int));
-void	unp_shutdown __P((struct unpcb *unp));
-int 	unp_externalize __P((struct mbuf *));
-int	unp_internalize __P((struct mbuf *, struct proc *));
-void 	unp_dispose __P((struct mbuf *));
-int	unp_output __P((struct mbuf *, struct mbuf *, struct unpcb *,
-	    struct proc *));
-void	unp_setsockaddr __P((struct unpcb *, struct mbuf *));
-void	unp_setpeeraddr __P((struct unpcb *, struct mbuf *));
+int	uipc_usrreq(struct socket *, int, struct mbuf *,
+	    struct mbuf *, struct mbuf *, struct lwp *);
+int	uipc_ctloutput(int, struct socket *, int, int, struct mbuf **);
+
+int	unp_attach (struct socket *);
+int	unp_bind (struct unpcb *, struct mbuf *, struct lwp *);
+int	unp_connect (struct socket *, struct mbuf *, struct lwp *);
+int	unp_connect2 (struct socket *, struct socket *, int);
+void	unp_detach (struct unpcb *);
+void	unp_discard (struct file *);
+void	unp_disconnect (struct unpcb *);
+void	unp_drop (struct unpcb *, int);
+void	unp_gc (void);
+void	unp_mark (struct file *);
+void	unp_scan (struct mbuf *, void (*)(struct file *), int);
+void	unp_shutdown (struct unpcb *);
+int 	unp_externalize (struct mbuf *, struct lwp *);
+int	unp_internalize (struct mbuf *, struct lwp *);
+void 	unp_dispose (struct mbuf *);
+int	unp_output (struct mbuf *, struct mbuf *, struct unpcb *,
+	    struct proc *);
+void	unp_setsockaddr (struct unpcb *, struct mbuf *);
+void	unp_setpeeraddr (struct unpcb *, struct mbuf *);
 #else /* !_KERNEL */
 
 /* actual length of an initialized sockaddr_un */

@@ -1,4 +1,4 @@
-/*	$NetBSD: smb_iod.c,v 1.21.2.1 2003/07/02 15:27:06 darrenr Exp $	*/
+/*	$NetBSD: smb_iod.c,v 1.21.2.2 2004/08/03 10:56:05 skrll Exp $	*/
 
 /*
  * Copyright (c) 2000-2001 Boris Popov
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smb_iod.c,v 1.21.2.1 2003/07/02 15:27:06 darrenr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smb_iod.c,v 1.21.2.2 2004/08/03 10:56:05 skrll Exp $");
  
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -147,30 +147,37 @@ smb_iod_connect(struct smbiod *iod)
 		break;
 	}
 	vcp->vc_genid++;
-	error = 0;
-	itry {
-		ithrow(SMB_TRAN_CREATE(vcp, l));
-		SMBIODEBUG("tcreate\n");
-		if (vcp->vc_laddr) {
-			ithrow(SMB_TRAN_BIND(vcp, vcp->vc_laddr, l));
-		}
-		SMBIODEBUG("tbind\n");
-		ithrow(SMB_TRAN_CONNECT(vcp, vcp->vc_paddr, l));
-		SMB_TRAN_SETPARAM(vcp, SMBTP_SELECTID, &iod->iod_flags);
-		iod->iod_state = SMBIOD_ST_TRANACTIVE;
-		SMBIODEBUG("tconnect\n");
-/*		vcp->vc_mid = 0;*/
-		ithrow(smb_smb_negotiate(vcp, &iod->iod_scred));
-		SMBIODEBUG("snegotiate\n");
-		ithrow(smb_smb_ssnsetup(vcp, &iod->iod_scred));
-		iod->iod_state = SMBIOD_ST_VCACTIVE;
-		SMBIODEBUG("completed\n");
-		smb_iod_invrq(iod);
-	} icatch(error) {
-		smb_iod_dead(iod);
-	} ifinally {
-	} iendtry;
-	return error;
+
+#define ithrow(cmd)			\
+		if ((error = cmd))	\
+			goto fail
+
+	ithrow(SMB_TRAN_CREATE(vcp, l));
+	SMBIODEBUG("tcreate\n");
+	if (vcp->vc_laddr) {
+		ithrow(SMB_TRAN_BIND(vcp, vcp->vc_laddr, l));
+	}
+	SMBIODEBUG("tbind\n");
+	ithrow(SMB_TRAN_CONNECT(vcp, vcp->vc_paddr, l));
+	SMB_TRAN_SETPARAM(vcp, SMBTP_SELECTID, &iod->iod_flags);
+	iod->iod_state = SMBIOD_ST_TRANACTIVE;
+	SMBIODEBUG("tconnect\n");
+/*	vcp->vc_mid = 0;*/
+	ithrow(smb_smb_negotiate(vcp, &iod->iod_scred));
+	SMBIODEBUG("snegotiate\n");
+	ithrow(smb_smb_ssnsetup(vcp, &iod->iod_scred));
+	iod->iod_state = SMBIOD_ST_VCACTIVE;
+
+#undef ithrow
+
+	SMBIODEBUG("completed\n");
+	smb_iod_invrq(iod);
+
+	return (0);
+
+    fail:
+	smb_iod_dead(iod);
+	return (error);
 }
 
 static int

@@ -1,7 +1,7 @@
-/*	$NetBSD: sd.c,v 1.202.2.1 2003/07/02 15:26:18 darrenr Exp $	*/
+/*	$NetBSD: sd.c,v 1.202.2.2 2004/08/03 10:51:15 skrll Exp $	*/
 
 /*-
- * Copyright (c) 1998 The NetBSD Foundation, Inc.
+ * Copyright (c) 1998, 2003 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -54,10 +54,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.202.2.1 2003/07/02 15:26:18 darrenr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.202.2.2 2004/08/03 10:51:15 skrll Exp $");
 
 #include "opt_scsi.h"
-#include "opt_bufq.h"
 #include "rnd.h"
 
 #include <sys/param.h>
@@ -88,8 +87,6 @@ __KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.202.2.1 2003/07/02 15:26:18 darrenr Exp $")
 #include <dev/scsipi/scsiconf.h>
 #include <dev/scsipi/sdvar.h>
 
-#include "sd.h"		/* NSD_SCSIBUS and NSD_ATAPIBUS come from here */
-
 #define	SDUNIT(dev)			DISKUNIT(dev)
 #define	SDPART(dev)			DISKPART(dev)
 #define	SDMINOR(unit, part)		DISKMINOR(unit, part)
@@ -108,7 +105,47 @@ void	sd_shutdown __P((void *));
 int	sd_reassign_blocks __P((struct sd_softc *, u_long));
 int	sd_interpret_sense __P((struct scsipi_xfer *));
 
+int	sd_mode_sense __P((struct sd_softc *, u_int8_t, void *, size_t, int,
+	    int, int *));
+int	sd_mode_select __P((struct sd_softc *, u_int8_t, void *, size_t, int,
+	    int));
+int	sd_get_simplifiedparms __P((struct sd_softc *, struct disk_parms *,
+	    int));
+int	sd_get_capacity __P((struct sd_softc *, struct disk_parms *, int));
+int	sd_get_parms __P((struct sd_softc *, struct disk_parms *, int));
+int	sd_get_parms_page4 __P((struct sd_softc *, struct disk_parms *, 
+	    int));
+int	sd_get_parms_page5 __P((struct sd_softc *, struct disk_parms *, 
+	    int));
+
+int	sd_flush __P((struct sd_softc *, int));
+int	sd_getcache __P((struct sd_softc *, int *));
+int	sd_setcache __P((struct sd_softc *, int));
+
+int	sdmatch __P((struct device *, struct cfdata *, void *));
+void	sdattach __P((struct device *, struct device *, void *));
+int	sdactivate __P((struct device *, enum devact));
+int	sddetach __P((struct device *, int));
+
+CFATTACH_DECL(sd, sizeof(struct sd_softc), sdmatch, sdattach, sddetach,
+    sdactivate);
+
 extern struct cfdriver sd_cd;
+
+const struct scsipi_inquiry_pattern sd_patterns[] = {
+	{T_DIRECT, T_FIXED,
+	 "",         "",                 ""},
+	{T_DIRECT, T_REMOV,
+	 "",         "",                 ""},
+	{T_OPTICAL, T_FIXED,
+	 "",         "",                 ""},
+	{T_OPTICAL, T_REMOV,
+	 "",         "",                 ""},
+	{T_SIMPLE_DIRECT, T_FIXED,
+	 "",         "",                 ""},
+	{T_SIMPLE_DIRECT, T_REMOV,
+	 "",         "",                 ""},
+};
 
 dev_type_open(sdopen);
 dev_type_close(sdclose);
@@ -137,33 +174,72 @@ const struct scsipi_periphsw sd_switch = {
 	sddone,			/* deal with stats at interrupt time */
 };
 
+struct sd_mode_sense_data {
+	/*
+	 * XXX
+	 * We are not going to parse this as-is -- it just has to be large
+	 * enough.
+	 */
+	union {
+		struct scsipi_mode_header small;
+		struct scsipi_mode_header_big big;
+	} header;
+	struct scsi_blk_desc blk_desc;
+	union scsi_disk_pages pages;
+};
+
+/*
+ * The routine called by the low level scsi routine when it discovers
+ * A device suitable for this driver
+ */
+int
+sdmatch(parent, match, aux)
+	struct device *parent;
+	struct cfdata *match;
+	void *aux;
+{
+	struct scsipibus_attach_args *sa = aux;
+	int priority;
+
+	(void)scsipi_inqmatch(&sa->sa_inqbuf,
+	    (caddr_t)sd_patterns, sizeof(sd_patterns) / sizeof(sd_patterns[0]),
+	    sizeof(sd_patterns[0]), &priority);
+
+	return (priority);
+}
+
 /*
  * Attach routine common to atapi & scsi.
  */
 void
-sdattach(parent, sd, periph, ops)
-	struct device *parent;
-	struct sd_softc *sd;
-	struct scsipi_periph *periph;
-	const struct sd_ops *ops;
+sdattach(parent, self, aux)
+	struct device *parent, *self;
+	void *aux;
 {
+	struct sd_softc *sd = (void *)self;
+	struct scsipibus_attach_args *sa = aux;
+	struct scsipi_periph *periph = sa->sa_periph;
 	int error, result;
 	struct disk_parms *dp = &sd->params;
 	char pbuf[9];
 
 	SC_DEBUG(periph, SCSIPI_DB2, ("sdattach: "));
 
-#ifdef NEW_BUFQ_STRATEGY
-	bufq_alloc(&sd->buf_queue, BUFQ_READ_PRIO|BUFQ_SORT_RAWBLOCK);
-#else
-	bufq_alloc(&sd->buf_queue, BUFQ_DISKSORT|BUFQ_SORT_RAWBLOCK);
-#endif
+	sd->type = (sa->sa_inqbuf.type & SID_TYPE);
+	if (sd->type == T_SIMPLE_DIRECT)
+		periph->periph_quirks |= PQUIRK_ONLYBIG | PQUIRK_NOBIGMODESENSE;
+
+	if (scsipi_periph_bustype(sa->sa_periph) == SCSIPI_BUSTYPE_SCSI &&
+	    periph->periph_version == 0)
+		sd->flags |= SDF_ANCIENT;
+
+	bufq_alloc(&sd->buf_queue,
+	    BUFQ_DISK_DEFAULT_STRAT()|BUFQ_SORT_RAWBLOCK);
 
 	/*
 	 * Store information needed to contact our base driver
 	 */
 	sd->sc_periph = periph;
-	sd->sc_ops = ops;
 
 	periph->periph_dev = &sd->sc_dev;
 	periph->periph_switch = &sd_switch;
@@ -190,15 +266,14 @@ sdattach(parent, sd, periph, ops)
 	aprint_naive("\n");
 	aprint_normal("\n");
 
-	error = scsipi_start(periph, SSS_START,
+	error = scsipi_test_unit_ready(periph,
 	    XS_CTL_DISCOVERY | XS_CTL_IGNORE_ILLEGAL_REQUEST |
-	    XS_CTL_IGNORE_MEDIA_CHANGE | XS_CTL_SILENT);
+	    XS_CTL_IGNORE_MEDIA_CHANGE | XS_CTL_SILENT_NODEV);
 
 	if (error)
 		result = SDGP_RESULT_OFFLINE;
 	else
-		result = (*sd->sc_ops->sdo_get_parms)(sd, &sd->params,
-		    XS_CTL_DISCOVERY);
+		result = sd_get_parms(sd, &sd->params, XS_CTL_DISCOVERY);
 	aprint_normal("%s: ", sd->sc_dev.dv_xname);
 	switch (result) {
 	case SDGP_RESULT_OK:
@@ -411,26 +486,43 @@ sdopen(dev, flag, fmt, l)
 			goto bad3;
 		}
 	} else {
+		int silent;
+
+		if (part == RAW_PART && fmt == S_IFCHR)
+			silent = XS_CTL_SILENT;
+		else
+			silent = 0;
+
 		/* Check that it is still responding and ok. */
 		error = scsipi_test_unit_ready(periph,
 		    XS_CTL_IGNORE_ILLEGAL_REQUEST | XS_CTL_IGNORE_MEDIA_CHANGE |
-		    XS_CTL_IGNORE_NOT_READY);
-		if (error)
-			goto bad3;
+		    silent);
 
 		/*
 		 * Start the pack spinning if necessary. Always allow the
 		 * raw parition to be opened, for raw IOCTLs. Data transfers
 		 * will check for SDEV_MEDIA_LOADED.
 		 */
-		error = scsipi_start(periph, SSS_START,
-		    XS_CTL_IGNORE_ILLEGAL_REQUEST |
-		    XS_CTL_IGNORE_MEDIA_CHANGE | XS_CTL_SILENT);
+		if (error == EIO) {
+			int error2;
+
+			error2 = scsipi_start(periph, SSS_START, silent);
+			switch (error2) {
+			case 0:
+				error = 0;
+				break;
+			case EIO:
+			case EINVAL:
+				break;
+			default:
+				error = error2;
+				break;
+			}
+		}
 		if (error) {
-			if (part != RAW_PART || fmt != S_IFCHR)
-				goto bad3;
-			else
+			if (silent)
 				goto out;
+			goto bad3;
 		}
 
 		periph->periph_flags |= PERIPH_OPEN;
@@ -445,6 +537,7 @@ sdopen(dev, flag, fmt, l)
 		}
 
 		if ((periph->periph_flags & PERIPH_MEDIA_LOADED) == 0) {
+			int param_error;
 			periph->periph_flags |= PERIPH_MEDIA_LOADED;
 
 			/*
@@ -455,16 +548,19 @@ sdopen(dev, flag, fmt, l)
 			 * The drive should refuse real I/O, if the media is
 			 * unformatted.
 			 */
-			if ((*sd->sc_ops->sdo_get_parms)(sd, &sd->params,
-			    0) == SDGP_RESULT_OFFLINE) {
+			if ((param_error = sd_get_parms(sd, &sd->params, 0))
+			     == SDGP_RESULT_OFFLINE) {
 				error = ENXIO;
 				goto bad2;
 			}
 			SC_DEBUG(periph, SCSIPI_DB3, ("Params loaded "));
 
 			/* Load the partition info if not already loaded. */
-			sdgetdisklabel(sd);
-			SC_DEBUG(periph, SCSIPI_DB3, ("Disklabel loaded "));
+			if (param_error == 0) {
+				sdgetdisklabel(sd);
+				SC_DEBUG(periph, SCSIPI_DB3,
+				     ("Disklabel loaded "));
+			}
 		}
 	}
 
@@ -497,8 +593,10 @@ bad2:
 
 bad:
 	if (sd->sc_dk.dk_openmask == 0) {
-		scsipi_prevent(periph, PR_ALLOW,
-		    XS_CTL_IGNORE_ILLEGAL_REQUEST | XS_CTL_IGNORE_MEDIA_CHANGE);
+		if (periph->periph_flags & PERIPH_REMOVABLE)
+			scsipi_prevent(periph, PR_ALLOW,
+			    XS_CTL_IGNORE_ILLEGAL_REQUEST |
+			    XS_CTL_IGNORE_MEDIA_CHANGE);
 		periph->periph_flags &= ~PERIPH_OPEN;
 	}
 
@@ -514,7 +612,7 @@ bad4:
  * close the device.. only called if we are the LAST occurence of an open
  * device.  Convenient now but usually a pain.
  */
-int 
+int
 sdclose(dev, flag, fmt, l)
 	dev_t dev;
 	int flag, fmt;
@@ -545,9 +643,8 @@ sdclose(dev, flag, fmt, l)
 		 * If the disk cache needs flushing, and the disk supports
 		 * it, do it now.
 		 */
-		if ((sd->flags & SDF_DIRTY) != 0 &&
-		    sd->sc_ops->sdo_flush != NULL) {
-			if ((*sd->sc_ops->sdo_flush)(sd, 0)) {
+		if ((sd->flags & SDF_DIRTY) != 0) {
+			if (sd_flush(sd, 0)) {
 				printf("%s: cache synchronization failed\n",
 				    sd->sc_dev.dv_xname);
 				sd->flags &= ~SDF_FLUSHING;
@@ -560,11 +657,10 @@ sdclose(dev, flag, fmt, l)
 
 		scsipi_wait_drain(periph);
 
-		if (periph->periph_flags & PERIPH_REMOVABLE) {
+		if (periph->periph_flags & PERIPH_REMOVABLE)
 			scsipi_prevent(periph, PR_ALLOW,
 			    XS_CTL_IGNORE_ILLEGAL_REQUEST |
 			    XS_CTL_IGNORE_NOT_READY);
-		}
 		periph->periph_flags &= ~PERIPH_OPEN;
 
 		scsipi_wait_drain(periph);
@@ -652,10 +748,10 @@ sdstrategy(bp)
 		blkno = bp->b_blkno / (lp->d_secsize / DEV_BSIZE);
 	else
 		blkno = bp->b_blkno * (DEV_BSIZE / lp->d_secsize);
- 
+
 	if (SDPART(bp->b_dev) != RAW_PART)
 		blkno += lp->d_partitions[SDPART(bp->b_dev)].p_offset;
- 
+
 	bp->b_rawblkno = blkno;
 
 	s = splbio();
@@ -703,7 +799,7 @@ done:
  * must be called at the correct (highish) spl level
  * sdstart() is called at splbio from sdstrategy and scsipi_done
  */
-void 
+void
 sdstart(periph)
 	struct scsipi_periph *periph;
 {
@@ -711,9 +807,7 @@ sdstart(periph)
 	struct disklabel *lp = sd->sc_dk.dk_label;
 	struct buf *bp = 0;
 	struct scsipi_rw_big cmd_big;
-#if NSD_SCSIBUS > 0
 	struct scsi_rw cmd_small;
-#endif
 	struct scsipi_generic *cmdp;
 	int nblks, cmdlen, error, flags;
 
@@ -761,15 +855,13 @@ sdstart(periph)
 		else
 			nblks = howmany(bp->b_bcount, lp->d_secsize);
 
-#if NSD_SCSIBUS > 0
 		/*
 		 *  Fill out the scsi command.  If the transfer will
 		 *  fit in a "small" cdb, use it.
 		 */
 		if (((bp->b_rawblkno & 0x1fffff) == bp->b_rawblkno) &&
 		    ((nblks & 0xff) == nblks) &&
-		    !(periph->periph_quirks & PQUIRK_ONLYBIG) &&
-		    scsipi_periph_bustype(periph) == SCSIPI_BUSTYPE_SCSI) {
+		    !(periph->periph_quirks & PQUIRK_ONLYBIG)) {
 			/*
 			 * We can fit in a small cdb.
 			 */
@@ -780,9 +872,7 @@ sdstart(periph)
 			cmd_small.length = nblks & 0xff;
 			cmdlen = sizeof(cmd_small);
 			cmdp = (struct scsipi_generic *)&cmd_small;
-		} else
-#endif /* NSD_SCSIBUS > 0 */
-		{
+		} else {
 			/*
 			 * Need a large cdb.
 			 */
@@ -876,7 +966,7 @@ sdminphys(bp)
 			bp->b_bcount = max;
 	}
 
-	(*sd->sc_periph->periph_channel->chan_adapter->adapt_minphys)(bp);
+	scsipi_adapter_minphys(sd->sc_periph->periph_channel, bp);
 }
 
 int
@@ -1045,7 +1135,7 @@ bad:
 	case DIOCLOCK:
 		return (scsipi_prevent(periph,
 		    (*(int *)addr) ? PR_PREVENT : PR_ALLOW, 0));
-	
+
 	case DIOCEJECT:
 		if ((periph->periph_flags & PERIPH_REMOVABLE) == 0)
 			return (ENOTTY);
@@ -1089,21 +1179,12 @@ bad:
 #endif
 
 	case DIOCGCACHE:
-		if (sd->sc_ops->sdo_getcache != NULL)
-			return ((*sd->sc_ops->sdo_getcache)(sd, (int *) addr));
-
-		/* Not supported on this device. */
-		*(int *) addr = 0;
-		return (0);
+		return (sd_getcache(sd, (int *) addr));
 
 	case DIOCSCACHE:
 		if ((flag & FWRITE) == 0)
 			return (EBADF);
-		if (sd->sc_ops->sdo_setcache != NULL)
-			return ((*sd->sc_ops->sdo_setcache)(sd, *(int *) addr));
-
-		/* Not supported on this device. */
-		return (EOPNOTSUPP);
+		return (sd_setcache(sd, *(int *) addr));
 
 	case DIOCCACHESYNC:
 		/*
@@ -1112,9 +1193,8 @@ bad:
 		 */
 		if ((flag & FWRITE) == 0)
 			return (EBADF);
-		if (((sd->flags & SDF_DIRTY) != 0 || *(int *)addr != 0) &&
-		    sd->sc_ops->sdo_flush != NULL) {
-			error = (*sd->sc_ops->sdo_flush)(sd, 0);
+		if (((sd->flags & SDF_DIRTY) != 0 || *(int *)addr != 0)) {
+			error = sd_flush(sd, 0);
 			if (error)
 				sd->flags &= ~SDF_FLUSHING;
 			else
@@ -1149,23 +1229,25 @@ sdgetdefaultlabel(sd, lp)
 	lp->d_secpercyl = lp->d_ntracks * lp->d_nsectors;
 
 	switch (scsipi_periph_bustype(sd->sc_periph)) {
-#if NSD_SCSIBUS > 0
 	case SCSIPI_BUSTYPE_SCSI:
 		lp->d_type = DTYPE_SCSI;
 		break;
-#endif
-#if NSD_ATAPIBUS > 0
 	case SCSIPI_BUSTYPE_ATAPI:
 		lp->d_type = DTYPE_ATAPI;
 		break;
-#endif
 	}
-	strncpy(lp->d_typename, sd->name, 16);
+	/*
+	 * XXX
+	 * We could probe the mode pages to figure out what kind of disc it is.
+	 * Is this worthwhile?
+	 */
+	strncpy(lp->d_typename, "mydisk", 16);
 	strncpy(lp->d_packname, "fictitious", 16);
 	lp->d_secperunit = sd->params.disksize;
 	lp->d_rpm = sd->params.rot_rate;
 	lp->d_interleave = 1;
-	lp->d_flags = 0;
+	lp->d_flags = sd->sc_periph->periph_flags & PERIPH_REMOVABLE ?
+	    D_REMOVABLE : 0;
 
 	lp->d_partitions[RAW_PART].p_offset = 0;
 	lp->d_partitions[RAW_PART].p_size =
@@ -1220,38 +1302,14 @@ sd_shutdown(arg)
 	 * it, flush it.  We're cold at this point, so we poll for
 	 * completion.
 	 */
-	if ((sd->flags & SDF_DIRTY) != 0 && sd->sc_ops->sdo_flush != NULL) {
-		if ((*sd->sc_ops->sdo_flush)(sd, XS_CTL_NOSLEEP|XS_CTL_POLL)) {
+	if ((sd->flags & SDF_DIRTY) != 0) {
+		if (sd_flush(sd, XS_CTL_NOSLEEP|XS_CTL_POLL)) {
 			printf("%s: cache synchronization failed\n",
 			    sd->sc_dev.dv_xname);
 			sd->flags &= ~SDF_FLUSHING;
 		} else
 			sd->flags &= ~(SDF_FLUSHING|SDF_DIRTY);
 	}
-}
-
-/*
- * Tell the device to map out a defective block
- */
-int
-sd_reassign_blocks(sd, blkno)
-	struct sd_softc *sd;
-	u_long blkno;
-{
-	struct scsi_reassign_blocks scsipi_cmd;
-	struct scsi_reassign_blocks_data rbdata;
-
-	memset(&scsipi_cmd, 0, sizeof(scsipi_cmd));
-	memset(&rbdata, 0, sizeof(rbdata));
-	scsipi_cmd.opcode = SCSI_REASSIGN_BLOCKS;
-
-	_lto2b(sizeof(rbdata.defect_descriptor[0]), rbdata.length);
-	_lto4b(blkno, rbdata.defect_descriptor[0].dlbaddr);
-
-	return (scsipi_command(sd->sc_periph,
-	    (struct scsipi_generic *)&scsipi_cmd, sizeof(scsipi_cmd),
-	    (u_char *)&rbdata, sizeof(rbdata), SDRETRIES, 5000, NULL,
-	    XS_CTL_DATA_OUT | XS_CTL_DATA_ONSTACK));
 }
 
 /*
@@ -1300,8 +1358,7 @@ sd_interpret_sense(xs)
 			callout_reset(&periph->periph_callout,
 			    5 * hz, scsipi_periph_timed_thaw, periph);
 			retval = ERESTART;
-		} else if ((sense->add_sense_code_qual == 0x2) &&
-		    (periph->periph_quirks & PQUIRK_NOSTARTUNIT) == 0) {
+		} else if (sense->add_sense_code_qual == 0x02) {
 			printf("%s: pack is stopped, restarting...\n",
 			    sd->sc_dev.dv_xname);
 			s = splbio();
@@ -1320,6 +1377,12 @@ sd_interpret_sense(xs)
 			periph->periph_flags &= ~PERIPH_RECOVERING;
 			splx(s);
 		}
+	}
+	if ((sense->flags & SSD_KEY) == SKEY_MEDIUM_ERROR &&
+	    sense->add_sense_code == 0x31 &&
+	    sense->add_sense_code_qual == 0x00)	{ /* maybe for any asq ? */
+		/* Medium Format Corrupted */
+		retval = EFTYPE;
 	}
 	return (retval);
 }
@@ -1483,4 +1546,551 @@ sddump(dev, blkno, va, size)
 	}
 	sddoingadump = 0;
 	return (0);
+}
+
+int
+sd_mode_sense(sd, byte2, sense, size, page, flags, big)
+	struct sd_softc *sd;
+	u_int8_t byte2;
+	void *sense;
+	size_t size;
+	int page, flags;
+	int *big;
+{
+
+	if ((sd->sc_periph->periph_quirks & PQUIRK_ONLYBIG) &&
+	    !(sd->sc_periph->periph_quirks & PQUIRK_NOBIGMODESENSE)) {
+		*big = 1;
+		return scsipi_mode_sense_big(sd->sc_periph, byte2, page, sense,
+		    size + sizeof(struct scsipi_mode_header_big),
+		    flags | XS_CTL_DATA_ONSTACK, SDRETRIES, 6000);
+	} else {
+		*big = 0;
+		return scsipi_mode_sense(sd->sc_periph, byte2, page, sense,
+		    size + sizeof(struct scsipi_mode_header),
+		    flags | XS_CTL_DATA_ONSTACK, SDRETRIES, 6000);
+	}
+}
+
+int
+sd_mode_select(sd, byte2, sense, size, flags, big)
+	struct sd_softc *sd;
+	u_int8_t byte2;
+	void *sense;
+	size_t size;
+	int flags, big;
+{
+
+	if (big) {
+		struct scsipi_mode_header_big *header = sense;
+
+		_lto2b(0, header->data_length);
+		return scsipi_mode_select_big(sd->sc_periph, byte2, sense,
+		    size + sizeof(struct scsipi_mode_header_big),
+		    flags | XS_CTL_DATA_ONSTACK, SDRETRIES, 6000);
+	} else {
+		struct scsipi_mode_header *header = sense;
+
+		header->data_length = 0;
+		return scsipi_mode_select(sd->sc_periph, byte2, sense,
+		    size + sizeof(struct scsipi_mode_header),
+		    flags | XS_CTL_DATA_ONSTACK, SDRETRIES, 6000);
+	}
+}
+
+int
+sd_get_simplifiedparms(sd, dp, flags)
+	struct sd_softc *sd;
+	struct disk_parms *dp;
+	int flags;
+{
+	struct {
+		struct scsipi_mode_header header;
+		/* no block descriptor */
+		u_int8_t pg_code; /* page code (should be 6) */
+		u_int8_t pg_length; /* page length (should be 11) */
+		u_int8_t wcd; /* bit0: cache disable */
+		u_int8_t lbs[2]; /* logical block size */
+		u_int8_t size[5]; /* number of log. blocks */
+		u_int8_t pp; /* power/performance */
+		u_int8_t flags;
+		u_int8_t resvd;
+	} scsipi_sense;
+	u_int64_t sectors;
+	int error;
+
+	/*
+	 * scsipi_size (ie "read capacity") and mode sense page 6
+	 * give the same information. Do both for now, and check
+	 * for consistency.
+	 * XXX probably differs for removable media
+	 */
+	dp->blksize = 512;
+	if ((sectors = scsipi_size(sd->sc_periph, flags)) == 0)
+		return (SDGP_RESULT_OFFLINE);		/* XXX? */
+
+	error = scsipi_mode_sense(sd->sc_periph, SMS_DBD, 6,
+	    &scsipi_sense.header, sizeof(scsipi_sense),
+	    flags | XS_CTL_DATA_ONSTACK, SDRETRIES, 6000);
+
+	if (error != 0)
+		return (SDGP_RESULT_OFFLINE);		/* XXX? */
+
+	dp->blksize = _2btol(scsipi_sense.lbs);
+	if (dp->blksize == 0)
+		dp->blksize = 512;
+
+	/*
+	 * Create a pseudo-geometry.
+	 */
+	dp->heads = 64;
+	dp->sectors = 32;
+	dp->cyls = sectors / (dp->heads * dp->sectors);
+	dp->disksize = _5btol(scsipi_sense.size);
+	if (dp->disksize <= UINT32_MAX && dp->disksize != sectors) {
+		printf("RBC size: mode sense=%llu, get cap=%llu\n",
+		       (unsigned long long)dp->disksize,
+		       (unsigned long long)sectors);
+		dp->disksize = sectors;
+	}
+	dp->disksize512 = (dp->disksize * dp->blksize) / DEV_BSIZE;
+
+	return (SDGP_RESULT_OK);
+}
+
+/*
+ * Get the scsi driver to send a full inquiry to the * device and use the
+ * results to fill out the disk parameter structure.
+ */
+int
+sd_get_capacity(sd, dp, flags)
+	struct sd_softc *sd;
+	struct disk_parms *dp;
+	int flags;
+{
+	u_int64_t sectors;
+	int error;
+#if 0
+	int i;
+	u_int8_t *p;
+#endif
+
+	dp->disksize = sectors = scsipi_size(sd->sc_periph, flags);
+	if (sectors == 0) {
+		struct scsipi_read_format_capacities cmd;
+		struct {
+			struct scsipi_capacity_list_header header;
+			struct scsipi_capacity_descriptor desc;
+		} __attribute__((packed)) data;
+
+		memset(&cmd, 0, sizeof(cmd));
+		memset(&data, 0, sizeof(data));
+		cmd.opcode = READ_FORMAT_CAPACITIES;
+		_lto2b(sizeof(data), cmd.length);
+
+		error = scsipi_command(sd->sc_periph, (void *)&cmd, sizeof(cmd),
+		    (void *)&data, sizeof(data), SDRETRIES, 20000, NULL,
+		    flags | XS_CTL_DATA_IN | XS_CTL_DATA_ONSTACK);
+		if (error == EFTYPE) {
+			/* Medium Format Corrupted, handle as not formatted */
+			return (SDGP_RESULT_UNFORMATTED);
+		}
+		if (error || data.header.length == 0)
+			return (SDGP_RESULT_OFFLINE);
+
+#if 0
+printf("rfc: length=%d\n", data.header.length);
+printf("rfc result:"); for (i = sizeof(struct scsipi_capacity_list_header) + data.header.length, p = (void *)&data; i; i--, p++) printf(" %02x", *p); printf("\n");
+#endif
+		switch (data.desc.byte5 & SCSIPI_CAP_DESC_CODE_MASK) {
+		case SCSIPI_CAP_DESC_CODE_RESERVED:
+		case SCSIPI_CAP_DESC_CODE_FORMATTED:
+			break;
+
+		case SCSIPI_CAP_DESC_CODE_UNFORMATTED:
+			return (SDGP_RESULT_UNFORMATTED);
+
+		case SCSIPI_CAP_DESC_CODE_NONE:
+			return (SDGP_RESULT_OFFLINE);
+		}
+
+		dp->disksize = sectors = _4btol(data.desc.nblks);
+		if (sectors == 0)
+			return (SDGP_RESULT_OFFLINE);		/* XXX? */
+
+		dp->blksize = _3btol(data.desc.blklen);
+		if (dp->blksize == 0)
+			dp->blksize = 512;
+	} else {
+		struct sd_mode_sense_data scsipi_sense;
+		int big, bsize;
+		struct scsi_blk_desc *bdesc;
+
+		memset(&scsipi_sense, 0, sizeof(scsipi_sense));
+		error = sd_mode_sense(sd, 0, &scsipi_sense,
+		    sizeof(scsipi_sense.blk_desc), 0, flags | XS_CTL_SILENT, &big);
+		dp->blksize = 512;
+		if (!error) {
+			if (big) {
+				bdesc = (void *)(&scsipi_sense.header.big + 1);
+				bsize = _2btol(scsipi_sense.header.big.blk_desc_len);
+			} else {
+				bdesc = (void *)(&scsipi_sense.header.small + 1);
+				bsize = scsipi_sense.header.small.blk_desc_len;
+			}
+
+#if 0
+printf("page 0 sense:"); for (i = sizeof(scsipi_sense), p = (void *)&scsipi_sense; i; i--, p++) printf(" %02x", *p); printf("\n");
+printf("page 0 bsize=%d\n", bsize);
+printf("page 0 ok\n");
+#endif
+
+			if (bsize >= 8) {
+				dp->blksize = _3btol(bdesc->blklen);
+				if (dp->blksize == 0)
+					dp->blksize = 512;
+			}
+		}
+	}
+
+	dp->disksize512 = (sectors * dp->blksize) / DEV_BSIZE;
+	return (0);
+}
+
+int
+sd_get_parms_page4(sd, dp, flags)
+	struct sd_softc *sd;
+	struct disk_parms *dp;
+	int flags;
+{
+	struct sd_mode_sense_data scsipi_sense;
+	int error;
+	int big, poffset, byte2;
+	union scsi_disk_pages *pages;
+#if 0
+	int i;
+	u_int8_t *p;
+#endif
+
+	byte2 = SMS_DBD;
+again:
+	memset(&scsipi_sense, 0, sizeof(scsipi_sense));
+	error = sd_mode_sense(sd, byte2, &scsipi_sense,
+	    (byte2 ? 0 : sizeof(scsipi_sense.blk_desc)) +
+	    sizeof(scsipi_sense.pages.rigid_geometry), 4,
+	    flags | XS_CTL_SILENT, &big);
+	if (error) {
+		if (byte2 == SMS_DBD) {
+			/* No result; try once more with DBD off */
+			byte2 = 0;
+			goto again;
+		}
+		return (error);
+	}
+
+	if (big) {
+		poffset = sizeof scsipi_sense.header.big;
+		poffset += _2btol(scsipi_sense.header.big.blk_desc_len);
+	} else {
+		poffset = sizeof scsipi_sense.header.small;
+		poffset += scsipi_sense.header.small.blk_desc_len;
+	}
+
+	pages = (void *)((u_long)&scsipi_sense + poffset);
+#if 0
+printf("page 4 sense:"); for (i = sizeof(scsipi_sense), p = (void *)&scsipi_sense; i; i--, p++) printf(" %02x", *p); printf("\n");
+printf("page 4 pg_code=%d sense=%p/%p\n", pages->rigid_geometry.pg_code, &scsipi_sense, pages);
+#endif
+
+	if ((pages->rigid_geometry.pg_code & PGCODE_MASK) != 4)
+		return (ERESTART);
+
+	SC_DEBUG(sd->sc_periph, SCSIPI_DB3,
+	    ("%d cyls, %d heads, %d precomp, %d red_write, %d land_zone\n",
+	    _3btol(pages->rigid_geometry.ncyl),
+	    pages->rigid_geometry.nheads,
+	    _2btol(pages->rigid_geometry.st_cyl_wp),
+	    _2btol(pages->rigid_geometry.st_cyl_rwc),
+	    _2btol(pages->rigid_geometry.land_zone)));
+
+	/*
+	 * KLUDGE!! (for zone recorded disks)
+	 * give a number of sectors so that sec * trks * cyls
+	 * is <= disk_size
+	 * can lead to wasted space! THINK ABOUT THIS !
+	 */
+	dp->heads = pages->rigid_geometry.nheads;
+	dp->cyls = _3btol(pages->rigid_geometry.ncyl);
+	if (dp->heads == 0 || dp->cyls == 0)
+		return (ERESTART);
+	dp->sectors = dp->disksize / (dp->heads * dp->cyls);	/* XXX */
+
+	dp->rot_rate = _2btol(pages->rigid_geometry.rpm);
+	if (dp->rot_rate == 0)
+		dp->rot_rate = 3600;
+
+#if 0
+printf("page 4 ok\n");
+#endif
+	return (0);
+}
+
+int
+sd_get_parms_page5(sd, dp, flags)
+	struct sd_softc *sd;
+	struct disk_parms *dp;
+	int flags;
+{
+	struct sd_mode_sense_data scsipi_sense;
+	int error;
+	int big, poffset, byte2;
+	union scsi_disk_pages *pages;
+#if 0
+	int i;
+	u_int8_t *p;
+#endif
+
+	byte2 = SMS_DBD;
+again:
+	memset(&scsipi_sense, 0, sizeof(scsipi_sense));
+	error = sd_mode_sense(sd, 0, &scsipi_sense,
+	    (byte2 ? 0 : sizeof(scsipi_sense.blk_desc)) +
+	    sizeof(scsipi_sense.pages.flex_geometry), 5,
+	    flags | XS_CTL_SILENT, &big);
+	if (error) {
+		if (byte2 == SMS_DBD) {
+			/* No result; try once more with DBD off */
+			byte2 = 0;
+			goto again;
+		}
+		return (error);
+	}
+
+	if (big) {
+		poffset = sizeof scsipi_sense.header.big;
+		poffset += _2btol(scsipi_sense.header.big.blk_desc_len);
+	} else {
+		poffset = sizeof scsipi_sense.header.small;
+		poffset += scsipi_sense.header.small.blk_desc_len;
+	}
+
+	pages = (void *)((u_long)&scsipi_sense + poffset);
+#if 0
+printf("page 5 sense:"); for (i = sizeof(scsipi_sense), p = (void *)&scsipi_sense; i; i--, p++) printf(" %02x", *p); printf("\n");
+printf("page 5 pg_code=%d sense=%p/%p\n", pages->flex_geometry.pg_code, &scsipi_sense, pages);
+#endif
+
+	if ((pages->flex_geometry.pg_code & PGCODE_MASK) != 5)
+		return (ERESTART);
+
+	SC_DEBUG(sd->sc_periph, SCSIPI_DB3,
+	    ("%d cyls, %d heads, %d sec, %d bytes/sec\n",
+	    _3btol(pages->flex_geometry.ncyl),
+	    pages->flex_geometry.nheads,
+	    pages->flex_geometry.ph_sec_tr,
+	    _2btol(pages->flex_geometry.bytes_s)));
+
+	dp->heads = pages->flex_geometry.nheads;
+	dp->cyls = _2btol(pages->flex_geometry.ncyl);
+	dp->sectors = pages->flex_geometry.ph_sec_tr;
+	if (dp->heads == 0 || dp->cyls == 0 || dp->sectors == 0)
+		return (ERESTART);
+
+	dp->rot_rate = _2btol(pages->rigid_geometry.rpm);
+	if (dp->rot_rate == 0)
+		dp->rot_rate = 3600;
+
+#if 0
+printf("page 5 ok\n");
+#endif
+	return (0);
+}
+
+int
+sd_get_parms(sd, dp, flags)
+	struct sd_softc *sd;
+	struct disk_parms *dp;
+	int flags;
+{
+	int error;
+
+	/*
+	 * If offline, the SDEV_MEDIA_LOADED flag will be
+	 * cleared by the caller if necessary.
+	 */
+	if (sd->type == T_SIMPLE_DIRECT)
+		return (sd_get_simplifiedparms(sd, dp, flags));
+
+	error = sd_get_capacity(sd, dp, flags);
+	if (error)
+		return (error);
+
+	if (sd->type == T_OPTICAL)
+		goto page0;
+
+	if (sd->sc_periph->periph_flags & PERIPH_REMOVABLE) {
+		if (!sd_get_parms_page5(sd, dp, flags) ||
+		    !sd_get_parms_page4(sd, dp, flags))
+			return (SDGP_RESULT_OK);
+	} else {
+		if (!sd_get_parms_page4(sd, dp, flags) ||
+		    !sd_get_parms_page5(sd, dp, flags))
+			return (SDGP_RESULT_OK);
+	}
+
+page0:
+	printf("%s: fabricating a geometry\n", sd->sc_dev.dv_xname);
+	/* Try calling driver's method for figuring out geometry. */
+	if (!sd->sc_periph->periph_channel->chan_adapter->adapt_getgeom ||
+	    !(*sd->sc_periph->periph_channel->chan_adapter->adapt_getgeom)
+		(sd->sc_periph, dp, dp->disksize)) {
+		/*
+		 * Use adaptec standard fictitious geometry
+		 * this depends on which controller (e.g. 1542C is
+		 * different. but we have to put SOMETHING here..)
+		 */
+		dp->heads = 64;
+		dp->sectors = 32;
+		dp->cyls = dp->disksize / (64 * 32);
+	}
+	dp->rot_rate = 3600;
+	return (SDGP_RESULT_OK);
+}
+
+int
+sd_flush(sd, flags)
+	struct sd_softc *sd;
+	int flags;
+{
+	struct scsipi_periph *periph = sd->sc_periph;
+	struct scsi_synchronize_cache cmd;
+
+	/*
+	 * If the device is SCSI-2, issue a SYNCHRONIZE CACHE.
+	 * We issue with address 0 length 0, which should be
+	 * interpreted by the device as "all remaining blocks
+	 * starting at address 0".  We ignore ILLEGAL REQUEST
+	 * in the event that the command is not supported by
+	 * the device, and poll for completion so that we know
+	 * that the cache has actually been flushed.
+	 *
+	 * Unless, that is, the device can't handle the SYNCHRONIZE CACHE
+	 * command, as indicated by our quirks flags.
+	 *
+	 * XXX What about older devices?
+	 */
+	if (periph->periph_version < 2 ||
+	    (periph->periph_quirks & PQUIRK_NOSYNCCACHE))
+		return (0);
+
+	sd->flags |= SDF_FLUSHING;
+	memset(&cmd, 0, sizeof(cmd));
+	cmd.opcode = SCSI_SYNCHRONIZE_CACHE;
+
+	return (scsipi_command(periph, (void *)&cmd, sizeof(cmd), 0, 0,
+	    SDRETRIES, 100000, NULL, flags | XS_CTL_IGNORE_ILLEGAL_REQUEST));
+}
+
+int
+sd_getcache(sd, bitsp)
+	struct sd_softc *sd;
+	int *bitsp;
+{
+	struct scsipi_periph *periph = sd->sc_periph;
+	struct sd_mode_sense_data scsipi_sense;
+	int error, bits = 0;
+	int big;
+	union scsi_disk_pages *pages;
+
+	if (periph->periph_version < 2)
+		return (EOPNOTSUPP);
+
+	memset(&scsipi_sense, 0, sizeof(scsipi_sense));
+	error = sd_mode_sense(sd, SMS_DBD, &scsipi_sense,
+	    sizeof(scsipi_sense.pages.caching_params), 8, 0, &big);
+	if (error)
+		return (error);
+
+	if (big)
+		pages = (void *)(&scsipi_sense.header.big + 1);
+	else
+		pages = (void *)(&scsipi_sense.header.small + 1);
+
+	if ((pages->caching_params.flags & CACHING_RCD) == 0)
+		bits |= DKCACHE_READ;
+	if (pages->caching_params.flags & CACHING_WCE)
+		bits |= DKCACHE_WRITE;
+	if (pages->caching_params.pg_code & PGCODE_PS)
+		bits |= DKCACHE_SAVE;
+
+	memset(&scsipi_sense, 0, sizeof(scsipi_sense));
+	error = sd_mode_sense(sd, SMS_DBD, &scsipi_sense,
+	    sizeof(scsipi_sense.pages.caching_params),
+	    SMS_PAGE_CTRL_CHANGEABLE|8, 0, &big);
+	if (error == 0) {
+		if (big)
+			pages = (void *)(&scsipi_sense.header.big + 1);
+		else
+			pages = (void *)(&scsipi_sense.header.small + 1);
+
+		if (pages->caching_params.flags & CACHING_RCD)
+			bits |= DKCACHE_RCHANGE;
+		if (pages->caching_params.flags & CACHING_WCE)
+			bits |= DKCACHE_WCHANGE;
+	}
+
+	*bitsp = bits;
+
+	return (0);
+}
+
+int
+sd_setcache(sd, bits)
+	struct sd_softc *sd;
+	int bits;
+{
+	struct scsipi_periph *periph = sd->sc_periph;
+	struct sd_mode_sense_data scsipi_sense;
+	int error;
+	uint8_t oflags, byte2 = 0;
+	int big;
+	union scsi_disk_pages *pages;
+
+	if (periph->periph_version < 2)
+		return (EOPNOTSUPP);
+
+	memset(&scsipi_sense, 0, sizeof(scsipi_sense));
+	error = sd_mode_sense(sd, SMS_DBD, &scsipi_sense,
+	    sizeof(scsipi_sense.pages.caching_params), 8, 0, &big);
+	if (error)
+		return (error);
+
+	if (big)
+		pages = (void *)(&scsipi_sense.header.big + 1);
+	else
+		pages = (void *)(&scsipi_sense.header.small + 1);
+
+	oflags = pages->caching_params.flags;
+
+	if (bits & DKCACHE_READ)
+		pages->caching_params.flags &= ~CACHING_RCD;
+	else
+		pages->caching_params.flags |= CACHING_RCD;
+
+	if (bits & DKCACHE_WRITE)
+		pages->caching_params.flags |= CACHING_WCE;
+	else
+		pages->caching_params.flags &= ~CACHING_WCE;
+
+	if (oflags == pages->caching_params.flags)
+		return (0);
+
+	pages->caching_params.pg_code &= PGCODE_MASK;
+
+	if (bits & DKCACHE_SAVE)
+		byte2 |= SMS_SP;
+
+	return (sd_mode_select(sd, byte2|SMS_PF, &scsipi_sense,
+	    sizeof(struct scsipi_mode_page_header) +
+	    pages->caching_params.pg_length, 0, big));
 }

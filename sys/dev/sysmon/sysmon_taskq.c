@@ -1,4 +1,4 @@
-/*	$NetBSD: sysmon_taskq.c,v 1.1 2003/04/20 20:20:35 thorpej Exp $	*/
+/*	$NetBSD: sysmon_taskq.c,v 1.1.2.1 2004/08/03 10:51:29 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001, 2003 Wasabi Systems, Inc.
@@ -39,6 +39,9 @@
  * General purpose task queue for sysmon back-ends.  This can be
  * used to run callbacks that require thread context.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: sysmon_taskq.c,v 1.1.2.1 2004/08/03 10:51:29 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -139,7 +142,7 @@ sysmon_task_queue_create_thread(void *arg)
 	int error;
 
 	error = kthread_create1(sysmon_task_queue_thread, NULL,
-	    &sysmon_task_queue_proc, "sysmon taskq");
+	    &sysmon_task_queue_proc, "sysmon");
 	if (error) {
 		printf("Unable to create sysmon task queue thread, "
 		    "error = %d\n", error);

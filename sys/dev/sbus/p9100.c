@@ -1,4 +1,4 @@
-/*	$NetBSD: p9100.c,v 1.16 2003/06/29 22:30:36 fvdl Exp $ */
+/*	$NetBSD: p9100.c,v 1.16.2.1 2004/08/03 10:51:05 skrll Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: p9100.c,v 1.16 2003/06/29 22:30:36 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: p9100.c,v 1.16.2.1 2004/08/03 10:51:05 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -264,7 +264,7 @@ p9100_sbus_attach(struct device *parent, struct device *self, void *args)
 	       (i & 7), fb->fb_type.fb_width, fb->fb_type.fb_height,
 	       fb->fb_type.fb_depth);
 
-	fb->fb_type.fb_cmsize = PROM_getpropint(node, "cmsize", 256);
+	fb->fb_type.fb_cmsize = prom_getpropint(node, "cmsize", 256);
 	if ((1 << fb->fb_type.fb_depth) != fb->fb_type.fb_cmsize)
 		printf(", %d entry colormap", fb->fb_type.fb_cmsize);
 

@@ -1,4 +1,4 @@
-/* $NetBSD: bba.c,v 1.20 2003/05/03 18:11:41 wiz Exp $ */
+/* $NetBSD: bba.c,v 1.20.2.1 2004/08/03 10:51:29 skrll Exp $ */
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
 /* maxine/alpha baseboard audio (bba) */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bba.c,v 1.20 2003/05/03 18:11:41 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bba.c,v 1.20.2.1 2004/08/03 10:51:29 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -249,7 +249,6 @@ void
 bba_onopen(sc)
 	struct am7930_softc *sc;
 {
-	bba_reset((struct bba_softc *)sc, 0);
 }
 
 
@@ -257,8 +256,6 @@ void
 bba_onclose(sc)
 	struct am7930_softc *sc;
 {
-	bba_halt_input((struct bba_softc *)sc);
-	bba_halt_output((struct bba_softc *)sc);
 }
 
 

@@ -1,4 +1,4 @@
-/*      $NetBSD: if_atmsubr.c,v 1.32 2003/01/19 23:14:42 simonb Exp $       */
+/*      $NetBSD: if_atmsubr.c,v 1.32.2.1 2004/08/03 10:54:11 skrll Exp $       */
 
 /*
  *
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_atmsubr.c,v 1.32 2003/01/19 23:14:42 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_atmsubr.c,v 1.32.2.1 2004/08/03 10:54:11 skrll Exp $");
 
 #include "opt_inet.h"
 #include "opt_gateway.h"
@@ -383,7 +383,8 @@ pvcsif_alloc()
 	memset(pvcsif, 0, sizeof(struct pvcsif));
 
 #ifdef __NetBSD__
-	sprintf(pvcsif->sif_if.if_xname, "pvc%d", pvc_number++);
+	snprintf(pvcsif->sif_if.if_xname, sizeof(pvcsif->sif_if.if_xname),
+	    "pvc%d", pvc_number++);
 #else
 	pvcsif->sif_if.if_name = "pvc";
 	pvcsif->sif_if.if_unit = pvc_number++;

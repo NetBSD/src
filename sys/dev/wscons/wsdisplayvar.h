@@ -1,4 +1,4 @@
-/* $NetBSD: wsdisplayvar.h,v 1.25.2.1 2003/07/02 15:26:26 darrenr Exp $ */
+/* $NetBSD: wsdisplayvar.h,v 1.25.2.2 2004/08/03 10:52:11 skrll Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -73,6 +73,7 @@ struct wsdisplay_emulops {
 #define WSATTR_UNDERLINE 8
 #define WSATTR_WSCOLORS 16
 	/* XXX need a free_attr() ??? */
+	void	(*replaceattr)(void *c, long oldattr, long newattr);
 };
 
 struct wsscreen_descr {
@@ -111,6 +112,9 @@ struct wsdisplay_accessops {
 	void	(*pollc)(void *, int);
 	int	(*getwschar)(void *, struct wsdisplay_char *);
 	int	(*putwschar)(void *, struct wsdisplay_char *);
+	void	(*scroll) __P((void *, void *, int));
+	u_int	(*getborder)(void *);
+	int	(*setborder)(void *, u_int);
 };
 
 /*
@@ -196,6 +200,33 @@ int wsdisplay_stat_ioctl(struct wsdisplay_softc *sc, u_long cmd, caddr_t data,
 int wsdisplay_cfg_ioctl(struct wsdisplay_softc *sc, u_long cmd, caddr_t data,
 			int flag, struct lwp *l);
 
+#ifdef WSDISPLAY_SCROLLSUPPORT
+void wsdisplay_scroll (void *v, int op);
+#endif
+
+#define WSDISPLAY_SCROLL_BACKWARD	1
+#define WSDISPLAY_SCROLL_FORWARD	(1 << 1)
+#define WSDISPLAY_SCROLL_RESET		(1 << 2)
+#define WSDISPLAY_SCROLL_LOW		(1 << 3)
+
+#ifdef WSDISPLAY_SCROLLSUPPORT
+void wsdisplay_scroll (void *v, int op);
+#endif
+
+#define WSDISPLAY_SCROLL_BACKWARD	1
+#define WSDISPLAY_SCROLL_FORWARD	(1 << 1)
+#define WSDISPLAY_SCROLL_RESET		(1 << 2)
+#define WSDISPLAY_SCROLL_LOW		(1 << 3)
+
+#ifdef WSDISPLAY_SCROLLSUPPORT
+void wsdisplay_scroll (void *v, int op);
+#endif
+
+#define WSDISPLAY_SCROLL_BACKWARD	1
+#define WSDISPLAY_SCROLL_FORWARD	(1 << 1)
+#define WSDISPLAY_SCROLL_RESET		(1 << 2)
+#define WSDISPLAY_SCROLL_LOW		(1 << 3)
+
 int wsdisplay_stat_inject(struct device *dev, u_int type, int value);
 
 /*
@@ -205,3 +236,43 @@ int wsdisplay_stat_inject(struct device *dev, u_int type, int value);
 void wsdisplay_switchtoconsole(void);
 const struct wsscreen_descr *
     wsdisplay_screentype_pick(const struct wsscreen_list *, const char *);
+
+#if defined(_KERNEL)
+#  if defined(_KERNEL_OPT)
+#    include "opt_wsmsgattrs.h"
+#    include "opt_wsdisplay_border.h"
+#  endif
+#  if !defined(WS_DEFAULT_FG)
+#    define WS_DEFAULT_FG WSCOL_WHITE
+#  endif
+#  if !defined(WS_DEFAULT_BG)
+#    define WS_DEFAULT_BG WSCOL_BLACK
+#  endif
+#  if !defined(WS_DEFAULT_COLATTR)
+#    define WS_DEFAULT_COLATTR 0
+#  endif
+#  if !defined(WS_DEFAULT_MONOATTR)
+#    define WS_DEFAULT_MONOATTR 0
+#  endif
+#  if defined(WS_KERNEL_FG) || defined(WS_KERNEL_BG) || \
+      defined(WS_KERNEL_COLATTR) || defined(WS_KERNEL_MONOATTR)
+#    define WS_KERNEL_CUSTOMIZED
+#  else
+#    undef WS_KERNEL_CUSTOMIZED
+#  endif
+#  if !defined(WS_KERNEL_FG)
+#    define WS_KERNEL_FG WS_DEFAULT_FG
+#  endif
+#  if !defined(WS_KERNEL_BG)
+#    define WS_KERNEL_BG WS_DEFAULT_BG
+#  endif
+#  if !defined(WS_KERNEL_COLATTR)
+#    define WS_KERNEL_COLATTR WS_DEFAULT_COLATTR
+#  endif
+#  if !defined(WS_KERNEL_MONOATTR)
+#    define WS_KERNEL_MONOATTR WS_DEFAULT_MONOATTR
+#  endif
+#  if !defined(WSDISPLAY_BORDER_COLOR)
+#    define WSDISPLAY_BORDER_COLOR WSCOL_BLACK
+#  endif
+#endif /* _KERNEL */

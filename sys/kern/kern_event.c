@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_event.c,v 1.16.2.1 2003/07/02 15:26:36 darrenr Exp $	*/
+/*	$NetBSD: kern_event.c,v 1.16.2.2 2004/08/03 10:52:44 skrll Exp $	*/
 /*-
  * Copyright (c) 1999,2000,2001 Jonathan Lemon <jlemon@FreeBSD.org>
  * All rights reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_event.c,v 1.16.2.1 2003/07/02 15:26:36 darrenr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_event.c,v 1.16.2.2 2004/08/03 10:52:44 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -103,8 +103,8 @@ static const struct filterops file_filtops =
 static struct filterops timer_filtops =
 	{ 0, filt_timerattach, filt_timerdetach, filt_timer };
 
-struct pool	kqueue_pool;
-struct pool	knote_pool;
+POOL_INIT(kqueue_pool, sizeof(struct kqueue), 0, 0, 0, "kqueuepl", NULL);
+POOL_INIT(knote_pool, sizeof(struct knote), 0, 0, 0, "knotepl", NULL);
 static int	kq_ncallouts = 0;
 static int	kq_calloutmax = (4 * 1024);
 
@@ -150,21 +150,6 @@ static const struct kfilter sys_kfilters[] = {
 static struct kfilter	*user_kfilters;		/* array */
 static int		user_kfilterc;		/* current offset */
 static int		user_kfiltermaxc;	/* max size so far */
-
-/*
- * kqueue_init:
- *
- *	Initialize the kqueue/knote facility.
- */
-void
-kqueue_init(void)
-{
-
-	pool_init(&kqueue_pool, sizeof(struct kqueue), 0, 0, 0, "kqueuepl",
-	    NULL);
-	pool_init(&knote_pool, sizeof(struct knote), 0, 0, 0, "knotepl",
-	    NULL);
-}
 
 /*
  * Find kfilter entry by name, or NULL if not found.
@@ -424,7 +409,7 @@ filt_procdetach(struct knote *kn)
 		return;
 
 	p = kn->kn_ptr.p_proc;
-	KASSERT(p->p_stat == SDEAD || pfind(kn->kn_id) == p);
+	KASSERT(p->p_stat == SZOMB || pfind(kn->kn_id) == p);
 
 	/* XXXSMP lock the process? */
 	SLIST_REMOVE(&p->p_klist, kn, knote, kn_selnext);
@@ -887,7 +872,7 @@ kqueue_scan(struct file *fp, size_t maxevents, struct kevent *ulistp,
 	struct kqueue	*kq;
 	struct kevent	*kevp;
 	struct timeval	atv;
-	struct knote	*kn, marker;
+	struct knote	*kn, *marker=NULL;
 	size_t		count, nkev;
 	int		s, timeout, error;
 
@@ -913,6 +898,10 @@ kqueue_scan(struct file *fp, size_t maxevents, struct kevent *ulistp,
 		/* no timeout, wait forever */
 		timeout = 0;
 	}
+
+	MALLOC(marker, struct knote *, sizeof(*marker), M_KEVENT, M_WAITOK);
+	memset(marker, 0, sizeof(*marker));
+
 	goto start;
 
  retry:
@@ -932,6 +921,7 @@ kqueue_scan(struct file *fp, size_t maxevents, struct kevent *ulistp,
 	if (kq->kq_count == 0) {
 		if (timeout < 0) { 
 			error = EWOULDBLOCK;
+			simple_unlock(&kq->kq_lock);
 		} else {
 			kq->kq_state |= KQ_SLEEP;
 			error = ltsleep(kq, PSOCK | PCATCH | PNORELOCK,
@@ -949,14 +939,14 @@ kqueue_scan(struct file *fp, size_t maxevents, struct kevent *ulistp,
 	}
 
 	/* mark end of knote list */
-	TAILQ_INSERT_TAIL(&kq->kq_head, &marker, kn_tqe); 
+	TAILQ_INSERT_TAIL(&kq->kq_head, marker, kn_tqe); 
 	simple_unlock(&kq->kq_lock);
 
 	while (count) {				/* while user wants data ... */
 		simple_lock(&kq->kq_lock);
 		kn = TAILQ_FIRST(&kq->kq_head);	/* get next knote */
 		TAILQ_REMOVE(&kq->kq_head, kn, kn_tqe); 
-		if (kn == &marker) {		/* if it's our marker, stop */
+		if (kn == marker) {		/* if it's our marker, stop */
 			/* What if it's some else's marker? */
 			simple_unlock(&kq->kq_lock);
 			splx(s);
@@ -1020,10 +1010,13 @@ kqueue_scan(struct file *fp, size_t maxevents, struct kevent *ulistp,
 
 	/* remove marker */
 	simple_lock(&kq->kq_lock);
-	TAILQ_REMOVE(&kq->kq_head, &marker, kn_tqe); 
+	TAILQ_REMOVE(&kq->kq_head, marker, kn_tqe); 
 	simple_unlock(&kq->kq_lock);
 	splx(s);
  done:
+	if (marker)
+		FREE(marker, M_KEVENT);
+
 	if (nkev != 0) {
 		/* copyout remaining events */
 		error = copyout((caddr_t)&kq->kq_kev, (caddr_t)ulistp,

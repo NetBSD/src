@@ -1,4 +1,4 @@
-/*	$NetBSD: advfsops.c,v 1.8.2.2 2003/07/03 01:19:03 wrstuden Exp $	*/
+/*	$NetBSD: advfsops.c,v 1.8.2.3 2004/08/03 10:52:23 skrll Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: advfsops.c,v 1.8.2.2 2003/07/03 01:19:03 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: advfsops.c,v 1.8.2.3 2004/08/03 10:52:23 skrll Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -40,6 +40,7 @@ __KERNEL_RCSID(0, "$NetBSD: advfsops.c,v 1.8.2.2 2003/07/03 01:19:03 wrstuden Ex
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/sysctl.h>
 #include <sys/vnode.h>
 #include <sys/mount.h>
 #include <sys/proc.h>
@@ -60,14 +61,13 @@ void adosfs_init __P((void));
 void adosfs_reinit __P((void));
 void adosfs_done __P((void));
 int adosfs_mount __P((struct mount *, const char *, void *, struct nameidata *,
-		      struct lwp *));
 int adosfs_start __P((struct mount *, int, struct lwp *));
 int adosfs_unmount __P((struct mount *, int, struct lwp *));
 int adosfs_root __P((struct mount *, struct vnode **, struct lwp *));
-int adosfs_quotactl __P((struct mount *, int, uid_t, caddr_t, struct lwp *));
-int adosfs_statfs __P((struct mount *, struct statfs *, struct lwp *));
+int adosfs_quotactl __P((struct mount *, int, uid_t, void *, struct lwp *));
+int adosfs_statvfs __P((struct mount *, struct statvfs *, struct lwp *));
 int adosfs_sync __P((struct mount *, int, struct ucred *, struct lwp *));
-int adosfs_vget __P((struct mount *, ino_t, struct vnode **, struct lwp *));
+int adosfs_vget __P((struct mount *, ino_t, struct vnode **));
 int adosfs_fhtovp __P((struct mount *, struct fid *, struct vnode **,
 		       struct lwp *));
 int adosfs_checkexp __P((struct mount *, struct mbuf *, int *,
@@ -76,12 +76,11 @@ int adosfs_vptofh __P((struct vnode *, struct fid *));
 
 int adosfs_mountfs __P((struct vnode *, struct mount *, struct lwp *));
 int adosfs_loadbitmap __P((struct adosfsmount *));
-int adosfs_sysctl __P((int *, u_int, void *, size_t *, void *, size_t,
-			struct lwp *));
 
 struct simplelock adosfs_hashlock;
 
-struct pool adosfs_node_pool;
+POOL_INIT(adosfs_node_pool, sizeof(struct anode), 0, 0, 0, "adosndpl",
+    &pool_allocator_nointr);
 
 MALLOC_DEFINE(M_ADOSFSMNT, "adosfs mount", "adosfs mount structures");
 MALLOC_DEFINE(M_ANODE, "adosfs anode", "adosfs anode structures and tables");
@@ -177,7 +176,7 @@ adosfs_mount(mp, path, data, ndp, l)
 	amp->uid = args.uid;
 	amp->gid = args.gid;
 	amp->mask = args.mask;
-	return set_statfs_info(path, UIO_USERSPACE, args.fspec, UIO_USERSPACE,
+	return set_statvfs_info(path, UIO_USERSPACE, args.fspec, UIO_USERSPACE,
 	    mp, l);
 }
 
@@ -262,8 +261,9 @@ adosfs_mountfs(devvp, mp, l)
 	amp->devvp = devvp;
 	
 	mp->mnt_data = amp;
-        mp->mnt_stat.f_fsid.val[0] = (long)devvp->v_rdev;
-        mp->mnt_stat.f_fsid.val[1] = makefstype(MOUNT_ADOSFS);
+        mp->mnt_stat.f_fsidx.__fsid_val[0] = (long)devvp->v_rdev;
+        mp->mnt_stat.f_fsidx.__fsid_val[1] = makefstype(MOUNT_ADOSFS);
+        mp->mnt_stat.f_fsid = mp->mnt_stat.f_fsidx.__fsid_val[0];
 	mp->mnt_fs_bshift = ffs(amp->bsize) - 1;
 	mp->mnt_dev_bshift = DEV_BSHIFT;	/* XXX */
 	mp->mnt_flag |= MNT_LOCAL;
@@ -361,27 +361,25 @@ adosfs_root(mp, vpp, l)
 }
 
 int
-adosfs_statfs(mp, sbp, l)
+adosfs_statvfs(mp, sbp, l)
 	struct mount *mp;
-	struct statfs *sbp;
 	struct lwp *l;
 {
 	struct adosfsmount *amp;
 
 	amp = VFSTOADOSFS(mp);
-#ifdef COMPAT_09
-	sbp->f_type = 16;
-#else
-	sbp->f_type = 0;
-#endif
 	sbp->f_bsize = amp->bsize;
+	sbp->f_frsize = amp->bsize;
 	sbp->f_iosize = amp->dbsize;
 	sbp->f_blocks = amp->numblks;
 	sbp->f_bfree = amp->freeblks;
 	sbp->f_bavail = amp->freeblks;
+	sbp->f_bresvd = 0;
 	sbp->f_files = 0;		/* who knows */
 	sbp->f_ffree = 0;		/* " " */
-	copy_statfs_info(sbp, mp);
+	sbp->f_favail = 0;		/* " " */
+	sbp->f_fresvd = 0;
+	copy_statvfs_info(sbp, mp);
 	return (0);
 }
 
@@ -798,7 +796,6 @@ adosfs_quotactl(mp, cmds, uid, arg, l)
 	struct mount *mp;
 	int cmds;
 	uid_t uid;
-	caddr_t arg;
 	struct lwp *l;
 {
 	return(EOPNOTSUPP);
@@ -820,29 +817,46 @@ adosfs_sync(mp, waitfor, uc, l)
 void
 adosfs_init()
 {
+#ifdef _LKM
+	malloc_type_attach(M_ADOSFSMNT);
+	malloc_type_attach(M_ANODE);
+	malloc_type_attach(M_ADOSFSBITMAP);
+	pool_init(&adosfs_node_pool, sizeof(struct anode), 0, 0, 0, "adosndpl",
+	    &pool_allocator_nointr);
+#endif
 	simple_lock_init(&adosfs_hashlock);
-
-	pool_init(&adosfs_node_pool, sizeof(struct anode), 0, 0, 0,
-	    "adosndpl", &pool_allocator_nointr);
 }
 
 void
 adosfs_done()
 {
+#ifdef _LKM
 	pool_destroy(&adosfs_node_pool);
+	malloc_type_detach(M_ADOSFSBITMAP);
+	malloc_type_detach(M_ANODE);
+	malloc_type_detach(M_ADOSFSMNT);
+#endif
 }
 
-int
-adosfs_sysctl(name, namelen, oldp, oldlenp, newp, newlen, l)
-	int *name;
-	u_int namelen;
-	void *oldp;
-	size_t *oldlenp;
-	void *newp;
-	size_t newlen;
-	struct lwp *l;
+SYSCTL_SETUP(sysctl_vfs_adosfs_setup, "sysctl vfs.adosfs subtree setup")
 {
-	return (EOPNOTSUPP);
+
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_NODE, "vfs", NULL,
+		       NULL, 0, NULL, 0,
+		       CTL_VFS, CTL_EOL);
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_NODE, "adosfs",
+		       SYSCTL_DESCR("AmigaDOS file system"),
+		       NULL, 0, NULL, 0,
+		       CTL_VFS, 16, CTL_EOL);
+	/*
+	 * XXX the "16" above could be dynamic, thereby eliminating
+	 * one more instance of the "number to vfs" mapping problem,
+	 * but "16" is the order as taken from sys/mount.h
+	 */
 }
 
 /*
@@ -863,7 +877,7 @@ struct vfsops adosfs_vfsops = {
 	adosfs_unmount,
 	adosfs_root,
 	adosfs_quotactl,                
-	adosfs_statfs,                  
+	adosfs_statvfs,                  
 	adosfs_sync,                    
 	adosfs_vget,
 	adosfs_fhtovp,                  
@@ -871,8 +885,9 @@ struct vfsops adosfs_vfsops = {
 	adosfs_init,                    
 	NULL,
 	adosfs_done,
-	adosfs_sysctl,
+	NULL,
 	NULL,				/* vfs_mountroot */
 	adosfs_checkexp,
+	(int (*)(struct mount *, struct vnode *, struct timespec *)) eopnotsupp,
 	adosfs_vnodeopv_descs,
 };

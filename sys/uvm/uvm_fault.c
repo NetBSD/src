@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_fault.c,v 1.82 2003/05/03 17:57:50 yamt Exp $	*/
+/*	$NetBSD: uvm_fault.c,v 1.82.2.1 2004/08/03 10:57:05 skrll Exp $	*/
 
 /*
  *
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_fault.c,v 1.82 2003/05/03 17:57:50 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_fault.c,v 1.82.2.1 2004/08/03 10:57:05 skrll Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -179,8 +179,8 @@ static struct uvm_advice uvmadvice[] = {
  * private prototypes
  */
 
-static void uvmfault_amapcopy __P((struct uvm_faultinfo *));
-static __inline void uvmfault_anonflush __P((struct vm_anon **, int));
+static void uvmfault_amapcopy(struct uvm_faultinfo *);
+static __inline void uvmfault_anonflush(struct vm_anon **, int);
 
 /*
  * inline functions
@@ -428,8 +428,6 @@ uvmfault_anonget(ufi, amap, anon)
 				wakeup(pg);
 			}
 			if (error) {
-				/* remove page from anon */
-				anon->u.an_page = NULL;
 
 				/*
 				 * remove the swap slot from the anon
@@ -438,8 +436,12 @@ uvmfault_anonget(ufi, amap, anon)
 				 * it from being used again.
 				 */
 
-				uvm_swap_markbad(anon->an_swslot, 1);
+				if (anon->an_swslot > 0)
+					uvm_swap_markbad(anon->an_swslot, 1);
 				anon->an_swslot = SWSLOT_BAD;
+
+				if ((pg->flags & PG_RELEASED) != 0)
+					goto released;
 
 				/*
 				 * note: page was never !PG_BUSY, so it
@@ -458,6 +460,30 @@ uvmfault_anonget(ufi, amap, anon)
 					simple_unlock(&anon->an_lock);
 				UVMHIST_LOG(maphist, "<- ERROR", 0,0,0,0);
 				return error;
+			}
+
+			if ((pg->flags & PG_RELEASED) != 0) {
+released:
+				KASSERT(anon->an_ref == 0);
+
+				/*
+				 * released while we unlocked amap.
+				 */
+
+				if (locked)
+					uvmfault_unlockall(ufi, amap, NULL,
+					    NULL);
+
+				uvm_anon_release(anon);
+
+				if (error) {
+					UVMHIST_LOG(maphist,
+					    "<- ERROR/RELEASED", 0,0,0,0);
+					return error;
+				}
+
+				UVMHIST_LOG(maphist, "<- RELEASED", 0,0,0,0);
+				return ERESTART;
 			}
 
 			/*
@@ -898,8 +924,11 @@ ReFault:
 			currva = startva;
 			for (lcv = 0; lcv < npages;
 			     lcv++, currva += PAGE_SIZE) {
-				if (pages[lcv] == NULL ||
-				    pages[lcv] == PGO_DONTCARE) {
+				struct vm_page *curpg;
+				boolean_t readonly;
+
+				curpg = pages[lcv];
+				if (curpg == NULL || curpg == PGO_DONTCARE) {
 					continue;
 				}
 
@@ -912,7 +941,7 @@ ReFault:
 				 */
 
 				if (lcv == centeridx) {
-					uobjpage = pages[lcv];
+					uobjpage = curpg;
 					UVMHIST_LOG(maphist, "  got uobjpage "
 					    "(0x%x) with locked get",
 					    uobjpage, 0,0,0);
@@ -927,23 +956,27 @@ ReFault:
 				 */
 
 				uvm_lock_pageq();
-				uvm_pageactivate(pages[lcv]);
+				uvm_pageactivate(curpg);
 				uvm_unlock_pageq();
 				UVMHIST_LOG(maphist,
 				  "  MAPPING: n obj: pm=0x%x, va=0x%x, pg=0x%x",
-				  ufi.orig_map->pmap, currva, pages[lcv], 0);
+				  ufi.orig_map->pmap, currva, curpg, 0);
 				uvmexp.fltnomap++;
 
 				/*
 				 * Since this page isn't the page that's
-				 * actually fauling, ignore pmap_enter()
+				 * actually faulting, ignore pmap_enter()
 				 * failures; it's not critical that we
 				 * enter these right now.
 				 */
+				KASSERT((curpg->flags & PG_PAGEOUT) == 0);
+				KASSERT((curpg->flags & PG_RELEASED) == 0);
+				readonly = (curpg->flags & PG_RDONLY)
+				    || (curpg->loan_count > 0);
 
 				(void) pmap_enter(ufi.orig_map->pmap, currva,
-				    VM_PAGE_TO_PHYS(pages[lcv]),
-				    pages[lcv]->flags & PG_RDONLY ?
+				    VM_PAGE_TO_PHYS(curpg),
+				    readonly ?
 				    enter_prot & ~VM_PROT_WRITE :
 				    enter_prot & MASK(ufi.entry),
 				    PMAP_CANFAIL |
@@ -955,8 +988,8 @@ ReFault:
 				 * we've had the handle.
 				 */
 
-				pages[lcv]->flags &= ~(PG_BUSY);
-				UVM_PAGE_OWN(pages[lcv], NULL);
+				curpg->flags &= ~(PG_BUSY);
+				UVM_PAGE_OWN(curpg, NULL);
 			}
 			pmap_update(ufi.orig_map->pmap);
 		}
@@ -1159,8 +1192,7 @@ ReFault:
 				uvm_anfree(anon);
 			}
 			uvmfault_unlockall(&ufi, amap, uobj, oanon);
-			KASSERT(uvmexp.swpgonly <= uvmexp.swpages);
-			if (anon == NULL || uvmexp.swpgonly == uvmexp.swpages) {
+			if (anon == NULL || uvm_swapisfull()) {
 				UVMHIST_LOG(maphist,
 				    "<- failed.  out of VM",0,0,0,0);
 				uvmexp.fltnoanon++;
@@ -1224,8 +1256,7 @@ ReFault:
 		if (anon != oanon)
 			simple_unlock(&anon->an_lock);
 		uvmfault_unlockall(&ufi, amap, uobj, oanon);
-		KASSERT(uvmexp.swpgonly <= uvmexp.swpages);
-		if (uvmexp.swpgonly == uvmexp.swpages) {
+		if (uvm_swapisfull()) {
 			UVMHIST_LOG(maphist,
 			    "<- failed.  out of VM",0,0,0,0);
 			/* XXX instrumentation */
@@ -1529,8 +1560,7 @@ Case2:
 
 			/* unlock and fail ... */
 			uvmfault_unlockall(&ufi, amap, uobj, NULL);
-			KASSERT(uvmexp.swpgonly <= uvmexp.swpages);
-			if (anon == NULL || uvmexp.swpgonly == uvmexp.swpages) {
+			if (anon == NULL || uvm_swapisfull()) {
 				UVMHIST_LOG(maphist, "  promote: out of VM",
 				    0,0,0,0);
 				uvmexp.fltnoanon++;
@@ -1639,8 +1669,7 @@ Case2:
 		pg->flags &= ~(PG_BUSY|PG_FAKE|PG_WANTED);
 		UVM_PAGE_OWN(pg, NULL);
 		uvmfault_unlockall(&ufi, amap, uobj, anon);
-		KASSERT(uvmexp.swpgonly <= uvmexp.swpages);
-		if (uvmexp.swpgonly == uvmexp.swpages) {
+		if (uvm_swapisfull()) {
 			UVMHIST_LOG(maphist,
 			    "<- failed.  out of VM",0,0,0,0);
 			/* XXX instrumentation */

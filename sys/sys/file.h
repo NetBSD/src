@@ -1,4 +1,4 @@
-/*	$NetBSD: file.h,v 1.43.2.1 2003/07/02 15:27:15 darrenr Exp $	*/
+/*	$NetBSD: file.h,v 1.43.2.2 2004/08/03 10:56:27 skrll Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -12,11 +12,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -68,28 +64,26 @@ struct file {
 #define	DTYPE_PIPE	3		/* pipe */
 #define	DTYPE_KQUEUE	4		/* event queue */
 #define	DTYPE_MISC	5		/* misc file descriptor type */
+#define	DTYPE_CRYPTO	6		/* crypto */
 	int		f_type;		/* descriptor type */
 	u_int		f_count;	/* reference count */
 	u_int		f_msgcount;	/* references from message queue */
 	int		f_usecount;	/* number active users */
 	struct ucred	*f_cred;	/* creds associated with descriptor */
 	struct fileops {
-		int	(*fo_read)	(struct file *fp, off_t *offset,
-					    struct uio *uio,
-					    struct ucred *cred, int flags);
-		int	(*fo_write)	(struct file *fp, off_t *offset,
-					    struct uio *uio,
-					    struct ucred *cred, int flags);
-		int	(*fo_ioctl)	(struct file *fp, u_long com,
-					    void *data, struct lwp *l);
-		int	(*fo_fcntl)	(struct file *fp, u_int com,
-					    void *data, struct lwp *l);
-		int	(*fo_poll)	(struct file *fp, int events,
-					    struct lwp *l);
-		int	(*fo_stat)	(struct file *fp, struct stat *sp,
-					    struct lwp *l);
-		int	(*fo_close)	(struct file *fp, struct lwp *l);
-		int	(*fo_kqfilter)	(struct file *fp, struct knote *kn);
+		int	(*fo_read)	(struct file *, off_t *, struct uio *,
+					    struct ucred *, int);
+		int	(*fo_write)	(struct file *, off_t *, struct uio *,
+					    struct ucred *, int);
+		int	(*fo_ioctl)	(struct file *, u_long, void *,
+					    struct lwp *);
+		int	(*fo_fcntl)	(struct file *, u_int, void *,
+					    struct lwp *);
+		int	(*fo_poll)	(struct file *, int, struct lwp *);
+		int	(*fo_stat)	(struct file *, struct stat *,
+					    struct lwp *);
+		int	(*fo_close)	(struct file *, struct lwp *);
+		int	(*fo_kqfilter)	(struct file *, struct knote *);
 	} *f_ops;
 	off_t		f_offset;
 	void		*f_data;	/* descriptor data, e.g. vnode/socket */
@@ -129,9 +123,10 @@ do {									\
 	simple_unlock(&(fp)->f_slock);					\
 } while (/* CONSTCOND */ 0)
 
-#define	FILE_UNUSE(fp, p)						\
+#define	FILE_UNUSE_WLOCK(fp, p, havelock)				\
 do {									\
-	simple_lock(&(fp)->f_slock);					\
+	if (!(havelock))						\
+		simple_lock(&(fp)->f_slock);				\
 	if ((fp)->f_iflags & FIF_WANTCLOSE) {				\
 		simple_unlock(&(fp)->f_slock);				\
 		/* Will drop usecount */				\
@@ -143,6 +138,8 @@ do {									\
 	}								\
 	simple_unlock(&(fp)->f_slock);					\
 } while (/* CONSTCOND */ 0)
+#define	FILE_UNUSE(fp, p)		FILE_UNUSE_WLOCK(fp, p, 0)
+#define	FILE_UNUSE_HAVELOCK(fp, p)	FILE_UNUSE_WLOCK(fp, p, 1)
 
 /*
  * Flags for fo_read and fo_write.
@@ -166,7 +163,9 @@ int	dofilereadv(struct lwp *, int, struct file *,
 int	dofilewritev(struct lwp *, int, struct file *,
 	    const struct iovec *, int, off_t *, int, register_t *);
 
-void	finit(void);
+int	fsetown(struct proc *, pid_t *, int, const void *);
+int	fgetown(struct proc *, pid_t, int, void *);
+void	fownsignal(pid_t, int, int, int, void *);
 
 #endif /* _KERNEL */
 

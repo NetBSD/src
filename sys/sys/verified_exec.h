@@ -1,4 +1,4 @@
-/*	$NetBSD: verified_exec.h,v 1.3.2.1 2003/07/02 15:27:18 darrenr Exp $	*/
+/*	$NetBSD: verified_exec.h,v 1.3.2.2 2004/08/03 10:56:33 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998-1999 Brett Lymn
@@ -92,14 +92,11 @@ struct veriexec_inode_list
 	LIST_ENTRY(veriexec_inode_list) entries;
 };
 
-struct veriexec_inode_list *
-get_veriexec_inode(struct veriexec_devhead *head, long fsid, long fileid,
-		char *found_dev);
-int
-evaluate_fingerprint(struct vnode *vp, struct veriexec_inode_list *ip,
-		     struct lwp *p, u_quad_t file_size, char *fingerprint);
-int
-fingerprintcmp(struct veriexec_inode_list *ip, unsigned char *digest);
+struct veriexec_inode_list *get_veriexec_inode(struct veriexec_devhead *,
+	    long, long, char *);
+int evaluate_fingerprint(struct vnode *, struct veriexec_inode_list *,
+	    struct lwp *, u_quad_t, char *);
+int fingerprintcmp(struct veriexec_inode_list *, unsigned char *);
 
 #endif
 #endif

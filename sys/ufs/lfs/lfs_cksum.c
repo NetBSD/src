@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_cksum.c,v 1.22 2003/02/20 04:27:24 perseant Exp $	*/
+/*	$NetBSD: lfs_cksum.c,v 1.22.2.1 2004/08/03 10:56:57 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002 The NetBSD Foundation, Inc.
@@ -47,11 +47,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -71,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_cksum.c,v 1.22 2003/02/20 04:27:24 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_cksum.c,v 1.22.2.1 2004/08/03 10:56:57 skrll Exp $");
 
 #include <sys/param.h>
 #ifdef _KERNEL
@@ -93,16 +89,22 @@ __KERNEL_RCSID(0, "$NetBSD: lfs_cksum.c,v 1.22 2003/02/20 04:27:24 perseant Exp 
  * Use the TCP/IP checksum instead.
  */
 u_int32_t
-cksum(void *str, size_t len)
+lfs_cksum_part(void *str, size_t len, u_int32_t sum)
 {
-	u_int32_t sum;
 	
 	len &= ~(sizeof(u_int16_t) - 1);
-	for (sum = 0; len; len -= sizeof(u_int16_t)) {
+	for (; len; len -= sizeof(u_int16_t)) {
 		sum ^= *(u_int16_t *)str;
 		str = (void *)((u_int16_t *)str + 1);
 	}
 	return (sum);
+}
+
+u_int32_t
+cksum(void *str, size_t len)
+{
+
+	return lfs_cksum_fold(lfs_cksum_part(str, len, 0));
 }
 
 u_int32_t

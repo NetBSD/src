@@ -1,4 +1,4 @@
-/*	$NetBSD: if_loop.c,v 1.46 2003/06/23 11:02:11 martin Exp $	*/
+/*	$NetBSD: if_loop.c,v 1.46.2.1 2004/08/03 10:54:15 skrll Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -41,11 +41,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -69,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_loop.c,v 1.46 2003/06/23 11:02:11 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_loop.c,v 1.46.2.1 2004/08/03 10:54:15 skrll Exp $");
 
 #include "opt_inet.h"
 #include "opt_atalk.h"
@@ -138,8 +134,10 @@ __KERNEL_RCSID(0, "$NetBSD: if_loop.c,v 1.46 2003/06/23 11:02:11 martin Exp $");
 
 #if defined(LARGE_LOMTU)
 #define LOMTU	(131072 +  MHLEN + MLEN)
+#define LOMTU_MAX LOMTU
 #else
 #define	LOMTU	(32768 +  MHLEN + MLEN)
+#define	LOMTU_MAX	(65536 +  MHLEN + MLEN)
 #endif
 
 struct	ifnet loif[NLOOP];
@@ -160,7 +158,7 @@ loopattach(n)
 
 	for (i = 0; i < NLOOP; i++) {
 		ifp = &loif[i];
-		sprintf(ifp->if_xname, "lo%d", i);
+		snprintf(ifp->if_xname, sizeof(ifp->if_xname), "lo%d", i);
 		ifp->if_softc = NULL;
 		ifp->if_mtu = LOMTU;
 		ifp->if_flags = IFF_LOOPBACK | IFF_MULTICAST;
@@ -260,6 +258,8 @@ looutput(ifp, m, dst, rt)
 		return (error);
 	}
 #endif /* ALTQ */
+
+	m_tag_delete_nonpersistent(m);
 
 	switch (dst->sa_family) {
 
@@ -406,8 +406,10 @@ lortrequest(cmd, rt, info)
 	struct rt_addrinfo *info;
 {
 
+	struct ifnet *ifp = &loif[0];
 	if (rt)
-		rt->rt_rmx.rmx_mtu = LOMTU;
+		rt->rt_rmx.rmx_mtu = ifp->if_mtu;
+
 }
 
 /*
@@ -434,6 +436,16 @@ loioctl(ifp, cmd, data)
 		/*
 		 * Everything else is done at a higher level.
 		 */
+		break;
+
+	case SIOCSIFMTU:
+		ifr = (struct ifreq *)data;
+		if ((unsigned)ifr->ifr_mtu > LOMTU_MAX)
+			error = EINVAL;
+		else {
+			/* XXX update rt mtu for AF_ISO? */
+			ifp->if_mtu = ifr->ifr_mtu;
+		}
 		break;
 
 	case SIOCADDMULTI:

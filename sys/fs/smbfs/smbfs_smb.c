@@ -1,4 +1,4 @@
-/*	$NetBSD: smbfs_smb.c,v 1.17 2003/04/07 19:35:39 jdolecek Exp $	*/
+/*	$NetBSD: smbfs_smb.c,v 1.17.2.1 2004/08/03 10:52:42 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smbfs_smb.c,v 1.17 2003/04/07 19:35:39 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smbfs_smb.c,v 1.17.2.1 2004/08/03 10:52:42 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -182,79 +182,93 @@ smbfs_smb_lock(struct smbnode *np, int op, caddr_t id,
 }
 
 int
-smbfs_smb_statfs2(struct smb_share *ssp, struct statfs *sbp,
+smbfs_smb_statvfs(struct smb_share *ssp, struct statvfs *sbp,
 	struct smb_cred *scred)
 {
-	struct smb_t2rq *t2p;
-	struct mbchain *mbp;
-	struct mdchain *mdp;
-	u_int16_t bsize;
-	u_int32_t units, bpu, funits;
-	int error;
+	unsigned long bsize;	/* Block (allocation unit) size */
+	unsigned long bavail, bfree;
 
-	error = smb_t2_alloc(SSTOCP(ssp), SMB_TRANS2_QUERY_FS_INFORMATION,
-	    scred, &t2p);
-	if (error)
-		return error;
-	mbp = &t2p->t2_tparam;
-	mb_init(mbp);
-	mb_put_uint16le(mbp, SMB_INFO_ALLOCATION);
-	t2p->t2_maxpcount = 4;
-	t2p->t2_maxdcount = 4 * 4 + 2;
-	error = smb_t2_request(t2p);
-	if (error) {
+	/*
+	 * The SMB request work with notion of sector size and
+	 * allocation units. Allocation unit is what 'block'
+	 * means in Unix context, sector size might be HW sector size.
+	 */
+	
+	if (SMB_DIALECT(SSTOVC(ssp)) >= SMB_DIALECT_LANMAN2_0) {
+		struct smb_t2rq *t2p;
+		struct mbchain *mbp;
+		struct mdchain *mdp;
+		u_int16_t secsz;
+		u_int32_t units, bpu, funits;
+		int error;
+
+		error = smb_t2_alloc(SSTOCP(ssp),
+		    SMB_TRANS2_QUERY_FS_INFORMATION, scred, &t2p);
+		if (error)
+			return error;
+		mbp = &t2p->t2_tparam;
+		mb_init(mbp);
+		mb_put_uint16le(mbp, SMB_INFO_ALLOCATION);
+		t2p->t2_maxpcount = 4;
+		t2p->t2_maxdcount = 4 * 4 + 2;
+		error = smb_t2_request(t2p);
+		if (error) {
+			smb_t2_done(t2p);
+			return error;
+		}
+		mdp = &t2p->t2_rdata;
+		md_get_uint32(mdp, NULL);	/* fs id */
+		md_get_uint32le(mdp, &bpu);	/* Number of sectors per unit */
+		md_get_uint32le(mdp, &units);	/* Total number of units */
+		md_get_uint32le(mdp, &funits);	/* Number of available units */
+		md_get_uint16le(mdp, &secsz);	/* Number of bytes per sector */
 		smb_t2_done(t2p);
-		return error;
-	}
-	mdp = &t2p->t2_rdata;
-	md_get_uint32(mdp, NULL);	/* fs id */
-	md_get_uint32le(mdp, &bpu);
-	md_get_uint32le(mdp, &units);
-	md_get_uint32le(mdp, &funits);
-	md_get_uint16le(mdp, &bsize);
-	sbp->f_bsize = bpu * bsize;	/* fundamental file system block size */
-	sbp->f_blocks= units;		/* total data blocks in file system */
-	sbp->f_bfree = funits;		/* free blocks in fs */
-	sbp->f_bavail= funits;		/* free blocks avail to non-superuser */
-	sbp->f_files = 0xffff;		/* total file nodes in file system */
-	sbp->f_ffree = 0xffff;		/* free file nodes in fs */
-	smb_t2_done(t2p);
-	return 0;
-}
 
-int
-smbfs_smb_statfs(struct smb_share *ssp, struct statfs *sbp,
-	struct smb_cred *scred)
-{
-	struct smb_rq *rqp;
-	struct mdchain *mdp;
-	u_int16_t units, bpu, bsize, funits;
-	int error;
+		bsize = bpu * secsz;
+		bavail = units;
+		bfree = funits;
+	} else {
+		struct smb_rq *rqp;
+		struct mdchain *mdp;
+		u_int16_t units, bpu, secsz, funits;
+		int error;
 
-	error = smb_rq_alloc(SSTOCP(ssp), SMB_COM_QUERY_INFORMATION_DISK, scred, &rqp);
-	if (error)
-		return error;
-	smb_rq_wstart(rqp);
-	smb_rq_wend(rqp);
-	smb_rq_bstart(rqp);
-	smb_rq_bend(rqp);
-	error = smb_rq_simple(rqp);
-	if (error) {
+		error = smb_rq_alloc(SSTOCP(ssp),
+		    SMB_COM_QUERY_INFORMATION_DISK, scred, &rqp);
+		if (error)
+			return error;
+		smb_rq_wstart(rqp);
+		smb_rq_wend(rqp);
+		smb_rq_bstart(rqp);
+		smb_rq_bend(rqp);
+		error = smb_rq_simple(rqp);
+		if (error) {
+			smb_rq_done(rqp);
+			return error;
+		}
+		smb_rq_getreply(rqp, &mdp);
+		md_get_uint16le(mdp, &units);	/* Total units per server */
+		md_get_uint16le(mdp, &bpu);	/* Blocks per allocation unit */
+		md_get_uint16le(mdp, &secsz);	/* Block size (in bytes) */
+		md_get_uint16le(mdp, &funits);	/* Number of free units */
 		smb_rq_done(rqp);
-		return error;
+
+		bsize = bpu * secsz;
+		bavail = units;
+		bfree = funits;
 	}
-	smb_rq_getreply(rqp, &mdp);
-	md_get_uint16le(mdp, &units);
-	md_get_uint16le(mdp, &bpu);
-	md_get_uint16le(mdp, &bsize);
-	md_get_uint16le(mdp, &funits);
-	sbp->f_bsize = bpu * bsize;	/* fundamental file system block size */
-	sbp->f_blocks= units;		/* total data blocks in file system */
-	sbp->f_bfree = funits;		/* free blocks in fs */
-	sbp->f_bavail= funits;		/* free blocks avail to non-superuser */
+
+	sbp->f_bsize = bsize;		/* fundamental file system block size */
+	sbp->f_frsize = bsize;		/* fundamental file system frag size */
+	sbp->f_iosize = bsize;		/* optimal I/O size */
+	sbp->f_blocks = bavail;		/* total data blocks in file system */
+	sbp->f_bfree = bfree;		/* free blocks in fs */
+	sbp->f_bresvd = 0;		/* reserved blocks in fs */
+	sbp->f_bavail= bfree;		/* free blocks avail to non-superuser */
 	sbp->f_files = 0xffff;		/* total file nodes in file system */
-	sbp->f_ffree = 0xffff;		/* free file nodes in fs */
-	smb_rq_done(rqp);
+	sbp->f_ffree = 0xffff;		/* free file nodes to non-superuser */
+	sbp->f_favail = 0xffff;		/* free file nodes in fs */
+	sbp->f_fresvd = 0;		/* reserved file nodes in fs */
 	return 0;
 }
 
@@ -1154,10 +1168,12 @@ smbfs_findnextLM2(struct smbfs_fctx *ctx, int limit)
 		fxsz = 64;
 		recsz = next ? next : fxsz + size;
 		break;
-#ifdef DIAGNOSTIC
 	default:
+#ifdef DIAGNOSTIC
 		panic("smbfs_findnextLM2: unexpected info level %d\n",
 		    ctx->f_infolevel);
+#else
+		return EINVAL;
 #endif
 	}
 	nmlen = min(size, SMB_MAXFNAMELEN);
@@ -1247,7 +1263,7 @@ smbfs_findnext(struct smbfs_fctx *ctx, int limit, struct smb_cred *scred)
 	if (limit == 0)
 		limit = 1000000;
 	else if (limit > 1)
-		limit *= 4;	/* imperical */
+		limit *= 4;	/* empirical */
 	ctx->f_scred = scred;
 	for (;;) {
 		if (ctx->f_flags & SMBFS_RDD_USESEARCH) {
@@ -1315,6 +1331,14 @@ smbfs_smb_lookup(struct smbnode *dnp, const char *name, int nmlen,
 		*fap = ctx->f_attr;
 		if (name == NULL)
 			fap->fa_ino = dnp->n_ino;
+
+		/*
+		 * Check the returned file name case exactly
+		 * matches requested file name. ctx->f_nmlen is
+		 * guaranteed to always match nmlen.
+		 */
+		if (nmlen > 0 && strncmp(name, ctx->f_name, nmlen) != 0)
+			error = ENOENT;
 	}
 	smbfs_findclose(ctx, scred);
 	return error;

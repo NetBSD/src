@@ -1,4 +1,4 @@
-/*	$NetBSD: ohcivar.h,v 1.32 2003/02/22 05:24:17 tsutsui Exp $	*/
+/*	$NetBSD: ohcivar.h,v 1.32.2.1 2004/08/03 10:51:33 skrll Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ohcivar.h,v 1.13 1999/11/17 22:33:41 n_hibma Exp $	*/
 
 /*
@@ -145,8 +145,6 @@ struct ohci_xfer {
 	struct usbd_xfer xfer;
 	struct usb_task	abort_task;
 };
-
-#define OXFER(xfer) ((struct ehci_xfer *)(xfer))
 
 usbd_status	ohci_init(ohci_softc_t *);
 int		ohci_intr(void *);

@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_srvcache.c,v 1.27 2003/05/21 14:13:34 yamt Exp $	*/
+/*	$NetBSD: nfs_srvcache.c,v 1.27.2.1 2004/08/03 10:56:17 skrll Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -15,11 +15,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -45,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_srvcache.c,v 1.27 2003/05/21 14:13:34 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_srvcache.c,v 1.27.2.1 2004/08/03 10:56:17 skrll Exp $");
 
 #include "opt_iso.h"
 
@@ -96,54 +92,54 @@ static void nfsrv_unlockcache(struct nfsrvcache *rp);
  * Static array that defines which nfs rpc's are nonidempotent
  */
 const int nonidempotent[NFS_NPROCS] = {
-	FALSE,
-	FALSE,
-	TRUE,
-	FALSE,
-	FALSE,
-	FALSE,
-	FALSE,
-	TRUE,
-	TRUE,
-	TRUE,
-	TRUE,
-	TRUE,
-	TRUE,
-	TRUE,
-	TRUE,
-	TRUE,
-	FALSE,
-	FALSE,
-	FALSE,
-	FALSE,
-	FALSE,
-	FALSE,
-	FALSE,
-	FALSE,
-	FALSE,
-	FALSE,
+	FALSE,	/* NULL */
+	FALSE,	/* GETATTR */
+	TRUE,	/* SETATTR */
+	FALSE,	/* LOOKUP */
+	FALSE,	/* ACCESS */
+	FALSE,	/* READLINK */
+	FALSE,	/* READ */
+	TRUE,	/* WRITE */
+	TRUE,	/* CREATE */
+	TRUE,	/* MKDIR */
+	TRUE,	/* SYMLINK */
+	TRUE,	/* MKNOD */
+	TRUE,	/* REMOVE */
+	TRUE,	/* RMDIR */
+	TRUE,	/* RENAME */
+	TRUE,	/* LINK */
+	FALSE,	/* READDIR */
+	FALSE,	/* READDIRPLUS */
+	FALSE,	/* FSSTAT */
+	FALSE,	/* FSINFO */
+	FALSE,	/* PATHCONF */
+	FALSE,	/* COMMIT */
+	FALSE,	/* GETLEASE */
+	FALSE,	/* VACATED */
+	FALSE,	/* EVICTED */
+	FALSE,	/* NOOP */
 };
 
 /* True iff the rpc reply is an nfs status ONLY! */
 static const int nfsv2_repstat[NFS_NPROCS] = {
-	FALSE,
-	FALSE,
-	FALSE,
-	FALSE,
-	FALSE,
-	FALSE,
-	FALSE,
-	FALSE,
-	FALSE,
-	FALSE,
-	TRUE,
-	TRUE,
-	TRUE,
-	TRUE,
-	FALSE,
-	TRUE,
-	FALSE,
-	FALSE,
+	FALSE,	/* NULL */
+	FALSE,	/* GETATTR */
+	FALSE,	/* SETATTR */
+	FALSE,	/* NOOP */
+	FALSE,	/* LOOKUP */
+	FALSE,	/* READLINK */
+	FALSE,	/* READ */
+	FALSE,	/* Obsolete WRITECACHE */
+	FALSE,	/* WRITE */
+	FALSE,	/* CREATE */
+	TRUE,	/* REMOVE */
+	TRUE,	/* RENAME */
+	TRUE,	/* LINK */
+	TRUE,	/* SYMLINK */
+	FALSE,	/* MKDIR */
+	TRUE,	/* RMDIR */
+	FALSE,	/* READDIR */
+	FALSE,	/* STATFS */
 };
 
 /*
@@ -227,18 +223,12 @@ nfsrv_getcache(nd, slp, repp)
 	struct nfssvc_sock *slp;
 	struct mbuf **repp;
 {
-	struct nfsrvcache *rp;
+	struct nfsrvcache *rp, *rpdup;
 	struct mbuf *mb;
 	struct sockaddr_in *saddr;
 	caddr_t bpos;
 	int ret;
 
-	/*
-	 * Don't cache recent requests for reliable transport protocols.
-	 * (Maybe we should for the case of a reconnect, but..)
-	 */
-	if (!nd->nd_nam2)
-		return RC_DOIT;
 	simple_lock(&nfsrv_reqcache_lock);
 	rp = nfsrv_lookupcache(nd);
 	if (rp) {
@@ -317,12 +307,14 @@ found:
 	};
 	rp->rc_proc = nd->nd_procnum;
 	simple_lock(&nfsrv_reqcache_lock);
-	if (nfsrv_lookupcache(nd)) {
+	rpdup = nfsrv_lookupcache(nd);
+	if (rpdup != NULL) {
 		/*
 		 * other thread made duplicate cache entry.
 		 */
 		simple_unlock(&nfsrv_reqcache_lock);
 		pool_put(&nfs_reqcache_pool, rp);
+		rp = rpdup;
 		goto found;
 	}
 	TAILQ_INSERT_TAIL(&nfsrvlruhead, rp, rc_lru);

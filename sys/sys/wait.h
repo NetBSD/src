@@ -1,4 +1,4 @@
-/*	$NetBSD: wait.h,v 1.19 2003/04/28 23:16:32 bjh21 Exp $	*/
+/*	$NetBSD: wait.h,v 1.19.2.1 2004/08/03 10:56:35 skrll Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993, 1994
@@ -12,11 +12,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -49,11 +45,10 @@
  * Macros to test the exit status returned by wait
  * and extract the relevant values.
  */
-#if !( defined(_XOPEN_SOURCE) || defined(_NETBSD_SOURCE) )
+#if !( defined(_XOPEN_SOURCE) || defined(_NETBSD_SOURCE) ) || defined(_KERNEL)
 #define	_W_INT(i)	(i)
 #else
 #define	_W_INT(w)	(*(int *)(void *)&(w))	/* convert union wait to int */
-#define	WCOREFLAG	0200
 #endif
 
 #define	_WSTATUS(x)	(_W_INT(x) & 0177)
@@ -64,7 +59,8 @@
 #define WTERMSIG(x)	(_WSTATUS(x))
 #define WIFEXITED(x)	(_WSTATUS(x) == 0)
 #define WEXITSTATUS(x)	((int)(((unsigned int)_W_INT(x)) >> 8) & 0xff)
-#if defined(_XOPEN_SOURCE) || defined(_NETBSD_SOURCE)
+#if defined(_XOPEN_SOURCE) || defined(_NETBSD_SOURCE) || defined(_KERNEL)
+#define	WCOREFLAG	0200
 #define WCOREDUMP(x)	(_W_INT(x) & WCOREFLAG)
 
 #define	W_EXITCODE(ret, sig)	((ret) << 8 | (sig))

@@ -1,13 +1,13 @@
-/*	$NetBSD: vnode_if.h,v 1.43.2.1 2003/07/02 15:27:19 darrenr Exp $	*/
+/*	$NetBSD: vnode_if.h,v 1.43.2.2 2004/08/03 10:56:34 skrll Exp $	*/
 
 /*
  * Warning: This file is generated automatically.
  * (Modifications made here may easily be lost!)
  *
  * Created from the file:
- *	NetBSD: vnode_if.src,v 1.33 2003/04/10 20:35:36 jdolecek Exp 
+ *	NetBSD: vnode_if.src,v 1.39 2004/05/27 12:49:09 yamt Exp 
  * by the script:
- *	NetBSD: vnode_if.sh,v 1.30 2001/11/12 14:34:24 lukem Exp 
+ *	NetBSD: vnode_if.sh,v 1.34 2004/01/25 18:02:04 hannken Exp 
  */
 
 /*
@@ -22,11 +22,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -1098,6 +1094,33 @@ static __inline int VOP_BMAP(vp, bn, vpp, bnp, runp)
 }
 #endif
 
+struct vop_strategy_args {
+	const struct vnodeop_desc *a_desc;
+	struct vnode *a_vp;
+	struct buf *a_bp;
+};
+extern const struct vnodeop_desc vop_strategy_desc;
+#ifndef VNODE_OP_NOINLINE
+static __inline
+#endif
+int VOP_STRATEGY(struct vnode *, struct buf *)
+#ifndef VNODE_OP_NOINLINE
+__attribute__((__unused__))
+#endif
+;
+#ifndef VNODE_OP_NOINLINE
+static __inline int VOP_STRATEGY(vp, bp)
+	struct vnode *vp;
+	struct buf *bp;
+{
+	struct vop_strategy_args a;
+	a.a_desc = VDESC(vop_strategy);
+	a.a_vp = vp;
+	a.a_bp = bp;
+	return (VCALL(vp, VOFFSET(vop_strategy), &a));
+}
+#endif
+
 struct vop_print_args {
 	const struct vnodeop_desc *a_desc;
 	struct vnode *a_vp;
@@ -1587,30 +1610,6 @@ static __inline int VOP_PUTPAGES(vp, offlo, offhi, flags)
 
 /* Special cases: */
 #include <sys/buf.h>
-
-struct vop_strategy_args {
-	const struct vnodeop_desc *a_desc;
-	struct buf *a_bp;
-};
-extern const struct vnodeop_desc vop_strategy_desc;
-#ifndef VNODE_OP_NOINLINE
-static __inline
-#endif
-int VOP_STRATEGY(struct buf *)
-#ifndef VNODE_OP_NOINLINE
-__attribute__((__unused__))
-#endif
-;
-#ifndef VNODE_OP_NOINLINE
-static __inline int VOP_STRATEGY(bp)
-	struct buf *bp;
-{
-	struct vop_strategy_args a;
-	a.a_desc = VDESC(vop_strategy);
-	a.a_bp = bp;
-	return (VCALL(bp->b_vp, VOFFSET(vop_strategy), &a));
-}
-#endif
 
 struct vop_bwrite_args {
 	const struct vnodeop_desc *a_desc;

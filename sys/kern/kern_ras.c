@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ras.c,v 1.5 2003/06/28 14:52:10 simonb Exp $	*/
+/*	$NetBSD: kern_ras.c,v 1.5.2.1 2004/08/03 10:52:51 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_ras.c,v 1.5 2003/06/28 14:52:10 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_ras.c,v 1.5.2.1 2004/08/03 10:52:51 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/lock.h>
@@ -84,18 +84,18 @@ ras_lookup(struct proc *p, caddr_t addr)
 		return ((caddr_t)-1);
 #endif
 
-	simple_lock(&p->p_raslock);
+	simple_lock(&p->p_lock);
 	LIST_FOREACH(rp, &p->p_raslist, ras_list) {
 		if (addr > rp->ras_startaddr && addr < rp->ras_endaddr) {
 			rp->ras_hits++;
-			simple_unlock(&p->p_raslock);
+			simple_unlock(&p->p_lock);
 #ifdef DIAGNOSTIC
 			DPRINTF(("RAS hit: p=%p %p\n", p, addr));
 #endif
 			return (rp->ras_startaddr);
 		}
 	}
-	simple_unlock(&p->p_raslock);
+	simple_unlock(&p->p_lock);
 
 	return ((caddr_t)-1);
 }
@@ -108,20 +108,61 @@ int
 ras_fork(struct proc *p1, struct proc *p2)
 {
 	struct ras *rp, *nrp;
+	int nras;
 
-	DPRINTF(("ras_fork: p1=%p, p2=%p, p1->p_nras=%d\n",
-	    p1, p2, p1->p_nras));
+again:
+	/*
+	 * first, try to shortcut.
+	 */
 
-	simple_lock(&p1->p_raslock);
-	LIST_FOREACH(rp, &p1->p_raslist, ras_list) {
-		nrp = pool_get(&ras_pool, PR_NOWAIT);
-		nrp->ras_startaddr = rp->ras_startaddr;
-		nrp->ras_endaddr = rp->ras_endaddr;
+	if (LIST_EMPTY(&p1->p_raslist))
+		return (0);
+
+	/*
+	 * count entries.
+	 */
+
+	nras = 0;
+	simple_lock(&p1->p_lock);
+	LIST_FOREACH(rp, &p1->p_raslist, ras_list)
+		nras++;
+	simple_unlock(&p1->p_lock);
+
+	/*
+	 * allocate entries.
+	 */
+
+	for ( ; nras > 0; nras--) {
+		nrp = pool_get(&ras_pool, PR_WAITOK);
 		nrp->ras_hits = 0;
 		LIST_INSERT_HEAD(&p2->p_raslist, nrp, ras_list);
 	}
-	p2->p_nras = p1->p_nras;
-	simple_unlock(&p1->p_raslock);
+
+	/*
+	 * copy entries.
+	 */
+
+	simple_lock(&p1->p_lock);
+	nrp = LIST_FIRST(&p2->p_raslist);
+	LIST_FOREACH(rp, &p1->p_raslist, ras_list) {
+		if (nrp == NULL)
+			break;
+		nrp->ras_startaddr = rp->ras_startaddr;
+		nrp->ras_endaddr = rp->ras_endaddr;
+		nrp = LIST_NEXT(nrp, ras_list);
+	}
+	simple_unlock(&p1->p_lock);
+
+	/*
+	 * if we lose a race, retry.
+	 */
+
+	if (rp != NULL || nrp != NULL) {
+		ras_purgeall(p2);
+		goto again;
+	}
+
+	DPRINTF(("ras_fork: p1=%p, p2=%p, nras=%d\n", p1, p2, nras));
 
 	return (0);
 }
@@ -134,7 +175,7 @@ ras_purgeall(struct proc *p)
 {
 	struct ras *rp;
 
-	simple_lock(&p->p_raslock);
+	simple_lock(&p->p_lock);
 	while (!LIST_EMPTY(&p->p_raslist)) {
 		rp = LIST_FIRST(&p->p_raslist);
                 DPRINTF(("RAS %p-%p, hits %d\n", rp->ras_startaddr,           
@@ -142,8 +183,7 @@ ras_purgeall(struct proc *p)
 		LIST_REMOVE(rp, ras_list);
 		pool_put(&ras_pool, rp);
 	}
-	p->p_nras = 0;
-	simple_unlock(&p->p_raslock);
+	simple_unlock(&p->p_lock);
 
 	return (0);
 }
@@ -156,35 +196,37 @@ int
 ras_install(struct proc *p, caddr_t addr, size_t len)
 {
 	struct ras *rp;
+	struct ras *newrp;
 	caddr_t endaddr = addr + len;
+	int nras = 0;
 
 	if (addr < (caddr_t)VM_MIN_ADDRESS ||
-	    addr > (caddr_t)VM_MAXUSER_ADDRESS)
+	    endaddr > (caddr_t)VM_MAXUSER_ADDRESS)
 		return (EINVAL);
 
 	if (len <= 0)
 		return (EINVAL);
 
-	if (p->p_nras >= ras_per_proc)
-		return (EINVAL);
-
-	simple_lock(&p->p_raslock);
+	newrp = NULL;
+again:
+	simple_lock(&p->p_lock);
 	LIST_FOREACH(rp, &p->p_raslist, ras_list) {
-		if ((addr > rp->ras_startaddr && addr < rp->ras_endaddr) ||
-		    (endaddr > rp->ras_startaddr &&
-			 endaddr < rp->ras_endaddr) ||
-		    (addr < rp->ras_startaddr && endaddr > rp->ras_endaddr)) {
-			simple_unlock(&p->p_raslock);
+		if (++nras >= ras_per_proc ||
+		    (addr < rp->ras_endaddr && endaddr > rp->ras_startaddr)) {
+			simple_unlock(&p->p_lock);
 			return (EINVAL);
 		}
 	}
-	rp = pool_get(&ras_pool, PR_NOWAIT);
-	rp->ras_startaddr = addr;
-	rp->ras_endaddr = endaddr;
-	rp->ras_hits = 0;
-	LIST_INSERT_HEAD(&p->p_raslist, rp, ras_list);
-	p->p_nras++;
-	simple_unlock(&p->p_raslock);
+	if (newrp == NULL) {
+		simple_unlock(&p->p_lock);
+		newrp = pool_get(&ras_pool, PR_WAITOK);
+		goto again;
+	}
+	newrp->ras_startaddr = addr;
+	newrp->ras_endaddr = endaddr;
+	newrp->ras_hits = 0;
+	LIST_INSERT_HEAD(&p->p_raslist, newrp, ras_list);
+	simple_unlock(&p->p_lock);
 
 	return (0);
 }
@@ -200,17 +242,16 @@ ras_purge(struct proc *p, caddr_t addr, size_t len)
 	caddr_t endaddr = addr + len;
 	int error = ESRCH;
 
-	simple_lock(&p->p_raslock);
+	simple_lock(&p->p_lock);
 	LIST_FOREACH(rp, &p->p_raslist, ras_list) {
 		if (addr == rp->ras_startaddr && endaddr == rp->ras_endaddr) {
 			LIST_REMOVE(rp, ras_list);
 			pool_put(&ras_pool, rp);
-			p->p_nras--;
 			error = 0;
 			break;
 		}
 	}
-	simple_unlock(&p->p_raslock);
+	simple_unlock(&p->p_lock);
 
 	return (error);
 }

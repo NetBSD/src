@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipiconf.h,v 1.76.2.1 2003/07/02 15:26:18 darrenr Exp $	*/
+/*	$NetBSD: scsipiconf.h,v 1.76.2.2 2004/08/03 10:51:15 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -444,19 +444,12 @@ struct scsipi_periph {
 						   LUNs */
 #define	PQUIRK_NOMODESENSE	0x00000040	/* device doesn't do MODE SENSE
 						   properly */
-#define	PQUIRK_NOSTARTUNIT	0x00000080	/* do not issue START UNIT */
 #define	PQUIRK_NOSYNCCACHE	0x00000100	/* do not issue SYNC CACHE */
-#define	PQUIRK_CDROM		0x00000200	/* device is a CD-ROM, no
-						   matter what else it claims */
 #define	PQUIRK_LITTLETOC	0x00000400	/* audio TOC is little-endian */
 #define	PQUIRK_NOCAPACITY	0x00000800	/* no READ CD CAPACITY */
 #define	PQUIRK_NOTUR		0x00001000	/* no TEST UNIT READY */
-#define	PQUIRK_NODOORLOCK	0x00002000	/* can't lock door */
 #define	PQUIRK_NOSENSE		0x00004000	/* can't REQUEST SENSE */
 #define PQUIRK_ONLYBIG		0x00008000	/* only use SCSI_{R,W}_BIG */
-#define PQUIRK_BYTE5_ZERO	0x00010000	/* byte5 in capacity is wrong */
-#define PQUIRK_NO_FLEX_PAGE	0x00020000	/* does not support flex geom
-						   page */
 #define PQUIRK_NOBIGMODESENSE	0x00040000	/* has no big mode-sense op */
 #define PQUIRK_CAP_SYNC		0x00080000	/* SCSI device with ST sync op*/
 #define PQUIRK_CAP_WIDE16	0x00100000	/* SCSI device with ST wide op*/
@@ -642,7 +635,7 @@ caddr_t	scsipi_inqmatch __P((struct scsipi_inquiry_pattern *, caddr_t,
 char	*scsipi_dtype __P((int));
 void	scsipi_strvis __P((u_char *, int, u_char *, int));
 int	scsipi_execute_xs __P((struct scsipi_xfer *));
-u_int64_t	scsipi_size __P((struct scsipi_periph *, int));
+u_int64_t scsipi_size __P((struct scsipi_periph *, int));
 int	scsipi_test_unit_ready __P((struct scsipi_periph *, int));
 int	scsipi_prevent __P((struct scsipi_periph *, int, int));
 int	scsipi_inquire __P((struct scsipi_periph *,
@@ -667,6 +660,7 @@ void	scsipi_print_sense __P((struct scsipi_xfer *, int));
 void	scsipi_print_sense_data __P((struct scsipi_sense_data *, int));
 char   *scsipi_decode_sense __P((void *, int));
 #endif
+void	scsipi_print_cdb __P((struct scsipi_generic *cmd));
 int	scsipi_thread_call_callback __P((struct scsipi_channel *,
 	    void (*callback) __P((struct scsipi_channel *, void *)),
 	    void *));

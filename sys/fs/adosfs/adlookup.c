@@ -1,4 +1,4 @@
-/*	$NetBSD: adlookup.c,v 1.3.2.2 2003/07/03 01:19:03 wrstuden Exp $	*/
+/*	$NetBSD: adlookup.c,v 1.3.2.3 2004/08/03 10:52:23 skrll Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adlookup.c,v 1.3.2.2 2003/07/03 01:19:03 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adlookup.c,v 1.3.2.3 2004/08/03 10:52:23 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -136,7 +136,7 @@ adosfs_lookup(v)
 		 * cannot get `..' while `vdp' is locked
 		 * e.g. procA holds lock on `..' and waits for `vdp'
 		 * we wait for `..' and hold lock on `vdp'. deadlock.
-		 * becuase `vdp' may have been acheived through symlink
+		 * because `vdp' may have been achieved through symlink
 		 * fancy detection code that decreases the race
 		 * window size is not reasonably possible.
 		 *

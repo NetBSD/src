@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_vnode.c,v 1.62.2.1 2003/07/02 15:27:30 darrenr Exp $	*/
+/*	$NetBSD: uvm_vnode.c,v 1.62.2.2 2004/08/03 10:57:09 skrll Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_vnode.c,v 1.62.2.1 2003/07/02 15:27:30 darrenr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_vnode.c,v 1.62.2.2 2004/08/03 10:57:09 skrll Exp $");
 
 #include "fs_nfs.h"
 #include "opt_uvmhist.h"
@@ -77,13 +77,13 @@ __KERNEL_RCSID(0, "$NetBSD: uvm_vnode.c,v 1.62.2.1 2003/07/02 15:27:30 darrenr E
  * functions
  */
 
-void	uvn_detach __P((struct uvm_object *));
-int	uvn_get __P((struct uvm_object *, voff_t, struct vm_page **, int *, int,
-	    vm_prot_t, int, int));
-int	uvn_put __P((struct uvm_object *, voff_t, voff_t, int));
-void	uvn_reference __P((struct uvm_object *));
+void	uvn_detach(struct uvm_object *);
+int	uvn_get(struct uvm_object *, voff_t, struct vm_page **, int *, int,
+	    vm_prot_t, int, int);
+int	uvn_put(struct uvm_object *, voff_t, voff_t, int);
+void	uvn_reference(struct uvm_object *);
 
-int	uvn_findpage __P((struct uvm_object *, voff_t, struct vm_page **, int));
+int	uvn_findpage(struct uvm_object *, voff_t, struct vm_page **, int);
 
 /*
  * master pager structure

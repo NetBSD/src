@@ -1,7 +1,7 @@
-/*	$NetBSD: ras.h,v 1.2 2003/06/28 14:52:10 simonb Exp $	*/
+/*	$NetBSD: ras.h,v 1.2.2.1 2004/08/03 10:56:29 skrll Exp $	*/
 
 /*-
- * Copyright (c) 2002 The NetBSD Foundation, Inc.
+ * Copyright (c) 2002, 2004 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -66,6 +66,31 @@ int ras_purgeall(struct proc *);
 extern struct pool ras_pool;
 
 #else
+
+#ifndef	RAS_DECL
+
+#define	RAS_DECL(name)							\
+extern void __CONCAT(name,_ras_start(void)), __CONCAT(name,_ras_end(void))
+
+#endif	/* RAS_DECL */
+
+/*
+ * RAS_START and RAS_END contain implicit instruction reordering
+ * barriers.  See __insn_barrier() in <sys/cdefs.h>.
+ */
+#define	RAS_START(name)							\
+	__asm __volatile(".globl " ___STRING(name) "_ras_start\n"	\
+			 ___STRING(name) "_ras_start:" 			\
+	    ::: "memory")
+
+#define	RAS_END(name)							\
+	__asm __volatile(".globl " ___STRING(name) "_ras_end\n"		\
+			 ___STRING(name) "_ras_end:"			\
+	    ::: "memory")
+
+#define	RAS_ADDR(name)	(void *) __CONCAT(name,_ras_start)
+#define	RAS_SIZE(name)	((size_t)((uintptr_t) __CONCAT(name,_ras_end) -	\
+				  (uintptr_t) __CONCAT(name,_ras_start)))
 
 __BEGIN_DECLS
 int rasctl(caddr_t, size_t, int);

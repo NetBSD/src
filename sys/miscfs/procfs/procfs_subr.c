@@ -1,10 +1,42 @@
-/*	$NetBSD: procfs_subr.c,v 1.56.2.1 2003/07/02 15:26:53 darrenr Exp $	*/
+/*	$NetBSD: procfs_subr.c,v 1.56.2.2 2004/08/03 10:54:07 skrll Exp $	*/
+
+/*
+ * Copyright (c) 1993
+ *	The Regents of the University of California.  All rights reserved.
+ *
+ * This code is derived from software contributed to Berkeley by
+ * Jan-Simon Pendry.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. Neither the name of the University nor the names of its contributors
+ *    may be used to endorse or promote products derived from this software
+ *    without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
+ * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+ * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+ * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+ * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+ * SUCH DAMAGE.
+ *
+ *	@(#)procfs_subr.c	8.6 (Berkeley) 5/14/95
+ */
 
 /*
  * Copyright (c) 1994 Christopher G. Demetriou.  All rights reserved.
  * Copyright (c) 1993 Jan-Simon Pendry
- * Copyright (c) 1993
- *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
  * Jan-Simon Pendry.
@@ -41,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_subr.c,v 1.56.2.1 2003/07/02 15:26:53 darrenr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_subr.c,v 1.56.2.2 2004/08/03 10:54:07 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -129,20 +161,20 @@ procfs_allocvp(mp, vpp, pid, pfs_type, fd)
 	pfs->pfs_fd = fd;
 
 	switch (pfs_type) {
-	case Proot:	/* /proc = dr-xr-xr-x */
+	case PFSroot:	/* /proc = dr-xr-xr-x */
 		pfs->pfs_mode = S_IRUSR|S_IXUSR|S_IRGRP|S_IXGRP|S_IROTH|S_IXOTH;
 		vp->v_type = VDIR;
 		vp->v_flag = VROOT;
 		break;
 
-	case Pcurproc:	/* /proc/curproc = lr-xr-xr-x */
-	case Pself:	/* /proc/self    = lr-xr-xr-x */
+	case PFScurproc:	/* /proc/curproc = lr-xr-xr-x */
+	case PFSself:	/* /proc/self    = lr-xr-xr-x */
 		pfs->pfs_mode = S_IRUSR|S_IXUSR|S_IRGRP|S_IXGRP|S_IROTH|S_IXOTH;
 		vp->v_type = VLNK;
 		break;
 
-	case Pproc:	/* /proc/N = dr-xr-xr-x */
-	case Pfd:
+	case PFSproc:	/* /proc/N = dr-xr-xr-x */
+	case PFSfd:
 		if (fd == -1) {	/* /proc/N/fd = dr-xr-xr-x */
 			pfs->pfs_mode = S_IRUSR|S_IXUSR;
 			vp->v_type = VDIR;
@@ -191,29 +223,29 @@ procfs_allocvp(mp, vpp, pid, pfs_type, fd)
 		}
 		break;
 
-	case Pfile:	/* /proc/N/file = -rw------- */
-	case Pmem:	/* /proc/N/mem = -rw------- */
-	case Pregs:	/* /proc/N/regs = -rw------- */
-	case Pfpregs:	/* /proc/N/fpregs = -rw------- */
+	case PFSfile:	/* /proc/N/file = -rw------- */
+	case PFSmem:	/* /proc/N/mem = -rw------- */
+	case PFSregs:	/* /proc/N/regs = -rw------- */
+	case PFSfpregs:	/* /proc/N/fpregs = -rw------- */
 		pfs->pfs_mode = S_IRUSR|S_IWUSR;
 		vp->v_type = VREG;
 		break;
 
-	case Pctl:	/* /proc/N/ctl = --w------ */
-	case Pnote:	/* /proc/N/note = --w------ */
-	case Pnotepg:	/* /proc/N/notepg = --w------ */
+	case PFSctl:	/* /proc/N/ctl = --w------ */
+	case PFSnote:	/* /proc/N/note = --w------ */
+	case PFSnotepg:	/* /proc/N/notepg = --w------ */
 		pfs->pfs_mode = S_IWUSR;
 		vp->v_type = VREG;
 		break;
 
-	case Pmap:	/* /proc/N/map = -r--r--r-- */
-	case Pmaps:	/* /proc/N/maps = -r--r--r-- */
-	case Pstatus:	/* /proc/N/status = -r--r--r-- */
-	case Pstat:	/* /proc/N/stat = -r--r--r-- */
-	case Pcmdline:	/* /proc/N/cmdline = -r--r--r-- */
-	case Pmeminfo:	/* /proc/meminfo = -r--r--r-- */
-	case Pcpuinfo:	/* /proc/cpuinfo = -r--r--r-- */
-	case Puptime:	/* /proc/uptime = -r--r--r-- */
+	case PFSmap:	/* /proc/N/map = -r--r--r-- */
+	case PFSmaps:	/* /proc/N/maps = -r--r--r-- */
+	case PFSstatus:	/* /proc/N/status = -r--r--r-- */
+	case PFSstat:	/* /proc/N/stat = -r--r--r-- */
+	case PFScmdline:	/* /proc/N/cmdline = -r--r--r-- */
+	case PFSmeminfo:	/* /proc/meminfo = -r--r--r-- */
+	case PFScpuinfo:	/* /proc/cpuinfo = -r--r--r-- */
+	case PFSuptime:	/* /proc/uptime = -r--r--r-- */
 		pfs->pfs_mode = S_IRUSR|S_IRGRP|S_IROTH;
 		vp->v_type = VREG;
 		break;
@@ -267,9 +299,17 @@ procfs_rw(v)
 	struct pfsnode *pfs = VTOPFS(vp);
 	struct proc *p;
 
+	if (uio->uio_offset < 0)
+		return EINVAL;
 	p = PFIND(pfs->pfs_pid);
 	if (p == 0)
-		return (EINVAL);
+		return ESRCH;
+	/*
+	 * Do not allow init to be modified while in secure mode; it
+	 * could be duped into changing the security level.
+	 */
+	if (uio->uio_rw == UIO_WRITE && p == initproc && securelevel > -1)
+		return EPERM;
 
 	curl = uio->uio_lwp;
 
@@ -281,67 +321,47 @@ procfs_rw(v)
 	l = proc_representative_lwp(p);
 
 	switch (pfs->pfs_type) {
-	case Pregs:
-	case Pfpregs:
-	case Pmem:
-#if defined(__HAVE_PROCFS_MACHDEP) && defined(PROCFS_MACHDEP_PROTECT_CASES)
-	PROCFS_MACHDEP_PROTECT_CASES
-#endif
-		/*
-		 * Do not allow init to be modified while in secure mode; it
-		 * could be duped into changing the security level.
-		 */
-		if (uio->uio_rw == UIO_WRITE &&
-		    p == initproc && securelevel > -1)
-			return (EPERM);
-		break;
-
-	default:
-		break;
-	}
-
-	switch (pfs->pfs_type) {
-	case Pnote:
-	case Pnotepg:
+	case PFSnote:
+	case PFSnotepg:
 		return (procfs_donote(curl, p, pfs, uio));
 
-	case Pregs:
+	case PFSregs:
 		return (procfs_doregs(curl, l, pfs, uio));
 
-	case Pfpregs:
+	case PFSfpregs:
 		return (procfs_dofpregs(curl, l, pfs, uio));
 
-	case Pctl:
+	case PFSctl:
 		return (procfs_doctl(curl, l, pfs, uio));
 
-	case Pstatus:
+	case PFSstatus:
 		return (procfs_dostatus(curl, l, pfs, uio));
 
-	case Pstat:
+	case PFSstat:
 		return (procfs_do_pid_stat(curl, l, pfs, uio));
 
-	case Pmap:
+	case PFSmap:
 		return (procfs_domap(curl, p, pfs, uio, 0));
 
-	case Pmaps:
+	case PFSmaps:
 		return (procfs_domap(curl, p, pfs, uio, 1));
 
-	case Pmem:
+	case PFSmem:
 		return (procfs_domem(curl, l, pfs, uio));
 
-	case Pcmdline:
+	case PFScmdline:
 		return (procfs_docmdline(curl, p, pfs, uio));
 
-	case Pmeminfo:
+	case PFSmeminfo:
 		return (procfs_domeminfo(curl, p, pfs, uio));
 
-	case Pcpuinfo:
+	case PFScpuinfo:
 		return (procfs_docpuinfo(curl, p, pfs, uio));
 
-	case Pfd:
+	case PFSfd:
 		return (procfs_dofd(curl, p, pfs, uio));
 
-	case Puptime:
+	case PFSuptime:
 		return (procfs_douptime(curl, p, pfs, uio));
 
 #ifdef __HAVE_PROCFS_MACHDEP

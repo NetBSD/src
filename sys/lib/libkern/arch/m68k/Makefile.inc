@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.24 2002/09/21 17:45:17 chs Exp $
+#	$NetBSD: Makefile.inc,v 1.24.6.1 2004/08/03 10:53:42 skrll Exp $
 
 SRCS+=	__main.c __assert.c \
 	imax.c imin.c lmax.c lmin.c max.c min.c ulmax.c ulmin.c \
@@ -9,10 +9,12 @@ SRCS+=	__main.c __assert.c \
 	strcpy.S strlen.S strncmp.S strncasecmp.c strncpy.S strrchr.S \
 	strtoul.c \
 	scanc.S skpc.S \
-	htonl.S htons.S ntohl.S ntohs.S
+	htonl.S htons.S ntohl.S ntohs.S \
+	ffs.S
 .if defined(MACHINE_ARCH) && (${MACHINE_ARCH} == "m68000")
 SRCS+=	mulsi3.S divsi3.S udivsi3.S modsi3.S umodsi3.S
-SRCS+=	ffs.c random.c
+SRCS+=	random.c
+random.o random.d: random.c
 .else
-SRCS+=	ffs.S random.S
+SRCS+=	random.S
 .endif

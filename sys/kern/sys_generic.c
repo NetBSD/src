@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_generic.c,v 1.76.2.1 2003/07/02 15:26:40 darrenr Exp $	*/
+/*	$NetBSD: sys_generic.c,v 1.76.2.2 2004/08/03 10:52:55 skrll Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -17,11 +17,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -41,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_generic.c,v 1.76.2.1 2003/07/02 15:26:40 darrenr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_generic.c,v 1.76.2.2 2004/08/03 10:52:55 skrll Exp $");
 
 #include "opt_ktrace.h"
 
@@ -66,8 +62,8 @@ __KERNEL_RCSID(0, "$NetBSD: sys_generic.c,v 1.76.2.1 2003/07/02 15:26:40 darrenr
 #include <sys/sa.h>
 #include <sys/syscallargs.h>
 
-int selscan __P((struct lwp *, fd_mask *, fd_mask *, int, register_t *));
-int pollscan __P((struct lwp *, struct pollfd *, int, register_t *));
+int selscan(struct lwp *, fd_mask *, fd_mask *, int, register_t *);
+int pollscan(struct lwp *, struct pollfd *, int, register_t *);
 
 /*
  * Read system call.
@@ -115,7 +111,7 @@ dofileread(struct lwp *l, int fd, struct file *fp, void *buf, size_t nbyte,
 	size_t cnt;
 	int error;
 #ifdef KTRACE
-	struct iovec ktriov;
+	struct iovec	ktriov = {0};
 #endif
 	p = l->l_proc;
 	error = 0;
@@ -274,7 +270,7 @@ dofilereadv(struct lwp *l, int fd, struct file *fp, const struct iovec *iovp,
 	cnt -= auio.uio_resid;
 #ifdef KTRACE
 	if (ktriov != NULL) {
-		if (error == 0)
+		if (KTRPOINT(p, KTR_GENIO) && (error == 0))
 			ktrgenio(l, fd, UIO_READ, ktriov, cnt, error);
 		free(ktriov, M_TEMP);
 	}
@@ -333,7 +329,7 @@ dofilewrite(struct lwp *l, int fd, struct file *fp, const void *buf,
 	size_t cnt;
 	int error;
 #ifdef KTRACE
-	struct iovec ktriov;
+	struct iovec	ktriov = {0};
 #endif
 
 	p = l->l_proc;
@@ -497,8 +493,8 @@ dofilewritev(struct lwp *l, int fd, struct file *fp, const struct iovec *iovp,
 	}
 	cnt -= auio.uio_resid;
 #ifdef KTRACE
-	if (KTRPOINT(p, KTR_GENIO))
-		if (error == 0) {
+	if (ktriov != NULL) {
+		if (KTRPOINT(p, KTR_GENIO) && (error == 0))
 			ktrgenio(l, fd, UIO_WRITE, ktriov, cnt, error);
 		free(ktriov, M_TEMP);
 	}
@@ -531,7 +527,6 @@ sys_ioctl(struct lwp *l, void *v, register_t *retval)
 	int		error;
 	u_int		size;
 	caddr_t		data, memp;
-	int		tmp;
 #define	STK_PARAMS	128
 	u_long		stkbuf[STK_PARAMS/sizeof(u_long)];
 
@@ -606,51 +601,19 @@ sys_ioctl(struct lwp *l, void *v, register_t *retval)
 	switch (com) {
 
 	case FIONBIO:
-		if ((tmp = *(int *)data) != 0)
+		if (*(int *)data != 0)
 			fp->f_flag |= FNONBLOCK;
 		else
 			fp->f_flag &= ~FNONBLOCK;
-		error = (*fp->f_ops->fo_ioctl)(fp, FIONBIO, (caddr_t)&tmp, l);
+		error = (*fp->f_ops->fo_ioctl)(fp, FIONBIO, data, l);
 		break;
 
 	case FIOASYNC:
-		if ((tmp = *(int *)data) != 0)
+		if (*(int *)data != 0)
 			fp->f_flag |= FASYNC;
 		else
 			fp->f_flag &= ~FASYNC;
-		error = (*fp->f_ops->fo_ioctl)(fp, FIOASYNC, (caddr_t)&tmp, l);
-		break;
-
-	case FIOSETOWN:
-		tmp = *(int *)data;
-		if (fp->f_type == DTYPE_SOCKET) {
-			((struct socket *)fp->f_data)->so_pgid = tmp;
-			error = 0;
-			break;
-		}
-		if (tmp <= 0) {
-			tmp = -tmp;
-		} else {
-			struct proc *p1 = pfind(tmp);
-			if (p1 == 0) {
-				error = ESRCH;
-				break;
-			}
-			tmp = p1->p_pgrp->pg_id;
-		}
-		error = (*fp->f_ops->fo_ioctl)
-			(fp, TIOCSPGRP, (caddr_t)&tmp, l);
-		break;
-
-	case FIOGETOWN:
-		if (fp->f_type == DTYPE_SOCKET) {
-			error = 0;
-			*(int *)data = ((struct socket *)fp->f_data)->so_pgid;
-			break;
-		}
-		error = (*fp->f_ops->fo_ioctl)(fp, TIOCGPGRP, data, l);
-		if (error == 0)
-			*(int *)data = -*(int *)data;
+		error = (*fp->f_ops->fo_ioctl)(fp, FIOASYNC, data, l);
 		break;
 
 	default:
@@ -912,7 +875,7 @@ sys_poll(struct lwp *l, void *v, register_t *retval)
 		goto retry;
 	}
 	l->l_flag &= ~L_SELECT;
-	error = tsleep((caddr_t)&selwait, PSOCK | PCATCH, "select", timo);
+	error = tsleep((caddr_t)&selwait, PSOCK | PCATCH, "poll", timo);
 	splx(s);
 	if (error == 0)
 		goto retry;

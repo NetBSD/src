@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.9 2002/05/16 19:30:41 wiz Exp $	*/
+/*	$NetBSD: main.c,v 1.9.8.1 2004/08/03 10:56:04 skrll Exp $	*/
 
 /*
  * TODO:
@@ -12,7 +12,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: main.c,v 1.9 2002/05/16 19:30:41 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: main.c,v 1.9.8.1 2004/08/03 10:56:04 skrll Exp $");
 
 #include <stdio.h>
 #include <strings.h>
@@ -69,7 +69,7 @@ usage(a)
 	fprintf(stderr, "\t\t-X<debugging file name>\n");
 	fprintf(stderr, "\t\t-K<directory name>\n");
 	fprintf(stderr, 
-	"\tThese names do NOT include the suffices (.c, .h)\n");
+	"\tThese names do NOT include the suffixes (.c, .h)\n");
 	fprintf(stderr, 
 	"\t\t-D<options> to turn on debug options for xebec itself\n");
 	fprintf(stderr, "\t-<nn> for levels of debugging output\n");

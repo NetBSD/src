@@ -1,4 +1,4 @@
-/*	$NetBSD: clnp_er.c,v 1.13 2003/05/25 08:47:54 is Exp $	*/
+/*	$NetBSD: clnp_er.c,v 1.13.2.1 2004/08/03 10:55:41 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -12,11 +12,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -63,7 +59,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clnp_er.c,v 1.13 2003/05/25 08:47:54 is Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clnp_er.c,v 1.13.2.1 2004/08/03 10:55:41 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/mbuf.h>
@@ -87,7 +83,7 @@ __KERNEL_RCSID(0, "$NetBSD: clnp_er.c,v 1.13 2003/05/25 08:47:54 is Exp $");
 #include <netiso/tp_param.h>
 #include <netiso/tp_var.h>
 
-static struct clnp_fixed er_template = {
+static const struct clnp_fixed er_template = {
 	ISO8473_CLNP,		/* network identifier */
 	0,			/* length */
 	ISO8473_V1,		/* version */
@@ -109,10 +105,10 @@ static struct clnp_fixed er_template = {
  * NOTES:
  */
 void
-clnp_er_input(m, src, reason)
-	struct mbuf    *m;	/* ptr to packet itself */
-	struct iso_addr *src;	/* ptr to src of er */
-	u_int           reason;	/* reason code of er */
+clnp_er_input(
+	struct mbuf    *m,	/* ptr to packet itself */
+	struct iso_addr *src,	/* ptr to src of er */
+	u_int           reason)	/* reason code of er */
 {
 	int             cmd = -1;
 
@@ -385,8 +381,7 @@ done:
 }
 
 int
-clnp_er_index(p)
-	u_int p;
+clnp_er_index(u_int p)
 {
 	u_char *cp = clnp_er_codes + CLNP_ERRORS;
 	while (cp > clnp_er_codes) {

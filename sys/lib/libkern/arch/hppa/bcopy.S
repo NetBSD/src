@@ -1,4 +1,4 @@
-/*	$NetBSD: bcopy.S,v 1.1 2002/06/06 20:03:38 fredette Exp $	*/
+/*	$NetBSD: bcopy.S,v 1.1.10.1 2004/08/03 10:53:42 skrll Exp $	*/
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
 #include <machine/frame.h>
  
 #if defined(LIBC_SCCS) && !defined(lint) 
-        RCSID("$NetBSD: bcopy.S,v 1.1 2002/06/06 20:03:38 fredette Exp $")
+RCSID("$NetBSD: bcopy.S,v 1.1.10.1 2004/08/03 10:53:42 skrll Exp $")
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -64,7 +64,7 @@
  * in the delay slot of the b instruction.
  */
 #define _STBYS_E_M(r, dst_spc, dst_off)				  \
-	comib,<>	4, t2, 4				! \
+	comib,<>	4, %t2, 4				! \
 	b		4					! \
 	stws,mb		r, -4(dst_spc, dst_off)			! \
 	stbys,e,m	r, 0(dst_spc, dst_off)
@@ -86,23 +86,23 @@
 	comib,>>=,n	15, count, _LABEL(_skip16)		! \
 .label _LABEL(_loop16)						! \
 	addi		-16, count, count			! \
-	ldws,cmplt	m*4(src_spc, src_off), t1		! \
-	ldws,cmplt	m*4(src_spc, src_off), t2		! \
-	ldws,cmplt	m*4(src_spc, src_off), t3		! \
-	ldws,cmplt	m*4(src_spc, src_off), t4		! \
-	stws,cmplt	t1, m*4(dst_spc, dst_off)		! \
-	stws,cmplt	t2, m*4(dst_spc, dst_off)		! \
-	stws,cmplt	t3, m*4(dst_spc, dst_off)		! \
+	ldws,cmplt	m*4(src_spc, src_off), %t1		! \
+	ldws,cmplt	m*4(src_spc, src_off), %t2		! \
+	ldws,cmplt	m*4(src_spc, src_off), %t3		! \
+	ldws,cmplt	m*4(src_spc, src_off), %t4		! \
+	stws,cmplt	%t1, m*4(dst_spc, dst_off)		! \
+	stws,cmplt	%t2, m*4(dst_spc, dst_off)		! \
+	stws,cmplt	%t3, m*4(dst_spc, dst_off)		! \
 	comib,<<	15, count, _LABEL(_loop16)		! \
-	stws,cmplt	t4, m*4(dst_spc, dst_off)		! \
+	stws,cmplt	%t4, m*4(dst_spc, dst_off)		! \
 .label _LABEL(_skip16)						! \
 								! \
 	/* Loop storing 4 bytes at a time. */			! \
 	addib,<,n	-4, count, _LABEL(_skip4)		! \
 .label _LABEL(_loop4)						! \
-	ldws,cmplt	m*4(src_spc, src_off), t1		! \
+	ldws,cmplt	m*4(src_spc, src_off), %t1		! \
 	addib,>=	-4, count, _LABEL(_loop4)		! \
-	stws,cmplt	t1, m*4(dst_spc, dst_off)		! \
+	stws,cmplt	%t1, m*4(dst_spc, dst_off)		! \
 .label _LABEL(_skip4)						! \
 	/* Restore the correct count. */			! \
 	addi		4, count, count				! \
@@ -112,9 +112,9 @@
 	/* Loop storing 1 byte at a time. */			! \
 	addib,<,n	-1, count, _LABEL(_skip1)		! \
 .label _LABEL(_loop1)						! \
-	ldbs,cmplt	m*1(src_spc, src_off), t1		! \
+	ldbs,cmplt	m*1(src_spc, src_off), %t1		! \
 	addib,>=	-1, count, _LABEL(_loop1)		! \
-	stbs,cmplt	t1, m*1(dst_spc, dst_off)		! \
+	stbs,cmplt	%t1, m*1(dst_spc, dst_off)		! \
 .label _LABEL(_skip1)						! \
 	/* Restore the correct count. */			! \
 	b		_LABEL(_done)				! \
@@ -131,9 +131,9 @@
  * to get data to line up correctly in the destination buffer.
  *
  * The _COPYS macro is used when copying backwards, as well
- * as forwards.  The 4-word loop always loads into t1, t2, t3,
- * and t4 in that order.  This means that when copying forward,
- * t1 will have the word from the lowest address, and t4 will
+ * as forwards.  The 4-word loop always loads into %t1, %t2, %t3,
+ * and %t4 in that order.  This means that when copying forward,
+ * %t1 will have the word from the lowest address, and %t4 will
  * have the word from the highest address.  When copying 
  * backwards, the opposite is true.
  *
@@ -160,15 +160,15 @@
  * below.
  *
  * When copying forward, then, the first register used with
- * the first vshd will be 19 + (3 - ((0 - 1) & 3)), or t4,
+ * the first vshd will be 19 + (3 - ((0 - 1) & 3)), or %t4,
  * which matches _COPYS' requirement that the word last loaded
- * be in t4.  The first register used for the second vshd 
- * will then "wrap" around to 19 + (3 - ((1 - 1) & 3)), or t1.
- * And so on to t2 and t3.
+ * be in %t4.  The first register used for the second vshd 
+ * will then "wrap" around to 19 + (3 - ((1 - 1) & 3)), or %t1.
+ * And so on to %t2 and %t3.
  *
  * When copying forward, the second register used with the first 
- * vshd will be (19 + (3 - ((n + 0) & 3)), or t1.  It will 
- * continue to be t2, then t3, and finally t4.
+ * vshd will be (19 + (3 - ((n + 0) & 3)), or %t1.  It will 
+ * continue to be %t2, then %t3, and finally %t4.
  *
  * When copying backwards, the values for the first and second 
  * register for each vshd are reversed from the forwards case.  
@@ -185,7 +185,7 @@
  * This macro does a bulk copy with shifting.  cmplt and m are 
  * the completer and displacement multiplier, respectively, for 
  * the load and store instructions.  It is assumed that the
- * word last loaded is already in t4.
+ * word last loaded is already in %t4.
  */
 #define _COPYS(src_spc, src_off, dst_spc, dst_off, count, cmplt, m) \
 								! \
@@ -199,27 +199,27 @@
 	comib,>>=,n	15, count, _LABEL(S_skip16)		! \
 .label _LABEL(S_loop16)						! \
 	addi		-16, count, count			! \
-	ldws,cmplt	m*4(src_spc, src_off), t1		! \
-	ldws,cmplt	m*4(src_spc, src_off), t2		! \
-	ldws,cmplt	m*4(src_spc, src_off), t3		! \
-	_VSHD(0, m, 1)	/* vshd t4, t1, %r1 */			! \
-	ldws,cmplt	m*4(src_spc, src_off), t4		! \
-	_VSHD(1, m, 22)	/* vshd t1, t2, t1 */			! \
-	_VSHD(2, m, 21)	/* vshd t2, t3, t2 */			! \
-	_VSHD(3, m, 20)	/* vshd t3, t4, t3 */			! \
+	ldws,cmplt	m*4(src_spc, src_off), %t1		! \
+	ldws,cmplt	m*4(src_spc, src_off), %t2		! \
+	ldws,cmplt	m*4(src_spc, src_off), %t3		! \
+	_VSHD(0, m, 1)	/* vshd %t4, %t1, %r1 */		! \
+	ldws,cmplt	m*4(src_spc, src_off), %t4		! \
+	_VSHD(1, m, 22)	/* vshd %t1, %t2, %t1 */		! \
+	_VSHD(2, m, 21)	/* vshd %t2, %t3, %t2 */		! \
+	_VSHD(3, m, 20)	/* vshd %t3, %t4, %t3 */		! \
 	stws,cmplt	%r1, m*4(dst_spc, dst_off)		! \
-	stws,cmplt	t1, m*4(dst_spc, dst_off)		! \
-	stws,cmplt	t2, m*4(dst_spc, dst_off)		! \
+	stws,cmplt	%t1, m*4(dst_spc, dst_off)		! \
+	stws,cmplt	%t2, m*4(dst_spc, dst_off)		! \
 	comib,<<	15, count, _LABEL(S_loop16)		! \
-	stws,cmplt	t3, m*4(dst_spc, dst_off)		! \
+	stws,cmplt	%t3, m*4(dst_spc, dst_off)		! \
 .label _LABEL(S_skip16)						! \
 								! \
 	/* Loop storing 4 bytes at a time. */			! \
 	addib,<,n	-4, count, _LABEL(S_skip4)		! \
 .label _LABEL(S_loop4)						! \
-	ldws,cmplt	m*4(src_spc, src_off), t1		! \
-	_VSHD(0, m, 1)	/* into r1 (1) */			! \
-	copy		t1, t4					! \
+	ldws,cmplt	m*4(src_spc, src_off), %t1		! \
+	_VSHD(0, m, 1)	/* into %r1 (1) */			! \
+	copy		%t1, %t4				! \
 	addib,>=	-4, count, _LABEL(S_loop4)		! \
 	stws,cmplt	%r1, m*4(dst_spc, dst_off)		! \
 .label _LABEL(S_skip4)						! \
@@ -227,7 +227,7 @@
 	/*							! \
  	 * We now need to "back up" src_off by the		! \
 	 * number of bytes remaining in the FIFO		! \
-	 * (i.e., the number of bytes remaining in t4),		! \
+	 * (i.e., the number of bytes remaining in %t4),	! \
 	 * because (the correct) count still includes		! \
 	 * these bytes, and we intent to keep it that		! \
 	 * way, and finish with the single-byte copier.		! \
@@ -236,9 +236,9 @@
 	 * related to the shift count, so recover it,		! \
 	 * restoring the correct count at the same time.	! \
 	 */							! \
-	mfctl	%cr11, t1					! \
+	mfctl	%cr11, %t1					! \
 	addi	4, count, count					! \
-	shd	%r0, t1, 3, t1					! \
+	shd	%r0, %t1, 3, %t1				! \
 								! \
 	/*							! \
 	 * If we're copying forward, the shift count		! \
@@ -253,11 +253,11 @@
 	 * m is -1, although this does mean one extra		! \
 	 * instruction in the forward case.			! \
 	 */							! \
-	addi	4*((m - 1) / 2), t1, t1				! \
+	addi	4*((m - 1) / 2), %t1, %t1			! \
 								! \
 	/* Now branch to the byte-at-a-time loop. */		! \
 	b	_LABEL(_do1)					! \
-	sub	src_off, t1, src_off
+	sub	src_off, %t1, src_off
 
 /*
  * This macro copies a region in the forward direction.
@@ -278,10 +278,10 @@
 	 * will be in the first 4-byte word we read.		! \
 	 * Ditto for writing the destination offset.		! \
 	 */							! \
-	extru		src_off, 31, 2, t1			! \
-	extru		dst_off, 31, 2, t2			! \
-	subi		4, t1, t1				! \
-	subi		4, t2, t2				! \
+	extru		src_off, 31, 2, %t1			! \
+	extru		dst_off, 31, 2, %t2			! \
+	subi		4, %t1, %t1				! \
+	subi		4, %t2, %t2				! \
 								! \
 	/*							! \
 	 * Calculate the byte shift required.  A 		! \
@@ -289,7 +289,7 @@
 	 * has to be shifted to the right to line up 		! \
 	 * as a destination 4-byte word.			! \
 	 */							! \
-	sub		t1, t2, t1				! \
+	sub		%t1, %t2, %t1				! \
 								! \
 	/* 4-byte align src_off. */				! \
 	depi		0, 31, 2, src_off			! \
@@ -310,12 +310,12 @@
 	 * If the shift is zero, strictly as an optimization	! \
 	 * we use a copy loop that does no shifting.		! \
 	 */							! \
-	comb,<>		%r0, t1, _LABEL(_shifting)		! \
-	sub		count, t2, count			! \
+	comb,<>		%r0, %t1, _LABEL(_shifting)		! \
+	sub		count, %t2, count			! \
 								! \
 	/* Load and store the first word. */			! \
-	ldws,ma		4(src_spc, src_off), t4			! \
-	stbys,b,m	t4, 4(dst_spc, dst_off)			! \
+	ldws,ma		4(src_spc, src_off), %t4		! \
+	stbys,b,m	%t4, 4(dst_spc, dst_off)		! \
 								! \
 	/* Do the rest of the copy. */				! \
 	_COPY(src_spc,src_off,dst_spc,dst_off,count,ma,1)	! \
@@ -330,10 +330,10 @@
 	 * the FIFO.  Otherwise, we load a zero into the	! \
 	 * high word of the FIFO.				! \
 	 */							! \
-	comb,<=		%r0, t1, _LABEL(_shiftingrt)		! \
-	copy		%r0, t3					! \
-	addi		4, t1, t1				! \
-	ldws,ma		4(src_spc, src_off), t3			! \
+	comb,<=		%r0, %t1, _LABEL(_shiftingrt)		! \
+	copy		%r0, %t3				! \
+	addi		4, %t1, %t1				! \
+	ldws,ma		4(src_spc, src_off), %t3		! \
 .label _LABEL(_shiftingrt)					! \
 								! \
 	/*							! \
@@ -341,10 +341,10 @@
 	 * load the next word, set the Shift Amount 		! \
 	 * Register, and form and store the first word.		! \
 	 */							! \
-	sh3add		t1, %r0, t1				! \
-	ldws,ma		4(src_spc, src_off), t4			! \
-	mtctl		t1, %cr11				! \
-	vshd		t3, t4, %r1				! \
+	sh3add		%t1, %r0, %t1				! \
+	ldws,ma		4(src_spc, src_off), %t4		! \
+	mtctl		%t1, %cr11				! \
+	vshd		%t3, %t4, %r1				! \
 	stbys,b,m	%r1, 4(dst_spc, dst_off)		! \
 								! \
 	/* Do the rest of the copy. */				! \
@@ -372,10 +372,10 @@
 	 * will be in the first 4-byte word we read.		! \
 	 * Ditto for writing the destination offset.		! \
 	 */							! \
-	extru,<>	src_off, 31, 2, t1			! \
-	ldi		4, t1					! \
-	extru,<>	dst_off, 31, 2, t2			! \
-	ldi		4, t2					! \
+	extru,<>	src_off, 31, 2, %t1			! \
+	ldi		4, %t1					! \
+	extru,<>	dst_off, 31, 2, %t2			! \
+	ldi		4, %t2					! \
 								! \
 	/*							! \
 	 * Calculate the byte shift required.  A 		! \
@@ -383,7 +383,7 @@
 	 * word has to be shifted to the right to 		! \
 	 * line up as a destination 4-byte word.		! \
 	 */							! \
-	sub		t2, t1, t1				! \
+	sub		%t2, %t1, %t1				! \
 								! \
 	/*							! \
 	 * 4-byte align src_off, leaving it pointing 		! \
@@ -410,13 +410,13 @@
 	 * of vshd.						! \
 	 */							! \
 	addi		3, src_off, src_off			! \
-	sub		count, t2, count			! \
-	comb,<>		%r0, t1, _LABEL(_shifting)		! \
+	sub		count, %t2, count			! \
+	comb,<>		%r0, %t1, _LABEL(_shifting)		! \
 	depi		0, 31, 2, src_off			! \
 								! \
 	/* Load and store the first word. */			! \
-	ldws,mb		-4(src_spc, src_off), t4		! \
-	_STBYS_E_M(t4, dst_spc, dst_off)			! \
+	ldws,mb		-4(src_spc, src_off), %t4		! \
+	_STBYS_E_M(%t4, dst_spc, dst_off)			! \
 								! \
 	/* Do the rest of the copy. */				! \
 	_COPY(src_spc,src_off,dst_spc,dst_off,count,mb,-1)	! \
@@ -439,20 +439,20 @@
  	 * shifting to the left, so we nullify the load.	! \
 	 * we branch if we're shifting to the 			! \
 	 */							! \
-	copy		%r0, t3					! \
-	comb,<=,n	%r0, t1, 0				! \
-	addi,tr		4, t1, t1				! \
-	ldws,mb		-4(src_spc, src_off), t3		! \
+	copy		%r0, %t3				! \
+	comb,<=,n	%r0, %t1, 0				! \
+	addi,tr		4, %t1, %t1				! \
+	ldws,mb		-4(src_spc, src_off), %t3		! \
 								! \
 	/*							! \
 	 * Turn the shift byte count into a bit count,		! \
 	 * load the next word, set the Shift Amount 		! \
 	 * Register, and form and store the first word.		! \
 	 */							! \
-	sh3add		t1, %r0, t1				! \
-	ldws,mb		-4(src_spc, src_off), t4		! \
-	mtctl		t1, %cr11				! \
-	vshd		t4, t3, %r1				! \
+	sh3add		%t1, %r0, %t1				! \
+	ldws,mb		-4(src_spc, src_off), %t4		! \
+	mtctl		%t1, %cr11				! \
+	vshd		%t4, %t3, %r1				! \
 	_STBYS_E_M(%r1, dst_spc, dst_off)			! \
 								! \
 	/* Do the rest of the copy. */				! \
@@ -504,46 +504,46 @@ LEAF_ENTRY(spcopy)
 	 * Setup the fault handler, and load %ret0
 	 * with EFAULT, assuming the copy will fail.
 	 */
-	.import	curproc, data
-        ldil    L%curproc, %r31
-        ldw     R%curproc(%r31), %r31
+	.import	curlwp, data
+	ldil    L%curlwp, %r31
+	ldw     R%curlwp(%r31), %r31
 #ifdef	DIAGNOSTIC
-	comb,<>,n %r0, %r31, Lspcopy_curproc_ok
+	comb,<>,n %r0, %r31, Lspcopy_curlwp_ok
 	ldil	L%panic, %r1 
-	ldil	L%Lspcopy_curproc_bad, %arg0
+	ldil	L%Lspcopy_curlwp_bad, %arg0
 	ldo	R%panic(%r1), %r1
-	ldo	R%Lspcopy_curproc_bad(%arg0), %arg0
+	ldo	R%Lspcopy_curlwp_bad(%arg0), %arg0
 	.call
 	bv,n    %r0(%r1)
 	nop
-Lspcopy_curproc_bad
-	.asciz	"spcopy: curproc == NULL\n"
+Lspcopy_curlwp_bad:
+	.asciz	"spcopy: curlwp == NULL\n"
 	.align	8
-Lspcopy_curproc_ok
+Lspcopy_curlwp_ok:
 #endif /* DIAGNOSTIC */
-        ldil    L%spcopy_fault, %r1
-        ldw     P_ADDR(%r31), %r31
-        ldo     R%spcopy_fault(%r1), %r1
+	ldil    L%spcopy_fault, %r1
+	ldw     L_ADDR(%r31), %r31
+	ldo     R%spcopy_fault(%r1), %r1
 	ldi	EFAULT, %ret0
-        stw     %r1, U_PCB+PCB_ONFAULT(%r31)
+	stw     %r1, U_PCB+PCB_ONFAULT(%r31)
 
 	/* Setup the space registers. */
-	mfsp	sr2, %ret1
-	mtsp	%arg0, sr1
-	mtsp	%arg2, sr2
+	mfsp	%sr2, %ret1
+	mtsp	%arg0, %sr1
+	mtsp	%arg2, %sr2
 
 	/* Get the len argument and do the copy. */
-	ldw	HPPA_FRAME_ARG(4)(sp), %arg0
+	ldw	HPPA_FRAME_ARG(4)(%sp), %arg0
 #define	_LABEL(l) __CONCAT(spcopy,l)
-	_COPY_FORWARD(sr1,%arg1,sr2,%arg3,%arg0)
-_LABEL(_done)
+	_COPY_FORWARD(%sr1,%arg1,%sr2,%arg3,%arg0)
+_LABEL(_done):
 
 	/* Return. */
 	copy	%r0, %ret0
 ALTENTRY(spcopy_fault)
-        stw     %r0, U_PCB+PCB_ONFAULT(%r31)
+	stw     %r0, U_PCB+PCB_ONFAULT(%r31)
 	bv	%r0(%rp)
-	mtsp	%ret1, sr2
+	mtsp	%ret1, %sr2
 EXIT(spcopy)
 #endif /* SPCOPY && !_STANDALONE */
 
@@ -557,8 +557,8 @@ EXIT(spcopy)
 LEAF_ENTRY(memcpy)
 	copy	%arg0, %ret0
 #define	_LABEL(l) __CONCAT(memcpy,l)
-	_COPY_FORWARD(sr0,%arg1,sr0,%arg0,%arg2)
-_LABEL(_done)
+	_COPY_FORWARD(%sr0,%arg1,%sr0,%arg0,%arg2)
+_LABEL(_done):
 	bv,n	%r0(%rp)
 	nop
 EXIT(memcpy)
@@ -598,16 +598,16 @@ LEAF_ENTRY(memmove)
 	comb,>>,n	%r1, %arg0, _LABEL_R(_go)
 
 #define _LABEL _LABEL_F
-	_COPY_FORWARD(sr0,%arg1,sr0,%arg0,%arg2)
+	_COPY_FORWARD(%sr0,%arg1,%sr0,%arg0,%arg2)
 #undef _LABEL
 
-_LABEL_R(_go)
+_LABEL_R(_go):
 #define _LABEL _LABEL_R
-	_COPY_REVERSE(sr0,%arg1,sr0,%arg0,%arg2)
+	_COPY_REVERSE(%sr0,%arg1,%sr0,%arg0,%arg2)
 #undef _LABEL
 	
-_LABEL_F(_done)
-_LABEL_R(_done)
+_LABEL_F(_done):
+_LABEL_R(_done):
 	bv,n	%r0(%rp)
 	nop
 #ifdef BCOPY

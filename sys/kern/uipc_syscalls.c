@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_syscalls.c,v 1.81.2.1 2003/07/02 15:26:45 darrenr Exp $	*/
+/*	$NetBSD: uipc_syscalls.c,v 1.81.2.2 2004/08/03 10:52:58 skrll Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1990, 1993
@@ -12,11 +12,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -36,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls.c,v 1.81.2.1 2003/07/02 15:26:45 darrenr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls.c,v 1.81.2.2 2004/08/03 10:52:58 skrll Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_pipe.h"
@@ -94,7 +90,7 @@ sys_socket(struct lwp *l, void *v, register_t *retval)
 	fp->f_type = DTYPE_SOCKET;
 	fp->f_ops = &socketops;
 	error = socreate(SCARG(uap, domain), &so, SCARG(uap, type),
-			 SCARG(uap, protocol));
+			 SCARG(uap, protocol), l);
 	if (error) {
 		FILE_UNUSE(fp, l);
 		fdremove(fdp, fd);
@@ -179,13 +175,9 @@ sys_accept(struct lwp *l, void *v, register_t *retval)
 
 	p = l->l_proc;
 	fdp = p->p_fd;
-	if (SCARG(uap, name) && (error = copyin((caddr_t)SCARG(uap, anamelen),
-	    (caddr_t)&namelen, sizeof(namelen))))
+	if (SCARG(uap, name) && (error = copyin(SCARG(uap, anamelen),
+	    &namelen, sizeof(namelen))))
 		return (error);
-	if (SCARG(uap, name) != NULL &&
-	    uvm_useracc((caddr_t)SCARG(uap, name), sizeof(struct sockaddr),
-	     B_WRITE) == FALSE)
-		return (EFAULT);
 
 	/* getsock() will use the descriptor for us */
 	if ((error = getsock(fdp, SCARG(uap, s), &fp)) != 0)
@@ -280,13 +272,14 @@ sys_connect(struct lwp *l, void *v, register_t *retval)
 	struct socket	*so;
 	struct mbuf	*nam;
 	int		error, s;
+	int		interrupted = 0;
 
 	p = l->l_proc;
 	/* getsock() will use the descriptor for us */
 	if ((error = getsock(p->p_fd, SCARG(uap, s), &fp)) != 0)
 		return (error);
 	so = (struct socket *)fp->f_data;
-	if ((so->so_state & SS_NBIO) && (so->so_state & SS_ISCONNECTING)) {
+	if (so->so_state & SS_ISCONNECTING) {
 		error = EALREADY;
 		goto out;
 	}
@@ -295,7 +288,7 @@ sys_connect(struct lwp *l, void *v, register_t *retval)
 	if (error)
 		goto out;
 	MCLAIM(nam, so->so_mowner);
-	error = soconnect(so, nam);
+	error = soconnect(so, nam, l);
 	if (error)
 		goto bad;
 	if ((so->so_state & SS_NBIO) && (so->so_state & SS_ISCONNECTING)) {
@@ -307,8 +300,11 @@ sys_connect(struct lwp *l, void *v, register_t *retval)
 	while ((so->so_state & SS_ISCONNECTING) && so->so_error == 0) {
 		error = tsleep((caddr_t)&so->so_timeo, PSOCK | PCATCH,
 			       netcon, 0);
-		if (error)
+		if (error) {
+			if (error == EINTR || error == ERESTART)
+				interrupted = 1;
 			break;
+		}
 	}
 	if (error == 0) {
 		error = so->so_error;
@@ -316,7 +312,8 @@ sys_connect(struct lwp *l, void *v, register_t *retval)
 	}
 	splx(s);
  bad:
-	so->so_state &= ~SS_ISCONNECTING;
+	if (!interrupted)
+		so->so_state &= ~SS_ISCONNECTING;
 	m_freem(nam);
 	if (error == ERESTART)
 		error = EINTR;
@@ -343,11 +340,11 @@ sys_socketpair(struct lwp *l, void *v, register_t *retval)
 	p = l->l_proc;
 	fdp = p->p_fd;
 	error = socreate(SCARG(uap, domain), &so1, SCARG(uap, type),
-			 SCARG(uap, protocol));
+			 SCARG(uap, protocol), l);
 	if (error)
 		return (error);
 	error = socreate(SCARG(uap, domain), &so2, SCARG(uap, type),
-			 SCARG(uap, protocol));
+			 SCARG(uap, protocol), l);
 	if (error)
 		goto free1;
 	/* falloc() will use the descriptor for us */
@@ -536,7 +533,7 @@ sendit(struct lwp *l, int s, struct msghdr *mp, int flags, register_t *retsize)
 	}
 #endif
 	len = auio.uio_resid;
-	error = (*so->so_send)(so, to, &auio, NULL, control, flags);
+	error = (*so->so_send)(so, to, &auio, NULL, control, flags, l);
 	if (error) {
 		if (auio.uio_resid != len && (error == ERESTART ||
 		    error == EINTR || error == EWOULDBLOCK))
@@ -906,9 +903,9 @@ sys_pipe(struct lwp *l, void *v, register_t *retval)
 
 	p = l->l_proc;
 	fdp = p->p_fd;
-	if ((error = socreate(AF_LOCAL, &rso, SOCK_STREAM, 0)) != 0)
+	if ((error = socreate(AF_LOCAL, &rso, SOCK_STREAM, 0, p)) != 0)
 		return (error);
-	if ((error = socreate(AF_LOCAL, &wso, SOCK_STREAM, 0)) != 0)
+	if ((error = socreate(AF_LOCAL, &wso, SOCK_STREAM, 0, p)) != 0)
 		goto free1;
 	/* remember this socket pair implements a pipe */
 	wso->so_state |= SS_ISAPIPE;
@@ -928,7 +925,7 @@ sys_pipe(struct lwp *l, void *v, register_t *retval)
 	wf->f_ops = &socketops;
 	wf->f_data = (caddr_t)wso;
 	retval[1] = fd;
-	if ((error = unp_connect2(wso, rso)) != 0)
+	if ((error = unp_connect2(wso, rso, PRU_CONNECT2)) != 0)
 		goto free4;
 	FILE_SET_MATURE(rf);
 	FILE_SET_MATURE(wf);

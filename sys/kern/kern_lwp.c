@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lwp.c,v 1.8 2003/06/23 11:02:05 martin Exp $	*/
+/*	$NetBSD: kern_lwp.c,v 1.8.2.1 2004/08/03 10:52:47 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -36,6 +36,9 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.8.2.1 2004/08/03 10:52:47 skrll Exp $");
+
 #include "opt_multiprocessor.h"
 
 #include <sys/param.h>
@@ -54,8 +57,6 @@
 #include <uvm/uvm_extern.h>
 
 struct lwplist alllwp;
-struct lwplist deadlwp;
-struct lwplist zomblwp;
 
 #define LWP_DEBUG
 
@@ -107,9 +108,9 @@ sys__lwp_create(struct lwp *l, void *v, register_t *retval)
 		l2->l_stat = LSRUN;
 		setrunqueue(l2);
 		SCHED_UNLOCK(s);
-		simple_lock(&p->p_lwplock);
+		simple_lock(&p->p_lock);
 		p->p_nrlwps++;
-		simple_unlock(&p->p_lwplock);
+		simple_unlock(&p->p_lock);
 	} else {
 		l2->l_stat = LSSUSPENDED;
 	}
@@ -174,8 +175,8 @@ sys__lwp_suspend(struct lwp *l, void *v, register_t *retval)
 	} */ *uap = v;
 	int target_lid;
 	struct proc *p = l->l_proc;
-	struct lwp *t, *t2;
-	int s;
+	struct lwp *t;
+	struct lwp *t2;
 
 	target_lid = SCARG(uap, target);
 
@@ -198,11 +199,22 @@ sys__lwp_suspend(struct lwp *l, void *v, register_t *retval)
 
 		if (t2 == NULL) /* All other LWPs are suspended */
 			return (EDEADLK);
+	}
 
+	return lwp_suspend(l, t);
+}
+
+inline int
+lwp_suspend(struct lwp *l, struct lwp *t)
+{
+	struct proc *p = t->l_proc;
+	int s;
+
+	if (t == l) {
 		SCHED_LOCK(s);
 		l->l_stat = LSSUSPENDED;
 		/* XXX NJWLWP check if this makes sense here: */
-		l->l_proc->p_stats->p_ru.ru_nvcsw++;
+		p->p_stats->p_ru.ru_nvcsw++;
 		mi_switch(l, NULL);
 		SCHED_ASSERT_UNLOCKED();
 		splx(s);
@@ -215,15 +227,14 @@ sys__lwp_suspend(struct lwp *l, void *v, register_t *retval)
 			remrunqueue(t);
 			t->l_stat = LSSUSPENDED;
 			SCHED_UNLOCK(s);
-			simple_lock(&p->p_lwplock);
+			simple_lock(&p->p_lock);
 			p->p_nrlwps--;
-			simple_unlock(&p->p_lwplock);
+			simple_unlock(&p->p_lock);
 			break;
 		case LSSLEEP:
 			t->l_stat = LSSUSPENDED;
 			break;
 		case LSIDL:
-		case LSDEAD:
 		case LSZOMB:
 			return (EINTR); /* It's what Solaris does..... */
 		case LSSTOP:
@@ -245,7 +256,7 @@ sys__lwp_continue(struct lwp *l, void *v, register_t *retval)
 	struct sys__lwp_continue_args /* {
 		syscallarg(lwpid_t) target;
 	} */ *uap = v;
-	int target_lid;
+	int s, target_lid;
 	struct proc *p = l->l_proc;
 	struct lwp *t;
 
@@ -258,7 +269,9 @@ sys__lwp_continue(struct lwp *l, void *v, register_t *retval)
 	if (t == NULL)
 		return (ESRCH);
 
+	SCHED_LOCK(s);
 	lwp_continue(t);
+	SCHED_UNLOCK(s);
 
 	return (0);
 }
@@ -266,7 +279,6 @@ sys__lwp_continue(struct lwp *l, void *v, register_t *retval)
 void
 lwp_continue(struct lwp *l)
 {
-	int s;
 
 	DPRINTF(("lwp_continue of %d.%d (%s), state %d, wchan %p\n",
 	    l->l_proc->p_pid, l->l_lid, l->l_proc->p_comm, l->l_stat,
@@ -277,9 +289,7 @@ lwp_continue(struct lwp *l)
 
 	if (l->l_wchan == 0) {
 		/* LWP was runnable before being suspended. */
-		SCHED_LOCK(s);
 		setrunnable(l);
-		SCHED_UNLOCK(s);
 	} else {
 		/* LWP was sleeping before being suspended. */
 		l->l_stat = LSSLEEP;
@@ -295,26 +305,43 @@ sys__lwp_wakeup(struct lwp *l, void *v, register_t *retval)
 	lwpid_t target_lid;
 	struct lwp *t;
 	struct proc *p;
+	int error;
+	int s;
 
 	p = l->l_proc;
 	target_lid = SCARG(uap, target);
+
+	SCHED_LOCK(s);
 
 	LIST_FOREACH(t, &p->p_lwps, l_sibling)
 		if (t->l_lid == target_lid)
 			break;
 
-	if (t == NULL)
-		return (ESRCH);
+	if (t == NULL) {
+		error = ESRCH;
+		goto exit;
+	}
 
-	if (t->l_stat != LSSLEEP)
-		return (ENODEV);
+	if (t->l_stat != LSSLEEP) {
+		error = ENODEV;
+		goto exit;
+	}
 
-	if ((t->l_flag & L_SINTR) == 0)
-		return (EBUSY);
+	if ((t->l_flag & L_SINTR) == 0) {
+		error = EBUSY;
+		goto exit;
+	}
+	/*
+	 * Tell ltsleep to wakeup.
+	 */
+	t->l_flag |= L_CANCELLED;
 
 	setrunnable(t);
+	error = 0;
+exit:
+	SCHED_UNLOCK(s);
 
-	return 0;
+	return error;
 }
 
 int
@@ -345,12 +372,11 @@ sys__lwp_wait(struct lwp *l, void *v, register_t *retval)
 int
 lwp_wait1(struct lwp *l, lwpid_t lid, lwpid_t *departed, int flags)
 {
-
 	struct proc *p = l->l_proc;
 	struct lwp *l2, *l3;
-	int nfound, error, s, wpri;
-	static char waitstr1[] = "lwpwait";
-	static char waitstr2[] = "lwpwait2";
+	int nfound, error, wpri;
+	static const char waitstr1[] = "lwpwait";
+	static const char waitstr2[] = "lwpwait2";
 
 	DPRINTF(("lwp_wait1: %d.%d waiting for %d.\n",
 	    p->p_pid, l->l_lid, lid));
@@ -372,15 +398,11 @@ lwp_wait1(struct lwp *l, lwpid_t lid, lwpid_t *departed, int flags)
 			if (departed)
 				*departed = l2->l_lid;
 
-			s = proclist_lock_write();
-			LIST_REMOVE(l2, l_zlist); /* off zomblwp */
-			proclist_unlock_write(s);
-
-			simple_lock(&p->p_lwplock);
+			simple_lock(&p->p_lock);
 			LIST_REMOVE(l2, l_sibling);
 			p->p_nlwps--;
 			p->p_nzlwps--;
-			simple_unlock(&p->p_lwplock);
+			simple_unlock(&p->p_lock);
 			/* XXX decrement limits */
 
 			pool_put(&lwp_pool, l2);
@@ -445,7 +467,6 @@ newlwp(struct lwp *l1, struct proc *p2, vaddr_t uaddr, boolean_t inmem,
 	l2->l_forw = l2->l_back = NULL;
 	l2->l_proc = p2;
 
-
 	memset(&l2->l_startzero, 0,
 	       (unsigned) ((caddr_t)&l2->l_endzero -
 			   (caddr_t)&l2->l_startzero));
@@ -465,7 +486,7 @@ newlwp(struct lwp *l1, struct proc *p2, vaddr_t uaddr, boolean_t inmem,
 	l2->l_cpu = l1->l_cpu;
 #else
 	/*
-	 * zero child's cpu pointer so we don't get trash.
+	 * zero child's CPU pointer so we don't get trash.
 	 */
 	l2->l_cpu = NULL;
 #endif /* ! MULTIPROCESSOR */
@@ -482,17 +503,19 @@ newlwp(struct lwp *l1, struct proc *p2, vaddr_t uaddr, boolean_t inmem,
 	uvm_lwp_fork(l1, l2, stack, stacksize, func,
 	    (arg != NULL) ? arg : l2);
 
-
-	simple_lock(&p2->p_lwplock);
+	simple_lock(&p2->p_lock);
 	l2->l_lid = ++p2->p_nlwpid;
 	LIST_INSERT_HEAD(&p2->p_lwps, l2, l_sibling);
 	p2->p_nlwps++;
-	simple_unlock(&p2->p_lwplock);
+	simple_unlock(&p2->p_lock);
 
 	/* XXX should be locked differently... */
 	s = proclist_lock_write();
 	LIST_INSERT_HEAD(&alllwp, l2, l_list);
 	proclist_unlock_write(s);
+
+	if (p2->p_emul->e_lwp_fork)
+		(*p2->p_emul->e_lwp_fork)(l1, l2);
 
 	return (0);
 }
@@ -513,6 +536,9 @@ lwp_exit(struct lwp *l)
 	DPRINTF((" nlwps: %d nrlwps %d nzlwps: %d\n",
 	    p->p_nlwps, p->p_nrlwps, p->p_nzlwps));
 
+	if (p->p_emul->e_lwp_exit)
+		(*p->p_emul->e_lwp_exit)(l);
+
 	/*
 	 * If we are the last live LWP in a process, we need to exit
 	 * the entire process (if that's not already going on). We do
@@ -523,41 +549,71 @@ lwp_exit(struct lwp *l)
 		DPRINTF(("lwp_exit: %d.%d calling exit1()\n",
 		    p->p_pid, l->l_lid));
 		exit1(l, 0);
+		/* NOTREACHED */
 	}
 
 	s = proclist_lock_write();
 	LIST_REMOVE(l, l_list);
-	if ((l->l_flag & L_DETACHED) == 0) {
-		DPRINTF(("lwp_exit: %d.%d going on zombie list\n", p->p_pid,
-		    l->l_lid));
-		LIST_INSERT_HEAD(&zomblwp, l, l_zlist);
-	}
 	proclist_unlock_write(s);
 
-	simple_lock(&p->p_lwplock);
+	/* Free MD LWP resources */
+#ifndef __NO_CPU_LWP_FREE
+	cpu_lwp_free(l, 0);
+#endif
+
+	simple_lock(&p->p_lock);
 	p->p_nrlwps--;
-	simple_unlock(&p->p_lwplock);
+	simple_unlock(&p->p_lock);
 
 	l->l_stat = LSDEAD;
 
 	/* This LWP no longer needs to hold the kernel lock. */
 	KERNEL_PROC_UNLOCK(l);
 
-	/* cpu_exit() will not return */
-	cpu_exit(l, 0);
+	pmap_deactivate(l);
 
+	/* cpu_exit() will not return */
+	cpu_exit(l);
 }
 
-
+/*
+ * We are called from cpu_exit() once it is safe to schedule the
+ * dead process's resources to be freed (i.e., once we've switched to
+ * the idle PCB for the current CPU).
+ *
+ * NOTE: One must be careful with locking in this routine.  It's
+ * called from a critical section in machine-dependent code, so
+ * we should refrain from changing any interrupt state.
+ */
 void
 lwp_exit2(struct lwp *l)
 {
+	struct proc *p;
 
-	simple_lock(&deadproc_slock);
-	LIST_INSERT_HEAD(&deadlwp, l, l_list);
-	simple_unlock(&deadproc_slock);
+	KERNEL_LOCK(LK_EXCLUSIVE);
+	/*
+	 * Free the VM resources we're still holding on to.
+	 */
+	uvm_lwp_exit(l);
 
-	wakeup(&deadprocs);
+	if (l->l_flag & L_DETACHED) {
+		/* Nobody waits for detached LWPs. */
+
+		if ((l->l_flag & L_PROCEXIT) == 0) {
+			LIST_REMOVE(l, l_sibling);
+			p = l->l_proc;
+			p->p_nlwps--;
+		}
+
+		pool_put(&lwp_pool, l);
+		KERNEL_UNLOCK();
+	} else {
+		l->l_stat = LSZOMB;
+		p = l->l_proc;
+		p->p_nzlwps++;
+		KERNEL_UNLOCK();
+		wakeup(&p->p_nlwps);
+	}
 }
 
 /*
@@ -566,10 +622,10 @@ lwp_exit2(struct lwp *l)
  * with a LWP.
  */
 struct lwp *
-proc_representative_lwp(p)
-	struct proc *p;
+proc_representative_lwp(struct proc *p)
 {
 	struct lwp *l, *onproc, *running, *sleeping, *stopped, *suspended;
+	struct lwp *signalled;
 
 	/* Trivial case: only one LWP */
 	if (p->p_nlwps == 1)
@@ -580,7 +636,10 @@ proc_representative_lwp(p)
 	case SACTIVE:
 		/* Pick the most live LWP */
 		onproc = running = sleeping = stopped = suspended = NULL;
+		signalled = NULL;
 		LIST_FOREACH(l, &p->p_lwps, l_sibling) {
+			if (l->l_lid == p->p_sigctx.ps_lwp)
+				signalled = l;
 			switch (l->l_stat) {
 			case LSONPROC:
 				onproc = l;
@@ -599,6 +658,8 @@ proc_representative_lwp(p)
 				break;
 			}
 		}
+		if (signalled)
+			return signalled;
 		if (onproc)
 			return onproc;
 		if (running)
@@ -610,11 +671,9 @@ proc_representative_lwp(p)
 		if (suspended)
 			return suspended;
 		break;
-	case SDEAD:
 	case SZOMB:
 		/* Doesn't really matter... */
 		return (LIST_FIRST(&p->p_lwps));
-		break;
 #ifdef DIAGNOSTIC
 	case SIDL:
 		/* We have more than one LWP and we're in SIDL?

@@ -27,7 +27,7 @@
  *	i4b_util.c - layer 2 utility routines
  *	-------------------------------------
  *
- *	$Id: i4b_util.c,v 1.6 2002/05/21 10:31:11 martin Exp $ 
+ *	$Id: i4b_util.c,v 1.6.8.1 2004/08/03 10:55:41 skrll Exp $ 
  *
  * $FreeBSD$
  *
@@ -36,7 +36,7 @@
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i4b_util.c,v 1.6 2002/05/21 10:31:11 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i4b_util.c,v 1.6.8.1 2004/08/03 10:55:41 skrll Exp $");
 
 #ifdef __FreeBSD__
 #include "i4bq921.h"
@@ -249,8 +249,8 @@ i4b_print_frame(int len, u_char *buf)
 void
 i4b_print_l2var(l2_softc_t *l2sc)
 {
-	NDBGL2(L2_ERROR, "bri %d V(R)=%d, V(S)=%d, V(A)=%d,ACKP=%d,PBSY=%d,OBSY=%d",
-		l2sc->drv->bri,
+	NDBGL2(L2_ERROR, "isdnif %d V(R)=%d, V(S)=%d, V(A)=%d,ACKP=%d,PBSY=%d,OBSY=%d",
+		l2sc->drv->isdnif,
 		l2sc->vr,
 		l2sc->vs,
 		l2sc->va,

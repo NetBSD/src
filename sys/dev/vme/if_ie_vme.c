@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ie_vme.c,v 1.17 2002/10/02 16:53:12 thorpej Exp $	*/
+/*	$NetBSD: if_ie_vme.c,v 1.17.6.1 2004/08/03 10:52:00 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1995 Charles D. Cranor
@@ -145,7 +145,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ie_vme.c,v 1.17 2002/10/02 16:53:12 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ie_vme.c,v 1.17.6.1 2004/08/03 10:52:00 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -162,6 +162,9 @@ __KERNEL_RCSID(0, "$NetBSD: if_ie_vme.c,v 1.17 2002/10/02 16:53:12 thorpej Exp $
 
 #include <machine/bus.h>
 #include <machine/intr.h>
+#ifdef __sparc__
+#include <machine/autoconf.h>
+#endif
 #include <dev/vme/vmevar.h>
 
 #include <dev/ic/i82586reg.h>
@@ -493,9 +496,6 @@ ie_vme_attach(parent, self, aux)
 	void   *aux;
 {
 	u_int8_t myaddr[ETHER_ADDR_LEN];
-#ifdef __sparc__
-	extern void myetheraddr(u_char *);	/* should be elsewhere */
-#endif
 	struct ie_vme_softc *vsc = (void *) self;
 	struct vme_attach_args *va = aux;
 	vme_chipset_tag_t ct = va->va_vct;
@@ -597,7 +597,7 @@ ie_vme_attach(parent, self, aux)
 	printf("\n%s:", self->dv_xname);
 
 #ifdef __sparc__
-	myetheraddr(myaddr);
+	prom_getether(0, myaddr);
 #endif
 	i82586_attach(sc, "multibus/vme", myaddr, media, NMEDIA, media[0]);
 

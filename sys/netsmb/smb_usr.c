@@ -1,4 +1,4 @@
-/*	$NetBSD: smb_usr.c,v 1.7 2003/04/07 19:35:40 jdolecek Exp $	*/
+/*	$NetBSD: smb_usr.c,v 1.7.2.1 2004/08/03 10:56:05 skrll Exp $	*/
 
 /*
  * Copyright (c) 2000-2001 Boris Popov
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smb_usr.c,v 1.7 2003/04/07 19:35:40 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smb_usr.c,v 1.7.2.1 2004/08/03 10:56:05 skrll Exp $");
  
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -163,7 +163,7 @@ out:
 /*
  * Connect to the resource specified by smbioc_ossn structure.
  * It may either find an existing connection or try to establish a new one.
- * If no errors occured smb_vc returned locked and referenced.
+ * If no errors occurred smb_vc returned locked and referenced.
  */
 int
 smb_usr_opensession(struct smbioc_ossn *dp, struct smb_cred *scred,
@@ -298,8 +298,7 @@ smb_usr_t2request(struct smb_share *ssp, struct smbioc_t2rq *dp,
 	struct mdchain *mdp;
 	int error, len;
 
-	if (dp->ioc_tparamcnt > 0xffff || dp->ioc_tdatacnt > 0xffff ||
-	    dp->ioc_setupcnt > 3)
+	if (dp->ioc_setupcnt > 3)
 		return EINVAL;
 	error = smb_t2_alloc(SSTOCP(ssp), dp->ioc_setup[0], scred, &t2p);
 	if (error)

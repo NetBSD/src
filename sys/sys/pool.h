@@ -1,4 +1,4 @@
-/*	$NetBSD: pool.h,v 1.39 2003/04/09 18:22:13 thorpej Exp $	*/
+/*	$NetBSD: pool.h,v 1.39.2.1 2004/08/03 10:56:29 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -52,9 +52,9 @@
 #include <sys/lock.h>
 #include <sys/queue.h>
 #include <sys/time.h>
+#include <sys/tree.h>
 #endif
 
-#define PR_HASHTABSIZE		8
 #define	PCG_NOBJECTS		16
 
 #define	POOL_PADDR_INVALID	((paddr_t) -1)
@@ -112,11 +112,17 @@ struct pool_allocator {
 	int		pa_pageshift;
 };
 
+LIST_HEAD(pool_pagelist,pool_item_header);
+
 struct pool {
 	TAILQ_ENTRY(pool)
 			pr_poollist;
-	TAILQ_HEAD(,pool_item_header)
-			pr_pagelist;	/* Allocated pages */
+	struct pool_pagelist
+			pr_emptypages;	/* Empty pages */
+	struct pool_pagelist
+			pr_fullpages;	/* Full pages */
+	struct pool_pagelist
+			pr_partpages;	/* Partially-allocated pages */
 	struct pool_item_header	*pr_curpage;
 	TAILQ_HEAD(,pool_cache)
 			pr_cachelist;	/* Caches for this pool */
@@ -162,8 +168,7 @@ struct pool {
 	 */
 	struct simplelock	pr_slock;
 
-	LIST_HEAD(,pool_item_header)		/* Off-page page headers */
-			pr_hashtab[PR_HASHTABSIZE];
+	SPLAY_HEAD(phtree, pool_item_header) pr_phtree;
 
 	int		pr_maxcolor;	/* Cache colouring */
 	int		pr_curcolor;
@@ -210,6 +215,24 @@ struct pool {
 extern struct pool_allocator pool_allocator_kmem;
 extern struct pool_allocator pool_allocator_nointr;
 
+struct link_pool_init {	/* same as args to pool_init() */
+	struct pool *pp;
+	size_t size;
+	u_int align;
+	u_int align_offset;
+	int flags;
+	const char *wchan;
+	struct pool_allocator *palloc;
+};
+#define	POOL_INIT(pp, size, align, align_offset, flags, wchan, palloc)	\
+struct pool pp;								\
+static const struct link_pool_init _link_ ## pp[1] = {			\
+	{ &pp, size, align, align_offset, flags, wchan, palloc }	\
+};									\
+__link_set_add_rodata(pools, _link_ ## pp)
+
+void		link_pool_init(void);
+
 void		pool_init(struct pool *, size_t, u_int, u_int,
 		    int, const char *, struct pool_allocator *);
 void		pool_destroy(struct pool *);
@@ -251,8 +274,8 @@ int		pool_chk(struct pool *, const char *);
  * Pool cache routines.
  */
 void		pool_cache_init(struct pool_cache *, struct pool *,
-		    int (*ctor)(void *, void *, int),
-		    void (*dtor)(void *, void *),
+		    int (*)(void *, void *, int),
+		    void (*)(void *, void *),
 		    void *);
 void		pool_cache_destroy(struct pool_cache *);
 void		*pool_cache_get_paddr(struct pool_cache *, int, paddr_t *);

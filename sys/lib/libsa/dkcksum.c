@@ -1,4 +1,4 @@
-/*	$NetBSD: dkcksum.c,v 1.2 2000/03/30 12:19:48 augustss Exp $	*/
+/*	$NetBSD: dkcksum.c,v 1.2.28.1 2004/08/03 10:53:53 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -12,11 +12,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -43,15 +39,14 @@
  * Compute checksum for disk label.
  */
 int
-dkcksum(lp)
-	struct disklabel *lp;
+dkcksum(const struct disklabel *lp)
 {
-	u_short *start, *end;
+	const u_short *start, *end;
 	u_short sum = 0;
 
-	start = (u_short *)lp;
-	end = (u_short *)&lp->d_partitions[lp->d_npartitions];
+	start = (const void *)lp;
+	end = (const void *)&lp->d_partitions[lp->d_npartitions];
 	while (start < end)
 		sum ^= *start++;
-	return (sum);
+	return sum;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_malloc_debug.c,v 1.10 2003/02/01 06:23:43 thorpej Exp $	*/
+/*	$NetBSD: kern_malloc_debug.c,v 1.10.2.1 2004/08/03 10:52:49 skrll Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Artur Grabowski <art@openbsd.org>
@@ -41,7 +41,7 @@
  * more types will also add to the complexity of the code.
  *
  * This is really simple. Every malloc() allocates two virtual pages,
- * the second page is left unmapped, and the the value returned is aligned
+ * the second page is left unmapped, and the value returned is aligned
  * so that it ends at (or very close to) the page boundary to catch overflows.
  * Every free() changes the protection of the first page to VM_PROT_NONE so
  * that we can catch any dangling writes to it.
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_malloc_debug.c,v 1.10 2003/02/01 06:23:43 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_malloc_debug.c,v 1.10.2.1 2004/08/03 10:52:49 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -109,7 +109,8 @@ int debug_malloc_frees;
 int debug_malloc_pages;
 int debug_malloc_chunks_on_freelist;
 
-struct pool debug_malloc_pool;
+POOL_INIT(debug_malloc_pool, sizeof(struct debug_malloc_entry), 0, 0, 0,
+    "mdbepl", NULL);
 
 int
 debug_malloc(unsigned long size, struct malloc_type *type, int flags,
@@ -220,9 +221,6 @@ debug_malloc_init(void)
 	debug_malloc_frees = 0;
 	debug_malloc_pages = 0;
 	debug_malloc_chunks_on_freelist = 0;
-
-	pool_init(&debug_malloc_pool, sizeof(struct debug_malloc_entry),
-	    0, 0, 0, "mdbepl", NULL);
 }
 
 /*
@@ -279,7 +277,7 @@ void
 debug_malloc_print(void)
 {
 
-	debug_malloc_printit(printf, NULL);
+	debug_malloc_printit(printf, 0);
 }
 
 void

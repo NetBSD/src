@@ -1,4 +1,4 @@
-/* $NetBSD: boot_flag.h,v 1.3 2001/07/01 02:56:21 gmcgarry Exp $ */
+/* $NetBSD: boot_flag.h,v 1.3.22.1 2004/08/03 10:56:25 skrll Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -70,6 +70,12 @@
 		break;						\
 	case 'v': /* boot verbosely */				\
 		(retval) |= AB_VERBOSE;				\
+		break;						\
+	case 'x': /* boot with debugging messages */		\
+		(retval) |= AB_DEBUG;				\
+		break;						\
+	case 'z': /* boot silently */				\
+		(retval) |= AB_SILENT;				\
 		break;						\
 	default:  /* something else, do nothing */		\
 		break;						\

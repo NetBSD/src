@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vfsops.c,v 1.121.2.2 2003/08/19 19:53:50 skrll Exp $	*/
+/*	$NetBSD: lfs_vfsops.c,v 1.121.2.3 2004/08/03 10:56:58 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -47,11 +47,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -71,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.121.2.2 2003/08/19 19:53:50 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.121.2.3 2004/08/03 10:56:58 skrll Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -116,19 +112,18 @@ __KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.121.2.2 2003/08/19 19:53:50 skrll E
 
 #include <miscfs/genfs/genfs.h>
 #include <miscfs/genfs/genfs_node.h>
+
 static int lfs_gop_write(struct vnode *, struct vm_page **, int, int);
 static boolean_t lfs_issequential_hole(const struct ufsmount *,
     daddr_t, daddr_t);
 
 static int lfs_mountfs(struct vnode *, struct mount *, struct lwp *);
+static daddr_t check_segsum(struct lfs *, daddr_t, u_int64_t,
+    struct ucred *, int, int *, struct lwp *);
 
 extern const struct vnodeopv_desc lfs_vnodeop_opv_desc;
 extern const struct vnodeopv_desc lfs_specop_opv_desc;
 extern const struct vnodeopv_desc lfs_fifoop_opv_desc;
-extern int lfs_subsys_pages;	
-extern int  locked_queue_count;
-extern long locked_queue_bytes;
-extern struct simplelock lfs_subsys_lock;
 
 pid_t lfs_writer_daemon = 0;
 int lfs_do_flush = 0;
@@ -147,7 +142,7 @@ struct vfsops lfs_vfsops = {
 	lfs_unmount,
 	ufs_root,
 	ufs_quotactl,
-	lfs_statfs,
+	lfs_statvfs,
 	lfs_sync,
 	lfs_vget,
 	lfs_fhtovp,
@@ -155,9 +150,10 @@ struct vfsops lfs_vfsops = {
 	lfs_init,
 	lfs_reinit,
 	lfs_done,
-	lfs_sysctl,
+	NULL,
 	lfs_mountroot,
 	ufs_check_export,
+	(int (*)(struct mount *, struct vnode *, struct timespec *)) eopnotsupp,
 	lfs_vnodeopv_descs,
 };
 
@@ -167,9 +163,15 @@ struct genfs_ops lfs_genfsops = {
 	lfs_gop_write,
 };
 
-struct pool lfs_inode_pool;
-struct pool lfs_dinode_pool;
-struct pool lfs_inoext_pool;
+/*
+ * XXX Same structure as FFS inodes?  Should we share a common pool?
+ */
+POOL_INIT(lfs_inode_pool, sizeof(struct inode), 0, 0, 0, "lfsinopl",
+    &pool_allocator_nointr);
+POOL_INIT(lfs_dinode_pool, sizeof(struct ufs1_dinode), 0, 0, 0, "lfsdinopl",
+    &pool_allocator_nointr);
+POOL_INIT(lfs_inoext_pool, sizeof(struct lfs_inode_ext), 8, 0, 0, "lfsinoextpl",
+    &pool_allocator_nointr);
 
 /*
  * The writer daemon.  UVM keeps track of how many dirty pages we are holding
@@ -186,8 +188,10 @@ lfs_writerd(void *arg)
 
 	lfs_writer_daemon = curproc->p_pid;
 
+	simple_lock(&lfs_subsys_lock);
 	for (;;) {
-		tsleep(&lfs_writer_daemon, PVM, "lfswriter", 0);
+		ltsleep(&lfs_writer_daemon, PVM | PNORELOCK, "lfswriter", 0,
+		    &lfs_subsys_lock);
 
 #ifdef LFS_PD
 		/*
@@ -195,15 +199,15 @@ lfs_writerd(void *arg)
 		 * have requested pageouts.
 		 */
 		simple_lock(&mountlist_slock);
-		for (mp = mountlist.cqh_first; mp != (void *)&mountlist;
+		for (mp = CIRCLEQ_FIRST(&mountlist); mp != (void *)&mountlist;
 		     mp = nmp) {
 			if (vfs_busy(mp, LK_NOWAIT, &mountlist_slock)) {
-				nmp = mp->mnt_list.cqe_next;
+				nmp = CIRCLEQ_NEXT(mp, mnt_list);
 				continue;
 			}
 			if (strncmp(&mp->mnt_stat.f_fstypename[0], MOUNT_LFS,
 				    MFSNAMELEN) == 0) {
-				fs = ((struct ufsmount *)mp->mnt_data)->ufsmount_u.lfs;
+				fs = VFSTOUFS(mp)->um_lfs;
 				if (fs->lfs_pdflush ||
 				    !TAILQ_EMPTY(&fs->lfs_pchainhd)) {
 					fs->lfs_pdflush = 0;
@@ -212,7 +216,7 @@ lfs_writerd(void *arg)
 			}
 
 			simple_lock(&mountlist_slock);
-			nmp = mp->mnt_list.cqe_next;
+			nmp = CIRCLEQ_NEXT(mp, mnt_list);
 			vfs_unbusy(mp);
 		}
 		simple_unlock(&mountlist_slock);
@@ -221,6 +225,7 @@ lfs_writerd(void *arg)
 		/*
 		 * If global state wants a flush, flush everything.
 		 */
+		simple_lock(&lfs_subsys_lock);
 		while (lfs_do_flush || locked_queue_count > LFS_MAX_BUFS || 
 			locked_queue_bytes > LFS_MAX_BYTES ||
 			lfs_subsys_pages > LFS_MAX_PAGES) {
@@ -232,7 +237,7 @@ lfs_writerd(void *arg)
 				printf("daemon: lqc = %d, max %d\n",
 					locked_queue_count, LFS_MAX_BUFS);
 			if (locked_queue_bytes > LFS_MAX_BYTES)
-				printf("daemon: lqb = %ld, max %d\n",
+				printf("daemon: lqb = %ld, max %ld\n",
 					locked_queue_bytes, LFS_MAX_BYTES);
 			if (lfs_subsys_pages > LFS_MAX_PAGES) 
 				printf("daemon: lssp = %d, max %d\n",
@@ -241,7 +246,6 @@ lfs_writerd(void *arg)
 			lfs_flush(NULL, SEGM_WRITERD);
 			lfs_do_flush = 0;
 		}
-		wakeup(&lfs_subsys_pages);
 	}
 	/* NOTREACHED */
 }
@@ -252,17 +256,17 @@ lfs_writerd(void *arg)
 void
 lfs_init()
 {
+#ifdef _LKM
+	malloc_type_attach(M_SEGMENT);
+	pool_init(&lfs_inode_pool, sizeof(struct inode), 0, 0, 0,
+	    "lfsinopl", &pool_allocator_nointr);
+	pool_init(&lfs_dinode_pool, sizeof(struct ufs1_dinode), 0, 0, 0,
+	    "lfsdinopl", &pool_allocator_nointr);
+	pool_init(&lfs_inoext_pool, sizeof(struct lfs_inode_ext), 8, 0, 0,
+	    "lfsinoextpl", &pool_allocator_nointr);
+#endif
 	ufs_init();
 
-	/*
-	 * XXX Same structure as FFS inodes?  Should we share a common pool?
-	 */
-	pool_init(&lfs_inode_pool, sizeof(struct inode), 0, 0, 0,
-		  "lfsinopl", &pool_allocator_nointr);
-	pool_init(&lfs_dinode_pool, sizeof(struct ufs1_dinode), 0, 0, 0,
-		  "lfsdinopl", &pool_allocator_nointr);
-	pool_init(&lfs_inoext_pool, sizeof(struct lfs_inode_ext), 8, 0, 0,
-		  "lfsinoextpl", &pool_allocator_nointr);
 #ifdef DEBUG
 	memset(lfs_log, 0, sizeof(lfs_log));
 #endif
@@ -279,8 +283,12 @@ void
 lfs_done()
 {
 	ufs_done();
+#ifdef _LKM
 	pool_destroy(&lfs_inode_pool);
+	pool_destroy(&lfs_dinode_pool);
 	pool_destroy(&lfs_inoext_pool);
+	malloc_type_detach(M_SEGMENT);
+#endif
 }
 
 /*
@@ -320,9 +328,9 @@ lfs_mountroot()
 	simple_lock(&mountlist_slock);
 	CIRCLEQ_INSERT_TAIL(&mountlist, mp, mnt_list);
 	simple_unlock(&mountlist_slock);
-	(void)lfs_statfs(mp, &mp->mnt_stat, l);
+	(void)lfs_statvfs(mp, &mp->mnt_stat, l);
 	vfs_unbusy(mp);
-	inittodr(VFSTOUFS(mp)->um_lfs->lfs_tstamp);
+	setrootfstime((time_t)(VFSTOUFS(mp)->um_lfs->lfs_tstamp));
 	return (0);
 }
 
@@ -362,7 +370,7 @@ lfs_mount(struct mount *mp, const char *path, void *data, struct nameidata *ndp,
 	if (mp->mnt_flag & MNT_UPDATE) {
 		ump = VFSTOUFS(mp);
 		fs = ump->um_lfs;
-		if (fs->lfs_ronly && (mp->mnt_flag & MNT_WANTRDWR)) {
+		if (fs->lfs_ronly && (mp->mnt_iflag & IMNT_WANTRDWR)) {
 			/*
 			 * If upgrade to read-write by non-root, then verify
 			 * that user has necessary permissions on the device.
@@ -430,7 +438,7 @@ lfs_mount(struct mount *mp, const char *path, void *data, struct nameidata *ndp,
 	}
 	ump = VFSTOUFS(mp);
 	fs = ump->um_lfs;					/* LFS */
-	return set_statfs_info(path, UIO_USERSPACE, args.fspec,
+	return set_statvfs_info(path, UIO_USERSPACE, args.fspec,
 	    UIO_USERSPACE, mp, l);
 }
 
@@ -449,17 +457,22 @@ update_meta(struct lfs *fs, ino_t ino, int version, daddr_t lbn,
 	int error;
 	struct vnode *vp;
 	struct inode *ip;
-	daddr_t odaddr, ooff;
-	struct indir a[NIADDR], *ap;
+#ifdef DEBUG_LFS_RFW
+	daddr_t odaddr;
+	struct indir a[NIADDR];
+	int num;
+	int i;
+#endif /* DEBUG_LFS_RFW */
 	struct buf *bp;
 	SEGUSE *sup;
-	int num;
+
+	KASSERT(lbn >= 0);	/* no indirect blocks */
 
 	if ((error = lfs_rf_valloc(fs, ino, version, l, &vp)) != 0) {
 #ifdef DEBUG_LFS_RFW
 		printf("update_meta: ino %d: lfs_rf_valloc returned %d\n", ino,
 		       error);
-#endif
+#endif /* DEBUG_LFS_RFW */
 		return error;
 	}
 
@@ -484,80 +497,46 @@ update_meta(struct lfs *fs, ino_t ino, int version, daddr_t lbn,
 	 */
 	ip = VTOI(vp);
 	if (ip->i_size <= (lbn << fs->lfs_bshift)) {
+		u_int64_t newsize;
+
 		if (lbn < NDADDR)
-			ip->i_size = ip->i_ffs1_size = (lbn << fs->lfs_bshift) +
+			newsize = ip->i_ffs1_size = (lbn << fs->lfs_bshift) +
 				(size - fs->lfs_fsize) + 1;
 		else
-			ip->i_size = ip->i_ffs1_size =
-			    (lbn << fs->lfs_bshift) + 1;
-	}
+			newsize = ip->i_ffs1_size = (lbn << fs->lfs_bshift) + 1;
 
-	error = ufs_bmaparray(vp, lbn, &odaddr, &a[0], &num, NULL, NULL);
-	if (error) {
-#ifdef DEBUG_LFS_RFW
-		printf("update_meta: ufs_bmaparray returned %d\n", error);
-#endif
-		vput(vp);
-		return error;
-	}
-	switch (num) {
-	    case 0:
-		ooff = ip->i_ffs1_db[lbn];
-		if (ooff == UNWRITTEN)
-			ip->i_ffs1_blocks += btofsb(fs, size);
-		/* XXX what about fragment extension? */
-		ip->i_ffs1_db[lbn] = ndaddr;
-		break;
-	    case 1:
-		ooff = ip->i_ffs1_ib[a[0].in_off];
-		if (ooff == UNWRITTEN)
-			ip->i_ffs1_blocks += btofsb(fs, size);
-		ip->i_ffs1_ib[a[0].in_off] = ndaddr;
-		break;
-	    default:
-		ap = &a[num - 1];
-		if (bread(vp, ap->in_lbn, fs->lfs_bsize, NOCRED, &bp))
-			panic("update_meta: bread bno %lld",
-			    (long long)ap->in_lbn);
-
-		/* XXX ondisk32 */
-		ooff = ((int32_t *)bp->b_data)[ap->in_off];
-		if (ooff == UNWRITTEN)
-			ip->i_ffs1_blocks += btofsb(fs, size);
-		/* XXX ondisk32 */
-		((int32_t *)bp->b_data)[ap->in_off] = ndaddr;
-		(void) VOP_BWRITE(bp);
-	}
-	LFS_SET_UINO(ip, IN_CHANGE | IN_MODIFIED | IN_UPDATE);
-
-	/* Update segment usage information. */
-	if (odaddr > 0) {
-		LFS_SEGENTRY(sup, fs, dtosn(fs, dbtofsb(fs, odaddr)), bp);
-#ifdef DIAGNOSTIC
-		if (sup->su_nbytes < size) {
-			panic("update_meta: negative bytes "
-			      "(segment %" PRIu32 " short by %ld)\n",
-			      dtosn(fs, dbtofsb(fs, odaddr)), (long)size - sup->su_nbytes);
-			sup->su_nbytes = size;
+		if (ip->i_size < newsize) {
+			ip->i_size = newsize;
+			/*
+			 * tell vm our new size for the case the inode won't
+			 * appear later.
+			 */
+			uvm_vnp_setsize(vp, newsize);
 		}
-#endif
-		sup->su_nbytes -= size;
-		LFS_WRITESEGENTRY(sup, fs, dtosn(fs, dbtofsb(fs, odaddr)), bp);
 	}
+
+	lfs_update_single(fs, NULL, vp, lbn, ndaddr, size);
+
 	LFS_SEGENTRY(sup, fs, dtosn(fs, ndaddr), bp);
 	sup->su_nbytes += size;
 	LFS_WRITESEGENTRY(sup, fs, dtosn(fs, ndaddr), bp);
 
-	/* Fix this so it can be released */
-	/* ip->i_lfs_effnblks = ip->i_ffs1_blocks; */
+	/* differences here should be due to UNWRITTEN indirect blocks. */
+	KASSERT((lblkno(fs, ip->i_size) > NDADDR &&
+	    ip->i_lfs_effnblks == ip->i_ffs1_blocks) ||
+	    ip->i_lfs_effnblks >= ip->i_ffs1_blocks);
 
 #ifdef DEBUG_LFS_RFW
 	/* Now look again to make sure it worked */
 	ufs_bmaparray(vp, lbn, &odaddr, &a[0], &num, NULL, NULL);
+	for (i = num; i > 0; i--) {
+		if (!a[i].in_exists)
+			panic("update_meta: absent %d lv indirect block", i);
+	}
 	if (dbtofsb(fs, odaddr) != ndaddr)
 		printf("update_meta: failed setting ino %d lbn %" PRId64
 		    " to %" PRId64 "\n", ino, lbn, ndaddr);
-#endif
+#endif /* DEBUG_LFS_RFW */
 	vput(vp);
 	return 0;
 }
@@ -659,20 +638,19 @@ update_inoblk(struct lfs *fs, daddr_t offset, struct ucred *cred,
 #define CHECK_UPDATE  0x0002  /* Update Ifile for new data blocks / inodes */
 
 static daddr_t
-check_segsum(struct lfs *fs, daddr_t offset,
+check_segsum(struct lfs *fs, daddr_t offset, u_int64_t nextserial,
 	     struct ucred *cred, int flags, int *pseg_flags, struct lwp *l)
 {
 	struct vnode *devvp;
 	struct buf *bp, *dbp;
-	int error, nblocks, ninos, i, j;
+	int error, nblocks = 0, ninos, i, j; /* XXX: gcc */
 	SEGSUM *ssp;
-	u_long *dp, *datap; /* XXX u_int32_t */
+	u_long *dp = NULL, *datap = NULL; /* XXX u_int32_t */
 	daddr_t oldoffset;
 	int32_t *iaddr;	/* XXX ondisk32 */
 	FINFO *fip;
 	SEGUSE *sup;
 	size_t size;
-	u_int64_t serial;
 
 	devvp = VTOI(fs->lfs_ivnode)->i_devvp;
 	/*
@@ -687,7 +665,7 @@ check_segsum(struct lfs *fs, daddr_t offset,
 	}
 
 	/* Read in the segment summary */
-	error = bread(devvp, offset, fs->lfs_sumsize, cred, &bp);
+	error = bread(devvp, fsbtodb(fs, offset), fs->lfs_sumsize, cred, &bp);
 	if (error)
 		return -1;
 	
@@ -719,8 +697,7 @@ check_segsum(struct lfs *fs, daddr_t offset,
 		}
 	}
 	if (fs->lfs_version > 1) {
-		serial = ssp->ss_serial;
-		if (serial != fs->lfs_serial + 1) {
+		if (ssp->ss_serial != nextserial) {
 #ifdef DEBUG_LFS_RFW
 			printf("Unexpected serial number at 0x%" PRIx64
 			    "\n", offset);
@@ -852,13 +829,12 @@ check_segsum(struct lfs *fs, daddr_t offset,
 	if (flags & CHECK_UPDATE) {
 		fs->lfs_avail -= (offset - oldoffset);
 		/* Don't clog the buffer queue */
+		simple_lock(&lfs_subsys_lock);
 		if (locked_queue_count > LFS_MAX_BUFS ||
 		    locked_queue_bytes > LFS_MAX_BYTES) {
-			++fs->lfs_writer;
 			lfs_flush(fs, SEGM_CKP);
-			if (--fs->lfs_writer == 0)
-				wakeup(&fs->lfs_dirops);
 		}
+		simple_unlock(&lfs_subsys_lock);
 	}
 
     err2:
@@ -870,7 +846,7 @@ check_segsum(struct lfs *fs, daddr_t offset,
 
 	/* XXX should we update the serial number even for bad psegs? */
 	if ((flags & CHECK_UPDATE) && offset > 0 && fs->lfs_version > 1)
-		fs->lfs_serial = serial;
+		fs->lfs_serial = nextserial;
 	return offset;
 }
 
@@ -1081,8 +1057,10 @@ lfs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l)
 	/* Initialize the mount structure. */
 	dev = devvp->v_rdev;
 	mp->mnt_data = ump;
-	mp->mnt_stat.f_fsid.val[0] = (long)dev;
-	mp->mnt_stat.f_fsid.val[1] = makefstype(MOUNT_LFS);
+	mp->mnt_stat.f_fsidx.__fsid_val[0] = (long)dev;
+	mp->mnt_stat.f_fsidx.__fsid_val[1] = makefstype(MOUNT_LFS);
+	mp->mnt_stat.f_fsid = mp->mnt_stat.f_fsidx.__fsid_val[0];
+	mp->mnt_stat.f_namemax = MAXNAMLEN;
 	mp->mnt_stat.f_iosize = fs->lfs_bsize;
 	mp->mnt_maxsymlinklen = fs->lfs_maxsymlinklen;
 	mp->mnt_flag |= MNT_LOCAL;
@@ -1174,6 +1152,7 @@ lfs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l)
 			  !(fs->lfs_pflags & LFS_PF_CLEAN));
 #endif
 	if (do_rollforward) {
+		u_int64_t nextserial;
 		/*
 		 * Phase I: Find the address of the last good partial
 		 * segment that was written after the checkpoint.  Mark
@@ -1191,9 +1170,10 @@ lfs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l)
 			--fs->lfs_nclean;
 		sup->su_flags |= SEGUSE_DIRTY;
 		LFS_WRITESEGENTRY(sup, fs, dtosn(fs, offset), bp);
-		while ((offset = check_segsum(fs, offset, cred, CHECK_CKSUM,
-					      &flags, l)) > 0)
-		{
+		nextserial = fs->lfs_serial + 1;
+		while ((offset = check_segsum(fs, offset, nextserial,
+		    cred, CHECK_CKSUM, &flags, l)) > 0) {
+			nextserial++;
 			if (sntod(fs, oldoffset) != sntod(fs, offset)) {
 				LFS_SEGENTRY(sup, fs, dtosn(fs, oldoffset),
 					     bp); 
@@ -1253,8 +1233,9 @@ lfs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l)
 				printf("LFS roll forward phase 2: 0x%"
 				    PRIx64 "\n", offset);
 #endif
-				offset = check_segsum(fs, offset, cred,
-						      CHECK_UPDATE, NULL, l);
+				offset = check_segsum(fs, offset,
+				    fs->lfs_serial + 1, cred, CHECK_UPDATE,
+				    NULL, l);
 			}
 
 			/*
@@ -1311,7 +1292,7 @@ lfs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l)
 	if (fs->lfs_ivnode->v_size > LFS_MAX_BYTES) {
 		fs->lfs_flags |= LFS_WARNED;
 		printf("lfs_mountfs: please consider increasing BUFPAGES to at least %lld\n",
-			(long long)fs->lfs_ivnode->v_size * bufpages / LFS_MAX_BYTES);
+			(long long)(fs->lfs_ivnode->v_size * bufpages / LFS_MAX_BYTES));
 	}
 
 	return (0);
@@ -1401,8 +1382,8 @@ lfs_unmount(struct mount *mp, int mntflags, struct lwp *l)
 		if (fs->lfs_ivnode->v_size > LFS_MAX_BYTES)
 			printf("lfs_unmount: please consider increasing"
 				" BUFPAGES to at least %lld\n",
-				(long long)fs->lfs_ivnode->v_size *
-				bufpages / LFS_MAX_BYTES);
+				(long long)(fs->lfs_ivnode->v_size *
+				bufpages / LFS_MAX_BYTES));
 	}
 
 	/* Explicitly write the superblock, to update serial and pflags */
@@ -1441,7 +1422,7 @@ lfs_unmount(struct mount *mp, int mntflags, struct lwp *l)
  * Get file system statistics.
  */
 int
-lfs_statfs(struct mount *mp, struct statfs *sbp, struct lwp *l)
+lfs_statvfs(struct mount *mp, struct statvfs *sbp, struct lwp *l)
 {
 	struct lfs *fs;
 	struct ufsmount *ump;
@@ -1449,19 +1430,24 @@ lfs_statfs(struct mount *mp, struct statfs *sbp, struct lwp *l)
 	ump = VFSTOUFS(mp);
 	fs = ump->um_lfs;
 	if (fs->lfs_magic != LFS_MAGIC)
-		panic("lfs_statfs: magic");
+		panic("lfs_statvfs: magic");
 
-	sbp->f_type = 0;
-	sbp->f_bsize = fs->lfs_fsize;
+	sbp->f_bsize = fs->lfs_bsize;
+	sbp->f_frsize = fs->lfs_fsize;
 	sbp->f_iosize = fs->lfs_bsize;
 	sbp->f_blocks = fsbtofrags(fs, LFS_EST_NONMETA(fs));
 	sbp->f_bfree = fsbtofrags(fs, LFS_EST_BFREE(fs));
-	sbp->f_bavail = fsbtofrags(fs, (long)LFS_EST_BFREE(fs) -
-				  (long)LFS_EST_RSVD(fs));
+	sbp->f_bresvd = fsbtofrags(fs, LFS_EST_RSVD(fs));
+	if (sbp->f_bfree > sbp->f_bresvd)
+		sbp->f_bavail = sbp->f_bfree - sbp->f_bresvd;
+	else
+		sbp->f_bavail = 0;
 	
 	sbp->f_files = fs->lfs_bfree / btofsb(fs, fs->lfs_ibsize) * INOPB(fs);
 	sbp->f_ffree = sbp->f_files - fs->lfs_nfiles;
-	copy_statfs_info(sbp, mp);
+	sbp->f_favail = sbp->f_ffree;
+	sbp->f_fresvd = 0;
+	copy_statvfs_info(sbp, mp);
 	return (0);
 }
 
@@ -1478,17 +1464,14 @@ lfs_sync(struct mount *mp, int waitfor, struct ucred *cred, struct lwp *l)
 	int error;
 	struct lfs *fs;
 
-	fs = ((struct ufsmount *)mp->mnt_data)->ufsmount_u.lfs;
+	fs = VFSTOUFS(mp)->um_lfs;
 	if (fs->lfs_ronly)
 		return 0;
-	while (fs->lfs_dirops)
-		error = tsleep(&fs->lfs_writer, PRIBIO + 1, "lfs_dirops", 0);
-	fs->lfs_writer++;
+	lfs_writer_enter(fs, "lfs_dirops");
 
 	/* All syncs must be checkpoints until roll-forward is implemented. */
 	error = lfs_segwrite(mp, SEGM_CKP | (waitfor ? SEGM_SYNC : 0));
-	if (--fs->lfs_writer == 0)
-		wakeup(&fs->lfs_dirops);
+	lfs_writer_leave(fs);
 #ifdef QUOTA
 	qsync(l, mp);
 #endif
@@ -1649,7 +1632,7 @@ lfs_vget(struct mount *mp, ino_t ino, struct vnode **vpp, struct lwp *l)
 		ip->i_ffs1_atimensec = ts.tv_nsec;
 	}
 
-	lfs_vinit(mp, vp);
+	lfs_vinit(mp, &vp);
 
 	*vpp = vp;
 
@@ -1713,43 +1696,80 @@ lfs_vptofh(struct vnode *vp, struct fid *fhp)
 	return (0);
 }
 
-int
-lfs_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp, size_t newlen, struct lwp *l)
+static int
+sysctl_lfs_dostats(SYSCTLFN_ARGS)
 {
-	extern int lfs_writeindir, lfs_dostats, lfs_clean_vnhead;
 	extern struct lfs_stats lfs_stats;
+	extern int lfs_dostats;
 	int error;
 
-	/* all sysctl names at this level are terminal */
-	if (namelen != 1)
-		return (ENOTDIR);
+	error = sysctl_lookup(SYSCTLFN_CALL(rnode));
+	if (error || newp == NULL)
+		return (error);
 
-	switch (name[0]) {
-	case LFS_WRITEINDIR:
-		return (sysctl_int(oldp, oldlenp, newp, newlen,
-				   &lfs_writeindir));
-	case LFS_CLEAN_VNHEAD:
-		return (sysctl_int(oldp, oldlenp, newp, newlen,
-				   &lfs_clean_vnhead));
-	case LFS_DOSTATS:
-		if ((error = sysctl_int(oldp, oldlenp, newp, newlen,
-				       &lfs_dostats)))
-			return error;
-		if (lfs_dostats == 0)
-			memset(&lfs_stats,0,sizeof(lfs_stats));
-		return 0;
-	default:
-		return (EOPNOTSUPP);
-	}
-	/* NOTREACHED */
+	if (lfs_dostats == 0)
+		memset(&lfs_stats,0,sizeof(lfs_stats));
+
+	return (0);
 }
 
+SYSCTL_SETUP(sysctl_vfs_lfs_setup, "sysctl vfs.lfs subtree setup")
+{
+	extern int lfs_writeindir, lfs_dostats, lfs_clean_vnhead;
+
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_NODE, "vfs", NULL,
+		       NULL, 0, NULL, 0,
+		       CTL_VFS, CTL_EOL);
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_NODE, "lfs",
+		       SYSCTL_DESCR("Log-structured file system"),
+		       NULL, 0, NULL, 0,
+		       CTL_VFS, 5, CTL_EOL);
+	/*
+	 * XXX the "5" above could be dynamic, thereby eliminating one
+	 * more instance of the "number to vfs" mapping problem, but
+	 * "2" is the order as taken from sys/mount.h
+	 */
+
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+		       CTLTYPE_INT, "flushindir", NULL,
+		       NULL, 0, &lfs_writeindir, 0,
+		       CTL_VFS, 5, LFS_WRITEINDIR, CTL_EOL);
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+		       CTLTYPE_INT, "clean_vnhead", NULL,
+		       NULL, 0, &lfs_clean_vnhead, 0,
+		       CTL_VFS, 5, LFS_CLEAN_VNHEAD, CTL_EOL);
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+		       CTLTYPE_INT, "dostats",
+		       SYSCTL_DESCR("Maintain statistics on LFS operations"),
+		       sysctl_lfs_dostats, 0, &lfs_dostats, 0,
+		       CTL_VFS, 5, LFS_DOSTATS, CTL_EOL);
+}
+
+/*
+ * ufs_bmaparray callback function for writing.
+ *
+ * Since blocks will be written to the new segment anyway,
+ * we don't care about current daddr of them.
+ */
 static boolean_t
 lfs_issequential_hole(const struct ufsmount *ump,
     daddr_t daddr0, daddr_t daddr1)
 {
 
+	KASSERT(daddr0 == UNWRITTEN ||
+	    (0 <= daddr0 && daddr0 <= LFS_MAX_DADDR));
+	KASSERT(daddr1 == UNWRITTEN ||
+	    (0 <= daddr1 && daddr1 <= LFS_MAX_DADDR));
+
 	/* NOTE: all we want to know here is 'hole or not'. */
+	/* NOTE: UNASSIGNED is converted to 0 by ufs_bmaparray. */
 
 	/*
 	 * treat UNWRITTENs and all resident blocks as 'contiguous'
@@ -1782,7 +1802,7 @@ static int
 lfs_gop_write(struct vnode *vp, struct vm_page **pgs, int npages, int flags)
 {
 	int i, s, error, run;
-	int fs_bshift, dev_bshift;
+	int fs_bshift;
 	vaddr_t kva;
 	off_t eof, offset, startoffset;
 	size_t bytes, iobytes, skipbytes;
@@ -1796,8 +1816,7 @@ lfs_gop_write(struct vnode *vp, struct vm_page **pgs, int npages, int flags)
 	UVMHIST_FUNC("lfs_gop_write"); UVMHIST_CALLED(ubchist);
 
 	/* The Ifile lives in the buffer cache */
-	if (vp == fs->lfs_ivnode)
-		return genfs_compat_gop_write(vp, pgs, npages, flags);
+	KASSERT(vp != fs->lfs_ivnode);
 
 	/*
 	 * Sometimes things slip past the filters in lfs_putpages,
@@ -1847,13 +1866,10 @@ lfs_gop_write(struct vnode *vp, struct vm_page **pgs, int npages, int flags)
 
 	GOP_SIZE(vp, vp->v_size, &eof, GOP_SIZE_WRITE);
 
-	if (vp->v_type == VREG) {
+	if (vp->v_type == VREG)
 		fs_bshift = vp->v_mount->mnt_fs_bshift;
-		dev_bshift = vp->v_mount->mnt_dev_bshift;
-	} else {
+	else
 		fs_bshift = DEV_BSHIFT;
-		dev_bshift = DEV_BSHIFT;
-	}
 	error = 0;
 	pg = pgs[0];
 	startoffset = pg->offset;
@@ -2025,8 +2041,9 @@ lfs_gop_write(struct vnode *vp, struct vm_page **pgs, int npages, int flags)
  * used by lfs_vget and lfs_fastvget.
  */
 void
-lfs_vinit(struct mount *mp, struct vnode *vp)
+lfs_vinit(struct mount *mp, struct vnode **vpp)
 {
+	struct vnode *vp = *vpp;
 	struct inode *ip = VTOI(vp);
 	struct ufsmount *ump = VFSTOUFS(mp);
 	int i;
@@ -2090,4 +2107,6 @@ inconsistent:
 	VREF(ip->i_devvp);
 	genfs_node_init(vp, &lfs_genfsops);
 	uvm_vnp_setsize(vp, ip->i_size);
+
+	*vpp = vp;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: uhidev.c,v 1.14 2003/03/11 16:44:00 augustss Exp $	*/
+/*	$NetBSD: uhidev.c,v 1.14.2.1 2004/08/03 10:51:36 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -40,6 +40,9 @@
 /*
  * HID spec: http://www.usb.org/developers/devclass_docs/HID1_11.pdf
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: uhidev.c,v 1.14.2.1 2004/08/03 10:51:36 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -107,13 +110,14 @@ USB_ATTACH(uhidev)
 	int size, nrepid, repid, repsz;
 	int repsizes[256];
 	void *desc;
+	const void *descptr;
 	usbd_status err;
 	char devinfo[1024];
 
 	sc->sc_udev = uaa->device;
 	sc->sc_iface = iface;
 	id = usbd_get_interface_descriptor(iface);
-	usbd_devinfo(uaa->device, 0, devinfo);
+	usbd_devinfo(uaa->device, 0, devinfo, sizeof(devinfo));
 	USB_ATTACH_SETUP;
 	printf("%s: %s, iclass %d/%d\n", USBDEVNAME(sc->sc_dev),
 	       devinfo, id->bInterfaceClass, id->bInterfaceSubClass);
@@ -154,21 +158,47 @@ USB_ATTACH(uhidev)
 	sc->sc_ep_addr = ed->bEndpointAddress;
 
 	/* XXX need to extend this */
-	if (uaa->vendor == USB_VENDOR_WACOM &&
-	    uaa->product == USB_PRODUCT_WACOM_GRAPHIRE /* &&
-	    uaa->revision == 0x???? */) { /* XXX should use revision */
+	descptr = NULL;
+	if (uaa->vendor == USB_VENDOR_WACOM) {
+		static uByte reportbuf[] = {2, 2, 2};
+
 		/* The report descriptor for the Wacom Graphire is broken. */
-		size = sizeof uhid_graphire_report_descr;
+		switch (uaa->product) {
+		case USB_PRODUCT_WACOM_GRAPHIRE:
+			size = sizeof uhid_graphire_report_descr;
+			descptr = uhid_graphire_report_descr;
+			break;
+
+		case USB_PRODUCT_WACOM_GRAPHIRE3_4X5: /* The 6x8 too? */
+			/*
+			 * The Graphire3 needs 0x0202 to be written to
+			 * feature report ID 2 before it'll start
+			 * returning digitizer data.
+			 */
+			usbd_set_report(uaa->iface, UHID_FEATURE_REPORT, 2,
+			    &reportbuf, sizeof reportbuf);
+
+			size = sizeof uhid_graphire3_4x5_report_descr;
+			descptr = uhid_graphire3_4x5_report_descr;
+			break;
+		default:
+			/* Keep descriptor */
+			break;
+		}
+	}
+
+	if (descptr) {
 		desc = malloc(size, M_USBDEV, M_NOWAIT);
 		if (desc == NULL)
 			err = USBD_NOMEM;
 		else {
 			err = USBD_NORMAL_COMPLETION;
-			memcpy(desc, uhid_graphire_report_descr, size);
+			memcpy(desc, descptr, size);
 		}
 	} else {
 		desc = NULL;
-		err = usbd_read_report_desc(uaa->iface, &desc, &size, M_USBDEV);
+		err = usbd_read_report_desc(uaa->iface, &desc, &size,
+		    M_USBDEV);
 	}
 	if (err) {
 		printf("%s: no report descriptor\n", USBDEVNAME(sc->sc_dev));
@@ -305,6 +335,9 @@ uhidev_activate(device_ptr_t self, enum devact act)
 				rv |= config_deactivate(
 					&sc->sc_subdevs[i]->sc_dev);
 		sc->sc_dying = 1;
+		break;
+	default:
+		rv = 0;
 		break;
 	}
 	return (rv);
@@ -484,7 +517,7 @@ uhidev_set_report(struct uhidev *scd, int type, void *data, int len)
 	memcpy(buf+1, data, len);
 
 	retstat = usbd_set_report(scd->sc_parent->sc_iface, type,
-				  scd->sc_report_id, data, len + 1);
+				  scd->sc_report_id, buf, len + 1);
 
 	free(buf, M_TEMP);
 

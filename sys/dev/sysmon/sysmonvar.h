@@ -1,4 +1,4 @@
-/*	$NetBSD: sysmonvar.h,v 1.8.2.1 2003/07/02 15:26:22 darrenr Exp $	*/
+/*	$NetBSD: sysmonvar.h,v 1.8.2.2 2004/08/03 10:51:29 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2000 Zembu Labs, Inc.
@@ -70,7 +70,11 @@ struct sysmon_envsys {
 
 	u_int sme_fsensor;		/* sensor index base, from sysmon */
 	u_int sme_nsensors;		/* sensor count, from driver */
+	int sme_flags;			/* SME_FLAG_ flags defined below */
 };
+
+#define	SME_FLAG_BUSY	0x00000001		/* sme is busy */
+#define	SME_FLAG_WANTED	0x00000002		/* someone waiting for this */
 
 #define	SME_SENSOR_IDX(sme, idx)	((idx) - (sme)->sme_fsensor)
 

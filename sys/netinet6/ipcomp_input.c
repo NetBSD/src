@@ -1,4 +1,4 @@
-/*	$NetBSD: ipcomp_input.c,v 1.20 2002/09/11 02:41:27 itojun Exp $	*/
+/*	$NetBSD: ipcomp_input.c,v 1.20.6.1 2004/08/03 10:55:13 skrll Exp $	*/
 /*	$KAME: ipcomp_input.c,v 1.29 2001/09/04 08:43:19 itojun Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipcomp_input.c,v 1.20 2002/09/11 02:41:27 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipcomp_input.c,v 1.20.6.1 2004/08/03 10:55:13 skrll Exp $");
 
 #include "opt_inet.h"
 
@@ -116,7 +116,7 @@ ipcomp4_input(m, va_alist)
 	}
 
 	md = m_pulldown(m, off, sizeof(*ipcomp), NULL);
-	if (!m) {
+	if (!md) {
 		m = NULL;	/* already freed */
 		ipseclog((LOG_DEBUG, "IPv4 IPComp input: assumption failed "
 		    "(pulldown failure)\n"));
@@ -137,9 +137,9 @@ ipcomp4_input(m, va_alist)
 	if (cpi >= IPCOMP_CPI_NEGOTIATE_MIN) {
 		sav = key_allocsa(AF_INET, (caddr_t)&ip->ip_src,
 			(caddr_t)&ip->ip_dst, IPPROTO_IPCOMP, htonl(cpi));
-		if (sav != NULL
-		 && (sav->state == SADB_SASTATE_MATURE
-		  || sav->state == SADB_SASTATE_DYING)) {
+		if (sav != NULL &&
+		    (sav->state == SADB_SASTATE_MATURE ||
+		     sav->state == SADB_SASTATE_DYING)) {
 			cpi = sav->alg_enc;	/* XXX */
 			/* other parameters to look at? */
 		}
@@ -281,9 +281,9 @@ ipcomp6_input(mp, offp, proto)
 	if (cpi >= IPCOMP_CPI_NEGOTIATE_MIN) {
 		sav = key_allocsa(AF_INET6, (caddr_t)&ip6->ip6_src,
 			(caddr_t)&ip6->ip6_dst, IPPROTO_IPCOMP, htonl(cpi));
-		if (sav != NULL
-		 && (sav->state == SADB_SASTATE_MATURE
-		  || sav->state == SADB_SASTATE_DYING)) {
+		if (sav != NULL &&
+		    (sav->state == SADB_SASTATE_MATURE ||
+		     sav->state == SADB_SASTATE_DYING)) {
 			cpi = sav->alg_enc;	/* XXX */
 			/* other parameters to look at? */
 		}

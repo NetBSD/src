@@ -1,4 +1,4 @@
-/*	$NetBSD: clnp_frag.c,v 1.15 2001/11/13 01:10:47 lukem Exp $	*/
+/*	$NetBSD: clnp_frag.c,v 1.15.16.1 2004/08/03 10:55:41 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -12,11 +12,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -63,7 +59,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clnp_frag.c,v 1.15 2001/11/13 01:10:47 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clnp_frag.c,v 1.15.16.1 2004/08/03 10:55:41 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -106,14 +102,14 @@ struct clnp_fragl *clnp_frags = NULL;
  *			case, we ought to send an ER back.
  */
 int
-clnp_fragment(ifp, m, first_hop, total_len, segoff, flags, rt)
-	struct ifnet   *ifp;	/* ptr to outgoing interface */
-	struct mbuf    *m;	/* ptr to packet */
-	struct sockaddr *first_hop;	/* ptr to first hop */
-	int             total_len;	/* length of datagram */
-	int             segoff;	/* offset of segpart in hdr */
-	int             flags;	/* flags passed to clnp_output */
-	struct rtentry *rt;	/* route if direct ether */
+clnp_fragment(
+	struct ifnet   *ifp,	/* ptr to outgoing interface */
+	struct mbuf    *m,	/* ptr to packet */
+	struct sockaddr *first_hop,	/* ptr to first hop */
+	int             total_len,	/* length of datagram */
+	int             segoff,	/* offset of segpart in hdr */
+	int             flags,	/* flags passed to clnp_output */
+	struct rtentry *rt)	/* route if direct ether */
 {
 	struct clnp_fixed *clnp = mtod(m, struct clnp_fixed *);
 	int             hdr_len = (int) clnp->cnf_hdr_len;
@@ -343,11 +339,11 @@ clnp_fragment(ifp, m, first_hop, total_len, segoff, flags, rt)
  *			priority than clnp_slowtimo.
  */
 struct mbuf    *
-clnp_reass(m, src, dst, seg)
-	struct mbuf    *m;	/* new fragment */
-	struct iso_addr *src;	/* src of new fragment */
-	struct iso_addr *dst;	/* dst of new fragment */
-	struct clnp_segment *seg;	/* segment part of fragment header */
+clnp_reass(
+	struct mbuf    *m,	/* new fragment */
+	struct iso_addr *src,	/* src of new fragment */
+	struct iso_addr *dst,	/* dst of new fragment */
+	struct clnp_segment *seg)	/* segment part of fragment header */
 {
 	struct clnp_fragl *cfh;
 
@@ -409,11 +405,11 @@ clnp_reass(m, src, dst, seg)
  * NOTES:		Failure is only due to insufficient resources.
  */
 int
-clnp_newpkt(m, src, dst, seg)
-	struct mbuf    *m;	/* new fragment */
-	struct iso_addr *src;	/* src of new fragment */
-	struct iso_addr *dst;	/* dst of new fragment */
-	struct clnp_segment *seg;	/* segment part of fragment header */
+clnp_newpkt(
+	struct mbuf *m,		/* new fragment */
+	struct iso_addr *src,	/* src of new fragment */
+	struct iso_addr *dst,	/* dst of new fragment */
+	struct clnp_segment *seg)	/* segment part of fragment header */
 {
 	struct clnp_fragl *cfh;
 	struct clnp_fixed *clnp;
@@ -473,10 +469,10 @@ clnp_newpkt(m, src, dst, seg)
  *			part of the old clnp header.
  */
 void
-clnp_insert_frag(cfh, m, seg)
-	struct clnp_fragl *cfh;	/* header of list of packet fragments */
-	struct mbuf    *m;	/* new fragment */
-	struct clnp_segment *seg;	/* segment part of fragment header */
+clnp_insert_frag(
+	struct clnp_fragl *cfh,	/* header of list of packet fragments */
+	struct mbuf *m,		/* new fragment */
+	struct clnp_segment *seg)	/* segment part of fragment header */
 {
 	struct clnp_fixed *clnp;		/* clnp hdr of fragment */
 	struct clnp_frag *cf;			/* generic fragment ptr */
@@ -703,8 +699,8 @@ clnp_insert_frag(cfh, m, seg)
  *			fragment pdus.
  */
 struct mbuf    *
-clnp_comp_pdu(cfh)
-	struct clnp_fragl *cfh;	/* fragment header */
+clnp_comp_pdu(
+	struct clnp_fragl *cfh)	/* fragment header */
 {
 	struct clnp_frag *cf = cfh->cfl_frags;
 

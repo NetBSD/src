@@ -1,4 +1,4 @@
-/*      $NetBSD: procfs_linux.c,v 1.10.2.1 2003/07/02 15:26:53 darrenr Exp $      */
+/*      $NetBSD: procfs_linux.c,v 1.10.2.2 2004/08/03 10:54:07 skrll Exp $      */
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_linux.c,v 1.10.2.1 2003/07/02 15:26:53 darrenr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_linux.c,v 1.10.2.2 2004/08/03 10:54:07 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -44,6 +44,7 @@ __KERNEL_RCSID(0, "$NetBSD: procfs_linux.c,v 1.10.2.1 2003/07/02 15:26:53 darren
 #include <sys/kernel.h>
 #include <sys/proc.h>
 #include <sys/vnode.h>
+#include <sys/exec.h>
 #include <sys/resource.h>
 #include <sys/resourcevar.h>
 #include <sys/signal.h>
@@ -51,6 +52,7 @@ __KERNEL_RCSID(0, "$NetBSD: procfs_linux.c,v 1.10.2.1 2003/07/02 15:26:53 darren
 #include <sys/tty.h>
 
 #include <miscfs/procfs/procfs.h>
+#include <compat/linux/common/linux_exec.h>
 
 #include <uvm/uvm_extern.h>
 #include <uvm/uvm.h>
@@ -66,8 +68,8 @@ int
 procfs_domeminfo(struct lwp *curl, struct proc *p, struct pfsnode *pfs,
 		 struct uio *uio)
 {
-	char buf[512], *cp;
-	int len, error;
+	char buf[512];
+	int len;
 
 	len = snprintf(buf, sizeof buf,
 		"        total:    used:    free:  shared: buffers: cached:\n"
@@ -100,14 +102,7 @@ procfs_domeminfo(struct lwp *curl, struct proc *p, struct pfsnode *pfs,
 	if (len == 0)
 		return 0;
 
-	len -= uio->uio_offset;
-	cp = buf + uio->uio_offset;
-	len = imin(len, uio->uio_resid);
-	if (len <= 0)
-		error = 0;
-	else
-		error = uiomove(cp, len, uio);
-	return error;
+	return (uiomove_frombuf(buf, len, uio));
 }
 
 /*
@@ -118,14 +113,14 @@ int
 procfs_do_pid_stat(struct lwp *curl, struct lwp *l, struct pfsnode *pfs,
 		 struct uio *uio)
 {
+	char buf[512];
 	struct proc *p = curl->l_proc;
-	char buf[512], *cp;
-	int len, error;
+	int len;
 	struct tty *tty = p->p_session->s_ttyp;
 	struct rusage *ru = &p->p_stats->p_ru;
 	struct rusage *cru = &p->p_stats->p_cru;
 	struct vm_map *map = &p->p_vmspace->vm_map;
-	struct vm_map_entry *entry, *last = NULL;
+	struct vm_map_entry *entry;
 	unsigned long stext = 0, etext = 0, sstack = 0;
 
 	if (map != &curproc->p_vmspace->vm_map)
@@ -138,12 +133,16 @@ procfs_do_pid_stat(struct lwp *curl, struct lwp *l, struct pfsnode *pfs,
 		if (stext == etext) {
 			stext = entry->start;
 			etext = entry->end;
+			break;
 		}
-		last = entry;
 	}
-	/* assume stack is the last entry */
-	if (last != NULL)
-		sstack = last->start;
+#ifdef LINUX_USRSTACK
+	if (strcmp(p->p_emul->e_name, "linux") == 0 &&
+	    LINUX_USRSTACK < USRSTACK)
+		sstack = (unsigned long) LINUX_USRSTACK;
+	else
+#endif
+		sstack = (unsigned long) USRSTACK;
 
 	if (map != &curproc->p_vmspace->vm_map)
 		vm_map_unlock_read(map);
@@ -167,7 +166,7 @@ procfs_do_pid_stat(struct lwp *curl, struct lwp *l, struct pfsnode *pfs,
 	    p->p_pgid,
 	    p->p_session->s_sid,
 	    tty ? tty->t_dev : 0,
-	    tty ? tty->t_pgrp->pg_id : 0,
+	    (tty && tty->t_pgrp) ? tty->t_pgrp->pg_id : 0,
 
 	    p->p_flag,
 
@@ -209,22 +208,15 @@ procfs_do_pid_stat(struct lwp *curl, struct lwp *l, struct pfsnode *pfs,
 	if (len == 0)
 		return 0;
 
-	len -= uio->uio_offset;
-	cp = buf + uio->uio_offset;
-	len = imin(len, uio->uio_resid);
-	if (len <= 0)
-		error = 0;
-	else
-		error = uiomove(cp, len, uio);
-	return error;
+	return (uiomove_frombuf(buf, len, uio));
 }
 
 int
 procfs_docpuinfo(struct lwp *curl, struct proc *p, struct pfsnode *pfs,
 		 struct uio *uio)
 {
-	char buf[512], *cp;
-	int len, error;
+	char buf[512];
+	int len;
 
 	len = sizeof buf;
 	if (procfs_getcpuinfstr(buf, &len) < 0)
@@ -233,41 +225,27 @@ procfs_docpuinfo(struct lwp *curl, struct proc *p, struct pfsnode *pfs,
 	if (len == 0)
 		return 0;
 
-	len -= uio->uio_offset;
-	cp = buf + uio->uio_offset;
-	len = imin(len, uio->uio_resid);
-	if (len <= 0)
-		error = 0;
-	else
-		error = uiomove(cp, len, uio);
-	return error;
+	return (uiomove_frombuf(buf, len, uio));
 }
 
 int
 procfs_douptime(struct lwp *curl, struct proc *p, struct pfsnode *pfs,
 		 struct uio *uio)
 {
-	char buf[512], *cp;
-	int len, error;
+	char buf[512];
+	int len;
 	struct timeval runtime;
 	u_int64_t idle;
 
 	timersub(&curcpu()->ci_schedstate.spc_runtime, &boottime, &runtime);
 	idle = curcpu()->ci_schedstate.spc_cp_time[CP_IDLE];
-/*###251 [cc] unterminated string or character constant%%%*/
-	len = sprintf(buf, "%lu.%02lu %" PRIu64 ".%02" PRIu64 "\n",
-		      runtime.tv_sec, runtime.tv_usec / 10000,
-		      idle / hz, (((idle % hz) * 100) / hz) % 100);
+	len = snprintf(buf, sizeof(buf),
+	    "%lu.%02lu %" PRIu64 ".%02" PRIu64 "\n",
+	    runtime.tv_sec, runtime.tv_usec / 10000,
+	    idle / hz, (((idle % hz) * 100) / hz) % 100);
 
 	if (len == 0)
 		return 0;
 
-	len -= uio->uio_offset;
-	cp = buf + uio->uio_offset;
-	len = imin(len, uio->uio_resid);
-	if (len <= 0)
-		error = 0;
-	else
-		error = uiomove(cp, len, uio);
-	return error;
+	return (uiomove_frombuf(buf, len, uio));
 }

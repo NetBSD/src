@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel.c,v 1.5 1999/03/31 01:50:25 cgd Exp $	*/
+/*	$NetBSD: disklabel.c,v 1.5.42.1 2004/08/03 10:53:53 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -12,11 +12,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -39,36 +35,36 @@
 #include <sys/disklabel.h>
 #include "stand.h"
 
+
+#if defined(LIBSA_NO_DISKLABEL_MSGS) 
+#define nolabel (char *)1
+#define corruptedlabel (char *)1
+#else
+static char nolabel[] = "no disk label";
+static char corruptedlabel[] = "disk label corrupted";
+#endif
 char *
 getdisklabel(buf, lp)
 	const char *buf;
 	struct disklabel *lp;
 {
-	struct disklabel *dlp, *elp;
-	char *msg = (char *)0;
+	const struct disklabel *dlp, *elp;
+	char *msg = NULL;
 
-	elp = (struct disklabel *)(buf + DEV_BSIZE - sizeof(*dlp));
-	for (dlp = (struct disklabel *)buf; dlp <= elp;
-	    dlp = (struct disklabel *)((char *)dlp + sizeof(long))) {
+	elp = (const void *)(buf + DEV_BSIZE - sizeof(*dlp));
+	for (dlp = (const void *)buf; dlp <= elp;
+	    dlp = (const void *)((const char *)dlp + sizeof(long))) {
 		if (dlp->d_magic != DISKMAGIC || dlp->d_magic2 != DISKMAGIC) {
-#if defined(LIBSA_NO_DISKLABEL_MSGS)
-			msg = (char *)1;
-#else
-			if (msg == (char *)0)
-				msg = "no disk label";
-#endif
+			if (msg == NULL)
+				msg = nolabel;
 		} else if (dlp->d_npartitions > MAXPARTITIONS ||
 			   dkcksum(dlp) != 0)
-#if defined(LIBSA_NO_DISKLABEL_MSGS)
-			msg = (char *)1;
-#else
-			msg = "disk label corrupted";
-#endif
+			msg = corruptedlabel;
 		else {
-			bcopy(dlp, lp, sizeof *lp);
-			msg = (char *)0;
+			(void)memcpy(lp, dlp, sizeof *lp);
+			msg = NULL;
 			break;
 		}
 	}
-	return (msg);
+	return msg;
 }

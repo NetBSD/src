@@ -1,4 +1,4 @@
-/*	$NetBSD: lkminit_misc.c,v 1.2 2001/11/12 23:23:25 lukem Exp $	*/
+/*	$NetBSD: lkminit_misc.c,v 1.2.16.1 2004/08/03 10:53:59 skrll Exp $	*/
 
 /*
  * Makefile for miscmod
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lkminit_misc.c,v 1.2 2001/11/12 23:23:25 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lkminit_misc.c,v 1.2.16.1 2004/08/03 10:53:59 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -53,7 +53,7 @@ __KERNEL_RCSID(0, "$NetBSD: lkminit_misc.c,v 1.2 2001/11/12 23:23:25 lukem Exp $
 #include <sys/syscall.h>
 
 
-int	misccall __P((struct proc *, void *, register_t *));
+int	misccall __P((struct lwp *, void *, register_t *));
 int	misc_example_lkmentry __P((struct lkm_table *lkmtp, int, int));
 
 static int miscmod_handle __P((struct lkm_table *, int));
@@ -63,7 +63,7 @@ static int miscmod_handle __P((struct lkm_table *, int));
  * have 0 arguments to our system call.
  */
 static struct sysent newent = {
-	0, 0,	misccall		/* # of args, args size, fn pointer*/
+	0, 0, 0, misccall		/* # of args, args size, fn pointer*/
 };
 
 /*
@@ -71,7 +71,7 @@ static struct sysent newent = {
  */
 static struct sysent	oldent;		/* save are for old callslot entry*/
 
-MOD_MISC( "miscmod")
+MOD_MISC( "miscmod");
 
 
 /*
@@ -98,7 +98,7 @@ miscmod_handle( lkmtp, cmd)
 	int			i;
 	struct lkm_misc		*args = lkmtp->private.lkm_misc;
 	int			err = 0;	/* default = success*/
-	extern int sys_lkmnosys __P((struct proc *, void *, register_t *));
+	extern int sys_lkmnosys __P((struct lwp *, void *, register_t *));
 
 	switch( cmd) {
 	case LKM_E_LOAD:
@@ -119,7 +119,7 @@ miscmod_handle( lkmtp, cmd)
 		 * Search the table looking for a slot...
 		 */
 		for (i = 0; i < SYS_MAXSYSCALL; i++)
-			if (sysent[i].sy_call == sys_lkmnosys)
+			if ((void *)sysent[i].sy_call == sys_lkmnosys)
 				break;		/* found it!*/
 		/* out of allocable slots?*/
 		if (i == SYS_MAXSYSCALL) {
@@ -134,7 +134,7 @@ miscmod_handle( lkmtp, cmd)
 		bcopy( &newent, &sysent[ i], sizeof( struct sysent));
 
 		/* done!*/
-		args->lkm_offset = i;	/* slot in sysent[]*/
+		args->mod.lkm_offset = i;	/* slot in sysent[]*/
 
 
 		/* if we make it to here, print copyright on console*/
@@ -147,7 +147,7 @@ miscmod_handle( lkmtp, cmd)
 
 	case LKM_E_UNLOAD:
 		/* current slot...*/
-		i = args->lkm_offset;
+		i = args->mod.lkm_offset;
 
 		/* replace current slot contents with old contents*/
 		bcopy( &oldent, &sysent[ i], sizeof( struct sysent));
