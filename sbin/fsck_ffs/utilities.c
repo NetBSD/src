@@ -1,4 +1,4 @@
-/*	$NetBSD: utilities.c,v 1.23 1998/03/18 17:01:24 bouyer Exp $	*/
+/*	$NetBSD: utilities.c,v 1.24 1998/03/30 02:09:40 mrg Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)utilities.c	8.6 (Berkeley) 5/19/95";
 #else
-__RCSID("$NetBSD: utilities.c,v 1.23 1998/03/18 17:01:24 bouyer Exp $");
+__RCSID("$NetBSD: utilities.c,v 1.24 1998/03/30 02:09:40 mrg Exp $");
 #endif
 #endif /* not lint */
 
@@ -520,7 +520,7 @@ void
 catchquit(sig)
 	int sig;
 {
-	extern returntosingle;
+	extern int returntosingle;
 
 	printf("returning to single-user after filesystem check\n");
 	returntosingle = 1;
