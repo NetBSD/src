@@ -1,4 +1,4 @@
-/*	$NetBSD: com_supio.c,v 1.2 1997/08/27 20:35:46 is Exp $	*/
+/*	$NetBSD: com_supio.c,v 1.3 1997/08/27 20:41:30 is Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1996
@@ -86,15 +86,10 @@ struct cfattach com_supio_ca = {
 int
 com_supio_match(parent, match, aux)
 	struct device *parent;
-#ifdef __BROKEN_INDIRECT_CONFIG
-	void *match;
-#else
 	struct cfdata *match;
-#endif
 	void *aux;
 {
 	bus_space_tag_t iot;
-/* XXX	bus_space_handle_t ioh;*/
 	int iobase;
 	int rv = 1;
 	struct supio_attach_args *supa = aux;
