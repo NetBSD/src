@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipi_all.h,v 1.7 1998/02/13 08:28:47 enami Exp $	*/
+/*	$NetBSD: scsipi_all.h,v 1.8 1998/06/24 00:29:39 mjacob Exp $	*/
 
 /*
  * SCSI and SCSI-like general interface description
@@ -25,6 +25,32 @@
  * SCSI-like command format and opcode
  */
 
+/*
+ * Some basic, common SCSI command group definitions.
+ */
+
+#define	CDB_GROUPID(cmd)        ((cmd >> 5) & 0x7)
+#define	CDB_GROUPID_0	0
+#define	CDB_GROUPID_1	1
+#define	CDB_GROUPID_2	2
+#define	CDB_GROUPID_3	3
+#define	CDB_GROUPID_4	4
+#define	CDB_GROUPID_5	5
+#define	CDB_GROUPID_6	6
+#define	CDB_GROUPID_7	7
+
+#define	CDB_GROUP0	6       /*  6-byte cdb's */
+#define	CDB_GROUP1	10      /* 10-byte cdb's */
+#define	CDB_GROUP2	10      /* 10-byte cdb's */
+#define	CDB_GROUP3	0       /* reserved */
+#define	CDB_GROUP4	16      /* 16-byte cdb's */
+#define	CDB_GROUP5	12      /* 12-byte cdb's */
+#define	CDB_GROUP6	0       /* vendor specific */
+#define	CDB_GROUP7	0       /* vendor specific */
+
+/*
+ * Some basic, common SCSI commands
+ */
 #define	TEST_UNIT_READY		0x00
 struct scsipi_test_unit_ready {
 	u_int8_t opcode;
