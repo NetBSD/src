@@ -1,4 +1,4 @@
-/*	$NetBSD: mkinit.c,v 1.14 1996/02/18 12:29:21 mycroft Exp $	*/
+/*	$NetBSD: mkinit.c,v 1.14.4.1 1997/01/26 04:57:27 rat Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -46,7 +46,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)mkinit.c	8.2 (Berkeley) 5/4/95";
 #else
-static char rcsid[] = "$NetBSD: mkinit.c,v 1.14 1996/02/18 12:29:21 mycroft Exp $";
+static char rcsid[] = "$NetBSD: mkinit.c,v 1.14.4.1 1997/01/26 04:57:27 rat Exp $";
 #endif
 #endif /* not lint */
 
@@ -94,7 +94,7 @@ struct text {
 	int nleft;
 	struct block *start;
 	struct block *last;
-};      
+};
 
 struct block {
 	struct block *next;
@@ -165,8 +165,8 @@ void addchar __P((int, struct text *));
 void writetext __P((struct text *, FILE *));
 FILE *ckfopen __P((char *, char *));
 void *ckmalloc __P((int));
-char *savestr __P((char *)); 
-void error __P((char *));  
+char *savestr __P((char *));
+void error __P((char *));
 
 #define equal(s1, s2)	(strcmp(s1, s2) == 0)
 
@@ -217,6 +217,22 @@ readfile(fname)
 			dodecl(line, fp);
 		if (line[0] == '#' && gooddefine(line))
 			addstr(line, &defines);
+		if (line[0] == '#' && gooddefine(line)) {
+		        char *cp;
+			char line2[1024];
+			static const char undef[] = "#undef ";
+
+			strcpy(line2, line);
+			memcpy(line2, undef, sizeof(undef) - 1);
+			cp = line2 + sizeof(undef) - 1;
+			while(*cp && (*cp == ' ' || *cp == '\t'))
+			        cp++;
+			while(*cp && *cp != ' ' && *cp != '\t' && *cp != '\n')
+			        cp++;
+			*cp++ = '\n'; *cp = '\0';
+			addstr(line2, &defines);
+			addstr(line, &defines);
+		}
 	}
 	fclose(fp);
 }
@@ -227,7 +243,7 @@ match(name, line)
 	char *name;
 	char *line;
 {
-	register char *p, *q;
+	char *p, *q;
 
 	p = name, q = line;
 	while (*p) {
@@ -244,7 +260,7 @@ int
 gooddefine(line)
 	char *line;
 {
-	register char *p;
+	char *p;
 
 	if (! match("#define", line))
 		return 0;			/* not a define */
@@ -266,7 +282,7 @@ gooddefine(line)
 
 void
 doevent(ep, fp, fname)
-	register struct event *ep;
+	struct event *ep;
 	FILE *fp;
 	char *fname;
 	{
@@ -308,9 +324,9 @@ void
 doinclude(line)
 	char *line;
 	{
-	register char *p;
+	char *p;
 	char *name;
-	register char **pp;
+	char **pp;
 
 	for (p = line ; *p != '"' && *p != '<' && *p != '\0' ; p++);
 	if (*p == '\0')
@@ -335,7 +351,7 @@ dodecl(line1, fp)
 	FILE *fp;
 	{
 	char line[1024];
-	register char *p, *q;
+	char *p, *q;
 
 	if (strcmp(line1, "MKINIT\n") == 0) { /* start of struct/union decl */
 		addchar('\n', &decls);
@@ -350,7 +366,8 @@ dodecl(line1, fp)
 		if (! amiddecls)
 			addchar('\n', &decls);
 		q = NULL;
-		for (p = line1 + 6 ; *p != '\0' && *p != '=' && *p != '/' ; p++);
+		for (p = line1 + 6 ; *p && strchr("=/\n", *p) == NULL; p++)
+			continue;
 		if (*p == '=') {		/* eliminate initialization */
 			for (q = p ; *q && *q != ';' ; q++);
 			if (*q == '\0')
@@ -408,8 +425,8 @@ output() {
 
 void
 addstr(s, text)
-	register char *s;
-	register struct text *text;
+	char *s;
+	struct text *text;
 	{
 	while (*s) {
 		if (--text->nleft < 0)
@@ -423,7 +440,7 @@ addstr(s, text)
 void
 addchar(c, text)
 	int c;
-	register struct text *text;
+	struct text *text;
 {
 	struct block *bp;
 
@@ -472,10 +489,10 @@ ckfopen(file, mode)
 }
 
 void *
-ckmalloc(nbytes) 
+ckmalloc(nbytes)
 	int nbytes;
 {
-	register char *p;
+	char *p;
 
 	if ((p = malloc(nbytes)) == NULL)
 		error("Out of space");
@@ -486,7 +503,7 @@ char *
 savestr(s)
 	char *s;
 	{
-	register char *p;
+	char *p;
 
 	p = ckmalloc(strlen(s) + 1);
 	strcpy(p, s);

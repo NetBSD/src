@@ -1,4 +1,4 @@
-/*	$NetBSD: exec.c,v 1.17 1995/06/09 01:53:50 christos Exp $	*/
+/*	$NetBSD: exec.c,v 1.17.6.1 1997/01/26 04:57:17 rat Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -40,7 +40,7 @@
 #if 0
 static char sccsid[] = "@(#)exec.c	8.4 (Berkeley) 6/8/95";
 #else
-static char rcsid[] = "$NetBSD: exec.c,v 1.17 1995/06/09 01:53:50 christos Exp $";
+static char rcsid[] = "$NetBSD: exec.c,v 1.17.6.1 1997/01/26 04:57:17 rat Exp $";
 #endif
 #endif /* not lint */
 
@@ -97,6 +97,7 @@ struct tblentry {
 
 STATIC struct tblentry *cmdtable[CMDTABLESIZE];
 STATIC int builtinloc = -1;		/* index in path of %builtin, or -1 */
+int exerrno = 0;			/* Last exec error */
 
 
 STATIC void tryexec __P((char *, char **, char **));
@@ -136,7 +137,20 @@ shellexec(argv, envp, path, index)
 			stunalloc(cmdname);
 		}
 	}
-	error2(argv[0], errmsg(e, E_EXEC));
+
+	/* Map to POSIX errors */
+	switch (e) {
+	case EACCES:
+		exerrno = 126;
+		break;
+	case ENOENT:
+		exerrno = 127;
+		break;
+	default:
+		exerrno = 2;
+		break;
+	}
+	exerror(EXEXEC, "%s: %s", argv[0], errmsg(e, E_EXEC));
 }
 
 
@@ -275,7 +289,7 @@ padvance(path, name)
 	char **path;
 	char *name;
 	{
-	register char *p, *q;
+	char *p, *q;
 	char *start;
 	int len;
 
@@ -313,7 +327,7 @@ padvance(path, name)
 int
 hashcmd(argc, argv)
 	int argc;
-	char **argv; 
+	char **argv;
 {
 	struct tblentry **pp;
 	struct tblentry *cmdp;
@@ -542,7 +556,7 @@ int
 find_builtin(name)
 	char *name;
 {
-	register const struct builtincmd *bp;
+	const struct builtincmd *bp;
 
 	for (bp = builtincmd ; bp->name ; bp++) {
 		if (*bp->name == *name && equal(bp->name, name))
@@ -582,9 +596,9 @@ hashcd() {
 
 void
 changepath(newval)
-	char *newval;
+	const char *newval;
 {
-	char *old, *new;
+	const char *old, *new;
 	int index;
 	int firstchange;
 	int bltin;
@@ -705,7 +719,7 @@ cmdlookup(name, add)
 	int add;
 {
 	int hashval;
-	register char *p;
+	char *p;
 	struct tblentry *cmdp;
 	struct tblentry **pp;
 
@@ -755,7 +769,7 @@ delete_cmd_entry() {
 void
 getcmdentry(name, entry)
 	char *name;
-	struct cmdentry *entry; 
+	struct cmdentry *entry;
 	{
 	struct tblentry *cmdp = cmdlookup(name, 0);
 

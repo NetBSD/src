@@ -1,4 +1,4 @@
-/*	$NetBSD: output.c,v 1.15 1995/09/14 16:19:06 jtc Exp $	*/
+/*	$NetBSD: output.c,v 1.15.6.1 1997/01/26 04:57:33 rat Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -40,7 +40,7 @@
 #if 0
 static char sccsid[] = "@(#)output.c	8.2 (Berkeley) 5/4/95";
 #else
-static char rcsid[] = "$NetBSD: output.c,v 1.15 1995/09/14 16:19:06 jtc Exp $";
+static char rcsid[] = "$NetBSD: output.c,v 1.15.6.1 1997/01/26 04:57:33 rat Exp $";
 #endif
 #endif /* not lint */
 
@@ -144,8 +144,8 @@ out2str(p)
 
 void
 outstr(p, file)
-	register const char *p;
-	register struct output *file;
+	const char *p;
+	struct output *file;
 	{
 	while (*p)
 		outc(*p++, file);
@@ -353,20 +353,16 @@ fmtstr(va_alist)
 
 #define TEMPSIZE 24
 
-#ifdef __STDC__
-static const char digit[16] = "0123456789ABCDEF";
-#else
-static const char digit[17] = "0123456789ABCDEF";
-#endif
+static const char digit[] = "0123456789ABCDEF";
 
 
 void
 doformat(dest, f, ap)
-	register struct output *dest;
-	register char *f;		/* format string */
+	struct output *dest;
+	char *f;		/* format string */
 	va_list ap;
 	{
-	register char c;
+	char c;
 	char temp[TEMPSIZE];
 	int flushleft;
 	int sharp;
@@ -569,7 +565,7 @@ xwrite(fd, buf, nbytes)
  */
 
 int
-xioctl(fd, request, arg) 
+xioctl(fd, request, arg)
 	int fd;
 	unsigned long request;
 	char * arg;

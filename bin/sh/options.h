@@ -1,4 +1,4 @@
-/*	$NetBSD: options.h,v 1.8 1995/05/11 21:29:48 christos Exp $	*/
+/*	$NetBSD: options.h,v 1.8.6.1 1997/01/26 04:57:33 rat Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -39,11 +39,12 @@
  */
 
 struct shparam {
-	int nparam;	/* number of positional parameters (without $0) */
-	char malloc;	/* true if parameter list dynamicly allocated */
+	int nparam;		/* # of positional parameters (without $0) */
+	unsigned char malloc;	/* if parameter list dynamically allocated */
+	unsigned char reset;	/* if getopts has been reset */
 	char **p;		/* parameter list */
-	char **optnext;	/* next parameter to be processed by getopts */
-	char *optptr;	/* used by getopts */
+	char **optnext;		/* next parameter to be processed by getopts */
+	char *optptr;		/* used by getopts */
 };
 
 
@@ -102,11 +103,12 @@ extern char **argptr;		/* argument list for builtin commands */
 extern char *optarg;		/* set by nextopt */
 extern char *optptr;		/* used by nextopt */
 
-void procargs __P((int, char **)); 
+void procargs __P((int, char **));
 void optschanged __P((void));
 void setparam __P((char **));
-void freeparam __P((struct shparam *)); 
+void freeparam __P((struct shparam *));
 int shiftcmd __P((int, char **));
 int setcmd __P((int, char **));
 int getoptscmd __P((int, char **));
 int nextopt __P((char *));
+void getoptsreset __P((const char *));

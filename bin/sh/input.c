@@ -1,4 +1,4 @@
-/*	$NetBSD: input.c,v 1.19 1995/10/19 04:14:37 christos Exp $	*/
+/*	$NetBSD: input.c,v 1.19.4.1 1997/01/26 04:57:21 rat Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -40,7 +40,7 @@
 #if 0
 static char sccsid[] = "@(#)input.c	8.3 (Berkeley) 6/9/95";
 #else
-static char rcsid[] = "$NetBSD: input.c,v 1.19 1995/10/19 04:14:37 christos Exp $";
+static char rcsid[] = "$NetBSD: input.c,v 1.19.4.1 1997/01/26 04:57:21 rat Exp $";
 #endif
 #endif /* not lint */
 
@@ -143,7 +143,7 @@ pfgets(line, len)
 	char *line;
 	int len;
 {
-	register char *p = line;
+	char *p = line;
 	int nleft = len;
 	int c;
 
@@ -177,7 +177,7 @@ pgetc()
 
 
 static int
-pread() 
+pread()
 {
 	int nr;
 	parsenextc = parsefile->buf;
@@ -185,7 +185,6 @@ pread()
 retry:
 	if (parsefile->fd == 0 && el) {
 		const char *rl_cp;
-		int len;
 
 		rl_cp = el_gets(el, &nr);
 		if (rl_cp == NULL)
@@ -264,7 +263,7 @@ again:
 		case '\0':
 			p++;	/* Skip nul */
 			goto check;
-		
+
 		case '\t':
 		case ' ':
 			break;

@@ -1,4 +1,4 @@
-/*	$NetBSD: mknodes.c,v 1.11 1995/05/11 21:29:36 christos Exp $	*/
+/*	$NetBSD: mknodes.c,v 1.11.6.1 1997/01/26 04:57:28 rat Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -46,7 +46,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)mknodes.c	8.2 (Berkeley) 5/4/95";
 #else
-static char rcsid[] = "$NetBSD: mknodes.c,v 1.11 1995/05/11 21:29:36 christos Exp $";
+static char rcsid[] = "$NetBSD: mknodes.c,v 1.11.6.1 1997/01/26 04:57:28 rat Exp $";
 #endif
 #endif /* not lint */
 
@@ -123,7 +123,7 @@ main(argc, argv)
 	char **argv;
 {
 	if (argc != 3)
-		error("usage: mknodes file\n");
+		error("usage: mknodes file");
 	if ((infp = fopen(argv[1], "r")) == NULL)
 		error("Can't open %s", argv[1]);
 	while (readline()) {
@@ -398,7 +398,7 @@ static int
 nextfield(buf)
 	char *buf;
 {
-	register char *p, *q;
+	char *p, *q;
 
 	p = linep;
 	while (*p == ' ' || *p == '\t')
@@ -423,7 +423,7 @@ skipbl()
 static int
 readline()
 {
-	register char *p;
+	char *p;
 
 	if (fgets(line, 1024, infp) == NULL)
 		return 0;
@@ -472,7 +472,7 @@ static char *
 savestr(s)
 	const char *s;
 {
-	register char *p;
+	char *p;
 
 	if ((p = malloc(strlen(s) + 1)) == NULL)
 		error("Out of space");

@@ -1,4 +1,4 @@
-/*	$NetBSD: alias.c,v 1.6 1995/05/11 21:28:40 christos Exp $	*/
+/*	$NetBSD: alias.c,v 1.6.6.1 1997/01/26 04:57:11 rat Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -40,7 +40,7 @@
 #if 0
 static char sccsid[] = "@(#)alias.c	8.3 (Berkeley) 5/4/95";
 #else
-static char rcsid[] = "$NetBSD: alias.c,v 1.6 1995/05/11 21:28:40 christos Exp $";
+static char rcsid[] = "$NetBSD: alias.c,v 1.6.6.1 1997/01/26 04:57:11 rat Exp $";
 #endif
 #endif /* not lint */
 
@@ -240,7 +240,7 @@ unaliascmd(argc, argv)
 	char **argv;
 {
 	int i;
-	
+
 	while ((i = nextopt("a")) != '\0') {
 		if (i == 'a') {
 			rmaliases();
@@ -255,7 +255,7 @@ unaliascmd(argc, argv)
 
 STATIC struct alias **
 hashalias(p)
-	register char *p;
+	char *p;
 	{
 	unsigned int hashval;
 

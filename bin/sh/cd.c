@@ -1,4 +1,4 @@
-/*	$NetBSD: cd.c,v 1.15 1996/03/01 01:58:58 jtc Exp $	*/
+/*	$NetBSD: cd.c,v 1.15.4.1 1997/01/26 04:57:14 rat Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -40,13 +40,14 @@
 #if 0
 static char sccsid[] = "@(#)cd.c	8.2 (Berkeley) 5/4/95";
 #else
-static char rcsid[] = "$NetBSD: cd.c,v 1.15 1996/03/01 01:58:58 jtc Exp $";
+static char rcsid[] = "$NetBSD: cd.c,v 1.15.4.1 1997/01/26 04:57:14 rat Exp $";
 #endif
 #endif /* not lint */
 
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <stdlib.h>
+#include <string.h>
 #include <unistd.h>
 #include <errno.h>
 
@@ -62,6 +63,7 @@ static char rcsid[] = "$NetBSD: cd.c,v 1.15 1996/03/01 01:58:58 jtc Exp $";
 #include "output.h"
 #include "memalloc.h"
 #include "error.h"
+#include "exec.h"
 #include "redir.h"
 #include "mystring.h"
 #include "show.h"
@@ -78,21 +80,26 @@ STATIC char *cdcomppath;
 int
 cdcmd(argc, argv)
 	int argc;
-	char **argv; 
+	char **argv;
 {
 	char *dest;
 	char *path;
 	char *p;
 	struct stat statb;
-	char *padvance();
 	int print = 0;
 
 	nextopt(nullstr);
 	if ((dest = *argptr) == NULL && (dest = bltinlookup("HOME", 1)) == NULL)
 		error("HOME not set");
+	if (*dest == '\0')
+	        dest = ".";
 	if (dest[0] == '-' && dest[1] == '\0') {
 		dest = prevdir ? prevdir : curdir;
 		print = 1;
+		if (dest)
+		        print = 1;
+		else
+		        dest = ".";
 	}
 	if (*dest == '/' || (path = bltinlookup("CDPATH", 1)) == NULL)
 		path = nullstr;
@@ -125,18 +132,60 @@ cdcmd(argc, argv)
 STATIC int
 docd(dest, print)
 	char *dest;
+	int print;
 {
+	char *p;
+	char *q;
+	char *component;
+	struct stat statb;
+	int first;
+	int badstat;
 
 	TRACE(("docd(\"%s\", %d) called\n", dest, print));
+
+	/*
+	 *  Check each component of the path. If we find a symlink or
+	 *  something we can't stat, clear curdir to force a getcwd()
+	 *  next time we get the value of the current directory.
+	 */
+	badstat = 0;
+	cdcomppath = stalloc(strlen(dest) + 1);
+	scopy(dest, cdcomppath);
+	STARTSTACKSTR(p);
+	if (*dest == '/') {
+		STPUTC('/', p);
+		cdcomppath++;
+	}
+	first = 1;
+	while ((q = getcomponent()) != NULL) {
+		if (q[0] == '\0' || (q[0] == '.' && q[1] == '\0'))
+			continue;
+		if (! first)
+			STPUTC('/', p);
+		first = 0;
+		component = q;
+		while (*q)
+			STPUTC(*q++, p);
+		if (equal(component, ".."))
+			continue;
+		STACKSTRNUL(p);
+		if ((lstat(stackblock(), &statb) < 0)
+		    || (S_ISLNK(statb.st_mode)))  {
+			/* print = 1; */
+			badstat = 1;
+			break;
+		}
+	}
+
 	INTOFF;
 	if (chdir(dest) < 0) {
 		INTON;
 		return -1;
 	}
-	updatepwd(dest);
+	updatepwd(badstat ? NULL : dest);
 	INTON;
 	if (print && iflag)
-		out1fmt("%s\n", stackblock());
+		out1fmt("%s\n", curdir);
 	return 0;
 }
 
@@ -148,7 +197,7 @@ docd(dest, print)
 
 STATIC char *
 getcomponent() {
-	register char *p;
+	char *p;
 	char *start;
 
 	if ((p = cdcomppath) == NULL)
@@ -183,6 +232,23 @@ updatepwd(dir)
 	char *p;
 
 	hashcd();				/* update command hash table */
+
+	/*
+	 * If our argument is NULL, we don't know the current directory
+	 * any more because we traversed a symbolic link or something
+	 * we couldn't stat().
+	 */
+	if (dir == NULL)  {
+		if (prevdir)
+			ckfree(prevdir);
+		INTOFF;
+		prevdir = curdir;
+		curdir = NULL;
+		getpwd();
+		INTON;
+		return;
+	}
+
 	cdcomppath = stalloc(strlen(dir) + 1);
 	scopy(dir, cdcomppath);
 	STARTSTACKSTR(new);
@@ -220,7 +286,7 @@ updatepwd(dir)
 int
 pwdcmd(argc, argv)
 	int argc;
-	char **argv; 
+	char **argv;
 {
 	getpwd();
 	out1str(curdir);
@@ -258,7 +324,7 @@ getpwd()
 	 */
 #if defined(__NetBSD__) || defined(__svr4__)
 	if (getcwd(buf, sizeof(buf)) == NULL)
-		error("getcwd() failed");
+		error("getcwd() failed: %s", strerror(errno));
 	curdir = savestr(buf);
 #else
 	{

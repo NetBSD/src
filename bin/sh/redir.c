@@ -1,4 +1,4 @@
-/*	$NetBSD: redir.c,v 1.12 1995/05/11 21:30:10 christos Exp $	*/
+/*	$NetBSD: redir.c,v 1.12.6.1 1997/01/26 04:57:37 rat Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -40,7 +40,7 @@
 #if 0
 static char sccsid[] = "@(#)redir.c	8.2 (Berkeley) 5/4/95";
 #else
-static char rcsid[] = "$NetBSD: redir.c,v 1.12 1995/05/11 21:30:10 christos Exp $";
+static char rcsid[] = "$NetBSD: redir.c,v 1.12.6.1 1997/01/26 04:57:37 rat Exp $";
 #endif
 #endif /* not lint */
 
@@ -79,10 +79,10 @@ struct redirtab {
 
 MKINIT struct redirtab *redirlist;
 
-/* 
+/*
  * We keep track of whether or not fd0 has been redirected.  This is for
  * background commands, where we want to redirect fd0 to /dev/null only
- * if it hasn't already been redirected.  
+ * if it hasn't already been redirected.
 */
 int fd0_redirected = 0;
 
@@ -107,7 +107,7 @@ redirect(redir, flags)
 	struct redirtab *sv;
 	int i;
 	int fd;
-	char memory[10];		/* file descriptors to write to memory */
+	char memory[10];	/* file descriptors to write to memory */
 
 	for (i = 10 ; --i >= 0 ; )
 		memory[i] = 0;
@@ -121,6 +121,9 @@ redirect(redir, flags)
 	}
 	for (n = redir ; n ; n = n->nfile.next) {
 		fd = n->nfile.fd;
+		if ((n->nfile.type == NTOFD || n->nfile.type == NFROMFD) &&
+		    n->ndup.dupfd == fd)
+			continue; /* redirect from/to same file descriptor */
 		if ((flags & REDIR_PUSH) && sv->renamed[fd] == EMPTY) {
 			INTOFF;
 			if ((i = copyfd(fd, 10)) != EMPTY) {
@@ -263,7 +266,7 @@ out:
 
 void
 popredir() {
-	register struct redirtab *rp = redirlist;
+	struct redirtab *rp = redirlist;
 	int i;
 
 	for (i = 0 ; i < 10 ; i++) {
@@ -314,7 +317,7 @@ fd0_redirected_p () {
 
 void
 clearredir() {
-	register struct redirtab *rp;
+	struct redirtab *rp;
 	int i;
 
 	for (rp = redirlist ; rp ; rp = rp->next) {
@@ -336,14 +339,18 @@ clearredir() {
  */
 
 int
-copyfd(from, to) 
+copyfd(from, to)
 	int from;
 	int to;
 {
 	int newfd;
 
 	newfd = fcntl(from, F_DUPFD, to);
-	if (newfd < 0 && errno == EMFILE)
-		return EMPTY;
+	if (newfd < 0) {
+		if (errno == EMFILE)
+			return EMPTY;
+		else
+			error("%d: %s", from, strerror(errno));
+	}
 	return newfd;
 }
