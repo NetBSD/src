@@ -1,4 +1,4 @@
-.\"	$NetBSD: nsswitch.conf.5,v 1.17 2000/02/14 13:03:37 itojun Exp $
+.\"	$NetBSD: nsswitch.conf.5,v 1.18 2000/02/20 14:45:35 itojun Exp $
 .\"
 .\"  Copyright (c) 1997, 1998, 1999 The NetBSD Foundation, Inc.
 .\"  All rights reserved.
@@ -263,14 +263,3 @@ and
 .Tn Solaris
 .Xr nsswitch.conf 4
 manual pages.
-.Sh BUGS
-Due to resolver internal issues,
-.Xr getaddrinfo 3
-may not behave as
-.Nm
-suggests.
-Consequently, userland programs that use
-.Xr getaddrinfo 3
-may behave differently from what
-.Nm
-says.
