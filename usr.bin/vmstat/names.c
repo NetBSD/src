@@ -31,10 +31,10 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)names.c	5.2 (Berkeley) 6/4/91
- *	$Id: names.c,v 1.3 1993/05/21 08:53:22 cgd Exp $
+ *	$Id: names.c,v 1.4 1993/12/06 09:21:56 cgd Exp $
  */
 
-#if !defined(hp300) && !defined(tahoe) && !defined(vax) && !defined(__386BSD__)
+#if !defined(hp300) && !defined(tahoe) && !defined(vax) && !defined(i386)
 char *defdrives[] = { 0 };
 
 void read_names()
