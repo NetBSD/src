@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf.c,v 1.26 1996/05/07 02:40:22 thorpej Exp $	*/
+/*	$NetBSD: bpf.c,v 1.27 1996/05/07 05:26:02 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993
@@ -930,7 +930,6 @@ bpf_setif(d, ifr)
 		struct ifnet *ifp = bp->bif_ifp;
 
 		if (ifp == 0 ||
-		    strlen(ifp->if_xname) != strlen(ifr->ifr_name) ||
 		    strcmp(ifp->if_xname, ifr->ifr_name) != 0)
 			continue;
 		/*

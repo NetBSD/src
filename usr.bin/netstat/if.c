@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.15 1996/05/07 02:55:00 thorpej Exp $	*/
+/*	$NetBSD: if.c,v 1.16 1996/05/07 05:30:45 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "from: @(#)if.c	8.2 (Berkeley) 2/21/94";
 #else
-static char *rcsid = "$NetBSD: if.c,v 1.15 1996/05/07 02:55:00 thorpej Exp $";
+static char *rcsid = "$NetBSD: if.c,v 1.16 1996/05/07 05:30:45 thorpej Exp $";
 #endif
 #endif /* not lint */
 
@@ -129,9 +129,7 @@ intpr(interval, ifnetaddr)
 			bcopy(ifnet.if_xname, name, IFNAMSIZ);
 			name[IFNAMSIZ - 1] = '\0';	/* sanity */
 			ifnetaddr = (u_long)ifnet.if_list.tqe_next;
-			if (interface != 0 &&
-			    (strlen(name) != strlen(interface) ||
-			     strcmp(name, interface) != 0))
+			if (interface != 0 && strcmp(name, interface) != 0)
 				continue;
 			cp = index(name, '\0');
 			if ((ifnet.if_flags & IFF_UP) == 0)
@@ -292,7 +290,6 @@ sidewaysintpr(interval, off)
 		ip->ift_name[0] = '(';
 		bcopy(ifnet.if_xname, ip->ift_name + 1, IFNAMSIZ - 1);
 		if (interface &&
-		    strlen(ip->ift_name + 1) == strlen(interface) &&
 		    strcmp(ip->ift_name + 1, interface) == 0)
 			interesting = ip;
 		ip->ift_name[IFNAMSIZ - 1] = '\0';
