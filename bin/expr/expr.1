@@ -1,4 +1,4 @@
-.\"	$NetBSD: expr.1,v 1.10 1997/10/20 08:51:56 enami Exp $
+.\"	$NetBSD: expr.1,v 1.11 2000/01/14 07:14:41 mjl Exp $
 .\"
 .\" Written by J.T. Conklin <jtc@netbsd.org>.
 .\" Public domain.
@@ -97,6 +97,8 @@ the expression is neither an empty string nor 0.
 the expression is an empty string or 0.
 .It 2
 the expression is invalid.
+.It >2
+an error occurred (such as memory allocation failure).
 .El
 .Sh STANDARDS
 The
