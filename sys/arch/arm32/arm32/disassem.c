@@ -1,4 +1,4 @@
-/* $NetBSD: disassem.c,v 1.5 1996/10/11 00:06:38 christos Exp $ */
+/* $NetBSD: disassem.c,v 1.6 1996/10/13 03:05:49 christos Exp $ */
 
 /*
  * Copyright (c) 1994 Mark Brinicombe.
@@ -276,18 +276,18 @@ printascii(byte)
 	byte &= 0x7f;
 	if (byte < 0x20)
 #ifdef DISASSEM_COLOUR
-		kprintf("\x1b[31m%c\x1b[0m", byte + '@');
+		printf("\x1b[31m%c\x1b[0m", byte + '@');
 #else
-		kprintf("%c", byte + '@');
+		printf("%c", byte + '@');
 #endif
 	else if (byte == 0x7f)
 #ifdef DISASSEM_COLOUR
-		kprintf("\x1b[31m?\x1b[0m");
+		printf("\x1b[31m?\x1b[0m");
 #else
-		kprintf("?");
+		printf("?");
 #endif
 	else
-		kprintf("%c", byte);
+		printf("%c", byte);
 }
 
 
@@ -299,25 +299,25 @@ disassemble(addr)
 	u_int word;
 	u_int result = 0;
 
-	kprintf("%08x : ", (u_int)addr);
+	printf("%08x : ", (u_int)addr);
 
 	word = *((u_int *)addr);
 
 	for (loop = 0; loop < 4; ++loop)
 		printascii(addr[loop]);
 
-	kprintf(" : %08x :    ", word);
+	printf(" : %08x :    ", word);
 
 	loop = 0;
 
 	while (opcodes[loop].mask != 0) {
 		if ((word & opcodes[loop].mask) == opcodes[loop].pattern) {
 #ifdef DISASSEM_COLOUR
-			kprintf("\x1b[3%dm", opcodes[loop].colour);
+			printf("\x1b[3%dm", opcodes[loop].colour);
 #endif
 			result = (*opcodes[loop].decoder)((u_int )addr, word);
 #ifdef DISASSEM_COLOUR
-			kprintf("\x1b[0m");
+			printf("\x1b[0m");
 #endif
 			break;
 		}
@@ -325,9 +325,9 @@ disassemble(addr)
 	}
 
 	if (opcodes[loop].mask == 0)
-		kprintf("Undefined instruction");
+		printf("Undefined instruction");
 
-	kprintf("\n\r");
+	printf("\n\r");
 	return(result);
 }
 
@@ -337,7 +337,7 @@ instruction_swi(addr, word)
 	u_int addr;
 	u_int word;
 {
-	kprintf("SWI%s\t0x%08x", opcode_condition(word), (word & 0x00ffffff));
+	printf("SWI%s\t0x%08x", opcode_condition(word), (word & 0x00ffffff));
 	return(addr);
 }
 
@@ -356,9 +356,9 @@ instruction_branch(addr, word)
 	branch += addr + 8;
 
 	if (word & 0x01000000)
-		kprintf("BL%s\t0x%08x", opcode_condition(word), branch);
+		printf("BL%s\t0x%08x", opcode_condition(word), branch);
 	else
-		kprintf("B%s\t0x%08x", opcode_condition(word), branch);
+		printf("B%s\t0x%08x", opcode_condition(word), branch);
 
 	return(branch);
 }
@@ -369,9 +369,9 @@ instruction_mul(addr, word)
 	u_int addr;
 	u_int word;
 {
-	kprintf("MUL%s%s\t", opcode_condition(word), opcode_s(word));
+	printf("MUL%s%s\t", opcode_condition(word), opcode_s(word));
 
-	kprintf("r%d, r%d, r%d", (word >> 16) & 0x0f, word & 0x0f,
+	printf("r%d, r%d, r%d", (word >> 16) & 0x0f, word & 0x0f,
 		(word >> 8) & 0x0f);
 	return(addr);
 }
@@ -382,9 +382,9 @@ instruction_mla(addr, word)
 	u_int addr;
 	u_int word;
 {
-	kprintf("MLA%s%s\t", opcode_condition(word), opcode_s(word));
+	printf("MLA%s%s\t", opcode_condition(word), opcode_s(word));
 
-	kprintf("r%d, r%d, r%d, r%d", (word >> 16) & 0x0f, word & 0x0f,
+	printf("r%d, r%d, r%d, r%d", (word >> 16) & 0x0f, word & 0x0f,
 		(word >> 8) & 0x0f, (word >> 12) & 0x0f);
 	return(addr);
 }
@@ -394,16 +394,16 @@ static void
 register_shift(word)
 	u_int word;
 {
-	kprintf("r%d", (word & 0x0f));
+	printf("r%d", (word & 0x0f));
 	if ((word & 0x00000ff0) == 0)
 		;
 	else if ((word & 0x00000ff0) == 0x00000060)
- 		kprintf(", RRX");
+ 		printf(", RRX");
 	else {
 		if (word & 0x10)
-			kprintf(", %s r%d", opcode_shift(word), (word >> 8) & 0x0f);
+			printf(", %s r%d", opcode_shift(word), (word >> 8) & 0x0f);
 		else
-			kprintf(", %s #%d", opcode_shift(word), (word >> 7) & 0x1f);
+			printf(", %s #%d", opcode_shift(word), (word >> 7) & 0x1f);
 	}
 }
 
@@ -413,10 +413,10 @@ instruction_ldrstr(addr, word)
 	u_int addr;
 	u_int word;
 {
-    kprintf("%s%s%s%s\t", (word & 0x00100000) ? "LDR" : "STR",
+    printf("%s%s%s%s\t", (word & 0x00100000) ? "LDR" : "STR",
       opcode_condition(word), opcode_b(word), opcode_t(word));
 
-    kprintf("r%d, ", (word >> 12) & 0x0f);
+    printf("r%d, ", (word >> 12) & 0x0f);
 
     if (((word >> 16) & 0x0f) == 16)
       {
@@ -428,23 +428,23 @@ instruction_ldrstr(addr, word)
       }
     else
       {
-        kprintf("[r%d", (word >> 16) & 0x0f);
+        printf("[r%d", (word >> 16) & 0x0f);
 
-        kprintf("%s, ", (word & (1 << 24)) ? "" : "]");
+        printf("%s, ", (word & (1 << 24)) ? "" : "]");
 
         if (!(word & 0x00800000))
-          kprintf("-");
+          printf("-");
 
         if (word & (1 << 25))
           register_shift(word);
         else
-          kprintf("#0x%04x", word & 0xfff);
+          printf("#0x%04x", word & 0xfff);
 
         if (word & (1 << 24))
-          kprintf("]");
+          printf("]");
 
         if (word & (1 << 21))
-          kprintf("!");
+          printf("!");
       }
 
     return(addr);
@@ -459,15 +459,15 @@ instruction_ldmstm(addr, word)
     int loop;
     int start;
 
-    kprintf("%s%s%s\t", (word & 0x00100000) ? "LDM" : "STM",
+    printf("%s%s%s\t", (word & 0x00100000) ? "LDM" : "STM",
       opcode_condition(word), opcode_blktrans(word));
 
-    kprintf("r%d", (word >> 16) & 0x0f);
+    printf("r%d", (word >> 16) & 0x0f);
 
     if (word & (1 << 21))
-      kprintf("!");
+      printf("!");
 
-    kprintf(", {");
+    printf(", {");
 
     start = -1;
 
@@ -478,9 +478,9 @@ instruction_ldmstm(addr, word)
             if (!(word & (1 << loop)) || loop == 16)
               {
                 if (start == loop - 1)
-                  kprintf("r%d, ", start);
+                  printf("r%d, ", start);
                 else
-                  kprintf("r%d-r%d, ", start, loop - 1);
+                  printf("r%d-r%d, ", start, loop - 1);
                 start = -1;
               }
           }
@@ -491,10 +491,10 @@ instruction_ldmstm(addr, word)
           }
 
       }
-    kprintf("\x7f\x7f}");
+    printf("\x7f\x7f}");
 
     if (word & (1 << 22))
-      kprintf("^");
+      printf("^");
     return(addr);
 }
 
@@ -507,18 +507,18 @@ instruction_dataproc(addr, word)
     if ((word & 0x01800000) == 0x01000000)
       word = word & ~(1<<20);
 
-    kprintf("%s%s%s\t", opcode_dataproc(word), opcode_condition(word),
+    printf("%s%s%s\t", opcode_dataproc(word), opcode_condition(word),
       opcode_s(word));
 
     if ((word & 0x01800000) != 0x01000000)
-      kprintf("r%d, ", (word >> 12) & 0x0f);
+      printf("r%d, ", (word >> 12) & 0x0f);
 
     if ((word & 0x01a00000) != 0x01a00000)
-      kprintf("r%d, ", (word >> 16) & 0x0f);
+      printf("r%d, ", (word >> 16) & 0x0f);
 
     if (word & 0x02000000)
       {
-        kprintf("#&%08x", (word & 0xff) << (((word >> 7) & 0x1e)));
+        printf("#&%08x", (word & 0xff) << (((word >> 7) & 0x1e)));
       }
     else
       {
@@ -533,9 +533,9 @@ instruction_swap(addr, word)
 	u_int addr;
 	u_int word;
 {
-	kprintf("SWP%s%s\t", opcode_condition(word), opcode_b(word));
+	printf("SWP%s%s\t", opcode_condition(word), opcode_b(word));
 
-	kprintf("r%d, r%d, [r%d]", (word >> 12) & 0x0f, (word & 0x0f),
+	printf("r%d, r%d, [r%d]", (word >> 12) & 0x0f, (word & 0x0f),
 		(word >> 16) & 0x0f);
 	return(addr);
 }
@@ -546,9 +546,9 @@ instruction_mrs(addr, word)
 	u_int addr;
 	u_int word;
 {
-	kprintf("MRS%s\tr%d, ", opcode_condition(word), (word >> 12) & 0x0f);
+	printf("MRS%s\tr%d, ", opcode_condition(word), (word >> 12) & 0x0f);
 
-	kprintf("%s", (word & 0x00400000) ? "SPSR" : "CPSR");
+	printf("%s", (word & 0x00400000) ? "SPSR" : "CPSR");
 	return(addr);
 }
 
@@ -558,9 +558,9 @@ instruction_msr(addr, word)
 	u_int addr;
 	u_int word;
 {
-	kprintf("MSR%s\t", opcode_condition(word));
+	printf("MSR%s\t", opcode_condition(word));
 
-	kprintf("%s, r%d", (word & 0x00400000) ? "SPSR" : "CPSR", word & 0x0f);
+	printf("%s, r%d", (word & 0x00400000) ? "SPSR" : "CPSR", word & 0x0f);
 
 	return(addr);
 }
@@ -571,14 +571,14 @@ instruction_msrf(addr, word)
 	u_int addr;
 	u_int word;
 {
-	kprintf("MSR%s\t", opcode_condition(word));
+	printf("MSR%s\t", opcode_condition(word));
 
-	kprintf("%s_flg, ", (word & 0x00400000) ? "SPSR" : "CPSR");
+	printf("%s_flg, ", (word & 0x00400000) ? "SPSR" : "CPSR");
 
 	if (word & 0x02000000)
-		kprintf("#0x%08x", (word & 0xff) << (32 - ((word >> 7) & 0x1e)));
+		printf("#0x%08x", (word & 0xff) << (32 - ((word >> 7) & 0x1e)));
 	else
-		kprintf("r%d", word &0x0f);
+		printf("r%d", word &0x0f);
 	return(addr);
 }
 
@@ -588,16 +588,16 @@ instruction_mrcmcr(addr, word)
 	u_int addr;
 	u_int word;
 {
-	kprintf("%s%s\t", (word & (1 << 20)) ? "MRC" : "MCR",
+	printf("%s%s\t", (word & (1 << 20)) ? "MRC" : "MCR",
 		opcode_condition(word));
 
-	kprintf("CP #%d, %d, ", (word >> 8) & 0x0f, (word >> 21) & 0x07);
+	printf("CP #%d, %d, ", (word >> 8) & 0x0f, (word >> 21) & 0x07);
 
-	kprintf("r%d, cr%d, cr%d", (word >> 12) & 0x0f, (word >> 16) & 0x0f,
+	printf("r%d, cr%d, cr%d", (word >> 12) & 0x0f, (word >> 16) & 0x0f,
 		word & 0x0f);
 
 	if (((word >> 5) & 0x07) != 0)
-		kprintf(", %d", (word >> 5) & 0x07);
+		printf(", %d", (word >> 5) & 0x07);
 
 	return(addr);
 }
@@ -608,14 +608,14 @@ instruction_cdp(addr, word)
 	u_int addr;
 	u_int word;
 {
-	kprintf("CDP%s\t", opcode_condition(word));
+	printf("CDP%s\t", opcode_condition(word));
 
-	kprintf("CP #%d, %d, ", (word >> 8) & 0x0f, (word >> 20) & 0x0f);
+	printf("CP #%d, %d, ", (word >> 8) & 0x0f, (word >> 20) & 0x0f);
 
-	kprintf("cr%d, cr%d, cr%d", (word >> 12) & 0x0f, (word >> 16) & 0x0f,
+	printf("cr%d, cr%d, cr%d", (word >> 12) & 0x0f, (word >> 16) & 0x0f,
 		word & 0x0f);
 
-	kprintf(", %d", (word >> 5) & 0x07);
+	printf(", %d", (word >> 5) & 0x07);
 
 	return(addr);
 }
@@ -626,25 +626,25 @@ instruction_cdt(addr, word)
 	u_int addr;
 	u_int word;
 {
-    kprintf("%s%s%s\t", (word & (1 << 20)) ? "LDC" : "STC",
+    printf("%s%s%s\t", (word & (1 << 20)) ? "LDC" : "STC",
       opcode_condition(word), (word & (1 << 22)) ? "L" : "");
 
-    kprintf("CP #%d, cr%d, ", (word >> 8) & 0x0f, (word >> 12) & 0x0f);
+    printf("CP #%d, cr%d, ", (word >> 8) & 0x0f, (word >> 12) & 0x0f);
 
-    kprintf("[r%d", (word >> 16) & 0x0f);
+    printf("[r%d", (word >> 16) & 0x0f);
 
-    kprintf("%s, ", (word & (1 << 24)) ? "" : "]");
+    printf("%s, ", (word & (1 << 24)) ? "" : "]");
 
     if (!(word & (1 << 23)))
-      kprintf("-");
+      printf("-");
 
-    kprintf("#0x%02x", word & 0xff);
+    printf("#0x%02x", word & 0xff);
 
     if (word & (1 << 24))
-      kprintf("]");
+      printf("]");
 
     if (word & (1 << 21))
-      kprintf("!");
+      printf("!");
 
     return(addr);
 }
@@ -655,15 +655,15 @@ instruction_fpabinop(addr, word)
 	u_int addr;
 	u_int word;
 {
-	kprintf("%s%s%s%s\t", opcode_fpabinop(word), opcode_condition(word),
+	printf("%s%s%s%s\t", opcode_fpabinop(word), opcode_condition(word),
 		opcode_fpaprec(word), opcode_fparnd(word));
 
-	kprintf("f%d, f%d, ", (word >> 12) & 0x07, (word >> 16) & 0x07);
+	printf("f%d, f%d, ", (word >> 12) & 0x07, (word >> 16) & 0x07);
 
 	if (word & (1 << 3))
-		kprintf("#%s", opcode_fpaimm(word));
+		printf("#%s", opcode_fpaimm(word));
 	else
-		kprintf("f%d", word & 0x07);
+		printf("f%d", word & 0x07);
 
 	return(addr);
 }
@@ -674,15 +674,15 @@ instruction_fpaunop(addr, word)
 	u_int addr;
 	u_int word;
 {
-	kprintf("%s%s%s%s\t", opcode_fpaunop(word), opcode_condition(word),
+	printf("%s%s%s%s\t", opcode_fpaunop(word), opcode_condition(word),
 		opcode_fpaprec(word), opcode_fparnd(word));
 
-	kprintf("f%d, ", (word >> 12) & 0x07);
+	printf("f%d, ", (word >> 12) & 0x07);
 
 	if (word & (1 << 3))
-		kprintf("#%s", opcode_fpaimm(word));
+		printf("#%s", opcode_fpaimm(word));
 	else
-		kprintf("f%d", word & 0x07);
+		printf("f%d", word & 0x07);
 
 	return(addr);
 }
@@ -693,23 +693,23 @@ instruction_ldfstf(addr, word)
 	u_int addr;
 	u_int word;
 {
-    kprintf("%s%s%s\t", (word & (1 << 20)) ? "LDF" : "STF",
+    printf("%s%s%s\t", (word & (1 << 20)) ? "LDF" : "STF",
       opcode_condition(word), (word & (1 << 22)) ? "L" : "");
 
-    kprintf("f%d, [r%d", (word >> 12) & 0x07, (word >> 16) & 0x0f);
+    printf("f%d, [r%d", (word >> 12) & 0x07, (word >> 16) & 0x0f);
 
-    kprintf("%s, ", (word & (1 << 24)) ? "" : "]");
+    printf("%s, ", (word & (1 << 24)) ? "" : "]");
 
     if (!(word & (1 << 23)))
-      kprintf("-");
+      printf("-");
 
-    kprintf("#0x%03x", (word & 0xff) << 2);
+    printf("#0x%03x", (word & 0xff) << 2);
 
     if (word & (1 << 24))
-      kprintf("]");
+      printf("]");
 
     if (word & (1 << 21))
-      kprintf("!");
+      printf("!");
 
     return(addr);
 }

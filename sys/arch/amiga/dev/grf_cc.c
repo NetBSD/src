@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_cc.c,v 1.21 1996/10/10 23:55:41 christos Exp $	*/
+/*	$NetBSD: grf_cc.c,v 1.22 1996/10/13 03:06:59 christos Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -147,7 +147,7 @@ grfccattach(pdp, dp, auxp)
 		grf_cc_on(gp);
 	}
 	if (dp != NULL)
-		kprintf("\n");
+		printf("\n");
 	/*
 	 * attach grf
 	 */
@@ -160,7 +160,7 @@ grfccprint(auxp, pnp)
 	const char *pnp;
 {
 	if (pnp)
-		kprintf("grf%d at %s", ((struct grf_softc *)auxp)->g_unit,
+		printf("grf%d at %s", ((struct grf_softc *)auxp)->g_unit,
 			pnp);
 	return(UNCONF);
 }

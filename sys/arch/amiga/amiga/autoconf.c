@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.42 1996/10/11 19:49:49 mhitch Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.43 1996/10/13 03:06:31 christos Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -69,7 +69,7 @@ configure()
 		panic("no mainbus found");
 
 #ifdef DEBUG_KERNEL_START
-	kprintf("survived autoconf, going to enable interrupts\n");
+	printf("survived autoconf, going to enable interrupts\n");
 #endif
 	
 #ifdef DRACO
@@ -85,32 +85,32 @@ configure()
 		custom.intena = INTF_SETCLR | INTF_SOFTINT;
 	}
 #ifdef DEBUG_KERNEL_START
-	kprintf("survived interrupt enable\n");
+	printf("survived interrupt enable\n");
 #endif
 
 #ifdef GENERIC
 	if ((boothowto & RB_ASKNAME) == 0) {
 		setroot();
 #ifdef DEBUG_KERNEL_START
-		kprintf("survived setroot()\n");
+		printf("survived setroot()\n");
 #endif
 	}
 	setconf();
 #ifdef DEBUG_KERNEL_START
-	kprintf("survived setconf()\n");
+	printf("survived setconf()\n");
 #endif
 #else
 	setroot();
 #ifdef DEBUG_KERNEL_START
-	kprintf("survived setroot()\n");
+	printf("survived setroot()\n");
 #endif
 #endif
 #ifdef DEBUG_KERNEL_START
-	kprintf("survived root device search\n");
+	printf("survived root device search\n");
 #endif
 	swapconf();
 #ifdef DEBUG_KERNEL_START
-	kprintf("survived swap device search\n");
+	printf("survived swap device search\n");
 #endif
 	cold = 0;
 }
@@ -235,7 +235,7 @@ mbattach(pdp, dp, auxp)
 	struct device *pdp, *dp;
 	void *auxp;
 {
-	kprintf("\n");
+	printf("\n");
 	config_found(dp, "clock", simple_devprint);
 #ifdef DRACO
 	if (is_draco()) {
@@ -273,7 +273,7 @@ mbprint(auxp, pnp)
 	const char *pnp;
 {
 	if (pnp)
-		kprintf("%s at %s", (char *)auxp, pnp);
+		printf("%s at %s", (char *)auxp, pnp);
 	return(UNCONF);
 }
 
@@ -342,7 +342,7 @@ setroot()
 	 */
 	if (rootdev == orootdev)
 		return;
-	kprintf("changing root device to %c%c%d%c\n",
+	printf("changing root device to %c%c%d%c\n",
 	    devname[majdev][0], devname[majdev][1],
 	    unit, part + 'a');
 #ifdef DOSWAP
@@ -442,7 +442,7 @@ is_a4000()
 		return (1);
 #ifdef DEBUG
 	if (a4000_flag)
-		kprintf("Denise ID = %04x\n", (unsigned short)custom.deniseid);
+		printf("Denise ID = %04x\n", (unsigned short)custom.deniseid);
 #endif
 	if (machineid >> 16)
 		return (0);		/* It's not an A4000 */

@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_rh.c,v 1.23 1996/10/10 23:55:49 christos Exp $	*/
+/*	$NetBSD: grf_rh.c,v 1.24 1996/10/13 03:07:05 christos Exp $	*/
 
 /*
  * Copyright (c) 1994 Markus Wild
@@ -1609,7 +1609,7 @@ grfrhattach(pdp, dp, auxp)
 		(void)rh_load_mon(gp, current_mon);
 	}
 	if (dp != NULL)
-		kprintf("\n");
+		printf("\n");
 	/*
 	 * attach grf
 	 */
@@ -1622,7 +1622,7 @@ grfrhprint(auxp, pnp)
 	const char *pnp;
 {
 	if (pnp)
-		kprintf("ite at %s", pnp);
+		printf("ite at %s", pnp);
 	return(UNCONF);
 }
 

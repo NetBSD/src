@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bah.c,v 1.21 1996/10/10 23:56:04 christos Exp $ */
+/*	$NetBSD: if_bah.c,v 1.22 1996/10/13 03:07:14 christos Exp $ */
 
 /*
  * Copyright (c) 1994, 1995 Ignatios Souvatzis
@@ -223,7 +223,7 @@ bah_zbus_attach(parent, self, aux)
 	int s, linkaddress;
 
 #if (defined(BAH_DEBUG) && (BAH_DEBUG > 2))
-	kprintf("\n%s: attach(0x%x, 0x%x, 0x%x)\n",
+	printf("\n%s: attach(0x%x, 0x%x, 0x%x)\n",
 	    sc->sc_dev.dv_xname, parent, self, aux);
 #endif
 	s = splhigh();
@@ -246,10 +246,10 @@ bah_zbus_attach(parent, self, aux)
 	linkaddress = sc->sc_base->dipswitches;
 
 #ifdef BAHTIMINGS
-	kprintf(": link addr 0x%02x(%ld), with timer\n",
+	printf(": link addr 0x%02x(%ld), with timer\n",
 	    linkaddress, linkaddress);
 #else
-	kprintf(": link addr 0x%02x(%d)\n", linkaddress, linkaddress);
+	printf(": link addr 0x%02x(%d)\n", linkaddress, linkaddress);
 #endif
 
 	sc->sc_arccom.ac_anaddr = linkaddress;
@@ -339,7 +339,7 @@ bah_reset(sc)
 	ifp = &sc->sc_arccom.ac_if;
 
 #ifdef BAH_DEBUG
-	kprintf("%s: reset\n", sc->sc_dev.dv_xname);
+	printf("%s: reset\n", sc->sc_dev.dv_xname);
 #endif
 	/* stop hardware in case it still runs */
 
@@ -358,7 +358,7 @@ bah_reset(sc)
 	linkaddress = sc->sc_base->dipswitches;
 
 #if defined(BAH_DEBUG) && (BAH_DEBUG > 2)
-	kprintf("%s: reset: card reset, link addr = 0x%02x (%ld)\n",
+	printf("%s: reset: card reset, link addr = 0x%02x (%ld)\n",
 	    sc->sc_dev.dv_xname, linkaddress, linkaddress);
 #endif
 	sc->sc_arccom.ac_anaddr = linkaddress;
@@ -372,14 +372,14 @@ bah_reset(sc)
 	sc->sc_base->command = ARC_CONF(CONF_LONG);
 	
 #ifdef BAH_DEBUG
-	kprintf("%s: reset: chip configured, status=0x%02x\n",
+	printf("%s: reset: chip configured, status=0x%02x\n",
 	    sc->sc_dev.dv_xname, sc->sc_base->status);
 #endif
 
 	sc->sc_base->command = ARC_CLR(CLR_POR|CLR_RECONFIG);
 
 #ifdef BAH_DEBUG
-	kprintf("%s: reset: bits cleared, status=0x%02x\n",
+	printf("%s: reset: bits cleared, status=0x%02x\n",
 	    sc->sc_dev.dv_xname, sc->sc_base->status);
 #endif
 
@@ -395,7 +395,7 @@ bah_reset(sc)
 	sc->sc_base->status	= sc->sc_intmask;
 
 #ifdef BAH_DEBUG
-	kprintf("%s: reset: started receiver, status=0x%02x\n",
+	printf("%s: reset: started receiver, status=0x%02x\n",
 	    sc->sc_dev.dv_xname, sc->sc_base->status);
 #endif
 
@@ -541,7 +541,7 @@ bah_start(ifp)
 	sc = ifp->if_softc;
 
 #if defined(BAH_DEBUG) && (BAH_DEBUG > 3)
-	kprintf("%s: start(0x%x)\n", sc->sc_dev.dv_xname, ifp);
+	printf("%s: start(0x%x)\n", sc->sc_dev.dv_xname, ifp);
 #endif
 
 	if ((ifp->if_flags & IFF_RUNNING) == 0)
@@ -576,7 +576,7 @@ bah_start(ifp)
 
 #ifdef BAH_DEBUG
 	m = m_pullup(m,3);	/* gcc does structure padding */
-	kprintf("%s: start: filling %ld from %ld to %ld type %ld\n",
+	printf("%s: start: filling %ld from %ld to %ld type %ld\n",
 	    sc->sc_dev.dv_xname, buffer, mtod(m, u_char *)[0],
 	    mtod(m, u_char *)[1], mtod(m, u_char *)[2]);
 #else
@@ -648,7 +648,7 @@ bah_start(ifp)
 		ifp->if_flags |= IFF_OACTIVE;
 	} else {
 #ifdef BAH_DEBUG
-		kprintf("%s: start: starting transmitter on buffer %d\n", 
+		printf("%s: start: starting transmitter on buffer %d\n", 
 		    sc->sc_dev.dv_xname, buffer);
 #endif
 		/* Transmitter was off, start it */
@@ -901,7 +901,7 @@ cleanup:
 		sc->sc_base->status = sc->sc_intmask;
 
 #ifdef BAH_DEBUG
-		kprintf("%s: srint: restarted rx on buf %ld\n",
+		printf("%s: srint: restarted rx on buf %ld\n",
 		    sc->sc_dev.dv_xname, buffer);
 #endif
 	}
@@ -984,7 +984,7 @@ bah_tint(sc, isr)
 #endif
  
 #if defined(BAH_DEBUG) && (BAH_DEBUG > 1)
-		kprintf("%s: tint: starting tx on buffer %d, status 0x%02x\n", 
+		printf("%s: tint: starting tx on buffer %d, status 0x%02x\n", 
 		    sc->sc_dev.dv_xname, buffer, sc->sc_base->status);
 #endif
 	} else {
@@ -995,7 +995,7 @@ bah_tint(sc, isr)
 		ifp->if_timer = 0;
 
 #ifdef BAH_DEBUG
-		kprintf("%s: tint: no more buffers to send, status 0x%02x\n",
+		printf("%s: tint: no more buffers to send, status 0x%02x\n",
 		    sc->sc_dev.dv_xname, sc->sc_base->status);
 #endif
 	}
@@ -1027,7 +1027,7 @@ bahintr(arg)
 		return (0);
 
 #if defined(BAH_DEBUG) && (BAH_DEBUG>1)
-	kprintf("%s: intr: status 0x%02x, intmask 0x%02x\n",
+	printf("%s: intr: status 0x%02x, intmask 0x%02x\n",
 	    sc->sc_dev.dv_xname, isr, sc->sc_intmask);
 #endif
 
@@ -1081,7 +1081,7 @@ bahintr(arg)
 	if (maskedisr & ARC_RI) {
 
 #if defined(BAH_DEBUG) && (BAH_DEBUG > 1)
-		kprintf("%s: intr: hard rint, act %ld\n",
+		printf("%s: intr: hard rint, act %ld\n",
 		    sc->sc_dev.dv_xname, sc->sc_rx_act);
 #endif
 	
@@ -1113,7 +1113,7 @@ bahintr(arg)
 			/* we are in the RX intr, so mask is ok for RX */
 
 #ifdef BAH_DEBUG
-			kprintf("%s: started rx for buffer %ld, status 0x%02x\n",
+			printf("%s: started rx for buffer %ld, status 0x%02x\n",
 			    sc->sc_dev.dv_xname, sc->sc_rx_act,
 			    sc->sc_base->status);
 #endif
@@ -1156,7 +1156,7 @@ bah_ioctl(ifp, command, data)
 	s = splnet();
 
 #if defined(BAH_DEBUG) && (BAH_DEBUG > 2) 
-	kprintf("%s: ioctl() called, cmd = 0x%x\n",
+	printf("%s: ioctl() called, cmd = 0x%x\n",
 	    sc->sc_dev.dv_xname, command);
 #endif
 

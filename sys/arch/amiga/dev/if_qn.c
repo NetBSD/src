@@ -1,4 +1,4 @@
-/*	$NetBSD: if_qn.c,v 1.8 1996/10/10 23:56:09 christos Exp $	*/
+/*	$NetBSD: if_qn.c,v 1.9 1996/10/13 03:07:18 christos Exp $	*/
 
 /*
  * Copyright (c) 1995 Mika Kortelainen
@@ -258,7 +258,7 @@ qnattach(parent, self, aux)
 	ether_ifattach(ifp);
 
 #ifdef QN_DEBUG
-	kprintf(": hardware address %s\n", ether_sprintf(sc->sc_arpcom.ac_enaddr));
+	printf(": hardware address %s\n", ether_sprintf(sc->sc_arpcom.ac_enaddr));
 #endif
 
 #if NBPFILTER > 0

@@ -1,4 +1,4 @@
-/* $NetBSD: sfas.c,v 1.5 1996/10/11 00:07:51 christos Exp $ */
+/* $NetBSD: sfas.c,v 1.6 1996/10/13 03:06:53 christos Exp $ */
 
 /*
  * Copyright (c) 1995 Scott Stevens
@@ -94,7 +94,7 @@ u_char	sfas_inhibit_disc[8] = { 0, 0, 0, 0, 0, 0, 0, 0 };
 
 #define DEBUG
 #ifdef DEBUG
-#define QPRINTF(a) if (sfas_debug > 1) kprintf a
+#define QPRINTF(a) if (sfas_debug > 1) printf a
 int	sfas_debug = 2;
 #else
 #define QPRINTF
@@ -202,7 +202,7 @@ sfasinitialize(dev)
 	*pte &= ~PT_C;
 	tlbflush();
 
-	kprintf(" dmabuf V0x%08x P0x%08x", (u_int)dev->sc_bump_va, (u_int)dev->sc_bump_pa);
+	printf(" dmabuf V0x%08x P0x%08x", (u_int)dev->sc_bump_va, (u_int)dev->sc_bump_pa);
 }
 
 
@@ -921,19 +921,19 @@ sfas_pretests(dev, rp)
 
 			sfas_init_nexus(dev, &dev->sc_nexus[i]);
 		}
-		kprintf("sfasintr: SCSI-RESET detected!");
+		printf("sfasintr: SCSI-RESET detected!");
 		return(-1);
 	}
 
 	if (dev->sc_interrupt & SFAS_INT_ILLEGAL_COMMAND) {
 		/* Something went terrible wrong! Dump some data and panic! */
 
-		kprintf("FIFO:");
+		printf("FIFO:");
 		while(*rp->sfas_fifo_flags & SFAS_FIFO_COUNT_MASK)
-			kprintf(" %x", *rp->sfas_fifo);
-		kprintf("\n");
+			printf(" %x", *rp->sfas_fifo);
+		printf("\n");
 
-		kprintf("CMD: %x\n", *rp->sfas_command);
+		printf("CMD: %x\n", *rp->sfas_command);
 		panic("sfasintr: ILLEGAL COMMAND!");
 	}
 
@@ -990,7 +990,7 @@ sfas_pretests(dev, rp)
 		}
 
 		/* Somehow we got an illegal reselection. Dump and panic. */
-		kprintf("sfasintr: resel[0] %x resel[1] %x disconnected %d\n",
+		printf("sfasintr: resel[0] %x resel[1] %x disconnected %d\n",
 		       dev->sc_resel[0], dev->sc_resel[1],
 		       dev->sc_units_disconnected);
 		panic("sfasintr: Unexpected reselection!");
@@ -1080,8 +1080,8 @@ sfas_midaction(dev, rp, nexus)
 			 * Unexpected disconnection! Cleanup and exit. This
 			 * shouldn't cause any problems.
 			 */
-			kprintf("sfasintr: Unexpected disconnection\n");
-			kprintf("sfasintr: u %x s %d p %d f %x c %x\n",
+			printf("sfasintr: Unexpected disconnection\n");
+			printf("sfasintr: u %x s %d p %d f %x c %x\n",
 			       nexus->lun_unit, nexus->state,
 			       dev->sc_status & SFAS_STAT_PHASE_MASK,
 			       nexus->flags, nexus->cbuf[0]);
@@ -1305,7 +1305,7 @@ sfas_postaction(dev, rp, nexus)
 				    ((nexus->state == SFAS_NS_DATA_OUT) ?
 				     SFAS_DMA_WRITE : SFAS_DMA_READ));
 
-		  kprintf("Using DMA !!!!\n");
+		  printf("Using DMA !!!!\n");
 		  cmd = SFAS_CMD_TRANSFER_INFO | SFAS_CMD_DMA;
 		} else {
 			/*
@@ -1553,7 +1553,7 @@ sfas_postaction(dev, rp, nexus)
 		}
 		break;
 	default:
-		kprintf("SFASINTR: UNKNOWN PHASE! phase: %d\n",
+		printf("SFASINTR: UNKNOWN PHASE! phase: %d\n",
 		       dev->sc_status & SFAS_STAT_PHASE_MASK);
 		dev->sc_led(dev, 0);
 		sfas_scsidone(dev, nexus->xs, -4);

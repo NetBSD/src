@@ -1,4 +1,4 @@
-/* $NetBSD: makemodes.c,v 1.5 1996/10/11 00:06:50 christos Exp $ */
+/* $NetBSD: makemodes.c,v 1.6 1996/10/13 03:05:55 christos Exp $ */
 
 /*
  * Copyright (c) 1995 Mark Brinicombe.
@@ -205,7 +205,7 @@ main(argc, argv)
 /* This was for debugging */
 
 	for (loop = 0; loop < md; ++loop) {
-		kprintf("%d x %d: %d %d [%d,%d,%d,%d,%d,%d] [%d,%d,%d,%d,%d,%d]\n",
+		printf("%d x %d: %d %d [%d,%d,%d,%d,%d,%d] [%d,%d,%d,%d,%d,%d]\n",
 			mds[loop].md_xres,
 			mds[loop].md_yres,
 			mds[loop].md_pixelrate,
@@ -246,7 +246,7 @@ main(argc, argv)
 /* NOTE: A mode specifier cannot have a space in it at the moment */
 	
 	while (argv[loop]) {
-		kprintf("%s ==> ", argv[loop]);
+		printf("%s ==> ", argv[loop]);
 		f = -1;
 		c = 256;
 		params = sscanf(argv[loop], "X%dY%dC%dF%d", &x, &y, &c, &f);
@@ -257,8 +257,8 @@ main(argc, argv)
 		else if (params == 3)
 			makemode(out_fd, x, y, 256, c);
 		else
-			kprintf("Invalid mode specifier\n");
-		kprintf("\n");
+			printf("Invalid mode specifier\n");
+		printf("\n");
 		++loop;
 	}
 
@@ -287,7 +287,7 @@ void makemode(out_fd, x, y, c, f)
  
 /* Print some info */
 
-	kprintf("%d x %d x %d x %d : ", x, y, c, f);
+	printf("%d x %d x %d x %d : ", x, y, c, f);
 
 /* Scan the modes */
 
@@ -318,7 +318,7 @@ void makemode(out_fd, x, y, c, f)
 
 /* Print it as info */
 
-			kprintf("%d ", fr);
+			printf("%d ", fr);
 
 /* Is this a new maximum ? */
 

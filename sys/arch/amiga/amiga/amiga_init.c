@@ -1,4 +1,4 @@
-/*	$NetBSD: amiga_init.c,v 1.51 1996/10/10 23:55:08 christos Exp $	*/
+/*	$NetBSD: amiga_init.c,v 1.52 1996/10/13 03:06:29 christos Exp $	*/
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -1083,7 +1083,7 @@ kernel_reload_write(uio)
 		if ((error = uiomove((caddr_t)&kernel_exec, sizeof(kernel_exec),
 		     uio)) != 0)
 			return(error);
-		kprintf("loading kernel %ld+%ld+%ld+%ld\n", kernel_exec.a_text,
+		printf("loading kernel %ld+%ld+%ld+%ld\n", kernel_exec.a_text,
 		    kernel_exec.a_data, kernel_exec.a_bss,
 		    esym == NULL ? 0 : kernel_exec.a_syms);
 		/*

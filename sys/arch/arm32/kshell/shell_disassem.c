@@ -1,4 +1,4 @@
-/* $NetBSD: shell_disassem.c,v 1.4 1996/10/11 00:07:08 christos Exp $ */
+/* $NetBSD: shell_disassem.c,v 1.5 1996/10/13 03:06:07 christos Exp $ */
 
 /*
  * Copyright (c) 1994 Mark Brinicombe.
@@ -71,7 +71,7 @@ shell_disassem(argc, argv)
 	u_char *addr;
 
 	if (argc < 2) {
-		kprintf("Syntax: dis <addr>\n\r");
+		printf("Syntax: dis <addr>\n\r");
 		return;
 	}
 
@@ -79,7 +79,7 @@ shell_disassem(argc, argv)
 
 	addr = (u_char *)readhex(argv[1]);
 
-	kprintf("Interactive disassembly\n\r");
+	printf("Interactive disassembly\n\r");
 
 	do_disassemble(addr);
 }
@@ -160,18 +160,18 @@ do_disassemble(addr)
 
 			case '/' :
 			case '?' :
-				kprintf("\'\xe3\'  - Backwards 1 word\n\r");
-				kprintf("\'\xe4\'  - Forwards 1 word\n\r");
-				kprintf("\'\xe5\'  - Backwords 16 words\n\r");
-				kprintf("\'\xe6\'  - Forwards 16 words\n\r");
-				kprintf("\'Q\'  - Quit\n\r");
-				kprintf("\'B\'  - Back a word\n\r");
-				kprintf("\'R\'  - Disassemble 16 words\n\r");
-				kprintf("\'J\'  - Jump to address\n\r");
-				kprintf("\' \'  - Branch to address\n\r");
-				kprintf("<BS> - Return from branch\n\r");
-				kprintf("\'-\'  - Skip backwards 128 words\n\r");
-				kprintf("\'+\'  - Skip forwards 128 words\n\r");
+				printf("\'\xe3\'  - Backwards 1 word\n\r");
+				printf("\'\xe4\'  - Forwards 1 word\n\r");
+				printf("\'\xe5\'  - Backwords 16 words\n\r");
+				printf("\'\xe6\'  - Forwards 16 words\n\r");
+				printf("\'Q\'  - Quit\n\r");
+				printf("\'B\'  - Back a word\n\r");
+				printf("\'R\'  - Disassemble 16 words\n\r");
+				printf("\'J\'  - Jump to address\n\r");
+				printf("\' \'  - Branch to address\n\r");
+				printf("<BS> - Return from branch\n\r");
+				printf("\'-\'  - Skip backwards 128 words\n\r");
+				printf("\'+\'  - Skip forwards 128 words\n\r");
 				break;
 
 			}

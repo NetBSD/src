@@ -1,4 +1,4 @@
-/* $NetBSD: pms.c,v 1.4 1996/10/11 00:07:25 christos Exp $ */
+/* $NetBSD: pms.c,v 1.5 1996/10/13 03:06:27 christos Exp $ */
 
 /*-
  * Copyright (c) 1996 D.C. Tsen
@@ -139,7 +139,7 @@ cmd_mouse(unsigned char cmd)
 		delay(2);
 	}
 	if (i == 1000)
-		kprintf("Mouse transmit not ready\n");
+		printf("Mouse transmit not ready\n");
 
 resend:
 	outb(IOMD_MSDATA, cmd);
@@ -162,7 +162,7 @@ resend:
 		goto resend;
 	}
 
-	kprintf("Mouse cmd failed, cmd = %x, status = %x\n", cmd, c);
+	printf("Mouse cmd failed, cmd = %x, status = %x\n", cmd, c);
 	return(1);
 }
 
@@ -203,7 +203,7 @@ pmsinit()
 	case RC7500_IOC_ID:
 		break;
 	default:
-		kprintf("pms: Unknown IOMD id=%04x", id);
+		printf("pms: Unknown IOMD id=%04x", id);
 		return(0);
 		break;
 	}
@@ -213,7 +213,7 @@ pmsinit()
 	i = 0;
 	while ((inb(IOMD_MSCR) & 0x03) != 0x03) {
 		if (i++ > 10) {
-			kprintf("Mouse not found, status = <%x>.\n", inb(IOMD_MSCR));
+			printf("Mouse not found, status = <%x>.\n", inb(IOMD_MSCR));
 			return(0);
 		}
 		pms_flush();
@@ -236,7 +236,7 @@ pmsinit()
 	while ((mid = inb(IOMD_MSDATA)) != 0xAA) {
 		if (++i > 500) {
 			if (--j < 0) {
-				kprintf("Mouse Reset failed, status = <%x>.\n", mid);
+				printf("Mouse Reset failed, status = <%x>.\n", mid);
 				return(0);
 			}
 			pms_flush();
@@ -266,7 +266,7 @@ pmsattach(parent, self, aux)
 	struct pms_softc *sc = (void *)self;
 	struct mainbus_attach_args *mb = aux;
 
-	kprintf("\n");
+	printf("\n");
 
 	/* Other initialization was done by pmsprobe. */
 	sc->sc_state = 0;
@@ -416,7 +416,7 @@ pmsioctl(dev, cmd, addr, flag, p)
 
 	switch (cmd) {
 	case MOUSEIOC_SETSTATE:
-		kprintf("MOUSEIOC_SETSTATE called\n");
+		printf("MOUSEIOC_SETSTATE called\n");
 		break;
 	case MOUSEIOC_WRITEX:
 		sc->sc_x = *(int *) addr;
@@ -453,7 +453,7 @@ pmsioctl(dev, cmd, addr, flag, p)
 		break;
 	}
 	case MOUSEIOC_GETSTATE:
-		kprintf("MOUSEIOC_GETSTATE called\n");
+		printf("MOUSEIOC_GETSTATE called\n");
 		/*
 		 * Fall through.
 		 */
@@ -642,7 +642,7 @@ pmswatchdog(arg)
 	int s;
 
 	if ((inb(IOMD_MSCR) & 0x03) != 0x03) {
-		kprintf("Mouse is dead (%x), restart it\n", inb(IOMD_MSCR));
+		printf("Mouse is dead (%x), restart it\n", inb(IOMD_MSCR));
 		s = spltty();
 		pmsinit();
 		splx(s);
