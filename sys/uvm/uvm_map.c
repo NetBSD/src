@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.c,v 1.66 1999/07/19 17:45:23 thorpej Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.67 1999/08/03 00:38:33 thorpej Exp $	*/
 
 /* 
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -2376,20 +2376,29 @@ uvm_map_pageable_all(map, flags, limit)
 		/*
 		 * first drop the wiring count on all the entries
 		 * which haven't actually been wired yet.
+		 *
+		 * Skip VM_PROT_NONE entries like we did above.
 		 */
 		failed_entry = entry;
 		for (/* nothing */; entry != &map->header;
-		     entry = entry->next)
+		     entry = entry->next) {
+			if (entry->protection == VM_PROT_NONE)
+				continue;
 			entry->wired_count--;
+		}
 
 		/*
 		 * now, unwire all the entries that were successfully
 		 * wired above.
+		 *
+		 * Skip VM_PROT_NONE entries like we did above.
 		 */
 		for (entry = map->header.next; entry != failed_entry;
 		     entry = entry->next) {
+			if (entry->protection == VM_PROT_NONE)
+				continue;
 			entry->wired_count--;
-			if (VM_MAPENT_ISWIRED(entry) == 0)
+			if (VM_MAPENT_ISWIRED(entry))
 				uvm_map_entry_unwire(map, entry);
 		}
 		vm_map_unlock(map);
