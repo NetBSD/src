@@ -1,4 +1,4 @@
-/*	$NetBSD: dump.c,v 1.2 1999/07/12 04:13:34 mrg Exp $	*/
+/*	$NetBSD: dump.c,v 1.3 1999/07/23 03:12:31 itohy Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993\n\
 #if 0
 static char sccsid[] = "@(#)kdump.c	8.4 (Berkeley) 4/28/95";
 #endif
-__RCSID("$NetBSD: dump.c,v 1.2 1999/07/12 04:13:34 mrg Exp $");
+__RCSID("$NetBSD: dump.c,v 1.3 1999/07/23 03:12:31 itohy Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -124,7 +124,7 @@ static char *ptrace_ops[] = {
 };
 
 
-void	dumprecord __P((struct ktr_header *, int, int, void *, FILE *));
+void	dumprecord __P((struct ktr_header *, int, int *, void **, FILE *));
 void	dumpheader __P((struct ktr_header *, char *, int, int *));
 void	dumpfile __P((char *, int, int));
 int	fread_tail __P((char *, int, int, FILE *));
@@ -143,16 +143,18 @@ void	setemul __P((char *));
 
 
 void
-dumprecord(ktr, trpoints, size, m, fp)
+dumprecord(ktr, trpoints, sizep, mp, fp)
 	register struct ktr_header *ktr;
-	int trpoints, size;
-	void *m;
+	int trpoints;
+	int *sizep;
+	void **mp;
 	FILE *fp;
 {
 	static void *mcopy = NULL;
 	static int linelen = 0, iolinelen = 0;
 	char buff[KTR_BUFSZ], iobuff[KTR_BUFSZ], *bp;
 	int ktrlen, *lenp;
+	void *m;
 
 	if (!ktr) {
 		printf("%s\n", buff);
@@ -173,11 +175,11 @@ dumprecord(ktr, trpoints, size, m, fp)
 
 	if ((ktrlen = ktr->ktr_len) < 0)
 		errx(1, "bogus length 0x%x", ktrlen);
-	if (ktrlen > size) {
-		m = (void *)realloc(m, ktrlen+1);
+	m = *mp;
+	if (ktrlen >= *sizep) {
+		*mp = m = (void *)realloc(m, *sizep = ktrlen+1);
 		if (m == NULL)
 			errx(1, "%s", strerror(ENOMEM));
-		size = ktrlen;
 	}
 	if (ktrlen && fread_tail(m, ktrlen, 1, fp) == 0)
 		errx(1, "data too short");
@@ -235,7 +237,7 @@ dumpfile(file, fd, trpoints)
 	int trpoints;
 {
 	struct ktr_header ktr_header;
-	register void *m;
+	void *m;
 	FILE *fp;
 	int size;
 
@@ -251,11 +253,11 @@ dumpfile(file, fd, trpoints)
 		err(1, "%s", file);
 
 	while (fread_tail((char *)&ktr_header,sizeof(struct ktr_header),1,fp)) {
-		dumprecord(&ktr_header, trpoints, size, m, fp);
+		dumprecord(&ktr_header, trpoints, &size, &m, fp);
 		if (tail)
 			(void)fflush(stdout);
 	}
-	dumprecord(NULL, 0, 0, 0, fp);
+	dumprecord(NULL, 0, NULL, NULL, fp);
 }
 
 
