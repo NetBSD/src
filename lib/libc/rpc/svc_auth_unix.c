@@ -1,4 +1,4 @@
-/*	$NetBSD: svc_auth_unix.c,v 1.16 2000/07/14 08:40:42 fvdl Exp $	*/
+/*	$NetBSD: svc_auth_unix.c,v 1.17 2002/11/11 22:15:42 thorpej Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -35,7 +35,7 @@
 static char *sccsid = "@(#)svc_auth_unix.c 1.28 88/02/08 Copyr 1984 Sun Micro";
 static char *sccsid = "@(#)svc_auth_unix.c	2.3 88/08/01 4.0 RPCSRC";
 #else
-__RCSID("$NetBSD: svc_auth_unix.c,v 1.16 2000/07/14 08:40:42 fvdl Exp $");
+__RCSID("$NetBSD: svc_auth_unix.c,v 1.17 2002/11/11 22:15:42 thorpej Exp $");
 #endif
 #endif
 
@@ -76,8 +76,7 @@ _svcauth_unix(rqst, msg)
 		int area_gids[NGRPS];
 	} *area;
 	u_int auth_len;
-	size_t str_len, gid_len;
-	int i;
+	size_t str_len, gid_len, i;
 
 	_DIAGASSERT(rqst != NULL);
 	_DIAGASSERT(msg != NULL);
