@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysctl.3,v 1.102 2002/12/11 12:59:33 scw Exp $
+.\"	$NetBSD: sysctl.3,v 1.103 2002/12/11 19:14:34 jdolecek Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -283,6 +283,7 @@ information.
 .It KERN\_DEFCORENAME	string	yes
 .It KERN\_DOMAINNAME	string	yes
 .It KERN\_FILE	struct file	no
+.It KERN\_FORKFSLEEP	integer	yes
 .It KERN\_FSCALE	integer	no
 .It KERN\_FSYNC	integer	no
 .It KERN\_HOSTID	integer	yes
@@ -384,6 +385,15 @@ followed by an array of
 whose size depends on the current number of such objects in the system.
 .It Li KERN_FSCALE
 The kernel fixed-point scale factor.
+.It Li KERN_FORKFSLEEP
+If
+.Xr fork 2
+system call fails due to limit on number of processes (either
+the global maxproc limit or user's one), wait for this many
+miliseconds before returning
+.Er EAGAIN
+error to process. Useful to keep heavily forking runaway
+processes in bay. Default zero (no sleep). Maximum is 20 seconds.
 .It Li KERN_FSYNC
 Return 1 if the POSIX 1003.1b File Synchronization Option is available
 on this system,
