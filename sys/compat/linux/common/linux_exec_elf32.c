@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_exec_elf32.c,v 1.16 1996/09/03 03:12:28 mycroft Exp $	*/
+/*	$NetBSD: linux_exec_elf32.c,v 1.17 1996/09/26 20:52:42 cgd Exp $	*/
 
 /*
  * Copyright (c) 1995 Frank van der Linden
@@ -29,6 +29,9 @@
  *
  * based on exec_aout.c, sunos_exec.c and svr4_exec.c
  */
+
+#define	ELFSIZE		32				/* XXX */
+#define	EXEC_ELF32					/* XXX should die */
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -61,7 +64,7 @@
 
 static void *linux_aout_copyargs __P((struct exec_package *,
     struct ps_strings *, void *, void *));
-static int linux_elf_signature __P((struct proc *p, struct exec_package *,
+static int linux_elf32_signature __P((struct proc *p, struct exec_package *,
     Elf32_Ehdr *));
 
 #define	LINUX_AOUT_AUX_ARGSIZ	2
@@ -103,7 +106,7 @@ struct emul emul_linux_elf = {
 	linux_sysent,
 	linux_syscallnames,
 	LINUX_ELF_AUX_ARGSIZ,
-	elf_copyargs,
+	elf32_copyargs,
 	setregs,
 	linux_sigcode,
 	linux_esigcode,
@@ -372,7 +375,7 @@ exec_linux_aout_prep_qmagic(p, epp)
  * but we check all the progbits headers.
  */
 static int
-linux_elf_signature(p, epp, eh)
+linux_elf32_signature(p, epp, eh)
 	struct proc *p;
 	struct exec_package *epp;
 	Elf32_Ehdr *eh;
@@ -386,7 +389,7 @@ linux_elf_signature(p, epp, eh)
 
 	sh = (Elf32_Shdr *) malloc(shsize, M_TEMP, M_WAITOK);
 
-	if ((error = elf_read_from(p, epp->ep_vp, eh->e_shoff,
+	if ((error = elf32_read_from(p, epp->ep_vp, eh->e_shoff,
 	    (caddr_t) sh, shsize)) != 0)
 		goto out;
 
@@ -404,7 +407,7 @@ linux_elf_signature(p, epp, eh)
 		    s->sh_size < sizeof(signature) - 1)
 			continue;
 
-		if ((error = elf_read_from(p, epp->ep_vp, s->sh_offset,
+		if ((error = elf32_read_from(p, epp->ep_vp, s->sh_offset,
 		    (caddr_t) buf, sizeof(signature) - 1)) != 0)
 			goto out;
 
@@ -422,18 +425,18 @@ out:
 }
 
 int
-linux_elf_probe(p, epp, eh, itp, pos)
+linux_elf32_probe(p, epp, eh, itp, pos)
 	struct proc *p;
 	struct exec_package *epp;
 	Elf32_Ehdr *eh;
 	char *itp;
-	u_long *pos;
+	Elf32_Addr *pos;
 {
 	char *bp;
 	int error;
 	size_t len;
 
-	if ((error = linux_elf_signature(p, epp, eh)) != 0)
+	if ((error = linux_elf32_signature(p, epp, eh)) != 0)
 		return error;
 
 	if (itp[0]) {
