@@ -38,7 +38,7 @@
  * from: Utah $Hdr: locore.s 1.66 92/12/22$
  *
  *	from: @(#)locore.s	8.6 (Berkeley) 5/27/94
- *	$Id: locore.s,v 1.30 1994/09/09 23:40:15 mycroft Exp $
+ *	$Id: locore.s,v 1.31 1994/10/20 20:47:53 mycroft Exp $
  */
 
 /*
@@ -1325,8 +1325,8 @@ Lset2:
  */
 ENTRY(remrq)
 	movl	sp@(4),a0
-#ifdef DIAGNOSTIC
 	movb	a0@(P_PRIORITY),d0
+#ifdef DIAGNOSTIC
 	lsrb	#2,d0
 	movl	_whichqs,d1
 	btst	d0,d1
@@ -1340,7 +1340,6 @@ ENTRY(remrq)
 	cmpal	a0,a1
 	jne	Lrem1
 #ifndef DIAGNOSTIC
-	movb	a0@(P_PRIORITY),d0
 	lsrb	#2,d0
 	movl	_whichqs,d1
 #endif
