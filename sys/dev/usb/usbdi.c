@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi.c,v 1.105 2004/10/23 13:26:34 augustss Exp $	*/
+/*	$NetBSD: usbdi.c,v 1.106 2004/10/24 12:52:40 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usbdi.c,v 1.28 1999/11/17 22:33:49 n_hibma Exp $	*/
 
 /*
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usbdi.c,v 1.105 2004/10/23 13:26:34 augustss Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usbdi.c,v 1.106 2004/10/24 12:52:40 augustss Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1196,6 +1196,7 @@ usbd_get_string(usbd_device_handle dev, int si, char *buf)
 		err = usbd_get_string_desc(dev, USB_LANGUAGE_TABLE, 0, &us,
 		    &size);
 		if (err || size < 4) {
+			DPRINTFN(-1,("usbd_get_string: getting lang failed, using 0\n"));
 			dev->langid = 0; /* Well, just pick something then */
 		} else {
 			/* Pick the first language as the default. */
