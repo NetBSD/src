@@ -1,4 +1,4 @@
-/*	$NetBSD: aucc.c,v 1.8 1997/07/04 21:00:15 is Exp $	*/
+/*	$NetBSD: aucc.c,v 1.9 1997/07/09 22:37:08 is Exp $	*/
 #undef AUDIO_DEBUG
 /*
  * Copyright (c) 1997 Stephan Thesing
@@ -423,8 +423,10 @@ aucc_set_params(addr, mode, p, q)
 	/* if (mode == AUMODE_RECORD)
 		return 0 ENXIO*/;
 
+#ifdef AUCCDEBUG
 	printf("aucc_set_params(mode %x, enc %d, bits %d, chn %d, sr %ld)\n",
 	    mode, p->encoding, p->precision, p->channels, p->sample_rate);
+#endif
 
 	switch (p->encoding) {
 	case AUDIO_ENCODING_ULAW:
@@ -642,7 +644,7 @@ aucc_start_output(addr, p, cc, intr, arg)
 			custom.aud[i].per=sc->sc_channel[i].nd_per;
 			custom.aud[i].vol=sc->sc_channel[i].nd_volume;
 			custom.aud[i].lc = PREP_DMA_MEM(dmap[k++]);
-			custom.aud[i].len=cc>>1;
+			custom.aud[i].len=cc/(sc->sc_channels*2);
 			sc->sc_channel[i].nd_mask=mask;
 			DPRINTF(("per is %d, vol is %d, len is %d\n",\
 			    sc->sc_channel[i].nd_per,
@@ -937,14 +939,18 @@ aucc_encode(enc, channels, i, p, dmap)
 	int off;
 	u_char *tab;
 
+#ifdef AUCCDEBUG
 	static int debctl = 6;
+#endif
 
 	off = 0;
 	tab = NULL;
 
+#ifdef AUCCDEBUG
 	if (--debctl >= 0)
 		printf("Enc: enc %d, chan %d, dmap %p %p %p %p\n",
 		    enc, channels, dmap[0], dmap[1], dmap[2], dmap[3]);
+#endif
 
 	switch (enc) {
 	case AUDIO_ENCODING_ULAW:
@@ -969,22 +975,24 @@ aucc_encode(enc, channels, i, p, dmap)
 	t = (char *)dmap[3];
 
 	if (tab)
-		while (i--) {
+		while (i) {
 			switch (channels) {
 			case 4: *t++ = tab[*p++];
 			case 3: *s++ = tab[*p++];
 			case 2: *r++ = tab[*p++];
 			case 1: *q++ = tab[*p++];
 			}
+			i -= channels;
 		}
 	else
-		while (i--) {
+		while (i) {
 			switch (channels) {
 			case 4: *t++ = *p++ + off;
 			case 3: *s++ = *p++ + off;
 			case 2: *r++ = *p++ + off;
 			case 1: *q++ = *p++ + off;
 			}
+			i -= channels;
 		}
 	
 }
