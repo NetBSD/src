@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.241 2001/03/31 09:35:34 itojun Exp $
+# $NetBSD: mi,v 1.242 2001/03/31 11:43:22 aymeric Exp $
 .			base-sys-root
 ./altroot		base-sys-root
 ./bin			base-sys-root
@@ -849,8 +849,9 @@
 ./usr/share/doc/usd/09.edtut		base-usd-share
 ./usr/share/doc/usd/10.edadv		base-usd-share
 ./usr/share/doc/usd/11.edit		base-usd-share
+./usr/share/doc/usd/12.ex		base-usd-share
 ./usr/share/doc/usd/12.vi		base-usd-share
-./usr/share/doc/usd/13.ex		base-usd-share
+./usr/share/doc/usd/13.viref		base-usd-share
 ./usr/share/doc/usd/14.jove		base-usd-share
 ./usr/share/doc/usd/15.sed		base-usd-share
 ./usr/share/doc/usd/16.awk		base-usd-share
@@ -1422,8 +1423,10 @@
 ./usr/share/vi/catalog			base-util-share
 ./usr/share/vi/catalog/dutch		base-util-share
 ./usr/share/vi/catalog/english		base-util-share
+./usr/share/vi/catalog/french		base-util-share
 ./usr/share/vi/catalog/german		base-util-share
 ./usr/share/vi/catalog/ru_RU.KOI8-R	base-util-share
+./usr/share/vi/catalog/spanish		base-util-share
 ./usr/share/vi/catalog/swedish		base-util-share
 ./usr/share/wscons			base-util-share
 ./usr/share/wscons/fonts			base-util-share
