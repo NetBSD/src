@@ -1,4 +1,4 @@
-/*	$NetBSD: asic.c,v 1.39 1999/09/28 08:05:42 nisimura Exp $	*/
+/*	$NetBSD: asic.c,v 1.40 1999/10/01 09:19:43 nisimura Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -212,11 +212,4 @@ ioasic_intr_establish(dev, cookie, level, handler, val)
 {
 
 	(*tc_enable_interrupt)((int)cookie, handler, val, 1);
-}
-
-char *
-ioasic_lance_ether_address()
-{
-
-	return (char *)IOASIC_SYS_ETHER_ADDRESS(ioasic_base);
 }
