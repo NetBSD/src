@@ -1,4 +1,4 @@
-/*	$NetBSD: sb_isapnp.c,v 1.25 1998/06/09 07:28:31 thorpej Exp $	*/
+/*	$NetBSD: sb_isapnp.c,v 1.26 1998/06/29 22:42:32 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -129,6 +129,7 @@ sb_isapnp_attach(parent, self, aux)
 	sc->sc_ioh = ipa->ipa_io[0].h;
 
 	sc->sc_irq = ipa->ipa_irq[0].num;
+	sc->sc_ist = ipa->ipa_irq[0].type;
 	sc->sc_drq8 = ipa->ipa_drq[0].num;
         if (ipa->ipa_ndrq > 1 && ipa->ipa_drq[0].num != ipa->ipa_drq[1].num) {
         	/* Some cards have the 16 bit drq first */
