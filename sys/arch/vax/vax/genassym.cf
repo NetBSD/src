@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.7 1998/08/31 18:43:29 ragge Exp $
+#	$NetBSD: genassym.cf,v 1.8 1998/09/30 14:09:59 ragge Exp $
 #
 # Copyright (c) 1997 Ludd, University of Lule}, Sweden.
 # All rights reserved.
@@ -57,6 +57,8 @@ define	IFTRAP		offsetof(struct pcb, iftrap)
 define	MCHK		offsetof(struct cpu_dep, cpu_mchk)
 define	MEMERR		offsetof(struct cpu_dep, cpu_memerr)
 
+define	KERNBASE	KERNBASE
+
 # mtpr register numbers
 define	PR_KSP		PR_KSP
 define	PR_USP		PR_USP
@@ -103,7 +105,8 @@ define	USPACE		USPACE
 
 define	ENAMETOOLONG	ENAMETOOLONG
 
-define	SYS_sigreturn	SYS_sigreturn
+define	SYS___sigreturn14	SYS___sigreturn14
+define	SYS_exit	SYS_exit
 
 define	VAX_TYP_UV2	VAX_TYP_UV2
 define	VAX_TYP_8SS	VAX_TYP_8SS

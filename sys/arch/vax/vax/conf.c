@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.35 1998/06/04 15:52:49 ragge Exp $	*/
+/*	$NetBSD: conf.c,v 1.36 1998/09/30 14:09:59 ragge Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
@@ -98,8 +98,9 @@ bdev_decl(ccd);
 #include "vnd.h"
 bdev_decl(vnd);
 
-#include "hdc.h"
-bdev_decl(hdc);
+#include "ry.h"
+bdev_decl(rd);
+bdev_decl(ry);
 
 #include "sd.h"
 bdev_decl(sd);
@@ -134,11 +135,12 @@ struct bdevsw	bdevsw[] =
 	bdev_notdef(),			/* 16: was: KDB50/RA?? */
 	bdev_disk_init(NCCD,ccd),	/* 17: concatenated disk driver */
 	bdev_disk_init(NVND,vnd),	/* 18: vnode disk driver */
-	bdev_disk_init(NHDC,hdc),	/* 19: HDC9224/RD?? */
+	bdev_disk_init(NRD,rd),		/* 19: VS3100 ST506 disk */
 	bdev_disk_init(NSD,sd),		/* 20: SCSI disk */
 	bdev_tape_init(NST,st),		/* 21: SCSI tape */
 	bdev_disk_init(NCD,cd),		/* 22: SCSI CD-ROM */
 	bdev_disk_init(NMD,md),		/* 23: memory disk driver */
+	bdev_disk_init(NRY,ry),		/* 24: VS3100 floppy */
 };
 int	nblkdev = sizeof(bdevsw) / sizeof(bdevsw[0]);
 
@@ -165,7 +167,7 @@ cons_decl(smg);
 #include "smg.h"
 
 struct	consdev constab[]={
-#if VAX8600 || VAX780 || VAX750 || VAX650 || VAX630
+#if VAX8600 || VAX8200 || VAX780 || VAX750 || VAX650 || VAX630
 #define NGEN	1
 	cons_init(gen), /* Generic console type; mtpr/mfpr */
 #else
@@ -259,7 +261,8 @@ cdev_decl(gencn);
 cdev_decl(rx);
 cdev_decl(rl);
 cdev_decl(ccd);
-cdev_decl(hdc);
+cdev_decl(rd);
+cdev_decl(ry);
 cdev_decl(sd);
 cdev_decl(st);
 
@@ -436,7 +439,7 @@ struct cdevsw	cdevsw[] =
 	cdev_disk_init(NVND,vnd),	/* 55: vnode disk driver */
 	cdev_bpftun_init(NBPFILTER,bpf),/* 56: berkeley packet filter */
 	cdev_bpftun_init(NTUN,tun),	/* 57: tunnel filter */
-	cdev_disk_init(NHDC,hdc),	/* 58: HDC9224/RD?? */
+	cdev_disk_init(NRD,rd),		/* 58: HDC9224/RD?? */
 	cdev_disk_init(NSD,sd),		/* 59: SCSI disk */
 	cdev_tape_init(NST,st),		/* 60: SCSI tape */
 	cdev_disk_init(NCD,cd),		/* 61: SCSI CD-ROM */
@@ -452,6 +455,7 @@ struct cdevsw	cdevsw[] =
 	cdev_mouse_init(NWSKBD, wskbd),	/* 69: keyboards */
 	cdev_mouse_init(NWSMOUSE,
 			wsmouse),	/* 70: mice */
+	cdev_disk_init(NRY,ry),		/* 71: VS floppy */
 };
 int	nchrdev = sizeof(cdevsw) / sizeof(cdevsw[0]);
 
@@ -537,6 +541,10 @@ int	chrtoblktbl[] = {
 	NODEV,	/* 65 */
 	NODEV,	/* 66 */
 	NODEV,	/* 67 */
+	NODEV,	/* 68 */
+	NODEV,	/* 69 */
+	NODEV,	/* 70 */
+	NODEV,	/* 71 */
 };
 
 dev_t
