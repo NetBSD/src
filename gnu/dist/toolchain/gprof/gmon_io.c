@@ -296,7 +296,11 @@ DEFUN (gmon_out_read, (filename), const char *filename)
 	  ++narcs;
 	  from_pc = get_vma (core_bfd, (bfd_byte *) raw_arc.from_pc);
 	  self_pc = get_vma (core_bfd, (bfd_byte *) raw_arc.self_pc);
+#if defined(__arch64__)
+	  count = bfd_get_64 (core_bfd, (bfd_byte *) raw_arc.count);
+#else
 	  count = bfd_get_32 (core_bfd, (bfd_byte *) raw_arc.count);
+#endif
 	  DBG (SAMPLEDEBUG,
 	     printf ("[gmon_out_read] frompc 0x%lx selfpc 0x%lx count %lu\n",
 		     (unsigned long) from_pc, (unsigned long) self_pc, count));
