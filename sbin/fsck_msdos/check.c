@@ -1,4 +1,4 @@
-/*	$NetBSD: check.c,v 1.12 2001/04/06 16:52:41 wiz Exp $	*/
+/*	$NetBSD: check.c,v 1.13 2005/01/19 20:00:45 xtraeme Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997 Wolfgang Solfrank
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: check.c,v 1.12 2001/04/06 16:52:41 wiz Exp $");
+__RCSID("$NetBSD: check.c,v 1.13 2005/01/19 20:00:45 xtraeme Exp $");
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -49,8 +49,7 @@ __RCSID("$NetBSD: check.c,v 1.12 2001/04/06 16:52:41 wiz Exp $");
 #include "fsutil.h"
 
 int
-checkfilesys(filename)
-	const char *filename;
+checkfilesys(const char *filename)
 {
 	int dosfs;
 	struct bootblock boot;
