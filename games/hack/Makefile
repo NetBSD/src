@@ -1,5 +1,5 @@
 #	from: @(#)Makefile	5.10 (Berkeley) 12/8/90
-#	$Id: Makefile,v 1.8 1993/08/10 02:53:17 mycroft Exp $
+#	$Id: Makefile,v 1.9 1993/08/14 22:21:45 mycroft Exp $
 
 PROG=	hack
 CFLAGS+=-I.
@@ -20,6 +20,8 @@ DPADD+=	${LIBTERM}
 LDADD+=	-ltermcap
 HIDEGAME=hidegame
 CLEANFILES+=hack.onames.h makedefs
+
+${PROG}: hack.onames.h
 
 hack.onames.h: makedefs def.objects.h
 	./makedefs ${.CURDIR}/def.objects.h > hack.onames.h
