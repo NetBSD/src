@@ -1,4 +1,4 @@
-/*	$NetBSD: ultrix_pathname.c,v 1.7 1998/08/09 20:37:57 perry Exp $	*/
+/*	$NetBSD: ultrix_pathname.c,v 1.8 1999/02/09 20:30:38 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -90,7 +90,7 @@ ultrix_sys_creat(p, v, retval)
 	struct sys_open_args ap;
 
 	caddr_t sg = stackgap_init(p->p_emul);
-	ULTRIX_CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
+	ULTRIX_CHECK_ALT_CREAT(p, &sg, SCARG(uap, path));
 
 	SCARG(&ap, path) = SCARG(uap, path);
 	SCARG(&ap, flags) = O_WRONLY | O_CREAT | O_TRUNC;
@@ -146,7 +146,7 @@ ultrix_sys_execv(p, v, retval)
 	register_t *retval;
 {
 	struct ultrix_sys_execv_args /* {
-		syscallarg(char *) path;
+		syscallarg(const char *) path;
 		syscallarg(char **) argv;
 	} */ *uap = v;
 	struct sys_execve_args ap;
@@ -169,7 +169,7 @@ ultrix_sys_execve(p, v, retval)
 	register_t *retval;
 {
 	struct ultrix_sys_execve_args /* {
-		syscallarg(char *) path;
+		syscallarg(const char *) path;
 		syscallarg(char **) argv;
 		syscallarg(char **) envp;
 	} */ *uap = v;
@@ -198,7 +198,6 @@ ultrix_sys_open(p, v, retval)
 	int ret;
 	
 	caddr_t sg = stackgap_init(p->p_emul);
-	ULTRIX_CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
 
 	/* convert open flags into NetBSD flags */
 	l = SCARG(uap, flags);
@@ -209,6 +208,10 @@ ultrix_sys_open(p, v, retval)
 	r |=	((l & 0x0100) ? O_EXLOCK : 0);
 	r |=	((l & 0x2000) ? O_FSYNC : 0);
 
+	if (r & O_CREAT)
+		ULTRIX_CHECK_ALT_CREAT(p, &sg, SCARG(uap, path));
+	else
+		ULTRIX_CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
 	SCARG(uap, flags) = r;
 	ret = sys_open(p, (struct sys_open_args *)uap, retval);
 
@@ -326,7 +329,7 @@ ultrix_sys_mknod(p, v, retval)
 	struct ultrix_sys_mknod_args *uap = v;
 
 	caddr_t sg = stackgap_init(p->p_emul);
-	ULTRIX_CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
+	ULTRIX_CHECK_ALT_CREAT(p, &sg, SCARG(uap, path));
 
 	if (S_ISFIFO(SCARG(uap, mode)))
 		return sys_mkfifo(p, uap, retval);
