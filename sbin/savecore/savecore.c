@@ -1,4 +1,4 @@
-/*	$NetBSD: savecore.c,v 1.21 1995/03/18 15:01:02 cgd Exp $	*/
+/*	$NetBSD: savecore.c,v 1.22 1995/06/25 06:28:13 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1992, 1993
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)savecore.c	8.3 (Berkeley) 1/2/94";
 #else
-static char rcsid[] = "$NetBSD: savecore.c,v 1.21 1995/03/18 15:01:02 cgd Exp $";
+static char rcsid[] = "$NetBSD: savecore.c,v 1.22 1995/06/25 06:28:13 cgd Exp $";
 #endif
 #endif /* not lint */
 
@@ -245,12 +245,12 @@ kmem_setup()
 	}
 	Lseek(kmem, (off_t)current_nl[X_DUMPLO].n_value, L_SET);
 	(void)Read(kmem, &dumplo, sizeof(dumplo));
+	dumplo *= DEV_BSIZE;
 	if (verbose)
 		(void)printf("dumplo = %d (%d * %d)\n",
-		    dumplo, dumplo/DEV_BSIZE, DEV_BSIZE);
+		    dumplo, dumplo / DEV_BSIZE, DEV_BSIZE);
 	Lseek(kmem, (off_t)current_nl[X_DUMPMAG].n_value, L_SET);
 	(void)Read(kmem, &dumpmag, sizeof(dumpmag));
-	dumplo *= DEV_BSIZE;
 	ddname = find_dev(dumpdev, S_IFBLK);
 	dumpfd = Open(ddname, O_RDWR);
 	fp = fdopen(kmem, "r");
@@ -410,7 +410,6 @@ err2:			syslog(LOG_WARNING,
 			exit(1);
 		}
 	}
-	(void)printf("\n");
 	(void)close(ifd);
 	if (compress)
 		(void)fclose(fp);
