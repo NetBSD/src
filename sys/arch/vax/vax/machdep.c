@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.4 1994/10/26 08:03:14 cgd Exp $	*/
+/*      $NetBSD: machdep.c,v 1.5 1994/11/25 19:09:57 ragge Exp $  */
 
 /* Copyright (c) 1994 Ludd, University of Lule}, Sweden.
  * Copyright (c) 1993 Adam Glass
@@ -59,7 +59,10 @@
 #include "sys/proc.h"
 #include "sys/user.h"
 #include "sys/time.h"
+#include "sys/signal.h"
 #include "sys/kernel.h"
+#include "sys/reboot.h"
+#include "sys/msgbuf.h"
 #include "vax/include/mtpr.h"
 #include "vax/include/cpu.h"
 #include "vm/vm.h"
@@ -67,6 +70,8 @@
 #include "vm/vm_page.h"
 #include "vax/include/macros.h"
 #include "vax/include/nexus.h"
+#include "vax/include/trap.h"
+#include "net/netisr.h"
 
 /*
  * We do these external declarations here, maybe they should be done 
@@ -83,6 +88,7 @@ struct	msgbuf *msgbufp;
 int	physmem;
 struct	cfdriver nexuscd;
 int	todrstopped,glurg;
+int	dumpsize=0;
 
 caddr_t allocsys __P((caddr_t));
 
@@ -111,6 +117,19 @@ cpu_startup() {
 	extern unsigned int avail_end;
 	extern char *panicstr;
 
+        /*
+         * Initialize error message buffer (at end of core).
+         * avail_end was pre-decremented in pmap_bootstrap to compensate.
+         */
+#if 0
+        for (i = 0; i < btoc(sizeof (struct msgbuf)); i++)
+                pmap_enter(kernel_pmap, (vm_offset_t)msgbufp,
+                    avail_end + i * NBPG, VM_PROT_ALL, TRUE);
+        msgbufmapped = 1;
+#endif
+        /*
+         * Good {morning,afternoon,evening,night}.
+         */
 	printf("%s\n", version);
 	printf("realmem = %d\n", avail_end);
 	physmem=btoc(avail_end); 
@@ -118,8 +137,8 @@ cpu_startup() {
 	mtpr(AST_NO,PR_ASTLVL);
 	spl0();
 
-	boothowto=0; /* XXX Vi l}ser s} att vi alltid f}r root-fr}{ga */
-
+	boothowto=RB_SINGLE;
+	dumpsize=physmem+1;
 
     /*
      * Find out how much space we need, allocate it,
@@ -334,8 +353,28 @@ resettodr(){
 }
 #endif
 
-dumpconf(){
-	printf("dumpconf() not implemented - yet!\n");
+dumpconf()
+{
+        int nblks;
+	extern int dumpdev, dumplo;
+
+        /*
+         * XXX include the final RAM page which is not included in physmem.
+         */
+        dumpsize = physmem + 1;
+        if (dumpdev != NODEV && bdevsw[major(dumpdev)].d_psize) {
+                nblks = (*bdevsw[major(dumpdev)].d_psize)(dumpdev);
+                if (dumpsize > btoc(dbtob(nblks - dumplo)))
+                        dumpsize = btoc(dbtob(nblks - dumplo));
+                else if (dumplo == 0)
+                        dumplo = nblks - btodb(ctob(dumpsize));
+        }
+        /*
+         * Don't dump on the first CLBYTES (why CLBYTES?)
+         * in case the dump device includes a disk label.
+         */
+        if (dumplo < btodb(CLBYTES))
+                dumplo = btodb(CLBYTES);
 }
 
 cpu_initclocks(){
@@ -387,12 +426,221 @@ _remque(elem)
         prev->q_next = next;
         elem->q_prev = 0;
 }
-#if 0
-microtime(){
-/* XXX Should be fixed and moved to clock.c */
-}
-#endif
 
 consinit(){
 /*	cninit(); */
+}
+
+struct sigretargs {
+        struct sigcontext *cntxp;
+};
+
+sigreturn(p, uap, retval)
+	struct proc *p;
+	struct sigretargs *uap;
+	int *retval;
+{
+	struct sysc_frame *scf=(struct sysc_frame *)mfpr(PR_SSP);
+	struct sigcontext *cntx=uap->cntxp;
+/*
+printf("sigreturn: cntx %x, sysc_frame %x, uap %x\n",cntx, scf,uap);
+	asm("halt");
+*/
+	/* XXX Here we must do some checking of privileges... */
+
+        if (cntx->sc_onstack & 01)
+                p->p_sigacts->ps_sigstk.ss_flags |= SA_ONSTACK;
+        else
+                p->p_sigacts->ps_sigstk.ss_flags &= ~SA_ONSTACK;
+        p->p_sigmask = cntx->sc_mask &~ sigcantmask;
+
+	scf->fp=cntx->sc_fp;
+	scf->ap=cntx->sc_ap;
+	scf->pc=cntx->sc_pc;
+	scf->psl=cntx->sc_ps;
+	mtpr(cntx->sc_sp,PR_USP);
+	return(EJUSTRETURN);
+}
+
+struct	trampframe {
+	u_int	sig;	/* Signal number */
+	u_int	code;	/* Info code */
+	u_int	scp;	/* Pointer to struct sigcontext */
+	u_int	r0,r1,r2,r3,r4,r5;	/* Registers saved when interrupt */
+	u_int	pc;	/* Address of signal handler */
+	u_int	arg;	/* Pointer to first (and only) sigreturn argument */
+};
+
+void
+sendsig(catcher, sig, mask, code)
+        sig_t catcher;
+        int sig, mask;
+        unsigned code;
+{
+        struct proc *p = curproc;
+        struct sigacts *psp = p->p_sigacts;
+	struct sysc_frame *syscf;
+	struct sigcontext *sigctx;
+	struct trampframe *trampf;
+	u_int *cursp;
+	int oonstack;
+/*
+printf("sendsig: catcher %x, sig %x, mask %x, code %x\n",catcher,sig,mask,code);
+        oonstack = psp->ps_sigstk.ss_flags & SA_ONSTACK;
+*/
+        /*
+         * Allocate and validate space for the signal handler
+         * context. Note that if the stack is in P0 space, the
+         * call to grow() is a nop, and the useracc() check
+         * will fail if the process has not already allocated
+         * the space with a `brk'.
+	 * We shall allocate space on the stack for both 
+	 * struct sigcontext and struct calls...
+         */
+	/* First check what stack to work on */
+        if ((psp->ps_flags & SAS_ALTSTACK) && !oonstack &&
+            (psp->ps_sigonstack & sigmask(sig))) {
+		cursp=(u_int *)(psp->ps_sigstk.ss_base+psp->ps_sigstk.ss_size);
+		psp->ps_sigstk.ss_flags |= SA_ONSTACK;
+        } else
+		cursp = (u_int *)mfpr(PR_USP);
+        if ((u_int)cursp <= USRSTACK - ctob(p->p_vmspace->vm_ssize))
+                (void)grow(p, (u_int)cursp);
+
+	/* Set up positions for structs on stack */
+	sigctx=(struct sigcontext *)((u_int)cursp-sizeof(struct sigcontext));
+	trampf=(struct trampframe *)((u_int)sigctx-sizeof(struct trampframe));
+	cursp=(u_int*)sigctx-2; /* Place for pointer to arg list in sigreturn */
+
+	syscf=(struct sysc_frame*)mfpr(PR_SSP); /* Where registers are placed */
+
+        if(useracc((caddr_t)cursp, sizeof(struct sigcontext)+
+			sizeof(struct trampframe), B_WRITE)==0) {
+                /*
+                 * Process has trashed its stack; give it an illegal
+                 * instruction to halt it in its tracks.
+                 */
+                SIGACTION(p, SIGILL) = SIG_DFL;
+                sig = sigmask(SIGILL);
+                p->p_sigignore &= ~sig;
+                p->p_sigcatch &= ~sig;
+                p->p_sigmask &= ~sig;
+                psignal(p, SIGILL);
+                return;
+        }
+	/* Set up pointers for sigreturn args */
+	trampf->arg=(int)sigctx;
+	trampf->pc=(u_int)catcher;
+	trampf->scp=(int)sigctx;
+	trampf->code=code;
+	trampf->sig=sig;
+
+
+	sigctx->sc_pc=syscf->pc;
+	sigctx->sc_ps=syscf->psl;
+	sigctx->sc_ap=syscf->ap;
+	sigctx->sc_fp=syscf->fp;
+	sigctx->sc_sp=mfpr(PR_USP);
+	sigctx->sc_onstack=oonstack;
+	sigctx->sc_mask=mask;
+
+	syscf->pc=(u_int)0x7fffe000; /* XXX signal trampoline code */
+	syscf->ap=(u_int)cursp;
+/*
+printf("sendsig: ap %x, sp %x, sigctx %x, trampf %x\n",
+		syscf->ap, cursp,sigctx,trampf);
+	asm("halt");
+*/
+	mtpr(cursp,PR_USP);
+
+}
+
+int	waittime=-1;
+
+boot(howto)
+	int howto;
+{
+	extern char *panicstr;
+
+	if ((howto&RB_NOSYNC) == 0 && waittime < 0) {
+		register struct buf *bp;
+		int iter, nbusy;
+
+		waittime = 0;
+		(void) spl0();
+		if(panicstr&&curproc) showstate(curproc);
+
+		printf("syncing disks... ");
+		/*
+		 * Release vnodes held by texts before sync.
+		 */
+		if (panicstr == 0)
+		        vnode_pager_umount(NULL);
+
+		sync(&proc0, (void *)NULL, (int *)NULL);
+		for (iter = 0; iter < 20; iter++) {
+			nbusy = 0;
+                        for (bp = &buf[nbuf]; --bp >= buf; )
+                                if ((bp->b_flags & (B_BUSY|B_INVAL)) == B_BUSY)
+                                        nbusy++;
+                        if (nbusy == 0)
+                                break;
+                        printf("%d ", nbusy);
+			{register int m;
+				m=mfpr(PR_TODR)+iter*4;
+				while(m!=mfpr(PR_TODR));}
+                /*      DELAY(400000 * iter); */
+                }
+                if (nbusy)
+                        printf("giving up\n");
+                else
+                        printf("done\n");
+                /*
+                 * If we've been adjusting the clock, the todr
+                 * will be out of synch; adjust it now.
+                 */
+                resettodr();
+        }
+        splhigh();                      /* extreme priority */
+	if (howto&RB_HALT) {
+		asm("halt"); /* Always want halt */
+		printf("halting (in tight loop); hit\n\t^P\n\tHALT\n\n");
+		while(1);
+	} else {
+		if (howto & RB_DUMP)
+			dumpsys();
+		asm("halt");	/* Not good way to do this */
+	}
+}
+
+netintr()
+{
+#ifdef INET
+        if (netisr & (1 << NETISR_ARP)) {
+                netisr &= ~(1 << NETISR_ARP);
+                arpintr();
+        }
+        if (netisr & (1 << NETISR_IP)) {
+                netisr &= ~(1 << NETISR_IP);
+                ipintr();
+        }
+#endif
+#ifdef NS
+        if (netisr & (1 << NETISR_NS)) {
+                netisr &= ~(1 << NETISR_NS);
+                nsintr();
+        }
+#endif
+#ifdef ISO
+        if (netisr & (1 << NETISR_ISO)) {
+                netisr &= ~(1 << NETISR_ISO);
+                clnlintr();
+        }
+#endif
+#ifdef CCITT
+        if (netisr & (1 << NETISR_CCITT)) {
+                netisr &= ~(1 << NETISR_CCITT);
+                ccittintr();
+        }
+#endif
 }

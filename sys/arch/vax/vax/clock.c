@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.2 1994/10/26 08:02:57 cgd Exp $	*/
+/*	$NetBSD: clock.c,v 1.3 1994/11/25 19:09:49 ragge Exp $	*/
 
 /******************************************************************************
 
@@ -62,11 +62,10 @@ void inittodr(time_t fs_time) {
     mtpr((fs_time-year)*100+1, PR_TODR); /* +1 so the clock won't be stopped */
     todrstopped=0;
   } else if(mfpr(PR_TODR)/100>fs_time-year+SEC_PER_DAY*3) {
-    printf("NOTE: Clock has gained %d days.\n"
-	   "Please check and reset the date.\n",
+    printf("WARNING: Clock has gained %d days - CHECK AND RESET THE DATE.\n",
 	   (mfpr(PR_TODR)/100-(fs_time-year))/SEC_PER_DAY);
   } else if(mfpr(PR_TODR)/100<fs_time-year) {
-    printf("NOTE: Clock has lost time! Please check and reset the date.\n");
+    printf("WARNING: Clock has lost time! CHECK AND RESET THE DATE.\n");
   }
 }
 

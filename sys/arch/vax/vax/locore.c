@@ -1,4 +1,4 @@
-/*      $NetBSD: cpu_machdep.c,v 1.3 1994/11/25 19:09:50 ragge Exp $      */
+/*	$NetBSD: locore.c,v 1.1 1994/11/25 19:09:56 ragge Exp $	*/
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -42,70 +42,68 @@
 #include "machine/vmparam.h"
 #include "vm/vm.h"
 
-int	cpu_notsupp(),cpu_notgen();
-#ifdef	VAX750
-int	v750_loinit();
-#endif
+#define ROUND_PAGE(x)   (((uint)(x)+PAGE_SIZE-1)& ~(PAGE_SIZE-1))
 
-struct	cpu_dep	cpu_calls[VAX_MAX+1]={
-		/* Type 0,noexist */
-	cpu_notsupp,cpu_notsupp,cpu_notsupp,cpu_notsupp,
-#ifdef	VAX780	/* Type 1, 11/{780,782,785} */
-	cpu_notsupp,cpu_notsupp,cpu_notsupp,cpu_notsupp,
-#else
-	cpu_notsupp,cpu_notsupp,cpu_notsupp,cpu_notsupp,
-#endif
-#ifdef  VAX750	/* Type 2, 11/750 */
-        v750_loinit,cpu_notgen,cpu_notgen,cpu_notgen,
-#else
-        cpu_notgen,cpu_notgen,cpu_notgen,cpu_notgen,
-#endif
-#ifdef	VAX730	/* Type 3, 11/{730,725}, ceauciesco-vax */
-	cpu_notsupp,cpu_notsupp,cpu_notsupp,cpu_notsupp,
-#else
-	cpu_notsupp,cpu_notsupp,cpu_notsupp,cpu_notsupp,
-#endif
-#ifdef	VAX8600	/* Type 4, 8600/8650 (11/{790,795}) */
-	cpu_notsupp,cpu_notsupp,cpu_notsupp,cpu_notsupp,
-#else
-	cpu_notsupp,cpu_notsupp,cpu_notsupp,cpu_notsupp,
-#endif
-#ifdef	VAX8200	/* Type 5, 8200, 8300, 8350 */
-	cpu_notsupp,cpu_notsupp,cpu_notsupp,cpu_notsupp,
-#else
-	cpu_notsupp,cpu_notsupp,cpu_notsupp,cpu_notsupp,
-#endif
-#ifdef	VAX8800	/* Type 6, 85X0, 8700, 88X0 */
-	cpu_notsupp,cpu_notsupp,cpu_notsupp,cpu_notsupp,
-#else
-	cpu_notsupp,cpu_notsupp,cpu_notsupp,cpu_notsupp,
-#endif
-#ifdef	VAX610	/* Type 7, KA610 */
-	cpu_notsupp,cpu_notsupp,cpu_notsupp,cpu_notsupp,
-#else
-	cpu_notsupp,cpu_notsupp,cpu_notsupp,cpu_notsupp,
-#endif
-#ifdef	VAX630	/* Type 8, KA630 (uVAX II) */
-	cpu_notsupp,cpu_notsupp,cpu_notsupp,cpu_notsupp,
-#else
-	cpu_notsupp,cpu_notsupp,cpu_notsupp,cpu_notsupp,
-#endif
-		/* Type 9, not used */
-	cpu_notsupp,cpu_notsupp,cpu_notsupp,cpu_notsupp,
-#ifdef	VAX650  /* Type 10, KA65X (uVAX III) */
-	cpu_notsupp,cpu_notsupp,cpu_notsupp,cpu_notsupp,
-#else
-	cpu_notsupp,cpu_notsupp,cpu_notsupp,cpu_notsupp,
-#endif
-};
+u_int	proc0paddr;
 
-cpu_notgen()
+start()
 {
-	conout("This cputype not generated.\n");
-	asm("halt");
-}
-cpu_notsupp()
-{
-	conout("This cputype not supported.\n");
-	asm("halt");
+	extern u_int *end, v_cmap, p_cmap;
+	register curtop,i,maxmem;
+	extern struct cpu_dep cpu_calls[];
+
+	mtpr(0x1f,PR_IPL); /* No interrupts before istack is ok, please */
+
+	asm("movl r10,_bootdev");   /* XXX stack should have been setup */
+	asm("movl r11,_boothowto"); /* in boot, easier to transfer args */
+
+	/* FIRST we must set up kernel stack, directly after end */
+	/* This is the only thing we have to setup here, rest in pmap */
+	PAGE_SIZE = NBPG*2; /* Set logical page size */
+	proc0paddr=ROUND_PAGE(&end);
+	mtpr(proc0paddr+UPAGES*NBPG,PR_KSP);
+
+/*
+ * Set logical page size and put Sysmap on its place.
+ */
+	Sysmap=(struct pte *)ROUND_PAGE(mfpr(PR_KSP));
+
+
+	/* Be sure we are in system space. XXX should be done in boot */
+	asm("	pushl   $0x001f0000
+		pushl   $to_kmem
+		rei
+to_kmem:
+	");
+
+	/* Be sure some important internal registers have safe values */
+	mtpr(0,PR_P0LR);
+	mtpr(0,PR_P0BR);
+	mtpr(0,PR_P1LR);
+	mtpr(0x80000000,PR_P1BR);
+
+	mtpr(0,PR_MAPEN); /* No memory mapping yet */
+	mtpr(0,PR_SCBB); /* SCB at physical addr 0 */
+	mtpr(0,PR_ESP); /* Must be zero, used in page fault routine */
+	
+	cninit();
+printf("proc0paddr %x, end %x\n",proc0paddr,&end);
+
+	/* Count up memory etc... early machine dependent routines */
+	if((i=MACHID(mfpr(PR_SID)))>VAX_MAX) i=0;
+	maxmem=(cpu_calls[i].cpu_loinit)();
+
+	pmap_bootstrap(0,maxmem);
+
+/*	mtpr(0x80000000,PR_KSP); /* Change ksp to new value :) */
+	cpu_type=mfpr(PR_SID);
+	main();
+	/* XXX det {r dumt att fastna vid att init startar p} 2 */
+	asm("
+		pushl   $0x3c00000
+		pushl   $2
+		rei
+	");
+
+	/* Notreached */
 }
