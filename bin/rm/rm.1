@@ -1,6 +1,6 @@
-.\"	$NetBSD: rm.1,v 1.14 2002/05/02 13:14:23 enami Exp $
+.\"	$NetBSD: rm.1,v 1.15 2003/02/12 19:27:22 jrf Exp $
 .\"
-.\" Copyright (c) 1990, 1993, 1994
+.\" Copyright (c) 1990, 1993, 1994, 2003
 .\"	The Regents of the University of California.  All rights reserved.
 .\"
 .\" This code is derived from software contributed to Berkeley by
@@ -36,7 +36,7 @@
 .\"
 .\"	@(#)rm.1	8.5 (Berkeley) 12/5/94
 .\"
-.Dd December 5, 1994
+.Dd January 30, 2003
 .Dt RM 1
 .Os
 .Sh NAME
@@ -45,7 +45,7 @@
 .Sh SYNOPSIS
 .Nm
 .Op Fl f | Fl i
-.Op Fl dPRrW
+.Op Fl dPRrvW
 .Ar
 .Sh DESCRIPTION
 The
@@ -101,6 +101,10 @@ that directory is skipped.
 .It Fl r
 Equivalent to
 .Fl R .
+.It Fl v
+Cause
+.Nm
+to be verbose, showing files as they are processed.
 .It Fl W
 Attempts to undelete the named files.
 Currently, this option can only be used to recover
@@ -154,4 +158,6 @@ The
 .Nm
 utility is expected to be
 .St -p1003.2
-compatible.
+compatible. The
+.Fl v
+option is an extension.
