@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.71 2002/06/06 09:53:22 lukem Exp $	*/
+/*	$NetBSD: util.c,v 1.72 2002/06/29 20:04:56 scottr Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -614,7 +614,7 @@ cleanup_dist(name)
 			}
 		} else {
 			current->next = malloc(sizeof(struct filelist));
-			if (head == NULL) {
+			if (current->next == NULL) {
 				fprintf(stderr, "out of memory\n");
 				exit(1);
 			}
