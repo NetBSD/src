@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.man.mk,v 1.31 1997/05/07 16:45:40 mycroft Exp $
+#	$NetBSD: bsd.man.mk,v 1.32 1997/05/09 13:25:56 mycroft Exp $
 #	@(#)bsd.man.mk	8.1 (Berkeley) 6/8/93
 
 .if !target(.MAIN)
@@ -9,7 +9,7 @@
 .MAIN:		all
 .endif
 .PHONY:		catinstall maninstall catpages manpages catlinks manlinks cleanman
-install:	${MANINSTALL}
+realinstall:	${MANINSTALL}
 cleandir:	cleanman
 
 MANTARGET?=	cat
