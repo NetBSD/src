@@ -1,4 +1,4 @@
-/*	$NetBSD: scsi_ioctl.c,v 1.10 1994/10/30 21:49:21 cgd Exp $	*/
+/*	$NetBSD: scsi_ioctl.c,v 1.11 1994/12/01 11:53:56 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
@@ -50,69 +50,56 @@
 
 void scsierr __P((struct buf *, int));
 
-/*
- * We need to maintain an assocation between the buf and the SCSI request
- * structure.  We do this with a simple array of scsi_ioctl structures below.
- * XXX The free structures should probably be in a linked list.
- */
-#define NIOCTL	16
-
 struct scsi_ioctl {
-	struct buf *si_bp;
-	scsireq_t si_screq;
-	struct scsi_link *si_sc_link;
+	LIST_ENTRY(scsi_ioctl) si_list;
+	struct buf si_bp;
 	struct uio si_uio;
 	struct iovec si_iov;
-} scsi_ioctl[NIOCTL];
+	scsireq_t si_screq;
+	struct scsi_link *si_sc_link;
+};
+
+LIST_HEAD(, scsi_ioctl) si_head;
 
 struct scsi_ioctl *
-si_get(bp)
-	struct buf *bp;
+si_get()
 {
-	int s = splbio();
 	struct scsi_ioctl *si;
-	int error;
+	int s;
 
-	for (;;) {
-		for (si = scsi_ioctl; si < &scsi_ioctl[NIOCTL]; si++)
-			if (si->si_bp == 0) {
-				si->si_bp = bp;
-				splx(s);
-				return si;
-			}
-		error = tsleep(scsi_ioctl, PRIBIO | PCATCH, "siget", 0);
-		if (error) {
-			splx(s);
-			return 0;
-		}
-	}
+	si = malloc(sizeof(struct scsi_ioctl), M_TEMP, M_WAITOK);
+	bzero(si, sizeof(struct scsi_ioctl));
+	s = splbio();
+	LIST_INSERT_HEAD(&si_head, si, si_list);
+	splx(s);
+	return (si);
 }
 
 void
 si_free(si)
 	struct scsi_ioctl *si;
 {
-	int s = splbio();
+	int s;
 
-	si->si_bp = 0;
-	wakeup(scsi_ioctl);
+	s = splbio();
+	LIST_REMOVE(si, si_list);
 	splx(s);
+	free(si, M_TEMP);
 }
 
 struct scsi_ioctl *
 si_find(bp)
 	struct buf *bp;
 {
-	int s = splbio();
 	struct scsi_ioctl *si;
+	int s;
 
-	for (si = scsi_ioctl; si < &scsi_ioctl[NIOCTL]; si++)
-		if (si->si_bp == bp) {
-			splx(s);
-			return si;
-		}
+	s = splbio();
+	for (si = si_head.lh_first; si != 0; si = si->si_list.le_next)
+		if (bp == &si->si_bp)
+			break;
 	splx(s);
-	return 0;
+	return (si);
 }
 
 /*
@@ -204,7 +191,7 @@ void
 scsistrategy(bp)
 	struct buf *bp;
 {
-	int err;
+	int error;
 	struct scsi_ioctl *si;
 	scsireq_t *screq;
 	struct scsi_link *sc_link;
@@ -223,7 +210,7 @@ scsistrategy(bp)
 	if (!sc_link) {
 		printf("user_strat: No link pointer\n");
 		scsierr(bp, EINVAL);
-		goto out;
+		return;
 	}
 	SC_DEBUG(sc_link, SDEV_DB2, ("user_strategy\n"));
 
@@ -234,19 +221,19 @@ scsistrategy(bp)
 		sc_print_addr(sc_link);
 		printf("physio split the request.. cannot proceed\n");
 		scsierr(bp, EIO);
-		goto out;
+		return;
 	}
 
 	if (screq->timeout == 0) {
 		scsierr(bp, EINVAL);
-		goto out;
+		return;
 	}
 
 	if (screq->cmdlen > sizeof(struct scsi_generic)) {
 		sc_print_addr(sc_link);
 		printf("cmdlen too big\n");
 		scsierr(bp, EFAULT);
-		goto out;
+		return;
 	}
 
 	if (screq->flags & SCCMD_READ)
@@ -258,25 +245,22 @@ scsistrategy(bp)
 	if (screq->flags & SCCMD_ESCAPE)
 		flags |= SCSI_ESCAPE;
 
-	err = scsi_scsi_cmd(sc_link, (struct scsi_generic *)screq->cmd,
+	error = scsi_scsi_cmd(sc_link, (struct scsi_generic *)screq->cmd,
 	    screq->cmdlen, (u_char *)bp->b_data, screq->datalen,
 	    0, /* user must do the retries *//* ignored */
 	    screq->timeout, bp, flags | SCSI_USER);
 
 	/* because there is a bp, scsi_scsi_cmd will return immediatly */
-	if (err) {
-		scsierr(bp, err);
-		goto out;
+	if (error) {
+		scsierr(bp, error);
+		return;
 	}
-	SC_DEBUG(sc_link, SDEV_DB3, ("about to  sleep\n"));
+	SC_DEBUG(sc_link, SDEV_DB3, ("about to sleep\n"));
 	s = splbio();
 	while (!(bp->b_flags & B_DONE))
 		tsleep(bp, PRIBIO, "scistr", 0);
 	splx(s);
 	SC_DEBUG(sc_link, SDEV_DB3, ("back from sleep\n"));
-
-out:
-	si_free(si);
 }
 
 /*
@@ -297,6 +281,7 @@ scsi_do_ioctl(sc_link, dev, cmd, addr, f)
 	int error;
 
 	SC_DEBUG(sc_link, SDEV_DB2, ("scsi_do_ioctl(0x%lx)\n", cmd));
+
 	switch(cmd) {
 	case SCIOCCOMMAND: {
 		/*
@@ -308,24 +293,15 @@ scsi_do_ioctl(sc_link, dev, cmd, addr, f)
 		 * Make a static copy using malloc!
 		 */
 		scsireq_t *screq = (scsireq_t *)addr;
-		struct buf *bp;
 		struct scsi_ioctl *si;
-		caddr_t	daddr;
 		int len;
 
-		bp = malloc(sizeof(struct buf), M_TEMP, M_WAITOK);
-		bzero(bp, sizeof(struct buf));
-		daddr = screq->databuf;
-		bp->b_bcount = len = screq->datalen;
-		si = si_get(bp);
-		if (!si) {
-			scsierr(bp, EINTR);
-			return EINTR;
-		}
+		si = si_get();
 		si->si_screq = *screq;
 		si->si_sc_link = sc_link;
+		si->si_bp.b_bcount = len = screq->datalen;
 		if (len) {
-			si->si_iov.iov_base = daddr;
+			si->si_iov.iov_base = screq->databuf;
 			si->si_iov.iov_len = len;
 			si->si_uio.uio_iov = &si->si_iov;
 			si->si_uio.uio_iovcnt = 1;
@@ -334,18 +310,18 @@ scsi_do_ioctl(sc_link, dev, cmd, addr, f)
 			si->si_uio.uio_rw = 
 			    (screq->flags & SCCMD_READ) ? UIO_READ : UIO_WRITE;
 			si->si_uio.uio_procp = curproc;	/* XXX */
-			error = physio(scsistrategy, bp, dev,
+			error = physio(scsistrategy, &si->si_bp, dev,
 			    (screq->flags & SCCMD_READ) ? B_READ : B_WRITE,
 			    sc_link->adapter->scsi_minphys, &si->si_uio);
 		} else {
 			/* if no data, no need to translate it.. */
-			bp->b_data = 0;
-			bp->b_dev = -1; /* irrelevant info */
-			bp->b_flags = 0;
-			scsistrategy(bp);
-			error = bp->b_error;
+			si->si_bp.b_data = 0;
+			si->si_bp.b_dev = -1; /* irrelevant info */
+			si->si_bp.b_flags = 0;
+			scsistrategy(&si->si_bp);
+			error = si->si_bp.b_error;
 		}
-		free(bp, M_TEMP);
+		si_free(si);
 		return error;
 	}
 	case SCIOCDEBUG: {
