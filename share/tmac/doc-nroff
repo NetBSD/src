@@ -29,7 +29,8 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"     @(#)doc-nroff	5.6 (Berkeley) 8/5/91
+.\"	from @(#)doc-nroff	5.6 (Berkeley) 8/5/91
+.\"	$NetBSD: doc-nroff,v 1.2 1996/10/15 20:04:27 perry Exp $
 .\"
 .\" tmac.mdoc-nroff
 .\"     %beginstrip%

@@ -1,5 +1,5 @@
 #	from: @(#)Makefile	6.13 (Berkeley) 3/20/91
-#	$Id: Makefile,v 1.12 1995/04/20 02:05:51 mycroft Exp $
+#	$NetBSD: Makefile,v 1.13 1996/10/15 20:04:22 perry Exp $
 
 BINDIR= /usr/share
 FILES=	tmac.andoc
