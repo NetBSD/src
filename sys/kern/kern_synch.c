@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_synch.c,v 1.92 2000/09/01 17:14:04 bouyer Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.93 2000/09/05 16:20:28 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -122,8 +122,6 @@ void endtsleep(void *);
 __inline void awaken(struct proc *);
 
 struct callout schedcpu_ch = CALLOUT_INITIALIZER;
-
-int sched_suspended = 0;
 
 /*
  * Force switch among equal priority processes every 100ms.
@@ -572,21 +570,18 @@ awaken(struct proc *p)
 	if (p->p_slptime > 1)
 		updatepri(p);
 	p->p_slptime = 0;
-	if ((p->p_flag & P_SUSPEND) == 0) {
-		p->p_stat = SRUN;
-		/*
-		 * Since curpriority is a user priority, p->p_priority
-		 * is always better than curpriority.
-		 */
-		if (p->p_flag & P_INMEM) {
-			setrunqueue(p);
-			KASSERT(p->p_cpu != NULL);
-			need_resched(p->p_cpu);
-		} else
-			sched_wakeup(&proc0);
-	} else {
-		p->p_stat = SSUSPEND;
-	}
+	p->p_stat = SRUN;
+
+	/*
+	 * Since curpriority is a user priority, p->p_priority
+	 * is always better than curpriority.
+	 */
+	if (p->p_flag & P_INMEM) {
+		setrunqueue(p);
+		KASSERT(p->p_cpu != NULL);
+		need_resched(p->p_cpu);
+	} else
+		sched_wakeup(&proc0);
 }
 
 #if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)
@@ -727,11 +722,8 @@ yield(void)
 
 	SCHED_LOCK(s);
 	p->p_priority = p->p_usrpri;
-	if ((p->p_flag & P_SUSPEND) == 0) {
-		p->p_stat = SRUN;
-		setrunqueue(p);
-	} else
-		p->p_stat = SSUSPEND;
+	p->p_stat = SRUN;
+	setrunqueue(p);
 	p->p_stats->p_ru.ru_nvcsw++;
 	mi_switch(p);
 	SCHED_ASSERT_UNLOCKED();
@@ -758,11 +750,8 @@ preempt(struct proc *newp)
 
 	SCHED_LOCK(s);
 	p->p_priority = p->p_usrpri;
-	if ((p->p_flag & P_SUSPEND) == 0) {
-		p->p_stat = SRUN;
-		setrunqueue(p);
-	} else 
-		p->p_stat = SSUSPEND;
+	p->p_stat = SRUN;
+	setrunqueue(p);
 	p->p_stats->p_ru.ru_nivcsw++;
 	mi_switch(p);
 	SCHED_ASSERT_UNLOCKED();
@@ -914,7 +903,6 @@ setrunnable(struct proc *p)
 	switch (p->p_stat) {
 	case 0:
 	case SRUN:
-	case SSUSPEND:
 	case SONPROC:
 	case SZOMB:
 	case SDEAD:
@@ -936,12 +924,10 @@ setrunnable(struct proc *p)
 	case SIDL:
 		break;
 	}
-	if ((p->p_flag & P_SUSPEND) == 0) {
-		p->p_stat = SRUN;
-		if (p->p_flag & P_INMEM)
-			setrunqueue(p);
-	} else
-		p->p_stat = SSUSPEND;
+	p->p_stat = SRUN;
+	if (p->p_flag & P_INMEM)
+		setrunqueue(p);
+
 	if (p->p_slptime > 1)
 		updatepri(p);
 	p->p_slptime = 0;
@@ -1012,69 +998,4 @@ schedclock(struct proc *p)
 
 	if (p->p_priority >= PUSER)
 		p->p_priority = p->p_usrpri;
-}
-
-/*
- * Mark all non-system processes as non-runnable, and remove from run queue.
- */
-void
-suspendsched()
-{
-	int s, i;
-	struct proc *p, *next;
-
-	SCHED_LOCK(s);
-	sched_suspended++;
-	if (sched_suspended > 1) {
-		/* sheduling was already suspended */
-		SCHED_UNLOCK(s);
-		return;
-	}
-	/* mark P_SUSPEND all processes that aren't P_SYSTEM or curproc */
-	for (p = LIST_FIRST(&allproc); p != NULL; p = next) {
-		next = LIST_NEXT(p, p_list);
-		if (p == curproc || (p->p_flag & P_SYSTEM) != 0)
-			continue;
-		p->p_flag |= P_SUSPEND;
-	}
-	/* go through the run queues, remove P_SUSPEND processes */
-	for (i = 0; i < RUNQUE_NQS; i++) {
-		for (p = (struct proc *)&sched_qs[i];
-		    p->p_forw != (struct proc *)&sched_qs[i]; p = next) {
-			next = p->p_forw;
-			if ((p->p_flag & P_SUSPEND) != 0) {
-				remrunqueue(p);
-				p->p_stat = SSUSPEND;
-			}
-		}
-	}
-	SCHED_UNLOCK(s);
-}
-
-/* resume scheduling, replace all suspended processes on a run queue */
-void
-resumesched()
-{
-	int s;
-	struct proc *p, *next;
-
-	SCHED_LOCK(s);
-	sched_suspended--;
-	if (sched_suspended < 0)
-		panic("resumesched");
-	if (sched_suspended > 0) {
-		/* someone still wants the sheduling to be suspended */
-		/* XXX should we mark curproc P_SUSPEND as well ? */
-		SCHED_UNLOCK(s);
-		return;
-	}
-	for (p = LIST_FIRST(&allproc); p != NULL; p = next) {
-		next = LIST_NEXT(p, p_list);
-		p->p_flag &= ~P_SUSPEND;
-		if (p->p_stat == SSUSPEND) {
-			p->p_stat = SRUN;
-			setrunqueue(p);
-		}
-	}
-	SCHED_UNLOCK(s);
 }
