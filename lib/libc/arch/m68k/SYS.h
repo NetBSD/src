@@ -1,4 +1,4 @@
-/*	$NetBSD: SYS.h,v 1.6 1996/10/17 18:14:59 jtc Exp $	*/
+/*	$NetBSD: SYS.h,v 1.7 1996/11/19 03:15:51 jtc Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -65,7 +65,7 @@
 
 #define	PSEUDO(x,y) \
 	ENTRY(x); \
-	SYSTRAP(y); 
+	SYSTRAP(y); \
 	rts
 
 #define	ASMSTR		.asciz
