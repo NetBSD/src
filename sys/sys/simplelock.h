@@ -1,4 +1,4 @@
-/*	$NetBSD: simplelock.h,v 1.1.2.2 2002/03/19 04:11:45 thorpej Exp $	*/
+/*	$NetBSD: simplelock.h,v 1.1.2.3 2002/03/22 03:50:37 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2002 The NetBSD Foundation, Inc.
@@ -112,6 +112,8 @@ struct simplelock {
 	cpuid_t lock_holder;		/* CPU ID */
 #endif
 };
+
+typedef struct simplelock simplelock_t;
 
 #define	lock_data	lock_un.lock_un_data
 
