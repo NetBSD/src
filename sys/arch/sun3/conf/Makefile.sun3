@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.sun3,v 1.49 1996/08/12 00:52:11 mycroft Exp $
+#	$NetBSD: Makefile.sun3,v 1.50 1996/08/31 21:41:51 mycroft Exp $
 
 # Makefile for NetBSD
 #
@@ -28,7 +28,9 @@ STRIP?=	strip -d
 TOUCH?=	touch -f -c
 
 # source tree is located via $S relative to the compilation directory
+.ifndef S
 S!=	cd ../../../..; pwd
+.endif
 SUN3=	$S/arch/sun3
 
 # Override CPP defaults entirely, so cross-compilation works.

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.pica,v 1.7 1996/08/12 00:51:56 mycroft Exp $
+#	$NetBSD: Makefile.pica,v 1.8 1996/08/31 21:41:35 mycroft Exp $
 
 # Makefile for NetBSD
 #
@@ -28,7 +28,9 @@ STRIP?=	strip -d
 TOUCH?=	touch -f -c
 
 # source tree is located via $S relative to the compilation directory
+.ifndef S
 S!=	cd ../../../..; pwd
+.endif
 PICA=	$S/arch/pica
 
 INCLUDES=	-I. -I$S/arch -I$S -nostdinc

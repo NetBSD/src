@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.pmax,v 1.32 1996/08/12 00:52:01 mycroft Exp $
+#	$NetBSD: Makefile.pmax,v 1.33 1996/08/31 21:41:41 mycroft Exp $
 
 # Makefile for NetBSD
 #
@@ -28,7 +28,9 @@ STRIP?=	strip -d
 TOUCH?=	touch -f -c
 
 # source tree is located via $S relative to the compilation directory
+.ifndef S
 S!=	cd ../../../..; pwd
+.endif
 PMAX=	$S/arch/pmax
 
 INCLUDES=	-I. -I$S/arch -I$S -nostdinc

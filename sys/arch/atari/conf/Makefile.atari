@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.atari,v 1.21 1996/08/12 00:51:31 mycroft Exp $
+#	$NetBSD: Makefile.atari,v 1.22 1996/08/31 21:41:03 mycroft Exp $
 
 # Makefile for NetBSD
 #
@@ -28,7 +28,9 @@ STRIP?=	strip -d
 TOUCH?=	touch -f -c
 
 # source tree is located via $S relative to the compilation directory
+.ifndef S
 S!=	cd ../../../..; pwd
+.endif
 ATARI=	$S/arch/atari
 
 INCLUDES=	-I. -I$S/arch -I$S -nostdinc
