@@ -1,4 +1,4 @@
-/*	$NetBSD: ossaudio.c,v 1.2 1997/10/19 07:47:48 augustss Exp $	*/
+/*	$NetBSD: ossaudio.c,v 1.3 1997/10/26 23:50:33 augustss Exp $	*/
 
 /*
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
  */
 
 /* XXX This file is essentially the same as sys/compat/ossaudio.c.
- * With some preprocessor magic it coule be the same file.
+ * With some preprocessor magic it could be the same file.
  */
 
 #include <string.h>
