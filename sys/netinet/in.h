@@ -31,13 +31,16 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)in.h	8.3 (Berkeley) 1/3/94
- *	$Id: in.h,v 1.9 1994/05/13 06:06:04 mycroft Exp $
+ *	$Id: in.h,v 1.10 1994/05/14 05:46:35 cgd Exp $
  */
 
 /*
  * Constants and structures defined by the internet system,
  * Per RFC 790, September 1981, and numerous additions.
  */
+
+#ifndef _NET_IN_H_
+#define	_NET_IN_H_
 
 /*
  * Protocols
@@ -238,3 +241,4 @@ int	 in_localaddr __P((struct in_addr));
 u_long	 in_netof __P((struct in_addr));
 void	 in_socktrim __P((struct sockaddr_in *));
 #endif
+#endif /* !_NET_IN_H_ */
