@@ -1,5 +1,5 @@
-/*	$NetBSD: raw_ip6.c,v 1.24 2000/07/07 15:54:19 itojun Exp $	*/
-/*	$KAME: raw_ip6.c,v 1.35 2000/06/21 18:35:23 itojun Exp $	*/
+/*	$NetBSD: raw_ip6.c,v 1.25 2000/10/19 00:40:45 itojun Exp $	*/
+/*	$KAME: raw_ip6.c,v 1.39 2000/10/19 00:37:50 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -275,7 +275,7 @@ rip6_ctlinput(cmd, sa, d)
 		struct in6_addr s;
 
 		/* translate addresses into internal form */
-		memcpy(&s, &ip6->ip6_src, sizeof(s));
+		bcopy(&ip6->ip6_src, &s, sizeof(s));
 		if (IN6_IS_ADDR_LINKLOCAL(&s))
 			s.s6_addr16[1] = htons(m->m_pkthdr.rcvif->if_index);
 

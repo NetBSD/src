@@ -1,5 +1,5 @@
-/*	$NetBSD: ah_input.c,v 1.21 2000/10/18 21:14:14 itojun Exp $	*/
-/*	$KAME: ah_input.c,v 1.34 2000/10/01 12:37:18 itojun Exp $	*/
+/*	$NetBSD: ah_input.c,v 1.22 2000/10/19 00:40:44 itojun Exp $	*/
+/*	$KAME: ah_input.c,v 1.37 2000/10/19 00:37:50 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -1046,12 +1046,12 @@ ah6_ctlinput(cmd, sa, d)
 		off = ip6cp->ip6c_off;
 
 		/* translate addresses into internal form */
-		memcpy(&finaldst, ip6cp->ip6c_finaldst, sizeof(finaldst));
+		bcopy(ip6cp->ip6c_finaldst, &finaldst, sizeof(finaldst));
 		if (IN6_IS_ADDR_LINKLOCAL(&finaldst)) {
 			finaldst.s6_addr16[1] =
 			    htons(m->m_pkthdr.rcvif->if_index);
 		}
-		memcpy(&s, &ip6->ip6_src, sizeof(s));
+		bcopy(&ip6->ip6_src, &s, sizeof(s));
 		if (IN6_IS_ADDR_LINKLOCAL(&s))
 			s.s6_addr16[1] = htons(m->m_pkthdr.rcvif->if_index);
 	} else {
