@@ -20,7 +20,7 @@
 # MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
 #
 #	from: @(#)MAKEDEV	5.2 (Berkeley) 6/22/90
-#	$NetBSD: MAKEDEV,v 1.15 2000/07/27 18:43:28 mason Exp $
+#	$NetBSD: MAKEDEV,v 1.16 2001/09/10 21:23:56 augustss Exp $
 #
 ###########################################################################
 #
@@ -74,6 +74,7 @@
 #	ss*	SCSI scanner
 #	uk*	SCSI unknown
 #	ch*	SCSI changer
+#	wsmux*	wscons event multiplexor
 #
 
 PATH=/sbin:/bin/:/usr/bin:/usr/sbin
@@ -131,6 +132,16 @@ wsmux|wsmouse|wskbd)
 	mknod wskbd c 45 1
 	chown root.wheel wsmouse wskbd
 	chmod 600 wsmouse wskbd
+	;;
+
+wsmux*)
+	unit=${i#wsmux}
+	wsmux=wsmux$unit
+	major=45
+	rm -f $wsmux
+	mknod $wsmux c $major $unit
+	chown root.wheel $wsmux
+	chmod 600 $wsmux
 	;;
 
 ttyEcfg)
