@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc_msg.h,v 1.11 2000/06/02 22:57:56 fvdl Exp $	*/
+/*	$NetBSD: rpc_msg.h,v 1.12 2005/02/03 04:39:32 perry Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -166,7 +166,7 @@ __BEGIN_DECLS
  * 	XDR *xdrs;
  * 	struct rpc_msg *cmsg;
  */
-extern bool_t	xdr_callmsg	__P((XDR *, struct rpc_msg *));
+extern bool_t	xdr_callmsg	(XDR *, struct rpc_msg *);
 
 /*
  * XDR routine to pre-serialize the static part of an rpc message.
@@ -174,7 +174,7 @@ extern bool_t	xdr_callmsg	__P((XDR *, struct rpc_msg *));
  * 	XDR *xdrs;
  * 	struct rpc_msg *cmsg;
  */
-extern bool_t	xdr_callhdr	__P((XDR *, struct rpc_msg *));
+extern bool_t	xdr_callhdr	(XDR *, struct rpc_msg *);
 
 /*
  * XDR routine to handle an rpc reply.
@@ -182,7 +182,7 @@ extern bool_t	xdr_callhdr	__P((XDR *, struct rpc_msg *));
  * 	XDR *xdrs;
  * 	struct rpc_msg *rmsg;
  */
-extern bool_t	xdr_replymsg	__P((XDR *, struct rpc_msg *));
+extern bool_t	xdr_replymsg	(XDR *, struct rpc_msg *);
 
 
 /*
@@ -191,7 +191,7 @@ extern bool_t	xdr_replymsg	__P((XDR *, struct rpc_msg *));
  * 	XDR *xdrs;
  * 	struct accepted_reply *rej;
  */
-extern bool_t	xdr_accepted_reply	__P((XDR *, struct accepted_reply *));
+extern bool_t	xdr_accepted_reply	(XDR *, struct accepted_reply *);
 
 /*
  * XDR routine to handle a rejected rpc reply.
@@ -199,7 +199,7 @@ extern bool_t	xdr_accepted_reply	__P((XDR *, struct accepted_reply *));
  * 	XDR *xdrs;
  * 	struct rejected_reply *rej;
  */
-extern bool_t	xdr_rejected_reply	__P((XDR *, struct rejected_reply *));
+extern bool_t	xdr_rejected_reply	(XDR *, struct rejected_reply *);
 
 /*
  * Fills in the error part of a reply message.
@@ -207,7 +207,7 @@ extern bool_t	xdr_rejected_reply	__P((XDR *, struct rejected_reply *));
  * 	struct rpc_msg *msg;
  * 	struct rpc_err *error;
  */
-extern void	_seterr_reply	__P((struct rpc_msg *, struct rpc_err *));
+extern void	_seterr_reply	(struct rpc_msg *, struct rpc_err *);
 __END_DECLS
 
 #endif /* !_RPC_RPC_MSG_H_ */

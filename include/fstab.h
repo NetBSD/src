@@ -1,4 +1,4 @@
-/*	$NetBSD: fstab.h,v 1.10 2003/08/07 09:44:10 agc Exp $	*/
+/*	$NetBSD: fstab.h,v 1.11 2005/02/03 04:39:32 perry Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -68,11 +68,11 @@ struct fstab {
 };
 
 __BEGIN_DECLS
-struct fstab *getfsent __P((void));
-struct fstab *getfsspec __P((const char *));
-struct fstab *getfsfile __P((const char *));
-int setfsent __P((void));
-void endfsent __P((void));
+struct fstab *getfsent(void);
+struct fstab *getfsspec(const char *);
+struct fstab *getfsfile(const char *);
+int setfsent(void);
+void endfsent(void);
 __END_DECLS
 
 #endif /* !_FSTAB_H_ */

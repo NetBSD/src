@@ -1,4 +1,4 @@
-/*	$NetBSD: mntopts.h,v 1.4 2003/10/13 17:55:11 thorpej Exp $	*/
+/*	$NetBSD: mntopts.h,v 1.5 2005/02/03 04:39:32 perry Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -91,11 +91,10 @@ struct mntopt {
 
 __BEGIN_DECLS
 typedef struct mntoptparse *mntoptparse_t;
-mntoptparse_t getmntopts __P((const char *, const struct mntopt *, int *,
-    int *));
-const char *getmntoptstr __P((mntoptparse_t, const char *));
-long getmntoptnum __P((mntoptparse_t, const char *));
-void freemntopts __P((mntoptparse_t));
+mntoptparse_t getmntopts(const char *, const struct mntopt *, int *, int *);
+const char *getmntoptstr(mntoptparse_t, const char *);
+long getmntoptnum(mntoptparse_t, const char *);
+void freemntopts(mntoptparse_t);
 
 extern int getmnt_silent;
 __END_DECLS

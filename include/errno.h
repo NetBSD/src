@@ -1,4 +1,4 @@
-/*	$NetBSD: errno.h,v 1.6 2003/08/07 09:44:10 agc Exp $	*/
+/*	$NetBSD: errno.h,v 1.7 2005/02/03 04:39:32 perry Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -45,7 +45,7 @@
 
 __BEGIN_DECLS
 #ifndef errno
-int *__errno __P((void));
+int *__errno(void);
 #define errno (*__errno())
 #endif
 

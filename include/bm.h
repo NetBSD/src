@@ -1,4 +1,4 @@
-/*	$NetBSD: bm.h,v 1.4 2003/08/07 09:44:09 agc Exp $	*/
+/*	$NetBSD: bm.h,v 1.5 2005/02/03 04:39:32 perry Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -49,9 +49,9 @@ typedef struct {
 #include <sys/cdefs.h>
 
 __BEGIN_DECLS
-bm_pat	*bm_comp __P((u_char const *, size_t, u_char const *));
-u_char	*bm_exec __P((bm_pat *, u_char *, size_t));
-void	 bm_free __P((bm_pat *));
+bm_pat	*bm_comp(u_char const *, size_t, u_char const *);
+u_char	*bm_exec(bm_pat *, u_char *, size_t);
+void	 bm_free(bm_pat *);
 __END_DECLS
 
 #endif /* !_BM_H_ */

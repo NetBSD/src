@@ -1,4 +1,4 @@
-/*	$NetBSD: assert.h,v 1.17 2004/07/01 22:31:28 kleink Exp $	*/
+/*	$NetBSD: assert.h,v 1.18 2005/02/03 04:39:32 perry Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -95,9 +95,9 @@
 #ifndef __ASSERT_DECLARED
 #define __ASSERT_DECLARED
 __BEGIN_DECLS
-void __assert __P((const char *, int, const char *));
-void __assert13 __P((const char *, int, const char *, const char *));
-void __diagassert __P((const char *, int, const char *));
-void __diagassert13 __P((const char *, int, const char *, const char *));
+void __assert(const char *, int, const char *);
+void __assert13(const char *, int, const char *, const char *);
+void __diagassert(const char *, int, const char *);
+void __diagassert13(const char *, int, const char *, const char *);
 __END_DECLS
 #endif /* __ASSERT_DECLARED */

@@ -1,4 +1,4 @@
-/*	$NetBSD: pwd.h,v 1.36 2005/01/12 03:33:32 christos Exp $	*/
+/*	$NetBSD: pwd.h,v 1.37 2005/02/03 04:39:32 perry Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -118,26 +118,26 @@ struct passwd {
 };
 
 __BEGIN_DECLS
-struct passwd	*getpwuid __P((uid_t));
-struct passwd	*getpwnam __P((const char *));
+struct passwd	*getpwuid(uid_t);
+struct passwd	*getpwnam(const char *);
 #if defined(_XOPEN_SOURCE) || defined(_NETBSD_SOURCE)
-struct passwd	*getpwent __P((void));
-void		 setpwent __P((void));
-void		 endpwent __P((void));
-int		 getpwnam_r __P((const char *, struct passwd *, char *, size_t,
-				struct passwd **));
-int		 getpwuid_r __P((uid_t, struct passwd *, char *, size_t,
-				struct passwd **));
+struct passwd	*getpwent(void);
+void		 setpwent(void);
+void		 endpwent(void);
+int		 getpwnam_r(const char *, struct passwd *, char *, size_t,
+				struct passwd **);
+int		 getpwuid_r(uid_t, struct passwd *, char *, size_t,
+				struct passwd **);
 #endif
 #if defined(_NETBSD_SOURCE)
-int		 pw_gensalt __P((char *, size_t, const char *, const char *));
-int		 pw_scan __P((char *, struct passwd *, int *));
-int		 setpassent __P((int));
-const char	*user_from_uid __P((uid_t, int));
-int		 uid_from_user __P((const char *, uid_t *));
-int		 pwcache_userdb __P((int (*)(int), void (*)(void),
-				    struct passwd * (*)(const char *),
-				    struct passwd * (*)(uid_t)));
+int		 pw_gensalt(char *, size_t, const char *, const char *);
+int		 pw_scan(char *, struct passwd *, int *);
+int		 setpassent(int);
+const char	*user_from_uid(uid_t, int);
+int		 uid_from_user(const char *, uid_t *);
+int		 pwcache_userdb(int (*)(int), void (*)(void),
+				struct passwd * (*)(const char *),
+				struct passwd * (*)(uid_t));
 #endif
 __END_DECLS
 

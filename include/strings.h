@@ -1,4 +1,4 @@
-/*	$NetBSD: strings.h,v 1.9 2003/04/28 23:16:15 bjh21 Exp $	*/
+/*	$NetBSD: strings.h,v 1.10 2005/02/03 04:39:32 perry Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -54,14 +54,14 @@ typedef	_BSD_SIZE_T_	size_t;
 #include <sys/cdefs.h>
 
 __BEGIN_DECLS
-int	 bcmp __P((const void *, const void *, size_t));
-void	 bcopy __P((const void *, void *, size_t));
-void	 bzero __P((void *, size_t));
-int	 ffs __P((int));
-char	*index __P((const char *, int));
-char	*rindex __P((const char *, int));
-int	 strcasecmp __P((const char *, const char *));
-int	 strncasecmp __P((const char *, const char *, size_t));
+int	 bcmp(const void *, const void *, size_t);
+void	 bcopy(const void *, void *, size_t);
+void	 bzero(void *, size_t);
+int	 ffs(int);
+char	*index(const char *, int);
+char	*rindex(const char *, int);
+int	 strcasecmp(const char *, const char *);
+int	 strncasecmp(const char *, const char *, size_t);
 __END_DECLS
 
 #if defined(_NETBSD_SOURCE)

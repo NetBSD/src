@@ -1,4 +1,4 @@
-/*	$NetBSD: string.h,v 1.27 2004/07/12 23:35:14 kleink Exp $	*/
+/*	$NetBSD: string.h,v 1.28 2005/02/03 04:39:32 perry Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -46,44 +46,44 @@ typedef	_BSD_SIZE_T_	size_t;
 #include <sys/featuretest.h>
 
 __BEGIN_DECLS
-void	*memchr __P((const void *, int, size_t));
-int	 memcmp __P((const void *, const void *, size_t));
-void	*memcpy __P((void * __restrict, const void * __restrict, size_t));
-void	*memmove __P((void *, const void *, size_t));
-void	*memset __P((void *, int, size_t));
-char	*strcat __P((char * __restrict, const char * __restrict));
-char	*strchr __P((const char *, int));
-int	 strcmp __P((const char *, const char *));
-int	 strcoll __P((const char *, const char *));
-char	*strcpy __P((char * __restrict, const char * __restrict));
-size_t	 strcspn __P((const char *, const char *));
-__aconst char *strerror __P((int));
-size_t	 strlen __P((const char *));
-char	*strncat __P((char * __restrict, const char * __restrict, size_t));
-int	 strncmp __P((const char *, const char *, size_t));
-char	*strncpy __P((char * __restrict, const char * __restrict, size_t));
-char	*strpbrk __P((const char *, const char *));
-char	*strrchr __P((const char *, int));
-size_t	 strspn __P((const char *, const char *));
-char	*strstr __P((const char *, const char *));
-char	*strtok __P((char * __restrict, const char * __restrict));
+void	*memchr(const void *, int, size_t);
+int	 memcmp(const void *, const void *, size_t);
+void	*memcpy(void * __restrict, const void * __restrict, size_t);
+void	*memmove(void *, const void *, size_t);
+void	*memset(void *, int, size_t);
+char	*strcat(char * __restrict, const char * __restrict);
+char	*strchr(const char *, int);
+int	 strcmp(const char *, const char *);
+int	 strcoll(const char *, const char *);
+char	*strcpy(char * __restrict, const char * __restrict);
+size_t	 strcspn(const char *, const char *);
+__aconst char *strerror(int);
+size_t	 strlen(const char *);
+char	*strncat(char * __restrict, const char * __restrict, size_t);
+int	 strncmp(const char *, const char *, size_t);
+char	*strncpy(char * __restrict, const char * __restrict, size_t);
+char	*strpbrk(const char *, const char *);
+char	*strrchr(const char *, int);
+size_t	 strspn(const char *, const char *);
+char	*strstr(const char *, const char *);
+char	*strtok(char * __restrict, const char * __restrict);
 #if (_POSIX_C_SOURCE - 0 >= 199506L) || (_XOPEN_SOURCE - 0 >= 500) || \
     defined(_REENTRANT) || defined(_NETBSD_SOURCE)
-char	*strtok_r __P((char *, const char *, char **));
+char	*strtok_r(char *, const char *, char **);
 #endif /* _POSIX_C_SOURCE >= 199506 || XOPEN_SOURCE >= 500 || ... */
-size_t	 strxfrm __P((char * __restrict, const char * __restrict, size_t));
+size_t	 strxfrm(char * __restrict, const char * __restrict, size_t);
 
 #if defined(_XOPEN_SOURCE) || defined(_NETBSD_SOURCE)
-void	*memccpy __P((void *, const void *, int, size_t));
-char	*strdup __P((const char *));
+void	*memccpy(void *, const void *, int, size_t);
+char	*strdup(const char *);
 #endif
 
 #if defined(_NETBSD_SOURCE)
 #include <strings.h>		/* for backwards-compatibilty */
-char	*strcasestr __P((const char *, const char *));
-size_t	 strlcat __P((char *, const char *, size_t));
-size_t	 strlcpy __P((char *, const char *, size_t));
-char	*strsep __P((char **, const char *));
+char	*strcasestr(const char *, const char *);
+size_t	 strlcat(char *, const char *, size_t);
+size_t	 strlcpy(char *, const char *, size_t);
+char	*strsep(char **, const char *);
 #endif
 __END_DECLS
 

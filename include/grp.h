@@ -1,4 +1,4 @@
-/*	$NetBSD: grp.h,v 1.19 2004/10/04 04:11:33 lukem Exp $	*/
+/*	$NetBSD: grp.h,v 1.20 2005/02/03 04:39:32 perry Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -55,25 +55,25 @@ struct group {
 };
 
 __BEGIN_DECLS
-struct group	*getgrgid __P((gid_t));
-struct group	*getgrnam __P((const char *));
+struct group	*getgrgid(gid_t);
+struct group	*getgrnam(const char *);
 #if defined(_XOPEN_SOURCE) || defined(_NETBSD_SOURCE)
-struct group	*getgrent __P((void));
-void		 setgrent __P((void));
-void		 endgrent __P((void));
-int		 getgrgid_r __P((gid_t, struct group *, char *, size_t,
-				struct group **));
-int		 getgrnam_r __P((const char *, struct group *, char *, size_t,
-				struct group **));
+struct group	*getgrent(void);
+void		 setgrent(void);
+void		 endgrent(void);
+int		 getgrgid_r(gid_t, struct group *, char *, size_t,
+				struct group **);
+int		 getgrnam_r(const char *, struct group *, char *, size_t,
+				struct group **);
 #endif
 #if defined(_NETBSD_SOURCE)
-void		 setgrfile __P((const char *));
-int		 setgroupent __P((int));
-const char	*group_from_gid __P((gid_t, int));
-int		 gid_from_group __P((const char *, gid_t *));
-int		 pwcache_groupdb __P((int (*)(int), void (*)(void),
+void		 setgrfile(const char *);
+int		 setgroupent(int);
+const char	*group_from_gid(gid_t, int);
+int		 gid_from_group(const char *, gid_t *);
+int		 pwcache_groupdb(int (*)(int), void (*)(void),
 				    struct group * (*)(const char *),
-				    struct group * (*)(gid_t)));
+				    struct group * (*)(gid_t));
 #endif
 __END_DECLS
 

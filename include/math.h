@@ -1,4 +1,4 @@
-/*	$NetBSD: math.h,v 1.39 2004/07/12 23:44:52 kleink Exp $	*/
+/*	$NetBSD: math.h,v 1.40 2005/02/03 04:39:32 perry Exp $	*/
 
 /*
  * ====================================================
@@ -177,60 +177,60 @@ __BEGIN_DECLS
 /*
  * ANSI/POSIX
  */
-double	acos __P((double));
-double	asin __P((double));
-double	atan __P((double));
-double	atan2 __P((double, double));
-double	cos __P((double));
-double	sin __P((double));
-double	tan __P((double));
+double	acos(double);
+double	asin(double);
+double	atan(double);
+double	atan2(double, double);
+double	cos(double);
+double	sin(double);
+double	tan(double);
 
-double	cosh __P((double));
-double	sinh __P((double));
-double	tanh __P((double));
+double	cosh(double);
+double	sinh(double);
+double	tanh(double);
 
-double	exp __P((double));
-double	frexp __P((double, int *));
-double	ldexp __P((double, int));
-double	log __P((double));
-double	log10 __P((double));
-double	modf __P((double, double *));
+double	exp(double);
+double	frexp(double, int *);
+double	ldexp(double, int);
+double	log(double);
+double	log10(double);
+double	modf(double, double *);
 
-double	pow __P((double, double));
-double	sqrt __P((double));
+double	pow(double, double);
+double	sqrt(double);
 
-double	ceil __P((double));
-double	fabs __P((double));
-double	floor __P((double));
-double	fmod __P((double, double));
+double	ceil(double);
+double	fabs(double);
+double	floor(double);
+double	fmod(double, double);
 
 #if defined(_XOPEN_SOURCE) || defined(_NETBSD_SOURCE)
-double	erf __P((double));
-double	erfc __P((double));
-double	gamma __P((double));
-double	hypot __P((double, double));
-int	finite __P((double));
-double	j0 __P((double));
-double	j1 __P((double));
-double	jn __P((int, double));
-double	lgamma __P((double));
-double	y0 __P((double));
-double	y1 __P((double));
-double	yn __P((int, double));
+double	erf(double);
+double	erfc(double);
+double	gamma(double);
+double	hypot(double, double);
+int	finite(double);
+double	j0(double);
+double	j1(double);
+double	jn(int, double);
+double	lgamma(double);
+double	y0(double);
+double	y1(double);
+double	yn(int, double);
 
 #if (_XOPEN_SOURCE - 0) >= 500 || defined(_NETBSD_SOURCE)
-double	acosh __P((double));
-double	asinh __P((double));
-double	atanh __P((double));
-double	cbrt __P((double));
-double	expm1 __P((double));
-int	ilogb __P((double));
-double	log1p __P((double));
-double	logb __P((double));
-double	nextafter __P((double, double));
-double	remainder __P((double, double));
-double	rint __P((double));
-double	scalb __P((double, double));
+double	acosh(double);
+double	asinh(double);
+double	atanh(double);
+double	cbrt(double);
+double	expm1(double);
+int	ilogb(double);
+double	log1p(double);
+double	logb(double);
+double	nextafter(double, double);
+double	remainder(double, double);
+double	rint(double);
+double	scalb(double, double);
 #endif /* (_XOPEN_SOURCE - 0) >= 500 || defined(_NETBSD_SOURCE)*/
 #endif /* _XOPEN_SOURCE || _NETBSD_SOURCE */
 
@@ -257,80 +257,80 @@ double	scalb __P((double, double));
 
 /* 7.12.4 trigonometric */
 
-float	acosf __P((float));
-float	asinf __P((float));
-float	atanf __P((float));
-float	atan2f __P((float, float));
-float	cosf __P((float));
-float	sinf __P((float));
-float	tanf __P((float));
+float	acosf(float);
+float	asinf(float);
+float	atanf(float);
+float	atan2f(float, float);
+float	cosf(float);
+float	sinf(float);
+float	tanf(float);
 
 /* 7.12.5 hyperbolic */
 
-float	acoshf __P((float));
-float	asinhf __P((float));
-float	atanhf __P((float));
-float	coshf __P((float));
-float	sinhf __P((float));
-float	tanhf __P((float));
+float	acoshf(float);
+float	asinhf(float);
+float	atanhf(float);
+float	coshf(float);
+float	sinhf(float);
+float	tanhf(float);
 
 /* 7.12.6 exp / log */
 
-float	expf __P((float));
-float	expm1f __P((float));
-float	frexpf __P((float, int *));
-int	ilogbf __P((float));
-float	ldexpf __P((float, int));
-float	logf __P((float));
-float	log10f __P((float));
-float	log1pf __P((float));
-float	logbf __P((float));
-float	modff __P((float, float *));
-float	scalbnf __P((float, int));
+float	expf(float);
+float	expm1f(float);
+float	frexpf(float, int *);
+int	ilogbf(float);
+float	ldexpf(float, int);
+float	logf(float);
+float	log10f(float);
+float	log1pf(float);
+float	logbf(float);
+float	modff(float, float *);
+float	scalbnf(float, int);
 
 /* 7.12.7 power / absolute */
 
-float	cbrtf __P((float));
-float	fabsf __P((float));
-float	hypotf __P((float, float));
-float	powf __P((float, float));
-float	sqrtf __P((float));
+float	cbrtf(float);
+float	fabsf(float);
+float	hypotf(float, float);
+float	powf(float, float);
+float	sqrtf(float);
 
 /* 7.12.8 error / gamma */
 
-float	erff __P((float));
-float	erfcf __P((float));
-float	lgammaf __P((float));
+float	erff(float);
+float	erfcf(float);
+float	lgammaf(float);
 
 /* 7.12.9 nearest integer */
 
-float	ceilf __P((float));
-float	floorf __P((float));
-float	rintf __P((float));
-double	round __P((double));
-float	roundf __P((float));
-long int	lrint __P((double));
-long int	lrintf __P((float));
+float	ceilf(float);
+float	floorf(float);
+float	rintf(float);
+double	round(double);
+float	roundf(float);
+long int	lrint(double);
+long int	lrintf(float);
 /* LONGLONG */
-long long int	llrint __P((double));
+long long int	llrint(double);
 /* LONGLONG */
-long long int	llrintf __P((float));
-long int	lround __P((double));
-long int	lroundf __P((float));
+long long int	llrintf(float);
+long int	lround(double);
+long int	lroundf(float);
 /* LONGLONG */
-long long int	llround __P((double));
+long long int	llround(double);
 /* LONGLONG */
-long long int	llroundf __P((float));
+long long int	llroundf(float);
 
 /* 7.12.10 remainder */
 
-float	fmodf __P((float, float));
-float	remainderf __P((float, float));
+float	fmodf(float, float);
+float	remainderf(float, float);
 
 /* 7.2.11 manipulation */
 
-float	copysignf __P((float, float));
-float	nextafterf __P((float, float));
+float	copysignf(float, float);
+float	nextafterf(float, float);
 
 
 #endif /* !_ANSI_SOURCE && ... */
@@ -357,27 +357,27 @@ float	nextafterf __P((float, float));
 
 #if defined(_NETBSD_SOURCE)
 #ifndef __cplusplus
-int	matherr __P((struct exception *));
+int	matherr(struct exception *);
 #endif
 
 /*
  * IEEE Test Vector
  */
-double	significand __P((double));
+double	significand(double);
 
 /*
  * Functions callable from C, intended to support IEEE arithmetic.
  */
-double	copysign __P((double, double));
-double	scalbn __P((double, int));
+double	copysign(double, double);
+double	scalbn(double, int);
 
 /*
  * BSD math library entry points
  */
 #ifndef __MATH_PRIVATE__
-double	cabs __P((/* struct complex { double r; double i; } */));
+double	cabs(/* struct complex { double r; double i; } */);
 #endif
-double	drem __P((double, double));
+double	drem(double, double);
 
 #endif /* _NETBSD_SOURCE */
 
@@ -386,8 +386,8 @@ double	drem __P((double, double));
  * Reentrant version of gamma & lgamma; passes signgam back by reference
  * as the second argument; user must allocate space for signgam.
  */
-double	gamma_r __P((double, int *));
-double	lgamma_r __P((double, int *));
+double	gamma_r(double, int *);
+double	lgamma_r(double, int *);
 #endif /* _NETBSD_SOURCE || _REENTRANT */
 
 
@@ -395,31 +395,31 @@ double	lgamma_r __P((double, int *));
 
 /* float versions of ANSI/POSIX functions */
 
-float	gammaf __P((float));
-int	isinff __P((float));
-int	isnanf __P((float));
-int	finitef __P((float));
-float	j0f __P((float));
-float	j1f __P((float));
-float	jnf __P((int, float));
-float	y0f __P((float));
-float	y1f __P((float));
-float	ynf __P((int, float));
+float	gammaf(float);
+int	isinff(float);
+int	isnanf(float);
+int	finitef(float);
+float	j0f(float);
+float	j1f(float);
+float	jnf(int, float);
+float	y0f(float);
+float	y1f(float);
+float	ynf(int, float);
 
-float	scalbf __P((float, float));
+float	scalbf(float, float);
 
 /*
  * float version of IEEE Test Vector
  */
-float	significandf __P((float));
+float	significandf(float);
 
 /*
  * float versions of BSD math library entry points
  */
 #ifndef __MATH_PRIVATE__
-float	cabsf __P((/* struct complex { float r; float i; } */));
+float	cabsf(/* struct complex { float r; float i; } */);
 #endif
-float	dremf __P((float, float));
+float	dremf(float, float);
 #endif /* _NETBSD_SOURCE */
 
 #if defined(_NETBSD_SOURCE) || defined(_REENTRANT)
@@ -428,30 +428,30 @@ float	dremf __P((float, float));
  * signgam back by reference as the second argument; user must
  * allocate space for signgam.
  */
-float	gammaf_r __P((float, int *));
-float	lgammaf_r __P((float, int *));
+float	gammaf_r(float, int *);
+float	lgammaf_r(float, int *);
 #endif /* !... || _REENTRANT */
 
 /*
  * Library implementation
  */
-int	__fpclassifyf __P((float));
-int	__fpclassifyd __P((double));
-int	__isfinitef __P((float));
-int	__isfinited __P((double));
-int	__isinff __P((float));
-int	__isinfd __P((double));
-int	__isnanf __P((float));
-int	__isnand __P((double));
-int	__signbitf __P((float));
-int	__signbitd __P((double));
+int	__fpclassifyf(float);
+int	__fpclassifyd(double);
+int	__isfinitef(float);
+int	__isfinited(double);
+int	__isinff(float);
+int	__isinfd(double);
+int	__isnanf(float);
+int	__isnand(double);
+int	__signbitf(float);
+int	__signbitd(double);
 
 #ifdef __HAVE_LONG_DOUBLE
-int	__fpclassifyl __P((long double));
-int	__isfinitel __P((long double));
-int	__isinfl __P((long double));
-int	__isnanl __P((long double));
-int	__signbitl __P((long double));
+int	__fpclassifyl(long double);
+int	__isfinitel(long double);
+int	__isinfl(long double);
+int	__isnanl(long double);
+int	__signbitl(long double);
 #endif
 __END_DECLS
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: fts.h,v 1.11 2003/08/07 09:44:10 agc Exp $	*/
+/*	$NetBSD: fts.h,v 1.12 2005/02/03 04:39:32 perry Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -44,7 +44,7 @@ typedef struct {
 	u_int fts_pathlen;		/* sizeof(path) */
 	u_int fts_nitems;		/* elements in the sort array */
 	int (*fts_compar)		/* compare function */
-	    __P((const struct _ftsent **, const struct _ftsent **));
+		(const struct _ftsent **, const struct _ftsent **);
 
 #define	FTS_COMFOLLOW	0x001		/* follow command line symlinks */
 #define	FTS_LOGICAL	0x002		/* logical walk */
@@ -125,20 +125,20 @@ typedef struct _ftsent {
 
 __BEGIN_DECLS
 #ifdef __LIBC12_SOURCE__
-FTSENT	*fts_children __P((FTS *, int));
-int	 fts_close __P((FTS *));
-FTS	*fts_open __P((char * const *, int,
-	    int (*)(const FTSENT **, const FTSENT **)));
-FTSENT	*fts_read __P((FTS *));
-int	 fts_set __P((FTS *, FTSENT *, int));
+FTSENT	*fts_children(FTS *, int);
+int	 fts_close(FTS *);
+FTS	*fts_open(char * const *, int,
+	    int (*)(const FTSENT **, const FTSENT **));
+FTSENT	*fts_read(FTS *);
+int	 fts_set(FTS *, FTSENT *, int);
 #else
-FTSENT	*fts_children __P((FTS *, int))		__RENAME(__fts_children13);
-int	 fts_close __P((FTS *))			__RENAME(__fts_close13);
-FTS	*fts_open __P((char * const *, int,
-	    int (*)(const FTSENT **, const FTSENT **)))
+FTSENT	*fts_children(FTS *, int)		__RENAME(__fts_children13);
+int	 fts_close(FTS *)			__RENAME(__fts_close13);
+FTS	*fts_open(char * const *, int,
+	    int (*)(const FTSENT **, const FTSENT **))
 						__RENAME(__fts_open13);
-FTSENT	*fts_read __P((FTS *))			__RENAME(__fts_read13);
-int	 fts_set __P((FTS *, FTSENT *, int))	__RENAME(__fts_set13);
+FTSENT	*fts_read(FTS *)			__RENAME(__fts_read13);
+int	 fts_set(FTS *, FTSENT *, int)	__RENAME(__fts_set13);
 #endif
 __END_DECLS
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: utmpx.h,v 1.11 2003/08/26 16:48:32 wiz Exp $	 */
+/*	$NetBSD: utmpx.h,v 1.12 2005/02/03 04:39:32 perry Exp $	 */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -113,29 +113,29 @@ struct lastlogx {
 
 __BEGIN_DECLS
 
-void setutxent __P((void));
-void endutxent __P((void));
-struct utmpx *getutxent __P((void));
-struct utmpx *getutxid __P((const struct utmpx *));
-struct utmpx *getutxline __P((const struct utmpx *));
-struct utmpx *pututxline __P((const struct utmpx *));
+void setutxent(void);
+void endutxent(void);
+struct utmpx *getutxent(void);
+struct utmpx *getutxid(const struct utmpx *);
+struct utmpx *getutxline(const struct utmpx *);
+struct utmpx *pututxline(const struct utmpx *);
 
 #if defined(_NETBSD_SOURCE)
-int updwtmpx __P((const char *, const struct utmpx *));
-int lastlogxname __P((const char *));
+int updwtmpx(const char *, const struct utmpx *);
+int lastlogxname(const char *);
 #ifdef __LIBC12_SOURCE__
-struct lastlogx *getlastlogx __P((uid_t, struct lastlogx *));
-struct lastlogx *__getlastlogx13 __P((const char *, uid_t, struct lastlogx *));
+struct lastlogx *getlastlogx(uid_t, struct lastlogx *);
+struct lastlogx *__getlastlogx13(const char *, uid_t, struct lastlogx *);
 #else
-struct lastlogx *getlastlogx __P((const char *, uid_t, struct lastlogx *))
+struct lastlogx *getlastlogx(const char *, uid_t, struct lastlogx *)
 	__RENAME(__getlastlogx13);
 #endif
-int updlastlogx __P((const char *, uid_t, struct lastlogx *));
+int updlastlogx(const char *, uid_t, struct lastlogx *);
 struct utmp;
-void getutmp __P((const struct utmpx *, struct utmp *));
-void getutmpx __P((const struct utmp *, struct utmpx *));
+void getutmp(const struct utmpx *, struct utmp *);
+void getutmpx(const struct utmp *, struct utmpx *);
 
-int utmpxname __P((const char *));
+int utmpxname(const char *);
 
 #endif /* _NETBSD_SOURCE */
 

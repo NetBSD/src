@@ -1,4 +1,4 @@
-/*	$NetBSD: ulimit.h,v 1.1 1999/09/13 18:38:04 kleink Exp $	*/
+/*	$NetBSD: ulimit.h,v 1.2 2005/02/03 04:39:32 perry Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
 #include <sys/cdefs.h>
 
 __BEGIN_DECLS
-long int ulimit __P((int, ...));
+long int ulimit(int, ...);
 __END_DECLS
 
 #endif /* !_ULIMIT_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: disktab.h,v 1.9 2004/04/23 14:37:12 christos Exp $	*/
+/*	$NetBSD: disktab.h,v 1.10 2005/02/03 04:39:32 perry Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -42,8 +42,8 @@
 #define	_PATH_DISKTAB	"/etc/disktab"
 
 __BEGIN_DECLS
-int setdisktab __P((const char *));
-struct disklabel *getdiskbyname __P((const char *));
+int setdisktab(const char *);
+struct disklabel *getdiskbyname(const char *);
 __END_DECLS
 
 #endif /* !_DISKTAB_H_ */

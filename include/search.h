@@ -1,4 +1,4 @@
-/*	$NetBSD: search.h,v 1.15 2003/07/26 17:35:01 salo Exp $	*/
+/*	$NetBSD: search.h,v 1.16 2005/02/03 04:39:32 perry Exp $	*/
 
 /*
  * Written by J.T. Conklin <jtc@NetBSD.org>
@@ -43,27 +43,27 @@ __BEGIN_DECLS
 #ifndef __BSEARCH_DECLARED
 #define __BSEARCH_DECLARED
 /* also in stdlib.h */
-void	*bsearch __P((const void *, const void *, size_t, size_t,
-		      int (*)(const void *, const void *)));
+void	*bsearch(const void *, const void *, size_t, size_t,
+		      int (*)(const void *, const void *));
 #endif /* __BSEARCH_DECLARED */
-int	 hcreate __P((size_t));
-void	 hdestroy __P((void));
-ENTRY	*hsearch __P((ENTRY, ACTION));
+int	 hcreate(size_t);
+void	 hdestroy(void);
+ENTRY	*hsearch(ENTRY, ACTION);
 
-void	*lfind __P((const void *, const void *, size_t *, size_t,
-		      int (*)(const void *, const void *)));
-void	*lsearch __P((const void *, const void *, size_t *, size_t,
-		      int (*)(const void *, const void *)));
-void	 insque __P((void *, void *));
-void	 remque __P((void *));
+void	*lfind(const void *, const void *, size_t *, size_t,
+		      int (*)(const void *, const void *));
+void	*lsearch(const void *, const void *, size_t *, size_t,
+		      int (*)(const void *, const void *));
+void	 insque(void *, void *);
+void	 remque(void *);
 
-void	*tdelete __P((const void *, void **,
-		      int (*)(const void *, const void *)));
-void	*tfind __P((const void *, void **,
-		      int (*)(const void *, const void *)));
-void	*tsearch __P((const void *, void **, 
-		      int (*)(const void *, const void *)));
-void      twalk __P((const void *, void (*)(const void *, VISIT, int)));
+void	*tdelete(const void *, void **,
+		      int (*)(const void *, const void *));
+void	*tfind(const void *, void **,
+		      int (*)(const void *, const void *));
+void	*tsearch(const void *, void **, 
+		      int (*)(const void *, const void *));
+void	twalk(const void *, void (*)(const void *, VISIT, int));
 __END_DECLS
 
 #endif /* !_SEARCH_H_ */

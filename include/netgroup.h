@@ -1,4 +1,4 @@
-/*	$NetBSD: netgroup.h,v 1.6 1999/01/10 02:53:34 lukem Exp $	*/
+/*	$NetBSD: netgroup.h,v 1.7 2005/02/03 04:39:32 perry Exp $	*/
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -59,15 +59,15 @@ struct netgroup {
 };
 
 __BEGIN_DECLS
-void	setnetgrent	__P((const char *));
-int	getnetgrent	__P((const char **, const char **, const char **));
-void	endnetgrent	__P((void));
-int	innetgr		__P((const char *, const char *, const char *,
-			     const char *));
+void	setnetgrent	(const char *);
+int	getnetgrent	(const char **, const char **, const char **);
+void	endnetgrent	(void);
+int	innetgr		(const char *, const char *, const char *,
+			     const char *);
 #ifdef _NETGROUP_PRIVATE
-char    *_ng_makekey __P((const char *, const char *, size_t));
-int	_ng_parse __P((char **, char **, struct netgroup **));
-void	_ng_print __P((char *, size_t, const struct netgroup *));
+char    *_ng_makekey(const char *, const char *, size_t);
+int	_ng_parse(char **, char **, struct netgroup **);
+void	_ng_print(char *, size_t, const struct netgroup *);
 #endif /* _NETGROUP_PRIVATE */
 
 __END_DECLS

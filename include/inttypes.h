@@ -1,4 +1,4 @@
-/*	$NetBSD: inttypes.h,v 1.2 2003/03/11 09:21:22 tshiozak Exp $	*/
+/*	$NetBSD: inttypes.h,v 1.3 2005/02/03 04:39:32 perry Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -44,14 +44,14 @@
 #include <wchar.h>
 
 __BEGIN_DECLS
-intmax_t	strtoimax __P((const char * __restrict,
-		    char ** __restrict, int));
-uintmax_t	strtoumax __P((const char * __restrict,
-		    char ** __restrict, int));
-intmax_t	wcstoimax __P((const wchar_t * __restrict,
-		    wchar_t ** __restrict, int));
-uintmax_t	wcstoumax __P((const wchar_t * __restrict,
-		    wchar_t ** __restrict, int));
+intmax_t	strtoimax(const char * __restrict,
+		    char ** __restrict, int);
+uintmax_t	strtoumax(const char * __restrict,
+		    char ** __restrict, int);
+intmax_t	wcstoimax(const wchar_t * __restrict,
+		    wchar_t ** __restrict, int);
+uintmax_t	wcstoumax(const wchar_t * __restrict,
+		    wchar_t ** __restrict, int);
 __END_DECLS
 
 #endif /* !_INTTYPES_H_ */

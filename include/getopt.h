@@ -1,4 +1,4 @@
-/*	$NetBSD: getopt.h,v 1.6 2004/06/20 22:20:14 jmc Exp $	*/
+/*	$NetBSD: getopt.h,v 1.7 2005/02/03 04:39:32 perry Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -68,8 +68,8 @@ struct option {
 
 #if defined(_NETBSD_SOURCE)
 __BEGIN_DECLS
-int getopt_long __P((int, char * const *, const char *,
-    const struct option *, int *));
+int getopt_long(int, char * const *, const char *,
+    const struct option *, int *);
 __END_DECLS
 #endif
  

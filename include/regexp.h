@@ -1,4 +1,4 @@
-/*	$NetBSD: regexp.h,v 1.6 2003/08/07 09:44:11 agc Exp $	*/
+/*	$NetBSD: regexp.h,v 1.7 2005/02/03 04:39:32 perry Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -95,16 +95,15 @@ typedef struct regexp {
 
 __BEGIN_DECLS
 #ifdef __LIBCOMPAT_SOURCE__
-regexp *__compat_regcomp __P((const char *));
-int __compat_regexec __P((const  regexp *, const char *));
-void __compat_regsub __P((const  regexp *, const char *, char *));
-void __compat_regerror __P((const char *));
+regexp *__compat_regcomp(const char *);
+int __compat_regexec(const  regexp *, const char *);
+void __compat_regsub(const  regexp *, const char *, char *);
+void __compat_regerror(const char *);
 #endif
-regexp *regcomp __P((const char *))		 __RENAME(__compat_regcomp);
-int regexec __P((const  regexp *, const char *)) __RENAME(__compat_regexec);
-void regsub __P((const  regexp *, const char *, char *))
-						 __RENAME(__compat_regsub);
-void regerror __P((const char *))		 __RENAME(__compat_regerror);
+regexp *regcomp(const char *) __RENAME(__compat_regcomp);
+int regexec(const  regexp *, const char *) __RENAME(__compat_regexec);
+void regsub(const  regexp *, const char *, char *) __RENAME(__compat_regsub);
+void regerror(const char *) __RENAME(__compat_regerror);
 __END_DECLS
 
 #endif /* !_REGEXP_H_ */
