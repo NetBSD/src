@@ -1,4 +1,4 @@
-/*	$NetBSD: oldmon.h,v 1.9 1996/02/22 15:04:08 pk Exp $ */
+/*	$NetBSD: oldmon.h,v 1.10 1996/03/14 19:49:12 christos Exp $ */
 
 /*
  * Copyright (C) 1985 Regents of the University of California
@@ -238,7 +238,7 @@ struct om_vector {
 	u_char	**memorybitmap;		/* V1: &{0 or &bits} */
 	void	(*setcxsegmap)		/* Set seg in any context */
 		    __P((int, caddr_t, int));
-	void	(**vector_cmd) __P((void));/* V2: Handler for 'v' cmd */
+	void	(**vector_cmd) __P((u_long, char *));/* V2: Handler for 'v' cmd */
   	u_long	*ExpectedTrapSig;
   	u_long	*TrapVectorTable;
 	int	dummy1z;
@@ -303,4 +303,11 @@ struct saif {
 	int	(*sif_reset)(void *devdata, struct saioreq *sip);
 	/* Later (sun4 only) proms have more stuff here. */
 };
+
+
+#if defined(SUN4)
+void	oldmon_w_trace __P((u_long));
+void	oldmon_w_cmd __P((u_long, char *));
+#endif
+
 #endif /* _MACHINE_OLDMON_H */

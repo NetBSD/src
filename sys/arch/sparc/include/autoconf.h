@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.h,v 1.13 1996/01/15 00:06:51 thorpej Exp $ */
+/*	$NetBSD: autoconf.h,v 1.14 1996/03/14 19:49:04 christos Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -152,6 +152,7 @@ int	romprop __P((struct romaux *ra, const char *name, int node));
  * its aux pointer to point to a pointer to the name (the address of
  * a romaux structure suffices, for instance).
  */
+struct device;
 int	matchbyname __P((struct device *, void *cf, void *aux));
 
 /*
@@ -193,3 +194,13 @@ struct	device *parsedisk __P((char *, int, int, dev_t *));
 /* Establish a mountroot_hook, for benefit of floppy drive, mostly. */
 void	mountroot_hook_establish __P((void (*func) __P((struct device *)),
 		struct device *));
+
+void	configure __P((void));
+void	bootstrap __P((void));
+int	firstchild __P((int));
+int	nextsibling __P((int));
+void	callrom __P((void));
+struct device *getdevunit __P((char *, int));
+void   *findzs __P((int));
+int	romgetcursoraddr __P((int **, int **));
+int	findroot __P((void));

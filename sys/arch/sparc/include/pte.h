@@ -1,4 +1,4 @@
-/*	$NetBSD: pte.h,v 1.13 1996/02/01 22:32:34 mycroft Exp $ */
+/*	$NetBSD: pte.h,v 1.14 1996/03/14 19:49:16 christos Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -176,11 +176,11 @@ extern int nptesg;
 	? ((int)(vr) << RGSHIFT)		\
 	: (((int)(vr) << (RGSHIFT+2)) >> 2))
 #define	VSTOVA(vr,vs)	(mmu_3l				\
-	? (((int)vr << RGSHIFT) + ((int)vs << SGSHIFT))	\
-	: ((((int)vr << (RGSHIFT+2)) >> 2) + ((int)vs << SGSHIFT)))
+	? (((int)vr << RGSHIFT) + ((int)(vs) << SGSHIFT))	\
+	: ((((int)vr << (RGSHIFT+2)) >> 2) + ((int)(vs) << SGSHIFT)))
 #else
-#define	VRTOVA(vr)	(((int)vr << (RGSHIFT+2)) >> 2)
-#define	VSTOVA(vr,vs)	((((int)vr << (RGSHIFT+2)) >> 2) + ((int)vs << SGSHIFT))
+#define	VRTOVA(vr)	(((int)(vr) << (RGSHIFT+2)) >> 2)
+#define	VSTOVA(vr,vs)	((((int)(vr) << (RGSHIFT+2)) >> 2) + ((int)(vs) << SGSHIFT))
 #endif
 
 extern int mmu_has_hole;
