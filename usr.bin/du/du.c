@@ -1,4 +1,4 @@
-/*	$NetBSD: du.c,v 1.13 1997/10/19 14:06:18 mrg Exp $	*/
+/*	$NetBSD: du.c,v 1.14 1998/02/15 17:08:18 kleink Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)du.c	8.5 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: du.c,v 1.13 1997/10/19 14:06:18 mrg Exp $");
+__RCSID("$NetBSD: du.c,v 1.14 1998/02/15 17:08:18 kleink Exp $");
 #endif
 #endif /* not lint */
 
@@ -82,7 +82,7 @@ main(argc, argv)
 	Hflag = Lflag = Pflag = aflag = cflag = kflag = sflag = 0;
 	totalblocks = 0;
 	ftsoptions = FTS_PHYSICAL;
-	while ((ch = getopt(argc, argv, "HLPacksx")) != -1)
+	while ((ch = getopt(argc, argv, "HLPackrsx")) != -1)
 		switch (ch) {
 		case 'H':
 			Hflag = 1;
@@ -105,6 +105,8 @@ main(argc, argv)
 		case 'k':
 			blocksize = 1024;
 			kflag = 1;
+			break;
+		case 'r':
 			break;
 		case 's':
 			sflag = 1;
