@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.17 1998/09/13 09:15:51 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.18 1998/09/13 11:58:00 mycroft Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -769,6 +769,7 @@ sendsig(catcher, sig, mask, code)
 		 * instructoin to halt it in its tracks.
 		 */
 		sigexit(p, SIGILL);
+		/* NOTREACHED */
 	}
 
 	/*
@@ -779,8 +780,11 @@ sendsig(catcher, sig, mask, code)
 	tf->fixreg[3] = (int)sig;
 	tf->fixreg[4] = (int)code;
 	tf->fixreg[5] = (int)&frame.sf_sc;
-	tf->srr0 = (int)(((char *)PS_STRINGS)
-			 - (p->p_emul->e_esigcode - p->p_emul->e_sigcode));
+	tf->srr0 = (int)psp->ps_sigcode;
+
+	/* Remember that we're now on the signal stack. */
+	if (onstack)
+		psp->ps_sigstk.ss_flags |= SS_ONSTACK;
 }
 
 /*
