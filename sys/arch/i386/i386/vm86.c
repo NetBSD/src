@@ -1,4 +1,4 @@
-/*	$NetBSD: vm86.c,v 1.26 2002/03/29 17:07:06 christos Exp $	*/
+/*	$NetBSD: vm86.c,v 1.27 2002/06/24 10:10:17 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm86.c,v 1.26 2002/03/29 17:07:06 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm86.c,v 1.27 2002/06/24 10:10:17 itojun Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -158,8 +158,17 @@ fast_intxx(p, intrno)
 	 * Fetch intr handler info from "real-mode" IDT based at addr 0 in
 	 * the user address space.
 	 */
-	if (copyin((caddr_t)(intrno * sizeof(ihand)), &ihand, sizeof(ihand)))
-		goto bad;
+	if (copyin((caddr_t)(intrno * sizeof(ihand)), &ihand, sizeof(ihand))) {
+		/*
+		 * No IDT!  What Linux does here is simply call back into
+		 * userspace with the VM86_INTx arg as if it was a revectored
+		 * int.  Some applications rely on this (i.e. dynamically
+		 * emulate an IDT), and those that don't will crash in a
+		 * spectacular way, I suppose.
+		 *	--thorpej@netbsd.org
+		 */
+		goto vector;
+	}
 
 	/*
 	 * Otherwise, push flags, cs, eip, and jump to handler to
@@ -180,10 +189,6 @@ fast_intxx(p, intrno)
 
 vector:
 	vm86_return(p, VM86_MAKEVAL(VM86_INTx, intrno));
-	return;
-
-bad:
-	vm86_return(p, VM86_UNKNOWN);
 	return;
 }
 
