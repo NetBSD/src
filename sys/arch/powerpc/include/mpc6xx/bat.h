@@ -1,4 +1,4 @@
-/*	$NetBSD: bat.h,v 1.3 2002/03/02 15:07:35 kleink Exp $	*/
+/*	$NetBSD: bat.h,v 1.4 2002/03/25 21:35:45 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -171,8 +171,14 @@ struct bat {
 #define	BATL601(pa, size, v)						\
 	(((pa) & BAT601_PBN) | (v) | (size))
 
+#define	BAT601_VA_MATCH_P(batu, batl, va)				\
+	(((~(((batl)&BAT601_BSM)<<17))&(va)&BAT601_BLPI)==((batu)&BAT601_BLPI))
+
+#define	BAT601_VALID_P(batl) \
+	((batl) & BAT601_V)
+
 #ifdef	_KERNEL
-extern struct bat battable[16];
+extern struct bat battable[];
 #endif
 
 #endif	/* _MPC6XX_BAT_H_ */
