@@ -1,4 +1,4 @@
-/*	$NetBSD: nubus.c,v 1.32 1997/02/28 07:54:02 scottr Exp $	*/
+/*	$NetBSD: nubus.c,v 1.33 1997/03/15 18:33:44 scottr Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Allen Briggs.  All rights reserved.
@@ -46,6 +46,7 @@
 #include <machine/param.h>
 #include <machine/cpu.h>
 #include <machine/pte.h>
+#include <machine/viareg.h>
 
 #include <vm/vm.h>
 
@@ -145,6 +146,8 @@ nubus_attach(parent, self, aux)
 
 		config_found(self, &na_args, nubus_print);
 	}
+
+	enable_nubus_intr();
 }
 
 static int

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ae_nubus.c,v 1.7 1997/03/15 18:09:59 is Exp $	*/
+/*	$NetBSD: if_ae_nubus.c,v 1.8 1997/03/15 18:33:46 scottr Exp $	*/
 
 /*
  * Copyright (C) 1997 Scott Reynolds
@@ -317,16 +317,6 @@ ae_nubus_attach(parent, self, aux)
 
 	/* make sure interrupts are vectored to us */
 	add_nubus_intr(na->slot, aeintr, sc);
-
-#ifdef MAC68K_BROKEN_VIDEO
-	/*
-	 * XXX -- enable nubus interrupts here.  Should be done elsewhere,
-	 *        but that currently breaks with some nubus video cards'
-	 *	  interrupts.  So we only enable nubus interrupts if we
-	 *	  have an ethernet card...  i.e., we do it here.
-	 */
-	enable_nubus_intr();
-#endif
 }
 
 static int
