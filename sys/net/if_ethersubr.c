@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ethersubr.c,v 1.107 2003/05/02 03:15:23 itojun Exp $	*/
+/*	$NetBSD: if_ethersubr.c,v 1.108 2003/05/16 04:54:55 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.107 2003/05/02 03:15:23 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.108 2003/05/16 04:54:55 itojun Exp $");
 
 #include "opt_inet.h"
 #include "opt_atalk.h"
@@ -1093,10 +1093,14 @@ ether_ifattach(struct ifnet *ifp, const u_int8_t *lla)
 	bpfattach(ifp, DLT_EN10MB, sizeof(struct ether_header));
 #endif
 #ifdef MBUFTRACE
-	strcpy(ec->ec_tx_mowner.mo_name, ifp->if_xname);
-	strcpy(ec->ec_tx_mowner.mo_descr, "tx");
-	strcpy(ec->ec_rx_mowner.mo_name, ifp->if_xname);
-	strcpy(ec->ec_rx_mowner.mo_descr, "rx");
+	strlcpy(ec->ec_tx_mowner.mo_name, ifp->if_xname,
+	    sizeof(ec->ec_tx_mowner.mo_name));
+	strlcpy(ec->ec_tx_mowner.mo_descr, "tx",
+	    sizeof(ec->ec_tx_mowner.mo_descr));
+	strlcpy(ec->ec_rx_mowner.mo_name, ifp->if_xname,
+	    sizeof(ec->ec_rx_mowner.mo_name));
+	strlcpy(ec->ec_rx_mowner.mo_descr, "rx",
+	    sizeof(ec->ec_rx_mowner.mo_descr));
 	MOWNER_ATTACH(&ec->ec_tx_mowner);
 	MOWNER_ATTACH(&ec->ec_rx_mowner);
 	ifp->if_mowner = &ec->ec_tx_mowner;

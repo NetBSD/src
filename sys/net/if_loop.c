@@ -1,4 +1,4 @@
-/*	$NetBSD: if_loop.c,v 1.44 2003/05/14 06:47:33 itojun Exp $	*/
+/*	$NetBSD: if_loop.c,v 1.45 2003/05/16 04:54:56 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_loop.c,v 1.44 2003/05/14 06:47:33 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_loop.c,v 1.45 2003/05/16 04:54:56 itojun Exp $");
 
 #include "opt_inet.h"
 #include "opt_atalk.h"
@@ -179,7 +179,8 @@ loopattach(n)
 #endif
 #ifdef MBUFTRACE
 		ifp->if_mowner = &lomowner[i];
-		strcpy(ifp->if_mowner->mo_name, ifp->if_xname);
+		strlcpy(ifp->if_mowner->mo_name, ifp->if_xname,
+		    sizeof(ifp->if_mowner->mo_name));
 		MOWNER_ATTACH(&lomowner[i]);
 #endif
 	}

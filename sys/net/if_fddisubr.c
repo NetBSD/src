@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fddisubr.c,v 1.48 2003/05/14 15:50:51 itojun Exp $	*/
+/*	$NetBSD: if_fddisubr.c,v 1.49 2003/05/16 04:54:55 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_fddisubr.c,v 1.48 2003/05/14 15:50:51 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_fddisubr.c,v 1.49 2003/05/16 04:54:55 itojun Exp $");
 
 #include "opt_inet.h"
 #include "opt_atalk.h"
@@ -839,10 +839,14 @@ fddi_ifattach(ifp, lla)
 	bpfattach(ifp, DLT_FDDI, sizeof(struct fddi_header));
 #endif /* NBPFILTER > 0 */
 #ifdef MBUFTRACE
-	strcpy(ec->ec_tx_mowner.mo_name, ifp->if_xname);
-	strcpy(ec->ec_tx_mowner.mo_descr, "tx");
-	strcpy(ec->ec_rx_mowner.mo_name, ifp->if_xname);
-	strcpy(ec->ec_rx_mowner.mo_descr, "rx");
+	strlcpy(ec->ec_tx_mowner.mo_name, ifp->if_xname,
+	    sizeof(ec->ec_tx_mowner.mo_name));
+	strlcpy(ec->ec_tx_mowner.mo_descr, "tx",
+	    sizeof(ec->ec_tx_mowner.mo_descr));
+	strlcpy(ec->ec_rx_mowner.mo_name, ifp->if_xname,
+	    sizeof(ec->ec_rx_mowner.mo_name));
+	strlcpy(ec->ec_rx_mowner.mo_descr, "rx",
+	    sizeof(ec->ec_rx_mowner.mo_descr));
 	MOWNER_ATTACH(&ec->ec_tx_mowner);
 	MOWNER_ATTACH(&ec->ec_rx_mowner);
 	ifp->if_mowner = &ec->ec_tx_mowner;

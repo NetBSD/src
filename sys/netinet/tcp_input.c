@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.164 2003/05/14 06:47:35 itojun Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.165 2003/05/16 03:58:33 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -152,7 +152,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.164 2003/05/14 06:47:35 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.165 2003/05/16 03:58:33 itojun Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -720,12 +720,12 @@ tcp4_log_refused(ip, th)
 	char dst[4*sizeof "123"];
 
 	if (ip) {
-		strcpy(src, inet_ntoa(ip->ip_src));
-		strcpy(dst, inet_ntoa(ip->ip_dst));
+		strlcpy(src, inet_ntoa(ip->ip_src), sizeof(src));
+		strlcpy(dst, inet_ntoa(ip->ip_dst), sizeof(dst));
 	}
 	else {
-		strcpy(src, "(unknown)");
-		strcpy(dst, "(unknown)");
+		strlcpy(src, "(unknown)", sizeof(src));
+		strlcpy(dst, "(unknown)", sizeof(dst));
 	}
 	log(LOG_INFO,
 	    "Connection attempt to TCP %s:%d from %s:%d\n",
@@ -744,12 +744,12 @@ tcp6_log_refused(ip6, th)
 	char dst[INET6_ADDRSTRLEN];
 
 	if (ip6) {
-		strcpy(src, ip6_sprintf(&ip6->ip6_src));
-		strcpy(dst, ip6_sprintf(&ip6->ip6_dst));
+		strlcpy(src, ip6_sprintf(&ip6->ip6_src), sizeof(src));
+		strlcpy(dst, ip6_sprintf(&ip6->ip6_dst), sizeof(dst));
 	}
 	else {
-		strcpy(src, "(unknown v6)");
-		strcpy(dst, "(unknown v6)");
+		strlcpy(src, "(unknown v6)", sizeof(src));
+		strlcpy(dst, "(unknown v6)", sizeof(dst));
 	}
 	log(LOG_INFO,
 	    "Connection attempt to TCP [%s]:%d from [%s]:%d\n",

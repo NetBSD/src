@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ieee80211subr.c,v 1.32 2003/05/16 01:26:17 dyoung Exp $	*/
+/*	$NetBSD: if_ieee80211subr.c,v 1.33 2003/05/16 04:54:55 itojun Exp $	*/
 /*	$FreeBSD: src/sys/net/if_ieee80211subr.c,v 1.4 2003/01/21 08:55:59 alfred Exp $	*/
 
 /*-
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ieee80211subr.c,v 1.32 2003/05/16 01:26:17 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ieee80211subr.c,v 1.33 2003/05/16 04:54:55 itojun Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -2978,7 +2978,8 @@ ieee80211_cfgget(struct ifnet *ifp, u_long cmd, caddr_t data)
 		/* nothing appropriate */
 		break;
 	case WI_RID_NODENAME:
-		strcpy((char *)&wreq.wi_val[1], hostname);
+		strlcpy((char *)&wreq.wi_val[1], hostname,
+		    sizeof(wreq.wi_val) - 1);
 		wreq.wi_val[0] = htole16(strlen(hostname));
 		wreq.wi_len = (1 + strlen(hostname) + 1) / 2;
 		break;

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bridge.c,v 1.12 2003/05/14 23:18:29 itojun Exp $	*/
+/*	$NetBSD: if_bridge.c,v 1.13 2003/05/16 04:54:55 itojun Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bridge.c,v 1.12 2003/05/14 23:18:29 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bridge.c,v 1.13 2003/05/16 04:54:55 itojun Exp $");
 
 #include "opt_bridge_ipf.h"
 #include "bpfilter.h"
@@ -760,7 +760,8 @@ bridge_ioctl_gifs(struct bridge_softc *sc, void *arg)
 		if (len < sizeof(breq))
 			break;
 
-		strcpy(breq.ifbr_ifsname, bif->bif_ifp->if_xname);
+		strlcpy(breq.ifbr_ifsname, bif->bif_ifp->if_xname,
+		    sizeof(breq.ifbr_ifsname));
 		breq.ifbr_ifsflags = bif->bif_flags;
 		breq.ifbr_state = bif->bif_state;
 		breq.ifbr_priority = bif->bif_priority;
@@ -792,7 +793,8 @@ bridge_ioctl_rts(struct bridge_softc *sc, void *arg)
 	LIST_FOREACH(brt, &sc->sc_rtlist, brt_list) {
 		if (len < sizeof(bareq))
 			goto out;
-		strcpy(bareq.ifba_ifsname, brt->brt_ifp->if_xname);
+		strlcpy(bareq.ifba_ifsname, brt->brt_ifp->if_xname,
+		    sizeof(bareq.ifba_ifsname));
 		memcpy(bareq.ifba_dst, brt->brt_addr, sizeof(brt->brt_addr));
 		if ((brt->brt_flags & IFBAF_TYPEMASK) == IFBAF_DYNAMIC)
 			bareq.ifba_expire = brt->brt_expire - mono_time.tv_sec;
