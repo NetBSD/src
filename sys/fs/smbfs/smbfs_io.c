@@ -1,4 +1,4 @@
-/*	$NetBSD: smbfs_io.c,v 1.2 2002/01/09 17:43:28 deberg Exp $	*/
+/*	$NetBSD: smbfs_io.c,v 1.3 2003/02/20 15:35:55 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2000-2001, Boris Popov
@@ -106,7 +106,7 @@ smbfs_readvdir(struct vnode *vp, struct uio *uio, struct ucred *cred)
 	long offset, limit;
 
 	np = VTOSMB(vp);
-	SMBVDEBUG("dirname='%s'\n", np->n_name);
+	SMBVDEBUG("dirname='%.*s'\n", (int) np->n_nmlen, np->n_name);
 	smb_makescred(&scred, uio->uio_procp, cred);
 	offset = uio->uio_offset / DE_SIZE; 	/* offset in the directory */
 	limit = uio->uio_resid / DE_SIZE;
