@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)if_le.c	7.6 (Berkeley) 5/8/91
- *	$Id: if_le.c,v 1.7 1994/02/05 15:04:18 mycroft Exp $
+ *	$Id: if_le.c,v 1.8 1994/02/06 00:46:02 mycroft Exp $
  */
 
 #include "le.h"
@@ -84,17 +84,8 @@
 /* offsets for:	   ID,   REGS,    MEM,  NVRAM */
 int	lestd[] = { 0, 0x4000, 0x8000, 0xC008 };
 
-int	leattach();
-struct	driver ledriver = {
-	leattach, "le",
-};
-
 struct	isr le_isr[NLE];
 int	ledebug = 0;		/* console error messages */
-
-int	leintr(), leinit(), leioctl(), lestart(), ether_output();
-struct	mbuf *leget();
-extern	struct ifnet loif;
 
 /*
  * Ethernet software status per interface.
@@ -141,11 +132,34 @@ struct	le_softc {
 		(dst) = (src); \
 	} while (((cntl)->ler0_status & LE_ACK) == 0);
 
+int leattach __P((struct hp_device *));
+void lesetladrf __P((struct le_softc *));
+void ledrinit __P((struct lereg2 *));
+void lereset __P((struct le_softc *));
+void leinit __P((int));
+int lestart __P((struct ifnet *));
+int leintr __P((int));
+void lexint __P((struct le_softc *));
+void lerint __P((struct le_softc *));
+void leread __P((struct le_softc *, char *, int));
+int leput __P((char *, struct mbuf *));
+struct mbuf *leget __P((char *, int, int, struct ifnet *));
+int leioctl __P((struct ifnet *, int, caddr_t));
+void leerror __P((struct le_softc *, int));
+void lererror __P((struct le_softc *, char *));
+void lexerror __P((struct le_softc *));
+int ether_output();
+
+struct	driver ledriver = {
+	leattach, "le",
+};
+
 /*
  * Interface exists: make available by filling in network interface
  * record.  System will initialize the interface when it is ready
  * to accept packets.
  */
+int
 leattach(hd)
 	struct hp_device *hd;
 {
@@ -282,6 +296,7 @@ lesetladrf(sc)
 	}
 }
 
+void
 ledrinit(ler2)
 	register struct lereg2 *ler2;
 {
@@ -302,6 +317,7 @@ ledrinit(ler2)
 	}
 }
 
+void
 lereset(sc)
 	register struct le_softc *sc;
 {
@@ -353,13 +369,14 @@ lereset(sc)
 		    sc->sc_if.if_unit, stat);
 	else
 		LERDWR(ler0, LE_IDON, ler1->ler1_rdp);
-	LERDWR(ler0, LE_STRT | LE_INEA, ler1->ler1_rdp);
 	sc->sc_if.if_flags &= ~IFF_OACTIVE;
+	LERDWR(ler0, LE_STRT | LE_INEA, ler1->ler1_rdp);
 }
 
 /*
  * Initialization of interface
  */
+void
 leinit(unit)
 	int unit;
 {
@@ -387,6 +404,7 @@ leinit(unit)
  * off of the interface queue, and copy it to the interface
  * before starting the output.
  */
+int
 lestart(ifp)
 	struct ifnet *ifp;
 {
@@ -428,13 +446,14 @@ lestart(ifp)
 		LENEXTTMP;
 		gotone++;
 	} while (++sc->sc_txcnt < LETBUF);
-	/* transmit as soon as possible */
-	LERDWR(sc->sc_r0, LE_INEA|LE_TDMD, sc->sc_r1->ler1_rdp);
 	sc->sc_tmd = bix;
 	sc->sc_if.if_flags |= IFF_OACTIVE;
+	/* transmit as soon as possible */
+	LERDWR(sc->sc_r0, LE_INEA|LE_TDMD, sc->sc_r1->ler1_rdp);
 	return (0);
 }
 
+int
 leintr(unit)
 	register int unit;
 {
@@ -488,20 +507,21 @@ leintr(unit)
  * Ethernet interface transmitter interrupt.
  * Start another output if more data to send.
  */
+void
 lexint(sc)
 	register struct le_softc *sc;
 {
 	register struct letmd *tmd;
-	int i, gotone = 0;
+	int bix, gotone = 0;
 
 	if ((sc->sc_if.if_flags & IFF_OACTIVE) == 0) {
 		sc->sc_xint++;
 		return;
 	}
+	if ((bix = sc->sc_tmd - sc->sc_txcnt) < 0)
+		bix += LETBUF;
+	tmd = &sc->sc_r2->ler2_tmd[bix];
 	do {
-		if ((i = sc->sc_tmd - sc->sc_txcnt) < 0)
-			i += LETBUF;
-		tmd = &sc->sc_r2->ler2_tmd[i];
 		if (tmd->tmd1 & LE_OWN) {
 			if (gotone)
 				break;
@@ -531,6 +551,7 @@ lexint(sc)
 			sc->sc_if.if_collisions += 2;
 		else
 			sc->sc_if.if_opackets++;
+		LENEXTTMP;
 		gotone++;
 	} while (--sc->sc_txcnt > 0);
 	sc->sc_if.if_flags &= ~IFF_OACTIVE;
@@ -546,6 +567,7 @@ lexint(sc)
  * Decapsulate packet based on type and pass to type specific
  * higher-level input routine.
  */
+void
 lerint(sc)
 	register struct le_softc *sc;
 {
@@ -614,6 +636,7 @@ lerint(sc)
 	sc->sc_rmd = bix;
 }
 
+void
 leread(sc, buf, len)
 	register struct le_softc *sc;
 	char *buf;
@@ -668,6 +691,7 @@ leread(sc, buf, len)
  * Routine to copy from mbuf chain to transmit
  * buffer in board local memory.
  */
+int
 leput(lebuf, m)
 	register char *lebuf;
 	register struct mbuf *m;
@@ -762,6 +786,7 @@ leget(lebuf, totlen, off0, ifp)
 /*
  * Process an ioctl request.
  */
+int
 leioctl(ifp, cmd, data)
 	register struct ifnet *ifp;
 	int cmd;
@@ -769,7 +794,6 @@ leioctl(ifp, cmd, data)
 {
 	register struct ifaddr *ifa;
 	struct le_softc *sc = &le_softc[ifp->if_unit];
-	struct lereg1 *ler1;
 	int s = splimp(), error = 0;
 
 	switch (cmd) {
@@ -800,7 +824,7 @@ leioctl(ifp, cmd, data)
 				 * so reset everything
 				 */
 				ifp->if_flags &= ~IFF_RUNNING; 
-				LERDWR(sc->sc_r0, LE_STOP, ler1->ler1_rdp);
+				LERDWR(sc->sc_r0, LE_STOP, sc->sc_r1->ler1_rdp);
 				bcopy((caddr_t)ina->x_host.c_host,
 				    (caddr_t)sc->sc_addr, sizeof(sc->sc_addr));
 			}
@@ -815,11 +839,10 @@ leioctl(ifp, cmd, data)
 		break;
 
 	case SIOCSIFFLAGS:
-		ler1 = sc->sc_r1;
 		if ((ifp->if_flags & IFF_UP) == 0 &&
 		    ifp->if_flags & IFF_RUNNING) {
 			ifp->if_flags &= ~IFF_RUNNING;
-			LERDWR(sc->sc_r0, LE_STOP, ler1->ler1_rdp);
+			LERDWR(sc->sc_r0, LE_STOP, sc->sc_r1->ler1_rdp);
 		} else if (ifp->if_flags & IFF_UP &&
 		    (ifp->if_flags & IFF_RUNNING) == 0)
 			leinit(ifp->if_unit);
@@ -859,6 +882,7 @@ leioctl(ifp, cmd, data)
 	return (error);
 }
 
+void
 leerror(sc, stat)
 	register struct le_softc *sc;
 	int stat;
@@ -878,6 +902,7 @@ leerror(sc, stat)
 	    "\20\20ERR\17BABL\16CERR\15MISS\14MERR\13RINT\12TINT\11IDON\10INTR\07INEA\06RXON\05TXON\04TDMD\03STOP\02STRT\01INIT");
 }
 
+void
 lererror(sc, msg)
 	register struct le_softc *sc;
 	char *msg;
@@ -898,6 +923,7 @@ lererror(sc, msg)
 	    "\20\20OWN\17ERR\16FRAM\15OFLO\14CRC\13RBUF\12STP\11ENP");
 }
 
+void
 lexerror(sc)
 	register struct le_softc *sc;
 {
