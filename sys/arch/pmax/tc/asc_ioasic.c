@@ -1,7 +1,7 @@
-/* $NetBSD: asc_ioasic.c,v 1.1.2.4 1999/03/02 01:57:05 nisimura Exp $ */
+/* $NetBSD: asc_ioasic.c,v 1.1.2.5 1999/03/05 04:42:12 nisimura Exp $ */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: asc_ioasic.c,v 1.1.2.4 1999/03/02 01:57:05 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: asc_ioasic.c,v 1.1.2.5 1999/03/05 04:42:12 nisimura Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -20,7 +20,7 @@ __KERNEL_RCSID(0, "$NetBSD: asc_ioasic.c,v 1.1.2.4 1999/03/02 01:57:05 nisimura 
 #include <dev/ic/ncr53c9xvar.h>
 
 #include <dev/tc/tcvar.h>
-#include <dev/tc/ioasicvar.h>
+#include <pmax/tc/ioasicvar.h> /* XXX XXX XXX */
 #include <dev/tc/ioasicreg.h>
 
 int	asc_ioasic_match __P((struct device *, struct cfdata *, void *));
@@ -30,8 +30,10 @@ struct asc_softc {
 	struct ncr53c9x_softc sc_ncr53c9x;	/* glue to MI code */
 	bus_space_tag_t sc_bst;
 	bus_space_handle_t sc_bsh;
-	bus_dma_tag_t sc_dma;
 	void	*sc_cookie;			/* intr. handling cookie */
+
+	bus_dma_tag_t sc_dmat;
+	bus_dmamap_t sc_dmamap;
 	int	sc_active;			/* DMA active ? */
 	int	sc_iswrite;			/* DMA into main memory? */
 	int	sc_datain;
@@ -39,8 +41,8 @@ struct asc_softc {
 	caddr_t *sc_dmaaddr;
 	size_t	*sc_dmalen;
 
-	vaddr_t	sc_base;			/* XXX XXX XXX */
-	caddr_t sc_reg;
+	/* XXX XXX XXX */
+	vaddr_t	sc_base;
 	volatile u_int32_t *sc_ssr;
 	volatile u_int32_t *sc_scsi_scr;
 	volatile u_int32_t *sc_scsi_dmaptr;
@@ -119,15 +121,18 @@ asc_ioasic_attach(parent, self, aux)
 	 * Set up glue for MI code early; we use some of it here.
 	 */
 	sc->sc_glue = &asc_ioasic_glue;
-#if 0
-	asc->sc_bst = /* bus space tag */ 0;
-	asc->sc_bsh = /* bus space handle */ 0;
-	asc->sc_dma = /* bus dma */ 0;
-#endif
-	asc->sc_base = (vaddr_t)ioasic_base; /* TC slot 3 */	
+	asc->sc_bst = ((struct ioasic_softc *)parent)->sc_bst;
+	asc->sc_dmat = ((struct ioasic_softc *)parent)->sc_dmat;
+	if (bus_space_subregion(asc->sc_bst,
+			((struct ioasic_softc *)parent)->sc_bsh,
+			IOASIC_SLOT_12_START, 0x100, &asc->sc_bsh)) {
+		printf("%s: unable to map device\n", sc->sc_dev.dv_xname);
+		return;
+	}
 	asc->sc_cookie = d->iada_cookie;
 
-	asc->sc_reg =	(void *)(asc->sc_base + IOASIC_SLOT_12_START);
+	/* XXX XXX XXX */
+	asc->sc_base =	(vaddr_t)ioasic_base; /* TC slot 3 */	
 	asc->sc_ssr =	(void *)(asc->sc_base + IOASIC_CSR);
 	asc->sc_scsi_dmaptr =	(void *)(asc->sc_base + IOASIC_SCSI_DMAPTR);
 	asc->sc_scsi_nextptr =	(void *)(asc->sc_base + IOASIC_SCSI_NEXTPTR);
@@ -380,7 +385,9 @@ asc_read_reg(sc, reg)
 	struct asc_softc *asc = (struct asc_softc *)sc;
 	u_char v;
 
-	v = asc->sc_reg[reg * 4] /*& 0xff*/;
+	v = bus_space_read_4(asc->sc_bst, asc->sc_bsh,
+	    reg * sizeof(u_int32_t)) & 0xff;
+
 	return (v);
 }
 
@@ -392,8 +399,8 @@ asc_write_reg(sc, reg, val)
 {
 	struct asc_softc *asc = (struct asc_softc *)sc;
 
-	asc->sc_reg[reg * 4] = val;
-	wbflush();
+	bus_space_write_4(asc->sc_bst, asc->sc_bsh,
+	    reg * sizeof(u_int32_t), val);
 }
 
 static int
