@@ -1,8 +1,6 @@
-#	$NetBSD: list,v 1.3 1997/09/21 18:37:37 chopps Exp $
+#	$NetBSD: list,v 1.3.2.1 1997/11/09 20:17:20 mellon Exp $
 
 # Amiga extra's
-#LINK	instbin			sbin/edahdi
-#LINK	instbin			sbin/edlabel
 LINK	instbin			sbin/mount_ados
 LINK	instbin			sbin/mount_kernfs
 SPECIAL mkdir			kern
@@ -10,12 +8,17 @@ LINK	instbin			usr/bin/printf
 LINK	instbin			usr/bin/vi
 LINK	instbin			usr/sbin/loadkmap
 
+SYMLINK	../../instbin		usr/bin/netstat
+
 # `internal' crunchgen links
 ARGVLINK mount_ados		ados
 
 # crunchgen source directory specials
 CRUNCHSPECIAL	loadkmap srcdir sys/arch/amiga/stand/loadkmap
 CRUNCHSPECIAL	vi srcdir usr.bin/vi/build
+
+# Minimize use of MFS
+SYMLINK	/tmp	var/tmp
 
 # copy the MAKEDEV script and make some devices
 COPY	${DESTDIR}/dev/MAKEDEV		dev/MAKEDEV
@@ -26,9 +29,9 @@ SPECIAL	/bin/rm dev/MAKEDEV
 # various files that we need in /etc for the install
 COPY	${ARCHDIR}/disktab.shadow		etc/disktab.shadow
 #SYMLINK	/tmp/disktab.shadow		etc/disktab
-#SYMLINK	/tmp/fstab.shadow		etc/fstab
-#SYMLINK	/tmp/resolv.conf.shadow		etc/resolv.conf
-#SYMLINK	/tmp/hosts			etc/hosts
+SYMLINK	/tmp/fstab.shadow		etc/fstab
+SYMLINK	/tmp/resolv.conf.shadow		etc/resolv.conf
+SYMLINK	/tmp/hosts			etc/hosts
 
 # and the termcap file
 COPY	${ARCHDIR}/termcap.vt usr/share/misc/termcap
