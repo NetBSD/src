@@ -1,4 +1,4 @@
-/*	$NetBSD: bootconfig.h,v 1.6 1998/09/05 04:14:21 mark Exp $	*/
+/*	$NetBSD: bootconfig.h,v 1.7 1998/09/06 03:11:38 mark Exp $	*/
 
 /*
  * Copyright (c) 1994 Mark Brinicombe.
@@ -88,6 +88,19 @@ typedef struct _BootConfig {
 
 extern BootConfig bootconfig;
 #endif	/* _KERNEL && (RISCPC || RC7500) */
+
+#if defined(_KERNEL) && defined(EBSA285)
+
+#define	DRAM_BLOCKS	1
+
+typedef struct _BootConfig {
+	PhysMem dram[DRAM_BLOCKS];
+	u_int dramblocks;
+} BootConfig;
+
+extern BootConfig bootconfig;
+#define MAX_BOOT_STRING 255
+#endif	/* _KERNEL && EBSA285 */
 
 #if defined(_KERNEL) && defined(OFW)
 /*
