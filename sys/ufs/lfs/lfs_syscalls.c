@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_syscalls.c,v 1.42 2000/06/22 18:11:45 perseant Exp $	*/
+/*	$NetBSD: lfs_syscalls.c,v 1.43 2000/06/27 20:57:16 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -254,7 +254,7 @@ sys_lfs_markv(p, v, retval)
 					iwritten++;
 #endif
 				if(lfs_fastvget_unlock) {
-					VOP_UNLOCK(vp,0);
+					VOP_UNLOCK(vp, 0);
 					numlocked--;
 				}
 				lfs_vunref(vp);
@@ -299,11 +299,11 @@ sys_lfs_markv(p, v, retval)
 				numrefed++;
 			}
 			if(error) {
-#ifdef DIAGNOSTIC
+#ifdef DEBUG_LFS
 				printf("lfs_markv: lfs_fastvget failed with %d (ino %d, segment %d)\n", 
 				       error, blkp->bi_inode,
 				       datosn(fs, blkp->bi_daddr));
-#endif /* DIAGNOSTIC */
+#endif /* DEBUG_LFS */
 				/*
 				 * If we got EAGAIN, that means that the
 				 * Inode was locked.  This is
@@ -439,7 +439,7 @@ sys_lfs_markv(p, v, retval)
 			iwritten++;
 #endif
 		if(lfs_fastvget_unlock) {
-			VOP_UNLOCK(vp,0);
+			VOP_UNLOCK(vp, 0);
 			numlocked--;
 		}
 		lfs_vunref(vp);
@@ -609,7 +609,7 @@ sys_lfs_bmapv(p, v, retval)
 			 */
 			if(v_daddr != LFS_UNUSED_DADDR) {
 				if(need_unlock) {
-					VOP_UNLOCK(vp,0);
+					VOP_UNLOCK(vp, 0);
 					numlocked--;
 				}
 				lfs_vunref(vp);
@@ -643,23 +643,29 @@ sys_lfs_bmapv(p, v, retval)
 					need_unlock = 0;
 					continue;
 				}
+				numrefed++;
 				if(VOP_ISLOCKED(vp)) {
-					/* printf("lfs_bmapv: inode %d inlocked\n",ip->i_number); */
+#ifdef DEBUG_LFS
+					printf("lfs_bmapv: inode %d inlocked\n",ip->i_number);
+#endif
+					v_daddr = LFS_UNUSED_DADDR;
 					need_unlock = 0;
+					lfs_vunref(vp);
+					--numrefed;
+					continue;
 				} else {
-					VOP_LOCK(vp,LK_EXCLUSIVE);
+					vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 					need_unlock = FVG_UNLOCK;
 					numlocked++;
 				}
-				numrefed++;
 			} else {
 				error = VFS_VGET(mntp, blkp->bi_inode, &vp);
 				if(error) {
-					v_daddr = LFS_UNUSED_DADDR;
-					need_unlock = 0;
 #ifdef DEBUG_LFS
 					printf("lfs_bmapv: vget of ino %d failed with %d",blkp->bi_inode,error);
 #endif
+					v_daddr = LFS_UNUSED_DADDR;
+					need_unlock = 0;
 					continue;
 				} else {
 					need_unlock = FVG_PUT;
@@ -708,7 +714,7 @@ sys_lfs_bmapv(p, v, retval)
 	 */
 	if(v_daddr != LFS_UNUSED_DADDR) {
 		if(need_unlock) {
-			VOP_UNLOCK(vp,0);
+			VOP_UNLOCK(vp, 0);
 			numlocked--;
 		}
 		lfs_vunref(vp);
@@ -774,34 +780,10 @@ sys_lfs_segclean(p, v, retval)
 	fs->lfs_avail += fsbtodb(fs, fs->lfs_ssize) - 1;
 	fs->lfs_bfree += (sup->su_nsums * LFS_SUMMARY_SIZE / DEV_BSIZE) +
 		sup->su_ninos * btodb(fs->lfs_bsize);
+	fs->lfs_dmeta -= sup->su_nsums + fsbtodb(fs, sup->su_ninos);
+	if (fs->lfs_dmeta < 0)
+		fs->lfs_dmeta = 0;
 	sup->su_flags &= ~SEGUSE_DIRTY;
-#ifdef DEBUG_LFS
-	/* XXX KS - before we return, really empty the segment (i.e., fill
-	   it with zeroes).  This is only for debugging purposes. */
-	{
-		daddr_t start;
-		int offset, sizeleft, bufsize;
-		struct buf *zbp;
-		int s;
-
-		start = sntoda(fs, SCARG(uap, segment));
-		offset = (sup->su_flags & SEGUSE_SUPERBLOCK) ? LFS_SBPAD : 0;
-		sizeleft = fs->lfs_ssize * fs->lfs_bsize - offset;
-		while(sizeleft > 0) {
-			bufsize = (sizeleft < MAXPHYS) ? sizeleft : MAXPHYS;
-			zbp = lfs_newbuf(VTOI(fs->lfs_ivnode)->i_devvp, start+(offset/DEV_BSIZE), bufsize);
-			memset(zbp->b_data, 'Z', bufsize);
-			zbp->b_saveaddr = (caddr_t)fs;
-			s = splbio();
-			++zbp->b_vp->v_numoutput;
-			++fs->lfs_iocount;
-			splx(s);
-			VOP_STRATEGY(zbp);
-			offset += bufsize;
-			sizeleft -= bufsize;
-		}
-	}
-#endif
 	(void) VOP_BWRITE(bp);
 	
 	LFS_CLEANERINFO(cip, fs, bp);
@@ -926,15 +908,17 @@ lfs_fastvget(mp, ino, daddr, vpp, dinp, need_unlock)
 				return EAGAIN;
 			}
 			if (VOP_ISLOCKED(*vpp)) {
+#ifdef DEBUG_LFS
 				printf("lfs_fastvget: ino %d inlocked by pid %d\n",ip->i_number,
 				       (*vpp)->v_lock.lk_lockholder);
+#endif
 				clean_inlocked++;
 #ifdef LFS_EAGAIN_FAIL
 				lfs_vunref(*vpp);
 				return EAGAIN;
 #endif /* LFS_EAGAIN_FAIL */
 			} else {
-				VOP_LOCK(*vpp,LK_EXCLUSIVE);
+				vn_lock(*vpp, LK_EXCLUSIVE | LK_RETRY);
 				*need_unlock |= FVG_UNLOCK;
 			}
 			return (0);
