@@ -1,4 +1,4 @@
-/*	$NetBSD: bioscall.s,v 1.1 1997/10/14 03:54:20 jtk Exp $ */
+/*	$NetBSD: bioscall.s,v 1.2 1997/10/19 22:59:50 jtk Exp $ */
 /*
  *  Copyright (c) 1997 John T. Kohl
  *  All rights reserved.
@@ -47,7 +47,7 @@ _biostramp_image_size:
 	.long	9b - 8b
 
 /*
- * void bioscall(int function, struct apmregs *regs):
+ * void bioscall(int function, struct bioscallregs *regs):
  * 	call the BIOS interrupt "function" from real mode with
  *	registers as specified in "regs"
  *	for the flags, though, only these flags are passed to the BIOS--
