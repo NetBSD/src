@@ -1,4 +1,4 @@
-/*	$NetBSD: arp.c,v 1.32 2001/10/06 19:09:44 bjh21 Exp $ */
+/*	$NetBSD: arp.c,v 1.33 2002/02/28 22:43:42 pooka Exp $ */
 
 /*
  * Copyright (c) 1984, 1993
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1984, 1993\n\
 #if 0
 static char sccsid[] = "@(#)arp.c	8.3 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: arp.c,v 1.32 2001/10/06 19:09:44 bjh21 Exp $");
+__RCSID("$NetBSD: arp.c,v 1.33 2002/02/28 22:43:42 pooka Exp $");
 #endif
 #endif /* not lint */
 
@@ -105,7 +105,6 @@ static int is = -1;
 
 static struct ifconf ifc;
 static char ifconfbuf[8192];
-static char *progname;
 
 int
 main(argc, argv)
@@ -116,7 +115,6 @@ main(argc, argv)
 	int op = 0;
 
 	pid = getpid();
-	progname = ((progname = strrchr(argv[0], '/')) ? progname + 1 : argv[0]);
 
 	while ((ch = getopt(argc, argv, "andsfv")) != -1)
 		switch((char)ch) {
@@ -557,7 +555,9 @@ atosdl(s, sdl)
 void
 usage()
 {
+	const char *progname;
 
+	progname = getprogname();
 	(void)fprintf(stderr, "usage: %s [-n] hostname\n", progname);
 	(void)fprintf(stderr, "usage: %s [-n] -a\n", progname);
 	(void)fprintf(stderr, "usage: %s -d [-a|hostname]\n", progname);
