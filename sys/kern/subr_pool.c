@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_pool.c,v 1.85 2003/02/23 21:25:19 pk Exp $	*/
+/*	$NetBSD: subr_pool.c,v 1.86 2003/03/16 08:06:51 matt Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1999, 2000 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.85 2003/02/23 21:25:19 pk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.86 2003/03/16 08:06:51 matt Exp $");
 
 #include "opt_pool.h"
 #include "opt_poollog.h"
@@ -169,6 +169,7 @@ struct pool_log {
 	void		*pl_addr;
 };
 
+#ifdef POOL_DIAGNOSTIC
 /* Number of entries in pool log buffers */
 #ifndef POOL_LOGSIZE
 #define	POOL_LOGSIZE	10
@@ -176,7 +177,6 @@ struct pool_log {
 
 int pool_logsize = POOL_LOGSIZE;
 
-#ifdef POOL_DIAGNOSTIC
 static __inline void
 pr_log(struct pool *pp, void *v, int action, const char *file, long line)
 {
