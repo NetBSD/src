@@ -1,4 +1,4 @@
-/* $NetBSD: wsdisplayvar.h,v 1.11 1999/02/12 11:25:23 drochner Exp $ */
+/* $NetBSD: wsdisplayvar.h,v 1.11.2.1 1999/10/19 16:42:59 he Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -183,7 +183,10 @@ int wsdisplay_internal_ioctl __P((struct wsdisplay_softc *sc,
 				  u_long cmd, caddr_t data,
 				  int flag, struct proc *p));
 
-int wsdisplay_usl_ioctl __P((struct wsdisplay_softc *, struct wsscreen *,
+int wsdisplay_usl_ioctl1 __P((struct wsdisplay_softc *,
+			     u_long, caddr_t, int, struct proc *));
+
+int wsdisplay_usl_ioctl2 __P((struct wsdisplay_softc *, struct wsscreen *,
 			     u_long, caddr_t, int, struct proc *));
 
 int wsdisplay_cfg_ioctl __P((struct wsdisplay_softc *sc,
