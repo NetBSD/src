@@ -32,8 +32,11 @@
  *
  *	@(#)proc.h	7.1 (Berkeley) 5/15/91
  *
- *	$Id: proc.h,v 1.1.1.1 1993/09/09 23:53:46 phil Exp $
+ *	proc.h,v 1.1.1.1 1993/09/09 23:53:46 phil Exp
  */
+
+#ifndef _MACHINE_PROC_H_
+#define _MACHINE_PROC_H_
 
 /*
  * Machine-dependent part of the proc structure for hp300. 
@@ -45,3 +48,5 @@ struct mdproc {
 
 /* md_flags */
 #define	MDP_AST		0x0001	/* async trap pending */
+
+#endif

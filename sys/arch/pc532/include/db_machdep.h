@@ -25,7 +25,7 @@
  * any improvements or extensions that they make and grant Carnegie Mellon 
  * the rights to redistribute these changes.
  *
- *	$Id: db_machdep.h,v 1.1.1.1 1993/09/09 23:53:46 phil Exp $
+ *	db_machdep.h,v 1.1.1.1 1993/09/09 23:53:46 phil Exp
  */
 /*
  * HISTORY
@@ -43,8 +43,8 @@
  *
  */
 
-#ifndef	_NS532_DB_MACHDEP_H_
-#define	_NS532_DB_MACHDEP_H_
+#ifndef	_MACHINE_DB_MACHDEP_H_
+#define	_MACHINE_DB_MACHDEP_H_
 
 /* #include <mach/ns532/vm_types.h> */
 /* #include <mach/ns532/vm_param.h> */
@@ -56,8 +56,7 @@
 /* #include <ns532/thread.h>		/* for thread_status */
 #include <machine/frame.h>	/* For struct trapframe */
 
-/* #include <ns532/psl.h> */
-/* #include <ns532/trap.h> */
+#include <machine/psl.h>
 #include <machine/trap.h>
 
 typedef	vm_offset_t	db_addr_t;	/* address - unsigned */
@@ -129,4 +128,4 @@ void		db_task_name(/* task_t */);
 
 #define db_thread_fp_used(thread)	((thread)->pcb->fps && (thread)->pcb->fps->valid)
 
-#endif	/* _NS532_DB_MACHDEP_H_ */
+#endif

@@ -36,7 +36,7 @@
  *
  *	@(#)pmap.h	7.4 (Berkeley) 5/12/91
  * 
- *	$Id: pmap.h,v 1.1.1.1 1993/09/09 23:53:46 phil Exp $
+ *	pmap.h,v 1.1.1.1 1993/09/09 23:53:46 phil Exp
  */
 
 /*
@@ -49,8 +49,8 @@
  * from hp300:	@(#)pmap.h	7.2 (Berkeley) 12/16/90
  */
 
-#ifndef	_PMAP_MACHINE_
-#define	_PMAP_MACHINE_	1
+#ifndef	_MACHINE_PMAP_H_
+#define	_MACHINE_PMAP_H_
 
 /*
  * 532 page table entry and page table directory
@@ -240,4 +240,4 @@ pv_entry_t	pv_table;		/* array of entries, one per page */
 
 #endif	KERNEL
 
-#endif	_PMAP_MACHINE_
+#endif
