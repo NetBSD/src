@@ -1,4 +1,4 @@
-/*	$NetBSD: mmu.c,v 1.1 2002/02/17 20:55:56 uch Exp $	*/
+/*	$NetBSD: mmu.c,v 1.2 2002/02/22 19:46:34 uch Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -120,6 +120,31 @@ sh_mmu_init()
 		__sh_INTEVT	= 0xff000028;
 	}
 
+}
+
+void
+sh_mmu_information()
+{
+	u_int32_t r;
+
+	if (CPU_IS_SH3) {
+		printf("4-way set-associative 128 TLB entries\n");
+		r = _reg_read_4(SH3_MMUCR);
+		printf("%s mode, %s virtual storage mode\n",
+		    r & SH3_MMUCR_IX
+		    ? "ASID+VPN" : "VPN",
+		    r & SH3_MMUCR_SV ? "single" : "multiple");
+	}
+
+	if (CPU_IS_SH4) {
+		printf("full-associative 4 ITLB, 64 UTLB entries\n");
+		r = _reg_read_4(SH4_MMUCR);
+		printf("%s virtual storage mode, SQ access: kernel%s, ",
+		    r & SH3_MMUCR_SV ? "single" : "multiple",
+		    r & SH4_MMUCR_SQMD ? "" : "/user");
+		printf("wired %d\n", (r & SH4_MMUCR_URB_MASK) >>
+		    SH4_MMUCR_URB_SHIFT);
+	}
 }
 
 void
