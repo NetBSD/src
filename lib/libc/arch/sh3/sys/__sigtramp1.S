@@ -1,4 +1,4 @@
-/*	$NetBSD: __sigtramp1.S,v 1.1 2002/07/09 23:32:38 thorpej Exp $	*/
+/*	$NetBSD: __sigtramp1.S,v 1.2 2004/03/26 20:35:37 drochner Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -48,6 +48,6 @@
  */
 NENTRY(__sigtramp_sigcontext_1)
 	mov	r15, r4			/* get pointer to sigcontext */
-	SYSTRAP(__sigreturn14)		/* and call sigreturn() */
+	SYSTRAP(compat_16___sigreturn14) /* and call sigreturn() */
 	mov	r0, r4			/* exit with errno */
 	SYSTRAP(exit)			/* if sigreturn fails */
