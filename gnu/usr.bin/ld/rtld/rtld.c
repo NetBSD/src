@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld.c,v 1.60 1998/05/12 21:22:28 pk Exp $	*/
+/*	$NetBSD: rtld.c,v 1.61 1998/05/19 12:15:38 pk Exp $	*/
 
 /*
  * Copyright (c) 1993 Paul Kranenburg
@@ -96,6 +96,9 @@ struct somap_private {
 #define _RTLD_DL	4	/* A dlopen'ed object */
 #define _RTLD_GLOBAL	8	/* Map is open to global search */
 	size_t		spd_size;
+	int		spd_symbolsize;
+	long		spd_symbolbase;
+	char		*spd_stringbase;
 
 #ifdef SUN_COMPAT
 	long		spd_offset;	/* Correction for Sun main programs */
@@ -121,17 +124,18 @@ struct somap_private {
 	(smp->som_addr + LM_OFFSET(smp) + LD_REL((smp)->som_dynamic)))
 
 /* Start of symbols */
+#define LM_SYMBOLBASE(smp)	((long) \
+	(smp->som_addr + LM_OFFSET(smp) + LD_SYMBOL((smp)->som_dynamic)))
 #define LM_SYMBOL(smp, i)	((struct nzlist *) \
-	(smp->som_addr + LM_OFFSET(smp) + LD_SYMBOL((smp)->som_dynamic) + \
-		i * (LD_VERSION_NZLIST_P(smp->som_dynamic->d_version) ? \
-			sizeof(struct nzlist) : sizeof(struct nlist))))
+	(LM_PRIVATE(smp)->spd_symbolbase + \
+	(i) * LM_PRIVATE(smp)->spd_symbolsize))
 
 /* Start of hash table */
 #define LM_HASH(smp)	((struct rrs_hash *) \
 	((smp)->som_addr + LM_OFFSET(smp) + LD_HASH((smp)->som_dynamic)))
 
 /* Start of strings */
-#define LM_STRINGS(smp)	((char *) \
+#define LM_STRINGBASE(smp)	((char *) \
 	((smp)->som_addr + LM_OFFSET(smp) + LD_STRINGS((smp)->som_dynamic)))
 
 /* Start of search paths */
@@ -572,11 +576,21 @@ alloc_link_map(path, sodp, parent, addr, size, dp)
 	smpp->spd_flags = 0;
 	smpp->spd_parent = parent;
 	smpp->spd_size = size;
-
 #ifdef SUN_COMPAT
 	smpp->spd_offset =
 		(addr==0 && dp && dp->d_version==LD_VERSION_SUN) ? PAGSIZ : 0;
 #endif
+
+	/*
+	 * Pre-compute the location of symbol and string tables;
+	 * they do not change while this object is loaded.
+	 */
+	smpp->spd_symbolsize = LD_VERSION_NZLIST_P(dp->d_version)
+				? sizeof(struct nzlist)
+				: sizeof(struct nlist);
+	smpp->spd_symbolbase = LM_SYMBOLBASE(smp);
+	smpp->spd_stringbase = LM_STRINGBASE(smp);
+
 	return smp;
 }
 
@@ -788,8 +802,8 @@ check_text_reloc(r, smp, addr)
 		return;
 
 	if (RELOC_EXTERN_P(r))
-		sym = LM_STRINGS(smp) +
-				LM_SYMBOL(smp, RELOC_SYMBOL(r))->nz_strx;
+		sym = LM_PRIVATE(smp)->spd_stringbase +
+		      LM_SYMBOL(smp, RELOC_SYMBOL(r))->nz_strx;
 	else
 		sym = "";
 
@@ -816,11 +830,9 @@ reloc_map(smp)
 	struct _dynamic		*dp = smp->som_dynamic;
 	struct relocation_info	*r = LM_REL(smp);
 	struct relocation_info	*rend = r + LD_RELSZ(dp)/sizeof(*r);
-	long			symbolbase = (long)LM_SYMBOL(smp, 0);
-	char			*stringbase = LM_STRINGS(smp);
-	int symsize		= LD_VERSION_NZLIST_P(dp->d_version) ?
-					sizeof(struct nzlist) :
-					sizeof(struct nlist);
+	long			symbolbase = LM_PRIVATE(smp)->spd_symbolbase;
+	char			*stringbase = LM_PRIVATE(smp)->spd_stringbase;
+	int			symsize = LM_PRIVATE(smp)->spd_symbolsize;
 
 	if (LD_PLTSZ(dp))
 		md_fix_jmpslot(LM_PLT(smp),
@@ -1043,7 +1055,7 @@ lookup(name, ref_map, src_map, strong)
 	struct	nzlist		*weak_np = 0;
 
 	if ((rtsp = lookup_rts(name)) != NULL)
-		return rtsp->rt_sp;
+		return (rtsp->rt_sp);
 
 	/*
 	 * Search all maps for a definition of NAME
@@ -1093,11 +1105,10 @@ restart:
 			/* Nothing in this bucket */
 			continue;
 
-		symbolbase = (long)LM_SYMBOL(smp, 0);
-		stringbase = LM_STRINGS(smp);
-		symsize	= LD_VERSION_NZLIST_P(smp->som_dynamic->d_version)?
-				sizeof(struct nzlist) :
-				sizeof(struct nlist);
+		symbolbase = LM_PRIVATE(smp)->spd_symbolbase;
+		stringbase = LM_PRIVATE(smp)->spd_stringbase;
+		symsize = LM_PRIVATE(smp)->spd_symbolsize;
+
 		while (hp) {
 			np = (struct nzlist *)
 				(symbolbase + hp->rh_symbolnum * symsize);
@@ -1240,11 +1251,9 @@ __dladdr(addr, dli)
 		 * in search for the nearest symbol.
 		 */
 		hashbase = LM_HASH(smp);
-		symbolbase = (long)LM_SYMBOL(smp, 0);
-		stringbase = LM_STRINGS(smp);
-		symsize	= LD_VERSION_NZLIST_P(smp->som_dynamic->d_version)?
-				sizeof(struct nzlist) :
-				sizeof(struct nlist);
+		symbolbase = LM_PRIVATE(smp)->spd_symbolbase;
+		stringbase = LM_PRIVATE(smp)->spd_stringbase;
+		symsize = LM_PRIVATE(smp)->spd_symbolsize;
 
 		for (i = 0; i < buckets; i++) {
 			hp = hashbase + i;
@@ -1311,7 +1320,7 @@ binder(jsp)
 	 */
 	for (smp = link_map_head; smp; smp = smp->som_next) {
 		if (LM_PLT(smp) < jsp &&
-			jsp < LM_PLT(smp) + LD_PLTSZ(smp->som_dynamic)/sizeof(*jsp))
+		    jsp < LM_PLT(smp) + LD_PLTSZ(smp->som_dynamic)/sizeof(*jsp))
 			break;
 	}
 
@@ -1321,8 +1330,8 @@ binder(jsp)
 	index = jsp->reloc_index & JMPSLOT_RELOC_MASK;
 
 	/* Get the local symbol this jmpslot refers to */
-	sym = LM_STRINGS(smp) +
-		LM_SYMBOL(smp,RELOC_SYMBOL(&LM_REL(smp)[index]))->nz_strx;
+	sym = LM_PRIVATE(smp)->spd_stringbase +
+	      LM_SYMBOL(smp,RELOC_SYMBOL(&LM_REL(smp)[index]))->nz_strx;
 
 	np = lookup(sym, smp, &src_map, 1);
 	if (np == NULL)
