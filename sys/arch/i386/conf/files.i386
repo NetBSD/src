@@ -1,4 +1,4 @@
-#	$NetBSD: files.i386,v 1.75 1996/07/09 09:23:03 mycroft Exp $
+#	$NetBSD: files.i386,v 1.76 1996/08/05 21:16:02 soda Exp $
 #
 # new style config file for i386 architecture
 #
@@ -133,6 +133,11 @@ file	arch/i386/isa/spkr.c		spkr needs-flag
 device	joy
 attach	joy at isa
 file	arch/i386/isa/joy.c		joy needs-flag
+
+# Adaptec AHA-284x VL SCSI controllers
+# device declaration in sys/conf/files
+attach	ahc at isa with ahc_isa
+file	arch/i386/isa/ahc_isa.c		ahc_isa
 
 #
 # EISA-only drivers
