@@ -1,4 +1,4 @@
-/*	$NetBSD: ipfs.c,v 1.1.1.1 2000/05/03 10:55:47 veego Exp $	*/
+/*	$NetBSD: ipfs.c,v 1.2 2000/05/05 20:59:17 veego Exp $	*/
 
 /*
  * Copyright (C) 1999 by Darren Reed.
@@ -429,7 +429,7 @@ char *file;
 			break;
 		if (i != sizeof(ips)) {
 			fprintf(stderr, "incomplete read: %d != %d\n", i,
-				sizeof(ips));
+				(int)sizeof(ips));
 			close(sfd);
 			return 1;
 		}
@@ -522,7 +522,7 @@ char *file;
 			break;
 		if (i != sizeof(ipn)) {
 			fprintf(stderr, "incomplete read: %d != %d\n", i,
-				sizeof(ipn));
+				(int)sizeof(ipn));
 			close(nfd);
 			return 1;
 		}
