@@ -1,4 +1,4 @@
-/*	$NetBSD: rd94.h,v 1.2 2000/06/09 05:33:06 soda Exp $	*/
+/*	$NetBSD: rd94.h,v 1.1 2000/12/24 09:25:29 ur Exp $	*/
 /*	$OpenBSD: pica.h,v 1.4 1996/09/14 15:58:28 pefo Exp $ */
 
 /*

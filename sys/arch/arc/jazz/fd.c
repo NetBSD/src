@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.23 2000/06/29 08:34:11 mrg Exp $	*/
+/*	$NetBSD: fd.c,v 1.1 2000/12/24 09:25:28 ur Exp $	*/
 /*	$OpenBSD: fd.c,v 1.6 1998/10/03 21:18:57 millert Exp $	*/
 /*	NetBSD: fd.c,v 1.78 1995/07/04 07:23:09 mycroft Exp 	*/
 
@@ -100,9 +100,10 @@
 #include <machine/autoconf.h>
 
 #include <mips/locore.h> /* for mips3_HitFlushDCache() */
-#include <arc/dev/fdreg.h>
+#include <arc/jazz/fdreg.h>
+#include <arc/jazz/jazziovar.h>
 #include <arc/jazz/jazzdmatlbreg.h>
-#include <arc/dev/dma.h>
+#include <arc/jazz/dma.h>
 
 #include "locators.h"
 
@@ -264,10 +265,10 @@ fdcprobe(parent, match, aux)
 	struct cfdata *match;
 	void *aux;
 {
-	register struct confargs *ca = aux;
-	int iobase = (long)BUS_CVTADDR(ca);
+	struct jazzio_attach_args *ja = aux;
+	int iobase = ja->ja_addr;
 
-	if (!BUS_MATCHNAME(ca, "fdc"))
+	if (strcmp(ja->ja_name, "fdc") != 0)
 		return (0);
 
 	/* reset */
@@ -317,11 +318,11 @@ fdcattach(parent, self, aux)
 	void *aux;
 {
 	struct fdc_softc *fdc = (void *)self;
-	struct confargs *ca = aux;
+	struct jazzio_attach_args *ja = aux;
 	struct fdc_attach_args fa;
 	int type;
 
-	fdc->sc_iobase = (long)BUS_CVTADDR(ca);
+	fdc->sc_iobase = ja->ja_addr;
 	fdc->sc_state = DEVIDLE;
 	TAILQ_INIT(&fdc->sc_drives);
 
@@ -333,7 +334,7 @@ fdcattach(parent, self, aux)
 	callout_init(&fdc->sc_timo_ch); 
 	callout_init(&fdc->sc_intr_ch);
 
-	BUS_INTR_ESTABLISH(ca, fdcintr, fdc);
+	jazzio_intr_establish(ja->ja_intr, fdcintr, fdc);
 
 	/*
 	 * No way yet to determine default disk types.

@@ -1,4 +1,4 @@
-/*	$NetBSD: pccons.c,v 1.22 2000/11/02 00:29:17 eeh Exp $	*/
+/*	$NetBSD: pccons.c,v 1.23 2000/12/24 09:25:27 ur Exp $	*/
 /*	$OpenBSD: pccons.c,v 1.22 1999/01/30 22:39:37 imp Exp $	*/
 /*	NetBSD: pccons.c,v 1.89 1995/05/04 19:35:20 cgd Exp	*/
 /*	NetBSD: pms.c,v 1.21 1995/04/18 02:25:18 mycroft Exp	*/
@@ -79,8 +79,9 @@
 #include <machine/pccons.h>
 #include <arc/arc/arctype.h>
 #include <arc/arc/arcbios.h>
-#include <arc/pica/pica.h>
+#include <arc/jazz/pica.h>
 #include <arc/dti/desktech.h>
+#include <arc/jazz/jazziovar.h>
 
 #include <dev/isa/isavar.h>
 #include <machine/isa_machdep.h>
@@ -182,7 +183,7 @@ void pccnpollc __P((dev_t, int));
 
 extern struct cfdriver pc_cd;
 
-struct cfattach pc_pica_ca = {
+struct cfattach pc_jazzio_ca = {
 	 sizeof(struct pc_softc), pcprobe, pcattach
 };
 
@@ -548,12 +549,12 @@ pcprobe(parent, match, aux)
 	struct cfdata *match;
 	void *aux;
 {
-	struct confargs *ca = aux;
+	struct jazzio_attach_args *ja = aux;
 	u_int i;
 
 	/* Make shure we're looking for this type of device */
 	if(!strcmp((parent)->dv_cfdata->cf_driver->cd_name, "pica")) {
-		if(!BUS_MATCHNAME(ca, "pckbd"))
+		if (strcmp(ja->ja_name, "pckbd") != 0)
 			return(0);
 
 		switch (cputype) { /* XXX ick */
@@ -652,7 +653,7 @@ pcattach(parent, self, aux)
 	struct device *parent, *self;
 	void *aux;
 {
-	struct confargs *ca = aux;
+	struct jazzio_attach_args *ja = aux;
 	struct isa_attach_args *ia = aux;
 	struct pc_softc *sc = (void *)self;
 
@@ -662,7 +663,7 @@ pcattach(parent, self, aux)
 	switch (cputype) {
 	case ACER_PICA_61:
 	case NEC_R96:
-		BUS_INTR_ESTABLISH(ca, pcintr, (void *)(long)sc);
+		jazzio_intr_establish(ja->ja_intr, pcintr, (void *)(long)sc);
 		break;
 	case DESKSTATION_RPC44:                     /* XXX ick */
 	case DESKSTATION_TYNE:

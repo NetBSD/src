@@ -1,4 +1,4 @@
-/*	$NetBSD: dma.h,v 1.7 2000/06/09 05:22:25 soda Exp $	*/
+/*	$NetBSD: dma.h,v 1.1 2000/12/24 09:25:28 ur Exp $	*/
 /*	$OpenBSD: dma.h,v 1.3 1997/04/19 17:19:51 pefo Exp $	*/
 
 /*
@@ -80,16 +80,11 @@ typedef struct dma_softc {
 	struct device	sc_dev;		/* use as a device */
 	struct esp_softc *sc_esp;
 	bus_addr_t	dma_va;		/* Viritual address for transfer */
-	vaddr_t		req_va;		/* Original request va */
-	bus_addr_t	next_va;	/* Value to program into dma regs */
-	int		next_size;	/* Value to program into dma regs */
 	int		mode;		/* Mode register value and direction */
 	jazz_dma_pte_t	*pte_base;	/* Pointer to dma tlb array */
 	int		pte_size;	/* Size of pte allocated pte array */
 	pDmaReg		dma_reg;	/* Pointer to dma registers */
 	int		sc_active;	/* Active flag */
-	char		**sc_dmaaddr;	/* Pointer to dma address in dev */
-	int		*sc_dmalen;	/* Pointer to len counter in dev */
 	void (*reset)(struct dma_softc *);	/* Reset routine pointer */
 	void (*enintr)(struct dma_softc *);	/* Int enab routine pointer */
 	void (*map)(struct dma_softc *, char *, size_t, int);
@@ -114,7 +109,6 @@ typedef struct dma_softc {
 void picaDmaInit __P((void));
 void picaDmaTLBAlloc __P((dma_softc_t *));
 void picaDmaTLBFree __P((dma_softc_t *));
-void picaDmaTLBMap __P((dma_softc_t *));
 void picaDmaMap __P((struct dma_softc *, char *, size_t, int));
 void picaDmaStart __P((struct dma_softc *, char *, size_t, int));
 void picaDmaFlush __P((struct dma_softc *, char *, size_t, int));

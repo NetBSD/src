@@ -1,4 +1,4 @@
-/*	$NetBSD: ascreg.h,v 1.6 2000/01/23 21:01:53 soda Exp $	*/
+/*	$NetBSD: ascreg.h,v 1.1 2000/12/24 09:25:28 ur Exp $	*/
 /*	$OpenBSD: ascreg.h,v 1.1.1.1 1996/06/24 09:07:19 pefo Exp $	*/
 
 /*-

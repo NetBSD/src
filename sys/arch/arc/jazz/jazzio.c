@@ -1,4 +1,4 @@
-/*	$NetBSD: picabus.c,v 1.14 2000/06/29 08:34:12 mrg Exp $	*/
+/*	$NetBSD: jazzio.c,v 1.1 2000/12/24 09:25:29 ur Exp $	*/
 /*	$OpenBSD: picabus.c,v 1.11 1999/01/11 05:11:10 millert Exp $	*/
 /*	NetBSD: tc.c,v 1.2 1995/03/08 00:39:05 cgd Exp 	*/
 
@@ -44,36 +44,36 @@
 #include <machine/pio.h>
 #include <machine/autoconf.h>
 
-#include <arc/pica/pica.h>
-#include <arc/pica/rd94.h>
+#include <arc/jazz/jazziovar.h>
+#include <arc/jazz/pica.h>
+#include <arc/jazz/rd94.h>
 #include <arc/arc/arctype.h>
 #include <arc/jazz/jazzdmatlbreg.h>
-#include <arc/dev/dma.h>
+#include <arc/jazz/dma.h>
 
-struct pica_softc {
+struct jazzio_softc {
 	struct	device sc_dv;
 	struct	abus sc_bus;
+	struct	arc_bus_dma_tag sc_dmat;
 	struct	pica_dev *sc_devs;
 };
 
 /* Definition of the driver for autoconfig. */
-int	picamatch(struct device *, struct cfdata *, void *);
-void	picaattach(struct device *, struct device *, void *);
-int	picaprint(void *, const char *);
+int	jazziomatch(struct device *, struct cfdata *, void *);
+void	jazzioattach(struct device *, struct device *, void *);
+int	jazzioprint(void *, const char *);
 
-struct cfattach pica_ca = {
-	sizeof(struct pica_softc), picamatch, picaattach
+struct cfattach jazzio_ca = {
+	sizeof(struct jazzio_softc), jazziomatch, jazzioattach
 };
-extern struct cfdriver pica_cd;
+extern struct cfdriver jazzio_cd;
 
-void	pica_intr_establish __P((struct confargs *, int (*)(void *), void *));
-void	pica_intr_disestablish __P((struct confargs *));
-caddr_t	pica_cvtaddr __P((struct confargs *));
-int	pica_matchname __P((struct confargs *, char *));
-int	pica_iointr __P((unsigned int, struct clockframe *));
-int	pica_clkintr __P((unsigned int, struct clockframe *));
-int	rd94_iointr __P((unsigned int, struct clockframe *));
-int	rd94_clkintr __P((unsigned int, struct clockframe *));
+void	jazzio_intr_establish(int, int (*)(void *), void *);
+void	jazzio_intr_disestablish(int);
+int	pica_iointr(unsigned int, struct clockframe *);
+int	pica_clkintr(unsigned int, struct clockframe *);
+int	rd94_iointr(unsigned int, struct clockframe *);
+int	rd94_clkintr(unsigned int, struct clockframe *);
 
 intr_handler_t pica_clock_handler;
 
@@ -171,7 +171,7 @@ struct pica_dev nec_rd94_cpu[] = {
 	   0, pica_intrnull, (void *)NULL, },
 	{{ "sonic",	4, 0, },
 	   RD94_SYS_LB_IE_SONIC, pica_intrnull,	(void *)RD94_SYS_SONIC, },
-	{{ NULL,	5, NULL, },
+	{{ NULL,	5, 0, },
 	   0, pica_intrnull, (void *)NULL, },
 	{{ NULL,	6, NULL, },
 	   0, pica_intrnull, (void *)NULL, },
@@ -198,10 +198,13 @@ struct pica_dev *pica_cpu_devs[] = {
 };
 int npica_cpu_devs = sizeof pica_cpu_devs / sizeof pica_cpu_devs[0];
 
+int jazzio_found = 0;
 int local_int_mask = 0;	/* Local interrupt enable mask */
 
+extern struct arc_bus_space	pica_bus;
+
 int
-picamatch(parent, match, aux)
+jazziomatch(parent, match, aux)
 	struct device *parent;
 	struct cfdata *match;
 	void *aux;
@@ -209,11 +212,11 @@ picamatch(parent, match, aux)
 	struct confargs *ca = aux;
 
         /* Make sure that we're looking for a PICA. */
-        if (strcmp(ca->ca_name, pica_cd.cd_name) != 0)
+        if (strcmp(ca->ca_name, jazzio_cd.cd_name) != 0)
                 return (0);
 
         /* Make sure that unit exists. */
-	if (match->cf_unit != 0 ||
+	if (jazzio_found ||
 	    cputype > npica_cpu_devs || pica_cpu_devs[cputype] == NULL)
 		return (0);
 
@@ -221,16 +224,18 @@ picamatch(parent, match, aux)
 }
 
 void
-picaattach(parent, self, aux)
+jazzioattach(parent, self, aux)
 	struct device *parent;
 	struct device *self;
 	void *aux;
 {
-	struct pica_softc *sc = (struct pica_softc *)self;
-	struct confargs *nca;
+	struct jazzio_softc *sc = (struct jazzio_softc *)self;
+	struct jazzio_attach_args ja;
 	int i;
 
 	printf("\n");
+
+	jazzio_found = 1;
 
 	/* keep our CPU device description handy */
 	sc->sc_devs = pica_cpu_devs[cputype];
@@ -250,14 +255,12 @@ picaattach(parent, self, aux)
 	}
 
 	sc->sc_bus.ab_dv = (struct device *)sc;
-	sc->sc_bus.ab_type = BUS_PICA;
-	sc->sc_bus.ab_intr_establish = pica_intr_establish;
-	sc->sc_bus.ab_intr_disestablish = pica_intr_disestablish;
-	sc->sc_bus.ab_cvtaddr = pica_cvtaddr;
-	sc->sc_bus.ab_matchname = pica_matchname;
 
 	/* Initialize PICA Dma */
 	picaDmaInit();
+
+	/* Create bus_dma_tag */
+	jazz_bus_dma_tag_init(&sc->sc_dmat);
 
 	/* Try to configure each PICA attached device */
 	for (i = 0; sc->sc_devs[i].ps_ca.ca_slot >= 0; i++) {
@@ -265,48 +268,40 @@ picaattach(parent, self, aux)
 		if(sc->sc_devs[i].ps_ca.ca_name == NULL)
 			continue; /* Empty slot */
 
-		nca = &sc->sc_devs[i].ps_ca;
-		nca->ca_bus = &sc->sc_bus;
+		ja.ja_name = sc->sc_devs[i].ps_ca.ca_name;
+		ja.ja_bus = &sc->sc_bus;
+		ja.ja_bust = &pica_bus;
+		ja.ja_dmat = &sc->sc_dmat;
+		ja.ja_addr = (bus_addr_t)sc->sc_devs[i].ps_base;
+		ja.ja_intr = sc->sc_devs[i].ps_ca.ca_slot;
+		ja.ja_dma = 0;
 
 		/* Tell the autoconfig machinery we've found the hardware. */
-		config_found(self, nca, picaprint);
+		config_found(self, &ja, jazzioprint);
 	}
 }
 
 int
-picaprint(aux, pnp)
+jazzioprint(aux, pnp)
 	void *aux;
 	const char *pnp;
 {
-	struct confargs *ca = aux;
+	struct jazzio_attach_args *ja = aux;
 
         if (pnp)
-                printf("%s at %s", ca->ca_name, pnp);
-        printf(" slot %d offset 0x%x", ca->ca_slot, ca->ca_offset);
+                printf("%s at %s", ja->ja_name, pnp);
+        printf(" addr 0x%lx intr %d", ja->ja_addr, ja->ja_intr);
         return (UNCONF);
 }
 
-caddr_t
-pica_cvtaddr(ca)
-	struct confargs *ca;
-{
-	struct pica_softc *sc = pica_cd.cd_devs[0];
-
-	return(sc->sc_devs[ca->ca_slot].ps_base + ca->ca_offset);
-
-}
-
 void
-pica_intr_establish(ca, handler, val)
-	struct confargs *ca;
+jazzio_intr_establish(slot, handler, val)
+	int slot;
 	intr_handler_t handler;
 	void *val;
 {
-	struct pica_softc *sc = pica_cd.cd_devs[0];
+	struct jazzio_softc *sc = jazzio_cd.cd_devs[0];
 
-	int slot;
-
-	slot = ca->ca_slot;
 	if(slot == 0) {		/* Slot 0 is special, clock */
 		pica_clock_handler = handler;
 		switch (cputype) {
@@ -353,26 +348,15 @@ pica_intr_establish(ca, handler, val)
 }
 
 void
-pica_intr_disestablish(ca)
-	struct confargs *ca;
-{
+jazzio_intr_disestablish(slot)
 	int slot;
-
-	slot = ca->ca_slot;
+{
 	if(slot != 0)		 {	/* Slot 0 is special, clock */
 		local_int_mask &= ~int_table[slot].int_mask;
 		int_table[slot].int_mask = 0;
 		int_table[slot].int_hand = pica_intrnull;
 		int_table[slot].param = (void *)NULL;
 	}
-}
-
-int
-pica_matchname(ca, name)
-	struct confargs *ca;
-	char *name;
-{
-	return (strcmp(name, ca->ca_name) == 0);
 }
 
 int

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sn.c,v 1.22 2000/11/15 01:02:12 thorpej Exp $	*/
+/*	$NetBSD: if_sn.c,v 1.1 2000/12/24 09:25:29 ur Exp $	*/
 /*	$OpenBSD: if_sn.c,v 1.12 1999/05/13 15:44:48 jason Exp $	*/
 
 /*
@@ -66,11 +66,12 @@
 
 #include <mips/locore.h> /* for mips3_HitFlushDCache() */
 
+#include <arc/jazz/jazziovar.h>
 #include <arc/jazz/jazzdmatlbreg.h>
-#include <arc/dev/dma.h>
+#include <arc/jazz/dma.h>
 
 #define SONICDW 32
-#include <arc/dev/if_snreg.h>
+#include <arc/jazz/if_snreg.h>
 
 #define SWR(a, x) 	(a) = (x)
 #define SRD(a)		((a) & 0xffff)
@@ -247,11 +248,10 @@ snmatch(parent, match, aux)
 	struct cfdata *match;
 	void *aux;
 {
-	struct confargs *ca = aux;
+	struct jazzio_attach_args *ja = aux;
 
-	/* XXX CHECK BUS */
 	/* make sure that we're looking for this type of device. */
-	if (!BUS_MATCHNAME(ca, "sonic"))
+	if (strcmp(ja->ja_name, "sonic") != 0)
 		return (0);
 
 	return (1);
@@ -268,12 +268,12 @@ snattach(parent, self, aux)
 	void   *aux;
 {
 	struct sn_softc *sc = (void *)self;
-	struct confargs *ca = aux;
+	struct jazzio_attach_args *ja = aux;
 	struct ifnet *ifp = &sc->sc_if;
 	int p, pp;
 	u_int8_t myaddr[ETHER_ADDR_LEN];
 
-	sc->sc_csr = (struct sonic_reg *)BUS_CVTADDR(ca);
+	sc->sc_csr = (struct sonic_reg *)ja->ja_addr;	/* XXX */
 
 	sc->dma = &sc->__dma;
 	sn_dma_init(sc->dma, FRAGMAX * NTDA
@@ -332,7 +332,7 @@ printf("sonic buffers: rra=0x%x cda=0x%x rda=0x%x tda=0x%x rba=0x%x\n",
 printf("mapped to offset 0x%x size 0x%x\n", SONICBUF - pp, p - SONICBUF);
 #endif
 
-	BUS_INTR_ESTABLISH(ca, (intr_handler_t)snintr, (void *)sc);
+	jazzio_intr_establish(ja->ja_intr, (intr_handler_t)snintr, (void *)sc);
 
 	bcopy(sc->sc_dev.dv_xname, ifp->if_xname, IFNAMSIZ);
 	ifp->if_softc = sc;

@@ -1,4 +1,4 @@
-/*	$NetBSD: dma.c,v 1.17 2000/06/29 08:34:11 mrg Exp $	*/
+/*	$NetBSD: dma.c,v 1.1 2000/12/24 09:25:28 ur Exp $	*/
 /*	$OpenBSD: dma.c,v 1.5 1998/03/01 16:49:57 niklas Exp $	*/
 
 /*
@@ -60,12 +60,12 @@
 #include <dev/scsipi/scsipi_all.h>
 #include <dev/scsipi/scsiconf.h>
 
-#include <arc/pica/pica.h>
-#include <arc/pica/rd94.h>
+#include <arc/jazz/pica.h>
+#include <arc/jazz/rd94.h>
 #include <arc/arc/arctype.h>
 #include <arc/jazz/jazzdmatlbreg.h>
 #include <arc/jazz/jazzdmatlbvar.h>
-#include <arc/dev/dma.h>
+#include <arc/jazz/dma.h>
 
 void picaDmaReset __P((dma_softc_t *sc));
 void picaDmaEnd __P((dma_softc_t *sc));
@@ -116,24 +116,6 @@ picaDmaTLBFree(dma_softc_t *dma)
 }
 
 /*
- *  Map up a viritual address space in dma space given by
- *  the dma control structure and invalidate dma TLB cache.
- */
-
-void
-picaDmaTLBMap(dma_softc_t *sc)
-{
-	vaddr_t va;
-	jazz_dma_pte_t *dma_pte;
-
-	va = sc->next_va - sc->dma_va;
-	dma_pte = sc->pte_base + (va / JAZZ_DMA_PAGE_SIZE);
-
-	jazz_dmatlb_map_va(NULL, sc->req_va, sc->next_size, dma_pte);
-
-}
-
-/*
  *  Start local dma channel.
  */
 void
@@ -144,6 +126,8 @@ picaDmaStart(sc, addr, size, datain)
 	int     datain;
 {
 	pDmaReg regs = sc->dma_reg;
+	vaddr_t va;
+	jazz_dma_pte_t *dma_pte;
 
 	/* Halt DMA */
 	regs->dma_enab = 0;
@@ -151,17 +135,15 @@ picaDmaStart(sc, addr, size, datain)
 
 	/* Remap request space va into dma space va */
 
-	sc->req_va = (int)addr;
-	sc->next_va = sc->dma_va + jazz_dma_page_offs(addr);
-	sc->next_size = size;
-
 	/* Map up the request viritual dma space */
-	picaDmaTLBMap(sc);
+	va = jazz_dma_page_offs(addr);
+	dma_pte = sc->pte_base + (va / JAZZ_DMA_PAGE_SIZE);
+
+	jazz_dmatlb_map_va(NULL, (vaddr_t)addr, size, dma_pte);
 	jazz_dmatlb_flush();
 
 	/* Load new transfer parameters */
-	regs->dma_addr = sc->next_va;
-	regs->dma_count = sc->next_size;
+	regs->dma_addr = sc->dma_va + va;
 	regs->dma_mode = sc->mode & R4030_DMA_MODE;
 
 	sc->sc_active = 1;
@@ -187,14 +169,17 @@ picaDmaMap(sc, addr, size, offset)
 	size_t  size;
 	int	offset;
 {
+	vaddr_t va;
+	jazz_dma_pte_t *dma_pte;
+
 	/* Remap request space va into dma space va */
 
-	sc->req_va = (vaddr_t)addr;
-	sc->next_va = sc->dma_va + jazz_dma_page_offs(addr) + offset;
-	sc->next_size = size;
-
 	/* Map up the request viritual dma space */
-	picaDmaTLBMap(sc);
+
+	va = jazz_dma_page_offs(addr) + offset;
+	dma_pte = sc->pte_base + (va / JAZZ_DMA_PAGE_SIZE);
+
+	jazz_dmatlb_map_va(NULL, (vaddr_t)addr, size, dma_pte);
 }
 
 /*
@@ -231,9 +216,6 @@ void
 picaDmaEnd(dma_softc_t *sc)
 {
 	pDmaReg regs = sc->dma_reg;
-	int res;
-
-	res = regs->dma_count = sc->next_size;
 
 	/* Halt DMA */
 	regs->dma_enab = 0;

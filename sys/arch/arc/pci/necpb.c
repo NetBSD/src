@@ -1,4 +1,4 @@
-/*	$NetBSD: necpb.c,v 1.5 2000/11/09 06:15:27 thorpej Exp $	*/
+/*	$NetBSD: necpb.c,v 1.6 2000/12/24 09:25:30 ur Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -89,7 +89,7 @@
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcireg.h>
 
-#include <arc/pica/rd94.h>
+#include <arc/jazz/rd94.h>
 #include <arc/pci/necpbvar.h>
 
 int	necpbmatch __P((struct device *, struct cfdata *, void *));

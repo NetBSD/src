@@ -1,4 +1,4 @@
-/*	$NetBSD: if_snreg.h,v 1.5 2000/01/23 21:01:54 soda Exp $	*/
+/*	$NetBSD: if_snreg.h,v 1.1 2000/12/24 09:25:29 ur Exp $	*/
 /*	$OpenBSD: if_sn.h,v 1.1.1.1 1996/06/24 09:07:19 pefo Exp $	*/
 
 /*
