@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.156 2001/08/03 06:00:13 jdolecek Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.157 2001/09/15 16:12:57 chs Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -2631,7 +2631,7 @@ vfs_attach(vfs)
 	/*
 	 * Make sure this file system doesn't already exist.
 	 */
-	for (v = LIST_FIRST(&vfs_list); v != NULL; v = LIST_NEXT(v, vfs_list)) {
+	LIST_FOREACH(v, &vfs_list, vfs_list) {
 		if (strcmp(vfs->vfs_name, v->vfs_name) == 0) {
 			error = EEXIST;
 			goto out;
@@ -2680,7 +2680,7 @@ vfs_detach(vfs)
 	/*
 	 * ...and remove it from the kernel's list.
 	 */
-	for (v = LIST_FIRST(&vfs_list); v != NULL; v = LIST_NEXT(v, vfs_list)) {
+	LIST_FOREACH(v, &vfs_list, vfs_list) {
 		if (v == vfs) {
 			LIST_REMOVE(v, vfs_list);
 			break;
@@ -2700,6 +2700,18 @@ vfs_detach(vfs)
 	 */
 	vfs_opv_free(vfs->vfs_opv_descs);
 	return (0);
+}
+
+void
+vfs_reinit(void)
+{
+	struct vfsops *vfs;
+
+	LIST_FOREACH(vfs, &vfs_list, vfs_list) {
+		if (vfs->vfs_reinit) {
+			(*vfs->vfs_reinit)();
+		}
+	}
 }
 
 #ifdef DDB

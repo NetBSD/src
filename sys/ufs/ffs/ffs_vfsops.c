@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vfsops.c,v 1.85 2001/09/06 02:16:02 lukem Exp $	*/
+/*	$NetBSD: ffs_vfsops.c,v 1.86 2001/09/15 16:13:05 chs Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1994
@@ -103,6 +103,7 @@ struct vfsops ffs_vfsops = {
 	ffs_fhtovp,
 	ffs_vptofh,
 	ffs_init,
+	ffs_reinit,
 	ffs_done,
 	ffs_sysctl,
 	ffs_mountroot,
@@ -1076,6 +1077,7 @@ ffs_vget(mp, ino, vpp)
 			ip->i_dquot[i] = NODQUOT;
 	}
 #endif
+
 	/*
 	 * Put it onto its hash chain and lock it so that other requests for
 	 * this inode will block if they arrive while we are sleeping waiting
@@ -1200,6 +1202,13 @@ ffs_init()
 
 	pool_init(&ffs_inode_pool, sizeof(struct inode), 0, 0, 0, "ffsinopl",
 	    0, pool_page_alloc_nointr, pool_page_free_nointr, M_FFSNODE);
+}
+
+void
+ffs_reinit()
+{
+	softdep_reinitialize();
+	ufs_reinit();
 }
 
 void

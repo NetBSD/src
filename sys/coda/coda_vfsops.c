@@ -1,4 +1,4 @@
-/*	$NetBSD: coda_vfsops.c,v 1.12 2001/07/18 16:12:31 thorpej Exp $	*/
+/*	$NetBSD: coda_vfsops.c,v 1.13 2001/09/15 16:12:55 chs Exp $	*/
 
 /*
  * 
@@ -109,9 +109,8 @@ struct vfsops coda_vfsops = {
 	eopnotsupp,
     (int (*) (struct vnode *, struct fid *)) eopnotsupp,
     coda_init,
-#ifdef __NetBSD__
+    NULL,
     coda_done,
-#endif
     coda_sysctl,
     (int (*)(void)) eopnotsupp,
     (int (*)(struct mount *, struct mbuf *, int *, struct ucred **))
@@ -538,13 +537,11 @@ coda_init(void)
     ENTRY;
 }
 
-#ifdef __NetBSD__
 void
 coda_done(void)
 {
     ENTRY;
 }
-#endif
 
 int
 coda_sysctl(name, namelen, oldp, oldlp, newp, newl, p)

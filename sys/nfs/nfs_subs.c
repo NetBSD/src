@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_subs.c,v 1.95 2001/06/07 01:04:40 lukem Exp $	*/
+/*	$NetBSD: nfs_subs.c,v 1.96 2001/09/15 16:13:01 chs Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -1489,14 +1489,13 @@ nfs_init()
 void
 nfs_vfs_init()
 {
-	int i;
-
-	/* Ensure async daemons disabled */
-	for (i = 0; i < NFS_MAXASYNCDAEMON; i++) {
-		nfs_iodwant[i] = (struct proc *)0;
-		nfs_iodmount[i] = (struct nfsmount *)0;
-	}
 	nfs_nhinit();			/* Init the nfsnode table */
+}
+
+void
+nfs_vfs_reinit()
+{
+	nfs_nhreinit();
 }
 
 void
