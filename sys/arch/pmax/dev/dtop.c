@@ -1,4 +1,4 @@
-/*	$NetBSD: dtop.c,v 1.8 1995/09/13 07:46:03 jonathan Exp $	*/
+/*	$NetBSD: dtop.c,v 1.9 1995/09/25 21:12:33 jonathan Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -158,6 +158,7 @@ typedef volatile unsigned int	*poll_reg_t;	/* SIR */
  * Driver status
  */
 struct dtop_softc {
+	struct device	dtop_dv;
 	data_reg_t	data;
 	poll_reg_t	poll;
 	char		polling_mode;
@@ -200,7 +201,7 @@ static u_long keymodes[8] = {0, 0, 0, 0, 0, 0x0003e000, 0, 0};
  */
 int  dtopmatch  __P((struct device * parent, void *cfdata, void *aux));
 void dtopattach __P((struct device *parent, struct device *self, void *aux));
-void dtopintr	__P((int unit));
+int dtopintr	__P((void *sc));
 
 int dtop_doprobe __P((void *addr, int unit, int pri));
 
@@ -250,7 +251,7 @@ dtopattach(parent, self, aux)
 			   self->dv_unit, ca->ca_slot);
 
 	/* tie pseudo-slot to device */
-	BUS_INTR_ESTABLISH(ca, dtopintr, self->dv_unit);
+	BUS_INTR_ESTABLISH(ca, dtopintr, (void*)&dtop_softc[self->dv_unit]);
 	printf("\n");
 }
 
@@ -420,15 +421,15 @@ dtopioctl(dev, cmd, data, flag, p)
 /*
  * Interrupt routine
  */
-void
-dtopintr(unit)
-	int unit;
+int
+dtopintr(sc)
+	void *sc;
 {
 	dtop_message msg;
 	int devno;
 	dtop_softc_t dtop;
 
-	dtop = &dtop_softc[unit];
+	dtop = sc;
 	if (dtop_get_packet(dtop, &msg) < 0) {
 #ifdef DIAGNOSTIC
 	    printf("dtop: overrun (or stray)\n");
