@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.149.2.2 2004/06/30 21:25:05 jdc Exp $
+# $NetBSD: GENERIC,v 1.149.2.3 2004/07/02 17:41:00 he Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/sparc/conf/std.sparc"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.149.2.2 $"
+#ident 		"GENERIC-$Revision: 1.149.2.3 $"
 
 maxusers	32
 
@@ -79,6 +79,7 @@ options 	SYSVSEM		# System V semaphores
 #options 	SEMMNU=30	# number of undo structures in system
 options 	SYSVSHM		# System V shared memory
 #options 	SHMMAXPGS=1024	# 1024 pages is the default
+options 	P1003_1B_SEMAPHORE # p1003.1b semaphore support
 
 ## Loadable kernel module support; still under development.
 options 	LKM
