@@ -1,6 +1,6 @@
 #! /bin/sh
 
-# $NetBSD: linkfarm.sh,v 1.1.2.2 2003/07/13 11:09:29 jlam Exp $
+# $NetBSD: linkfarm.sh,v 1.1.2.3 2003/07/13 12:25:46 jlam Exp $
 
 #
 # Copyright (c) 2002 Alistair G. Crooks.  All rights reserved.
@@ -69,7 +69,7 @@ delete=no
 create=yes
 
 # process args - can't use getopt(1) because of '--' style args
-while [ $# -gt 1 ]; do
+while [ $# -gt 0 ]; do
 	case "$1" in
 	-D)		delete=yes; create=no ;;
 	-R)		delete=yes; create=yes ;;
