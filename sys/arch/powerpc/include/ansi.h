@@ -1,4 +1,4 @@
-/*	$NetBSD: ansi.h,v 1.17 2002/12/04 17:42:51 thorpej Exp $	*/
+/*	$NetBSD: ansi.h,v 1.18 2003/01/18 21:32:58 matt Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -77,8 +77,8 @@ typedef struct {
 	char __gpr, __fpr, __pad[2];
 	char *__stack, *__base;
 #endif
-#endif
 } __va_list;
+#endif
 
 /*
  * NOTE: rune_t is not covered by ANSI nor other standards, and should not
