@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_subr.S,v 1.10.6.4 2002/08/01 02:43:18 nathanw Exp $	*/
+/*	$NetBSD: locore_subr.S,v 1.10.6.5 2002/08/10 15:49:29 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -413,19 +413,6 @@ NENTRY(sigcode)
 	trapa	#0x80			/* exit if sigreturn fails */
 	.align	2
 _L.SYS___sigreturn14:	.long	SYS___sigreturn14
-
-/*
- * upcallcode:
- *	Scheduler activation upcall trampoline.
- *
- * The kernel invokes the upcall directly.  This is used only to exit
- * if the upcall returns (which is an error).
- */
-NENTRY(upcallcode)
-	mov.l	_L.SYS_exit, r0
-	trapa	#0x80
-
-	.align	2
 _L.SYS_exit:		.long	SYS_exit
 	.globl	_C_LABEL(esigcode)
 _C_LABEL(esigcode):

@@ -1,4 +1,4 @@
-/*	$NetBSD: sh3_machdep.c,v 1.41.6.7 2002/08/02 19:51:36 nathanw Exp $	*/
+/*	$NetBSD: sh3_machdep.c,v 1.41.6.8 2002/08/10 15:49:30 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2002 The NetBSD Foundation, Inc.
@@ -374,10 +374,8 @@ void
 cpu_upcall(struct lwp *l, int type, int nevents, int ninterrupted, void *sas,
     void *ap, void *sp, sa_upcall_t upcall)
 {
-	struct proc *p = l->l_proc;
 	struct trapframe *tf;
 	struct saframe *sf, frame;
-	extern char sigcode[], upcallcode[];
 
 	tf = l->l_md.md_regs;
 
@@ -403,8 +401,7 @@ cpu_upcall(struct lwp *l, int type, int nevents, int ninterrupted, void *sas,
 	tf->tf_r7 = ninterrupted;
 
 	tf->tf_spc = (int) upcall;
-	tf->tf_pr = (int) ((caddr_t)p->p_sigctx.ps_sigcode +
-	    ((caddr_t)upcallcode - (caddr_t)sigcode));
+	tf->tf_pr = 0;		/* no return */
 	tf->tf_r15 = (int) sf;
 }
 
