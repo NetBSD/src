@@ -1,4 +1,4 @@
-.\"	$NetBSD: options.4,v 1.137 2001/06/05 13:45:10 wiz Exp $
+.\"	$NetBSD: options.4,v 1.138 2001/06/12 11:26:21 wiz Exp $
 .\"
 .\" Copyright (c) 1996
 .\" 	Perry E. Metzger.  All rights reserved.
@@ -609,7 +609,7 @@ permits them to be accessed over
 .It Cd options FFS_EI
 Enable ``Endian-Independent'' FFS support.
 This allows a system to mount an FFS filesystem created for another
-architecture, at a small performance cost for all FFS filesytems.
+architecture, at a small performance cost for all FFS filesystems.
 See also
 .Xr newfs 8 ,
 .Xr fsck_ffs 8 ,
@@ -1031,7 +1031,7 @@ Tells the kernel to maintain per-address statistics on bytes sent
 and received over (currently) internet and appletalk addresses.
 .\"This can be a fairly expensive operation, so you probably want to
 .\"keep this disabled.
-The option is not recommended as itdegrades system stability.
+The option is not recommended as it degrades system stability.
 .It Cd options MROUTING
 Includes support for IP multicast routers.
 You certainly want
@@ -1608,7 +1608,7 @@ N < then current load average.  See
 .It Cd options COUNT_SW_LEFTOVERS
 Count how many times the sw SCSI device has left 3, 2, 1 and 0 in the
 sw_3_leftover, sw_2_leftover, sw_1_leftover, and sw_0_leftover
-variables accessable from
+variables accessible from
 .Xr ddb 4 .
 See
 .Xr sw 4 .
