@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.389.2.2 2000/08/17 18:52:55 fvdl Exp $	*/
+/*	$NetBSD: machdep.c,v 1.389.2.3 2001/03/30 21:30:17 he Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -192,7 +192,9 @@ int	dumpmem_low;
 int	dumpmem_high;
 int	boothowto;
 int	cpu_class;
-int	i386_fpu_present = 0;
+int	i386_fpu_present;
+int	i386_fpu_exception;
+int	i386_fpu_fdivbug;
 
 #define	CPUID2MODEL(cpuid)	(((cpuid) >> 4) & 15)
 
@@ -218,6 +220,11 @@ extern	paddr_t hole_start, hole_end;
  */
 phys_ram_seg_t mem_clusters[VM_PHYSSEG_MAX];
 int	mem_cluster_cnt;
+
+/*
+ * The number of CPU cycles in one second.
+ */
+u_int64_t cpu_tsc_freq;
 
 int	cpu_dump __P((void));
 int	cpu_dumpsize __P((void));
@@ -279,7 +286,11 @@ cpu_startup()
 
 	printf(version);
 
-	printf("cpu0: %s\n", cpu_model);
+	printf("cpu0: %s", cpu_model);
+	if (cpu_tsc_freq != 0)
+		printf(", %qd.%02qd MHz", (cpu_tsc_freq + 4999) / 1000000,
+		    ((cpu_tsc_freq + 4999) / 10000) % 100);
+	printf("\n");
 
 	format_bytes(pbuf, sizeof(pbuf), ptoa(physmem));
 	printf("total memory = %s\n", pbuf);
@@ -830,6 +841,20 @@ identifycpu()
 	 */
 	if (cpu_class >= CPUCLASS_486)
 		lcr0(rcr0() | CR0_WP);
+#endif
+
+#if defined(I586_CPU) || defined(I686_CPU)
+	/*
+	 * If we have a cycle counter, compute the approximate
+	 * CPU speed in MHz.
+	 */
+	if (cpu_feature & CPUID_TSC) {
+		u_int64_t last_tsc;
+
+		last_tsc = rdtsc();
+		delay(100000);
+		cpu_tsc_freq = (rdtsc() - last_tsc) * 10;
+	}
 #endif
 }
 
