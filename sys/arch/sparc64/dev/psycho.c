@@ -1,4 +1,4 @@
-/*	$NetBSD: psycho.c,v 1.58 2003/03/22 06:33:09 nakayama Exp $	*/
+/*	$NetBSD: psycho.c,v 1.59 2003/04/01 16:34:58 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Eduardo E. Horvath
@@ -765,7 +765,7 @@ psycho_ue(arg)
 	struct psychoreg *regs = sc->sc_regs;
 	long long afsr = regs->psy_ue_afsr;
 	long long afar = regs->psy_ue_afar;
-	long size = NBPG<<(sc->sc_is->is_tsbsize);
+	long size = PAGE_SIZE<<(sc->sc_is->is_tsbsize);
 	struct iommu_state *is = sc->sc_is;
 	char bits[128];
 
@@ -781,7 +781,7 @@ psycho_ue(arg)
 	/* Sometimes the AFAR points to an IOTSB entry */
 	if (afar >= is->is_ptsb && afar < is->is_ptsb + size) {
 		printf("IOVA %llx IOTTE %llx\n",
-			(long long)((afar - is->is_ptsb) * NBPG + is->is_dvmabase),
+			(long long)((afar - is->is_ptsb) * PAGE_SIZE + is->is_dvmabase),
 			(long long)ldxa(afar, ASI_PHYS_CACHED));
 	}
 #ifdef DDB
