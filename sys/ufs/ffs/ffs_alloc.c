@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_alloc.c,v 1.79 2004/10/11 17:15:36 dbj Exp $	*/
+/*	$NetBSD: ffs_alloc.c,v 1.80 2004/12/15 07:11:51 mycroft Exp $	*/
 
 /*
  * Copyright (c) 2002 Networks Associates Technology, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_alloc.c,v 1.79 2004/10/11 17:15:36 dbj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_alloc.c,v 1.80 2004/12/15 07:11:51 mycroft Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -566,7 +566,7 @@ ffs_reallocblks(v)
  				    ba, buflist->bs_children[i]);
  		}
 		/* XXX ondisk32 */
-		*bap++ = ufs_rw32((int32_t)blkno, UFS_FSNEEDSWAP(fs));
+		*bap++ = ufs_rw32((u_int32_t)blkno, UFS_FSNEEDSWAP(fs));
 	}
 	/*
 	 * Next we must write out the modified inode and indirect blocks.

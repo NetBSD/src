@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_bmap.c,v 1.33 2004/09/15 09:52:49 yamt Exp $	*/
+/*	$NetBSD: ufs_bmap.c,v 1.34 2004/12/15 07:11:51 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_bmap.c,v 1.33 2004/09/15 09:52:49 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_bmap.c,v 1.34 2004/12/15 07:11:51 mycroft Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -157,7 +157,7 @@ ufs_bmaparray(vp, bn, bnp, ap, nump, runp, is_sequential)
 		if (nump != NULL)
 			*nump = 0;
 		if (ump->um_fstype == UFS1)
-			daddr = (int32_t)ufs_rw32(ip->i_ffs1_db[bn],
+			daddr = ufs_rw32(ip->i_ffs1_db[bn],
 			    UFS_MPNEEDSWAP(ump));
 		else
 			daddr = ufs_rw64(ip->i_ffs2_db[bn],
@@ -184,9 +184,9 @@ ufs_bmaparray(vp, bn, bnp, ap, nump, runp, is_sequential)
 			if (ump->um_fstype == UFS1) {
 				for (++bn; bn < NDADDR && *runp < maxrun &&
 				    is_sequential(ump,
-				        (int32_t)ufs_rw32(ip->i_ffs1_db[bn - 1],
+				        ufs_rw32(ip->i_ffs1_db[bn - 1],
 				            UFS_MPNEEDSWAP(ump)),
-				        (int32_t)ufs_rw32(ip->i_ffs1_db[bn],
+				        ufs_rw32(ip->i_ffs1_db[bn],
 				            UFS_MPNEEDSWAP(ump)));
 				    ++bn, ++*runp);
 			} else {
@@ -212,7 +212,7 @@ ufs_bmaparray(vp, bn, bnp, ap, nump, runp, is_sequential)
 
 	/* Get disk address out of indirect block array */
 	if (ump->um_fstype == UFS1)
-		daddr = (int32_t)ufs_rw32(ip->i_ffs1_ib[xap->in_off],
+		daddr = ufs_rw32(ip->i_ffs1_ib[xap->in_off],
 		    UFS_MPNEEDSWAP(ump));
 	else
 		daddr = ufs_rw64(ip->i_ffs2_ib[xap->in_off],
@@ -267,23 +267,20 @@ ufs_bmaparray(vp, bn, bnp, ap, nump, runp, is_sequential)
 			}
 		}
 		if (ump->um_fstype == UFS1) {
-			daddr = (int32_t)ufs_rw32(
-			    ((int32_t *)bp->b_data)[xap->in_off],
+			daddr = ufs_rw32(((u_int32_t *)bp->b_data)[xap->in_off],
 			    UFS_MPNEEDSWAP(ump));
 			if (num == 1 && daddr && runp) {
 				for (bn = xap->in_off + 1;
 				    bn < MNINDIR(ump) && *runp < maxrun &&
 				    is_sequential(ump,
-				        (int32_t)ufs_rw32(
-					    ((int32_t *)bp->b_data)[bn-1],
+				        ufs_rw32(((int32_t *)bp->b_data)[bn-1],
 				            UFS_MPNEEDSWAP(ump)),
-				        (int32_t)ufs_rw32(
-					    ((int32_t *)bp->b_data)[bn],
+				        ufs_rw32(((int32_t *)bp->b_data)[bn],
 				            UFS_MPNEEDSWAP(ump)));
 				    ++bn, ++*runp);
 			}
 		} else {
-			daddr = ufs_rw64(((int64_t *)bp->b_data)[xap->in_off],
+			daddr = ufs_rw64(((u_int64_t *)bp->b_data)[xap->in_off],
 			    UFS_MPNEEDSWAP(ump));
 			if (num == 1 && daddr && runp) {
 				for (bn = xap->in_off + 1;
