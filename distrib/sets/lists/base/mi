@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.174 2000/07/13 14:31:13 lukem Exp $
+# $NetBSD: mi,v 1.175 2000/07/26 16:35:33 itojun Exp $
 .
 ./altroot
 ./bin
@@ -229,6 +229,7 @@
 ./usr/bin/hesinfo
 ./usr/bin/hexdump
 ./usr/bin/host
+./usr/bin/hoststat
 ./usr/bin/id
 ./usr/bin/ident
 ./usr/bin/indent
@@ -308,6 +309,7 @@
 ./usr/bin/pr
 ./usr/bin/printenv
 ./usr/bin/printf
+./usr/bin/purgestat
 ./usr/bin/quota
 ./usr/bin/rcs
 ./usr/bin/rcsclean
