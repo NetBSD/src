@@ -1,4 +1,4 @@
-/* $NetBSD: pci_kn300.c,v 1.17 2000/02/10 04:31:36 mjacob Exp $ */
+/* $NetBSD: pci_kn300.c,v 1.18 2000/02/10 07:45:43 mjacob Exp $ */
 
 /*
  * Copyright (c) 1998 by Matthew Jacob
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pci_kn300.c,v 1.17 2000/02/10 04:31:36 mjacob Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_kn300.c,v 1.18 2000/02/10 07:45:43 mjacob Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -102,7 +102,7 @@ pci_kn300_pickintr(ccp, first)
 
 		kn300_pci_intr = alpha_shared_intr_alloc(NIRQ);
 		for (g = 0; g < NIRQ; g++) {
-			alpha_shared_intr_set_maxstrays(kn300_pci_intr, g, 100);
+			alpha_shared_intr_set_maxstrays(kn300_pci_intr, g, 25);
 			savirqs[g] = (char) -1;
 		}
 		set_iointr(kn300_iointr);
@@ -286,9 +286,8 @@ kn300_iointr(framep, vec)
 		 * Any claim of an interrupt at this level is a hint to
 		 * reset the stray interrupt count- elsewise a slow leak
 		 * over time will cause this level to be shutdown.
-		 *
-		 * Unfortunately, there's no clean mechanism to do this yet.
 		 */
+		alpha_shared_intr_set_maxstrays(kn300_pci_intr, irq, 25);
 		return;
 	}
 
