@@ -1,4 +1,4 @@
-#	$NetBSD: airport,v 1.8 1999/01/05 16:07:16 hubertf Exp $
+#	$NetBSD: airport,v 1.9 1999/01/06 02:40:16 cjs Exp $
 #	@(#)airport	8.1 (Berkeley) 6/8/93
 # 
 # Some of this information from the Airport Search Engine at
@@ -201,7 +201,7 @@ PVD:Providence Theodore Francis Green State, Rhode Island, USA
 PWM:Portland International Jetport, Maine, USA
 QDV:All Airports around Denver, Colorado, USA
 QLA:All Airports around Los Angeles, California, USA
-QSF:All Airports around San Fransisco, California, USA
+QSF:All Airports around San Francisco, California, USA
 RDU:Raleigh-Durham, North Carolina, USA
 RIC:Richmond International/Byrd Field, Virginia, USA
 RIO:All Airports around Rio de Janeiro, RJ, Brazil
