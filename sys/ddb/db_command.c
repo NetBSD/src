@@ -1,4 +1,4 @@
-/*	$NetBSD: db_command.c,v 1.42 2000/05/23 06:06:10 thorpej Exp $	*/
+/*	$NetBSD: db_command.c,v 1.43 2000/05/26 03:34:31 jhawk Exp $	*/
 
 /* 
  * Mach Operating System
@@ -678,6 +678,19 @@ db_sifting_cmd(addr, have_addr, count, omodif)
 		db_printf("Bad argument (non-string)\n");
 		db_flush_lex();
 	}
+}
+
+void
+db_stack_trace_cmd(addr, have_addr, count, modif)
+	db_expr_t	addr;
+	boolean_t	have_addr;
+	db_expr_t	count;
+	char		*modif;
+{
+	if (count == -1)
+		count = 65535;
+
+	db_stack_trace_print(addr, have_addr, count, modif, db_printf);
 }
 
 void

@@ -1,4 +1,4 @@
-/*	$NetBSD: db_trace.c,v 1.3 1999/03/05 06:10:48 tsubai Exp $	*/
+/*	$NetBSD: db_trace.c,v 1.4 2000/05/26 03:34:28 jhawk Exp $	*/
 /*	$OpenBSD: db_trace.c,v 1.3 1997/03/21 02:10:48 niklas Exp $	*/
 
 /* 
@@ -83,11 +83,12 @@ extern label_t	*db_recover;
  *	Frame tracing.
  */
 void
-db_stack_trace_cmd(addr, have_addr, count, modif)
+db_stack_trace_print(addr, have_addr, count, modif, pr)
 	db_expr_t addr;
 	int have_addr;
 	db_expr_t count;
 	char *modif;
+	void (*pr) __P((const char *, ...));
 {
 	db_addr_t frame, lr, caller;
 	db_expr_t diff;
@@ -108,14 +109,11 @@ db_stack_trace_cmd(addr, have_addr, count, modif)
 		}
 	}
 
-	if (count == -1)
-		count = 65535;
-
 	frame = (db_addr_t)ddb_regs.r[1];
 	while ((frame = *(db_addr_t *)frame) && count--) {
 		lr = *(db_addr_t *)(frame + 4) - 4;
 		if (lr & 3) {
-			db_printf("saved LR(0x%x) is invalid.", lr);
+			(*pr)("saved LR(0x%x) is invalid.", lr);
 			break;
 		}
 		if ((caller = (db_addr_t)vtophys(lr)) == 0)
@@ -127,6 +125,6 @@ db_stack_trace_cmd(addr, have_addr, count, modif)
 		db_symbol_values(sym, &symname, 0);
 		if (symname == NULL)
 			symname = "?";
-		db_printf("at %s+%x\n", symname, diff);
+		(*pr)("at %s+%x\n", symname, diff);
 	}
 }
