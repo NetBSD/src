@@ -1,4 +1,4 @@
-/* $NetBSD: wss_acpi.c,v 1.5 2003/01/13 13:01:15 mrg Exp $ */
+/* $NetBSD: wss_acpi.c,v 1.6 2003/10/31 20:54:18 mycroft Exp $ */
 
 /*
  * Copyright (c) 2002 Jared D. McNeill <jmcneill@invisible.ca>
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wss_acpi.c,v 1.5 2003/01/13 13:01:15 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wss_acpi.c,v 1.6 2003/10/31 20:54:18 mycroft Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -102,7 +102,7 @@ wss_acpi_match(struct device *parent, struct cfdata *match, void *aux)
 	struct acpi_attach_args *aa = aux;
 
 	if (aa->aa_node->ad_type != ACPI_TYPE_DEVICE ||
-	    wss_acpi_hints_index(aa->aa_node->ad_devinfo.HardwareId) == -1)
+	    wss_acpi_hints_index(aa->aa_node->ad_devinfo.HardwareId.Value) == -1)
 		return (0);
 
 	return (1);
@@ -127,7 +127,7 @@ wss_acpi_attach(struct device *parent, struct device *self, void *aux)
 	printf(": NeoMagic 256AV audio\n");
 
 	wah = &wss_acpi_hints[
-	    wss_acpi_hints_index(aa->aa_node->ad_devinfo.HardwareId)];
+	    wss_acpi_hints_index(aa->aa_node->ad_devinfo.HardwareId.Value)];
 
 	/* Parse our resources */
 	rv = acpi_resource_parse(&sc->sc_ad1848.sc_ad1848.sc_dev,
