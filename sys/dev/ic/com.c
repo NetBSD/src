@@ -1,4 +1,4 @@
-/*	$NetBSD: com.c,v 1.78 1996/04/11 22:28:31 cgd Exp $	*/
+/*	$NetBSD: com.c,v 1.79 1996/04/15 18:54:31 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1996
@@ -160,6 +160,7 @@ int	comconsinit;
 int	comconsattached;
 bus_chipset_tag_t comconsbc;
 bus_io_handle_t comconsioh;
+tcflag_t comconscflag = TTYDEF_CFLAG;
 
 int	commajor;
 int	comsopen = 0;
@@ -534,7 +535,10 @@ comopen(dev, flag, mode, p)
 		ttychars(tp);
 		tp->t_iflag = TTYDEF_IFLAG;
 		tp->t_oflag = TTYDEF_OFLAG;
-		tp->t_cflag = TTYDEF_CFLAG;
+		if (ISSET(sc->sc_hwflags, COM_HW_CONSOLE))
+			tp->t_cflag = comconscflag;
+		else
+			tp->t_cflag = TTYDEF_CFLAG;
 		if (ISSET(sc->sc_swflags, COM_SW_CLOCAL))
 			SET(tp->t_cflag, CLOCAL);
 		if (ISSET(sc->sc_swflags, COM_SW_CRTSCTS))

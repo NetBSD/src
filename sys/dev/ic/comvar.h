@@ -1,4 +1,4 @@
-/*	$NetBSD: comvar.h,v 1.3 1996/03/10 09:01:26 cgd Exp $	*/
+/*	$NetBSD: comvar.h,v 1.4 1996/04/15 18:54:35 cgd Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -45,3 +45,4 @@ extern int comconsaddr;
 extern int comconsattached;
 extern bus_chipset_tag_t comconsbc;
 extern bus_io_handle_t comconsioh;
+extern tcflag_t comconscflag;
