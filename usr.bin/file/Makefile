@@ -1,4 +1,4 @@
-#	$Id: Makefile,v 1.6 1994/12/22 12:29:47 cgd Exp $
+#	$Id: Makefile,v 1.7 1996/10/05 20:20:24 christos Exp $
 
 MAGIC=		/etc/magic
 MAGICOWN=	bin
@@ -7,7 +7,7 @@ MAGICMODE=	444
 
 PROG=		file
 SRCS=		file.c apprentice.c fsmagic.c softmagic.c ascmagic.c is_tar.c \
-		print.c compress.c
+		print.c compress.c readelf.c
 CFLAGS+=	-DMAGIC='"$(MAGIC)"'
 MAN=		file.1 magic.5
 

@@ -26,7 +26,7 @@
  */
 #ifndef	lint
 static char *moduleid = 
-	"@(#)$Id: file.c,v 1.8 1995/10/27 23:33:20 christos Exp $";
+	"@(#)$Id: file.c,v 1.9 1996/10/05 20:20:26 christos Exp $";
 #endif	/* lint */
 
 #include <stdio.h>
@@ -43,9 +43,7 @@ static char *moduleid =
 #endif
 #include <unistd.h>	/* for read() */
 
-#ifdef __ELF__
-#include <elf.h>
-#endif
+#include <netinet/in.h>		/* for byte swapping */
 
 #include "patchlevel.h"
 #include "file.h"
@@ -76,7 +74,9 @@ char *progname;		/* used throughout 			*/
 int lineno;		/* line number in the magic file	*/
 
 
-static void unwrap	__P((char *fn));
+static void	unwrap		__P((char *fn));
+static int	byteconv4	__P((int, int, int));
+static short	byteconv2	__P((int, int, int));
 
 /*
  * main - parse arguments and handle options
@@ -180,18 +180,23 @@ char *fn;
 	FILE *f;
 	int wid = 0, cwid;
 
-	if ((f = fopen(fn, "r")) == NULL) {
-		error("Cannot open `%s' (%s).\n", fn, strerror(errno));
-		/*NOTREACHED*/
-	}
+	if (strcmp("-", fn) == 0) {
+		f = stdin;
+		wid = 1;
+	} else {
+		if ((f = fopen(fn, "r")) == NULL) {
+			error("Cannot open `%s' (%s).\n", fn, strerror(errno));
+			/*NOTREACHED*/
+		}
 
-	while (fgets(buf, MAXPATHLEN, f) != NULL) {
-		cwid = strlen(buf) - 1;
-		if (cwid > wid)
-			wid = cwid;
-	}
+		while (fgets(buf, MAXPATHLEN, f) != NULL) {
+			cwid = strlen(buf) - 1;
+			if (cwid > wid)
+				wid = cwid;
+		}
 
-	rewind(f);
+		rewind(f);
+	}
 
 	while (fgets(buf, MAXPATHLEN, f) != NULL) {
 		buf[strlen(buf)-1] = '\0';
@@ -201,6 +206,69 @@ char *fn;
 	(void) fclose(f);
 }
 
+
+/*
+ * byteconv4
+ * Input:
+ *	from		4 byte quantity to convert
+ *	same		whether to perform byte swapping
+ *	big_endian	whether we are a big endian host
+ */
+static int
+byteconv4(from, same, big_endian)
+    int from;
+    int same;
+    int big_endian;
+{
+  if (same)
+    return from;
+  else if (big_endian)		/* lsb -> msb conversion on msb */
+  {
+    union {
+      int i;
+      char c[4];
+    } retval, tmpval;
+
+    tmpval.i = from;
+    retval.c[0] = tmpval.c[3];
+    retval.c[1] = tmpval.c[2];
+    retval.c[2] = tmpval.c[1];
+    retval.c[3] = tmpval.c[0];
+
+    return retval.i;
+  }
+  else
+    return ntohl(from);		/* msb -> lsb conversion on lsb */
+}
+
+/*
+ * byteconv2
+ * Same as byteconv4, but for shorts
+ */
+static short
+byteconv2(from, same, big_endian)
+	int from;
+	int same;
+	int big_endian;
+{
+  if (same)
+    return from;
+  else if (big_endian)		/* lsb -> msb conversion on msb */
+  {
+    union {
+      short s;
+      char c[2];
+    } retval, tmpval;
+
+    tmpval.s = (short) from;
+    retval.c[0] = tmpval.c[1];
+    retval.c[1] = tmpval.c[0];
+
+    return retval.s;
+  }
+  else
+    return ntohs(from);		/* msb -> lsb conversion on lsb */
+}
 
 /*
  * process - process input file
@@ -265,56 +333,21 @@ int wid;
 		buf[nbytes++] = '\0';	/* null-terminate it */
 		match = tryit(buf, nbytes, zflag);
 	}
-#ifdef __ELF__
-	/*
-	 * ELF executables have multiple section headers in arbitrary
-	 * file locations and thus file(1) cannot determine it from easily.
-	 * Instead we traverse thru all section headers until a symbol table
-	 * one is found or else the binary is stripped.
-	 * XXX: This will not work for binaries of a different byteorder.
-	 *	Should come up with a better fix.
-	 */
 
-	if (match == 's' && nbytes > sizeof (Elf32_Ehdr) &&
-	    buf[EI_MAG0] == ELFMAG0 &&
-	    buf[EI_MAG1] == ELFMAG1 &&
-	    buf[EI_MAG2] == ELFMAG2 &&
-	    buf[EI_MAG3] == ELFMAG3) {
-
-		union {
-			long l;
-			char c[sizeof (long)];
-		} u;
-		Elf32_Ehdr elfhdr;
-		int stripped = 1;
-
-		u.l = 1;
-		(void) memcpy(&elfhdr, buf, sizeof elfhdr);
-
-		/*
-		 * If the system byteorder does not equal the object byteorder
-		 * then don't test.
-		 */
-		if ((u.c[sizeof(long) - 1] + 1) == elfhdr.e_ident[5]) {
-		    if (lseek(fd, elfhdr.e_shoff, SEEK_SET)<0)
-			error("lseek failed (%s).\n", strerror(errno));
-
-		    for ( ; elfhdr.e_shnum ; elfhdr.e_shnum--) {
-			if (read(fd, buf, elfhdr.e_shentsize)<0)
-			    error("read failed (%s).\n", strerror(errno));
-			if (((Elf32_Shdr *)&buf)->sh_type == SHT_SYMTAB) {
-			    stripped = 0;
-			    break;
-			}
-		    }
-		    if (stripped)
-			(void) printf (", stripped");
-		}
-	}
+#ifdef BUILTIN_ELF
+	if (match == 's' && nbytes > 5)
+		tryelf(fd, buf, nbytes);
 #endif
 
-	if (inname != stdname)
+	if (inname != stdname) {
+		/*
+		 * Try to restore access, modification times if read it.
+		 */
+		utbuf.actime = sb.st_atime;
+		utbuf.modtime = sb.st_mtime;
+		(void) utime(inname, &utbuf); /* don't care if loses */
 		(void) close(fd);
+	}
 	(void) putchar('\n');
 }
 

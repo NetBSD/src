@@ -34,7 +34,7 @@
 
 #ifndef	lint
 static char *moduleid = 
-	"@(#)$Id: apprentice.c,v 1.10 1995/10/27 23:33:17 christos Exp $";
+	"@(#)$Id: apprentice.c,v 1.11 1996/10/05 20:20:25 christos Exp $";
 #endif	/* lint */
 
 #define	EATAB {while (isascii((unsigned char) *l) && \
@@ -210,6 +210,10 @@ int *ndx, check;
 		++l;		/* step over */
 		m->flag |= INDIR;
 	}
+	if (m->cont_level != 0 && *l == '&') {
+                ++l;            /* step over */
+                m->flag |= ADD;
+        }
 
 	/* get offset, then skip over it */
 	m->offset = (int) strtoul(l,&t,0);

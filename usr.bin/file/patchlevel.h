@@ -1,17 +1,24 @@
 #define	FILE_VERSION_MAJOR	3
-#define	patchlevel		19
+#define	patchlevel		21
 
 /*
  * Patchlevel file for Ian Darwin's MAGIC command.
- * $Id: patchlevel.h,v 1.5 1995/10/27 23:33:21 christos Exp $
+ * $Id: patchlevel.h,v 1.6 1996/10/05 20:20:29 christos Exp $
  *
  * $Log: patchlevel.h,v $
- * Revision 1.5  1995/10/27 23:33:21  christos
- * Update to file-3.19.
- * - Magic fixes
- * - MAGIC environment variable processing
- * - Better LEGAL.NOTICE
- * - -m magic : separated list of magic files processing
+ * Revision 1.6  1996/10/05 20:20:29  christos
+ * Changes from file-3.21
+ *
+ * Revision 1.21  1996/10/05 18:15:29  christos
+ * Segregate elf stuff and conditionally enable it with -DBUILTIN_ELF
+ * More magic fixes
+ *
+ * Revision 1.20  1996/06/22  22:15:52  christos
+ * - support relative offsets of the form >&
+ * - fix bug with truncating magic strings that contain \n
+ * - file -f - did not read from stdin as documented
+ * - support elf file parsing using our own elf support.
+ * - as always magdir fixes and additions.
  *
  * Revision 1.19  1995/10/27  23:14:46  christos
  * Ability to parse colon separated list of magic files
