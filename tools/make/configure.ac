@@ -1,10 +1,18 @@
-#	$NetBSD: configure.ac,v 1.2 2002/01/25 17:51:31 tv Exp $
+#	$NetBSD: configure.ac,v 1.3 2002/04/24 21:20:08 bjh21 Exp $
 #
 # Autoconf definition file for make.
 #
 
 AC_INIT([make], [noversion], [bin-bug-people@netbsd.org])
 AC_CONFIG_FILES(buildmake.sh)
+
+AC_PATH_PROG(BSHELL, sh)
+if test x"$BSHELL" = x; then
+	AC_MSG_ERROR([sh must be somewhere on \$PATH])
+fi
+# Make wants to know what directory to find sh in.
+nb_path_defshelldir=`echo $BSHELL | sed 's,/sh$,,'`
+AC_DEFINE_UNQUOTED(_PATH_DEFSHELLDIR, "$nb_path_defshelldir")
 
 # Make sure we have POSIX regex ability.
 AC_CHECK_HEADER(regex.h,, AC_MSG_ERROR([POSIX regex.h is required]))
