@@ -1,4 +1,4 @@
-/*	$NetBSD: softintr.c,v 1.2 2001/05/23 02:20:47 toshii Exp $	*/
+/*	$NetBSD: softintr.c,v 1.3 2001/06/07 02:38:59 toshii Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -120,7 +120,7 @@ softintr_schedule(void *cookie)
 	sh->sh_hlink = NULL;
 
 #ifdef __GNUC__
-	asm("mrs %0, cpsr_all\n orr r1, %0, %1\n msr cpsr_all, r1" :
+	asm volatile("mrs %0, cpsr_all\n orr r1, %0, %1\n msr cpsr_all, r1" :
 	    "=r" (saved_cpsr) : "i" (I32_bit) : "r1");
 #else
 	saved_cpsr = SetCPSR(I32_bit, I32_bit);
@@ -146,7 +146,7 @@ softintr_schedule(void *cookie)
 set_and_exit:
 	*p = sh;
 #ifdef __GNUC__
-	asm("msr cpsr_c, %0" : : "r" (saved_cpsr));
+	asm volatile("msr cpsr_c, %0" : : "r" (saved_cpsr));
 #else
 	SetCPSR(I32_bit, I32_bit & saved_cpsr);
 #endif
@@ -162,8 +162,9 @@ softintr_dispatch(int s)
 	while (1) {
 		/* Protect list operation from interrupts */
 #ifdef __GNUC__
-		asm("mrs %0, cpsr_all\n orr r1, %0, %1\n msr cpsr_all, r1" :
-		    "=r" (saved_cpsr) : "i" (I32_bit) : "r1");
+		asm volatile("mrs %0, cpsr_all\n orr r1, %0, %1\n"
+		    " msr cpsr_all, r1" : "=r" (saved_cpsr) :
+		    "i" (I32_bit) : "r1");
 #else
 		saved_cpsr = SetCPSR(I32_bit, I32_bit);
 #endif
@@ -182,7 +183,7 @@ softintr_dispatch(int s)
 
 		s = raisespl(sh->sh_level);
 #ifdef __GNUC__
-		asm("msr cpsr_c, %0" : : "r" (saved_cpsr));
+		asm volatile("msr cpsr_c, %0" : : "r" (saved_cpsr));
 #else
 		SetCPSR(I32_bit, I32_bit & saved_cpsr);
 #endif
