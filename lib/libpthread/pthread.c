@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread.c,v 1.1.2.23 2002/04/28 23:57:49 nathanw Exp $	*/
+/*	$NetBSD: pthread.c,v 1.1.2.24 2002/05/02 16:49:24 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -73,6 +73,38 @@ static int started;
 static int nextthread;
 pthread_spin_t nextthread_lock;
 
+pthread_ops_t pthread_ops = {
+	pthread_mutex_init,
+	pthread_mutex_lock,
+	pthread_mutex_trylock,
+	pthread_mutex_unlock,
+	pthread_mutex_destroy,
+	pthread_mutexattr_init,
+	pthread_mutexattr_destroy,
+
+	pthread_cond_init,
+	pthread_cond_signal,
+	pthread_cond_broadcast,
+	pthread_cond_wait,
+	pthread_cond_timedwait,
+	pthread_cond_destroy,
+	pthread_condattr_init,
+	pthread_condattr_destroy,
+
+	pthread_key_create,
+	pthread_setspecific,
+	pthread_getspecific,
+	pthread_key_delete,
+
+	pthread_once,
+
+	pthread_self, 
+
+	pthread_sigmask,
+
+	pthread__errno
+};
+
 /* This needs to be started by the library loading code, before main() 
  * gets to run, for various things that use the state of the initial thread
  * to work properly (thread-specific data is an application-visible example; 
@@ -82,6 +114,7 @@ void pthread_init(void)
 {
 	pthread_t first;
 	extern int __isthreaded;
+	extern pthread_ops_t *__libc_pthread_ops;
 
 #ifdef PTHREAD__DEBUG
 	pthread__debug_init();
@@ -105,6 +138,7 @@ void pthread_init(void)
 	pthread__alarm_init();
 
 	/* Tell libc that we're here and it should role-play accordingly. */
+	__libc_pthread_ops = &pthread_ops;
 	__isthreaded = 1;
 
 }

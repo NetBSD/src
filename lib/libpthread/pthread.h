@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread.h,v 1.1.2.10 2002/03/25 03:46:00 nathanw Exp $	*/
+/*	$NetBSD: pthread.h,v 1.1.2.11 2002/05/02 16:49:24 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -150,28 +150,38 @@ int 	*pthread__errno(void);
 #define PTHREAD_STACK_MIN	4096 /* XXX Pulled out of my butt */
 #define PTHREAD_THREADS_MAX	64		/* Min. required */
 
-/* Prototypes for libc, which needs to use non-public names to avoid
- * accidentally pulling in routines from non-integrated pthread
- * libraries.
- */
-int	_libc_pthread_mutex_init(pthread_mutex_t *mutex,
-	    const pthread_mutexattr_t *attr);
-int	_libc_pthread_mutex_lock(pthread_mutex_t *mutex);
-int	_libc_pthread_mutex_trylock(pthread_mutex_t *mutex);
-int	_libc_pthread_mutex_unlock(pthread_mutex_t *mutex);
-int	_libc_pthread_cond_init(pthread_cond_t *cond,
-	    const pthread_condattr_t *attr);
-int	_libc_pthread_cond_wait(pthread_cond_t *cond, pthread_mutex_t *mutex);
-int	_libc_pthread_cond_signal(pthread_cond_t *cond);
-int	_libc_pthread_key_create(pthread_key_t *key, void (*destructor)(void *));
-int	_libc_pthread_key_delete(pthread_key_t key);
-int	_libc_pthread_setspecific(pthread_key_t key, const void *value);
-void*	_libc_pthread_getspecific(pthread_key_t key);
-int	_libc_pthread_sigmask(int how, const sigset_t *set, sigset_t *oset);
-pthread_t	_libc_pthread_self(void);
-void	_libc_pthread_exit(void *retval) __attribute__((__noreturn__));
-int	_libc_pthread_once(pthread_once_t *once_control, void (*routine)(void));
-int 	*_libc_pthread__errno(void);
+typedef struct pthread_ops_st {
+	int (*mutex_init)(pthread_mutex_t *, const pthread_mutexattr_t *);
+	int (*mutex_lock)(pthread_mutex_t *);
+	int (*mutex_trylock)(pthread_mutex_t *);
+	int (*mutex_unlock)(pthread_mutex_t *);
+	int (*mutex_destroy)(pthread_mutex_t *);
+       	int (*mutexattr_init)(pthread_mutexattr_t *);
+	int (*mutexattr_destroy)(pthread_mutexattr_t *);
+	
+	int (*cond_init)(pthread_cond_t *, const pthread_condattr_t *);
+	int (*cond_signal)(pthread_cond_t *);
+	int (*cond_broadcast)(pthread_cond_t *);
+	int (*cond_wait)(pthread_cond_t *, pthread_mutex_t *);
+	int (*cond_timedwait)(pthread_cond_t *, pthread_mutex_t *, 
+	    const struct timespec *);
+	int (*cond_destroy)(pthread_cond_t *);
+       	int (*condattr_init)(pthread_condattr_t *);
+	int (*condattr_destroy)(pthread_condattr_t *);
+
+	int (*thr_keycreate)(pthread_key_t *, void (*)(void *));
+	int (*thr_setspecific)(pthread_key_t, const void *);
+	void *(*thr_getspecific)(pthread_key_t);
+	int (*thr_keydelete)(pthread_key_t);
+
+	int (*thr_once)(pthread_once_t *, void (*)(void));
+
+	pthread_t (*thr_self)(void);
+
+	int (*thr_sigsetmask)(int, const sigset_t *, sigset_t *);
+
+	int *(*thr_errno)(void);
+} pthread_ops_t;
 
 
 #endif /* _LIB_PTHREAD_H */
