@@ -1,4 +1,4 @@
-/*	$NetBSD: compat.c,v 1.10 1995/06/14 15:18:55 christos Exp $	*/
+/*	$NetBSD: compat.c,v 1.11 1995/09/27 18:44:38 jtc Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)compat.c	5.7 (Berkeley) 3/1/91";
 #else
-static char rcsid[] = "$NetBSD: compat.c,v 1.10 1995/06/14 15:18:55 christos Exp $";
+static char rcsid[] = "$NetBSD: compat.c,v 1.11 1995/09/27 18:44:38 jtc Exp $";
 #endif
 #endif /* not lint */
 
@@ -61,11 +61,11 @@ static char rcsid[] = "$NetBSD: compat.c,v 1.10 1995/06/14 15:18:55 christos Exp
 
 #include    <stdio.h>
 #include    <sys/types.h>
-#include    <sys/signal.h>
-#include    <sys/wait.h>
-#include    <sys/errno.h>
 #include    <sys/stat.h>
+#include    <sys/wait.h>
 #include    <ctype.h>
+#include    <errno.h>
+#include    <signal.h>
 #include    "make.h"
 #include    "hash.h"
 #include    "dir.h"

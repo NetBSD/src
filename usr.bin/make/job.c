@@ -1,4 +1,4 @@
-/*	$NetBSD: job.c,v 1.10 1995/06/14 15:19:21 christos Exp $	*/
+/*	$NetBSD: job.c,v 1.11 1995/09/27 18:44:40 jtc Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)job.c	5.15 (Berkeley) 3/1/91";
 #else
-static char rcsid[] = "$NetBSD: job.c,v 1.10 1995/06/14 15:19:21 christos Exp $";
+static char rcsid[] = "$NetBSD: job.c,v 1.11 1995/09/27 18:44:40 jtc Exp $";
 #endif
 #endif /* not lint */
 
@@ -103,13 +103,13 @@ static char rcsid[] = "$NetBSD: job.c,v 1.10 1995/06/14 15:19:21 christos Exp $"
  */
 
 #include <sys/types.h>
-#include <sys/signal.h>
 #include <sys/stat.h>
 #include <sys/file.h>
 #include <sys/time.h>
 #include <sys/wait.h>
 #include <fcntl.h>
 #include <errno.h>
+#include <signal.h>
 #include <stdio.h>
 #include <string.h>
 #include <signal.h>
@@ -886,7 +886,7 @@ Job_Touch (gn, silent)
 		 * modification time, then close the file.
 		 */
 		if (read(streamID, &c, 1) == 1) {
-		    lseek(streamID, 0L, L_SET);
+		    lseek(streamID, (off_t) 0, SEEK_SET);
 		    write(streamID, &c, 1);
 		}
 		
@@ -1050,7 +1050,7 @@ JobExec(job, argv)
 	 */
 	(void) dup2(fileno(job->cmdFILE), 0);
 	fcntl(0, F_SETFD, 0);
-	lseek(0, 0, L_SET);
+	lseek(0, (off_t) 0, SEEK_SET);
 	
 	if (usePipes) {
 	    /*
