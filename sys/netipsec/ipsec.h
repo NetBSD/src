@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec.h,v 1.2 2003/08/15 03:50:20 jonathan Exp $	*/
+/*	$NetBSD: ipsec.h,v 1.3 2003/10/06 22:05:15 tls Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/ipsec.h,v 1.2.4.1 2003/01/24 05:11:35 sam Exp $	*/
 /*	$KAME: ipsec.h,v 1.53 2001/11/20 08:32:38 itojun Exp $	*/
 
@@ -44,6 +44,7 @@
 #endif
 
 #include <net/pfkeyv2.h>
+#include <netipsec/ipsec_osdep.h>
 #include <netipsec/keydb.h>
 
 #ifdef _KERNEL
@@ -437,17 +438,6 @@ extern char *ipsec_dump_policy __P((caddr_t, char *));
 extern const char *ipsec_strerror __P((void));
 #endif /* !_KERNEL */
 
-/*
- * Porting glue for impedance mismatches between {free,net,open}bsd
- */
-#ifdef __FreeBSD__ 
-  #define IPSEC_ASSERT(x, y) KASSERT(x, y)
-  #define INITFN static
-#endif
-#ifdef __NetBSD__
-  #define IPSEC_ASSERT(x, y) KASSERT(x)
-#define INITFN extern
-
 /* External declarations of per-file init functions */
 INITFN void ah_attach(void);
 INITFN void esp_attach(void);
@@ -455,6 +445,5 @@ INITFN void ipcomp_attach(void);
 INITFN void ipe4_attach(void);
 
 INITFN void ipsec_attach(void);
-#endif /* __NetBSD __ */
 
 #endif /* _NETIPSEC_IPSEC_H_ */

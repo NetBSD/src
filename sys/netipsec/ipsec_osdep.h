@@ -1,32 +1,7 @@
-/*	$NetBSD: ipsec_osdep.h,v 1.2 2003/09/29 22:35:43 jonathan Exp $	*/
+/*	$NetBSD: ipsec_osdep.h,v 1.3 2003/10/06 22:05:15 tls Exp $	*/
 
 #ifndef NETIPSEC_OSDEP_H
 #define NETIPSEC_OSDEP_H
-
-/*
- * Copyright (c) 2003 Jonathan Stone (jonathan@cs.stanford.edu)
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
- *
- * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
- * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
- * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
- * DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT,
- * INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
- * (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
- * SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
- * STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
- * ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
- * POSSIBILITY OF SUCH DAMAGE.
- */
 
 /* 
  *  Hide porting differences across different 4.4BSD-derived platforms.
@@ -41,6 +16,7 @@
  * 8.  Test if a  socket object opened by  a privileged (super) user.
  * 9.  Global SLIST of all open raw sockets.
  * 10. Global SLIST of known interface addresses.
+ * 11. Type of initialization functions.
  */
 
 /*
@@ -127,7 +103,7 @@ read_random(void *bufp, u_int len)
  * is empty, new clusters are allocated en-masse).
  *   On NetBSD, for now, implement the `cache' as an inline  function
  *using normal NetBSD mbuf/cluster allocation macros. Replace this
- * with fast-cache code, if and when netBSD  implements one.
+ * with fast-cache code, if and when NetBSD implements one.
  */
 #ifdef __NetBSD__
 static __inline struct mbuf *
@@ -253,8 +229,15 @@ if_handoff(struct ifqueue *ifq, struct mbuf *m, struct ifnet *ifp, int adjust)
 #define ia_link ia_list
 #endif	/* __NetBSD__ */
 
-
-
+/*
+ * 11.  Type of initialization functions.  
+ */
+#ifdef __FreeBSD__ 
+#define INITFN static
+#endif
+#ifdef __NetBSD__
+#define INITFN extern
+#endif
 
 /*
  * Differences that we don't attempt to hide:
@@ -298,5 +281,4 @@ if_handoff(struct ifqueue *ifq, struct mbuf *m, struct ifnet *ifp, int adjust)
  * FreeBSD splnet() equates directly to NetBSD's splsoftnet();
  * FreeBSD uses splimp() where (for networking) NetBSD would use splnet().
  */
-#endif  NETIPSEC_OSDEP_H
-
+#endif /* NETIPSEC_OSDEP_H */
