@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.213 2005/01/26 21:49:27 mycroft Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.214 2005/01/27 03:39:36 mycroft Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -148,7 +148,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.213 2005/01/26 21:49:27 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.214 2005/01/27 03:39:36 mycroft Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -1547,7 +1547,7 @@ after_listen:
 			if (SEQ_GT(th->th_ack, tp->snd_una) &&
 			    SEQ_LEQ(th->th_ack, tp->snd_max) &&
 			    tp->snd_cwnd >= tp->snd_wnd &&
-			    tp->t_dupacks < tcprexmtthresh) {
+			    tp->t_partialacks < 0) {
 				/*
 				 * this is a pure ack for outstanding data.
 				 */
@@ -2091,7 +2091,8 @@ after_listen:
 				if (TCP_TIMER_ISARMED(tp, TCPT_REXMT) == 0 ||
 				    th->th_ack != tp->snd_una)
 					tp->t_dupacks = 0;
-				else if (++tp->t_dupacks == tcprexmtthresh) {
+				else if (++tp->t_dupacks == tcprexmtthresh &&
+					 tp->t_partialacks < 0) {
 					tcp_seq onxt;
 					u_int win;
 
@@ -2113,6 +2114,7 @@ after_listen:
 						win = 2;
 					tp->snd_ssthresh = win * tp->t_segsz;
 					tp->snd_recover = tp->snd_max;
+					tp->t_partialacks = 0;
 					TCP_TIMER_DISARM(tp, TCPT_REXMT);
 					tp->t_rtttime = 0;
 					tp->snd_nxt = th->th_ack;
@@ -2145,14 +2147,10 @@ after_listen:
 		 * If the congestion window was inflated to account
 		 * for the other side's cached packets, retract it.
 		 */
-		if (!tcp_do_newreno) {
-			if (tp->t_dupacks >= tcprexmtthresh &&
-			    tp->snd_cwnd > tp->snd_ssthresh)
-				tp->snd_cwnd = tp->snd_ssthresh;
-			tp->t_dupacks = 0;
-		} else {
-			tcp_newreno(tp, th);
-		}
+		if (!tcp_do_newreno)
+			tcp_reno_newack(tp, th);
+		else
+			tcp_newreno_newack(tp, th);
 		if (SEQ_GT(th->th_ack, tp->snd_max)) {
 			tcpstat.tcps_rcvacktoomuch++;
 			goto dropafterack;
@@ -2199,7 +2197,7 @@ after_listen:
 		 * NewReno and we have only received partial acks), do not
 		 * inflate the window yet.
 		 */
-		if (tp->t_dupacks == 0) {
+		if (tp->t_partialacks < 0) {
 			u_int cw = tp->snd_cwnd;
 			u_int incr = tp->t_segsz;
 
@@ -3039,16 +3037,39 @@ tcp_xmit_timer(tp, rtt)
 	tp->t_softerror = 0;
 }
 
+void
+tcp_reno_newack(tp, th)
+	struct tcpcb *tp;
+	struct tcphdr *th;
+{
+	if (tp->t_partialacks < 0) {
+		/*
+		 * We were not in fast recovery.  Reset the duplicate ack
+		 * counter.
+		 */
+		tp->t_dupacks = 0;
+	} else {
+		/*
+		 * Clamp the congestion window to the crossover point and
+		 * exit fast recovery.
+		 */
+		if (tp->snd_cwnd > tp->snd_ssthresh)
+			tp->snd_cwnd = tp->snd_ssthresh;
+		tp->t_partialacks = -1;
+		tp->t_dupacks = 0;
+	}
+}
+
 /*
  * Implement the NewReno response to a new ack, checking for partial acks in
  * fast recovery.
  */
 void
-tcp_newreno(tp, th)
+tcp_newreno_newack(tp, th)
 	struct tcpcb *tp;
 	struct tcphdr *th;
 {
-	if (tp->t_dupacks < tcprexmtthresh) {
+	if (tp->t_partialacks < 0) {
 		/*
 		 * We were not in fast recovery.  Reset the duplicate ack
 		 * counter.
@@ -3069,7 +3090,8 @@ tcp_newreno(tp, th)
 		 * have to leave snd_una as it was to get the correct data
 		 * offset in tcp_output().
 		 */
-		TCP_TIMER_DISARM(tp, TCPT_REXMT);
+		if (++tp->t_partialacks == 1)
+			TCP_TIMER_DISARM(tp, TCPT_REXMT);
 		tp->t_rtttime = 0;
 		tp->snd_nxt = th->th_ack;
 		/*
@@ -3096,11 +3118,12 @@ tcp_newreno(tp, th)
 		 * would be inclined to send a burst, better to do
 		 * it via the slow start mechanism.
 		 */
-		if (SEQ_LT(tp->snd_max, th->th_ack + tp->snd_ssthresh))
+		if (SEQ_SUB(tp->snd_max, th->th_ack) < tp->snd_ssthresh)
 			tp->snd_cwnd = SEQ_SUB(tp->snd_max, th->th_ack)
 			    + tp->t_segsz;
 		else
 			tp->snd_cwnd = tp->snd_ssthresh;
+		tp->t_partialacks = -1;
 		tp->t_dupacks = 0;
 	}
 }
@@ -3716,6 +3739,8 @@ syn_cache_get(src, dst, th, hlen, tlen, so, m)
 	if (sc->sc_win > 0 && SEQ_GT(tp->rcv_nxt + sc->sc_win, tp->rcv_adv))
 		tp->rcv_adv = tp->rcv_nxt + sc->sc_win;
 	tp->last_ack_sent = tp->rcv_nxt;
+	tp->t_partialacks = -1;
+	tp->t_dupacks = 0;
 
 	tcpstat.tcps_sc_completed++;
 	SYN_CACHE_PUT(sc);
