@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.10 1996/09/12 04:59:56 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.11 1996/09/12 06:02:35 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -85,15 +85,16 @@
 #define	MAXMEM	64*1024*CLSIZE	/* XXX - from cmap.h */
 #include <vm/vm_kern.h>
 
-#if 1	/* XXX MVME147 */
-#include <mvme68k/dev/pccreg.h>
-#endif
-
 /* the following is used externally (sysctl_hw) */
 char machine[] = "mvme68k";		/* cpu "architecture" */
 
 vm_map_t buffer_map;
 extern vm_offset_t avail_end;
+
+/*
+ * Model information, filled in by the Bug; see locore.s
+ */
+struct	mvmeprom_brdid  boardid;
 
 /*
  * Declare these as initialized data so we can patch them.
@@ -134,21 +135,28 @@ extern struct emul emul_svr4;
 #endif
 
 /*
- * Note that the value of delay_divisor is roughly
+ * On the 68020/68030, the value of delay_divisor is roughly
  * 2048 / cpuspeed (where cpuspeed is in MHz).
+ *
+ * On the 68040/68060(?), the value of delay_divisor is roughly
+ * 759 / cpuspeed (where cpuspeed is in MHz).
  */
-int	cpuspeed;		/* only used to printing later */
+int	cpuspeed;		/* only used for printing later */
 int	delay_divisor = 82;	/* assume some reasonable value to start */
 
 /* Machine-dependent initialization routines. */
 void	mvme68k_init __P((void));
-#if 1	/* XXX MVME147 */
+
+#ifdef MVME147
+#include <mvme68k/dev/pccreg.h>
 void	mvme147_init __P((void));
 #endif
-#if 0	/* XXX MVME162 */
+
+#ifdef MVME162
 void	mvme162_init __P((void));
 #endif
-#if 0	/* XXX MVME167 */
+
+#ifdef MVME167
 void	mvme167_init __P((void));
 #endif
 
@@ -160,32 +168,28 @@ void
 mvme68k_init()
 {
 
-#ifdef notyet
-	switch (cputyp) {
+	switch (machineid) {
 #ifdef MVME147
-	case CPU_147:
+	case MVME_147:
 		mvme147_init();
 		break;
 #endif
 #ifdef MVME162
-	case CPU_162:
+	case MVME_162:
 		mvme162_init();
 		break;
 #endif
 #ifdef MVME167
-	case CPU_167:
+	case MVME_167:
 		mvme167_init();
 		break;
 #endif
 	default:
-		panic("mvme68k_init: impossible cputyp");
+		panic("mvme68k_init: impossible machineid");
 	}
-#else
-	mvme147_init();		/* XXX for now */
-#endif
 }
 
-#if 1	/* XXX MVME147 */
+#ifdef MVME147
 /*
  * MVME-147 specific initialization.
  */
@@ -217,7 +221,31 @@ mvme147_init()
 	/* calculate cpuspeed */
 	cpuspeed = 2048 / delay_divisor;
 }
-#endif	/* MVME147 */
+#endif /* MVME147 */
+
+#ifdef MVME162
+/*
+ * MVME-162 specific initialization.
+ */
+void
+mvme162_init()
+{
+
+	/* XXX implement XXX */
+}
+#endif /* MVME162 */
+
+#ifdef MVME167
+/*
+ * MVME-167 specific initializaion.
+ */
+void
+mvme167_init()
+{
+
+	/* XXX implement XXX */
+}
+#endif /* MVME167 */
 
 /*
  * Console initialization: called early on from main,
@@ -227,17 +255,6 @@ mvme147_init()
 void
 consinit()
 {
-
-	/*
-	 * Set cpuspeed immediately since cninit() called routines
-	 * might use delay.  Note that we only set it if a custom value
-	 * has not already been specified.
-	 */
-	if (cpuspeed == 0) {
-		cpuspeed = MHZ_16;
-		if (mmutype == MMU_68040)
-			cpuspeed *= 2;	/* XXX */
-	}
 
 	/*
 	 * Initialize the console before we print anything out.
@@ -563,47 +580,110 @@ extern	char version[];
 
 identifycpu()
 {
-	char *t, *mc;
-	int len;
+	char board_str[16];
+	char cpu_str[32];
+	char mmu_str[16];
+	char fpu_str[16];
+	int len = 0;
 
-	switch (mmutype) {
-	case MMU_68851:
-		t = "?";
+	bzero(cpu_model, sizeof(cpu_model));
+	bzero(board_str, sizeof(board_str));
+	bzero(cpu_str, sizeof(cpu_str));
+	bzero(mmu_str, sizeof(mmu_str));
+	bzero(fpu_str, sizeof(cpu_str));
+
+	/* Fill in the CPU string. */
+	switch (cputype) {
+#ifdef M68020
+	case CPU_68020:
+		sprintf(cpu_str, "MC68020 CPU");
+		sprintf(fpu_str, "MC68881 FPU");	/* XXX */
 		break;
-	case MMU_68030:
-		t = "147";
+#endif
+
+#ifdef M68030
+	case CPU_68030:
+		sprintf(cpu_str, "MC68030 CPU+MMU");
+		sprintf(fpu_str, "MC68882 FPU");	/* XXX */
 		break;
-	case MMU_68040:
-		t = "16[27]";
+#endif
+
+#ifdef M68040
+	case CPU_68040:
+		sprintf(cpu_str, "MC68040 CPU+MMU+FPU");
 		break;
+#endif
+
+#ifdef M68060
+	case CPU_68060:
+		sprintf(cpu_str, "MC68060 CPU+MMU+FPU");
+		break;
+#endif
+
 	default:
-		t = "???";
-		break;
-	}
-	mc = (mmutype == MMU_68040 ? "40" :
-		(mmutype == MMU_68030 ? "30" : "20"));
-	sprintf(cpu_model, "Motorola MVME%s: %dMHz MC680%s CPU", t, 
-	    cpuspeed, mc);
-	switch (mmutype) {
-	case MMU_68040:
-	case MMU_68030:
-		strcat(cpu_model, "+MMU");
-		break;
-	case MMU_68851:
-		strcat(cpu_model, ", MC68851 MMU");
-		break;
-	default:
-		printf("%s\nunknown MMU type %d\n", cpu_model, mmutype);
+		printf("unknown CPU type");
 		panic("startup");
 	}
-	len = strlen(cpu_model);
-	if (mmutype == MMU_68040)
-		len += sprintf(cpu_model + len,
-		    "+FPU, 4k on-chip physical I/D caches");
-	else if (mmutype == MMU_68030)
-		len += sprintf(cpu_model + len, ", MC68882 FPU");
-	else
-		len += sprintf(cpu_model + len, ", MC68881 FPU");
+
+	/* Fill in the MMU string; only need to handle one case. */
+	switch (mmutype) {
+	case MMU_68851:
+		sprintf(mmu_str, "MC68851 MMU");
+		break;
+	}
+
+	/* XXX Find out FPU type and fill in string here. */
+
+	/* Fill in board model string. */
+	switch (machineid) {
+#ifdef MVME147
+	case MVME_147: {
+		char *suffix = (char *)&boardid.suffix;
+		len = sprintf(board_str, "%x", machineid);
+		if (suffix[0] != '\0') {
+			board_str[len++] = suffix[0];
+			if (suffix[1] != '\0')
+				board_str[len++] = suffix[1];
+		}
+		break; }
+#endif
+
+#if defined(MVME162) || defined(MVME167) || defined(MVME177)
+	case MVME_162:
+	case MVME_167:
+	case MVME_177: {
+		int i;
+		char c;
+		for (i = 0; i < sizeof(boardid.longname); i++) {
+			c = boardid.longname[i];
+			if (c == '\0' || c == ' ')
+				break;
+			board_str[i] = c;
+		}
+		break; }
+#endif
+	default:
+		printf("unknown machine type: 0x%x\n", machineid);
+		panic("startup");
+	}
+
+	len = sprintf(cpu_model, "Motorola MVME-%s: %dMHz %s", board_str,
+	    cpuspeed, cpu_str);
+
+	if (mmu_str[0] != '\0')
+		len += sprintf(cpu_model + len, ", %s", mmu_str);
+
+	if (fpu_str[0] != '\0')
+		len += sprintf(cpu_model + len, ", %s", fpu_str);
+
+#if defined(M68040) || defined(M68060)
+	switch (cputype) {
+	case CPU_68040:
+	case CPU_68060:		/* XXX is this right? */
+		strcat(cpu_model, ", 4k on-chip physical I/D caches");
+	}
+#endif
+
 	printf("%s\n", cpu_model);
 }
 
@@ -638,53 +718,6 @@ cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 	}
 	/* NOTREACHED */
 }
-
-#ifdef USELEDS
-#include <hp300/hp300/led.h>
-
-int inledcontrol = 0;	/* 1 if we are in ledcontrol already, cheap mutex */
-char *ledaddr;
-
-/*
- * Map the LED page and setup the KVA to access it.
- */
-ledinit()
-{
-	extern caddr_t ledbase;
-
-	pmap_enter(pmap_kernel(), (vm_offset_t)ledbase, (vm_offset_t)LED_ADDR,
-		   VM_PROT_READ|VM_PROT_WRITE, TRUE);
-	ledaddr = (char *) ((int)ledbase | (LED_ADDR & PGOFSET));
-}
-
-/*
- * Do lights:
- *	`ons' is a mask of LEDs to turn on,
- *	`offs' is a mask of LEDs to turn off,
- *	`togs' is a mask of LEDs to toggle.
- * Note we don't use splclock/splx for mutual exclusion.
- * They are expensive and we really don't need to be that precise.
- * Besides we would like to be able to profile this routine.
- */
-ledcontrol(ons, offs, togs)
-	register int ons, offs, togs;
-{
-	static char currentleds;
-	register char leds;
-
-	inledcontrol = 1;
-	leds = currentleds;
-	if (ons)
-		leds |= ons;
-	if (offs)
-		leds &= ~offs;
-	if (togs)
-		leds ^= togs;
-	currentleds = leds;
-	*ledaddr = ~leds;
-	inledcontrol = 0;
-}
-#endif
 
 #define SS_RTEFRAME	1
 #define SS_FPSTATE	2
