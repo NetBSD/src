@@ -1,4 +1,4 @@
-/*	$NetBSD: mach.c,v 1.4 1995/04/27 22:06:04 mycroft Exp $	*/
+/*	$NetBSD: mach.c,v 1.5 1995/04/28 22:28:48 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -40,7 +40,7 @@
 #if 0
 static char sccsid[] = "@(#)mach.c	8.1 (Berkeley) 6/11/93";
 #else
-static char rcsid[] = "$NetBSD: mach.c,v 1.4 1995/04/27 22:06:04 mycroft Exp $";
+static char rcsid[] = "$NetBSD: mach.c,v 1.5 1995/04/28 22:28:48 mycroft Exp $";
 #endif
 #endif /* not lint */
 
@@ -52,11 +52,11 @@ static char rcsid[] = "$NetBSD: mach.c,v 1.4 1995/04/27 22:06:04 mycroft Exp $";
 #include <ctype.h>
 #include <curses.h>
 #include <fcntl.h>
-#include <sgtty.h>
 #include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <termios.h>
 #include <time.h>
 
 #include "bog.h"
@@ -278,10 +278,8 @@ void
 flushin(fp)
 	FILE *fp;
 {
-	int arg;
 
-	arg = FREAD;
-	(void)ioctl(fileno(fp), TIOCFLUSH, &arg);
+	(void) tcflush(fileno(fp), TCIFLUSH);
 }
 
 static int gone;
