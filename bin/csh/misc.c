@@ -1,4 +1,4 @@
-/* $NetBSD: misc.c,v 1.14 2003/08/07 09:05:06 agc Exp $ */
+/* $NetBSD: misc.c,v 1.15 2004/01/05 23:12:30 christos Exp $ */
 
 /*-
  * Copyright (c) 1980, 1991, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)misc.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: misc.c,v 1.14 2003/08/07 09:05:06 agc Exp $");
+__RCSID("$NetBSD: misc.c,v 1.15 2004/01/05 23:12:30 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -42,7 +42,9 @@ __RCSID("$NetBSD: misc.c,v 1.14 2003/08/07 09:05:06 agc Exp $");
 
 #include <stdarg.h>
 #include <stdlib.h>
+#include <string.h>
 #include <unistd.h>
+#include <fcntl.h>
 
 #include "csh.h"
 #include "extern.h"
@@ -224,8 +226,17 @@ void
 closem(void)
 {
     int f;
+    int nofile;
 
-    for (f = 0; f < NOFILE; f++)
+#ifdef F_CLOSEM
+    nofile = FOLDSTD + 1;
+    if (fcntl(nofile, F_CLOSEM, 0) == -1)
+	stderror(ERR_SYSTEM, "", strerror(errno));
+#else
+    nofile = NOFILE;
+#endif
+
+    for (f = 0; f < nofile; f++)
 	if (f != SHIN && f != SHOUT && f != SHERR && f != OLDSTD &&
 	    f != FSHTTY)
 	    (void) close(f);
