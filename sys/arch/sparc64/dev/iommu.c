@@ -1,4 +1,4 @@
-/*	$NetBSD: iommu.c,v 1.19 2000/06/29 07:37:55 mrg Exp $	*/
+/*	$NetBSD: iommu.c,v 1.20 2000/07/02 14:00:38 mrg Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Matthew R. Green
@@ -452,7 +452,7 @@ iommu_dvmamap_load(t, is, map, buf, buflen, p, flags)
 	int err;
 	bus_size_t sgsize;
 	paddr_t curaddr;
-	u_long dvmaddr;
+	u_long dvmaddr, align;
 	vaddr_t vaddr = (vaddr_t)buf;
 	pmap_t pmap;
 
@@ -475,17 +475,15 @@ iommu_dvmamap_load(t, is, map, buf, buflen, p, flags)
 		return (EINVAL);
 	}
 
-#if 1
 	sgsize = round_page(buflen + ((int)vaddr & PGOFSET));
-#else
-	sgsize = buflen + ((int)vaddr & PGOFSET);
-#endif
+
 	/*
 	 * XXX Need to implement "don't dma across this boundry".
 	 */
+	align = max(map->_dm_boundary, NBPG);
 	s = splhigh();
-	err = extent_alloc(is->is_dvmamap, sgsize, NBPG,
-	    map->_dm_boundary, EX_NOWAIT, (u_long *)&dvmaddr);
+	err = extent_alloc(is->is_dvmamap, sgsize, align,
+	    map->_dm_boundary, EX_NOWAIT|EX_BOUNDZERO, (u_long *)&dvmaddr);
 	splx(s);
 
 #ifdef DEBUG
@@ -600,7 +598,7 @@ iommu_dvmamap_load_raw(t, is, map, segs, nsegs, size, flags)
 	int err;
 	bus_size_t sgsize;
 	paddr_t pa;
-	u_long boundary;
+	u_long boundary, align;
 	u_long dvmaddr;
 	struct pglist *mlist;
 	int pagesz = PAGE_SIZE;
@@ -635,10 +633,11 @@ iommu_dvmamap_load_raw(t, is, map, segs, nsegs, size, flags)
 	if ((boundary = segs[0]._ds_boundary) == 0)
 		boundary = map->_dm_boundary;
 	
+	align = max(map->_dm_boundary, NBPG);
 	s = splhigh();
-	err = extent_alloc(is->is_dvmamap, sgsize, NBPG, boundary, 
-			   (flags & BUS_DMA_NOWAIT) == 0 ? EX_WAITOK : EX_NOWAIT, 
-			   (u_long *)&dvmaddr);
+	err = extent_alloc(is->is_dvmamap, sgsize, align, boundary, 
+	   ((flags & BUS_DMA_NOWAIT) == 0 ? EX_WAITOK : EX_NOWAIT)|EX_BOUNDZERO, 
+	    (u_long *)&dvmaddr);
 	splx(s);
 
 	if (err != 0)
