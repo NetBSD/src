@@ -857,12 +857,12 @@ legitimate_address_p(mode, xbar, strict)
       xfoo = XEXP (xbar, 0);
       if (INDEX_TERM_P (xfoo, mode, strict))
 	{
-	  GO_IF_NONINDEXED_ADDRESS (XEXP (xbar, 1), win, strict, 1);
+	  GO_IF_NONINDEXED_ADDRESS (XEXP (xbar, 1), win, strict, 0);
 	}
       xfoo = XEXP (xbar, 1);
       if (INDEX_TERM_P (xfoo, mode, strict))
 	{
-	  GO_IF_NONINDEXED_ADDRESS (XEXP (xbar, 0), win, strict, 1);
+	  GO_IF_NONINDEXED_ADDRESS (XEXP (xbar, 0), win, strict, 0);
 	}
       /* Handle offset(reg)[index] with offset added outermost */
       if (INDIRECTABLE_CONSTANT_ADDRESS_P (XEXP (xbar, 0), 1, 0))
@@ -883,6 +883,135 @@ legitimate_address_p(mode, xbar, strict)
   return 0;
 
  win:
+  return 1;
+}
+
+int
+vax_symbolic_operand (op, mode)
+     register rtx op;
+     enum machine_mode mode ATTRIBUTE_UNUSED;
+{
+  if (!general_operand(op, mode))
+    return 0;
+  if (GET_CODE (op) == SYMBOL_REF
+	 || GET_CODE (op) == LABEL_REF
+	 || (GET_CODE (op) == CONST
+	     && GET_CODE (XEXP (op, 0)) == PLUS
+	     && GET_CODE (XEXP (XEXP (op, 0), 0)) == SYMBOL_REF
+#ifdef NO_EXTERNAL_INDIRECT_ADDRESS
+	     && (SYMBOL_REF_FLAG (XEXP (XEXP (op, 0), 0))
+		 || !(flag_pic || TARGET_HALFPIC))
+#endif
+	     && GET_CODE (XEXP (XEXP (op, 0), 1)) == CONST_INT)
+	 || (GET_CODE (op) == CONST
+	     && GET_CODE (XEXP (op, 0)) == PLUS
+	     && GET_CODE (XEXP (XEXP (op, 0), 1)) == SYMBOL_REF
+#ifdef NO_EXTERNAL_INDIRECT_ADDRESS
+	     && (SYMBOL_REF_FLAG (XEXP (XEXP (op, 0), 1))
+		 || !(flag_pic || TARGET_HALFPIC))
+#endif
+	     && GET_CODE (XEXP (XEXP (op, 0), 0)) == CONST_INT)
+	 || (GET_CODE (op) == PLUS
+	     && GET_CODE (XEXP (op, 1)) == SYMBOL_REF
+#ifdef NO_EXTERNAL_INDIRECT_ADDRESS
+	     && (SYMBOL_REF_FLAG (XEXP (op, 1))
+		 || !(flag_pic || TARGET_HALFPIC))
+#endif
+	     && GET_CODE (XEXP (op, 0)) == CONST_INT)
+	 || (GET_CODE (op) == PLUS
+	     && GET_CODE (XEXP (op, 0)) == SYMBOL_REF
+#ifdef NO_EXTERNAL_INDIRECT_ADDRESS
+	     && (SYMBOL_REF_FLAG (XEXP (op, 0))
+		 || !(flag_pic || TARGET_HALFPIC))
+#endif
+	     && GET_CODE (XEXP (op, 1)) == CONST_INT))
+    {
+      return 1;
+    }
+  return 0;
+}
+
+int
+vax_nonsymbolic_operand (op, mode)
+     register rtx op;
+     enum machine_mode mode ATTRIBUTE_UNUSED;
+{
+  if (!general_operand(op, mode))
+    return 0;
+  if (GET_CODE (op) == SYMBOL_REF
+	 || GET_CODE (op) == LABEL_REF
+	 || (GET_CODE (op) == CONST
+	     && GET_CODE (XEXP (op, 0)) == PLUS
+	     && GET_CODE (XEXP (XEXP (op, 0), 0)) == SYMBOL_REF)
+	 || (GET_CODE (op) == MEM
+	     && GET_CODE (XEXP (op, 0)) == CONST
+	     && GET_CODE (XEXP (XEXP (op, 0), 0)) == PLUS
+	     && GET_CODE (XEXP (XEXP (XEXP (op, 0), 0), 0)) == SYMBOL_REF)
+	 || (GET_CODE (op) == PLUS
+	     && GET_CODE (XEXP (op, 0)) == SYMBOL_REF
+	     && GET_CODE (XEXP (op, 1)) == CONST_INT))
+    return 0;
+#if 0
+  if (GET_CODE (op) == PLUS)
+    debug_rtx (op);
+#endif
+  if (vax_symbolic_operand (op, mode))
+    return 0;
+#if 0
+  if (GET_CODE (op) != CONST_INT && GET_CODE (op) != REG)
+    debug_rtx (op);
+#endif
+  return 1;
+}
+
+int
+vax_lvalue_operand(op, mode)
+     register rtx op;
+     enum machine_mode mode;
+{
+  if (!general_operand(op, mode))
+    return 0;
+  return GET_CODE (op) == REG
+	|| GET_CODE (op) == SUBREG
+	|| GET_CODE (op) == MEM
+	|| GET_CODE (op) == CONCAT
+	|| GET_CODE (op) == PARALLEL
+	|| GET_CODE (op) == STRICT_LOW_PART;
+}
+
+int
+vax_general_operand(op, mode)
+     register rtx op;
+     enum machine_mode mode;
+{
+  if (!general_operand(op, mode))
+    return 0;
+  if (!(flag_pic || TARGET_HALFPIC))
+    return 1;
+  if ((GET_CODE (op) == CONST
+       && GET_CODE (XEXP (op, 0)) == PLUS
+       && GET_CODE (XEXP (XEXP (op, 0), 0)) == SYMBOL_REF
+#ifdef NO_EXTERNAL_INDIRECT_ADDRESS
+       && !SYMBOL_REF_FLAG (XEXP (XEXP (op, 0), 0))
+#endif
+      ) || (GET_CODE (op) == MEM
+          && GET_CODE (XEXP (op, 0)) == CONST
+          && GET_CODE (XEXP (XEXP (op, 0), 0)) == PLUS
+          && GET_CODE (XEXP (XEXP (XEXP (op, 0), 0), 0)) == SYMBOL_REF
+#ifdef NO_EXTERNAL_INDIRECT_ADDRESS
+          && !SYMBOL_REF_FLAG (XEXP (XEXP (op, 0), 0))
+#endif
+      ) || (GET_CODE (op) == PLUS
+          && GET_CODE (XEXP (op, 0)) == SYMBOL_REF
+          && GET_CODE (XEXP (op, 1)) == CONST_INT
+#ifdef NO_EXTERNAL_INDIRECT_ADDRESS
+          && !SYMBOL_REF_FLAG (XEXP (op, 0))
+#endif
+     ))
+    return 0;
+#if 0
+  debug_rtx (op);
+#endif
   return 1;
 }
 
