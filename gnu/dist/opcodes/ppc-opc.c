@@ -1109,6 +1109,10 @@ extract_tbr (insn, invalid)
 #define XTO(op, xop, to) (X ((op), (xop)) | ((((unsigned long)(to)) & 0x1f) << 21))
 #define XTO_MASK (X_MASK | TO_MASK)
 
+/* An X form tlb instruction with the SH field specified.  */
+#define XTLB(op, xop, sh) (X ((op), (xop)) | ((((unsigned long)(sh)) & 0x1f) << 11))
+#define XTLB_MASK (X_MASK | SH_MASK)
+
 /* An XFL form instruction.  */
 #define XFL(op, xop, rc) (OP (op) | ((((unsigned long)(xop)) & 0x3ff) << 1) | (((unsigned long)(rc)) & 1))
 #define XFL_MASK (XFL (0x3f, 0x3ff, 1) | (((unsigned long)1) << 25) | (((unsigned long)1) << 16))
@@ -2416,6 +2420,7 @@ const struct powerpc_opcode powerpc_opcodes[] = {
 { "mfmd_dbcam", XSPR(31,339,824), XSPR_MASK, PPC860,	{ RT } },
 { "mfmd_dbram0",XSPR(31,339,825), XSPR_MASK, PPC860,	{ RT } },
 { "mfmd_dbram1",XSPR(31,339,826), XSPR_MASK, PPC860,	{ RT } },
+{ "mfpid",   XSPR(31,339,945), XSPR_MASK, PPC403,	{ RT } },
 { "mficdbdr",XSPR(31,339,979), XSPR_MASK, PPC403,	{ RT } },
 { "mfesr",   XSPR(31,339,980), XSPR_MASK, PPC403,	{ RT } },
 { "mfdear",  XSPR(31,339,981), XSPR_MASK, PPC403,	{ RT } },
@@ -2582,6 +2587,7 @@ const struct powerpc_opcode powerpc_opcodes[] = {
 { "mtibatl", XSPR(31,467,529), XSPRBAT_MASK, PPC,	{ SPRBAT, RS } },
 { "mtdbatu", XSPR(31,467,536), XSPRBAT_MASK, PPC,	{ SPRBAT, RS } },
 { "mtdbatl", XSPR(31,467,537), XSPRBAT_MASK, PPC,	{ SPRBAT, RS } },
+{ "mtpid",   XSPR(31,467,945), XSPR_MASK, PPC403,	{ RT } },
 { "mticdbdr",XSPR(31,467,979), XSPR_MASK, PPC403,	{ RT } },
 { "mtesr",   XSPR(31,467,980), XSPR_MASK, PPC403,	{ RT } },
 { "mtevpr",  XSPR(31,467,982), XSPR_MASK, PPC403,	{ RT } },
@@ -2734,6 +2740,9 @@ const struct powerpc_opcode powerpc_opcodes[] = {
 
 { "eieio",   X(31,854),	0xffffffff,	PPC,		{ 0 } },
 
+{ "tlbsx",   XRC(31,914,0), X_MASK, PPC403,	{ RT, RA, RB } },
+{ "tlbsx.",  XRC(31,914,1), X_MASK, PPC403,	{ RT, RA, RB } },
+
 { "sthbrx",  X(31,918),	X_MASK,		COM,		{ RS, RA, RB } },
 
 { "sraq",    XRC(31,920,0), X_MASK,	M601,		{ RA, RS, RB } },
@@ -2747,6 +2756,10 @@ const struct powerpc_opcode powerpc_opcodes[] = {
 { "extsh.",  XRC(31,922,1), XRB_MASK,	PPCCOM,		{ RA, RS } },
 { "exts.",   XRC(31,922,1), XRB_MASK,	PWRCOM,		{ RA, RS } },
 
+{ "tlbrehi", XTLB(31,946,0), XTLB_MASK,	PPC403,		{ RT, RA } },
+{ "tlbrelo", XTLB(31,946,1), XTLB_MASK,	PPC403,		{ RT, RA } },
+{ "tlbre",   X(31,946),	X_MASK,		PPC403,		{ RT, RA, SH } },
+
 { "sraiq",   XRC(31,952,0), X_MASK,	M601,		{ RA, RS, SH } },
 { "sraiq.",  XRC(31,952,1), X_MASK,	M601,		{ RA, RS, SH } },
 
@@ -2756,6 +2769,10 @@ const struct powerpc_opcode powerpc_opcodes[] = {
 { "iccci",   X(31,966),	XRT_MASK,	PPC,		{ RA, RB } },
 
 { "tlbld",   X(31,978),	XRTRA_MASK,	PPC,		{ RB } },
+
+{ "tlbwehi", XTLB(31,978,0), XTLB_MASK,	PPC403,		{ RT, RA } },
+{ "tlbwelo", XTLB(31,978,1), XTLB_MASK,	PPC403,		{ RT, RA } },
+{ "tlbwe",   X(31,978),	X_MASK,		PPC403,		{ RS, RA, SH } },
 
 { "icbi",    X(31,982),	XRT_MASK,	PPC,		{ RA, RB } },
 
