@@ -1,3 +1,5 @@
+/*	$NetBSD: print-ospf6.c,v 1.2 1999/07/04 02:57:51 itojun Exp $	*/
+
 /*
  * Copyright (c) 1992, 1993, 1994, 1995, 1996, 1997
  *	The Regents of the University of California.  All rights reserved.
@@ -23,7 +25,7 @@
 
 #ifndef lint
 static const char rcsid[] =
-    "@(#) $Header: /cvsroot/src/usr.sbin/tcpdump/Attic/print-ospf6.c,v 1.1 1999/07/02 11:31:35 itojun Exp $ (LBL)";
+    "@(#) $Header: /cvsroot/src/usr.sbin/tcpdump/Attic/print-ospf6.c,v 1.2 1999/07/04 02:57:51 itojun Exp $ (LBL)";
 #endif
 
 #include <sys/param.h>

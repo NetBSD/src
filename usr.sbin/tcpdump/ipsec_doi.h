@@ -1,3 +1,5 @@
+/*	$NetBSD: ipsec_doi.h,v 1.2 1999/07/04 02:57:51 itojun Exp $	*/
+
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
  * All rights reserved.
@@ -26,7 +28,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-/* YIPS @(#)$Id: ipsec_doi.h,v 1.1 1999/07/02 11:31:29 itojun Exp $ */
+/* YIPS @(#) Id: ipsec_doi.h,v 1.1.2.1.4.1 1999/02/12 08:10:00 sumikawa Exp */
 
 /* refer to RFC 2407 */
 
