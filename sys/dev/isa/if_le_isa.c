@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le_isa.c,v 1.2 1996/05/12 23:52:56 mycroft Exp $	*/
+/*	$NetBSD: if_le_isa.c,v 1.3 1996/08/30 01:40:35 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
@@ -356,6 +356,7 @@ le_isa_attach(parent, self, aux)
 /*
  * Controller interrupt.
  */
+int
 le_isa_intredge(arg)
 	void *arg;
 {
