@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist,v 1.258 2004/01/30 03:02:41 lukem Exp $
+#	$NetBSD: NetBSD.dist,v 1.259 2004/03/09 20:09:40 garbled Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 /set type=dir uname=root gname=wheel mode=0755
@@ -1005,10 +1005,15 @@
 ./usr/share/sushi/system/usermgmtconf
 ./usr/share/sushi/system/weeklyconf
 ./usr/share/sushi/users
+./usr/share/sushi/users/addgroup
 ./usr/share/sushi/users/adduser
+./usr/share/sushi/users/delgroup
 ./usr/share/sushi/users/deluser
 ./usr/share/sushi/users/disuser
+./usr/share/sushi/users/listgroup
 ./usr/share/sushi/users/listuser
+./usr/share/sushi/users/moduser
+./usr/share/sushi/users/passwd
 ./usr/share/sushi/util
 ./usr/share/sushi/util/logging
 ./usr/share/sushi/util/scripting
