@@ -1,4 +1,4 @@
-/*	$NetBSD: scsi_subr.c,v 1.8 2003/06/23 11:53:43 agc Exp $	*/
+/*	$NetBSD: scsi_subr.c,v 1.9 2003/09/08 09:05:08 agc Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: scsi_subr.c,v 1.8 2003/06/23 11:53:43 agc Exp $");
+__RCSID("$NetBSD: scsi_subr.c,v 1.9 2003/09/08 09:05:08 agc Exp $");
 #endif
 
 
@@ -120,7 +120,7 @@ scsi_mode_sense(fd, pgcode, pctl, buf, len)
 
 	cmd.opcode = MODE_SENSE;
 	cmd.page = pgcode | pctl;
-	cmd.u_len.scsi.length = len;
+	cmd.length = len;
 
 	scsi_command(fd, &cmd, sizeof(cmd), buf, len, 10000, SCCMD_READ);
 }
@@ -138,7 +138,7 @@ scsi_mode_select(fd, byte2, buf, len)
 
 	cmd.opcode = MODE_SELECT;
 	cmd.byte2 = SMS_PF | byte2;
-	cmd.u_len.scsi.length = len;
+	cmd.length = len;
 
 	scsi_command(fd, &cmd, sizeof(cmd), buf, len, 10000, SCCMD_WRITE);
 }
