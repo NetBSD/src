@@ -1,4 +1,4 @@
-/*	$NetBSD: lpd.c,v 1.39 2002/09/19 20:08:58 mycroft Exp $	*/
+/*	$NetBSD: lpd.c,v 1.40 2002/09/19 20:22:32 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993, 1994
@@ -45,7 +45,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)lpd.c	8.7 (Berkeley) 5/10/95";
 #else
-__RCSID("$NetBSD: lpd.c,v 1.39 2002/09/19 20:08:58 mycroft Exp $");
+__RCSID("$NetBSD: lpd.c,v 1.40 2002/09/19 20:22:32 mycroft Exp $");
 #endif
 #endif /* not lint */
 
@@ -250,8 +250,11 @@ main(int argc, char **argv)
 		exit(1);
 	}
 	if (flock(lfd, LOCK_EX|LOCK_NB) < 0) {
-		if (errno == EWOULDBLOCK)	/* active daemon present */
+		if (errno == EWOULDBLOCK) {	/* active daemon present */
+			syslog(LOG_ERR, "%s is locked; another lpd is running",
+			    _PATH_MASTERLOCK);
 			exit(0);
+		}
 		syslog(LOG_ERR, "%s: %m", _PATH_MASTERLOCK);
 		exit(1);
 	}
