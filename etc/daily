@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: daily,v 1.43 2001/12/18 00:44:20 lukem Exp $
+#	$NetBSD: daily,v 1.44 2001/12/18 00:48:05 lukem Exp $
 #	@(#)daily	8.2 (Berkeley) 1/25/94
 #
 
@@ -163,7 +163,7 @@ rm -f $TMP $TMP2
 
 if checkyesno check_mailq; then
 	mailq > $TMP
-	if ! grep -q "^Mail queue is empty$" $TMP; then
+	if ! grep -q "queue is empty$" $TMP; then
 		echo ""
 		echo "mail:"
 		cat $TMP
