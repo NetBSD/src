@@ -1,4 +1,4 @@
-/*	$NetBSD: menus.mi,v 1.5 2003/06/11 09:03:32 dsl Exp $	*/
+/*	$NetBSD: menus.mi,v 1.6 2003/06/27 13:36:04 dsl Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -38,6 +38,9 @@
 
 /*
  * Menu system definitions -- machine and language independent
+ *
+ * Some menus may be called directly in the code rather than via the 
+ * menu system.
  *
  *  This file must be first in the sed command line.
  *
@@ -83,4 +86,264 @@ menu selfsize, title MSG_Select_number_of_fragments_per_block, y = 15;
 	option MSG_f4_per_block, exit, action { set_fsize(arg, 4); };
 	option MSG_f2_per_block, exit, action { set_fsize(arg, 2); };
 	option MSG_f1_per_block, exit, action { set_fsize(arg, 1); };
+
+menu netbsd, title MSG_NetBSD_VERSION_Install_System,
+    exit, exitstring MSG_Exit_Install_System;
+	display action  { toplevel(); };
+	option MSG_Install_NetBSD_to_hard_disk,
+		action { do_install(); };
+	option MSG_Upgrade_NetBSD_on_a_hard_disk,
+		action { do_upgrade(); };
+	option MSG_Re_install_sets_or_install_additional_sets,
+		action { do_reinstall_sets(); };
+	option MSG_Reboot_the_computer, exit,
+		action (endwin) { system("/sbin/reboot -q"); };
+	option MSG_Utility_menu, sub menu utility;
+
+menu utility, title MSG_NetBSD_VERSION_Utilities, exit;
+	option MSG_Run_bin_sh,
+		action (endwin) { system("/bin/sh"); };
+/*	option MSG_test, action { run_prog(RUN_DISPLAY, NULL, "/bin/pwd"); }; */
+	option MSG_Set_timezone, 
+		action {
+			set_timezone();
+		};
+	option MSG_Configure_network,
+		action {
+			extern int network_up;
+
+			network_up = 0;
+			config_network();
+		};
+/*	option MSG_Partition a disk; XXX add later.  */
+	option MSG_Logging_functions, action { do_logging(); };
+	option MSG_Halt_the_system, exit,
+		action (endwin) { system("/sbin/halt -q"); };
+
+menu yesno, title MSG_yes_or_no;
+	option MSG_Yes, exit, action  {yesno = 1;};
+	option MSG_No,  exit, action  {yesno = 0;};
+
+menu noyes, title MSG_yes_or_no;
+	option MSG_No,  exit, action  {yesno = 0;};
+	option MSG_Yes, exit, action  {yesno = 1;};
+
+menu ok, title MSG_Hit_enter_to_continue;
+	option MSG_ok, exit;
+
+menu layout, title  MSG_Choose_your_installation;
+	option MSG_Standard, 	  exit, action { layoutkind = 1; };
+	option MSG_Use_Existing, 	  exit, action { layoutkind = 4; };
+
+menu sizechoice, title  MSG_Choose_your_size_specifier;
+	option MSG_Megabytes, exit, action 
+		{ sizemult = MEG / sectorsize;
+		  multname = msg_string(MSG_megname);
+		};
+	option MSG_Cylinders, exit, action 
+		{ sizemult = current_cylsize; 
+		  multname = msg_string(MSG_cylname);
+		};
+	option MSG_Sectors, exit, action 
+		{ sizemult = 1; 
+		  multname = msg_string(MSG_secname);
+		};
+
+menu distmedium, title MSG_Select_medium;
+	display action { msg_display (MSG_distmedium); nodist = 0; };
+	option MSG_ftp,  action	{
+				  got_dist = get_via_ftp();
+			        },
+				exit;
+	option MSG_nfs,  action	{ 
+				  got_dist = get_via_nfs();
+			 	}, exit;
+	option MSG_cdrom, action  {
+				  got_dist = get_via_cdrom();
+				}, exit; 
+	option MSG_floppy, action {
+			          got_dist = get_via_floppy(); 
+				}, exit;
+	option MSG_unmounted_fs, action {
+				  got_dist = get_via_localfs(); 
+				}, exit;
+	option MSG_local_dir, action {
+				   got_dist = get_via_localdir();
+				 }, exit;
+	option MSG_none,  action { nodist = 1; }, exit;
+
+menu distset, title MSG_Select_your_distribution;
+	display action { msg_display (MSG_distset); };
+	option MSG_Full_installation, exit;
+	option MSG_Custom_installation, exit, action { customise_sets(); };
+
+menu ftpsource, title MSG_Change;
+	display action
+		{ msg_clear();
+		  msg_table_add (MSG_ftpsource, ftp_host, ftp_dir, ftp_user,
+		     strcmp(ftp_user, "ftp") == 0 ? ftp_pass :
+		       strlen(ftp_pass) != 0 ? MSG_hidden : "" , ftp_proxy);
+		};
+	option MSG_Host, action
+		{ msg_prompt (MSG_host, ftp_host, ftp_host, 255); };
+	option MSG_Directory, action
+		{ msg_prompt (MSG_dir, ftp_dir, ftp_dir, 255); };
+	option MSG_User, action
+		{ msg_prompt (MSG_user, ftp_user, ftp_user, 255);
+			ftp_pass[0] = '\0';
+		};
+	option MSG_Password, action
+		{ if (strcmp(ftp_user, "ftp") == 0)
+			msg_prompt (MSG_email, ftp_pass, ftp_pass, 255);
+		  else {
+			msg_prompt_noecho (MSG_passwd, "", ftp_pass, 255);
+		  }
+		};
+	option MSG_Proxy, action
+		{ msg_prompt (MSG_proxy, ftp_proxy, ftp_proxy, 255);
+		  if (strcmp(ftp_proxy, "") == 0)
+			unsetenv("ftp_proxy");
+		  else
+			setenv("ftp_proxy", ftp_proxy, 1);
+		};
+	option MSG_Get_Distribution, exit;
+
+menu nfssource, title MSG_Change;
+	display action
+		{ msg_display (MSG_nfssource, nfs_host, nfs_dir); };
+	option MSG_Host, action
+		{ msg_prompt (MSG_host, NULL, nfs_host, 255); };
+	option MSG_Directory, action
+		{ msg_prompt (MSG_dir, NULL, nfs_dir, 255); };
+	option MSG_Continue, exit;
+
+menu nfsbadmount, title MSG_What_do_you_want_to_do;
+	option MSG_Try_again, exit, sub menu nfssource, action
+		{ yesno = 1; ignorerror = 0; };
+	option MSG_Give_up, exit, action
+		{ yesno = 0; ignorerror = 0; };
+	option MSG_Ignore_continue_anyway, exit, action
+		{ yesno = 1; ignorerror = 1; };
+
+
+menu fdremount, title MSG_What_do_you_want_to_do;
+	option MSG_Try_again, exit, action { yesno = 1; };
+	option MSG_Set_finished, exit, action { yesno = 2; };
+	option MSG_Abort_install, exit, action { yesno = 0; };
+
+menu fdok, title MSG_Hit_enter_to_continue;
+	option MSG_OK, exit, action { yesno = 1; };
+	option MSG_Set_finished, exit, action { yesno = 2; };
+	option MSG_Abort_install, exit, action { yesno = 0; };
+
+menu crypttype, title MSG_Password_cipher, y=16;
+	option MSG_DES, exit, action { yesno = 1; };
+	option MSG_MD5, exit, action { yesno = 2; };
+	option MSG_Blowfish_2_7_round, exit, action { yesno = 3; };
+	option MSG_do_not_change, exit, action { yesno = 0; };
+
+menu cdromsource, title MSG_Change;
+	display action
+		{ msg_display (MSG_cdromsource, cdrom_dev, cdrom_dir); };
+	option MSG_Device, action
+		{ msg_prompt (MSG_dev, cdrom_dev, cdrom_dev, SSTRSIZE); };
+	option MSG_Directory, action
+		{ msg_prompt (MSG_dir, cdrom_dir, cdrom_dir, STRSIZE); };
+	option MSG_Continue, exit;
+
+menu cdrombadmount, title MSG_What_do_you_want_to_do;
+	option MSG_Try_again, exit, sub menu cdromsource, action
+		{ yesno = 1; ignorerror = 0; };
+	option MSG_Give_up, exit, action
+		{ yesno = 0; ignorerror = 0; };
+	option MSG_Ignore_continue_anyway, exit, action
+		{ yesno = 1; ignorerror = 1; };
+
+
+menu localfssource, title MSG_Change;
+	display action
+		{ msg_display (MSG_localfssource, localfs_dev, localfs_fs, localfs_dir); };
+	option MSG_Device, action
+		{ msg_prompt (MSG_dev, localfs_dev, localfs_dev, SSTRSIZE); };
+	option MSG_File_system, action
+		{ msg_prompt (MSG_filesys, localfs_fs, localfs_fs, STRSIZE); };
+	option MSG_Directory, action
+		{ msg_prompt (MSG_dir, localfs_dir, localfs_dir, STRSIZE); };
+	option MSG_Continue, exit;
+
+menu localfsbadmount, title MSG_What_do_you_want_to_do;
+	option MSG_Try_again, exit, sub menu localfssource, action
+		{ yesno = 1; ignorerror = 0; };
+	option MSG_Give_up, exit, action
+		{ yesno = 0; ignorerror = 0; };
+	option MSG_Ignore_continue_anyway, exit, action
+		{ yesno = 1; ignorerror = 1; };
+
+menu localdirsource, title MSG_Change;
+	display action
+		{ msg_display(MSG_localdir, localfs_dir); };
+	option MSG_Directory, action
+		{ msg_prompt (MSG_dir, localfs_dir, localfs_dir, STRSIZE); },
+		exit;
+	option MSG_Continue, exit;
+
+menu localdirbad, title MSG_What_do_you_want_to_do;
+	option MSG_Change_directory_path,  action
+		{ yesno = 1;
+	          msg_prompt(MSG_localdir, localfs_dir, localfs_dir, STRSIZE);
+		}, exit;
+	option MSG_Give_up, exit, action
+		{ yesno = 0; ignorerror = 0; };
+	option MSG_Ignore_continue_anyway, exit, action
+		{ yesno = 1; ignorerror = 1; };
+
+menu namesrv6, title MSG_Select_IPv6_DNS_server;
+	option "ns9.iij.ad.jp", exit, action
+		{
+#ifdef INET6
+		  strlcpy(net_namesvr6, "2001:240::1", sizeof(net_namesvr6));
+		  yesno = 1;
+#else
+		  yesno = 0;
+#endif
+		}; 
+	option "ns-wide.wide.ad.jp", exit, action
+		{
+#ifdef INET6
+		  strlcpy(net_namesvr6, "2001:200:0:1::3", sizeof(net_namesvr6));
+		  yesno = 1;
+#else
+		  yesno = 0;
+#endif
+		}; 
+	option "light.imasy.or.jp", exit, action
+		{
+#ifdef INET6
+		  strlcpy(net_namesvr6, "3ffe:505:0:1:2a0:c9ff:fe61:6521",
+		      sizeof(net_namesvr6));
+		  yesno = 1;
+#else
+		  yesno = 0;
+#endif
+		}; 
+	option MSG_other, exit, action
+		{ yesno = 0; };
+
+menu ip6autoconf, title MSG_Perform_IPv6_autoconfiguration;
+	option MSG_Yes, exit, action  {yesno = 1;};
+	option MSG_No,  exit, action  {yesno = 0;};
+
+menu dhcpautoconf, title MSG_Perform_DHCP_autoconfiguration;
+	option MSG_Yes, exit, action  {yesno = 1;};
+	option MSG_No,  exit, action  {yesno = 0;};
+
+menu rootsh, title MSG_Root_shell;
+	option "/bin/csh", exit, action {shellpath = "/bin/csh";};
+	option "/bin/ksh", exit, action {shellpath = "/bin/ksh";};
+	option "/bin/sh",  exit, action {shellpath = "/bin/sh";}; 
+
+menu extract, title MSG_Select_set_extraction_verbosity;
+	option MSG_Progress_bar_recommended, exit, action  { yesno = 1; };
+	option MSG_Silent, exit, action  { yesno = 0; };
+	option MSG_Verbose_file_name_listing_slow, exit, action { yesno = 2; };
 

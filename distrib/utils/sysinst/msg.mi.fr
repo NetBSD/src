@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.fr,v 1.57 2003/06/25 15:41:16 dsl Exp $	*/
+/*	$NetBSD: msg.mi.fr,v 1.58 2003/06/27 13:36:06 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -44,11 +44,14 @@ message usage
 
 message newline {\n}
 
-message yes {Oui}
-message no {Non}
-message all {Tout}
-message some {Some}	/* XXX translate */
-message none {None}	/* XXX translate */
+message Yes {Oui}
+message No {Non}
+message All {Tout}
+message Some {Some}	/* XXX translate */
+message None {Aucun}
+message none {aucun}
+message OK {OK}
+message ok {ok}
 
 message install
 {installer}
@@ -1005,6 +1008,73 @@ un point de montage "/".
 
 Appuyer sur <entrée> pour continuer.
 }
+
+message NetBSD_VERSION_Install_System {NetBSD-@@VERSION@@ Programme d'installation}
+message Exit_Install_System {Quitter le programme d'installation}
+message Install_NetBSD_to_hard_disk {Installation de NetBSD sur disque dur}
+message Upgrade_NetBSD_on_a_hard_disk {Mise à jour de NetBSD sur disque dur}
+message Re_install_sets_or_install_additional_sets {Réinstaller ou installer de nouveaux composants}
+message Reboot_the_computer {Redémarrer l'ordinateur}
+message Utility_menu {Menu utilitaire}
+message NetBSD_VERSION_Utilities {Utilitaires NetBSD-@@VERSION@@}
+message Run_bin_sh {Exécuter /bin/sh}
+message Set_timezone {Set timezone}	/* XXX translate */
+message Configure_network {Configuration du réseau}
+message Partition_a_disk {Partitioner un disque}
+message Logging_functions {Traces}
+message Halt_the_system {Arrêter le système}
+message yes_or_no {oui ou non?}
+message Hit_enter_to_continue {Presser entrée pour continuer}
+message Choose_your_installation {Choisissez votre type d'installation}
+message Standard {Standard}	/* XXX translate */
+message Use_Existing {Use Existing}	/* XXX translate */
+message Choose_your_size_specifier {Choisissez votre unité d'espace disque}
+message Megabytes {Megaoctets}
+message Cylinders {Cylindres}
+message Sectors {Secteurs}
+message Select_medium {Sélection du media d'installation}
+message ftp {ftp}
+message nfs {nfs}
+message cdrom {cdrom}
+message floppy {disquette}
+message unmounted_fs {systeme de fichier non-monté}
+message local_dir {répertoire local}
+message Select_your_distribution {Sélection de la distribution}
+message Full_installation {Installation complète}
+message Custom_installation {Installation personnalisée}
+message Change {Changer}
+message hidden {** caché **}
+message Host {Serveur ftp}
+message Directory {Répertoire}
+message User {Utilisateur}
+message Password {Mot de passe}
+message Proxy {Proxy}
+message ftp_proxy {ftp_proxy}
+message Get_Distribution {Récupérer la Distribution}
+message Continue {Continuer}
+message What_do_you_want_to_do {Que voulez vous faire?}
+message Try_again {Réessayer}
+message Give_up {Abandonner}
+message Ignore_continue_anyway {Ignorer les erreurs, continuer quand même}
+message Set_finished {Set finished}	/* XXX translate */
+message Abort_install {Annuler l'installation}
+message Password_cipher {Password cipher}
+message DES {DES}
+message MD5 {MD5}
+message Blowfish_2_7_round {Blowfish 2^7 round}
+message do_not_change {do not change}	/* XXX translate */
+message Device {Device}
+message File_system {Système de fichier}
+message Change_directory_path {Changer le chemin d'accès}
+message Select_IPv6_DNS_server {  Choisissez un serveur de noms IPv6 :}
+message other {other }	/* XXX translate */
+message Perform_IPv6_autoconfiguration {Faire la configuration automatique IPv6 ?}
+message Perform_DHCP_autoconfiguration {Exécutez la configuration automatique de DHCP?}
+message Root_shell {Root shell}	/* XXX translate */
+message Select_set_extraction_verbosity {Methode d'indication de l'extraction d'ensemble ?}
+message Progress_bar_recommended {Thermometre (recommendeé)}
+message Silent {Silencieux}
+message Verbose_file_name_listing_slow {Liste verbeuse des fichiers (lent)}
 
 .if AOUT2ELF
 message aoutfail

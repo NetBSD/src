@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.pl,v 1.19 2003/06/13 22:27:04 dsl Exp $	*/
+/*	$NetBSD: msg.mi.pl,v 1.20 2003/06/27 13:36:06 dsl Exp $	*/
 /*	Based on english version: */
 /*	NetBSD: msg.mi.en,v 1.86 2002/04/04 14:26:44 ad Exp 	*/
 
@@ -46,11 +46,14 @@ message usage
 
 message newline {\n}
 
-message yes {Tak}
-message no {Nie}
-message all {All}	/* XXX translate */
-message some {Some}	/* XXX translate */
-message none {None}	/* XXX translate */
+message Yes {Tak}
+message No {Nie}
+message All {All}	/* XXX translate */
+message Some {Some}	/* XXX translate */
+message None {Zadne}
+message none {zadne}
+message ok {ok}
+message OK {OK}
 
 message install
 {zainstalowac}
@@ -957,6 +960,73 @@ jeden mountpoint z "/".
 
 Nacisnij <enter> aby kontynuowac.
 }
+
+message NetBSD_VERSION_Install_System {System Instalacyjny NetBSD-@@VERSION@@}
+message Exit_Install_System {Wyjdz z Systemu Instalacyjnego}
+message Install_NetBSD_to_hard_disk {Zainstaluj NetBSD na twardym dysku}
+message Upgrade_NetBSD_on_a_hard_disk {Zaktualizuj NetBSD na twardym dysku}
+message Re_install_sets_or_install_additional_sets {Przeinstaluj albo zainstaluj dodatkowe pakiety}
+message Reboot_the_computer {Zrestartuj komputer}
+message Utility_menu {Menu Narzedziowe}
+message NetBSD_VERSION_Utilities {Narzedzia NetBSD-@@VERSION@@}
+message Run_bin_sh {Uruchom /bin/sh}
+message Set_timezone {Ustaw strefe czasowa}
+message Configure_network {Skonfiguruj siec}
+message Partition_a_disk {Skonfiguruj dysk}
+message Logging_functions {Funkcje logowania}
+message Halt_the_system {Zatrzymaj system}
+message yes_or_no {tak lub nie?}
+message Hit_enter_to_continue {Nacisnij enter aby kontynuowac}
+message Choose_your_installation {Wybierz swoja instalacje}
+message Standard {Standardowa}
+message Use_Existing {Istniejaca}
+message Choose_your_size_specifier {Wybierz specyfikator rozmiaru}
+message Megabytes {Megabajty}
+message Cylinders {Cylindry}
+message Sectors {Sektory}
+message Select_medium {Wybierz medium}
+message ftp {ftp}
+message nfs {nfs}
+message cdrom {cdrom}
+message floppy {dyskietka}
+message unmounted_fs {niezamontowany SP}
+message local_dir {lokalny katalog}
+message Select_your_distribution {Wybierz swoja dystrybucje}
+message Full_installation {Pelna instalacja}
+message Custom_installation {Inna instalacja}
+message Change {Zmien}
+message hidden {** hidden **}	/* XXX translate */
+message Host {Host}
+message Directory {Katalog}
+message User {Uzytkownik}
+message Password {Haslo}
+message Proxy {Proxy}
+message ftp_proxy {ftp_proxy}
+message Get_Distribution {Sciagnij Dystrybucje}
+message Continue {Kontynuuj}
+message What_do_you_want_to_do {Co chcesz zrobic?}
+message Try_again {Sprobowac jeszcze raz}
+message Give_up {Poddac sie}
+message Ignore_continue_anyway {Zignorowac, kontynuowac}
+message Set_finished {Set finished}  /* XXX translate */
+message Abort_install {Przerwac instalacje}
+message Password_cipher {Kodowanie hasel}
+message DES {DES}
+message MD5 {MD5}
+message Blowfish_2_7_round {Blowfish 2^7 round}
+message do_not_change {nie zmieniaj}
+message Device {Urzadzenie}
+message File_system {SystemPlikow}
+message Change_directory_path {Zmien sciezke katalogu}
+message Select_IPv6_DNS_server {  Wybierz serwer nazw IPv6}
+message other {inny  }
+message Perform_IPv6_autoconfiguration {Wykonac autokonfiguracje IPv6?}
+message Perform_DHCP_autoconfiguration {Wykonac autkonfiguracje DHCP?}
+message Root_shell {Root shell}	/* XXX translate */
+message Select_set_extraction_verbosity {Select set extraction verbosity}	/* XXX translate */
+message Progress_bar_recommended {Progress bar (recommended)}	/* XXX translate */
+message Silent {Silent}	/* XXX translate */
+message Verbose_file_name_listing_slow {Verbose file name listing (slow)}	/* XXX translate */
 
 .if AOUT2ELF
 message aoutfail
