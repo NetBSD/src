@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.212 2002/09/08 05:35:42 tsutsui Exp $ */
+/*	$NetBSD: pmap.c,v 1.213 2002/11/26 15:09:56 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -3895,7 +3895,33 @@ pmap_quiet_check(struct pmap *pm)
 					printf("pmap_chk: ptes still "
 					     "allocated in segment %d\n", vs);
 				}
+				if (CPU_ISSUN4 || CPU_ISSUN4C) {
+					if (sp->sg_pmeg != seginval)
+						printf("pmap_chk: pm %p(%d,%d) "
+						  "spurious soft pmeg %d\n",
+						  pm, vr, vs, sp->sg_pmeg);
+				}
 			}
+		}
+
+		/* Check for spurious pmeg entries in the MMU */
+		if (pm->pm_ctx == NULL)
+			continue;
+		if ((CPU_ISSUN4 || CPU_ISSUN4C)) {
+			int ctx;
+			if (mmu_has_hole && (vr >= 32 || vr < (256 - 32)))
+				continue;
+			ctx = getcontext4();
+			setcontext4(pm->pm_ctxnum);
+			for (vs = 0; vs < NSEGRG; vs++) {
+				vaddr_t va = VSTOVA(vr,vs);
+				int pmeg = getsegmap(va);
+				if (pmeg != seginval)
+					printf("pmap_chk: pm %p(%d,%d:%x): "
+						"spurious pmeg %d\n",
+						pm, vr, vs, (u_int)va, pmeg);
+			}
+			setcontext4(ctx);
 		}
 	}
 }
@@ -3922,7 +3948,7 @@ pmap_pmap_pool_ctor(void *arg, void *object, int flags)
 
 	qzero((caddr_t)pm->pm_regmap, NUREG * sizeof(struct regmap));
 
-	/* pm->pm_ctx = NULL; */
+	/* pm->pm_ctx = NULL; // already done */
 	simple_lock_init(&pm->pm_lock);
 
 	if (CPU_ISSUN4 || CPU_ISSUN4C) {
@@ -3935,6 +3961,7 @@ pmap_pmap_pool_ctor(void *arg, void *object, int flags)
 				pm->pm_regmap[i].rg_smeg = reginval;
 		}
 #endif
+		/* pm->pm_gap_start = 0; // already done */
 		pm->pm_gap_end = VA_VREG(VM_MAXUSER_ADDRESS);
 	}
 #if defined(SUN4M) || defined(SUN4D)
@@ -4049,6 +4076,11 @@ pmap_destroy(pm)
 	count = --pm->pm_refcount;
 	simple_unlock(&pm->pm_lock);
 	if (count == 0) {
+		if (CPU_ISSUN4 || CPU_ISSUN4C) {
+			/* reset the region gap */
+			pm->pm_gap_start = 0;
+			pm->pm_gap_end = VA_VREG(VM_MAXUSER_ADDRESS);
+		}
 #ifdef DEBUG
 		pmap_quiet_check(pm);
 #endif
