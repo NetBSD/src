@@ -1,4 +1,4 @@
-/*	$NetBSD: altivec.c,v 1.2 2002/07/05 18:45:22 matt Exp $	*/
+/*	$NetBSD: altivec.c,v 1.3 2002/07/07 00:46:20 matt Exp $	*/
 
 /*
  * Copyright (C) 1996 Wolfgang Solfrank.
@@ -87,8 +87,8 @@ enable_vec(struct proc *p)
 	 * (this needs to done before loading the user's vector registers
 	 * since we need to a scratch vector register)
 	 */
-	__asm __volatile("lvx %2,%0,%1; mtvscr %2" \
-	    ::	"r"(vr), "r"(offsetof(struct vreg, vreg[32])), "n"(0));
+	__asm __volatile("vxor %2,%2,%2; lvewx %2,%0,%1; mtvscr %2" \
+	    ::	"r"(vr), "r"(offsetof(struct vreg, vscr)), "n"(0));
 
 	/*
 	 * VRSAVE will be restored when trap frame returns
@@ -152,8 +152,8 @@ save_vec(struct proc *p)
 	 * Save VSCR (this needs to be done after save the vector registers
 	 * since we need to use one as scratch).
 	 */
-	__asm __volatile("mfvscr %2; stvx %2,%0,%1" \
-	    ::	"r"(vr), "r"(offsetof(struct vreg, vreg[32])), "n"(0));
+	__asm __volatile("mfvscr %2; stvewx %2,%0,%1" \
+	    ::	"r"(vr), "r"(offsetof(struct vreg, vscr)), "n"(0));
 
 	/*
 	 * Save VRSAVE
