@@ -1,6 +1,7 @@
-#	$NetBSD: Makefile,v 1.4 2001/04/11 19:07:38 jdolecek Exp $
+#	$NetBSD: Makefile,v 1.5 2002/04/12 17:56:14 heinz Exp $
 
 # use 'make -f Makefile.usbdevs' to make usbdevs.h and usbdevs_data.h
+# _after_ you committed usbdevs. See comment in Makefile.usbdevs
 
 INCSDIR= /usr/include/dev/usb
 
