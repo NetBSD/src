@@ -1,4 +1,4 @@
-/*	$NetBSD: sequencer.c,v 1.21 2002/10/23 09:13:05 jdolecek Exp $	*/
+/*	$NetBSD: sequencer.c,v 1.22 2002/11/26 18:49:41 christos Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sequencer.c,v 1.21 2002/10/23 09:13:05 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sequencer.c,v 1.22 2002/11/26 18:49:41 christos Exp $");
 
 #include "sequencer.h"
 
@@ -681,7 +681,7 @@ filt_sequencerrdetach(struct knote *kn)
 	int s;
 
 	s = splaudio();
-	SLIST_REMOVE(&sc->rsel.si_klist, kn, knote, kn_selnext);
+	SLIST_REMOVE(&sc->rsel.sel_klist, kn, knote, kn_selnext);
 	splx(s);
 }
 
@@ -708,7 +708,7 @@ filt_sequencerwdetach(struct knote *kn)
 	int s;
 
 	s = splaudio();
-	SLIST_REMOVE(&sc->wsel.si_klist, kn, knote, kn_selnext);
+	SLIST_REMOVE(&sc->wsel.sel_klist, kn, knote, kn_selnext);
 	splx(s);
 }
 
@@ -737,12 +737,12 @@ sequencerkqfilter(dev_t dev, struct knote *kn)
 
 	switch (kn->kn_filter) {
 	case EVFILT_READ:
-		klist = &sc->rsel.si_klist;
+		klist = &sc->rsel.sel_klist;
 		kn->kn_fop = &sequencerread_filtops;
 		break;
 
 	case EVFILT_WRITE:
-		klist = &sc->wsel.si_klist;
+		klist = &sc->wsel.sel_klist;
 		kn->kn_fop = &sequencerwrite_filtops;
 		break;
 

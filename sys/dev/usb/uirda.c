@@ -1,4 +1,4 @@
-/*	$NetBSD: uirda.c,v 1.13 2002/10/23 09:14:01 jdolecek Exp $	*/
+/*	$NetBSD: uirda.c,v 1.14 2002/11/26 18:49:49 christos Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uirda.c,v 1.13 2002/10/23 09:14:01 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uirda.c,v 1.14 2002/11/26 18:49:49 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -689,7 +689,7 @@ filt_uirdardetach(struct knote *kn)
 	int s;
 
 	s = splusb();
-	SLIST_REMOVE(&sc->sc_rd_sel.si_klist, kn, knote, kn_selnext);
+	SLIST_REMOVE(&sc->sc_rd_sel.sel_klist, kn, knote, kn_selnext);
 	splx(s);
 }
 
@@ -709,7 +709,7 @@ filt_uirdawdetach(struct knote *kn)
 	int s;
 
 	s = splusb();
-	SLIST_REMOVE(&sc->sc_wr_sel.si_klist, kn, knote, kn_selnext);
+	SLIST_REMOVE(&sc->sc_wr_sel.sel_klist, kn, knote, kn_selnext);
 	splx(s);
 }
 
@@ -727,11 +727,11 @@ uirda_kqfilter(void *h, struct knote *kn)
 
 	switch (kn->kn_filter) {
 	case EVFILT_READ:
-		klist = &sc->sc_rd_sel.si_klist;
+		klist = &sc->sc_rd_sel.sel_klist;
 		kn->kn_fop = &uirdaread_filtops;
 		break;
 	case EVFILT_WRITE:
-		klist = &sc->sc_wr_sel.si_klist;
+		klist = &sc->sc_wr_sel.sel_klist;
 		kn->kn_fop = &uirdawrite_filtops;
 		break;
 	default:

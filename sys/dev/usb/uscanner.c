@@ -1,4 +1,4 @@
-/*	$NetBSD: uscanner.c,v 1.34 2002/10/23 09:14:03 jdolecek Exp $	*/
+/*	$NetBSD: uscanner.c,v 1.35 2002/11/26 18:49:49 christos Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uscanner.c,v 1.34 2002/10/23 09:14:03 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uscanner.c,v 1.35 2002/11/26 18:49:49 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -711,7 +711,7 @@ filt_uscannerdetach(struct knote *kn)
 {
 	struct uscanner_softc *sc = kn->kn_hook;
 
-	SLIST_REMOVE(&sc->sc_selq.si_klist, kn, knote, kn_selnext);
+	SLIST_REMOVE(&sc->sc_selq.sel_klist, kn, knote, kn_selnext);
 }
 
 static const struct filterops uscanner_seltrue_filtops =
@@ -736,7 +736,7 @@ uscannerkqfilter(dev_t dev, struct knote *kn)
 		 * yield any data or a write will happen.
 		 * Pretend they will.
 		 */
-		klist = &sc->sc_selq.si_klist;
+		klist = &sc->sc_selq.sel_klist;
 		kn->kn_fop = &uscanner_seltrue_filtops;
 		break;
 
