@@ -1,4 +1,4 @@
-/*	$NetBSD: mkbdmap.h,v 1.4 2001/01/31 03:19:50 thorpej Exp $	*/
+/*	$NetBSD: mkbdmap.h,v 1.5 2001/03/02 00:25:06 marcus Exp $	*/
 
 /*-
  * Copyright (c) 2001 Marcus Comstedt
@@ -75,7 +75,8 @@ static const keysym_t mkbd_keydesc_jp[] = {
     KC(39),	KS_0,		KS_asciitilde,
 
     KC(40),	KS_Return,
-    KC(41),	KS_Escape,
+    KC(41),  KS_Cmd_Debugger,
+    		KS_Escape,
     KC(42),	KS_BackSpace,
     KC(43),	KS_Tab,
     KC(44),	KS_space,
@@ -95,16 +96,16 @@ static const keysym_t mkbd_keydesc_jp[] = {
 
     KC(57),	KS_Caps_Lock,
 
-    KC(58),	KS_f1,
-    KC(59),	KS_f2,
-    KC(60),	KS_f3,
-    KC(61),	KS_f4,
-    KC(62),	KS_f5,
-    KC(63),	KS_f6,
-    KC(64),	KS_f7,
-    KC(65),	KS_f8,
-    KC(66),	KS_f9,
-    KC(67),	KS_f10,
+    KC(58),  KS_Cmd_Screen0,	KS_f1,
+    KC(59),  KS_Cmd_Screen1,	KS_f2,
+    KC(60),  KS_Cmd_Screen2,	KS_f3,
+    KC(61),  KS_Cmd_Screen3,	KS_f4,
+    KC(62),  KS_Cmd_Screen4,	KS_f5,
+    KC(63),  KS_Cmd_Screen5,	KS_f6,
+    KC(64),  KS_Cmd_Screen6,	KS_f7,
+    KC(65),  KS_Cmd_Screen7,	KS_f8,
+    KC(66),  KS_Cmd_Screen8,	KS_f9,
+    KC(67),  KS_Cmd_Screen9,	KS_f10,
     KC(68),	KS_f11,
     KC(69),	KS_f12,
 
@@ -136,14 +137,16 @@ static const keysym_t mkbd_keydesc_jp[] = {
     KC(138),	KS_Henkan_Mode,
     KC(139),	KS_Muhenkan,
 
-    KC(0x100),	KS_Control_L,
-    KC(0x101),	KS_Shift_L,
-    KC(0x102),	KS_Alt_L,
-    KC(0x103),	KS_Meta_L,
-    KC(0x104),	KS_Control_R,
-    KC(0x105),	KS_Shift_R,
-    KC(0x106),	KS_Alt_R,
-    KC(0x107),	KS_Meta_R,
+    KC(0xe0),  KS_Cmd1,
+    		KS_Control_L,
+    KC(0xe1),	KS_Shift_L,
+    KC(0xe2),  KS_Cmd2,
+    		KS_Alt_L,
+    KC(0xe3),	KS_Meta_L,
+    KC(0xe4),	KS_Control_R,
+    KC(0xe5),	KS_Shift_R,
+    KC(0xe6),	KS_Alt_R,	KS_Multi_key,
+    KC(0xe7),	KS_Meta_R,
 };
 
 
