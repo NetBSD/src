@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.5 2001/11/13 02:08:44 lukem Exp $ */
+/*	$NetBSD: linux_machdep.c,v 1.6 2001/11/17 20:49:14 manu Exp $ */
 
 /*-
  * Copyright (c) 1995, 2000, 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.5 2001/11/13 02:08:44 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.6 2001/11/17 20:49:14 manu Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -147,7 +147,7 @@ linux_sendsig(catcher, sig, mask, code)  /* XXX Check me */
 	    (SIGACTION(p, sig).sa_flags & SA_ONSTACK) != 0;
 
 	/*
-	 * Signal stack is broken (see at the end of linux_Sigreturn), so we do
+	 * Signal stack is broken (see at the end of linux_sigreturn), so we do
 	 * not use it yet. XXX fix this.
 	 */
 	onstack=0;
@@ -174,7 +174,7 @@ linux_sendsig(catcher, sig, mask, code)  /* XXX Check me */
 
 	/*
 	 * This is the signal trampoline used by Linux, we don't use it,
-	 * but we set ip up in case an application expects it to be there
+	 * but we set it up in case an application expects it to be there
 	 */
 	sf.lsf_code[0] = 0x24020000;	/* li	v0, __NR_sigreturn	*/
 	sf.lsf_code[1] = 0x0000000c;	/* syscall			*/
