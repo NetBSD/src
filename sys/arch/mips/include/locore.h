@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.h,v 1.37 2000/06/26 02:55:45 nisimura Exp $	*/
+/* $NetBSD: locore.h,v 1.38 2000/06/29 06:00:43 cgd Exp $ */
 
 /*
  * Copyright 1996 The Board of Trustees of The Leland Stanford
@@ -38,60 +38,60 @@
 #include "opt_mips_cache.h"
 #endif
 
+struct tlb;
+
 /*
  * locore service routine for exception vectors. Used outside locore
  * only to print them by name in stack tracebacks
  */
 
-u_int32_t mips_read_causereg __P((void));
-u_int32_t mips_read_statusreg __P((void));
+u_int32_t mips_read_causereg(void);
+u_int32_t mips_read_statusreg(void);
 
-void mips1_ConfigCache  __P((void));
-void mips1_FlushCache  __P((void));
-void mips1_FlushDCache  __P((vaddr_t addr, vsize_t len));
-void mips1_FlushICache  __P((vaddr_t addr, vsize_t len));
+void	mips1_ConfigCache(void);
+void	mips1_FlushCache(void);
+void	mips1_FlushDCache(vaddr_t addr, vsize_t len);
+void	mips1_FlushICache(vaddr_t addr, vsize_t len);
 
-void mips1_SetPID   __P((int pid));
-void mips1_TBIA __P((int));
-void mips1_TBIAP __P((int));
-void mips1_TBIS __P((vaddr_t));
-int mips1_TLBUpdate __P((u_int, u_int));
+void	mips1_SetPID(int pid);
+void	mips1_TBIA(int);
+void	mips1_TBIAP(int);
+void	mips1_TBIS(vaddr_t);
+int	mips1_TLBUpdate(u_int, u_int);
+void	mips1_wbflush(void);
+void	mips1_proc_trampoline(void);
+void	mips1_cpu_switch_resume(void);
 
-void mips1_wbflush __P((void));
-void mips1_proc_trampoline __P((void));
-void mips1_cpu_switch_resume __P((void));
+void	mips3_ConfigCache(void);
+void	mips3_FlushCache(void);
+void	mips3_FlushDCache(vaddr_t addr, vaddr_t len);
+void	mips3_FlushICache(vaddr_t addr, vaddr_t len);
+void	mips3_HitFlushDCache(vaddr_t, int);
 
-void mips3_ConfigCache __P((void));
-void mips3_FlushCache  __P((void));
-void mips3_FlushDCache __P((vaddr_t addr, vaddr_t len));
-void mips3_FlushICache __P((vaddr_t addr, vaddr_t len));
-void mips3_HitFlushDCache __P((vaddr_t, int));
+void	mips3_SetPID(int pid);
+void	mips3_TBIA(int);
+void	mips3_TBIAP(int);
+void	mips3_TBIS(vaddr_t);
+int	mips3_TLBUpdate(u_int, u_int);
+void	mips3_TLBRead(int, struct tlb *);
+void	mips3_SetWIRED(int);
+void	mips3_wbflush(void);
+void	mips3_proc_trampoline(void);
+void	mips3_cpu_switch_resume(void);
 
-void mips3_SetPID  __P((int pid));
-void mips3_TBIA __P((int));
-void mips3_TBIAP __P((int));
-void mips3_TBIS __P((vaddr_t));
-int mips3_TLBUpdate __P((u_int, u_int));
-struct tlb;
-void mips3_TLBRead __P((int, struct tlb *));
-void mips3_SetWIRED __P((int));
-void mips3_wbflush __P((void));
-void mips3_proc_trampoline __P((void));
-void mips3_cpu_switch_resume __P((void));
+void	mips3_FlushCache_2way(void);
+void	mips3_FlushDCache_2way(vaddr_t addr, vaddr_t len);
+void	mips3_HitFlushDCache_2way(vaddr_t, int);
+void	mips3_FlushICache_2way(vaddr_t addr, vaddr_t len);
 
-void mips3_FlushCache_2way  __P((void));
-void mips3_FlushDCache_2way __P((vaddr_t addr, vaddr_t len));
-void mips3_HitFlushDCache_2way __P((vaddr_t, int));
-void mips3_FlushICache_2way __P((vaddr_t addr, vaddr_t len));
-
-u_int32_t mips3_read_config __P((void));
-u_int32_t mips3_cycle_count __P((void));
-u_int32_t mips3_write_count __P((u_int32_t));
-u_int32_t mips3_read_compare __P((void));
-void mips3_write_config __P((u_int32_t));
-void mips3_write_compare __P((u_int32_t));
-void mips3_write_xcontext_upper __P((u_int32_t));
-void mips3_clearBEV __P((void));
+u_int32_t mips3_read_config(void);
+u_int32_t mips3_cycle_count(void);
+u_int32_t mips3_write_count(u_int32_t);
+u_int32_t mips3_read_compare(void);
+void	mips3_write_config(u_int32_t);
+void	mips3_write_compare(u_int32_t);
+void	mips3_write_xcontext_upper(u_int32_t);
+void	mips3_clearBEV(void);
 
 /*
  *  A vector with an entry for each mips-ISA-level dependent
@@ -100,24 +100,24 @@ void mips3_clearBEV __P((void));
  * Sprite  coding-convention names used in 4.4bsd/pmax.
  */
 typedef struct  {
-	void (*flushCache)  __P((void));
-	void (*flushDCache) __P((vaddr_t addr, vsize_t len));
-	void (*flushICache) __P((vaddr_t addr, vsize_t len));
-	void (*setTLBpid)  __P((int pid));
-	void (*TBIAP)	__P((int));
-	void (*TBIS)	__P((vaddr_t));
-	int  (*tlbUpdate)  __P((u_int highreg, u_int lowreg));
-	void (*wbflush) __P((void));
+	void (*flushCache)(void);
+	void (*flushDCache)(vaddr_t addr, vsize_t len);
+	void (*flushICache)(vaddr_t addr, vsize_t len);
+	void (*setTLBpid)(int pid);
+	void (*TBIAP)(int);
+	void (*TBIS)(vaddr_t);
+	int  (*tlbUpdate)(u_int highreg, u_int lowreg);
+	void (*wbflush)(void);
 } mips_locore_jumpvec_t;
 
 /* Override writebuffer-drain method. */
-void mips_set_wbflush __P((void (*) __P((void)) ));
+void	mips_set_wbflush(void (*)(void));
 
 
 /* stacktrace() -- print a stack backtrace to the console */
-void stacktrace __P((void));
+void	stacktrace(void);
 /* logstacktrace() -- log a stack traceback to msgbuf */
-void logstacktrace __P((void));
+void	logstacktrace(void);
 
 /*
  * The "active" locore-fuction vector, and
