@@ -1,4 +1,4 @@
-/*	$NetBSD: kbd.c,v 1.17 1998/01/12 18:04:10 thorpej Exp $	*/
+/*	$NetBSD: kbd.c,v 1.18 1999/08/06 08:27:31 leo Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman
@@ -167,7 +167,7 @@ kbdenable()
 	/*
 	 * Enable interrupts from MFP
 	 */
-	MFP->mf_iprb &= ~IB_AINT;
+	MFP->mf_iprb  = (u_int8_t)~IB_AINT;
 	MFP->mf_ierb |= IB_AINT;
 	MFP->mf_imrb |= IB_AINT;
 
@@ -509,7 +509,7 @@ kbdgetcn()
 	}
 
 	if (ints_active) {
-		MFP->mf_iprb &= ~IB_AINT;
+		MFP->mf_iprb  = (u_int8_t)~IB_AINT;
 		MFP->mf_imrb |=  IB_AINT;
 	}
 
