@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_cvscan.c,v 1.8 2001/11/13 07:11:12 lukem Exp $	*/
+/*	$NetBSD: rf_cvscan.c,v 1.9 2002/09/21 00:37:14 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -35,7 +35,7 @@
  ******************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_cvscan.c,v 1.8 2001/11/13 07:11:12 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_cvscan.c,v 1.9 2002/09/21 00:37:14 oster Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 #include "rf_alloclist.h"
@@ -318,15 +318,6 @@ rf_CvscanPeek(void *q_in)
 ** CVSCAN( 1, infinity ) is SCAN
 **				lowest response time standard deviation
 */
-
-
-int 
-rf_CvscanConfigure()
-{
-	return (0);
-}
-
-
 
 void   *
 rf_CvscanCreate(RF_SectorCount_t sectPerDisk,
