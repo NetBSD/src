@@ -59,13 +59,12 @@
 #ifndef HEADER_RC4_H
 #define HEADER_RC4_H
 
+#include <sys/types.h>
+#define RC4_INT u_int32_t
+
 #ifdef  __cplusplus
 extern "C" {
 #endif
-
-
-#include <sys/types.h>
-#define RC4_INT u_int32_t
 
 typedef struct rc4_key_st
 	{

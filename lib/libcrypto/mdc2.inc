@@ -1,4 +1,4 @@
-#	$NetBSD: mdc2.inc,v 1.1.1.1.2.2 2000/07/17 06:00:00 mrg Exp $
+#	$NetBSD: mdc2.inc,v 1.1.1.1.2.3 2002/08/29 16:39:29 he Exp $
 #
 #	@(#) Copyright (c) 1995 Simon J. Gerraty
 #
@@ -9,6 +9,4 @@
 
 CPPFLAGS+=	-I${OPENSSLSRC}/crypto/mdc2
 
-SRCS+=mdc2dgst.c mdc2_one.c
-
-
+SRCS+=	mdc2dgst.c mdc2_one.c

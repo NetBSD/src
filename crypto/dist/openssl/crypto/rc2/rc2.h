@@ -59,11 +59,6 @@
 #ifndef HEADER_RC2_H
 #define HEADER_RC2_H
 
-#ifdef  __cplusplus
-extern "C" {
-#endif
-
-
 #include <sys/types.h>
 #define	RC2_INT	u_int32_t
 
@@ -74,23 +69,29 @@ extern "C" {
 #define RC2_BLOCK	8
 #define RC2_KEY_LENGTH	16
 
+#ifdef  __cplusplus
+extern "C" {
+#endif
+
 typedef struct rc2_key_st
 	{
 	RC2_INT data[64];
 	} RC2_KEY;
 
  
-void RC2_set_key(RC2_KEY *key, int len, unsigned char *data,int bits);
-void RC2_ecb_encrypt(unsigned char *in,unsigned char *out,RC2_KEY *key,
-	int enc);
+void RC2_set_key(RC2_KEY *key, int len, const unsigned char *data,int bits);
+void RC2_ecb_encrypt(const unsigned char *in,unsigned char *out,RC2_KEY *key,
+		     int enc);
 void RC2_encrypt(u_int32_t *data,RC2_KEY *key);
 void RC2_decrypt(u_int32_t *data,RC2_KEY *key);
-void RC2_cbc_encrypt(unsigned char *in, unsigned char *out, long length,
+void RC2_cbc_encrypt(const unsigned char *in, unsigned char *out, long length,
 	RC2_KEY *ks, unsigned char *iv, int enc);
-void RC2_cfb64_encrypt(unsigned char *in, unsigned char *out, long length,
-	RC2_KEY *schedule, unsigned char *ivec, int *num, int enc);
-void RC2_ofb64_encrypt(unsigned char *in, unsigned char *out, long length,
-	RC2_KEY *schedule, unsigned char *ivec, int *num);
+void RC2_cfb64_encrypt(const unsigned char *in, unsigned char *out,
+		       long length, RC2_KEY *schedule, unsigned char *ivec,
+		       int *num, int enc);
+void RC2_ofb64_encrypt(const unsigned char *in, unsigned char *out,
+		       long length, RC2_KEY *schedule, unsigned char *ivec,
+		       int *num);
 
 #ifdef  __cplusplus
 }
