@@ -1,4 +1,4 @@
-/*	$NetBSD: screen.c,v 1.5 2000/05/25 12:25:16 blymn Exp $	*/
+/*	$NetBSD: screen.c,v 1.6 2001/11/02 18:27:01 christos Exp $	*/
 
 /*
  *  Top users/processes display for Unix
@@ -58,7 +58,6 @@ char ch_kill;
 char smart_terminal;
 char PC;
 struct tinfo *info;
-char *string_buffer;
 char home[15];
 char lower_left[15];
 char *clear_line;
@@ -99,7 +98,6 @@ init_termcap(interactive)
 int interactive;
 
 {
-    char *bufptr;
     char *PCptr;
     char *term_name;
     int status;
@@ -174,32 +172,29 @@ int interactive;
     /* terminals that overstrike need special attention */
     overstrike = t_getflag(info, "os");
 
-    /* initialize the pointer into the termcap string buffer */
-    string_buffer = NULL;
-
     /* get "ce", clear to end */
     if (!overstrike)
     {
-	clear_line = t_agetstr(info, "ce", &string_buffer, &bufptr);
+	clear_line = t_agetstr(info, "ce");
     }
 
     /* get necessary capabilities */
-    if ((clear_screen  = t_agetstr(info, "cl", &string_buffer, &bufptr)) == NULL ||
-	(cursor_motion = t_agetstr(info, "cm", &string_buffer, &bufptr)) == NULL)
+    if ((clear_screen  = t_agetstr(info, "cl")) == NULL ||
+	(cursor_motion = t_agetstr(info, "cm")) == NULL)
     {
 	smart_terminal = No;
 	return;
     }
 
     /* get some more sophisticated stuff -- these are optional */
-    clear_to_end   = t_agetstr(info, "cd", &string_buffer, &bufptr);
-    terminal_init  = t_agetstr(info, "ti", &string_buffer, &bufptr);
-    terminal_end   = t_agetstr(info, "te", &string_buffer, &bufptr);
-    start_standout = t_agetstr(info, "so", &string_buffer, &bufptr);
-    end_standout   = t_agetstr(info, "se", &string_buffer, &bufptr);
+    clear_to_end   = t_agetstr(info, "cd");
+    terminal_init  = t_agetstr(info, "ti");
+    terminal_end   = t_agetstr(info, "te");
+    start_standout = t_agetstr(info, "so");
+    end_standout   = t_agetstr(info, "se");
 
     /* pad character */
-    PC = (PCptr = t_agetstr(info, "pc", &string_buffer, &bufptr)) ? *PCptr : 0;
+    PC = (PCptr = t_agetstr(info, "pc")) ? *PCptr : 0;
 
     /* set convenience strings */
     home[0] = '\0';

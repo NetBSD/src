@@ -1,4 +1,4 @@
-/*	$NetBSD: ul.c,v 1.10 2000/05/28 10:27:13 blymn Exp $	*/
+/*	$NetBSD: ul.c,v 1.11 2001/11/02 18:27:01 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\n\
 #if 0
 static char sccsid[] = "@(#)ul.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: ul.c,v 1.10 2000/05/28 10:27:13 blymn Exp $");
+__RCSID("$NetBSD: ul.c,v 1.11 2001/11/02 18:27:01 christos Exp $");
 #endif /* not lint */
 
 #include <stdio.h>
@@ -423,28 +423,25 @@ reverse()
 void
 initcap()
 {
-	static char *tcapbuf=NULL;
-	char *bp;
-
 	/* This nonsense attempts to work with both old and new termcap */
-	CURS_UP =		t_agetstr(info, "up", &tcapbuf, &bp);
-	CURS_RIGHT =		t_agetstr(info, "ri", &tcapbuf, &bp);
+	CURS_UP =		t_agetstr(info, "up");
+	CURS_RIGHT =		t_agetstr(info, "ri");
 	if (CURS_RIGHT == NULL)
-		CURS_RIGHT =	t_agetstr(info, "nd", &tcapbuf, &bp);
-	CURS_LEFT =		t_agetstr(info, "le", &tcapbuf, &bp);
+		CURS_RIGHT =	t_agetstr(info, "nd");
+	CURS_LEFT =		t_agetstr(info, "le");
 	if (CURS_LEFT == NULL)
-		CURS_LEFT =	t_agetstr(info, "bc", &tcapbuf, &bp);
+		CURS_LEFT =	t_agetstr(info, "bc");
 	if (CURS_LEFT == NULL && t_getflag(info, "bs"))
 		CURS_LEFT =	"\b";
 
-	ENTER_STANDOUT =	t_agetstr(info, "so", &tcapbuf, &bp);
-	EXIT_STANDOUT =		t_agetstr(info, "se", &tcapbuf, &bp);
-	ENTER_UNDERLINE =	t_agetstr(info, "us", &tcapbuf, &bp);
-	EXIT_UNDERLINE =	t_agetstr(info, "ue", &tcapbuf, &bp);
-	ENTER_DIM =		t_agetstr(info, "mh", &tcapbuf, &bp);
-	ENTER_BOLD =		t_agetstr(info, "md", &tcapbuf, &bp);
-	ENTER_REVERSE =		t_agetstr(info, "mr", &tcapbuf, &bp);
-	EXIT_ATTRIBUTES =	t_agetstr(info, "me", &tcapbuf, &bp);
+	ENTER_STANDOUT =	t_agetstr(info, "so");
+	EXIT_STANDOUT =		t_agetstr(info, "se");
+	ENTER_UNDERLINE =	t_agetstr(info, "us");
+	EXIT_UNDERLINE =	t_agetstr(info, "ue");
+	ENTER_DIM =		t_agetstr(info, "mh");
+	ENTER_BOLD =		t_agetstr(info, "md");
+	ENTER_REVERSE =		t_agetstr(info, "mr");
+	EXIT_ATTRIBUTES =	t_agetstr(info, "me");
 
 	if (!ENTER_BOLD && ENTER_REVERSE)
 		ENTER_BOLD = ENTER_REVERSE;
@@ -469,7 +466,7 @@ initcap()
 	 * letters the 37 has.
 	 */
 
-	UNDER_CHAR =		t_agetstr(info, "uc", &tcapbuf, &bp);
+	UNDER_CHAR =		t_agetstr(info, "uc");
 	must_use_uc = (UNDER_CHAR && !ENTER_UNDERLINE);
 }
 

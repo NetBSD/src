@@ -1,4 +1,4 @@
-/*	$NetBSD: screen.c,v 1.15 2000/05/24 14:43:00 blymn Exp $	*/
+/*	$NetBSD: screen.c,v 1.16 2001/11/02 18:27:00 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -120,7 +120,6 @@ struct tcsinfo {	/* termcap string info; some abbrevs above */
 
 /* This is where we will actually stuff the information */
 
-static char *combuf;
 static struct tinfo *info;
 
 /*
@@ -160,7 +159,7 @@ scr_init()
 #ifdef unneeded
 	static int ncflag;
 #endif
-	char *term, *fill;
+	char *term;
 	static struct tcninfo {	/* termcap numeric and flag info */
 		char tcname[3];
 		int *tcaddr;
@@ -183,13 +182,11 @@ scr_init()
 		stop("you must set the TERM environment variable");
 	if (t_getent(&info, term) <= 0)
 		stop("cannot find your termcap");
-	combuf = NULL;
 	{
 		register struct tcsinfo *p;
 
 		for (p = tcstrings; p->tcaddr; p++)
-			*p->tcaddr = t_agetstr(info, p->tcname, &combuf,
-					       &fill);
+			*p->tcaddr = t_agetstr(info, p->tcname);
 	}
 	{
 		register struct tcninfo *p;
