@@ -1,4 +1,4 @@
-/*	$NetBSD: memchr.c,v 1.1 1997/10/24 15:32:24 chuck Exp $	*/
+/*	$NetBSD: memchr.c,v 1.2 1997/10/24 18:10:30 mjacob Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -38,13 +38,14 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char *sccsid = "from: @(#)memchr.c     5.6 (Berkeley) 1/26/91";*/
-static char *rcsid = "$NetBSD: memchr.c,v 1.1 1997/10/24 15:32:24 chuck Exp $";
+static char *rcsid = "$NetBSD: memchr.c,v 1.2 1997/10/24 18:10:30 mjacob Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #ifndef _KERNEL
 #include <string.h>
 #else
 #include <lib/libkern/libkern.h>
+#define	NULL	((char *)0)
 #endif 
 
 void *

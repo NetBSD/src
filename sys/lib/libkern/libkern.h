@@ -1,4 +1,4 @@
-/*	$NetBSD: libkern.h,v 1.14 1997/07/07 22:45:36 cgd Exp $	*/
+/*	$NetBSD: libkern.h,v 1.15 1997/10/24 18:10:32 mjacob Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -152,6 +152,7 @@ void	 __assert __P((const char *, const char *, int, const char *))
 int	 bcmp __P((const void *, const void *, size_t));
 void	 bzero __P((void *, size_t));
 int	 ffs __P((int));
+void	*memchr __P((const void *, int, size_t));
 u_long	 random __P((void));
 char	*rindex __P((const char *, int));
 int	 scanc __P((u_int, const u_char *, const u_char *, int));
