@@ -1,4 +1,4 @@
-/*	$NetBSD: cardbus.c,v 1.54 2004/08/23 17:52:45 drochner Exp $	*/
+/*	$NetBSD: cardbus.c,v 1.55 2004/08/23 18:21:51 drochner Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999 and 2000
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cardbus.c,v 1.54 2004/08/23 17:52:45 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cardbus.c,v 1.55 2004/08/23 18:21:51 drochner Exp $");
 
 #include "opt_cardbus.h"
 
@@ -57,6 +57,8 @@ __KERNEL_RCSID(0, "$NetBSD: cardbus.c,v 1.54 2004/08/23 17:52:45 drochner Exp $"
 #include <dev/pci/pcireg.h>	/* XXX */
 
 #include <dev/pcmcia/pcmciareg.h>
+
+#include "locators.h"
 
 #if defined CARDBUS_DEBUG
 #define STATIC
