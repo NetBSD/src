@@ -1,11 +1,11 @@
-/* $NetBSD: awivar.h,v 1.9 2000/06/09 05:31:18 onoe Exp $ */
+/* $NetBSD: awivar.h,v 1.10 2000/06/09 14:36:26 onoe Exp $ */
 
-/*
- * Copyright (c) 2000 The NetBSD Foundation, Inc.
+/*-
+ * Copyright (c) 1999 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Atsushi Onoe
+ * by Bill Sommerfeld
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
