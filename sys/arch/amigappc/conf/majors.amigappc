@@ -1,0 +1,10 @@
+#	$NetBSD: majors.amigappc,v 1.1 2003/12/12 04:12:09 jmc Exp $
+#
+# Devices majors specific to amigappc
+#
+
+include "arch/amiga/conf/majors.amiga"
+
+# Majors up to 143 are reserved for machine-dependant drivers.
+# New machine-independant driver majors are assigned in 
+# sys/conf/majors.
