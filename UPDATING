@@ -1,4 +1,4 @@
-$NetBSD: UPDATING,v 1.124 2004/06/22 01:29:51 jmc Exp $
+$NetBSD: UPDATING,v 1.125 2004/07/22 03:55:33 atatat Exp $
 
 This file (UPDATING) is intended to be a brief reference to recent
 changes that might cause problems in the build process, and a guide for
@@ -16,13 +16,32 @@ See also: BUILDING, build.sh, Makefile.
 Recent changes:
 ^^^^^^^^^^^^^^^
 
-20040621:
+20040715:
+	The rc.d/sendmail script now uses a heuristic to determine
+	if sendmail should be started at boot time.  It checks the
+	contents of /etc/mailer.conf, /etc/mail/submit.cf, and the
+	owner and mode of the sendmail binary to see if any changes
+	to the mail infrastructure have been made.  If no changes
+	are detected, it will start an SMTP listener.
 
+	Setting sendmail=NO in /etc/rc.conf will override this.
+
+	If you are only using sendmail by default and only for
+	local delivery, it is important that you also update your
+	sendmail.cf so that the SMTP listener only listens on the
+	loopback interface.
+
+20040715:
+	The method by which athhal-elf.o gets pulled into i386
+	kernel builds has been changed again.  The latest version
+	of bsd.files.mk is no longer required.
+
+20040621:
 	Due to the recent rototill of tools/compat it's crucial one starts
 	from a clean objdir under tools/*.
 
 	This is mostly due to generated files (yacc and lex sources) needing
-	to be generated w. new rules from bsd.hostprog.mk.
+	to be generated with new rules from bsd.hostprog.mk.
 
 	The safest course is to rm -rf all objects under tools before building.
 
