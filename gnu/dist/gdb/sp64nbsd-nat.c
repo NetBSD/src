@@ -65,7 +65,7 @@ fetch_inferior_registers (regno)
      we have to do that first, since they're found in memory relative
      to the stack pointer.  */
   if (regno < O7_REGNUM  /* including -1 */
-      || regno >= Y_REGNUM
+      || regno >= PC_REGNUM
       || (!register_valid[SP_REGNUM] && regno < I7_REGNUM))
     {
       if (0 != ptrace (PT_GETREGS, inferior_pid,
@@ -324,7 +324,7 @@ fetch_core_registers (core_reg_sect, core_reg_size, which, reg_addr)
   *(int *)&registers[REGISTER_BYTE (Y_REGNUM)]   = tf->tf_y;
 
   /* Clear out the G0 slot (see reg.h) */
-  *(int *)&registers[REGISTER_BYTE(G0_REGNUM)] = 0;
+  *(long *)&registers[REGISTER_BYTE(G0_REGNUM)] = 0;
 
   /* My best guess at where to get the locals and input
      registers is exactly where they usually are, right above
