@@ -1,4 +1,4 @@
-/*	$NetBSD: pcmcia.c,v 1.20 2000/02/22 21:29:36 chopps Exp $	*/
+/*	$NetBSD: pcmcia.c,v 1.21 2000/02/26 19:02:22 uch Exp $	*/
 
 #define	PCMCIADEBUG
 
@@ -42,6 +42,9 @@
 #include <dev/pcmcia/pcmciareg.h>
 #include <dev/pcmcia/pcmciachip.h>
 #include <dev/pcmcia/pcmciavar.h>
+#ifdef IT8368E_LEGACY_MODE /* XXX -uch */
+#include <arch/hpcmips/dev/it8368var.h>
+#endif
 
 #include "locators.h"
 
@@ -540,6 +543,11 @@ pcmcia_function_enable(pf)
 #endif
 
 	pf->pf_flags |= PFF_ENABLED;
+
+#ifdef IT8368E_LEGACY_MODE
+	/* return to I/O mode */
+	it8368_mode(pf, IT8368_IO_MODE, IT8368_WIDTH_16);
+#endif
 	return (0);
 
  bad:
