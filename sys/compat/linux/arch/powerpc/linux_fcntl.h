@@ -1,4 +1,4 @@
-/* $NetBSD: linux_fcntl.h,v 1.1 2001/01/19 01:31:24 manu Exp $ */
+/* $NetBSD: linux_fcntl.h,v 1.2 2001/01/21 22:19:26 manu Exp $ */
 
 /*-
  * Copyright (c) 1995, 1998, 2001 The NetBSD Foundation, Inc.
@@ -50,17 +50,18 @@
 /* 
  * flags used in open(2) 
  * From Linux's include/asm-ppc/fcntl.h 
+ * Theses are octal values (remember 0100 != 100 in C)
  */
-#define LINUX_O_CREAT		0x0100
-#define LINUX_O_EXCL			0x0200	
-#define LINUX_O_NOCTTY		0x0400
-#define LINUX_O_TRUNC		0x01000
-#define LINUX_O_APPEND		0x02000
-#define LINUX_O_NONBLOCK	0x04000
+#define LINUX_O_CREAT		0100
+#define LINUX_O_EXCL			0200	
+#define LINUX_O_NOCTTY		0400
+#define LINUX_O_TRUNC		01000
+#define LINUX_O_APPEND		02000
+#define LINUX_O_NONBLOCK	04000
 #define LINUX_O_NDELAY		LINUX_O_NONBLOCK
-#define LINUX_O_SYNC			0x010000
+#define LINUX_O_SYNC			010000
 
-#define LINUX_FASYNC			0x020000
+#define LINUX_FASYNC			020000
 
 /* 
  * fcntl(2) operations 
