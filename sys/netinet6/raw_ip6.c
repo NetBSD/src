@@ -1,4 +1,4 @@
-/*	$NetBSD: raw_ip6.c,v 1.63.2.1 2004/06/14 18:01:01 tron Exp $	*/
+/*	$NetBSD: raw_ip6.c,v 1.63.2.2 2004/09/11 12:09:08 he Exp $	*/
 /*	$KAME: raw_ip6.c,v 1.82 2001/07/23 18:57:56 jinmei Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: raw_ip6.c,v 1.63.2.1 2004/06/14 18:01:01 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: raw_ip6.c,v 1.63.2.2 2004/09/11 12:09:08 he Exp $");
 
 #include "opt_ipsec.h"
 
@@ -494,9 +494,19 @@ rip6_output(m, va_alist)
 		off += sizeof(struct ip6_hdr);
 
 		sum = 0;
-		m_copyback(m, off, sizeof(sum), (caddr_t)&sum);
+		m = m_copyback_cow(m, off, sizeof(sum), (caddr_t)&sum,
+		    M_DONTWAIT);
+		if (m == NULL) {
+			error = ENOBUFS;
+			goto bad;
+		}
 		sum = in6_cksum(m, ip6->ip6_nxt, sizeof(*ip6), plen);
-		m_copyback(m, off, sizeof(sum), (caddr_t)&sum);
+		m = m_copyback_cow(m, off, sizeof(sum), (caddr_t)&sum,
+		    M_DONTWAIT);
+		if (m == NULL) {
+			error = ENOBUFS;
+			goto bad;
+		}
 	}
 
 	flags = 0;
