@@ -1,4 +1,4 @@
-/*	$NetBSD: mips3_pte.h,v 1.10 1999/09/25 00:00:37 shin Exp $	*/
+/*	$NetBSD: mips3_pte.h,v 1.11 2000/03/27 02:55:13 nisimura Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -81,15 +81,9 @@ struct tlb {
 #define MIPS3_PG_WIRED	0x80000000	/* SW */
 #define MIPS3_PG_RO	0x40000000	/* SW */
 
-#ifdef MIPS_16K_PAGE			/* enable kernel support for 16k pages  */
-#define	MIPS3_PG_SVPN	0xffffc000	/* Software page no mask */
-#define	MIPS3_PG_HVPN	0xffff8000	/* Hardware page no mask */
-#define	MIPS3_PG_ODDPG	0x00004000	/* Odd even pte entry */
-#else
 #define	MIPS3_PG_SVPN	0xfffff000	/* Software page no mask */
 #define	MIPS3_PG_HVPN	0xffffe000	/* Hardware page no mask */
 #define	MIPS3_PG_ODDPG	0x00001000	/* Odd even pte entry */
-#endif
 #define	MIPS3_PG_ASID	0x000000ff	/* Address space ID */
 #define	MIPS3_PG_G	0x00000001	/* Global; ignore ASID if in lo0 & lo1 */
 #define	MIPS3_PG_V	0x00000002	/* Valid */
