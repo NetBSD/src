@@ -1,5 +1,5 @@
 # from:	@(#)SPARC	8.1 (Berkeley) 6/29/93
-# $Id: SPARC,v 1.1 1993/10/02 10:22:29 deraadt Exp $
+# $Id: SPARC,v 1.2 1993/12/02 11:10:35 deraadt Exp $
 # SPARCstation 1, 1+, 2, etc.
 
 include	"std.sparc"
@@ -19,7 +19,8 @@ options		RCONSOLE		# fast rasterop console
 options		FIFO		# POSIX fifo support (in all filesystems)
 options		FFS, QUOTA	# fast filesystem with user and group quotas
 options		MFS		# memory-based filesystem
-options		NFS		# Sun NFS-compatible filesystem
+options		NFSSERVER	# Sun NFS-compatible filesystem
+options		NFSCLIENT	# Sun NFS-compatible filesystem
 options		LOFS		# Loop-back filesystem
 #options	KERNFS		# kernel data-structure filesystem
 options		FDESC		# user file descriptor filesystem
@@ -29,11 +30,12 @@ options		FDESC		# user file descriptor filesystem
 
 # Networking options
 options		INET
-#options	TCP_COMPAT_42	# compatibility with 4.2BSD TCP/IP
+options		TCP_COMPAT_42	# compatibility with 4.2BSD TCP/IP
 #options	GATEWAY		# IP packet forwarding
 #options	ISO		# OSI networking
 #options	TPIP
 #options	EON
+options		COMPAT_43
 
 # Options for SPARCstation hardware
 options		COMPAT_SUNOS		# compatibility with SunOS binaries
