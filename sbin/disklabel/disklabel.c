@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel.c,v 1.75 1999/09/17 18:30:33 ross Exp $	*/
+/*	$NetBSD: disklabel.c,v 1.76 1999/10/11 05:28:04 shin Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -47,7 +47,7 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1993\n\
 static char sccsid[] = "@(#)disklabel.c	8.4 (Berkeley) 5/4/95";
 /* from static char sccsid[] = "@(#)disklabel.c	1.2 (Symmetric) 11/28/85"; */
 #else
-__RCSID("$NetBSD: disklabel.c,v 1.75 1999/09/17 18:30:33 ross Exp $");
+__RCSID("$NetBSD: disklabel.c,v 1.76 1999/10/11 05:28:04 shin Exp $");
 #endif
 #endif /* not lint */
 
@@ -137,7 +137,7 @@ static int	debug;
 #define OPTIONS	"BCNRWb:ef:irs:tw"
 #endif
 
-#ifdef __i386__
+#if defined(__i386__) || defined(USE_MBR)
 static struct mbr_partition *dosdp;	/* i386 DOS partition, if found */
 static int mbrpt_nobsd; /* MBR partition table exists, but no BSD partition */
 static struct mbr_partition *readmbr __P((int));
@@ -147,7 +147,7 @@ static u_int filecore_partition_offset;
 static u_int get_filecore_partition __P((int));
 static int filecore_checksum __P((u_char *));
 #endif	/* __arm32__ */
-#if defined(__i386__) || (defined(__arm32__) && defined(notyet))
+#if defined(__i386__) || (defined(__arm32__) && defined(notyet)) || defined(USE_MBR)
 static void confirm __P((const char *));
 #endif
 
@@ -274,7 +274,7 @@ main(argc, argv)
 	if (f < 0)
 		err(4, "%s", specname);
 
-#ifdef __i386__
+#if defined(__i386__) || defined(USE_MBR)
 	/*
 	 * Check for presence of DOS partition table in
 	 * master boot record. Return pointer to NetBSD/i386
@@ -433,7 +433,7 @@ makelabel(type, name, lp)
 		(void)strncpy(lp->d_packname, name, sizeof(lp->d_packname));
 }
 
-#if defined(__i386__) || (defined(__arm32__) && defined(notyet))
+#if defined(__i386__) || (defined(__arm32__) && defined(notyet)) || defined(USE_MBR)
 static void
 confirm(txt)
 	const char *txt;
@@ -474,7 +474,7 @@ writelabel(f, boot, lp)
 	if (rflag)
 #endif
 	{
-#ifdef __i386__
+#if defined(_i386__) || defined(USE_MBR)
 		struct partition *pp = &lp->d_partitions[2];
 
 		/*
@@ -606,7 +606,7 @@ l_perror(s)
 	}
 }
 
-#ifdef __i386__
+#if defined(_i386__) || defined(USE_MBR)
 /*
  * Fetch DOS partition table from disk.
  */
@@ -623,6 +623,11 @@ readmbr(f)
 	    read(f, mbr, sizeof(mbr)) < sizeof(mbr))
 		err(4, "can't read master boot record");
 		
+#if !defined(__i386__)
+	/* avoid alignment error */
+	memcpy(mbr, &mbr[MBR_PARTOFF], NMBRPART * sizeof(*dp));
+	dp = (struct mbr_partition *)mbr;
+#endif
 	/*
 	 * Don't (yet) know disk geometry (BIOS), use
 	 * partition table to find NetBSD/i386 partition, and obtain
@@ -821,7 +826,7 @@ readlabel(f)
 		char *msg;
 		off_t sectoffset = 0;
 
-#ifdef __i386__
+#if defined(_i386__) || defined(USE_MBR)
 		if (dosdp)
 			sectoffset = (off_t)dosdp->mbrp_start * DEV_BSIZE;
 #endif
@@ -906,7 +911,7 @@ makebootarea(boot, dp, f)
 		if (rflag) {
 			off_t sectoffset = 0;
 
-#ifdef __i386__
+#if defined(_i386__) || defined(USE_MBR)
 			if (dosdp)
 				sectoffset = (off_t)dosdp->mbrp_start * DEV_BSIZE;
 #endif
