@@ -66,11 +66,13 @@
  */
 
 #include <sys/cdefs.h>
+#if 0
 #ifndef lint
 __RCSID(
 "@(#) Copyright (c) 1989, 1993\n\
 	The Regents of the University of California.  All rights reserved.\n");
 #endif /* not lint */
+#endif
 
 #if 0
 __RCSID("@(#)ping.c	8.1 (Berkeley) 6/5/93");
