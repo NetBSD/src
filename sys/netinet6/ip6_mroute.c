@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_mroute.c,v 1.34 2002/06/08 20:06:45 itojun Exp $	*/
+/*	$NetBSD: ip6_mroute.c,v 1.35 2002/06/29 12:33:33 itojun Exp $	*/
 /*	$KAME: ip6_mroute.c,v 1.49 2001/07/25 09:21:18 jinmei Exp $	*/
 
 /*
@@ -40,13 +40,13 @@
  * Modified by Mark J. Steiglitz, Stanford, May, 1991
  * Modified by Van Jacobson, LBL, January 1993
  * Modified by Ajit Thyagarajan, PARC, August 1993
- * Modified by Bill Fenenr, PARC, April 1994
+ * Modified by Bill Fenner, PARC, April 1994
  *
  * MROUTING Revision: 3.5.1.2 + PIM-SMv2 (pimd) Support
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_mroute.c,v 1.34 2002/06/08 20:06:45 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_mroute.c,v 1.35 2002/06/29 12:33:33 itojun Exp $");
 
 #include "opt_inet.h"
 
