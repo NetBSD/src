@@ -1,4 +1,4 @@
-/*	$NetBSD: scsi_all.h,v 1.16 2000/11/29 12:49:56 wiz Exp $	*/
+/*	$NetBSD: scsi_all.h,v 1.17 2001/04/19 10:16:25 augustss Exp $	*/
 
 /*
  * SCSI-specific interface description.
@@ -81,7 +81,7 @@ struct scsi_mode_sense {
 	u_int8_t control;
 };
 
-#define	SCSI_MODE_SENSE_BIG		0x54
+#define	SCSI_MODE_SENSE_BIG		0x5A
 struct scsi_mode_sense_big {
 	u_int8_t opcode;
 	u_int8_t byte2;		/* same bits as small version */
