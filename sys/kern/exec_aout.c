@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_aout.c,v 1.12 1994/07/05 03:26:34 glass Exp $	*/
+/*	$NetBSD: exec_aout.c,v 1.13 1994/08/01 18:49:49 pk Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Christopher G. Demetriou
@@ -194,7 +194,7 @@ exec_aout_prep_omagic(p, epp)
 	struct exec_package *epp;
 {
 	struct exec *execp = epp->ep_hdr;
-	long bsize, baddr;
+	long dsize, bsize, baddr;
 
 	epp->ep_taddr = USRTEXT;
 	epp->ep_tsize = execp->a_text;
@@ -214,6 +214,16 @@ exec_aout_prep_omagic(p, epp)
 		NEW_VMCMD(&epp->ep_vmcmds, vmcmd_map_zero, bsize, baddr,
 		    NULLVP, 0, VM_PROT_READ|VM_PROT_WRITE|VM_PROT_EXECUTE);
 
+	/*
+	 * Make sure (# of pages) mapped above equals (vm_tsize + vm_dsize);
+	 * obreak(2) relies on this fact. Both `vm_tsize' and `vm_dsize' are
+	 * computed (in execve(2)) by rounding *up* `ep_tsize' and `ep_dsize'
+	 * respectively to page boundaries.
+	 * Compensate `ep_dsize' for the amount of data covered by the last
+	 * text page. 
+	 */
+	dsize = epp->ep_dsize + execp->a_text - roundup(execp->a_text, NBPG);
+	epp->ep_dsize = (dsize > 0) ? dsize : 0;
 	return exec_aout_setup_stack(p, epp);
 }
 
