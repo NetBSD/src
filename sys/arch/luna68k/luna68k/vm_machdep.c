@@ -1,5 +1,5 @@
-/* $NetBSD: vm_machdep.c,v 1.8 2001/08/04 07:46:22 chs Exp $ */
-/*	$NetBSD: vm_machdep.c,v 1.8 2001/08/04 07:46:22 chs Exp $	*/
+/* $NetBSD: vm_machdep.c,v 1.9 2001/08/19 18:09:21 chs Exp $ */
+/*	$NetBSD: vm_machdep.c,v 1.9 2001/08/19 18:09:21 chs Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.8 2001/08/04 07:46:22 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.9 2001/08/19 18:09:21 chs Exp $");
 
 #include "opt_compat_hpux.h"
 
@@ -350,8 +350,8 @@ vunmapbuf(bp, len)
 	kva = m68k_trunc_page(bp->b_data);
 	off = (vaddr_t)bp->b_data - kva;
 	len = m68k_round_page(off + len);
-
 	pmap_kremove(kva, len);
+	pmap_update();
 	uvm_km_free_wakeup(phys_map, kva, len);
 	bp->b_data = bp->b_saveaddr;
 	bp->b_saveaddr = 0;
