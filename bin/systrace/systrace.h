@@ -1,4 +1,4 @@
-/*	$NetBSD: systrace.h,v 1.10 2002/11/02 19:49:21 provos Exp $	*/
+/*	$NetBSD: systrace.h,v 1.11 2002/11/02 20:04:20 provos Exp $	*/
 /*	$OpenBSD: systrace.h,v 1.14 2002/08/05 23:27:53 provos Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
@@ -48,6 +48,7 @@ struct logic {
 	void *filterdata;
 	size_t filterlen;
 	int (*filter_match)(struct intercept_translate *, struct logic *);
+	void *filterarg;
 };
 
 #define LOGIC_NEEDEXPAND	0x01

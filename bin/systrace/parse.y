@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.y,v 1.5 2002/10/11 21:54:58 provos Exp $	*/
+/*	$NetBSD: parse.y,v 1.6 2002/11/02 20:04:20 provos Exp $	*/
 /*	$OpenBSD: parse.y,v 1.9 2002/08/04 04:15:50 provos Exp $	*/
 
 /*
@@ -32,7 +32,7 @@
  */
 %{
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: parse.y,v 1.5 2002/10/11 21:54:58 provos Exp $");
+__RCSID("$NetBSD: parse.y,v 1.6 2002/11/02 20:04:20 provos Exp $");
 
 #include <sys/types.h>
 
@@ -47,6 +47,7 @@ __RCSID("$NetBSD: parse.y,v 1.5 2002/10/11 21:54:58 provos Exp $");
 #include <unistd.h>
 #include <pwd.h>
 #include <grp.h>
+#include <regex.h>
 
 #include "intercept.h"
 #include "systrace.h"
@@ -71,7 +72,7 @@ extern int iamroot;
 
 %token	AND OR NOT LBRACE RBRACE LSQBRACE RSQBRACE THEN MATCH PERMIT DENY
 %token	EQ NEQ TRUE SUB NSUB INPATH LOG COMMA IF USER GROUP EQUAL NEQUAL AS
-%token	COLON
+%token	COLON RE
 %token	<string> STRING
 %token	<string> CMDSTRING
 %token	<number> NUMBER
@@ -355,6 +356,36 @@ symbol		: STRING typeoff MATCH CMDSTRING
 		break;
 
 	node->filter_match = filter_inpath;
+	$$ = node;
+}
+		| STRING typeoff RE CMDSTRING
+{
+	struct logic *node;
+	regex_t *re;
+
+	if ((node = parse_newsymbol($1, $2, $4)) == NULL)
+		break;
+
+	if ((re = calloc(1, sizeof (regex_t))) == NULL) {
+		yyerror("calloc");
+		break;
+	}
+
+	/* Precompute regexp here, otherwise we need to compute it
+	 * on the fly which is fairly expensive.
+	 */
+	if (!(node->flags & LOGIC_NEEDEXPAND)) {
+		if (regcomp(re, node->filterdata,
+			REG_EXTENDED | REG_NOSUB) != 0) {
+			yyerror("Invalid regular expression: %s",
+			    node->filterdata);
+			break;
+		}
+		node->filterarg = re;
+	} else
+		node->filterarg = NULL;
+
+	node->filter_match = filter_regex;
 	$$ = node;
 }
 		| TRUE
