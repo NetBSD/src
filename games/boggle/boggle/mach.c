@@ -1,4 +1,4 @@
-/*	$NetBSD: mach.c,v 1.5 1995/04/28 22:28:48 mycroft Exp $	*/
+/*	$NetBSD: mach.c,v 1.6 1997/10/10 12:04:31 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -36,11 +36,12 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)mach.c	8.1 (Berkeley) 6/11/93";
 #else
-static char rcsid[] = "$NetBSD: mach.c,v 1.5 1995/04/28 22:28:48 mycroft Exp $";
+__RCSID("$NetBSD: mach.c,v 1.6 1997/10/10 12:04:31 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -49,6 +50,8 @@ static char rcsid[] = "$NetBSD: mach.c,v 1.5 1995/04/28 22:28:48 mycroft Exp $";
  *
  * Input is raw and unechoed
  */
+#include <sys/ioctl.h>
+
 #include <ctype.h>
 #include <curses.h>
 #include <fcntl.h>
