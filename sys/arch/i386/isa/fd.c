@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)fd.c	7.4 (Berkeley) 5/25/91
- *	$Id: fd.c,v 1.38 1994/04/08 18:51:19 mycroft Exp $
+ *	$Id: fd.c,v 1.39 1994/04/09 02:57:14 mycroft Exp $
  */
 
 #include <sys/param.h>
@@ -442,6 +442,9 @@ fd_nvtotype(fdc, nvraminfo, drive)
 		return NULL;
 	case RTCFDT_12M:
 		return &fd_types[1];
+	case RTCFDT_TYPE5:
+	case RTCFDT_TYPE6:
+		/* XXX We really ought to handle 2.88MB format. */
 	case RTCFDT_144M:
 		return &fd_types[0];
 	case RTCFDT_360K:
