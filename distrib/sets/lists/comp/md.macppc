@@ -1,9 +1,10 @@
-# $NetBSD: md.macppc,v 1.20 2001/05/03 13:17:26 soren Exp $
+# $NetBSD: md.macppc,v 1.21 2002/06/18 05:24:45 itojun Exp $
 ./usr/include/macppc	comp-c-include
 ./usr/include/macppc/_G_config.h	comp-c-include
 ./usr/include/macppc/adbsys.h	comp-c-include
 ./usr/include/macppc/ansi.h	comp-c-include
 ./usr/include/macppc/aout_machdep.h	comp-c-include
+./usr/include/macppc/apmvar.h		comp-c-include
 ./usr/include/macppc/asm.h	comp-c-include
 ./usr/include/macppc/autoconf.h	comp-c-include
 ./usr/include/macppc/bat.h	comp-c-include
