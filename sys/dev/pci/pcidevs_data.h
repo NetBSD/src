@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.287 2001/01/08 09:53:41 rh Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.288 2001/01/08 20:08:17 thorpej Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.284 2001/01/08 09:52:22 rh Exp 
+ *	NetBSD: pcidevs,v 1.285 2001/01/08 20:07:21 thorpej Exp 
  */
 
 /*
@@ -1946,6 +1946,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Digital Equipment",
 	    "Compaq SMART RAID 42xx",
+	},
+	{
+	    PCI_VENDOR_DEC, PCI_PRODUCT_DEC_SWXCR,
+	    0,
+	    "Digital Equipment",
+	    "SWXCR RAID",
 	},
 	{
 	    PCI_VENDOR_DELTA, PCI_PRODUCT_DELTA_8139,
