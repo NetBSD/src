@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_pool.c,v 1.55 2001/05/10 04:51:41 thorpej Exp $	*/
+/*	$NetBSD: subr_pool.c,v 1.56 2001/05/13 17:06:59 sommerfeld Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1999, 2000 The NetBSD Foundation, Inc.
@@ -572,7 +572,11 @@ pool_alloc_item_header(struct pool *pp, caddr_t storage, int flags)
  * Grab an item from the pool; must be called at appropriate spl level
  */
 void *
+#ifdef DIAGNOSTIC
 _pool_get(struct pool *pp, int flags, const char *file, long line)
+#else
+pool_get(struct pool *pp, int flags)
+#endif
 {
 	struct pool_item *pi;
 	struct pool_item_header *ph;
@@ -584,11 +588,11 @@ _pool_get(struct pool *pp, int flags, const char *file, long line)
 		pr_printlog(pp, NULL, printf);
 		panic("pool_get: static");
 	}
-#endif
 
 	if (__predict_false(curproc == NULL && doing_shutdown == 0 &&
 			    (flags & PR_WAITOK) != 0))
 		panic("pool_get: must have NOWAIT");
+#endif
 
 	simple_lock(&pp->pr_slock);
 	pr_enter(pp, file, line);
@@ -728,10 +732,9 @@ _pool_get(struct pool *pp, int flags, const char *file, long line)
 		    pp->pr_wchan, pp->pr_nitems);
 		panic("pool_get: nitems inconsistent\n");
 	}
-#endif
+
 	pr_log(pp, v, PRLOG_GET, file, line);
 
-#ifdef DIAGNOSTIC
 	if (__predict_false(pi->pi_magic != PI_MAGIC)) {
 		pr_printlog(pp, pi, printf);
 		panic("pool_get(%s): free list modified: magic=%x; page %p;"
@@ -807,7 +810,7 @@ _pool_get(struct pool *pp, int flags, const char *file, long line)
  * Internal version of pool_put().  Pool is already locked/entered.
  */
 static void
-pool_do_put(struct pool *pp, void *v, const char *file, long line)
+pool_do_put(struct pool *pp, void *v)
 {
 	struct pool_item *pi = v;
 	struct pool_item_header *ph;
@@ -823,8 +826,6 @@ pool_do_put(struct pool *pp, void *v, const char *file, long line)
 		panic("pool_put");
 	}
 #endif
-
-	pr_log(pp, v, PRLOG_PUT, file, line);
 
 	if (__predict_false((ph = pr_find_pagehead(pp, page)) == NULL)) {
 		pr_printlog(pp, NULL, printf);
@@ -936,6 +937,7 @@ pool_do_put(struct pool *pp, void *v, const char *file, long line)
 /*
  * Return resource to the pool; must be called at appropriate spl level
  */
+#ifdef DIAGNOSTIC
 void
 _pool_put(struct pool *pp, void *v, const char *file, long line)
 {
@@ -943,11 +945,26 @@ _pool_put(struct pool *pp, void *v, const char *file, long line)
 	simple_lock(&pp->pr_slock);
 	pr_enter(pp, file, line);
 
-	pool_do_put(pp, v, file, line);
+	pr_log(pp, v, PRLOG_PUT, file, line);
+
+	pool_do_put(pp, v);
 
 	pr_leave(pp);
 	simple_unlock(&pp->pr_slock);
 }
+
+#else
+void
+pool_put(struct pool *pp, void *v)
+{
+
+	simple_lock(&pp->pr_slock);
+
+	pool_do_put(pp, v);
+
+	simple_unlock(&pp->pr_slock);
+}
+#endif
 
 /*
  * Add N items to the pool.
@@ -1219,7 +1236,11 @@ pool_page_free_nointr(void *v, unsigned long sz, int mtype)
  * Release all complete pages that have not been used recently.
  */
 void
+#ifdef DIAGNOSTIC
 _pool_reclaim(struct pool *pp, const char *file, long line)
+#else
+pool_reclaim(struct pool *pp)
+#endif
 {
 	struct pool_item_header *ph, *phnext;
 	struct pool_cache *pc;
@@ -1729,7 +1750,7 @@ pool_cache_destruct_object(struct pool_cache *pc, void *object)
  */
 static void
 pool_cache_do_invalidate(struct pool_cache *pc, int free_groups,
-    void (*putit)(struct pool *, void *, const char *, long))
+    void (*putit)(struct pool *, void *))
 {
 	struct pool_cache_group *pcg, *npcg;
 	void *object;
@@ -1744,7 +1765,7 @@ pool_cache_do_invalidate(struct pool_cache *pc, int free_groups,
 				pc->pc_allocfrom = NULL;
 			if (pc->pc_dtor != NULL)
 				(*pc->pc_dtor)(pc->pc_arg, object);
-			(*putit)(pc->pc_pool, object, __FILE__, __LINE__);
+			(*putit)(pc->pc_pool, object);
 		}
 		if (free_groups) {
 			pc->pc_ngroups--;
@@ -1767,7 +1788,7 @@ pool_cache_invalidate(struct pool_cache *pc)
 {
 
 	simple_lock(&pc->pc_slock);
-	pool_cache_do_invalidate(pc, 0, _pool_put);
+	pool_cache_do_invalidate(pc, 0, pool_put);
 	simple_unlock(&pc->pc_slock);
 }
 
