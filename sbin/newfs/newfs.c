@@ -1,4 +1,4 @@
-/*	$NetBSD: newfs.c,v 1.50 2001/12/13 06:29:15 lukem Exp $	*/
+/*	$NetBSD: newfs.c,v 1.51 2001/12/30 16:47:55 lukem Exp $	*/
 
 /*
  * Copyright (c) 1983, 1989, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1989, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)newfs.c	8.13 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: newfs.c,v 1.50 2001/12/13 06:29:15 lukem Exp $");
+__RCSID("$NetBSD: newfs.c,v 1.51 2001/12/30 16:47:55 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -117,7 +117,7 @@ int main(int, char *[]);
  * on a single cylinder. The default is to use 16 cylinders
  * per group.
  */
-#define	DESCPG		16	/* desired fs_cpg */
+#define	DESCPG		65536	/* desired fs_cpg ("infinity") */
 
 /*
  * ROTDELAY gives the minimum number of milliseconds to initiate
