@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.30 1996/02/17 00:03:17 pk Exp $ */
+/*	$NetBSD: clock.c,v 1.31 1996/02/17 09:47:48 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -468,7 +468,7 @@ delay(n)
 		else
 			t = (cacheinfo.c_enabled) ? 3 : 1; /* 4/200 */
 
-		while (--n >= 0) {
+		while (n-- > 0) {
 			for (lcv = 0 ; lcv < t ; lcv++)
 				;
 		}
@@ -482,7 +482,7 @@ delay(n)
 	if (timercd.cd_ndevs == 0)
 		panic("delay");
 	c = TIMERREG->t_c10.t_counter;
-	while (--n >= 0) {
+	while (n-- > 0) {
 		while ((t = TIMERREG->t_c10.t_counter) == c)
 			continue;
 		c = t;
