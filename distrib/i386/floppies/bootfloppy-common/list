@@ -1,4 +1,9 @@
-#	$NetBSD: list,v 1.2 1997/06/21 21:30:52 christos Exp $
+#	$NetBSD: list,v 1.3 1999/03/13 20:02:32 sommerfe Exp $
 
 # copy the kernel
-COPY	${OBJDIR}/netbsd.ram.gz	netbsd.gz
+# We copy compressed kernel to "netbsd" rather than "netbsd.gz" for two reasons
+#	1) shaves two seconds off the boot as the bootblocks look for netbsd first.
+#	2) avoids possible moment of confusion when bootblocks 
+#	print "no such file or directory" error before moving on to netbsd.gz
+
+COPY	${OBJDIR}/netbsd.ram.gz	netbsd
