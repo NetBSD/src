@@ -1,4 +1,4 @@
-/* $NetBSD: wsmoused.c,v 1.19 2004/01/20 22:24:28 matt Exp $ */
+/* $NetBSD: wsmoused.c,v 1.20 2004/02/05 16:07:51 jmmv Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 2002, 2003\n"
 "The NetBSD Foundation, Inc.  All rights reserved.\n");
-__RCSID("$NetBSD: wsmoused.c,v 1.19 2004/01/20 22:24:28 matt Exp $");
+__RCSID("$NetBSD: wsmoused.c,v 1.20 2004/02/05 16:07:51 jmmv Exp $");
 #endif /* not lint */
 
 #include <sys/ioctl.h>
@@ -172,9 +172,10 @@ log_info(const char *fmt, ...)
 	va_list ap;
 
 	va_start(ap, fmt);
-	if (Foreground)
+	if (Foreground) {
 		vfprintf(stderr, fmt, ap);
-	else
+		fprintf(stderr, "\n");
+	} else
 		vsyslog(LOG_DAEMON | LOG_INFO, fmt, ap);
 	va_end(ap);
 }
