@@ -1,5 +1,7 @@
 /*
  * Driver for custom chips display.
+ *
+ *	$Id: grf_ccreg.h,v 1.2 1993/08/02 18:33:33 mycroft Exp $
  */
 
 /* this is a mere collection of data, the registers itself are in the

@@ -1,3 +1,5 @@
+/*	$Id: grf_cc.c,v 1.2 1993/08/02 18:33:32 mycroft Exp $ */
+
 #include "grf.h"
 #if NGRF > 0
 
