@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.79 1998/02/02 05:20:24 perry Exp $
+#	$NetBSD: Makefile.inc,v 1.80 1998/02/14 01:38:36 thorpej Exp $
 #	@(#)Makefile.inc	8.3 (Berkeley) 10/24/94
 
 # sys sources
@@ -173,7 +173,7 @@ MAN+=	accept.2 access.2 acct.2 adjtime.2 bind.2 brk.2 chdir.2 \
 	execve.2 _exit.2 fcntl.2 flock.2 fork.2 fsync.2 getdents.2 \
 	getdirentries.3 getfh.2 getfsstat.2 getgid.2 getgroups.2 \
 	getitimer.2 getlogin.2 getpeername.2 getpgrp.2 getpid.2 \
-	getpriority.2 getrlimit.2 getrusage.2 getsockname.2 \
+	getpriority.2 getrlimit.2 getrusage.2 getsid.2 getsockname.2 \
 	getsockopt.2 gettimeofday.2 getuid.2 intro.2 ioctl.2 kill.2 \
 	ktrace.2 link.2 listen.2 lseek.2 mkdir.2 mkfifo.2 mknod.2 \
 	madvise.2 mincore.2 minherit.2 mlock.2 mmap.2 mount.2 \
