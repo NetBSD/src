@@ -1,4 +1,4 @@
-/*	$NetBSD: files.c,v 1.8 1997/10/10 10:27:54 mycroft Exp $	*/
+/*	$NetBSD: files.c,v 1.9 1997/10/18 07:59:06 lukem Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -86,17 +86,6 @@ initfiles()
 	nextobject = &allobjects;
 }
 
-static void
-showprev(pref, fi)
-	const char *pref;
-	register struct files *fi;
-{
-
-	xerror(fi->fi_srcfile, fi->fi_srcline,
-	    "%sfile %s ...", pref, fi->fi_path);
-	errors--;
-}
-
 void
 addfile(path, optx, flags, rule)
 	const char *path;
@@ -174,8 +163,6 @@ addobject(path, optx, flags)
 	int flags;
 {
 	struct objects *oi;
-	const char *dotp, *tail;
-	size_t baselen;
 
 	/*
 	 * Commit this object to memory.  We will decide later whether it
@@ -200,8 +187,6 @@ addobject(path, optx, flags)
 	*nextobject = oi;
 	nextobject = &oi->oi_next;
 	return;
-bad:   
-	expr_free(optx);
 }     
 
 /*
@@ -213,8 +198,7 @@ bad:
 void
 checkfiles()
 {
-	register struct files *fi, *last;
-	register struct nvlist *nv;
+	struct files *fi, *last;
 
 	last = NULL;
 	for (fi = *unchecked; fi != NULL; last = fi, fi = fi->fi_next)
@@ -233,7 +217,7 @@ checkaux(name, context)
 	const char *name;
 	void *context;
 {
-	register struct files *fi = context;
+	struct files *fi = context;
 
 	if (ht_lookup(devbasetab, name) == NULL) {
 		xerror(fi->fi_srcfile, fi->fi_srcline,
@@ -253,7 +237,7 @@ checkaux(name, context)
 int
 fixfiles()
 {
-	register struct files *fi, *ofi;
+	struct files *fi, *ofi;
 	struct nvlist *flathead, **flatp;
 	int err, sel;
 
@@ -313,7 +297,7 @@ fixfiles()
 int    
 fixobjects()
 {     
-	register struct objects *oi, *ooi;
+	struct objects *oi;
 	struct nvlist *flathead, **flatp;
 	int err, sel; 
  
@@ -348,12 +332,12 @@ fixobjects()
  */
 static int
 fixcount(name, context)
-	register const char *name;
+	const char *name;
 	void *context;
 {
-	register struct nvlist ***p = context;
-	register struct devbase *dev;
-	register struct nvlist *nv;
+	struct nvlist ***p = context;
+	struct devbase *dev;
+	struct nvlist *nv;
 
 	dev = ht_lookup(devbasetab, name);
 	if (dev == NULL)	/* cannot occur here; we checked earlier */
@@ -374,9 +358,9 @@ fixfsel(name, context)
 	const char *name;
 	void *context;
 {
-	register struct nvlist ***p = context;
-	register struct nvlist *nv;
-	register int sel;
+	struct nvlist ***p = context;
+	struct nvlist *nv;
+	int sel;
 
 	sel = ht_lookup(selecttab, name) != NULL;
 	nv = newnv(name, NULL, NULL, sel, NULL);
@@ -407,9 +391,9 @@ fixsel(name, context)
  */
 static int
 expr_eval(expr, fn, context)
-	register struct nvlist *expr;
-	register int (*fn) __P((const char *, void *));
-	register void *context;
+	struct nvlist *expr;
+	int (*fn) __P((const char *, void *));
+	void *context;
 {
 	int lhs, rhs;
 
@@ -433,6 +417,7 @@ expr_eval(expr, fn, context)
 	}
 	panic("expr_eval %d", expr->nv_int);
 	/* NOTREACHED */
+	return (0);
 }
 
 /*
@@ -440,9 +425,9 @@ expr_eval(expr, fn, context)
  */
 static void
 expr_free(expr)
-	register struct nvlist *expr;
+	struct nvlist *expr;
 {
-	register struct nvlist *rhs;
+	struct nvlist *rhs;
 
 	/* This loop traverses down the RHS of each subexpression. */
 	for (; expr != NULL; expr = rhs) {
@@ -485,7 +470,7 @@ prexpr(expr)
 
 static void
 pr0(e)
-	register struct nvlist *e;
+	struct nvlist *e;
 {
 
 	switch (e->nv_int) {

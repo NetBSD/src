@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.5 1996/08/31 20:58:29 mycroft Exp $	*/
+/*	$NetBSD: util.c,v 1.6 1997/10/18 07:59:38 lukem Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -102,7 +102,7 @@ char *
 sourcepath(file)
 	const char *file;
 {
-	register char *cp;
+	char *cp;
 
 	cp = emalloc(strlen(srcdir) + 1 + strlen(file) + 1);
 	(void)sprintf(cp, "%s/%s", srcdir, file);
@@ -118,7 +118,7 @@ newnv(name, str, ptr, i, next)
 	int i;
 	struct nvlist *next;
 {
-	register struct nvlist *nv;
+	struct nvlist *nv;
 
 	if ((nv = nvhead) == NULL)
 		nv = emalloc(sizeof(*nv));
@@ -142,7 +142,7 @@ newnv(name, str, ptr, i, next)
  */
 void
 nvfree(nv)
-	register struct nvlist *nv;
+	struct nvlist *nv;
 {
 
 	nv->nv_next = nvhead;
@@ -154,9 +154,9 @@ nvfree(nv)
  */
 void
 nvfreel(nv)
-	register struct nvlist *nv;
+	struct nvlist *nv;
 {
-	register struct nvlist *next;
+	struct nvlist *next;
 
 	for (; nv != NULL; nv = next) {
 		next = nv->nv_next;

@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: gram.y,v 1.18 1997/10/10 10:41:18 mycroft Exp $	*/
+/*	$NetBSD: gram.y,v 1.19 1997/10/18 07:59:10 lukem Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -60,8 +60,6 @@
 #define	stop(s)	error(s), exit(1)
 
 int	include __P((const char *, int));
-void	yyerror __P((const char *));
-int	yylex __P((void));
 
 static	struct	config conf;	/* at most one active at a time */
 
@@ -436,8 +434,8 @@ yyerror(s)
 static void
 cleanup()
 {
-	register struct nvlist **np;
-	register int i;
+	struct nvlist **np;
+	int i;
 
 	for (np = alloc, i = adepth; --i >= 0; np++)
 		nvfree(*np);
