@@ -1,6 +1,6 @@
 #!/usr/local/bin/perl
 #
-#	$NetBSD: amd2netbsd,v 1.7 1997/09/26 16:59:44 christos Exp $
+#	$NetBSD: amd2netbsd,v 1.8 1997/10/16 05:18:42 lukem Exp $
 #
 #  Perl script to convert a standard distribution directory for am-utils into
 #	a NetBSD source tree.
@@ -322,6 +322,9 @@ __END__
 %% file usr.sbin/amd/Makefile
 %% NetBSD #
 SUBDIR= libamu amd amq hlfsd fixmount fsinfo mk-amd-map wire-test
+
+all-amd all-amq all-hlfsd all-fixmount all-fsinfo all-mk-amd-map \
+    all-wire-test: all-libamu
 
 .include <bsd.subdir.mk>
 %% file usr.sbin/amd/Makefile.inc
