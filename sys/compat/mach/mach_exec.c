@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_exec.c,v 1.41 2003/12/03 20:24:51 manu Exp $	 */
+/*	$NetBSD: mach_exec.c,v 1.42 2003/12/05 21:12:43 jdolecek Exp $	 */
 
 /*-
  * Copyright (c) 2001-2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_exec.c,v 1.41 2003/12/03 20:24:51 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_exec.c,v 1.42 2003/12/05 21:12:43 jdolecek Exp $");
 
 #include "opt_syscall_debug.h"
 
@@ -96,7 +96,6 @@ const struct emul emul_mach = {
 #endif
 	sendsig,
 	mach_trapsignal,
-	NULL,
 #if !defined(__HAVE_SIGINFO) || defined(COMPAT_16)
 	sigcode,
 	esigcode,
