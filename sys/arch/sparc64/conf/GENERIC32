@@ -1,10 +1,10 @@
-# 	$NetBSD: GENERIC32,v 1.93 2005/01/31 16:55:29 hannken Exp $
+# 	$NetBSD: GENERIC32,v 1.94 2005/02/06 18:27:41 martin Exp $
 
 include "arch/sparc64/conf/std.sparc64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.93 $"
+#ident 		"GENERIC-$Revision: 1.94 $"
 
 maxusers	64
 
@@ -513,9 +513,11 @@ ukphy*	at mii? phy ?			# generic unknown PHYs
 # PCI USB controllers
 ehci*	at pci? dev ? function ?	# Enhanced Host Controller
 ohci*	at pci? dev ? function ?	# Open Host Controller
+uhci*	at pci?	dev ? function ?	# Universal Host Controller (Intel)
 
 usb*	at ehci?			# USB bus support
 usb*	at ohci?
+usb*	at uhci?
 
 uhub*	at usb?						# USB Hubs
 uhub*	at uhub? port ? configuration ? interface ?
