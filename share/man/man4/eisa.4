@@ -1,4 +1,4 @@
-.\"	$NetBSD: eisa.4,v 1.8 2000/09/01 12:19:15 ad Exp $
+.\"	$NetBSD: eisa.4,v 1.9 2001/05/06 19:55:00 ad Exp $
 .\"
 .\" Copyright (c) 1997 Jonathan Stone
 .\" All rights reserved.
@@ -77,6 +77,8 @@ and driver name:
 .Bl -tag -width pcdisplay -offset indent
 .It cac
 Compaq array controllers.
+.It mlx
+Mylex DAC960 and DEC SWXCR RAID controllers.
 .El
 .Ss SCSI interfaces
 .Bl -tag -width pcdisplay -offset indent
@@ -146,6 +148,7 @@ supported bus variants.
 .Xr ep 4 ,
 .Xr fea 4 ,
 .Xr le 4 ,
+.Xr mlx 4 ,
 .Xr tlp 4 ,
 .Xr uha 4
 .Sh HISTORY

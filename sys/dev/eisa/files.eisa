@@ -1,4 +1,4 @@
-#	$NetBSD: files.eisa,v 1.23 2001/02/24 02:13:32 lukem Exp $
+#	$NetBSD: files.eisa,v 1.24 2001/05/06 19:54:59 ad Exp $
 #
 # Config file and device description for machine-independent EISA code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -51,3 +51,7 @@ file	dev/eisa/if_tlp_eisa.c		tlp_eisa
 device	fea: pdq, fddi, ifnet, arp
 attach	fea at eisa
 file	dev/eisa/if_fea.c		fea
+
+# Mylex RAID controllers
+attach	mlx at eisa with mlx_eisa
+file	dev/eisa/mlx_eisa.c		mlx_eisa
