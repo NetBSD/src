@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_input.c,v 1.6 2003/10/14 23:02:52 dyoung Exp $	*/
+/*	$NetBSD: ieee80211_input.c,v 1.7 2003/10/15 11:43:51 dyoung Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002, 2003 Sam Leffler, Errno Consulting
@@ -35,7 +35,7 @@
 #ifdef __FreeBSD__
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211_input.c,v 1.8 2003/08/19 22:17:03 sam Exp $");
 #else
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_input.c,v 1.6 2003/10/14 23:02:52 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_input.c,v 1.7 2003/10/15 11:43:51 dyoung Exp $");
 #endif
 
 #include "opt_inet.h"
@@ -585,6 +585,219 @@ ieee80211_setup_rates(struct ieee80211com *ic, struct ieee80211_node *ni,
 	}								\
 } while (0)
 
+static void
+ieee80211_auth_open(struct ieee80211com *ic, struct ieee80211_frame *wh,
+    struct ieee80211_node *ni, int rssi, u_int32_t rstamp, u_int16_t seq,
+    u_int16_t status)
+{
+	struct ifnet *ifp = &ic->ic_if;
+	int allocbs;
+	switch (ic->ic_opmode) {
+	case IEEE80211_M_IBSS:
+		if (ic->ic_state != IEEE80211_S_RUN || seq != 1)
+			return;
+		ieee80211_new_state(ic, IEEE80211_S_AUTH,
+		    wh->i_fc[0] & IEEE80211_FC0_SUBTYPE_MASK);
+		break;
+
+	case IEEE80211_M_AHDEMO:
+		/* should not come here */
+		break;
+
+	case IEEE80211_M_HOSTAP:
+		if (ic->ic_state != IEEE80211_S_RUN || seq != 1)
+			return;
+		if (ni == ic->ic_bss) {
+			ni = ieee80211_alloc_node(ic, wh->i_addr2);
+			if (ni == NULL)
+				return;
+			IEEE80211_ADDR_COPY(ni->ni_bssid, ic->ic_bss->ni_bssid);
+			ni->ni_rssi = rssi;
+			ni->ni_rstamp = rstamp;
+			ni->ni_chan = ic->ic_bss->ni_chan;
+			allocbs = 1;
+		} else
+			allocbs = 0;
+		IEEE80211_SEND_MGMT(ic, ni,
+			IEEE80211_FC0_SUBTYPE_AUTH, seq + 1);
+		if (ifp->if_flags & IFF_DEBUG)
+			if_printf(ifp, "station %s %s authenticated\n",
+			    ether_sprintf(ni->ni_macaddr),
+			    (allocbs ? "newly" : "already"));
+		break;
+
+	case IEEE80211_M_STA:
+		if (ic->ic_state != IEEE80211_S_AUTH ||
+		    seq != IEEE80211_AUTH_OPEN_RESPONSE)
+			return;
+		if (status != 0) {
+			if_printf(&ic->ic_if,
+			    "authentication failed (reason %d) for %s\n",
+			    status,
+			    ether_sprintf(wh->i_addr3));
+			if (ni != ic->ic_bss)
+				ni->ni_fails++;
+			return;
+		}
+		ieee80211_new_state(ic, IEEE80211_S_ASSOC,
+		    wh->i_fc[0] & IEEE80211_FC0_SUBTYPE_MASK);
+		break;
+	case IEEE80211_M_MONITOR:
+		break;
+	}
+}
+
+/* TBD send appropriate responses on error? */
+static void
+ieee80211_auth_shared(struct ieee80211com *ic, struct ieee80211_frame *wh,
+    u_int8_t *frm, u_int8_t *efrm, struct ieee80211_node *ni, int rssi,
+    u_int32_t rstamp, u_int16_t seq, u_int16_t status)
+{
+	struct ifnet *ifp = &ic->ic_if;
+	u_int8_t *challenge = NULL;
+	int allocbs, i;
+
+	if ((ic->ic_flags & IEEE80211_F_WEPON) == 0) {
+		IEEE80211_DPRINTF(("%s: WEP is off\n", __func__));
+		return;
+	}
+
+	if (frm + 1 < efrm) {
+		if ((frm[1] + 2) > (efrm - frm)) {
+			IEEE80211_DPRINTF(("elt %d %d bytes too long\n",
+			    frm[0], (frm[1] + 2) - (efrm - frm)));
+			return;
+		}
+		if (*frm == IEEE80211_ELEMID_CHALLENGE)
+			challenge = frm;
+		frm += frm[1] + 2;
+	}
+	switch (seq) {
+	case IEEE80211_AUTH_SHARED_CHALLENGE:
+	case IEEE80211_AUTH_SHARED_RESPONSE:
+		if (challenge == NULL) {
+			IEEE80211_DPRINTF(("%s: no challenge sent\n",
+			    __func__));
+			return;
+		}
+		if (challenge[1] != IEEE80211_CHALLENGE_LEN) {
+			IEEE80211_DPRINTF(("%s: bad challenge len %d\n",
+			    __func__, challenge[1]));
+			return;
+		}
+	default:
+		break;
+	}
+	switch (ic->ic_opmode) {
+	case IEEE80211_M_MONITOR:
+	case IEEE80211_M_AHDEMO:
+	case IEEE80211_M_IBSS:
+		IEEE80211_DPRINTF(("%s: unexpected operating mode\n",
+		    __func__));
+		return;
+	case IEEE80211_M_HOSTAP:
+		if (ic->ic_state != IEEE80211_S_RUN) {
+			IEEE80211_DPRINTF(("%s: not running\n", __func__));
+			return;
+		}
+		switch (seq) {
+		case IEEE80211_AUTH_SHARED_REQUEST:
+			if (ni == ic->ic_bss) {
+				ni = ieee80211_alloc_node(ic, wh->i_addr2);
+				if (ni == NULL)
+					return;
+				IEEE80211_ADDR_COPY(ni->ni_bssid,
+				    ic->ic_bss->ni_bssid);
+				ni->ni_rssi = rssi;
+				ni->ni_rstamp = rstamp;
+				ni->ni_chan = ic->ic_bss->ni_chan;
+				allocbs = 1;
+			} else
+				allocbs = 0;
+			if (ni->ni_challenge == NULL)
+				ni->ni_challenge = (u_int32_t*)malloc(
+				    IEEE80211_CHALLENGE_LEN, M_DEVBUF,
+				    M_NOWAIT);
+			if (ni->ni_challenge == NULL) {
+				IEEE80211_DPRINTF(("challenge alloc failed\n"));
+				return;
+			}
+			for (i = IEEE80211_CHALLENGE_LEN / sizeof(u_int32_t);
+			     --i >= 0; )
+				ni->ni_challenge[i] = arc4random();
+			break;
+		case IEEE80211_AUTH_SHARED_RESPONSE:
+			if (ni == ic->ic_bss) {
+				IEEE80211_DPRINTF(("%s: unknown STA\n",
+				    __func__));
+				return;
+			}
+			if (ni->ni_challenge == NULL) {
+				IEEE80211_DPRINTF((
+				    "%s: no challenge recorded\n", __func__));
+				return;
+			}
+			if (memcmp(ni->ni_challenge, &challenge[2],
+			           challenge[1]) != 0) {
+				IEEE80211_DPRINTF(("%s: challenge mismatch\n",
+				    __func__));
+				return;
+			}
+			break;
+		default:
+			IEEE80211_DPRINTF(("%s: bad seq %d from %s\n",
+			    __func__, seq, ether_sprintf(wh->i_addr2)));
+			return;
+		}
+		IEEE80211_SEND_MGMT(ic, ni,
+			IEEE80211_FC0_SUBTYPE_AUTH, seq + 1);
+		if (ifp->if_flags & IFF_DEBUG)
+			if_printf(ifp, "station %s %s authenticated\n",
+			    ether_sprintf(ni->ni_macaddr),
+			    (allocbs ? "newly" : "already"));
+		break;
+
+	case IEEE80211_M_STA:
+		if (ic->ic_state != IEEE80211_S_AUTH)
+			return;
+		switch (seq) {
+		case IEEE80211_AUTH_SHARED_PASS:
+			if (ni->ni_challenge != NULL) {
+				FREE(ni->ni_challenge, M_DEVBUF);
+				ni->ni_challenge = NULL;
+			}
+			if (status != 0) {
+				if_printf(&ic->ic_if,
+				    "%s: auth failed (reason %d) for %s\n",
+				    __func__, status,
+				    ether_sprintf(wh->i_addr3));
+				if (ni != ic->ic_bss)
+					ni->ni_fails++;
+				return;
+			}
+			ieee80211_new_state(ic, IEEE80211_S_ASSOC,
+			    wh->i_fc[0] & IEEE80211_FC0_SUBTYPE_MASK);
+			break;
+		case IEEE80211_AUTH_SHARED_CHALLENGE:
+			if (ni->ni_challenge == NULL)
+				ni->ni_challenge = (u_int32_t*)malloc(
+				    challenge[1], M_DEVBUF, M_NOWAIT);
+			if (ni->ni_challenge == NULL) {
+				IEEE80211_DPRINTF((
+				    "%s: challenge alloc failed\n", __func__));
+				return;
+			}
+			memcpy(ni->ni_challenge, &challenge[2], challenge[1]);
+			break;
+		default:
+			IEEE80211_DPRINTF(("%s: bad seq %d from %s\n",
+			    __func__, seq, ether_sprintf(wh->i_addr2)));
+			return;
+		}
+		break;
+	}
+}
+
 void
 ieee80211_recv_mgmt(struct ieee80211com *ic, struct mbuf *m0,
 	struct ieee80211_node *ni,
@@ -865,64 +1078,20 @@ ieee80211_recv_mgmt(struct ieee80211com *ic, struct mbuf *m0,
 		algo   = le16toh(*(u_int16_t *)frm);
 		seq    = le16toh(*(u_int16_t *)(frm + 2));
 		status = le16toh(*(u_int16_t *)(frm + 4));
-		if (algo != IEEE80211_AUTH_ALG_OPEN) {
-			/* TODO: shared key auth */
+		IEEE80211_DPRINTF(("%s: auth %d seq %d from %s\n",
+		    __func__, algo, seq, ether_sprintf(wh->i_addr2)));
+
+		if (algo == IEEE80211_AUTH_ALG_SHARED)
+			ieee80211_auth_shared(ic, wh, frm + 6, efrm, ni, rssi,
+			    rstamp, seq, status);
+		else if (algo == IEEE80211_AUTH_ALG_OPEN)
+			ieee80211_auth_open(ic, wh, ni, rssi, rstamp, seq,
+			    status);
+		else {
 			IEEE80211_DPRINTF(("%s: unsupported auth %d from %s\n",
 				__func__, algo, ether_sprintf(wh->i_addr2)));
 			return;
-		}
-		switch (ic->ic_opmode) {
-		case IEEE80211_M_IBSS:
-			if (ic->ic_state != IEEE80211_S_RUN || seq != 1)
-				return;
-			ieee80211_new_state(ic, IEEE80211_S_AUTH,
-			    wh->i_fc[0] & IEEE80211_FC0_SUBTYPE_MASK);
-			break;
-
-		case IEEE80211_M_AHDEMO:
-			/* should not come here */
-			break;
-
-		case IEEE80211_M_HOSTAP:
-			if (ic->ic_state != IEEE80211_S_RUN || seq != 1)
-				return;
-			if (ni == ic->ic_bss) {
-				ni = ieee80211_alloc_node(ic, wh->i_addr2);
-				if (ni == NULL)
-					return;
-				IEEE80211_ADDR_COPY(ni->ni_bssid, ic->ic_bss->ni_bssid);
-				ni->ni_rssi = rssi;
-				ni->ni_rstamp = rstamp;
-				ni->ni_chan = ic->ic_bss->ni_chan;
-				allocbs = 1;
-			} else
-				allocbs = 0;
-			IEEE80211_SEND_MGMT(ic, ni,
-				IEEE80211_FC0_SUBTYPE_AUTH, 2);
-			if (ifp->if_flags & IFF_DEBUG)
-				if_printf(ifp, "station %s %s authenticated\n",
-				    (allocbs ? "newly" : "already"),
-				    ether_sprintf(ni->ni_macaddr));
-			break;
-
-		case IEEE80211_M_STA:
-			if (ic->ic_state != IEEE80211_S_AUTH || seq != 2)
-				return;
-			if (status != 0) {
-				if_printf(&ic->ic_if,
-				    "authentication failed (reason %d) for %s\n",
-				    status,
-				    ether_sprintf(wh->i_addr3));
-				if (ni != ic->ic_bss)
-					ni->ni_fails++;
-				return;
-			}
-			ieee80211_new_state(ic, IEEE80211_S_ASSOC,
-			    wh->i_fc[0] & IEEE80211_FC0_SUBTYPE_MASK);
-			break;
-		case IEEE80211_M_MONITOR:
-			break;
-		}
+		} 
 		break;
 	}
 
@@ -999,6 +1168,11 @@ ieee80211_recv_mgmt(struct ieee80211com *ic, struct mbuf *m0,
 				ieee80211_free_node(ic, ni);
 			}
 			return;
+		}
+		/* discard challenge after association */
+		if (ni->ni_challenge != NULL) {
+			FREE(ni->ni_challenge, M_DEVBUF);
+			ni->ni_challenge = NULL;
 		}
 		/* XXX per-node cipher suite */
 		/* XXX some stations use the privacy bit for handling APs

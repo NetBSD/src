@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211.h,v 1.3 2003/10/13 04:28:35 dyoung Exp $	*/
+/*	$NetBSD: ieee80211.h,v 1.4 2003/10/15 11:43:51 dyoung Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002, 2003 Sam Leffler, Errno Consulting
@@ -226,6 +226,8 @@ enum {
 	IEEE80211_ELEMID_ERP			= 42,
 	IEEE80211_ELEMID_XRATES			= 50,
 };
+
+#define IEEE80211_CHALLENGE_LEN			128
 
 #define	IEEE80211_RATE_BASIC			0x80
 #define	IEEE80211_RATE_VAL			0x7f

@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_node.h,v 1.5 2003/10/13 04:20:23 dyoung Exp $	*/
+/*	$NetBSD: ieee80211_node.h,v 1.6 2003/10/15 11:43:51 dyoung Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002, 2003 Sam Leffler, Errno Consulting
@@ -107,6 +107,7 @@ struct ieee80211_node {
 	int			ni_fails;	/* failure count to associate */
 	int			ni_inact;	/* inactivity mark count */
 	int			ni_txrate;	/* index to ni_rates[] */
+	u_int32_t		*ni_challenge;	/* shared-key challenge */
 };
 
 #ifdef __NetBSD__

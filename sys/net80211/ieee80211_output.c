@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_output.c,v 1.6 2003/10/13 04:22:55 dyoung Exp $	*/
+/*	$NetBSD: ieee80211_output.c,v 1.7 2003/10/15 11:43:51 dyoung Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002, 2003 Sam Leffler, Errno Consulting
@@ -35,7 +35,7 @@
 #ifdef __FreeBSD__
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211_output.c,v 1.5 2003/09/01 02:55:09 sam Exp $");
 #else
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_output.c,v 1.6 2003/10/13 04:22:55 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_output.c,v 1.7 2003/10/15 11:43:51 dyoung Exp $");
 #endif
 
 #include "opt_inet.h"
@@ -137,6 +137,13 @@ ieee80211_mgmt_output(struct ifnet *ifp, struct ieee80211_node *ni,
 	IEEE80211_ADDR_COPY(wh->i_addr1, ni->ni_macaddr);
 	IEEE80211_ADDR_COPY(wh->i_addr2, ic->ic_myaddr);
 	IEEE80211_ADDR_COPY(wh->i_addr3, ni->ni_bssid);
+
+	if ((m->m_flags & M_LINK0) != 0 && ni->ni_challenge != NULL) {
+		m->m_flags &= ~M_LINK0;
+		IEEE80211_DPRINTF(("%s: encrypting frame for %s\n", __func__,
+		    ether_sprintf(wh->i_addr1)));
+		wh->i_fc[1] |= IEEE80211_FC1_WEP;
+	}
 
 	if (ifp->if_flags & IFF_DEBUG) {
 		/* avoid to print too many frames */
@@ -339,7 +346,7 @@ ieee80211_send_mgmt(struct ieee80211com *ic, struct ieee80211_node *ni,
 	u_int8_t *frm;
 	enum ieee80211_phymode mode;
 	u_int16_t capinfo;
-	int ret, timer;
+	int has_challenge, is_shared_key, ret, timer;
 
 	KASSERT(ni != NULL, ("null node"));
 
@@ -465,13 +472,41 @@ ieee80211_send_mgmt(struct ieee80211com *ic, struct ieee80211_node *ni,
 		MGETHDR(m, M_DONTWAIT, MT_DATA);
 		if (m == NULL)
 			senderr(ENOMEM);
-		MH_ALIGN(m, 2 * 3);
-		m->m_pkthdr.len = m->m_len = 6;
+
+		has_challenge = ((arg == IEEE80211_AUTH_SHARED_CHALLENGE ||
+		    arg == IEEE80211_AUTH_SHARED_RESPONSE) &&
+		    ni->ni_challenge != NULL);
+
+		is_shared_key = has_challenge || (ni->ni_challenge != NULL &&
+		    arg == IEEE80211_AUTH_SHARED_PASS);
+
+		if (has_challenge) {
+			MH_ALIGN(m, 2 * 3 + 2 + IEEE80211_CHALLENGE_LEN);
+			m->m_pkthdr.len = m->m_len =
+			    2 * 3 + 2 + IEEE80211_CHALLENGE_LEN;
+		} else {
+			MH_ALIGN(m, 2 * 3);
+			m->m_pkthdr.len = m->m_len = 2 * 3;
+		}
 		frm = mtod(m, u_int8_t *);
-		/* TODO: shared key auth */
-		((u_int16_t *)frm)[0] = htole16(IEEE80211_AUTH_ALG_OPEN);
+		((u_int16_t *)frm)[0] =
+		    (is_shared_key) ? htole16(IEEE80211_AUTH_ALG_SHARED)
+		                    : htole16(IEEE80211_AUTH_ALG_OPEN);
 		((u_int16_t *)frm)[1] = htole16(arg);	/* sequence number */
 		((u_int16_t *)frm)[2] = 0;		/* status */
+
+		if (has_challenge) {
+			((u_int16_t *)frm)[3] =
+			    htole16((IEEE80211_CHALLENGE_LEN << 8) |
+			    IEEE80211_ELEMID_CHALLENGE);
+			memcpy(&((u_int16_t *)frm)[4], ni->ni_challenge,
+			    IEEE80211_CHALLENGE_LEN);
+			if (arg == IEEE80211_AUTH_SHARED_RESPONSE) {
+				IEEE80211_DPRINTF((
+				    "%s: request encrypt frame\n", __func__));
+				m->m_flags |= M_LINK0; /* WEP-encrypt, please */
+			}
+		}
 		if (ic->ic_opmode == IEEE80211_M_STA)
 			timer = IEEE80211_TRANS_WAIT;
 		break;
