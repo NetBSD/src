@@ -38,7 +38,7 @@
  * from: Utah $Hdr: pte.h 1.11 89/09/03$
  *
  *	@(#)pte.h	7.3 (Berkeley) 5/8/91
- *	$Id: pte.h,v 1.6 1994/06/01 19:34:45 chopps Exp $
+ *	$Id: pte.h,v 1.7 1994/06/04 05:25:03 chopps Exp $
  */
 #ifndef _MACHINE_PTE_H_
 #define _MACHINE_PTE_H_
@@ -108,15 +108,29 @@ typedef struct pte	pt_entry_t;	/* Mach page table entry */
 #define PG_SHIFT	13
 #define	PG_PFNUM(x)	(((x) & PG_FRAME) >> PG_SHIFT)
 
-#define AMIGA_040RTSIZE		512		/* root (level 1) table size */
-#define AMIGA_040STSIZE		512		/* segment (level 2) table size */
-#define	AMIGA_040PTSIZE		128		/* page (level 3) table size */
-#define AMIGA_STSIZE		1024		/* segment table size */
-#define AMIGA_MAX_PTSIZE	(2*1024*1024)	/* max size of UPT */
-/* XXX probably have to reduce this to 512k */
-#define AMIGA_MAX_KPTSIZE	0x100000	/* max memory to allocate to KPT */
-#define AMIGA_PTBASE		0x10000000	/* UPT map base address */
-#define AMIGA_PTMAXSIZE		0x70000000	/* UPT map maximum size */
+#define AMIGA_040RTSIZE		512	/* root (level 1) table size */
+#define AMIGA_040STSIZE		512	/* segment (level 2) table size */
+#define	AMIGA_040PTSIZE		128	/* page (level 3) table size */
+#define AMIGA_STSIZE		1024	/* segment table size */
+/*
+ * AMIGA_MAX_COREUPT	maximum number of incore user page tables
+ * AMIGA_USER_PTSIZE	the number of bytes for user pagetables
+ * AMIGA_PTBASE		the VA start of the map from which upt's are allocated
+ * AMIGA_PTSIZE		the size of the map from which upt's are allocated
+ * AMIGA_KPTSIZE	size of kernel page table
+ * AMIGA_MAX_KPTSIZE	the most number of bytes for kpt pages
+ * AMIGA_MAX_PTSIZE	the number of bytes to map everything
+ */
+#define AMIGA_MAX_COREUPT	1024
+#define AMIGA_UPTSIZE		roundup(VM_MAXUSER_ADDRESS / NPTEPG, NBPG)
+#define AMIGA_UPTBASE		0x10000000
+#define AMIGA_UPTMAXSIZE \
+    roundup((AMIGA_MAX_COREUPT * AMIGA_UPTSIZE), NBPG)
+#define AMIGA_MAX_KPTSIZE \
+    (AMIGA_MAX_COREUPT * AMIGA_UPTSIZE / NPTEPG)
+#define AMIGA_KPTSIZE \
+    roundup((VM_MAX_KERNEL_ADDRESS - VM_MIN_KERNEL_ADDRESS) / NPTEPG, NBPG)
+#define AMIGA_MAX_PTSIZE	roundup(0xffffffff / NPTEPG, NBPG)
 
 /*
  * Kernel virtual address to page table entry and to physical address.
