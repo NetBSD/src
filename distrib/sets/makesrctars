@@ -1,6 +1,6 @@
 #! /bin/sh
 #
-#	$NetBSD: makesrctars,v 1.15 2003/05/10 06:07:26 lukem Exp $
+#	$NetBSD: makesrctars,v 1.16 2004/04/20 03:40:45 lukem Exp $
 #
 # makesrctars srcdir setdir
 #	Create source tarballs in setdir from the source under srcdir.
@@ -45,20 +45,23 @@ makeset()
 }
 
 
-makeset src .								\
-		! \( \( -path ./gnu -o -path ./share \) -prune \)	\
-		! \( -path ./sys -prune \)				\
-		! \( -path ./usr.sbin/config -prune \)
+makeset src .						\
+		! \( \(	-path ./gnu			\
+		     -o -path ./share			\
+		     -o -path ./sys			\
+		     -o -path ./contrib/sys		\
+		     -o -path ./usr.sbin/config		\
+		    \) -prune \)
 
 makeset gnusrc ./gnu
 
-makeset syssrc ./sys ./usr.sbin/config					\
+makeset syssrc ./sys ./contrib/sys ./usr.sbin/config			\
 		! \( -path ./sys/arch/\*/compile/\* -type d		\
 		    ! -name CVS -prune \)
 
 makeset sharesrc ./share
 
-
+echo "Creating checksum files"
 (cd ${setdir}
 	${CKSUM} -o1 *.tgz > BSDSUM
 	${CKSUM}     *.tgz > CKSUM
