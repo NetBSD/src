@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.291 2001/01/08 20:08:17 thorpej Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.292 2001/01/08 21:47:38 thorpej Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.285 2001/01/08 20:07:21 thorpej Exp 
+ *	NetBSD: pcidevs,v 1.286 2001/01/08 21:47:10 thorpej Exp 
  */
 
 /*
@@ -635,6 +635,7 @@
 
 /* Accton products */
 #define	PCI_PRODUCT_ACCTON_MPX5030	0x1211		/* MPX 5030/5038 Ethernet */
+#define	PCI_PRODUCT_ACCTON_EN2242	0x1216		/* EN2242 10/100 Ethernet */
 
 /* Acer products */
 #define	PCI_PRODUCT_ACER_M1435	0x1435		/* M1435 VL-PCI Bridge */
