@@ -1,4 +1,4 @@
-/*	$NetBSD: alpha_reloc.c,v 1.2 2001/12/14 00:53:07 thorpej Exp $	*/
+/*	$NetBSD: alpha_reloc.c,v 1.3 2002/09/04 19:13:00 mycroft Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -103,12 +103,12 @@ _rtld_setup_alpha_pltgot(const Obj_Entry *obj, bool dodebug)
 		adbg(("ALPHA: object %p has old PLT format\n", obj));
 		obj->pltgot[2] = (Elf_Addr) &_rtld_bind_start_old;
 		obj->pltgot[3] = (Elf_Addr) obj;
-
-		return;
+	} else {
+		/* New PLT entry format. */
+		adbg(("ALPHA: object %p has new PLT format\n", obj));
+		obj->pltgot[2] = (Elf_Addr) &_rtld_bind_start;
+		obj->pltgot[3] = (Elf_Addr) obj;
 	}
 
-	/* New PLT entry format. */
-	adbg(("ALPHA: object %p has new PLT format\n", obj));
-	obj->pltgot[2] = (Elf_Addr) &_rtld_bind_start;
-	obj->pltgot[3] = (Elf_Addr) obj;
+	__asm __volatile("imb");
 }
