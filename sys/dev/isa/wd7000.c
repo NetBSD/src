@@ -581,8 +581,8 @@ wdsattach(struct isa_device *dev)
 	int masunit = dev->id_masunit;
 	int r;
 
-	if(wds_getvers(unit)==-1)
-		printf("wds%d: getvers failed\n", unit);
+	if(wds_getvers(masunit)==-1)
+		printf("wds%d: getvers failed\n", masunit);
 
 	r = scsi_attach(masunit, wds[masunit].devs, &wds_switch,
 		&dev->id_physid, &dev->id_unit, dev->id_flags);
