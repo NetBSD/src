@@ -1,4 +1,4 @@
-/*	$NetBSD: st.c,v 1.108 1999/01/10 21:46:39 tron Exp $ */
+/*	$NetBSD: st.c,v 1.109 1999/02/10 12:29:51 bouyer Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -985,6 +985,13 @@ ststrategy(bp)
 	 */
 	if (bp->b_bcount == 0)
 		goto done;
+
+	/* If offset is negative, error */
+	if (bp->b_blkno < 0) {
+		bp->b_error = EINVAL;
+		goto bad;
+	}
+
 	/*
 	 * Odd sized request on fixed drives are verboten
 	 */
