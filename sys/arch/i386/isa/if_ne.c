@@ -32,7 +32,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)if_ne.c	7.4 (Berkeley) 5/21/91
- *	$Id: if_ne.c,v 1.14 1994/01/12 02:58:33 mycroft Exp $
+ *	$Id: if_ne.c,v 1.15 1994/01/15 03:24:23 briggs Exp $
  */
 
 /*
@@ -436,7 +436,7 @@ nestart(ifp)
 {
 	register struct ne_softc *ns = &ne_softc[ifp->if_unit];
 	struct mbuf *m0, *m;
-	int len, i;
+	int len, i, t;
 	register nec = ns->ns_port;
 	u_char cmd;
 	u_short word;
