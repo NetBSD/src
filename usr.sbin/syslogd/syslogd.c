@@ -1,4 +1,4 @@
-/*	$NetBSD: syslogd.c,v 1.51.2.1 2002/05/25 17:44:49 perry Exp $	*/
+/*	$NetBSD: syslogd.c,v 1.51.2.2 2004/06/07 08:57:41 tron Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1988, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)syslogd.c	8.3 (Berkeley) 4/4/94";
 #else
-__RCSID("$NetBSD: syslogd.c,v 1.51.2.1 2002/05/25 17:44:49 perry Exp $");
+__RCSID("$NetBSD: syslogd.c,v 1.51.2.2 2004/06/07 08:57:41 tron Exp $");
 #endif
 #endif /* not lint */
 
@@ -207,6 +207,7 @@ int	SecureMode = 0;		/* listen only on unix domain socks */
 int	UseNameService = 1;	/* make domain name queries */
 int	NumForwards = 0;	/* number of forwarding actions in conf file */
 char	**LogPaths;		/* array of pathnames to read messages from */
+volatile sig_atomic_t gothup = 0; /* got SIGHUP */
 
 void	cfline __P((char *, struct filed *));
 char   *cvthname __P((struct sockaddr_storage *));
@@ -216,11 +217,12 @@ void	domark __P((int));
 void	fprintlog __P((struct filed *, int, char *));
 int	getmsgbufsize __P((void));
 int*	socksetup __P((int));
-void	init __P((int));
+void	init __P((void));
 void	logerror __P((const char *, ...));
 void	logmsg __P((int, char *, char *, int));
 void	printline __P((char *, char *));
 void	printsys __P((char *));
+void	sighup (int);
 void	reapchild __P((int));
 void	usage __P((void));
 void	wallmsg __P((struct filed *, struct iovec *));
@@ -392,7 +394,7 @@ getgroup:
 		dprintf("Listening on unix dgram socket `%s'\n", *pp);
 	}
 
-	init(0);
+	init();
 
 	if ((fklog = open(_PATH_KLOG, O_RDONLY, 0)) < 0) {
 		dprintf("Can't open `%s' (%d)\n", _PATH_KLOG, errno);
@@ -402,7 +404,7 @@ getgroup:
 
 	dprintf("Off & running....\n");
 
-	(void)signal(SIGHUP, init);
+	(void)signal(SIGHUP, sighup);
 
 	/* setup pollfd set. */
 	readfds = (struct pollfd *)malloc(sizeof(struct pollfd) *
@@ -473,6 +475,10 @@ getgroup:
 		if (rv < 0) {
 			if (errno != EINTR)
 				logerror("poll() failed");
+			if (gothup) {
+				init();
+				gothup = 0;
+			}
 			continue;
 		}
 		dprintf("Got a message (%d)\n", rv);
@@ -1025,6 +1031,13 @@ wallmsg(f, iov)
 }
 
 void
+sighup(int signo)
+{
+
+	gothup = 1;
+}
+
+void
 reapchild(signo)
 	int signo;
 {
@@ -1157,8 +1170,7 @@ die(signo)
  *  INIT -- Initialize syslogd from configuration table
  */
 void
-init(signo)
-	int signo;
+init(void)
 {
 	int i;
 	FILE *cf;
