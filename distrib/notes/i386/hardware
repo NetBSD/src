@@ -81,7 +81,7 @@ Supported devices include:
 		3COM 3c503
 		3COM 3c505 [*]
 		3COM 3c507
-		3COM 3c509, 3c579, and 3c59X
+		3COM 3c509, 3c579, 3c59X, and 3c90X
 		Digital DC21x4x-based PCI Ethernet adapters, including:
 			Cogent EM1X0, EM960 (a.k.a. Adaptec ANA-69XX)
 			Cogent EM964 [b]
