@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_stat.h,v 1.11 1998/03/09 00:58:59 mrg Exp $	*/
+/*	$NetBSD: uvm_stat.h,v 1.12 1998/06/20 13:19:00 mrg Exp $	*/
 
 /*
  * XXXCDC: "ROUGH DRAFT" QUALITY UVM PRE-RELEASE FILE!   
@@ -123,6 +123,23 @@ struct uvm_history {
 
 LIST_HEAD(uvm_history_head, uvm_history);
 
+/*
+ * grovelling lists all at once.  we currently do not allow more than
+ * 32 histories to exist, as the way to dump a number of them at once
+ * is by calling uvm_hist() with a bitmask.
+ */
+
+/* this is used to set the size of some arrays */
+#define	MAXHISTS		32	/* do not change this! */
+
+/* and these are the bit values of each history */
+#define	UVMHIST_MAPHIST		0x00000001	/* maphist */
+#define	UVMHIST_PDHIST		0x00000002	/* pdhist */
+
+/*
+ * macros to use the history/tracing code.  note that UVMHIST_LOG
+ * must take 4 arguments (even if they are ignored by the format).
+ */
 #ifndef UVMHIST
 #define UVMHIST_DECL(NAME)
 #define UVMHIST_INIT(NAME,N)
