@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.31 2000/07/03 17:56:08 eeh Exp $ */
+/*	$NetBSD: intr.c,v 1.32 2000/07/27 14:13:50 mrg Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -72,7 +72,7 @@ void	strayintr __P((const struct trapframe64 *, int));
 int	softintr __P((void *));
 int	softnet __P((void *));
 int	send_softclock __P((void *));
-int	intr_list_handler __P((void *, void *));
+int	intr_list_handler __P((void *));
 
 /*
  * Stray interrupt handler.  Clear it if possible.
@@ -213,9 +213,8 @@ int fastvec = 0;
  * a handler to hand out interrupts.
  */
 int
-intr_list_handler(arg, vec)
+intr_list_handler(arg)
 	void * arg;
-	void * vec;
 {
 	int claimed = 0;
 	struct intrhand *ih = (struct intrhand *)arg;
@@ -227,8 +226,8 @@ intr_list_handler(arg, vec)
 		{
 			extern int intrdebug;
 			if (intrdebug & 1)
-				printf("intr %p %x arg %p vec %p %s\n",
-					ih, ih->ih_number, ih->ih_arg, vec,
+				printf("intr %p %x arg %p %s\n",
+					ih, ih->ih_number, ih->ih_arg,
 					claimed ? "claimed" : "");
 		}
 #endif
