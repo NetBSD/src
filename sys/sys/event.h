@@ -1,4 +1,4 @@
-/*	$NetBSD: event.h,v 1.1.1.1.2.8 2002/09/19 07:18:32 jdolecek Exp $	*/
+/*	$NetBSD: event.h,v 1.1.1.1.2.9 2002/09/29 09:29:26 jdolecek Exp $	*/
 /*-
  * Copyright (c) 1999,2000,2001 Jonathan Lemon <jlemon@FreeBSD.org>
  * All rights reserved.
@@ -170,7 +170,7 @@ struct knote {
 		void		*p_opaque;	/* opaque/misc pointer */
 	} kn_ptr;
 	const struct filterops	*kn_fop;
-	caddr_t			kn_hook;
+	void 			*kn_hook;
 
 #define	KN_ACTIVE	0x01			/* event has been triggered */
 #define	KN_QUEUED	0x02			/* event is on queue */
