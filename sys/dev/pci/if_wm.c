@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.9.4.3 2002/07/15 16:16:45 thorpej Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.9.4.4 2002/07/15 16:17:53 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -42,6 +42,11 @@
  * TODO (in order of importance):
  *
  *	- Fix TCP/UDP checksums.
+ *		Status: Several successful transmissions with offloaded
+ *		checksums occur.  After several successful transmissions,
+ *		the chip goes catatonic.  The watchdog timer fires, which
+ *		resets the chip, and gets things moving again, until the
+ *		cycle repeats.
  *
  *	- Make GMII work on the i82543.
  *
