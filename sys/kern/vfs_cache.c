@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_cache.c,v 1.7 1994/07/02 20:26:19 chopps Exp $	*/
+/*	$NetBSD: vfs_cache.c,v 1.8 1994/07/05 19:09:32 cgd Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -95,8 +95,10 @@ cache_lookup(dvp, vpp, cnp)
 {
 	register struct namecache *ncp, *ncq, **ncpp;
 
-	if (!doingcache)
+	if (!doingcache) {
+		cnp->cn_flags &= ~MAKEENTRY;
 		return (0);
+	}
 	if (cnp->cn_namelen > NCHNAMLEN) {
 		nchstats.ncs_long++;
 		cnp->cn_flags &= ~MAKEENTRY;
