@@ -1,4 +1,4 @@
-/*	$NetBSD: agp_i810.c,v 1.4 2001/09/13 16:18:53 drochner Exp $	*/
+/*	$NetBSD: agp_i810.c,v 1.5 2001/09/14 12:05:03 drochner Exp $	*/
 
 /*-
  * Copyright (c) 2000 Doug Rabson
@@ -430,8 +430,14 @@ agp_i810_bind_memory(struct agp_softc *sc, struct agp_memory *mem,
 				  isc->gatt->ag_physical | 1);
 	}
 
-	if (mem->am_type == 2)
+	if (mem->am_type == 2) {
+		WRITE4(AGP_I810_GTT + (u_int32_t)(offset >> AGP_PAGE_SHIFT) * 4,
+		       mem->am_physical | 1);
+		mem->am_offset = offset;
+		mem->am_is_bound = 1;
 		return 0;
+	}
+
 	if (mem->am_type != 1)
 		return agp_generic_bind_memory(sc, mem, offset);
 
@@ -449,8 +455,14 @@ agp_i810_unbind_memory(struct agp_softc *sc, struct agp_memory *mem)
 	struct agp_i810_softc *isc = sc->as_chipc;
 	u_int32_t i;
 
-	if (mem->am_type == 2)
+	if (mem->am_type == 2) {
+		WRITE4(AGP_I810_GTT +
+		       (u_int32_t)(mem->am_offset >> AGP_PAGE_SHIFT) * 4,
+		       0);
+		mem->am_offset = 0;
+		mem->am_is_bound = 0;
 		return 0;
+	}
 
 	if (mem->am_type != 1)
 		return agp_generic_unbind_memory(sc, mem);
