@@ -10,7 +10,7 @@
  *   of this software, nor does the author assume any responsibility
  *   for damages incurred with its use.
  *
- *	$Id: if_le.c,v 1.2 1994/07/01 21:31:14 mycroft Exp $
+ *	$Id: if_le.c,v 1.3 1994/07/01 21:33:20 mycroft Exp $
  */
 
 #include "bpfilter.h"
@@ -113,6 +113,7 @@ void xmit_print __P((struct le_softc *, int));
 void le_setladrf __P((struct arpcom *, u_long *));
 
 int leprobe();
+int depca_probe __P((struct le_softc *, struct isa_attach_args *));
 int ne2100_probe __P((struct le_softc *, struct isa_attach_args *));
 int bicc_probe __P((struct le_softc *, struct isa_attach_args *));
 int lance_probe __P((struct le_softc *));
