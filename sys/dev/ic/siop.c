@@ -1,4 +1,4 @@
-/*	$NetBSD: siop.c,v 1.2 2000/04/25 16:27:05 bouyer Exp $	*/
+/*	$NetBSD: siop.c,v 1.3 2000/04/25 20:02:33 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2000 Manuel Bouyer.
@@ -532,6 +532,12 @@ siop_intr(v)
 		}
 		if ((sist0 & SIST0_MA) && need_reset == 0) {
 			if (siop_cmd) { 
+				/*
+				 * first restore DSA, in case we were in a S/G
+				 * operation.
+				 */
+				bus_space_write_4(sc->sc_rt, sc->sc_rh,
+				    SIOP_DSA, htole32(siop_cmd->dsa));
 				switch (sstat1 & SSTAT1_PHASE_MASK) {
 				case SSTAT1_PHASE_STATUS:
 				/*
