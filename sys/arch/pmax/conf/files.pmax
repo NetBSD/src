@@ -1,4 +1,4 @@
-#	$NetBSD: files.pmax,v 1.95 2001/09/18 16:18:35 tsutsui Exp $
+#	$NetBSD: files.pmax,v 1.96 2001/10/01 10:22:43 simonb Exp $
 # DECstation-specific configuration info
 
 # maxpartitions must be first item in files.${ARCH}.
@@ -100,15 +100,9 @@ major { md = 17 }
 major { raid = 32 }
 
 
-# MI SCSI driver; to be moved into dev/tc/ replacing existings, eventually.
-#
-device	asc: ncr53c9x, scsi
-attach	asc at tc with asc_pmaz
-file	arch/pmax/tc/asc_pmaz.c		asc_pmaz
+# asc attachment at ioasic?
 attach	asc at ioasic with asc_ioasic
 file	arch/pmax/tc/asc_ioasic.c	asc_ioasic
-attach	asc at tcds with asc_tcds
-file	dev/tc/asc_tcds.c		asc_tcds
 
 # sii: kn01 SCSI interface
 device	sii: scsi
