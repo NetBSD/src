@@ -1,4 +1,4 @@
-/*	$NetBSD: mknod.c,v 1.26 2003/05/08 11:34:19 dsl Exp $	*/
+/*	$NetBSD: mknod.c,v 1.27 2003/05/08 13:29:39 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 #include <sys/cdefs.h>
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 1998 The NetBSD Foundation, Inc.  All rights reserved.\n");
-__RCSID("$NetBSD: mknod.c,v 1.26 2003/05/08 11:34:19 dsl Exp $");
+__RCSID("$NetBSD: mknod.c,v 1.27 2003/05/08 13:29:39 christos Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -71,7 +71,7 @@ main(int argc, char **argv)
 {
 	char	*name, *p;
 	mode_t	 mode;
-	dev_t	 dev;
+	portdev_t	 dev;
 	pack_t	*pack;
 	u_long	 numbers[MAXARGS];
 	int	 n, ch, fifo, hasformat;
