@@ -1,4 +1,4 @@
-/*	$NetBSD: rtclock.c,v 1.5 1999/03/24 14:07:39 minoura Exp $	*/
+/*	$NetBSD: rtclock.c,v 1.6 2001/01/04 06:45:18 minoura Exp $	*/
 
 /*
  * Copyright 1993, 1994 Masaru Oki
@@ -161,7 +161,7 @@ rtgettod()
 	range_test(hour, 0, 23);
 	range_test(day, 1, 31);
 	range_test(month, 1, 12);
-	range_test(year, STARTOFTIME, 2000);
+	range_test(year, STARTOFTIME, 2079);
   
 	tmp = 0;
 
