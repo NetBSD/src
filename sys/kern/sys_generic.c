@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_generic.c,v 1.49 2000/07/13 01:32:33 thorpej Exp $	*/
+/*	$NetBSD: sys_generic.c,v 1.50 2000/08/02 20:48:37 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -217,7 +217,7 @@ dofilereadv(p, fd, fp, iovp, iovcnt, offset, flags, retval)
 			error = EINVAL;
 			goto out;
 		}
-		MALLOC(iov, struct iovec *, iovlen, M_IOV, M_WAITOK);
+		iov = malloc(iovlen, M_IOV, M_WAITOK);
 		needfree = iov;
 	} else if ((u_int)iovcnt > 0) {
 		iov = aiov;
@@ -254,7 +254,7 @@ dofilereadv(p, fd, fp, iovp, iovcnt, offset, flags, retval)
 	 * if tracing, save a copy of iovec
 	 */
 	if (KTRPOINT(p, KTR_GENIO))  {
-		MALLOC(ktriov, struct iovec *, iovlen, M_TEMP, M_WAITOK);
+		ktriov = malloc(iovlen, M_TEMP, M_WAITOK);
 		memcpy((caddr_t)ktriov, (caddr_t)auio.uio_iov, iovlen);
 	}
 #endif
@@ -269,13 +269,13 @@ dofilereadv(p, fd, fp, iovp, iovcnt, offset, flags, retval)
 	if (KTRPOINT(p, KTR_GENIO))
 		if (error == 0) {
 			ktrgenio(p, fd, UIO_READ, ktriov, cnt, error);
-		FREE(ktriov, M_TEMP);
+		free(ktriov, M_TEMP);
 	}
 #endif
 	*retval = cnt;
  done:
 	if (needfree)
-		FREE(needfree, M_IOV);
+		free(needfree, M_IOV);
  out:
 	FILE_UNUSE(fp, p);
 	return (error);
@@ -433,7 +433,7 @@ dofilewritev(p, fd, fp, iovp, iovcnt, offset, flags, retval)
 	if ((u_int)iovcnt > UIO_SMALLIOV) {
 		if ((u_int)iovcnt > IOV_MAX)
 			return (EINVAL);
-		MALLOC(iov, struct iovec *, iovlen, M_IOV, M_WAITOK);
+		iov = malloc(iovlen, M_IOV, M_WAITOK);
 		needfree = iov;
 	} else if ((u_int)iovcnt > 0) {
 		iov = aiov;
@@ -470,7 +470,7 @@ dofilewritev(p, fd, fp, iovp, iovcnt, offset, flags, retval)
 	 * if tracing, save a copy of iovec
 	 */
 	if (KTRPOINT(p, KTR_GENIO))  {
-		MALLOC(ktriov, struct iovec *, iovlen, M_TEMP, M_WAITOK);
+		ktriov = malloc(iovlen, M_TEMP, M_WAITOK);
 		memcpy((caddr_t)ktriov, (caddr_t)auio.uio_iov, iovlen);
 	}
 #endif
@@ -488,13 +488,13 @@ dofilewritev(p, fd, fp, iovp, iovcnt, offset, flags, retval)
 	if (KTRPOINT(p, KTR_GENIO))
 		if (error == 0) {
 			ktrgenio(p, fd, UIO_WRITE, ktriov, cnt, error);
-		FREE(ktriov, M_TEMP);
+		free(ktriov, M_TEMP);
 	}
 #endif
 	*retval = cnt;
  done:
 	if (needfree)
-		FREE(needfree, M_IOV);
+		free(needfree, M_IOV);
  out:
 	FILE_UNUSE(fp, p);
 	return (error);
