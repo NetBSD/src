@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.556 2003/07/27 02:39:16 jonathan Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.557 2003/07/29 07:43:49 martin Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.556 2003/07/27 02:34:38 jonathan Exp 
+ *	NetBSD: pcidevs,v 1.558 2003/07/29 07:42:51 martin Exp 
  */
 
 /*
@@ -4873,19 +4873,19 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82855GM_IGD,
 	    0,
 	    "Intel",
-	    "82855PM GMCH Integrated Graphics Device",
+	    "82855GM GMCH Integrated Graphics Device",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82855GM_MC,
 	    0,
 	    "Intel",
-	    "82855PM GMCH Memory Controller",
+	    "82855GM GMCH Memory Controller",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82855GM_CP,
 	    0,
 	    "Intel",
-	    "82855PM GMCH Configuration Process",
+	    "82855GM GMCH Configuration Process",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82830MP_IO_1,
@@ -6764,6 +6764,12 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Ricoh",
 	    "5C478 PCI-CardBus bridge",
+	},
+	{
+	    PCI_VENDOR_RICOH, PCI_PRODUCT_RICOH_Rx5C551,
+	    0,
+	    "Ricoh",
+	    "5C551 PCI-CardBus bridge/Firewire",
 	},
 	{
 	    PCI_VENDOR_RICOH, PCI_PRODUCT_RICOH_Rx5C552,

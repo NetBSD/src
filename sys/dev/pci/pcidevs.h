@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.558 2003/07/27 02:39:15 jonathan Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.559 2003/07/29 07:43:48 martin Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.556 2003/07/27 02:34:38 jonathan Exp 
+ *	NetBSD: pcidevs,v 1.558 2003/07/29 07:42:51 martin Exp 
  */
 
 /*
@@ -1622,9 +1622,9 @@
 #define	PCI_PRODUCT_INTEL_82855PM_AGP	0x3341		/* 82855PM Host-to-AGP Bridge */
 #define	PCI_PRODUCT_INTEL_82855PM_PM	0x3342		/* 82855PM Power Management Controller */
 #define	PCI_PRODUCT_INTEL_82855GM_MCH	0x3580		/* 82855GM Host-to-Hub Controller */
-#define	PCI_PRODUCT_INTEL_82855GM_IGD	0x3582		/* 82855PM GMCH Integrated Graphics Device */
-#define	PCI_PRODUCT_INTEL_82855GM_MC	0x3584		/* 82855PM GMCH Memory Controller */
-#define	PCI_PRODUCT_INTEL_82855GM_CP	0x3585		/* 82855PM GMCH Configuration Process */
+#define	PCI_PRODUCT_INTEL_82855GM_IGD	0x3582		/* 82855GM GMCH Integrated Graphics Device */
+#define	PCI_PRODUCT_INTEL_82855GM_MC	0x3584		/* 82855GM GMCH Memory Controller */
+#define	PCI_PRODUCT_INTEL_82855GM_CP	0x3585		/* 82855GM GMCH Configuration Process */
 #define	PCI_PRODUCT_INTEL_82830MP_IO_1	0x3575		/* 82830MP CPU to I/O Bridge 1 */
 #define	PCI_PRODUCT_INTEL_82830MP_AGP	0x3576		/* 82830MP CPU to AGP Bridge */
 #define	PCI_PRODUCT_INTEL_82830MP_IV	0x3577		/* 82830MP Integrated Video */
@@ -2048,6 +2048,7 @@
 #define	PCI_PRODUCT_RICOH_RL5C476	0x0476		/* 5C476 PCI-CardBus bridge */
 #define	PCI_PRODUCT_RICOH_Rx5C477	0x0477		/* 5C477 PCI-CardBus bridge */
 #define	PCI_PRODUCT_RICOH_Rx5C478	0x0478		/* 5C478 PCI-CardBus bridge */
+#define	PCI_PRODUCT_RICOH_Rx5C551	0x0551		/* 5C551 PCI-CardBus bridge/Firewire */
 #define	PCI_PRODUCT_RICOH_Rx5C552	0x0552		/* 5C552 PCI-CardBus bridge/Firewire */
 
 /* RISCom (SDL Communications, Inc?) products */
