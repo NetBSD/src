@@ -1,4 +1,4 @@
-#	$NetBSD: changelist,v 1.3 1997/01/04 14:04:09 mrg Exp $
+#	$NetBSD: changelist,v 1.4 1997/01/07 03:56:47 hpeyerl Exp $
 #	from: @(#)changelist	8.1 (Berkeley) 6/9/93
 #
 # List of files which the security script backs up and checks
@@ -53,3 +53,4 @@
 /root/.login
 /root/.profile
 /root/.rhosts
+/var/cron/tabs/root
