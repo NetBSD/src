@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vnops.c,v 1.171 2003/06/03 14:27:48 yamt Exp $	*/
+/*	$NetBSD: nfs_vnops.c,v 1.172 2003/06/27 13:58:36 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_vnops.c,v 1.171 2003/06/03 14:27:48 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_vnops.c,v 1.172 2003/06/27 13:58:36 yamt Exp $");
 
 #include "opt_nfs.h"
 #include "opt_uvmhist.h"
@@ -1391,9 +1391,10 @@ nfs_writerpc(vp, uiop, iomode, pageprotected, stalewriteverf)
 				simple_unlock(&nmp->nm_slock);
 			}
 		} else
-		    nfsm_loadattr(vp, (struct vattr *)0, NAC_NOTRUNC);
+			nfsm_loadattr(vp, (struct vattr *)0, NAC_NOTRUNC);
 		if (wccflag)
-		    VTONFS(vp)->n_mtime = VTONFS(vp)->n_vattr->va_mtime.tv_sec;
+			VTONFS(vp)->n_mtime =
+			    VTONFS(vp)->n_vattr->va_mtime.tv_sec;
 		m_freem(mrep);
 		if (error)
 			break;
