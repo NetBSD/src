@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.8 1996/05/17 04:38:02 chuck Exp $	*/
+/*	$NetBSD: locore.s,v 1.9 1996/05/20 00:40:16 chuck Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -1632,18 +1632,31 @@ _doboot:
 	movl	#CACHE_OFF,d0
 	movc	d0,cacr			| disable on-chip cache(s)
 Lnocache5:
-	movl	_boothowto,d1		| load howto
-	movl	_bootdev,d0		| and devtype
-	movl	sp@(4),d1		| arg
+	movl	_boothowto,d0		| load howto
+	movl	_bootdev,d1		| and devtype
+	movl	sp@(4),d2		| arg
 	lea	tmpstk,sp		| physical SP in case of NMI
 	movl	#0,a7@-			| value for pmove to TC (turn off MMU)
 	pmove	a7@,tc			| disable MMU
-	movl	#0, d0
-	movc	d0,vbr			| ROM VBR
-	cmpl	#0, d1			| autoboot?
-	jeq	Lauto			| yes
+	movl	#0, d3
+	movc	d3,vbr			| ROM VBR
+	andl	#RB_SBOOT, d0		| mask off
+	tstl	d0			| 
+	bne	Lsboot			| sboot?
+	/* NOT sboot */
+	cmpl	#0, d2			| autoboot?
+	beq	1f			| yes!
+	trap	#15			| return to bug
+	.short	MVMEPROM_EXIT		| exit
+1:	movl	#0xff800004,a0		| restart the BUG
+	movl	a0@, a0			| get PC
+	jmp	a0@			| go!
+
+Lsboot: /* sboot */
+	cmpl	#0, d2			| autoboot?
+	beq	1f			| yes!
 	jmp 	0x4000			| back to sboot
-Lauto:	jmp	0x400a			| tell sboot to reboot us
+1:	jmp	0x400a			| tell sboot to reboot us
 
 	.data
 	.globl	_mmutype,_protorp

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.6 1996/04/26 19:26:55 chuck Exp $	*/
+/*	$NetBSD: machdep.c,v 1.7 1996/05/20 00:40:18 chuck Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -77,6 +77,7 @@
 
 #include <machine/cpu.h>
 #include <machine/reg.h>
+#include <machine/prom.h>
 #include <machine/psl.h>
 #include <machine/pte.h>
 #include <dev/cons.h>
@@ -1116,7 +1117,7 @@ boot(howto)
 	if (curproc && curproc->p_addr)
 		savectx(curproc->p_addr);
 
-	boothowto = howto;
+	boothowto = howto | (boothowto & RB_SBOOT);
 	if ((howto&RB_NOSYNC) == 0 && waittime < 0) {
 		waittime = 0;
 		vfs_shutdown();
