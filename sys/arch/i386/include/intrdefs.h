@@ -1,4 +1,4 @@
-/*	$NetBSD: intrdefs.h,v 1.1.2.2 2002/12/11 06:01:01 thorpej Exp $	*/
+/*	$NetBSD: intrdefs.h,v 1.1.2.3 2002/12/11 16:00:52 thorpej Exp $	*/
 
 #ifndef _i386_INTRDEFS_H
 #define _i386_INTRDEFS_H
@@ -43,17 +43,18 @@
 #define	IST_EDGE	2	/* edge-triggered */
 #define	IST_LEVEL	3	/* level-triggered */
 
-/* Soft interrupt masks. */
-#define	SIR_CLOCK	31
-#define	SIR_NET	30
-#define	SIR_SERIAL	29
-
 /*
  * Local APIC masks. Must not conflict with SIR_* above, and must
- * be >= NUM_LEGACY_IRQs.
+ * be >= NUM_LEGACY_IRQs. Note that LIR_IPI must be first.
  */
-#define LIR_TIMER	28
-#define LIR_IPI		27
+#define LIR_IPI		31
+#define LIR_TIMER	30
+
+/* Soft interrupt masks. */
+#define	SIR_CLOCK	29
+#define	SIR_NET		28
+#define	SIR_SERIAL	27
+
 
 /*
  * Maximum # of interrupt sources per CPU. 32 to fit in one word.
