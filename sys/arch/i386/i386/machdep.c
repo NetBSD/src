@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)machdep.c	7.4 (Berkeley) 6/3/91
- *	$Id: machdep.c,v 1.47.2.19 1993/11/06 00:00:24 mycroft Exp $
+ *	$Id: machdep.c,v 1.47.2.20 1993/11/08 20:23:17 mycroft Exp $
  */
 
 #include <stddef.h>
@@ -280,31 +280,24 @@ allocsys(v)
 }
 
 struct cpu_nameclass i386_cpus[] = {
-	{ "Intel 80286",	CPUCLASS_286 },		/* CPU_286   */
-	{ "i386SX",		CPUCLASS_386 },		/* CPU_386SX */
-	{ "i386DX",		CPUCLASS_386 },		/* CPU_386   */
-	{ "i486SX",		CPUCLASS_486 },		/* CPU_486SX */
-	{ "i486DX",		CPUCLASS_486 },		/* CPU_486   */
-	{ "i586",		CPUCLASS_586 },		/* CPU_586   */
+	{ "i386SX",	CPUCLASS_386 },	/* CPU_386SX */
+	{ "i386DX",	CPUCLASS_386 },	/* CPU_386   */
+	{ "i486SX",	CPUCLASS_486 },	/* CPU_486SX */
+	{ "i486DX",	CPUCLASS_486 },	/* CPU_486   */
+	{ "Pentium",	CPUCLASS_586 },	/* CPU_586   */
 };
 
 identifycpu()
 {
 	printf("CPU: ");
-	if (cpu >= 0 && cpu < (sizeof i386_cpus/sizeof(struct cpu_nameclass))) {
-		printf("%s", i386_cpus[cpu].cpu_name);
-		cpu_class = i386_cpus[cpu].cpu_class;
-	} else {
 #ifdef DIAGNOSTIC
-		printf("unknown cpu type %d\n", cpu);
-		panic("startup: bad cpu id");
+	if (cpu < 0 || cpu >= (sizeof i386_cpus/sizeof(struct cpu_nameclass)))
+		panic("unknown cpu type %d\n", cpu);
 #endif
-	}
+	printf("%s", i386_cpus[cpu].cpu_name);
+	cpu_class = i386_cpus[cpu].cpu_class;
 	printf(" (");
 	switch(cpu_class) {
-	    case CPUCLASS_286:
-		printf("286");
-		break;
 	    case CPUCLASS_386:
 		printf("386");
 		break;
@@ -325,7 +318,6 @@ identifycpu()
 	 * let them know if that machine type isn't configured.
 	 */
 	switch (cpu_class) {
-	    case CPUCLASS_286:	/* a 286 should not make it this far, anyway */
 #if !defined(I386_CPU)
 	    case CPUCLASS_386:
 #endif
@@ -477,7 +469,6 @@ sigreturn(p, uap, retval)
 {
 	register struct sigcontext *scp;
 	register struct sigframe *fp;
-	register struct trapframe *tf;
 	register int *regs = p->p_regs;
 
 	/*
@@ -496,13 +487,12 @@ sigreturn(p, uap, retval)
 		return(EINVAL);
 
 	/* make sure they aren't trying to do anything funny */
-	if ((scp->sc_ps & PSL_MBZ) != 0 || (scp->sc_ps & PSL_MBO) != PSL_MBO) {
+	if ((scp->sc_ps & PSL_MBZ) != 0 || (scp->sc_ps & PSL_MBO) != PSL_MBO)
 		return(EINVAL);
-	}
+
 	/* compare IOPL; we can't insist that it's always 3 or the X server
 	   will fail */
-	tf = (struct trapframe *)curproc->p_regs;
-	if ((tf->tf_eflags & PSL_IOPL) != (regs[tEFLAGS] & PSL_IOPL))
+	if ((regs[tEFLAGS] & PSL_IOPL) < (scp->sc_efl & PSL_IOPL))
 		return(EINVAL);
 
 	p->p_sigacts->ps_onstack = scp->sc_onstack & 01;
@@ -689,7 +679,7 @@ dumpsys()
 	 * We do all the memory mapping *here*.  There is no excuse for each
 	 * driver having to know how to do this!
 	 */
-	bytes = physmem << (PGSHIFT + CLSIZELOG2);
+	bytes = ctob(physmem);
 	maddr = 0;
 	blkno = dumplo;
 	dump = bdevsw[major(dumpdev)].d_dump;
@@ -697,42 +687,39 @@ dumpsys()
 		n = bytes - i;
 		if (n > BYTES_PER_DUMP)
 			n = BYTES_PER_DUMP;
-		/* print out how many MBs we have dumped */
-		if (i && (i % (1024*1024)) == 0)
-			printf("%d ", i / (1024*1024));
+		if (maddr == hole_start)
+			maddr = hole_end;
+		else if (maddr < hole_start && (maddr + n) > hole_start)
+			n = hole_start - maddr;
 		error = (*dump)(dumpdev, blkno, (caddr_t)maddr, (int)n);
 		if (error)
 			break;
 		maddr += n;
 		blkno += btodb(n);
+		/* print out how many MBs we have dumped */
+		if ((i / (1024*1024)) != ((i+n) / (1024*1024)))
+			printf("%d ", (i+n) / (1024*1024));
 	}
 	switch (error) {
-
-	case ENXIO:
+	    case ENXIO:
 		printf("device bad\n");
 		break;
-
-	case EFAULT:
+	    case EFAULT:
 		printf("device not ready\n");
 		break;
-
-	case EINVAL:
+	    case EINVAL:
 		printf("area improper\n");
 		break;
-
-	case EIO:
+	    case EIO:
 		printf("i/o error\n");
 		break;
-
-	case EINTR:
+	    case EINTR:
 		printf("aborted from console\n");
 		break;
-
-	case 0:
+	    case 0:
 		printf("succeeded\n");
 		break;
-
-	default:
+	    default:
 		printf("error %d\n", error);
 		break;
 	}
@@ -950,7 +937,7 @@ setidt(idx, func, typ, dpl)
 extern	IDTVEC(div), IDTVEC(dbg), IDTVEC(nmi), IDTVEC(bpt), IDTVEC(ofl),
 	IDTVEC(bnd), IDTVEC(ill), IDTVEC(dna), IDTVEC(dble), IDTVEC(fpusegm),
 	IDTVEC(tss), IDTVEC(missing), IDTVEC(stk), IDTVEC(prot),
-	IDTVEC(page), IDTVEC(rsvd), IDTVEC(fpu), IDTVEC(rsvd0),
+	IDTVEC(page), IDTVEC(rsvd), IDTVEC(fpu), IDTVEC(align),
 	IDTVEC(rsvd1), IDTVEC(rsvd2), IDTVEC(rsvd3), IDTVEC(rsvd4),
 	IDTVEC(rsvd5), IDTVEC(rsvd6), IDTVEC(rsvd7), IDTVEC(rsvd8),
 	IDTVEC(rsvd9), IDTVEC(rsvd10), IDTVEC(rsvd11), IDTVEC(rsvd12),
@@ -1003,7 +990,7 @@ init386(first_avail)
 	setidt(14, &IDTVEC(page), SDT_SYS386TGT, SEL_KPL);
 	setidt(15, &IDTVEC(rsvd), SDT_SYS386TGT, SEL_KPL);
 	setidt(16, &IDTVEC(fpu), SDT_SYS386TGT, SEL_KPL);
-	setidt(17, &IDTVEC(rsvd0), SDT_SYS386TGT, SEL_KPL);
+	setidt(17, &IDTVEC(align), SDT_SYS386TGT, SEL_KPL);
 	setidt(18, &IDTVEC(rsvd1), SDT_SYS386TGT, SEL_KPL);
 	setidt(19, &IDTVEC(rsvd2), SDT_SYS386TGT, SEL_KPL);
 	setidt(20, &IDTVEC(rsvd3), SDT_SYS386TGT, SEL_KPL);
@@ -1064,20 +1051,21 @@ init386(first_avail)
 	avail_end = biosextmem ? IOM_END + biosextmem * 1024
 			       : biosbasemem * 1024;
 
-	/* number of pages of physmem addr space; XXX first page unused */
-	physmem = btoc(avail_end) - 1;
+	/* number of pages of physmem addr space */
+	physmem = btoc((biosbasemem + biosextmem) * 1024);
 
 	/*
 	 * Initialize for pmap_free_pages and pmap_next_page.
 	 * These guys should be page-aligned.
 	 */
 	hole_start = biosbasemem * 1024;
+	/* we load right after the I/O hole; adjust hole_end to compensate */
 	hole_end = round_page((vm_offset_t)first_avail);
 	avail_next = avail_start;
-	avail_remaining = atop((avail_end - avail_start) -
-			       (hole_end - hole_start));
+	avail_remaining = i386_btop((avail_end - avail_start) -
+				    (hole_end - hole_start));
 
-	if (avail_remaining < atop(2 * 1024 * 1024)) {
+	if (avail_remaining < i386_btop(2 * 1024 * 1024)) {
 		printf("warning: too little memory available; running in degraded mode\n"
 		       "press a key to confirm\n\n");
 		/*
