@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.77.2.1 1997/11/05 02:46:55 mellon Exp $	*/
+/*	$NetBSD: audio.c,v 1.77.2.2 1998/11/23 03:12:57 cgd Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -1648,7 +1648,7 @@ audio_mmap(dev, off, prot)
 	cb = &sc->sc_pr;
 #endif
 
-	if (off >= cb->bufsize)
+	if ((u_int)off >= cb->bufsize)
 		return -1;
 	if (!cb->mmapped) {
 		cb->mmapped = 1;

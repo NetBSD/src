@@ -1,4 +1,4 @@
-/*	$NetBSD: pccons.c,v 1.113.2.3 1998/01/29 10:07:25 mellon Exp $	*/
+/*	$NetBSD: pccons.c,v 1.113.2.4 1998/11/23 03:12:54 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles Hannum.  All rights reserved.
@@ -2323,7 +2323,7 @@ pcmmap(dev, offset, nprot)
 	int nprot;
 {
 
-	if (offset > 0x20000)
+	if ((u_int)offset > 0x20000)
 		return (-1);
 	return (i386_btop(0xa0000 + offset));
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: isadma.c,v 1.32 1997/09/05 01:48:33 thorpej Exp $	*/
+/*	$NetBSD: isadma.c,v 1.32.4.1 1998/11/23 03:12:57 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -578,6 +578,9 @@ isa_dmamem_mmap(isadev, chan, addr, size, off, prot, flags)
 		printf("%s: bogus drq %d\n", sc->sc_dev.dv_xname, chan);
 		panic("isa_dmamem_mmap");
 	}
+
+	if (off < 0)
+		return (-1);
 
 	seg.ds_addr = addr;
 	seg.ds_len = size;

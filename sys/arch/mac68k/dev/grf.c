@@ -1,4 +1,4 @@
-/*	$NetBSD: grf.c,v 1.45.4.1 1998/01/29 12:18:02 mellon Exp $	*/
+/*	$NetBSD: grf.c,v 1.45.4.2 1998/11/23 03:12:55 cgd Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -290,7 +290,7 @@ grfmmap(dev, off, prot)
 		printf("grfmmap(%x): off %x, prot %x\n", dev, off, prot);
 #endif
 
-	if (off < m68k_round_page(gm->fbsize + gm->fboff))
+	if (off >= 0 && off < m68k_round_page(gm->fbsize + gm->fboff))
 		addr = m68k_btop((*gp->sc_phys)(gp) + off);
 	else
 		addr = (-1);	/* XXX bogus */

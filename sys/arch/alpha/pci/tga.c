@@ -1,4 +1,4 @@
-/* $NetBSD: tga.c,v 1.21 1997/09/25 01:32:04 thorpej Exp $ */
+/* $NetBSD: tga.c,v 1.21.2.1 1998/11/23 03:12:52 cgd Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: tga.c,v 1.21 1997/09/25 01:32:04 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tga.c,v 1.21.2.1 1998/11/23 03:12:52 cgd Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -401,7 +401,7 @@ tgammap(v, offset, prot)
 {
 	struct tga_softc *sc = v;
 
-	if (offset > sc->sc_dc->dc_tgaconf->tgac_cspace_size)
+	if (offset >= sc->sc_dc->dc_tgaconf->tgac_cspace_size || offset < 0)
 		return -1;
 	return alpha_btop(sc->sc_dc->dc_paddr + offset);
 }

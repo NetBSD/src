@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.8 1997/10/10 17:43:16 oki Exp $	*/
+/*	$NetBSD: mem.c,v 1.8.2.1 1998/11/23 03:12:57 cgd Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -224,7 +224,7 @@ mmmmap(dev, off, prot)
 	 * XXX could be extended to allow access to IO space but must
 	 * be very careful.
 	 */
-	if ((unsigned)off < lowram || (unsigned)off >= 0xFFFFFFFC)
+	if ((u_int)off < lowram || (u_int)off >= 0xFFFFFFFC)
 		return (-1);
-	return (m68k_btop(off));
+	return (m68k_btop((u_int)off));
 }

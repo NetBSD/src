@@ -771,7 +771,7 @@ do_standard:
 int
 pcmmap(Dev_t dev, int offset, int nprot)
 {
-	if (offset > 0x20000)
+	if ((u_int)offset >= 0x20000)
 		return -1;
 	return i386_btop((0xa0000 + offset));
 }

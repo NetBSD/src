@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.26 1997/04/28 23:21:01 gwr Exp $	*/
+/*	$NetBSD: mem.c,v 1.26.8.1 1998/11/23 03:12:56 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Gordon W. Ross
@@ -247,7 +247,7 @@ mmmmap(dev, off, prot)
 	dev_t dev;
 	int off, prot;
 {
-	register int v = off;
+	register u_int v = off;
 
 	/*
 	 * Check address validity.

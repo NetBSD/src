@@ -1,4 +1,4 @@
-/*	$NetBSD: rcons.c,v 1.14 1996/10/13 13:14:00 jonathan Exp $	*/
+/*	$NetBSD: rcons.c,v 1.14.14.1 1998/11/23 03:12:56 cgd Exp $	*/
 
 /*
  * Copyright (c) 1995
@@ -373,7 +373,8 @@ rconsmmap (dev, off, prot)
 	 int off;
 	 int prot;
 {
-	return 0;
+
+	return -1;
 }
 
 void
