@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vfsops.c,v 1.22 1994/09/22 02:34:49 mycroft Exp $	*/
+/*	$NetBSD: msdosfs_vfsops.c,v 1.23 1994/09/28 11:31:33 mycroft Exp $	*/
 
 /*-
  * Copyright (C) 1994 Wolfgang Solfrank.
@@ -57,6 +57,8 @@
 #include <sys/mount.h>
 #include <sys/buf.h>
 #include <sys/file.h>
+#include <sys/disklabel.h>
+#include <sys/ioctl.h>
 #include <sys/malloc.h>
 
 #include <msdosfs/bpb.h>
@@ -82,16 +84,16 @@ msdosfs_mount(mp, path, data, ndp, p)
 	struct vnode *devvp;	  /* vnode for blk device to mount */
 	struct msdosfs_args args; /* will hold data from mount request */
 	struct msdosfsmount *pmp; /* msdosfs specific mount control block */
-	int error, flags;
 	u_int size;
+	int error, flags;
 	struct ucred *cred, *scred;
 	struct vattr va;
 
 	/*
 	 * Copy in the args for the mount request.
 	 */
-	if (error = copyin(data, (caddr_t) & args, sizeof(struct msdosfs_args)))
-		return error;
+	if (error = copyin(data, (caddr_t)&args, sizeof(struct msdosfs_args)))
+		return (error);
 
 	/*
 	 * If they just want to update then be sure we can do what is
@@ -107,27 +109,27 @@ msdosfs_mount(mp, path, data, ndp, p)
 			if (mp->mnt_flag & MNT_FORCE)
 				flags |= FORCECLOSE;
 			if (vfs_busy(mp))
-				return EBUSY;
+				return (EBUSY);
 			error = vflush(mp, NULLVP, flags);
 			vfs_unbusy(mp);
 		}
 		if (!error && (mp->mnt_flag & MNT_RELOAD))
 			/* not yet implemented */
-			error = EINVAL;
+			error = EOPNOTSUPP;
 		if (error)
-			return error;
-		if (pmp->pm_ronly && (mp->mnt_flag & MNT_RDONLY) == 0)
+			return (error);
+		if (pmp->pm_ronly && (mp->mnt_flag & MNT_WANTRDWR))
 			pmp->pm_ronly = 0;
 		if (args.fspec == 0) {
 			/*
 			 * Process export requests.
 			 */
-			return vfs_export(mp, &pmp->pm_export, &args.export);
+			return (vfs_export(mp, &pmp->pm_export, &args.export));
 		}
 	}
 
 	/*
-	 * check to see that the user in owns the target directory.
+	 * Check to see that the user in owns the target directory.
 	 * Note the very XXX trick to make sure we're checking as the
 	 * real user -- were mount() executable by anyone, this wouldn't
 	 * be a problem.
@@ -136,25 +138,24 @@ msdosfs_mount(mp, path, data, ndp, p)
 	 */
 	cred = crdup(p->p_ucred);			/* XXX */
 	cred->cr_uid = p->p_cred->p_ruid;		/* XXX */
-	error = VOP_GETATTR(mp->mnt_vnodecovered, &va, cred, p);
-	if (error) {
+	if (error = VOP_GETATTR(mp->mnt_vnodecovered, &va, cred, p)) {
 		crfree(cred);				/* XXX */
-		return error;
+		return (error);
 	}
-	if (cred->cr_uid != 0) {
+	if (suser(p->p_ucred, &p->p_acflag)) {
 		if (va.va_uid != cred->cr_uid) {
 			error = EACCES;
 			crfree(cred);			/* XXX */
-			return error;
+			return (error);
 		}
-
 		/* a user mounted it; we'll verify permissions when unmounting */
 		mp->mnt_flag |= MNT_USER;
 	}
 
 	/*
-	 * Now, lookup the name of the block device this mount or name
-	 * update request is to apply to.
+	 * Not an update, or updating the name: look up the name
+	 * and verify that it refers to a sensible block device,
+	 * and is accessible by the user doing the mount.
 	 */
 	NDINIT(ndp, LOOKUP, FOLLOW, UIO_USERSPACE, args.fspec, p);
 	scred = p->p_ucred;				/* XXX */
@@ -162,22 +163,17 @@ msdosfs_mount(mp, path, data, ndp, p)
 	error = namei(ndp);
 	p->p_ucred = scred;				/* XXX */
 	crfree(cred);					/* XXX */
-	if (error != 0)
-		return error;
+	if (error)
+		return (error);
 	
-	/*
-	 * Be sure they've given us a block device to treat as a
-	 * filesystem.  And, that its major number is within the bdevsw
-	 * table.
-	 */
 	devvp = ndp->ni_vp;
 	if (devvp->v_type != VBLK) {
 		vrele(devvp);
-		return ENOTBLK;
+		return (ENOTBLK);
 	}
 	if (major(devvp->v_rdev) >= nblkdev) {
 		vrele(devvp);
-		return ENXIO;
+		return (ENXIO);
 	}
 
 	/*
@@ -189,93 +185,84 @@ msdosfs_mount(mp, path, data, ndp, p)
 			error = EINVAL;
 		else
 			vrele(devvp);
-	} else {
-
-		/*
-		 * Well, it's not an update, it's a real mount request.
-		 * Time to get dirty.
-		 */
-		error = mountmsdosfs(devvp, mp, p);
-	}
+	} else
+		error = msdosfs_mountfs(devvp, mp, p);
 	if (error) {
 		vrele(devvp);
-		return error;
+		return (error);
 	}
+
+	/*
+	 * Record the credentials of the process that mounted the file
+	 * system, and the permission mask.
+	 */
+	pmp = VFSTOMSDOSFS(mp);
+	pmp->pm_mounter = p->p_cred->p_ruid;
+	pmp->pm_gid = args.gid;
+	pmp->pm_uid = args.uid;
+	pmp->pm_mask = args.mask;
 
 	/*
 	 * Copy in the name of the directory the filesystem is to be
 	 * mounted on. Then copy in the name of the block special file
 	 * representing the filesystem being mounted. And we clear the
-	 * remainder of the character strings to be tidy. Set up the
-	 * user id/group id/mask as specified by the user. Then, we try to
-	 * fill in the filesystem stats structure as best we can with
+	 * remainder of the character strings to be tidy. Then, we try to
+	 * fill in the filesystem statfs structure as best we can with
 	 * whatever applies from a dos file system.
 	 */
-	pmp = VFSTOMSDOSFS(mp);
-	copyinstr(path, (caddr_t) mp->mnt_stat.f_mntonname,
+	(void) copyinstr(path, (caddr_t)mp->mnt_stat.f_mntonname,
 	    sizeof(mp->mnt_stat.f_mntonname) - 1, &size);
 	bzero(mp->mnt_stat.f_mntonname + size,
 	    sizeof(mp->mnt_stat.f_mntonname) - size);
-	copyinstr(args.fspec, mp->mnt_stat.f_mntfromname, MNAMELEN - 1, &size);
-	bzero(mp->mnt_stat.f_mntfromname + size,
-	    MNAMELEN - size);
-	pmp->pm_mounter = p->p_cred->p_ruid;
-	pmp->pm_gid = args.gid;
-	pmp->pm_uid = args.uid;
-	pmp->pm_mask = args.mask;
+	(void) copyinstr(args.fspec, mp->mnt_stat.f_mntfromname, MNAMELEN - 1,
+	    &size);
+	bzero(mp->mnt_stat.f_mntfromname + size, MNAMELEN - size);
 	(void) msdosfs_statfs(mp, &mp->mnt_stat, p);
 #ifdef MSDOSFS_DEBUG
 	printf("msdosfs_mount(): mp %x, pmp %x, inusemap %x\n", mp, pmp, pmp->pm_inusemap);
 #endif
-	return 0;
+	return (0);
 }
 
 int
-mountmsdosfs(devvp, mp, p)
+msdosfs_mountfs(devvp, mp, p)
 	struct vnode *devvp;
 	struct mount *mp;
 	struct proc *p;
 {
-	int i;
-	int bpc;
-	int bit;
-	int error;
-	int needclose;
-	int ronly = (mp->mnt_flag & MNT_RDONLY) != 0;
+	struct msdosfsmount *pmp;
+	struct buf *bp;
 	dev_t dev = devvp->v_rdev;
+	struct partinfo dpart;
 	union bootsector *bsp;
-	struct msdosfsmount *pmp = NULL;
-	struct buf *bp0 = NULL;
 	struct byte_bpb33 *b33;
 	struct byte_bpb50 *b50;
+	int bpc;
+	int bit;
+	int error, i, size;
+	int ronly;
+	extern struct vnode *rootvp;
 
 	/*
-	 * Multiple mounts of the same block special file aren't allowed.
-	 * Make sure no one else has the special file open.  And flush any
-	 * old buffers from this filesystem.  Presumably this prevents us
-	 * from running into buffers that are the wrong blocksize.
+	 * Disallow multiple mounts of the same device.
+	 * Disallow mounting of a device that is currently in use
+	 * (except for root, which might share swap device for miniroot).
+	 * Flush out any old buffers remaining from a previous use.
 	 */
 	if (error = vfs_mountedon(devvp))
-		return error;
-	if (vcount(devvp) > 1)
-		return EBUSY;
+		return (error);
+	if (vcount(devvp) > 1 && devvp != rootvp)
+		return (EBUSY);
 	if (error = vinvalbuf(devvp, V_SAVE, p->p_ucred, p, 0, 0))
-		return error;
+		return (error);
 
-	/*
-	 * Now open the block special file.
-	 */
-	if (error = VOP_OPEN(devvp, ronly ? FREAD : FREAD | FWRITE, FSCRED, p))
-		return error;
-	needclose = 1;
-#ifdef HDSUPPORT
-	/*
-	 * Put this in when we support reading dos filesystems from
-	 * partitioned harddisks.
-	 */
-	if (VOP_IOCTL(devvp, DIOCGPART, &msdosfspart, FREAD, NOCRED, p) == 0) {
-	}
-#endif
+	ronly = (mp->mnt_flag & MNT_RDONLY) != 0;
+	if (error = VOP_OPEN(devvp, ronly ? FREAD : FREAD|FWRITE, FSCRED, p))
+		return (error);
+	if (VOP_IOCTL(devvp, DIOCGPART, (caddr_t)&dpart, FREAD, NOCRED, p) != 0)
+		size = DEV_BSIZE;
+	else
+		size = dpart.disklab->d_secsize;
 
 	/*
 	 * Read the boot sector of the filesystem, and then check the boot
@@ -283,12 +270,14 @@ mountmsdosfs(devvp, mp, p)
 	 * also add some checking on the bsOemName field.  So far I've seen
 	 * the following values: "IBM  3.3" "MSDOS3.3" "MSDOS5.0"
 	 */
-	if (error = bread(devvp, 0, 512, NOCRED, &bp0))
+	bp = NULL;
+	pmp = NULL;
+	if (error = bread(devvp, 0, 512, NOCRED, &bp))
 		goto error_exit;
-	bp0->b_flags |= B_AGE;
-	bsp = (union bootsector *) bp0->b_data;
-	b33 = (struct byte_bpb33 *) bsp->bs33.bsBPB;
-	b50 = (struct byte_bpb50 *) bsp->bs50.bsBPB;
+	bp->b_flags |= B_AGE;
+	bsp = (union bootsector *)bp->b_data;
+	b33 = (struct byte_bpb33 *)bsp->bs33.bsBPB;
+	b50 = (struct byte_bpb50 *)bsp->bs50.bsBPB;
 #ifdef MSDOSFS_CHECKSIG
 	if (bsp->bs50.bsBootSectSig != BOOTSIG) {
 		error = EINVAL;
@@ -362,7 +351,6 @@ mountmsdosfs(devvp, mp, p)
 		pmp->pm_fatblocksize = MAXBSIZE;
 	pmp->pm_fatblocksec = pmp->pm_fatblocksize / pmp->pm_BytesPerSec;
 
-
 	if ((pmp->pm_rootdirsize % pmp->pm_SectPerClust) != 0)
 		printf("mountmsdosfs(): root directory is not a multiple of the clustersize in length\n");
 
@@ -397,8 +385,8 @@ mountmsdosfs(devvp, mp, p)
 	/*
 	 * Release the bootsector buffer.
 	 */
-	brelse(bp0);
-	bp0 = NULL;
+	brelse(bp);
+	bp = NULL;
 
 	/*
 	 * Allocate memory for the bitmap of allocated clusters, and then
@@ -418,8 +406,7 @@ mountmsdosfs(devvp, mp, p)
 	/*
 	 * Have the inuse map filled in.
 	 */
-	error = fillinusemap(pmp);
-	if (error)
+	if (error = fillinusemap(pmp))
 		goto error_exit;
 
 	/*
@@ -436,7 +423,7 @@ mountmsdosfs(devvp, mp, p)
 	pmp->pm_ronly = ronly;
 	if (ronly == 0)
 		pmp->pm_fmod = 1;
-	mp->mnt_data = (qaddr_t) pmp;
+	mp->mnt_data = (qaddr_t)pmp;
         mp->mnt_stat.f_fsid.val[0] = (long)dev;
         mp->mnt_stat.f_fsid.val[1] = makefstype(MOUNT_MSDOS);
 	mp->mnt_flag |= MNT_LOCAL;
@@ -451,21 +438,19 @@ mountmsdosfs(devvp, mp, p)
 #endif
 	devvp->v_specflags |= SI_MOUNTEDON;
 
-	return 0;
+	return (0);
 
 error_exit:;
-	if (bp0)
-		brelse(bp0);
-	if (needclose)
-		(void) VOP_CLOSE(devvp, ronly ? FREAD : FREAD | FWRITE,
-		    NOCRED, p);
+	if (bp)
+		brelse(bp);
+	(void) VOP_CLOSE(devvp, ronly ? FREAD : FREAD|FWRITE, NOCRED, p);
 	if (pmp) {
 		if (pmp->pm_inusemap)
-			free((caddr_t) pmp->pm_inusemap, M_MSDOSFSFAT);
-		free((caddr_t) pmp, M_MSDOSFSMNT);
-		mp->mnt_data = (qaddr_t) 0;
+			free(pmp->pm_inusemap, M_MSDOSFSFAT);
+		free(pmp, M_MSDOSFSMNT);
+		mp->mnt_data = (qaddr_t)0;
 	}
-	return error;
+	return (error);
 }
 
 int
@@ -474,7 +459,8 @@ msdosfs_start(mp, flags, p)
 	int flags;
 	struct proc *p;
 {
-	return 0;
+
+	return (0);
 }
 
 /*
@@ -486,27 +472,24 @@ msdosfs_unmount(mp, mntflags, p)
 	int mntflags;
 	struct proc *p;
 {
-	int flags = 0;
-	int error;
 	struct msdosfsmount *pmp = VFSTOMSDOSFS(mp);
-	struct vnode *vp = pmp->pm_devvp;
+	int error, flags;
 
 	/* only the mounter, or superuser can unmount */
 	if ((p->p_cred->p_ruid != pmp->pm_mounter) &&
 	    (error = suser(p->p_ucred, &p->p_acflag)))
-		return error;
+		return (error);
 
+	flags = 0;
 	if (mntflags & MNT_FORCE) {
-		extern int doforce;
-
-		if (!doforce || (mp->mnt_flag & MNT_ROOTFS))
-			return EINVAL;
+		if (mp->mnt_flag & MNT_ROOTFS)
+			return (EINVAL);
 		flags |= FORCECLOSE;
 	}
 #ifdef QUOTA
 #endif
 	if (error = vflush(mp, NULLVP, flags))
-		return error;
+		return (error);
 	pmp->pm_devvp->v_specflags &= ~SI_MOUNTEDON;
 #ifdef MSDOSFS_DEBUG
 	printf("msdosfs_umount(): just before calling VOP_CLOSE()\n");
@@ -521,14 +504,14 @@ msdosfs_unmount(mp, mntflags, p)
 	printf("union %08x, tag %d, data[0] %08x, data[1] %08x\n",
 	    vp->v_socket, vp->v_tag, vp->v_data[0], vp->v_data[1]);
 #endif
-	error = VOP_CLOSE(pmp->pm_devvp, pmp->pm_ronly ? FREAD : FREAD | FWRITE,
+	error = VOP_CLOSE(pmp->pm_devvp, pmp->pm_ronly ? FREAD : FREAD|FWRITE,
 	    NOCRED, p);
 	vrele(pmp->pm_devvp);
-	free((caddr_t) pmp->pm_inusemap, M_MSDOSFSFAT);
-	free((caddr_t) pmp, M_MSDOSFSMNT);
-	mp->mnt_data = (qaddr_t) 0;
+	free(pmp->pm_inusemap, M_MSDOSFSFAT);
+	free(pmp, M_MSDOSFSMNT);
+	mp->mnt_data = (qaddr_t)0;
 	mp->mnt_flag &= ~MNT_LOCAL;
-	return error;
+	return (error);
 }
 
 int
@@ -536,18 +519,18 @@ msdosfs_root(mp, vpp)
 	struct mount *mp;
 	struct vnode **vpp;
 {
-	struct denode *ndep;
 	struct msdosfsmount *pmp = VFSTOMSDOSFS(mp);
+	struct denode *ndep;
 	int error;
 
-	error = deget(pmp, MSDOSFSROOT, MSDOSFSROOT_OFS, NULL, &ndep);
 #ifdef MSDOSFS_DEBUG
 	printf("msdosfs_root(); mp %08x, pmp %08x, ndep %08x, vp %08x\n",
 	    mp, pmp, ndep, DETOV(ndep));
 #endif
-	if (error == 0)
-		*vpp = DETOV(ndep);
-	return error;
+	if (error = deget(pmp, MSDOSFSROOT, MSDOSFSROOT_OFS, NULL, &ndep))
+		return (error);
+	*vpp = DETOV(ndep);
+	return (0);
 }
 
 int
@@ -558,9 +541,11 @@ msdosfs_quotactl(mp, cmds, uid, arg, p)
 	caddr_t arg;
 	struct proc *p;
 {
+
 #ifdef QUOTA
+	return (EOPNOTSUPP);
 #else
-	return EOPNOTSUPP;
+	return (EOPNOTSUPP);
 #endif
 }
 
@@ -570,11 +555,9 @@ msdosfs_statfs(mp, sbp, p)
 	struct statfs *sbp;
 	struct proc *p;
 {
-	struct msdosfsmount *pmp = VFSTOMSDOSFS(mp);
+	struct msdosfsmount *pmp;
 
-	/*
-	 * Fill in the stat block.
-	 */
+	pmp = VFSTOMSDOSFS(mp);
 #ifdef COMPAT_09
 	sbp->f_type = 4;
 #else
@@ -587,20 +570,15 @@ msdosfs_statfs(mp, sbp, p)
 	sbp->f_bavail = pmp->pm_freeclustercount;
 	sbp->f_files = pmp->pm_RootDirEnts;			/* XXX */
 	sbp->f_ffree = 0;	/* what to put in here? */
-
-	/*
-	 * Copy the mounted on and mounted from names into the passed in
-	 * stat block, if it is not the one in the mount structure.
-	 */
 	if (sbp != &mp->mnt_stat) {
-		bcopy((caddr_t) mp->mnt_stat.f_mntonname,
-		    (caddr_t) & sbp->f_mntonname[0], MNAMELEN);
-		bcopy((caddr_t) mp->mnt_stat.f_mntfromname,
-		    (caddr_t) & sbp->f_mntfromname[0], MNAMELEN);
+		bcopy((caddr_t)mp->mnt_stat.f_mntonname,
+		    (caddr_t)&sbp->f_mntonname[0], MNAMELEN);
+		bcopy((caddr_t)mp->mnt_stat.f_mntfromname,
+		    (caddr_t)&sbp->f_mntfromname[0], MNAMELEN);
 	}
 	strncpy(&sbp->f_fstypename[0], mp->mnt_op->vfs_name, MFSNAMELEN);
 	sbp->f_fstypename[MFSNAMELEN] = '\0';
-	return 0;
+	return (0);
 }
 
 int
@@ -613,15 +591,14 @@ msdosfs_sync(mp, waitfor, cred, p)
 	struct vnode *vp;
 	struct denode *dep;
 	struct msdosfsmount *pmp = VFSTOMSDOSFS(mp);
-	int error;
-	int allerror = 0;
+	int error, allerror = 0;
 
 	/*
 	 * If we ever switch to not updating all of the fats all the time,
 	 * this would be the place to update them from the first one.
 	 */
-	if (pmp->pm_fmod)
-		if (pmp->pm_ronly)
+	if (pmp->pm_fmod != 0)
+		if (pmp->pm_ronly != 0)
 			panic("msdosfs_sync: rofs mod");
 		else {
 			/* update fats here */
@@ -656,7 +633,9 @@ loop:
 	 */
 	if (error = VOP_FSYNC(pmp->pm_devvp, cred, waitfor, p))
 		allerror = error;
-	return allerror;
+#ifdef QUOTA
+#endif
+	return (allerror);
 }
 
 int
@@ -676,33 +655,34 @@ msdosfs_fhtovp(mp, fhp, nam, vpp, exflagsp, credanonp)
 
 	np = vfs_export_lookup(mp, &pmp->pm_export, nam);
 	if (np == NULL)
-		return EACCES;
+		return (EACCES);
 	error = deget(pmp, defhp->defid_dirclust, defhp->defid_dirofs,
 	    NULL, &dep);
 	if (error) {
 		*vpp = NULLVP;
-		return error;
+		return (error);
 	}
 	*vpp = DETOV(dep);
 	*exflagsp = np->netc_exflags;
 	*credanonp = &np->netc_anon;
-	return 0;
+	return (0);
 }
-
 
 int
 msdosfs_vptofh(vp, fhp)
 	struct vnode *vp;
 	struct fid *fhp;
 {
-	struct denode *dep = VTODE(vp);
-	struct defid *defhp = (struct defid *) fhp;
+	struct denode *dep;
+	struct defid *defhp;
 
+	dep = VTODE(vp);
+	defhp = (struct defid *)fhp;
 	defhp->defid_len = sizeof(struct defid);
 	defhp->defid_dirclust = dep->de_dirclust;
 	defhp->defid_dirofs = dep->de_diroffset;
-	/* defhp->defid_gen = ip->i_gen; */
-	return 0;
+	/* defhp->defid_gen = dep->de_gen; */
+	return (0);
 }
 
 int
@@ -711,7 +691,8 @@ msdosfs_vget(mp, ino, vpp)
 	ino_t ino;
 	struct vnode **vpp;
 {
-	return EOPNOTSUPP;
+
+	return (EOPNOTSUPP);
 }
 
 struct vfsops msdosfs_vfsops = {

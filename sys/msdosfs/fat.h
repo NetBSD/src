@@ -1,4 +1,4 @@
-/*	$NetBSD: fat.h,v 1.4 1994/08/21 18:43:57 ws Exp $	*/
+/*	$NetBSD: fat.h,v 1.5 1994/09/28 11:31:25 mycroft Exp $	*/
 
 /*-
  * Copyright (C) 1994 Wolfgang Solfrank.
@@ -87,10 +87,13 @@
  */
 #define	DE_CLEAR	1	/* Zero out the blocks allocated */
 
-int pcbmap __P((struct denode *dep, u_long findcn, daddr_t *bnp, u_long *cnp));
-int clusterfree __P((struct msdosfsmount *pmp, u_long cn, u_long *oldcnp));
-int clusteralloc __P((struct msdosfsmount *pmp, u_long start, u_long count, u_long fillwith, u_long *retcluster, u_long *got));
-int fatentry __P((int function, struct msdosfsmount *pmp, u_long cluster, u_long *oldcontents, u_long newcontents));
-int freeclusterchain __P((struct msdosfsmount *pmp, u_long startchain));
-int extendfile __P((struct denode *dep, u_long count, struct buf **bpp, u_long *ncp, int flags));
+int pcbmap __P((struct denode *, u_long, daddr_t *, u_long *));
+int clusterfree __P((struct msdosfsmount *, u_long, u_long *));
+int clusteralloc __P((struct msdosfsmount *, u_long, u_long, u_long, u_long *, u_long *));
+int extendfile __P((struct denode *, u_long, struct buf **, u_long *, int));
+int fatentry __P((int, struct msdosfsmount *, u_long, u_long *, u_long));
+void fc_purge __P((struct denode *, u_int));
+void fc_lookup __P((struct denode *, u_long, u_long *, u_long *));
+int fillinusemap __P((struct msdosfsmount *));
+int freeclusterchain __P((struct msdosfsmount *, u_long));
 #endif	/* KERNEL */
