@@ -1,4 +1,4 @@
-.\"	$NetBSD: syslog.conf.5,v 1.11.4.3 2004/11/15 15:07:02 thorpej Exp $
+.\"	$NetBSD: syslog.conf.5,v 1.11.4.4 2004/11/15 17:16:10 thorpej Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     from: @(#)syslog.conf.5	8.1 (Berkeley) 6/9/93
 .\"
-.Dd November 14, 2004
+.Dd November 15, 2004
 .Dt SYSLOG.CONF 5
 .Os
 .Sh NAME
@@ -45,6 +45,8 @@ file is the configuration file for the
 program.
 It consists of blocks of lines separated by
 .Em program
+and
+.Em hostname
 specifications, with each line containing two fields: the
 .Em selector
 field which specifies the types of messages and priorities to which the
@@ -101,16 +103,65 @@ values specified to the
 .Xr syslog 3
 library routine.
 .Pp
-Each block of lines is separated from the previous block by a tag.
-The tag is a line beginning with
-.Em #!prog
+Each block of lines is separated from the previous block by a
+.Em program
 or
-.Em !prog
+.Em hostname
+specification.
+A block will only log messages corresponding to the most recent
+.Em program
+and
+.Em hostname
+specifications given.
+Consider the case of a block that selects
+.Ql pppd
+as the
+.Em program ,
+directly followed by a block that selects messages from the
+.Em hostname
+.Ql dialhost .
+The second block will log only messages from the
+.Xr pppd 8
+program from the host
+.Sq dialhost .
+.Pp
+A
+.Em program
+specification is a line beginning with
+.Ql #!prog
+or
+.Ql !prog
 (the former is for compatbility with older versions of
 .Xr syslogd 8 ,
 which will interpret the tag as a comment)
-and each block will be associated with log messages from the program
-specified by the tag.
+and will cause subsequent blocks to be applied to messages logged by
+the specified program.
+The special specifcation
+.Ql !*
+will cause subsequent blocks to apply to all programs.
+.Pp
+A
+.Em hostname
+specification of the form
+.Ql #+hostname
+or
+.Ql +hostname
+will cause subsequent blocks to be applied to messages received from
+the specified host.
+A
+.Em hostname
+specification of the form
+.Ql #-hostname
+or
+.Ql -hostname
+will cause subsequent blocks to be applied to messages from hosts other
+than the one specified.
+If the hostname is given as
+.Ql @ ,
+the local hostname will be used.
+The special specification
+.Ql +*
+will cause subsequent blocks to apply to all hosts.
 .Pp
 See
 .Xr syslog 3
@@ -161,9 +212,7 @@ characters.
 An asterisk
 .Pq Sq \&*
 can be used to specify all
-.Em programs ,
-all
-.Em facilities ,
+.Em facilities
 or all
 .Em levels .
 .Pp
@@ -281,29 +330,39 @@ A configuration file might appear as follows:
 *.info;mail.none;authpriv.none		/var/log/messages
 
 # The authpriv file has restricted access.
-authpriv.*						/var/log/secure
+authpriv.*				/var/log/secure
 
 # Log all the mail messages in one place.
-mail.*							/var/log/maillog
+mail.*					/var/log/maillog
 
 # Everybody gets emergency messages, plus log them on another
 # machine.
-*.emerg							*
-*.emerg							@arpa.berkeley.edu
+*.emerg					*
+*.emerg					@arpa.berkeley.edu
 
 # Root and Eric get alert and higher messages.
-*.alert							root,eric
+*.alert					root,eric
 
 # Save mail and news errors of level err and higher in a
 # special file.
-mail,news.err						/var/log/spoolerr
+mail,news.err				/var/log/spoolerr
 
 # Pipe all authentication messages to a filter.
 auth.*					|exec /usr/local/sbin/authfilter
 
-# Save ftpd transactions along with mail and news
+# Save ftpd transactions along with mail and news.
 !ftpd
-*.*							/var/log/spoolerr
+*.*					/var/log/spoolerr
+
+# Save pppd messages from dialhost to a separate file.
+!pppd
++dialhost
+*.*					/var/log/dialhost-pppd
+
+# Save non-local log messages from all programs to a separate file.
+!*
+-@
+*.*					/var/log/foreign
 .Ed
 .Sh SEE ALSO
 .Xr syslog 3 ,
