@@ -27,7 +27,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: fd.c,v 1.6 1994/06/05 07:45:08 chopps Exp $
+ *	$Id: fd.c,v 1.7 1994/06/07 05:41:51 chopps Exp $
  */
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1001,7 +1001,7 @@ fdsetpos(sc, trk, towrite)
 		/*
 		 * figure direction
 		 */
-		if (nstep > 0) {
+		if (nstep > 0 && ncyl != 0) {
 			sdir = FDSTEPIN;
 			FDSETDIR(1);
 		} else {
