@@ -1,11 +1,9 @@
-/*	$NetBSD: sdlpi.c,v 1.1.1.1 1999/12/11 22:24:10 veego Exp $	*/
+/*	$NetBSD: sdlpi.c,v 1.1.1.1.8.1 2002/02/09 16:55:15 he Exp $	*/
 
 /*
  * (C)opyright 1992-1998 Darren Reed. (from tcplog)
  *
- * Redistribution and use in source and binary forms are permitted
- * provided that this notice is preserved and due credit is given
- * to the original author and the contributors.
+ * See the IPFILTER.LICENCE file for details on licencing.
  */
 
 #include <stdio.h>
@@ -42,7 +40,7 @@
 
 #if !defined(lint)
 static const char sccsid[] = "@(#)sdlpi.c	1.3 10/30/95 (C)1995 Darren Reed";
-static const char rcsid[] = "@(#)Id: sdlpi.c,v 2.1 1999/08/04 17:31:13 darrenr Exp";
+static const char rcsid[] = "@(#)Id: sdlpi.c,v 2.1.4.2 2001/06/26 10:43:22 darrenr Exp";
 #endif
 
 #define	CHUNKSIZE	8192
@@ -60,7 +58,8 @@ int	sport, tout;
 	char	devname[16], *s, buf[256];
 	int	i, fd;
 
-	(void) sprintf(devname, "/dev/%s", device);
+	(void) strcpy(devname, "/dev/");
+	(void) strncat(devname, device, sizeof(devname) - strlen(devname));
 
 	s = devname + 5;
 	while (*s && !isdigit(*s))
