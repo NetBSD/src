@@ -1,4 +1,4 @@
-/*	$NetBSD: if_el.c,v 1.43.4.1 1997/02/25 16:45:11 is Exp $	*/
+/*	$NetBSD: if_el.c,v 1.43.4.2 1997/02/26 16:28:16 is Exp $	*/
 
 /*
  * Copyright (c) 1994, Matthew E. Kimmel.  Permission is hereby granted
@@ -237,7 +237,7 @@ elattach(parent, self, aux)
 	ether_ifattach(ifp, myaddr);
 
 	/* Print out some information for the user. */
-	printf("%s: address %s\n", self->dv_xname, myaddr);
+	printf("%s: address %s\n", self->dv_xname, ether_sprintf(myaddr));
 
 	/* Finally, attach to bpf filter if it is present. */
 #if NBPFILTER > 0
