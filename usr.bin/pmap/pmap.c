@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.7 2002/10/17 17:18:34 atatat Exp $ */
+/*	$NetBSD: pmap.c,v 1.8 2002/10/29 14:50:53 thorpej Exp $ */
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: pmap.c,v 1.7 2002/10/17 17:18:34 atatat Exp $");
+__RCSID("$NetBSD: pmap.c,v 1.8 2002/10/29 14:50:53 thorpej Exp $");
 #endif
 
 #include <sys/types.h>
@@ -647,8 +647,8 @@ dump_vm_map_entry(kvm_t *kd, struct kbit *vmspace,
 		printf("%*s    start = %lx,", indent(2), "", vme->start);
 		printf(" end = %lx,", vme->end);
 		printf(" object.uvm_obj/sub_map = %p,\n", vme->object.uvm_obj);
-		printf("%*s    offset = %lx,", indent(2), "",
-		       (unsigned long)vme->offset);
+		printf("%*s    offset = %" PRIx64 ",", indent(2), "",
+		       vme->offset);
 		printf(" etype = %x <%s%s%s%s >,", vme->etype,
 		       vme->etype & UVM_ET_OBJ ? " OBJ" : "",
 		       vme->etype & UVM_ET_SUBMAP ? " SUBMAP" : "",
@@ -774,7 +774,7 @@ dump_vm_map_entry(kvm_t *kd, struct kbit *vmspace,
 	}
 
 	if (print_maps) {
-		printf("%*s%0*lx-%0*lx %c%c%c%c %0*lx %02x:%02x %d     %s\n",
+		printf("%*s%0*lx-%0*lx %c%c%c%c %0*" PRIx64 " %02x:%02x %d     %s\n",
 		       indent(2), "",
 		       (int)sizeof(void *) * 2, vme->start,
 		       (int)sizeof(void *) * 2, vme->end,
@@ -783,16 +783,16 @@ dump_vm_map_entry(kvm_t *kd, struct kbit *vmspace,
 		       (vme->protection & VM_PROT_EXECUTE) ? 'x' : '-',
 		       (vme->etype & UVM_ET_COPYONWRITE) ? 'p' : 's',
 		       (int)sizeof(void *) * 2,
-		       (unsigned long)vme->offset,
+		       vme->offset,
 		       major(dev), minor(dev), inode,
 		       (name[0] != ' ') || verbose ? name : "");
 	}
 
 	if (print_ddb) {
-		printf("%*s - %p: 0x%lx->0x%lx: obj=%p/0x%lx, amap=%p/%d\n",
+		printf("%*s - %p: 0x%lx->0x%lx: obj=%p/0x%" PRIx64 ", amap=%p/%d\n",
 		       indent(2), "",
 		       P(vm_map_entry), vme->start, vme->end,
-		       vme->object.uvm_obj, (unsigned long)vme->offset,
+		       vme->object.uvm_obj, vme->offset,
 		       vme->aref.ar_amap, vme->aref.ar_pageoff);
 		printf("\t%*ssubmap=%c, cow=%c, nc=%c, prot(max)=%d/%d, inh=%d, "
 		       "wc=%d, adv=%d\n",
@@ -841,8 +841,8 @@ dump_vm_map_entry(kvm_t *kd, struct kbit *vmspace,
 	if (print_all) {
 		sz = (size_t)((vme->end - vme->start) / 1024);
 		printf(A(vp) ?
-		       "%*s%0*lx-%0*lx %7luk %0*lx %c%c%c%c%c (%c%c%c) %d/%d/%d %02d:%02d %7d - %s [%p]\n" :
-		       "%*s%0*lx-%0*lx %7luk %0*lx %c%c%c%c%c (%c%c%c) %d/%d/%d %02d:%02d %7d - %s\n",
+		       "%*s%0*lx-%0*lx %7luk %0*" PRIx64 " %c%c%c%c%c (%c%c%c) %d/%d/%d %02d:%02d %7d - %s [%p]\n" :
+		       "%*s%0*lx-%0*lx %7luk %0*" PRIx64 " %c%c%c%c%c (%c%c%c) %d/%d/%d %02d:%02d %7d - %s\n",
 		       indent(2), "",
 		       (int)sizeof(void *) * 2,
 		       vme->start,
@@ -850,7 +850,7 @@ dump_vm_map_entry(kvm_t *kd, struct kbit *vmspace,
 		       vme->end - (vme->start != vme->end ? 1 : 0),
 		       (unsigned long)sz,
 		       (int)sizeof(void *) * 2,
-		       (unsigned long)vme->offset,
+		       vme->offset,
 		       (vme->protection & VM_PROT_READ) ? 'r' : '-',
 		       (vme->protection & VM_PROT_WRITE) ? 'w' : '-',
 		       (vme->protection & VM_PROT_EXECUTE) ? 'x' : '-',
