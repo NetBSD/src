@@ -1,4 +1,4 @@
-/*	$NetBSD: interrupt.c,v 1.3.4.4 2002/08/01 02:42:58 nathanw Exp $	*/
+/*	$NetBSD: interrupt.c,v 1.3.4.5 2002/08/02 09:28:29 gmcgarry Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -95,7 +95,7 @@ cpu_intr(status, cause, pc, ipending)
 			goto kerneltouchedFPU;
 		pmax_fpu_evcnt.ev_count++;
 #if !defined(SOFTFLOAT)
-		MachFPInterrupt(status, cause, pc, curproc->p_md.md_regs);
+		MachFPInterrupt(status, cause, pc, curlwp->l_md.md_regs);
 #endif
 	}
 
