@@ -1,11 +1,18 @@
+/*	$NetBSD: scaffold.c,v 1.2 1997/10/11 21:41:44 christos Exp $	*/
+
  /*
   * Routines for testing only. Not really industrial strength.
   * 
   * Author: Wietse Venema, Eindhoven University of Technology, The Netherlands.
   */
 
+#include <sys/cdefs.h>
 #ifndef lint
+#if 0
 static char sccs_id[] = "@(#) scaffold.c 1.5 95/01/03 09:13:48";
+#else
+__RCSID("$NetBSD: scaffold.c,v 1.2 1997/10/11 21:41:44 christos Exp $");
+#endif
 #endif
 
 /* System libraries. */
@@ -20,17 +27,18 @@ static char sccs_id[] = "@(#) scaffold.c 1.5 95/01/03 09:13:48";
 #include <syslog.h>
 #include <setjmp.h>
 #include <string.h>
+#include <stdlib.h>
 
 #ifndef INADDR_NONE
 #define	INADDR_NONE	(-1)		/* XXX should be 0xffffffff */
 #endif
 
-extern char *malloc();
-
 /* Application-specific. */
 
 #include "tcpd.h"
 #include "scaffold.h"
+
+static struct hostent *dup_hostent __P((struct hostent *));
 
  /*
   * These are referenced by the options module and by rfc931.c.
@@ -176,6 +184,7 @@ struct request_info *request;
     exit(0);
 }
 
+#if 0
 /* dummy function  to intercept the real rfc931() */
 
 /* ARGSUSED */
@@ -185,6 +194,7 @@ struct request_info *request;
 {
     strcpy(request->user, unknown);
 }
+#endif
 
 /* check_path - examine accessibility */
 

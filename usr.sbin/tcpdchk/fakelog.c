@@ -1,3 +1,5 @@
+/*	$NetBSD: fakelog.c,v 1.2 1997/10/11 21:41:36 christos Exp $	*/
+
  /*
   * This module intercepts syslog() library calls and redirects their output
   * to the standard output stream. For interactive testing.
@@ -5,20 +7,28 @@
   * Author: Wietse Venema, Eindhoven University of Technology, The Netherlands.
   */
 
+#include <sys/cdefs.h>
 #ifndef lint
+#if 0
 static char sccsid[] = "@(#) fakelog.c 1.3 94/12/28 17:42:21";
+#else
+__RCSID("$NetBSD: fakelog.c,v 1.2 1997/10/11 21:41:36 christos Exp $");
+#endif
 #endif
 
 #include <stdio.h>
+#include <syslog.h>
 
 #include "mystdarg.h"
+#include "percent_m.h"
 
 /* openlog - dummy */
 
 /* ARGSUSED */
 
+void
 openlog(name, logopt, facility)
-char   *name;
+const char   *name;
 int     logopt;
 int     facility;
 {
@@ -27,9 +37,10 @@ int     facility;
 
 /* vsyslog - format one record */
 
+void
 vsyslog(severity, fmt, ap)
 int     severity;
-char   *fmt;
+const char   *fmt;
 va_list ap;
 {
     char    buf[BUFSIZ];
@@ -43,19 +54,33 @@ va_list ap;
 
 /* VARARGS */
 
-VARARGS(syslog, int, severity)
+void
+#ifdef __STDC__
+syslog(int severity, const char *fmt, ...)
+#else
+syslog(va_alist)
+	va_dcl
+#endif
 {
     va_list ap;
+#ifndef __STDC__
+    int severity;
     char   *fmt;
 
-    VASTART(ap, int, severity);
+    va_start(ap);
+    severity = va_arg(ap, int);
+    fmt = va_arg(ap, char *);
+#else
+    va_start(ap, fmt);
+#endif
     fmt = va_arg(ap, char *);
     vsyslog(severity, fmt, ap);
-    VAEND(ap);
+    va_end(ap);
 }
 
 /* closelog - dummy */
 
+void
 closelog()
 {
     /* void */

@@ -4,9 +4,9 @@
   * Author: Wietse Venema, Eindhoven University of Technology, The Netherlands.
   */
 
-extern char *inet_cfg();		/* read inetd.conf file */
-extern void inet_set();			/* remember internet service */
-extern int inet_get();			/* look up internet service */
+char *inet_cfg __P((char *));		/* read inetd.conf file */
+void inet_set __P((char *, int));	/* remember internet service */
+int inet_get __P((char *));		/* look up internet service */
 
 #define WR_UNKNOWN	(-1)		/* service unknown */
 #define WR_NOT		1		/* may not be wrapped */

@@ -1,3 +1,5 @@
+/*	$NetBSD: inetcf.c,v 1.4 1997/10/11 21:41:37 christos Exp $	*/
+
  /*
   * Routines to parse an inetd.conf or tlid.conf file. This would be a great
   * job for a PERL script.
@@ -5,8 +7,13 @@
   * Author: Wietse Venema, Eindhoven University of Technology, The Netherlands.
   */
 
+#include <sys/cdefs.h>
 #ifndef lint
+#if 0
 static char sccsid[] = "@(#) inetcf.c 1.6 96/02/11 17:01:29";
+#else
+__RCSID("$NetBSD: inetcf.c,v 1.4 1997/10/11 21:41:37 christos Exp $");
+#endif
 #endif
 
 #include <sys/types.h>
@@ -16,11 +23,13 @@ static char sccsid[] = "@(#) inetcf.c 1.6 96/02/11 17:01:29";
 #include <string.h>
 #include <stdlib.h>
 
-extern int errno;
-extern void exit();
-
 #include "tcpd.h"
 #include "inetcf.h"
+#include "percent_m.h"
+#include "scaffold.h"
+
+static void inet_chk __P((char *, char *, char *, char *));
+static char *base_name __P((char *));
 
  /*
   * Programs that use libwrap directly are not in inetd.conf, and so must
@@ -50,9 +59,6 @@ char   *inet_files[] = {
     0,
 };
 
-static void inet_chk();
-static char *base_name();
-
  /*
   * Structure with everything we know about a service.
   */
@@ -72,7 +78,7 @@ char   *inet_cfg(conf)
 char   *conf;
 {
     char    buf[BUFSIZ];
-    FILE   *fp;
+    FILE   *fp = NULL;
     char   **wrapped;
     char   *service;
     char   *protocol;
@@ -81,7 +87,6 @@ char   *conf;
     char   *arg0;
     char   *arg1;
     struct tcpd_context saved_context;
-    char   *percent_m();
     int     i;
     struct stat st;
 
