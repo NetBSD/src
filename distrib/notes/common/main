@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.61.2.6 2000/11/01 03:47:58 tv Exp $
+.\"	$NetBSD: main,v 1.61.2.7 2000/11/13 11:04:47 lukem Exp $
 .\"
 .\" Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -124,7 +124,7 @@ is a completely integrated system.
 In addition to its highly portable, high performance kernel,
 .Nx
 features a complete set of user utilities, compilers for several
-languages, The X Window System,
+languages, The X Window System, firewall software
 and numerous other tools, all accompanied by full source code.
 .Pp
 .\" XXX Should we include some text here about NetBSD's license
@@ -140,11 +140,11 @@ wouldn't exist.
 .Pp
 The
 .Nx \*V
-release is a substantial improvement over its predecessors.  We have
-provided numerous significant functional enhancements, including
+release 
+provides numerous significant functional enhancements, including
 support for many new devices, integration of hundreds of bug fixes,
 new and updated kernel subsystems, and many userland enhancements. The
-results of these improvements is a stable operating system fit for
+result of these improvements is a stable operating system fit for
 production use that rivals most commercially available systems.
 .Pp
 It is impossible to completely summarize over one year of
@@ -164,17 +164,17 @@ sgimips,
 and
 sparc64.
 .It
-The performance and stability of the UVM virtual memory subsystem has improved.
+Improved performance and stability of the UVM virtual memory subsystem.
 .It
 Implementation of generic kernel locking code, as well as a
-restructure and re-tuning of the scheduler, to by used by the
+restructure and re-tuning of the scheduler, to be used by the
 future symmetric multi-processing (SMP) implementation.
 .It
-Compatibility support for Linux, OSF1, and SVR4 programs has been
-improved, and added for Win32 programs.
+Improved compatibility support for Linux, OSF1, and SVR4 programs.
 .It
-Dynamically loaded ELF kernel modules are now supported
-(on ports which use ELF).
+New compatibility support for Win32 programs.
+.It
+Support for dynamically loaded ELF kernel modules.
 .It
 Kernel process tracing using
 .Xr ktruss 1 .
@@ -196,14 +196,14 @@ audio, UDMA/66 support for ATA drives, USB, and wireless networking.
 .Ss2 Networking
 .
 .(bullet
-Addition of IP version 6 and IPsec to the networking stack, from the
-KAME project.
+Addition of IP version 6 (IPv6) and IPsec to the networking stack,
+from the KAME project.
 This includes addition of kernel code for IPv6/IPsec,
 IPv4/v6 dual-stack user applications and supporting libraries.
-Due to this, shlib major version for
+Due to this, the shlib major version for
 .Xr pcap 3
-is incremented and you may need a recompilation of your userland tools.
-The KAME IPv6 part includes result from unified-ipv6 effort.
+is incremented and you may need to recompile userland tools.
+The KAME IPv6 part includes results from the unified-ipv6 effort.
 .bullet)
 .
 .Ss2 File system
@@ -212,15 +212,15 @@ The KAME IPv6 part includes result from unified-ipv6 effort.
 Significant Fast file system (FFS) performance enhancements via
 integration of Kirk McKusick's soft updates and trickle sync code.
 .It
-Read-only support for the
+Support for the 
 .Tn "Windows NT"
 .Sq NTFS
-file system.
+file system (read-only at this stage).
 .It
-Support for the
+Support for revision 1 of the
 .Tn Linux
 .Sq extfs
-(revision 1) file system.
+file system.
 .It
 Enhanced stability and usability of LFS (the
 .Bx
@@ -232,16 +232,16 @@ file system
 .Pq Pa /
 on a RAID set.
 .It
-Support for the
+Support for
 .Tn Microsoft
 Joliet extensions to the ISO9660 CD file system.
 .It
-The file system vnode locking mechanisms have been improved,
-thus resolving a source of many panics in the past.
+Improved file system vnode locking mechanisms,
+thus resolving a source of several panics in the past.
 .It
-NFS (and RPC) are supported over IPv6.
+Support for NFS and RPC over IPv6.
 .It
-The NFS locking protocol (implemented with
+NFS locking (implemented with
 .Xr rpc.lockd 8 )
 now works.
 .bullet)
@@ -251,9 +251,9 @@ now works.
 .(bullet
 Strong cryptographic libraries and applications integrated,
 including the AES cipher Rijndael, the OpenSSL library, more
-complete Kerberos IV and Kerberos V support, and an SSH client.
+complete Kerberos IV and Kerberos V support, and an SSH server
+and client.
 .It
-Provide
 .Xr sysctl 3
 interfaces to various elements of process and system information,
 allowing programs such as
@@ -264,13 +264,13 @@ and remove the necessity to run setgid kmem (thus improving system
 security).
 .It
 Disable various services by default, and set the default options for
-disable daemons to a higher level of logging.
+disabled daemons to a higher level of logging.
 .bullet)
 .
 .Ss2 System administration and user tools
 .
 .(bullet
-Convert the
+Conversion of the
 .Xr rc 8
 system startup and shutdown scripts to an
 .Sq rc.d
@@ -278,26 +278,26 @@ mechanism, with separate control scripts for each service, and
 appropriate dependency ordering provided by
 .Xr rcorder 8 .
 .It
-Provide
 .Xr postfix 1
-as an alternate mail transport agent to
+provided as alternative mail transport agent to
 .Xr sendmail 8 .
 .It
-Addition of user management tools
+User management tools
 .Xr useradd 8 ,
 .Xr usermod 8 ,
 .Xr userdel 8 ,
 .Xr groupadd 8 ,
 .Xr groupmod 8 ,
 and
-.Xr groupdel 8 .
+.Xr groupdel 8
+added to the system.
 .It
 Incorporation of a login class capability database
 .Pq Pa /etc/login.conf
 from
 .Tn BSD/OS .
 .It
-Improve support for usernames longer than eight characters in programs
+Improved support for usernames longer than eight characters in programs
 such as
 .Xr at 1
 and
@@ -320,7 +320,7 @@ See the man page for details.
 .Ss2 Miscellaneous
 .
 .(bullet
-Update the
+Updates to the
 .Nx
 source code style code (located in
 .Pa /usr/share/misc/style )
@@ -333,13 +333,14 @@ Implementation of many SUSv2 features to the
 .Xr curses 3
 library, including support for color.
 .It
-Most third party packages that are shipped in the base system, including
+Updates of most third party packages that are shipped in the base
+system, including
 .Xr file 1 ,
 .Xr ipfilter 4 ,
 .Xr ppp 4 ,
 and
 .Xr sendmail 8
-have been updated to the latest stable release.
+to the latest stable release.
 .It
 Many new packages in the
 .Em pkgsrc
@@ -438,8 +439,6 @@ release is organized as follows:
 .Pp
 .Pa .../NetBSD-\*V/
 .(tag LAST_MINUTE
-.It Li BUGS
-Known bugs list (somewhat incomplete and out of date).
 .It Li CHANGES
 Changes since earlier
 .Nx
@@ -469,10 +468,13 @@ There are also
 .Pa README.export-control
 files sprinkled liberally throughout the
 distribution tree, which point out that there are some portions of the
-distribution (i.e. the
-.Sq domestic
-portion) that may be subject to
-export regulations of the United States.  It is your responsibility
+distribution that may be subject to
+export regulations of the United States, e.g.
+code under
+.Pa src/crypto
+and
+.Pa src/sys/crypto . 
+It is your responsibility
 to determine whether or not it is legal for you to export these portions
 and to act accordingly.
 .Pp
@@ -494,7 +496,7 @@ This set contains the
 .Dq pkgsrc
 sources, which contain the infrastructure to build third-party packages.
 .br
-.Em 7.1 MB gzipped, 61.0 MB uncompressed
+.Em 5.6 MB gzipped, 57.0 MB uncompressed
 .It Sy sharesrc
 This set contains the
 .Dq share
@@ -512,11 +514,11 @@ sources which are not in
 or
 .Sy syssrc .
 .br
-.Em 23.8 MB gzipped, 117.4 MB uncompressed
+.Em 24.2 MB gzipped, 120.6 MB uncompressed
 .It Sy syssrc
 This set contains the sources to the
 .Nx \*V
-kernel,
+kernel for all architectures,
 .Xr config 8 ,
 and
 .Xr dbsym 8 .
@@ -525,7 +527,7 @@ and
 .It Sy xsrc
 This set contains the sources to the X Window System.
 .br
-.Em 35.2 MB gzipped, 175.2 MB uncompressed
+.Em 35.2 MB gzipped, 176.8 MB uncompressed
 .tag)
 .Pp
 All the above source sets are located in the
@@ -537,14 +539,14 @@ unpacked into
 .Pa /usr/src
 with the command:
 .Pp
-.Dl # Ic "tar -C / -zxpf set_name.tgz"
+.Dl # Ic "( cd / ; tar -zxpf - ) < set_name.tgz"
 .Pp
 The
 .Pa sets/Split/
 subdirectory contains split
 versions of the source sets for those users who need to load the
 source sets from floppy or otherwise need a split distribution. The
-split sets are are named
+split sets are named
 .Pa "set_name." Ns Ar xx
 where
 .Pa set_name
@@ -564,7 +566,7 @@ The split distributions may be reassembled and extracted with
 .Ic cat
 as follows:
 .Pp
-.Dl # Ic "cat set_name.?? | tar -C / -xzpf -"
+.Dl # Ic "cat set_name.?? | ( cd / ; tar -zxpf - )"
 .Pp
 In each of the source distribution set directories, there are
 files which contain the checksums of the files in the directory:
@@ -761,7 +763,7 @@ is moved from
 .Pa /usr/sbin/sysctl
 to
 .Pa /sbin/sysctl .
-If you have hardcoded reference to full pathname
+If you have hardcoded references to the full pathname
 .Pq in shell scripts, for example
 please be sure to update those.
 .\"
@@ -789,7 +791,7 @@ is now called
 and so forth.
 If you have customized
 .Xr sendmail.cf 5
-and friends, you will need to move files to new location.
+and friends, you will need to move the files to the new locations.
 See
 .Pa /usr/share/sendmail/README
 for more information.
@@ -842,7 +844,7 @@ logging in, enter
 to read the documentation for
 .Xr passwd 1 .
 To view the documentation for
-.Xr passwd 5 m
+.Xr passwd 5 ,
 enter
 .Pp
 .Dl # Ic "man 5 passwd"
@@ -892,7 +894,9 @@ the cracks.
 There are also port-specific mailing lists, to discuss aspects of
 each port of
 .Nx .
-Use majordomo to find their addresses. If
+Use majordomo to find their addresses, or visit
+.Lk http://www.netbsd.org/MailingLists/ .
+If
 you're interested in doing a serious amount of work on a specific
 port, you probably should contact the
 .Sq owner
@@ -905,7 +909,7 @@ you could be useful, send us mail or subscribe to:
 .Pp
 As a favor, please avoid mailing huge documents or files to these
 mailing lists. Instead, put the material you would have sent up
-for FTP somewhere, then mail the appropriate list about it, or, if
+for FTP or WWW somewhere, then mail the appropriate list about it, or, if
 you'd rather not do that, mail the list saying you'll send the data
 to those who want it.
 .
