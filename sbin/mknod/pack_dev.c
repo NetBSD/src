@@ -1,4 +1,4 @@
-/*	$NetBSD: pack_dev.c,v 1.4 2003/05/08 09:38:03 lukem Exp $	*/
+/*	$NetBSD: pack_dev.c,v 1.5 2003/05/08 13:29:39 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: pack_dev.c,v 1.4 2003/05/08 09:38:03 lukem Exp $");
+__RCSID("$NetBSD: pack_dev.c,v 1.5 2003/05/08 13:29:39 christos Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -68,10 +68,10 @@ static	int	compare_format(const void *, const void *);
 
 
 	/* exported */
-dev_t
+portdev_t
 pack_native(int n, u_long numbers[])
 {
-	dev_t dev;
+	portdev_t dev;
 
 	if (n == 2) {
 		dev = makedev(numbers[0], numbers[1]);
@@ -85,10 +85,10 @@ pack_native(int n, u_long numbers[])
 }
 
 
-static dev_t
+static portdev_t
 pack_netbsd(int n, u_long numbers[])
 {
-	dev_t dev;
+	portdev_t dev;
 
 	if (n == 2) {
 		dev = makedev_netbsd(numbers[0], numbers[1]);
@@ -104,13 +104,13 @@ pack_netbsd(int n, u_long numbers[])
 
 #define	major_freebsd(x)	((int32_t)(((x) & 0x0000ff00) >> 8))
 #define	minor_freebsd(x)	((int32_t)(((x) & 0xffff00ff) >> 0))
-#define	makedev_freebsd(x,y)	((dev_t)((((x) << 8) & 0x0000ff00) | \
+#define	makedev_freebsd(x,y)	((portdev_t)((((x) << 8) & 0x0000ff00) | \
 					 (((y) << 0) & 0xffff00ff)))
 
-static dev_t
+static portdev_t
 pack_freebsd(int n, u_long numbers[])
 {
-	dev_t dev;
+	portdev_t dev;
 
 	if (n == 2) {
 		dev = makedev_freebsd(numbers[0], numbers[1]);
@@ -126,13 +126,13 @@ pack_freebsd(int n, u_long numbers[])
 
 #define	major_8_8(x)		((int32_t)(((x) & 0x0000ff00) >> 8))
 #define	minor_8_8(x)		((int32_t)(((x) & 0x000000ff) >> 0))
-#define	makedev_8_8(x,y)	((dev_t)((((x) << 8) & 0x0000ff00) | \
+#define	makedev_8_8(x,y)	((portdev_t)((((x) << 8) & 0x0000ff00) | \
 					 (((y) << 0) & 0x000000ff)))
 
-static dev_t
+static portdev_t
 pack_8_8(int n, u_long numbers[])
 {
-	dev_t dev;
+	portdev_t dev;
 
 	if (n == 2) {
 		dev = makedev_8_8(numbers[0], numbers[1]);
@@ -148,13 +148,13 @@ pack_8_8(int n, u_long numbers[])
 
 #define	major_12_20(x)		((int32_t)(((x) & 0xfff00000) >> 20))
 #define	minor_12_20(x)		((int32_t)(((x) & 0x000fffff) >>  0))
-#define	makedev_12_20(x,y)	((dev_t)((((x) << 20) & 0xfff00000) | \
+#define	makedev_12_20(x,y)	((portdev_t)((((x) << 20) & 0xfff00000) | \
 					 (((y) <<  0) & 0x000fffff)))
 
-static dev_t
+static portdev_t
 pack_12_20(int n, u_long numbers[])
 {
-	dev_t dev;
+	portdev_t dev;
 
 	if (n == 2) {
 		dev = makedev_12_20(numbers[0], numbers[1]);
@@ -170,13 +170,13 @@ pack_12_20(int n, u_long numbers[])
 
 #define	major_14_18(x)		((int32_t)(((x) & 0xfffc0000) >> 18))
 #define	minor_14_18(x)		((int32_t)(((x) & 0x0003ffff) >>  0))
-#define	makedev_14_18(x,y)	((dev_t)((((x) << 18) & 0xfffc0000) | \
+#define	makedev_14_18(x,y)	((portdev_t)((((x) << 18) & 0xfffc0000) | \
 					 (((y) <<  0) & 0x0003ffff)))
 
-static dev_t
+static portdev_t
 pack_14_18(int n, u_long numbers[])
 {
-	dev_t dev;
+	portdev_t dev;
 
 	if (n == 2) {
 		dev = makedev_14_18(numbers[0], numbers[1]);
@@ -192,13 +192,13 @@ pack_14_18(int n, u_long numbers[])
 
 #define	major_8_24(x)		((int32_t)(((x) & 0xff000000) >> 24))
 #define	minor_8_24(x)		((int32_t)(((x) & 0x00ffffff) >>  0))
-#define	makedev_8_24(x,y)	((dev_t)((((x) << 24) & 0xff000000) | \
+#define	makedev_8_24(x,y)	((portdev_t)((((x) << 24) & 0xff000000) | \
 					 (((y) <<  0) & 0x00ffffff)))
 
-static dev_t
+static portdev_t
 pack_8_24(int n, u_long numbers[])
 {
-	dev_t dev;
+	portdev_t dev;
 
 	if (n == 2) {
 		dev = makedev_8_24(numbers[0], numbers[1]);
@@ -215,14 +215,14 @@ pack_8_24(int n, u_long numbers[])
 #define	major_12_12_8(x)	((int32_t)(((x) & 0xfff00000) >> 20))
 #define	unit_12_12_8(x)		((int32_t)(((x) & 0x000fff00) >>  8))
 #define	subunit_12_12_8(x)	((int32_t)(((x) & 0x000000ff) >>  0))
-#define	makedev_12_12_8(x,y,z)	((dev_t)((((x) << 20) & 0xfff00000) | \
+#define	makedev_12_12_8(x,y,z)	((portdev_t)((((x) << 20) & 0xfff00000) | \
 					 (((y) <<  8) & 0x000fff00) | \
 					 (((z) <<  0) & 0x000000ff)))
 
-static dev_t
+static portdev_t
 pack_bsdos(int n, u_long numbers[])
 {
-	dev_t dev;
+	portdev_t dev;
 
 	if (n == 2) {
 		dev = makedev_12_20(numbers[0], numbers[1]);
