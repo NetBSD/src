@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.705 2004/05/31 05:27:33 itojun Exp $
+#	$NetBSD: mi,v 1.706 2004/06/02 14:10:14 pooka Exp $
 ./etc/mtree/set.comp				comp-sys-root
 ./usr/bin/addr2line				comp-debug-bin		bfd
 ./usr/bin/ar					comp-util-bin		bfd
@@ -3916,6 +3916,7 @@
 ./usr/share/man/cat3/pthread_spin_destroy.0	comp-c-catman		.cat
 ./usr/share/man/cat3/pthread_spin_init.0	comp-c-catman		.cat
 ./usr/share/man/cat3/pthread_spin_lock.0	comp-c-catman		.cat
+./usr/share/man/cat3/pthread_spin_trylock.0	comp-c-catman		.cat
 ./usr/share/man/cat3/pthread_spin_unlock.0	comp-c-catman		.cat
 ./usr/share/man/cat3/pthread_suspend_np.0	comp-c-catman		.cat
 ./usr/share/man/cat3/pthread_testcancel.0	comp-c-catman		.cat
@@ -7644,6 +7645,7 @@
 ./usr/share/man/man3/pthread_spin_destroy.3	comp-c-man		.man
 ./usr/share/man/man3/pthread_spin_init.3	comp-c-man		.man
 ./usr/share/man/man3/pthread_spin_lock.3	comp-c-man		.man
+./usr/share/man/man3/pthread_spin_trylock.3	comp-c-man		.man
 ./usr/share/man/man3/pthread_spin_unlock.3	comp-c-man		.man
 ./usr/share/man/man3/pthread_suspend_np.3	comp-c-man		.man
 ./usr/share/man/man3/pthread_testcancel.3	comp-c-man		.man
