@@ -1,4 +1,4 @@
-/*	$NetBSD: wivar.h,v 1.19 2002/09/23 14:31:28 thorpej Exp $	*/
+/*	$NetBSD: wivar.h,v 1.20 2002/09/30 06:29:30 onoe Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -42,7 +42,6 @@
 struct wi_softc	{
 	struct device		sc_dev;
 	struct ethercom		sc_ethercom;
-	struct ifnet		*sc_ifp;
 	void			*sc_ih; /* interrupt handler */
 	int			(*sc_enable) __P((struct wi_softc *));
 	void			(*sc_disable) __P((struct wi_softc *));
@@ -118,6 +117,8 @@ struct wi_softc	{
 	caddr_t			sc_bpf80211;
 	caddr_t			sc_bpf80211plus;
 };
+
+#define	sc_if			sc_ethercom.ec_if
 
 /* Values for wi_flags. */
 #define	WI_FLAGS_ATTACHED		0x0001

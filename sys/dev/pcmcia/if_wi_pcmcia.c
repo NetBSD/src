@@ -1,4 +1,4 @@
-/* $NetBSD: if_wi_pcmcia.c,v 1.26 2002/09/27 20:41:04 thorpej Exp $ */
+/* $NetBSD: if_wi_pcmcia.c,v 1.27 2002/09/30 06:29:30 onoe Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wi_pcmcia.c,v 1.26 2002/09/27 20:41:04 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wi_pcmcia.c,v 1.27 2002/09/30 06:29:30 onoe Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -472,7 +472,6 @@ wi_pcmcia_attach(parent, self, aux)
 		goto no_interrupt;
 	}
 
-	sc->sc_ifp = &sc->sc_ethercom.ec_if;
 	if (wi_attach(sc) != 0) {
 		printf("%s: failed to attach controller\n",
 		    sc->sc_dev.dv_xname);

@@ -1,4 +1,4 @@
-/*	$NetBSD: wi_hostap.c,v 1.2 2002/09/23 14:31:27 thorpej Exp $	*/
+/*	$NetBSD: wi_hostap.c,v 1.3 2002/09/30 06:29:29 onoe Exp $	*/
 /*	$OpenBSD: if_wi_hostap.c,v 1.19 2002/06/25 01:59:52 millert Exp $	*/
 
 /*
@@ -1078,7 +1078,7 @@ wihap_check_tx(struct wi_softc *sc, struct mbuf *m, u_int8_t *txrate)
 
 	if (sta == NULL || !(sta->flags & WI_SIFLAGS_ASSOC)) {
 		splx(s);
-		if (sc->sc_ifp->if_flags & IFF_DEBUG)
+		if (sc->sc_if.if_flags & IFF_DEBUG)
 			printf("%s: Host-AP: dropping unassoc dst %s\n",
 			    sc->sc_dev.dv_xname,
 			    ether_sprintf(addr));
