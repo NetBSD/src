@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_event.c,v 1.1.1.1.2.6 2001/09/08 02:33:48 thorpej Exp $	*/
+/*	$NetBSD: kern_event.c,v 1.1.1.1.2.7 2001/09/08 16:48:18 thorpej Exp $	*/
 /*-
  * Copyright (c) 1999,2000,2001 Jonathan Lemon <jlemon@FreeBSD.org>
  * All rights reserved.
@@ -453,6 +453,24 @@ filt_proc(struct knote *kn, long hint)
 	}
 
 	return (kn->kn_fflags != 0);
+}
+
+/*
+ * filt_seltrue:
+ *
+ *	This filter "event" routine simulates seltrue().
+ */
+int
+filt_seltrue(struct knote *kn, long hint)
+{
+
+	/*
+	 * We don't know how much data can be read/written,
+	 * but we know that it *can* be.  This is about as
+	 * good as select/poll does as well.
+	 */
+	kn->kn_data = 0;
+	return (1);
 }
 
 /*

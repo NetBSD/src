@@ -1,4 +1,4 @@
-/*	$NetBSD: event.h,v 1.1.1.1.2.3 2001/09/07 22:01:55 thorpej Exp $	*/
+/*	$NetBSD: event.h,v 1.1.1.1.2.4 2001/09/08 16:48:17 thorpej Exp $	*/
 /*-
  * Copyright (c) 1999,2000,2001 Jonathan Lemon <jlemon@FreeBSD.org>
  * All rights reserved.
@@ -210,6 +210,8 @@ extern int 	kqueue_register(struct kqueue *kq,
 extern int	kfilter_register(const char *name,
 		    const struct filterops *filtops, int *retfilter);
 extern int	kfilter_unregister(const char *name);
+
+extern int	filt_seltrue(struct knote *kn, long hint);
 
 #else 	/* !_KERNEL */
 
