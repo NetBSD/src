@@ -1,4 +1,4 @@
-/*	$NetBSD: alloc.c,v 1.1 2001/11/01 22:50:18 thorpej Exp $	*/
+/*	$NetBSD: alloc.c,v 1.2 2001/11/02 19:58:52 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -180,7 +180,7 @@ alloc(size)
 		 * to page size, and record the chunk size.
 		 */
 		size = roundup(size, NBPG);
-		help = OF_claim(0, size, NBPG);
+		help = OF_claim(NULL, size, NBPG);
 		if (help == (char *)-1)
 			panic("alloc: out of memory");
 
@@ -188,7 +188,7 @@ alloc(size)
 		f->size = size;
 #ifdef ALLOC_TRACE
 		printf("=%lx (new chunk size %u)\n",
-		    (u_long)(help + OVERHEAD), f->f_size);
+		    (u_long)(help + OVERHEAD), f->size);
 #endif
 		goto out;
 	}
@@ -235,7 +235,6 @@ free(ptr, size)
 void
 freeall()
 {
-#ifdef __notyet__		/* Firmware bug ?! */
 	struct ml *m;
 
 	/* Release chunks on freelist... */
@@ -249,5 +248,4 @@ freeall()
 		LIST_REMOVE(m, list);
 		OF_release(m, m->size);
 	}
-#endif /* __notyet__ */
 }
