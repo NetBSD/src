@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci.c,v 1.42 2003/02/04 18:41:20 augustss Exp $	*/
+/*	$NetBSD: ehci.c,v 1.43 2003/02/08 03:32:50 ichiro Exp $	*/
 
 /*
  * TODO
@@ -47,12 +47,12 @@
  * The EHCI 1.0 spec can be found at
  * http://developer.intel.com/technology/usb/download/ehci-r10.pdf
  * and the USB 2.0 spec at
- * http://www.usb.org/developers/data/usb_20.zip
+ * http://www.usb.org/developers/docs/usb_20.zip
  *
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.42 2003/02/04 18:41:20 augustss Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.43 2003/02/08 03:32:50 ichiro Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

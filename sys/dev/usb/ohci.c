@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci.c,v 1.137 2003/01/20 07:12:13 simonb Exp $	*/
+/*	$NetBSD: ohci.c,v 1.138 2003/02/08 03:32:50 ichiro Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ohci.c,v 1.22 1999/11/17 22:33:40 n_hibma Exp $	*/
 
 /*
@@ -42,11 +42,11 @@
  * USB Open Host Controller driver.
  *
  * OHCI spec: http://www.compaq.com/productinfo/development/openhci.html
- * USB spec: http://www.usb.org/developers/data/usbspec.zip
+ * USB spec: http://www.usb.org/developers/docs/usbspec.zip
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.137 2003/01/20 07:12:13 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.138 2003/02/08 03:32:50 ichiro Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

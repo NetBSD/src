@@ -1,4 +1,4 @@
-/*	$NetBSD: uhub.c,v 1.63 2003/01/02 03:20:09 dsainty Exp $	*/
+/*	$NetBSD: uhub.c,v 1.64 2003/02/08 03:32:51 ichiro Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhub.c,v 1.18 1999/11/17 22:33:43 n_hibma Exp $	*/
 
 /*
@@ -39,11 +39,11 @@
  */
 
 /*
- * USB spec: http://www.usb.org/developers/data/usbspec.zip
+ * USB spec: http://www.usb.org/developers/docs/usbspec.zip
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhub.c,v 1.63 2003/01/02 03:20:09 dsainty Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhub.c,v 1.64 2003/02/08 03:32:51 ichiro Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
