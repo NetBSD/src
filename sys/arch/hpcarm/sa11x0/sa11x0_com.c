@@ -1,4 +1,4 @@
-/*      $NetBSD: sa11x0_com.c,v 1.10 2001/05/30 15:24:30 lukem Exp $        */
+/*      $NetBSD: sa11x0_com.c,v 1.11 2001/06/29 17:22:51 toshii Exp $        */
 
 /*-
  * Copyright (c) 1998, 1999, 2001 The NetBSD Foundation, Inc.
@@ -215,6 +215,8 @@ sacom_attach(parent, self, aux)
 {
 	struct sacom_softc *sc = (struct sacom_softc*)self;
 	struct sa11x0_attach_args *sa = aux;
+
+	printf("\n");
 
 	sc->sc_iot = sa->sa_iot;
 	sc->sc_baseaddr = sa->sa_addr;

@@ -1,4 +1,4 @@
-/* $NetBSD: j720ssp.c,v 1.1 2001/06/23 09:20:05 toshii Exp $ */
+/* $NetBSD: j720ssp.c,v 1.2 2001/06/29 17:22:50 toshii Exp $ */
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -183,6 +183,8 @@ j720sspattach(struct device *parent, struct device *self, void *aux)
 	struct sa11x0_softc *psc = (void *)parent;
 	struct sa11x0_attach_args *sa = aux;
 	struct wskbddev_attach_args a;
+
+	printf("\n");
 
 	sc->sc_iot = psc->sc_iot;
 	sc->sc_gpioh = psc->sc_gpioh;

@@ -1,4 +1,4 @@
-/*	$NetBSD: sed_saip.c,v 1.4 2001/06/23 09:13:06 toshii Exp $	*/
+/*	$NetBSD: sed_saip.c,v 1.5 2001/06/29 17:22:50 toshii Exp $	*/
 
 /*-
  * Copyright (c) 1999-2001
@@ -119,6 +119,8 @@ sed1356attach(struct device *parent, struct device *self, void *aux)
 {
 	struct sed1356_softc *sc = (struct sed1356_softc *)self;
 	struct hpcfb_attach_args ha;
+
+	printf("\n");
 
 	if (attach_flag) {
 		panic("%s(%d): sed1356 attached twice", __FILE__, __LINE__);
