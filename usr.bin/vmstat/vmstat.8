@@ -1,4 +1,4 @@
-.\"	$NetBSD: vmstat.8,v 1.14 1998/02/13 05:10:33 thorpej Exp $
+.\"	$NetBSD: vmstat.8,v 1.15 1998/04/01 16:32:54 kleink Exp $
 .\"
 .\" Copyright (c) 1986, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -191,7 +191,7 @@ id	cpu idle
 .fi
 .RE
 .SH EXAMPLES
-The command ``vmstat -i 5'' will print what the system is doing every five
+The command ``vmstat -w 5'' will print what the system is doing every five
 seconds; this is a good choice of printing interval since this is how often
 some of the statistics are sampled in the system.
 Others vary every second and running the output for a while will make it
