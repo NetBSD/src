@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.10 1998/06/30 11:59:11 msaitoh Exp $	*/
+/*	$NetBSD: param.h,v 1.11 1998/12/13 15:04:01 minoura Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -51,6 +51,11 @@
 #define	_MACHINE	x68k
 #define	MACHINE		"x68k"
 
+/*
+ * Interrupt glue.
+ */
+#include <machine/intr.h>
+
 #define	PGSHIFT		12		/* LOG2(NBPG) */
 #define	KERNBASE	0x00000000	/* start of kernel virtual */
 
@@ -75,46 +80,6 @@
 # define	NKMEMCLUSTERS	(2048 * 1024 / CLBYTES)
 #endif
 
-/*
- * spl functions; all but spl0 are done in-line
- */
-#include <machine/psl.h>
-
-#define _spl(s) \
-({ \
-        register int _spl_r; \
-\
-        __asm __volatile ("clrl %0; movew sr,%0; movew %1,sr" : \
-                "&=d" (_spl_r) : "di" (s)); \
-        _spl_r; \
-})
-
-/* spl0 requires checking for software interrupts */
-void	spl0 __P((void));
-#define spl1()  _spl(PSL_S|PSL_IPL1)
-#define spl2()  _spl(PSL_S|PSL_IPL2)
-#define spl3()  _spl(PSL_S|PSL_IPL3)
-#define spl4()  _spl(PSL_S|PSL_IPL4)
-#define spl5()  _spl(PSL_S|PSL_IPL5)
-#define spl6()  _spl(PSL_S|PSL_IPL6)
-#define spl7()  _spl(PSL_S|PSL_IPL7)
-
-#define splnone()       spl0()
-#define splsoftclock()  spl1()  /* disallow softclock */
-#define splsoftnet()	spl1()	/* disallow softnet */
-#define splnet()        spl4()  /* disallow network */
-#define splbio()        spl3() 	/* disallow block I/O */
-#define splimp()        spl4()  /* disallow imput */
-#define spltty()        spl4()  /* disallow tty interrupts */
-#define splzs()         spl6()  /* disallow serial interrupts */
-#define splclock()      spl6()  /* disallow clock interrupt */
-#define splstatclock()  spl6()  /* disallow clock interrupt */
-#define splvm()         spl4()  /* disallow virtual memory operations */
-#define splhigh()       spl7()  /* disallow everything */
-#define splsched()      spl7()  /* disallow scheduling */
-
-/* watch out for side effects */
-#define splx(s)         ((s) & PSL_IPL ? _spl(s) : spl0())
 
 #if defined(_KERNEL) && !defined(_LOCORE)
 extern int	cpuspeed;

@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.12 1998/11/11 06:43:52 thorpej Exp $	*/
+/*	$NetBSD: cpu.h,v 1.13 1998/12/13 15:04:01 minoura Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -56,6 +56,11 @@
 #define	M68K_MMU_MOTOROLA
 
 /*
+ * Get interrupt glue.
+ */
+#include <machine/intr.h>
+
+/*
  * definitions of cpu-dependent requirements
  * referenced in generic code
  */
@@ -110,22 +115,6 @@ extern int astpending;		/* need to trap before returning to user mode */
 #define aston() (astpending++)
 
 /*
- * simulated software interrupt register
- */
-extern unsigned char ssir;
-
-#define SIR_NET		0x1
-#define SIR_CLOCK	0x2
-#define SIR_SERIAL	0x4
-#define SIR_KBD		0x8
-
-#define siroff(x)	ssir &= ~(x)
-#define setsoftnet()	ssir |= SIR_NET
-#define setsoftclock()	ssir |= SIR_CLOCK
-#define setsoftserial() ssir |= SIR_SERIAL
-#define setsoftkbd()    ssir |= SIR_KBD
-
-/*
  * CTL_MACHDEP definitions.
  */
 #define	CPU_CONSDEV		1	/* dev_t: console terminal device */
@@ -137,7 +126,7 @@ extern unsigned char ssir;
 }
 
 /*
- * The rest of this should probably be moved to ../x68k/x68kcpu.h,
+ * The rest of this should probably be moved to <machine/x68kcpu.h>
  * although some of it could probably be put into generic 68k headers.
  */
 
