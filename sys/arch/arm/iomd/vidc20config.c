@@ -1,4 +1,4 @@
-/*	$NetBSD: vidc20config.c,v 1.8 2002/03/10 15:47:44 bjh21 Exp $	*/
+/*	$NetBSD: vidc20config.c,v 1.9 2002/03/15 13:33:19 reinoud Exp $	*/
 
 /*
  * Copyright (c) 2001 Reinoud Zandijk
@@ -48,7 +48,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: vidc20config.c,v 1.8 2002/03/10 15:47:44 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vidc20config.c,v 1.9 2002/03/15 13:33:19 reinoud Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -64,6 +64,7 @@ __KERNEL_RCSID(0, "$NetBSD: vidc20config.c,v 1.8 2002/03/10 15:47:44 bjh21 Exp $
 #include <arm/iomd/iomdreg.h>
 #include <arm/iomd/iomdvar.h>
 #include <arm/iomd/vidc20config.h>
+
 
 /*
  * A structure containing ALL the information required to restore
@@ -123,7 +124,7 @@ struct vidc_state vidc_current[1];
 static int cold_init = 0;		/* flags initialisation */
 extern videomemory_t videomemory;
 
-static struct vidc_mode vidc_initialmode;
+static struct vidc_mode  vidc_initialmode;
 static struct vidc_mode *vidc_currentmode;
 
 unsigned int dispstart;
@@ -139,10 +140,10 @@ unsigned int transfersize;
 /* cursor stuff */
 char *cursor_normal;
 char *cursor_transparent;
-int p_cursor_normal;
-int p_cursor_transparent;
-int cursor_width;
-int cursor_height;
+int   p_cursor_normal;
+int   p_cursor_transparent;
+int   cursor_width;
+int   cursor_height;
 
 
 /*
@@ -164,6 +165,7 @@ vidcvideo_printdetails(void)
             videomemory.vidm_size / 1024,
             (videomemory.vidm_type == VIDEOMEM_TYPE_VRAM) ? "VRAM" : "DRAM");
 }
+
 
 /*
  * Common functions to directly access VIDC registers
@@ -242,7 +244,7 @@ void
 vidcvideo_setstate(vidc)
 	struct vidc_state *vidc;
 {
-	vidcvideo_write ( VIDC_PALREG,	vidc->palreg 	);
+	vidcvideo_write ( VIDC_PALREG,		vidc->palreg 	);
 	vidcvideo_write ( VIDC_BCOL,		vidc->bcol	);
 	vidcvideo_write ( VIDC_CP1,		vidc->cp1	);
 	vidcvideo_write ( VIDC_CP2,		vidc->cp2	);
@@ -295,7 +297,7 @@ vidcvideo_getmode(mode)
 void
 vidcvideo_stdpalette()
 {
-        WriteWord(vidc_base, VIDC_PALREG | 0x00000000);
+        WriteWord(vidc_base, VIDC_PALREG  | 0x00000000);
         WriteWord(vidc_base, VIDC_PALETTE | VIDC_COL(  0,   0,   0));
         WriteWord(vidc_base, VIDC_PALETTE | VIDC_COL(255,   0,   0));
         WriteWord(vidc_base, VIDC_PALETTE | VIDC_COL(  0, 255,   0));
@@ -421,7 +423,7 @@ void *vidcvideo_hwscroll_back(void *cookie) {
 }
 
 
-/* this function is to be called at vsync */
+/* this function is to be called perferably at vsync */
 void vidcvideo_progr_scroll(void) {
 	IOMD_WRITE_WORD(IOMD_VIDINIT, dispstart-ptov);
 	IOMD_WRITE_WORD(IOMD_VIDSTART, dispstart-ptov);
