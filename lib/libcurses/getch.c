@@ -1,4 +1,4 @@
-/*	$NetBSD: getch.c,v 1.19 2000/04/15 22:59:05 jdc Exp $	*/
+/*	$NetBSD: getch.c,v 1.20 2000/04/17 12:25:46 blymn Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)getch.c	8.2 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: getch.c,v 1.19 2000/04/15 22:59:05 jdc Exp $");
+__RCSID("$NetBSD: getch.c,v 1.20 2000/04/17 12:25:46 blymn Exp $");
 #endif
 #endif					/* not lint */
 
@@ -80,13 +80,19 @@ struct key_entry {
 				 * it is the end of a multi-char sequence or a
 				 * single char key that generates a symbol */
 
+/* allocate this many key_entry structs at once to speed start up must
+ * be a power of 2.
+ */
+#define KEYMAP_ALLOC_CHUNK 4
+
 /* The max number of different chars we can receive */
 #define MAX_CHAR 256
 
 struct keymap {
 	int	count;		/* count of number of key structs allocated */
 	short	mapping[MAX_CHAR]; /* mapping of key to allocated structs */
-	key_entry_t **key;	/* dynamic array of keys */};
+	key_entry_t **key;	/* dynamic array of keys */
+};
 
 
 /* Key buffer */
@@ -109,7 +115,7 @@ static short	state;		/* state of the inkey function */
 
 /* The termcap data we are interested in and the symbols they map to */
 struct tcdata {
-	char	*name;		/* name of termcap entry */
+	const char	*name;	/* name of termcap entry */
 	wchar_t	symbol;		/* the symbol associated with it */
 };
 
@@ -159,9 +165,89 @@ static const int num_tcs = (sizeof(tc) / sizeof(struct tcdata));
 static keymap_t *base_keymap;
 
 /* prototypes for private functions */
+static key_entry_t *add_new_key(keymap_t *current, char chr, int key_type,
+				int symbol);
 static keymap_t		*new_keymap(void);	/* create a new keymap */
 static key_entry_t	*new_key(void);		/* create a new key entry */
-static wchar_t		inkey(int, int);
+static wchar_t		inkey(int to, int delay);
+
+/*
+ * Add a new key entry to the keymap pointed to by current.  Entry
+ * contains the character to add to the keymap, type is the type of
+ * entry to add (either multikey or leaf) and symbol is the symbolic
+ * value for a leaf type entry.  The function returns a pointer to the
+ * new keymap entry.
+ */
+static key_entry_t *
+add_new_key(keymap_t *current, char chr, int key_type, int symbol)
+{
+	key_entry_t *the_key;
+        int i;
+
+#ifdef DEBUG
+	__CTRACE("Adding character %s of type %d, symbol 0x%x\n", unctrl(chr),
+		 key_type, symbol);
+#endif
+	if (current->mapping[(unsigned) chr] < 0) {
+		  /* first time for this char */
+		current->mapping[(unsigned) chr] = current->count;	/* map new entry */
+		  /* make sure we have room in the key array first */
+		if ((current->count & (KEYMAP_ALLOC_CHUNK - 1)) == 0)
+		{
+			if ((current->key =
+			     realloc(current->key,
+				     (current->count) * sizeof(key_entry_t *)
+				     + KEYMAP_ALLOC_CHUNK * sizeof(key_entry_t *))) == NULL) {
+				fprintf(stderr,
+					"Could not malloc for key entry\n");
+				exit(1);
+			}
+			
+			the_key = new_key();
+                        for (i = 0; i < KEYMAP_ALLOC_CHUNK; i++) {
+                                current->key[current->count + i]
+					= &the_key[i];
+                        }
+                }
+                
+                  /* point at the current key array element to use */
+                the_key = current->key[current->count];
+                                                
+		the_key->type = key_type;
+
+		switch (key_type) {
+		  case KEYMAP_MULTI:
+			    /* need for next key */
+#ifdef DEBUG
+			  __CTRACE("Creating new keymap\n");
+#endif
+			  the_key->value.next = new_keymap();
+			  break;
+
+		  case KEYMAP_LEAF:
+				/* the associated symbol for the key */
+#ifdef DEBUG
+			  __CTRACE("Adding leaf key\n");
+#endif
+			  the_key->value.symbol = symbol;
+			  break;
+
+		  default:
+			  fprintf(stderr, "add_new_key: bad type passed\n");
+			  exit(1);
+		}
+		
+		current->count++;
+	} else {
+		  /* the key is already known - just return the address. */
+#ifdef DEBUG
+		__CTRACE("Keymap already known\n");
+#endif
+		the_key = current->key[current->mapping[(unsigned) chr]];
+	}
+
+        return the_key;
+}
 
 /*
  * Init_getch - initialise all the pointers & structures needed to make
@@ -171,12 +257,15 @@ static wchar_t		inkey(int, int);
 void
 __init_getch(char *sp)
 {
-static struct tinfo *termcap;
+	static	struct tinfo *termcap;
 	char entry[1024], termname[1024], *p;
-	int i, j, length;
-        size_t limit;
+	int     i, j, length, key_ent;
+	size_t limit;
+	key_entry_t *tmp_key;
 	keymap_t *current;
-	key_entry_t *the_key;
+#ifdef DEBUG
+	int k;
+#endif
 
 	/* init the inkey state variable */
 	state = INKEY_NORM;
@@ -191,71 +280,52 @@ static struct tinfo *termcap;
 	(void) strncpy(termname, sp, (size_t) 1022);
 	termname[1023] = 0;
 
-	if (t_getent(&termcap, termname) <= 0)
-		return;
+	if (t_getent(&termcap, termname) > 0) {
+		for (i = 0; i < num_tcs; i++) {
+			p = entry;
+			limit = 1023;
+			if (t_getstr(termcap, tc[i].name, &p, &limit) != NULL) {
+				current = base_keymap;	/* always start with
+							 * base keymap. */
+				length = (int) strlen(entry);
+#ifdef DEBUG
+				__CTRACE("Processing termcap entry %s, sequence ",
+					tc[i].name);
+				for (k = 0; k <= length -1; k++)
+					__CTRACE("%s", unctrl(entry[k]));
+				__CTRACE("\n");
+#endif
+				for (j = 0; j < length - 1; j++) {
+					  /* add the entry to the struct */
+                                        tmp_key = add_new_key(current,
+							      entry[j],
+							      KEYMAP_MULTI, 0);
+					
+                                          /* index into the key array - it's
+                                             clearer if we stash this */
+                                        key_ent = current->mapping[
+                                                (unsigned) entry[j]];
 
-	for (i = 0; i < num_tcs; i++) {
-
-		p = entry;
-                limit = 1023;
-		if (t_getstr(termcap, tc[i].name, &p, &limit) == NULL)
-			continue;
-
-		current = base_keymap;	/* always start with base keymap. */
-		length = (int) strlen(entry);
-
-		for (j = 0; j < length - 1; j++) {
-			if (current->mapping[(unsigned) entry[j]] < 0) {
-				/* first time for this char */
-				current->mapping[(unsigned) entry[j]] = current->count;	/* map new entry */
-				the_key = new_key();
-				/* multikey coz we are here */
-				the_key->type = KEYMAP_MULTI;
-
-				/* need for next key */
-				the_key->value.next = new_keymap();
-
-				/* put into key array */
-				if ((current->key = realloc(current->key, (current->count + 1) * sizeof(key_entry_t *))) == NULL) {
-					fprintf(stderr,
-						"Could not malloc for key entry\n");
-					exit(1);
+					current->key[key_ent] = tmp_key;
+					
+					  /* next key uses this map... */
+					current = current->key[key_ent]->value.next;
 				}
 
-				current->key[current->count++] = the_key;
-
-			}
-			/* next key uses this map... */
-			current = current->key[current->mapping[(unsigned) entry[j]]]->value.next;
-		}
-
-		/*
-		 * This is the last key in the sequence (it may have been
-		 * the only one but that does not matter) this means it is
-		 * a leaf key and should have a symbol associated with it.
-		 */
-		if (current->count > 0) {
-			/*
-			 * If there were other keys then we need to
-			 * extend the mapping array.
-			 */
-			if ((current->key =
-				realloc(current->key,
-					(current->count + 1) *
-					sizeof(key_entry_t *))) == NULL) {
-
-				fprintf(stderr,
-					"Could not malloc for key entry\n");
-				exit(1);
+				/* this is the last key in the sequence (it
+				 * may have been the only one but that does
+				 * not matter) this means it is a leaf key and
+				 * should have a symbol associated with it.
+				 */
+				tmp_key = add_new_key(current,
+						      entry[length - 1],
+						      KEYMAP_LEAF,
+						      tc[i].symbol);
+				current->key[
+					current->mapping[(int)entry[length - 1]]] =
+                                        tmp_key;
 			}
 		}
-		current->mapping[(unsigned) entry[length - 1]] = current->count;
-		the_key = new_key();
-		the_key->type = KEYMAP_LEAF;	/* leaf key */
-
-		/* the associated symbol */
-		the_key->value.symbol = tc[i].symbol;
-		current->key[current->count++] = the_key;
 	}
 }
 
@@ -282,13 +352,9 @@ new_keymap(void)
 		new_map->mapping[i] = -1;	/* no mapping for char */
 	}
 
-	/* one does assume there will be at least one key mapped.... */
-	if ((new_map->key = malloc(sizeof(key_entry_t *))) == NULL) {
-		perror("Could not malloc first key ent");
-		exit(1);
-	}
-
-	return (new_map);
+          /* key array will be allocated when first key is added */
+        
+	return new_map;
 }
 
 /*
@@ -300,15 +366,20 @@ static key_entry_t *
 new_key(void)
 {
 	key_entry_t *new_one;
-
-	if ((new_one = malloc(sizeof(key_entry_t))) == NULL) {
-		perror("inkey: Cannot allocate new key entry");
+	int i;
+	
+	if ((new_one = malloc(KEYMAP_ALLOC_CHUNK * sizeof(key_entry_t)))
+	    == NULL) {
+		perror("inkey: Cannot allocate new key entry chunk");
 		exit(2);
 	}
-	new_one->type = 0;
-	new_one->value.next = NULL;
 
-	return (new_one);
+	for (i = 0; i < KEYMAP_ALLOC_CHUNK; i++) {
+		new_one[i].type = 0;
+		new_one[i].value.next = NULL;
+	}
+	
+	return new_one;
 }
 
 /*
@@ -318,13 +389,12 @@ new_key(void)
  */
 
 wchar_t
-inkey(to, delay)
-	int     to, delay;
+inkey(int to, int delay)
 {
-	wchar_t	       k;
-	ssize_t	       nchar;
-	unsigned char  c;
-	keymap_t       *current = base_keymap;
+	wchar_t	k;
+	ssize_t     nchar;
+	char    c;
+	keymap_t *current = base_keymap;
 
 	for (;;) {		/* loop until we get a complete key sequence */
 reread:
@@ -398,7 +468,7 @@ reread:
 		}
 
 		/* Check key has no special meaning and we have not timed out */
-		if ((current->mapping[k] < 0) || (state == INKEY_TIMEOUT)) {
+		if ((state == INKEY_TIMEOUT) || (current->mapping[k] < 0)) {
 			/* return the first key we know about */
 			k = inbuf[start];
 
@@ -553,10 +623,10 @@ wgetch(WINDOW *win)
 	}
 #ifdef DEBUG
 	if (inp > 255)
-		/* we have a key symbol - treat it differently */
-		/* XXXX perhaps __unctrl should be expanded to include
-	 	 * XXXX the keysyms in the table....
-		 */
+		  /* we have a key symbol - treat it differently */
+		  /* XXXX perhaps __unctrl should be expanded to include
+		   * XXXX the keysyms in the table....
+		   */
 		__CTRACE("wgetch assembled keysym 0x%x\n", inp);
 	else
 		__CTRACE("wgetch got '%s'\n", unctrl(inp));

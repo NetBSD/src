@@ -1,4 +1,4 @@
-/*	$NetBSD: setterm.c,v 1.16 2000/04/15 13:17:04 blymn Exp $	*/
+/*	$NetBSD: setterm.c,v 1.17 2000/04/17 12:25:46 blymn Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)setterm.c	8.8 (Berkeley) 10/25/94";
 #else
-__RCSID("$NetBSD: setterm.c,v 1.16 2000/04/15 13:17:04 blymn Exp $");
+__RCSID("$NetBSD: setterm.c,v 1.17 2000/04/17 12:25:46 blymn Exp $");
 #endif
 #endif /* not lint */
 
@@ -188,7 +188,8 @@ setterm(char *type)
 static void
 zap()
 {
-	char *namp, ***sp;
+	const char *namp;
+        char ***sp;
 	int  **vp;
 	char **fp;
 	char tmp[3];
