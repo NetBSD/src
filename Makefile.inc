@@ -1,9 +1,13 @@
-#	$NetBSD: Makefile.inc,v 1.2 2000/05/03 00:08:13 sjg Exp $
+#	$NetBSD: Makefile.inc,v 1.3 2000/05/06 15:05:15 sjg Exp $
 
 .ifndef ABSTOP
 ABSTOP!= cd ${.PARSEDIR}; pwd
 
+.if (${.PARSEDIR} == ${.CURDIR})
+RELTOP:= .
+.else
 RELTOP:= ${.PARSEDIR:S,^${.CURDIR},,}
+.endif
 
 KERNSRCDIR:=${ABSTOP}/sys
 
