@@ -33,7 +33,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)print.c	5.9 (Berkeley) 7/1/91";*/
-static char rcsid[] = "$Id: print.c,v 1.9 1993/08/14 12:30:04 mycroft Exp $";
+static char rcsid[] = "$Id: print.c,v 1.10 1994/05/05 02:04:30 cgd Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -48,7 +48,7 @@ static char rcsid[] = "$Id: print.c,v 1.9 1993/08/14 12:30:04 mycroft Exp $";
 #include <vis.h>
 #include "ps.h"
 
-#ifdef SPPWAIT
+#ifdef P_PPWAIT
 #define NEWVM
 #endif
 
@@ -169,10 +169,10 @@ state(k, v)
 		break;
 
 	case SSLEEP:
-		if (flag & SSINTR)	/* interuptable (long) */
+		if (flag & P_SINTR)	/* interuptable (long) */
 			*cp = p->p_slptime >= MAXSLP ? 'I' : 'S';
 		else
-			*cp = (flag & SPAGE) ? 'P' : 'D';
+			*cp = 'D';
 		break;
 
 	case SRUN:
@@ -188,7 +188,7 @@ state(k, v)
 		*cp = '?';
 	}
 	cp++;
-	if (flag & SLOAD) {
+	if (flag & P_INMEM) {
 #ifndef NEWVM
 		if (p->p_rssize > p->p_maxrss)
 			*cp++ = '>';
@@ -205,25 +205,25 @@ state(k, v)
 	else if (flag & SSEQL)
 		*cp++ = 'S';
 #endif
-	if (flag & STRC)
+	if (flag & P_TRACED)
 		*cp++ = 'X';
-	if (flag & SWEXIT && p->p_stat != SZOMB)
+	if (flag & P_WEXIT && p->p_stat != SZOMB)
 		*cp++ = 'E';
 #ifdef NEWVM
-	if (flag & SPPWAIT)
+	if (flag & P_PPWAIT)
 #else
 	if (flag & SVFORK)
 #endif
 		*cp++ = 'V';
 #ifdef NEWVM
-	if (flag & (SSYS|SLOCK|SKEEP|SPHYSIO))
+	if (flag & (P_SYSTEM|P_NOSWAP|P_PHYSIO))
 #else
-	if (flag & (SSYS|SLOCK|SULOCK|SKEEP|SPHYSIO))
+	if (flag & (P_SYSTEM|P_NOSWAP|P_PHYSIO))
 #endif
 		*cp++ = 'L';
 	if (k->ki_e->e_flag & EPROC_SLEADER)
 		*cp++ = 's';
-	if ((flag & SCTTY) && k->ki_e->e_pgid == k->ki_e->e_tpgid)
+	if ((flag & P_CONTROLT) && k->ki_e->e_pgid == k->ki_e->e_tpgid)
 		*cp++ = '+';
 	*cp = '\0';
 	(void) printf("%-*s", v->width, buf);
@@ -460,7 +460,7 @@ getpcpu(k)
 #define	fxtofl(fixpt)	((double)(fixpt) / fscale)
 
 	/* XXX - I don't like this */
-	if (p->p_time == 0 || (p->p_stat == SZOMB) || (p->p_flag & SLOAD) == 0)
+	if (p->p_time == 0 || (p->p_stat == SZOMB) || (p->p_flag & P_INMEM) == 0)
 		return (0.0);
 	if (rawcpu)
 		return (100.0 * fxtofl(p->p_pctcpu));
@@ -493,7 +493,7 @@ getpmem(k)
 
 	p = k->ki_p;
 	e = k->ki_e;
-	if ((p->p_flag & SLOAD) == 0 || (p->p_stat == SZOMB))
+	if ((p->p_flag & P_INMEM) == 0 || (p->p_stat == SZOMB))
 		return (0.0);
 #ifndef NEWVM
 	szptudot = UPAGES + clrnd(ctopt(p->p_dsize + p->p_ssize + e->e_xsize));

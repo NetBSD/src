@@ -33,7 +33,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)keyword.c	5.9 (Berkeley) 6/3/91";*/
-static char rcsid[] = "$Id: keyword.c,v 1.4 1993/08/01 18:59:09 mycroft Exp $";
+static char rcsid[] = "$Id: keyword.c,v 1.5 1994/05/05 02:04:26 cgd Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -47,7 +47,7 @@ static char rcsid[] = "$Id: keyword.c,v 1.4 1993/08/01 18:59:09 mycroft Exp $";
 #include <string.h>
 #include "ps.h"
 
-#ifdef SPPWAIT
+#ifdef P_PPWAIT
 #define NEWVM
 #endif
 
@@ -209,7 +209,6 @@ VAR var[] = {
 	{"oublk", "OUBLK", NULL, USER, rvar, 4, ROFF(ru_oublock), LONG, "d"},
 	{"oublock", "", "oublk"},
 	{"p_ru", "P_RU", NULL, 0, pvar, 6, POFF(p_ru), KPTR, "x"},
-	{"paddr", "PADDR", NULL, 0, evar, 6, EOFF(e_paddr), KPTR, "x"},
 	{"pagein", "PAGEIN", NULL, USER, pagein, 6},
 	{"pcpu", "", "%cpu"},
 	{"pending", "", "sig"},

@@ -39,7 +39,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)w.c	5.29 (Berkeley) 4/23/91";*/
-static char rcsid[] = "$Id: w.c,v 1.9 1993/10/26 20:52:51 mycroft Exp $";
+static char rcsid[] = "$Id: w.c,v 1.10 1994/05/05 02:08:58 cgd Exp $";
 #endif /* not lint */
 
 /*
@@ -64,7 +64,7 @@ static char rcsid[] = "$Id: w.c,v 1.9 1993/10/26 20:52:51 mycroft Exp $";
 #include <stdio.h>
 #include <vis.h>
 
-#ifdef SPPWAIT
+#ifdef P_PPWAIT
 #define NEWVM
 #endif
 #ifndef NEWVM
@@ -242,7 +242,7 @@ main(argc, argv)
 	}
 
 	while ((p = kvm_nextproc()) != NULL) {
-		if (p->p_stat == SZOMB || (p->p_flag & SCTTY) == 0)
+		if (p->p_stat == SZOMB || (p->p_flag & P_CONTROLT) == 0)
 			continue;
 		e = kvm_geteproc(p);
 		for (ep = ehead; ep != NULL; ep = ep->next) {
