@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.71 2001/05/16 05:36:56 matt Exp $	     */
+/*	$NetBSD: vm_machdep.c,v 1.72 2001/05/29 21:26:44 ragge Exp $	     */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -79,6 +79,20 @@ pagemove(caddr_t from, caddr_t to, size_t size)
 	mtpr(0, PR_TBIA);
 }
 
+#ifdef MULTIPROCESSOR
+static void
+procjmp(void *arg)
+{
+	struct pcb *pcb = arg;
+	void (*func)(void *);
+
+	func = (void *)pcb->R[0];
+	arg = (void *)pcb->R[1];
+	proc_trampoline_mp();
+	(*func)(arg);
+}
+#endif
+
 /*
  * Finish a fork operation, with process p2 nearly set up.
  * Copy and update the pcb and trap frame, making the child ready to run.
@@ -158,7 +172,14 @@ cpu_fork(struct proc *p1, struct proc *p2, void *stack, size_t stacksize,
 	pcb->KSP = (long)cf;
 	pcb->FP = (long)cf;
 	pcb->AP = (long)&cf->ca_argno;
+#ifdef MULTIPROCESSOR
+	cf->ca_arg1 = (long)pcb;
+	pcb->PC = (long)procjmp + 2;
+	pcb->R[0] = (int)func;
+	pcb->R[1] = (int)arg;
+#else
 	pcb->PC = (int)func + 2;	/* Skip save mask */
+#endif
 
 	/*
 	 * If specified, give the child a different stack.
