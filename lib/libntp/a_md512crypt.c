@@ -7,7 +7,7 @@
 #include "md5.h"
 #include "ntp_stdlib.h"
 
-extern u_long cache_keyid;
+extern u_int32 cache_keyid;
 extern char *cache_key;
 extern int cache_keylen;
 
@@ -44,7 +44,7 @@ static MD5_CTX ctx;
 
 void
 MD5auth1crypt(keyno, pkt, length)
-    u_long keyno;
+    u_int32 keyno;
     u_int32 *pkt;
     int length;	/* length of all encrypted data */
 {
@@ -70,7 +70,7 @@ MD5auth1crypt(keyno, pkt, length)
  */
 int
 MD5auth2crypt(keyno, pkt, length)
-    u_long keyno;
+    u_int32 keyno;
     u_int32 *pkt;
     int length;	/* total length of encrypted area */
 {

@@ -35,7 +35,7 @@ atolfp(str, lfp)
 	char *ind;
 	int ndec;
 	int isneg;
-	static char *digits = "0123456789";
+	static const char *digits = "0123456789";
 
 	isneg = 0;
 	dec_i = dec_f = 0;

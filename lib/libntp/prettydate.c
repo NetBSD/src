@@ -20,11 +20,11 @@ prettydate(ts)
 	struct tm *tm;
 	time_t sec;
 	u_long msec;
-	static char *months[] = {
+	static const char *months[] = {
 		"Jan", "Feb", "Mar", "Apr", "May", "Jun",
 		"Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
 	};
-	static char *days[] = {
+	static const char *days[] = {
 		"Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"
 	};
 

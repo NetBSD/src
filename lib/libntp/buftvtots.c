@@ -16,7 +16,7 @@ buftvtots(bufp, ts)
 	register u_long usec;
 
 #ifdef XNTP_BIG_ENDIAN
-	bp = (u_char *)bufp;
+	bp = (const u_char *)bufp;
 
 	sec = (u_long)*bp++ & 0xff;
 	sec <<= 8;

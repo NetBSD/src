@@ -319,6 +319,7 @@ adj_systime(now)
 	 */
 	if (
 #ifndef SYS_WINNT
+        /* casey - we need a posix type thang here */
 	    (adjtime(&adjtv, &oadjtv) < 0)
 #else
 	    (!SetSystemTimeAdjustment(dwTimeAdjustment, FALSE))
@@ -436,7 +437,13 @@ step_systime_real(now)
 	}
 #if DEBUG
 	if (debug) {
-		GETTIMEOFDAY(&timetv, (struct timezone *) 0);
+#ifdef HAVE_GETCLOCK
+        (void) getclock(TIMEOFDAY, &ts);
+        timetv.tv_sec = ts.tv_sec;
+        timetv.tv_usec = ts.tv_nsec / 1000;
+#else /*  not HAVE_GETCLOCK */
+	(void) GETTIMEOFDAY(&timetv, (struct timezone *)0);
+#endif /* not HAVE_GETCLOCK */
 		printf("step: new timetv = %s sec\n", utvtoa(&timetv));
 	}
 #endif

@@ -15,7 +15,7 @@
  */
 struct codestring {
 	int code;
-	char *string;
+	const char *string;
 };
 
 /*

@@ -7,7 +7,7 @@
 #include "md5.h"
 #include "ntp_stdlib.h"
 
-extern u_long cache_keyid;
+extern u_int32 cache_keyid;
 extern char *cache_key;
 extern int cache_keylen;
 
@@ -34,7 +34,7 @@ extern u_int32 authnokey;
 
 int
 MD5authdecrypt(keyno, pkt, length)
-    u_long keyno;
+    u_int32 keyno;
     const u_int32 *pkt;
     int length;		/* length of variable data in octets */
 {
@@ -53,7 +53,7 @@ MD5authdecrypt(keyno, pkt, length)
     MD5Update(&ctx, (unsigned const char *)pkt, length);
     MD5Final(&ctx);
 
-    return (!memcmp((char *)ctx.digest,
-		    (char *)pkt + length + 4,
+    return (!memcmp((const char *)ctx.digest,
+		    (const char *)pkt + length + 4,
 		    BLOCK_OCTETS));
 }

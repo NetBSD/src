@@ -83,7 +83,7 @@ authreadkeys(file)
 	FILE *fp;
 	char *line;
 	char *token;
-	u_long keyno;
+	u_int32 keyno;
 	int keytype;
 	char buf[512];		/* lots of room for line? */
 #if !defined(VMS)   /* wjm - what are these lines doing here? */

@@ -28,7 +28,7 @@ int	ntp_opterr = 1;	/* for compatibility, should error be printed? */
 int	ntp_optopt;	/* for compatibility, option character checked */
 
 static char	*scan = NULL;	/* Private scan pointer. */
-static char	*prog = "amnesia";
+static const char	*prog = "amnesia";
 
 /*
  * Print message about a bad option.

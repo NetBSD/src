@@ -6,12 +6,12 @@
 #include "lib_strbuf.h"
 #include "ntp_stdlib.h"
 
-char *
+const char *
 modetoa(mode)
 	int mode;
 {
 	char *bp;
-	static char *modestrings[] = {
+	static const char *modestrings[] = {
 		"unspec",
 		"sym_active",
 		"sym_passive",

@@ -64,6 +64,10 @@ struct clktype clktypes[] = {
 	    "TRUETIME" },
 	{ REFCLK_GPS_HP,	"HP 58503A GPS Time & Frequency Receiver (26)",
 	    "GPS_HP" },
+	{ REFCLK_ARCRON_MSF,	"ARCRON MSF (and DCF77) Receiver (27)",
+	    "ARCRON_MSF" },
+	{ REFCLK_SHM,		"Clock attached thru shared Memory (28)",
+	    "SHM" },
 	{ -1,			"", "" }
 };
 

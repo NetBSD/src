@@ -18,7 +18,7 @@ hextolfp(str, lfp)
 	register u_long dec_i;
 	register u_long dec_f;
 	char *ind = NULL;
-	static char *digits = "0123456789abcdefABCDEF";
+	static const char *digits = "0123456789abcdefABCDEF";
 
 	dec_i = dec_f = 0;
 	cp = str;
