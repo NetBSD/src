@@ -1,4 +1,4 @@
-/*	$NetBSD: refresh.c,v 1.43 2001/12/02 09:14:22 blymn Exp $	*/
+/*	$NetBSD: refresh.c,v 1.44 2001/12/31 14:23:11 blymn Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)refresh.c	8.7 (Berkeley) 8/13/94";
 #else
-__RCSID("$NetBSD: refresh.c,v 1.43 2001/12/02 09:14:22 blymn Exp $");
+__RCSID("$NetBSD: refresh.c,v 1.44 2001/12/31 14:23:11 blymn Exp $");
 #endif
 #endif				/* not lint */
 
@@ -75,6 +75,19 @@ refresh(void)
 int
 wnoutrefresh(WINDOW *win)
 {
+	return _cursesi_wnoutrefresh(_cursesi_screen, win);
+}
+
+
+/*
+ * _cursesi_wnoutrefresh --
+ *      Does the grunt work for wnoutrefresh to the given screen.
+ *
+ */
+int
+_cursesi_wnoutrefresh(SCREEN *screen, WINDOW *win)
+{
+	
 	short	wy, wx, x_off;
 	__LINE	*wlp, *vlp;
 
@@ -82,21 +95,21 @@ wnoutrefresh(WINDOW *win)
 	__CTRACE("wnoutrefresh: win %0.2o, flags 0x%08x\n", win, win->flags);
 #endif
 
-	if (_cursesi_screen->curwin)
+	if (screen->curwin)
 		return(OK);
-	__virtscr->cury = win->cury + win->begy;
-	__virtscr->curx = win->curx + win->begx;
+	screen->__virtscr->cury = win->cury + win->begy;
+	screen->__virtscr->curx = win->curx + win->begx;
 
 	/* Copy the window flags from "win" to "__virtscr" */
 	if (win->flags & __CLEAROK) {
 		if (win->flags & __FULLWIN)
-			__virtscr->flags |= __CLEAROK;
+			screen->__virtscr->flags |= __CLEAROK;
 		win->flags &= ~__CLEAROK;
 	}
-	__virtscr->flags &= ~__LEAVEOK;
-	__virtscr->flags |= win->flags;
+	screen->__virtscr->flags &= ~__LEAVEOK;
+	screen->__virtscr->flags |= win->flags;
 
-	for (wy = 0; wy < win->maxy && wy < __virtscr->maxy - win->begy; wy++) {
+	for (wy = 0; wy < win->maxy && wy < screen->__virtscr->maxy - win->begy; wy++) {
 		wlp = win->lines[wy];
 #ifdef DEBUG
 		__CTRACE("wnoutrefresh: wy %d\tf: %d\tl:%d\tflags %x\n", wy,
@@ -104,13 +117,13 @@ wnoutrefresh(WINDOW *win)
 #endif
 		if ((wlp->flags & __ISDIRTY) == 0)
 			continue;
-		vlp = __virtscr->lines[wy + win->begy];
+		vlp = screen->__virtscr->lines[wy + win->begy];
 
 		if (*wlp->firstchp < win->maxx + win->ch_off &&
 		    *wlp->lastchp >= win->ch_off) {
 			/* Copy line from "win" to "__virtscr". */
 			for (wx = 0, x_off = win->begx; wx < win->maxx &&
-			    x_off < __virtscr->maxx; wx++, x_off++) {
+			    x_off < screen->__virtscr->maxx; wx++, x_off++) {
 				vlp->line[x_off].attr = wlp->line[wx].attr;
 				if (wlp->line[wx].attr & __COLOR)
 					vlp->line[x_off].attr |=
@@ -179,11 +192,11 @@ wnoutrefresh(WINDOW *win)
 int
 wrefresh(WINDOW *win)
 {
-	int	retval;
-
-	_cursesi_screen->curwin = (win == curscr);
+	int retval;
+	
+	_cursesi_screen->curwin = (win == _cursesi_screen->curscr);
 	if (!_cursesi_screen->curwin)
-		retval = wnoutrefresh(win);
+		retval = _cursesi_wnoutrefresh(_cursesi_screen, win);
 	else
 		retval = OK;
 	if (retval == OK) {
@@ -216,7 +229,7 @@ doupdate(void)
 	if (_cursesi_screen->curwin)
 		win = curscr;
 	else
-		win = __virtscr;
+		win = _cursesi_screen->__virtscr;
 
 	/* Initialize loop parameters. */
 	_cursesi_screen->ly = curscr->cury;

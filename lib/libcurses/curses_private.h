@@ -1,4 +1,4 @@
-/*	$NetBSD: curses_private.h,v 1.18 2001/12/11 11:18:17 blymn Exp $	*/
+/*	$NetBSD: curses_private.h,v 1.19 2001/12/31 14:23:11 blymn Exp $	*/
 
 /*-
  * Copyright (c) 1998-2000 Brett Lymn
@@ -247,11 +247,13 @@ extern SCREEN   *_cursesi_screen;       /* The current screen in use */
 #ifdef DEBUG
 void	 __CTRACE(const char *fmt, ...);
 #endif
+void     __cputchar_args(char ch, void *args);
 void     _cursesi_free_keymap(keymap_t *map);
 int      _cursesi_gettmode(SCREEN *screen);
 void     _cursesi_reset_acs(SCREEN *screen);
 void     _cursesi_resetterm(SCREEN *screen);
 int      _cursesi_setterm(char *type, SCREEN *screen);
+int      _cursesi_wnoutrefresh(SCREEN *screen, WINDOW *win);
 int	 __delay(void);
 unsigned int __hash(char *s, int len);
 void	 __id_subwins(WINDOW *orig);
