@@ -1,4 +1,4 @@
-/*	$NetBSD: config.c,v 1.11 2003/03/05 21:05:38 wiz Exp $	*/
+/*	$NetBSD: config.c,v 1.12 2003/05/16 18:10:38 itojun Exp $	*/
 
 /*
  * The mrouted program is covered by the license in the accompanying file
@@ -59,7 +59,8 @@ config_vifs_from_kernel(void)
 	    addr == (subnet | ~mask)) {
 	    logit(LOG_WARNING, 0,
 		"ignoring %s, has invalid address (%s) and/or mask (%s)",
-		ifa->ifa_name, inet_fmt(addr, s1), inet_fmt(mask, s2));
+		ifa->ifa_name, inet_fmt(addr, s1, sizeof(s1)),
+		inet_fmt(mask, s2, sizeof(s2)));
 	    continue;
 	}
 
@@ -102,7 +103,8 @@ config_vifs_from_kernel(void)
 	v->uv_addrs	  = NULL;
 
 	logit(LOG_INFO,0,"installing %s (%s on subnet %s) as vif #%u - rate=%d",
-	    v->uv_name, inet_fmt(addr, s1), inet_fmts(subnet, mask, s2),
+	    v->uv_name, inet_fmt(addr, s1, sizeof(s1)),
+	    inet_fmts(subnet, mask, s2, sizeof(s2)),
 	    numvifs, v->uv_rate_limit);
 
 	++numvifs;
