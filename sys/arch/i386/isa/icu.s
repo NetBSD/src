@@ -1,4 +1,5 @@
 /*-
+ * Copyright (c) 1993 Charles Hannum.
  * Copyright (c) 1989, 1990 William F. Jolitz.
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
@@ -35,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)icu.s	7.2 (Berkeley) 5/21/91
- *	$Id: icu.s,v 1.20 1993/12/14 05:31:49 mycroft Exp $
+ *	$Id: icu.s,v 1.21 1993/12/17 00:11:46 mycroft Exp $
  */
 
 /*
@@ -43,10 +44,12 @@
  * Vector interrupt control section
  */
 
+#include <net/netisr.h>
+
 /*
- * XXX - this file is now misnamed.  All spls are now soft and the only thing
- * related to the hardware icu is that the bit numbering is the same in the
- * soft priority masks as in the hard ones.
+ * All spl levels include astmask; this forces cpl to be non-zero when
+ * splx()ing from nested spl levels, and thus soft interrupts do not
+ * get executed.  Logically, all spl levels are `above' soft interupts.
  */
 
 #ifdef notyet
@@ -55,26 +58,35 @@
 #define NSIO 0
 #endif
 
-#define	HIGHMASK	0xffff
-#define	SOFTCLOCKMASK	0x8000
-
 	.data
 	.globl	_cpl
-_cpl:	.long	0xffff			# current priority (all off)
-	.globl	_imen
-_imen:	.long	0xffff			# interrupt mask enable (all off)
+_cpl:
+	.long	-1		# current priority (all off)
 	.globl	_highmask
-_highmask:	.long	HIGHMASK
-	.globl	_ttymask
-_ttymask:	.long	0
-	.globl	_biomask
-_biomask:	.long	0
-	.globl	_netmask
-_netmask:	.long	0
-	.globl	_impmask
-_impmask:	.long	0
+_highmask:
+	.long	-1		# XXX needed for braindead config
 	.globl  _ipending
-_ipending:	.long   0
+_ipending:
+	.long   0
+	.globl	_imen
+_imen:
+	.long	0xffff		# interrupt mask enable (all off)
+	.globl	_ttymask
+_ttymask:
+	.long	0
+	.globl	_biomask
+_biomask:
+	.long	0
+	.globl	_netmask
+_netmask:
+	.long	0
+	.globl	_impmask
+_impmask:
+	.long	0
+	.globl	_astmask
+_astmask:
+	.long	0x80000000
+
 vec:
 	.long	INTRLOCAL(vec0), INTRLOCAL(vec1), INTRLOCAL(vec2)
 	.long	INTRLOCAL(vec3), INTRLOCAL(vec4), INTRLOCAL(vec5)
@@ -87,35 +99,29 @@ vec:
 	.globl  _spl/**/name ; \
 	ALIGN_TEXT ; \
 _spl/**/name: ; \
-	COUNT_EVENT(_intrcnt_spl, event) ; \
 	movl	_cpl,%eax ; \
 	movl	%eax,%edx ; \
 	orl	mask,%edx ; \
 	movl	%edx,_cpl ; \
-	SHOW_CPL ; \
 	ret
 
 #define	FASTSPL(mask) \
-	movl	mask,_cpl ; \
-	SHOW_CPL
+	movl	mask,_cpl
 
 #define	FASTSPL_VARMASK(varmask) \
 	movl	varmask,%eax ; \
-	movl	%eax,_cpl ; \
-	SHOW_CPL
+	movl	%eax,_cpl
 
 	.text
 
 	ALIGN_TEXT
 INTRLOCAL(unpend_v):
-	COUNT_EVENT(_intrcnt_spl, 0)
 	bsfl    %eax,%eax               # slow, but not worth optimizing
 	btrl    %eax,_ipending
 	jnc     INTRLOCAL(unpend_v_next) # some intr cleared the in-memory bit
-	SHOW_IPENDING
 	movl    Vresume(,%eax,4),%eax
 	testl   %eax,%eax
-	je      INTRLOCAL(noresume)
+	jz      INTRLOCAL(noresume)
 	jmp     %eax
   
 	ALIGN_TEXT
@@ -131,7 +137,7 @@ INTRLOCAL(unpend_v_next):
 	movl	%eax,%edx
 	notl	%eax
 	andl	_ipending,%eax
-	je	INTRLOCAL(none_to_unpend)
+	jz	INTRLOCAL(none_to_unpend)
 	jmp	INTRLOCAL(unpend_v)
 
 /*
@@ -139,7 +145,6 @@ INTRLOCAL(unpend_v_next):
  */
 	ALIGN_TEXT
 doreti:
-	COUNT_EVENT(_intrcnt_spl, 1)
 	addl	$4,%esp	# discard unit arg
 	popl	%eax	# get previous priority
 /*
@@ -149,49 +154,38 @@ doreti:
  * a waste of time.
  */
 	movl	%eax,_cpl
-	SHOW_CPL
 	movl	%eax,%edx
 	notl	%eax
 	andl	_ipending,%eax
-	jne	INTRLOCAL(unpend_v)
+	jnz	INTRLOCAL(unpend_v)
 INTRLOCAL(none_to_unpend):
 	testl   %edx,%edx	# returning to zero priority?
-	jne	1f	# nope, going to non-zero priority
-	movl	_netisr,%eax
-	testl   %eax,%eax	# check for softint s/traps
-	jne	2f	# there are some
-	jmp	test_resched	# XXX - schedule jumps better
-	COUNT_EVENT(_intrcnt_spl, 2)	# XXX
-
-	ALIGN_TEXT	# XXX
-1:	# XXX
-	COUNT_EVENT(_intrcnt_spl, 3)
+	jz	2f
 	popl	%es
 	popl	%ds
 	popal
 	addl	$8,%esp
 	iret
 
-#include "../net/netisr.h"
+
+	.globl	_netisr,_sir
 
 #define DONET(s, c, event) ; \
 	.globl  c ; \
 	btrl	$s,_netisr ; \
 	jnc	1f ; \
-	COUNT_EVENT(_intrcnt_spl, event) ; \
 	call	c ; \
 1:
 
 	ALIGN_TEXT
 2:
-	COUNT_EVENT(_intrcnt_spl, 4)
 /*
  * XXX - might need extra locking while testing reg copy of netisr, but
  * interrupt routines setting it would not cause any new problems (since we
  * don't loop, fresh bits will not be processed until the next doreti or spl0)
  */
-	testl   $~((1 << NETISR_SCLK) | (1 << NETISR_AST)),%eax
-	je	test_ASTs	# no net stuff, just temporary AST's
+	btrl	$SIR_NET,_sir
+	jnc	test_clock
 	FASTSPL_VARMASK(_netmask)
 	DONET(NETISR_RAW, _rawintr, 5)
 #ifdef INET
@@ -207,38 +201,23 @@ INTRLOCAL(none_to_unpend):
 	DONET(NETISR_ISO, _clnlintr, 25)
 #endif
 	FASTSPL($0)
-test_ASTs:
-	btrl	$NETISR_SCLK,_netisr
-	jnc	test_resched
-	COUNT_EVENT(_intrcnt_spl, 9)
-	FASTSPL($SOFTCLOCKMASK)
-/*
- * Back to an interrupt frame for a moment.
- */
-	pushl   $0	# previous cpl (probably not used)
-	pushl   $0x7f	# dummy unit number
+test_clock:
+	btrl	$SIR_CLOCK,_sir
+	jnc	test_ast
+	FASTSPL_VARMASK(_astmask)
+	pushl   $0	# XXX previous cpl (probably not used)
+	pushl   $0x7f	# XXX dummy unit number
 	call	_softclock
-	addl	$8,%esp	# discard dummies
+	addl	$8,%esp	# XXX discard dummies
 	FASTSPL($0)
-test_resched:
-#ifdef notused1
-	btrl	$NETISR_AST,_netisr
+test_ast:
+	btrl	$SIR_AST,_sir		# signal handling, rescheduling, ...
 	jnc	2f
-#endif
-#ifdef notused2
-	cmpl	$0,_want_resched
-	je	2f
-#endif
-	cmpl	$0,_astpending	# XXX - put it back in netisr to
-	je	2f	# reduce the number of tests
 	testb   $SEL_RPL_MASK,TF_CS(%esp)
 					# to non-kernel (i.e., user)?
-	je	2f	# nope, leave
-	COUNT_EVENT(_intrcnt_spl, 10)
-	movl	$0,_astpending
+	jz	2f			# nope, leave
 	call	_trap
 2:
-	COUNT_EVENT(_intrcnt_spl, 11)
 	popl	%es
 	popl	%ds
 	popal
@@ -252,28 +231,23 @@ test_resched:
  *	-- ipending = active interrupts currently masked by cpl
  */
 
-	GENSPL(bio, _biomask, 12)
-	GENSPL(clock, $HIGHMASK, 13)	/* splclock == splhigh ex for count */
-	GENSPL(high, $HIGHMASK, 14)
-	GENSPL(imp, _impmask, 15)
-	GENSPL(net, _netmask, 16)
-	GENSPL(softclock, $SOFTCLOCKMASK, 17)
 	GENSPL(tty, _ttymask, 18)
+	GENSPL(bio, _biomask, 12)
+	GENSPL(net, _netmask, 16)
+	GENSPL(imp, _impmask, 15)
+	GENSPL(high, $-1, 14)
+	GENSPL(clock, $-1, 13)	/* splclock == splhigh ex for count */
+	GENSPL(softclock, _astmask, 17)
 
-	.globl _splnone
 	.globl _spl0
 	ALIGN_TEXT
-_splnone:
 _spl0:
-	COUNT_EVENT(_intrcnt_spl, 19)
 in_spl0:
 	movl	_cpl,%eax
 	pushl   %eax	# save old priority
-	testl   $~((1 << NETISR_SCLK) | (1 << NETISR_AST)),_netisr
-	jz	INTRLOCAL(over_net_stuff_for_spl0)
-	movl	_netmask,%eax	# mask off those network devices
-	movl	%eax,_cpl	# set new priority
-	SHOW_CPL
+	btrl	$SIR_NET,_sir
+	jnc	INTRLOCAL(over_net_stuff_for_spl0)
+	FASTSPL_VARMASK(_netmask)
 	DONET(NETISR_RAW, _rawintr, 20)
 #ifdef INET
 	DONET(NETISR_IP, _ipintr, 21)
@@ -288,43 +262,35 @@ in_spl0:
 	DONET(NETISR_ISO, _clnlintr, 28)
 #endif
 INTRLOCAL(over_net_stuff_for_spl0):
-	movl	$0,_cpl	# set new priority
-	SHOW_CPL
+	FASTSPL($0)
 	movl	_ipending,%eax
 	testl   %eax,%eax
-	jne	INTRLOCAL(unpend_V)
-	popl	%eax	# return old priority
+	jnz	INTRLOCAL(unpend_V)
+	popl	%eax		# return old priority
 	ret
 	
 	.globl _splx
 	ALIGN_TEXT
 _splx:
-	COUNT_EVENT(_intrcnt_spl, 22)
 	movl	4(%esp),%eax	# new priority
 	testl   %eax,%eax
-	je	in_spl0	# going to "zero level" is special
-	COUNT_EVENT(_intrcnt_spl, 23)
-	movl	_cpl,%edx	# save old priority
+	jz	in_spl0		# going to "zero level" is special
+	pushl	_cpl		# save old priority
 	movl	%eax,_cpl	# set new priority
-	SHOW_CPL
 	notl	%eax
 	andl	_ipending,%eax
-	jne	INTRLOCAL(unpend_V_result_edx)
-	movl	%edx,%eax	# return old priority
+	jnz	INTRLOCAL(unpend_V)
+	popl	%eax		# return old priority
 	ret
 
 	ALIGN_TEXT
-INTRLOCAL(unpend_V_result_edx):
-	pushl   %edx
 INTRLOCAL(unpend_V):
-	COUNT_EVENT(_intrcnt_spl, 24)
 	bsfl    %eax,%eax
 	btrl    %eax,_ipending
 	jnc     INTRLOCAL(unpend_V_next)
-	SHOW_IPENDING
 	movl    Vresume(,%eax,4),%edx
 	testl   %edx,%edx
-	je      INTRLOCAL(noresumeV)
+	jz      INTRLOCAL(noresumeV)
 /*
  * We would prefer to call the intr handler directly here but that doesn't
  * work for badly behaved handlers that want the interrupt frame.  Also,
@@ -345,14 +311,14 @@ INTRLOCAL(unpend_V_next):
 	movl	_cpl,%eax
 	notl	%eax
 	andl	_ipending,%eax
-	jne	INTRLOCAL(unpend_V)
+	jnz	INTRLOCAL(unpend_V)
 	popl	%eax
 	ret
 
 #define BUILD_VEC(irq_num) \
 	ALIGN_TEXT ; \
 INTRLOCAL(vec/**/irq_num): ; \
-	int     $ICU_OFFSET + (irq_num) ; \
+	int     $(ICU_OFFSET + irq_num) ; \
 	popl	%eax ; \
 	ret
 
