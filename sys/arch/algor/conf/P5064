@@ -1,11 +1,11 @@
-#	$NetBSD: P5064,v 1.1 2001/05/28 16:22:16 thorpej Exp $
+#	$NetBSD: P5064,v 1.2 2001/06/01 03:53:29 thorpej Exp $
 #
 # Algorithmics P-5064 kernel.
 #
 
 include	"arch/algor/conf/std.algor"
 
-#ident 		"P5064-$Revision: 1.1 $"
+#ident 		"P5064-$Revision: 1.2 $"
 
 maxusers 32
 
@@ -131,7 +131,7 @@ pci*	at	vtpbc?
 #le*	at	pci? dev ? function ?		# PCI LANCE Ethernet (untested)
 #ncr*	at	pci? dev ? function ?		# NCR 53c8xx SCSI
 pcib*	at	pci? dev ? function ?		# Intel PCI-ISA Bridges
-#siop*	at	pci? dev ? function ?		# Symbios 53c8xx SCSI
+siop*	at	pci? dev ? function ?		# Symbios 53c8xx SCSI
 #mlx*	at	pci? dev ? function ?		# Mylex DAC960 / DEC SWXCR (untested)
 #ne*	at	pci? dev ? function ?		# NE2000-compatible Ethernet
 #ohci*	at	pci? dev ? function ?		# USB Open Host Controller
@@ -252,13 +252,13 @@ fdc0	at	isa? port 0x3f0 irq 6 drq 2	# floppy controller
 #scsibus* at	dpt?
 #scsibus* at	isp?
 #scsibus* at	ncr?
-#scsibus* at	siop?
+scsibus* at	siop?
 #scsibus* at	pcscp?
 #scsibus* at	uha?
 
 # SCSI devices
-#cd*	at	scsibus? target ? lun ?		# SCSI CD-ROM drives
-#sd*	at	scsibus? target ? lun ?		# SCSI disk drives
+cd*	at	scsibus? target ? lun ?		# SCSI CD-ROM drives
+sd*	at	scsibus? target ? lun ?		# SCSI disk drives
 #st*	at	scsibus? target ? lun ?		# SCSI tape drives
 
 # ST506/ESDI/IDE devices
