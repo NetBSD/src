@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_malloc_debug.c,v 1.6 2002/03/08 20:48:40 thorpej Exp $	*/
+/*	$NetBSD: kern_malloc_debug.c,v 1.6.2.1 2002/03/22 19:08:11 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Artur Grabowski <art@openbsd.org>
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_malloc_debug.c,v 1.6 2002/03/08 20:48:40 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_malloc_debug.c,v 1.6.2.1 2002/03/22 19:08:11 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -111,11 +111,13 @@ int debug_malloc_chunks_on_freelist;
 
 struct pool debug_malloc_pool;
 
+kmutex_t debug_malloc_mutex;
+
 int
 debug_malloc(unsigned long size, int type, int flags, void **addr)
 {
 	struct debug_malloc_entry *md = NULL;
-	int s, wait = !(flags & M_NOWAIT);
+	int wait = !(flags & M_NOWAIT);
 
 	/* Careful not to compare unsigned long to int -1 */
 	if ((type != debug_malloc_type && debug_malloc_type != 0) ||
@@ -128,13 +130,14 @@ debug_malloc(unsigned long size, int type, int flags, void **addr)
 	if (size > PAGE_SIZE)
 		return (0);
 
-	s = splvm();
+	mutex_enter(&debug_malloc_mutex);
+
 	if (debug_malloc_chunks_on_freelist < MALLOC_DEBUG_CHUNKS)
 		debug_malloc_allocate_free(wait);
 
 	md = TAILQ_FIRST(&debug_malloc_freelist);
 	if (md == NULL) {
-		splx(s);
+		mutex_exit(&debug_malloc_mutex);
 		return (0);
 	}
 	TAILQ_REMOVE(&debug_malloc_freelist, md, md_list);
@@ -142,7 +145,7 @@ debug_malloc(unsigned long size, int type, int flags, void **addr)
 
 	TAILQ_INSERT_HEAD(&debug_malloc_usedlist, md, md_list);
 	debug_malloc_allocs++;
-	splx(s);
+	mutex_exit(&debug_malloc_mutex);
 
 	pmap_kenter_pa(md->md_va, md->md_pa, VM_PROT_ALL);
 
@@ -164,7 +167,6 @@ debug_free(void *addr, int type)
 {
 	struct debug_malloc_entry *md;
 	vaddr_t va;
-	int s;
 
 	if (type != debug_malloc_type && debug_malloc_type != 0)
 		return (0);
@@ -174,7 +176,8 @@ debug_free(void *addr, int type)
 	 */
 	va = trunc_page((vaddr_t)addr);
 
-	s = splvm();
+	mutex_enter(&debug_malloc_mutex);
+
 	TAILQ_FOREACH(md, &debug_malloc_usedlist, md_list)
 		if (md->md_va == va)
 			break;
@@ -190,7 +193,7 @@ debug_free(void *addr, int type)
 		TAILQ_FOREACH(md, &debug_malloc_freelist, md_list)
 			if (md->md_va == va)
 				panic("debug_free: already free");
-		splx(s);
+		mutex_exit(&debug_malloc_mutex);
 		return (0);
 	}
 
@@ -203,7 +206,7 @@ debug_free(void *addr, int type)
 	 * unmap the page.
 	 */
 	pmap_kremove(md->md_va, PAGE_SIZE);
-	splx(s);
+	mutex_exit(&debug_malloc_mutex);
 
 	return (1);
 }
@@ -222,12 +225,14 @@ debug_malloc_init(void)
 
 	pool_init(&debug_malloc_pool, sizeof(struct debug_malloc_entry),
 	    0, 0, 0, "mdbepl", NULL);
+
+	mutex_init(&debug_malloc_mutex, MUTEX_SPIN, IPL_VM);
 }
 
 /*
  * Add one chunk to the freelist.
  *
- * called at splvm.
+ * called with debug_malloc_mutex held.
  */
 void
 debug_malloc_allocate_free(int wait)
