@@ -1,4 +1,4 @@
-/*	$NetBSD: com_diovar.h,v 1.1 2003/11/08 11:18:33 tsutsui Exp $	*/
+/*	$NetBSD: com_diovar.h,v 1.2 2004/08/28 17:37:00 thorpej Exp $	*/
 /*
  * Copyright (c) 2003 Izumi Tsutsui.
  * All rights reserved.
@@ -26,4 +26,9 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-int com_dio_cnattach(bus_space_tag_t, bus_addr_t, int);
+#ifndef _HP300_DEV_COM_DIOVAR_H_
+#define _HP300_DEV_COM_DIOVAR_H_
+
+int	com_dio_cnattach(bus_space_tag_t, bus_addr_t, int);
+
+#endif /* _HP300_DEV_COM_DIOVAR_H_ */

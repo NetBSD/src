@@ -1,4 +1,4 @@
-/*	$NetBSD: diovar.h,v 1.9 2003/08/01 00:29:16 tsutsui Exp $	*/
+/*	$NetBSD: diovar.h,v 1.10 2004/08/28 17:37:00 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -76,8 +76,8 @@ struct dio_devdesc {
 };
 
 #ifdef _KERNEL
-void	*dio_scodetopa __P((int));
-void	*dio_intr_establish __P((int (*)(void *), void *, int, int));
-void	dio_intr_disestablish __P((void *));
-void	dio_set_bus_space_oddbyte __P((bus_space_tag_t));
+void	*dio_scodetopa(int);
+void	*dio_intr_establish(int (*)(void *), void *, int, int);
+void	dio_intr_disestablish(void *);
+void	dio_set_bus_space_oddbyte(bus_space_tag_t);
 #endif /* _KERNEL */

@@ -1,4 +1,4 @@
-/*	$NetBSD: dmavar.h,v 1.11 2003/08/07 16:27:28 agc Exp $	*/
+/*	$NetBSD: dmavar.h,v 1.12 2004/08/28 17:37:00 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -95,15 +95,15 @@ struct dmaqueue {
 	 * it has been given the DMA controller, and to stop the
 	 * initiator when the DMA controller has stopped.
 	 */
-	void	(*dq_start) __P((void *));
-	void	(*dq_done) __P((void *));
+	void	(*dq_start)(void *);
+	void	(*dq_done)(void *);
 };
 
 #ifdef _KERNEL
-void	dmainit __P((void));
-void	dmago __P((int, char *, int, int));
-void	dmastop __P((int));
-void	dmafree __P((struct dmaqueue *));
-int	dmareq __P((struct dmaqueue *));
-void	dmacomputeipl __P((void));
+void	dmainit(void);
+void	dmago(int, char *, int, int);
+void	dmastop(int);
+void	dmafree(struct dmaqueue *);
+int	dmareq(struct dmaqueue *);
+void	dmacomputeipl(void);
 #endif /* _KERNEL */
