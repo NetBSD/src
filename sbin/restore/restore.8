@@ -1,4 +1,4 @@
-.\"	$NetBSD: restore.8,v 1.25 1999/06/28 01:32:50 abs Exp $
+.\"	$NetBSD: restore.8,v 1.26 1999/07/01 19:18:47 abs Exp $
 .\"
 .\" Copyright (c) 1985, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -439,9 +439,12 @@ for more information.
 .Sh FILES
 .Bl -tag -width "./restoresymtable" -compact
 .It Pa /dev/nrst0
-the default tape drive
+default tape unit to use. Taken from
+.Dv _PATH_DEFTAPE
+in
+.Pa /usr/include/paths.h .
 .It Pa /dev/rst*
-Raw SCSI tape interface
+raw SCSI tape interface
 .It Pa /tmp/rstdir*
 file containing directories on the tape.
 .It Pa /tmp/rstmode*
