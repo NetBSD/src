@@ -1,4 +1,4 @@
-#	$NetBSD: services,v 1.53.2.1 2002/06/15 01:02:06 lukem Exp $
+#	$NetBSD: services,v 1.53.2.2 2002/10/23 12:20:15 lukem Exp $
 #
 # Network services, Internet style
 #
@@ -205,6 +205,7 @@ radius-acct	1813/tcp		radacct
 radius-acct	1813/udp		radacct
 cvspserver	2401/tcp
 cvspserver	2401/udp
+iscsi		3260/tcp
 rfe		5002/tcp		# Radio Free Ethernet
 rfe		5002/udp		# Actually uses UDP only
 
