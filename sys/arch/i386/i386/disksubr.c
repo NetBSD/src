@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.39 1999/01/27 21:20:18 thorpej Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.40 1999/05/06 15:45:51 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -203,6 +203,9 @@ readdisklabel(dev, strat, lp, osdep)
 			}
 			if (dp->mbrp_typ == MBR_PTYPE_LNXEXT2)
 				pp->p_fstype = FS_EX2FS;
+
+			if (dp->mbrp_typ == MBR_PTYPE_NTFS)
+				pp->p_fstype = FS_NTFS;
 
 			/* is this ours? */
 			if (dp == ourdp) {
