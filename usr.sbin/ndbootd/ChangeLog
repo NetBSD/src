@@ -1,0 +1,83 @@
+Tue May 22 13:13:24 2001  Matthew Fredette  <fredette@alum.mit.edu>
+
+	* Release 0.3 out.
+	* acconfig.h: Added coverage for macros with alignment information.
+	* acinclude.m4 (AC_CHECK_ALIGNOF): Added.
+	* configure.in: Bumped the version number.
+	Now use AC_CHECK_ALIGNOF to check for the minimum
+	alignment of a 32-bit int; if it isn't 1, compile
+	ndbootd for a strict-alignment machine.
+
+	* ndbootd.c Ran indent(1) with NetBSD's KNF-approximating profile.
+	* ndbootd.c: [HAVE_STRICT_ALIGNMENT]: Added code to copy packet headers
+	between the buffer and local variables, to satisfy
+	alignment constraints.
+
+	* ndbootd.h Ran indent(1) with NetBSD's KNF-approximating profile.
+	* config/ndbootd-bpf.c Ran indent(1) with NetBSD's KNF-approximating profile.
+
+Tue May 15 14:46:24 2001  Matthew Fredette  <fredette@alum.mit.edu>
+
+	* configure.in: Bumped up the version.
+
+Tue May 15 14:43:24 2001  Matthew Fredette  <fredette@alum.mit.edu>
+
+	* Release 0.2 out.
+	* configure.in: Bumped up the version.
+	* ndbootd.8: Some formatting changes.
+	* ndbootd.c: Now have prototypes for the allocation functions.
+	(main): Now handle boot blocks that aren't an integral
+	multiple of the block size.
+
+Wed May 09 20:50:46 2001  Matthew Fredette  <fredette@alum.mit.edu>
+
+	* Makefile.am: Added support for the man page.
+	* README: Updated the usage to reflect the new single-letter option names.
+	* ndbootd.8: Added.
+	* ndbootd.c (main): Now insert a small delay before sending each packet.
+	Sending packets too quickly apparently overwhelms clients.
+	Added new single-letter versions of all options that didn't
+	already have them.  Expanded some debug messages, and fixed
+	others to display Ethernet addresses correctly.
+
+	* config/ndbootd-bpf.c: Removed an unnecessary comment.
+
+Wed Jan 31 17:35:50 2001  Matthew Fredette  <fredette@alum.mit.edu>
+
+	* Makefile.am: Added the ChangeLog to EXTRA_DIST.
+	* README: Updated.
+	* ndbootd.c (main): Fixed various printf argument lists.
+
+Wed Jan 31 17:35:16 2001  Matthew Fredette  <fredette@alum.mit.edu>
+
+	* Release 0.1 out.
+	* Makefile.am: Added the ChangeLog to EXTRA_DIST.
+	* README: Updated.
+	* ndbootd.c (main): Fixed various printf argument lists.
+	* ndbootd.h: Now include param.h.
+
+Tue Jan 30 15:35:38 2001  Matthew Fredette  <fredette@alum.mit.edu>
+
+	* README: Added.
+	* ndbootd.c: Now, ndbootd assembles disk images for clients on-the-fly.
+	Defined many new macros related to this.
+	(main): Added support for the --boot2 option.  Turned the
+	original disk-image filename into the filename of the
+	first-stage boot program.  Now do better multiple-client
+	support, especially when it comes to checking if a client
+	is really ours.  Now assemble client-specific disk images
+	on-the-fly, potentially serving each client a different
+	second-stage boot.
+
+Mon Jan 29 15:12:13 2001  Matthew Fredette  <fredette@alum.mit.edu>
+
+	* COPYING: Added.
+	* Makefile.am: Added.
+	* acconfig.h: Added.
+	* acinclude.m4: Added.
+	* configure.in: Added.
+	* missing: Added.
+	* ndbootd.c: Added.
+	* ndbootd.h: Added.
+	* config/ndbootd-bpf.c: Added.
+
