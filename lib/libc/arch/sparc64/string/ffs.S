@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs.S,v 1.3 1999/12/30 15:30:26 eeh Exp $	*/
+/*	$NetBSD: ffs.S,v 1.4 2000/07/18 22:39:25 eeh Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -44,7 +44,7 @@
 #if 0
 	.asciz "@(#)ffs.s	8.1 (Berkeley) 6/4/93"
 #else
-	RCSID("$NetBSD: ffs.S,v 1.3 1999/12/30 15:30:26 eeh Exp $")
+	RCSID("$NetBSD: ffs.S,v 1.4 2000/07/18 22:39:25 eeh Exp $")
 #endif
 #endif  /* LIBC_SCCS and not lint */
 
@@ -84,10 +84,10 @@ ENTRY(ffs)
  * one, we just return the table value plus 24.  This means
  * that ffstab[0] must be -24 so that ffs(0) will return 0.
  */
-ENTRY(_C_LABEL(ffs))
+ENTRY(ffs)
 #ifdef PIC
-	PIC_PROLOGUE(%o1,%o2)
-	ld	[%o1 + _C_LABEL(__ffstab)], %o2
+	PIC_PROLOGUE(%o1, %o2)
+	PICCY_SET(_C_LABEL(__ffstab), %o2, %o3)
 #else
 	set	_C_LABEL(__ffstab), %o2
 #endif
@@ -121,7 +121,7 @@ ENTRY(_C_LABEL(ffs))
 	retl
 	 add	%o0, 24, %o0
 
-ENTRY(_C_LABEL(__ffstab))
+RODATA(__ffstab)
 	.byte	-24,1,2,1,3,1,2,1,4,1,2,1,3,1,2,1 /* 00-0f */
 	.byte	5,1,2,1,3,1,2,1,4,1,2,1,3,1,2,1	/* 10-1f */
 	.byte	6,1,2,1,3,1,2,1,4,1,2,1,3,1,2,1	/* 20-2f */

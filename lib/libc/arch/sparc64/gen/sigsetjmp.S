@@ -1,4 +1,4 @@
-/*	$NetBSD: sigsetjmp.S,v 1.2 1998/10/08 02:27:59 eeh Exp $	*/
+/*	$NetBSD: sigsetjmp.S,v 1.3 2000/07/18 22:39:25 eeh Exp $	*/
 /*
  * Copyright (c) 1995 Paul Kranenburg
  * All rights reserved.
@@ -39,8 +39,8 @@ ENTRY(sigsetjmp)
 	cmp %o1,0
 	st %o1,[%o0+0x38]		! jmpbuf[JBLEN]
 	bne,a 1f
-	 ld [%g1+_C_LABEL(setjmp)], %g1	! if (%o1 != 0) goto _setjmp;
-	ld [%g1+_C_LABEL(_setjmp)], %g1	! else goto __setjmp;
+	 ldx [%g1+_C_LABEL(setjmp)], %g1	! if (%o1 != 0) goto _setjmp;
+	ldx [%g1+_C_LABEL(_setjmp)], %g1	! else goto __setjmp;
 1:
 	jmp %g1
 	 nop
@@ -50,8 +50,8 @@ ENTRY(siglongjmp)
 	ld [%o0+0x38],%g2		! jmpbuf[JBLEN]
 	cmp %g2,0
 	bne,a 1f
-	 ld [%g1+_C_LABEL(longjmp)], %g1	 ! if (%g2 != 0) goto _longjmp;
-	ld [%g1+_C_LABEL(_longjmp)], %g1 ! else goto __longjmp;
+	 ldx [%g1+_C_LABEL(longjmp)], %g1	 ! if (%g2 != 0) goto _longjmp;
+	ldx [%g1+_C_LABEL(_longjmp)], %g1 ! else goto __longjmp;
 1:
 	jmp %g1
 	 nop
