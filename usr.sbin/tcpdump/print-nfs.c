@@ -1,4 +1,4 @@
-/*	$NetBSD: print-nfs.c,v 1.6 1997/03/15 18:37:54 is Exp $	*/
+/*	$NetBSD: print-nfs.c,v 1.7 1997/07/18 01:01:33 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994
@@ -379,7 +379,8 @@ nfsreq_print(register const u_char *bp, int length, register const u_char *bp2)
 	register const u_int32 *dp;
 	register const u_char *ep;
 	nfstype type;
-	int proc, v3;
+	int v3;
+	u_int32 proc;
 	struct nfsv3_sattr sa3;
 
 #define TCHECK(p, l) if ((u_char *)(p) > ep - l) break
