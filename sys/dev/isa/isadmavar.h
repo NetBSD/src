@@ -1,4 +1,4 @@
-/*	$NetBSD: isadmavar.h,v 1.12 1998/06/09 01:04:17 thorpej Exp $	*/
+/*	$NetBSD: isadmavar.h,v 1.13 1998/06/25 19:18:06 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -101,7 +101,7 @@ struct proc;
 void	   _isa_dmainit __P((struct isa_dma_state *, bus_space_tag_t,
 	       bus_dma_tag_t, struct device *));
 
-void	   _isa_dmacascade __P((struct isa_dma_state *, int));
+int	   _isa_dmacascade __P((struct isa_dma_state *, int));
 
 int	   _isa_dmamap_create __P((struct isa_dma_state *, int,
 	       bus_size_t, int));
