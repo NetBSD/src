@@ -1,11 +1,11 @@
-/*	$NetBSD: file.c,v 1.48.2.1 2002/06/28 12:42:06 lukem Exp $	*/
+/*	$NetBSD: file.c,v 1.48.2.2 2002/07/21 04:35:40 lukem Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: file.c,v 1.29 1997/10/08 07:47:54 charnier Exp";
 #else
-__RCSID("$NetBSD: file.c,v 1.48.2.1 2002/06/28 12:42:06 lukem Exp $");
+__RCSID("$NetBSD: file.c,v 1.48.2.2 2002/07/21 04:35:40 lukem Exp $");
 #endif
 #endif
 
@@ -256,7 +256,7 @@ fileGet1URL(const char *base, const char *spec, const char *sfx)
 		 * now we need to construct a composite one out of that and
 		 * the basename we were handed as a dependency. */
 		if (base) {
-			strcpy(fname, base);
+			strlcpy(fname, base, sizeof(fname));
 			/* Advance back two slashes to get to the root of the package hierarchy */
 			cp = strrchr(fname, '/');
 			if (cp) {
@@ -264,20 +264,20 @@ fileGet1URL(const char *base, const char *spec, const char *sfx)
 				cp = strrchr(fname, '/');
 			}
 			if (cp) {
-				*(cp + 1) = '\0';
-				strcat(cp, "All/");
-				strcat(cp, spec);
-				strcat(cp, sfx);
+				size_t sz;
+
+				cp++; /* next char of '/' */
+				sz = fname + sizeof(fname) - cp;
+				snprintf(cp, sz, "All/%s%s", spec, sfx);
 			} else
 				return NULL;
 		} else {
 			/* Otherwise, we've been given an environment variable hinting at the right location from sysinstall */
-			strcpy(fname, hint);
-			strcat(fname, spec);
-			strcat(fname, sfx);
+			assert(hint != NULL);
+			snprintf(fname, sizeof(fname), "%s%s%s", hint, spec, sfx);
 		}
 	} else
-		strcpy(fname, spec);
+		strlcpy(fname, spec, sizeof(fname));
 
  	/* Some sanity checks on the URL */
 	cp = fileURLHost(fname, host, MAXHOSTNAMELEN);
@@ -367,10 +367,11 @@ fileFindByPath(char *base, char *fname)
 			cp = strrchr(tmp, '/');
 		}
 		if (cp) {
-			*(cp + 1) = '\0';
-			strcat(cp, "All/");
-			strcat(cp, fname);
-			strcat(cp, ".t[bg]z");
+			size_t sz;
+
+			cp++; /* next char of '/' */
+			sz = fname + sizeof(fname) - cp;
+			snprintf(cp, sz, "All/%s.t[bg]z", fname);
 
 			if (ispkgpattern(tmp)) {
 				if (IS_URL(tmp)) {
@@ -658,10 +659,9 @@ move_file(char *dir, char *fname, char *to)
 int
 unpack(char *pkg, char *flist)
 {
-	char    args[10], suff[80], *cp;
+	char    args[10] = "-";
+	char   *cp;
 
-	args[0] = '-';
-	args[1] = '\0';
 	/*
          * Figure out by a crude heuristic whether this or not this is probably
          * compressed.
@@ -669,8 +669,8 @@ unpack(char *pkg, char *flist)
 	if (strcmp(pkg, "-")) {
 		cp = strrchr(pkg, '.');
 		if (cp) {
-			strcpy(suff, cp + 1);
-			if (strchr(suff, 'z') || strchr(suff, 'Z'))
+			cp++;
+			if (strchr(cp, 'z') || strchr(cp, 'Z'))
 				strcat(args, "z");
 		}
 	} else
