@@ -1,4 +1,4 @@
-/*	$NetBSD: cs4231_sbus.c,v 1.28 2003/05/03 18:11:39 wiz Exp $	*/
+/*	$NetBSD: cs4231_sbus.c,v 1.29 2003/09/10 11:45:45 uwe Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cs4231_sbus.c,v 1.28 2003/05/03 18:11:39 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cs4231_sbus.c,v 1.29 2003/09/10 11:45:45 uwe Exp $");
 
 #include "audio.h"
 #if NAUDIO > 0
@@ -107,7 +107,7 @@ struct audio_hw_if audiocs_sbus_hw_if = {
 	NULL,			/* drain */
 	ad1848_query_encoding,
 	ad1848_set_params,
-	cs4231_round_blocksize,
+	NULL,			/* round_blocksize */
 	ad1848_commit_settings,
 	NULL,			/* init_output */
 	NULL,			/* init_input */
@@ -123,7 +123,7 @@ struct audio_hw_if audiocs_sbus_hw_if = {
 	cs4231_query_devinfo,
 	cs4231_malloc,
 	cs4231_free,
-	cs4231_round_buffersize,
+	NULL,			/* round_buffersize */
         NULL,			/* mappage */
 	cs4231_get_props,
 	cs4231_sbus_trigger_output,
@@ -182,7 +182,7 @@ cs4231_sbus_attach(parent, self, aux)
 	}
 
 	bus_space_subregion(sa->sa_bustag, bh, CS4231_APCDMA_OFFSET,
-		sizeof(struct apc_dma), &sbsc->sc_bh);
+		APC_DMA_SIZE, &sbsc->sc_bh);
 
 	cs4231_common_attach(sc, bh);
 	printf("\n");
@@ -206,29 +206,28 @@ cs4231_sbus_regdump(label, sc)
 	struct cs4231_sbus_softc *sc;
 {
 	char bits[128];
-	volatile struct apc_dma *dma = NULL;
 
 	printf("cs4231regdump(%s): regs:", label);
 	printf("dmapva: 0x%x; ",
-		bus_space_read_4(sc->sc_bh, sc->sc_bh, &dma->dmapva));
+		bus_space_read_4(sc->sc_bh, sc->sc_bh, APC_DMA_PVA));
 	printf("dmapc: 0x%x; ",
-		bus_space_read_4(sc->sc_bh, sc->sc_bh, &dma->dmapc));
+		bus_space_read_4(sc->sc_bh, sc->sc_bh, APC_DMA_PC));
 	printf("dmapnva: 0x%x; ",
-		bus_space_read_4(sc->sc_bh, sc->sc_bh, &dma->dmapnva));
+		bus_space_read_4(sc->sc_bh, sc->sc_bh, APC_DMA_PNVA));
 	printf("dmapnc: 0x%x\n",
-		bus_space_read_4(sc->sc_bh, sc->sc_bh, &dma->dmapnc));
+		bus_space_read_4(sc->sc_bh, sc->sc_bh, APC_DMA_PNC));
 	printf("dmacva: 0x%x; ", 
-		bus_space_read_4(sc->sc_bh, sc->sc_bh, &dma->dmacva));
+		bus_space_read_4(sc->sc_bh, sc->sc_bh, APC_DMA_CVA));
 	printf("dmacc: 0x%x; ", 
-		bus_space_read_4(sc->sc_bh, sc->sc_bh, &dma->dmacc));
+		bus_space_read_4(sc->sc_bh, sc->sc_bh, APC_DMA_CC));
 	printf("dmacnva: 0x%x; ", 
-		bus_space_read_4(sc->sc_bh, sc->sc_bh, &dma->dmacnva));
+		bus_space_read_4(sc->sc_bh, sc->sc_bh, APC_DMA_CNVA));
 	printf("dmacnc: 0x%x\n", 
-		bus_space_read_4(sc->sc_bh, sc->sc_bh, &dma->dmacnc));
+		bus_space_read_4(sc->sc_bh, sc->sc_bh, APC_DMA_CNC));
 
 	printf("apc_dmacsr=%s\n",
 		bitmask_snprintf(
-			bus_space_read_4(sc->sc_bh, sc->sc_bh, &dma->dmacsr),
+			bus_space_read_4(sc->sc_bh, sc->sc_bh, APC_DMA_CSR),
 				APC_BITS, bits, sizeof(bits)));
 
 	ad1848_dump_regs(&sc->sc_cs4231.sc_ad1848);
@@ -248,7 +247,6 @@ cs4231_sbus_trigger_output(addr, start, end, blksize, intr, arg, param)
 	struct cs4231_sbus_softc *sbsc = addr;
 	struct cs4231_softc *sc = &sbsc->sc_cs4231;
 	struct cs_transfer *t = &sc->sc_playback;
-	volatile struct apc_dma *dma = NULL;
 	u_int32_t csr;
 	bus_addr_t dmaaddr;
 	bus_size_t dmasize;
@@ -263,34 +261,34 @@ cs4231_sbus_trigger_output(addr, start, end, blksize, intr, arg, param)
 		return (ret);
 
 	DPRINTF(("trigger_output: was: %x %d, %x %d\n",
-		bus_space_read_4(sbsc->sc_bt, sbsc->sc_bh, (vaddr_t)&dma->dmapva), 
-		bus_space_read_4(sbsc->sc_bt, sbsc->sc_bh, (vaddr_t)&dma->dmapc),
-		bus_space_read_4(sbsc->sc_bt, sbsc->sc_bh, (vaddr_t)&dma->dmapnva),
-		bus_space_read_4(sbsc->sc_bt, sbsc->sc_bh, (vaddr_t)&dma->dmapnc)));
+		bus_space_read_4(sbsc->sc_bt, sbsc->sc_bh, APC_DMA_PVA), 
+		bus_space_read_4(sbsc->sc_bt, sbsc->sc_bh, APC_DMA_PC),
+		bus_space_read_4(sbsc->sc_bt, sbsc->sc_bh, APC_DMA_PNVA),
+		bus_space_read_4(sbsc->sc_bt, sbsc->sc_bh, APC_DMA_PNC)));
 
 	/* load first block */
-	bus_space_write_4(sbsc->sc_bt, sbsc->sc_bh, (vaddr_t)&dma->dmapnva, dmaaddr);
-	bus_space_write_4(sbsc->sc_bt, sbsc->sc_bh, (vaddr_t)&dma->dmapnc, dmasize);
+	bus_space_write_4(sbsc->sc_bt, sbsc->sc_bh, APC_DMA_PNVA, dmaaddr);
+	bus_space_write_4(sbsc->sc_bt, sbsc->sc_bh, APC_DMA_PNC, dmasize);
 
 	DPRINTF(("trigger_output: 1st: %x %d, %x %d\n",
-		bus_space_read_4(sbsc->sc_bt, sbsc->sc_bh, (vaddr_t)&dma->dmapva),
-		bus_space_read_4(sbsc->sc_bt, sbsc->sc_bh, (vaddr_t)&dma->dmapc),
-		bus_space_read_4(sbsc->sc_bt, sbsc->sc_bh, (vaddr_t)&dma->dmapnva),
-		bus_space_read_4(sbsc->sc_bt, sbsc->sc_bh, (vaddr_t)&dma->dmapnc)));
+		bus_space_read_4(sbsc->sc_bt, sbsc->sc_bh, APC_DMA_PVA),
+		bus_space_read_4(sbsc->sc_bt, sbsc->sc_bh, APC_DMA_PC),
+		bus_space_read_4(sbsc->sc_bt, sbsc->sc_bh, APC_DMA_PNVA),
+		bus_space_read_4(sbsc->sc_bt, sbsc->sc_bh, APC_DMA_PNC)));
 
-	csr = bus_space_read_4(sbsc->sc_bt, sbsc->sc_bh, (vaddr_t)&dma->dmacsr);
+	csr = bus_space_read_4(sbsc->sc_bt, sbsc->sc_bh, APC_DMA_CSR);
 	DPRINTF(("trigger_output: csr=%s\n",
 		 bitmask_snprintf(csr, APC_BITS, bits, sizeof(bits))));
 	if ((csr & PDMA_GO) == 0 || (csr & APC_PPAUSE) != 0) {
 		int cfg;
 
 		csr &= ~(APC_PPAUSE | APC_PMIE | APC_INTR_MASK);
-		bus_space_write_4(sbsc->sc_bt, sbsc->sc_bh, (vaddr_t)&dma->dmacsr, csr);
+		bus_space_write_4(sbsc->sc_bt, sbsc->sc_bh, APC_DMA_CSR, csr);
 
-		csr = bus_space_read_4(sbsc->sc_bt, sbsc->sc_bh, (vaddr_t)&dma->dmacsr);
+		csr = bus_space_read_4(sbsc->sc_bt, sbsc->sc_bh, APC_DMA_CSR);
 		csr &= ~APC_INTR_MASK;
 		csr |= APC_ENABLE | APC_PIE | APC_PMIE | PDMA_GO;
-		bus_space_write_4(sbsc->sc_bt, sbsc->sc_bh, (vaddr_t)&dma->dmacsr, csr);
+		bus_space_write_4(sbsc->sc_bt, sbsc->sc_bh, APC_DMA_CSR, csr);
 
 		ad_write(&sc->sc_ad1848, SP_LOWER_BASE_COUNT, 0xff);
 		ad_write(&sc->sc_ad1848, SP_UPPER_BASE_COUNT, 0xff);
@@ -304,17 +302,17 @@ cs4231_sbus_trigger_output(addr, start, end, blksize, intr, arg, param)
 	}
 
 	/* load next block if we can */
-	csr = bus_space_read_4(sbsc->sc_bt, sbsc->sc_bh, (vaddr_t)&dma->dmacsr);
+	csr = bus_space_read_4(sbsc->sc_bt, sbsc->sc_bh, APC_DMA_CSR);
 	if (csr & APC_PD) {
 		cs4231_transfer_advance(t, &dmaaddr, &dmasize);
-		bus_space_write_4(sbsc->sc_bt, sbsc->sc_bh, (vaddr_t)&dma->dmapnva, dmaaddr);
-		bus_space_write_4(sbsc->sc_bt, sbsc->sc_bh, (vaddr_t)&dma->dmapnc, dmasize);
+		bus_space_write_4(sbsc->sc_bt, sbsc->sc_bh, APC_DMA_PNVA, dmaaddr);
+		bus_space_write_4(sbsc->sc_bt, sbsc->sc_bh, APC_DMA_PNC, dmasize);
 
 		DPRINTF(("trigger_output: 2nd: %x %d, %x %d\n",
-		    bus_space_read_4(sbsc->sc_bt, sbsc->sc_bh, (vaddr_t)&dma->dmapva),
-		    bus_space_read_4(sbsc->sc_bt, sbsc->sc_bh, (vaddr_t)&dma->dmapc),
-		    bus_space_read_4(sbsc->sc_bt, sbsc->sc_bh, (vaddr_t)&dma->dmapnva),
-		    bus_space_read_4(sbsc->sc_bt, sbsc->sc_bh, (vaddr_t)&dma->dmapnc)));
+		    bus_space_read_4(sbsc->sc_bt, sbsc->sc_bh, APC_DMA_PVA),
+		    bus_space_read_4(sbsc->sc_bt, sbsc->sc_bh, APC_DMA_PC),
+		    bus_space_read_4(sbsc->sc_bt, sbsc->sc_bh, APC_DMA_PNVA),
+		    bus_space_read_4(sbsc->sc_bt, sbsc->sc_bh, APC_DMA_PNC)));
 	}
 
 	return (0);
@@ -327,7 +325,6 @@ cs4231_sbus_halt_output(addr)
 {
 	struct cs4231_sbus_softc *sbsc = addr;
 	struct cs4231_softc *sc = &sbsc->sc_cs4231;
-	volatile struct apc_dma *dma = NULL;
 	u_int32_t csr;
 	int cfg;
 #ifdef AUDIO_DEBUG
@@ -336,19 +333,19 @@ cs4231_sbus_halt_output(addr)
 
 	sc->sc_playback.t_active = 0;
 
-	csr = bus_space_read_4(sbsc->sc_bt, sbsc->sc_bh, (vaddr_t)&dma->dmacsr);
+	csr = bus_space_read_4(sbsc->sc_bt, sbsc->sc_bh, APC_DMA_CSR);
 	DPRINTF(("halt_output: csr=%s\n",
 		 bitmask_snprintf(csr, APC_BITS, bits, sizeof(bits))));
 
 	csr &= ~APC_INTR_MASK;	/* do not clear interrupts accidentally */
 	csr |= APC_PPAUSE;	/* pause playback (let current complete) */
-	bus_space_write_4(sbsc->sc_bt, sbsc->sc_bh, (vaddr_t)&dma->dmacsr, csr);
+	bus_space_write_4(sbsc->sc_bt, sbsc->sc_bh, APC_DMA_CSR, csr);
 	
 	/* let the curernt transfer complete */
 	if (csr & PDMA_GO)
 		do {
 			csr = bus_space_read_4(sbsc->sc_bt, sbsc->sc_bh, 
-				(vaddr_t)&dma->dmacsr);
+				APC_DMA_CSR);
 			DPRINTF(("halt_output: csr=%s\n",
 				 bitmask_snprintf(csr, APC_BITS,
 						  bits, sizeof(bits))));
@@ -374,7 +371,6 @@ cs4231_sbus_trigger_input(addr, start, end, blksize, intr, arg, param)
 	struct cs4231_sbus_softc *sbsc = addr;
 	struct cs4231_softc *sc = &sbsc->sc_cs4231;
 	struct cs_transfer *t = &sc->sc_capture;
-	volatile struct apc_dma *dma = NULL;
 	u_int32_t csr;
 	bus_addr_t dmaaddr;
 	bus_size_t dmasize;
@@ -388,36 +384,36 @@ cs4231_sbus_trigger_input(addr, start, end, blksize, intr, arg, param)
 	if (ret != 0)
 		return (ret);
 
-	csr = bus_space_read_4(sbsc->sc_bt, sbsc->sc_bh, (vaddr_t)&dma->dmacsr);
+	csr = bus_space_read_4(sbsc->sc_bt, sbsc->sc_bh, APC_DMA_CSR);
 	DPRINTF(("trigger_input: csr=%s\n",
 		 bitmask_snprintf(csr, APC_BITS, bits, sizeof(bits))));
 	DPRINTF(("trigger_input: was: %x %d, %x %d\n",
-		bus_space_read_4(sbsc->sc_bt, sbsc->sc_bh, (vaddr_t)&dma->dmacva), 
-		bus_space_read_4(sbsc->sc_bt, sbsc->sc_bh, (vaddr_t)&dma->dmacc),
-		bus_space_read_4(sbsc->sc_bt, sbsc->sc_bh, (vaddr_t)&dma->dmacnva),
-		bus_space_read_4(sbsc->sc_bt, sbsc->sc_bh, (vaddr_t)&dma->dmacnc)));
+		bus_space_read_4(sbsc->sc_bt, sbsc->sc_bh, APC_DMA_CVA), 
+		bus_space_read_4(sbsc->sc_bt, sbsc->sc_bh, APC_DMA_CC),
+		bus_space_read_4(sbsc->sc_bt, sbsc->sc_bh, APC_DMA_CNVA),
+		bus_space_read_4(sbsc->sc_bt, sbsc->sc_bh, APC_DMA_CNC)));
 
 	/* supply first block */
-	bus_space_write_4(sbsc->sc_bt, sbsc->sc_bh, (vaddr_t)&dma->dmacnva, dmaaddr);
-	bus_space_write_4(sbsc->sc_bt, sbsc->sc_bh, (vaddr_t)&dma->dmacnc, dmasize);
+	bus_space_write_4(sbsc->sc_bt, sbsc->sc_bh, APC_DMA_CNVA, dmaaddr);
+	bus_space_write_4(sbsc->sc_bt, sbsc->sc_bh, APC_DMA_CNC, dmasize);
 
 	DPRINTF(("trigger_input: 1st: %x %d, %x %d\n",
-		bus_space_read_4(sbsc->sc_bt, sbsc->sc_bh, (vaddr_t)&dma->dmacva), 
-		bus_space_read_4(sbsc->sc_bt, sbsc->sc_bh, (vaddr_t)&dma->dmacc),
-		bus_space_read_4(sbsc->sc_bt, sbsc->sc_bh, (vaddr_t)&dma->dmacnva),
-		bus_space_read_4(sbsc->sc_bt, sbsc->sc_bh, (vaddr_t)&dma->dmacnc)));
+		bus_space_read_4(sbsc->sc_bt, sbsc->sc_bh, APC_DMA_CVA), 
+		bus_space_read_4(sbsc->sc_bt, sbsc->sc_bh, APC_DMA_CC),
+		bus_space_read_4(sbsc->sc_bt, sbsc->sc_bh, APC_DMA_CNVA),
+		bus_space_read_4(sbsc->sc_bt, sbsc->sc_bh, APC_DMA_CNC)));
 
-	csr = bus_space_read_4(sbsc->sc_bt, sbsc->sc_bh, (vaddr_t)&dma->dmacsr);
+	csr = bus_space_read_4(sbsc->sc_bt, sbsc->sc_bh, APC_DMA_CSR);
 	if ((csr & CDMA_GO) == 0 || (csr & APC_CPAUSE) != 0) {
 		int cfg;
 
 		csr &= ~(APC_CPAUSE | APC_CMIE | APC_INTR_MASK);
-		bus_space_write_4(sbsc->sc_bt, sbsc->sc_bh, (vaddr_t)&dma->dmacsr, csr);
+		bus_space_write_4(sbsc->sc_bt, sbsc->sc_bh, APC_DMA_CSR, csr);
 
-		csr = bus_space_read_4(sbsc->sc_bt, sbsc->sc_bh, (vaddr_t)&dma->dmacsr);
+		csr = bus_space_read_4(sbsc->sc_bt, sbsc->sc_bh, APC_DMA_CSR);
 		csr &= ~APC_INTR_MASK;
 		csr |= APC_ENABLE | APC_CIE | CDMA_GO;
-		bus_space_write_4(sbsc->sc_bt, sbsc->sc_bh, (vaddr_t)&dma->dmacsr, csr);
+		bus_space_write_4(sbsc->sc_bt, sbsc->sc_bh, APC_DMA_CSR, csr);
 
 		ad_write(&sc->sc_ad1848, CS_LOWER_REC_CNT, 0xff);
 		ad_write(&sc->sc_ad1848, CS_UPPER_REC_CNT, 0xff);
@@ -431,16 +427,16 @@ cs4231_sbus_trigger_input(addr, start, end, blksize, intr, arg, param)
 	}
 
 	/* supply next block if we can */
-	csr = bus_space_read_4(sbsc->sc_bt, sbsc->sc_bh, (vaddr_t)&dma->dmacsr);
+	csr = bus_space_read_4(sbsc->sc_bt, sbsc->sc_bh, APC_DMA_CSR);
 	if (csr & APC_CD) {
 		cs4231_transfer_advance(t, &dmaaddr, &dmasize);
-		bus_space_write_4(sbsc->sc_bt, sbsc->sc_bh, (vaddr_t)&dma->dmacnva, dmaaddr);
-		bus_space_write_4(sbsc->sc_bt, sbsc->sc_bh, (vaddr_t)&dma->dmacnc, dmasize);
+		bus_space_write_4(sbsc->sc_bt, sbsc->sc_bh, APC_DMA_CNVA, dmaaddr);
+		bus_space_write_4(sbsc->sc_bt, sbsc->sc_bh, APC_DMA_CNC, dmasize);
 		DPRINTF(("trigger_input: 2nd: %x %d, %x %d\n",
-		    bus_space_read_4(sbsc->sc_bt, sbsc->sc_bh, (vaddr_t)&dma->dmacva),
-		    bus_space_read_4(sbsc->sc_bt, sbsc->sc_bh, (vaddr_t)&dma->dmacc),
-		    bus_space_read_4(sbsc->sc_bt, sbsc->sc_bh, (vaddr_t)&dma->dmacnva),
-		    bus_space_read_4(sbsc->sc_bt, sbsc->sc_bh, (vaddr_t)&dma->dmacnc)));
+		    bus_space_read_4(sbsc->sc_bt, sbsc->sc_bh, APC_DMA_CVA),
+		    bus_space_read_4(sbsc->sc_bt, sbsc->sc_bh, APC_DMA_CC),
+		    bus_space_read_4(sbsc->sc_bt, sbsc->sc_bh, APC_DMA_CNVA),
+		    bus_space_read_4(sbsc->sc_bt, sbsc->sc_bh, APC_DMA_CNC)));
 	}
 
 	return (0);
@@ -453,7 +449,6 @@ cs4231_sbus_halt_input(addr)
 {
 	struct cs4231_sbus_softc *sbsc = addr;
 	struct cs4231_softc *sc = &sbsc->sc_cs4231;
-	volatile struct apc_dma *dma = NULL;
 	u_int32_t csr;
 	int cfg;
 #ifdef AUDIO_DEBUG
@@ -462,19 +457,19 @@ cs4231_sbus_halt_input(addr)
 
 	sc->sc_capture.t_active = 0;
 
-	csr = bus_space_read_4(sbsc->sc_bt, sbsc->sc_bh, (vaddr_t)&dma->dmacsr);
+	csr = bus_space_read_4(sbsc->sc_bt, sbsc->sc_bh, APC_DMA_CSR);
 	DPRINTF(("halt_input: csr=%s\n",
 		 bitmask_snprintf(csr, APC_BITS, bits, sizeof(bits))));
 
 	csr &= ~APC_INTR_MASK;	/* do not clear interrupts accidentally */
 	csr |= APC_CPAUSE;
-	bus_space_write_4(sbsc->sc_bt, sbsc->sc_bh, (vaddr_t)&dma->dmacsr, csr);
+	bus_space_write_4(sbsc->sc_bt, sbsc->sc_bh, APC_DMA_CSR, csr);
 
 	/* let the curernt transfer complete */
 	if (csr & CDMA_GO)
 		do {
 			csr = bus_space_read_4(sbsc->sc_bt, sbsc->sc_bh,
-				(vaddr_t)&dma->dmacsr);
+				APC_DMA_CSR);
 			DPRINTF(("halt_input: csr=%s\n",
 				 bitmask_snprintf(csr, APC_BITS,
 						  bits, sizeof(bits))));
@@ -493,7 +488,6 @@ cs4231_sbus_intr(arg)
 {
 	struct cs4231_sbus_softc *sbsc = arg;
 	struct cs4231_softc *sc = &sbsc->sc_cs4231;
-	volatile struct apc_dma *dma = NULL;
 	u_int32_t csr;
 	int status;
 	bus_addr_t dmaaddr;
@@ -503,12 +497,12 @@ cs4231_sbus_intr(arg)
 	char bits[128];
 #endif
 
-	csr = bus_space_read_4(sbsc->sc_bt, sbsc->sc_bh, (vaddr_t)&dma->dmacsr);
+	csr = bus_space_read_4(sbsc->sc_bt, sbsc->sc_bh, APC_DMA_CSR);
 	if ((csr & APC_INTR_MASK) == 0)	/* any interrupt pedning? */
 		return (0);
 
 	/* write back DMA status to clear interrupt */
-	bus_space_write_4(sbsc->sc_bt, sbsc->sc_bh, (vaddr_t)&dma->dmacsr, csr);
+	bus_space_write_4(sbsc->sc_bt, sbsc->sc_bh, APC_DMA_CSR, csr);
 	++sc->sc_intrcnt.ev_count;
 	served = 0;
 
@@ -538,9 +532,9 @@ cs4231_sbus_intr(arg)
 
 			cs4231_transfer_advance(t, &dmaaddr, &dmasize);
 			bus_space_write_4(sbsc->sc_bt, sbsc->sc_bh,
-				(vaddr_t)&dma->dmacnva, dmaaddr);
+				APC_DMA_CNVA, dmaaddr);
 			bus_space_write_4(sbsc->sc_bt, sbsc->sc_bh,
-				(vaddr_t)&dma->dmacnc, dmasize);
+				APC_DMA_CNC, dmasize);
 
 			if (t->t_intr != NULL)
 				(*t->t_intr)(t->t_arg);
@@ -561,9 +555,9 @@ cs4231_sbus_intr(arg)
 			if (t->t_active) {
 				cs4231_transfer_advance(t, &dmaaddr, &dmasize);
 				bus_space_write_4(sbsc->sc_bt, sbsc->sc_bh,
-					(vaddr_t)&dma->dmapnva, dmaaddr);
+					APC_DMA_PNVA, dmaaddr);
 				bus_space_write_4(sbsc->sc_bt, sbsc->sc_bh,
-					(vaddr_t)&dma->dmapnc, dmasize);
+					APC_DMA_PNC, dmasize);
 			}
 
 			if (t->t_intr != NULL)
