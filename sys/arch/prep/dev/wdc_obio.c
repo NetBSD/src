@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_obio.c,v 1.8 2003/10/08 11:14:52 bouyer Exp $	*/
+/*	$NetBSD: wdc_obio.c,v 1.9 2003/12/04 09:32:37 he Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc_obio.c,v 1.8 2003/10/08 11:14:52 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc_obio.c,v 1.9 2003/12/04 09:32:37 he Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -83,7 +83,7 @@ wdc_obio_probe(struct device *parent, struct cfdata *match, void *aux)
 	bzero(&ch, sizeof(ch));
 	ch.cmd_iot = oa->oa_iot;
 	if (bus_space_map(ch.cmd_iot, oa->oa_iobase, WDC_OBIO_REG_NPORTS, 0,
-	    &ch.cmd_ioh))
+	    &ch.cmd_baseioh))
 		goto out;
 
 	ch.ctl_iot = oa->oa_iot;
@@ -99,7 +99,7 @@ wdc_obio_probe(struct device *parent, struct cfdata *match, void *aux)
 
 	bus_space_unmap(ch.ctl_iot, ch.ctl_ioh, WDC_OBIO_AUXREG_NPORTS);
 outunmap:
-	bus_space_unmap(ch.cmd_iot, ch.cmd_ioh, WDC_OBIO_REG_NPORTS);
+	bus_space_unmap(ch.cmd_iot, ch.cmd_baseioh, WDC_OBIO_REG_NPORTS);
 out:
 	return (result);
 }
@@ -115,7 +115,7 @@ wdc_obio_attach(struct device *parent, struct device *self, void *aux)
 	sc->wdc_channel.cmd_iot = oa->oa_iot;
 	sc->wdc_channel.ctl_iot = oa->oa_iot;
 	if (bus_space_map(sc->wdc_channel.cmd_iot, oa->oa_iobase,
-	    WDC_OBIO_REG_NPORTS, 0, &sc->wdc_channel.cmd_ioh) ||
+	    WDC_OBIO_REG_NPORTS, 0, &sc->wdc_channel.cmd_baseioh) ||
 	    bus_space_map(sc->wdc_channel.ctl_iot,
 	      oa->oa_iobase + WDC_OBIO_AUXREG_OFFSET, WDC_OBIO_AUXREG_NPORTS,
 	      0, &sc->wdc_channel.ctl_ioh)) {
@@ -123,7 +123,7 @@ wdc_obio_attach(struct device *parent, struct device *self, void *aux)
 		    sc->sc_wdcdev.sc_dev.dv_xname);
 	}
 	sc->wdc_channel.data32iot = sc->wdc_channel.cmd_iot;
-	sc->wdc_channel.data32ioh = sc->wdc_channel.cmd_ioh;
+	sc->wdc_channel.data32ioh = sc->wdc_channel.cmd_iohs[0];
 
 	sc->sc_ih = obio_intr_establish(oa->oa_irq, IST_LEVEL,
 	    IPL_BIO, wdcintr, &sc->wdc_channel);
