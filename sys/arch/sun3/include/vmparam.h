@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.23 1999/04/10 02:15:46 gwr Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.24 1999/12/04 21:21:41 ragge Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@ struct pmap_physseg {
  * by the page replacement algorithm.  Basically this says that if you are
  * swapped in you deserve some resources.  We protect the last SAFERSS
  * pages against paging and will just swap you out rather than paging you.
- * Note that each process has at least UPAGES+CLSIZE pages which are not
+ * Note that each process has at least UPAGES pages which are not
  * paged anyways (this is currently 8+2=10 pages or 5k bytes), so this
  * number just means a swapped in process is given around 25k bytes.
  * Just for fun: current memory prices are 4600$ a megabyte on VAX (4/22/81),

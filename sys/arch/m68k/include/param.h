@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.5 1998/04/29 23:11:00 thorpej Exp $	*/
+/*	$NetBSD: param.h,v 1.6 1999/12/04 21:20:35 ragge Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -76,10 +76,6 @@
 #define BLKDEV_IOSIZE	2048
 #define	MAXPHYS		(64 * 1024)	/* max raw I/O transfer size */
 
-#define	CLSIZELOG2	0
-#define	CLSIZE		(1 << CLSIZELOG2)
-
-/* NOTE: SSIZE, SINCR and UPAGES must be multiples of CLSIZE */
 #define	SSIZE		1		/* initial stack size/NBPG */
 #define	SINCR		1		/* increment of stack/NBPG */
 

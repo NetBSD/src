@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.54 1999/11/13 00:32:17 thorpej Exp $ */
+/*	$NetBSD: machdep.c,v 1.55 1999/12/04 21:21:35 ragge Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -253,7 +253,7 @@ printf("cpu_startup: allocsys %ld, rounded %ld\n", sz, round_page(sz));
 		 * "base" pages for the rest.
 		 */
 		curbuf = (vaddr_t) buffers + (i * MAXBSIZE);
-		curbufsize = CLBYTES * ((i < residual) ? (base+1) : base);
+		curbufsize = NBPG * ((i < residual) ? (base+1) : base);
 
 		while (curbufsize) {
 			pg = uvm_pagealloc(NULL, 0, NULL, 0);
@@ -293,7 +293,7 @@ printf("cpu_startup: allocsys %ld, rounded %ld\n", sz, round_page(sz));
 #endif
 	format_bytes(pbuf, sizeof(pbuf), ptoa(uvmexp.free));
 	printf("avail memory = %s\n", pbuf);
-	format_bytes(pbuf, sizeof(pbuf), bufpages * CLBYTES);
+	format_bytes(pbuf, sizeof(pbuf), bufpages * NBPG);
 	printf("using %d buffers containing %s of memory\n", nbuf, pbuf);
 
 	/*
