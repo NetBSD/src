@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_output.c,v 1.90 2003/03/01 04:40:28 thorpej Exp $	*/
+/*	$NetBSD: tcp_output.c,v 1.91 2003/05/17 17:16:20 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -142,7 +142,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_output.c,v 1.90 2003/03/01 04:40:28 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_output.c,v 1.91 2003/05/17 17:16:20 itojun Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -1069,27 +1069,8 @@ send:
 	/*
 	 * Trace.
 	 */
-	if (so->so_options & SO_DEBUG) {
-		/*
-		 * need to recover version # field, which was overwritten
-		 * on ip_cksum computation.
-		 */
-		struct ip *sip;
-		sip = mtod(m, struct ip *);
-		switch (af) {
-#ifdef INET
-		case AF_INET:
-			sip->ip_v = 4;
-			break;
-#endif
-#ifdef INET6
-		case AF_INET6:
-			sip->ip_v = 6;
-			break;
-#endif
-		}
+	if (so->so_options & SO_DEBUG)
 		tcp_trace(TA_OUTPUT, tp->t_state, tp, m, 0);
-	}
 #endif
 
 	/*
