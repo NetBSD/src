@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: fgen.l,v 1.9 2000/04/14 06:11:07 simonb Exp $	*/
+/*	$NetBSD: fgen.l,v 1.9.4.1 2000/10/18 01:32:42 tv Exp $	*/
 /* FLEX input for FORTH input file scanner */
 /*  
  * Copyright (c) 1998 Eduardo Horvath.
@@ -91,7 +91,8 @@ Cell parse_stack[PSTKSIZ];
 int parse_stack_ptr = 0;
 
 int	main __P((int, char *[]));
-void	token_err __P((int, char *, char *, char *, ...));
+void	token_err __P((int, char *, char *, char *, ...))
+	__attribute__((__format__(__printf__, 4, 5)));
 YY_DECL;
 
 int debug = 0;

@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc_tblout.c,v 1.7 1997/10/18 10:54:11 lukem Exp $	*/
+/*	$NetBSD: rpc_tblout.c,v 1.7.12.1 2000/10/18 01:32:50 tv Exp $	*/
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
  * unrestricted use provided that this legend is included on all tape
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)rpc_tblout.c 1.4 89/02/22 (C) 1988 SMI";
 #else
-__RCSID("$NetBSD: rpc_tblout.c,v 1.7 1997/10/18 10:54:11 lukem Exp $");
+__RCSID("$NetBSD: rpc_tblout.c,v 1.7.12.1 2000/10/18 01:32:50 tv Exp $");
 #endif
 #endif
 
@@ -54,14 +54,14 @@ __RCSID("$NetBSD: rpc_tblout.c,v 1.7 1997/10/18 10:54:11 lukem Exp $");
 
 static char tabstr[TABCOUNT + 1] = "\t\t\t\t\t";
 
-static char tbl_hdr[] = "struct rpcgen_table %s_table[] = {\n";
-static char tbl_end[] = "};\n";
+static const char tbl_hdr[] = "struct rpcgen_table %s_table[] = {\n";
+static const char tbl_end[] = "};\n";
 
-static char null_entry[] = "\t(char *(*)())0,\n\
+static const char null_entry[] = "\t(char *(*)())0,\n\
  \t(xdrproc_t)xdr_void,\t\t0,\n\
  \t(xdrproc_t)xdr_void,\t\t0,\n";
 
-static char tbl_nproc[] = "int %s_nproc =\n\tsizeof(%s_table)/sizeof(%s_table[0]);\n\n";
+static const char tbl_nproc[] = "int %s_nproc =\n\tsizeof(%s_table)/sizeof(%s_table[0]);\n\n";
 
 static void write_table __P((definition *));
 static void printit __P((char *, char *));

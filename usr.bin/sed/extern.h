@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.5 1997/01/09 20:21:29 tls Exp $	*/
+/*	$NetBSD: extern.h,v 1.5.12.1 2000/10/18 01:32:51 tv Exp $	*/
 
 /*-
  * Copyright (c) 1992 Diomidis Spinellis.
@@ -37,7 +37,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)extern.h	8.1 (Berkeley) 6/6/93
- *	$NetBSD: extern.h,v 1.5 1997/01/09 20:21:29 tls Exp $
+ *	$NetBSD: extern.h,v 1.5.12.1 2000/10/18 01:32:51 tv Exp $
  */
 
 extern struct s_command *prog;
@@ -54,7 +54,8 @@ void	 cfclose __P((struct s_command *, struct s_command *));
 void	 compile __P((void));
 void	 cspace __P((SPACE *, char *, size_t, enum e_spflag));
 char	*cu_fgets __P((char *, int));
-void	 err __P((int, const char *, ...));
+void	 err __P((int, const char *, ...))
+     __attribute__((__format__(__printf__, 2, 3)));
 int	 mf_fgets __P((SPACE *, enum e_spflag));
 void	 process __P((void));
 char	*strregerror __P((int, regex_t *));

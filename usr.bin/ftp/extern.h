@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.57 2000/06/15 13:08:25 lukem Exp $	*/
+/*	$NetBSD: extern.h,v 1.57.2.1 2000/10/18 01:32:43 tv Exp $	*/
 
 /*-
  * Copyright (c) 1996-2000 The NetBSD Foundation, Inc.
@@ -122,7 +122,8 @@ void	cleanuppeer(void);
 void	cmdabort(int);
 void	cmdtimeout(int);
 void	cmdscanner(void);
-int	command(const char *, ...);
+int	command(const char *, ...)
+     __attribute__((__format__(__printf__, 1, 2)));
 #ifndef NO_EDITCOMPLETE
 unsigned char complete(EditLine *, int);
 void	controlediting(void);
