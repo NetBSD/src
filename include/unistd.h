@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)unistd.h	5.13 (Berkeley) 6/17/91
- *	$Id: unistd.h,v 1.17 1994/03/29 02:53:54 jtc Exp $
+ *	$Id: unistd.h,v 1.18 1994/05/07 00:20:47 jtc Exp $
  */
 
 #ifndef _UNISTD_H_
@@ -179,6 +179,7 @@ extern	 char *optarg;			/* getopt(3) external variables */
 extern	 int opterr;
 extern	 int optind;
 extern	 int optopt;
+extern	 int optreset;
 int	 getsubopt __P((char **, char * const *, char **));
 extern	 char *suboptarg;		/* getsubopt(3) external variable */
 #endif /* !_POSIX_SOURCE */
