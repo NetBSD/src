@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_exec.c,v 1.1 2001/07/14 02:11:00 christos Exp $	 */
+/*	$NetBSD: mach_exec.c,v 1.2 2001/07/29 21:26:07 christos Exp $	 */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -91,41 +91,53 @@ const struct emul emul_mach = {
  * Copy arguments onto the stack in the normal way, but add some
  * extra information in case of dynamic binding.
  */
-void *
+int
 exec_mach_copyargs(struct exec_package *pack, struct ps_strings *arginfo,
-    void *stack, void *argp)
+    char **stackp, void *argp)
 {
 	char path[MAXPATHLEN];
 	size_t len;
 	size_t zero = 0;
+	int error;
 
-	stack = copyargs(pack, arginfo, stack, argp);
-	if (!stack)
-		return NULL;
+	if ((error = copyargs(pack, arginfo, stackp, argp)) != 0) {
+		DPRINTF(("mach: copyargs failed\n"));
+		return error;
+	}
 
-	if (copyout(&zero, stack, sizeof(zero)))
-		return NULL;
-	stack = (char *)stack + sizeof(zero);
+	if ((error = copyout(&zero, *stackp, sizeof(zero))) != 0) {
+		DPRINTF(("mach: copyout first zero failed\n"));
+		return error;
+	}
+	*stackp += sizeof(zero);
 
 	/* do the really stupid thing */
-	if (copyinstr(pack->ep_name, path, MAXPATHLEN, &len))
-		return NULL;
-	if (copyout(path, stack, len))
-		return NULL;
-	stack = (char *)stack + len;
+	if ((error = copyinstr(pack->ep_name, path, MAXPATHLEN, &len)) != 0) {
+		DPRINTF(("mach: copyinstr %p failed\n", pack->ep_name));
+		return error;
+	}
+	if ((error = copyout(path, *stackp, len)) != 0) {
+		DPRINTF(("mach: copyout path failed\n"));
+		return error;
+	}
+	*stackp += len;
 
 	len = len % sizeof(zero);
 	if (len) {
-		if (copyout(&zero, stack, len))
-			return NULL;
-		stack = (char *)stack + len;
+		if ((error = copyout(&zero, *stackp, len)) != 0) {
+			DPRINTF(("mach: zero align %d failed\n", len));
+			return error;
+		}
+		*stackp += len;
 	}
 
-	if (copyout(&zero, stack, sizeof(zero)))
-		return NULL;
-	stack = (char *)stack + sizeof(zero);
+	if ((error = copyout(&zero, *stackp, sizeof(zero))) != 0) {
+		DPRINTF(("mach: copyout second zero failed\n"));
+		return error;
+	}
+	*stackp += sizeof(zero);
 
-	return stack;
+	return 0;
 }
 
 int
