@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_port.c,v 1.42 2003/11/09 11:10:11 manu Exp $ */
+/*	$NetBSD: mach_port.c,v 1.43 2003/11/09 23:05:29 manu Exp $ */
 
 /*-
  * Copyright (c) 2002-2003 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 #include "opt_compat_darwin.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_port.c,v 1.42 2003/11/09 11:10:11 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_port.c,v 1.43 2003/11/09 23:05:29 manu Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -422,7 +422,7 @@ mach_port_get_attributes(args)
 	}
 
 	default:
-		printf("mach_port_get_attributes: unknwo flavor %d\n",
+		printf("mach_port_get_attributes: unknown flavor %d\n",
 		    req->req_flavor);
 		return mach_msg_error(args, EINVAL);
 
