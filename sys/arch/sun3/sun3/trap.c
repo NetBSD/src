@@ -51,15 +51,18 @@
 #include <sys/resourcevar.h>
 #include <sys/syslog.h>
 #include <sys/user.h>
+#include <sys/syscall.h>
 #ifdef KTRACE
 #include <sys/ktrace.h>
 #endif
 
+#include <machine/cpu.h>
+#include <machine/endian.h>
+#include <machine/mtpr.h>
 #include <machine/psl.h>
 #include <machine/trap.h>
-#include <machine/cpu.h>
 #include <machine/reg.h>
-#include <machine/mtpr.h>
+
 
 #include <vm/vm.h>
 #include <vm/pmap.h>
@@ -585,7 +588,7 @@ syscall(code, frame)
 		if (p->p_emul == EMUL_SUNOS)
 			break;
 #endif		
-	        code = fuword(params + QUAD_LOWWORD * sizeof(int)); /* indir */
+	        code = fuword(params + _QUAD_LOWWORD*sizeof(int)); /* indir */
 	        params += sizeof(quad_t);
 	        break;
 	default:

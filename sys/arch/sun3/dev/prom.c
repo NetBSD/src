@@ -273,7 +273,6 @@ promcninit(cp)
      struct consdev *cp;
 {
     cp->cn_tp = NULL;
-    mon_printf("prom console initialized\n");
 }
 
 promcngetc(dev)
