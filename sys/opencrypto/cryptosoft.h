@@ -1,4 +1,4 @@
-/*	$NetBSD: cryptosoft.h,v 1.1 2003/07/25 21:12:45 jonathan Exp $ */
+/*	$NetBSD: cryptosoft.h,v 1.2 2003/08/27 00:20:56 thorpej Exp $ */
 /*	$OpenBSD: cryptosoft.h,v 1.10 2002/04/22 23:10:09 deraadt Exp $	*/
 
 /*
@@ -58,8 +58,8 @@ struct swcr_data {
 };
 
 #ifdef _KERNEL
-extern u_int8_t hmac_ipad_buffer[64];
-extern u_int8_t hmac_opad_buffer[64];
+extern const u_int8_t hmac_ipad_buffer[64];
+extern const u_int8_t hmac_opad_buffer[64];
 void	swcr_init(void);
 #endif /* _KERNEL */
 
