@@ -1,4 +1,4 @@
-/*	$NetBSD: psychoreg.h,v 1.8 2001/09/10 16:17:06 eeh Exp $ */
+/*	$NetBSD: psychoreg.h,v 1.9 2001/09/15 07:10:05 eeh Exp $ */
 
 /*
  * Copyright (c) 1998, 1999 Eduardo E. Horvath
@@ -69,6 +69,9 @@ struct psychoreg {
 	u_int64_t	psy_ecccr;		/* ECC control register */		/* 1fe.0000.0020 */
 	u_int64_t	reserved;							/* 1fe.0000.0028 */
 	u_int64_t	psy_ue_afsr;		/* Uncorrectable Error AFSR */		/* 1fe.0000.0030 */
+#define	PSYCHO_UE_AFSR_BITS	"\177\020"				\
+	"b\27BLK\0b\070P_DTE\0b\071S_DTE\0b\072S_DWR\0b\073S_DRD\0b"	\
+	"\075P_DWR\0b\076P_DRD\0\0"
 	u_int64_t	psy_ue_afar;		/* Uncorrectable Error AFAR */		/* 1fe.0000.0038 */
 	u_int64_t	psy_ce_afsr;		/* Correctable Error AFSR */		/* 1fe.0000.0040 */
 	u_int64_t	psy_ce_afar;		/* Correctable Error AFAR */		/* 1fe.0000.0048 */
