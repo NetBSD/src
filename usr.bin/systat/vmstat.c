@@ -1,4 +1,4 @@
-/*	$NetBSD: vmstat.c,v 1.51 2003/06/11 17:26:31 drochner Exp $	*/
+/*	$NetBSD: vmstat.c,v 1.52 2003/08/05 20:01:25 grant Exp $	*/
 
 /*-
  * Copyright (c) 1983, 1989, 1992, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)vmstat.c	8.2 (Berkeley) 1/12/94";
 #endif
-__RCSID("$NetBSD: vmstat.c,v 1.51 2003/06/11 17:26:31 drochner Exp $");
+__RCSID("$NetBSD: vmstat.c,v 1.52 2003/08/05 20:01:25 grant Exp $");
 #endif /* not lint */
 
 /*
@@ -368,7 +368,7 @@ labelvmstat(void)
 	mvprintw(NAMEIROW, NAMEICOL, "Namei         Sys-cache     Proc-cache");
 	mvprintw(NAMEIROW + 1, NAMEICOL,
 		"    Calls     hits    %%     hits     %%");
-	mvprintw(DISKROW, DISKCOL, "Discs:");
+	mvprintw(DISKROW, DISKCOL, "Disks:");
 	if (disk_horiz) {
 		mvprintw(DISKROW + 1, DISKCOL + 1, "seeks");
 		mvprintw(DISKROW + 2, DISKCOL + 1, "xfers");
