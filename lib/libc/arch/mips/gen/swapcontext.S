@@ -1,4 +1,4 @@
-/*	$NetBSD: swapcontext.S,v 1.1.2.3 2001/11/24 02:27:35 wdk Exp $	*/
+/*	$NetBSD: swapcontext.S,v 1.1.2.4 2002/11/20 09:38:54 wdk Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -40,22 +40,21 @@
 #include <machine/mcontext.h>
 
 #if defined(SYSLIBC_SCCS) && !defined(lint)
-	ASMSTR("$NetBSD: swapcontext.S,v 1.1.2.3 2001/11/24 02:27:35 wdk Exp $")
+	ASMSTR("$NetBSD: swapcontext.S,v 1.1.2.4 2002/11/20 09:38:54 wdk Exp $")
 #endif /* SYSLIBC_SCCS && !lint */
 
 NESTED(swapcontext, CALLFRAME_SIZ, ra)
-	.mask	0x80000000, (CALLFRAME_RA - CALLFRAME_SIZ)
 	subu	sp, sp, CALLFRAME_SIZ
-
+	.mask	0x80000000, (CALLFRAME_RA - CALLFRAME_SIZ)
 	sw	ra, CALLFRAME_RA(sp)	# save ra
-	sw	a0, CALLFRAME_SIZ(sp)	# stash away oucp
-	sw	a1, CALLFRAME_SIZ+4(sp)	# stash away ucp
+	sw	a0, 0(sp)		# stash away oucp
+	sw	a1, 4(sp)		# stash away ucp
 	SYSTRAP(getcontext)
 	bne	a3, zero, 1f
 	 lw	ra, CALLFRAME_RA(sp)
 
-	lw	v1, CALLFRAME_SIZ(sp)	# load oucp again for adjustment
-	lw	a0, CALLFRAME_SIZ+4(sp)	# load ucp
+	lw	v1, 0(sp)		# load oucp again for adjustment
+	lw	a0, 4(sp)		# load ucp
 	addiu	v0, sp, CALLFRAME_SIZ
 	REG_PROLOGUE
 	REG_S	zero, (_OFFSETOF_UC_GREGS + _REG_V0 * SZREG)(v1)
