@@ -1,4 +1,4 @@
-.\"	$NetBSD: audio.4,v 1.5 1997/05/07 19:24:25 augustss Exp $
+.\"	$NetBSD: audio.4,v 1.6 1997/07/28 00:23:10 augustss Exp $
 .\"
 .\" Copyright (c) 1996 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -83,14 +83,6 @@ Only one process may hold open a sampling device at a given time
 (although file descriptors may be shared between processes once the
 first open completes).
 .Pp
-Reads and writes to a sampling device should be in multiples of the
-current audio block size which can be queried and set using the
-interfaces described below.
-Writes which are not multiples of the block size will be padded to a
-block boundary with silence.
-Reads which are not multiples of the block size will consume a block
-from the audio hardware but only return the requested number of bytes.
-.Pp
 On a half-duplex device, writes while recording is in progress will be
 immediately discarded.  Similarly, reads while playback is in progress
 will be filled with silence but delayed to return at the current
@@ -106,18 +98,44 @@ until recording is unpaused.
 .Pp
 If a writing process does not call
 .Xr write 2
-frequently enough to provide audio playback blocks in time for the next
-hardware interrupt service, one or more audio silence blocks will be
-queued for playback, unless the
-.Dv AUMODE_PLAY_ALL
-mode is set.  The writing process must provide enough data via
+frequently enough to provide samples at the pace the hardware
+consumes them silence is inserted.
+If the 
+.Dv AUMODE_PLAY_ALL 
+mode is not set the writing process must 
+provide enough data via
 subsequent write calls to ``catch up'' in time to the current audio
 block before any more process-provided samples will be played.
-[Alternatively, the playing process can use one of the interfaces below
-to halt and later restart audio playback.]
 If a reading process does not call
 .Xr read 2
 frequently enough, it will simply miss samples.
+.Pp
+The audio device is normally accessed with
+.Xr read 2
+or
+.Xr write 2
+calls, but it can also be mapped into user memory with
+.Xr mmap 2 .
+Once the device has been mapped it can no longer be accessed
+by read or write; all access is by reading and writing to
+the mapped memory.  The device appears as a block of memory
+of size
+.Va buffersize
+available via 
+.Dv AUDIO_GETINFO .
+The device driver will continuously move data from this buffer
+from/to the audio hardware, wrapping around at the end of the
+buffer.  To find out where the hardware is currently accessing
+data in the buffer the
+.Dv AUDIO_GETIOFFS
+and
+.Dv AUDIO_GETOOFFS
+calls can be used.
+The playing and recording buffers are distinct and must be
+mapped separately if both are to be used.
+Only encodings that are not emulated (i.e. where
+.Dv AUDIO_ENCODINGFLAG_EMULATED
+is not set) work properly for a mapped device.
 .Pp
 The following
 .Xr ioctl 2
@@ -167,21 +185,47 @@ continue with successive encodings (1, 2, ...) until the command returns
 an error.
 .It Dv AUDIO_GETFD (int)
 This command fetches a non-zero value into its integer argument if the
-hardware supports full-duplex operation, or a zero value if the hardware
-only supports half-duplex operation.
+hardware is in full-duplex mode, or a zero value if the hardware
+is not in full-duplex mode.
 .It Dv AUDIO_SETFD (int)
 This command sets the device into full-duplex operation if its integer
 argument has a non-zero value, or into half-duplex operation if it
 contains a zero value.  If the device does not support full-duplex
 operation, attempting to set full-duplex mode returns an error.
+.It Dv AUDIO_GETPROPS (int)
+This command gets a bit set of hardware properties.  If the hardware
+has a certain property a bit is set, otherwise it is not.
+The properties can have the following values:
+.Bl -tag -width indent -compact
+.It Dv AUDIO_PROP_FULLDUPLEX
+the device admits full duplex operation.
+.It Dv AUDIO_PROP_MMAP
+the device can be used with
+.Xr mmap 2 .
+.El
+.It Dv AUDIO_GETIOFFS (audio_offset_t)
+.It Dv AUDIO_GETOOFFS (audio_offset_t)
+This command fetches the current offset in the input(output) buffer where
+the hardware is putting(getting) data.  It mostly useful when the device
+buffer is available in user space via the
+.Xr mmap 2
+call.
+The information is returned in the audio_offset structure.
+.Bd -literal
+typedef struct audio_offset {
+	u_int	samples;   /* Total number of bytes transferred */
+	u_int	deltablks; /* Blocks transferred since last checked */
+	u_int	offset;    /* Physical transfer offset in buffer */
+} audio_offset_t;
+.Ed
 .It Dv AUDIO_GETINFO (audio_info_t)
 .It Dv AUDIO_SETINFO (audio_info_t)
 Get or set audio information as encoded in the audio_info structure.
 .Bd -literal
 typedef struct audio_info {
-	struct	audio_prinfo play;	/* Info for play (output) side */
-	struct	audio_prinfo record;	/* Info for record (input) side */
-	u_int	buffersize;             /* total size audio buffer */
+	struct	audio_prinfo play;   /* info for play (output) side */
+	struct	audio_prinfo record; /* info for record (input) side */
+	u_int	buffersize;          /* total size audio buffer */
 	/* BSD extensions */
 	u_int	blocksize;	/* H/W read/write block size */
 	u_int	hiwat;		/* output high water mark */
@@ -190,7 +234,7 @@ typedef struct audio_info {
 	u_int	mode;		/* current device mode */
 #define AUMODE_PLAY	0x01
 #define AUMODE_RECORD	0x02
-#define AUMODE_PLAY_ALL	0x04	/* play all samples--no real-time correction */
+#define AUMODE_PLAY_ALL 0x04	/* do not do real-time correction */
 };
 .Ed
 .Pp
@@ -211,10 +255,7 @@ field should be set to
 .Dv AUMODE_RECORD ,
 .Dv AUMODE_PLAY_ALL ,
 or a bitwise OR combination of the three.
-.Dv AUMODE_PLAY
-and
-.Dv AUMODE_PLAY_ALL
-are mutually exclusive, and only full-duplex audio devices support
+Only full-duplex audio devices support
 simultaneous record and playback.
 .Pp
 .Va hiwat
@@ -228,6 +269,16 @@ mark.
 and
 .Va lowat
 set those high- and low-water marks (in audio blocks).
+.Pp
+.Va buffersize
+is the total size of the audio buffer.  The buffer size divided
+by the 
+.Va blocksize
+gives the maximim value for
+.Va hiwat.
+Currently the
+.Va blocksize
+can only be read and not set.
 .Pp
 .Va blocksize
 sets the current audio blocksize.  The generic audio driver layer and
@@ -270,15 +321,15 @@ The encoding parameter can have the following values:
 mulaw encoding, 8 bits/sample
 .It Dv AUDIO_ENCODING_ALAW
 alaw encoding, 8 bits/sample
-.It Dv AUDIO_ENCODING_LINEAR
+.It Dv AUDIO_ENCODING_SLINEAR
 two's complement signed linear encoding with the platform byte order
 .It Dv AUDIO_ENCODING_ULINEAR
 unsigned linear encoding with the platform byte order
 .It Dv AUDIO_ENCODING_ADPCM
 ADPCM encoding, 8 bits/sample
-.It Dv AUDIO_ENCODING_LINEAR_LE
+.It Dv AUDIO_ENCODING_SLINEAR_LE
 two's complement signed linear encoding with little endian byte order
-.It Dv AUDIO_ENCODING_LINEAR_BE
+.It Dv AUDIO_ENCODING_SLINEAR_BE
 two's complement signed linear encoding with big endian byte order
 .It Dv AUDIO_ENCODING_ULINEAR_LE
 unsigned linear encoding with little endian byte order
@@ -306,7 +357,7 @@ fields are only used for
 represents the count of
 samples pending;
 .Va samples
-represents the total number of samples recorded or played, less those
+represents the total number of bytes recorded or played, less those
 that were dropped due to inadequate consumption/production rates.
 .Pp
 .Va pause
@@ -482,7 +533,8 @@ For ports using the ISA bus:
 .Sh BUGS
 The device class conventions are just a wish and not yet reality.
 .Pp
-Audio playback can be scratchy with pops and crackles due to the
-audio layer's buffering scheme.  Using a bigger blocksize will help
-reduce such annoyances.
-
+If the device is used in
+.Xr mmap 2
+it is currently always mapped for writing (playing) due to
+VM system weirdness.
+.Pp
