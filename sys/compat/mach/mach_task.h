@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_task.h,v 1.7 2003/04/05 21:18:02 manu Exp $ */
+/*	$NetBSD: mach_task.h,v 1.8 2003/04/06 17:58:50 manu Exp $ */
 
 /*-
  * Copyright (c) 2002-2003 The NetBSD Foundation, Inc.
@@ -192,6 +192,32 @@ typedef struct {
 	mach_msg_trailer_t rep_trailer;
 } mach_task_info_reply_t;
 
+/* task_suspend */
+
+typedef struct {
+	mach_msg_header_t req_msgh;
+} mach_task_suspend_request_t;
+
+typedef struct {
+	mach_msg_header_t rep_msgh;
+	mach_ndr_record_t rep_ndr;
+	mach_kern_return_t rep_retval;
+	mach_msg_trailer_t rep_trailer;
+} mach_task_suspend_reply_t;
+
+/* task_resume */
+
+typedef struct {
+	mach_msg_header_t req_msgh;
+} mach_task_resume_request_t;
+
+typedef struct {
+	mach_msg_header_t rep_msgh;
+	mach_ndr_record_t rep_ndr;
+	mach_kern_return_t rep_retval;
+	mach_msg_trailer_t rep_trailer;
+} mach_task_resume_reply_t;
+
 int mach_task_get_special_port(struct mach_trap_args *);
 int mach_ports_lookup(struct mach_trap_args *);
 int mach_task_set_special_port(struct mach_trap_args *);
@@ -199,5 +225,7 @@ int mach_task_threads(struct mach_trap_args *);
 int mach_task_get_exception_ports(struct mach_trap_args *);
 int mach_task_set_exception_ports(struct mach_trap_args *);
 int mach_task_info(struct mach_trap_args *);
+int mach_task_suspend(struct mach_trap_args *);
+int mach_task_resume(struct mach_trap_args *);
 
 #endif /* _MACH_TASK_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_namemap.c,v 1.22 2003/04/05 21:18:02 manu Exp $ */
+/*	$NetBSD: mach_namemap.c,v 1.23 2003/04/06 17:58:50 manu Exp $ */
 
 /*-
  * Copyright (c) 2002-2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_namemap.c,v 1.22 2003/04/05 21:18:02 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_namemap.c,v 1.23 2003/04/06 17:58:50 manu Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -108,6 +108,8 @@ struct mach_subsystem_namemap mach_namemap[] = {
 	{ 3402, mach_task_threads, "task_threads" },
 	{ 3404, mach_ports_lookup, "ports_lookup" },
 	{ 3405, mach_task_info, "task_info" },
+	{ 3407, mach_task_suspend, "task_suspend" },
+	{ 3408, mach_task_resume, "task_resume" },
 	{ 3409, mach_task_get_special_port, "task_get_special_port" },
 	{ 3410, mach_task_set_special_port, "task_set_special_port" },
 	{ 3412, mach_thread_create_running, "thread_create_running" },
