@@ -1,4 +1,4 @@
-/*	$NetBSD: rquotad.c,v 1.8 1997/08/25 19:31:50 kleink Exp $	*/
+/*	$NetBSD: rquotad.c,v 1.9 1997/10/07 11:15:18 mrg Exp $	*/
 
 /*
  * by Manuel Bouyer (bouyer@ensta.fr)
@@ -6,11 +6,17 @@
  * There is no copyright, you can use it as you want.
  */
 
+#include <sys/cdefs.h>
+#ifndef lint
+__RCSID("$NetBSD: rquotad.c,v 1.9 1997/10/07 11:15:18 mrg Exp $");
+#endif
+
 #include <sys/param.h>
 #include <sys/types.h>
 #include <sys/mount.h>
 #include <sys/file.h>
 #include <sys/stat.h>
+#include <sys/socket.h>
 #include <signal.h>
 
 #include <stdio.h>
@@ -21,6 +27,7 @@
 #include <pwd.h>
 #include <grp.h>
 #include <errno.h>
+#include <unistd.h>
 
 #include <syslog.h>
 #include <varargs.h>
@@ -36,6 +43,8 @@ void printerr_reply __P((SVCXPRT *transp));
 void initfs __P((void));
 int getfsquota __P((long id, char *path, struct dqblk *dqblk));
 int hasquota __P((struct fstab *fs, char **qfnamep));
+void cleanup __P((int));
+int main __P((int, char *[]));
 
 /*
  * structure containing informations about ufs filesystems
@@ -49,10 +58,12 @@ struct fs_stat {
 } fs_stat;
 struct fs_stat *fs_begin = NULL;
 
+char *qfextension[] = INITQFNAMES;
 int from_inetd = 1;
 
 void 
-cleanup()
+cleanup(dummy)
+	int dummy;
 {
 	(void) pmap_unset(RQUOTAPROG, RQUOTAVERS);
 	exit(0);
@@ -209,10 +220,9 @@ initfs()
 	char *qfpathname;
 	struct fstab *fs;
 	struct stat st;
-	char *qfextension[] = INITQFNAMES;
 
 	setfsent();
-	while (fs = getfsent()) {
+	while ((fs = getfsent())) {
 		if (strcmp(fs->fs_vfstype, "ffs"))
 			continue;
 		if (!hasquota(fs, &qfpathname))
@@ -249,7 +259,6 @@ getfsquota(id, path, dqblk)
 	struct stat st_path;
 	struct fs_stat *fs;
 	int	qcmd, fd, ret = 0;
-	char	*qfextension[] = INITQFNAMES;
 
 	if (stat(path, &st_path) < 0)
 		return (0);
@@ -306,17 +315,18 @@ hasquota(fs, qfnamep)
 	char  **qfnamep;
 {
 	static char initname, usrname[100];
-	static char buf[BUFSIZ];
-	char	*opt, *cp;
-	char	*qfextension[] = INITQFNAMES;
+	static char buf[MAXPATHLEN];
+	char	*opt, *cp = NULL;
 
 	if (!initname) {
-		sprintf(usrname, "%s%s", qfextension[USRQUOTA], QUOTAFILENAME);
+		(void)snprintf(usrname, sizeof usrname, "%s%s",
+		    qfextension[USRQUOTA], QUOTAFILENAME);
 		initname = 1;
 	}
-	strcpy(buf, fs->fs_mntops);
+	strncpy(buf, fs->fs_mntops, sizeof(buf) - 1);
+	buf[sizeof(buf) - 1] = '\0';
 	for (opt = strtok(buf, ","); opt; opt = strtok(NULL, ",")) {
-		if (cp = index(opt, '='))
+		if ((cp = index(opt, '=')))
 			*cp++ = '\0';
 		if (strcmp(opt, usrname) == 0)
 			break;
@@ -327,7 +337,8 @@ hasquota(fs, qfnamep)
 		*qfnamep = cp;
 		return (1);
 	}
-	sprintf(buf, "%s/%s.%s", fs->fs_file, QUOTAFILENAME, qfextension[USRQUOTA]);
+	(void)snprintf(buf, sizeof buf, "%s/%s.%s", fs->fs_file, QUOTAFILENAME,
+	    qfextension[USRQUOTA]);
 	*qfnamep = buf;
 	return (1);
 }
