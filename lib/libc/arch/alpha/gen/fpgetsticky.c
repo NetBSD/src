@@ -1,4 +1,4 @@
-/*	$NetBSD: fpgetsticky.c,v 1.1 1995/04/29 05:10:59 cgd Exp $	*/
+/*	$NetBSD: fpgetsticky.c,v 1.2 1999/04/30 00:58:31 ross Exp $	*/
 
 /*
  * Copyright (c) 1995 Christopher G. Demetriou
@@ -31,12 +31,19 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <sys/types.h>
 #include <ieeefp.h>
 
 fp_except
-fpgetsticky()
+fpgetsticky __P((void))
 {
+	double fpcrval;
+	u_int64_t old;
 
-	/* XXX */
-	abort();
+	__asm__("trapb");
+	__asm__("mf_fpcr %0" : "=f" (fpcrval));
+	__asm__("trapb");
+	old = *(u_int64_t *)&fpcrval;
+
+	return (old >> 52) & 0x3f;
 }
