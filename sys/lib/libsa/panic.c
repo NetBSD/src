@@ -1,4 +1,4 @@
-/*	$NetBSD: panic.c,v 1.2 1999/04/28 13:24:12 christos Exp $	*/
+/*	$NetBSD: panic.c,v 1.3 2003/03/07 00:46:37 dsl Exp $	*/
 
 /*-
  *  Copyright (c) 1993 John Brezak
@@ -44,7 +44,7 @@ panic(fmt /*, va_alist */)
 #endif
 {
     va_list ap;
-#ifndef LIBSA_NO_CLOSE
+#ifndef LIBSA_NO_FS_CLOSE
     static int paniced;
     
     if (!paniced) {
