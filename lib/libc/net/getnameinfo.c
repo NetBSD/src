@@ -1,4 +1,5 @@
-/*	$NetBSD: getnameinfo.c,v 1.15 2000/04/24 10:40:25 itojun Exp $	*/
+/*	$NetBSD: getnameinfo.c,v 1.16 2000/04/26 16:08:38 itojun Exp $	*/
+/*	$KAME: getnameinfo.c,v 1.38 2000/04/26 15:58:50 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -37,11 +38,15 @@
  * - RFC2553 says that we should raise error on short buffer.  X/Open says
  *   we need to truncate the result.  We obey RFC2553 (and X/Open should be
  *   modified).
+ * - What is "local" in NI_FQDN?
+ * - NI_NAMEREQD and NI_NUMERICHOST conflict with each other.
+ * - (KAME extension) NI_WITHSCOPEID when called with global address,
+ *   and sin6_scope_id filled
  */
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: getnameinfo.c,v 1.15 2000/04/24 10:40:25 itojun Exp $");
+__RCSID("$NetBSD: getnameinfo.c,v 1.16 2000/04/26 16:08:38 itojun Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -87,7 +92,9 @@ struct sockinet {
 };
 
 #ifdef INET6
-static char *ip6_sa2str __P((struct sockaddr_in6 *, char *, int));
+static int ip6_parsenumeric __P((const struct sockaddr *, const char *, char *,
+				 size_t, int));
+static int ip6_sa2str __P((const struct sockaddr_in6 *, char *, size_t, int));
 #endif 
 
 #define ENI_NOSOCKET 	0
@@ -113,7 +120,7 @@ getnameinfo(sa, salen, host, hostlen, serv, servlen, flags)
 	struct hostent *hp;
 	u_short port;
 	int family, i;
-	char *addr, *p;
+	const char *addr;
 	u_int32_t v4a;
 	int h_error;
 	char numserv[512];
@@ -139,8 +146,9 @@ getnameinfo(sa, salen, host, hostlen, serv, servlen, flags)
 	if (salen != afd->a_socklen)
 		return ENI_SALEN;
 	
-	port = ((struct sockinet *)sa)->si_port; /* network byte order */
-	addr = (char *)sa + afd->a_off;
+	/* network byte order */
+	port = ((const struct sockinet *)sa)->si_port;
+	addr = (const char *)sa + afd->a_off;
 
 	if (serv == NULL || servlen == 0) {
 		/*
@@ -171,7 +179,7 @@ getnameinfo(sa, salen, host, hostlen, serv, servlen, flags)
 	switch (sa->sa_family) {
 	case AF_INET:
 		v4a = (u_int32_t)
-			ntohl(((struct sockaddr_in *)sa)->sin_addr.s_addr);
+		    ntohl(((const struct sockaddr_in *)sa)->sin_addr.s_addr);
 		if (IN_MULTICAST(v4a) || IN_EXPERIMENTAL(v4a))
 			flags |= NI_NUMERICHOST;
 		v4a >>= IN_CLASSA_NSHIFT;
@@ -181,8 +189,8 @@ getnameinfo(sa, salen, host, hostlen, serv, servlen, flags)
 #ifdef INET6
 	case AF_INET6:
 	    {
-		struct sockaddr_in6 *sin6;
-		sin6 = (struct sockaddr_in6 *)sa;
+		const struct sockaddr_in6 *sin6;
+		sin6 = (const struct sockaddr_in6 *)sa;
 		switch (sin6->sin6_addr.s6_addr[0]) {
 		case 0x00:
 			if (IN6_IS_ADDR_V4MAPPED(&sin6->sin6_addr))
@@ -217,69 +225,46 @@ getnameinfo(sa, salen, host, hostlen, serv, servlen, flags)
 		/* NUMERICHOST and NAMEREQD conflicts with each other */
 		if (flags & NI_NAMEREQD)
 			return ENI_NOHOSTNAME;
-		if (inet_ntop(afd->a_af, addr, numaddr, sizeof(numaddr))
-		    == NULL)
-			return ENI_SYSTEM;
-		numaddrlen = strlen(numaddr);
-		if (numaddrlen + 1 > hostlen) /* don't forget terminator */
-			return ENI_MEMORY;
-		strcpy(host, numaddr);
-#if defined(INET6) && defined(NI_WITHSCOPEID)
-		if (afd->a_af == AF_INET6 &&
-		    (IN6_IS_ADDR_LINKLOCAL((struct in6_addr *)addr) ||
-		     IN6_IS_ADDR_MULTICAST((struct in6_addr *)addr)) &&
-		    ((struct sockaddr_in6 *)sa)->sin6_scope_id) {
-#ifndef ALWAYS_WITHSCOPE
-			if (flags & NI_WITHSCOPEID)
-#endif /* !ALWAYS_WITHSCOPE */
-			{
-				char scopebuf[MAXHOSTNAMELEN], *s;
-				int scopelen;
 
-				if ((s = ip6_sa2str((struct sockaddr_in6 *)sa,
-						    scopebuf, 0)) == NULL)
-					/* XXX what should we do? */
-					strcpy(scopebuf, "0");
+		switch(afd->a_af) {
+#ifdef INET6
+		case AF_INET6:
+		{
+			int error;
 
-				scopelen = strlen(scopebuf);
-				if (scopelen + 1 + numaddrlen + 1 > hostlen)
-					return ENI_MEMORY;
-
-#if 0
-				/*
-				 * construct <scopeid><delim><numeric-addr>
-				 */
-				/*
-				 * Shift the host string to allocate
-				 * space for the scope ID part.
-				 */
-				memmove(host + scopelen + 1, host,
-					numaddrlen);
-				/* copy the scope ID and the delimiter */
-				memcpy(host, scopebuf, scopelen);
-				host[scopelen] = SCOPE_DELIMITER;
-				host[scopelen + 1 + numaddrlen] = '\0';
-#else
-				/*
-				 * construct <numeric-addr><delim><scopeid>
-				 */
-				memcpy(host + numaddrlen + 1, scopebuf,
-				    scopelen);
-				host[numaddrlen] = SCOPE_DELIMITER;
-				host[numaddrlen + 1 + scopelen] = '\0';
-#endif
-			}
+			if ((error = ip6_parsenumeric(sa, addr, host,
+						      hostlen, flags)) != 0)
+				return(error);
+			break;
 		}
-#endif /* INET6 */
+#endif
+		default:
+			if (inet_ntop(afd->a_af, addr, numaddr, sizeof(numaddr))
+			    == NULL)
+				return ENI_SYSTEM;
+			numaddrlen = strlen(numaddr);
+			if (numaddrlen + 1 > hostlen) /* don't forget terminator */
+				return ENI_MEMORY;
+			strcpy(host, numaddr);
+			break;
+		}
 	} else {
 		hp = gethostbyaddr(addr, afd->a_addrlen, afd->a_af);
 		h_error = h_errno;
 
 		if (hp) {
+#if 0
+			/*
+			 * commented out, since "for local host" is not
+			 * implemented here - see RFC2553 p30
+			 */
 			if (flags & NI_NOFQDN) {
+				char *p;
 				p = strchr(hp->h_name, '.');
-				if (p) *p = '\0';
+				if (p)
+					*p = '\0';
 			}
+#endif
 			if (strlen(hp->h_name) > hostlen) {
 				return ENI_MEMORY;
 			}
@@ -287,43 +272,105 @@ getnameinfo(sa, salen, host, hostlen, serv, servlen, flags)
 		} else {
 			if (flags & NI_NAMEREQD)
 				return ENI_NOHOSTNAME;
-			if (inet_ntop(afd->a_af, addr, numaddr, sizeof(numaddr))
-			    == NULL)
-				return ENI_NOHOSTNAME;
-			if (strlen(numaddr) > hostlen)
-				return ENI_MEMORY;
-			strcpy(host, numaddr);
+			switch(afd->a_af) {
+#ifdef INET6
+			case AF_INET6:
+			{
+				int error;
+
+				if ((error = ip6_parsenumeric(sa, addr, host,
+							      hostlen,
+							      flags)) != 0)
+					return(error);
+				break;
+			}
+#endif
+			default:
+				if (inet_ntop(afd->a_af, addr, host,
+				    hostlen) == NULL)
+					return ENI_SYSTEM;
+				break;
+			}
 		}
 	}
 	return SUCCESS;
 }
 
 #ifdef INET6
+static int
+ip6_parsenumeric(sa, addr, host, hostlen, flags)
+	const struct sockaddr *sa;
+	const char *addr;
+	char *host;
+	size_t hostlen;
+	int flags;
+{
+	int numaddrlen;
+	char numaddr[512];
+
+	if (inet_ntop(AF_INET6, addr, numaddr, sizeof(numaddr))
+	    == NULL)
+		return ENI_SYSTEM;
+
+	numaddrlen = strlen(numaddr);
+	if (numaddrlen + 1 > hostlen) /* don't forget terminator */
+		return ENI_MEMORY;
+	strcpy(host, numaddr);
+
+#ifdef NI_WITHSCOPEID
+	if (((const struct sockaddr_in6 *)sa)->sin6_scope_id) {
+		if (flags & NI_WITHSCOPEID)
+		{
+			char scopebuf[MAXHOSTNAMELEN];
+			int scopelen;
+
+			/* ip6_sa2str never fails */
+			scopelen = ip6_sa2str((const struct sockaddr_in6 *)sa,
+					      scopebuf, sizeof(scopebuf),
+					      0);
+			if (scopelen + 1 + numaddrlen + 1 > hostlen)
+				return ENI_MEMORY;
+			/*
+			 * construct <numeric-addr><delim><scopeid>
+			 */
+			memcpy(host + numaddrlen + 1, scopebuf,
+			       scopelen);
+			host[numaddrlen] = SCOPE_DELIMITER;
+			host[numaddrlen + 1 + scopelen] = '\0';
+		}
+	}
+#endif /* NI_WITHSCOPEID */
+
+	return 0;
+}
+
 /* ARGSUSED */
-static char *
-ip6_sa2str(sa6, buf, flags)
-	struct sockaddr_in6 *sa6;
+static int
+ip6_sa2str(sa6, buf, bufsiz, flags)
+	const struct sockaddr_in6 *sa6;
 	char *buf;
+	size_t bufsiz;
 	int flags;
 {
 	unsigned int ifindex = (unsigned int)sa6->sin6_scope_id;
-	struct in6_addr *a6 = &sa6->sin6_addr;
+	const struct in6_addr *a6 = &sa6->sin6_addr;
 
 #ifdef notyet
 	if (flags & NI_NUMERICSCOPE) {
-		sprintf(buf, "%d", sa6->sin6_scope_id);
-		return(buf);
+		return(snprintf(buf, bufsiz, "%d", sa6->sin6_scope_id));
 	}
 #endif
  
-	if (IN6_IS_ADDR_LINKLOCAL(a6) || IN6_IS_ADDR_MC_LINKLOCAL(a6))
-		return(if_indextoname(ifindex, buf));
+	/* if_indextoname() does not take buffer size.  not a good api... */
+	if ((IN6_IS_ADDR_LINKLOCAL(a6) || IN6_IS_ADDR_MC_LINKLOCAL(a6)) &&
+	    bufsiz >= IF_NAMESIZE) {
+		char *p = if_indextoname(ifindex, buf);
+		if (p) {
+			return(strlen(p));
+		}
+	}
 
-	if (IN6_IS_ADDR_SITELOCAL(a6) || IN6_IS_ADDR_MC_SITELOCAL(a6))
-		return(NULL);	/* XXX */
-	if (IN6_IS_ADDR_MC_ORGLOCAL(a6))
-		return(NULL);	/* XXX */
-
-	return(NULL);		/* XXX */
+	/* last resort */
+	return(snprintf(buf, bufsiz, "%u", sa6->sin6_scope_id));
 }
-#endif 
+#endif /* INET6 */
