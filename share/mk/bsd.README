@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.README,v 1.22 1997/03/27 09:10:09 mycroft Exp $
+#	$NetBSD: bsd.README,v 1.23 1997/03/27 17:33:35 christos Exp $
 #	@(#)bsd.README	5.1 (Berkeley) 5/11/90
 
 This is the README file for the new make "include" files for the BSD
@@ -393,7 +393,13 @@ the variable SUBDIRS.
 
 =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
-The include file <bsd.links.mk> handles the LINKS and SYMLINKS targets.
+The include file <bsd.links.mk> handles the LINKS and SYMLINKS variables
+and is included from from bsd.lib.mk and bsd.prog.mk.
+
+=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+
+The include file <bsd.files.mk> handles the FILES variables and is included
+from bsd.lib.mk and bsd.prog.mk.
 
 =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 

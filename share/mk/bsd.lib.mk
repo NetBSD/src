@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.lib.mk,v 1.90 1997/03/24 23:19:12 christos Exp $
+#	$NetBSD: bsd.lib.mk,v 1.91 1997/03/27 17:33:34 christos Exp $
 #	@(#)bsd.lib.mk	5.26 (Berkeley) 5/2/91
 
 .if exists(${.CURDIR}/../Makefile.inc)
@@ -297,7 +297,7 @@ ${DESTDIR}${LINTLIBDIR}/llib-l${LIB}.ln llib-l${LIB}.ln
 .endif
 
 libinstall:: linksinstall
-realinstall: libinstall
+realinstall: libinstall filesinstall
 
 install: ${MANINSTALL} _SUBDIRUSE
 ${MANINSTALL}: afterinstall
@@ -315,6 +315,7 @@ realinstall: beforeinstall
 
 .include <bsd.obj.mk>
 .include <bsd.links.mk>
+.include <bsd.files.mk>
 .include <bsd.inc.mk>
 .include <bsd.dep.mk>
 .include <bsd.subdir.mk>
