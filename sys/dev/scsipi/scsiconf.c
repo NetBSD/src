@@ -1,4 +1,4 @@
-/*	$NetBSD: scsiconf.c,v 1.217 2003/09/18 05:06:53 mycroft Exp $	*/
+/*	$NetBSD: scsiconf.c,v 1.218 2003/10/10 18:04:46 matt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scsiconf.c,v 1.217 2003/09/18 05:06:53 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scsiconf.c,v 1.218 2003/10/10 18:04:46 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -524,10 +524,6 @@ const struct scsi_quirk_inquiry_pattern scsi_quirk_patterns[] = {
 	{{T_DIRECT, T_FIXED,
 	 "EMULEX  ", "MD21/S2     ESDI", "A00"},
 				PQUIRK_FORCELUNS|PQUIRK_AUTOSAVE},
-	{{T_DIRECT, T_FIXED,
-	/* improperly report DT-only sync mode */
-	 "HITACHI", "DX32DJ-72ME",	 ""},
-				PQUIRK_CAP_SYNC|PQUIRK_CAP_WIDE16},
 	{{T_DIRECT, T_FIXED,
 	 "MICROP",  "1548-15MZ1077801",  "HZ2P"}, PQUIRK_NOTAG},
 	{{T_DIRECT, T_FIXED,
