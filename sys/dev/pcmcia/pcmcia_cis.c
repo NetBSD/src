@@ -1,4 +1,4 @@
-/*	$NetBSD: pcmcia_cis.c,v 1.8 1998/08/13 15:03:06 nathanw Exp $	*/
+/*	$NetBSD: pcmcia_cis.c,v 1.9 1998/08/22 23:41:48 msaitoh Exp $	*/
 
 #define	PCMCIACISDEBUG
 
@@ -445,10 +445,13 @@ pcmcia_print_cis(sc)
 	int i;
 
 	printf("%s: CIS version ", sc->dev.dv_xname);
-	if ((card->cis1_major == 4) && (card->cis1_minor == 1))
-		printf("2.0 or 2.01\n");
-	else if ((card->cis1_major == 5) && (card->cis1_minor == 0))
-		printf("2.1\n");
+	if (card->cis1_major == 4) {
+		if (card->cis1_minor == 0)
+			printf("PCMCIA 1.0\n");
+		else if (card->cis1_minor == 1)
+			printf("PCMCIA 2.0 or 2.1\n");
+	} else if (card->cis1_major >= 5)
+		printf("PC Card Standard %d.%d\n", card->cis1_major, card->cis1_minor);
 	else
 		printf("unknown (major=%d, minor=%d)\n",
 		    card->cis1_major, card->cis1_minor);
