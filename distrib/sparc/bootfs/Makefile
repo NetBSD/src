@@ -1,11 +1,11 @@
-#	$NetBSD: Makefile,v 1.4 1998/06/21 07:39:45 mrg Exp $
+#	$NetBSD: Makefile,v 1.5 1998/08/28 02:01:28 mrg Exp $
 
 TOP=		${.CURDIR}/..
 
 .include "${TOP}/Makefile.inc"
 
 IMAGE=		boot${REV}.fs
-KERN=		${.CURDIR}/../../../sys/arch/sparc/compile/INSTALL/netbsd
+KERN=		${TOP}/../../sys/arch/sparc/compile/INSTALL/netbsd
 
 MOUNT_POINT?=	/mnt
 VND?=		vnd0
@@ -20,7 +20,7 @@ KERN?=		netbsd-xxx
 MDEC=		${DESTDIR}/usr/mdec
 
 LISTS=		${.CURDIR}/list
-RAMDISK!=	cd $(.CURDIR)/../ramdisk/; \
+RAMDISK!=	cd ${TOP}/ramdisk/; \
 		    printf "xxx: .MAKE\n\t@echo \$${.OBJDIR}/ramdisk.fs\n" | \
 		    ${MAKE} -s -f-
 
@@ -65,6 +65,8 @@ netbsd.ram.gz: ${KERN} ${RAMDISK}
 
 clean cleandir:
 	/bin/rm -f *.core ${IMAGE} ${CLEANFILES}
+
+depend install:
 
 real-floppy:
 	dd if=${IMAGE} of=${FD_RDEV} bs=32k
