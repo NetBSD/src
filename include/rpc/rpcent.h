@@ -1,4 +1,4 @@
-/*	$NetBSD: svc_auth.h,v 1.8 2000/06/02 22:57:57 fvdl Exp $	*/
+/*	$NetBSD: rpcent.h,v 1.1 2000/06/02 22:57:56 fvdl Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -27,28 +27,42 @@
  * Sun Microsystems, Inc.
  * 2550 Garcia Avenue
  * Mountain View, California  94043
+ */
+/*
+ * Copyright (c) 1986 - 1991 by Sun Microsystems, Inc.
+ */
+
+/*
+ * rpcent.h,
+ * For converting rpc program numbers to names etc.
  *
- *	from: @(#)svc_auth.h 1.6 86/07/16 SMI
- *	@(#)svc_auth.h	2.1 88/07/29 4.0 RPCSRC
  */
 
-/*
- * svc_auth.h, Service side of rpc authentication.
- * 
- * Copyright (C) 1984, Sun Microsystems, Inc.
- */
+#ifndef _RPC_RPCENT_H
+#define _RPC_RPCENT_H
 
-#ifndef _RPC_SVC_AUTH_H_
-#define _RPC_SVC_AUTH_H_
+/*	#pragma ident "@(#)rpcent.h   1.13    94/04/25 SMI"	*/
+/*      @(#)rpcent.h 1.1 88/12/06 SMI   */
 
-/*
- * Server side authenticator
- */
+
+struct rpcent {
+      char    *r_name;        /* name of server for this rpc program */
+      char    **r_aliases;    /* alias list */
+      int     r_number;       /* rpc program number */
+};
+
 __BEGIN_DECLS
-extern enum auth_stat _authenticate __P((struct svc_req *, struct rpc_msg *));
-extern int svc_auth_reg __P((int, enum auth_stat (*) __P((struct svc_req *,
-							  struct rpc_msg *))));
+extern struct rpcent *getrpcbyname_r __P((const char *, struct rpcent *,
+					  char *, int));
+extern struct rpcent *getrpcbynumber_r __P((int, struct rpcent *, char *, int));
+extern struct rpcent *getrpcent_r __P((struct rpcent *, char *, int));
 
+/* Old interfaces that return a pointer to a static area;  MT-unsafe */
+extern struct rpcent *getrpcbyname	__P((char *));
+extern struct rpcent *getrpcbynumber	__P((int));
+extern struct rpcent *getrpcent		__P((void));
+extern void setrpcent __P((int));
+extern void endrpcent __P((void));
 __END_DECLS
 
-#endif /* !_RPC_SVC_AUTH_H_ */
+#endif /* !_RPC_ENT_H_ */
