@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sip.c,v 1.11 2000/05/12 16:41:59 thorpej Exp $	*/
+/*	$NetBSD: if_sip.c,v 1.11.4.1 2000/08/12 18:50:25 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1999 Network Computer, Inc.
@@ -75,6 +75,7 @@
 
 #include <machine/bus.h>
 #include <machine/intr.h>
+#include <machine/endian.h>
 
 #include <dev/mii/miivar.h>
 
@@ -257,12 +258,14 @@ do {									\
 	struct sip_rxsoft *__rxs = &(sc)->sc_rxsoft[(x)];		\
 	struct sip_desc *__sipd = &(sc)->sc_rxdescs[(x)];		\
 									\
-	__sipd->sipd_link = SIP_CDRXADDR((sc), SIP_NEXTRX((x)));	\
-	__sipd->sipd_bufptr = __rxs->rxs_dmamap->dm_segs[0].ds_addr;	\
-	__sipd->sipd_cmdsts = CMDSTS_INTR |				\
-	    ((MCLBYTES - 1) & CMDSTS_SIZE_MASK);			\
+	__sipd->sipd_link = htole32(SIP_CDRXADDR((sc), SIP_NEXTRX((x))));	\
+	__sipd->sipd_bufptr = htole32(__rxs->rxs_dmamap->dm_segs[0].ds_addr);	\
+	__sipd->sipd_cmdsts = htole32(CMDSTS_INTR |			\
+	    ((MCLBYTES - 1) & CMDSTS_SIZE_MASK));			\
 	SIP_CDRXSYNC((sc), (x), BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE); \
 } while (0)
+
+#define SIP_TIMEOUT 1000
 
 void	sip_start __P((struct ifnet *));
 void	sip_watchdog __P((struct ifnet *));
@@ -347,7 +350,8 @@ sip_attach(parent, self, aux)
 	int i, rseg, error;
 	const struct sip_product *sip;
 	pcireg_t pmode;
-	u_int16_t enaddr[ETHER_ADDR_LEN / 2];
+	u_int16_t myea[ETHER_ADDR_LEN / 2];
+	u_int8_t enaddr[ETHER_ADDR_LEN];
 	int pmreg;
 
 	callout_init(&sc->sc_tick_ch);
@@ -504,10 +508,17 @@ sip_attach(parent, self, aux)
 	 * Read the Ethernet address from the EEPROM.
 	 */
 	sip_read_eeprom(sc, SIP_EEPROM_ETHERNET_ID0 >> 1,
-	    sizeof(enaddr) / sizeof(enaddr[0]), enaddr);
+	    sizeof(myea) / sizeof(myea[0]), myea);
+
+	enaddr[0] = myea[0] & 0xff;
+	enaddr[1] = myea[0] >> 8;
+	enaddr[2] = myea[1] & 0xff;
+	enaddr[3] = myea[1] >> 8;
+	enaddr[4] = myea[2] & 0xff;
+	enaddr[5] = myea[2] >> 8;
 
 	printf("%s: Ethernet address %s\n", sc->sc_dev.dv_xname,
-	    ether_sprintf((u_int8_t *)enaddr));
+	    ether_sprintf(enaddr));
 
 	/*
 	 * Initialize our media structures and probe the MII.
@@ -538,7 +549,7 @@ sip_attach(parent, self, aux)
 	 * Attach the interface.
 	 */
 	if_attach(ifp);
-	ether_ifattach(ifp, (u_int8_t *)enaddr);
+	ether_ifattach(ifp, enaddr);
 #if NBPFILTER > 0
 	bpfattach(&sc->sc_ethercom.ec_if.if_bpf, ifp, DLT_EN10MB,
 	    sizeof(struct ether_header));
@@ -723,15 +734,15 @@ sip_start(ifp)
 			 * We'll do it below.
 			 */
 			sc->sc_txdescs[nexttx].sipd_bufptr =
-			    dmamap->dm_segs[seg].ds_addr;
+			    htole32(dmamap->dm_segs[seg].ds_addr);
 			sc->sc_txdescs[nexttx].sipd_cmdsts =
-			    (nexttx == firsttx ? 0 : CMDSTS_OWN) |
-			    CMDSTS_MORE | dmamap->dm_segs[seg].ds_len;
+			    htole32((nexttx == firsttx ? 0 : CMDSTS_OWN) |
+			    CMDSTS_MORE | dmamap->dm_segs[seg].ds_len);
 			lasttx = nexttx;
 		}
 
 		/* Clear the MORE bit on the last segment. */
-		sc->sc_txdescs[lasttx].sipd_cmdsts &= ~CMDSTS_MORE;
+		sc->sc_txdescs[lasttx].sipd_cmdsts &= htole32(~CMDSTS_MORE);
 
 		/* Sync the descriptors we're using. */
 		SIP_CDTXSYNC(sc, sc->sc_txnext, dmamap->dm_nsegs,
@@ -772,7 +783,7 @@ sip_start(ifp)
 		 * Cause a descriptor interrupt to happen on the
 		 * last packet we enqueued.
 		 */
-		sc->sc_txdescs[lasttx].sipd_cmdsts |= CMDSTS_INTR;
+		sc->sc_txdescs[lasttx].sipd_cmdsts |= htole32(CMDSTS_INTR);
 		SIP_CDTXSYNC(sc, lasttx, 1,
 		    BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
 
@@ -780,7 +791,7 @@ sip_start(ifp)
 		 * The entire packet chain is set up.  Give the
 		 * first descrptor to the chip now.
 		 */
-		sc->sc_txdescs[firsttx].sipd_cmdsts |= CMDSTS_OWN;
+		sc->sc_txdescs[firsttx].sipd_cmdsts |= htole32(CMDSTS_OWN);
 		SIP_CDTXSYNC(sc, firsttx, 1,
 		    BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
 
@@ -1071,7 +1082,7 @@ sip_txintr(sc)
 		SIP_CDTXSYNC(sc, txs->txs_firstdesc, txs->txs_dmamap->dm_nsegs,
 		    BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
 
-		cmdsts = sc->sc_txdescs[txs->txs_lastdesc].sipd_cmdsts;
+		cmdsts = le32toh(sc->sc_txdescs[txs->txs_lastdesc].sipd_cmdsts);
 		if (cmdsts & CMDSTS_OWN)
 			break;
 
@@ -1138,7 +1149,7 @@ sip_rxintr(sc)
 
 		SIP_CDRXSYNC(sc, i, BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
 
-		cmdsts = sc->sc_rxdescs[i].sipd_cmdsts;
+		cmdsts = le32toh(sc->sc_rxdescs[i].sipd_cmdsts);
 
 		/*
 		 * NOTE: OWN is set if owned by _consumer_.  We're the
@@ -1328,14 +1339,16 @@ sip_reset(sc)
 
 	bus_space_write_4(st, sh, SIP_CR, CR_RST);
 
-	for (i = 0; i < 1000; i++) {
-		if ((bus_space_read_4(st, sh, SIP_ISR) &
-		     (ISR_TXRCMP|ISR_RXRCMP)) == (ISR_TXRCMP|ISR_RXRCMP))
-			return;
+	for (i = 0; i < SIP_TIMEOUT; i++) {
+		if ((bus_space_read_4(st, sh, SIP_CR) & CR_RST) == 0)
+			break;
 		delay(2);
 	}
 
-	printf("%s: reset failed to complete\n", sc->sc_dev.dv_xname);
+	if (i == SIP_TIMEOUT)
+		printf("%s: reset failed to complete\n", sc->sc_dev.dv_xname);
+
+	delay(1000);
 }
 
 /*
@@ -1372,7 +1385,7 @@ sip_init(sc)
 	for (i = 0; i < SIP_NTXDESC; i++) {
 		sipd = &sc->sc_txdescs[i];
 		memset(sipd, 0, sizeof(struct sip_desc));
-		sipd->sipd_link = SIP_CDTXADDR(sc, SIP_NEXTTX(i));
+		sipd->sipd_link = htole32(SIP_CDTXADDR(sc, SIP_NEXTTX(i)));
 	}
 	SIP_CDTXSYNC(sc, 0, SIP_NTXDESC,
 	    BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
@@ -1422,7 +1435,10 @@ sip_init(sc)
 	/*
 	 * ...descriptors in big-endian mode.
 	 */
+#if 0
+	/* "Big endian mode" does not work properly. */
 	cfg |= CFG_BEM;
+#endif
 #endif
 	bus_space_write_4(st, sh, SIP_CFG, cfg);
 
@@ -1593,7 +1609,7 @@ sip_stop(sc, drain)
 	while ((txs = SIMPLEQ_FIRST(&sc->sc_txdirtyq)) != NULL) {
 		if ((ifp->if_flags & IFF_DEBUG) != 0 &&
 		    SIMPLEQ_NEXT(txs, txs_q) == NULL &&
-		    (sc->sc_txdescs[txs->txs_lastdesc].sipd_cmdsts &
+		    (le32toh(sc->sc_txdescs[txs->txs_lastdesc].sipd_cmdsts) &
 		     CMDSTS_INTR) == 0)
 			printf("%s: sip_stop: last descriptor does not "
 			    "have INTR bit set\n", sc->sc_dev.dv_xname);
@@ -1606,7 +1622,7 @@ sip_stop(sc, drain)
 		}
 #endif
 		cmdsts |=		/* DEBUG */
-		    sc->sc_txdescs[txs->txs_lastdesc].sipd_cmdsts;
+		    le32toh(sc->sc_txdescs[txs->txs_lastdesc].sipd_cmdsts);
 		bus_dmamap_unload(sc->sc_dmat, txs->txs_dmamap);
 		m_freem(txs->txs_mbuf);
 		txs->txs_mbuf = NULL;
@@ -1691,6 +1707,7 @@ sip_read_eeprom(sc, word, wordcnt, data)
 			if (bus_space_read_4(st, sh, SIP_EROMAR) & EROMAR_EEDO)
 				data[i] |= (1 << (x - 1));
 			bus_space_write_4(st, sh, SIP_EROMAR, reg);
+			delay(4);
 		}
 
 		/* Clear CHIP SELECT. */
@@ -1819,7 +1836,9 @@ sip_set_filter(sc)
  setit:
 #define	FILTER_EMIT(addr, data)						\
 	bus_space_write_4(st, sh, SIP_RFCR, (addr));			\
-	bus_space_write_4(st, sh, SIP_RFDR, (data))
+	delay(1);							\
+	bus_space_write_4(st, sh, SIP_RFDR, (data));			\
+	delay(1)
 
 	/*
 	 * Disable receive filter, and program the node address.
