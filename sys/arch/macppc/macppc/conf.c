@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.3 1998/06/24 15:13:43 tsubai Exp $	*/
+/*	$NetBSD: conf.c,v 1.4 1998/07/02 18:58:32 tsubai Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -105,12 +105,8 @@ cdev_decl(vnd);
 cdev_decl(ccd);
 #include "adb.h"
 cdev_decl(adb);
-
-#define	cdev_rtc_init(c,n) { \
-	dev_init(c,n,open), dev_init(c,n,close), \
-	dev_init(c,n,read), dev_init(c,n,write), \
-	(dev_type_ioctl((*))) enodev, (dev_type_stop((*))) enodev, \
-	0, seltrue, (dev_type_mmap((*))) enodev }
+#include "ofcons.h"
+cdev_decl(ofc);
 
 struct cdevsw cdevsw[] = {
 	cdev_cn_init(1,cn),		/* 0: virtual console */
@@ -120,7 +116,7 @@ struct cdevsw cdevsw[] = {
 	cdev_ptc_init(NPTY,ptc),	/* 4: pseudo tty master */
 	cdev_log_init(1,log),		/* 5: /dev/klog */
 	cdev_swap_init(1,sw),		/* 6: /dev/drum pseudo device */
-	cdev_notdef(),			/* 7: Openfirmware console */
+	cdev_tty_init(NOFCONS,ofc),	/* 7: Openfirmware console */
 	cdev_notdef(),			/* 8: Openfirmware disk */
 	cdev_notdef(),			/* 9: Openfirmware RTC */
 	cdev_bpftun_init(NBPFILTER,bpf),/* 10: Berkeley packet filter */
