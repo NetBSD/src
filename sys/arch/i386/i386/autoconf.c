@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.26 1997/09/23 22:34:00 thorpej Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.27 1997/09/28 13:17:41 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -129,9 +129,7 @@ findroot(devpp, partp)
 	struct device **devpp;
 	int *partp;
 {
-#ifdef notyet
 	struct btinfo_bootdisk *bid;
-#endif
 	struct device *dv;
 	int i, majdev, unit, part;
 	char buf[32];
@@ -157,7 +155,6 @@ findroot(devpp, partp)
 		return;
 	}
 
-#ifdef notyet
 	bid = lookup_bootinfo(BTINFO_BOOTDISK);
 	if (bid) {
 		/*
@@ -218,10 +215,12 @@ findroot(devpp, partp)
 				if (bdevvp(MAKEDISKDEV(i->d_maj, dv->dv_unit,
 				    bid->partition), &tmpvn))
 					panic("findroot can't alloc vnode");
-				error = VOP_OPEN(tmpvn, FREAD, FSCRED, 0);
+				error = VOP_OPEN(tmpvn, FREAD, NOCRED, 0);
 				if (error) {
 					printf("findroot: can't open dev "
-					    "%s (%d)\n", dv->dv_xname, error);
+					    "%s%c (%d)\n", dv->dv_xname,
+					       'a' + bid->partition, error);
+					vrele(tmpvn);
 					continue;
 				}
 				error = VOP_IOCTL(tmpvn, DIOCGDINFO,
@@ -229,10 +228,11 @@ findroot(devpp, partp)
 				if (error) {
 					/*
 					 * XXX can't happen - open() would
-					 * have errored our (or faked up one)
+					 * have errored out (or faked up one)
 					 */
 					printf("can't get label for dev "
-					    "%s (%d)\n", dv->dv_xname, error);
+					    "%s%c (%d)\n", dv->dv_xname,
+					       'a' + bid->partition, error);
 					goto closeout;
 				}
 
@@ -269,7 +269,6 @@ found:
 		if (*devpp)
 			return;
 	}
-#endif /* notyet */
 
 #if 0
 	printf("howto %x bootdev %x ", boothowto, bootdev);
@@ -332,7 +331,7 @@ device_register(dev, aux)
 
 			/* compare IO base address */
 			if (bin->addr.iobase == iaa->ia_iobase)
-				goto found;;
+				goto found;
 		}
 #if NPCI > 0
 		if (bin->bus == BI_BUS_PCI &&
