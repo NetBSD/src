@@ -1,4 +1,4 @@
-# $NetBSD: md.sparc,v 1.1 2003/07/22 11:46:56 mrg Exp $
+# $NetBSD: md.sparc,v 1.2 2003/08/26 04:50:22 lukem Exp $
 ./usr/X11R6/bin/Xnest
 ./usr/X11R6/bin/Xvfb
 ./usr/X11R6/bin/xvidtune
@@ -6,6 +6,3 @@
 ./usr/X11R6/man/cat1/Xnest.0
 ./usr/X11R6/man/cat1/Xvfb.0
 ./usr/X11R6/man/cat1/xvidtune.0
-./usr/X11R6/lib/X11/etc
-./usr/X11R6/lib/X11/etc/xterm.termcap
-./usr/X11R6/lib/X11/etc/xterm.terminfo
