@@ -44,7 +44,7 @@
 #endif
 
 #ifndef BIG_PIPE_SIZE
-#define BIG_PIPE_SIZE	(64*1024)
+#define BIG_PIPE_SIZE	(4*PIPE_SIZE)
 #endif
 
 /*
