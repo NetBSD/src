@@ -1,4 +1,4 @@
-/*	$NetBSD: satlink.c,v 1.9 2000/03/23 07:01:35 thorpej Exp $	*/
+/*	$NetBSD: satlink.c,v 1.10 2000/05/15 23:56:49 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -187,7 +187,7 @@ satlinkattach(parent, self, aux)
 	    sc->sc_id.sid_grpid, sc->sc_id.sid_userid,
 	    sc->sc_id.sid_serial);
 
-	callout_reset(&sc->sc_ch);
+	callout_init(&sc->sc_ch);
 
 	sc->sc_bufsize = isa_dmamaxsize(sc->sc_ic, sc->sc_drq);
 
