@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.53.4.3 2001/11/17 22:14:17 briggs Exp $	*/
+/*	$NetBSD: trap.c,v 1.53.4.4 2001/12/17 21:34:44 nathanw Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -453,7 +453,7 @@ brain_damage2:
 
 	/* Invoke any pending upcalls */
 	if (l->l_flag & L_SA_UPCALL)
-		cpu_upcall(l);
+		sa_upcall_userret(l);
 
 	curcpu()->ci_schedstate.spc_curpriority = l->l_priority = l->l_usrpri;
 }
@@ -731,7 +731,7 @@ upcallret(struct lwp *l)
 
 	/* Invoke any pending upcalls */
 	if (l->l_flag & L_SA_UPCALL)
-		cpu_upcall(l);
+		sa_upcall_userret(l);
 
 	curcpu()->ci_schedstate.spc_curpriority = l->l_priority = l->l_usrpri;
 }

@@ -1,4 +1,4 @@
-/* $NetBSD: except.c,v 1.38.4.6 2001/11/24 19:56:49 bjh21 Exp $ */
+/* $NetBSD: except.c,v 1.38.4.7 2001/12/17 21:34:41 nathanw Exp $ */
 /*-
  * Copyright (c) 1998, 1999, 2000 Ben Harris
  * All rights reserved.
@@ -32,7 +32,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: except.c,v 1.38.4.6 2001/11/24 19:56:49 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: except.c,v 1.38.4.7 2001/12/17 21:34:41 nathanw Exp $");
 
 #include "opt_cputypes.h"
 #include "opt_ddb.h"
@@ -103,7 +103,7 @@ userret(struct lwp *l)
 
 	/* Invoke any pending upcalls. */
 	if (l->l_flag & L_SA_UPCALL)
-		cpu_upcall(l);
+		sa_upcall_userret(l);
 
 	curcpu()->ci_schedstate.spc_curpriority = l->l_priority = l->l_usrpri;
 #ifdef DIAGNOSTIC

@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.2.6.2 2001/11/05 19:46:16 briggs Exp $	*/
+/*	$NetBSD: trap.c,v 1.2.6.3 2001/12/17 21:34:44 nathanw Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -438,7 +438,7 @@ brain_damage:
 
 	/* Invoke any pending upcalls */
 	if (l->l_flag & L_SA_UPCALL)
-		cpu_upcall(l);
+		sa_upcall_userret(l);
 
 	curcpu()->ci_schedstate.spc_curpriority = l->l_priority = l->l_usrpri;
   done:
@@ -803,7 +803,7 @@ upcallret(arg)
 
 	/* Invoke any pending upcalls */
 	if (l->l_flag & L_SA_UPCALL)
-		cpu_upcall(l);
+		sa_upcall_userret(l);
 
 	curcpu()->ci_schedstate.spc_curpriority = l->l_priority = l->l_usrpri;
 }
