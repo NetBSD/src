@@ -1,4 +1,4 @@
-/*	$NetBSD: sd.c,v 1.60 1995/03/07 21:46:11 mycroft Exp $	*/
+/*	$NetBSD: sd.c,v 1.61 1995/03/23 11:33:25 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Charles Hannum.  All rights reserved.
@@ -89,12 +89,13 @@ struct sd_softc {
 #define	SDF_LOCKED	0x01
 #define	SDF_WANTED	0x02
 #define	SDF_WLABEL	0x04		/* label is writable */
-	struct scsi_link *sc_link;	/* contains our targ, lun etc. */
+#define	SDF_LABELLING	0x08		/* writing label */
+	struct scsi_link *sc_link;	/* contains our targ, lun, etc. */
 	struct disk_parms {
-		u_char heads;		/* Number of heads */
-		u_short cyls;		/* Number of cylinders */
-		u_char sectors;		/* Number of sectors/track */
-		int blksize;		/* Number of bytes/sector */
+		u_char heads;		/* number of heads */
+		u_short cyls;		/* number of cylinders */
+		u_char sectors;		/* number of sectors/track */
+		int blksize;		/* number of bytes/sector */
 		u_long disksize;	/* total number sectors */
 	} params;
 	struct buf buf_queue;
@@ -192,6 +193,32 @@ sdattach(parent, self, aux)
 		    dp->heads, dp->sectors, dp->blksize);
 }
 
+int
+sdlockwait(sd)
+	struct sd_softc *sd;
+{
+	int error;
+
+	while ((sd->flags & SDF_LOCKED) != 0) {
+		sd->flags |= SDF_WANTED;
+		if ((error = tsleep(sd, PRIBIO | PCATCH, "sdlck", 0)) != 0)
+			return error;
+	}
+	return 0;
+}
+
+void
+sdunlock(sd)
+	struct sd_softc *sd;
+{
+
+	sd->flags &= ~SDF_LOCKED;
+	if ((sd->flags & SDF_WANTED) != 0) {
+		sd->flags &= ~SDF_WANTED;
+		wakeup(sd);
+	}
+}
+
 /*
  * open the device. Make sure the partition info is a up-to-date as can be.
  */
@@ -219,11 +246,8 @@ sdopen(dev, flag, fmt)
 	    ("sdopen: dev=0x%x (unit %d (of %d), partition %d)\n", dev, unit,
 	    sdcd.cd_ndevs, part));
 
-	while ((sd->flags & SDF_LOCKED) != 0) {
-		sd->flags |= SDF_WANTED;
-		if ((error = tsleep(sd, PRIBIO | PCATCH, "sdopn", 0)) != 0)
-			return error;
-	}
+	if (error = sdlockwait(sd))
+		return error;
 
 	if (sd->sc_dk.dk_openmask != 0) {
 		/*
@@ -267,11 +291,7 @@ sdopen(dev, flag, fmt)
 			SC_DEBUG(sc_link, SDEV_DB3, ("Disklabel loaded "));
 		}
 
-		sd->flags &= ~SDF_LOCKED;
-		if ((sd->flags & SDF_WANTED) != 0) {
-			sd->flags &= ~SDF_WANTED;
-			wakeup(sd);
-		}
+		sdunlock(sd);
 	}
 
 	/* Check that the partition exists. */
@@ -306,11 +326,7 @@ bad:
 		sc_link->flags &= ~SDEV_OPEN;
 
 bad3:
-		sd->flags &= ~SDF_LOCKED;
-		if ((sd->flags & SDF_WANTED) != 0) {
-			sd->flags &= ~SDF_WANTED;
-			wakeup(sd);
-		}
+		sdunlock(sd);
 	}
 
 	return error;
@@ -340,6 +356,10 @@ sdclose(dev, flag, fmt)
 	sd->sc_dk.dk_openmask = sd->sc_dk.dk_copenmask | sd->sc_dk.dk_bopenmask;
 
 	if (sd->sc_dk.dk_openmask == 0) {
+		/*
+		 * If we're closing the last partition, nobody else could be
+		 * holding the lock, so don't bother to check.
+		 */
 		sd->flags |= SDF_LOCKED;
 
 #if 0
@@ -356,11 +376,7 @@ sdclose(dev, flag, fmt)
 		    SCSI_IGNORE_ILLEGAL_REQUEST | SCSI_IGNORE_NOT_READY);
 		sd->sc_link->flags &= ~SDEV_OPEN;
 
-		sd->flags &= ~SDF_LOCKED;
-		if ((sd->flags & SDF_WANTED) != 0) {
-			sd->flags &= ~SDF_WANTED;
-			wakeup(sd);
-		}
+		sdunlock(sd);
 	}
 
 	return 0;
@@ -401,7 +417,7 @@ sdstrategy(bp)
 	/*
 	 * If the device has been made invalid, error out
 	 */
-	if (!(sd->sc_link->flags & SDEV_MEDIA_LOADED)) {
+	if ((sd->sc_link->flags & SDEV_MEDIA_LOADED) == 0) {
 		bp->b_error = EIO;
 		goto bad;
 	}
@@ -425,7 +441,7 @@ sdstrategy(bp)
 	 * If end of partition, just return.
 	 */
 	if (bounds_check_with_label(bp, &sd->sc_dk.dk_label,
-	    (sd->flags & SDF_WLABEL) != 0) <= 0)
+	    (sd->flags & (SDF_WLABEL|SDF_LABELLING)) != 0) <= 0)
 		goto done;
 
 	opri = splbio();
@@ -510,7 +526,7 @@ sdstart(sd)
 		 * reads and writes until all files have been closed and
 		 * re-opened
 		 */
-		if (!(sc_link->flags & SDEV_MEDIA_LOADED)) {
+		if ((sc_link->flags & SDEV_MEDIA_LOADED) == 0) {
 			bp->b_error = EIO;
 			bp->b_flags |= B_ERROR;
 			biodone(bp);
@@ -518,10 +534,10 @@ sdstart(sd)
 		}
 
 		/*
-		 * We have a buf, now we know we are going to go through
-		 * With this thing..
+		 * We have a buf, now we should make a command 
 		 *
-		 *  First, translate the block to absolute
+		 * First, translate the block to absolute and put it in terms
+		 * of the logical blocksize of the device.
 		 */
 		blkno =
 		    bp->b_blkno / (sd->sc_dk.dk_label.d_secsize / DEV_BSIZE);
@@ -570,10 +586,12 @@ sdioctl(dev, cmd, addr, flag, p)
 	struct sd_softc *sd = sdcd.cd_devs[SDUNIT(dev)];
 	int error;
 
+	SC_DEBUG(sd->sc_link, SDEV_DB2, ("sdioctl 0x%lx ", cmd));
+
 	/*
 	 * If the device is not valid.. abandon ship
 	 */
-	if (!(sd->sc_link->flags & SDEV_MEDIA_LOADED))
+	if ((sd->sc_link->flags & SDEV_MEDIA_LOADED) == 0)
 		return EIO;
 
 	switch (cmd) {
@@ -587,12 +605,24 @@ sdioctl(dev, cmd, addr, flag, p)
 		    &sd->sc_dk.dk_label.d_partitions[SDPART(dev)];
 		return 0;
 
+	case DIOCWDINFO:
 	case DIOCSDINFO:
 		if ((flag & FWRITE) == 0)
 			return EBADF;
+
+		if (error = sdlockwait(sd))
+			return error;
+		sd->flags |= SDF_LOCKED | SDF_LABELLING;
+
 		error = setdisklabel(&sd->sc_dk.dk_label,
 		    (struct disklabel *)addr, /*sd->sc_dk.dk_openmask : */0,
 		    &sd->sc_dk.dk_cpulabel);
+		if (error == 0 && cmd == DIOCWDINFO)
+			error = writedisklabel(SDLABELDEV(dev), sdstrategy,
+			    &sd->sc_dk.dk_label, &sd->sc_dk.dk_cpulabel);
+
+		sd->flags &= ~SDF_LABELLING;
+		sdunlock(sd);
 		return error;
 
 	case DIOCWLABEL:
@@ -603,22 +633,6 @@ sdioctl(dev, cmd, addr, flag, p)
 		else
 			sd->flags &= ~SDF_WLABEL;
 		return 0;
-
-	case DIOCWDINFO:
-		if ((flag & FWRITE) == 0)
-			return EBADF;
-		error = setdisklabel(&sd->sc_dk.dk_label,
-		    (struct disklabel *)addr, /*sd->sc_dk.dk_openmask : */0,
-		    &sd->sc_dk.dk_cpulabel);
-		if (error == 0) {
-			/* Simulate opening partition 0 so write succeeds. */
-			sd->sc_dk.dk_openmask |= (1 << 0);	/* XXX */
-			error = writedisklabel(SDLABELDEV(dev), sdstrategy,
-			    &sd->sc_dk.dk_label, &sd->sc_dk.dk_cpulabel);
-			sd->sc_dk.dk_openmask =
-			    sd->sc_dk.dk_copenmask | sd->sc_dk.dk_bopenmask;
-		}
-		return error;
 
 	default:
 		if (SDPART(dev) != RAW_PART)
