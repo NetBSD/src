@@ -1,4 +1,4 @@
-/*	$NetBSD: auxreg.c,v 1.24 1998/03/30 14:21:38 pk Exp $ */
+/*	$NetBSD: auxreg.c,v 1.25 1999/03/11 06:44:40 fair Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -178,6 +178,8 @@ auxregattach(self)
 	printf("\n");
 #ifdef BLINK
 	blink((caddr_t)0);
+#else
+	LED_ON;
 #endif
 }
 
