@@ -1,4 +1,4 @@
-.\" $NetBSD: ioctl.9,v 1.6 2001/04/09 17:12:28 wiz Exp $
+.\" $NetBSD: ioctl.9,v 1.7 2001/06/21 11:59:00 wiz Exp $
 .\"
 .\" Copyright (c) 1999  The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -52,7 +52,7 @@ are internally defined as
 .It #define FOOIOCTL   fun(t,n,pt)
 .El
 
-where the different wariables and funcions are:
+where the different variables and functions are:
 .Bl -tag -width FOOIOCTL
 .It Fn FOOIOCTL
 the name as the ioctl is later known in a as second argument to a
@@ -90,7 +90,7 @@ for a given
 .Fn t .
 This is a unsigned 8 bit number.
 .It pt
-This specifyies the type of the passed parameter. This one gets internally
+This specifies the type of the passed parameter. This one gets internally
 transformed to the size of the parameter, so if you e.g. want to pass
 a structure, then you have to specify that structure and not a pointer
 to it or sizeof(struct foo)
@@ -106,7 +106,7 @@ in either <sys/ioctl.h> or one of the files that are reached from
    int a=3;
    error =  ioctl(s,FOOICTL, &a);
 
-Within the ioctl()-routine of the driver, it can be then accessd like
+Within the ioctl()-routine of the driver, it can be then accessed like
 
    driver_ioctl(..,cmd,data)
                 u_long cmd;

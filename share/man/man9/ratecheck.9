@@ -1,4 +1,4 @@
-.\" $NetBSD: ratecheck.9,v 1.5 2000/08/03 20:35:40 jhawk Exp $
+.\" $NetBSD: ratecheck.9,v 1.6 2001/06/21 11:59:01 wiz Exp $
 .\"
 .\" Copyright (c) 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -25,7 +25,7 @@
 .\" THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
 .\" ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
 .\" TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
-.\" PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS 
+.\" PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
 .\" BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
 .\" CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
 .\" SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
@@ -89,7 +89,7 @@ long drv_err2count;                /* # of err2 errs since last msg */
 
 /*
  * the following variable will often be global or shared by all
- * instances of a driver.  It should be initalized, so it can be
+ * instances of a driver.  It should be initialized, so it can be
  * patched.  Allowing it to be set via an option might be nice,
  * but could lead to an insane proliferation of options.
  */
@@ -111,7 +111,7 @@ drv_errhandler(int err1, int err2)
 		drv_err1count++;
 		if (ratecheck(&drv_lasterr1notice,
 		    &drv_errinterval)) {
-			printf("drv: %ld err1 errors occurred",	
+			printf("drv: %ld err1 errors occurred",
 			    drv_err1count);
 			drv_err1count = 0;
 		}
@@ -123,7 +123,7 @@ drv_errhandler(int err1, int err2)
 		drv_err2count++;
 		if (ratecheck(&drv_lasterr2notice,
 		    &drv_errinterval)) {
-			printf("drv: %ld err2 errors occurred",	
+			printf("drv: %ld err2 errors occurred",
 			    drv_err2count);
 			drv_err2count = 0;
 		}

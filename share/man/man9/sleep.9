@@ -1,4 +1,4 @@
-.\"	$NetBSD: sleep.9,v 1.12 2001/04/27 07:54:24 jdolecek Exp $
+.\"	$NetBSD: sleep.9,v 1.13 2001/06/21 11:59:01 wiz Exp $
 .\"
 .\" Copyright (c) 1996 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -136,7 +136,8 @@ will return
 If not NULL, the
 .Fa slock
 interlock is unlocked once the scheduler lock is acquired. Unless
-.Dv PNORELOCK was set,
+.Dv PNORELOCK
+was set,
 .Fa slock
 is locked again once
 the process is resumed from sleep. This provides wakeup-before-sleep
@@ -152,7 +153,7 @@ ltsleep(ident, priority, wmesg, timo, NULL)
 .Pp
 The
 .Fn sleep
-function puts the process in an uninterruptable sleep.
+function puts the process in an uninterruptible sleep.
 It is functionally equivalent to:
 .Bd -literal -offset indent
 ltsleep(ident, priority & PRIMASK, 0, 0, NULL)

@@ -1,12 +1,12 @@
-.\" $NetBSD: bus_dma.9,v 1.15 2001/03/07 22:23:45 thorpej Exp $
+.\" $NetBSD: bus_dma.9,v 1.16 2001/06/21 11:59:00 wiz Exp $
 .\"
 .\" Copyright (c) 1996, 1997, 1998, 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
-.\" 
+.\"
 .\" This code is derived from software contributed to The NetBSD Foundation
 .\" by Jason R. Thorpe of the Numerical Aerospace Simulation Facility,
 .\" NASA Ames Research Center.
-.\" 
+.\"
 .\" Redistribution and use in source and binary forms, with or without
 .\" modification, are permitted provided that the following conditions
 .\" are met:
@@ -22,7 +22,7 @@
 .\" 4. Neither the name of The NetBSD Foundation nor the names of its
 .\"    contributors may be used to endorse or promote products derived
 .\"    from this software without specific prior written permission.
-.\" 
+.\"
 .\" THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
 .\" ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
 .\" TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
@@ -199,7 +199,7 @@ bus-dependent functionality.
 .El
 .It Fa dmamp
 This is a pointer to a bus_dmamap_t.  A DMA map will be allocated and
-pointed to by 
+pointed to by
 .Fa dmamp
 upon successful completion of this routine.
 .El
@@ -220,7 +220,7 @@ The DMA handle to destroy.
 .El
 .Pp
 In the event that the DMA handle contains a valid mapping,
-the mapping will be unloaded via the same mechanism used by 
+the mapping will be unloaded via the same mechanism used by
 .Fn bus_dmamap_unload .
 .Pp
 Behavior is not defined if invalid arguments are passed to
@@ -270,10 +270,10 @@ that there is coherency between memory and the device performing
 the DMA transaction.
 This flag allows the use of this special hardware, provided that
 the device is doing sequential, unidirectional transfers which
-conform to certain alignment and size contraints defined by the
+conform to certain alignment and size constraints defined by the
 platform.  If the platform does not support the feature, or if
 the buffer being loaded into the DMA map does not conform to the
-contraints required for use of the feature, then this flag will
+constraints required for use of the feature, then this flag will
 be silently ignored.  Also refer to the use of this flag with the
 .Fn bus_dmamem_alloc
 function.
@@ -288,7 +288,7 @@ As noted above, if a DMA handle is created with
 .Fn bus_dmamap_load
 will never block.
 .Pp
-If a call to 
+If a call to
 .Fn bus_dmamap_load
 fails, the mapping in
 the DMA handle will be invalid.  It is the responsibility
@@ -300,7 +300,7 @@ Behavior is not defined if invalid arguments are passed to
 .Pp
 Returns 0 on success, or an error code to indicate mode of failure.
 .It Fn bus_dmamap_load_mbuf "tag" "dmam" "chain" "flags"
-This is a variation of 
+This is a variation of
 .Fn bus_dmamap_load
 which maps mbuf chains
 for DMA transfers.  Mbuf chains are assumed to be in kernel
@@ -425,7 +425,7 @@ will always cause the store buffer to be flushed.
 This function exists so that multiple read and write transfers can be
 performed with the same buffer, and so that drivers can explicitly
 inform the
-.Nm 
+.Nm
 code when their data is 'ready' in its DMA buffer.
 .Pp
 An example of multiple read-write use of a single mapping
@@ -483,7 +483,7 @@ returned as part of
 can thus not be used to program DMA controller address registers. Only
 the values in the
 .Fa dm_segs
-array of a sucessfully loaded DMA map (using
+array of a successfully loaded DMA map (using
 .Fn bus_dmamap_load
 ) can be used for this purpose.
 .Pp
@@ -523,7 +523,7 @@ It is safe to wait (sleep) for resources during this call.
 .It Dv BUS_DMA_NOWAIT
 It is not safe to wait (sleep) for resources during this call.
 .It Dv BUS_DMA_STREAMING
-Adjusts, if necessary, the size, alignment, and boundary contrains
+Adjusts, if necessary, the size, alignment, and boundary constrains
 to conform to the platform-dependent requirements for the use of the
 .Dv BUS_DMA_STREAMING
 flag with the
@@ -552,7 +552,7 @@ Behavior is undefined if invalid arguments are passed to
 .Pp
 Returns 0 on success, or an error code indicating mode of failure.
 .It Fn bus_dmamem_free "tag" "segs" "nsegs"
-Frees memory previously allocated by 
+Frees memory previously allocated by
 .Fn bus_dmamem_alloc .
 Any mappings
 will be invalidated.  Arguments are as follows:
@@ -571,7 +571,7 @@ The number of segments in
 Behavior is undefined if invalid arguments are passed to
 .Fn bus_dmamem_free .
 .Pp
-If given valid arguments, 
+If given valid arguments,
 .Fn bus_dmamem_free
 always succeeds.
 .It Fn bus_dmamem_map "tag" "segs" "nsegs" "size" "kvap" "flags"
@@ -659,7 +659,7 @@ The size of the mapping.
 Behavior is undefined if invalid arguments are passed to
 .Fn bus_dmamem_unmap .
 .Pp
-If given valid arguments, 
+If given valid arguments,
 .Fn bus_dmamem_unmap
 always succeeds.
 .It Fn bus_dmamem_mmap "tag" "segs" "nsegs" "off" "prot" "flags"
@@ -677,7 +677,7 @@ This is the bus_dma_tag_t passed down from the parent driver via
 The array of bus_dma_segment_t's filled in by
 .Fn bus_dmamem_alloc ,
 representing the memory to be
-.Xr mmap 2 Ns 'ed.
+.Xr mmap 2 Ns 'ed .
 .It Fa nsegs
 The number of elements in the
 .Fa segs

@@ -1,4 +1,4 @@
-.\"	$NetBSD: audio.9,v 1.16 2000/07/24 15:00:07 ad Exp $
+.\"	$NetBSD: audio.9,v 1.17 2001/06/21 11:59:00 wiz Exp $
 .\"
 .\" Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -43,9 +43,9 @@
 .Sh DESCRIPTION
 The audio device driver is divided into a high level,
 hardware independent layer, and a low level hardware
-dependent layer.  The interface between these is 
-the 
-.Va audio_hw_if 
+dependent layer.  The interface between these is
+the
+.Va audio_hw_if
 structure.
 .Bd -literal
 struct audio_hw_if {
@@ -54,7 +54,7 @@ struct audio_hw_if {
 	int	(*drain)__P((void *));
 
 	int	(*query_encoding)__P((void *, struct audio_encoding *));
-	int	(*set_params)__P((void *, int, int, 
+	int	(*set_params)__P((void *, int, int,
 			struct audio_params *, struct audio_params *));
 	int	(*round_blocksize)__P((void *, int));
 
@@ -75,12 +75,12 @@ struct audio_hw_if {
 
 	int	(*getdev)__P((void *, struct audio_device *));
 	int	(*setfd)__P((void *, int));
-	
+
 	int	(*set_port)__P((void *, mixer_ctrl_t *));
 	int	(*get_port)__P((void *, mixer_ctrl_t *));
 
 	int	(*query_devinfo)__P((void *, mixer_devinfo_t *));
-	
+
 	void	*(*allocm)__P((void *, int, size_t, int, int));
 	void	(*freem)__P((void *, void *, int));
 	size_t	(*round_buffersize)__P((void *, int, size_t));
@@ -117,10 +117,10 @@ This call should be
 	struct device *dev;
 .Ed
 .Pp
-The 
+The
 .Va audio_hw_if
 struct is as shown above.  The
-.Va hdl 
+.Va hdl
 argument is a handle to some low level data structure.
 It is sent as the first argument to all the functions
 in
@@ -156,18 +156,18 @@ is called when the audio device is closed.
 optional, is called before the device is closed or when
 .Dv AUDIO_DRAIN
 is called.  It should make sure that no samples remain
-in to be played that could be lost when 
+in to be played that could be lost when
 .Va close
 is called.
 Return 0 on success, otherwise an error code.
 .It Dv int query_encoding(void *hdl, struct audio_encoding *ae)
 is used when
 .Dv AUDIO_GETENC
-is called.  It should fill the 
+is called.  It should fill the
 .Va audio_encoding
 structure and return 0 or, if there is no encoding with the
 given number, return EINVAL.
-.It Dv int set_params(void *hdl, int setmode, int usemode, 
+.It Dv int set_params(void *hdl, int setmode, int usemode,
 .Dv "struct audio_params *play, struct audio_params *rec)"
 .br
 Called to set the audio encoding mode.
@@ -230,7 +230,7 @@ Return 0 on success, otherwise an error code.
 optional, is called before any output starts, but when the total
 .Va size
 of the output
-.Va buffer 
+.Va buffer
 has been determined.  It can be used to initialize looping DMA
 for hardware that needs that.
 Return 0 on success, otherwise an error code.
@@ -238,7 +238,7 @@ Return 0 on success, otherwise an error code.
 optional, is called before any input starts, but when the total
 .Va size
 of the input
-.Va buffer 
+.Va buffer
 has been determined.  It can be used to initialize looping DMA
 for hardware that needs that.
 Return 0 on success, otherwise an error code.
@@ -276,7 +276,7 @@ should be called with the argument
 Calling
 .Va intr
 will normally initiate another call to
-.Va start_input.
+.Va start_input .
 Return 0 on success, otherwise an error code.
 .It Dv int halt_output(void *hdl)
 is called to abort the output transfer (started by
@@ -294,7 +294,7 @@ playing and recording.  It can, e.g., be used to turn on
 and off the speaker.
 Return 0 on success, otherwise an error code.
 .It Dv int getdev(void *hdl, struct audio_device *ret)
-Should fill the 
+Should fill the
 .Va audio_device
 struct with relevant information about the driver.
 Return 0 on success, otherwise an error code.
@@ -364,7 +364,7 @@ AUDIO_PROP_xxx.
 .It Dv int trigger_output(void *hdl, void *start, void *end,
 .Dv "int blksize, void (*intr)(void*), void *intrarg,"
 .br
-.Dv "stuct audio_params *param)"
+.Dv "struct audio_params *param)"
 .br
 optional, is called to start the transfer of data from the circular buffer
 delimited by
@@ -388,7 +388,7 @@ Return 0 on success, otherwise an error code.
 .It Dv int trigger_input(void *hdl, void *start, void *end,
 .Dv "int blksize, void (*intr)(void*), void *intrarg,"
 .br
-.Dv "stuct audio_params *param)"
+.Dv "struct audio_params *param)"
 .br
 optional, is called to start the transfer of data from the audio hardware,
 parameterized as in

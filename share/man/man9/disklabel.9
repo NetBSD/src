@@ -1,4 +1,4 @@
-.\"	$NetBSD: disklabel.9,v 1.8 1999/03/16 00:40:47 garbled Exp $
+.\"	$NetBSD: disklabel.9,v 1.9 2001/06/21 11:59:00 wiz Exp $
 .\"
 .\" Copyright (c) 1996 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -25,7 +25,7 @@
 .\" THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
 .\" ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
 .\" TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
-.\" PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS 
+.\" PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
 .\" BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
 .\" CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
 .\" SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
@@ -111,11 +111,11 @@ using the buffer pointed at by
 .Fa clp
 .Pc ,
 to store the disk label onto the medium in a format complying with
-architectural contraints.
+architectural constraints.
 .Fn writedisklabel
 returns 0 on success and
 .Dv EINVAL
-if the disk label specifies invalid or unconvertable values.
+if the disk label specifies invalid or inconvertible values.
 Otherwise, any error condition reported by the device strategy routine
 in the buffer's
 .Dq Va b_error
