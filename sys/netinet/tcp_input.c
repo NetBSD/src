@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.42 1998/01/24 05:04:27 mycroft Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.43 1998/01/24 12:27:31 mellon Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1990, 1993, 1994, 1995
@@ -1682,10 +1682,15 @@ syn_cache_insert(sc, prevp, headp)
 	}
 	if (scp->sch_timer_sum > 0)
 		sc->sc_timer = tcp_syn_cache_timeo - scp->sch_timer_sum;
-	else if (scp->sch_timer_sum == 0) {
-		/* When the bucket timer is 0, it is not in the cache queue.  */
-		scp->sch_headq = tcp_syn_cache_first;
-		tcp_syn_cache_first = scp;
+	else {
+		if (scp->sch_timer_sum == 0) {
+			/*
+			 * When the bucket timer is 0, it is not in the
+			 * cache queue.
+			 */
+			scp->sch_headq = tcp_syn_cache_first;
+			tcp_syn_cache_first = scp;
+		}
 		sc->sc_timer = tcp_syn_cache_timeo;
 	}
 	scp->sch_timer_sum = tcp_syn_cache_timeo;
