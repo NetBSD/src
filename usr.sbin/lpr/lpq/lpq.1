@@ -1,4 +1,4 @@
-.\"	$NetBSD: lpq.1,v 1.10 1999/03/22 18:43:59 garbled Exp $
+.\"	$NetBSD: lpq.1,v 1.11 2002/01/19 03:23:11 wiz Exp $
 .\"
 .\" Copyright (c) 1983, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -40,7 +40,7 @@
 .Nm lpq
 .Nd spool queue examination program
 .Sh SYNOPSIS
-.Nm ""
+.Nm
 .Op Fl al
 .Op Fl P Ar printer
 .Op Ar job# ...
@@ -117,6 +117,9 @@ Control files specifying jobs.
 .It Pa /var/spool/output/*/lock
 The lock file to obtain the currently active job.
 .El
+.Sh DIAGNOSTICS
+Unable to open various files.  The lock file being malformed.  Garbage
+files when there is no daemon active, but files in the spooling directory.
 .Sh SEE ALSO
 .Xr lpr 1 ,
 .Xr lprm 1 ,
@@ -132,6 +135,3 @@ Due to the dynamic nature of the information in the spooling directory
 may report unreliably.
 Output formatting is sensitive to the line length of the terminal;
 this can results in widely spaced columns.
-.Sh DIAGNOSTICS
-Unable to open various files.  The lock file being malformed.  Garbage
-files when there is no daemon active, but files in the spooling directory.
