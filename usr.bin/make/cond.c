@@ -1,4 +1,4 @@
-/*	$NetBSD: cond.c,v 1.25 2005/02/16 15:11:52 christos Exp $	*/
+/*	$NetBSD: cond.c,v 1.26 2005/03/01 04:34:55 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -70,14 +70,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: cond.c,v 1.25 2005/02/16 15:11:52 christos Exp $";
+static char rcsid[] = "$NetBSD: cond.c,v 1.26 2005/03/01 04:34:55 christos Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)cond.c	8.2 (Berkeley) 1/2/94";
 #else
-__RCSID("$NetBSD: cond.c,v 1.25 2005/02/16 15:11:52 christos Exp $");
+__RCSID("$NetBSD: cond.c,v 1.26 2005/03/01 04:34:55 christos Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -180,6 +180,12 @@ static int  	  condTop = MAXIF;  	/* Top-most conditional */
 static int  	  skipIfLevel=0;    	/* Depth of skipped conditionals */
 static Boolean	  skipLine = FALSE; 	/* Whether the parse module is skipping
 					 * lines */
+
+static int
+istoken(const char *str, const char *tok, size_t len)
+{
+	return strncmp(str, tok, len) == 0 && !isalpha((unsigned char)str[len]);
+}
 
 /*-
  *-----------------------------------------------------------------------
@@ -841,7 +847,7 @@ error:
 		char	*arg;
 		int	arglen;
 
-		if (strncmp (condExpr, "defined", 7) == 0) {
+		if (istoken(condExpr, "defined", 7)) {
 		    /*
 		     * Use CondDoDefined to evaluate the argument and
 		     * CondGetArg to extract the argument from the 'function
@@ -854,7 +860,7 @@ error:
 			condExpr -= 7;
 			goto use_default;
 		    }
-		} else if (strncmp (condExpr, "make", 4) == 0) {
+		} else if (istoken(condExpr, "make", 4)) {
 		    /*
 		     * Use CondDoMake to evaluate the argument and
 		     * CondGetArg to extract the argument from the 'function
@@ -867,7 +873,7 @@ error:
 			condExpr -= 4;
 			goto use_default;
 		    }
-		} else if (strncmp (condExpr, "exists", 6) == 0) {
+		} else if (istoken(condExpr, "exists", 6)) {
 		    /*
 		     * Use CondDoExists to evaluate the argument and
 		     * CondGetArg to extract the argument from the
@@ -880,7 +886,7 @@ error:
 			condExpr -= 6;
 			goto use_default;
 		    }
-		} else if (strncmp(condExpr, "empty", 5) == 0) {
+		} else if (istoken(condExpr, "empty", 5)) {
 		    /*
 		     * Use Var_Parse to parse the spec in parens and return
 		     * True if the resulting string is empty.
@@ -925,7 +931,7 @@ error:
 			goto use_default;
 		    }
 		    break;
-		} else if (strncmp (condExpr, "target", 6) == 0) {
+		} else if (istoken(condExpr, "target", 6)) {
 		    /*
 		     * Use CondDoTarget to evaluate the argument and
 		     * CondGetArg to extract the argument from the
@@ -938,7 +944,7 @@ error:
 			condExpr -= 6;
 			goto use_default;
 		    }
-		} else if (strncmp (condExpr, "commands", 8) == 0) {
+		} else if (istoken(condExpr, "commands", 8)) {
 		    /*
 		     * Use CondDoCommands to evaluate the argument and
 		     * CondGetArg to extract the argument from the
@@ -1232,7 +1238,7 @@ Cond_Eval(char *line)
     if (line[0] == 'e' && line[1] == 'l') {
 	line += 2;
 	isElse = TRUE;
-    } else if (strncmp (line, "endif", 5) == 0) {
+    } else if (istoken(line, "endif", 5)) {
 	/*
 	 * End of a conditional section. If skipIfLevel is non-zero, that
 	 * conditional was skipped, so lines following it should also be
@@ -1264,7 +1270,7 @@ Cond_Eval(char *line)
      * function is, etc. -- by looking in the table of valid "ifs"
      */
     for (ifp = ifs; ifp->form != (char *)0; ifp++) {
-	if (strncmp (ifp->form, line, ifp->formlen) == 0) {
+	if (istoken(ifp->form, line, ifp->formlen)) {
 	    break;
 	}
     }
@@ -1275,7 +1281,7 @@ Cond_Eval(char *line)
 	 * "else", it's a valid conditional whose value is the inverse
 	 * of the previous if we parsed.
 	 */
-	if (isElse && (line[0] == 's') && (line[1] == 'e')) {
+	if (isElse && istoken(line, "se", 2)) {
 	    if (finalElse[condTop][skipIfLevel]) {
 		Parse_Error(PARSE_WARNING, "extra else");
 	    } else {
