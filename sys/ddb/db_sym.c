@@ -1,4 +1,4 @@
-/*	$NetBSD: db_sym.c,v 1.17 1999/04/12 20:38:21 pk Exp $	*/
+/*	$NetBSD: db_sym.c,v 1.18 1999/06/26 16:58:12 simonb Exp $	*/
 
 /* 
  * Mach Operating System
@@ -103,7 +103,7 @@ ddb_init(symsize, vss, vse)
 	 * the message N times.
 	 */
 	if (ALIGNED_POINTER(vss, long) == 0) {
-		printf("[ %s symbol table nas bad start address %p ]\n",
+		printf("[ %s symbol table has bad start address %p ]\n",
 		    name, vss);
 		return;
 	}
