@@ -1,4 +1,4 @@
-/*	$NetBSD: gem.c,v 1.35 2005/02/20 18:29:00 heas Exp $ */
+/*	$NetBSD: gem.c,v 1.36 2005/02/21 02:12:48 thorpej Exp $ */
 
 /*
  *
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gem.c,v 1.35 2005/02/20 18:29:00 heas Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gem.c,v 1.36 2005/02/21 02:12:48 thorpej Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -1156,9 +1156,8 @@ gem_start(ifp)
 						m_free(m0);
 						continue;
 					}
-					start += m0->m_pkthdr.csum_data >> 16;
-					offset = (m0->m_pkthdr.csum_data &
-						  0xffff) + start;
+					start += M_CSUM_DATA_IPv4_IPHL(m0->m_pkthdr.csum_data);
+					offset = M_CSUM_DATA_IPv4_OFFSET(m0->m_pkthdr.csum_data) + start;
 					flags |= (start <<
 						  GEM_TD_CXSUM_STARTSHFT) |
 						 (offset <<

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_dge.c,v 1.8 2005/02/18 01:21:02 heas Exp $ */
+/*	$NetBSD: if_dge.c,v 1.9 2005/02/21 02:12:48 thorpej Exp $ */
 
 /*
  * Copyright (c) 2004, SUNET, Swedish University Computer Network.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_dge.c,v 1.8 2005/02/18 01:21:02 heas Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_dge.c,v 1.9 2005/02/21 02:12:48 thorpej Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -1051,7 +1051,7 @@ dge_tx_cksum(struct dge_softc *sc, struct dge_txsoft *txs, uint8_t *fieldsp)
 		return (0);
 	}
 
-	iphl = m0->m_pkthdr.csum_data >> 16;
+	iphl = M_CSUM_DATA_IPv4_IPHL(m0->m_pkthdr.csum_data);
 
 	/*
 	 * NOTE: Even if we're not using the IP or TCP/UDP checksum
@@ -1084,7 +1084,7 @@ dge_tx_cksum(struct dge_softc *sc, struct dge_txsoft *txs, uint8_t *fieldsp)
 		DGE_EVCNT_INCR(&sc->sc_ev_txtusum);
 		fields |= TDESC_POPTS_TXSM;
 		tucs = DGE_TCPIP_TUCSS(offset) |
-		   DGE_TCPIP_TUCSO(offset + (m0->m_pkthdr.csum_data & 0xffff)) |
+		   DGE_TCPIP_TUCSO(offset + M_CSUM_DATA_IPv4_OFFSET(m0->m_pkthdr.csum_data)) |
 		   DGE_TCPIP_TUCSE(0) /* rest of packet */;
 	} else if (__predict_true(sc->sc_txctx_tucs != 0xffffffff)) {
 		/* Use the cached value. */

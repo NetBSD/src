@@ -1,4 +1,4 @@
-/*	$NetBSD: mbuf.h,v 1.102 2005/02/18 00:52:56 heas Exp $	*/
+/*	$NetBSD: mbuf.h,v 1.103 2005/02/21 02:12:48 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1999, 2001 The NetBSD Foundation, Inc.
@@ -178,6 +178,13 @@ struct	pkthdr {
 						 * the UDP/TCP pseudo-hdr, and
 						 * is not yet 1s-complemented.
 						 */
+
+/*
+ * Macros for manipulating csum_data on outgoing packets.  These are
+ * used to pass information down from the L4/L3 to the L2.
+ */
+#define	M_CSUM_DATA_IPv4_IPHL(x)	((x) >> 16)
+#define	M_CSUM_DATA_IPv4_OFFSET(x)	((x) & 0xffff)
 
 /*
  * Max # of pages we can attach to m_ext.  This is carefully chosen
