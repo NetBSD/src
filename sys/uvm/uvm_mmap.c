@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_mmap.c,v 1.76 2003/08/24 16:32:50 chs Exp $	*/
+/*	$NetBSD: uvm_mmap.c,v 1.77 2003/08/24 18:12:25 chs Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_mmap.c,v 1.76 2003/08/24 16:32:50 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_mmap.c,v 1.77 2003/08/24 18:12:25 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -537,11 +537,11 @@ sys___msync13(l, v, retval)
 
 	/* sanity check flags */
 	if ((flags & ~(MS_ASYNC | MS_SYNC | MS_INVALIDATE)) != 0 ||
-			(flags & (MS_ASYNC | MS_SYNC | MS_INVALIDATE)) == 0 ||
-			(flags & (MS_ASYNC | MS_SYNC)) == (MS_ASYNC | MS_SYNC))
-	  return (EINVAL);
+	    (flags & (MS_ASYNC | MS_SYNC | MS_INVALIDATE)) == 0 ||
+	    (flags & (MS_ASYNC | MS_SYNC)) == (MS_ASYNC | MS_SYNC))
+		return (EINVAL);
 	if ((flags & (MS_ASYNC | MS_SYNC)) == 0)
-	  flags |= MS_SYNC;
+		flags |= MS_SYNC;
 
 	/*
 	 * align the address to a page boundary and adjust the size accordingly.
