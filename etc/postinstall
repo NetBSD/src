@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: postinstall,v 1.56 2003/03/24 15:19:27 atatat Exp $
+# $NetBSD: postinstall,v 1.57 2003/04/02 17:56:46 atatat Exp $
 #
 # Copyright (c) 2002-2003 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -705,6 +705,8 @@ do_sendmail()
 	_etcmail="${DEST_DIR}/etc/mail"
 	_sendmailcf="${_etcmail}/sendmail.cf"
 	_submitcf="${_etcmail}/submit.cf"
+	_sample_sendmailcf="${DEST_DIR}/usr/share/sendmail/cf/netbsd-proto.cf"
+	_sample_submitcf="${DEST_DIR}/usr/share/sendmail/cf/netbsd-msp.cf"
 	_sendmail=${DEST_DIR}/usr/libexec/sendmail/sendmail
 
 	#
@@ -742,14 +744,18 @@ do_sendmail()
 	fi
 
 	# check that owner and mode match what it required
+	_notfixed=""
 	if ! stat "${_op}" "${_smownerfmt}" "${_sendmail}" \
 	    "10${_smownermode} ${_smownerreq}"; then
 		if [ "${_op}" = "fix" ]; then
 			_notfixed=${NOT_FIXED}
-			chown "${_smownerreq}" "${_sendmail}" &&
-			    chmod "${_smownermode}" "${_sendmail}" &&
-			    _notfixed=" [ FIXED ]" ||
-			    failed=1
+			if chown "${_smownerreq}" "${_sendmail}" 2>/dev/null &&
+			    chmod "${_smownermode}" "${_sendmail}" 2>/dev/null
+			then
+				_notfixed=" [ FIXED ]"
+			else
+				failed=1
+			fi
 		else
 			_notfixed=""
 			failed=1
@@ -757,41 +763,51 @@ do_sendmail()
 		msg "${_sendmail} binary has wrong owner/mode${_notfixed}"
 	fi
 
+	_notfixed=""
 	if [ ! -f "${_sendmailcf}" ]; then
-		# XXX no fix here
-		_notfixed=""
 		if [ "${_op}" = "fix" ]; then
 			_notfixed=${NOT_FIXED}
+			if cp "${_sample_sendmailcf}" \
+			    "${_sendmailcf}" 2>/dev/null; then
+				_notfixed=" [ FIXED ]"
+			else
+				failed=1
+			fi
 		fi
 		msg "${_sendmailcf} is missing${_notfixed}"
+	fi
+	if [ ! -f "${_sendmailcf}" ]; then
 		_cfversion="10"		# pretend it's okay
-		failed=1
 	else
 		_cfversion=$(sed -n 's/^V *\([0-9]*\).*/\1/p' "${_sendmailcf}")
 	fi
 
+	_notfixed=""
 	if [ "${_cfversion}" -lt 10 ]; then
 		# XXX no fix here
-		_notfixed=""
 		if [ "${_op}" = "fix" ]; then
 			_notfixed=${NOT_FIXED}
 		fi
-		msg "Version of ${_sendmailcf} is ${_cfversion}, should be 10${_notfixed}"
+		msg "Version of ${_sendmailcf} is ${_cfversion}," \
+		    "should be 10${_notfixed}"
 		failed=1
 	fi
 
+	_notfixed=""
 	if $_root; then
 		if [ -f "${_submitcf}" ]; then
 			if [ "${_op}" = "fix" ]; then
 				_notfixed=${NOT_FIXED}
-				rm -f "${_submitcf}" &&
-				    _notfixed=" [ FIXED ]" ||
-				    failed=1
+				if rm -f "${_submitcf}" 2>/dev/null; then
+					_notfixed=" [ FIXED ]"
+				else
+					failed=1
+				fi
 			else
 				_notfixed=""
 				failed=1
 			fi
-			msg "Submission configuration file ${_submitcf} exists${_notfixed}"
+			msg "${_submitcf} exists${_notfixed}"
 	       fi
 	       _checkcq=false
 	else
@@ -799,9 +815,14 @@ do_sendmail()
 			_notfixed=""
 			if [ "${_op}" = "fix" ]; then
 				_notfixed=${NOT_FIXED}
+				if cp "${_sample_submitcf}" \
+				    "${_submitcf}" 2>/dev/null; then
+					_notfixed=" [ FIXED ]"
+				else
+					failed=1
+				fi
 			fi
-			failed=1
-			msg "Submission configuration file ${_submitcf} missing${_notfixed}"
+			msg "${_submitcf} is missing${_notfixed}"
 		fi
 		_checkcq=true
 	fi
@@ -822,6 +843,7 @@ do_sendmail()
 		_cqueuefmt="d ${_cqueuemode} ${_cqueueowner}"
 	fi
 
+	_notfixed=""
 	if ! stat "${_op}" "${_cqueuefmt}" "${_cqueuepath}" \
 	    "d ${_cqueuemode} ${_cqueueowner}"; then
 		if [ "${_op}" = "fix" ]; then
