@@ -1,4 +1,4 @@
-/*	$NetBSD: psl.h,v 1.14 1994/11/06 01:37:47 mycroft Exp $	*/
+/*	$NetBSD: psl.h,v 1.15 1995/01/03 01:19:19 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -70,12 +70,20 @@
 
 #ifdef KERNEL
 
+/* Interrupt priority `levels'; not mutually exclusive. */
 #define	IPL_NONE	-1
-#define	IPL_BIO		0
-#define	IPL_NET		1
-#define	IPL_TTY		2
-#define	IPL_CLOCK	3
+#define	IPL_BIO		0	/* block I/O */
+#define	IPL_NET		1	/* network */
+#define	IPL_TTY		2	/* terminal */
+#define	IPL_CLOCK	3	/* clock */
 
+/* Interrupt sharing types. */
+#define	IST_NONE	0	/* none */
+#define	IST_PULSE	1	/* pulsed */
+#define	IST_EDGE	2	/* edge-triggered */
+#define	IST_LEVEL	3	/* level-triggered */
+
+/* Soft interrupt masks. */
 #define	SIR_CLOCK	31
 #define	SIR_CLOCKMASK	((1 << SIR_CLOCK))
 #define	SIR_NET		30
