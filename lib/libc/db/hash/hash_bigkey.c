@@ -1,4 +1,4 @@
-/*	$NetBSD: hash_bigkey.c,v 1.12 1999/07/28 19:41:36 mycroft Exp $	*/
+/*	$NetBSD: hash_bigkey.c,v 1.13 1999/07/29 01:12:57 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)hash_bigkey.c	8.3 (Berkeley) 5/31/94";
 #else
-__RCSID("$NetBSD: hash_bigkey.c,v 1.12 1999/07/28 19:41:36 mycroft Exp $");
+__RCSID("$NetBSD: hash_bigkey.c,v 1.13 1999/07/29 01:12:57 mycroft Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -133,11 +133,14 @@ __big_insert(hashp, bufp, key, val)
 			if (space) {
 				move_bytes = MIN(space, val_size);
 				/*
-				 * Here's the hack to make sure that if the data ends on the
-				 * same page as the key ends, FREESPACE is at least one.
+				 * If the data would fit exactly in the
+				 * remaining space, we must overflow it to the
+				 * next page; otherwise the invariant that the
+				 * data must end on a page with FREESPACE
+				 * non-zero would fail.
 				 */
 				if (space == val_size && val_size == val->size)
-					move_bytes--;
+					goto toolarge;
 				off = OFFSET(p) - move_bytes;
 				memmove(cp + off, val_data, (size_t)move_bytes);
 				val_data += move_bytes;
@@ -146,8 +149,10 @@ __big_insert(hashp, bufp, key, val)
 				p[n - 2] = FULL_KEY_DATA;
 				FREESPACE(p) = FREESPACE(p) - move_bytes;
 				OFFSET(p) = off;
-			} else
+			} else {
+			toolarge:
 				p[n - 2] = FULL_KEY;
+			}
 		}
 		p = (u_int16_t *)(void *)bufp->page;
 		cp = bufp->page;
