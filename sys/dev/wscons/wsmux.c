@@ -1,4 +1,4 @@
-/*	$NetBSD: wsmux.c,v 1.22 2001/11/02 13:02:20 augustss Exp $	*/
+/*	$NetBSD: wsmux.c,v 1.23 2001/11/07 03:26:06 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -679,7 +679,8 @@ wsmux_detach_sc(struct wsevsrc *me)
 
 #ifdef DIAGNOSTIC
 	if (sc == NULL) {
-		printf("wsmux_detach_sc: not allocated\n");
+		printf("wsmux_detach_sc: %s has no parent\n",
+		       me->me_dv.dv_xname);
 		return;
 	}
 #endif
