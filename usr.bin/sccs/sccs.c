@@ -39,13 +39,13 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)sccs.c	5.11 (Berkeley) 3/4/91";*/
-static char rcsid[] = "$Id: sccs.c,v 1.2 1993/08/01 18:08:39 mycroft Exp $";
+static char rcsid[] = "$Id: sccs.c,v 1.3 1993/12/08 00:33:06 jtc Exp $";
 #endif /* not lint */
 
 #include <sys/cdefs.h>
 #include <sys/param.h>
 #include <sys/stat.h>
-#include <sys/dir.h>
+#include <dirent.h>
 #include <signal.h>
 #include <sysexits.h>
 #include <errno.h>
@@ -978,7 +978,7 @@ clean(mode, argv)
 	int mode;
 	char **argv;
 {
-	struct direct *dir;
+	struct dirent *dir;
 	char buf[FBUFSIZ];
 	char *bufend;
 	register DIR *dirp;
