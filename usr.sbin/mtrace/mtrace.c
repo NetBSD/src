@@ -1,4 +1,4 @@
-/*	$NetBSD: mtrace.c,v 1.21 2002/08/09 02:04:03 itojun Exp $	*/
+/*	$NetBSD: mtrace.c,v 1.22 2002/08/09 02:09:01 itojun Exp $	*/
 
 /*
  * mtrace.c
@@ -52,7 +52,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: mtrace.c,v 1.21 2002/08/09 02:04:03 itojun Exp $");
+__RCSID("$NetBSD: mtrace.c,v 1.22 2002/08/09 02:09:01 itojun Exp $");
 #endif
 
 #include <sys/types.h>
@@ -464,7 +464,7 @@ send_recv(u_int32_t dst, int type, int code, int tries, struct resp_buf *save)
 	while (TRUE) {
 	    FD_ZERO(&fds);
 	    if (igmp_socket >= FD_SETSIZE)
-		    log(LOG_ERR, 0, "descriptor too big");
+		log(LOG_ERR, 0, "descriptor too big");
 	    FD_SET(igmp_socket, &fds);
 	    gettimeofday(&tv, 0);
 	    tv.tv_sec = tq.tv_sec + timeout - tv.tv_sec;
@@ -1689,7 +1689,8 @@ log(int severity, int syserr, const char *format, ...)
 	case 1: if (severity > LOG_NOTICE) return;
 	case 2: if (severity > LOG_INFO  ) return;
 	default:
-	    if (severity == LOG_WARNING) fprintf(stderr, "warning - ");
+	    if (severity == LOG_WARNING)
+		fprintf(stderr, "warning - ");
 	    va_start(ap, format);
 	    vfprintf(stderr, format, ap);
 	    va_end(ap);
