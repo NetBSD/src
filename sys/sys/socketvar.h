@@ -31,11 +31,13 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)socketvar.h	7.17 (Berkeley) 5/5/91
- *	$Id: socketvar.h,v 1.4 1993/05/18 18:20:38 cgd Exp $
+ *	$Id: socketvar.h,v 1.5 1993/05/20 11:49:03 cgd Exp $
  */
 
 #ifndef _SYS_SOCKETVAR_H_
 #define _SYS_SOCKETVAR_H_
+
+#include <sys/select.h>			/* for struct selinfo */
 
 /*
  * Kernel structure per socket.
