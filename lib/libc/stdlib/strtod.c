@@ -86,7 +86,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$Id: strtod.c,v 1.6 1993/11/10 01:58:57 jtc Exp $";
+static char *rcsid = "$Id: strtod.c,v 1.7 1993/11/11 02:08:55 jtc Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #ifdef i386
@@ -332,7 +332,7 @@ extern double rnd_prod(double, double), rnd_quot(double, double);
 
 #ifdef __cplusplus
 extern "C" double strtod(const char *s00, char **se);
-extern "C" char *dtoa(double d, int mode, int ndigits,
+extern "C" char *__dtoa(double d, int mode, int ndigits,
 			int *decpt, int *sign, char **rve);
 #endif
 
@@ -1851,7 +1851,7 @@ quorem
  */
 
  char *
-dtoa
+__dtoa
 #ifdef KR_headers
 	(d, mode, ndigits, decpt, sign, rve)
 	double d; int mode, ndigits, *decpt, *sign; char **rve;
