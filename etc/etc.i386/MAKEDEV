@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.200 2003/05/09 00:13:50 augustss Exp $
+#	$NetBSD: MAKEDEV,v 1.201 2003/05/13 15:44:32 thorpej Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -145,6 +145,7 @@
 #	dmoverio hardware-assisted data movers
 #	veriexec verified executable fingerprint loader
 #	twe	3ware Escalade control interface
+#	icp	ICP-Vortex/Intel RAID control interface
 #
 
 dialin=0
@@ -182,7 +183,7 @@ init)
 	makedev bpf0
 	makedev ccd0 md0 ch0 random
 	makedev cgd0 cgd1
-	makedev iop0 mlx0 mly0 dpti0 dpt0 twe0
+	makedev iop0 mlx0 mly0 dpti0 dpt0 twe0 icp0
 	makedev ed0 ed1
 	makedev raid0
 	makedev ld0 ld1 ld2 ld3
@@ -885,6 +886,13 @@ twe*)
 	rm -f twe$unit
 	mknod twe$unit c 97 $unit
 	chmod 600 twe$unit
+	;;
+
+icp*)
+	unit=${i#icp}
+	rm -f icp$unit
+	mknod icp$unit c 102 $unit
+	chmod 600 icp$unit
 	;;
 
 agp*)
