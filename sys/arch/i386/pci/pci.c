@@ -26,7 +26,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: pci.c,v 1.1 1994/08/09 00:47:49 mycroft Exp $
+ *	$Id: pci.c,v 1.2 1994/08/10 04:37:52 mycroft Exp $
  */
 
 /*
@@ -99,6 +99,9 @@ pciattach(parent, self, aux)
 	/*
 	 * XXX
 	 * Some current chipsets do wacky things with bus numbers > 0.
+	 * This seems like a violation of protocol, but the PCI BIOS does
+	 * allow one to query the maximum bus number, and eventually we
+	 * should do so.
 	 */
 	for (bus = 0; bus <= 0; bus++) {
 #endif
