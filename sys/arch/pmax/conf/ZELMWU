@@ -1,0 +1,163 @@
+#
+# Matthias Drochner's development machine
+#
+#	$NetBSD: ZELMWU,v 1.1.2.1 1998/10/19 20:04:06 drochner Exp $
+#
+include		"arch/pmax/conf/std.pmax"
+
+maxusers	64
+
+options 	MIPS1			# R2000/R3000 CPUs
+#options 	MIPS3			# R4000/R4400/R4600 CPUs
+
+# Support for specific models of DECstation
+#options 	DEC_3100		# kn01:	  DECstation 2100, 3100
+#options 	DEC_5100		# kn230:  DECsystem 5100
+#options 	DEC_3MAX		# kn02:   DECstation 5000/200
+#options 	DEC_3MIN		# kn02ba: DECstation 5000/1xx
+#options 	DEC_MAXINE		# kn02ca: Personal DECstation 5000/xx
+options 	DEC_3MAXPLUS		# 5000/240 (kn03), 5000/260 (kn05)
+#options	DEC_5400
+#options	DEC_5800
+#options	DEC_5500
+
+# Standard system options
+options 	DDB			# in-kernel debugger
+#options	DDB_HISTORY_SIZE=100	# enable history editing in DDB
+#options	DDB_ONPANIC=0		# don't enter debugger on panic
+#options	DIAGNOSTIC		# extra kernel debugging checks
+#options	DEBUG			# extra kernel debugging support
+options 	"COMPAT_43"		# compatibility with 4.3BSD binaries
+options 	KTRACE			# system call tracing support
+options 	"NKMEMCLUSTERS=1024"	# 4K pages in kernel malloc pool
+
+#options	SCSIVERBOSE		# Verbose SCSI errors
+
+#Old 4.4bsd/pmax kgdb options
+#options	KGDB			# support for kernel gdb
+#options	"KGDBRATE=19200"	# kernel gdb port rate (default 9600)
+#options	"KGDBDEV=15*256+0"	# device for kernel gdb
+
+options 	NTP			# network time protocol
+#options	UCONSOLE		# users can redirect console (unsafe)
+
+
+# Filesystem options
+file-system	FFS             # fast filesystem with user and group quotas
+#file-system	MFS		# memory-based filesystem
+file-system	NFS		# Sun NFS-compatible filesystem (client)
+#file-system	LFS		# Log-based filesystem (still experimental)
+#file-system	CD9660		# ISO 9660 + Rock Ridge file system
+#file-system	FDESC		# /dev/fd
+#file-system	KERNFS		# /kern (kernel informational filesystem)
+#file-system	NULLFS		# loopback file system
+#file-system	PORTAL		# portal filesystem (still experimental)
+#file-system	PROCFS		# /proc
+#file-system	UMAPFS		# NULLFS + uid and gid remapping
+#file-system	UNION
+
+#options 	NFSSERVER	# Sun NFS-compatible filesystem (server)
+#options	QUOTA		# UFS quotas
+#options	FFS_EI		# FFS Endian Independant support
+
+# Networking options
+options 	INET		# Internet protocols
+options 	"TCP_COMPAT_42"	# compatibility with 4.2BSD TCP/IP
+#options	GATEWAY		# IP packet forwarding
+#options	MULTICAST	# Multicast support
+#options	MROUTING	# Multicast routing support
+#options	ISO		# OSI networking
+#options	TPIP		# TPIP
+#options	EON		# OSI tunneling over IP
+#options	CCITT,LLC,HDLC	# X.25
+
+# NetBSD backwards compatibility
+#options	COMPAT_10	# NetBSD 1.0, (needed for X on 386?)
+#options	COMPAT_11	# NetBSD 1.1,
+#options	COMPAT_12	# Netbsd 1.2 reboot()
+options 	COMPAT_13	# Netbsd 1.3
+
+
+# pmax specific
+options 	COMPAT_ULTRIX	# ultrix compatibility
+options 	EXEC_ECOFF	# Ultrix RISC binaries are ECOFF format
+options 	"HZ=256"	# RTC rate required
+
+# The pmax proms need bootp anyway, so just use bootp.
+options 	NFS_BOOT_DHCP
+
+config		netbsd		root on ? type ?
+
+mainbus0	at root
+cpu*		at mainbus0
+
+# TURBOchannel bus support
+tc*	at	mainbus0
+
+# 3MIN, 3MAX+ and MAXINE have IOASIC in system slot
+ioasic0	at	tc?
+mcclock0 at	ioasic? offset ?	# DS1287 RTC
+asc0	at	ioasic?	offset ?	# NCR53C94 SCSI with IOASIC
+le0	at	ioasic?	offset ?	# LANCE
+zsc*	at	ioasic? offset ?	# Z85C30
+zstty*	at	zsc?
+zskbd0	at	zsc?
+#dtop0	at	ioasic?	offset ?	# MAXINE kbd and mouse
+#isdn	at	ioasic?	offset ?	# MAXINE ISDN/audio (not supported)
+#fdc	at	ioasic?	offset ?	# MAXINE floppy disk (not supported)
+
+# 3MAX has TURBOchannel but no IOASIC
+#ibus0	at	tc? # slot ? offset ?	# 3MAX system slot
+#mcclock0 at	ibus0			# DS1287 RTC
+#dc0	at	ibus0			# DC7085 quad line serial device
+
+# TURBOchannel devices
+#mfb0	at	tc? # slot ? offset ?	# PMAG-A MX Monochrome Framebuffer
+#cfb0	at	tc? # slot ? offset ?	# PMAG-B CX Color Framebuffer
+#tfb0	at	tc? # slot ? offset ?	# PMAG-RO TX True Color Framebuffer
+sfb0	at	tc? # slot ? offset ?	# PMAGB-B HX Smart Framebuffer
+#xcfb0	at	tc? # slot ? offset ?	# PMAG-DV Color Framebuffer at MAXINE
+#asc*	at	tc? # slot ? offset ?	# PMAZ-A single channel SCSI
+le*	at	tc? # slot ? offset ?	# PMAD-A LANCE
+fta*	at	tc? # slot ? offset ?	# PMAF-F FDDI
+
+# PMAX and MIPSMATE
+#ibus0	at	mainbus0
+#mcclock0 at	ibus0			# MC146818 RTC
+#dc0	at	ibus0			# DC7085 quad line serial device
+#le0	at	ibus0			# 3100 onboard LANCE
+#sii0	at	ibus0			# DC7061 onboard scsi
+#pm0	at	ibus0			# 3100 onboard fb
+#dc*	at	ibus0			# 5100 optional serial device
+
+# SCSI bus support
+scsibus*	at asc?
+#scsibus*	at sii?
+
+# SCSI devices
+sd*	at scsibus? target ? lun ?
+st*	at scsibus? target ? lun ?
+cd*	at scsibus? target ? lun ?
+
+# Workstation Console attachments  
+#wsdisplay* at	pm?
+#wsdisplay* at	mfb?
+#wsdisplay* at	cfb?
+wsdisplay* at	sfb?
+#wsdisplay* at	tfb?
+#wsdisplay* at	xcfb?
+wskbd0 at zskbd?
+
+# Pseudo-devices                            ###
+pseudo-device	loop		1	# network loopback
+#pseudo-device	sl		2	# serial-line IP ports
+#pseudo-device	ppp		2	# serial-line IP ports
+pseudo-device	pty		64	# pseudo ptys
+#pseudo-device	bpfilter	16	# packet filter ports
+#pseudo-device	ipfilter		# IP filter, NAT
+
+#pseudo-device	vnd		4	# virtual disk ick
+#pseudo-device	ccd             4       # concatenated disks
+
+# rnd is EXPERIMENTAL
+#pseudo-device	rnd			# /dev/random and in-kernel generator
