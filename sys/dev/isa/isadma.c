@@ -1,4 +1,4 @@
-/*	$NetBSD: isadma.c,v 1.37 1998/06/28 06:59:35 thorpej Exp $	*/
+/*	$NetBSD: isadma.c,v 1.38 1998/07/08 05:23:23 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -187,6 +187,13 @@ _isa_dmainit(ids, bst, dmat, dev)
 		ids->ids_masked = 0xff;
 
 		ids->ids_initialized = 1;
+
+		/*
+		 * DRQ 4 is used to chain the two 8237s together; make
+		 * sure it's always cascaded, and that it will be unmasked
+		 * when DMA is thawed.
+		 */
+		_isa_dmacascade(ids, 4);
 	}
 }
 
