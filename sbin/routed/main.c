@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.31 2002/11/30 04:04:23 christos Exp $	*/
+/*	$NetBSD: main.c,v 1.32 2003/04/21 08:54:42 itojun Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1988, 1993\n"
 	    "The Regents of the University of California."
 	    "  All rights reserved.\n");
 #ifdef __NetBSD__
-__RCSID("$NetBSD: main.c,v 1.31 2002/11/30 04:04:23 christos Exp $");
+__RCSID("$NetBSD: main.c,v 1.32 2003/04/21 08:54:42 itojun Exp $");
 #elif defined(__FreeBSD__)
 __RCSID("$FreeBSD$");
 #else
@@ -321,7 +321,7 @@ usage:
 
 
 	if (tracename != 0) {
-		strncpy(inittracename, tracename, sizeof(inittracename)-1);
+		strlcpy(inittracename, tracename, sizeof(inittracename));
 		set_tracefile(inittracename, "%s", -1);
 	} else {
 		tracelevel_msg("%s", -1);   /* turn on tracing to stdio */
