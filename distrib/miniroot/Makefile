@@ -1,10 +1,8 @@
-#	$NetBSD: Makefile,v 1.46 2002/02/09 13:56:51 lukem Exp $
+#	$NetBSD: Makefile,v 1.47 2002/02/12 01:38:17 lukem Exp $
 
 .include "../../Makefile.inc"
 .include <bsd.own.mk>
 .include <bsd.kernobj.mk>
-
-REV!=sh ${.CURDIR}/../../sys/conf/osrelease.sh -s
 
 CBIN=		instbin
 ARCHDIR=	${.CURDIR}/../${MACHINE}/miniroot
@@ -50,7 +48,7 @@ all: ${CBIN}
 	${BOOTINSTALL}
 	mount -o async ${VND_DEV} ${MOUNT_POINT}
 	${MTREE} -def ${MTREECONF} -p ${MOUNT_POINT}/ -u
-	REV=${REV} CURDIR=${.CURDIR} OBJDIR=${.OBJDIR} ARCHDIR=${ARCHDIR} \
+	REV=${DISTRIBREV} CURDIR=${.CURDIR} OBJDIR=${.OBJDIR} ARCHDIR=${ARCHDIR} \
 	    TARGDIR=${MOUNT_POINT} VND_RDEV=${VND_RDEV} \
 	    KERNOBJDIR=${KERNOBJDIR} \
 	    sh ${.CURDIR}/runlist.sh ${LISTS}
