@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.25 2003/03/22 15:34:44 tron Exp $
+#	$NetBSD: Makefile,v 1.26 2003/03/22 19:09:39 jdolecek Exp $
 #	@(#)Makefile	8.2 (Berkeley) 3/27/94
 
 .include <bsd.own.mk>
@@ -9,12 +9,11 @@ MAN=	newfs.8 mount_mfs.8
 
 WARNS=	2
 
-MOUNT=	${NETBSDSRCDIR}/sbin/mount
 DISKLABEL=${NETBSDSRCDIR}/sbin/disklabel
-CPPFLAGS+=-DMFS -I${.CURDIR} -I${MOUNT} -I${DISKLABEL}
+CPPFLAGS+=-DMFS -I${.CURDIR} -I${DISKLABEL}
 DPADD+= ${LIBUTIL}
 LDADD+= -lutil
-.PATH:	${MOUNT} ${DISKLABEL} ${NETBSDSRCDIR}/sys/ufs/ffs 
+.PATH:	${DISKLABEL} ${NETBSDSRCDIR}/sys/ufs/ffs 
 
 LINKS=	${BINDIR}/newfs ${BINDIR}/mount_mfs
 MLINKS=	mount_mfs.8 mfs.8
