@@ -1,6 +1,6 @@
-#	$NetBSD: bootptab,v 1.5 1997/01/18 04:11:06 perry Exp $
+#	$NetBSD: bootptab,v 1.6 2001/04/24 21:55:06 pooka Exp $
 #
-# /etc/bootptab: database for bootp server (/etc/bootpd)
+# /etc/bootptab: database for bootp server (/usr/sbin/bootpd)
 # Last update Mon 11/7/88 18:03
 # Blank lines and lines beginning with '#' are ignored.
 #
