@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.222 2000/05/12 17:47:05 thorpej Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.223 2000/05/14 14:58:14 soren Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.215 2000/05/12 17:46:47 thorpej Exp 
+ *	NetBSD: pcidevs,v 1.216 2000/05/14 14:56:53 soren Exp 
  */
 
 /*
@@ -1286,6 +1286,7 @@
 #define	PCI_PRODUCT_SAMSUNGSEMI_KS8920	0x8920		/* KS8920 10/100 Ethernet */
 
 /* SGI products */
+#define	PCI_PRODUCT_SGI_IOC3	0x0003		/* IOC3 */
 #define	PCI_PRODUCT_SGI_TIGON	0x0009		/* Tigon Gigabit Ethernet */
 
 /* SGS Thomson products */
