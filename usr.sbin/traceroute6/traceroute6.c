@@ -1,3 +1,5 @@
+/*	$NetBSD: traceroute6.c,v 1.3 1999/07/04 02:52:49 itojun Exp $	*/
+
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
  * All rights reserved.
@@ -63,22 +65,22 @@
  * SUCH DAMAGE.
  */
 
-#include <sys/cdefs.h>
-#ifndef lint
 #if 0
+#ifndef lint
 static char copyright[] =
 "@(#) Copyright (c) 1990, 1993\n\
 	The Regents of the University of California.  All rights reserved.\n";
-#endif
 #endif /* not lint */
 
 #ifndef lint
-#if 0
 static char sccsid[] = "@(#)traceroute.c	8.1 (Berkeley) 6/6/93";
-#else
-__RCSID("@(#)traceroute.c	8.1 (Berkeley) 6/6/93");
-#endif
 #endif /* not lint */
+#else
+#include <sys/cdefs.h>
+#ifndef lint
+__RCSID("$NetBSD: traceroute6.c,v 1.3 1999/07/04 02:52:49 itojun Exp $");
+#endif
+#endif
 
 /*
  * traceroute host  - trace the route ip packets follow going to "host".
@@ -379,7 +381,11 @@ main(argc, argv)
 			lflag++;
 			break;
 		case 'g':
+#if 0
+			hp = getipnodebyname(optarg, AF_INET6, 0, &h_errno);
+#else
 			hp = gethostbyname2(optarg, AF_INET6);
+#endif
 			if (hp == NULL) {
 				Fprintf(stderr,
 				    "traceroute6: unknown host %s\n", optarg);
