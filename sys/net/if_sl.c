@@ -163,13 +163,10 @@ Huh? Slip without inet?
  *	signals a "soft" exit from slip mode by usermode process
  */
 
-#ifdef ABT_ESC
-#undef ABT_ESC
 #define	ABT_ESC		'\033'	/* can't be t_intr - distant host must know it*/
 #define ABT_WAIT	1	/* in seconds - idle before an escape & after */
 #define ABT_RECYCLE	(5*2+2)	/* in seconds - time window processing abort */
 #define ABT_SOFT	3	/* count of escapes */
-#endif	/* ABT_ESC */
 
 /*
  * The following disgusting hack gets around the problem that IP TOS
@@ -327,20 +324,6 @@ sltioctl(tp, cmd, data, flag)
 		*(int *)data = sc->sc_if.if_unit;
 		break;
 
-	case SLIOCGFLAGS:
-		*(int *)data = sc->sc_flags;
-		break;
-
-	case SLIOCSFLAGS:
-		if (error = suser(p->p_ucred, &p->p_acflag))
-			return (error);
-#define	SC_MASK	0xffff
-		s = splimp();
-		sc->sc_flags =
-		    (sc->sc_flags &~ SC_MASK) | ((*(int *)data) & SC_MASK);
-		splx(s);
-		break;
-
 	default:
 		return (-1);
 	}
@@ -390,7 +373,7 @@ sloutput(ifp, m, dst)
 			ifq = &sc->sc_fastq;
 		}
 
-	} else if (sc->sc_flags & SC_NOICMP && ip->ip_p == IPPROTO_ICMP) {
+	} else if (sc->sc_if.if_flags & SC_NOICMP && ip->ip_p == IPPROTO_ICMP) {
 		m_freem(m);
 		return (0);
 	}
@@ -498,7 +481,7 @@ slstart(tp)
 		}
 #endif
 	        if ((ip = mtod(m, struct ip *))->ip_p == IPPROTO_TCP) {
-			if (sc->sc_flags & SC_COMPRESS)
+			if (sc->sc_if.if_flags & SC_COMPRESS)
 				*mtod(m, u_char *) |= sl_compress_tcp(m, ip, &sc->sc_comp, 1);
 		}
 #if NBPFILTER > 0
@@ -665,8 +648,7 @@ slinput(c, tp)
 	++sc->sc_bytesrcvd;
 	++sc->sc_if.if_ibytes;
 
-#ifdef ABT_ESC
-	if (sc->sc_flags & SC_ABORT) {
+	if (sc->sc_if.if_flags & IFF_DEBUG) {
 		/* if we see an abort after "idle" time, count it */
 		if (c == ABT_ESC && time.tv_sec >= sc->sc_lasttime + ABT_WAIT) {
 			sc->sc_abortcount++;
@@ -690,7 +672,6 @@ slinput(c, tp)
 		}
 		sc->sc_lasttime = time.tv_sec;
 	}
-#endif
 
 	switch (c) {
 
@@ -743,18 +724,18 @@ slinput(c, tp)
 			 * it's a reasonable packet, decompress it and then
 			 * enable compression.  Otherwise, drop it.
 			 */
-			if (sc->sc_flags & SC_COMPRESS) {
+			if (sc->sc_if.if_flags & SC_COMPRESS) {
 				len = sl_uncompress_tcp(&sc->sc_buf, len,
 							(u_int)c, &sc->sc_comp);
 				if (len <= 0)
 					goto error;
-			} else if ((sc->sc_flags & SC_AUTOCOMP) &&
+			} else if ((sc->sc_if.if_flags & SC_AUTOCOMP) &&
 			    c == TYPE_UNCOMPRESSED_TCP && len >= 40) {
 				len = sl_uncompress_tcp(&sc->sc_buf, len,
 							(u_int)c, &sc->sc_comp);
 				if (len <= 0)
 					goto error;
-				sc->sc_flags |= SC_COMPRESS;
+				sc->sc_if.if_flags |= SC_COMPRESS;
 			} else
 				goto error;
 		}
