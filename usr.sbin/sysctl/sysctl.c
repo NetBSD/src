@@ -39,7 +39,7 @@ static char copyright[] =
 
 #ifndef lint
 /* from: static char sccsid[] = "@(#)sysctl.c	8.1 (Berkeley) 6/6/93"; */
-static char *rcsid = "$Id: sysctl.c,v 1.3 1994/05/13 11:02:09 cgd Exp $";
+static char *rcsid = "$Id: sysctl.c,v 1.4 1994/09/18 21:59:40 mycroft Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -370,8 +370,8 @@ parse(string, flags)
 		if (!nflag)
 			fprintf(stdout, "%s: ", string);
 		fprintf(stdout,
-		    "hz = %d, tick = %d, profhz = %d, stathz = %d\n",
-		    clkp->hz, clkp->tick, clkp->profhz, clkp->stathz);
+		    "tick = %d, tickadj = %d, hz = %d, profhz = %d, stathz = %d\n",
+		    clkp->tick, clkp->tickadj, clkp->hz, clkp->profhz, clkp->stathz);
 		return;
 	}
 	if (special & BOOTTIME) {
