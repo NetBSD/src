@@ -1,4 +1,4 @@
-/*	$NetBSD: cmds.c,v 1.106 2004/07/20 10:40:21 lukem Exp $	*/
+/*	$NetBSD: cmds.c,v 1.107 2004/07/20 11:05:20 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1996-2004 The NetBSD Foundation, Inc.
@@ -103,7 +103,7 @@
 #if 0
 static char sccsid[] = "@(#)cmds.c	8.6 (Berkeley) 10/9/94";
 #else
-__RCSID("$NetBSD: cmds.c,v 1.106 2004/07/20 10:40:21 lukem Exp $");
+__RCSID("$NetBSD: cmds.c,v 1.107 2004/07/20 11:05:20 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -146,7 +146,7 @@ struct	types {
 };
 
 sigjmp_buf	 jabort;
-char		*mname;
+const char	*mname;
 
 static int	confirm(const char *, const char *);
 
@@ -1325,6 +1325,7 @@ ls(int argc, char *argv[])
 		(void)strlcpy(locfile + 1, p, len - 1);
 		freelocfile = 1;
 	} else if ((strcmp(locfile, "-") != 0) && *locfile != '|') {
+		mname = argv[0];
 		if ((locfile = globulize(locfile)) == NULL ||
 		    !confirm("output to local-file:", locfile)) {
 			code = -1;
@@ -1361,6 +1362,7 @@ mls(int argc, char *argv[])
 	}
 	odest = dest = argv[argc - 1];
 	argv[argc - 1] = NULL;
+	mname = argv[0];
 	if (strcmp(dest, "-") && *dest != '|')
 		if (((dest = globulize(dest)) == NULL) ||
 		    !confirm("output to local-file:", dest)) {
@@ -1368,7 +1370,6 @@ mls(int argc, char *argv[])
 			return;
 	}
 	dolist = strcmp(argv[0], "mls");
-	mname = argv[0];
 	mflag = 1;
 	oldintr = xsignal(SIGINT, mintr);
 	if (sigsetjmp(jabort, 1))
