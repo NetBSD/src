@@ -1,4 +1,4 @@
-/* $NetBSD: ieee80211_rssadapt.h,v 1.3 2004/05/06 03:03:20 dyoung Exp $ */
+/* $NetBSD: ieee80211_rssadapt.h,v 1.3.8.1 2005/03/19 08:36:35 yamt Exp $ */
 /*-
  * Copyright (c) 2003, 2004 David Young.  All rights reserved.
  *
@@ -32,12 +32,12 @@
 /* Data-rate adaptation loosely based on "Link Adaptation Strategy
  * for IEEE 802.11 WLAN via Received Signal Strength Measurement"
  * by Javier del Prado Pavon and Sunghyun Choi.
- */   
+ */
 
 /* Buckets for frames 0-128 bytes long, 129-1024, 1025-maximum. */
 #define	IEEE80211_RSSADAPT_BKTS		3
 #define IEEE80211_RSSADAPT_BKT0		128
-#define	IEEE80211_RSSADAPT_BKTPOWER	3	/* 2**_BKTPOWER */	
+#define	IEEE80211_RSSADAPT_BKTPOWER	3	/* 2**_BKTPOWER */
 
 #define	ieee80211_rssadapt_thresh_new \
     (ieee80211_rssadapt_thresh_denom - ieee80211_rssadapt_thresh_old)
@@ -74,7 +74,7 @@ struct ieee80211_rssadapt {
 	struct timeval		ra_raise_interval;
 };
 
-/* Properties of a Tx packet, for link adaptation. */  
+/* Properties of a Tx packet, for link adaptation. */
 struct ieee80211_rssdesc {
 	u_int			 id_len;	/* Tx packet length */
 	u_int			 id_rateidx;	/* index into ni->ni_rates */

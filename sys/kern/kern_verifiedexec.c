@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_verifiedexec.c,v 1.8 2004/09/17 14:11:25 skrll Exp $	*/
+/*	$NetBSD: kern_verifiedexec.c,v 1.8.6.1 2005/03/19 08:36:12 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -37,10 +37,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_verifiedexec.c,v 1.8 2004/09/17 14:11:25 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_verifiedexec.c,v 1.8.6.1 2005/03/19 08:36:12 yamt Exp $");
 
 #include <sys/param.h>
-#include <sys/mount.h> 
+#include <sys/mount.h>
 #include <sys/malloc.h>
 #include <sys/vnode.h>
 #include <sys/exec.h>
@@ -76,10 +76,10 @@ md5_fingerprint(struct vnode *vp, struct veriexec_inode_list *ip,
 	char            *filebuf;
 	size_t          resid;
 	int             count, error;
-	
+
 	filebuf = malloc(BUF_SIZE, M_TEMP, M_WAITOK);
 	MD5Init(&md5context);
-	
+
 	for (j = 0; j < file_size; j+= BUF_SIZE) {
 		if ((j + BUF_SIZE) > file_size) {
 			count = file_size - j;
@@ -93,7 +93,7 @@ md5_fingerprint(struct vnode *vp, struct veriexec_inode_list *ip,
 			free(filebuf, M_TEMP);
 			return error;
 		}
-		
+
 		MD5Update(&md5context, filebuf, (unsigned int) count);
 
 	}
@@ -151,7 +151,7 @@ evaluate_fingerprint(struct vnode *vp, struct veriexec_inode_list *ip,
 		     struct proc *p, u_quad_t file_size, char *fingerprint)
 {
 	int error;
-	
+
 	switch (ip->fp_type) {
 	case FINGERPRINT_TYPE_MD5:
 		error = md5_fingerprint(vp, ip, p, file_size, fingerprint);
@@ -216,11 +216,11 @@ get_veriexec_inode(struct veriexec_devhead *head, long fsid, long fileid,
 	ip = NULL;
 	if (found_dev != NULL)
 		*found_dev = 0;
-	
+
 #ifdef VERIFIED_EXEC_DEBUG
 	printf("searching for file %lu on device %lu\n", fileid, fsid);
 #endif
-	
+
 	for (lp = LIST_FIRST(head); lp != NULL; lp = LIST_NEXT(lp, entries))
 		if (lp->id == fsid)
 			break;
@@ -231,7 +231,7 @@ get_veriexec_inode(struct veriexec_devhead *head, long fsid, long fileid,
 #endif
 		if (found_dev != NULL)
 			*found_dev = 1;
-		
+
 		for (ip = LIST_FIRST(&(lp->inode_head)); ip != NULL;
 		     ip = LIST_NEXT(ip, entries))
 			if (ip->inode == fileid)
@@ -269,7 +269,7 @@ check_veriexec(struct proc *p, struct vnode *vp, struct exec_package *epp,
 #endif
 			vp->fp_status = FINGERPRINT_NODEV;
 		}
- 
+
 		if (ip != NULL) {
 #ifdef VERIFIED_EXEC_DEBUG
 			printf("found matching inode number %lu\n", ip->inode);
@@ -310,7 +310,7 @@ check_veriexec(struct proc *p, struct vnode *vp, struct exec_package *epp,
           case FINGERPRINT_INVALID: /* should not happen */
                   printf("Got unexpected FINGERPRINT_INVALID!!!\n");
                   error = EPERM;
-                  break; 
+                  break;
           case FINGERPRINT_VALID: /* is ok - report so if debug is on */
 #ifdef VERIFIED_EXEC_DEBUG
                   printf("Fingerprint matches\n");
@@ -361,6 +361,6 @@ check_veriexec(struct proc *p, struct vnode *vp, struct exec_package *epp,
                   error = EPERM;
         }
 
-	return error; 
+	return error;
 
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: altq_fifoq.c,v 1.5 2003/11/09 22:11:12 christos Exp $	*/
+/*	$NetBSD: altq_fifoq.c,v 1.5.10.1 2005/03/19 08:32:44 yamt Exp $	*/
 /*	$KAME: altq_fifoq.c,v 1.7 2000/12/14 08:12:45 thorpej Exp $	*/
 
 /*
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: altq_fifoq.c,v 1.5 2003/11/09 22:11:12 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: altq_fifoq.c,v 1.5.10.1 2005/03/19 08:32:44 yamt Exp $");
 
 #if defined(__FreeBSD__) || defined(__NetBSD__)
 #include "opt_altq.h"
@@ -143,7 +143,7 @@ fifoqioctl(dev, cmd, addr, flag, p)
 #endif
 		break;
 	}
-    
+
 	switch (cmd) {
 	case FIFOQ_ENABLE:
 		ifacep = (struct fifoq_interface *)addr;
@@ -321,7 +321,7 @@ fifoq_dequeue(ifq, op)
 
 	if (op == ALTDQ_POLL)
 		return (q->q_head);
-		
+
 	if ((m = q->q_head) == NULL)
 		return (NULL);
 

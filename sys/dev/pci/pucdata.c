@@ -1,4 +1,4 @@
-/*	$NetBSD: pucdata.c,v 1.39 2004/10/16 18:05:19 bouyer Exp $	*/
+/*	$NetBSD: pucdata.c,v 1.39.6.1 2005/03/19 08:35:12 yamt Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Christopher G. Demetriou.  All rights reserved.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pucdata.c,v 1.39 2004/10/16 18:05:19 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pucdata.c,v 1.39.6.1 2005/03/19 08:35:12 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -986,7 +986,7 @@ const struct puc_device_description puc_devices[] = {
 		{ PUC_PORT_TYPE_COM, 0x18, 0x08, COM_FREQ * 4 },
 		{ PUC_PORT_TYPE_COM, 0x18, 0x10, COM_FREQ * 4 },
 		{ PUC_PORT_TYPE_COM, 0x18, 0x18, COM_FREQ * 4 },
-	    }, 
+	    },
 	},
 
 	/*

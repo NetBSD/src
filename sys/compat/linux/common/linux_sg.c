@@ -1,4 +1,4 @@
-/* $NetBSD: linux_sg.c,v 1.1.4.2 2005/02/12 18:17:41 yamt Exp $ */
+/* $NetBSD: linux_sg.c,v 1.1.4.3 2005/03/19 08:33:37 yamt Exp $ */
 
 /*
  * Copyright (c) 2004 Soren S. Jorvang.  All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_sg.c,v 1.1.4.2 2005/02/12 18:17:41 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_sg.c,v 1.1.4.3 2005/03/19 08:33:37 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -44,11 +44,13 @@ __KERNEL_RCSID(0, "$NetBSD: linux_sg.c,v 1.1.4.2 2005/02/12 18:17:41 yamt Exp $"
 #include <sys/syscallargs.h>
 
 #include <compat/linux/common/linux_types.h>
-#include <compat/linux/common/linux_ioctl.h> 
-#include <compat/linux/common/linux_signal.h> 
+#include <compat/linux/common/linux_ioctl.h>
+#include <compat/linux/common/linux_signal.h>
 #include <compat/linux/common/linux_sg.h>
 
 #include <compat/linux/linux_syscallargs.h>
+
+int linux_sg_version = 30125;
 
 #ifdef LINUX_SG_DEBUG
 #define DPRINTF(a)	printf a
@@ -87,8 +89,8 @@ linux_ioctl_sg(struct proc *p, struct linux_sys_ioctl_args *uap,
 	DPRINTF(("Command = %lx\n", com));
 	switch (com) {
 	case LINUX_SG_GET_VERSION_NUM: {
-		short version = 30124;
-		error = copyout(&version, SCARG(uap, data), sizeof(version));
+		error = copyout(&version, SCARG(uap, data),
+		    sizeof(linux_sg_version));
 		break;
 	}
 	case LINUX_SG_IO:
@@ -97,7 +99,7 @@ linux_ioctl_sg(struct proc *p, struct linux_sys_ioctl_args *uap,
 			DPRINTF(("failed to copy in request data %d\n", error));
 			break;
 		}
-			
+
 #ifdef LINUX_SG_DEBUG
 		dump_sg_io(&lreq);
 #endif
@@ -133,7 +135,7 @@ linux_ioctl_sg(struct proc *p, struct linux_sys_ioctl_args *uap,
 			DPRINTF(("failed to copy in cmd data %d\n", error));
 			break;
 		}
-		
+
 		req.timeout = lreq.timeout;
 		req.cmdlen = lreq.cmd_len;
 		req.datalen = lreq.dxfer_len;
@@ -147,9 +149,9 @@ linux_ioctl_sg(struct proc *p, struct linux_sys_ioctl_args *uap,
 #ifdef LINUX_SG_DEBUG
 		dump_scsireq(&req);
 #endif
-		(void)memset(&req, 0, sizeof(req));
-
 		if (req.senselen_used) {
+			if (req.senselen > lreq.mx_sb_len)
+				req.senselen = lreq.mx_sb_len;
 			lreq.sb_len_wr = req.senselen;
 			error = copyout(req.sense, lreq.sbp, req.senselen);
 			if (error) {
@@ -256,8 +258,8 @@ bsd_to_linux_host_status(int bs)
 		return LINUX_DID_ERROR;
 	}
 }
-		
-	
+
+
 
 #ifdef LINUX_SG_DEBUG
 static void
@@ -281,7 +283,7 @@ static void
 dump_scsireq(struct scsireq *br)
 {
 	int i;
-	printf("bsdreq [flags=%lx, timeout=%lu, cmd=[ ", 
+	printf("bsdreq [flags=%lx, timeout=%lu, cmd=[ ",
 	    br->flags, br->timeout);
 	for (i = 0; i < sizeof(br->cmd) / sizeof(br->cmd[0]); i++)
 		printf("%.2u ", br->cmd[i]);

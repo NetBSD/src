@@ -1,4 +1,4 @@
-/* $NetBSD: cmsreg.h,v 1.1 2000/05/01 22:48:33 augustss Exp $ */
+/* $NetBSD: cmsreg.h,v 1.1.40.1 2005/03/19 08:34:33 yamt Exp $ */
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -53,13 +53,13 @@
 /*
  * Note that for each register, if ports CMS_DATA1/CMS_ADDR1 are used
  * then the first voice is modified.  If ports CMS_DATA2/CMS_ADDR2 are
- * used then the second voice is modified. 
+ * used then the second voice is modified.
  */
 
-/* 
+/*
  * Each voice can have a volume between 0 and 15 on both left and
  * right channels.  The high-order nibble is the right channel volume,
- * and the low-order nibble is the left channel volume. 
+ * and the low-order nibble is the left channel volume.
  */
 
 #define CMS_IREG_VOL0 0x00
@@ -81,7 +81,7 @@
  * Octave Registers: To get tones in higher octaves the octave
  * register for the voice must be set.  Each octave register stores
  * the octave number for two voices.  The high-order nibble is for
- * first voice and the low-order nibble is for the second voice. 
+ * first voice and the low-order nibble is for the second voice.
  */
 
 #define CMS_IREG_OCTAVE_1_0 0x10

@@ -1,8 +1,8 @@
-/*	$NetBSD: smdk2800_machdep.c,v 1.19 2004/12/12 21:03:06 abs Exp $ */
+/*	$NetBSD: smdk2800_machdep.c,v 1.19.4.1 2005/03/19 08:32:56 yamt Exp $ */
 
 /*
- * Copyright (c) 2002 Fujitsu Component Limited
- * Copyright (c) 2002 Genetec Corporation
+ * Copyright (c) 2002, 2003, 2005 Fujitsu Component Limited
+ * Copyright (c) 2002, 2003, 2005 Genetec Corporation
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -106,7 +106,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smdk2800_machdep.c,v 1.19 2004/12/12 21:03:06 abs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smdk2800_machdep.c,v 1.19.4.1 2005/03/19 08:32:56 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -149,21 +149,9 @@ __KERNEL_RCSID(0, "$NetBSD: smdk2800_machdep.c,v 1.19 2004/12/12 21:03:06 abs Ex
 
 #include <arm/s3c2xx0/s3c2800reg.h>
 #include <arm/s3c2xx0/s3c2800var.h>
+#include <evbarm/smdk2xx0/smdk2800var.h>
 
 #include "ksyms.h"
-
-#ifndef	SDRAM_START
-#define	SDRAM_START	S3C2800_DBANK0_START
-#endif
-#ifndef	SDRAM_SIZE
-#define	SDRAM_SIZE	(32*1024*1024)
-#endif
-
-/*
- * Address to map I/O registers in early initialize stage.
- */
-#define	SMDK2800_IO_AREA_VBASE	0xfd000000
-#define SMDK2800_VBASE_FREE	0xfd200000
 
 /* Kernel text starts 2MB in from the bottom of the kernel address space. */
 #define	KERNEL_TEXT_BASE	(KERNEL_BASE + 0x00200000)
@@ -255,12 +243,6 @@ struct user *proc0paddr;
 void consinit(void);
 void kgdb_port_init(void);
 
-static int 
-bootstrap_bs_map(void *t, bus_addr_t bpa, bus_size_t size,
-    int cacheable, bus_space_handle_t * bshp);
-static void map_builtin_peripherals(void);
-static void copy_io_area_map(pd_entry_t * new_pd);
-
 /* A load of console goo. */
 #include "vga.h"
 #if NVGA > 0
@@ -295,8 +277,6 @@ static void copy_io_area_map(pd_entry_t * new_pd);
 
 int comcnspeed = CONSPEED;
 int comcnmode = CONMODE;
-
-struct bus_space bootstrap_bs_tag;
 
 /*
  * void cpu_reboot(int howto, char *bootstr)
@@ -359,7 +339,24 @@ cpu_reboot(int howto, char *bootstr)
 	cpu_reset();
 	/* NOTREACHED */
 }
-#define ioreg_write8(a,v)  (*(volatile uint8_t *)(a)=(v))
+
+/*
+ * All built-in peripheral registers are statically mapped in start up
+ * routine.  This table tells pmap subsystem about it, and to map them
+ * at the same position.
+ */
+static const struct pmap_devmap smdk2800_devmap[] = {
+	{
+		SMDK2800_IO_AREA_VBASE,
+		S3C2800_PERIPHERALS,
+		S3C2800_PERIPHERALS_SIZE,
+		VM_PROT_READ|VM_PROT_WRITE, PTE_NOCACHE,
+	},
+	{ 0, 0, 0, 0 }
+};
+
+#define ioreg_vaddr(pa)	((pa) - S3C2800_PERIPHERALS + SMDK2800_IO_AREA_VBASE)
+#define	ioreg32(pa)	(*(volatile uint32_t *)ioreg_vaddr(pa))
 
 /*
  * u_int initarm(...)
@@ -384,7 +381,6 @@ initarm(void *arg)
 	extern int etext asm("_etext");
 	extern int end asm("_end");
 	pv_addr_t kernel_l1pt;
-	struct s3c2800_softc temp_softc;	/* used to initialize IO regs */
 	int progress_counter = 0;
 
 #ifdef DO_MEMORY_DISK
@@ -392,12 +388,11 @@ initarm(void *arg)
 #define MD_ROOT_SIZE (MEMORY_DISK_ROOT_SIZE * DEV_BSIZE)
 #endif
 
-#define gpio_read8(reg) bus_space_read_1(temp_softc.sc_sx.sc_iot,  \
-					 temp_softc.sc_sx.sc_gpio_ioh, (reg))
+#define gpio8(reg) (*(volatile uint8_t *)(ioreg_vaddr(S3C2800_GPIO_BASE) + (reg)))
 
 #define LEDSTEP()  __LED(progress_counter++)
 
-#define pdatc (*(volatile uint8_t *)(S3C2800_GPIO_BASE+GPIO_PDATC))
+#define pdatc gpio8(GPIO_PDATC)
 #define __LED(x)  (pdatc = (pdatc & ~0x07) | (~(x) & 0x07))
 
 	LEDSTEP();
@@ -409,38 +404,9 @@ initarm(void *arg)
 
 	LEDSTEP();
 
-	map_builtin_peripherals();
-
-	/*
-	 * prepare fake bus space tag
-	 */
-	bootstrap_bs_tag = s3c2xx0_bs_tag;
-	bootstrap_bs_tag.bs_map = bootstrap_bs_map;
-	s3c2xx0_softc = &temp_softc.sc_sx;
-	s3c2xx0_softc->sc_iot = &bootstrap_bs_tag;
-
-	bootstrap_bs_map(&bootstrap_bs_tag, S3C2800_GPIO_BASE,
-	    S3C2800_GPIO_SIZE, 0, &temp_softc.sc_sx.sc_gpio_ioh);
-	bootstrap_bs_map(&bootstrap_bs_tag, S3C2800_INTCTL_BASE,
-	    S3C2800_INTCTL_SIZE, 0, &temp_softc.sc_sx.sc_intctl_ioh);
-	bootstrap_bs_map(&bootstrap_bs_tag, S3C2800_CLKMAN_BASE,
-	    S3C2800_CLKMAN_SIZE, 0, &temp_softc.sc_sx.sc_clkman_ioh);
-
-#undef __LED
-#define __LED(x)							\
-	bus_space_write_1(&bootstrap_bs_tag,				\
-	    temp_softc.sc_sx.sc_gpio_ioh,				\
-	    GPIO_PDATC, (~(x) & 0x07) |					\
-	    (bus_space_read_1(&bootstrap_bs_tag,			\
-		temp_softc.sc_sx.sc_gpio_ioh, GPIO_PDATC ) & ~0x07))
-
-	LEDSTEP();
 
 	/* Disable all peripheral interrupts */
-	bus_space_write_4(&bootstrap_bs_tag, temp_softc.sc_sx.sc_intctl_ioh,
-	    INTCTL_INTMSK, 0);
-
-	s3c2800_clock_freq(s3c2xx0_softc);
+	ioreg32(S3C2800_INTCTL_BASE + INTCTL_INTMSK) = 0;
 
 	consinit();
 #ifdef VERBOSE_INIT_ARM
@@ -707,9 +673,8 @@ initarm(void *arg)
 
 #ifdef MEMORY_DISK_DYNAMIC
 	/* map MD root image */
-	bootstrap_bs_map(&bootstrap_bs_tag, md_root_start, MD_ROOT_SIZE,
-			 BUS_SPACE_MAP_CACHEABLE | BUS_SPACE_MAP_LINEAR,
-			 (bus_space_handle_t *)&md_root_start);
+	pmap_map_chunk(l1pagetable, SMDK2800_MEMORY_DISK_VADDR, md_root_start,
+	    MD_ROOT_SIZE, VM_PROT_READ | VM_PROT_WRITE, PTE_CACHE);
 
 	md_root_setconf((void *)md_root_start, MD_ROOT_SIZE);
 #endif /* MEMORY_DISK_DYNAMIC */
@@ -717,7 +682,7 @@ initarm(void *arg)
 	 * map integrated peripherals at same address in l1pagetable
 	 * so that we can continue to use console.
 	 */
-	copy_io_area_map((pd_entry_t *)l1pagetable);
+	pmap_devmap_bootstrap(l1pagetable, smdk2800_devmap);
 
 	/*
 	 * Now we have the real page tables in place so we can switch to them.
@@ -858,7 +823,7 @@ initarm(void *arg)
 	boothowto |= BOOTHOWTO_INIT;
 #endif
 	{
-		uint8_t  gpio = ~gpio_read8(GPIO_PDATF);
+		uint8_t  gpio = ~gpio8(GPIO_PDATF);
 		
 		if (gpio & (1<<5)) /* SW3 */
 			boothowto ^= RB_SINGLE;
@@ -902,13 +867,17 @@ void
 consinit(void)
 {
 	static int consinit_done = 0;
-	bus_space_tag_t iot = s3c2xx0_softc->sc_iot;
-	int pclk = s3c2xx0_softc->sc_pclk;
+	bus_space_tag_t iot = &s3c2xx0_bs_tag;
+	int pclk;
 
 	if (consinit_done != 0)
 		return;
 
 	consinit_done = 1;
+
+	pmap_devmap_register(smdk2800_devmap);
+
+	s3c2800_clock_freq2(ioreg_vaddr(S3C2800_CLKMAN_BASE), NULL, NULL, &pclk);
 
 #if NSSCOM > 0
 #ifdef SSCOM0CONSOLE
@@ -955,7 +924,7 @@ kgdb_port_init(void)
 {
 #if (NSSCOM > 0)
 	int unit = -1;
-	int pclk = s3c2xx0_softc->sc_pclk;
+	int pclk;
 
 	if (strcmp(kgdb_devname, "sscom0") == 0)
 		unit = 0;
@@ -963,131 +932,12 @@ kgdb_port_init(void)
 		unit = 1;
 
 	if (unit >= 0) {
-		s3c2800_sscom_kgdb_attach(s3c2xx0_softc->sc_iot,
+		s3c2800_clock_freq2(ioreg_vaddr(S3C2800_CLKMAN_BASE), 
+		    NULL, NULL, &pclk);
+
+		s3c2800_sscom_kgdb_attach(&s3c2xx0_bs_tag,
 		    unit, kgdb_rate, pclk, kgdb_sscom_mode);
 	}
 #endif
 }
 #endif
-
-static __inline
-       pd_entry_t *
-read_ttb(void)
-{
-	long ttb;
-
-	__asm __volatile("mrc	p15, 0, %0, c2, c0, 0" : "=r"(ttb));
-
-
-	return (pd_entry_t *)(ttb & ~((1 << 14) - 1));
-}
-
-
-static __inline void
-writeback_dcache_line(vaddr_t va)
-{
-	/* writeback Dcache line */
-	/* we can't use cpu_dcache_wb_range() here, because cpufuncs for ARM9
-	 * assume write-through cache, and always flush Dcache instead of
-	 * cleaning it. Since Boot loader maps page table with write-back
-	 * cached, we really need to clean Dcache. */
-	asm("mcr	p15, 0, %0, c7, c10, 1"
-	    : :	"r"(va));
-}
-
-static __inline void
-clean_dcache_line(vaddr_t va)
-{
-	/* writeback and invalidate Dcache line */
-	asm("mcr	p15, 0, %0, c7, c14, 1"
-	    : : "r"(va));
-}
-
-static vaddr_t section_free = SMDK2800_VBASE_FREE;
-
-static void
-map_builtin_peripherals(void)
-{
-	pd_entry_t *pagedir = read_ttb();
-	int i, sec;
-
-	for (i=0; i < 2; ++i) {
-
-		pmap_map_section((vaddr_t)pagedir, 
-		    SMDK2800_IO_AREA_VBASE + (i <<L1_S_SHIFT),
-		    S3C2800_PERIPHERALS + (i << L1_S_SHIFT),
-		    VM_PROT_READ | VM_PROT_WRITE, PTE_NOCACHE);
-
-		sec = (SMDK2800_IO_AREA_VBASE >> L1_S_SHIFT) + i;
-		writeback_dcache_line((vaddr_t)&pagedir[sec]);
-	}
-
-	cpu_drain_writebuf();
-	cpu_tlb_flushD();
-}
-
-/*
- * simple memory mapping function used in early bootstrap stage
- * before pmap is initialized.
- * This assumes only peripheral registers to map. they are mapped to
- * fixed address with section mapping.
- */
-static int
-bootstrap_bs_map(void *t, bus_addr_t bpa, bus_size_t size,
-    int flag, bus_space_handle_t * bshp)
-{
-	long offset;
-	int modified = 0;
-	pd_entry_t *pagedir = read_ttb();
-	/* This assumes PA==VA for page directory */
-
-	if (S3C2800_PERIPHERALS <= bpa && bpa < S3C2800_PERIPHERALS + 0x200000) {
-		offset = bpa - S3C2800_PERIPHERALS;
-		if (offset < 0 || 2 * L1_S_SIZE < offset)
-			panic("bootstrap_bs_map: can't map");
-		*bshp = (bus_space_handle_t)(SMDK2800_IO_AREA_VBASE + offset);
-	} else {
-		vaddr_t va;
-		bus_addr_t pa;
-		int cacheable = flag & BUS_SPACE_MAP_CACHEABLE;
-
-
-		size = (size + L1_S_OFFSET) & ~L1_S_OFFSET;
-		pa = bpa & ~L1_S_OFFSET;
-		offset = bpa - pa;
-
-		va = section_free;
-		while (size) {
-			pmap_map_section((vaddr_t)pagedir, va,
-			    pa, VM_PROT_READ | VM_PROT_WRITE,
-			    cacheable ? PTE_CACHE : PTE_NOCACHE);
-			writeback_dcache_line((vaddr_t)& pagedir[va >> L1_S_SHIFT]);
-			va += L1_S_SIZE;
-			pa += L1_S_SIZE;
-			size -= L1_S_SIZE;
-		}
-
-		*bshp = (bus_space_handle_t)(section_free + offset);
-		section_free = va;
-	}
-
-
-	if (modified) {
-
-		cpu_drain_writebuf();
-		cpu_tlb_flushD();
-	}
-	return (0);
-}
-
-static void
-copy_io_area_map(pd_entry_t * new_pd)
-{
-	pd_entry_t *cur_pd = read_ttb();
-	int sec;
-
-	for (sec = SMDK2800_IO_AREA_VBASE >> L1_S_SHIFT;
-	    sec < (section_free >> L1_S_SHIFT); ++sec) {
-		new_pd[sec] = cur_pd[sec];
-	}
-}

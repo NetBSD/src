@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_sstf.h,v 1.3 1999/02/05 00:06:17 oster Exp $	*/
+/*	$NetBSD: rf_sstf.h,v 1.3.52.1 2005/03/19 08:35:41 yamt Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -58,7 +58,7 @@ rf_CscanCreate(RF_SectorCount_t sect_per_disk,
 void    rf_SstfEnqueue(void *qptr, RF_DiskQueueData_t * req, int priority);
 RF_DiskQueueData_t *rf_SstfDequeue(void *qptr);
 RF_DiskQueueData_t *rf_SstfPeek(void *qptr);
-int 
+int
 rf_SstfPromote(void *qptr, RF_StripeNum_t parityStripeID,
     RF_ReconUnitNum_t which_ru);
 RF_DiskQueueData_t *rf_ScanDequeue(void *qptr);

@@ -1,4 +1,4 @@
-/*	$NetBSD: aic6360.c,v 1.82 2004/08/24 00:53:29 thorpej Exp $	*/
+/*	$NetBSD: aic6360.c,v 1.82.6.1 2005/03/19 08:34:01 yamt Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1996 Charles M. Hannum.  All rights reserved.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aic6360.c,v 1.82 2004/08/24 00:53:29 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aic6360.c,v 1.82.6.1 2005/03/19 08:34:01 yamt Exp $");
 
 #include "opt_ddb.h"
 
@@ -133,6 +133,7 @@ __KERNEL_RCSID(0, "$NetBSD: aic6360.c,v 1.82 2004/08/24 00:53:29 thorpej Exp $")
 #include <machine/bus.h>
 #include <machine/intr.h>
 
+#include <dev/scsipi/scsi_spc.h>
 #include <dev/scsipi/scsi_all.h>
 #include <dev/scsipi/scsipi_all.h>
 #include <dev/scsipi/scsi_message.h>
@@ -326,7 +327,7 @@ aic_detach(struct device *self, int flags)
 
 	if (sc->sc_child != NULL)
 		rv = config_detach(sc->sc_child, flags);
-	
+
 	return (rv);
 }
 
@@ -865,17 +866,17 @@ aic_sense(struct aic_softc *sc, struct aic_acb *acb)
 	struct scsipi_xfer *xs = acb->xs;
 	struct scsipi_periph *periph = xs->xs_periph;
 	struct aic_tinfo *ti = &sc->sc_tinfo[periph->periph_target];
-	struct scsipi_sense *ss = (void *)&acb->scsipi_cmd;
+	struct scsi_request_sense *ss = (void *)&acb->scsipi_cmd;
 
 	AIC_MISC(("requesting sense  "));
 	/* Next, setup a request sense command block */
 	memset(ss, 0, sizeof(*ss));
-	ss->opcode = REQUEST_SENSE;
+	ss->opcode = SCSI_REQUEST_SENSE;
 	ss->byte2 = periph->periph_lun << 5;
-	ss->length = sizeof(struct scsipi_sense_data);
+	ss->length = sizeof(struct scsi_sense_data);
 	acb->scsipi_cmd_length = sizeof(*ss);
 	acb->data_addr = (char *)&xs->sense.scsi_sense;
-	acb->data_length = sizeof(struct scsipi_sense_data);
+	acb->data_length = sizeof(struct scsi_sense_data);
 	acb->flags |= ACB_SENSE;
 	ti->senses++;
 	if (acb->flags & ACB_NEXUS)
@@ -931,7 +932,7 @@ aic_done(struct aic_softc *sc, struct aic_acb *acb)
 		if (xs->resid != 0)
 			printf("resid=%d ", xs->resid);
 		if (xs->error == XS_SENSE)
-			printf("sense=0x%02x\n", xs->sense.scsi_sense.error_code);
+			printf("sense=0x%02x\n", xs->sense.scsi_sense.response_code);
 		else
 			printf("error=%d\n", xs->error);
 	}

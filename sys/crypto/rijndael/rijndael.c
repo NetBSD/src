@@ -1,8 +1,8 @@
-/*	$NetBSD: rijndael.c,v 1.6 2003/08/27 14:23:27 itojun Exp $	*/
+/*	$NetBSD: rijndael.c,v 1.6.12.1 2005/03/19 08:33:52 yamt Exp $	*/
 
-/**             
- * rijndael-alg-fst.c 
- *      
+/**
+ * rijndael-alg-fst.c
+ *
  * @version 3.0 (December 2000)
  *
  * Optimised ANSI C code for the Rijndael cipher (now AES)
@@ -10,9 +10,9 @@
  * @author Vincent Rijmen <vincent.rijmen@esat.kuleuven.ac.be>
  * @author Antoon Bosselaers <antoon.bosselaers@esat.kuleuven.ac.be>
  * @author Paulo Barreto <paulo.barreto@terra.com.br>
- *              
- * This code is hereby placed in the public domain. 
- *      
+ *
+ * This code is hereby placed in the public domain.
+ *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHORS ''AS IS'' AND ANY EXPRESS
  * OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
  * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rijndael.c,v 1.6 2003/08/27 14:23:27 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rijndael.c,v 1.6.12.1 2005/03/19 08:33:52 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/systm.h>

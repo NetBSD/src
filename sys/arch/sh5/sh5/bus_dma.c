@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.12.6.1 2005/02/02 12:30:37 yamt Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.12.6.2 2005/03/19 08:33:13 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.12.6.1 2005/02/02 12:30:37 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.12.6.2 2005/03/19 08:33:13 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -138,9 +138,10 @@ _bus_dmamap_create(void *cookie, bus_size_t size, int nsegments,
 	map = (struct sh5_bus_dmamap *)mapstore;
 	map->_dm_size = size;
 	map->_dm_segcnt = nsegments;
-	map->_dm_maxsegsz = maxsegsz;
+	map->_dm_maxmaxsegsz = maxsegsz;
 	map->_dm_boundary = boundary;
 	map->_dm_flags = flags & ~(BUS_DMA_WAITOK|BUS_DMA_NOWAIT);
+	map->dm_maxsegsz = maxsegsz;
 	map->dm_mapsize = 0;		/* no valid mappings */
 	map->dm_nsegs = 0;
 
@@ -230,7 +231,7 @@ _bus_dmamap_load_buffer_direct_common(void *cookie, bus_dmamap_t map,
 			if (curaddr == lastaddr &&
 			    map->dm_segs[seg]._ds_flags == cacheable &&
 			    (map->dm_segs[seg].ds_len + sgsize) <=
-			     map->_dm_maxsegsz &&
+			     map->dm_maxsegsz &&
 			    (map->_dm_boundary == 0 ||
 			     (map->dm_segs[seg].ds_addr & bmask) ==
 			     (curaddr & bmask)))
@@ -295,6 +296,7 @@ _bus_dmamap_load_direct(void *cookie, bus_dmamap_t map, void *buf,
 	 */
 	map->dm_mapsize = 0;
 	map->dm_nsegs = 0;
+	KASSERT(map->dm_maxsegsz <= map->_dm_maxmaxsegsz);
 
 	if (buflen > map->_dm_size)
 		return (EINVAL);
@@ -330,6 +332,7 @@ _bus_dmamap_load_mbuf_direct(void *cookie, bus_dmamap_t map, struct mbuf *m0,
 	 */
 	map->dm_mapsize = 0;
 	map->dm_nsegs = 0;
+	KASSERT(map->dm_maxsegsz <= map->_dm_maxmaxsegsz);
 
 #ifdef DIAGNOSTIC
 	if ((m0->m_flags & M_PKTHDR) == 0)
@@ -377,6 +380,7 @@ _bus_dmamap_load_uio_direct(void *cookie, bus_dmamap_t map, struct uio *uio,
 	 */
 	map->dm_mapsize = 0;
 	map->dm_nsegs = 0;
+	KASSERT(map->dm_maxsegsz <= map->_dm_maxmaxsegsz);
 
 	resid = uio->uio_resid;
 	iov = uio->uio_iov;
@@ -442,7 +446,7 @@ _bus_dmamap_load_raw_direct(void *cookie, bus_dmamap_t map,
 		if (segs[i].ds_len == 0)
 			continue;
 #ifdef DIAGNOSTIC
-		if (map->_dm_maxsegsz < map->dm_segs[i].ds_len)
+		if (map->dm_maxsegsz < map->dm_segs[i].ds_len)
 			panic("_bus_dmamap_load_raw_direct: segment too large for map");
 #endif
 		map->dm_segs[j++] = segs[i];
@@ -467,6 +471,7 @@ _bus_dmamap_unload(void *cookie, bus_dmamap_t map)
 	 * No resources to free; just mark the mappings as
 	 * invalid.
 	 */
+	map->dm_maxsegsz = map->_dm_maxmaxsegsz;
 	map->dm_mapsize = 0;
 	map->dm_nsegs = 0;
 	map->_dm_flags &= ~BUS_DMA_COHERENT;

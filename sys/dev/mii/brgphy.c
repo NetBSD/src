@@ -1,4 +1,4 @@
-/*	$NetBSD: brgphy.c,v 1.22 2004/10/28 07:26:17 cube Exp $	*/
+/*	$NetBSD: brgphy.c,v 1.22.6.1 2005/03/19 08:34:59 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: brgphy.c,v 1.22 2004/10/28 07:26:17 cube Exp $");
+__KERNEL_RCSID(0, "$NetBSD: brgphy.c,v 1.22.6.1 2005/03/19 08:34:59 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -329,7 +329,7 @@ brgphy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 	 * Callback if something changed.  Note that we need to poke
 	 * the DSP on the Broadcom PHYs if the media changes.
 	 */
-	if (sc->mii_media_active != mii->mii_media_active || 
+	if (sc->mii_media_active != mii->mii_media_active ||
 	    sc->mii_media_status != mii->mii_media_status ||
 	    cmd == MII_MEDIACHG) {
 		mii_phy_update(sc, cmd);

@@ -1,4 +1,4 @@
-/*	$NetBSD: ses.c,v 1.26 2004/09/18 00:21:03 mycroft Exp $ */
+/*	$NetBSD: ses.c,v 1.26.6.1 2005/03/19 08:35:47 yamt Exp $ */
 /*
  * Copyright (C) 2000 National Aeronautics & Space Administration
  * All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ses.c,v 1.26 2004/09/18 00:21:03 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ses.c,v 1.26.6.1 2005/03/19 08:35:47 yamt Exp $");
 
 #include "opt_scsi.h"
 
@@ -281,7 +281,7 @@ static enctyp
 ses_device_type(struct scsipibus_attach_args *sa)
 {
 	struct scsipi_inquiry_data *inqp = sa->sa_inqptr;
- 
+
 	if (inqp == NULL)
 		return (SES_NONE);
 
@@ -399,7 +399,7 @@ sesioctl(dev_t dev, u_long cmd, caddr_t arg_addr, int flag, struct proc *p)
 		error = copyout(&ssc->ses_nobjects, addr,
 		    sizeof (ssc->ses_nobjects));
 		break;
-		
+
 	case SESIOC_GETOBJMAP:
 		for (uobj = addr, i = 0; i != ssc->ses_nobjects; i++, uobj++) {
 			obj.obj_id = i;
@@ -1092,7 +1092,7 @@ ses_getputstat(ses_softc_t *ssc, int objid, SesComStat *sp, int slp, int in)
 			cdb[4] = bufsiz & 0xff;
 			cdb[5] = 0;
 			amt = -bufsiz;
-			err = ses_runcmd(ssc, cdb, 6, sdata, &amt);   
+			err = ses_runcmd(ssc, cdb, 6, sdata, &amt);
 		}
 	}
 	SES_FREE(sdata, bufsiz);

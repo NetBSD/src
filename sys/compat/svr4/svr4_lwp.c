@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_lwp.c,v 1.8 2003/01/18 08:44:26 thorpej Exp $	*/
+/*	$NetBSD: svr4_lwp.c,v 1.8.12.1 2005/03/19 08:33:45 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_lwp.c,v 1.8 2003/01/18 08:44:26 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_lwp.c,v 1.8.12.1 2005/03/19 08:33:45 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -85,12 +85,12 @@ svr4_sys__lwp_create(l, v, retval)
 	struct svr4_sys__lwp_create_args *uap = v;
 	struct sys__lwp_create_args lc;
 	int flags;
-	
+
 	flags = 0;
-	
+
 	if (SCARG(uap, flags) & SVR4_LWP_DETACHED)
 	    flags  &= LWP_DETACHED;
-       
+
 	if (SCARG(uap, flags) & SVR4_LWP_SUSPENDED)
 	    flags  &= LWP_SUSPENDED;
 
@@ -103,7 +103,7 @@ svr4_sys__lwp_create(l, v, retval)
 	SCARG(&lc, ucp) = (ucontext_t *)SCARG(uap, uc);
 	SCARG(&lc, flags) = flags;
 	SCARG(&lc, new_lwp) = SCARG(uap, lwpid);
-	
+
 
 	return sys__lwp_create(l, &lc, retval);
 }

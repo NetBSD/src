@@ -1,4 +1,4 @@
-/*	$NetBSD: gpibio.h,v 1.1 2003/06/02 03:45:42 gmcgarry Exp $	*/
+/*	$NetBSD: gpibio.h,v 1.1.12.1 2005/03/19 08:33:58 yamt Exp $	*/
 
 #ifndef _SYS_GPIBIO_H_
 #define _SYS_GPIBIO_H_

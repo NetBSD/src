@@ -1,8 +1,8 @@
-/* $NetBSD: infblock.c,v 1.7 2004/06/30 15:44:55 christos Exp $ */
+/* $NetBSD: infblock.c,v 1.7.6.1 2005/03/19 08:36:26 yamt Exp $ */
 
 /* infblock.c -- interpret and process block types to last block
  * Copyright (C) 1995-2002 Mark Adler
- * For conditions of distribution and use, see copyright notice in zlib.h 
+ * For conditions of distribution and use, see copyright notice in zlib.h
  */
 
 #include "zutil.h"

@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.40 2003/01/18 08:32:05 thorpej Exp $
+	$NetBSD: syscalls.master,v 1.40.12.1 2005/03/19 08:33:43 yamt Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -102,7 +102,7 @@
 42	NOARGS		{ int sys_pipe(void); }
 43	STD		{ int osf1_sys_set_program_attributes( \
                           caddr_t taddr, unsigned long tsize, \
-                          caddr_t daddr, unsigned long dsize); }  
+                          caddr_t daddr, unsigned long dsize); }
 44	UNIMPL		profil
 45	STD		{ int osf1_sys_open(const char *path, int flags, \
 			    int mode); }
@@ -329,7 +329,7 @@
 			    struct osf1_shmid_ds *buf); }
 211	STD		{ int osf1_sys_shmdt(const void *shmaddr); }
 212	STD		{ int osf1_sys_shmget(osf1_key_t key, size_t size, \
-			    int flags); } 
+			    int flags); }
 213	UNIMPL		mvalid
 214	UNIMPL		getaddressconf
 215	UNIMPL		msleep

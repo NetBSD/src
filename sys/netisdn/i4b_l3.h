@@ -27,7 +27,7 @@
  *	i4b_l3.h - layer 3 header file
  *	------------------------------
  *
- *	$Id: i4b_l3.h,v 1.4 2003/10/03 16:38:44 pooka Exp $ 
+ *	$Id: i4b_l3.h,v 1.4.10.1 2005/03/19 08:36:41 yamt Exp $
  *
  * $FreeBSD$
  *

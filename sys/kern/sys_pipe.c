@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_pipe.c,v 1.62.6.1 2005/01/25 12:59:35 yamt Exp $	*/
+/*	$NetBSD: sys_pipe.c,v 1.62.6.2 2005/03/19 08:36:12 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_pipe.c,v 1.62.6.1 2005/01/25 12:59:35 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_pipe.c,v 1.62.6.2 2005/03/19 08:36:12 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -129,9 +129,9 @@ __KERNEL_RCSID(0, "$NetBSD: sys_pipe.c,v 1.62.6.1 2005/01/25 12:59:35 yamt Exp $
 /*
  * interfaces to the outside world
  */
-static int pipe_read(struct file *fp, off_t *offset, struct uio *uio, 
+static int pipe_read(struct file *fp, off_t *offset, struct uio *uio,
 		struct ucred *cred, int flags);
-static int pipe_write(struct file *fp, off_t *offset, struct uio *uio, 
+static int pipe_write(struct file *fp, off_t *offset, struct uio *uio,
 		struct ucred *cred, int flags);
 static int pipe_close(struct file *fp, struct proc *p);
 static int pipe_poll(struct file *fp, int events, struct proc *p);
@@ -317,7 +317,7 @@ pipe_create(pipep, allockva)
 
 	pipe = *pipep = pool_get(&pipe_pool, PR_WAITOK);
 
-	/* Initialize */ 
+	/* Initialize */
 	memset(pipe, 0, sizeof(struct pipe));
 	pipe->pipe_state = PIPE_SIGNALR;
 
@@ -970,7 +970,7 @@ retry:
 			else
 				size = space;
 			/*
-			 * First segment to transfer is minimum of 
+			 * First segment to transfer is minimum of
 			 * transfer size and contiguous space in
 			 * pipe buffer.  If first segment to transfer
 			 * is less than the transfer size, we've got
@@ -984,7 +984,7 @@ retry:
 			error = uiomove(&bp->buffer[bp->in], segsize, uio);
 
 			if (error == 0 && segsize < size) {
-				/* 
+				/*
 				 * Transfer remaining part now, to
 				 * support atomic writes.  Wraparound
 				 * happened.
@@ -1256,6 +1256,8 @@ pipe_stat(fp, ub, td)
 	memset((caddr_t)ub, 0, sizeof(*ub));
 	ub->st_mode = S_IFIFO | S_IRUSR | S_IWUSR;
 	ub->st_blksize = pipe->pipe_buffer.size;
+	if (ub->st_blksize == 0 && pipe->pipe_peer)
+		ub->st_blksize = pipe->pipe_peer->pipe_buffer.size;
 	ub->st_size = pipe->pipe_buffer.cnt;
 	ub->st_blocks = (ub->st_size) ? 1 : 0;
 	TIMEVAL_TO_TIMESPEC(&pipe->pipe_atime, &ub->st_atimespec);
@@ -1434,7 +1436,7 @@ filt_pipewrite(struct knote *kn, long hint)
 	/* XXXSMP: race for peer */
 	if ((wpipe == NULL) || (wpipe->pipe_state & PIPE_EOF)) {
 		kn->kn_data = 0;
-		kn->kn_flags |= EV_EOF; 
+		kn->kn_flags |= EV_EOF;
 		if ((hint & NOTE_SUBMIT) == 0)
 			PIPE_UNLOCK(rpipe);
 		return (1);

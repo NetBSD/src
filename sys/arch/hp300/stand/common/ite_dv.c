@@ -1,4 +1,4 @@
-/*	$NetBSD: ite_dv.c,v 1.3 2003/11/14 16:52:40 tsutsui Exp $	*/
+/*	$NetBSD: ite_dv.c,v 1.3.10.1 2005/03/19 08:32:58 yamt Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -93,8 +93,7 @@ static void dvbox_windowmove(struct ite_data *, int, int, int, int,
     int, int, int);
 
 void
-dvbox_init(ip)
-	struct ite_data *ip;
+dvbox_init(struct ite_data *ip)
 {
 	struct dvboxfb *regbase;
 	int i;
@@ -172,20 +171,16 @@ dvbox_init(ip)
 }
 
 void
-dvbox_putc(ip, c, dy, dx, mode)
-	struct ite_data *ip;
-	int dy, dx;
-	int c, mode;
+dvbox_putc(struct ite_data *ip, int dy, int dx, int c, int mode)
 {
+
 	dvbox_windowmove(ip, charY(ip, c), charX(ip, c),
 			 dy * ip->ftheight, dx * ip->ftwidth,
 			 ip->ftheight, ip->ftwidth, RR_COPY);
 }
 
 void
-dvbox_cursor(ip, flag)
-	struct ite_data *ip;
-	int flag;
+dvbox_cursor(struct ite_data *ip, int flag)
 {
 	if (flag == DRAW_CURSOR)
 		draw_cursor(ip)
@@ -198,10 +193,9 @@ dvbox_cursor(ip, flag)
 }
 
 void
-dvbox_clear(ip, sy, sx, h, w)
-	struct ite_data *ip;
-	int sy, sx, h, w;
+dvbox_clear(struct ite_data *ip, int sy, int sx, int h, int w)
 {
+
 	dvbox_windowmove(ip, sy * ip->ftheight, sx * ip->ftwidth,
 			 sy * ip->ftheight, sx * ip->ftwidth,
 			 h  * ip->ftheight, w  * ip->ftwidth,
@@ -209,10 +203,7 @@ dvbox_clear(ip, sy, sx, h, w)
 }
 
 void
-dvbox_scroll(ip, sy, sx, count, dir)
-	struct ite_data *ip;
-	int sy, count;
-	int dir, sx;
+dvbox_scroll(struct ite_data *ip, int sy, int count, int dir, int sx)
 {
 	int dy = sy - count;
 	int height = ip->rows - sy;
@@ -226,11 +217,11 @@ dvbox_scroll(ip, sy, sx, count, dir)
 }
 
 void
-dvbox_windowmove(ip, sy, sx, dy, dx, h, w, func)
-	struct ite_data *ip;
-	int sy, sx, dy, dx, h, w, func;
+dvbox_windowmove(struct ite_data *ip, int sy, int sx, int dy, int dx,
+    int h, int w, int func)
 {
 	struct dvboxfb *dp = (void *)ip->regbase;
+
 	if (h == 0 || w == 0)
 		return;
 	
@@ -246,8 +237,7 @@ dvbox_windowmove(ip, sy, sx, dy, dx, h, w, func)
 }
 
 static void
-dv_reset(dbp)
-	struct dvboxfb *dbp;
+dv_reset(struct dvboxfb *dbp)
 {
 
 	dbp->reset = 0x80;

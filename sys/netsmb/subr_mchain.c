@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_mchain.c,v 1.9 2004/02/24 15:12:53 wiz Exp $	*/
+/*	$NetBSD: subr_mchain.c,v 1.9.10.1 2005/03/19 08:36:51 yamt Exp $	*/
 
 /*
  * Copyright (c) 2000, 2001 Boris Popov
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_mchain.c,v 1.9 2004/02/24 15:12:53 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_mchain.c,v 1.9.10.1 2005/03/19 08:36:51 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -129,7 +129,7 @@ mb_init(struct mbchain *mbp)
 	struct mbuf *m;
 
 	m = m_gethdr(M_WAIT, MT_DATA);
-	if (m == NULL) 
+	if (m == NULL)
 		return ENOBUFS;
 	m->m_len = 0;
 	mb_initm(mbp, m);
@@ -173,7 +173,7 @@ mb_fixhdr(struct mbchain *mbp)
  * Check if object of size 'size' fit to the current position and
  * allocate new mbuf if not. Advance pointers and increase length of mbuf(s).
  * Return pointer to the object placeholder or NULL if any error occurred.
- * Note: size should be <= MLEN 
+ * Note: size should be <= MLEN
  */
 caddr_t
 mb_reserve(struct mbchain *mbp, int size)
@@ -364,7 +364,7 @@ md_init(struct mdchain *mdp)
 	struct mbuf *m;
 
 	m = m_gethdr(M_WAIT, MT_DATA);
-	if (m == NULL) 
+	if (m == NULL)
 		return ENOBUFS;
 	m->m_len = 0;
 	md_initm(mdp, m);
@@ -521,7 +521,7 @@ md_get_mem(struct mdchain *mdp, caddr_t target, int size, int type)
 	int error;
 	u_int count;
 	u_char *s;
-	
+
 	while (size > 0) {
 		if (m == NULL) {
 #ifdef MCHAIN_DEBUG

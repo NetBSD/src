@@ -1,4 +1,4 @@
-/*	$NetBSD: dca.c,v 1.4 2003/11/14 16:52:40 tsutsui Exp $	*/
+/*	$NetBSD: dca.c,v 1.4.10.1 2005/03/19 08:32:58 yamt Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -91,8 +91,7 @@ struct dcadevice *dcacnaddr = 0;
 #define DCACONSCODE	9	/* XXX */
 
 void
-dcaprobe(cp)
-	struct consdev *cp;
+dcaprobe(struct consdev *cp)
 {
 	struct dcadevice *dca;
 
@@ -124,8 +123,7 @@ dcaprobe(cp)
 }
 
 void
-dcainit(cp)
-	struct consdev *cp;
+dcainit(struct consdev *cp)
 {
 	struct dcadevice *dca = dcacnaddr;
 
@@ -144,8 +142,7 @@ dcainit(cp)
 /* ARGSUSED */
 #ifndef SMALL
 int
-dcagetchar(dev)
-	dev_t dev;
+dcagetchar(dev_t dev)
 {
 	struct dcadevice *dca = dcacnaddr;
 	short stat;
@@ -158,8 +155,7 @@ dcagetchar(dev)
 }
 #else
 int
-dcagetchar(dev)
-	dev_t dev;
+dcagetchar(dev_t dev)
 {
 
 	return 0;
@@ -168,9 +164,7 @@ dcagetchar(dev)
 
 /* ARGSUSED */
 void
-dcaputchar(dev, c)
-	dev_t dev;
-	int c;
+dcaputchar(dev_t dev, int c)
 {
 	struct dcadevice *dca = dcacnaddr;
 	int timo;

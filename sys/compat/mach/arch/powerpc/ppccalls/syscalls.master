@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.2 2003/01/21 04:02:10 matt Exp $
+	$NetBSD: syscalls.master,v 1.2.12.1 2005/03/19 08:33:42 yamt Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -55,9 +55,9 @@
 7	UNIMPL			bb_settaskenv
 8	UNIMPL			vmm_stop_vm
 9	UNIMPL			dis
-10	UNIMPL	
-11	UNIMPL	
-12	UNIMPL	
-13	UNIMPL	
-14	UNIMPL	
-15	UNIMPL	
+10	UNIMPL
+11	UNIMPL
+12	UNIMPL
+13	UNIMPL
+14	UNIMPL
+15	UNIMPL

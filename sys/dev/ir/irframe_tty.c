@@ -1,4 +1,4 @@
-/*	$NetBSD: irframe_tty.c,v 1.27 2003/07/14 15:47:14 lukem Exp $	*/
+/*	$NetBSD: irframe_tty.c,v 1.27.10.1 2005/03/19 08:34:33 yamt Exp $	*/
 
 /*
  * TODO
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irframe_tty.c,v 1.27 2003/07/14 15:47:14 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irframe_tty.c,v 1.27.10.1 2005/03/19 08:34:33 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -284,7 +284,7 @@ irframetclose(struct tty *tp, int flag)
  */
 /* ARGSUSED */
 int
-irframetioctl(struct tty *tp, u_long cmd, caddr_t data, int flag, 
+irframetioctl(struct tty *tp, u_long cmd, caddr_t data, int flag,
 	     struct proc *p)
 {
 	struct irframet_softc *sc = (struct irframet_softc *)tp->t_sc;
@@ -513,14 +513,14 @@ irframet_read(void *h, struct uio *uio, int flag)
 	int error = 0;
 	int s;
 
-	DPRINTF(("%s: resid=%d, iovcnt=%d, offset=%ld\n", 
-		 __FUNCTION__, uio->uio_resid, uio->uio_iovcnt, 
+	DPRINTF(("%s: resid=%d, iovcnt=%d, offset=%ld\n",
+		 __FUNCTION__, uio->uio_resid, uio->uio_iovcnt,
 		 (long)uio->uio_offset));
 	DPRINTF(("%s: nframe=%d framei=%d frameo=%d\n",
 		 __FUNCTION__, sc->sc_nframes, sc->sc_framei, sc->sc_frameo));
 
 
-	s = splir();	
+	s = splir();
 	while (sc->sc_nframes == 0) {
 		if (flag & IO_NDELAY) {
 			splx(s);
@@ -602,8 +602,8 @@ irframet_write(void *h, struct uio *uio, int flag)
 	u_int8_t buf[MAX_IRDA_FRAME];
 	int n;
 
-	DPRINTF(("%s: resid=%d, iovcnt=%d, offset=%ld\n", 
-		 __FUNCTION__, uio->uio_resid, uio->uio_iovcnt, 
+	DPRINTF(("%s: resid=%d, iovcnt=%d, offset=%ld\n",
+		 __FUNCTION__, uio->uio_resid, uio->uio_iovcnt,
 		 (long)uio->uio_offset));
 
 	n = irda_sir_frame(buf, MAX_IRDA_FRAME, uio, sc->sc_params.ebofs);
@@ -756,7 +756,7 @@ int
 irframet_set_params(void *h, struct irda_params *p)
 {
 	struct tty *tp = h;
-	struct irframet_softc *sc = (struct irframet_softc *)tp->t_sc;	
+	struct irframet_softc *sc = (struct irframet_softc *)tp->t_sc;
 	int i;
 
 	DPRINTF(("%s: tp=%p speed=%d ebofs=%d maxsize=%d\n",
@@ -802,7 +802,7 @@ int
 irframet_get_speeds(void *h, int *speeds)
 {
 	struct tty *tp = h;
-	struct irframet_softc *sc = (struct irframet_softc *)tp->t_sc;	
+	struct irframet_softc *sc = (struct irframet_softc *)tp->t_sc;
 
 	DPRINTF(("%s: tp=%p\n", __FUNCTION__, tp));
 
@@ -817,7 +817,7 @@ int
 irframet_get_turnarounds(void *h, int *turnarounds)
 {
 	struct tty *tp = h;
-	struct irframet_softc *sc = (struct irframet_softc *)tp->t_sc;	
+	struct irframet_softc *sc = (struct irframet_softc *)tp->t_sc;
 
 	DPRINTF(("%s: tp=%p\n", __FUNCTION__, tp));
 
@@ -874,7 +874,7 @@ irt_delay(struct tty *tp, u_int ms)
 		delay(ms * 1000);
 	else
 		tsleep(&irt_delay, PZERO, "irtdly", ms * hz / 1000 + 1);
-		
+
 }
 
 /**********************************************************************
@@ -979,7 +979,7 @@ irts_actisys(struct tty *tp, u_int speed)
 	if (sc->sc_dongle_private == 0) {
 		sc->sc_dongle_private = 1;
 		irt_setline(tp, TIOCM_DTR | TIOCM_RTS);
-		/* 
+		/*
 		 * Must wait at least 50ms after initial
 		 * power on to charge internal capacitor
 		 */
@@ -992,7 +992,7 @@ irts_actisys(struct tty *tp, u_int speed)
 		delay(2);
 		if (--pulses <= 0)
 			break;
-		irt_setline(tp, TIOCM_DTR);    
+		irt_setline(tp, TIOCM_DTR);
 		delay(2);
 	}
 }
@@ -1027,7 +1027,7 @@ irts_litelink(struct tty *tp, u_int speed)
 		irt_delay(tp, 1); /* 15 us */;
 		if (--pulses <= 0)
 			break;
-		irt_setline(tp, TIOCM_DTR);    
+		irt_setline(tp, TIOCM_DTR);
 		irt_delay(tp, 1); /* 15 us */;
 	}
 }
@@ -1048,11 +1048,11 @@ irts_litelink(struct tty *tp, u_int speed)
 
 /* Baud register */
 #define GIRBIL_2400      0x30
-#define GIRBIL_4800      0x31	
+#define GIRBIL_4800      0x31
 #define GIRBIL_9600      0x32
 #define GIRBIL_19200     0x33
-#define GIRBIL_38400     0x34	
-#define GIRBIL_57600     0x35	
+#define GIRBIL_38400     0x34
+#define GIRBIL_57600     0x35
 #define GIRBIL_115200    0x36
 
 /* Mode register */

@@ -1,4 +1,4 @@
-/*	$NetBSD: filecore_utils.c,v 1.2 2003/08/07 16:31:38 agc Exp $	*/
+/*	$NetBSD: filecore_utils.c,v 1.2.10.1 2005/03/19 08:36:10 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1994 The Regents of the University of California.
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: filecore_utils.c,v 1.2 2003/08/07 16:31:38 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: filecore_utils.c,v 1.2.10.1 2005/03/19 08:36:10 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -152,16 +152,16 @@ __KERNEL_RCSID(0, "$NetBSD: filecore_utils.c,v 1.2 2003/08/07 16:31:38 agc Exp $
 int
 filecore_bbchecksum(bb)
 	void *bb;
-{  
+{
 	u_char *bootblock = bb;
 	u_char byte0, accum_diff;
 	u_int sum;
 	int i;
- 
+
 	sum = 0;
 	accum_diff = 0;
 	byte0 = bootblock[0];
- 
+
 	/*
 	 * Sum the contents of the block, keeping track of whether
 	 * or not all bytes are the same.  If 'accum_diff' ends up
@@ -180,7 +180,7 @@ filecore_bbchecksum(bb)
 	 */
 	accum_diff |= bootblock[i] ^ byte0;
 	sum = (sum - ((sum - 1) / 255) * 255);
- 
+
 	/*
 	 * If all bytes in block are the same
 	 * or the checksum does not match ; call it invalid.

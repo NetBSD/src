@@ -1,4 +1,4 @@
-/*      $NetBSD: svvar.h,v 1.4 2003/05/03 18:11:37 wiz Exp $ */
+/*      $NetBSD: svvar.h,v 1.4.12.1 2005/03/19 08:35:12 yamt Exp $ */
 
 /*
  * Copyright (c) 1998 Constantine Paul Sapuntzakis
@@ -15,7 +15,7 @@
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
  * 3. The author's name or those of the contributors may be used to
- *    endorse or promote products derived from this software without 
+ *    endorse or promote products derived from this software without
  *    specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR(S) AND CONTRIBUTORS

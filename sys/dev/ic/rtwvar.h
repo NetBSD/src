@@ -1,4 +1,4 @@
-/* $NetBSD: rtwvar.h,v 1.19.4.1 2005/02/12 18:17:44 yamt Exp $ */
+/* $NetBSD: rtwvar.h,v 1.19.4.2 2005/03/19 08:34:03 yamt Exp $ */
 /*-
  * Copyright (c) 2004, 2005 David Young.  All rights reserved.
  *
@@ -90,7 +90,7 @@ enum rtw_rfchipid {
 	RTW_RFCHIPID_PHILIPS = 3,
 	RTW_RFCHIPID_MAXIM = 4,
 	RTW_RFCHIPID_GCT = 5
-}; 
+};
 
 /* sc_flags */
 #define RTW_F_ENABLED		0x00000001	/* chip is enabled */
@@ -157,7 +157,7 @@ struct rtw_txsoft {
 #define RTW_TXQLENLO	64	/* low-priority queue length */
 #define RTW_TXQLENMD	64	/* medium-priority */
 #define RTW_TXQLENHI	64	/* high-priority */
-#define RTW_TXQLENBCN	1	/* beacon */
+#define RTW_TXQLENBCN	2	/* beacon */
 
 #define RTW_NTXDESCLO	RTW_TXQLENLO
 #define RTW_NTXDESCMD	RTW_TXQLENMD

@@ -1,4 +1,4 @@
-/*	$NetBSD: gtidma.c,v 1.3.10.1 2005/02/12 18:17:46 yamt Exp $	*/
+/*	$NetBSD: gtidma.c,v 1.3.10.2 2005/03/19 08:34:40 yamt Exp $	*/
 
 /*
  * Copyright (c) 2002 Allegro Networks, Inc., Wasabi Systems, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gtidma.c,v 1.3.10.1 2005/02/12 18:17:46 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gtidma.c,v 1.3.10.2 2005/03/19 08:34:40 yamt Exp $");
 
 #include "opt_idma.h"
 #include "opt_ddb.h"
@@ -173,7 +173,7 @@ idma_list_sync_pre(idma_chan_t * const idcp, idma_desch_t * const iddhp)
 	for(iddhp_tmp = iddhp; iddhp_tmp != 0; iddhp_tmp = iddhp_tmp->idh_next){
 		iddp = iddhp_tmp->idh_desc_va;
 		DPRINTFN(2, ("idma_list_sync_pre: "
-			"{ 0x%x, 0x%x, 0x%x, 0x%x }\n", 
+			"{ 0x%x, 0x%x, 0x%x, 0x%x }\n",
 			bswap32(iddp->idd_ctl),
 			bswap32(iddp->idd_src_addr),
 			bswap32(iddp->idd_dst_addr),
@@ -275,7 +275,7 @@ idma_match(
 		return 0;
 
 	return 1;
-}       
+}
 
 STATIC void
 idma_attach(
@@ -344,7 +344,7 @@ idma_attach(
 #endif
 
 }
-   
+
 /*
  * idma_chan_init - init soft channel state && disable the channel
  */
@@ -569,7 +569,7 @@ idma_dmamem_free(idma_softc_t * const sc, idma_dmamem_t * const idmp)
 }
 
 
-STATIC int      
+STATIC int
 idma_dmamem_alloc(
 	idma_softc_t * const sc,
 	idma_dmamem_t * const idmp,
@@ -855,7 +855,7 @@ idma_intr_check(idma_softc_t *sc, u_int chan)
 	u_int32_t r;
 	u_int32_t irqbit = 1 << irq;
 	u_int mask;
-	
+
 	printf("chan %d IRQ %d, ", chan, irq);
 
 	reg = 0xc18;
@@ -979,25 +979,25 @@ idma_abort(idma_desch_t *iddhp, unsigned int flags, const char *str)
 		gt_write(&sc->idma_gt->gt_dev,  IDMA_CTLLO_REG(chan), r);
 		DPRINTFN(2, ("idma_abort: 0x%x <-- 0x%x\n",
 			IDMA_CTLLO_REG(chan), r));
-	
+
 		for (try = 0; try < 100; try++) {
-	
+
 			DELAY(1);
-	
+
 			r = gt_read(&sc->idma_gt->gt_dev, IDMA_CTLLO_REG(chan));
 			DPRINTFN(2, ("idma_abort: 0x%x --> 0x%x\n",
 				IDMA_CTLLO_REG(chan), r));
-	
+
 			if ((r & (IDMA_CTLLO_ABORT|IDMA_CTLLO_ACTIVE)) == 0)
 				break;
-	
+
 		}
 		DPRINTFN(2, ("idma_abort: tries %d\n", try));
-	
+
 		if (try >= 100)
 			panic("%s: idma_abort %p failed\n",
 				sc->idma_dev.dv_xname, iddhp);
-	
+
 	}
 	if ((flags & IDMA_ABORT_CANCEL) == 0)
 		idma_retry(sc, idcp, chan, iddhp);
@@ -1098,7 +1098,7 @@ idma_start_subr(
 	idma_softc_t * const sc,
 	idma_chan_t * const idcp,
 	const unsigned int chan,
-	idma_desch_t * const iddhp) 
+	idma_desch_t * const iddhp)
 {
 	u_int32_t r;
 
@@ -1166,7 +1166,7 @@ idma_retry(
 	idma_softc_t * const sc,
 	idma_chan_t * const idcp,
 	const unsigned int chan,
-	idma_desch_t * const iddhp) 
+	idma_desch_t * const iddhp)
 {
 	idma_desch_t *iddhp_tmp = iddhp;
 	idma_desc_t *iddp;
@@ -1196,7 +1196,7 @@ idma_done(
 	idma_chan_t * const idcp,
 	const unsigned int chan,
 	idma_desch_t * const iddhp,
-	u_int32_t ccause) 
+	u_int32_t ccause)
 {
 	int (*callback)(void *, idma_desch_t *, u_int32_t);
 
@@ -1383,7 +1383,7 @@ idma_time(void * const arg)
 		limit = tbhz >> 3;		/* XXX 1/8 sec ??? */
 		idcp = sc->idma_chan;
 		for (chan=0; chan < NIDMA_CHANS; chan++) {
-			if ((idcp->idc_state & IDC_ALLOC) 
+			if ((idcp->idc_state & IDC_ALLOC)
 			&&  (idcp->idc_active != 0)) {
 				dt = now - idcp->idc_active->tb;
 				if (dt > limit) {

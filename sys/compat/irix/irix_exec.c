@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_exec.c,v 1.39 2004/10/01 16:30:52 yamt Exp $ */
+/*	$NetBSD: irix_exec.c,v 1.39.6.1 2005/03/19 08:33:34 yamt Exp $ */
 
 /*-
  * Copyright (c) 2001-2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_exec.c,v 1.39 2004/10/01 16:30:52 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_exec.c,v 1.39.6.1 2005/03/19 08:33:34 yamt Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_syscall_debug.h"
@@ -79,11 +79,11 @@ void irix_syscall __P((void));
 void irix_syscall_intern __P((struct proc *));
 #endif
 
-/* 
- * Fake sigcode. COMPAT_IRIX does not use it, since the 
+/*
+ * Fake sigcode. COMPAT_IRIX does not use it, since the
  * signal trampoline is provided by libc. However, some
  * other part of the kernel will be happier if we still
- * provide non NULL sigcode and esigcode. 
+ * provide non NULL sigcode and esigcode.
  */
 char irix_sigcode[] = { 0 };
 
@@ -124,7 +124,7 @@ const struct emul emul_irix = {
 };
 
 /*
- * set registers on exec for N32 applications 
+ * set registers on exec for N32 applications
  */
 void
 irix_n32_setregs(l, pack, stack)
@@ -133,9 +133,9 @@ irix_n32_setregs(l, pack, stack)
 	u_long stack;
 {
 	struct frame *f = (struct frame *)l->l_md.md_regs;
-	
+
 	/* Enable 64 bit instructions (eg: sd) */
-	f->f_regs[_R_SR] |= MIPS3_SR_UX; 
+	f->f_regs[_R_SR] |= MIPS3_SR_UX;
 }
 
 /*
@@ -151,7 +151,7 @@ irix_e_proc_init(p, vmspace)
 	vsize_t vm_len;
 
 	if (!p->p_emuldata)
-		p->p_emuldata = malloc(sizeof(struct irix_emuldata), 
+		p->p_emuldata = malloc(sizeof(struct irix_emuldata),
 		    M_EMULDATA, M_WAITOK | M_ZERO);
 
 	ied = p->p_emuldata;
@@ -161,9 +161,9 @@ irix_e_proc_init(p, vmspace)
 	vm_min = vm_map_min(&vmspace->vm_map);
 	vm_len = vm_map_max(&vmspace->vm_map) - vm_min;
 	irix_isrr_insert(vm_min, vm_len, IRIX_ISRR_SHARED, p);
-}  
+}
 
-/* 
+/*
  * exec() hook used to allocate per process structures
  */
 static void
@@ -195,7 +195,7 @@ irix_e_proc_exit(p)
 	struct irix_share_group *isg;
 	struct irix_shared_regions_rec *isrr;
 
-	/* 
+	/*
 	 * Send SIGHUP to child process as requested using prctl(2)
 	 */
 	proclist_lock_read();
@@ -219,37 +219,37 @@ irix_e_proc_exit(p)
 		lockmgr(&isg->isg_lock, LK_EXCLUSIVE, NULL);
 		LIST_REMOVE(ied, ied_sglist);
 		isg->isg_refcount--;
-	
+
 		if (isg->isg_refcount == 0) {
-			/* 
+			/*
 		 	 * This was the last process in the share group.
-			 * Call irix_usema_exit_cleanup() to free in-kernel 
+			 * Call irix_usema_exit_cleanup() to free in-kernel
 			 * structures hold by the share group through
-			 * the irix_usync_cntl system call. 
+			 * the irix_usync_cntl system call.
 			 */
 			irix_usema_exit_cleanup(p, NULL);
-			 /* 
+			 /*
 			  * Free the share group structure (no need to free
 			  * the lock since we destroy it now).
 			  */
 			free(isg, M_EMULDATA);
 			ied->ied_share_group = NULL;
 		} else {
-			/* 
+			/*
 			 * There are other processes remaining in the share
-			 * group. Call irix_usema_exit_cleanup() to set the 
-			 * first of them as the owner of the structures 
+			 * group. Call irix_usema_exit_cleanup() to set the
+			 * first of them as the owner of the structures
 			 * hold in the kernel by the share group.
 			 */
-			irix_usema_exit_cleanup(p, 
+			irix_usema_exit_cleanup(p,
 			    LIST_FIRST(&isg->isg_head)->ied_p);
 			lockmgr(&isg->isg_lock, LK_RELEASE, NULL);
 		}
-	
+
 	} else {
-		/* 
-		 * The process is not part of a share group. Call 
-		 * irix_usema_exit_cleanup() to free in-kernel structures hold 
+		/*
+		 * The process is not part of a share group. Call
+		 * irix_usema_exit_cleanup() to free in-kernel structures hold
 		 * by the process through the irix_usync_cntl system call.
 		 */
 		irix_usema_exit_cleanup(p, NULL);

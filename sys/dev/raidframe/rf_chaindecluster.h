@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_chaindecluster.h,v 1.5 2003/12/29 02:38:17 oster Exp $	*/
+/*	$NetBSD: rf_chaindecluster.h,v 1.5.10.1 2005/03/19 08:35:41 yamt Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -34,24 +34,24 @@
 #ifndef _RF__RF_CHAINDECLUSTER_H_
 #define _RF__RF_CHAINDECLUSTER_H_
 
-int 
+int
 rf_ConfigureChainDecluster(RF_ShutdownList_t ** listp, RF_Raid_t * raidPtr,
     RF_Config_t * cfgPtr);
 RF_ReconUnitCount_t rf_GetNumSpareRUsChainDecluster(RF_Raid_t * raidPtr);
-void 
+void
 rf_MapSectorChainDecluster(RF_Raid_t * raidPtr, RF_RaidAddr_t raidSector,
     RF_RowCol_t * col, RF_SectorNum_t * diskSector, int remap);
-void 
+void
 rf_MapParityChainDecluster(RF_Raid_t * raidPtr, RF_RaidAddr_t raidSector,
     RF_RowCol_t * col, RF_SectorNum_t * diskSector, int remap);
-void 
+void
 rf_IdentifyStripeChainDecluster(RF_Raid_t * raidPtr, RF_RaidAddr_t addr,
     RF_RowCol_t ** diskids);
-void 
+void
 rf_MapSIDToPSIDChainDecluster(RF_RaidLayout_t * layoutPtr,
     RF_StripeNum_t stripeID, RF_StripeNum_t * psID,
     RF_ReconUnitNum_t * which_ru);
-void 
+void
 rf_RAIDCDagSelect(RF_Raid_t * raidPtr, RF_IoType_t type,
     RF_AccessStripeMap_t * asmap,
     RF_VoidFuncPtr *);

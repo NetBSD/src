@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$NetBSD: makemachservices.sh,v 1.5 2003/11/30 00:09:59 manu Exp $
+#	$NetBSD: makemachservices.sh,v 1.5.12.1 2005/03/19 08:33:42 yamt Exp $
 #
 # Copyright (c) 2003 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -72,6 +72,7 @@ BEGIN{
 (NR == 1) {
 	gsub(/^[^\$]*\$/, "", $0);
 	gsub(/\$.*$/, "", $0);
+	sub(/ $/, "");
 	printf(" * created from %s\n */\n\n", $0) > table;
 	printf("#include \<sys/cdefs.h\>\n__KERNEL_RCSID(0, " \
 	    "\"\$NetBSD\$\");\n\n") > table;

@@ -1,4 +1,4 @@
-/*	$NetBSD: dl.c,v 1.28 2004/03/22 18:36:14 bjh21 Exp $	*/
+/*	$NetBSD: dl.c,v 1.28.10.1 2005/03/19 08:35:37 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -111,7 +111,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dl.c,v 1.28 2004/03/22 18:36:14 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dl.c,v 1.28.10.1 2005/03/19 08:35:37 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -191,13 +191,13 @@ dl_match (struct device *parent, struct cfdata *cf, void *aux)
 	if (bus_space_read_2(ua->ua_iot, ua->ua_ioh, DL_UBA_XCSR) !=
 	    (DL_XCSR_TXIE | DL_XCSR_TX_READY)) {
 #ifdef DL_DEBUG
-	        printf("failed (step 1; XCSR = %.4b)\n", 
-		    bus_space_read_2(ua->ua_iot, ua->ua_ioh, DL_UBA_XCSR), 
+		printf("failed (step 1; XCSR = %.4b)\n",
+		    bus_space_read_2(ua->ua_iot, ua->ua_ioh, DL_UBA_XCSR),
 		    DL_XCSR_BITS);
 #endif
 		return 0;
 	}
-	
+
 	/*
 	 * We have to force an interrupt so the uba driver can work
 	 * out where we are.  Unfortunately, the only way to make a
@@ -210,8 +210,8 @@ dl_match (struct device *parent, struct cfdata *cf, void *aux)
 #if 0 /* This test seems to fail 2/3 of the time :-( */
 	if (dladdr->dl_xcsr != (DL_XCSR_TXIE)) {
 #ifdef DL_DEBUG
-	        printf("failed (step 2; XCSR = %.4b)\n", dladdr->dl_xcsr,
-		       DL_XCSR_BITS);
+		printf("failed (step 2; XCSR = %.4b)\n", dladdr->dl_xcsr,
+		    DL_XCSR_BITS);
 #endif
 		return 0;
 	}
@@ -220,7 +220,7 @@ dl_match (struct device *parent, struct cfdata *cf, void *aux)
 	if (bus_space_read_2(ua->ua_iot, ua->ua_ioh, DL_UBA_XCSR) !=
 	    (DL_XCSR_TXIE | DL_XCSR_TX_READY)) {
 #ifdef DL_DEBUG
-	        printf("failed (step 3; XCSR = %.4b)\n", 
+		printf("failed (step 3; XCSR = %.4b)\n",
 		    bus_space_read_2(ua->ua_iot, ua->ua_ioh, DL_UBA_XCSR),
 		    DL_XCSR_BITS);
 #endif
@@ -228,7 +228,7 @@ dl_match (struct device *parent, struct cfdata *cf, void *aux)
 	}
 
 
-        /* What else do I need to do? */
+	/* What else do I need to do? */
 
 	return 1;
 
@@ -242,14 +242,14 @@ dl_attach (struct device *parent, struct device *self, void *aux)
 
 	sc->sc_iot = ua->ua_iot;
 	sc->sc_ioh = ua->ua_ioh;
-	
+
 	/* Tidy up the device */
 
 	DL_WRITE_WORD(DL_UBA_RCSR, DL_RCSR_RXIE);
 	DL_WRITE_WORD(DL_UBA_XCSR, DL_XCSR_TXIE);
 
 	/* Initialize our softc structure. Should be done in open? */
-	
+
 	sc->sc_tty = ttymalloc();
 	tty_attach(sc->sc_tty);
 
@@ -278,7 +278,7 @@ dlrint(void *arg)
 		unsigned c;
 		int cc;
 
-	        c = DL_READ_WORD(DL_UBA_RBUF);
+		c = DL_READ_WORD(DL_UBA_RBUF);
 		cc = c & 0xFF;
 
 		if (!(tp->t_state & TS_ISOPEN)) {
@@ -318,7 +318,7 @@ dlxint(void *arg)
 
 	tp->t_state &= ~(TS_BUSY | TS_FLUSH);
 	(*tp->t_linesw->l_start)(tp);
-       
+
 	return;
 }
 
@@ -350,10 +350,10 @@ dlopen(dev_t dev, int flag, int mode, struct proc *p)
 		tp->t_cflag = TTYDEF_CFLAG | CLOCAL;
 		tp->t_lflag = TTYDEF_LFLAG;
 		tp->t_ispeed = tp->t_ospeed = TTYDEF_SPEED;
-		
+
 		dlparam(tp, &tp->t_termios);
 		ttsetwater(tp);
-		
+
 	} else if ((tp->t_state & TS_XCLUDE) && p->p_ucred->cr_uid != 0)
 		return EBUSY;
 
@@ -398,7 +398,7 @@ dlpoll(dev_t dev, int events, struct proc *p)
 {
 	struct dl_softc *sc = dl_cd.cd_devs[minor(dev)];
 	struct tty *tp = sc->sc_tty;
- 
+
 	return ((*tp->t_linesw->l_poll)(tp, events, p));
 }
 
@@ -406,37 +406,37 @@ int
 dlioctl(dev_t dev, unsigned long cmd, caddr_t data, int flag, struct proc *p)
 {
 	struct dl_softc *sc = dl_cd.cd_devs[minor(dev)];
-        struct tty *tp = sc->sc_tty;
-        int error;
+	struct tty *tp = sc->sc_tty;
+	int error;
 
 
-        error = (*tp->t_linesw->l_ioctl)(tp, cmd, data, flag, p);
-        if (error != EPASSTHROUGH)
-                return (error);
+	error = (*tp->t_linesw->l_ioctl)(tp, cmd, data, flag, p);
+	if (error != EPASSTHROUGH)
+		return (error);
 
-        error = ttioctl(tp, cmd, data, flag, p);
-        if (error != EPASSTHROUGH)
-                return (error);
+	error = ttioctl(tp, cmd, data, flag, p);
+	if (error != EPASSTHROUGH)
+		return (error);
 
 	switch (cmd) {
-	       
-        case TIOCSBRK:
-                dlbrk(sc, 1);
-                break;
 
-        case TIOCCBRK:
-                dlbrk(sc, 0);
-                break;
+	case TIOCSBRK:
+		dlbrk(sc, 1);
+		break;
 
-        case TIOCMGET:
+	case TIOCCBRK:
+		dlbrk(sc, 0);
+		break;
+
+	case TIOCMGET:
 		/* No modem control, assume they're all low. */
-                *(int *)data = 0;
-                break;
+		*(int *)data = 0;
+		break;
 
-        default:
-                return (EPASSTHROUGH);
-        }
-        return (0);
+	default:
+		return (EPASSTHROUGH);
+	}
+	return (0);
 }
 
 struct tty *
@@ -454,7 +454,7 @@ dlstop(struct tty *tp, int flag)
 
 	if ((tp->t_state & (TS_BUSY|TS_TTSTOP)) == TS_BUSY)
 		tp->t_state |= TS_FLUSH;
-        splx(s);
+	splx(s);
 }
 
 static void
@@ -463,17 +463,17 @@ dlstart(struct tty *tp)
 	struct dl_softc *sc = dl_cd.cd_devs[minor(tp->t_dev)];
 	int s = spltty();
 
-        if (tp->t_state & (TS_TIMEOUT|TS_BUSY|TS_TTSTOP))
-                goto out;
-        if (tp->t_outq.c_cc <= tp->t_lowat) {
-                if (tp->t_state & TS_ASLEEP) {
-                        tp->t_state &= ~TS_ASLEEP;
-                        wakeup((caddr_t)&tp->t_outq);
-                }
-                selwakeup(&tp->t_wsel);
-        }
-        if (tp->t_outq.c_cc == 0)
-                goto out;
+	if (tp->t_state & (TS_TIMEOUT|TS_BUSY|TS_TTSTOP))
+		goto out;
+	if (tp->t_outq.c_cc <= tp->t_lowat) {
+		if (tp->t_state & TS_ASLEEP) {
+			tp->t_state &= ~TS_ASLEEP;
+			wakeup((caddr_t)&tp->t_outq);
+		}
+		selwakeup(&tp->t_wsel);
+	}
+	if (tp->t_outq.c_cc == 0)
+		goto out;
 
 
 	if (DL_READ_WORD(DL_UBA_XCSR) & DL_XCSR_TX_READY) {

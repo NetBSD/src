@@ -1,4 +1,4 @@
-/* 	$NetBSD: lwp.h,v 1.24.6.1 2005/02/12 18:17:55 yamt Exp $	*/
+/* 	$NetBSD: lwp.h,v 1.24.6.2 2005/03/19 08:36:52 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@ struct	lwp {
 #define l_startzero l_swtime
 	u_int	l_swtime;	/* Time swapped in or out. */
 	u_int	l_slptime;	/* Time since last blocked. */
-    
+
 	const void *l_wchan;	/* Sleep address. */
 	struct callout l_tsleep_ch;	/* callout for tsleep */
 	const char *l_wmesg;	/* Reason for sleep. */

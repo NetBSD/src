@@ -1,4 +1,4 @@
-#	$NetBSD: std.pc532,v 1.15 2004/01/20 19:58:00 jdolecek Exp $
+#	$NetBSD: std.pc532,v 1.15.10.1 2005/03/19 08:33:09 yamt Exp $
 #
 # Standard configuration info for NetBSD/pc532.
 
@@ -18,14 +18,14 @@ scsibus0	at ncr? 		# ncr SCSI bus
 #XXX It should look like:
 #scn*		at mainbus0
 #scntty*	at scn? channel?
-scn0		at mainbus? flags 0x1 # addr 0x28000000
-scn1		at mainbus? flags 0x0 # addr 0x28000008
-scn2		at mainbus? flags 0x0 # addr 0x28000010
-scn3		at mainbus? flags 0x0 # addr 0x28000018
-scn4		at mainbus? flags 0x0 # addr 0x28000020
-scn5		at mainbus? flags 0x0 # addr 0x28000028
-scn6		at mainbus? flags 0x0 # addr 0x28000030
-scn7		at mainbus? flags 0x0 # addr 0x28000038
+scn0		at mainbus? addr 0x28000000 irq 0xcd flags 0x1
+scn1		at mainbus? addr 0x28000008
+scn2		at mainbus? addr 0x28000010 irq 0xab
+scn3		at mainbus? addr 0x28000018
+scn4		at mainbus? addr 0x28000020 irq 0x89
+scn5		at mainbus? addr 0x28000028
+scn6		at mainbus? addr 0x28000030 irq 0x67
+scn7		at mainbus? addr 0x28000038
 
 options 	EXEC_AOUT	# a.out executables
 options 	EXEC_SCRIPT	# #! scripts

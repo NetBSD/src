@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bge.c,v 1.81.2.1 2005/02/12 18:17:47 yamt Exp $	*/
+/*	$NetBSD: if_bge.c,v 1.81.2.2 2005/03/19 08:35:10 yamt Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.81.2.1 2005/02/12 18:17:47 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.81.2.2 2005/03/19 08:35:10 yamt Exp $");
 
 #include "bpfilter.h"
 #include "vlan.h"
@@ -142,7 +142,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.81.2.1 2005/02/12 18:17:47 yamt Exp $")
  * limits on the  bcm5700: inreasing rx_ticks much beyond 600
  * results in internal wrapping and higher interrupt rates.
  * The limit of 46 frames was chosen to match NFS workloads.
- * 
+ *
  * These values also work well on bcm5701, bcm5704C, and (less
  * tested) bcm5703.  On other chipsets, (including the Altima chip
  * family), the larger values may overflow internal chip limits,
@@ -152,7 +152,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.81.2.1 2005/02/12 18:17:47 yamt Exp $")
  * Applications using heavy interrupt mitigation (interrupting every
  * 32 or 46 frames) in both directions may need to increase the TCP
  * windowsize to above 131072 bytes (e.g., to 199608 bytes) to sustain
- * full link bandwidth, due to ACKs and window updates lingering 
+ * full link bandwidth, due to ACKs and window updates lingering
  * in the RX queue during the 30-to-40-frame interrupt-mitigation window.
  */
 struct bge_load_rx_thresh {
@@ -671,7 +671,7 @@ bge_update_all_threshes(int lvl)
 		lvl = 0;
 	else if( lvl >= NBGE_RX_THRESH)
 		lvl = NBGE_RX_THRESH - 1;
-    
+
 	namelen = strlen(namebuf);
 	/*
 	 * Now search all the interfaces for this name/number
@@ -1023,7 +1023,7 @@ bge_free_rx_ring_std(sc)
 		if (sc->bge_cdata.bge_rx_std_chain[i] != NULL) {
 			m_freem(sc->bge_cdata.bge_rx_std_chain[i]);
 			sc->bge_cdata.bge_rx_std_chain[i] = NULL;
-			bus_dmamap_destroy(sc->bge_dmatag, 
+			bus_dmamap_destroy(sc->bge_dmatag,
 			    sc->bge_cdata.bge_rx_std_map[i]);
 		}
 		memset((char *)&sc->bge_rdata->bge_rx_std_ring[i], 0,
@@ -1262,7 +1262,7 @@ bge_chipinit(sc)
 
 	/* Set power state to D0. */
 	bge_setpowerstate(sc, 0);
-	
+
 	/*
 	 * Check the 'ROM failed' bit on the RX CPU to see if
 	 * self-tests passed.
@@ -1560,14 +1560,14 @@ bge_blockinit(sc)
 		rcb = &sc->bge_rdata->bge_info.bge_jumbo_rx_rcb;
 		bge_set_hostaddr(&rcb->bge_hostaddr,
 		    BGE_RING_DMA_ADDR(sc, bge_rx_jumbo_ring));
-		rcb->bge_maxlen_flags = 
+		rcb->bge_maxlen_flags =
 		    BGE_RCB_MAXLEN_FLAGS(BGE_MAX_FRAMELEN,
 			BGE_RCB_FLAG_RING_DISABLED);
 		if (sc->bge_extram)
 			rcb->bge_nicaddr = BGE_EXT_JUMBO_RX_RINGS;
 		else
 			rcb->bge_nicaddr = BGE_JUMBO_RX_RINGS;
-	
+
 		CSR_WRITE_4(sc, BGE_RX_JUMBO_RCB_HADDR_HI,
 		    rcb->bge_hostaddr.bge_addr_hi);
 		CSR_WRITE_4(sc, BGE_RX_JUMBO_RCB_HADDR_LO,
@@ -1618,7 +1618,7 @@ bge_blockinit(sc)
 	RCB_WRITE_4(sc, rcb_addr, bge_nicaddr,
 		    BGE_NIC_TXRING_ADDR(0, BGE_TX_RING_CNT));
 	if ((sc->bge_quirks & BGE_QUIRK_5705_CORE) == 0) {
-		RCB_WRITE_4(sc, rcb_addr, bge_maxlen_flags, 
+		RCB_WRITE_4(sc, rcb_addr, bge_maxlen_flags,
 		    BGE_RCB_MAXLEN_FLAGS(BGE_TX_RING_CNT, 0));
 	}
 
@@ -1627,7 +1627,7 @@ bge_blockinit(sc)
 	for (i = 0; i < BGE_RX_RINGS_MAX; i++) {
 		RCB_WRITE_4(sc, rcb_addr, bge_hostaddr.bge_addr_hi, 0);
 		RCB_WRITE_4(sc, rcb_addr, bge_hostaddr.bge_addr_lo, 0);
-		RCB_WRITE_4(sc, rcb_addr, bge_maxlen_flags, 
+		RCB_WRITE_4(sc, rcb_addr, bge_maxlen_flags,
 			    BGE_RCB_MAXLEN_FLAGS(sc->bge_return_ring_cnt,
                                      BGE_RCB_FLAG_RING_DISABLED));
 		RCB_WRITE_4(sc, rcb_addr, bge_nicaddr, 0);
@@ -1763,10 +1763,10 @@ bge_blockinit(sc)
 #if defined(not_quite_yet)
 	/* Linux driver enables enable gpio pin #1 on 5700s */
 	if (sc->bge_chipid == BGE_CHIPID_BCM5700) {
-		sc->bge_local_ctrl_reg |= 
+		sc->bge_local_ctrl_reg |=
 		  (BGE_MLC_MISCIO_OUT1|BGE_MLC_MISCIO_OUTEN1);
 	}
-#endif	
+#endif
 	CSR_WRITE_4(sc, BGE_MISC_LOCAL_CTL, sc->bge_local_ctrl_reg);
 
 	/* Turn on DMA completion state machine */
@@ -2248,7 +2248,7 @@ bge_attach(parent, self, aux)
 	bus_addr_t		memaddr;
 	bus_size_t		memsize;
 	u_int32_t		pm_ctl;
-	
+
 	bp = bge_lookup(pa);
 	KASSERT(bp != NULL);
 
@@ -2472,7 +2472,7 @@ bge_attach(parent, self, aux)
 	if ((sc->bge_quirks & BGE_QUIRK_CSUM_BROKEN) == 0)
 		sc->ethercom.ec_if.if_capabilities |=
 		    IFCAP_CSUM_IPv4 | IFCAP_CSUM_TCPv4 | IFCAP_CSUM_UDPv4;
-	sc->ethercom.ec_capabilities |=	
+	sc->ethercom.ec_capabilities |=
 	    ETHERCAP_VLAN_HWTAGGING | ETHERCAP_VLAN_MTU;
 
 	/*
@@ -2524,7 +2524,7 @@ bge_attach(parent, self, aux)
 		mii_attach(&sc->bge_dev, &sc->bge_mii, 0xffffffff,
 			   MII_PHY_ANY, MII_OFFSET_ANY,
 			   MIIF_FORCEANEG|MIIF_DOPAUSE);
-		
+
 		if (LIST_FIRST(&sc->bge_mii.mii_phys) == NULL) {
 			printf("%s: no PHY found!\n", sc->bge_dev.dv_xname);
 			ifmedia_add(&sc->bge_mii.mii_media,
@@ -2700,12 +2700,12 @@ bge_reset(sc)
 	for (i = 0; i < BGE_TIMEOUT; i++) {
 		new_pcistate = pci_conf_read(pa->pa_pc, pa->pa_tag,
 		    BGE_PCI_PCISTATE);
-		if ((new_pcistate & ~BGE_PCISTATE_RESERVED) == 
+		if ((new_pcistate & ~BGE_PCISTATE_RESERVED) ==
 		    (pcistate & ~BGE_PCISTATE_RESERVED))
 			break;
 		DELAY(10);
 	}
-	if ((new_pcistate & ~BGE_PCISTATE_RESERVED) != 
+	if ((new_pcistate & ~BGE_PCISTATE_RESERVED) !=
 	    (pcistate & ~BGE_PCISTATE_RESERVED)) {
 		printf("%s: pcistate failed to revert\n",
 		    sc->bge_dev.dv_xname);
@@ -2743,8 +2743,6 @@ bge_rxeof(sc)
 {
 	struct ifnet *ifp;
 	int stdcnt = 0, jumbocnt = 0;
-	int have_tag = 0;
-	u_int16_t vlan_tag = 0;
 	bus_dmamap_t dmamap;
 	bus_addr_t offset, toff;
 	bus_size_t tlen;
@@ -2758,7 +2756,7 @@ bge_rxeof(sc)
 	    BUS_DMASYNC_POSTREAD);
 
 	offset = offsetof(struct bge_ring_data, bge_rx_return_ring);
-	tosync = sc->bge_rdata->bge_status_block.bge_idx[0].bge_rx_prod_idx - 
+	tosync = sc->bge_rdata->bge_status_block.bge_idx[0].bge_rx_prod_idx -
 	    sc->bge_rx_saved_considx;
 
 	toff = offset + (sc->bge_rx_saved_considx * sizeof (struct bge_rx_bd));
@@ -2786,11 +2784,6 @@ bge_rxeof(sc)
 
 		rxidx = cur_rx->bge_idx;
 		BGE_INC(sc->bge_rx_saved_considx, sc->bge_return_ring_cnt);
-
-		if (cur_rx->bge_flags & BGE_RXBDFLAG_VLAN_TAG) {
-			have_tag = 1;
-			vlan_tag = cur_rx->bge_vlan_tag;
-		}
 
 		if (cur_rx->bge_flags & BGE_RXBDFLAG_JUMBO_RING) {
 			BGE_INC(sc->bge_jumbo, BGE_JUMBO_RX_RING_CNT);
@@ -2841,7 +2834,7 @@ bge_rxeof(sc)
 			m->m_data += ETHER_ALIGN;
 		}
 #endif
-                
+
 		m->m_pkthdr.len = m->m_len = cur_rx->bge_len - ETHER_CRC_LEN;
 		m->m_pkthdr.rcvif = ifp;
 
@@ -2876,22 +2869,9 @@ bge_rxeof(sc)
 		 * If we received a packet with a vlan tag, pass it
 		 * to vlan_input() instead of ether_input().
 		 */
-		if (have_tag) {
-			struct m_tag *mtag;
+		if (cur_rx->bge_flags & BGE_RXBDFLAG_VLAN_TAG)
+			VLAN_INPUT_TAG(ifp, m, cur_rx->bge_vlan_tag, continue);
 
-			mtag = m_tag_get(PACKET_TAG_VLAN, sizeof(u_int),
-			    M_NOWAIT);
-			if (mtag != NULL) {
-				*(u_int *)(mtag + 1) = vlan_tag;
-				m_tag_prepend(m, mtag);
-				have_tag = vlan_tag = 0;
-			} else {
-				printf("%s: no mbuf for tag\n", ifp->if_xname);
-				m_freem(m);
-				have_tag = vlan_tag = 0;
-				continue;
-			}
-		}
 		(*ifp->if_input)(ifp, m);
 	}
 
@@ -2922,7 +2902,7 @@ bge_txeof(sc)
 	    BUS_DMASYNC_POSTREAD);
 
 	offset = offsetof(struct bge_ring_data, bge_tx_ring);
-	tosync = sc->bge_rdata->bge_status_block.bge_idx[0].bge_tx_cons_idx - 
+	tosync = sc->bge_rdata->bge_status_block.bge_idx[0].bge_tx_cons_idx -
 	    sc->bge_tx_saved_considx;
 
 	toff = offset + (sc->bge_tx_saved_considx * sizeof (struct bge_tx_bd));
@@ -3049,7 +3029,7 @@ bge_intr(xsc)
 		CSR_WRITE_4(sc, BGE_HCC_RX_COAL_TICKS, rx_ticks);
 		DELAY(10);
 		junk = CSR_READ_4(sc, BGE_HCC_RX_COAL_TICKS);
-		
+
 		CSR_WRITE_4(sc, BGE_HCC_RX_MAX_COAL_BDS, rx_bds);
 		DELAY(10);
 		junk = CSR_READ_4(sc, BGE_HCC_RX_MAX_COAL_BDS);
@@ -3205,7 +3185,7 @@ bge_cksum_pad(struct mbuf *pkt)
 	} else {
 		/*
 		 * Walk packet chain to find last mbuf. We will either
-		 * pad there, or append a new mbuf and pad it 
+		 * pad there, or append a new mbuf and pad it
 		 * (thus perhaps avoiding the bcm5700 dma-min bug).
 		 */
 		for (last = pkt; last->m_next != NULL; last = last->m_next) {
@@ -3304,7 +3284,7 @@ bge_compact_dma_runt(struct mbuf *pkt)
 #endif
 			if ((prev->m_len - shortfall) < 8)
 				shortfall = prev->m_len;
-			
+
 #ifdef notyet	/* just do the safe slow thing for now */
 			if (!M_READONLY(m)) {
 				if (M_LEADINGSPACE(m) < shorfall) {
@@ -3380,7 +3360,7 @@ bge_encap(sc, m_head, txidx)
 			csum_flags |= BGE_TXBDFLAG_TCP_UDP_CSUM;
 	}
 
-	/* 
+	/*
 	 * If we were asked to do an outboard checksum, and the NIC
 	 * has the bug where it sometimes adds in the Ethernet padding,
 	 * explicitly pad with zeros so the cksum will be correct either way.
@@ -3390,7 +3370,7 @@ bge_encap(sc, m_head, txidx)
 	if ((csum_flags & BGE_TXBDFLAG_TCP_UDP_CSUM) == 0 ||
 #ifdef notyet
 	    (sc->bge_quirks & BGE_QUIRK_SHORT_CKSUM_BUG) == 0 ||
-#endif	    
+#endif
 	    m_head->m_pkthdr.len >= ETHER_MIN_NOPAD)
 		goto check_dma_bug;
 
@@ -3402,7 +3382,7 @@ check_dma_bug:
 		goto doit;
 	/*
 	 * bcm5700 Revision B silicon cannot handle DMA descriptors with
-	 * less than eight bytes.  If we encounter a teeny mbuf 
+	 * less than eight bytes.  If we encounter a teeny mbuf
 	 * at the end of a chain, we can pad.  Otherwise, copy.
 	 */
 	if (bge_compact_dma_runt(m_head) != 0)
@@ -3423,8 +3403,7 @@ doit:
 	    BUS_DMA_NOWAIT))
 		return(ENOBUFS);
 
-	mtag = sc->ethercom.ec_nvlans ?
-	    m_tag_find(m_head, PACKET_TAG_VLAN, NULL) : NULL;
+	mtag = VLAN_OUTPUT_TAG(&sc->ethercom, m_head);
 
 	for (i = 0; i < dmamap->dm_nsegs; i++) {
 		f = &sc->bge_rdata->bge_tx_ring[frag];
@@ -3436,7 +3415,7 @@ doit:
 
 		if (mtag != NULL) {
 			f->bge_flags |= BGE_TXBDFLAG_VLAN_TAG;
-			f->bge_vlan_tag = *(u_int *)(mtag + 1);
+			f->bge_vlan_tag = VLAN_TAG_VALUE(mtag);
 		} else {
 			f->bge_vlan_tag = 0;
 		}
@@ -3508,7 +3487,7 @@ bge_start(ifp)
 		if (m_head->m_flags & M_FIRSTFRAG &&
 		    m_head->m_pkthdr.csum_flags & (CSUM_DELAY_DATA)) {
 			if ((BGE_TX_RING_CNT - sc->bge_txcnt) <
-			    m_head->m_pkthdr.csum_data + 16) {
+			    M_CSUM_DATA_IPv4_OFFSET(m_head->m_pkthdr.csum_data) + 16) {
 				ifp->if_flags |= IFF_OACTIVE;
 				break;
 			}
@@ -3995,7 +3974,7 @@ SYSCTL_SETUP(sysctl_bge, "sysctl bge subtree setup")
 	bge_root_num = node->sysctl_num;
 
 	/* BGE Rx interrupt mitigation level */
-	if ((rc = sysctl_createv(clog, 0, NULL, &node, 
+	if ((rc = sysctl_createv(clog, 0, NULL, &node,
 	    CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
 	    CTLTYPE_INT, "rx_lvl",
 	    SYSCTL_DESCR("BGE receive interrupt mitigation level"),

@@ -1,4 +1,4 @@
-/*	$NetBSD: kbd.c,v 1.4 2003/11/14 16:52:40 tsutsui Exp $	*/
+/*	$NetBSD: kbd.c,v 1.4.10.1 2005/03/19 08:32:58 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -57,14 +57,14 @@
 struct kbdsw *selected_kbd;
 
 int
-kbdgetc()
+kbdgetc(void)
 {
 
 	return (selected_kbd != NULL) ? (*selected_kbd->k_getc)() : 0;
 }
 
 void
-kbdnmi()
+kbdnmi(void)
 {
 
 	if (selected_kbd != NULL)
@@ -82,7 +82,7 @@ kbdnmi()
 }
 
 void
-kbdinit()
+kbdinit(void)
 {
 	int i;
 

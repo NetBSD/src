@@ -1,4 +1,4 @@
-/*	$NetBSD: umass_scsipi.c,v 1.21 2004/10/28 07:07:46 yamt Exp $	*/
+/*	$NetBSD: umass_scsipi.c,v 1.21.6.1 2005/03/19 08:35:58 yamt Exp $	*/
 
 /*
  * Copyright (c) 2001, 2003 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umass_scsipi.c,v 1.21 2004/10/28 07:07:46 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umass_scsipi.c,v 1.21.6.1 2005/03/19 08:35:58 yamt Exp $");
 
 #include "atapibus.h"
 #include "scsibus.h"
@@ -55,6 +55,7 @@ __KERNEL_RCSID(0, "$NetBSD: umass_scsipi.c,v 1.21 2004/10/28 07:07:46 yamt Exp $
 
 /* SCSI & ATAPI */
 #include <sys/scsiio.h>
+#include <dev/scsipi/scsi_spc.h>
 #include <dev/scsipi/scsi_all.h>
 #include <dev/scsipi/scsipi_all.h>
 #include <dev/scsipi/scsiconf.h>
@@ -84,7 +85,7 @@ struct umass_scsipi_softc {
 #define sc_adapter sc_atapi_adapter._generic
 	struct scsipi_channel sc_channel;
 	usbd_status		sc_sync_status;
-	struct scsipi_sense	sc_sense_cmd;
+	struct scsi_request_sense	sc_sense_cmd;
 };
 
 
@@ -445,7 +446,7 @@ umass_scsipi_cb(struct umass_softc *sc, void *priv, int residue, int status)
 		/* fetch sense data */
 		sc->sc_sense = 1;
 		memset(&scbus->sc_sense_cmd, 0, sizeof(scbus->sc_sense_cmd));
-		scbus->sc_sense_cmd.opcode = REQUEST_SENSE;
+		scbus->sc_sense_cmd.opcode = SCSI_REQUEST_SENSE;
 		scbus->sc_sense_cmd.byte2 = periph->periph_lun <<
 		    SCSI_CMD_LUN_SHIFT;
 		scbus->sc_sense_cmd.length = sizeof(xs->sense);

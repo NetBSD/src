@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_conv.c,v 1.4 2004/12/27 18:14:36 jdolecek Exp $	*/
+/*	$NetBSD: ntfs_conv.c,v 1.4.4.1 2005/03/19 08:36:10 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ntfs_conv.c,v 1.4 2004/12/27 18:14:36 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ntfs_conv.c,v 1.4.4.1 2005/03/19 08:36:10 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -102,5 +102,5 @@ ntfs_utf8_wcmp(wchar wc1, wchar wc2)
 	if (wc1 == wc2)
 		return 0;
 	else
-		return (int) wc1 - (int) wc2; 
+		return (int) wc1 - (int) wc2;
 }

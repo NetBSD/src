@@ -1,4 +1,4 @@
-/*	$NetBSD: st_scsi.c,v 1.16 2004/10/28 07:07:46 yamt Exp $ */
+/*	$NetBSD: st_scsi.c,v 1.16.6.1 2005/03/19 08:35:48 yamt Exp $ */
 
 /*-
  * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: st_scsi.c,v 1.16 2004/10/28 07:07:46 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: st_scsi.c,v 1.16.6.1 2005/03/19 08:35:48 yamt Exp $");
 
 #include "opt_scsi.h"
 #include "rnd.h"
@@ -187,8 +187,8 @@ st_scsibus_mode_sense(struct st_softc *st, int flags)
 	u_int scsipi_sense_len;
 	int error;
 	struct scsipi_sense {
-		struct scsipi_mode_header header;
-		struct scsi_blk_desc blk_desc;
+		struct scsi_mode_parameter_header_6 header;
+		struct scsi_general_block_descriptor blk_desc;
 		u_char sense_data[MAX_PAGE_0_SIZE];
 	} scsipi_sense;
 	struct scsipi_periph *periph = st->sc_periph;
@@ -201,7 +201,7 @@ st_scsibus_mode_sense(struct st_softc *st, int flags)
 	 * if asked, or if we need it as a template for the mode select store
 	 * it away.
 	 */
-	error = scsipi_mode_sense(st->sc_periph, 0, SMS_PAGE_CTRL_CURRENT,
+	error = scsipi_mode_sense(st->sc_periph, 0, SMS_PCTRL_CURRENT,
 	    &scsipi_sense.header, scsipi_sense_len, flags | XS_CTL_DATA_ONSTACK,
 	    ST_RETRIES, ST_CTL_TIME);
 	if (error)
@@ -237,8 +237,8 @@ st_scsibus_mode_select(struct st_softc *st, int flags)
 {
 	u_int scsi_select_len;
 	struct scsi_select {
-		struct scsipi_mode_header header;
-		struct scsi_blk_desc blk_desc;
+		struct scsi_mode_parameter_header_6 header;
+		struct scsi_general_block_descriptor blk_desc;
 		u_char sense_data[MAX_PAGE_0_SIZE];
 	} scsi_select;
 	struct scsipi_periph *periph = st->sc_periph;
@@ -261,7 +261,7 @@ st_scsibus_mode_select(struct st_softc *st, int flags)
 	 * Set up for a mode select
 	 */
 	memset(&scsi_select, 0, scsi_select_len);
-	scsi_select.header.blk_desc_len = sizeof(struct scsi_blk_desc);
+	scsi_select.header.blk_desc_len = sizeof(struct scsi_general_block_descriptor);
 	scsi_select.header.dev_spec &= ~SMH_DSP_BUFF_MODE;
 	scsi_select.blk_desc.density = st->density;
 	if (st->flags & ST_DONTBUFFER)
@@ -276,7 +276,7 @@ st_scsibus_mode_select(struct st_softc *st, int flags)
 	/*
 	 * do the command
 	 */
-	return scsipi_mode_select(periph, 0, &scsi_select.header, 
+	return scsipi_mode_select(periph, 0, &scsi_select.header,
 	    scsi_select_len, flags | XS_CTL_DATA_ONSTACK,
 	    ST_RETRIES, ST_CTL_TIME);
 }
@@ -287,8 +287,8 @@ st_scsibus_cmprss(struct st_softc *st, int flags, int onoff)
 	u_int scsi_dlen;
 	int byte2, page;
 	struct scsi_select {
-		struct scsipi_mode_header header;
-		struct scsi_blk_desc blk_desc;
+		struct scsi_mode_parameter_header_6 header;
+		struct scsi_general_block_descriptor blk_desc;
 		u_char pdata[MAX(sizeof(struct scsi_tape_dev_conf_page),
 		    sizeof(struct scsi_tape_dev_compression_page))];
 	} scsi_pdata;
@@ -298,10 +298,10 @@ st_scsibus_cmprss(struct st_softc *st, int flags, int onoff)
 	int error, ison;
 
 	scsi_dlen = sizeof(scsi_pdata);
-	/*  
+	/*
 	 * Do DATA COMPRESSION page first.
 	 */
-	page = SMS_PAGE_CTRL_CURRENT | 0xf;
+	page = SMS_PCTRL_CURRENT | 0xf;
 	byte2 = 0;
 
 	/*
@@ -321,8 +321,8 @@ again:
 		/*
 		 * Try a different page?
 		 */
-		if (page == (SMS_PAGE_CTRL_CURRENT | 0xf)) {
-			page = SMS_PAGE_CTRL_CURRENT | 0x10;
+		if (page == (SMS_PCTRL_CURRENT | 0xf)) {
+			page = SMS_PCTRL_CURRENT | 0x10;
 			byte2 = 0;
 			goto again;
 		}
@@ -334,7 +334,7 @@ again:
 	else
 		ptr = (struct scsi_tape_dev_conf_page *) &scsi_pdata.blk_desc;
 
-	if ((page & SMS_PAGE_CODE) == 0xf) {
+	if ((page & SMS_PAGE_MASK) == 0xf) {
 		cptr = (struct scsi_tape_dev_compression_page *) ptr;
 		ison = (cptr->dce_dcc & DCP_DCE) != 0;
 		if (onoff)
@@ -392,11 +392,11 @@ again:
 	error = scsipi_mode_select(periph, SMS_PF, &scsi_pdata.header,
 	    scsi_dlen, flags | XS_CTL_DATA_ONSTACK, ST_RETRIES, ST_CTL_TIME);
 
-	if (error && (page & SMS_PAGE_CODE) == 0xf) {
+	if (error && (page & SMS_PAGE_MASK) == 0xf) {
 		/*
 		 * Try DEVICE CONFIGURATION page.
 		 */
-		page = SMS_PAGE_CTRL_CURRENT | 0x10;
+		page = SMS_PCTRL_CURRENT | 0x10;
 		goto again;
 	}
 	return (error);

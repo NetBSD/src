@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.9 2003/03/15 07:20:22 perseant Exp $
+#	$NetBSD: Makefile,v 1.9.12.1 2005/03/19 08:36:30 yamt Exp $
 
 .include "../Makefile.inc"
 
@@ -14,7 +14,7 @@ KMOD=	lfs
 SRCS=	lkminit_vfs.c
 SRCS+=	lfs_vfsops.c lfs_vnops.c lfs_subr.c
 SRCS+=	lfs_alloc.c lfs_balloc.c lfs_bio.c lfs_cksum.c lfs_debug.c
-SRCS+=	lfs_inode.c lfs_segment.c lfs_syscalls.c 
+SRCS+=	lfs_inode.c lfs_segment.c lfs_syscalls.c
 SRCS+=	ufs_vnops.c
 
 .include <bsd.kmod.mk>

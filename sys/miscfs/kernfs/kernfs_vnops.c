@@ -1,4 +1,4 @@
-/*	$NetBSD: kernfs_vnops.c,v 1.106 2004/10/27 06:55:53 skrll Exp $	*/
+/*	$NetBSD: kernfs_vnops.c,v 1.106.6.1 2005/03/19 08:36:30 yamt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kernfs_vnops.c,v 1.106 2004/10/27 06:55:53 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kernfs_vnops.c,v 1.106.6.1 2005/03/19 08:36:30 yamt Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ipsec.h"
@@ -835,9 +835,9 @@ kernfs_getattr(v)
 	 * Make all times be current TOD, except for the "boottime" node.
 	 * Avoid microtime(9), it's slow.
 	 * We don't guard the read from time(9) with splclock(9) since we
-	 * don't actually need to be THAT sure the access is atomic. 
+	 * don't actually need to be THAT sure the access is atomic.
 	 */
-	if (kfs->kfs_kt && kfs->kfs_kt->kt_namlen == 8 && 
+	if (kfs->kfs_kt && kfs->kfs_kt->kt_namlen == 8 &&
 	    !memcmp(kfs->kfs_kt->kt_name, "boottime", 8)) {
 		TIMEVAL_TO_TIMESPEC(&boottime, &vap->va_ctime);
 	} else {
@@ -1507,15 +1507,15 @@ kernfs_print(v)
 }
 
 int
-kernfs_link(v) 
+kernfs_link(v)
 	void *v;
 {
 	struct vop_link_args /* {
 		struct vnode *a_dvp;
-		struct vnode *a_vp;  
+		struct vnode *a_vp;
 		struct componentname *a_cnp;
 	} */ *ap = v;
- 
+
 	VOP_ABORTOP(ap->a_dvp, ap->a_cnp);
 	vput(ap->a_dvp);
 	return (EROFS);
@@ -1532,7 +1532,7 @@ kernfs_symlink(v)
 		struct vattr *a_vap;
 		char *a_target;
 	} */ *ap = v;
-  
+
 	VOP_ABORTOP(ap->a_dvp, ap->a_cnp);
 	vput(ap->a_dvp);
 	return (EROFS);

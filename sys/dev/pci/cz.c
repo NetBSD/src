@@ -1,4 +1,4 @@
-/*	$NetBSD: cz.c,v 1.29 2003/10/27 07:07:34 chs Exp $	*/
+/*	$NetBSD: cz.c,v 1.29.10.1 2005/03/19 08:35:10 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2000 Zembu Labs, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cz.c,v 1.29 2003/10/27 07:07:34 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cz.c,v 1.29.10.1 2005/03/19 08:35:10 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1147,7 +1147,7 @@ czttypoll(dev, events, p)
 {
 	struct cztty_softc *sc = CZTTY_SOFTC(dev);
 	struct tty *tp = sc->sc_tty;
- 
+
 	return ((*tp->t_linesw->l_poll)(tp, events, p));
 }
 

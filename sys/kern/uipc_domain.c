@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_domain.c,v 1.49 2005/01/23 18:41:56 matt Exp $	*/
+/*	$NetBSD: uipc_domain.c,v 1.49.2.1 2005/03/19 08:36:12 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -32,10 +32,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_domain.c,v 1.49 2005/01/23 18:41:56 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_domain.c,v 1.49.2.1 2005/03/19 08:36:12 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/socket.h>
+#include <sys/socketvar.h>
 #include <sys/protosw.h>
 #include <sys/domain.h>
 #include <sys/mbuf.h>
@@ -46,6 +47,9 @@ __KERNEL_RCSID(0, "$NetBSD: uipc_domain.c,v 1.49 2005/01/23 18:41:56 matt Exp $"
 #include <sys/queue.h>
 #include <sys/proc.h>
 #include <sys/sysctl.h>
+#include <sys/un.h>
+#include <sys/unpcb.h>
+#include <sys/file.h>
 
 void	pffasttimo(void *);
 void	pfslowtimo(void *);
@@ -170,6 +174,140 @@ pffindproto(int family, int protocol, int type)
 	return (maybe);
 }
 
+/*
+ * sysctl helper to stuff PF_LOCAL pcbs into sysctl structures
+ */
+static void
+sysctl_dounpcb(struct kinfo_pcb *pcb, const struct socket *so)
+{
+	struct unpcb *unp = sotounpcb(so);
+	struct sockaddr_un *un = unp->unp_addr;
+
+	memset(pcb, 0, sizeof(*pcb));
+
+	pcb->ki_family = so->so_proto->pr_domain->dom_family;
+	pcb->ki_type = so->so_proto->pr_type;
+	pcb->ki_protocol = so->so_proto->pr_protocol;
+	pcb->ki_pflags = unp->unp_flags;
+
+	pcb->ki_pcbaddr = PTRTOUINT64(unp);
+	/* pcb->ki_ppcbaddr = unp has no ppcb... */
+	pcb->ki_sockaddr = PTRTOUINT64(so);
+
+	pcb->ki_sostate = so->so_state;
+	/* pcb->ki_prstate = unp has no state... */
+
+	pcb->ki_rcvq = so->so_rcv.sb_cc;
+	pcb->ki_sndq = so->so_snd.sb_cc;
+
+	un = (struct sockaddr_un *)&pcb->ki_src;
+	/*
+	 * local domain sockets may bind without having a local
+	 * endpoint.  bleah!
+	 */
+	if (unp->unp_addr != NULL) {
+		un->sun_len = unp->unp_addr->sun_len;
+		un->sun_family = unp->unp_addr->sun_family;
+		strlcpy(un->sun_path, unp->unp_addr->sun_path,
+		    sizeof(pcb->ki_s));
+	}
+	else {
+		un->sun_len = offsetof(struct sockaddr_un, sun_path);
+		un->sun_family = pcb->ki_family;
+	}
+	if (unp->unp_conn != NULL) {
+		un = (struct sockaddr_un *)&pcb->ki_dst;
+		if (unp->unp_conn->unp_addr != NULL) {
+			un->sun_len = unp->unp_conn->unp_addr->sun_len;
+			un->sun_family = unp->unp_conn->unp_addr->sun_family;
+			un->sun_family = unp->unp_conn->unp_addr->sun_family;
+			strlcpy(un->sun_path, unp->unp_conn->unp_addr->sun_path,
+				sizeof(pcb->ki_d));
+		}
+		else {
+			un->sun_len = offsetof(struct sockaddr_un, sun_path);
+			un->sun_family = pcb->ki_family;
+		}
+	}
+
+	pcb->ki_inode = unp->unp_ino;
+	pcb->ki_vnode = PTRTOUINT64(unp->unp_vnode);
+	pcb->ki_conn = PTRTOUINT64(unp->unp_conn);
+	pcb->ki_refs = PTRTOUINT64(unp->unp_refs);
+	pcb->ki_nextref = PTRTOUINT64(unp->unp_nextref);
+}
+
+static int
+sysctl_unpcblist(SYSCTLFN_ARGS)
+{
+	struct file *fp;
+	struct socket *so;
+	struct kinfo_pcb pcb;
+	char *dp;
+	u_int op, arg;
+	size_t len, needed, elem_size, out_size;
+	int error, elem_count, pf, type, pf2;
+
+	if (namelen == 1 && name[0] == CTL_QUERY)
+		return (sysctl_query(SYSCTLFN_CALL(rnode)));
+
+	if (namelen != 4)
+		return (EINVAL);
+
+	error = 0;
+	dp = oldp;
+	len = (oldp != NULL) ? *oldlenp : 0;
+	op = name[0];
+	arg = name[1];
+	elem_size = name[2];
+	elem_count = name[3];
+	out_size = MIN(sizeof(pcb), elem_size);
+	needed = 0;
+
+	elem_count = INT_MAX;
+	elem_size = out_size = sizeof(pcb);
+
+	if (name - oname != 4)
+		return (EINVAL);
+
+	pf = oname[1];
+	type = oname[2];
+	pf2 = (oldp == NULL) ? 0 : pf;
+
+	/*
+	 * there's no "list" of local domain sockets, so we have
+	 * to walk the file list looking for them.  :-/
+	 */
+	LIST_FOREACH(fp, &filehead, f_list) {
+		if (fp->f_type != DTYPE_SOCKET)
+			continue;
+		so = (struct socket *)fp->f_data;
+		if (so->so_type != type)
+			continue;
+		if (so->so_proto->pr_domain->dom_family != pf)
+			continue;
+		if (len >= elem_size && elem_count > 0) {
+			sysctl_dounpcb(&pcb, so);
+			error = copyout(&pcb, dp, out_size);
+			if (error)
+				break;
+			dp += elem_size;
+			len -= elem_size;
+		}
+		if (elem_count > 0) {
+			needed += elem_size;
+			if (elem_count != INT_MAX)
+				elem_count--;
+		}
+	}
+
+	*oldlenp = needed;
+	if (oldp == NULL)
+		*oldlenp += PCB_SLOP * sizeof(struct kinfo_pcb);
+
+	return (error);
+}
+
 SYSCTL_SETUP(sysctl_net_setup, "sysctl net subtree setup")
 {
 	sysctl_createv(clog, 0, NULL, NULL,
@@ -177,19 +315,37 @@ SYSCTL_SETUP(sysctl_net_setup, "sysctl net subtree setup")
 		       CTLTYPE_NODE, "net", NULL,
 		       NULL, 0, NULL, 0,
 		       CTL_NET, CTL_EOL);
-
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT,
 		       CTLTYPE_NODE, "local",
 		       SYSCTL_DESCR("PF_LOCAL related settings"),
 		       NULL, 0, NULL, 0,
 		       CTL_NET, PF_LOCAL, CTL_EOL);
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_NODE, "stream",
+		       SYSCTL_DESCR("SOCK_STREAM settings"),
+		       NULL, 0, NULL, 0,
+		       CTL_NET, PF_LOCAL, SOCK_STREAM, CTL_EOL);
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_NODE, "dgram",
+		       SYSCTL_DESCR("SOCK_DGRAM settings"),
+		       NULL, 0, NULL, 0,
+		       CTL_NET, PF_LOCAL, SOCK_DGRAM, CTL_EOL);
 
-	/*
-	 * other protocols are expected to have their own setup
-	 * routines that will do everything.  we end up not having
-	 * anything at all to do.
-	 */
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_STRUCT, "pcblist",
+		       SYSCTL_DESCR("SOCK_STREAM protocol control block list"),
+		       sysctl_unpcblist, 0, NULL, 0,
+		       CTL_NET, PF_LOCAL, SOCK_STREAM, CTL_CREATE, CTL_EOL);
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_STRUCT, "pcblist",
+		       SYSCTL_DESCR("SOCK_DGRAM protocol control block list"),
+		       sysctl_unpcblist, 0, NULL, 0,
+		       CTL_NET, PF_LOCAL, SOCK_DGRAM, CTL_CREATE, CTL_EOL);
 }
 
 void

@@ -1,4 +1,4 @@
-/*	$NetBSD: am9513reg.h,v 1.1 2001/04/10 12:50:17 fredette Exp $	*/
+/*	$NetBSD: am9513reg.h,v 1.1.36.1 2005/03/19 08:34:01 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
 
 /*
  * Driver support for the Am9513 timer chip.  See
- * http://www.amd.com/products/cpg/techdocs/misc/03402/03402.html 
+ * http://www.amd.com/products/cpg/techdocs/misc/03402/03402.html
  * for data sheets.
  */
 
@@ -53,18 +53,18 @@ struct am9513 {
 #define	AM9513_CLK_DATA		0
 #define	AM9513_CLK_CMD		2
 
-/* 
+/*
  * All of the below macros are for use in bitfields in the Counter
  * Mode (CM) Register.
  */
 
 /* Gating control, CM[13:15]: */
 /*
- * Legend: A[HL][LE]? 
+ * Legend: A[HL][LE]?
  *         | |    `-> L = level, E = edge
  *         | `-> H = high, L = low
  *         `-> active
- *  
+ *
  *         P1 = plus one, M1 = minus one
  */
 #define	AM9513_CM_GATING_NONE		(0x0 << 13)
@@ -135,13 +135,13 @@ struct am9513 {
 
 /*
  * Mode B is just like mode A, except you OR in the
- * AM9513_CM_GATING_ value for the *level* you want: 
+ * AM9513_CM_GATING_ value for the *level* you want:
  */
 #define	AM9513_CM_MODE_B AM9513_CM_MODE_A
 
 /*
  * Mode C is just like mode A, except you OR in the
- * AM9513_CM_GATING_ value for the *edge* you want: 
+ * AM9513_CM_GATING_ value for the *edge* you want:
  */
 #define	AM9513_CM_MODE_C AM9513_CM_MODE_A
 
@@ -153,13 +153,13 @@ struct am9513 {
 
 /*
  * Mode E is just like mode D, except you OR in the
- * AM9513_CM_GATING_ value for the *level* you want: 
+ * AM9513_CM_GATING_ value for the *level* you want:
  */
 #define	AM9513_CM_MODE_E AM9513_CM_MODE_D
 
 /*
  * Mode F is just like mode D, except you OR in the
- * AM9513_CM_GATING_ value for the *edge* you want: 
+ * AM9513_CM_GATING_ value for the *edge* you want:
  */
 #define	AM9513_CM_MODE_F AM9513_CM_MODE_D
 
@@ -171,13 +171,13 @@ struct am9513 {
 
 /*
  * Mode H is just like mode G, except you OR in the
- * AM9513_CM_GATING_ value for the *level* you want: 
+ * AM9513_CM_GATING_ value for the *level* you want:
  */
 #define	AM9513_CM_MODE_H AM9513_CM_MODE_G
 
 /*
  * Mode I is just like mode G, except you OR in the
- * AM9513_CM_GATING_ value for the *edge* you want: 
+ * AM9513_CM_GATING_ value for the *edge* you want:
  */
 #define	AM9513_CM_MODE_I AM9513_CM_MODE_G
 
@@ -189,13 +189,13 @@ struct am9513 {
 
 /*
  * Mode K is just like mode J, except you OR in the
- * AM9513_CM_GATING_ value for the *level* you want: 
+ * AM9513_CM_GATING_ value for the *level* you want:
  */
 #define	AM9513_CM_MODE_K AM9513_CM_MODE_J
 
-/* 
+/*
  * Mode L is just like mode J, except you OR in the
- * AM9513_CM_GATING_ value for the *edge* you want: 
+ * AM9513_CM_GATING_ value for the *edge* you want:
  */
 #define	AM9513_CM_MODE_L AM9513_CM_MODE_J
 
@@ -205,9 +205,9 @@ struct am9513 {
 			  | AM9513_CM_RELOAD_SOURCE_LOAD \
 			  | AM9513_CM_REPEAT_DIS)
 
-/* 
+/*
  * Mode O is just like mode N, except you OR in the
- * AM9513_CM_GATING_ value for the *edge* you want: 
+ * AM9513_CM_GATING_ value for the *edge* you want:
  */
 #define	AM9513_CM_MODE_O AM9513_CM_MODE_N
 
@@ -219,7 +219,7 @@ struct am9513 {
 
 /*
  * Mode R is just like mode N, except you OR in the
- * AM9513_CM_GATING_ value for the *edge* you want: 
+ * AM9513_CM_GATING_ value for the *edge* you want:
  */
 #define	AM9513_CM_MODE_R AM9513_CM_MODE_Q
 
@@ -239,8 +239,8 @@ struct am9513 {
 #define	AM9513_CM_SOURCE_Fn_DIV(func) (1 << (((func) - AM9513_CM_SOURCE_F1) >> 6))
 
 /*
- * Given a basic frequency and an AM9513_CM_SOURCE_F? value, returns 
- * the number of clock ticks for a certain frequency: 
+ * Given a basic frequency and an AM9513_CM_SOURCE_F? value, returns
+ * the number of clock ticks for a certain frequency:
  */
 #define	AM9513_TICKS(basic, func, hz) (((basic) / AM9513_CM_SOURCE_Fn_DIV(func)) / (hz))
 
@@ -252,8 +252,8 @@ struct am9513 {
 #define	AM9513_TIMER5	(5)
 
 /*
- * This macro is used to compose a bitmask of times for those 
- * commands that take a bitmask: 
+ * This macro is used to compose a bitmask of times for those
+ * commands that take a bitmask:
  */
 #define	AM9513_TIMER_BIT(timer)	(1 << ((timer) - 1))
 

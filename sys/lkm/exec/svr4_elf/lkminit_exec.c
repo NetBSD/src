@@ -1,4 +1,4 @@
-/* $NetBSD: lkminit_exec.c,v 1.9 2004/11/13 06:09:47 christos Exp $ */
+/* $NetBSD: lkminit_exec.c,v 1.9.6.1 2005/03/19 08:36:29 yamt Exp $ */
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lkminit_exec.c,v 1.9 2004/11/13 06:09:47 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lkminit_exec.c,v 1.9.6.1 2005/03/19 08:36:29 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -93,7 +93,7 @@ MOD_EXEC("exec_svr4_elf", -1, &exec_svr4_elf, "svr4");
  */
 int
 exec_svr4_elf_lkmentry(lkmtp, cmd, ver)
-	struct lkm_table *lkmtp;	
+	struct lkm_table *lkmtp;
 	int cmd;
 	int ver;
 {

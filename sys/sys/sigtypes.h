@@ -1,4 +1,4 @@
-/*	$NetBSD: sigtypes.h,v 1.5 2003/10/13 18:50:43 fvdl Exp $	*/
+/*	$NetBSD: sigtypes.h,v 1.5.10.1 2005/03/19 08:36:52 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -152,7 +152,7 @@ struct __sigaltstack32 {
 	uint32_t	ss_size;
 	int32_t		ss_flags;
 };
- 
+
 typedef struct __sigaltstack32 stack32_t;
 
 #endif /* COMPAT_NETBSD32 && _KERNEL */

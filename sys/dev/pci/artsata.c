@@ -1,4 +1,4 @@
-/*	$NetBSD: artsata.c,v 1.4.6.1 2005/02/12 18:17:47 yamt Exp $	*/
+/*	$NetBSD: artsata.c,v 1.4.6.2 2005/03/19 08:35:10 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -78,9 +78,9 @@ struct artisea_cmd_map
 };
 
 static const struct artisea_cmd_map artisea_dpa_cmd_map[] =
-{ 
+{
 	{ARTISEA_SUPDDR, 4},	/* 0 Data */
-	{ARTISEA_SUPDER, 1},	/* 1 Error */ 
+	{ARTISEA_SUPDER, 1},	/* 1 Error */
 	{ARTISEA_SUPDCSR, 2},	/* 2 Sector Count */
 	{ARTISEA_SUPDSNR, 2},	/* 3 Sector Number */
 	{ARTISEA_SUPDCLR, 2},	/* 4 Cylinder Low */
@@ -232,7 +232,7 @@ artisea_mapregs(struct pci_attach_args *pa, struct pciide_channel *cp,
 			aprint_error("%s: couldn't map native-PCI interrupt\n",
 			    sc->sc_wdcdev.sc_atac.atac_dev.dv_xname);
 			goto bad;
-		}	
+		}
 		intrstr = pci_intr_string(pa->pa_pc, intrhandle);
 		sc->sc_pci_ih = pci_intr_establish(pa->pa_pc,
 		    intrhandle, IPL_BIO, pci_intr, sc);
@@ -271,7 +271,7 @@ artisea_mapregs(struct pci_attach_args *pa, struct pciide_channel *cp,
 
 	for (i = 0; i < WDC_NREG + 2; i++) {
 
-		if (bus_space_subregion(wdr->cmd_iot, wdr->cmd_baseioh, 
+		if (bus_space_subregion(wdr->cmd_iot, wdr->cmd_baseioh,
 		    artisea_dpa_cmd_map[i].offset, artisea_dpa_cmd_map[i].size,
 		    &wdr->cmd_iohs[i]) != 0) {
 			aprint_error("%s: couldn't subregion %s channel "
@@ -324,7 +324,7 @@ artisea_mapreg_dma(struct pciide_softc *sc, struct pci_attach_args *pa)
 	sc->sc_dma_ok = 1;
 
 	/*
-	 * Errata #4 says that if the cacheline length is not set correctly, 
+	 * Errata #4 says that if the cacheline length is not set correctly,
 	 * we can get corrupt MWI and Memory-Block-Write transactions.
 	 */
 	cacheline_len = PCI_CACHELINE(pci_conf_read (pa->pa_pc, pa->pa_tag,
@@ -401,7 +401,7 @@ artisea_chip_map_dpa(struct pciide_softc *sc, struct pci_attach_args *pa)
 		return;
 
 	artisea_mapreg_dma(sc, pa);
-	
+
 	sc->sc_wdcdev.cap = WDC_CAPABILITY_WIDEREGS;
 
 	sc->sc_wdcdev.sc_atac.atac_cap |= ATAC_CAP_DATA16 | ATAC_CAP_DATA32;
@@ -420,7 +420,7 @@ artisea_chip_map_dpa(struct pciide_softc *sc, struct pci_attach_args *pa)
 
 	wdc_allocate_regs(&sc->sc_wdcdev);
 
-	/* 
+	/*
 	 * Perform a quick check to ensure that the device isn't configured
 	 * in Spread-spectrum clocking mode.  This feature is buggy and has
 	 * been removed from the latest documentation.

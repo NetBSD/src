@@ -1,4 +1,4 @@
-/* $NetBSD: i4b_l2.h,v 1.9 2004/02/13 18:02:05 wiz Exp $ */
+/* $NetBSD: i4b_l2.h,v 1.9.10.1 2005/03/19 08:36:41 yamt Exp $ */
 
 /*
  * Copyright (c) 1997, 2000 Hellmuth Michaelis. All rights reserved.
@@ -29,7 +29,7 @@
  *	i4b_l2.h - ISDN layer 2 (Q.921) definitions
  *	---------------------------------------------
  *
- *	$Id: i4b_l2.h,v 1.9 2004/02/13 18:02:05 wiz Exp $ 
+ *	$Id: i4b_l2.h,v 1.9.10.1 2005/03/19 08:36:41 yamt Exp $
  *
  * $FreeBSD$
  *
@@ -52,7 +52,7 @@ typedef struct l2_softc {
 
 	int	tei_valid;	/* tei is valid flag */
 #define TEI_INVALID	0
-#define TEI_VALID	1	
+#define TEI_VALID	1
 	int	tei;		/* tei, if tei flag valid */
 
 	int	ph_active;	/* Layer 1 active flag */
@@ -69,7 +69,7 @@ typedef struct l2_softc {
 	struct	callout T200_callout;
 	struct	callout T202_callout;
 	struct	callout T203_callout;
-	struct	callout IFQU_callout;	
+	struct	callout IFQU_callout;
 
 /*
  * i4b_iframe.c, i4b_i_frame_queued_up(): value of IFQU_DLY
@@ -97,7 +97,7 @@ typedef struct l2_softc {
 	/* this implementation only supports a k-value of 1 !!! */
 	struct mbuf *ua_frame;	/* last unacked frame */
 	int	ua_num;		/* last unacked frame number */
-#define UA_EMPTY (-1)		/* ua_frame is unused	*/	
+#define UA_EMPTY (-1)		/* ua_frame is unused	*/
 
 	int	rxd_CR;		/* received Command Response bit */
 	int	rxd_PF;		/* received Poll/Final bit */
@@ -105,7 +105,7 @@ typedef struct l2_softc {
 	int	RC;		/* Retry Counter */
 
 	int	iframe_sent;	/* check if i frame acked by another i frame */
-	
+
 	int (*postfsmfunc)(struct isdn_l3_driver *drv);/* function to be called at fsm exit */
 	struct isdn_l3_driver *postfsmarg;	/* argument for above function */
 
@@ -135,13 +135,13 @@ typedef struct l2_softc {
 			{		\
 				v = 0;	\
 			}
-			
+
 #define M128DEC(v) 	(v)--;		\
 			if((v)<0)	\
 			{		\
 				v = 127;\
 			}
-			
+
 /* P-bit values */
 
 typedef enum {
@@ -188,7 +188,7 @@ typedef enum {
 
 #define OFF_TEI		1	/* TEI offset */
 #define GETTEI(octett) (((octett) >> 1) & 0x7f)
-#define PUTTEI(tei, octett) ((octett) = ((((tei) << 1) & 0xfe)) | 0x01) 
+#define PUTTEI(tei, octett) ((octett) = ((((tei) << 1) & 0xfe)) | 0x01)
 #define GROUP_TEI	127	/* broadcast TEI for LME */
 
 /* control field - octett 4 */
@@ -262,7 +262,7 @@ typedef enum {
 #define TEIM_TEIO	0x01		/* TEI, EA */
 #define TEIM_UIO	0x02		/* frame type = UI = 0x03 */
 #define TEIM_MEIO	0x03		/* management entity id = 0x0f */
-#define 	MEI	0x0f	
+#define 	MEI	0x0f
 #define TEIM_RILO	0x04		/* reference number, low  */
 #define TEIM_RIHO	0x05		/* reference number, high */
 #define TEIM_MTO	0x06		/* message type */
@@ -293,7 +293,7 @@ enum MDL_ERROR_CODES {
 	MDL_ERR_M,
 	MDL_ERR_N,
 	MDL_ERR_O,
-	MDL_ERR_MAX	
+	MDL_ERR_MAX
 };
 
 /* forward decl */

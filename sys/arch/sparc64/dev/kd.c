@@ -1,4 +1,4 @@
-/*	$NetBSD: kd.c,v 1.32 2004/03/21 15:08:24 pk Exp $	*/
+/*	$NetBSD: kd.c,v 1.32.10.1 2005/03/19 08:33:14 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kd.c,v 1.32 2004/03/21 15:08:24 pk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kd.c,v 1.32.10.1 2005/03/19 08:33:14 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -63,12 +63,6 @@ __KERNEL_RCSID(0, "$NetBSD: kd.c,v 1.32 2004/03/21 15:08:24 pk Exp $");
 #include <machine/cpu.h>
 #include <machine/kbd.h>
 #include <machine/autoconf.h>
-
-#ifdef RASTERCONSOLE
-#include <dev/sun/fbio.h>
-#include <dev/sun/fbvar.h>
-#endif
-
 
 #include <dev/cons.h>
 #include <dev/sun/event_var.h>
@@ -143,11 +137,6 @@ kd_init(kd)
 	 */
 	if (kd_is_console) {
 		fbconstty = tp;
-#ifdef RASTERCONSOLE
-		kd->rows = fbrcons_rows();
-		kd->cols = fbrcons_cols();
-		rcons_ttyinit(tp);
-#endif
 	}
 
 	if (kd->rows == 0 &&

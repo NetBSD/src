@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.33.6.1 2005/02/12 18:17:41 yamt Exp $
+#	$NetBSD: INSTALL,v 1.33.6.2 2005/03/19 08:33:20 yamt Exp $
 #
 # INSTALL kernel; all supported devices but nothing fancy.
 #
@@ -67,7 +67,7 @@ file-system 	CD9660
 #options 	NFSSERVER
 #options 	NFS_V2_ONLY	# Exclude NFS3 and NQNFS code to save space
 options 	VNODE_OP_NOINLINE	# Not inlining vnode op calls saves mem
-#options 	FFS_SNAPSHOT	# ffs snapshots
+options 	FFS_NO_SNAPSHOT	# ffs snapshots
 
 #options 	NFS_BOOT_BOOTP,NFS_BOOT_DHCP	# Use bootp <> dhcp
 #options 	NFS_BOOT_BOOTPARAM	# Use the Sun way for netbooting.
@@ -94,6 +94,7 @@ options 	WSEMUL_VT100
 #options 	COMPAT_13
 options 	COMPAT_14
 options 	COMPAT_15
+options 	COMPAT_20
 #options 	COMPAT_ULTRIX
 options		COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_parityscan.c,v 1.27 2004/03/18 17:26:36 oster Exp $	*/
+/*	$NetBSD: rf_parityscan.c,v 1.27.10.1 2005/03/19 08:35:41 yamt Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -33,7 +33,7 @@
  ****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_parityscan.c,v 1.27 2004/03/18 17:26:36 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_parityscan.c,v 1.27.10.1 2005/03/19 08:35:41 yamt Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -60,7 +60,7 @@ __KERNEL_RCSID(0, "$NetBSD: rf_parityscan.c,v 1.27 2004/03/18 17:26:36 oster Exp
  *
  ****************************************************************************/
 
-int 
+int
 rf_RewriteParity(RF_Raid_t *raidPtr)
 {
 	RF_RaidLayout_t *layoutPtr = &raidPtr->Layout;
@@ -75,9 +75,9 @@ rf_RewriteParity(RF_Raid_t *raidPtr)
 	}
 	if (raidPtr->status != rf_rs_optimal) {
 		/*
-		 * We're in degraded mode.  Don't try to verify parity now! 
-		 * XXX: this should be a "we don't want to", not a 
-		 * "we can't" error. 
+		 * We're in degraded mode.  Don't try to verify parity now!
+		 * XXX: this should be a "we don't want to", not a
+		 * "we can't" error.
 		 */
 		return (RF_PARITY_COULD_NOT_VERIFY);
 	}
@@ -86,18 +86,18 @@ rf_RewriteParity(RF_Raid_t *raidPtr)
 
 	rc = RF_PARITY_OKAY;
 
-	for (i = 0; i < raidPtr->totalSectors && 
-		     rc <= RF_PARITY_CORRECTED; 
+	for (i = 0; i < raidPtr->totalSectors &&
+		     rc <= RF_PARITY_CORRECTED;
 	     i += layoutPtr->dataSectorsPerStripe) {
 		if (raidPtr->waitShutdown) {
 			/* Someone is pulling the plug on this set...
 			   abort the re-write */
 			return (1);
 		}
-		asm_h = rf_MapAccess(raidPtr, i, 
-				     layoutPtr->dataSectorsPerStripe, 
+		asm_h = rf_MapAccess(raidPtr, i,
+				     layoutPtr->dataSectorsPerStripe,
 				     NULL, RF_DONT_REMAP);
-		raidPtr->parity_rewrite_stripes_done = 
+		raidPtr->parity_rewrite_stripes_done =
 			i / layoutPtr->dataSectorsPerStripe ;
 		rc = rf_VerifyParity(raidPtr, asm_h->stripeMap, 1, 0);
 
@@ -134,7 +134,7 @@ rf_RewriteParity(RF_Raid_t *raidPtr)
  * region defined by the parityPDA.
  *
  ****************************************************************************/
-int 
+int
 rf_VerifyParity(RF_Raid_t *raidPtr, RF_AccessStripeMap_t *aasm,
 		int correct_it, RF_RaidAccessFlags_t flags)
 {
@@ -153,10 +153,10 @@ rf_VerifyParity(RF_Raid_t *raidPtr, RF_AccessStripeMap_t *aasm,
 	rc = RF_PARITY_OKAY;
 	if (lp->VerifyParity) {
 		for (doasm = aasm; doasm; doasm = doasm->next) {
-			for (parityPDA = doasm->parityInfo; parityPDA; 
+			for (parityPDA = doasm->parityInfo; parityPDA;
 			     parityPDA = parityPDA->next) {
-				lrc = lp->VerifyParity(raidPtr, 
-						       doasm->raidAddress, 
+				lrc = lp->VerifyParity(raidPtr,
+						       doasm->raidAddress,
 						       parityPDA,
 						       correct_it, flags);
 				if (lrc > rc) {
@@ -172,7 +172,7 @@ rf_VerifyParity(RF_Raid_t *raidPtr, RF_AccessStripeMap_t *aasm,
 	return (rc);
 }
 
-int 
+int
 rf_VerifyParityBasic(RF_Raid_t *raidPtr, RF_RaidAddr_t raidAddr,
 		     RF_PhysDiskAddr_t *parityPDA, int correct_it,
 		     RF_RaidAccessFlags_t flags)
@@ -192,8 +192,8 @@ rf_VerifyParityBasic(RF_Raid_t *raidPtr, RF_RaidAddr_t raidAddr,
 	char   *pbuf, *buf, *end_p, *p;
 	int     i, retcode;
 	RF_ReconUnitNum_t which_ru;
-	RF_StripeNum_t psID = rf_RaidAddressToParityStripeID(layoutPtr, 
-							     raidAddr, 
+	RF_StripeNum_t psID = rf_RaidAddressToParityStripeID(layoutPtr,
+							     raidAddr,
 							     &which_ru);
 	int     stripeWidth = layoutPtr->numDataCol + layoutPtr->numParityCol;
 #if RF_ACC_TRACE > 0
@@ -320,7 +320,7 @@ out:
 	return (retcode);
 }
 
-int 
+int
 rf_TryToRedirectPDA(RF_Raid_t *raidPtr, RF_PhysDiskAddr_t *pda, int parity)
 {
 	if (raidPtr->Disks[pda->col].status == rf_ds_reconstructing) {
@@ -381,7 +381,7 @@ rf_TryToRedirectPDA(RF_Raid_t *raidPtr, RF_PhysDiskAddr_t *pda, int parity)
  *
  ****************************************************************************/
 #if 0
-int 
+int
 rf_VerifyDegrModeWrite(RF_Raid_t *raidPtr, RF_AccessStripeMapHeader_t *asmh)
 {
 	return (0);
@@ -394,7 +394,7 @@ rf_VerifyDegrModeWrite(RF_Raid_t *raidPtr, RF_AccessStripeMapHeader_t *asmh)
  * second-level nodes, so they must be filled in later.
  *
  * commit point is established at unblock node - this means that any
- * failure during dag execution causes the dag to fail 
+ * failure during dag execution causes the dag to fail
  *
  * name - node names at the second level
  */

@@ -1,4 +1,4 @@
-/*	$NetBSD: mln_ipl.c,v 1.35 2004/10/01 15:20:33 christos Exp $	*/
+/*	$NetBSD: mln_ipl.c,v 1.35.6.1 2005/03/19 08:36:29 yamt Exp $	*/
 
 /*
  *  Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -6,7 +6,7 @@
  *
  *  This code is derived from software contributed to the NetBSD Foundation
  *  by Peter Postma.
- * 
+ *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions
  *  are met:
@@ -22,7 +22,7 @@
  *  4. Neither the name of The NetBSD Foundation nor the names of its
  *     contributors may be used to endorse or promote products derived
  *     from this software without specific prior written permission.
- * 
+ *
  *  THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  *  ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
  *  TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mln_ipl.c,v 1.35 2004/10/01 15:20:33 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mln_ipl.c,v 1.35.6.1 2005/03/19 08:36:29 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_sysctl.h,v 1.2 2004/05/20 06:34:24 atatat Exp $ */
+/*	$NetBSD: irix_sysctl.h,v 1.2.6.1 2005/03/19 08:33:34 yamt Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@ extern char irix_si_vendor[128];
 extern char irix_si_os_provider[128];
 extern char irix_si_os_name[128];
 extern char irix_si_hw_name[128];
-extern char irix_si_osrel_maj[128]; 
+extern char irix_si_osrel_maj[128];
 extern char irix_si_osrel_min[128];
 extern char irix_si_osrel_patch[128];
 extern char irix_si_processors[128];
@@ -81,7 +81,7 @@ extern char irix_si_version[128];
 	{ "version", CTLTYPE_STRING }, \
 }
 
-int irix_sysctl __P((int *, u_int, void *, size_t *, 
+int irix_sysctl __P((int *, u_int, void *, size_t *,
     void *, size_t, struct proc *));
 
 #ifdef SYSCTL_SETUP_PROTO

@@ -1,4 +1,4 @@
-/*	$NetBSD: hil.c,v 1.8 2003/11/14 16:52:40 tsutsui Exp $	*/
+/*	$NetBSD: hil.c,v 1.8.10.1 2005/03/19 08:32:58 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -272,7 +272,7 @@ char	*hilkbd_shiftmap = hil_us_shiftmap;
 char	*hilkbd_ctrlmap = hil_us_ctrlmap;
 
 int
-hilkbd_getc()
+hilkbd_getc(void)
 {
 	int status, c;
 	struct hil_dev *hiladdr = HILADDR;
@@ -300,7 +300,7 @@ hilkbd_getc()
 #endif /* SMALL */
 
 void
-hilkbd_nmi()
+hilkbd_nmi(void)
 {
 	struct hil_dev *hiladdr = HILADDR;
 
@@ -312,7 +312,7 @@ hilkbd_nmi()
 }
 
 int
-hilkbd_init()
+hilkbd_init(void)
 {
 	struct hil_dev *hiladdr = HILADDR;
 	struct kbdmap *km;

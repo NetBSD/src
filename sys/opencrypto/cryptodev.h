@@ -1,4 +1,4 @@
-/*	$NetBSD: cryptodev.h,v 1.5 2003/08/21 19:44:14 jonathan Exp $ */
+/*	$NetBSD: cryptodev.h,v 1.5.12.1 2005/03/19 08:36:52 yamt Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/cryptodev.h,v 1.2.2.6 2003/07/02 17:04:50 sam Exp $	*/
 /*	$OpenBSD: cryptodev.h,v 1.33 2002/07/17 23:52:39 art Exp $	*/
 
@@ -115,7 +115,7 @@ struct session_op {
 	int		mackeylen;	/* mac key */
 	caddr_t		mackey;
 
-  	u_int32_t	ses;		/* returns: session # */ 
+  	u_int32_t	ses;		/* returns: session # */
 };
 
 struct crypt_op {

@@ -1,8 +1,8 @@
-/* $NetBSD: infcodes.h,v 1.5 2003/03/18 20:00:48 mycroft Exp $ */
+/* $NetBSD: infcodes.h,v 1.5.12.1 2005/03/19 08:36:26 yamt Exp $ */
 
 /* infcodes.h -- header to use infcodes.c
  * Copyright (C) 1995-2002 Mark Adler
- * For conditions of distribution and use, see copyright notice in zlib.h 
+ * For conditions of distribution and use, see copyright notice in zlib.h
  */
 
 /* WARNING: this file should *not* be used by applications. It is

@@ -1,4 +1,4 @@
-/* $NetBSD: if_rtw_cardbus.c,v 1.5 2004/12/25 06:58:37 dyoung Exp $ */
+/* $NetBSD: if_rtw_cardbus.c,v 1.5.4.1 2005/03/19 08:33:55 yamt Exp $ */
 
 /*-
  * Copyright (c) 2004, 2005 David Young.  All rights reserved.
@@ -74,15 +74,15 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_rtw_cardbus.c,v 1.5 2004/12/25 06:58:37 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_rtw_cardbus.c,v 1.5.4.1 2005/03/19 08:33:55 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"
 #include "bpfilter.h"
 
 #include <sys/param.h>
-#include <sys/systm.h> 
-#include <sys/mbuf.h>   
+#include <sys/systm.h>
+#include <sys/mbuf.h>
 #include <sys/malloc.h>
 #include <sys/kernel.h>
 #include <sys/socket.h>
@@ -91,7 +91,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_rtw_cardbus.c,v 1.5 2004/12/25 06:58:37 dyoung Ex
 #include <sys/device.h>
 
 #include <machine/endian.h>
- 
+
 #include <net/if.h>
 #include <net/if_dl.h>
 #include <net/if_media.h>
@@ -101,12 +101,12 @@ __KERNEL_RCSID(0, "$NetBSD: if_rtw_cardbus.c,v 1.5 2004/12/25 06:58:37 dyoung Ex
 #include <net80211/ieee80211_radiotap.h>
 #include <net80211/ieee80211_var.h>
 
-#if NBPFILTER > 0 
+#if NBPFILTER > 0
 #include <net/bpf.h>
-#endif 
+#endif
 
 #ifdef INET
-#include <netinet/in.h> 
+#include <netinet/in.h>
 #include <netinet/if_inarp.h>
 #endif
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: layer_vnops.c,v 1.23 2004/06/30 17:42:55 hannken Exp $	*/
+/*	$NetBSD: layer_vnops.c,v 1.23.6.1 2005/03/19 08:36:30 yamt Exp $	*/
 
 /*
  * Copyright (c) 1999 National Aeronautics & Space Administration
@@ -67,7 +67,7 @@
  *
  * Ancestors:
  *	@(#)lofs_vnops.c	1.2 (Berkeley) 6/18/92
- *	$Id: layer_vnops.c,v 1.23 2004/06/30 17:42:55 hannken Exp $
+ *	$Id: layer_vnops.c,v 1.23.6.1 2005/03/19 08:36:30 yamt Exp $
  *	...and...
  *	@(#)null_vnodeops.c 1.20 92/07/07 UCLA Ficus project
  */
@@ -180,7 +180,7 @@
  * this or other null vnode stacks.
  *
  * New vnode stacks come into existence as a result of
- * an operation which returns a vnode.  
+ * an operation which returns a vnode.
  * The bypass routine stacks a null-node above the new
  * vnode before returning it to the caller.
  *
@@ -190,7 +190,7 @@
  * the root null-node (which was created when the null layer was mounted).
  * Now consider opening "sys".  A vop_lookup would be
  * done on the root null-node.  This operation would bypass through
- * to the lower layer which would return a vnode representing 
+ * to the lower layer which would return a vnode representing
  * the UFS "sys".  layer_bypass then builds a null-node
  * aliasing the UFS "sys" and returns this to the caller.
  * Later operations on the null-node "sys" will repeat this
@@ -204,13 +204,13 @@
  * then begin modifing the copy.  Sed can be used to easily rename
  * all variables.
  *
- * The umap layer is an example of a layer descended from the 
+ * The umap layer is an example of a layer descended from the
  * null layer.
  *
  *
  * INVOKING OPERATIONS ON LOWER LAYERS
  *
- * There are two techniques to invoke operations on a lower layer 
+ * There are two techniques to invoke operations on a lower layer
  * when the operation cannot be completely bypassed.  Each method
  * is appropriate in different situations.  In both cases,
  * it is the responsibility of the aliasing layer to make
@@ -232,7 +232,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: layer_vnops.c,v 1.23 2004/06/30 17:42:55 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: layer_vnops.c,v 1.23.6.1 2005/03/19 08:36:30 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -279,7 +279,7 @@ __KERNEL_RCSID(0, "$NetBSD: layer_vnops.c,v 1.23 2004/06/30 17:42:55 hannken Exp
  *   to determine what implementation of the op should be invoked
  * - all mapped vnodes are of our vnode-type (NEEDSWORK:
  *   problems on rmdir'ing mount points and renaming?)
- */ 
+ */
 int
 layer_bypass(v)
 	void *v;
@@ -324,7 +324,7 @@ layer_bypass(v)
 	for (i = 0; i < VDESC_MAX_VPS; reles >>= 1, i++) {
 		if (descp->vdesc_vp_offsets[i] == VDESC_NO_OFFSET)
 			break;   /* bail out at end of list */
-		vps_p[i] = this_vp_p = 
+		vps_p[i] = this_vp_p =
 		    VOPARG_OFFSETTO(struct vnode**, descp->vdesc_vp_offsets[i],
 		    ap);
 		/*
@@ -346,7 +346,7 @@ layer_bypass(v)
 			if (reles & VDESC_VP0_WILLRELE)
 				VREF(*this_vp_p);
 		}
-			
+
 	}
 
 	/*
@@ -447,7 +447,7 @@ layer_lookup(v)
 	    (cnp->cn_nameiop == CREATE || cnp->cn_nameiop == RENAME))
 		error = EROFS;
 	/*
-	 * We must do the same locking and unlocking at this layer as 
+	 * We must do the same locking and unlocking at this layer as
 	 * is done in the layers below us. It used to be we would try
 	 * to guess based on what was set with the flags and error codes.
 	 *

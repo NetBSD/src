@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos32_misc.c,v 1.28 2004/09/17 14:11:24 skrll Exp $	*/
+/*	$NetBSD: sunos32_misc.c,v 1.28.6.1 2005/03/19 08:33:45 yamt Exp $	*/
 /* from :NetBSD: sunos_misc.c,v 1.107 2000/12/01 19:25:10 jdolecek Exp	*/
 
 /*
@@ -68,7 +68,7 @@
  *
  *	@(#)sunos_misc.c	8.1 (Berkeley) 6/18/93
  *
- *	Header: sunos_misc.c,v 1.16 93/04/07 02:46:27 torek Exp 
+ *	Header: sunos_misc.c,v 1.16 93/04/07 02:46:27 torek Exp
  */
 
 /*
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunos32_misc.c,v 1.28 2004/09/17 14:11:24 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunos32_misc.c,v 1.28.6.1 2005/03/19 08:33:45 yamt Exp $");
 
 #define COMPAT_SUNOS 1
 
@@ -151,13 +151,13 @@ sunos32_sigvec_to_sigaction(sv, sa)
 	struct sigaction *sa;
 {
 /*XXX*/ extern void compat_43_sigmask_to_sigset __P((const int *, sigset_t *));
-	
+
 	sa->sa_handler = (void *)(u_long)sv->sv_handler;
 	compat_43_sigmask_to_sigset(&sv->sv_mask, &sa->sa_mask);
 	sa->sa_flags = sv->sv_flags ^ SA_RESTART;
 }
 
-static 
+static
 void sunos32_sigvec_from_sigaction(sv, sa)
 	struct netbsd32_sigvec *sv;
 	const struct sigaction *sa;
@@ -225,7 +225,7 @@ sunos32_sys_creat(l, v, retval)
 	void *v;
 	register_t *retval;
 {
-	struct sunos32_sys_creat_args /* { 
+	struct sunos32_sys_creat_args /* {
 		syscallarg(const netbsd32_charp) path;
 		syscallarg(int) mode;
 	} */ *uap = v;
@@ -664,7 +664,7 @@ sunos32_sys_sigpending(l, v, retval)
 	return (copyout((caddr_t)(u_long)&mask, (caddr_t)(u_long)SCARG(uap, mask), sizeof(int)));
 }
 
-int     
+int
 sunos32_sys_sigsuspend(l, v, retval)
 	struct lwp *l;
 	void *v;
@@ -676,7 +676,7 @@ sunos32_sys_sigsuspend(l, v, retval)
 	int mask;
 	struct proc *p = l->l_proc;
 	sigset_t ss;
-        
+
 	mask = SCARG(uap, mask);
 	sunos_to_native_sigset(mask, &ss);
 	return (sigsuspend1(p, &ss));
@@ -1250,7 +1250,7 @@ sunstatfs(sp, buf)
 	ssfs.f_ffree = sp->f_ffree;
 	ssfs.f_fsid = sp->f_fsidx;
 	return copyout((caddr_t)&ssfs, buf, sizeof ssfs);
-}	
+}
 
 int
 sunos32_sys_statfs(l, v, retval)

@@ -1,4 +1,4 @@
-/*	$NetBSD: image.S,v 1.2 2003/04/29 05:01:34 thorpej Exp $	*/
+/*	$NetBSD: image.S,v 1.2.12.1 2005/03/19 08:32:56 yamt Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -38,6 +38,8 @@
 #include <machine/asm.h>
 
 	.section .image,"a",%progbits
+
+	.balign 4
 
 	.global	_C_LABEL(md_root_loadaddr)
 _C_LABEL(md_root_loadaddr):

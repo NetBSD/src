@@ -1,5 +1,5 @@
-/*	$NetBSD: pmap.c,v 1.7.4.1 2005/02/13 10:20:49 yamt Exp $	*/
-/*	NetBSD: pmap.c,v 1.172 2004/04/12 13:17:46 yamt Exp 	*/
+/*	$NetBSD: pmap.c,v 1.7.4.2 2005/03/19 08:33:21 yamt Exp $	*/
+/*	NetBSD: pmap.c,v 1.179 2004/10/10 09:55:24 yamt Exp		*/
 
 /*
  *
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.7.4.1 2005/02/13 10:20:49 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.7.4.2 2005/03/19 08:33:21 yamt Exp $");
 
 #include "opt_cputype.h"
 #include "opt_user_ldt.h"
@@ -105,7 +105,7 @@ void xpmap_find_pte(paddr_t);
 #define	XENPRINTK(x)
 #endif
 #define	PRINTF(x) printf x
-#define	PRINTK(x) printk x
+#define	PRINTK(x) printf x
 
 
 /*
@@ -153,8 +153,6 @@ void xpmap_find_pte(paddr_t);
  *  - pv_page/pv_page_info: pv_entry's are allocated out of pv_page's.
  *      if we run out of pv_entry's we allocate a new pv_page and free
  *      its pv_entrys.
- * - pmap_remove_record: a list of virtual addresses whose mappings
- *	have been changed.   used for TLB flushing.
  */
 
 /*
@@ -577,12 +575,14 @@ pmap_tmpmap_pa(pa)
 	int id = cpu_number();
 #endif
 	pt_entry_t *ptpte = PTESLEW(ptp_pte, id);
+	pt_entry_t *maptp;
 	caddr_t ptpva = VASLEW(ptpp, id);
 #if defined(DIAGNOSTIC)
 	if (*ptpte)
 		panic("pmap_tmpmap_pa: ptp_pte in use?");
 #endif
-	PTE_SET(ptpte, PG_V | PG_RW | pa);	/* always a new mapping */
+	maptp = (pt_entry_t *)vtomach((vaddr_t)ptpte);
+	PTE_SET(ptpte, maptp, PG_V | PG_RW | pa); /* always a new mapping */
 	return((vaddr_t)ptpva);
 }
 
@@ -597,12 +597,14 @@ pmap_tmpunmap_pa()
 	int id = cpu_number();
 #endif
 	pt_entry_t *ptpte = PTESLEW(ptp_pte, id);
+	pt_entry_t *maptp;
 	caddr_t ptpva = VASLEW(ptpp, id);
 #if defined(DIAGNOSTIC)
 	if (!pmap_valid_entry(*ptp_pte))
 		panic("pmap_tmpunmap_pa: our pte invalid?");
 #endif
-	PTE_CLEAR(ptpte);		/* zap! */
+	maptp = (pt_entry_t *)vtomach((vaddr_t)ptpte);
+	PTE_CLEAR(ptpte, maptp);		/* zap! */
 	pmap_update_pg((vaddr_t)ptpva);
 #ifdef MULTIPROCESSOR
 	/*
@@ -696,6 +698,7 @@ pmap_map_ptes(pmap)
 	struct pmap *pmap;
 {
 	pd_entry_t opde;
+	pd_entry_t *mapdp;
 	struct pmap *ourpmap;
 	struct cpu_info *ci;
 
@@ -730,14 +733,14 @@ pmap_map_ptes(pmap)
 	COUNT(apdp_pde_map);
 	opde = PDE_GET(APDP_PDE);
 	if (!pmap_valid_entry(opde) || (opde & PG_FRAME) != pmap->pm_pdirpa) {
-		XENPRINTF(("APDP_PDE %p %p/%p set %p/%p at %s:%d\n",
+		XENPRINTF(("APDP_PDE %p %p/%p set %p/%p\n",
 			   pmap,
 			   (void *)vtophys((vaddr_t)APDP_PDE),
 			   (void *)xpmap_ptom(vtophys((vaddr_t)APDP_PDE)),
 			   (void *)pmap->pm_pdirpa,
-			   (void *)xpmap_ptom(pmap->pm_pdirpa),
-			   file, line));
-		PDE_SET(APDP_PDE, pmap->pm_pdirpa /* | PG_RW */ | PG_V);
+			   (void *)xpmap_ptom(pmap->pm_pdirpa)));
+		mapdp = (pt_entry_t *)vtomach((vaddr_t)APDP_PDE);
+		PDE_SET(APDP_PDE, mapdp, pmap->pm_pdirpa /* | PG_RW */ | PG_V);
 #ifdef DEBUG
 		curapdp = pmap->pm_pdirpa;
 #endif
@@ -756,6 +759,9 @@ __inline static void
 pmap_unmap_ptes(pmap)
 	struct pmap *pmap;
 {
+#if defined(MULTIPROCESSOR)
+	pd_entry_t *mapdp;
+#endif
 
 	if (pmap == pmap_kernel()) {
 		return;
@@ -766,7 +772,8 @@ pmap_unmap_ptes(pmap)
 		struct pmap *ourpmap = curcpu()->ci_pmap;
 
 #if defined(MULTIPROCESSOR)
-		PDE_CLEAR(APDP_PDE);
+		mapdp = (pt_entry_t *)vtomach((vaddr_t)APDP_PDE);
+		PDE_CLEAR(APDP_PDE, mapdp);
 		pmap_apte_flush(ourpmap);
 #endif
 #ifdef DEBUG
@@ -816,7 +823,7 @@ pte_mtop(pt_entry_t pte)
 
 	KDASSERT(pmap_valid_entry(pte));
 	ppte = xpmap_mtop(pte);
-	if ((ppte & PG_FRAME) == (KERNTEXTOFF - KERNBASE_LOCORE)) {
+	if ((ppte & PG_FRAME) == XPMAP_OFFSET) {
 		XENPRINTF(("pte_mtop: null page %08x -> %08x\n",
 		    ppte, pte));
 		ppte = pte;
@@ -842,30 +849,32 @@ pte_get(pt_entry_t *pte)
 }
 
 __inline static pt_entry_t
-pte_atomic_update_ma(pt_entry_t *pte, pt_entry_t npte)
+pte_atomic_update_ma(pt_entry_t *pte, pt_entry_t *mapte, pt_entry_t npte)
 {
 	pt_entry_t opte;
 
+	XENPRINTK(("pte_atomic_update_ma pte %p mapte %p npte %08x\n",
+		   pte, mapte, npte));
 	opte = PTE_GET_MA(pte);
 	if (opte > pmap_mem_end) {
 		/* must remove opte unchecked */
 		if (npte > pmap_mem_end)
 			/* must set npte unchecked */
-			xpq_queue_unchecked_pte_update(pte, npte);
+			xpq_queue_unchecked_pte_update(mapte, npte);
 		else {
 			/* must set npte checked */
-			xpq_queue_unchecked_pte_update(pte, 0);
-			xpq_queue_pte_update(pte, npte);
+			xpq_queue_unchecked_pte_update(mapte, 0);
+			xpq_queue_pte_update(mapte, npte);
 		}
 	} else {
 		/* must remove opte checked */
 		if (npte > pmap_mem_end) {
 			/* must set npte unchecked */
-			xpq_queue_pte_update(pte, 0);
-			xpq_queue_unchecked_pte_update(pte, npte);
+			xpq_queue_pte_update(mapte, 0);
+			xpq_queue_unchecked_pte_update(mapte, npte);
 		} else
 			/* must set npte checked */
-			xpq_queue_pte_update(pte, npte);
+			xpq_queue_pte_update(mapte, npte);
 	}
 	xpq_flush_queue();
 
@@ -873,11 +882,11 @@ pte_atomic_update_ma(pt_entry_t *pte, pt_entry_t npte)
 }
 
 __inline static pt_entry_t
-pte_atomic_update(pt_entry_t *pte, pt_entry_t npte)
+pte_atomic_update(pt_entry_t *pte, pt_entry_t *mapte, pt_entry_t npte)
 {
 	pt_entry_t opte;
 
-	opte = pte_atomic_update_ma(pte, npte);
+	opte = pte_atomic_update_ma(pte, mapte, npte);
 
 	return pte_mtop(opte);
 }
@@ -941,6 +950,7 @@ pmap_kenter_pa(va, pa, prot)
 	vm_prot_t prot;
 {
 	pt_entry_t *pte, opte, npte;
+	pt_entry_t *maptp;
 
 	if (va < VM_MIN_KERNEL_ADDRESS)
 		pte = vtopte(va);
@@ -954,13 +964,14 @@ pmap_kenter_pa(va, pa, prot)
 		npte |= xpmap_ptom(pa);
 	} else {
 		XENPRINTF(("pmap_kenter: va %08lx outside pa range %08lx\n",
-		    va, pa));
+			      va, pa));
 		npte |= pa;
 	}
 
-	opte = pte_atomic_update_ma(pte, npte); /* zap! */
-	XENPRINTK(("pmap_kenter_pa(%p,%p) %p, was %08x\n", (void *)va, 
-		      (void *)pa, pte, opte));
+	maptp = (pt_entry_t *)vtomach((vaddr_t)pte);
+	opte = pte_atomic_update_ma(pte, maptp, npte); /* zap! */
+	XENPRINTK(("pmap_kenter_pa(%p,%p) %p, was %08x now %08x\n", (void *)va, 
+		      (void *)pa, pte, opte, npte));
 #ifdef LARGEPAGES
 	/* XXX For now... */
 	if (opte & PG_PS)
@@ -995,6 +1006,7 @@ pmap_kenter_ma(va, ma, prot)
 	vm_prot_t prot;
 {
 	pt_entry_t *pte, opte, npte;
+	pt_entry_t *maptp;
 
 	KASSERT (va >= VM_MIN_KERNEL_ADDRESS);
 	pte = kvtopte(va);
@@ -1002,7 +1014,8 @@ pmap_kenter_ma(va, ma, prot)
 	npte = ma | ((prot & VM_PROT_WRITE) ? PG_RW : PG_RO) |
 	     PG_V | pmap_pg_g;
 
-	opte = pte_atomic_update_ma(pte, npte); /* zap! */
+	maptp = (pt_entry_t *)vtomach((vaddr_t)pte);
+	opte = pte_atomic_update_ma(pte, maptp, npte); /* zap! */
 	XENPRINTK(("pmap_kenter_ma(%p,%p) %p, was %08x\n", (void *)va,
 		      (void *)ma, pte, opte));
 #ifdef LARGEPAGES
@@ -1040,6 +1053,7 @@ pmap_kremove(va, len)
 	vsize_t len;
 {
 	pt_entry_t *pte, opte;
+	pt_entry_t *maptp;
 	int32_t cpumask = 0;
 
 	XENPRINTK(("pmap_kremove va %p, len %08lx\n", (void *)va, len));
@@ -1049,7 +1063,8 @@ pmap_kremove(va, len)
 			pte = vtopte(va);
 		else
 			pte = kvtopte(va);
-		opte = pte_atomic_update_ma(pte, 0); /* zap! */
+		maptp = (pt_entry_t *)vtomach((vaddr_t)pte);
+		opte = pte_atomic_update_ma(pte, maptp, 0); /* zap! */
 		XENPRINTK(("pmap_kremove pte %p, was %08x\n", pte, opte));
 #ifdef LARGEPAGES
 		/* XXX For now... */
@@ -1092,6 +1107,7 @@ pmap_bootstrap(kva_start)
 	struct pmap *kpm;
 	vaddr_t kva;
 	pt_entry_t *pte;
+	pt_entry_t *maptp;
 	int i;
 
 	/*
@@ -1143,8 +1159,8 @@ pmap_bootstrap(kva_start)
 	kpm->pm_obj.uo_refs = 1;
 	memset(&kpm->pm_list, 0, sizeof(kpm->pm_list));  /* pm_list not used */
 	kpm->pm_pdir = (pd_entry_t *)(lwp0.l_addr->u_pcb.pcb_cr3 + KERNBASE);
-	XENPRINTF(("pm_pdirpa %p PTDpaddr %p\n",
-	    (void *)lwp0.l_addr->u_pcb.pcb_cr3, (void *)PTDpaddr));
+	XENPRINTF(("pm_pdirpa %p PDPpaddr %p\n",
+	    (void *)lwp0.l_addr->u_pcb.pcb_cr3, (void *)PDPpaddr));
 	kpm->pm_pdirpa = (u_int32_t) lwp0.l_addr->u_pcb.pcb_cr3;
 	kpm->pm_stats.wired_count = kpm->pm_stats.resident_count =
 		x86_btop(kva_start - VM_MIN_KERNEL_ADDRESS);
@@ -1167,11 +1183,15 @@ pmap_bootstrap(kva_start)
 		/* add PG_G attribute to already mapped kernel pages */
 		for (kva = VM_MIN_KERNEL_ADDRESS ; kva < virtual_avail ;
 		     kva += PAGE_SIZE)
-			if (pmap_valid_entry(PTE_BASE[x86_btop(kva)]))
+			if (pmap_valid_entry(PTE_BASE[x86_btop(kva)])) {
 #if !defined(XEN)
 				PTE_BASE[x86_btop(kva)] |= PG_G;
 #else
-				PTE_SETBITS(&PTE_BASE[x86_btop(kva)], PG_G);
+				maptp = (pt_entry_t *)vtomach(
+					(vaddr_t)&PTE_BASE[x86_btop(kva)]);
+				PTE_SETBITS(&PTE_BASE[x86_btop(kva)], maptp,
+				    PG_G);
+			}
 		PTE_UPDATES_FLUSH();
 #endif
 	}
@@ -1185,6 +1205,7 @@ pmap_bootstrap(kva_start)
 		paddr_t pa;
 		vaddr_t kva_end;
 		pd_entry_t *pde;
+		pd_entry_t *mapdp;
 		extern char _etext;
 
 		lcr4(rcr4() | CR4_PSE);	/* enable hardware (via %cr4) */
@@ -1207,7 +1228,8 @@ pmap_bootstrap(kva_start)
 		for (pa = 0, kva = KERNBASE; kva < kva_end;
 		     kva += NBPD, pa += NBPD) {
 			pde = &kpm->pm_pdir[pdei(kva)];
-			PDE_SET(pde, pa | pmap_pg_g | PG_PS |
+			mapdp = (pt_entry_t *)vtomach((vaddr_t)pde);
+			PDE_SET(pde, mapdp, pa | pmap_pg_g | PG_PS |
 			    PG_KR | PG_V); /* zap! */
 			tlbflush();
 		}
@@ -1742,6 +1764,7 @@ pmap_alloc_ptp(pmap, pde_index)
 	int pde_index;
 {
 	struct vm_page *ptp;
+	pd_entry_t *mapdp;
 
 	ptp = uvm_pagealloc(&pmap->pm_obj, ptp_i2o(pde_index), NULL,
 			    UVM_PGA_USERESERVE|UVM_PGA_ZERO);
@@ -1751,7 +1774,8 @@ pmap_alloc_ptp(pmap, pde_index)
 	/* got one! */
 	ptp->flags &= ~PG_BUSY;	/* never busy */
 	ptp->wire_count = 1;	/* no mappings yet */
-	PDE_SET(&pmap->pm_pdir[pde_index],
+	mapdp = (pt_entry_t *)vtomach((vaddr_t)&pmap->pm_pdir[pde_index]);
+	PDE_SET(&pmap->pm_pdir[pde_index], mapdp,
 	    (pd_entry_t) (VM_PAGE_TO_PHYS(ptp) | PG_u | PG_RW | PG_V));
 	pmap->pm_stats.resident_count++;	/* count PTP as resident */
 	pmap->pm_ptphint = ptp;
@@ -1833,6 +1857,9 @@ pmap_pdp_ctor(void *arg, void *object, int flags)
 
 	pmap_enter(pmap_kernel(), (vaddr_t)pdir, pdirpa, VM_PROT_READ,
 	    VM_PROT_READ);
+#if 0
+	pmap_kenter_pa((vaddr_t)pdir, pdirpa, VM_PROT_READ);
+#endif
 	pmap_update(pmap_kernel());
 
 	/* pin page type */
@@ -1856,6 +1883,13 @@ pmap_pdp_dtor(void *arg, void *object)
 	/* unpin page type */
 	xpq_queue_unpin_table(xpmap_ptom(pdirpa));
 	xpq_flush_queue();
+	pmap_enter(pmap_kernel(), (vaddr_t)pdir, pdirpa,
+	    VM_PROT_READ | VM_PROT_WRITE, VM_PROT_READ | VM_PROT_WRITE);
+#if 0
+	pmap_kremove((vaddr_t)pdir, PAGE_SIZE)
+	pmap_kenter_pa((vaddr_t)pdir, pdirpa, VM_PROT_READ | VM_PROT_WRITE);
+#endif
+	pmap_update(pmap_kernel());
 }
 
 /*
@@ -2159,7 +2193,11 @@ pmap_reactivate(struct pmap *pmap)
 	 * for this pmap in the meantime.
 	 */
 
+#if defined(MULTIPROCESSOR)
 	s = splipi(); /* protect from tlb shootdown ipis. */
+#else /* defined(MULTIPROCESSOR) */
+	s = splvm();
+#endif /* defined(MULTIPROCESSOR) */
 	oldcpus = pmap->pm_cpus;
 	x86_atomic_setbits_l(&pmap->pm_cpus, cpumask);
 	if (oldcpus & cpumask) {
@@ -2189,9 +2227,14 @@ pmap_load()
 	struct pmap *oldpmap;
 	struct lwp *l;
 	struct pcb *pcb;
+	pd_entry_t *mapdp;
 	int s;
 
 	KASSERT(ci->ci_want_pmapload);
+
+	/* should be able to take ipis. */
+	KASSERT(ci->ci_ilevel < IPL_IPI);
+	KASSERT(read_psl() == 0);
 
 	l = ci->ci_curlwp;
 	KASSERT(l != NULL);
@@ -2235,7 +2278,11 @@ pmap_load()
 	 * mark the pmap in use by this processor.
 	 */
 
+#if defined(MULTIPROCESSOR)
 	s = splipi();
+#else /* defined(MULTIPROCESSOR) */
+	s = splvm();
+#endif /* defined(MULTIPROCESSOR) */
 	x86_atomic_setbits_l(&pmap->pm_cpus, cpumask);
 	ci->ci_pmap = pmap;
 	ci->ci_tlbstate = TLBSTATE_VALID;
@@ -2246,7 +2293,8 @@ pmap_load()
 	 * linear pagetable mappings in the current pagetable.
 	 */
 	KDASSERT(curapdp == 0);
-	PDE_CLEAR(APDP_PDE);
+	mapdp = (pt_entry_t *)vtomach((vaddr_t)APDP_PDE);
+	PDE_CLEAR(APDP_PDE, mapdp);
 
 	/*
 	 * update tss and load corresponding registers.
@@ -2361,6 +2409,41 @@ pmap_extract(pmap, va, pap)
 	return (FALSE);
 }
 
+/*
+ * pmap_extract_ma: like pmap_extract, but returns machine address
+ */
+
+boolean_t
+pmap_extract_ma(pmap, va, pap)
+	struct pmap *pmap;
+	vaddr_t va;
+	paddr_t *pap;
+{
+	pt_entry_t *ptes, pte;
+	pd_entry_t pde;
+
+	if (__predict_true((pde = PDE_GET(&pmap->pm_pdir[pdei(va)])) != 0)) {
+#ifdef LARGEPAGES
+		if (pde & PG_PS) {
+			if (pap != NULL)
+				*pap = (pde & PG_LGFRAME) | (va & ~PG_LGFRAME);
+			return (TRUE);
+		}
+#endif
+
+		ptes = pmap_map_ptes(pmap);
+		pte = PTE_GET_MA(&ptes[x86_btop(va)]);
+		pmap_unmap_ptes(pmap);
+
+		if (__predict_true((pte & PG_V) != 0)) {
+			if (pap != NULL)
+				*pap = (pte & PG_FRAME) | (va & ~PG_FRAME);
+			return (TRUE);
+		}
+	}
+	return (FALSE);
+}
+
 
 /*
  * vtophys: virtual address to physical address.  For use by
@@ -2427,6 +2510,7 @@ pmap_zero_page(pa)
 	int id = cpu_number();
 #endif
 	pt_entry_t *zpte = PTESLEW(zero_pte, id);
+	pt_entry_t *maptp;
 	caddr_t zerova = VASLEW(zerop, id);
 
 #ifdef DIAGNOSTIC
@@ -2434,11 +2518,13 @@ pmap_zero_page(pa)
 		panic("pmap_zero_page: lock botch");
 #endif
 
-	PTE_SET(zpte, (pa & PG_FRAME) | PG_V | PG_RW);	/* map in */
+	maptp = (pt_entry_t *)vtomach((vaddr_t)zpte);
+	PTE_SET(zpte, maptp,
+	    (pa & PG_FRAME) | PG_V | PG_RW | PG_M | PG_U);/* map in */
 	pmap_update_pg((vaddr_t)zerova);		/* flush TLB */
 
 	memset(zerova, 0, PAGE_SIZE);			/* zero */
-	PTE_CLEAR(zpte);				/* zap! */
+	PTE_CLEAR(zpte, maptp);				/* zap! */
 }
 
 /*
@@ -2455,17 +2541,25 @@ pmap_pageidlezero(pa)
 	int id = cpu_number();
 #endif
 	pt_entry_t *zpte = PTESLEW(zero_pte, id);
+	pt_entry_t *maptp;
 	caddr_t zerova = VASLEW(zerop, id);
 	boolean_t rv = TRUE;
-	int i, *ptr;
+	int *ptr;
+	int *ep;
+#if defined(I686_CPU)
+	const u_int32_t cpu_features = curcpu()->ci_feature_flags;
+#endif /* defined(I686_CPU) */
 
 #ifdef DIAGNOSTIC
 	if (PTE_GET(zpte))
-		panic("pmap_zero_page_uncached: lock botch");
+		panic("pmap_pageidlezero: lock botch");
 #endif
-	PTE_SET(zpte, (pa & PG_FRAME) | PG_V | PG_RW);		/* map in */
+	maptp = (pt_entry_t *)vtomach((vaddr_t)zpte);
+	PTE_SET(zpte, maptp,
+	    (pa & PG_FRAME) | PG_V | PG_RW | PG_M | PG_U); /* map in */
 	pmap_update_pg((vaddr_t)zerova);		/* flush TLB */
-	for (i = 0, ptr = (int *) zerova; i < PAGE_SIZE / sizeof(int); i++) {
+	for (ptr = (int *) zerova, ep = ptr + PAGE_SIZE / sizeof(int);
+	    ptr < ep; ptr++) {
 		if (sched_whichqs != 0) {
 
 			/*
@@ -2478,10 +2572,21 @@ pmap_pageidlezero(pa)
 			rv = FALSE;
 			break;
 		}
-		*ptr++ = 0;
+#if defined(I686_CPU)
+		if (cpu_features & CPUID_SSE2)
+			__asm __volatile ("movnti %1, %0" :
+			    "=m"(*ptr) : "r" (0));
+		else
+#endif /* defined(I686_CPU) */
+			*ptr = 0;
 	}
 
-	PTE_CLEAR(zpte);				/* zap! */
+#if defined(I686_CPU)
+	if (cpu_features & CPUID_SSE2)
+		__asm __volatile ("sfence" ::: "memory");
+#endif /* defined(I686_CPU) */       
+
+	PTE_CLEAR(zpte, maptp);				/* zap! */
 	return (rv);
 }
 
@@ -2496,8 +2601,8 @@ pmap_copy_page(srcpa, dstpa)
 #ifdef MULTIPROCESSOR
 	int id = cpu_number();
 #endif
-	pt_entry_t *spte = PTESLEW(csrc_pte,id);
-	pt_entry_t *dpte = PTESLEW(cdst_pte,id);
+	pt_entry_t *spte = PTESLEW(csrc_pte,id), *maspte;
+	pt_entry_t *dpte = PTESLEW(cdst_pte,id), *madpte;
 	caddr_t csrcva = VASLEW(csrcp, id);
 	caddr_t cdstva = VASLEW(cdstp, id);
 
@@ -2506,12 +2611,14 @@ pmap_copy_page(srcpa, dstpa)
 		panic("pmap_copy_page: lock botch");
 #endif
 
-	PTE_SET(spte, (srcpa & PG_FRAME) | PG_V | PG_RW);
-	PTE_SET(dpte, (dstpa & PG_FRAME) | PG_V | PG_RW);
+	maspte = (pt_entry_t *)vtomach((vaddr_t)spte);
+	madpte = (pt_entry_t *)vtomach((vaddr_t)dpte);
+	PTE_SET(spte, maspte, (srcpa & PG_FRAME) | PG_V | PG_RW | PG_U);
+	PTE_SET(dpte, madpte, (dstpa & PG_FRAME) | PG_V | PG_RW | PG_M | PG_U);
 	pmap_update_2pg((vaddr_t)csrcva, (vaddr_t)cdstva);
 	memcpy(cdstva, csrcva, PAGE_SIZE);
-	PTE_CLEAR(spte);			/* zap! */
-	PTE_CLEAR(dpte);			/* zap! */
+	PTE_CLEAR(spte, maspte);			/* zap! */
+	PTE_CLEAR(dpte, madpte);			/* zap! */
 }
 
 /*
@@ -2542,6 +2649,7 @@ pmap_remove_ptes(pmap, ptp, ptpva, startva, endva, cpumaskp, flags)
 	struct pv_entry *pve;
 	pt_entry_t *pte = (pt_entry_t *) ptpva;
 	pt_entry_t opte;
+	pt_entry_t *maptp;
 
 	/*
 	 * note that ptpva points to the PTE that maps startva.   this may
@@ -2564,7 +2672,8 @@ pmap_remove_ptes(pmap, ptp, ptpva, startva, endva, cpumaskp, flags)
 		}
 
 		/* atomically save the old PTE and zap! it */
-		opte = pte_atomic_update(pte, 0);
+		maptp = (pt_entry_t *)vtomach((vaddr_t)pte);
+		opte = pte_atomic_update(pte, maptp, 0);
 		pmap_exec_account(pmap, startva, opte, 0);
 
 		if (opte & PG_W)
@@ -2642,6 +2751,7 @@ pmap_remove_pte(pmap, ptp, pte, va, cpumaskp, flags)
 	int flags;
 {
 	pt_entry_t opte;
+	pt_entry_t *maptp;
 	struct pv_entry *pve;
 	struct vm_page *pg;
 	struct vm_page_md *mdpg;
@@ -2653,7 +2763,8 @@ pmap_remove_pte(pmap, ptp, pte, va, cpumaskp, flags)
 	}
 
 	/* atomically save the old PTE and zap! it */
-	opte = pte_atomic_update(pte, 0);
+	maptp = (pt_entry_t *)vtomach((vaddr_t)pte);
+	opte = pte_atomic_update(pte, maptp, 0);
 
 	XENPRINTK(("pmap_remove_pte %p, was %08x\n", pte, opte));
 	pmap_exec_account(pmap, va, opte, 0);
@@ -2732,6 +2843,7 @@ pmap_do_remove(pmap, sva, eva, flags)
 	int flags;
 {
 	pt_entry_t *ptes, opte;
+	pt_entry_t *maptp;
 	boolean_t result;
 	paddr_t ptppa;
 	vaddr_t blkendva;
@@ -2794,8 +2906,10 @@ pmap_do_remove(pmap, sva, eva, flags)
 
 			if (result && ptp && ptp->wire_count <= 1) {
 				/* zap! */
+				maptp = (pt_entry_t *)vtomach(
+					(vaddr_t)&pmap->pm_pdir[pdei(sva)]);
 				PTE_ATOMIC_CLEAR(&pmap->pm_pdir[pdei(sva)],
-				    opte);
+				    maptp, opte);
 #if defined(MULTIPROCESSOR)
 				/*
 				 * XXXthorpej Redundant shootdown can happen
@@ -2886,13 +3000,16 @@ pmap_do_remove(pmap, sva, eva, flags)
 #endif
 			}
 		}
-		pmap_remove_ptes(pmap, ptp,
-		    (vaddr_t)&ptes[x86_btop(sva)], sva, blkendva, &cpumask, flags);
+		pmap_remove_ptes(pmap, ptp, (vaddr_t)&ptes[x86_btop(sva)],
+		    sva, blkendva, &cpumask, flags);
 
 		/* if PTP is no longer being used, free it! */
 		if (ptp && ptp->wire_count <= 1) {
 			/* zap! */
-			PTE_ATOMIC_CLEAR(&pmap->pm_pdir[pdei(sva)], opte);
+			maptp = (pt_entry_t *)vtomach(
+				(vaddr_t)&pmap->pm_pdir[pdei(sva)]);
+			PTE_ATOMIC_CLEAR(&pmap->pm_pdir[pdei(sva)],
+			    maptp, opte);
 #if defined(MULTIPROCESSOR)
 			/*
 			 * XXXthorpej Redundant shootdown can happen here
@@ -2944,6 +3061,7 @@ pmap_page_remove(pg)
 	struct pv_head *pvh;
 	struct pv_entry *pve, *npve, *killlist = NULL;
 	pt_entry_t *ptes, opte;
+	pt_entry_t *maptp;
 	int32_t cpumask = 0;
 	TAILQ_HEAD(, vm_page) empty_ptps;
 	struct vm_page *ptp;
@@ -2979,22 +3097,25 @@ pmap_page_remove(pg)
 		ptes = pmap_map_ptes(pve->pv_pmap);		/* locks pmap */
 
 #ifdef DIAGNOSTIC
-		if (pve->pv_ptp && (PDE_GET(&pve->pv_pmap->pm_pdir[pdei(pve->pv_va)]) &
-				    PG_FRAME)
-		    != VM_PAGE_TO_PHYS(pve->pv_ptp)) {
+		if (pve->pv_ptp &&
+		    (PDE_GET(&pve->pv_pmap->pm_pdir[pdei(pve->pv_va)]) &
+			PG_FRAME) != VM_PAGE_TO_PHYS(pve->pv_ptp)) {
 			printf("pmap_page_remove: pg=%p: va=%lx, pv_ptp=%p\n",
-			       pg, pve->pv_va, pve->pv_ptp);
+			    pg, pve->pv_va, pve->pv_ptp);
 			printf("pmap_page_remove: PTP's phys addr: "
-			       "actual=%lx, recorded=%lx\n",
-			       (PDE_GET(&pve->pv_pmap->pm_pdir[pdei(pve->pv_va)]) &
-				PG_FRAME), VM_PAGE_TO_PHYS(pve->pv_ptp));
+			    "actual=%lx, recorded=%lx\n",
+			    (PDE_GET(&pve->pv_pmap->pm_pdir[pdei(pve->pv_va)])
+				& PG_FRAME), VM_PAGE_TO_PHYS(pve->pv_ptp));
 			panic("pmap_page_remove: mapped managed page has "
-			      "invalid pv_ptp field");
+			    "invalid pv_ptp field");
 		}
 #endif
 
 		/* atomically save the old PTE and zap! it */
-		opte = pte_atomic_update(&ptes[x86_btop(pve->pv_va)], 0);
+		maptp = (pt_entry_t *)vtomach(
+			(vaddr_t)&ptes[x86_btop(pve->pv_va)]);
+		opte = pte_atomic_update(&ptes[x86_btop(pve->pv_va)],
+		    maptp, 0);
 
 		if (opte & PG_W)
 			pve->pv_pmap->pm_stats.wired_count--;
@@ -3021,8 +3142,10 @@ pmap_page_remove(pg)
 					    pve->pv_va, opte, &cpumask);
 
 				/* zap! */
-				PTE_ATOMIC_CLEAR(&pve->pv_pmap->pm_pdir[pdei(pve->pv_va)],
-				    opte);
+				maptp = (pt_entry_t *)vtomach((vaddr_t)
+				    &pve->pv_pmap->pm_pdir[pdei(pve->pv_va)]);
+				PTE_ATOMIC_CLEAR(&pve->pv_pmap->pm_pdir
+				    [pdei(pve->pv_va)], maptp, opte);
 				pmap_tlb_shootdown(curpmap,
 				    ((vaddr_t)ptes) + pve->pv_ptp->offset,
 				    opte, &cpumask);
@@ -3153,6 +3276,7 @@ pmap_clear_attrs(pg, clearbits)
 	struct pv_head *pvh;
 	struct pv_entry *pve;
 	pt_entry_t *ptes, opte;
+	pt_entry_t *maptp;
 	int *myattrs;
 	int32_t cpumask = 0;
 
@@ -3194,8 +3318,11 @@ pmap_clear_attrs(pg, clearbits)
 				 */
 
 				/* First zap the RW bit! */
+				maptp = (pt_entry_t *)vtomach(
+					(vaddr_t)&ptes[x86_btop(pve->pv_va)]);
 				PTE_ATOMIC_CLEARBITS(
-					&ptes[x86_btop(pve->pv_va)], PG_RW);
+					&ptes[x86_btop(pve->pv_va)],
+					maptp, PG_RW);
 				opte = PTE_GET(&ptes[x86_btop(pve->pv_va)]);
 
 				/*
@@ -3211,7 +3338,9 @@ pmap_clear_attrs(pg, clearbits)
 			 */
 
 			/* zap! */
-			PTE_ATOMIC_SET(&ptes[x86_btop(pve->pv_va)],
+			maptp = (pt_entry_t *)vtomach(
+				(vaddr_t)&ptes[x86_btop(pve->pv_va)]);
+			PTE_ATOMIC_SET(&ptes[x86_btop(pve->pv_va)], maptp,
 			    (opte & ~(PG_U | PG_M)), opte);
 
 			result |= (opte & clearbits);
@@ -3264,6 +3393,7 @@ pmap_write_protect(pmap, sva, eva, prot)
 	vm_prot_t prot;
 {
 	pt_entry_t *ptes, *epte;
+	pt_entry_t *maptp;
 #ifndef XEN
 	volatile
 #endif
@@ -3311,7 +3441,8 @@ pmap_write_protect(pmap, sva, eva, prot)
 
 		for (/*null */; spte < epte ; spte++) {
 			if ((PTE_GET(spte) & (PG_RW|PG_V)) == (PG_RW|PG_V)) {
-				PTE_ATOMIC_CLEARBITS(spte, PG_RW);
+				maptp = (pt_entry_t *)vtomach((vaddr_t)spte);
+				PTE_ATOMIC_CLEARBITS(spte, maptp, PG_RW);
 				if (PTE_GET(spte) & PG_M)
 					pmap_tlb_shootdown(pmap,
 					    x86_ptob(spte - ptes),
@@ -3344,6 +3475,7 @@ pmap_unwire(pmap, va)
 	vaddr_t va;
 {
 	pt_entry_t *ptes;
+	pt_entry_t *maptp;
 
 	if (pmap_valid_entry(pmap->pm_pdir[pdei(va)])) {
 		ptes = pmap_map_ptes(pmap);		/* locks pmap */
@@ -3353,7 +3485,9 @@ pmap_unwire(pmap, va)
 			panic("pmap_unwire: invalid (unmapped) va 0x%lx", va);
 #endif
 		if ((ptes[x86_btop(va)] & PG_W) != 0) {
-			PTE_ATOMIC_CLEARBITS(&ptes[x86_btop(va)], PG_W);
+			maptp = (pt_entry_t *)vtomach(
+				(vaddr_t)&ptes[x86_btop(va)]);
+			PTE_ATOMIC_CLEARBITS(&ptes[x86_btop(va)], maptp, PG_W);
 			pmap->pm_stats.wired_count--;
 		}
 #ifdef DIAGNOSTIC
@@ -3424,6 +3558,7 @@ pmap_enter(pmap, va, pa, prot, flags)
 	struct pv_entry *pve = NULL; /* XXX gcc */
 	int error;
 	boolean_t wired = (flags & PMAP_WIRED) != 0;
+	pt_entry_t *maptp;
 
 	XENPRINTK(("pmap_enter(%p, %p, %p, %08x, %08x)\n",
 	    pmap, (void *)va, (void *)pa, prot, flags));
@@ -3511,7 +3646,8 @@ pmap_enter(pmap, va, pa, prot, flags)
 
 		XENPRINTK(("pmap update opte == pa"));
 		/* zap! */
-		opte = pte_atomic_update_ma(&ptes[x86_btop(va)], npte);
+		maptp = (pt_entry_t *)vtomach((vaddr_t)&ptes[x86_btop(va)]);
+		opte = pte_atomic_update_ma(&ptes[x86_btop(va)], maptp, npte);
 
 		/*
 		 * Any change in the protection level that the CPU
@@ -3524,7 +3660,7 @@ pmap_enter(pmap, va, pa, prot, flags)
 			 * No need to flush the TLB.
 			 * Just add old PG_M, ... flags in new entry.
 			 */
-			PTE_ATOMIC_SETBITS(&ptes[x86_btop(va)],
+			PTE_ATOMIC_SETBITS(&ptes[x86_btop(va)], maptp,
 			    opte & (PG_M | PG_U));
 			goto out_ok;
 		}
@@ -3608,7 +3744,10 @@ pmap_enter(pmap, va, pa, prot, flags)
 
 			XENPRINTK(("pmap change pa"));
 			/* zap! */
-			opte = pte_atomic_update_ma(&ptes[x86_btop(va)], npte);
+			maptp = (pt_entry_t *)vtomach(
+				(vaddr_t)&ptes[x86_btop(va)]);
+			opte = pte_atomic_update_ma(&ptes[x86_btop(va)], maptp,
+						    npte);
 
 			pve = pmap_remove_pv(old_pvh, pmap, va);
 			KASSERT(pve != 0);
@@ -3637,8 +3776,10 @@ pmap_enter(pmap, va, pa, prot, flags)
 		simple_unlock(&new_pvh->pvh_lock);
 	}
 
-	XENPRINTK(("pmap initial setup"));
-	opte = pte_atomic_update_ma(&ptes[x86_btop(va)], npte); /* zap! */
+	XENPRINTK(("pmap initial setup\n"));
+	maptp = (pt_entry_t *)vtomach((vaddr_t)&ptes[x86_btop(va)]);
+	opte = pte_atomic_update_ma(&ptes[x86_btop(va)],
+	    maptp, npte); /* zap! */
 
 shootdown_test:
 	/* Update page attributes if needed */
@@ -3684,6 +3825,7 @@ pmap_enter_ma(pmap, va, pa, prot, flags)
 	int flags;
 {
 	pt_entry_t *ptes, opte, npte;
+	pt_entry_t *maptp;
 	struct vm_page *ptp, *pg;
 	struct vm_page_md *mdpg;
 	struct pv_head *old_pvh;
@@ -3767,7 +3909,8 @@ pmap_enter_ma(pmap, va, pa, prot, flags)
 
 		XENPRINTK(("pmap update opte == pa"));
 		/* zap! */
-		opte = pte_atomic_update_ma(&ptes[x86_btop(va)], npte);
+		maptp = (pt_entry_t *)vtomach((vaddr_t)&ptes[x86_btop(va)]);
+		opte = pte_atomic_update_ma(&ptes[x86_btop(va)], maptp, npte);
 
 		/*
 		 * Any change in the protection level that the CPU
@@ -3780,7 +3923,7 @@ pmap_enter_ma(pmap, va, pa, prot, flags)
 			 * No need to flush the TLB.
 			 * Just add old PG_M, ... flags in new entry.
 			 */
-			PTE_ATOMIC_SETBITS(&ptes[x86_btop(va)],
+			PTE_ATOMIC_SETBITS(&ptes[x86_btop(va)], maptp,
 			    opte & (PG_M | PG_U));
 			goto out_ok;
 		}
@@ -3835,7 +3978,10 @@ pmap_enter_ma(pmap, va, pa, prot, flags)
 
 			XENPRINTK(("pmap change pa"));
 			/* zap! */
-			opte = pte_atomic_update_ma(&ptes[x86_btop(va)], npte);
+			maptp = (pt_entry_t *)vtomach(
+				(vaddr_t)&ptes[x86_btop(va)]);
+			opte = pte_atomic_update_ma(&ptes[x86_btop(va)], maptp,
+						    npte);
 
 			pve = pmap_remove_pv(old_pvh, pmap, va);
 			KASSERT(pve != 0);
@@ -3855,7 +4001,9 @@ pmap_enter_ma(pmap, va, pa, prot, flags)
 	}
 
 	XENPRINTK(("pmap initial setup"));
-	opte = pte_atomic_update_ma(&ptes[x86_btop(va)], npte); /* zap! */
+	maptp = (pt_entry_t *)vtomach((vaddr_t)&ptes[x86_btop(va)]);
+	opte = pte_atomic_update_ma(&ptes[x86_btop(va)],
+	    maptp, npte); /* zap! */
 
 shootdown_test:
 	/* Update page attributes if needed */
@@ -3886,6 +4034,222 @@ out:
 }
 
 /*
+ * pmap_remap_pages: change an existing mapping to new machine pages
+ *
+ * => must be done "now" ... no lazy-evaluation
+ * => we set pmap => pv_head locking
+ */
+
+int
+pmap_remap_pages(pmap, va, pa, npages, flags, dom)
+	struct pmap *pmap;
+	vaddr_t va;
+	paddr_t pa;
+	int npages;
+	int flags;
+	int dom;
+{
+	pt_entry_t *ptes, opte, npte;
+	pt_entry_t *maptp;
+	struct vm_page *ptp, *pg;
+	struct vm_page_md *mdpg;
+	struct pv_head *old_pvh;
+	struct pv_entry *pve = NULL; /* XXX gcc */
+	int error;
+
+	XENPRINTK(("pmap_remap_pages(%p, %p, %p, %d, %08x, %d)\n",
+	    pmap, (void *)va, (void *)pa, npages, flags, dom));
+	//printf("pmap_remap_pages(%p, %p, %p, %d, %08x, %d)\n", pmap, (void *)va, (void *)pa, npages, flags, dom);
+
+	if (npages != 1)
+		panic("pmap_remap_pages: not yet");
+
+#ifdef DIAGNOSTIC
+	/* sanity check: totally out of range? */
+	if (va >= VM_MAX_KERNEL_ADDRESS)
+		panic("pmap_remap_pages: too big");
+
+	if (va == (vaddr_t) PDP_BASE || va == (vaddr_t) APDP_BASE)
+		panic("pmap_remap_pages: trying to map over PDP/APDP!");
+
+	/* sanity check: kernel PTPs should already have been pre-allocated */
+	if (va >= VM_MIN_KERNEL_ADDRESS &&
+	    !pmap_valid_entry(pmap->pm_pdir[pdei(va)]))
+		panic("pmap_remap_pages: missing kernel PTP!");
+#endif
+
+	npte = pa | PG_V;
+	/* XENPRINTK(("npte %p\n", npte)); */
+	//printf("npte 0x%x\n", npte);
+
+	/* it is always a wired mapping */
+	npte |= PG_W;
+
+	if (va < VM_MAXUSER_ADDRESS)
+		npte |= PG_u;
+	else if (va < VM_MAX_ADDRESS)
+		npte |= (PG_u | PG_RW);	/* XXXCDC: no longer needed? */
+	if (pmap == pmap_kernel())
+		npte |= pmap_pg_g;
+
+	/* get lock */
+	PMAP_MAP_TO_HEAD_LOCK();
+
+	ptes = pmap_map_ptes(pmap);		/* locks pmap */
+	if (pmap == pmap_kernel()) {
+		ptp = NULL;
+	} else {
+		ptp = pmap_get_ptp(pmap, pdei(va));
+		if (ptp == NULL) {
+			if (flags & PMAP_CANFAIL) {
+				error = ENOMEM;
+				goto out;
+			}
+			panic("pmap_remap_pages: get ptp failed");
+		}
+	}
+
+	/*
+	 * Get first view on old PTE 
+	 * on SMP the PTE might gain PG_U and PG_M flags
+	 * before we zap it later
+	 */
+	opte = pte_get_ma(&ptes[x86_btop(va)]);		/* old PTE */
+	XENPRINTK(("npte %p opte %p ptes %p idx %03x\n", 
+		      (void *)npte, (void *)opte, ptes, x86_btop(va)));
+	XENPRINTF(("pmap_remap_pages pa %08lx va %08lx opte %08x npte %08x "
+	    "count %ld\n", pa, va, opte, npte,
+	    pmap->pm_stats.wired_count));
+	//printf("npte %p opte %p ptes %p idx %03x\n", (void *)npte, (void *)opte, ptes, x86_btop(va));
+	//printf("pmap_remap_pages pa %08lx va %08lx opte %08x npte %08x count %ld\n", pa, va, opte, npte, pmap->pm_stats.wired_count);
+#if 0
+	npte |= (opte & (PG_M | PG_RW));
+#else
+	npte |= (PG_M | PG_RW);
+#endif
+
+	/*
+	 * is there currently a valid mapping at our VA and does it
+	 * map to the same MA as the one we want to map ?
+	 */
+	if (pmap_valid_entry(opte) && ((opte & PG_FRAME) == pa)) {
+		/*
+		 * first, calculate pm_stats updates.  resident count will not
+		 * change since we are replacing/changing a valid mapping.
+		 * wired count might change...
+		 */
+		pmap->pm_stats.wired_count += (1 - (opte & PG_W) ? 1 : 0);
+
+		//printf("pmap_remap_pages opte == pa");
+		/* zap! */
+		maptp = (pt_entry_t *)vtomach((vaddr_t)&ptes[x86_btop(va)]);
+		error = xpq_update_foreing(maptp, npte, dom);
+
+		/*
+		 * The protection bits should not have changed
+		 */
+		if ((npte & PG_RW)
+		     || ((opte & (PG_M | PG_RW)) != (PG_M | PG_RW)))
+			panic("pmap_remap_pages protection changed\n");
+		/*
+		 * Might be cached in the TLB as being writable
+		 * if this is on the PVLIST, sync R/M bit
+		 */
+		KDASSERT((opte & PG_PVLIST) == 0);
+		goto shootdown_now;
+	}
+		
+	/* 
+	 * no managed mapping for pages mapped through pmap_remap_pages.
+	 */
+
+	/*
+	 * is there currently a valid mapping at our VA?
+	 */
+
+	if (pmap_valid_entry(opte)) {
+		/*
+		 * changing PAs: we must remove the old one first
+		 */
+
+		/*
+		 * first, calculate pm_stats updates.  resident count will not
+		 * change since we are replacing/changing a valid mapping.
+		 * wired count might change...
+		 */
+		pmap->pm_stats.wired_count += (1 - (opte & PG_W) ? 1 : 0);
+
+		if (opte & PG_PVLIST) {
+			opte = xpmap_mtop(opte);
+			KDASSERT((opte & PG_FRAME) !=
+			    (KERNTEXTOFF - KERNBASE_LOCORE));
+
+			pg = PHYS_TO_VM_PAGE(opte & PG_FRAME);
+#ifdef DIAGNOSTIC
+			if (pg == NULL)
+				panic("pmap_remap_pages: PG_PVLIST mapping with "
+				      "unmanaged page "
+				      "pa = 0x%lx (0x%lx)", pa, atop(pa));
+#endif
+			mdpg = &pg->mdpage;
+			old_pvh = &mdpg->mp_pvhead;
+
+			/* NULL new_pvh since page will not be managed */
+			pmap_lock_pvhs(old_pvh, NULL);
+
+			//printf("pmap change pa");
+			/* zap! */
+			opte = pte_get_ma(&ptes[x86_btop(va)]);
+			maptp = (pt_entry_t *)vtomach(
+				(vaddr_t)&ptes[x86_btop(va)]);
+			error = xpq_update_foreing(maptp, npte, dom);
+
+			pve = pmap_remove_pv(old_pvh, pmap, va);
+			KASSERT(pve != 0);
+			mdpg->mp_attrs |= opte;
+
+			pmap_free_pv(pmap, pve);
+			simple_unlock(&old_pvh->pvh_lock);
+
+			goto shootdown_test;
+		}
+	} else {
+		pmap->pm_stats.resident_count++;
+		pmap->pm_stats.wired_count++;
+		if (ptp)
+			ptp->wire_count++;
+	}
+
+	//printf("pmap initial setup");
+	maptp = (pt_entry_t *)vtomach((vaddr_t)&ptes[x86_btop(va)]);
+	error = xpq_update_foreing(maptp, npte, dom);
+
+shootdown_test:
+	/* Update page attributes if needed */
+	if ((opte & (PG_V | PG_U)) == (PG_V | PG_U)) {
+#if defined(MULTIPROCESSOR)
+		int32_t cpumask = 0;
+#endif
+shootdown_now:
+#if defined(MULTIPROCESSOR)
+		pmap_tlb_shootdown(pmap, va, opte, &cpumask);
+		pmap_tlb_shootnow(cpumask);
+#else
+		/* Don't bother deferring in the single CPU case. */
+		if (pmap_is_curpmap(pmap))
+			pmap_update_pg(va);
+#endif
+	}
+
+out:
+	pmap_unmap_ptes(pmap);
+	PMAP_MAP_TO_HEAD_UNLOCK();
+
+	//printf("pmap_remap_pages: %d\n", error);
+	return error;
+}
+
+/*
  * pmap_growkernel: increase usage of KVM space
  *
  * => we allocate new PTPs for the kernel and install them in all
@@ -3897,6 +4261,8 @@ pmap_growkernel(maxkvaddr)
 	vaddr_t maxkvaddr;
 {
 	struct pmap *kpm = pmap_kernel(), *pm;
+	pd_entry_t *mapdp;
+	pt_entry_t *maptp;
 	int needed_kpde;   /* needed number of kernel PTPs */
 	int s;
 	paddr_t ptaddr;
@@ -3917,6 +4283,7 @@ pmap_growkernel(maxkvaddr)
 
 	for (/*null*/ ; nkpde < needed_kpde ; nkpde++) {
 
+		mapdp = (pt_entry_t *)vtomach((vaddr_t)&kpm->pm_pdir[PDSLOT_KERN + nkpde]);
 		if (uvm.page_init_done == FALSE) {
 
 			/*
@@ -3930,8 +4297,7 @@ pmap_growkernel(maxkvaddr)
 			pmap_zero_page(ptaddr);
 
 			XENPRINTF(("xxxx maybe not PG_RW\n"));
-			PDE_SET(&kpm->pm_pdir[PDSLOT_KERN + nkpde],
-			    ptaddr | PG_RW | PG_V);
+			PDE_SET(&kpm->pm_pdir[PDSLOT_KERN + nkpde], mapdp, ptaddr | PG_RW | PG_V);
 
 			/* count PTP as resident */
 			kpm->pm_stats.resident_count++;
@@ -3949,14 +4315,16 @@ pmap_growkernel(maxkvaddr)
 		}
 
 		/* PG_u not for kernel */
-		PDE_CLEARBITS(&kpm->pm_pdir[PDSLOT_KERN + nkpde], PG_u);
+		PDE_CLEARBITS(&kpm->pm_pdir[PDSLOT_KERN + nkpde], mapdp, PG_u);
 
 		/* distribute new kernel PTP to all active pmaps */
 		simple_lock(&pmaps_lock);
 		for (pm = pmaps.lh_first; pm != NULL;
 		     pm = pm->pm_list.le_next) {
 			XENPRINTF(("update\n"));
-			PDE_COPY(&pm->pm_pdir[PDSLOT_KERN + nkpde],
+			maptp = (pt_entry_t *)vtomach(
+				(vaddr_t)&pm->pm_pdir[PDSLOT_KERN + nkpde]);
+			PDE_COPY(&pm->pm_pdir[PDSLOT_KERN + nkpde], maptp,
 			    &kpm->pm_pdir[PDSLOT_KERN + nkpde]);
 		}
 
@@ -4119,7 +4487,11 @@ pmap_tlb_shootdown(pmap, va, pte, cpumaskp)
 
 	self = curcpu();
 
+#if defined(MULTIPROCESSOR)
 	s = splipi();
+#else /* defined(MULTIPROCESSOR) */
+	s = splvm();
+#endif /* defined(MULTIPROCESSOR) */
 #if 0
 	printf("dshootdown %lx\n", va);
 #endif
@@ -4203,7 +4575,8 @@ pmap_tlb_shootdown(pmap, va, pte, cpumaskp)
 /*
  * pmap_do_tlb_shootdown_checktlbstate: check and update ci_tlbstate.
  *
- * => called at splipi.
+ * => called at splipi if MULTIPROCESSOR.
+ * => called at splvm if !MULTIPROCESSOR.
  * => return TRUE if we need to maintain user tlbs.
  */
 static __inline boolean_t
@@ -4249,10 +4622,15 @@ pmap_do_tlb_shootdown(struct cpu_info *self)
 #ifdef MULTIPROCESSOR
 	struct cpu_info *ci;
 	CPU_INFO_ITERATOR cii;
-#endif
+#endif /* MULTIPROCESSOR */
+
 	KASSERT(self == curcpu());
 
+#ifdef MULTIPROCESSOR
 	s = splipi();
+#else /* MULTIPROCESSOR */
+	s = splvm();
+#endif /* MULTIPROCESSOR */
 
 	__cpu_simple_lock(&pq->pq_slock);
 
@@ -4295,7 +4673,7 @@ pmap_do_tlb_shootdown(struct cpu_info *self)
 	for (CPU_INFO_FOREACH(cii, ci))
 		x86_atomic_clearbits_l(&ci->ci_tlb_ipi_mask,
 		    (1U << cpu_id));
-#endif
+#endif /* MULTIPROCESSOR */
 	__cpu_simple_unlock(&pq->pq_slock);
 
 	splx(s);

@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs.h,v 1.74 2004/08/14 14:32:04 mycroft Exp $	*/
+/*	$NetBSD: lfs.h,v 1.74.6.1 2005/03/19 08:37:03 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -73,12 +73,8 @@
  * Compile-time options for LFS.
  */
 #define LFS_IFIND_RETRIES  16
-#define LFS_EAGAIN_FAIL		/* markv fail with EAGAIN if ino is locked */
-#define LFS_DEBUG_RFW		/* print roll-forward debugging info */
 #define LFS_LOGLENGTH      1024 /* size of debugging log */
 #define LFS_MAX_ACTIVE	   10	/* Dirty segments before ckp forced */
-
-/* #define DEBUG_LFS */		 /* Intensive debugging of LFS subsystem */
 
 /*
  * Fixed filesystem layout parameters
@@ -111,16 +107,17 @@
 /* Resource limits */
 #define LFS_MAX_BUFS	    ((nbuf >> 2) - 10)
 #define LFS_WAIT_BUFS	    ((nbuf >> 1) - (nbuf >> 3) - 10)
-extern u_long bufmem; /* XXX */
-#define LFS_MAX_BYTES	    ((bufmem >> 2) - 10 * PAGE_SIZE)
-#define LFS_WAIT_BYTES	    ((bufmem >> 1) - (bufmem >> 3) - 10 * PAGE_SIZE)
+#define LFS_INVERSE_MAX_BUFS(n) (((n) + 10) << 2)
+extern u_long bufmem_lowater, bufmem_hiwater; /* XXX */
+#define LFS_MAX_BYTES	    ((bufmem_lowater >> 2) - 10 * PAGE_SIZE)
+#define LFS_INVERSE_MAX_BYTES(n) (((n) + 10 * PAGE_SIZE) << 2)
+#define LFS_WAIT_BYTES	    ((bufmem_lowater >> 1) - (bufmem_lowater >> 3) - 10 * PAGE_SIZE)
 #define LFS_MAX_DIROP	    ((desiredvnodes >> 2) + (desiredvnodes >> 3))
 #define LFS_MAX_PAGES \
      (((uvmexp.active + uvmexp.inactive + uvmexp.free) * uvmexp.filemin) >> 8)
 #define LFS_WAIT_PAGES \
      (((uvmexp.active + uvmexp.inactive + uvmexp.free) * uvmexp.filemax) >> 8)
 #define LFS_BUFWAIT	    2	/* How long to wait if over *_WAIT_* */
-
 
 /*
  * Reserved blocks for lfs_malloc
@@ -200,10 +197,12 @@ typedef struct lfs_res_blk {
 # define LFS_IS_MALLOC_BUF(bp) (((bp)->b_flags & B_CALL) &&		\
      (bp)->b_iodone == lfs_callback)
 
-# ifdef DEBUG_LOCKED_LIST
+# ifdef DEBUG
 #  define LFS_DEBUG_COUNTLOCKED(m) do {					\
-	lfs_countlocked(&locked_queue_count, &locked_queue_bytes, (m));	\
-	wakeup(&locked_queue_count);					\
+	if (lfs_debug_log_subsys[DLOG_LLIST]) {				\
+		lfs_countlocked(&locked_queue_count, &locked_queue_bytes, (m)); \
+		wakeup(&locked_queue_count);				\
+	}								\
 } while (0)
 # else
 #  define LFS_DEBUG_COUNTLOCKED(m)
@@ -239,14 +238,33 @@ extern struct lfs_log_entry lfs_log[LFS_LOGLENGTH];
 		LFS_ENTER_LOG("clear", __FILE__, __LINE__,		\
 			      bp->b_lblkno, bp->b_flags);		\
 } while (0)
+
+/* Must match list in lfs_vfsops.c ! */
+#  define DLOG_RF     0  /* roll forward */
+#  define DLOG_ALLOC  1  /* inode alloc */
+#  define DLOG_AVAIL  2  /* lfs_{,r,f}avail */
+#  define DLOG_FLUSH  3  /* flush */
+#  define DLOG_LLIST  4  /* locked list accounting */
+#  define DLOG_WVNODE 5  /* vflush/writevnodes verbose */
+#  define DLOG_VNODE  6  /* vflush/writevnodes */
+#  define DLOG_SEG    7  /* segwrite */
+#  define DLOG_SU     8  /* seguse accounting */
+#  define DLOG_CLEAN  9  /* cleaner routines */
+#  define DLOG_MOUNT  10 /* mount/unmount */
+#  define DLOG_PAGE   11 /* putpages/gop_write */
+#  define DLOG_DIROP  12 /* dirop accounting */
+#  define DLOG_MALLOC 13 /* lfs_malloc accounting */
+#  define DLOG_MAX    14 /* The terminator */
+#  define DLOG(a) lfs_debug_log a
 # else /* ! DEBUG */
 #  define LFS_BCLEAN_LOG(fs, bp)
 #  define LFS_BWRITE_LOG(bp)		VOP_BWRITE((bp))
+#  define DLOG(a)
 # endif /* ! DEBUG */
 #else /* ! _KERNEL */
 # define LFS_BWRITE_LOG(bp)		VOP_BWRITE((bp))
 #endif /* _KERNEL */
-	
+
 #ifdef _KERNEL
 /* Filehandle structure for exported LFSes */
 struct lfid {
@@ -466,7 +484,7 @@ struct ifile_v1 {
 typedef struct _cleanerinfo {
 	u_int32_t clean;		/* number of clean segments */
 	u_int32_t dirty;		/* number of dirty segments */
-	u_int32_t bfree;		/* disk blocks free */
+	int32_t   bfree;		/* disk blocks free */
 	int32_t	  avail;		/* disk blocks available */
 	u_int32_t free_head;		/* head of the inode free list */
 	u_int32_t free_tail;		/* tail of the inode free list */
@@ -487,9 +505,11 @@ typedef struct _cleanerinfo {
 /* Synchronize the Ifile cleaner info with current avail and bfree */
 #define LFS_SYNC_CLEANERINFO(cip, fs, bp, w) do {		 	\
     if ((w) || (cip)->bfree != (fs)->lfs_bfree ||		 	\
-	(cip)->avail != (fs)->lfs_avail - (fs)->lfs_ravail) {	 	\
+	(cip)->avail != (fs)->lfs_avail - (fs)->lfs_ravail - 		\
+	(fs)->lfs_favail) {	 					\
 	(cip)->bfree = (fs)->lfs_bfree;				 	\
-	(cip)->avail = (fs)->lfs_avail - (fs)->lfs_ravail;	 	\
+	(cip)->avail = (fs)->lfs_avail - (fs)->lfs_ravail -		\
+		(fs)->lfs_favail;				 	\
 	if (((bp)->b_flags & B_GATHERED) == 0)			 	\
 		(fs)->lfs_flags |= LFS_IFDIRTY;			 	\
 	(void) LFS_BWRITE_LOG(bp); /* Ifile */			 	\
@@ -590,7 +610,7 @@ struct dlfs {
 
 /* Checkpoint region. */
 	u_int32_t dlfs_freehd;	  /* 32: start of the free list */
-	u_int32_t dlfs_bfree;	  /* 36: number of free disk blocks */
+	int32_t   dlfs_bfree;	  /* 36: number of free disk blocks */
 	u_int32_t dlfs_nfiles;	  /* 40: number of allocated inodes */
 	int32_t	  dlfs_avail;	  /* 44: blocks available for writing */
 	int32_t	  dlfs_uinodes;	  /* 48: inodes in cache not yet on disk */
@@ -750,11 +770,12 @@ struct lfs {
 	pid_t lfs_rfpid;		/* Process ID of roll-forward agent */
 	int	  lfs_nadirop;		/* number of active dirop nodes */
 	long	  lfs_ravail;		/* blocks pre-reserved for writing */
+	long	  lfs_favail;		/* blocks pre-reserved for writing */
 	res_t *lfs_resblk;		/* Reserved memory for pageout */
 	TAILQ_HEAD(, inode) lfs_dchainhd; /* dirop vnodes */
 	TAILQ_HEAD(, inode) lfs_pchainhd; /* paging vnodes */
 #define LFS_RESHASH_WIDTH 17
-	LIST_HEAD(, lfs_res_blk) lfs_reshash[LFS_RESHASH_WIDTH]; 
+	LIST_HEAD(, lfs_res_blk) lfs_reshash[LFS_RESHASH_WIDTH];
 	int	  lfs_pdflush;		 /* pagedaemon wants us to flush */
 	u_int32_t **lfs_suflags;	/* Segment use flags */
 #ifdef _KERNEL
@@ -767,6 +788,7 @@ struct lfs {
 	int 	 lfs_cleanind;	/* Index into intervals */
 	struct simplelock lfs_interlock;  /* lock for lfs_seglock */
 	int lfs_sleepers;		/* # procs sleeping this fs */
+	int lfs_pages;			/* dirty pages blaming this fs */
 };
 
 /* NINDIR is the number of indirects in a file system block. */
@@ -899,20 +921,34 @@ struct lfs_cluster {
 #endif /* _KERNEL */
 
 /*
- * LFS inode extensions; moved from <ufs/ufs/inode.h> so that file didn't
- * have to change every time LFS changed.
+ * List containing block numbers allocated through lfs_balloc.
+ */
+struct lbnentry {
+	LIST_ENTRY(lbnentry) entry;
+	daddr_t lbn;
+};
+
+/*
+ * LFS inode extensions.
  */
 struct lfs_inode_ext {
 	off_t	  lfs_osize;		/* size of file on disk */
 	u_int32_t lfs_effnblocks;  /* number of blocks when i/o completes */
 	size_t	  lfs_fragsize[NDADDR]; /* size of on-disk direct blocks */
-	TAILQ_ENTRY(inode) lfs_dchain; /* Dirop chain. */
-	TAILQ_ENTRY(inode) lfs_pchain; /* Paging chain. */
+	TAILQ_ENTRY(inode) lfs_dchain;  /* Dirop chain. */
+	TAILQ_ENTRY(inode) lfs_pchain;  /* Paging chain. */
+	/* Blocks allocated for write */
+#define LFS_BLIST_HASH_WIDTH 17
+	LIST_HEAD(, lbnentry) lfs_blist[LFS_BLIST_HASH_WIDTH];
+#define LFSI_NO_GOP_WRITE 0x01
+	u_int32_t lfs_iflags;           /* Inode flags */
 };
 #define i_lfs_osize		inode_ext.lfs->lfs_osize
 #define i_lfs_effnblks		inode_ext.lfs->lfs_effnblocks
 #define i_lfs_fragsize		inode_ext.lfs->lfs_fragsize
 #define i_lfs_dchain		inode_ext.lfs->lfs_dchain
+#define i_lfs_blist		inode_ext.lfs->lfs_blist
+#define i_lfs_iflags		inode_ext.lfs->lfs_iflags
 
 /*
  * Macros for determining free space on the disk, with the variable metadata
@@ -927,7 +963,7 @@ struct lfs_inode_ext {
 #define LFS_EST_NONMETA(F) ((F)->lfs_dsize - (F)->lfs_dmeta - LFS_EST_CMETA(F))
 
 /* Estimate number of blocks actually available for writing */
-#define LFS_EST_BFREE(F) ((F)->lfs_bfree - LFS_EST_CMETA(F) - (F)->lfs_dmeta)
+#define LFS_EST_BFREE(F) ((F)->lfs_bfree > LFS_EST_CMETA(F) + (F)->lfs_dmeta ? (F)->lfs_bfree - LFS_EST_CMETA(F) - (F)->lfs_dmeta : 0)
 
 /* Amount of non-meta space not available to mortal man */
 #define LFS_EST_RSVD(F) (int32_t)((LFS_EST_NONMETA(F) *			     \
@@ -944,8 +980,15 @@ struct lfs_inode_ext {
 #define IS_FREESPACE(F, BB)						\
 	  (LFS_EST_BFREE(F) >= (BB) + LFS_EST_RSVD(F))
 
+/*
+ * The minimum number of blocks to create a new inode.  This is:
+ * directory direct block (1) + NIADDR indirect blocks + inode block (1) +
+ * ifile direct block (1) + NIADDR indirect blocks = 3 + 2 * NIADDR blocks.
+ */
+#define LFS_NRESERVE(F) (btofsb((F), (2 * NIADDR + 3) << (F)->lfs_bshift))
+
 /* Statistics Counters */
-struct lfs_stats {
+struct lfs_stats {	/* Must match sysctl list in lfs_vfsops.h ! */
 	u_int	segsused;
 	u_int	psegwrites;
 	u_int	psyncwrites;
@@ -959,6 +1002,8 @@ struct lfs_stats {
 	u_int	write_exceeded;
 	u_int	flush_invoked;
 	u_int	vflush_invoked;
+	u_int	clean_inlocked;
+	u_int	clean_vnlocked;
 };
 #ifdef _KERNEL
 extern struct lfs_stats lfs_stats;
@@ -970,11 +1015,15 @@ struct lfs_fcntl_markv {
 	int blkcnt;		/* number of blocks */
 };
 
-#define LFCNSEGWAITALL	 _FCNW_FSPRIV('L', 0, struct timeval)
-#define LFCNSEGWAIT	 _FCNW_FSPRIV('L', 1, struct timeval)
+#define LFCNSEGWAITALL	 _FCNR_FSPRIV('L', 0, struct timeval)
+#define LFCNSEGWAIT	 _FCNR_FSPRIV('L', 1, struct timeval)
 #define LFCNBMAPV	_FCNRW_FSPRIV('L', 2, struct lfs_fcntl_markv)
 #define LFCNMARKV	_FCNRW_FSPRIV('L', 3, struct lfs_fcntl_markv)
 #define LFCNRECLAIM	 _FCNO_FSPRIV('L', 4)
+#define LFCNIFILEFH	 _FCNW_FSPRIV('L', 5, struct fhandle)
+/* Compat for NetBSD 2.x error */
+#define LFCNSEGWAITALL_COMPAT	 _FCNW_FSPRIV('L', 0, struct timeval)
+#define LFCNSEGWAIT_COMPAT	 _FCNW_FSPRIV('L', 1, struct timeval)
 
 #ifdef _KERNEL
 /* XXX MP */

@@ -1,4 +1,4 @@
-/*	$NetBSD: rbus_ppb.c,v 1.13.6.1 2005/02/12 18:17:42 yamt Exp $	*/
+/*	$NetBSD: rbus_ppb.c,v 1.13.6.2 2005/03/19 08:33:55 yamt Exp $	*/
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rbus_ppb.c,v 1.13.6.1 2005/02/12 18:17:42 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rbus_ppb.c,v 1.13.6.2 2005/03/19 08:33:55 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -114,7 +114,7 @@ static void rbus_pci_phys_countspace(pci_chipset_tag_t pc,
 
 static int rbus_do_phys_countspace(pci_chipset_tag_t pc,
 					pcitag_t tag,
-					int mapreg,	
+					int mapreg,
 					void *ctx,
 					int type,
 					bus_addr_t *addr,
@@ -216,7 +216,7 @@ rbus_do_header_fixup(pc, tag, context)
 
 }
 
-/* 
+/*
  * This function takes a range of PCI bus numbers and
  * allocates space for all devices found in this space (the BARs) from
  * the rbus space maps (I/O and memory).
@@ -225,7 +225,7 @@ rbus_do_header_fixup(pc, tag, context)
  *
  * It uses pci_device_foreach_min() to call rbus_pci_phys_allocate.
  * This function is mostly stolen from
- *     pci_addr_fixup.c:pciaddr_resource_reserve. 
+ *     pci_addr_fixup.c:pciaddr_resource_reserve.
  *
  */
 struct rbus_pci_addr_fixup_context {
@@ -239,9 +239,9 @@ struct rbus_pci_addr_fixup_context {
   bus_size_t  *bussize_memreqs;
   rbus_tag_t   *iobustags;
   rbus_tag_t   *membustags;
-};  
+};
 
-unsigned int 
+unsigned int
 rbus_round_up(unsigned int size, unsigned int min)
 {
   unsigned int power2;
@@ -256,10 +256,10 @@ rbus_round_up(unsigned int size, unsigned int min)
 	power2 < size) {
     power2 = power2 << 1;
   }
-  
+
   return power2;
 }
-    
+
 static void
 rbus_pci_addr_fixup(struct ppb_cardbus_softc *csc,
 		    cardbus_chipset_tag_t ct,
@@ -352,7 +352,7 @@ rbus_pci_addr_fixup(struct ppb_cardbus_softc *csc,
 		  rct.bussize_ioreqs[minbus], minbus);
 	  }
 	  rct.iobustags[minbus]=rbus_new(caa->ca_rbus_iot,
-					 start, 
+					 start,
 					 rct.bussize_ioreqs[minbus],
 					 0 /* offset to add to physical address
 					      to make processor address */,
@@ -417,7 +417,7 @@ rbus_pci_addr_fixup(struct ppb_cardbus_softc *csc,
 					   RBUS_SPACE_DEDICATE);
 
 	    /* program the bridge */
-	    
+
 	    /* enable I/O space */
 	    reg = pci_conf_read(pc, pci_bus_tag[busnum],
 				PCI_COMMAND_STATUS_REG);
@@ -432,12 +432,12 @@ rbus_pci_addr_fixup(struct ppb_cardbus_softc *csc,
 			       rct.bussize_ioreqs[busnum] +
 			       4095) & 0xf000) >> 8) << PPB_IOLIMIT_SHIFT));
 	  }
-	  
+
 	  if(rct.bussize_memreqs[busnum]) {
 	    if(rbus_space_alloc(rct.membustags[busparent],
 				0,
-				rct.bussize_memreqs[busnum] /* size  */, 
-				rct.bussize_memreqs[busnum]-1 /*mask */, 
+				rct.bussize_memreqs[busnum] /* size  */,
+				rct.bussize_memreqs[busnum]-1 /*mask */,
 				rct.bussize_memreqs[busnum] /* align */,
 				/* flags */ 0,
 				&start,
@@ -510,7 +510,7 @@ rbus_pci_phys_countspace(pc, tag, context)
 				rbus_do_phys_countspace, context);
 }
 
-  
+
 int
 rbus_do_phys_countspace(pc, tag, mapreg, ctx, type, addr, size)
 	pci_chipset_tag_t pc;
@@ -537,7 +537,7 @@ rbus_do_phys_countspace(pc, tag, mapreg, ctx, type, addr, size)
 	} else {
 	  rct->bussize_memreqs[bus]+= size;
 	}
-	 
+
 	return 0;
 }
 
@@ -552,7 +552,7 @@ rbus_pci_phys_allocate(pc, tag, context)
 	  (struct rbus_pci_addr_fixup_context *)context;
 	//cardbus_chipset_tag_t ct = rct->ct;
 	//	struct cardbus_softc *sc = rct->sc;
-  
+
 	pci_decompose_tag(pc, tag, &bus, &device, &function);
 
 	printf("%s: configuring device %02x:%02x:%02x\n",
@@ -597,7 +597,7 @@ rbus_do_phys_allocate(pc, tag, mapreg, ctx, type, addr, size)
 	/*
 	 * some devices come up with garbage in them (Tulip?)
 	 * we are in charge here, so give them address
-	 * space anyway. 
+	 * space anyway.
 	 *
 	 * XXX this may be due to no secondary PCI reset!!!
 	 */
@@ -638,7 +638,7 @@ rbus_do_phys_allocate(pc, tag, mapreg, ctx, type, addr, size)
 
 	printf("%s: alloc %s space of size %08x for %02d:%02d:%02d -> %08x\n",
 	       rct->csc->sc_dev.dv_xname,
-	       bustype, 
+	       bustype,
 	       (unsigned int)size,
 	       bus, device, function, (unsigned int)*addr);
 
@@ -695,7 +695,7 @@ ppb_cardbus_attach(parent, self, aux)
 
 	/* shut up compiler */
 	csc->foo=parent_sc->sc_intrline;
-	
+
 
 	pci_devinfo(ca->ca_id, ca->ca_class, 0, devinfo, sizeof(devinfo));
 	printf(": %s (rev. 0x%02x)\n", devinfo, PCI_REVISION(ca->ca_class));
@@ -733,11 +733,11 @@ ppb_cardbus_attach(parent, self, aux)
 	  return;
 	}
 
-#if 0	  
+#if 0
 	minbus = PPB_BUSINFO_SECONDARY(busdata);
 	maxbus = PPB_BUSINFO_SUBORDINATE(busdata);
 #endif
-	
+
 	/* now, go and assign addresses for the new devices */
 	rbus_pci_addr_fixup(csc, cc, parent_sc,
 			    psc->sc_pc,
@@ -751,7 +751,7 @@ ppb_cardbus_attach(parent, self, aux)
 	 */
 	rbus_intr_fixup(psc->sc_pc, minbus, maxbus, ca->ca_intrline);
 
-	/* 
+	/*
 	 * enable direct routing of interrupts. We do this because
 	 * we can not manage to get pccb_intr_establish() called until
 	 * PCI subsystem is merged with rbus. The major thing that this
@@ -768,7 +768,7 @@ ppb_cardbus_attach(parent, self, aux)
 	 *
 	 * XXX Don't pass-through Memory Read Multiple.  Should we?
 	 * XXX Consult the spec...
-	 */	
+	 */
 	pba.pba_iot  = ca->ca_iot;
 	pba.pba_memt = ca->ca_memt;
 	pba.pba_dmat = ca->ca_dmat;

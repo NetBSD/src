@@ -1,6 +1,6 @@
-/*	$NetBSD: ext2fs_lookup.c,v 1.30.6.1 2005/02/12 18:17:56 yamt Exp $	*/
+/*	$NetBSD: ext2fs_lookup.c,v 1.30.6.2 2005/03/19 08:37:03 yamt Exp $	*/
 
-/* 
+/*
  * Modified for NetBSD 1.2E
  * May 1997, Manuel Bouyer
  * Laboratoire d'informatique de Paris VI
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_lookup.c,v 1.30.6.1 2005/02/12 18:17:56 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_lookup.c,v 1.30.6.2 2005/03/19 08:37:03 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -80,8 +80,8 @@ static int	ext2fs_dirbadentry __P((struct vnode *dp,
  * the problem that is tackled below is the fact that FFS
  * includes the terminating zero on disk while EXT2FS doesn't
  * this implies that we need to introduce some padding.
- * For instance, a filename "sbin" has normally a reclen 12 
- * in EXT2, but 16 in FFS. 
+ * For instance, a filename "sbin" has normally a reclen 12
+ * in EXT2, but 16 in FFS.
  * This reminds me of that Pepsi commercial: 'Kid saved a lousy nine cents...'
  * If it wasn't for that, the complete ufs code for directories would
  * have worked w/o changes (except for the difference in DIRBLKSIZ)
@@ -108,7 +108,7 @@ ext2fs_dirconv2ffs( e2dir, ffsdir)
 #endif
 	strncpy(ffsdir->d_name, e2dir->e2d_name, ffsdir->d_namlen);
 
-	/* Godmar thinks: since e2dir->e2d_reclen can be big and means 
+	/* Godmar thinks: since e2dir->e2d_reclen can be big and means
 	   nothing anyway, we compute our own reclen according to what
 	   we think is right
 	 */
@@ -121,7 +121,7 @@ ext2fs_dirconv2ffs( e2dir, ffsdir)
  * Convert the on-disk entries to <sys/dirent.h> entries.
  * the problem is that the conversion will blow up some entries by four bytes,
  * so it can't be done in place. This is too bad. Right now the conversion is
- * done entry by entry, the converted entry is sent via uiomove. 
+ * done entry by entry, the converted entry is sent via uiomove.
  *
  * XXX allocate a buffer, convert as many entries as possible, then send
  * the whole buffer to uiomove
@@ -181,7 +181,7 @@ ext2fs_readdir(v)
 	error = VOP_READ(ap->a_vp, &auio, 0, ap->a_cred);
 	if (error == 0) {
 		readcnt = e2fs_count - auio.uio_resid;
-		for (dp = (struct ext2fs_direct *)dirbuf; 
+		for (dp = (struct ext2fs_direct *)dirbuf;
 			(char *)dp < (char *)dirbuf + readcnt; ) {
 			e2d_reclen = fs2h16(dp->e2d_reclen);
 			if (e2d_reclen == 0) {
@@ -932,7 +932,7 @@ ext2fs_dirremove(dvp, cnp)
 	struct ext2fs_direct *ep;
 	struct buf *bp;
 	int error;
-	 
+
 	dp = VTOI(dvp);
 	if (dp->i_count == 0) {
 		/*
@@ -1010,7 +1010,7 @@ ext2fs_dirempty(ip, parentino, cred)
 	struct ext2fs_direct *dp = (struct ext2fs_direct *)&dbuf;
 	int error, namlen;
 	size_t count;
-		 
+
 #define	MINDIRSIZ (sizeof (struct ext2fs_dirtemplate) / 2)
 
 	for (off = 0; off < ext2fs_size(ip); off += fs2h16(dp->e2d_reclen)) {

@@ -1,4 +1,4 @@
-/* -*-C++-*-	$NetBSD: hpcmenu.cpp,v 1.14 2004/08/06 18:33:09 uch Exp $	*/
+/* -*-C++-*-	$NetBSD: hpcmenu.cpp,v 1.14.6.1 2005/03/19 08:33:00 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2004 The NetBSD Foundation, Inc.
@@ -327,7 +327,7 @@ HpcMenuInterface::setup_bootinfo(struct bootinfo &bi)
 {
 	FrameBufferInfo fb(_pref.platid_hi, _pref.platid_lo);
 	TIME_ZONE_INFORMATION tz;
-	GetTimeZoneInformation(&tz);
+	DWORD tzid = GetTimeZoneInformation(&tz);
 
 	memset(&bi, 0, sizeof(struct bootinfo));
 	bi.length		= sizeof(struct bootinfo);
@@ -341,6 +341,8 @@ HpcMenuInterface::setup_bootinfo(struct bootinfo &bi)
 	bi.platid_cpu		= _pref.platid_hi;
 	bi.platid_machine	= _pref.platid_lo;
 	bi.timezone		= tz.Bias;
+	if (tzid == TIME_ZONE_ID_DAYLIGHT)
+		bi.timezone    += tz.DaylightBias;
 }
 
 // Progress bar

@@ -1,4 +1,4 @@
-/*	$NetBSD: am79900reg.h,v 1.6 2003/11/02 11:07:44 wiz Exp $	*/
+/*	$NetBSD: am79900reg.h,v 1.6.10.1 2005/03/19 08:34:01 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -102,7 +102,7 @@ struct leinit {
 	int32_t	  pad;		/* Pad to 16 shorts */
 };
 
-/* Receive message descriptor 1 (rmd1_bits) */ 
+/* Receive message descriptor 1 (rmd1_bits) */
 #define	LE_R1_OWN	(1<<31)		/* LANCE owns the packet */
 #define	LE_R1_ERR	(1<<30)		/* error summary */
 #define	LE_R1_FRAM	(1<<29)		/* framing error */
@@ -117,7 +117,7 @@ struct leinit {
 #define	LE_R1_BITS \
     "\20\40OWN\37ERR\36FRAM\35OFLO\34CRC\33BUFF\32STP\31ENP"
 
-/* Transmit message descriptor 1 (tmd1_bits) */ 
+/* Transmit message descriptor 1 (tmd1_bits) */
 #define	LE_T1_OWN	(1<<31)		/* LANCE owns the packet */
 #define	LE_T1_ERR	(1<<30)		/* error summary */
 #define	LE_T1_ADD_FCS	(1<<29)		/* add FCS (PCnet-PCI) */
@@ -134,7 +134,7 @@ struct leinit {
 #define	LE_T1_BITS \
     "\20\40OWN\37ERR\36RES\35MORE\34ONE\33DEF\32STP\31ENP"
 
-/* Transmit message descriptor 3 (tmd3) */ 
+/* Transmit message descriptor 3 (tmd3) */
 #define	LE_T2_BUFF	(1<<31)		/* buffer error */
 #define	LE_T2_UFLO	(1<<30)		/* underflow error */
 #define	LE_T2_EXDEF	(1<<29)		/* excessive defferral */

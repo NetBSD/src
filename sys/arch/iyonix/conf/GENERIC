@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.4.6.1 2005/02/12 18:17:35 yamt Exp $
+#	$NetBSD: GENERIC,v 1.4.6.2 2005/03/19 08:33:04 yamt Exp $
 #
 #	GENERIC -- Generic kernel
 #
@@ -58,7 +58,7 @@ file-system     FILECORE        # Acorn filecore file system
 #options 	NFSSERVER
 #options 	SOFTDEP
 #options	UFS_DIRHASH	# UFS Large Directory Hashing - Experimental
-#options 	FFS_SNAPSHOT	# ffs snapshots
+options 	FFS_NO_SNAPSHOT	# ffs snapshots
 
 # Networking options
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_exec.h,v 1.12 2003/06/29 22:29:19 fvdl Exp $	*/
+/*	$NetBSD: ibcs2_exec.h,v 1.12.12.1 2005/03/19 08:33:32 yamt Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1998 Scott Bartram
@@ -181,6 +181,7 @@ extern const struct emul emul_ibcs2;
 #define XOUT_HDR_SIZE		(sizeof(struct xexec) + sizeof(struct xext))
 
 int     exec_ibcs2_xout_makecmds __P((struct proc *, struct exec_package *));
+int	ibcs2_exec_setup_stack __P((struct proc *, struct exec_package *));
 
 #ifdef EXEC_ELF32
 int	ibcs2_elf32_probe __P((struct proc *, struct exec_package *,

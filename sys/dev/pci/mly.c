@@ -1,4 +1,4 @@
-/*	$NetBSD: mly.c,v 1.21 2003/06/29 22:30:25 fvdl Exp $	*/
+/*	$NetBSD: mly.c,v 1.21.12.1 2005/03/19 08:35:11 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mly.c,v 1.21 2003/06/29 22:30:25 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mly.c,v 1.21.12.1 2005/03/19 08:35:11 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -121,9 +121,9 @@ static int	mly_alloc_ccbs(struct mly_softc *);
 static void	mly_check_event(struct mly_softc *);
 static void	mly_complete_event(struct mly_softc *, struct mly_ccb *);
 static void	mly_complete_rescan(struct mly_softc *, struct mly_ccb *);
-static int	mly_dmamem_alloc(struct mly_softc *, int, bus_dmamap_t *, 
+static int	mly_dmamem_alloc(struct mly_softc *, int, bus_dmamap_t *,
 				 caddr_t *, bus_addr_t *, bus_dma_segment_t *);
-static void	mly_dmamem_free(struct mly_softc *, int, bus_dmamap_t, 
+static void	mly_dmamem_free(struct mly_softc *, int, bus_dmamap_t,
 				caddr_t, bus_dma_segment_t *);
 static int	mly_enable_mmbox(struct mly_softc *);
 static void	mly_fetch_event(struct mly_softc *);
@@ -149,7 +149,7 @@ static int	mly_ccb_submit(struct mly_softc *, struct mly_ccb *);
 static void	mly_ccb_unmap(struct mly_softc *, struct mly_ccb *);
 static int	mly_ccb_wait(struct mly_softc *, struct mly_ccb *, int);
 
-static void	mly_get_xfer_mode(struct mly_softc *, int, 
+static void	mly_get_xfer_mode(struct mly_softc *, int,
 				  struct scsipi_xfer_mode *);
 static void	mly_scsipi_complete(struct mly_softc *, struct mly_ccb *);
 static int	mly_scsipi_ioctl(struct scsipi_channel *, u_long, caddr_t,
@@ -431,7 +431,7 @@ mly_attach(struct device *parent, struct device *self, void *aux)
 	 */
 	mly_outb(mly, mly->mly_interrupt_mask, MLY_INTERRUPT_MASK_DISABLE);
 
-	/* 
+	/*
 	 * Wait for the controller to come ready, handshaking with the
 	 * firmware if required.  This is typically only necessary on
 	 * platforms where the controller BIOS does not run.
@@ -485,7 +485,7 @@ mly_attach(struct device *parent, struct device *self, void *aux)
 		goto bad;
 	}
 
-	/* 
+	/*
 	 * Print a little information about the controller.
 	 */
 	mi = mly->mly_controllerinfo;
@@ -660,13 +660,13 @@ mly_scan_btl(struct mly_softc *mly, int bus, int target)
 		return (rv);
 
 	/* Set up the data buffer. */
-	mc->mc_data = malloc(sizeof(union mly_devinfo), 
+	mc->mc_data = malloc(sizeof(union mly_devinfo),
 	    M_DEVBUF, M_NOWAIT|M_ZERO);
 
 	mc->mc_flags |= MLY_CCB_DATAIN;
 	mc->mc_complete = mly_complete_rescan;
 
-	/* 
+	/*
 	 * Build the ioctl.
 	 */
 	mci = (struct mly_cmd_ioctl *)&mc->mc_packet->ioctl;
@@ -751,7 +751,7 @@ mly_complete_rescan(struct mly_softc *mly, struct mly_ccb *mc)
 		    MLY_LOGDEV_TARGET(mly, tmp) != target) {
 #ifdef MLYDEBUG
 			printf("%s: WARNING: BTL rescan (logical) for %d:%d "
-			    "returned data for %d:%d instead\n", 
+			    "returned data for %d:%d instead\n",
 			   mly->mly_dv.dv_xname, bus, target,
 			   MLY_LOGDEV_BUS(mly, tmp),
 			   MLY_LOGDEV_TARGET(mly, tmp));
@@ -768,7 +768,7 @@ mly_complete_rescan(struct mly_softc *mly, struct mly_ccb *mc)
 		if (pdi->channel != bus || pdi->target != target) {
 #ifdef MLYDEBUG
 			printf("%s: WARNING: BTL rescan (physical) for %d:%d "
-			    " returned data for %d:%d instead\n", 
+			    " returned data for %d:%d instead\n",
 			   mly->mly_dv.dv_xname,
 			   bus, target, pdi->channel, pdi->target);
 #endif
@@ -1069,7 +1069,7 @@ mly_fetch_event(struct mly_softc *mly)
 	event = mly->mly_event_counter++;
 	splx(s);
 
-	/* 
+	/*
 	 * Build the ioctl.
 	 *
 	 * At this point we are committed to sending this request, as it
@@ -1131,13 +1131,13 @@ mly_complete_event(struct mly_softc *mly, struct mly_ccb *mc)
 static void
 mly_process_event(struct mly_softc *mly, struct mly_event *me)
 {
-	struct scsipi_sense_data *ssd;
+	struct scsi_sense_data *ssd;
 	int bus, target, event, class, action;
 	const char *fp, *tp;
 
-	ssd = (struct scsipi_sense_data *)&me->sense[0];
+	ssd = (struct scsi_sense_data *)&me->sense[0];
 
-	/* 
+	/*
 	 * Errors can be reported using vendor-unique sense data.  In this
 	 * case, the event code will be 0x1c (Request sense data present),
 	 * the sense key will be 0x09 (vendor specific), the MSB of the ASC
@@ -1146,10 +1146,10 @@ mly_process_event(struct mly_softc *mly, struct mly_event *me)
 	 * (low seven bits of the high byte).
 	 */
 	if (le32toh(me->code) == 0x1c &&
-	    (ssd->flags & SSD_KEY) == SKEY_VENDOR_UNIQUE &&
-	    (ssd->add_sense_code & 0x80) != 0) {
-		event = ((int)(ssd->add_sense_code & ~0x80) << 8) +
-		    ssd->add_sense_code_qual;
+	    SSD_SENSE_KEY(ssd->flags) == SKEY_VENDOR_SPECIFIC &&
+	    (ssd->asc & 0x80) != 0) {
+		event = ((int)(ssd->asc & ~0x80) << 8) +
+		    ssd->ascq;
 	} else
 		event = le32toh(me->code);
 
@@ -1202,11 +1202,11 @@ mly_process_event(struct mly_softc *mly, struct mly_event *me)
 		/*
 		 * Report of sense data.
 		 */
-		if (((ssd->flags & SSD_KEY) == SKEY_NO_SENSE ||
-		    (ssd->flags & SSD_KEY) == SKEY_NOT_READY) && 
-		    ssd->add_sense_code == 0x04 && 
-		    (ssd->add_sense_code_qual == 0x01 ||
-		    ssd->add_sense_code_qual == 0x02)) {
+		if ((SSD_SENSE_KEY(ssd->flags) == SKEY_NO_SENSE ||
+		     SSD_SENSE_KEY(ssd->flags) == SKEY_NOT_READY) &&
+		    ssd->asc == 0x04 &&
+		    (ssd->ascq == 0x01 ||
+		     ssd->ascq == 0x02)) {
 			/* Ignore NO_SENSE or NOT_READY in one case */
 			break;
 		}
@@ -1217,13 +1217,13 @@ mly_process_event(struct mly_softc *mly, struct mly_event *me)
 		printf("%s: physical device %d:%d %s\n", mly->mly_dv.dv_xname,
 		    me->channel, me->target, tp);
 		printf("%s:  sense key %d  asc %02x  ascq %02x\n",
-		    mly->mly_dv.dv_xname, ssd->flags & SSD_KEY,
-		    ssd->add_sense_code, ssd->add_sense_code_qual);
+		    mly->mly_dv.dv_xname, SSD_SENSE_KEY(ssd->flags),
+		    ssd->asc, ssd->ascq);
 		printf("%s:  info %x%x%x%x  csi %x%x%x%x\n",
 		    mly->mly_dv.dv_xname, ssd->info[0], ssd->info[1],
-		    ssd->info[2], ssd->info[3], ssd->cmd_spec_info[0],
-		    ssd->cmd_spec_info[1], ssd->cmd_spec_info[2],
-		    ssd->cmd_spec_info[3]);
+		    ssd->info[2], ssd->info[3], ssd->csi[0],
+		    ssd->csi[1], ssd->csi[2],
+		    ssd->csi[3]);
 		if (action == 'r')
 			mly->mly_btl[me->channel][me->target].mb_flags |=
 			    MLY_BTL_RESCAN;
@@ -1560,7 +1560,7 @@ mly_ccb_complete(struct mly_softc *mly, struct mly_ccb *mc)
 	complete = mc->mc_complete;
 	mc->mc_flags |= MLY_CCB_COMPLETE;
 
-	/* 
+	/*
 	 * Call completion handler or wake up sleeping consumer.
 	 */
 	if (complete != NULL)
@@ -2046,7 +2046,7 @@ mly_get_xfer_mode(struct mly_softc *mly, int bus, struct scsipi_xfer_mode *xm)
 
 	s = splbio();
 
-	if ((btl->mb_flags & MLY_BTL_PHYSICAL) != 0) {	
+	if ((btl->mb_flags & MLY_BTL_PHYSICAL) != 0) {
 		if (btl->mb_speed == 0) {
 			xm->xm_period = 0;
 			xm->xm_offset = 0;
@@ -2090,9 +2090,9 @@ mly_scsipi_ioctl(struct scsipi_channel *chan, u_long cmd, caddr_t data,
 {
 	struct mly_softc *mly;
 	int rv;
-  
+
 	mly = (struct mly_softc *)chan->chan_adapter->adapt_dev;
-  
+
 	switch (cmd) {
 	case SCBUSIOLLSCAN:
 		mly_scan_channel(mly, chan->chan_channel);
@@ -2110,7 +2110,7 @@ mly_scsipi_ioctl(struct scsipi_channel *chan, u_long cmd, caddr_t data,
  * Handshake with the firmware while the card is being initialized.
  */
 static int
-mly_fwhandshake(struct mly_softc *mly) 
+mly_fwhandshake(struct mly_softc *mly)
 {
 	u_int8_t error, param0, param1;
 	int spinup;
@@ -2201,14 +2201,14 @@ mly_padstr(char *dst, const char *src, int len)
  * Allocate DMA safe memory.
  */
 static int
-mly_dmamem_alloc(struct mly_softc *mly, int size, bus_dmamap_t *dmamap, 
+mly_dmamem_alloc(struct mly_softc *mly, int size, bus_dmamap_t *dmamap,
 		 caddr_t *kva, bus_addr_t *paddr, bus_dma_segment_t *seg)
 {
 	int rseg, rv, state;
 
 	state = 0;
-	
-	if ((rv = bus_dmamem_alloc(mly->mly_dmat, size, PAGE_SIZE, 0, 
+
+	if ((rv = bus_dmamem_alloc(mly->mly_dmat, size, PAGE_SIZE, 0,
 	    seg, 1, &rseg, BUS_DMA_NOWAIT)) != 0) {
 		printf("%s: dmamem_alloc = %d\n", mly->mly_dv.dv_xname, rv);
 		goto bad;
@@ -2224,7 +2224,7 @@ mly_dmamem_alloc(struct mly_softc *mly, int size, bus_dmamap_t *dmamap,
 
 	state++;
 
-	if ((rv = bus_dmamap_create(mly->mly_dmat, size, size, 1, 0, 
+	if ((rv = bus_dmamap_create(mly->mly_dmat, size, size, 1, 0,
 	    BUS_DMA_NOWAIT, dmamap)) != 0) {
 		printf("%s: dmamap_create = %d\n", mly->mly_dv.dv_xname, rv);
 		goto bad;
@@ -2232,7 +2232,7 @@ mly_dmamem_alloc(struct mly_softc *mly, int size, bus_dmamap_t *dmamap,
 
 	state++;
 
-	if ((rv = bus_dmamap_load(mly->mly_dmat, *dmamap, *kva, size, 
+	if ((rv = bus_dmamap_load(mly->mly_dmat, *dmamap, *kva, size,
 	    NULL, BUS_DMA_NOWAIT)) != 0) {
 		printf("%s: dmamap_load = %d\n", mly->mly_dv.dv_xname, rv);
 		goto bad;
@@ -2257,7 +2257,7 @@ mly_dmamem_alloc(struct mly_softc *mly, int size, bus_dmamap_t *dmamap,
  * Free DMA safe memory.
  */
 static void
-mly_dmamem_free(struct mly_softc *mly, int size, bus_dmamap_t dmamap, 
+mly_dmamem_free(struct mly_softc *mly, int size, bus_dmamap_t dmamap,
 		caddr_t kva, bus_dma_segment_t *seg)
 {
 
@@ -2369,7 +2369,7 @@ mly_user_command(struct mly_softc *mly, struct mly_user_command *uc)
 			mc->mc_flags |= MLY_CCB_DATAIN;
 			memset(mc->mc_data, 0, mc->mc_length);
 		}
-	
+
 		if (uc->DataTransferLength < 0) {
 			mc->mc_flags |= MLY_CCB_DATAOUT;
 			rv = copyin(uc->DataTransferBuffer, mc->mc_data,
@@ -2396,10 +2396,10 @@ mly_user_command(struct mly_softc *mly, struct mly_user_command *uc)
 		if (rv != 0)
 			goto out;
 	}
-	
+
 	/* Return the sense buffer to userspace. */
 	if (uc->RequestSenseLength > 0 && mc->mc_sense > 0) {
-		rv = copyout(mc->mc_packet, uc->RequestSenseBuffer, 
+		rv = copyout(mc->mc_packet, uc->RequestSenseBuffer,
 		    min(uc->RequestSenseLength, mc->mc_sense));
 		if (rv != 0)
 			goto out;
@@ -2433,7 +2433,7 @@ mly_user_health(struct mly_softc *mly, struct mly_user_health *uh)
 {
 	struct mly_health_status mh;
 	int rv, s;
-	
+
 	/* Fetch the current health status from userspace. */
 	rv = copyin(uh->HealthStatusBuffer, &mh, sizeof(mh));
 	if (rv != 0)

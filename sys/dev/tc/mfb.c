@@ -1,4 +1,4 @@
-/* $NetBSD: mfb.c,v 1.42 2005/01/02 20:41:20 mhitch Exp $ */
+/* $NetBSD: mfb.c,v 1.42.4.1 2005/03/19 08:35:51 yamt Exp $ */
 
 /*
  * Copyright (c) 1998, 1999 Tohru Nishimura.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mfb.c,v 1.42 2005/01/02 20:41:20 mhitch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mfb.c,v 1.42.4.1 2005/03/19 08:35:51 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -51,7 +51,7 @@ __KERNEL_RCSID(0, "$NetBSD: mfb.c,v 1.42 2005/01/02 20:41:20 mhitch Exp $");
 #include <dev/wsfont/wsfont.h>
 
 #include <dev/tc/tcvar.h>
-#include <dev/ic/bt431reg.h>	
+#include <dev/ic/bt431reg.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -495,7 +495,7 @@ mfbintr(arg)
 	caddr_t base, vdac, curs;
 	int v;
 	volatile register int junk;
-	
+
 	base = (caddr_t)sc->sc_ri->ri_hw;
 	junk = *(u_int8_t *)(base + MX_IREQ_OFFSET);
 #if 0
@@ -578,7 +578,7 @@ mfbintr(arg)
 			bcnt += 2;
 		}
 	}
-	sc->sc_changed = 0;	
+	sc->sc_changed = 0;
 	return (1);
 }
 
@@ -592,7 +592,7 @@ mfbhwinit(mfbbase)
 	vdac = mfbbase + MX_BT455_OFFSET;
 	curs = mfbbase + MX_BT431_OFFSET;
 	SELECT431(curs, BT431_REG_COMMAND);
-	REGWRITE32(curs, bt_ctl, 0x0404);	
+	REGWRITE32(curs, bt_ctl, 0x0404);
 	REGWRITE32(curs, bt_ctl, 0); /* XLO */
 	REGWRITE32(curs, bt_ctl, 0); /* XHI */
 	REGWRITE32(curs, bt_ctl, 0); /* YLO */
@@ -608,12 +608,12 @@ mfbhwinit(mfbbase)
 
 	/* 0: black, 1: white, 8,9: cursor mask, ovly: cursor image */
 	SELECT455(vdac, 0);
-	REGWRITE32(vdac, bt_cmap, 0); 	
-	REGWRITE32(vdac, bt_cmap, 0); 	
-	REGWRITE32(vdac, bt_cmap, 0);	
-	REGWRITE32(vdac, bt_cmap, 0);	
-	REGWRITE32(vdac, bt_cmap, 0xff);	
-	REGWRITE32(vdac, bt_cmap, 0);	
+	REGWRITE32(vdac, bt_cmap, 0);
+	REGWRITE32(vdac, bt_cmap, 0);
+	REGWRITE32(vdac, bt_cmap, 0);
+	REGWRITE32(vdac, bt_cmap, 0);
+	REGWRITE32(vdac, bt_cmap, 0xff);
+	REGWRITE32(vdac, bt_cmap, 0);
 	for (i = 2; i < 16; i++) {
 		REGWRITE32(vdac, bt_cmap, 0);
 		REGWRITE32(vdac, bt_cmap, 0);

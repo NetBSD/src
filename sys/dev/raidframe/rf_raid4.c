@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_raid4.c,v 1.8 2003/12/30 21:59:03 oster Exp $	*/
+/*	$NetBSD: rf_raid4.c,v 1.8.10.1 2005/03/19 08:35:41 yamt Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -33,7 +33,7 @@
  ***************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_raid4.c,v 1.8 2003/12/30 21:59:03 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_raid4.c,v 1.8.10.1 2005/03/19 08:35:41 yamt Exp $");
 
 #include "rf_raid.h"
 #include "rf_dag.h"
@@ -53,7 +53,7 @@ typedef struct RF_Raid4ConfigInfo_s {
 
 
 
-int 
+int
 rf_ConfigureRAID4(RF_ShutdownList_t **listp, RF_Raid_t *raidPtr,
 		  RF_Config_t *cfgPtr)
 {
@@ -84,19 +84,19 @@ rf_ConfigureRAID4(RF_ShutdownList_t **listp, RF_Raid_t *raidPtr,
 	return (0);
 }
 
-int 
+int
 rf_GetDefaultNumFloatingReconBuffersRAID4(RF_Raid_t *raidPtr)
 {
 	return (20);
 }
 
-RF_HeadSepLimit_t 
+RF_HeadSepLimit_t
 rf_GetDefaultHeadSepLimitRAID4(RF_Raid_t *raidPtr)
 {
 	return (20);
 }
 
-void 
+void
 rf_MapSectorRAID4(RF_Raid_t *raidPtr, RF_RaidAddr_t raidSector,
 		  RF_RowCol_t *col, RF_SectorNum_t *diskSector, int remap)
 {
@@ -106,7 +106,7 @@ rf_MapSectorRAID4(RF_Raid_t *raidPtr, RF_RaidAddr_t raidSector,
 	    (raidSector % raidPtr->Layout.sectorsPerStripeUnit);
 }
 
-void 
+void
 rf_MapParityRAID4(RF_Raid_t *raidPtr, RF_RaidAddr_t raidSector,
 		  RF_RowCol_t *col, RF_SectorNum_t *diskSector, int remap)
 {
@@ -117,7 +117,7 @@ rf_MapParityRAID4(RF_Raid_t *raidPtr, RF_RaidAddr_t raidSector,
 	    (raidSector % raidPtr->Layout.sectorsPerStripeUnit);
 }
 
-void 
+void
 rf_IdentifyStripeRAID4(RF_Raid_t *raidPtr, RF_RaidAddr_t addr,
 		       RF_RowCol_t **diskids)
 {
@@ -126,7 +126,7 @@ rf_IdentifyStripeRAID4(RF_Raid_t *raidPtr, RF_RaidAddr_t addr,
 	*diskids = info->stripeIdentifier;
 }
 
-void 
+void
 rf_MapSIDToPSIDRAID4(RF_RaidLayout_t *layoutPtr, RF_StripeNum_t stripeID,
 		     RF_StripeNum_t *psID, RF_ReconUnitNum_t *which_ru)
 {

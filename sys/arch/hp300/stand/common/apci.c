@@ -1,4 +1,4 @@
-/*	$NetBSD: apci.c,v 1.6 2003/11/14 16:52:40 tsutsui Exp $	*/
+/*	$NetBSD: apci.c,v 1.6.10.1 2005/03/19 08:32:58 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1999 The NetBSD Foundation, Inc.
@@ -124,8 +124,7 @@
 struct apciregs *apcicnaddr = 0;
 
 void
-apciprobe(cp)
-	struct consdev *cp;
+apciprobe(struct consdev *cp)
 {
 
 	apcicnaddr = (void *)IIOV(FRODO_BASE + FRODO_APCI_OFFSET(1));
@@ -148,8 +147,7 @@ apciprobe(cp)
 }
 
 void
-apciinit(cp)
-	struct consdev *cp;
+apciinit(struct consdev *cp)
 {
 	struct apciregs *apci = (struct apciregs *)apcicnaddr;
 
@@ -175,8 +173,7 @@ apciinit(cp)
 /* ARGSUSED */
 #ifndef SMALL
 int
-apcigetchar(dev)
-	dev_t dev;
+apcigetchar(dev_t dev)
 {
 	struct apciregs *apci = apcicnaddr;
 	short stat;
@@ -189,8 +186,7 @@ apcigetchar(dev)
 }
 #else
 int
-apcigetchar(dev)
-	dev_t dev;
+apcigetchar(dev_t dev)
 {
 
 	return 0;
@@ -199,9 +195,7 @@ apcigetchar(dev)
 
 /* ARGSUSED */
 void
-apciputchar(dev, c)
-	dev_t dev;
-	int c;
+apciputchar(dev_t dev, int c)
 {
 	struct apciregs *apci = apcicnaddr;
 	int timo;

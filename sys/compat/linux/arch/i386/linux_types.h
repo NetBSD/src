@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_types.h,v 1.12 2004/09/20 18:51:55 jdolecek Exp $	*/
+/*	$NetBSD: linux_types.h,v 1.12.6.1 2005/03/19 08:33:36 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -55,6 +55,7 @@ typedef unsigned char linux_cc_t;
 typedef unsigned long linux_speed_t;
 typedef unsigned long linux_tcflag_t;
 
+#define LINUX_STAT_HAS_NSEC	1
 struct linux_stat {
 	linux_dev_t		lst_dev;
 	unsigned short		pad1;
@@ -69,11 +70,11 @@ struct linux_stat {
 	unsigned long		lst_blksize;
 	unsigned long		lst_blocks;
 	linux_time_t		lst_atime;
-	unsigned long		unused1;
+	unsigned long		lst_atime_nsec;
 	linux_time_t		lst_mtime;
-	unsigned long		unused2;
+	unsigned long		lst_mtime_nsec;
 	linux_time_t		lst_ctime;
-	unsigned long		unused3;
+	unsigned long		lst_ctime_nsec;
 	unsigned long		unused4;
 	unsigned long		unused5;
 };
@@ -81,6 +82,7 @@ struct linux_stat {
 /* This matches struct stat64 in glibc2.1, hence the absolutely
  * insane amounts of padding around dev_t's.
  */
+#define LINUX_STAT64_HAS_NSEC	1
 struct linux_stat64 {
 	unsigned long long lst_dev;
 	unsigned int	__pad1;
@@ -102,13 +104,13 @@ struct linux_stat64 {
 	unsigned long long lst_blocks;	/* Number 512-byte blocks allocated. */
 
 	unsigned int	lst_atime;
-	unsigned int	__unused1;
+	unsigned int	lst_atime_nsec;
 
 	unsigned int	lst_mtime;
-	unsigned int	__unused2;
+	unsigned int	lst_mtime_nsec;
 
 	unsigned int	lst_ctime;
-	unsigned int	__unused3;	/* will be high 32 bits of ctime someday */
+	unsigned int	lst_ctime_nsec;
 
 	unsigned long long lst_ino;
 };

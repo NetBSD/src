@@ -1,4 +1,4 @@
-/*	$NetBSD: mfs_vfsops.c,v 1.64 2005/01/09 03:11:48 mycroft Exp $	*/
+/*	$NetBSD: mfs_vfsops.c,v 1.64.4.1 2005/03/19 08:37:06 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1990, 1993, 1994
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mfs_vfsops.c,v 1.64 2005/01/09 03:11:48 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mfs_vfsops.c,v 1.64.4.1 2005/03/19 08:37:06 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -77,7 +77,7 @@ MALLOC_DEFINE(M_MFSNODE, "MFS node", "MFS vnode private part");
  * mfs vfs operations.
  */
 
-extern const struct vnodeopv_desc mfs_vnodeop_opv_desc;  
+extern const struct vnodeopv_desc mfs_vnodeop_opv_desc;
 
 const struct vnodeopv_desc * const mfs_vnodeopv_descs[] = {
 	&mfs_vnodeop_opv_desc,
@@ -129,9 +129,9 @@ SYSCTL_SETUP(sysctl_vfs_mfs_setup, "sysctl vfs.mfs subtree setup")
 	 */
 }
 
-/* 
+/*
  * Memory based filesystem initialization.
- */ 
+ */
 void
 mfs_init()
 {
@@ -200,7 +200,7 @@ mfs_mountroot()
 		free(mp, M_MOUNT);
 		free(mfsp, M_MFSNODE);
 		return (error);
-	}	
+	}
 	simple_lock(&mountlist_slock);
 	CIRCLEQ_INSERT_TAIL(&mountlist, mp, mnt_list);
 	simple_unlock(&mountlist_slock);
@@ -375,7 +375,7 @@ mfs_start(mp, flags, p)
 	 * place where we want a execution context. Cheat.
 	 */
 	KASSERT(curproc == p);
-	l = curlwp; 
+	l = curlwp;
 	base = mfsp->mfs_baseoff;
 	while (mfsp->mfs_shutdown != 1) {
 		while ((bp = BUFQ_GET(&mfsp->mfs_buflist)) != NULL) {

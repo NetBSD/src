@@ -1,4 +1,4 @@
-/*	$NetBSD: if_stf.h,v 1.1 2000/04/19 06:30:53 itojun Exp $	*/
+/*	$NetBSD: if_stf.h,v 1.1.40.1 2005/03/19 08:36:31 yamt Exp $	*/
 /*	$KAME: if_stf.h,v 1.3 2000/03/25 07:23:33 sumikawa Exp $	*/
 
 /*
@@ -32,6 +32,10 @@
 
 #ifndef _NET_IF_STF_H_
 #define _NET_IF_STF_H_
+
+#define STF_MTU		(1280)	/* Default MTU */
+#define	STF_MTU_MIN	(1280)	/* Minimum MTU */
+#define	STF_MTU_MAX	(8192)	/* Maximum MTU */
 
 void in_stf_input __P((struct mbuf *, ...));
 

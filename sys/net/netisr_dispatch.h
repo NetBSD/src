@@ -1,7 +1,7 @@
-/* $NetBSD: netisr_dispatch.h,v 1.10 2002/11/02 12:00:03 kristerw Exp $ */
+/* $NetBSD: netisr_dispatch.h,v 1.10.16.1 2005/03/19 08:36:32 yamt Exp $ */
 
 /*
- * netisr_dispatch: This file is included by the 
+ * netisr_dispatch: This file is included by the
  *	machine dependant softnet function.  The
  *	DONETISR macro should be set before including
  *	this file.  i.e.:

@@ -1,4 +1,4 @@
-/*	$NetBSD: gt.c,v 1.8 2004/11/26 05:10:31 jmc Exp $	*/
+/*	$NetBSD: gt.c,v 1.8.6.1 2005/03/19 08:34:40 yamt Exp $	*/
 
 /*
  * Copyright (c) 2002 Allegro Networks, Inc., Wasabi Systems, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gt.c,v 1.8 2004/11/26 05:10:31 jmc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gt.c,v 1.8.6.1 2005/03/19 08:34:40 yamt Exp $");
 
 #include "opt_marvell.h"
 #include "locators.h"
@@ -462,7 +462,7 @@ gt_bs_extent_init(struct discovery_bus_space *bs, char *name)
 	for (i = 0; i < bs->bs_nregion && bs->bs_nregion > 1; i++) {
 		/* Initial start is "infinity" and the inital end is
 		 * is the end of this bus region.
-		 */ 
+		 */
 		start = ~0UL;
 		end = bs->bs_regions[i].br_end;
 		/* For each region, if it starts after this region but less
@@ -537,11 +537,11 @@ gt_comm_intr(void *arg)
 		if (cause & mask) {
 			printf("%s: Comm Unit %s:", gt->gt_dev.dv_xname,
 				gt_comm_subunit_name[i]);
-			if (cause & 1) 
+			if (cause & 1)
 				printf(" AddrMiss");
-			if (cause & 2) 
+			if (cause & 2)
 				printf(" AccProt");
-			if (cause & 4) 
+			if (cause & 4)
 				printf(" WrProt");
 			printf("\n");
 		}
@@ -852,7 +852,7 @@ gt_watchdog_service(void)
 	if (inhibit_watchdog_service)
 		return;
 #endif
-	
+
 	gt_write(gt, GT_WDOG_Config,
 		(GT_WDOG_Config_Ctl2a | GT_WDOG_Preset_DFLT));
 	gt_write(gt, GT_WDOG_Config,
@@ -965,7 +965,7 @@ gt_mii_read(
 			child->dv_xname, phy, reg);
 #if defined(GTMIIDEBUG)
 	printf("%s: mii_read(%d, %d): %#x data %#x\n",
-		child->dv_xname, phy, reg, 
+		child->dv_xname, phy, reg,
 		data, ETH_ESMIR_Value_GET(data));
 #endif
 	return ETH_ESMIR_Value_GET(data);
@@ -1006,7 +1006,7 @@ gt_mii_write (
 		printf("%s: mii write for phy %d reg %d timed out\n",
 			child->dv_xname, phy, reg);
 #if defined(GTMIIDEBUG)
-	printf("%s: mii_write(%d, %d, %#x)\n", 
+	printf("%s: mii_write(%d, %d, %#x)\n",
 		child->dv_xname, phy, reg, value);
 #endif
 }

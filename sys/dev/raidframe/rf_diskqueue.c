@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_diskqueue.c,v 1.36.6.1 2005/02/12 18:17:50 yamt Exp $	*/
+/*	$NetBSD: rf_diskqueue.c,v 1.36.6.2 2005/03/19 08:35:41 yamt Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -66,7 +66,7 @@
  ****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_diskqueue.c,v 1.36.6.1 2005/02/12 18:17:50 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_diskqueue.c,v 1.36.6.2 2005/03/19 08:35:41 yamt Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -154,7 +154,7 @@ static const RF_DiskQueueSW_t diskqueuesw[] = {
 
 /* configures a single disk queue */
 
-int 
+int
 rf_ConfigureDiskQueue(RF_Raid_t *raidPtr, RF_DiskQueue_t *diskqueue,
 		      RF_RowCol_t c, const RF_DiskQueueSW_t *p,
 		      RF_SectorCount_t sectPerDisk, dev_t dev,
@@ -178,7 +178,7 @@ rf_ConfigureDiskQueue(RF_Raid_t *raidPtr, RF_DiskQueue_t *diskqueue,
 	return (0);
 }
 
-static void 
+static void
 rf_ShutdownDiskQueueSystem(void *ignored)
 {
 	pool_destroy(&rf_pools.dqd);
@@ -195,7 +195,7 @@ rf_ConfigureDiskQueueSystem(RF_ShutdownList_t **listp)
 	return (0);
 }
 
-int 
+int
 rf_ConfigureDiskQueues(RF_ShutdownList_t **listp, RF_Raid_t *raidPtr,
 		       RF_Config_t *cfgPtr)
 {
@@ -218,9 +218,9 @@ rf_ConfigureDiskQueues(RF_ShutdownList_t **listp, RF_Raid_t *raidPtr,
 	}
 	raidPtr->qType = p;
 
-	RF_MallocAndAdd(diskQueues, 
+	RF_MallocAndAdd(diskQueues,
 			(raidPtr->numCol + RF_MAXSPARE) *
-			sizeof(RF_DiskQueue_t), (RF_DiskQueue_t *), 
+			sizeof(RF_DiskQueue_t), (RF_DiskQueue_t *),
 			raidPtr->cleanupList);
 	if (diskQueues == NULL)
 		return (ENOMEM);
@@ -229,9 +229,9 @@ rf_ConfigureDiskQueues(RF_ShutdownList_t **listp, RF_Raid_t *raidPtr,
 	for (c = 0; c < raidPtr->numCol; c++) {
 		rc = rf_ConfigureDiskQueue(raidPtr, &diskQueues[c],
 					   c, p,
-					   raidPtr->sectorsPerDisk, 
+					   raidPtr->sectorsPerDisk,
 					   raidPtr->Disks[c].dev,
-					   cfgPtr->maxOutstandingDiskReqs, 
+					   cfgPtr->maxOutstandingDiskReqs,
 					   listp, raidPtr->cleanupList);
 		if (rc)
 			return (rc);
@@ -279,7 +279,7 @@ rf_ConfigureDiskQueues(RF_ShutdownList_t **listp, RF_Raid_t *raidPtr,
  * simulator rules:
  *    Do the same as at user level, with the sleeps and wakeups suppressed.
  */
-void 
+void
 rf_DiskIOEnqueue(RF_DiskQueue_t *queue, RF_DiskQueueData_t *req, int pri)
 {
 	RF_ETIMER_START(req->qtime);
@@ -336,7 +336,7 @@ rf_DiskIOEnqueue(RF_DiskQueue_t *queue, RF_DiskQueueData_t *req, int pri)
 
 
 /* get the next set of I/Os started, kernel version only */
-void 
+void
 rf_DiskIOComplete(RF_DiskQueue_t *queue, RF_DiskQueueData_t *req, int status)
 {
 	int     done = 0;
@@ -424,7 +424,7 @@ rf_DiskIOComplete(RF_DiskQueue_t *queue, RF_DiskQueueData_t *req, int status)
  * need not implement it.  If there is no promotion routine associated with
  * a queue, this routine does nothing and returns -1.
  */
-int 
+int
 rf_DiskIOPromote(RF_DiskQueue_t *queue, RF_StripeNum_t parityStripeID,
 		 RF_ReconUnitNum_t which_ru)
 {
@@ -458,7 +458,7 @@ rf_CreateDiskQueueData(RF_IoType_t typ, RF_SectorNum_t ssect,
 	memset(p, 0, sizeof(RF_DiskQueueData_t));
 	/* Need to be at splbio to access bufpool! */
 	s = splbio();
-	p->bp = pool_get(&bufpool, waitflag); 
+	p->bp = pool_get(&bufpool, waitflag);
 	splx(s);
 	if (p->bp == NULL) {
 		/* no memory for the buffer!?!? */
@@ -484,12 +484,12 @@ rf_CreateDiskQueueData(RF_IoType_t typ, RF_SectorNum_t ssect,
 	return (p);
 }
 
-void 
+void
 rf_FreeDiskQueueData(RF_DiskQueueData_t *p)
 {
 	int s;
 
-	s = splbio();	
+	s = splbio();
 	pool_put(&bufpool, p->bp);
 	splx(s);
 	pool_put(&rf_pools.dqd, p);

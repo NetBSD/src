@@ -1,4 +1,4 @@
-/*	$NetBSD: raidframevar.h,v 1.7 2004/06/02 22:58:28 drochner Exp $ */
+/*	$NetBSD: raidframevar.h,v 1.7.6.1 2005/03/19 08:35:40 yamt Exp $ */
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -274,7 +274,7 @@ typedef struct RF_ThroughputStats_s RF_ThroughputStats_t;
 
 /*
  * Important assumptions regarding ordering of the states in this list
- * have been made!!!  Before disturbing this ordering, look at code in 
+ * have been made!!!  Before disturbing this ordering, look at code in
  * sys/dev/raidframe/rf_states.c
  */
 typedef enum RF_AccessState_e {
@@ -293,7 +293,7 @@ typedef enum RF_AccessState_e {
 }       RF_AccessState_t;
 
 
-/* Some constants related to RAIDframe.  These are arbitrary and 
+/* Some constants related to RAIDframe.  These are arbitrary and
    can be modified at will. */
 
 #define RF_MAXROW    10
@@ -348,9 +348,9 @@ struct RF_Config_s {
 				 * be copied in */
 	int     force;                          /* if !0, ignore many fatal
 						   configuration conditions */
-	/* 
-	   "force" is used to override cases where the component labels would 
-	   indicate that configuration should not proceed without user 
+	/*
+	   "force" is used to override cases where the component labels would
+	   indicate that configuration should not proceed without user
 	   intervention
 	 */
 };
@@ -412,7 +412,7 @@ struct RF_RaidDisk_s {
         RF_SectorCount_t numBlocks;     /* number of blocks, obtained via READ
                                          * CAPACITY */
         int     blockSize;
-        RF_SectorCount_t partitionSize; /* The *actual* and *full* size of 
+        RF_SectorCount_t partitionSize; /* The *actual* and *full* size of
                                            the partition, from the disklabel */
         int     auto_configured;/* 1 if this component was autoconfigured.
                                    0 otherwise. */
@@ -432,7 +432,7 @@ typedef struct RF_ComponentLabel_s {
 	int serial_number;    /* a user-specified serial number for this
 				 RAID set */
 	int mod_counter;      /* modification counter.  Changed (usually
-				 by incrementing) every time the label 
+				 by incrementing) every time the label
 				 is changed */
 	int row;              /* the row number of this component */
 	int column;           /* the column number of this component */
@@ -446,23 +446,23 @@ typedef struct RF_ComponentLabel_s {
 	int SUsPerRU;         /* Stripe Units per Reconstruction Units */
 	int parityConfig;     /* '0' == RAID0, '1' == RAID1, etc. */
 	int maxOutstanding;   /* maxOutstanding disk requests */
-	int blockSize;        /* size of component block. 
+	int blockSize;        /* size of component block.
 				 (disklabel->d_secsize) */
 	int numBlocks;        /* number of blocks on this component.  May
 			         be smaller than the partition size. */
-	int partitionSize;    /* number of blocks on this *partition*. 
+	int partitionSize;    /* number of blocks on this *partition*.
 				 Must exactly match the partition size
 				 from the disklabel. */
 	int future_use[33];   /* Future expansion */
-	int autoconfigure;    /* automatically configure this RAID set. 
+	int autoconfigure;    /* automatically configure this RAID set.
 				 0 == no, 1 == yes */
 	int root_partition;   /* Use this set as /
 				 0 == no, 1 == yes*/
-	int last_unit;        /* last unit number (e.g. 0 for /dev/raid0) 
+	int last_unit;        /* last unit number (e.g. 0 for /dev/raid0)
 				 of this component.  Used for autoconfigure
 				 only. */
 	int config_order;     /* 0 .. n.  The order in which the component
-				 should be auto-configured.  E.g. 0 is will 
+				 should be auto-configured.  E.g. 0 is will
 				 done first, (and would become raid0).
 				 This may be in conflict with last_unit!!?! */
 	                      /* Not currently used. */
@@ -473,7 +473,7 @@ typedef struct RF_SingleComponent_s {
 	int row;
 	int column;
 	char component_name[50]; /* name of the component */
-} RF_SingleComponent_t; 
+} RF_SingleComponent_t;
 
 typedef struct RF_DeviceConfig_s {
 	u_int   rows;
@@ -498,29 +498,29 @@ typedef struct RF_LayoutSW_s {
 
 #ifndef _KERNEL
 	/* layout-specific parsing */
-	int     (*MakeLayoutSpecific) (FILE * fp, RF_Config_t * cfgPtr, 
+	int     (*MakeLayoutSpecific) (FILE * fp, RF_Config_t * cfgPtr,
 				       void *arg);
 	void   *makeLayoutSpecificArg;
 #else				/* !KERNEL */
 
 	/* initialization routine */
-	int     (*Configure) (RF_ShutdownList_t ** shutdownListp, 
+	int     (*Configure) (RF_ShutdownList_t ** shutdownListp,
 			      RF_Raid_t * raidPtr, RF_Config_t * cfgPtr);
 
 	/* routine to map RAID sector address -> physical (row, col, offset) */
 	void    (*MapSector) (RF_Raid_t * raidPtr, RF_RaidAddr_t raidSector,
-			      RF_RowCol_t * col, 
+			      RF_RowCol_t * col,
 			      RF_SectorNum_t * diskSector, int remap);
 
 	/* routine to map RAID sector address -> physical (r,c,o) of parity
 	 * unit */
 	void    (*MapParity) (RF_Raid_t * raidPtr, RF_RaidAddr_t raidSector,
-			      RF_RowCol_t * col, 
+			      RF_RowCol_t * col,
 			      RF_SectorNum_t * diskSector, int remap);
 
 	/* routine to map RAID sector address -> physical (r,c,o) of Q unit */
-	void    (*MapQ) (RF_Raid_t * raidPtr, RF_RaidAddr_t raidSector, 
-			 RF_RowCol_t * col, 
+	void    (*MapQ) (RF_Raid_t * raidPtr, RF_RaidAddr_t raidSector,
+			 RF_RowCol_t * col,
 			 RF_SectorNum_t * diskSector, int remap);
 
 	/* routine to identify the disks comprising a stripe */
@@ -534,9 +534,9 @@ typedef struct RF_LayoutSW_s {
 
 	/* map a stripe ID to a parity stripe ID.  This is typically the
 	 * identity mapping */
-	void    (*MapSIDToPSID) (RF_RaidLayout_t * layoutPtr, 
+	void    (*MapSIDToPSID) (RF_RaidLayout_t * layoutPtr,
 				 RF_StripeNum_t stripeID,
-				 RF_StripeNum_t * psID, 
+				 RF_StripeNum_t * psID,
 				 RF_ReconUnitNum_t * which_ru);
 
 	/* get default head separation limit (may be NULL) */
@@ -549,7 +549,7 @@ typedef struct RF_LayoutSW_s {
 	RF_ReconUnitCount_t(*GetNumSpareRUs) (RF_Raid_t * raidPtr);
 
 	/* spare table installation (may be NULL) */
-	int     (*InstallSpareTable) (RF_Raid_t * raidPtr, RF_RowCol_t frow, 
+	int     (*InstallSpareTable) (RF_Raid_t * raidPtr, RF_RowCol_t frow,
 				      RF_RowCol_t fcol);
 
 	/* recon buffer submission function */
@@ -561,7 +561,7 @@ typedef struct RF_LayoutSW_s {
          * see rf_parityscan.h for return vals
          */
 	int     (*VerifyParity) (RF_Raid_t * raidPtr, RF_RaidAddr_t raidAddr,
-				 RF_PhysDiskAddr_t * parityPDA, 
+				 RF_PhysDiskAddr_t * parityPDA,
 				 int correct_it, RF_RaidAccessFlags_t flags);
 
 	/* number of faults tolerated by this mapping */

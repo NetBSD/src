@@ -1,4 +1,4 @@
-/*	$NetBSD: ucontext.h,v 1.5 2004/07/18 21:26:00 chs Exp $	*/
+/*	$NetBSD: ucontext.h,v 1.5.6.1 2005/03/19 08:36:52 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2003 The NetBSD Foundation, Inc.
@@ -86,7 +86,7 @@ struct __ucontext32 {
 #define _UC_CPU		0x04		/* valid GPR context in uc_mcontext */
 #define _UC_FPU		0x08		/* valid FPU context in uc_mcontext */
 
-/*      
+/*
  * The following macros are used to convert from a ucontext to sigcontext,
  * and vice-versa.  This is for building a sigcontext to deliver to old-style
  * signal handlers, and converting back (in the event the handler modifies
@@ -98,7 +98,7 @@ struct __ucontext32 {
  *
  * The _MCONTEXT_TO_SIGCONTEXT() and _SIGCONTEXT_TO_MCONTEXT() macros
  * should be provided by <machine/signal.h>.
- */     
+ */
 #define	_UCONTEXT_TO_SIGCONTEXT(uc, sc)					\
 do {									\
 	(sc)->sc_mask = (uc)->uc_sigmask;				\

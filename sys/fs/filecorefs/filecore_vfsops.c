@@ -1,4 +1,4 @@
-/*	$NetBSD: filecore_vfsops.c,v 1.17 2005/01/02 16:08:28 thorpej Exp $	*/
+/*	$NetBSD: filecore_vfsops.c,v 1.17.4.1 2005/03/19 08:36:10 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1994 The Regents of the University of California.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: filecore_vfsops.c,v 1.17 2005/01/02 16:08:28 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: filecore_vfsops.c,v 1.17.4.1 2005/03/19 08:36:10 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -150,7 +150,7 @@ filecore_mountroot()
 
 	if (root_device->dv_class != DV_DISK)
 		return (ENODEV);
-	
+
 	/*
 	 * Get vnodes for swapdev and rootdev.
 	 */
@@ -193,7 +193,7 @@ filecore_mount(mp, path, data, ndp, p)
 	struct filecore_args args;
 	int error;
 	struct filecore_mnt *fcmp = NULL;
-	
+
 	if (mp->mnt_flag & MNT_GETARGS) {
 		fcmp = VFSTOFILECORE(mp);
 		if (fcmp == NULL)
@@ -208,10 +208,10 @@ filecore_mount(mp, path, data, ndp, p)
 	error = copyin(data, &args, sizeof (struct filecore_args));
 	if (error)
 		return (error);
-	
+
 	if ((mp->mnt_flag & MNT_RDONLY) == 0)
 		return (EROFS);
-	
+
 	/*
 	 * If updating, check whether changing from read-only to
 	 * read/write; if there is no device name, that's all we do.
@@ -287,10 +287,10 @@ filecore_mountfs(devvp, mp, p, argp)
 	struct filecore_disc_record *fcdr;
 	unsigned map;
 	unsigned log2secsize;
-	
+
 	if (!ronly)
 		return EROFS;
-	
+
 	/*
 	 * Disallow multiple mounts of the same device.
 	 * Disallow mounting of a device that is currently in use
@@ -307,7 +307,7 @@ filecore_mountfs(devvp, mp, p, argp)
 	error = VOP_OPEN(devvp, ronly ? FREAD : FREAD|FWRITE, FSCRED, p);
 	if (error)
 		return error;
-	
+
 	/* Read the filecore boot block to check FS validity and to find the map */
 	error = bread(devvp, FILECORE_BOOTBLOCK_BLKN,
 			   FILECORE_BOOTBLOCK_SIZE, NOCRED, &bp);
@@ -388,7 +388,7 @@ filecore_mountfs(devvp, mp, p, argp)
 		fcmp->fc_uid = argp->uid;
 		fcmp->fc_gid = argp->gid;
 	}
-	
+
 	return 0;
 out:
 	if (bp) {
@@ -432,7 +432,7 @@ filecore_unmount(mp, mntflags, p)
 {
 	struct filecore_mnt *fcmp;
 	int error, flags = 0;
-	
+
 	if (mntflags & MNT_FORCE)
 		flags |= FORCECLOSE;
 #if 0
@@ -553,7 +553,7 @@ filecore_fhtovp(mp, fhp, vpp)
 	struct vnode *nvp;
 	struct filecore_node *ip;
 	int error;
-	
+
 	if ((error = VFS_VGET(mp, ifhp->ifid_ino, &nvp)) != 0) {
 		*vpp = NULLVP;
 		return (error);
@@ -578,7 +578,7 @@ filecore_checkexp(mp, nam, exflagsp, credanonp)
 {
 	struct filecore_mnt *fcmp = VFSTOFILECORE(mp);
 	struct netcred *np;
-	
+
 	/*
 	 * Get the export permission structure for this <mp, client> tuple.
 	 */
@@ -661,7 +661,7 @@ filecore_vget(mp, ino, vpp)
 			*vpp = NULL;
 			return (error);
 		}
-		
+
 		memcpy(&ip->i_dirent,
 		    fcdirentry(bp->b_data, ino >> FILECORE_INO_INDEX),
 		    sizeof(struct filecore_direntry));
@@ -703,7 +703,7 @@ filecore_vget(mp, ino, vpp)
 	case VREG:
 		break;
 	}
-	
+
 	if (ino == FILECORE_ROOTINO)
 		vp->v_flag |= VROOT;
 
@@ -728,7 +728,7 @@ filecore_vptofh(vp, fhp)
 {
 	struct filecore_node *ip = VTOI(vp);
 	struct ifid *ifhp;
-	
+
 	ifhp = (struct ifid *)fhp;
 	ifhp->ifid_len = sizeof(struct ifid);
 	ifhp->ifid_ino = ip->i_number;

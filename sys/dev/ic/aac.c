@@ -1,4 +1,4 @@
-/*	$NetBSD: aac.c,v 1.14 2005/01/14 16:23:32 scw Exp $	*/
+/*	$NetBSD: aac.c,v 1.14.4.1 2005/03/19 08:34:00 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aac.c,v 1.14 2005/01/14 16:23:32 scw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aac.c,v 1.14.4.1 2005/03/19 08:34:00 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -155,7 +155,12 @@ aac_attach(struct aac_softc *sc)
 	struct aac_fib *fib;
 	bus_addr_t fibpa;
 	int help[2];
-	locdesc_t *ldesc = (void *)help; /* XXX */
+	locdesc_t *ldesc = (void *)help; /* XXX - Not clean
+		The big plan is to let config(8) issue information
+		about the length of the locator array in a useful way.
+		Then the allocation can be centralized. See also
+		http://mail-index.netbsd.org/tech-kern/2005/02/09/0025.html
+	*/
 
 	SIMPLEQ_INIT(&sc->sc_ccb_free);
 	SIMPLEQ_INIT(&sc->sc_ccb_queue);
@@ -176,7 +181,7 @@ aac_attach(struct aac_softc *sc)
 		return (rv);
 	aac_startup(sc);
 
-	/* 
+	/*
 	 * Print a little information about the controller.
 	 */
 	aac_describe_controller(sc);
@@ -229,7 +234,7 @@ aac_attach(struct aac_softc *sc)
 
 	for (i = 0, ac = sc->sc_ccbs; i < AAC_NCCBS; i++, ac++) {
 		rv = bus_dmamap_create(sc->sc_dmat, AAC_MAX_XFER,
-		    AAC_MAX_SGENTRIES, AAC_MAX_XFER, 0, 
+		    AAC_MAX_SGENTRIES, AAC_MAX_XFER, 0,
 		    BUS_DMA_NOWAIT | BUS_DMA_ALLOCNOW, &ac->ac_dmamap_xfer);
 		if (rv) {
 			while (--ac >= sc->sc_ccbs)
@@ -340,9 +345,18 @@ aac_describe_code(const struct aac_code_lookup *table, u_int32_t code)
 	return (table[i + 1].string);
 }
 
+/*
+ * bitmask_snprintf(9) format string for the adapter options.
+ */
+static char *optfmt = 
+    "\20\1SNAPSHOT\2CLUSTERS\3WCACHE\4DATA64\5HOSTTIME\6RAID50"
+    "\7WINDOW4GB"
+    "\10SCSIUPGD\11SOFTERR\12NORECOND\13SGMAP64\14ALARM\15NONDASD";
+
 static void
 aac_describe_controller(struct aac_softc *sc)
 {
+	u_int8_t fmtbuf[256];
 	u_int8_t buf[AAC_FIB_DATASIZE];
 	u_int16_t bufsize;
 	struct aac_adapter_info *info;
@@ -363,16 +377,33 @@ aac_describe_controller(struct aac_softc *sc)
 	}
 	info = (struct aac_adapter_info *)&buf[0];
 
-	aprint_normal("%s: %s at %dMHz, %dMB cache, %s, kernel %d.%d-%d\n",
+	aprint_normal("%s: %s at %dMHz, %dMB mem (%dMB cache), %s\n",
 	    sc->sc_dv.dv_xname,
 	    aac_describe_code(aac_cpu_variant, le32toh(info->CpuVariant)),
 	    le32toh(info->ClockSpeed),
+	    le32toh(info->TotalMem) / (1024 * 1024),
 	    le32toh(info->BufferMem) / (1024 * 1024),
 	    aac_describe_code(aac_battery_platform,
-			      le32toh(info->batteryPlatform)),
+			      le32toh(info->batteryPlatform)));
+
+	aprint_verbose("%s: Kernel %d.%d-%d [Build %d], ",
+	    sc->sc_dv.dv_xname,
 	    info->KernelRevision.external.comp.major,
 	    info->KernelRevision.external.comp.minor,
-	    info->KernelRevision.external.comp.dash);
+	    info->KernelRevision.external.comp.dash,
+	    info->KernelRevision.buildNumber);
+
+	aprint_verbose("Monitor %d.%d-%d [Build %d], S/N %6X\n",
+	    info->MonitorRevision.external.comp.major,
+	    info->MonitorRevision.external.comp.minor,
+	    info->MonitorRevision.external.comp.dash,
+	    info->MonitorRevision.buildNumber,
+	    ((u_int32_t)info->SerialNumber & 0xffffff));
+
+	aprint_verbose("%s: Controller supports: %s\n",
+	    sc->sc_dv.dv_xname,
+	    bitmask_snprintf(sc->sc_supported_options, optfmt, fmtbuf,
+			     sizeof(fmtbuf)));
 
 	/* Save the kernel revision structure for later use. */
 	sc->sc_revision = info->KernelRevision;
@@ -385,7 +416,7 @@ aac_describe_controller(struct aac_softc *sc)
 static int
 aac_check_firmware(struct aac_softc *sc)
 {
-	u_int32_t major, minor;
+	u_int32_t major, minor, opts;
 
 	if ((sc->sc_quirks & AAC_QUIRK_PERC2QC) != 0) {
 		if (aac_sync_command(sc, AAC_MONKER_GETKERNVER, 0, 0, 0, 0,
@@ -396,8 +427,8 @@ aac_check_firmware(struct aac_softc *sc)
 		}
 
 		/* These numbers are stored as ASCII! */
-		major = (AAC_GETREG4(sc, AAC_SA_MAILBOX + 4) & 0xff) - 0x30;
-		minor = (AAC_GETREG4(sc, AAC_SA_MAILBOX + 8) & 0xff) - 0x30;
+		major = (AAC_GET_MAILBOX(sc, 1) & 0xff) - 0x30;
+		minor = (AAC_GET_MAILBOX(sc, 2) & 0xff) - 0x30;
 		if (major == 1) {
 			aprint_error(
 			    "%s: firmware version %d.%d not supported.\n",
@@ -405,6 +436,15 @@ aac_check_firmware(struct aac_softc *sc)
 			return (1);
 		}
 	}
+
+	if (aac_sync_command(sc, AAC_MONKER_GETINFO, 0, 0, 0, 0, NULL)) {
+		aprint_error("%s: GETINFO failed\n", sc->sc_dv.dv_xname);
+		return (1);
+	}
+	opts = AAC_GET_MAILBOX(sc, 1);
+	sc->sc_supported_options = opts;
+
+	/* XXX -- Enable 64-bit sglists if we can */
 
 	return (0);
 }
@@ -602,7 +642,7 @@ aac_init(struct aac_softc *sc)
 	/*
 	 * Give the init structure to the controller.
 	 */
-	if (aac_sync_command(sc, AAC_MONKER_INITSTRUCT, 
+	if (aac_sync_command(sc, AAC_MONKER_INITSTRUCT,
 	    sc->sc_common_seg.ds_addr + offsetof(struct aac_common, ac_init),
 	    0, 0, 0, NULL)) {
 		aprint_error("%s: error establishing init structure\n",
@@ -664,7 +704,7 @@ aac_startup(struct aac_softc *sc)
 			continue;
 		}
 
-		/* 
+		/*
 		 * Check container volume type for validity.  Note that many
 		 * of the possible types may never show up.
 		 */
@@ -695,7 +735,7 @@ aac_shutdown(void *cookie)
 
 		AAC_MASK_INTERRUPTS(sc);
 
-		/* 
+		/*
 		 * Send a Container shutdown followed by a HostShutdown FIB
 		 * to the controller to convince it that we don't want to
 		 * talk to it anymore.  We've been closed and all I/O
@@ -720,6 +760,8 @@ aac_shutdown(void *cookie)
 		    &i, sizeof(i), NULL, NULL))
 			printf("%s: unable to halt controller\n",
 			    sc->sc_dv.dv_xname);
+
+		sc->sc_flags &= ~AAC_ONLINE;
 	}
 }
 
@@ -955,7 +997,7 @@ aac_sync_fib(struct aac_softc *sc, u_int32_t command, u_int32_t xferstate,
 	fib->Header.StructType = AAC_FIBTYPE_TFIB;
 	fib->Header.Size = htole16(sizeof(*fib) + datasize);
 	fib->Header.SenderSize = htole16(sizeof(*fib));
-	fib->Header.SenderFibAddress = htole32((u_int32_t)fib);	/* XXX */
+	fib->Header.SenderFibAddress = 0; /* htole32((u_int32_t)fib);	* XXX */
 	fib->Header.ReceiverFibAddress = htole32(fibpa);
 
 	/*
@@ -976,12 +1018,16 @@ aac_sync_fib(struct aac_softc *sc, u_int32_t command, u_int32_t xferstate,
 	 */
 	if (aac_sync_command(sc, AAC_MONKER_SYNCFIB, fibpa, 0, 0, 0, &status))
 		return (EIO);
+	if (status != 1) {
+		printf("%s: syncfib command %04x status %08x\n",
+			sc->sc_dv.dv_xname, command, status);
+	}
 
 	bus_dmamap_sync(sc->sc_dmat, sc->sc_common_dmamap,
 	    (caddr_t)fib - (caddr_t)sc->sc_common, sizeof(*fib),
 	    BUS_DMASYNC_POSTWRITE | BUS_DMASYNC_POSTREAD);
 
-	/* 
+	/*
 	 * Copy out the result
 	 */
 	if (result != NULL) {
@@ -1028,7 +1074,7 @@ aac_ccb_free(struct aac_softc *sc, struct aac_ccb *ac)
 	ac->ac_fib->Header.SenderSize = htole16(sizeof(*ac->ac_fib));
 
 #ifdef AAC_DEBUG
-	/* 
+	/*
 	 * These are duplicated in aac_ccb_submit() to cover the case where
 	 * an intermediate stage may have destroyed them.  They're left
 	 * initialised here for debugging purposes only.
@@ -1328,13 +1374,13 @@ aac_print_fib(struct aac_softc *sc, struct aac_fib *fib, char *caller)
 		sg = NULL;
 
 		if (le32toh(br->Command) == VM_CtBlockRead) {
-			printf("  BlockRead: container %d  0x%x/%d\n", 
+			printf("  BlockRead: container %d  0x%x/%d\n",
 			    le32toh(br->ContainerId), le32toh(br->BlockNumber),
 			    le32toh(br->ByteCount));
 			sg = &br->SgMap;
 		}
 		if (le32toh(bw->Command) == VM_CtBlockWrite) {
-			printf("  BlockWrite: container %d  0x%x/%d (%s)\n", 
+			printf("  BlockWrite: container %d  0x%x/%d (%s)\n",
 			    le32toh(bw->ContainerId), le32toh(bw->BlockNumber),
 			    le32toh(bw->ByteCount),
 			    le32toh(bw->Stable) == CSTABLE ?

@@ -1,7 +1,7 @@
 #!/bin/sh
 # Make statetexts.h from vinumstate.h
 # $FreeBSD$
-# $Id: makestatetext,v 1.1.1.1 2003/10/10 03:07:29 grog Exp $
+# $Id: makestatetext,v 1.1.1.1.12.1 2005/03/19 08:36:02 yamt Exp $
 infile=vinumstate.h
 ofile=statetexts.h
 echo >$ofile "/* Created by $0 on" `date`.  "Do not edit */"
@@ -29,7 +29,7 @@ cat >> $ofile <<FOO
  * 4. Neither the name of the Company nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
- *  
+ *
  * This software is provided \`\`as is'', and any express or implied
  * warranties, including, but not limited to, the implied warranties of
  * merchantability and fitness for a particular purpose are disclaimed.
@@ -46,7 +46,7 @@ cat >> $ofile <<FOO
 FOO
 
 echo >>$ofile "/* Drive state texts */"
-echo >>$ofile "char *drivestatetext [] = 
+echo >>$ofile "char *drivestatetext [] =
   { "
 egrep  -e 'drive_[A-z0-9]*,'  <$infile | grep -v = | sed 's: *drive_\([^,]*\).*:  \"\1\",:' >>$ofile
 cat <<FOO >> $ofile
@@ -54,7 +54,7 @@ cat <<FOO >> $ofile
 
 /* Subdisk state texts */
 char *sdstatetext [] =
-  { 
+  {
 FOO
 egrep  -e 'sd_[A-z0-9]*,' $infile | grep -v = | sed 's: *sd_\([^,]*\).*:  \"\1\",:' >>$ofile
 cat <<FOO >> $ofile
@@ -62,7 +62,7 @@ cat <<FOO >> $ofile
 
 /* Plex state texts */
 char *plexstatetext [] =
-  { 
+  {
 FOO
 egrep  -e 'plex_[A-z0-9]*,' $infile | grep -v = | sed 's: *plex_\([^,]*\).*:  \"\1\",:' >>$ofile
 cat <<FOO >> $ofile
@@ -70,7 +70,7 @@ cat <<FOO >> $ofile
 
 /* Volume state texts */
 char *volstatetext [] =
-  { 
+  {
 FOO
 egrep  -e 'volume_[A-z0-9]*,' $infile | grep -v = | sed 's: *volume_\([^,]*\).*:  \"\1\",:' >>$ofile
 cat <<FOO >> $ofile

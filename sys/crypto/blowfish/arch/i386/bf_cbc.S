@@ -1,4 +1,4 @@
-/* $NetBSD: bf_cbc.S,v 1.3 2003/11/28 08:56:48 keihan Exp $ */
+/* $NetBSD: bf_cbc.S,v 1.3.10.1 2005/03/19 08:33:49 yamt Exp $ */
 
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
@@ -58,7 +58,7 @@
  */
 
 /*
- * Modified from the output of `perl bf-686.pl elf' by 
+ * Modified from the output of `perl bf-686.pl elf' by
  * Thor Lancelot Simon <tls@NetBSD.org>
  */
 
@@ -71,7 +71,7 @@ ENTRY(BF_cbc_encrypt)
 	pushl	%esi
 	pushl	%edi
 	movl	28(%esp),	%ebp
-	# getting iv ptr from parameter 4 
+	# getting iv ptr from parameter 4
 	movl	36(%esp),	%ebx
 	movl	(%ebx),		%esi
 	movl	4(%ebx),	%edi
@@ -82,9 +82,9 @@ ENTRY(BF_cbc_encrypt)
 	movl	%esp,		%ebx
 	movl	36(%esp),	%esi
 	movl	40(%esp),	%edi
-	# getting encrypt flag from parameter 5 
+	# getting encrypt flag from parameter 5
 	movl	56(%esp),	%ecx
-	# get and push parameter 3 
+	# get and push parameter 3
 	movl	48(%esp),	%eax
 	pushl	%eax
 	pushl	%ebx
@@ -100,18 +100,18 @@ ENTRY(BF_cbc_encrypt)
 	xorl	%ecx,		%eax
 	xorl	%edx,		%ebx
 .byte 15
-.byte 200		# bswapl  %eax 
+.byte 200		# bswapl  %eax
 .byte 15
-.byte 203		# bswapl  %ebx 
+.byte 203		# bswapl  %ebx
 	movl	%eax,		8(%esp)
 	movl	%ebx,		12(%esp)
 	call	_C_LABEL(BF_encrypt)
 	movl	8(%esp),	%eax
 	movl	12(%esp),	%ebx
 .byte 15
-.byte 200		# bswapl  %eax 
+.byte 200		# bswapl  %eax
 .byte 15
-.byte 203		# bswapl  %ebx 
+.byte 203		# bswapl  %ebx
 	movl	%eax,		(%edi)
 	movl	%ebx,		4(%edi)
 	addl	$8,		%esi
@@ -147,18 +147,18 @@ ENTRY(BF_cbc_encrypt)
 	xorl	%ecx,		%eax
 	xorl	%edx,		%ebx
 .byte 15
-.byte 200		# bswapl  %eax 
+.byte 200		# bswapl  %eax
 .byte 15
-.byte 203		# bswapl  %ebx 
+.byte 203		# bswapl  %ebx
 	movl	%eax,		8(%esp)
 	movl	%ebx,		12(%esp)
 	call	_C_LABEL(BF_encrypt)
 	movl	8(%esp),	%eax
 	movl	12(%esp),	%ebx
 .byte 15
-.byte 200		# bswapl  %eax 
+.byte 200		# bswapl  %eax
 .byte 15
-.byte 203		# bswapl  %ebx 
+.byte 203		# bswapl  %ebx
 	movl	%eax,		(%edi)
 	movl	%ebx,		4(%edi)
 	jmp	.L003finish
@@ -176,18 +176,18 @@ ENTRY(BF_cbc_encrypt)
 	movl	(%esi),		%eax
 	movl	4(%esi),	%ebx
 .byte 15
-.byte 200		# bswapl  %eax 
+.byte 200		# bswapl  %eax
 .byte 15
-.byte 203		# bswapl  %ebx 
+.byte 203		# bswapl  %ebx
 	movl	%eax,		8(%esp)
 	movl	%ebx,		12(%esp)
 	call	_C_LABEL(BF_decrypt)
 	movl	8(%esp),	%eax
 	movl	12(%esp),	%ebx
 .byte 15
-.byte 200		# bswapl  %eax 
+.byte 200		# bswapl  %eax
 .byte 15
-.byte 203		# bswapl  %ebx 
+.byte 203		# bswapl  %ebx
 	movl	16(%esp),	%ecx
 	movl	20(%esp),	%edx
 	xorl	%eax,		%ecx
@@ -209,18 +209,18 @@ ENTRY(BF_cbc_encrypt)
 	movl	(%esi),		%eax
 	movl	4(%esi),	%ebx
 .byte 15
-.byte 200		# bswapl  %eax 
+.byte 200		# bswapl  %eax
 .byte 15
-.byte 203		# bswapl  %ebx 
+.byte 203		# bswapl  %ebx
 	movl	%eax,		8(%esp)
 	movl	%ebx,		12(%esp)
 	call	_C_LABEL(BF_decrypt)
 	movl	8(%esp),	%eax
 	movl	12(%esp),	%ebx
 .byte 15
-.byte 200		# bswapl  %eax 
+.byte 200		# bswapl  %eax
 .byte 15
-.byte 203		# bswapl  %ebx 
+.byte 203		# bswapl  %ebx
 	movl	16(%esp),	%ecx
 	movl	20(%esp),	%edx
 	xorl	%eax,		%ecx

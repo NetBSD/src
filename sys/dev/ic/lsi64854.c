@@ -1,4 +1,4 @@
-/*	$NetBSD: lsi64854.c,v 1.23.12.1 2005/02/12 18:17:43 yamt Exp $ */
+/*	$NetBSD: lsi64854.c,v 1.23.12.2 2005/03/19 08:34:03 yamt Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lsi64854.c,v 1.23.12.1 2005/02/12 18:17:43 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lsi64854.c,v 1.23.12.2 2005/03/19 08:34:03 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -319,7 +319,7 @@ lsi64854_setup(sc, addr, len, datain, dmasize)
 	DPRINTF(LDB_ANY, ("dma_setup: dmasize = %ld\n", (long)sc->sc_dmasize));
 
 	/*
-	 * XXX what length? 
+	 * XXX what length?
 	 */
 	if (sc->sc_rev == DMAREV_HME) {
 
@@ -334,7 +334,7 @@ lsi64854_setup(sc, addr, len, datain, dmasize)
 		sc->sc_dvmaaddr = *sc->sc_dmaaddr;
 		if (bus_dmamap_load(sc->sc_dmatag, sc->sc_dmamap,
 				*sc->sc_dmaaddr, sc->sc_dmasize,
-				NULL /* kernel address */,   
+				NULL /* kernel address */,
 		                BUS_DMA_NOWAIT | BUS_DMA_STREAMING))
 			panic("%s: cannot allocate DVMA address",
 			      sc->sc_dev.dv_xname);
@@ -581,7 +581,7 @@ lsi64854_setup_pp(sc, addr, len, datain, dmasize)
 		sc->sc_dvmaaddr = *sc->sc_dmaaddr;
 		if (bus_dmamap_load(sc->sc_dmatag, sc->sc_dmamap,
 				*sc->sc_dmaaddr, sc->sc_dmasize,
-				NULL /* kernel address */,   
+				NULL /* kernel address */,
 				    BUS_DMA_NOWAIT/*|BUS_DMA_COHERENT*/))
 			panic("%s: pp cannot allocate DVMA address",
 			      sc->sc_dev.dv_xname);

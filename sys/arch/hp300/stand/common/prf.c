@@ -1,4 +1,4 @@
-/*	$NetBSD: prf.c,v 1.3 2003/11/14 16:52:40 tsutsui Exp $	*/
+/*	$NetBSD: prf.c,v 1.3.10.1 2005/03/19 08:32:58 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -35,7 +35,7 @@
 #include <hp300/stand/common/samachdep.h>
 
 int
-getchar()
+getchar(void)
 {
 	int c;
 
@@ -51,7 +51,7 @@ getchar()
 }
 
 int
-tgetchar()
+tgetchar(void)
 {
 	int c;
 
@@ -68,8 +68,7 @@ tgetchar()
 }
 
 void
-putchar(c)
-	int c;
+putchar(int c)
 {
 	cnputc(c);
 	if (c == '\n')

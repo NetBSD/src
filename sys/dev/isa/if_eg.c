@@ -1,4 +1,4 @@
-/*	$NetBSD: if_eg.c,v 1.63.6.1 2005/02/12 18:17:45 yamt Exp $	*/
+/*	$NetBSD: if_eg.c,v 1.63.6.2 2005/03/19 08:34:33 yamt Exp $	*/
 
 /*
  * Copyright (c) 1993 Dean Huxley <dean@fsa.ca>
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_eg.c,v 1.63.6.1 2005/02/12 18:17:45 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_eg.c,v 1.63.6.2 2005/03/19 08:34:33 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"
@@ -113,8 +113,8 @@ struct eg_softc {
 	struct ethercom sc_ethercom;	/* Ethernet common part */
 	bus_space_tag_t sc_iot;		/* bus space identifier */
 	bus_space_handle_t sc_ioh;	/* i/o handle */
-	u_int8_t eg_rom_major;		/* Cards ROM version (major number) */ 
-	u_int8_t eg_rom_minor;		/* Cards ROM version (minor number) */ 
+	u_int8_t eg_rom_major;		/* Cards ROM version (major number) */
+	u_int8_t eg_rom_minor;		/* Cards ROM version (minor number) */
 	short	 eg_ram;		/* Amount of RAM on the card */
 	u_int8_t eg_pcb[EG_PCBLEN];	/* Primary Command Block buffer */
 	u_int8_t eg_incount;		/* Number of buffers currently used */
@@ -154,13 +154,13 @@ static int egreadPCB(bus_space_tag_t, bus_space_handle_t, u_int8_t *);
 /*
  * Support stuff
  */
-	
+
 static inline void
 egprintpcb(pcb)
 	u_int8_t *pcb;
 {
 	int i;
-	
+
 	for (i = 0; i < pcb[1] + 2; i++)
 		DPRINTF(("pcb[%2d] = %x\n", i, pcb[i]));
 }
@@ -170,7 +170,7 @@ static inline void
 egprintstat(b)
 	u_char b;
 {
-	DPRINTF(("%s %s %s %s %s %s %s\n", 
+	DPRINTF(("%s %s %s %s %s %s %s\n",
 		 (b & EG_STAT_HCRE)?"HCRE":"",
 		 (b & EG_STAT_ACRF)?"ACRF":"",
 		 (b & EG_STAT_DIR )?"DIR ":"",
@@ -198,7 +198,7 @@ egoutPCB(iot, ioh, b)
 	DPRINTF(("egoutPCB failed\n"));
 	return 1;
 }
-	
+
 static int
 egreadPCBstat(iot, ioh, statb)
 	bus_space_tag_t iot;
@@ -209,11 +209,11 @@ egreadPCBstat(iot, ioh, statb)
 
 	for (i=0; i < 5000; i++) {
 		if ((bus_space_read_1(iot, ioh, EG_STATUS) &
-		    EG_PCB_STAT) != EG_PCB_NULL) 
+		    EG_PCB_STAT) != EG_PCB_NULL)
 			break;
 		delay(10);
 	}
-	if ((bus_space_read_1(iot, ioh, EG_STATUS) & EG_PCB_STAT) == statb) 
+	if ((bus_space_read_1(iot, ioh, EG_STATUS) & EG_PCB_STAT) == statb)
 		return 0;
 	return 1;
 }
@@ -233,7 +233,7 @@ egreadPCBready(iot, ioh)
 	DPRINTF(("PCB read not ready\n"));
 	return 1;
 }
-	
+
 static int
 egwritePCB(iot, ioh, pcb)
 	bus_space_tag_t iot;
@@ -264,8 +264,8 @@ egwritePCB(iot, ioh, pcb)
 	if (egreadPCBstat(iot, ioh, EG_PCB_ACCEPT))
 		return 1;
 	return 0;
-}	
-	
+}
+
 static int
 egreadPCB(iot, ioh, pcb)
 	bus_space_tag_t iot;
@@ -313,7 +313,7 @@ egreadPCB(iot, ioh, pcb)
 	    ~EG_PCB_STAT) | EG_PCB_ACCEPT);
 
 	return 0;
-}	
+}
 
 /*
  * Real stuff
@@ -361,12 +361,12 @@ egprobe(parent, match, aux)
 	}
 
 	/* hard reset card */
-	bus_space_write_1(iot, ioh, EG_CONTROL, EG_CTL_RESET); 
+	bus_space_write_1(iot, ioh, EG_CONTROL, EG_CTL_RESET);
 	bus_space_write_1(iot, ioh, EG_CONTROL, 0);
 	for (i = 0; i < 5000; i++) {
 		delay(1000);
 		if ((bus_space_read_1(iot, ioh, EG_STATUS) &
-		    EG_PCB_STAT) == EG_PCB_NULL) 
+		    EG_PCB_STAT) == EG_PCB_NULL)
 			break;
 	}
 	if ((bus_space_read_1(iot, ioh, EG_STATUS) & EG_PCB_STAT) != EG_PCB_NULL) {
@@ -453,7 +453,7 @@ egattach(parent, self, aux)
 	if (egwritePCB(iot, ioh, sc->eg_pcb) != 0) {
 		printf("%s: can't send Get Station Address\n", self->dv_xname);
 		return;
-	}	
+	}
 	if (egreadPCB(iot, ioh, sc->eg_pcb) != 0) {
 		printf("%s: can't read station address\n", self->dv_xname);
 		egprintpcb(sc->eg_pcb);
@@ -461,7 +461,7 @@ egattach(parent, self, aux)
 	}
 
 	/* check Get station address response */
-	if (sc->eg_pcb[0] != EG_RSP_GETEADDR || sc->eg_pcb[1] != 0x06) { 
+	if (sc->eg_pcb[0] != EG_RSP_GETEADDR || sc->eg_pcb[1] != 0x06) {
 		printf("%s: card responded with garbage (1)\n",
 		    self->dv_xname);
 		egprintpcb(sc->eg_pcb);
@@ -504,7 +504,7 @@ egattach(parent, self, aux)
 	/* Now we can attach the interface. */
 	if_attach(ifp);
 	ether_ifattach(ifp, myaddr);
-	
+
 	sc->sc_ih = isa_intr_establish(ia->ia_ic, ia->ia_irq[0].ir_irq,
 	    IST_EDGE, IPL_NET, egintr, sc);
 
@@ -621,7 +621,7 @@ loop:
 	IFQ_DEQUEUE(&ifp->if_snd, m0);
 	if (m0 == 0)
 		return;
-	
+
 	ifp->if_flags |= IFF_OACTIVE;
 
 	/* We need to use m->m_pkthdr.len, so require the header */
@@ -663,14 +663,14 @@ loop:
 
 	/* set direction bit: host -> adapter */
 	bus_space_write_1(iot, ioh, EG_CONTROL,
-	    bus_space_read_1(iot, ioh, EG_CONTROL) & ~EG_CTL_DIR); 
-	
+	    bus_space_read_1(iot, ioh, EG_CONTROL) & ~EG_CTL_DIR);
+
 	for (ptr = (u_int16_t *) sc->eg_outbuf; len > 0; len -= 2) {
 		bus_space_write_2(iot, ioh, EG_DATA, *ptr++);
 		while (!(bus_space_read_1(iot, ioh, EG_STATUS) & EG_STAT_HRDY))
 			; /* XXX need timeout here */
 	}
-	
+
 	m_freem(m0);
 }
 
@@ -691,10 +691,10 @@ egintr(arg)
 		switch (sc->eg_pcb[0]) {
 		case EG_RSP_RECVPACKET:
 			len = sc->eg_pcb[6] | (sc->eg_pcb[7] << 8);
-	
+
 			/* Set direction bit : Adapter -> host */
 			bus_space_write_1(iot, ioh, EG_CONTROL,
-			    bus_space_read_1(iot, ioh, EG_CONTROL) | EG_CTL_DIR); 
+			    bus_space_read_1(iot, ioh, EG_CONTROL) | EG_CTL_DIR);
 
 			for (ptr = (u_int16_t *) sc->eg_inbuf;
 			    len > 0; len -= 2) {
@@ -744,7 +744,7 @@ egintr(arg)
 			    *(short *) &sc->eg_pcb[16]));
 			serviced = 1;
 			break;
-			
+
 		default:
 			printf("%s: egintr: Unknown response %x??\n",
 			    sc->sc_dev.dv_xname, sc->eg_pcb[0]);
@@ -771,7 +771,7 @@ egread(sc, buf, len)
 {
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	struct mbuf *m;
-	
+
 	if (len <= sizeof(struct ether_header) ||
 	    len > ETHER_MAX_LEN) {
 		printf("%s: invalid packet size %d; dropping\n",
@@ -879,7 +879,7 @@ egioctl(ifp, cmd, data)
 		case AF_NS:
 		    {
 			struct ns_addr *ina = &IA_SNS(ifa)->sns_addr;
-				
+
 			if (ns_nullhost(*ina))
 				ina->x_host =
 				   *(union ns_host *)LLADDR(ifp->if_sadl);
@@ -964,6 +964,6 @@ void
 egstop(sc)
 	struct eg_softc *sc;
 {
-	
+
 	bus_space_write_1(sc->sc_iot, sc->sc_ioh, EG_CONTROL, 0);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: union_vfsops.c,v 1.24 2005/01/02 16:08:28 thorpej Exp $	*/
+/*	$NetBSD: union_vfsops.c,v 1.24.4.1 2005/03/19 08:36:11 yamt Exp $	*/
 
 /*
  * Copyright (c) 1994 The Regents of the University of California.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: union_vfsops.c,v 1.24 2005/01/02 16:08:28 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: union_vfsops.c,v 1.24.4.1 2005/03/19 08:36:11 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -179,7 +179,7 @@ union_mount(mp, path, data, ndp, p)
 		error = EINVAL;
 		goto bad;
 	}
-	
+
 	um = (struct union_mount *) malloc(sizeof(struct union_mount),
 				M_UFSMNT, M_WAITOK);	/* XXX */
 
@@ -383,7 +383,7 @@ union_unmount(mp, mntflags, p)
 
 	if (mntflags & MNT_FORCE)
 		vflush(mp, um_rootvp, FORCECLOSE);
-	
+
 
 	/* At this point the root vnode should have a single reference */
 	if (um_rootvp->v_usecount > 1) {
@@ -393,7 +393,7 @@ union_unmount(mp, mntflags, p)
 
 #ifdef UNION_DIAGNOSTIC
 	vprint("union root", um_rootvp);
-#endif	 
+#endif
 	/*
 	 * Discard references to upper and lower target vnodes.
 	 */
@@ -556,7 +556,7 @@ union_vget(mp, ino, vpp)
 	ino_t ino;
 	struct vnode **vpp;
 {
-	
+
 	return (EOPNOTSUPP);
 }
 

@@ -1,4 +1,4 @@
-/* $NetBSD: isic_l1.c,v 1.14 2003/10/03 16:38:44 pooka Exp $ */
+/* $NetBSD: isic_l1.c,v 1.14.10.1 2005/03/19 08:34:02 yamt Exp $ */
 
 /*
  * Copyright (c) 1997, 2000 Hellmuth Michaelis. All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isic_l1.c,v 1.14 2003/10/03 16:38:44 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isic_l1.c,v 1.14.10.1 2005/03/19 08:34:02 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -75,7 +75,7 @@ const struct isdn_layer1_isdnif_driver isic_std_driver = {
 
 /* from i4btrc driver i4b_trace.c */
 extern int get_trace_data_from_l1(int unit, int what, int len, char *buf);
- 
+
 /*---------------------------------------------------------------------------*
  *
  *	L2 -> L1: PH-DATA-REQUEST
@@ -136,10 +136,10 @@ isic_std_ph_data_req(isdn_layer1token token, struct mbuf *m, int freeflag)
 		}
 
 		NDBGL1(L1_I_ERR, "No Space in TX FIFO, state = %s", isic_printstate(sc));
-	
+
 		if(freeflag == MBUF_FREE)
-			i4b_Dfreembuf(m);			
-	
+			i4b_Dfreembuf(m);
+
 		splx(s);
 		return (0);
 	}
@@ -152,13 +152,13 @@ isic_std_ph_data_req(isdn_layer1token token, struct mbuf *m, int freeflag)
 		hdr.count = ++sc->sc_trace_dcount;
 		isdn_layer2_trace_ind(&sc->sc_l2, sc->sc_l3token, &hdr, m->m_len, m->m_data);
 	}
-	
+
 	sc->sc_state |= ISAC_TX_ACTIVE;	/* set transmitter busy flag */
 
 	NDBGL1(L1_I_MSG, "ISAC_TX_ACTIVE set");
 
 	sc->sc_freeflag = 0;		/* IRQ must NOT mfree */
-	
+
 	ISAC_WRFIFO(m->m_data, min(m->m_len, ISAC_FIFO_LEN)); /* output to TX fifo */
 
 	if(m->m_len > ISAC_FIFO_LEN)	/* message > 32 bytes ? */
@@ -169,7 +169,7 @@ isic_std_ph_data_req(isdn_layer1token token, struct mbuf *m, int freeflag)
 
 		if(freeflag)
 			sc->sc_freeflag = 1;	/* IRQ must mfree */
-		
+
 		cmd = ISAC_CMDR_XTF;
 	}
 	else
@@ -188,7 +188,7 @@ isic_std_ph_data_req(isdn_layer1token token, struct mbuf *m, int freeflag)
 	ISACCMDRWRDELAY();
 
 	splx(s);
-	
+
 	return(1);
 }
 
@@ -201,8 +201,8 @@ isic_std_ph_data_req(isdn_layer1token token, struct mbuf *m, int freeflag)
  *		token		softc of physical interface
  *
  *	returns:
- *		==0	
- *		!=0	
+ *		==0
+ *		!=0
  *
  *---------------------------------------------------------------------------*/
 static int
@@ -232,7 +232,7 @@ isic_std_mph_command_req(isdn_layer1token token, int command, void *parm)
 			sc->sc_intr_valid = ISIC_INTR_VALID;
 			pass_down = 1;
 			break;
-			
+
 		case CMR_DCLOSE:	/* daemon not running */
 			NDBGL1(L1_PRIM, "%s, command = CMR_DCLOSE", sc->sc_dev.dv_xname);
 			sc->sc_intr_valid = ISIC_INTR_DISABLED;

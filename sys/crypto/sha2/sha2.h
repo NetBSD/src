@@ -1,4 +1,4 @@
-/*	$NetBSD: sha2.h,v 1.1 2003/07/22 03:24:25 itojun Exp $	*/
+/*	$NetBSD: sha2.h,v 1.1.12.1 2005/03/19 08:33:52 yamt Exp $	*/
 /*	$KAME: sha2.h,v 1.4 2003/07/20 00:28:38 itojun Exp $	*/
 
 /*
@@ -21,7 +21,7 @@
  * 3. Neither the name of the copyright holder nor the names of contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR(S) AND CONTRIBUTOR(S) ``AS IS'' AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -74,7 +74,7 @@ typedef unsigned long long u_int64_t;	/* 8-bytes (64-bits) */
  *
  *   #include <inttypes.h>
  *
- * If you choose to use <inttypes.h> then please define: 
+ * If you choose to use <inttypes.h> then please define:
  *
  *   #define SHA2_USE_INTTYPES_H
  *

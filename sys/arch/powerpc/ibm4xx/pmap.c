@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.30.2.2 2005/02/12 18:17:38 yamt Exp $	*/
+/*	$NetBSD: pmap.c,v 1.30.2.3 2005/03/19 08:33:10 yamt Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.30.2.2 2005/02/12 18:17:38 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.30.2.3 2005/03/19 08:33:10 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -528,7 +528,8 @@ pmap_growkernel(vaddr_t maxkvaddr)
 			if (!uvm_page_physget(&pg))
 				panic("pmap_growkernel: no memory");
 		}
-		if (!pg) panic("pmap_growkernel: no pages");
+		if (!pg)
+			panic("pmap_growkernel: no pages");
 		pmap_zero_page((paddr_t)pg);
 
 		/* XXX This is based on all phymem being addressable */
@@ -728,9 +729,11 @@ pmap_enter_pv(struct pmap *pm, vaddr_t va, paddr_t pa, boolean_t wired)
 		npv->pv_pm = pm;
 		npv->pv_next = pv->pv_next;
 		pv->pv_next = npv;
+		pv = npv;
 	}
 	if (wired) {
 		PV_WIRE(pv);
+		pm->pm_stats.wired_count++;
 	}
 	splx(s);
 	return (1);
@@ -869,16 +872,13 @@ pmap_enter(struct pmap *pm, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 	if ((prot & VM_PROT_EXECUTE) && (tte & TTE_I) == 0)
 		__syncicache((void *)pa, PAGE_SIZE);
 
-	if (flags & PMAP_WIRED)
-		pm->pm_stats.wired_count++;
-
 	return 0;
 }
 
 void
 pmap_unwire(struct pmap *pm, vaddr_t va)
 {
-	struct pv_entry *pv, *npv;
+	struct pv_entry *pv;
 	paddr_t pa;
 	int s;
 
@@ -890,21 +890,16 @@ pmap_unwire(struct pmap *pm, vaddr_t va)
 	if (!pv)
 		return;
 
-	/*
-	 * If it is the first entry on the list, it is actually
-	 * in the header and we must copy the following entry up
-	 * to the header.  Otherwise we must search the list for
-	 * the entry.  In either case we free the now unused entry.
-	 */
 	s = splvm();
-	for (npv = pv; (npv = pv->pv_next) != NULL; pv = npv) {
-		if (pm == npv->pv_pm && PV_CMPVA(va, npv)) {
-			if (PV_ISWIRED(npv)) {
-				PV_UNWIRE(npv);
+	while (pv != NULL) {
+		if (pm == pv->pv_pm && PV_CMPVA(va, pv)) {
+			if (PV_ISWIRED(pv)) {
+				PV_UNWIRE(pv);
 				pm->pm_stats.wired_count--;
 			}
 			break;
 		}
+		pv = pv->pv_next;
 	}
 	splx(s);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_stge.c,v 1.22 2004/10/30 18:09:22 thorpej Exp $	*/
+/*	$NetBSD: if_stge.c,v 1.22.6.1 2005/03/19 08:35:11 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_stge.c,v 1.22 2004/10/30 18:09:22 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_stge.c,v 1.22.6.1 2005/03/19 08:35:11 yamt Exp $");
 
 #include "bpfilter.h"
 
@@ -665,29 +665,29 @@ stge_attach(struct device *parent, struct device *self, void *aux)
 	    NULL, sc->sc_dev.dv_xname, "txdmaintr");
 	evcnt_attach_dynamic(&sc->sc_ev_txindintr, EVCNT_TYPE_INTR,
 	    NULL, sc->sc_dev.dv_xname, "txindintr");
-	evcnt_attach_dynamic(&sc->sc_ev_rxintr, EVCNT_TYPE_INTR,        
+	evcnt_attach_dynamic(&sc->sc_ev_rxintr, EVCNT_TYPE_INTR,
 	    NULL, sc->sc_dev.dv_xname, "rxintr");
 
-	evcnt_attach_dynamic(&sc->sc_ev_txseg1, EVCNT_TYPE_MISC,       
-	    NULL, sc->sc_dev.dv_xname, "txseg1");                      
-	evcnt_attach_dynamic(&sc->sc_ev_txseg2, EVCNT_TYPE_MISC,       
-	    NULL, sc->sc_dev.dv_xname, "txseg2");                      
-	evcnt_attach_dynamic(&sc->sc_ev_txseg3, EVCNT_TYPE_MISC,       
-	    NULL, sc->sc_dev.dv_xname, "txseg3");                      
-	evcnt_attach_dynamic(&sc->sc_ev_txseg4, EVCNT_TYPE_MISC,       
-	    NULL, sc->sc_dev.dv_xname, "txseg4");                      
-	evcnt_attach_dynamic(&sc->sc_ev_txseg5, EVCNT_TYPE_MISC,       
-	    NULL, sc->sc_dev.dv_xname, "txseg5");                      
-	evcnt_attach_dynamic(&sc->sc_ev_txsegmore, EVCNT_TYPE_MISC,       
-	    NULL, sc->sc_dev.dv_xname, "txsegmore");                      
-	evcnt_attach_dynamic(&sc->sc_ev_txcopy, EVCNT_TYPE_MISC,       
-	    NULL, sc->sc_dev.dv_xname, "txcopy");                      
+	evcnt_attach_dynamic(&sc->sc_ev_txseg1, EVCNT_TYPE_MISC,
+	    NULL, sc->sc_dev.dv_xname, "txseg1");
+	evcnt_attach_dynamic(&sc->sc_ev_txseg2, EVCNT_TYPE_MISC,
+	    NULL, sc->sc_dev.dv_xname, "txseg2");
+	evcnt_attach_dynamic(&sc->sc_ev_txseg3, EVCNT_TYPE_MISC,
+	    NULL, sc->sc_dev.dv_xname, "txseg3");
+	evcnt_attach_dynamic(&sc->sc_ev_txseg4, EVCNT_TYPE_MISC,
+	    NULL, sc->sc_dev.dv_xname, "txseg4");
+	evcnt_attach_dynamic(&sc->sc_ev_txseg5, EVCNT_TYPE_MISC,
+	    NULL, sc->sc_dev.dv_xname, "txseg5");
+	evcnt_attach_dynamic(&sc->sc_ev_txsegmore, EVCNT_TYPE_MISC,
+	    NULL, sc->sc_dev.dv_xname, "txsegmore");
+	evcnt_attach_dynamic(&sc->sc_ev_txcopy, EVCNT_TYPE_MISC,
+	    NULL, sc->sc_dev.dv_xname, "txcopy");
 
-	evcnt_attach_dynamic(&sc->sc_ev_rxipsum, EVCNT_TYPE_MISC,       
-	    NULL, sc->sc_dev.dv_xname, "rxipsum");                      
-	evcnt_attach_dynamic(&sc->sc_ev_rxtcpsum, EVCNT_TYPE_MISC,      
+	evcnt_attach_dynamic(&sc->sc_ev_rxipsum, EVCNT_TYPE_MISC,
+	    NULL, sc->sc_dev.dv_xname, "rxipsum");
+	evcnt_attach_dynamic(&sc->sc_ev_rxtcpsum, EVCNT_TYPE_MISC,
 	    NULL, sc->sc_dev.dv_xname, "rxtcpsum");
-	evcnt_attach_dynamic(&sc->sc_ev_rxudpsum, EVCNT_TYPE_MISC,      
+	evcnt_attach_dynamic(&sc->sc_ev_rxudpsum, EVCNT_TYPE_MISC,
 	    NULL, sc->sc_dev.dv_xname, "rxudpsum");
 	evcnt_attach_dynamic(&sc->sc_ev_txipsum, EVCNT_TYPE_MISC,
 	    NULL, sc->sc_dev.dv_xname, "txipsum");
@@ -817,8 +817,7 @@ stge_start(struct ifnet *ifp)
 		/*
 		 * See if we have any VLAN stuff.
 		 */
-		mtag = sc->sc_ethercom.ec_nvlans ?
-		    m_tag_find(m0, PACKET_TAG_VLAN, NULL) : NULL;
+		mtag = VLAN_OUTPUT_TAG(&sc->sc_ethercom, m0);
 
 		/*
 		 * Get the last and next available transmit descriptor.
@@ -934,7 +933,7 @@ stge_start(struct ifnet *ifp)
 #ifdef	STGE_VLAN_CFI
 			    TFD_CFI |
 #endif
-			    TFD_VID((*(u_int *)(mtag + 1)));
+			    TFD_VID(VLAN_TAG_VALUE(mtag));
 		}
 		tfd->tfd_control = htole64(tfc);
 
@@ -1031,7 +1030,7 @@ stge_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 
 	default:
 		error = ether_ioctl(ifp, cmd, data);
-		if (error == ENETRESET) { 
+		if (error == ENETRESET) {
 			/*
 			 * Multicast list has changed; set the hardware filter
 			 * accordingly.
@@ -1361,18 +1360,9 @@ stge_rxintr(struct stge_softc *sc)
 		/*
 		 * Check for VLAN tagged packets
 		 */
-		if (status & RFD_VLANDetected) {
-			struct m_tag *mtag =
-			    m_tag_get(PACKET_TAG_VLAN, sizeof(u_int), M_NOWAIT);
-			if (mtag == NULL) {
-				printf("%s: no mbuf for VLAN tag\n",
-				    ifp->if_xname);
-				m_freem(m);
-				continue;
-			}
-			*(u_int *)(mtag + 1) = RFD_TCI(status);
-			m_tag_prepend(m, mtag);
-		}
+		if (status & RFD_VLANDetected)
+			VLAN_INPUT_TAG(ifp, m, RFD_TCI(status), continue);
+
 #endif
 #if	0
 		if (status & RFD_VLANDetected) {
@@ -1815,7 +1805,7 @@ stge_add_rxbuf(struct stge_softc *sc, int idx)
 	int error;
 
 	MGETHDR(m, M_DONTWAIT, MT_DATA);
-	if (m == NULL)  
+	if (m == NULL)
 		return (ENOBUFS);
 
 	MCLGET(m, M_DONTWAIT);

@@ -1,4 +1,4 @@
-/*	$NetBSD: hd64570.c,v 1.27.6.1 2005/02/12 18:17:43 yamt Exp $	*/
+/*	$NetBSD: hd64570.c,v 1.27.6.2 2005/03/19 08:34:02 yamt Exp $	*/
 
 /*
  * Copyright (c) 1999 Christian E. Hopps
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hd64570.c,v 1.27.6.1 2005/02/12 18:17:43 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hd64570.c,v 1.27.6.2 2005/03/19 08:34:02 yamt Exp $");
 
 #include "bpfilter.h"
 #include "opt_inet.h"
@@ -301,7 +301,7 @@ sca_desc_read_buflen(struct sca_softc *sc, struct sca_desc *dp)
 	return (bus_space_read_2(sc->scu_memt, sc->scu_memh,
 	    sca_page_addr(sc, dp) + offsetof(struct sca_desc, sd_buflen)));
 }
-	    
+
 /*
  * write the buffer length
  */
@@ -498,7 +498,7 @@ sca_msci_get_baud_rate_values(u_int32_t hz, u_int8_t *tmcp)
 	 * 2 <= TD <= 512		TD is inc of 2
 	 * 4 <= TD <= 1024		TD is inc of 4
 	 * ...
-	 * 512 <= TD <= 256*512		TD is inc of 512 
+	 * 512 <= TD <= 256*512		TD is inc of 512
 	 *
 	 * so note there are overlaps.  We lose prec
 	 * as div increases so we wish to minize div.
@@ -786,7 +786,7 @@ sca_dmac_rxinit(sca_port_t *scp)
 	/*
 	 * enable receiver DMA
 	 */
-	dmac_write_1(scp, SCA_DIR0, 
+	dmac_write_1(scp, SCA_DIR0,
 		     (SCA_DIR_EOT | SCA_DIR_EOM | SCA_DIR_BOF | SCA_DIR_COF));
 	dmac_write_1(scp, SCA_DSR0, SCA_DSR_DE);
 }
@@ -837,28 +837,28 @@ sca_output(ifp, m, dst, rt0)
 		/*
 		 * Add cisco serial line header. If there is no
 		 * space in the first mbuf, allocate another.
-		 */     
+		 */
 		M_PREPEND(m, sizeof(struct hdlc_header), M_DONTWAIT);
 		if (m == 0)
 			return (ENOBUFS);
 		hdlc = mtod(m, struct hdlc_header *);
 		hdlc->h_proto = htons(HDLC_PROTOCOL_IP);
-		break;  
+		break;
 #endif
 #ifdef INET6
 	case AF_INET6:
 		/*
 		 * Add cisco serial line header. If there is no
 		 * space in the first mbuf, allocate another.
-		 */     
+		 */
 		M_PREPEND(m, sizeof(struct hdlc_header), M_DONTWAIT);
 		if (m == 0)
 			return (ENOBUFS);
 		hdlc = mtod(m, struct hdlc_header *);
 		hdlc->h_proto = htons(HDLC_PROTOCOL_IPV6);
-		break;  
+		break;
 #endif
-#ifdef ISO     
+#ifdef ISO
        case AF_ISO:
                /*
                 * Add cisco llc serial line header. If there is no
@@ -1290,7 +1290,7 @@ sca_dmac_intr(sca_port_t *scp, u_int8_t isr)
 			if (dsr & SCA_DSR_COF) {
 				printf("%s: TXDMA counter overflow\n",
 				       scp->sp_if.if_xname);
-				
+
 				scp->sp_if.if_flags &= ~IFF_OACTIVE;
 				scp->sp_txcur = 0;
 				scp->sp_txinuse = 0;
@@ -1637,7 +1637,7 @@ sca_frame_process(sca_port_t *scp)
 #endif	/* INET6 */
 #ifdef ISO
 	case HDLC_PROTOCOL_ISO:
-		if (m->m_pkthdr.len < sizeof(struct hdlc_llc_header)) 
+		if (m->m_pkthdr.len < sizeof(struct hdlc_llc_header))
                        goto dropit;
 		m->m_pkthdr.rcvif = &scp->sp_if;
 		m->m_pkthdr.len -= sizeof(struct hdlc_llc_header);
@@ -1721,7 +1721,7 @@ sca_frame_process(sca_port_t *scp)
 			SCA_DPRINTF(SCA_DEBUG_CISCO,
 				    ("Unknown CISCO keepalive protocol 0x%04x\n",
 				     ntohl(cisco->type)));
-			
+
 			scp->sp_if.if_noproto++;
 			goto dropit;
 		}
@@ -1781,7 +1781,7 @@ sca_frame_print(sca_port_t *scp, sca_desc_t *desc, u_int8_t *p)
 		nothing_yet = 0;
 		if (i % 16 == 0)
 			printf("\n");
-		printf("%02x ", 
+		printf("%02x ",
 		    (sc->sc_usedma ? *p
 		    : bus_space_read_1(sc->scu_memt, sc->scu_memh,
 		    sca_page_addr(sc, p))));
@@ -1868,7 +1868,7 @@ sca_port_up(sca_port_t *scp)
 	if (scp->sp_port == 0) {
 		sca_write_1(sc, SCA_IER0, sca_read_1(sc, SCA_IER0) | 0x0f);
 		sca_write_1(sc, SCA_IER1, sca_read_1(sc, SCA_IER1) | 0x0f);
-	} else {     
+	} else {
 		sca_write_1(sc, SCA_IER0, sca_read_1(sc, SCA_IER0) | 0xf0);
 		sca_write_1(sc, SCA_IER1, sca_read_1(sc, SCA_IER1) | 0xf0);
 	}
@@ -1930,7 +1930,7 @@ sca_port_down(sca_port_t *scp)
 	if (scp->sp_port == 0) {
 		sca_write_1(sc, SCA_IER0, sca_read_1(sc, SCA_IER0) & 0xf0);
 		sca_write_1(sc, SCA_IER1, sca_read_1(sc, SCA_IER1) & 0xf0);
-	} else {     
+	} else {
 		sca_write_1(sc, SCA_IER0, sca_read_1(sc, SCA_IER0) & 0x0f);
 		sca_write_1(sc, SCA_IER1, sca_read_1(sc, SCA_IER1) & 0x0f);
 	}
@@ -2048,7 +2048,7 @@ sca_mbuf_alloc(struct sca_softc *sc, caddr_t p, u_int len)
 /*
  * get the base clock
  */
-void      
+void
 sca_get_base_clock(struct sca_softc *sc)
 {
 	struct timeval btv, ctv, dtv;

@@ -1,7 +1,7 @@
-/*	$NetBSD: kern_sa.c,v 1.56.4.1 2005/02/12 18:17:52 yamt Exp $	*/
+/*	$NetBSD: kern_sa.c,v 1.56.4.2 2005/03/19 08:36:11 yamt Exp $	*/
 
 /*-
- * Copyright (c) 2001 The NetBSD Foundation, Inc.
+ * Copyright (c) 2001, 2004, 2005 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sa.c,v 1.56.4.1 2005/02/12 18:17:52 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sa.c,v 1.56.4.2 2005/03/19 08:36:11 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -172,7 +172,7 @@ sa_newsavp(struct sadata *sa)
 	} else {
 		SLIST_FOREACH(qvp, &sa->sa_vps, savp_next) {
 			if (SLIST_NEXT(qvp, savp_next) == NULL ||
-			    SLIST_NEXT(qvp, savp_next)->savp_id != 
+			    SLIST_NEXT(qvp, savp_next)->savp_id !=
 			    qvp->savp_id + 1)
 				break;
 		}
@@ -303,7 +303,7 @@ sa_setstackfree(struct sastack *sast, struct sadata *sa)
 	}
 }
 
-/* 
+/*
  * Find next free stack, starting at sa->sa_stacknext.
  */
 static struct sastack *
@@ -322,7 +322,7 @@ sa_getstack(struct sadata *sa)
 	sast->sast_gen++;
 
 	return sast;
-}	
+}
 
 static __inline struct sastack *
 sa_getstack0(struct sadata *sa)
@@ -632,7 +632,7 @@ sa_yield(struct lwp *l)
 	KERNEL_LOCK_ASSERT_LOCKED();
 
 	if (vp->savp_lwp != l) {
-		/* 
+		/*
 		 * We lost the VP on our way here, this happens for
 		 * instance when we sleep in systrace.  This will end
 		 * in an SA_UNBLOCKED_UPCALL in sa_setwoken().
@@ -644,7 +644,7 @@ sa_yield(struct lwp *l)
 	}
 
 	/*
-	 * If we're the last running LWP, stick around to recieve
+	 * If we're the last running LWP, stick around to receive
 	 * signals.
 	 */
 	KDASSERT((l->l_flag & L_SA_YIELD) == 0);
@@ -653,7 +653,7 @@ sa_yield(struct lwp *l)
 	/*
 	 * A signal will probably wake us up. Worst case, the upcall
 	 * happens and just causes the process to yield again.
-	 */	
+	 */
 	/* s = splsched(); */	/* Protect from timer expirations */
 	KDASSERT(vp->savp_lwp == l);
 	/*
@@ -711,7 +711,7 @@ sa_preempt(struct lwp *l)
 	struct proc *p = l->l_proc;
 	struct sadata *sa = p->p_sa;
 
-	/* 
+	/*
 	 * Defer saving the lwp's state because on some ports
 	 * preemption can occur between generating an unblocked upcall
 	 * and processing the upcall queue.
@@ -745,7 +745,7 @@ sa_upcall(struct lwp *l, int type, struct lwp *event, struct lwp *interrupted,
 	if (sast == NULL) {
 		return (ENOMEM);
 	}
-	DPRINTFN(9,("sa_upcall(%d.%d) using stack %p\n", 
+	DPRINTFN(9,("sa_upcall(%d.%d) using stack %p\n",
 	    l->l_proc->p_pid, l->l_lid, sast->sast_stack.ss_sp));
 
 	SA_LWP_STATE_LOCK(l, f);
@@ -817,7 +817,7 @@ sa_upcall_getstate(union sau_state *ss, struct lwp *l)
 }
 
 
-/* 
+/*
  * Detect double pagefaults and pagefaults on upcalls.
  * - double pagefaults are detected by comparing the previous faultaddr
  *   against the current faultaddr
@@ -961,11 +961,11 @@ sa_switch(struct lwp *l, int type)
 			return;
 		}
 
-		/* 
+		/*
 		 * Perform the double/upcall pagefault check.
 		 * We do this only here since we need l's ucontext to
 		 * get l's userspace stack. sa_upcall0 above has saved
-		 * it for us. 
+		 * it for us.
 		 * The L_SA_PAGEFAULT flag is set in the MD
 		 * pagefault code to indicate a pagefault.  The MD
 		 * pagefault code also saves the faultaddr for us.
@@ -1183,7 +1183,7 @@ sa_unblock_userret(struct lwp *l)
 	p = l->l_proc;
 	sa = p->p_sa;
 	vp = l->l_savp;
-	
+
 	if (p->p_flag & P_WEXIT)
 		return;
 
@@ -1227,7 +1227,7 @@ sa_unblock_userret(struct lwp *l)
 		KDASSERT(sast != NULL);
 		DPRINTFN(9,("sa_unblock_userret(%d.%d) using stack %p\n",
 		    l->l_proc->p_pid, l->l_lid, sast->sast_stack.ss_sp));
-		
+
 		/*
 		 * Defer saving the event lwp's state because a
 		 * PREEMPT upcall could be on the queue already.
@@ -1273,7 +1273,7 @@ sa_upcall_userret(struct lwp *l)
 	p = l->l_proc;
 	sa = p->p_sa;
 	vp = l->l_savp;
-	
+
 	SCHED_ASSERT_UNLOCKED();
 
 	KERNEL_PROC_LOCK(l);

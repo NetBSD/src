@@ -1,4 +1,4 @@
-/*	$NetBSD: iavc.c,v 1.1 2003/09/25 15:53:26 pooka Exp $	*/
+/*	$NetBSD: iavc.c,v 1.1.12.1 2005/03/19 08:34:02 yamt Exp $	*/
 
 /*
  * Copyright (c) 2001-2003 Cubical Solutions Ltd. All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iavc.c,v 1.1 2003/09/25 15:53:26 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iavc.c,v 1.1.12.1 2005/03/19 08:34:02 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -334,7 +334,7 @@ int iavc_load(capi_softc_t *capi_sc, int len, u_int8_t *cp)
 
     aprint_debug("%s: start loading %d bytes firmware\n",
       sc->sc_dev.dv_xname, len);
-    
+
     while (len && b1io_save_put_byte(sc, *cp++) == 0)
 	len--;
 
@@ -345,20 +345,20 @@ int iavc_load(capi_softc_t *capi_sc, int len, u_int8_t *cp)
     }
 
     aprint_debug("%s: firmware loaded, wait for ACK\n", sc->sc_dev.dv_xname);
-    
+
     if(sc->sc_capi.card_type == CARD_TYPEC_AVM_B1_ISA)
 	    iavc_put_byte(sc, SEND_POLL);
     else
-	    iavc_put_byte(sc, SEND_POLLACK);    	
-    
+	    iavc_put_byte(sc, SEND_POLLACK);
+
     for (len = 0; len < 1000 && !iavc_rx_full(sc); len++)
 	DELAY(100);
-    
+
     if (!iavc_rx_full(sc)) {
 	aprint_error("%s: loading failed, no ack\n", sc->sc_dev.dv_xname);
 	return (EIO);
     }
-    
+
     val = iavc_get_byte(sc);
 
     if ((sc->sc_dma && val != RECEIVE_POLLDWORD) ||
@@ -368,7 +368,7 @@ int iavc_load(capi_softc_t *capi_sc, int len, u_int8_t *cp)
 	return (EIO);
     }
 
-    aprint_debug("%s: got ACK = 0x%02x\n", sc->sc_dev.dv_xname, val);    
+    aprint_debug("%s: got ACK = 0x%02x\n", sc->sc_dev.dv_xname, val);
 
     /* Start the DMA engine */
     if (sc->sc_dma) {
@@ -402,7 +402,7 @@ int iavc_load(capi_softc_t *capi_sc, int len, u_int8_t *cp)
     if(sc->sc_capi.card_type == CARD_TYPEC_AVM_B1_ISA)
 	b1isa_setup_irq(sc);
 #endif
-    
+
     iavc_send_init(sc);
 
     return 0;
@@ -436,7 +436,7 @@ int iavc_register(capi_softc_t *capi_sc, int applid, int nchan)
     p = amcc_put_word(p, 1024 + (nchan + 1));
 #else
     p = amcc_put_word(p, 1024 * (nchan + 1));
-#endif    
+#endif
     p = amcc_put_word(p, nchan);
     p = amcc_put_word(p, 8);
     p = amcc_put_word(p, 2048);
@@ -501,7 +501,7 @@ int iavc_send(capi_softc_t *capi_sc, struct mbuf *m)
 
 	iavc_start_tx(sc);
     }
-    
+
     return 0;
 }
 
@@ -654,7 +654,7 @@ static int iavc_receive_start(iavc_softc_t *sc, u_int8_t *dmabuf)
     p = amcc_put_byte(mtod(m, u_int8_t*), 0);
     p = amcc_put_byte(p, 0);
     p = amcc_put_byte(p, SEND_POLLACK);
-    
+
     IF_PREPEND(&sc->sc_txq, m);
 
     NDBGL4(L4_IAVCDBG, "%s: blocked = %d, state = %d",
@@ -662,7 +662,7 @@ static int iavc_receive_start(iavc_softc_t *sc, u_int8_t *dmabuf)
 
     sc->sc_blocked = 0;
     iavc_start_tx(sc);
-    
+
     /* If this was our first START, register our readiness */
     if (sc->sc_state != IAVC_UP) {
 	sc->sc_state = IAVC_UP;
@@ -718,7 +718,7 @@ static int iavc_receive_task_ready(iavc_softc_t *sc, u_int8_t *dmabuf)
     u_int32_t TaskId, Length;
     u_int8_t *p;
     printf("%s: receive_task_ready\n", sc->sc_dev.dv_xname);
-    
+
     if (sc->sc_dma) {
 	p = amcc_get_word(dmabuf, &TaskId);
 	p = amcc_get_word(p, &Length);
@@ -737,7 +737,7 @@ static int iavc_receive_debugmsg(iavc_softc_t *sc, u_int8_t *dmabuf)
     u_int32_t Length;
     u_int8_t *p;
     printf("%s: receive_debugmsg\n", sc->sc_dev.dv_xname);
-    
+
     if (sc->sc_dma) {
 	p = amcc_get_word(dmabuf, &Length);
     } else {
@@ -901,7 +901,7 @@ static void iavc_handle_rx(iavc_softc_t *sc)
     }
 
     NDBGL4(L4_IAVCDBG, "iavc%d: command = 0x%02x", sc->sc_unit, cmd);
-    
+
     switch (cmd) {
     case RECEIVE_DATA_B3_IND:
 	iavc_receive(sc, dmabuf, 1);
@@ -948,7 +948,7 @@ static void iavc_start_tx(iavc_softc_t *sc)
 {
     struct mbuf *m;
     u_int32_t txlen;
-    
+
     /* If device has put us on hold, punt. */
 
     if (sc->sc_blocked) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vlan.c,v 1.42 2004/12/04 18:31:43 peter Exp $	*/
+/*	$NetBSD: if_vlan.c,v 1.42.6.1 2005/03/19 08:36:32 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -50,7 +50,7 @@
  * no representations about the suitability of this software for any
  * purpose.  It is provided "as is" without express or implied
  * warranty.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY M.I.T. ``AS IS''.  M.I.T. DISCLAIMS
  * ALL EXPRESS OR IMPLIED WARRANTIES WITH REGARD TO THIS SOFTWARE,
  * INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
@@ -85,7 +85,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vlan.c,v 1.42 2004/12/04 18:31:43 peter Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vlan.c,v 1.42.6.1 2005/03/19 08:36:32 yamt Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -779,7 +779,7 @@ vlan_start(struct ifnet *ifp)
 				 * Ethernet header with 802.1Q encapsulation.
 				 */
 				memmove(mtod(m, caddr_t),
-				    mtod(m, caddr_t) + ifv->ifv_encaplen, 
+				    mtod(m, caddr_t) + ifv->ifv_encaplen,
 				    sizeof(struct ether_header));
 				evl = mtod(m, struct ether_vlan_header *);
 				evl->evl_proto = evl->evl_encap_proto;
@@ -835,7 +835,7 @@ vlan_start(struct ifnet *ifp)
 
 /*
  * Given an Ethernet frame, find a valid vlan interface corresponding to the
- * given source interface and tag, then run the real packet through the 
+ * given source interface and tag, then run the real packet through the
  * parent's input routine.
  */
 void
@@ -848,12 +848,8 @@ vlan_input(struct ifnet *ifp, struct mbuf *m)
 	mtag = m_tag_find(m, PACKET_TAG_VLAN, NULL);
 	if (mtag != NULL) {
 		/* m contains a normal ethernet frame, the tag is in mtag */
-		tag = *(u_int *)(mtag + 1);
+		tag = EVL_VLANOFTAG(*(u_int *)(mtag + 1));
 		m_tag_delete(m, mtag);
-		for (ifv = LIST_FIRST(&ifv_list); ifv != NULL;
-		    ifv = LIST_NEXT(ifv, ifv_list))
-			if (ifp == ifv->ifv_p && tag == ifv->ifv_tag)
-				break;
 	} else {
 		switch (ifp->if_type) {
 		case IFT_ETHER:
@@ -887,23 +883,12 @@ vlan_input(struct ifnet *ifp, struct mbuf *m)
 			panic("vlan_input: impossible");
 #endif
 		}
-
-		for (ifv = LIST_FIRST(&ifv_list); ifv != NULL;
-		     ifv = LIST_NEXT(ifv, ifv_list))
-			if (ifp == ifv->ifv_p && tag == ifv->ifv_tag)
-				break;
-
-
-		/*
-		 * Now, remove the encapsulation header.  The original
-		 * header has already been fixed up above.
-		 */
-		if (ifv) {
-			memmove(mtod(m, caddr_t) + ifv->ifv_encaplen,
-			    mtod(m, caddr_t), sizeof(struct ether_header));
-			m_adj(m, ifv->ifv_encaplen);
-		}
 	}
+
+	for (ifv = LIST_FIRST(&ifv_list); ifv != NULL;
+	    ifv = LIST_NEXT(ifv, ifv_list))
+		if (ifp == ifv->ifv_p && tag == ifv->ifv_tag)
+			break;
 
 	if (ifv == NULL ||
 	    (ifv->ifv_if.if_flags & (IFF_UP|IFF_RUNNING)) !=
@@ -912,6 +897,17 @@ vlan_input(struct ifnet *ifp, struct mbuf *m)
 		ifp->if_noproto++;
 		return;
 	}
+
+	/*
+	 * Now, remove the encapsulation header.  The original
+	 * header has already been fixed up above.
+	 */
+	if (mtag == NULL) {
+		memmove(mtod(m, caddr_t) + ifv->ifv_encaplen,
+		    mtod(m, caddr_t), sizeof(struct ether_header));
+		m_adj(m, ifv->ifv_encaplen);
+	}
+
 	m->m_pkthdr.rcvif = &ifv->ifv_if;
 	ifv->ifv_if.if_ipackets++;
 

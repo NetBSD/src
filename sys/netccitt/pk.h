@@ -1,4 +1,4 @@
-/*	$NetBSD: pk.h,v 1.10 2003/08/07 16:33:03 agc Exp $	*/
+/*	$NetBSD: pk.h,v 1.10.10.1 2005/03/19 08:36:38 yamt Exp $	*/
 
 /*
  * Copyright (c) 1990, 1992, 1993
@@ -85,22 +85,22 @@
 /* Packet type identifier field definitions. */
 
 #define X25_CALL                         11
-#define X25_CALL_ACCEPTED                15   
+#define X25_CALL_ACCEPTED                15
 #define X25_CLEAR                        19
-#define X25_CLEAR_CONFIRM                23  
-#define X25_DATA                          0   
-#define X25_INTERRUPT                    35   
-#define X25_INTERRUPT_CONFIRM            39   
+#define X25_CLEAR_CONFIRM                23
+#define X25_DATA                          0
+#define X25_INTERRUPT                    35
+#define X25_INTERRUPT_CONFIRM            39
 
-#define X25_RR                            1   
-#define X25_RNR                           5   
+#define X25_RR                            1
+#define X25_RNR                           5
 #define X25_REJECT			  9
-#define X25_RESET                        27 
-#define X25_RESET_CONFIRM                31   
+#define X25_RESET                        27
+#define X25_RESET_CONFIRM                31
 #define X25_DIAGNOSTIC			241
 
-#define X25_RESTART                     251     
-#define X25_RESTART_CONFIRM		255 
+#define X25_RESTART                     251
+#define X25_RESTART_CONFIRM		255
 
 /* Restart cause field definitions. */
 
@@ -211,7 +211,7 @@ struct data_packet {
 /*
  *  The following definitions are used in a switch statement after
  *  determining the packet type.  These values are returned by the
- *  pk_decode procedure. 
+ *  pk_decode procedure.
  */
 
 #define PK_CALL			(0 * MAXSTATES)

@@ -1,4 +1,4 @@
-/*	$NetBSD: i82365_isavar.h,v 1.3.38.1 2005/02/12 18:17:45 yamt Exp $	*/
+/*	$NetBSD: i82365_isavar.h,v 1.3.38.2 2005/03/19 08:34:33 yamt Exp $	*/
 
 /*
  * Copyright (c) 1998 Bill Sommerfeld.  All rights reserved.
@@ -37,7 +37,7 @@ struct pcic_isa_softc {
 
 extern int pcic_isa_intr_alloc_mask;
 
-/* 
+/*
  * Establish/disestablish interrupts for PCMCIA functions.
  */
 

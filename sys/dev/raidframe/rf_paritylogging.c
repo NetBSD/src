@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_paritylogging.c,v 1.22 2004/02/29 04:03:50 oster Exp $	*/
+/*	$NetBSD: rf_paritylogging.c,v 1.22.10.1 2005/03/19 08:35:41 yamt Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_paritylogging.c,v 1.22 2004/02/29 04:03:50 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_paritylogging.c,v 1.22.10.1 2005/03/19 08:35:41 yamt Exp $");
 
 #include "rf_archs.h"
 
@@ -70,7 +70,7 @@ static void rf_ShutdownParityLoggingRegionBufferPool(RF_ThreadArg_t arg);
 static void rf_ShutdownParityLoggingParityBufferPool(RF_ThreadArg_t arg);
 static void rf_ShutdownParityLoggingDiskQueue(RF_ThreadArg_t arg);
 
-int 
+int
 rf_ConfigureParityLogging(
     RF_ShutdownList_t ** listp,
     RF_Raid_t * raidPtr,
@@ -97,8 +97,8 @@ rf_ConfigureParityLogging(
 	raidPtr->numSectorsPerLog = RF_DEFAULT_NUM_SECTORS_PER_LOG;
 
 	/* create a parity logging configuration structure */
-	RF_MallocAndAdd(info, sizeof(RF_ParityLoggingConfigInfo_t), 
-			(RF_ParityLoggingConfigInfo_t *), 
+	RF_MallocAndAdd(info, sizeof(RF_ParityLoggingConfigInfo_t),
+			(RF_ParityLoggingConfigInfo_t *),
 			raidPtr->cleanupList);
 	if (info == NULL)
 		return (ENOMEM);
@@ -106,8 +106,8 @@ rf_ConfigureParityLogging(
 
 	/* the stripe identifier must identify the disks in each stripe, IN
 	 * THE ORDER THAT THEY APPEAR IN THE STRIPE. */
-	info->stripeIdentifier = rf_make_2d_array((raidPtr->numCol), 
-						  (raidPtr->numCol), 
+	info->stripeIdentifier = rf_make_2d_array((raidPtr->numCol),
+						  (raidPtr->numCol),
 						  raidPtr->cleanupList);
 	if (info->stripeIdentifier == NULL)
 		return (ENOMEM);
@@ -115,7 +115,7 @@ rf_ConfigureParityLogging(
 	startdisk = 0;
 	for (i = 0; i < (raidPtr->numCol); i++) {
 		for (j = 0; j < (raidPtr->numCol); j++) {
-			info->stripeIdentifier[i][j] = (startdisk + j) % 
+			info->stripeIdentifier[i][j] = (startdisk + j) %
 				(raidPtr->numCol - 1);
 		}
 		if ((--startdisk) < 0)
@@ -126,37 +126,37 @@ rf_ConfigureParityLogging(
 	layoutPtr->numStripe = layoutPtr->stripeUnitsPerDisk;
 	layoutPtr->numParityCol = 1;
 	layoutPtr->numParityLogCol = 1;
-	layoutPtr->numDataCol = raidPtr->numCol - layoutPtr->numParityCol - 
+	layoutPtr->numDataCol = raidPtr->numCol - layoutPtr->numParityCol -
 		layoutPtr->numParityLogCol;
-	layoutPtr->dataSectorsPerStripe = layoutPtr->numDataCol * 
+	layoutPtr->dataSectorsPerStripe = layoutPtr->numDataCol *
 		layoutPtr->sectorsPerStripeUnit;
 	layoutPtr->dataStripeUnitsPerDisk = layoutPtr->stripeUnitsPerDisk;
-	raidPtr->sectorsPerDisk = layoutPtr->stripeUnitsPerDisk * 
+	raidPtr->sectorsPerDisk = layoutPtr->stripeUnitsPerDisk *
 		layoutPtr->sectorsPerStripeUnit;
 
-	raidPtr->totalSectors = layoutPtr->stripeUnitsPerDisk * 
+	raidPtr->totalSectors = layoutPtr->stripeUnitsPerDisk *
 		layoutPtr->numDataCol * layoutPtr->sectorsPerStripeUnit;
 
 	/* configure parity log parameters
-	 * 
-	 * parameter               comment/constraints 
-	 * ------------------------------------------- 
-	 * numParityRegions*       all regions (except possibly last) 
-	 *                         of equal size 
-	 * totalInCoreLogCapacity* amount of memory in bytes available 
-	 *                         for in-core logs (default 1 MB) 
-	 * numSectorsPerLog#       capacity of an in-core log in sectors 
+	 *
+	 * parameter               comment/constraints
+	 * -------------------------------------------
+	 * numParityRegions*       all regions (except possibly last)
+	 *                         of equal size
+	 * totalInCoreLogCapacity* amount of memory in bytes available
+	 *                         for in-core logs (default 1 MB)
+	 * numSectorsPerLog#       capacity of an in-core log in sectors
 	 *                         (1 * disk track)
 	 * numParityLogs           total number of in-core logs,
-	 *                         should be at least numParityRegions 
-	 * regionLogCapacity       size of a region log (except possibly 
-	 *                         last one) in sectors 
+	 *                         should be at least numParityRegions
+	 * regionLogCapacity       size of a region log (except possibly
+	 *                         last one) in sectors
 	 * totalLogCapacity        total amount of log space in sectors
-	 * 
-	 * where '*' denotes a user settable parameter. 
-	 * Note that logs are fixed to be the size of a disk track, 
+	 *
+	 * where '*' denotes a user settable parameter.
+	 * Note that logs are fixed to be the size of a disk track,
 	 * value #defined in rf_paritylog.h
-	 * 
+	 *
 	 */
 
 	totalLogCapacity = layoutPtr->stripeUnitsPerDisk * layoutPtr->sectorsPerStripeUnit * layoutPtr->numParityLogCol;
@@ -170,29 +170,29 @@ rf_ConfigureParityLogging(
 	fragmentation = raidPtr->regionLogCapacity % raidPtr->numSectorsPerLog;
 	if (fragmentation > 0)
 		for (i = 1; i < (raidPtr->numSectorsPerLog / 2); i++) {
-			if (((totalLogCapacity / (rf_numParityRegions + i)) % 
+			if (((totalLogCapacity / (rf_numParityRegions + i)) %
 			     raidPtr->numSectorsPerLog) < fragmentation) {
 				rf_numParityRegions++;
 				raidPtr->regionLogCapacity = totalLogCapacity /
 					rf_numParityRegions;
-				fragmentation = raidPtr->regionLogCapacity % 
+				fragmentation = raidPtr->regionLogCapacity %
 					raidPtr->numSectorsPerLog;
 			}
-			if (((totalLogCapacity / (rf_numParityRegions - i)) % 
+			if (((totalLogCapacity / (rf_numParityRegions - i)) %
 			     raidPtr->numSectorsPerLog) < fragmentation) {
 				rf_numParityRegions--;
 				raidPtr->regionLogCapacity = totalLogCapacity /
 					rf_numParityRegions;
-				fragmentation = raidPtr->regionLogCapacity % 
+				fragmentation = raidPtr->regionLogCapacity %
 					raidPtr->numSectorsPerLog;
 			}
 		}
 	/* ensure integral number of regions per log */
-	raidPtr->regionLogCapacity = (raidPtr->regionLogCapacity / 
-				      raidPtr->numSectorsPerLog) * 
+	raidPtr->regionLogCapacity = (raidPtr->regionLogCapacity /
+				      raidPtr->numSectorsPerLog) *
 		raidPtr->numSectorsPerLog;
 
-	raidPtr->numParityLogs = rf_totalInCoreLogCapacity / 
+	raidPtr->numParityLogs = rf_totalInCoreLogCapacity /
 		(raidPtr->bytesPerSector * raidPtr->numSectorsPerLog);
 	/* to avoid deadlock, must ensure that enough logs exist for each
 	 * region to have one simultaneously */
@@ -202,20 +202,20 @@ rf_ConfigureParityLogging(
 	/* create region information structs */
 	printf("Allocating %d bytes for in-core parity region info\n",
 	       (int) (rf_numParityRegions * sizeof(RF_RegionInfo_t)));
-	RF_Malloc(raidPtr->regionInfo, 
-		  (rf_numParityRegions * sizeof(RF_RegionInfo_t)), 
+	RF_Malloc(raidPtr->regionInfo,
+		  (rf_numParityRegions * sizeof(RF_RegionInfo_t)),
 		  (RF_RegionInfo_t *));
 	if (raidPtr->regionInfo == NULL)
 		return (ENOMEM);
 
 	/* last region may not be full capacity */
 	lastRegionCapacity = raidPtr->regionLogCapacity;
-	while ((rf_numParityRegions - 1) * raidPtr->regionLogCapacity + 
+	while ((rf_numParityRegions - 1) * raidPtr->regionLogCapacity +
 	       lastRegionCapacity > totalLogCapacity)
-		lastRegionCapacity = lastRegionCapacity - 
+		lastRegionCapacity = lastRegionCapacity -
 			raidPtr->numSectorsPerLog;
 
-	raidPtr->regionParityRange = raidPtr->sectorsPerDisk / 
+	raidPtr->regionParityRange = raidPtr->sectorsPerDisk /
 		rf_numParityRegions;
 	maxRegionParityRange = raidPtr->regionParityRange;
 
@@ -225,11 +225,11 @@ rf_ConfigureParityLogging(
 
 	/* build pool of unused parity logs */
 	printf("Allocating %d bytes for %d parity logs\n",
-	       raidPtr->numParityLogs * raidPtr->numSectorsPerLog * 
+	       raidPtr->numParityLogs * raidPtr->numSectorsPerLog *
 	       raidPtr->bytesPerSector,
 	       raidPtr->numParityLogs);
-	RF_Malloc(raidPtr->parityLogBufferHeap, raidPtr->numParityLogs * 
-		  raidPtr->numSectorsPerLog * raidPtr->bytesPerSector, 
+	RF_Malloc(raidPtr->parityLogBufferHeap, raidPtr->numParityLogs *
+		  raidPtr->numSectorsPerLog * raidPtr->bytesPerSector,
 		  (caddr_t));
 	if (raidPtr->parityLogBufferHeap == NULL)
 		return (ENOMEM);
@@ -237,7 +237,7 @@ rf_ConfigureParityLogging(
 	rc = rf_mutex_init(&raidPtr->parityLogPool.mutex);
 	if (rc) {
 		rf_print_unable_to_init_mutex(__FILE__, __LINE__, rc);
-		RF_Free(raidPtr->parityLogBufferHeap, raidPtr->numParityLogs * 
+		RF_Free(raidPtr->parityLogBufferHeap, raidPtr->numParityLogs *
 			raidPtr->numSectorsPerLog * raidPtr->bytesPerSector);
 		return (ENOMEM);
 	}
@@ -246,22 +246,22 @@ rf_ConfigureParityLogging(
 			RF_Malloc(raidPtr->parityLogPool.parityLogs,
 				  sizeof(RF_ParityLog_t), (RF_ParityLog_t *));
 			if (raidPtr->parityLogPool.parityLogs == NULL) {
-				RF_Free(raidPtr->parityLogBufferHeap, 
-					raidPtr->numParityLogs * 
-					raidPtr->numSectorsPerLog * 
+				RF_Free(raidPtr->parityLogBufferHeap,
+					raidPtr->numParityLogs *
+					raidPtr->numSectorsPerLog *
 					raidPtr->bytesPerSector);
 				return (ENOMEM);
 			}
 			l = raidPtr->parityLogPool.parityLogs;
 		} else {
-			RF_Malloc(l->next, sizeof(RF_ParityLog_t), 
+			RF_Malloc(l->next, sizeof(RF_ParityLog_t),
 				  (RF_ParityLog_t *));
 			if (l->next == NULL) {
-				RF_Free(raidPtr->parityLogBufferHeap, 
-					raidPtr->numParityLogs * 
-					raidPtr->numSectorsPerLog * 
+				RF_Free(raidPtr->parityLogBufferHeap,
+					raidPtr->numParityLogs *
+					raidPtr->numSectorsPerLog *
 					raidPtr->bytesPerSector);
-				for (l = raidPtr->parityLogPool.parityLogs; 
+				for (l = raidPtr->parityLogPool.parityLogs;
 				     l;
 				     l = next) {
 					next = l->next;
@@ -274,23 +274,23 @@ rf_ConfigureParityLogging(
 			l = l->next;
 		}
 		l->bufPtr = lHeapPtr;
-		lHeapPtr += raidPtr->numSectorsPerLog * 
+		lHeapPtr += raidPtr->numSectorsPerLog *
 			raidPtr->bytesPerSector;
-		RF_Malloc(l->records, (raidPtr->numSectorsPerLog * 
-				       sizeof(RF_ParityLogRecord_t)), 
+		RF_Malloc(l->records, (raidPtr->numSectorsPerLog *
+				       sizeof(RF_ParityLogRecord_t)),
 			  (RF_ParityLogRecord_t *));
 		if (l->records == NULL) {
-			RF_Free(raidPtr->parityLogBufferHeap, 
-				raidPtr->numParityLogs * 
-				raidPtr->numSectorsPerLog * 
+			RF_Free(raidPtr->parityLogBufferHeap,
+				raidPtr->numParityLogs *
+				raidPtr->numSectorsPerLog *
 				raidPtr->bytesPerSector);
-			for (l = raidPtr->parityLogPool.parityLogs; 
-			     l; 
+			for (l = raidPtr->parityLogPool.parityLogs;
+			     l;
 			     l = next) {
 				next = l->next;
 				if (l->records)
-					RF_Free(l->records, 
-						(raidPtr->numSectorsPerLog * 
+					RF_Free(l->records,
+						(raidPtr->numSectorsPerLog *
 						 sizeof(RF_ParityLogRecord_t)));
 				RF_Free(l, sizeof(RF_ParityLog_t));
 			}
@@ -305,49 +305,49 @@ rf_ConfigureParityLogging(
 		return (ENOMEM);
 	}
 	raidPtr->regionBufferPool.cond = 0;
-	raidPtr->regionBufferPool.bufferSize = raidPtr->regionLogCapacity * 
+	raidPtr->regionBufferPool.bufferSize = raidPtr->regionLogCapacity *
 		raidPtr->bytesPerSector;
-	printf("regionBufferPool.bufferSize %d\n", 
+	printf("regionBufferPool.bufferSize %d\n",
 	       raidPtr->regionBufferPool.bufferSize);
 
 	/* for now, only one region at a time may be reintegrated */
-	raidPtr->regionBufferPool.totalBuffers = 1;	
+	raidPtr->regionBufferPool.totalBuffers = 1;
 
-	raidPtr->regionBufferPool.availableBuffers = 
+	raidPtr->regionBufferPool.availableBuffers =
 		raidPtr->regionBufferPool.totalBuffers;
 	raidPtr->regionBufferPool.availBuffersIndex = 0;
 	raidPtr->regionBufferPool.emptyBuffersIndex = 0;
 	printf("Allocating %d bytes for regionBufferPool\n",
-	       (int) (raidPtr->regionBufferPool.totalBuffers * 
+	       (int) (raidPtr->regionBufferPool.totalBuffers *
 		      sizeof(caddr_t)));
-	RF_Malloc(raidPtr->regionBufferPool.buffers, 
-		  raidPtr->regionBufferPool.totalBuffers * sizeof(caddr_t), 
+	RF_Malloc(raidPtr->regionBufferPool.buffers,
+		  raidPtr->regionBufferPool.totalBuffers * sizeof(caddr_t),
 		  (caddr_t *));
 	if (raidPtr->regionBufferPool.buffers == NULL) {
 		return (ENOMEM);
 	}
 	for (i = 0; i < raidPtr->regionBufferPool.totalBuffers; i++) {
 		printf("Allocating %d bytes for regionBufferPool#%d\n",
-		       (int) (raidPtr->regionBufferPool.bufferSize * 
+		       (int) (raidPtr->regionBufferPool.bufferSize *
 			      sizeof(char)), i);
-		RF_Malloc(raidPtr->regionBufferPool.buffers[i], 
+		RF_Malloc(raidPtr->regionBufferPool.buffers[i],
 			  raidPtr->regionBufferPool.bufferSize * sizeof(char),
 			  (caddr_t));
 		if (raidPtr->regionBufferPool.buffers[i] == NULL) {
 			for (j = 0; j < i; j++) {
-				RF_Free(raidPtr->regionBufferPool.buffers[i], 
+				RF_Free(raidPtr->regionBufferPool.buffers[i],
 					raidPtr->regionBufferPool.bufferSize *
 					sizeof(char));
 			}
-			RF_Free(raidPtr->regionBufferPool.buffers, 
-				raidPtr->regionBufferPool.totalBuffers * 
+			RF_Free(raidPtr->regionBufferPool.buffers,
+				raidPtr->regionBufferPool.totalBuffers *
 				sizeof(caddr_t));
 			return (ENOMEM);
 		}
 		printf("raidPtr->regionBufferPool.buffers[%d] = %lx\n", i,
 		    (long) raidPtr->regionBufferPool.buffers[i]);
 	}
-	rf_ShutdownCreate(listp, 
+	rf_ShutdownCreate(listp,
 			  rf_ShutdownParityLoggingRegionBufferPool,
 			  raidPtr);
 	/* build pool of parity buffers */
@@ -358,51 +358,51 @@ rf_ConfigureParityLogging(
 		return (rc);
 	}
 	raidPtr->parityBufferPool.cond = 0;
-	raidPtr->parityBufferPool.bufferSize = parityBufferCapacity * 
+	raidPtr->parityBufferPool.bufferSize = parityBufferCapacity *
 		raidPtr->bytesPerSector;
-	printf("parityBufferPool.bufferSize %d\n", 
+	printf("parityBufferPool.bufferSize %d\n",
 	       raidPtr->parityBufferPool.bufferSize);
 
 	/* for now, only one region at a time may be reintegrated */
-	raidPtr->parityBufferPool.totalBuffers = 1;	
+	raidPtr->parityBufferPool.totalBuffers = 1;
 
-	raidPtr->parityBufferPool.availableBuffers = 
+	raidPtr->parityBufferPool.availableBuffers =
 		raidPtr->parityBufferPool.totalBuffers;
 	raidPtr->parityBufferPool.availBuffersIndex = 0;
 	raidPtr->parityBufferPool.emptyBuffersIndex = 0;
 	printf("Allocating %d bytes for parityBufferPool of %d units\n",
-	       (int) (raidPtr->parityBufferPool.totalBuffers * 
+	       (int) (raidPtr->parityBufferPool.totalBuffers *
 		      sizeof(caddr_t)),
 	       raidPtr->parityBufferPool.totalBuffers );
-	RF_Malloc(raidPtr->parityBufferPool.buffers, 
-		  raidPtr->parityBufferPool.totalBuffers * sizeof(caddr_t), 
+	RF_Malloc(raidPtr->parityBufferPool.buffers,
+		  raidPtr->parityBufferPool.totalBuffers * sizeof(caddr_t),
 		  (caddr_t *));
 	if (raidPtr->parityBufferPool.buffers == NULL) {
 		return (ENOMEM);
 	}
 	for (i = 0; i < raidPtr->parityBufferPool.totalBuffers; i++) {
 		printf("Allocating %d bytes for parityBufferPool#%d\n",
-		       (int) (raidPtr->parityBufferPool.bufferSize * 
+		       (int) (raidPtr->parityBufferPool.bufferSize *
 			      sizeof(char)),i);
-		RF_Malloc(raidPtr->parityBufferPool.buffers[i], 
+		RF_Malloc(raidPtr->parityBufferPool.buffers[i],
 			  raidPtr->parityBufferPool.bufferSize * sizeof(char),
 			  (caddr_t));
 		if (raidPtr->parityBufferPool.buffers == NULL) {
 			for (j = 0; j < i; j++) {
-				RF_Free(raidPtr->parityBufferPool.buffers[i], 
-					raidPtr->regionBufferPool.bufferSize * 
+				RF_Free(raidPtr->parityBufferPool.buffers[i],
+					raidPtr->regionBufferPool.bufferSize *
 					sizeof(char));
 			}
-			RF_Free(raidPtr->parityBufferPool.buffers, 
-				raidPtr->regionBufferPool.totalBuffers * 
+			RF_Free(raidPtr->parityBufferPool.buffers,
+				raidPtr->regionBufferPool.totalBuffers *
 				sizeof(caddr_t));
 			return (ENOMEM);
 		}
 		printf("parityBufferPool.buffers[%d] = %lx\n", i,
 		    (long) raidPtr->parityBufferPool.buffers[i]);
 	}
-	rf_ShutdownCreate(listp, 
-			  rf_ShutdownParityLoggingParityBufferPool, 
+	rf_ShutdownCreate(listp,
+			  rf_ShutdownParityLoggingParityBufferPool,
 			  raidPtr);
 	/* initialize parityLogDiskQueue */
 	rf_mutex_init(&raidPtr->parityLogDiskQueue.mutex);
@@ -420,8 +420,8 @@ rf_ConfigureParityLogging(
 	raidPtr->parityLogDiskQueue.freeDataList = NULL;
 	raidPtr->parityLogDiskQueue.freeCommonList = NULL;
 
-	rf_ShutdownCreate(listp, 
-			  rf_ShutdownParityLoggingDiskQueue, 
+	rf_ShutdownCreate(listp,
+			  rf_ShutdownParityLoggingDiskQueue,
 			  raidPtr);
 	for (i = 0; i < rf_numParityRegions; i++) {
 		rc = rf_mutex_init(&raidPtr->regionInfo[i].mutex);
@@ -429,8 +429,8 @@ rf_ConfigureParityLogging(
 			rf_print_unable_to_init_mutex(__FILE__, __LINE__, rc);
 			for (j = 0; j < i; j++)
 				FreeRegionInfo(raidPtr, j);
-			RF_Free(raidPtr->regionInfo, 
-				(rf_numParityRegions * 
+			RF_Free(raidPtr->regionInfo,
+				(rf_numParityRegions *
 				 sizeof(RF_RegionInfo_t)));
 			return (ENOMEM);
 		}
@@ -439,51 +439,51 @@ rf_ConfigureParityLogging(
 			rf_print_unable_to_init_mutex(__FILE__, __LINE__, rc);
 			for (j = 0; j < i; j++)
 				FreeRegionInfo(raidPtr, j);
-			RF_Free(raidPtr->regionInfo, 
-				(rf_numParityRegions * 
+			RF_Free(raidPtr->regionInfo,
+				(rf_numParityRegions *
 				 sizeof(RF_RegionInfo_t)));
 			return (ENOMEM);
 		}
 		raidPtr->regionInfo[i].reintInProgress = RF_FALSE;
-		raidPtr->regionInfo[i].regionStartAddr = 
+		raidPtr->regionInfo[i].regionStartAddr =
 			raidPtr->regionLogCapacity * i;
-		raidPtr->regionInfo[i].parityStartAddr = 
+		raidPtr->regionInfo[i].parityStartAddr =
 			raidPtr->regionParityRange * i;
 		if (i < rf_numParityRegions - 1) {
-			raidPtr->regionInfo[i].capacity = 
+			raidPtr->regionInfo[i].capacity =
 				raidPtr->regionLogCapacity;
-			raidPtr->regionInfo[i].numSectorsParity = 
+			raidPtr->regionInfo[i].numSectorsParity =
 				raidPtr->regionParityRange;
 		} else {
-			raidPtr->regionInfo[i].capacity = 
+			raidPtr->regionInfo[i].capacity =
 				lastRegionCapacity;
-			raidPtr->regionInfo[i].numSectorsParity = 
-				raidPtr->sectorsPerDisk - 
+			raidPtr->regionInfo[i].numSectorsParity =
+				raidPtr->sectorsPerDisk -
 				raidPtr->regionParityRange * i;
-			if (raidPtr->regionInfo[i].numSectorsParity > 
+			if (raidPtr->regionInfo[i].numSectorsParity >
 			    maxRegionParityRange)
-				maxRegionParityRange = 
+				maxRegionParityRange =
 					raidPtr->regionInfo[i].numSectorsParity;
 		}
 		raidPtr->regionInfo[i].diskCount = 0;
-		RF_ASSERT(raidPtr->regionInfo[i].capacity + 
-			  raidPtr->regionInfo[i].regionStartAddr <= 
+		RF_ASSERT(raidPtr->regionInfo[i].capacity +
+			  raidPtr->regionInfo[i].regionStartAddr <=
 			  totalLogCapacity);
-		RF_ASSERT(raidPtr->regionInfo[i].parityStartAddr + 
-			  raidPtr->regionInfo[i].numSectorsParity <= 
+		RF_ASSERT(raidPtr->regionInfo[i].parityStartAddr +
+			  raidPtr->regionInfo[i].numSectorsParity <=
 			  raidPtr->sectorsPerDisk);
 		printf("Allocating %d bytes for region %d\n",
 		       (int) (raidPtr->regionInfo[i].capacity *
 			   sizeof(RF_DiskMap_t)), i);
-		RF_Malloc(raidPtr->regionInfo[i].diskMap, 
+		RF_Malloc(raidPtr->regionInfo[i].diskMap,
 			  (raidPtr->regionInfo[i].capacity *
-			   sizeof(RF_DiskMap_t)), 
+			   sizeof(RF_DiskMap_t)),
 			  (RF_DiskMap_t *));
 		if (raidPtr->regionInfo[i].diskMap == NULL) {
 			for (j = 0; j < i; j++)
 				FreeRegionInfo(raidPtr, j);
-			RF_Free(raidPtr->regionInfo, 
-				(rf_numParityRegions * 
+			RF_Free(raidPtr->regionInfo,
+				(rf_numParityRegions *
 				 sizeof(RF_RegionInfo_t)));
 			return (ENOMEM);
 		}
@@ -491,11 +491,11 @@ rf_ConfigureParityLogging(
 		raidPtr->regionInfo[i].coreLog = NULL;
 	}
 	rf_ShutdownCreate(listp,
-			  rf_ShutdownParityLoggingRegionInfo, 
+			  rf_ShutdownParityLoggingRegionInfo,
 			  raidPtr);
 	RF_ASSERT(raidPtr->parityLogDiskQueue.threadState == 0);
 	raidPtr->parityLogDiskQueue.threadState = RF_PLOG_CREATED;
-	rc = RF_CREATE_THREAD(raidPtr->pLogDiskThreadHandle, 
+	rc = RF_CREATE_THREAD(raidPtr->pLogDiskThreadHandle,
 			      rf_ParityLoggingDiskManager, raidPtr,"rf_log");
 	if (rc) {
 		raidPtr->parityLogDiskQueue.threadState = 0;
@@ -506,7 +506,7 @@ rf_ConfigureParityLogging(
 	/* wait for thread to start */
 	RF_LOCK_MUTEX(raidPtr->parityLogDiskQueue.mutex);
 	while (!(raidPtr->parityLogDiskQueue.threadState & RF_PLOG_RUNNING)) {
-		RF_WAIT_COND(raidPtr->parityLogDiskQueue.cond, 
+		RF_WAIT_COND(raidPtr->parityLogDiskQueue.cond,
 			     raidPtr->parityLogDiskQueue.mutex);
 	}
 	RF_UNLOCK_MUTEX(raidPtr->parityLogDiskQueue.mutex);
@@ -527,17 +527,17 @@ rf_ConfigureParityLogging(
 	return (0);
 }
 
-static void 
+static void
 FreeRegionInfo(
     RF_Raid_t * raidPtr,
     RF_RegionId_t regionID)
 {
 	RF_LOCK_MUTEX(raidPtr->regionInfo[regionID].mutex);
-	RF_Free(raidPtr->regionInfo[regionID].diskMap, 
-		(raidPtr->regionInfo[regionID].capacity * 
+	RF_Free(raidPtr->regionInfo[regionID].diskMap,
+		(raidPtr->regionInfo[regionID].capacity *
 		 sizeof(RF_DiskMap_t)));
 	if (!rf_forceParityLogReint && raidPtr->regionInfo[regionID].coreLog) {
-		rf_ReleaseParityLogs(raidPtr, 
+		rf_ReleaseParityLogs(raidPtr,
 				     raidPtr->regionInfo[regionID].coreLog);
 		raidPtr->regionInfo[regionID].coreLog = NULL;
 	} else {
@@ -548,7 +548,7 @@ FreeRegionInfo(
 }
 
 
-static void 
+static void
 FreeParityLogQueue(
     RF_Raid_t * raidPtr,
     RF_ParityLogQueue_t * queue)
@@ -560,7 +560,7 @@ FreeParityLogQueue(
 	while (l1) {
 		l2 = l1;
 		l1 = l2->next;
-		RF_Free(l2->records, (raidPtr->numSectorsPerLog * 
+		RF_Free(l2->records, (raidPtr->numSectorsPerLog *
 				      sizeof(RF_ParityLogRecord_t)));
 		RF_Free(l2, sizeof(RF_ParityLog_t));
 	}
@@ -568,7 +568,7 @@ FreeParityLogQueue(
 }
 
 
-static void 
+static void
 FreeRegionBufferQueue(RF_RegionBufferQueue_t * queue)
 {
 	int     i;
@@ -584,7 +584,7 @@ FreeRegionBufferQueue(RF_RegionBufferQueue_t * queue)
 	RF_UNLOCK_MUTEX(queue->mutex);
 }
 
-static void 
+static void
 rf_ShutdownParityLoggingRegionInfo(RF_ThreadArg_t arg)
 {
 	RF_Raid_t *raidPtr;
@@ -592,18 +592,18 @@ rf_ShutdownParityLoggingRegionInfo(RF_ThreadArg_t arg)
 
 	raidPtr = (RF_Raid_t *) arg;
 	if (rf_parityLogDebug) {
-		printf("raid%d: ShutdownParityLoggingRegionInfo\n", 
+		printf("raid%d: ShutdownParityLoggingRegionInfo\n",
 		       raidPtr->raidid);
 	}
 	/* free region information structs */
 	for (i = 0; i < rf_numParityRegions; i++)
 		FreeRegionInfo(raidPtr, i);
-	RF_Free(raidPtr->regionInfo, (rf_numParityRegions * 
+	RF_Free(raidPtr->regionInfo, (rf_numParityRegions *
 				      sizeof(raidPtr->regionInfo)));
 	raidPtr->regionInfo = NULL;
 }
 
-static void 
+static void
 rf_ShutdownParityLoggingPool(RF_ThreadArg_t arg)
 {
 	RF_Raid_t *raidPtr;
@@ -614,24 +614,24 @@ rf_ShutdownParityLoggingPool(RF_ThreadArg_t arg)
 	}
 	/* free contents of parityLogPool */
 	FreeParityLogQueue(raidPtr, &raidPtr->parityLogPool);
-	RF_Free(raidPtr->parityLogBufferHeap, raidPtr->numParityLogs * 
+	RF_Free(raidPtr->parityLogBufferHeap, raidPtr->numParityLogs *
 		raidPtr->numSectorsPerLog * raidPtr->bytesPerSector);
 }
 
-static void 
+static void
 rf_ShutdownParityLoggingRegionBufferPool(RF_ThreadArg_t arg)
 {
 	RF_Raid_t *raidPtr;
 
 	raidPtr = (RF_Raid_t *) arg;
 	if (rf_parityLogDebug) {
-		printf("raid%d: ShutdownParityLoggingRegionBufferPool\n", 
+		printf("raid%d: ShutdownParityLoggingRegionBufferPool\n",
 		       raidPtr->raidid);
 	}
 	FreeRegionBufferQueue(&raidPtr->regionBufferPool);
 }
 
-static void 
+static void
 rf_ShutdownParityLoggingParityBufferPool(RF_ThreadArg_t arg)
 {
 	RF_Raid_t *raidPtr;
@@ -644,7 +644,7 @@ rf_ShutdownParityLoggingParityBufferPool(RF_ThreadArg_t arg)
 	FreeRegionBufferQueue(&raidPtr->parityBufferPool);
 }
 
-static void 
+static void
 rf_ShutdownParityLoggingDiskQueue(RF_ThreadArg_t arg)
 {
 	RF_ParityLogData_t *d;
@@ -663,19 +663,19 @@ rf_ShutdownParityLoggingDiskQueue(RF_ThreadArg_t arg)
 	RF_ASSERT(raidPtr->parityLogDiskQueue.reintTail == NULL);
 	while (raidPtr->parityLogDiskQueue.freeDataList) {
 		d = raidPtr->parityLogDiskQueue.freeDataList;
-		raidPtr->parityLogDiskQueue.freeDataList = 
+		raidPtr->parityLogDiskQueue.freeDataList =
 			raidPtr->parityLogDiskQueue.freeDataList->next;
 		RF_Free(d, sizeof(RF_ParityLogData_t));
 	}
 	while (raidPtr->parityLogDiskQueue.freeCommonList) {
 		c = raidPtr->parityLogDiskQueue.freeCommonList;
-		raidPtr->parityLogDiskQueue.freeCommonList = 
+		raidPtr->parityLogDiskQueue.freeCommonList =
 			raidPtr->parityLogDiskQueue.freeCommonList->next;
 		RF_Free(c, sizeof(RF_CommonLogData_t));
 	}
 }
 
-static void 
+static void
 rf_ShutdownParityLogging(RF_ThreadArg_t arg)
 {
 	RF_Raid_t *raidPtr;
@@ -699,7 +699,7 @@ rf_ShutdownParityLogging(RF_ThreadArg_t arg)
          */
 	RF_LOCK_MUTEX(raidPtr->parityLogDiskQueue.mutex);
 	while (!(raidPtr->parityLogDiskQueue.threadState & RF_PLOG_SHUTDOWN)) {
-		RF_WAIT_COND(raidPtr->parityLogDiskQueue.cond, 
+		RF_WAIT_COND(raidPtr->parityLogDiskQueue.cond,
 			     raidPtr->parityLogDiskQueue.mutex);
 	}
 	RF_UNLOCK_MUTEX(raidPtr->parityLogDiskQueue.mutex);
@@ -708,19 +708,19 @@ rf_ShutdownParityLogging(RF_ThreadArg_t arg)
 	}
 }
 
-int 
+int
 rf_GetDefaultNumFloatingReconBuffersParityLogging(RF_Raid_t * raidPtr)
 {
 	return (20);
 }
 
-RF_HeadSepLimit_t 
+RF_HeadSepLimit_t
 rf_GetDefaultHeadSepLimitParityLogging(RF_Raid_t * raidPtr)
 {
 	return (10);
 }
 /* return the region ID for a given RAID address */
-RF_RegionId_t 
+RF_RegionId_t
 rf_MapRegionIDParityLogging(
     RF_Raid_t * raidPtr,
     RF_SectorNum_t address)
@@ -734,7 +734,7 @@ rf_MapRegionIDParityLogging(
 		regionID--;
 	}
 	RF_ASSERT(address >= raidPtr->regionInfo[regionID].parityStartAddr);
-	RF_ASSERT(address < raidPtr->regionInfo[regionID].parityStartAddr + 
+	RF_ASSERT(address < raidPtr->regionInfo[regionID].parityStartAddr +
 		  raidPtr->regionInfo[regionID].numSectorsParity);
 	RF_ASSERT(regionID < rf_numParityRegions);
 	return (regionID);
@@ -742,7 +742,7 @@ rf_MapRegionIDParityLogging(
 
 
 /* given a logical RAID sector, determine physical disk address of data */
-void 
+void
 rf_MapSectorParityLogging(
     RF_Raid_t * raidPtr,
     RF_RaidAddr_t raidSector,
@@ -750,19 +750,19 @@ rf_MapSectorParityLogging(
     RF_SectorNum_t * diskSector,
     int remap)
 {
-	RF_StripeNum_t SUID = raidSector / 
+	RF_StripeNum_t SUID = raidSector /
 		raidPtr->Layout.sectorsPerStripeUnit;
 	/* *col = (SUID % (raidPtr->numCol -
 	 * raidPtr->Layout.numParityLogCol)); */
 	*col = SUID % raidPtr->Layout.numDataCol;
-	*diskSector = (SUID / (raidPtr->Layout.numDataCol)) * 
+	*diskSector = (SUID / (raidPtr->Layout.numDataCol)) *
 		raidPtr->Layout.sectorsPerStripeUnit +
 		(raidSector % raidPtr->Layout.sectorsPerStripeUnit);
 }
 
 
 /* given a logical RAID sector, determine physical disk address of parity  */
-void 
+void
 rf_MapParityParityLogging(
     RF_Raid_t * raidPtr,
     RF_RaidAddr_t raidSector,
@@ -770,21 +770,21 @@ rf_MapParityParityLogging(
     RF_SectorNum_t * diskSector,
     int remap)
 {
-	RF_StripeNum_t SUID = raidSector / 
+	RF_StripeNum_t SUID = raidSector /
 		raidPtr->Layout.sectorsPerStripeUnit;
 
 	/* *col =
 	 * raidPtr->Layout.numDataCol-(SUID/raidPtr->Layout.numDataCol)%(raidPt
 	 * r->numCol - raidPtr->Layout.numParityLogCol); */
 	*col = raidPtr->Layout.numDataCol;
-	*diskSector = (SUID / (raidPtr->Layout.numDataCol)) * 
+	*diskSector = (SUID / (raidPtr->Layout.numDataCol)) *
 		raidPtr->Layout.sectorsPerStripeUnit +
 		(raidSector % raidPtr->Layout.sectorsPerStripeUnit);
 }
 
 
 /* given a regionID and sector offset, determine the physical disk address of the parity log */
-void 
+void
 rf_MapLogParityLogging(
     RF_Raid_t * raidPtr,
     RF_RegionId_t regionID,
@@ -799,7 +799,7 @@ rf_MapLogParityLogging(
 
 /* given a regionID, determine the physical disk address of the logged
    parity for that region */
-void 
+void
 rf_MapRegionParity(
     RF_Raid_t * raidPtr,
     RF_RegionId_t regionID,
@@ -815,21 +815,21 @@ rf_MapRegionParity(
 
 /* given a logical RAID address, determine the participating disks in
    the stripe */
-void 
+void
 rf_IdentifyStripeParityLogging(
     RF_Raid_t * raidPtr,
     RF_RaidAddr_t addr,
     RF_RowCol_t ** diskids)
 {
-	RF_StripeNum_t stripeID = rf_RaidAddressToStripeID(&raidPtr->Layout, 
+	RF_StripeNum_t stripeID = rf_RaidAddressToStripeID(&raidPtr->Layout,
 							   addr);
-	RF_ParityLoggingConfigInfo_t *info = (RF_ParityLoggingConfigInfo_t *) 
+	RF_ParityLoggingConfigInfo_t *info = (RF_ParityLoggingConfigInfo_t *)
 		raidPtr->Layout.layoutSpecificInfo;
 	*diskids = info->stripeIdentifier[stripeID % raidPtr->numCol];
 }
 
 
-void 
+void
 rf_MapSIDToPSIDParityLogging(
     RF_RaidLayout_t * layoutPtr,
     RF_StripeNum_t stripeID,
@@ -845,7 +845,7 @@ rf_MapSIDToPSIDParityLogging(
  * one to a function that will return information about the DAG, and
  * another to a function that will create the dag.
  */
-void 
+void
 rf_ParityLoggingDagSelect(
     RF_Raid_t * raidPtr,
     RF_IoType_t type,
@@ -880,8 +880,8 @@ rf_ParityLoggingDagSelect(
 			if (prior_recon) {
 				RF_RowCol_t oc = failedPDA->col;
 				RF_SectorNum_t oo = failedPDA->startSector;
-				if (layoutPtr->map->flags & 
-				    RF_DISTRIBUTE_SPARE) {	
+				if (layoutPtr->map->flags &
+				    RF_DISTRIBUTE_SPARE) {
 					/* redirect to dist spare space */
 
 					if (failedPDA == asmp->parityInfo) {
@@ -912,7 +912,7 @@ rf_ParityLoggingDagSelect(
 
 						}
 
-				} else {	
+				} else {
 					/* redirect to dedicated spare space */
 
 					failedPDA->col = raidPtr->Disks[fcol].spareCol;
@@ -958,10 +958,10 @@ rf_ParityLoggingDagSelect(
 		 * when G is 3 or 4, numDataCol/2 is 1, and I want
 		 * single-stripe-unit updates to use just one disk. */
 		if ((asmp->numDataFailed + asmp->numParityFailed) == 0) {
-			if (((asmp->numStripeUnitsAccessed <= 
-			      (layoutPtr->numDataCol / 2)) && 
+			if (((asmp->numStripeUnitsAccessed <=
+			      (layoutPtr->numDataCol / 2)) &&
 			     (layoutPtr->numDataCol != 1)) ||
-			    (asmp->parityInfo->next != NULL) || 
+			    (asmp->parityInfo->next != NULL) ||
 			    rf_CheckStripeForFailures(raidPtr, asmp)) {
 				*createFunc = (RF_VoidFuncPtr) rf_CreateParityLoggingSmallWriteDAG;
 			} else

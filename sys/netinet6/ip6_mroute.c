@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_mroute.c,v 1.62 2004/12/21 11:40:12 drochner Exp $	*/
+/*	$NetBSD: ip6_mroute.c,v 1.62.4.1 2005/03/19 08:36:41 yamt Exp $	*/
 /*	$KAME: ip6_mroute.c,v 1.49 2001/07/25 09:21:18 jinmei Exp $	*/
 
 /*
@@ -117,7 +117,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_mroute.c,v 1.62 2004/12/21 11:40:12 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_mroute.c,v 1.62.4.1 2005/03/19 08:36:41 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_mrouting.h"
@@ -1391,7 +1391,7 @@ ip6_mdq(m, ifp, rt)
 			    "wrong if: ifid %d mifi %d mififid %x\n",
 			    ifp->if_index, mifi,
 			    mif6table[mifi].m6_ifp ?
-			    mif6table[mifi].m6_ifp->if_index : -1); 
+			    mif6table[mifi].m6_ifp->if_index : -1);
 #endif
 		mrt6stat.mrt6s_wrong_if++;
 		rt->mf6c_wrong_if++;

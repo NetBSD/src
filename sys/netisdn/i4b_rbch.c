@@ -27,7 +27,7 @@
  *	i4b_rbch.c - device driver for raw B channel data
  *	---------------------------------------------------
  *
- *	$Id: i4b_rbch.c,v 1.14 2003/10/03 16:38:44 pooka Exp $
+ *	$Id: i4b_rbch.c,v 1.14.10.1 2005/03/19 08:36:42 yamt Exp $
  *
  * $FreeBSD$
  *
@@ -36,7 +36,7 @@
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i4b_rbch.c,v 1.14 2003/10/03 16:38:44 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i4b_rbch.c,v 1.14.10.1 2005/03/19 08:36:42 yamt Exp $");
 
 #include "isdnbchan.h"
 
@@ -140,13 +140,13 @@ static struct rbch_softc {
 #if defined(__FreeBSD__) && __FreeBSD__ == 3
 #ifdef DEVFS
 	void *devfs_token;		/* device filesystem	*/
-#endif	
+#endif
 #endif
 
 #if I4BRBCHACCT
 #if defined(__FreeBSD__)
 	struct callout_handle sc_callout;
-#endif	
+#endif
 #if defined(__NetBSD__) && __NetBSD_Version__ >= 104230000
 	struct callout	sc_callout;
 #endif
@@ -156,7 +156,7 @@ static struct rbch_softc {
 	int		sc_linb;	/* last # of bytes rx'd		*/
 	int		sc_loutb;	/* last # of bytes tx'd 	*/
 	int		sc_fn;		/* flag, first null acct	*/
-#endif	
+#endif
 } rbch_softc[NISDNBCHAN];
 
 static void rbch_rx_data_rdy(void *softc);
@@ -275,7 +275,7 @@ void dummy_isdnbchanattach(struct device*, struct device *, void *);
 static struct cfdriver isdnbchancd =
 	{ NULL, "isdnbchan", isdnbchanmatch, dummy_isdnbchanattach, DV_DULL,
 	  sizeof(struct cfdriver) };
-struct devsw isdnbchansw = 
+struct devsw isdnbchansw =
 	{ &isdnbchancd,
 	  isdnbchanopen,	isdnbchanclose,	isdnbchanread,	isdnbchanwrite,
 	  isdnbchanioctl,	seltrue,	nommap,		nostrat,
@@ -368,7 +368,7 @@ PDEVSTATIC int
 isdnbchanopen(dev_t dev, int flag, int fmt, struct proc *p)
 {
 	int unit = minor(dev);
-	
+
 	if(unit >= NISDNBCHAN)
 		return(ENXIO);
 
@@ -378,10 +378,10 @@ isdnbchanopen(dev_t dev, int flag, int fmt, struct proc *p)
 #if 0
 	rbch_clrq(unit);
 #endif
-	
-	rbch_softc[unit].sc_devstate |= ST_ISOPEN;		
 
-	NDBGL4(L4_RBCHDBG, "unit %d, open", unit);	
+	rbch_softc[unit].sc_devstate |= ST_ISOPEN;
+
+	NDBGL4(L4_RBCHDBG, "unit %d, open", unit);
 
 	return(0);
 }
@@ -394,16 +394,16 @@ isdnbchanclose(dev_t dev, int flag, int fmt, struct proc *p)
 {
 	int unit = minor(dev);
 	struct rbch_softc *sc = &rbch_softc[unit];
-	
+
 	if(sc->sc_devstate & ST_CONNECTED)
 		i4b_l4_drvrdisc(sc->sc_cd->cdid);
 
-	sc->sc_devstate &= ~ST_ISOPEN;		
+	sc->sc_devstate &= ~ST_ISOPEN;
 
 	rbch_clrq(sc);
-	
+
 	NDBGL4(L4_RBCHDBG, "channel %d, closed", unit);
-	
+
 	return(0);
 }
 
@@ -420,9 +420,9 @@ isdnbchanread(dev_t dev, struct uio *uio, int ioflag)
 	struct rbch_softc *sc = &rbch_softc[unit];
 
 	int s;
-	
+
 	NDBGL4(L4_RBCHDBG, "unit %d, enter read", unit);
-	
+
 	s = splnet();
 	if(!(sc->sc_devstate & ST_ISOPEN))
 	{
@@ -441,7 +441,7 @@ isdnbchanread(dev_t dev, struct uio *uio, int ioflag)
 		if(sc->sc_bprot == BPROT_RHDLC)
 			iqp = &sc->sc_hdlcq;
 		else
-			iqp = sc->sc_ilt->rx_queue;	
+			iqp = sc->sc_ilt->rx_queue;
 
 		if(IF_QEMPTY(iqp) && (sc->sc_devstate & ST_ISOPEN)) {
 			splx(s);
@@ -453,7 +453,7 @@ isdnbchanread(dev_t dev, struct uio *uio, int ioflag)
 		while(!(sc->sc_devstate & ST_CONNECTED))
 		{
 			NDBGL4(L4_RBCHDBG, "unit %d, wait read init", unit);
-		
+
 			if((error = tsleep((caddr_t) &rbch_softc[unit],
 					   TTIPRI | PCATCH,
 					   "rrrbch", 0 )) != 0)
@@ -467,14 +467,14 @@ isdnbchanread(dev_t dev, struct uio *uio, int ioflag)
 		if(sc->sc_bprot == BPROT_RHDLC)
 			iqp = &sc->sc_hdlcq;
 		else
-			iqp = sc->sc_ilt->rx_queue;	
+			iqp = sc->sc_ilt->rx_queue;
 
 		while(IF_QEMPTY(iqp) && (sc->sc_devstate & ST_ISOPEN))
 		{
 			sc->sc_devstate |= ST_RDWAITDATA;
-		
+
 			NDBGL4(L4_RBCHDBG, "unit %d, wait read data", unit);
-		
+
 			if((error = tsleep((caddr_t) &sc->sc_ilt->rx_queue,
 					   TTIPRI | PCATCH,
 					   "rrbch", 0 )) != 0)
@@ -493,7 +493,7 @@ isdnbchanread(dev_t dev, struct uio *uio, int ioflag)
 	IF_DEQUEUE(iqp, m);
 
 	NDBGL4(L4_RBCHDBG, "unit %d, read %d bytes", unit, m->m_len);
-	
+
 	if(m && m->m_len)
 	{
 		error = uiomove(m->m_data, m->m_len, uio);
@@ -503,7 +503,7 @@ isdnbchanread(dev_t dev, struct uio *uio, int ioflag)
 		NDBGL4(L4_RBCHDBG, "unit %d, error %d uiomove", unit, error);
 		error = EIO;
 	}
-		
+
 	if(m)
 		i4b_Bfreembuf(m);
 
@@ -524,8 +524,8 @@ isdnbchanwrite(dev_t dev, struct uio * uio, int ioflag)
 	struct rbch_softc *sc = &rbch_softc[unit];
 
 	int s;
-	
-	NDBGL4(L4_RBCHDBG, "unit %d, write", unit);	
+
+	NDBGL4(L4_RBCHDBG, "unit %d, write", unit);
 
 	s = splnet();
 	if(!(sc->sc_devstate & ST_ISOPEN))
@@ -551,7 +551,7 @@ isdnbchanwrite(dev_t dev, struct uio * uio, int ioflag)
 		while(!(sc->sc_devstate & ST_CONNECTED))
 		{
 			NDBGL4(L4_RBCHDBG, "unit %d, write wait init", unit);
-		
+
 			error = tsleep((caddr_t) &rbch_softc[unit],
 						   TTIPRI | PCATCH,
 						   "wrrbch", 0 );
@@ -579,7 +579,7 @@ isdnbchanwrite(dev_t dev, struct uio * uio, int ioflag)
 			sc->sc_devstate |= ST_WRWAITEMPTY;
 
 			NDBGL4(L4_RBCHDBG, "unit %d, write queue full", unit);
-		
+
 			if ((error = tsleep((caddr_t) &sc->sc_ilt->tx_queue,
 					    TTIPRI | PCATCH,
 					    "wrbch", 0)) != 0) {
@@ -621,12 +621,12 @@ isdnbchanwrite(dev_t dev, struct uio * uio, int ioflag)
 		m->m_len = min(BCH_MAX_DATALEN, uio->uio_resid);
 
 		NDBGL4(L4_RBCHDBG, "unit %d, write %d bytes", unit, m->m_len);
-		
+
 		error = uiomove(m->m_data, m->m_len, uio);
 
 		if(IF_QFULL(sc->sc_ilt->tx_queue))
 		{
-			m_freem(m);			
+			m_freem(m);
 		}
 		else
 		{
@@ -637,7 +637,7 @@ isdnbchanwrite(dev_t dev, struct uio * uio, int ioflag)
 	}
 
 	splx(s);
-	
+
 	return(error);
 }
 
@@ -650,7 +650,7 @@ isdnbchanioctl(dev_t dev, IOCTL_CMD_T cmd, caddr_t data, int flag, struct proc *
 	int error = 0;
 	int unit = minor(dev);
 	struct rbch_softc *sc = &rbch_softc[unit];
-	
+
 	switch(cmd)
 	{
 		case FIOASYNC:	/* Set async mode */
@@ -726,7 +726,7 @@ isdnbchanioctl(dev_t dev, IOCTL_CMD_T cmd, caddr_t data, int flag, struct proc *
 
 			mvr->version = VERSION;
 			mvr->release = REL;
-			mvr->step = STEP;			
+			mvr->step = STEP;
 			break;
 		}
 
@@ -750,7 +750,7 @@ isdnbchanpoll(dev_t dev, int events, struct proc *p)
 	int s;
 	int unit = minor(dev);
 	struct rbch_softc *sc = &rbch_softc[unit];
-	
+
 	/* We can't check for anything but IN or OUT */
 
 	s = splhigh();
@@ -765,14 +765,14 @@ isdnbchanpoll(dev_t dev, int events, struct proc *p)
 	 * Writes are OK if we are connected and the
          * transmit queue can take them
 	 */
-	 
+
 	if((events & (POLLOUT|POLLWRNORM)) &&
 	   (sc->sc_devstate & ST_CONNECTED) &&
 	   !IF_QFULL(sc->sc_ilt->tx_queue))
 	{
 		revents |= (events & (POLLOUT|POLLWRNORM));
 	}
-	
+
 	/* ... while reads are OK if we have any data */
 
 	if((events & (POLLIN|POLLRDNORM)) &&
@@ -783,12 +783,12 @@ isdnbchanpoll(dev_t dev, int events, struct proc *p)
 		if(sc->sc_bprot == BPROT_RHDLC)
 			iqp = &sc->sc_hdlcq;
 		else
-			iqp = sc->sc_ilt->rx_queue;	
+			iqp = sc->sc_ilt->rx_queue;
 
 		if(!IF_QEMPTY(iqp))
 			revents |= (events & (POLLIN|POLLRDNORM));
 	}
-		
+
 	if(revents == 0)
 		selrecord(p, &sc->selp);
 
@@ -819,7 +819,7 @@ filt_i4brbchread(struct knote *kn, long hint)
 	if (sc->sc_bprot == BPROT_RHDLC)
 		iqp = &sc->sc_hdlcq;
 	else
-		iqp = sc->sc_ilt->rx_queue;	
+		iqp = sc->sc_ilt->rx_queue;
 
 	if (IF_QEMPTY(iqp))
 		return (0);
@@ -900,7 +900,7 @@ isdnbchanselect(dev_t dev, int rw, struct proc *p)
 		NDBGL4(L4_RBCHDBG, "(minor=%d) not open anymore", unit);
 		return(1);
 	}
-	
+
 	if(sc->sc_devstate & ST_CONNECTED)
 	{
 		struct ifqueue *iqp;
@@ -911,7 +911,7 @@ isdnbchanselect(dev_t dev, int rw, struct proc *p)
 				if(sc->sc_bprot == BPROT_RHDLC)
 					iqp = &sc->sc_hdlcq;
 				else
-					iqp = isdn_linktab[unit]->rx_queue;	
+					iqp = isdn_linktab[unit]->rx_queue;
 
 				if(!IF_QEMPTY(iqp))
 				{
@@ -949,15 +949,15 @@ rbch_timeout(struct rbch_softc *sc)
 {
 	bchan_statistics_t bs;
 
-	/* get # of bytes in and out from the HSCX driver */ 
-	
+	/* get # of bytes in and out from the HSCX driver */
+
 	(*sc->sc_ilt->bchannel_driver->bch_stat)
 		(sc->sc_ilt->l1token, sc->sc_ilt->channel, &bs);
 
 	sc->sc_ioutb += bs.outbytes;
 	sc->sc_iinb += bs.inbytes;
-	
-	if((sc->sc_iinb != sc->sc_linb) || (sc->sc_ioutb != sc->sc_loutb) || sc->sc_fn) 
+
+	if((sc->sc_iinb != sc->sc_linb) || (sc->sc_ioutb != sc->sc_loutb) || sc->sc_fn)
 	{
 		int ri = (sc->sc_iinb - sc->sc_linb)/I4BRBCHACCTINTVL;
 		int ro = (sc->sc_ioutb - sc->sc_loutb)/I4BRBCHACCTINTVL;
@@ -966,7 +966,7 @@ rbch_timeout(struct rbch_softc *sc)
 			sc->sc_fn = 0;
 		else
 			sc->sc_fn = 1;
-			
+
 		sc->sc_linb = sc->sc_iinb;
 		sc->sc_loutb = sc->sc_ioutb;
 
@@ -995,7 +995,7 @@ rbch_connect(void *softc, void *cdp)
 
 #if I4BRBCHACCT
 	if(sc->sc_bprot == BPROT_RHDLC)
-	{	
+	{
 		sc->sc_iinb = 0;
 		sc->sc_ioutb = 0;
 		sc->sc_linb = 0;
@@ -1003,7 +1003,7 @@ rbch_connect(void *softc, void *cdp)
 
 		START_TIMER(sc->sc_callout, rbch_timeout, sc, I4BRBCHACCTINTVL*hz);
 	}
-#endif		
+#endif
 	if(!(sc->sc_devstate & ST_CONNECTED))
 	{
 		NDBGL4(L4_RBCHDBG, "B channel %d at ISDN %d, wakeup",
@@ -1025,7 +1025,7 @@ rbch_disconnect(void *softc, void *cdp)
 	struct rbch_softc *sc = softc;
 
 	int s;
-	
+
         if(cd != sc->sc_cd)
 	{
 		NDBGL4(L4_RBCHDBG, "B channel %d at ISDN %d not active",
@@ -1034,7 +1034,7 @@ rbch_disconnect(void *softc, void *cdp)
 	}
 
 	s = splnet();
-	
+
 	NDBGL4(L4_RBCHDBG, "B channel %d at ISDN %d disconnect",
 	    cd->channelid, cd->isdnif);
 
@@ -1046,7 +1046,7 @@ rbch_disconnect(void *softc, void *cdp)
 		    sc->sc_ioutb, sc->sc_iinb, 0, 0, sc->sc_ioutb, sc->sc_iinb);
 
 	STOP_TIMER(sc->sc_callout, rbch_timeout, sc);
-#endif		
+#endif
 
 	sc->sc_cd = NULL;
 	if (sc->sc_devstate & ST_RDWAITDATA)
@@ -1058,7 +1058,7 @@ rbch_disconnect(void *softc, void *cdp)
 
 	selwakeup(&sc->selp);
 }
-	
+
 /*---------------------------------------------------------------------------*
  *	feedback from daemon in case of dial problems
  *---------------------------------------------------------------------------*/
@@ -1066,7 +1066,7 @@ static void
 rbch_dialresponse(void *softc, int status, cause_t cause)
 {
 }
-	
+
 /*---------------------------------------------------------------------------*
  *	interface up/down
  *---------------------------------------------------------------------------*/
@@ -1074,7 +1074,7 @@ static void
 rbch_updown(void *softc, int updown)
 {
 }
-	
+
 /*---------------------------------------------------------------------------*
  *	this routine is called from the HSCX interrupt handler
  *	when a new frame (mbuf) has been received and is to be put on
@@ -1088,7 +1088,7 @@ rbch_rx_data_rdy(void *softc)
 	if(sc->sc_bprot == BPROT_RHDLC)
 	{
 		register struct mbuf *m;
-		
+
 		if((m = *sc->sc_ilt->rx_mbuf) == NULL)
 			return;
 
@@ -1103,7 +1103,7 @@ rbch_rx_data_rdy(void *softc)
 		{
 			IF_ENQUEUE(&sc->sc_hdlcq, m);
 		}
-	}				
+	}
 
 	if(sc->sc_devstate & ST_RDWAITDATA)
 	{
@@ -1164,13 +1164,13 @@ rbch_clrq(void *softc)
 	struct rbch_softc *sc = softc;
 	struct mbuf *m;
 	int s;
-	
+
 	for(;;)
 	{
 		s = splnet();
 		IF_DEQUEUE(&sc->sc_hdlcq, m);
 		splx(s);
-		
+
 		if(m)
 			m_freem(m);
 		else

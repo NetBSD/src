@@ -1,4 +1,4 @@
-#	$NetBSD: SIMULATOR,v 1.9 2004/07/15 03:53:46 atatat Exp $
+#	$NetBSD: SIMULATOR,v 1.9.6.1 2005/03/19 08:32:58 yamt Exp $
 
 # NetBSD/sh5 on the simple `chess' based simulator.
 #
@@ -15,7 +15,7 @@ options 	SH5_SIM
 options 	KERNEL_IPT_SIZE=0x8000
 options 	SH5_CPU_SPEED=10
 
-#ident		"SIMULATOR-$Revision: 1.9 $"
+#ident		"SIMULATOR-$Revision: 1.9.6.1 $"
 
 # Uncomment this to build a 64-bit kernel
 #makeoptions 	SH5_ABI=64
@@ -33,6 +33,7 @@ options 	SYSTRACE	# system call vetting via systrace(1)
 file-system 	FFS
 file-system 	KERNFS
 file-system 	MFS
+options 	FFS_NO_SNAPSHOT	# No FFS snapshots
 
 options 	INET
 

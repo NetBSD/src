@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_vnops.c,v 1.93.2.2 2005/02/12 18:17:53 yamt Exp $	*/
+/*	$NetBSD: genfs_vnops.c,v 1.93.2.3 2005/03/19 08:36:30 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfs_vnops.c,v 1.93.2.2 2005/02/12 18:17:53 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfs_vnops.c,v 1.93.2.3 2005/03/19 08:36:30 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_nfsserver.h"
@@ -520,7 +520,19 @@ genfs_getpages(void *v)
 	KASSERT(ap->a_centeridx >= 0 || ap->a_centeridx <= orignpages);
 	KASSERT((origoffset & (PAGE_SIZE - 1)) == 0 && origoffset >= 0);
 	KASSERT(orignpages > 0);
-	KASSERT(origoffset + (ap->a_centeridx << PAGE_SHIFT) < memeof);
+
+	/*
+	 * Bounds-check the request.
+	 */
+
+	if (origoffset + (ap->a_centeridx << PAGE_SHIFT) >= memeof) {
+		if ((flags & PGO_LOCKED) == 0) {
+			simple_unlock(&uobj->vmobjlock);
+		}
+		UVMHIST_LOG(ubchist, "off 0x%x count %d goes past EOF 0x%x",
+		    origoffset, *ap->a_count, memeof,0);
+		return (EINVAL);
+	}
 
 	/*
 	 * For PGO_LOCKED requests, just return whatever's in memory.
@@ -1752,9 +1764,9 @@ filt_genfsvnode(struct knote *kn, long hint)
 	return (kn->kn_fflags != 0);
 }
 
-static const struct filterops genfsread_filtops = 
+static const struct filterops genfsread_filtops =
 	{ 1, NULL, filt_genfsdetach, filt_genfsread };
-static const struct filterops genfsvnode_filtops = 
+static const struct filterops genfsvnode_filtops =
 	{ 1, NULL, filt_genfsdetach, filt_genfsvnode };
 
 int

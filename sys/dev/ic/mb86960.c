@@ -1,4 +1,4 @@
-/*	$NetBSD: mb86960.c,v 1.59 2005/01/02 12:41:03 tsutsui Exp $	*/
+/*	$NetBSD: mb86960.c,v 1.59.4.1 2005/03/19 08:34:03 yamt Exp $	*/
 
 /*
  * All Rights Reserved, Copyright (C) Fujitsu Limited 1995
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mb86960.c,v 1.59 2005/01/02 12:41:03 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mb86960.c,v 1.59.4.1 2005/03/19 08:34:03 yamt Exp $");
 
 /*
  * Device driver for Fujitsu MB86960A/MB86965A based Ethernet cards.
@@ -727,7 +727,7 @@ mb86960_start(struct ifnet *ifp)
 		 * We *could* do better job by peeking the send queue to
 		 * know the length of the next packet.  Current version just
 		 * tests against the worst case (i.e., longest packet).  FIXME.
-		 * 
+		 *
 		 * When adding the packet-peek feature, don't forget adding a
 		 * test on txb_count against QUEUEING_MAX.
 		 * There is a little chance the packet count exceeds
@@ -923,7 +923,7 @@ mb86960_tint(struct mb86960_softc *sc, uint8_t tstat)
 	if (sc->txb_sched == 0) {
 		/*
 		 * The transmitter is no more active.
-		 * Reset output active flag and watchdog timer. 
+		 * Reset output active flag and watchdog timer.
 		 */
 		ifp->if_flags &= ~IFF_OACTIVE;
 		ifp->if_timer = 0;
@@ -1054,7 +1054,7 @@ mb86960_rint(struct mb86960_softc *sc, uint8_t rstat)
 			    "%s: received a short packet? (%u bytes)\n",
 			    sc->sc_dev.dv_xname, len);
 		}
-#endif 
+#endif
 
 		/*
 		 * Go get a packet.
@@ -1378,7 +1378,7 @@ mb86960_get_packet(struct mb86960_softc *sc, u_int len)
  *
  * If an mbuf chain is too long for an Ethernet frame, it is not sent.
  * Packets shorter than Ethernet minimum are legal, and we pad them
- * before sending out.  An exception is "partial" packets which are 
+ * before sending out.  An exception is "partial" packets which are
  * shorter than mandatory Ethernet header.
  *
  * I wrote a code for an experimental "delayed padding" technique.
@@ -1480,7 +1480,7 @@ mb86960_write_mbufs(struct mb86960_softc *sc, struct mbuf *m)
 #endif
 
 	/*
-	 * Transfer the data from mbuf chain to the transmission buffer. 
+	 * Transfer the data from mbuf chain to the transmission buffer.
 	 * If the MB86960 is configured in word mode, data needs to be
 	 * transferred as words, and only words.
 	 * So that we require some extra code to patch over odd-length
@@ -1519,7 +1519,7 @@ mb86960_write_mbufs(struct mb86960_softc *sc, struct mbuf *m)
 					len--;
 					bus_space_write_stream_2(bst, bsh,
 					   FE_BMPR8, *(uint16_t *)savebyte);
-					leftover = 0; 
+					leftover = 0;
 				} else if (BUS_SPACE_ALIGNED_POINTER(data,
 				    uint16_t) == 0) {
 					/*

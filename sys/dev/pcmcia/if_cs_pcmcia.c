@@ -1,4 +1,4 @@
-/* $NetBSD: if_cs_pcmcia.c,v 1.10 2004/08/10 20:47:17 mycroft Exp $ */
+/* $NetBSD: if_cs_pcmcia.c,v 1.10.6.1 2005/03/19 08:35:34 yamt Exp $ */
 
 /*-
  * Copyright (c)2001 YAMAMOTO Takashi,
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_cs_pcmcia.c,v 1.10 2004/08/10 20:47:17 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_cs_pcmcia.c,v 1.10.6.1 2005/03/19 08:35:34 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -165,7 +165,7 @@ cs_pcmcia_detach(struct device *self, int flags)
 	error = cs_detach(sc);
 	if (error)
 		return (error);
-	
+
 	pcmcia_function_unconfigure(psc->sc_pf);
 
 	return (0);

@@ -1,4 +1,4 @@
-/*	$NetBSD: rijndael-api-fst.c,v 1.17 2003/08/18 02:36:17 elric Exp $	*/
+/*	$NetBSD: rijndael-api-fst.c,v 1.17.10.1 2005/03/19 08:33:52 yamt Exp $	*/
 
 /**
  * rijndael-api-fst.c
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rijndael-api-fst.c,v 1.17 2003/08/18 02:36:17 elric Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rijndael-api-fst.c,v 1.17.10.1 2005/03/19 08:33:52 yamt Exp $");
 
 #include <sys/param.h>
 #ifdef _KERNEL
@@ -54,7 +54,7 @@ __KERNEL_RCSID(0, "$NetBSD: rijndael-api-fst.c,v 1.17 2003/08/18 02:36:17 elric 
 
 int rijndael_makeKey(keyInstance *key, BYTE direction, int keyLen, char *keyMaterial) {
 	u_int8_t cipherKey[RIJNDAEL_MAXKB];
-	
+
 	if (key == NULL) {
 		return BAD_KEY_INSTANCE;
 	}
@@ -115,7 +115,7 @@ int rijndael_blockEncrypt(cipherInstance *cipher, keyInstance *key,
 	}
 
 	numBlocks = inputLen/128;
-	
+
 	switch (cipher->mode) {
 	case MODE_ECB:
 		for (i = numBlocks; i > 0; i--) {
@@ -124,7 +124,7 @@ int rijndael_blockEncrypt(cipherInstance *cipher, keyInstance *key,
 			outBuffer += 16;
 		}
 		break;
-		
+
 	case MODE_CBC:
 		iv = (u_int8_t *)cipher->IV;
 		for (i = numBlocks; i > 0; i--) {
@@ -159,7 +159,7 @@ int rijndael_blockEncrypt(cipherInstance *cipher, keyInstance *key,
 	default:
 		return BAD_CIPHER_STATE;
 	}
-	
+
 	return 128*numBlocks;
 }
 
@@ -254,7 +254,7 @@ int rijndael_blockDecrypt(cipherInstance *cipher, keyInstance *key,
 			outBuffer += 16;
 		}
 		break;
-		
+
 	case MODE_CBC:
 		iv = (u_int8_t *)cipher->IV;
 		for (i = numBlocks; i > 0; i--) {
@@ -290,7 +290,7 @@ int rijndael_blockDecrypt(cipherInstance *cipher, keyInstance *key,
 	default:
 		return BAD_CIPHER_STATE;
 	}
-	
+
 	return 128*numBlocks;
 }
 
@@ -334,7 +334,7 @@ int rijndael_padDecrypt(cipherInstance *cipher, keyInstance *key,
 		}
 		memcpy(outBuffer, block, 16 - padLen);
 		break;
-		
+
 	case MODE_CBC:
 		/* all blocks but last */
 		for (i = numBlocks - 1; i > 0; i--) {
@@ -365,11 +365,11 @@ int rijndael_padDecrypt(cipherInstance *cipher, keyInstance *key,
 		}
 		memcpy(outBuffer, block, 16 - padLen);
 		break;
-	
+
 	default:
 		return BAD_CIPHER_STATE;
 	}
-	
+
 	return 16*numBlocks - padLen;
 }
 

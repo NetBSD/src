@@ -1,4 +1,4 @@
-/*	$NetBSD: smc90cx6.c,v 1.41.10.1 2005/02/12 18:17:44 yamt Exp $ */
+/*	$NetBSD: smc90cx6.c,v 1.41.10.2 2005/03/19 08:34:04 yamt Exp $ */
 
 /*-
  * Copyright (c) 1994, 1995, 1998 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smc90cx6.c,v 1.41.10.1 2005/02/12 18:17:44 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smc90cx6.c,v 1.41.10.2 2005/03/19 08:34:04 yamt Exp $");
 
 /* #define BAHSOFTCOPY */
 #define BAHRETRANSMIT /**/
@@ -104,8 +104,8 @@ __KERNEL_RCSID(0, "$NetBSD: smc90cx6.c,v 1.41.10.1 2005/02/12 18:17:44 yamt Exp 
  *
  * New rx protocol:
  *
- * rx has a fillcount variable. If fillcount > (NRXBUF-1), 
- * rx can be switched off from rx hard int. 
+ * rx has a fillcount variable. If fillcount > (NRXBUF-1),
+ * rx can be switched off from rx hard int.
  * Else rx is restarted on the other receiver.
  * rx soft int counts down. if it is == (NRXBUF-1), it restarts
  * the receiver.
@@ -115,7 +115,7 @@ __KERNEL_RCSID(0, "$NetBSD: smc90cx6.c,v 1.41.10.1 2005/02/12 18:17:44 yamt Exp 
  * compare both values to determine the older packet.
  *
  * Transmit direction:
- * 
+ *
  * bah_start checks tx_fillcount
  * case 2: return
  *
@@ -177,7 +177,7 @@ bah_attach_subr(sc)
 
 	do {
 		delay(200);
-	} while (!(GETREG(BAHSTAT) & BAH_POR)); 
+	} while (!(GETREG(BAHSTAT) & BAH_POR));
 
 	linkaddress = GETMEM(BAHMACOFF);
 
@@ -198,7 +198,7 @@ bah_attach_subr(sc)
 	/*
 	 * set interface to stopped condition (reset)
 	 */
-	bah_stop(sc); 
+	bah_stop(sc);
 
 	strcpy(ifp->if_xname, sc->sc_dev.dv_xname);
 	ifp->if_softc = sc;
@@ -273,7 +273,7 @@ bah_reset(sc)
 	(*sc->sc_reset)(sc, 1);
 	do {
 		DELAY(200);
-	} while (!(GETREG(BAHSTAT) & BAH_POR)); 
+	} while (!(GETREG(BAHSTAT) & BAH_POR));
 
 	linkaddress = GETMEM(BAHMACOFF);
 
@@ -289,7 +289,7 @@ bah_reset(sc)
 	sc->sc_intmask = BAH_RECON|BAH_POR;
 	PUTREG(BAHSTAT, sc->sc_intmask);
 	PUTREG(BAHCMD, BAH_CONF(CONF_LONG));
-	
+
 #ifdef BAH_DEBUG
 	printf("%s: reset: chip configured, status=0x%02x\n",
 	    sc->sc_dev.dv_xname, GETREG(BAHSTAT));
@@ -433,7 +433,7 @@ bah_start(ifp)
 
 	PUTMEM(bah_ram_ptr + 1, mtod(m, u_char *)[1]);
 	m_adj(m, 2);
-		
+
 	/* get total length left at this point */
 	tlen = m->m_pkthdr.len;
 	if (tlen < ARC_MIN_FORBID_LEN) {
@@ -470,7 +470,7 @@ bah_start(ifp)
 	/* actually transmit the packet */
 	s = splnet();
 
-	if (++sc->sc_tx_fillcount > 1) { 
+	if (++sc->sc_tx_fillcount > 1) {
 		/*
 		 * We are filled up to the rim. No more bufs for the moment,
 		 * please.
@@ -478,7 +478,7 @@ bah_start(ifp)
 		ifp->if_flags |= IFF_OACTIVE;
 	} else {
 #ifdef BAH_DEBUG
-		printf("%s: start: starting transmitter on buffer %d\n", 
+		printf("%s: start: starting transmitter on buffer %d\n",
 		    sc->sc_dev.dv_xname, buffer);
 #endif
 		/* Transmitter was off, start it */
@@ -538,7 +538,7 @@ bah_srint(vsc)
 	MGETHDR(m, M_DONTWAIT, MT_DATA);
 
 	if (m == 0) {
-		/* 
+		/*
 	 	 * in case s.th. goes wrong with mem, drop it
 	 	 * to make sure the receiver can be started again
 		 * count it as input error (we dont have any other
@@ -547,7 +547,7 @@ bah_srint(vsc)
 		ifp->if_ierrors++;
 		goto cleanup;
 	}
-			
+
 	m->m_pkthdr.rcvif = ifp;
 
 	/*
@@ -567,7 +567,7 @@ bah_srint(vsc)
 	}
 	if (len+2 >= MINCLSIZE)
 		MCLGET(m, M_DONTWAIT);
-	
+
 	if (m == 0) {
 		ifp->if_ierrors++;
 		goto cleanup;
@@ -578,7 +578,7 @@ bah_srint(vsc)
 
 	head = m;
 	ah = mtod(head, struct arc_header *);
-		
+
 	ah->arc_shost = GETMEM(bah_ram_ptr + 0);
 	ah->arc_dhost = GETMEM(bah_ram_ptr + 1);
 
@@ -587,22 +587,22 @@ bah_srint(vsc)
 	bah_ram_ptr += offset;	/* ram buffer continues there */
 
 	while (len > 0) {
-	
+
 		len1 = len;
 		amount = M_TRAILINGSPACE(m);
 
 		if (amount == 0) {
 			dst = m;
 			MGET(m, M_DONTWAIT, MT_DATA);
-		
+
 			if (m == 0) {
 				ifp->if_ierrors++;
 				goto cleanup;
 			}
-		
+
 			if (len1 >= MINCLSIZE)
 				MCLGET(m, M_DONTWAIT);
-	
+
 			m->m_len = 0;
 			dst->m_next = m;
 			amount = M_TRAILINGSPACE(m);
@@ -611,7 +611,7 @@ bah_srint(vsc)
 		if (amount < len1)
 			len1 = amount;
 
-		bus_space_read_region_1(bst_m, mem, bah_ram_ptr, 
+		bus_space_read_region_1(bst_m, mem, bah_ram_ptr,
 		    mtod(m, u_char *) + m->m_len, len1);
 
 		m->m_len += len1;
@@ -628,7 +628,7 @@ bah_srint(vsc)
 
 	head = NULL;
 	ifp->if_ipackets++;
-	
+
 cleanup:
 
 	if (head != NULL)
@@ -676,16 +676,16 @@ bah_tint(sc, isr)
 	buffer = sc->sc_tx_act;
 
 	/*
-	 * retransmit code:  
+	 * retransmit code:
 	 * Normal situations first for fast path:
 	 * If acknowledgement received ok or broadcast, we're ok.
-	 * else if 
-	 */ 
+	 * else if
+	 */
 
 	if (isr & BAH_TMA || sc->sc_broadcast[buffer])
 		sc->sc_arccom.ac_if.if_opackets++;
 #ifdef BAHRETRANSMIT
-	else if (ifp->if_flags & IFF_LINK2 && ifp->if_timer > 0 
+	else if (ifp->if_flags & IFF_LINK2 && ifp->if_timer > 0
 	    && --sc->sc_retransmits[buffer] > 0) {
 		/* retransmit same buffer */
 		PUTREG(BAHCMD, BAH_TX(buffer));
@@ -694,14 +694,14 @@ bah_tint(sc, isr)
 #endif
 	else
 		ifp->if_oerrors++;
-		
-		
+
+
 	/* We know we can accept another buffer at this point. */
 	ifp->if_flags &= ~IFF_OACTIVE;
 
 	if (--sc->sc_tx_fillcount > 0) {
 
-		/* 
+		/*
 		 * start tx on other buffer.
 		 * This also clears the int flag
 		 */
@@ -710,7 +710,7 @@ bah_tint(sc, isr)
 
 		/*
 		 * already given:
-		 * sc->sc_intmask |= BAH_TA; 
+		 * sc->sc_intmask |= BAH_TA;
 		 * PUTREG(BAHSTAT, sc->sc_intmask);
 		 */
 		PUTREG(BAHCMD, BAH_TX(buffer));
@@ -718,7 +718,7 @@ bah_tint(sc, isr)
 		ifp->if_timer = ARCTIMEOUT;
 
 #if defined(BAH_DEBUG) && (BAH_DEBUG > 1)
-		printf("%s: tint: starting tx on buffer %d, status 0x%02x\n", 
+		printf("%s: tint: starting tx on buffer %d, status 0x%02x\n",
 		    sc->sc_dev.dv_xname, buffer, GETREG(BAHSTAT));
 #endif
 	} else {
@@ -764,7 +764,7 @@ bahintr(arg)
 
 	isr = GETREG(BAHSTAT);
 	maskedisr = isr & sc->sc_intmask;
-	if (!maskedisr) 
+	if (!maskedisr)
 		return (0);
 	do {
 
@@ -774,7 +774,7 @@ bahintr(arg)
 #endif
 
 		if (maskedisr & BAH_POR) {
-		  	/* 
+		  	/*
 			 * XXX We should never see this. Don't bother to store
 			 * the address.
 			 * sc->sc_arccom.ac_anaddr = GETMEM(BAHMACOFF);
@@ -784,7 +784,7 @@ bahintr(arg)
 			    "%s: intr: got spurious power on reset int\n",
 			    sc->sc_dev.dv_xname);
 		}
-	
+
 		if (maskedisr & BAH_RECON) {
 			/*
 			 * we dont need to:
@@ -792,7 +792,7 @@ bahintr(arg)
 			 */
 			PUTREG(BAHCMD, BAH_CLR(CLR_RECONFIG));
 			sc->sc_arccom.ac_if.if_collisions++;
-	
+
 			/*
 			 * If less than 2 seconds per reconfig:
 			 *	If ARC_EXCESSIVE_RECONFIGS
@@ -806,10 +806,10 @@ bahintr(arg)
 			 * XXX TODO: check timeout bits in status word and
 			 * double time if necessary.
 			 */
-	
+
 			callout_stop(&sc->sc_recon_ch);
 			newsec = time.tv_sec;
-			if ((newsec - sc->sc_recontime <= 2) && 
+			if ((newsec - sc->sc_recontime <= 2) &&
 			    (++sc->sc_reconcount == ARC_EXCESSIVE_RECONS)) {
 				log(LOG_WARNING,
 				    "%s: excessive token losses, "
@@ -833,7 +833,7 @@ bahintr(arg)
 				 * invalid marked buffer (or illegally
 				 * configured sender)
 				 */
-				log(LOG_WARNING, 
+				log(LOG_WARNING,
 				    "%s: spurious RX interrupt or sender 0 "
 				    " (ignored)\n", sc->sc_dev.dv_xname);
 				/*
@@ -848,7 +848,7 @@ bahintr(arg)
 				} else {
 					buffer ^= 1;
 					sc->sc_rx_act = buffer;
-	
+
 					/*
 					 * Start receiver on other receive
 					 * buffer. This also clears the RI
@@ -856,7 +856,7 @@ bahintr(arg)
 					 */
 					PUTREG(BAHCMD, BAH_RXBC(buffer));
 					/* in RX intr, so mask is ok for RX */
-		
+
 #ifdef BAH_DEBUG
 					printf("%s: strt rx for buf %ld, "
 					    "stat 0x%02x\n",
@@ -864,7 +864,7 @@ bahintr(arg)
 					    GETREG(BAHSTAT);
 #endif
 				}
-		
+
 #ifdef BAHSOFTCOPY
 				/*
 				 * this one starts a soft int to copy out
@@ -903,7 +903,7 @@ bah_reconwatch(arg)
 
 
 /*
- * Process an ioctl request. 
+ * Process an ioctl request.
  * This code needs some work - it looks pretty ugly.
  */
 int
@@ -923,7 +923,7 @@ bah_ioctl(ifp, command, data)
 	ifr = (struct ifreq *)data;
 	s = splnet();
 
-#if defined(BAH_DEBUG) && (BAH_DEBUG > 2) 
+#if defined(BAH_DEBUG) && (BAH_DEBUG > 2)
 	printf("%s: ioctl() called, cmd = 0x%x\n",
 	    sc->sc_dev.dv_xname, command);
 #endif
@@ -947,7 +947,7 @@ bah_ioctl(ifp, command, data)
 		if ((ifp->if_flags & IFF_UP) == 0 &&
 		    (ifp->if_flags & IFF_RUNNING) != 0) {
 			/*
-			 * If interface is marked down and it is running, 
+			 * If interface is marked down and it is running,
 			 * then stop it.
 			 */
 			bah_stop(sc);
@@ -959,7 +959,7 @@ bah_ioctl(ifp, command, data)
 			 * start it.
 			 */
 			bah_init(sc);
-		} 
+		}
 		break;
 
 	case SIOCADDMULTI:

@@ -1,4 +1,4 @@
-/*	$NetBSD: lock.h,v 1.57 2004/10/23 21:27:33 yamt Exp $	*/
+/*	$NetBSD: lock.h,v 1.57.6.1 2005/03/19 08:36:52 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-/* 
+/*
  * Copyright (c) 1995
  *	The Regents of the University of California.  All rights reserved.
  *

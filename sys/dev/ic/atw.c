@@ -1,4 +1,4 @@
-/*	$NetBSD: atw.c,v 1.82.4.1 2005/02/12 18:17:43 yamt Exp $	*/
+/*	$NetBSD: atw.c,v 1.82.4.2 2005/03/19 08:34:01 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002, 2003, 2004 The NetBSD Foundation, Inc.
@@ -41,14 +41,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atw.c,v 1.82.4.1 2005/02/12 18:17:43 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atw.c,v 1.82.4.2 2005/03/19 08:34:01 yamt Exp $");
 
 #include "bpfilter.h"
 
 #include <sys/param.h>
-#include <sys/systm.h> 
+#include <sys/systm.h>
 #include <sys/callout.h>
-#include <sys/mbuf.h>   
+#include <sys/mbuf.h>
 #include <sys/malloc.h>
 #include <sys/kernel.h>
 #include <sys/socket.h>
@@ -60,7 +60,7 @@ __KERNEL_RCSID(0, "$NetBSD: atw.c,v 1.82.4.1 2005/02/12 18:17:43 yamt Exp $");
 #include <machine/endian.h>
 
 #include <uvm/uvm_extern.h>
- 
+
 #include <net/if.h>
 #include <net/if_dl.h>
 #include <net/if_media.h>
@@ -70,9 +70,9 @@ __KERNEL_RCSID(0, "$NetBSD: atw.c,v 1.82.4.1 2005/02/12 18:17:43 yamt Exp $");
 #include <net80211/ieee80211_compat.h>
 #include <net80211/ieee80211_radiotap.h>
 
-#if NBPFILTER > 0 
+#if NBPFILTER > 0
 #include <net/bpf.h>
-#endif 
+#endif
 
 #include <machine/bus.h>
 #include <machine/intr.h>
@@ -104,15 +104,15 @@ __KERNEL_RCSID(0, "$NetBSD: atw.c,v 1.82.4.1 2005/02/12 18:17:43 yamt Exp $");
  *    set ATW_PAR_SWR (software reset)
  *    wait for ATW_PAR_SWR clear
  *    disable interrupts
- *    ack status register 
- *    enable interrupts 
+ *    ack status register
+ *    enable interrupts
  *
  * rx/tx initialization
  *
  *    disable rx/tx w/ ATW_NAR_SR, ATW_NAR_ST
  *    allocate and init descriptor rings
  *    write ATW_PAR_DSL (descriptor skip length)
- *    write descriptor base addrs: ATW_TDBD, ATW_TDBP, write ATW_RDB		
+ *    write descriptor base addrs: ATW_TDBD, ATW_TDBP, write ATW_RDB
  *    write ATW_NAR_SQ for one/both transmit descriptor rings
  *    write ATW_NAR_SQ for one/both transmit descriptor rings
  *    enable rx/tx w/ ATW_NAR_SR, ATW_NAR_ST
@@ -171,12 +171,12 @@ static void	atw_dump_pkt(struct ifnet *, struct mbuf *);
 static void	atw_print_regs(struct atw_softc *, const char *);
 
 /* Note well: I never got atw_rf3000_read or atw_si4126_read to work. */
-#	ifdef ATW_BBPDEBUG 
+#	ifdef ATW_BBPDEBUG
 static void	atw_rf3000_print(struct atw_softc *);
 static int	atw_rf3000_read(struct atw_softc *sc, u_int, u_int *);
 #	endif /* ATW_BBPDEBUG */
 
-#	ifdef ATW_SYNDEBUG 
+#	ifdef ATW_SYNDEBUG
 static void	atw_si4126_print(struct atw_softc *);
 static int	atw_si4126_read(struct atw_softc *, u_int, u_int *);
 #	endif /* ATW_SYNDEBUG */
@@ -1558,7 +1558,7 @@ atw_si4126_tune(struct atw_softc *sc, u_int chan)
 
 	if (chan == 14)
 		mhz = 2484;
-	else 
+	else
 		mhz = 2412 + 5 * (chan - 1);
 
 	/* Tune IF to 748MHz to suit the IF LO input of the
@@ -1659,7 +1659,7 @@ atw_rf3000_init(struct atw_softc *sc)
 
 	atw_bbp_io_enable(sc, 1);
 
-	/* CCA is acquisition sensitive */ 
+	/* CCA is acquisition sensitive */
 	rc = atw_rf3000_write(sc, RF3000_CCACTL,
 	    LSHIFT(RF3000_CCACTL_MODE_BOTH, RF3000_CCACTL_MODE_MASK));
 
@@ -1754,7 +1754,7 @@ atw_rf3000_tune(struct atw_softc *sc, u_int chan)
 		lna_gs_thresh >>= 8;
 	}
 
-#ifdef ATW_BBPDEBUG 
+#ifdef ATW_BBPDEBUG
 	atw_rf3000_print(sc);
 #endif /* ATW_BBPDEBUG */
 
@@ -1784,7 +1784,7 @@ atw_rf3000_tune(struct atw_softc *sc, u_int chan)
 	if (rc != 0)
 		goto out;
 
-#ifdef ATW_BBPDEBUG 
+#ifdef ATW_BBPDEBUG
 	atw_rf3000_print(sc);
 #endif /* ATW_BBPDEBUG */
 
@@ -1844,7 +1844,7 @@ atw_rf3000_write(struct atw_softc *sc, u_int addr, u_int val)
  * of the magic I have derived from a binary-only driver concerns
  * the "chip address" (see the RF3000 manual).
  */
-#ifdef ATW_BBPDEBUG 
+#ifdef ATW_BBPDEBUG
 static int
 atw_rf3000_read(struct atw_softc *sc, u_int addr, u_int *val)
 {
@@ -1931,7 +1931,7 @@ atw_si4126_write(struct atw_softc *sc, u_int addr, u_int val)
  * XXX This does not seem to work. The ADM8211 must require more or
  * different magic to read the chip than to write it.
  */
-#ifdef ATW_SYNDEBUG 
+#ifdef ATW_SYNDEBUG
 static int
 atw_si4126_read(struct atw_softc *sc, u_int addr, u_int *val)
 {
@@ -2343,7 +2343,7 @@ static __inline uint32_t
 atw_last_even_tsft(uint32_t tsfth, uint32_t tsftl, uint32_t ival)
 {
 	/* Following the reference driver's lead, I compute
-	 * 
+	 *
 	 *   (uint32_t)((((uint64_t)tsfth << 32) | tsftl) % ival)
 	 *
 	 * without using 64-bit arithmetic, using the following
@@ -2896,7 +2896,7 @@ atw_idle(struct atw_softc *sc, u_int32_t bits)
 	u_int32_t ackmask = 0, opmode, stsr, test0;
 	int i, s;
 
-	s = splnet(); 
+	s = splnet();
 
 	opmode = sc->sc_opmode & ~bits;
 
@@ -3682,7 +3682,7 @@ atw_start(struct ifnet *ifp)
 			txd = &sc->sc_txdescs[nexttx];
 			txd->at_ctl = ctl |
 			    ((nexttx == firsttx) ? 0 : htole32(ATW_TXCTL_OWN));
- 
+
 			txd->at_buf1 = htole32(dmamap->dm_segs[seg].ds_addr);
 			txd->at_flags =
 			    htole32(LSHIFT(dmamap->dm_segs[seg].ds_len,

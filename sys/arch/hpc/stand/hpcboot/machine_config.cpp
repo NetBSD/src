@@ -1,4 +1,4 @@
-/* -*-C++-*-	$NetBSD: machine_config.cpp,v 1.10 2004/08/13 15:48:51 uch Exp $	*/
+/* -*-C++-*-	$NetBSD: machine_config.cpp,v 1.10.6.1 2005/03/19 08:33:00 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2004 The NetBSD Foundation, Inc.
@@ -123,8 +123,7 @@ FrameBufferInfo::_table[] =
 	{ PLATID_CPU_ARM_STRONGARM_SA1100 , PLATID_MACH_HP_JORNADA_820     ,        8,      640,      480,        0, 0x00000000 },
 	{ PLATID_CPU_ARM_STRONGARM_SA1100 , PLATID_MACH_HP_JORNADA_820JP   ,        8,      640,      480,        0, 0x00000000 },
 	// SA-1110
-	{ PLATID_CPU_ARM_STRONGARM_SA1110 , PLATID_MACH_HP_JORNADA_720     ,       16,      640,      240,        0, 0x00000000 },
-	{ PLATID_CPU_ARM_STRONGARM_SA1110 , PLATID_MACH_HP_JORNADA_720JP   ,       16,      640,      240,     1280, 0x48200000 },
+	{ PLATID_CPU_ARM_STRONGARM_SA1110 , PLATID_MACH_HP_JORNADA_7XX     ,       16,      640,      240,     1280, 0x48200000 },
 	{ PLATID_CPU_ARM_STRONGARM_SA1110 , PLATID_MACH_COMPAQ_IPAQ_H3600  ,       16,      240,      320,        0, 0x00000000 },
 #endif // ARM
 	{ 0, 0, 0, 0, 0, 0, 0 } // TERMINATOR

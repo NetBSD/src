@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_audit.h,v 1.1 2004/07/28 22:24:06 manu Exp $ */
+/*	$NetBSD: darwin_audit.h,v 1.1.8.1 2005/03/19 08:33:28 yamt Exp $ */
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 #ifndef	_DARWIN_AUDIT_H_
 #define	_DARWIN_AUDIT_H_
 
-typedef uid_t darwin_au_id_t; 
+typedef uid_t darwin_au_id_t;
 typedef pid_t darwin_au_asid_t;
 
 struct darwin_au_mask {

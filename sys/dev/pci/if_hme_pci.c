@@ -1,4 +1,4 @@
-/*	$NetBSD: if_hme_pci.c,v 1.14.10.1 2005/02/12 18:17:47 yamt Exp $	*/
+/*	$NetBSD: if_hme_pci.c,v 1.14.10.2 2005/03/19 08:35:11 yamt Exp $	*/
 
 /*
  * Copyright (c) 2000 Matthew R. Green
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_hme_pci.c,v 1.14.10.1 2005/02/12 18:17:47 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_hme_pci.c,v 1.14.10.2 2005/03/19 08:35:11 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -90,7 +90,7 @@ hmematch_pci(parent, cf, aux)
 {
 	struct pci_attach_args *pa = aux;
 
-	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_SUN && 
+	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_SUN &&
 	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_SUN_HMENETWORK)
 		return (1);
 
@@ -128,7 +128,7 @@ hmeattach_pci(parent, self, aux)
 		PCI_PRODUCT_SUN_HMENETWORK >> 8
 	};
 #define PROMDATA_PTR_VPD	0x08
-#define PROMDATA_DATA2		0x0a		
+#define PROMDATA_DATA2		0x0a
 	static const u_int8_t promdat2[] = {
 		0x18, 0x00,			/* structure length */
 		0x00,				/* structure revision */
@@ -296,7 +296,7 @@ hmeattach_pci(parent, self, aux)
 	if (pci_intr_map(pa, &ih) != 0) {
 		printf("%s: unable to map interrupt\n", sc->sc_dev.dv_xname);
 		return;
-	}	
+	}
 	intrstr = pci_intr_string(pa->pa_pc, ih);
 	hsc->hsc_ih = pci_intr_establish(pa->pa_pc, ih, IPL_NET, hme_intr, sc);
 	if (hsc->hsc_ih == NULL) {

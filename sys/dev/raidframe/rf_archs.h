@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_archs.h,v 1.24 2004/03/09 03:10:26 oster Exp $	*/
+/*	$NetBSD: rf_archs.h,v 1.24.10.1 2005/03/19 08:35:40 yamt Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -48,11 +48,11 @@
 #ifndef _RF__RF_ARCHS_H_
 #define _RF__RF_ARCHS_H_
 
-#ifndef RF_INCLUDE_EVENODD 
+#ifndef RF_INCLUDE_EVENODD
 #define RF_INCLUDE_EVENODD       0
 #endif
 
-#ifndef RF_INCLUDE_RAID5_RS 
+#ifndef RF_INCLUDE_RAID5_RS
 #define RF_INCLUDE_RAID5_RS      0
 #endif
 

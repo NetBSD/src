@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_kq.c,v 1.7 2003/10/30 01:43:10 simonb Exp $	*/
+/*	$NetBSD: nfs_kq.c,v 1.7.10.1 2005/03/19 08:36:51 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_kq.c,v 1.7 2003/10/30 01:43:10 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_kq.c,v 1.7.10.1 2005/03/19 08:36:51 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -237,9 +237,9 @@ filt_nfsvnode(struct knote *kn, long hint)
 	return (kn->kn_fflags != 0);
 }
 
-static const struct filterops nfsread_filtops = 
+static const struct filterops nfsread_filtops =
 	{ 1, NULL, filt_nfsdetach, filt_nfsread };
-static const struct filterops nfsvnode_filtops = 
+static const struct filterops nfsvnode_filtops =
 	{ 1, NULL, filt_nfsdetach, filt_nfsvnode };
 
 int
@@ -274,12 +274,12 @@ nfs_kqfilter(void *v)
 	/*
 	 * Put the vnode to watched list.
 	 */
-	
+
 	/*
 	 * Fetch current attributes. It's only needed when the vnode
 	 * is not watched yet, but we need to do this without lock
 	 * held. This is likely cheap due to attrcache, so do it now.
-	 */ 
+	 */
 	memset(&attr, 0, sizeof(attr));
 	(void) VOP_GETATTR(vp, &attr, p->p_ucred, p);
 

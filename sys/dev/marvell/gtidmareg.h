@@ -1,4 +1,4 @@
-/*	$NetBSD: gtidmareg.h,v 1.1 2003/03/05 22:08:20 matt Exp $	*/
+/*	$NetBSD: gtidmareg.h,v 1.1.12.1 2005/03/19 08:34:40 yamt Exp $	*/
 
 /*
  * Copyright (c) 2002 Allegro Networks, Inc., Wasabi Systems, Inc.
@@ -53,9 +53,9 @@
 #define IDMA_BITS(hi, lo) ((unsigned int)(~((~0ULL)<<((hi)+1)))&((~0)<<(lo)))
 
 #define IDMA_WORD_SHIFT		2	/* log2(sizeof(u_int32_t) */
- 
 
-static volatile inline unsigned int 
+
+static volatile inline unsigned int
 idma_desc_read(u_int32_t *ip)
 {
 	u_int32_t rv;
@@ -76,7 +76,7 @@ typedef struct idma_desc {
 	u_int32_t idd_ctl;
 	u_int32_t idd_src_addr;
 	u_int32_t idd_dst_addr;
-	u_int32_t idd_next; 
+	u_int32_t idd_next;
 	u_int32_t idd_pad[4];	/* pad to CACHELINESIZE */
 } idma_desc_t __attribute__ ((aligned(CACHELINESIZE)));
 
@@ -247,8 +247,8 @@ typedef struct idma_desc {
 		(IDMA_INTR_SHIFT * ((chan < 4) ? chan : (chan - 4)))
 #define IDMA_MASK(chan, mask) \
 		(((mask) & IDMA_MASK_BITS) << IDMA_MASK_SHIFT(chan))
-			
-		
+
+
 #define IDMA_MASK_RES	(IDMA_MASK_RESX(0) \
 			|IDMA_MASK_RESX(1) \
 			|IDMA_MASK_RESX(2) \

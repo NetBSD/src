@@ -1,4 +1,4 @@
-/*	$NetBSD: mlxvar.h,v 1.8 2004/09/13 12:55:48 drochner Exp $	*/
+/*	$NetBSD: mlxvar.h,v 1.8.6.1 2005/03/19 08:34:03 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -219,7 +219,7 @@ static __inline__ void		mlx_outl(struct mlx_softc *, int, u_int32_t);
 
 static __inline__ void
 mlx_make_type1(struct mlx_ccb *mc, u_int8_t code, u_int16_t f1, u_int32_t f2,
-	       u_int8_t f3, u_int32_t f4, u_int8_t f5) 
+	       u_int8_t f3, u_int32_t f4, u_int8_t f5)
 {
 
 	mc->mc_mbox[0x0] = code;

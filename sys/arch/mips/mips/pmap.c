@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.156 2005/01/17 04:54:14 atatat Exp $	*/
+/*	$NetBSD: pmap.c,v 1.156.2.1 2005/03/19 08:33:05 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.156 2005/01/17 04:54:14 atatat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.156.2.1 2005/03/19 08:33:05 yamt Exp $");
 
 /*
  *	Manages physical address maps.
@@ -1598,7 +1598,8 @@ pmap_zero_page(phys)
 	 *
 	 * XXXJRT This is totally disgusting.
 	 */
-	if (MIPS_HAS_R4K_MMU && mips_sdcache_line_size == 0)
+	if (MIPS_HAS_R4K_MMU &&
+		( (mips_sdcache_line_size == 0) || (mips_sdcache_forceinv) ) )
 		mips_dcache_wbinv_range(MIPS_PHYS_TO_KSEG0(phys), NBPG);
 #endif	/* MIPS3_PLUS */
 }
@@ -1635,7 +1636,8 @@ pmap_copy_page(src, dst)
 	 * It would probably be better to map the destination as a
 	 * write-through no allocate to reduce cache thrash.
 	 */
-	if (MIPS_HAS_R4K_MMU && mips_sdcache_line_size == 0) {
+	if (MIPS_HAS_R4K_MMU &&
+		( (mips_sdcache_line_size == 0) || (mips_sdcache_forceinv)) ) {
 		/*XXX FIXME Not very sophisticated */
 		mips_flushcache_allpvh(src);
 /*		mips_flushcache_allpvh(dst); */
@@ -1657,7 +1659,8 @@ pmap_copy_page(src, dst)
 	 *
 	 * XXXJRT -- This is totally disgusting.
 	 */
-	if (MIPS_HAS_R4K_MMU && mips_sdcache_line_size == 0) {
+	if (MIPS_HAS_R4K_MMU &&
+		( (mips_sdcache_line_size == 0) || (mips_sdcache_forceinv)) ) {
 		mips_dcache_wbinv_range(MIPS_PHYS_TO_KSEG0(src), NBPG);
 		mips_dcache_wbinv_range(MIPS_PHYS_TO_KSEG0(dst), NBPG);
 	}

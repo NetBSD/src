@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_dagfuncs.h,v 1.7 2004/01/10 17:04:44 oster Exp $	*/
+/*	$NetBSD: rf_dagfuncs.h,v 1.7.10.1 2005/03/19 08:35:41 yamt Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -55,16 +55,16 @@ int     rf_GenericWakeupFunc(RF_DagNode_t * node, int status);
 int     rf_RegularXorFunc(RF_DagNode_t * node);
 int     rf_SimpleXorFunc(RF_DagNode_t * node);
 int     rf_RecoveryXorFunc(RF_DagNode_t * node);
-int 
+int
 rf_XorIntoBuffer(RF_Raid_t * raidPtr, RF_PhysDiskAddr_t * pda, char *srcbuf,
 		 char *targbuf);
 int     rf_bxor(char *src, char *dest, int len);
-int 
+int
 rf_longword_bxor(unsigned long *src, unsigned long *dest, int len);
-int 
-rf_longword_bxor3(unsigned long *dest, unsigned long *a, unsigned long *b, 
+int
+rf_longword_bxor3(unsigned long *dest, unsigned long *a, unsigned long *b,
 		  unsigned long *c, int len, void *bp);
-int 
+int
 rf_bxor3(unsigned char *dst, unsigned char *a, unsigned char *b,
     unsigned char *c, unsigned long len, void *bp);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_usema.c,v 1.11 2005/01/02 16:08:28 thorpej Exp $ */
+/*	$NetBSD: irix_usema.c,v 1.11.4.1 2005/03/19 08:33:34 yamt Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_usema.c,v 1.11 2005/01/02 16:08:28 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_usema.c,v 1.11.4.1 2005/03/19 08:33:34 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -82,38 +82,38 @@ static struct lock irix_usema_reclist_lock;
 
 static struct irix_usema_rec *iur_lookup_by_vn __P((struct vnode *));
 static struct irix_usema_rec *iur_lookup_by_sem __P((struct irix_semaphore *));
-static struct irix_usema_rec *iur_insert 
+static struct irix_usema_rec *iur_insert
 	__P((struct irix_semaphore *, struct vnode *, struct proc *));
 static void iur_remove __P((struct irix_usema_rec *));
-static struct irix_waiting_proc_rec *iur_proc_queue 
+static struct irix_waiting_proc_rec *iur_proc_queue
 	__P((struct irix_usema_rec *, struct proc *));
-static void iur_proc_dequeue 
+static void iur_proc_dequeue
 	__P((struct irix_usema_rec *, struct irix_waiting_proc_rec *));
 static void iur_proc_release
 	__P((struct irix_usema_rec *, struct irix_waiting_proc_rec *));
 static int iur_proc_isreleased __P((struct irix_usema_rec *, struct proc *));
-static struct irix_waiting_proc_rec *iur_proc_getfirst 
+static struct irix_waiting_proc_rec *iur_proc_getfirst
 	__P((struct irix_usema_rec *));
 
 /*
  * In order to define a custom vnode operation vector for the usemaclone
  * driver, we need to define a dummy filesystem, featuring just a null
- * init function and the vnode operation vector. This is defined by 
+ * init function and the vnode operation vector. This is defined by
  * irix_usema_dummy_vfsops, and registered to the kernel using vfs_attach
  * at driver attach time, in irix_usemaattach().
  */
 struct vfsops irix_usema_dummy_vfsops = {
-	"usema_dummy", 
+	"usema_dummy",
 	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
 	NULL, NULL, irix_usema_dummy_vfs_init, NULL, NULL, NULL, NULL, NULL,
 	NULL, NULL, irix_usema_vnodeopv_descs,
 };
 void irix_usema_dummy_vfs_init(void) { return; } /* Do nothing */
-const struct vnodeopv_desc * const irix_usema_vnodeopv_descs[] = { 
+const struct vnodeopv_desc * const irix_usema_vnodeopv_descs[] = {
 	&irix_usema_opv_desc,
 	NULL,
-};	
-const struct vnodeopv_desc irix_usema_opv_desc = 
+};
+const struct vnodeopv_desc irix_usema_opv_desc =
 	{ &irix_usema_vnodeop_p, irix_usema_vnodeop_entries };
 int (**irix_usema_vnodeop_p) __P((void *));
 
@@ -156,7 +156,7 @@ void
 irix_usemaattach(parent, self, aux)
 	struct device *parent;
 	struct device *self;
-	void *aux; 
+	void *aux;
 {
 	int error;
 
@@ -193,16 +193,16 @@ irix_usema_ioctl(v)
 	int error;
 
 #ifdef DEBUG_IRIX
-	printf("irix_usema_ioctl(): vp = %p, cmd = %lx, data = %p\n", 
+	printf("irix_usema_ioctl(): vp = %p, cmd = %lx, data = %p\n",
 	    vp, cmd, data);
 #endif
-	
+
 	/*
 	 * Some ioctl commands need to set the ioctl return value. In
-	 * irix_sys_ioctl(), we copy the return value address and the 
-	 * data argument to the stackgap in a struct irix_ioctl_usrdata. 
+	 * irix_sys_ioctl(), we copy the return value address and the
+	 * data argument to the stackgap in a struct irix_ioctl_usrdata.
 	 * The address of this structure is passed as the data argument
-	 * to the vnode layer. We therefore need to read this structure 
+	 * to the vnode layer. We therefore need to read this structure
 	 * to get the real data argument and the retval address.
 	 */
 	if ((error = copyin(data, &iiu, sizeof(iiu))) != 0)
@@ -214,7 +214,7 @@ irix_usema_ioctl(v)
 	case IRIX_UIOCABLOCKQ: /* semaphore has been blocked */
 		if ((iur = iur_lookup_by_vn(vp)) == NULL)
 			return EBADF;
-		
+
 		(void *)iur_proc_queue(iur, ap->a_p);
 		break;
 
@@ -242,7 +242,7 @@ irix_usema_ioctl(v)
 		if ((error = copyin(data, &iui, sizeof(iui))) != 0)
 			return error;
 
-		/* 
+		/*
 		 * iui.iui_oidp points to the is_oid field of struct
 		 * irix_semaphore. We want the structre address itself.
 		 */
@@ -288,7 +288,7 @@ irix_usema_poll(v)
 
 	if (iur_proc_isreleased(iur, ap->a_p) == 0)
 		return 0;
-		
+
 	return (events & check);
 }
 
@@ -306,7 +306,7 @@ irix_usema_close(v)
 	struct vnode *rvp;
 	struct irix_usema_rec *iur;
 	int error;
-	
+
 #ifdef DEBUG_IRIX
 	printf("irix_usema_close() vn = %p\n", vp);
 #endif
@@ -332,7 +332,7 @@ irix_usema_close(v)
 	return error;
 }
 
-/* 
+/*
  * Try to apply setattr to the original vnode, not the duplicated one,
  * but still return 0 in case of failure (IRIX libc rely on this).
  */
@@ -374,8 +374,8 @@ irix_usema_inactive(v)
 }
 
 
-/* 
- * For fcntl, access and getattr vnode operations, we want to do the 
+/*
+ * For fcntl, access and getattr vnode operations, we want to do the
  * operation on the original vnode, not the duplicated one.
  */
 #define ___CONCAT(x,y) __CONCAT(x,y)
@@ -400,8 +400,8 @@ IRIX_USEMA_VNOP_WRAP(access)
 IRIX_USEMA_VNOP_WRAP(getattr)
 IRIX_USEMA_VNOP_WRAP(fcntl)
 
-/* 
- * The usync_ctnl system call is not part of the usema driver, 
+/*
+ * The usync_ctnl system call is not part of the usema driver,
  * but it is closely related to it.
  */
 int
@@ -430,7 +430,7 @@ irix_sys_usync_cntl(l, v, retval)
 
 		iwpr = iur_proc_queue(iur, p);
 		(void)tsleep(iwpr, PZERO, "irix_usema", 0);
-		break;	
+		break;
 
 	case IRIX_USYNC_INTR_BLOCK:
 		if ((error = copyin(SCARG(uap, arg), &iua, sizeof(iua))) != 0)
@@ -441,7 +441,7 @@ irix_sys_usync_cntl(l, v, retval)
 
 		iwpr = iur_proc_queue(iur, p);
 		(void)tsleep(iwpr, PZERO|PCATCH, "irix_usema", 0);
-		break;	
+		break;
 
 	case IRIX_USYNC_UNBLOCK_ALL:
 		if ((error = copyin(SCARG(uap, arg), &iua, sizeof(iua))) != 0)
@@ -459,7 +459,7 @@ irix_sys_usync_cntl(l, v, retval)
 		(void)lockmgr(&iur->iur_lock, LK_RELEASE, NULL);
 		break;
 
-	case IRIX_USYNC_UNBLOCK: 
+	case IRIX_USYNC_UNBLOCK:
 		if ((error = copyin(SCARG(uap, arg), &iua, sizeof(iua))) != 0)
 			return error;
 
@@ -500,7 +500,7 @@ iur_lookup_by_vn(vp)
 	struct irix_usema_rec *iur;
 
 	(void)lockmgr(&irix_usema_reclist_lock, LK_SHARED, NULL);
-	LIST_FOREACH(iur, &irix_usema_reclist, iur_list) 
+	LIST_FOREACH(iur, &irix_usema_reclist, iur_list)
 		if (iur->iur_vn == vp)
 			break;
 	(void)lockmgr(&irix_usema_reclist_lock, LK_RELEASE, NULL);
@@ -514,16 +514,16 @@ iur_lookup_by_sem(sem)
 	struct irix_usema_rec *iur;
 	struct irix_semaphore is;
 	int error;
-	
+
 	if ((error = copyin(sem, &is, sizeof(is))) != 0)
 		return NULL;
-	
+
 	(void)lockmgr(&irix_usema_reclist_lock, LK_SHARED, NULL);
 	LIST_FOREACH(iur, &irix_usema_reclist, iur_list)
 		if (iur->iur_sem == sem && iur->iur_shid == is.is_shid)
 			break;
 	(void)lockmgr(&irix_usema_reclist_lock, LK_RELEASE, NULL);
-	
+
 	return iur;
 }
 
@@ -563,7 +563,7 @@ iur_remove(iur)
 	struct irix_usema_rec *iur;
 {
 	struct irix_waiting_proc_rec *iwpr;
-	
+
 	(void)lockmgr(&iur->iur_lock, LK_EXCLUSIVE, NULL);
 waiting_restart:
 	TAILQ_FOREACH(iwpr, &iur->iur_waiting_p, iwpr_list) {
@@ -682,38 +682,38 @@ iur_proc_getfirst(iur)
  * if new_p is NULL, free any structure allocated for process p
  * otherwise change ownership of structure allocated for process p to new_p
  */
-void    
+void
 irix_usema_exit_cleanup(p, new_p)
 	struct proc *p;
 	struct proc *new_p;
 {
 	struct irix_usema_rec *iur;
-  
+
 #ifdef DEBUG_IRIX
 	printf("irix_usema_exit_cleanup(): p = %p, new_p = %p\n", p, new_p);
 #endif
 remove_restart:
 	(void)lockmgr(&irix_usema_reclist_lock, LK_SHARED, NULL);
 	LIST_FOREACH(iur, &irix_usema_reclist, iur_list) {
-		if (iur->iur_p != p) 
+		if (iur->iur_p != p)
 			continue;
 		if (new_p == NULL) {
-			/* 
-			 * Release the lock now since iur_remove() needs to 
+			/*
+			 * Release the lock now since iur_remove() needs to
 			 * acquire an exclusive lock.
 			 */
-			(void)lockmgr(&irix_usema_reclist_lock, 
+			(void)lockmgr(&irix_usema_reclist_lock,
 			    LK_RELEASE, NULL);
 			iur_remove(iur);
-			/* 
-			 * iur is now invalid and we lost the lock, restart 
+			/*
+			 * iur is now invalid and we lost the lock, restart
 			 */
 			goto remove_restart;
 		} else {
-			(void)lockmgr(&irix_usema_reclist_lock, 
+			(void)lockmgr(&irix_usema_reclist_lock,
 			    LK_UPGRADE, NULL);
 			iur->iur_p = new_p;
-			(void)lockmgr(&irix_usema_reclist_lock, 
+			(void)lockmgr(&irix_usema_reclist_lock,
 			    LK_DOWNGRADE, NULL);
 		}
 	}
@@ -723,10 +723,10 @@ remove_restart:
 }
 
 #ifdef DEBUG_IRIX
-/* 
+/*
  * This dumps all in-kernel information about processes waiting for
  * semaphores and process that have been released by an operation
- * on a semaphore. 
+ * on a semaphore.
  * When called from ddb, curproc is NULL, and this panic lockmgr().
  */
 void
@@ -743,18 +743,18 @@ irix_usema_debug(void)
 		printf("  iur->iur_sem = %p\n", iur->iur_sem);
 		printf("  iur->iur_shid = 0x%08x\n", iur->iur_shid);
 		printf("  iur->iur_p = %p\n", iur->iur_p);
-		printf("  iur->iur_waiting_count = %d\n", 
+		printf("  iur->iur_waiting_count = %d\n",
 		    iur->iur_waiting_count);
 		printf("  Waiting processes\n");
 		if (curproc != NULL)
 			(void)lockmgr(&iur->iur_lock, LK_SHARED, NULL);
 		TAILQ_FOREACH(iwpr, &iur->iur_waiting_p, iwpr_list) {
-			printf("    iwpr %p: iwpr->iwpr_p = %p (pid %d)\n", 
+			printf("    iwpr %p: iwpr->iwpr_p = %p (pid %d)\n",
 			    iwpr, iwpr->iwpr_p, iwpr->iwpr_p->p_pid);
 		}
 		printf("  Released processes\n");
 		TAILQ_FOREACH(iwpr, &iur->iur_released_p, iwpr_list) {
-			printf("    iwpr %p: iwpr->iwpr_p = %p (pid %d)\n", 
+			printf("    iwpr %p: iwpr->iwpr_p = %p (pid %d)\n",
 			    iwpr, iwpr->iwpr_p, iwpr->iwpr_p->p_pid);
 		}
 		if (curproc != NULL)

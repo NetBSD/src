@@ -1,4 +1,4 @@
-/*	$NetBSD: sbpscsi.c,v 1.7 2004/02/13 21:22:13 enami Exp $	*/
+/*	$NetBSD: sbpscsi.c,v 1.7.10.1 2005/03/19 08:34:33 yamt Exp $	*/
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbpscsi.c,v 1.7 2004/02/13 21:22:13 enami Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbpscsi.c,v 1.7.10.1 2005/03/19 08:34:33 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -118,19 +118,19 @@ sbpscsi_attach(struct device *parent, struct device *self, void *aux)
 		sc->sbp2 = sbp2_init(psc, *udirs);
 		found = 1;
 	}
-	
+
 	if (!found) {
 		DPRINTF(("Can't match an SBP capable scsi lun?"));
 		return;
-	}		
-	
+	}
+
 	sc->sc_adapter.adapt_dev = &sc->sc_dev;
 	sc->sc_adapter.adapt_nchannels = 1;
 	sc->sc_adapter.adapt_max_periph = 1;
 	sc->sc_adapter.adapt_request = sbpscsi_scsipi_request;
 	sc->sc_adapter.adapt_minphys = sbpscsi_minphys;
 	sc->sc_adapter.adapt_openings = 8; /*Start with some. Grow as needed.*/
-	
+
 	sc->sc_channel.chan_adapter = &sc->sc_adapter;
 	sc->sc_channel.chan_bustype = &scsi_bustype;
 	sc->sc_channel.chan_defquirks = PQUIRK_ONLYBIG;
@@ -144,7 +144,7 @@ sbpscsi_attach(struct device *parent, struct device *self, void *aux)
 	printf("\n");
 
 	sc->sc_bus = config_found(&sc->sc_dev, &sc->sc_channel, scsiprint);
-	
+
 	return;
 }
 
@@ -171,13 +171,13 @@ sbpscsi_scsipi_request(struct scsipi_channel *channel, scsipi_adapter_req_t req,
 	struct sbp2 *sbp2 = sc->sbp2;
 	struct scsipi_xfer *xs = arg;
 	struct sbp2_cmd cmd;
-	
+
 	DPRINTFN(1, ("Called sbpscsi_scsipi_request\n"));
 
 	switch (req) {
 	case ADAPTER_REQ_RUN_XFER:
 		DPRINTFN(1, ("Got req_run_xfer\n"));
-		DPRINTFN(1, ("xs control: 0x%08x, timeout: %d\n", 
+		DPRINTFN(1, ("xs control: 0x%08x, timeout: %d\n",
 		    xs->xs_control, xs->timeout));
 		DPRINTFN(1, ("opcode: 0x%02x\n", (int)xs->cmd->opcode));
 		for (i = 0; i < 15; i++)
@@ -245,7 +245,7 @@ sbpscsi_status(struct sbp2_status *status, void *arg)
 {
 	struct scsipi_xfer *xs = arg;
 	u_int8_t smft, vflag, iflag, mflag, eflag;
-	
+
 	callout_stop(&xs->xs_callout);
 
 	DPRINTFN(1, ("status: resp 0x%04x, sbp_status 0x%04x\n", status->resp,
@@ -259,16 +259,16 @@ sbpscsi_status(struct sbp2_status *status, void *arg)
 		xs->error = XS_NOERROR;
 		xs->resid = 0;
 	}
-	
+
 	if (status->datalen) {
-		xs->sense.scsi_sense.error_code =
+		xs->sense.scsi_sense.response_code =
 		    SBPSCSI_STATUS_GET_STATUS(status->data[0]);
 		vflag = SBPSCSI_STATUS_GET_VFLAG(status->data[0]);
 		mflag = SBPSCSI_STATUS_GET_MFLAG(status->data[0]);
 		eflag = SBPSCSI_STATUS_GET_EFLAG(status->data[0]);
 		iflag = SBPSCSI_STATUS_GET_IFLAG(status->data[0]);
 		smft = SBPSCSI_STATUS_GET_SMFT(status->data[0]);
-		
+
 		if (iflag)
 			xs->sense.scsi_sense.flags |= SSD_ILI;
 		if (eflag)
@@ -287,25 +287,25 @@ sbpscsi_status(struct sbp2_status *status, void *arg)
 			xs->sense.scsi_sense.info[3] =
 			    status->data[1] & 0x000000ff;
 		}
-		xs->sense.scsi_sense.cmd_spec_info[0] =
+		xs->sense.scsi_sense.csi[0] =
 		    (status->data[2] & 0xff000000) >> 24;
-		xs->sense.scsi_sense.cmd_spec_info[1] =
+		xs->sense.scsi_sense.csi[1] =
 		    (status->data[2] & 0x00ff0000) >> 16;
-		xs->sense.scsi_sense.cmd_spec_info[2] =
+		xs->sense.scsi_sense.csi[2] =
 		    (status->data[2] & 0x0000ff00) >> 8;
-		xs->sense.scsi_sense.cmd_spec_info[3] =
+		xs->sense.scsi_sense.csi[3] =
 		    status->data[2] & 0x000000ff;
-		xs->sense.scsi_sense.add_sense_code =
+		xs->sense.scsi_sense.asc =
 		    SBPSCSI_STATUS_GET_SENSECODE(status->data[0]);
-		xs->sense.scsi_sense.add_sense_code_qual =
+		xs->sense.scsi_sense.ascq =
 		    SBPSCSI_STATUS_GET_SENSEQUAL(status->data[0]);
 		xs->sense.scsi_sense.fru =
 		    SBPSCSI_STATUS_GET_FRU(status->data[3]);
-		xs->sense.scsi_sense.sense_key_spec_1 =
+		xs->sense.scsi_sense.sks.sks_bytes[0] =
 		    SBPSCSI_STATUS_GET_SENSE1(status->data[3]);
-		xs->sense.scsi_sense.sense_key_spec_2 =
+		xs->sense.scsi_sense.sks.sks_bytes[1] =
 		    SBPSCSI_STATUS_GET_SENSE2(status->data[3]);
-		xs->sense.scsi_sense.sense_key_spec_3 =
+		xs->sense.scsi_sense.sks.sks_bytes[3] =
 		    SBPSCSI_STATUS_GET_SENSE3(status->data[3]);
 	}
 	scsipi_done(xs);

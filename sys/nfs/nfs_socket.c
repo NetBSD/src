@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_socket.c,v 1.111 2004/09/17 14:11:26 skrll Exp $	*/
+/*	$NetBSD: nfs_socket.c,v 1.111.6.1 2005/03/19 08:36:51 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1995
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_socket.c,v 1.111 2004/09/17 14:11:26 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_socket.c,v 1.111.6.1 2005/03/19 08:36:51 yamt Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -375,7 +375,7 @@ nfs_disconnect(nmp)
 {
 	struct socket *so;
 	int drain = 0;
-	
+
 	if (nmp->nm_so) {
 		so = nmp->nm_so;
 		nmp->nm_so = (struct socket *)0;
@@ -578,7 +578,7 @@ tryagain:
 		}
 		so = rep->r_nmp->nm_so;
 		if (!so) {
-			error = nfs_reconnect(rep, p); 
+			error = nfs_reconnect(rep, p);
 			if (error) {
 				nfs_sndunlock(&rep->r_nmp->nm_iflag);
 				return (error);
@@ -813,10 +813,10 @@ nfs_reply(myrep, procp)
 			}
 			return (error);
 		}
-		nmp->nm_waiters--;			
+		nmp->nm_waiters--;
 		if (nam)
 			m_freem(nam);
-	
+
 		/*
 		 * Get the xid and check that it is an rpc reply
 		 */
@@ -1709,7 +1709,7 @@ nfs_rcvlock(rep)
 
 	if (*flagp & NFSMNT_DISMNT)
 		return EIO;
-	
+
 	if (*flagp & NFSMNT_INT)
 		slpflag = PCATCH;
 	else

@@ -1,4 +1,4 @@
-#	$NetBSD: majors.arm32,v 1.18.4.1 2005/02/12 18:17:30 yamt Exp $
+#	$NetBSD: majors.arm32,v 1.18.4.2 2005/03/19 08:32:51 yamt Exp $
 #
 # Device majors for arm32
 #
@@ -103,7 +103,7 @@ device-major	ksyms		char 105		ksyms
 device-major	isdnbchan	char 106		isdnbchan
 device-major	epcom		char 107		epcom
 device-major	tslcd		char 108		tslcd
-device-major	twe		char 109  block 109	twe
+device-major	twe		char 109  		twe
 
 # Majors up to 143 are reserved for machine-dependant drivers.
 # New machine-independant driver majors are assigned in 

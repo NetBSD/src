@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: aicasm_scan.l,v 1.3 2003/04/19 19:26:11 fvdl Exp $	*/
+/*	$NetBSD: aicasm_scan.l,v 1.3.12.1 2005/03/19 08:34:42 yamt Exp $	*/
 /*
  * Lexical Analyzer for the Aic7xxx SCSI Host adapter sequencer assembler.
  *
@@ -125,7 +125,7 @@ if[ \t]*\(		{
 					 && string_buf_ptr != string_buf
 					 && string_buf_ptr[-1] == ' ')
 						yptr++;
-					else 
+					else
 						*string_buf_ptr++ = *yptr++;
 				}
 			}
@@ -272,7 +272,7 @@ else			{ return T_ELSE; }
 				BEGIN MACRODEF;
 				return T_DEFINE;
 			}
-<MACRODEF>{WORD}{SPACE}	{ 
+<MACRODEF>{WORD}{SPACE}	{
 				char *yptr;
 
 				/* Strip space and return as a normal symbol */
@@ -418,7 +418,7 @@ else			{ return T_ELSE; }
 					return T_SYMBOL;
 				}
 			}
-.			{ 
+.			{
 				snprintf(buf, sizeof(buf), "Invalid character "
 					 "'%c'", yytext[0]);
 				stop(buf, EX_DATAERR);
@@ -448,7 +448,7 @@ include_file(char *file_name, include_type type)
 	if (newfile == NULL && type != SOURCE_FILE) {
                 path_entry_t include_dir;
                 for (include_dir = search_path.slh_first;
-                     include_dir != NULL;                
+                     include_dir != NULL;
                      include_dir = include_dir->links.sle_next) {
 			char fullname[PATH_MAX];
 

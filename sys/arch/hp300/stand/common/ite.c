@@ -1,4 +1,4 @@
-/*	$NetBSD: ite.c,v 1.3 2003/11/14 16:52:40 tsutsui Exp $	*/
+/*	$NetBSD: ite.c,v 1.3.10.1 2005/03/19 08:32:58 yamt Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -142,7 +142,7 @@ int	ite_scode[NITE] = { 0 };
  * Locate all bitmapped displays
  */
 static void
-iteconfig()
+iteconfig(void)
 {
 	extern struct hp_hw sc_table[];
 	int dtype, fboff, i;
@@ -203,8 +203,7 @@ int	whichconsole = -1;
 #endif
 
 void
-iteprobe(cp)
-	struct consdev *cp;
+iteprobe(struct consdev *cp)
 {
 	int ite;
 	struct ite_data *ip;
@@ -243,8 +242,7 @@ iteprobe(cp)
 }
 
 void
-iteinit(cp)
-	struct consdev *cp;
+iteinit(struct consdev *cp)
 {
 	int ite = cp->cn_dev;
 	struct ite_data *ip;
@@ -268,9 +266,7 @@ iteinit(cp)
 
 /* ARGSUSED */
 void
-iteputchar(dev, c)
-	dev_t dev;
-	int c;
+iteputchar(dev_t dev, int c)
 {
 	struct ite_data *ip = &ite_data[itecons];
 	struct itesw *sp = ip->isw;
@@ -311,9 +307,7 @@ iteputchar(dev, c)
 }
 
 static void
-itecheckwrap(ip, sp)
-	struct ite_data *ip;
-	struct itesw *sp;
+itecheckwrap(struct ite_data *ip, struct itesw *sp)
 {
 	if (++ip->curx == ip->cols) {
 		ip->curx = 0;
@@ -328,19 +322,16 @@ itecheckwrap(ip, sp)
 }
 
 static void
-ite_clrtoeol(ip, sp, y, x)
-	struct ite_data *ip;
-	struct itesw *sp;
-	int y, x;
+ite_clrtoeol(struct ite_data *ip, struct itesw *sp, int y, int x)
 {
+
 	(*sp->ite_clear)(ip, y, x, 1, ip->cols - x);
 	(*sp->ite_cursor)(ip, DRAW_CURSOR);
 }
 
 /* ARGSUSED */
 int
-itegetchar(dev)
-	dev_t dev;
+itegetchar(dev_t dev)
 {
 
 #ifdef SMALL
@@ -353,7 +344,6 @@ itegetchar(dev)
 
 /* ARGSUSED */
 static void
-ite_deinit_noop(ip)
-	struct ite_data *ip;
+ite_deinit_noop(struct ite_data *ip)
 {
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_init.c,v 1.25 2004/03/23 13:22:05 junyoung Exp $	*/
+/*	$NetBSD: vfs_init.c,v 1.25.10.1 2005/03/19 08:36:12 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_init.c,v 1.25 2004/03/23 13:22:05 junyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_init.c,v 1.25.10.1 2005/03/19 08:36:12 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/mount.h>
@@ -229,7 +229,7 @@ vfs_opv_init_default(vfs_opv_desc)
 
 	for (j = 0; j < VNODE_OPS_COUNT; j++)
 		if (opv_desc_vector[j] == NULL)
-			opv_desc_vector[j] = 
+			opv_desc_vector[j] =
 			    opv_desc_vector[VOFFSET(vop_default)];
 }
 

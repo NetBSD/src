@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_tables.c,v 1.7 2003/10/27 00:12:42 lukem Exp $	*/
+/*	$NetBSD: ffs_tables.c,v 1.7.10.1 2005/03/19 08:37:03 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -36,7 +36,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_tables.c,v 1.7 2003/10/27 00:12:42 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_tables.c,v 1.7.10.1 2005/03/19 08:37:03 yamt Exp $");
 
 #include <sys/param.h>
 
@@ -53,7 +53,7 @@ const int inside[9] = {
 
 /*
  * Given a block map bit pattern, the frag tables tell whether a
- * particular size fragment is available. 
+ * particular size fragment is available.
  *
  * used as:
  * if ((1 << (size - 1)) & fragtbl[fs->fs_frag][map] {

@@ -1,4 +1,4 @@
-/*	$NetBSD: icpsp.c,v 1.9 2003/09/18 01:33:59 mycroft Exp $	*/
+/*	$NetBSD: icpsp.c,v 1.9.10.1 2005/03/19 08:34:02 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: icpsp.c,v 1.9 2003/09/18 01:33:59 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: icpsp.c,v 1.9.10.1 2005/03/19 08:34:02 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -181,7 +181,7 @@ icpsp_scsipi_request(struct scsipi_channel *chan, scsipi_adapter_req_t req,
 		ic->ic_sg = rc->rc_sg;
 		ic->ic_service = ICP_SCSIRAWSERVICE;
 		soff = ICP_SCRATCH_SENSE + ic->ic_ident *
-		    sizeof(struct scsipi_sense_data);
+		    sizeof(struct scsi_sense_data);
 
 		/*
 		 * Build the command.  We don't need to actively prevent
@@ -251,7 +251,7 @@ icpsp_scsipi_request(struct scsipi_channel *chan, scsipi_adapter_req_t req,
 
 				/*
 				 * XXX We're now in a bad way, because we
-				 * don't know how to abort the command. 
+				 * don't know how to abort the command.
 				 * That shouldn't matter too much, since
 				 * polled commands won't be used while the
 				 * system is running.
@@ -287,7 +287,7 @@ icpsp_intr(struct icp_ccb *ic)
 	xs = (struct scsipi_xfer *)ic->ic_context;
 	icp = (struct icp_softc *)ic->ic_dv->dv_parent;
 	soff = ICP_SCRATCH_SENSE + ic->ic_ident *
-	    sizeof(struct scsipi_sense_data);
+	    sizeof(struct scsi_sense_data);
 
 	SC_DEBUG(xs->xs_periph, SCSIPI_DB2, ("icpsp_intr\n"));
 

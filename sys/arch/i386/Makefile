@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.23 2004/01/16 10:08:42 dyoung Exp $
+#	$NetBSD: Makefile,v 1.23.10.1 2005/03/19 08:33:01 yamt Exp $
 
 # Makefile for i386 tags file and boot blocks
 
@@ -19,7 +19,7 @@ tags:
 	rm -f ${TI386}
 	-echo ${SI386} ${COMM} | xargs ctags -wadtf ${TI386}
 	egrep "^ENTRY(.*)|^ALTENTRY(.*)" ${AI386} | \
-	    sed "s;\([^:]*\):\([^(]*\)(\([^, )]*\)\(.*\);\3 \1 /^\2(\3\4$$/;" \
+	    sed "s;\([^:]*\):\([^(]*\)(\([^, )]*\)\(.*\);\3	\1	/^\2(\3\4$$/;" \
 		>> ${TI386}
 	sort -o ${TI386} ${TI386}
 

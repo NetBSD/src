@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_ecoff.c,v 1.23.10.1 2005/02/12 18:17:52 yamt Exp $	*/
+/*	$NetBSD: exec_ecoff.c,v 1.23.10.2 2005/03/19 08:36:11 yamt Exp $	*/
 
 /*
  * Copyright (c) 1994 Adam Glass
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exec_ecoff.c,v 1.23.10.1 2005/02/12 18:17:52 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exec_ecoff.c,v 1.23.10.2 2005/03/19 08:36:11 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -88,7 +88,7 @@ exec_ecoff_makecmds(struct proc *p, struct exec_package *epp)
 		   epp->ep_vp);
 		break;
 	case ECOFF_NMAGIC:
-		error = exec_ecoff_prep_nmagic(p, epp, epp->ep_hdr, 
+		error = exec_ecoff_prep_nmagic(p, epp, epp->ep_hdr,
 		   epp->ep_vp);
 		break;
 	case ECOFF_ZMAGIC:
@@ -135,7 +135,7 @@ exec_ecoff_prep_omagic(struct proc *p, struct exec_package *epp,
 		NEW_VMCMD(&epp->ep_vmcmds, vmcmd_map_zero, eap->bsize,
 		    ECOFF_SEGMENT_ALIGN(execp, eap->bss_start), NULLVP, 0,
 		    VM_PROT_READ|VM_PROT_WRITE|VM_PROT_EXECUTE);
-	
+
 	return 0;
 }
 

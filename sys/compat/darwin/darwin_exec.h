@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_exec.h,v 1.11 2004/07/03 00:14:30 manu Exp $ */
+/*	$NetBSD: darwin_exec.h,v 1.11.6.1 2005/03/19 08:33:28 yamt Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -41,9 +41,9 @@
 
 #include <compat/mach/mach_exec.h>
 
-/* 
+/*
  * Because it can be used by Mach emulation code as well as Darwin emulation
- * code, this structure must begin with a struct mach_emuldata. 
+ * code, this structure must begin with a struct mach_emuldata.
  */
 struct darwin_emuldata {
 	struct mach_emuldata ded_mach_emuldata;
@@ -56,7 +56,7 @@ struct darwin_emuldata {
 
 #define DARWIN_DED_SIGEXC	1	/* Mach exceptions instead of signals */
 
-int exec_darwin_copyargs(struct proc *, struct exec_package *, 
+int exec_darwin_copyargs(struct proc *, struct exec_package *,
     struct ps_strings *, char **, void *);
 int exec_darwin_probe(char **);
 int darwin_exec_setup_stack(struct proc *, struct exec_package *);

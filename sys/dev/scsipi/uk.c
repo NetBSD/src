@@ -1,4 +1,4 @@
-/*	$NetBSD: uk.c,v 1.42 2004/08/21 22:02:31 thorpej Exp $	*/
+/*	$NetBSD: uk.c,v 1.42.6.1 2005/03/19 08:35:48 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uk.c,v 1.42 2004/08/21 22:02:31 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uk.c,v 1.42.6.1 2005/03/19 08:35:48 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -118,12 +118,12 @@ static int
 ukactivate(struct device *self, enum devact act)
 {
 	int rv = 0;
- 
+
 	switch (act) {
 	case DVACT_ACTIVATE:
 		rv = EOPNOTSUPP;
 		break;
- 
+
 	case DVACT_DEACTIVATE:
 		/*
 		 * Nothing to do; we key off the device's DVF_ACTIVE.
@@ -132,20 +132,20 @@ ukactivate(struct device *self, enum devact act)
 	}
 	return (rv);
 }
- 
+
 static int
 ukdetach(struct device *self, int flags)
 {
 	/*struct uk_softc *uk = (struct uk_softc *) self;*/
 	int cmaj, mn;
- 
+
 	/* locate the major number */
 	cmaj = cdevsw_lookup_major(&uk_cdevsw);
- 
+
 	/* Nuke the vnodes for any open instances */
 	mn = self->dv_unit;
 	vdevgone(cmaj, mn, mn, VCHR);
- 
+
 	return (0);
 }
 

@@ -1,13 +1,13 @@
-/*	$NetBSD: coda_kernel.h,v 1.4 2002/11/02 07:18:36 perry Exp $	*/
+/*	$NetBSD: coda_kernel.h,v 1.4.16.1 2005/03/19 08:33:28 yamt Exp $	*/
 
 /*
- * 
+ *
  *             Coda: an Experimental Distributed File System
  *                              Release 3.1
- * 
+ *
  *           Copyright (c) 1987-1998 Carnegie Mellon University
  *                          All Rights Reserved
- * 
+ *
  * Permission  to  use, copy, modify and distribute this software and its
  * documentation is hereby granted,  provided  that  both  the  copyright
  * notice  and  this  permission  notice  appear  in  all  copies  of the
@@ -16,19 +16,19 @@
  * that credit is given to Carnegie Mellon University  in  all  documents
  * and publicity pertaining to direct or indirect use of this code or its
  * derivatives.
- * 
+ *
  * CODA IS AN EXPERIMENTAL SOFTWARE SYSTEM AND IS  KNOWN  TO  HAVE  BUGS,
  * SOME  OF  WHICH MAY HAVE SERIOUS CONSEQUENCES.  CARNEGIE MELLON ALLOWS
  * FREE USE OF THIS SOFTWARE IN ITS "AS IS" CONDITION.   CARNEGIE  MELLON
  * DISCLAIMS  ANY  LIABILITY  OF  ANY  KIND  FOR  ANY  DAMAGES WHATSOEVER
  * RESULTING DIRECTLY OR INDIRECTLY FROM THE USE OF THIS SOFTWARE  OR  OF
  * ANY DERIVATIVE WORK.
- * 
+ *
  * Carnegie  Mellon  encourages  users  of  this  software  to return any
  * improvements or extensions that  they  make,  and  to  grant  Carnegie
  * Mellon the rights to redistribute these changes without encumbrance.
- * 
- * 	@(#) coda/coda_kernel.h,v 1.1.1.1 1998/08/29 21:26:46 rvb Exp $ 
+ *
+ * 	@(#) coda/coda_kernel.h,v 1.1.1.1 1998/08/29 21:26:46 rvb Exp $
  */
 
 /* Macros to manipulate the queue */
@@ -48,7 +48,7 @@ do {                                         \
 #define EMPTY(head) ((head).forw == &(head))
 
 #define EOQ(el, head) ((struct queue *)(el) == (struct queue *)&(head))
-		   
+
 #define INSQUE(el, head)                             \
 do {                                                 \
 	(el).forw = ((head).back)->forw;             \

@@ -1,4 +1,4 @@
-/*	$NetBSD: com.c,v 1.231 2004/08/09 16:57:14 mycroft Exp $	*/
+/*	$NetBSD: com.c,v 1.231.6.1 2005/03/19 08:34:02 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2004 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.231 2004/08/09 16:57:14 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.231.6.1 2005/03/19 08:34:02 yamt Exp $");
 
 #include "opt_com.h"
 #include "opt_ddb.h"
@@ -219,7 +219,7 @@ static struct cnm_state com_cnm_state;
 
 static int ppscap =
 	PPS_TSFMT_TSPEC |
-	PPS_CAPTUREASSERT | 
+	PPS_CAPTUREASSERT |
 	PPS_CAPTURECLEAR |
 	PPS_OFFSETASSERT | PPS_OFFSETCLEAR;
 
@@ -639,7 +639,7 @@ com_config(struct com_softc *sc)
 		/* Set 16550 compatibility mode */
 		bus_space_write_1(iot, sc->sc_hayespioh, HAYESP_CMD1,
 				  HAYESP_SETMODE);
-		bus_space_write_1(iot, sc->sc_hayespioh, HAYESP_CMD2, 
+		bus_space_write_1(iot, sc->sc_hayespioh, HAYESP_CMD2,
 				  HAYESP_MODE_FIFO|HAYESP_MODE_RTS|
 				  HAYESP_MODE_SCALE);
 
@@ -654,7 +654,7 @@ com_config(struct com_softc *sc)
 		/* Set flow control levels */
 		bus_space_write_1(iot, sc->sc_hayespioh, HAYESP_CMD1,
 				  HAYESP_SETRXFLOW);
-		bus_space_write_1(iot, sc->sc_hayespioh, HAYESP_CMD2, 
+		bus_space_write_1(iot, sc->sc_hayespioh, HAYESP_CMD2,
 				  HAYESP_HIBYTE(HAYESP_RXHIWMARK));
 		bus_space_write_1(iot, sc->sc_hayespioh, HAYESP_CMD2,
 				  HAYESP_LOBYTE(HAYESP_RXHIWMARK));
@@ -693,7 +693,7 @@ com_detach(struct device *self, int flags)
 		ttyfree(sc->sc_tty);
 		return 0;
 	}
-	
+
 	/* Free the receive buffer. */
 	free(sc->sc_rbuf, M_DEVBUF);
 
@@ -740,7 +740,7 @@ com_activate(struct device *self, enum devact act)
 		break;
 	}
 
-	COM_UNLOCK(sc);	
+	COM_UNLOCK(sc);
 	splx(s);
 	return (rv);
 }
@@ -752,7 +752,7 @@ com_shutdown(struct com_softc *sc)
 	int s;
 
 	s = splserial();
-	COM_LOCK(sc);	
+	COM_LOCK(sc);
 
 	/* If we were asserting flow control, then deassert it. */
 	SET(sc->sc_rx_flags, RX_IBUF_BLOCKED);
@@ -777,7 +777,7 @@ com_shutdown(struct com_softc *sc)
 		/* XXX tsleep will only timeout */
 		(void) tsleep(sc, TTIPRI, ttclos, hz);
 		s = splserial();
-		COM_LOCK(sc);	
+		COM_LOCK(sc);
 	}
 
 	/* Turn off interrupts. */
@@ -938,7 +938,7 @@ comopen(dev_t dev, int flag, int mode, struct proc *p)
 		COM_UNLOCK(sc);
 		splx(s2);
 	}
-	
+
 	splx(s);
 
 	error = ttyopen(tp, COMDIALOUT(dev), ISSET(flag, O_NONBLOCK));
@@ -962,7 +962,7 @@ bad:
 
 	return (error);
 }
- 
+
 int
 comclose(dev_t dev, int flag, int mode, struct proc *p)
 {
@@ -990,7 +990,7 @@ comclose(dev_t dev, int flag, int mode, struct proc *p)
 
 	return (0);
 }
- 
+
 int
 comread(dev_t dev, struct uio *uio, int flag)
 {
@@ -999,10 +999,10 @@ comread(dev_t dev, struct uio *uio, int flag)
 
 	if (COM_ISALIVE(sc) == 0)
 		return (EIO);
- 
+
 	return ((*tp->t_linesw->l_read)(tp, uio, flag));
 }
- 
+
 int
 comwrite(dev_t dev, struct uio *uio, int flag)
 {
@@ -1011,7 +1011,7 @@ comwrite(dev_t dev, struct uio *uio, int flag)
 
 	if (COM_ISALIVE(sc) == 0)
 		return (EIO);
- 
+
 	return ((*tp->t_linesw->l_write)(tp, uio, flag));
 }
 
@@ -1023,7 +1023,7 @@ compoll(dev_t dev, int events, struct proc *p)
 
 	if (COM_ISALIVE(sc) == 0)
 		return (EIO);
- 
+
 	return ((*tp->t_linesw->l_poll)(tp, events, p));
 }
 
@@ -1058,7 +1058,7 @@ comioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 	error = 0;
 
 	s = splserial();
-	COM_LOCK(sc);	
+	COM_LOCK(sc);
 
 	switch (cmd) {
 	case TIOCSBRK:
@@ -1082,7 +1082,7 @@ comioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 		break;
 
 	case TIOCSFLAGS:
-		error = suser(p->p_ucred, &p->p_acflag); 
+		error = suser(p->p_ucred, &p->p_acflag);
 		if (error)
 			break;
 		sc->sc_swflags = *(int *)data;
@@ -1120,7 +1120,7 @@ comioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 			break;
 		}
 		sc->ppsparam = *pp;
-	 	/* 
+	 	/*
 		 * Compute msr masks from user-specified timestamp state.
 		 */
 		mode = sc->ppsparam.mode;
@@ -1128,13 +1128,13 @@ comioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 		case 0:
 			sc->sc_ppsmask = 0;
 			break;
-	
+
 		case PPS_CAPTUREASSERT:
 			sc->sc_ppsmask = MSR_DCD;
 			sc->sc_ppsassert = MSR_DCD;
 			sc->sc_ppsclear = -1;
 			break;
-	
+
 		case PPS_CAPTURECLEAR:
 			sc->sc_ppsmask = MSR_DCD;
 			sc->sc_ppsassert = -1;
@@ -1194,19 +1194,19 @@ comioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 	case TIOCDCDTIMESTAMP:	/* XXX old, overloaded  API used by xntpd v3 */
 		/*
 		 * Some GPS clocks models use the falling rather than
-		 * rising edge as the on-the-second signal. 
+		 * rising edge as the on-the-second signal.
 		 * The old API has no way to specify PPS polarity.
 		 */
 		sc->sc_ppsmask = MSR_DCD;
 #ifndef PPS_TRAILING_EDGE
 		sc->sc_ppsassert = MSR_DCD;
 		sc->sc_ppsclear = -1;
-		TIMESPEC_TO_TIMEVAL((struct timeval *)data, 
+		TIMESPEC_TO_TIMEVAL((struct timeval *)data,
 		    &sc->ppsinfo.assert_timestamp);
 #else
 		sc->sc_ppsassert = -1;
 		sc->sc_ppsclear = 0;
-		TIMESPEC_TO_TIMEVAL((struct timeval *)data, 
+		TIMESPEC_TO_TIMEVAL((struct timeval *)data,
 		    &sc->ppsinfo.clear_timestamp);
 #endif
 		break;
@@ -1299,7 +1299,7 @@ tiocm_to_com(struct com_softc *sc, u_long how, int ttybits)
 		SET(combits, MCR_DTR);
 	if (ISSET(ttybits, TIOCM_RTS))
 		SET(combits, MCR_RTS);
- 
+
 	switch (how) {
 	case TIOCMBIC:
 		CLR(sc->sc_mcr, combits);
@@ -1443,7 +1443,7 @@ comparam(struct tty *tp, struct termios *t)
 	lcr = ISSET(sc->sc_lcr, LCR_SBREAK) | cflag2lcr(t->c_cflag);
 
 	s = splserial();
-	COM_LOCK(sc);	
+	COM_LOCK(sc);
 
 	sc->sc_lcr = lcr;
 
@@ -1655,7 +1655,7 @@ comhwiflow(struct tty *tp, int block)
 
 	s = splserial();
 	COM_LOCK(sc);
-	
+
 	if (block) {
 		if (!ISSET(sc->sc_rx_flags, RX_TTY_BLOCKED)) {
 			SET(sc->sc_rx_flags, RX_TTY_BLOCKED);
@@ -1676,7 +1676,7 @@ comhwiflow(struct tty *tp, int block)
 	splx(s);
 	return (1);
 }
-	
+
 /*
  * (un)block input via hw flowcontrol
  */
@@ -1788,7 +1788,7 @@ comstop(struct tty *tp, int flag)
 		if (!ISSET(tp->t_state, TS_TTSTOP))
 			SET(tp->t_state, TS_FLUSH);
 	}
-	COM_UNLOCK(sc);	
+	COM_UNLOCK(sc);
 	splx(s);
 }
 
@@ -1896,7 +1896,7 @@ com_rxsoft(struct com_softc *sc, struct tty *tp)
 		sc->sc_rbget = get;
 		s = splserial();
 		COM_LOCK(sc);
-		
+
 		cc = sc->sc_rbavail += scc - cc;
 		/* Buffers should be ok again, release possible block. */
 		if (cc >= sc->sc_r_lowat) {
@@ -1943,7 +1943,7 @@ com_stsoft(struct com_softc *sc, struct tty *tp)
 	msr = sc->sc_msr;
 	delta = sc->sc_msr_delta;
 	sc->sc_msr_delta = 0;
-	COM_UNLOCK(sc);	
+	COM_UNLOCK(sc);
 	splx(s);
 
 	if (ISSET(delta, sc->sc_msr_dcd)) {
@@ -2013,7 +2013,7 @@ comsoft(void *arg)
 			continue;
 #endif
 		tp = sc->sc_tty;
-		
+
 		if (sc->sc_rx_ready) {
 			sc->sc_rx_ready = 0;
 			com_rxsoft(sc, tp);
@@ -2160,7 +2160,7 @@ again:	do {
 		    	if ((msr & sc->sc_ppsmask) == sc->sc_ppsassert) {
 				/* XXX nanotime() */
 				microtime(&tv);
-				TIMEVAL_TO_TIMESPEC(&tv, 
+				TIMEVAL_TO_TIMESPEC(&tv,
 				    &sc->ppsinfo.assert_timestamp);
 				if (sc->ppsparam.mode & PPS_OFFSETASSERT) {
 					timespecadd(&sc->ppsinfo.assert_timestamp,
@@ -2180,7 +2180,7 @@ again:	do {
 			} else if ((msr & sc->sc_ppsmask) == sc->sc_ppsclear) {
 				/* XXX nanotime() */
 				microtime(&tv);
-				TIMEVAL_TO_TIMESPEC(&tv, 
+				TIMEVAL_TO_TIMESPEC(&tv,
 				    &sc->ppsinfo.clear_timestamp);
 				if (sc->ppsparam.mode & PPS_OFFSETCLEAR) {
 					timespecadd(&sc->ppsinfo.clear_timestamp,
@@ -2304,7 +2304,7 @@ again:	do {
 /*
  * The following functions are polled getc and putc routines, shared
  * by the console and kgdb glue.
- * 
+ *
  * The read-ahead code is so that you can detect pending in-band
  * cn_magic in polled mode while doing output rather than having to
  * wait until the kernel decides it needs input.
@@ -2357,7 +2357,7 @@ com_common_putc(dev_t dev, bus_space_tag_t iot, bus_space_handle_t ioh, int c)
 	int s = splserial();
 	int cin, stat, timo;
 
-	if (com_readaheadcount < MAX_READAHEAD 
+	if (com_readaheadcount < MAX_READAHEAD
 	     && ISSET(stat = bus_space_read_1(iot, ioh, com_lsr), LSR_RXRDY)) {
 		int cn_trapped = 0;
 		cin = bus_space_read_1(iot, ioh, com_data);

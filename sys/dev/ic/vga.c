@@ -1,21 +1,21 @@
-/* $NetBSD: vga.c,v 1.80 2004/08/13 04:03:38 mycroft Exp $ */
+/* $NetBSD: vga.c,v 1.80.6.1 2005/03/19 08:34:04 yamt Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
  * All rights reserved.
  *
  * Author: Chris G. Demetriou
- * 
+ *
  * Permission to use, copy, modify and distribute this software and
  * its documentation is hereby granted, provided that both the copyright
  * notice and this permission notice appear in all copies of the
  * software, derivative works or modified versions, and any portions
  * thereof, and that both notices appear in supporting documentation.
- * 
- * CARNEGIE MELLON ALLOWS FREE USE OF THIS SOFTWARE IN ITS "AS IS" 
- * CONDITION.  CARNEGIE MELLON DISCLAIMS ANY LIABILITY OF ANY KIND 
+ *
+ * CARNEGIE MELLON ALLOWS FREE USE OF THIS SOFTWARE IN ITS "AS IS"
+ * CONDITION.  CARNEGIE MELLON DISCLAIMS ANY LIABILITY OF ANY KIND
  * FOR ANY DAMAGES WHATSOEVER RESULTING FROM THE USE OF THIS SOFTWARE.
- * 
+ *
  * Carnegie Mellon requests users of this software to return to
  *
  *  Software Distribution Coordinator  or  Software.Distribution@CS.CMU.EDU
@@ -35,7 +35,7 @@
 #include "opt_wsmsgattrs.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vga.c,v 1.80 2004/08/13 04:03:38 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vga.c,v 1.80.6.1 2005/03/19 08:34:04 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1387,7 +1387,7 @@ vga_scroll(void *v, void *cookie, int lines)
 			p = st;
 		scr->pcs.visibleoffset = (p + ul) % we;
 	}
-	
+
 	vga_6845_write(vh, startadrh, scr->pcs.visibleoffset >> 9);
 	vga_6845_write(vh, startadrl, scr->pcs.visibleoffset >> 1);
 }

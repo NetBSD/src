@@ -1,4 +1,4 @@
-# $NetBSD: ALPHA,v 1.198.2.1 2005/02/12 18:17:29 yamt Exp $
+# $NetBSD: ALPHA,v 1.198.2.2 2005/03/19 08:32:44 yamt Exp $
 #
 # Alpha kernel with all the options you'd want, and more.
 
@@ -6,7 +6,7 @@ include 	"arch/alpha/conf/std.alpha"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-ident		"ALPHA-$Revision: 1.198.2.1 $"
+ident		"ALPHA-$Revision: 1.198.2.2 $"
 
 maxusers 32
 
@@ -79,7 +79,7 @@ options 	QUOTA		# User and group quotas for the FFS
 #options 	FFS_EI		# FFS Endian Independant support
 options 	SOFTDEP		# FFS soft updates support.
 options 	NFSSERVER	# Sun NFS-compatible file system server
-options 	FFS_SNAPSHOT	# ffs snapshots
+#options 	FFS_NO_SNAPSHOT	# ffs snapshots
 
 # Networking options
 options 	INET		# Internet protocol suite
@@ -113,6 +113,7 @@ options 	COMPAT_12
 options 	COMPAT_13
 options 	COMPAT_14
 options 	COMPAT_16
+options 	COMPAT_20
 
 # OSF/1 binary compatibility
 options 	COMPAT_OSF1
