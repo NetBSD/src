@@ -1,4 +1,4 @@
-/*	$NetBSD: uhidev.c,v 1.9 2002/10/08 09:56:17 dan Exp $	*/
+/*	$NetBSD: uhidev.c,v 1.10 2002/10/09 06:27:09 fair Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -396,7 +396,7 @@ uhidev_intr(usbd_xfer_handle xfer, usbd_private_handle addr, usbd_status status)
 		       scd->sc_in_rep_size, cc);
 #endif
 #if NRND > 0
-	rnd_add_uint32(&scd->rnd_source, (u_int32_t)(sc->sc_ibuf));
+	rnd_add_uint32(&scd->rnd_source, (uintptr_t)(sc->sc_ibuf));
 #endif
 	scd->sc_intr(scd, p, cc);
 }
