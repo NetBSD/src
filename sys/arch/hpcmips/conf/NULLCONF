@@ -1,5 +1,5 @@
 #
-# 	$NetBSD: NULLCONF,v 1.17 2002/11/27 07:33:02 shin Exp $
+# 	$NetBSD: NULLCONF,v 1.17.8.1 2004/04/18 02:19:17 jmc Exp $
 #
 include		"arch/hpcmips/conf/std.hpcmips"
 
@@ -8,6 +8,7 @@ include		"arch/hpcmips/conf/std.hpcmips"
 maxusers	8
 
 include		"arch/hpcmips/conf/std.hpcmips.vr41"
+makeoptions	CPUFLAGS="-mips2"	# CPU codegen options
 options 	VR4102			# NEC VR4102
 options 	VR4111			# NEC VR4111
 options 	VR4121			# NEC VR4121
