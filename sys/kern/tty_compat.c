@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_compat.c,v 1.15 1994/08/02 08:47:54 mycroft Exp $	*/
+/*	$NetBSD: tty_compat.c,v 1.16 1994/08/03 03:41:34 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -350,20 +350,22 @@ ttcompatsetflags(tp, t)
 		break;
 	}
 
-	if ((flags & (RAW|PASS8)) == 0)
-		iflag |= ISTRIP;
-	else
-		iflag &= ~ISTRIP;
-	if ((flags & (RAW|LITOUT)) == 0)
-		oflag |= OPOST;
-	else
-		oflag &= ~OPOST;
-	if (flags & (LITOUT|PASS8)) {
+	if (flags & (RAW|LITOUT|PASS8)) {
 		cflag &= ~(CSIZE|PARENB);
 		cflag |= CS8;
-	} else if ((flags&RAW) == 0) {
+		if ((flags & (RAW|PASS8)) == 0)
+			iflag |= ISTRIP;
+		else
+			iflag &= ~ISTRIP;
+		if ((flags & (RAW|LITOUT)) == 0)
+			oflag |= OPOST;
+		else
+			oflag &= ~OPOST;
+	} else {
 		cflag &= ~CSIZE;
 		cflag |= CS7|PARENB;
+		iflag |= ISTRIP;
+		oflag |= OPOST;
 	}
 
 	t->c_iflag = iflag;
@@ -415,20 +417,22 @@ ttcompatsetlflags(tp, t)
 	lflag &= ~(TOSTOP|FLUSHO|PENDIN|NOFLSH);
 	lflag |= flags&(TOSTOP|FLUSHO|PENDIN|NOFLSH);
 
-	if ((flags & (RAW|PASS8)) == 0)
-		iflag |= ISTRIP;
-	else
-		iflag &= ~ISTRIP;
-	if ((flags & (RAW|LITOUT)) == 0)
-		oflag |= OPOST;
-	else
-		oflag &= ~OPOST;
-	if (flags & (LITOUT|PASS8)) {
+	if (flags & (RAW|LITOUT|PASS8)) {
 		cflag &= ~(CSIZE|PARENB);
 		cflag |= CS8;
-	} else if ((flags&RAW) == 0) {
+		if ((flags & (RAW|PASS8)) == 0)
+			iflag |= ISTRIP;
+		else
+			iflag &= ~ISTRIP;
+		if ((flags & (RAW|LITOUT)) == 0)
+			oflag |= OPOST;
+		else
+			oflag &= ~OPOST;
+	} else {
 		cflag &= ~CSIZE;
 		cflag |= CS7|PARENB;
+		iflag |= ISTRIP;
+		oflag |= OPOST;
 	}
 
 	t->c_iflag = iflag;
