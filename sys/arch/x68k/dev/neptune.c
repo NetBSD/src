@@ -1,4 +1,4 @@
-/*	$NetBSD: neptune.c,v 1.2 1999/03/16 16:30:20 minoura Exp $	*/
+/*	$NetBSD: neptune.c,v 1.3 1999/03/24 14:07:38 minoura Exp $	*/
 
 /*
  *
@@ -185,7 +185,7 @@ neptune_bus_space_map(t, bpa, size, flags, bshp)
 	 */
 	*bshp = (bus_space_handle_t) ((u_int)start + ((u_int)bpa - 0x200) * 2);
 
-	if (badaddr(*bshp)) {
+	if (badaddr((caddr_t)*bshp)) {
 		return 1;
 	}
 

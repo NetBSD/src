@@ -1,4 +1,4 @@
-/*	$NetBSD: rtclock.c,v 1.4 1999/03/16 16:30:20 minoura Exp $	*/
+/*	$NetBSD: rtclock.c,v 1.5 1999/03/24 14:07:39 minoura Exp $	*/
 
 /*
  * Copyright 1993, 1994 Masaru Oki
@@ -55,6 +55,8 @@ static int  rtsettod __P((long));
 
 static int rtc_match __P((struct device *, struct cfdata *, void *));
 static void rtc_attach __P((struct device *, struct device *, void *));
+
+int rtclockinit __P((void));
 
 struct cfattach rtc_ca = {
 	sizeof(struct rtc_softc), rtc_match, rtc_attach
@@ -118,8 +120,6 @@ rtc_attach(parent, self, aux)
  */
 u_long (*gettod) __P((void));
 int (*settod) __P((long));
-
-int rtclockinit __P((void));
 
 int
 rtclockinit()

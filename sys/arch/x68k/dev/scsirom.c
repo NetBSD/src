@@ -1,4 +1,4 @@
-/*	$NetBSD: scsirom.c,v 1.2 1999/03/16 16:30:20 minoura Exp $	*/
+/*	$NetBSD: scsirom.c,v 1.3 1999/03/24 14:07:39 minoura Exp $	*/
 
 /*
  *
@@ -156,9 +156,9 @@ scsirom_attach(parent, self, aux)
 		ia->ia_intr = scsirom_descr[sc->sc_which].intr;
 
 	if (sc->sc_which == INTERNAL)
-		printf (": On-board at %p\n", ia->ia_addr);
+		printf (": On-board at %p\n", (void*)ia->ia_addr);
 	else
-		printf (": External at %p\n", ia->ia_addr);
+		printf (": External at %p\n", (void*)ia->ia_addr);
 
 	cf = config_search (NULL, self, ia);
 	if (cf) {

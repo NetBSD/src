@@ -1,4 +1,4 @@
-/*	$NetBSD: intio.c,v 1.4 1999/03/22 03:21:35 minoura Exp $	*/
+/*	$NetBSD: intio.c,v 1.5 1999/03/24 14:07:38 minoura Exp $	*/
 
 /*
  *
@@ -132,7 +132,7 @@ static struct intio_interrupt_vector {
 	intio_intr_handler_t	iiv_handler;
 	void			*iiv_arg;
 	int			iiv_intrcntoff;
-} iiv[256] = {0,};
+} iiv[256] = {{0,},};
 
 extern struct cfdriver intio_cd;
 

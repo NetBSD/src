@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.15 1999/03/16 16:30:20 minoura Exp $	*/
+/*	$NetBSD: zs.c,v 1.16 1999/03/24 14:07:39 minoura Exp $	*/
 
 /*-
  * Copyright (c) 1998 Minoura Makoto
@@ -152,7 +152,6 @@ zs_match(parent, cf, aux)
 	void *aux;
 {
 	struct intio_attach_args *ia = aux;
-	int unit = cf->cf_unit;
 	struct zsdevice *zsaddr = (void*) ia->ia_addr;
 	int i;
 
@@ -169,7 +168,7 @@ zs_match(parent, cf, aux)
 
 	if (zsaddr != (void*) zs_physaddr[i])
 		return 0;
-	if (badaddr(INTIO_ADDR(zsaddr)))
+	if (badaddr((caddr_t)INTIO_ADDR(zsaddr)))
 		return 0;
 
 	return (1);
