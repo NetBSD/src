@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.5 1995/11/30 21:53:17 leo Exp $	*/
+/*	$NetBSD: clock.c,v 1.6 1995/12/01 19:51:53 leo Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -312,7 +312,6 @@ profclock(pc, ps)
 			stopprofclock();
 	}
 }
-#endif
 #endif
 
 /*
