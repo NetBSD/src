@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.197 1998/06/25 21:15:35 thorpej Exp $
+#	$NetBSD: files,v 1.198 1998/06/25 22:16:01 thorpej Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -19,6 +19,7 @@ defopt	opt_ntp.h	PPS_SYNC NTP
 
 defopt	opt_nfs_boot.h	NFS_BOOT_BOOTP NFS_BOOT_BOOTPARAM NFS_BOOT_DHCP
 			NFS_BOOT_GATEWAY
+defopt	NFSSERVER
 
 defopt	opt_malloclog.h	MALLOCLOG MALLOCLOGSIZE
 
