@@ -1,5 +1,3 @@
-/*	$NetBSD: negdi2.c,v 1.2 1994/10/26 06:42:36 cgd Exp $	*/
-
 /*-
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -38,10 +36,8 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-#ifdef notdef
-static char *sccsid = "@(#)negdi2.c	8.1 (Berkeley) 6/4/93";
-#endif
-static char *rcsid = "$NetBSD: negdi2.c,v 1.2 1994/10/26 06:42:36 cgd Exp $";
+/*static char *sccsid = "from: @(#)negdi2.c	8.1 (Berkeley) 6/4/93";*/
+static char *rcsid = "$Id: negdi2.c,v 1.3 1995/01/06 00:12:21 cgd Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include "quad.h"
