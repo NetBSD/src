@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.137 2001/03/15 03:20:43 mrg Exp $	*/
+/*	$NetBSD: locore.s,v 1.138 2001/03/18 17:11:22 chs Exp $	*/
 
 /*
  * Copyright (c) 1996 Paul Kranenburg
@@ -4199,7 +4199,7 @@ ENTRY(copyoutstr)
 Lcsdocopy:
 !	sethi	%hi(cpcb), %o4		! (done earlier)
 	ld	[%o4 + %lo(cpcb)], %o4	! catch faults
-	set	Lcsfault, %g1
+	set	Lcsdone, %g1
 	st	%g1, [%o4 + PCB_ONFAULT]
 
 ! XXX should do this in bigger chunks when possible
@@ -4226,10 +4226,6 @@ Lcsdone:				! done:
 3:
 	retl				! cpcb->pcb_onfault = 0;
 	 st	%g0, [%o4 + PCB_ONFAULT]! return (error);
-
-Lcsfault:
-	b	Lcsdone			! error = EFAULT;
-	 mov	EFAULT, %o0		! goto ret;
 
 /*
  * copystr(fromaddr, toaddr, maxlength, &lencopied)
@@ -4322,9 +4318,8 @@ Ldocopy:
 Lcopyfault:
 	sethi	%hi(cpcb), %o3
 	ld	[%o3 + %lo(cpcb)], %o3
-	st	%g0, [%o3 + PCB_ONFAULT]
 	jmp	%g7 + 8
-	 mov	EFAULT, %o0
+	 st	%g0, [%o3 + PCB_ONFAULT]
 
 
 /*
@@ -4904,7 +4899,7 @@ ENTRY(fuword)
 	st	%o3, [%o2 + PCB_ONFAULT]
 	ld	[%o0], %o0		! fetch the word
 	retl				! phew, made it, return the word
-	st	%g0, [%o2 + PCB_ONFAULT]! but first clear onfault
+	 st	%g0, [%o2 + PCB_ONFAULT]! but first clear onfault
 
 Lfserr:
 	st	%g0, [%o2 + PCB_ONFAULT]! error in r/w, clear pcb_onfault
@@ -5718,9 +5713,8 @@ Lkcopy_done:
 	/* NOTREACHED */
 
 Lkcerr:
-	st	%g1, [%o5 + PCB_ONFAULT]	! restore onfault
 	retl
-	 mov	EFAULT, %o0	! delay slot: return error indicator
+	 st	%g1, [%o5 + PCB_ONFAULT]	! restore onfault
 	/* NOTREACHED */
 
 /*
