@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_mips3.S,v 1.32 2000/06/06 17:41:11 soren Exp $	*/
+/*	$NetBSD: locore_mips3.S,v 1.33 2000/06/09 04:28:17 soda Exp $	*/
 
 /*
  * Copyright (c) 1997 Jonathan Stone (hereinafter referred to as the author)
@@ -1242,7 +1242,7 @@ END(mips3_SetPID)
  *
  *	Write the given value into the TLB wired reg.
  *
- *	mips3_SetPID(wired)
+ *	mips3_SetWIRED(wired)
  *		int wired;
  *
  * Results:
