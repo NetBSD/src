@@ -1,4 +1,4 @@
-/*	$NetBSD: sort.c,v 1.6 2000/10/07 21:46:39 bjh21 Exp $	*/
+/*	$NetBSD: sort.c,v 1.7 2000/10/11 19:16:39 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -51,7 +51,7 @@ __COPYRIGHT("@(#) Copyright (c) 1993\n\
 #endif /* not lint */
 
 #ifndef lint
-__RCSID("$NetBSD: sort.c,v 1.6 2000/10/07 21:46:39 bjh21 Exp $");
+__RCSID("$NetBSD: sort.c,v 1.7 2000/10/11 19:16:39 thorpej Exp $");
 __SCCSID("@(#)sort.c	8.1 (Berkeley) 6/6/93");
 #endif /* not lint */
 
@@ -189,7 +189,7 @@ main(argc, argv)
 				argv[i] = devstdin;
 			}
 		} else if ((ch = access(argv[i], R_OK)))
-			err(2, argv[i]);
+			err(2, "%s", argv[i]);
 	}
 	if (!(fldtab->flags & (I|D|N) || fldtab[1].icol.num)) {
 		SINGL_FLD = 1;
@@ -240,7 +240,7 @@ main(argc, argv)
 		(void)snprintf(toutpath, sizeof(toutpath), "%sXXXX", outpath);
 		if ((outfd = mkstemp(toutpath)) < 0 ||
 		    (outfp = fdopen(outfd, "w")) == 0)
-			err(2, toutpath);
+			err(2, "%s", toutpath);
 		outfile = toutpath;
 		(void)atexit(cleanup);
 		for (i = 0; sigtable[i]; ++i)	/* always unlink toutpath */
@@ -248,14 +248,14 @@ main(argc, argv)
 	} else
 		outfile = outpath;
 	if (outfp == NULL && (outfp = fopen(outfile, "w")) == NULL)
-		err(2, outfile);
+		err(2, "%s", outfile);
 	if (mflag)
 		fmerge(-1, filelist, argc-optind, get, outfp, putline, fldtab);
 	else
 		fsort(-1, 0, filelist, argc-optind, outfp, fldtab);
 	if (outfile != outpath) {
 		if (access(outfile, 0))
-			err(2, outfile);
+			err(2, "%s", outfile);
 		(void)unlink(outpath);
 		if (link(outfile, outpath))
 			err(2, "cannot link %s: output left in %s",
