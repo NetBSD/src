@@ -23,8 +23,11 @@
    other reasons why the executable file might be covered by the GNU
    General Public License.  */
 
+#ifndef __NetBSD__
+/* the forced define of _POSIX_SOURCE is probably only needed for glibc */ 
 #ifndef _POSIX_SOURCE
 # define _POSIX_SOURCE
+#endif
 #endif
 
 #include <errno.h>
