@@ -1,4 +1,4 @@
-/*	$NetBSD: timed.c,v 1.11 1999/06/06 03:37:28 thorpej Exp $	*/
+/*	$NetBSD: timed.c,v 1.12 2001/01/11 02:46:43 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1985, 1993 The Regents of the University of California.
@@ -44,12 +44,12 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)timed.c	8.2 (Berkeley) 3/26/95";
 #else
-__RCSID("$NetBSD: timed.c,v 1.11 1999/06/06 03:37:28 thorpej Exp $");
+__RCSID("$NetBSD: timed.c,v 1.12 2001/01/11 02:46:43 lukem Exp $");
 #endif
 #endif /* not lint */
 
 #ifdef sgi
-#ident "$Revision: 1.11 $"
+#ident "$Revision: 1.12 $"
 #endif /* sgi */
 
 #define TSPTYPES
@@ -508,7 +508,7 @@ main(int argc, char **argv)
 
 	if (trace)
 		traceon();
-	openlog("timed", LOG_CONS|LOG_PID, LOG_DAEMON);
+	openlog("timed", LOG_PID, LOG_DAEMON);
 
 	/*
 	 * keep returning here
