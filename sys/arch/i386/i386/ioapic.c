@@ -1,4 +1,4 @@
-/* $NetBSD: ioapic.c,v 1.1.2.13 2001/12/29 23:31:00 sommerfeld Exp $ */
+/* $NetBSD: ioapic.c,v 1.1.2.14 2002/04/27 14:25:03 sommerfeld Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -266,7 +266,7 @@ ioapic_attach(parent, self, aux)
 	if (apic_id != sc->sc_apicid) {
 		printf("%s: misconfigured as apic %d\n", sc->sc_dev.dv_xname, apic_id);
 
-		ioapic_write(sc,IOAPIC_VER,
+		ioapic_write(sc,IOAPIC_ID,
 		    (ioapic_read(sc,IOAPIC_ID)&~IOAPIC_ID_MASK)
 		    |(sc->sc_apicid<<IOAPIC_ID_SHIFT));
 		
