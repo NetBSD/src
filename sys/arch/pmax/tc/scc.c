@@ -1,4 +1,4 @@
-/*	$NetBSD: scc.c,v 1.28 1997/07/21 05:39:41 jonathan Exp $	*/
+/*	$NetBSD: scc.c,v 1.28.6.1 1997/11/09 20:15:56 mellon Exp $	*/
 
 /* 
  * Copyright (c) 1991,1990,1989,1994,1995,1996 Carnegie Mellon University
@@ -65,6 +65,8 @@
  *	@(#)scc.c	8.2 (Berkeley) 11/30/93
  */
 
+#include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
+__KERNEL_RCSID(0, "$NetBSD: scc.c,v 1.28.6.1 1997/11/09 20:15:56 mellon Exp $");
 
 /*
  * Intel 82530 dual usart chip driver. Supports the serial port(s) on the
@@ -754,6 +756,7 @@ sccopen(dev, flag, mode, p)
 	register struct tty *tp;
 	register int unit, line;
 	int s, error = 0;
+	int firstopen = 0;
 
 	unit = SCCUNIT(dev);
 	if (unit >= scc_cd.cd_ndevs)
@@ -775,6 +778,7 @@ sccopen(dev, flag, mode, p)
 	tp->t_dev = dev;
 	if ((tp->t_state & TS_ISOPEN) == 0) {
 		tp->t_state |= TS_WOPEN;
+		firstopen = 1;
 		ttychars(tp);
 #ifndef PORTSELECTOR
 		if (tp->t_ispeed == 0) {
@@ -791,6 +795,7 @@ sccopen(dev, flag, mode, p)
 #endif
 		(void) sccparam(tp, &tp->t_termios);
 		ttsetwater(tp);
+
 	} else if ((tp->t_state & TS_XCLUDE) && curproc->p_ucred->cr_uid != 0)
 		return (EBUSY);
 	(void) sccmctl(dev, DML_DTR, DMSET);
@@ -805,7 +810,17 @@ sccopen(dev, flag, mode, p)
 	splx(s);
 	if (error)
 		return (error);
-	return ((*linesw[tp->t_line].l_open)(dev, tp));
+	error = (*linesw[tp->t_line].l_open)(dev, tp);
+
+#ifdef HAVE_RCONS
+	/* handle raster console specially */
+	if (tp == scctty(makedev(SCCDEV,SCCKBD_PORT)) &&
+	    raster_console() && firstopen) {
+	  	extern struct tty *fbconstty;
+		tp->t_winsize = fbconstty->t_winsize;
+	}
+#endif /* HAVE_RCONS */		
+	return (error);
 }
 
 /*ARGSUSED*/
@@ -1522,6 +1537,9 @@ sccGetc(dev)
 		if (value & ZSRR0_RX_READY) {
 			SCC_READ_REG(regs, line, SCC_RR1, value);
 			SCC_READ_DATA(regs, line, c);
+#ifdef pmax		/* Alpha handles the 1.6 msec settle time in h/w */
+			DELAY(2);
+#endif
 			if (value & (ZSRR1_PE | ZSRR1_DO | ZSRR1_FE)) {
 				SCC_WRITE_REG(regs, line, SCC_WR0,
 					ZSWR0_RESET_ERRORS);
