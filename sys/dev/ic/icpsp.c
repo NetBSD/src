@@ -1,4 +1,4 @@
-/*	$NetBSD: icpsp.c,v 1.1 2002/04/22 21:05:21 ad Exp $	*/
+/*	$NetBSD: icpsp.c,v 1.2 2002/04/25 18:45:35 ad Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: icpsp.c,v 1.1 2002/04/22 21:05:21 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: icpsp.c,v 1.2 2002/04/25 18:45:35 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -301,6 +301,7 @@ icpsp_intr(struct icp_ccb *ic)
 		case SCSI_CHECK:
 			memcpy(&xs->sense.scsi_sense, icp->icp_scr + soff,
 			    sizeof(xs->sense.scsi_sense));
+			xs->error = XS_SENSE;
 			/* FALLTHROUGH */
 		default:
 			/*
