@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.54 2000/02/23 02:04:21 oster Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.55 2000/02/23 02:11:05 oster Exp $	*/
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -1080,7 +1080,6 @@ raidioctl(dev, cmd, data, flag, p)
 			ci_label.row = row;
 			for(column=0;column<raidPtr->numCol;column++) {
 				diskPtr = &raidPtr->Disks[row][column];
-				ci_label.blockSize = diskPtr->blockSize;
 				ci_label.partitionSize = diskPtr->partitionSize;
 				ci_label.column = column;
 				raidwrite_component_label( 
