@@ -1,4 +1,4 @@
-/*	$NetBSD: ata_wdc.c,v 1.41 2003/10/08 10:58:12 bouyer Exp $	*/
+/*	$NetBSD: ata_wdc.c,v 1.42 2003/10/29 22:05:15 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001, 2003 Manuel Bouyer.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ata_wdc.c,v 1.41 2003/10/08 10:58:12 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ata_wdc.c,v 1.42 2003/10/29 22:05:15 bouyer Exp $");
 
 #ifndef WDCDEBUG
 #define WDCDEBUG
@@ -224,7 +224,7 @@ wdc_ata_bio_start(chp, xfer)
 		/* If it's not a polled command, we need the kenrel thread */
 		if ((xfer->c_flags & C_POLL) == 0 &&
 		    (chp->ch_flags & WDCF_TH_RUN) == 0) {
-			chp->ch_queue->queue_freese++;
+			chp->ch_queue->queue_freeze++;
 			wakeup(&chp->thread);
 			return;
 		}
