@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld.c,v 1.19 1999/05/31 14:48:16 kleink Exp $	 */
+/*	$NetBSD: rtld.c,v 1.20 1999/06/15 15:54:28 kleink Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -55,7 +55,9 @@
 #include "debug.h"
 #include "rtld.h"
 
+#if !defined(lint)
 #include "sysident.h"
+#endif
 
 /*
  * Debugging support.
