@@ -1,4 +1,4 @@
-/*	$NetBSD: alpha_cpu.h,v 1.1 1996/07/09 00:40:58 cgd Exp $	*/
+/*	$NetBSD: alpha_cpu.h,v 1.2 1996/07/11 03:44:50 cgd Exp $	*/
 
 /*
  * Copyright (c) 1996 Carnegie-Mellon University.
@@ -35,13 +35,49 @@
  *
  * Definitions for:
  *
+ *	Process Control Block
+ *	Interrupt/Exception/Syscall Stack Frame
  *	Processor Status Register
+ *	Machine Check Error Summary Register
+ *	Machine Check Logout Area
  *	Virtual Memory Management
  *	Translation Buffer Invalidation
  *
  * and miscellaneous PALcode operations.
  */
 
+
+/*
+ * Process Control Block definitions [OSF/1 PALcode Specific]
+ */
+
+struct alpha_pcb {
+	unsigned long	apcb_ksp;	/* kernel stack ptr */
+	unsigned long	apcb_usp;	/* user stack ptr */
+	unsigned long	apcb_ptbr;	/* page table base reg */
+	unsigned int	apcb_cpc;	/* charged process cycles */
+	unsigned int	apcb_asn;	/* address space number */
+	unsigned long	apcb_unique;	/* process unique value */
+	unsigned long	apcb_flags;	/* flags; see below */
+	unsigned long	apcb_decrsv0;	/* DEC reserved */
+	unsigned long	apcb_decrsv1;	/* DEC reserved */
+};
+
+#define	ALPHA_PCB_FLAGS_FEN	0x0000000000000001
+#define	ALPHA_PCB_FLAGS_PME	0x4000000000000000
+
+/*
+ * Interrupt/Exception/Syscall Stack Frame
+ */
+
+struct alpha_frame {
+	unsigned long	af_ps;		/* processor status */
+	unsigned long	af_pc;		/* program counter */
+	unsigned long	af_gp;		/* GP */
+	unsigned long	af_a0;		/* A0 */
+	unsigned long	af_a1;		/* A1 */
+	unsigned long	af_a2;		/* A2 */
+};
 
 /*
  * Processor Status Register [OSF/1 PALcode Specific]
@@ -64,10 +100,58 @@
 #define	ALPHA_PSL_USERSET	ALPHA_PSL_USERMODE
 #define	ALPHA_PSL_USERCLR	(ALPHA_PSL_MUST_BE_ZERO | ALPHA_PSL_IPL_MASK)
 
-typedef unsigned long alpha_psl_t;
+/*
+ * Machine Check Error Summary Register definitions [OSF/1 PALcode Specific]
+ */
+
+#define	ALPHA_MCES_IMP							\
+    0xffffffff00000000	/* impl. dependent */
+#define	ALPHA_MCES_RSVD							\
+    0x00000000ffffffe0	/* reserved */
+#define	ALPHA_MCES_DSC							\
+    0x0000000000000010	/* disable system correctable error reporting */
+#define	ALPHA_MCES_DPC							\
+    0x0000000000000008	/* disable processor correctable error reporting */
+#define	ALPHA_MCES_PCE							\
+    0x0000000000000004	/* processor correctable error in progress */
+#define	ALPHA_MCES_SCE							\
+    0x0000000000000002	/* system correctable error in progress */
+#define	ALPHA_MCES_MIP							\
+    0x0000000000000001	/* machine check in progress */
 
 /*
- * Virtual Memory Management [OSF/1 PALcode Specific]
+ * Machine Check Error Summary Register definitions [OSF/1 PALcode Specific]
+ */
+
+struct alpha_logout_area {
+	unsigned int	la_frame_size;		/* frame size */
+	unsigned int	la_flags;		/* flags; see below */
+	unsigned int	la_cpu_offset;		/* offset to cpu area */
+	unsigned int	la_system_offset;	/* offset to system area */
+};
+
+#define	ALPHA_LOGOUT_FLAGS_RETRY	0x80000000	/* OK to continue */
+#define	ALPHA_LOGOUT_FLAGS_SE		0x40000000	/* second error */
+#define	ALPHA_LOGOUT_FLAGS_SBZ		0x3fffffff	/* should be zero */
+
+#define	ALPHA_LOGOUT_NOT_BUILT						\
+    (struct alpha_logout_area *)0xffffffffffffffff)
+
+#define	ALPHA_LOGOUT_PAL_AREA(lap)					\
+    (unsigned long *)((unsigned char *)(lap) + 16)
+#define	ALPHA_LOGOUT_PAL_SIZE(lap)					\
+    ((lap)->la_cpu_offset - 16)
+#define	ALPHA_LOGOUT_CPU_AREA(lap)					\
+    (unsigned long *)((unsigned char *)(lap) + (lap)->la_cpu_offset)
+#define	ALPHA_LOGOUT_CPU_SIZE(lap)					\
+    ((lap)->la_system_offset - (lap)->la_cpu_offset)
+#define	ALPHA_LOGOUT_SYSTEM_AREA(lap)					\
+    (unsigned long *)((unsigned char *)(lap) + (lap)->la_system_offset)
+#define	ALPHA_LOGOUT_SYSTEM_SIZE(lap)					\
+    ((lap)->la_frame_size - (lap)->la_system_offset)
+	
+/*
+ * Virtual Memory Management definitions [OSF/1 PALcode Specific]
  *
  * Includes user and kernel space addresses and information,
  * page table entry definitions, etc.
@@ -76,6 +160,7 @@ typedef unsigned long alpha_psl_t;
  */
 
 #define	ALPHA_PGSHIFT		13
+#define	ALPHA_PGBYTES		(1 << ALPHA_PGSHIFT)
 
 #define	ALPHA_USEG_BASE		0			/* virtual */
 #define	ALPHA_USEG_END		0x000003ffffffffff
@@ -116,7 +201,7 @@ typedef unsigned long alpha_pt_entry_t;
 
 
 /*
- * Translation Buffer Invalidation [OSF/1 PALcode Specific]
+ * Translation Buffer Invalidation definitions [OSF/1 PALcode Specific]
  */
 
 #define	TBIA()		alpha_pal_tbi(-2, 0)		/* all TB entries */
@@ -129,16 +214,43 @@ typedef unsigned long alpha_pt_entry_t;
 /*
  * Stubs for Alpha instructions normally inaccessible from C.
  */
+unsigned long	alpha_rpcc __P((void));
 void		alpha_mb __P((void));
 void		alpha_wmb __P((void));
 
 /*
  * Stubs for OSF/1 PALcode operations.
  */
+void		alpha_pal_bpt __P((unsigned long, unsigned long,
+		    unsigned long));
+void		alpha_pal_bugchk __P((unsigned long, unsigned long,
+                    unsigned long));
+void		alpha_pal_callsys __P((void));
+void		alpha_pal_gentrap __P((unsigned long, unsigned long,
+                    unsigned long));
 void		alpha_pal_imb __P((void));
-alpha_psl_t	alpha_pal_swpipl __P((alpha_psl_t));
-alpha_psl_t	_alpha_pal_swpipl __P((alpha_psl_t));	/* for profiling */
-void		alpha_pal_tbi __P((unsigned long, vm_offset_t));
+unsigned long	alpha_pal_rdunique __P((void));
+void		alpha_pal_wrunique __P((unsigned long));
+void		alpha_pal_draina __P((void));
 void		alpha_pal_halt __P((void)) __attribute__((__noreturn__));
+unsigned long	alpha_pal_rdmces __P((void));
+unsigned long	alpha_pal_rdps __P((void));
+unsigned long	alpha_pal_rdusp __P((void));
+unsigned long	alpha_pal_rdval __P((void));
+void		alpha_pal_retsys __P((void));
+void		alpha_pal_rti __P((void));
+unsigned long	alpha_pal_swpctx __P((unsigned long));
+unsigned long	alpha_pal_swpipl __P((unsigned long));
+void		alpha_pal_tbi __P((unsigned long, vm_offset_t));
+unsigned long	alpha_pal_whami __P((void));
+void		alpha_pal_wrent __P((void *, unsigned long));
+void		alpha_pal_wrfen __P((unsigned long));
+void		alpha_pal_wrkgp __P((unsigned long));
+void		alpha_pal_wrusp __P((unsigned long));
+void		alpha_pal_wrval __P((unsigned long));
+void		alpha_pal_wrvptptr __P((unsigned long));
+void		alpha_pal_wrmces __P((unsigned long));
+
+unsigned long	_alpha_pal_swpipl __P((unsigned long));	/* for profiling */
 
 #endif __ALPHA_ALPHA_CPU_H__
