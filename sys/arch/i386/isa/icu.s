@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)icu.s	7.2 (Berkeley) 5/21/91
- *	$Id: icu.s,v 1.19.4.16 1993/11/11 02:16:21 mycroft Exp $
+ *	$Id: icu.s,v 1.19.4.17 1994/02/01 06:54:15 mycroft Exp $
  */
 
 /*
@@ -176,7 +176,7 @@ test_clock:
 	call	_softclock
 	FASTSPL($0)
 test_ast:
-	btrl	$SIR_GENERIC,_sir	# signal handling, rescheduling, ...
+	btrl	$SIR_AST,_sir	# signal handling, rescheduling, ...
 	jnc	2f
 	testb   $SEL_RPL_MASK,TF_CS(%esp)
 					# to non-kernel (i.e., user)?
