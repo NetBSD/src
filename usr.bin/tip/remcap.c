@@ -42,6 +42,7 @@ static char sccsid[] = "@(#)remcap.c	5.5 (Berkeley) 2/2/91";
  */
 #include <sys/types.h>
 #include <fcntl.h>
+#include <stdlib.h>
 #include <ctype.h>
 #include "pathnames.h"
 
@@ -78,10 +79,9 @@ char	*RM;
 
 static	char *tbuf;
 static	int hopcount;	/* detect infinite loops in termcap, init 0 */
-char	*tskip();
+static	char *tskip();
+static	char *tdecode();
 char	*tgetstr();
-char	*tdecode();
-char	*getenv();
 static	char *remotefile;
 
 /*
