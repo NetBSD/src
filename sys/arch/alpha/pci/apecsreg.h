@@ -1,4 +1,4 @@
-/* $NetBSD: apecsreg.h,v 1.5 1997/04/07 01:59:51 cgd Exp $ */
+/* $NetBSD: apecsreg.h,v 1.6 1997/06/03 21:54:02 cgd Exp $ */
 
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
@@ -34,7 +34,7 @@
  * Sheet'' (DEC order number EC-QAEMA-TE), pages 4-1 - 4-27, 10-21 - 10-38.
  */
 
-#define	REGVAL(r)	(*(int32_t *)ALPHA_PHYS_TO_K0SEG(r))
+#define	REGVAL(r)	(*(volatile int32_t *)ALPHA_PHYS_TO_K0SEG(r))
 
 /*
  * Base addresses
