@@ -1,4 +1,4 @@
-/*	$NetBSD: arcemu.c,v 1.1 2004/04/10 19:53:48 pooka Exp $	*/
+/*	$NetBSD: arcemu.c,v 1.2 2004/04/10 20:23:05 pooka Exp $	*/
 
 /*
  * Copyright (c) 2004 Steve Rumble 
@@ -191,7 +191,6 @@ arcemu_ip12_eeprom_read()
 	sd.sd_control_offset = 0;
 	sd.sd_status_offset = 0;
 	sd.sd_dataout_offset = 0;
-	sd.sd_chip = C56_66;
 	sd.sd_DI = 0x10;	/* EEPROM -> CPU */
 	sd.sd_DO = 0x08;	/* CPU -> EEPROM */
 	sd.sd_CK = 0x04;
