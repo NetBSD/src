@@ -1,4 +1,4 @@
-/*	$NetBSD: input.c,v 1.19 1995/10/19 04:14:37 christos Exp $	*/
+/*	$NetBSD: input.c,v 1.20 1996/10/16 15:45:08 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -40,7 +40,7 @@
 #if 0
 static char sccsid[] = "@(#)input.c	8.3 (Berkeley) 6/9/95";
 #else
-static char rcsid[] = "$NetBSD: input.c,v 1.19 1995/10/19 04:14:37 christos Exp $";
+static char rcsid[] = "$NetBSD: input.c,v 1.20 1996/10/16 15:45:08 christos Exp $";
 #endif
 #endif /* not lint */
 
@@ -177,7 +177,7 @@ pgetc()
 
 
 static int
-pread() 
+pread()
 {
 	int nr;
 	parsenextc = parsefile->buf;
@@ -264,7 +264,7 @@ again:
 		case '\0':
 			p++;	/* Skip nul */
 			goto check;
-		
+
 		case '\t':
 		case ' ':
 			break;

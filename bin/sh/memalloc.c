@@ -1,4 +1,4 @@
-/*	$NetBSD: memalloc.c,v 1.17 1996/05/20 14:49:32 cgd Exp $	*/
+/*	$NetBSD: memalloc.c,v 1.18 1996/10/16 15:45:10 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -40,7 +40,7 @@
 #if 0
 static char sccsid[] = "@(#)memalloc.c	8.3 (Berkeley) 5/4/95";
 #else
-static char rcsid[] = "$NetBSD: memalloc.c,v 1.17 1996/05/20 14:49:32 cgd Exp $";
+static char rcsid[] = "$NetBSD: memalloc.c,v 1.18 1996/10/16 15:45:10 christos Exp $";
 #endif
 #endif /* not lint */
 
@@ -58,7 +58,7 @@ static char rcsid[] = "$NetBSD: memalloc.c,v 1.17 1996/05/20 14:49:32 cgd Exp $"
  */
 
 pointer
-ckmalloc(nbytes) 
+ckmalloc(nbytes)
 	int nbytes;
 {
 	register pointer p;
@@ -128,7 +128,7 @@ int herefd = -1;
 
 
 pointer
-stalloc(nbytes) 
+stalloc(nbytes)
 	int nbytes;
 {
 	register char *p;
@@ -237,7 +237,7 @@ growstackblock() {
 
 
 void
-grabstackblock(len) 
+grabstackblock(len)
 	int len;
 {
 	len = ALIGN(len);

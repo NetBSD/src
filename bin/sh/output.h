@@ -1,4 +1,4 @@
-/*	$NetBSD: output.h,v 1.11 1995/05/11 21:29:53 christos Exp $	*/
+/*	$NetBSD: output.h,v 1.12 1996/10/16 15:45:14 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -70,7 +70,7 @@ void flushall __P((void));
 void flushout __P((struct output *));
 void freestdout __P((void));
 void outfmt __P((struct output *, char *, ...));
-void out1fmt __P((char *, ...)); 
+void out1fmt __P((char *, ...));
 void dprintf __P((char *, ...));
 void fmtstr __P((char *, int, char *, ...));
 void doformat __P((struct output *, char *, va_list));

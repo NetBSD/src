@@ -1,4 +1,4 @@
-/*	$NetBSD: miscbltin.c,v 1.15 1995/06/12 19:44:16 jtc Exp $	*/
+/*	$NetBSD: miscbltin.c,v 1.16 1996/10/16 15:45:11 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -40,7 +40,7 @@
 #if 0
 static char sccsid[] = "@(#)miscbltin.c	8.4 (Berkeley) 5/4/95";
 #else
-static char rcsid[] = "$NetBSD: miscbltin.c,v 1.15 1995/06/12 19:44:16 jtc Exp $";
+static char rcsid[] = "$NetBSD: miscbltin.c,v 1.16 1996/10/16 15:45:11 christos Exp $";
 #endif
 #endif /* not lint */
 
@@ -78,7 +78,7 @@ extern char **argptr;		/* argument list for builtin command */
 int
 readcmd(argc, argv)
 	int argc;
-	char **argv; 
+	char **argv;
 {
 	char **ap;
 	int backslash;
@@ -162,7 +162,7 @@ readcmd(argc, argv)
 int
 umaskcmd(argc, argv)
 	int argc;
-	char **argv; 
+	char **argv;
 {
 	char *ap;
 	int mask;
@@ -223,7 +223,7 @@ umaskcmd(argc, argv)
 			} while (*++ap != '\0');
 			umask(mask);
 		} else {
-			void *set; 
+			void *set;
 			if ((set = setmode (ap)) == 0)
 					error("Illegal number: %s", ap);
 

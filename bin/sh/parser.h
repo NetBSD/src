@@ -1,4 +1,4 @@
-/*	$NetBSD: parser.h,v 1.10 1995/05/11 21:30:02 christos Exp $	*/
+/*	$NetBSD: parser.h,v 1.11 1996/10/16 15:45:15 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -79,4 +79,4 @@ extern int whichprompt;		/* 1 == PS1, 2 == PS2 */
 union node *parsecmd __P((int));
 void fixredir __P((union node *, const char *, int));
 int goodname __P((char *));
-char *getprompt __P((void *));  
+char *getprompt __P((void *));
