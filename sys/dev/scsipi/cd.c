@@ -1,4 +1,4 @@
-/*	$NetBSD: cd.c,v 1.66 1995/04/01 10:29:41 mycroft Exp $	*/
+/*	$NetBSD: cd.c,v 1.67 1995/04/15 05:01:26 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -424,7 +424,8 @@ cdstrategy(bp)
 	 * Do bounds checking, adjust transfer. if error, process.
 	 * If end of partition, just return.
 	 */
-	if (bounds_check_with_label(bp, &cd->sc_dk.dk_label,
+	if (CDPART(bp->b_dev) != RAW_PART &&
+	    bounds_check_with_label(bp, &cd->sc_dk.dk_label,
 	    (cd->flags & (CDF_WLABEL|CDF_LABELLING)) != 0) <= 0)
 		goto done;
 

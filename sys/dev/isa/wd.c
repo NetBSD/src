@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.137 1995/04/10 16:53:06 mycroft Exp $	*/
+/*	$NetBSD: wd.c,v 1.138 1995/04/15 05:02:56 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -376,7 +376,8 @@ wdstrategy(bp)
 	 * Do bounds checking, adjust transfer. if error, process.
 	 * If end of partition, just return.
 	 */
-	if (bounds_check_with_label(bp, &wd->sc_dk.dk_label,
+	if (WDPART(bp->b_dev) != RAW_PART &&
+	    bounds_check_with_label(bp, &wd->sc_dk.dk_label,
 	    (wd->sc_flags & (WDF_WLABEL|WDF_LABELLING)) != 0) <= 0)
 		goto done;
     
