@@ -1,4 +1,4 @@
-/*	$NetBSD: cond.c,v 1.22 2004/04/08 07:24:26 sjg Exp $	*/
+/*	$NetBSD: cond.c,v 1.23 2004/04/13 16:06:23 sjg Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -70,14 +70,14 @@
  */
 
 #ifdef MAKE_BOOTSTRAP
-static char rcsid[] = "$NetBSD: cond.c,v 1.22 2004/04/08 07:24:26 sjg Exp $";
+static char rcsid[] = "$NetBSD: cond.c,v 1.23 2004/04/13 16:06:23 sjg Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)cond.c	8.2 (Berkeley) 1/2/94";
 #else
-__RCSID("$NetBSD: cond.c,v 1.22 2004/04/08 07:24:26 sjg Exp $");
+__RCSID("$NetBSD: cond.c,v 1.23 2004/04/13 16:06:23 sjg Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -114,6 +114,7 @@ __RCSID("$NetBSD: cond.c,v 1.22 2004/04/08 07:24:26 sjg Exp $");
  *	T -> $(varspec) op value
  *	T -> $(varspec) == "string"
  *	T -> $(varspec) != "string"
+ *	T -> "string"
  *	T -> ( E )
  *	T -> ! T
  *	op -> == | != | > | < | >= | <=
@@ -528,6 +529,116 @@ CondCvtArg(char *str, double *value)
 
 /*-
  *-----------------------------------------------------------------------
+ * CondGetString --
+ *	Get a string from a variable reference or an optionally quoted
+ *	string.  This is called for the lhs and rhs of string compares.
+ *
+ * Results:
+ *	Sets doFree if needed,
+ *	Sets quoted if string was quoted,
+ *	Returns NULL on error,
+ *	else returns string - absent any quotes.
+ *
+ * Side Effects:
+ *	Moves condExpr to end of this token.
+ *
+ *
+ *-----------------------------------------------------------------------
+ */
+static char *
+CondGetString(Boolean doEval, Boolean *quoted, Boolean *doFree)
+{
+    Buffer buf;
+    char *cp;
+    char *str;
+    int	len;
+    int qt;
+    char *start;
+
+    buf = Buf_Init(0);
+    str = NULL;
+    *quoted = qt = *condExpr == '"' ? 1 : 0;
+    if (qt)
+	condExpr++;
+    for (start = condExpr; *condExpr && str == NULL; condExpr++) {
+	switch (*condExpr) {
+	case '\\':
+	    if (condExpr[1] != '\0') {
+		condExpr++;
+		Buf_AddByte(buf, (Byte)*condExpr);
+	    }
+	    break;
+	case '"':
+	    if (qt) {
+		condExpr++;		/* we don't want the quotes */
+		goto got_str;
+	    } else
+		Buf_AddByte(buf, (Byte)*condExpr); /* likely? */
+	    break;
+	case ')':
+	case '!':
+	case '=':
+	case '>':
+	case '<':
+	case ' ':
+	case '\t':
+	    if (!qt)
+		goto got_str;
+	    else
+		Buf_AddByte(buf, (Byte)*condExpr);
+	    break;
+	case '$':
+	    /* if we are in quotes, then an undefined variable is ok */
+	    str = Var_Parse(condExpr, VAR_CMD, (qt ? 0 : doEval),
+			    &len, doFree);
+	    if (str == var_Error) {
+		/*
+		 * Even if !doEval, we still report syntax errors, which
+		 * is what getting var_Error back with !doEval means.
+		 */
+		str = NULL;
+		goto cleanup;
+	    }
+	    condExpr += len;
+	    /*
+	     * If the '$' was first char (no quotes), and we are
+	     * followed by space, the operator or end of expression,
+	     * we are done.
+	     */
+	    if ((condExpr == start + len) &&
+		(*condExpr == '\0' ||
+		 isspace((unsigned char) *condExpr) ||
+		 strchr("!=><)", *condExpr))) {
+		goto cleanup;
+	    }
+	    /*
+	     * Nope, we better copy str to buf
+	     */
+	    for (cp = str; *cp; cp++) {
+		Buf_AddByte(buf, (Byte)*cp);
+	    }
+	    if (*doFree)
+		free(str);
+	    *doFree = FALSE;
+	    str = NULL;			/* not finished yet */
+	    condExpr--;			/* don't skip over next char */
+	    break;
+	default:
+	    Buf_AddByte(buf, (Byte)*condExpr);
+	    break;
+	}
+    }
+ got_str:
+    Buf_AddByte(buf, (Byte)'\0');
+    str = (char *)Buf_GetAll(buf, NULL);
+    *doFree = TRUE;
+ cleanup:
+    Buf_Destroy(buf, FALSE);
+    return str;
+}
+
+/*-
+ *-----------------------------------------------------------------------
  * CondToken --
  *	Return the next token from the input.
  *
@@ -580,52 +691,27 @@ CondToken(Boolean doEval)
 	    case '\0':
 		t = EndOfFile;
 		break;
+	    case '"':
 	    case '$': {
 		char	*lhs;
 		char	*rhs;
 		char	*op;
-		int	varSpecLen;
-		Boolean	doFree;
+		Boolean	lhsFree;
+		Boolean	rhsFree;
+		Boolean lhsQuoted;
+		Boolean rhsQuoted;
 
+		lhsFree = rhsFree = FALSE;
+		lhsQuoted = rhsQuoted = FALSE;
+		
 		/*
 		 * Parse the variable spec and skip over it, saving its
 		 * value in lhs.
 		 */
 		t = Err;
-		lhs = Var_Parse(condExpr, VAR_CMD, doEval,&varSpecLen,&doFree);
-		if (lhs == var_Error) {
-		    /*
-		     * Even if !doEval, we still report syntax errors, which
-		     * is what getting var_Error back with !doEval means.
-		     */
-		    return(Err);
-		}
-		condExpr += varSpecLen;
-
-		if (!isspace((unsigned char) *condExpr) &&
-		    strchr("!=><", *condExpr) == NULL) {
-		    Buffer buf;
-		    char *cp;
-
-		    buf = Buf_Init(0);
-
-		    for (cp = lhs; *cp; cp++)
-			Buf_AddByte(buf, (Byte)*cp);
-
-		    if (doFree)
-			free(lhs);
-
-		    for (;*condExpr && !isspace((unsigned char) *condExpr);
-			 condExpr++)
-			Buf_AddByte(buf, (Byte)*condExpr);
-
-		    Buf_AddByte(buf, (Byte)'\0');
-		    lhs = (char *)Buf_GetAll(buf, &varSpecLen);
-		    Buf_Destroy(buf, FALSE);
-
-		    doFree = TRUE;
-		}
-
+		lhs = CondGetString(doEval, &lhsQuoted, &lhsFree);
+		if (!lhs)
+		    return Err;
 		/*
 		 * Skip whitespace to get to the operator
 		 */
@@ -651,7 +737,10 @@ CondToken(Boolean doEval)
 			break;
 		    default:
 			op = UNCONST("!=");
-			rhs = UNCONST("0");
+			if (lhsQuoted)
+			    rhs = UNCONST("");
+			else
+			    rhs = UNCONST("0");
 
 			goto do_compare;
 		}
@@ -663,18 +752,11 @@ CondToken(Boolean doEval)
 				"Missing right-hand-side of operator");
 		    goto error;
 		}
-		rhs = condExpr;
+		rhs = CondGetString(doEval, &rhsQuoted, &rhsFree);
+		if (!rhs)
+		    return Err;
 do_compare:
-		if (*rhs == '"') {
-		    /*
-		     * Doing a string comparison. Only allow == and != for
-		     * operators.
-		     */
-		    char    *string;
-		    char    *cp, *cp2;
-		    int	    qt;
-		    Buffer  buf;
-
+		if (rhsQuoted || lhsQuoted) {
 do_string_compare:
 		    if (((*op != '!') && (*op != '=')) || (op[1] != '=')) {
 			Parse_Error(PARSE_WARNING,
@@ -682,63 +764,18 @@ do_string_compare:
 			goto error;
 		    }
 
-		    buf = Buf_Init(0);
-		    qt = *rhs == '"' ? 1 : 0;
-
-		    for (cp = &rhs[qt];
-			 ((qt && (*cp != '"')) ||
-			  (!qt && strchr(" \t)", *cp) == NULL)) &&
-			 (*cp != '\0'); cp++) {
-			if ((*cp == '\\') && (cp[1] != '\0')) {
-			    /*
-			     * Backslash escapes things -- skip over next
-			     * character, if it exists.
-			     */
-			    cp++;
-			    Buf_AddByte(buf, (Byte)*cp);
-			} else if (*cp == '$') {
-			    int	len;
-			    Boolean freeIt;
-
-			    cp2 = Var_Parse(cp, VAR_CMD, doEval,&len, &freeIt);
-			    if (cp2 != var_Error) {
-				Buf_AddBytes(buf, strlen(cp2), (Byte *)cp2);
-				if (freeIt) {
-				    free(cp2);
-				}
-				cp += len - 1;
-			    } else {
-				Buf_AddByte(buf, (Byte)*cp);
-			    }
-			} else {
-			    Buf_AddByte(buf, (Byte)*cp);
-			}
-		    }
-
-		    Buf_AddByte(buf, (Byte)0);
-
-		    string = (char *)Buf_GetAll(buf, (int *)0);
-		    Buf_Destroy(buf, FALSE);
-
 		    if (DEBUG(COND)) {
 			printf("lhs = \"%s\", rhs = \"%s\", op = %.2s\n",
-			       lhs, string, op);
+			       lhs, rhs, op);
 		    }
 		    /*
 		     * Null-terminate rhs and perform the comparison.
 		     * t is set to the result.
 		     */
 		    if (*op == '=') {
-			t = strcmp(lhs, string) ? False : True;
+			t = strcmp(lhs, rhs) ? False : True;
 		    } else {
-			t = strcmp(lhs, string) ? True : False;
-		    }
-		    free(string);
-		    if (rhs == condExpr) {
-		    	if (!qt && *cp == ')')
-			    condExpr = cp;
-			else
-			    condExpr = cp + 1;
+			t = strcmp(lhs, rhs) ? True : False;
 		    }
 		} else {
 		    /*
@@ -746,44 +783,13 @@ do_string_compare:
 		     * lhs and the rhs to a double and compare the two.
 		     */
 		    double  	left, right;
-		    char    	*string;
-
+		    char	*cp;
+		
 		    if (CondCvtArg(lhs, &left))
 			goto do_string_compare;
-		    if (*rhs == '$') {
-			int 	len;
-			Boolean	freeIt;
-
-			string = Var_Parse(rhs, VAR_CMD, doEval,&len,&freeIt);
-			if (string == var_Error) {
-			    right = 0.0;
-			} else {
-			    if (CondCvtArg(string, &right)) {
-				if (freeIt)
-				    free(string);
-				goto do_string_compare;
-			    }
-			    if (freeIt)
-				free(string);
-			    if (rhs == condExpr)
-				condExpr += len;
-			}
-		    } else {
-			char *cp;
-
-			if ((cp = CondCvtArg(rhs, &right)) &&
+		    if ((cp = CondCvtArg(rhs, &right)) &&
 			    cp == rhs)
-			    goto do_string_compare;
-			if (rhs == condExpr) {
-			    /*
-			     * Skip over the right-hand side
-			     */
-			    if (cp)
-				condExpr = cp;
-			    else
-				condExpr = strchr(rhs, '\0');	
-			}
-		    }
+			goto do_string_compare;
 
 		    if (DEBUG(COND)) {
 			printf("left = %f, right = %f, op = %.2s\n", left,
@@ -823,8 +829,10 @@ do_string_compare:
 		    }
 		}
 error:
-		if (doFree)
+		if (lhsFree)
 		    free(lhs);
+		if (rhsFree)
+		    free(rhs);
 		break;
 	    }
 	    default: {
