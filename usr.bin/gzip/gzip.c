@@ -1,4 +1,4 @@
-/*	$NetBSD: gzip.c,v 1.42 2004/04/27 13:45:50 mrg Exp $	*/
+/*	$NetBSD: gzip.c,v 1.43 2004/05/06 17:43:57 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 2003, 2004 Matthew R. Green
@@ -32,7 +32,7 @@
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 1997, 1998, 2003, 2004 Matthew R. Green\n\
      All rights reserved.\n");
-__RCSID("$NetBSD: gzip.c,v 1.42 2004/04/27 13:45:50 mrg Exp $");
+__RCSID("$NetBSD: gzip.c,v 1.43 2004/05/06 17:43:57 bouyer Exp $");
 #endif /* not lint */
 
 /*
@@ -867,13 +867,13 @@ file_compress(char *file)
 	if (in == 0)
 		maybe_err(1, "can't fopen %s", file);
 
-	if (cflag == 0) {
 #ifndef SMALL
-		if (nflag == 0)
-			savename = basename(file);
-		else
-			savename = NULL;
+	if (nflag == 0)
+		savename = basename(file);
+	else
+		savename = NULL;
 #endif
+	if (cflag == 0) {
 		out = open(outfile, O_WRONLY|O_CREAT|O_EXCL, 0600);
 		if (out == -1) {
 			maybe_warn("could not create output: %s", outfile);
