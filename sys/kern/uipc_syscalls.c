@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_syscalls.c,v 1.61 2001/06/25 19:24:03 jdolecek Exp $	*/
+/*	$NetBSD: uipc_syscalls.c,v 1.62 2001/06/25 19:46:50 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1990, 1993
@@ -270,19 +270,21 @@ sys_connect(struct proc *p, void *v, register_t *retval)
 	if ((error = getsock(p->p_fd, SCARG(uap, s), &fp)) != 0)
 		return (error);
 	so = (struct socket *)fp->f_data;
-	FILE_UNUSE(fp, p);
-	if ((so->so_state & SS_NBIO) && (so->so_state & SS_ISCONNECTING))
-		return (EALREADY);
+	if ((so->so_state & SS_NBIO) && (so->so_state & SS_ISCONNECTING)) {
+		error = EALREADY;
+		goto out;
+	}
 	error = sockargs(&nam, SCARG(uap, name), SCARG(uap, namelen),
 	    MT_SONAME);
 	if (error)
-		return (error);
+		goto out;
 	error = soconnect(so, nam);
 	if (error)
 		goto bad;
 	if ((so->so_state & SS_NBIO) && (so->so_state & SS_ISCONNECTING)) {
 		m_freem(nam);
-		return (EINPROGRESS);
+		error = EINPROGRESS;
+		goto out;
 	}
 	s = splsoftnet();
 	while ((so->so_state & SS_ISCONNECTING) && so->so_error == 0) {
@@ -301,6 +303,8 @@ sys_connect(struct proc *p, void *v, register_t *retval)
 	m_freem(nam);
 	if (error == ERESTART)
 		error = EINTR;
+ out:
+	FILE_UNUSE(fp, p);
 	return (error);
 }
 
