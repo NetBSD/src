@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gre.c,v 1.52 2004/08/19 20:58:24 christos Exp $ */
+/*	$NetBSD: if_gre.c,v 1.53 2004/12/04 18:31:43 peter Exp $ */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gre.c,v 1.52 2004/08/19 20:58:24 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gre.c,v 1.53 2004/12/04 18:31:43 peter Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"
@@ -111,7 +111,7 @@ struct gre_softc_head gre_softc_list;
 int ip_gre_ttl = GRE_TTL;
 
 int	gre_clone_create __P((struct if_clone *, int));
-void	gre_clone_destroy __P((struct ifnet *));
+int	gre_clone_destroy __P((struct ifnet *));
 
 struct if_clone gre_cloner =
     IF_CLONE_INITIALIZER("gre", gre_clone_create, gre_clone_destroy);
@@ -163,7 +163,7 @@ gre_clone_create(ifc, unit)
 	return (0);
 }
 
-void
+int
 gre_clone_destroy(ifp)
 	struct ifnet *ifp;
 {
@@ -175,6 +175,8 @@ gre_clone_destroy(ifp)
 #endif
 	if_detach(ifp);
 	free(sc, M_DEVBUF);
+
+	return (0);
 }
 
 /*

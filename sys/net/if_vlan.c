@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vlan.c,v 1.41 2004/07/08 19:09:12 mycroft Exp $	*/
+/*	$NetBSD: if_vlan.c,v 1.42 2004/12/04 18:31:43 peter Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -85,7 +85,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vlan.c,v 1.41 2004/07/08 19:09:12 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vlan.c,v 1.42 2004/12/04 18:31:43 peter Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -175,7 +175,7 @@ const struct vlan_multisw vlan_ether_multisw = {
 };
 
 static int	vlan_clone_create(struct if_clone *, int);
-static void	vlan_clone_destroy(struct ifnet *);
+static int	vlan_clone_destroy(struct ifnet *);
 static int	vlan_config(struct ifvlan *, struct ifnet *);
 static int	vlan_ioctl(struct ifnet *, u_long, caddr_t);
 static void	vlan_start(struct ifnet *);
@@ -247,7 +247,7 @@ vlan_clone_create(struct if_clone *ifc, int unit)
 	return (0);
 }
 
-static void
+static int
 vlan_clone_destroy(struct ifnet *ifp)
 {
 	struct ifvlan *ifv = ifp->if_softc;
@@ -260,6 +260,8 @@ vlan_clone_destroy(struct ifnet *ifp)
 
 	if_detach(ifp);
 	free(ifv, M_DEVBUF);
+
+	return (0);
 }
 
 /*
