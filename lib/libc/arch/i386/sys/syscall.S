@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.S,v 1.7 1999/01/14 22:48:20 kleink Exp $	*/
+/*	$NetBSD: syscall.S,v 1.8 1999/02/08 18:56:48 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -40,7 +40,7 @@
 
 #include <machine/asm.h>
 #if defined(SYSLIBC_SCCS) && !defined(lint)
-	RCSID("$NetBSD: syscall.S,v 1.7 1999/01/14 22:48:20 kleink Exp $")
+	RCSID("$NetBSD: syscall.S,v 1.8 1999/02/08 18:56:48 christos Exp $")
 #endif /* SYSLIBC_SCCS and not lint */
 
 #include "SYS.h"
@@ -55,6 +55,7 @@ ENTRY(syscall)
 	ret
 err:
 #ifdef PIC
+	PIC_PROLOGUE
 	jmp	PIC_PLT(CERROR)
 #else
 	jmp	CERROR
