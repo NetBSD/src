@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.189 2002/01/02 00:51:33 chs Exp $ */
+/* $NetBSD: pmap.c,v 1.190 2002/01/03 22:43:05 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -154,7 +154,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.189 2002/01/02 00:51:33 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.190 2002/01/03 22:43:05 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1520,16 +1520,6 @@ pmap_page_protect(struct vm_page *pg, vm_prot_t prot)
 			else
 				PMAP_SYNC_ISTREAM_USER(pmap);
 		}
-#ifdef DEBUG
-		else {
-			if (pmapdebug & PDB_PARANOIA) {
-				printf("%s wired mapping for %lx not removed\n",
-				       "pmap_page_protect:", pa);
-				printf("vm wire count %d\n", 
-					PHYS_TO_VM_PAGE(pa)->wire_count);
-			}
-		}
-#endif
 		PMAP_UNLOCK(pmap);
 	}
 
