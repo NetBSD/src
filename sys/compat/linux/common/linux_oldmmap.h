@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_oldmmap.h,v 1.2 1998/10/07 23:06:17 erh Exp $	*/
+/*	$NetBSD: linux_oldmmap.h,v 1.3 2004/08/22 15:40:41 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -51,12 +51,12 @@
  * Passed to the mmap() system call
  */
 struct linux_oldmmap {
-	caddr_t lm_addr;
-	int lm_len;
-	int lm_prot;
-	int lm_flags;
+	unsigned int lm_addr;
+	unsigned int lm_len;
+	unsigned int lm_prot;
+	unsigned int lm_flags;
 	int lm_fd;
-	int lm_pos;
+	unsigned int lm_offset;
 };
 
 #endif /* !_MULTIARCH_LINUX_OLDMMAP_H */
