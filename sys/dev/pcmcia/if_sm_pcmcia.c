@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sm_pcmcia.c,v 1.31 2004/08/06 19:38:49 mycroft Exp $	*/
+/*	$NetBSD: if_sm_pcmcia.c,v 1.32 2004/08/07 01:07:31 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sm_pcmcia.c,v 1.31 2004/08/06 19:38:49 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sm_pcmcia.c,v 1.32 2004/08/07 01:07:31 mycroft Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -89,9 +89,6 @@ int	sm_pcmcia_enable __P((struct smc91cxx_softc *));
 void	sm_pcmcia_disable __P((struct smc91cxx_softc *));
 
 int	sm_pcmcia_ascii_enaddr __P((const char *, u_int8_t *));
-int	sm_pcmcia_funce_enaddr __P((struct device *, u_int8_t *));
-
-int	sm_pcmcia_lannid_ciscallback __P((struct pcmcia_tuple *, void *));
 
 const struct pcmcia_product sm_pcmcia_products[] = {
 	{ "",	PCMCIA_VENDOR_MEGAHERTZ2,
@@ -142,7 +139,7 @@ sm_pcmcia_attach(parent, self, aux)
 	struct smc91cxx_softc *sc = &psc->sc_smc;
 	struct pcmcia_attach_args *pa = aux;
 	struct pcmcia_config_entry *cfe;
-	u_int8_t myla[ETHER_ADDR_LEN], *enaddr = NULL;
+	u_int8_t enaddr[ETHER_ADDR_LEN];
 	const struct pcmcia_product *pp;
 
 	psc->sc_pf = pa->pf;
@@ -186,22 +183,16 @@ sm_pcmcia_attach(parent, self, aux)
 
 	/*
 	 * First try to get the Ethernet address from FUNCE/LANNID tuple.
+	 * If that fails, try one of the CIS info strings.
 	 */
-	if (sm_pcmcia_funce_enaddr(parent, myla))
-		enaddr = myla;
-
-	/*
-	 * If that failed, try one of the CIS info strings.
-	 */
-	if (enaddr == NULL) {
-		if (sm_pcmcia_ascii_enaddr(pa->pf->sc->card.cis1_info[3], myla) ||
-		    sm_pcmcia_ascii_enaddr(pa->pf->sc->card.cis1_info[2], myla))
-			enaddr = myla;
+	if (pa->pf->pf_funce_lan_nidlen == ETHER_ADDR_LEN) {
+		memcpy(enaddr, pa->pf->pf_funce_lan_nid, ETHER_ADDR_LEN);
+	} else {
+		if (!sm_pcmcia_ascii_enaddr(pa->pf->sc->card.cis1_info[3], enaddr) &&
+		    !sm_pcmcia_ascii_enaddr(pa->pf->sc->card.cis1_info[2], enaddr))
+			printf("%s: unable to get Ethernet address\n",
+			    sc->sc_dev.dv_xname);
 	}
-
-	if (enaddr == NULL)
-		printf("%s: unable to get Ethernet address\n",
-		    sc->sc_dev.dv_xname);
 
 	/* Perform generic intialization. */
 	smc91cxx_attach(sc, enaddr);
@@ -280,41 +271,6 @@ sm_pcmcia_ascii_enaddr(cisstr, myla)
 	}
 
 	return (1);
-}
-
-int
-sm_pcmcia_funce_enaddr(parent, myla)
-	struct device *parent;
-	u_int8_t *myla;
-{
-
-	return (pcmcia_scan_cis(parent, sm_pcmcia_lannid_ciscallback, myla));
-}
-
-int
-sm_pcmcia_lannid_ciscallback(tuple, arg)
-	struct pcmcia_tuple *tuple;
-	void *arg;
-{
-	u_int8_t *myla = arg;
-	int i;
-
-	if (tuple->code == PCMCIA_CISTPL_FUNCE
-	    || tuple->code == PCMCIA_CISTPL_SPCL) {
-		/* subcode, length */
-		if (tuple->length < 2)
-			return (0);
-
-		if ((pcmcia_tuple_read_1(tuple, 0) !=
-		     PCMCIA_TPLFE_TYPE_LAN_NID) ||
-		    (pcmcia_tuple_read_1(tuple, 1) != ETHER_ADDR_LEN))
-			return (0);
-
-		for (i = 0; i < ETHER_ADDR_LEN; i++)
-			myla[i] = pcmcia_tuple_read_1(tuple, i + 2);
-		return (1);
-	}
-	return (0);
 }
 
 int
