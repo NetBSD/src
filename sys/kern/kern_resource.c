@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_resource.c,v 1.63 2002/08/25 21:44:13 thorpej Exp $	*/
+/*	$NetBSD: kern_resource.c,v 1.64 2002/09/04 01:32:34 matt Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_resource.c,v 1.63 2002/08/25 21:44:13 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_resource.c,v 1.64 2002/09/04 01:32:34 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -102,8 +102,7 @@ sys_getpriority(curp, v, retval)
 			pg = curp->p_pgrp;
 		else if ((pg = pgfind(SCARG(uap, who))) == NULL)
 			break;
-		for (p = pg->pg_members.lh_first; p != 0;
-		     p = p->p_pglist.le_next) {
+		LIST_FOREACH(p, &pg->pg_members, p_pglist) {
 			if (p->p_nice < low)
 				low = p->p_nice;
 		}
@@ -114,10 +113,11 @@ sys_getpriority(curp, v, retval)
 		if (SCARG(uap, who) == 0)
 			SCARG(uap, who) = curp->p_ucred->cr_uid;
 		proclist_lock_read();
-		for (p = allproc.lh_first; p != 0; p = p->p_list.le_next)
+		LIST_FOREACH(p, &allproc, p_list) {
 			if (p->p_ucred->cr_uid == (uid_t) SCARG(uap, who) &&
 			    p->p_nice < low)
 				low = p->p_nice;
+		}
 		proclist_unlock_read();
 		break;
 
@@ -165,8 +165,7 @@ sys_setpriority(curp, v, retval)
 			pg = curp->p_pgrp;
 		else if ((pg = pgfind(SCARG(uap, who))) == NULL)
 			break;
-		for (p = pg->pg_members.lh_first; p != 0;
-		    p = p->p_pglist.le_next) {
+		LIST_FOREACH(p, &pg->pg_members, p_pglist) {
 			error = donice(curp, p, SCARG(uap, prio));
 			found++;
 		}
@@ -177,11 +176,12 @@ sys_setpriority(curp, v, retval)
 		if (SCARG(uap, who) == 0)
 			SCARG(uap, who) = curp->p_ucred->cr_uid;
 		proclist_lock_read();
-		for (p = allproc.lh_first; p != 0; p = p->p_list.le_next)
+		LIST_FOREACH(p, &allproc, p_list) {
 			if (p->p_ucred->cr_uid == (uid_t) SCARG(uap, who)) {
 				error = donice(curp, p, SCARG(uap, prio));
 				found++;
 			}
+		}
 		proclist_unlock_read();
 		break;
 

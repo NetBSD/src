@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.176 2002/08/26 01:26:29 thorpej Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.177 2002/09/04 01:32:48 matt Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.176 2002/08/26 01:26:29 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.177 2002/09/04 01:32:48 matt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
@@ -306,8 +306,7 @@ vfs_getvfs(fsid)
 	struct mount *mp;
 
 	simple_lock(&mountlist_slock);
-	for (mp = mountlist.cqh_first; mp != (void *)&mountlist;
-	     mp = mp->mnt_list.cqe_next) {
+	CIRCLEQ_FOREACH(mp, &mountlist, mnt_list) {
 		if (mp->mnt_stat.f_fsid.val[0] == fsid->val[0] &&
 		    mp->mnt_stat.f_fsid.val[1] == fsid->val[1]) {
 			simple_unlock(&mountlist_slock);
@@ -337,7 +336,7 @@ vfs_getnewfsid(mp)
 		++xxxfs_mntid;
 	tfsid.val[0] = makedev((nblkdev + mtype) & 0xff, xxxfs_mntid);
 	tfsid.val[1] = mtype;
-	if (mountlist.cqh_first != (void *)&mountlist) {
+	if (!CIRCLEQ_EMPTY(&mountlist)) {
 		while (vfs_getvfs(&tfsid)) {
 			tfsid.val[0]++;
 			xxxfs_mntid++;
@@ -893,7 +892,7 @@ brelvp(bp)
 	/*
 	 * Delete from old vnode list, if on one.
 	 */
-	if (bp->b_vnbufs.le_next != NOLIST)
+	if (LIST_NEXT(bp, b_vnbufs) != NOLIST)
 		bufremvn(bp);
 
 	if (TAILQ_EMPTY(&vp->v_uobj.memq) && (vp->v_flag & VONWORKLST) &&
@@ -925,7 +924,7 @@ reassignbuf(bp, newvp)
 	/*
 	 * Delete from old vnode list, if on one.
 	 */
-	if (bp->b_vnbufs.le_next != NOLIST)
+	if (LIST_NEXT(bp, b_vnbufs) != NOLIST)
 		bufremvn(bp);
 	/*
 	 * If dirty, put on list of dirty buffers;
@@ -1393,10 +1392,10 @@ vflush(mp, skipvp, flags)
 
 	simple_lock(&mntvnode_slock);
 loop:
-	for (vp = mp->mnt_vnodelist.lh_first; vp; vp = nvp) {
+	for (vp = LIST_FIRST(&mp->mnt_vnodelist); vp; vp = nvp) {
 		if (vp->v_mount != mp)
 			goto loop;
-		nvp = vp->v_mntvnodes.le_next;
+		nvp = LIST_NEXT(vp, v_mntvnodes);
 		/*
 		 * Skip over a selected vnode.
 		 */
@@ -1866,9 +1865,10 @@ printlockedvnodes()
 
 	printf("Locked vnodes\n");
 	simple_lock(&mountlist_slock);
-	for (mp = mountlist.cqh_first; mp != (void *)&mountlist; mp = nmp) {
+	for (mp = CIRCLEQ_FIRST(&mountlist); mp != (void *)&mountlist;
+	     mp = nmp) {
 		if (vfs_busy(mp, LK_NOWAIT, &mountlist_slock)) {
-			nmp = mp->mnt_list.cqe_next;
+			nmp = CIRCLEQ_NEXT(mp, mnt_list);
 			continue;
 		}
 		LIST_FOREACH(vp, &mp->mnt_vnodelist, v_mntvnodes) {
@@ -1876,7 +1876,7 @@ printlockedvnodes()
 				vprint(NULL, vp);
 		}
 		simple_lock(&mountlist_slock);
-		nmp = mp->mnt_list.cqe_next;
+		nmp = CIRCLEQ_NEXT(mp, mnt_list);
 		vfs_unbusy(mp);
 	}
 	simple_unlock(&mountlist_slock);
@@ -1991,15 +1991,16 @@ sysctl_vnode(where, sizep, p)
 	ewhere = where + *sizep;
 
 	simple_lock(&mountlist_slock);
-	for (mp = mountlist.cqh_first; mp != (void *)&mountlist; mp = nmp) {
+	for (mp = CIRCLEQ_FIRST(&mountlist); mp != (void *)&mountlist;
+	     mp = nmp) {
 		if (vfs_busy(mp, LK_NOWAIT, &mountlist_slock)) {
-			nmp = mp->mnt_list.cqe_next;
+			nmp = CIRCLEQ_NEXT(mp, mnt_list);
 			continue;
 		}
 		savebp = bp;
 again:
 		simple_lock(&mntvnode_slock);
-		for (vp = mp->mnt_vnodelist.lh_first;
+		for (vp = LIST_FIRST(&mp->mnt_vnodelist);
 		     vp != NULL;
 		     vp = nvp) {
 			/*
@@ -2014,7 +2015,7 @@ again:
 				bp = savebp;
 				goto again;
 			}
-			nvp = vp->v_mntvnodes.le_next;
+			nvp = LIST_NEXT(vp, v_mntvnodes);
 			if (bp + VPTRSZ + VNODESZ > ewhere) {
 				simple_unlock(&mntvnode_slock);
 				*sizep = bp - where;
@@ -2029,7 +2030,7 @@ again:
 		}
 		simple_unlock(&mntvnode_slock);
 		simple_lock(&mountlist_slock);
-		nmp = mp->mnt_list.cqe_next;
+		nmp = CIRCLEQ_NEXT(mp, mnt_list);
 		vfs_unbusy(mp);
 	}
 	simple_unlock(&mountlist_slock);

@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_usrreq.c,v 1.53 2001/11/12 15:25:34 lukem Exp $	*/
+/*	$NetBSD: uipc_usrreq.c,v 1.54 2002/09/04 01:32:45 matt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_usrreq.c,v 1.53 2001/11/12 15:25:34 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_usrreq.c,v 1.54 2002/09/04 01:32:45 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1079,7 +1079,7 @@ unp_gc()
 	unp_defer = 0;
 
 	/* Clear mark bits */
-	for (fp = filehead.lh_first; fp != 0; fp = fp->f_list.le_next)
+	LIST_FOREACH(fp, &filehead, f_list)
 		fp->f_flag &= ~(FMARK|FDEFER);
 
 	/*
@@ -1088,7 +1088,7 @@ unp_gc()
 	 * marking for rescan descriptors which are queued on a socket.
 	 */
 	do {
-		for (fp = filehead.lh_first; fp != 0; fp = fp->f_list.le_next) {
+		LIST_FOREACH(fp, &filehead, f_list) {
 			if (fp->f_flag & FDEFER) {
 				fp->f_flag &= ~FDEFER;
 				unp_defer--;
@@ -1133,14 +1133,10 @@ unp_gc()
 			 * mark descriptors referenced from sockets queued on the accept queue as well.
 			 */
 			if (so->so_options & SO_ACCEPTCONN) {
-				for (so1 = so->so_q0.tqh_first;
-				     so1 != 0;
-				     so1 = so1->so_qe.tqe_next) {
+				TAILQ_FOREACH(so1, &so->so_q0, so_qe) {
 					unp_scan(so1->so_rcv.sb_mb, unp_mark, 0);
 				}
-				for (so1 = so->so_q.tqh_first;
-				     so1 != 0;
-				     so1 = so1->so_qe.tqe_next) {
+				TAILQ_FOREACH(so1, &so->so_q, so_qe) {
 					unp_scan(so1->so_rcv.sb_mb, unp_mark, 0);
 				}
 			}
@@ -1190,9 +1186,9 @@ unp_gc()
 	 * 91/09/19, bsy@cs.cmu.edu
 	 */
 	extra_ref = malloc(nfiles * sizeof(struct file *), M_FILE, M_WAITOK);
-	for (nunref = 0, fp = filehead.lh_first, fpp = extra_ref; fp != 0;
+	for (nunref = 0, fp = LIST_FIRST(&filehead), fpp = extra_ref; fp != 0;
 	    fp = nextfp) {
-		nextfp = fp->f_list.le_next;
+		nextfp = LIST_NEXT(fp, f_list);
 		if (fp->f_count == 0)
 			continue;
 		if (fp->f_count == fp->f_msgcount && !(fp->f_flag & FMARK)) {
