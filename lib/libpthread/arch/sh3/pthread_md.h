@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_md.h,v 1.1 2003/06/23 19:34:45 uwe Exp $ */
+/*	$NetBSD: pthread_md.h,v 1.2 2003/11/20 17:38:08 uwe Exp $ */
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -50,6 +50,12 @@ pthread__sp(void)
 #define pthread__uc_sp(ucp) ((ucp)->uc_mcontext.__gregs[_REG_R15])
 #define pthread__uc_pc(ucp) ((ucp)->uc_mcontext.__gregs[_REG_PC])
 
+/*
+ * Set initial, sane values for registers whose values aren't just
+ * "don't care".
+ */
+#define _INITCONTEXT_U_MD(ucp)						\
+	(ucp)->uc_mcontext.__gregs[_REG_SR] = 0;
 
 /*
  * SH3 requires no extra stack space
