@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc_tblout.c,v 1.6 1997/10/11 22:19:12 mycroft Exp $	*/
+/*	$NetBSD: rpc_tblout.c,v 1.7 1997/10/18 10:54:11 lukem Exp $	*/
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
  * unrestricted use provided that this legend is included on all tape
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)rpc_tblout.c 1.4 89/02/22 (C) 1988 SMI";
 #else
-__RCSID("$NetBSD: rpc_tblout.c,v 1.6 1997/10/11 22:19:12 mycroft Exp $");
+__RCSID("$NetBSD: rpc_tblout.c,v 1.7 1997/10/18 10:54:11 lukem Exp $");
 #endif
 #endif
 
@@ -52,7 +52,7 @@ __RCSID("$NetBSD: rpc_tblout.c,v 1.6 1997/10/11 22:19:12 mycroft Exp $");
 #define TABCOUNT	5
 #define TABSTOP		(TABSIZE*TABCOUNT)
 
-static char tabstr[TABCOUNT+1] = "\t\t\t\t\t";
+static char tabstr[TABCOUNT + 1] = "\t\t\t\t\t";
 
 static char tbl_hdr[] = "struct rpcgen_table %s_table[] = {\n";
 static char tbl_end[] = "};\n";
@@ -69,7 +69,7 @@ static void printit __P((char *, char *));
 void
 write_tables()
 {
-	list *l;
+	list   *l;
 	definition *def;
 
 	f_print(fout, "\n");
@@ -87,10 +87,10 @@ write_table(def)
 {
 	version_list *vp;
 	proc_list *proc;
-	int current;
-	int expected;
-	char progvers[100];
-	int warning;
+	int     current;
+	int     expected;
+	char    progvers[100];
+	int     warning;
 
 	for (vp = def->def.pr.versions; vp != NULL; vp = vp->next) {
 		warning = 0;
@@ -111,10 +111,10 @@ write_table(def)
 			current = atoi(proc->proc_num);
 			if (current != expected++) {
 				f_print(fout,
-			"/*\n * WARNING: table out of order\n */\n\n");
+				    "/*\n * WARNING: table out of order\n */\n\n");
 				if (warning == 0) {
 					f_print(stderr,
-				    "WARNING %s table is out of order\n",
+					    "WARNING %s table is out of order\n",
 					    progvers);
 					warning = 1;
 					nonfatalerrors = 1;
@@ -124,22 +124,23 @@ write_table(def)
 			f_print(fout, "\t(char *(*)())RPCGEN_ACTION(");
 
 			/* routine to invoke */
-			if ( !newstyle)
-			  pvname_svc(proc->proc_name, vp->vers_num);
+			if (!newstyle)
+				pvname_svc(proc->proc_name, vp->vers_num);
 			else {
-			  if( newstyle )
-			    f_print( fout, "_");   /* calls internal func */
-			  pvname(proc->proc_name, vp->vers_num);
+				if (newstyle)
+					f_print(fout, "_");	/* calls internal func */
+				pvname(proc->proc_name, vp->vers_num);
 			}
 			f_print(fout, "),\n");
 
 			/* argument info */
-			if( proc->arg_num > 1 )
-			  printit((char*) NULL, proc->args.argname );
-			else  
-			  /* do we have to do something special for newstyle */
-			  printit( proc->args.decls->decl.prefix,
-				  proc->args.decls->decl.type );
+			if (proc->arg_num > 1)
+				printit((char *) NULL, proc->args.argname);
+			else
+				/* do we have to do something special for
+				 * newstyle */
+				printit(proc->args.decls->decl.prefix,
+				    proc->args.decls->decl.type);
 			/* result info */
 			printit(proc->res_prefix, proc->res_type);
 		}
@@ -152,19 +153,19 @@ write_table(def)
 
 static void
 printit(prefix, type)
-	char *prefix;
-	char *type;
+	char   *prefix;
+	char   *type;
 {
-	int len;
-	int tabs;
+	int     len;
+	int     tabs;
 
 
- 	len = fprintf(fout, "\txdr_%s,", stringfix(type));
+	len = fprintf(fout, "\txdr_%s,", stringfix(type));
 	/* account for leading tab expansion */
 	len += TABSIZE - 1;
 	/* round up to tabs required */
-	tabs = (TABSTOP - len + TABSIZE - 1)/TABSIZE;
-	f_print(fout, "%s", &tabstr[TABCOUNT-tabs]);
+	tabs = (TABSTOP - len + TABSIZE - 1) / TABSIZE;
+	f_print(fout, "%s", &tabstr[TABCOUNT - tabs]);
 
 	if (streq(type, "void")) {
 		f_print(fout, "0");
