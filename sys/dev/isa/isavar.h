@@ -1,4 +1,4 @@
-/*	$NetBSD: isavar.h,v 1.13 1995/01/02 20:06:33 mycroft Exp $	*/
+/*	$NetBSD: isavar.h,v 1.14 1995/01/03 03:14:35 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1992 Berkeley Software Design, Inc.
@@ -90,7 +90,7 @@ struct intrhand {
 	int	ih_level;
 };
 
-void intr_establish __P((int intr, struct intrhand *));
+void intr_establish __P((int intr, int type, struct intrhand *));
 void intr_disestablish __P((int intr, struct intrhand *));
 void isa_establish __P((struct isadev *, struct device *));
 
