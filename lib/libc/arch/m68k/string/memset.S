@@ -1,4 +1,4 @@
-/*	$NetBSD: memset.S,v 1.10 1997/05/14 18:18:44 jtc Exp $	*/
+/*	$NetBSD: memset.S,v 1.11 1999/05/02 20:34:04 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -79,7 +79,7 @@
 #if 0
 	RCSID("from: @(#)bzero.s	5.1 (Berkeley) 5/12/90")
 #else
-	RCSID("$NetBSD: memset.S,v 1.10 1997/05/14 18:18:44 jtc Exp $")
+	RCSID("$NetBSD: memset.S,v 1.11 1999/05/02 20:34:04 kleink Exp $")
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -158,5 +158,8 @@ Lbzbyte:
 	dbf	d1,Lbzbloop		| till done
 Lbzdone:
 	movl	sp@(8),d0		| return destination
+#ifdef __SVR4_ABI__
+	moveal	d0,a0
+#endif
 	movl	sp@+,d2
 	rts
