@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.101 1997/09/27 17:19:38 veego Exp $	*/
+/*	$NetBSD: machdep.c,v 1.102 1997/10/04 03:59:36 mhitch Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -197,6 +197,12 @@ char	*cpu_type = "m68k";
 /* the following is used externally (sysctl_hw) */
 char	machine[] = MACHINE;	/* from <machine/param.h> */
  
+/*
+ * current open serial device speed;  used by some SCSI drivers to reduce
+ * DMA transfer lengths.
+ */
+int	ser_open_speed;
+
  /*
  * Console initialization: called early on from main,
  * before vm init or startup.  Do enough configuration
