@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.116 1995/02/11 21:57:39 mycroft Exp $	*/
+/*	$NetBSD: locore.s,v 1.117 1995/03/11 18:42:42 ws Exp $	*/
 
 #undef DIAGNOSTIC
 #define DIAGNOSTIC
@@ -516,7 +516,8 @@ try586:	/* Use the `cpuid' instruction. */
 	movl	%esi,%eax		# phys address of ptd in proc 0
 	movl	%eax,%cr3		# load ptd addr into mmu
 	movl	%cr0,%eax		# get control word
-	orl	$(CR0_PE|CR0_PG),%eax	# enable paging
+					# enable paging & NPX emulation
+	orl	$(CR0_PE|CR0_PG|CR0_TS|CR0_MP),%eax
 	movl	%eax,%cr0		# and let's page NOW!
 
 	pushl	$begin			# jump to high mem
