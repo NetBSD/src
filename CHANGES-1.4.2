@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.4.2,v 1.1.2.92 1999/12/20 23:36:09 he Exp $
+#	$NetBSD: CHANGES-1.4.2,v 1.1.2.93 1999/12/20 23:59:44 he Exp $
 
 A complete list of changes from NetBSD 1.4.1 to NetBSD 1.4.2:
 
@@ -2310,3 +2310,16 @@ usr.sbin/ipf/rules/Makefile			1.8
 sys/netinet/ip_fil.c				patch
 
   Make this compile on NetBSD 1.4.2 (where we don't have IPSEC).
+
+usr.sbin/pkg_install/lib/pkgdb.c		1.5
+
+  Initialize some values for the db(3) routines.
+
+usr.bin/systat/main.c				1.21
+
+  Guard against buffer overflow.
+
+sys/conf/osrelease.sh				patch
+sys/conf/param.h				patch
+
+  Bump version to NetBSD-1.4.2_ALPHA.
