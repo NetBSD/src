@@ -1,4 +1,4 @@
-/*	$NetBSD: cdio.h,v 1.15 1998/07/13 16:48:11 thorpej Exp $	*/
+/*	$NetBSD: cdio.h,v 1.16 1998/08/18 07:28:24 msaitoh Exp $	*/
 
 #ifndef _SYS_CDIO_H_
 #define _SYS_CDIO_H_
@@ -41,6 +41,40 @@ struct cd_sub_channel_header {
 #define CD_AS_PLAY_ERROR	0x14
 #define CD_AS_NO_STATUS		0x15
 	u_char	data_len[2];
+};
+
+struct cd_sub_channel_q_data {
+	u_char	data_format;
+#if BYTE_ORDER == LITTLE_ENDIAN
+	u_char	control:4;
+	u_char	addr_type:4;
+#endif
+#if BYTE_ORDER == BIG_ENDIAN
+	u_char	addr_type:4;
+	u_char	control:4;
+#endif
+	u_char	track_number;
+	u_char	index_number;
+	u_char	absaddr[4];
+	u_char	reladdr[4];
+#if BYTE_ORDER == LITTLE_ENDIAN
+        u_char  :7;
+        u_char  mc_valid:1;
+#endif
+#if BYTE_ORDER == BIG_ENDIAN
+        u_char  mc_valid:1;
+        u_char  :7;
+#endif
+        u_char  mc_number[15]; 
+#if BYTE_ORDER == LITTLE_ENDIAN
+        u_char  :7;
+        u_char  ti_valid:1;   
+#endif
+#if BYTE_ORDER == BIG_ENDIAN
+        u_char  ti_valid:1;   
+        u_char  :7;
+#endif
+        u_char  ti_number[15]; 
 };
 
 struct cd_sub_channel_position_data {
@@ -94,6 +128,7 @@ struct cd_sub_channel_track_info {
 struct cd_sub_channel_info {
 	struct cd_sub_channel_header header;
 	union {
+		struct cd_sub_channel_q_data q_data;
 		struct cd_sub_channel_position_data position;
 		struct cd_sub_channel_media_catalog media_catalog;
 		struct cd_sub_channel_track_info track_info;
