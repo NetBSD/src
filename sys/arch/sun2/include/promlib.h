@@ -1,4 +1,4 @@
-/*	$NetBSD: promlib.h,v 1.1 2001/04/06 13:13:04 fredette Exp $ */
+/*	$NetBSD: promlib.h,v 1.2 2001/06/14 13:15:21 fredette Exp $ */
 
 /*-
  * Copyright (c) 1999, 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 /*
- * Macros and functions to hide the Sun[23] PROM interface from the 
+ * Macros and functions to hide the Sun2 PROM interface from the 
  * common Sun parts of the kernel.
  */
 
@@ -45,6 +45,10 @@
 #define _MACHINE_PROMLIB_H_
 
 #include <machine/mon.h>
+
+#ifdef	_SUN2_PROMLIB_PRIVATE
+#define	romVectorPtr	((struct sunromvec *) SUN2_PROM_BASE)
+#endif	/* _SUN2_PROMLIB_PRIVATE */
 
 /*
  * We define both of these, since there are places where their
@@ -71,6 +75,7 @@ void	prom_boot	__P((char *))	__attribute__((__noreturn__));
 char	*prom_getbootpath	__P((void));
 char	*prom_getbootfile	__P((void));
 char	*prom_getbootargs	__P((void));
+int	prom_sd_target	__P((int));
 #define	callrom		prom_abort
 
 #endif /* _MACHINE_PROMLIB_H_ */
