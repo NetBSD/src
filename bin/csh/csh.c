@@ -1,4 +1,4 @@
-/* $NetBSD: csh.c,v 1.31 2002/07/10 22:22:29 wiz Exp $ */
+/* $NetBSD: csh.c,v 1.32 2003/01/06 13:19:51 wiz Exp $ */
 
 /*-
  * Copyright (c) 1980, 1991, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1991, 1993\n\
 #if 0
 static char sccsid[] = "@(#)csh.c	8.2 (Berkeley) 10/12/93";
 #else
-__RCSID("$NetBSD: csh.c,v 1.31 2002/07/10 22:22:29 wiz Exp $");
+__RCSID("$NetBSD: csh.c,v 1.32 2003/01/06 13:19:51 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -1231,7 +1231,7 @@ gethdir(Char *home)
 
 /*
  * When didfds is set, we do I/O from 0, 1, 2 otherwise from 15, 16, 17
- * We also check if the shell has already changed the decriptor to point to
+ * We also check if the shell has already changed the descriptor to point to
  * 0, 1, 2 when didfds is set.
  */
 #define DESC(a) (*((int *) (a)) - (didfds && *((int *) a) >= FSHIN ? FSHIN : 0))
