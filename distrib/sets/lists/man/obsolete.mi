@@ -1,4 +1,4 @@
-# $NetBSD: obsolete.mi,v 1.10 2000/04/27 20:55:04 veego Exp $
+# $NetBSD: obsolete.mi,v 1.11 2000/06/05 03:17:24 simonb Exp $
 /usr/share/man/cat1/amq.0
 /usr/share/man/cat1/ld.so.0
 /usr/share/man/cat1/pstat.0
@@ -44,6 +44,8 @@
 /usr/share/man/cat8/sun3x
 /usr/share/man/cat8/sun3x/installboot.0
 /usr/share/man/cat8/usbd.0
+/usr/share/man/cat8/xntpd.0
+/usr/share/man/cat8/xntpdc.0
 /usr/share/man/cat9/boot.0
 /usr/share/man/man1/amq.1
 /usr/share/man/man1/ld.so.1
@@ -90,4 +92,6 @@
 /usr/share/man/man8/sun3x
 /usr/share/man/man8/sun3x/installboot.8
 /usr/share/man/man8/usbd.8
+/usr/share/man/man8/xntpd.8
+/usr/share/man/man8/xntpdc.8
 /usr/share/man/man9/boot.9
