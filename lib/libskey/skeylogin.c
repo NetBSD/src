@@ -1,4 +1,4 @@
-/*	$NetBSD: skeylogin.c,v 1.9 1998/07/26 21:58:46 mycroft Exp $	*/
+/*	$NetBSD: skeylogin.c,v 1.9.2.1 2000/04/30 12:30:55 he Exp $	*/
 
 /* S/KEY v1.1b (skeylogin.c)
  *
@@ -128,7 +128,8 @@ skeylookup(mp,name)
 
 	/* Look up user name in database */
 	len = strlen(name);
-	if( len > 8 ) len = 8;		/*  Added 8/2/91  -  nmh */
+	if (len > 8)
+		len = 8;		/*  Added 8/2/91  -  nmh */
 	found = 0;
 	while (!feof(mp->keyfile)) {
 		recstart = ftell(mp->keyfile);
@@ -178,6 +179,7 @@ skeyverify(mp,response)
 	char fkey[8];
 	char filekey[8];
 	time_t now;
+	int  prevprio;
 	struct tm *tm;
 	char tbuf[27];
 	char *cp;
@@ -211,13 +213,23 @@ skeyverify(mp,response)
 	 * to the system
 	 */
 
-	setpriority(PRIO_PROCESS, 0, -4);
+	/* Save the priority for later use. */
+	errno = 0;
+	prevprio = getpriority(PRIO_PROCESS, 0);
+	if (errno) {
+		/* Don't report the error; just don't use it later. */
+		prevprio = PRIO_MAX + 1;
+	} else {
+		setpriority(PRIO_PROCESS, 0, -4);
+	}
 
 	/* reread the file record NOW*/
 
 	fseek(mp->keyfile,mp->recstart,0);
 	if (fgets(mp->buf,sizeof(mp->buf),mp->keyfile) != mp->buf){
-		setpriority(PRIO_PROCESS, 0, 0);
+		if (prevprio != PRIO_MAX + 1) {
+			setpriority(PRIO_PROCESS, 0, prevprio);
+		}
 		fclose(mp->keyfile);
 		return -1;
 	}
@@ -234,7 +246,9 @@ skeyverify(mp,response)
 
 	if (memcmp(filekey,fkey,8) != 0){
 		/* Wrong response */
-		setpriority(PRIO_PROCESS, 0, 0);
+		if (prevprio != PRIO_MAX + 1) {
+			setpriority(PRIO_PROCESS, 0, prevprio);
+		}
 		fclose(mp->keyfile);
 		return 1;
 	}
@@ -252,7 +266,9 @@ skeyverify(mp,response)
 
 	fclose(mp->keyfile);
 	
-	setpriority(PRIO_PROCESS, 0, 0);
+	if (prevprio != PRIO_MAX + 1) {
+		setpriority(PRIO_PROCESS, 0, prevprio);
+	}
 	return 0;
 }
 
