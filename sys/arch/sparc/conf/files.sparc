@@ -1,4 +1,4 @@
-#	$NetBSD: files.sparc,v 1.5 1995/06/02 17:54:06 pk Exp $
+#	$NetBSD: files.sparc,v 1.6 1995/06/26 23:01:43 pk Exp $
 
 # @(#)files.sparc	8.1 (Berkeley) 7/19/93
 # sparc-specific configuration info
@@ -78,6 +78,10 @@ file	arch/sparc/dev/if_le.c		le
 device ie at obio, vmes, vmel: ifnet, ether
 file	arch/sparc/dev/if_ie.c		ie
 
+device	xdc at vmel {drive = -1}
+device	xd at xdc: disk
+file	arch/sparc/dev/xd.c		xd needs-flag
+major	{xd = 10}
 
 pseudo-device	kbd
 
