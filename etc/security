@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: security,v 1.24 1997/06/24 01:16:47 lukem Exp $
+#	$NetBSD: security,v 1.25 1997/06/24 02:32:38 lukem Exp $
 #	from: @(#)security	8.1 (Berkeley) 6/9/93
 #
 
@@ -39,27 +39,43 @@ awk -F: '{ print $1 " " $3 }' $MP | sort -k2n > $TMP1
 
 # Check the master password file syntax.
 if [ "$check_passwd" = YES ]; then
-	awk -F: '{
+	awk '
+	BEGIN {
+		while ( getline < "/etc/shells" > 0 ) {
+			if ($LINE ~ /^\#/ || $LINE ~ /^$/ )
+				continue;
+			shells[$1]++;
+		}
+		FS=":";
+	}
+
+	{
 		if ($0 ~ /^[	 ]*$/) {
-			printf("Line %d is a blank line.\n", NR);
+			printf "Line %d is a blank line.\n", NR;
 			next;
 		}
 		if (NF != 10)
-			printf("Line %d has the wrong number of fields.\n", NR);
+			printf "Line %d has the wrong number of fields.\n", NR;
 		if ($1 !~ /^[A-Za-z0-9]*$/)
-			printf("Login %s has non-alphanumeric characters.\n", $1);
+			printf "Login %s has non-alphanumeric characters.\n",
+			    $1;
 		if (length($1) > 8)
-			printf("Login %s has more than 8 characters.\n", $1);
+			printf "Login %s has more than 8 characters.\n", $1;
 		if ($2 == "")
-			printf("Login %s has no password.\n", $1);
-		if (length($2) != 13 && $2 != "" && ($10 ~ /.*sh$/ || $10 == ""))
-			printf("Login %s is off but still has a valid shell.\n", $1);
+			printf "Login %s has no password.\n", $1;
+		if (length($2) != 13 && $2 != "") {
+			if ($10 == "" || shells[$10])
+				printf "Login %s is off but still has a valid shell (%s)\n",
+				    $1, $10;
+		} else if (! shells[$10])
+			printf "Login %s does not have a valid shell (%s)\n",
+			    $1, $10;
 		if ($3 == 0 && $1 != "root" && $1 != "toor")
-			printf("Login %s has a user id of 0.\n", $1);
+			printf "Login %s has a user id of 0.\n", $1;
 		if ($3 < 0)
-			printf("Login %s has a negative user id.\n", $1);
+			printf "Login %s has a negative user id.\n", $1;
 		if ($4 < 0)
-			printf("Login %s has a negative group id.\n", $1);
+			printf "Login %s has a negative group id.\n", $1;
 	}' < $MP > $OUTPUT
 	if [ -s $OUTPUT ] ; then
 		printf "\nChecking the $MP file:\n"
@@ -104,17 +120,18 @@ if [ "$check_group" = YES ]; then
 	GRP=/etc/group
 	awk -F: '{
 		if ($0 ~ /^[	 ]*$/) {
-			printf("Line %d is a blank line.\n", NR);
+			printf "Line %d is a blank line.\n", NR;
 			next;
 		}
 		if (NF != 4)
-			printf("Line %d has the wrong number of fields.\n", NR);
+			printf "Line %d has the wrong number of fields.\n", NR;
 		if ($1 !~ /^[A-za-z0-9]*$/)
-			printf("Group %s has non-alphanumeric characters.\n", $1);
+			printf "Group %s has non-alphanumeric characters.\n",
+			    $1;
 		if (length($1) > 8)
-			printf("Group %s has more than 8 characters.\n", $1);
+			printf "Group %s has more than 8 characters.\n", $1;
 		if ($3 !~ /[0-9]*/)
-			printf("Login %s has a negative group id.\n", $1);
+			printf "Login %s has a negative group id.\n", $1;
 	}' < $GRP > $OUTPUT
 	if [ -s $OUTPUT ] ; then
 		printf "\nChecking the $GRP file:\n"
@@ -468,8 +485,8 @@ if [ "$check_devices" = YES ]; then
 	done
 
 	awk '$3 != "root" || $4 != "operator" || $1 !~ /.rw-r-----/ \
-		{ printf("Disk %s is user %s, group %s, permissions %s.\n", \
-		    $11, $3, $4, $1); }' < $TMP1 > $OUTPUT
+		{ printf "Disk %s is user %s, group %s, permissions %s.\n", \
+		    $11, $3, $4, $1; }' < $TMP1 > $OUTPUT
 	if [ -s $OUTPUT ] ; then
 		printf "\nChecking disk ownership and permissions.\n"
 		cat $OUTPUT
