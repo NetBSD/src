@@ -1,4 +1,4 @@
-/*	$NetBSD: ldconfig.c,v 1.24 1999/04/08 19:19:57 drochner Exp $	*/
+/*	$NetBSD: ldconfig.c,v 1.25 1999/04/09 07:29:43 agc Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -265,6 +265,8 @@ dodir(dir, silent, update_dir_list)
 		ndewey = getdewey(dewey, cp + 4);
 		enter(dir, dp->d_name, name, dewey, ndewey);
 	}
+
+	(void) closedir(dd);
 
 	return (0);
 }
