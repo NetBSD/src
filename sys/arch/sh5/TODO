@@ -1,4 +1,4 @@
-$NetBSD: TODO,v 1.8 2002/10/23 13:37:05 scw Exp $
+$NetBSD: TODO,v 1.9 2002/11/23 09:27:03 scw Exp $
 
 TODO List For NetBSD/sh5
 ~~~~~~~~~~~~~~~~~~~~~~~~
@@ -13,7 +13,7 @@ DONE.	Enable the cpu cache.
 	of the pmap. And anyway, the pmap doesn't pay lip-service to the
 	cache yet.
 
-2.	Re-work the TLB invalidation code.
+DONE.	Re-work the TLB invalidation code.
 	This is a pain, as there is no hardware support for looking up an
 	address in the TLBs. To get around this, the PTEG structure
 	used to track user-space mappings contains a hint as to which group
