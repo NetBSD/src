@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_input.c,v 1.14 1994/06/29 06:38:19 cgd Exp $	*/
+/*	$NetBSD: ip_input.c,v 1.15 1995/04/13 06:33:21 cgd Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1993
@@ -98,7 +98,7 @@ static	struct ip_srcrt {
 
 #ifdef GATEWAY
 extern	int if_index;
-u_long	*ip_ifmatrix;
+u_int32_t *ip_ifmatrix;
 #endif
 
 static void save_rte __P((u_char *, struct in_addr));
@@ -126,8 +126,8 @@ ip_init()
 	ip_id = time.tv_sec & 0xffff;
 	ipintrq.ifq_maxlen = ipqmaxlen;
 #ifdef GATEWAY
-	i = (if_index + 1) * (if_index + 1) * sizeof (u_long);
-	ip_ifmatrix = (u_long *) malloc(i, M_RTABLE, M_WAITOK);
+	i = (if_index + 1) * (if_index + 1) * sizeof (u_int32_t);
+	ip_ifmatrix = (u_int32_t *) malloc(i, M_RTABLE, M_WAITOK);
 	bzero((char *)ip_ifmatrix, i);
 #endif
 }
@@ -248,7 +248,7 @@ next:
 		    ia->ia_ifp == m->m_pkthdr.rcvif &&
 #endif
 		    (ia->ia_ifp->if_flags & IFF_BROADCAST)) {
-			u_long t;
+			u_int32_t t;
 
 			if (satosin(&ia->ia_broadaddr)->sin_addr.s_addr ==
 			    ip->ip_dst.s_addr)
@@ -322,7 +322,7 @@ next:
 		}
 		goto ours;
 	}
-	if (ip->ip_dst.s_addr == (u_long)INADDR_BROADCAST)
+	if (ip->ip_dst.s_addr == (u_int32_t)INADDR_BROADCAST)
 		goto ours;
 	if (ip->ip_dst.s_addr == INADDR_ANY)
 		goto ours;
@@ -773,7 +773,7 @@ ip_dooptions(m)
 			ipt = (struct ip_timestamp *)cp;
 			if (ipt->ipt_len < 5)
 				goto bad;
-			if (ipt->ipt_ptr > ipt->ipt_len - sizeof (long)) {
+			if (ipt->ipt_ptr > ipt->ipt_len - sizeof (int32_t)) {
 				if (++ipt->ipt_oflw == 0)
 					goto bad;
 				break;
@@ -1074,7 +1074,7 @@ ip_forward(m, srcrt)
 	    satosin(rt_key(rt))->sin_addr.s_addr != 0 &&
 	    ipsendredirects && !srcrt) {
 #define	RTA(rt)	((struct in_ifaddr *)(rt->rt_ifa))
-		u_long src = ntohl(ip->ip_src.s_addr);
+		u_int32_t src = ntohl(ip->ip_src.s_addr);
 
 		if (RTA(rt) &&
 		    (src & RTA(rt)->ia_subnetmask) == RTA(rt)->ia_subnet) {
@@ -1087,7 +1087,7 @@ ip_forward(m, srcrt)
 		    code = ICMP_REDIRECT_HOST;
 #ifdef DIAGNOSTIC
 		    if (ipprintfs)
-		        printf("redirect (%d) to %lx\n", code, (u_long)dest);
+		        printf("redirect (%d) to %lx\n", code, (u_int32_t)dest);
 #endif
 		}
 	}
