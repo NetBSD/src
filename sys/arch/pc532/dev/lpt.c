@@ -1,4 +1,4 @@
-/*	$NetBSD: lpt.c,v 1.18.6.1 1997/03/04 15:46:35 is Exp $	*/
+/*	$NetBSD: lpt.c,v 1.18.6.2 1997/03/10 15:54:07 is Exp $	*/
 
 /*
  * Copyright (c) 1994 Matthias Pfaller.
@@ -88,7 +88,7 @@
 #include <netinet/in_systm.h>
 #include <netinet/in_var.h>
 #include <netinet/ip.h>
-#include <netinet/if_ether.h>
+#include <netinet/if_inarp.h>
 #if NBPFILTER > 0
 #include <sys/time.h>
 #include <net/bpf.h>
