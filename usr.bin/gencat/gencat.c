@@ -1,4 +1,4 @@
-/*	$NetBSD: gencat.c,v 1.16 2002/04/24 22:34:07 bjh21 Exp $	*/
+/*	$NetBSD: gencat.c,v 1.17 2002/04/24 22:44:40 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: gencat.c,v 1.16 2002/04/24 22:34:07 bjh21 Exp $");
+__RCSID("$NetBSD: gencat.c,v 1.17 2002/04/24 22:44:40 bjh21 Exp $");
 #endif
 
 /***********************************************************
@@ -79,6 +79,7 @@ up-to-date.  Many thanks.
 
 #define _NLS_PRIVATE
 
+#include <sys/types.h>
 #include <sys/queue.h>
 
 #include <netinet/in.h>	/* Needed by arpa/inet.h on NetBSD */
