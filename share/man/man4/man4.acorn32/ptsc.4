@@ -1,7 +1,5 @@
-.\" $NetBSD: autoconf.4,v 1.8 2001/04/09 13:11:28 wiz Exp $
 .\"
 .\" Copyright (c) 1995 Mark Brinicombe
-.\" Copyright (c) 1994 Christopher G. Demetriou
 .\" All rights reserved.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
@@ -14,7 +12,7 @@
 .\"    documentation and/or other materials provided with the distribution.
 .\" 3. All advertising materials mentioning features or use of this software
 .\"    must display the following acknowledgement:
-.\"      This product includes software developed by Christopher G. Demetriou.
+.\"      This product includes software developed by Mark Brinicombe.
 .\" 4. The name of the author may not be used to endorse or promote products
 .\"    derived from this software without specific prior written permission
 .\"
@@ -29,37 +27,22 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd June 14, 2000
-.Dt AUTOCONF 4 arm32
+.\"	$NetBSD: ptsc.4,v 1.1 2003/04/17 10:16:15 wiz Exp $
+.\"
+.Dd April 6, 1999
+.Dt PTSC 4 acorn32
 .Os
 .Sh NAME
-.Nm autoconf
-.Nd diagnostics from the autoconfiguration code
+.Nm ptsc
+.Nd Powertec SCSI II Card device interface
+.Sh SYNOPSIS
+.Cd "ptsc0 at podulebus?"
 .Sh DESCRIPTION
-When
-.Nx
-bootstraps it probes the innards of the machine
-on which it is running
-and locates controllers, drives, and other devices, printing out
-what it finds on the console.  This procedure is driven by a system
-configuration table which is processed by
-.Xr config 8
-and compiled into each kernel.
-Devices which exist in the machine but are not configured into the
-kernel are not detected.
-.Sh DIAGNOSTICS
-.Bl -diag
-.It CPU class not configured.
-You tried to boot
-.Nx
-on a class of
-.Tn CPU
-type which it doesn't
-(or at least this compiled version of
-.Nx
-doesn't) understand.
-.El
+The
+.Nm
+interface provides access to Powertec SCSI II interfaces.
 .Sh SEE ALSO
-.Xr intro 4 ,
-.Xr boot 8 ,
-.Xr config 8
+.Xr asc 4 ,
+.Xr cosc 4 ,
+.Xr csc 4 ,
+.Xr oak 4
