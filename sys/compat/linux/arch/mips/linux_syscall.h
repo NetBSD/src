@@ -1,4 +1,4 @@
-/* $NetBSD: linux_syscall.h,v 1.11 2002/04/10 18:19:09 christos Exp $ */
+/* $NetBSD: linux_syscall.h,v 1.11.4.1 2003/10/22 04:03:00 jmc Exp $ */
 
 /*
  * System call numbers.
@@ -505,6 +505,9 @@
 
 /* syscall: "sigaltstack" ret: "int" args: "const struct linux_sigaltstack *" "struct linux_sigaltstack *" */
 #define	LINUX_SYS_sigaltstack	206
+
+/* syscall: "mmap2" ret: "linux_off_t" args: "unsigned long" "size_t" "int" "int" "int" "linux_off_t" */
+#define	LINUX_SYS_mmap2	210
 
 /* syscall: "truncate64" ret: "int" args: "const char *" "off_t" */
 #define	LINUX_SYS_truncate64	211

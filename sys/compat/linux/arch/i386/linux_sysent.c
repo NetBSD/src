@@ -1,4 +1,4 @@
-/* $NetBSD: linux_sysent.c,v 1.44 2002/04/10 18:19:08 christos Exp $ */
+/* $NetBSD: linux_sysent.c,v 1.44.4.1 2003/10/22 04:03:00 jmc Exp $ */
 
 /*
  * System call switch table.
@@ -8,7 +8,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_sysent.c,v 1.44 2002/04/10 18:19:08 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_sysent.c,v 1.44.4.1 2003/10/22 04:03:00 jmc Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_43.h"
@@ -413,8 +413,8 @@ struct sysent linux_sysent[] = {
 	    sys___vfork14 },			/* 190 = __vfork14 */
 	{ 2, s(struct linux_sys_ugetrlimit_args), 0,
 	    linux_sys_ugetrlimit },		/* 191 = ugetrlimit */
-	{ 6, s(struct linux_sys_mmap_args), 0,
-	    linux_sys_mmap },			/* 192 = mmap */
+	{ 6, s(struct linux_sys_mmap2_args), 0,
+	    linux_sys_mmap2 },			/* 192 = mmap2 */
 	{ 2, s(struct linux_sys_truncate64_args), 0,
 	    linux_sys_truncate64 },		/* 193 = truncate64 */
 	{ 2, s(struct sys_ftruncate_args), 0,

@@ -1,4 +1,4 @@
-/* $NetBSD: linux_sysent.c,v 1.10 2002/04/10 18:19:09 christos Exp $ */
+/* $NetBSD: linux_sysent.c,v 1.10.4.1 2003/10/22 04:03:01 jmc Exp $ */
 
 /*
  * System call switch table.
@@ -8,7 +8,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_sysent.c,v 1.10 2002/04/10 18:19:09 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_sysent.c,v 1.10.4.1 2003/10/22 04:03:01 jmc Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -451,8 +451,8 @@ struct sysent linux_sysent[] = {
 	    sys_nosys },			/* 208 = unimplemented */
 	{ 0, 0, 0,
 	    sys_nosys },			/* 209 = unimplemented */
-	{ 0, 0, 0,
-	    sys_nosys },			/* 210 = unimplemented mmap2 */
+	{ 6, s(struct linux_sys_mmap2_args), 0,
+	    linux_sys_mmap2 },			/* 210 = mmap2 */
 	{ 2, s(struct linux_sys_truncate64_args), 0,
 	    linux_sys_truncate64 },		/* 211 = truncate64 */
 	{ 0, 0, 0,
