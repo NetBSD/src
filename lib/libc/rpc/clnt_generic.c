@@ -1,4 +1,4 @@
-/*	$NetBSD: clnt_generic.c,v 1.18 2000/07/06 03:10:34 christos Exp $	*/
+/*	$NetBSD: clnt_generic.c,v 1.19 2001/01/04 14:42:18 lukem Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -46,6 +46,7 @@ static char sccsid[] = "@(#)clnt_generic.c 1.32 89/03/16 Copyr 1988 Sun Micro";
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <netinet/tcp.h>
+#include <assert.h>
 #include <stdio.h>
 #include <errno.h>
 #include <rpc/rpc.h>
@@ -81,6 +82,10 @@ clnt_create_vers(hostname, prog, vers_out, vers_low, vers_high, nettype)
 	struct timeval to;
 	enum clnt_stat rpc_stat;
 	struct rpc_err rpcerr;
+
+	_DIAGASSERT(hostname != NULL);
+	_DIAGASSERT(vers_out != NULL);
+	/* XXX: nettype appears to support being NULL */
 
 	clnt = clnt_create(hostname, prog, vers_high, nettype);
 	if (clnt == NULL) {
@@ -151,6 +156,8 @@ clnt_create(hostname, prog, vers, nettype)
 	enum clnt_stat	save_cf_stat = RPC_SUCCESS;
 	struct rpc_err	save_cf_error;
 
+	_DIAGASSERT(hostname != NULL);
+	/* XXX: nettype appears to support being NULL */
 
 	if ((handle = __rpc_setconf(nettype)) == NULL) {
 		rpc_createerr.cf_stat = RPC_UNKNOWNPROTO;
@@ -219,6 +226,9 @@ clnt_tp_create(hostname, prog, vers, nconf)
 	struct netbuf *svcaddr;			/* servers address */
 	CLIENT *cl = NULL;			/* client handle */
 
+	_DIAGASSERT(hostname != NULL);
+	/* nconf is handled below */
+
 	if (nconf == NULL) {
 		rpc_createerr.cf_stat = RPC_UNKNOWNPROTO;
 		return (NULL);
@@ -278,6 +288,9 @@ clnt_tli_create(fd, nconf, svcaddr, prog, vers, sendsz, recvsz)
 	long servtype;
 	int one = 1;
 	struct __rpc_sockinfo si;
+
+	/* nconf is handled below */
+	_DIAGASSERT(svcaddr != NULL);
 
 	if (fd == RPC_ANYFD) {
 		if (nconf == NULL) {

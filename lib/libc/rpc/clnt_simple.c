@@ -1,4 +1,4 @@
-/*	$NetBSD: clnt_simple.c,v 1.21 2000/07/06 03:10:34 christos Exp $	*/
+/*	$NetBSD: clnt_simple.c,v 1.22 2001/01/04 14:42:19 lukem Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -50,6 +50,7 @@ static char sccsid[] = "@(#)clnt_simple.c 1.49 89/01/31 Copyr 1984 Sun Micro";
 #include "reentrant.h"
 #include <sys/param.h>
 #include <stdio.h>
+#include <assert.h>
 #include <errno.h>
 #include <rpc/rpc.h>
 #include <string.h>
@@ -122,6 +123,11 @@ rpc_call(host, prognum, versnum, procnum, inproc, in, outproc, out, nettype)
 	extern mutex_t tsd_lock;
 #endif
 	int main_thread = 1;
+
+	_DIAGASSERT(host != NULL);
+	/* XXX: in may be NULL ??? */
+	/* XXX: out may be NULL ??? */
+	/* XXX: nettype may be NULL ??? */
 
 #ifdef __REENT
 	if ((main_thread = _thr_main())) {

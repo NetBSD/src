@@ -1,4 +1,4 @@
-/*	$NetBSD: getnetconfig.c,v 1.3 2000/07/06 03:10:34 christos Exp $	*/
+/*	$NetBSD: getnetconfig.c,v 1.4 2001/01/04 14:42:19 lukem Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -42,6 +42,7 @@ static        char sccsid[] = "@(#)getnetconfig.c	1.12 91/12/19 SMI";
 #include "namespace.h"
 #include <sys/cdefs.h>
 #include <stdio.h>
+#include <assert.h>
 #include <errno.h>
 #include <netconfig.h>
 #include <stdlib.h>
@@ -522,6 +523,9 @@ struct netconfig *ncp;	/* where to put results */
     char    *tokenp;	/* for processing tokens */
     char    *lasts;
 
+    _DIAGASSERT(stringp != NULL);
+    _DIAGASSERT(ncp != NULL);
+
     nc_error = NC_BADFILE;	/* nearly anything that breaks is for this reason */
     stringp[strlen(stringp)-1] = '\0';	/* get rid of newline */
     /* netid */
@@ -634,6 +638,9 @@ void
 nc_perror(s)
 	const char *s;
 {
+
+    _DIAGASSERT(s != NULL);
+
     fprintf(stderr, "%s: %s", s, nc_sperror());
 }
 
@@ -647,6 +654,8 @@ struct netconfig	*ncp;
     struct netconfig	*p;
     char	*tmp;
     int	i;
+
+    _DIAGASSERT(ncp != NULL);
 
     if ((tmp=malloc(MAXNETCONFIGLINE)) == NULL)
 	return(NULL);

@@ -1,4 +1,4 @@
-/*	$NetBSD: svc_auth.c,v 1.12 2000/07/06 03:10:35 christos Exp $	*/
+/*	$NetBSD: svc_auth.c,v 1.13 2001/01/04 14:42:21 lukem Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -49,6 +49,7 @@ static char sccsid[] = "@(#)svc_auth.c 1.26 89/02/07 Copyr 1984 Sun Micro";
 #include "reentrant.h"
 #include <sys/types.h>
 #include <rpc/rpc.h>
+#include <assert.h>
 #include <stdlib.h>
 
 #ifdef __weak_alias
@@ -107,6 +108,9 @@ _authenticate(rqst, msg)
 #ifdef __REENT
 	extern mutex_t authsvc_lock;
 #endif
+
+	_DIAGASSERT(rqst != NULL);
+	_DIAGASSERT(msg != NULL);
 
 /* VARIABLES PROTECTED BY authsvc_lock: asp, Auths */
 

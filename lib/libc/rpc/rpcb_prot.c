@@ -1,4 +1,4 @@
-/*	$NetBSD: rpcb_prot.c,v 1.3 2000/07/14 08:40:42 fvdl Exp $	*/
+/*	$NetBSD: rpcb_prot.c,v 1.4 2001/01/04 14:42:21 lukem Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -54,6 +54,8 @@ static char sccsid[] = "@(#)rpcb_prot.c 1.9 89/04/21 Copyr 1984 Sun Micro";
 #include <rpc/xdr.h>
 #include <rpc/rpcb_prot.h>
 
+#include <assert.h>
+
 #ifdef __weak_alias
 __weak_alias(xdr_rpcb,_xdr_rpcb)
 __weak_alias(xdr_rpcblist_ptr,_xdr_rpcblist_ptr)
@@ -71,6 +73,9 @@ xdr_rpcb(xdrs, objp)
 	XDR *xdrs;
 	RPCB *objp;
 {
+
+	_DIAGASSERT(objp != NULL);
+
 	if (!xdr_u_int32_t(xdrs, &objp->r_prog)) {
 		return (FALSE);
 	}
@@ -123,9 +128,14 @@ xdr_rpcblist_ptr(xdrs, rp)
 	 * xdr_bool when the direction is XDR_DECODE.
 	 */
 	bool_t more_elements;
-	int freeing = (xdrs->x_op == XDR_FREE);
+	int freeing;
 	rpcblist_ptr next;
 	rpcblist_ptr next_copy;
+
+	_DIAGASSERT(xdrs != NULL);
+	/* XXX: rp may be NULL ??? */
+
+	freeing = (xdrs->x_op == XDR_FREE);
 
 	for (;;) {
 		more_elements = (bool_t)(*rp != NULL);
@@ -182,6 +192,9 @@ xdr_rpcb_entry(xdrs, objp)
 	XDR *xdrs;
 	rpcb_entry *objp;
 {
+
+	_DIAGASSERT(objp != NULL);
+
 	if (!xdr_string(xdrs, &objp->r_maddr, (u_int)~0)) {
 		return (FALSE);
 	}
@@ -211,9 +224,14 @@ xdr_rpcb_entry_list_ptr(xdrs, rp)
 	 * xdr_bool when the direction is XDR_DECODE.
 	 */
 	bool_t more_elements;
-	int freeing = (xdrs->x_op == XDR_FREE);
+	int freeing;
 	rpcb_entry_list_ptr next;
 	rpcb_entry_list_ptr next_copy;
+
+	_DIAGASSERT(xdrs != NULL);
+	/* XXX: rp is allowed to be NULL ??? */
+
+	freeing = (xdrs->x_op == XDR_FREE);
 
 	for (;;) {
 		more_elements = (bool_t)(*rp != NULL);
@@ -263,6 +281,8 @@ xdr_rpcb_rmtcallargs(xdrs, p)
 	    (struct r_rpcb_rmtcallargs *)(void *)p;
 	u_int lenposition, argposition, position;
 	int32_t *buf;
+
+	_DIAGASSERT(p != NULL);
 
 	buf = XDR_INLINE(xdrs, 3 * BYTES_PER_XDR_UNIT);
 	if (buf == NULL) {
@@ -314,6 +334,8 @@ xdr_rpcb_rmtcallres(xdrs, p)
 	bool_t dummy;
 	struct r_rpcb_rmtcallres *objp = (struct r_rpcb_rmtcallres *)(void *)p;
 
+	_DIAGASSERT(p != NULL);
+
 	if (!xdr_string(xdrs, &objp->addr, (u_int)~0)) {
 		return (FALSE);
 	}
@@ -330,6 +352,8 @@ xdr_netbuf(xdrs, objp)
 	struct netbuf *objp;
 {
 	bool_t dummy;
+
+	_DIAGASSERT(objp != NULL);
 
 	if (!xdr_u_int32_t(xdrs, (u_int32_t *) &objp->maxlen)) {
 		return (FALSE);

@@ -1,4 +1,4 @@
-/*	$NetBSD: svc_dg.c,v 1.5 2000/12/20 20:52:24 christos Exp $	*/
+/*	$NetBSD: svc_dg.c,v 1.6 2001/01/04 14:42:22 lukem Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -47,6 +47,7 @@
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <rpc/rpc.h>
+#include <assert.h>
 #include <errno.h>
 #include <unistd.h>
 #include <stdio.h>
@@ -176,13 +177,19 @@ svc_dg_recv(xprt, msg)
 	SVCXPRT *xprt;
 	struct rpc_msg *msg;
 {
-	struct svc_dg_data *su = su_data(xprt);
-	XDR *xdrs = &(su->su_xdrs);
+	struct svc_dg_data *su;
+	XDR *xdrs;
 	char *reply;
 	struct sockaddr_storage ss;
 	socklen_t alen;
 	size_t replylen;
 	int rlen;
+
+	_DIAGASSERT(xprt != NULL);
+	_DIAGASSERT(msg != NULL);
+
+	su = su_data(xprt);
+	xdrs = &(su->su_xdrs);
 
 again:
 	alen = sizeof (struct sockaddr_storage);
@@ -226,10 +233,16 @@ svc_dg_reply(xprt, msg)
 	SVCXPRT *xprt;
 	struct rpc_msg *msg;
 {
-	struct svc_dg_data *su = su_data(xprt);
-	XDR *xdrs = &(su->su_xdrs);
+	struct svc_dg_data *su;
+	XDR *xdrs;
 	bool_t stat = FALSE;
 	size_t slen;
+
+	_DIAGASSERT(xprt != NULL);
+	_DIAGASSERT(msg != NULL);
+
+	su = su_data(xprt);
+	xdrs = &(su->su_xdrs);
 
 	xdrs->x_op = XDR_ENCODE;
 	XDR_SETPOS(xdrs, 0);
@@ -262,8 +275,11 @@ svc_dg_freeargs(xprt, xdr_args, args_ptr)
 	xdrproc_t xdr_args;
 	caddr_t args_ptr;
 {
-	XDR *xdrs = &(su_data(xprt)->su_xdrs);
+	XDR *xdrs;
 
+	_DIAGASSERT(xprt != NULL);
+
+	xdrs = &(su_data(xprt)->su_xdrs);
 	xdrs->x_op = XDR_FREE;
 	return (*xdr_args)(xdrs, args_ptr);
 }
@@ -272,7 +288,11 @@ static void
 svc_dg_destroy(xprt)
 	SVCXPRT *xprt;
 {
-	struct svc_dg_data *su = su_data(xprt);
+	struct svc_dg_data *su;
+
+	_DIAGASSERT(xprt != NULL);
+
+	su = su_data(xprt);
 
 	xprt_unregister(xprt);
 	if (xprt->xp_fd != -1)
@@ -308,6 +328,8 @@ svc_dg_ops(xprt)
 #ifdef __REENT
 	extern mutex_t ops_lock;
 #endif
+
+	_DIAGASSERT(xprt != NULL);
 
 /* VARIABLES PROTECTED BY ops_lock: ops */
 
@@ -410,8 +432,12 @@ svc_dg_enablecache(transp, size)
 	SVCXPRT *transp;
 	u_int size;
 {
-	struct svc_dg_data *su = su_data(transp);
+	struct svc_dg_data *su;
 	struct cl_cache *uc;
+
+	_DIAGASSERT(transp != NULL);
+
+	su = su_data(transp);
 
 	mutex_lock(&dupreq_lock);
 	if (su->su_cache != NULL) {
@@ -469,14 +495,19 @@ cache_set(xprt, replylen)
 {
 	cache_ptr victim;
 	cache_ptr *vicp;
-	struct svc_dg_data *su = su_data(xprt);
-	struct cl_cache *uc = (struct cl_cache *) su->su_cache;
+	struct svc_dg_data *su;
+	struct cl_cache *uc;
 	u_int loc;
 	char *newbuf;
 #ifdef RPC_CACHE_DEBUG
 	struct netconfig *nconf;
 	char *uaddr;
 #endif
+
+	_DIAGASSERT(xprt != NULL);
+
+	su = su_data(xprt);
+	uc = (struct cl_cache *) su->su_cache;
 
 	mutex_lock(&dupreq_lock);
 	/*
@@ -561,12 +592,20 @@ cache_get(xprt, msg, replyp, replylenp)
 {
 	u_int loc;
 	cache_ptr ent;
-	struct svc_dg_data *su = su_data(xprt);
-	struct cl_cache *uc = (struct cl_cache *) su->su_cache;
+	struct svc_dg_data *su;
+	struct cl_cache *uc;
 #ifdef RPC_CACHE_DEBUG
 	struct netconfig *nconf;
 	char *uaddr;
 #endif
+
+	_DIAGASSERT(xprt != NULL);
+	_DIAGASSERT(msg != NULL);
+	_DIAGASSERT(replyp != NULL);
+	_DIAGASSERT(replylenp != NULL);
+
+	su = su_data(xprt);
+	uc = (struct cl_cache *) su->su_cache;
 
 	mutex_lock(&dupreq_lock);
 	loc = CACHE_LOC(xprt, su->su_xid);

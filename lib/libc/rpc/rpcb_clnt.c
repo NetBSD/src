@@ -1,4 +1,4 @@
-/*	$NetBSD: rpcb_clnt.c,v 1.7 2000/12/20 20:52:24 christos Exp $	*/
+/*	$NetBSD: rpcb_clnt.c,v 1.8 2001/01/04 14:42:20 lukem Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -62,13 +62,14 @@ static char sccsid[] = "@(#)rpcb_clnt.c 1.30 89/06/21 Copyr 1988 Sun Micro";
 #include <netinet/in.h>		/* FOR IPPROTO_TCP/UDP definitions */
 #include <rpc/pmap_prot.h>
 #endif
-#include <stdio.h>
+#include <assert.h>
 #include <errno.h>
+#include <netdb.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <unistd.h>
-#include <netdb.h>
 #include <syslog.h>
+#include <unistd.h>
 
 #include "rpc_com.h"
 
@@ -127,6 +128,9 @@ __rpc_control(request, info)
 	int	request;
 	void	*info;
 {
+
+	_DIAGASSERT(info != NULL);
+
 	switch (request) {
 	case CLCR_GET_RPCB_TIMEOUT:
 		*(struct timeval *)info = tottimeout;
@@ -172,6 +176,9 @@ check_cache(host, netid)
 {
 	struct address_cache *cptr;
 
+	_DIAGASSERT(host != NULL);
+	_DIAGASSERT(netid != NULL);
+
 	/* READ LOCK HELD ON ENTRY: rpcbaddr_cache_lock */
 
 	for (cptr = front; cptr != NULL; cptr = cptr->ac_next) {
@@ -192,6 +199,8 @@ delete_cache(addr)
 	struct netbuf *addr;
 {
 	struct address_cache *cptr, *prevptr = NULL;
+
+	_DIAGASSERT(addr != NULL);
 
 	/* WRITE LOCK HELD ON ENTRY: rpcbaddr_cache_lock */
 	for (cptr = front; cptr != NULL; cptr = cptr->ac_next) {
@@ -221,6 +230,11 @@ add_cache(host, netid, taddr, uaddr)
 	struct netbuf *taddr;
 {
 	struct address_cache  *ad_cache, *cptr, *prevptr;
+
+	_DIAGASSERT(host != NULL);
+	_DIAGASSERT(netid != NULL);
+	/* uaddr may be NULL */
+	/* taddr may be NULL ??? */
 
 	ad_cache = (struct address_cache *)
 			malloc(sizeof (struct address_cache));
@@ -302,6 +316,10 @@ getclnthandle(host, nconf, targaddr)
 	struct addrinfo hints, *res, *tres;
 	struct address_cache *ad_cache;
 	char *tmpaddr;
+
+	_DIAGASSERT(host != NULL);
+	_DIAGASSERT(nconf != NULL);
+	/* targaddr may be NULL */
 
 /* VARIABLES PROTECTED BY rpcbaddr_cache_lock:  ad_cache */
 
@@ -616,6 +634,8 @@ got_entry(relp, nconf)
 	rpcb_entry_list_ptr sp;
 	rpcb_entry *rmap;
 
+	_DIAGASSERT(nconf != NULL);
+
 	for (sp = relp; sp != NULL; sp = sp->rpcb_entry_next) {
 		rmap = &sp->rpcb_entry_map;
 		if ((strcmp(nconf->nc_proto, rmap->r_nc_proto) == 0) &&
@@ -670,6 +690,10 @@ __rpcb_findaddr(program, version, nconf, host, clpp)
 	struct netbuf *address = NULL;
 	rpcvers_t start_vers = RPCBVERS4;
 	struct netbuf servaddr;
+
+	/* nconf is handled below */
+	_DIAGASSERT(host != NULL);
+	/* clpp may be NULL */
 
 	/* parameter checking */
 	if (nconf == NULL) {
@@ -776,14 +800,15 @@ try_rpcbind:
 #if 1
 	if ((nconf->nc_semantics == NC_TPI_COTS_ORD ||
 			nconf->nc_semantics == NC_TPI_COTS) &&
-	    (strcmp(nconf->nc_protofmly, NC_LOOPBACK) != 0)) {
+	    (strcmp(nconf->nc_protofmly, NC_LOOPBACK) != 0))
 #else
 	if (client != NULL) {
 		CLNT_DESTROY(client);
 		client = NULL;
 	}
-	if (nconf->nc_semantics == NC_TPI_CLTS) {
+	if (nconf->nc_semantics == NC_TPI_CLTS)
 #endif
+	{
 		void *handle;
 		struct netconfig *nconf_clts;
 		rpcb_entry_list_ptr relp = NULL;
@@ -791,10 +816,11 @@ try_rpcbind:
 		if (client == NULL) {
 			/* This did not go through the above PORTMAP/TCP code */
 #if 1
-			if ((handle = __rpc_setconf("datagram_v")) != NULL) {
+			if ((handle = __rpc_setconf("datagram_v")) != NULL)
 #else
-			if ((handle = __rpc_setconf("circuit_v")) != NULL) {
+			if ((handle = __rpc_setconf("circuit_v")) != NULL)
 #endif
+			{
 				while ((nconf_clts = __rpc_getconf(handle))
 					!= NULL) {
 					if (strcmp(nconf_clts->nc_protofmly,
@@ -858,10 +884,11 @@ regular_rpcbind:
 	/* Now the same transport is to be used to get the address */
 #if 1
 	if (client && ((nconf->nc_semantics == NC_TPI_COTS_ORD) ||
-			(nconf->nc_semantics == NC_TPI_COTS))) {
+			(nconf->nc_semantics == NC_TPI_COTS)))
 #else
-	if (client && nconf->nc_semantics == NC_TPI_CLTS) {
+	if (client && nconf->nc_semantics == NC_TPI_CLTS)
 #endif
+	{
 		/* A CLTS type of client - destroy it */
 		CLNT_DESTROY(client);
 		client = NULL;
@@ -970,6 +997,8 @@ rpcb_getaddr(program, version, nconf, address, host)
 {
 	struct netbuf *na;
 
+	_DIAGASSERT(address != NULL);
+
 	if ((na = __rpcb_findaddr(program, version, nconf,
 				host, (CLIENT **) NULL)) == NULL)
 		return (FALSE);
@@ -1065,7 +1094,6 @@ rpcb_rmtcall(nconf, host, prog, vers, proc, xdrargs, argsp,
 	struct r_rpcb_rmtcallargs a;
 	struct r_rpcb_rmtcallres r;
 	rpcvers_t rpcb_vers;
-
 
 	client = getclnthandle(host, nconf, NULL);
 	if (client == NULL) {

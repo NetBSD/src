@@ -1,4 +1,4 @@
-/*	$NetBSD: getnetpath.c,v 1.3 2000/07/06 03:10:34 christos Exp $	*/
+/*	$NetBSD: getnetpath.c,v 1.4 2001/01/04 14:42:19 lukem Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -42,6 +42,7 @@ static        char sccsid[] = "@(#)getnetpath.c	1.11 91/12/19 SMI";
 #include "namespace.h"
 #include <sys/cdefs.h>
 #include <stdio.h>
+#include <assert.h>
 #include <errno.h>
 #include <netconfig.h>
 #include <stdlib.h>
@@ -90,7 +91,6 @@ char *_get_next_token __P((char *, int));
 void *
 setnetpath()
 {
-
     struct netpath_vars *np_sessionp;   /* this session's variables */
     char *npp;				/* NETPATH env variable */
 
@@ -244,6 +244,9 @@ int token;		/* char to parse string for */
     char  *cp;		/* char pointer */
     char  *np;		/* netpath pointer */
     char  *ep;		/* escape pointer */
+
+    _DIAGASSERT(npp != NULL);
+    _DIAGASSERT(token != NULL);
 
     if ((cp = strchr(npp, token)) == NULL) {
 	return (NULL);

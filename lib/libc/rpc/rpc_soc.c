@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc_soc.c,v 1.6 2000/07/06 03:10:35 christos Exp $	*/
+/*	$NetBSD: rpc_soc.c,v 1.7 2001/01/04 14:42:20 lukem Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -64,11 +64,12 @@ static char sccsid[] = "@(#)rpc_soc.c 1.41 89/05/02 Copyr 1988 Sun Micro";
 #include <rpc/pmap_prot.h>
 #include <rpc/nettype.h>
 #include <netinet/in.h>
-#include <netdb.h>
+#include <assert.h>
 #include <errno.h>
-#include <syslog.h>
+#include <netdb.h>
 #include <stdlib.h>
 #include <string.h>
+#include <syslog.h>
 #include <unistd.h>
 
 #include "rpc_com.h"
@@ -113,9 +114,15 @@ clnt_com_create(raddr, prog, vers, sockp, sendsz, recvsz, tp)
 {
 	CLIENT *cl;
 	int madefd = FALSE;
-	int fd = *sockp;
+	int fd;
 	struct netconfig *nconf;
 	struct netbuf bindaddr;
+
+	_DIAGASSERT(raddr != NULL);
+	_DIAGASSERT(sockp != NULL);
+	_DIAGASSERT(tp != NULL);
+
+	fd = *sockp;
 
 	mutex_lock(&rpcsoc_lock);
 	if ((nconf = __rpc_getconfip(tp)) == NULL) {
@@ -189,6 +196,9 @@ clntudp_bufcreate(raddr, prog, vers, wait, sockp, sendsz, recvsz)
 {
 	CLIENT *cl;
 
+	_DIAGASSERT(raddr != NULL);
+	_DIAGASSERT(sockp != NULL);
+
 	cl = clnt_com_create(raddr, (rpcprog_t)prog, (rpcvers_t)vers, sockp,
 	    sendsz, recvsz, "udp");
 	if (cl == NULL) {
@@ -246,6 +256,8 @@ svc_com_create(fd, sendsize, recvsize, netid)
 	int madefd = FALSE;
 	int port;
 	struct sockaddr_in sin;
+
+	_DIAGASSERT(netid != NULL);
 
 	if ((nconf = __rpc_getconfip(netid)) == NULL) {
 		(void) syslog(LOG_ERR, "Could not get %s transport", netid);
@@ -322,6 +334,9 @@ int
 get_myaddress(addr)
 	struct sockaddr_in *addr;
 {
+
+	_DIAGASSERT(addr != NULL);
+
 	memset((void *) addr, 0, sizeof(*addr));
 	addr->sin_family = AF_INET;
 	addr->sin_port = htons(PMAPPORT);
@@ -377,6 +392,10 @@ rpc_wrap_bcast(resultp, addr, nconf)
 	struct netconfig *nconf; /* Netconf of the transport */
 {
 	resultproc_t clnt_broadcast_result;
+
+	_DIAGASSERT(resultp != NULL);
+	_DIAGASSERT(addr != NULL);
+	_DIAGASSERT(nconf != NULL);
 
 	if (strcmp(nconf->nc_netid, "udp"))
 		return (FALSE);

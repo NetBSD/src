@@ -1,4 +1,4 @@
-/*	$NetBSD: svc.c,v 1.21 2000/07/06 03:10:35 christos Exp $	*/
+/*	$NetBSD: svc.c,v 1.22 2001/01/04 14:42:21 lukem Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -35,7 +35,7 @@
 static char *sccsid = "@(#)svc.c 1.44 88/02/08 Copyr 1984 Sun Micro";
 static char *sccsid = "@(#)svc.c	2.4 88/08/11 4.0 RPCSRC";
 #else
-__RCSID("$NetBSD: svc.c,v 1.21 2000/07/06 03:10:35 christos Exp $");
+__RCSID("$NetBSD: svc.c,v 1.22 2001/01/04 14:42:21 lukem Exp $");
 #endif
 #endif
 
@@ -192,6 +192,9 @@ svc_reg(xprt, prog, vers, dispatch, nconf)
 	struct netconfig *tnconf;
 	char *netid = NULL;
 	int flag = 0;
+
+	_DIAGASSERT(xprt != NULL);
+	/* XXX: dispatch may be NULL ??? */
 
 /* VARIABLES PROTECTED BY svc_lock: s, prev, svc_head */
 
@@ -362,6 +365,7 @@ svc_find(prog, vers, prev, netid)
 	struct svc_callout *s, *p;
 
 	_DIAGASSERT(prev != NULL);
+	/* netid is handled below */
 
 	p = NULL;
 	for (s = svc_head; s != NULL; s = s->sc_next) {
@@ -466,6 +470,8 @@ __svc_versquiet_on(xprt)
 {
 	u_long	tmp;
 
+	_DIAGASSERT(xprt != NULL);
+
 	tmp = ((u_long) xprt->xp_p3) | SVC_VERSQUIET;
 	xprt->xp_p3 = (caddr_t) tmp;
 }
@@ -475,6 +481,8 @@ __svc_versquiet_off(xprt)
 	SVCXPRT *xprt;
 {
 	u_long	tmp;
+
+	_DIAGASSERT(xprt != NULL);
 
 	tmp = ((u_long) xprt->xp_p3) & ~SVC_VERSQUIET;
 	xprt->xp_p3 = (caddr_t) tmp;
@@ -491,6 +499,9 @@ int
 __svc_versquiet_get(xprt)
 	SVCXPRT *xprt;
 {
+
+	_DIAGASSERT(xprt != NULL);
+
 	return ((int) xprt->xp_p3) & SVC_VERSQUIET;
 }
 #endif
@@ -712,6 +723,8 @@ svc_getreq_poll(pfdp, pollretval)
 {
 	int i;
 	int fds_found;
+
+	_DIAGASSERT(pfdp != NULL);
 
 	for (i = fds_found = 0; fds_found < pollretval; i++) {
 		struct pollfd *p = &pfdp[i];

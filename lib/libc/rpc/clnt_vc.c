@@ -1,4 +1,4 @@
-/*	$NetBSD: clnt_vc.c,v 1.6 2000/12/20 23:08:51 christos Exp $	*/
+/*	$NetBSD: clnt_vc.c,v 1.7 2001/01/04 14:42:19 lukem Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -36,7 +36,7 @@ static char *sccsid = "@(#)clnt_tcp.c 1.37 87/10/05 Copyr 1984 Sun Micro";
 static char *sccsid = "@(#)clnt_tcp.c	2.2 88/08/01 4.0 RPCSRC";
 static char sccsid[] = "@(#)clnt_vc.c 1.19 89/03/16 Copyr 1988 Sun Micro";
 #else
-__RCSID("$NetBSD: clnt_vc.c,v 1.6 2000/12/20 23:08:51 christos Exp $");
+__RCSID("$NetBSD: clnt_vc.c,v 1.7 2001/01/04 14:42:19 lukem Exp $");
 #endif
 #endif
  
@@ -174,6 +174,8 @@ clnt_vc_create(fd, raddr, prog, vers, sendsz, recvsz)
 	struct sockaddr_storage ss;
 	socklen_t slen;
 	struct __rpc_sockinfo si;
+
+	_DIAGASSERT(raddr != NULL);
 
 	if (disrupt == 0)
 		disrupt = (u_int32_t)(long)raddr;
@@ -774,6 +776,9 @@ static bool_t
 time_not_ok(t)
 	struct timeval *t;
 {
+
+	_DIAGASSERT(t != NULL);
+
 	return (t->tv_sec <= -1 || t->tv_sec > 100000000 ||
 		t->tv_usec <= -1 || t->tv_usec > 1000000);
 }
