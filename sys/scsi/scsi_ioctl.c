@@ -1,4 +1,4 @@
-/*	$NetBSD: scsi_ioctl.c,v 1.14 1994/12/01 12:26:37 mycroft Exp $	*/
+/*	$NetBSD: scsi_ioctl.c,v 1.15 1994/12/01 12:36:35 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
@@ -303,6 +303,7 @@ scsi_do_ioctl(sc_link, dev, cmd, addr, f)
 			si->si_iov.iov_len = len;
 			si->si_uio.uio_iov = &si->si_iov;
 			si->si_uio.uio_iovcnt = 1;
+			si->si_uio.uio_resid = len;
 			si->si_uio.uio_offset = 0;
 			si->si_uio.uio_segflg = UIO_USERSPACE;
 			si->si_uio.uio_rw = 
