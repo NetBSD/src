@@ -1,4 +1,4 @@
-/*	$NetBSD: ftpd.c,v 1.132 2001/12/01 10:25:30 lukem Exp $	*/
+/*	$NetBSD: ftpd.c,v 1.133 2001/12/04 13:54:12 lukem Exp $	*/
 
 /*
  * Copyright (c) 1997-2001 The NetBSD Foundation, Inc.
@@ -109,7 +109,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)ftpd.c	8.5 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: ftpd.c,v 1.132 2001/12/01 10:25:30 lukem Exp $");
+__RCSID("$NetBSD: ftpd.c,v 1.133 2001/12/04 13:54:12 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -561,7 +561,8 @@ sgetpwnam(const char *name)
 }
 
 static int	login_attempts;	/* number of failed login attempts */
-static int	askpasswd;	/* had user command, ask for passwd */
+static int	askpasswd;	/* had USER command, ask for PASSwd */
+static int	permitted;	/* USER permitted */
 static char	curname[10];	/* current USER name */
 
 /*
@@ -578,6 +579,9 @@ static char	curname[10];	/* current USER name */
 void
 user(const char *name)
 {
+	char	*class;
+
+	class = NULL;
 	if (logged_in) {
 		switch (curclass.type) {
 		case CLASS_GUEST:
@@ -606,6 +610,9 @@ user(const char *name)
 #endif
 
 	curclass.type = CLASS_REAL;
+	askpasswd = 0;
+	permitted = 0;
+
 	if (strcmp(name, "ftp") == 0 || strcmp(name, "anonymous") == 0) {
 			/* need `pw' setup for checkaccess() and checkuser () */
 		if ((pw = sgetpwnam("ftp")) == NULL)
@@ -618,34 +625,106 @@ user(const char *name)
 			reply(331,
 			    "Guest login ok, type your name as password.");
 		}
-		if (!askpasswd && logging)
-			syslog(LOG_NOTICE,
-			    "ANONYMOUS FTP LOGIN REFUSED FROM %s", remotehost);
-		return;
-	}
+		if (!askpasswd) {
+			if (logging)
+				syslog(LOG_NOTICE,
+				    "ANONYMOUS FTP LOGIN REFUSED FROM %s",
+				    remotehost);
+			end_login();
+			goto cleanup_user;
+		}
+		name = "ftp";
+	} else
+		pw = sgetpwnam(name);
 
-	pw = sgetpwnam(name);
 	if (logging)
 		strlcpy(curname, name, sizeof(curname));
 
+			/* check user in /etc/ftpusers, and setup class */
+	permitted = checkuser(_PATH_FTPUSERS, curname, 1, 0, &class);
+
+			/* check user in /etc/ftpchroot */
+	if (checkuser(_PATH_FTPCHROOT, curname, 0, 0, NULL)) {
+		if (curclass.type == CLASS_GUEST) {
+			syslog(LOG_NOTICE,
+	    "Can't change guest user to chroot class; remove entry in %s",
+			    _PATH_FTPCHROOT);
+			exit(1);
+		}
+		curclass.type = CLASS_CHROOT;
+	}
+			/* determine default class */
+	if (class == NULL) {
+		switch (curclass.type) {
+		case CLASS_GUEST:
+			class = xstrdup("guest");
+			break;
+		case CLASS_CHROOT:
+			class = xstrdup("chroot");
+			break;
+		case CLASS_REAL:
+			class = xstrdup("real");
+			break;
+		default:
+			syslog(LOG_ERR, "unknown curclass.type %d; aborting",
+			    curclass.type);
+			abort();
+		}
+	}
+			/* parse ftpd.conf, setting up various parameters */
+	parse_conf(class);
+			/* if not guest user, check for valid shell */
+	if (pw == NULL)
+		permitted = 0;
+	else {
+		const char	*cp, *shell;
+
+		if ((shell = pw->pw_shell) == NULL || *shell == 0)
+			shell = _PATH_BSHELL;
+		while ((cp = getusershell()) != NULL)
+			if (strcmp(cp, shell) == 0)
+				break;
+		endusershell();
+		if (cp == NULL && curclass.type != CLASS_GUEST)
+			permitted = 0;
+	}
+
+			/* deny quickly (after USER not PASS) if requested */
+	if (CURCLASS_FLAGS_ISSET(denyquick) && !permitted) {
+		reply(530, "User %s may not use FTP.", curname);
+		if (logging)
+			syslog(LOG_NOTICE, "FTP LOGIN REFUSED FROM %s, %s",
+			    remotehost, curname);
+		end_login();
+		goto cleanup_user;
+	}
+
+			/* if haven't asked yet (i.e, not anon), ask now */
+	if (!askpasswd) {
+		askpasswd = 1;
 #ifdef SKEY
-	if (skey_haskey(name) == 0) {
-		const char *myskey;
+		if (skey_haskey(curname) == 0) {
+			const char *myskey;
 
-		myskey = skey_keyinfo(name);
-		reply(331, "Password [%s] required for %s.",
-		    myskey ? myskey : "error getting challenge", name);
-	} else
+			myskey = skey_keyinfo(curname);
+			reply(331, "Password [%s] required for %s.",
+			    myskey ? myskey : "error getting challenge",
+			    curname);
+		} else
 #endif
-		reply(331, "Password required for %s.", name);
+			reply(331, "Password required for %s.", curname);
+	}
 
-	askpasswd = 1;
+ cleanup_user:
 	/*
 	 * Delay before reading passwd after first failed
 	 * attempt to slow down passwd-guessing programs.
 	 */
 	if (login_attempts)
 		sleep((unsigned) login_attempts);
+
+	if (class)
+		free(class);
 }
 
 /*
@@ -740,6 +819,8 @@ checkuser(const char *fname, const char *name, int def, int nofile,
 			gid_t	*groups, *ng;
 			int	 gsize, i, found;
 
+			if (pw == NULL)
+				continue;	/* no match for unknown user */
 			*p++ = '\0';
 			groups = NULL;
 			gsize = 16;
@@ -823,6 +904,8 @@ end_login(void)
 		memset(pw->pw_passwd, 0, strlen(pw->pw_passwd));
 	pw = NULL;
 	logged_in = 0;
+	askpasswd = 0;
+	permitted = 0;
 	quietmessages = 0;
 	gidcount = 0;
 	curclass.type = CLASS_REAL;
@@ -833,10 +916,8 @@ void
 pass(const char *passwd)
 {
 	int		 rval;
-	const char	*cp, *shell;
-	char		*class, root[MAXPATHLEN];
+	char		 root[MAXPATHLEN];
 
-	class = NULL;
 	if (logged_in || askpasswd == 0) {
 		reply(503, "Login with USER first.");
 		return;
@@ -907,22 +988,8 @@ pass(const char *passwd)
 		}
 	}
 
-			/* password ok; see if anything else prevents login */
-	if (! checkuser(_PATH_FTPUSERS, pw->pw_name, 1, 0, &class)) {
-		reply(530, "User %s may not use FTP.", pw->pw_name);
-		if (logging)
-			syslog(LOG_NOTICE, "FTP LOGIN REFUSED FROM %s, %s",
-			    remotehost, pw->pw_name);
-		goto bad;
-	}
-			/* if not guest user, check for valid shell */
-	if ((shell = pw->pw_shell) == NULL || *shell == 0)
-		shell = _PATH_BSHELL;
-	while ((cp = getusershell()) != NULL)
-		if (strcmp(cp, shell) == 0)
-			break;
-	endusershell();
-	if (cp == NULL && curclass.type != CLASS_GUEST) {
+			/* password ok; check if anything else prevents login */
+	if (! permitted) {
 		reply(530, "User %s may not use FTP.", pw->pw_name);
 		if (logging)
 			syslog(LOG_NOTICE, "FTP LOGIN REFUSED FROM %s, %s",
@@ -955,36 +1022,6 @@ pass(const char *passwd)
 
 	logged_in = 1;
 
-			/* check user in /etc/ftpchroot */
-	if (checkuser(_PATH_FTPCHROOT, pw->pw_name, 0, 0, NULL)) {
-		if (curclass.type == CLASS_GUEST) {
-			syslog(LOG_NOTICE,
-	    "Can't change guest user to chroot class; remove entry in %s",
-			    _PATH_FTPCHROOT);
-			exit(1);
-		}
-		curclass.type = CLASS_CHROOT;
-	}
-	if (class == NULL) {
-		switch (curclass.type) {
-		case CLASS_GUEST:
-			class = xstrdup("guest");
-			break;
-		case CLASS_CHROOT:
-			class = xstrdup("chroot");
-			break;
-		case CLASS_REAL:
-			class = xstrdup("real");
-			break;
-		default:
-			syslog(LOG_ERR, "unknown curclass.type %d; aborting",
-			    curclass.type);
-			abort();
-		}
-	}
-
-			/* parse ftpd.conf, setting up various parameters */
-	parse_conf(class);
 	connections = 1;
 	if (dopidfile)
 		count_users();
@@ -1154,15 +1191,11 @@ pass(const char *passwd)
 			    curclass.classname, CURCLASSTYPE);
 	}
 	(void) umask(curclass.umask);
-	goto cleanuppass;
+	return;
 
  bad:
 			/* Forget all about it... */
 	end_login();
-
- cleanuppass:
-	if (class)
-		free(class);
 }
 
 void
@@ -2019,7 +2052,7 @@ statcmd(void)
 	    (LLT)otb, PLURAL(otb),
 	    (LLT)total_xfers, PLURAL(total_xfers));
 
-	if (logged_in) {
+	if (logged_in && !CURCLASS_FLAGS_ISSET(private)) {
 		struct ftpconv *cp;
 
 		reply(0, "%s", "");
@@ -2043,6 +2076,8 @@ statcmd(void)
 			    conffilename(curclass.limitfile));
 		if (! EMPTYSTR(curclass.chroot))
 			reply(0, "Chroot format: %s", curclass.chroot);
+		reply(0, "Deny bad ftpusers(5) quickly: : %sabled",
+		    CURCLASS_FLAGS_ISSET(denyquick) ? "en" : "dis");
 		if (! EMPTYSTR(curclass.homedir))
 			reply(0, "Homedir format: %s", curclass.homedir);
 		if (curclass.maxfilesize == -1)

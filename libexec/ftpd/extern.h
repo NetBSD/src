@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.42 2001/07/13 05:37:49 lukem Exp $	*/
+/*	$NetBSD: extern.h,v 1.43 2001/12/04 13:54:12 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -239,11 +239,13 @@ typedef enum {
 
 typedef enum {
 	FLAG_checkportcmd =	1<<0,	/* Check port commands */
-	FLAG_modify =		1<<1,	/* Allow CHMOD, DELE, MKD, RMD, RNFR,
+	FLAG_denyquick =	1<<1,	/* Check ftpusers(5) before PASS */
+	FLAG_modify =		1<<2,	/* Allow CHMOD, DELE, MKD, RMD, RNFR,
 					   UMASK */
-	FLAG_passive =		1<<2,	/* Allow PASV mode */
-	FLAG_sanenames =	1<<3,	/* Restrict names of uploaded files */ 
-	FLAG_upload =		1<<4	/* As per modify, but also allow
+	FLAG_passive =		1<<3,	/* Allow PASV mode */
+	FLAG_private =		1<<4,	/* Don't publish class info in STAT */
+	FLAG_sanenames =	1<<5,	/* Restrict names of uploaded files */ 
+	FLAG_upload =		1<<6,	/* As per modify, but also allow
 					   APPE, STOR, STOU */
 } classflag_t;
 

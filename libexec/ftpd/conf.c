@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.45 2001/12/01 10:25:29 lukem Exp $	*/
+/*	$NetBSD: conf.c,v 1.46 2001/12/04 13:54:12 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1997-2001 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: conf.c,v 1.45 2001/12/01 10:25:29 lukem Exp $");
+__RCSID("$NetBSD: conf.c,v 1.46 2001/12/04 13:54:12 lukem Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -121,8 +121,10 @@ init_curclass(void)
 	curclass.umask =	DEFAULT_UMASK;
 
 	CURCLASS_FLAGS_SET(checkportcmd);
+	CURCLASS_FLAGS_CLR(denyquick);
 	CURCLASS_FLAGS_SET(modify);
 	CURCLASS_FLAGS_SET(passive);
+	CURCLASS_FLAGS_CLR(private);
 	CURCLASS_FLAGS_CLR(sanenames);
 	CURCLASS_FLAGS_SET(upload);
 }
@@ -330,6 +332,9 @@ parse_conf(const char *findclass)
 			REASSIGN(conv->disable, disable);
 			REASSIGN(conv->command, convcmd);
 
+		} else if (strcasecmp(word, "denyquick") == 0) {
+			CONF_FLAG(denyquick);
+
 		} else if (strcasecmp(word, "display") == 0) {
 			CONF_STRING(display);
 
@@ -445,6 +450,9 @@ parse_conf(const char *findclass)
 			}
 			curclass.portmin = minport;
 			curclass.portmax = maxport;
+
+		} else if (strcasecmp(word, "private") == 0) {
+			CONF_FLAG(private);
 
 		} else if (strcasecmp(word, "rateget") == 0) {
 			curclass.maxrateget = 0;
