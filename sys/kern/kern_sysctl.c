@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sysctl.c,v 1.143 2003/08/24 19:20:40 atatat Exp $	*/
+/*	$NetBSD: kern_sysctl.c,v 1.144 2003/09/03 11:36:52 ragge Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.143 2003/08/24 19:20:40 atatat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.144 2003/09/03 11:36:52 ragge Exp $");
 
 #include "opt_ddb.h"
 #include "opt_insecure.h"
@@ -803,6 +803,7 @@ proc_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp,
 	char *tmps = NULL;
 	size_t len, curlen;
 	u_int i;
+	int si;
 
 	if (namelen < 2)
 		return (EINVAL);
@@ -831,10 +832,10 @@ proc_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp,
 	case PROC_PID_STOPFORK:
 		if (namelen != 2)
 			return (EINVAL);
-		i = ((ptmp->p_flag & P_STOPFORK) != 0);
-		if ((error = sysctl_int(oldp, oldlenp, newp, newlen, &i)) != 0)
+		si = ((ptmp->p_flag & P_STOPFORK) != 0);
+		if ((error = sysctl_int(oldp, oldlenp, newp, newlen, &si)) != 0)
 			return (error);
-		if (i != 0)
+		if (si != 0)
 			ptmp->p_flag |= P_STOPFORK;
 		else
 			ptmp->p_flag &= ~P_STOPFORK;
@@ -844,10 +845,10 @@ proc_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp,
 	case PROC_PID_STOPEXEC:
 		if (namelen != 2)
 			return (EINVAL);
-		i = ((ptmp->p_flag & P_STOPEXEC) != 0);
-		if ((error = sysctl_int(oldp, oldlenp, newp, newlen, &i)) != 0)
+		si = ((ptmp->p_flag & P_STOPEXEC) != 0);
+		if ((error = sysctl_int(oldp, oldlenp, newp, newlen, &si)) != 0)
 			return (error);
-		if (i != 0)
+		if (si != 0)
 			ptmp->p_flag |= P_STOPEXEC;
 		else
 			ptmp->p_flag &= ~P_STOPEXEC;
