@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ras.c,v 1.5.2.3 2004/09/21 13:35:07 skrll Exp $	*/
+/*	$NetBSD: kern_ras.c,v 1.5.2.4 2005/03/04 16:51:58 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_ras.c,v 1.5.2.3 2004/09/21 13:35:07 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_ras.c,v 1.5.2.4 2005/03/04 16:51:58 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/lock.h>
@@ -178,7 +178,7 @@ ras_purgeall(struct proc *p)
 	simple_lock(&p->p_lock);
 	while (!LIST_EMPTY(&p->p_raslist)) {
 		rp = LIST_FIRST(&p->p_raslist);
-                DPRINTF(("RAS %p-%p, hits %d\n", rp->ras_startaddr,           
+                DPRINTF(("RAS %p-%p, hits %d\n", rp->ras_startaddr,
                     rp->ras_endaddr, rp->ras_hits));
 		LIST_REMOVE(rp, ras_list);
 		pool_put(&ras_pool, rp);

@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_proxy.c,v 1.1.2.4 2005/02/15 21:33:29 skrll Exp $	*/
+/*	$NetBSD: ip_proxy.c,v 1.1.2.5 2005/03/04 16:51:28 skrll Exp $	*/
 
 /*
  * Copyright (C) 1997-2003 by Darren Reed.
@@ -89,11 +89,11 @@ struct file;
 
 #include "netinet/ip_ftp_pxy.c"
 #include "netinet/ip_rcmd_pxy.c"
+# include "netinet/ip_pptp_pxy.c"
 #if defined(_KERNEL)
 # include "netinet/ip_irc_pxy.c"
 # include "netinet/ip_raudio_pxy.c"
 # include "netinet/ip_h323_pxy.c"
-# include "netinet/ip_pptp_pxy.c"
 # ifdef	IPFILTER_PRO
 #  include "netinet/ip_msnrpc_pxy.c"
 # endif
@@ -105,7 +105,7 @@ struct file;
 /* END OF INCLUDES */
 
 #if !defined(lint)
-static const char rcsid[] = "@(#)Id: ip_proxy.c,v 2.62.2.9 2004/10/17 15:21:28 darrenr Exp";
+static const char rcsid[] = "@(#)Id: ip_proxy.c,v 2.62.2.10 2005/02/17 04:40:03 darrenr Exp";
 #endif
 
 static int appr_fixseqack __P((fr_info_t *, ip_t *, ap_session_t *, int ));

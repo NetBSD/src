@@ -1,4 +1,4 @@
-/*	$NetBSD: dlreg.h,v 1.4 2000/05/14 09:46:17 bjh21 Exp $	*/
+/*	$NetBSD: dlreg.h,v 1.4.28.1 2005/03/04 16:49:52 skrll Exp $	*/
 /*
  * Ben Harris, 1997
  *
@@ -26,7 +26,7 @@ struct DLregs
 	volatile u_short dl_rbuf; /* Receive Buffer (R) */
 	volatile u_short dl_xcsr; /* Transmit Control/Status Register (R/W) */
 	volatile union w_b u_xbuf; /* Transmit Buffer (W) */
-#define dl_xbuf u_xbuf.bytes.byte_lo	
+#define dl_xbuf u_xbuf.bytes.byte_lo
 };
 
 typedef struct DLregs dlregs;

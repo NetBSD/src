@@ -1,4 +1,4 @@
-/*	$NetBSD: bcopy.S,v 1.1.10.3 2004/09/21 13:36:07 skrll Exp $	*/
+/*	$NetBSD: bcopy.S,v 1.1.10.4 2005/03/04 16:52:29 skrll Exp $	*/
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -44,23 +44,23 @@
 #define _LOCORE	/* XXX fredette - unfortunate */
 #include <machine/asm.h>
 #include <machine/frame.h>
- 
-#if defined(LIBC_SCCS) && !defined(lint) 
-RCSID("$NetBSD: bcopy.S,v 1.1.10.3 2004/09/21 13:36:07 skrll Exp $")
+
+#if defined(LIBC_SCCS) && !defined(lint)
+RCSID("$NetBSD: bcopy.S,v 1.1.10.4 2005/03/04 16:52:29 skrll Exp $")
 #endif /* LIBC_SCCS and not lint */
 
 /*
- * The stbys instruction is a little asymmetric.  When (%r2 & 3) 
+ * The stbys instruction is a little asymmetric.  When (%r2 & 3)
  * is zero, stbys,b,m %r1, 4(%r2) works like stws,ma.  You
- * might then wish that when (%r2 & 3) == 0, stbys,e,m %r1, -4(%r2) 
+ * might then wish that when (%r2 & 3) == 0, stbys,e,m %r1, -4(%r2)
  * worked like stws,mb.  But it doesn't.
  *
  * This macro works around this problem.  It requires that %t2
  * hold the number of bytes that will be written by this store
  * (meaning that it ranges from one to four).
  *
- * Watch the delay-slot trickery here.  The comib is used to set 
- * up which instruction, either the stws or the stbys, is run 
+ * Watch the delay-slot trickery here.  The comib is used to set
+ * up which instruction, either the stws or the stbys, is run
  * in the delay slot of the b instruction.
  */
 #define _STBYS_E_M(r, dst_spc, dst_off)				  \
@@ -70,8 +70,8 @@ RCSID("$NetBSD: bcopy.S,v 1.1.10.3 2004/09/21 13:36:07 skrll Exp $")
 	stbys,e,m	r, 0(dst_spc, dst_off)
 
 /*
- * This macro does a bulk copy with no shifting.  cmplt and m are 
- * the completer and displacement multiplier, respectively, for 
+ * This macro does a bulk copy with no shifting.  cmplt and m are
+ * the completer and displacement multiplier, respectively, for
  * the load and store instructions.
  */
 #define _COPY(src_spc, src_off, dst_spc, dst_off, count, cmplt, m) \
@@ -122,7 +122,7 @@ RCSID("$NetBSD: bcopy.S,v 1.1.10.3 2004/09/21 13:36:07 skrll Exp $")
 
 /*
  * This macro is definitely strange.  It exists purely to
- * allow the _COPYS macro to be reused, but because it 
+ * allow the _COPYS macro to be reused, but because it
  * requires this long attempt to explain it, I'm starting
  * to doubt the value of that.
  *
@@ -134,17 +134,17 @@ RCSID("$NetBSD: bcopy.S,v 1.1.10.3 2004/09/21 13:36:07 skrll Exp $")
  * as forwards.  The 4-word loop always loads into %t1, %t2, %t3,
  * and %t4 in that order.  This means that when copying forward,
  * %t1 will have the word from the lowest address, and %t4 will
- * have the word from the highest address.  When copying 
+ * have the word from the highest address.  When copying
  * backwards, the opposite is true.
  *
  * The shift instructions need pairs of registers with adjacent
- * words, with the register containing the word from the lowest 
- * address *always* coming first.  It is this assymetry that 
+ * words, with the register containing the word from the lowest
+ * address *always* coming first.  It is this assymetry that
  * gives rise to this macro - depending on which direction
  * we're copying in, these ordered pairs are different.
  *
- * Fortunately, we can compute those register numbers at compile 
- * time, and assemble them manually into a shift instruction.  
+ * Fortunately, we can compute those register numbers at compile
+ * time, and assemble them manually into a shift instruction.
  * That's what this macro does.
  *
  * This macro takes two arguments.  n ranges from 0 to 3 and
@@ -154,7 +154,7 @@ RCSID("$NetBSD: bcopy.S,v 1.1.10.3 2004/09/21 13:36:07 skrll Exp $")
  * m is the displacement multiplier from the _COPYS macro call.
  * This is 1 for a forward copy and -1 for a backwards copy.
  * So, the ((m + 1) / 2) term yields 0 for a backwards copy and
- * 1 for a forward copy, and the ((m - 1) / 2) term yields 
+ * 1 for a forward copy, and the ((m - 1) / 2) term yields
  * 0 for a forward copy, and -1 for a backwards copy.
  * These terms are used to discriminate the register computations
  * below.
@@ -162,17 +162,17 @@ RCSID("$NetBSD: bcopy.S,v 1.1.10.3 2004/09/21 13:36:07 skrll Exp $")
  * When copying forward, then, the first register used with
  * the first vshd will be 19 + (3 - ((0 - 1) & 3)), or %t4,
  * which matches _COPYS' requirement that the word last loaded
- * be in %t4.  The first register used for the second vshd 
+ * be in %t4.  The first register used for the second vshd
  * will then "wrap" around to 19 + (3 - ((1 - 1) & 3)), or %t1.
  * And so on to %t2 and %t3.
  *
- * When copying forward, the second register used with the first 
- * vshd will be (19 + (3 - ((n + 0) & 3)), or %t1.  It will 
+ * When copying forward, the second register used with the first
+ * vshd will be (19 + (3 - ((n + 0) & 3)), or %t1.  It will
  * continue to be %t2, then %t3, and finally %t4.
  *
- * When copying backwards, the values for the first and second 
- * register for each vshd are reversed from the forwards case.  
- * (Symmetry reclaimed!)  Proving this is "left as an exercise 
+ * When copying backwards, the values for the first and second
+ * register for each vshd are reversed from the forwards case.
+ * (Symmetry reclaimed!)  Proving this is "left as an exercise
  * for the reader" (remember the different discriminating values!)
  */
 #define _VSHD(n, m, t)						  \
@@ -182,8 +182,8 @@ RCSID("$NetBSD: bcopy.S,v 1.1.10.3 2004/09/21 13:36:07 skrll Exp $")
 	(t))
 
 /*
- * This macro does a bulk copy with shifting.  cmplt and m are 
- * the completer and displacement multiplier, respectively, for 
+ * This macro does a bulk copy with shifting.  cmplt and m are
+ * the completer and displacement multiplier, respectively, for
  * the load and store instructions.  It is assumed that the
  * word last loaded is already in %t4.
  */
@@ -509,7 +509,7 @@ LEAF_ENTRY(spcopy)
 	ldw     R%curlwp(%r31), %r31
 #ifdef	DIAGNOSTIC
 	comb,<>,n %r0, %r31, Lspcopy_curlwp_ok
-	ldil	L%panic, %r1 
+	ldil	L%panic, %r1
 	ldil	L%Lspcopy_curlwp_bad, %arg0
 	ldo	R%panic(%r1), %r1
 	ldo	R%Lspcopy_curlwp_bad(%arg0), %arg0
@@ -605,7 +605,7 @@ _LABEL_R(_go):
 #define _LABEL _LABEL_R
 	_COPY_REVERSE(%sr0,%arg1,%sr0,%arg0,%arg2)
 #undef _LABEL
-	
+
 _LABEL_F(_done):
 _LABEL_R(_done):
 	bv,n	%r0(%rp)

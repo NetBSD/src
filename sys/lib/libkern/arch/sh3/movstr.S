@@ -1,4 +1,4 @@
-/*	$NetBSD: movstr.S,v 1.2 2001/02/14 17:59:39 msaitoh Exp $	*/
+/*	$NetBSD: movstr.S,v 1.2.24.1 2005/03/04 16:52:41 skrll Exp $	*/
 
 /*-
  * Copyright (C) 1999 Tsubai Masanari.  All rights reserved.
@@ -85,5 +85,5 @@ loop2:
 	tst	r6, r6
 	bf	1b
 
-	rts	
+	rts
 	nop

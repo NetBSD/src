@@ -1,4 +1,4 @@
-/*	$NetBSD: qduser.h,v 1.4.22.3 2004/09/21 13:32:38 skrll Exp $	*/
+/*	$NetBSD: qduser.h,v 1.4.22.4 2005/03/04 16:49:54 skrll Exp $	*/
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
  * All rights reserved.
@@ -148,8 +148,8 @@
 /*-------------------------------------------------------------------------
 * macros to transform device coordinates to hardware cursor coordinates */
 
-#define CURS_MIN_X 	232	/* device coordinate x = 0 */
-#define CURS_MIN_Y 	16	/* device coordinate y = 0 */
+#define CURS_MIN_X	232	/* device coordinate x = 0 */
+#define CURS_MIN_Y	16	/* device coordinate y = 0 */
 
 #define TRANX(x) ( -(((int)(x)+CURS_MIN_X) & ~0x0003) | \
 		   (((int)(x)+CURS_MIN_X) & 0x0003) )
@@ -162,10 +162,10 @@
 *
 **********************************************************************
 * most of the event queue definitions are found in "qevent.h".  But a
-* few things not found there are here.  */ 	
+* few things not found there are here.  */
 
 /* The event queue header */
-	
+
 struct qdinput {
 
 	    struct _vs_eventqueue header;  /* event queue ring handling */
@@ -177,7 +177,7 @@ struct qdinput {
 	    struct _vs_box curs_box;	/* cursor reporting box */
 
 	};
-	
+
 /* vse_key field.  definitions for mouse buttons */
 
 #define VSE_LEFT_BUTTON		0
@@ -206,21 +206,21 @@ struct qdinput {
 * with.  As seen below, the xxxBEGIN and xxxEND macros maintain the event
 * queue access mechanism.
 *
-* First, the macros to be used by the event queue reader 
+* First, the macros to be used by the event queue reader
 */
 
 #define ISEMPTY(eq)	  ((eq)->header.head == (eq)->header.tail)
-#define GETBEGIN(eq)	  (&(eq)->header.events[(eq)->header.head]) 
+#define GETBEGIN(eq)	  (&(eq)->header.events[(eq)->header.head])
 
-#define GET_X(event)	  ((event)->vse_x)  	     /* get x position */
-#define GET_Y(event)	  ((event)->vse_y)  	     /* get y position */
-#define GET_TIME(event)	  ((event)->vse_time) 	     /* get time */
-#define GET_TYPE(event)	  ((event)->vse_type)	     /* get entry type */
-#define GET_KEY(event)	  ((event)->vse_key)  	     /* get keycode */
-#define GET_DIR(event)	  ((event)->vse_direction)     /* get direction */
-#define GET_DEVICE(event) ((event)->vse_device)        /* get device */
+#define GET_X(event)	  ((event)->vse_x)		/* get x position */
+#define GET_Y(event)	  ((event)->vse_y)		/* get y position */
+#define GET_TIME(event)	  ((event)->vse_time)		/* get time */
+#define GET_TYPE(event)	  ((event)->vse_type)		/* get entry type */
+#define GET_KEY(event)	  ((event)->vse_key)		/* get keycode */
+#define GET_DIR(event)	  ((event)->vse_direction)	/* get direction */
+#define GET_DEVICE(event) ((event)->vse_device)		/* get device */
 
-#define GETEND(eq)        (++(eq)->header.head >= (eq)->header.size ? \
+#define GETEND(eq)	  (++(eq)->header.head >= (eq)->header.size ? \
 			   (eq)->header.head = 0 : 0 )
 
 /*------------------------------------------------
@@ -236,16 +236,16 @@ struct qdinput {
 
 #define PUTBEGIN(eq)	(&(eq)->header.events[(eq)->header.tail])
 
-#define PUT_X(event, value)  	((event)->vse_x = value)    /* put X pos */
-#define PUT_Y(event, value)   	((event)->vse_y = value)    /* put Y pos */
+#define PUT_X(event, value)	((event)->vse_x = value)    /* put X pos */
+#define PUT_Y(event, value)	((event)->vse_y = value)    /* put Y pos */
 #define PUT_TIME(event, value)	((event)->vse_time = value)   /* put time */
 #define PUT_TYPE(event, value)	((event)->vse_type = value) /* put type */
 #define PUT_KEY(event, value)	((event)->vse_key = value) /* put input key */
 #define PUT_DIR(event, value)	((event)->vse_direction = value) /* put dir */
 #define PUT_DEVICE(event, value) ((event)->vse_device = value)   /* put dev */
 
-#define PUTEND(eq)     (++(eq)->header.tail >= (eq)->header.size ?  \
-			(eq)->header.tail = 0 : 0) 
+#define PUTEND(eq)	(++(eq)->header.tail >= (eq)->header.size ?  \
+			 (eq)->header.tail = 0 : 0)
 
 /******************************************************************
 *
@@ -264,7 +264,7 @@ struct qdinput {
 	    short DMAtype;		/* DMA type code (for QDSS) */
 	    short DMAdone;		/* DMA done parameter */
 	    char  *bufp;		/* virtual adrs of buffer */
-	    int   length;	        /* transfer buffer length */
+	    int   length;		/* transfer buffer length */
 	};
 
 /* DMA type command codes */
@@ -307,17 +307,17 @@ struct qdinput {
 
 	/* DMA status set/check macros */
 
-#define DMA_SETACTIVE(header)   ((header)->status |= DMA_ACTIVE)
+#define DMA_SETACTIVE(header)	((header)->status |= DMA_ACTIVE)
 #define DMA_CLRACTIVE(header)	((header)->status &= ~DMA_ACTIVE)
-#define DMA_ISACTIVE(header)    ((header)->status & DMA_ACTIVE)
+#define DMA_ISACTIVE(header)	((header)->status & DMA_ACTIVE)
 
-#define DMA_SETERROR(header)    ((header)->status |= DMA_ERROR)
-#define DMA_CLRERROR(header)    ((header)->status &= ~DMA_ERROR)
-#define DMA_ISERROR(header)     ((header)->status & DMA_ERROR)
+#define DMA_SETERROR(header)	((header)->status |= DMA_ERROR)
+#define DMA_CLRERROR(header)	((header)->status &= ~DMA_ERROR)
+#define DMA_ISERROR(header)	((header)->status & DMA_ERROR)
 
 #define DMA_SETIGNORE(header)	((header)->status |= DMA_IGNORE)
-#define DMA_CLRIGNORE(header)   ((header)->status &= ~DMA_IGNORE)
-#define DMA_ISIGNORE(header)    ((header)->status & DMA_IGNORE)
+#define DMA_CLRIGNORE(header)	((header)->status &= ~DMA_IGNORE)
+#define DMA_ISIGNORE(header)	((header)->status & DMA_IGNORE)
 
 	/* yields TRUE if queue is empty (ISEMPTY) or full (ISFULL) */
 
@@ -328,16 +328,16 @@ struct qdinput {
 	 * or oldest (GET) request */
 
 #define DMA_PUTBEGIN(header)	(&(header)->DMAreq[(header)->newest])
-#define DMA_GETBEGIN(header)  	(&(header)->DMAreq[(header)->oldest])
+#define DMA_GETBEGIN(header)	(&(header)->DMAreq[(header)->oldest])
 
 	/* does queue access pointer maintenance */
 
-#define DMA_GETEND(header)      (++(header)->oldest >= (header)->size    \
-				  ? (header)->oldest = 0 : 0);		 \
+#define DMA_GETEND(header)	(++(header)->oldest >= (header)->size	\
+				  ? (header)->oldest = 0 : 0);		\
 				--(header)->used;
 
-#define DMA_PUTEND(header)     	(++(header)->newest >= (header)->size    \
-				  ? (header)->newest = 0 : 0);		 \
+#define DMA_PUTEND(header)	(++(header)->newest >= (header)->size	\
+				  ? (header)->newest = 0 : 0);		\
 				++(header)->used;
 
 /******************************************************************
@@ -391,32 +391,32 @@ struct qdinput {
 /*-----------------------------------
 * LK201 programmming definitions  */
 
-#define LK_UPDOWN 	0x86		/* bits for setting lk201 modes */
-#define LK_AUTODOWN 	0x82
-#define LK_DOWN 	0x80
-#define LK_DEFAULTS 	0xD3		/* reset (some) default settings */
-#define LK_AR_ENABLE 	0xE3		/* global auto repeat enable */
-#define LK_CL_ENABLE 	0x1B		/* keyclick enable */
-#define LK_KBD_ENABLE 	0x8B		/* keyboard enable */
-#define LK_BELL_ENABLE 	0x23		/* the bell */
-#define LK_RING_BELL 	0xA7		/* ring keyboard bell */
+#define LK_UPDOWN	0x86		/* bits for setting lk201 modes */
+#define LK_AUTODOWN	0x82
+#define LK_DOWN		0x80
+#define LK_DEFAULTS	0xD3		/* reset (some) default settings */
+#define LK_AR_ENABLE	0xE3		/* global auto repeat enable */
+#define LK_CL_ENABLE	0x1B		/* keyclick enable */
+#define LK_KBD_ENABLE	0x8B		/* keyboard enable */
+#define LK_BELL_ENABLE	0x23		/* the bell */
+#define LK_RING_BELL	0xA7		/* ring keyboard bell */
 
-#define LK_LED_ENABLE 	0x13		/* light led */
-#define LK_LED_DISABLE 	0x11		/* turn off led */
-#define LED_1 		0x81		/* led bits */
-#define LED_2 		0x82
-#define LED_3 		0x84
-#define LED_4 		0x88
-#define LED_ALL 	0x8F
+#define LK_LED_ENABLE	0x13		/* light led */
+#define LK_LED_DISABLE	0x11		/* turn off led */
+#define LED_1		0x81		/* led bits */
+#define LED_2		0x82
+#define LED_3		0x84
+#define LED_4		0x88
+#define LED_ALL		0x8F
 #define LK_LED_HOLD	LED_4
 #define LK_LED_LOCK	LED_3
 #define LK_LED_COMPOSE	LED_2
-#define LK_LED_WAIT 	LED_1
+#define LK_LED_WAIT	LED_1
 
 #define LK_KDOWN_ERROR	0x3D		/* key down on powerup error */
-#define LK_POWER_ERROR 	0x3E		/* keyboard failure on powerup test */
+#define LK_POWER_ERROR	0x3E		/* keyboard failure on powerup test */
 #define LK_OUTPUT_ERROR	0xB5		/* keystrokes lost during inhibit */
-#define LK_INPUT_ERROR 	0xB6		/* garbage command to keyboard */
+#define LK_INPUT_ERROR	0xB6		/* garbage command to keyboard */
 #define LK_LOWEST	0x56		/* lowest significant keycode */
 #define LK_DIV6_START	0xAD		/* start of div 6 */
 #define LK_DIV5_END	0xB2		/* end of div 5 */
@@ -480,7 +480,7 @@ struct qdinput {
 * tablet command/interface definitions  */
 
 #define T_STREAM	'R'		/* continuous stream report mode */
-#define T_POINT	 	'D'		/* enter report-on-request mode */
+#define T_POINT		'D'		/* enter report-on-request mode */
 #define T_REQUEST	'P'		/* request position report */
 
 #define T_BAUD		'B'		/* increase baud to 9600 from 4800 */

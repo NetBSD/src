@@ -1,4 +1,4 @@
-/*	$NetBSD: si.c,v 1.13.2.1 2005/02/04 11:47:34 skrll Exp $	*/
+/*	$NetBSD: si.c,v 1.13.2.2 2005/03/04 16:51:14 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996,2000 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: si.c,v 1.13.2.1 2005/02/04 11:47:34 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: si.c,v 1.13.2.2 2005/03/04 16:51:14 skrll Exp $");
 
 #include "opt_ddb.h"
 
@@ -211,7 +211,7 @@ si_match(parent, cf, aux)
 {
 	struct vme_attach_args	*va = aux;
 	vme_chipset_tag_t	ct = va->va_vct;
-        vme_am_t		mod; 
+        vme_am_t		mod;
         vme_addr_t		vme_addr;
 
 	/* Make sure there is something there... */

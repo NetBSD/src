@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.166.2.7 2005/02/04 11:48:06 skrll Exp $	*/
+/*	$NetBSD: proc.h,v 1.166.2.8 2005/03/04 16:54:23 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1989, 1991, 1993
@@ -128,7 +128,7 @@ struct emul {
 	int		(*e_fault)(struct proc *, vaddr_t, int, int);
 };
 
-/* 
+/*
  * Emulation miscelaneous flags
  */
 #define	EMUL_HAS_SYS___syscall	0x001	/* Has SYS___syscall */
@@ -214,13 +214,13 @@ struct proc {
 
 	const struct emul *p_emul;	/* Emulation information */
 	void		*p_emuldata;	/* Per-process emulation data, or NULL.
-					 * Malloc type M_EMULDATA 
+					 * Malloc type M_EMULDATA
 					 */
-	
-	void 		(*p_userret)(struct lwp *, void *); 
-					/* Function to call at userret(). */ 
+
+	void 		(*p_userret)(struct lwp *, void *);
+					/* Function to call at userret(). */
 	void		*p_userret_arg;
-	
+
 	const struct execsw *p_execsw;	/* Exec package information */
 	struct klist	p_klist;	/* Knotes attached to this process */
 
@@ -247,7 +247,7 @@ struct proc {
 	size_t 		p_psenv;	/* offset of ps_envstr in above */
 	size_t 		p_psnenv;	/* offset of ps_nenvstr in above */
 
-/* 
+/*
  * End area that is copied on creation
  */
 #define	p_endcopy	p_xstat

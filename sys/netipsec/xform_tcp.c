@@ -1,4 +1,4 @@
-/*	$NetBSD: xform_tcp.c,v 1.1.2.4 2004/09/21 13:37:48 skrll Exp $ */
+/*	$NetBSD: xform_tcp.c,v 1.1.2.5 2005/03/04 16:53:44 skrll Exp $ */
 /*	$FreeBSD: sys/netipsec/xform_tcp.c,v 1.1.2.1 2004/02/14 22:24:09 bms Exp $ */
 
 /*
@@ -171,4 +171,4 @@ SYSINIT(tcpsignature_xform_init, SI_SUB_DRIVERS, SI_ORDER_FIRST,
     tcpsignature_attach, NULL)
 
 #endif
-     
+

@@ -1,5 +1,5 @@
 #! /usr/bin/awk -f
-#	$NetBSD: devlist2h.awk,v 1.9.24.3 2004/09/21 13:33:42 skrll Exp $
+#	$NetBSD: devlist2h.awk,v 1.9.24.4 2005/03/04 16:50:54 skrll Exp $
 #
 # Copyright (c) 1995, 1996 Christopher G. Demetriou
 # All rights reserved.
@@ -37,6 +37,7 @@ BEGIN {
 NR == 1 {
 	VERSION = $0
 	gsub("\\$", "", VERSION)
+	gsub(/ $/, "", VERSION)
 
 	if (os == "NetBSD")
 		printf("/*\t$NetBSD" "$\t*/\n\n") > dfile
@@ -174,28 +175,36 @@ END {
 
 	printf("\n") > dfile
 
-	printf("const struct usb_knowndev usb_knowndevs[] = {\n") > dfile
+	printf("const struct usb_vendor usb_vendors[] = {\n") > dfile
+	for (i = 1; i <= nvendors; i++) {
+		printf("\t{\n") > dfile
+		printf("\t    USB_VENDOR_%s,\n", vendors[i, 1]) \
+		    > dfile
+
+		printf("\t    \"") > dfile
+		j = 3;
+		needspace = 0;
+		while ((i, j) in vendors) {
+			if (needspace)
+				printf(" ") > dfile
+			printf("%s", vendors[i, j]) > dfile
+			needspace = 1
+			j++
+		}
+		printf("\",\n") > dfile
+		printf("\t},\n") > dfile
+	}
+	printf("};\n") > dfile
+	printf("const int usb_nvendors = %d;\n", nvendors) > dfile
+
+	printf("\n") > dfile
+
+	printf("const struct usb_product usb_products[] = {\n") > dfile
 	for (i = 1; i <= nproducts; i++) {
 		printf("\t{\n") > dfile
 		printf("\t    USB_VENDOR_%s, USB_PRODUCT_%s_%s,\n",
 		    products[i, 1], products[i, 1], products[i, 2]) \
 		    > dfile
-		printf("\t    ") > dfile
-		printf("0") > dfile
-		printf(",\n") > dfile
-
-		vendi = vendorindex[products[i, 1]];
-		printf("\t    \"") > dfile
-		j = 3;
-		needspace = 0;
-		while ((vendi, j) in vendors) {
-			if (needspace)
-				printf(" ") > dfile
-			printf("%s", vendors[vendi, j]) > dfile
-			needspace = 1
-			j++
-		}
-		printf("\",\n") > dfile
 
 		printf("\t    \"") > dfile
 		j = 4;
@@ -210,28 +219,9 @@ END {
 		printf("\",\n") > dfile
 		printf("\t},\n") > dfile
 	}
-	for (i = 1; i <= nvendors; i++) {
-		printf("\t{\n") > dfile
-		printf("\t    USB_VENDOR_%s, 0,\n", vendors[i, 1]) \
-		    > dfile
-		printf("\t    USB_KNOWNDEV_NOPROD,\n") \
-		    > dfile
-		printf("\t    \"") > dfile
-		j = 3;
-		needspace = 0;
-		while ((i, j) in vendors) {
-			if (needspace)
-				printf(" ") > dfile
-			printf("%s", vendors[i, j]) > dfile
-			needspace = 1
-			j++
-		}
-		printf("\",\n") > dfile
-		printf("\t    NULL,\n") > dfile
-		printf("\t},\n") > dfile
-	}
-	printf("\t{ 0, 0, 0, NULL, NULL, }\n") > dfile
 	printf("};\n") > dfile
+	printf("const int usb_nproducts = %d;\n", nproducts) > dfile
+
 	close(dfile)
 	close(hfile)
 }

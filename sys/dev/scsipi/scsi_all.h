@@ -1,4 +1,4 @@
-/*	$NetBSD: scsi_all.h,v 1.19.2.1 2004/12/18 09:32:21 skrll Exp $	*/
+/*	$NetBSD: scsi_all.h,v 1.19.2.2 2005/03/04 16:50:33 skrll Exp $	*/
 
 /*
  * SCSI-specific interface description.
@@ -39,37 +39,6 @@
 #define	SCSI_CMD_LUN_MASK	0xe0
 #define	SCSI_CMD_LUN_SHIFT	5
 
-/* XXX Is this a command ? What's its opcode ? */
-struct scsi_send_diag {
-	u_int8_t opcode;
-	u_int8_t byte2;
-#define	SSD_UOL		0x01
-#define	SSD_DOL		0x02
-#define	SSD_SELFTEST	0x04
-#define	SSD_PF		0x10
-	u_int8_t unused[1];
-	u_int8_t paramlen[2];
-	u_int8_t control;
-};
-
-#define	SCSI_RESERVE      		0x16
-struct scsi_reserve {
-	u_int8_t opcode;
-	u_int8_t byte2;
-	u_int8_t unused[2];
-	u_int8_t length;
-	u_int8_t control;
-};
-
-#define	SCSI_RELEASE      		0x17
-struct scsi_release {
-	u_int8_t opcode;
-	u_int8_t byte2;
-	u_int8_t unused[2];
-	u_int8_t length;
-	u_int8_t control;
-};
-
 #define	SCSI_CHANGE_DEFINITION	0x40
 struct scsi_changedef {
 	u_int8_t opcode;
@@ -82,14 +51,6 @@ struct scsi_changedef {
 };
 #define	SC_SCSI_1 0x01
 #define	SC_SCSI_2 0x03
-
-/* block descriptor, for mode sense/mode select */
-struct scsi_blk_desc {
-	u_int8_t density;
-	u_int8_t nblocks[3];
-	u_int8_t reserved;
-	u_int8_t blklen[3];
-};
 
 /*
  * Status Byte

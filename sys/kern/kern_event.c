@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_event.c,v 1.16.2.7 2005/02/24 17:22:33 skrll Exp $	*/
+/*	$NetBSD: kern_event.c,v 1.16.2.8 2005/03/04 16:51:58 skrll Exp $	*/
 /*-
  * Copyright (c) 1999,2000,2001 Jonathan Lemon <jlemon@FreeBSD.org>
  * All rights reserved.
@@ -28,13 +28,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_event.c,v 1.16.2.7 2005/02/24 17:22:33 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_event.c,v 1.16.2.8 2005/03/04 16:51:58 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/proc.h>
-#include <sys/malloc.h> 
+#include <sys/malloc.h>
 #include <sys/unistd.h>
 #include <sys/file.h>
 #include <sys/fcntl.h>
@@ -143,7 +143,7 @@ static const struct kfilter sys_kfilters[] = {
 	{ "EVFILT_PROC",	EVFILT_PROC,	&proc_filtops },
 	{ "EVFILT_SIGNAL",	EVFILT_SIGNAL,	&sig_filtops },
 	{ "EVFILT_TIMER",	EVFILT_TIMER,	&timer_filtops },
-	{ NULL,			0,		NULL },	/* end of list */ 
+	{ NULL,			0,		NULL },	/* end of list */
 };
 
 		/* User defined kfilters */
@@ -445,13 +445,13 @@ filt_proc(struct knote *kn, long hint)
 		 * have to do this now, since psignal KNOTE() is called
 		 * also for zombies and we might end up reading freed
 		 * memory if the kevent would already be picked up
-		 * and knote g/c'ed. 
+		 * and knote g/c'ed.
 		 */
 		kn->kn_fop->f_detach(kn);
 		kn->kn_status |= KN_DETACHED;
 
 		/* Mark as ONESHOT, so that the knote it g/c'ed when read */
-		kn->kn_flags |= (EV_EOF | EV_ONESHOT); 
+		kn->kn_flags |= (EV_EOF | EV_ONESHOT);
 		return (1);
 	}
 
@@ -498,7 +498,7 @@ filt_timerexpire(void *knx)
 
 /*
  * data contains amount of time to sleep, in milliseconds
- */ 
+ */
 static int
 filt_timerattach(struct knote *kn)
 {
@@ -760,7 +760,7 @@ kqueue_register(struct kqueue *kq, struct kevent *kev, struct lwp *l)
 		 */
 		if (fdp->fd_knhashmask != 0) {
 			struct klist *list;
-			
+
 			list = &fdp->fd_knhash[
 			    KN_HASH((u_long)kev->ident, fdp->fd_knhashmask)];
 			SLIST_FOREACH(kn, list, kn_link)
@@ -815,7 +815,7 @@ kqueue_register(struct kqueue *kq, struct kevent *kev, struct lwp *l)
 
 			/*
 			 * The user may change some filter values after the
-			 * initial EV_ADD, but doing so will not reset any 
+			 * initial EV_ADD, but doing so will not reset any
 			 * filter which have already been triggered.
 			 */
 			kn->kn_sfflags = kev->fflags;
@@ -919,7 +919,7 @@ kqueue_scan(struct file *fp, size_t maxevents, struct kevent *ulistp,
 	s = splsched();
 	simple_lock(&kq->kq_lock);
 	if (kq->kq_count == 0) {
-		if (timeout < 0) { 
+		if (timeout < 0) {
 			error = EWOULDBLOCK;
 			simple_unlock(&kq->kq_lock);
 		} else {
@@ -939,13 +939,13 @@ kqueue_scan(struct file *fp, size_t maxevents, struct kevent *ulistp,
 	}
 
 	/* mark end of knote list */
-	TAILQ_INSERT_TAIL(&kq->kq_head, marker, kn_tqe); 
+	TAILQ_INSERT_TAIL(&kq->kq_head, marker, kn_tqe);
 	simple_unlock(&kq->kq_lock);
 
 	while (count) {				/* while user wants data ... */
 		simple_lock(&kq->kq_lock);
 		kn = TAILQ_FIRST(&kq->kq_head);	/* get next knote */
-		TAILQ_REMOVE(&kq->kq_head, kn, kn_tqe); 
+		TAILQ_REMOVE(&kq->kq_head, kn, kn_tqe);
 		if (kn == marker) {		/* if it's our marker, stop */
 			/* What if it's some else's marker? */
 			simple_unlock(&kq->kq_lock);
@@ -989,7 +989,7 @@ kqueue_scan(struct file *fp, size_t maxevents, struct kevent *ulistp,
 		} else {
 			/* add event back on list */
 			simple_lock(&kq->kq_lock);
-			TAILQ_INSERT_TAIL(&kq->kq_head, kn, kn_tqe); 
+			TAILQ_INSERT_TAIL(&kq->kq_head, kn, kn_tqe);
 			kq->kq_count++;
 			simple_unlock(&kq->kq_lock);
 		}
@@ -1010,7 +1010,7 @@ kqueue_scan(struct file *fp, size_t maxevents, struct kevent *ulistp,
 
 	/* remove marker */
 	simple_lock(&kq->kq_lock);
-	TAILQ_REMOVE(&kq->kq_head, marker, kn_tqe); 
+	TAILQ_REMOVE(&kq->kq_head, marker, kn_tqe);
 	simple_unlock(&kq->kq_lock);
 	splx(s);
  done:
@@ -1071,7 +1071,7 @@ kqueue_ioctl(struct file *fp, u_long com, void *data, struct lwp *l)
 	char			*name;
 	int			error;
 
-	km = (struct kfilter_mapping *)data; 
+	km = (struct kfilter_mapping *)data;
 	error = 0;
 
 	switch (com) {
@@ -1389,7 +1389,7 @@ knote_enqueue(struct knote *kn)
 
 	s = splsched();
 	simple_lock(&kq->kq_lock);
-	TAILQ_INSERT_TAIL(&kq->kq_head, kn, kn_tqe); 
+	TAILQ_INSERT_TAIL(&kq->kq_head, kn, kn_tqe);
 	kn->kn_status |= KN_QUEUED;
 	kq->kq_count++;
 	simple_unlock(&kq->kq_lock);
@@ -1411,7 +1411,7 @@ knote_dequeue(struct knote *kn)
 
 	s = splsched();
 	simple_lock(&kq->kq_lock);
-	TAILQ_REMOVE(&kq->kq_head, kn, kn_tqe); 
+	TAILQ_REMOVE(&kq->kq_head, kn, kn_tqe);
 	kn->kn_status &= ~KN_QUEUED;
 	kq->kq_count--;
 	simple_unlock(&kq->kq_lock);

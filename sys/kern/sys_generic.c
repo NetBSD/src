@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_generic.c,v 1.76.2.4 2004/09/21 13:35:12 skrll Exp $	*/
+/*	$NetBSD: sys_generic.c,v 1.76.2.5 2005/03/04 16:52:00 skrll Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_generic.c,v 1.76.2.4 2004/09/21 13:35:12 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_generic.c,v 1.76.2.5 2005/03/04 16:52:00 skrll Exp $");
 
 #include "opt_ktrace.h"
 
@@ -64,6 +64,7 @@ __KERNEL_RCSID(0, "$NetBSD: sys_generic.c,v 1.76.2.4 2004/09/21 13:35:12 skrll E
 
 int selscan(struct lwp *, fd_mask *, fd_mask *, int, register_t *);
 int pollscan(struct lwp *, struct pollfd *, int, register_t *);
+
 
 /*
  * Read system call.
@@ -662,6 +663,41 @@ int	selwait, nselcoll;
  * Select system call.
  */
 int
+sys_pselect(struct lwp *l, void *v, register_t *retval)
+{
+	struct sys_pselect_args /* {
+		syscallarg(int)				nd;
+		syscallarg(fd_set *)			in;
+		syscallarg(fd_set *)			ou;
+		syscallarg(fd_set *)			ex;
+		syscallarg(const struct timespec *)	ts;
+		syscallarg(sigset_t *)			mask;
+	} */ * const uap = v;
+	struct timespec	ats;
+	struct timeval	atv, *tv = NULL;
+	sigset_t	amask, *mask = NULL;
+	int		error;
+
+	if (SCARG(uap, ts)) {
+		error = copyin(SCARG(uap, ts), &ats, sizeof(ats));
+		if (error)
+			return error;
+		atv.tv_sec = ats.tv_sec;
+		atv.tv_usec = ats.tv_nsec / 1000;
+		tv = &atv;
+	}
+	if (SCARG(uap, mask) != NULL) {
+		error = copyin(SCARG(uap, mask), &amask, sizeof(amask));
+		if (error)
+			return error;
+		mask = &amask;
+	}
+
+	return selcommon(l, retval, SCARG(uap, nd), SCARG(uap, in),
+	    SCARG(uap, ou), SCARG(uap, ex), tv, mask);
+}
+
+int
 sys_select(struct lwp *l, void *v, register_t *retval)
 {
 	struct sys_select_args /* {
@@ -670,32 +706,50 @@ sys_select(struct lwp *l, void *v, register_t *retval)
 		syscallarg(fd_set *)		ou;
 		syscallarg(fd_set *)		ex;
 		syscallarg(struct timeval *)	tv;
-	} */ *uap = v;
-	struct proc	*p;
+	} */ * const uap = v;
+	struct timeval atv, *tv = NULL;
+	int error;
+
+	if (SCARG(uap, tv)) {
+		error = copyin(SCARG(uap, tv), (caddr_t)&atv,
+			sizeof(atv));
+		if (error)
+			return error;
+		tv = &atv;
+	}
+
+	return selcommon(l, retval, SCARG(uap, nd), SCARG(uap, in),
+	    SCARG(uap, ou), SCARG(uap, ex), tv, NULL);
+}
+
+int
+selcommon(struct lwp *l, register_t *retval, int nd, fd_set *u_in,
+	fd_set *u_ou, fd_set *u_ex, struct timeval *tv, sigset_t *mask)
+{
+	struct proc	* const p = l->l_proc;
 	caddr_t		bits;
 	char		smallbits[howmany(FD_SETSIZE, NFDBITS) *
 			    sizeof(fd_mask) * 6];
-	struct		timeval atv;
 	int		s, ncoll, error, timo;
 	size_t		ni;
+	sigset_t	oldmask;
 
 	error = 0;
-	p = l->l_proc;
-	if (SCARG(uap, nd) < 0)
+	if (nd < 0)
 		return (EINVAL);
-	if (SCARG(uap, nd) > p->p_fd->fd_nfiles) {
+	if (nd > p->p_fd->fd_nfiles) {
 		/* forgiving; slightly wrong */
-		SCARG(uap, nd) = p->p_fd->fd_nfiles;
+		nd = p->p_fd->fd_nfiles;
 	}
-	ni = howmany(SCARG(uap, nd), NFDBITS) * sizeof(fd_mask);
+	ni = howmany(nd, NFDBITS) * sizeof(fd_mask);
 	if (ni * 6 > sizeof(smallbits))
 		bits = malloc(ni * 6, M_TEMP, M_WAITOK);
 	else
 		bits = smallbits;
 
 #define	getbits(name, x)						\
-	if (SCARG(uap, name)) {						\
-		error = copyin(SCARG(uap, name), bits + ni * x, ni);	\
+	if (u_ ## name) {						\
+		error = copyin(u_ ## name, bits + ni * x, ni);		\
 		if (error)						\
 			goto done;					\
 	} else								\
@@ -706,32 +760,30 @@ sys_select(struct lwp *l, void *v, register_t *retval)
 #undef	getbits
 
 	timo = 0;
-	if (SCARG(uap, tv)) {
-		error = copyin(SCARG(uap, tv), (caddr_t)&atv,
-			sizeof(atv));
-		if (error)
-			goto done;
-		if (itimerfix(&atv)) {
+	if (tv) {
+		if (itimerfix(tv)) {
 			error = EINVAL;
 			goto done;
 		}
 		s = splclock();
-		timeradd(&atv, &time, &atv);
+		timeradd(tv, &time, tv);
 		splx(s);
 	}
+	if (mask)
+		(void)sigprocmask1(p, SIG_SETMASK, mask, &oldmask);
 
  retry:
 	ncoll = nselcoll;
 	l->l_flag |= L_SELECT;
 	error = selscan(l, (fd_mask *)(bits + ni * 0),
-			   (fd_mask *)(bits + ni * 3), SCARG(uap, nd), retval);
+			   (fd_mask *)(bits + ni * 3), nd, retval);
 	if (error || *retval)
 		goto done;
-	if (SCARG(uap, tv)) {
+	if (tv) {
 		/*
 		 * We have to recalculate the timeout on every retry.
 		 */
-		timo = hzto(&atv);
+		timo = hzto(tv);
 		if (timo <= 0)
 			goto done;
 	}
@@ -746,6 +798,8 @@ sys_select(struct lwp *l, void *v, register_t *retval)
 	if (error == 0)
 		goto retry;
  done:
+	if (mask)
+		(void)sigprocmask1(p, SIG_SETMASK, &oldmask, NULL);
 	l->l_flag &= ~L_SELECT;
 	/* select is not restarted after signals... */
 	if (error == ERESTART)
@@ -755,8 +809,8 @@ sys_select(struct lwp *l, void *v, register_t *retval)
 	if (error == 0) {
 
 #define	putbits(name, x)						\
-		if (SCARG(uap, name)) {					\
-			error = copyout(bits + ni * x, SCARG(uap, name), ni); \
+		if (u_ ## name) {					\
+			error = copyout(bits + ni * x, u_ ## name, ni); \
 			if (error)					\
 				goto out;				\
 		}
@@ -818,54 +872,105 @@ sys_poll(struct lwp *l, void *v, register_t *retval)
 		syscallarg(struct pollfd *)	fds;
 		syscallarg(u_int)		nfds;
 		syscallarg(int)			timeout;
-	} */ *uap = v;
-	struct proc	*p;
+	} */ * const uap = v;
+	struct timeval	atv, *tv = NULL;
+
+	if (SCARG(uap, timeout) != INFTIM) {
+		atv.tv_sec = SCARG(uap, timeout) / 1000;
+		atv.tv_usec = (SCARG(uap, timeout) % 1000) * 1000;
+		tv = &atv;
+	}
+
+	return pollcommon(l, retval, SCARG(uap, fds), SCARG(uap, nfds),
+		tv, NULL);
+}
+
+/*
+ * Poll system call.
+ */
+int
+sys_pollts(struct lwp *l, void *v, register_t *retval)
+{
+	struct sys_pollts_args /* {
+		syscallarg(struct pollfd *)		fds;
+		syscallarg(u_int)			nfds;
+		syscallarg(const struct timespec *)	ts;
+		syscallarg(const sigset_t *)		mask;
+	} */ * const uap = v;
+	struct timespec	ats;
+	struct timeval	atv, *tv = NULL;
+	sigset_t	amask, *mask = NULL;
+	int		error;
+
+	if (SCARG(uap, ts)) {
+		error = copyin(SCARG(uap, ts), &ats, sizeof(ats));
+		if (error)
+			return error;
+		atv.tv_sec = ats.tv_sec;
+		atv.tv_usec = ats.tv_nsec / 1000;
+		tv = &atv;
+	}
+	if (SCARG(uap, mask)) {
+		error = copyin(SCARG(uap, mask), &amask, sizeof(amask));
+		if (error)
+			return error;
+		mask = &amask;
+	}
+
+	return pollcommon(l, retval, SCARG(uap, fds), SCARG(uap, nfds),
+		tv, mask);
+}
+
+int
+pollcommon(struct lwp *l, register_t *retval,
+	struct pollfd *u_fds, u_int nfds,
+	struct timeval *tv, sigset_t *mask)
+{
+	struct proc	* const p = l->l_proc;
 	caddr_t		bits;
 	char		smallbits[32 * sizeof(struct pollfd)];
-	struct timeval	atv;
+	sigset_t	oldmask;
 	int		s, ncoll, error, timo;
 	size_t		ni;
 
-	error = 0;
-	p = l->l_proc;
-	if (SCARG(uap, nfds) > p->p_fd->fd_nfiles) {
+	if (nfds > p->p_fd->fd_nfiles) {
 		/* forgiving; slightly wrong */
-		SCARG(uap, nfds) = p->p_fd->fd_nfiles;
+		nfds = p->p_fd->fd_nfiles;
 	}
-	ni = SCARG(uap, nfds) * sizeof(struct pollfd);
+	ni = nfds * sizeof(struct pollfd);
 	if (ni > sizeof(smallbits))
 		bits = malloc(ni, M_TEMP, M_WAITOK);
 	else
 		bits = smallbits;
 
-	error = copyin(SCARG(uap, fds), bits, ni);
+	error = copyin(u_fds, bits, ni);
 	if (error)
 		goto done;
 
 	timo = 0;
-	if (SCARG(uap, timeout) != INFTIM) {
-		atv.tv_sec = SCARG(uap, timeout) / 1000;
-		atv.tv_usec = (SCARG(uap, timeout) % 1000) * 1000;
-		if (itimerfix(&atv)) {
+	if (tv) {
+		if (itimerfix(tv)) {
 			error = EINVAL;
 			goto done;
 		}
 		s = splclock();
-		timeradd(&atv, &time, &atv);
+		timeradd(tv, &time, tv);
 		splx(s);
 	}
+	if (mask != NULL)
+		(void)sigprocmask1(p, SIG_SETMASK, mask, &oldmask);
 
  retry:
 	ncoll = nselcoll;
 	l->l_flag |= L_SELECT;
-	error = pollscan(l, (struct pollfd *)bits, SCARG(uap, nfds), retval);
+	error = pollscan(l, (struct pollfd *)bits, nfds, retval);
 	if (error || *retval)
 		goto done;
-	if (SCARG(uap, timeout) != INFTIM) {
+	if (tv) {
 		/*
 		 * We have to recalculate the timeout on every retry.
 		 */
-		timo = hzto(&atv);
+		timo = hzto(tv);
 		if (timo <= 0)
 			goto done;
 	}
@@ -880,6 +985,8 @@ sys_poll(struct lwp *l, void *v, register_t *retval)
 	if (error == 0)
 		goto retry;
  done:
+	if (mask != NULL)
+		(void)sigprocmask1(p, SIG_SETMASK, &oldmask, NULL);
 	l->l_flag &= ~L_SELECT;
 	/* poll is not restarted after signals... */
 	if (error == ERESTART)
@@ -887,7 +994,7 @@ sys_poll(struct lwp *l, void *v, register_t *retval)
 	if (error == EWOULDBLOCK)
 		error = 0;
 	if (error == 0) {
-		error = copyout(bits, SCARG(uap, fds), ni);
+		error = copyout(bits, u_fds, ni);
 		if (error)
 			goto out;
 	}

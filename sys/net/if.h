@@ -1,4 +1,4 @@
-/*	$NetBSD: if.h,v 1.90.2.7 2005/02/04 11:47:42 skrll Exp $	*/
+/*	$NetBSD: if.h,v 1.90.2.8 2005/03/04 16:52:56 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -397,7 +397,7 @@ do {									\
 #define	IF_IS_EMPTY(ifq)	((ifq)->ifq_len == 0)
 
 #ifndef IFQ_MAXLEN
-#define	IFQ_MAXLEN	50
+#define	IFQ_MAXLEN	256
 #endif
 #define	IFNET_SLOWHZ	1		/* granularity is 1 second */
 
@@ -549,13 +549,13 @@ struct ifmediareq {
 	int	*ifm_ulist;			/* media words */
 };
 
- 
+
 struct  ifdrv {
 	char		ifd_name[IFNAMSIZ];	/* if name, e.g. "en0" */
 	unsigned long	ifd_cmd;
 	size_t		ifd_len;
 	void		*ifd_data;
-}; 
+};
 
 /*
  * Structure used in SIOCGIFCONF request.
@@ -825,7 +825,7 @@ int	sysctl_ifq __P((int *name, u_int namelen, void *oldp,
 
 #ifdef _NETBSD_SOURCE
 /*
- * sysctl for ifq (per-protocol packet input queue variant of ifqueue) 
+ * sysctl for ifq (per-protocol packet input queue variant of ifqueue)
  */
 #define CTL_IFQ_NAMES  { \
 	{ 0, 0 }, \

@@ -1,4 +1,4 @@
-/*	$NetBSD: pk_var.h,v 1.16.10.3 2004/09/21 13:36:56 skrll Exp $	*/
+/*	$NetBSD: pk_var.h,v 1.16.10.4 2005/03/04 16:53:18 skrll Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -170,7 +170,7 @@ struct	pkcb {
 #define	PQEMPTY		(pkcb_q.q_forw == &pkcb_q)
 
 /*
- *	Interface address, x25 version. Exactly one of these structures is 
+ *	Interface address, x25 version. Exactly one of these structures is
  *	allocated for each interface with an x25 address.
  *
  *	The ifaddr structure conatins the protocol-independent part

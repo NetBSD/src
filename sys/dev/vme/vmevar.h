@@ -1,4 +1,4 @@
-/* $NetBSD: vmevar.h,v 1.9.24.1 2005/02/04 11:47:34 skrll Exp $ */
+/* $NetBSD: vmevar.h,v 1.9.24.2 2005/03/04 16:51:14 skrll Exp $ */
 
 /*
  * Copyright (c) 1999
@@ -49,7 +49,7 @@ typedef int vme_swap_t; /* hardware swap capabilities,
  * Generic placeholder for any resources needed for a mapping,
  * overloaded by bus interface driver
  */
-typedef void *vme_mapresc_t; 
+typedef void *vme_mapresc_t;
 
 /* Describes interrupt mapping, opaque to MI drivers */
 typedef void *vme_intr_handle_t;

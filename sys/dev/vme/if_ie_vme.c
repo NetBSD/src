@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ie_vme.c,v 1.17.6.4 2005/02/04 11:47:34 skrll Exp $	*/
+/*	$NetBSD: if_ie_vme.c,v 1.17.6.5 2005/03/04 16:51:14 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1995 Charles D. Cranor
@@ -116,7 +116,7 @@
  *
  *	The page map to control where ram appears in the address space.
  *	We choose to have RAM start at 0 in the 24 bit address space.
- * 
+ *
  *	to get the phyiscal address of the board's RAM you must take the
  *	top 12 bits of the physical address of the register address and
  *	or in the 4 bits from the status word as bits 17-20 (remember that
@@ -145,7 +145,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ie_vme.c,v 1.17.6.4 2005/02/04 11:47:34 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ie_vme.c,v 1.17.6.5 2005/03/04 16:51:14 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -225,7 +225,7 @@ struct ievme {
 /* Supported media */
 static int media[] = {
 	IFM_ETHER | IFM_10_2,
-};      
+};
 #define NMEDIA	(sizeof(media) / sizeof(media[0]))
 
 /*
@@ -406,7 +406,7 @@ ie_vme_read16(sc, offset)
 
 void
 ie_vme_write16(sc, offset, v)
-	struct ie_softc *sc;	
+	struct ie_softc *sc;
 	int offset;
 	u_int16_t v;
 {
@@ -417,7 +417,7 @@ ie_vme_write16(sc, offset, v)
 
 void
 ie_vme_write24(sc, offset, addr)
-	struct ie_softc *sc;	
+	struct ie_softc *sc;
 	int offset;
 	int addr;
 {

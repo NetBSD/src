@@ -1,4 +1,4 @@
-/*	$NetBSD: bcmp.S,v 1.8.22.3 2004/09/21 13:36:07 skrll Exp $	*/
+/*	$NetBSD: bcmp.S,v 1.8.22.4 2005/03/04 16:52:29 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
 #if 0
 	RCSID("from: @(#)bcmp.s 5.1 (Berkeley) 5/12/90")
 #else
-	RCSID("$NetBSD: bcmp.S,v 1.8.22.3 2004/09/21 13:36:07 skrll Exp $")
+	RCSID("$NetBSD: bcmp.S,v 1.8.22.4 2005/03/04 16:52:29 skrll Exp $")
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -89,7 +89,7 @@ ENTRY(bcmp)
 	 * if the string is too short.
 	 */
 	cmpl	#8,%d1
-	jlt	Lbcbyte			
+	jlt	Lbcbyte
 
 #ifdef	__mc68010__
 	/*
@@ -102,7 +102,7 @@ ENTRY(bcmp)
 	btst	#0,%d0
 	jne	Lbcbyte
 #endif	/* __mc68010__ */
-	
+
 	/* word align */
 	movl	%a0,%d0
 	btst	#0,%d0
@@ -157,7 +157,7 @@ Lbclloop:
 	jne	Lbcnoteq		|	not equal, return non-zero
 	dbf	%d0,Lbclloop		|	till done
 	andl	#3,%d1			|	len %= 4
-	jeq	Lbcdone 
+	jeq	Lbcdone
 
 	subql	#1,%d1			| set up for dbf
 Lbcbloop:

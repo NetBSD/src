@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_bio.c,v 1.28.2.4 2005/01/17 19:33:11 skrll Exp $	*/
+/*	$NetBSD: uvm_bio.c,v 1.28.2.5 2005/03/04 16:55:00 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998 Chuck Silvers.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_bio.c,v 1.28.2.4 2005/01/17 19:33:11 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_bio.c,v 1.28.2.5 2005/03/04 16:55:00 skrll Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -245,7 +245,7 @@ ubc_fault(ufi, ign1, ign2, ign3, ign4, fault_type, access_type, flags)
 	 * software has to do read/modify/write of larger quantities instead.
 	 * this means that the access_type for "write" operations
 	 * can be VM_PROT_READ, which confuses us mightily.
-	 * 
+	 *
 	 * deal with this by resetting access_type based on the info
 	 * that ubc_alloc() stores for us.
 	 */

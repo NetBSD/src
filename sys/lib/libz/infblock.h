@@ -1,8 +1,8 @@
-/* $NetBSD: infblock.h,v 1.5 2003/03/25 22:48:44 mycroft Exp $ */
+/* $NetBSD: infblock.h,v 1.5.2.1 2005/03/04 16:52:42 skrll Exp $ */
 
 /* infblock.h -- header to use infblock.c
  * Copyright (C) 1995-2002 Mark Adler
- * For conditions of distribution and use, see copyright notice in zlib.h 
+ * For conditions of distribution and use, see copyright notice in zlib.h
  */
 
 /* WARNING: this file should *not* be used by applications. It is

@@ -1,4 +1,4 @@
-/*	$NetBSD: smb_usr.c,v 1.7.2.3 2004/09/21 13:38:24 skrll Exp $	*/
+/*	$NetBSD: smb_usr.c,v 1.7.2.4 2005/03/04 16:54:20 skrll Exp $	*/
 
 /*
  * Copyright (c) 2000-2001 Boris Popov
@@ -35,8 +35,8 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smb_usr.c,v 1.7.2.3 2004/09/21 13:38:24 skrll Exp $");
- 
+__KERNEL_RCSID(0, "$NetBSD: smb_usr.c,v 1.7.2.4 2005/03/04 16:54:20 skrll Exp $");
+
 #include <sys/param.h>
 #include <sys/malloc.h>
 #include <sys/kernel.h>
@@ -305,7 +305,7 @@ smb_usr_t2request(struct smb_share *ssp, struct smbioc_t2rq *dp,
 		return error;
 	len = t2p->t2_setupcount = dp->ioc_setupcnt;
 	if (len > 1)
-		t2p->t2_setupdata = dp->ioc_setup; 
+		t2p->t2_setupdata = dp->ioc_setup;
 	if (dp->ioc_name) {
 		t2p->t_name = smb_strdupin(dp->ioc_name, 128);
 		if (t2p->t_name == NULL) {

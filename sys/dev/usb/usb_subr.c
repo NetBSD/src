@@ -1,8 +1,8 @@
-/*	$NetBSD: usb_subr.c,v 1.104.2.4 2004/11/02 07:53:03 skrll Exp $	*/
+/*	$NetBSD: usb_subr.c,v 1.104.2.5 2005/03/04 16:50:55 skrll Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_subr.c,v 1.18 1999/11/17 22:33:47 n_hibma Exp $	*/
 
 /*
- * Copyright (c) 1998 The NetBSD Foundation, Inc.
+ * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb_subr.c,v 1.104.2.4 2004/11/02 07:53:03 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb_subr.c,v 1.104.2.5 2005/03/04 16:50:55 skrll Exp $");
 
 #include "opt_usbverbose.h"
 
@@ -106,13 +106,15 @@ typedef u_int16_t usb_product_id_t;
 /*
  * Descriptions of of known vendors and devices ("products").
  */
-struct usb_knowndev {
+struct usb_vendor {
+	usb_vendor_id_t		vendor;
+	char			*vendorname;
+};
+struct usb_product {
 	usb_vendor_id_t		vendor;
 	usb_product_id_t	product;
-	int			flags;
-	char			*vendorname, *productname;
+	char			*productname;
 };
-#define	USB_KNOWNDEV_NOPROD	0x01		/* match on vendor only */
 
 #include <dev/usb/usbdevs_data.h>
 #endif /* USBVERBOSE */
@@ -212,7 +214,7 @@ usbd_devinfo_vp(usbd_device_handle dev, char *v, size_t lv, char *p, size_t lp,
 	usb_device_descriptor_t *udd = &dev->ddesc;
 	char *vendor = NULL, *product = NULL;
 #ifdef USBVERBOSE
-	const struct usb_knowndev *kdp;
+	int n;
 #endif
 
 	if (dev == NULL) {
@@ -240,22 +242,16 @@ usbd_devinfo_vp(usbd_device_handle dev, char *v, size_t lv, char *p, size_t lp,
 		product = NULL;
 	}
 #ifdef USBVERBOSE
-	if (vendor == NULL || product == NULL) {
-		for(kdp = usb_knowndevs;
-		    kdp->vendorname != NULL;
-		    kdp++) {
-			if (kdp->vendor == UGETW(udd->idVendor) &&
-			    (kdp->product == UGETW(udd->idProduct) ||
-			     (kdp->flags & USB_KNOWNDEV_NOPROD) != 0))
-				break;
-		}
-		if (kdp->vendorname != NULL) {
-			if (vendor == NULL)
-			    vendor = kdp->vendorname;
-			if (product == NULL)
-			    product = (kdp->flags & USB_KNOWNDEV_NOPROD) == 0 ?
-				kdp->productname : NULL;
-		}
+	if (vendor == NULL) {
+		for (n = 0; n < usb_nvendors; n++)
+			if (usb_vendors[n].vendor == UGETW(udd->idVendor))
+				vendor = usb_vendors[n].vendorname;
+	}
+	if (product == NULL) {
+		for (n = 0; n < usb_nproducts; n++)
+			if (usb_products[n].vendor == UGETW(udd->idVendor) &&
+			    usb_products[n].product == UGETW(udd->idProduct))
+				product = usb_products[n].productname;
 	}
 #endif
 	if (vendor != NULL && *vendor)

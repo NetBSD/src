@@ -1,4 +1,4 @@
-/*	$NetBSD: lkminit_misc.c,v 1.2.16.3 2004/09/21 13:36:24 skrll Exp $	*/
+/*	$NetBSD: lkminit_misc.c,v 1.2.16.4 2005/03/04 16:52:48 skrll Exp $	*/
 
 /*
  * Makefile for miscmod
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lkminit_misc.c,v 1.2.16.3 2004/09/21 13:36:24 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lkminit_misc.c,v 1.2.16.4 2005/03/04 16:52:48 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -184,7 +184,7 @@ miscmod_handle( lkmtp, cmd)
  */
 int
 misc_example_lkmentry( lkmtp, cmd, ver)
-	struct lkm_table *lkmtp;	
+	struct lkm_table *lkmtp;
 	int	cmd, ver;
 {
 	DISPATCH(lkmtp,cmd,ver,miscmod_handle,miscmod_handle,lkm_nofunc)

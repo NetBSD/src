@@ -1,4 +1,4 @@
-/*	$NetBSD: vnode.h,v 1.112.2.12 2005/02/04 11:48:07 skrll Exp $	*/
+/*	$NetBSD: vnode.h,v 1.112.2.13 2005/03/04 16:54:24 skrll Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -170,7 +170,7 @@ struct vnode {
 #define	VSIZENOTSET	((voff_t)-1)
 
 /*
- * Use a global lock for all v_numoutput updates.	
+ * Use a global lock for all v_numoutput updates.
  * Define a convenience macro to increment by one.
  * Note: the only place where v_numoutput is decremented is in vwakeup().
  */
@@ -682,7 +682,7 @@ int	vaccess(enum vtype, mode_t, uid_t, gid_t, mode_t, struct ucred *);
 void 	vattr_null(struct vattr *);
 int 	vcount(struct vnode *);
 void	vdevgone(int, int, int, enum vtype);
-int	vfinddev(dev_t, enum vtype, struct vnode **); 
+int	vfinddev(dev_t, enum vtype, struct vnode **);
 int	vflush(struct mount *, struct vnode *, int);
 void	vflushbuf(struct vnode *, int);
 int 	vget(struct vnode *, int);

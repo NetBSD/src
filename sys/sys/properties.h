@@ -1,6 +1,6 @@
-/*	$NetBSD: properties.h,v 1.2.24.3 2004/09/21 13:38:49 skrll Exp $	*/
+/*	$NetBSD: properties.h,v 1.2.24.4 2005/03/04 16:54:23 skrll Exp $	*/
 
-/*  
+/*
  * Copyright (c) 2001 Eduardo Horvath.
  * All rights reserved.
  *

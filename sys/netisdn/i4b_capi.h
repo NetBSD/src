@@ -1,4 +1,4 @@
-/*	$NetBSD: i4b_capi.h,v 1.2.4.4 2004/09/21 13:37:59 skrll Exp $	*/
+/*	$NetBSD: i4b_capi.h,v 1.2.4.5 2005/03/04 16:53:44 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001-2003 Cubical Solutions Ltd. All rights reserved.
@@ -100,7 +100,7 @@ typedef struct capi_softc {
 
     /* Link layer driver context holder and methods */
     void *ctx;
-    
+
     int (*load)(struct capi_softc *, int, u_int8_t *);
     int (*reg_appl)(struct capi_softc *, int, int);
     int (*rel_appl)(struct capi_softc *, int);

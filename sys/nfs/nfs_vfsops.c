@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vfsops.c,v 1.131.2.7 2005/01/17 19:32:55 skrll Exp $	*/
+/*	$NetBSD: nfs_vfsops.c,v 1.131.2.8 2005/03/04 16:54:21 skrll Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1995
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_vfsops.c,v 1.131.2.7 2005/01/17 19:32:55 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_vfsops.c,v 1.131.2.8 2005/03/04 16:54:21 skrll Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -691,7 +691,7 @@ mountnfs(argp, mp, nam, pth, hst, vpp, l)
 	struct vattr *attrs;
 	struct ucred *cr;
 
-	/* 
+	/*
 	 * If the number of nfs iothreads to use has never
 	 * been set, create a reasonable number of them.
 	 */
@@ -700,7 +700,7 @@ mountnfs(argp, mp, nam, pth, hst, vpp, l)
 		nfs_niothreads = NFS_DEFAULT_NIOTHREADS;
 		nfs_getset_niothreads(TRUE);
 	}
-	
+
 	if (mp->mnt_flag & MNT_UPDATE) {
 		nmp = VFSTONFS(mp);
 		/* update paths, file handles, etc, here	XXX */
@@ -1009,7 +1009,7 @@ SYSCTL_SETUP(sysctl_vfs_nfs_setup, "sysctl vfs.nfs subtree setup")
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
 		       CTLTYPE_STRUCT, "nfsstats",
 		       SYSCTL_DESCR("NFS operation statistics"),
-		       NULL, 0, &nfsstats, sizeof(nfsstats), 
+		       NULL, 0, &nfsstats, sizeof(nfsstats),
 		       CTL_VFS, 2, NFS_NFSSTATS, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,

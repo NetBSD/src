@@ -1,4 +1,4 @@
-/*	$NetBSD: bootp.c,v 1.24.2.3 2004/09/21 13:36:18 skrll Exp $	*/
+/*	$NetBSD: bootp.c,v 1.24.2.4 2005/03/04 16:52:41 skrll Exp $	*/
 
 /*
  * Copyright (c) 1992 Regents of the University of California.
@@ -115,7 +115,7 @@ bootp(sock)
 #endif
 	if (!bot)
 		bot = getsecs();
-	
+
 	if (!(d = socktodesc(sock))) {
 		printf("bootp: bad socket. %d\n", sock);
 		return;
@@ -310,7 +310,7 @@ bootprecv(d, pkt, len, tleft)
 		goto bad;
 
 	bp = (struct bootp *)pkt;
-	
+
 #ifdef BOOTP_DEBUG
 	if (debug)
 		printf("bootprecv: checked.  bp = 0x%lx, n = %d\n",

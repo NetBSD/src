@@ -1,4 +1,4 @@
-/*	$NetBSD: kbdvar.h,v 1.11.6.3 2004/09/21 13:33:27 skrll Exp $	*/
+/*	$NetBSD: kbdvar.h,v 1.11.6.4 2005/03/04 16:50:39 skrll Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -60,7 +60,7 @@ struct kbd_softc {
 	struct callout k_wsbell;/* to shut the bell off */
 #endif
 
-	/* ACSII translation state */
+	/* ASCII translation state */
 	struct kbd_state k_state;
 
 	/* console hooks */

@@ -1,4 +1,4 @@
-/* $NetBSD: lkminit_emul.c,v 1.2 2001/11/12 23:23:06 lukem Exp $ */
+/* $NetBSD: lkminit_emul.c,v 1.2.18.1 2005/03/04 16:52:46 skrll Exp $ */
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lkminit_emul.c,v 1.2 2001/11/12 23:23:06 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lkminit_emul.c,v 1.2.18.1 2005/03/04 16:52:46 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -60,7 +60,7 @@ MOD_COMPAT("compat_svr4_32", -1, &emul_svr4_32);
  */
 int
 compat_svr4_32_lkmentry(lkmtp, cmd, ver)
-	struct lkm_table *lkmtp;	
+	struct lkm_table *lkmtp;
 	int cmd;
 	int ver;
 {

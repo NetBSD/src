@@ -1,4 +1,4 @@
-/*	$NetBSD: if_stf.c,v 1.33.2.6 2005/02/04 11:47:44 skrll Exp $	*/
+/*	$NetBSD: if_stf.c,v 1.33.2.7 2005/03/04 16:52:59 skrll Exp $	*/
 /*	$KAME: if_stf.c,v 1.62 2001/06/07 22:32:16 itojun Exp $	*/
 
 /*
@@ -60,7 +60,7 @@
  * ICMPv6:
  * - Redirects cannot be used due to the lack of link-local address.
  *
- * stf interface does not have, and will not need, a link-local address.  
+ * stf interface does not have, and will not need, a link-local address.
  * It seems to have no real benefit and does not help the above symptoms much.
  * Even if we assign link-locals to interface, we cannot really
  * use link-local unicast/multicast on top of 6to4 cloud (since there's no
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_stf.c,v 1.33.2.6 2005/02/04 11:47:44 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_stf.c,v 1.33.2.7 2005/03/04 16:52:59 skrll Exp $");
 
 #include "opt_inet.h"
 
@@ -653,7 +653,7 @@ in_stf_input(struct mbuf *m, ...)
 	ip6->ip6_flow |= htonl((u_int32_t)itos << 20);
 
 	m->m_pkthdr.rcvif = ifp;
-	
+
 #if NBPFILTER > 0
 	if (ifp->if_bpf)
 		bpf_mtap_af(ifp->if_bpf, AF_INET6, m);

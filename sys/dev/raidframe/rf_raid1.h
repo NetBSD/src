@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_raid1.h,v 1.4.18.3 2004/09/21 13:32:54 skrll Exp $	*/
+/*	$NetBSD: rf_raid1.h,v 1.4.18.4 2005/03/04 16:50:08 skrll Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -33,29 +33,29 @@
 
 #include <dev/raidframe/raidframevar.h>
 
-int 
+int
 rf_ConfigureRAID1(RF_ShutdownList_t ** listp, RF_Raid_t * raidPtr,
     RF_Config_t * cfgPtr);
-void 
+void
 rf_MapSectorRAID1(RF_Raid_t * raidPtr, RF_RaidAddr_t raidSector,
     RF_RowCol_t * col, RF_SectorNum_t * diskSector, int remap);
-void 
+void
 rf_MapParityRAID1(RF_Raid_t * raidPtr, RF_RaidAddr_t raidSector,
     RF_RowCol_t * col, RF_SectorNum_t * diskSector, int remap);
-void 
+void
 rf_IdentifyStripeRAID1(RF_Raid_t * raidPtr, RF_RaidAddr_t addr,
     RF_RowCol_t ** diskids);
-void 
+void
 rf_MapSIDToPSIDRAID1(RF_RaidLayout_t * layoutPtr,
     RF_StripeNum_t stripeID, RF_StripeNum_t * psID,
     RF_ReconUnitNum_t * which_ru);
-void 
+void
 rf_RAID1DagSelect(RF_Raid_t * raidPtr, RF_IoType_t type,
     RF_AccessStripeMap_t * asmap, RF_VoidFuncPtr * createFunc);
-int 
+int
 rf_VerifyParityRAID1(RF_Raid_t * raidPtr, RF_RaidAddr_t raidAddr,
     RF_PhysDiskAddr_t * parityPDA, int correct_it, RF_RaidAccessFlags_t flags);
-int 
+int
 rf_SubmitReconBufferRAID1(RF_ReconBuffer_t * rbuf, int keep_int,
     int use_committed);
 

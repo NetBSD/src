@@ -1,4 +1,4 @@
-/*	$NetBSD: pmatch.c,v 1.2.16.3 2004/09/21 13:35:54 skrll Exp $	*/
+/*	$NetBSD: pmatch.c,v 1.2.16.4 2005/03/04 16:52:29 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991 The Regents of the University of California.
@@ -83,7 +83,7 @@ pmatch(string, pattern, estr)
 				case 2:
 					return 2;
 				default:
-					return -1;	
+					return -1;
 				}
 				*estr = string;
 			}
@@ -108,7 +108,7 @@ pmatch(string, pattern, estr)
 					continue;
 				if (rangec == '-' && *(pattern - 2) != '[' &&
 				    *pattern != ']') {
-					match = 
+					match =
 					    stringc <= (u_char)*pattern &&
 					    (u_char)*(pattern - 2) <= stringc;
 					pattern++;

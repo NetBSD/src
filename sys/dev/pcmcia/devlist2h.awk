@@ -1,5 +1,5 @@
 #! /usr/bin/awk -f
-#	$NetBSD: devlist2h.awk,v 1.4.16.4 2004/09/21 13:32:19 skrll Exp $
+#	$NetBSD: devlist2h.awk,v 1.4.16.5 2005/03/04 16:49:38 skrll Exp $
 #
 # Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -99,6 +99,7 @@ BEGIN {
 NR == 1 {
 	VERSION = $0
 	gsub("\\$", "", VERSION)
+	gsub(/ $/, "", VERSION)
 
 	printf("/*\t$NetBSD" "$\t*/\n\n") > dfile
 	printf("/*\n") > dfile
@@ -213,7 +214,7 @@ END {
 			printf("\t    PCMCIA_VENDOR_%s, PCMCIA_PRODUCT_%s_%s,\n",
 			    products[i, 1], products[i, 1], products[i, 2]) > dfile
 		}
-		printf("\t    PCMCIA_CIS_%s_%s,\n", 
+		printf("\t    PCMCIA_CIS_%s_%s,\n",
 		    products[i, 1], products[i, 2]) > dfile
 		printf("\t    ") > dfile
 		printf("0") > dfile

@@ -1,4 +1,4 @@
-/*	$NetBSD: divsi3.S,v 1.4 2003/04/05 23:27:15 bjh21 Exp $	*/
+/*	$NetBSD: divsi3.S,v 1.4.2.1 2005/03/04 16:52:29 skrll Exp $	*/
 
 /*
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
@@ -16,7 +16,7 @@
 
 #include <machine/asm.h>
 
-/* 
+/*
  * stack is aligned as there's a possibility of branching to L_overflow
  * which makes a C call
  */
@@ -50,9 +50,9 @@ ENTRY(__modsi3)
 
 ENTRY(__udivsi3)
 .L_udivide:				/* r0 = r0 / r1; r1 = r0 % r1 */
-	eor     r0, r1, r0 
-	eor     r1, r0, r1 
-	eor     r0, r1, r0 
+	eor     r0, r1, r0
+	eor     r1, r0, r1
+	eor     r0, r1, r0
 					/* r0 = r1 / r0; r1 = r1 % r0 */
 	cmp	r0, #1
 	bcc	.L_overflow
@@ -72,9 +72,9 @@ ENTRY(__udivsi3)
 
 ENTRY(__divsi3)
 .L_divide:				/* r0 = r0 / r1; r1 = r0 % r1 */
-	eor     r0, r1, r0 
-	eor     r1, r0, r1 
-	eor     r0, r1, r0 
+	eor     r0, r1, r0
+	eor     r1, r0, r1
+	eor     r0, r1, r0
 					/* r0 = r1 / r0; r1 = r1 % r0 */
 	cmp	r0, #1
 	bcc	.L_overflow
@@ -93,7 +93,7 @@ ENTRY(__divsi3)
 
 	/*
 	 * If the highest bit of the dividend is set, we have to be
-	 * careful when shifting the divisor. Test this. 
+	 * careful when shifting the divisor. Test this.
 	 */
 	movs	r1,r1
 	bpl	.L_old_code

@@ -1,4 +1,4 @@
-/* $NetBSD: lkminit_exec.c,v 1.5.16.1 2004/11/14 08:16:12 skrll Exp $ */
+/* $NetBSD: lkminit_exec.c,v 1.5.16.2 2005/03/04 16:52:47 skrll Exp $ */
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lkminit_exec.c,v 1.5.16.1 2004/11/14 08:16:12 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lkminit_exec.c,v 1.5.16.2 2005/03/04 16:52:47 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -77,7 +77,7 @@ MOD_EXEC("exec_osf1_ecoff", -1, &exec_osf1_ecoff, "osf1");
  */
 int
 exec_osf1_ecoff_lkmentry(lkmtp, cmd, ver)
-	struct lkm_table *lkmtp;	
+	struct lkm_table *lkmtp;
 	int cmd;
 	int ver;
 {

@@ -1,4 +1,4 @@
-/*	$NetBSD: SYS.h,v 1.4.28.3 2004/09/21 13:36:07 skrll Exp $	*/
+/*	$NetBSD: SYS.h,v 1.4.28.4 2005/03/04 16:52:29 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -82,7 +82,7 @@
 
 #define RSYSCALL(x)							\
 	PSEUDO(x,x)
-	
+
 #define	ASMSTR		.asciz
 
 	.globl	CERROR

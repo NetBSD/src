@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_pcmcia.c,v 1.55.2.6 2004/10/19 15:57:27 skrll Exp $ */
+/*	$NetBSD: wdc_pcmcia.c,v 1.55.2.7 2005/03/04 16:49:39 skrll Exp $ */
 
 /*-
  * Copyright (c) 1998, 2003, 2004 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc_pcmcia.c,v 1.55.2.6 2004/10/19 15:57:27 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc_pcmcia.c,v 1.55.2.7 2005/03/04 16:49:39 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -104,7 +104,7 @@ static const struct pcmcia_product wdc_pcmcia_products[] = {
 	  PCMCIA_CIS_TEAC_IDECARDII },
 
 	/*
-	 * A fujitsu rebranded panasonic drive that reports 
+	 * A fujitsu rebranded panasonic drive that reports
 	 * itself as function "scsi", disk interface 0
 	 */
 	{ PCMCIA_VENDOR_PANASONIC,
@@ -126,7 +126,7 @@ static const struct pcmcia_product wdc_pcmcia_products[] = {
 	{ PCMCIA_VENDOR_INVALID, PCMCIA_PRODUCT_INVALID,
 	  {"FREECOM", "PCCARD-IDE", NULL, NULL} },
 
-	/* Random CD-ROM, (badged AMACOM), neither vendor ID nor product ID */ 
+	/* Random CD-ROM, (badged AMACOM), neither vendor ID nor product ID */
 	{ PCMCIA_VENDOR_INVALID, PCMCIA_PRODUCT_INVALID,
 	  {"PCMCIA", "CD-ROM", NULL, NULL} },
 
@@ -139,8 +139,8 @@ static const struct pcmcia_product wdc_pcmcia_products[] = {
 	{ PCMCIA_VENDOR_INVALID, PCMCIA_PRODUCT_INVALID,
 	  PCMCIA_CIS_TOSHIBA_CBIDE2 },
 
-	/* 
-	 * Novac PCMCIA-IDE Card for HD530P IDE Box, 
+	/*
+	 * Novac PCMCIA-IDE Card for HD530P IDE Box,
 	 * with neither vendor ID nor product ID
 	 */
 	{ PCMCIA_VENDOR_INVALID, PCMCIA_PRODUCT_INVALID,
@@ -160,7 +160,7 @@ wdc_pcmcia_match(struct device *parent, struct cfdata *match, void *aux)
 {
 	struct pcmcia_attach_args *pa = aux;
 
-	if (pa->pf->function == PCMCIA_FUNCTION_DISK && 
+	if (pa->pf->function == PCMCIA_FUNCTION_DISK &&
 	    pa->pf->pf_funce_disk_interface == PCMCIA_TPLFE_DDI_PCCARD_ATA)
 		return (1);
 	if (pcmcia_product_lookup(pa, wdc_pcmcia_products, wdc_pcmcia_nproducts,

@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_conf.c,v 1.82.2.4 2004/09/21 13:35:03 skrll Exp $	*/
+/*	$NetBSD: exec_conf.c,v 1.82.2.5 2005/03/04 16:51:58 skrll Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Christopher G. Demetriou
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exec_conf.c,v 1.82.2.4 2004/09/21 13:35:03 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exec_conf.c,v 1.82.2.5 2005/03/04 16:51:58 skrll Exp $");
 
 #include "opt_execfmt.h"
 #include "opt_compat_freebsd.h"
@@ -374,7 +374,7 @@ const struct execsw execsw_builtin[] = {
 	  linux_exec_setup_stack },
 #endif
 
-#ifdef COMPAT_IRIX 
+#ifdef COMPAT_IRIX
 	/* IRIX Elf32 n32 ABI */
 	{ sizeof (Elf32_Ehdr),
 	  exec_elf32_makecmds,
@@ -583,7 +583,7 @@ const struct execsw execsw_builtin[] = {
 	  copyargs,
 	  NULL,
 	  coredump_netbsd,
-	  exec_setup_stack },
+	  ibcs2_exec_setup_stack },
 
 	/* iBCS2 x.out (native word size) */
 	{ XOUT_HDR_SIZE,
@@ -595,7 +595,7 @@ const struct execsw execsw_builtin[] = {
 	  copyargs,
 	  NULL,
 	  coredump_netbsd,
-	  exec_setup_stack },
+	  ibcs2_exec_setup_stack },
 #endif
 
 #if defined(COMPAT_FREEBSD) && defined(EXEC_AOUT)

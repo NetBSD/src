@@ -1,4 +1,4 @@
-/*	$NetBSD: rfreg.h,v 1.1.2.1 2004/10/19 15:57:27 skrll Exp $	*/
+/*	$NetBSD: rfreg.h,v 1.1.2.2 2005/03/04 16:49:54 skrll Exp $	*/
 /*
  * Copyright (c) 2002 Jochen Kunz.
  * All rights reserved.
@@ -11,8 +11,8 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. The name of Jochen Kunz may not be used to endorse or promote 
- *    products derived from this software without specific prior 
+ * 3. The name of Jochen Kunz may not be used to endorse or promote
+ *    products derived from this software without specific prior
  *    written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY JOCHEN KUNZ
@@ -89,7 +89,7 @@
 
 
 /* Bitdefinitions of RX2ES. */
-/*			<15-12> Not Used                -- */
+/*			<15-12> Not Used		-- */
 #define	RX2ES_NEM	0x0800	/* Non-Existend Memory	RO */
 #define	RX2ES_WCO	0x0400	/* Word Count Overflow	RO */
 /*			0x0200	   Not Used		RO */

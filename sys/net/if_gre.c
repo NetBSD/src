@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gre.c,v 1.45.2.5 2004/12/18 09:32:50 skrll Exp $ */
+/*	$NetBSD: if_gre.c,v 1.45.2.6 2005/03/04 16:52:58 skrll Exp $ */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gre.c,v 1.45.2.5 2004/12/18 09:32:50 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gre.c,v 1.45.2.6 2005/03/04 16:52:58 skrll Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"
@@ -346,7 +346,7 @@ gre_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 	case SIOCSIFADDR:
 		ifp->if_flags |= IFF_UP;
 		break;
-	case SIOCSIFDSTADDR: 
+	case SIOCSIFDSTADDR:
 		break;
 	case SIOCSIFFLAGS:
 		if ((error = suser(p->p_ucred, &p->p_acflag)) != 0)

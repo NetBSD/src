@@ -1,19 +1,19 @@
-/*	$NetBSD: llparse.c,v 1.7 2002/05/16 19:30:41 wiz Exp $	*/
+/*	$NetBSD: llparse.c,v 1.7.8.1 2005/03/04 16:54:09 skrll Exp $	*/
 
 /*
  * ************************* NOTICE *******************************
  * This code is in the public domain.  It cannot be copyrighted.
- * This ll parser was originally written by Keith Thompson for the 
+ * This ll parser was originally written by Keith Thompson for the
  * University of Wisconsin Crystal project.
  * It was based on an FMQ lr parser written by Jon Mauney at the
  * University of Wisconsin.
- * It was subsequently modified very slightly by Nancy Hall at the 
+ * It was subsequently modified very slightly by Nancy Hall at the
  * University of Wisconsin for the Crystal project.
  * ****************************************************************
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: llparse.c,v 1.7 2002/05/16 19:30:41 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: llparse.c,v 1.7.8.1 2005/03/04 16:54:09 skrll Exp $");
 
 #include "xebec.h"
 #include "llparse.h"
@@ -303,13 +303,13 @@ llsetattr(n)
 	ENDDEBUG
 	if(lldescindex >= LLMAXDESC) {
 		fprintf(stdout, "llattribute stack overflow: desc\n");
-		fprintf(stdout, 
+		fprintf(stdout,
 			"lldescindex=0x%x, llattrtop=0x%x\n",lldescindex, llattrtop);
 		Exit(-1);
 	}
 	ptr = &llattrdesc[lldescindex];
 	ptr->llabase = &llattributes[llattrtop];
-	ptr->lloldtop = ++llattrtop; 
+	ptr->lloldtop = ++llattrtop;
 	ptr->llaindex = 1;
 	ptr->llacnt = n+1; /* the lhs ALWAYS uses an attr; it remains on the
 						stack when the production is recognized */

@@ -1,4 +1,4 @@
-/*	$NetBSD: bridgestp.c,v 1.3.2.3 2004/09/21 13:36:35 skrll Exp $	*/
+/*	$NetBSD: bridgestp.c,v 1.3.2.4 2005/03/04 16:52:56 skrll Exp $	*/
 
 /*
  * Copyright (c) 2000 Jason L. Wright (jason@thought.net)
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bridgestp.c,v 1.3.2.3 2004/09/21 13:36:35 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bridgestp.c,v 1.3.2.4 2005/03/04 16:52:56 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -639,7 +639,7 @@ bstp_input(struct ifnet *ifp, struct mbuf *m)
 		    (((uint64_t)cpdu.cbu_rootaddr[3]) << 16) |
 		    (((uint64_t)cpdu.cbu_rootaddr[4]) << 8) |
 		    (((uint64_t)cpdu.cbu_rootaddr[5]) << 0);
-		    
+
 		cu.cu_bridge_id =
 		    (((uint64_t)ntohs(cpdu.cbu_bridgepri)) << 48) |
 		    (((uint64_t)cpdu.cbu_bridgeaddr[0]) << 40) |
@@ -1027,7 +1027,7 @@ bstp_ifupdstatus(struct bridge_softc *sc, struct bridge_iflist *bif)
 		case LINK_STATE_DOWN:
 			if (bif->bif_state != BSTP_IFSTATE_DISABLED)
 				bstp_disable_port(sc, bif);
-			break;			
+			break;
 		}
 		return;
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: pty.h,v 1.2.2.3 2004/11/29 07:25:05 skrll Exp $	*/
+/*	$NetBSD: pty.h,v 1.2.2.4 2005/03/04 16:54:23 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -52,7 +52,7 @@ struct ptm_pty *pty_sethandler(struct ptm_pty *);
 
 struct ptm_pty {
 	int (*allocvp)(struct ptm_pty *, struct lwp *, struct vnode **, dev_t,
-	    char); 
+	    char);
 	int (*makename)(struct ptm_pty *, char *, size_t, dev_t, char);
 	void (*getvattr)(struct ptm_pty *, struct proc *, struct vattr *);
 	void *arg;

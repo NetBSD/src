@@ -1,12 +1,14 @@
-/*	$NetBSD: kern_clock.c,v 1.86.2.3 2004/09/21 13:35:03 skrll Exp $	*/
+/*	$NetBSD: kern_clock.c,v 1.86.2.4 2005/03/04 16:51:58 skrll Exp $	*/
 
 /*-
- * Copyright (c) 2000 The NetBSD Foundation, Inc.
+ * Copyright (c) 2000, 2004 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
  * by Jason R. Thorpe of the Numerical Aerospace Simulation Facility,
  * NASA Ames Research Center.
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by Charles M. Hannum.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -74,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_clock.c,v 1.86.2.3 2004/09/21 13:35:03 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_clock.c,v 1.86.2.4 2005/03/04 16:51:58 skrll Exp $");
 
 #include "opt_ntp.h"
 #include "opt_multiprocessor.h"
@@ -497,7 +499,7 @@ hardclock(struct clockframe *frame)
 		statclock(frame);
 	if ((--ci->ci_schedstate.spc_rrticks) <= 0)
 		roundrobin(ci);
-	
+
 #if defined(MULTIPROCESSOR)
 	/*
 	 * If we are not the primary CPU, we're not allowed to do
@@ -968,8 +970,8 @@ void
 proftick(struct clockframe *frame)
 {
 #ifdef GPROF
-        struct gmonparam *g;    
-        intptr_t i;     
+        struct gmonparam *g;
+        intptr_t i;
 #endif
 	struct proc *p;
 
@@ -988,10 +990,10 @@ proftick(struct clockframe *frame)
 			}
 		}
 #endif
-#ifdef PROC_PC 
+#ifdef PROC_PC
                 if (p && p->p_flag & P_PROFIL)
                         addupc_intr(p, PROC_PC(p));
-#endif  
+#endif
 	}
 }
 #endif
@@ -1022,7 +1024,7 @@ statclock(struct clockframe *frame)
 		if (psdiv == 1) {
 			setstatclockrate(stathz);
 		} else {
-			setstatclockrate(profhz);			
+			setstatclockrate(profhz);
 		}
 	}
 	l = curlwp;
@@ -1088,7 +1090,7 @@ statclock(struct clockframe *frame)
 	if (l != NULL) {
 		++p->p_cpticks;
 		/*
-		 * If no separate schedclock is provided, call it here 
+		 * If no separate schedclock is provided, call it here
 		 * at about 16 Hz.
 		 */
 		if (schedhz == 0)

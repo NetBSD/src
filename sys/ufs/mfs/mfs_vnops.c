@@ -1,4 +1,4 @@
-/*	$NetBSD: mfs_vnops.c,v 1.33.2.5 2004/11/02 07:53:37 skrll Exp $	*/
+/*	$NetBSD: mfs_vnops.c,v 1.33.2.6 2005/03/04 16:55:00 skrll Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mfs_vnops.c,v 1.33.2.5 2004/11/02 07:53:37 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mfs_vnops.c,v 1.33.2.6 2005/03/04 16:55:00 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -164,7 +164,7 @@ mfs_strategy(v)
 	} else if (mfsp->mfs_proc == p) {
 		mfs_doio(bp, mfsp->mfs_baseoff);
 	} else if (doing_shutdown) {
-		/* 
+		/*
 		 * bitbucket I/O during shutdown.
 		 * Note that reads should *not* happen here, but..
 		 */

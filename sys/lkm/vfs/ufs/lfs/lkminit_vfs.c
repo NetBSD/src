@@ -1,4 +1,4 @@
-/* $NetBSD: lkminit_vfs.c,v 1.6.2.3 2004/09/21 13:36:30 skrll Exp $ */
+/* $NetBSD: lkminit_vfs.c,v 1.6.2.4 2005/03/04 16:52:49 skrll Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lkminit_vfs.c,v 1.6.2.3 2004/09/21 13:36:30 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lkminit_vfs.c,v 1.6.2.4 2005/03/04 16:52:49 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/sysctl.h>
@@ -98,7 +98,7 @@ MOD_VFS("lfs", -1, &lfs_vfsops);
  */
 int
 lfs_lkmentry(lkmtp, cmd, ver)
-	struct lkm_table *lkmtp;	
+	struct lkm_table *lkmtp;
 	int cmd;
 	int ver;
 {
@@ -111,11 +111,11 @@ lfs_lkmentry(lkmtp, cmd, ver)
  */
 static int
 lfs_load(lkmtp, cmd)
-	struct lkm_table *lkmtp;	
+	struct lkm_table *lkmtp;
 	int cmd;
 {
 	int i;
-	
+
 	/* first check if the entries are empty */
 	for(i=0; i < LFS_SYSENT_CNT; i++) {
 		if (sysent[lfs_sysents[i].sysno].sy_call != sys_nosys) {
@@ -141,7 +141,7 @@ lfs_load(lkmtp, cmd)
  */
 static int
 lfs_unload(lkmtp, cmd)
-	struct lkm_table *lkmtp;	
+	struct lkm_table *lkmtp;
 	int cmd;
 {
 	int i;

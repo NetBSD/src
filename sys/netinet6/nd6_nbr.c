@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6_nbr.c,v 1.47.2.5 2005/02/15 21:33:40 skrll Exp $	*/
+/*	$NetBSD: nd6_nbr.c,v 1.47.2.6 2005/03/04 16:53:32 skrll Exp $	*/
 /*	$KAME: nd6_nbr.c,v 1.61 2001/02/10 16:06:14 jinmei Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6_nbr.c,v 1.47.2.5 2005/02/15 21:33:40 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6_nbr.c,v 1.47.2.6 2005/03/04 16:53:32 skrll Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -503,7 +503,7 @@ nd6_ns_output(ifp, daddr6, taddr6, ln, dad)
 	nd_ns->nd_ns_cksum =
 	    in6_cksum(m, IPPROTO_ICMPV6, sizeof(*ip6), icmp6len);
 
-	ip6_output(m, NULL, &ro, dad ? IPV6_UNSPECSRC : 0, 
+	ip6_output(m, NULL, &ro, dad ? IPV6_UNSPECSRC : 0,
 	    &im6o, (struct socket *)NULL, NULL);
 	icmp6_ifstat_inc(ifp, ifs6_out_msg);
 	icmp6_ifstat_inc(ifp, ifs6_out_neighborsolicit);

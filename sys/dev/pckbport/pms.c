@@ -1,4 +1,4 @@
-/* $NetBSD: pms.c,v 1.2.4.8 2005/02/04 11:47:08 skrll Exp $ */
+/* $NetBSD: pms.c,v 1.2.4.9 2005/03/04 16:49:38 skrll Exp $ */
 
 /*-
  * Copyright (c) 2004 Kentaro Kurahone.
@@ -28,7 +28,7 @@
 #include "opt_pms.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pms.c,v 1.2.4.8 2005/02/04 11:47:08 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pms.c,v 1.2.4.9 2005/03/04 16:49:38 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -380,21 +380,21 @@ pms_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct lwp *l)
 	case WSMOUSEIO_GTYPE:
 		*(u_int *)data = WSMOUSE_TYPE_PS2;
 		break;
-		
+
 	case WSMOUSEIO_SRES:
 		i = (*(u_int *)data - 12) / 25;
-		
+
 		if (i < 0)
 			i = 0;
-			
+
 		if (i > 3)
 			i = 3;
 
 		kbcmd[0] = PMS_SET_RES;
-		kbcmd[1] = i;			
-		i = pckbport_enqueue_cmd(sc->sc_kbctag, sc->sc_kbcslot, kbcmd, 
+		kbcmd[1] = i;
+		i = pckbport_enqueue_cmd(sc->sc_kbctag, sc->sc_kbcslot, kbcmd,
 		    2, 0, 1, 0);
-		
+
 		if (i)
 			printf("pms_ioctl: SET_RES command error\n");
 		break;
@@ -428,7 +428,7 @@ pms_reset_thread(void *arg)
 		if (pmsdebug)
 #endif
 #if defined(PMSDEBUG) || defined(DIAGNOSTIC)
-			printf("%s: resetting mouse interface\n", 
+			printf("%s: resetting mouse interface\n",
 			    sc->sc_dev.dv_xname);
 #endif
 		save_protocol = sc->protocol;
@@ -437,7 +437,7 @@ pms_reset_thread(void *arg)
 		res = pckbport_enqueue_cmd(sc->sc_kbctag, sc->sc_kbcslot, cmd,
 		    1, 2, 1, resp);
 		if (res)
-			DPRINTF(("%s: reset error %d\n", sc->sc_dev.dv_xname, 
+			DPRINTF(("%s: reset error %d\n", sc->sc_dev.dv_xname,
 			    res));
 
 #ifdef PMS_SYNAPTICS_TOUCHPAD
@@ -616,7 +616,7 @@ pmsinput(void *vsc, int data)
 			dy -= 256;
 		if (dy == -128)
 			dy = -127;
-		
+
 		sc->inputstate = 0;
 		changed = (sc->buttons ^ newbuttons);
 		sc->buttons = newbuttons;

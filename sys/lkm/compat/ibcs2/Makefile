@@ -1,11 +1,11 @@
-#	$NetBSD: Makefile,v 1.5.6.3 2004/09/21 13:36:23 skrll Exp $
+#	$NetBSD: Makefile,v 1.5.6.4 2005/03/04 16:52:46 skrll Exp $
 
 .include "../Makefile.inc"
 
 .PATH:	$S/compat/ibcs2 $S/arch/${MACHINE}/${MACHINE}
 
 CPPFLAGS+=	-DCOMPAT_SVR4 -DSYSVSEM -DSYSVMSG -DSYSVSHM \
-		-DSVR4_COMPAT_SOLARIS2 -DCOMPAT_IBCS2	
+		-DSVR4_COMPAT_SOLARIS2 -DCOMPAT_IBCS2
 AFLAGS=		-x assembler-with-cpp -traditional-cpp -D_LOCORE \
 		-I. -I${S}
 

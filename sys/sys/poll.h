@@ -1,4 +1,4 @@
-/*	$NetBSD: poll.h,v 1.7.2.1 2005/02/04 11:48:06 skrll Exp $	*/
+/*	$NetBSD: poll.h,v 1.7.2.2 2005/03/04 16:54:23 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -74,8 +74,15 @@ struct pollfd {
 #define	INFTIM		-1
 #endif
 
-#ifndef _KERNEL
+#ifdef _KERNEL
+#include <sys/signal.h>		/* for sigset_t */
 
+struct lwp;
+struct timeval;
+
+int	pollcommon(struct lwp *, register_t *, struct pollfd *, u_int,
+	    struct timeval *, sigset_t *);
+#else
 #include <sys/cdefs.h>
 
 __BEGIN_DECLS

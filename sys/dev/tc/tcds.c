@@ -1,4 +1,4 @@
-/* $NetBSD: tcds.c,v 1.10.2.3 2005/02/04 11:47:34 skrll Exp $ */
+/* $NetBSD: tcds.c,v 1.10.2.4 2005/03/04 16:50:52 skrll Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -42,17 +42,17 @@
  * All rights reserved.
  *
  * Author: Keith Bostic, Chris G. Demetriou
- * 
+ *
  * Permission to use, copy, modify and distribute this software and
  * its documentation is hereby granted, provided that both the copyright
  * notice and this permission notice appear in all copies of the
  * software, derivative works or modified versions, and any portions
  * thereof, and that both notices appear in supporting documentation.
- * 
- * CARNEGIE MELLON ALLOWS FREE USE OF THIS SOFTWARE IN ITS "AS IS" 
- * CONDITION.  CARNEGIE MELLON DISCLAIMS ANY LIABILITY OF ANY KIND 
+ *
+ * CARNEGIE MELLON ALLOWS FREE USE OF THIS SOFTWARE IN ITS "AS IS"
+ * CONDITION.  CARNEGIE MELLON DISCLAIMS ANY LIABILITY OF ANY KIND
  * FOR ANY DAMAGES WHATSOEVER RESULTING FROM THE USE OF THIS SOFTWARE.
- * 
+ *
  * Carnegie Mellon requests users of this software to return to
  *
  *  Software Distribution Coordinator  or  Software.Distribution@CS.CMU.EDU
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcds.c,v 1.10.2.3 2005/02/04 11:47:34 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcds.c,v 1.10.2.4 2005/03/04 16:50:52 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -450,7 +450,7 @@ tcds_dma_enable(sc, on)
 	cir = bus_space_read_4(sc->sc_bst, sc->sc_bsh, TCDS_CIR);
 
 	/* XXX Clear/set IOSLOT/PBS bits. */
-	if (on) 
+	if (on)
 		TCDS_CIR_SET(cir, sc->sc_dmabits);
 	else
 		TCDS_CIR_CLR(cir, sc->sc_dmabits);
@@ -517,7 +517,7 @@ tcds_intr(arg)
 #undef CHECKINTR
 
 #ifdef DIAGNOSTIC
-	/* 
+	/*
 	 * Interrupts not currently handled, but would like to know if they
 	 * occur.
 	 *

@@ -1,4 +1,4 @@
-/*	$NetBSD: sunkbd.c,v 1.18.2.4 2004/09/21 13:33:27 skrll Exp $	*/
+/*	$NetBSD: sunkbd.c,v 1.18.2.5 2005/03/04 16:50:39 skrll Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunkbd.c,v 1.18.2.4 2004/09/21 13:33:27 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunkbd.c,v 1.18.2.5 2005/03/04 16:50:39 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -100,8 +100,8 @@ CFATTACH_DECL(kbd_tty, sizeof(struct kbd_sun_softc),
     sunkbd_match, sunkbd_attach, NULL, NULL);
 
 struct  linesw sunkbd_disc =
-	{ "sunkbd", 7, ttylopen, ttylclose, ttyerrio, ttyerrio, ttynullioctl,
-	  sunkbdinput, sunkbdstart, nullmodem, ttpoll }; /* 7- SUNKBDDISC */
+	{ "sunkbd", -1, ttylopen, ttylclose, ttyerrio, ttyerrio, ttynullioctl,
+	  sunkbdinput, sunkbdstart, nullmodem, ttpoll };
 
 
 /*
@@ -274,8 +274,7 @@ sunkbdinput(c, tp)
 	}
 
 	/* Pass this up to the "middle" layer. */
-	kbd_sun_input(k, c);
-	return (-1);
+	return(kbd_sun_input(k, c));
 
 send_reset:
 	/* Send a reset to resync translation. */

@@ -1,4 +1,4 @@
-/* $NetBSD: lkminit_exec.c,v 1.8.2.1 2004/11/14 08:16:12 skrll Exp $ */
+/* $NetBSD: lkminit_exec.c,v 1.8.2.2 2005/03/04 16:52:47 skrll Exp $ */
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lkminit_exec.c,v 1.8.2.1 2004/11/14 08:16:12 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lkminit_exec.c,v 1.8.2.2 2005/03/04 16:52:47 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -79,7 +79,7 @@ MOD_EXEC("exec_freebsd_elf", -1, &exec_freebsd_elf, "freebsd");
  */
 int
 exec_freebsd_elf_lkmentry(lkmtp, cmd, ver)
-	struct lkm_table *lkmtp;	
+	struct lkm_table *lkmtp;
 	int cmd;
 	int ver;
 {

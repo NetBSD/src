@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_dagdegrd.c,v 1.13.2.4 2004/09/21 13:32:51 skrll Exp $	*/
+/*	$NetBSD: rf_dagdegrd.c,v 1.13.2.5 2005/03/04 16:50:05 skrll Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_dagdegrd.c,v 1.13.2.4 2004/09/21 13:32:51 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_dagdegrd.c,v 1.13.2.5 2005/03/04 16:50:05 skrll Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -75,7 +75,7 @@ __KERNEL_RCSID(0, "$NetBSD: rf_dagdegrd.c,v 1.13.2.4 2004/09/21 13:32:51 skrll E
  * the DAG creation routines to be replaced at this single point.
  */
 
-void 
+void
 rf_CreateRaidFiveDegradedReadDAG(RF_Raid_t *raidPtr,
 				 RF_AccessStripeMap_t *asmap,
 				 RF_DagHeader_t *dag_h,
@@ -110,7 +110,7 @@ rf_CreateRaidFiveDegradedReadDAG(RF_Raid_t *raidPtr,
  *              allocList - list of memory allocated in DAG creation
  *****************************************************************************/
 
-void 
+void
 rf_CreateRaidOneDegradedReadDAG(RF_Raid_t *raidPtr,
 				RF_AccessStripeMap_t *asmap,
 				RF_DagHeader_t *dag_h,
@@ -258,7 +258,7 @@ rf_CreateRaidOneDegradedReadDAG(RF_Raid_t *raidPtr,
  *
  *****************************************************************************/
 
-void 
+void
 rf_CreateDegradedReadDAG(RF_Raid_t *raidPtr, RF_AccessStripeMap_t *asmap,
 			 RF_DagHeader_t *dag_h, void *bp,
 			 RF_RaidAccessFlags_t flags,
@@ -573,7 +573,7 @@ rf_CreateDegradedReadDAG(RF_Raid_t *raidPtr, RF_AccessStripeMap_t *asmap,
  *              allocList - list of memory allocated in DAG creation
  *****************************************************************************/
 
-void 
+void
 rf_CreateRaidCDegradedReadDAG(RF_Raid_t *raidPtr, RF_AccessStripeMap_t *asmap,
 			      RF_DagHeader_t *dag_h, void *bp,
 			      RF_RaidAccessFlags_t flags,
@@ -700,7 +700,7 @@ rf_CreateRaidCDegradedReadDAG(RF_Raid_t *raidPtr, RF_AccessStripeMap_t *asmap,
 /*
  * XXX move this elsewhere?
  */
-void 
+void
 rf_DD_GenerateFailedAccessASMs(RF_Raid_t *raidPtr, RF_AccessStripeMap_t *asmap,
 			       RF_PhysDiskAddr_t **pdap, int *nNodep,
 			       RF_PhysDiskAddr_t **pqpdap, int *nPQNodep,
@@ -821,7 +821,7 @@ rf_DD_GenerateFailedAccessASMs(RF_Raid_t *raidPtr, RF_AccessStripeMap_t *asmap,
 
 	/* allocate up our list of pda's */
 
-	RF_MallocAndAdd(pda_p, napdas * sizeof(RF_PhysDiskAddr_t), 
+	RF_MallocAndAdd(pda_p, napdas * sizeof(RF_PhysDiskAddr_t),
 			(RF_PhysDiskAddr_t *), allocList);
 	*pdap = pda_p;
 
@@ -1029,7 +1029,7 @@ rf_InitNode(node, rf_wait, RF_FALSE, rf_DiskReadFunc, rf_DiskReadUndoFunc, rf_Ge
   (_node_).params[2].v = parityStripeID; \
   (_node_).params[3].v = RF_CREATE_PARAM3(RF_IO_NORMAL_PRIORITY, which_ru)
 
-void 
+void
 rf_DoubleDegRead(RF_Raid_t *raidPtr, RF_AccessStripeMap_t *asmap,
 		 RF_DagHeader_t *dag_h, void *bp, RF_RaidAccessFlags_t flags,
 		 RF_AllocListElem_t *allocList,

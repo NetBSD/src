@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_mroute.c,v 1.75.2.5 2005/02/04 11:47:48 skrll Exp $	*/
+/*	$NetBSD: ip_mroute.c,v 1.75.2.6 2005/03/04 16:53:29 skrll Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -93,7 +93,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_mroute.c,v 1.75.2.5 2005/02/04 11:47:48 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_mroute.c,v 1.75.2.6 2005/03/04 16:53:29 skrll Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -354,7 +354,7 @@ static struct ip pim_encap_iphdr = {
 	0,			/* tos */
 	sizeof(struct ip),	/* total length */
 	0,			/* id */
-	0,			/* frag offset */ 
+	0,			/* frag offset */
 	ENCAP_TTL,
 	IPPROTO_PIM,
 	0,			/* checksum */
@@ -2546,10 +2546,10 @@ compute_bw_meter_flags(struct bw_upcall *req)
 	flags |= BW_METER_GEQ;
     if (req->bu_flags & BW_UPCALL_LEQ)
 	flags |= BW_METER_LEQ;
-    
+
     return flags;
 }
- 
+
 /*
  * Add a bw_meter entry
  */
@@ -2664,11 +2664,11 @@ del_bw_upcall(struct mbuf *m)
 	return EINVAL;
 
     req = mtod(m, struct bw_upcall *);
-    
+
     if (!(mrt_api_config & MRT_MFC_BW_UPCALL))
 	return EOPNOTSUPP;
 
-    s = splsoftnet();    
+    s = splsoftnet();
     /* Find the corresponding MFC entry */
     mfc = mfc_find(&req->bu_src, &req->bu_dst);
     if (mfc == NULL) {
@@ -2750,7 +2750,7 @@ bw_meter_receive_packet(struct bw_meter *x, int plen, struct timeval *nowp)
 	/*
 	 * Test if we should deliver an upcall
 	 */
-	if (!(x->bm_flags & BW_METER_UPCALL_DELIVERED)) {	
+	if (!(x->bm_flags & BW_METER_UPCALL_DELIVERED)) {
 	    if (((x->bm_flags & BW_METER_UNIT_PACKETS) &&
 		 (x->bm_measured.b_packets >= x->bm_threshold.b_packets)) ||
 		((x->bm_flags & BW_METER_UNIT_BYTES) &&
@@ -2781,7 +2781,7 @@ bw_meter_receive_packet(struct bw_meter *x, int plen, struct timeval *nowp)
 	    unschedule_bw_meter(x);
 	    schedule_bw_meter(x, nowp);
 	}
-	
+
 	/* Record that a packet is received */
 	x->bm_measured.b_packets++;
 	x->bm_measured.b_bytes += plen;
@@ -2820,7 +2820,7 @@ bw_meter_prepare_upcall(struct bw_meter *x, struct timeval *nowp)
     struct bw_upcall *u;
 
     /*
-     * Compute the measured time interval 
+     * Compute the measured time interval
      */
     delta = *nowp;
     BW_TIMEVALDECR(&delta, &x->bm_start_time);
@@ -2871,7 +2871,7 @@ bw_upcalls_send(void)
 				      0,		/* unused3 */
 				      { 0 },		/* im_src  */
 				      { 0 } };		/* im_dst  */
-    
+
     if (bw_upcalls_n == 0)
 	return;			/* No pending upcalls */
 
@@ -3370,7 +3370,7 @@ pim_input(struct mbuf *m, ...)
      * If the packet is at least as big as a REGISTER, go agead
      * and grab the PIM REGISTER header size, to avoid another
      * possible m_pullup() later.
-     * 
+     *
      * PIM_MINLEN       == pimhdr + u_int32_t == 4 + 4 = 8
      * PIM_REG_MINLEN   == pimhdr + reghdr + encap_iphdr == 4 + 4 + 20 = 28
      */
@@ -3522,7 +3522,7 @@ pim_input(struct mbuf *m, ...)
 
 	/*
 	 * Decapsulate the inner IP packet and loopback to forward it
-	 * as a normal multicast packet. Also, make a copy of the 
+	 * as a normal multicast packet. Also, make a copy of the
 	 *     outer_iphdr + pimhdr + reghdr + encap_iphdr
 	 * to pass to the daemon later, so it can take the appropriate
 	 * actions (e.g., send back PIM_REGISTER_STOP).

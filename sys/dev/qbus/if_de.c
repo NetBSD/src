@@ -1,4 +1,4 @@
-/*	$NetBSD: if_de.c,v 1.14.6.3 2004/09/21 13:32:38 skrll Exp $	*/
+/*	$NetBSD: if_de.c,v 1.14.6.4 2005/03/04 16:49:52 skrll Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989 Regents of the University of California.
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_de.c,v 1.14.6.3 2004/09/21 13:32:38 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_de.c,v 1.14.6.4 2005/03/04 16:49:52 skrll Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -163,9 +163,9 @@ struct	de_softc {
 	struct ubinfo sc_ui;
 	struct de_cdata *sc_dedata;	/* Control structure */
 	struct de_cdata *sc_pdedata;	/* Bus-mapped control structure */
-	struct	ifubinfo sc_ifuba;      /* UNIBUS resources */
-	struct	ifrw sc_ifr[NRCV];      /* UNIBUS receive buffer maps */
-	struct	ifxmt sc_ifw[NXMT];     /* UNIBUS receive buffer maps */
+	struct	ifubinfo sc_ifuba;	/* UNIBUS resources */
+	struct	ifrw sc_ifr[NRCV];	/* UNIBUS receive buffer maps */
+	struct	ifxmt sc_ifw[NXMT];	/* UNIBUS receive buffer maps */
 
 	int	sc_xindex;		/* UNA index into transmit chain */
 	int	sc_rindex;		/* UNA index into receive chain */
@@ -262,7 +262,7 @@ deattach(struct device *parent, struct device *self, void *aux)
 	printf("\n%s: %s, hardware address %s\n", sc->sc_dev.dv_xname, c,
 		ether_sprintf(myaddr));
 
-	uba_intr_establish(ua->ua_icookie, ua->ua_cvec, deintr, sc, 
+	uba_intr_establish(ua->ua_icookie, ua->ua_cvec, deintr, sc,
 	    &sc->sc_intrcnt);
 	uba_reset_establish(dereset, &sc->sc_dev);
 	evcnt_attach_dynamic(&sc->sc_intrcnt, EVCNT_TYPE_INTR, ua->ua_evcnt,
@@ -527,7 +527,7 @@ deintr(void *arg)
 /*
  * Ethernet interface receiver interface.
  * If input error just drop packet.
- * Otherwise purge input buffered data path and examine 
+ * Otherwise purge input buffered data path and examine
  * packet to determine type.  If can't determine length
  * from type, then have to drop packet.	 Othewise decapsulate
  * packet based on type and pass to type specific higher-level

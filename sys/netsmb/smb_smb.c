@@ -1,4 +1,4 @@
-/*	$NetBSD: smb_smb.c,v 1.20.2.3 2004/09/21 13:38:24 skrll Exp $	*/
+/*	$NetBSD: smb_smb.c,v 1.20.2.4 2005/03/04 16:54:20 skrll Exp $	*/
 
 /*
  * Copyright (c) 2000-2001 Boris Popov
@@ -38,8 +38,8 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smb_smb.c,v 1.20.2.3 2004/09/21 13:38:24 skrll Exp $");
- 
+__KERNEL_RCSID(0, "$NetBSD: smb_smb.c,v 1.20.2.4 2005/03/04 16:54:20 skrll Exp $");
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
@@ -864,7 +864,7 @@ smb_write(struct smb_share *ssp, u_int16_t fid, struct uio *uio,
 	int error = 0;
 	size_t len, tsize, resid;
 	int wx = (SMB_CAPS(SSTOVC(ssp)) & SMB_CAP_LARGE_WRITEX);
- 
+
 	tsize = uio->uio_resid;
 	while (tsize > 0) {
 		len = tsize;

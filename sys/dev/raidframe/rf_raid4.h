@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_raid4.h,v 1.3.42.3 2004/09/21 13:32:54 skrll Exp $	*/
+/*	$NetBSD: rf_raid4.h,v 1.3.42.4 2005/03/04 16:50:08 skrll Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -31,25 +31,25 @@
 #ifndef _RF__RF_RAID4_H_
 #define _RF__RF_RAID4_H_
 
-int 
+int
 rf_ConfigureRAID4(RF_ShutdownList_t ** listp, RF_Raid_t * raidPtr,
     RF_Config_t * cfgPtr);
 int     rf_GetDefaultNumFloatingReconBuffersRAID4(RF_Raid_t * raidPtr);
 RF_HeadSepLimit_t rf_GetDefaultHeadSepLimitRAID4(RF_Raid_t * raidPtr);
-void 
+void
 rf_MapSectorRAID4(RF_Raid_t * raidPtr, RF_RaidAddr_t raidSector,
     RF_RowCol_t * col, RF_SectorNum_t * diskSector, int remap);
-void 
+void
 rf_MapParityRAID4(RF_Raid_t * raidPtr, RF_RaidAddr_t raidSector,
     RF_RowCol_t * col, RF_SectorNum_t * diskSector, int remap);
-void 
+void
 rf_IdentifyStripeRAID4(RF_Raid_t * raidPtr, RF_RaidAddr_t addr,
     RF_RowCol_t ** diskids);
-void 
+void
 rf_MapSIDToPSIDRAID4(RF_RaidLayout_t * layoutPtr,
     RF_StripeNum_t stripeID, RF_StripeNum_t * psID,
     RF_ReconUnitNum_t * which_ru);
-void 
+void
 rf_RAID4DagSelect(RF_Raid_t * raidPtr, RF_IoType_t type,
     RF_AccessStripeMap_t * asmap, RF_VoidFuncPtr * createFunc);
 

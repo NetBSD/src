@@ -1,4 +1,4 @@
-/* $NetBSD: lkminit_emul.c,v 1.5.16.3 2004/09/21 13:36:23 skrll Exp $ */
+/* $NetBSD: lkminit_emul.c,v 1.5.16.4 2005/03/04 16:52:46 skrll Exp $ */
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lkminit_emul.c,v 1.5.16.3 2004/09/21 13:36:23 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lkminit_emul.c,v 1.5.16.4 2005/03/04 16:52:46 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/sysctl.h>
@@ -73,7 +73,7 @@ static struct sysctllog *_emul_netbsd32_log;
  */
 int
 compat_netbsd32_lkmentry(lkmtp, cmd, ver)
-	struct lkm_table *lkmtp;	
+	struct lkm_table *lkmtp;
 	int cmd;
 	int ver;
 {
@@ -83,7 +83,7 @@ compat_netbsd32_lkmentry(lkmtp, cmd, ver)
 
 int
 load(lkmtp, cmd)
-	struct lkm_table *lkmtp; 
+	struct lkm_table *lkmtp;
 	int cmd;
 {
 
@@ -93,7 +93,7 @@ load(lkmtp, cmd)
 
 int
 unload(lkmtp, cmd)
-	struct lkm_table *lkmtp; 
+	struct lkm_table *lkmtp;
 	int cmd;
 {
 

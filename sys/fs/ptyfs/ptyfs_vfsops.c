@@ -1,4 +1,4 @@
-/*	$NetBSD: ptyfs_vfsops.c,v 1.2.2.4 2005/01/17 19:32:25 skrll Exp $	*/
+/*	$NetBSD: ptyfs_vfsops.c,v 1.2.2.5 2005/03/04 16:51:46 skrll Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1995
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ptyfs_vfsops.c,v 1.2.2.4 2005/01/17 19:32:25 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ptyfs_vfsops.c,v 1.2.2.5 2005/03/04 16:51:46 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -181,7 +181,7 @@ ptyfs_done(void)
  * Mount the Pseudo tty params filesystem
  */
 int
-ptyfs_mount(struct mount *mp, const char *path, void *data, 
+ptyfs_mount(struct mount *mp, const char *path, void *data,
     struct nameidata *ndp, struct lwp *l)
 {
 	int error = 0;
@@ -219,7 +219,7 @@ ptyfs_mount(struct mount *mp, const char *path, void *data,
 		args.mode = S_IRUSR|S_IWUSR|S_IWGRP;
 	}
 
-	pmnt = malloc(sizeof(struct ptyfsmount), M_UFSMNT, M_WAITOK); 
+	pmnt = malloc(sizeof(struct ptyfsmount), M_UFSMNT, M_WAITOK);
 
 	mp->mnt_data = pmnt;
 	pmnt->pmnt_gid = args.gid;
@@ -270,7 +270,7 @@ ptyfs_unmount(struct mount *mp, int mntflags, struct lwp *p)
 	 * Finally, throw away the ptyfsmount structure
 	 */
 	free(mp->mnt_data, M_UFSMNT);
-	mp->mnt_data = 0; 
+	mp->mnt_data = 0;
 
 	return 0;
 }

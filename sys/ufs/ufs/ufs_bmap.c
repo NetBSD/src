@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_bmap.c,v 1.23.2.5 2004/12/18 09:33:18 skrll Exp $	*/
+/*	$NetBSD: ufs_bmap.c,v 1.23.2.6 2005/03/04 16:55:00 skrll Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_bmap.c,v 1.23.2.5 2004/12/18 09:33:18 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_bmap.c,v 1.23.2.6 2005/03/04 16:55:00 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -219,7 +219,7 @@ ufs_bmaparray(vp, bn, bnp, ap, nump, runp, is_sequential)
 		    UFS_MPNEEDSWAP(ump));
 
 	for (bp = NULL, ++xap; --num; ++xap) {
-		/* 
+		/*
 		 * Exit the loop if there is no disk address assigned yet and
 		 * the indirect block isn't in the cache, or if we were
 		 * looking for an indirect block and we've found it.
@@ -351,7 +351,7 @@ ufs_getlbns(vp, bn, ap, nump)
 		bn = -bn;
 	KASSERT(bn >= NDADDR);
 
-	/* 
+	/*
 	 * Determine the number of levels of indirection.  After this loop
 	 * is done, blockcnt indicates the number of data blocks possible
 	 * at the given level of indirection, and NIADDR - i is the number
@@ -377,7 +377,7 @@ ufs_getlbns(vp, bn, ap, nump)
 	else
 		metalbn = -(-realbn - bn + NIADDR - i);
 
-	/* 
+	/*
 	 * At each iteration, off is the offset into the bap array which is
 	 * an array of disk addresses at the current level of indirection.
 	 * The logical block number and the offset in that block are stored

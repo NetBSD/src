@@ -1,6 +1,6 @@
-/*	$NetBSD: disksubr.c,v 1.2.4.5 2005/02/04 11:47:33 skrll Exp $ */
+/*	$NetBSD: disksubr.c,v 1.2.4.6 2005/03/04 16:50:38 skrll Exp $ */
 
-/* 
+/*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
  * All rights reserved.
  *
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.2.4.5 2005/02/04 11:47:33 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.2.4.6 2005/03/04 16:50:38 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

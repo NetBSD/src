@@ -1,11 +1,11 @@
-/*	$NetBSD: tcxreg.h,v 1.1 2000/08/20 22:27:07 pk Exp $ */
-/* 
+/*	$NetBSD: tcxreg.h,v 1.1.26.1 2005/03/04 16:50:32 skrll Exp $ */
+/*
  *  Copyright (c) 1996 The NetBSD Foundation, Inc.
  *  All rights reserved.
- * 
+ *
  *  This code is derived from software contributed to The NetBSD Foundation
  *  by Paul Kranenburg.
- * 
+ *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions
  *  are met:
@@ -21,7 +21,7 @@
  *  4. Neither the name of The NetBSD Foundation nor the names of its
  *     contributors may be used to endorse or promote products derived
  *     from this software without specific prior written permission.
- * 
+ *
  *  THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  *  ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
  *  TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
@@ -33,7 +33,7 @@
  *  CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
  *  ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  *  POSSIBILITY OF SUCH DAMAGE.
- */ 
+ */
 
 /*
  * A TCX is composed of numerous groups of control registers, all with TLAs:

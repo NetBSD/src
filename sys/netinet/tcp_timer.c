@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_timer.c,v 1.62.2.4 2005/02/04 11:47:49 skrll Exp $	*/
+/*	$NetBSD: tcp_timer.c,v 1.62.2.5 2005/03/04 16:53:30 skrll Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -30,12 +30,14 @@
  */
 
 /*-
- * Copyright (c) 1997, 1998, 2001 The NetBSD Foundation, Inc.
+ * Copyright (c) 1997, 1998, 2001, 2005 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
  * by Jason R. Thorpe and Kevin M. Lahey of the Numerical Aerospace Simulation
  * Facility, NASA Ames Research Center.
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by Charles M. Hannum.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -98,7 +100,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_timer.c,v 1.62.2.4 2005/02/04 11:47:49 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_timer.c,v 1.62.2.5 2005/03/04 16:53:30 skrll Exp $");
 
 #include "opt_inet.h"
 #include "opt_tcp_debug.h"
@@ -303,6 +305,12 @@ tcp_timer_rexmt(void *arg)
 #endif
 	ostate = tp->t_state;
 #endif /* TCP_DEBUG */
+
+	/*
+	 * Clear the SACK scoreboard, reset FACK estimate.
+	 */
+	tcp_free_sackholes(tp);
+	tp->snd_fack = tp->snd_una;
 
 	/*
 	 * Retransmission timer went off.  Message has not
@@ -599,6 +607,13 @@ tcp_timer_2msl(void *arg)
 		splx(s);
 		return;
 	}
+
+	/*
+	 * 2 MSL timeout went off, clear the SACK scoreboard, reset
+	 * the FACK estimate.
+	 */
+	tcp_free_sackholes(tp);
+	tp->snd_fack = tp->snd_una;
 
 #ifdef TCP_DEBUG
 #ifdef INET

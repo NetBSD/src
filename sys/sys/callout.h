@@ -1,4 +1,4 @@
-/*	$NetBSD: callout.h,v 1.17.2.3 2004/09/21 13:38:45 skrll Exp $	*/
+/*	$NetBSD: callout.h,v 1.17.2.4 2005/03/04 16:54:22 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2003 The NetBSD Foundation, Inc.
@@ -123,6 +123,7 @@ do {									\
 
 #define	callout_pending(c)	((c)->c_flags & CALLOUT_PENDING)
 #define	callout_expired(c)	((c)->c_flags & CALLOUT_FIRED)
+#define	callout_active(c)	((c)->c_flags & (CALLOUT_PENDING|CALLOUT_FIRED))
 #define	callout_invoking(c)	((c)->c_flags & CALLOUT_INVOKING)
 #define	callout_ack(c)		((c)->c_flags &= ~CALLOUT_INVOKING)
 #endif /* _KERNEL */

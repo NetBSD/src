@@ -1,11 +1,11 @@
-/*	$NetBSD: synapticsvar.h,v 1.2.4.2 2005/01/17 19:31:52 skrll Exp $	*/
+/*	$NetBSD: synapticsvar.h,v 1.2.4.3 2005/03/04 16:49:38 skrll Exp $	*/
 
 /*
  * Copyright (c) 2005, Steve C. Woodford
  * Copyright (c) 2004, Ales Krenek
  * Copyright (c) 2004, Kentaro A. Kurahone
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:

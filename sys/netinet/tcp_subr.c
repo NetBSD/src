@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_subr.c,v 1.142.2.8 2005/02/17 07:10:37 skrll Exp $	*/
+/*	$NetBSD: tcp_subr.c,v 1.142.2.9 2005/03/04 16:53:29 skrll Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_subr.c,v 1.142.2.8 2005/02/17 07:10:37 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_subr.c,v 1.142.2.9 2005/03/04 16:53:29 skrll Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -930,11 +930,6 @@ tcp_tcpcb_template(void)
 		flags |= TF_REQ_SCALE;
 	if (tcp_do_rfc1323 && tcp_do_timestamps)
 		flags |= TF_REQ_TSTMP;
-	if (tcp_do_sack == 2)
-		flags |= TF_WILL_SACK;
-	else if (tcp_do_sack == 1)
-		flags |= TF_WILL_SACK|TF_IGNR_RXSACK;
-	flags |= TF_CANT_TXSACK;
 	tp->t_flags = flags;
 
 	/*
@@ -967,6 +962,7 @@ tcp_newtcpcb(int family, void *aux)
 	TAILQ_INIT(&tp->segq);
 	TAILQ_INIT(&tp->timeq);
 	tp->t_family = family;		/* may be overridden later on */
+	TAILQ_INIT(&tp->snd_holes);
 	LIST_INIT(&tp->t_sc);		/* XXX can template this */
 
 	/* Don't sweat this loop; hopefully the compiler will unroll it. */
@@ -1188,6 +1184,9 @@ tcp_close(struct tcpcb *tp)
 	TCP_REASS_LOCK(tp);
 	(void) tcp_freeq(tp);
 	TCP_REASS_UNLOCK(tp);
+
+	/* free the SACK holes list. */
+	tcp_free_sackholes(tp);
 
 	tcp_canceltimers(tp);
 	TCP_CLEAR_DELACK(tp);
@@ -2190,11 +2189,14 @@ tcp_optlen(struct tcpcb *tp)
 
 #ifdef TCP_SIGNATURE
 #if defined(INET6) && defined(FAST_IPSEC)
-	if (tp->t_family == AF_INET) 
+	if (tp->t_family == AF_INET)
 #endif
 	if (tp->t_flags & TF_SIGNATURE)
 		optlen += TCPOLEN_SIGNATURE + 2;
 #endif /* TCP_SIGNATURE */
+
+	if (tp->t_flags & TF_WILL_SACK)
+		optlen += 8 * TCP_SACK_MAX + 4;
 
 	return optlen;
 }

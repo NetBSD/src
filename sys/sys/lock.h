@@ -1,4 +1,4 @@
-/*	$NetBSD: lock.h,v 1.48.2.5 2004/11/02 07:53:37 skrll Exp $	*/
+/*	$NetBSD: lock.h,v 1.48.2.6 2005/03/04 16:54:22 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-/* 
+/*
  * Copyright (c) 1995
  *	The Regents of the University of California.  All rights reserved.
  *

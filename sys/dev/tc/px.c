@@ -1,4 +1,4 @@
-/* 	$NetBSD: px.c,v 1.19.2.5 2005/01/17 19:31:52 skrll Exp $	*/
+/* 	$NetBSD: px.c,v 1.19.2.6 2005/03/04 16:50:52 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: px.c,v 1.19.2.5 2005/01/17 19:31:52 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: px.c,v 1.19.2.6 2005/03/04 16:50:52 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -197,7 +197,7 @@ px_init(struct stic_info *si, int bootstrap)
 	 * 32kB boundary.
 	 */
 	if (bootstrap) {
-		/* 
+		/*
 		 * UVM won't be initialised at this point, so grab memory
 		 * directly from vm_physmem[].
 		 */
@@ -254,7 +254,7 @@ px_intr(void *cookie)
 	 * Clear the flag and flush out any waiting VDAC updates.  We do
 	 * this at retrace time to avoid producing `shearing' and other
 	 * nasty artifacts.
-	 */	 
+	 */
 	if ((state & STIC_INT_V) != 0) {
 		sr->sr_ipdvint = STIC_INT_V_WE | STIC_INT_V_EN;
 		tc_wmb();

@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_subr.c,v 1.28.2.3 2004/09/21 13:39:09 skrll Exp $	*/
+/*	$NetBSD: ffs_subr.c,v 1.28.2.4 2005/03/04 16:54:46 skrll Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -36,7 +36,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_subr.c,v 1.28.2.3 2004/09/21 13:39:09 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_subr.c,v 1.28.2.4 2005/03/04 16:54:46 skrll Exp $");
 
 #include <sys/param.h>
 
@@ -156,7 +156,7 @@ ffs_load_inode(bp, ip, fs, ino)
 #endif	/* _KERNEL */
 
 /*
- * Update the frsum fields to reflect addition or deletion 
+ * Update the frsum fields to reflect addition or deletion
  * of some frags.
  */
 void
@@ -237,7 +237,7 @@ ffs_checkoverlap(bp, ip)
  *
  * check if a block is available
  *  returns true if all the correponding bits in the free map are 1
- *  returns false if any corresponding bit in the free map is 0 
+ *  returns false if any corresponding bit in the free map is 0
  */
 int
 ffs_isblock(fs, cp, h)

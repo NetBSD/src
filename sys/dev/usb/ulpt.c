@@ -1,4 +1,4 @@
-/*	$NetBSD: ulpt.c,v 1.59.2.5 2004/11/02 07:53:03 skrll Exp $	*/
+/*	$NetBSD: ulpt.c,v 1.59.2.6 2005/03/04 16:50:55 skrll Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ulpt.c,v 1.24 1999/11/17 22:33:44 n_hibma Exp $	*/
 
 /*
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ulpt.c,v 1.59.2.5 2004/11/02 07:53:03 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ulpt.c,v 1.59.2.6 2005/03/04 16:50:55 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -250,7 +250,7 @@ USB_ATTACH(ulpt)
 			     id->bInterfaceProtocol == UIPROTO_PRINTER_1284*/))
 				goto found;
 			altno++;
-		}		
+		}
 	}
 	id = ifcd;		/* not found, use original */
  found:
@@ -668,7 +668,7 @@ ulptclose(dev_t dev, int flag, int mode, struct lwp *l)
 		usbd_free_xfer(sc->sc_out_xfer);
 		sc->sc_out_xfer = NULL;
 	}
-		
+
 	if (sc->sc_in_pipe != NULL) {
 		usbd_abort_pipe(sc->sc_in_pipe);
 		usbd_close_pipe(sc->sc_in_pipe);

@@ -1,4 +1,4 @@
-/*	$NetBSD: st.c,v 1.163.2.7 2004/11/02 07:52:46 skrll Exp $ */
+/*	$NetBSD: st.c,v 1.163.2.8 2005/03/04 16:50:36 skrll Exp $ */
 
 /*-
  * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: st.c,v 1.163.2.7 2004/11/02 07:52:46 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: st.c,v 1.163.2.8 2005/03/04 16:50:36 skrll Exp $");
 
 #include "opt_scsi.h"
 
@@ -77,6 +77,7 @@ __KERNEL_RCSID(0, "$NetBSD: st.c,v 1.163.2.7 2004/11/02 07:52:46 skrll Exp $");
 #include <sys/kernel.h>
 #include <sys/vnode.h>
 
+#include <dev/scsipi/scsi_spc.h>
 #include <dev/scsipi/scsipi_all.h>
 #include <dev/scsipi/scsi_all.h>
 #include <dev/scsipi/scsi_tape.h>
@@ -596,14 +597,14 @@ stopen(dev_t dev, int flags, int mode, struct lwp *l)
 #endif
 	} else
 		sflags = 0;
- 
+
 	/*
 	 * If we're already mounted or we aren't configured for
 	 * a mount delay, only try a test unit ready once. Otherwise,
 	 * try up to ST_MOUNT_DELAY times with a rest interval of
 	 * one second between each try.
 	 */
- 
+
 	if ((st->flags & ST_MOUNTED) || ST_MOUNT_DELAY == 0) {
 		ntries = 1;
 	} else {
@@ -657,7 +658,7 @@ stopen(dev_t dev, int flags, int mode, struct lwp *l)
 		if (slpintr) {
 			goto bad;
 		}
-	} 
+	}
 
 
 	/*
@@ -678,16 +679,16 @@ stopen(dev_t dev, int flags, int mode, struct lwp *l)
 	 * to pass the 'test unit ready' test for the non-controlmode device,
 	 * so we bounce the open.
 	 */
- 
+
 	if (error)
 		return (error);
- 
+
 	/*
 	 * Else, we're now committed to saying we're open.
 	 */
- 
+
 	periph->periph_flags |= PERIPH_OPEN; /* unit attn are now errors */
- 
+
 	/*
 	 * If it's a different mode, or if the media has been
 	 * invalidated, unmount the tape from the previous
@@ -707,7 +708,7 @@ stopen(dev_t dev, int flags, int mode, struct lwp *l)
 		st->last_dsty = dsty;
 	}
 	if (!(st->quirks & ST_Q_NOPREVENT)) {
-		scsipi_prevent(periph, PR_PREVENT,
+		scsipi_prevent(periph, SPAMR_PREVENT_DT,
 		    XS_CTL_IGNORE_ILLEGAL_REQUEST | XS_CTL_IGNORE_NOT_READY);
 	}
 
@@ -760,7 +761,7 @@ stclose(dev_t dev, int flags, int mode, struct lwp *l)
 	/*
 	 * Allow robots to eject tape if needed.
 	 */
-	scsipi_prevent(periph, PR_ALLOW,
+	scsipi_prevent(periph, SPAMR_ALLOW,
 	    XS_CTL_IGNORE_ILLEGAL_REQUEST | XS_CTL_IGNORE_NOT_READY);
 
 	switch (STMODE(dev)) {
@@ -950,7 +951,7 @@ st_unmount(struct st_softc *st, boolean eject)
 
 	if (eject) {
 		if (!(st->quirks & ST_Q_NOPREVENT)) {
-			scsipi_prevent(periph, PR_ALLOW,
+			scsipi_prevent(periph, SPAMR_ALLOW,
 			    XS_CTL_IGNORE_ILLEGAL_REQUEST |
 			    XS_CTL_IGNORE_NOT_READY);
 		}
@@ -2061,7 +2062,7 @@ static int
 st_interpret_sense(struct scsipi_xfer *xs)
 {
 	struct scsipi_periph *periph = xs->xs_periph;
-	struct scsipi_sense_data *sense = &xs->sense.scsi_sense;
+	struct scsi_sense_data *sense = &xs->sense.scsi_sense;
 	struct buf *bp = xs->bp;
 	struct st_softc *st = (void *)periph->periph_dev;
 	int retval = EJUSTRETURN;
@@ -2073,20 +2074,20 @@ st_interpret_sense(struct scsipi_xfer *xs)
 	 * If it isn't a extended or extended/deferred error, let
 	 * the generic code handle it.
 	 */
-	if ((sense->error_code & SSD_ERRCODE) != 0x70 &&
-	    (sense->error_code & SSD_ERRCODE) != 0x71) {	/* DEFFERRED */
+	if ((sense->response_code & SSD_RCODE_VALID) == 0 ||
+	    (SSD_RCODE(sense->response_code) != SSD_RCODE_CURRENT &&
+	     SSD_RCODE(sense->response_code) != SSD_RCODE_DEFERRED))
 		return (retval);
-	}
 
-	if (sense->error_code & SSD_ERRCODE_VALID)
+	if (sense->response_code & SSD_RCODE_VALID)
 		info = _4btol(sense->info);
 	else
 		info = (st->flags & ST_FIXEDBLOCKS) ?
 		    xs->datalen / st->blksize : xs->datalen;
-	key = sense->flags & SSD_KEY;
+	key = SSD_SENSE_KEY(sense->flags);
 	st->mt_erreg = key;
-	st->asc = sense->add_sense_code;
-	st->ascq = sense->add_sense_code_qual;
+	st->asc = sense->asc;
+	st->ascq = sense->ascq;
 	st->mt_resid = (short) info;
 
 	if (key == SKEY_NOT_READY && st->asc == 0x4 && st->ascq == 0x1) {
@@ -2149,7 +2150,7 @@ st_interpret_sense(struct scsipi_xfer *xs)
 			st->flags |= ST_EIO_PENDING;
 			if (bp)
 				bp->b_resid = xs->resid;
-			if (sense->error_code & SSD_ERRCODE_VALID &&
+			if (sense->response_code & SSD_RCODE_VALID &&
 			    (xs->xs_control & XS_CTL_SILENT) == 0)
 				printf("%s: block wrong size, %d blocks "
 				    "residual\n", st->sc_dev.dv_xname, info);
@@ -2286,12 +2287,12 @@ st_interpret_sense(struct scsipi_xfer *xs)
 #else
 		scsipi_printaddr(periph);
 		printf("Sense Key 0x%02x", key);
-		if ((sense->error_code & SSD_ERRCODE_VALID) != 0) {
+		if ((sense->response_code & SSD_RCODE_VALID) != 0) {
 			switch (key) {
 			case SKEY_NOT_READY:
 			case SKEY_ILLEGAL_REQUEST:
 			case SKEY_UNIT_ATTENTION:
-			case SKEY_WRITE_PROTECT:
+			case SKEY_DATA_PROTECT:
 				break;
 			case SKEY_VOLUME_OVERFLOW:
 			case SKEY_BLANK_CHECK:
@@ -2311,7 +2312,7 @@ st_interpret_sense(struct scsipi_xfer *xs)
 			int n;
 			printf(", data =");
 			for (n = 0; n < sense->extra_len; n++)
-				printf(" %02x", sense->cmd_spec_info[n]);
+				printf(" %02x", sense->csi[n]);
 		}
 		printf("\n");
 #endif

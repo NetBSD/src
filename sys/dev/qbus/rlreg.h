@@ -1,4 +1,4 @@
-/*	$NetBSD: rlreg.h,v 1.2 2002/03/23 18:12:09 ragge Exp $	*/ 
+/*	$NetBSD: rlreg.h,v 1.2.10.1 2005/03/04 16:49:54 skrll Exp $	*/
 
 /*
  * Copyright (c) 2000 Ludd, University of Lule}, Sweden. All rights reserved.

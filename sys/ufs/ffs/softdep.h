@@ -1,4 +1,4 @@
-/*	$NetBSD: softdep.h,v 1.7.2.3 2004/09/21 13:39:10 skrll Exp $	*/
+/*	$NetBSD: softdep.h,v 1.7.2.4 2005/03/04 16:54:46 skrll Exp $	*/
 
 /*
  * Copyright 1998 Marshall Kirk McKusick. All Rights Reserved.
@@ -41,7 +41,7 @@
  * Allocation dependencies are handled with undo/redo on the in-memory
  * copy of the data. A particular data dependency is eliminated when
  * it is ALLCOMPLETE: that is ATTACHED, DEPCOMPLETE, and COMPLETE.
- * 
+ *
  * ATTACHED means that the data is not currently being written to
  * disk. UNDONE means that the data has been rolled back to a safe
  * state for writing to the disk. When the I/O completes, the data is
@@ -111,7 +111,7 @@
 
 /*
  * The workitem queue.
- * 
+ *
  * It is sometimes useful and/or necessary to clean up certain dependencies
  * in the background rather than during execution of an application process
  * or interrupt service routine. To realize this, we append dependency
@@ -198,7 +198,7 @@ struct pagedep {
  * The "inodedep" structure tracks the set of dependencies associated
  * with an inode. One task that it must manage is delayed operations
  * (i.e., work requests that must be held until the inodedep's associated
- * inode has been written to disk). Getting an inode from its incore 
+ * inode has been written to disk). Getting an inode from its incore
  * state to the disk requires two steps to be taken by the filesystem
  * in this order: first the inode must be copied to its disk buffer by
  * the VOP_UPDATE operation; second the inode's buffer must be written
@@ -272,7 +272,7 @@ struct inodedep {
  * an associated allocdirect or allocindir allocation which will attach
  * themselves to the bmsafemap structure if the newblk's DEPCOMPLETE flag
  * is not set (i.e., its cylinder group map has not been written).
- */ 
+ */
 struct newblk {
 	LIST_ENTRY(newblk) nb_hash;	/* hashed lookup */
 	struct	fs *nb_fs;		/* associated filesystem */
@@ -380,7 +380,7 @@ struct indirdep {
  * to disk, ai_state has the DEPCOMPLETE flag set. When the block itself
  * is written, the COMPLETE flag is set. Once both the cylinder group map
  * and the data itself have been written, it is safe to write the entry in
- * the indirect block that claims the block; the "allocindir" dependency 
+ * the indirect block that claims the block; the "allocindir" dependency
  * can then be freed as it is no longer applicable.
  */
 struct allocindir {
@@ -573,7 +573,7 @@ struct dirrem {
  * deleted from their pagedep->id_pendinghd and inodedep->id_pendinghd
  * lists. Note that we could track directory blocks allocated to indirect
  * blocks using a similar scheme with the allocindir structures. Rather
- * than adding this level of complexity, we simply write those newly 
+ * than adding this level of complexity, we simply write those newly
  * allocated indirect blocks synchronously as such allocations are rare.
  */
 struct newdirblk {

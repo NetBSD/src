@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_psstatus.h,v 1.4.18.3 2004/09/21 13:32:54 skrll Exp $	*/
+/*	$NetBSD: rf_psstatus.h,v 1.4.18.4 2005/03/04 16:50:07 skrll Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -125,9 +125,9 @@ struct RF_PSStatusHeader_s {
 int rf_ConfigurePSStatus(RF_ShutdownList_t **, RF_Raid_t *, RF_Config_t *);
 RF_PSStatusHeader_t *rf_MakeParityStripeStatusTable(RF_Raid_t *);
 void rf_FreeParityStripeStatusTable(RF_Raid_t *, RF_PSStatusHeader_t *);
-RF_ReconParityStripeStatus_t *rf_LookupRUStatus(RF_Raid_t *, RF_PSStatusHeader_t *, 
-						RF_StripeNum_t, RF_ReconUnitNum_t, 
-						RF_PSSFlags_t, 
+RF_ReconParityStripeStatus_t *rf_LookupRUStatus(RF_Raid_t *, RF_PSStatusHeader_t *,
+						RF_StripeNum_t, RF_ReconUnitNum_t,
+						RF_PSSFlags_t,
 						RF_ReconParityStripeStatus_t *);
 void rf_PSStatusDelete(RF_Raid_t *, RF_PSStatusHeader_t *,
 		       RF_ReconParityStripeStatus_t *);

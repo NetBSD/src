@@ -1,4 +1,4 @@
-/*	$NetBSD: slcompress.h,v 1.12.48.4 2004/12/18 09:32:51 skrll Exp $	*/
+/*	$NetBSD: slcompress.h,v 1.12.48.5 2005/03/04 16:53:00 skrll Exp $	*/
 /*	Id: slcompress.h,v 1.4 1994/09/21 06:50:08 paulus Exp 	*/
 
 /*
@@ -57,7 +57,7 @@
  * sequence number changes, one change per bit set in the header
  * (there may be no changes and there are two special cases where
  * the receiver implicitly knows what changed -- see below).
- * 
+ *
  * There are 5 numbers which can change (they are always inserted
  * in the following order): TCP urgent pointer, window,
  * acknowlegement, sequence number and IP ID.  (The urgent pointer

@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsd.h,v 1.13.18.4 2005/01/24 08:35:36 skrll Exp $	*/
+/*	$NetBSD: rf_netbsd.h,v 1.13.18.5 2005/03/04 16:50:07 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -98,7 +98,7 @@ typedef struct RF_AutoConfig_s {
 	dev_t dev;              /* the device for this component */
 	struct vnode *vp;       /* Mr. Vnode Pointer */
 	RF_ComponentLabel_t *clabel;  /* the label */
-	struct RF_AutoConfig_s *next; /* the next autoconfig structure 
+	struct RF_AutoConfig_s *next; /* the next autoconfig structure
 				         in this set. */
 } RF_AutoConfig_t;
 

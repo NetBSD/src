@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_dagutils.h,v 1.7.2.3 2004/09/21 13:32:52 skrll Exp $	*/
+/*	$NetBSD: rf_dagutils.h,v 1.7.2.4 2005/03/04 16:50:06 skrll Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -60,7 +60,7 @@ void rf_InitNode(RF_DagNode_t *, RF_NodeStatus_t, int,
 		 int (*doFunc) (RF_DagNode_t *),
 		 int (*undoFunc) (RF_DagNode_t *),
 		 int (*wakeFunc) (RF_DagNode_t *, int),
-		 int, int, int, int, RF_DagHeader_t *, 
+		 int, int, int, int, RF_DagHeader_t *,
 		 char *, RF_AllocListElem_t *);
 
 void rf_FreeDAG(RF_DagHeader_t *);
@@ -102,7 +102,7 @@ void rf_MapUnaccessedPortionOfStripe(RF_Raid_t *, RF_RaidLayout_t *,
 				     char **, char **, RF_AllocListElem_t *);
 int rf_PDAOverlap(RF_RaidLayout_t *, RF_PhysDiskAddr_t *, RF_PhysDiskAddr_t *);
 void rf_GenerateFailedAccessASMs(RF_Raid_t *, RF_AccessStripeMap_t *,
-				 RF_PhysDiskAddr_t *, RF_DagHeader_t *, 
+				 RF_PhysDiskAddr_t *, RF_DagHeader_t *,
 				 RF_AccessStripeMapHeader_t **,
 				 int *, char **, char *, RF_AllocListElem_t *);
 
@@ -110,7 +110,7 @@ void rf_GenerateFailedAccessASMs(RF_Raid_t *, RF_AccessStripeMap_t *,
 #define RF_RESTRICT_NOBUFFER 0
 #define RF_RESTRICT_DOBUFFER 1
 
-void rf_RangeRestrictPDA(RF_Raid_t *, RF_PhysDiskAddr_t *, 
+void rf_RangeRestrictPDA(RF_Raid_t *, RF_PhysDiskAddr_t *,
 			 RF_PhysDiskAddr_t *, int, int);
 
 int rf_compute_workload_shift(RF_Raid_t *, RF_PhysDiskAddr_t *);

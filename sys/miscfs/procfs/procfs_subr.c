@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_subr.c,v 1.56.2.7 2004/09/24 10:53:43 skrll Exp $	*/
+/*	$NetBSD: procfs_subr.c,v 1.56.2.8 2005/03/04 16:52:55 skrll Exp $	*/
 
 /*
  * Copyright (c) 1993
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_subr.c,v 1.56.2.7 2004/09/24 10:53:43 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_subr.c,v 1.56.2.8 2005/03/04 16:52:55 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -194,7 +194,7 @@ procfs_allocvp(mp, vpp, pid, pfs_type, fd)
 				vxp = (struct vnode *)fp->f_data;
 
 				/*
-				 * We make symlinks for directories 
+				 * We make symlinks for directories
 				 * to avoid cycles.
 				 */
 				if (vxp->v_type == VDIR)

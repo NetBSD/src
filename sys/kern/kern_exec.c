@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.169.2.7 2005/02/15 21:33:29 skrll Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.169.2.8 2005/03/04 16:51:58 skrll Exp $	*/
 
 /*-
  * Copyright (C) 1993, 1994, 1996 Christopher G. Demetriou
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.169.2.7 2005/02/15 21:33:29 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.169.2.8 2005/03/04 16:51:58 skrll Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_syscall_debug.h"
@@ -786,7 +786,7 @@ sys_execve(struct lwp *l, void *v, register_t *retval)
 	free(pack.ep_hdr, M_EXEC);
 
 	/*
-	 * Call emulation specific exec hook. This can setup setup per-process
+	 * Call emulation specific exec hook. This can setup per-process
 	 * p->p_emuldata or do any other per-process stuff an emulation needs.
 	 *
 	 * If we are executing process of different emulation than the

@@ -1,4 +1,4 @@
-/*	$NetBSD: tpcalib.c,v 1.2.2.5 2004/12/18 09:32:21 skrll Exp $	*/
+/*	$NetBSD: tpcalib.c,v 1.2.2.6 2005/03/04 16:51:14 skrll Exp $	*/
 
 /*
  * Copyright (c) 1999-2003 TAKEMURA Shin All rights reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tpcalib.c,v 1.2.2.5 2004/12/18 09:32:21 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tpcalib.c,v 1.2.2.6 2005/03/04 16:51:14 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -110,7 +110,7 @@ tpcalib_ioctl(struct tpcalib_softc *sc, u_long cmd, caddr_t data, int flag,
 				&sc->sc_ay, &sc->sc_by, &sc->sc_cy)) {
 				printf("tpcalib: MRA error");
 				tpcalib_reset(sc);
-			
+
 				return (EINVAL);
 			} else {
 				sc->sc_minx = d->minx;

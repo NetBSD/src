@@ -1,4 +1,4 @@
-/*	$NetBSD: ns_error.c,v 1.14.2.3 2004/09/21 13:38:23 skrll Exp $	*/
+/*	$NetBSD: ns_error.c,v 1.14.2.4 2005/03/04 16:54:09 skrll Exp $	*/
 
 /*
  * Copyright (c) 1984, 1988, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ns_error.c,v 1.14.2.3 2004/09/21 13:38:23 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ns_error.c,v 1.14.2.4 2005/03/04 16:54:09 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -166,7 +166,7 @@ ns_error(struct mbuf *om, int type, int param)
 	if (idpcksum) {
 		nip->idp_sum = 0;
 		nip->idp_sum = ns_cksum(m, sizeof(*ep));
-	} else 
+	} else
 		nip->idp_sum = 0xffff;
 	(void) ns_output(m, (struct route *)0, 0);
 
@@ -283,7 +283,7 @@ ns_err_input(struct mbuf *m)
 		default:
 			idp_ctlinput(code, NULL, ep);
 		}
-		
+
 		goto freeit;
 
 	default:

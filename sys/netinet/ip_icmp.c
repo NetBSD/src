@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_icmp.c,v 1.74.2.5 2005/02/04 11:47:48 skrll Exp $	*/
+/*	$NetBSD: ip_icmp.c,v 1.74.2.6 2005/03/04 16:53:29 skrll Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -101,7 +101,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_icmp.c,v 1.74.2.5 2005/02/04 11:47:48 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_icmp.c,v 1.74.2.6 2005/03/04 16:53:29 skrll Exp $");
 
 #include "opt_ipsec.h"
 
@@ -830,7 +830,7 @@ icmp_reflect(struct mbuf *m)
 	m_tag_delete_nonpersistent(m);
 	m->m_flags &= ~(M_BCAST|M_MCAST);
 
-	/*      
+	/*
 	 * Clear any in-bound checksum flags for this packet.
 	 */
 	if (m->m_flags & M_PKTHDR)
@@ -865,7 +865,7 @@ icmp_send(struct mbuf *m, struct mbuf *opts)
 	if (icmpprintfs)
 		printf("icmp_send dst %x src %x\n", ip->ip_dst, ip->ip_src);
 #endif
-	(void) ip_output(m, opts, NULL, 0, 
+	(void) ip_output(m, opts, NULL, 0,
 	    (struct ip_moptions *)NULL, (struct socket *)NULL);
 }
 
@@ -942,7 +942,7 @@ sysctl_net_inet_icmp_redirtimeout(SYSCTLFN_ARGS)
 		icmp_redirect_timeout_q =
 		    rt_timer_queue_create(icmp_redirtimeout);
 	}
-	
+
 	return (0);
 }
 

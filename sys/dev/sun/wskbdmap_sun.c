@@ -1,4 +1,4 @@
-/*	$NetBSD: wskbdmap_sun.c,v 1.2.8.3 2004/09/21 13:33:27 skrll Exp $	*/
+/*	$NetBSD: wskbdmap_sun.c,v 1.2.8.4 2005/03/04 16:50:39 skrll Exp $	*/
 /*	$OpenBSD: sunkbd.c,v 1.9 2002/09/08 23:22:00 miod Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wskbdmap_sun.c,v 1.2.8.3 2004/09/21 13:33:27 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wskbdmap_sun.c,v 1.2.8.4 2005/03/04 16:50:39 skrll Exp $");
 
 #include <sys/types.h>
 #include <dev/wscons/wsksymdef.h>
@@ -52,19 +52,19 @@ static const keysym_t wssun_keydesctab_us [] = {
     KC(0x02), KS_Cmd_BrightnessDown,
     KC(0x03),				KS_Again,
     KC(0x04), KS_Cmd_BrightnessUp,
-    KC(0x05),				KS_f1,
-    KC(0x06),				KS_f2,
-    KC(0x07),				KS_f10,
-    KC(0x08),				KS_f3,
+    KC(0x05), KS_Cmd_Screen0,				KS_f1,
+    KC(0x06), KS_Cmd_Screen1,				KS_f2,
+    KC(0x07), KS_Cmd_Screen9,				KS_f10,
+    KC(0x08), KS_Cmd_Screen2,				KS_f3,
     KC(0x09),				KS_f11,
-    KC(0x0a),				KS_f4,
+    KC(0x0a), KS_Cmd_Screen3,				KS_f4,
     KC(0x0b),				KS_f12,
-    KC(0x0c),				KS_f5,
+    KC(0x0c), KS_Cmd_Screen4,				KS_f5,
     KC(0x0d),				KS_Alt_R,
-    KC(0x0e),				KS_f6,
-    KC(0x10),				KS_f7,
-    KC(0x11),				KS_f8,
-    KC(0x12),				KS_f9,
+    KC(0x0e), KS_Cmd_Screen5,				KS_f6,
+    KC(0x10), KS_Cmd_Screen6,				KS_f7,
+    KC(0x11), KS_Cmd_Screen7,				KS_f8,
+    KC(0x12), KS_Cmd_Screen8,				KS_f9,
     KC(0x13),				KS_Alt_L,
     KC(0x14),				KS_Up,
     KC(0x15),				KS_Pause,
@@ -170,7 +170,7 @@ static const keysym_t wssun_keydesctab_us [] = {
 
 const keysym_t wssun_keydesctab_sv[] = {
     KC(0x0d),		KS_Multi_key,
-    KC(0x0f),		KS_asciitilde,	KS_asciicircum, 
+    KC(0x0f),		KS_asciitilde,	KS_asciicircum,
     KC(0x1f),		KS_2,		KS_quotedbl,	KS_at,
     KC(0x20),		KS_3,		KS_numbersign,	KS_sterling,
     KC(0x21),		KS_4,		KS_currency,	KS_dollar,

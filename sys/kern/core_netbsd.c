@@ -1,4 +1,4 @@
-/*	$NetBSD: core_netbsd.c,v 1.5.2.4 2004/09/21 13:35:02 skrll Exp $	*/
+/*	$NetBSD: core_netbsd.c,v 1.5.2.5 2005/03/04 16:51:58 skrll Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: core_netbsd.c,v 1.5.2.4 2004/09/21 13:35:02 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: core_netbsd.c,v 1.5.2.5 2005/03/04 16:51:58 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -75,7 +75,7 @@ coredump_netbsd(struct lwp *l, struct vnode *vp, struct ucred *cred)
 	struct proc *p;
 	struct vmspace *vm;
 	int error;
-	
+
 	p = l->l_proc;
 	vm = p->p_vmspace;
 

@@ -1,11 +1,13 @@
-/*	$NetBSD: tcp_timer.h,v 1.19.2.3 2004/09/21 13:37:15 skrll Exp $	*/
+/*	$NetBSD: tcp_timer.h,v 1.19.2.4 2005/03/04 16:53:30 skrll Exp $	*/
 
 /*-
- * Copyright (c) 2001 The NetBSD Foundation, Inc.
+ * Copyright (c) 2001, 2005 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
  * by Jason R. Thorpe of Wasabi Systems, Inc.
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by Charles M. Hannum.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -162,7 +164,7 @@ char *tcptimers[] =
 	callout_stop(&(tp)->t_timer[(timer)])
 
 #define	TCP_TIMER_ISARMED(tp, timer)					\
-	callout_pending(&(tp)->t_timer[(timer)])
+	callout_active(&(tp)->t_timer[(timer)])
 
 /*
  * Force a time value to be in a certain range.

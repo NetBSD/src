@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_macho.h,v 1.12.2.5 2005/02/04 11:48:05 skrll Exp $	*/
+/*	$NetBSD: exec_macho.h,v 1.12.2.6 2005/03/04 16:54:22 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -93,7 +93,7 @@ struct exec_macho_fat_arch {
  */
 #define	MACHO_CPU_SUBTYPE_MC680x0_ALL		1
 #define	MACHO_CPU_SUBTYPE_MC68030		1
-#define	MACHO_CPU_SUBTYPE_MC68040		2 
+#define	MACHO_CPU_SUBTYPE_MC68040		2
 #define	MACHO_CPU_SUBTYPE_MC68030_ONLY		3
 
 /*
@@ -143,7 +143,7 @@ struct exec_macho_object_header {
 #define	MACHO_MOH_MAGIC	0xfeedface
 
 /*
- * Object header filetype 
+ * Object header filetype
  */
 #define	MACHO_MOH_OBJECT	0x1
 #define	MACHO_MOH_EXECUTE	0x2
@@ -181,7 +181,7 @@ struct exec_macho_load_command {
 #define	MACHO_LC_IDFVMLIB	0x07
 #define	MACHO_LC_IDENT		0x08
 #define	MACHO_LC_FVMFILE	0x09
-#define	MACHO_LC_PREPAGE	0x0a 
+#define	MACHO_LC_PREPAGE	0x0a
 #define	MACHO_LC_DYSYMTAB	0x0b
 #define	MACHO_LC_LOAD_DYLIB	0x0c
 #define	MACHO_LC_ID_DYLIB	0x0d
@@ -253,7 +253,7 @@ struct exec_macho_emul_arg {
 #include "opt_execfmt.h"
 #endif
 
-#ifdef _KERNEL 
+#ifdef _KERNEL
 struct exec_package;
 struct ps_strings;
 u_long	exec_macho_thread_entry(struct exec_macho_thread_command *);

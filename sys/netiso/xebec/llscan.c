@@ -1,17 +1,17 @@
-/*	$NetBSD: llscan.c,v 1.8 2002/05/16 19:30:41 wiz Exp $	*/
+/*	$NetBSD: llscan.c,v 1.8.8.1 2005/03/04 16:54:09 skrll Exp $	*/
 
 /*
  * ************************* NOTICE *******************************
  * This code is in the public domain.  It cannot be copyrighted.
- * This scanner was originally written by Keith Thompson for the 
+ * This scanner was originally written by Keith Thompson for the
  * University of Wisconsin Crystal project.
- * It was subsequently modified significantly by Nancy Hall at the 
+ * It was subsequently modified significantly by Nancy Hall at the
  * University of Wisconsin for the ARGO project.
  * ****************************************************************
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: llscan.c,v 1.8 2002/05/16 19:30:41 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: llscan.c,v 1.8.8.1 2005/03/04 16:54:09 skrll Exp $");
 
 #include "xebec.h"
 #include "llparse.h"
@@ -68,7 +68,7 @@ int chtype[128] = {
 };
 
 
-extern FILE *astringfile; 
+extern FILE *astringfile;
 static char *buffptr;
 static char buffer[2][LINELEN];
 static int currentbuf = 1;
@@ -146,9 +146,9 @@ char **buf;
 }
 
 void
-getstr(o,c) 
-	/* c is the string delimiter 
-	 * allow the delimiter to be escaped 
+getstr(o,c)
+	/* c is the string delimiter
+	 * allow the delimiter to be escaped
 	 * the messy part: translate $ID to
 	 *   e->ev_union.ID
 	 * where ID is an event with a non-zero obj_struc
@@ -157,7 +157,7 @@ getstr(o,c)
 char o,c;
 {
 	register int nested = 1;
-	register int allow_nesting = (o==c)?-1:1; 
+	register int allow_nesting = (o==c)?-1:1;
 
 	IFDEBUG(S)
 		fprintf(stdout,"getstr: ch=%c, delimiters %c %c\n",
@@ -181,14 +181,14 @@ char o,c;
 
 			/* assume it's an event */
 			/* addbuf is a macro so this isn't as bad as
-			 * it looks 
+			 * it looks
 			 * add "e->ev_union."
 			 */
 			if( (ch = getch()) == '$' ) {
 				addbuf('e'); addbuf('-'); addbuf('>');
 				addbuf('e'); addbuf('v'); addbuf('_');
 				addbuf('u'); addbuf('n'); addbuf('i');
-				addbuf('o'); addbuf('n'); 
+				addbuf('o'); addbuf('n');
 				addbuf('.');
 				AddCurrentEventName(& buffptr);
 			} else {
@@ -206,7 +206,7 @@ char o,c;
 				} else if( !strncmp(obufp, synonyms[EVENT_SYN],
 										strlen(synonyms[EVENT_SYN]))) {
 					buffptr = obufp;
-					addbuf('e'); 
+					addbuf('e');
 				} else {
 					fprintf(stderr, "Unknown synonym %s\n", obufp);
 					Exit(-1);
@@ -230,7 +230,7 @@ char o,c;
 			if( (ch != o ) && (ch != c) && (ch != '$') ) {
 			/* may need to handle case where \ is last char in file... */
 				/* don't treat is as escape; not open or close so
-				 * don't have to worry about nesting either 
+				 * don't have to worry about nesting either
 				 */
 				addbuf('\\');
 			}
@@ -242,14 +242,14 @@ char o,c;
 		if( ch == o ) nested += allow_nesting;
 		else if( ch == c ) nested--;
 		if ( (buffptr - buffer[currentbuf]) > LINELEN) {
-			fprintf(stderr, 
+			fprintf(stderr,
 			"%s too long.\n", (o=='{')?"Action":"Predicate"); /*}*/
-			fprintf(stderr, 
+			fprintf(stderr,
 			"buffptr, currentbuf 0x%p, 0x%x\n",buffptr,currentbuf );
 			Exit(-1);
 		}
 		IFDEBUG(S)
-			fprintf(stdout,"loop in getstr: ch 0x%x,%c o=%c,c=%c nested=%d\n", 
+			fprintf(stdout,"loop in getstr: ch 0x%x,%c o=%c,c=%c nested=%d\n",
 				ch,ch,o,c,nested);
 		ENDDEBUG
 	}
@@ -337,7 +337,7 @@ again:
 						break;
 					whatchar = (c=='*')?0:(c=='/'?1:2);
 					IFDEBUG(S)
-						fprintf(stdout, 
+						fprintf(stdout,
 							"comment: whatchar = %d, c = 0x%x,%c, oldstate=%d",
 							whatchar, c,c, state);
 					ENDDEBUG

@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf.h,v 1.31.6.4 2004/09/21 13:36:35 skrll Exp $	*/
+/*	$NetBSD: bpf.h,v 1.31.6.5 2005/03/04 16:52:56 skrll Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993
@@ -49,8 +49,8 @@ typedef	int bpf_int32;
 typedef	u_int bpf_u_int32;
 
 /*
- * Alignment macros.  BPF_WORDALIGN rounds up to the next 
- * even multiple of BPF_ALIGNMENT. 
+ * Alignment macros.  BPF_WORDALIGN rounds up to the next
+ * even multiple of BPF_ALIGNMENT.
  */
 #define BPF_ALIGNMENT sizeof(long)
 #define BPF_WORDALIGN(x) (((x)+(BPF_ALIGNMENT-1))&~(BPF_ALIGNMENT-1))
@@ -67,7 +67,7 @@ struct bpf_program {
 	u_int bf_len;
 	struct bpf_insn *bf_insns;
 };
- 
+
 /*
  * Struct returned by BIOCGSTATS.
  */
@@ -77,7 +77,7 @@ struct bpf_stat {
 	u_int64_t bs_capt;	/* number of packets captured */
 	u_int64_t bs_padding[13];
 };
- 
+
 /*
  * Struct returned by BIOCGSTATSOLD.
  */
@@ -87,7 +87,7 @@ struct bpf_stat_old {
 };
 
 /*
- * Struct return by BIOCVERSION.  This represents the version number of 
+ * Struct return by BIOCVERSION.  This represents the version number of
  * the filter language described by the instruction encodings below.
  * bpf understands a program iff kernel_major == filter_major &&
  * kernel_minor >= filter_minor, that is, if the value returned by the

@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_bmap.c,v 1.11.2.5 2004/12/18 09:33:18 skrll Exp $	*/
+/*	$NetBSD: ext2fs_bmap.c,v 1.11.2.6 2005/03/04 16:54:45 skrll Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_bmap.c,v 1.11.2.5 2004/12/18 09:33:18 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_bmap.c,v 1.11.2.6 2005/03/04 16:54:45 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -207,7 +207,7 @@ ext2fs_bmaparray(vp, bn, bnp, ap, nump, runp)
 	}
 #endif
 	for (bp = NULL, ++xap; --num; ++xap) {
-		/* 
+		/*
 		 * Exit the loop if there is no disk address assigned yet and
 		 * the indirect block isn't in the cache, or if we were
 		 * looking for an indirect block and we've found it.

@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_pty.c,v 1.70.2.6 2004/11/29 07:24:51 skrll Exp $	*/
+/*	$NetBSD: tty_pty.c,v 1.70.2.7 2005/03/04 16:52:02 skrll Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty_pty.c,v 1.70.2.6 2004/11/29 07:24:51 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty_pty.c,v 1.70.2.7 2005/03/04 16:52:02 skrll Exp $");
 
 #include "opt_compat_sunos.h"
 #include "opt_ptm.h"
@@ -479,7 +479,7 @@ ptspoll(dev, events, l)
 
 	if (tp->t_oproc == 0)
 		return (EIO);
- 
+
 	return ((*tp->t_linesw->l_poll)(tp, events, l));
 }
 
@@ -913,7 +913,7 @@ filt_ptcread(struct knote *kn, long hint)
 	if (canread) {
 		/*
 		 * c_cc is number of characters after output post-processing;
-		 * the amount of data actually read(2) depends on 
+		 * the amount of data actually read(2) depends on
 		 * setting of input flags for the terminal.
 		 */
 		kn->kn_data = tp->t_outq.c_cc;

@@ -1,6 +1,6 @@
-/*	$NetBSD: dll.h,v 1.4.46.3 2004/09/21 13:36:56 skrll Exp $	*/
+/*	$NetBSD: dll.h,v 1.4.46.4 2005/03/04 16:53:18 skrll Exp $	*/
 
-/* 
+/*
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
  *
@@ -31,9 +31,9 @@
  *	@(#)dll.h	8.1 (Berkeley) 6/10/93
  */
 
-/* 
+/*
  * Copyright (c) 1990, 1991, 1992
- *		Dirk Husemann, Computer Science Department IV, 
+ *		Dirk Husemann, Computer Science Department IV,
  * 		University of Erlangen-Nuremberg, Germany.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -67,7 +67,7 @@
  *	@(#)dll.h	8.1 (Berkeley) 6/10/93
  */
 
-/* 
+/*
  * We define the additional PRC_* codes in here
  */
 #ifdef _KERNEL

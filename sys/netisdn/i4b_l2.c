@@ -1,4 +1,4 @@
-/* $NetBSD: i4b_l2.c,v 1.15.8.3 2004/09/21 13:37:59 skrll Exp $ */
+/* $NetBSD: i4b_l2.c,v 1.15.8.4 2005/03/04 16:53:44 skrll Exp $ */
 
 /*
  * Copyright (c) 1997, 2000 Hellmuth Michaelis. All rights reserved.
@@ -29,7 +29,7 @@
  *      i4b_l2.c - ISDN layer 2 (Q.921)
  *	-------------------------------
  *
- *	$Id: i4b_l2.c,v 1.15.8.3 2004/09/21 13:37:59 skrll Exp $ 
+ *	$Id: i4b_l2.c,v 1.15.8.4 2005/03/04 16:53:44 skrll Exp $
  *
  * $FreeBSD$
  *
@@ -38,7 +38,7 @@
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i4b_l2.c,v 1.15.8.3 2004/09/21 13:37:59 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i4b_l2.c,v 1.15.8.4 2005/03/04 16:53:44 skrll Exp $");
 
 #ifdef __FreeBSD__
 #include "i4bq921.h"
@@ -98,7 +98,7 @@ int i4b_dl_release_req(l2_softc_t *l2sc, struct isdn_l3_driver *drv)
 {
 	NDBGL2(L2_PRIM, "isdnif %d", l2sc->drv->isdnif);
 	i4b_next_l2state(l2sc, drv, EV_DLRELRQ);
-	return(0);	
+	return(0);
 }
 
 /*---------------------------------------------------------------------------*
@@ -122,7 +122,7 @@ int i4b_dl_data_req(l2_softc_t *l2sc, struct isdn_l3_driver *drv, struct mbuf *m
 		case ST_AW_EST:
 		case ST_MULTIFR:
 		case ST_TIMREC:
-		
+
 		        if(IF_QFULL(&l2sc->i_queue))
 		        {
 		        	NDBGL2(L2_ERROR, "i_queue full!!");
@@ -139,12 +139,12 @@ int i4b_dl_data_req(l2_softc_t *l2sc, struct isdn_l3_driver *drv, struct mbuf *m
 				i4b_i_frame_queued_up(l2sc);
 			}
 			break;
-			
+
 		default:
 			NDBGL2(L2_ERROR, "isdnif %d ERROR in state [%s], freeing mbuf", l2sc->drv->isdnif, i4b_print_l2state(l2sc));
 			i4b_Dfreembuf(m);
 			break;
-	}		
+	}
 	return(0);
 }
 
@@ -187,7 +187,7 @@ i4b_l2_unit_init(l2_softc_t *l2sc)
 	l2sc->rxd_NR = 0;
 	l2sc->RC = 0;
 	l2sc->iframe_sent = 0;
-		
+
 	l2sc->postfsmfunc = NULL;
 
 	if(l2sc->ua_num != UA_EMPTY)
@@ -201,7 +201,7 @@ i4b_l2_unit_init(l2_softc_t *l2sc)
 	i4b_T202_stop(l2sc);
 	i4b_T203_stop(l2sc);
 
-	splx(s);	
+	splx(s);
 }
 
 /*---------------------------------------------------------------------------*
@@ -212,7 +212,7 @@ isdn_layer2_status_ind(l2_softc_t *l2sc, struct isdn_l3_driver *drv, int status,
 {
 	int s;
 	int sendup = 1;
-	
+
 	s = splnet();
 
 	NDBGL2(L2_PRIM, "isdnif %d, status=%d, parm=%d", l2sc->drv->isdnif, status, parm);
@@ -231,9 +231,9 @@ isdn_layer2_status_ind(l2_softc_t *l2sc, struct isdn_l3_driver *drv, int status,
 
 			l2sc->i_queue.ifq_maxlen = IQUEUE_MAXLEN;
 			l2sc->ua_frame = NULL;
-			memset(&l2sc->stat, 0, sizeof(lapdstat_t));			
+			memset(&l2sc->stat, 0, sizeof(lapdstat_t));
 			i4b_l2_unit_init(l2sc);
-			
+
 			/* initialize the callout handles for timeout routines */
 			callout_init(&l2sc->T200_callout);
 			callout_init(&l2sc->T202_callout);
@@ -244,7 +244,7 @@ isdn_layer2_status_ind(l2_softc_t *l2sc, struct isdn_l3_driver *drv, int status,
 
 		case STI_L1STAT:	/* state of layer 1 */
 			break;
-		
+
 		case STI_PDEACT:	/* Timer 4 expired */
 /*XXX*/			if((l2sc->Q921_state >= ST_AW_EST) &&
 			   (l2sc->Q921_state <= ST_TIMREC))
@@ -264,17 +264,17 @@ isdn_layer2_status_ind(l2_softc_t *l2sc, struct isdn_l3_driver *drv, int status,
 			i4b_l2_unit_init(l2sc);
 			NDBGL2(L2_ERROR, "isdnif %d, cannot access S0 bus!", l2sc->drv->isdnif);
 			break;
-			
+
 		default:
 			NDBGL2(L2_ERROR, "ERROR, isdnif %d, unknown status message!", l2sc->drv->isdnif);
 			break;
 	}
-	
+
 	if(sendup)
 		i4b_mdl_status_ind(l2sc->drv, status, parm);  /* send up to layer 3 */
 
 	splx(s);
-	
+
 	return(0);
 }
 
@@ -296,12 +296,12 @@ int i4b_mdl_command_req(struct isdn_l3_driver *drv, int command, void * parm)
 		case CMR_DCLOSE:
 			/* XXX - disable interrupts */
 			break;
-	}		
+	}
 
 	/* pass down to layer 1 driver */
 	if (sc->driver)
 		sc->driver->mph_command_req(sc->l1_token, command, parm);
-	
+
 	return(0);
 }
 
@@ -381,7 +381,7 @@ isdn_bchan_silence(unsigned char *data, int len)
 	register int j = 0;
 
 	/* count idle bytes */
-	
+
 	for(;i < len; i++)
 	{
 		if((*data >= 0xaa) && (*data <= 0xac))
@@ -392,7 +392,7 @@ isdn_bchan_silence(unsigned char *data, int len)
 #ifdef NOTDEF
 	printf("isic_hscx_silence: got %d silence bytes in frame\n", j);
 #endif
-	
+
 	if(j < (TEL_IDLE_MIN))
 		return(0);
 	else

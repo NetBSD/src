@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs.S,v 1.4.6.3 2004/09/21 13:36:07 skrll Exp $	*/
+/*	$NetBSD: ffs.S,v 1.4.6.4 2005/03/04 16:52:30 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -36,7 +36,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 	ASMSTR("from: @(#)ffs.s	8.1 (Berkeley) 6/4/93")
-	ASMSTR("$NetBSD: ffs.S,v 1.4.6.3 2004/09/21 13:36:07 skrll Exp $")
+	ASMSTR("$NetBSD: ffs.S,v 1.4.6.4 2005/03/04 16:52:30 skrll Exp $")
 #endif /* LIBC_SCCS and not lint */
 
 #if !defined(_KERNEL)
@@ -51,11 +51,11 @@ LEAF(ffs)
 	move	v0, zero
 	beq	a0, zero, done
 1:
-#ifdef MIPS3_5900	
+#ifdef MIPS3_5900
 	nop
 	nop
 	nop
-#endif	
+#endif
 	and	v1, a0, 1		# bit set?
 	addu	v0, v0, 1
 	srl	a0, a0, 1

@@ -1,4 +1,4 @@
-/* $NetBSD: sfbplus.c,v 1.18.6.4 2005/02/04 11:47:34 skrll Exp $ */
+/* $NetBSD: sfbplus.c,v 1.18.6.5 2005/03/04 16:50:52 skrll Exp $ */
 
 /*
  * Copyright (c) 1999, 2000, 2001 Tohru Nishimura.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sfbplus.c,v 1.18.6.4 2005/02/04 11:47:34 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sfbplus.c,v 1.18.6.5 2005/03/04 16:50:52 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -51,7 +51,7 @@ __KERNEL_RCSID(0, "$NetBSD: sfbplus.c,v 1.18.6.4 2005/02/04 11:47:34 skrll Exp $
 #include <dev/wsfont/wsfont.h>
 
 #include <dev/tc/tcvar.h>
-#include <dev/ic/bt459reg.h>	
+#include <dev/ic/bt459reg.h>
 #include <dev/ic/bt463reg.h>
 #include <dev/tc/sfbreg.h>
 #include <dev/pci/tgareg.h>
@@ -605,7 +605,7 @@ sfbpintr(arg)
 	caddr_t base, asic;
 	u_int32_t sisr;
 	int v;
-	
+
 	base = (caddr_t)sc->sc_ri->ri_hw;
 	asic = base + SFB_ASIC_OFFSET;
 	sisr = *((u_int32_t *)asic + TGA_REG_SISR);
@@ -1326,7 +1326,7 @@ sfbp_copyrows(id, srcrow, dstrow, nrows)
 	SFBMODE(sfb, MODE_COPY);
 	SFBPLANEMASK(sfb, ~0);
 	SFBPIXELSHIFT(sfb, 0);
-	
+
 	if (width <= SFBCOPYBITS)
 		; /* never happens */
 	else if (width < SFBCOPY64BITS) {

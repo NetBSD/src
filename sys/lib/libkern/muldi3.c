@@ -1,4 +1,4 @@
-/*	$NetBSD: muldi3.c,v 1.7.6.3 2004/09/21 13:35:54 skrll Exp $	*/
+/*	$NetBSD: muldi3.c,v 1.7.6.4 2005/03/04 16:52:29 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)muldi3.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: muldi3.c,v 1.7.6.3 2004/09/21 13:35:54 skrll Exp $");
+__RCSID("$NetBSD: muldi3.c,v 1.7.6.4 2005/03/04 16:52:29 skrll Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -52,7 +52,7 @@ __RCSID("$NetBSD: muldi3.c,v 1.7.6.3 2004/09/21 13:35:54 skrll Exp $");
  *
  *	u = 2^n u1  *  u0	(n = number of bits in `u_int', usu. 32)
  *
- * and 
+ * and
  *
  *	v = 2^n v1  *  v0
  *

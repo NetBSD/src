@@ -1,4 +1,4 @@
-/*	$NetBSD: bufq_priocscan.c,v 1.1.2.4 2004/11/29 07:24:51 skrll Exp $	*/
+/*	$NetBSD: bufq_priocscan.c,v 1.1.2.5 2005/03/04 16:51:57 skrll Exp $	*/
 
 /*-
  * Copyright (c)2004 YAMAMOTO Takashi,
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bufq_priocscan.c,v 1.1.2.4 2004/11/29 07:24:51 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bufq_priocscan.c,v 1.1.2.5 2005/03/04 16:51:57 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -238,7 +238,9 @@ bufq_priocscan_get(struct bufq_state *bufq, int remove)
 		/*
 		 * XXX account only by number of requests.  is it good enough?
 		 */
-		pq->q_burst--;
+		if (remove) {
+			pq->q_burst--;
+		}
 	} else {
 		/*
 		 * no queue was selected due to burst counts
@@ -256,9 +258,11 @@ bufq_priocscan_get(struct bufq_state *bufq, int remove)
 		/*
 		 * reset burst counts
 		 */
-		for (i = 0; i < PRIOCSCAN_NQUEUE; i++) {
-			pq = &q->bq_queue[i];
-			pq->q_burst = priocscan_burst[i];
+		if (remove) {
+			for (i = 0; i < PRIOCSCAN_NQUEUE; i++) {
+				pq = &q->bq_queue[i];
+				pq->q_burst = priocscan_burst[i];
+			}
 		}
 
 		/*

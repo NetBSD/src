@@ -1,4 +1,4 @@
-/* $NetBSD: wsemul_dumb.c,v 1.8 2001/10/13 15:56:15 augustss Exp $ */
+/* $NetBSD: wsemul_dumb.c,v 1.8.18.1 2005/03/04 16:51:14 skrll Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsemul_dumb.c,v 1.8 2001/10/13 15:56:15 augustss Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsemul_dumb.c,v 1.8.18.1 2005/03/04 16:51:14 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -191,7 +191,7 @@ wsemul_dumb_output(void *cookie, const u_char *data, u_int count,
 			    edp->nrows - n, n, edp->defattr);
 			edp->crow -= n - 1;
 			break;
-		}	
+		}
 	}
 	/* XXX */
 	(*edp->emulops->cursor)(edp->emulcookie, 1, edp->crow, edp->ccol);

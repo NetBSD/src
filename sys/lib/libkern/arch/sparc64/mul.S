@@ -1,4 +1,4 @@
-/*	$NetBSD: mul.S,v 1.4.44.3 2004/09/21 13:36:13 skrll Exp $	*/
+/*	$NetBSD: mul.S,v 1.4.44.4 2005/03/04 16:52:41 skrll Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -39,7 +39,7 @@
 #ifdef notdef
 	.asciz "@(#)mul.s	8.1 (Berkeley) 6/4/93"
 #endif
-	.asciz "$NetBSD: mul.S,v 1.4.44.3 2004/09/21 13:36:13 skrll Exp $"
+	.asciz "$NetBSD: mul.S,v 1.4.44.4 2005/03/04 16:52:41 skrll Exp $"
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -77,7 +77,7 @@ FUNC(.mul)
 	blt,a	%icc, 1f
 	 mulx	%o0, %o1, %o0
 	mulx	%o1, %o0, %o0
-1:	
+1:
 	srax	%o0, 32, %o1
 	retl
 	 sll	%o0, 0, %o0	! Sign extend
@@ -132,7 +132,7 @@ FUNC(.mul)
 	bge	1f
 	rd	%y, %o0
 
-	! %o0 was indeed negative; fix upper 32 bits of result by subtracting 
+	! %o0 was indeed negative; fix upper 32 bits of result by subtracting
 	! %o1 (i.e., return %o4 - %o1 in %o1).
 	retl
 	sub	%o4, %o1, %o1

@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vnops.c,v 1.59.2.5 2005/02/04 11:48:27 skrll Exp $	*/
+/*	$NetBSD: ffs_vnops.c,v 1.59.2.6 2005/03/04 16:54:46 skrll Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_vnops.c,v 1.59.2.5 2005/02/04 11:48:27 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_vnops.c,v 1.59.2.6 2005/03/04 16:54:46 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -426,7 +426,7 @@ loop:
 		simple_unlock(&global_v_numoutput_slock);
 		splx(s);
 
-		/* 
+		/*
 		 * Ensure that any filesystem metadata associated
 		 * with the vnode has been written.
 		 */
@@ -603,7 +603,7 @@ ffs_gop_size(struct vnode *vp, off_t size, off_t *eobp, int flags)
 	daddr_t olbn, nlbn;
 
 	KASSERT(flags & (GOP_SIZE_READ | GOP_SIZE_WRITE));
-	KASSERT((flags & (GOP_SIZE_READ | GOP_SIZE_WRITE)) 
+	KASSERT((flags & (GOP_SIZE_READ | GOP_SIZE_WRITE))
 		!= (GOP_SIZE_READ | GOP_SIZE_WRITE));
 
 	olbn = lblkno(fs, ip->i_size);

@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_decluster.c,v 1.14.6.3 2004/09/21 13:32:52 skrll Exp $	*/
+/*	$NetBSD: rf_decluster.c,v 1.14.6.4 2005/03/04 16:50:06 skrll Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -48,7 +48,7 @@
  *--------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_decluster.c,v 1.14.6.3 2004/09/21 13:32:52 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_decluster.c,v 1.14.6.4 2005/03/04 16:50:06 skrll Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -66,7 +66,7 @@ __KERNEL_RCSID(0, "$NetBSD: rf_decluster.c,v 1.14.6.3 2004/09/21 13:32:52 skrll 
 
 /* configuration code */
 
-int 
+int
 rf_ConfigureDeclustered(RF_ShutdownList_t **listp, RF_Raid_t *raidPtr,
 			RF_Config_t *cfgPtr)
 {
@@ -287,7 +287,7 @@ rf_ConfigureDeclustered(RF_ShutdownList_t **listp, RF_Raid_t *raidPtr,
 }
 /* declustering with distributed sparing */
 static void rf_ShutdownDeclusteredDS(RF_ThreadArg_t);
-static void 
+static void
 rf_ShutdownDeclusteredDS(RF_ThreadArg_t arg)
 {
 	RF_DeclusteredConfigInfo_t *info;
@@ -299,7 +299,7 @@ rf_ShutdownDeclusteredDS(RF_ThreadArg_t arg)
 		rf_FreeSpareTable(raidPtr);
 }
 
-int 
+int
 rf_ConfigureDeclusteredDS(RF_ShutdownList_t **listp, RF_Raid_t *raidPtr,
 			  RF_Config_t *cfgPtr)
 {
@@ -313,9 +313,9 @@ rf_ConfigureDeclusteredDS(RF_ShutdownList_t **listp, RF_Raid_t *raidPtr,
 	return (0);
 }
 
-void 
+void
 rf_MapSectorDeclustered(RF_Raid_t *raidPtr, RF_RaidAddr_t raidSector,
-			RF_RowCol_t *row, RF_RowCol_t *col, 
+			RF_RowCol_t *row, RF_RowCol_t *col,
 			RF_SectorNum_t *diskSector, int remap)
 {
 	RF_RaidLayout_t *layoutPtr = &(raidPtr->Layout);
@@ -378,7 +378,7 @@ rf_MapSectorDeclustered(RF_Raid_t *raidPtr, RF_RaidAddr_t raidSector,
 
 
 /* prototyping this inexplicably causes the compile of the layout table (rf_layout.c) to fail */
-void 
+void
 rf_MapParityDeclustered(RF_Raid_t *raidPtr, RF_RaidAddr_t raidSector,
 			RF_RowCol_t *row, RF_RowCol_t *col,
 			RF_SectorNum_t *diskSector, int remap)
@@ -446,7 +446,7 @@ rf_MapParityDeclustered(RF_Raid_t *raidPtr, RF_RaidAddr_t raidSector,
 /* returns an array of ints identifying the disks that comprise the stripe containing the indicated address.
  * the caller must _never_ attempt to modify this array.
  */
-void 
+void
 rf_IdentifyStripeDeclustered(RF_Raid_t *raidPtr, RF_RaidAddr_t addr,
 			     RF_RowCol_t **diskids, RF_RowCol_t *outRow)
 {
@@ -492,7 +492,7 @@ rf_IdentifyStripeDeclustered(RF_Raid_t *raidPtr, RF_RaidAddr_t addr,
  * If numBufsToAccumulate is not 1, we need to limit the head sep further
  * because multiple bufs will be required for each stripe under recon.
  */
-RF_HeadSepLimit_t 
+RF_HeadSepLimit_t
 rf_GetDefaultHeadSepLimitDeclustered(RF_Raid_t *raidPtr)
 {
 	RF_DeclusteredConfigInfo_t *info = (RF_DeclusteredConfigInfo_t *) raidPtr->Layout.layoutSpecificInfo;
@@ -504,7 +504,7 @@ rf_GetDefaultHeadSepLimitDeclustered(RF_Raid_t *raidPtr)
  * for a reasonably large head-sep limit, but small enough that you
  * don't use up all your system memory with buffers.
  */
-int 
+int
 rf_GetDefaultNumFloatingReconBuffersDeclustered(RF_Raid_t * raidPtr)
 {
 	return (100 * rf_numBufsToAccumulate);
@@ -525,7 +525,7 @@ rf_GetDefaultNumFloatingReconBuffersDeclustered(RF_Raid_t * raidPtr)
  * the users stripe unit number from an offset into the array to
  * an offset into the last fulltable.
  */
-void 
+void
 rf_decluster_adjust_params(RF_RaidLayout_t *layoutPtr,
 			   RF_StripeNum_t *SUID,
 			   RF_StripeCount_t *sus_per_fulltable,
@@ -553,7 +553,7 @@ rf_decluster_adjust_params(RF_RaidLayout_t *layoutPtr,
  * map a stripe ID to a parity stripe ID.
  * See comment above RaidAddressToParityStripeID in layout.c.
  */
-void 
+void
 rf_MapSIDToPSIDDeclustered(RF_RaidLayout_t *layoutPtr,
 			   RF_StripeNum_t stripeID,
 			   RF_StripeNum_t *psID,
@@ -573,7 +573,7 @@ rf_MapSIDToPSIDDeclustered(RF_RaidLayout_t *layoutPtr,
  * Called from MapSector and MapParity to retarget an access at the spare unit.
  * Modifies the "col" and "outSU" parameters only.
  */
-void 
+void
 rf_remap_to_spare_space(RF_RaidLayout_t *layoutPtr,
 			RF_DeclusteredConfigInfo_t *info,
 			RF_RowCol_t row,
@@ -624,7 +624,7 @@ rf_remap_to_spare_space(RF_RaidLayout_t *layoutPtr,
 #endif /* (RF_INCLUDE_PARITY_DECLUSTERING > 0)  || (RF_INCLUDE_PARITY_DECLUSTERING_PQ > 0) */
 
 #if (RF_INCLUDE_PARITY_DECLUSTERING_DS > 0)
-int 
+int
 rf_InstallSpareTable(RF_Raid_t *raidPtr, RF_RowCol_t frow, RF_RowCol_t fcol)
 {
 	RF_DeclusteredConfigInfo_t *info = (RF_DeclusteredConfigInfo_t *) raidPtr->Layout.layoutSpecificInfo;
@@ -651,7 +651,7 @@ rf_InstallSpareTable(RF_Raid_t *raidPtr, RF_RowCol_t frow, RF_RowCol_t fcol)
 /*
  * Invoked via ioctl to install a spare table in the kernel.
  */
-int 
+int
 rf_SetSpareTable(RF_Raid_t *raidPtr, void *data)
 {
 	RF_DeclusteredConfigInfo_t *info = (RF_DeclusteredConfigInfo_t *) raidPtr->Layout.layoutSpecificInfo;
@@ -687,7 +687,7 @@ rf_SetSpareTable(RF_Raid_t *raidPtr, void *data)
 	return (0);
 }
 
-RF_ReconUnitCount_t 
+RF_ReconUnitCount_t
 rf_GetNumSpareRUsDeclustered(RF_Raid_t *raidPtr)
 {
 	RF_RaidLayout_t *layoutPtr = &raidPtr->Layout;
@@ -696,7 +696,7 @@ rf_GetNumSpareRUsDeclustered(RF_Raid_t *raidPtr)
 }
 #endif /* (RF_INCLUDE_PARITY_DECLUSTERING > 0)  || (RF_INCLUDE_PARITY_DECLUSTERING_PQ > 0) */
 
-void 
+void
 rf_FreeSpareTable(RF_Raid_t *raidPtr)
 {
 	long    i;

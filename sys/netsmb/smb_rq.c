@@ -1,4 +1,4 @@
-/*	$NetBSD: smb_rq.c,v 1.24.2.4 2004/09/21 13:38:24 skrll Exp $	*/
+/*	$NetBSD: smb_rq.c,v 1.24.2.5 2005/03/04 16:54:19 skrll Exp $	*/
 
 /*
  * Copyright (c) 2000-2001, Boris Popov
@@ -35,8 +35,8 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smb_rq.c,v 1.24.2.4 2004/09/21 13:38:24 skrll Exp $");
- 
+__KERNEL_RCSID(0, "$NetBSD: smb_rq.c,v 1.24.2.5 2005/03/04 16:54:19 skrll Exp $");
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
@@ -476,7 +476,7 @@ smb_t2_reply(struct smb_t2rq *t2p)
 	if (error)
 		return error;
 	if ((t2p->t2_flags & SMBT2_ALLSENT) == 0) {
-		/* 
+		/*
 		 * this is an interim response, ignore it.
 		 */
 		SMBRQ_SLOCK(rqp);
@@ -681,7 +681,7 @@ smb_t2_request_int(struct smb_t2rq *t2p)
 	if (error)
 		goto bad;
 	while (leftpcount || leftdcount) {
-		error = smb_rq_new(rqp, t2p->t_name ? 
+		error = smb_rq_new(rqp, t2p->t_name ?
 		    SMB_COM_TRANSACTION_SECONDARY : SMB_COM_TRANSACTION2_SECONDARY);
 		if (error)
 			goto bad;

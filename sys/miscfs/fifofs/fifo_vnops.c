@@ -1,4 +1,4 @@
-/*	$NetBSD: fifo_vnops.c,v 1.41.2.4 2004/09/21 13:36:30 skrll Exp $	*/
+/*	$NetBSD: fifo_vnops.c,v 1.41.2.5 2005/03/04 16:52:49 skrll Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993, 1995
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fifo_vnops.c,v 1.41.2.4 2004/09/21 13:36:30 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fifo_vnops.c,v 1.41.2.5 2005/03/04 16:52:49 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -130,7 +130,7 @@ fifo_lookup(void *v)
 		struct vnode		**a_vpp;
 		struct componentname	*a_cnp;
 	} */ *ap = v;
-	
+
 	*ap->a_vpp = NULL;
 	return (ENOTDIR);
 }

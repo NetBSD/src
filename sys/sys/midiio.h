@@ -1,4 +1,4 @@
-/*	$NetBSD: midiio.h,v 1.9.2.3 2004/09/21 13:38:47 skrll Exp $	*/
+/*	$NetBSD: midiio.h,v 1.9.2.4 2005/03/04 16:54:23 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -123,7 +123,7 @@ struct synth_info {
 
 	int	nr_voices;
 	int	instr_bank_size;
-	u_int	capabilities;	
+	u_int	capabilities;
 #define SYNTH_CAP_OPL3			0x00000002
 #define SYNTH_CAP_INPUT			0x00000004
 };

@@ -1,4 +1,4 @@
-/*	$NetBSD: time.h,v 1.38.2.5 2005/02/04 11:48:06 skrll Exp $	*/
+/*	$NetBSD: time.h,v 1.38.2.6 2005/03/04 16:54:23 skrll Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -189,7 +189,7 @@ struct 	ptimer {
 	int	pt_poverruns;	/* Overruns associated w/ a delivery */
 	int	pt_type;
 	int	pt_entry;
-	struct proc *pt_proc; 
+	struct proc *pt_proc;
 };
 
 #define pt_ch	pt_data.pt_ch
@@ -216,7 +216,7 @@ void	microtime(struct timeval *tv);
 int	settime(struct timeval *);
 int	ratecheck(struct timeval *, const struct timeval *);
 int	ppsratecheck(struct timeval *, int *, int);
-int	settimeofday1(const struct timeval *, const struct timezone *, 
+int	settimeofday1(const struct timeval *, const struct timezone *,
 	    struct proc *);
 int	adjtime1(const struct timeval *, struct timeval *, struct proc *);
 int	clock_settime1(clockid_t, const struct timespec *);

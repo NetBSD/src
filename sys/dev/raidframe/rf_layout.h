@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_layout.h,v 1.10.2.3 2004/09/21 13:32:53 skrll Exp $	*/
+/*	$NetBSD: rf_layout.h,v 1.10.2.4 2005/03/04 16:50:07 skrll Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -185,7 +185,7 @@ struct RF_ASMHeaderListElem_s {
 	RF_ASMHeaderListElem_t *next;
 };
 
-/* A structure to keep track of all the data structures associated with 
+/* A structure to keep track of all the data structures associated with
 a failed stripe.  Used for constructing the appropriate DAGs in
 rf_SelectAlgorithm() in rf_aselect.c */
 typedef struct RF_FailedStripe_s RF_FailedStripe_t;
@@ -277,10 +277,10 @@ struct RF_FailedStripe_s {
   ( (_psid_) * (_layoutPtr_)->SUsPerPU * (_layoutPtr_)->numDataCol * (_layoutPtr_)->sectorsPerStripeUnit )
 
 const RF_LayoutSW_t *rf_GetLayout(RF_ParityConfig_t parityConfig);
-int 
+int
 rf_ConfigureLayout(RF_ShutdownList_t ** listp, RF_Raid_t * raidPtr,
     RF_Config_t * cfgPtr);
-RF_StripeNum_t 
+RF_StripeNum_t
 rf_MapStripeIDToParityStripeID(RF_RaidLayout_t * layoutPtr,
     RF_StripeNum_t stripeID, RF_ReconUnitNum_t * which_ru);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: timepps.h,v 1.4.24.4 2005/02/04 11:48:07 skrll Exp $	*/
+/*	$NetBSD: timepps.h,v 1.4.24.5 2005/03/04 16:54:23 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998 Jonathan Stone
@@ -181,7 +181,7 @@ time_pps_getparams(handle, ppsparams)
 	return (ioctl(handle, PPS_IOC_GETPARAMS, ppsparams));
 }
 
-static __inline int 
+static __inline int
 time_pps_getcap(handle, mode)
 	pps_handle_t handle;
 	int *mode;

@@ -1,4 +1,4 @@
-/*	$NetBSD: tp_pcb.h,v 1.14.2.3 2004/09/21 13:38:02 skrll Exp $	*/
+/*	$NetBSD: tp_pcb.h,v 1.14.2.4 2005/03/04 16:54:09 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -75,7 +75,7 @@ SOFTWARE.
 /*
  * NOTE: the code depends on REF_CLOSED > REF_OPEN > the rest, and on
  * REF_FREE being zero
- * 
+ *
  * Possible improvement: think about merging the tp_ref w/ the tpcb and doing a
  * search through the tpcb list, from tpb. This would slow down lookup during
  * data transfer It would be a little nicer also to have something based on
@@ -85,7 +85,7 @@ SOFTWARE.
  * independent of whether the timers are in the pcb or in an array.. Last,
  * would have to make the number of timers a function of the amount of mbufs
  * available, plus some for the frozen references.
- * 
+ *
  * Possible improvement: Might not need the ref_state stuff either... REF_FREE
  * could correspond to tp_state == CLOSED or nonexistend tpcb, REF_OPEN to
  * tp_state anywhere from AK_WAIT or CR_SENT to CLOSING REF_OPENING could
@@ -132,7 +132,7 @@ struct nl_protosw {
 				(void *, u_short *, caddr_t, int);
 						/* from nl pcb */
 	void		(*nlp_recycle_suffix)	/* clears suffix from nl pcb */
-				(void *);		 
+				(void *);
 	int		(*nlp_mtu)		/* figures out mtu based on */
 				(void *);	/* nl used */
 	int		(*nlp_pcbbind)		/* bind to pcb for net level */

@@ -1,4 +1,4 @@
-/*	$NetBSD: tp_timer.c,v 1.12.16.3 2004/09/21 13:38:02 skrll Exp $	*/
+/*	$NetBSD: tp_timer.c,v 1.12.16.4 2005/03/04 16:54:09 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -59,7 +59,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tp_timer.c,v 1.12.16.3 2004/09/21 13:38:02 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tp_timer.c,v 1.12.16.4 2005/03/04 16:54:09 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -221,6 +221,7 @@ tp_slowtimo(void)
 					}
 					/* XXX wart; where else to do it? */
 					free((caddr_t) tpcb, M_PCB);
+					break;
 				}
 			}
 		}

@@ -1,4 +1,4 @@
-#	$NetBSD: genlintstub.awk,v 1.7 2003/05/20 20:25:31 kristerw Exp $
+#	$NetBSD: genlintstub.awk,v 1.7.2.1 2005/03/04 16:51:58 skrll Exp $
 #
 # Copyright 2001 Wasabi Systems, Inc.
 # All rights reserved.
@@ -75,12 +75,12 @@ BEGIN	{
 		printf "\n\n";
 	}
 
-/^\/\* LINTSTUB: Empty.*\*\/[ \t]*$/ { 
+/^\/\* LINTSTUB: Empty.*\*\/[ \t]*$/ {
 		printf "/* LINTED (empty translation unit) */\n";
 		next;
 	}
 
-/^\/\* LINTSTUB: Func:.*\)[ \t]*[;]?[ \t]+\*\/[ \t]*$/ { 
+/^\/\* LINTSTUB: Func:.*\)[ \t]*[;]?[ \t]+\*\/[ \t]*$/ {
 		if (($4 == "int") || ($4 == "long"))
 			retflag = 1;
 		else if ($4 == "void")
@@ -105,12 +105,12 @@ BEGIN	{
 		next;
 	}
 
-/^\/\* LINTSTUB: Func:/ { 
+/^\/\* LINTSTUB: Func:/ {
 	  printf "ERROR: bad function declaration: %s\n", $0 > "/dev/stderr";
 	  exit 1;
 	}
-			
-/^\/\* LINTSTUB: Var:.*[ \t]+\*\/[ \t]*$/ { 
+
+/^\/\* LINTSTUB: Var:.*[ \t]+\*\/[ \t]*$/ {
 		for (i = 4; i < NF; i++) {
 			if (i != (NF - 1))
 				printf "%s ", $i;
@@ -122,7 +122,7 @@ BEGIN	{
 		next;
 	}
 
-/^\/\* LINTSTUB: Var:/ { 
+/^\/\* LINTSTUB: Var:/ {
 	  printf "ERROR: bad variable declaration: %s\n", $0 > "/dev/stderr";
 	  exit 1;
 	}
@@ -134,17 +134,17 @@ BEGIN	{
 
 /^\/\* LINTSTUB: Ignore.*\*\/[ \t]*$/ { next; }
 
-/^\/\* LINTSTUB: Ignore/ { 
+/^\/\* LINTSTUB: Ignore/ {
 	  printf "ERROR: bad ignore declaration: %s\n", $0 > "/dev/stderr";
 	  exit 1;
 	}
 
-/^\/\* LINTSTUBS:/ { 
+/^\/\* LINTSTUBS:/ {
 	  printf "ERROR: LINTSTUB, not LINTSTUBS: %s\n", $0 > "/dev/stderr";
 	  exit 1;
 	}
 
-/^\/\* LINTSTUB:/ { 
+/^\/\* LINTSTUB:/ {
 	  printf "ERROR: bad declaration: %s\n", $0 > "/dev/stderr";
 	  exit 1;
 	}

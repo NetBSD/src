@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ksyms.c,v 1.13.2.5 2005/02/17 07:10:37 skrll Exp $	*/
+/*	$NetBSD: kern_ksyms.c,v 1.13.2.6 2005/03/04 16:51:58 skrll Exp $	*/
 /*
  * Copyright (c) 2001, 2003 Anders Magnusson (ragge@ludd.luth.se).
  * All rights reserved.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_ksyms.c,v 1.13.2.5 2005/02/17 07:10:37 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_ksyms.c,v 1.13.2.6 2005/03/04 16:51:58 skrll Exp $");
 
 #ifdef _KERNEL
 #include "opt_ddb.h"
@@ -340,7 +340,7 @@ addsymtab(const char *name, Elf_Ehdr *ehdr, struct symtab *tab)
 
 #ifdef KSYMS_DEBUG
 	printf("start %p sym %p symsz %d str %p strsz %d send %p\n",
-	    start, tab->sd_symstart, tab->sd_symsize, 
+	    start, tab->sd_symstart, tab->sd_symsize,
 	    tab->sd_strstart, tab->sd_strsize, send);
 #endif
 
@@ -491,7 +491,7 @@ ksyms_init(int symsize, void *start, void *end)
 
 /*
  * Get the value associated with a symbol.
- * "mod" is the module name, or null if any module. 
+ * "mod" is the module name, or null if any module.
  * "sym" is the symbol name.
  * "val" is a pointer to the corresponding value, if call succeeded.
  * Returns 0 if success or ENOENT if no such entry.
@@ -596,8 +596,8 @@ static int symsz, strsz;
 
 static void
 ksyms_sizes_calc(void)
-{               
-        struct symtab *st; 
+{
+        struct symtab *st;
 	int i;
 
         symsz = strsz = 0;
@@ -628,7 +628,7 @@ struct syminfo {
 	int *symnmoff;
 	char *symnames;
 };
-	
+
 
 /*
  * Add a symbol to the temporary save area for symbols.
@@ -649,7 +649,7 @@ addsym(struct syminfo *info, const Elf_Sym *sym, const char *name,
 		mlen = 1 + strlen(mod);
 	else
 		mlen = 0;
-	if (info->cursyms == info->maxsyms || 
+	if (info->cursyms == info->maxsyms ||
 	    (len + mlen + info->curnamep) > info->maxnamep) {
 		printf("addsym: too many symbols, skipping '%s'\n", name);
 		return;
@@ -741,7 +741,7 @@ ksyms_addsymtab(const char *mod, void *symstart, vsize_t symsize,
 		/* XXX - save local symbols if DDB */
 		if (ELF_ST_BIND(sym[i].st_info) != STB_GLOBAL)
 			continue;
-			
+
 		/* Check if the symbol exists */
 		if (ksyms_getval(NULL, symname, &rval, KSYMS_EXTERN) == 0) {
 			/* Check (and complain) about differing values */
@@ -785,7 +785,7 @@ ksyms_addsymtab(const char *mod, void *symstart, vsize_t symsize,
 		/* XXX - save local symbols if DDB */
 		if (ELF_ST_BIND(sym[i].st_info) != STB_GLOBAL)
 			continue;
-			
+
 		/* Check if the symbol exists */
 		if (ksyms_getval(NULL, symname, &rval, KSYMS_EXTERN) == 0) {
 			if ((sym[i].st_value != rval) && specialsym(symname)) {

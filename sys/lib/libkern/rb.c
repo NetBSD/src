@@ -1,4 +1,4 @@
-/* $NetBSD: rb.c,v 1.2 2002/10/08 11:58:54 simonb Exp $ */
+/* $NetBSD: rb.c,v 1.2.6.1 2005/03/04 16:52:29 skrll Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@ rb_tree_rotate(struct rb_tree *rbt, struct rb_node *self, int which)
 	const int other = which ^ RB_OTHER;
 	struct rb_node * const parent = self->rb_parent;
 	struct rb_node * const child = self->rb_nodes[other];
-	
+
 	assert(!child->rb_sentinel);
 	assert(child->rb_parent == self);
 #if 0
@@ -116,7 +116,7 @@ rb_tree_insert_node(struct rb_tree *rbt, struct rb_node *self)
 	prev = NULL;
 	next = NULL;
 	parent = NULL;
-	tmp = rbt->rbt_root;	
+	tmp = rbt->rbt_root;
 
 	/*
 	 * Find out where to place this new leaf.
@@ -284,7 +284,7 @@ rb_tree_remove_node(struct rb_tree *rbt, struct rb_node *self)
 			child = child->rb_left;
 		new_self = child;
 		assert(new_self == TAILQ_NEXT(self, rb_link));
-		
+
 		/*
 		 * Take new_self out of the tree (its only subnode can be on the
 		 * right since we know the left subnode is NULL).

@@ -1,4 +1,4 @@
-/*	$NetBSD: deflate.h,v 1.1.4.4 2004/09/21 13:38:44 skrll Exp $ */
+/*	$NetBSD: deflate.h,v 1.1.4.5 2005/03/04 16:54:22 skrll Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/deflate.h,v 1.1.2.1 2002/11/21 23:34:23 sam Exp $	*/
 /* $OpenBSD: deflate.h,v 1.3 2002/03/14 01:26:51 millert Exp $ */
 
@@ -30,7 +30,7 @@
  */
 
 /*
- * Definition for the wrapper around the deflate compression 
+ * Definition for the wrapper around the deflate compression
  * algorithm used in /sys/crypto
  */
 

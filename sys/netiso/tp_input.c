@@ -1,4 +1,4 @@
-/*	$NetBSD: tp_input.c,v 1.14.16.3 2004/09/21 13:38:01 skrll Exp $	*/
+/*	$NetBSD: tp_input.c,v 1.14.16.4 2005/03/04 16:54:08 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -79,7 +79,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tp_input.c,v 1.14.16.3 2004/09/21 13:38:01 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tp_input.c,v 1.14.16.4 2005/03/04 16:54:08 skrll Exp $");
 
 #include "opt_iso.h"
 
@@ -856,7 +856,7 @@ again:
 			);
 		}
 #endif
-		CHECK(((class_to_use == TP_CLASS_0) && 
+		CHECK(((class_to_use == TP_CLASS_0) &&
 		      (dgout_routine != tpcons_output)),
 			E_TP_NEGOT_FAILED, ts_negotfailed, clear_parent_tcb,
 		     (1 + 2 + (caddr_t) & hdr->_tpdufr.CRCC - (caddr_t) hdr)

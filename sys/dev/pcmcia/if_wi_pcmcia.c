@@ -1,4 +1,4 @@
-/* $NetBSD: if_wi_pcmcia.c,v 1.33.2.6 2005/02/04 11:47:09 skrll Exp $ */
+/* $NetBSD: if_wi_pcmcia.c,v 1.33.2.7 2005/03/04 16:49:38 skrll Exp $ */
 
 /*-
  * Copyright (c) 2001, 2004 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wi_pcmcia.c,v 1.33.2.6 2005/02/04 11:47:09 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wi_pcmcia.c,v 1.33.2.7 2005/03/04 16:49:38 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -348,7 +348,7 @@ wi_pcmcia_attach(parent, self, aux)
 	error = wi_pcmcia_enable(sc);
 	if (error)
 		goto fail;
-	
+
 	sc->sc_pci = 0;
 	sc->sc_enable = wi_pcmcia_enable;
 	sc->sc_disable = wi_pcmcia_disable;
@@ -417,7 +417,7 @@ wi_pcmcia_shutdown(arg)
 	struct wi_pcmcia_softc *psc = arg;
 	struct wi_softc *sc = &psc->sc_wi;
 
-	wi_shutdown(sc);  
+	wi_shutdown(sc);
 }
 
 /*
@@ -515,7 +515,7 @@ wi_pcmcia_write_firm(sc, buf, buflen, ebuf, ebuflen)
 		    (const u_int16_t *)p, len / 2);
 		p += len;
 	}
-	
+
 	/*
 	 * PDR: id[4], address[4], length[4];
 	 */

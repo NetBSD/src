@@ -1,4 +1,4 @@
-/*	$NetBSD: ddp_usrreq.c,v 1.11.2.4 2004/09/21 13:36:56 skrll Exp $	 */
+/*	$NetBSD: ddp_usrreq.c,v 1.11.2.5 2005/03/04 16:53:17 skrll Exp $	 */
 
 /*
  * Copyright (c) 1990,1991 Regents of The University of Michigan.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ddp_usrreq.c,v 1.11.2.4 2004/09/21 13:36:56 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ddp_usrreq.c,v 1.11.2.5 2005/03/04 16:53:17 skrll Exp $");
 
 #include "opt_mbuftrace.h"
 
@@ -311,7 +311,7 @@ at_pcbsetaddr(ddp, addr, p)
 	} else {
 		for (ddpp = ddp_ports[sat->sat_port - 1]; ddpp;
 		     ddpp = ddpp->ddp_pnext) {
-			if (ddpp->ddp_lsat.sat_addr.s_net == 
+			if (ddpp->ddp_lsat.sat_addr.s_net ==
 			    sat->sat_addr.s_net &&
 			    ddpp->ddp_lsat.sat_addr.s_node ==
 			    sat->sat_addr.s_node)

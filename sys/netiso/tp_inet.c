@@ -1,4 +1,4 @@
-/*	$NetBSD: tp_inet.c,v 1.22.6.3 2004/09/21 13:38:01 skrll Exp $	*/
+/*	$NetBSD: tp_inet.c,v 1.22.6.4 2005/03/04 16:54:08 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -73,7 +73,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tp_inet.c,v 1.22.6.3 2004/09/21 13:38:01 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tp_inet.c,v 1.22.6.4 2005/03/04 16:54:08 skrll Exp $");
 
 #include "opt_inet.h"
 #include "opt_iso.h"
@@ -454,7 +454,7 @@ tpip_output_dg(struct mbuf *m0, ...)
 	}
 #endif
 
-	error = ip_output(m, (struct mbuf *) 0, ro, IP_ALLOWBROADCAST, 
+	error = ip_output(m, (struct mbuf *) 0, ro, IP_ALLOWBROADCAST,
 	    (struct ip_moptions *)NULL, (struct socket *)NULL);
 
 #ifdef ARGO_DEBUG

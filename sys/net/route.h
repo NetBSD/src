@@ -1,4 +1,4 @@
-/*	$NetBSD: route.h,v 1.35.2.4 2004/09/21 13:36:42 skrll Exp $	*/
+/*	$NetBSD: route.h,v 1.35.2.5 2005/03/04 16:53:00 skrll Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -39,7 +39,7 @@
 
 /*
  * Kernel resident routing tables.
- * 
+ *
  * The routing tables are initialized when interface addresses
  * are set by making entries for all directly connected interfaces.
  */
@@ -239,7 +239,7 @@ struct route_cb {
 	int	any_count;
 };
 
-/* 
+/*
  * This structure, and the prototypes for the rt_timer_{init,remove_all,
  * add,timer} functions all used with the kind permission of BSDI.
  * These allow functions to be called for routes at specific times.

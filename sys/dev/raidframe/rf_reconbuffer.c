@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_reconbuffer.c,v 1.13.2.3 2004/09/21 13:32:54 skrll Exp $	*/
+/*	$NetBSD: rf_reconbuffer.c,v 1.13.2.4 2005/03/04 16:50:08 skrll Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -33,7 +33,7 @@
  ***************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_reconbuffer.c,v 1.13.2.3 2004/09/21 13:32:54 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_reconbuffer.c,v 1.13.2.4 2005/03/04 16:50:08 skrll Exp $");
 
 #include "rf_raid.h"
 #include "rf_reconbuffer.h"
@@ -72,7 +72,7 @@ __KERNEL_RCSID(0, "$NetBSD: rf_reconbuffer.c,v 1.13.2.3 2004/09/21 13:32:54 skrl
  *
  * Returns non-zero if and only if we were not able to submit.
  * In this case, we append the current disk ID to the wait list on the
- * indicated RU, so that it will be re-enabled when we acquire a buffer 
+ * indicated RU, so that it will be re-enabled when we acquire a buffer
  * for this RU.
  *
  ****************************************************************************/
@@ -99,7 +99,7 @@ static const RF_VoidFuncPtr nWayXorFuncs[] = {
  * keep_it       - whether we can keep this buffer or we have to return it
  * use_committed - whether to use a committed or an available recon buffer
  */
-int 
+int
 rf_SubmitReconBuffer(RF_ReconBuffer_t *rbuf, int keep_it, int use_committed)
 {
 	const RF_LayoutSW_t *lp;
@@ -115,8 +115,8 @@ rf_SubmitReconBuffer(RF_ReconBuffer_t *rbuf, int keep_it, int use_committed)
  * keep_it       - whether we can keep this buffer or we have to return it
  * use_committed - whether to use a committed or an available recon buffer
  */
-int 
-rf_SubmitReconBufferBasic(RF_ReconBuffer_t *rbuf, int keep_it, 
+int
+rf_SubmitReconBufferBasic(RF_ReconBuffer_t *rbuf, int keep_it,
 			  int use_committed)
 {
 	RF_Raid_t *raidPtr = rbuf->raidPtr;
@@ -293,7 +293,7 @@ out:
 	return (retcode);
 }
 /* pssPtr - the pss descriptor for this parity stripe */
-int 
+int
 rf_MultiWayReconXor(RF_Raid_t *raidPtr, RF_ReconParityStripeStatus_t *pssPtr)
 {
 	int     i, numBufs = pssPtr->xorBufCount;
@@ -362,8 +362,8 @@ rf_GetFullReconBuffer(RF_ReconCtrl_t *reconCtrlPtr)
  * which is maintained sorted by failed disk sector offset
  *
  * ASSUMES THE RB_MUTEX IS LOCKED AT ENTRY.  */
-int 
-rf_CheckForFullRbuf(RF_Raid_t *raidPtr, RF_ReconCtrl_t *reconCtrl, 
+int
+rf_CheckForFullRbuf(RF_Raid_t *raidPtr, RF_ReconCtrl_t *reconCtrl,
 		    RF_ReconParityStripeStatus_t *pssPtr, int numDataCol)
 {
 	RF_ReconBuffer_t *p, *pt, *rbuf = (RF_ReconBuffer_t *) pssPtr->rbuf;
@@ -395,7 +395,7 @@ rf_CheckForFullRbuf(RF_Raid_t *raidPtr, RF_ReconCtrl_t *reconCtrl,
 /* release a floating recon buffer for someone else to use.
  * assumes the rb_mutex is LOCKED at entry
  */
-void 
+void
 rf_ReleaseFloatingReconBuffer(RF_Raid_t *raidPtr, RF_ReconBuffer_t *rbuf)
 {
 	RF_ReconCtrl_t *rcPtr = raidPtr->reconControl;

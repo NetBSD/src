@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_tb.c,v 1.28.12.3 2004/09/21 13:35:17 skrll Exp $	*/
+/*	$NetBSD: tty_tb.c,v 1.28.12.4 2005/03/04 16:52:02 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty_tb.c,v 1.28.12.3 2004/09/21 13:35:17 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty_tb.c,v 1.28.12.4 2005/03/04 16:52:02 skrll Exp $");
 
 #include "tb.h"
 
@@ -104,7 +104,7 @@ struct tb {
 	char	cbuf[TBMAXREC];		/* input buffer */
 	int	tbinbuf;
 	char	*tbcp;
-	union	tbpos tbpos; 
+	union	tbpos tbpos;
 } tb[NTB];
 
 

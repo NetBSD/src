@@ -1,4 +1,4 @@
-/*	$NetBSD: event.c,v 1.14.2.5 2005/02/04 11:47:33 skrll Exp $	*/
+/*	$NetBSD: event.c,v 1.14.2.6 2005/03/04 16:50:38 skrll Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: event.c,v 1.14.2.5 2005/02/04 11:47:33 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: event.c,v 1.14.2.6 2005/03/04 16:50:38 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/fcntl.h>
@@ -185,7 +185,7 @@ filt_evrdetach(struct knote *kn)
 
 static int
 filt_evread(struct knote *kn, long hint)
-{               
+{
 	struct evvar *ev = kn->kn_hook;
 
 	if (ev->ev_get == ev->ev_put)

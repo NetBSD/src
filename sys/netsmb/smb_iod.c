@@ -1,4 +1,4 @@
-/*	$NetBSD: smb_iod.c,v 1.21.2.5 2004/10/31 07:22:23 skrll Exp $	*/
+/*	$NetBSD: smb_iod.c,v 1.21.2.6 2005/03/04 16:54:19 skrll Exp $	*/
 
 /*
  * Copyright (c) 2000-2001 Boris Popov
@@ -35,8 +35,8 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smb_iod.c,v 1.21.2.5 2004/10/31 07:22:23 skrll Exp $");
- 
+__KERNEL_RCSID(0, "$NetBSD: smb_iod.c,v 1.21.2.6 2005/03/04 16:54:19 skrll Exp $");
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
@@ -459,7 +459,7 @@ smb_iod_addrq(struct smb_rq *rqp)
 		/*
 		 * Return error to force the caller reissue the request
 		 * using new connection state.
-		 */ 
+		 */
 		return EXDEV;
 	default:
 		break;
@@ -475,7 +475,7 @@ smb_iod_addrq(struct smb_rq *rqp)
 			break;
 		iod->iod_muxwant++;
 		/* XXX use interruptible sleep? */
-		ltsleep(&iod->iod_muxwant, PWAIT, "smbmux", 
+		ltsleep(&iod->iod_muxwant, PWAIT, "smbmux",
 			0, SMB_IOD_RQLOCKPTR(iod));
 	}
 	iod->iod_muxcnt++;
@@ -535,7 +535,7 @@ smb_iod_waitrq(struct smb_rq *rqp)
 	SMBRQ_SLOCK(rqp);
 	if (rqp->sr_rpgen == rqp->sr_rplast) {
 		/* XXX interruptible sleep? */
-		ltsleep(&rqp->sr_state, PWAIT, "smbwrq", 0, 
+		ltsleep(&rqp->sr_state, PWAIT, "smbwrq", 0,
 			SMBRQ_SLOCKPTR(rqp));
 	}
 	rqp->sr_rplast++;

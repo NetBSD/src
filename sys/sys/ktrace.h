@@ -1,4 +1,4 @@
-/*	$NetBSD: ktrace.h,v 1.30.2.10 2005/02/16 07:42:16 skrll Exp $	*/
+/*	$NetBSD: ktrace.h,v 1.30.2.11 2005/03/04 16:54:22 skrll Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -176,8 +176,8 @@ struct ktr_user {
  * KTR_MMSG - Mach message
  */
 #define KTR_MMSG		9
-struct ktr_mmsg { 
-	/* 
+struct ktr_mmsg {
+	/*
 	 * This is a Mach message header
 	 */
 	int	ktr_bits;
@@ -186,7 +186,7 @@ struct ktr_mmsg {
 	int	ktr_local_port;
 	int	ktr_reserved;
 	int	ktr_id;
-	/* 
+	/*
 	 * Followed by ktr_size - sizeof(mach_msg_header_t) of message payload
 	 */
 };
@@ -273,7 +273,7 @@ void ktremul(struct lwp *);
 void ktrgenio(struct lwp *, int, enum uio_rw, struct iovec *, int, int);
 void ktrnamei(struct lwp *, char *);
 void ktrpsig(struct lwp *, int, sig_t, const sigset_t *, const ksiginfo_t *);
-void ktrsyscall(struct lwp *, register_t, register_t, 
+void ktrsyscall(struct lwp *, register_t, register_t,
     const struct sysent *, register_t []);
 void ktrsysret(struct lwp *, register_t, int, register_t *);
 void ktruser(struct lwp *, const char *, void *, size_t, int);

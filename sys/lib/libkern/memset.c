@@ -1,4 +1,4 @@
-/*	$NetBSD: memset.c,v 1.7.46.3 2004/09/21 13:35:54 skrll Exp $	*/
+/*	$NetBSD: memset.c,v 1.7.46.4 2005/03/04 16:52:29 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)memset.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: memset.c,v 1.7.46.3 2004/09/21 13:35:54 skrll Exp $");
+__RCSID("$NetBSD: memset.c,v 1.7.46.4 2005/03/04 16:52:29 skrll Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -49,7 +49,7 @@ __RCSID("$NetBSD: memset.c,v 1.7.46.3 2004/09/21 13:35:54 skrll Exp $");
 #else
 #include <lib/libkern/libkern.h>
 #include <machine/limits.h>
-#endif 
+#endif
 
 #define	wsize	sizeof(u_int)
 #define	wmask	(wsize - 1)
@@ -94,7 +94,7 @@ memset(dst0, c0, length)
 	 *
 	 * but we use a minimum of 3 here since the overhead of the code
 	 * to do word writes is substantial.
-	 */ 
+	 */
 	if (length < 3 * wsize) {
 		while (length != 0) {
 			*dst++ = VAL;

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tr_pcmcia.c,v 1.11.6.3 2004/09/21 13:32:20 skrll Exp $	*/
+/*	$NetBSD: if_tr_pcmcia.c,v 1.11.6.4 2005/03/04 16:49:38 skrll Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang.  All rights reserved.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tr_pcmcia.c,v 1.11.6.3 2004/09/21 13:32:20 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tr_pcmcia.c,v 1.11.6.4 2005/03/04 16:49:38 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -312,7 +312,7 @@ tr_pcmcia_detach(self, flags)
 
 	rv = tr_detach(self, flags);
 
-	if (rv == 0) { 
+	if (rv == 0) {
 		pcmcia_mem_unmap(psc->sc_pf, psc->sc_mmio_window);
 		pcmcia_mem_free(psc->sc_pf, &psc->sc_mmioh);
 		pcmcia_mem_unmap(psc->sc_pf, psc->sc_sram_window);

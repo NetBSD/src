@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_aselect.c,v 1.8.2.3 2004/09/21 13:32:50 skrll Exp $	*/
+/*	$NetBSD: rf_aselect.c,v 1.8.2.4 2005/03/04 16:50:05 skrll Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -33,7 +33,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_aselect.c,v 1.8.2.3 2004/09/21 13:32:50 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_aselect.c,v 1.8.2.4 2005/03/04 16:50:05 skrll Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -102,7 +102,7 @@ InitHdrNode(RF_DagHeader_t **hdr, RF_Raid_t *raidPtr, RF_RaidAccessDesc_t *desc)
 
 #define MAXNSTRIPES 50
 
-int 
+int
 rf_SelectAlgorithm(RF_RaidAccessDesc_t *desc, RF_RaidAccessFlags_t flags)
 {
 	RF_AccessStripeMapHeader_t *asm_h = desc->asmap;
@@ -170,7 +170,7 @@ rf_SelectAlgorithm(RF_RaidAccessDesc_t *desc, RF_RaidAccessFlags_t flags)
 			/* could not find creation function for entire stripe
 			 * so, let's see if we can find one for each stripe
 			 * unit in the stripe */
-			
+
 			/* create a failed stripe structure to attempt to deal with the failure */
 			failed_stripe = rf_AllocFailedStripeStruct();
 			if (failed_stripes_list == NULL) {
@@ -185,7 +185,7 @@ rf_SelectAlgorithm(RF_RaidAccessDesc_t *desc, RF_RaidAccessFlags_t flags)
 			 * stripeFuncs) for this stripe */
 			numStripeUnits = asm_p->numStripeUnitsAccessed;
 
-			/* lookup array of stripeUnitFuncs for this stripe */			
+			/* lookup array of stripeUnitFuncs for this stripe */
 			failed_stripes_asmh_u_end = NULL;
 			failed_stripes_vfple_end = NULL;
 			for (j = 0, physPtr = asm_p->physInfo; physPtr; physPtr = physPtr->next, j++) {
@@ -204,8 +204,8 @@ rf_SelectAlgorithm(RF_RaidAccessDesc_t *desc, RF_RaidAccessFlags_t flags)
 					failed_stripes_asmh_u_end->next = asmhle;
 					failed_stripes_asmh_u_end = asmhle;
 				}
-				
-				
+
+
 				asmhle->asmh = rf_MapAccess(raidPtr, address, length, buffer, RF_DONT_REMAP);
 				asm_up = asmhle->asmh->stripeMap;
 
@@ -253,7 +253,7 @@ rf_SelectAlgorithm(RF_RaidAccessDesc_t *desc, RF_RaidAccessFlags_t flags)
 
 						asmhle->asmh = rf_MapAccess(raidPtr, address, length, buffer, RF_DONT_REMAP);
 						asm_bp = asmhle->asmh->stripeMap;
-						
+
 						vfple = rf_AllocVFPListElem();
 						if (failed_stripe->bvfple == NULL) {
 							failed_stripe->bvfple = vfple;
@@ -305,7 +305,7 @@ rf_SelectAlgorithm(RF_RaidAccessDesc_t *desc, RF_RaidAccessFlags_t flags)
 						rf_FreeAccessStripeMap(tmpasmhle->asmh);
 						rf_FreeASMHeaderListElem(tmpasmhle);
 					}
-					
+
 					vfple = failed_stripe->vfple;
 					while (vfple) {
 						tmpvfple = vfple;
@@ -526,14 +526,14 @@ rf_SelectAlgorithm(RF_RaidAccessDesc_t *desc, RF_RaidAccessFlags_t flags)
 					vfple = tmpvfple->next;
 					rf_FreeVFPListElem(tmpvfple);
 				}
-				
+
 				vfple = failed_stripe->bvfple;
 				while (vfple) {
 					tmpvfple = vfple;
 					vfple = tmpvfple->next;
 					rf_FreeVFPListElem(tmpvfple);
 				}
-				
+
 				tmpfailed_stripe = failed_stripe;
 				failed_stripe = tmpfailed_stripe->next;
 				rf_FreeFailedStripeStruct(tmpfailed_stripe);

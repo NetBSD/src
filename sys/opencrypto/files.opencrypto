@@ -1,8 +1,8 @@
-#	$NetBSD: files.opencrypto,v 1.14.4.4 2004/09/21 13:38:44 skrll Exp $
+#	$NetBSD: files.opencrypto,v 1.14.4.5 2005/03/04 16:54:22 skrll Exp $
 #
 #
 
-# Opencrypto framework. 
+# Opencrypto framework.
 # Devices that provide crypto transforms via opencrypto, or subsystems
 # that use the opencrypto framework, should list opencrypto as a dependency
 # to pull in the framework.

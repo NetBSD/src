@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_dagffrd.c,v 1.8.6.3 2004/09/21 13:32:51 skrll Exp $	*/
+/*	$NetBSD: rf_dagffrd.c,v 1.8.6.4 2005/03/04 16:50:06 skrll Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_dagffrd.c,v 1.8.6.3 2004/09/21 13:32:51 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_dagffrd.c,v 1.8.6.4 2005/03/04 16:50:06 skrll Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -73,7 +73,7 @@ __KERNEL_RCSID(0, "$NetBSD: rf_dagffrd.c,v 1.8.6.3 2004/09/21 13:32:51 skrll Exp
  * the DAG creation routines to be replaced at this single point.
  */
 
-void 
+void
 rf_CreateFaultFreeReadDAG(RF_Raid_t *raidPtr, RF_AccessStripeMap_t *asmap,
 			  RF_DagHeader_t *dag_h, void *bp,
 			  RF_RaidAccessFlags_t flags,
@@ -123,7 +123,7 @@ rf_CreateFaultFreeReadDAG(RF_Raid_t *raidPtr, RF_AccessStripeMap_t *asmap,
  *
  *****************************************************************************/
 
-void 
+void
 rf_CreateNonredundantDAG(RF_Raid_t *raidPtr, RF_AccessStripeMap_t *asmap,
 			 RF_DagHeader_t *dag_h, void *bp,
 			 RF_RaidAccessFlags_t flags,
@@ -317,10 +317,10 @@ rf_CreateNonredundantDAG(RF_Raid_t *raidPtr, RF_AccessStripeMap_t *asmap,
  *              allocList - list of memory allocated in DAG creation
  *****************************************************************************/
 
-static void 
+static void
 CreateMirrorReadDAG(RF_Raid_t *raidPtr, RF_AccessStripeMap_t *asmap,
 		    RF_DagHeader_t *dag_h, void *bp,
-		    RF_RaidAccessFlags_t flags, 
+		    RF_RaidAccessFlags_t flags,
 		    RF_AllocListElem_t *allocList,
 		    int (*readfunc) (RF_DagNode_t * node))
 {
@@ -439,7 +439,7 @@ CreateMirrorReadDAG(RF_Raid_t *raidPtr, RF_AccessStripeMap_t *asmap,
 	termNode->antType[0] = rf_control;
 }
 
-void 
+void
 rf_CreateMirrorIdleReadDAG(
     RF_Raid_t * raidPtr,
     RF_AccessStripeMap_t * asmap,
@@ -454,7 +454,7 @@ rf_CreateMirrorIdleReadDAG(
 
 #if (RF_INCLUDE_CHAINDECLUSTER > 0) || (RF_INCLUDE_INTERDECLUSTER > 0)
 
-void 
+void
 rf_CreateMirrorPartitionReadDAG(RF_Raid_t *raidPtr,
 				RF_AccessStripeMap_t *asmap,
 				RF_DagHeader_t *dag_h, void *bp,

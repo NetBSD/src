@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lkm.c,v 1.67.2.8 2005/01/24 08:35:36 skrll Exp $	*/
+/*	$NetBSD: kern_lkm.c,v 1.67.2.9 2005/03/04 16:51:58 skrll Exp $	*/
 
 /*
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lkm.c,v 1.67.2.8 2005/01/24 08:35:36 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lkm.c,v 1.67.2.9 2005/03/04 16:51:58 skrll Exp $");
 
 #include "opt_ddb.h"
 #include "opt_malloclog.h"
@@ -973,7 +973,7 @@ drvlkm_unload(struct cfdriver **cd, const struct cfattachlkminit *cai,
 			if (error) {
 				printf("%s: unable to deregister cfattach\n",
 				       cfai->cfai_list[i]->ca_name);
-				return (error);	
+				return (error);
 			}
 		}
 	}

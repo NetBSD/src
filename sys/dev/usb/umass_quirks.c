@@ -1,11 +1,13 @@
-/*	$NetBSD: umass_quirks.c,v 1.43.2.3 2004/09/21 13:33:48 skrll Exp $	*/
+/*	$NetBSD: umass_quirks.c,v 1.43.2.4 2005/03/04 16:50:55 skrll Exp $	*/
 
 /*
- * Copyright (c) 2001 The NetBSD Foundation, Inc.
+ * Copyright (c) 2001, 2004 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
  * by MAEKAWA Masahide (gehenna@NetBSD.org).
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by Charles M. Hannum.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -37,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umass_quirks.c,v 1.43.2.3 2004/09/21 13:33:48 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umass_quirks.c,v 1.43.2.4 2005/03/04 16:50:55 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

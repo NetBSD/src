@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_lookup.c,v 1.47.2.8 2005/01/24 08:36:05 skrll Exp $	*/
+/*	$NetBSD: ufs_lookup.c,v 1.47.2.9 2005/03/04 16:55:00 skrll Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_lookup.c,v 1.47.2.8 2005/01/24 08:36:05 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_lookup.c,v 1.47.2.9 2005/03/04 16:55:00 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -336,7 +336,7 @@ searchloop:
 			else
 				namlen = ep->d_namlen;
 #else
-			if (FSFMT(vdp) && needswap != 0) 
+			if (FSFMT(vdp) && needswap != 0)
 				namlen = ep->d_type;
 			else
 				namlen = ep->d_namlen;

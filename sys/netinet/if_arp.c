@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arp.c,v 1.92.2.7 2005/02/04 11:47:45 skrll Exp $	*/
+/*	$NetBSD: if_arp.c,v 1.92.2.8 2005/03/04 16:53:29 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.92.2.7 2005/02/04 11:47:45 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.92.2.8 2005/03/04 16:53:29 skrll Exp $");
 
 #include "opt_ddb.h"
 #include "opt_inet.h"
@@ -1162,7 +1162,7 @@ arplookup(struct mbuf *m, struct in_addr *addr, int create, int proxy)
 		else if ((rt->rt_flags & RTF_LLINFO) == 0) {
 			arpstat.as_allocfail++;
 			why = "could not allocate llinfo";
-		} else 
+		} else
 			why = "gateway route is not ours";
 		log(LOG_DEBUG, "arplookup: unable to enter address"
 		    " for %s@%s on %s (%s)\n",

@@ -1,4 +1,4 @@
-/*	$NetBSD: raw_usrreq.c,v 1.19.2.4 2004/09/21 13:36:42 skrll Exp $	*/
+/*	$NetBSD: raw_usrreq.c,v 1.19.2.5 2005/03/04 16:53:00 skrll Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: raw_usrreq.c,v 1.19.2.4 2004/09/21 13:36:42 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: raw_usrreq.c,v 1.19.2.5 2005/03/04 16:53:00 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/mbuf.h>
@@ -79,7 +79,7 @@ raw_input(struct mbuf *m0, ...)
 	va_list ap;
 	struct sockproto *proto;
 	struct sockaddr *src, *dst;
-	
+
 	va_start(ap, m0);
 	proto = va_arg(ap, struct sockproto *);
 	src = va_arg(ap, struct sockaddr *);
@@ -223,7 +223,7 @@ raw_usrreq(so, req, m, nam, control, l)
 	 * If a socket isn't bound to a single address,
 	 * the raw input routine will hand it anything
 	 * within that protocol family (assuming there's
-	 * nothing else around it should go to). 
+	 * nothing else around it should go to).
 	 */
 	case PRU_BIND:
 	case PRU_LISTEN:

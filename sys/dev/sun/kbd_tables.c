@@ -1,4 +1,4 @@
-/*	$NetBSD: kbd_tables.c,v 1.7 2002/04/12 14:27:29 pk Exp $	*/
+/*	$NetBSD: kbd_tables.c,v 1.7.10.1 2005/03/04 16:50:39 skrll Exp $	*/
 
 /*
  * Copyright (c) 1996 Gordon W. Ross
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kbd_tables.c,v 1.7 2002/04/12 14:27:29 pk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kbd_tables.c,v 1.7.10.1 2005/03/04 16:50:39 skrll Exp $");
 
 #include <sys/types.h>
 
@@ -927,5 +927,5 @@ struct keyboard * keyboards[] = {
 	&kbd_type3,
 	&kbd_type4,
 	&kbd_type5,
-};		
+};
 int kbd_max_type = 5;

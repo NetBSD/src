@@ -1,4 +1,4 @@
-/*	$NetBSD: fdc_pcmcia.c,v 1.10.6.4 2005/02/04 11:47:08 skrll Exp $	*/
+/*	$NetBSD: fdc_pcmcia.c,v 1.10.6.5 2005/03/04 16:49:38 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdc_pcmcia.c,v 1.10.6.4 2005/02/04 11:47:08 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdc_pcmcia.c,v 1.10.6.5 2005/03/04 16:49:38 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -88,7 +88,7 @@ fdc_conf(fdc)
 	int n;
 
 	/* Figure out what we have */
-	if (out_fdc_cmd(iot, ioh, FDC_CMD_VERSION) == -1 || 
+	if (out_fdc_cmd(iot, ioh, FDC_CMD_VERSION) == -1 ||
 	    (n = fdcresult(fdc, 1)) != 1)
 		return;
 
@@ -98,7 +98,7 @@ fdc_conf(fdc)
 
 #if 0
 	/* ns8477 check */
-	if (out_fdc_cmd(iot, ioh, FDC_CMD_NSC) == -1 || 
+	if (out_fdc_cmd(iot, ioh, FDC_CMD_NSC) == -1 ||
 	    (n = fdcresult(fdc, 1)) != 1) {
 		printf("NSC command failed\n");
 		return;
@@ -107,7 +107,7 @@ fdc_conf(fdc)
 		printf("Version %x\n", fdc->sc_status[0]);
 #endif
 
-	if (out_fdc_cmd(iot, ioh, FDC_CMD_DUMPREG) == -1 || 
+	if (out_fdc_cmd(iot, ioh, FDC_CMD_DUMPREG) == -1 ||
 	    (n = fdcresult(fdc, -1)) == -1)
 		return;
 

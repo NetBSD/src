@@ -1,4 +1,4 @@
-/* $NetBSD: if_pppoe.c,v 1.44.2.6 2005/01/24 08:35:53 skrll Exp $ */
+/* $NetBSD: if_pppoe.c,v 1.44.2.7 2005/03/04 16:52:58 skrll Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_pppoe.c,v 1.44.2.6 2005/01/24 08:35:53 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_pppoe.c,v 1.44.2.7 2005/03/04 16:52:58 skrll Exp $");
 
 #include "pppoe.h"
 #include "bpfilter.h"
@@ -952,7 +952,7 @@ pppoe_ioctl(struct ifnet *ifp, unsigned long cmd, caddr_t data)
 /*
  * Allocate a mbuf/cluster with space to store the given data length
  * of payload, leaving space for prepending an ethernet header
- * in front. 
+ * in front.
  */
 static struct mbuf *
 pppoe_get_mbuf(size_t len)

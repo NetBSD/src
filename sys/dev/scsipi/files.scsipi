@@ -1,4 +1,4 @@
-#	$NetBSD: files.scsipi,v 1.33.6.4 2004/09/21 13:33:21 skrll Exp $
+#	$NetBSD: files.scsipi,v 1.33.6.5 2005/03/04 16:50:33 skrll Exp $
 #
 # Config file and device description for machine-independent SCSI code.
 # Included by ports that need it.  Ports that use it must provide
@@ -18,7 +18,7 @@ file	dev/scsipi/scsipiconf.c		scsi_core | atapibus
 file	dev/scsipi/scsipi_base.c	scsi_core | atapibus
 file	dev/scsipi/scsipi_ioctl.c	scsi_core | atapibus
 file	dev/scsipi/scsipi_verbose.c	(scsi_core | atapibus) & scsiverbose
-file	dev/scsipi/scsi_base.c		scsi_core 
+file	dev/scsipi/scsi_base.c		scsi_core
 file	dev/scsipi/atapi_base.c		atapibus
 file	dev/scsipi/atapi_wdc.c		atapibus & atabus & wdc_common
 

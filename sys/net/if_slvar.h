@@ -1,4 +1,4 @@
-/*	$NetBSD: if_slvar.h,v 1.24.22.4 2004/12/18 09:32:50 skrll Exp $	*/
+/*	$NetBSD: if_slvar.h,v 1.24.22.5 2005/03/04 16:52:58 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -36,7 +36,7 @@
 
 /*
  * Definitions for SLIP interface data structures
- * 
+ *
  * (This exists so programs like slstats can get at the definition
  *  of sl_softc.)
  */

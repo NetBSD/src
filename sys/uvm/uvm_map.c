@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.c,v 1.136.2.7 2005/02/15 21:34:02 skrll Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.136.2.8 2005/03/04 16:55:00 skrll Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.136.2.7 2005/02/15 21:34:02 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.136.2.8 2005/03/04 16:55:00 skrll Exp $");
 
 #include "opt_ddb.h"
 #include "opt_uvmhist.h"
@@ -2652,7 +2652,7 @@ uvm_map_setup_kernel(struct vm_map_kernel *map,
 {
 
 	uvm_map_setup(&map->vmk_map, min, max, flags);
-	
+
 	LIST_INIT(&map->vmk_kentry_free);
 	map->vmk_merged_entries = NULL;
 }
@@ -3422,13 +3422,17 @@ uvm_map_clean(struct vm_map *map, vaddr_t start, vaddr_t end, int flags)
 	}
 
 	/*
-	 * Make a first pass to check for holes.
+	 * Make a first pass to check for holes and wiring problems.
 	 */
 
 	for (current = entry; current->start < end; current = current->next) {
 		if (UVM_ET_ISSUBMAP(current)) {
 			vm_map_unlock_read(map);
 			return EINVAL;
+		}
+		if ((flags & PGO_FREE) != 0 && VM_MAPENT_ISWIRED(entry)) {
+			vm_map_unlock_read(map);
+			return EBUSY;
 		}
 		if (end <= current->end) {
 			break;

@@ -1,4 +1,4 @@
-/*	$NetBSD: mfs_vfsops.c,v 1.51.2.7 2005/01/17 19:33:11 skrll Exp $	*/
+/*	$NetBSD: mfs_vfsops.c,v 1.51.2.8 2005/03/04 16:55:00 skrll Exp $	*/
 
 /*
  * Copyright (c) 1989, 1990, 1993, 1994
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mfs_vfsops.c,v 1.51.2.7 2005/01/17 19:33:11 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mfs_vfsops.c,v 1.51.2.8 2005/03/04 16:55:00 skrll Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -77,7 +77,7 @@ MALLOC_DEFINE(M_MFSNODE, "MFS node", "MFS vnode private part");
  * mfs vfs operations.
  */
 
-extern const struct vnodeopv_desc mfs_vnodeop_opv_desc;  
+extern const struct vnodeopv_desc mfs_vnodeop_opv_desc;
 
 const struct vnodeopv_desc * const mfs_vnodeopv_descs[] = {
 	&mfs_vnodeop_opv_desc,
@@ -129,9 +129,9 @@ SYSCTL_SETUP(sysctl_vfs_mfs_setup, "sysctl vfs.mfs subtree setup")
 	 */
 }
 
-/* 
+/*
  * Memory based filesystem initialization.
- */ 
+ */
 void
 mfs_init()
 {
@@ -200,7 +200,7 @@ mfs_mountroot()
 		free(mp, M_MOUNT);
 		free(mfsp, M_MFSNODE);
 		return (error);
-	}	
+	}
 	simple_lock(&mountlist_slock);
 	CIRCLEQ_INSERT_TAIL(&mountlist, mp, mnt_list);
 	simple_unlock(&mountlist_slock);

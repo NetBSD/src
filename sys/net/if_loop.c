@@ -1,9 +1,9 @@
-/*	$NetBSD: if_loop.c,v 1.46.2.5 2004/12/18 09:32:50 skrll Exp $	*/
+/*	$NetBSD: if_loop.c,v 1.46.2.6 2005/03/04 16:52:58 skrll Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -15,7 +15,7 @@
  * 3. Neither the name of the project nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE PROJECT AND CONTRIBUTORS ``AS IS'' AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_loop.c,v 1.46.2.5 2004/12/18 09:32:50 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_loop.c,v 1.46.2.6 2005/03/04 16:52:58 skrll Exp $");
 
 #include "opt_inet.h"
 #include "opt_atalk.h"
