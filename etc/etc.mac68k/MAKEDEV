@@ -20,7 +20,7 @@
 # MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
 #
 #	from: @(#)MAKEDEV	5.2 (Berkeley) 6/22/90
-#	$Id: MAKEDEV,v 1.14 1995/08/17 18:02:36 thorpej Exp $
+#	$Id: MAKEDEV,v 1.15 1995/10/03 20:21:26 briggs Exp $
 #
 # Device "make" file.  Valid arguments:
 #	all	a smattering--at least one of each except
@@ -71,7 +71,9 @@ all)
 	sh MAKEDEV ccd0 ccd1 ccd2 ccd3
 	sh MAKEDEV adb grf0 grf1 ttye0
 	sh MAKEDEV tty00 tty01 pty0
-	sh MAKEDEV bpf0 bpf1 bpf2 bpf3 tun0 tun1 tun2 tun3
+	sh MAKEDEV bpf0 bpf1 bpf2 bpf3 bpf4 bpf5 bpf6 bpf7
+	sh MAKEDEV bpf8 bpf9 bpfa bpfb
+	sh MAKEDEV tun0 tun1 tun2 tun3
 	sh MAKEDEV lkm
 	sh MAKEDEV local
 	;;
