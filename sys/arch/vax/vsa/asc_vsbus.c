@@ -1,4 +1,4 @@
-/*	$NetBSD: asc_vsbus.c,v 1.26 2002/09/27 20:36:58 thorpej Exp $	*/
+/*	$NetBSD: asc_vsbus.c,v 1.27 2002/10/01 05:19:03 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: asc_vsbus.c,v 1.26 2002/09/27 20:36:58 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: asc_vsbus.c,v 1.27 2002/10/01 05:19:03 thorpej Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -105,9 +105,8 @@ struct asc_vsbus_softc {
 static int asc_vsbus_match(struct device *, struct cfdata *, void *);
 static void asc_vsbus_attach(struct device *, struct device *, void *);
 
-const struct cfattach asc_vsbus_ca = {
-	sizeof(struct asc_vsbus_softc), asc_vsbus_match, asc_vsbus_attach
-};
+CFATTACH_DECL(asc_vsbus, sizeof(struct asc_vsbus_softc),
+    asc_vsbus_match, asc_vsbus_attach, NULL, NULL)
 
 /*
  * Functions and the switch for the MI code

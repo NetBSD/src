@@ -1,4 +1,4 @@
-/*	$NetBSD: ts.c,v 1.21 2002/09/27 20:36:49 thorpej Exp $ */
+/*	$NetBSD: ts.c,v 1.22 2002/10/01 05:19:01 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -193,9 +193,8 @@ int	tsmatch __P((struct device *, void *, void *));
 void	tsattach __P((struct device *, struct device *, void *));
 void	tsstrategy __P((struct buf *));
 
-const struct cfattach ts_ca = {
-	sizeof(struct ts_softc), tsmatch, tsattach
-};
+CFATTACH_DECL(ts, sizeof(struct ts_softc),
+    tsmatch, tsattach, NULL, NULL)
 
 extern struct cfdriver ts_cd;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: hp.c,v 1.27 2002/09/27 20:36:48 thorpej Exp $ */
+/*	$NetBSD: hp.c,v 1.28 2002/10/01 05:19:00 thorpej Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -82,9 +82,8 @@ void	hpstart(struct mba_device *);
 int	hpattn(struct mba_device *);
 enum	xfer_action hpfinish(struct mba_device *, int, int *);
 
-const struct cfattach hp_ca = {
-	sizeof(struct hp_softc), hpmatch, hpattach
-};
+CFATTACH_DECL(hp, sizeof(struct hp_softc),
+    hpmatch, hpattach, NULL, NULL)
 
 dev_type_open(hpopen);
 dev_type_close(hpclose);

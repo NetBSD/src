@@ -1,4 +1,4 @@
-/*	$NetBSD: ka820.c,v 1.32 2002/09/27 20:36:55 thorpej Exp $	*/
+/*	$NetBSD: ka820.c,v 1.33 2002/10/01 05:19:02 thorpej Exp $	*/
 /*
  * Copyright (c) 1988 Regents of the University of California.
  * All rights reserved.
@@ -131,9 +131,8 @@ struct ka820_softc {
 	int sc_binid;		/* CPU node ID */
 };
 
-const struct cfattach cpu_bi_ca = {
-	sizeof(struct ka820_softc), ka820_match, ka820_attach
-};
+CFATTACH_DECL(cpu_bi, sizeof(struct ka820_softc),
+    ka820_match, ka820_attach, NULL, NULL)
 
 #ifdef notyet
 extern struct pte BRAMmap[];
@@ -304,9 +303,8 @@ struct mem_bi_softc {
 	bus_space_handle_t sc_ioh;
 };
 
-const struct cfattach mem_bi_ca = {
-	sizeof(struct mem_bi_softc), ms820_match, ms820_attach
-};
+CFATTACH_DECL(mem_bi, sizeof(struct mem_bi_softc),
+    ms820_match, ms820_attach, NULL, NULL)
 
 static int
 ms820_match(struct device *parent, struct cfdata *cf, void *aux)
