@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_subr.c,v 1.40 2001/12/05 00:58:05 thorpej Exp $	*/
+/*	$NetBSD: procfs_subr.c,v 1.41 2002/11/07 08:21:36 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 Christopher G. Demetriou.  All rights reserved.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_subr.c,v 1.40 2001/12/05 00:58:05 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_subr.c,v 1.41 2002/11/07 08:21:36 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -356,8 +356,7 @@ procfs_hashreinit()
 {
 	struct pfsnode *pp;
 	struct pfs_hashhead *oldhash, *hash;
-	u_long oldmask, mask, val;
-	int i;
+	u_long i, oldmask, mask, val;
 
 	hash = hashinit(desiredvnodes / 4, HASH_LIST, M_UFSMNT, M_WAITOK,
 	    &mask);
