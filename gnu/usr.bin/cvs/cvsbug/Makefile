@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2000/09/04 22:14:31 christos Exp $
+#	$NetBSD: Makefile,v 1.3 2000/09/04 22:35:01 christos Exp $
 
 .include "${.CURDIR}/../Makefile.inc"
 
@@ -9,6 +9,7 @@ PROG=	cvsbug
 DIST=	${IDIST}/src
 .PATH:	${DIST} ${IDIST}/man
 
+STRIPFLAG=
 MAN=	cvsbug.8
 SRCS=	cvsbug.sh
 CLEANFILES+=.fname
