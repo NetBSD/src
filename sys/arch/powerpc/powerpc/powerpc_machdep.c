@@ -36,13 +36,16 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: powerpc_machdep.c,v 1.1 2001/02/24 04:29:26 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: powerpc_machdep.c,v 1.2 2001/02/24 22:39:20 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
+#include <sys/conf.h>
 #include <sys/exec.h>
 #include <sys/proc.h>
 #include <sys/user.h>
+#include <sys/sysctl.h>
+#include <sys/disklabel.h>
 #include <uvm/uvm_extern.h>
 
 #include <machine/frame.h>
@@ -90,4 +93,79 @@ setregs(struct proc *p, struct exec_package *pack, u_long stack)
 	tf->srr0 = pack->ep_entry;
 	tf->srr1 = PSL_MBO | PSL_USERSET | PSL_FE_DFLT;
 	p->p_addr->u_pcb.pcb_flags = 0;
+}
+
+/*
+ * Machine dependent system variables.
+ */
+int
+cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
+	int *name;
+	u_int namelen;
+	void *oldp;
+	size_t *oldlenp;
+	void *newp;
+	size_t newlen;
+	struct proc *p;
+{
+	/* all sysctl names at this level are terminal */
+	if (namelen != 1)
+		return ENOTDIR;
+
+	switch (name[0]) {
+	case CPU_CACHELINE:
+		return sysctl_rdint(oldp, oldlenp, newp, CACHELINESIZE);
+	default:
+		return EOPNOTSUPP;
+	}
+}
+
+
+/*
+ * Crash dump handling.
+ */
+u_long dumpmag = 0x8fca0101;		/* magic number */
+long dumplo = -1;			/* blocks */
+int dumpsize = 0;			/* size of dump in pages */
+
+/*
+ * This is called by main to set dumplo and dumpsize.
+ * Dumps always skip the first NBPG of disk space
+ * in case there might be a disk label stored there.
+ * If there is extra space, put dump at the end to
+ * reduce the chance that swapping trashes it.
+ */
+void
+cpu_dumpconf(void)
+{
+	int nblks;	/* size of dump area */
+	int skip;
+	int maj;
+
+	if (dumpdev == NODEV)
+		return;
+	maj = major(dumpdev);
+	if (maj < 0 || maj >= nblkdev)
+		panic("dumpconf: bad dumpdev=0x%x", dumpdev);
+	if (bdevsw[maj].d_psize == NULL)
+		return;
+	nblks = (*bdevsw[maj].d_psize)(dumpdev);
+	if (nblks <= ctod(1))
+		return;
+
+	dumpsize = physmem;
+
+	/* Skip enough block at the start of disk to preserve an eventual disklabel */
+	skip = LABELSECTOR + ctod(1);
+	skip = ctod(dtoc(skip));
+
+	/* Always skip the first NBPG, in case there is a label there. */
+	if (dumplo < skip)
+		dumplo = skip;
+
+	/* Put dump at end of partition, and make it fit. */
+	if (dumpsize > dtoc(nblks - dumplo))
+		dumpsize = dtoc(nblks - dumplo);
+	if (dumplo < nblks - ctod(dumpsize))
+		dumplo = nblks - ctod(dumpsize);
 }

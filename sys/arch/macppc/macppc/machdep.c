@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.89 2001/02/24 04:35:33 matt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.90 2001/02/24 22:39:18 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -535,36 +535,8 @@ consinit()
 }
 
 /*
- * Machine dependent system variables.
- */
-int
-cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
-	int *name;
-	u_int namelen;
-	void *oldp;
-	size_t *oldlenp;
-	void *newp;
-	size_t newlen;
-	struct proc *p;
-{
-	/* all sysctl names at this level are terminal */
-	if (namelen != 1)
-		return ENOTDIR;
-
-	switch (name[0]) {
-	case CPU_CACHELINE:
-		return sysctl_rdint(oldp, oldlenp, newp, CACHELINESIZE);
-	default:
-		return EOPNOTSUPP;
-	}
-}
-
-/*
  * Crash dump handling.
  */
-u_long dumpmag = 0x8fca0101;		/* magic number */
-int dumpsize = 0;			/* size of dump in pages */
-long dumplo = -1;			/* blocks */
 
 void
 dumpsys()
