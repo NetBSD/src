@@ -1,4 +1,4 @@
-.\" $NetBSD: pkg_add.1,v 1.21 2001/01/07 01:39:20 hubertf Exp $
+.\" $NetBSD: pkg_add.1,v 1.22 2001/03/05 16:53:13 wiz Exp $
 .\"
 .\" FreeBSD install - a package for the installation and maintainance
 .\" of non-core utilities.
@@ -25,7 +25,7 @@
 .Nd a utility for installing software package distributions
 .Sh SYNOPSIS
 .Nm ""
-.Op Fl vInfRMS
+.Op Fl fIMnRSVv
 .Bk -words
 .Op Fl t Ar template
 .Ek
@@ -177,6 +177,8 @@ You can get a performance boost by setting the staging area
 to reside on the same disk partition as target directories for package
 file installation; often this is
 .Pa /usr .
+.It Fl V
+Print version number and exit.
 .It Fl v
 Turn on verbose output.
 .El

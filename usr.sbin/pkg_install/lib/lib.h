@@ -1,4 +1,4 @@
-/* $NetBSD: lib.h,v 1.31 2000/10/11 20:23:55 is Exp $ */
+/* $NetBSD: lib.h,v 1.32 2001/03/05 16:53:14 wiz Exp $ */
 
 /* from FreeBSD Id: lib.h,v 1.25 1997/10/08 07:48:03 charnier Exp */
 
@@ -174,6 +174,7 @@ void    leave_playpen(char *);
 off_t   min_free(char *);
 void    save_dirs(char **c, char **p);
 void    restore_dirs(char *c, char *p);
+void    show_version(void);
 
 /* String */
 char   *get_dash_string(char **);

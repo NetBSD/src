@@ -1,8 +1,8 @@
-/*	$NetBSD: main.c,v 1.20 2001/02/21 13:12:47 hubertf Exp $	*/
+/*	$NetBSD: main.c,v 1.21 2001/03/05 16:53:13 wiz Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: main.c,v 1.20 2001/02/21 13:12:47 hubertf Exp $");
+__RCSID("$NetBSD: main.c,v 1.21 2001/03/05 16:53:13 wiz Exp $");
 #endif
 
 /*
@@ -339,7 +339,12 @@ main(int argc, char *argv[])
 	if (argc < 2)
 		usage();
 
-	if (strcasecmp(argv[1], "rebuild") == 0) {
+	if (strcmp(argv[1], "-V") == 0) {
+
+		show_version();
+		/* NOTREACHED */
+
+	} else if (strcasecmp(argv[1], "rebuild") == 0) {
 
 		rebuild();
 		printf("Done.\n");
@@ -549,7 +554,7 @@ main(int argc, char *argv[])
 void 
 usage(void)
 {
-	printf("usage: pkg_admin command args ...\n"
+	printf("usage: pkg_admin [-V] command args ...\n"
 	    "Where 'commands' and 'args' are:\n"
 	    " rebuild          - rebuild pkgdb from +CONTENTS files\n"
 	    " check [pkg ...]  - check md5 checksum of installed files\n"
