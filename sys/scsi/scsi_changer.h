@@ -1,4 +1,4 @@
-/*	$NetBSD: scsi_changer.h,v 1.5 1994/12/28 19:42:59 mycroft Exp $	*/
+/*	$NetBSD: scsi_changer.h,v 1.6 1996/03/19 03:05:15 mycroft Exp $	*/
 
 /*
  * SCSI changer interface description
@@ -28,16 +28,16 @@
  * SCSI command format
  */
 struct scsi_read_element_status {
-        u_char  opcode;
-	u_char	byte2;
+        u_int8_t opcode;
+	u_int8_t byte2;
 #define	SRES_ELEM_TYPE_CODE 	0x0F
 #define	SRES_ELEM_VOLTAG 	0x10
-	u_char	starting_element_addr[2];
-	u_char	number_of_elements[2];
-	u_char	resv1;
-	u_char	allocation_length[3];
-	u_char	resv2;
-	u_char	control;
+	u_int8_t starting_element_addr[2];
+	u_int8_t number_of_elements[2];
+	u_int8_t resv1;
+	u_int8_t allocation_length[3];
+	u_int8_t resv2;
+	u_int8_t control;
 };
 #define RE_ALL_ELEMENTS			0
 #define RE_MEDIUM_TRANSPORT_ELEMENT	1
@@ -46,24 +46,24 @@ struct scsi_read_element_status {
 #define RE_DATA_TRANSFER_ELEMENT	4
 
 struct scsi_move_medium {
-	u_char  opcode;
-	u_char	byte2;
-	u_char  transport_element_address[2];
-	u_char  source_address[2];
-	u_char  destination_address[2];
-	u_char  rsvd[2];
-	u_char  invert;
-	u_char	control;
+	u_int8_t opcode;
+	u_int8_t byte2;
+	u_int8_t transport_element_address[2];
+	u_int8_t source_address[2];
+	u_int8_t destination_address[2];
+	u_int8_t rsvd[2];
+	u_int8_t invert;
+	u_int8_t control;
 };
 
 struct scsi_position_to_element {
-	u_char  opcode;
-        u_char  byte2;
-	u_char  transport_element_address[2];
-	u_char  source_address[2];
-	u_char  rsvd[2];
-	u_char  invert;
-	u_char	control;
+	u_int8_t opcode;
+        u_int8_t byte2;
+	u_int8_t transport_element_address[2];
+	u_int8_t source_address[2];
+	u_int8_t rsvd[2];
+	u_int8_t invert;
+	u_int8_t control;
 };
 	
 /*
@@ -74,20 +74,20 @@ struct scsi_position_to_element {
 #define READ_ELEMENT_STATUS     0xb8
 
 struct scsi_element_status_data {
-	u_char	first_element_reported[2];
-	u_char	number_of_elements_reported[2];
-	u_char  rsvd;
-	u_char	byte_count_of_report[3];
+	u_int8_t first_element_reported[2];
+	u_int8_t number_of_elements_reported[2];
+	u_int8_t rsvd;
+	u_int8_t byte_count_of_report[3];
 };
 
 struct element_status_page {
-	u_char	element_type_code;
-	u_char	flags;
+	u_int8_t element_type_code;
+	u_int8_t flags;
 #define	ESP_AVOLTAG	0x40
 #define	ESP_PVOLTAG	0x80
-	u_char element_descriptor_length[2];
-	u_char rsvd;
-	u_char byte_count_of_descriptor_data[3];
+	u_int8_t element_descriptor_length[2];
+	u_int8_t rsvd;
+	u_int8_t byte_count_of_descriptor_data[3];
 };
 
 #endif /* _SCSI_SCSI_CHANGER_H */

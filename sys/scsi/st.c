@@ -1,4 +1,4 @@
-/*	$NetBSD: st.c,v 1.63 1996/03/17 00:59:54 thorpej Exp $	*/
+/*	$NetBSD: st.c,v 1.64 1996/03/19 03:05:15 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
@@ -1005,9 +1005,9 @@ ststart(v)
 		 */
 		if (st->flags & ST_FIXEDBLOCKS) {
 			cmd.byte2 |= SRW_FIXED;
-			lto3b(bp->b_bcount / st->blksize, cmd.len);
+			_lto3b(bp->b_bcount / st->blksize, cmd.len);
 		} else
-			lto3b(bp->b_bcount, cmd.len);
+			_lto3b(bp->b_bcount, cmd.len);
 
 		/*
 		 * go ask the adapter to do all this for us
@@ -1254,20 +1254,14 @@ st_read(st, buf, size, flags)
 	cmd.opcode = READ;
 	if (st->flags & ST_FIXEDBLOCKS) {
 		cmd.byte2 |= SRW_FIXED;
-		lto3b(size / (st->blksize ? st->blksize : DEF_FIXED_BSIZE),
+		_lto3b(size / (st->blksize ? st->blksize : DEF_FIXED_BSIZE),
 		    cmd.len);
 	} else
-		lto3b(size, cmd.len);
+		_lto3b(size, cmd.len);
 	return scsi_scsi_cmd(st->sc_link, (struct scsi_generic *) &cmd,
 	    sizeof(cmd), (u_char *) buf, size, 0, 100000, NULL,
 	    flags | SCSI_DATA_IN);
 }
-
-#ifdef	__STDC__
-#define b2tol(a)	(((unsigned)(a##_1) << 8) + (unsigned)a##_0)
-#else
-#define b2tol(a)	(((unsigned)(a/**/_1) << 8) + (unsigned)a/**/_0)
-#endif
 
 /*
  * Ask the drive what it's min and max blk sizes are.
@@ -1304,8 +1298,8 @@ st_read_block_limits(st, flags)
 	if (error)
 		return error;
 
-	st->blkmin = b2tol(block_limits.min_length);
-	st->blkmax = _3btol(&block_limits.max_length_2);
+	st->blkmin = _2btol(block_limits.min_length);
+	st->blkmax = _3btol(block_limits.max_length);
 
 	SC_DEBUG(sc_link, SDEV_DB3,
 	    ("(%d <= blksize <= %d)\n", st->blkmin, st->blkmax));
@@ -1413,7 +1407,7 @@ st_mode_select(st, flags)
 	else
 		scsi_select.header.dev_spec |= SMH_DSP_BUFF_MODE_ON;
 	if (st->flags & ST_FIXEDBLOCKS)
-		lto3b(st->blksize, scsi_select.blk_desc.blklen);
+		_lto3b(st->blksize, scsi_select.blk_desc.blklen);
 	if (st->page_0_size)
 		bcopy(st->sense_data, scsi_select.sense_data, st->page_0_size);
 
@@ -1531,7 +1525,7 @@ st_space(st, number, what, flags)
 	bzero(&cmd, sizeof(cmd));
 	cmd.opcode = SPACE;
 	cmd.byte2 = what;
-	lto3b(number, cmd.number);
+	_lto3b(number, cmd.number);
 
 	return scsi_scsi_cmd(st->sc_link, (struct scsi_generic *) &cmd,
 	    sizeof(cmd), 0, 0, 0, 900000, NULL, flags);
@@ -1570,7 +1564,7 @@ st_write_filemarks(st, number, flags)
 
 	bzero(&cmd, sizeof(cmd));
 	cmd.opcode = WRITE_FILEMARKS;
-	lto3b(number, cmd.number);
+	_lto3b(number, cmd.number);
 
 	return scsi_scsi_cmd(st->sc_link, (struct scsi_generic *) &cmd,
 	    sizeof(cmd), 0, 0, 0, 100000, NULL, flags);
@@ -1686,26 +1680,25 @@ st_interpret_sense(xs)
 	/*
 	 * Get the sense fields and work out what code
 	 */
-	if (sense->error_code & SSD_ERRCODE_VALID) {
-		bcopy(sense->extended_info, &info, sizeof info);
-		info = ntohl(info);
-	} else
+	if (sense->error_code & SSD_ERRCODE_VALID)
+		info = _4btol(sense->info);
+	else
 		info = xs->datalen;	/* bad choice if fixed blocks */
 	if ((sense->error_code & SSD_ERRCODE) != 0x70)
 		return -1;	/* let the generic code handle it */
 	if (st->flags & ST_FIXEDBLOCKS) {
 		xs->resid = info * st->blksize;
-		if (sense->extended_flags & SSD_EOM) {
+		if (sense->flags & SSD_EOM) {
 			st->flags |= ST_EIO_PENDING;
 			if (bp)
 				bp->b_resid = xs->resid;
 		}
-		if (sense->extended_flags & SSD_FILEMARK) {
+		if (sense->flags & SSD_FILEMARK) {
 			st->flags |= ST_AT_FILEMARK;
 			if (bp)
 				bp->b_resid = xs->resid;
 		}
-		if (sense->extended_flags & SSD_ILI) {
+		if (sense->flags & SSD_ILI) {
 			st->flags |= ST_EIO_PENDING;
 			if (bp)
 				bp->b_resid = xs->resid;
@@ -1739,14 +1732,14 @@ st_interpret_sense(xs)
 		}
 	} else {		/* must be variable mode */
 		xs->resid = xs->datalen;	/* to be sure */
-		if (sense->extended_flags & SSD_EOM)
+		if (sense->flags & SSD_EOM)
 			return EIO;
-		if (sense->extended_flags & SSD_FILEMARK) {
+		if (sense->flags & SSD_FILEMARK) {
 			if (bp)
 				bp->b_resid = bp->b_bcount;
 			return 0;
 		}
-		if (sense->extended_flags & SSD_ILI) {
+		if (sense->flags & SSD_ILI) {
 			if (info < 0) {
 				/*
 				 * the record was bigger than the read
@@ -1762,7 +1755,7 @@ st_interpret_sense(xs)
 				bp->b_resid = info;
 		}
 	}
-	key = sense->extended_flags & SSD_KEY;
+	key = sense->flags & SSD_KEY;
 
 	if (key == 0x8) {
 		/*

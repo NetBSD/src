@@ -1,4 +1,4 @@
-/*	$NetBSD: ss_scanjet.c,v 1.1 1996/02/18 20:32:49 mycroft Exp $	*/
+/*	$NetBSD: ss_scanjet.c,v 1.2 1996/03/19 03:05:15 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1995 Kenneth Stailey.  All rights reserved.
@@ -240,7 +240,7 @@ scanjet_read(ss, bp)
 	 * Handle "fixed-block-mode" tape drives by using the
 	 * block count instead of the length.
 	 */
-	lto3b(bp->b_bcount, cmd.len);
+	_lto3b(bp->b_bcount, cmd.len);
 
 	/*
 	 * go ask the adapter to do all this for us
@@ -278,7 +278,7 @@ scanjet_write(ss, buf, size, flags)
 		return (0);
 	bzero(&cmd, sizeof(cmd));
 	cmd.opcode = WRITE;
-	lto3b(size, cmd.len);
+	_lto3b(size, cmd.len);
 	return (scsi_scsi_cmd(ss->sc_link, (struct scsi_generic *) &cmd,
 	    sizeof(cmd), (u_char *) buf, size, 0, 100000, NULL,
 	    flags | SCSI_DATA_OUT));

@@ -1,4 +1,4 @@
-/*	$NetBSD: ch.c,v 1.17 1996/03/17 00:59:44 thorpej Exp $	*/
+/*	$NetBSD: ch.c,v 1.18 1996/03/19 03:05:15 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
@@ -312,8 +312,7 @@ ch_getelem(ch, stat, type, from, data, flags)
 	bzero(&scsi_cmd, sizeof(scsi_cmd));
 	scsi_cmd.opcode = READ_ELEMENT_STATUS;
 	scsi_cmd.byte2 = type;
-	scsi_cmd.starting_element_addr[0] = (from >> 8) & 0xff;
-	scsi_cmd.starting_element_addr[1] = from & 0xff;
+	_lto2b(from, scsi_cmd.starting_element_addr);
 	scsi_cmd.number_of_elements[1] = 1;
 	scsi_cmd.allocation_length[2] = 32;
 
@@ -339,12 +338,9 @@ ch_move(ch, stat, chm, from, to, flags)
 
 	bzero(&scsi_cmd, sizeof(scsi_cmd));
 	scsi_cmd.opcode = MOVE_MEDIUM;
-	scsi_cmd.transport_element_address[0] = (chm >> 8) & 0xff;
-	scsi_cmd.transport_element_address[1] = chm & 0xff;
-	scsi_cmd.source_address[0] = (from >> 8) & 0xff;
-	scsi_cmd.source_address[1] = from & 0xff;
-	scsi_cmd.destination_address[0] = (to >> 8) & 0xff;
-	scsi_cmd.destination_address[1] = to & 0xff;
+	_lto2b(chm, scsi_cmd.transport_element_address);
+	_lto2b(from, scsi_cmd.source_address);
+	_lto2b(to, scsi_cmd.destination_address);
 	scsi_cmd.invert = (chm & CH_INVERT) ? 1 : 0;
 	error = scsi_scsi_cmd(ch->sc_link, (struct scsi_generic *) &scsi_cmd,
 	    sizeof(scsi_cmd), NULL, 0, CHRETRIES, 100000, NULL, flags);
@@ -366,10 +362,8 @@ ch_position(ch, stat, chm, to, flags)
 
 	bzero(&scsi_cmd, sizeof(scsi_cmd));
 	scsi_cmd.opcode = POSITION_TO_ELEMENT;
-	scsi_cmd.transport_element_address[0] = (chm >> 8) & 0xff;
-	scsi_cmd.transport_element_address[1] = chm & 0xff;
-	scsi_cmd.source_address[0] = (to >> 8) & 0xff;
-	scsi_cmd.source_address[1] = to & 0xff;
+	_lto2b(chm, scsi_cmd.transport_element_address);
+	_lto2b(to, scsi_cmd.source_address);
 	scsi_cmd.invert = (chm & CH_INVERT) ? 1 : 0;
 	error = scsi_scsi_cmd(ch->sc_link, (struct scsi_generic *) &scsi_cmd,
 	    sizeof(scsi_cmd), NULL, 0, CHRETRIES, 100000, NULL, flags);
