@@ -37,18 +37,18 @@
  *
  *	from: Utah Hdr: ite_dv.c 1.1 89/02/28
  *	from: @(#)ite_dv.c	7.2 (Berkeley) 12/16/90
- *	$Id: ite_dv.c,v 1.4 1994/01/26 02:38:41 brezak Exp $
+ *	$Id: ite_dv.c,v 1.5 1994/02/19 17:55:16 hpeyerl Exp $
  */
 
 #include "samachdep.h"
 
 #ifdef ITECONSOLE
 
-#include "sys/param.h"
-#include "../dev/itevar.h"
-#include "../dev/itereg.h"
-#include "../dev/grfvar.h"
-#include "../dev/grf_dvreg.h"
+#include <sys/param.h>
+#include <hp300/dev/itevar.h>
+#include <hp300/dev/itereg.h>
+#include <hp300/dev/grfvar.h>
+#include <hp300/dev/grf_dvreg.h>
 
 #define REGBASE		((struct dvboxfb *)(ip->regbase))
 #define WINDOWMOVER	dvbox_windowmove

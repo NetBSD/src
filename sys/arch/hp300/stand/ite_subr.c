@@ -37,16 +37,16 @@
  *
  *	from: Utah Hdr: ite_subr.c 1.1 89/02/17
  *	from: @(#)ite_subr.c	7.2 (Berkeley) 12/16/90
- *	$Id: ite_subr.c,v 1.4 1994/01/26 02:38:46 brezak Exp $
+ *	$Id: ite_subr.c,v 1.5 1994/02/19 17:55:13 hpeyerl Exp $
  */
 
 #include "samachdep.h"
 
 #ifdef ITECONSOLE
 
-#include "sys/param.h"
-#include "../dev/itevar.h"
-#include "../dev/itereg.h"
+#include <sys/param.h>
+#include <hp300/dev/itevar.h>
+#include <hp300/dev/itereg.h>
 
 ite_devinfo(ip)
 	struct ite_softc *ip;
