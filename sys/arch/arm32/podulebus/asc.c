@@ -1,4 +1,4 @@
-/* $NetBSD: asc.c,v 1.12 1996/10/13 03:06:36 christos Exp $ */
+/* $NetBSD: asc.c,v 1.13 1996/10/14 23:53:58 mark Exp $ */
 
 /*
  * Copyright (c) 1996 Mark Brinicombe
@@ -37,6 +37,10 @@
  */
 
 /*
+ * Driver for the Acorn SCSI card using the SBIC (WD3393) generic driver
+ */
+
+/*
  * Ok this driver is not wonderful yet. It only supports POLLING mode
  * The Acorn SCSI card (or any WD3393 based card) does not support
  * DMA so the DMA section of this driver and the sbic driver needs
@@ -49,6 +53,7 @@
 #include <sys/device.h>
 #include <scsi/scsi_all.h>
 #include <scsi/scsiconf.h>
+#include <machine/bootconfig.h>
 #include <machine/io.h>
 #include <machine/irqhandler.h>
 #include <machine/katelib.h>
@@ -57,6 +62,7 @@
 #include <arm32/podulebus/sbicvar.h>
 #include <arm32/podulebus/ascreg.h>
 #include <arm32/podulebus/ascvar.h>
+#include <arm32/podulebus/podules.h>
 
 void ascattach	__P((struct device *, struct device *, void *));
 int ascmatch	__P((struct device *, void *, void *));
@@ -68,10 +74,11 @@ int asc_dmaintr __P((struct sbic_softc *));
 int asc_dmago	__P((struct sbic_softc *, char *, int, int));
 int asc_scsicmd __P((struct scsi_xfer *xs));
 int asc_intr	__P((struct asc_softc *));
+void asc_minphys __P((struct buf *bp));
 
 struct scsi_adapter asc_scsiswitch = {
 	asc_scsicmd,
-	sbic_minphys,
+	asc_minphys,
 	0,			/* no lun support */
 	0,			/* no lun support */
 };
@@ -100,9 +107,8 @@ u_long scsi_nosync;
 int shift_nosync;
 
 #if ASC_POLL > 0
-int asc_poll = 1;
+int asc_poll = 0;
 
-extern char *boot_args;
 #endif
 
 int
@@ -114,7 +120,10 @@ ascmatch(pdp, match, auxp)
 
 /* Look for the card */
 
-	if (matchpodule(pa, 0x00, 0x02, -1) == 0)
+	if (matchpodule(pa, MANUFACTURER_ACORN, PODULE_ACORN_SCSI, -1) == 0)
+		return(0);
+
+	if (strncmp(pa->pa_podule->description, "MCS", 3) == 0)
 		return(0);
 
 	return(1);
@@ -140,22 +149,6 @@ ascattach(pdp, dp, auxp)
 	sc->sc_podule = pa->pa_podule;
 	podules[sc->sc_podule_number].attached = 1;
 
-#if ASC_POLL > 0
-        if (boot_args) {
-        	char *ptr;
-       
-		ptr = strstr(boot_args, "noascpoll");
-		if (ptr)
-			asc_poll = 0;
-	}
-
-	if (asc_poll)
-		printf(" polling");
-	else
-		printf(" using interrupts");
-#endif
-	printf("\n");
-
 	sbic = &sc->sc_softc;
 
 	sbic->sc_enintr = asc_enintr;
@@ -177,6 +170,22 @@ ascattach(pdp, dp, auxp)
 	sbic->sc_link.adapter = &asc_scsiswitch;
 	sbic->sc_link.device = &asc_scsidev;
 	sbic->sc_link.openings = 1;	/* was 2 */
+
+	printf(" hostid=%d", sbic->sc_link.adapter_target);
+
+#if ASC_POLL > 0
+        if (boot_args) {
+        	char *ptr;
+       
+		ptr = strstr(boot_args, "ascpoll");
+		if (ptr)
+			asc_poll = 1;
+	}
+
+	if (asc_poll)
+		printf(" polling");
+#endif
+	printf("\n");
 
 	sc->sc_pagereg = sc->sc_podule->fast_base + ASC_PAGEREG;
         sc->sc_intstat = sc->sc_podule->fast_base + ASC_INTSTATUS;
@@ -203,13 +212,14 @@ ascattach(pdp, dp, auxp)
 	if (!asc_poll)
 #endif
 	if (irq_claim(IRQ_PODULE, &sc->sc_ih))
-		panic("asc: Cannot claim podule IRQ\n");
+		panic("%s: Cannot claim podule IRQ\n", dp->dv_xname);
 
 	/*
 	 * attach all scsi units on us
 	 */
 	config_found(dp, &sbic->sc_link, scsiprint);
 }
+
 
 void
 asc_enintr(sbicsc)
@@ -236,7 +246,8 @@ asc_dmago(dev, addr, count, flags)
 	char *addr;
 	int count, flags;
 {
-	printf("asc_dmago\n");
+	printf("asc_dmago(addr=%x, count=%d,flags=%d)\n", (u_int)addr, count, flags);
+	printf("dmago: dc_addr=%x tcnt=%x\n", dev->sc_cur->dc_addr, dev->sc_tcnt);
 #ifdef DDB
 	Debugger();
 #else
@@ -467,3 +478,23 @@ void PREP_DMA_MEM()
 {
 	panic("PREP_DMA_MEM");
 }
+
+/*
+ * limit the transfer as required.
+ */
+void
+asc_minphys(bp)
+	struct buf *bp;
+{
+#if 0
+	/*
+	 * We must limit the DMA xfer size
+	 */
+	if (bp->b_bcount > MAX_DMA_LEN) {
+		printf("asc: Reducing dma length\n");
+		bp->b_bcount = MAX_DMA_LEN;
+	}
+#endif
+	minphys(bp);
+}
+
