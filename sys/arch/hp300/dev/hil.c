@@ -1,4 +1,4 @@
-/*	$NetBSD: hil.c,v 1.42.2.9 2002/10/10 18:32:39 jdolecek Exp $	*/
+/*	$NetBSD: hil.c,v 1.42.2.10 2002/10/11 21:55:07 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hil.c,v 1.42.2.9 2002/10/10 18:32:39 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hil.c,v 1.42.2.10 2002/10/11 21:55:07 jdolecek Exp $");
 
 #include "opt_compat_hpux.h"
 #include "rnd.h"
@@ -872,7 +872,7 @@ filt_hilread(struct knote *kn, long hint)
 	 * This is primarily to be consistant with HP-UX.
 	 */
 	if (device && (dptr->hd_flags & (HIL_ALIVE|HIL_PSEUDO)) != HIL_ALIVE) {
-		kn->kn_data = 0; /* XXXLUKEM (thorpej): what goes here? */
+		kn->kn_data = 0; /* XXXLUKEM (thorpej): what to put here? */
 		return (1);
 	}
 
@@ -894,7 +894,7 @@ filt_hilread(struct knote *kn, long hint)
 		if (/*qp->hq_procp == p &&*/ (mask & qp->hq_devmask) &&
 		    qp->hq_eventqueue->hil_evqueue.head !=
 		    qp->hq_eventqueue->hil_evqueue.tail) {
-			/* XXXLUKEM (thorpej): what does here? */
+			/* XXXLUKEM (thorpej): what to put here? */
 			kn->kn_data = 0;
 			return (1);
 		}
