@@ -1,4 +1,4 @@
-/*	$NetBSD: neo.c,v 1.3 2000/11/05 16:24:45 thorpej Exp $	*/
+/*	$NetBSD: neo.c,v 1.4 2000/11/05 16:44:08 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1999 Cameron Grant <gandalf@vilnya.demon.co.uk>
@@ -107,13 +107,9 @@
  * interface clients.
  *
  * TO-DO list:
- *    Add mmap support.
- *
  *    Figure out interaction with video stuff (look at Xfree86 driver?)
  *
  *    Power management (neoactivate)
- *
- *    Fix detect of Neo devices that don't work this driver (see neo_attach)   
  *
  *    Figure out how to shrink that huge table neo-coeff.h
  */
