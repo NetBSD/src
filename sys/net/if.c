@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.124 2003/07/06 07:54:43 dyoung Exp $	*/
+/*	$NetBSD: if.c,v 1.125 2003/07/15 06:24:38 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -101,7 +101,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.124 2003/07/06 07:54:43 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.125 2003/07/15 06:24:38 itojun Exp $");
 
 #include "opt_inet.h"
 
@@ -675,13 +675,16 @@ do { \
 #ifdef NATM
 	IF_DETACH_QUEUES(natmintrq);
 #endif
+#ifdef DECNET
+	IF_DETACH_QUEUES(decnetintrq);
+#endif
 #undef IF_DETACH_QUEUES
 
 	splx(s);
 }
 
 #if defined(INET) || defined(INET6) || defined(NETATALK) || defined(NS) || \
-    defined(ISO) || defined(CCITT) || defined(NATM)
+    defined(ISO) || defined(CCITT) || defined(NATM) || defined(DECNET)
 static void
 if_detach_queues(ifp, q)
 	struct ifnet *ifp;
