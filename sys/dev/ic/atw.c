@@ -1,4 +1,4 @@
-/*	$NetBSD: atw.c,v 1.24 2004/02/17 21:20:55 dyoung Exp $	*/
+/*	$NetBSD: atw.c,v 1.25 2004/05/31 08:52:53 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002, 2003, 2004 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atw.c,v 1.24 2004/02/17 21:20:55 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atw.c,v 1.25 2004/05/31 08:52:53 dyoung Exp $");
 
 #include "bpfilter.h"
 
@@ -3033,8 +3033,6 @@ atw_rxintr(struct atw_softc *sc)
  #if NBPFILTER > 0
 		/* Pass this up to any BPF listeners. */
 		if (sc->sc_radiobpf != NULL) {
-			struct mbuf mb;
-
 			struct atw_rx_radiotap_header *tap = &sc->sc_rxtap;
 
 			tap->ar_rate = rate;
@@ -3045,12 +3043,8 @@ atw_rxintr(struct atw_softc *sc)
 			tap->ar_antsignal = (int)rssi;
 			/* TBD tap->ar_flags */
 
-			M_COPY_PKTHDR(&mb, m);
-			mb.m_data = (caddr_t)tap;
-			mb.m_len = tap->ar_ihdr.it_len;
-			mb.m_next = m;
-			mb.m_pkthdr.len += mb.m_len;
-			bpf_mtap(sc->sc_radiobpf, &mb);
+			bpf_mtap2(sc->sc_radiobpf, (caddr_t)tap,
+			    tap->ar_ihdr.it_len, m);
  		}
  #endif /* NPBFILTER > 0 */
 
@@ -3410,7 +3404,6 @@ atw_start(struct ifnet *ifp)
 			bpf_mtap((caddr_t)ic->ic_rawbpf, m0);
 
 		if (sc->sc_radiobpf != NULL) {
-			struct mbuf mb;
 			struct atw_tx_radiotap_header *tap = &sc->sc_txtap;
 
 			tap->at_rate = rate;
@@ -3419,12 +3412,8 @@ atw_start(struct ifnet *ifp)
 
 			/* TBD tap->at_flags */
 
-			M_COPY_PKTHDR(&mb, m0);
-			mb.m_data = (caddr_t)tap;
-			mb.m_len = tap->at_ihdr.it_len;
-			mb.m_next = m0;
-			mb.m_pkthdr.len += mb.m_len;
-			bpf_mtap(sc->sc_radiobpf, &mb);
+			bpf_mtap2(sc->sc_radiobpf, (caddr_t)tap,
+			    tap->at_ihdr.it_len, m0);
 		}
 #endif /* NBPFILTER > 0 */
 
