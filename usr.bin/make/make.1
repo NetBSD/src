@@ -1,4 +1,4 @@
-.\"	$NetBSD: make.1,v 1.62 2002/02/08 01:36:28 ross Exp $
+.\"	$NetBSD: make.1,v 1.63 2002/03/19 22:17:30 lukem Exp $
 .\"
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -33,7 +33,7 @@
 .\"
 .\"	from: @(#)make.1	8.4 (Berkeley) 3/19/94
 .\"
-.Dd December 23, 2001
+.Dd March 20, 2002
 .Dt MAKE 1
 .Os
 .Sh NAME
@@ -715,9 +715,13 @@ should start and end with a period. For example.
 .It Cm U Ar newval
 If the variable is undefined
 .Ar newval
-is the value.  This is another ODE make feature.  It is handy for
+is the value.
+If the variable is defined, the existing value is returned.
+This is another ODE make feature.  It is handy for
 setting per-target CFLAGS for instance:
 .Dl ${_${.TARGET:T}_CFLAGS:U${DEF_CFLAGS}}
+If a value is only required if the variable is undefined, use:
+.Dl ${VAR:D:Unewval}
 .It Cm D Ar newval
 If the variable is defined
 .Ar newval
