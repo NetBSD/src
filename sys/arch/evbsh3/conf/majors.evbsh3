@@ -1,4 +1,4 @@
-#	$NetBSD: majors.evbsh3,v 1.9 2003/10/10 22:42:39 jdolecek Exp $
+#	$NetBSD: majors.evbsh3,v 1.10 2003/12/10 02:04:00 jmc Exp $
 #
 # Device majors for evbsh3
 #
@@ -50,4 +50,4 @@ device-major	ksyms		char 55			ksyms
 
 # Majors up to 143 are reserved for machine-dependant drivers.
 # New machine-independant driver majors are assigned in 
-# sys/dev/majors.
+# sys/conf/majors.

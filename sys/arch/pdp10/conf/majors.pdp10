@@ -1,4 +1,4 @@
-#	$NetBSD: majors.pdp10,v 1.4 2003/10/11 12:31:05 jdolecek Exp $
+#	$NetBSD: majors.pdp10,v 1.5 2003/12/10 02:04:01 jmc Exp $
 #
 # Device majors for pdp10
 #
@@ -14,4 +14,4 @@ device-major	ksyms		char 8
 
 # Majors up to 143 are reserved for machine-dependant drivers.
 # New machine-independant driver majors are assigned in 
-# sys/dev/majors.
+# sys/conf/majors.
