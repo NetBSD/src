@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.5 1997/07/29 18:07:48 phil Exp $
+#	$NetBSD: Makefile.inc,v 1.6 1997/08/07 11:32:00 hannken Exp $
 
 # TOP is assumed to be defined by Makefile including this one.
 
@@ -21,13 +21,20 @@ RAMDISK	!=cd $(.CURDIR)/../ramdisk/; \
 
 DISKTYPE=	floppy5
 
+# Some reasonable values for the -i parameter to newfs are:
+#
+#   6144	1142k, 189 inodes free
+#  16384	1150k, 125 inodes free
+# 204800	1158k,  61 inodes free
+INO_BYTES?=	204800
+
 CLEANFILES+=	netbsd.ram.gz
 
 all:	netbsd.ram.gz
 	dd if=/dev/zero of=${IMAGE} bs=100k count=12
 	vnconfig -t ${DISKTYPE} -v -c ${VND_CDEV} ${IMAGE}
 	disklabel -rw ${VND_CDEV} ${DISKTYPE}
-	newfs -m 0 -o space -i 6144 -c 80 ${VND_RDEV} ${DISKTYPE}
+	newfs -m 0 -o space -i ${INO_BYTES} -c 80 ${VND_RDEV} ${DISKTYPE}
 	mount ${VND_DEV} ${MOUNT_POINT}
 	TOPDIR=${TOP} CURDIR=${.CURDIR} OBJDIR=${.OBJDIR} \
 	    TARGDIR=${MOUNT_POINT} sh ${TOP}/runlist.sh ${LISTS}
