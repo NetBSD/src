@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)socket.h	7.13 (Berkeley) 4/20/91
- *	$Id: socket.h,v 1.5 1993/06/27 05:59:06 andrew Exp $
+ *	$Id: socket.h,v 1.5.4.1 1993/11/10 19:53:14 mycroft Exp $
  */
 
 #ifndef _SYS_SOCKET_H_
@@ -92,7 +92,8 @@ struct	linger {
  * Address families.
  */
 #define	AF_UNSPEC	0		/* unspecified */
-#define	AF_UNIX		1		/* local to host (pipes, portals) */
+#define	AF_LOCAL	1		/* local to host (pipes, portals) */
+#define	AF_UNIX		AF_LOCAL
 #define	AF_INET		2		/* internetwork: UDP, TCP, etc. */
 #define	AF_IMPLINK	3		/* arpanet imp addresses */
 #define	AF_PUP		4		/* pup protocols: e.g. BSP */
@@ -138,7 +139,8 @@ struct sockproto {
  * Protocol families, same as address families for now.
  */
 #define	PF_UNSPEC	AF_UNSPEC
-#define	PF_UNIX		AF_UNIX
+#define	PF_LOCAL	AF_LOCAL
+#define	PF_UNIX		AF_LOCAL
 #define	PF_INET		AF_INET
 #define	PF_IMPLINK	AF_IMPLINK
 #define	PF_PUP		AF_PUP
