@@ -81,7 +81,7 @@ typedef int Int64_t __attribute ((mode (DI)));
 
 #ifndef NAN
 # define NAN (nan())
-double nan (void);
+double nan (char *);
 #endif
 
 #ifdef HAVE_IEEEFP_H
