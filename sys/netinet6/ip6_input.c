@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_input.c,v 1.5 1999/07/22 03:59:42 itojun Exp $	*/
+/*	$NetBSD: ip6_input.c,v 1.6 1999/07/31 18:41:16 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -69,7 +69,9 @@
 #endif
 #if (defined(__FreeBSD__) && __FreeBSD__ >= 3) || defined(__NetBSD__)
 #include "opt_inet.h"
+#ifdef __NetBSD__	/*XXX*/
 #include "opt_ipsec.h"
+#endif
 #endif
 
 #include <sys/param.h>

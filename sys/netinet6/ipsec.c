@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec.c,v 1.8 1999/07/30 10:35:37 itojun Exp $	*/
+/*	$NetBSD: ipsec.c,v 1.9 1999/07/31 18:41:16 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -35,7 +35,9 @@
 
 #if (defined(__FreeBSD__) && __FreeBSD__ >= 3) || defined(__NetBSD__)
 #include "opt_inet.h"
+#ifdef __NetBSD__	/*XXX*/
 #include "opt_ipsec.h"
+#endif
 #endif
 
 #include <sys/param.h>
@@ -2087,6 +2089,8 @@ ipsec4_output(state, sp, flags)
 
 	for (isr = sp->req; isr != NULL; isr = isr->next) {
 
+#if 0	/* give up to check restriction of transport mode */
+	/* XXX but should be checked somewhere */
 		/*
 		 * some of the IPsec operation must be performed only in
 		 * originating case.
@@ -2094,6 +2098,7 @@ ipsec4_output(state, sp, flags)
 		if (isr->mode == IPSEC_MODE_TRANSPORT
 		 && (flags & IP_FORWARDING))
 			continue;
+#endif
 
 		if ((error = key_checkrequest(isr)) != 0) {
 			/*
@@ -2130,7 +2135,11 @@ ipsec4_output(state, sp, flags)
 		 * There may be the case that SA status will be changed when
 		 * we are refering to one. So calling splsoftnet().
 		 */
+#ifdef __NetBSD__
 		s = splsoftnet();
+#else
+		s = splnet();
+#endif
 
 		if (isr->mode == IPSEC_MODE_TUNNEL && isr->proxy) {
 			/*
@@ -2166,6 +2175,7 @@ ipsec4_output(state, sp, flags)
 			}
 
 			ip = mtod(state->m, struct ip *);
+#if 0 /* XXX */
 			if (!key_checktunnelsanity(isr->sa, AF_INET,
 					(caddr_t)&ip->ip_src,
 					(caddr_t)&ip->ip_dst)) {
@@ -2179,6 +2189,7 @@ ipsec4_output(state, sp, flags)
 				error = EINVAL;
 				goto bad;
 			}
+#endif
 
 			state->m = ipsec4_splithdr(state->m);
 			if (!state->m) {
@@ -2474,7 +2485,11 @@ ipsec6_output_tunnel(state, sp, flags)
 		 * There may be the case that SA status will be changed when
 		 * we are refering to one. So calling splsoftnet().
 		 */
+#ifdef __NetBSD__
 		s = splsoftnet();
+#else
+		s = splnet();
+#endif
 
 		if (isr->mode == IPSEC_MODE_TUNNEL && isr->proxy) {
 			/*
@@ -2510,6 +2525,7 @@ ipsec6_output_tunnel(state, sp, flags)
 			}
 
 			ip6 = mtod(state->m, struct ip6_hdr *);
+#if 0 /* XXX */
 			if (!key_checktunnelsanity(isr->sa, AF_INET6,
 					(caddr_t)&ip6->ip6_src,
 					(caddr_t)&ip6->ip6_dst)) {
@@ -2521,6 +2537,7 @@ ipsec6_output_tunnel(state, sp, flags)
 				error = EINVAL;
 				goto bad;
 			}
+#endif
 
 			state->m = ipsec6_splithdr(state->m);
 			if (!state->m) {
