@@ -1,24 +1,36 @@
-#	$NetBSD: Makefile,v 1.11 1999/03/05 11:13:39 pk Exp $
+#	$NetBSD: Makefile,v 1.11.2.1 2000/02/22 23:06:31 he Exp $
 
 PROG=		boot
-PROGSOURCE=	boot.c net.c netif_sun.c conf.c openfirm.c
+PROGSOURCE=	boot.c net.c netif_sun.c conf.c openfirm.c vers.c
 NEWVERSWHAT=	"Secondary Boot"
-CLEANFILES+=	vers.c vers.o
+FILES=		${RELOCS:S/^/boot./g}
+CLEANFILES:=	vers.c ${FILES}
+LINKS=		${BINDIR}/boot.${RELOC_DEFAULT} ${BINDIR}/boot
 
 INCLUDE_LIBZ=	yes
 SAMISCMAKEFLAGS= SA_USE_CREAD=yes
 
 .include "../Makefile.buildboot"
+.if exists(${.CURDIR}/../Makefile.inc)
+.include "${.CURDIR}/../Makefile.inc"
+.endif
+.include <bsd.own.mk>
 
-RELOC=		0x300000
-LINKFLAGS=	-N -Ttext ${RELOC} -e start
+OBJS=${SRCS:N*.h:N*.sh:N*.fth:R:S/$/.o/g}
 
-${PROG}: ${OBJS} ${LIBSA} ${LIBZ} ${LIBKERN}
+LINKFLAGS=	-N -e start
+
+all: ${FILES}
+
+vers.c:
 	sh ${.CURDIR}/../common/newvers.sh ${.CURDIR}/version ${NEWVERSWHAT}
-	${COMPILE.c} vers.c
-	${LD} -o ${.TARGET} ${LINKFLAGS} ${OBJS} \
-	    vers.o ${LIBSA} ${LIBZ} ${LIBKERN}
+
+.for RELOC in ${RELOCS}
+boot.${RELOC}: ${OBJS} ${LIBSA} ${LIBZ} ${LIBKERN}
+	${LD} -o ${.TARGET} ${LINKFLAGS} -Ttext ${RELOC} ${OBJS} \
+	    ${LIBSA} ${LIBZ} ${LIBKERN}
 	@size ${.TARGET}
+.endfor
 
 afterinstall:
 	# conjure up a magic header that is accepted by all Sun PROMS;
@@ -30,4 +42,10 @@ afterinstall:
 	chmod ${BINMODE} ${DESTDIR}/${BINDIR}/boot.net
 	chown ${BINOWN}.${BINGRP} ${DESTDIR}/${BINDIR}/boot.net
 
-.include <bsd.prog.mk>
+clean cleandir: cleanprog
+
+cleanprog:
+	rm -f ${OBJS} ${CLEANFILES}
+
+.include <bsd.files.mk>
+.include <bsd.links.mk>
