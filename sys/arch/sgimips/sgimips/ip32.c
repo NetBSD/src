@@ -1,4 +1,4 @@
-/*	$NetBSD: ip32.c,v 1.22 2003/12/14 05:23:12 sekiya Exp $	*/
+/*	$NetBSD: ip32.c,v 1.23 2004/01/12 03:30:51 sekiya Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip32.c,v 1.22 2003/12/14 05:23:12 sekiya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip32.c,v 1.23 2004/01/12 03:30:51 sekiya Exp $");
 
 #include "opt_machtypes.h"
 
@@ -81,6 +81,7 @@ ip32_init(void)
 	u_int32_t cps;
 
 	/* XXX nasty hack */
+	bus_space_tag_t iot = SGIMIPS_BUS_SPACE_CRIME;
 	bus_space_handle_t ioh = MIPS_PHYS_TO_KSEG1(CRIME_BASE);
 
 	/*
