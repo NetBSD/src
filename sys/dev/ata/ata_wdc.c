@@ -1,4 +1,4 @@
-/*	$NetBSD: ata_wdc.c,v 1.1.2.6 1998/06/09 13:32:32 bouyer Exp $	*/
+/*	$NetBSD: ata_wdc.c,v 1.1.2.7 1998/06/23 08:07:36 leo Exp $	*/
 
 /*
  * Copyright (c) 1998 Manuel Bouyer.
@@ -355,16 +355,30 @@ again:
 			wdc_ata_bio_done(chp, xfer);
 			return;
 		}
-		if (drvp->drive_flags & DRIVE_CAP32) {
-			bus_space_write_multi_stream_4(chp->cmd_iot,
-			    chp->cmd_ioh, wd_data,
-			    xfer->databuf + xfer->c_skip,
-			    ata_bio->nbytes >> 2);
+		if ((chp->wdc->cap & WDC_CAPABILITY_ATA_NOSTREAM)) {
+			if (drvp->drive_flags & DRIVE_CAP32) {
+				bus_space_write_multi_4(chp->cmd_iot,
+				    chp->cmd_ioh, wd_data,
+				    xfer->databuf + xfer->c_skip,
+				    ata_bio->nbytes >> 2);
+			} else {
+				bus_space_write_multi_2(chp->cmd_iot,
+				    chp->cmd_ioh, wd_data,
+				    xfer->databuf + xfer->c_skip,
+				    ata_bio->nbytes >> 1);
+			}
 		} else {
-			bus_space_write_multi_stream_2(chp->cmd_iot,
-			    chp->cmd_ioh, wd_data,
-			    xfer->databuf + xfer->c_skip,
-			    ata_bio->nbytes >> 1);
+			if (drvp->drive_flags & DRIVE_CAP32) {
+				bus_space_write_multi_stream_4(chp->cmd_iot,
+				    chp->cmd_ioh, wd_data,
+				    xfer->databuf + xfer->c_skip,
+				    ata_bio->nbytes >> 2);
+			} else {
+				bus_space_write_multi_stream_2(chp->cmd_iot,
+				    chp->cmd_ioh, wd_data,
+				    xfer->databuf + xfer->c_skip,
+				    ata_bio->nbytes >> 1);
+			}
 		}
 	}
 
@@ -483,17 +497,30 @@ wdc_ata_bio_intr(chp, xfer)
 			wdc_ata_bio_done(chp, xfer);
 			return 1;
 		}
-
-		if (drvp->drive_flags & DRIVE_CAP32) {
-			bus_space_read_multi_stream_4(chp->cmd_iot,
-			    chp->cmd_ioh, wd_data,
-			    xfer->databuf + xfer->c_skip,
-			    ata_bio->nbytes >> 2);
+		if ((chp->wdc->cap & WDC_CAPABILITY_ATA_NOSTREAM)) {
+			if (drvp->drive_flags & DRIVE_CAP32) {
+				bus_space_read_multi_4(chp->cmd_iot,
+				    chp->cmd_ioh, wd_data,
+				    xfer->databuf + xfer->c_skip,
+				    ata_bio->nbytes >> 2);
+			} else {
+				bus_space_read_multi_2(chp->cmd_iot,
+				    chp->cmd_ioh, wd_data,
+				    xfer->databuf + xfer->c_skip,
+				    ata_bio->nbytes >> 1);
+			}
 		} else {
-			bus_space_read_multi_stream_2(chp->cmd_iot,
-			    chp->cmd_ioh, wd_data,
-			    xfer->databuf + xfer->c_skip,
-			    ata_bio->nbytes >> 1);
+			if (drvp->drive_flags & DRIVE_CAP32) {
+				bus_space_read_multi_stream_4(chp->cmd_iot,
+				    chp->cmd_ioh, wd_data,
+				    xfer->databuf + xfer->c_skip,
+				    ata_bio->nbytes >> 2);
+			} else {
+				bus_space_read_multi_stream_2(chp->cmd_iot,
+				    chp->cmd_ioh, wd_data,
+				    xfer->databuf + xfer->c_skip,
+				    ata_bio->nbytes >> 1);
+			}
 		}
 	}
 
