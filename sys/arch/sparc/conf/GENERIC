@@ -1,4 +1,4 @@
-# 	$NetBSD: GENERIC,v 1.69 1998/07/23 13:03:23 pk Exp $
+# 	$NetBSD: GENERIC,v 1.70 1998/08/27 20:56:44 pk Exp $
 
 include "arch/sparc/conf/std.sparc"
 
@@ -385,6 +385,14 @@ ie2	at vme0 addr 0x31ff02 pri 3 vec 0x76		# VME
 ie3	at vme0 addr 0x35ff02 pri 3 vec 0x77		# VME
 ie4	at vme0 addr 0x2dff02 pri 3 vec 0x7c		# VME
 
+## qec/be, qec/hme
+qec*		at sbus? slot ? offset ?
+#be*		at qec?
+#hme*		at qec?
+
+# midway ATM
+en0	at sbus? slot ? offset ?
+
 ## Loopback network interface; required
 pseudo-device	loop
 
@@ -418,6 +426,9 @@ audioamd0	at mainbus0				# sun4c
 #audioamd0	at obio0				# sun4m
 audioamd0	at sbus0 slot ? offset ?		# sun4m
 audio*		at audioamd0
+
+audiocs0	at sbus0 slot ? offset ?		# SUNW,CS4231
+audio*		at audiocs0
 
 
 ## Sun "bwtwo" black and white framebuffer, found on sun4, sun4c, and sun4m
