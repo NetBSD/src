@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.inc,v 1.1 2003/06/27 08:40:48 tshiozak Exp $
+# $NetBSD: Makefile.inc,v 1.2 2003/10/19 14:08:51 lukem Exp $
 
 .PATH: ${.CURDIR}/KS
 
@@ -9,14 +9,14 @@ MAPS_KS=		KSC5601%UCS.mps \
 			UCS%KSC5601.mps
 
 mapper.dir.KS: ${.CURDIR}/KS/mapper.dir.KS.src
-	echo "# KS" > $@
-	cat $> >> $@
-	echo >> $@
+	${_MKMSGCREATE}
+	${_MKCMD}\
+	(echo "# KS" ; cat ${.ALLSRC} ; echo ) > ${.TARGET}
 
 charset.pivot.KS: ${.CURDIR}/KS/charset.pivot.KS.src
-	echo "# KS" > $@
-	cat $> >> $@
-	echo >> $@
+	${_MKMSGCREATE}
+	${_MKCMD}\
+	(echo "# KS" ; cat ${.ALLSRC} ; echo ) > ${.TARGET}
 
 FILES+= ${MAPS_KS}
 CLEANFILES+= ${MAPS_KS}
