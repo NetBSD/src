@@ -1,4 +1,4 @@
-/*	$NetBSD: ite.c,v 1.43 2005/01/19 02:13:02 chs Exp $	*/
+/*	$NetBSD: ite.c,v 1.44 2005/01/23 09:25:52 he Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ite.c,v 1.43 2005/01/19 02:13:02 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ite.c,v 1.44 2005/01/23 09:25:52 he Exp $");
 
 #include "opt_ddb.h"
 
@@ -370,7 +370,7 @@ itecnputc(dev, c)
 
 	if (panicstr && !paniced &&
 	    (ip->flags & (ITE_ACTIVE | ITE_INGRF)) != ITE_ACTIVE) {
-		(void)ite_on(dev, 3);
+		ite_on(dev, 3);
 		paniced = 1;
 	}
 	SUBR_CURSOR(ip, START_CURSOROPT);
@@ -443,9 +443,7 @@ iteopen(dev, mode, devtype, p)
 	    && p->p_ucred->cr_uid != 0)
 		return (EBUSY);
 	if ((ip->flags & ITE_ACTIVE) == 0) {
-		error = ite_on(dev, 0);
-		if (error)
-			return (error);
+		ite_on(dev, 0);
 		first = 1;
 	}
 	if (!(tp->t_state & TS_ISOPEN) && tp->t_wopen == 0) {
