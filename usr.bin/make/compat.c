@@ -1,4 +1,4 @@
-/*	$NetBSD: compat.c,v 1.35 2001/06/12 23:36:17 sjg Exp $	*/
+/*	$NetBSD: compat.c,v 1.36 2001/10/16 18:50:12 sjg Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -39,14 +39,14 @@
  */
 
 #ifdef MAKE_BOOTSTRAP
-static char rcsid[] = "$NetBSD: compat.c,v 1.35 2001/06/12 23:36:17 sjg Exp $";
+static char rcsid[] = "$NetBSD: compat.c,v 1.36 2001/10/16 18:50:12 sjg Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)compat.c	8.2 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: compat.c,v 1.35 2001/06/12 23:36:17 sjg Exp $");
+__RCSID("$NetBSD: compat.c,v 1.36 2001/10/16 18:50:12 sjg Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -617,5 +617,9 @@ Compat_Run(targs)
      */
     if (errors == 0) {
 	Lst_ForEach(ENDNode->commands, CompatRunCommand, (ClientData)gn);
+	if (gn->made == ERROR) {
+	    PrintOnError("\n\nStop.");
+	    exit(1);
+	}
     }
 }
