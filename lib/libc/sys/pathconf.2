@@ -1,4 +1,4 @@
-.\"	$NetBSD: pathconf.2,v 1.15 2003/08/07 16:44:03 agc Exp $
+.\"	$NetBSD: pathconf.2,v 1.15.2.1 2004/05/22 16:14:50 he Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -81,9 +81,11 @@ The maximum number of bytes in terminal canonical input line.
 The minimum maximum number of bytes for which space is available in
 a terminal input queue.
 .It Li _PC_NAME_MAX
-The maximum number of bytes in a file name.
+The maximum number of bytes in a filename,
+not including a terminating null character.
 .It Li _PC_PATH_MAX
-The maximum number of bytes in a pathname.
+The maximum number of bytes in a pathname,
+including the terminating null character.
 .It Li _PC_PIPE_BUF
 The maximum number of bytes which will be written atomically to a pipe.
 .It Li _PC_CHOWN_RESTRICTED
@@ -91,7 +93,9 @@ Return 1 if appropriate privileges are required for the
 .Xr chown 2
 system call, otherwise 0.
 .It Li _PC_NO_TRUNC
-Return 1 if file names longer than KERN_NAME_MAX are truncated.
+Return 1 if filenames longer than
+.Dv {NAME_MAX}
+are truncated.
 .It Li _PC_VDISABLE
 Returns the terminal character disabling value.
 .It Li _PC_SYNC_IO
