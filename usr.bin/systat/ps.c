@@ -1,4 +1,4 @@
-/*      $NetBSD: ps.c,v 1.2 1999/04/22 03:40:46 simonb Exp $  */
+/*      $NetBSD: ps.c,v 1.3 1999/06/19 05:35:14 itohy Exp $  */
 
 /*-
  * Copyright (c) 1999
@@ -46,7 +46,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ps.c,v 1.2 1999/04/22 03:40:46 simonb Exp $");
+__RCSID("$NetBSD: ps.c,v 1.3 1999/06/19 05:35:14 itohy Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -75,7 +75,7 @@ char *tty2str __P((struct kinfo_proc *));
 int rss2int __P((struct kinfo_proc *));
 int vsz2int __P((struct kinfo_proc *));
 char *comm2str __P((struct kinfo_proc *));
-float pmem2float __P((struct kinfo_proc *));
+double pmem2float __P((struct kinfo_proc *));
 char *start2str __P((struct kinfo_proc *));
 char *time2str __P((struct kinfo_proc *));
 
@@ -93,7 +93,7 @@ showps ()
 	int i, k, y, vsz, rss;
 	const char *user, *comm, *state, *tty, *start, *time;
 	pid_t pid;
-	float pctcpu, pctmem;
+	double pctcpu, pctmem;
 	struct  eproc *ep;
 
 	now = 0;	/* force start2str to reget current time */
@@ -111,7 +111,7 @@ showps ()
 		ep = &pt[k].pt_kp->kp_eproc;
 		user = user_from_uid(ep->e_ucred.cr_uid, 0);
 		pid = pt[k].pt_kp->kp_proc.p_pid;
-		pctcpu = pt[k].pt_pctcpu;
+		pctcpu = 100.0 * pt[k].pt_pctcpu;
 		pctmem = pmem2float(pt[k].pt_kp);
 		vsz = vsz2int(pt[k].pt_kp);
 		rss = rss2int(pt[k].pt_kp);
@@ -289,7 +289,7 @@ comm2str(kp)
 	return commstr;
 }
 
-float
+double
 pmem2float(kp)
 	struct kinfo_proc *kp;
 {	                       
@@ -306,7 +306,7 @@ pmem2float(kp)
 	/* XXX want pmap ptpages, segtab, etc. (per architecture) */
 	szptudot = USPACE/getpagesize();
 	/* XXX don't have info about shared */
-	fracmem = ((float)e->e_vm.vm_rssize + szptudot)/CLSIZE/mempages;
+	fracmem = ((double)e->e_vm.vm_rssize + szptudot)/CLSIZE/mempages;
 	return (fracmem >= 0) ? 100.0 * fracmem : 0;
 }
 
