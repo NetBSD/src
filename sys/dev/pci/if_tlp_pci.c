@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tlp_pci.c,v 1.2 1999/09/03 00:24:56 thorpej Exp $	*/
+/*	$NetBSD: if_tlp_pci.c,v 1.3 1999/09/08 21:42:44 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -123,7 +123,7 @@ const struct tulip_pci_product {
 	  TULIP_CHIP_21142 },
 #endif
 
-	{ PCI_VENDOR_LITEON,		PCI_PRODUCT_LITEON_PNIC,
+	{ PCI_VENDOR_LITEON,		PCI_PRODUCT_LITEON_82C168,
 	  TULIP_CHIP_82C168 },
 
 #if 0
