@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.5 2002/03/13 13:12:28 simonb Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.6 2003/01/06 06:19:41 rafal Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -84,11 +84,7 @@ pci_bus_maxdevs(pc, busno)
 	pci_chipset_tag_t pc;
 	int busno;
 {
-#if 0
-	return 32;
-#else
-	return 4;		/* XXX O2 master aborts.. */
-#endif
+	return 5;	/* 2 on-board SCSI chips, slots 0, 1 and 2 */
 }
 
 pcitag_t
@@ -137,18 +133,41 @@ pci_intr_map(pa, ihp)
 	struct pci_attach_args *pa;
 	pci_intr_handle_t *ihp;
 {
-	int line = pa->pa_intrline;
-#if 0
 	pci_chipset_tag_t pc = pa->pa_pc;
 	pcitag_t intrtag = pa->pa_intrtag;
 	int pin = pa->pa_intrpin;
-	int bus, dev, func;
+	int bus, dev, func, start;
 
 	pci_decompose_tag(pc, intrtag, &bus, &dev, &func);
-#endif
 
-	*ihp = line;
+	if (dev < 3 && pin != PCI_INTERRUPT_PIN_A)
+		panic("SCSI0 and SCSI1 must be hardwired!");
+		
+	switch (pin) {
+	case PCI_INTERRUPT_PIN_NONE:
+		return -1;
 
+	case PCI_INTERRUPT_PIN_A:
+		/* 
+		 * Each of SCSI{0,1}, & slots 0 - 2 has dedicated interrupt
+		 * for pin A?
+		 */
+		*ihp = dev + 7;
+		return 0;
+
+	case PCI_INTERRUPT_PIN_B: 
+		start = 0; 
+		break;
+	case PCI_INTERRUPT_PIN_C:
+		start = 1; 
+		break;
+	case PCI_INTERRUPT_PIN_D:
+		start = 2;
+		break;
+	}
+
+	/* Pins B,C,D are mapped to PCI_SHARED0 - PCI_SHARED2 interrupts */
+	*ihp = 13 /* PCI_SHARED0 */ + (start + dev - 3) % 3;
 	return 0;
 }
 
@@ -157,14 +176,9 @@ pci_intr_string(pc, ih)
 	pci_chipset_tag_t pc;
 	pci_intr_handle_t ih;
 {
-	static char irqstr[8];
+	static char irqstr[32];
 
-#if 0
-	sprintf(irqstr, "mace %d", ih);
-#else
-	sprintf(irqstr, "mace");
-#endif
-
+	sprintf(irqstr, "crime interrupt %d", ih);
 	return irqstr;
 }
 
@@ -187,9 +201,7 @@ pci_intr_establish(pc, ih, level, func, arg)
 	int level, (*func)(void *);
 	void *arg;
 {
-	crime_intr_establish(0, 0, 0, func, arg);
-
-	return (void *)-1;	/* XXX */
+	return crime_intr_establish(ih, 0, 0, func, arg);
 }
 
 void
