@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_lookup.c,v 1.9 1998/12/02 10:44:52 bouyer Exp $	*/
+/*	$NetBSD: ext2fs_lookup.c,v 1.10 1999/08/02 22:58:29 wrstuden Exp $	*/
 
 /* 
  * Modified for NetBSD 1.2E
@@ -335,13 +335,19 @@ ext2fs_lookup(v)
 			error = 0;
 		} else if (flags & ISDOTDOT) {
 			VOP_UNLOCK(pdp, 0);
+			cnp->cn_flags |= PDIRUNLOCK;
 			error = vget(vdp, LK_EXCLUSIVE);
-			if (!error && lockparent && (flags & ISLASTCN))
+			if (!error && lockparent && (flags & ISLASTCN)) {
 				error = vn_lock(pdp, LK_EXCLUSIVE);
+				if (error == 0)
+					cnp->cn_flags &= ~PDIRUNLOCK;
+			}
 		} else {
 			error = vget(vdp, LK_EXCLUSIVE);
-			if (!lockparent || error || !(flags & ISLASTCN))
+			if (!lockparent || error || !(flags & ISLASTCN)) {
 				VOP_UNLOCK(pdp, 0);
+				cnp->cn_flags |= PDIRUNLOCK;
+			}
 		}
 		/*
 		 * Check that the capability number did not change
@@ -351,11 +357,14 @@ ext2fs_lookup(v)
 			if (vpid == vdp->v_id)
 				return (0);
 			vput(vdp);
-			if (lockparent && pdp != vdp && (flags & ISLASTCN))
+			if (lockparent && pdp != vdp && (flags & ISLASTCN)) {
 				VOP_UNLOCK(pdp, 0);
+				cnp->cn_flags |= PDIRUNLOCK;
+			}
 		}
 		if ((error = vn_lock(pdp, LK_EXCLUSIVE)) != 0)
 			return (error);
+		cnp->cn_flags &= ~PDIRUNLOCK;
 		vdp = pdp;
 		dp = VTOI(pdp);
 		*vpp = NULL;
@@ -562,8 +571,10 @@ searchloop:
 		 * information cannot be used.
 		 */
 		cnp->cn_flags |= SAVENAME;
-		if (!lockparent)
+		if (!lockparent) {
 			VOP_UNLOCK(vdp, 0);
+			cnp->cn_flags |= PDIRUNLOCK;
+		}
 		return (EJUSTRETURN);
 	}
 	/*
@@ -638,8 +649,10 @@ found:
 			return (EPERM);
 		}
 		*vpp = tdp;
-		if (!lockparent)
+		if (!lockparent) {
 			VOP_UNLOCK(vdp, 0);
+			cnp->cn_flags |= PDIRUNLOCK;
+		}
 		return (0);
 	}
 
@@ -665,8 +678,10 @@ found:
 			return (error);
 		*vpp = tdp;
 		cnp->cn_flags |= SAVENAME;
-		if (!lockparent)
+		if (!lockparent) {
 			VOP_UNLOCK(vdp, 0);
+			cnp->cn_flags |= PDIRUNLOCK;
+		}
 		return (0);
 	}
 
@@ -692,9 +707,11 @@ found:
 	pdp = vdp;
 	if (flags & ISDOTDOT) {
 		VOP_UNLOCK(pdp, 0);	/* race to get the inode */
+		cnp->cn_flags |= PDIRUNLOCK;
 		error = VFS_VGET(vdp->v_mount, dp->i_ino, &tdp);
 		if (error) {
-			vn_lock(pdp, LK_EXCLUSIVE | LK_RETRY);
+			if (vn_lock(pdp, LK_EXCLUSIVE | LK_RETRY) == 0)
+				cnp->cn_flags &= ~PDIRUNLOCK;
 			return (error);
 		}
 		if (lockparent && (flags & ISLASTCN) &&
@@ -702,6 +719,7 @@ found:
 			vput(tdp);
 			return (error);
 		}
+		cnp->cn_flags &= ~PDIRUNLOCK;
 		*vpp = tdp;
 	} else if (dp->i_number == dp->i_ino) {
 		VREF(vdp);	/* we want ourself, ie "." */
@@ -709,8 +727,10 @@ found:
 	} else {
 		if ((error = VFS_VGET(vdp->v_mount, dp->i_ino, &tdp)) != 0)
 			return (error);
-		if (!lockparent || !(flags & ISLASTCN))
+		if (!lockparent || !(flags & ISLASTCN)) {
 			VOP_UNLOCK(pdp, 0);
+			cnp->cn_flags |= PDIRUNLOCK;
+		}
 		*vpp = tdp;
 	}
 
