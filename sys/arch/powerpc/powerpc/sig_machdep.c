@@ -1,4 +1,4 @@
-/*	$NetBSD: sig_machdep.c,v 1.2 1999/11/22 13:26:59 tsubai Exp $	*/
+/*	$NetBSD: sig_machdep.c,v 1.3 2000/04/03 10:23:24 tsubai Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -110,7 +110,7 @@ sendsig(catcher, sig, mask, code)
 	tf->lr = (int)catcher;
 	tf->fixreg[3] = (int)sig;
 	tf->fixreg[4] = (int)code;
-	tf->fixreg[5] = (int)&frame.sf_sc;
+	tf->fixreg[5] = (int)&fp->sf_sc;
 	tf->srr0 = (int)psp->ps_sigcode;
 
 	/* Remember that we're now on the signal stack. */
