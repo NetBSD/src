@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.15 2003/11/30 14:36:45 dsl Exp $	*/
+/*	$NetBSD: md.c,v 1.16 2003/12/10 19:42:51 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -157,13 +157,25 @@ md_check_partitions(void)
 	return check_partitions();
 }
 
+/* install/update bootblocks */
+static void
+install_bootblocks(void)
+{
+
+	/* Install boot blocks now that we have a full system ... */
+	msg_display(MSG_dobootblks, diskdev);
+	run_program(RUN_DISPLAY, "/sbin/disklabel -W %s", diskdev);
+	run_program(RUN_DISPLAY, "/usr/mdec/binstall ffs %s", targetroot_mnt);
+}
+
 /* Upgrade support */
 int
 md_update(void)
 {
-	endwin();
+	/* endwin(); */
 	md_copy_filesystem();
 	md_post_newfs();
+	install_bootblocks();
 	wrefresh(curscr);
 	wmove(stdscr, 0, 0);
 	wclear(stdscr);
@@ -174,11 +186,7 @@ md_update(void)
 void
 md_cleanup_install(void)
 {
-
-	/* Install boot blocks now that we have a full system ... */
-	msg_display(MSG_dobootblks, diskdev);
-	run_program(RUN_DISPLAY, "/sbin/disklabel -W %s", diskdev);
-	run_program(RUN_DISPLAY, "/usr/mdec/binstall ffs %s", targetroot_mnt);
+	install_bootblocks();
 
 	enable_rc_conf();
 
