@@ -31,6 +31,7 @@
  * SUCH DAMAGE.
  *
  *	@(#)sys_machdep.c	7.7 (Berkeley) 5/7/91
+ *	$Id: sys_machdep.c,v 1.4 1994/02/11 07:00:03 chopps Exp $
  */
 
 #include "sys/param.h"

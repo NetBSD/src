@@ -1,3 +1,7 @@
+/*
+ *	$Id: disksubr.c,v 1.5 1994/02/11 06:59:35 chopps Exp $
+ */
+
 #include "param.h"
 #include "systm.h"
 #include "buf.h"

@@ -24,8 +24,11 @@
  * the rights to redistribute these changes.
  */
 /* This is a rewrite (retype) of the Amiga's CIA chip register map, based
-   on the Hardware Reference Manual.  It is NOT based on the Amiga's
-   hardware/cia.h.  */
+ * on the Hardware Reference Manual.  It is NOT based on the Amiga's
+ *  hardware/cia.h.  
+ *
+ *	$Id: cia.h,v 1.5 1994/02/11 06:59:25 chopps Exp $
+ */
 
 #ifndef _amiga_cia_
 #define _amiga_cia_
