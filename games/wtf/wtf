@@ -1,13 +1,13 @@
 #!/bin/sh
 #
-#	$NetBSD: wtf,v 1.1 1999/07/22 01:03:20 mrg Exp $
+#	$NetBSD: wtf,v 1.2 1999/07/22 10:08:17 lukem Exp $
 #
 # Public domain
 #
 
 acronyms=${ACRONYMDB:-/usr/share/misc/acronyms}
 
-if [ $1 = "is" ] ; then
+if [ X"$1" = X"is" ] ; then
 	shift
 fi
 
