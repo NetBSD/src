@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipiconf.h,v 1.4 1997/10/18 19:51:05 thorpej Exp $	*/
+/*	$NetBSD: scsipiconf.h,v 1.5 1997/11/20 04:09:19 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1995 Charles Hannum.  All rights reserved.
@@ -220,7 +220,7 @@ struct scsipi_link {
  */
 struct scsipi_xfer {
 	LIST_ENTRY(scsipi_xfer) free_list;
-	int	flags;			/* 0x00ff0000 reserved for ATAPI */
+	volatile int flags;		/* 0x00ff0000 reserved for ATAPI */
 	struct	scsipi_link *sc_link;	/* all about our device and adapter */
 	int	retries;		/* the number of times to retry */
 	int	timeout;		/* in milliseconds */
