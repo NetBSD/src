@@ -1,4 +1,4 @@
-.\"	$NetBSD: mount_mfs.8,v 1.1 2002/01/04 10:47:48 lukem Exp $
+.\"	$NetBSD: mount_mfs.8,v 1.2 2002/01/07 12:00:09 simonb Exp $
 .\"
 .\" Copyright (c) 1983, 1987, 1991, 1993, 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -48,11 +48,14 @@
 .Op Fl d Ar rotdelay
 .Op Fl e Ar maxbpg
 .Op Fl f Ar frag-size
+.Op Fl g Ar groupname
 .Op Fl i Ar bytes-per-inode
 .Op Fl m Ar free-space
 .Op Fl n Ar rotational-positions
 .Op Fl o Ar options
+.Op Fl p Ar permissions
 .Op Fl s Ar size
+.Op Fl u Ar username
 .Ar special node
 .Sh DESCRIPTION
 .Nm
@@ -157,6 +160,9 @@ The default size depends upon the size of the file system:
 .It \&>\&= 1024 MB
 2 KB
 .El
+.It Fl g Ar groupname
+This specifies the group name or group id of the root
+inode of the file system.
 .It Fl i Ar bytes-per-inode
 This specifies the density of inodes in the file system.
 If fewer inodes are desired, a larger number should be used;
@@ -192,6 +198,9 @@ flag followed by a comma separated string of options.
 See the
 .Xr mount 8
 man page for possible options and their meanings.
+.It Fl p Ar permissions
+This specifies the permissions of the root
+inode of the file system.
 .It Fl s Ar size
 The size of the file system in sectors.
 An
@@ -202,6 +211,9 @@ except that the number is converted into sectors by dividing by the
 sector size (as specified by
 .Fl S Ar secsize )
 after suffix interpretation.
+.It Fl u Ar username
+This specifies the user name or user id of the root
+inode of the file system.
 .El
 .Sh NOTES
 The owner and group ids of the root node of the new file system
