@@ -1,4 +1,4 @@
-#	$NetBSD: files.cardbus,v 1.6 1999/10/31 15:14:17 joda Exp $
+#	$NetBSD: files.cardbus,v 1.7 1999/11/19 18:23:35 thorpej Exp $
 #
 # files.cardbus
 #
@@ -33,6 +33,12 @@ file	dev/cardbus/if_fxp_cardbus.c		fxp_cardbus
 #
 #attach	com at cardbus with com_cardbus
 #file	dev/cardbus/com_cardbus.c		com_cardbus
+
+#
+# DECchip 21143 and clones.
+#
+attach	tlp at cardbus with tlp_cardbus
+file	dev/cardbus/if_tlp_cardbus.c		tlp_cardbus
 
 #
 # OHCI USB controller
