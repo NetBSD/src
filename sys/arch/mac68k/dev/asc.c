@@ -1,4 +1,4 @@
-/*	$NetBSD: asc.c,v 1.13 1996/10/13 03:21:15 christos Exp $	*/
+/*	$NetBSD: asc.c,v 1.14 1996/11/09 17:26:26 briggs Exp $	*/
 
 /*-
  * Copyright (C) 1993	Allen K. Briggs, Chris P. Caputo,
@@ -44,6 +44,8 @@
 #include <sys/systm.h>
 #include <sys/param.h>
 #include <sys/device.h>
+
+#include <machine/autoconf.h>
 #include <machine/cpu.h>
 
 #include "ascvar.h"
@@ -53,6 +55,7 @@ volatile unsigned char *ASCBase = (unsigned char *) 0x14000;
 
 
 /* bell support data */
+static int asc_configured = 0;
 static int bell_freq = 1880;
 static int bell_length = 10;
 static int bell_volume = 100;
@@ -74,6 +77,8 @@ ascmatch(pdp, match, auxp)
 	struct device	*pdp;
 	void	*match, *auxp;
 {
+	if (badbaddr((unsigned char *) ASCBase))
+		return 0;
 	return 1;
 }
 
@@ -83,6 +88,7 @@ ascattach(parent, dev, aux)
 	void   *aux;
 {
 	printf(" Apple sound chip.\n");
+	asc_configured = 1;
 }
 
 int 
@@ -91,6 +97,8 @@ asc_setbellparams(freq, length, volume)
     int length;
     int volume;
 {
+	if (!asc_configured) return (ENODEV);
+
 	/* I only perform these checks for sanity. */
 	/* I suppose someone might want a bell that rings */
 	/* all day, but then the can make kernel mods themselves. */
@@ -116,6 +124,8 @@ asc_getbellparams(freq, length, volume)
     int *length;
     int *volume;
 {
+	if (!asc_configured) return (ENODEV);
+
 	*freq = bell_freq;
 	*length = bell_length;
 	*volume = bell_volume;
@@ -128,6 +138,8 @@ void
 asc_bellstop(param)
     int param;
 {
+	if (!asc_configured) return;
+
 	if (bell_ringing > 1000 || bell_ringing < 0)
 		panic("bell got out of synch?????");
 	if (--bell_ringing == 0) {
@@ -142,6 +154,8 @@ asc_ringbell()
 {
 	int     i;
 	unsigned long freq;
+
+	if (!asc_configured) return (ENODEV);
 
 	if (bell_ringing == 0) {
 		for (i = 0; i < 0x800; i++)
