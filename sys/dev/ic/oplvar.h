@@ -1,4 +1,4 @@
-/*	$NetBSD: oplvar.h,v 1.6 2001/09/29 13:56:04 augustss Exp $	*/
+/*	$NetBSD: oplvar.h,v 1.7 2001/10/23 13:09:43 itohy Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -60,6 +60,9 @@ struct opl_softc {
 
 	struct opl_voice voices[OPL3_NVOICE];
 	int volume;
+	u_int8_t pan[MIDI_MAX_CHANS];
+#define OPL_MIDI_CENTER_MIN	(64 - 20)
+#define OPL_MIDI_CENTER_MAX	(64 + 20)
 
 	int	(*spkrctl)__P((void *, int));
 	void	*spkrarg;
