@@ -1,4 +1,4 @@
-#	$NetBSD: DEVNAMES,v 1.144 2004/01/18 12:38:59 bjh21 Exp $
+#	$NetBSD: DEVNAMES,v 1.145 2004/01/20 19:58:01 jdolecek Exp $
 #
 # This file contains all used device names and defined attributes in 
 # alphabetical order. New devices added to the system somewhere should first 
@@ -95,6 +95,7 @@ atabus			MI
 atapi			MI		Attribute
 atapibus		MI		
 ate			MI		
+atppc			MI
 atm			MI		Attribute
 atzsc			amiga
 atzsc			amigappc
@@ -857,6 +858,7 @@ panel			cobalt
 par			amiga
 par			amigappc
 par			x68k
+parport			MI		Attribute
 pas			MI		
 pbcpcibr		arc
 pc			arc
@@ -939,6 +941,7 @@ power			sparc
 power			sparc64
 pp			sun3
 ppb			MI		
+ppbus			MI
 ppi			hp300
 ps			vax
 pss			MI		

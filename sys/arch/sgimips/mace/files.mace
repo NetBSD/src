@@ -1,4 +1,4 @@
-#	$NetBSD: files.mace,v 1.1 2004/01/18 04:07:17 sekiya Exp $
+#	$NetBSD: files.mace,v 1.2 2004/01/20 19:58:00 jdolecek Exp $
 
 device mace {[offset = -1], [intr = -1], [intrmask = 0] }
 attach mace at mainbus
@@ -7,10 +7,8 @@ file arch/sgimips/mace/mace.c		mace
 attach com at mace with com_mace
 file arch/sgimips/mace/com_mace.c	com_mace
 
-device lpt
 attach lpt at mace with lpt_mace
 file arch/sgimips/mace/lpt_mace.c	lpt_mace
-file dev/ic/lpt.c			lpt_mace
 
 attach pckbc at mace with pckbc_mace
 file arch/sgimips/mace/pckbc_mace.c	pckbc_mace

@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.650 2004/01/17 20:55:59 bjh21 Exp $
+#	$NetBSD: files,v 1.651 2004/01/20 19:58:01 jdolecek Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -230,6 +230,9 @@ include	"dev/ir/files.ir"
 
 # Bluetooth device support
 include "dev/bluetooth/files.bluetooth"
+
+# Parallel Port Bus support
+include "dev/ppbus/files.ppbus"
 
 # raster operations attributes
 #
@@ -742,16 +745,15 @@ attach atabus at ata
 file	dev/ic/wdc.c			atabus
 
 # CHIPS and Technologies 82C7[12][01] Universal Peripheral Controller
-# lpt attachment commented out because "device lpt" isn't in this file.
 #
 device	upc { [offset = -1] }
 attach	wdc at upc with wdc_upc
 attach	com at upc with com_upc
-# attach lpt at upc with lpt_upc
+attach	lpt at upc with lpt_upc
 file	dev/ic/upc.c			upc
 file	dev/ic/wdc_upc.c		wdc_upc
 file	dev/ic/com_upc.c		com_upc
-# file	dev/ic/lpt_upc.c		lpt_upc
+file	dev/ic/lpt_upc.c		lpt_upc
 
 # Common code for ISA/PCMCIA (non 802.11) WaveLAN adapters
 #
