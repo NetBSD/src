@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.19 2004/02/13 11:36:12 wiz Exp $	*/
+/*	$NetBSD: machdep.c,v 1.20 2004/03/16 23:58:18 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.19 2004/02/13 11:36:12 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.20 2004/03/16 23:58:18 scw Exp $");
 
 #include "opt_sh5_debug.h"
 #include "opt_sh5_cpu.h"
@@ -182,7 +182,6 @@ evbsh5_init(void *symtab, vaddr_t endkernel)
 #endif
 	struct boot_params *bp;
 	u_long ksize;
-	vsize_t size;
 	paddr_t kseg0_phys;
 	int i, j;
 
