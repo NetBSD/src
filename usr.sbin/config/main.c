@@ -39,7 +39,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)main.c	5.17 (Berkeley) 7/1/91";*/
-static char rcsid[] = "$Id: main.c,v 1.4 1993/08/01 18:00:17 mycroft Exp $";
+static char rcsid[] = "$Id: main.c,v 1.5 1993/09/13 15:27:38 brezak Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -106,6 +106,7 @@ usage:		fputs("usage: config [-gkp] sysname\n", stderr);
 		exit(2);
 	}
 
+	loadaddress = -1;
 	dtab = NULL;
 	confp = &conf_list;
 	if (yyparse())
