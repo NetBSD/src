@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.2,v 1.1.2.263 2004/02/09 12:32:50 he Exp $
+#	$NetBSD: CHANGES-1.6.2,v 1.1.2.264 2004/02/09 12:59:46 he Exp $
 
 A complete list of changes from NetBSD 1.6.1 to NetBSD 1.6.2:
 
@@ -3401,5 +3401,18 @@ xsrc/xfree/xc/lib/font/fontfile/dirfile.c	1.2
 
 	Fix problem with too long file names.
 	[tron, ticket #1606]
+
+	(Moved tags on last 2 files + doc/CHANGES-1.6.2)
+
+crypto/dist/kame/racoon/isakmp_inf.c		1.5-1.6
+
+	Validate hash on info exchange.
+	Fix endian mismatch.
+	[itojun, #1608]
+
+usr.sbin/racoon/Makefile.inc			patch
+
+	Bump version string by appending ``-nb1''.
+	[itojun, #1608]
 
 	(Moved tags on last 2 files + doc/CHANGES-1.6.2)
