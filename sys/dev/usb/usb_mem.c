@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_mem.c,v 1.21.4.3 2002/06/24 22:10:31 nathanw Exp $	*/
+/*	$NetBSD: usb_mem.c,v 1.21.4.4 2002/07/10 17:30:29 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb_mem.c,v 1.21.4.3 2002/06/24 22:10:31 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb_mem.c,v 1.21.4.4 2002/07/10 17:30:29 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -107,7 +107,7 @@ usb_block_allocmem(bus_dma_tag_t tag, size_t size, size_t align,
 		     (u_long)size, (u_long)align));
 
 #ifdef DIAGNOSTIC
-	if (!curlwp) {
+	if (!curproc) {
 		printf("usb_block_allocmem: in interrupt context, size=%lu\n",
 		    (unsigned long) size);
 	}
@@ -129,7 +129,7 @@ usb_block_allocmem(bus_dma_tag_t tag, size_t size, size_t align,
 	splx(s);
 
 #ifdef DIAGNOSTIC
-	if (!curlwp) {
+	if (!curproc) {
 		printf("usb_block_allocmem: in interrupt context, failed\n");
 		return (USBD_NOMEM);
 	}
@@ -180,7 +180,7 @@ void
 usb_block_real_freemem(usb_dma_block_t *p)
 {
 #ifdef DIAGNOSTIC
-	if (!curlwp) {
+	if (!curproc) {
 		printf("usb_block_real_freemem: in interrupt context\n");
 		return;
 	}
