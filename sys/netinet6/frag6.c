@@ -1,4 +1,4 @@
-/*	$NetBSD: frag6.c,v 1.25 2003/09/05 23:20:51 itojun Exp $	*/
+/*	$NetBSD: frag6.c,v 1.26 2003/09/06 03:36:32 itojun Exp $	*/
 /*	$KAME: frag6.c,v 1.40 2002/05/27 21:40:31 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: frag6.c,v 1.25 2003/09/05 23:20:51 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: frag6.c,v 1.26 2003/09/06 03:36:32 itojun Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -140,7 +140,6 @@ void
 frag6_init()
 {
 
-	ip6_id = arc4random();
 	ip6q.ip6q_next = ip6q.ip6q_prev = &ip6q;
 }
 
