@@ -1,4 +1,4 @@
-/*	$NetBSD: find.c,v 1.16 2003/05/22 15:47:25 yamt Exp $	*/
+/*	$NetBSD: find.c,v 1.17 2003/05/22 15:48:44 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "from: @(#)find.c	8.5 (Berkeley) 8/5/94";
 #else
-__RCSID("$NetBSD: find.c,v 1.16 2003/05/22 15:47:25 yamt Exp $");
+__RCSID("$NetBSD: find.c,v 1.17 2003/05/22 15:48:44 yamt Exp $");
 #endif
 #endif /* not lint */
 
@@ -51,6 +51,7 @@ __RCSID("$NetBSD: find.c,v 1.16 2003/05/22 15:47:25 yamt Exp $");
 #include <err.h>
 #include <errno.h>
 #include <fts.h>
+#include <signal.h>
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
@@ -58,6 +59,9 @@ __RCSID("$NetBSD: find.c,v 1.16 2003/05/22 15:47:25 yamt Exp $");
 #include "find.h"
 
 static int ftscompare __P((const FTSENT **, const FTSENT **));
+
+static void sig_lock __P((sigset_t *));
+static void sig_unlock __P((const sigset_t *));
 
 /*
  * find_formplan --
@@ -156,6 +160,25 @@ ftscompare(e1, e2)
 	return (strcoll((*e1)->fts_name, (*e2)->fts_name));
 }
 
+static void
+sig_lock(s)
+	sigset_t *s;
+{
+	sigset_t new;
+
+	sigemptyset(&new);
+	sigaddset(&new, SIGINFO); /* block SIGINFO */
+	sigprocmask(SIG_BLOCK, &new, s);
+}
+
+static void
+sig_unlock(s)
+	const sigset_t *s;
+{
+
+	sigprocmask(SIG_SETMASK, s, NULL);
+}
+
 FTS *tree;			/* pointer to top of FTS hierarchy */
 FTSENT *g_entry;		/* shared with SIGINFO handler */
 
@@ -171,11 +194,14 @@ find_execute(plan, paths)
 {
 	PLAN *p;
 	int rval;
+	sigset_t s;
 
 	if (!(tree = fts_open(paths, ftsoptions, issort ? ftscompare : NULL)))
 		err(1, "ftsopen");
 
-	for (rval = 0; (g_entry = fts_read(tree)) != NULL; ) {
+	sig_lock(&s);
+	for (rval = 0; (g_entry = fts_read(tree)) != NULL; sig_lock(&s)) {
+		sig_unlock(&s);
 		switch (g_entry->fts_info) {
 		case FTS_D:
 			if (isdepth)
@@ -214,6 +240,7 @@ find_execute(plan, paths)
 		for (p = plan; p && (p->eval)(p, g_entry); p = p->next)
 			;
 	}
+	sig_unlock(&s);
 	if (errno)
 		err(1, "fts_read");
 	(void)fts_close(tree);

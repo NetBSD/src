@@ -1,4 +1,4 @@
-/*	$NetBSD: misc.c,v 1.10 2003/05/22 15:47:25 yamt Exp $	*/
+/*	$NetBSD: misc.c,v 1.11 2003/05/22 15:48:45 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "from: @(#)misc.c	8.2 (Berkeley) 4/1/94";
 #else
-__RCSID("$NetBSD: misc.c,v 1.10 2003/05/22 15:47:25 yamt Exp $");
+__RCSID("$NetBSD: misc.c,v 1.11 2003/05/22 15:48:45 yamt Exp $");
 #endif
 #endif /* not lint */
 
@@ -156,8 +156,19 @@ show_path(sig)
 	int sig;
 {
 	extern FTSENT *g_entry;
+	int errno_bak;
 
+	if (g_entry == NULL) {
+		/*
+		 * not initialized yet.
+		 * assumption: pointer assignment is atomic.
+		 */
+		return;
+	}
+
+	errno_bak = errno;
 	write(STDERR_FILENO, "find path: ", 11);
 	write(STDERR_FILENO, g_entry->fts_path, g_entry->fts_pathlen);
 	write(STDERR_FILENO, "\n", 1);
+	errno = errno_bak;
 }
