@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.kmod.mk,v 1.4 1996/08/27 23:31:47 explorer Exp $
+#	$NetBSD: bsd.kmod.mk,v 1.5 1996/10/18 02:34:43 thorpej Exp $
 
 S!=	cd ${.CURDIR}/..;pwd
 
@@ -66,7 +66,7 @@ afterinstall:
 
 .if !target(realinstall)
 realinstall:
-	install ${COPY} -o ${KMODOWN} -g ${KMODGRP} -m ${KMODMODE} \
+	${INSTALL} ${COPY} -o ${KMODOWN} -g ${KMODGRP} -m ${KMODMODE} \
 		${PROG} ${DESTDIR}${KMODDIR}
 .endif
 

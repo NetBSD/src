@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.doc.mk,v 1.20 1994/07/26 19:42:37 mycroft Exp $
+#	$NetBSD: bsd.doc.mk,v 1.21 1996/10/18 02:34:42 thorpej Exp $
 #	@(#)bsd.doc.mk	8.1 (Berkeley) 8/14/93
 
 BIB?=		bib
@@ -42,7 +42,7 @@ clean cleandir:
 
 FILES?=	${SRCS}
 install:
-	install -c -o ${BINOWN} -g ${BINGRP} -m 444 \
+	${INSTALL} -c -o ${BINOWN} -g ${BINGRP} -m 444 \
 	    Makefile ${FILES} ${EXTRA} ${DESTDIR}${BINDIR}/${DIR}
 
 spell: ${SRCS}
