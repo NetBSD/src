@@ -1,4 +1,4 @@
-/*	$NetBSD: cons.c,v 1.7 1995/02/01 04:43:52 mellon Exp $	*/
+/*	$NetBSD: cons.c,v 1.8 1995/04/10 07:14:33 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -72,6 +72,7 @@ struct consdev cn_tab = {
 	(struct tty *)0,
 };
 
+int
 cnopen(dev, flag, mode, p)
 	dev_t dev;
 	int flag, mode;
@@ -83,6 +84,7 @@ cnopen(dev, flag, mode, p)
 	return ((*cdevsw[major(dev)].d_open)(dev, flag, mode, p));
 }
  
+int
 cnclose(dev, flag, mode, p)
 	dev_t dev;
 	int flag, mode;
@@ -94,6 +96,7 @@ cnclose(dev, flag, mode, p)
 	return ((*cdevsw[major(dev)].d_close)(dev, flag, mode, p));
 }
  
+int
 cnread(dev, uio, flag)
 	dev_t dev;
 	struct uio *uio;
@@ -104,6 +107,7 @@ cnread(dev, uio, flag)
 	return ((*cdevsw[major(dev)].d_read)(dev, uio, flag));
 }
  
+int
 cnwrite(dev, uio, flag)
 	dev_t dev;
 	struct uio *uio;
@@ -115,7 +119,16 @@ cnwrite(dev, uio, flag)
 	dev = cn_tab.cn_dev;
 	return ((*cdevsw[major(dev)].d_write)(dev, uio, flag));
 }
+
+int
+cnstop(tp, flag)
+	struct tty *tp;
+	int flag;
+{
+
+}
  
+int
 cnioctl(dev, cmd, data, flag, p)
 	dev_t dev;
 	caddr_t data;
@@ -149,6 +162,7 @@ cnioctl(dev, cmd, data, flag, p)
 }
 
 /*ARGSUSED*/
+int
 cnselect(dev, rw, p)
 	dev_t dev;
 	int rw;
@@ -162,6 +176,7 @@ cnselect(dev, rw, p)
 /*
  * Get character from console.
  */
+int
 cngetc()
 {
 
@@ -174,6 +189,7 @@ cngetc()
 /*
  * Print a character on console.
  */
+void
 cnputc(c)
 	register int c;
 {
