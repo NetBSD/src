@@ -1,4 +1,4 @@
-/*	$NetBSD: xinstall.c,v 1.22 1997/10/27 23:16:34 thorpej Exp $	*/
+/*	$NetBSD: xinstall.c,v 1.23 1997/11/30 22:20:00 tv Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1993\n\
 #if 0
 static char sccsid[] = "@(#)xinstall.c	8.1 (Berkeley) 7/21/93";
 #else
-__RCSID("$NetBSD: xinstall.c,v 1.22 1997/10/27 23:16:34 thorpej Exp $");
+__RCSID("$NetBSD: xinstall.c,v 1.23 1997/11/30 22:20:00 tv Exp $");
 #endif
 #endif /* not lint */
 
@@ -169,8 +169,8 @@ main(argc, argv)
 	argc -= optind;
 	argv += optind;
 
-	/* copy and strip options make no sense when creating directories */
-	if ((docopy || dostrip || dolink) && dodir)
+	/* strip and link options make no sense when creating directories */
+	if ((dostrip || dolink) && dodir)
 		usage();
 
 	/* strip and flags make no sense with links */
