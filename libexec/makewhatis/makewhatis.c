@@ -1,4 +1,4 @@
-/*	$NetBSD: makewhatis.c,v 1.24 2002/03/10 20:36:10 jdolecek Exp $	*/
+/*	$NetBSD: makewhatis.c,v 1.24.2.1 2002/11/03 13:55:55 he Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1999 The NetBSD Foundation, Inc.\n\
 #endif /* not lint */
 
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: makewhatis.c,v 1.24 2002/03/10 20:36:10 jdolecek Exp $");
+__RCSID("$NetBSD: makewhatis.c,v 1.24.2.1 2002/11/03 13:55:55 he Exp $");
 #endif /* not lint */
 
 #if HAVE_CONFIG_H
@@ -71,7 +71,7 @@ __RCSID("$NetBSD: makewhatis.c,v 1.24 2002/03/10 20:36:10 jdolecek Exp $");
 #include <unistd.h>
 #include <zlib.h>
 
-#include <man/config.h>
+#include <man/manconf.h>
 #include <man/pathnames.h>
 
 typedef struct manpagestruct manpage;
