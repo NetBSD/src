@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.106 2001/01/05 21:42:08 jdolecek Exp $
+	$NetBSD: syscalls.master,v 1.107 2001/01/08 18:25:35 nathanw Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
 
@@ -607,3 +607,42 @@
 305	STD		{ int sys_issetugid(void); }
 306	STD		{ int sys_utrace(const char *label, void *addr, \
 				size_t len); }
+;
+; Syscalls 307 and 308 are reserved for getcontext and setcontext
+;
+307	UNIMPL
+308	UNIMPL
+;
+; Syscalls 309-339 are reserved for LWP and scheduler activation syscalls.
+;
+309	UNIMPL
+310	UNIMPL
+311	UNIMPL
+312	UNIMPL
+313	UNIMPL
+314	UNIMPL
+315	UNIMPL
+316	UNIMPL
+317	UNIMPL
+318	UNIMPL
+319	UNIMPL
+320	UNIMPL
+321	UNIMPL
+322	UNIMPL
+323	UNIMPL
+324	UNIMPL
+325	UNIMPL
+326	UNIMPL
+327	UNIMPL
+328	UNIMPL
+329	UNIMPL
+330	UNIMPL
+331	UNIMPL
+332	UNIMPL
+333	UNIMPL
+334	UNIMPL
+335	UNIMPL
+336	UNIMPL
+337	UNIMPL
+338	UNIMPL
+339	UNIMPL
