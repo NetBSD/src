@@ -1,4 +1,4 @@
-/*	$NetBSD: pidlock.c,v 1.10 2002/11/16 23:30:32 itojun Exp $ */
+/*	$NetBSD: pidlock.c,v 1.11 2003/04/21 00:39:40 christos Exp $ */
 
 /*
  * Copyright 1996, 1997 by Curt Sampson <cjs@netbsd.org>.
@@ -24,7 +24,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: pidlock.c,v 1.10 2002/11/16 23:30:32 itojun Exp $");
+__RCSID("$NetBSD: pidlock.c,v 1.11 2003/04/21 00:39:40 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
@@ -213,7 +213,7 @@ ttylock(const char *tty, int flags, pid_t *locker)
 	/* do the lock */
 	strlcpy(lockfile, LOCKPATH, sizeof(lockfile));
 	strlcat(lockfile, tty, sizeof(lockfile));
-	return pidlock(lockfile, 0, 0, 0);
+	return pidlock(lockfile, flags, locker, 0);
 }
 
 int
