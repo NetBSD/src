@@ -7,3 +7,6 @@ mainbus0 at root
 obio0 at mainbus?
 obmem0 at mainbus?
 obctl0 at mainbus?
+
+clock0 at obio? addr ? level 5
+
