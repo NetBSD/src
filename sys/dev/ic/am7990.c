@@ -1,4 +1,4 @@
-/*	$NetBSD: am7990.c,v 1.24.4.1 1997/02/21 19:28:30 is Exp $	*/
+/*	$NetBSD: am7990.c,v 1.24.4.2 1997/02/27 19:47:51 is Exp $	*/
 
 /*-
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
@@ -875,9 +875,6 @@ am7990_ioctl(ifp, cmd, data)
 				ina->x_host =
 				    *(union ns_host *)LLADDR(ifp->if_sadl);
 			else {
-				bcopy(ina->x_host.c_host,
-				    sc->sc_enaddr,
-				    sizeof(sc->sc_enaddr));
 				bcopy(ina->x_host.c_host,
 				    LLADDR(ifp->if_sadl),
 				    sizeof(sc->sc_enaddr));
