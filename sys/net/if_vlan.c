@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vlan.c,v 1.20 2000/11/10 02:31:53 enami Exp $	*/
+/*	$NetBSD: if_vlan.c,v 1.21 2000/11/12 19:39:42 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -316,7 +316,8 @@ vlan_config(struct ifvlan *ifv, struct ifnet *p)
 
 	ifv->ifv_p = p;
 	ifv->ifv_if.if_mtu = p->if_mtu - ifv->ifv_mtufudge;
-	ifv->ifv_if.if_flags = p->if_flags;
+	ifv->ifv_if.if_flags = p->if_flags &
+	    (IFF_UP | IFF_BROADCAST | IFF_RUNNING | IFF_ALLMULTI | IFF_SIMPLEX);
 
 	/*
 	 * Inherit the if_type from the parent.  This allows us
