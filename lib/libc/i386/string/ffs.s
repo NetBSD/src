@@ -31,33 +31,22 @@
 #include "DEFS.h"
 
 /*
- * strrchr(s, c)
- *	return a pointer to the last occurance of the character c in
- *	string s, or NULL if c does not occur in the string.
- *
- * %edx - pointer iterating through string
- * %eax - pointer to last occurance of 'c'
- * %cl  - character we're comparing against
- * %bl  - character at %edx
+ * ffs(value)
+ *	finds the first bit set in value and returns the index of 
+ *	that bit.  Bits are numbered starting from 1, starting at the
+ *	rightmost bit.  A return value of 0 means that the argument
+ *	was zero.
  *
  * Written by:
  *	J.T. Conklin (jtc@wimsey.com), Winning Strategies, Inc.
  */
 
-ENTRY(strrchr)
-	pushl	%ebx
-	movl	8(%esp),%edx
-	movb	12(%esp),%cl
-	xorl	%eax,%eax		/* init pointer to null */
-	.align 2,0x90
+ENTRY(ffs)
+	bsfl	4(%esp),%eax
+	jz	L1	 		/* ZF is set if all bits are 0 */
+	incl	%eax			/* bits numbered from 1, not 0 */
+	ret
 L1:
-	movb	(%edx),%bl
-	cmpb	%bl,%cl
-	jne	L2
-	movl	%edx,%eax
-L2:	
-	incl	%edx
-	testb	%bl,%bl			/* null terminator??? */
-	jne	L1
-	popl	%ebx
+	.align 2
+	xorl	%eax,%eax		/* clear result */
 	ret
