@@ -18,6 +18,9 @@ ac_help="$ac_help
 ac_help="$ac_help
   --enable-sim-powerpc "
 ac_help="$ac_help
+  --with-mmalloc=MMALLOC_DIR
+  use the GNU mapped-malloc package in MMALLOC_DIR "
+ac_help="$ac_help
   --enable-gdbtk "
 ac_help="$ac_help
   --with-x                use the X Window System"
@@ -1799,6 +1802,25 @@ fi
 
 
 
+mmalloc_dir=../mmalloc
+mmalloc_yn=MMALLOC_YES
+# Check whether --with-mmalloc or --without-mmalloc was given.
+if test "${with_mmalloc+set}" = set; then
+  withval="$with_mmalloc"
+  case "${withval}" in
+  no)	mmalloc_yn=MMALLOC_NO ;;
+  *)	mmalloc_dir="${withval}";;
+  esac
+else
+  if test ! -d "${mmalloc_dir}"; then
+    echo "configure: warning: mmalloc not found - building without it" 1>&2;
+    mmalloc_yn=MMALLOC_NO
+  fi
+fi
+
+
+
+
 # target_subdir is used by the testsuite to find the target libraries.
 target_subdir=
 if test "${host}" != "${target}"; then
@@ -2399,6 +2421,8 @@ s%@X_LDFLAGS@%$X_LDFLAGS%g
 s%@ENABLE_CFLAGS@%$ENABLE_CFLAGS%g
 s%@ENABLE_CLIBS@%$ENABLE_CLIBS%g
 s%@ENABLE_OBS@%$ENABLE_OBS%g
+s%@mmalloc_dir@%$mmalloc_dir%g
+s%@mmalloc_yn@%$mmalloc_yn%g
 s%@target_subdir@%$target_subdir%g
 /@host_makefile_frag@/r $host_makefile_frag
 s%@host_makefile_frag@%%g
