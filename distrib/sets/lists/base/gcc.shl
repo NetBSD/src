@@ -1,4 +1,7 @@
-# $NetBSD: gcc.shl,v 1.3 2004/08/12 16:07:07 lukem Exp $
+# $NetBSD: gcc.shl,v 1.4 2004/08/13 01:02:24 lukem Exp $
+./usr/lib/libg2c.so				base-sys-shlib
+./usr/lib/libg2c.so.2				base-sys-shlib
+./usr/lib/libg2c.so.2.0				base-sys-shlib
 ./usr/lib/libgcc_s.so				base-sys-shlib
 ./usr/lib/libgcc_s.so.1				base-sys-shlib
 ./usr/lib/libgcc_s.so.1.0			base-sys-shlib
