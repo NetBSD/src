@@ -1,4 +1,4 @@
-.\" $NetBSD: pcmcia.4,v 1.29 2003/03/31 19:16:49 perry Exp $
+.\" $NetBSD: pcmcia.4,v 1.30 2003/04/16 09:07:06 wiz Exp $
 .\"
 .\" Copyright (c) 1999, 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -177,7 +177,7 @@ in
 .Xr options 4 .
 Example:
 .Bd -literal -offset indent
-# Avoid pcmcia bus space conflicts with the default io space
+# Avoid PCMCIA bus space conflicts with the default IO space
 # allocation on 12-bit wide busses (base 0x400 size 0xfff).
 options PCIC_ISA_ALLOC_IOBASE=0x300
 options PCIC_ISA_ALLOC_IOSIZE=0x0ff
