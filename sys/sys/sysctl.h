@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.h,v 1.125 2004/05/20 06:34:32 atatat Exp $	*/
+/*	$NetBSD: sysctl.h,v 1.126 2004/07/27 22:01:56 manu Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -833,13 +833,15 @@ struct buf_sysctl {
 #define	EMUL_LINUX	1
 #define	EMUL_IRIX	2
 #define	EMUL_DARWIN	3
+#define	EMUL_MACH	4
 
-#define	EMUL_MAXID	4
+#define	EMUL_MAXID	5
 #define	CTL_EMUL_NAMES { \
 	{ 0, 0 }, \
 	{ "linux", CTLTYPE_NODE }, \
 	{ "irix", CTLTYPE_NODE }, \
 	{ "darwin", CTLTYPE_NODE }, \
+	{ "mach", CTLTYPE_NODE }, \
 }
 
 #ifdef _KERNEL
