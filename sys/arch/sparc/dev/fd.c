@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.11 1995/10/02 21:04:45 pk Exp $	*/
+/*	$NetBSD: fd.c,v 1.12 1995/10/03 17:32:12 pk Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles Hannum.
@@ -203,13 +203,14 @@ void fdstart __P((struct fd_softc *));
 struct dkdriver fddkdriver = { fdstrategy };
 
 struct	fd_type *fd_nvtotype __P((char *, int, int));
-void	fd_set_motor __P((struct fdc_softc *fdc, int reset));
+void	fd_set_motor __P((struct fdc_softc *fdc));
 void	fd_motor_off __P((void *arg));
 void	fd_motor_on __P((void *arg));
 int	fdcresult __P((struct fdc_softc *fdc));
 int	out_fdc __P((struct fdc_softc *fdc, u_char x));
 void	fdcstart __P((struct fdc_softc *fdc));
 void	fdcstatus __P((struct device *dv, int n, char *s));
+void	fdc_reset __P((struct fdc_softc *fdc));
 void	fdctimeout __P((void *arg));
 void	fdcpseudointr __P((void *arg));
 #ifdef FDC_C_HANDLER
@@ -639,21 +640,35 @@ fdfinish(fd, bp)
 }
 
 void
-fd_set_motor(fdc, reset)
+fdc_reset(fdc)
 	struct fdc_softc *fdc;
-	int reset;
+{
+	if (fdc->sc_flags & FDC_82077) {
+		*fdc->sc_reg_dor = FDO_MOEN(0);
+	}
+
+	*fdc->sc_reg_drs = DRS_RESET;
+	delay(10);
+	*fdc->sc_reg_drs = 0;
+#ifdef FD_DEBUG
+	if (fdc_debug)
+		printf("fdc reset\n");
+#endif
+}
+
+void
+fd_set_motor(fdc)
+	struct fdc_softc *fdc;
 {
 	struct fd_softc *fd;
 	u_char status;
 	int n;
 
 	if (fdc->sc_flags & FDC_82077) {
+		status = FDO_FRST | FDO_FDMAEN;
 		if (fd = fdc->sc_drives.tqh_first)
-			status = fd->sc_drive;
-		else
-			status = 0;
-		if (!reset)
-			status |= FDO_FRST | FDO_FDMAEN;
+			status |= fd->sc_drive;
+
 		for (n = 0; n < 4; n++)
 			if ((fd = fdc->sc_fd[n]) && (fd->sc_flags & FD_MOTOR))
 				status |= FDO_MOEN(n);
@@ -669,18 +684,6 @@ fd_set_motor(fdc, reset)
 		} else {
 			auxregbisc(0, AUXIO_FDS);
 		}
-		delay(10);
-		if (reset) {
-			*fdc->sc_reg_drs = DRS_RESET;
-			delay(10);
-			*fdc->sc_reg_drs = 0;
-#ifdef FD_DEBUG
-			if (fdc_debug)
-				printf("fdc reset\n");
-#endif
-			fdconf(fdc);
-		}
-
 	}
 }
 
@@ -693,7 +696,7 @@ fd_motor_off(arg)
 
 	s = splbio();
 	fd->sc_flags &= ~(FD_MOTOR | FD_MOTOR_WAIT);
-	fd_set_motor((struct fdc_softc *)fd->sc_dk.dk_dev.dv_parent, 0);
+	fd_set_motor((struct fdc_softc *)fd->sc_dk.dk_dev.dv_parent);
 	splx(s);
 }
 
@@ -1002,14 +1005,20 @@ fdcswintr(fdc)
 	int read, head, trac, sec, i, s, nblks;
 	struct fd_type *type;
 
-loop:
+
 	if (fdc->sc_istate != ISTATE_IDLE) {
 		/* Trouble... */
-		printf("fdc: spurious interrupt: istate=%d\n", fdc->sc_istate);
+		printf("fdc: spurious interrupt: state %d, istate=%d\n",
+			fdc->sc_state, fdc->sc_istate);
 		fdc->sc_istate = ISTATE_IDLE;
+		if (fdc->sc_state == RESETCOMPLETE ||
+		    fdc->sc_state == RESETTIMEDOUT) {
+			panic("fdcintr: spurious interrupt can't be cleared");
+		}
 		goto doreset;
 	}
 
+loop:
 	/* Is there a drive for the controller to do a transfer with? */
 	fd = fdc->sc_drives.tqh_first;
 	if (fd == NULL) {
@@ -1045,7 +1054,7 @@ loop:
 				ofd->sc_flags &= ~(FD_MOTOR | FD_MOTOR_WAIT);
 			}
 			fd->sc_flags |= FD_MOTOR | FD_MOTOR_WAIT;
-			fd_set_motor(fdc, 0);
+			fd_set_motor(fdc);
 			fdc->sc_state = MOTORWAIT;
 			if (fdc->sc_flags & FDC_82077) { /* XXX */
 				/* Allow .25s for motor to stabilize. */
@@ -1057,7 +1066,7 @@ loop:
 			return 1;
 		}
 		/* Make sure the right drive is selected. */
-		fd_set_motor(fdc, 0);
+		fd_set_motor(fdc);
 
 		/* fall through */
 	case DOSEEK:
@@ -1219,7 +1228,7 @@ loop:
 			printf("\n");
 			fdc->sc_errors = 0;
 		} else {
-			if (--fdc->sc_overruns < -5) {
+			if (--fdc->sc_overruns < -20) {
 				int thr = fdc->sc_cfg & CFG_THRHLD_MASK;
 				if (thr > 0) {
 					thr--;
@@ -1247,20 +1256,18 @@ loop:
 	case DORESET:
 	doreset:
 		/* try a reset, keep motor on */
-		fd_set_motor(fdc, 1);
+		fd_set_motor(fdc);
 		delay(100);
-		fd_set_motor(fdc, 0);
+		fdc_reset(fdc);
+		fdc->sc_nstat = 0;
+		fdc->sc_istate = ISTATE_SENSEI;
 		fdc->sc_state = RESETCOMPLETE;
 		timeout(fdctimeout, fdc, hz / 2);
 		return 1;			/* will return later */
 
 	case RESETCOMPLETE:
 		untimeout(fdctimeout, fdc);
-		/* clear the controller output buffer */
-		for (i = 0; i < 4; i++) {
-			out_fdc(fdc, NE7CMD_SENSEI);
-			(void) fdcresult(fdc);
-		}
+		fdconf(fdc);
 
 		/* fall through */
 	case DORECAL:
