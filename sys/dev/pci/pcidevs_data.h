@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.240.2.15 2001/04/23 22:04:37 he Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.240.2.16 2001/05/03 21:01:10 he Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.236.2.14 2001/03/22 02:44:11 he Exp 
+ *	NetBSD: pcidevs,v 1.236.2.15 2001/04/23 22:04:13 he Exp 
  */
 
 /*
@@ -1294,6 +1294,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    "EX110TX PCI Fast Ethernet Adapter",
 	},
 	{
+	    PCI_VENDOR_COMPAL, PCI_PRODUCT_COMPAL_38W2,
+	    0,
+	    "COMPAL Electronics, Inc.",
+	    "COMPAL 38W2 OEM Notebook",
+	},
+	{
 	    PCI_VENDOR_COMPAQ, PCI_PRODUCT_COMPAQ_PCI_EISA_BRIDGE,
 	    0,
 	    "Compaq",
@@ -1388,6 +1394,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Compaq",
 	    "Deskpro 4000 5233MMX",
+	},
+	{
+	    PCI_VENDOR_COMPAQ, PCI_PRODUCT_COMPAQ_M700,
+	    0,
+	    "Compaq",
+	    "Armada M700",
 	},
 	{
 	    PCI_VENDOR_COMPAQ, PCI_PRODUCT_COMPAQ_NF3P_BNC,
@@ -1742,6 +1754,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "ESS Technology Inc",
 	    "Maestro 3 Modem",
+	},
+	{
+	    PCI_VENDOR_ESSTECH2, PCI_PRODUCT_ESSTECH2_MAESTRO1,
+	    0,
+	    "ESS Technology Inc",
+	    "Maestro 1 PCI Audio Accelerator",
 	},
 	{
 	    PCI_VENDOR_O2MICRO, PCI_PRODUCT_O2MICRO_OZ6832,
@@ -2878,6 +2896,18 @@ struct pci_knowndev pci_knowndevs[] = {
 	    "uPD72871 IEEE 1394 OHCI Host Controller",
 	},
 	{
+	    PCI_VENDOR_NEC, PCI_PRODUCT_NEC_VA26D,
+	    0,
+	    "NEC",
+	    "NEC Versa Pro LX VA26D",
+	},
+	{
+	    PCI_VENDOR_NEC, PCI_PRODUCT_NEC_VERSALX,
+	    0,
+	    "NEC",
+	    "NEC Versa LX",
+	},
+	{
 	    PCI_VENDOR_NEOMAGIC, PCI_PRODUCT_NEOMAGIC_NMMG128ZV,
 	    0,
 	    "Neomagic",
@@ -3974,6 +4004,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Toshiba America",
 	    "TC35856F ATM (\"Meteor\")",
+	},
+	{
+	    PCI_VENDOR_TOSHIBA2, PCI_PRODUCT_TOSHIBA2_PORTEGE,
+	    0,
+	    "Toshiba America Info Systems",
+	    "Portege Notebook",
 	},
 	{
 	    PCI_VENDOR_TOSHIBA2, PCI_PRODUCT_TOSHIBA2_HOST,
@@ -7420,6 +7456,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    NULL,
 	},
 	{
+	    PCI_VENDOR_ESSTECH2, 0,
+	    PCI_KNOWNDEV_NOPROD,
+	    "ESS Technology Inc",
+	    NULL,
+	},
+	{
 	    PCI_VENDOR_TRITECH, 0,
 	    PCI_KNOWNDEV_NOPROD,
 	    "TriTech Microelectronics",
@@ -7489,6 +7531,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    PCI_VENDOR_LMC, 0,
 	    PCI_KNOWNDEV_NOPROD,
 	    "LAN Media Corporation",
+	    NULL,
+	},
+	{
+	    PCI_VENDOR_COMPAL, 0,
+	    PCI_KNOWNDEV_NOPROD,
+	    "COMPAL Electronics, Inc.",
 	    NULL,
 	},
 	{
