@@ -1,5 +1,5 @@
 #! /usr/bin/env sh
-#	$NetBSD: build.sh,v 1.101 2003/05/12 02:33:17 lukem Exp $
+#	$NetBSD: build.sh,v 1.102 2003/05/12 03:01:16 lukem Exp $
 #
 # Copyright (c) 2001-2003 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -111,6 +111,7 @@ initdefaults()
 
 	makeenv=
 	makewrapper=
+	makewrappermachine=
 	runcmd=
 	operations=
 	removedirs=
@@ -162,6 +163,7 @@ getarch()
 
 	evbmips-e[bl]|sbmips-e[bl])
 		MACHINE_ARCH=mips${MACHINE##*-}
+		makewrappermachine=${MACHINE}
 		MACHINE=${MACHINE%-e[bl]}
 		;;
 
@@ -340,7 +342,7 @@ Usage: ${progname} [-EnorUu] [-a arch] [-B buildid] [-D dest] [-j njob] [-M obj]
  Options:
     -a arch     Set MACHINE_ARCH to arch (otherwise deduced from MACHINE)
     -B buildId  Set BUILDID to buildId
-    -D dest     Set DESTDIR to dest
+    -D dest     Set DESTDIR to dest.  (Default: destdir.MACHINE)
     -E          Set "expert" mode; disables various safety checks.
                 Should not be used without expert knowledge of the build system
     -j njob     Run up to njob jobs in parallel; see make(1)
@@ -349,7 +351,7 @@ Usage: ${progname} [-EnorUu] [-a arch] [-B buildid] [-D dest] [-j njob] [-M obj]
     -n          Show commands that would be executed, but do not execute them
     -O obj      Set obj root directory to obj (sets a MAKEOBJDIR pattern)
     -o          Set MKOBJDIRS=no (do not create objdirs at start of build)
-    -R release  Set RELEASEDIR to release
+    -R release  Set RELEASEDIR to release.  (Default: releasedir)
     -r          Remove contents of TOOLDIR and DESTDIR before building
     -T tools    Set TOOLDIR to tools.  If unset, and TOOLDIR is not set in
                 the environment, ${toolprefix}make will be (re)built unconditionally
@@ -757,7 +759,7 @@ createmakewrapper()
 	# well as by build.sh.
 	#
 	if [ -z "${makewrapper}" ]; then
-		makewrapper="${TOOLDIR}/bin/${toolprefix}make-${MACHINE}"
+		makewrapper="${TOOLDIR}/bin/${toolprefix}make-${makewrappermachine:-${MACHINE}}"
 		[ -z "${BUILDID}" ] || makewrapper="${makewrapper}-${BUILDID}"
 	fi
 
@@ -772,7 +774,7 @@ createmakewrapper()
 	eval cat <<EOF ${makewrapout}
 #! /bin/sh
 # Set proper variables to allow easy "make" building of a NetBSD subtree.
-# Generated from:  \$NetBSD: build.sh,v 1.101 2003/05/12 02:33:17 lukem Exp $
+# Generated from:  \$NetBSD: build.sh,v 1.102 2003/05/12 03:01:16 lukem Exp $
 #
 
 EOF
