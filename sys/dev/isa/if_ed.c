@@ -13,7 +13,7 @@
  * Currently supports the Western Digital/SMC 8003 and 8013 series, the 3Com
  * 3c503, the NE1000 and NE2000, and a variety of similar clones.
  *
- *	$Id: if_ed.c,v 1.36 1994/03/06 17:18:57 mycroft Exp $
+ *	$Id: if_ed.c,v 1.37 1994/03/06 19:34:46 ws Exp $
  */
 
 #include "ed.h"
@@ -396,6 +396,7 @@ ed_probe_WD80x3(isa_dev)
 	 * XXX - We could also check the IO address register.  But why
 	 * bother... if we get past this, it *has* to be correct.
 	 */
+	sc->ed_cr_rd2 = ED_CR_RD2;
 	if (sc->is790) {
 		sc->ed_cr_rd2 = 0;
 		/* Assemble together the encoded interrupt number. */
@@ -419,7 +420,6 @@ ed_probe_WD80x3(isa_dev)
 		outb(isa_dev->id_iobase + 0x06, inb(isa_dev->id_iobase + 0x06)
 		    | 0x01);
 	} else if (sc->type & ED_WD_SOFTCONFIG) {
-		sc->ed_cr_rd2 = ED_CR_RD2;
 		/* Assemble together the encoded interrupt number. */
 		iptr = (inb(isa_dev->id_iobase + ED_WD_ICR) & ED_WD_ICR_IR2) |
 		    ((inb(isa_dev->id_iobase + ED_WD_IRR) &
