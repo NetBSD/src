@@ -1,4 +1,4 @@
-/*	$NetBSD: print-nfs.c,v 1.10 1999/09/04 03:36:41 itojun Exp $	*/
+/*	$NetBSD: print-nfs.c,v 1.11 2000/06/10 05:27:27 itojun Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -27,7 +27,7 @@
 static const char rcsid[] =
     "@(#) Header: print-nfs.c,v 1.65 97/08/17 13:24:22 leres Exp  (LBL)";
 #else
-__RCSID("$NetBSD: print-nfs.c,v 1.10 1999/09/04 03:36:41 itojun Exp $");
+__RCSID("$NetBSD: print-nfs.c,v 1.11 2000/06/10 05:27:27 itojun Exp $");
 #endif
 #endif
 
@@ -49,7 +49,9 @@ struct rtentry;
 #include <netinet/in.h>
 #include <netinet/in_systm.h>
 #include <netinet/ip.h>
-#include <netinet/ip_var.h>
+#ifdef INET6
+#include <netinet/ip6.h>
+#endif
 
 #include <rpc/rpc.h>
 
@@ -65,13 +67,14 @@ struct rtentry;
 #include "nfsfh.h"
 
 static void nfs_printfh(const u_int32_t *, const u_int);
-static void xid_map_enter(const struct rpc_msg *, const struct ip *);
-static int32_t xid_map_find(const struct rpc_msg *, const struct ip *,
-			  u_int32_t *, u_int32_t *);
+static void xid_map_enter(const struct rpc_msg *, const u_char *);
+static int32_t xid_map_find(const struct rpc_msg *, const u_char *,
+			    u_int32_t *, u_int32_t *);
 static void interp_reply(const struct rpc_msg *, u_int32_t, u_int32_t, int);
 static const u_int32_t *parse_post_op_attr(const u_int32_t *, int);
 static void print_sattr3(const struct nfsv3_sattr *sa3, int verbose);
 static int print_int64(const u_int32_t *dp, int how);
+static void print_nfsaddr(const u_char *, const char *, const char *);
 
 /*
  * Mapping of old NFS Version 2 RPC numbers to generic numbers.
@@ -105,10 +108,11 @@ u_int32_t nfsv3_procid[NFS_NPROCS] = {
 	NFSPROC_NOOP
 };
 
-const char *nfsv3_writemodes[NFSV3WRITE_NMODES] = {
-	"unstable",
-	"datasync",
-	"filesync"
+static struct tok nfsv3_writemodes[] = {
+	{ 0,		"unstable" },
+	{ 1,		"datasync" },
+	{ 2,		"filesync" },
+	{ 0,		NULL }
 };
 
 static struct tok type2str[] = {
@@ -155,78 +159,102 @@ static int print_int64(const u_int32_t *dp, int how)
 		return (0);
 	}
 #else
-#if 0
-	int sign;
-#endif
-	/*
-	 * XXX - throw upper 32 bits away.
-	 * Could also go for hex: printf("0x%x%x", dp[0], dp[1]);
-	 */
-	if (sign)
-		printf("%d", (int)dp[1]);
-	else
-		printf("%u", (unsigned int)dp[1]);
+	switch (how) {
+	case SIGNED:
+	case UNSIGNED:
+	case HEX:
+		printf("0x%x%08x", (u_int32_t)ntohl(dp[0]),
+		    (u_int32_t)ntohl(dp[1]));
+		break;
+	default:
+		return (0);
+	}
 #endif
 	return 1;
+}
+
+static void
+print_nfsaddr(const u_char *bp, const char *s, const char *d)
+{
+	struct ip *ip;
+#ifdef INET6
+	struct ip6_hdr *ip6;
+	char srcaddr[INET6_ADDRSTRLEN], dstaddr[INET6_ADDRSTRLEN];
+#else
+	char srcaddr[INET_ADDRSTRLEN], dstaddr[INET_ADDRSTRLEN];
+#endif
+
+	srcaddr[0] = dstaddr[0] = '\0';
+	switch (((struct ip *)bp)->ip_v) {
+	case 4:
+		ip = (struct ip *)bp;
+		strlcpy(srcaddr, ipaddr_string(&ip->ip_src), sizeof(srcaddr));
+		strlcpy(dstaddr, ipaddr_string(&ip->ip_dst), sizeof(dstaddr));
+		break;
+#ifdef INET6
+	case 6:
+		ip6 = (struct ip6_hdr *)bp;
+		strlcpy(srcaddr, ip6addr_string(&ip6->ip6_src),
+		    sizeof(srcaddr));
+		strlcpy(dstaddr, ip6addr_string(&ip6->ip6_dst),
+		    sizeof(dstaddr));
+		break;
+#endif
+	default:
+		strlcpy(srcaddr, "?", sizeof(srcaddr));
+		strlcpy(dstaddr, "?", sizeof(dstaddr));
+		break;
+	}
+
+	(void)printf("%s.%s > %s.%s: ", srcaddr, s, dstaddr, d);
 }
 
 static const u_int32_t *
 parse_sattr3(const u_int32_t *dp, struct nfsv3_sattr *sa3)
 {
-	register const u_int32_t *ep = (u_int32_t *)snapend;
-
-	if (dp + 1 > ep)
-		return (0);
+	TCHECK(dp[0]);
 	if ((sa3->sa_modeset = ntohl(*dp++))) {
-		if (dp + 1 > ep)
-			return (0);
+		TCHECK(dp[0]);
 		sa3->sa_mode = ntohl(*dp++);
 	}
 
-	if (dp + 1 > ep)
-		return (0);
+	TCHECK(dp[0]);
 	if ((sa3->sa_uidset = ntohl(*dp++))) {
-		if (dp + 1 > ep)
-			return (0);
+		TCHECK(dp[0]);
 		sa3->sa_uid = ntohl(*dp++);
 	}
 
-	if (dp + 1 > ep)
-		return (0);
+	TCHECK(dp[0]);
 	if ((sa3->sa_gidset = ntohl(*dp++))) {
-		if (dp + 1 > ep)
-			return (0);
+		TCHECK(dp[0]);
 		sa3->sa_gid = ntohl(*dp++);
 	}
 
-	if (dp + 1 > ep)
-		return (0);
+	TCHECK(dp[0]);
 	if ((sa3->sa_sizeset = ntohl(*dp++))) {
-		if (dp + 1 > ep)
-			return (0);
+		TCHECK(dp[0]);
 		sa3->sa_size = ntohl(*dp++);
 	}
 
-	if (dp + 1 > ep)
-		return (0);
+	TCHECK(dp[0]);
 	if ((sa3->sa_atimetype = ntohl(*dp++)) == NFSV3SATTRTIME_TOCLIENT) {
-		if (dp + 2 > ep)
-			return (0);
+		TCHECK(dp[1]);
 		sa3->sa_atime.nfsv3_sec = ntohl(*dp++);
 		sa3->sa_atime.nfsv3_nsec = ntohl(*dp++);
 	}
 
-	if (dp + 1 > ep)
-		return (0);
+	TCHECK(dp[0]);
 	if ((sa3->sa_mtimetype = ntohl(*dp++)) == NFSV3SATTRTIME_TOCLIENT) {
-		if (dp + 2 > ep)
-			return (0);
+		TCHECK(dp[1]);
 		sa3->sa_mtime.nfsv3_sec = ntohl(*dp++);
 		sa3->sa_mtime.nfsv3_nsec = ntohl(*dp++);
 	}
 
 	return dp;
+trunc:
+	return NULL;
 }
+
 static int nfserr;		/* true if we error rather than trunc */
 
 static void
@@ -253,32 +281,28 @@ nfsreply_print(register const u_char *bp, u_int length,
 	       register const u_char *bp2)
 {
 	register const struct rpc_msg *rp;
-	register const struct ip *ip;
 	u_int32_t proc, vers;
+	char srcid[20], dstid[20];	/*fits 32bit*/
 
 	nfserr = 0;		/* assume no error */
 	rp = (const struct rpc_msg *)bp;
-	ip = (const struct ip *)bp2;
 
-	if (!nflag)
-		(void)printf("%s.nfs > %s.%u: reply %s %d",
-			     ipaddr_string(&ip->ip_src),
-			     ipaddr_string(&ip->ip_dst),
-			     (u_int32_t)ntohl(rp->rm_xid),
-			     ntohl(rp->rm_reply.rp_stat) == MSG_ACCEPTED?
-				     "ok":"ERR",
-			     length);
-	else
-		(void)printf("%s.%u > %s.%u: reply %s %d",
-			     ipaddr_string(&ip->ip_src),
-			     NFS_PORT,
-			     ipaddr_string(&ip->ip_dst),
-			     (u_int32_t)ntohl(rp->rm_xid),
-			     ntohl(rp->rm_reply.rp_stat) == MSG_ACCEPTED?
-			     	"ok":"ERR",
+	if (!nflag) {
+		strlcpy(srcid, "nfs", sizeof(srcid));
+		snprintf(dstid, sizeof(dstid), "%u",
+		    (u_int32_t)ntohl(rp->rm_xid));
+	} else {
+		snprintf(srcid, sizeof(srcid), "%u", NFS_PORT);
+		snprintf(dstid, sizeof(dstid), "%u",
+		    (u_int32_t)ntohl(rp->rm_xid));
+	}
+	print_nfsaddr(bp2, srcid, dstid);
+	(void)printf("reply %s %d",
+		     ntohl(rp->rm_reply.rp_stat) == MSG_ACCEPTED?
+			     "ok":"ERR",
 			     length);
 
-	if (xid_map_find(rp, ip, &proc, &vers) >= 0)
+	if (xid_map_find(rp, bp2, &proc, &vers) >= 0)
 		interp_reply(rp, proc, vers, length);
 }
 
@@ -322,17 +346,17 @@ parsefh(register const u_int32_t *dp, int v3)
 	int len;
 
 	if (v3) {
-		if (dp + 1 > (u_int32_t *)snapend)
-			return (0);
+		TCHECK(dp[0]);
 		len = (int)ntohl(*dp) / 4;
 		dp++;
 	} else
 		len = NFSX_V2FH / 4;
 
-	if (dp + len <= (u_int32_t *)snapend) {
+	if (TTEST2(*dp, len * sizeof(*dp))) {
 		nfs_printfh(dp, len);
 		return (dp + len);
 	}
+trunc:
 	return (NULL);
 }
 
@@ -347,24 +371,25 @@ parsefn(register const u_int32_t *dp)
 	register const u_char *cp;
 
 	/* Bail if we don't have the string length */
-	if ((u_char *)dp > snapend - sizeof(*dp))
-		return (NULL);
+	TCHECK(*dp);
 
 	/* Fetch string length; convert to host order */
 	len = *dp++;
 	NTOHL(len);
 
+	TCHECK2(*dp, ((len + 3) & ~3));
+
 	cp = (u_char *)dp;
 	/* Update 32-bit pointer (NFS filenames padded to 32-bit boundaries) */
 	dp += ((len + 3) & ~3) / sizeof(*dp);
-	if ((u_char *)dp > snapend)
-		return (NULL);
 	/* XXX seems like we should be checking the length */
 	putchar('"');
 	(void) fn_printn(cp, len, NULL);
 	putchar('"');
 
 	return (dp);
+trunc:
+	return NULL;
 }
 
 /*
@@ -387,31 +412,28 @@ nfsreq_print(register const u_char *bp, u_int length,
     register const u_char *bp2)
 {
 	register const struct rpc_msg *rp;
-	register const struct ip *ip;
 	register const u_int32_t *dp;
 	nfstype type;
 	int v3;
 	u_int32_t proc;
 	struct nfsv3_sattr sa3;
+	char srcid[20], dstid[20];	/*fits 32bit*/
 
 	nfserr = 0;		/* assume no error */
 	rp = (const struct rpc_msg *)bp;
-	ip = (const struct ip *)bp2;
-	if (!nflag)
-		(void)printf("%s.%u > %s.nfs: %d",
-			     ipaddr_string(&ip->ip_src),
-			     (u_int32_t)ntohl(rp->rm_xid),
-			     ipaddr_string(&ip->ip_dst),
-			     length);
-	else
-		(void)printf("%s.%u > %s.%u: %d",
-			     ipaddr_string(&ip->ip_src),
-			     (u_int32_t)ntohl(rp->rm_xid),
-			     ipaddr_string(&ip->ip_dst),
-			     NFS_PORT,
-			     length);
+	if (!nflag) {
+		snprintf(srcid, sizeof(srcid), "%u",
+		    (u_int32_t)ntohl(rp->rm_xid));
+		strlcpy(dstid, "nfs", sizeof(dstid));
+	} else {
+		snprintf(srcid, sizeof(srcid), "%u",
+		    (u_int32_t)ntohl(rp->rm_xid));
+		snprintf(dstid, sizeof(dstid), "%u", NFS_PORT);
+	}
+	print_nfsaddr(bp2, srcid, dstid);
+	(void)printf("%d", length);
 
-	xid_map_enter(rp, ip);	/* record proc number for later on */
+	xid_map_enter(rp, bp2);	/* record proc number for later on */
 
 	v3 = (ntohl(rp->rm_call.cb_vers) == NFS_VER3);
 	proc = ntohl(rp->rm_call.cb_proc);
@@ -452,8 +474,8 @@ nfsreq_print(register const u_char *bp, u_int length,
 		printf(" access");
 		if ((dp = parsereq(rp, length)) != NULL &&
 		    (dp = parsefh(dp, v3)) != NULL) {
-			TCHECK2(dp[0], 4);
-			printf(" %04x", ntohl(dp[0]));
+			TCHECK(dp[0]);
+			printf(" %04x", (u_int32_t)ntohl(dp[0]));
 			return;
 		}
 		break;
@@ -470,15 +492,15 @@ nfsreq_print(register const u_char *bp, u_int length,
 		if ((dp = parsereq(rp, length)) != NULL &&
 		    (dp = parsefh(dp, v3)) != NULL) {
 			if (v3) {
-				TCHECK2(dp[0], 3 * sizeof(*dp));
+				TCHECK(dp[2]);
 				printf(" %u bytes @ ",
 				       (u_int32_t) ntohl(dp[2]));
 				print_int64(dp, UNSIGNED);
 			} else {
-				TCHECK2(dp[0], 2 * sizeof(*dp));
+				TCHECK(dp[1]);
 				printf(" %u bytes @ %u",
-				       (u_int32_t) ntohl(dp[1]),
-				       (u_int32_t) ntohl(dp[0]));
+				    (u_int32_t)ntohl(dp[1]),
+				    (u_int32_t)ntohl(dp[0]));
 			}
 			return;
 		}
@@ -489,23 +511,24 @@ nfsreq_print(register const u_char *bp, u_int length,
 		if ((dp = parsereq(rp, length)) != NULL &&
 		    (dp = parsefh(dp, v3)) != NULL) {
 			if (v3) {
-				TCHECK2(dp[0], 3 * sizeof(*dp));
+				TCHECK(dp[4]);
 				printf(" %u bytes @ ",
-				    (u_int32_t) ntohl(dp[4]));
+						(u_int32_t) ntohl(dp[4]));
 				print_int64(dp, UNSIGNED);
 				if (vflag) {
 					dp += 3;
-					TCHECK2(dp[0], sizeof(*dp));
+					TCHECK(dp[0]);
 					printf(" <%s>",
-					       nfsv3_writemodes[ntohl(*dp)]);
+						tok2str(nfsv3_writemodes,
+							NULL, ntohl(*dp)));
 				}
 			} else {
-				TCHECK2(dp[0], 4 * sizeof(*dp));
+				TCHECK(dp[3]);
 				printf(" %u (%u) bytes @ %u (%u)",
-				       (u_int32_t) ntohl(dp[3]),
-				       (u_int32_t) ntohl(dp[2]),
-				       (u_int32_t) ntohl(dp[1]),
-				       (u_int32_t) ntohl(dp[0]));
+						(u_int32_t)ntohl(dp[3]),
+						(u_int32_t)ntohl(dp[2]),
+						(u_int32_t)ntohl(dp[1]),
+						(u_int32_t)ntohl(dp[0]));
 			}
 			return;
 		}
@@ -528,7 +551,7 @@ nfsreq_print(register const u_char *bp, u_int length,
 		printf(" symlink");
 		if ((dp = parsereq(rp, length)) != 0 &&
 		    (dp = parsefhn(dp, v3)) != 0) {
-			fputs(" -> ", stdout);
+			fputs(" ->", stdout);
 			if (v3 && (dp = parse_sattr3(dp, &sa3)) == 0)
 				break;
 			if (parsefn(dp) == 0)
@@ -543,16 +566,16 @@ nfsreq_print(register const u_char *bp, u_int length,
 		printf(" mknod");
 		if ((dp = parsereq(rp, length)) != 0 &&
 		    (dp = parsefhn(dp, v3)) != 0) {
-			if (dp + 1 > (u_int32_t *)snapend)
-				break;
+			TCHECK(*dp);
 			type = (nfstype)ntohl(*dp++);
 			if ((dp = parse_sattr3(dp, &sa3)) == 0)
 				break;
 			printf(" %s", tok2str(type2str, "unk-ft %d", type));
 			if (vflag && (type == NFCHR || type == NFBLK)) {
-				if (dp + 2 > (u_int32_t *)snapend)
-					break;
-				printf(" %u/%u", ntohl(dp[0]), ntohl(dp[1]));
+				TCHECK(dp[1]);
+				printf(" %u/%u",
+				       (u_int32_t)ntohl(dp[0]),
+				       (u_int32_t)ntohl(dp[1]));
 				dp += 2;
 			}
 			if (vflag)
@@ -600,7 +623,7 @@ nfsreq_print(register const u_char *bp, u_int length,
 		if ((dp = parsereq(rp, length)) != NULL &&
 		    (dp = parsefh(dp, v3)) != NULL) {
 			if (v3) {
-				TCHECK2(dp[0], 20);
+				TCHECK(dp[4]);
 				/*
 				 * We shouldn't really try to interpret the
 				 * offset cookie here.
@@ -612,14 +635,14 @@ nfsreq_print(register const u_char *bp, u_int length,
 					printf(" verf %08x%08x", dp[2],
 					       dp[3]);
 			} else {
-				TCHECK2(dp[0], 2 * sizeof(*dp));
+				TCHECK(dp[1]);
 				/*
 				 * Print the offset as signed, since -1 is
 				 * common, but offsets > 2^31 aren't.
 				 */
 				printf(" %u bytes @ %d",
-				       (u_int32_t)ntohl(dp[1]),
-				       (u_int32_t)ntohl(dp[0]));
+				    (u_int32_t)ntohl(dp[1]),
+				    (u_int32_t)ntohl(dp[0]));
 			}
 			return;
 		}
@@ -629,7 +652,7 @@ nfsreq_print(register const u_char *bp, u_int length,
 		printf(" readdirplus");
 		if ((dp = parsereq(rp, length)) != NULL &&
 		    (dp = parsefh(dp, v3)) != NULL) {
-			TCHECK2(dp[0], 20);
+			TCHECK(dp[4]);
 			/*
 			 * We don't try to interpret the offset
 			 * cookie here.
@@ -672,6 +695,7 @@ nfsreq_print(register const u_char *bp, u_int length,
 		printf(" proc-%u", (u_int32_t)ntohl(rp->rm_call.cb_proc));
 		return;
 	}
+
 trunc:
 	if (!nfserr)
 		fputs(" [|nfs]", stdout);
@@ -696,23 +720,24 @@ nfs_printfh(register const u_int32_t *dp, const u_int len)
 	Parse_fh((caddr_t*)dp, len, &fsid, &ino, NULL, &sfsname, 0);
 
 	if (sfsname) {
-	    /* file system ID is ASCII, not numeric, for this server OS */
-	    static char temp[NFSX_V3FHMAX+1];
+		/* file system ID is ASCII, not numeric, for this server OS */
+		static char temp[NFSX_V3FHMAX+1];
 
-	    /* Make sure string is null-terminated */
-	    strncpy(temp, sfsname, NFSX_V3FHMAX);
-	    /* Remove trailing spaces */
-	    sfsname = strchr(temp, ' ');
-	    if (sfsname)
-		*sfsname = 0;
+		/* Make sure string is null-terminated */
+		strncpy(temp, sfsname, NFSX_V3FHMAX);
+		temp[sizeof(temp) - 1] = '\0';
+		/* Remove trailing spaces */
+		sfsname = strchr(temp, ' ');
+		if (sfsname)
+			*sfsname = 0;
 
-	    (void)printf(" fh %s/%ld", temp, (long) ino);
+		(void)printf(" fh %s/", temp);
+	} else {
+		(void)printf(" fh %d,%d/",
+			     fsid.Fsid_dev.Major, fsid.Fsid_dev.Minor);
 	}
-	else {
-	    (void)printf(" fh %d,%d/%ld",
-			fsid.Fsid_dev.Major, fsid.Fsid_dev.Minor,
-			(long) ino);
-	}
+
+	(void)printf("%ld", (long) ino);
 }
 
 /*
@@ -722,11 +747,17 @@ nfs_printfh(register const u_int32_t *dp, const u_int len)
  */
 
 struct xid_map_entry {
-	u_int32_t		xid;	/* transaction ID (net order) */
+	u_int32_t	xid;		/* transaction ID (net order) */
+	int ipver;			/* IP version (4 or 6) */
+#ifdef INET6
+	struct in6_addr	client;		/* client IP address (net order) */
+	struct in6_addr	server;		/* server IP address (net order) */
+#else
 	struct in_addr	client;		/* client IP address (net order) */
 	struct in_addr	server;		/* server IP address (net order) */
-	u_int32_t		proc;	/* call proc number (host order) */
-	u_int32_t		vers;	/* program version (host order) */
+#endif
+	u_int32_t	proc;		/* call proc number (host order) */
+	u_int32_t	vers;		/* program version (host order) */
 };
 
 /*
@@ -743,9 +774,26 @@ int	xid_map_next = 0;
 int	xid_map_hint = 0;
 
 static void
-xid_map_enter(const struct rpc_msg *rp, const struct ip *ip)
+xid_map_enter(const struct rpc_msg *rp, const u_char *bp)
 {
+	struct ip *ip = NULL;
+#ifdef INET6
+	struct ip6_hdr *ip6 = NULL;
+#endif
 	struct xid_map_entry *xmep;
+
+	switch (((struct ip *)bp)->ip_v) {
+	case 4:
+		ip = (struct ip *)bp;
+		break;
+#ifdef INET6
+	case 6:
+		ip6 = (struct ip6_hdr *)bp;
+		break;
+#endif
+	default:
+		return;
+	}
 
 	xmep = &xid_map[xid_map_next];
 
@@ -753,41 +801,83 @@ xid_map_enter(const struct rpc_msg *rp, const struct ip *ip)
 		xid_map_next = 0;
 
 	xmep->xid = rp->rm_xid;
-	xmep->client = ip->ip_src;
-	xmep->server = ip->ip_dst;
+	if (ip) {
+		xmep->ipver = 4;
+		memcpy(&xmep->client, &ip->ip_src, sizeof(ip->ip_src));
+		memcpy(&xmep->server, &ip->ip_dst, sizeof(ip->ip_dst));
+	}
+#ifdef INET6
+	else if (ip6) {
+		xmep->ipver = 6;
+		memcpy(&xmep->client, &ip6->ip6_src, sizeof(ip6->ip6_src));
+		memcpy(&xmep->server, &ip6->ip6_dst, sizeof(ip6->ip6_dst));
+	}
+#endif
 	xmep->proc = ntohl(rp->rm_call.cb_proc);
 	xmep->vers = ntohl(rp->rm_call.cb_vers);
 }
 
-/* Returns NFSPROC_xxx or -1 on failure */
+/*
+ * Returns 0 and puts NFSPROC_xxx in proc return and
+ * version in vers return, or returns -1 on failure
+ */
 static int
-xid_map_find(const struct rpc_msg *rp, const struct ip *ip, u_int32_t *proc,
+xid_map_find(const struct rpc_msg *rp, const u_char *bp, u_int32_t *proc,
 	     u_int32_t *vers)
 {
 	int i;
 	struct xid_map_entry *xmep;
 	u_int32_t xid = rp->rm_xid;
-	u_int32_t clip = ip->ip_dst.s_addr;
-	u_int32_t sip = ip->ip_src.s_addr;
+	struct ip *ip = (struct ip *)ip;
+#ifdef INET6
+	struct ip6_hdr *ip6 = (struct ip6_hdr *)bp;
+#endif
+	int cmp;
 
 	/* Start searching from where we last left off */
-	i = xid_map_hint;
+	i = xid_map_hint; 
 	do {
 		xmep = &xid_map[i];
-		if (xmep->xid == xid && xmep->client.s_addr == clip &&
-		    xmep->server.s_addr == sip) {
+		cmp = 1;
+		if (xmep->ipver != ip->ip_v || xmep->xid != xid)
+			goto nextitem;
+		switch (xmep->ipver) {
+		case 4:
+			if (memcmp(&ip->ip_src, &xmep->server,
+				   sizeof(ip->ip_src)) != 0 ||
+			    memcmp(&ip->ip_dst, &xmep->client,
+				   sizeof(ip->ip_dst)) != 0) {
+				cmp = 0;
+			}
+			break;
+#ifdef INET6
+		case 6:
+			if (memcmp(&ip6->ip6_src, &xmep->server,
+				   sizeof(ip6->ip6_src)) != 0 ||
+			    memcmp(&ip6->ip6_dst, &xmep->client,
+				   sizeof(ip6->ip6_dst)) != 0) {
+				cmp = 0;
+			}
+			break;
+#endif
+		default:
+			cmp = 0;
+			break;
+		}
+		if (cmp) {
 			/* match */
 			xid_map_hint = i;
 			*proc = xmep->proc;
 			*vers = xmep->vers;
-			return 1;
+			return 0;
 		}
+	nextitem:
 		if (++i >= XIDMAPSIZE)
 			i = 0;
 	} while (i != xid_map_hint);
 
 	/* search failed */
-	return (0);
+	return (-1);
 }
 
 /*
@@ -821,7 +911,7 @@ parserep(register const struct rpc_msg *rp, register u_int length)
 	 * which is an "enum" and so occupies one 32-bit word.
 	 */
 	dp = ((const u_int32_t *)&rp->rm_reply) + 1;
-	TCHECK2(dp[0], 1);
+	TCHECK(dp[1]);
 	len = ntohl(dp[1]);
 	if (len >= length)
 		return (NULL);
@@ -871,42 +961,31 @@ parserep(register const struct rpc_msg *rp, register u_int length)
 		return (NULL);
 	}
 	/* successful return */
-	if ((sizeof(astat) + ((u_char *)dp)) < snapend)
-		return ((u_int32_t *) (sizeof(astat) + ((char *)dp)));
+	TCHECK2(*dp, sizeof(astat));
+	return ((u_int32_t *) (sizeof(astat) + ((char *)dp)));
 trunc:
 	return (0);
-}
-
-#define T2CHECK(p, l) if ((u_char *)(p) > ((u_char *)snapend) - l) return(0)
-
-/*
- * Not all systems have strerror().
- */
-static const char *
-strerr(int errno)
-{
-	return (strerror(errno));
 }
 
 static const u_int32_t *
 parsestatus(const u_int32_t *dp, int *er)
 {
-	int errno;
-	T2CHECK(dp, 4);
+	int errnum;
 
-	errno = ntohl(dp[0]);
+	TCHECK(dp[0]);
+
+	errnum = ntohl(dp[0]);
 	if (er)
-		*er = errno;
-	if (errno != 0 && !qflag) {
-		const char *errmsg;
-
-		errmsg = strerr(errno);
-		if (errmsg)
-			printf(" ERROR: '%s'", errmsg);
-		else
-			printf(" ERROR: %d", errno);
+		*er = errnum;
+	if (errnum != 0) {
+		if (!qflag)
+			printf(" ERROR: %s", pcap_strerror(errnum));
+		nfserr = 1;
+		return (NULL);
 	}
 	return (dp + 1);
+trunc:
+	return NULL;
 }
 
 static const u_int32_t *
@@ -914,33 +993,31 @@ parsefattr(const u_int32_t *dp, int verbose, int v3)
 {
 	const struct nfs_fattr *fap;
 
-	T2CHECK(dp,  5 * sizeof(*dp));
-
 	fap = (const struct nfs_fattr *)dp;
+	TCHECK(fap->fa_gid);
 	if (verbose) {
 		printf(" %s %o ids %d/%d",
 		    tok2str(type2str, "unk-ft %d ",
-		    (u_int32_t) ntohl(fap->fa_type)),
-		    (u_int32_t) ntohl(fap->fa_mode),
-		    (u_int32_t) ntohl(fap->fa_uid),
+		    (u_int32_t)ntohl(fap->fa_type)),
+		    (u_int32_t)ntohl(fap->fa_mode),
+		    (u_int32_t)ntohl(fap->fa_uid),
 		    (u_int32_t) ntohl(fap->fa_gid));
 		if (v3) {
-			T2CHECK(dp,  7 * sizeof(*dp));
+			TCHECK(fap->fa3_size);
 			printf(" sz ");
 			print_int64((u_int32_t *)&fap->fa3_size, UNSIGNED);
 			putchar(' ');
-		}
-		else {
-			T2CHECK(dp,  6 * sizeof(*dp));
+		} else {
+			TCHECK(fap->fa2_size);
 			printf(" sz %d ", (u_int32_t) ntohl(fap->fa2_size));
 		}
 	}
 	/* print lots more stuff */
 	if (verbose > 1) {
 		if (v3) {
-			T2CHECK(dp, 64);
+			TCHECK(fap->fa3_ctime);
 			printf("nlink %d rdev %d/%d ",
-			       (u_int32_t) ntohl(fap->fa_nlink),
+			       (u_int32_t)ntohl(fap->fa_nlink),
 			       (u_int32_t) ntohl(fap->fa3_rdev.specdata1),
 			       (u_int32_t) ntohl(fap->fa3_rdev.specdata2));
 			printf("fsid ");
@@ -957,7 +1034,7 @@ parsefattr(const u_int32_t *dp, int verbose, int v3)
 			       (u_int32_t) ntohl(fap->fa3_ctime.nfsv3_sec),
 			       (u_int32_t) ntohl(fap->fa3_ctime.nfsv3_nsec));
 		} else {
-			T2CHECK(dp, 48);
+			TCHECK(fap->fa2_ctime);
 			printf("nlink %d rdev %x fsid %x nodeid %x a/m/ctime ",
 			       (u_int32_t) ntohl(fap->fa_nlink),
 			       (u_int32_t) ntohl(fap->fa2_rdev),
@@ -976,6 +1053,8 @@ parsefattr(const u_int32_t *dp, int verbose, int v3)
 	}
 	return ((const u_int32_t *)((unsigned char *)dp +
 		(v3 ? NFSX_V3FATTR : NFSX_V2FATTR)));
+trunc:
+	return (NULL);
 }
 
 static int
@@ -1027,7 +1106,7 @@ parsestatfs(const u_int32_t *dp, int v3)
 
 	dp = parsestatus(dp, &er);
 	if (dp == NULL || (!v3 && er))
-		return(0);
+		return (0);
 
 	if (qflag)
 		return(1);
@@ -1039,7 +1118,7 @@ parsestatfs(const u_int32_t *dp, int v3)
 			return (0);
 	}
 
-	T2CHECK(dp, (v3 ? NFSX_V3STATFS : NFSX_V2STATFS));
+	TCHECK2(dp, (v3 ? NFSX_V3STATFS : NFSX_V2STATFS));
 
 	sfsp = (const struct nfs_statfs *)dp;
 
@@ -1062,14 +1141,16 @@ parsestatfs(const u_int32_t *dp, int v3)
 		}
 	} else {
 		printf(" tsize %d bsize %d blocks %d bfree %d bavail %d",
-		       (u_int32_t) ntohl(sfsp->sf_tsize),
-		       (u_int32_t) ntohl(sfsp->sf_bsize),
-		       (u_int32_t) ntohl(sfsp->sf_blocks),
-		       (u_int32_t) ntohl(sfsp->sf_bfree),
-		       (u_int32_t) ntohl(sfsp->sf_bavail));
+			(u_int32_t)ntohl(sfsp->sf_tsize),
+			(u_int32_t)ntohl(sfsp->sf_bsize),
+			(u_int32_t)ntohl(sfsp->sf_blocks),
+			(u_int32_t)ntohl(sfsp->sf_bfree),
+			(u_int32_t)ntohl(sfsp->sf_bavail));
 	}
 
 	return (1);
+trunc:
+	return (0);
 }
 
 static int
@@ -1083,12 +1164,15 @@ parserddires(const u_int32_t *dp)
 	if (qflag)
 		return (1);
 
-	T2CHECK(dp, 12);
-	printf(" offset %x size %d ", ntohl(dp[0]), ntohl(dp[1]));
+	TCHECK(dp[2]);
+	printf(" offset %x size %d ",
+	       (u_int32_t)ntohl(dp[0]), (u_int32_t)ntohl(dp[1]));
 	if (dp[2] != 0)
-		printf("eof");
+		printf(" eof");
 
 	return (1);
+trunc:
+	return (0);
 }
 
 static const u_int32_t *
@@ -1096,8 +1180,9 @@ parse_wcc_attr(const u_int32_t *dp)
 {
 	printf(" sz ");
 	print_int64(dp, UNSIGNED);
-	printf(" mtime %u.%06u ctime %u.%06u", ntohl(dp[2]), ntohl(dp[3]),
-	       ntohl(dp[4]), ntohl(dp[5]));
+	printf(" mtime %u.%06u ctime %u.%06u",
+	       (u_int32_t)ntohl(dp[2]), (u_int32_t)ntohl(dp[3]),
+	       (u_int32_t)ntohl(dp[4]), (u_int32_t)ntohl(dp[5]));
 	return (dp + 6);
 }
 
@@ -1107,17 +1192,19 @@ parse_wcc_attr(const u_int32_t *dp)
 static const u_int32_t *
 parse_pre_op_attr(const u_int32_t *dp, int verbose)
 {
-	T2CHECK(dp, 4);
+	TCHECK(dp[0]);
 	if (!ntohl(dp[0]))
 		return (dp + 1);
 	dp++;
-	T2CHECK(dp, 24);
+	TCHECK2(dp, 24);
 	if (verbose > 1) {
 		return parse_wcc_attr(dp);
 	} else {
 		/* If not verbose enough, just skip over wcc_attr */
 		return (dp + 6);
 	}
+trunc:
+	return (NULL);
 }
 
 /*
@@ -1126,7 +1213,7 @@ parse_pre_op_attr(const u_int32_t *dp, int verbose)
 static const u_int32_t *
 parse_post_op_attr(const u_int32_t *dp, int verbose)
 {
-	T2CHECK(dp, 4);
+	TCHECK(dp[0]);
 	if (!ntohl(dp[0]))
 		return (dp + 1);
 	dp++;
@@ -1134,6 +1221,8 @@ parse_post_op_attr(const u_int32_t *dp, int verbose)
 		return parsefattr(dp, verbose, 1);
 	} else
 		return (dp + (NFSX_V3FATTR / sizeof (u_int32_t)));
+trunc:
+	return (NULL);
 }
 
 static const u_int32_t *
@@ -1159,7 +1248,7 @@ parsecreateopres(const u_int32_t *dp, int verbose)
 	if (er)
 		dp = parse_wcc_data(dp, verbose);
 	else {
-		T2CHECK(dp, 4);
+		TCHECK(dp[0]);
 		if (!ntohl(dp[0]))
 			return (dp + 1);
 		dp++;
@@ -1175,6 +1264,8 @@ parsecreateopres(const u_int32_t *dp, int verbose)
 		}
 	}
 	return (dp);
+trunc:
+	return (NULL);
 }
 
 static int
@@ -1201,11 +1292,13 @@ parsev3rddirres(const u_int32_t *dp, int verbose)
 	if (er)
 		return dp;
 	if (vflag) {
-		T2CHECK(dp, 8);
+		TCHECK(dp[1]);
 		printf(" verf %08x%08x", dp[0], dp[1]);
 		dp += 2;
 	}
 	return dp;
+trunc:
+	return (NULL);
 }
 
 static int
@@ -1223,9 +1316,8 @@ parsefsinfo(const u_int32_t *dp)
 	if (er)
 		return (1);
 
-	T2CHECK(dp, sizeof (struct nfsv3_fsinfo));
-
 	sfp = (struct nfsv3_fsinfo *)dp;
+	TCHECK(*sfp);
 	printf(" rtmax %u rtpref %u wtmax %u wtpref %u dtpref %u",
 	       (u_int32_t) ntohl(sfp->fs_rtmax),
 	       (u_int32_t) ntohl(sfp->fs_rtpref),
@@ -1241,6 +1333,8 @@ parsefsinfo(const u_int32_t *dp)
 		       (u_int32_t) ntohl(sfp->fs_timedelta.nfsv3_sec),
 		       (u_int32_t) ntohl(sfp->fs_timedelta.nfsv3_nsec));
 	}
+	return (0);
+trunc:
 	return (1);
 }
 
@@ -1259,9 +1353,8 @@ parsepathconf(const u_int32_t *dp)
 	if (er)
 		return (1);
 
-	T2CHECK(dp, sizeof (struct nfsv3_pathconf));
-
 	spp = (struct nfsv3_pathconf *)dp;
+	TCHECK(*spp);
 
 	printf(" linkmax %u namemax %u %s %s %s %s",
 	       (u_int32_t) ntohl(spp->pc_linkmax),
@@ -1271,8 +1364,10 @@ parsepathconf(const u_int32_t *dp)
 	       ntohl(spp->pc_caseinsensitive) ? "igncase" : "",
 	       ntohl(spp->pc_casepreserving) ? "keepcase" : "");
 	return (0);
+trunc:
+	return (1);
 }
-				
+
 static void
 interp_reply(const struct rpc_msg *rp, u_int32_t proc, u_int32_t vers, int length)
 {
@@ -1354,7 +1449,7 @@ interp_reply(const struct rpc_msg *rp, u_int32_t proc, u_int32_t vers, int lengt
 		if (!(dp = parse_post_op_attr(dp, vflag)))
 			break;
 		if (!er)
-			printf(" c %04x", ntohl(dp[0]));
+			printf(" c %04x", (u_int32_t)ntohl(dp[0]));
 		return;
 
 	case NFSPROC_READLINK:
@@ -1376,7 +1471,7 @@ interp_reply(const struct rpc_msg *rp, u_int32_t proc, u_int32_t vers, int lengt
 			if (er)
 				return;
 			if (vflag) {
-				TCHECK2(dp[0], 8);
+				TCHECK(dp[1]);
 				printf("%u bytes", (u_int32_t) ntohl(dp[0]));
 				if (ntohl(dp[1]))
 					printf(" EOF");
@@ -1400,12 +1495,13 @@ interp_reply(const struct rpc_msg *rp, u_int32_t proc, u_int32_t vers, int lengt
 			if (er)
 				return;
 			if (vflag) {
-				TCHECK2(dp[0], 4);
+				TCHECK(dp[0]);
 				printf("%u bytes", (u_int32_t) ntohl(dp[0]));
 				if (vflag > 1) {
-					TCHECK2(dp[0], 4);
+					TCHECK(dp[1]);
 					printf(" <%s>",
-					       nfsv3_writemodes[ntohl(dp[1])]);
+						tok2str(nfsv3_writemodes,
+							NULL, ntohl(dp[1])));
 				}
 				return;
 			}
@@ -1585,7 +1681,7 @@ interp_reply(const struct rpc_msg *rp, u_int32_t proc, u_int32_t vers, int lengt
 		printf(" proc-%u", proc);
 		return;
 	}
+trunc:
 	if (!nfserr)
 		fputs(" [|nfs]", stdout);
-trunc:;
 }
