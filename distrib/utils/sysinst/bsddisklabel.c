@@ -1,4 +1,4 @@
-/*	$NetBSD: bsddisklabel.c,v 1.24 2003/10/19 20:17:31 dsl Exp $	*/
+/*	$NetBSD: bsddisklabel.c,v 1.25 2003/11/20 09:47:53 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -304,6 +304,10 @@ set_ptn_size(menudesc *m, void *arg)
 	}
 
 	size = NUMSEC(size, mult, dlcylsize);
+	if (p->ptn_id == PART_TMP_MFS) {
+		p->size = size;
+		return 0;
+	}
 	if (p == pi->pool_part)
 		pi->pool_part = NULL;
 	if (*cp == '+' && p->limit == 0) {
