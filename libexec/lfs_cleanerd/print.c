@@ -1,4 +1,4 @@
-/*	$NetBSD: print.c,v 1.2 1997/10/07 13:40:00 mrg Exp $	*/
+/*	$NetBSD: print.c,v 1.3 1998/04/01 14:39:56 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "from: @(#)print.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: print.c,v 1.2 1997/10/07 13:40:00 mrg Exp $");
+__RCSID("$NetBSD: print.c,v 1.3 1998/04/01 14:39:56 kleink Exp $");
 #endif
 #endif /* not lint */
 
@@ -52,6 +52,7 @@ __RCSID("$NetBSD: print.c,v 1.2 1997/10/07 13:40:00 mrg Exp $");
 
 #include <stdlib.h>
 #include <stdio.h>
+#include <time.h>
 #include "clean.h"
 
 extern u_long cksum __P((void *, size_t));	/* XXX */
