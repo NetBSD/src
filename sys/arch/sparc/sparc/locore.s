@@ -5725,6 +5725,7 @@ NOP_ON_4_4C_1:
 	 add	%g3, 4, %g3
 #endif
 
+2:
 	ldd	[%g2+%lo(_time)], %o2		! time.tv_sec & time.tv_usec
 	ld	[%g3], %o4			! usec counter
 	ldd	[%g2+%lo(_time)], %g4		! see if time values changed
