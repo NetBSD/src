@@ -1,4 +1,4 @@
-/*	$NetBSD: sa11x0_gpioreg.h,v 1.9 2001/07/08 14:41:14 ichiro Exp $	*/
+/*	$NetBSD: sa11x0_gpioreg.h,v 1.10 2001/07/10 14:58:28 ichiro Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.  All rights reserved.
@@ -69,99 +69,29 @@
 #define GPIO(x)		(0x00000001 << (x))
 
 /*
- * iPAQ H3600 specific parameter
+ * SA-11x0 GPIOs parameter
  */
 /*
-port	I/O(Active)	name 	desc
-0	I(L)	PWR_ON#		button detect: power-on
-1	I(L)	IP_IRQ#		cpu-interrupt
-2...9	O	LDD{8..15}	LCD DATA(8-15)
-10	I(L)	CARD_IND1#	PCMCIA Socket1 inserted detection
-11	I(L)	CARD_IRQ1#	PCMCIA slot1 IRQ
-12	O	CLK_SET0	clock select 0 for audio codec
-13	O	CLK_SET1	clock select 1 for audio codec
-14	I/O	L3_SDA		UDA1341 L3DATA
-15	O	L3_MODE		UDA1341 L3MODE
-16	O	L3_SCLK		UDA1341 L3SCLK
-17	I(L)	CARD_IND0#	PCMCIA Socket0 inserted detection
-18	I(L)	KEY_ACT#	button detect: center button
-19	I	SYS_CLK		Stereo audio codev external clock
-20	I(H)	BAT_FAULT	Battery fault
-21	I(L)	CARD_IRQ0#	PCMCIA slot0 IRQ	
-22	I(L)	LOCK#		expansion pack lock/unlock signal
-23	I(H)	COM_DCD		RS-232 DCD
-24	I(H)	OPT_IRQ		expansion pach shared IRQ
-25	I(H)	COM_CTS		RS-232 CTS
-26	O(H)	COM_RTS		RS-232 RTS
-27	O(L)	OPT_DETECT#	Indicates presence of expansion pack inserted
-
-Extended GPIO
-0	O(H)	VPEN		Enables programming and erasing of Flash
-1	O(H)	CARD_RESET	CF/PCMCIA card reset signal
-2	O(H)	OPT_RESET	Expansion pack reset signal 
-3	O(L)	CODEC_RESET#	onboard codec reset signal
-4	O(H)	OPT_NVRAM_ON	Enables power supply to the NVRAM of the
-				Expansion pack.(=OPT_ON)
-5	O(H)	OPT_ON		Enables full power supply to the Expansion pack.
-6	O(H)	LCD_ON		Enables LCD 3.3V power supply
-7	O(H)	RS232_ON	Enables RS232
-8	O(H)	LCD_PCI		Enables power to LCD control IC
-9	O(H)	IR_ON		Enables power to IR module
-10	O(H)	AUD_ON		Enables power to audio output amp.
-11	O(H)	AUD_PWR_ON	Enables power to all audio modules.
-12	O(H)	QMUTE		Mutes yhe onboard audio codec
-13	O	IR_FSEL		FIR mode selection:H=FIR,L=SIR
-14	O(H)	LCD_5V_ON	Enables 5V to the LCD module
-15	O(H)	LVDD_ON		Enables 9V and -6.5V to the LCD module
+port	name 		desc
+0	Reserved
+1	Reserved
+2...9	LDD{8..15}	LCD DATA(8-15)
+10	SSP_TXD		SSP transmit
+11	SSP_RXD		SSP receive
+12	SSP_SCLK	SSP serial clock
+13	SSP_SFRM	SSP frameclock
+14	UART_TXD	UART transmit
+15	UART_RXD	UART receive
+16	GPCLK_OUT	General-purpose clock out
+17	Reserved
+18	UART_SCLK	Sample clock input
+19	SSP_CLK		Sample clock input
+20	UART_SCLK3	Sample clock input
+21	MCP_CLK		MCP dock in
+22	TREQA		Either TIC request A
+23	TREQB		Either TIC request B
+24	Reserved
+25	RTC		Real Time Clock
+26	RCLK_OUT	internal clock /2
+27	32KHZ_OUT	Raw 32.768kHz osc output
  */
-
-#define GPIO_H3600_POWER_BUTTON	GPIO (0)
-#define GPIO_H3600_PCMCIA_CD0	GPIO (17)
-#define GPIO_H3600_PCMCIA_CD1	GPIO (10)
-#define GPIO_H3600_PCMCIA_IRQ0	GPIO (21)
-#define GPIO_H3600_PCMCIA_IRQ1	GPIO (11)
-#define GPIO_H3600_OPT_LOCK	GPIO (22)
-#define GPIO_H3600_OPT_IRQ	GPIO (24)
-#define GPIO_H3600_OPT_DETECT	GPIO (27)
-
-#define EGPIO_H3600_VPEN		GPIO (0)
-#define EGPIO_H3600_CARD_RESET		GPIO (1)
-#define EGPIO_H3600_OPT_RESET		GPIO (2)
-#define EGPIO_H3600_CODEC_RESET		GPIO (3)
-#define EGPIO_H3600_OPT_NVRAM_ON	GPIO (4)
-#define EGPIO_H3600_OPT_ON		GPIO (5)
-#define EGPIO_H3600_LCD33_ON		GPIO (6)
-#define EGPIO_H3600_RS232_ON		GPIO (7)
-#define EGPIO_H3600_LCD_PCI		GPIO (8)
-#define EGPIO_H3600_IR_ON		GPIO (9)
-#define EGPIO_H3600_AUD_ON		GPIO (10)
-#define EGPIO_H3600_AUD_PWRON		GPIO (11)
-#define EGPIO_H3600_QMUTE		GPIO (12)
-#define EGPIO_H3600_IR_FSEL		GPIO (13)
-#define EGPIO_H3600_LCD5_ON		GPIO (14)
-#define EGPIO_H3600_LVDD_ON		GPIO (15)
-
-#define EGPIO_INIT	(EGPIO_H3600_OPT_NVRAM_ON| \
-			 EGPIO_H3600_LCD33_ON| \
-			 EGPIO_H3600_LCD_PCI| \
-			 EGPIO_H3600_AUD_ON) & 0xFFFF
-
-#define EGPIO_LCD_INIT	EGPIO_H3600_LCD33_ON| \
-			EGPIO_H3600_LCD_PCI| \
-			EGPIO_H3600_LCD5_ON| \
-			EGPIO_H3600_LVDD_ON
-			
-#define IRQ_H3600_POWER_BUTTON	IRQ_GPIO0
-#define IRQ_H3600_PCMCIA_CD0	IRQ_GPIO17
-#define IRQ_H3600_PCMCIA_CD1	IRQ_GPIO10
-#define IRQ_H3600_PCMCIA_IRQ0	IRQ_GPIO21
-#define IRQ_H3600_PCMCIA_IRQ1	IRQ_GPIO11
-#define IRQ_H3600_OPT_IRQ	IRQ_GPIO24
-#define IRQ_H3600_OPT_DETECT	IRQ_GPIO27
-
-/*
- * JORNADA720 specific parameter
- */
-
-#define JORNADA720_KBD_IRQ	GPIO (0)
-#define JORNADA720_MOUSE_IRQ	GPIO (9)
