@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vnops.c,v 1.97.4.2 2000/07/30 09:57:00 jdolecek Exp $	*/
+/*	$NetBSD: msdosfs_vnops.c,v 1.97.4.3 2000/07/30 20:38:34 jdolecek Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -1852,8 +1852,7 @@ msdosfs_advlock(v)
 	} */ *ap = v;
 	struct denode *dep = VTODE(ap->a_vp);
 
-	return (lf_advlock(&dep->de_lockf, dep->de_FileSize, ap->a_id, ap->a_op,
-	    ap->a_fl, ap->a_flags));
+	return lf_advlock(ap, &dep->de_lockf, dep->de_FileSize);
 }
 
 int
