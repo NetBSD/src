@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_swap.c,v 1.36.2.3 1997/03/02 16:31:54 mrg Exp $	*/
+/*	$NetBSD: vm_swap.c,v 1.36.2.4 1997/03/04 13:21:17 mrg Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997 Matthew R. Green
@@ -90,6 +90,13 @@
  *		using the misc value (done).
  */
 
+/*
+ * XXX
+ *
+ * Does all the manipulation of the swap_priority list, etc, need to
+ * be locked ?
+ */
+
 #define SWAPDEBUG
 
 #ifdef SWAPDEBUG
@@ -142,17 +149,17 @@ sys_swapon(p, v, retval)
 	void *v;
 	register_t *retval;
 {
-	register struct sys_swapon_args /* {
+	struct sys_swapon_args /* {
 		syscallarg(int) cmd;
 		syscallarg(void *) arg;
 		syscallarg(int) misc;
 	} */ *uap = (struct sys_swapon_args *)v;
-	register struct vnode *vp;
-	register struct swappri *spp;
-	register struct swapdev *sdp = NULL;
+	struct vnode *vp;
+	struct nameidata nd;
+	struct swappri *spp, *nspp = NULL, *pspp = swap_priority.lh_first;
+	struct swapdev *sdp = NULL, *nsdp = NULL;
 	dev_t dev;
 	int error, misc = SCARG(uap, misc);
-	struct nameidata nd;
 
 #ifdef SWAPDEBUG
 	if (vmswapdebug & VMSDB_SWFLOW)
@@ -188,7 +195,7 @@ sys_swapon(p, v, retval)
 		}
 #ifdef SWAPDEBUG
 		if (vmswapdebug & VMSDB_SWFLOW)
-			printf("did SWAP_STATS:  leaving sys_swapon\n");
+			printf("sw: did SWAP_STATS:  leaving sys_swapon\n");
 #endif /* SWAPDEBUG */
 		return (count);
 	}
@@ -196,7 +203,7 @@ sys_swapon(p, v, retval)
 	if ((error = suser(p->p_ucred, &p->p_acflag)))
 		goto out;
 
-	NDINIT(&nd, LOOKUP, FOLLOW, UIO_USERSPACE, (char *)SCARG(uap, arg), p);
+	NDINIT(&nd, LOOKUP, FOLLOW, UIO_USERSPACE, SCARG(uap, arg), p);
 	if ((error = namei(&nd)))
 		goto out;
 
@@ -214,12 +221,10 @@ sys_swapon(p, v, retval)
 	case SWAP_ON:
 	{
 		int	priority = SCARG(uap, misc);
-		struct swapdev *nsdp;
-		struct swappri *nspp, *pspp = swap_priority.lh_first;
 
 #ifdef SWAPDEBUG
 		if (vmswapdebug & VMSDB_SWFLOW)
-			printf("doing SWAP_ON...\n");
+			printf("sw: doing SWAP_ON...\n");
 #endif /* SWAPDEBUG */
 		for (spp = pspp; spp != NULL; spp = spp->spi_swappri.le_next) {
 			if (spp->spi_priority <= priority)
@@ -231,21 +236,18 @@ sys_swapon(p, v, retval)
 			nspp = (struct swappri *)malloc(sizeof *nspp,
 			   M_VMSWAP, M_WAITOK);
 
+#ifdef SWAPDEBUG
+			if (vmswapdebug & VMSDB_SWFLOW)
+				printf("sw: had to create a new swappri = %d\n",
+				   priority);
+#endif /* SWAPDEBUG */
 			if (nspp == NULL) {
 				error = ENOMEM;
 				goto bad;
 			}
 			nspp->spi_priority = priority;
-			CIRCLEQ_INIT(&nspp->spi_swapdev);
-			if (spp) {
-				LIST_INSERT_AFTER(spp, nspp, spi_swappri);
-			} else if (pspp) {
-				LIST_INSERT_AFTER(pspp, nspp, spi_swappri);
-			} else {
-				LIST_INSERT_HEAD(&swap_priority, nspp,
-				    spi_swappri);
-			}
-			spp = nspp;
+			if (spp == NULL)
+				spp = pspp;
 		}
 
 		nsdp = (struct swapdev *)malloc(sizeof *nsdp, M_VMSWAP,
@@ -257,13 +259,23 @@ sys_swapon(p, v, retval)
 		nsdp->swd_dev = dev;
 		nsdp->swd_flags = 0;
 		nsdp->swd_priority = (int)SCARG(uap, misc);
+		nsdp->swd_vp = vp;
+		/* XXX */
 		copyinstr(SCARG(uap, arg), &nsdp->swd_name,
 		    sizeof(nsdp->swd_name) - 1, 0);
-		nsdp->swd_vp = vp;
 		if ((error = swap_on(p, nsdp)))
 			goto bad;
-		CIRCLEQ_INSERT_TAIL(&spp->spi_swapdev, nsdp, swd_next);
-		return (0);
+		if (nspp) {
+			if (pspp) {
+				LIST_INSERT_AFTER(pspp, nspp, spi_swappri);
+			} else {
+				LIST_INSERT_HEAD(&swap_priority, nspp,
+				    spi_swappri);
+			}
+		}
+		CIRCLEQ_INIT(&nspp->spi_swapdev);
+		CIRCLEQ_INSERT_TAIL(&nspp->spi_swapdev, nsdp, swd_next);
+		goto out;
 	}
 	case SWAP_OFF:
 #ifdef SWAPDEBUG
@@ -313,6 +325,10 @@ sys_swapon(p, v, retval)
 		error = EINVAL;
 	}
 bad:
+	if (nspp)
+		free((caddr_t)nspp, M_VMSWAP);
+	if (nsdp)
+		free((caddr_t)nsdp, M_VMSWAP);
 	vrele(vp);
 out:
 #ifdef SWAPDEBUG
@@ -334,18 +350,25 @@ swap_on(p, sdp)
 {
 	static int count = 0;
 	extern int dmmax;
-	register struct vnode *vp = sdp->swd_vp;
-	register int error, nblks, size;
-	register long blk, addr;
+	struct vnode *vp = sdp->swd_vp;
+	int error, nblks, size;
+	long blk, addr;
 	struct vattr va;
 	dev_t dev = sdp->swd_dev;
 	int ssize;
 	char tmp[12], *storage;
 
+	/*
+	 * XXX
+	 *
+	 * Need to handle where root is on swap.
+	 */
+#if 0
 	if (vp != rootvp) {
 		if ((error = VOP_OPEN(vp, FREAD|FWRITE, p->p_ucred, p)))
 			return (error);
 	}
+#endif
 	sdp->swd_flags |= SWF_INUSE;
 	if (vp->v_type == VBLK && (bdevsw[major(dev)].d_psize == 0 ||
 	    (nblks = (*bdevsw[major(dev)].d_psize)(dev)) == -1)) {
@@ -358,8 +381,8 @@ swap_on(p, sdp)
 	}
 	if (nblks == 0) {
 #ifdef SWAPDEBUG
-	if (vmswapdebug & VMSDB_SWFLOW)
-		printf("swap_on: nblks == 0\n");
+		if (vmswapdebug & VMSDB_SWFLOW)
+			printf("swap_on: nblks == 0\n");
 #endif /* SWAPDEBUG */
 		error = EINVAL;
 		goto bad;
@@ -400,8 +423,11 @@ swap_on(p, sdp)
 	return (0);
 
 bad:
+	/* XXX see above */
+#ifdef 0
 	if (vp != rootvp)
 		(void)VOP_CLOSE(vp, FREAD|FWRITE, p->p_ucred, p);
+#endif
 	return (error);
 }
 
@@ -466,26 +492,22 @@ swap_alloc(size)
 	daddr_t addr;
 	struct swapdev *sdp;
 	struct swappri *spp;
-	u_long result;
+	u_long	result;
 
 	if (nswapdev < 1)
 		return NULL;
 	
+	/* XXX THIS IS BUSTED XXX */
 	for (spp = swap_priority.lh_first; spp != NULL;
 	    spp = spp->spi_swappri.le_next) {
 		for (sdp = spp->spi_swapdev.cqh_first; sdp != NULL;
 		    sdp = sdp->swd_next.cqe_next) {
 			/* if it's not enabled, then, we can't swap from it */
-			if ((sdp->swd_flags & SWF_ENABLE) == 0)
+			if ((sdp->swd_flags & SWF_ENABLE) == 0 ||
+			    extent_alloc(sdp->swd_ex, size, EX_NOALIGN,
+			    EX_NOBOUNDARY, 0, &result) != 0)
 				continue;
-
-			/* XXX we don't check if it is FULL!!! */
-			addr = swap_ptov_addr(sdp, extent_alloc(sdp->swd_ex,
-			    size, EX_NOALIGN, EX_NOBOUNDARY, 0, &result));
-#ifdef DIAGNOSTIC
-			if (result < 0)
-				panic("swap_alloc");
-#endif
+			addr = swap_ptov_addr(sdp, (daddr_t)result);
 			CIRCLEQ_REMOVE(&spp->spi_swapdev, sdp, swd_next);
 			CIRCLEQ_INSERT_TAIL(&spp->spi_swapdev, sdp, swd_next);
 			if (addr)
@@ -536,6 +558,24 @@ swap_getdevfromaddr(addr)
 	return NULL;
 }
 
+static daddr_t
+swap_ptov_addr(sdp, addr)
+	struct swapdev *sdp;
+	daddr_t addr;
+{
+
+	return (addr + sdp->swd_mapoffset);
+}
+
+static daddr_t
+swap_vtop_addr(addr)
+	daddr_t addr;
+{
+	struct swapdev *sdp = swap_getdevfromaddr(addr);
+
+	return (addr - sdp->swd_mapoffset);
+}
+
 void
 swap_addmap(sdp, size)
 	struct swapdev *sdp;
@@ -563,24 +603,6 @@ swap_removemap(sdp)
 }
 #endif
 
-static daddr_t
-swap_ptov_addr(sdp, addr)
-	struct swapdev *sdp;
-	daddr_t addr;
-{
-
-	return (addr + sdp->swd_mapoffset);
-}
-
-static daddr_t
-swap_vtop_addr(addr)
-	daddr_t addr;
-{
-	struct swapdev *sdp = swap_getdevfromaddr(addr);
-
-	return (addr - sdp->swd_mapoffset);
-}
-
 /*ARGSUSED*/
 int
 swread(dev, uio, ioflag)
@@ -605,7 +627,7 @@ swwrite(dev, uio, ioflag)
 
 void
 swstrategy(bp)
-	register struct buf *bp;
+	struct buf *bp;
 {
 	struct swapdev *sdp;
 	struct vnode *vp;
@@ -634,8 +656,8 @@ swstrategy(bp)
 void
 swapinit()
 {
-	register struct buf *sp = swbuf;
-	register struct proc *p = &proc0;       /* XXX */
+	struct buf *sp = swbuf;
+	struct proc *p = &proc0;       /* XXX */
 	u_long size, addr;
 	int i, ssize;
 	char *storage;
