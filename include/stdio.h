@@ -1,4 +1,4 @@
-/*	$NetBSD: stdio.h,v 1.28 1998/08/28 22:55:50 tv Exp $	*/
+/*	$NetBSD: stdio.h,v 1.29 1998/09/28 17:47:58 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -268,7 +268,7 @@ int	 rename  __P((const char *, const char *));
 __END_DECLS
 
 /*
- * Functions defined in POSIX 1003.1.
+ * IEEE Std 1003.1-90
  */
 #ifndef _ANSI_SOURCE
 #define	L_ctermid	1024	/* size for ctermid(); PATH_MAX */
@@ -282,21 +282,31 @@ int	 fileno __P((FILE *));
 __END_DECLS
 #endif /* not ANSI */
 
-#if 1	/* _POSIX_C_SOURCE >= 199506L */
-extern void	flockfile __P((FILE *));
-extern int	ftrylockfile __P((FILE *));
-extern void	funlockfile __P((FILE *));
-extern int	getc_unlocked __P((FILE *));
-extern int	getchar_unlocked __P((void));
-extern int	putc_unlocked __P((int, FILE *));
-extern int	putchar_unlocked __P((int));
-#endif
+/*
+ * IEEE Std 1003.1c-95, also adopted by X/Open CAE Spec Issue 5 Version 2
+ */
+#if (!defined(_ANSI_SOURCE) && !defined(_POSIX_C_SOURCE) && \
+     !defined(_XOPEN_SOURCE)) || (_POSIX_C_SOURCE - 0) >= 199506L || \
+    (_XOPEN_SOURCE - 0) >= 500
+__BEGIN_DECLS
+#if 0 /* not yet */
+void	flockfile __P((FILE *));
+int	ftrylockfile __P((FILE *));
+void	funlockfile __P((FILE *));
+#endif /* 0 */
+int	getc_unlocked __P((FILE *));
+int	getchar_unlocked __P((void));
+int	putc_unlocked __P((int, FILE *));
+int	putchar_unlocked __P((int));
+__END_DECLS
+#endif /* (!_ANSI_SOURCE && !_POSIX_C_SOURCE && !_XOPEN_SOURCE) || ... */
 
 /*
- * Functions defined in POSIX 1003.2 and XPGn or later.
+ * Functions defined in POSIX 1003.2 and XPG2 or later.
  */
-#if !defined(_ANSI_SOURCE) && !defined(_POSIX_C_SOURCE) || \
-    (_POSIX_C_SOURCE - 0) >= 2 || defined(_XOPEN_SOURCE)
+#if (!defined(_ANSI_SOURCE) && !defined(_POSIX_C_SOURCE) && \
+     !defined(_XOPEN_SOURCE)) || (_POSIX_C_SOURCE - 0) >= 2 || \
+    (_XOPEN_SOURCE - 0) >= 2
 __BEGIN_DECLS
 int	 pclose __P((FILE *));
 FILE	*popen __P((const char *, const char *));
