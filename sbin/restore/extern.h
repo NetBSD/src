@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.6 1997/09/15 08:04:30 lukem Exp $	*/
+/*	$NetBSD: extern.h,v 1.6.12.1 2000/10/18 00:39:47 tv Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -70,13 +70,15 @@ long		 listfile __P((char *, ino_t, int));
 ino_t		 lowerbnd __P((ino_t));
 void		 mktempname __P((struct entry *));
 void		 moveentry __P((struct entry *, char *));
-void		 msg __P((const char *, ...));
+void		 msg __P((const char *, ...))
+     __attribute__((__format__(__printf__,1,2)));
 char		*myname __P((struct entry *));
 void		 newnode __P((struct entry *));
 void		 newtapebuf __P((long));
 long		 nodeupdates __P((char *, ino_t, int));
 void	 	 onintr __P((int));
-void		 panic __P((const char *, ...));
+void		 panic __P((const char *, ...))
+     __attribute__((__format__(__printf__,1,2)));
 void		 pathcheck __P((char *));
 struct direct	*pathsearch __P((const char *));
 void		 printdumpinfo __P((void));
