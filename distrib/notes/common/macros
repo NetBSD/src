@@ -1,4 +1,4 @@
-.\"	$NetBSD: macros,v 1.17 2002/03/29 21:36:18 bjh21 Exp $
+.\"	$NetBSD: macros,v 1.18 2002/04/14 13:12:37 bjh21 Exp $
 .\"
 .\" Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -370,12 +370,11 @@
 .define_all \*[MACHINE_LIST]
 .
 .\" Supported CPUs:
-.\"	arm alpha arm32 i386 m68k mips pc532 powerpc sh3 sparc sparc64 vax
+.\"	alpha arm i386 m68k mips pc532 powerpc sh3 sparc sparc64 vax
 .\" Define registers for MACHINE_ARCHs with multiple MACHINEs
 .
 .ds A \*M
-.if \n[acorn26]:\n[evbarm]:\n[hpcarm]:\n[netwinder] .ds A arm
-.if \n[acorn32]:\n[cats]:\n[shark] .ds A arm32
+.if \n[acorn26]:\n[acorn32]:\n[cats]:\n[evbarm]:\n[hpcarm]:\n[netwinder]:\n[shark] .ds A arm
 .if \n[amiga]:\n[atari]:\n[hp300]:\n[luna68k]:\n[mac68k]:\n[mvme68k]:\n[news68k]:\n[next68k]:\n[sun3]:\n[x68k] .ds A m68k
 .if \n[arc]:\n[cobalt]:\n[hpcmips]:\n[newsmips]:\n[pmax]:\n[sgimips] .ds A mips
 .if \n[amigappc]:\n[bebox]:\n[macppc]:\n[ofppc]:\n[prep] .ds A powerpc
