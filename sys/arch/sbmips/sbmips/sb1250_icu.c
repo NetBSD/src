@@ -1,4 +1,4 @@
-/* $NetBSD: sb1250_icu.c,v 1.5 2003/09/26 10:34:41 simonb Exp $ */
+/* $NetBSD: sb1250_icu.c,v 1.6 2003/10/25 15:52:38 simonb Exp $ */
 
 /*
  * Copyright 2000, 2001
@@ -33,10 +33,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sb1250_icu.c,v 1.5 2003/09/26 10:34:41 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sb1250_icu.c,v 1.6 2003/10/25 15:52:38 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/device.h>
+#include <sys/malloc.h>
 
 /* XXX for uvmexp */
 #include <uvm/uvm_extern.h>
@@ -54,6 +56,7 @@ struct sb1250_ihand {
 	void	(*fun)(void *, uint32_t, uint32_t);
 	void	*arg;
 	int	level;
+	struct evcnt count;
 };
 static struct sb1250_ihand sb1250_ihands[64];		/* XXX */
 
@@ -69,9 +72,6 @@ static struct sb1250_ihand sb1250_ihands[64];		/* XXX */
 #define	READ_REG(rp)		(mips3_ld((uint64_t *)(rp)))
 #define	WRITE_REG(rp, val)	(mips3_sd((uint64_t *)(rp), (val)))
 
-#undef __inline
-#define	__inline
-
 static void	sb1250_cpu_intr(uint32_t, uint32_t, uint32_t, uint32_t);
 static void	sb1250_cpu_setsoftintr(void);
 static void	*sb1250_intr_establish(u_int, u_int,
@@ -81,6 +81,7 @@ void
 sb1250_icu_init(void)
 {
 	int i;
+	char *name;
 
 	/* zero out the list of used interrupts/lines */
 	memset(ints_for_line, 0, sizeof ints_for_line);
@@ -93,8 +94,14 @@ sb1250_icu_init(void)
 
 	WRITE_REG(SB1250_I_IMR_ADDR, imr_all);
 
-	for (i = 0; i < 64; i++)
+	for (i = 0; i < 64; i++) {
 		WRITE_REG(SB1250_I_MAP(i), SB1250_I_MAP_I0);
+		/* XXX add irq name arrays for various CPU models? */
+		name = malloc(8, M_DEVBUF, M_NOWAIT);
+		snprintf(name, 8, "irq %d", i);
+		evcnt_attach_dynamic(&sb1250_ihands[i].count, EVCNT_TYPE_INTR,
+		    NULL, "sb1250", name);	/* XXX "sb1250"? */
+	}
 }
 
 static void
@@ -122,9 +129,11 @@ sb1250_cpu_intr(uint32_t status, uint32_t cause, uint32_t pc, uint32_t ipending)
 			sstatus &= ints_for_line[i];
 			for (j = 0; sstatus != 0 && j < 64; j++) {
 				if (sstatus & ((uint64_t)1 << j)) {
-					struct sb1250_ihand *ihp = &sb1250_ihands[j];
+					struct sb1250_ihand *ihp =
+					    &sb1250_ihands[j];
 					(*ihp->fun)(ihp->arg, status, pc);
 					sstatus &= ~((uint64_t)1 << j);
+					ihp->count.ev_count++;
 				}
 			}
 		}
