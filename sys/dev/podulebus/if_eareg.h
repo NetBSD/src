@@ -1,4 +1,4 @@
-/* $NetBSD: if_eareg.h,v 1.2 2001/03/25 01:08:56 bjh21 Exp $ */
+/* $NetBSD: if_eareg.h,v 1.3 2001/06/15 00:28:01 bjh21 Exp $ */
 
 /*
  * Copyright (c) 1995 Mark Brinicombe
@@ -37,6 +37,17 @@
 
 /*
  * Atomwide Ether3 Register Definitions
+ */
+
+/*
+ * The 8005 (or 80C04 or 80C04A) in an Ether3 is wired up as follows:
+ * A0 -- LA[2]
+ * A1 -- LA[6]
+ * A2 -- LA[7]
+ * A3 -- LA[8]
+ *
+ * Happily, we can ignore A0 in 16-bit mode, but it'll come back to bite
+ * us on 8-bit versions.
  */
 
 #define EA_8005_BASE	0x000
