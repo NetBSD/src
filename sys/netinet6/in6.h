@@ -1,4 +1,4 @@
-/*	$NetBSD: in6.h,v 1.37 2002/05/13 14:25:13 kleink Exp $	*/
+/*	$NetBSD: in6.h,v 1.38 2002/05/13 15:20:30 kleink Exp $	*/
 /*	$KAME: in6.h,v 1.83 2001/03/29 02:55:07 jinmei Exp $	*/
 
 /*
@@ -121,9 +121,9 @@
  */
 struct in6_addr {
 	union {
-		u_int8_t   __u6_addr8[16];
-		u_int16_t  __u6_addr16[8];
-		u_int32_t  __u6_addr32[4];
+		__uint8_t   __u6_addr8[16];
+		__uint16_t  __u6_addr16[8];
+		uint32_t  __u6_addr32[4];
 	} __u6_addr;			/* 128-bit IP6 address */
 };
 
@@ -143,12 +143,12 @@ struct in6_addr {
 #define SIN6_LEN
 #endif
 struct sockaddr_in6 {
-	u_int8_t	sin6_len;	/* length of this struct(socklen_t)*/
+	uint8_t		sin6_len;	/* length of this struct(socklen_t)*/
 	sa_family_t	sin6_family;	/* AF_INET6 (sa_family_t) */
 	in_port_t	sin6_port;	/* Transport layer port */
-	u_int32_t	sin6_flowinfo;	/* IP6 flow information */
+	uint32_t	sin6_flowinfo;	/* IP6 flow information */
 	struct in6_addr	sin6_addr;	/* IP6 address */
-	u_int32_t	sin6_scope_id;	/* scope zone index */
+	uint32_t	sin6_scope_id;	/* scope zone index */
 };
 
 /*
@@ -244,37 +244,37 @@ extern const struct in6_addr in6addr_linklocal_allrouters;
  * Unspecified
  */
 #define IN6_IS_ADDR_UNSPECIFIED(a)	\
-	((*(const u_int32_t *)(const void *)(&(a)->s6_addr[0]) == 0) &&	\
-	 (*(const u_int32_t *)(const void *)(&(a)->s6_addr[4]) == 0) &&	\
-	 (*(const u_int32_t *)(const void *)(&(a)->s6_addr[8]) == 0) &&	\
-	 (*(const u_int32_t *)(const void *)(&(a)->s6_addr[12]) == 0))
+	((*(const uint32_t *)(const void *)(&(a)->s6_addr[0]) == 0) &&	\
+	 (*(const uint32_t *)(const void *)(&(a)->s6_addr[4]) == 0) &&	\
+	 (*(const uint32_t *)(const void *)(&(a)->s6_addr[8]) == 0) &&	\
+	 (*(const uint32_t *)(const void *)(&(a)->s6_addr[12]) == 0))
 
 /*
  * Loopback
  */
 #define IN6_IS_ADDR_LOOPBACK(a)		\
-	((*(const u_int32_t *)(const void *)(&(a)->s6_addr[0]) == 0) &&	\
-	 (*(const u_int32_t *)(const void *)(&(a)->s6_addr[4]) == 0) &&	\
-	 (*(const u_int32_t *)(const void *)(&(a)->s6_addr[8]) == 0) &&	\
-	 (*(const u_int32_t *)(const void *)(&(a)->s6_addr[12]) == ntohl(1)))
+	((*(const uint32_t *)(const void *)(&(a)->s6_addr[0]) == 0) &&	\
+	 (*(const uint32_t *)(const void *)(&(a)->s6_addr[4]) == 0) &&	\
+	 (*(const uint32_t *)(const void *)(&(a)->s6_addr[8]) == 0) &&	\
+	 (*(const uint32_t *)(const void *)(&(a)->s6_addr[12]) == ntohl(1)))
 
 /*
  * IPv4 compatible
  */
 #define IN6_IS_ADDR_V4COMPAT(a)		\
-	((*(const u_int32_t *)(const void *)(&(a)->s6_addr[0]) == 0) &&	\
-	 (*(const u_int32_t *)(const void *)(&(a)->s6_addr[4]) == 0) &&	\
-	 (*(const u_int32_t *)(const void *)(&(a)->s6_addr[8]) == 0) &&	\
-	 (*(const u_int32_t *)(const void *)(&(a)->s6_addr[12]) != 0) &&	\
-	 (*(const u_int32_t *)(const void *)(&(a)->s6_addr[12]) != ntohl(1)))
+	((*(const uint32_t *)(const void *)(&(a)->s6_addr[0]) == 0) &&	\
+	 (*(const uint32_t *)(const void *)(&(a)->s6_addr[4]) == 0) &&	\
+	 (*(const uint32_t *)(const void *)(&(a)->s6_addr[8]) == 0) &&	\
+	 (*(const uint32_t *)(const void *)(&(a)->s6_addr[12]) != 0) &&	\
+	 (*(const uint32_t *)(const void *)(&(a)->s6_addr[12]) != ntohl(1)))
 
 /*
  * Mapped
  */
 #define IN6_IS_ADDR_V4MAPPED(a)		      \
-	((*(const u_int32_t *)(const void *)(&(a)->s6_addr[0]) == 0) &&	\
-	 (*(const u_int32_t *)(const void *)(&(a)->s6_addr[4]) == 0) &&	\
-	 (*(const u_int32_t *)(const void *)(&(a)->s6_addr[8]) == ntohl(0x0000ffff)))
+	((*(const uint32_t *)(const void *)(&(a)->s6_addr[0]) == 0) &&	\
+	 (*(const uint32_t *)(const void *)(&(a)->s6_addr[4]) == 0) &&	\
+	 (*(const uint32_t *)(const void *)(&(a)->s6_addr[8]) == ntohl(0x0000ffff)))
 
 /*
  * KAME Scope Values
@@ -639,16 +639,28 @@ extern	u_char	ip6_protox[];
 #define	ifatoia6(ifa)	((struct in6_ifaddr *)(ifa))
 #endif /* _KERNEL */
 
+#if !defined(_POSIX_C_SOURCE) && !defined(_XOPEN_SOURCE)
+
+#include <machine/ansi.h>
+
+#ifdef	_BSD_SIZE_T_
+typedef	_BSD_SIZE_T_		size_t;
+#define	_SIZE_T
+#undef	_BSD_SIZE_T_
+#endif
+
+#include <sys/cdefs.h>
+
 __BEGIN_DECLS
 struct cmsghdr;
 
 extern int inet6_option_space __P((int));
 extern int inet6_option_init __P((void *, struct cmsghdr **, int));
-extern int inet6_option_append __P((struct cmsghdr *, const u_int8_t *,
+extern int inet6_option_append __P((struct cmsghdr *, const uint8_t *,
 	int, int));
-extern u_int8_t *inet6_option_alloc __P((struct cmsghdr *, int, int, int));
-extern int inet6_option_next __P((const struct cmsghdr *, u_int8_t **));
-extern int inet6_option_find __P((const struct cmsghdr *, u_int8_t **, int));
+extern uint8_t *inet6_option_alloc __P((struct cmsghdr *, int, int, int));
+extern int inet6_option_next __P((const struct cmsghdr *, uint8_t **));
+extern int inet6_option_find __P((const struct cmsghdr *, uint8_t **, int));
 
 extern size_t inet6_rthdr_space __P((int, int));
 extern struct cmsghdr *inet6_rthdr_init __P((void *, int));
@@ -662,5 +674,6 @@ extern int inet6_rthdr_segments __P((const struct cmsghdr *));
 extern struct in6_addr *inet6_rthdr_getaddr __P((struct cmsghdr *, int));
 extern int inet6_rthdr_getflags __P((const struct cmsghdr *, int));
 __END_DECLS
+#endif /* !_POSIX_C_SOURCE && !_XOPEN_SOURCE */
 
 #endif /* !_NETINET6_IN6_H_ */
