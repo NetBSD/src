@@ -1,4 +1,4 @@
-/*	$NetBSD: gem.c,v 1.12 2002/01/19 03:16:38 eeh Exp $ */
+/*	$NetBSD: gem.c,v 1.13 2002/03/29 00:00:10 matt Exp $ */
 
 /*
  * 
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gem.c,v 1.12 2002/01/19 03:16:38 eeh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gem.c,v 1.13 2002/03/29 00:00:10 matt Exp $");
 
 #include "bpfilter.h"
 
@@ -825,6 +825,7 @@ gem_init_regs(struct gem_softc *sc)
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	bus_space_tag_t t = sc->sc_bustag;
 	bus_space_handle_t h = sc->sc_h;
+	const u_char *laddr = LLADDR(ifp->if_sadl);
 
 	/* These regs are not cleared on reset */
 	if (!sc->sc_inited) {
@@ -844,13 +845,14 @@ gem_init_regs(struct gem_softc *sc)
 		/* Dunno.... */
 		bus_space_write_4(t, h, GEM_MAC_CONTROL_TYPE, 0x8088);
 		bus_space_write_4(t, h, GEM_MAC_RANDOM_SEED,
-			((LLADDR(ifp->if_sadl)[5]<<8)|
-			 LLADDR(ifp->if_sadl)[4])&0x3ff);
+			((laddr[5]<<8)|laddr[4])&0x3ff);
+
 		/* Secondary MAC addr set to 0:0:0:0:0:0 */
 		bus_space_write_4(t, h, GEM_MAC_ADDR3, 0);
 		bus_space_write_4(t, h, GEM_MAC_ADDR4, 0);
 		bus_space_write_4(t, h, GEM_MAC_ADDR5, 0);
-		/* MAC control addr set to 0:1:c2:0:1:80 */
+
+		/* MAC control addr set to 01:80:c2:00:00:01 */
 		bus_space_write_4(t, h, GEM_MAC_ADDR6, 0x0001);
 		bus_space_write_4(t, h, GEM_MAC_ADDR7, 0xc200);
 		bus_space_write_4(t, h, GEM_MAC_ADDR8, 0x0180);
@@ -889,12 +891,9 @@ gem_init_regs(struct gem_softc *sc)
 	/*
 	 * Set the station address.
 	 */
-	bus_space_write_4(t, h, GEM_MAC_ADDR0, 
-		(LLADDR(ifp->if_sadl)[4]<<8) | LLADDR(ifp->if_sadl)[5]);
-	bus_space_write_4(t, h, GEM_MAC_ADDR1, 
-		(LLADDR(ifp->if_sadl)[2]<<8) | LLADDR(ifp->if_sadl)[3]);
-	bus_space_write_4(t, h, GEM_MAC_ADDR2, 
-		(LLADDR(ifp->if_sadl)[0]<<8) | LLADDR(ifp->if_sadl)[1]);
+	bus_space_write_4(t, h, GEM_MAC_ADDR0, (laddr[4]<<8)|laddr[5]);
+	bus_space_write_4(t, h, GEM_MAC_ADDR1, (laddr[2]<<8)|laddr[3]);
+	bus_space_write_4(t, h, GEM_MAC_ADDR2, (laddr[0]<<8)|laddr[1]);
 
 }
 
