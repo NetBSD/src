@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1.2.2 2002/10/07 01:23:08 thorpej Exp $
+#	$NetBSD: Makefile,v 1.1.2.3 2002/10/07 02:17:37 thorpej Exp $
 #
 
 WARNS=	2
@@ -34,8 +34,10 @@ SRCS=	pthread_dbg.c
 INCS=	pthread_dbg.h
 INCSDIR=/usr/include
 
-.endif
-
 .include <bsd.lib.mk>
 
-# DO NOT DELETE
+.else
+
+.include <bsd.man.mk>
+
+.endif

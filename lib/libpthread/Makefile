@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.8.2.17 2002/10/07 01:23:07 thorpej Exp $
+#	$NetBSD: Makefile,v 1.8.2.18 2002/10/07 02:17:37 thorpej Exp $
 #
 
 WARNS=	2
@@ -57,15 +57,16 @@ INCSDIR=/usr/include
 debuglog: debuglog.o
 	$(CC) -o debuglog debuglog.o -lpthread
 
-.endif
-
 .include <bsd.lib.mk>
+
+.else
+
+.include <bsd.man.mk>
+
+.endif
 
 # WARNS=2 sets -Wcast-qual. This causes problems for one of
 # pthread_setspecific() and pthread_getspecific(), since the constness
 # of the argument to setspecific() has to be discarded *somewhere*
 # before returning it from getspecific().
 CFLAGS+= -Wno-cast-qual
-
-
-# DO NOT DELETE
