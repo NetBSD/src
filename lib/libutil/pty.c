@@ -1,4 +1,4 @@
-/*	$NetBSD: pty.c,v 1.20 2003/08/07 16:45:00 agc Exp $	*/
+/*	$NetBSD: pty.c,v 1.21 2003/10/25 07:31:12 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)pty.c	8.3 (Berkeley) 5/16/94";
 #else
-__RCSID("$NetBSD: pty.c,v 1.20 2003/08/07 16:45:00 agc Exp $");
+__RCSID("$NetBSD: pty.c,v 1.21 2003/10/25 07:31:12 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -65,7 +65,7 @@ openpty(int *amaster, int *aslave, char *name, struct termios *termp,
 {
 	static char line[] = "/dev/XtyXX";
 	const char *cp1, *cp2, *cp;
-	int master, slave, tries = 0;
+	int master, slave;
 	gid_t ttygid;
 	struct group *gr;
 
@@ -81,7 +81,6 @@ openpty(int *amaster, int *aslave, char *name, struct termios *termp,
 		ttygid = (gid_t) -1;
 
 	for (cp1 = TTY_LETTERS; *cp1; cp1++) {
-		tries = 0;
 		line[8] = *cp1;
 		for (cp = cp2 = TTY_OLD_SUFFIX TTY_NEW_SUFFIX; *cp2; cp2++) {
 			line[5] = 'p';
