@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.4 2002/10/02 14:40:27 scw Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.5 2002/10/04 09:20:20 scw Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.4 2002/10/02 14:40:27 scw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.5 2002/10/04 09:20:20 scw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -177,7 +177,7 @@ _bus_dmamap_load_buffer_direct_common(void *cookie, bus_dmamap_t map,
 	vaddr_t vaddr = (vaddr_t)buf;
 	paddr_t paddr;
 	pmap_t pm;
-	int seg, cacheable, coherent = BUS_DMA_COHERENT;
+	int seg, cacheable, coherent = 1;
 
 	lastaddr = *lastaddrp;
 	bmask = ~(map->_dm_boundary - 1);
@@ -193,8 +193,11 @@ _bus_dmamap_load_buffer_direct_common(void *cookie, bus_dmamap_t map,
 
 		curaddr = (bus_addr_t) paddr;
 
-		if (cacheable)
+		if (cacheable) {
 			coherent = 0;
+			cacheable = 0;
+		} else
+			cacheable = BUS_DMA_COHERENT;
 
 		/*
 		 * Compute the segment size, and adjust counts.
@@ -221,11 +224,11 @@ _bus_dmamap_load_buffer_direct_common(void *cookie, bus_dmamap_t map,
 			    map->dm_segs[seg]._ds_cpuaddr = curaddr;
 			map->dm_segs[seg].ds_len = sgsize;
 			map->dm_segs[seg]._ds_vaddr = vaddr;
-			map->dm_segs[seg]._ds_flags =
-			    cacheable ? 0 : BUS_DMA_COHERENT;
+			map->dm_segs[seg]._ds_flags = cacheable;
 			first = 0;
 		} else {
 			if (curaddr == lastaddr &&
+			    map->dm_segs[seg]._ds_flags == cacheable &&
 			    (map->dm_segs[seg].ds_len + sgsize) <=
 			     map->_dm_maxsegsz &&
 			    (map->_dm_boundary == 0 ||
@@ -239,8 +242,7 @@ _bus_dmamap_load_buffer_direct_common(void *cookie, bus_dmamap_t map,
 				    map->dm_segs[seg]._ds_cpuaddr = curaddr;
 				map->dm_segs[seg].ds_len = sgsize;
 				map->dm_segs[seg]._ds_vaddr = vaddr;
-				map->dm_segs[seg]._ds_flags =
-				    cacheable ? 0 : BUS_DMA_COHERENT;
+				map->dm_segs[seg]._ds_flags = cacheable;
 			}
 		}
 
@@ -251,8 +253,14 @@ _bus_dmamap_load_buffer_direct_common(void *cookie, bus_dmamap_t map,
 
 	*segp = seg;
 	*lastaddrp = lastaddr;
-	map->_dm_flags &= ~BUS_DMA_COHERENT;
-	map->_dm_flags |= coherent;
+
+	/*
+	 * If the map is marked as being coherent, but we just added
+	 * at least one non-coherent segment, kill the coherent flag
+	 * in the map.
+	 */
+	if (coherent == 0 && map->_dm_flags & BUS_DMA_COHERENT)
+		map->_dm_flags &= ~BUS_DMA_COHERENT;
 
 	/*
 	 * Did we fit?
@@ -291,7 +299,11 @@ _bus_dmamap_load_direct(void *cookie, bus_dmamap_t map, void *buf,
 	if (buflen > map->_dm_size)
 		return (EINVAL);
 
+	if (buflen == 0)
+		return (0);
+
 	seg = 0;
+	map->_dm_flags |= BUS_DMA_COHERENT;
 	error = _bus_dmamap_load_buffer_direct_common(cookie, map, buf, buflen,
 	    p, flags, &lastaddr, &seg, 1);
 	if (error == 0) {
@@ -330,7 +342,10 @@ _bus_dmamap_load_mbuf_direct(void *cookie, bus_dmamap_t map, struct mbuf *m0,
 	first = 1;
 	seg = 0;
 	error = 0;
+	map->_dm_flags |= BUS_DMA_COHERENT;
 	for (m = m0; m != NULL && error == 0; m = m->m_next) {
+		if (m->m_len == 0)
+			continue;
 		error = _bus_dmamap_load_buffer_direct_common(cookie, map,
 		    m->m_data, m->m_len, NULL, flags, &lastaddr, &seg, first);
 		first = 0;
@@ -377,6 +392,7 @@ _bus_dmamap_load_uio_direct(void *cookie, bus_dmamap_t map, struct uio *uio,
 	first = 1;
 	seg = 0;
 	error = 0;
+	map->_dm_flags |= BUS_DMA_COHERENT;
 	for (i = 0; i < uio->uio_iovcnt && resid != 0 && error == 0; i++) {
 		/*
 		 * Now at the first iovec to load.  Load each iovec
@@ -384,6 +400,9 @@ _bus_dmamap_load_uio_direct(void *cookie, bus_dmamap_t map, struct uio *uio,
 		 */
 		minlen = resid < iov[i].iov_len ? resid : iov[i].iov_len;
 		addr = (caddr_t)iov[i].iov_base;
+
+		if (minlen == 0)
+			continue;
 
 		error = _bus_dmamap_load_buffer_direct_common(cookie, map,
 		    addr, minlen, p, flags, &lastaddr, &seg, first);
@@ -406,32 +425,30 @@ static int
 _bus_dmamap_load_raw_direct(void *cookie, bus_dmamap_t map,
     bus_dma_segment_t *segs, int nsegs, bus_size_t size, int flags)
 {
+	int i, j;
+
 	/* @@@ This routine doesn't enforce map boundary requirement
 	 * @@@ perhaps it should return an error instead of panicing
 	 */
 
 #ifdef DIAGNOSTIC
-	if (map->_dm_size < size) {
+	if (map->_dm_size < size)
 		panic("_bus_dmamap_load_raw_direct: size is too large for map");
-	}
-	if (map->_dm_segcnt < nsegs) {
+	if (map->_dm_segcnt < nsegs)
 		panic("_bus_dmamap_load_raw_direct: too many segments for map");
-	}
 #endif
 
-	{
-		int i;
-		for (i = 0; i < nsegs; i++) {
+	for (i = j = 0; i < nsegs; i++) {
+		if (segs[i].ds_len == 0)
+			continue;
 #ifdef DIAGNOSTIC
-			if (map->_dm_maxsegsz < map->dm_segs[i].ds_len) {
-				panic("_bus_dmamap_load_raw_direct: segment too large for map");
-			}
+		if (map->_dm_maxsegsz < map->dm_segs[i].ds_len)
+			panic("_bus_dmamap_load_raw_direct: segment too large for map");
 #endif
-			map->dm_segs[i] = segs[i];
-		}
+		map->dm_segs[j++] = segs[i];
 	}
 
-	map->dm_nsegs   = nsegs;
+	map->dm_nsegs   = j;
 	map->dm_mapsize = size;
 
 	return (0);
@@ -467,15 +484,28 @@ _bus_dmamap_sync(void *cookie, bus_dmamap_t map, bus_addr_t offset,
 	vsize_t seglen;
 	vaddr_t va;
 	paddr_t pa;
-	int i;
+	int i, inv;
 
 	/* If the whole DMA map is uncached, do nothing */
 	if (map->_dm_flags & BUS_DMA_COHERENT)
 		return;
 
-	/* Short-circuit for unsupported `ops' */
-	if ((ops & (BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE)) == 0)
+	switch (ops & (BUS_DMASYNC_PREWRITE|BUS_DMASYNC_PREREAD)) {
+	case BUS_DMASYNC_PREWRITE|BUS_DMASYNC_PREREAD:
+		inv = 0;
+		break;
+
+	case BUS_DMASYNC_PREREAD:
+		inv = 1;
+		break;
+
+	case BUS_DMASYNC_PREWRITE:
+		inv = 0;
+		break;
+
+	default:
 		return;
+	}
 
 	for (i = 0; i < map->dm_nsegs && len > 0; i++) {
 		if (map->dm_segs[i].ds_len <= offset) {
@@ -496,19 +526,7 @@ _bus_dmamap_sync(void *cookie, bus_dmamap_t map, bus_addr_t offset,
 		pa = (paddr_t)(map->dm_segs[i]._ds_cpuaddr + offset);
 		va = map->dm_segs[i]._ds_vaddr + offset;
 
-		switch (ops & (BUS_DMASYNC_PREWRITE|BUS_DMASYNC_PREREAD)) {
-		case BUS_DMASYNC_PREWRITE|BUS_DMASYNC_PREREAD:
-			_bus_dmamap_sync_helper(va, pa, seglen, 0);
-			break;
-
-		case BUS_DMASYNC_PREREAD:
-			_bus_dmamap_sync_helper(va, pa, seglen, 1);
-			break;
-
-		case BUS_DMASYNC_PREWRITE:
-			_bus_dmamap_sync_helper(va, pa, seglen, 0);
-			break;
-		}
+		_bus_dmamap_sync_helper(va, pa, seglen, inv);
 	}
 }
 
@@ -745,7 +763,8 @@ _bus_dmamem_map(void *cookie, bus_dma_segment_t *segs, int nsegs,
 
 			pmap_enter(pmap_kernel(), va, addr,
 			    VM_PROT_READ | VM_PROT_WRITE,
-			    VM_PROT_READ | VM_PROT_WRITE | PMAP_WIRED |
+			    VM_PROT_READ | VM_PROT_WRITE |
+			    PMAP_WIRED   | PMAP_UNMANAGED |
 			    ((flags & BUS_DMA_COHERENT) ? PMAP_NC : 0));
 
 			segs[curseg]._ds_flags &= ~BUS_DMA_COHERENT;
