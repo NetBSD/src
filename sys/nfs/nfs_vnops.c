@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vnops.c,v 1.170 2003/05/27 14:41:06 yamt Exp $	*/
+/*	$NetBSD: nfs_vnops.c,v 1.171 2003/06/03 14:27:48 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_vnops.c,v 1.170 2003/05/27 14:41:06 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_vnops.c,v 1.171 2003/06/03 14:27:48 yamt Exp $");
 
 #include "opt_nfs.h"
 #include "opt_uvmhist.h"
@@ -1209,15 +1209,28 @@ nfsmout:
 	return (error);
 }
 
+struct nfs_writerpc_context {
+	struct simplelock nwc_slock;
+	volatile int nwc_mbufcount;
+};
+
 /*
  * free mbuf used to refer protected pages while write rpc call.
+ * called at splvm.
  */
 static void
 nfs_writerpc_extfree(struct mbuf *m, caddr_t buf, size_t size, void *arg)
 {
+	struct nfs_writerpc_context *ctx = arg;
 
 	KASSERT(m != NULL);
+	KASSERT(ctx != NULL);
 	pool_cache_put(&mbpool_cache, m);
+	simple_lock(&ctx->nwc_slock);
+	if (--ctx->nwc_mbufcount == 0) {
+		wakeup(ctx);
+	}
+	simple_unlock(&ctx->nwc_slock);
 }
 
 /*
@@ -1241,6 +1254,12 @@ nfs_writerpc(vp, uiop, iomode, pageprotected, stalewriteverf)
 	const int v3 = NFS_ISV3(vp);
 	int committed = NFSV3WRITE_FILESYNC;
 	struct nfsnode *np = VTONFS(vp);
+	struct nfs_writerpc_context ctx;
+	int s;
+	struct lwp *l;
+
+	simple_lock_init(&ctx.nwc_slock);
+	ctx.nwc_mbufcount = 1;
 
 	if (vp->v_mount->mnt_flag & MNT_RDONLY) {
 		panic("writerpc readonly vp %p", vp);
@@ -1253,6 +1272,10 @@ nfs_writerpc(vp, uiop, iomode, pageprotected, stalewriteverf)
 	tsiz = uiop->uio_resid;
 	if (uiop->uio_offset + tsiz > nmp->nm_maxfilesize)
 		return (EFBIG);
+	if (pageprotected) {
+		l = curlwp;
+		PHOLD(l);
+	}
 	while (tsiz > 0) {
 		int datalen;
 
@@ -1293,7 +1316,7 @@ nfs_writerpc(vp, uiop, iomode, pageprotected, stalewriteverf)
 			m = m_get(M_WAIT, MT_DATA);
 			MCLAIM(m, &nfs_mowner);
 			MEXTADD(m, iovp->iov_base, len, M_MBUF,
-			    nfs_writerpc_extfree, NULL);
+			    nfs_writerpc_extfree, &ctx);
 			m->m_flags |= M_EXT_ROMAP;
 			m->m_len = len;
 			mb->m_next = m;
@@ -1309,6 +1332,11 @@ nfs_writerpc(vp, uiop, iomode, pageprotected, stalewriteverf)
 			iovp->iov_len -= len;
 			uiop->uio_offset += len;
 			uiop->uio_resid -= len;
+			s = splvm();
+			simple_lock(&ctx.nwc_slock);
+			ctx.nwc_mbufcount++;
+			simple_unlock(&ctx.nwc_slock);
+			splx(s);
 		} else {
 			nfsm_uiotom(uiop, len);
 		}
@@ -1370,6 +1398,22 @@ nfs_writerpc(vp, uiop, iomode, pageprotected, stalewriteverf)
 		if (error)
 			break;
 		tsiz -= len;
+	}
+	if (pageprotected) {
+		/*
+		 * wait until mbufs go away.
+		 * retransmitted mbufs can survive longer than rpc requests
+		 * themselves.
+		 */
+		s = splvm();
+		simple_lock(&ctx.nwc_slock);
+		ctx.nwc_mbufcount--;
+		while (ctx.nwc_mbufcount > 0) {
+			ltsleep(&ctx, PRIBIO, "nfsmblk", 0, &ctx.nwc_slock);
+		}
+		simple_unlock(&ctx.nwc_slock);
+		splx(s);
+		PRELE(l);
 	}
 nfsmout:
 	*iomode = committed;
