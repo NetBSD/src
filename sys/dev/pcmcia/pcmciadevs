@@ -1,4 +1,4 @@
-$NetBSD: pcmciadevs,v 1.101 2000/11/10 01:02:32 hubertf Exp $
+$NetBSD: pcmciadevs,v 1.102 2000/11/21 00:25:35 soren Exp $
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -153,7 +153,7 @@ product IODATA PCLATE		0x2216 I-O DATA PCLA/TE
 product FARALLON SKYLINE	0x0a01 SkyLINE Wireless
 
 /* Lexar Media */
-product LEXARMEDIA COMPATFLASH	0x0100 Lexar Media CompactFlash
+product LEXARMEDIA COMPACTFLASH	0x0100 Lexar Media CompactFlash
 
 /* Linksys corporation */
 product LINKSYS ETHERFAST	0x0230 Linksys Etherfast 10/100 Ethernet
