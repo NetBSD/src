@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu.c,v 1.5 1996/03/17 02:04:30 thorpej Exp $	*/
+/*	$NetBSD: fpu.c,v 1.6 1996/03/26 15:16:45 gwr Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon W. Ross
@@ -41,7 +41,6 @@
 #include <sys/kernel.h>
 #include <sys/device.h>
 
-#include <machine/autoconf.h>
 #include <machine/psl.h>
 #include <machine/cpu.h>
 #include <machine/frame.h>
@@ -53,31 +52,7 @@
 extern int fpu_type;
 extern long *nofault;
 
-int fpu_match __P((struct device *, void *vcf, void *args));
-void fpu_attach __P((struct device *, struct device *, void *));
 int fpu_probe();
-
-struct cfattach fpu_ca = {
-	sizeof(struct device), fpu_match, fpu_attach
-};
-
-struct cfdriver fpu_cd = {
-	NULL, "fpu", DV_DULL
-};
-
-int fpu_match(parent, vcf, args)
-    struct device *parent;
-    void *vcf, *args;
-{
-    struct cfdata *cf = vcf;
-	struct confargs *ca = args;
-
-	/* This driver only supports one unit. */
-	if (cf->cf_unit != 0)
-		return (0);
-
-	return (1);
-}
 
 static char *fpu_descr[] = {
 #ifdef	FPU_EMULATE
@@ -89,12 +64,8 @@ static char *fpu_descr[] = {
 	"mc68882",			/* 2 */
 	"?" };
 
-void fpu_attach(parent, self, args)
-	struct device *parent;
-	struct device *self;
-	void *args;
+void initfpu()
 {
-	struct confargs *ca = args;
 	char *descr;
 	int enab_reg;
 
@@ -109,7 +80,7 @@ void fpu_attach(parent, self, args)
 	else
 		descr = "unknown type";
 
-	printf(" (%s)\n", descr);
+	printf("fpu: %s\n", descr);
 
 	if (fpu_type == 0) {
 		/* Might as well turn the enable bit back off. */

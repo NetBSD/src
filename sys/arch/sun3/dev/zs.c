@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.34 1996/03/17 02:04:13 thorpej Exp $	*/
+/*	$NetBSD: zs.c,v 1.35 1996/03/26 15:16:24 gwr Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon W. Ross
@@ -165,8 +165,9 @@ static u_char zs_init_reg[16] = {
  ****************************************************************/
 
 /* Definition of the driver for autoconfig. */
-static int	zsc_match(struct device *, void *, void *);
-static void	zsc_attach(struct device *, struct device *, void *);
+static int	zsc_match __P((struct device *, void *, void *));
+static void	zsc_attach __P((struct device *, struct device *, void *));
+static int  zsc_print __P((void *, char *name));
 
 struct cfattach zsc_ca = {
 	sizeof(struct zsc_softc), zsc_match, zsc_attach
@@ -186,47 +187,42 @@ static int zssoft(void *);
 static int
 zsc_match(parent, vcf, aux)
 	struct device *parent;
-	void *vcf;
-	void *aux;
+	void *vcf, *aux;
 {
 	struct cfdata *cf = vcf;
 	struct confargs *ca = aux;
-	int unit, x;
-	void *zsva;
+	int pa, unit, x;
+	void *va;
 
 	unit = cf->cf_unit;
 	if (unit < 0 || unit >= NZS)
 		return (0);
 
-	/* Make sure zs_init() found mappings. */
-	zsva = zsaddr[unit];
-	if (zsva == NULL)
+	/*
+	 * OBIO match functions may be called for every possible
+	 * physical address, so match only our physical address.
+	 * This driver only supports its default mappings, so
+	 * non-default locators must match our defaults.
+	 */
+	if ((pa = cf->cf_paddr) == -1) {
+		/* Use our default PA. */
+		pa = zs_physaddr[unit];
+	} else {
+		/* Validate the given PA. */
+		if (pa != zs_physaddr[unit])
+			return (0);
+	}
+	if (pa != ca->ca_paddr)
 		return (0);
 
-	if (ca->ca_paddr == -1)
-		ca->ca_paddr = zs_physaddr[unit];
-	if (ca->ca_intpri == -1)
-		ca->ca_intpri = ZSHARD_PRI;
+	/* Make sure zs_init() found mappings. */
+	va = zsaddr[unit];
+	if (va == NULL)
+		return (0);
 
 	/* This returns -1 on a fault (bus error). */
-	x = peek_byte(zsva);
+	x = peek_byte(va);
 	return (x != -1);
-}
-
-static int
-zsc_print(aux, name)
-	void *aux;
-	char *name;
-{
-	struct zsc_attach_args *args = aux;
-
-	if (name != NULL)
-		printf("%s: ", name);
-
-	if (args->channel != -1)
-		printf(" channel %d", args->channel);
-
-	return UNCONF;
 }
 
 /*
@@ -242,17 +238,21 @@ zsc_attach(parent, self, aux)
 	void *aux;
 {
 	struct zsc_softc *zsc = (void *) self;
+	struct cfdata *cf = self->dv_cfdata;
 	struct confargs *ca = aux;
 	struct zsc_attach_args zsc_args;
 	volatile struct zschan *zc;
 	struct zs_chanstate *cs;
-	int zsc_unit, channel;
+	int zsc_unit, intpri, channel;
 	int reset, s;
 	static int didintr;
 
 	zsc_unit = zsc->zsc_dev.dv_unit;
 
-	printf(" softpri %d\n", ZSSOFT_PRI);
+	if ((intpri = cf->cf_intpri) == -1)
+		intpri = ZSHARD_PRI;
+
+	printf(" level %d (softpri %d)\n", intpri, ZSSOFT_PRI);
 
 	/* Use the mapping setup by the Sun PROM. */
 	if (zsaddr[zsc_unit] == NULL)
@@ -324,6 +324,22 @@ zsc_attach(parent, self, aux)
 	/* master interrupt control (enable) */
 	zs_write_reg(cs, 9, zs_init_reg[9]);
 	splx(s);
+}
+
+static int
+zsc_print(aux, name)
+	void *aux;
+	char *name;
+{
+	struct zsc_attach_args *args = aux;
+
+	if (name != NULL)
+		printf("%s: ", name);
+
+	if (args->channel != -1)
+		printf(" channel %d", args->channel);
+
+	return UNCONF;
 }
 
 static int

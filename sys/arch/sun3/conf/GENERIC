@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.26 1996/02/20 22:03:20 gwr Exp $
+#	$NetBSD: GENERIC,v 1.27 1996/03/26 15:15:50 gwr Exp $
 
 #
 # GENERIC Sun3 (3/50, 3/60, 3/110, 3/160, 3/260)
@@ -8,7 +8,7 @@
 include "std.sun3"
 
 # Machines to be supported by this kernel
-options		GENERIC
+options 	GENERIC
 options 	FPU_EMULATE
 options 	HAVECACHE		# Sun3/260 VAC
 
@@ -16,9 +16,9 @@ options 	HAVECACHE		# Sun3/260 VAC
 maxusers	4
 
 # Standard system options
-options		SWAPPAGER, VNODEPAGER, DEVPAGER	# paging
-options		KTRACE				# system call tracing support
-#makeoptions	DEBUG="-g"			# symbols for kgdb + nm
+options 	SWAPPAGER, VNODEPAGER, DEVPAGER	# paging
+options 	KTRACE				# system call tracing support
+#makeoptions DEBUG="-g"			# symbols for kgdb + nm
 options 	DDB
 
 # Filesystem options
@@ -26,29 +26,30 @@ options 	NFSSERVER			# nfs server support
 options 	NFSCLIENT			# nfs client support
 options 	FFS				# ufs file system
 #
-options		CD9660		# ISO 9660 + Rock Ridge file system
+options 	CD9660		# ISO 9660 + Rock Ridge file system
 options 	FDESC		# /dev/fd/*
-options		FIFO		# FIFOs; RECOMMENDED
-options		KERNFS		# /kern
-options		NULLFS		# loopback file system
+options 	FIFO		# FIFOs; RECOMMENDED
+options 	KERNFS		# /kern
+options 	NULLFS		# loopback file system
 options 	PROCFS		# /proc
 options 	UNION		# union file system
 
 # Networking options
-options		INET				# IP prototol stack support
+options 	INET				# IP prototol stack support
 # XXX - Work-around for root on slow SunOS/Sun3 servers (sigh...)
 options 	NFS_BOOT_RWSIZE=1024
 
 # Compatability options
 options 	COMPAT_SUNOS	# can run SunOS 4.1.1 executables
-options 	COMPAT_09	# NetBSD 0.9,
+#options 	COMPAT_09	# NetBSD 0.9,
 options 	COMPAT_10	# NetBSD 1.0,
+options 	COMPAT_11	# NetBSD 1.1,
 options 	COMPAT_43	# and 4.3BSD
 options 	TCP_COMPAT_42	# TCP bug compatibility with 4.2BSD
+options 	UCONSOLE	# Allow non-root TIOCCONS
 
 # Sun3-specific debugging options
-#options 	CONTEXT_DEBUG
-#options 	PMAP_DEBUG
+options 	PMAP_DEBUG
 #options 	VMFAULT_TRACE
 #options 	SYSCALL_DEBUG
 #options 	EXEC_DEBUG
@@ -56,6 +57,15 @@ options 	DIAGNOSTIC
 #options 	SCSIDEBUG
 
 config		netbsd swap generic
+
+#
+# Serial ports
+#
+zstty0 at zsc1 channel 0	# ttya
+zstty1 at zsc1 channel 1	# ttyb
+
+kbd0   at zsc0 channel 0	# keyboard
+ms0    at zsc0 channel 1	# mouse
 
 #
 # Network devices
@@ -73,9 +83,9 @@ le0 at obio0 addr ? level ?
 #
 
 # Sun3 "si" SCSI controller (NCR 5380)
-ncr_si0 at obio0 addr ? level ?
-ncr_si0 at vmes0 addr 0xff200000 level 2 vect 0x40
-ncr_si1 at vmes0 addr 0xff204000 level 2 vect 0x41
+si0 at obio0 addr ? level ?
+si0 at vmes0 addr 0xff200000 level 2 vect 0x40
+si1 at vmes0 addr 0xff204000 level 2 vect 0x41
 
 # Xylogics 7053 controllers
 # xdc0 at vmel0 addr 0xffffee80 level 2 vect 0x44
@@ -94,7 +104,7 @@ ncr_si1 at vmes0 addr 0xff204000 level 2 vect 0x41
 #
 
 # The default cgfour address depends on the machine:
-# 3/60: obio 0xFF200000 .. 0xFF9fffff
+# 3/60: obmem 0xFF200000 .. 0xFF9fffff
 # 3/110: different? (not tested)
 cgfour0 at obmem0 addr ?
 
@@ -105,8 +115,8 @@ cgfour0 at obmem0 addr ?
 # cgeight0 at obmem0 addr ?
 
 # The default bwtwo address depends on the machine:
-# 3/50: obio   0x100000
-# else: obio 0xff000000
+# 3/50: obmem   0x100000
+# else: obmem 0xff000000
 bwtwo0 at obmem0 addr ?
 # 3/60 P4 color frame buffer overlay plane, or P4 monochrome frame buffer
 #bwtwo1 at obmem0 addr 0xff300000
@@ -140,10 +150,8 @@ cd* at scsibus? target ? lun ?
 
 #ch* at scsibus? target ? lun ?
 
-
 # RAM-disk drivers
-rd0 at mainbus?
-rd1 at mainbus?
+pseudo-device	rd	2
 
 # Misc.
 pseudo-device	loop	1		# network loopback

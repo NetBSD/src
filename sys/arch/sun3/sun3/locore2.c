@@ -1,4 +1,4 @@
-/*	$NetBSD: locore2.c,v 1.50 1996/02/20 22:05:38 gwr Exp $	*/
+/*	$NetBSD: locore2.c,v 1.51 1996/03/26 15:16:59 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -191,18 +191,6 @@ void sun3_mon_reboot(bootstring)
 	mon_exit_to_mon();
 	/*NOTREACHED*/
 }
-
-#ifndef DDB
-/*
- * When DDB is included, Debugger() comes from db_interface.c
- * otherwise provide this function.  This will just stop in
- * the Sun PROM monitor.  (You can look around, or continue.)
- */
-void Debugger()
-{
-	sun3_mon_abort();
-}
-#endif	/* DDB */
 
 /*
  * Duplicate all mappings in the current context into
@@ -829,7 +817,7 @@ void internal_configure()
 	/* Drivers that use those OBIO mappings from the PROM */
 	zs_init();
 	eeprom_init();
-	isr_init();
+	intreg_init();
 	clock_init();
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: eeprom.c,v 1.7 1996/03/17 02:03:47 thorpej Exp $	*/
+/*	$NetBSD: eeprom.c,v 1.8 1996/03/26 15:16:06 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -55,8 +55,8 @@ static int ee_update(caddr_t buf, int off, int cnt);
 static char *eeprom_va;
 static int ee_busy, ee_want;
 
-int eeprom_match __P((struct device *, void *vcf, void *args));
-void eeprom_attach __P((struct device *, struct device *, void *));
+static int  eeprom_match __P((struct device *, void *vcf, void *args));
+static void eeprom_attach __P((struct device *, struct device *, void *));
 
 struct cfattach eeprom_ca = {
 	sizeof(struct device), eeprom_match, eeprom_attach
@@ -73,24 +73,38 @@ void eeprom_init()
 	ee_console = ((struct eeprom *)eeprom_va)->eeConsole;
 }
 
-int eeprom_match(parent, vcf, args)
+static int
+eeprom_match(parent, vcf, args)
     struct device *parent;
     void *vcf, *args;
 {
     struct cfdata *cf = vcf;
 	struct confargs *ca = args;
+	int pa;
 
 	/* This driver only supports one unit. */
 	if (cf->cf_unit != 0)
 		return (0);
+
+	if ((pa = cf->cf_paddr) == -1) {
+		/* Use our default PA. */
+		pa = OBIO_EEPROM;
+	} else {
+		/* Validate the given PA. */
+		if (pa != OBIO_EEPROM)
+			return (0);
+	}
+	if (pa != ca->ca_paddr)
+		return (0);
+
 	if (eeprom_va == NULL)
 		return (0);
-	if (ca->ca_paddr == -1)
-		ca->ca_paddr = OBIO_EEPROM;
+
 	return (1);
 }
 
-void eeprom_attach(parent, self, args)
+static void
+eeprom_attach(parent, self, args)
 	struct device *parent;
 	struct device *self;
 	void *args;

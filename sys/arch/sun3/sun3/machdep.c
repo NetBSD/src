@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.70 1996/02/20 22:05:34 gwr Exp $	*/
+/*	$NetBSD: machdep.c,v 1.71 1996/03/26 15:16:53 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Gordon W. Ross
@@ -239,6 +239,8 @@ cpu_startup()
 	 */
 	printf(version);
 	identifycpu();
+	initfpu();	/* also prints FPU type */
+
 	printf("real mem = %d\n", ctob(physmem));
 
 	/*
@@ -380,6 +382,7 @@ setregs(p, pack, stack, retval)
  */
 char	machine[] = "sun3";		/* cpu "architecture" */
 char	cpu_model[120];
+extern	long hostid;
 
 void
 identifycpu()
@@ -394,7 +397,7 @@ identifycpu()
     /* should eventually include whether it has a VAC, mc6888x version, etc */
 	strcat(cpu_model, cpu_string);
 
-	printf("Model: %s\n", cpu_model);
+	printf("Model: %s (hostid %x)\n", cpu_model, hostid);
 }
 
 /*

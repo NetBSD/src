@@ -1,4 +1,4 @@
-/*	$NetBSD: obio.c,v 1.17 1996/03/17 02:04:01 thorpej Exp $	*/
+/*	$NetBSD: obio.c,v 1.18 1996/03/26 15:16:14 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -41,34 +41,77 @@
 #include <machine/isr.h>
 #include <machine/obio.h>
 
+static int  obio_match __P((struct device *, void *, void *));
 static void obio_attach __P((struct device *, struct device *, void *));
-static void obio_scan __P((struct device *, void *));
+static int  obio_print __P((void *, char *parentname));
 
 struct cfattach obio_ca = {
-	sizeof(struct device), always_match, obio_attach
+	sizeof(struct device), obio_match, obio_attach
 };
 
 struct cfdriver obio_cd = {
 	NULL, "obio", DV_DULL
 };
 
-static void
-obio_attach(parent, self, args)
+static int
+obio_match(parent, vcf, aux)
 	struct device *parent;
-	struct device *self;
-	void *args;
+	void *vcf, *aux;
 {
-	printf("\n");
-	config_scan(obio_scan, self);
+	struct confargs *ca = aux;
+
+	if (ca->ca_bustype != BUS_OBIO)
+		return (0);
+	return(1);
 }
 
+#define	OBIO_INCR	0x020000
+#define OBIO_END	0x200000
+
 static void
-obio_scan(parent, child)
+obio_attach(parent, self, aux)
 	struct device *parent;
-	void *child;
+	struct device *self;
+	void *aux;
 {
-	bus_scan(parent, child, BUS_OBIO);
+	struct confargs *ca = aux;
+	int	addr;
+
+	printf("\n");
+
+	/* Configure these in order of address. */
+	for (addr = 0; addr < OBIO_END; addr += OBIO_INCR) {
+
+		/* We know ca_bustype == BUS_OBIO */
+		ca->ca_paddr = addr;
+		ca->ca_intpri = -1;
+		ca->ca_intvec = -1;
+
+		(void) config_found(self, ca, obio_print);
+	}
 }
+
+/*
+ * Print out the confargs.  The (parent) name is non-NULL
+ * when there was no match found by config_found().
+ */
+static int
+obio_print(args, name)
+	void *args;
+	char *name;
+{
+	struct confargs *ca = args;
+
+	/* Be quiet about empty OBIO locations. */
+	if (name)
+		return(QUIET);
+
+	printf(" addr 0x%x", ca->ca_paddr);
+
+	return(UNCONF);
+}
+
+/*****************************************************************/
 
 /*
  * Spacing of "interesting" OBIO mappings.  We will
