@@ -1,4 +1,4 @@
-/*	$NetBSD: trace.c,v 1.24 2000/03/02 21:02:01 christos Exp $	*/
+/*	$NetBSD: trace.c,v 1.25 2001/03/10 23:52:47 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -33,13 +33,6 @@
  * SUCH DAMAGE.
  */
 
-#if !defined(lint) && !defined(sgi) && !defined(__NetBSD__)
-static char sccsid[] __attribute__((unused)) = "@(#)trace.c	8.1 (Berkeley) 6/5/93";
-#elif defined(__NetBSD__)
-#include <sys/cdefs.h>
-__RCSID("$NetBSD: trace.c,v 1.24 2000/03/02 21:02:01 christos Exp $");
-#endif
-
 #define	RIPCMDS
 #include "defs.h"
 #include "pathnames.h"
@@ -47,6 +40,14 @@ __RCSID("$NetBSD: trace.c,v 1.24 2000/03/02 21:02:01 christos Exp $");
 #include <sys/signal.h>
 #include <fcntl.h>
 
+#ifdef __NetBSD__
+__RCSID("$NetBSD: trace.c,v 1.25 2001/03/10 23:52:47 christos Exp $");
+#elif defined(__FreeBSD__)
+__RCSID("$FreeBSD$");
+#else
+__RCSID("Revision: 2.23 ");
+#ident "Revision: 2.23 "
+#endif
 
 #ifdef sgi
 /* use *stat64 for files on large filesystems */

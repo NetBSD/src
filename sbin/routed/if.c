@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.21 2001/01/15 13:19:12 itojun Exp $	*/
+/*	$NetBSD: if.c,v 1.22 2001/03/10 23:52:45 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -33,15 +33,17 @@
  * SUCH DAMAGE.
  */
 
-#if !defined(lint) && !defined(sgi) && !defined(__NetBSD__)
-static char sccsid[] __attribute__((unused)) = "@(#)if.c	8.1 (Berkeley) 6/5/93";
-#elif defined(__NetBSD__)
-#include <sys/cdefs.h>
-__RCSID("$NetBSD: if.c,v 1.21 2001/01/15 13:19:12 itojun Exp $");
-#endif
-
 #include "defs.h"
 #include "pathnames.h"
+
+#ifdef __NetBSD__
+__RCSID("$NetBSD: if.c,v 1.22 2001/03/10 23:52:45 christos Exp $");
+#elif defined(__FreeBSD__)
+__RCSID("$FreeBSD$");
+#else
+__RCSID("Revision: 2.24 ");
+#ident "Revision: 2.24 "
+#endif
 
 struct interface *ifnet;		/* all interfaces */
 
@@ -267,14 +269,14 @@ iflookup(naddr addr)
 			}
 		}
 
-		if (maybe != 0 || once)
+		if (maybe != 0 || once || IF_RESCAN_DELAY())
 			return maybe;
+		once = 1;
 
 		/* If there is no known interface, maybe there is a
 		 * new interface.  So just once look for new interfaces.
 		 */
 		ifinit();
-		once = 1;
 	}
 }
 
@@ -406,7 +408,8 @@ check_dup(naddr addr,			/* IP address, so network byte order */
 		/* The local address can only be shared with a point-to-point
 		 * link.
 		 */
-		if (ifp->int_addr == addr
+		if ((!(ifp->int_state & IS_REMOTE) || !(if_flags & IS_REMOTE))
+		    && ifp->int_addr == addr
 		    && (((if_flags|ifp->int_if_flags) & IFF_POINTOPOINT) == 0))
 			return ifp;
 
@@ -1136,6 +1139,9 @@ ifinit(void)
 				if (ifp1->int_if_flags & IFF_POINTOPOINT)
 					continue;
 				if (ifp1->int_dstaddr == RIP_DEFAULT)
+					continue;
+				/* ignore aliases on the right network */
+				if (!strcmp(ifp->int_name, ifp1->int_name))
 					continue;
 				if (on_net(ifp->int_dstaddr,
 					   ifp1->int_net, ifp1->int_mask)
