@@ -1,4 +1,4 @@
-/*	$NetBSD: elinkxl.c,v 1.64 2002/06/20 23:47:25 itojun Exp $	*/
+/*	$NetBSD: elinkxl.c,v 1.65 2002/07/01 16:16:37 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: elinkxl.c,v 1.64 2002/06/20 23:47:25 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: elinkxl.c,v 1.65 2002/07/01 16:16:37 thorpej Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -1635,6 +1635,11 @@ ex_shutdown(arg)
 	struct ex_softc *sc = arg;
 
 	ex_stop(&sc->sc_ethercom.ec_if, 1);
+	/*
+	 * Make sure the interface is powered up when we reboot,
+	 * otherwise firmware on some systems gets really confused.
+	 */
+	(void) ex_enable(sc);
 }
 
 /*
