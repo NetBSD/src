@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld.c,v 1.77 2002/09/25 06:43:46 mycroft Exp $	 */
+/*	$NetBSD: rtld.c,v 1.78 2002/09/26 13:42:05 mycroft Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -79,7 +79,7 @@ Obj_Entry      *_rtld_objlist;	/* Head of linked list of shared objects */
 Obj_Entry     **_rtld_objtail;	/* Link field of last object in list */
 Obj_Entry      *_rtld_objmain;	/* The main program shared object */
 Obj_Entry       _rtld_objself;	/* The dynamic linker shared object */
-char            _rtld_path[] = _PATH_RTLD;
+const char     *_rtld_path = _PATH_RTLD;
 Elf_Sym         _rtld_sym_zero;	/* For resolving undefined weak refs. */
 int		_rtld_pagesz;	/* Page size, as provided by kernel */
 
@@ -399,10 +399,8 @@ _rtld(sp, relocbase)
 	 * one is being used.
 	 */
 	if (_rtld_objmain->interp != NULL &&
-	    strcmp(_rtld_objmain->interp, _rtld_objself.path) != 0) {
-		free(_rtld_objself.path);
+	    strcmp(_rtld_objmain->interp, _rtld_objself.path) != 0)
 		_rtld_objself.path = xstrdup(_rtld_objmain->interp);
-	}
 	dbg(("actual dynamic linker is %s", _rtld_objself.path));
 	
 	_rtld_digest_dynamic(_rtld_objmain);
