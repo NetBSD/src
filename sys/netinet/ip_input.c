@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_input.c,v 1.117 2000/08/25 13:35:05 tron Exp $	*/
+/*	$NetBSD: ip_input.c,v 1.118 2000/08/26 10:41:29 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -1665,7 +1665,8 @@ ip_sysctl(name, namelen, oldp, oldlenp, newp, newlen)
 	case IPCTL_ANONPORTMIN:
 		old = anonportmin;
 		error = sysctl_int(oldp, oldlenp, newp, newlen, &anonportmin);
-		if (anonportmin >= anonportmax || anonportmin > 65535
+		if (anonportmin >= anonportmax || anonportmin < 0
+		    || anonportmin > 65535
 #ifndef IPNOPRIVPORTS
 		    || anonportmin < IPPORT_RESERVED
 #endif
@@ -1677,7 +1678,8 @@ ip_sysctl(name, namelen, oldp, oldlenp, newp, newlen)
 	case IPCTL_ANONPORTMAX:
 		old = anonportmax;
 		error = sysctl_int(oldp, oldlenp, newp, newlen, &anonportmax);
-		if (anonportmin >= anonportmax || anonportmax > 65535
+		if (anonportmin >= anonportmax || anonportmax < 0
+		    || anonportmax > 65535
 #ifndef IPNOPRIVPORTS
 		    || anonportmax < IPPORT_RESERVED
 #endif
