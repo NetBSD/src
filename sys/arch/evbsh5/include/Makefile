@@ -1,6 +1,5 @@
-#	$NetBSD: Makefile,v 1.8 2002/11/23 09:05:27 scw Exp $
+#	$NetBSD: Makefile,v 1.9 2002/11/26 23:30:26 lukem Exp $
 
-KDIR=	/sys/arch/evbsh5/include
 INCSDIR= /usr/include/evbsh5
 
 INCS=	alphaledio.h ansi.h aout_machdep.h asm.h \

@@ -1,6 +1,5 @@
-#	$NetBSD: Makefile,v 1.2 1998/12/20 23:17:48 thomas Exp $
+#	$NetBSD: Makefile,v 1.3 2002/11/26 23:30:12 lukem Exp $
 
-KDIR=	/sys/arch/atari/dev
 INCSDIR= /usr/include/atari
 
 INCS=	grfioctl.h iteioctl.h kbdmap.h kbdreg.h vuid_event.h

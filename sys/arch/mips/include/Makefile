@@ -1,6 +1,5 @@
-#	$NetBSD: Makefile,v 1.22 2002/08/07 05:15:33 briggs Exp $
+#	$NetBSD: Makefile,v 1.23 2002/11/26 23:30:18 lukem Exp $
 
-KDIR=	/sys/arch/mips/include
 INCSDIR= /usr/include/mips
 
 INCS=	ansi.h aout_machdep.h asm.h \

@@ -1,6 +1,5 @@
-#	$NetBSD: Makefile,v 1.15 2002/09/28 15:53:03 chris Exp $
+#	$NetBSD: Makefile,v 1.16 2002/11/26 23:30:15 lukem Exp $
 
-KDIR=	/sys/arch/cats/include
 INCSDIR= /usr/include/cats
 
 INCS=	ansi.h aout_machdep.h asm.h \

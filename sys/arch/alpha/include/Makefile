@@ -1,6 +1,5 @@
-#	$NetBSD: Makefile,v 1.21 2002/09/06 13:18:43 gehenna Exp $
+#	$NetBSD: Makefile,v 1.22 2002/11/26 23:30:10 lukem Exp $
 
-KDIR=	/sys/arch/alpha/include
 INCSDIR= /usr/include/alpha
 
 INCS=	alpha_cpu.h ansi.h aout_machdep.h asm.h atomic.h autoconf.h \

@@ -1,6 +1,5 @@
-# $NetBSD: Makefile,v 1.3 2002/08/07 05:15:57 briggs Exp $
+# $NetBSD: Makefile,v 1.4 2002/11/26 23:30:28 lukem Exp $
 
-KDIR=	/sys/arch/sbmips/include
 INCSDIR= /usr/include/sbmips
 
 # XXXcgd need local: bus.h pci_machdep.h

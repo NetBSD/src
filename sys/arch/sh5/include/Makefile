@@ -1,6 +1,5 @@
-#	$NetBSD: Makefile,v 1.9 2002/10/24 13:58:48 scw Exp $
+#	$NetBSD: Makefile,v 1.10 2002/11/26 23:30:30 lukem Exp $
 
-KDIR=	/sys/arch/sh5/include
 INCSDIR= /usr/include/sh5
 
 INCS=	ansi.h aout_machdep.h asm.h \

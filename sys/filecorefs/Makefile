@@ -1,6 +1,5 @@
-#	$NetBSD: Makefile,v 1.1 1998/08/14 03:26:12 mark Exp $
+#	$NetBSD: Makefile,v 1.2 2002/11/26 23:30:31 lukem Exp $
 
-KDIR=	/sys/filecorefs
 INCSDIR=/usr/include/filecorefs
 
 INCS=	filecore_mount.h

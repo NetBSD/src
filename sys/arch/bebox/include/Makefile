@@ -1,6 +1,5 @@
-#	$NetBSD: Makefile,v 1.17 2002/09/06 13:18:43 gehenna Exp $
+#	$NetBSD: Makefile,v 1.18 2002/11/26 23:30:13 lukem Exp $
 
-KDIR=	/sys/arch/bebox/include
 INCSDIR= /usr/include/bebox
 
 INCS=   ansi.h aout_machdep.h asm.h \
