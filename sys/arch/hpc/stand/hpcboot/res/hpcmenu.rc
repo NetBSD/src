@@ -1,4 +1,4 @@
-/*	$NetBSD: hpcmenu.rc,v 1.9 2003/12/23 15:37:11 uwe Exp $	*/
+/*	$NetBSD: hpcmenu.rc,v 1.10 2003/12/23 16:25:35 uwe Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -109,9 +109,9 @@ STYLE WS_CHILD
 WOption DIALOG DISCARDABLE 0, 0, 0, 0
 STYLE WS_CHILD
 {
+	AUTOCHECKBOX	"Auto Boot",		IDC_OPT_AUTO,	5, 0,  50, 12
 	EDITTEXT	IDC_OPT_AUTO_INPUT, 55, 0, 24, 15,
 		WS_CHILD | WS_VISIBLE | WS_BORDER | ES_LEFT
-	AUTOCHECKBOX	"Auto Boot",		IDC_OPT_AUTO,	5, 0,  50, 12
 	AUTOCHECKBOX	"Reverse Video",	IDC_OPT_VIDEO,	5, 14, 80, 12
 	AUTOCHECKBOX	"Pause Before Boot",	IDC_OPT_PAUSE,	5, 26, 80, 12
 	AUTOCHECKBOX	"Load Debug Info",	IDC_OPT_DEBUG,	5, 38, 80, 12
