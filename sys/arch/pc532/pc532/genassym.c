@@ -1,4 +1,4 @@
-/*	$NetBSD: genassym.c,v 1.7 1995/05/16 07:30:47 phil Exp $	*/
+/*	$NetBSD: genassym.c,v 1.8 1995/06/09 05:59:58 phil Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -90,6 +90,7 @@ main()
 	printf("#define\tKSTK_SIZE %d\n", UPAGES*NBPG);
 	printf("#define\tON_STK_SIZE %d\n", sizeof(struct on_stack));
 	printf("#define\tREGS_USP %d\n", &regs->pcb_usp);
+	printf("#define\tREGS_FP %d\n", &regs->pcb_fp);
 	printf("#define\tREGS_SB %d\n", &regs->pcb_sb);
 	printf("#define\tREGS_PSR %d\n", &regs->pcb_psr);
 

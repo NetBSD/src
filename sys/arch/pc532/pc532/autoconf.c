@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.12 1995/05/16 07:30:44 phil Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.13 1995/06/09 05:59:56 phil Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -71,6 +71,8 @@ extern int	cold;		/* cold start flag initialized in locore.s */
  */
 configure()
 {
+	extern int safepri;
+
 	/* Start the clocks. */
 	startrtclock();
 
@@ -82,6 +84,9 @@ configure()
 		imask[IPL_ZERO], imask[IPL_BIO], imask[IPL_NET],
 		imask[IPL_TTY], imask[IPL_CLOCK]);
 
+	safepri = imask[IPL_ZERO];
+	spl0();
+
 	/* select the root device */
 	setroot();
 
@@ -89,7 +94,7 @@ configure()
 	 * Configure swap area and related system
 	 * parameter based on device(s) used.
 	 */
-	swapconf(); 
+	swapconf();
 	cold = 0;
 }
 

@@ -1,3 +1,5 @@
+/*	$NetBSD: intr.c,v 1.2 1995/06/09 05:59:59 phil Exp $  */
+
 /*
  * Copyright (c) 1994 Matthias Pfaller.
  * All rights reserved.
@@ -27,7 +29,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: intr.c,v 1.1 1995/05/16 07:30:48 phil Exp $
+ *	$Id: intr.c,v 1.2 1995/06/09 05:59:59 phil Exp $
  */
 
 #define DEFINE_SPLX
@@ -65,8 +67,9 @@ intr_init()
 	intr_establish(SOFTINT, softclock, NULL, "softclock", IPL_CLOCK, 0);
 	intr_establish(SOFTINT, softnet,   NULL, "softnet",   IPL_NET,   0);
 
-	imask[IPL_BIO] |= SIR_CLOCKMASK;
-	imask[IPL_TTY] |= SIR_NETMASK;
+	imask[IPL_BIO]   |= SIR_CLOCKMASK;
+	imask[IPL_NET]   |= SIR_NETMASK;
+	imask[IPL_CLOCK] |= SIR_CLOCKMASK;
 }
 
 /*
@@ -122,20 +125,20 @@ intr_establish(int intr, void (*vector)(), void *arg, char *use,
 		di();
 		switch (mode) {
 		case RAISING_EDGE:
-			ICU(TPL)  |=  (1 << intr);
-			ICU(ELTG) &= ~(1 << intr);
+			ICUW(TPL)  |=  (1 << intr);
+			ICUW(ELTG) &= ~(1 << intr);
 			break;
 		case FALLING_EDGE:
-			ICU(TPL)  &= ~(1 << intr);
-			ICU(ELTG) &= ~(1 << intr);
+			ICUW(TPL)  &= ~(1 << intr);
+			ICUW(ELTG) &= ~(1 << intr);
 			break;
 		case HIGH_LEVEL:
-			ICU(TPL)  |=  (1 << intr);
-			ICU(ELTG) |=  (1 << intr);
+			ICUW(TPL)  |=  (1 << intr);
+			ICUW(ELTG) |=  (1 << intr);
 			break;
 		case LOW_LEVEL:
-			ICU(TPL)  &= ~(1 << intr);
-			ICU(ELTG) |=  (1 << intr);
+			ICUW(TPL)  &= ~(1 << intr);
+			ICUW(ELTG) |=  (1 << intr);
 			break;
 		default:
 			panic("Unknown interrupt mode");
