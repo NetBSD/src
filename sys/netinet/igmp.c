@@ -1,4 +1,4 @@
-/*	$NetBSD: igmp.c,v 1.28 2002/05/12 20:33:50 matt Exp $	*/
+/*	$NetBSD: igmp.c,v 1.28.4.1 2003/06/30 02:16:24 grant Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: igmp.c,v 1.28 2002/05/12 20:33:50 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: igmp.c,v 1.28.4.1 2003/06/30 02:16:24 grant Exp $");
 
 #include "opt_mrouting.h"
 
@@ -71,7 +71,8 @@ static struct router_info *rti_head;
 
 void igmp_sendpkt __P((struct in_multi *, int));
 static int rti_fill __P((struct in_multi *));
-static struct router_info * rti_find __P((struct ifnet *));
+static struct router_info *rti_find __P((struct ifnet *));
+static void rti_delete(struct ifnet *);
 
 void
 igmp_init()
@@ -125,6 +126,21 @@ rti_find(ifp)
 	rti->rti_next = rti_head;
 	rti_head = rti;
 	return (rti);
+}
+
+static void
+rti_delete(ifp)
+	struct ifnet *ifp;
+{
+	struct router_info *rti;
+
+	LIST_FOREACH(rti, &rti_head, rti_link) {
+		if (rti->rti_ifp == ifp) {
+			LIST_REMOVE(rti, rti_link);
+			pool_put(&igmp_rti_pool, rti);
+			return;
+		}
+	}
 }
 
 void
@@ -561,4 +577,12 @@ igmp_sendpkt(inm, type)
 	    &imo);
 
 	++igmpstat.igps_snd_reports;
+}
+
+void
+igmp_purgeif(ifp)
+	struct ifnet *ifp;
+{
+
+	rti_delete(ifp);
 }
