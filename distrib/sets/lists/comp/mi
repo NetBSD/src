@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.549 2003/03/25 23:55:35 pooka Exp $
+#	$NetBSD: mi,v 1.550 2003/03/25 23:59:15 pooka Exp $
 ./usr/bin/addr2line		comp-debug-bin
 ./usr/bin/ar			comp-util-bin
 ./usr/bin/as			comp-util-bin
@@ -2455,6 +2455,7 @@
 ./usr/share/man/cat3/lgammaf.0	comp-c-catman
 ./usr/share/man/cat3/lgammaf_r.0	comp-c-catman
 ./usr/share/man/cat3/lh_stats.0		comp-c-catman
+./usr/share/man/cat3/libmagic.0		comp-c-catman
 ./usr/share/man/cat3/libusbhid.0	comp-c-catman
 ./usr/share/man/cat3/link_addr.0	comp-c-catman
 ./usr/share/man/cat3/link_field.0	comp-c-catman
@@ -5509,6 +5510,7 @@
 ./usr/share/man/man3/lgammaf.3		comp-c-man
 ./usr/share/man/man3/lgammaf_r.3		comp-c-man
 ./usr/share/man/man3/lh_stats.3		comp-c-man
+./usr/share/man/man3/libmagic.3		comp-c-man
 ./usr/share/man/man3/libusbhid.3		comp-c-man
 ./usr/share/man/man3/link_addr.3		comp-c-man
 ./usr/share/man/man3/link_field.3	comp-c-man
