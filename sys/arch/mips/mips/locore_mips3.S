@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_mips3.S,v 1.72 2001/11/14 18:15:23 thorpej Exp $	*/
+/*	$NetBSD: locore_mips3.S,v 1.73 2001/12/27 04:03:37 shin Exp $	*/
 
 /*
  * Copyright (c) 1997 Jonathan Stone (hereinafter referred to as the author)
@@ -1665,42 +1665,18 @@ END(mips3_TLBRead)
 LEAF_NOPROFILE(mips3_VCED)
 XLEAF(mips3_VCEI)	/* XXXX */
 	.set	noat
-	move	k0, AT
-	.set	at
-	sw	k0, vce_saveat
 	mfc0	k0, MIPS_COP_0_BAD_VADDR	# fault addr.
-	nop
-	nop
-	and	k0, -16
-	sw	k0, vce_savek0			# save virtual address
-	cache	C_IWBINV_D, 0(k0)		# writeback primary line
-	nop
-	nop
-	cache	C_ILDTAG_SD, 0(k0)		# read L2Cache tag
-	and	k0, PGOFSET
-	mfc0	k1, MIPS_COP_0_TAG_LO
-	and	k1, 0x00000380			# VIndex[9..7]
-	sll	k1, k1, 5			# [14..12] <---
-	or	k0, k0, k1
-	or	k0, MIPS_KSEG0_START		# physical K0SEG address
-	lw	k1, _C_LABEL(mips_sdcache_line_size)
-	beq	k1, zero, 2f			# XXX needed?
-	subu	k1, zero, k1
-	and	k0, k0, k1			# align to L2CacheLSize
-1:
-	cache	C_IWBINV_D, 0(k0)		# flush 32 bytes
-	cache	C_IWBINV_D, 16(k0)
-	addu	k1, 32
-	bltz	k1, 1b
-	addu	k0, 32
-2:
-	lw	k0, vce_savek0			# get original address
-	cache	C_HSETV_SD, 0(k0)
-	nop
+	li	k1, -16
+	and	k0, k1
+	cache	C_HWBINV_SD, 0(k0)
+	cache	C_HINV_D, 0(k0)
 #ifdef DEBUG
-	mfc0	k1, MIPS_COP_0_EXC_PC
-	sw	k0, VCE_vaddr
-	sw	k1, VCE_epc
+	mfc0	k0, MIPS_COP_0_BAD_VADDR
+	la	k1, VCE_vaddr
+	sw	k0, 0(k1)
+	mfc0	k0, MIPS_COP_0_EXC_PC
+	la	k1, VCE_epc
+	sw	k0, 0(k1)
 	la	k1, VCE_count		# count number of exceptions
 	srl	k0, k0, 26		# position upper 4 bits of VA
 	and	k0, k0, 0x3c		# mask it off
@@ -1709,18 +1685,10 @@ XLEAF(mips3_VCEI)	/* XXXX */
 	addu	k0, 1
 	sw	k0, 0(k1)
 #endif
-	lw	k0, vce_saveat
-	.set	noat
-	move	AT, k0
-	.set	at
 	eret
-	.align	3			# needs to be aligned?
-vce_saveat:
-	.word	0
-	.word	0
-vce_savek0:
-	.word	0
-	.word	0
+	.set	at
+
+	.data
 	.globl	_C_LABEL(VCE_count)
 _C_LABEL(VCE_count):
 	.word	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
@@ -1730,6 +1698,7 @@ _C_LABEL(VCE_epc):
 	.globl	_C_LABEL(VCE_vaddr)
 _C_LABEL(VCE_vaddr):
 	.word	0
+	.text
 END(mips3_VCED)
 #endif /* !MIPS3_5900 */	
 
