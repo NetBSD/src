@@ -1,4 +1,4 @@
-/*	$NetBSD: apm.c,v 1.50 2000/06/04 22:36:27 gmcgarry Exp $ */
+/*	$NetBSD: apm.c,v 1.50.2.1 2000/08/04 05:34:29 enami Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -678,7 +678,7 @@ apm_powmgt_engage(onoff, dev)
 	regs.BX = dev;
 	regs.CX = onoff ? APM_MGT_ENGAGE : APM_MGT_DISENGAGE;
 	if (apmcall(APM_PWR_MGT_ENGAGE, &regs) != 0)
-		apm_perror("power mgmt engage (device %x)\n", &regs, dev);
+		apm_perror("power mgmt engage (device %x)", &regs, dev);
 }
 
 #if 0
