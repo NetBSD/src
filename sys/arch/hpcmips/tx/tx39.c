@@ -1,7 +1,7 @@
-/*	$NetBSD: tx39.c,v 1.8 1999/12/22 15:35:35 uch Exp $ */
+/*	$NetBSD: tx39.c,v 1.9 2000/01/03 18:24:04 uch Exp $ */
 
 /*
- * Copyright (c) 1999, by UCHIYAMA Yasushi
+ * Copyright (c) 1999, 2000, by UCHIYAMA Yasushi
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -337,6 +337,38 @@ tx_conf_register_intr(t, intrt)
 	tx_chipset.tc_intrt = intrt;
 }
 
+void
+tx_conf_register_power(t, powert)
+	tx_chipset_tag_t t;
+	void *powert;
+{
+	if (tx_chipset.tc_powert) {
+		panic("duplicate powert");
+	}
+
+	if (t != &tx_chipset) {
+		panic("bogus tx_chipset_tag");
+	}
+
+	tx_chipset.tc_powert = powert;
+}
+
+void
+tx_conf_register_clock(t, clockt)
+	tx_chipset_tag_t t;
+	void *clockt;
+{
+	if (tx_chipset.tc_clockt) {
+		panic("duplicate clockt");
+	}
+
+	if (t != &tx_chipset) {
+		panic("bogus tx_chipset_tag");
+	}
+
+	tx_chipset.tc_clockt = clockt;
+}
+
 #ifdef TX39_PREFER_FUNCTION
 tx_chipset_tag_t
 tx_conf_get_tag()
@@ -368,9 +400,10 @@ __is_set_print(reg, mask, name)
 	int mask;
 	char *name;
 {
-	if (reg & mask) {
-		printf("%s ", name);
-		return 1;
-	}
-	return 0;
+	const char onoff[2] = "_x";
+	int ret = reg & mask ? 1 : 0;
+
+	printf("%s[%c] ", name, onoff[ret]);
+
+	return ret;
 }

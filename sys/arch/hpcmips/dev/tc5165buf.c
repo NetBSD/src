@@ -1,7 +1,7 @@
-/*	$NetBSD: tc5165buf.c,v 1.1 1999/12/12 17:10:01 uch Exp $ */
+/*	$NetBSD: tc5165buf.c,v 1.2 2000/01/03 18:24:03 uch Exp $ */
 
 /*
- * Copyright (c) 1999, by UCHIYAMA Yasushi
+ * Copyright (c) 1999, 2000, by UCHIYAMA Yasushi
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -126,7 +126,7 @@ tc5165buf_attach(parent, self, aux)
 		return;
 	}
 #endif
-	if (!(sc->sc_ih = tx39_poll_establish(sc->sc_tc, 1, IST_EDGE, 
+	if (!(sc->sc_ih = tx39_poll_establish(sc->sc_tc, 1,
 					      IPL_TTY, tc5165buf_poll, 
 					      sc->sc_chip))) {
 		printf(": can't establish interrupt\n");
