@@ -1,4 +1,4 @@
-.\"	$NetBSD: ftpd.8,v 1.23 1998/04/28 06:00:54 fair Exp $
+.\"	$NetBSD: ftpd.8,v 1.24 1998/04/29 08:33:11 fair Exp $
 .\"
 .\" Copyright (c) 1985, 1988, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -49,12 +49,10 @@ Internet File Transfer Protocol server
 .Op Fl C Ar user
 .Sh DESCRIPTION
 .Nm
-is the
-Internet File Transfer Protocol
-server process.  The server uses the
+is the Internet File Transfer Protocol server process.
+The server uses the
 .Tn TCP
-protocol
-and listens at the port specified in the
+protocol and listens at the port specified in the
 .Dq ftp
 service specification; see
 .Xr services 5 .
@@ -199,13 +197,15 @@ and not have a null password.
 In this case a password must be provided by the client before any
 file operations may be performed.
 If the user has an S/Key key, the response from a successful USER
-command will include an S/Key challenge. The client may choose to respond
-with a PASS command giving either a standard password or an S/Key
-one-time password. The server will automatically determine which type of
-password it has been given and attempt to authenticate accordingly. See
+command will include an S/Key challenge.
+The client may choose to respond with a PASS command giving either
+a standard password or an S/Key one-time password.
+The server will automatically determine which type of password it
+has been given and attempt to authenticate accordingly.
+See
 .Xr skey 1
-for more information on S/Key authentication. S/Key is a Trademark of
-Bellcore.
+for more information on S/Key authentication.
+S/Key is a Trademark of Bellcore.
 .It
 The login name must be allowed based on the information in
 .Pa /etc/ftpusers
@@ -213,9 +213,9 @@ The login name must be allowed based on the information in
 .It
 The user must have a standard shell returned by
 .Xr getusershell 3 .
-(If the user's shell field in the password database is empty, the
+If the user's shell field in the password database is empty, the
 shell is assumed to be
-.Pa /bin/sh . )
+.Pa /bin/sh .
 .It
 If the user name appears in the file
 .Pa /etc/ftpchroot
@@ -225,10 +225,11 @@ as for an
 .Dq anonymous
 or
 .Dq ftp
-account (see next item).  However, the user must still supply a password.
+account (see next item).
+However, the user must still supply a password.
 This feature is intended as a compromise between a fully anonymous account
-and a fully privileged account.  The account should also be set up as for an
-anonymous account.
+and a fully privileged account.
+The account should also be set up as for an anonymous account.
 .It
 If the user name is
 .Dq anonymous
@@ -256,8 +257,8 @@ are required.
 The file
 .Pa /etc/ftpusers
 is used to determine which users may use ftp.
-If the file does not exist, all users are denied access.  If it
-does exist, each line is a a comment starting with
+If the file does not exist, all users are denied access.
+If it does exist, each line is a a comment starting with
 .Dq #
 or a glob pattern that uses the same syntax as /bin/sh,
 optionally followed by whitespace and
@@ -265,8 +266,8 @@ optionally followed by whitespace and
 or
 .Dq deny .
 Each glob pattern is compared in turn against the username
-until a match is found.  If the word following the matched glob
-pattern is
+until a match is found.
+If the word following the matched glob pattern is
 .Dq allow
 the user is granted access; if the word is
 anything else, or nothing at all, the user is denied access.
@@ -300,7 +301,8 @@ Each configuration line may be one of:
 .It Sy checkportcmd Ar class Op Sy off
 Check the
 PORT
-command for validity.  The
+command for validity.
+The
 PORT
 command will fail if the IP address specified does not match the ftp
 command connection, or if the remote TCP port number is less than
@@ -308,7 +310,7 @@ command connection, or if the remote TCP port number is less than
 It is
 .Em strongly
 encouraged that this option be used, espcially for sites concerned
-with potential security problems with ftp bounce attacks.  
+with potential security problems with ftp bounce attacks.
 If class is
 .Dq none
 or
@@ -356,8 +358,9 @@ is replaced with the requested file (sans
 .El
 .Pp
 Conversion directives specified later in the file override earlier
-conversions with the same suffix. The order in which conversions is
-matched is the reverse of their order in the file (i.e., a LIFO).
+conversions with the same suffix.
+The order in which conversions is matched is the reverse of their
+order in the file (i.e. a LIFO).
 .It Sy display Ar class Op Ar file
 If
 .Ar file
@@ -452,7 +455,8 @@ umask         guest  0707
 .Ed
 .Pp
 Directives that appear later in the file override settings by previous
-directives. This allows
+directives.
+This allows
 .Sq wildcard
 entries to define defaults, and then have class-specific overrides.
 .Pp
@@ -502,10 +506,10 @@ and
 (see
 .Xr group 5 )
 must be present for the
-.Xr ls
+.Xr ls 1
 command to be able to produce owner names rather than numbers.
 The password field in
-.Xr passwd
+.Xr passwd 5
 is not used, and should not contain real passwords.
 The file
 .Pa motd ,
@@ -514,7 +518,8 @@ These files should be mode 444.
 .It Pa ~ftp/pub
 This directory and the subdirectories beneath it should be owned
 by the users and groups responsible for placing files in them,
-and be writable only by them (mode 755 or 775). They should
+and be writable only by them (mode 755 or 775).
+They should
 .Em not
 be owned or writable by ftp or its group.
 .It Pa ~ftp/incoming
@@ -524,9 +529,10 @@ The owners should be the user
 and an appropriate group.
 Members of this group will be the only users with access to these
 files after they have been uploaded; these should be people who
-know how to deal with them appropriately.  If you wish anonymous
-ftp users to be able to see the names of the files in this directory
-the permissions should be 770, otherwise they should be 370.
+know how to deal with them appropriately.
+If you wish anonymous ftp users to be able to see the names of the
+files in this directory the permissions should be 770, otherwise
+they should be 370.
 .Pp
 Anonymous users will be able to upload files to this directory,
 but they will not be able to download them, delete them, or overwrite
@@ -565,8 +571,10 @@ are possibly incomplete.
 provides no restrictions on the PORT command, and this can lead
 to security problems, as
 .Nm
-can be fooled into connecting to any service on any host.  With the
-``checkportcmd'' feature of the
+can be fooled into connecting to any service on any host.
+With the
+.Dq checkportcmd
+feature of the
 .Pa /etc/ftpd.conf ,
 PORT commands with different host addresses, or TCP ports lower than
 .Dv IPPORT_RESERVED

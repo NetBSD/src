@@ -1,4 +1,4 @@
-.\"	$NetBSD: rlogind.8,v 1.6 1997/10/20 02:44:18 enami Exp $
+.\"	$NetBSD: rlogind.8,v 1.7 1998/04/29 08:33:12 fair Exp $
 .\"
 .\" Copyright (c) 1983, 1989, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -44,10 +44,11 @@
 .Op Fl alnL
 .Sh DESCRIPTION
 .Nm
-is the server for the 
+is the server for the
 .Xr rlogin 1
-program.  The server provides a remote login facility
-with authentication based on privileged port numbers from trusted hosts.
+program.
+The server provides a remote login facility with authentication
+based on privileged port numbers from trusted hosts.
 .Pp
 Options supported by
 .Nm "" :
@@ -68,12 +69,11 @@ as
 messages.
 .El
 .Pp
-.Nm 
+.Nm
 listens for service requests at the port indicated in
 the ``login'' service specification; see
 .Xr services 5 .
-When a service request is received the following protocol
-is initiated:
+When a service request is received the following protocol is initiated:
 .Bl -enum
 .It
 The server checks the client's source port.
@@ -98,14 +98,14 @@ verifying that the name and address correspond.
 Normal authentication is bypassed if the address verification fails.
 .El
 .Pp
-Once the source port and address have been checked, 
+Once the source port and address have been checked,
 .Nm
 proceeds with the authentication process described in
 .Xr rshd 8 .
-It then allocates a pseudo terminal (see 
+It then allocates a pseudo terminal (see
 .Xr pty 4 ) ,
 and manipulates file descriptors so that the slave
-half of the pseudo terminal becomes the 
+half of the pseudo terminal becomes the
 .Em stdin ,
 .Em stdout ,
 and
@@ -122,16 +122,16 @@ prompted to log in as if on a standard terminal line.
 The parent of the login process manipulates the master side of
 the pseudo terminal, operating as an intermediary
 between the login process and the client instance of the
-.Xr rlogin
-program.  In normal operation, the packet protocol described
-in
+.Xr rlogin 1
+program.
+In normal operation, the packet protocol described in
 .Xr pty 4
 is invoked to provide
 .Ql ^S/^Q
 type facilities and propagate
-interrupt signals to the remote programs.  The login process
-propagates the client terminal's baud rate and terminal type,
-as found in the environment variable,
+interrupt signals to the remote programs.
+The login process propagates the client terminal's baud rate and
+terminal type, as found in the environment variable,
 .Ql Ev TERM ;
 see
 .Xr environ 7 .
@@ -148,7 +148,7 @@ All initial diagnostic messages are indicated
 by a leading byte with a value of 1,
 after which any network connections are closed.
 If there are no errors before
-.Xr login
+.Xr login 1
 is invoked, a null byte is returned as in indication of success.
 .Bl -tag -width Ds
 .It Sy Try again.
@@ -162,8 +162,8 @@ by the server failed.
 .Xr rshd 8
 .Sh BUGS
 The authentication procedure used here assumes the integrity
-of each client machine and the connecting medium.  This is
-insecure, but is useful in an ``open'' environment.
+of each client machine and the connecting medium.
+This is insecure, but is useful in an ``open'' environment.
 .Pp
 A facility to allow all data exchanges to be encrypted should be
 present.

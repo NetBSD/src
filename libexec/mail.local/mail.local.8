@@ -1,4 +1,4 @@
-.\"	$NetBSD: mail.local.8,v 1.8 1998/01/10 00:37:34 perry Exp $
+.\"	$NetBSD: mail.local.8,v 1.9 1998/04/29 08:33:12 fair Exp $
 .\"
 .\" Copyright (c) 1990 The Regents of the University of California.
 .\" All rights reserved.
@@ -76,7 +76,8 @@ If the
 .Op Fl l
 flag is specified mailbox locking is done with
 .Nm username.lock
-files. Otherwise, the mailbox is exclusively locked with
+files.
+Otherwise, the mailbox is exclusively locked with
 .Xr flock 2
 while mail is appended.
 .Pp
@@ -108,8 +109,7 @@ user's mailbox directory
 .Sh HISTORY
 A superset of
 .Nm
-(handling mailbox reading as well as mail delivery)
-appeared in
+(handling mailbox reading as well as mail delivery) appeared in
 .At v7
 as the program
-.Xr mail .
+.Xr mail 1 .
