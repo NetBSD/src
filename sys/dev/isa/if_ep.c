@@ -21,7 +21,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: if_ep.c,v 1.15 1994/02/14 03:50:09 hpeyerl Exp $
+ *	$Id: if_ep.c,v 1.16 1994/02/15 22:57:09 mycroft Exp $
  */
 /*
  * TODO:
@@ -828,28 +828,25 @@ epstop(unit)
  */
 static void
 epsendidseq(port)
-	u_short port;
+	register u_short port;
 {
-	char    cx, al;
+	int i;
+	register u_char c;
 
-	cx = 0x0ff;
-	al = 0x0ff;
+	outb(port, 0x00);
+	DELAY(100);
+	outb(port, 0x00);
+	DELAY(100);
 
-	outb(port, 0x0);
-	DELAY(1000);
-	outb(port, 0x0);
-	DELAY(1000);
-
-loop1:	cx--;
-	outb(port, al);
-	if (!(al & 0x80)) {
-		al = al << 1;
-		goto loop1;
+	c = 0xff;
+	for (i = 255; i; i--) {
+		outb(port, c);
+		if (c & 0x80) {
+			c <<= 1;
+			c ^= 0xcf;
+		} else
+			c <<= 1;
 	}
-	al = al << 1;
-	al ^= 0xcf;
-	if (cx)
-		goto loop1;
 }
 
 
