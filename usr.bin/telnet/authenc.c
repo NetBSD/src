@@ -1,3 +1,5 @@
+/*	$NetBSD: authenc.c,v 1.5 1996/02/28 21:03:52 thorpej Exp $	*/
+
 /*-
  * Copyright (c) 1991, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -32,8 +34,11 @@
  */
 
 #ifndef lint
-/* from: static char sccsid[] = "@(#)authenc.c	8.1 (Berkeley) 6/6/93"; */
-static char rcsid[] = "$NetBSD: authenc.c,v 1.4 1996/02/24 01:18:30 jtk Exp $";
+#if 0
+static char sccsid[] = "@(#)authenc.c	8.1 (Berkeley) 6/6/93";
+#else
+static char rcsid[] = "$NetBSD: authenc.c,v 1.5 1996/02/28 21:03:52 thorpej Exp $";
+#endif
 #endif /* not lint */
 
 #if	defined(AUTHENTICATION)

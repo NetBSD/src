@@ -1,3 +1,4 @@
+#	$NetBSD: Makefile,v 1.6 1996/02/28 21:03:49 thorpej Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -31,7 +32,6 @@
 # SUCH DAMAGE.
 #
 #	from: @(#)Makefile	8.1 (Berkeley) 6/6/93
-#	$NetBSD: Makefile,v 1.5 1996/02/24 01:18:25 jtk Exp $
 #
 
 PROG=	telnet

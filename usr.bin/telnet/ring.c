@@ -1,3 +1,5 @@
+/*	$NetBSD: ring.c,v 1.7 1996/02/28 21:04:07 thorpej Exp $	*/
+
 /*
  * Copyright (c) 1988, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -32,8 +34,11 @@
  */
 
 #ifndef lint
-/* from: static char sccsid[] = "@(#)ring.c	8.2 (Berkeley) 5/30/95"; */
-static char rcsid[] = "$NetBSD: ring.c,v 1.6 1996/02/24 18:43:37 jtk Exp $";
+#if 0
+static char sccsid[] = "@(#)ring.c	8.2 (Berkeley) 5/30/95";
+#else
+static char rcsid[] = "$NetBSD: ring.c,v 1.7 1996/02/28 21:04:07 thorpej Exp $";
+#endif
 #endif /* not lint */
 
 /*

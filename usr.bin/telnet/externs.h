@@ -1,3 +1,5 @@
+/*	$NetBSD: externs.h,v 1.8 1996/02/28 21:03:58 thorpej Exp $	*/
+
 /*
  * Copyright (c) 1988, 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -31,7 +33,6 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)externs.h	8.3 (Berkeley) 5/30/95
- *	$NetBSD: externs.h,v 1.7 1996/02/24 07:32:00 jtk Exp $
  */
 
 #ifndef	BSD
