@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.23 2002/05/09 12:28:08 uch Exp $	*/
+/*	$NetBSD: pmap.h,v 1.24 2002/09/22 07:17:20 chs Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -69,6 +69,12 @@ void pmap_procwr(struct proc *, vaddr_t, size_t);
 #define	pmap_collect(pmap)		((void)0)
 #define	pmap_wired_count(pmap)		((pmap)->pm_stats.wired_count)
 #define	pmap_resident_count(pmap)	((pmap)->pm_stats.resident_count)
+
+static __inline void
+pmap_remove_all(void)
+{
+	/* Nothing. */
+}
 
 #define	PMAP_MAP_POOLPAGE(pa)		SH3_PHYS_TO_P1SEG((pa))
 #define	PMAP_UNMAP_POOLPAGE(va)		SH3_P1SEG_TO_PHYS((va))

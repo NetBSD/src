@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.62 2001/12/23 23:08:41 thorpej Exp $	*/
+/*	$NetBSD: pmap.h,v 1.63 2002/09/22 07:17:12 chs Exp $	*/
 
 /*
  *
@@ -372,6 +372,12 @@ boolean_t			pmap_pageidlezero __P((paddr_t));
 /*
  * inline functions
  */
+
+static __inline void
+pmap_remove_all(void)
+{
+	/* Nothing. */
+}
 
 /*
  * pmap_update_pg: flush one page from the TLB (or flush the whole thing

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.1 2002/06/05 01:04:22 fredette Exp $	*/
+/*	$NetBSD: pmap.h,v 1.2 2002/09/22 07:17:12 chs Exp $	*/
 
 /*	$OpenBSD: pmap.h,v 1.14 2001/05/09 15:31:24 art Exp $	*/
 
@@ -134,6 +134,12 @@ void	pmap_activate __P((struct proc *));
 
 #define pmap_phys_address(x)	((x) << PGSHIFT)
 #define pmap_phys_to_frame(x)	((x) >> PGSHIFT)
+
+static __inline void
+pmap_remove_all(void)
+{
+	/* Nothing. */
+}
 
 static __inline int
 pmap_prot(struct pmap *pmap, int prot)
