@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.13.2.6 2002/04/17 00:06:21 nathanw Exp $
+#	$NetBSD: Makefile,v 1.13.2.7 2002/06/20 03:47:40 nathanw Exp $
 
 COMPAT_UTIL_OVERRIDE=	linux
 .include "../Makefile.inc"
@@ -47,6 +47,14 @@ SRCS+=	linux_sig_machdep.S
 CPPFLAGS+=	-Dalpha
 SRCS+=	linux_olduname.c linux_syscall.c
 SRCS+=	linux_sigcode.s
+.endif
+
+.if ${MACHINE_ARCH} == "powerpc"
+CPPFLAGS+=	-Dpowerpc
+SRCS+=	linux_ipccall.c linux_misc_notalpha.c linux_sig_notalpha.c	\
+	linux_socketcall.c linux_llseek.c linux_olduname.c linux_file64.c
+SRCS+=	linux_ptrace.c linux_exec_powerpc.c linux_sp_wrap_powerpc.S
+SRCS+=	linux_sigcode.S linux_trap.c
 .endif
 
 .include <bsd.kmod.mk>

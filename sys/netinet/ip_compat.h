@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_compat.h,v 1.21.2.5 2002/05/04 19:51:47 thorpej Exp $	*/
+/*	$NetBSD: ip_compat.h,v 1.21.2.6 2002/06/20 03:48:37 nathanw Exp $	*/
 
 /*
  * Copyright (C) 1993-2001 by Darren Reed.
@@ -251,8 +251,8 @@ typedef u_int32_t       u_32_t;
 #   include "opt_inet6.h"
 #  endif
 #  ifdef INET6
-#   define USE_INET6     
-#  endif   
+#   define USE_INET6
+#  endif
 # endif
 # if !defined(_KERNEL) && !defined(IPFILTER_LKM) && !defined(USE_INET6)
 #  if (defined(__FreeBSD_version) && (__FreeBSD_version >= 400000)) || \
@@ -1080,7 +1080,7 @@ typedef	struct	uio	{
 #  define	SPL_X(x)
 #  define	SPL_NET(x)
 #  define	SPL_IMP(x)
- 
+
 #  define	bcmp(a,b,c)	memcmp(a,b,c)
 #  define	bcopy(a,b,c)	memcpy(b,a,c)
 #  define	bzero(a,c)	memset(a,0,c)

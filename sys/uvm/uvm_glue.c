@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_glue.c,v 1.44.2.12 2002/02/28 19:57:09 nathanw Exp $	*/
+/*	$NetBSD: uvm_glue.c,v 1.44.2.13 2002/06/20 03:50:40 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_glue.c,v 1.44.2.12 2002/02/28 19:57:09 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_glue.c,v 1.44.2.13 2002/06/20 03:50:40 nathanw Exp $");
 
 #include "opt_kgdb.h"
 #include "opt_sysv.h"
@@ -683,6 +683,10 @@ uvm_coredump_walkmap(p, vp, cred, func, cookie)
 		}
 
 		if ((entry->protection & VM_PROT_WRITE) == 0)
+			state.flags |= UVM_COREDUMP_NODUMP;
+
+		if (entry->object.uvm_obj != NULL &&
+		    entry->object.uvm_obj->pgops == &uvm_deviceops)
 			state.flags |= UVM_COREDUMP_NODUMP;
 
 		error = (*func)(p, vp, cred, &state);

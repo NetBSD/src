@@ -1,4 +1,4 @@
-/*	$NetBSD: ddp_var.h,v 1.1 1997/04/02 21:31:11 christos Exp $	 */
+/*	$NetBSD: ddp_var.h,v 1.1.34.1 2002/06/20 03:48:26 nathanw Exp $	 */
 
 /*
  * Copyright (c) 1990,1994 Regents of The University of Michigan.
@@ -55,7 +55,7 @@ struct ddpstat {
 #ifdef _KERNEL
 extern struct ddpcb *ddp_ports[];
 extern struct ddpcb *ddpcb;
-struct ddpstat  ddpstat;
+extern struct ddpstat ddpstat;
 #endif
 
 #endif /* _NETATALK_DDP_VAR_H_ */

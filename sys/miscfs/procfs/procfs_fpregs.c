@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_fpregs.c,v 1.7.2.3 2002/01/08 00:33:41 nathanw Exp $	*/
+/*	$NetBSD: procfs_fpregs.c,v 1.7.2.4 2002/06/20 03:48:01 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1993 Jan-Simon Pendry
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_fpregs.c,v 1.7.2.3 2002/01/08 00:33:41 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_fpregs.c,v 1.7.2.4 2002/06/20 03:48:01 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -49,7 +49,8 @@ __KERNEL_RCSID(0, "$NetBSD: procfs_fpregs.c,v 1.7.2.3 2002/01/08 00:33:41 nathan
 #include <sys/lwp.h>
 #include <sys/proc.h>
 #include <sys/vnode.h>
-#include <machine/reg.h>
+#include <sys/ptrace.h>
+
 #include <miscfs/procfs/procfs.h>
 
 int
@@ -59,45 +60,8 @@ procfs_dofpregs(curp, l, pfs, uio)
 	struct pfsnode *pfs;
 	struct uio *uio;
 {
-#if defined(PT_GETFPREGS) || defined(PT_SETFPREGS)
-	int error;
-	struct fpreg r;
-	char *kv;
-	int kl;
 
-	if ((error = procfs_checkioperm(curp, l->l_proc)) != 0)
-		return (error);
-
-	kl = sizeof(r);
-	kv = (char *) &r;
-
-	kv += uio->uio_offset;
-	kl -= uio->uio_offset;
-	if (kl > uio->uio_resid)
-		kl = uio->uio_resid;
-
-	PHOLD(l);
-
-	if (kl < 0)
-		error = EINVAL;
-	else
-		error = process_read_fpregs(l, &r);
-	if (error == 0)
-		error = uiomove(kv, kl, uio);
-	if (error == 0 && uio->uio_rw == UIO_WRITE) {
-		if (l->l_stat != LSSTOP)
-			error = EBUSY;
-		else
-			error = process_write_fpregs(l, &r);
-	}
-
-	PRELE(l);
-
-	uio->uio_offset = 0;
-	return (error);
-#else
-	return (EINVAL);
-#endif
+	return (process_dofpregs(curp, l, uio));
 }
 
 int
@@ -106,9 +70,5 @@ procfs_validfpregs(l, mp)
 	struct mount *mp;
 {
 
-#if defined(PT_SETFPREGS) || defined(PT_GETFPREGS)
-	return ((l->l_proc->p_flag & P_SYSTEM) == 0);
-#else
-	return (0);
-#endif
+	return (process_validfpregs(l));
 }

@@ -1,9 +1,9 @@
-/*	$NetBSD: udp_usrreq.c,v 1.75.2.6 2002/01/08 00:34:12 nathanw Exp $	*/
+/*	$NetBSD: udp_usrreq.c,v 1.75.2.7 2002/06/20 03:49:01 nathanw Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -15,7 +15,7 @@
  * 3. Neither the name of the project nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE PROJECT AND CONTRIBUTORS ``AS IS'' AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: udp_usrreq.c,v 1.75.2.6 2002/01/08 00:34:12 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udp_usrreq.c,v 1.75.2.7 2002/06/20 03:49:01 nathanw Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -138,6 +138,9 @@ int	udpcksum = 1;
 #else
 int	udpcksum = 0;		/* XXX */
 #endif
+
+struct	inpcbtable udbtable;
+struct	udpstat udpstat;
 
 #ifdef INET
 static void udp4_sendup __P((struct mbuf *, int, struct sockaddr *,
@@ -1134,7 +1137,7 @@ udp_sysctl(name, namelen, oldp, oldlenp, newp, newlen)
 		return (sysctl_int(oldp, oldlenp, newp, newlen,
 		    &udp_sendspace));
 	case UDPCTL_RECVSPACE:
-		return (sysctl_int(oldp, oldlenp, newp, newlen, 
+		return (sysctl_int(oldp, oldlenp, newp, newlen,
 		    &udp_recvspace));
 	default:
 		return (ENOPROTOOPT);

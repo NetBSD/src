@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf.c,v 1.60.2.4 2002/04/01 07:48:18 nathanw Exp $	*/
+/*	$NetBSD: bpf.c,v 1.60.2.5 2002/06/20 03:48:07 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.60.2.4 2002/04/01 07:48:18 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.60.2.5 2002/06/20 03:48:07 nathanw Exp $");
 
 #include "bpfilter.h"
 
@@ -79,6 +79,10 @@ __KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.60.2.4 2002/04/01 07:48:18 nathanw Exp $")
 
 #include <netinet/in.h>
 #include <netinet/if_inarp.h>
+
+#if defined(_KERNEL_OPT)
+#include "bpf.h"
+#endif
 
 #ifndef BPF_BUFSIZE
 # define BPF_BUFSIZE 8192		/* 4096 too small for FDDI frames */

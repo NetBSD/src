@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ieee1394subr.c,v 1.9.2.4 2002/04/01 07:48:21 nathanw Exp $	*/
+/*	$NetBSD: if_ieee1394subr.c,v 1.9.2.5 2002/06/20 03:48:15 nathanw Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ieee1394subr.c,v 1.9.2.4 2002/04/01 07:48:21 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ieee1394subr.c,v 1.9.2.5 2002/06/20 03:48:15 nathanw Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -686,7 +686,7 @@ ieee1394_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 	struct ifreq *ifr = (struct ifreq *)data;
 	struct ifaddr *ifa = (struct ifaddr *)data;
 	int error = 0;
-#if __NetBSD_Version < 105080000
+#if __NetBSD_Version__ < 105080000
 	int fw_init(struct ifnet *);
 	void fw_stop(struct ifnet *, int);
 #endif
@@ -697,7 +697,7 @@ ieee1394_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		switch (ifa->ifa_addr->sa_family) {
 #ifdef INET
 		case AF_INET:
-#if __NetBSD_Version >= 105080000
+#if __NetBSD_Version__ >= 105080000
 			if ((error = (*ifp->if_init)(ifp)) != 0)
 #else
 			if ((error = fw_init(ifp)) != 0)
@@ -707,7 +707,7 @@ ieee1394_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 			break;
 #endif /* INET */
 		default:
-#if __NetBSD_Version >= 105080000
+#if __NetBSD_Version__ >= 105080000
 			error = (*ifp->if_init)(ifp);
 #else
 			error = fw_init(ifp);
@@ -729,7 +729,7 @@ ieee1394_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		break;
 
 	case SIOCSIFFLAGS:
-#if __NetBSD_Version >= 105080000
+#if __NetBSD_Version__ >= 105080000
 		if ((ifp->if_flags & (IFF_UP|IFF_RUNNING)) == IFF_RUNNING)
 			(*ifp->if_stop)(ifp, 1);
 		else if ((ifp->if_flags & (IFF_UP|IFF_RUNNING)) == IFF_UP)

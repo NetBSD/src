@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_balloc.c,v 1.8.2.6 2002/02/28 04:15:26 nathanw Exp $	*/
+/*	$NetBSD: ext2fs_balloc.c,v 1.8.2.7 2002/06/20 03:50:21 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_balloc.c,v 1.8.2.6 2002/02/28 04:15:26 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_balloc.c,v 1.8.2.7 2002/06/20 03:50:21 nathanw Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_uvmhist.h"
@@ -408,12 +408,11 @@ ext2fs_balloc_range(vp, off, len, cred, flags)
 
 	pagestart = trunc_page(off) & ~(bsize - 1);
 	npages = MIN(ppb, (round_page(eof) - pagestart) >> PAGE_SHIFT);
-	memset(pgs, 0, npages);
+	memset(pgs, 0, npages * sizeof(struct vm_page *));
 	simple_lock(&vp->v_interlock);
 	error = VOP_GETPAGES(vp, pagestart, pgs, &npages, 0,
 	    VM_PROT_READ, 0, PGO_SYNCIO | PGO_PASTEOF);
 	if (error) {
-		UVMHIST_LOG(ubchist, "getpages %d", error,0,0,0);
 		return error;
 	}
 	for (i = 0; i < npages; i++) {

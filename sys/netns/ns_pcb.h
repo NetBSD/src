@@ -1,4 +1,4 @@
-/*	$NetBSD: ns_pcb.h,v 1.8 1997/07/18 19:30:42 thorpej Exp $	*/
+/*	$NetBSD: ns_pcb.h,v 1.8.32.1 2002/06/20 03:49:58 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1984, 1985, 1986, 1987, 1993
@@ -77,5 +77,5 @@ struct nspcb {
 
 
 #ifdef _KERNEL
-struct	nspcb nspcb;			/* head of list */
+extern	struct	nspcb nspcb;			/* head of list */
 #endif

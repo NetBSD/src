@@ -1,0 +1,7 @@
+#	$NetBSD: files.union,v 1.1.6.2 2002/06/20 03:48:05 nathanw Exp $
+
+deffs	fs_union.h			UNION
+
+file	miscfs/union/union_subr.c	union
+file	miscfs/union/union_vfsops.c	union
+file	miscfs/union/union_vnops.c	union

@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_cmdline.c,v 1.11.2.2 2002/01/08 00:33:40 nathanw Exp $	*/
+/*	$NetBSD: procfs_cmdline.c,v 1.11.2.3 2002/06/20 03:48:00 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1999 Jaromir Dolecek <dolecek@ics.muni.cz>
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_cmdline.c,v 1.11.2.2 2002/01/08 00:33:40 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_cmdline.c,v 1.11.2.3 2002/06/20 03:48:00 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -96,7 +96,7 @@ procfs_docmdline(curp, p, pfs, uio)
 	}
 
 	/*
-	 * NOTE: Don't bother doing a procfs_checkioperm() here
+	 * NOTE: Don't bother doing a process_checkioperm() here
 	 * because the psstrings info is available by using ps(1),
 	 * so it's not like there's anything to protect here.
 	 */

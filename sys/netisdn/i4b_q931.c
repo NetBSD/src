@@ -27,7 +27,7 @@
  *	i4b_q931.c - Q931 received messages handling
  *	--------------------------------------------
  *
- *	$Id: i4b_q931.c,v 1.2.2.6 2002/04/17 00:06:27 nathanw Exp $ 
+ *	$Id: i4b_q931.c,v 1.2.2.7 2002/06/20 03:49:40 nathanw Exp $ 
  *
  * $FreeBSD$
  *
@@ -36,7 +36,7 @@
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i4b_q931.c,v 1.2.2.6 2002/04/17 00:06:27 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i4b_q931.c,v 1.2.2.7 2002/06/20 03:49:40 nathanw Exp $");
 
 #ifdef __FreeBSD__
 #include "i4bq931.h"
@@ -208,7 +208,7 @@ i4b_decode_q931(int bri, int msg_len, u_char *msg_ptr)
 
 	/* decode and handle message type */
 	
-	i4b_decode_q931_message(bri, cd, *msg_ptr);
+	i4b_decode_q931_message(cd, *msg_ptr);
 	msg_ptr++;
 	msg_len--;
 	
@@ -241,7 +241,7 @@ i4b_decode_q931(int bri, int msg_len, u_char *msg_ptr)
 		switch(codeset)
 		{
 			case CODESET_0:
-				offset = i4b_decode_q931_cs0_ie(bri, cd, msg_len, msg_ptr);
+				offset = i4b_decode_q931_cs0_ie(cd, msg_len, msg_ptr);
 				msg_len -= offset;
 				msg_ptr += offset;
 				break;
@@ -268,7 +268,7 @@ i4b_decode_q931(int bri, int msg_len, u_char *msg_ptr)
  *	decode and process one Q.931 codeset 0 information element
  *---------------------------------------------------------------------------*/
 int
-i4b_decode_q931_cs0_ie(int unit, call_desc_t *cd, int msg_len, u_char *msg_ptr)
+i4b_decode_q931_cs0_ie(call_desc_t *cd, int msg_len, u_char *msg_ptr)
 {
 	int i, j;
 	char *p;
@@ -344,6 +344,7 @@ i4b_decode_q931_cs0_ie(int unit, call_desc_t *cd, int msg_len, u_char *msg_ptr)
 			}
 			else
 			{
+				int old_chanid = cd->channelid;
 				switch(msg_ptr[2] & 0x03)
 				{
 					case IE_CHAN_ID_NO:
@@ -363,15 +364,21 @@ i4b_decode_q931_cs0_ie(int unit, call_desc_t *cd, int msg_len, u_char *msg_ptr)
 
 				NDBGL3(L3_P_MSG, "IEI_CHANNELID - channel %d, exclusive = %d", cd->channelid, cd->channelexcl);
 
-				/* if this is a setup message, reserve channel */
-				
-				if(cd->event == EV_SETUP)
+				/* if this is the first time we know the real channel,
+				 * reserve it */
+				if (old_chanid != cd->channelid)
 				{
 					if((cd->channelid == CHAN_B1) || (cd->channelid == CHAN_B2))
 					{
-						if (i4b_l2_channel_get_state(unit, cd->channelid) == BCH_ST_FREE)
-							i4b_l2_channel_set_state(unit, cd->channelid, BCH_ST_RSVD);
-						else
+						struct isdn_l3_driver *d = cd->l3drv;
+						
+						if (i4b_l2_channel_get_state(d, cd->channelid) == BCH_ST_FREE) {
+							if (d != NULL) {
+								d->bch_state[cd->channelid] = BCH_ST_RSVD;
+								update_controller_leds(d);
+							}
+							i4b_l2_channel_set_state(d, cd->channelid, BCH_ST_RSVD);
+						} else
 							NDBGL3(L3_P_ERR, "IE ChannelID, Channel NOT free!!");
 					}
 					else if(cd->channelid == CHAN_NO)
@@ -528,7 +535,7 @@ i4b_decode_q931_cs0_ie(int unit, call_desc_t *cd, int msg_len, u_char *msg_ptr)
  *	decode and process one Q.931 codeset 0 information element
  *---------------------------------------------------------------------------*/
 void
-i4b_decode_q931_message(int unit, call_desc_t *cd, u_char message_type)
+i4b_decode_q931_message(call_desc_t *cd, u_char message_type)
 {
 	char *m = NULL;
 	
@@ -701,12 +708,12 @@ i4b_decode_q931_message(int unit, call_desc_t *cd, u_char message_type)
 			break;
 			
 		default:
-			NDBGL3(L3_P_ERR, "unit %d, cr = 0x%02x, msg = 0x%02x", unit, cd->cr, message_type);
+			NDBGL3(L3_P_ERR, "bri %d, cr = 0x%02x, msg = 0x%02x", cd->bri, cd->cr, message_type);
 			break;
 	}
 	if(m)
 	{
-		NDBGL3(L3_PRIM, "%s: unit %d, cr = 0x%02x\n", m, unit, cd->cr);
+		NDBGL3(L3_PRIM, "%s: bri %d, cr = 0x%02x\n", m, cd->bri, cd->cr);
 	}
 }
 

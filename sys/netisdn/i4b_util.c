@@ -27,7 +27,7 @@
  *	i4b_util.c - layer 2 utility routines
  *	-------------------------------------
  *
- *	$Id: i4b_util.c,v 1.2.2.3 2002/04/01 07:49:02 nathanw Exp $ 
+ *	$Id: i4b_util.c,v 1.2.2.4 2002/06/20 03:49:42 nathanw Exp $ 
  *
  * $FreeBSD$
  *
@@ -36,7 +36,7 @@
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i4b_util.c,v 1.2.2.3 2002/04/01 07:49:02 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i4b_util.c,v 1.2.2.4 2002/06/20 03:49:42 nathanw Exp $");
 
 #ifdef __FreeBSD__
 #include "i4bq921.h"
@@ -70,6 +70,7 @@ __KERNEL_RCSID(0, "$NetBSD: i4b_util.c,v 1.2.2.3 2002/04/01 07:49:02 nathanw Exp
 #include <netisdn/i4b_isdnq931.h>
 #include <netisdn/i4b_mbuf.h>
 #include <netisdn/i4b_l2fsm.h>
+#include <netisdn/i4b_l3l4.h>
 
 /*---------------------------------------------------------------------------*
  *	routine ESTABLISH DATA LINK (Q.921 03/93 page 83)
@@ -249,7 +250,7 @@ void
 i4b_print_l2var(l2_softc_t *l2sc)
 {
 	NDBGL2(L2_ERROR, "bri %d V(R)=%d, V(S)=%d, V(A)=%d,ACKP=%d,PBSY=%d,OBSY=%d",
-		l2sc->bri,
+		l2sc->drv->bri,
 		l2sc->vr,
 		l2sc->vs,
 		l2sc->va,
@@ -262,7 +263,7 @@ i4b_print_l2var(l2_softc_t *l2sc)
  *	got s or i frame, check if valid ack for last sent frame
  *---------------------------------------------------------------------------*/
 void
-i4b_rxd_ack(l2_softc_t *l2sc, int nr)
+i4b_rxd_ack(l2_softc_t *l2sc, struct isdn_l3_driver *drv, int nr)
 {
 
 #ifdef NOTDEF

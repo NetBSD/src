@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gre.c,v 1.17.2.5 2002/02/28 04:15:00 nathanw Exp $ */
+/*	$NetBSD: if_gre.c,v 1.17.2.6 2002/06/20 03:48:14 nathanw Exp $ */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gre.c,v 1.17.2.5 2002/02/28 04:15:00 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gre.c,v 1.17.2.6 2002/06/20 03:48:14 nathanw Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"
@@ -102,14 +102,11 @@ __KERNEL_RCSID(0, "$NetBSD: if_gre.c,v 1.17.2.5 2002/02/28 04:15:00 nathanw Exp 
 #include <net/if_gre.h>
 
 /*
- * XXX this is below the standard MTU of
- * 1500 Bytes, allowing for headers,
- * but we should possibly do path mtu discovery
- * before changing if state to up to find the
- * correct value
+ * It is not easy to calculate the right value for a GRE MTU.
+ * We leave this task to the admin and use the same default that
+ * other vendors use.
  */
-#define GREMTU 1450
-#define LINK_MASK (IFF_LINK0|IFF_LINK1|IFF_LINK2)
+#define GREMTU 1476
 
 struct gre_softc_head gre_softc_list;
 int ip_gre_ttl = GRE_TTL;
@@ -146,8 +143,8 @@ gre_clone_create(ifc, unit)
 
 	sprintf(sc->sc_if.if_xname, "%s%d", ifc->ifc_name, unit);
 	sc->sc_if.if_softc = sc;
-	sc->sc_if.if_type =  IFT_OTHER;
-	sc->sc_if.if_addrlen = 4;
+	sc->sc_if.if_type = IFT_OTHER;
+	sc->sc_if.if_addrlen = 0;
 	sc->sc_if.if_hdrlen = 24; /* IP + GRE */
 	sc->sc_if.if_dlt = DLT_NULL;
 	sc->sc_if.if_mtu = GREMTU;
@@ -156,6 +153,7 @@ gre_clone_create(ifc, unit)
 	sc->sc_if.if_ioctl = gre_ioctl;
 	sc->g_dst.s_addr = sc->g_src.s_addr = INADDR_ANY;
 	sc->g_proto = IPPROTO_GRE;
+	sc->sc_if.if_flags |= IFF_LINK0;
 	if_attach(&sc->sc_if);
 	if_alloc_sadl(&sc->sc_if);
 #if NBPFILTER > 0
@@ -195,8 +193,12 @@ gre_output(struct ifnet *ifp, struct mbuf *m, struct sockaddr *dst,
 	u_short etype = 0;
 	struct mobile_h mob_h;
 
-	if ((ifp->if_flags & IFF_UP) == 0)
-		return ENETDOWN;
+	if ((ifp->if_flags & (IFF_UP | IFF_RUNNING)) == 0 ||
+	    sc->g_src.s_addr == INADDR_ANY || sc->g_dst.s_addr == INADDR_ANY) {
+		m_freem(m);
+		error = ENETDOWN;
+		goto end;
+	}
 
 	gh = NULL;
 	inp = NULL;
@@ -252,7 +254,8 @@ gre_output(struct ifnet *ifp, struct mbuf *m, struct sockaddr *dst,
 				if (m0 == NULL) {
 					IF_DROP(&ifp->if_snd);
 					m_freem(m);
-					return (ENOBUFS);
+					error = ENOBUFS;
+					goto end;
 				}
 				m0->m_next = m;
 				m->m_data += sizeof(struct ip);
@@ -270,14 +273,15 @@ gre_output(struct ifnet *ifp, struct mbuf *m, struct sockaddr *dst,
 				memmove(mtod(m, caddr_t), inp,
 					sizeof(struct ip));
 			}
-			inp=mtod(m, struct ip *);
+			inp = mtod(m, struct ip *);
 			memcpy((caddr_t)(inp + 1), &mob_h, (unsigned)msiz);
 			NTOHS(inp->ip_len);
 			inp->ip_len += msiz;
 		} else {  /* AF_INET */
 			IF_DROP(&ifp->if_snd);
 			m_freem(m);
-			return (EINVAL);
+			error = EINVAL;
+			goto end;
 		}
 	} else if (sc->g_proto == IPPROTO_GRE) {
 		switch (dst->sa_family) {
@@ -298,19 +302,21 @@ gre_output(struct ifnet *ifp, struct mbuf *m, struct sockaddr *dst,
 		default:
 			IF_DROP(&ifp->if_snd);
 			m_freem(m);
-			return (EAFNOSUPPORT);
+			error = EAFNOSUPPORT;
+			goto end;
 		}
 		M_PREPEND(m, sizeof(struct greip), M_DONTWAIT);
 	} else {
-		error = EINVAL;
 		IF_DROP(&ifp->if_snd);
 		m_freem(m);
-		return (error);
+		error = EINVAL;
+		goto end;
 	}
 
-	if (m == NULL) {
+	if (m == NULL) {	/* impossible */
 		IF_DROP(&ifp->if_snd);
-		return (ENOBUFS);
+		error = ENOBUFS;
+		goto end;
 	}
 
 	gh = mtod(m, struct greip *);
@@ -335,6 +341,7 @@ gre_output(struct ifnet *ifp, struct mbuf *m, struct sockaddr *dst,
 	ifp->if_obytes += m->m_pkthdr.len;
 	/* send it off */
 	error = ip_output(m, NULL, &sc->route, 0, NULL);
+  end:
 	if (error)
 		ifp->if_oerrors++;
 	return (error);
@@ -344,9 +351,8 @@ int
 gre_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 {
 	struct proc *p = curproc->l_proc;	/* XXX */
-	struct ifaddr *ifa = (struct ifaddr *)data;
 	struct ifreq *ifr = (struct ifreq *)data;
-	struct in_ifaddr *ia = (struct in_ifaddr *)data;
+	struct if_laddrreq *lifr = (struct if_laddrreq *)data;
 	struct gre_softc *sc = ifp->if_softc;
 	int s;
 	struct sockaddr_in si;
@@ -358,51 +364,22 @@ gre_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 	s = splnet();
 	switch (cmd) {
 	case SIOCSIFADDR:
+		ifp->if_flags |= IFF_UP;
+		break;
 	case SIOCSIFDSTADDR: 
-		if ((error = suser(p->p_ucred, &p->p_acflag)) != 0)
-			break;
-		/*
-		 * set tunnel endpoints in case that we "only"
-		 * have ip over ip encapsulation. This allows to
-		 * set tunnel endpoints with ifconfig.
-		 */
-		if (ifa->ifa_addr->sa_family == AF_INET) {
-			sa = ifa->ifa_addr;
-			sc->g_src = (satosin(sa))->sin_addr;
-			sc->g_dst = ia->ia_dstaddr.sin_addr;
-			if ((sc->g_src.s_addr != INADDR_ANY) &&
-			    (sc->g_dst.s_addr != INADDR_ANY)) {
-				if (sc->route.ro_rt != 0) /* free old route */
-					RTFREE(sc->route.ro_rt);
-				if (gre_compute_route(sc) == 0)
-					ifp->if_flags |= IFF_UP;
-			}
-		}
 		break;
 	case SIOCSIFFLAGS:
 		if ((error = suser(p->p_ucred, &p->p_acflag)) != 0)
 			break;
-		if ((sc->g_dst.s_addr == INADDR_ANY) ||
-		    (sc->g_src.s_addr == INADDR_ANY))
-			ifp->if_flags &= ~IFF_UP;
-
-		switch (ifr->ifr_flags & LINK_MASK) {
-			case IFF_LINK0:
-				sc->g_proto = IPPROTO_GRE;
-				ifp->if_flags |= IFF_LINK0;
-				ifp->if_flags &= ~(IFF_LINK1|IFF_LINK2);
-				break;
-			case IFF_LINK2:
-				sc->g_proto = IPPROTO_MOBILE;
-				ifp->if_flags |= IFF_LINK2;
-				ifp->if_flags &= ~(IFF_LINK0|IFF_LINK1);
-				break;
-		}
+		if ((ifr->ifr_flags & IFF_LINK0) != 0)
+			sc->g_proto = IPPROTO_GRE;
+		else
+			sc->g_proto = IPPROTO_MOBILE;
 		break;
 	case SIOCSIFMTU:
 		if ((error = suser(p->p_ucred, &p->p_acflag)) != 0)
 			break;
-		if (ifr->ifr_mtu > GREMTU || ifr->ifr_mtu < 576) {
+		if (ifr->ifr_mtu < 576) {
 			error = EINVAL;
 			break;
 		}
@@ -434,16 +411,15 @@ gre_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 			break;
 		sc->g_proto = ifr->ifr_flags;
 		switch (sc->g_proto) {
-		case IPPROTO_GRE :
+		case IPPROTO_GRE:
 			ifp->if_flags |= IFF_LINK0;
-			ifp->if_flags &= ~(IFF_LINK1|IFF_LINK2);
 			break;
-		case IPPROTO_MOBILE :
-			ifp->if_flags |= IFF_LINK2;
-			ifp->if_flags &= ~(IFF_LINK1|IFF_LINK2);
+		case IPPROTO_MOBILE:
+			ifp->if_flags &= ~IFF_LINK0;
 			break;
 		default:
-			ifp->if_flags &= ~(IFF_LINK0|IFF_LINK1|IFF_LINK2);
+			error = EPROTONOSUPPORT;
+			break;
 		}
 		break;
 	case GREGPROTO:
@@ -458,30 +434,77 @@ gre_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		 * to the remote end and mark if as up
 		 */
 		sa = &ifr->ifr_addr;
-		if (cmd == GRESADDRS )
+		if (cmd == GRESADDRS)
 			sc->g_src = (satosin(sa))->sin_addr;
-		if (cmd == GRESADDRD )
+		if (cmd == GRESADDRD)
 			sc->g_dst = (satosin(sa))->sin_addr;
+	recompute:
 		if ((sc->g_src.s_addr != INADDR_ANY) &&
 		    (sc->g_dst.s_addr != INADDR_ANY)) {
 			if (sc->route.ro_rt != 0) /* free old route */
 				RTFREE(sc->route.ro_rt);
 			if (gre_compute_route(sc) == 0)
-				ifp->if_flags |= IFF_UP;
+				ifp->if_flags |= IFF_RUNNING;
+			else
+				ifp->if_flags &= ~IFF_RUNNING;
 		}
 		break;
 	case GREGADDRS:
+		memset(&si, 0, sizeof(si));
+		si.sin_family = AF_INET;
+		si.sin_len = sizeof(struct sockaddr_in);
 		si.sin_addr.s_addr = sc->g_src.s_addr;
 		sa = sintosa(&si);
 		ifr->ifr_addr = *sa;
 		break;
 	case GREGADDRD:
+		memset(&si, 0, sizeof(si));
+		si.sin_family = AF_INET;
+		si.sin_len = sizeof(struct sockaddr_in);
 		si.sin_addr.s_addr = sc->g_dst.s_addr;
 		sa = sintosa(&si);
 		ifr->ifr_addr = *sa;
 		break;
+	case SIOCSLIFPHYADDR:
+		if ((error = suser(p->p_ucred, &p->p_acflag)) != 0)
+			break;
+		if (lifr->addr.ss_family != AF_INET ||
+		    lifr->dstaddr.ss_family != AF_INET) {
+			error = EAFNOSUPPORT;
+			break;
+		}
+		if (lifr->addr.ss_len != sizeof(si) ||
+		    lifr->dstaddr.ss_len != sizeof(si)) {
+			error = EINVAL;
+			break;
+		}
+		sc->g_src = (satosin((struct sockadrr *)&lifr->addr))->sin_addr;
+		sc->g_dst =
+		    (satosin((struct sockadrr *)&lifr->dstaddr))->sin_addr;
+		goto recompute;
+	case SIOCDIFPHYADDR:
+		if ((error = suser(p->p_ucred, &p->p_acflag)) != 0)
+			break;
+		sc->g_src.s_addr = INADDR_ANY;
+		sc->g_dst.s_addr = INADDR_ANY;
+		break;
+	case SIOCGLIFPHYADDR:
+		if (sc->g_src.s_addr == INADDR_ANY ||
+		    sc->g_dst.s_addr == INADDR_ANY) {
+			error = EADDRNOTAVAIL;
+			break;
+		}
+		memset(&si, 0, sizeof(si));
+		si.sin_family = AF_INET;
+		si.sin_len = sizeof(struct sockaddr_in);
+		si.sin_addr.s_addr = sc->g_src.s_addr;
+		memcpy(&lifr->addr, &si, sizeof(si));
+		si.sin_addr.s_addr = sc->g_dst.s_addr;
+		memcpy(&lifr->dstaddr, &si, sizeof(si));
+		break;
 	default:
 		error = EINVAL;
+		break;
 	}
 
 	splx(s);

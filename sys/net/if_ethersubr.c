@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ethersubr.c,v 1.75.2.7 2002/04/17 00:06:23 nathanw Exp $	*/
+/*	$NetBSD: if_ethersubr.c,v 1.75.2.8 2002/06/20 03:48:10 nathanw Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.75.2.7 2002/04/17 00:06:23 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.75.2.8 2002/06/20 03:48:10 nathanw Exp $");
 
 #include "opt_inet.h"
 #include "opt_atalk.h"
@@ -595,12 +595,15 @@ altq_etherclassify(struct ifaltq *ifq, struct mbuf *m,
 		break;
 	}
 
+	while (m->m_len <= hlen) {
+		hlen -= m->m_len;
+		m = m->m_next;
+	}
 	if (m->m_len < (hlen + hdrsize)) {
 		/*
-		 * Ethernet and protocol header not in a single
-		 * mbuf.  We can't cope with this situation right
+		 * protocol header not in a single mbuf.
+		 * We can't cope with this situation right
 		 * now (but it shouldn't ever happen, really, anyhow).
-		 * XXX Should use m_pulldown().
 		 */
 #ifdef DEBUG
 		printf("altq_etherclassify: headers span multiple mbufs: "
@@ -1039,7 +1042,7 @@ ether_ifattach(struct ifnet *ifp, const u_int8_t *lla)
 
 	ifp->if_type = IFT_ETHER;
 	ifp->if_addrlen = ETHER_ADDR_LEN;
-	ifp->if_hdrlen = 14;
+	ifp->if_hdrlen = ETHER_HDR_LEN;
 	ifp->if_dlt = DLT_EN10MB;
 	ifp->if_mtu = ETHERMTU;
 	ifp->if_output = ether_output;

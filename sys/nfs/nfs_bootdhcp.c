@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_bootdhcp.c,v 1.16.2.3 2002/04/01 07:49:06 nathanw Exp $	*/
+/*	$NetBSD: nfs_bootdhcp.c,v 1.16.2.4 2002/06/20 03:50:01 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1997 The NetBSD Foundation, Inc.
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_bootdhcp.c,v 1.16.2.3 2002/04/01 07:49:06 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_bootdhcp.c,v 1.16.2.4 2002/06/20 03:50:01 nathanw Exp $");
 
 #include "opt_nfs_boot.h"
 
@@ -341,13 +341,11 @@ bootpcheck(m, context)
 	/*
 	 * don't make first checks more expensive than necessary
 	 */
-#define ofs(what, elem) ((int)&(((what *)0)->elem))
-	if (m->m_len < ofs(struct bootp, bp_secs)) {
-		m = m_pullup(m, ofs(struct bootp, bp_secs));
+	if (m->m_len < offsetof(struct bootp, bp_sname)) {
+		m = m_pullup(m, offsetof(struct bootp, bp_sname));
 		if (m == NULL)
 			return (-1);
 	}
-#undef ofs
 	bootp = mtod(m, struct bootp*);
 
 	if (bootp->bp_op != BOOTREPLY) {
@@ -508,6 +506,26 @@ bootpc_call(nd, procp)
 	/* Enable broadcast. */
 	if ((error = nfs_boot_enbroadcast(so))) {
 		DPRINT("SO_BROADCAST");
+		goto out;
+	}
+
+	/*
+	 * Set some TTL so we can boot through routers.
+	 * Real BOOTP forwarding agents don't need this; they obey "bp_hops"
+	 * and set "bp_giaddr", thus rewrite the packet anyway.
+	 * The "helper-address" feature of some popular router vendor seems
+	 * to do simple IP forwarding and drops packets with (ip_ttl == 1).
+	 */
+	{	u_char *opt;
+		m = m_get(M_WAIT, MT_SOOPTS);
+		opt = mtod(m, u_char *);
+		m->m_len = sizeof(*opt);
+		*opt = 7;
+		error = sosetopt(so, IPPROTO_IP, IP_MULTICAST_TTL, m);
+		m = NULL;	/* was consumed */
+	}
+	if (error) {
+		DPRINT("IP_MULTICAST_TTL");
 		goto out;
 	}
 

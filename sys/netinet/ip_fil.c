@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_fil.c,v 1.65.2.9 2002/05/04 19:51:47 thorpej Exp $	*/
+/*	$NetBSD: ip_fil.c,v 1.65.2.10 2002/06/20 03:48:39 nathanw Exp $	*/
 
 /*
  * Copyright (C) 1993-2001 by Darren Reed.
@@ -123,7 +123,7 @@ extern	int	ip_optcopy __P((struct ip *, struct ip *));
 #if !defined(lint)
 #if defined(__NetBSD__)
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_fil.c,v 1.65.2.9 2002/05/04 19:51:47 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_fil.c,v 1.65.2.10 2002/06/20 03:48:39 nathanw Exp $");
 #else
 static const char sccsid[] = "@(#)ip_fil.c	2.41 6/5/96 (C) 1993-2000 Darren Reed";
 static const char rcsid[] = "@(#)Id: ip_fil.c,v 2.42.2.55 2002/03/26 15:54:39 darrenr Exp";
@@ -290,7 +290,7 @@ struct mbuf **mp;
 struct ifnet *ifp;
 int dir;
 {
-	
+
 	return (fr_check(mtod(*mp, struct ip *), sizeof(struct ip6_hdr),
 	    ifp, (dir == PFIL_OUT), mp));
 }
@@ -1801,7 +1801,7 @@ sendorfree:
 		else
 			m_freem(m);
 	}
-    }	
+    }
 done:
 	if (!error)
 		ipl_frouteok[0]++;
@@ -1928,7 +1928,7 @@ frdest_t *fdp;
 			dst6 = (struct sockaddr_in6 *)ro->ro_rt->rt_gateway;
 		ro->ro_rt->rt_use++;
 
-		if (m0->m_pkthdr.len <= nd_ifinfo[ifp->if_index].linkmtu)
+		if (m0->m_pkthdr.len <= IN6_LINKMTU(ifp))
 			error = nd6_output(ifp, fin->fin_ifp, m0, dst6,
 					   ro->ro_rt);
 		else

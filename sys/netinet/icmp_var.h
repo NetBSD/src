@@ -1,4 +1,4 @@
-/*	$NetBSD: icmp_var.h,v 1.18.2.1 2001/11/14 19:17:41 nathanw Exp $	*/
+/*	$NetBSD: icmp_var.h,v 1.18.2.2 2002/06/20 03:48:30 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -49,7 +49,7 @@ struct	icmpstat {
 	u_quad_t icps_oldicmp;		/* no error 'cuz old was icmp */
 	u_quad_t icps_outhist[ICMP_MAXTYPE + 1];
 /* statistics related to input messages processed */
- 	u_quad_t icps_badcode;		/* icmp_code out of range */
+	u_quad_t icps_badcode;		/* icmp_code out of range */
 	u_quad_t icps_tooshort;		/* packet < ICMP_MINLEN */
 	u_quad_t icps_checksum;		/* bad checksum */
 	u_quad_t icps_badlen;		/* calculated bound mismatch */

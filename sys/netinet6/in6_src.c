@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_src.c,v 1.5.2.7 2002/02/28 04:15:14 nathanw Exp $	*/
+/*	$NetBSD: in6_src.c,v 1.5.2.8 2002/06/20 03:49:18 nathanw Exp $	*/
 /*	$KAME: in6_src.c,v 1.36 2001/02/06 04:08:17 itojun Exp $	*/
 
 /*
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6_src.c,v 1.5.2.7 2002/02/28 04:15:14 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6_src.c,v 1.5.2.8 2002/06/20 03:49:18 nathanw Exp $");
 
 #include "opt_inet.h"
 
@@ -97,7 +97,7 @@ __KERNEL_RCSID(0, "$NetBSD: in6_src.c,v 1.5.2.7 2002/02/28 04:15:14 nathanw Exp 
 #include <netinet6/ip6_var.h>
 #include <netinet6/nd6.h>
 #ifdef ENABLE_DEFAULT_SCOPE
-#include <netinet6/scope6_var.h> 
+#include <netinet6/scope6_var.h>
 #endif
 
 #include <net/net_osdep.h>
@@ -242,7 +242,7 @@ in6_selectsrc(dstsock, opts, mopts, ro, laddr, errorp)
 	 * If route is known or can be allocated now,
 	 * our src addr is taken from the i/f, else punt.
 	 * Note that we should check the address family of the
-	 * cached destination, in case of sharing the cache with IPv4. 
+	 * cached destination, in case of sharing the cache with IPv4.
 	 */
 	if (ro) {
 		if (ro->ro_rt &&
@@ -327,7 +327,7 @@ in6_selecthlim(in6p, ifp)
 	if (in6p && in6p->in6p_hops >= 0)
 		return(in6p->in6p_hops);
 	else if (ifp)
-		return(nd_ifinfo[ifp->if_index].chlim);
+		return(ND_IFINFO(ifp)->chlim);
 	else
 		return(ip6_defhlim);
 }
@@ -520,7 +520,6 @@ in6_recoverscope(sin6, in6, ifp)
 
 /*
  * just clear the embedded scope identifer.
- * XXX: currently used for bsdi4 only as a supplement function.
  */
 void
 in6_clearscope(addr)

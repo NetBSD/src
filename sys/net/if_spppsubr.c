@@ -1,4 +1,4 @@
-/*	$NetBSD: if_spppsubr.c,v 1.20.2.10 2002/04/01 07:48:23 nathanw Exp $	 */
+/*	$NetBSD: if_spppsubr.c,v 1.20.2.11 2002/06/20 03:48:16 nathanw Exp $	 */
 
 /*
  * Synchronous PPP/Cisco link level subroutines.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.20.2.10 2002/04/01 07:48:23 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.20.2.11 2002/06/20 03:48:16 nathanw Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipx.h"
@@ -1641,12 +1641,13 @@ sppp_cp_input(const struct cp *cp, struct sppp *sp, struct mbuf *m)
 		if (upper == NULL)
 			catastrophic++;
 
-		log(LOG_INFO,
-		    SPP_FMT "%s: RXJ%c (%s) for proto 0x%x (%s/%s)\n",
-		    SPP_ARGS(ifp), cp->name, catastrophic ? '-' : '+',
-		    sppp_cp_type_name(h->type), proto,
-		    upper ? upper->name : "unknown",
-		    upper ? sppp_state_name(sp->state[upper->protoidx]) : "?");
+		if (debug)
+			log(LOG_INFO,
+			    SPP_FMT "%s: RXJ%c (%s) for proto 0x%x (%s/%s)\n",
+			    SPP_ARGS(ifp), cp->name, catastrophic ? '-' : '+',
+			    sppp_cp_type_name(h->type), proto,
+			    upper ? upper->name : "unknown",
+			    upper ? sppp_state_name(sp->state[upper->protoidx]) : "?");
 
 		/*
 		 * if we got RXJ+ against conf-req, the peer does not implement
@@ -2067,9 +2068,10 @@ sppp_lcp_down(struct sppp *sp)
 	 * try to reopen the connection here?
 	 */
 	if ((ifp->if_flags & (IFF_AUTO | IFF_PASSIVE)) == 0) {
-		log(LOG_INFO,
-		    SPP_FMT "Down event (carrier loss), taking interface down.\n",
-		    SPP_ARGS(ifp));
+		if (debug)
+			log(LOG_INFO,
+			    SPP_FMT "Down event (carrier loss), taking interface down.\n",
+			    SPP_ARGS(ifp));
 		if_down(ifp);
 	} else {
 		if (debug)
@@ -3373,7 +3375,7 @@ sppp_ipv6cp_RCR(struct sppp *sp, struct lcp_header *h, int len)
 			addlog(" send %s\n", sppp_cp_type_name(type));
 		sppp_cp_send (sp, PPP_IPV6CP, type, h->ident, origlen, h+1);
 	} else {
-#ifdef DIAGNOSTIC
+#ifdef notdef
 		if (type == CONF_ACK)
 			panic("IPv6CP RCR: CONF_ACK with non-zero rlen");
 #endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_var.h,v 1.45.2.1 2002/01/08 00:34:10 nathanw Exp $	*/
+/*	$NetBSD: ip_var.h,v 1.45.2.2 2002/06/20 03:48:53 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -63,19 +63,20 @@ struct ipovly {
  * port numbers (which are no longer needed once we've located the
  * tcpcb) are overlayed with an mbuf pointer.
  */
-LIST_HEAD(ipqehead, ipqent);
+TAILQ_HEAD(ipqehead, ipqent);
 struct ipqent {
-	LIST_ENTRY(ipqent) ipqe_q;
+	TAILQ_ENTRY(ipqent) ipqe_q;
 	union {
 		struct ip	*_ip;
 		struct tcpiphdr *_tcp;
 	} _ipqe_u1;
-	struct mbuf	*ipqe_m;	/* mbuf contains packet */
+	struct mbuf	*ipqe_m;	/* point to first mbuf */
+	struct mbuf	*ipre_mlast;	/* point to last mbuf */
 	u_int8_t	ipqe_mff;	/* for IP fragmentation */
 	/*
 	 * The following are used in TCP reassembly
 	 */
-	LIST_ENTRY(ipqent) ipqe_timeq;
+	TAILQ_ENTRY(ipqent) ipqe_timeq;
 	u_int32_t ipqe_seq;
 	u_int32_t ipqe_len;
 	u_int32_t ipqe_flags;

@@ -1,4 +1,4 @@
-/*	$NetBSD: ns_error.c,v 1.11.6.1 2001/11/14 19:18:38 nathanw Exp $	*/
+/*	$NetBSD: ns_error.c,v 1.11.6.2 2002/06/20 03:49:57 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1984, 1988, 1993
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ns_error.c,v 1.11.6.1 2001/11/14 19:18:38 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ns_error.c,v 1.11.6.2 2002/06/20 03:49:57 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -73,6 +73,8 @@ __KERNEL_RCSID(0, "$NetBSD: ns_error.c,v 1.11.6.1 2001/11/14 19:18:38 nathanw Ex
  */
 int	ns_errprintfs = 0;
 #endif
+
+struct	ns_errstat ns_errstat;
 
 int
 ns_err_x(c)

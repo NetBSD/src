@@ -1,4 +1,4 @@
-/*	$NetBSD: esis.c,v 1.25.6.1 2001/11/14 19:18:25 nathanw Exp $	*/
+/*	$NetBSD: esis.c,v 1.25.6.2 2002/06/20 03:49:45 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -63,7 +63,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esis.c,v 1.25.6.1 2001/11/14 19:18:25 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esis.c,v 1.25.6.2 2002/06/20 03:49:45 nathanw Exp $");
 
 #include "opt_iso.h"
 #ifdef ISO
@@ -106,14 +106,13 @@ __KERNEL_RCSID(0, "$NetBSD: esis.c,v 1.25.6.1 2001/11/14 19:18:25 nathanw Exp $"
  *
  */
 LIST_HEAD(, rawcb) esis_pcb;
+struct esis_stat esis_stat;
 int             esis_sendspace = 2048;
 int             esis_recvspace = 2048;
 short           esis_holding_time = ESIS_HT;
 short           esis_config_time = ESIS_CONFIG;
 short           esis_esconfig_time = ESIS_CONFIG;
-extern int      iso_systype;
 struct sockaddr_dl esis_dl = {sizeof(esis_dl), AF_LINK};
-extern char     all_es_snpa[], all_is_snpa[];
 
 struct callout	esis_config_ch;
 

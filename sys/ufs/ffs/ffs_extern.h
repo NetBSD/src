@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_extern.h,v 1.17.2.2 2001/09/21 22:37:04 nathanw Exp $	*/
+/*	$NetBSD: ffs_extern.h,v 1.17.2.3 2002/06/20 03:50:23 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -140,6 +140,7 @@ int ffs_write __P((void *));
 int ffs_fsync __P((void *));
 int ffs_reclaim __P((void *));
 int ffs_getpages __P((void *));
+int ffs_putpages __P((void *));
 void ffs_gop_size __P((struct vnode *, off_t, off_t *));
 __END_DECLS
 

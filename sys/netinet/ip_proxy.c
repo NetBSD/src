@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_proxy.c,v 1.23.2.6 2002/05/04 19:51:52 thorpej Exp $	*/
+/*	$NetBSD: ip_proxy.c,v 1.23.2.7 2002/06/20 03:48:50 nathanw Exp $	*/
 
 /*
  * Copyright (C) 1997-2002 by Darren Reed.
@@ -17,8 +17,8 @@
 #include <sys/param.h>
 #include <sys/time.h>
 #include <sys/file.h>
-#if !defined(__FreeBSD_version)  
-# include <sys/ioctl.h>      
+#if !defined(__FreeBSD_version)
+# include <sys/ioctl.h>
 #endif
 #include <sys/fcntl.h>
 #if !defined(_KERNEL) && !defined(KERNEL)
@@ -79,7 +79,7 @@
 #if !defined(lint)
 #if defined(__NetBSD__)
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_proxy.c,v 1.23.2.6 2002/05/04 19:51:52 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_proxy.c,v 1.23.2.7 2002/06/20 03:48:50 nathanw Exp $");
 #else
 static const char rcsid[] = "@(#)Id: ip_proxy.c,v 2.9.2.22 2002/04/26 10:23:17 darrenr Exp";
 #endif
@@ -134,10 +134,10 @@ aproxy_t	ap_proxies[] = {
 #endif
 #ifdef  IPF_H323_PROXY
     { NULL, "h323", (char)IPPROTO_TCP, 0, 0, ippr_h323_init, NULL,
- 	  ippr_h323_new, ippr_h323_del, ippr_h323_in, ippr_h323_out, NULL },
+	  ippr_h323_new, ippr_h323_del, ippr_h323_in, ippr_h323_out, NULL },
     { NULL, "h245", (char)IPPROTO_TCP, 0, 0, ippr_h245_init, NULL,
- 	  ippr_h245_new, NULL, NULL, ippr_h245_out, NULL },
-#endif   
+	  ippr_h245_new, NULL, NULL, ippr_h245_out, NULL },
+#endif
 	{ NULL, "", '\0', 0, 0, NULL, NULL, NULL }
 };
 
@@ -412,7 +412,7 @@ ap_session_t *aps;
 	apr = aps->aps_apr;
 	if ((apr != NULL) && (apr->apr_del != NULL))
 		(*apr->apr_del)(aps);
- 
+
 	if ((aps->aps_data != NULL) && (aps->aps_psiz != 0))
 		KFREES(aps->aps_data, aps->aps_psiz);
 	KFREE(aps);

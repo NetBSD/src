@@ -1,4 +1,4 @@
-/*	$NetBSD: debug.h,v 1.4 1994/06/29 06:41:00 cgd Exp $	*/
+/*	$NetBSD: debug.h,v 1.4.46.1 2002/06/20 03:49:49 nathanw Exp $	*/
 
 #define OUT stdout
 
@@ -17,5 +17,5 @@ extern int column;
 #define IFDEBUG(letter)	 //*beginning of comment*/STAR
 #define ENDDEBUG	 STAR/*end of comment*//
 
-#endif DEBUG
+#endif /* DEBUG */
 

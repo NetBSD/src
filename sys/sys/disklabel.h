@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel.h,v 1.67.2.2 2002/04/01 07:49:10 nathanw Exp $	*/
+/*	$NetBSD: disklabel.h,v 1.67.2.3 2002/06/20 03:50:09 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1987, 1988, 1993
@@ -180,7 +180,13 @@ struct disklabel {
 	struct	partition {		/* the partition table */
 		u_int32_t p_size;	/* number of sectors in partition */
 		u_int32_t p_offset;	/* starting sector */
-		u_int32_t p_fsize;	/* filesystem basic fragment size */
+		union {
+			u_int32_t fsize; /* FFS, ADOS:
+					    filesystem basic fragment size */
+			u_int32_t cdsession; /* ISO9660: session offset */
+		} __partition_u2;
+#define	p_fsize		__partition_u2.fsize
+#define	p_cdsession	__partition_u2.cdsession
 		u_int8_t p_fstype;	/* filesystem type, see below */
 		u_int8_t p_frag;	/* filesystem fragments per block */
 		union {
@@ -235,7 +241,10 @@ struct olddisklabel {
 	struct	opartition {
 		u_int32_t p_size;
 		u_int32_t p_offset;
-		u_int32_t p_fsize;
+		union {
+			u_int32_t fsize;
+			u_int32_t cdsession;
+		} __partition_u2;
 		u_int8_t p_fstype;
 		u_int8_t p_frag;
 		union {

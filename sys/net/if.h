@@ -1,4 +1,4 @@
-/*	$NetBSD: if.h,v 1.65.2.4 2002/04/01 07:48:19 nathanw Exp $	*/
+/*	$NetBSD: if.h,v 1.65.2.5 2002/06/20 03:48:09 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -286,6 +286,8 @@ struct ifnet {				/* and the entries */
 	 */
 	int	if_csum_flags_tx;	/* M_CSUM_* flags for Tx */
 	int	if_csum_flags_rx;	/* M_CSUM_* flags for Rx */
+
+	void	*if_afdata[AF_MAX];
 };
 #define	if_mtu		if_data.ifi_mtu
 #define	if_type		if_data.ifi_type
@@ -350,7 +352,7 @@ struct ifnet {				/* and the entries */
  * Output queues (ifp->if_snd) and internetwork datagram level (pup level 1)
  * input routines have queues of messages stored on ifqueue structures
  * (defined above).  Entries are added to and deleted from these structures
- * by these macros, which should be called with ipl raised to splimp().
+ * by these macros, which should be called with ipl raised to splnet().
  */
 #define	IF_QFULL(ifq)		((ifq)->ifq_len >= (ifq)->ifq_maxlen)
 #define	IF_DROP(ifq)		((ifq)->ifq_drops++)
@@ -541,6 +543,11 @@ struct ifaliasreq {
 	struct	sockaddr ifra_dstaddr;
 #define	ifra_broadaddr	ifra_dstaddr
 	struct	sockaddr ifra_mask;
+};
+
+struct ifdatareq {
+	char	ifdr_name[IFNAMSIZ];		/* if name, e.g. "en0" */
+	struct	if_data ifdr_data;
 };
 
 struct ifmediareq {
@@ -742,6 +749,8 @@ char	*ether_sprintf __P((const u_char *));
 void	if_alloc_sadl __P((struct ifnet *));
 void	if_free_sadl __P((struct ifnet *));
 void	if_attach __P((struct ifnet *));
+void	if_attachdomain __P((void));
+void	if_attachdomain1 __P((struct ifnet *));
 void	if_deactivate __P((struct ifnet *));
 void	if_detach __P((struct ifnet *));
 void	if_down __P((struct ifnet *));

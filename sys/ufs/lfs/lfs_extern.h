@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_extern.h,v 1.24.2.4 2002/02/28 04:15:29 nathanw Exp $	*/
+/*	$NetBSD: lfs_extern.h,v 1.24.2.5 2002/06/20 03:50:30 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -107,6 +107,7 @@ struct lfs;
 struct segment;
 struct ucred;
 
+extern int lfs_allclean_wakeup;
 extern struct pool lfs_inode_pool;		/* memory pool for inodes */
 
 __BEGIN_DECLS
@@ -130,7 +131,7 @@ struct buf *lfs_newbuf_malloclog(struct lfs *, struct vnode *,
 void lfs_freebuf(struct buf *);
 struct buf *lfs_newbuf(struct lfs *, struct vnode *, ufs_daddr_t, size_t);
 #endif
-void lfs_countlocked(int *, long *);
+void lfs_countlocked(int *, long *, char *);
 int lfs_reserve(struct lfs *, struct vnode *, int);
 
 /* lfs_cksum.c */
@@ -139,6 +140,8 @@ u_int32_t lfs_sb_cksum(struct dlfs *);
 
 /* lfs_debug.c */
 #ifdef DEBUG
+int lfs_bwrite_log(struct buf *, char *, int);
+void lfs_dumplog(void);
 void lfs_dump_super(struct lfs *);
 void lfs_dump_dinode(struct dinode *);
 void lfs_check_bpp(struct lfs *, struct segment *, char *, int);
@@ -179,7 +182,7 @@ void lfs_segunlock(struct lfs *);
 
 /* lfs_syscalls.c */
 int lfs_fastvget(struct mount *, ino_t, ufs_daddr_t, struct vnode **, struct dinode *, int *);
-struct buf *lfs_fakebuf(struct vnode *, int, size_t, caddr_t);
+struct buf *lfs_fakebuf(struct lfs *, struct vnode *, int, size_t, caddr_t);
 
 /* lfs_vfsops.c */
 void lfs_init(void);
@@ -201,32 +204,34 @@ void lfs_unmark_vnode(struct vnode *);
 void lfs_itimes(struct inode *, struct timespec *, struct timespec *,
 		struct timespec *);
 
-int lfs_balloc	(void *);
-int lfs_valloc	(void *);
-int lfs_vfree	(void *);
-int lfs_bwrite	(void *);
-int lfs_update	(void *);
-int lfs_truncate(void *);
-int lfs_blkatoff(void *);
-int lfs_fsync	(void *);
-int lfs_symlink	(void *);
-int lfs_mknod	(void *);
-int lfs_create	(void *);
-int lfs_mkdir	(void *);
-int lfs_read	(void *);
-int lfs_remove	(void *);
-int lfs_rmdir	(void *);
-int lfs_link	(void *);
-int lfs_rename	(void *);
-int lfs_getattr	(void *);
-int lfs_setattr	(void *);
-int lfs_close	(void *);
-int lfs_inactive(void *);
-int lfs_reclaim	(void *);
-int lfs_write	(void *);
-int lfs_whiteout(void *);
-int lfs_getpages(void *);
-int lfs_putpages(void *);
+int lfs_balloc	 (void *);
+int lfs_valloc	 (void *);
+int lfs_vfree	 (void *);
+int lfs_bwrite	 (void *);
+int lfs_update	 (void *);
+int lfs_truncate (void *);
+int lfs_blkatoff (void *);
+int lfs_fsync	 (void *);
+int lfs_symlink	 (void *);
+int lfs_mknod	 (void *);
+int lfs_create	 (void *);
+int lfs_mkdir	 (void *);
+int lfs_read	 (void *);
+int lfs_remove	 (void *);
+int lfs_rmdir	 (void *);
+int lfs_link	 (void *);
+int lfs_rename	 (void *);
+int lfs_getattr	 (void *);
+int lfs_setattr	 (void *);
+int lfs_close	 (void *);
+int lfsspec_close(void *);
+int lfsfifo_close(void *);
+int lfs_inactive (void *);
+int lfs_reclaim	 (void *);
+int lfs_write	 (void *);
+int lfs_whiteout (void *);
+int lfs_getpages (void *);
+int lfs_putpages (void *);
 
 __END_DECLS
 extern int lfs_mount_type;

@@ -70,7 +70,7 @@
 #define USE_RADIX
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_encap.c,v 1.4.4.4 2002/04/01 07:48:32 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_encap.c,v 1.4.4.5 2002/06/20 03:48:38 nathanw Exp $");
 
 #include "opt_mrouting.h"
 #include "opt_inet.h"
@@ -182,7 +182,7 @@ encap_init()
 
 #ifdef USE_RADIX
 	/*
-	 * initialize radix lookup table.  
+	 * initialize radix lookup table.
 	 * max_keylen initialization should happen before the call to rn_init().
 	 */
 	rn_inithead((void **)&encap_head[0], sizeof(struct sockaddr_pack) << 3);

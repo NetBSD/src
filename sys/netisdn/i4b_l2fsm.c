@@ -27,7 +27,7 @@
  *	i4b_l2fsm.c - layer 2 FSM
  *	-------------------------
  *
- *	$Id: i4b_l2fsm.c,v 1.1.1.1.4.3 2002/04/01 07:48:56 nathanw Exp $ 
+ *	$Id: i4b_l2fsm.c,v 1.1.1.1.4.4 2002/06/20 03:49:36 nathanw Exp $ 
  *
  * $FreeBSD$
  *
@@ -36,7 +36,7 @@
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i4b_l2fsm.c,v 1.1.1.1.4.3 2002/04/01 07:48:56 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i4b_l2fsm.c,v 1.1.1.1.4.4 2002/06/20 03:49:36 nathanw Exp $");
 
 #ifdef __FreeBSD__
 #include "i4bq921.h"
@@ -115,86 +115,86 @@ static char *l2event_text[N_EVENTS] = {
 };
 #endif
 
-static void F_TU01 __P((l2_softc_t *));
-static void F_TU03 __P((l2_softc_t *));
+static void F_TU01 __P((l2_softc_t *, struct isdn_l3_driver *));
+static void F_TU03 __P((l2_softc_t *, struct isdn_l3_driver *));
 
-static void F_TA03 __P((l2_softc_t *));
-static void F_TA04 __P((l2_softc_t *));
-static void F_TA05 __P((l2_softc_t *));
+static void F_TA03 __P((l2_softc_t *, struct isdn_l3_driver *));
+static void F_TA04 __P((l2_softc_t *, struct isdn_l3_driver *));
+static void F_TA05 __P((l2_softc_t *, struct isdn_l3_driver *));
 
-static void F_TE03 __P((l2_softc_t *));
-static void F_TE04 __P((l2_softc_t *));
-static void F_TE05 __P((l2_softc_t *));
+static void F_TE03 __P((l2_softc_t *, struct isdn_l3_driver *));
+static void F_TE04 __P((l2_softc_t *, struct isdn_l3_driver *));
+static void F_TE05 __P((l2_softc_t *, struct isdn_l3_driver *));
 
-static void F_T01 __P((l2_softc_t *));
-static void F_T05 __P((l2_softc_t *));
-static void F_T06 __P((l2_softc_t *));
-static void F_T07 __P((l2_softc_t *));
-static void F_T08 __P((l2_softc_t *));
-static void F_T09 __P((l2_softc_t *));
-static void F_T10 __P((l2_softc_t *));
-static void F_T13 __P((l2_softc_t *));
+static void F_T01 __P((l2_softc_t *, struct isdn_l3_driver *));
+static void F_T05 __P((l2_softc_t *, struct isdn_l3_driver *));
+static void F_T06 __P((l2_softc_t *, struct isdn_l3_driver *));
+static void F_T07 __P((l2_softc_t *, struct isdn_l3_driver *));
+static void F_T08 __P((l2_softc_t *, struct isdn_l3_driver *));
+static void F_T09 __P((l2_softc_t *, struct isdn_l3_driver *));
+static void F_T10 __P((l2_softc_t *, struct isdn_l3_driver *));
+static void F_T13 __P((l2_softc_t *, struct isdn_l3_driver *));
 
-static void F_AE01 __P((l2_softc_t *));
-static void F_AE05 __P((l2_softc_t *));
-static void F_AE06 __P((l2_softc_t *));
-static void F_AE07 __P((l2_softc_t *));
-static void F_AE08 __P((l2_softc_t *));
-static void F_AE09 __P((l2_softc_t *));
-static void F_AE10 __P((l2_softc_t *));
-static void F_AE11 __P((l2_softc_t *));
-static void F_AE12 __P((l2_softc_t *));
+static void F_AE01 __P((l2_softc_t *, struct isdn_l3_driver *));
+static void F_AE05 __P((l2_softc_t *, struct isdn_l3_driver *));
+static void F_AE06 __P((l2_softc_t *, struct isdn_l3_driver *));
+static void F_AE07 __P((l2_softc_t *, struct isdn_l3_driver *));
+static void F_AE08 __P((l2_softc_t *, struct isdn_l3_driver *));
+static void F_AE09 __P((l2_softc_t *, struct isdn_l3_driver *));
+static void F_AE10 __P((l2_softc_t *, struct isdn_l3_driver *));
+static void F_AE11 __P((l2_softc_t *, struct isdn_l3_driver *));
+static void F_AE12 __P((l2_softc_t *, struct isdn_l3_driver *));
 
-static void F_AR05 __P((l2_softc_t *));
-static void F_AR06 __P((l2_softc_t *));
-static void F_AR07 __P((l2_softc_t *));
-static void F_AR08 __P((l2_softc_t *));
-static void F_AR09 __P((l2_softc_t *));
-static void F_AR10 __P((l2_softc_t *));
-static void F_AR11 __P((l2_softc_t *));
+static void F_AR05 __P((l2_softc_t *, struct isdn_l3_driver *));
+static void F_AR06 __P((l2_softc_t *, struct isdn_l3_driver *));
+static void F_AR07 __P((l2_softc_t *, struct isdn_l3_driver *));
+static void F_AR08 __P((l2_softc_t *, struct isdn_l3_driver *));
+static void F_AR09 __P((l2_softc_t *, struct isdn_l3_driver *));
+static void F_AR10 __P((l2_softc_t *, struct isdn_l3_driver *));
+static void F_AR11 __P((l2_softc_t *, struct isdn_l3_driver *));
 
-static void F_MF01 __P((l2_softc_t *));
-static void F_MF05 __P((l2_softc_t *));
-static void F_MF06 __P((l2_softc_t *));
-static void F_MF07 __P((l2_softc_t *));
-static void F_MF08 __P((l2_softc_t *));
-static void F_MF09 __P((l2_softc_t *));
-static void F_MF10 __P((l2_softc_t *));
-static void F_MF11 __P((l2_softc_t *));
-static void F_MF12 __P((l2_softc_t *));
-static void F_MF13 __P((l2_softc_t *));
-static void F_MF14 __P((l2_softc_t *));
-static void F_MF15 __P((l2_softc_t *));
-static void F_MF16 __P((l2_softc_t *));
-static void F_MF17 __P((l2_softc_t *));
-static void F_MF18 __P((l2_softc_t *));
-static void F_MF19 __P((l2_softc_t *));
-static void F_MF20 __P((l2_softc_t *));
+static void F_MF01 __P((l2_softc_t *, struct isdn_l3_driver *));
+static void F_MF05 __P((l2_softc_t *, struct isdn_l3_driver *));
+static void F_MF06 __P((l2_softc_t *, struct isdn_l3_driver *));
+static void F_MF07 __P((l2_softc_t *, struct isdn_l3_driver *));
+static void F_MF08 __P((l2_softc_t *, struct isdn_l3_driver *));
+static void F_MF09 __P((l2_softc_t *, struct isdn_l3_driver *));
+static void F_MF10 __P((l2_softc_t *, struct isdn_l3_driver *));
+static void F_MF11 __P((l2_softc_t *, struct isdn_l3_driver *));
+static void F_MF12 __P((l2_softc_t *, struct isdn_l3_driver *));
+static void F_MF13 __P((l2_softc_t *, struct isdn_l3_driver *));
+static void F_MF14 __P((l2_softc_t *, struct isdn_l3_driver *));
+static void F_MF15 __P((l2_softc_t *, struct isdn_l3_driver *));
+static void F_MF16 __P((l2_softc_t *, struct isdn_l3_driver *));
+static void F_MF17 __P((l2_softc_t *, struct isdn_l3_driver *));
+static void F_MF18 __P((l2_softc_t *, struct isdn_l3_driver *));
+static void F_MF19 __P((l2_softc_t *, struct isdn_l3_driver *));
+static void F_MF20 __P((l2_softc_t *, struct isdn_l3_driver *));
 
-static void F_TR01 __P((l2_softc_t *));
-static void F_TR05 __P((l2_softc_t *));
-static void F_TR06 __P((l2_softc_t *));
-static void F_TR07 __P((l2_softc_t *));
-static void F_TR08 __P((l2_softc_t *));
-static void F_TR09 __P((l2_softc_t *));
-static void F_TR10 __P((l2_softc_t *));
-static void F_TR11 __P((l2_softc_t *));
-static void F_TR12 __P((l2_softc_t *));
-static void F_TR13 __P((l2_softc_t *));
-static void F_TR15 __P((l2_softc_t *));
-static void F_TR16 __P((l2_softc_t *));
-static void F_TR17 __P((l2_softc_t *));
-static void F_TR18 __P((l2_softc_t *));
-static void F_TR19 __P((l2_softc_t *));
-static void F_TR20 __P((l2_softc_t *));
-static void F_ILL __P((l2_softc_t *));
-static void F_NCNA __P((l2_softc_t *));
+static void F_TR01 __P((l2_softc_t *, struct isdn_l3_driver *));
+static void F_TR05 __P((l2_softc_t *, struct isdn_l3_driver *));
+static void F_TR06 __P((l2_softc_t *, struct isdn_l3_driver *));
+static void F_TR07 __P((l2_softc_t *, struct isdn_l3_driver *));
+static void F_TR08 __P((l2_softc_t *, struct isdn_l3_driver *));
+static void F_TR09 __P((l2_softc_t *, struct isdn_l3_driver *));
+static void F_TR10 __P((l2_softc_t *, struct isdn_l3_driver *));
+static void F_TR11 __P((l2_softc_t *, struct isdn_l3_driver *));
+static void F_TR12 __P((l2_softc_t *, struct isdn_l3_driver *));
+static void F_TR13 __P((l2_softc_t *, struct isdn_l3_driver *));
+static void F_TR15 __P((l2_softc_t *, struct isdn_l3_driver *));
+static void F_TR16 __P((l2_softc_t *, struct isdn_l3_driver *));
+static void F_TR17 __P((l2_softc_t *, struct isdn_l3_driver *));
+static void F_TR18 __P((l2_softc_t *, struct isdn_l3_driver *));
+static void F_TR19 __P((l2_softc_t *, struct isdn_l3_driver *));
+static void F_TR20 __P((l2_softc_t *, struct isdn_l3_driver *));
+static void F_ILL __P((l2_softc_t *, struct isdn_l3_driver *));
+static void F_NCNA __P((l2_softc_t *, struct isdn_l3_driver *));
 
 /*---------------------------------------------------------------------------*
  *	FSM illegal state default action
  *---------------------------------------------------------------------------*/	
 static void
-F_ILL(l2_softc_t *l2sc)
+F_ILL(l2_softc_t *l2sc, struct isdn_l3_driver *drv)
 {
 	NDBGL2(L2_F_ERR, "FSM function F_ILL executing");
 }
@@ -203,7 +203,7 @@ F_ILL(l2_softc_t *l2sc)
  *	FSM No change, No action
  *---------------------------------------------------------------------------*/	
 static void
-F_NCNA(l2_softc_t *l2sc)
+F_NCNA(l2_softc_t *l2sc, struct isdn_l3_driver *drv)
 {
 	NDBGL2(L2_F_MSG, "FSM function F_NCNA executing");
 }
@@ -212,7 +212,7 @@ F_NCNA(l2_softc_t *l2sc)
  *	layer 2 state transition table
  *---------------------------------------------------------------------------*/	
 struct l2state_tab {
-	void (*func) __P((l2_softc_t *));	/* function to execute */
+	void (*func) __P((l2_softc_t *, struct isdn_l3_driver *));	/* function to execute */
 	int newstate;				/* next state */
 } l2state_tab[N_EVENTS][N_STATES] = {
 
@@ -244,10 +244,10 @@ struct l2state_tab {
 /*---------------------------------------------------------------------------*
  *	event handler, executes function and sets new state
  *---------------------------------------------------------------------------*/	
-void i4b_next_l2state(l2_softc_t *l2sc, int event)
+void i4b_next_l2state(l2_softc_t *l2sc, struct isdn_l3_driver *drv, int event)
 {
 	int currstate, newstate;
-	int (*savpostfsmfunc)(int) = NULL;
+	int (*savpostfsmfunc)(struct isdn_l3_driver *) = NULL;
 
 	/* check event number */
 	if(event > N_EVENTS)
@@ -271,7 +271,7 @@ void i4b_next_l2state(l2_softc_t *l2sc, int event)
         }
 
 	/* execute state transition function */
-        (*l2state_tab[event][currstate].func)(l2sc);
+        (*l2state_tab[event][currstate].func)(l2sc, drv);
 
 	if(newstate == ST_SUBSET)
 	{	/* state function DOES set new state */
@@ -319,7 +319,7 @@ char *i4b_print_l2state(l2_softc_t *l2sc)
  *	FSM state ST_TEI_UNAS event dl establish request
  *---------------------------------------------------------------------------*/	
 static void
-F_TU01(l2_softc_t *l2sc)
+F_TU01(l2_softc_t *l2sc, struct isdn_l3_driver *drv)
 {
 	NDBGL2(L2_F_MSG, "FSM function F_TU01 executing");
 	i4b_mdl_assign_ind(l2sc);
@@ -329,7 +329,7 @@ F_TU01(l2_softc_t *l2sc)
  *	FSM state ST_TEI_UNAS event mdl assign request
  *---------------------------------------------------------------------------*/	
 static void
-F_TU03(l2_softc_t *l2sc)
+F_TU03(l2_softc_t *l2sc, struct isdn_l3_driver *drv)
 {
 	NDBGL2(L2_F_MSG, "FSM function F_TU03 executing");
 }
@@ -338,7 +338,7 @@ F_TU03(l2_softc_t *l2sc)
  *	FSM state ST_ASG_AW_TEI event mdl assign request
  *---------------------------------------------------------------------------*/	
 static void
-F_TA03(l2_softc_t *l2sc)
+F_TA03(l2_softc_t *l2sc, struct isdn_l3_driver *drv)
 {
 	NDBGL2(L2_F_MSG, "FSM function F_TA03 executing");
 }
@@ -347,7 +347,7 @@ F_TA03(l2_softc_t *l2sc)
  *	FSM state ST_ASG_AW_TEI event mdl error response
  *---------------------------------------------------------------------------*/	
 static void
-F_TA04(l2_softc_t *l2sc)
+F_TA04(l2_softc_t *l2sc, struct isdn_l3_driver *drv)
 {
 	NDBGL2(L2_F_MSG, "FSM function F_TA04 executing");
 }
@@ -356,7 +356,7 @@ F_TA04(l2_softc_t *l2sc)
  *	FSM state ST_ASG_AW_TEI event persistent deactivation
  *---------------------------------------------------------------------------*/	
 static void
-F_TA05(l2_softc_t *l2sc)
+F_TA05(l2_softc_t *l2sc, struct isdn_l3_driver *drv)
 {
 	NDBGL2(L2_F_MSG, "FSM function F_TA05 executing");
 }
@@ -365,7 +365,7 @@ F_TA05(l2_softc_t *l2sc)
  *	FSM state ST_EST_AW_TEI event mdl assign request
  *---------------------------------------------------------------------------*/	
 static void
-F_TE03(l2_softc_t *l2sc)
+F_TE03(l2_softc_t *l2sc, struct isdn_l3_driver *drv)
 {
 	NDBGL2(L2_F_MSG, "FSM function F_TE03 executing");
 	i4b_establish_data_link(l2sc);
@@ -376,10 +376,10 @@ F_TE03(l2_softc_t *l2sc)
  *	FSM state ST_EST_AW_TEI event mdl error response
  *---------------------------------------------------------------------------*/	
 static void
-F_TE04(l2_softc_t *l2sc)
+F_TE04(l2_softc_t *l2sc, struct isdn_l3_driver *drv)
 {
 	NDBGL2(L2_F_MSG, "FSM function F_TE04 executing");
-	l2sc->postfsmarg = l2sc->bri;
+	l2sc->postfsmarg = l2sc->drv;
 	l2sc->postfsmfunc = i4b_dl_release_ind;
 }
 
@@ -387,10 +387,10 @@ F_TE04(l2_softc_t *l2sc)
  *	FSM state ST_EST_AW_TEI event persistent deactivation
  *---------------------------------------------------------------------------*/	
 static void
-F_TE05(l2_softc_t *l2sc)
+F_TE05(l2_softc_t *l2sc, struct isdn_l3_driver *drv)
 {
 	NDBGL2(L2_F_MSG, "FSM function F_TE05 executing");
-	l2sc->postfsmarg = l2sc->bri;
+	l2sc->postfsmarg = l2sc->drv;
 	l2sc->postfsmfunc = i4b_dl_release_ind;
 }
 
@@ -398,7 +398,7 @@ F_TE05(l2_softc_t *l2sc)
  *	FSM state ST_TEI_ASGD event dl establish request
  *---------------------------------------------------------------------------*/	
 static void
-F_T01(l2_softc_t *l2sc)
+F_T01(l2_softc_t *l2sc, struct isdn_l3_driver *drv)
 {
 	NDBGL2(L2_F_MSG, "FSM function F_T01 executing");
 	i4b_establish_data_link(l2sc);
@@ -409,7 +409,7 @@ F_T01(l2_softc_t *l2sc)
  *	FSM state ST_TEI_ASGD event persistent deactivation
  *---------------------------------------------------------------------------*/	
 static void
-F_T05(l2_softc_t *l2sc)
+F_T05(l2_softc_t *l2sc, struct isdn_l3_driver *drv)
 {
 	NDBGL2(L2_F_MSG, "FSM function F_T05 executing");
 }
@@ -418,7 +418,7 @@ F_T05(l2_softc_t *l2sc)
  *	FSM state ST_TEI_ASGD event mdl remove request
  *---------------------------------------------------------------------------*/	
 static void
-F_T06(l2_softc_t *l2sc)
+F_T06(l2_softc_t *l2sc, struct isdn_l3_driver *drv)
 {
 	NDBGL2(L2_F_MSG, "FSM function F_T06 executing");
 /*XXX*/	i4b_mdl_assign_ind(l2sc);
@@ -428,7 +428,7 @@ F_T06(l2_softc_t *l2sc)
  *	FSM state ST_TEI_ASGD event rx'd SABME
  *---------------------------------------------------------------------------*/	
 static void
-F_T07(l2_softc_t *l2sc)
+F_T07(l2_softc_t *l2sc, struct isdn_l3_driver *drv)
 {
 	NDBGL2(L2_F_MSG, "FSM function F_T07 executing");
 
@@ -444,7 +444,7 @@ F_T07(l2_softc_t *l2sc)
 
 	i4b_clear_exception_conditions(l2sc);
 
-	i4b_mdl_status_ind(l2sc->bri, STI_L2STAT, LAYER_ACTIVE);
+	i4b_mdl_status_ind(l2sc->drv, STI_L2STAT, LAYER_ACTIVE);
 	
 	i4b_tx_ua(l2sc, l2sc->rxd_PF);
 
@@ -452,7 +452,7 @@ F_T07(l2_softc_t *l2sc)
 	l2sc->va = 0;
 	l2sc->vr = 0;	
 
-	l2sc->postfsmarg = l2sc->bri;
+	l2sc->postfsmarg = l2sc->drv;
 	l2sc->postfsmfunc = i4b_dl_establish_ind;
 
 	i4b_T203_start(l2sc);	
@@ -464,10 +464,10 @@ F_T07(l2_softc_t *l2sc)
  *	FSM state ST_TEI_ASGD event rx'd DISC
  *---------------------------------------------------------------------------*/	
 static void
-F_T08(l2_softc_t *l2sc)
+F_T08(l2_softc_t *l2sc, struct isdn_l3_driver *drv)
 {
 	NDBGL2(L2_F_MSG, "FSM function F_T08 executing");
-	i4b_mdl_status_ind(l2sc->bri, STI_L2STAT, LAYER_IDLE);
+	i4b_mdl_status_ind(l2sc->drv, STI_L2STAT, LAYER_IDLE);
 	i4b_tx_ua(l2sc, l2sc->rxd_PF);
 }
 
@@ -475,7 +475,7 @@ F_T08(l2_softc_t *l2sc)
  *	FSM state ST_TEI_ASGD event rx'd UA
  *---------------------------------------------------------------------------*/	
 static void
-F_T09(l2_softc_t *l2sc)
+F_T09(l2_softc_t *l2sc, struct isdn_l3_driver *drv)
 {
 	NDBGL2(L2_F_MSG, "FSM function F_T09 executing");
 	i4b_mdl_error_ind(l2sc, "F_T09", MDL_ERR_C);
@@ -486,7 +486,7 @@ F_T09(l2_softc_t *l2sc)
  *	FSM state ST_TEI_ASGD event rx'd DM
  *---------------------------------------------------------------------------*/	
 static void
-F_T10(l2_softc_t *l2sc)
+F_T10(l2_softc_t *l2sc, struct isdn_l3_driver *drv)
 {
 	NDBGL2(L2_F_MSG, "FSM function F_T10 executing");
 
@@ -515,10 +515,10 @@ F_T10(l2_softc_t *l2sc)
  *	FSM state ST_TEI_ASGD event dl release request
  *---------------------------------------------------------------------------*/	
 static void
-F_T13(l2_softc_t *l2sc)
+F_T13(l2_softc_t *l2sc, struct isdn_l3_driver *drv)
 {
 	NDBGL2(L2_F_MSG, "FSM function F_T13 executing");
-	l2sc->postfsmarg = l2sc->bri;
+	l2sc->postfsmarg = l2sc->drv;
 	l2sc->postfsmfunc = i4b_dl_release_cnf;
 }
 
@@ -526,7 +526,7 @@ F_T13(l2_softc_t *l2sc)
  *	FSM state ST_AW_EST event dl establish request
  *---------------------------------------------------------------------------*/	
 static void
-F_AE01(l2_softc_t *l2sc)
+F_AE01(l2_softc_t *l2sc, struct isdn_l3_driver *drv)
 {
 	NDBGL2(L2_F_MSG, "FSM function F_AE01 executing");
 
@@ -539,13 +539,13 @@ F_AE01(l2_softc_t *l2sc)
  *	FSM state ST_AW_EST event persistent deactivation
  *---------------------------------------------------------------------------*/	
 static void
-F_AE05(l2_softc_t *l2sc)
+F_AE05(l2_softc_t *l2sc, struct isdn_l3_driver *drv)
 {
 	NDBGL2(L2_F_MSG, "FSM function F_AE05 executing");
 
 	i4b_Dcleanifq(&l2sc->i_queue);	
 
-	l2sc->postfsmarg = l2sc->bri;
+	l2sc->postfsmarg = l2sc->drv;
 	l2sc->postfsmfunc = i4b_dl_release_ind;
 
 	i4b_T200_stop(l2sc);
@@ -555,13 +555,13 @@ F_AE05(l2_softc_t *l2sc)
  *	FSM state ST_AW_EST event mdl remove request
  *---------------------------------------------------------------------------*/	
 static void
-F_AE06(l2_softc_t *l2sc)
+F_AE06(l2_softc_t *l2sc, struct isdn_l3_driver *drv)
 {
 	NDBGL2(L2_F_MSG, "FSM function F_AE06 executing");
 
 	i4b_Dcleanifq(&l2sc->i_queue);	
 
-	l2sc->postfsmarg = l2sc->bri;
+	l2sc->postfsmarg = l2sc->drv;
 	l2sc->postfsmfunc = i4b_dl_release_ind;
 
 	i4b_T200_stop(l2sc);
@@ -573,10 +573,10 @@ F_AE06(l2_softc_t *l2sc)
  *	FSM state ST_AW_EST event rx'd SABME
  *---------------------------------------------------------------------------*/	
 static void
-F_AE07(l2_softc_t *l2sc)
+F_AE07(l2_softc_t *l2sc, struct isdn_l3_driver *drv)
 {
 	NDBGL2(L2_F_MSG, "FSM function F_AE07 executing");
-	i4b_mdl_status_ind(l2sc->bri, STI_L2STAT, LAYER_ACTIVE);
+	i4b_mdl_status_ind(l2sc->drv, STI_L2STAT, LAYER_ACTIVE);
 	i4b_tx_ua(l2sc, l2sc->rxd_PF);
 }
 
@@ -584,7 +584,7 @@ F_AE07(l2_softc_t *l2sc)
  *	FSM state ST_AW_EST event rx'd DISC
  *---------------------------------------------------------------------------*/	
 static void
-F_AE08(l2_softc_t *l2sc)
+F_AE08(l2_softc_t *l2sc, struct isdn_l3_driver *drv)
 {
 	NDBGL2(L2_F_MSG, "FSM function F_AE08 executing");
 	i4b_tx_dm(l2sc, l2sc->rxd_PF);
@@ -594,7 +594,7 @@ F_AE08(l2_softc_t *l2sc)
  *	FSM state ST_AW_EST event rx'd UA
  *---------------------------------------------------------------------------*/	
 static void
-F_AE09(l2_softc_t *l2sc)
+F_AE09(l2_softc_t *l2sc, struct isdn_l3_driver *drv)
 {
 	NDBGL2(L2_F_MSG, "FSM function F_AE09 executing");
 
@@ -609,7 +609,7 @@ F_AE09(l2_softc_t *l2sc)
 		{
 			l2sc->l3initiated = 0;
 			l2sc->vr = 0;
-			l2sc->postfsmarg = l2sc->bri;
+			l2sc->postfsmarg = l2sc->drv;
 			l2sc->postfsmfunc = i4b_dl_establish_cnf;
 		}
 		else
@@ -617,12 +617,12 @@ F_AE09(l2_softc_t *l2sc)
 			if(l2sc->vs != l2sc->va)
 			{
 				i4b_Dcleanifq(&l2sc->i_queue);
-				l2sc->postfsmarg = l2sc->bri;
+				l2sc->postfsmarg = l2sc->drv;
 				l2sc->postfsmfunc = i4b_dl_establish_ind;
 			}
 		}
 
-		i4b_mdl_status_ind(l2sc->bri, STI_L2STAT, LAYER_ACTIVE);
+		i4b_mdl_status_ind(l2sc->drv, STI_L2STAT, LAYER_ACTIVE);
 		
 		i4b_T200_stop(l2sc);
 		i4b_T203_start(l2sc);
@@ -638,7 +638,7 @@ F_AE09(l2_softc_t *l2sc)
  *	FSM state ST_AW_EST event rx'd DM
  *---------------------------------------------------------------------------*/	
 static void
-F_AE10(l2_softc_t *l2sc)
+F_AE10(l2_softc_t *l2sc, struct isdn_l3_driver *drv)
 {
 	NDBGL2(L2_F_MSG, "FSM function F_AE10 executing");
 
@@ -650,7 +650,7 @@ F_AE10(l2_softc_t *l2sc)
 	{
 		i4b_Dcleanifq(&l2sc->i_queue);
 
-		l2sc->postfsmarg = l2sc->bri;
+		l2sc->postfsmarg = l2sc->drv;
 		l2sc->postfsmfunc = i4b_dl_release_ind;
 
 		i4b_T200_stop(l2sc);
@@ -663,7 +663,7 @@ F_AE10(l2_softc_t *l2sc)
  *	FSM state ST_AW_EST event T200 expiry
  *---------------------------------------------------------------------------*/	
 static void
-F_AE11(l2_softc_t *l2sc)
+F_AE11(l2_softc_t *l2sc, struct isdn_l3_driver *drv)
 {
 	NDBGL2(L2_F_MSG, "FSM function F_AE11 executing");
 
@@ -673,7 +673,7 @@ F_AE11(l2_softc_t *l2sc)
 
 		i4b_mdl_error_ind(l2sc, "F_AE11", MDL_ERR_G);
 
-		l2sc->postfsmarg = l2sc->bri;
+		l2sc->postfsmarg = l2sc->drv;
 		l2sc->postfsmfunc = i4b_dl_release_ind;
 
 		l2sc->Q921_state = ST_TEI_ASGD;
@@ -694,7 +694,7 @@ F_AE11(l2_softc_t *l2sc)
  *	FSM state ST_AW_EST event dl data request
  *---------------------------------------------------------------------------*/	
 static void
-F_AE12(l2_softc_t *l2sc)
+F_AE12(l2_softc_t *l2sc, struct isdn_l3_driver *drv)
 {
 	NDBGL2(L2_F_MSG, "FSM function F_AE12 executing");
 
@@ -708,11 +708,11 @@ F_AE12(l2_softc_t *l2sc)
  *	FSM state ST_AW_REL event persistent deactivation
  *---------------------------------------------------------------------------*/	
 static void
-F_AR05(l2_softc_t *l2sc)
+F_AR05(l2_softc_t *l2sc, struct isdn_l3_driver *drv)
 {
 	NDBGL2(L2_F_MSG, "FSM function F_AR05 executing");
 
-	l2sc->postfsmarg = l2sc->bri;
+	l2sc->postfsmarg = l2sc->drv;
 	l2sc->postfsmfunc = i4b_dl_release_cnf;
 
 	i4b_T200_stop(l2sc);
@@ -722,11 +722,11 @@ F_AR05(l2_softc_t *l2sc)
  *	FSM state ST_AW_REL event mdl remove request
  *---------------------------------------------------------------------------*/	
 static void
-F_AR06(l2_softc_t *l2sc)
+F_AR06(l2_softc_t *l2sc, struct isdn_l3_driver *drv)
 {
 	NDBGL2(L2_F_MSG, "FSM function F_AR06 executing");
 
-	l2sc->postfsmarg = l2sc->bri;
+	l2sc->postfsmarg = l2sc->drv;
 	l2sc->postfsmfunc = i4b_dl_release_cnf;
 
 	i4b_T200_stop(l2sc);
@@ -738,7 +738,7 @@ F_AR06(l2_softc_t *l2sc)
  *	FSM state ST_AW_REL event rx'd SABME
  *---------------------------------------------------------------------------*/	
 static void
-F_AR07(l2_softc_t *l2sc)
+F_AR07(l2_softc_t *l2sc, struct isdn_l3_driver *drv)
 {
 	NDBGL2(L2_F_MSG, "FSM function F_AR07 executing");	
 	i4b_tx_dm(l2sc, l2sc->rxd_PF);
@@ -748,10 +748,10 @@ F_AR07(l2_softc_t *l2sc)
  *	FSM state ST_AW_REL event rx'd DISC
  *---------------------------------------------------------------------------*/	
 static void
-F_AR08(l2_softc_t *l2sc)
+F_AR08(l2_softc_t *l2sc, struct isdn_l3_driver *drv)
 {
 	NDBGL2(L2_F_MSG, "FSM function F_AR08 executing");
-	i4b_mdl_status_ind(l2sc->bri, STI_L2STAT, LAYER_IDLE);
+	i4b_mdl_status_ind(l2sc->drv, STI_L2STAT, LAYER_IDLE);
 	i4b_tx_ua(l2sc, l2sc->rxd_PF);	
 }
 
@@ -759,13 +759,13 @@ F_AR08(l2_softc_t *l2sc)
  *	FSM state ST_AW_REL event rx'd UA
  *---------------------------------------------------------------------------*/	
 static void
-F_AR09(l2_softc_t *l2sc)
+F_AR09(l2_softc_t *l2sc, struct isdn_l3_driver *drv)
 {
 	NDBGL2(L2_F_MSG, "FSM function F_AR09 executing");
 
 	if(l2sc->rxd_PF)
 	{
-		l2sc->postfsmarg = l2sc->bri;
+		l2sc->postfsmarg = l2sc->drv;
 		l2sc->postfsmfunc = i4b_dl_release_cnf;
 
 		i4b_T200_stop(l2sc);
@@ -784,13 +784,13 @@ F_AR09(l2_softc_t *l2sc)
  *	FSM state ST_AW_REL event rx'd DM
  *---------------------------------------------------------------------------*/	
 static void
-F_AR10(l2_softc_t *l2sc)
+F_AR10(l2_softc_t *l2sc, struct isdn_l3_driver *drv)
 {
 	NDBGL2(L2_F_MSG, "FSM function F_AR10 executing");
 
 	if(l2sc->rxd_PF)
 	{
-		l2sc->postfsmarg = l2sc->bri;
+		l2sc->postfsmarg = l2sc->drv;
 		l2sc->postfsmfunc = i4b_dl_release_cnf;
 
 		i4b_T200_stop(l2sc);
@@ -807,7 +807,7 @@ F_AR10(l2_softc_t *l2sc)
  *	FSM state ST_AW_REL event T200 expiry
  *---------------------------------------------------------------------------*/	
 static void
-F_AR11(l2_softc_t *l2sc)
+F_AR11(l2_softc_t *l2sc, struct isdn_l3_driver *drv)
 {
 	NDBGL2(L2_F_MSG, "FSM function F_AR11 executing");
 
@@ -815,7 +815,7 @@ F_AR11(l2_softc_t *l2sc)
 	{
 		i4b_mdl_error_ind(l2sc, "F_AR11", MDL_ERR_H);
 
-		l2sc->postfsmarg = l2sc->bri;
+		l2sc->postfsmarg = l2sc->drv;
 		l2sc->postfsmfunc = i4b_dl_release_cnf;
 
 		l2sc->Q921_state = ST_TEI_ASGD;
@@ -836,7 +836,7 @@ F_AR11(l2_softc_t *l2sc)
  *	FSM state ST_MULTIFR event dl establish request
  *---------------------------------------------------------------------------*/	
 static void
-F_MF01(l2_softc_t *l2sc)
+F_MF01(l2_softc_t *l2sc, struct isdn_l3_driver *drv)
 {
 	NDBGL2(L2_F_MSG, "FSM function F_MF01 executing");
 
@@ -851,13 +851,13 @@ F_MF01(l2_softc_t *l2sc)
  *	FSM state ST_MULTIFR event persistent deactivation
  *---------------------------------------------------------------------------*/	
 static void
-F_MF05(l2_softc_t *l2sc)
+F_MF05(l2_softc_t *l2sc, struct isdn_l3_driver *drv)
 {
 	NDBGL2(L2_F_MSG, "FSM function F_MF05 executing");
 
 	i4b_Dcleanifq(&l2sc->i_queue);
 	
-	l2sc->postfsmarg = l2sc->bri;
+	l2sc->postfsmarg = l2sc->drv;
 	l2sc->postfsmfunc = i4b_dl_release_ind;
 	
 	i4b_T200_stop(l2sc);
@@ -868,13 +868,13 @@ F_MF05(l2_softc_t *l2sc)
  *	FSM state ST_MULTIFR event mdl remove request
  *---------------------------------------------------------------------------*/	
 static void
-F_MF06(l2_softc_t *l2sc)
+F_MF06(l2_softc_t *l2sc, struct isdn_l3_driver *drv)
 {
 	NDBGL2(L2_F_MSG, "FSM function F_MF06 executing");
 
 	i4b_Dcleanifq(&l2sc->i_queue);
 	
-	l2sc->postfsmarg = l2sc->bri;
+	l2sc->postfsmarg = l2sc->drv;
 	l2sc->postfsmfunc = i4b_dl_release_ind;
 	
 	i4b_T200_stop(l2sc);
@@ -887,13 +887,13 @@ F_MF06(l2_softc_t *l2sc)
  *	FSM state ST_MULTIFR event rx'd SABME
  *---------------------------------------------------------------------------*/	
 static void
-F_MF07(l2_softc_t *l2sc)
+F_MF07(l2_softc_t *l2sc, struct isdn_l3_driver *drv)
 {
 	NDBGL2(L2_F_MSG, "FSM function F_MF07 executing");
 
 	i4b_clear_exception_conditions(l2sc);
 
-	i4b_mdl_status_ind(l2sc->bri, STI_L2STAT, LAYER_ACTIVE);	
+	i4b_mdl_status_ind(l2sc->drv, STI_L2STAT, LAYER_ACTIVE);	
 
 	i4b_tx_ua(l2sc, l2sc->rxd_PF);
 
@@ -903,7 +903,7 @@ F_MF07(l2_softc_t *l2sc)
 	{
 		i4b_Dcleanifq(&l2sc->i_queue);
 	
-		l2sc->postfsmarg = l2sc->bri;
+		l2sc->postfsmarg = l2sc->drv;
 		l2sc->postfsmfunc = i4b_dl_establish_ind;
 	}
 
@@ -919,15 +919,15 @@ F_MF07(l2_softc_t *l2sc)
  *	FSM state ST_MULTIFR event rx'd DISC
  *---------------------------------------------------------------------------*/	
 static void
-F_MF08(l2_softc_t *l2sc)
+F_MF08(l2_softc_t *l2sc, struct isdn_l3_driver *drv)
 {
 	NDBGL2(L2_F_MSG, "FSM function F_MF08 executing");
 
 	i4b_Dcleanifq(&l2sc->i_queue);
-	i4b_mdl_status_ind(l2sc->bri, STI_L2STAT, LAYER_IDLE);
+	i4b_mdl_status_ind(l2sc->drv, STI_L2STAT, LAYER_IDLE);
 	i4b_tx_ua(l2sc, l2sc->rxd_PF);
 	
-	l2sc->postfsmarg = l2sc->bri;
+	l2sc->postfsmarg = l2sc->drv;
 	l2sc->postfsmfunc = i4b_dl_release_ind;
 
 	i4b_T200_stop(l2sc);
@@ -938,7 +938,7 @@ F_MF08(l2_softc_t *l2sc)
  *	FSM state ST_MULTIFR event rx'd UA
  *---------------------------------------------------------------------------*/	
 static void
-F_MF09(l2_softc_t *l2sc)
+F_MF09(l2_softc_t *l2sc, struct isdn_l3_driver *drv)
 {
 	NDBGL2(L2_F_MSG, "FSM function F_MF09 executing");
 	if(l2sc->rxd_PF)
@@ -951,7 +951,7 @@ F_MF09(l2_softc_t *l2sc)
  *	FSM state ST_MULTIFR event rx'd DM
  *---------------------------------------------------------------------------*/	
 static void
-F_MF10(l2_softc_t *l2sc)
+F_MF10(l2_softc_t *l2sc, struct isdn_l3_driver *drv)
 {
 	NDBGL2(L2_F_MSG, "FSM function F_MF10 executing");
 
@@ -977,7 +977,7 @@ F_MF10(l2_softc_t *l2sc)
  *	FSM state ST_MULTIFR event T200 expiry
  *---------------------------------------------------------------------------*/	
 static void
-F_MF11(l2_softc_t *l2sc)
+F_MF11(l2_softc_t *l2sc, struct isdn_l3_driver *drv)
 {
 	NDBGL2(L2_F_MSG, "FSM function F_MF11 executing");
 
@@ -992,7 +992,7 @@ F_MF11(l2_softc_t *l2sc)
  *	FSM state ST_MULTIFR event dl data request
  *---------------------------------------------------------------------------*/	
 static void
-F_MF12(l2_softc_t *l2sc)
+F_MF12(l2_softc_t *l2sc, struct isdn_l3_driver *drv)
 {
 	NDBGL2(L2_F_MSG, "FSM function F_MF12 executing");
 
@@ -1003,7 +1003,7 @@ F_MF12(l2_softc_t *l2sc)
  *	FSM state ST_MULTIFR event dl release request
  *---------------------------------------------------------------------------*/	
 static void
-F_MF13(l2_softc_t *l2sc)
+F_MF13(l2_softc_t *l2sc, struct isdn_l3_driver *drv)
 {
 	NDBGL2(L2_F_MSG, "FSM function F_MF13 executing");
 
@@ -1021,7 +1021,7 @@ F_MF13(l2_softc_t *l2sc)
  *	FSM state ST_MULTIFR event T203 expiry
  *---------------------------------------------------------------------------*/	
 static void
-F_MF14(l2_softc_t *l2sc)
+F_MF14(l2_softc_t *l2sc, struct isdn_l3_driver *drv)
 {
 	NDBGL2(L2_F_MSG, "FSM function F_MF14 executing");
 
@@ -1034,7 +1034,7 @@ F_MF14(l2_softc_t *l2sc)
  *	FSM state ST_MULTIFR event set own rx busy
  *---------------------------------------------------------------------------*/	
 static void
-F_MF15(l2_softc_t *l2sc)
+F_MF15(l2_softc_t *l2sc, struct isdn_l3_driver *drv)
 {
 	NDBGL2(L2_F_MSG, "FSM function F_MF15 executing");
 
@@ -1052,7 +1052,7 @@ F_MF15(l2_softc_t *l2sc)
  *	FSM state ST_MULTIFR event clear own rx busy
  *---------------------------------------------------------------------------*/	
 static void
-F_MF16(l2_softc_t *l2sc)
+F_MF16(l2_softc_t *l2sc, struct isdn_l3_driver *drv)
 {
 	NDBGL2(L2_F_MSG, "FSM function F_MF16 executing");
 
@@ -1070,7 +1070,7 @@ F_MF16(l2_softc_t *l2sc)
  *	FSM state ST_MULTIFR event rx'd RR
  *---------------------------------------------------------------------------*/	
 static void
-F_MF17(l2_softc_t *l2sc)
+F_MF17(l2_softc_t *l2sc, struct isdn_l3_driver *drv)
 {
 	NDBGL2(L2_F_MSG, "FSM function F_MF17 executing");
 
@@ -1117,7 +1117,7 @@ F_MF17(l2_softc_t *l2sc)
  *	FSM state ST_MULTIFR event rx'd REJ
  *---------------------------------------------------------------------------*/	
 static void
-F_MF18(l2_softc_t *l2sc)
+F_MF18(l2_softc_t *l2sc, struct isdn_l3_driver *drv)
 {
 	NDBGL2(L2_F_MSG, "FSM function F_MF18 executing");
 
@@ -1157,7 +1157,7 @@ F_MF18(l2_softc_t *l2sc)
  *	FSM state ST_MULTIFR event rx'd RNR
  *---------------------------------------------------------------------------*/	
 static void
-F_MF19(l2_softc_t *l2sc)
+F_MF19(l2_softc_t *l2sc, struct isdn_l3_driver *drv)
 {
 	NDBGL2(L2_F_MSG, "FSM function F_MF19 executing");
 
@@ -1196,7 +1196,7 @@ F_MF19(l2_softc_t *l2sc)
  *	FSM state ST_MULTIFR event rx'd FRMR
  *---------------------------------------------------------------------------*/	
 static void
-F_MF20(l2_softc_t *l2sc)
+F_MF20(l2_softc_t *l2sc, struct isdn_l3_driver *drv)
 {
 	NDBGL2(L2_F_MSG, "FSM function F_MF20 executing");
 
@@ -1211,7 +1211,7 @@ F_MF20(l2_softc_t *l2sc)
  *	FSM state ST_TIMREC event dl establish request
  *---------------------------------------------------------------------------*/	
 static void
-F_TR01(l2_softc_t *l2sc)
+F_TR01(l2_softc_t *l2sc, struct isdn_l3_driver *drv)
 {
 	NDBGL2(L2_F_MSG, "FSM function F_TR01 executing");
 
@@ -1226,13 +1226,13 @@ F_TR01(l2_softc_t *l2sc)
  *	FSM state ST_TIMREC event persistent deactivation
  *---------------------------------------------------------------------------*/	
 static void
-F_TR05(l2_softc_t *l2sc)
+F_TR05(l2_softc_t *l2sc, struct isdn_l3_driver *drv)
 {
 	NDBGL2(L2_F_MSG, "FSM function F_TR05 executing");
 
 	i4b_Dcleanifq(&l2sc->i_queue);	
 
-	l2sc->postfsmarg = l2sc->bri;
+	l2sc->postfsmarg = l2sc->drv;
 	l2sc->postfsmfunc = i4b_dl_release_ind;
 
 	i4b_T200_stop(l2sc);
@@ -1242,13 +1242,13 @@ F_TR05(l2_softc_t *l2sc)
  *	FSM state ST_TIMREC event mdl remove request
  *---------------------------------------------------------------------------*/	
 static void
-F_TR06(l2_softc_t *l2sc)
+F_TR06(l2_softc_t *l2sc, struct isdn_l3_driver *drv)
 {
 	NDBGL2(L2_F_MSG, "FSM function F_TR06 executing");
 
 	i4b_Dcleanifq(&l2sc->i_queue);
 
-	l2sc->postfsmarg = l2sc->bri;
+	l2sc->postfsmarg = l2sc->drv;
 	l2sc->postfsmfunc = i4b_dl_release_ind;
 
 	i4b_T200_stop(l2sc);
@@ -1260,13 +1260,13 @@ F_TR06(l2_softc_t *l2sc)
  *	FSM state ST_TIMREC event rx'd SABME
  *---------------------------------------------------------------------------*/	
 static void
-F_TR07(l2_softc_t *l2sc)
+F_TR07(l2_softc_t *l2sc, struct isdn_l3_driver *drv)
 {
 	NDBGL2(L2_F_MSG, "FSM function F_TR07 executing");
 
 	i4b_clear_exception_conditions(l2sc);
 
-	i4b_mdl_status_ind(l2sc->bri, STI_L2STAT, LAYER_ACTIVE);
+	i4b_mdl_status_ind(l2sc->drv, STI_L2STAT, LAYER_ACTIVE);
 	
 	i4b_tx_ua(l2sc, l2sc->rxd_PF);
 
@@ -1276,7 +1276,7 @@ F_TR07(l2_softc_t *l2sc)
 	{
 		i4b_Dcleanifq(&l2sc->i_queue);		
 
-		l2sc->postfsmarg = l2sc->bri;
+		l2sc->postfsmarg = l2sc->drv;
 		l2sc->postfsmfunc = i4b_dl_establish_ind;
 	}
 
@@ -1292,15 +1292,15 @@ F_TR07(l2_softc_t *l2sc)
  *	FSM state ST_TIMREC event rx'd DISC
  *---------------------------------------------------------------------------*/	
 static void
-F_TR08(l2_softc_t *l2sc)
+F_TR08(l2_softc_t *l2sc, struct isdn_l3_driver *drv)
 {
 	NDBGL2(L2_F_MSG, "FSM function F_TR08 executing");
 
 	i4b_Dcleanifq(&l2sc->i_queue);		
-	i4b_mdl_status_ind(l2sc->bri, STI_L2STAT, LAYER_IDLE);
+	i4b_mdl_status_ind(drv, STI_L2STAT, LAYER_IDLE);
 	i4b_tx_ua(l2sc, l2sc->rxd_PF);
 
-	l2sc->postfsmarg = l2sc->bri;
+	l2sc->postfsmarg = drv;
 	l2sc->postfsmfunc = i4b_dl_release_ind;
 
 	i4b_T200_stop(l2sc);
@@ -1310,7 +1310,7 @@ F_TR08(l2_softc_t *l2sc)
  *	FSM state ST_TIMREC event rx'd UA
  *---------------------------------------------------------------------------*/	
 static void
-F_TR09(l2_softc_t *l2sc)
+F_TR09(l2_softc_t *l2sc, struct isdn_l3_driver *drv)
 {
 	NDBGL2(L2_F_MSG, "FSM function F_TR09 executing");
 	if(l2sc->rxd_PF)
@@ -1323,7 +1323,7 @@ F_TR09(l2_softc_t *l2sc)
  *	FSM state ST_TIMREC event rx'd DM
  *---------------------------------------------------------------------------*/	
 static void
-F_TR10(l2_softc_t *l2sc)
+F_TR10(l2_softc_t *l2sc, struct isdn_l3_driver *drv)
 {
 	NDBGL2(L2_F_MSG, "FSM function F_TR10 executing");
 
@@ -1345,7 +1345,7 @@ F_TR10(l2_softc_t *l2sc)
  *	FSM state ST_TIMREC event T200 expiry
  *---------------------------------------------------------------------------*/	
 static void
-F_TR11(l2_softc_t *l2sc)
+F_TR11(l2_softc_t *l2sc, struct isdn_l3_driver *drv)
 {
 	NDBGL2(L2_F_MSG, "FSM function F_TR11 executing");
 
@@ -1373,7 +1373,7 @@ F_TR11(l2_softc_t *l2sc)
  *	FSM state ST_TIMREC event dl data request
  *---------------------------------------------------------------------------*/	
 static void
-F_TR12(l2_softc_t *l2sc)
+F_TR12(l2_softc_t *l2sc, struct isdn_l3_driver *drv)
 {
 	NDBGL2(L2_F_MSG, "FSM function F_TR12 executing");
 
@@ -1384,7 +1384,7 @@ F_TR12(l2_softc_t *l2sc)
  *	FSM state ST_TIMREC event dl release request
  *---------------------------------------------------------------------------*/	
 static void
-F_TR13(l2_softc_t *l2sc)
+F_TR13(l2_softc_t *l2sc, struct isdn_l3_driver *drv)
 {
 	NDBGL2(L2_F_MSG, "FSM function F_TR13 executing");
 
@@ -1401,7 +1401,7 @@ F_TR13(l2_softc_t *l2sc)
  *	FSM state ST_TIMREC event set own rx busy
  *---------------------------------------------------------------------------*/	
 static void
-F_TR15(l2_softc_t *l2sc)
+F_TR15(l2_softc_t *l2sc, struct isdn_l3_driver *drv)
 {
 	NDBGL2(L2_F_MSG, "FSM function F_TR15 executing");
 
@@ -1419,7 +1419,7 @@ F_TR15(l2_softc_t *l2sc)
  *	FSM state ST_TIMREC event clear own rx busy
  *---------------------------------------------------------------------------*/	
 static void
-F_TR16(l2_softc_t *l2sc)
+F_TR16(l2_softc_t *l2sc, struct isdn_l3_driver *drv)
 {
 	NDBGL2(L2_F_MSG, "FSM function F_TR16 executing");
 
@@ -1437,7 +1437,7 @@ F_TR16(l2_softc_t *l2sc)
  *	FSM state ST_TIMREC event rx'd RR
  *---------------------------------------------------------------------------*/	
 static void
-F_TR17(l2_softc_t *l2sc)
+F_TR17(l2_softc_t *l2sc, struct isdn_l3_driver *drv)
 {
 	NDBGL2(L2_F_MSG, "FSM function F_TR17 executing");
 
@@ -1488,7 +1488,7 @@ F_TR17(l2_softc_t *l2sc)
  *	FSM state ST_TIMREC event 
  *---------------------------------------------------------------------------*/	
 static void
-F_TR18(l2_softc_t *l2sc)
+F_TR18(l2_softc_t *l2sc, struct isdn_l3_driver *drv)
 {
 	NDBGL2(L2_F_MSG, "FSM function F_TR18 executing");
 
@@ -1539,7 +1539,7 @@ F_TR18(l2_softc_t *l2sc)
  *	FSM state ST_TIMREC event rx'd RNR
  *---------------------------------------------------------------------------*/	
 static void
-F_TR19(l2_softc_t *l2sc)
+F_TR19(l2_softc_t *l2sc, struct isdn_l3_driver *drv)
 {
 	NDBGL2(L2_F_MSG, "FSM function F_TR19 executing");
 
@@ -1589,7 +1589,7 @@ F_TR19(l2_softc_t *l2sc)
  *	FSM state ST_TIMREC event rx'd FRMR
  *---------------------------------------------------------------------------*/	
 static void
-F_TR20(l2_softc_t *l2sc)
+F_TR20(l2_softc_t *l2sc, struct isdn_l3_driver *drv)
 {
 	NDBGL2(L2_F_MSG, "FSM function F_TR20 executing");
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: spec_vnops.c,v 1.53.2.7 2001/11/14 19:17:13 nathanw Exp $	*/
+/*	$NetBSD: spec_vnops.c,v 1.53.2.8 2002/06/20 03:48:03 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spec_vnops.c,v 1.53.2.7 2001/11/14 19:17:13 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spec_vnops.c,v 1.53.2.8 2002/06/20 03:48:03 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/lwp.h>
@@ -66,6 +66,8 @@ const char	devin[] = "devin";
 const char	devout[] = "devout";
 const char	devioc[] = "devioc";
 const char	devcls[] = "devcls";
+
+struct vnode	*speclisth[SPECHSZ];
 
 /*
  * This vnode operations vector is used for two things only:

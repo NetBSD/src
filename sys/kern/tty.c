@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.c,v 1.125.2.8 2002/04/17 00:06:19 nathanw Exp $	*/
+/*	$NetBSD: tty.c,v 1.125.2.9 2002/06/20 03:47:24 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1991, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.125.2.8 2002/04/17 00:06:19 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.125.2.9 2002/06/20 03:47:24 nathanw Exp $");
 
 #include "opt_uconsole.h"
 
@@ -117,21 +117,21 @@ const char	ttyout[] = "ttyout";
 
 char const char_type[] = {
 	E|CC, O|CC, O|CC, E|CC, O|CC, E|CC, E|CC, O|CC,	/* nul - bel */
-	O|BS, E|TB, E|NL, O|CC, E|VT, O|CR, O|CC, E|CC, /* bs - si */
-	O|CC, E|CC, E|CC, O|CC, E|CC, O|CC, O|CC, E|CC, /* dle - etb */
-	E|CC, O|CC, O|CC, E|CC, O|CC, E|CC, E|CC, O|CC, /* can - us */
-	O|NO, E|NO, E|NO, O|NO, E|NO, O|NO, O|NO, E|NO, /* sp - ' */
-	E|NO, O|NO, O|NO, E|NO, O|NO, E|NO, E|NO, O|NO, /* ( - / */
-	E|NA, O|NA, O|NA, E|NA, O|NA, E|NA, E|NA, O|NA, /* 0 - 7 */
-	O|NA, E|NA, E|NO, O|NO, E|NO, O|NO, O|NO, E|NO, /* 8 - ? */
-	O|NO, E|NA, E|NA, O|NA, E|NA, O|NA, O|NA, E|NA, /* @ - G */
-	E|NA, O|NA, O|NA, E|NA, O|NA, E|NA, E|NA, O|NA, /* H - O */
-	E|NA, O|NA, O|NA, E|NA, O|NA, E|NA, E|NA, O|NA, /* P - W */
-	O|NA, E|NA, E|NA, O|NO, E|NO, O|NO, O|NO, O|NA, /* X - _ */
-	E|NO, O|NA, O|NA, E|NA, O|NA, E|NA, E|NA, O|NA, /* ` - g */
-	O|NA, E|NA, E|NA, O|NA, E|NA, O|NA, O|NA, E|NA, /* h - o */
-	O|NA, E|NA, E|NA, O|NA, E|NA, O|NA, O|NA, E|NA, /* p - w */
-	E|NA, O|NA, O|NA, E|NO, O|NO, E|NO, E|NO, O|CC, /* x - del */
+	O|BS, E|TB, E|NL, O|CC, E|VT, O|CR, O|CC, E|CC,	/* bs - si */
+	O|CC, E|CC, E|CC, O|CC, E|CC, O|CC, O|CC, E|CC,	/* dle - etb */
+	E|CC, O|CC, O|CC, E|CC, O|CC, E|CC, E|CC, O|CC,	/* can - us */
+	O|NO, E|NO, E|NO, O|NO, E|NO, O|NO, O|NO, E|NO,	/* sp - ' */
+	E|NO, O|NO, O|NO, E|NO, O|NO, E|NO, E|NO, O|NO,	/* ( - / */
+	E|NA, O|NA, O|NA, E|NA, O|NA, E|NA, E|NA, O|NA,	/* 0 - 7 */
+	O|NA, E|NA, E|NO, O|NO, E|NO, O|NO, O|NO, E|NO,	/* 8 - ? */
+	O|NO, E|NA, E|NA, O|NA, E|NA, O|NA, O|NA, E|NA,	/* @ - G */
+	E|NA, O|NA, O|NA, E|NA, O|NA, E|NA, E|NA, O|NA,	/* H - O */
+	E|NA, O|NA, O|NA, E|NA, O|NA, E|NA, E|NA, O|NA,	/* P - W */
+	O|NA, E|NA, E|NA, O|NO, E|NO, O|NO, O|NO, O|NA,	/* X - _ */
+	E|NO, O|NA, O|NA, E|NA, O|NA, E|NA, E|NA, O|NA,	/* ` - g */
+	O|NA, E|NA, E|NA, O|NA, E|NA, O|NA, O|NA, E|NA,	/* h - o */
+	O|NA, E|NA, E|NA, O|NA, E|NA, O|NA, O|NA, E|NA,	/* p - w */
+	E|NA, O|NA, O|NA, E|NO, O|NO, E|NO, E|NO, O|CC,	/* x - del */
 	/*
 	 * Meta chars; should be settable per character set;
 	 * for now, treat them all as normal characters.
@@ -203,8 +203,8 @@ ttyopen(struct tty *tp, int dialout, int nonblock)
 			 * processes to close the tty first.
 			 */
 			while (ISSET(tp->t_state, TS_DIALOUT) ||
-			       (!ISSET(tp->t_state, TS_CARR_ON) && 
-				!ISSET(tp->t_cflag, CLOCAL | MDMBUF))) {
+			    (!ISSET(tp->t_state, TS_CARR_ON) &&
+			    !ISSET(tp->t_cflag, CLOCAL | MDMBUF))) {
 				tp->t_wopen++;
 				error = ttysleep(tp, &tp->t_rawq,
 				    TTIPRI | PCATCH, ttopen, 0);
@@ -219,7 +219,7 @@ ttyopen(struct tty *tp, int dialout, int nonblock)
 			 * Don't allow a non-blocking non-dialout open if the
 			 * device is already open for dialout.
 			 */
-		        if (ISSET(tp->t_state, TS_DIALOUT)) {
+			if (ISSET(tp->t_state, TS_DIALOUT)) {
 				splx(s);
 				return (EBUSY);
 			}
@@ -341,11 +341,9 @@ ttyinput(int c, struct tty *tp)
 				ttyflush(tp, FREAD | FWRITE);
 				pgsignal(tp->t_pgrp, SIGINT, 1);
 				return (0);
-			}
-			else if (ISSET(iflag, PARMRK))
+			} else if (ISSET(iflag, PARMRK))
 				goto parmrk;
-		}
-		else if ((ISSET(error, TTY_PE) && ISSET(iflag, INPCK)) ||
+		} else if ((ISSET(error, TTY_PE) && ISSET(iflag, INPCK)) ||
 		    ISSET(error, TTY_FE)) {
 			if (ISSET(iflag, IGNPAR))
 				return (0);
@@ -354,12 +352,10 @@ ttyinput(int c, struct tty *tp)
 				(void)putc(0    | TTY_QUOTE, &tp->t_rawq);
 				(void)putc(c    | TTY_QUOTE, &tp->t_rawq);
 				return (0);
-			}
-			else
+			} else
 				c = 0;
 		}
-	}
-	else if (c == 0377 &&
+	} else if (c == 0377 &&
 	    ISSET(iflag, ISTRIP|IGNPAR|INPCK|PARMRK) == (INPCK|PARMRK)) {
 		/* "Escape" a valid character of '\377'. */
 		(void)putc(0377 | TTY_QUOTE, &tp->t_rawq);
@@ -519,7 +515,7 @@ ttyinput(int c, struct tty *tp)
 				 * erase whitespace
 				 */
 				while ((c = unputc(&tp->t_rawq)) == ' ' ||
-				       c == '\t')
+				    c == '\t')
 					ttyrub(c, tp);
 				if (c == -1)
 					goto endcase;
@@ -545,7 +541,7 @@ ttyinput(int c, struct tty *tp)
 					if (c == -1)
 						goto endcase;
 				} while (c != ' ' && c != '\t' &&
-				         (alt == 0 || ISALPHA(c) == ctype));
+				    (alt == 0 || ISALPHA(c) == ctype));
 				(void)putc(c, &tp->t_rawq);
 				goto endcase;
 			}
@@ -832,7 +828,7 @@ ttioctl(struct tty *tp, u_long cmd, caddr_t data, int flag, struct proc *p)
 		*(int *)data = tp->t_linesw->l_no;
 		break;
 	case TIOCGLINED:
-		(void)strncpy((char *)data, tp->t_linesw->l_name, 
+		(void)strncpy((char *)data, tp->t_linesw->l_name,
 		    TTLINEDNAMELEN - 1);
 		break;
 	case TIOCGWINSZ:		/* get window size */
@@ -939,7 +935,7 @@ ttioctl(struct tty *tp, u_long cmd, caddr_t data, int flag, struct proc *p)
 		dev_t device;
 
 		/* Null terminate to prevent buffer overflow */
-		name[TTLINEDNAMELEN - 1] = '\0'; 
+		name[TTLINEDNAMELEN - 1] = '\0';
 		lp = ttyldisc_lookup(name);
 
  setldisc:
@@ -990,7 +986,7 @@ ttioctl(struct tty *tp, u_long cmd, caddr_t data, int flag, struct proc *p)
 		/* Session ctty vnode pointer set in vnode layer. */
 		if (!SESS_LEADER(p) ||
 		    ((p->p_session->s_ttyvp || tp->t_session) &&
-		     (tp->t_session != p->p_session)))
+		    (tp->t_session != p->p_session)))
 			return (EPERM);
 		SESSHOLD(p->p_session);
 		tp->t_session = p->p_session;
@@ -1081,8 +1077,7 @@ ttnread(struct tty *tp)
  * Wait for output to drain.
  */
 int
-ttywait(tp)
-	struct tty *tp;
+ttywait(struct tty *tp)
 {
 	int	error, s;
 
@@ -1242,7 +1237,8 @@ ttymodem(struct tty *tp, int flag)
 			CLR(tp->t_state, TS_CARR_ON);
 			if (ISSET(tp->t_state, TS_ISOPEN) && !CONNECTED(tp)) {
 				if (tp->t_session && tp->t_session->s_leader)
-					psignal(tp->t_session->s_leader, SIGHUP);
+					psignal(tp->t_session->s_leader,
+					    SIGHUP);
 				ttyflush(tp, FREAD | FWRITE);
 				return (0);
 			}
@@ -1453,7 +1449,7 @@ ttread(struct tty *tp, struct uio *uio, int flag)
 			pgsignal(tp->t_pgrp, SIGTSTP, 1);
 			if (first) {
 				error = ttysleep(tp, &lbolt,
-						 TTIPRI | PCATCH, ttybg, 0);
+				    TTIPRI | PCATCH, ttybg, 0);
 				if (error)
 					break;
 				goto loop;
@@ -1486,7 +1482,7 @@ ttread(struct tty *tp, struct uio *uio, int flag)
 	 * the input queue has gone down.
 	 */
 	s = spltty();
-	if (ISSET(tp->t_state, TS_TBLOCK) && tp->t_rawq.c_cc < TTYHOG/5) {
+	if (ISSET(tp->t_state, TS_TBLOCK) && tp->t_rawq.c_cc < TTYHOG / 5) {
 		if (ISSET(tp->t_iflag, IXOFF) &&
 		    cc[VSTART] != _POSIX_VDISABLE &&
 		    putc(cc[VSTART], &tp->t_outq) == 0) {
@@ -1852,7 +1848,7 @@ ttyecho(int c, struct tty *tp)
 	    ISSET(tp->t_lflag, EXTPROC))
 		return;
 	if (((ISSET(tp->t_lflag, ECHOCTL) &&
-	     (ISSET(c, TTY_CHARMASK) <= 037 && c != '\t' && c != '\n')) ||
+	    (ISSET(c, TTY_CHARMASK) <= 037 && c != '\t' && c != '\n')) ||
 	    ISSET(c, TTY_CHARMASK) == 0177)) {
 		(void)ttyoutput('^', tp);
 		CLR(c, ~TTY_CHARMASK);
@@ -1885,7 +1881,7 @@ int
 ttspeedtab(int speed, struct speedtab *table)
 {
 
-	for ( ; table->sp_speed != -1; table++)
+	for (; table->sp_speed != -1; table++)
 		if (table->sp_speed == speed)
 			return (table->sp_code);
 	return (-1);
@@ -1923,7 +1919,7 @@ ttyinfo(struct tty *tp)
 	struct timeval	utime, stime;
 	int		tmp;
 
-	if (ttycheckoutq(tp,0) == 0)
+	if (ttycheckoutq(tp, 0) == 0)
 		return;
 
 	/* Print load average. */
@@ -2000,11 +1996,11 @@ ttyinfo(struct tty *tp)
  *	   we pick out just "short-term" sleepers (P_SINTR == 0).
  *	4) Further ties are broken by picking the highest pid.
  */
-#define ISRUN(p)	((p)->p_nrlwps > 0)
-#define	TESTAB(a, b)    ((a)<<1 | (b))
-#define	ONLYA   2
-#define	ONLYB   1
-#define	BOTH    3
+#define	ISRUN(p)	((p)->p_nrlwps > 0)
+#define	TESTAB(a, b)	((a)<<1 | (b))
+#define	ONLYA	2
+#define	ONLYB	1
+#define	BOTH	3
 
 static int
 proc_compare(struct proc *p1, struct proc *p2)
@@ -2039,7 +2035,7 @@ proc_compare(struct proc *p1, struct proc *p2)
 	case ONLYB:
 		return (0);
 	case BOTH:
-		return (p2->p_pid > p1->p_pid); /* tie - return highest pid */
+		return (p2->p_pid > p1->p_pid);	/* tie - return highest pid */
 	}
 #if 0 /* XXX NJWLWP */
 	/*
@@ -2106,6 +2102,7 @@ ttysleep(struct tty *tp, void *chan, int pri, const char *wmesg, int timo)
 void
 tty_init(void)
 {
+
 	ttyldisc_init();
 
 	TAILQ_INIT(&ttylist);
@@ -2169,7 +2166,7 @@ ttymalloc(void)
 	clalloc(&tp->t_outq, 1024, 0);
 	/* Set default line discipline. */
 	tp->t_linesw = linesw[0];
-	return(tp);
+	return (tp);
 }
 
 /*

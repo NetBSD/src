@@ -1,10 +1,10 @@
-/*	$NetBSD: xebec.c,v 1.4.46.1 2001/06/21 20:09:20 nathanw Exp $	*/
+/*	$NetBSD: xebec.c,v 1.4.46.2 2002/06/20 03:49:51 nathanw Exp $	*/
 
 #include "xebec.h"
 #include "llparse.h"
 #ifndef	E_TABLE
 #define	E_TABLE "xebec.e"
-#endif	E_TABLE
+#endif	/* !E_TABLE */
 
 #include "main.h"
 #include "sets.h"

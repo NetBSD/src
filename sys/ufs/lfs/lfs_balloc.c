@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_balloc.c,v 1.27.2.5 2002/01/08 00:34:51 nathanw Exp $	*/
+/*	$NetBSD: lfs_balloc.c,v 1.27.2.6 2002/06/20 03:50:28 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_balloc.c,v 1.27.2.5 2002/01/08 00:34:51 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_balloc.c,v 1.27.2.6 2002/06/20 03:50:28 nathanw Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -400,12 +400,14 @@ lfs_fragextend(struct vnode *vp, int osize, int nsize, ufs_daddr_t lbn, struct b
 	if ((*bpp)->b_blkno > 0) {
 		LFS_SEGENTRY(sup, fs, dtosn(fs, dbtofsb(fs, (*bpp)->b_blkno)), ibp);
 		sup->su_nbytes += (nsize - osize);
-		VOP_BWRITE(ibp);
+		LFS_BWRITE_LOG(ibp);
 		ip->i_ffs_blocks += bb;
 	}
 	fs->lfs_bfree -= bb;
 	ip->i_lfs_effnblks += bb;
 	ip->i_flag |= IN_CHANGE | IN_UPDATE;
+
+	LFS_DEBUG_COUNTLOCKED("frag1");
 
 	obufsize = (*bpp)->b_bufsize;
 	allocbuf(*bpp, nsize);
@@ -413,6 +415,8 @@ lfs_fragextend(struct vnode *vp, int osize, int nsize, ufs_daddr_t lbn, struct b
 	/* Adjust locked-list accounting */
 	if (((*bpp)->b_flags & (B_LOCKED | B_CALL)) == B_LOCKED)
 		locked_queue_bytes += (*bpp)->b_bufsize - obufsize;
+
+	LFS_DEBUG_COUNTLOCKED("frag2");
 
 	bzero((char *)((*bpp)->b_data) + osize, (u_int)(nsize - osize));
 

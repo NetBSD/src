@@ -1,4 +1,4 @@
-/*	$NetBSD: malloc.c,v 1.4.46.2 2001/11/14 19:18:33 nathanw Exp $	*/
+/*	$NetBSD: malloc.c,v 1.4.46.3 2002/06/20 03:49:50 nathanw Exp $	*/
 
 /*
  * This code is such a kludge that I don't want to put my name on it.
@@ -13,7 +13,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: malloc.c,v 1.4.46.2 2001/11/14 19:18:33 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: malloc.c,v 1.4.46.3 2002/06/20 03:49:50 nathanw Exp $");
 
 #include <stdio.h>
 #include "malloc.h"
@@ -31,13 +31,13 @@ init_alloc()
 #ifdef LINT
 	hiwat = 0;
 	highend = 0;
-#else LINT
+#else /* !LINT */
 	extern char *sbrk();
 
 	hiwat = (char *) sbrk(0);
 	hiwat = (char *)((unsigned)(hiwat + 3) & ~0x3);
 	highend = hiwat;
-#endif LINT
+#endif /* LINT */
 }
 
 void

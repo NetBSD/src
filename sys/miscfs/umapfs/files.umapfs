@@ -1,0 +1,7 @@
+#	$NetBSD: files.umapfs,v 1.1.6.2 2002/06/20 03:48:04 nathanw Exp $
+
+deffs	UMAPFS
+
+file	miscfs/umapfs/umap_subr.c	umapfs
+file	miscfs/umapfs/umap_vfsops.c	umapfs
+file	miscfs/umapfs/umap_vnops.c	umapfs

@@ -1,4 +1,4 @@
-/*	$NetBSD: ns_input.c,v 1.15.6.2 2001/11/14 19:18:38 nathanw Exp $	*/
+/*	$NetBSD: ns_input.c,v 1.15.6.3 2002/06/20 03:49:57 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1984, 1985, 1986, 1987, 1993
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ns_input.c,v 1.15.6.2 2001/11/14 19:18:38 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ns_input.c,v 1.15.6.3 2002/06/20 03:49:57 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -80,6 +80,8 @@ static u_int16_t allones[] = {-1, -1, -1};
 
 struct nspcb nspcb;
 struct nspcb nsrawpcb;
+
+struct idpstat idpstat;
 
 struct ifqueue	nsintrq;
 int	nsqmaxlen = IFQ_MAXLEN;

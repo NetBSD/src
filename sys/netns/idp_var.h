@@ -1,4 +1,4 @@
-/*	$NetBSD: idp_var.h,v 1.8 1996/05/22 13:56:18 mycroft Exp $	*/
+/*	$NetBSD: idp_var.h,v 1.8.40.1 2002/06/20 03:49:56 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1984, 1985, 1986, 1987, 1993
@@ -50,7 +50,7 @@ struct	idpstat {
 struct nspcb;
 struct mbuf;
 struct socket;
-struct idpstat	idpstat;
+extern struct idpstat	idpstat;
 
 void idp_input __P((struct mbuf *, ...));
 void idp_abort __P((struct nspcb *));

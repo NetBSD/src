@@ -1,4 +1,4 @@
-/*	$NetBSD: queue.h,v 1.26.2.2 2001/08/24 00:13:08 nathanw Exp $	*/
+/*	$NetBSD: queue.h,v 1.26.2.3 2002/06/20 03:50:15 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -277,9 +277,22 @@ struct {								\
 	(listelm)->field.sqe_next = (elm);				\
 } while (/*CONSTCOND*/0)
 
-#define SIMPLEQ_REMOVE_HEAD(head, elm, field) do {			\
-	if (((head)->sqh_first = (elm)->field.sqe_next) == NULL)	\
+#define SIMPLEQ_REMOVE_HEAD(head, field) do {				\
+	if (((head)->sqh_first = (head)->sqh_first->field.sqe_next) == NULL) \
 		(head)->sqh_last = &(head)->sqh_first;			\
+} while (/*CONSTCOND*/0)
+
+#define SIMPLEQ_REMOVE(head, elm, type, field) do {			\
+	if ((head)->sqh_first == (elm)) {				\
+		SIMPLEQ_REMOVE_HEAD((head), field);			\
+	} else {							\
+		struct type *curelm = (head)->sqh_first;		\
+		while (curelm->field.sqe_next != (elm))			\
+			curelm = curelm->field.sqe_next;		\
+		if ((curelm->field.sqe_next =				\
+			curelm->field.sqe_next->field.sqe_next) == NULL) \
+			    (head)->sqh_last = &(curelm)->field.sqe_next; \
+	}								\
 } while (/*CONSTCOND*/0)
 
 #define SIMPLEQ_FOREACH(var, head, field)				\

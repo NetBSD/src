@@ -1,4 +1,4 @@
-/* $NetBSD: syscallargs.h,v 1.99.2.8 2002/05/29 21:48:40 nathanw Exp $ */
+/* $NetBSD: syscallargs.h,v 1.99.2.9 2002/06/20 03:50:17 nathanw Exp $ */
 
 /*
  * System call argument lists.
@@ -1465,15 +1465,15 @@ int	compat_09_sys_getdomainname(struct lwp *, void *, register_t *);
 int	compat_09_sys_setdomainname(struct lwp *, void *, register_t *);
 int	compat_09_sys_uname(struct lwp *, void *, register_t *);
 int	sys_sysarch(struct lwp *, void *, register_t *);
-#if (defined(SYSVSEM) || !defined(_KERNEL)) && !defined(alpha)
+#if (defined(SYSVSEM) || !defined(_KERNEL)) && !defined(_LP64)
 int	compat_10_sys_semsys(struct lwp *, void *, register_t *);
 #else
 #endif
-#if (defined(SYSVMSG) || !defined(_KERNEL)) && !defined(alpha)
+#if (defined(SYSVMSG) || !defined(_KERNEL)) && !defined(_LP64)
 int	compat_10_sys_msgsys(struct lwp *, void *, register_t *);
 #else
 #endif
-#if (defined(SYSVSHM) || !defined(_KERNEL)) && !defined(alpha)
+#if (defined(SYSVSHM) || !defined(_KERNEL)) && !defined(_LP64)
 int	compat_10_sys_shmsys(struct lwp *, void *, register_t *);
 #else
 #endif

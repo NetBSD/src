@@ -27,7 +27,7 @@
  *	i4b_l4.c - kernel interface to userland
  *	-----------------------------------------
  *
- *	$Id: i4b_l4.c,v 1.2.2.7 2002/04/17 00:06:27 nathanw Exp $ 
+ *	$Id: i4b_l4.c,v 1.2.2.8 2002/06/20 03:49:39 nathanw Exp $ 
  *
  * $FreeBSD$
  *
@@ -36,7 +36,7 @@
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i4b_l4.c,v 1.2.2.7 2002/04/17 00:06:27 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i4b_l4.c,v 1.2.2.8 2002/06/20 03:49:39 nathanw Exp $");
 
 #include "isdn.h"
 #include "irip.h"
@@ -303,16 +303,15 @@ const struct isdn_l4_driver_functions *isdn_l4_get_driver(int driver_id, int uni
  *	send MSG_PDEACT_IND message to userland
  *---------------------------------------------------------------------------*/
 void
-i4b_l4_pdeact(int controller, int numactive)
+i4b_l4_pdeact(struct isdn_l3_driver *d, int numactive)
 {
-	struct isdn_l3_driver *d = isdn_find_l3_by_bri(controller);
 	struct mbuf *m;
 	int i;
 	call_desc_t *cd;
 	
 	for(i=0; i < num_call_desc; i++)
 	{
-		if(call_desc[i].cdid != CDID_UNUSED && call_desc[i].bri == controller)
+		if(call_desc[i].cdid != CDID_UNUSED && call_desc[i].l3drv == d)
 		{
 			cd = &call_desc[i];
 			
@@ -343,7 +342,7 @@ i4b_l4_pdeact(int controller, int numactive)
 		md->header.type = MSG_PDEACT_IND;
 		md->header.cdid = -1;
 
-		md->controller = controller;
+		md->controller = d->bri;
 		md->numactive = numactive;
 
 		i4bputqueue_hipri(m);		/* URGENT !!! */
@@ -354,7 +353,7 @@ i4b_l4_pdeact(int controller, int numactive)
  *	send MSG_L12STAT_IND message to userland
  *---------------------------------------------------------------------------*/
 void
-i4b_l4_l12stat(int controller, int layer, int state)
+i4b_l4_l12stat(struct isdn_l3_driver *d, int layer, int state)
 {
 	struct mbuf *m;
 
@@ -365,7 +364,7 @@ i4b_l4_l12stat(int controller, int layer, int state)
 		md->header.type = MSG_L12STAT_IND;
 		md->header.cdid = -1;
 
-		md->controller = controller;
+		md->controller = d->bri;
 		md->layer = layer;
 		md->state = state;
 
@@ -377,9 +376,8 @@ i4b_l4_l12stat(int controller, int layer, int state)
  *	send MSG_TEIASG_IND message to userland
  *---------------------------------------------------------------------------*/
 void
-i4b_l4_teiasg(int controller, int tei)
+i4b_l4_teiasg(struct isdn_l3_driver *d, int tei)
 {
-	struct isdn_l3_driver *d = isdn_find_l3_by_bri(controller);
 	struct mbuf *m;
 
 	if((m = i4b_Dgetmbuf(sizeof(msg_teiasg_ind_t))) != NULL)
@@ -389,7 +387,7 @@ i4b_l4_teiasg(int controller, int tei)
 		md->header.type = MSG_TEIASG_IND;
 		md->header.cdid = -1;
 
-		md->controller = controller;
+		md->controller = d->bri;
 		md->tei = d->tei;
 
 		i4bputqueue(m);
@@ -593,6 +591,8 @@ i4b_l4_connect_active_ind(call_desc_t *cd)
 	
 	i4b_link_bchandrvr(cd);
 
+	update_controller_leds(cd->l3drv);
+
 	(*cd->l4_driver->line_connected)(cd->l4_driver_softc, cd);
 
 	i4b_l4_setup_timeout(cd);
@@ -638,13 +638,14 @@ i4b_l4_disconnect_ind(call_desc_t *cd)
 	if((cd->channelid == CHAN_B1) || (cd->channelid == CHAN_B2))
 	{
 		d->bch_state[cd->channelid] = BCH_ST_FREE;
-		i4b_l2_channel_set_state(cd->bri, cd->channelid, BCH_ST_FREE);
+		i4b_l2_channel_set_state(d, cd->channelid, BCH_ST_FREE);
 	}
 	else
 	{
 		/* no error, might be hunting call for callback */
 		NDBGL4(L4_MSG, "channel free not B1/B2 but %d!", cd->channelid);
 	}
+	update_controller_leds(d);
 	
 	if((m = i4b_Dgetmbuf(sizeof(msg_disconnect_ind_t))) != NULL)
 	{
