@@ -1,4 +1,4 @@
-#	$NetBSD: files.sparc64,v 1.86 2003/11/02 09:33:56 he Exp $
+#	$NetBSD: files.sparc64,v 1.87 2003/11/15 17:52:30 bouyer Exp $
 
 # @(#)files.sparc64	8.1 (Berkeley) 7/19/93
 # sparc64-specific configuration info
@@ -162,6 +162,7 @@ file	arch/sparc64/dev/pld_wdog.c		pldwdog
 file	dev/cons.c
 file	arch/sparc64/dev/consinit.c
 file	kern/kern_microtime.c
+file	dev/sun/disksubr.c 
 
 file	arch/sparc/fpu/fpu.c
 file	arch/sparc/fpu/fpu_add.c
@@ -192,7 +193,6 @@ file	arch/sparc64/sparc64/pmap.c
 file	arch/sparc64/sparc64/sys_machdep.c
 file	arch/sparc64/sparc64/trap.c
 file	arch/sparc64/sparc64/vm_machdep.c
-file	arch/sparc64/sparc64/disksubr.c
 
 file	arch/sparc64/sparc64/db_interface.c	ddb | kgdb
 file	arch/sparc64/sparc64/db_trace.c	ddb

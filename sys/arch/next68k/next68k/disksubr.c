@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.15 2003/10/27 16:48:08 cl Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.16 2003/11/15 17:52:30 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.15 2003/10/27 16:48:08 cl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.16 2003/11/15 17:52:30 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -58,7 +58,7 @@ static unsigned short nextstep_checksum __P((unsigned char *,
 static char * parse_nextstep_label __P((struct next68k_disklabel *, 
 			struct disklabel *, struct cpu_disklabel *));
 static int build_nextstep_label __P((struct next68k_disklabel *, 
-			struct disklabel *, struct cpu_disklabel *));
+			struct disklabel *));
 
 static unsigned short
 nextstep_checksum(buf, limit)
@@ -116,7 +116,7 @@ parse_nextstep_label(ondisk, lp, osdep)
 	lp->d_rpm = ondisk->cd_rpm;
 	lp->d_flags = ondisk->cd_flags;
 
-	lp->d_bbsize = LABELSIZE;
+	lp->d_bbsize = NEXT68K_LABEL_SIZE;
 	lp->d_sbsize = SBLOCKSIZE;
 
 	lp->d_npartitions = nbp = 0;
@@ -171,38 +171,34 @@ parse_nextstep_label(ondisk, lp, osdep)
 }
 
 static int
-build_nextstep_label(ondisk, lp, osdep)
+build_nextstep_label(ondisk, lp)
 	struct next68k_disklabel *ondisk;
 	struct disklabel *lp;
-	struct cpu_disklabel *osdep;
 {
 	int i, t, nbp;
 	int front_porch = NEXT68K_LABEL_DEFAULTFRONTPORCH;
 	unsigned short *checksum;
 
-	if (osdep->od_version == 0) {
-		osdep->od_version = NEXT68K_LABEL_CD_V3;
 
-		memset (ondisk, 0, sizeof (ondisk));
+	memset (ondisk, 0, sizeof (ondisk));
 
-		/* ondisk->cd_label_blkno = 0; */
-		/* ondisk->cd_size = 0; */
-		/* ondisk->cd_tag = 0; */
-		strncpy (ondisk->cd_type, "fixed_rw_scsi", sizeof (ondisk->cd_type));
-		ondisk->cd_secsize = lp->d_secsize;
-		/* ondisk->cd_back = 0; */
-		/* ondisk->cd_ngroups = 0; */
-		/* ondisk->cd_ag_size = 0; */
-		/* ondisk->cd_ag_alts = 0; */
-		/* ondisk->cd_ag_off = 0; */
-		/* ondisk->kernel */
-		/* ondisk->hostname */
-		/* ondisk->rootpartition */
-		/* ondisk->rwpartition */
-	}
+	ondisk->cd_version = NEXT68K_LABEL_CD_V3;
+	/* ondisk->cd_label_blkno = 0; */
+	/* ondisk->cd_size = 0; */
+	/* ondisk->cd_tag = 0; */
+	strncpy (ondisk->cd_type, "fixed_rw_scsi", sizeof (ondisk->cd_type));
+	ondisk->cd_secsize = lp->d_secsize;
+	/* ondisk->cd_back = 0; */
+	/* ondisk->cd_ngroups = 0; */
+	/* ondisk->cd_ag_size = 0; */
+	/* ondisk->cd_ag_alts = 0; */
+	/* ondisk->cd_ag_off = 0; */
+	/* ondisk->kernel */
+	/* ondisk->hostname */
+	/* ondisk->rootpartition */
+	/* ondisk->rwpartition */
 	KASSERT(ondisk->cd_secsize >= lp->d_secsize);
 
-	ondisk->cd_version = osdep->od_version;
 	if (memcmp (ondisk->cd_name, lp->d_typename,
 		     min (sizeof (lp->d_typename), sizeof (ondisk->cd_name))) &&
 	    sizeof (ondisk->cd_name) > sizeof (lp->d_typename))
@@ -348,35 +344,57 @@ readdisklabel(dev, strat, lp, osdep)
 		lp->d_partitions[i].p_size = 0x1fffffff;
 	lp->d_partitions[i].p_offset = 0;
 
-	bp = geteblk(LABELSIZE);
+	bp = geteblk(NEXT68K_LABEL_SIZE);
 	bp->b_dev = dev;
-	bp->b_blkno = LABELSECTOR;
-	bp->b_bcount = LABELSIZE;
+	bp->b_blkno = NEXT68K_LABEL_SECTOR;
+	bp->b_bcount = NEXT68K_LABEL_SIZE;
 	bp->b_flags |= B_READ;
-	bp->b_cylinder = LABELSECTOR / lp->d_secpercyl;
+	bp->b_cylinder = NEXT68K_LABEL_SECTOR / lp->d_secpercyl;
 	(*strat)(bp);
 	
 	if (osdep)
 		osdep->od_version = 0;
 
-	if (biowait(bp))
-		msg = "I/O error";
-	else if (IS_DISKLABEL ((struct next68k_disklabel *)bp->b_data))
+	if (biowait(bp)) {
+		brelse(bp);
+		return("I/O error");
+	}
+	dlp = (struct disklabel *)
+	    ((char *)bp->b_data + LABELSECTOR * lp->d_secsize + LABELOFFSET);
+	if (dlp->d_magic == DISKMAGIC || dlp->d_magic2 == DISKMAGIC) {
+		/* got a NetBSD disklabel */
+		if (osdep)
+			osdep->od_version = DISKMAGIC;
+		if (dlp->d_npartitions > MAXPARTITIONS ||
+			   dkcksum(dlp) != 0)
+			msg = "disk label corrupted";
+		else {
+			*lp = *dlp;
+			msg = NULL;
+		}
+		brelse(bp);
+		return msg;
+	}
+	if (IS_DISKLABEL ((struct next68k_disklabel *)bp->b_data)) {
+		/* got a NeXT disklabel */
 		msg = parse_nextstep_label
 			((struct next68k_disklabel *)bp->b_data, lp, osdep);
-	else {
-		if (osdep &&
-		    ((struct disklabel *)bp->b_data)->d_magic == DISKMAGIC)
-			osdep->od_version = DISKMAGIC;
-		for (dlp = (struct disklabel *)bp->b_data;
-		     dlp <= (struct disklabel *)((char *)bp->b_data +
-						 DEV_BSIZE - sizeof(*dlp));
-		     dlp = (struct disklabel *)((char *)dlp + sizeof(long))) {
-			if (dlp->d_magic != DISKMAGIC || dlp->d_magic2 != DISKMAGIC) {
-				if (msg == NULL)
-					msg = "no disk label";
-			} else if (dlp->d_npartitions > MAXPARTITIONS ||
-				   dkcksum(dlp) != 0)
+		brelse(bp);
+		return msg;
+	}
+	/*
+	 * no disklabel at the usual places. Try to locate a NetBSD disklabel
+	 * in the first sector. This ensure compatibility with others
+	 * big-endian systems, and with next68k when LABELSECTOR was 0.
+	 */
+	msg = "no disk label";
+	for (dlp = (struct disklabel *)bp->b_data;
+	     dlp <= (struct disklabel *)((char *)bp->b_data +
+					 DEV_BSIZE - sizeof(*dlp));
+	     dlp = (struct disklabel *)((char *)dlp + sizeof(long))) {
+		if (dlp->d_magic == DISKMAGIC || dlp->d_magic2 == DISKMAGIC) {
+			if (dlp->d_npartitions > MAXPARTITIONS ||
+			   dkcksum(dlp) != 0)
 				msg = "disk label corrupted";
 			else {
 				*lp = *dlp;
@@ -443,7 +461,9 @@ writedisklabel(dev, strat, lp, osdep)
 	struct cpu_disklabel *osdep;
 {
 	struct buf *bp;
+#if 0
 	struct disklabel *dlp;
+#endif
 	int labelpart;
 	int error = 0;
 
@@ -453,50 +473,28 @@ writedisklabel(dev, strat, lp, osdep)
 			return (EXDEV);			/* not quite right */
 		labelpart = 0;
 	}
-	if (osdep->od_version != DISKMAGIC) {
-		bp = geteblk(LABELSIZE);
-		bp->b_dev = MAKEDISKDEV(major(dev), DISKUNIT(dev), labelpart);
-		bp->b_blkno = LABELSECTOR;
-		bp->b_bcount = LABELSIZE;
-		bp->b_flags |= B_READ;
-		bp->b_cylinder = LABELSECTOR / lp->d_secpercyl;
-		(*strat)(bp);
-		error = biowait(bp);
-		if (error)
-			goto done;
-		error = build_nextstep_label 
-			((struct next68k_disklabel *)bp->b_data, lp, osdep);
-		if (error)
-			goto done;
-		bp->b_flags &= ~(B_READ|B_DONE);
-		bp->b_flags |= B_WRITE;
-		(*strat)(bp);
-		error = biowait(bp);
-	} else {
-		bp = geteblk((int)lp->d_secsize);
-		bp->b_dev = MAKEDISKDEV(major(dev), DISKUNIT(dev), labelpart);
-		bp->b_blkno = LABELSECTOR;
-		bp->b_bcount = lp->d_secsize;
-		bp->b_flags |= B_READ;
-		(*strat)(bp);
-		if ((error = biowait(bp)))
-			goto done;
-		for (dlp = (struct disklabel *)bp->b_data;
-		     dlp <= (struct disklabel *)
-			     ((char *)bp->b_data + lp->d_secsize - sizeof(*dlp));
-		     dlp = (struct disklabel *)((char *)dlp + sizeof(long))) {
-			if (dlp->d_magic == DISKMAGIC && dlp->d_magic2 == DISKMAGIC &&
-			    dkcksum(dlp) == 0) {
-				*dlp = *lp;
-				bp->b_flags &= ~(B_READ|B_DONE);
-				bp->b_flags |= B_WRITE;
-				(*strat)(bp);
-				error = biowait(bp);
-				goto done;
-			}
-		}
-		error = ESRCH;
-	}
+	/*
+	 * We always write a NeXT v3 disklabel, and a NetBSD disklabel in
+	 * the last sector of the NeXT label area.
+	 */
+  
+	bp = geteblk(NEXT68K_LABEL_SIZE);
+	bp->b_dev = MAKEDISKDEV(major(dev), DISKUNIT(dev), labelpart);
+	bp->b_blkno = NEXT68K_LABEL_SECTOR;
+	bp->b_bcount = NEXT68K_LABEL_SIZE;
+	bp->b_flags |= B_WRITE;
+	bp->b_cylinder = NEXT68K_LABEL_SECTOR / lp->d_secpercyl;
+	error = build_nextstep_label 
+		((struct next68k_disklabel *)bp->b_data, lp);
+	if (error)
+		goto done;
+#if 0
+	dlp = (struct disklabel *)
+	    ((char *)bp->b_data + LABELSECTOR * lp->d_secsize + LABELOFFSET);
+	*dlp = *lp;
+#endif
+	(*strat)(bp);
+	error = biowait(bp);
 done:
 	brelse(bp);
 	return (error);
