@@ -1,4 +1,4 @@
-/* $NetBSD: cfb.c,v 1.34 2002/08/06 22:52:30 itojun Exp $ */
+/* $NetBSD: cfb.c,v 1.35 2002/08/19 03:52:53 itohy Exp $ */
 
 /*
  * Copyright (c) 1998, 1999 Tohru Nishimura.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cfb.c,v 1.34 2002/08/06 22:52:30 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cfb.c,v 1.35 2002/08/19 03:52:53 itohy Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -672,7 +672,7 @@ get_cmap(sc, p)
 {
 	u_int index = p->index, count = p->count;
 
-	if (index >= CMAP_SIZE || count) > CMAP_SIZE - index)
+	if (index >= CMAP_SIZE || count > CMAP_SIZE - index)
 		return (EINVAL);
 
 	if (!uvm_useracc(p->red, count, B_WRITE) ||
