@@ -30,11 +30,11 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)atanh.3	5.2 (Berkeley) 5/6/91
-.\"	$Id: atanh.3,v 1.7 1996/03/30 01:34:02 jtc Exp $
+.\"	$Id: atanh.3,v 1.8 1997/03/29 23:10:59 christos Exp $
 .\"
 .Dd May 6, 1991
 .Dt ATANH 3
-.Os BSD 4.3
+.Os
 .Sh NAME
 .Nm atanh
 .Nd inverse hyperbolic tangent function
@@ -54,14 +54,23 @@ of the real
 argument
 .Ar x .
 .Sh RETURN VALUES
-Exceptional conditions are handled by
-.Xr matherr 3 .
+If |x|>=1,
+.Fn atanh "x"
+and
+.Fn atanhf "x"
+.\" POSIX_MODE
+return +inf, -inf or NaN, and sets the global variable
+.Va errno
++to EDOM.
+.\" SYSV_MODE
+.\" call
+.\" .Xr matherr 3 .
 .Sh SEE ALSO
 .Xr acosh 3 ,
 .Xr asinh 3 ,
 .Xr exp 3 ,
-.Xr math 3 ,
-.Xr matherr 3
+.Xr math 3
+.\" .Xr matherr 3
 .Sh HISTORY
 The
 .Fn atanh
