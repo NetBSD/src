@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.1 1995/02/13 23:07:16 cgd Exp $	*/
+/*	$NetBSD: trap.c,v 1.2 1995/04/22 16:59:47 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -163,7 +163,7 @@ dopanic:
 		goto out;
 
 	case T_UNAFLT:			/* Always an error of some kind. */
-		if (p->p_addr->u_pcb.pcb_onfault == NULL)
+		if (p == NULL || p->p_addr->u_pcb.pcb_onfault == NULL)
 			goto dopanic;
 		else {
 			framep->tf_pc = (u_int64_t)p->p_addr->u_pcb.pcb_onfault;
@@ -223,7 +223,7 @@ sigfpe:		i = SIGFPE;
 #endif
 	    {
 		register vm_offset_t va;
-		register struct vmspace *vm = p->p_vmspace;
+		register struct vmspace *vm;
 		register vm_map_t map;
 		vm_prot_t ftype;
 		int rv;
@@ -231,7 +231,7 @@ sigfpe:		i = SIGFPE;
 		extern vm_map_t kernel_map;
 
 		/* if it was caused by fuswintr or suswintr, just punt. */
-		if (!USERMODE(framep->tf_ps) &&
+		if ((type & T_USER) == 0 && p != NULL &&
 		    p->p_addr->u_pcb.pcb_onfault == (caddr_t)fswintrberr) {
 			framep->tf_pc = (u_int64_t)p->p_addr->u_pcb.pcb_onfault;
 			p->p_addr->u_pcb.pcb_onfault = NULL;
@@ -246,12 +246,13 @@ sigfpe:		i = SIGFPE;
 		 * The last can occur during an exec() copyin where the
 		 * argument space is lazy-allocated.
 		 */
-		if ((type & T_USER) == 0 &&
-		    (!p->p_addr->u_pcb.pcb_onfault ||
-		    v > VM_MIN_KERNEL_ADDRESS))
+		if ((type & T_USER) == 0 && (v >= VM_MIN_KERNEL_ADDRESS ||
+		    p == NULL || p->p_addr->u_pcb.pcb_onfault == NULL))
 			map = kernel_map;
-		else
+		else {
+			vm = p->p_vmspace;
 			map = &vm->vm_map;
+		}
 
 		switch (code) {
 		case -1:		/* instruction fetch fault */
@@ -266,9 +267,9 @@ sigfpe:		i = SIGFPE;
 		va = trunc_page((vm_offset_t)v);
 		rv = vm_fault(map, va, ftype, FALSE);
 #ifdef VMFAULT_TRACE
-		printf(
-		    "vm_fault(0x%lx (pmap 0x%lx), 0x%lx (0x%lx), 0x%lx, %d) -> 0x%lx at pc 0x%lx\n",
-		    map, &vm->vm_pmap, va, v, ftype, FALSE, rv, framep->tf_pc);
+		printf("vm_fault(0x%lx (pmap 0x%lx), 0x%lx (0x%lx), 0x%lx, %d) -> 0x%lx at pc 0x%lx\n",
+		    map, map == kernel_map ? pmap_kernel() : &vm->vm_pmap,
+		    va, v, ftype, FALSE, rv, framep->tf_pc);
 #endif
 		/*
 		 * If this was a stack access we keep track of the maximum
@@ -290,7 +291,8 @@ sigfpe:		i = SIGFPE;
 		if (rv == KERN_SUCCESS)
 			goto out;
 		if (!USERMODE(framep->tf_ps)) {
-			if (p->p_addr->u_pcb.pcb_onfault != NULL) {
+			if (p != NULL &&
+			    p->p_addr->u_pcb.pcb_onfault != NULL) {
 				framep->tf_pc =
 				    (u_int64_t)p->p_addr->u_pcb.pcb_onfault;
 				p->p_addr->u_pcb.pcb_onfault = NULL;
