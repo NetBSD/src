@@ -1,4 +1,4 @@
-/*	$NetBSD: xform.c,v 1.2 2003/07/28 19:37:04 jonathan Exp $ */
+/*	$NetBSD: xform.c,v 1.3 2003/08/01 01:47:45 itojun Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/xform.c,v 1.1.2.1 2002/11/21 23:34:23 sam Exp $	*/
 /*	$OpenBSD: xform.c,v 1.19 2002/08/16 22:47:25 dhartmei Exp $	*/
 
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xform.c,v 1.2 2003/07/28 19:37:04 jonathan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xform.c,v 1.3 2003/08/01 01:47:45 itojun Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -223,14 +223,14 @@ struct auth_hash auth_hash_hmac_ripemd_160_96 = {
 
 struct auth_hash auth_hash_key_md5 = {
 	CRYPTO_MD5_KPDK, "Keyed MD5",
-	0, 16, 12, sizeof(MD5_CTX),
+	0, 16, 16, sizeof(MD5_CTX),
 	(void (*)(void *)) MD5Init, MD5Update_int,
 	(void (*)(u_int8_t *, void *)) MD5Final
 };
 
 struct auth_hash auth_hash_key_sha1 = {
 	CRYPTO_SHA1_KPDK, "Keyed SHA1",
-	0, 20, 12, sizeof(SHA1_CTX),
+	0, 20, 20, sizeof(SHA1_CTX),
 	SHA1Init_int, SHA1Update_int, SHA1Final_int
 };
 
