@@ -1,4 +1,4 @@
-/*	$NetBSD: pdqvar.h,v 1.18 1998/05/24 21:40:05 matt Exp $	*/
+/*	$NetBSD: pdqvar.h,v 1.19 1998/05/24 22:37:23 matt Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1996 Matt Thomas <matt@3am-software.com>
@@ -196,19 +196,19 @@ typedef bus_addr_t pdq_bus_memoffset_t;
 	PDQ_OS_DESCBLOCK_SYNC((pdq), (d), (s), BUS_DMASYNC_POSTWRITE)
 #define	PDQ_OS_CMDRQST_PRESYNC(pdq, s) \
 	PDQ_OS_DESCBLOCK_SYNC((pdq), \
-			      (pdq)->pdq_dbp->pdqdb_command_pool, \
+			      (pdq)->pdq_command_info.ci_request_bufstart, \
 			      (s), BUS_DMASYNC_PREWRITE)
 #define	PDQ_OS_CMDRSP_PRESYNC(pdq, s) \
 	PDQ_OS_DESCBLOCK_SYNC((pdq), \
-			      (pdq)->pdq_dbp->pdqdb_command_pool, \
+			      (pdq)->pdq_command_info.ci_response_bufstart, \
 			      (s), BUS_DMASYNC_PREREAD)
 #define	PDQ_OS_CMDRQST_POSTSYNC(pdq, s) \
 	PDQ_OS_DESCBLOCK_SYNC((pdq), \
-			      (pdq)->pdq_dbp->pdqdb_command_pool, \
+			      (pdq)->pdq_command_info.ci_request_bufstart, \
 			      (s), BUS_DMASYNC_POSTWRITE)
 #define	PDQ_OS_CMDRSP_POSTSYNC(pdq, s) \
 	PDQ_OS_DESCBLOCK_SYNC((pdq), \
-			      (pdq)->pdq_dbp->pdqdb_command_pool, \
+			      (pdq)->pdq_command_info.ci_response_bufstart, \
 			      (s), BUS_DMASYNC_POSTREAD)
 #define	PDQ_OS_RXPDU_PRESYNC(pdq, b, o, l) \
 	pdq_os_databuf_sync((pdq)->pdq_os_ctx, (b), (o), (l), \

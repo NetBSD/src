@@ -1,4 +1,4 @@
-/*	$NetBSD: pdq_ifsubr.c,v 1.14 1998/05/24 21:40:06 matt Exp $	*/
+/*	$NetBSD: pdq_ifsubr.c,v 1.15 1998/05/24 22:37:23 matt Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1996 Matt Thomas <matt@3am-software.com>
@@ -570,7 +570,7 @@ pdq_os_memalloc_contig(
     pdq_t *pdq)
 {
     pdq_softc_t * const sc = pdq->pdq_os_ctx;
-    bus_dma_segment_t db_segs[1], ui_segs[1];
+    bus_dma_segment_t db_segs[1], ui_segs[1], cb_segs[1];
     int db_nsegs = 0, ui_nsegs = 0;
     int steps = 0;
     int not_ok;
@@ -580,54 +580,88 @@ pdq_os_memalloc_contig(
 			 sizeof(*pdq->pdq_dbp), db_segs, 1, &db_nsegs,
 			 BUS_DMA_NOWAIT);
     if (!not_ok) {
-	steps++;
+	steps = 1;
 	not_ok = bus_dmamem_map(sc->sc_dmatag, db_segs, db_nsegs,
 				sizeof(*pdq->pdq_dbp), (caddr_t *) &pdq->pdq_dbp,
 				BUS_DMA_NOWAIT);
     }
     if (!not_ok) {
-	steps++;
+	steps = 2;
 	not_ok = bus_dmamap_create(sc->sc_dmatag, db_segs[0].ds_len, 1,
 				   0x2000, 0, BUS_DMA_NOWAIT, &sc->sc_dbmap);
     }
     if (!not_ok) {
-	steps++;
+	steps = 3;
 	not_ok = bus_dmamap_load(sc->sc_dmatag, sc->sc_dbmap,
 				 pdq->pdq_dbp, sizeof(*pdq->pdq_dbp),
 				 NULL, BUS_DMA_NOWAIT);
     }
     if (!not_ok) {
-	steps++;
+	steps = 4;
 	pdq->pdq_pa_descriptor_block = sc->sc_dbmap->dm_segs[0].ds_addr;
 	not_ok = bus_dmamem_alloc(sc->sc_dmatag,
 			 PDQ_OS_PAGESIZE, PDQ_OS_PAGESIZE, PDQ_OS_PAGESIZE,
 			 ui_segs, 1, &ui_nsegs, BUS_DMA_NOWAIT);
     }
     if (!not_ok) {
-	steps++;
+	steps = 5;
 	not_ok = bus_dmamem_map(sc->sc_dmatag, ui_segs, ui_nsegs,
 			    PDQ_OS_PAGESIZE,
 			    (caddr_t *) &pdq->pdq_unsolicited_info.ui_events,
 			    BUS_DMA_NOWAIT);
     }
     if (!not_ok) {
-	steps++;
+	steps = 6;
 	not_ok = bus_dmamap_create(sc->sc_dmatag, ui_segs[0].ds_len, 1,
 				   PDQ_OS_PAGESIZE, 0, BUS_DMA_NOWAIT,
 				   &sc->sc_uimap);
     }
     if (!not_ok) {
-	steps++;
+	steps = 7;
 	not_ok = bus_dmamap_load(sc->sc_dmatag, sc->sc_uimap,
 				 pdq->pdq_unsolicited_info.ui_events,
 				 PDQ_OS_PAGESIZE, NULL, BUS_DMA_NOWAIT);
     }
     if (!not_ok) {
+	steps = 8;
 	pdq->pdq_unsolicited_info.ui_pa_bufstart = sc->sc_uimap->dm_segs[0].ds_addr;
+	cb_segs[0].ds_addr = db_segs[0].ds_addr +
+		 offsetof(pdq_descriptor_block_t, pdqdb_consumer);
+	cb_segs[0].ds_len = sizeof(pdq_consumer_block_t);
+	not_ok = bus_dmamem_map(sc->sc_dmatag, cb_segs, 1,
+				sizeof(*pdq->pdq_cbp), (caddr_t *) &pdq->pdq_cbp,
+				BUS_DMA_NOWAIT|BUS_DMA_COHERENT);
+    }
+    if (!not_ok) {
+	steps = 9;
+	not_ok = bus_dmamap_create(sc->sc_dmatag, cb_segs[0].ds_len, 1,
+				   0x2000, 0, BUS_DMA_NOWAIT, &sc->sc_cbmap);
+    }
+    if (!not_ok) {
+	steps = 10;
+	not_ok = bus_dmamap_load(sc->sc_dmatag, sc->sc_cbmap,
+				 (caddr_t) pdq->pdq_cbp, sizeof(*pdq->pdq_cbp),
+				 NULL, BUS_DMA_NOWAIT);
+    }
+    if (!not_ok) {
+	pdq->pdq_pa_consumer_block = sc->sc_cbmap->dm_segs[0].ds_addr;
 	return not_ok;
     }
 
     switch (steps) {
+	case 11: {
+	    bus_dmamap_unload(sc->sc_dmatag, sc->sc_cbmap);
+	    /* FALL THROUGH */
+	}
+	case 10: {
+	    bus_dmamap_destroy(sc->sc_dmatag, sc->sc_cbmap);
+	    /* FALL THROUGH */
+	}
+	case 9: {
+	    bus_dmamem_unmap(sc->sc_dmatag,
+			     (caddr_t) pdq->pdq_cbp, sizeof(*pdq->pdq_cbp));
+	    /* FALL THROUGH */
+	}
 	case 8: {
 	    bus_dmamap_unload(sc->sc_dmatag, sc->sc_uimap);
 	    /* FALL THROUGH */
