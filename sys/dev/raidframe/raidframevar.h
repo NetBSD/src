@@ -1,4 +1,4 @@
-/*	$NetBSD: raidframevar.h,v 1.5 2003/12/29 02:38:17 oster Exp $ */
+/*	$NetBSD: raidframevar.h,v 1.6 2004/01/04 06:37:16 oster Exp $ */
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -281,7 +281,6 @@ typedef enum RF_AccessState_e {
 	/* original states */
 	rf_QuiesceState,	    /* handles queisence for reconstruction */
 	rf_IncrAccessesCountState,  /* count accesses in flight */
-	rf_DecrAccessesCountState,
 	rf_MapState,		    /* map access to disk addresses */
 	rf_LockState,		    /* take stripe locks */
 	rf_CreateDAGState,	    /* create DAGs */
@@ -289,6 +288,7 @@ typedef enum RF_AccessState_e {
 	rf_ProcessDAGState,	    /* DAGs are completing- check if correct,
 				     * or if we need to retry */
 	rf_CleanupState,	    /* release stripe locks, clean up */
+	rf_DecrAccessesCountState,
 	rf_LastState		    /* must be the last state */
 }       RF_AccessState_t;
 

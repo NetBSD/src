@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_layout.c,v 1.15 2003/12/30 21:59:03 oster Exp $	*/
+/*	$NetBSD: rf_layout.c,v 1.16 2004/01/04 06:37:16 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_layout.c,v 1.15 2003/12/30 21:59:03 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_layout.c,v 1.16 2004/01/04 06:37:16 oster Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -85,8 +85,8 @@ static const RF_AccessState_t DefaultStates[] = {
 					   rf_CreateDAGState,
 					   rf_ExecuteDAGState, 
 					   rf_ProcessDAGState, 
-					   rf_DecrAccessesCountState,
 					   rf_CleanupState, 
+					   rf_DecrAccessesCountState,
 					   rf_LastState};
 
 #define RF_NU(a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p) a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p
