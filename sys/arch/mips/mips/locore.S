@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.48 1998/03/12 05:45:05 thorpej Exp $	*/
+/*	$NetBSD: locore.S,v 1.49 1998/03/23 00:57:13 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -976,26 +976,26 @@ NON_LEAF(kcopy, 48, ra)
 	sw	ra, 44(sp)			# save ra
 	sw	s0, 32(sp)			# save s0
 	lw	v1, _C_LABEL(curpcb)		# set up fault handler
-	lw	v0, _C_LABEL(kcopyerr)
+	la	v0, _C_LABEL(kcopyerr)
 	lw	s0, U_PCB_ONFAULT(v1)		# save old handler
 	jal	_C_LABEL(bcopy)			# do the copy
 	sw	v0, U_PCB_ONFAULT(v1)
 
 	lw	v1, _C_LABEL(curpcb)		# restore the old handler
-	sw	s0, U_PCB_ONFAULT(v1)
 	lw	ra, 44(sp)			# restore ra
 	lw	s0, 32(sp)			# restore s0
 	addu	sp, sp, 48			# kill stack frame
+	sw	s0, U_PCB_ONFAULT(v1)
 	j	ra
 	move	v0, zero			# success!
 END(kcopy)
 
 LEAF(kcopyerr)
 	lw	v1, _C_LABEL(curpcb)		# restore the old handler
-	sw	s0, U_PCB_ONFAULT(v1)
 	lw	ra, 44(sp)			# restore ra
 	lw	s0, 32(sp)			# restore s0
 	addu	sp, sp, 48			# kill stack frame
+	sw	s0, U_PCB_ONFAULT(v1)
 	j	ra
 	li	v0, EFAULT			# return EFAULT
 END(kcopyerr)
