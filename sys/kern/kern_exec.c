@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.86 1997/12/31 07:47:44 thorpej Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.87 1998/01/01 02:43:18 enami Exp $	*/
 
 /*-
  * Copyright (C) 1993, 1994, 1996 Christopher G. Demetriou
@@ -50,9 +50,6 @@
 #include <sys/mman.h>
 #include <sys/signalvar.h>
 #include <sys/stat.h>
-#ifdef SYSVSHM
-#include <sys/shm.h>
-#endif
 
 #include <sys/syscallargs.h>
 
