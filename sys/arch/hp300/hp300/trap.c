@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.52 1997/04/14 02:28:48 thorpej Exp $	*/
+/*	$NetBSD: trap.c,v 1.53 1997/04/27 20:45:42 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -41,6 +41,8 @@
  *
  *	@(#)trap.c	8.5 (Berkeley) 1/4/94
  */
+
+#include <machine/hp300spu.h>	/* XXX param.h includes cpu.h */
 
 #include <sys/param.h>
 #include <sys/systm.h>

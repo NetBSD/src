@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.32 1997/04/02 22:41:39 scottr Exp $	*/
+/*	$NetBSD: pmap.c,v 1.33 1997/04/27 20:43:40 thorpej Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -93,6 +93,8 @@
  *	to which processors are currently using which maps,
  *	and to when physical maps must be made correct.
  */
+
+#include <machine/hp300spu.h>	/* XXX param.h includes cpu.h */
 
 #include <sys/param.h>
 #include <sys/systm.h>
