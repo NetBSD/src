@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_subs.c,v 1.132.2.3.2.1 2005/01/11 06:42:19 jmc Exp $	*/
+/*	$NetBSD: nfs_subs.c,v 1.132.2.3.2.2 2005/01/30 13:44:21 he Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_subs.c,v 1.132.2.3.2.1 2005/01/11 06:42:19 jmc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_subs.c,v 1.132.2.3.2.2 2005/01/30 13:44:21 he Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -1232,7 +1232,6 @@ nfs_initdircache(vp)
 	NFSDC_LOCK(np);
 	if (np->n_dircache == NULL) {
 		np->n_dircachesize = 0;
-		np->n_dblkno = 1;
 		np->n_dircache = dircache;
 		dircache = NULL;
 		TAILQ_INIT(&np->n_dirchain);
@@ -1374,7 +1373,6 @@ nfs_searchdircache(vp, off, do32, hashent)
 				 */
 				if (ndp->dc_flags & NFSDC_INVALID) {
 					ndp->dc_blkcookie = ndp->dc_cookie;
-					ndp->dc_blkno = np->n_dblkno++;
 					ndp->dc_entry = 0;
 					ndp->dc_flags &= ~NFSDC_INVALID;
 				}
@@ -1471,15 +1469,6 @@ retry:
 	} else
 		overwrite = 1;
 
-	/*
-	 * If the entry number is 0, we are at the start of a new block, so
-	 * allocate a new blocknumber.
-	 */
-	if (en == 0)
-		ndp->dc_blkno = np->n_dblkno++;
-	else
-		ndp->dc_blkno = blkno;
-
 	ndp->dc_cookie = off;
 	ndp->dc_blkcookie = blkoff;
 	ndp->dc_entry = en;
@@ -1545,7 +1534,6 @@ nfs_invaldircache(vp, forcefree)
 			ndp->dc_flags |= NFSDC_INVALID;
 	}
 
-	np->n_dblkno = 1;
 	NFSDC_UNLOCK(np);
 }
 
