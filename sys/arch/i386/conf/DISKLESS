@@ -1,4 +1,4 @@
-#	$NetBSD: DISKLESS,v 1.58 1998/02/06 07:21:43 mrg Exp $
+#	$NetBSD: DISKLESS,v 1.59 1998/02/06 11:20:29 mrg Exp $
 #
 # DISKLESS -- Generic machine setup for diskless boot.
 # This kernel can be loaded from a bootable floppy (i.e. kernel-copy)
@@ -41,11 +41,6 @@ options 	KTRACE		# system call tracing via ktrace(1)
 #options 	KMEMSTATS	# kernel memory statistics (vmstat -m)
 
 #options 	UVM		# Use UVM instead of Mach VM.
-
-# These are required for Mach VM
-options 	VNODEPAGER	# paging to vnodes
-options 	SWAPPAGER	# pageout
-options 	DEVPAGER	# paging to devices
 
 options 	SYSVMSG		# System V-like message queues
 options 	SYSVSEM		# System V-like semaphores
