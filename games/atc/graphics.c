@@ -1,4 +1,4 @@
-/*	$NetBSD: graphics.c,v 1.5 1998/11/10 13:43:30 hubertf Exp $	*/
+/*	$NetBSD: graphics.c,v 1.6 1999/07/24 23:58:15 hubertf Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -50,7 +50,7 @@
 #if 0
 static char sccsid[] = "@(#)graphics.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: graphics.c,v 1.5 1998/11/10 13:43:30 hubertf Exp $");
+__RCSID("$NetBSD: graphics.c,v 1.6 1999/07/24 23:58:15 hubertf Exp $");
 #endif
 #endif /* not lint */
 
@@ -401,8 +401,12 @@ loser(p, s)
 
 	wmove(input, 0, 0);
 	wclrtobot(input);
-	wprintw(input, "Plane '%c' %s\n\nHit space for top players list...",
-		name(p), s);
+	/* p may be NULL if we ran out of memory */
+	if (p == NULL)
+		wprintw(input, "%s\n\nHit space for top players list...", s);
+	else
+		wprintw(input, "Plane '%c' %s\n\nHit space for top players list...",
+			name(p), s);
 	wrefresh(input);
 	fflush(stdout);
 	while ((c = getchar()) != EOF && c != ' ')
