@@ -1,4 +1,4 @@
-/*	$NetBSD: vacation.c,v 1.22 2003/04/20 03:32:50 christos Exp $	*/
+/*	$NetBSD: vacation.c,v 1.23 2003/07/14 09:24:31 itojun Exp $	*/
 
 /*
  * Copyright (c) 1983, 1987, 1993
@@ -44,7 +44,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1987, 1993\n\
 #if 0
 static char sccsid[] = "@(#)vacation.c	8.2 (Berkeley) 1/26/94";
 #endif
-__RCSID("$NetBSD: vacation.c,v 1.22 2003/04/20 03:32:50 christos Exp $");
+__RCSID("$NetBSD: vacation.c,v 1.23 2003/07/14 09:24:31 itojun Exp $");
 #endif /* not lint */
 
 /*
@@ -233,7 +233,7 @@ readheaders(void)
 			if (!strncmp(buf, "From ", 5)) {
 				for (p = buf + 5; *p && *p != ' '; ++p);
 				*p = '\0';
-				(void)strcpy(from, buf + 5);
+				(void)strlcpy(from, buf + 5, sizeof(from));
 				if ((p = strchr(from, '\n')))
 					*p = '\0';
 				if (junkmail())
