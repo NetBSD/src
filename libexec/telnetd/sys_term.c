@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_term.c,v 1.12 1998/04/01 15:02:47 kleink Exp $	*/
+/*	$NetBSD: sys_term.c,v 1.13 1998/08/05 00:15:25 perry Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)sys_term.c	8.4+1 (Berkeley) 5/30/95";
 #else
-__RCSID("$NetBSD: sys_term.c,v 1.12 1998/04/01 15:02:47 kleink Exp $");
+__RCSID("$NetBSD: sys_term.c,v 1.13 1998/08/05 00:15:25 perry Exp $");
 #endif
 #endif /* not lint */
 
@@ -488,6 +488,24 @@ char *line = Xline;
 char *myline = "\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0";
 #endif	/* CRAY */
 
+#ifdef OPENPTY_PTY
+
+static int ptyslavefd; /* for cleanopen() */
+
+int
+getpty(ptynum)
+int *ptynum;                     
+{                   
+	int ptyfd;
+
+	ptyfd = openpty(ptynum, &ptyslavefd, line, NULL, NULL);
+	if (ptyfd == 0)
+		return *ptynum;
+	ptyslavefd = -1;
+	return (-1);
+}
+#else /* ! OPENPTY_PTY */
+
 	int
 getpty(ptynum)
 int *ptynum;
@@ -600,6 +618,7 @@ int *ptynum;
 #endif	/* STREAMSPTY */
 	return(-1);
 }
+#endif /* OPENPTY_PTY */
 #endif	/* convex */
 
 #ifdef	LINEMODE
@@ -1234,6 +1253,9 @@ getptyslave()
 cleanopen(line)
 	char *line;
 {
+#ifdef OPENPTY_PTY
+	return ptyslavefd;
+#else /* ! OPENPTY_PTY */
 	register int t;
 #ifdef	UNICOS7x
 	struct secstat secbuf;
@@ -1324,6 +1346,7 @@ cleanopen(line)
 	}
 # endif	/* defined(CRAY) && defined(TCVHUP) */
 	return(t);
+#endif /* OPENPTY_PTY */
 }
 #endif	/* !defined(CRAY) || !defined(NEWINIT) */
 
