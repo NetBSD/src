@@ -1,4 +1,4 @@
-/* -*-C++-*-	$NetBSD: rootwindow.cpp,v 1.6 2003/12/21 03:18:31 uwe Exp $	*/
+/* -*-C++-*-	$NetBSD: rootwindow.cpp,v 1.7 2003/12/21 03:22:20 uwe Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -252,13 +252,13 @@ RootWindow::isDialogMessage(MSG &msg)
 void
 RootWindow::progress()
 {
-    SendMessage(_progress_bar->_window, PBM_STEPIT, 0, 0);
+	SendMessage(_progress_bar->_window, PBM_STEPIT, 0, 0);
 }
 
 void
 RootWindow::unprogress()
 {
-    SendMessage(_progress_bar->_window, PBM_SETPOS, 0, 0);
+	SendMessage(_progress_bar->_window, PBM_SETPOS, 0, 0);
 }
 
 //
