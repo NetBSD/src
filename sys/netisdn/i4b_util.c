@@ -27,13 +27,16 @@
  *	i4b_util.c - layer 2 utility routines
  *	-------------------------------------
  *
- *	$Id: i4b_util.c,v 1.2.2.1 2001/04/09 01:58:52 nathanw Exp $ 
+ *	$Id: i4b_util.c,v 1.2.2.2 2001/11/14 19:18:22 nathanw Exp $ 
  *
  * $FreeBSD$
  *
  *      last edit-date: [Fri Jan  5 11:33:47 2001]
  *
  *---------------------------------------------------------------------------*/
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: i4b_util.c,v 1.2.2.2 2001/11/14 19:18:22 nathanw Exp $");
 
 #ifdef __FreeBSD__
 #include "i4bq921.h"

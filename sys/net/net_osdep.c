@@ -1,4 +1,4 @@
-/*	$NetBSD: net_osdep.c,v 1.2 1999/12/13 15:17:19 itojun Exp $	*/
+/*	$NetBSD: net_osdep.c,v 1.2.10.1 2001/11/14 19:17:29 nathanw Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -28,6 +28,9 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: net_osdep.c,v 1.2.10.1 2001/11/14 19:17:29 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

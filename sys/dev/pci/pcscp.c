@@ -1,4 +1,4 @@
-/*	$NetBSD: pcscp.c,v 1.12.2.3 2001/08/24 00:10:22 nathanw Exp $	*/
+/*	$NetBSD: pcscp.c,v 1.12.2.4 2001/11/14 19:15:28 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -44,6 +44,9 @@
  * Technical manual available at
  * http://www.amd.com/products/npd/techdocs/techdocs.html
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: pcscp.c,v 1.12.2.4 2001/11/14 19:15:28 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

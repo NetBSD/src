@@ -1,4 +1,4 @@
-/*	$NetBSD: fb.c,v 1.2.4.2 2001/10/08 20:11:30 nathanw Exp $ */
+/*	$NetBSD: fb.c,v 1.2.4.3 2001/11/14 19:16:07 nathanw Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -49,6 +49,9 @@
  * just build cdevsw[] dynamically.
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: fb.c,v 1.2.4.3 2001/11/14 19:16:07 nathanw Exp $");
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
@@ -64,6 +67,7 @@
 #include <dev/sun/fbio.h>
 #include <dev/sun/fbvar.h>
 
+#include "kbd.h"
 #include "pfour.h"
 
 static struct fbdevice *devfb;
@@ -348,7 +352,9 @@ static void
 fb_bell(on)
 	int on;
 {
+#if NKBD > 0
 	(void)kbd_docmd(on?KBD_CMD_BELL:KBD_CMD_NOBELL, 0);
+#endif
 }
 
 void

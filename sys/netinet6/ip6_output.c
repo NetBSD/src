@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_output.c,v 1.31.2.5 2001/10/22 20:42:03 nathanw Exp $	*/
+/*	$NetBSD: ip6_output.c,v 1.31.2.6 2001/11/14 19:18:10 nathanw Exp $	*/
 /*	$KAME: ip6_output.c,v 1.172 2001/03/25 09:55:56 itojun Exp $	*/
 
 /*
@@ -64,6 +64,9 @@
  *
  *	@(#)ip_output.c	8.3 (Berkeley) 1/21/94
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ip6_output.c,v 1.31.2.6 2001/11/14 19:18:10 nathanw Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -516,7 +519,7 @@ skip_ipsec2:;
 
 		exthdrs.ip6e_ip6 = m;
 	}
-#endif /*IPSEC*/
+#endif /* IPSEC */
 
 	if (!IN6_IS_ADDR_MULTICAST(&ip6->ip6_dst)) {
 		/* Unicast */

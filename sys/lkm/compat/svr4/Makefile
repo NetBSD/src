@@ -1,5 +1,6 @@
-#	$NetBSD: Makefile,v 1.6.2.1 2001/06/21 20:07:27 nathanw Exp $
+#	$NetBSD: Makefile,v 1.6.2.2 2001/11/14 19:16:56 nathanw Exp $
 
+COMPAT_UTIL_OVERRIDE=	svr4
 .include "../Makefile.inc"
 USE_32=
 .include "../svr4/Makefile.common"
@@ -11,6 +12,10 @@ SRCS+=	svr4_errno.c svr4_exec.c svr4_fcntl.c svr4_filio.c svr4_ioctl.c \
 	svr4_signal.c svr4_socket.c svr4_sockio.c svr4_stat.c svr4_stream.c \
 	svr4_syscalls.c svr4_sysent.c svr4_termios.c svr4_ttold.c
 SRCS+=	svr4_machdep.c
+
+# XXXX - temporary, not applicable for kernel with COMPAT_43
+#.PATH: $S/compat/common
+#SRCS+=	uipc_syscalls_43.c vfs_syscalls_43.c
 
 .if ${MACHINE} == "i386"
 SRCS+=	svr4_sigcode.s svr4_syscall.c

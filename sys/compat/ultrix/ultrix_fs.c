@@ -1,4 +1,4 @@
-/*	$NetBSD: ultrix_fs.c,v 1.19.2.1 2001/06/21 20:00:57 nathanw Exp $	*/
+/*	$NetBSD: ultrix_fs.c,v 1.19.2.2 2001/11/14 19:13:31 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1995, 1997 Jonathan Stone
@@ -31,6 +31,9 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ultrix_fs.c,v 1.19.2.2 2001/11/14 19:13:31 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: rtfps.c,v 1.40 1998/09/18 14:38:48 enami Exp $	*/
+/*	$NetBSD: rtfps.c,v 1.40.24.1 2001/11/14 19:14:53 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -32,6 +32,9 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: rtfps.c,v 1.40.24.1 2001/11/14 19:14:53 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_layout.c,v 1.9.2.1 2001/10/22 20:41:36 nathanw Exp $	*/
+/*	$NetBSD: rf_layout.c,v 1.9.2.2 2001/11/14 19:15:49 nathanw Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -28,6 +28,9 @@
 
 /* rf_layout.c -- driver code dealing with layout and mapping issues
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: rf_layout.c,v 1.9.2.2 2001/11/14 19:15:49 nathanw Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: ld_mlx.c,v 1.1.4.1 2001/06/21 20:02:48 nathanw Exp $	*/
+/*	$NetBSD: ld_mlx.c,v 1.1.4.2 2001/11/14 19:14:28 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -39,6 +39,9 @@
 /*
  * Mylex DAC960 front-end for ld(4) driver.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ld_mlx.c,v 1.1.4.2 2001/11/14 19:14:28 nathanw Exp $");
 
 #include "rnd.h"
 

@@ -1,3 +1,8 @@
+/*	$NetBSD: mpu_isapnp.c,v 1.4.14.1 2001/11/14 19:14:59 nathanw Exp $	*/
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: mpu_isapnp.c,v 1.4.14.1 2001/11/14 19:14:59 nathanw Exp $");
+
 #include "midi.h"
 
 #include <sys/param.h>

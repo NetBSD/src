@@ -27,13 +27,16 @@
  *	i4b_tel.c - device driver for ISDN telephony
  *	--------------------------------------------
  *
- *	$Id: i4b_tel.c,v 1.2.2.2 2001/06/21 20:09:09 nathanw Exp $
+ *	$Id: i4b_tel.c,v 1.2.2.3 2001/11/14 19:18:21 nathanw Exp $
  *
  * $FreeBSD$
  *
  *	last edit-date: [Fri Jan  5 11:33:47 2001]
  *
  *---------------------------------------------------------------------------*/
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: i4b_tel.c,v 1.2.2.3 2001/11/14 19:18:21 nathanw Exp $");
 
 #include "i4btel.h"
 

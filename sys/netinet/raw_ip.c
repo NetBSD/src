@@ -1,4 +1,4 @@
-/*	$NetBSD: raw_ip.c,v 1.55.2.1 2001/08/24 00:12:28 nathanw Exp $	*/
+/*	$NetBSD: raw_ip.c,v 1.55.2.2 2001/11/14 19:17:55 nathanw Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -63,6 +63,9 @@
  *
  *	@(#)raw_ip.c	8.7 (Berkeley) 5/15/95
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: raw_ip.c,v 1.55.2.2 2001/11/14 19:17:55 nathanw Exp $");
 
 #include "opt_ipsec.h"
 #include "opt_mrouting.h"
@@ -162,9 +165,7 @@ rip_input(m, va_alist)
 	 */
 	ip->ip_len -= ip->ip_hl << 2;
 
-	for (inp = rawcbtable.inpt_queue.cqh_first;
-	    inp != (struct inpcb *)&rawcbtable.inpt_queue;
-	    inp = inp->inp_queue.cqe_next) {
+	CIRCLEQ_FOREACH(inp, &rawcbtable.inpt_queue, inp_queue) {
 		if (inp->inp_ip.ip_p && inp->inp_ip.ip_p != proto)
 			continue;
 		if (!in_nullhost(inp->inp_laddr) &&
@@ -389,7 +390,7 @@ rip_bind(inp, nam)
 
 	if (nam->m_len != sizeof(*addr))
 		return (EINVAL);
-	if (ifnet.tqh_first == 0)
+	if (TAILQ_FIRST(&ifnet) == 0)
 		return (EADDRNOTAVAIL);
 	if (addr->sin_family != AF_INET &&
 	    addr->sin_family != AF_IMPLINK)
@@ -410,7 +411,7 @@ rip_connect(inp, nam)
 
 	if (nam->m_len != sizeof(*addr))
 		return (EINVAL);
-	if (ifnet.tqh_first == 0)
+	if (TAILQ_FIRST(&ifnet) == 0)
 		return (EADDRNOTAVAIL);
 	if (addr->sin_family != AF_INET &&
 	    addr->sin_family != AF_IMPLINK)

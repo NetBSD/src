@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_raid1.c,v 1.5.6.1 2001/08/24 00:10:38 nathanw Exp $	*/
+/*	$NetBSD: rf_raid1.c,v 1.5.6.2 2001/11/14 19:15:52 nathanw Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -31,6 +31,9 @@
  * rf_raid1.c -- implements RAID Level 1
  *
  *****************************************************************************/
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: rf_raid1.c,v 1.5.6.2 2001/11/14 19:15:52 nathanw Exp $");
 
 #include "rf_raid.h"
 #include "rf_raid1.h"

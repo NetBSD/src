@@ -1,4 +1,4 @@
-/*	$NetBSD: ukbdmap.c,v 1.5.6.1 2001/04/09 01:57:35 nathanw Exp $	*/
+/*	$NetBSD: ukbdmap.c,v 1.5.6.2 2001/11/14 19:16:18 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1999,2001 The NetBSD Foundation, Inc.
@@ -36,6 +36,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ukbdmap.c,v 1.5.6.2 2001/11/14 19:16:18 nathanw Exp $");
 
 #include <sys/types.h>
 #include <dev/wscons/wsksymdef.h>

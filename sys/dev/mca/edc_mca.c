@@ -1,4 +1,4 @@
-/*	$NetBSD: edc_mca.c,v 1.9.2.2 2001/06/21 20:04:00 nathanw Exp $	*/
+/*	$NetBSD: edc_mca.c,v 1.9.2.3 2001/11/14 19:15:00 nathanw Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -51,6 +51,9 @@
  *   necessary for this to work should be supported - edc_intr() specifically
  *   checks if the interrupt is for this controller
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: edc_mca.c,v 1.9.2.3 2001/11/14 19:15:00 nathanw Exp $");
 
 #include "rnd.h"
 

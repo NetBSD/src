@@ -115,6 +115,9 @@
  *
  *****************************************************************************/
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: exnames.c,v 1.1.1.1.4.3 2001/11/14 19:13:49 nathanw Exp $");
+
 #define __EXNAMES_C__
 
 #include "acpi.h"

@@ -1,6 +1,4 @@
-/*	$NetBSD: tcic2_isa.c,v 1.3 2000/06/28 16:27:57 mrg Exp $	*/
-
-#undef	TCICISADEBUG
+/*	$NetBSD: tcic2_isa.c,v 1.3.2.1 2001/11/14 19:14:54 nathanw Exp $	*/
 
 /*
  *
@@ -33,6 +31,10 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: tcic2_isa.c,v 1.3.2.1 2001/11/14 19:14:54 nathanw Exp $");
+
+#undef	TCICISADEBUG
 
 #include <sys/types.h>
 #include <sys/param.h>

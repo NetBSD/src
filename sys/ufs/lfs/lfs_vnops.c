@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vnops.c,v 1.50.2.4 2001/09/26 19:55:13 nathanw Exp $	*/
+/*	$NetBSD: lfs_vnops.c,v 1.50.2.5 2001/11/14 19:19:00 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -70,6 +70,9 @@
  *	@(#)lfs_vnops.c	8.13 (Berkeley) 6/10/95
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.50.2.5 2001/11/14 19:19:00 nathanw Exp $");
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/namei.h>
@@ -90,7 +93,6 @@
 #include <miscfs/genfs/genfs.h>
 #include <miscfs/specfs/specdev.h>
 
-#include <ufs/ufs/quota.h>
 #include <ufs/ufs/inode.h>
 #include <ufs/ufs/dir.h>
 #include <ufs/ufs/ufsmount.h>

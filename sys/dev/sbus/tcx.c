@@ -1,4 +1,4 @@
-/*	$NetBSD: tcx.c,v 1.2.4.1 2001/09/26 19:55:00 nathanw Exp $ */
+/*	$NetBSD: tcx.c,v 1.2.4.2 2001/11/14 19:15:59 nathanw Exp $ */
 
 /*
  *  Copyright (c) 1996,1998 The NetBSD Foundation, Inc.
@@ -43,6 +43,9 @@
  *
  * XXX should defer colormap updates to vertical retrace interrupts
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: tcx.c,v 1.2.4.2 2001/11/14 19:15:59 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

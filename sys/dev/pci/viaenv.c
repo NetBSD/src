@@ -1,4 +1,4 @@
-/*	$NetBSD: viaenv.c,v 1.3.4.1 2001/09/21 22:36:04 nathanw Exp $	*/
+/*	$NetBSD: viaenv.c,v 1.3.4.2 2001/11/14 19:15:32 nathanw Exp $	*/
 
 /*
  * Copyright (c) 2000 Johan Danielsson
@@ -33,6 +33,9 @@
  */
 
 /* driver for the hardware monitoring part of the VIA VT82C686A */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: viaenv.c,v 1.3.4.2 2001/11/14 19:15:32 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

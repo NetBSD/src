@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr53c9x.c,v 1.70.2.3 2001/08/24 00:09:33 nathanw Exp $	*/
+/*	$NetBSD: ncr53c9x.c,v 1.70.2.4 2001/11/14 19:14:31 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -75,6 +75,9 @@
  * inspired by the work of Julian Elischer (julian@tfs.com) and
  * Charles Hannum (mycroft@duality.gnu.ai.mit.edu).  Thanks a million!
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ncr53c9x.c,v 1.70.2.4 2001/11/14 19:14:31 nathanw Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -1490,23 +1493,15 @@ abort:
 	return (1);
 }
 
-
-/*
- * XXX this might be common thing(check with scsipi)
- */
-#define IS1BYTEMSG(m) (((m) != 1 && (m) < 0x20) || (m) & 0x80)
-#define IS2BYTEMSG(m) (((m) & 0xf0) == 0x20)
-#define ISEXTMSG(m) ((m) == 1)
-
 static inline int
 __verify_msg_format(u_char *p, int len)
 {
 
-	if (len == 1 && IS1BYTEMSG(p[0]))
+	if (len == 1 && MSG_IS1BYTE(p[0]))
 		return 1;
-	if (len == 2 && IS2BYTEMSG(p[0]))
+	if (len == 2 && MSG_IS2BYTE(p[0]))
 		return 1;
-	if (len >= 3 && ISEXTMSG(p[0]) &&
+	if (len >= 3 && MSG_ISEXTENDED(p[0]) &&
 	    len == p[1] + 2)
 		return 1;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: filecore_utils.c,v 1.3 1999/02/10 13:14:09 bouyer Exp $	*/
+/*	$NetBSD: filecore_utils.c,v 1.3.20.1 2001/11/14 19:16:29 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998 Andrew McMurry
@@ -68,6 +68,9 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: filecore_utils.c,v 1.3.20.1 2001/11/14 19:16:29 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

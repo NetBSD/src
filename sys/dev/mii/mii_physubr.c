@@ -1,4 +1,4 @@
-/*	$NetBSD: mii_physubr.c,v 1.18.2.3 2001/09/21 22:35:50 nathanw Exp $	*/
+/*	$NetBSD: mii_physubr.c,v 1.18.2.4 2001/11/14 19:15:02 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -40,6 +40,9 @@
 /*
  * Subroutines common to all PHYs.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: mii_physubr.c,v 1.18.2.4 2001/11/14 19:15:02 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_gre.c,v 1.15.2.1 2001/06/21 20:08:36 nathanw Exp $ */
+/*	$NetBSD: ip_gre.c,v 1.15.2.2 2001/11/14 19:17:48 nathanw Exp $ */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -42,6 +42,8 @@
  * This currently handles IPPROTO_GRE, IPPROTO_MOBILE
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ip_gre.c,v 1.15.2.2 2001/11/14 19:17:48 nathanw Exp $");
 
 #include "gre.h"
 #if NGRE > 0

@@ -1,4 +1,4 @@
-/*	$NetBSD: cd18xx.c,v 1.1.2.2 2001/10/08 20:10:58 nathanw Exp $	*/
+/*	$NetBSD: cd18xx.c,v 1.1.2.3 2001/11/14 19:14:18 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -103,6 +103,9 @@
  * cirrus logic CL-CD180/CD1864/CD1865 driver, based in (large) parts on
  * the com and z8530 drivers.  thanks charles.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: cd18xx.c,v 1.1.2.3 2001/11/14 19:14:18 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_stripelocks.c,v 1.6.2.2 2001/10/22 20:41:40 nathanw Exp $	*/
+/*	$NetBSD: rf_stripelocks.c,v 1.6.2.3 2001/11/14 19:15:53 nathanw Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -55,6 +55,9 @@
  * be only one stripe and you may spend some significant number of cycles
  * searching through stripe lock descriptors.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: rf_stripelocks.c,v 1.6.2.3 2001/11/14 19:15:53 nathanw Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_stf.c,v 1.12.2.2 2001/08/24 00:12:16 nathanw Exp $	*/
+/*	$NetBSD: if_stf.c,v 1.12.2.3 2001/11/14 19:17:26 nathanw Exp $	*/
 /*	$KAME: if_stf.c,v 1.62 2001/06/07 22:32:16 itojun Exp $	*/
 
 /*
@@ -74,6 +74,9 @@
  * Note that there is no way to be 100% secure.
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: if_stf.c,v 1.12.2.3 2001/11/14 19:17:26 nathanw Exp $");
+
 #if defined(__FreeBSD__) && __FreeBSD__ >= 3
 #include "opt_inet.h"
 #include "opt_inet6.h"
@@ -143,8 +146,6 @@
 #if NGIF > 0
 #include <net/if_gif.h>
 #endif
-
-#if NSTF > 0
 
 #define IN6_IS_ADDR_6TO4(x)	(ntohs((x)->s6_addr16[0]) == 0x2002)
 #define GET_V4(x)	((struct in_addr *)(&(x)->s6_addr16[1]))
@@ -343,9 +344,7 @@ stf_getsrcifa6(ifp)
 #if defined(__bsdi__) || (defined(__FreeBSD__) && __FreeBSD__ < 3)
 	for (ia = ifp->if_addrlist; ia; ia = ia->ifa_next)
 #else
-	for (ia = ifp->if_addrlist.tqh_first;
-	     ia;
-	     ia = ia->ifa_list.tqe_next)
+	TAILQ_FOREACH(ia, &ifp->if_addrlist, ifa_list)
 #endif
 	{
 		if (ia->ifa_addr == NULL)
@@ -361,9 +360,9 @@ stf_getsrcifa6(ifp)
 		INADDR_TO_IA(in, ia4);
 #else
 #ifdef __OpenBSD__
-		for (ia4 = in_ifaddr.tqh_first;
+		for (ia4 = TAILQ_FIRST(&in_ifaddr);
 		     ia4;
-		     ia4 = ia4->ia_list.tqe_next)
+		     ia4 = TAILQ_NEXT(ia4, ia_list))
 #elif defined(__FreeBSD__) && __FreeBSD__ >= 3
 		for (ia4 = TAILQ_FIRST(&in_ifaddrhead);
 		     ia4;
@@ -537,7 +536,7 @@ stf_checkaddr4(sc, in, inifp)
 	 * reject packets with broadcast
 	 */
 #if defined(__OpenBSD__) || defined(__NetBSD__)
-	for (ia4 = in_ifaddr.tqh_first; ia4; ia4 = ia4->ia_list.tqe_next)
+	TAILQ_FOREACH(ia4, &in_ifaddr, ia_list)
 #elif defined(__FreeBSD__) && __FreeBSD__ >= 3
 	for (ia4 = TAILQ_FIRST(&in_ifaddrhead);
 	     ia4;
@@ -793,5 +792,3 @@ stf_ioctl(ifp, cmd, data)
 
 	return error;
 }
-
-#endif /* NSTF > 0 */

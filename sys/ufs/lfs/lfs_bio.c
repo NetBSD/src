@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_bio.c,v 1.35.2.2 2001/08/24 00:13:24 nathanw Exp $	*/
+/*	$NetBSD: lfs_bio.c,v 1.35.2.3 2001/11/14 19:18:58 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -70,6 +70,9 @@
  *	@(#)lfs_bio.c	8.10 (Berkeley) 6/10/95
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: lfs_bio.c,v 1.35.2.3 2001/11/14 19:18:58 nathanw Exp $");
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
@@ -79,7 +82,6 @@
 #include <sys/mount.h>
 #include <sys/kernel.h>
 
-#include <ufs/ufs/quota.h>
 #include <ufs/ufs/inode.h>
 #include <ufs/ufs/ufsmount.h>
 #include <ufs/ufs/ufs_extern.h>
@@ -172,9 +174,6 @@ lfs_bwrite(void *v)
 		struct buf *a_bp;
 	} */ *ap = v;
 	struct buf *bp = ap->a_bp;
-	struct inode *ip;
-
-	ip = VTOI(bp->b_vp);
 
 #ifdef DIAGNOSTIC
         if (VTOI(bp->b_vp)->i_lfs->lfs_ronly == 0 && (bp->b_flags & B_ASYNC)) {

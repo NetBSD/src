@@ -1,4 +1,4 @@
-/*	$NetBSD: stic.c,v 1.8.2.2 2001/09/21 22:36:17 nathanw Exp $	*/
+/*	$NetBSD: stic.c,v 1.8.2.3 2001/11/14 19:16:12 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -71,6 +71,9 @@
  *
  * XXX The bt459 interface shouldn't be replicated here.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: stic.c,v 1.8.2.3 2001/11/14 19:16:12 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

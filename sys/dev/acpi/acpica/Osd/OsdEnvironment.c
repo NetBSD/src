@@ -1,4 +1,4 @@
-/*	$NetBSD: OsdEnvironment.c,v 1.1.4.2 2001/10/08 21:18:07 nathanw Exp $	*/
+/*	$NetBSD: OsdEnvironment.c,v 1.1.4.3 2001/11/14 19:13:43 nathanw Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -40,6 +40,9 @@
  *
  * 6.1: Environmental support.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: OsdEnvironment.c,v 1.1.4.3 2001/11/14 19:13:43 nathanw Exp $");
 
 #include <sys/types.h>
 

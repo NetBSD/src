@@ -115,6 +115,9 @@
  *
  *****************************************************************************/
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: exxface.c,v 1.1.1.1.4.3 2001/11/14 19:13:51 nathanw Exp $");
+
 #define __EXXFACE_C__
 
 #include "acpi.h"

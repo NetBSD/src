@@ -1,4 +1,4 @@
-/*	$NetBSD: lance.c,v 1.17.2.2 2001/08/24 00:09:28 nathanw Exp $	*/
+/*	$NetBSD: lance.c,v 1.17.2.3 2001/11/14 19:14:28 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -74,6 +74,9 @@
  *
  *	@(#)if_le.c	8.2 (Berkeley) 11/16/93
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: lance.c,v 1.17.2.3 2001/11/14 19:14:28 nathanw Exp $");
 
 #include "opt_ccitt.h"
 #include "opt_llc.h"

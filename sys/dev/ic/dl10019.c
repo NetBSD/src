@@ -1,4 +1,4 @@
-/*	$NetBSD: dl10019.c,v 1.1.2.2 2001/08/24 00:09:20 nathanw Exp $	*/
+/*	$NetBSD: dl10019.c,v 1.1.2.3 2001/11/14 19:14:20 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -35,6 +35,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: dl10019.c,v 1.1.2.3 2001/11/14 19:14:20 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

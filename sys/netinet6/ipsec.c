@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec.c,v 1.33.2.4 2001/10/22 20:42:04 nathanw Exp $	*/
+/*	$NetBSD: ipsec.c,v 1.33.2.5 2001/11/14 19:18:12 nathanw Exp $	*/
 /*	$KAME: ipsec.c,v 1.125 2001/09/12 23:01:16 sakane Exp $	*/
 
 /*
@@ -34,6 +34,9 @@
  * IPsec controller part.
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.33.2.5 2001/11/14 19:18:12 nathanw Exp $");
+
 #include "opt_inet.h"
 #include "opt_ipsec.h"
 
@@ -49,9 +52,7 @@
 #include <sys/time.h>
 #include <sys/kernel.h>
 #include <sys/syslog.h>
-#include <uvm/uvm_extern.h>
 #include <sys/sysctl.h>
-#include <sys/proc.h>
 
 #include <net/if.h>
 #include <net/route.h>

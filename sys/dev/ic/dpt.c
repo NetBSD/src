@@ -1,4 +1,4 @@
-/*	$NetBSD: dpt.c,v 1.25.2.3 2001/08/24 00:09:21 nathanw Exp $	*/
+/*	$NetBSD: dpt.c,v 1.25.2.4 2001/11/14 19:14:21 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -53,6 +53,9 @@
  * on the understanding that TFS is not responsible for the correct
  * functioning of this software in any circumstances.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: dpt.c,v 1.25.2.4 2001/11/14 19:14:21 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

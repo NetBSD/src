@@ -1,4 +1,4 @@
-/*	$NetBSD: com_puc.c,v 1.1.26.1 2001/04/09 01:56:58 nathanw Exp $	*/
+/*	$NetBSD: com_puc.c,v 1.1.26.2 2001/11/14 19:15:10 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1998 Christopher G. Demetriou.  All rights reserved.
@@ -36,6 +36,9 @@
  *
  * Author: Christopher G. Demetriou, May 17, 1998.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: com_puc.c,v 1.1.26.2 2001/11/14 19:15:10 nathanw Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_debugprint.c,v 1.3.20.1 2001/10/22 20:41:34 nathanw Exp $	*/
+/*	$NetBSD: rf_debugprint.c,v 1.3.20.2 2001/11/14 19:15:47 nathanw Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -32,6 +32,9 @@
  * The point is to try and minimize the timing variations induced by the
  * printfs, and to capture only the printf's immediately preceding a failure.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: rf_debugprint.c,v 1.3.20.2 2001/11/14 19:15:47 nathanw Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 

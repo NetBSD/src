@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_misc.c,v 1.83.2.5 2001/09/21 22:35:19 nathanw Exp $	*/
+/*	$NetBSD: linux_misc.c,v 1.83.2.6 2001/11/14 19:13:11 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 1999 The NetBSD Foundation, Inc.
@@ -62,6 +62,9 @@
  *	linux_sys_olduname		: linux_olduname.c
  *	linux_sys_pipe			: linux_pipe.c
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: linux_misc.c,v 1.83.2.6 2001/11/14 19:13:11 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_wait.c,v 1.1 2001/02/08 13:19:34 mrg Exp $	*/
+/*	$NetBSD: netbsd32_wait.c,v 1.1.4.1 2001/11/14 19:13:19 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -27,6 +27,9 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_wait.c,v 1.1.4.1 2001/11/14 19:13:19 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

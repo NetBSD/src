@@ -1,4 +1,4 @@
-/*	$NetBSD: bha_eisa.c,v 1.16.24.1 2001/06/21 20:01:29 nathanw Exp $	*/
+/*	$NetBSD: bha_eisa.c,v 1.16.24.2 2001/11/14 19:14:04 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -35,6 +35,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: bha_eisa.c,v 1.16.24.2 2001/11/14 19:14:04 nathanw Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>

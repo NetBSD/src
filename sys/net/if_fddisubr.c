@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fddisubr.c,v 1.38.2.3 2001/10/22 20:41:54 nathanw Exp $	*/
+/*	$NetBSD: if_fddisubr.c,v 1.38.2.4 2001/11/14 19:17:20 nathanw Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -67,6 +67,10 @@
  *
  * Id: if_fddisubr.c,v 1.15 1997/03/21 22:35:50 thomas Exp
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: if_fddisubr.c,v 1.38.2.4 2001/11/14 19:17:20 nathanw Exp $");
+
 #include "opt_inet.h"
 #include "opt_atalk.h"
 #include "opt_ccitt.h"

@@ -1,7 +1,5 @@
-/*	$NetBSD: fwohci.c,v 1.16.2.5 2001/10/22 20:41:21 nathanw Exp $	*/
+/*	$NetBSD: fwohci.c,v 1.16.2.6 2001/11/14 19:14:42 nathanw Exp $	*/
 
-#define DOUBLEBUF 1
-#define NO_THREAD 1
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -49,6 +47,12 @@
  * The first version to support isochronous acquisition part is wrtten
  * by HAYAKAWA Koichi <haya@netbsd.org>.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: fwohci.c,v 1.16.2.6 2001/11/14 19:14:42 nathanw Exp $");
+
+#define DOUBLEBUF 1
+#define NO_THREAD 1
 
 #include "opt_inet.h"
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: pk_output.c,v 1.13.6.1 2001/10/22 20:41:56 nathanw Exp $	*/
+/*	$NetBSD: pk_output.c,v 1.13.6.2 2001/11/14 19:17:39 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1984 University of British Columbia.
@@ -42,6 +42,9 @@
  *
  *	@(#)pk_output.c	8.2(Berkeley) 9/22/94
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: pk_output.c,v 1.13.6.2 2001/11/14 19:17:39 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

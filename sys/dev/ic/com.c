@@ -1,4 +1,4 @@
-/*	$NetBSD: com.c,v 1.183.2.4 2001/09/21 22:35:35 nathanw Exp $	*/
+/*	$NetBSD: com.c,v 1.183.2.5 2001/11/14 19:14:19 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -75,6 +75,9 @@
  * COM driver, uses National Semiconductor NS16450/NS16550AF UART
  * Supports automatic hardware flow control on StarTech ST16C650A UART
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.183.2.5 2001/11/14 19:14:19 nathanw Exp $");
 
 #include "opt_com.h"
 #include "opt_ddb.h"
@@ -2454,6 +2457,13 @@ com_kgdb_attach(iot, iobase, rate, frequency, cflag)
 	res = cominit(iot, iobase, rate, frequency, cflag, &com_kgdb_ioh);
 	if (res)
 		return (res);
+
+	/*
+	 * XXXfvdl this shouldn't be needed, but the cn_magic goo
+	 * expects this to be initialized
+	 */
+	cn_init_magic(&com_cnm_state);
+	cn_set_magic("\047\001");
 
 	kgdb_attach(com_kgdb_getc, com_kgdb_putc, NULL);
 	kgdb_dev = 123; /* unneeded, only to satisfy some tests */

@@ -1,4 +1,4 @@
-/*	$NetBSD: tulip.c,v 1.91.2.3 2001/09/21 22:35:44 nathanw Exp $	*/
+/*	$NetBSD: tulip.c,v 1.91.2.4 2001/11/14 19:14:39 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -41,6 +41,9 @@
  * Device driver for the Digital Semiconductor ``Tulip'' (21x4x)
  * Ethernet controller family, and a variety of clone chips.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: tulip.c,v 1.91.2.4 2001/11/14 19:14:39 nathanw Exp $");
 
 #include "bpfilter.h"
 
@@ -3874,7 +3877,7 @@ tlp_print_media(sc)
 	struct tulip_21x4x_media *tm;
 	const char *sep = "";
 
-#define	PRINT(s)	printf("%s%s", sep, s); sep = ", "
+#define	PRINT(str)	printf("%s%s", sep, str); sep = ", "
 
 	printf("%s: ", sc->sc_dev.dv_xname);
 	for (ife = TAILQ_FIRST(&sc->sc_mii.mii_media.ifm_list);
@@ -5085,7 +5088,7 @@ tlp_pnic_tmsw_init(sc)
 	const char *sep = "";
 
 #define	ADD(m, c)	ifmedia_add(&sc->sc_mii.mii_media, (m), (c), NULL)
-#define	PRINT(s)	printf("%s%s", sep, s); sep = ", "
+#define	PRINT(str)	printf("%s%s", sep, str); sep = ", "
 
 	sc->sc_mii.mii_ifp = ifp;
 	sc->sc_mii.mii_readreg = tlp_pnic_mii_readreg;

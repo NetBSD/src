@@ -27,13 +27,16 @@
  *	i4b_l3fsm.c - layer 3 FSM
  *	-------------------------
  *
- *	$Id: i4b_l3fsm.c,v 1.2.2.3 2001/09/21 22:36:53 nathanw Exp $ 
+ *	$Id: i4b_l3fsm.c,v 1.2.2.4 2001/11/14 19:18:19 nathanw Exp $ 
  *
  * $FreeBSD$
  *
  *      last edit-date: [Fri Jan  5 11:33:47 2001]
  *
  *---------------------------------------------------------------------------*/
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: i4b_l3fsm.c,v 1.2.2.4 2001/11/14 19:18:19 nathanw Exp $");
 
 #ifdef __FreeBSD__
 #include "i4bq931.h"

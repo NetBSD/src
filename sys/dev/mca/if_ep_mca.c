@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ep_mca.c,v 1.2.2.4 2001/08/24 00:09:54 nathanw Exp $	*/
+/*	$NetBSD: if_ep_mca.c,v 1.2.2.5 2001/11/14 19:15:00 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -74,6 +74,9 @@
  * This helped on my test machine to change the performance of the card
  * from like 5KB/s to like 800 KB/s.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: if_ep_mca.c,v 1.2.2.5 2001/11/14 19:15:00 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

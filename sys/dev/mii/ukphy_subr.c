@@ -1,4 +1,4 @@
-/*	$NetBSD: ukphy_subr.c,v 1.3.6.1 2001/09/21 22:35:51 nathanw Exp $	*/
+/*	$NetBSD: ukphy_subr.c,v 1.3.6.2 2001/11/14 19:15:03 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -40,6 +40,9 @@
 /*
  * Subroutines shared by the ukphy driver and other PHY drivers.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ukphy_subr.c,v 1.3.6.2 2001/11/14 19:15:03 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: cs4231.c,v 1.4.4.1 2001/10/08 20:10:59 nathanw Exp $	*/
+/*	$NetBSD: cs4231.c,v 1.4.4.2 2001/11/14 19:14:20 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -35,6 +35,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: cs4231.c,v 1.4.4.2 2001/11/14 19:14:20 nathanw Exp $");
 
 #include "audio.h"
 #if NAUDIO > 0

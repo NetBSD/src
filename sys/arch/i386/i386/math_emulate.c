@@ -1,4 +1,4 @@
-/*	$NetBSD: math_emulate.c,v 1.21.16.3 2001/08/24 04:19:59 nathanw Exp $	*/
+/*	$NetBSD: math_emulate.c,v 1.21.16.4 2001/11/14 19:12:46 nathanw Exp $	*/
 
 /*
  * expediant "port" of linux 8087 emulator to 386BSD, with apologies -wfj
@@ -114,7 +114,6 @@ math_emulate(info)
 		switch (prefix) {
 		case INSPREF_LOCK:
 			math_abort(info, SIGILL);
-			break;
 		case INSPREF_REPN:
 		case INSPREF_REPE:
 			break;
@@ -134,7 +133,6 @@ math_emulate(info)
 			break;
 		case -1:
 			math_abort(info,SIGSEGV);
-			break;
 		default:
 			goto done;
 		}
@@ -374,8 +372,6 @@ done:
 	case 0xf8: /* XXX */
 		printf("ffree not implemented\n\r");
 		math_abort(info,SIGILL);
-		fpop();
-		return(0);
 	case 0xf9: /* XXX */
 		fxchg(&ST(0),&ST(code & 7));
 		return(0);

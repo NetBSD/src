@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_pq.c,v 1.7.6.3 2001/10/22 20:41:38 nathanw Exp $	*/
+/*	$NetBSD: rf_pq.c,v 1.7.6.4 2001/11/14 19:15:51 nathanw Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -29,6 +29,9 @@
 /*
  * Code for RAID level 6 (P + Q) disk array architecture.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: rf_pq.c,v 1.7.6.4 2001/11/14 19:15:51 nathanw Exp $");
 
 #include "rf_archs.h"
 

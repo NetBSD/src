@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_memchunk.c,v 1.4.14.2 2001/10/22 20:41:37 nathanw Exp $	*/
+/*	$NetBSD: rf_memchunk.c,v 1.4.14.3 2001/11/14 19:15:50 nathanw Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -57,6 +57,9 @@
  * It's worth a try, though, and it can be turned off by setting useMemChunks to 0.
  *
  ********************************************************************************/
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: rf_memchunk.c,v 1.4.14.3 2001/11/14 19:15:50 nathanw Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 

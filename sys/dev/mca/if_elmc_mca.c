@@ -1,4 +1,4 @@
-/*	$NetBSD: if_elmc_mca.c,v 1.4.2.3 2001/06/21 20:04:04 nathanw Exp $	*/
+/*	$NetBSD: if_elmc_mca.c,v 1.4.2.4 2001/11/14 19:15:00 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -44,6 +44,9 @@
  *
  * This driver uses generic i82586 stuff. See also ai(4), ef(4), ix(4).
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: if_elmc_mca.c,v 1.4.2.4 2001/11/14 19:15:00 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

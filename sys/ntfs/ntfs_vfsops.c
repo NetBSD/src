@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_vfsops.c,v 1.33.2.5 2001/09/21 22:36:59 nathanw Exp $	*/
+/*	$NetBSD: ntfs_vfsops.c,v 1.33.2.6 2001/11/14 19:18:49 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 Semen Ustimenko
@@ -28,6 +28,8 @@
  *	Id: ntfs_vfsops.c,v 1.7 1999/05/31 11:28:30 phk Exp
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ntfs_vfsops.c,v 1.33.2.6 2001/11/14 19:18:49 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -780,11 +782,10 @@ ntfs_statfs(
 	struct proc *p)
 {
 	struct ntfsmount *ntmp = VFSTONTFS(mp);
-	u_int64_t mftsize,mftallocated;
+	u_int64_t mftallocated;
 
 	dprintf(("ntfs_statfs():\n"));
 
-	mftsize = VTOF(ntmp->ntm_sysvn[NTFS_MFTINO])->f_size;
 	mftallocated = VTOF(ntmp->ntm_sysvn[NTFS_MFTINO])->f_allocated;
 
 #if defined(__FreeBSD__)

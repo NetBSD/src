@@ -1,4 +1,4 @@
-/*	$NetBSD: ate_subr.c,v 1.1.2.2 2001/04/09 01:56:09 nathanw Exp $	*/
+/*	$NetBSD: ate_subr.c,v 1.1.2.3 2001/11/14 19:14:17 nathanw Exp $	*/
 
 /*
  * All Rights Reserved, Copyright (C) Fujitsu Limited 1995
@@ -30,6 +30,9 @@
  * software, nor does the author assume any responsibility for damages
  * incurred with its use.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ate_subr.c,v 1.1.2.3 2001/11/14 19:14:17 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

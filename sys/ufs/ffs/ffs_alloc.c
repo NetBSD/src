@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_alloc.c,v 1.41.2.5 2001/09/21 22:37:03 nathanw Exp $	*/
+/*	$NetBSD: ffs_alloc.c,v 1.41.2.6 2001/11/14 19:18:54 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -34,6 +34,9 @@
  *
  *	@(#)ffs_alloc.c	8.19 (Berkeley) 7/13/95
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ffs_alloc.c,v 1.41.2.6 2001/11/14 19:18:54 nathanw Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"

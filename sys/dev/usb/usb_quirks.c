@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_quirks.c,v 1.36.2.1 2001/06/21 20:06:26 nathanw Exp $	*/
+/*	$NetBSD: usb_quirks.c,v 1.36.2.2 2001/11/14 19:16:20 nathanw Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_quirks.c,v 1.13 1999/11/17 22:33:47 n_hibma Exp $	*/
 
 /*
@@ -37,6 +37,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: usb_quirks.c,v 1.36.2.2 2001/11/14 19:16:20 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: cgsix_sbus.c,v 1.3.2.2 2001/10/08 20:11:24 nathanw Exp $ */
+/*	$NetBSD: cgsix_sbus.c,v 1.3.2.3 2001/11/14 19:15:56 nathanw Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -39,6 +39,9 @@
 /*
  * color display (cgsix) driver; Sbus bus front-end.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: cgsix_sbus.c,v 1.3.2.3 2001/11/14 19:15:56 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: db_variables.c,v 1.20.2.1 2001/06/21 20:01:10 nathanw Exp $	*/
+/*	$NetBSD: db_variables.c,v 1.20.2.2 2001/11/14 19:13:39 nathanw Exp $	*/
 
 /* 
  * Mach Operating System
@@ -25,6 +25,9 @@
  * any improvements or extensions that they make and grant Carnegie the
  * rights to redistribute these changes.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: db_variables.c,v 1.20.2.2 2001/11/14 19:13:39 nathanw Exp $");
 
 #include "opt_ddb.h"				/* for sysctl.h */
 #include "opt_ddbparam.h"

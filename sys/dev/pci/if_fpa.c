@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fpa.c,v 1.33.2.2 2001/08/24 00:10:03 nathanw Exp $	*/
+/*	$NetBSD: if_fpa.c,v 1.33.2.3 2001/11/14 19:15:15 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1996 Matt Thomas <matt@3am-software.com>
@@ -32,6 +32,9 @@
  *
  *   This module supports the DEC DEFPA PCI FDDI Controller
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: if_fpa.c,v 1.33.2.3 2001/11/14 19:15:15 nathanw Exp $");
 
 #ifdef __NetBSD__
 #include "opt_inet.h"

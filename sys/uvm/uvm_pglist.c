@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pglist.c,v 1.13.2.3 2001/09/21 22:37:17 nathanw Exp $	*/
+/*	$NetBSD: uvm_pglist.c,v 1.13.2.4 2001/11/14 19:19:09 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -40,6 +40,9 @@
 /*
  * uvm_pglist.c: pglist functions
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: uvm_pglist.c,v 1.13.2.4 2001/11/14 19:19:09 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

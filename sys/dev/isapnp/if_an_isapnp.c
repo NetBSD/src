@@ -1,4 +1,4 @@
-/*	$NetBSD: if_an_isapnp.c,v 1.1.4.1 2001/08/24 00:09:52 nathanw Exp $	*/
+/*	$NetBSD: if_an_isapnp.c,v 1.1.4.2 2001/11/14 19:14:57 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -41,6 +41,9 @@
  * Unlike WaveLAN, this adapter is attached as an ISA device using an address
  * decoder hack.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: if_an_isapnp.c,v 1.1.4.2 2001/11/14 19:14:57 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

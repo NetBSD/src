@@ -1,4 +1,4 @@
-/*	$NetBSD: if_il.c,v 1.1.2.2 2001/06/21 20:05:27 nathanw Exp $	*/
+/*	$NetBSD: if_il.c,v 1.1.2.3 2001/11/14 19:15:44 nathanw Exp $	*/
 /*
  * Copyright (c) 1982, 1986 Regents of the University of California.
  * All rights reserved.
@@ -37,6 +37,10 @@
 /*
  * Interlan Ethernet Communications Controller interface
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: if_il.c,v 1.1.2.3 2001/11/14 19:15:44 nathanw Exp $");
+
 #include "opt_inet.h"
 #include "opt_ns.h"
 

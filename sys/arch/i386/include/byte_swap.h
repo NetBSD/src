@@ -1,4 +1,4 @@
-/*	$NetBSD: byte_swap.h,v 1.2.8.1 2001/06/21 19:25:45 nathanw Exp $	*/
+/*	$NetBSD: byte_swap.h,v 1.2.8.2 2001/11/14 19:12:47 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -39,32 +39,35 @@
 #ifndef _I386_BYTE_SWAP_H_
 #define	_I386_BYTE_SWAP_H_
 
+#include <sys/types.h>
+
 #if defined(_KERNEL_OPT)
 #include "opt_cputype.h"
 #endif
 
-#if defined(_KERNEL) && !defined(_LKM) && !defined(I386_CPU)
-#define	__byte_swap_long_variable(x) __extension__ \
-({ register in_addr_t __x = (x); \
-   __asm ("bswap %1" \
-	: "=r" (__x) \
-	: "0" (__x)); \
-   __x; })
-#else
-#define	__byte_swap_long_variable(x) __extension__ \
-({ register in_addr_t __x = (x); \
-   __asm ("rorw $8, %w1\n\trorl $16, %1\n\trorw $8, %w1" \
-	: "=r" (__x) \
-	: "0" (__x)); \
-   __x; })
-#endif	/* _KERNEL && ... */
 
-#define	__byte_swap_word_variable(x) __extension__ \
-({ register in_port_t __x = (x); \
-   __asm ("rorw $8, %w1" \
-	: "=r" (__x) \
-	: "0" (__x)); \
-   __x; })
+static __inline u_int32_t __byte_swap_long_variable(u_int32_t);
+static __inline u_int16_t __byte_swap_word_variable(u_int16_t);
+
+static __inline u_int32_t
+__byte_swap_long_variable(u_int32_t x)
+{
+	__asm __volatile (
+#if defined(_KERNEL) && !defined(_LKM) && !defined(I386_CPU)
+	    "bswap %1"
+#else
+	    "rorw $8, %w1\n\trorl $16, %1\n\trorw $8, %w1"
+#endif
+	    : "=r" (x) : "0" (x));
+	return x;
+}
+
+static __inline u_int16_t
+__byte_swap_word_variable(u_int16_t x)
+{
+	__asm __volatile ("rorw $8, %w1" : "=r" (x) : "0" (x)); 
+	return x;
+}
 
 #ifdef __OPTIMIZE__
 

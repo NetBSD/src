@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_reconbuffer.c,v 1.5 2001/01/27 20:10:49 oster Exp $	*/
+/*	$NetBSD: rf_reconbuffer.c,v 1.5.2.1 2001/11/14 19:15:52 nathanw Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -31,6 +31,9 @@
  * rf_reconbuffer.c -- reconstruction buffer manager
  *
  ***************************************************/
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: rf_reconbuffer.c,v 1.5.2.1 2001/11/14 19:15:52 nathanw Exp $");
 
 #include "rf_raid.h"
 #include "rf_reconbuffer.h"

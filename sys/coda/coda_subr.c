@@ -1,4 +1,4 @@
-/*	$NetBSD: coda_subr.c,v 1.10.2.2 2001/08/24 00:08:43 nathanw Exp $	*/
+/*	$NetBSD: coda_subr.c,v 1.10.2.3 2001/11/14 19:12:50 nathanw Exp $	*/
 
 /*
  * 
@@ -53,6 +53,9 @@
  *	 under the /coda mount point.
  * 4.	coda_cacheprint (under DEBUG) prints names with vnode/cnode address
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: coda_subr.c,v 1.10.2.3 2001/11/14 19:12:50 nathanw Exp $");
 
 #ifdef	_LKM
 #define	NVCODA 4

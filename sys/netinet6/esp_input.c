@@ -1,4 +1,4 @@
-/*	$NetBSD: esp_input.c,v 1.16.2.2 2001/10/22 20:41:59 nathanw Exp $	*/
+/*	$NetBSD: esp_input.c,v 1.16.2.3 2001/11/14 19:18:02 nathanw Exp $	*/
 /*	$KAME: esp_input.c,v 1.60 2001/09/04 08:43:19 itojun Exp $	*/
 
 /*
@@ -33,6 +33,9 @@
 /*
  * RFC1827/2406 Encapsulated Security Payload.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: esp_input.c,v 1.16.2.3 2001/11/14 19:18:02 nathanw Exp $");
 
 #include "opt_inet.h"
 

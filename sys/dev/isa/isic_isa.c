@@ -33,7 +33,7 @@
  *	isic_isa.c - ISA bus frontend for i4b_isic driver
  *	--------------------------------------------------
  *
- *	$Id: isic_isa.c,v 1.2.2.2 2001/08/24 00:09:50 nathanw Exp $ 
+ *	$Id: isic_isa.c,v 1.2.2.3 2001/11/14 19:14:50 nathanw Exp $ 
  *
  *      last edit-date: [Tue Jan  9 01:43:45 2001]
  *
@@ -41,6 +41,9 @@
  *      -hm     NetBSD patches from Martin
  *
  *---------------------------------------------------------------------------*/
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: isic_isa.c,v 1.2.2.3 2001/11/14 19:14:50 nathanw Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fxp_cardbus.c,v 1.12 2000/05/08 18:23:36 thorpej Exp $	*/
+/*	$NetBSD: if_fxp_cardbus.c,v 1.12.6.1 2001/11/14 19:14:02 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -39,6 +39,9 @@
 /*
  * CardBus front-end for the Intel i82557 family of Ethernet chips.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: if_fxp_cardbus.c,v 1.12.6.1 2001/11/14 19:14:02 nathanw Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"

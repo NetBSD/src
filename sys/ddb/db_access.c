@@ -1,4 +1,4 @@
-/*	$NetBSD: db_access.c,v 1.15 2001/01/17 19:50:03 jdolecek Exp $	*/
+/*	$NetBSD: db_access.c,v 1.15.2.1 2001/11/14 19:13:36 nathanw Exp $	*/
 
 /* 
  * Mach Operating System
@@ -28,6 +28,9 @@
  *	Author: David B. Golub, Carnegie Mellon University
  *	Date:	7/90
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: db_access.c,v 1.15.2.1 2001/11/14 19:13:36 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>

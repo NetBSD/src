@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_reconutil.c,v 1.3.20.1 2001/10/22 20:41:40 nathanw Exp $	*/
+/*	$NetBSD: rf_reconutil.c,v 1.3.20.2 2001/11/14 19:15:53 nathanw Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -29,6 +29,9 @@
 /********************************************
  * rf_reconutil.c -- reconstruction utilities
  ********************************************/
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: rf_reconutil.c,v 1.3.20.2 2001/11/14 19:15:53 nathanw Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 

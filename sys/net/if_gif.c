@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gif.c,v 1.26.2.4 2001/09/26 19:55:09 nathanw Exp $	*/
+/*	$NetBSD: if_gif.c,v 1.26.2.5 2001/11/14 19:17:21 nathanw Exp $	*/
 /*	$KAME: if_gif.c,v 1.76 2001/08/20 02:01:02 kjc Exp $	*/
 
 /*
@@ -29,6 +29,9 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: if_gif.c,v 1.26.2.5 2001/11/14 19:17:21 nathanw Exp $");
 
 #include "opt_inet.h"
 #include "opt_iso.h"
@@ -84,12 +87,9 @@
 #include <netinet/ip_encap.h>
 #include <net/if_gif.h>
 
-#include "gif.h"
 #include "bpfilter.h"
 
 #include <net/net_osdep.h>
-
-#if NGIF > 0
 
 void gifattach __P((int));
 #ifndef __HAVE_GENERIC_SOFT_INTERRUPTS
@@ -1025,4 +1025,3 @@ gif_eon_decap(struct ifnet *ifp, struct mbuf *m)
 	return m;
 }
 #endif /*ISO*/
-#endif /*NGIF > 0*/

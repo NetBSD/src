@@ -1,4 +1,4 @@
-/*	$NetBSD: spp_usrreq.c,v 1.24.6.2 2001/10/22 20:42:09 nathanw Exp $	*/
+/*	$NetBSD: spp_usrreq.c,v 1.24.6.3 2001/11/14 19:18:39 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1984, 1985, 1986, 1987, 1993
@@ -34,6 +34,9 @@
  *
  *	@(#)spp_usrreq.c	8.2 (Berkeley) 1/9/95
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: spp_usrreq.c,v 1.24.6.3 2001/11/14 19:18:39 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

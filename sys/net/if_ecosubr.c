@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ecosubr.c,v 1.8.2.2 2001/09/21 22:36:45 nathanw Exp $	*/
+/*	$NetBSD: if_ecosubr.c,v 1.8.2.3 2001/11/14 19:17:20 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 Ben Harris
@@ -61,12 +61,15 @@
  *	@(#)if_ethersubr.c	8.2 (Berkeley) 4/4/96
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: if_ecosubr.c,v 1.8.2.3 2001/11/14 19:17:20 nathanw Exp $");
+
 #include "bpfilter.h"
 #include "opt_inet.h"
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: if_ecosubr.c,v 1.8.2.2 2001/09/21 22:36:45 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ecosubr.c,v 1.8.2.3 2001/11/14 19:17:20 nathanw Exp $");
 
 #include <sys/errno.h>
 #include <sys/kernel.h>
@@ -122,7 +125,7 @@ eco_ifattach(struct ifnet *ifp, const u_int8_t *lla)
 {
 	struct ecocom *ec = (void *)ifp;
 
-	ifp->if_type = IFT_OTHER;
+	ifp->if_type = IFT_ECONET;
 	ifp->if_addrlen = ECO_ADDR_LEN;
 	ifp->if_hdrlen = ECO_HDR_LEN;
 	ifp->if_dlt = DLT_ECONET;

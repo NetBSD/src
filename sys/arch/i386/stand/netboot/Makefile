@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.20.16.2 2001/08/24 00:08:42 nathanw Exp $
+#	$NetBSD: Makefile,v 1.20.16.3 2001/11/14 19:12:50 nathanw Exp $
 
 S=	${.CURDIR}/../../../../
 
@@ -64,6 +64,9 @@ CPPFLAGS+= -DPCI_DID=0x9058 # 3c905b combo
 
 #USE_NETIF= i82557
 #CPPFLAGS+= -DPCIROM -DPCI_VID=0x8086 -DPCI_DID=0x1229 -DPCI_CLASS=0x020000
+
+#USE_NETIF= ne2000
+#CPPFLAGS+= -DBASEREG=0x300
 
 .include "../lib/netif/Makefile.inc"
 

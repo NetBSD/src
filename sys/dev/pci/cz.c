@@ -1,4 +1,4 @@
-/*	$NetBSD: cz.c,v 1.15.2.1 2001/06/21 20:04:33 nathanw Exp $	*/
+/*	$NetBSD: cz.c,v 1.15.2.2 2001/11/14 19:15:11 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2000 Zembu Labs, Inc.
@@ -71,6 +71,9 @@
  * This driver inspired by the FreeBSD driver written by Brian J. McGovern
  * for FreeBSD 3.2.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: cz.c,v 1.15.2.2 2001/11/14 19:15:11 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

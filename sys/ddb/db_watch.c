@@ -1,4 +1,4 @@
-/*	$NetBSD: db_watch.c,v 1.13.6.3 2001/10/22 20:41:14 nathanw Exp $	*/
+/*	$NetBSD: db_watch.c,v 1.13.6.4 2001/11/14 19:13:39 nathanw Exp $	*/
 
 /* 
  * Mach Operating System
@@ -28,6 +28,9 @@
  * 	Author: Richard P. Draves, Carnegie Mellon University
  *	Date:	10/90
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: db_watch.c,v 1.13.6.4 2001/11/14 19:13:39 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: mly.c,v 1.7.2.2 2001/08/24 00:10:13 nathanw Exp $	*/
+/*	$NetBSD: mly.c,v 1.7.2.3 2001/11/14 19:15:21 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -75,6 +75,9 @@
  * o Fix mmbox usage.
  * o Fix transfer speed fudge.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: mly.c,v 1.7.2.3 2001/11/14 19:15:21 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

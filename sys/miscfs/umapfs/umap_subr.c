@@ -1,4 +1,4 @@
-/*	$NetBSD: umap_subr.c,v 1.16.6.1 2001/06/21 20:07:46 nathanw Exp $	*/
+/*	$NetBSD: umap_subr.c,v 1.16.6.2 2001/11/14 19:17:15 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1999 National Aeronautics & Space Administration
@@ -70,6 +70,9 @@
  *	from: Id: lofs_subr.c, v 1.11 1992/05/30 10:05:43 jsp Exp
  *	@(#)umap_subr.c	8.9 (Berkeley) 5/14/95
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: umap_subr.c,v 1.16.6.2 2001/11/14 19:17:15 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.188.2.5 2001/11/05 19:59:02 briggs Exp $	*/
+/*	$NetBSD: init_main.c,v 1.188.2.6 2001/11/14 19:16:32 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1995 Christopher G. Demetriou.  All rights reserved.
@@ -40,6 +40,9 @@
  *
  *	@(#)init_main.c	8.16 (Berkeley) 5/14/95
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.188.2.6 2001/11/14 19:16:32 nathanw Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfsserver.h"

@@ -1,4 +1,4 @@
-/*	$NetBSD: mk48txx.c,v 1.6.4.1 2001/04/09 01:56:24 nathanw Exp $ */
+/*	$NetBSD: mk48txx.c,v 1.6.4.2 2001/11/14 19:14:30 nathanw Exp $ */
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -38,6 +38,9 @@
 /*
  * Mostek MK48T02, MK48T08, MK48T59 time-of-day chip subroutines.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: mk48txx.c,v 1.6.4.2 2001/11/14 19:14:30 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>

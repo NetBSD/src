@@ -1,4 +1,7 @@
-/*	$NetBSD: fontconv.c,v 1.1.2.1 2001/06/21 20:01:36 nathanw Exp $	*/
+/*	$NetBSD: fontconv.c,v 1.1.2.2 2001/11/14 19:14:06 nathanw Exp $	*/
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: fontconv.c,v 1.1.2.2 2001/11/14 19:14:06 nathanw Exp $");
 
 #include <stdio.h>
 

@@ -1,6 +1,5 @@
-/*	$NetBSD: if_tr_isa.c,v 1.6 2000/06/06 18:42:47 soren Exp $	*/
+/*	$NetBSD: if_tr_isa.c,v 1.6.4.1 2001/11/14 19:14:49 nathanw Exp $	*/
 
-#undef TRISADEBUG
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -36,6 +35,11 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: if_tr_isa.c,v 1.6.4.1 2001/11/14 19:14:49 nathanw Exp $");
+
+#undef TRISADEBUG
 
 #include <sys/param.h>
 #include <sys/systm.h>

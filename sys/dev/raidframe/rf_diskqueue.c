@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_diskqueue.c,v 1.13.6.1 2001/10/22 20:41:35 nathanw Exp $	*/
+/*	$NetBSD: rf_diskqueue.c,v 1.13.6.2 2001/11/14 19:15:48 nathanw Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -64,6 +64,9 @@
  * and wake up the disk thread to do the dispatch.
  *
  ****************************************************************************/
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: rf_diskqueue.c,v 1.13.6.2 2001/11/14 19:15:48 nathanw Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: pcmcia.c,v 1.23.2.1 2001/06/21 20:05:20 nathanw Exp $	*/
+/*	$NetBSD: pcmcia.c,v 1.23.2.2 2001/11/14 19:15:40 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1997 Marc Horowitz.  All rights reserved.
@@ -28,6 +28,9 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: pcmcia.c,v 1.23.2.2 2001/11/14 19:15:40 nathanw Exp $");
 
 #include "opt_pcmciaverbose.h"
 

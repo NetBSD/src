@@ -1,4 +1,4 @@
-/*	$NetBSD: sio16.c,v 1.1.2.2 2001/10/08 20:11:27 nathanw Exp $	*/
+/*	$NetBSD: sio16.c,v 1.1.2.3 2001/11/14 19:15:59 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -36,6 +36,9 @@
  * thanks go to Oliver Aldulea <oli@morcov.bv.ro> for writing the
  * linux driver of this that helped clear up a couple of issues.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: sio16.c,v 1.1.2.3 2001/11/14 19:15:59 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>

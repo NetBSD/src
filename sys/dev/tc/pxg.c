@@ -1,4 +1,4 @@
-/* 	$NetBSD: pxg.c,v 1.4.2.2 2001/09/21 22:36:16 nathanw Exp $	*/
+/* 	$NetBSD: pxg.c,v 1.4.2.3 2001/11/14 19:16:10 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -40,6 +40,9 @@
  * Driver for DEC PixelStamp graphics accelerators with onboard SRAM and
  * Intel i860 co-processor (PMAG-D, E and F).
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: pxg.c,v 1.4.2.3 2001/11/14 19:16:10 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>

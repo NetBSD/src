@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_input.c,v 1.130.2.4 2001/09/21 22:36:48 nathanw Exp $	*/
+/*	$NetBSD: ip_input.c,v 1.130.2.5 2001/11/14 19:17:49 nathanw Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -101,6 +101,9 @@
  *	@(#)ip_input.c	8.2 (Berkeley) 1/4/94
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.130.2.5 2001/11/14 19:17:49 nathanw Exp $");
+
 #include "opt_gateway.h"
 #include "opt_pfil_hooks.h"
 #include "opt_ipsec.h"
@@ -118,11 +121,7 @@
 #include <sys/errno.h>
 #include <sys/time.h>
 #include <sys/kernel.h>
-#include <sys/proc.h>
 #include <sys/pool.h>
-
-#include <uvm/uvm_extern.h>
-
 #include <sys/sysctl.h>
 
 #include <net/if.h>
@@ -414,7 +413,7 @@ ip_input(struct mbuf *m)
 	 * If no IP addresses have been set yet but the interfaces
 	 * are receiving, can't do anything with incoming packets yet.
 	 */
-	if (in_ifaddr.tqh_first == 0)
+	if (TAILQ_FIRST(&in_ifaddr) == 0)
 		goto bad;
 	ipstat.ips_total++;
 	if (m->m_len < sizeof (struct ip) &&
@@ -577,9 +576,7 @@ ip_input(struct mbuf *m)
 	 * as not mine.
 	 */
 	downmatch = 0;
-	for (ia = IN_IFADDR_HASH(ip->ip_dst.s_addr).lh_first;
-	     ia != NULL;
-	     ia = ia->ia_hash.le_next) {
+	LIST_FOREACH(ia, &IN_IFADDR_HASH(ip->ip_dst.s_addr), ia_hash) {
 		if (in_hosteq(ia->ia_addr.sin_addr, ip->ip_dst)) {
 			if ((ia->ia_ifp->if_flags & IFF_UP) != 0)
 				break;
@@ -590,9 +587,9 @@ ip_input(struct mbuf *m)
 	if (ia != NULL)
 		goto ours;
 	if (m->m_pkthdr.rcvif->if_flags & IFF_BROADCAST) {
-		for (ifa = m->m_pkthdr.rcvif->if_addrlist.tqh_first;
-		    ifa != NULL; ifa = ifa->ifa_list.tqe_next) {
-			if (ifa->ifa_addr->sa_family != AF_INET) continue;
+		TAILQ_FOREACH(ifa, &m->m_pkthdr.rcvif->if_addrlist, ifa_list) {
+			if (ifa->ifa_addr->sa_family != AF_INET)
+				continue;
 			ia = ifatoia(ifa);
 			if (in_hosteq(ip->ip_dst, ia->ia_broadaddr.sin_addr) ||
 			    in_hosteq(ip->ip_dst, ia->ia_netbroadcast) ||
@@ -705,7 +702,7 @@ ours:
 		 * of this datagram.
 		 */
 		IPQ_LOCK();
-		for (fp = ipq.lh_first; fp != NULL; fp = fp->ipq_q.le_next)
+		LIST_FOREACH(fp, &ipq, ipq_q)
 			if (ip->ip_id == fp->ipq_id &&
 			    in_hosteq(ip->ip_src, fp->ipq_src) &&
 			    in_hosteq(ip->ip_dst, fp->ipq_dst) &&
@@ -861,8 +858,8 @@ ip_reass(ipqe, fp)
 	/*
 	 * Find a segment which begins after this one does.
 	 */
-	for (p = NULL, q = fp->ipq_fragq.lh_first; q != NULL;
-	    p = q, q = q->ipqe_q.le_next)
+	for (p = NULL, q = LIST_FIRST(&fp->ipq_fragq); q != NULL;
+	    p = q, q = LIST_NEXT(q, ipqe_q))
 		if (q->ipqe_ip->ip_off > ipqe->ipqe_ip->ip_off)
 			break;
 
@@ -897,7 +894,7 @@ ip_reass(ipqe, fp)
 			m_adj(q->ipqe_m, i);
 			break;
 		}
-		nq = q->ipqe_q.le_next;
+		nq = LIST_NEXT(q, ipqe_q);
 		m_freem(q->ipqe_m);
 		LIST_REMOVE(q, ipqe_q);
 		pool_put(&ipqent_pool, q);
@@ -914,8 +911,8 @@ insert:
 		LIST_INSERT_AFTER(p, ipqe, ipqe_q);
 	}
 	next = 0;
-	for (p = NULL, q = fp->ipq_fragq.lh_first; q != NULL;
-	    p = q, q = q->ipqe_q.le_next) {
+	for (p = NULL, q = LIST_FIRST(&fp->ipq_fragq); q != NULL;
+	    p = q, q = LIST_NEXT(q, ipqe_q)) {
 		if (q->ipqe_ip->ip_off != next)
 			return (0);
 		next += q->ipqe_ip->ip_len;
@@ -927,7 +924,7 @@ insert:
 	 * Reassembly is complete.  Check for a bogus message size and
 	 * concatenate fragments.
 	 */
-	q = fp->ipq_fragq.lh_first;
+	q = LIST_FIRST(&fp->ipq_fragq);
 	ip = q->ipqe_ip;
 	if ((next + (ip->ip_hl << 2)) > IP_MAXPACKET) {
 		ipstat.ips_toolong++;
@@ -938,11 +935,11 @@ insert:
 	t = m->m_next;
 	m->m_next = 0;
 	m_cat(m, t);
-	nq = q->ipqe_q.le_next;
+	nq = LIST_NEXT(q, ipqe_q);
 	pool_put(&ipqent_pool, q);
 	for (q = nq; q != NULL; q = nq) {
 		t = q->ipqe_m;
-		nq = q->ipqe_q.le_next;
+		nq = LIST_NEXT(q, ipqe_q);
 		pool_put(&ipqent_pool, q);
 		m_cat(m, t);
 	}
@@ -989,8 +986,8 @@ ip_freef(fp)
 
 	IPQ_LOCK_CHECK();
 
-	for (q = fp->ipq_fragq.lh_first; q != NULL; q = p) {
-		p = q->ipqe_q.le_next;
+	for (q = LIST_FIRST(&fp->ipq_fragq); q != NULL; q = p) {
+		p = LIST_NEXT(q, ipqe_q);
 		m_freem(q->ipqe_m);
 		LIST_REMOVE(q, ipqe_q);
 		pool_put(&ipqent_pool, q);
@@ -1012,8 +1009,8 @@ ip_slowtimo()
 	int s = splsoftnet();
 
 	IPQ_LOCK();
-	for (fp = ipq.lh_first; fp != NULL; fp = nfp) {
-		nfp = fp->ipq_q.le_next;
+	for (fp = LIST_FIRST(&ipq); fp != NULL; fp = nfp) {
+		nfp = LIST_NEXT(fp, ipq_q);
 		if (--fp->ipq_ttl == 0) {
 			ipstat.ips_fragtimeout++;
 			ip_freef(fp);
@@ -1027,8 +1024,8 @@ ip_slowtimo()
 	if (ip_maxfragpackets < 0)
 		;
 	else {
-		while (ip_nfragpackets > ip_maxfragpackets && ipq.lh_first)
-			ip_freef(ipq.lh_first);
+		while (ip_nfragpackets > ip_maxfragpackets && LIST_FIRST(&ipq))
+			ip_freef(LIST_FIRST(&ipq));
 	}
 	IPQ_UNLOCK();
 #ifdef GATEWAY
@@ -1051,9 +1048,9 @@ ip_drain()
 	if (ipq_lock_try() == 0)
 		return;
 
-	while (ipq.lh_first != NULL) {
+	while (LIST_FIRST(&ipq) != NULL) {
 		ipstat.ips_fragdropped++;
-		ip_freef(ipq.lh_first);
+		ip_freef(LIST_FIRST(&ipq));
 	}
 
 	IPQ_UNLOCK();
@@ -1440,7 +1437,7 @@ ip_stripoptions(m, mopt)
 	ip->ip_hl = sizeof (struct ip) >> 2;
 }
 
-int inetctlerrmap[PRC_NCMDS] = {
+const int inetctlerrmap[PRC_NCMDS] = {
 	0,		0,		0,		0,
 	0,		EMSGSIZE,	EHOSTDOWN,	EHOSTUNREACH,
 	EHOSTUNREACH,	EHOSTUNREACH,	ECONNREFUSED,	ECONNREFUSED,

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cons.c,v 1.12 2000/03/30 13:10:10 augustss Exp $	*/
+/*	$NetBSD: if_cons.c,v 1.12.6.1 2001/11/14 19:18:25 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -66,6 +66,9 @@ SOFTWARE.
  * including support for a) user transport-level service,
  *	b) COSNS below CLNP, and c) CONS below TP.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(1, "$NetBSD: if_cons.c,v 1.12.6.1 2001/11/14 19:18:25 nathanw Exp $");
 
 #ifdef TPCONS
 #ifdef _KERNEL

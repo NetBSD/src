@@ -1,4 +1,4 @@
-/*	$NetBSD: sd.c,v 1.169.2.3 2001/08/24 00:10:52 nathanw Exp $	*/
+/*	$NetBSD: sd.c,v 1.169.2.4 2001/11/14 19:16:04 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -52,6 +52,9 @@
  *
  * Ported to run under 386BSD by Julian Elischer (julian@dialix.oz.au) Sept 1992
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.169.2.4 2001/11/14 19:16:04 nathanw Exp $");
 
 #include "opt_scsi.h"
 #include "rnd.h"

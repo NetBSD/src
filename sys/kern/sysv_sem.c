@@ -1,4 +1,4 @@
-/*	$NetBSD: sysv_sem.c,v 1.40.2.2 2001/08/24 00:11:40 nathanw Exp $	*/
+/*	$NetBSD: sysv_sem.c,v 1.40.2.3 2001/11/14 19:16:44 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -44,6 +44,9 @@
  *
  * This software is provided ``AS IS'' without any warranties of any kind.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: sysv_sem.c,v 1.40.2.3 2001/11/14 19:16:44 nathanw Exp $");
 
 #define SYSVSEM
 

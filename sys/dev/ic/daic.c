@@ -29,6 +29,9 @@
  * daic.c: MI driver for Diehl active ISDN cards (S, SX, SXn, SCOM, QUADRO)
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: daic.c,v 1.1.1.1.4.3 2001/11/14 19:14:20 nathanw Exp $");
+
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/systm.h>

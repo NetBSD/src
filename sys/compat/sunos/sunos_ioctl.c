@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos_ioctl.c,v 1.35.2.1 2001/06/21 20:00:25 nathanw Exp $	*/
+/*	$NetBSD: sunos_ioctl.c,v 1.35.2.2 2001/11/14 19:13:23 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1993 Markus Wild.
@@ -25,6 +25,9 @@
  *
  * loosely from: Header: sunos_ioctl.c,v 1.7 93/05/28 04:40:43 torek Exp
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: sunos_ioctl.c,v 1.35.2.2 2001/11/14 19:13:23 nathanw Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd32.h"

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ppp.c,v 1.67.2.3 2001/08/24 00:12:12 nathanw Exp $	*/
+/*	$NetBSD: if_ppp.c,v 1.67.2.4 2001/11/14 19:17:23 nathanw Exp $	*/
 /*	Id: if_ppp.c,v 1.6 1997/03/04 03:33:00 paulus Exp 	*/
 
 /*
@@ -85,9 +85,10 @@
  * to accomplish, and added that happy little comment.
  */
 
-#include "ppp.h"
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: if_ppp.c,v 1.67.2.4 2001/11/14 19:17:23 nathanw Exp $");
 
-#if NPPP > 0
+#include "ppp.h"
 
 #include "opt_inet.h"
 #include "opt_gateway.h"
@@ -1695,5 +1696,3 @@ done:
     *bp = 0;
     printf("%s\n", buf);
 }
-
-#endif	/* NPPP > 0 */

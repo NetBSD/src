@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.212.2.1 2001/06/21 20:01:18 nathanw Exp $ */
+/*	$NetBSD: wd.c,v 1.212.2.2 2001/11/14 19:13:59 nathanw Exp $ */
 
 /*
  * Copyright (c) 1998 Manuel Bouyer.  All rights reserved.
@@ -64,6 +64,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.212.2.2 2001/11/14 19:13:59 nathanw Exp $");
 
 #ifndef WDCDEBUG
 #define WDCDEBUG

@@ -1,4 +1,4 @@
-/*	$NetBSD: mlx_eisa.c,v 1.3.2.2 2001/06/21 20:01:32 nathanw Exp $	*/
+/*	$NetBSD: mlx_eisa.c,v 1.3.2.3 2001/11/14 19:14:05 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -39,6 +39,9 @@
 /*
  * EISA front-end for mlx(4) driver.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: mlx_eisa.c,v 1.3.2.3 2001/11/14 19:14:05 nathanw Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>

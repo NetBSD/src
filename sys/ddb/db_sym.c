@@ -1,4 +1,4 @@
-/*	$NetBSD: db_sym.c,v 1.25.2.1 2001/06/21 20:01:09 nathanw Exp $	*/
+/*	$NetBSD: db_sym.c,v 1.25.2.2 2001/11/14 19:13:39 nathanw Exp $	*/
 
 /* 
  * Mach Operating System
@@ -25,6 +25,9 @@
  * any improvements or extensions that they make and grant Carnegie the
  * rights to redistribute these changes.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: db_sym.c,v 1.25.2.2 2001/11/14 19:13:39 nathanw Exp $");
 
 #include "opt_ddbparam.h"
 
@@ -405,6 +408,7 @@ db_sifting(symstr, mode)
 		if (db_symtabs[i].name) {
 			db_printf("Sifting table %s:\n", db_symtabs[i].name);
 			X_db_forall(&db_symtabs[i], db_sift, &dsa);
+			db_printf("\n");
 		}
 
 	return;

@@ -1,4 +1,4 @@
-/*	$NetBSD: midi.c,v 1.21.2.1 2001/10/08 20:10:55 nathanw Exp $	*/
+/*	$NetBSD: midi.c,v 1.21.2.2 2001/11/14 19:13:41 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -35,6 +35,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: midi.c,v 1.21.2.2 2001/11/14 19:13:41 nathanw Exp $");
 
 #include "midi.h"
 #include "sequencer.h"

@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_glue.c,v 1.44.2.7 2001/09/26 19:55:15 nathanw Exp $	*/
+/*	$NetBSD: uvm_glue.c,v 1.44.2.8 2001/11/14 19:19:05 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -65,6 +65,9 @@
  * any improvements or extensions that they make and grant Carnegie the
  * rights to redistribute these changes.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: uvm_glue.c,v 1.44.2.8 2001/11/14 19:19:05 nathanw Exp $");
 
 #include "opt_kgdb.h"
 #include "opt_sysv.h"
@@ -336,7 +339,6 @@ uvm_lwp_exit(l)
 {
 	vaddr_t va = (vaddr_t)l->l_addr;
 
-	uvm_fault_unwire(kernel_map, va, va + USPACE);
 	uvm_km_free(kernel_map, va, USPACE);
 
 	l->l_flag &= ~L_INMEM;

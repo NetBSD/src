@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_syscalls.c,v 1.57.2.4 2001/09/21 22:36:27 nathanw Exp $	*/
+/*	$NetBSD: uipc_syscalls.c,v 1.57.2.5 2001/11/14 19:16:47 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1990, 1993
@@ -34,6 +34,9 @@
  *
  *	@(#)uipc_syscalls.c	8.6 (Berkeley) 2/14/95
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls.c,v 1.57.2.5 2001/11/14 19:16:47 nathanw Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_new_pipe.h"

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vlan.c,v 1.30.2.3 2001/06/21 20:08:17 nathanw Exp $	*/
+/*	$NetBSD: if_vlan.c,v 1.30.2.4 2001/11/14 19:17:28 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -83,6 +83,9 @@
  *	- Need some way to notify vlan interfaces when the parent
  *	  interface changes MTU.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: if_vlan.c,v 1.30.2.4 2001/11/14 19:17:28 nathanw Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"

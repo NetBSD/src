@@ -26,7 +26,7 @@
  *	i4b_itk_ix1.c - ITK ix1 micro passive card driver for isdn4bsd
  *	--------------------------------------------------------------
  *
- *	$Id: isic_isa_itk_ix1.c,v 1.2.2.2 2001/10/08 20:11:07 nathanw Exp $
+ *	$Id: isic_isa_itk_ix1.c,v 1.2.2.3 2001/11/14 19:14:50 nathanw Exp $
  *
  *      last edit-date: [Fri Jan  5 12:31:50 2001]
  *
@@ -63,6 +63,9 @@
  * additional debug output.
  *
  *---------------------------------------------------------------------------*/
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: isic_isa_itk_ix1.c,v 1.2.2.3 2001/11/14 19:14:50 nathanw Exp $");
 
 #include "opt_isicisa.h"
 

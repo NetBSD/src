@@ -1,4 +1,4 @@
-/*	$NetBSD: in_proto.c,v 1.47.2.2 2001/09/21 22:36:47 nathanw Exp $	*/
+/*	$NetBSD: in_proto.c,v 1.47.2.3 2001/11/14 19:17:45 nathanw Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -63,6 +63,9 @@
  *
  *	@(#)in_proto.c	8.2 (Berkeley) 2/9/95
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: in_proto.c,v 1.47.2.3 2001/11/14 19:17:45 nathanw Exp $");
 
 #include "opt_mrouting.h"
 #include "opt_eon.h"			/* ISO CLNL over IP */
@@ -178,7 +181,7 @@ struct protosw inetsw[] = {
 { SOCK_RAW,	&inetdomain,	IPPROTO_ICMP,	PR_ATOMIC|PR_ADDR|PR_LASTHDR,
   icmp_input,	rip_output,	0,		rip_ctloutput,
   rip_usrreq,
-  0,		0,		0,		0,		icmp_sysctl
+  icmp_init,	0,		0,		0,		icmp_sysctl
 },
 #ifdef IPSEC
 { SOCK_RAW,	&inetdomain,	IPPROTO_AH,	PR_ATOMIC|PR_ADDR,

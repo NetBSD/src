@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vnops.c,v 1.107.2.4 2001/09/26 19:55:09 nathanw Exp $	*/
+/*	$NetBSD: msdosfs_vnops.c,v 1.107.2.5 2001/11/14 19:17:17 nathanw Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -46,6 +46,9 @@
  *
  * October 1992
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_vnops.c,v 1.107.2.5 2001/11/14 19:17:17 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -356,7 +359,9 @@ msdosfs_setattr(v)
 	if ((vap->va_type != VNON) || (vap->va_nlink != (nlink_t)VNOVAL) ||
 	    (vap->va_fsid != VNOVAL) || (vap->va_fileid != VNOVAL) ||
 	    (vap->va_blocksize != VNOVAL) || (vap->va_rdev != VNOVAL) ||
-	    (vap->va_bytes != VNOVAL) || (vap->va_gen != VNOVAL)) {
+	    (vap->va_bytes != VNOVAL) || (vap->va_gen != VNOVAL) ||
+	    (vap->va_uid != VNOVAL && vap->va_uid != pmp->pm_uid) || 
+	    (vap->va_gid != VNOVAL && vap->va_gid != pmp->pm_gid)) {
 #ifdef MSDOSFS_DEBUG
 		printf("msdosfs_setattr(): returning EINVAL\n");
 		printf("    va_type %d, va_nlink %x, va_fsid %lx, va_fileid %lx\n",
@@ -547,7 +552,6 @@ msdosfs_write(v)
 	u_long osize;
 	int error = 0;
 	u_long count;
-	daddr_t lastcn;
 	int ioflag = ap->a_ioflag;
 	void *win;
 	vsize_t bytelen;
@@ -620,9 +624,7 @@ msdosfs_write(v)
 		if ((error = extendfile(dep, count, NULL, NULL, 0)) &&
 		    (error != ENOSPC || (ioflag & IO_UNIT)))
 			goto errexit;
-		lastcn = dep->de_fc[FC_LASTFC].fc_frcn;
-	} else
-		lastcn = de_clcount(pmp, osize) - 1;
+	}
 
 	if (dep->de_FileSize < uio->uio_offset + resid) {
 		dep->de_FileSize = uio->uio_offset + resid;

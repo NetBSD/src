@@ -1,10 +1,13 @@
-/*	$NetBSD: procs.c,v 1.4.46.1 2001/06/21 20:09:18 nathanw Exp $	*/
+/*	$NetBSD: procs.c,v 1.4.46.2 2001/11/14 19:18:33 nathanw Exp $	*/
 
 /*
  * This code is such a kludge that I don't want to put my name on it.
  * It was a ridiculously fast hack and needs rewriting.
  * However it does work...
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: procs.c,v 1.4.46.2 2001/11/14 19:18:33 nathanw Exp $");
 
 #include <stdio.h>
 #include <strings.h>

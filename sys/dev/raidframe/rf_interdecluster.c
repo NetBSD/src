@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_interdecluster.c,v 1.5.2.1 2001/10/22 20:41:36 nathanw Exp $	*/
+/*	$NetBSD: rf_interdecluster.c,v 1.5.2.2 2001/11/14 19:15:49 nathanw Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -31,6 +31,9 @@
  * rf_interdecluster.c -- implements interleaved declustering
  *
  ************************************************************/
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: rf_interdecluster.c,v 1.5.2.2 2001/11/14 19:15:49 nathanw Exp $");
 
 #include "rf_archs.h"
 

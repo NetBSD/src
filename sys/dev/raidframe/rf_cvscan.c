@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_cvscan.c,v 1.5.14.2 2001/10/22 20:41:33 nathanw Exp $	*/
+/*	$NetBSD: rf_cvscan.c,v 1.5.14.3 2001/11/14 19:15:46 nathanw Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -33,6 +33,9 @@
  * Nov 9, 1994, adapted from raidSim version (MCH)
  *
  ******************************************************************************/
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: rf_cvscan.c,v 1.5.14.3 2001/11/14 19:15:46 nathanw Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 #include "rf_alloclist.h"

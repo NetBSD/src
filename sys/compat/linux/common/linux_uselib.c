@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_uselib.c,v 1.2.2.2 2001/08/24 00:08:50 nathanw Exp $	*/
+/*	$NetBSD: linux_uselib.c,v 1.2.2.3 2001/11/14 19:13:14 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -35,6 +35,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: linux_uselib.c,v 1.2.2.3 2001/11/14 19:13:14 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -138,7 +141,7 @@ linux_sys_uselib(l, v, retval)
 		vrele(vp);
                 return ETXTBSY;
         }
-	vn_marktext(vp);
+	vp->v_flag |= VTEXT;
 
 	vcset.evs_cnt = 0;
 	vcset.evs_used = 0;

@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_anon.c,v 1.15.2.4 2001/10/22 20:42:14 nathanw Exp $	*/
+/*	$NetBSD: uvm_anon.c,v 1.15.2.5 2001/11/14 19:19:03 nathanw Exp $	*/
 
 /*
  *
@@ -35,6 +35,9 @@
 /*
  * uvm_anon.c: uvm anon ops
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: uvm_anon.c,v 1.15.2.5 2001/11/14 19:19:03 nathanw Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -181,6 +184,7 @@ uvm_analloc()
  * => anon must be unlocked and have a zero reference count.
  * => we may lock the pageq's.
  */
+
 void
 uvm_anfree(anon)
 	struct vm_anon *anon;
@@ -254,6 +258,13 @@ uvm_anfree(anon)
 				    "freed now!", anon, pg, 0, 0);
 		}
 	}
+	if (pg == NULL && anon->an_swslot != 0) {
+		/* this page is no longer only in swap. */
+		simple_lock(&uvm.swap_data_lock);
+		KASSERT(uvmexp.swpgonly > 0);
+		uvmexp.swpgonly--;
+		simple_unlock(&uvm.swap_data_lock);
+	}
 
 	/*
 	 * free any swap resources.
@@ -292,13 +303,6 @@ uvm_anon_dropswap(anon)
 		    anon, anon->an_swslot, 0, 0);
 	uvm_swap_free(anon->an_swslot, 1);
 	anon->an_swslot = 0;
-
-	if (anon->u.an_page == NULL) {
-		/* this page is no longer only in swap. */
-		simple_lock(&uvm.swap_data_lock);
-		uvmexp.swpgonly--;
-		simple_unlock(&uvm.swap_data_lock);
-	}
 }
 
 /*

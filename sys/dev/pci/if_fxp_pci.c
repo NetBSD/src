@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fxp_pci.c,v 1.12.2.2 2001/08/24 00:10:04 nathanw Exp $	*/
+/*	$NetBSD: if_fxp_pci.c,v 1.12.2.3 2001/11/14 19:15:15 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -41,6 +41,9 @@
  * PCI bus front-end for the Intel i82557 fast Ethernet controller
  * driver.  Works with Intel Etherexpress Pro 10+, 100B, 100+ cards.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: if_fxp_pci.c,v 1.12.2.3 2001/11/14 19:15:15 nathanw Exp $");
 
 #include "rnd.h"
 
@@ -114,6 +117,10 @@ const struct fxp_pci_product {
 	  "Intel InBusiness Ethernet" },
 	{ PCI_PRODUCT_INTEL_82801BA_LAN,
 	  "Intel i82562 Ethernet" },
+	{ PCI_PRODUCT_INTEL_PRO_100_VE_0,
+	  "Intel PRO/100 VE Network Controller" },
+	{ PCI_PRODUCT_INTEL_PRO_100_VE_1,
+	  "Intel PRO/100 VE Network Controller" },
 	{ 0,
 	  NULL },
 };

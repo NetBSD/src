@@ -1,4 +1,4 @@
-/*	$NetBSD: puccn.c,v 1.2.2.1 2001/06/21 20:05:12 nathanw Exp $ */
+/*	$NetBSD: puccn.c,v 1.2.2.2 2001/11/14 19:15:29 nathanw Exp $ */
 
 /*
  * Derived from  pci.c
@@ -40,6 +40,9 @@
  *
  * Scan the PCI bus for something which resembles a 16550
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: puccn.c,v 1.2.2.2 2001/11/14 19:15:29 nathanw Exp $");
 
 #include "opt_kgdb.h"
 

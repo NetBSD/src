@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tl.c,v 1.39.2.2 2001/09/21 22:35:57 nathanw Exp $	*/
+/*	$NetBSD: if_tl.c,v 1.39.2.3 2001/11/14 19:15:19 nathanw Exp $	*/
 
 /* XXX ALTQ XXX */
 
@@ -36,6 +36,9 @@
  * ThunderLAN Programmer's Guide (TI Literature Number SPWU013A)
  * available from www.ti.com
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: if_tl.c,v 1.39.2.3 2001/11/14 19:15:19 nathanw Exp $");
 
 #undef TLDEBUG
 #define TL_PRIV_STATS

@@ -1,4 +1,4 @@
-/*	$NetBSD: mln_ipl.c,v 1.24.2.1 2001/08/24 00:11:56 nathanw Exp $	*/
+/*	$NetBSD: mln_ipl.c,v 1.24.2.2 2001/11/14 19:17:01 nathanw Exp $	*/
 
 /*
  * Copyright (C) 1993-2000 by Darren Reed.
@@ -12,6 +12,8 @@
  * its own major char number! Way cool patch!
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: mln_ipl.c,v 1.24.2.2 2001/11/14 19:17:01 nathanw Exp $");
 
 #include <sys/param.h>
 

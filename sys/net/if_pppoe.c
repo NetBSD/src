@@ -1,4 +1,4 @@
-/* $NetBSD: if_pppoe.c,v 1.3.2.4 2001/09/21 22:36:45 nathanw Exp $ */
+/* $NetBSD: if_pppoe.c,v 1.3.2.5 2001/11/14 19:17:24 nathanw Exp $ */
 
 /*
  * Copyright (c) 2001 Martin Husemann. All rights reserved.
@@ -26,6 +26,9 @@
  *
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: if_pppoe.c,v 1.3.2.5 2001/11/14 19:17:24 nathanw Exp $");
+
 #include "pppoe.h"
 #include "bpfilter.h"
 
@@ -47,8 +50,6 @@
 #if NBPFILTER > 0
 #include <net/bpf.h>
 #endif
-
-#if NPPPOE > 0
 
 #undef PPPOE_DEBUG		/* XXX - remove this or make it an option */
 /* #define PPPOE_DEBUG 1 */
@@ -222,7 +223,6 @@ pppoe_clone_create(ifc, unit)
 	if_attach(&sc->sc_sppp.pp_if);
 	sppp_attach(&sc->sc_sppp.pp_if);
 
-	if_alloc_sadl(&sc->sc_sppp.pp_if);
 #if NBPFILTER > 0
 	bpfattach(&sc->sc_sppp.pp_if, DLT_PPP_ETHER, 0);
 #endif
@@ -240,6 +240,7 @@ pppoe_clone_destroy(ifp)
 #if NBPFILTER > 0
 	bpfdetach(ifp);
 #endif
+	sppp_detach(&sc->sc_sppp.pp_if);
 	if_detach(ifp);
 	free(sc, M_DEVBUF);
 }
@@ -1001,5 +1002,3 @@ pppoe_start(struct ifnet *ifp)
 		pppoe_output(sc, m);
 	}
 }
-
-#endif	/* NPPPOE > 0 */

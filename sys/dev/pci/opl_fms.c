@@ -1,4 +1,4 @@
-/*	$NetBSD: opl_fms.c,v 1.2 2000/05/15 01:27:48 thorpej Exp $	*/
+/*	$NetBSD: opl_fms.c,v 1.2.8.1 2001/11/14 19:15:22 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -35,6 +35,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: opl_fms.c,v 1.2.8.1 2001/11/14 19:15:22 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

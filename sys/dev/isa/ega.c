@@ -1,4 +1,4 @@
-/* $NetBSD: ega.c,v 1.5.4.1 2001/08/24 00:09:43 nathanw Exp $ */
+/* $NetBSD: ega.c,v 1.5.4.2 2001/11/14 19:14:45 nathanw Exp $ */
 
 /*
  * Copyright (c) 1999
@@ -31,6 +31,9 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ega.c,v 1.5.4.2 2001/11/14 19:14:45 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

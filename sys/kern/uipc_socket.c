@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_socket.c,v 1.54.2.5 2001/10/08 20:11:44 nathanw Exp $	*/
+/*	$NetBSD: uipc_socket.c,v 1.54.2.6 2001/11/14 19:16:46 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1990, 1993
@@ -34,6 +34,9 @@
  *
  *	@(#)uipc_socket.c	8.6 (Berkeley) 5/2/95
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.54.2.6 2001/11/14 19:16:46 nathanw Exp $");
 
 #include "opt_compat_sunos.h"
 

@@ -1,4 +1,7 @@
-/*	$NetBSD: ip_ftp_pxy.c,v 1.17.2.1 2001/04/09 01:58:23 nathanw Exp $	*/
+/*	$NetBSD: ip_ftp_pxy.c,v 1.17.2.2 2001/11/14 19:17:48 nathanw Exp $	*/
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(1, "$NetBSD: ip_ftp_pxy.c,v 1.17.2.2 2001/11/14 19:17:48 nathanw Exp $");
 
 /*
  * Simple FTP transparent proxy for in-kernel use.  For use with the NAT

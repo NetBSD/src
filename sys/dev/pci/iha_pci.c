@@ -1,4 +1,4 @@
-/*	$NetBSD: iha_pci.c,v 1.1.2.3 2001/10/08 20:11:13 nathanw Exp $ */
+/*	$NetBSD: iha_pci.c,v 1.1.2.4 2001/11/14 19:15:20 nathanw Exp $ */
 /*
  * Initio INI-9xxxU/UW SCSI Device Driver
  *
@@ -46,6 +46,9 @@
  * Ported to NetBSD by Izumi Tsutsui <tsutsui@ceres.dti.ne.jp> from OpenBSD:
  * $OpenBSD: iha_pci.c,v 1.2 2001/03/29 23:53:38 krw Exp $
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: iha_pci.c,v 1.1.2.4 2001/11/14 19:15:20 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

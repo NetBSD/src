@@ -1,4 +1,4 @@
-/*	$NetBSD: iop.c,v 1.10.2.7 2001/10/08 20:10:57 nathanw Exp $	*/
+/*	$NetBSD: iop.c,v 1.10.2.8 2001/11/14 19:14:09 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -39,6 +39,9 @@
 /*
  * Support for I2O IOPs (intelligent I/O processors).
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: iop.c,v 1.10.2.8 2001/11/14 19:14:09 nathanw Exp $");
 
 #include "opt_i2o.h"
 #include "iop.h"

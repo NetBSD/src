@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr53c9xvar.h,v 1.30.2.2 2001/06/21 20:03:03 nathanw Exp $	*/
+/*	$NetBSD: ncr53c9xvar.h,v 1.30.2.3 2001/11/14 19:14:32 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -410,7 +410,7 @@ struct ncr53c9x_softc {
 #ifdef NCR53C9X_DEBUG
 #define	NCRCMD(sc, cmd) do {						\
 	if ((ncr53c9x_debug & NCR_SHOWCCMDS) != 0)			\
-		printf("<cmd:0x%x %d>", (unsigned)cmd, __LINE__);	\
+		printf("<CMD:0x%x %d>", (unsigned)cmd, __LINE__);	\
 	sc->sc_lastcmd = cmd;						\
 	NCR_WRITE_REG(sc, NCR_CMD, cmd);				\
 } while (0)

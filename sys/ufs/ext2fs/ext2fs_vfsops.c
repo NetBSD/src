@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_vfsops.c,v 1.42.2.3 2001/09/21 22:37:03 nathanw Exp $	*/
+/*	$NetBSD: ext2fs_vfsops.c,v 1.42.2.4 2001/11/14 19:18:54 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.
@@ -36,6 +36,9 @@
  *	@(#)ffs_vfsops.c	8.14 (Berkeley) 11/28/94
  * Modified for ext2fs by Manuel Bouyer.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_vfsops.c,v 1.42.2.4 2001/11/14 19:18:54 nathanw Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -544,7 +547,7 @@ ext2fs_mountfs(devvp, mp, p)
 	printf("sb size: %d ino size %d\n", sizeof(struct ext2fs),
 	    EXT2_DINODE_SIZE);
 #endif
-	error = bread(devvp, (SBOFF / DEV_BSIZE), SBSIZE, cred, &bp);
+	error = bread(devvp, (SBOFF / size), SBSIZE, cred, &bp);
 	if (error)
 		goto out;
 	fs = (struct ext2fs *)bp->b_data;
@@ -683,12 +686,10 @@ ext2fs_flushfiles(mp, flags, p)
 	struct proc *p;
 {
 	extern int doforce;
-	struct ufsmount *ump;
 	int error;
 
 	if (!doforce)
 		flags &= ~FORCECLOSE;
-	ump = VFSTOUFS(mp);
 	error = vflush(mp, NULLVP, flags);
 	return (error);
 }

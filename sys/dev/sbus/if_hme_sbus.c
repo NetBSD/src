@@ -1,4 +1,4 @@
-/*	$NetBSD: if_hme_sbus.c,v 1.6.2.2 2001/10/22 20:41:41 nathanw Exp $	*/
+/*	$NetBSD: if_hme_sbus.c,v 1.6.2.3 2001/11/14 19:15:58 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -39,6 +39,9 @@
 /*
  * SBus front-end device driver for the HME ethernet device.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: if_hme_sbus.c,v 1.6.2.3 2001/11/14 19:15:58 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

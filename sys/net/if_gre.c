@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gre.c,v 1.17.2.2 2001/06/21 20:08:04 nathanw Exp $ */
+/*	$NetBSD: if_gre.c,v 1.17.2.3 2001/11/14 19:17:21 nathanw Exp $ */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -45,8 +45,8 @@
  * Also supported:  IP in IP encaps (proto 55) as of RFC 2004
  */
 
-#include "gre.h"
-#if NGRE > 0
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: if_gre.c,v 1.17.2.3 2001/11/14 19:17:21 nathanw Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"
@@ -574,4 +574,3 @@ gre_in_cksum(u_short *p, u_int len)
 	sum += (sum >> 16);
 	return (~sum);
 }
-#endif

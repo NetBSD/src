@@ -1,4 +1,4 @@
-/*	$NetBSD: ukphy.c,v 1.13.2.2 2001/09/21 22:35:51 nathanw Exp $	*/
+/*	$NetBSD: ukphy.c,v 1.13.2.3 2001/11/14 19:15:03 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -69,6 +69,9 @@
 /*
  * driver for generic unknown PHYs
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ukphy.c,v 1.13.2.3 2001/11/14 19:15:03 nathanw Exp $");
 
 #include "opt_mii.h"
 

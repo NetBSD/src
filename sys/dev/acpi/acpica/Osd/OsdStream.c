@@ -1,4 +1,4 @@
-/*	$NetBSD: OsdStream.c,v 1.1.4.2 2001/10/08 21:18:08 nathanw Exp $	*/
+/*	$NetBSD: OsdStream.c,v 1.1.4.3 2001/11/14 19:13:44 nathanw Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -40,6 +40,9 @@
  *
  * 6.6: Stream I/O
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: OsdStream.c,v 1.1.4.3 2001/11/14 19:13:44 nathanw Exp $");
 
 #include <sys/types.h>
 #include <sys/systm.h>

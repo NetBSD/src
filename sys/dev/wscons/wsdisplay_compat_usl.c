@@ -1,4 +1,4 @@
-/* $NetBSD: wsdisplay_compat_usl.c,v 1.15.2.2 2001/10/22 20:41:48 nathanw Exp $ */
+/* $NetBSD: wsdisplay_compat_usl.c,v 1.15.2.3 2001/11/14 19:16:26 nathanw Exp $ */
 
 /*
  * Copyright (c) 1998
@@ -31,6 +31,9 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: wsdisplay_compat_usl.c,v 1.15.2.3 2001/11/14 19:16:26 nathanw Exp $");
 
 #include "opt_compat_freebsd.h"
 #include "opt_compat_netbsd.h"

@@ -1,4 +1,4 @@
-/*	$NetBSD: db_input.c,v 1.14 2000/07/28 16:33:39 jhawk Exp $	*/
+/*	$NetBSD: db_input.c,v 1.14.2.1 2001/11/14 19:13:38 nathanw Exp $	*/
 
 /* 
  * Mach Operating System
@@ -28,6 +28,9 @@
  *	Author: David B. Golub, Carnegie Mellon University
  *	Date:	7/90
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: db_input.c,v 1.14.2.1 2001/11/14 19:13:38 nathanw Exp $");
 
 #include "opt_ddbparam.h"
 

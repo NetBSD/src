@@ -1,4 +1,4 @@
-/* $NetBSD: tcds.c,v 1.1.4.1 2001/09/21 22:36:17 nathanw Exp $ */
+/* $NetBSD: tcds.c,v 1.1.4.2 2001/11/14 19:16:13 nathanw Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -64,9 +64,8 @@
  * rights to redistribute these changes.
  */
 
-#include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-
-__KERNEL_RCSID(0, "$NetBSD: tcds.c,v 1.1.4.1 2001/09/21 22:36:17 nathanw Exp $");
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: tcds.c,v 1.1.4.2 2001/11/14 19:16:13 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>

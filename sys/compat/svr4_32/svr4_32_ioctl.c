@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_32_ioctl.c,v 1.4.2.1 2001/06/21 20:00:49 nathanw Exp $	 */
+/*	$NetBSD: svr4_32_ioctl.c,v 1.4.2.2 2001/11/14 19:13:29 nathanw Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -35,6 +35,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: svr4_32_ioctl.c,v 1.4.2.2 2001/11/14 19:13:29 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>

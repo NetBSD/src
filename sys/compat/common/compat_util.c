@@ -1,4 +1,4 @@
-/* 	$NetBSD: compat_util.c,v 1.20.2.1 2001/03/05 22:49:18 nathanw Exp $	*/
+/* 	$NetBSD: compat_util.c,v 1.20.2.2 2001/11/14 19:12:53 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -35,6 +35,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: compat_util.c,v 1.20.2.2 2001/11/14 19:12:53 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_raid4.c,v 1.4 2000/01/07 03:41:02 oster Exp $	*/
+/*	$NetBSD: rf_raid4.c,v 1.4.6.1 2001/11/14 19:15:52 nathanw Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -31,6 +31,9 @@
  * rf_raid4.c -- implements RAID Level 4
  *
  ***************************************/
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: rf_raid4.c,v 1.4.6.1 2001/11/14 19:15:52 nathanw Exp $");
 
 #include "rf_raid.h"
 #include "rf_dag.h"

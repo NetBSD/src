@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_utils.c,v 1.5.6.2 2001/09/26 19:54:59 nathanw Exp $	*/
+/*	$NetBSD: rf_utils.c,v 1.5.6.3 2001/11/14 19:15:54 nathanw Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -32,6 +32,8 @@
  *
  ****************************************/
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: rf_utils.c,v 1.5.6.3 2001/11/14 19:15:54 nathanw Exp $");
 
 #include "rf_threadstuff.h"
 

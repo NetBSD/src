@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_forward.c,v 1.18.2.4 2001/10/22 20:42:02 nathanw Exp $	*/
+/*	$NetBSD: ip6_forward.c,v 1.18.2.5 2001/11/14 19:18:09 nathanw Exp $	*/
 /*	$KAME: ip6_forward.c,v 1.74 2001/06/12 23:54:55 itojun Exp $	*/
 
 /*
@@ -29,6 +29,9 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ip6_forward.c,v 1.18.2.5 2001/11/14 19:18:09 nathanw Exp $");
 
 #include "opt_ipsec.h"
 #include "opt_pfil_hooks.h"
@@ -115,7 +118,7 @@ ip6_forward(m, srcrt)
 		m_freem(m);
 		return;
 	}
-#endif /*IPSEC*/
+#endif /* IPSEC */
 
 	/*
 	 * Do not forward packets to multicast destination (should be handled

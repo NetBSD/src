@@ -33,7 +33,7 @@
  *	isapnp_isic.c - ISA-P&P bus frontend for i4b_isic driver
  *	--------------------------------------------------------
  *
- *	$Id: isic_isapnp.c,v 1.2.2.1 2001/04/09 01:56:44 nathanw Exp $ 
+ *	$Id: isic_isapnp.c,v 1.2.2.2 2001/11/14 19:14:58 nathanw Exp $ 
  *
  *      last edit-date: [Fri Jan  5 11:38:29 2001]
  *
@@ -41,6 +41,9 @@
  *      -hm     NetBSD patches from Martin 
  *
  *---------------------------------------------------------------------------*/
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: isic_isapnp.c,v 1.2.2.2 2001/11/14 19:14:58 nathanw Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>

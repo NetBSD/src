@@ -1,4 +1,4 @@
-/*	$NetBSD: nsphy.c,v 1.28.2.3 2001/09/21 22:35:50 nathanw Exp $	*/
+/*	$NetBSD: nsphy.c,v 1.28.2.4 2001/11/14 19:15:03 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -70,6 +70,9 @@
  * driver for National Semiconductor's DP83840A ethernet 10/100 PHY
  * Data Sheet available from www.national.com
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: nsphy.c,v 1.28.2.4 2001/11/14 19:15:03 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

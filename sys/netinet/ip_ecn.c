@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_ecn.c,v 1.9.2.1 2001/06/21 20:08:33 nathanw Exp $	*/
+/*	$NetBSD: ip_ecn.c,v 1.9.2.2 2001/11/14 19:17:46 nathanw Exp $	*/
 /*	$KAME: ip_ecn.c,v 1.11 2001/05/03 16:09:29 itojun Exp $	*/
 
 /*
@@ -34,6 +34,9 @@
  * ECN consideration on tunnel ingress/egress operation.
  * http://www.aciri.org/floyd/papers/draft-ipsec-ecn-00.txt
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ip_ecn.c,v 1.9.2.2 2001/11/14 19:17:46 nathanw Exp $");
 
 #include "opt_inet.h"
 

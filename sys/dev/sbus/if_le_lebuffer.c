@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le_lebuffer.c,v 1.6.2.2 2001/10/08 20:11:25 nathanw Exp $	*/
+/*	$NetBSD: if_le_lebuffer.c,v 1.6.2.3 2001/11/14 19:15:58 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -37,6 +37,8 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: if_le_lebuffer.c,v 1.6.2.3 2001/11/14 19:15:58 nathanw Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"

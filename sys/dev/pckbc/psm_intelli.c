@@ -1,4 +1,4 @@
-/* $NetBSD: psm_intelli.c,v 1.8 2000/06/05 22:20:57 sommerfeld Exp $ */
+/* $NetBSD: psm_intelli.c,v 1.8.4.1 2001/11/14 19:15:35 nathanw Exp $ */
 
 /*-
  * Copyright (c) 1994 Charles M. Hannum.
@@ -22,6 +22,9 @@
  * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: psm_intelli.c,v 1.8.4.1 2001/11/14 19:15:35 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

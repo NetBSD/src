@@ -1,4 +1,4 @@
-/*	$NetBSD: uhid.c,v 1.42.2.2 2001/09/21 22:36:19 nathanw Exp $	*/
+/*	$NetBSD: uhid.c,v 1.42.2.3 2001/11/14 19:16:17 nathanw Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhid.c,v 1.22 1999/11/17 22:33:43 n_hibma Exp $	*/
 
 /*
@@ -41,6 +41,9 @@
 /*
  * HID spec: http://www.usb.org/developers/data/devclass/hid1_1.pdf
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: uhid.c,v 1.42.2.3 2001/11/14 19:16:17 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -235,7 +238,7 @@ USB_ATTACH(uhid)
 		}
 	} else {
 		desc = NULL;
-		err = usbd_alloc_report_desc(uaa->iface, &desc, &size,M_USBDEV);
+		err = usbd_read_report_desc(uaa->iface, &desc, &size,M_USBDEV);
 	}
 	if (err) {
 		printf("%s: no report descriptor\n", USBDEVNAME(sc->sc_dev));

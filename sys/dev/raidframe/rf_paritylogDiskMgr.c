@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_paritylogDiskMgr.c,v 1.10.6.2 2001/10/22 20:41:38 nathanw Exp $	*/
+/*	$NetBSD: rf_paritylogDiskMgr.c,v 1.10.6.3 2001/11/14 19:15:50 nathanw Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -28,6 +28,9 @@
 /* Code for flushing and reintegration operations related to parity logging.
  *
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: rf_paritylogDiskMgr.c,v 1.10.6.3 2001/11/14 19:15:50 nathanw Exp $");
 
 #include "rf_archs.h"
 

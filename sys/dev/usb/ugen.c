@@ -1,4 +1,4 @@
-/*	$NetBSD: ugen.c,v 1.45.2.1 2001/09/21 22:36:19 nathanw Exp $	*/
+/*	$NetBSD: ugen.c,v 1.45.2.2 2001/11/14 19:16:16 nathanw Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ugen.c,v 1.26 1999/11/17 22:33:41 n_hibma Exp $	*/
 
 /*
@@ -38,6 +38,9 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ugen.c,v 1.45.2.2 2001/11/14 19:16:16 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -173,6 +176,10 @@ USB_MATCH(ugen)
 {
 	USB_MATCH_START(ugen, uaa);
 
+#if 0
+	if (uaa->matchlvl)
+		return (uaa->matchlvl);
+#endif
 	if (uaa->usegeneric)
 		return (UMATCH_GENERIC);
 	else
@@ -1001,33 +1008,25 @@ ugen_do_ioctl(struct ugen_softc *sc, int endpt, u_long cmd,
 		/* All handled in the upper FS layer. */
 		return (0);
 	case USB_SET_SHORT_XFER:
-		/* This flag only affects read */
 		if (endpt == USB_CONTROL_ENDPOINT)
 			return (EINVAL);
+		/* This flag only affects read */
 		sce = &sc->sc_endpoints[endpt][IN];
-		if (sce == NULL)
+		if (sce == NULL || sce->pipeh == NULL)
 			return (EINVAL);
-#ifdef DIAGNOSTIC
-		if (sce->pipeh == NULL) {
-			printf("ugenioctl: USB_SET_SHORT_XFER, no pipe\n");
-			return (EIO);
-		}
-#endif
 		if (*(int *)addr)
 			sce->state |= UGEN_SHORT_OK;
 		else
 			sce->state &= ~UGEN_SHORT_OK;
 		return (0);
 	case USB_SET_TIMEOUT:
-		sce = &sc->sc_endpoints[endpt][IN];
-		if (sce == NULL)
+		if (endpt == USB_CONTROL_ENDPOINT) {
+			/* XXX the lower levels don't support this yet. */
 			return (EINVAL);
-#ifdef DIAGNOSTIC
-		if (sce->pipeh == NULL) {
-			printf("ugenioctl: USB_SET_TIMEOUT, no pipe\n");
-			return (EIO);
 		}
-#endif
+		sce = &sc->sc_endpoints[endpt][IN];
+		if (sce == NULL || sce->pipeh == NULL)
+			return (EINVAL);
 		sce->timeout = *(int *)addr;
 		return (0);
 	default:

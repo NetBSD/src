@@ -1,4 +1,4 @@
-/*	$NetBSD: elink3reg.h,v 1.22.6.1 2001/08/24 00:09:22 nathanw Exp $	*/
+/*	$NetBSD: elink3reg.h,v 1.22.6.2 2001/11/14 19:14:22 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1995 Herb Peyerl <hpeyerl@beer.org>
@@ -230,8 +230,6 @@
 #define ELINK_W7_RX_ERROR	0x04
 #define ELINK_W7_MASTER_LEN	0x06    
 #define ELINK_W7_RX_STATUS	0x08
-#define ELINK_W7_TIMER		0x0a    
-#define ELINK_W7_TX_STATUS	0x0b
 #define ELINK_W7_MASTER_STATUS	0x0c    
 
 /*

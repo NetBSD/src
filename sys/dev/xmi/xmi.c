@@ -1,4 +1,4 @@
-/*	$NetBSD: xmi.c,v 1.1 2000/07/06 17:45:52 ragge Exp $	*/
+/*	$NetBSD: xmi.c,v 1.1.4.1 2001/11/14 19:16:28 nathanw Exp $	*/
 
 /*
  * Copyright (c) 2000 Ludd, University of Lule}, Sweden. All rights reserved.
@@ -33,6 +33,9 @@
 /*
  * XMI specific routines.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: xmi.c,v 1.1.4.1 2001/11/14 19:16:28 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

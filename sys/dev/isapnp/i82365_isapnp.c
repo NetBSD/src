@@ -1,4 +1,4 @@
-/*	$NetBSD: i82365_isapnp.c,v 1.9.2.1 2001/09/26 19:54:55 nathanw Exp $	*/
+/*	$NetBSD: i82365_isapnp.c,v 1.9.2.2 2001/11/14 19:14:56 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1998 Bill Sommerfeld.  All rights reserved.
@@ -30,6 +30,8 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: i82365_isapnp.c,v 1.9.2.2 2001/11/14 19:14:56 nathanw Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>

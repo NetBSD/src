@@ -1,4 +1,4 @@
-/*	$NetBSD: umap_vnops.c,v 1.18 2001/01/22 12:17:40 jdolecek Exp $	*/
+/*	$NetBSD: umap_vnops.c,v 1.18.2.1 2001/11/14 19:17:15 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -41,6 +41,9 @@
 /*
  * Umap Layer
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: umap_vnops.c,v 1.18.2.1 2001/11/14 19:17:15 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

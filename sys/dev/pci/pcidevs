@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.306.2.7 2001/10/22 20:41:25 nathanw Exp $
+$NetBSD: pcidevs,v 1.306.2.8 2001/11/14 19:15:24 nathanw Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -1018,6 +1018,9 @@ product CYCLADES CYCLOM8Y_2	0x0105	Cyclom-8Y above 1M
 product CYCLADES CYCLOMZ_1	0x0200	Cyclom-Z below 1M
 product CYCLADES CYCLOMZ_2	0x0201	Cyclom-Z above 1M
 
+/* Cyclone Microsystems products */
+product CYCLONE PCI_700		0x0700	IQ80310 (PCI-700)
+
 /* Cyrix (now National) products */
 product CYRIX MEDIAGX_PCHB	0x0001	MediaGX Built-in PCI Host Controller
 product CYRIX CX5520_PCIB	0x0002	Cx5520 I/O Companion
@@ -1188,7 +1191,7 @@ product IMS 8849	0x8849	8849
 product IMS TT128M	0x9128	TwinTurbo 128M
 
 /* Intel products */
-product INTEL 80312		0x030d	80310 I/O Companion Chip
+product INTEL 80312		0x030d	80312 I/O Companion Chip
 product INTEL PCEB		0x0482	82375EB/SB PCI-EISA Bridge (PCEB)
 product INTEL CDC		0x0483	82424ZX Cache and DRAM controller (CDC)
 product INTEL SIO		0x0484	82378ZB System I/O (SIO)
@@ -1196,10 +1199,12 @@ product INTEL 82426EX		0x0486	82426EX PCI-to-ISA Bridge (PCIB)
 product INTEL PCMC		0x04a3	82434LX/NX PCI, Cache and Memory Controller (PCMC)
 product INTEL 80960RM		0x0962	i960 RM PCI-PCI
 product INTEL 80960RN		0x0964	i960 RN PCI-PCI
-product INTEL 82452		0x1000	i82452 Gigabit Ethernet
-product INTEL 82453_FIBER	0x1001	i82453 Gigabit Ethernet (1000BASE-X)
-product INTEL 82453_SC		0x1003	i82453-SC Gigabit Ethernet
+product INTEL 82542		0x1000	i82452 Gigabit Ethernet
+product INTEL 82543_FIBER	0x1001	i82453 Gigabit Ethernet (1000BASE-X)
+product INTEL 82543_SC		0x1003	i82453-SC Gigabit Ethernet
 product INTEL 82543_COPPER	0x1004	i82543 Gigabit Ethernet (1000BASE-T)
+product INTEL 82544_XT		0x1008	i82544 Gigabit Ethernet (1000BASE-T)
+product INTEL 82544_XF		0x1009	i82544 Gigabit Ethernet (1000BASE-X)
 product INTEL IN_BUSINESS	0x1030	InBusiness Fast Ethernet LAN Controller
 product INTEL PRO_100_VE_0	0x1031	PRO/100 VE Network Controller
 product INTEL PRO_100_VE_1	0x1032	PRO/100 VE Network Controller
@@ -1541,6 +1546,10 @@ product PCTECH RZ1000	0x1000	RZ1000
 
 /* PLX Technology products */
 product PLX 9060ES	0x906e	9060ES PCI bus controller
+
+/* Powerhouse Systems products */
+product	POWERHOUSE POWERTOP	0x6037	PowerTop PowerPC system controller
+product POWERHOUSE POWERPRO	0x6073	PowerPro PowerPC system controller
 
 /* ProLAN products - XXX better descriptions */
 product PROLAN NE2KETHER 0x1980 Ethernet
@@ -1884,7 +1893,10 @@ product VIATECH VT82C586_PWR	0x3040	VT82C586 (Apollo VP) Power Management Contro
 product VIATECH VT3043		0x3043	VT3043 (Rhine) 10/100 Ethernet
 product VIATECH VT82C686A_SMB	0x3057	VT82C686A SMBus Controller
 product VIATECH VT82C686A_AC97	0x3058	VT82C686A AC-97 Audio Controller
+product VIATECH VT8233_AC97	0x3059	VT8233 AC-97 Audio Controller
 product	VIATECH	VT6102		0x3065	VT6102 (Rhine II) 10/100 Ethernet
+product VIATECH VT8233		0x3074	VT8233 PCI-ISA Bridge
+product VIATECH VT8366		0x3099	VT8366 (Apollo KT266) CPU-PCI Bridge
 product VIATECH VT82C686A_MC97	0x3068	VT82C686A MC-97 Modem Controller
 product VIATECH VT86C100A	0x6100	VT86C100A (Rhine-II) 10/100 Ethernet
 product VIATECH VT8363_PPB	0x8305	VT8363 KT133 PCI to AGP Bridge
@@ -1892,6 +1904,7 @@ product	VIATECH	VT8371_PPB	0x8391	VT8371 (Apollo KX133) PCI-PCI Bridge
 product VIATECH VT8501AGP	0x8501	VT8501 PCI-AGP
 product VIATECH VT82C597AGP	0x8597	VT82C597 (Apollo VP3) PCI-AGP
 product VIATECH VT82C598AGP	0x8598	VT82C598 (Apollo MVP3) PCI-AGP
+product VIATECH VT8366AGP	0xb099	VT8366 CPU-AGP
 
 /* Vortex Computer Systems products */
 /* GDT_PCI */

@@ -1,4 +1,4 @@
-/*	$NetBSD: fil.c,v 1.45.2.2 2001/06/21 20:08:29 nathanw Exp $	*/
+/*	$NetBSD: fil.c,v 1.45.2.3 2001/11/14 19:17:40 nathanw Exp $	*/
 
 /*
  * Copyright (C) 1993-2000 by Darren Reed.
@@ -9,7 +9,8 @@
  */
 #if !defined(lint)
 #if defined(__NetBSD__)
-static const char rcsid[] = "$NetBSD: fil.c,v 1.45.2.2 2001/06/21 20:08:29 nathanw Exp $";
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: fil.c,v 1.45.2.3 2001/11/14 19:17:40 nathanw Exp $");
 #else
 static const char sccsid[] = "@(#)fil.c	1.36 6/5/96 (C) 1993-2000 Darren Reed";
 static const char rcsid[] = "@(#)Id: fil.c,v 2.35.2.30 2000/12/17 05:49:22 darrenr Exp";
@@ -1879,7 +1880,7 @@ struct in_addr *inp;
 	ifa = TAILQ_FIRST(&ifp->if_addrhead);
 #   else
 #    if defined(__NetBSD__) || defined(__OpenBSD__)
-	ifa = ifp->if_addrlist.tqh_first;
+	ifa = TAILQ_FIRST(&ifp->if_addrlist);
 #    else
 #     if defined(__sgi) && defined(IFF_DRVRLOCK) /* IRIX 6 */
 	ifa = &((struct in_ifaddr *)ifp->in_ifaddr)->ia_ifa;
@@ -1958,9 +1959,9 @@ void frsync()
 #  if defined(__OpenBSD__) || ((NetBSD >= 199511) && (NetBSD < 1991011)) || \
      (defined(__FreeBSD_version) && (__FreeBSD_version >= 300000))
 #   if (NetBSD >= 199905) || defined(__OpenBSD__)
-	for (ifp = ifnet.tqh_first; ifp; ifp = ifp->if_list.tqe_next)
+	for (ifp = TAILQ_FIRST(&ifnet); ifp; ifp = TAILQ_NEXT(ifp, if_list))
 #   else
-	for (ifp = ifnet.tqh_first; ifp; ifp = ifp->if_link.tqe_next)
+	for (ifp = TAILQ_FIRST(&ifnet); ifp; ifp = TAILQ_NEXT(ifp, if_link))
 #   endif
 #  else
 	for (ifp = ifnet; ifp; ifp = ifp->if_next)

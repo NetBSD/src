@@ -1,4 +1,4 @@
-/*	$NetBSD: mca.c,v 1.2.2.2 2001/06/21 20:04:07 nathanw Exp $	*/
+/*	$NetBSD: mca.c,v 1.2.2.3 2001/11/14 19:15:01 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -40,6 +40,9 @@
 /*
  * MCA Bus device
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: mca.c,v 1.2.2.3 2001/11/14 19:15:01 nathanw Exp $");
 
 #include "opt_mcaverbose.h"
 

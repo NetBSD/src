@@ -1,4 +1,4 @@
-/*	$NetBSD: pnaphy.c,v 1.2.6.2 2001/09/21 22:35:51 nathanw Exp $	*/
+/*	$NetBSD: pnaphy.c,v 1.2.6.3 2001/11/14 19:15:03 nathanw Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -45,6 +45,9 @@
  * the network connection, but we don't deal with any of that
  * at all.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: pnaphy.c,v 1.2.6.3 2001/11/14 19:15:03 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

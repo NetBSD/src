@@ -1,4 +1,4 @@
-/* $NetBSD: pcppi.c,v 1.4 2000/03/23 07:01:35 thorpej Exp $ */
+/* $NetBSD: pcppi.c,v 1.4.6.1 2001/11/14 19:14:52 nathanw Exp $ */
 
 /*
  * Copyright (c) 1996 Carnegie-Mellon University.
@@ -26,6 +26,9 @@
  * any improvements or extensions that they make and grant Carnegie the
  * rights to redistribute these changes.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: pcppi.c,v 1.4.6.1 2001/11/14 19:14:52 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

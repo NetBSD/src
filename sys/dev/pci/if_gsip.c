@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gsip.c,v 1.1.2.2 2001/06/21 20:04:43 nathanw Exp $	*/
+/*	$NetBSD: if_gsip.c,v 1.1.2.3 2001/11/14 19:15:15 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -35,6 +35,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(1, "$NetBSD: if_gsip.c,v 1.1.2.3 2001/11/14 19:15:15 nathanw Exp $");
 
 #define	DP83820
 #include <dev/pci/if_sip.c>

@@ -1,4 +1,4 @@
-/*	$NetBSD: cy.c,v 1.21.2.2 2001/08/24 00:09:20 nathanw Exp $	*/
+/*	$NetBSD: cy.c,v 1.21.2.3 2001/11/14 19:14:20 nathanw Exp $	*/
 
 /*
  * cy.c
@@ -14,6 +14,9 @@
  * Some debugging counters (number of receive/transmit interrupts etc.)
  * can be enabled by defining CY_DEBUG1
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: cy.c,v 1.21.2.3 2001/11/14 19:14:20 nathanw Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>

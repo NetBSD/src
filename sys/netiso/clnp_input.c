@@ -1,4 +1,4 @@
-/*	$NetBSD: clnp_input.c,v 1.21.2.1 2001/06/21 20:09:11 nathanw Exp $	*/
+/*	$NetBSD: clnp_input.c,v 1.21.2.2 2001/11/14 19:18:23 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -61,6 +61,9 @@ SOFTWARE.
 /*
  * ARGO Project, Computer Sciences Dept., University of Wisconsin - Madison
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: clnp_input.c,v 1.21.2.2 2001/11/14 19:18:23 nathanw Exp $");
 
 #include "opt_iso.h"
 

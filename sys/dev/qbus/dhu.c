@@ -1,4 +1,4 @@
-/*	$NetBSD: dhu.c,v 1.21.2.2 2001/06/21 20:05:24 nathanw Exp $	*/
+/*	$NetBSD: dhu.c,v 1.21.2.3 2001/11/14 19:15:43 nathanw Exp $	*/
 /*
  * Copyright (c) 1996  Ken C. Wellsch.  All rights reserved.
  * Copyright (c) 1992, 1993
@@ -35,6 +35,9 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: dhu.c,v 1.21.2.3 2001/11/14 19:15:43 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

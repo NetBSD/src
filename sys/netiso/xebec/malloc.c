@@ -1,4 +1,4 @@
-/*	$NetBSD: malloc.c,v 1.4.46.1 2001/06/21 20:09:17 nathanw Exp $	*/
+/*	$NetBSD: malloc.c,v 1.4.46.2 2001/11/14 19:18:33 nathanw Exp $	*/
 
 /*
  * This code is such a kludge that I don't want to put my name on it.
@@ -11,6 +11,9 @@
  * it might be brain-damaged but for the purposes of xebec
  * it's a whole lot faster than the c library malloc 
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: malloc.c,v 1.4.46.2 2001/11/14 19:18:33 nathanw Exp $");
 
 #include <stdio.h>
 #include "malloc.h"

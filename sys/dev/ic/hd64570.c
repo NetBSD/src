@@ -1,4 +1,4 @@
-/*	$NetBSD: hd64570.c,v 1.15.2.2 2001/08/24 00:09:23 nathanw Exp $	*/
+/*	$NetBSD: hd64570.c,v 1.15.2.3 2001/11/14 19:14:23 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1999 Christian E. Hopps
@@ -63,6 +63,9 @@
  *	   if not using dma.  currently the assumption is that
  *	   rx uses a page and tx uses a page.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: hd64570.c,v 1.15.2.3 2001/11/14 19:14:23 nathanw Exp $");
 
 #include "bpfilter.h"
 #include "opt_inet.h"

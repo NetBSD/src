@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_km.c,v 1.42.2.4 2001/09/21 22:37:14 nathanw Exp $	*/
+/*	$NetBSD: uvm_km.c,v 1.42.2.5 2001/11/14 19:19:05 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -65,8 +65,6 @@
  * any improvements or extensions that they make and grant Carnegie the
  * rights to redistribute these changes.
  */
-
-#include "opt_uvmhist.h"
 
 /*
  * uvm_km.c: handle kernel memory allocation and management
@@ -135,6 +133,11 @@
  * and no need to save them after they are no longer referenced.
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: uvm_km.c,v 1.42.2.5 2001/11/14 19:19:05 nathanw Exp $");
+
+#include "opt_uvmhist.h"
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
@@ -178,7 +181,7 @@ uvm_km_init(start, end)
 				 VM_MIN_KERNEL_ADDRESS, UAO_FLAG_KERNOBJ);
 
 	/*
-	 * init the map and reserve allready allocated kernel space
+	 * init the map and reserve already allocated kernel space
 	 * before installing.
 	 */
 
@@ -271,27 +274,18 @@ uvm_km_pgremove(uobj, start, end)
 	struct uvm_object *uobj;
 	vaddr_t start, end;
 {
-	boolean_t by_list;
-	struct vm_page *pg, *nextpg;
+	struct vm_page *pg;
 	voff_t curoff, nextoff;
+	int swpgonlydelta = 0;
 	UVMHIST_FUNC("uvm_km_pgremove"); UVMHIST_CALLED(maphist);
 
 	KASSERT(uobj->pgops == &aobj_pager);
 	simple_lock(&uobj->vmobjlock);
 
-	/* choose cheapest traversal */
-	by_list = (uobj->uo_npages <=
-	     ((end - start) >> PAGE_SHIFT) * UVM_PAGE_HASH_PENALTY);
-	if (by_list)
-		goto loop_by_list;
-
 	for (curoff = start; curoff < end; curoff = nextoff) {
 		nextoff = curoff + PAGE_SIZE;
 		pg = uvm_pagelookup(uobj, curoff);
-		if (pg == NULL) {
-			continue;
-		}
-		if (pg->flags & PG_BUSY) {
+		if (pg != NULL && pg->flags & PG_BUSY) {
 			pg->flags |= PG_WANTED;
 			UVM_UNLOCK_AND_WAIT(pg, &uobj->vmobjlock, 0,
 				    "km_pgrm", 0);
@@ -304,39 +298,25 @@ uvm_km_pgremove(uobj, start, end)
 		 * free the swap slot, then the page.
 		 */
 
+		if (pg == NULL &&
+		    uao_find_swslot(uobj, curoff >> PAGE_SHIFT) != 0) {
+			swpgonlydelta++;
+		}
 		uao_dropswap(uobj, curoff >> PAGE_SHIFT);
-		uvm_lock_pageq();
-		uvm_pagefree(pg);
-		uvm_unlock_pageq();
+		if (pg != NULL) {
+			uvm_lock_pageq();
+			uvm_pagefree(pg);
+			uvm_unlock_pageq();
+		}
 	}
 	simple_unlock(&uobj->vmobjlock);
-	return;
 
-loop_by_list:
-	for (pg = TAILQ_FIRST(&uobj->memq); pg != NULL; pg = nextpg) {
-		nextpg = TAILQ_NEXT(pg, listq);
-		if (pg->offset < start || pg->offset >= end) {
-			continue;
-		}
-		if (pg->flags & PG_BUSY) {
-			pg->flags |= PG_WANTED;
-			UVM_UNLOCK_AND_WAIT(pg, &uobj->vmobjlock, 0,
-				    "km_pgrm", 0);
-			simple_lock(&uobj->vmobjlock);
-			nextpg = TAILQ_FIRST(&uobj->memq);
-			continue;
-		}
-
-		/*
-		 * free the swap slot, then the page.
-		 */
-
-		uao_dropswap(uobj, pg->offset >> PAGE_SHIFT);
-		uvm_lock_pageq();
-		uvm_pagefree(pg);
-		uvm_unlock_pageq();
+	if (swpgonlydelta > 0) {
+		simple_lock(&uvm.swap_data_lock);
+		KASSERT(uvmexp.swpgonly >= swpgonlydelta);
+		uvmexp.swpgonly -= swpgonlydelta;
+		simple_unlock(&uvm.swap_data_lock);
 	}
-	simple_unlock(&uobj->vmobjlock);
 }
 
 

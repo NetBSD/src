@@ -1,4 +1,4 @@
-/*      $NetBSD: ac97.c,v 1.18.2.2 2001/08/24 00:09:11 nathanw Exp $ */
+/*      $NetBSD: ac97.c,v 1.18.2.3 2001/11/14 19:14:10 nathanw Exp $ */
 /*	$OpenBSD: ac97.c,v 1.8 2000/07/19 09:01:35 csapuntz Exp $	*/
 
 /*
@@ -61,6 +61,9 @@
  *
  * $FreeBSD$
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ac97.c,v 1.18.2.3 2001/11/14 19:14:10 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

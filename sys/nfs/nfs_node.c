@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_node.c,v 1.41.2.4 2001/09/25 16:28:43 nathanw Exp $	*/
+/*	$NetBSD: nfs_node.c,v 1.41.2.5 2001/11/14 19:18:43 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,6 +37,9 @@
  *
  *	@(#)nfs_node.c	8.6 (Berkeley) 5/22/95
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: nfs_node.c,v 1.41.2.5 2001/11/14 19:18:43 nathanw Exp $");
 
 #include "opt_nfs.h"
 

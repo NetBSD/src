@@ -1,4 +1,4 @@
-/*	$NetBSD: at_control.c,v 1.4.6.1 2001/06/21 20:08:21 nathanw Exp $	 */
+/*	$NetBSD: at_control.c,v 1.4.6.2 2001/11/14 19:17:33 nathanw Exp $	 */
 
 /*
  * Copyright (c) 1990,1994 Regents of The University of Michigan.
@@ -25,6 +25,9 @@
  *	+1-313-764-2278
  *	netatalk@umich.edu
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: at_control.c,v 1.4.6.2 2001/11/14 19:17:33 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

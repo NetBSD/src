@@ -114,6 +114,9 @@
  *
  *****************************************************************************/
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: exdump.c,v 1.1.1.1.4.3 2001/11/14 19:13:48 nathanw Exp $");
+
 #define __EXDUMP_C__
 
 #include "acpi.h"

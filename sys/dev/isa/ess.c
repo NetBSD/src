@@ -1,4 +1,4 @@
-/*	$NetBSD: ess.c,v 1.53.2.1 2001/10/08 20:11:05 nathanw Exp $	*/
+/*	$NetBSD: ess.c,v 1.53.2.2 2001/11/14 19:14:45 nathanw Exp $	*/
 
 /*
  * Copyright 1997
@@ -64,6 +64,9 @@
 **	ESS1788 support by Nathan J. Williams and Charles M. Hannum.
 **--
 */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ess.c,v 1.53.2.2 2001/11/14 19:14:45 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

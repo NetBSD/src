@@ -1,4 +1,4 @@
-/*	$NetBSD: spkr.c,v 1.4.2.1 2001/06/21 20:03:53 nathanw Exp $	*/
+/*	$NetBSD: spkr.c,v 1.4.2.2 2001/11/14 19:14:54 nathanw Exp $	*/
 
 /*
  * spkr.c -- device driver for console speaker on 80386
@@ -8,6 +8,9 @@
  *      386bsd only clean version, all SYSV stuff removed
  *      use hz value from param.c
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: spkr.c,v 1.4.2.2 2001/11/14 19:14:54 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: event.c,v 1.6.2.1 2001/06/21 20:06:10 nathanw Exp $	*/
+/*	$NetBSD: event.c,v 1.6.2.2 2001/11/14 19:16:07 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -47,6 +47,9 @@
 /*
  * Internal `Firm_event' interface for the keyboard and mouse drivers.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: event.c,v 1.6.2.2 2001/11/14 19:16:07 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/fcntl.h>

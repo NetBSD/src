@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_parityscan.c,v 1.9.4.2 2001/10/22 20:41:38 nathanw Exp $	*/
+/*	$NetBSD: rf_parityscan.c,v 1.9.4.3 2001/11/14 19:15:51 nathanw Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -31,6 +31,9 @@
  * rf_parityscan.c -- misc utilities related to parity verification
  *
  *****************************************************************************/
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: rf_parityscan.c,v 1.9.4.3 2001/11/14 19:15:51 nathanw Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 

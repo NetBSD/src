@@ -1,4 +1,4 @@
-/*	$NetBSD: db_lex.c,v 1.14 2000/07/08 17:10:23 sommerfeld Exp $	*/
+/*	$NetBSD: db_lex.c,v 1.14.2.1 2001/11/14 19:13:38 nathanw Exp $	*/
 
 /* 
  * Mach Operating System
@@ -32,6 +32,10 @@
 /*
  * Lexical analyzer.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: db_lex.c,v 1.14.2.1 2001/11/14 19:13:38 nathanw Exp $");
+
 #include <sys/param.h>
 #include <sys/systm.h>
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_evenodd.c,v 1.4.6.2 2001/10/22 20:41:35 nathanw Exp $	*/
+/*	$NetBSD: rf_evenodd.c,v 1.4.6.3 2001/11/14 19:15:48 nathanw Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -31,6 +31,9 @@
  * rf_evenodd.c -- implements EVENODD array architecture
  *
  ****************************************************************************************/
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: rf_evenodd.c,v 1.4.6.3 2001/11/14 19:15:48 nathanw Exp $");
 
 #include "rf_archs.h"
 

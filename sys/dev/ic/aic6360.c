@@ -1,11 +1,4 @@
-/*	$NetBSD: aic6360.c,v 1.70.6.2 2001/08/24 00:09:13 nathanw Exp $	*/
-
-#include "opt_ddb.h"
-#ifdef DDB
-#define	integrate
-#else
-#define	integrate	static inline
-#endif
+/*	$NetBSD: aic6360.c,v 1.70.6.3 2001/11/14 19:14:14 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1996 Charles M. Hannum.  All rights reserved.
@@ -63,6 +56,16 @@
  * 3) Get the synch stuff working.
  * 4) Rewrite it to use malloc for the acb structs instead of static alloc.?
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: aic6360.c,v 1.70.6.3 2001/11/14 19:14:14 nathanw Exp $");
+
+#include "opt_ddb.h"
+#ifdef DDB
+#define	integrate
+#else
+#define	integrate	static inline
+#endif
 
 /*
  * A few customizable items:
@@ -974,10 +977,6 @@ aic_dequeue(struct aic_softc *sc, struct aic_acb *acb)
  * INTERRUPT/PROTOCOL ENGINE
  */
 
-#define IS1BYTEMSG(m) (((m) != 0x01 && (m) < 0x20) || (m) >= 0x80)
-#define IS2BYTEMSG(m) (((m) & 0xf0) == 0x20)
-#define ISEXTMSG(m) ((m) == 0x01)
-
 /*
  * Precondition:
  * The SCSI bus is already in the MSGI phase and there is a message byte
@@ -1050,11 +1049,11 @@ nextbyte:
 				 * it should not affect performance
 				 * significantly.
 				 */
-				if (n == 1 && IS1BYTEMSG(sc->sc_imess[0]))
+				if (n == 1 && MSG_IS1BYTE(sc->sc_imess[0]))
 					break;
-				if (n == 2 && IS2BYTEMSG(sc->sc_imess[0]))
+				if (n == 2 && MSG_IS2BYTE(sc->sc_imess[0]))
 					break;
-				if (n >= 3 && ISEXTMSG(sc->sc_imess[0]) &&
+				if (n >= 3 && MSG_ISEXTENDED(sc->sc_imess[0]) &&
 				    n == sc->sc_imess[1] + 2)
 					break;
 			}

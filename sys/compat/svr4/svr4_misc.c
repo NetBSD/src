@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_misc.c,v 1.89.2.3 2001/06/21 20:00:39 nathanw Exp $	 */
+/*	$NetBSD: svr4_misc.c,v 1.89.2.4 2001/11/14 19:13:26 nathanw Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -42,6 +42,9 @@
  * SVR4 system calls that are implemented differently in BSD are
  * handled here.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: svr4_misc.c,v 1.89.2.4 2001/11/14 19:13:26 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -674,7 +677,11 @@ svr4_sys_sysconfig(l, v, retval)
 		*retval = 0;	/* No delaytimer support */
 		break;
 	case SVR4_CONFIG_MQ_OPEN_MAX:
+#ifdef SYSVMSG
 		*retval = msginfo.msgmni;
+#else
+		*retval = 0;
+#endif
 		break;
 	case SVR4_CONFIG_MQ_PRIO_MAX:
 		*retval = 0;	/* XXX: Don't know */
@@ -683,10 +690,18 @@ svr4_sys_sysconfig(l, v, retval)
 		*retval = 0;
 		break;
 	case SVR4_CONFIG_SEM_NSEMS_MAX:
+#ifdef SYSVSEM
 		*retval = seminfo.semmni;
+#else
+		*retval = 0;
+#endif
 		break;
 	case SVR4_CONFIG_SEM_VALUE_MAX:
+#ifdef SYSVSEM
 		*retval = seminfo.semvmx;
+#else
+		*retval = 0;
+#endif
 		break;
 	case SVR4_CONFIG_SIGQUEUE_MAX:
 		*retval = 0;	/* XXX: Don't know */

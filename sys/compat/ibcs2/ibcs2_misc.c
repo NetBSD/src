@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_misc.c,v 1.55.2.2 2001/06/21 19:59:17 nathanw Exp $	*/
+/*	$NetBSD: ibcs2_misc.c,v 1.55.2.3 2001/11/14 19:13:00 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1998 Scott Bartram
@@ -53,6 +53,9 @@
  * IBCS2 system calls that are implemented differently in BSD are
  * handled here.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ibcs2_misc.c,v 1.55.2.3 2001/11/14 19:13:00 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,6 +1,5 @@
-/*	$NetBSD: if_trtcm_isa.c,v 1.3 1999/04/30 15:29:24 bad Exp $	*/
+/*	$NetBSD: if_trtcm_isa.c,v 1.3.14.1 2001/11/14 19:14:50 nathanw Exp $	*/
 
-#undef TRTCMISADEBUG
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -36,6 +35,11 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: if_trtcm_isa.c,v 1.3.14.1 2001/11/14 19:14:50 nathanw Exp $");
+
+#undef TRTCMISADEBUG
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -115,6 +115,8 @@
  *
  *****************************************************************************/
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: exregion.c,v 1.1.1.1.4.3 2001/11/14 19:13:50 nathanw Exp $");
 
 #define __EXREGION_C__
 

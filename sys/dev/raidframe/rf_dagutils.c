@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_dagutils.c,v 1.6.6.2 2001/10/22 20:41:34 nathanw Exp $	*/
+/*	$NetBSD: rf_dagutils.c,v 1.6.6.3 2001/11/14 19:15:47 nathanw Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -31,6 +31,9 @@
  * rf_dagutils.c -- utility routines for manipulating dags
  *
  *****************************************************************************/
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: rf_dagutils.c,v 1.6.6.3 2001/11/14 19:15:47 nathanw Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 

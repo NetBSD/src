@@ -115,6 +115,9 @@
  *
  *****************************************************************************/
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: exstorob.c,v 1.1.1.1.4.3 2001/11/14 19:13:50 nathanw Exp $");
+
 #define __EXSTOROB_C__
 
 #include "acpi.h"

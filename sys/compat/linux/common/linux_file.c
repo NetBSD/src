@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_file.c,v 1.37.2.5 2001/09/26 19:54:48 nathanw Exp $	*/
+/*	$NetBSD: linux_file.c,v 1.37.2.6 2001/11/14 19:13:10 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -40,6 +40,9 @@
  * Functions in multiarch:
  *	linux_sys_llseek	: linux_llseek.c
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: linux_file.c,v 1.37.2.6 2001/11/14 19:13:10 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

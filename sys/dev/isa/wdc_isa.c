@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_isa.c,v 1.19.6.2 2001/06/21 20:03:53 nathanw Exp $ */
+/*	$NetBSD: wdc_isa.c,v 1.19.6.3 2001/11/14 19:14:54 nathanw Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -35,6 +35,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: wdc_isa.c,v 1.19.6.3 2001/11/14 19:14:54 nathanw Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>

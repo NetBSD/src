@@ -1,4 +1,4 @@
-/*	$NetBSD: raw_ip6.c,v 1.31.2.5 2001/10/22 20:42:05 nathanw Exp $	*/
+/*	$NetBSD: raw_ip6.c,v 1.31.2.6 2001/11/14 19:18:15 nathanw Exp $	*/
 /*	$KAME: raw_ip6.c,v 1.82 2001/07/23 18:57:56 jinmei Exp $	*/
 
 /*
@@ -65,6 +65,9 @@
  *	@(#)raw_ip.c	8.2 (Berkeley) 1/4/94
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: raw_ip6.c,v 1.31.2.6 2001/11/14 19:18:15 nathanw Exp $");
+
 #include "opt_ipsec.h"
 
 #include <sys/param.h>
@@ -98,7 +101,7 @@
 
 #ifdef IPSEC
 #include <netinet6/ipsec.h>
-#endif /*IPSEC*/
+#endif /* IPSEC */
 
 #include <machine/stdarg.h>
 
@@ -200,7 +203,7 @@ rip6_input(mp, offp, proto)
 				ipsec6stat.in_polvio++;
 				/* do not inject data into pcb */
 			} else
-#endif /*IPSEC*/
+#endif /* IPSEC */
 			if ((n = m_copy(m, 0, (int)M_COPYALL)) != NULL) {
 				if (last->in6p_flags & IN6P_CONTROLOPTS)
 					ip6_savecontrol(last, &opts, ip6, n);
@@ -231,7 +234,7 @@ rip6_input(mp, offp, proto)
 		ip6stat.ip6s_delivered--;
 		/* do not inject data into pcb */
 	} else
-#endif /*IPSEC*/
+#endif /* IPSEC */
 	if (last) {
 		if (last->in6p_flags & IN6P_CONTROLOPTS)
 			ip6_savecontrol(last, &opts, ip6, m);
@@ -510,7 +513,7 @@ rip6_output(m, va_alist)
 		error = ENOBUFS;
 		goto bad;
 	}
-#endif /*IPSEC*/
+#endif /* IPSEC */
 
 	flags = 0;
 #ifdef IPV6_MINMTU

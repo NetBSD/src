@@ -1,4 +1,4 @@
-/*	$NetBSD: mpu_isa.c,v 1.4 1999/08/05 11:25:47 augustss Exp $	*/
+/*	$NetBSD: mpu_isa.c,v 1.4.14.1 2001/11/14 19:14:52 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -35,6 +35,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: mpu_isa.c,v 1.4.14.1 2001/11/14 19:14:52 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ate_mca.c,v 1.1.2.3 2001/06/21 20:04:04 nathanw Exp $	*/
+/*	$NetBSD: if_ate_mca.c,v 1.1.2.4 2001/11/14 19:15:00 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -39,6 +39,9 @@
 /*
  * Driver for ATI AT1720X MCA cards based on Fujitsu MB8696xA controller.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: if_ate_mca.c,v 1.1.2.4 2001/11/14 19:15:00 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

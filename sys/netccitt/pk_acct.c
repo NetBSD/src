@@ -1,4 +1,4 @@
-/*	$NetBSD: pk_acct.c,v 1.13.6.2 2001/03/13 20:29:48 nathanw Exp $	*/
+/*	$NetBSD: pk_acct.c,v 1.13.6.3 2001/11/14 19:17:38 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1984 University of British Columbia.
@@ -39,6 +39,9 @@
  *
  *	@(#)pk_acct.c	8.2 (Berkeley) 5/14/95
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: pk_acct.c,v 1.13.6.3 2001/11/14 19:17:38 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

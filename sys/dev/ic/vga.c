@@ -1,4 +1,4 @@
-/* $NetBSD: vga.c,v 1.35.2.2 2001/09/21 22:35:44 nathanw Exp $ */
+/* $NetBSD: vga.c,v 1.35.2.3 2001/11/14 19:14:40 nathanw Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -26,6 +26,9 @@
  * any improvements or extensions that they make and grant Carnegie the
  * rights to redistribute these changes.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: vga.c,v 1.35.2.3 2001/11/14 19:14:40 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

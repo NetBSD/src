@@ -1,5 +1,5 @@
 #! /bin/sh -
-#	$NetBSD: makesyscalls.sh,v 1.45.2.4 2001/08/24 00:11:33 nathanw Exp $
+#	$NetBSD: makesyscalls.sh,v 1.45.2.5 2001/11/14 19:16:39 nathanw Exp $
 #
 # Copyright (c) 1994, 1996, 2000 Christopher G. Demetriou
 # All rights reserved.
@@ -177,8 +177,10 @@ BEGIN {
 }
 NR == 1 {
 	printf " * created from%s\n */\n\n", $0 > sysdcl
+	printf "#include <sys/cdefs.h>\n__KERNEL_RCSID(0, \"\$NetBSD\$\");\n\n" > sysdcl
 
 	printf " * created from%s\n */\n\n", $0 > sysnames
+	printf "#include <sys/cdefs.h>\n__KERNEL_RCSID(0, \"\$NetBSD\$\");\n\n" > sysnames
 
 	# System call names are included by userland (kdump(1)), so
 	# hide the include files from it.
@@ -199,8 +201,10 @@ NR == 1 {
 	printf "\tunion {\t\t\t\t\t\t\t\t\\\n" > sysarghdr
 	printf "\t\t%s pad;\t\t\t\t\t\t\\\n", registertype > sysarghdr
 	printf "\t\tstruct { x datum; } le;\t\t\t\t\t\\\n" > sysarghdr
-	printf "\t\tstruct {\t\t\t\t\t\t\\\n" > sysarghdr
-	printf "\t\t\tint8_t pad[ (sizeof (%s) < sizeof (x))\t\\\n", \
+	printf "\t\tstruct { /* LINTED zero array dimension */\t\t\\\n" \
+		> sysarghdr
+	printf "\t\t\tint8_t pad[  /* CONSTCOND */\t\t\t\\\n" > sysarghdr
+	printf "\t\t\t\t(sizeof (%s) < sizeof (x))\t\\\n", \
 		registertype > sysarghdr
 	printf "\t\t\t\t? 0\t\t\t\t\t\\\n" > sysarghdr
 	printf "\t\t\t\t: sizeof (%s) - sizeof (x)];\t\\\n", \

@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos32_exec.c,v 1.2.4.2 2001/09/21 22:35:22 nathanw Exp $	 */
+/*	$NetBSD: sunos32_exec.c,v 1.2.4.3 2001/11/14 19:13:24 nathanw Exp $	 */
 
 /*
  * Copyright (c) 2001 Matthew R. Green
@@ -27,6 +27,9 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: sunos32_exec.c,v 1.2.4.3 2001/11/14 19:13:24 nathanw Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_syscall_debug.h"

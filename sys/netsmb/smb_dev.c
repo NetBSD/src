@@ -1,4 +1,4 @@
-/*	$NetBSD: smb_dev.c,v 1.1.4.1 2001/06/21 20:09:30 nathanw Exp $	*/
+/*	$NetBSD: smb_dev.c,v 1.1.4.2 2001/11/14 19:18:40 nathanw Exp $	*/
 
 /*
  * Copyright (c) 2000, Boris Popov
@@ -31,6 +31,9 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: smb_dev.c,v 1.1.4.2 2001/11/14 19:18:40 nathanw Exp $");
 
 #include <netsmb.h>
 

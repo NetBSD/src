@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ieee1394subr.c,v 1.9.2.1 2001/06/21 20:08:05 nathanw Exp $	*/
+/*	$NetBSD: if_ieee1394subr.c,v 1.9.2.2 2001/11/14 19:17:22 nathanw Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -35,6 +35,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: if_ieee1394subr.c,v 1.9.2.2 2001/11/14 19:17:22 nathanw Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"

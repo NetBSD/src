@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdivar.h,v 1.63 2001/01/21 19:00:06 augustss Exp $	*/
+/*	$NetBSD: usbdivar.h,v 1.63.2.1 2001/11/14 19:16:23 nathanw Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usbdivar.h,v 1.11 1999/11/17 22:33:51 n_hibma Exp $	*/
 
 /*
@@ -176,8 +176,6 @@ struct usbd_pipe {
 	char			repeat;
 	int			interval;
 
-	usb_callout_t		abort_handle;
-
 	/* Filled by HC driver. */
 	struct usbd_pipe_methods *methods;
 };
@@ -224,6 +222,12 @@ struct usbd_xfer {
 
 void usbd_init(void);
 void usbd_finish(void);
+
+void usbd_dump_iface(struct usbd_interface *iface);
+void usbd_dump_device(struct usbd_device *dev);
+void usbd_dump_endpoint(struct usbd_endpoint *endp);
+void usbd_dump_queue(usbd_pipe_handle pipe);
+void usbd_dump_pipe(usbd_pipe_handle pipe);
 
 /* Routines from usb_subr.c */
 int		usbctlprint(void *, const char *);

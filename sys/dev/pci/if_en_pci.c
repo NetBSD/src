@@ -1,4 +1,4 @@
-/*	$NetBSD: if_en_pci.c,v 1.14 2000/12/28 22:59:12 sommerfeld Exp $	*/
+/*	$NetBSD: if_en_pci.c,v 1.14.2.1 2001/11/14 19:15:14 nathanw Exp $	*/
 
 /*
  *
@@ -41,6 +41,9 @@
  *
  * PCI glue for the eni155p card.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: if_en_pci.c,v 1.14.2.1 2001/11/14 19:15:14 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_eon.c,v 1.32.2.1 2001/06/21 20:09:11 nathanw Exp $	*/
+/*	$NetBSD: if_eon.c,v 1.32.2.2 2001/11/14 19:18:26 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -69,6 +69,9 @@ SOFTWARE.
  * Put together a current rfc986 address format and get the right offset
  * for the nsel
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: if_eon.c,v 1.32.2.2 2001/11/14 19:18:26 nathanw Exp $");
 
 #include "opt_eon.h"
 

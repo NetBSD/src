@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_conf.c,v 1.31.2.2 2001/08/24 00:11:41 nathanw Exp $	*/
+/*	$NetBSD: tty_conf.c,v 1.31.2.3 2001/11/14 19:16:45 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -39,6 +39,9 @@
  *
  *	@(#)tty_conf.c	8.5 (Berkeley) 1/9/95
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: tty_conf.c,v 1.31.2.3 2001/11/14 19:16:45 nathanw Exp $");
 
 #include "opt_compat_freebsd.h"
 #include "opt_compat_43.h"

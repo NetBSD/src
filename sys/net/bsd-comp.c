@@ -1,4 +1,4 @@
-/*	$NetBSD: bsd-comp.c,v 1.8.2.1 2001/08/24 00:12:06 nathanw Exp $	*/
+/*	$NetBSD: bsd-comp.c,v 1.8.2.2 2001/11/14 19:17:19 nathanw Exp $	*/
 /*	Id: bsd-comp.c,v 1.6 1996/08/28 06:31:58 paulus Exp 	*/
 
 /* Because this code is derived from the 4.3BSD compress source:
@@ -43,6 +43,9 @@
 /*
  * This version is for use with mbufs on BSD-derived systems.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: bsd-comp.c,v 1.8.2.2 2001/11/14 19:17:19 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_el.c,v 1.63.2.1 2001/08/24 00:09:47 nathanw Exp $	*/
+/*	$NetBSD: if_el.c,v 1.63.2.2 2001/11/14 19:14:48 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1994, Matthew E. Kimmel.  Permission is hereby granted
@@ -17,6 +17,9 @@
  *	- Does not currently support DMA
  *	- Does not currently support multicasts
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: if_el.c,v 1.63.2.2 2001/11/14 19:14:48 nathanw Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"

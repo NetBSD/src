@@ -1,4 +1,4 @@
-/*	$NetBSD: dpt_isa.c,v 1.4.4.1 2001/06/21 20:03:46 nathanw Exp $	*/
+/*	$NetBSD: dpt_isa.c,v 1.4.4.2 2001/11/14 19:14:45 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Andrew Doran <ad@netbsd.org>
@@ -30,6 +30,9 @@
 /*
  * ISA front-end for DPT EATA SCSI driver. 
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: dpt_isa.c,v 1.4.4.2 2001/11/14 19:14:45 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

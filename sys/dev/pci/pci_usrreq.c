@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_usrreq.c,v 1.2.2.2 2001/09/21 22:35:59 nathanw Exp $	*/
+/*	$NetBSD: pci_usrreq.c,v 1.2.2.3 2001/11/14 19:15:24 nathanw Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -38,6 +38,9 @@
 /*
  * User -> kernel interface for PCI bus access.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: pci_usrreq.c,v 1.2.2.3 2001/11/14 19:15:24 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>

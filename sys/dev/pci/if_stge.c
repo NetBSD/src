@@ -1,4 +1,4 @@
-/*	$NetBSD: if_stge.c,v 1.6.4.3 2001/10/22 20:41:24 nathanw Exp $	*/
+/*	$NetBSD: if_stge.c,v 1.6.4.4 2001/11/14 19:15:18 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -40,6 +40,9 @@
  * Device driver for the Sundance Tech. TC9021 10/100/1000
  * Ethernet controller.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: if_stge.c,v 1.6.4.4 2001/11/14 19:15:18 nathanw Exp $");
 
 #include "bpfilter.h"
 

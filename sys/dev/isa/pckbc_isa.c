@@ -1,4 +1,4 @@
-/* $NetBSD: pckbc_isa.c,v 1.2.8.1 2001/08/24 00:09:51 nathanw Exp $ */
+/* $NetBSD: pckbc_isa.c,v 1.2.8.2 2001/11/14 19:14:52 nathanw Exp $ */
 
 /*
  * Copyright (c) 1998
@@ -30,6 +30,9 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: pckbc_isa.c,v 1.2.8.2 2001/11/14 19:14:52 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: ns.c,v 1.20.6.1 2001/06/21 20:09:25 nathanw Exp $	*/
+/*	$NetBSD: ns.c,v 1.20.6.2 2001/11/14 19:18:37 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1984, 1985, 1986, 1987, 1993
@@ -34,6 +34,9 @@
  *
  *	@(#)ns.c	8.5 (Berkeley) 2/9/95
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ns.c,v 1.20.6.2 2001/11/14 19:18:37 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

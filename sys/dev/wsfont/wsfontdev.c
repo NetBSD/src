@@ -1,4 +1,4 @@
-/* $NetBSD: wsfontdev.c,v 1.1.6.3 2001/10/22 20:41:50 nathanw Exp $ */
+/* $NetBSD: wsfontdev.c,v 1.1.6.4 2001/11/14 19:16:28 nathanw Exp $ */
 
 /*
  * Copyright (c) 2001
@@ -25,6 +25,9 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: wsfontdev.c,v 1.1.6.4 2001/11/14 19:16:28 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

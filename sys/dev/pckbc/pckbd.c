@@ -1,4 +1,4 @@
-/* $NetBSD: pckbd.c,v 1.24.4.2 2001/08/24 00:10:25 nathanw Exp $ */
+/* $NetBSD: pckbd.c,v 1.24.4.3 2001/11/14 19:15:35 nathanw Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -77,6 +77,9 @@
 /*
  * code to work keyboard for PC-style console
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: pckbd.c,v 1.24.4.3 2001/11/14 19:15:35 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -370,8 +373,12 @@ pckbd_enable(v, on)
 	int res;
 
 	if (on) {
-		if (sc->sc_enabled)
+		if (sc->sc_enabled) {
+#ifdef DIAGNOSTIC
+			printf("pckbd_enable: bad enable\n");
+#endif
 			return (EBUSY);
+		}
 
 		pckbc_slot_enable(sc->id->t_kbctag, sc->id->t_kbcslot, 1);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_readwrite.c,v 1.30.2.4 2001/10/08 20:11:54 nathanw Exp $	*/
+/*	$NetBSD: ufs_readwrite.c,v 1.30.2.5 2001/11/14 19:19:02 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -34,6 +34,9 @@
  *
  *	@(#)ufs_readwrite.c	8.11 (Berkeley) 5/8/95
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(1, "$NetBSD: ufs_readwrite.c,v 1.30.2.5 2001/11/14 19:19:02 nathanw Exp $");
 
 #ifdef LFS_READWRITE
 #define	BLKSIZE(a, b, c)	blksize(a, b, c)
@@ -292,6 +295,12 @@ WRITE(void *v)
 		if (error) {
 			goto out;
 		}
+		if (flags & B_SYNC) {
+			vp->v_size = blkroundup(fs, osize);
+			simple_lock(&vp->v_interlock);
+			VOP_PUTPAGES(vp, osize & ~(bsize - 1),
+			    round_page(vp->v_size), PGO_CLEANIT | PGO_SYNCIO);
+		}
 	}
 
 	ubc_alloc_flags = UBC_WRITE;
@@ -355,20 +364,18 @@ WRITE(void *v)
 		 */
 
 		if (!async && oldoff >> 16 != uio->uio_offset >> 16) {
-			simple_lock(&vp->v_uobj.vmobjlock);
-			error = (vp->v_uobj.pgops->pgo_put)(&vp->v_uobj,
-			    (oldoff >> 16) << 16, (uio->uio_offset >> 16) << 16,
-			    PGO_CLEANIT);
+			simple_lock(&vp->v_interlock);
+			error = VOP_PUTPAGES(vp, (oldoff >> 16) << 16,
+			    (uio->uio_offset >> 16) << 16, PGO_CLEANIT);
 			if (error) {
 				break;
 			}
 		}
 	}
 	if (error == 0 && ioflag & IO_SYNC) {
-		simple_lock(&vp->v_uobj.vmobjlock);
-		error = (vp->v_uobj.pgops->pgo_put)(&vp->v_uobj,
-		    origoff & ~(bsize - 1), blkroundup(fs, uio->uio_offset),
-		    PGO_CLEANIT|PGO_SYNCIO);
+		simple_lock(&vp->v_interlock);
+		error = VOP_PUTPAGES(vp, origoff & ~(bsize - 1),
+		    blkroundup(fs, uio->uio_offset), PGO_CLEANIT|PGO_SYNCIO);
 	}
 	goto out;
 

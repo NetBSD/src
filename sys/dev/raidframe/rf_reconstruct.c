@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_reconstruct.c,v 1.27.2.3 2001/10/22 20:41:39 nathanw Exp $	*/
+/*	$NetBSD: rf_reconstruct.c,v 1.27.2.4 2001/11/14 19:15:52 nathanw Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -31,6 +31,9 @@
  * rf_reconstruct.c -- code to perform on-line reconstruction
  *
  ************************************************************/
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: rf_reconstruct.c,v 1.27.2.4 2001/11/14 19:15:52 nathanw Exp $");
 
 #include <sys/time.h>
 #include <sys/buf.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.13.2.3 2001/08/24 00:09:43 nathanw Exp $	*/
+/*	$NetBSD: fd.c,v 1.13.2.4 2001/11/14 19:14:46 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -90,6 +90,9 @@
  *  joerg_wunsch@uriah.sax.de (Joerg Wunsch)
  *  dufault@hda.com (Peter Dufault)
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.13.2.4 2001/11/14 19:14:46 nathanw Exp $");
 
 #include "rnd.h"
 #include "opt_ddb.h"

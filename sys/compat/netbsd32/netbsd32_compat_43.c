@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_compat_43.c,v 1.16.2.3 2001/09/21 22:35:20 nathanw Exp $	*/
+/*	$NetBSD: netbsd32_compat_43.c,v 1.16.2.4 2001/11/14 19:13:16 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -27,6 +27,9 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_43.c,v 1.16.2.4 2001/11/14 19:13:16 nathanw Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_43.h"

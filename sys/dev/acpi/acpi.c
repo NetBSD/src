@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi.c,v 1.4.4.2 2001/10/08 21:18:05 nathanw Exp $	*/
+/*	$NetBSD: acpi.c,v 1.4.4.3 2001/11/14 19:13:43 nathanw Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -39,6 +39,9 @@
  * Autoconfiguration support for the Intel ACPI Component Architecture
  * ACPI reference implementation.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.4.4.3 2001/11/14 19:13:43 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: iso_pcb.c,v 1.19.6.1 2001/06/21 20:09:13 nathanw Exp $	*/
+/*	$NetBSD: iso_pcb.c,v 1.19.6.2 2001/11/14 19:18:27 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -64,6 +64,9 @@ SOFTWARE.
 /*
  * Iso address family net-layer(s) pcb stuff. NEH 1/29/87
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: iso_pcb.c,v 1.19.6.2 2001/11/14 19:18:27 nathanw Exp $");
 
 #include "opt_iso.h"
 

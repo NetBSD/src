@@ -1,4 +1,4 @@
-/*	$NetBSD: vnd.c,v 1.71.2.4 2001/10/22 20:41:15 nathanw Exp $	*/
+/*	$NetBSD: vnd.c,v 1.71.2.5 2001/11/14 19:13:42 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -96,6 +96,9 @@
  *
  * NOTE 3: Doesn't interact with leases, should it?
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.71.2.5 2001/11/14 19:13:42 nathanw Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "fs_nfs.h"

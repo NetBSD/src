@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tlp_pci.c,v 1.51.2.2 2001/08/24 00:10:10 nathanw Exp $	*/
+/*	$NetBSD: if_tlp_pci.c,v 1.51.2.3 2001/11/14 19:15:19 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -41,6 +41,9 @@
  * PCI bus front-end for the Digital Semiconductor ``Tulip'' (21x4x)
  * Ethernet controller family driver.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: if_tlp_pci.c,v 1.51.2.3 2001/11/14 19:15:19 nathanw Exp $");
 
 #include "opt_tlp.h"
 

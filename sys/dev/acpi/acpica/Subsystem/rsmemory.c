@@ -114,6 +114,9 @@
  *
  *****************************************************************************/
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: rsmemory.c,v 1.1.1.1.4.3 2001/11/14 19:13:55 nathanw Exp $");
+
 #define __RSMEMORY_C__
 
 #include "acpi.h"

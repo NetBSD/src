@@ -1,4 +1,4 @@
-/*	$NetBSD: mfs_vnops.c,v 1.27.2.1 2001/03/05 22:50:09 nathanw Exp $	*/
+/*	$NetBSD: mfs_vnops.c,v 1.27.2.2 2001/11/14 19:19:01 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -34,6 +34,9 @@
  *
  *	@(#)mfs_vnops.c	8.11 (Berkeley) 5/22/95
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: mfs_vnops.c,v 1.27.2.2 2001/11/14 19:19:01 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

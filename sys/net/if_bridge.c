@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bridge.c,v 1.2.2.3 2001/09/25 16:15:55 nathanw Exp $	*/
+/*	$NetBSD: if_bridge.c,v 1.2.2.4 2001/11/14 19:17:19 nathanw Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -80,6 +80,9 @@
  *
  *	- Add packet filter hooks.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: if_bridge.c,v 1.2.2.4 2001/11/14 19:17:19 nathanw Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"

@@ -1,4 +1,4 @@
-/*	$NetBSD: tpcalib.c,v 1.1.2.1 2001/06/21 20:01:44 nathanw Exp $	*/
+/*	$NetBSD: tpcalib.c,v 1.1.2.2 2001/11/14 19:14:06 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1999 Shin Takemura All rights reserved.
@@ -26,6 +26,9 @@
  * SUCH DAMAGE.
  *
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: tpcalib.c,v 1.1.2.2 2001/11/14 19:14:06 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ate.c,v 1.24.4.2 2001/08/24 00:09:45 nathanw Exp $	*/
+/*	$NetBSD: if_ate.c,v 1.24.4.3 2001/11/14 19:14:47 nathanw Exp $	*/
 
 /*
  * All Rights Reserved, Copyright (C) Fujitsu Limited 1995
@@ -30,6 +30,9 @@
  * software, nor does the author assume any responsibility for damages
  * incurred with its use.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: if_ate.c,v 1.24.4.3 2001/11/14 19:14:47 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

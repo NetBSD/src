@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.112.2.6 2001/11/05 19:59:03 briggs Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.112.2.7 2001/11/14 19:16:37 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -39,6 +39,9 @@
  *
  *	@(#)kern_sig.c	8.14 (Berkeley) 5/14/95
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.112.2.7 2001/11/14 19:16:37 nathanw Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_compat_sunos.h"

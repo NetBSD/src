@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cs_ofisa.c,v 1.4 2000/12/26 09:42:21 mycroft Exp $	*/
+/*	$NetBSD: if_cs_ofisa.c,v 1.4.2.1 2001/11/14 19:15:05 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -36,6 +36,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: if_cs_ofisa.c,v 1.4.2.1 2001/11/14 19:15:05 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

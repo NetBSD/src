@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_subr.c,v 1.15.6.1 2001/08/24 00:13:18 nathanw Exp $	*/
+/*	$NetBSD: ffs_subr.c,v 1.15.6.2 2001/11/14 19:18:56 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -35,6 +35,9 @@
  *	@(#)ffs_subr.c	8.5 (Berkeley) 3/21/95
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ffs_subr.c,v 1.15.6.2 2001/11/14 19:18:56 nathanw Exp $");
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #ifndef _KERNEL
@@ -52,9 +55,8 @@ extern u_char *fragtbl[];
 #include <sys/vnode.h>
 #include <sys/mount.h>
 #include <sys/buf.h>
-#include <ufs/ufs/quota.h>
-#include <ufs/ufs/ufsmount.h>
 #include <ufs/ufs/inode.h>
+#include <ufs/ufs/ufsmount.h>
 #include <ufs/ufs/ufs_extern.h>
 #include <ufs/ffs/fs.h>
 #include <ufs/ffs/ffs_extern.h>
@@ -196,7 +198,7 @@ ffs_isblock(fs, cp, h)
 		mask = 0x01 << (h & 0x7);
 		return ((cp[h >> 3] & mask) == mask);
 	default:
-		panic("ffs_isblock");
+		panic("ffs_isblock: unknown fs_frag %d", (int)fs->fs_frag);
 	}
 }
 
@@ -220,7 +222,7 @@ ffs_isfreeblock(fs, cp, h)
 	case 1:
 		return ((cp[h >> 3] & (0x01 << (h & 0x7))) == 0);
 	default:
-		panic("ffs_isfreeblock");
+		panic("ffs_isfreeblock: unknown fs_frag %d", (int)fs->fs_frag);
 	}
 }
 
@@ -248,7 +250,7 @@ ffs_clrblock(fs, cp, h)
 		cp[h >> 3] &= ~(0x01 << (h & 0x7));
 		return;
 	default:
-		panic("ffs_clrblock");
+		panic("ffs_clrblock: unknown fs_frag %d", (int)fs->fs_frag);
 	}
 }
 
@@ -277,6 +279,6 @@ ffs_setblock(fs, cp, h)
 		cp[h >> 3] |= (0x01 << (h & 0x7));
 		return;
 	default:
-		panic("ffs_setblock");
+		panic("ffs_setblock: unknown fs_frag %d", (int)fs->fs_frag);
 	}
 }

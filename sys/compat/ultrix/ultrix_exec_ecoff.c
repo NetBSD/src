@@ -1,4 +1,4 @@
-/*	$NetBSD: ultrix_exec_ecoff.c,v 1.1 2000/12/09 12:19:28 jdolecek Exp $	*/
+/*	$NetBSD: ultrix_exec_ecoff.c,v 1.1.4.1 2001/11/14 19:13:31 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1995, 1997 Jonathan Stone (hereinafter referred to as the author)
@@ -82,6 +82,9 @@
 /*
  * Ultrix compatibility module.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ultrix_exec_ecoff.c,v 1.1.4.1 2001/11/14 19:13:31 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/exec.h>

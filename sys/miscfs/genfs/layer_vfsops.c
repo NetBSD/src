@@ -1,4 +1,4 @@
-/*	$NetBSD: layer_vfsops.c,v 1.2.6.1 2001/06/21 20:07:36 nathanw Exp $	*/
+/*	$NetBSD: layer_vfsops.c,v 1.2.6.2 2001/11/14 19:17:09 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1999 National Aeronautics & Space Administration
@@ -75,6 +75,9 @@
 /*
  * generic layer vfs ops.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: layer_vfsops.c,v 1.2.6.2 2001/11/14 19:17:09 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

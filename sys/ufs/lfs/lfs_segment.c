@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_segment.c,v 1.67.2.3 2001/08/24 00:13:27 nathanw Exp $	*/
+/*	$NetBSD: lfs_segment.c,v 1.67.2.4 2001/11/14 19:18:59 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -70,6 +70,9 @@
  *	@(#)lfs_segment.c	8.10 (Berkeley) 6/10/95
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.67.2.4 2001/11/14 19:18:59 nathanw Exp $");
+
 #define ivndebug(vp,str) printf("ino %d: %s\n",VTOI(vp)->i_number,(str))
 
 #if defined(_KERNEL_OPT)
@@ -93,7 +96,6 @@
 #include <miscfs/specfs/specdev.h>
 #include <miscfs/fifofs/fifo.h>
 
-#include <ufs/ufs/quota.h>
 #include <ufs/ufs/inode.h>
 #include <ufs/ufs/dir.h>
 #include <ufs/ufs/ufsmount.h>

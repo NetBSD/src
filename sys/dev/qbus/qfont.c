@@ -1,4 +1,4 @@
-/*	$NetBSD: qfont.c,v 1.4 1999/06/20 17:58:57 ragge Exp $	*/
+/*	$NetBSD: qfont.c,v 1.4.16.1 2001/11/14 19:15:44 nathanw Exp $	*/
 /*-
  * Copyright (c) 1982, 1986
  *	The Regents of the University of California.  All rights reserved.
@@ -76,6 +76,9 @@
  * into ascii characters. The tables also support the special
  * function keys.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: qfont.c,v 1.4.16.1 2001/11/14 19:15:44 nathanw Exp $");
 
 unsigned short q_key[]={
 	 0x00  ,0x00  ,0x00  ,0x00  ,0x00  ,0x00  ,0x00  ,0x00  /*   0 */

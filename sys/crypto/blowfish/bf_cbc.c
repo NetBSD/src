@@ -56,6 +56,9 @@
  * [including the GNU Public Licence.]
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: bf_cbc.c,v 1.2.4.2 2001/11/14 19:13:34 nathanw Exp $");
+
 #include <openssl/blowfish.h>
 #include "bf_locl.h"
 

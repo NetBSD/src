@@ -1,4 +1,4 @@
-/*	$NetBSD: pcmcia_cis.c,v 1.21.2.4 2001/09/26 19:54:58 nathanw Exp $	*/
+/*	$NetBSD: pcmcia_cis.c,v 1.21.2.5 2001/11/14 19:15:41 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1997 Marc Horowitz.  All rights reserved.
@@ -28,6 +28,9 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: pcmcia_cis.c,v 1.21.2.5 2001/11/14 19:15:41 nathanw Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -838,7 +841,20 @@ pcmcia_parse_cis_tuple(tuple, arg)
 			    tuple->length));
 			break;
 		}
-		if ((state->pf == NULL) || (state->gotmfc == 2)) {
+		if (state->pf) {
+			if (state->pf->function == PCMCIA_FUNCTION_UNSPEC) {
+				/*
+				 * This looks like a opportunistic function
+				 * created by a CONFIG tuple.  Just keep it.
+				 */
+			} else {
+				/*
+				 * A function is being defined, end it.
+				 */
+				state->pf = NULL;
+			}
+		}
+		if (state->pf == NULL) {
 			state->pf = malloc(sizeof(*state->pf), M_DEVBUF,
 			    M_NOWAIT);
 			memset(state->pf, 0, sizeof(*state->pf));

@@ -1,4 +1,4 @@
-/*	$NetBSD: ulpt.c,v 1.41.2.2 2001/10/22 20:41:44 nathanw Exp $	*/
+/*	$NetBSD: ulpt.c,v 1.41.2.3 2001/11/14 19:16:18 nathanw Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ulpt.c,v 1.24 1999/11/17 22:33:44 n_hibma Exp $	*/
 
 /*
@@ -41,6 +41,9 @@
 /*
  * Printer Class spec: http://www.usb.org/developers/data/devclass/usbprint109.PDF
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ulpt.c,v 1.41.2.3 2001/11/14 19:16:18 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: mscp_subr.c,v 1.15.6.1 2001/06/21 20:04:28 nathanw Exp $	*/
+/*	$NetBSD: mscp_subr.c,v 1.15.6.2 2001/11/14 19:15:04 nathanw Exp $	*/
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * Copyright (c) 1988 Regents of the University of California.
@@ -41,6 +41,9 @@
 /*
  * MSCP generic driver routines
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: mscp_subr.c,v 1.15.6.2 2001/11/14 19:15:04 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>

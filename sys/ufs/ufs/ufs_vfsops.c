@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_vfsops.c,v 1.11.6.1 2001/09/21 22:37:09 nathanw Exp $	*/
+/*	$NetBSD: ufs_vfsops.c,v 1.11.6.2 2001/11/14 19:19:02 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993, 1994
@@ -39,6 +39,9 @@
  *
  *	@(#)ufs_vfsops.c	8.8 (Berkeley) 5/20/95
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ufs_vfsops.c,v 1.11.6.2 2001/11/14 19:19:02 nathanw Exp $");
 
 #include "opt_quota.h"
 

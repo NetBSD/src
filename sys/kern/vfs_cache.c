@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_cache.c,v 1.28.2.2 2001/09/26 19:55:06 nathanw Exp $	*/
+/*	$NetBSD: vfs_cache.c,v 1.28.2.3 2001/11/14 19:16:48 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -34,6 +34,9 @@
  *
  *	@(#)vfs_cache.c	8.3 (Berkeley) 8/22/94
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: vfs_cache.c,v 1.28.2.3 2001/11/14 19:16:48 nathanw Exp $");
 
 #include "opt_ddb.h"
 #include "opt_revcache.h"
@@ -217,7 +220,8 @@ cache_lookup(dvp, vpp, cnp)
 				return (error);
 			cnp->cn_flags &= ~PDIRUNLOCK;
 		}
-		goto remove;
+		*vpp = NULL;
+		return (-1);
 	}
 
 	nchstats.ncs_goodhits++;

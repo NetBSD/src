@@ -1,4 +1,4 @@
-/*	$NetBSD: rrunner.c,v 1.21.2.4 2001/08/24 00:09:35 nathanw Exp $	*/
+/*	$NetBSD: rrunner.c,v 1.21.2.5 2001/11/14 19:14:34 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -40,6 +40,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: rrunner.c,v 1.21.2.5 2001/11/14 19:14:34 nathanw Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"

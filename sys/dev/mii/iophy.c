@@ -1,4 +1,4 @@
-/*	$NetBSD: iophy.c,v 1.10.2.3 2001/09/21 22:35:49 nathanw Exp $	*/
+/*	$NetBSD: iophy.c,v 1.10.2.4 2001/11/14 19:15:02 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -69,6 +69,9 @@
 /*
  * Intel 82553 PHY driver
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: iophy.c,v 1.10.2.4 2001/11/14 19:15:02 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
