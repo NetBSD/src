@@ -1,4 +1,4 @@
-/*	$NetBSD: ustarfs.c,v 1.18 2002/03/30 01:29:48 matt Exp $	*/
+/*	$NetBSD: ustarfs.c,v 1.19 2002/05/10 11:07:01 lukem Exp $	*/
 
 /* [Notice revision 2.2]
  * Copyright (c) 1997, 1998 Avalon Computer Systems, Inc.
@@ -485,7 +485,7 @@ ustarfs_seek(f, offs, whence)
 	}
 	return ustf->uas_fseek;
 }
-#endif /* !LIBSA_NO_FS_CLOSE */
+#endif /* !LIBSA_NO_FS_SEEK */
 
 int
 ustarfs_read(f, start, size, resid)
