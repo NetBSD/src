@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_vnops.c,v 1.67 1999/08/24 23:29:09 sommerfeld Exp $	*/
+/*	$NetBSD: procfs_vnops.c,v 1.68 1999/08/25 14:42:36 sommerfeld Exp $	*/
 
 /*
  * Copyright (c) 1993 Jan-Simon Pendry
@@ -847,7 +847,7 @@ procfs_readdir(v)
 	struct uio *uio = ap->a_uio;
 	struct dirent d;
 	struct pfsnode *pfs;
-	int i;
+	off_t i;
 	int error;
 	off_t *cookies = NULL;
 	int ncookies;
