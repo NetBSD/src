@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2004/03/19 08:07:28 jmc Exp $
+#	$NetBSD: Makefile,v 1.4 2004/03/19 10:36:55 skrll Exp $
 
 NOMAN=		# defined
 
@@ -11,7 +11,7 @@ TESTS=		C en_US.UTF-8 ja_JP.ISO2022-JP2 ja_JP.SJIS ja_JP.eucJP
 INPUTS=		${TESTS:S/$/.in/}
 OUTPUTS=	${TESTS:S/$/.out/}
 
-UUDECODE_FILES=	${TESTS}
+UUDECODE_FILES=	${INPUTS}
 
 CLEANFILES+=	${OUTPUTS} ${INPUTS}
 
