@@ -1,4 +1,4 @@
-/*	$NetBSD: ubtbcmfw.c,v 1.3 2002/08/24 17:24:04 augustss Exp $	*/
+/*	$NetBSD: ubtbcmfw.c,v 1.4 2002/08/24 17:58:15 augustss Exp $	*/
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ubtbcmfw.c,v 1.3 2002/08/24 17:24:04 augustss Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ubtbcmfw.c,v 1.4 2002/08/24 17:58:15 augustss Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -312,7 +312,7 @@ hw_dev_ubtbcmfw_sysctl(int *name, u_int nlen, void *oldp,
 		return (ENOTDIR);		/* overloaded */
 
 	switch (name[0]) {
-	case KERN_DEV_UBTBCMFW_FWPATH:
+	case HW_DEV_UBTBCMFW_FWPATH:
 		return sysctl_string(oldp, oldlenp, newp, newlen,
 		    ubtbcmfw_fwpath, sizeof(ubtbcmfw_fwpath));
 	default:
