@@ -1,4 +1,4 @@
-/*	$NetBSD: sd.c,v 1.93 1996/03/26 20:32:14 mycroft Exp $	*/
+/*	$NetBSD: sd.c,v 1.94 1996/03/26 22:22:33 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -182,6 +182,10 @@ sdattach(parent, self, aux)
 	sd->sc_dk.dk_driver = &sddkdriver;
 	sd->sc_dk.dk_name = sd->sc_dev.dv_xname;
 	disk_attach(&sd->sc_dk);
+
+#if !defined(i386)
+	dk_establish(&sd->sc_dk, &sd->sc_dev);		/* XXX */
+#endif
 
 	/*
 	 * Note if this device is ancient.  This is used in sdminphys().
