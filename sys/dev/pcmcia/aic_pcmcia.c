@@ -7,6 +7,12 @@
 #include <machine/bus.h>
 #include <machine/intr.h>
 
+#include <dev/scsipi/scsipi_all.h>
+#include <dev/scsipi/scsipiconf.h>
+#include <dev/scsipi/scsi_all.h>
+
+#include <dev/ic/aic6360var.h>
+
 #include <dev/pcmcia/pcmciareg.h>
 #include <dev/pcmcia/pcmciavar.h>
 
@@ -14,12 +20,11 @@
 #define PCMCIA_PRODUCT_ADAPTEC_APA1460	0x1
 
 struct aic_pcmcia_softc {
-    struct device sc_dev;
+	struct aic_softc sc_aic; /* real "aic" softc */
 
-    struct pcmcia_io_handle sc_pcioh;
-#define	sc_iot	sc_pcioh.iot
-#define	sc_ioh	sc_pcioh.ioh
-    struct pcmcia_function *sc_pf;
+	struct pcmcia_io_handle sc_pcioh;
+	struct pcmcia_function *sc_pf;
+	int sc_io_window;	/* our i/o window */
 };
 
 #ifdef __BROKEN_INDIRECT_CONFIG
@@ -31,10 +36,6 @@ void aic_pcmcia_attach __P((struct device *, struct device *, void *));
 
 struct cfattach aic_pcmcia_ca = {
     sizeof(struct aic_pcmcia_softc), aic_pcmcia_match, aic_pcmcia_attach
-};
-
-struct cfdriver aicx_cd = {
-	NULL, "aicx", DV_DULL
 };
 
 int
@@ -62,13 +63,31 @@ aic_pcmcia_attach(parent, self, aux)
      struct device *parent, *self;
      void *aux;
 {
-    struct aic_pcmcia_softc *sc = (void *) self;
+    struct aic_pcmcia_softc *psc = (void *) self;
+    struct aic_softc *sc = &psc->sc_aic;
     struct pcmcia_attach_args *pa = aux;
     struct pcmcia_config_entry *cfe;
     struct pcmcia_function *pf = pa->pf;
 
-    sc->sc_pf = pf;
-    cfe = pf->cfe_head.sqh_first;
+    psc->sc_pf = pf;
+
+    for (cfe = pf->cfe_head.sqh_first; cfe; cfe = cfe->cfe_list.sqe_next) {
+	    if (cfe->num_memspace != 0 ||
+		cfe->num_iospace != 1)
+		    continue;
+
+	    if (pcmcia_io_alloc(pa->pf, cfe->iospace[0].start,
+		cfe->iospace[0].length, 0, &psc->sc_pcioh) == 0)
+		    break;
+    }
+
+    if (cfe == 0) {
+	    printf(": can't alloc i/o space\n");
+	    return;
+    }
+
+    sc->sc_iot = psc->sc_pcioh.iot;
+    sc->sc_ioh = psc->sc_pcioh.ioh;
 
     /* Enable the card. */
     pcmcia_function_init(pf, cfe);
@@ -77,19 +96,23 @@ aic_pcmcia_attach(parent, self, aux)
 	return;
     }
 
-    if (cfe->num_memspace != 0) {
-	printf(": unexpected number of memory spaces %d should be 0\n",
-	       cfe->num_memspace);
-	return;
-    }
-     
-    if (cfe->num_iospace != 1) {
-	printf(": unexpected number of I/O spaces %d should be 1\n",
-	       cfe->num_iospace);
-	return;
+    /* map in the io space */
+    if (pcmcia_io_map(pa->pf, PCMCIA_WIDTH_AUTO, 0, psc->sc_pcioh.size,
+	&psc->sc_pcioh, &psc->sc_io_window)) {
+	    printf(": can't map i/o space\n");
+	    return;
     }
 
-    printf(": APA-1460 SCSI Host Adapter (not really attached)\n");
+    if (!aic_find(sc->sc_iot, sc->sc_ioh))
+	    printf(": coundn't find aic\n%s", sc->sc_dev.dv_xname);
 
-    return;
+    printf(": APA-1460 SCSI Host Adapter\n");
+
+    aicattach(sc);
+
+    /* establish the interrupt handler. */
+    sc->sc_ih = pcmcia_intr_establish(pa->pf, IPL_BIO, aicintr, sc);
+    if (sc->sc_ih == NULL)
+	    printf("%s: couldn't establish interrupt\n",
+		sc->sc_dev.dv_xname);
 }
