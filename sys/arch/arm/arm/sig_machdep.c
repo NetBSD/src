@@ -1,4 +1,4 @@
-/*	$NetBSD: sig_machdep.c,v 1.1 2001/02/13 13:19:52 bjh21 Exp $	*/
+/*	$NetBSD: sig_machdep.c,v 1.2 2001/02/27 14:11:30 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -41,10 +41,11 @@
  */
 
 #include "opt_compat_netbsd.h"
+#include "opt_progmode.h"
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: sig_machdep.c,v 1.1 2001/02/13 13:19:52 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sig_machdep.c,v 1.2 2001/02/27 14:11:30 bjh21 Exp $");
 
 #include <sys/mount.h>		/* XXX only needed by syscallargs.h */
 #include <sys/proc.h>
@@ -60,7 +61,7 @@ __KERNEL_RCSID(0, "$NetBSD: sig_machdep.c,v 1.1 2001/02/13 13:19:52 bjh21 Exp $"
 #include <machine/cpu.h>
 #include <machine/frame.h>
 #include <machine/pcb.h>
-#ifdef arm32
+#ifndef arm26
 #include <machine/cpufunc.h>
 #endif
 
@@ -68,10 +69,10 @@ static __inline struct trapframe *
 process_frame(struct proc *p)
 {
 
-#ifdef arm32
-	return (p->p_md.md_regs);
-#else /* arm26 */
+#ifdef arm26
 	return p->p_addr->u_pcb.pcb_tf;
+#else /* arm32 */
+	return (p->p_md.md_regs);
 #endif
 }
 
@@ -167,7 +168,7 @@ sendsig(sig_t catcher, int sig, sigset_t *mask, u_long code)
 	tf->tf_r3 = (int)frame.sf_handler;
 	tf->tf_usr_sp = (int)fp;
 	tf->tf_pc = (int)p->p_sigctx.ps_sigcode;
-#ifdef arm32
+#ifndef arm26
 	cpu_cache_syncI();
 #endif
 
@@ -206,10 +207,10 @@ sys___sigreturn14(struct proc *p, void *v, register_t *retval)
 		return (EFAULT);
 
 	/* Make sure the processor mode has not been tampered with. */
-#ifdef arm32
+#ifdef PROG32
 	if ((context.sc_spsr & PSR_MODE) != PSR_USR32_MODE)
 		return (EINVAL);
-#else /* arm26 */
+#else /* PROG26 */
 	if ((context.sc_pc & R15_MODE) != R15_MODE_USR ||
 	    (context.sc_pc & (R15_IRQ_DISABLE | R15_FIQ_DISABLE)) != 0)
 		return EINVAL;

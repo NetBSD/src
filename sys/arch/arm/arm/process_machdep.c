@@ -1,4 +1,4 @@
-/*	$NetBSD: process_machdep.c,v 1.2 2001/02/26 16:35:40 bjh21 Exp $	*/
+/*	$NetBSD: process_machdep.c,v 1.3 2001/02/27 14:11:30 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1995 Frank Lancaster.  All rights reserved.
@@ -66,13 +66,14 @@
  *	Set the process's program counter.
  */
 
-#ifdef arm32
+#include "opt_progmode.h"
+#ifndef arm26
 #include "opt_armfpe.h"
 #endif
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.2 2001/02/26 16:35:40 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.3 2001/02/27 14:11:30 bjh21 Exp $");
 
 #include <sys/proc.h>
 #include <sys/ptrace.h>
@@ -83,7 +84,7 @@ __KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.2 2001/02/26 16:35:40 bjh21 Ex
 #include <machine/pcb.h>
 #include <machine/reg.h>
 
-#ifndef arm32
+#ifdef arm26
 #include <arm/armreg.h>
 #endif
 
@@ -95,10 +96,10 @@ static __inline struct trapframe *
 process_frame(struct proc *p)
 {
 
-#ifdef arm32
-	return (p->p_md.md_regs);
-#else /* arm26 */
+#ifdef arm26
 	return p->p_addr->u_pcb.pcb_tf;
+#else /* arm32 */
+	return (p->p_md.md_regs);
 #endif
 }
 
@@ -139,11 +140,11 @@ process_write_regs(struct proc *p, struct reg *regs)
 	bcopy((caddr_t)regs->r, (caddr_t)&tf->tf_r0, sizeof(regs->r));
 	tf->tf_usr_sp = regs->r_sp;
 	tf->tf_usr_lr = regs->r_lr;
-#ifdef arm32
+#ifdef PROG32
 	tf->tf_pc = regs->r_pc;
 	tf->tf_spsr &=  ~PSR_FLAGS;
 	tf->tf_spsr |= regs->r_cpsr & PSR_FLAGS;
-#else /* arm26 */
+#else /* PROG26 */
 	if ((regs->r_pc & (R15_MODE | R15_IRQ_DISABLE | R15_FIQ_DISABLE)) != 0)
 		return EPERM;
 
@@ -171,9 +172,9 @@ process_set_pc(struct proc *p, caddr_t addr)
 	struct trapframe *tf = process_frame(p);
 
 	KASSERT(tf != NULL);
-#ifdef arm32
+#ifdef PROG32
 	tf->tf_pc = (int)addr;
-#else /* arm26 */
+#else /* PROG26 */
 	/* Only set the PC, not the PSR */
 	if (((register_t)addr & R15_PC) != (register_t)addr)
 		return EINVAL;
