@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 1990, 1993
+ * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -32,80 +32,82 @@
  */
 
 #ifndef lint
-static char copyright[] =
-"@(#) Copyright (c) 1990, 1993\n\
-	The Regents of the University of California.  All rights reserved.\n";
-#endif /* not lint */
-
-#ifndef lint
-static char sccsid[] = "@(#)kvm_mkdb.c	8.1 (Berkeley) 6/6/93";
+static char sccsid[] = "@(#)testdb.c	8.1 (Berkeley) 6/6/93";
 #endif /* not lint */
 
 #include <sys/param.h>
-#include <sys/stat.h>
-
-#include <db.h>
-#include <err.h>
+#include <sys/file.h>
 #include <errno.h>
-#include <fcntl.h>
-#include <paths.h>
+#include <limits.h>
+#include <kvm.h>
+#include <db.h>
 #include <stdio.h>
-#include <stdlib.h>
+#include <unistd.h>
 #include <string.h>
+#include <paths.h>
 
 #include "extern.h"
 
-static void usage __P((void));
-
+/* Return true if the db file is valid, else false */
 int
-main(argc, argv)
-	int argc;
-	char *argv[];
+testdb()
 {
-	DB *db;
-	int ch;
-	char *p, *nlistpath, *nlistname, dbtemp[MAXPATHLEN], dbname[MAXPATHLEN];
+	register DB *db;
+	register int cc, kd, ret, dbversionlen;
+	register char *cp, *uf;
+	DBT rec;
+	struct nlist nitem;
+	char dbname[MAXPATHLEN], dbversion[_POSIX2_LINE_MAX];
+	char kversion[_POSIX2_LINE_MAX];
 
-	while ((ch = getopt(argc, argv, "")) != EOF)
-		switch (ch) {
-		case '?':
-		default:
-			usage();
-		}
-	argc -= optind;
-	argv += optind;
+	ret = 0;
+	db = NULL;
 
-	if (argc > 1)
-		usage();
+	if ((kd = open(_PATH_KMEM, O_RDONLY, 0)) < 0)
+		goto close;
 
-	/* If the existing db file matches the currently running kernel, exit */
-	if (testdb())
-		exit(0);
+	uf = _PATH_UNIX;
+	if ((cp = rindex(uf, '/')) != 0)
+		uf = cp + 1;
+	(void) snprintf(dbname, sizeof(dbname), "%skvm_%s.db", _PATH_VARDB, uf);
+	if ((db = dbopen(dbname, O_RDONLY, 0, DB_HASH, NULL)) == NULL)
+		goto close;
 
-#define	basename(cp)	((p = rindex((cp), '/')) != NULL ? p + 1 : (cp))
-	nlistpath = argc > 0 ? argv[0] : _PATH_UNIX;
-	nlistname = basename(nlistpath);
+	/* Read the version out of the database */
+	rec.data = VRS_KEY;
+	rec.size = sizeof(VRS_KEY) - 1;
+	if ((db->get)(db, &rec, &rec, 0))
+		goto close;
+	if (rec.data == 0 || rec.size > sizeof(dbversion))
+		goto close;
+	bcopy(rec.data, dbversion, rec.size);
+	dbversionlen = rec.size;
 
-	(void)snprintf(dbtemp, sizeof(dbtemp), "%skvm_%s.tmp",
-	    _PATH_VARDB, nlistname);
-	(void)snprintf(dbname, sizeof(dbname), "%skvm_%s.db",
-	    _PATH_VARDB, nlistname);
-	(void)umask(0);
-	db = dbopen(dbtemp, O_CREAT | O_EXLOCK | O_TRUNC | O_RDWR,
-	    S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH, DB_HASH, NULL);
-	if (db == NULL)
-		err(1, "%s", dbtemp);
-	create_knlist(nlistpath, db);
-	if (db->close(db))
-		err(1, "%s", dbtemp);
-	if (rename(dbtemp, dbname))
-		err(1, "rename %s to %s", dbtemp, dbname);
-	exit(0);
-}
+	/* Read version string from kernel memory */
+	rec.data = VRS_SYM;
+	rec.size = sizeof(VRS_SYM) - 1;
+	if ((db->get)(db, &rec, &rec, 0))
+		goto close;
+	if (rec.data == 0 || rec.size != sizeof(struct nlist))
+		goto close;
+	bcopy(rec.data, &nitem, sizeof(nitem));
+	/*
+	 * Theoretically possible for lseek to be seeking to -1.  Not
+	 * that it's something to lie awake nights about, however.
+	 */
+	errno = 0;
+	if (lseek(kd, (off_t)nitem.n_value, SEEK_SET) == -1 && errno != 0)
+		goto close;
+	cc = read(kd, kversion, sizeof(kversion));
+	if (cc < 0 || cc != sizeof(kversion))
+		goto close;
 
-void
-usage()
-{
-	(void)fprintf(stderr, "usage: kvm_mkdb [file]\n");
-	exit(1);
+	/* If they match, we win */
+	ret = bcmp(dbversion, kversion, dbversionlen) == 0;
+
+close:	if (kd >= 0)
+		(void)close(kd);
+	if (db)
+		(void)(db->close)(db);
+	return (ret);
 }
