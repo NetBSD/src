@@ -1,4 +1,4 @@
-.\"	$NetBSD: fstat.1,v 1.12 1999/02/18 06:09:25 lukem Exp $
+.\"	$NetBSD: fstat.1,v 1.13 1999/03/16 09:54:50 kleink Exp $
 .\"
 .\" Copyright (c) 1987, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -32,7 +32,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)fstat.1	8.3 (Berkeley) 2/25/94
-.\"	$NetBSD: fstat.1,v 1.12 1999/02/18 06:09:25 lukem Exp $
+.\"	$NetBSD: fstat.1,v 1.13 1999/03/16 09:54:50 kleink Exp $
 .\"
 .Dd February 18, 1999
 .Dt FSTAT 1
@@ -185,7 +185,7 @@ Normally the name cannot be determined since there is no mapping
 from an open file back to the directory entry that was used to open
 that file.  Also, since different directory entries may reference
 the same file (via
-.Xr ln 2 ) ,
+.Xr ln 1 ) ,
 the name printed may not be the actual
 name that the process originally used to open that file.
 .El
