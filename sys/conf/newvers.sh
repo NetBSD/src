@@ -42,7 +42,13 @@ else
 fi
 
 touch version
-v=`cat version` t=`date "+%m/%d/%y %H:%M"`
+
+kernvers="386BSD 0.1"
+v=`cat version`
+t=`date "+%m/%d/%y %H:%M"`
+user=${USER-root}
+host=`hostname`
+dir=`pwd`
 (
-  echo "char version[] = \"version: ${v} ($1) ${t}\";"
+  echo "char version[] = \"${kernvers} ($1) #${v}: ${t}\\n  ${user}@${host}:${dir}\\n\";"
 ) > vers.c
