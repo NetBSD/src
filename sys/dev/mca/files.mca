@@ -1,4 +1,4 @@
-# $NetBSD: files.mca,v 1.16 2001/12/01 10:42:38 jdolecek Exp $
+# $NetBSD: files.mca,v 1.17 2001/12/04 20:47:58 jdolecek Exp $
 #
 # Config.new file and device description for machine-independent MCA code.
 # Included by ports that need it.
@@ -57,6 +57,6 @@ file	dev/mca/if_ne_mca.c		ne_mca
 attach	le at mca with le_mca: le24
 file	dev/mca/if_le_mca.c		le_mca
 
-# NCR 53C90 (nonworking)
+# NCR 53C90
 attach	esp at mca with esp_mca
 file	dev/mca/esp_mca.c		esp_mca
