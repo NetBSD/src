@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_mips3.S,v 1.35 2000/06/17 01:35:28 cgd Exp $	*/
+/*	$NetBSD: locore_mips3.S,v 1.36 2000/06/20 02:57:17 soren Exp $	*/
 
 /*
  * Copyright (c) 1997 Jonathan Stone (hereinafter referred to as the author)
@@ -2454,6 +2454,21 @@ LEAF(mips3_Set64bit)
 	nop
 END(mips3_Set64bit)
 
+LEAF(mips3_read_config)
+	mfc0	v0, MIPS_COP_0_CONFIG
+	nop
+	j	ra
+	nop
+END(mips3_read_config)
+
+LEAF(mips3_write_config)
+	mtc0	a0, MIPS_COP_0_CONFIG
+	nop
+	nop
+	j	ra
+	nop
+END(mips3_read_config)
+
 /*----------------------------------------------------------------------------
  *
  * mips3_cycle_count --
@@ -2518,13 +2533,6 @@ LEAF(mips3_read_compare)
 	j	ra
 	nop
 END(mips3_read_compare)
-
-LEAF(mips3_read_config)
-	mfc0	v0, MIPS_COP_0_CONFIG
-	nop
-	j	ra
-	nop
-END(mips3_read_config)
 
 /*
  * Write value to compare register.
