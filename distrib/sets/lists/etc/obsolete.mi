@@ -1,15 +1,15 @@
-# $NetBSD: obsolete.mi,v 1.8 2002/01/31 01:34:51 lukem Exp $
-./etc/default/daily.conf
-./etc/default/monthly.conf
-./etc/default/rc.conf
-./etc/default/security.conf
-./etc/default/weekly.conf
-./etc/dhclient-script
-./etc/primes
-./etc/rc.d/NETWORK
-./etc/rc.d/fsck.sh
-./etc/rc.d/gated
-./etc/rc.d/kerberos
-./etc/rc.d/systemfs
-./etc/rc.d/xntpd
-./etc/rc.wscons
+# $NetBSD: obsolete.mi,v 1.9 2002/04/04 08:46:11 wiz Exp $
+/etc/default/daily.conf
+/etc/default/monthly.conf
+/etc/default/rc.conf
+/etc/default/security.conf
+/etc/default/weekly.conf
+/etc/dhclient-script
+/etc/primes
+/etc/rc.d/NETWORK
+/etc/rc.d/fsck.sh
+/etc/rc.d/gated
+/etc/rc.d/kerberos
+/etc/rc.d/systemfs
+/etc/rc.d/xntpd
+/etc/rc.wscons
