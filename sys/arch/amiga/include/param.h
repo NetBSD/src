@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.33 1997/06/10 07:54:35 veego Exp $	*/
+/*	$NetBSD: param.h,v 1.34 1997/06/10 18:36:32 veego Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -54,11 +54,14 @@
 #define	PGSHIFT		13		/* LOG2(NBPG) */
 #define	KERNBASE	0x00000000	/* start of kernel virtual */
 
-#include <m68k/param.h>
-
 #define	SEGSHIFT	24		/* LOG2(NBSEG) [68030 value] */
-#define NBSEG		((mmutype == MMU_68040) ? 32*NBPG : 2048*NBPG)	/* bytes/segment */
+/* bytes/segment */
+/* (256 * (1 << PGSHIFT)) == (1 << SEGSHIFT) */
+#define NBSEG		((mmutype == MMU_68040) \
+			    ? (32 * (1 << PGSHIFT)) : (256 * (1 << PGSHIFT)))
 #define	SEGOFSET	(NBSEG-1)	/* byte offset into segment */
+
+#include <m68k/param.h>
 
 /*
  * Size of kernel malloc arena in CLBYTES-sized logical pages
@@ -66,16 +69,6 @@
 #ifndef NKMEMCLUSTERS
 # define	NKMEMCLUSTERS	(3072 * 1024 / CLBYTES)
 #endif
-
-/*
- * Mach derived conversion macros
- */
-#define amiga_round_seg(x)	((((unsigned)(x)) + NBSEG - 1) & ~(NBSEG-1))
-#define amiga_trunc_seg(x)	((unsigned)(x) & ~(NBSEG-1))
-#define amiga_round_page(x)	((((unsigned)(x)) + NBPG - 1) & ~(NBPG-1))
-#define amiga_trunc_page(x)	((unsigned)(x) & ~(NBPG-1))
-#define amiga_btop(x)		((unsigned)(x) >> PGSHIFT)
-#define amiga_ptob(x)		((unsigned)(x) << PGSHIFT)
 
 /*
  * spl functions; all are normally done in-line
