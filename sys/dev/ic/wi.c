@@ -1,4 +1,4 @@
-/*	$NetBSD: wi.c,v 1.157 2004/03/25 06:17:51 dyoung Exp $	*/
+/*	$NetBSD: wi.c,v 1.158 2004/03/26 06:39:56 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.157 2004/03/25 06:17:51 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.158 2004/03/26 06:39:56 dyoung Exp $");
 
 #define WI_HERMES_AUTOINC_WAR	/* Work around data write autoinc bug. */
 #define WI_HERMES_STATS_WAR	/* Work around stats counter bug. */
@@ -335,11 +335,11 @@ wi_attach(struct wi_softc *sc)
 		 * will work.
 		 */
 		switch (sc->sc_sta_firmware_ver) {
-		case 0x084201:
+		case 84201:
 			sc->sc_flags &= ~WI_FLAGS_RSSADAPTSTA;
 			break;
-		case 0x087001:
-		case 0x072801:
+		case 87001:
+		case 72801:
 		default:
 			sc->sc_flags |= WI_FLAGS_RSSADAPTSTA;
 			break;
