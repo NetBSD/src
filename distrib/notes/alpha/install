@@ -1,4 +1,4 @@
-	$NetBSD: install,v 1.6 1998/05/12 00:00:18 ross Exp $	
+	$NetBSD: install,v 1.7 1998/05/13 19:07:46 ross Exp $	
 
 0. Introduction
 
@@ -176,7 +176,27 @@
     `install' script from the boot floppy (or boot kernel, if you
     booted it via NFS with the INSTALL kernel).
 
-3.1 Running Install
+3.1 Manual Install from the Shell Prompt
+
+    The normal installation involves running the install shell script
+    and interactively configuring the file systems, and then simply
+    unpacking the tar files into these followed by running MAKEDEV.
+
+    However, it is also possible to do the installation yourself
+    from the shell, and in any case it is helpful to understand
+    what the install script does. The procedure is:
+
+	1. create /etc/disktab(5)
+	2. run disklabel(8),
+	3. run newfs(8)
+	4. mount(8) the new root on /mnt
+	5. cd to /usr/mdec and run ./installboot(8)
+
+    If you are reviewing man pages on NetBSD platforms other than
+    alpha, be sure when reading installboot that you read the alpha
+    version by typing: "man 8 alpha/installboot".
+
+3.2 Running Install
 
     When you first boot the INSTALL kernel you will be given the
     options of `install' or `shell'. Choose `install' and the
@@ -187,7 +207,7 @@
     prompt.  You can then restart the install script by typing
     `/install', or halt the machine by typing `halt'.
 
-3.1 Answering the Install Questions
+3.3 Answering the Install Questions
 
     These will for the most part be fairly obvious. You may install
     on either a SCSI or an IDE disk, and you will be prompted for
@@ -330,9 +350,23 @@
 
     The sets and kernel are extracted with
 
+	cd /mnt
         for file in base kern comp etc games man misc text; do
             tar xpfz /mnt/var/tmp/$file.tgz;
 	done
+
+    or (but do NOT unpack source/toolchain.tgz from / or /mnt) perhaps:
+
+	cd /mnt
+	for file in /mnt/var/tmp/*.tgz; do
+	    echo $i
+	    tar xpfz $i
+	done
+
+    Now make the device nodes:
+
+	cd /mnt/dev
+	sh ./MAKEDEV all
 
     You will now be ready to reboot from your hard disk. Type `sync'
     twice to make sure all the data is written out to disk and then
@@ -380,5 +414,3 @@
     accounts to your system, edit /etc/aliases to forward root mail to
     the right place (run `newaliases' afterwards) and edit /etc/rc.local
     to run any local daemons you use.
-
-
