@@ -1,4 +1,4 @@
-.\"	$NetBSD: shuffle.1,v 1.4 2003/08/20 23:37:51 christos Exp $
+.\"	$NetBSD: shuffle.1,v 1.5 2003/08/23 22:36:21 wiz Exp $
 .\"
 .\" Copyright (c) 1998
 .\" 	Perry E. Metzger.  All rights reserved.
@@ -30,7 +30,7 @@
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
 .\"
-.Dd September 22, 1998
+.Dd August 20, 2003
 .Dt SHUFFLE 1
 .Os
 .Sh NAME
@@ -73,12 +73,10 @@ prints that number of randomly selected lines or arguments in a random order.
 .Pp
 The
 .Fl 0
-option, changes the field separator char from a \en to \e0, so that it
-is suitable to be sent to
+option changes the field separator character from \en to \e0, so that
+the output is suitable to be sent to
 .Xr xargs 1
-with
-.Fl 0 
-to handle filenames with whitespace in them.
+(to handle filenames with whitespace in them).
 .Sh EXAMPLES
 .Bd -literal -offset indent
 $ shuffle a b c d
