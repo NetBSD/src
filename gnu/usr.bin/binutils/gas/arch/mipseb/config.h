@@ -234,10 +234,10 @@
 #define BFD_ASSEMBLER 1
 
 /* Target alias. */
-#define TARGET_ALIAS "mipseb-unknown-netbsdY"
+#define TARGET_ALIAS "mipseb-unknown-netbsd"
 
 /* Canonical target. */
-#define TARGET_CANONICAL "mipseb-unknown-netbsdY"
+#define TARGET_CANONICAL "mipseb-unknown-netbsd"
 
 /* Target CPU. */
 #define TARGET_CPU "mipseb"
@@ -246,7 +246,7 @@
 #define TARGET_VENDOR "unknown"
 
 /* Target OS. */
-#define TARGET_OS "netbsdY"
+#define TARGET_OS "netbsd"
 
 /* Define if you have the stpcpy function */
 /* #undef HAVE_STPCPY */
