@@ -1,4 +1,4 @@
-/*	$NetBSD: pstat.c,v 1.55 2000/12/13 05:34:55 enami Exp $	*/
+/*	$NetBSD: pstat.c,v 1.56 2000/12/13 05:50:33 enami Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1991, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)pstat.c	8.16 (Berkeley) 5/9/95";
 #else
-__RCSID("$NetBSD: pstat.c,v 1.55 2000/12/13 05:34:55 enami Exp $");
+__RCSID("$NetBSD: pstat.c,v 1.56 2000/12/13 05:50:33 enami Exp $");
 #endif
 #endif /* not lint */
 
@@ -62,6 +62,7 @@ __RCSID("$NetBSD: pstat.c,v 1.55 2000/12/13 05:34:55 enami Exp $");
 #undef NFS
 #include <sys/uio.h>
 #include <sys/namei.h>
+#include <miscfs/genfs/layer.h>
 #include <miscfs/union/union.h>
 #undef _KERNEL
 #include <sys/stat.h>
@@ -167,6 +168,8 @@ struct mount *
 	getmnt __P((struct mount *));
 struct e_vnode *
 	kinfo_vnodes __P((int *));
+void	layer_header __P((void));
+int	layer_print __P((struct vnode *));
 struct e_vnode *
 	loadvnodes __P((int *));
 int	main __P((int, char **));
@@ -324,6 +327,11 @@ vnodemode()
 			} else if (FSTYPE_IS(mp, MOUNT_EXT2FS)) {
 				ufs_header();
 				vnode_fsprint = ext2fs_print;
+			} else if (FSTYPE_IS(mp, MOUNT_NULL) ||
+			    FSTYPE_IS(mp, MOUNT_OVERLAY) ||
+			    FSTYPE_IS(mp, MOUNT_UMAP)) {
+				layer_header();
+				vnode_fsprint = layer_print;
 			} else if (FSTYPE_IS(mp, MOUNT_UNION)) {
 				union_header();
 				vnode_fsprint = union_print;
@@ -574,6 +582,25 @@ nfs_print(vp)
 		(void)printf(" %7qd", (long long)np->n_size);
 		break;
 	}
+	return (0);
+}
+
+void
+layer_header()
+{
+
+	(void)printf("    LOWER");
+}
+
+int
+layer_print(vp)
+	struct vnode *vp;
+{
+	struct layer_node lnode, *lp = &lnode;
+
+	KGETRET(VTOLAYER(vp), &lnode, sizeof(lnode), "layer vnode");
+
+	(void)printf(" %8lx", (long)lp->layer_lowervp);
 	return (0);
 }
 
