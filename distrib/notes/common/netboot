@@ -1,6 +1,6 @@
-.\"	$NetBSD: netboot,v 1.22 2004/06/10 05:59:05 mbw Exp $
+.\"	$NetBSD: netboot,v 1.23 2004/08/22 23:20:04 hubertf Exp $
 .\"
-.\" Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
+.\" Copyright (c) 1999-2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
@@ -227,8 +227,8 @@ You will need to start the
 If it's already running, you will need to
 restart it to force it to re-read its configuration file.
 If the server is running
-.Nx 1.5
-or later, you can achieve this with:
+.Nx ,
+you can achieve this with:
 .Pp
 .(disp
 .No # Ic "/etc/rc.d/rbootd restart"
@@ -375,8 +375,8 @@ You will need to start the
 If it's already running, you will need to
 restart it to force it to re-read its configuration file.
 If the server is running
-.Nx 1.5
-or later, you can achieve this with:
+.Nx ,
+you can achieve this with:
 .Pp
 .(disp
 .No # Ic "/etc/rc.d/dhcpd restart"
@@ -415,8 +415,8 @@ You will need to start the
 If it's already running, you will need to
 restart it to force it to re-read its configuration file.
 If the server is running
-.Nx 1.5
-or later, you can achieve this with:
+.Nx ,
+you can achieve this with:
 .Pp
 .(disp
 .No # Ic "/etc/rc.d/rarpd restart"
@@ -448,8 +448,8 @@ tftp  dgram  udp  wait  root  /usr/libexec/tftpd tftpd -l -s /tftpboot
 Now, restart
 .Xr inetd 8 .
 If the server is running
-.Nx 1.5
-or later, you can achieve this with:
+.Nx ,
+you can achieve this with:
 .Pp
 .(disp
 .No # Ic "/etc/rc.d/inetd restart"
@@ -609,8 +609,8 @@ Otherwise, you need to start
 and
 .Xr nfsd 8 .
 If the server is running
-.Nx 1.5
-or later, you can achieve this with:
+.Nx ,
+you can achieve this with:
 .Pp
 .(disp
 .No # Ic "/etc/rc.d/rpcbind start"
