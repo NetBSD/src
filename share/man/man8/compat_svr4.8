@@ -1,4 +1,4 @@
-.\"	$NetBSD: compat_svr4.8,v 1.5 1997/06/08 23:55:26 jonathan Exp $
+.\"	$NetBSD: compat_svr4.8,v 1.6 1997/10/19 15:03:17 fvdl Exp $
 .\"
 .\" Copyright (c) 1996 Christos Zoulas
 .\" All rights reserved.
@@ -145,3 +145,20 @@ and then override with other mounts /emul/svr4/etc and /emul/svr4/dev.
 .Sh BUGS
 Many system calls are still not emulated. The streams emulation is
 incomplete (socketpair does not work yet).
+.Pp
+Most SVR4 executables can not handle directory offset cookies > 32
+bits. More recent ones, compiled for large file support (Solaris 2.6
+and up) can. With older programs, you will see the message "svr4_getdents:
+dir offset too large for emulated program" when this happens. Currently,
+this can only happen on NFS mounted filesystems, mounted from servers
+that return offsets with information in the upper 32 bits. These errors
+should rarely happen, but can be avoided by mounting this filesystem with
+offset translation enabled. See the
+.Fl X
+option to
+.Xr mount_nfs 8 .
+The
+.Fl 2
+option to
+.Xr mount_nfs 8
+will also have the desired effect, but is less preferable.
