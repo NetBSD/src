@@ -1,4 +1,4 @@
-.\"	$NetBSD: fsck_msdos.8,v 1.2 1996/09/11 20:35:15 christos Exp $
+.\"	$NetBSD: fsck_msdos.8,v 1.3 1996/09/24 13:17:19 ws Exp $
 .\"
 .\" Copyright (C) 1995 Wolfgang Solfrank
 .\" Copyright (c) 1995 Martin Husemann
@@ -40,8 +40,8 @@
 .Sh SYNOPSIS
 .Nm fsck_msdos
 .Fl p
-.Op filesystem
-.Op ...
+.Ar filesystem
+.Ar ...
 .Nm fsck_msdos
 .Op Fl y
 .Op Fl n
@@ -68,14 +68,7 @@ assume yes as answer to all questions.
 .It Em -n
 assume no as answer to all questions.
 .It Em -p
-preen filesystems. If no filesystems are specified on the command line,
-then all the filesystems from the
-.Xr fstab 5
-file with
-type msdos and
-an 
-.Xr fsck 8
-pass number greater than zero will be checked.
+preen filesystems.
 .El
 .Sh SEE ALSO
 .Xr fsck 8 ,

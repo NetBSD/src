@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.4 1996/09/23 16:28:00 christos Exp $	*/
+/*	$NetBSD: main.c,v 1.5 1996/09/24 13:17:20 ws Exp $	*/
 
 /*
  * Copyright (C) 1995 Wolfgang Solfrank
@@ -34,7 +34,7 @@
 
 
 #ifndef lint
-static char rcsid[] = "$NetBSD: main.c,v 1.4 1996/09/23 16:28:00 christos Exp $";
+static char rcsid[] = "$NetBSD: main.c,v 1.5 1996/09/24 13:17:20 ws Exp $";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -99,7 +99,10 @@ main(argc, argv)
 	argc -= optind;
 	argv += optind;
 
-	while (argc-- > 0) {
+	if (!argc)
+		usage();
+
+	while (--argc >= 0) {
 		setcdevname(*argv, preen);
 		erg = checkfilesys(*argv++);
 		if (erg > ret)
