@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_stat.c,v 1.42.2.2 2001/11/14 19:13:27 nathanw Exp $	 */
+/*	$NetBSD: svr4_stat.c,v 1.42.2.3 2001/11/15 10:56:14 pk Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_stat.c,v 1.42.2.2 2001/11/14 19:13:27 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_stat.c,v 1.42.2.3 2001/11/15 10:56:14 pk Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -176,15 +176,15 @@ svr4_sys_stat(l, v, retval)
 	register_t *retval;
 {
 	struct svr4_sys_stat_args *uap = v;
-	struct proc *p = l->l_proc;
 #ifdef SVR4_NO_OSTAT
 	struct svr4_sys_xstat_args cup;
 
 	SCARG(&cup, two) = 2;
 	SCARG(&cup, path) = SCARG(uap, path);
 	SCARG(&cup, ub) = (struct svr4_xstat *) SCARG(uap, ub);
-	return svr4_sys_xstat(p, &cup, retval);
+	return svr4_sys_xstat(l, &cup, retval);
 #else
+	struct proc *p = l->l_proc;
 	struct stat		st;
 	struct svr4_stat	svr4_st;
 	struct sys___stat13_args	cup;
@@ -221,15 +221,15 @@ svr4_sys_lstat(l, v, retval)
 	register_t *retval;
 {
 	struct svr4_sys_lstat_args *uap = v;
-	struct proc *p = l->l_proc;
 #ifdef SVR4_NO_OSTAT
 	struct svr4_sys_lxstat_args cup;
 
 	SCARG(&cup, two) = 2;
 	SCARG(&cup, path) = SCARG(uap, path);
 	SCARG(&cup, ub) = (struct svr4_xstat *) SCARG(uap, ub);
-	return svr4_sys_lxstat(p, &cup, retval);
+	return svr4_sys_lxstat(l, &cup, retval);
 #else
+	struct proc *p = l->l_proc;
 	struct stat		st;
 	struct svr4_stat	svr4_st;
 	struct sys___lstat13_args	cup;
@@ -266,15 +266,15 @@ svr4_sys_fstat(l, v, retval)
 	register_t *retval;
 {
 	struct svr4_sys_fstat_args *uap = v;
-	struct proc *p = l->l_proc;
 #ifdef SVR4_NO_OSTAT
 	struct svr4_sys_fxstat_args cup;
 
 	SCARG(&cup, two) = 2;
 	SCARG(&cup, fd) = SCARG(uap, fd);
 	SCARG(&cup, sb) = (struct svr4_xstat *) SCARG(uap, sb);
-	return svr4_sys_fxstat(p, &cup, retval);
+	return svr4_sys_fxstat(l, &cup, retval);
 #else
+	struct proc *p = l->l_proc;
 	struct stat		st;
 	struct svr4_stat	svr4_st;
 	struct sys___fstat13_args	cup;
