@@ -1,4 +1,4 @@
-/*	$NetBSD: uaudio.c,v 1.76 2004/07/16 20:08:23 mycroft Exp $	*/
+/*	$NetBSD: uaudio.c,v 1.77 2004/07/16 22:39:23 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uaudio.c,v 1.76 2004/07/16 20:08:23 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uaudio.c,v 1.77 2004/07/16 22:39:23 mycroft Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -63,6 +63,7 @@ __KERNEL_RCSID(0, "$NetBSD: uaudio.c,v 1.76 2004/07/16 20:08:23 mycroft Exp $");
 
 #include <sys/audioio.h>
 #include <dev/audio_if.h>
+#include <dev/audiovar.h>
 #include <dev/mulaw.h>
 #include <dev/auconv.h>
 
@@ -1456,7 +1457,9 @@ uaudio_open(void *addr, int flags)
 	if (sc->sc_dying)
 		return (EIO);
 
-	if ((flags & ~sc->sc_mode) & (AUMODE_PLAY | AUMODE_RECORD))
+	if ((flags & FWRITE) && !(sc->sc_mode & AUMODE_PLAY))
+		return (EACCES);
+	if ((flags & FREAD) && !(sc->sc_mode & AUMODE_RECORD))
 		return (EACCES);
 
 	return (0);
