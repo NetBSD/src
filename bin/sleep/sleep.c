@@ -1,4 +1,4 @@
-/*	$NetBSD: sleep.c,v 1.10 1997/08/04 01:13:10 perry Exp $	*/
+/*	$NetBSD: sleep.c,v 1.11 1997/09/14 07:31:57 lukem Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)sleep.c	8.3 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: sleep.c,v 1.10 1997/08/04 01:13:10 perry Exp $");
+__RCSID("$NetBSD: sleep.c,v 1.11 1997/09/14 07:31:57 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -80,7 +80,7 @@ main(argc, argv)
 
 	(void)signal(SIGALRM, alarmhandle);
 
-	while ((ch = getopt(argc, argv, "")) != EOF)
+	while ((ch = getopt(argc, argv, "")) != -1)
 		switch(ch) {
 		case '?':
 		default:
