@@ -1,4 +1,4 @@
-/*	$NetBSD: iha.c,v 1.11 2001/11/13 13:14:38 lukem Exp $ */
+/*	$NetBSD: iha.c,v 1.12 2001/11/17 21:26:12 tsutsui Exp $ */
 /*
  * Initio INI-9xxxU/UW SCSI Device Driver
  *
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iha.c,v 1.11 2001/11/13 13:14:38 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iha.c,v 1.12 2001/11/17 21:26:12 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -276,7 +276,7 @@ iha_scsipi_request(chan, req, arg)
 	struct scsipi_periph *periph;
 	struct iha_scsi_req_q *scb;
 	struct iha_softc *sc;
-	int error, flags, s;
+	int error, s;
 
 	sc = (struct iha_softc *)chan->chan_adapter->adapt_dev;
 
@@ -284,7 +284,6 @@ iha_scsipi_request(chan, req, arg)
 	case ADAPTER_REQ_RUN_XFER:
 		xs = arg;
 		periph = xs->xs_periph;
-		flags = xs->xs_control;
 
 		if (xs->cmdlen > sizeof(struct scsi_generic) ||
 		    periph->periph_target >= IHA_MAX_TARGETS) {
@@ -310,24 +309,26 @@ iha_scsipi_request(chan, req, arg)
 		scb->target = periph->periph_target;
 		scb->lun = periph->periph_lun;
 		scb->tcs = &sc->sc_tcs[scb->target];
-		scb->flags = xs->xs_control; /* XXX */
 		scb->scb_id = MSG_IDENTIFY(periph->periph_lun,
 		    (xs->xs_control & XS_CTL_REQSENSE) == 0);
 
 		scb->xs = xs;
-		scb->timeout = xs->timeout;
 		scb->cmdlen = xs->cmdlen;
 		memcpy(&scb->cmd, xs->cmd, xs->cmdlen);
-
 		scb->buflen = xs->datalen;
+		scb->flags = 0;
+		if (xs->xs_control & XS_CTL_DATA_OUT)
+			scb->flags |= FLAG_DATAOUT;
+		if (xs->xs_control & XS_CTL_DATA_IN)
+			scb->flags |= FLAG_DATAIN;
 
-		if (scb->buflen > 0) {
+		if (scb->flags & (FLAG_DATAIN | FLAG_DATAOUT)) {
 			error = bus_dmamap_load(sc->sc_dmat, scb->dmap,
 			    xs->data, scb->buflen, NULL,
 			    ((xs->xs_control & XS_CTL_NOSLEEP) ?
 			     BUS_DMA_NOWAIT : BUS_DMA_WAITOK) |
 			    BUS_DMA_STREAMING |
-			    ((xs->xs_control & XS_CTL_DATA_IN) ?
+			    ((scb->flags & FLAG_DATAIN) ?
 			     BUS_DMA_READ : BUS_DMA_WRITE));
 
 			if (error) {
@@ -340,7 +341,7 @@ iha_scsipi_request(chan, req, arg)
 			}
 			bus_dmamap_sync(sc->sc_dmat, scb->dmap,
 			    0, scb->dmap->dm_mapsize,
-			    (xs->xs_control & XS_CTL_DATA_IN) ?
+			    (scb->flags & FLAG_DATAIN) ?
 			    BUS_DMASYNC_PREREAD : BUS_DMASYNC_PREWRITE);
 		}
 
@@ -530,24 +531,10 @@ iha_append_free_scb(sc, scb)
 	scb->ta_stat  = SCSI_OK;
 
 	scb->nextstat = 0;
-	scb->sg_index = 0;
-	scb->sg_max = 0;
-	scb->flags = 0;
-	scb->target = 0;
-	scb->lun = 0;
-	scb->buflen = 0;
-	scb->sg_size = 0;
-	scb->cmdlen = 0;
-	scb->scb_id = 0;
 	scb->scb_tagmsg = 0;
-	scb->timeout = 0;
-	scb->bufaddr = 0;
 
 	scb->xs = NULL;
 	scb->tcs = NULL;
-
-	memset(scb->cmd, 0, sizeof(scb->cmd));
-	memset(scb->sglist, 0, sizeof(scb->sglist));
 
 	/*
 	 * scb_tagid, sg_addr, sglist
@@ -615,7 +602,7 @@ iha_find_pend_scb(sc)
 
 	else
 		TAILQ_FOREACH(scb, &sc->sc_pendscb, chain) {
-			if ((scb->flags & XS_CTL_RESET) != 0)
+			if ((scb->xs->xs_control & XS_CTL_RESET) != 0)
 				/* ALWAYS willing to reset a device */
 				break;
 
@@ -831,8 +818,7 @@ iha_push_sense_request(sc, scb)
 	ss->length = sizeof(struct scsipi_sense_data);
 	ss->control = 0;
 
-	scb->flags &= ~(FLAG_SG | XS_CTL_DATA_OUT);
-	scb->flags |= FLAG_RSENS | XS_CTL_DATA_IN;
+	scb->flags = FLAG_RSENS | FLAG_DATAIN;
 
 	scb->scb_id &= ~MSG_IDENTIFY_DISCFLAG;
 
@@ -951,7 +937,7 @@ iha_scsi(sc)
 	/* program HBA's SCSI ID & target SCSI ID */
 	bus_space_write_1(iot, ioh, TUL_SID, (sc->sc_id << 4) | scb->target);
 
-	if ((scb->flags & XS_CTL_RESET) == 0) {
+	if ((scb->xs->xs_control & XS_CTL_RESET) == 0) {
 		bus_space_write_1(iot, ioh, TUL_SYNCM, tcs->syncm);
 
 		if ((tcs->flags & FLAG_NO_NEG_SYNC) == 0 ||
@@ -969,8 +955,9 @@ iha_scsi(sc)
 		scb->nextstat = 8;
 	}
 
-	if ((scb->flags & XS_CTL_POLL) != 0) {
-		for (; scb->timeout > 0; scb->timeout--) {
+	if ((scb->xs->xs_control & XS_CTL_POLL) != 0) {
+		int timeout;
+		for (timeout = scb->xs->timeout; timeout > 0; timeout--) {
 			if (iha_wait(sc, NO_OP) == -1)
 				break;
 			if (iha_next_state(sc) == -1)
@@ -985,7 +972,7 @@ iha_scsi(sc)
 		 *
 		 * Conversely, xs->error has not been set yet
 		 */
-		if (scb->timeout == 0)
+		if (timeout == 0)
 			iha_timeout(scb);
 	}
 }
@@ -1287,8 +1274,8 @@ iha_state_4(sc)
 {
 	struct iha_scsi_req_q *scb = sc->sc_actscb;
 
-	if ((scb->flags & (XS_CTL_DATA_IN | XS_CTL_DATA_OUT)) ==
-	    (XS_CTL_DATA_IN | XS_CTL_DATA_OUT))
+	if ((scb->flags & (FLAG_DATAIN | FLAG_DATAOUT)) ==
+	    (FLAG_DATAIN | FLAG_DATAOUT))
 		return (6); /* Both dir flags set => NO xfer was requested */
 
 	for (;;) {
@@ -1297,8 +1284,7 @@ iha_state_4(sc)
 
 		switch (sc->sc_phase) {
 		case PHASE_STATUS_IN:
-			if ((scb->flags & (XS_CTL_DATA_IN | XS_CTL_DATA_OUT))
-			    != 0)
+			if ((scb->flags & (FLAG_DATAIN | FLAG_DATAOUT)) != 0)
 				scb->ha_stat = iha_data_over_run(scb);
 			if ((iha_status_msg(sc)) == -1)
 				return (-1);
@@ -1325,10 +1311,10 @@ iha_state_4(sc)
 			break;
 
 		case PHASE_DATA_IN:
-			return (iha_xfer_data(sc, scb, XS_CTL_DATA_IN));
+			return (iha_xfer_data(sc, scb, FLAG_DATAIN));
 
 		case PHASE_DATA_OUT:
-			return (iha_xfer_data(sc, scb, XS_CTL_DATA_OUT));
+			return (iha_xfer_data(sc, scb, FLAG_DATAOUT));
 
 		default:
 			iha_bad_seq(sc);
@@ -1550,28 +1536,29 @@ iha_xfer_data(sc, scb, direction)
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
 	u_int32_t xferlen;
-	u_int8_t xfertype;
+	u_int8_t xfercmd;
 
-	if ((scb->flags & (XS_CTL_DATA_IN | XS_CTL_DATA_OUT)) != direction)
+	if ((scb->flags & (FLAG_DATAIN | FLAG_DATAOUT)) != direction)
 		return (6); /* wrong direction, abandon I/O */
 
 	bus_space_write_4(iot, ioh, TUL_STCNT0, scb->buflen);
 
-	if ((scb->flags & FLAG_SG) == 0) {
-		xferlen = scb->buflen;
-		xfertype = (direction == XS_CTL_DATA_IN) ? ST_X_IN : ST_X_OUT;
+	xfercmd = STRXFR;
+	if (direction == FLAG_DATAIN)
+		xfercmd |= XDIR;
 
-	} else {
+	if (scb->flags & FLAG_SG) {
 		xferlen = scb->sg_size * sizeof(struct iha_sg_element);
-		xfertype = (direction == XS_CTL_DATA_IN) ? ST_SG_IN : ST_SG_OUT;
-	}
+		xfercmd |= SGXFR;
+	} else
+		xferlen = scb->buflen;
 
 	bus_space_write_4(iot, ioh, TUL_DXC,  xferlen);
 	bus_space_write_4(iot, ioh, TUL_DXPA, scb->bufaddr);
-	bus_space_write_1(iot, ioh, TUL_DCMD, xfertype);
+	bus_space_write_1(iot, ioh, TUL_DCMD, xfercmd);
 
 	bus_space_write_1(iot, ioh, TUL_SCMD,
-	    (direction == XS_CTL_DATA_IN) ? XF_DMA_IN : XF_DMA_OUT);
+	    (direction == FLAG_DATAIN) ? XF_DMA_IN : XF_DMA_OUT);
 
 	scb->nextstat = 5;
 
@@ -1586,7 +1573,7 @@ iha_xpad_in(sc)
 	bus_space_handle_t ioh = sc->sc_ioh;
 	struct iha_scsi_req_q *scb = sc->sc_actscb;
 
-	if ((scb->flags & (XS_CTL_DATA_IN | XS_CTL_DATA_OUT)) != 0)
+	if ((scb->flags & (FLAG_DATAIN | FLAG_DATAOUT)) != 0)
 		scb->ha_stat = HOST_DO_DU;
 
 	for (;;) {
@@ -1618,7 +1605,7 @@ iha_xpad_out(sc)
 	bus_space_handle_t ioh = sc->sc_ioh;
 	struct iha_scsi_req_q *scb = sc->sc_actscb;
 
-	if ((scb->flags & (XS_CTL_DATA_IN | XS_CTL_DATA_OUT)) != 0)
+	if ((scb->flags & (FLAG_DATAIN | FLAG_DATAOUT)) != 0)
 		scb->ha_stat = HOST_DO_DU;
 
 	for (;;) {
@@ -2389,10 +2376,10 @@ iha_done_scb(sc, scb)
 		/* Cancel the timeout. */
 		callout_stop(&xs->xs_callout);
 
-		if (xs->datalen > 0) {
+		if (scb->flags & (FLAG_DATAIN | FLAG_DATAOUT)) {
 			bus_dmamap_sync(sc->sc_dmat, scb->dmap,
 			    0, scb->dmap->dm_mapsize,
-			    (xs->xs_control & XS_CTL_DATA_IN) ?
+			    (scb->flags & FLAG_DATAIN) ?
 			    BUS_DMASYNC_POSTREAD : BUS_DMASYNC_POSTWRITE);
 			bus_dmamap_unload(sc->sc_dmat, scb->dmap);
 		}
@@ -2426,7 +2413,7 @@ iha_done_scb(sc, scb)
 
 				if ((scb->flags & FLAG_RSENS) != 0 ||
 				    iha_push_sense_request(sc, scb) != 0) {
-					scb->flags &= FLAG_RSENS;
+					scb->flags &= ~FLAG_RSENS;
 					printf("%s: request sense failed\n",
 					    sc->sc_dev.dv_xname);
 					xs->error = XS_DRIVER_STUFFUP;
@@ -2522,8 +2509,9 @@ iha_exec_scb(sc, scb)
 		    scb->sgoffset, IHA_SG_SIZE,
 		    BUS_DMASYNC_PREWRITE);
 
-		scb->flags |= FLAG_SG; /* XXX */
+		scb->flags |= FLAG_SG;
 		scb->sg_size = scb->sg_max = nseg;
+		scb->sg_index = 0;
 
 		scb->bufaddr = scb->sg_addr;
 	} else
@@ -2540,7 +2528,8 @@ iha_exec_scb(sc, scb)
 
 	s = splbio();
 
-	if (((scb->flags & XS_RESET) != 0) || (scb->cmd[0] == REQUEST_SENSE))
+	if (((scb->xs->xs_control & XS_RESET) != 0) ||
+	    (scb->cmd[0] == REQUEST_SENSE))
 		iha_push_pend_scb(sc, scb);   /* Insert SCB at head of Pend */
 	else
 		iha_append_pend_scb(sc, scb); /* Append SCB to tail of Pend */
