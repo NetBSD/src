@@ -1,4 +1,4 @@
-#	$NetBSD: files.pica,v 1.2 1996/03/17 01:42:04 thorpej Exp $
+#	$NetBSD: files.pica,v 1.3 1996/03/17 13:21:19 cgd Exp $
 maxpartitions 8
 maxusers 2 8 64
 
@@ -53,7 +53,7 @@ device pc
 attach pc at pica
 device pms
 attach pms at pica
-file	arch/pica/dev/pccons.c		pc pms	needs-count
+file	arch/pica/dev/pccons.c		pc | pms	needs-count
 
 #	PS2 type mouse driver.
 

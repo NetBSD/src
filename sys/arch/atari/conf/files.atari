@@ -1,5 +1,5 @@
 #
-#	$NetBSD: files.atari,v 1.17 1996/03/17 01:26:39 thorpej Exp $
+#	$NetBSD: files.atari,v 1.18 1996/03/17 13:21:16 cgd Exp $
 #
 
 maxpartitions 16
@@ -58,10 +58,10 @@ attach	grfbus at mainbus
 device	grf {}
 attach	grf at grfb
 file	arch/atari/dev/grf.c		grf needs-count
-file	arch/atari/dev/ite_cc.c		grf ite
-file	arch/atari/dev/grfabs.c		grf ite
-file	arch/atari/dev/grfabs_tt.c	grf ite
-file	arch/atari/dev/grfabs_fal.c	grf ite
+file	arch/atari/dev/ite_cc.c		grf | ite
+file	arch/atari/dev/grfabs.c		grf | ite
+file	arch/atari/dev/grfabs_tt.c	grf | ite
+file	arch/atari/dev/grfabs_fal.c	grf | ite
 
 device	ite
 attach	ite at grf
@@ -72,7 +72,7 @@ file	arch/atari/dev/font_8x16.c	ite
 
 
 pseudo-device	view
-file	arch/atari/dev/view.c		view grf needs-count
+file	arch/atari/dev/view.c		view | grf needs-count
 
 pseudo-device	mouse
 file	arch/atari/dev/ms.c		mouse needs-count
