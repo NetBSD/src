@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.c,v 1.128.2.1 2001/07/10 13:48:05 lukem Exp $	*/
+/*	$NetBSD: tty.c,v 1.128.2.2 2001/09/07 16:20:35 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1991, 1993
@@ -1210,6 +1210,7 @@ ttyflush(struct tty *tp, int rw)
 		FLUSHQ(&tp->t_outq);
 		wakeup((caddr_t)&tp->t_outq);
 		selwakeup(&tp->t_wsel);
+		KNOTE(&tp->t_wsel.si_klist, 0);
 	}
 	splx(s);
 }
@@ -1946,6 +1947,7 @@ ttwakeup(struct tty *tp)
 {
 
 	selwakeup(&tp->t_rsel);
+	KNOTE(&tp->t_rsel.si_klist, 0);
 	if (ISSET(tp->t_state, TS_ASYNC))
 		pgsignal(tp->t_pgrp, SIGIO, 1);
 	wakeup((caddr_t)&tp->t_rawq);
