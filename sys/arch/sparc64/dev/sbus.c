@@ -1,4 +1,4 @@
-/*	$NetBSD: sbus.c,v 1.33 2000/06/29 07:37:55 mrg Exp $ */
+/*	$NetBSD: sbus.c,v 1.34 2000/07/07 12:53:30 mrg Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -784,7 +784,7 @@ sbus_dmamap_load_raw(tag, map, segs, nsegs, size, flags)
 {
 	struct sbus_softc *sc = (struct sbus_softc *)tag->_cookie;
 
-	return (iommu_dvmamap_load_raw(tag, &sc->sc_is, map, segs, nsegs, size, flags));
+	return (iommu_dvmamap_load_raw(tag, &sc->sc_is, map, segs, nsegs, flags, size));
 }
 
 void
