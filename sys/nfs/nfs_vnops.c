@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vnops.c,v 1.140 2001/09/22 22:35:19 sommerfeld Exp $	*/
+/*	$NetBSD: nfs_vnops.c,v 1.141 2001/10/13 23:25:58 simonb Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -2171,7 +2171,6 @@ nfs_readdirrpc(vp, uiop, cred)
 	int error = 0, tlen, more_dirs = 1, blksiz = 0, bigenough = 1;
 	int attrflag, nrpcs = 0, reclen;
 	const int v3 = NFS_ISV3(vp);
-	nfsquad_t cookie;
 
 #ifdef DIAGNOSTIC
 	/*
@@ -2204,7 +2203,6 @@ nfs_readdirrpc(vp, uiop, cred)
 		nfsm_fhtom(vp, v3);
 		if (v3) {
 			nfsm_build(tl, u_int32_t *, 5 * NFSX_UNSIGNED);
-			cookie.qval = uiop->uio_offset;
 			if (nmp->nm_iflag & NFSMNT_SWAPCOOKIE) {
 				txdr_swapcookie3(uiop->uio_offset, tl);
 			} else {

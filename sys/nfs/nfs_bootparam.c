@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_bootparam.c,v 1.17 2000/10/03 17:18:15 chs Exp $	*/
+/*	$NetBSD: nfs_bootparam.c,v 1.18 2001/10/13 23:25:58 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1997 The NetBSD Foundation, Inc.
@@ -309,7 +309,7 @@ bp_whoami(bpsin, my_ip, gw_ip)
 
 	struct mbuf *m, *from;
 	struct sockaddr_in *sin;
-	int error, msg_len;
+	int error;
 	int16_t port;
 
 	/*
@@ -346,7 +346,6 @@ bp_whoami(bpsin, my_ip, gw_ip)
 	}
 	reply = mtod(m, struct callit_reply *);
 	port = fxdr_unsigned(u_int32_t, reply->port);
-	msg_len = fxdr_unsigned(u_int32_t, reply->encap_len);
 	m_adj(m, sizeof(*reply));
 
 	/*
