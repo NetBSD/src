@@ -1,3 +1,9 @@
+/* $NetBSD: oldbind.compat.c,v 1.1.1.2 2003/06/01 14:01:46 atatat Exp $ */
+#include <sys/cdefs.h>
+#ifndef lint
+__RCSID("$NetBSD: oldbind.compat.c,v 1.1.1.2 2003/06/01 14:01:46 atatat Exp $");
+#endif
+
 /*
 **  OLDBIND.COMPAT.C
 **

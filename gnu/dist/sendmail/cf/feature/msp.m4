@@ -11,6 +11,7 @@ divert(-1)
 
 divert(0)dnl
 VERSIONID(`Id: msp.m4,v 1.32 2002/03/26 22:02:03 ca Exp')
+VERSIONID(`$NetBSD: msp.m4,v 1.1.1.2 2003/06/01 14:01:43 atatat Exp $')
 divert(-1)
 undefine(`ALIAS_FILE')
 define(`confDELIVERY_MODE', `i')
