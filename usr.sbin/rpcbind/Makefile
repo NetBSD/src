@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2002/09/18 03:54:36 lukem Exp $
+#	$NetBSD: Makefile,v 1.5 2003/12/07 21:57:22 matt Exp $
 
 .include <bsd.own.mk>
 
@@ -12,7 +12,10 @@ LIBCDIR=        ${NETBSDSRCDIR}/lib/libc
 LIBCRPCDIR=     ${LIBCDIR}/rpc
 LIBCINCLUDE=    ${LIBCDIR}/include
 
-CPPFLAGS+=      -I${LIBCRPCDIR} -I${LIBCINCLUDE} -DPORTMAP -DLIBWRAP -DINET6
+CPPFLAGS+=      -I${LIBCRPCDIR} -I${LIBCINCLUDE} -DPORTMAP -DLIBWRAP
+.if (${MKINET6} != "no")
+CPPFLAGS+=	-DINET6
+.endif
 
 LDADD+= -lwrap -lutil
 DPADD+= ${LIBWRAP} ${LIBUTIL}
