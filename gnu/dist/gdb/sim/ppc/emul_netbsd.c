@@ -94,6 +94,14 @@ int getrusage();
 #include <sys/sysctl.h>
 #include <sys/mount.h>
 extern int getdirentries(int fd, char *buf, int nbytes, long *basep);
+
+/* NetBSD post 2.0 has the statfs system call (if COMPAT_20), but does
+   not have struct statfs.  In this case don't implement fstatfs.
+   FIXME: Should implement fstatvfs.  */
+#ifndef HAVE_STRUCT_STATFS
+#undef HAVE_FSTATFS
+#endif
+
 #else
 
 /* If this is not netbsd, don't allow fstatfs or getdirentries at this time */
@@ -1466,4 +1474,4 @@ const os_emul emul_netbsd = {
   0 /*data*/
 };
 
-#endif /* _EMUL_NETBSD_C_ */
+#endif	/* _EMUL_NETBSD_C_ */

@@ -338,6 +338,9 @@
 /* Define if you have the <sys/stat.h> header file.  */
 #define HAVE_SYS_STAT_H 1
 
+/* Define if you have the <sys/statfs.h> header file.  */
+/* #undef HAVE_SYS_STATFS_H */
+
 /* Define if you have the <sys/termio.h> header file.  */
 /* #undef HAVE_SYS_TERMIO_H */
 
@@ -353,6 +356,9 @@
 /* Define if you have the <sys/types.h> header file.  */
 #define HAVE_SYS_TYPES_H 1
 
+/* Define if you have the <sys/vfs.h> header file.  */
+/* #undef HAVE_SYS_VFS_H */
+
 /* Define if you have the <time.h> header file.  */
 #define HAVE_TIME_H 1
 
@@ -361,3 +367,7 @@
 
 /* Define if you have the <values.h> header file.  */
 /* #undef HAVE_VALUES_H */
+
+/* Define if struct statfs is defined in <sys/mount.h> */
+/* #undef HAVE_STRUCT_STATFS */
+
