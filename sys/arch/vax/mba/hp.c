@@ -1,4 +1,4 @@
-/*	$NetBSD: hp.c,v 1.6 1996/02/24 21:22:54 ragge Exp $ */
+/*	$NetBSD: hp.c,v 1.7 1996/03/17 22:56:38 ragge Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -83,8 +83,12 @@ int	hpread __P((dev_t, struct uio *));
 int	hpwrite __P((dev_t, struct uio *));
 int	hpsize __P((dev_t));
 
-struct	cfdriver hpcd = {
-	NULL, "hp", hpmatch, hpattach, DV_DISK, sizeof(struct hp_softc)
+struct	cfdriver hp_cd = {
+	NULL, "hp", DV_DISK
+};
+
+struct	cfattach hp_ca = {
+	sizeof(struct hp_softc), hpmatch, hpattach
 };
 
 /*
@@ -169,7 +173,7 @@ hpstrategy(bp)
 	int	unit, s;
 
 	unit = DISKUNIT(bp->b_dev);
-	sc = hpcd.cd_devs[unit];
+	sc = hp_cd.cd_devs[unit];
 
 	if (bounds_check_with_label(bp, sc->sc_disk.dk_label, sc->sc_wlabel)
 	    <= 0)
@@ -239,9 +243,9 @@ hpopen(dev, flag, fmt)
 	int	unit, part;
 
 	unit = DISKUNIT(dev);
-	if (unit >= hpcd.cd_ndevs)
+	if (unit >= hp_cd.cd_ndevs)
 		return ENXIO;
-	sc = hpcd.cd_devs[unit];
+	sc = hp_cd.cd_devs[unit];
 	if (sc == 0)
 		return ENXIO;
 
@@ -274,7 +278,7 @@ hpclose(dev, flag, fmt)
 	int	unit, part;
 
 	unit = DISKUNIT(dev);
-	sc = hpcd.cd_devs[unit];
+	sc = hp_cd.cd_devs[unit];
 
 	part = DISKPART(dev);
 
@@ -301,7 +305,7 @@ hpioctl(dev, cmd, addr, flag, p)
 	int	flag;
 	struct	proc *p;
 {
-	struct	hp_softc *sc = hpcd.cd_devs[DISKUNIT(dev)];
+	struct	hp_softc *sc = hp_cd.cd_devs[DISKUNIT(dev)];
 	struct	disklabel *lp = sc->sc_disk.dk_label;
 	int	error;
 
@@ -373,7 +377,7 @@ hper1:
 	case HPER1_DCK: /* Corrected? data read. Just notice. */
 		bc = mr->mba_bc;
 		byte = ~(bc >> 16);
-		diskerr(buf, hpcd.cd_name, "soft ecc", LOG_PRINTF,
+		diskerr(buf, hp_cd.cd_name, "soft ecc", LOG_PRINTF,
 		    btodb(bp->b_bcount - byte), sc->sc_disk.dk_label);
 		er1 &= ~(1<<HPER1_DCK);
 		er1 &= HPMASK;
@@ -427,10 +431,10 @@ hpsize(dev)
 	int	size, unit = DISKUNIT(dev);
 	struct  hp_softc *sc;
 
-	if (unit >= hpcd.cd_ndevs || hpcd.cd_devs[unit] == 0)
+	if (unit >= hp_cd.cd_ndevs || hp_cd.cd_devs[unit] == 0)
 		return -1;
 
-	sc = hpcd.cd_devs[unit];
+	sc = hp_cd.cd_devs[unit];
 	size = sc->sc_disk.dk_label->d_partitions[DISKPART(dev)].p_size;
 
 	return size;
@@ -472,11 +476,11 @@ hp_getdev(mbanr, unit)
 	struct	hp_softc *sc;
 	int i;
 
-	for (i = 0; i < hpcd.cd_ndevs; i++) {
-		if (hpcd.cd_devs[i] == 0)
+	for (i = 0; i < hp_cd.cd_ndevs; i++) {
+		if (hp_cd.cd_devs[i] == 0)
 			continue;
 
-		sc = hpcd.cd_devs[i];
+		sc = hp_cd.cd_devs[i];
 		ms = (void *)sc->sc_dev.dv_parent;
 		if (ms->sc_physnr == mbanr && sc->sc_physnr == unit)
 			return i;

@@ -1,4 +1,4 @@
-/*	$NetBSD: sbi.c,v 1.7 1996/03/07 23:22:56 ragge Exp $ */
+/*	$NetBSD: sbi.c,v 1.8 1996/03/17 22:56:20 ragge Exp $ */
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -177,6 +177,11 @@ sbi_attach(parent, self, aux)
 	}
 }
 
-struct  cfdriver sbicd =
-	{ NULL, "sbi", sbi_match, sbi_attach, DV_DULL, sizeof(struct device) };
+struct  cfdriver sbi_cd = {
+	NULL, "sbi", DV_DULL
+};
 
+struct	cfattach sbi_ca = {
+	sizeof(struct device), sbi_match, sbi_attach
+};
+	

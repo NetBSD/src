@@ -1,29 +1,29 @@
 #!/usr/bin/awk -f
 #
-# $NetBSD: mkoldconf.awk,v 1.6 1996/03/07 23:28:01 ragge Exp $
+# $NetBSD: mkoldconf.awk,v 1.7 1996/03/17 22:56:31 ragge Exp $
 #
 
-/tmscd/{
-	tmsplats[ntms]=$2;
-	tmsaddr[ntms]=$5;
+/tms_cd/{
+	tmsplats[ntms]=$3;
+	tmsaddr[ntms]=$6;
 	ntms++;
 }
 
-/tscd/{
-	tsplats[nts]=$2;
-	tsaddr[nts]=$5;
+/ts_cd/{
+	tsplats[nts]=$3;
+	tsaddr[nts]=$6;
 	nts++;
 }
 
-/racd/{
-	raplats[nra]=$2;
-	raaddr[nra]=$5;
+/ra_cd/{
+	raplats[nra]=$3;
+	raaddr[nra]=$6;
 	nra++;
 }
 
 {
 	if(savenext==1){
-		l=sprintf("%d",$2)
+		l=sprintf("%d",$3)
 		udanummer[l-1]=nuda-1
 		savenext=0;
 	}
@@ -32,27 +32,27 @@
 
 {
 	if(tmssavenext==1){
-		l=sprintf("%d",$2)
+		l=sprintf("%d",$3)
 		tmsnummer[l-1]=ntmscp-1
 		tmssavenext=0;
 	}
 	if(tssavenext==1){
-		l=sprintf("%d",$2)
+		l=sprintf("%d",$3)
 		tsnummer[l-1]=nts-1
 		tssavenext=0;
 	}
 }
 
-/tmscpcd/{
-	tmscpplats[ntmscp]=$2;
-	tmscpaddr[ntmscp]=$5;
+/tmscp_cd/{
+	tmscpplats[ntmscp]=$3;
+	tmscpaddr[ntmscp]=$6;
 	ntmscp++;
 	tmssavenext=1;
 }
 		
-/udacd/{
-	udaplats[nuda]=$2;
-	udaddr[nuda]=$5;
+/uda_cd/{
+	udaplats[nuda]=$3;
+	udaddr[nuda]=$6;
 	nuda++;
 	savenext=1;
 }
@@ -110,7 +110,7 @@ if(nts) printf "void tsintr();\n"
 if(ntms) printf "extern struct uba_driver tmscpdriver;\n"
 if(ntms) printf "void tmscpintr();\n"
 printf "void udaintr();\n"
-printf "int racd=0, tmscd=0;\n"
+printf "int ra_cd=0, ra_ca=0, tms_cd=0, tms_ca=0;\n"
 printf "#define C (caddr_t)\n"
 
 printf "struct uba_ctlr ubminit[]={\n"
