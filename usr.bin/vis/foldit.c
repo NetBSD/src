@@ -1,4 +1,4 @@
-/*	$NetBSD: foldit.c,v 1.3 1994/11/17 07:55:58 jtc Exp $	*/
+/*	$NetBSD: foldit.c,v 1.4 1994/12/20 16:13:02 jtc Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -37,11 +37,15 @@
 #if 0
 static char sccsid[] = "@(#)foldit.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$NetBSD: foldit.c,v 1.3 1994/11/17 07:55:58 jtc Exp $";
+static char rcsid[] = "$NetBSD: foldit.c,v 1.4 1994/12/20 16:13:02 jtc Exp $";
 #endif /* not lint */
 
+#include <stdio.h>
+
+int
 foldit(chunk, col, max)
 	char *chunk;
+	int col, max;
 {
 	register char *cp;
 
