@@ -1,11 +1,11 @@
-/*	$NetBSD: plist.c,v 1.32 2002/03/05 13:01:21 agc Exp $	*/
+/*	$NetBSD: plist.c,v 1.32.2.1 2002/06/28 12:42:32 lukem Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: plist.c,v 1.24 1997/10/08 07:48:15 charnier Exp";
 #else
-__RCSID("$NetBSD: plist.c,v 1.32 2002/03/05 13:01:21 agc Exp $");
+__RCSID("$NetBSD: plist.c,v 1.32.2.1 2002/06/28 12:42:32 lukem Exp $");
 #endif
 #endif
 
@@ -43,7 +43,7 @@ typedef struct cmd_t {
 }       cmd_t;
 
 /* Commands to recognise */
-static cmd_t cmdv[] = {
+static const cmd_t cmdv[] = {
 	{"cwd", PLIST_CWD, 1, 1},
 	{"src", PLIST_SRC, 1, 1},
 	{"cd", PLIST_CWD, 1, 1},
@@ -230,7 +230,7 @@ free_plist(package_t *pkg)
 int
 plist_cmd(char *s, char **arg)
 {
-	cmd_t  *cmdp;
+	const cmd_t *cmdp;
 	char    cmd[FILENAME_MAX + 20];	/* 20 == fudge for max cmd len */
 	char   *cp;
 	char   *sp;
@@ -293,7 +293,7 @@ void
 write_plist(package_t *pkg, FILE * fp, char *realprefix)
 {
 	plist_t *p;
-	cmd_t  *cmdp;
+	const cmd_t *cmdp;
 
 	for (p = pkg->head; p; p = p->next) {
 		if (p->type == PLIST_FILE) {
