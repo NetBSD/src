@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.22 2000/04/13 22:02:54 soren Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.23 2000/05/06 05:19:32 nisimura Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -105,9 +105,6 @@
  * change over time.
  */
 #define	MAXSLP 		20
-
-#define	mapin(pte, v, pfnum, prot) \
-	(*(int *)(pte) = ((pfnum) << PG_SHIFT) | (prot), MachTLBFlushAddr(v))
 
 /*
  * Mach derived constants
