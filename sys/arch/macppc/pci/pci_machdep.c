@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.23 2003/08/20 14:41:56 matt Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.24 2004/02/24 15:16:04 wiz Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.23 2003/08/20 14:41:56 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.24 2004/02/24 15:16:04 wiz Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -445,7 +445,7 @@ again:
 			/*
 			 * We are now at an intermedia interrupt node.  We
 			 * need to use its interrupt mask and map the 
-			 * supplied address/interupt via its map.
+			 * supplied address/interrupt via its map.
 			 */
 			mlen = OF_getprop(iparent, "interrupt-map-mask",
 			    imask, sizeof(imask));

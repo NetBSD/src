@@ -1,4 +1,4 @@
-/*	$NetBSD: aic79xx.reg,v 1.8 2003/08/29 03:45:59 thorpej Exp $	*/
+/*	$NetBSD: aic79xx.reg,v 1.9 2004/02/24 15:16:05 wiz Exp $	*/
 
 /*
  * Aic79xx register and scratch ram definitions.
@@ -292,7 +292,7 @@ register HS_MAILBOX {
 }
 
 /*
- * Sequencer Interupt Status
+ * Sequencer Interrupt Status
  */
 register SEQINTSTAT {
 	address			0x00C
