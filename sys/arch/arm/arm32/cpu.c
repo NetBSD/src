@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.51 2003/06/23 11:01:06 martin Exp $	*/
+/*	$NetBSD: cpu.c,v 1.52 2003/09/03 02:07:08 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1995 Mark Brinicombe.
@@ -46,7 +46,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.51 2003/06/23 11:01:06 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.52 2003/09/03 02:07:08 mycroft Exp $");
 
 #include <sys/systm.h>
 #include <sys/malloc.h>
@@ -295,6 +295,8 @@ const struct cpuidtab cpuids[] = {
 	{ CPU_ID_ARM966ES,	CPU_CLASS_ARM9ES,	"ARM966E-S",
 	  generic_steppings },
 	{ CPU_ID_ARM966ESR1,	CPU_CLASS_ARM9ES,	"ARM966E-S",
+	  generic_steppings },
+	{ CPU_ID_TI925T,	CPU_CLASS_ARM9TDMI,	"TI ARM925T",
 	  generic_steppings },
 
 	{ CPU_ID_SA110,		CPU_CLASS_SA1,		"SA-110",
