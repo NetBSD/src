@@ -1,4 +1,4 @@
-/*	$NetBSD: atapi_wdc.c,v 1.1.2.10 1998/10/02 19:37:20 bouyer Exp $	*/
+/*	$NetBSD: atapi_wdc.c,v 1.1.2.11 1998/10/04 15:50:23 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1998 Manuel Bouyer.
@@ -188,8 +188,10 @@ wdc_atapi_send_cmd(sc_xfer)
 	struct scsipi_link *sc_link = sc_xfer->sc_link;
 	struct wdc_softc *wdc = (void*)sc_link->adapter_softc;
 	struct wdc_xfer *xfer;
+	struct ata_drive_datas *drvp;
 	int flags = sc_xfer->flags;
 	int channel = sc_xfer->sc_link->scsipi_atapi.channel;
+	int drive = sc_xfer->sc_link->scsipi_atapi.drive;
 	int s, ret;
 
 	WDCDEBUG_PRINT(("wdc_atapi_send_cmd\n"), DEBUG_FUNCS);
@@ -200,7 +202,11 @@ wdc_atapi_send_cmd(sc_xfer)
 	}
 	if (sc_xfer->flags & SCSI_POLL)
 		xfer->c_flags |= C_POLL;
-	xfer->drive = sc_xfer->sc_link->scsipi_atapi.drive;
+	drvp = &wdc->channels[channel].ch_drive[drive];
+	if ((drvp->drive_flags & (DRIVE_DMA | DRIVE_UDMA)) &&
+	    sc_xfer->datalen > 0)
+		xfer->c_flags |= C_DMA;
+	xfer->drive = drive;
 	xfer->c_flags |= C_ATAPI;
 	xfer->cmd = sc_xfer;
 	xfer->databuf = sc_xfer->data;
@@ -260,8 +266,7 @@ wdc_atapi_start(chp, xfer)
 	wdccommand(chp, xfer->drive, ATAPI_PKT_CMD, 
 	    sc_xfer->datalen <= 0xffff ? sc_xfer->datalen : 0xffff,
 	    0, 0, 0, 
-	    (chp->ch_drive[xfer->drive].drive_flags &
-	    (DRIVE_DMA | DRIVE_UDMA)) ? ATAPI_PKT_CMD_FTRE_DMA : 0);
+	    (xfer->c_flags & C_DMA) ? ATAPI_PKT_CMD_FTRE_DMA : 0);
 	
 	/*
 	 * If there is no interrupt for CMD input, busy-wait for it (done in 
@@ -332,8 +337,7 @@ wdc_atapi_intr(chp, xfer)
 		return 1;
 	}
 
-	if ((drvp->drive_flags & (DRIVE_DMA | DRIVE_UDMA)) &&
-	    sc_xfer->datalen > 0) {
+	if (xfer->c_flags & C_DMA) {
 		dma_flags = (sc_xfer->flags & SCSI_DATA_IN) ?
 		    WDC_DMA_READ : 0;
 		dma_flags |= sc_xfer->flags & SCSI_POLL ? WDC_DMA_POLL : 0;
@@ -351,8 +355,7 @@ again:
 	case PHASE_CMDOUT:
 		WDCDEBUG_PRINT(("PHASE_CMDOUT\n"), DEBUG_INTR);
 		/* Init the DMA channel if necessary */
-		if ((drvp->drive_flags & (DRIVE_DMA | DRIVE_UDMA)) &&
-		    sc_xfer->datalen > 0) {
+		if (xfer->c_flags & C_DMA) {
 			if ((*chp->wdc->dma_init)(chp->wdc->dma_arg,
 			    chp->channel, xfer->drive,
 			    xfer->databuf, sc_xfer->datalen, dma_flags) != 0) {
@@ -388,8 +391,7 @@ again:
 			}
 		}
 		/* Start the DMA channel if necessary */
-		if ((drvp->drive_flags & (DRIVE_DMA | DRIVE_UDMA)) &&
-		    sc_xfer->datalen > 0) {
+		if (xfer->c_flags & C_DMA) {
 			(*chp->wdc->dma_start)(chp->wdc->dma_arg,
 			    chp->channel, xfer->drive, dma_flags);
 		}
@@ -404,9 +406,9 @@ again:
 		/* write data */
 		WDCDEBUG_PRINT(("PHASE_DATAOUT\n"), DEBUG_INTR);
 		if ((sc_xfer->flags & SCSI_DATA_OUT) == 0 ||
-		    (drvp->drive_flags & (DRIVE_DMA | DRIVE_UDMA))) {
+		    (xfer->c_flags & C_DMA) != 0) {
 			printf("wdc_atapi_intr: bad data phase DATAOUT");
-			if (drvp->drive_flags & (DRIVE_DMA | DRIVE_UDMA)) {
+			if (xfer->c_flags & C_DMA) {
 				printf(", falling back to PIO\n");
 				drvp->drive_flags &= ~(DRIVE_DMA | DRIVE_UDMA);
 			}
@@ -470,9 +472,9 @@ again:
 		/* Read data */
 		WDCDEBUG_PRINT(("PHASE_DATAIN\n"), DEBUG_INTR);
 		if ((sc_xfer->flags & SCSI_DATA_IN) == 0 || 
-		    (drvp->drive_flags & (DRIVE_DMA | DRIVE_UDMA))) {
+		    (xfer->c_flags & C_DMA) != 0) {
 			printf("wdc_atapi_intr: bad data phase DATAIN");
-			if (drvp->drive_flags & (DRIVE_DMA | DRIVE_UDMA)) {
+			if (xfer->c_flags & C_DMA) {
 				printf(", falling back to PIO\n");
 				drvp->drive_flags &= ~(DRIVE_DMA | DRIVE_UDMA);
 			}
@@ -532,8 +534,7 @@ again:
 	case PHASE_COMPLETED:
 		WDCDEBUG_PRINT(("PHASE_COMPLETED\n"), DEBUG_INTR);
 		/* turn off DMA channel */
-		if ((drvp->drive_flags & (DRIVE_DMA | DRIVE_UDMA)) &&
-		    sc_xfer->datalen > 0) {
+		if (xfer->c_flags & C_DMA) {
 			dma_err = (*chp->wdc->dma_finish)(chp->wdc->dma_arg,
 			    chp->channel, xfer->drive, dma_flags);
 			xfer->c_bcount -= sc_xfer->datalen;
