@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.81 1998/02/23 10:09:32 jonathan Exp $
+#	$NetBSD: Makefile,v 1.82 1998/05/25 20:06:39 tv Exp $
 #	from: @(#)Makefile	8.3 (Berkeley) 1/7/94
 
 .include <bsd.own.mk>			# for EXPORTABLE_SYSTEM definition
@@ -19,7 +19,7 @@ SUBDIR=	apply apropos asa at audioctl banner basename bdes \
 	renice rev rlogin rpcgen rpcinfo rs rsh rup \
 	ruptime rusers rwall rwho script sed shar shlock \
 	showmount skey skeyinfo skeyinit soelim split \
-	strings su systat tail talk tcopy tee tftp time \
+	su systat tail talk tcopy tee tftp time \
 	tip tn3270 touch tput tr true tset tsort tty ul \
 	uname unexpand unifdef uniq units unvis users \
 	uudecode uuencode vacation vgrind vi vis vmstat w \
@@ -28,8 +28,7 @@ SUBDIR=	apply apropos asa at audioctl banner basename bdes \
 	ypmatch ypwhich
 
 .if	make(clean) || make(cleandir)
-SUBDIR+=ar elf2aout elf2ecoff elfstrip fdformat \
-	ldd nm ranlib size strip telnet
+SUBDIR+=elf2aout elf2ecoff elfstrip fdformat ldd strip telnet
 .else
 
 # XXX Keep telnet(1) and libtelnet from getting out of sync during the build
@@ -42,7 +41,7 @@ SUBDIR+=telnet
 # Don't use the standard a.out tool chain on non-aout (ELF) platforms.
 # On ELF platforms, build the  ELF ldd.
 .if (${OBJECT_FMT} != "ELF")
-SUBDIR+= ar nm ranlib size strip
+SUBDIR+= strip
 .else
 SUBDIR+= ldd
 .endif

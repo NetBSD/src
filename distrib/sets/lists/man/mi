@@ -1,5 +1,6 @@
 ./usr/share/man/cat1/Mail.0
 ./usr/share/man/cat1/[.0
+./usr/share/man/cat1/addr2line.0
 ./usr/share/man/cat1/alias.0
 ./usr/share/man/cat1/apply.0
 ./usr/share/man/cat1/apropos.0
@@ -15,6 +16,7 @@
 ./usr/share/man/cat1/bdes.0
 ./usr/share/man/cat1/bg.0
 ./usr/share/man/cat1/biff.0
+./usr/share/man/cat1/c++filt.0
 ./usr/share/man/cat1/cal.0
 ./usr/share/man/cat1/calendar.0
 ./usr/share/man/cat1/cap_mkdb.0
@@ -163,6 +165,7 @@
 ./usr/share/man/cat1/nice.0
 ./usr/share/man/cat1/nm.0
 ./usr/share/man/cat1/nohup.0
+./usr/share/man/cat1/objdump.0
 ./usr/share/man/cat1/od.0
 ./usr/share/man/cat1/page.0
 ./usr/share/man/cat1/pagesize.0
@@ -998,6 +1001,7 @@
 ./usr/share/man/cat9/writedisklabel.0
 ./usr/share/man/man1/Mail.1
 ./usr/share/man/man1/[.1
+./usr/share/man/man1/addr2line.1
 ./usr/share/man/man1/alias.1
 ./usr/share/man/man1/apply.1
 ./usr/share/man/man1/apropos.1
@@ -1013,6 +1017,7 @@
 ./usr/share/man/man1/bdes.1
 ./usr/share/man/man1/bg.1
 ./usr/share/man/man1/biff.1
+./usr/share/man/man1/c++filt.1
 ./usr/share/man/man1/cal.1
 ./usr/share/man/man1/calendar.1
 ./usr/share/man/man1/cap_mkdb.1
@@ -1161,6 +1166,7 @@
 ./usr/share/man/man1/nice.1
 ./usr/share/man/man1/nm.1
 ./usr/share/man/man1/nohup.1
+./usr/share/man/man1/objdump.1
 ./usr/share/man/man1/od.1
 ./usr/share/man/man1/page.1
 ./usr/share/man/man1/pagesize.1
