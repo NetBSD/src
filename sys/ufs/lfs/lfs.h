@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs.h,v 1.14.2.2 1999/12/17 23:20:39 he Exp $	*/
+/*	$NetBSD: lfs.h,v 1.14.2.3 1999/12/17 23:53:17 he Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -85,9 +85,10 @@
 /*
  * Parameters and generic definitions
  */
-#define BW_CLEAN 1
-#define MIN_FREE_SEGS 4
-#define LFS_MAX_ACTIVE          10
+#define BW_CLEAN	1
+#define MIN_FREE_SEGS	4
+#define LFS_MAX_ACTIVE	10
+#define LFS_MAXDIROP	(desiredvnodes>>2)
 
 #ifndef LFS_ATIME_IFILE
 # define LFS_ITIMES(ip, acc, mod, cre) FFS_ITIMES((ip),(acc),(mod),(cre))
@@ -309,8 +310,6 @@ struct lfs {
 #ifdef LFS_TRACK_IOS
 	daddr_t   lfs_pending[LFS_THROTTLE]; /* daddrs of pending writes */
 #endif /* LFS_TRACK_IOS */
-# define LFS_MAXDIROP 32
-	int       lfs_dirvcount;        /* number of VDIROP-marked vnodes */
 #ifdef LFS_CANNOT_ROLLFW
 	daddr_t   lfs_sbactive;         /* disk address of in-progress sb write */
 #endif
