@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.214 2005/01/27 03:39:36 mycroft Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.215 2005/01/27 16:56:06 mycroft Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -148,7 +148,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.214 2005/01/27 03:39:36 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.215 2005/01/27 16:56:06 mycroft Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -1496,17 +1496,15 @@ after_listen:
 			goto drop;
 
 	if (opti.ts_present && opti.ts_ecr) {
-		u_int32_t now;
-
 		/*
 		 * Calculate the RTT from the returned time stamp and the
 		 * connection's time base.  If the time stamp is later than
-		 * the current time, fall back to non-1323 RTT calculation.
+		 * the current time, or is extremely old, fall back to non-1323
+		 * RTT calculation.  Since ts_ecr is unsigned, we can test both
+		 * at the same time.
 		 */
-		now = TCP_TIMESTAMP(tp);
-		if (SEQ_GEQ(now, opti.ts_ecr))
-			opti.ts_ecr = now - opti.ts_ecr + 1;
-		else
+		opti.ts_ecr = TCP_TIMESTAMP(tp) - opti.ts_ecr + 1;
+		if (opti.ts_ecr > TCP_PAWS_IDLE)
 			opti.ts_ecr = 0;
 	}
 
