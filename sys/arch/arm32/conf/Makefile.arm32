@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.arm32,v 1.56 2001/05/29 02:20:21 mrg Exp $
+#	$NetBSD: Makefile.arm32,v 1.57 2001/07/28 15:50:40 chris Exp $
 
 # Makefile for NetBSD
 #
@@ -35,6 +35,7 @@ COPTS?=	-O2
 S!=	cd ../../../..; pwd
 .endif
 ARM32=	$S/arch/arm32
+ARM=	$S/arch/arm
 
 HAVE_EGCS!=	${CC} --version | egrep "^(2\.[89]|egcs)" ; echo 
 INCLUDES=	-I. -I$S/arch -I$S -nostdinc
@@ -123,9 +124,9 @@ LINKFLAGS+=	-x
 
 %LOAD
 
-assym.h: $S/kern/genassym.sh ${ARM32}/arm32/genassym.cf
+assym.h: $S/kern/genassym.sh ${ARM}/arm32/genassym.cf
 	sh $S/kern/genassym.sh ${CC} ${CFLAGS} ${CPPFLAGS} ${PROF} \
-	    < ${ARM32}/arm32/genassym.cf > assym.h.tmp && \
+	    < ${ARM}/arm32/genassym.cf > assym.h.tmp && \
 	mv -f assym.h.tmp assym.h
 
 param.c: $S/conf/param.c
@@ -156,7 +157,7 @@ cleandir distclean: __CLEANKERNEL __CLEANDEPEND
 
 lint:
 	@lint -hbxncez -Dvolatile= ${CPPFLAGS} -UKGDB \
-	    ${ARM32}/arm32/Locore.c ${CFILES}  \
+	    ${ARM}/arm32/Locore.c ${CFILES}  \
 	    ioconf.c param.c | \
 	    grep -v 'static function .* unused'
 
@@ -171,17 +172,17 @@ links:
 	  sed 's,../.*/\(.*.o\),rm -f \1; ln -s ../GENERIC/\1 \1,' > makelinks
 	sh makelinks && rm -f dontlink
 
-SRCS=	${ARM32}/arm32/locore.S param.c ioconf.c ${CFILES} ${SFILES}
+SRCS=	${ARM}/arm32/locore.S param.c ioconf.c ${CFILES} ${SFILES}
 .ifdef MONITOR
 SRCS+=	modedefs.c
 .endif
 depend: .depend
 .depend: ${SRCS} assym.h param.c
-	${MKDEP} ${AFLAGS} ${CPPFLAGS} ${ARM32}/arm32/locore.S
+	${MKDEP} ${AFLAGS} ${CPPFLAGS} ${ARM}/arm32/locore.S
 	${MKDEP} -a ${CFLAGS} ${CPPFLAGS} param.c ioconf.c ${CFILES}
 	test -z "${SFILES}" || ${MKDEP} -a ${AFLAGS} ${CPPFLAGS} ${SFILES}
 	sh $S/kern/genassym.sh ${MKDEP} -f assym.dep ${CFLAGS} \
-	    ${CPPFLAGS} < ${ARM32}/arm32/genassym.cf
+	    ${CPPFLAGS} < ${ARM}/arm32/genassym.cf
 	@sed -e 's/.*\.o:.*\.c/assym.h:/' < assym.dep >> .depend
 	@rm -f assym.dep
 .ifdef MONITOR
@@ -207,7 +208,7 @@ cpufunc.o cpufunc_asm.o: Makefile
 cpuswitch.o fault.o machdep.o: Makefile
 
 
-locore.o: ${ARM32}/arm32/locore.S assym.h
+locore.o: ${ARM}/arm32/locore.S assym.h
 	${NORMAL_S}
 
 modedefs.c: ${ARM32}/vidc/makemodes.awk ${ARM32}/conf/monitors/${MONITOR} Makefile
