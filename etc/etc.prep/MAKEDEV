@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.20 2002/02/25 07:35:13 atatat Exp $
+#	$NetBSD: MAKEDEV,v 1.21 2002/02/26 20:46:59 kleink Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -355,8 +355,8 @@ opty)
 		e)	jn=14 ;;
 		f)	jn=15 ;;
 		esac
-		mknod ttyp$j c 3 $jn
-		mknod ptyp$j c 4 $jn
+		mknod ttyp$j c 5 $jn
+		mknod ptyp$j c 6 $jn
 	done
 	chgrp wheel ttyp[0-9a-f] ptyp[0-9a-f]
 	chmod 666 ttyp[0-9a-f] ptyp[0-9a-f] 
@@ -383,8 +383,8 @@ pty*)
 			skip=$(($class * 30 + 256 - 16))
 		fi
 		unit=$(($class * 16 + $jn + $skip))
-		mknod tty$name$j c 3 $unit
-		mknod pty$name$j c 4 $unit
+		mknod tty$name$j c 5 $unit
+		mknod pty$name$j c 6 $unit
 		jn=$(($jn + 1))
 	done
         chgrp wheel tty$name[0-9a-zA-Z] pty$name[0-9a-zA-Z]
