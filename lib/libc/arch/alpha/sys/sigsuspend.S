@@ -1,4 +1,4 @@
-/*	$NetBSD: sigsuspend.S,v 1.2 1996/10/17 03:08:22 cgd Exp $	*/
+/*	$NetBSD: sigsuspend.S,v 1.3 1998/09/29 03:01:38 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -31,7 +31,7 @@
 
 LEAF(sigsuspend, 1)
 	ldl	a0, 0(a0)		/* pass *mask instead of mask */
-	CALLSYS_ERROR(sigsuspend)
+	CALLSYS_ERROR(compat_13_sigsuspend13)
 	mov	zero, v0		/* shouldn't need; just in case... */
 	RET
 END(sigsuspend)
