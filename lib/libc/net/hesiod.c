@@ -1,4 +1,4 @@
-/*	$NetBSD: hesiod.c,v 1.4 1999/01/20 13:04:27 christos Exp $	*/
+/*	$NetBSD: hesiod.c,v 1.5 1999/01/21 12:40:07 mycroft Exp $	*/
 
 /* This file is part of the Hesiod library.
  *
@@ -346,7 +346,7 @@ hes_resolve(HesiodName, HesiodNameType)
 	if (cp == NULL)
 		return(NULL);
 	errno = 0;
-	ns = _hes_res((u_char *)cp, C_HS, T_TXT);
+	ns = _hes_res((u_char *)cp, C_IN, T_TXT);
 	if (errno == ETIMEDOUT || errno == ECONNREFUSED) {
 		Hes_Errno = HES_ER_NET;
 		return(NULL);
@@ -356,7 +356,7 @@ hes_resolve(HesiodName, HesiodNameType)
 		return(NULL);
 	}
 	for(i = 0, rp = &ns->rr; i < ns->ns_off; rp++, i++) {
-		if (rp->class == C_HS && rp->type == T_TXT) {
+		if (rp->class == C_IN && rp->type == T_TXT) {
 			dst = calloc((size_t)(rp->dlen + 1), sizeof(char));
 			if (dst == NULL) {
 				sl_free(sl, 1);
