@@ -1,4 +1,4 @@
-/*	$NetBSD: db_disasm.c,v 1.7 2000/08/10 22:31:26 jeffs Exp $	*/
+/*	$NetBSD: db_disasm.c,v 1.8 2001/11/22 06:00:31 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -88,7 +88,7 @@ static char *bcond_name[32] = {
 };
 
 static char *cop1_name[64] = {
-/* 0 */ "fadd", "fsub", "fmpy", "fdiv", "fsqrt","fabs", "fmov", "fneg",
+/* 0 */ "fadd",  "fsub", "fmpy", "fdiv", "fsqrt","fabs", "fmov", "fneg",
 /* 8 */ "fop08","fop09","fop0a","fop0b","fop0c","fop0d","fop0e","fop0f",
 /*16 */ "fop10","fop11","fop12","fop13","fop14","fop15","fop16","fop17",
 /*24 */ "fop18","fop19","fop1a","fop1b","fop1c","fop1d","fop1e","fop1f",
@@ -118,7 +118,7 @@ static char *c0_opname[64] = {
 	"c0op00","tlbr",  "tlbwi", "c0op03","c0op04","c0op05","tlbwr", "c0op07",
 	"tlbp",	 "c0op11","c0op12","c0op13","c0op14","c0op15","c0op16","c0op17",
 	"rfe",	 "c0op21","c0op22","c0op23","c0op24","c0op25","c0op26","c0op27",
-	"eret","c0op31","c0op32","c0op33","c0op34","c0op35","c0op36","c0op37",
+	"eret",  "c0op31","c0op32","c0op33","c0op34","c0op35","c0op36","c0op37",
 	"c0op40","c0op41","c0op42","c0op43","c0op44","c0op45","c0op46","c0op47",
 	"c0op50","c0op51","c0op52","c0op53","c0op54","c0op55","c0op56","c0op57",
 	"c0op60","c0op61","c0op62","c0op63","c0op64","c0op65","c0op66","c0op67",
@@ -126,13 +126,17 @@ static char *c0_opname[64] = {
 };
 
 static char *c0_reg[32] = {
-	"index","random","tlblo0","tlblo1","context","tlbmask","wired","c0r7",
-	"badvaddr","count","tlbhi","c0r11","sr","cause","epc",	"prid",
-	"config","lladr","watchlo","watchhi","xcontext","c0r21","c0r22","c0r23",
-	"c0r24","c0r25","ecc","cacheerr","taglo","taghi","errepc","c0r31"
+	"index",    "random",   "tlblo0",  "tlblo1",
+	"context",  "pagemask", "wired",   "cp0r7",
+	"badvaddr", "count",    "tlbhi",   "compare",
+	"status",   "cause",    "epc",     "prid",
+	"config",   "lladdr",   "watchlo", "watchhi",
+	"xcontext", "cp0r21",   "cp0r22",  "debug",
+	"depc",     "perfcnt",  "ecc",     "cacheerr",
+	"taglo",    "taghi",    "errepc",  "desave"
 };
 
-void print_addr(long);
+static void print_addr(long);
 
 /*
  * Disassemble instruction at 'loc'.  'altfmt' specifies an
@@ -483,7 +487,7 @@ db_disasm_insn(insn, loc, altfmt)
 	return (loc + 4);
 }
 
-void
+static void
 print_addr(loc)
 	long loc;
 {
