@@ -1,4 +1,4 @@
-;	$NetBSD: siop.ss,v 1.10 2000/10/18 17:01:13 bouyer Exp $
+;	$NetBSD: siop.ss,v 1.11 2000/10/19 07:20:16 bouyer Exp $
 
 ;
 ;  Copyright (c) 2000 Manuel Bouyer.
@@ -85,6 +85,7 @@ EXTERN abs_targ0;
 EXTERN abs_msgin;
 
 ; lun switch symbols
+ENTRY lun_switch_entry;
 ENTRY resel_lun0;
 ENTRY restore_scntl3;
 EXTERN abs_lun0;
@@ -341,6 +342,11 @@ PROC  endslot_script:
 ; hack: we first to a call to the target-specific code, so that a return
 ; in the main switch will jump to the lun switch.
 PROC lun_switch:
+restore_scntl3:
+	MOVE 0xff TO SCNTL3;
+	MOVE 0xff TO SXFER;
+	JUMP abs_lunsw_return;
+lun_switch_entry:
 	CALL REL(restore_scntl3);
 	MOVE SCRATCHA1 TO SFBR;
 resel_lun0:
@@ -353,10 +359,6 @@ resel_lun0:
 	JUMP abs_lun0, IF 0x06;
 	JUMP abs_lun0, IF 0x07;
 	INT int_resellun;
-restore_scntl3:
-	MOVE 0xff TO SCNTL3;
-	MOVE 0xff TO SXFER;
-	JUMP abs_lunsw_return;
 
 ;; script used to load the DSA after a reselect.
 
