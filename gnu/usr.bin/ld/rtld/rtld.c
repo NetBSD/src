@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld.c,v 1.56 1998/03/15 21:24:27 pk Exp $	*/
+/*	$NetBSD: rtld.c,v 1.57 1998/03/15 23:10:21 pk Exp $	*/
 
 /*
  * Copyright (c) 1993 Paul Kranenburg
@@ -91,9 +91,10 @@ struct somap_private {
 	struct so_map	*spd_parent;
 	int		spd_refcount;
 	int		spd_flags;
-#define RTLD_MAIN	1	/* Marks the main program */
-#define RTLD_RTLD	2	/* Marks the run-time linker */
-#define RTLD_DL		4	/* A dlopen'ed object */
+#define _RTLD_MAIN	1	/* Marks the main program */
+#define _RTLD_RTLD	2	/* Marks the run-time linker */
+#define _RTLD_DL	4	/* A dlopen'ed object */
+#define _RTLD_GLOBAL	8	/* Map is open to global search */
 	size_t		spd_size;
 
 #ifdef SUN_COMPAT
@@ -342,12 +343,12 @@ rtld(version, crtp, dp)
 	smp = alloc_link_map(main_progname, (struct sod *)0, (struct so_map *)0,
 					(caddr_t)0, 0, crtp->crt_dp);
 	LM_PRIVATE(smp)->spd_refcount++;
-	LM_PRIVATE(smp)->spd_flags |= RTLD_MAIN;
+	LM_PRIVATE(smp)->spd_flags |= _RTLD_MAIN | _RTLD_GLOBAL;
 
 	smp = alloc_link_map(us, (struct sod *)0, (struct so_map *)0,
 					(caddr_t)crtp->crt_ba, 0, dp);
 	LM_PRIVATE(smp)->spd_refcount++;
-	LM_PRIVATE(smp)->spd_flags |= RTLD_RTLD;
+	LM_PRIVATE(smp)->spd_flags |= _RTLD_RTLD;
 
 	/* Handle LD_PRELOAD's here */
 	ld_preload_path = getenv("LD_PRELOAD");
@@ -407,12 +408,16 @@ static int
 load_subs(smp)
 	struct so_map	*smp;
 {
+	int flag = 0;
+
+	/* Propagate _RTLD_GLOBAL parent flag */
+	flag |= (LM_PRIVATE(smp)->spd_flags & _RTLD_GLOBAL);
 
 	for (; smp; smp = smp->som_next) {
 		struct sod	*sodp;
 		long		next = 0;
 
-		if (LM_PRIVATE(smp)->spd_flags & RTLD_RTLD)
+		if (LM_PRIVATE(smp)->spd_flags & _RTLD_RTLD)
 			continue;
 
 		if (smp->som_dynamic)
@@ -436,6 +441,8 @@ load_subs(smp)
 				newmap = alloc_link_map(NULL, sodp, smp, 0, 0, 0);
 			}
 			LM_PRIVATE(newmap)->spd_refcount++;
+			/* Note: existing maps also acquire the new flag */
+			LM_PRIVATE(newmap)->spd_flags |= flag;
 			next = sodp->sod_next;
 		}
 	}
@@ -581,7 +588,7 @@ free_link_map(smp)
 	struct so_map	*smp;
 {
 
-	if ((LM_PRIVATE(smp)->spd_flags & RTLD_DL) != 0) {
+	if ((LM_PRIVATE(smp)->spd_flags & _RTLD_DL) != 0) {
 		/* free synthetic sod structure allocated in __dlopen() */
 		free((char *)smp->som_sod->sod_name);
 		free(smp->som_sod);
@@ -746,21 +753,21 @@ init_maps(head)
 
 	/* Relocate all loaded objects according to their RRS segments */
 	for (smp = head; smp; smp = smp->som_next) {
-		if (LM_PRIVATE(smp)->spd_flags & RTLD_RTLD)
+		if (LM_PRIVATE(smp)->spd_flags & _RTLD_RTLD)
 			continue;
 		reloc_map(smp);
 	}
 
 	/* Copy any relocated initialized data. */
 	for (smp = head; smp; smp = smp->som_next) {
-		if (LM_PRIVATE(smp)->spd_flags & RTLD_RTLD)
+		if (LM_PRIVATE(smp)->spd_flags & _RTLD_RTLD)
 			continue;
 		reloc_copy(smp);
 	}
 
 	/* Call any object initialization routines. */
 	for (smp = head; smp; smp = smp->som_next) {
-		if (LM_PRIVATE(smp)->spd_flags & RTLD_RTLD)
+		if (LM_PRIVATE(smp)->spd_flags & _RTLD_RTLD)
 			continue;
 		call_map(smp, ".init");
 		call_map(smp, "__init");
@@ -1054,10 +1061,18 @@ lookup(name, src_map, strong)
 		if (*src_map && smp != *src_map)
 			continue;
 
+		/*
+		 * When doing a global search, consider only maps
+		 * marked for global lookup.
+		 */
+		if (*src_map == NULL &&
+		    (LM_PRIVATE(smp)->spd_flags & _RTLD_GLOBAL) == 0)
+			continue;
+
 		if ((buckets = LD_BUCKETS(smp->som_dynamic)) == 0)
 			continue; 
 
-		if (LM_PRIVATE(smp)->spd_flags & RTLD_RTLD)
+		if (LM_PRIVATE(smp)->spd_flags & _RTLD_RTLD)
 			continue;
 
 restart:
@@ -1449,6 +1464,7 @@ preload(paths)
 			errx(1, "preload: %s: cannot map object", cp);
 		}
 		LM_PRIVATE(nsmp)->spd_refcount++;
+		LM_PRIVATE(nsmp)->spd_flags |= _RTLD_GLOBAL;
 	}
 	free(paths);
 	return;
@@ -1581,6 +1597,8 @@ xprintf("%s: %s\n", name, strerror(errno));
 		free(sodp);
 		return NULL;
 	}
+	if ((mode & RTLD_GLOBAL) != 0)
+		LM_PRIVATE(smp)->spd_flags |= _RTLD_GLOBAL;
 
 	if (LM_PRIVATE(smp)->spd_refcount++ > 0) {
 		free((char *)sodp->sod_name);
@@ -1588,7 +1606,7 @@ xprintf("%s: %s\n", name, strerror(errno));
 		return smp;
 	}
 
-	LM_PRIVATE(smp)->spd_flags |= RTLD_DL;
+	LM_PRIVATE(smp)->spd_flags |= _RTLD_DL;
 
 	if (load_subs(smp) != 0) {
 		if (--LM_PRIVATE(smp)->spd_refcount == 0) {
@@ -1618,7 +1636,7 @@ xprintf("dlclose(%s): refcount = %d\n", smp->som_path, LM_PRIVATE(smp)->spd_refc
 	if (--LM_PRIVATE(smp)->spd_refcount != 0)
 		return 0;
 
-	if ((LM_PRIVATE(smp)->spd_flags & RTLD_DL) == 0)
+	if ((LM_PRIVATE(smp)->spd_flags & _RTLD_DL) == 0)
 		return 0;
 
 	/* Dismantle shared object map and descriptor */
@@ -1683,7 +1701,7 @@ __dlexit()
 
 	/* Call any object initialization routines. */
 	for (smp = link_map_head; smp; smp = smp->som_next) {
-		if (LM_PRIVATE(smp)->spd_flags & RTLD_RTLD)
+		if (LM_PRIVATE(smp)->spd_flags & _RTLD_RTLD)
 			continue;
 		call_map(smp, ".fini");
 	}
