@@ -1,4 +1,4 @@
-/*	$NetBSD: temp.c,v 1.14 2002/03/06 13:45:51 wiz Exp $	*/
+/*	$NetBSD: temp.c,v 1.15 2002/03/06 17:36:44 wiz Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)temp.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: temp.c,v 1.14 2002/03/06 13:45:51 wiz Exp $");
+__RCSID("$NetBSD: temp.c,v 1.15 2002/03/06 17:36:44 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -51,7 +51,6 @@ __RCSID("$NetBSD: temp.c,v 1.14 2002/03/06 13:45:51 wiz Exp $");
  * Give names to all the temporary files that we will need.
  */
 
-char	*tempMail;
 char	*tmpdir;
 
 void
@@ -72,8 +71,6 @@ tinit(void)
 		*p = '\0';
 		p--;
 	}
-
-	tempMail  = tempnam (tmpdir, "Rs");
 
 	/*
 	 * It's okay to call savestr in here because main will

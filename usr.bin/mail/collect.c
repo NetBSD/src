@@ -1,4 +1,4 @@
-/*	$NetBSD: collect.c,v 1.27 2002/03/06 13:45:51 wiz Exp $	*/
+/*	$NetBSD: collect.c,v 1.28 2002/03/06 17:36:44 wiz Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)collect.c	8.2 (Berkeley) 4/19/94";
 #else
-__RCSID("$NetBSD: collect.c,v 1.27 2002/03/06 13:45:51 wiz Exp $");
+__RCSID("$NetBSD: collect.c,v 1.28 2002/03/06 17:36:44 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -53,7 +53,6 @@ __RCSID("$NetBSD: collect.c,v 1.27 2002/03/06 13:45:51 wiz Exp $");
 #include "extern.h"
 
 extern char *tmpdir;
-extern char *tempMail;
 
 /*
  * Read a message from standard output and return a read file to it
@@ -87,6 +86,7 @@ collect(struct header *hp, int printheaders)
 	char linebuf[LINESIZE], *cp;
 	char getsub;
 	char tempname[PATHSIZE];
+	char mailtempname[PATHSIZE];
 	sigset_t nset;
 	int longline, lastlong, rc;	/* So we don't make 2 or more lines
 					   out of a long input line. */
@@ -98,6 +98,7 @@ collect(struct header *hp, int printheaders)
 	(void)&longline;
 #endif
 
+	memset(mailtempname, 0, sizeof(mailtempname));
 	collf = NULL;
 	/*
 	 * Start catching signals from here, but we're still die on interrupts
@@ -115,17 +116,22 @@ collect(struct header *hp, int printheaders)
 	savettou = signal(SIGTTOU, collstop);
 	savettin = signal(SIGTTIN, collstop);
 	if (setjmp(collabort) || setjmp(colljmp)) {
-		rm(tempMail);
+		(void)rm(mailtempname);
 		goto err;
 	}
 	sigprocmask(SIG_UNBLOCK, &nset, NULL);
 
 	noreset++;
-	if ((collf = Fopen(tempMail, "w+")) == NULL) {
-		warn("%s", tempMail);
+	(void)snprintf(mailtempname, sizeof(mailtempname),
+	    "%s/mail.RsXXXXXXXXXX", tmpdir);
+	if ((fd = mkstemp(mailtempname)) == -1 ||
+	    (collf = Fdopen(fd, "w+")) == NULL) {
+		if (fd != -1)
+			close(fd);
+		warn("%s", mailtempname);
 		goto err;
 	}
-	unlink(tempMail);
+	(void)rm(mailtempname);
 
 	/*
 	 * If we are going to prompt for a subject,
@@ -345,7 +351,7 @@ cont:
 				}
 
 				(void)snprintf(tempname, sizeof(tempname),
-				    "%s/ReXXXXXXXXXX", tmpdir);
+				    "%s/mail.ReXXXXXXXXXX", tmpdir);
 				if ((fd = mkstemp(tempname)) == -1 ||
 				    (fbuf = Fdopen(fd, "w+")) == NULL) {
 					if (fd != -1)
@@ -425,7 +431,7 @@ cont:
 			 * standard list processing garbage.
 			 * If ~f is given, we don't shift over.
 			 */
-			if (forward(linebuf + 2, collf, c) < 0)
+			if (forward(linebuf + 2, collf, mailtempname, c) < 0)
 				goto err;
 			goto cont;
 		case '?':
@@ -566,8 +572,8 @@ mespipe(FILE *fp, char cmd[])
 	int fd;
 	char tempname[PATHSIZE];
 
-	(void)snprintf(tempname, sizeof(tempname), "%s/ReXXXXXXXXXX",
-	    tmpdir);
+	(void)snprintf(tempname, sizeof(tempname),
+	    "%s/mail.ReXXXXXXXXXX", tmpdir);
 	if ((fd = mkstemp(tempname)) == -1 ||
 	    (nf = Fdopen(fd, "w+")) == NULL) {
 		if (fd != -1)
@@ -611,7 +617,7 @@ out:
  * should shift over and 'f' if not.
  */
 int
-forward(char ms[], FILE *fp, int f)
+forward(char ms[], FILE *fp, char *fn, int f)
 {
 	int *msgvec;
 	struct ignoretab *ig;
@@ -642,7 +648,7 @@ forward(char ms[], FILE *fp, int f)
 		touch(mp);
 		printf(" %d", *msgvec);
 		if (sendmessage(mp, fp, ig, tabst) < 0) {
-			warn("%s", tempMail);
+			warn("%s", fn);
 			return(-1);
 		}
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.14 2002/03/05 19:25:16 wiz Exp $	*/
+/*	$NetBSD: extern.h,v 1.15 2002/03/06 17:36:44 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -33,7 +33,7 @@
  * SUCH DAMAGE.
  *
  *	@(#)extern.h	8.2 (Berkeley) 4/20/95 
- *	$NetBSD: extern.h,v 1.14 2002/03/05 19:25:16 wiz Exp $
+ *	$NetBSD: extern.h,v 1.15 2002/03/06 17:36:44 wiz Exp $
  */
 
 struct name;
@@ -133,7 +133,7 @@ int	 first(int, int);
 void	 fixhead(struct header *, struct name *);
 void	 fmt(char *, struct name *, FILE *, int);
 int	 folders(void *);
-int	 forward(char [], FILE *, int);
+int	 forward(char [], FILE *, char *, int);
 void	 free_child(int);
 int	 from(void *);
 off_t	 fsize(FILE *);
