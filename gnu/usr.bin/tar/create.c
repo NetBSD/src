@@ -18,7 +18,7 @@ along with GNU Tar; see the file COPYING.  If not, write to
 the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.  */
 
 #ifndef lint
-static char rcsid[] = "$Id: create.c,v 1.7 1998/06/07 02:30:12 enami Exp $";
+static char rcsid[] = "$Id: create.c,v 1.8 1999/09/05 23:34:40 hubertf Exp $";
 #endif /* not lint */
 
 /*
@@ -292,6 +292,9 @@ dump_file (p, curdev, toplevel)
 #endif
 #ifdef S_ISFIFO
 	  || S_ISFIFO (hstat.st_mode)
+#endif
+#ifdef S_ISLNK
+	  || S_ISLNK (hstat.st_mode)
 #endif
       ))
     {

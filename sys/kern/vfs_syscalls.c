@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.146 1999/07/31 03:18:43 christos Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.147 1999/09/05 23:34:39 hubertf Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -1391,7 +1391,7 @@ sys_link(p, v, retval)
 	struct nameidata nd;
 	int error;
 
-	NDINIT(&nd, LOOKUP, FOLLOW, UIO_USERSPACE, SCARG(uap, path), p);
+	NDINIT(&nd, LOOKUP, NOFOLLOW, UIO_USERSPACE, SCARG(uap, path), p);
 	if ((error = namei(&nd)) != 0)
 		return (error);
 	vp = nd.ni_vp;

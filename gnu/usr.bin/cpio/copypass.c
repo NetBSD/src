@@ -332,6 +332,24 @@ process_copy_pass ()
 	    }
 	  link_name[in_file_stat.st_size] = '\0';
 
+	  /* Can the current symlink be linked to a another file?
+	     Set link_name to the original file name.  */
+	  if (link_flag)
+	    /* User said to link it if possible.  Try and link to
+	       the original copy.  If that fails we'll still try
+	       and link to a copy we've already made.  */
+	    link_res = link_to_name (output_name.ds_string, 
+				     input_name.ds_string);
+	  if ( (link_res < 0) && (in_file_stat.st_nlink > 1) )
+	    link_res = link_to_maj_min_ino (output_name.ds_string, 
+				major (in_file_stat.st_dev), 
+				minor (in_file_stat.st_dev), 
+				in_file_stat.st_ino);
+
+	  /* If the link was not (hard)linked, make a softlink.  */
+	  if (link_res < 0)
+	    {
+	  
 	  res = UMASKED_SYMLINK (link_name, output_name.ds_string,
 				 in_file_stat.st_mode);
 	  if (res < 0 && create_dir_flag)
@@ -355,6 +373,7 @@ process_copy_pass ()
 		&& errno != EPERM)
 	      error (0, errno, "%s", output_name.ds_string);
 	  free (link_name);
+	    }
 	}
 #endif
       else

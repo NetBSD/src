@@ -876,6 +876,68 @@ process_copy_in ()
 #ifdef CP_IFLNK
 	    case CP_IFLNK:
 	      {
+	      /* Can the current symlink be linked to a previously copied
+		 file? */
+	      if (file_hdr.c_nlink > 1 && (archive_format == arf_newascii
+		  || archive_format == arf_crcascii) )
+		{
+		  int link_res;
+		  if (file_hdr.c_filesize == 0)
+		    {
+		      /* See CP_IFREG case for how links are handled  */
+		      defer_copyin (&file_hdr);
+		      toss_input (in_file_des, file_hdr.c_filesize);
+		      skip_padding (in_file_des, file_hdr.c_filesize);
+		      break;
+		    }
+		  /* If the file has data (filesize != 0), then presumably
+		     any other links have already been defer_copyin'ed(),
+		     but GNU cpio version 2.0-2.2 didn't do that, so we
+		     still have to check for links here (and also in case
+		     the archive was created and later appeneded to). */
+		  link_res = link_to_maj_min_ino (file_hdr.c_name, 
+				file_hdr.c_dev_maj, file_hdr.c_dev_maj,
+				file_hdr.c_ino);
+		  if (link_res == 0)
+		    {
+		      toss_input (in_file_des, file_hdr.c_filesize);
+		      skip_padding (in_file_des, file_hdr.c_filesize);
+		      break;
+		    }
+		}
+	      else if (file_hdr.c_nlink > 1 && archive_format != arf_tar
+		  && archive_format != arf_ustar)
+		{
+		  int link_res;
+		  link_res = link_to_maj_min_ino (file_hdr.c_name, 
+				file_hdr.c_dev_maj, file_hdr.c_dev_maj,
+				file_hdr.c_ino);
+		  if (link_res == 0)
+		    {
+		      toss_input (in_file_des, file_hdr.c_filesize);
+		      skip_padding (in_file_des, file_hdr.c_filesize);
+		      break;
+		    }
+		}
+	      else if ((archive_format == arf_tar || archive_format == arf_ustar)
+		       && file_hdr.c_tar_linkname && 
+		       file_hdr.c_tar_linkname[0] != '\0')
+		{
+		  int	link_res;
+		  link_res = link_to_maj_min_ino (file_hdr.c_tar_linkname, 
+				file_hdr.c_dev_maj, file_hdr.c_dev_maj,
+				file_hdr.c_ino);
+		  if (link_res == 0)
+		    {
+		      toss_input (in_file_des, file_hdr.c_filesize);
+		      skip_padding (in_file_des, file_hdr.c_filesize);
+		      break;
+		    }
+		}
+
+	      /* If not linked, copy the contents of the file.  */
+	      if (link_name == NULL)
+		{
 		if (archive_format != arf_tar && archive_format != arf_ustar)
 		  {
 		    link_name = (char *) xmalloc ((unsigned int) file_hdr.c_filesize + 1);
@@ -911,6 +973,7 @@ process_copy_in ()
 		    error (0, errno, "%s", file_hdr.c_name);
 		free (link_name);
 		link_name = NULL;
+		}
 	      }
 	      break;
 #endif

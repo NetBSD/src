@@ -450,8 +450,9 @@ process_copy_out ()
 #ifdef CP_IFLNK
 	    case CP_IFLNK:
 	      {
-		char *link_name = (char *) xmalloc (file_stat.st_size + 1);
+		char *link_name;
 
+		link_name = (char *) xmalloc (file_stat.st_size + 1);
 		if (readlink (input_name.ds_string, link_name,
 			      file_stat.st_size) < 0)
 		  {
@@ -459,6 +460,36 @@ process_copy_out ()
 		    free (link_name);
 		    continue;
 		  }
+		
+#ifndef __MSDOS__
+	      if (archive_format == arf_tar || archive_format == arf_ustar)
+		{
+		  char *otherfile;
+		  if ((otherfile = find_inode_file (file_hdr.c_ino,
+						    file_hdr.c_dev_maj,
+						    file_hdr.c_dev_min)))
+		    {
+                      file_hdr.c_mode = CP_IFREG; /* XXX hardlink! */
+ 		      file_hdr.c_tar_linkname = otherfile;
+		      write_out_header (&file_hdr, out_file_des);
+		      break;
+		    }
+		}
+	      if ( (archive_format == arf_newascii || archive_format == arf_crcascii)
+		  && (file_hdr.c_nlink > 1) )
+		{
+		  if (last_link (&file_hdr) )
+		    {
+		      writeout_other_defers (&file_hdr, out_file_des);
+		    }
+		  else
+		    {
+		      add_link_defer (&file_hdr);
+		      break;
+		    }
+		}
+#endif
+		
 		if (archive_format == arf_tar || archive_format == arf_ustar)
 		  {
 		    if (file_stat.st_size + 1 > 100)
@@ -479,6 +510,12 @@ process_copy_out ()
 		    copy_buf_out (link_name, out_file_des, file_stat.st_size);
 		    pad_output (out_file_des, file_hdr.c_filesize);
 		  }
+#ifndef __MSDOS__
+	      if (archive_format == arf_tar || archive_format == arf_ustar)
+		add_inode (file_hdr.c_ino, input_name.ds_string, file_hdr.c_dev_maj,
+			   file_hdr.c_dev_min);
+#endif
+	      
 		free (link_name);
 	      }
 	      break;
