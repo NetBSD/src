@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_states.c,v 1.4 1999/01/26 02:34:02 oster Exp $	*/
+/*	$NetBSD: rf_states.c,v 1.5 1999/01/26 04:40:03 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -160,9 +160,6 @@ void rf_ContinueDagAccess (RF_DagList_t *dagList)
     /* when a dag fails, mark desc status as bad and allow all other dags
      * in the desc to execute to completion.  then, free all dags and start over */
     desc->status = 1;  /* bad status */
-#if RF_DEMO > 0
-    if (!rf_demoMode)
-#endif /* RF_DEMO > 0 */
     {
       printf("[%d] DAG failure: %c addr 0x%lx (%ld) nblk 0x%x (%d) buf 0x%lx\n",
 	     desc->tid, desc->type, (long)desc->raidAddress, 
