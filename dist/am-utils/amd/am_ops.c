@@ -1,4 +1,5 @@
-/*	$NetBSD: am_ops.c,v 1.1.1.1 2000/06/07 00:52:22 dogcow Exp $ */
+/*	$NetBSD: am_ops.c,v 1.1.1.2 2000/11/19 23:43:31 wiz Exp $	*/
+
 /*
  * Copyright (c) 1997-2000 Erez Zadok
  * Copyright (c) 1989 Jan-Simon Pendry
@@ -39,7 +40,7 @@
  *
  *      %W% (Berkeley) %G%
  *
- * Id: am_ops.c,v 1.6 2000/02/07 08:34:49 ezk Exp 
+ * Id: am_ops.c,v 1.6.2.1 2000/06/02 10:58:35 ezk Exp
  *
  */
 
@@ -421,7 +422,7 @@ ops_match(am_opts *fo, char *key, char *g_key, char *path, char *keym, char *map
       /* optimize things for the common case where opts==remopts */
       char *mergedstr;
       mergedstr = merge_opts(fo->opt_opts, fo->opt_addopts);
-      plog(XLOG_USER, "merge rem/opts \"%s\" add \"%s\" => \"%s\"",
+      plog(XLOG_INFO, "merge rem/opts \"%s\" add \"%s\" => \"%s\"",
 	   fo->opt_opts, fo->opt_addopts, mergedstr);
       XFREE(fo->opt_opts);
       XFREE(fo->opt_remopts);
@@ -430,12 +431,12 @@ ops_match(am_opts *fo, char *key, char *g_key, char *path, char *keym, char *map
     } else {
       char *mergedstr, *remmergedstr;
       mergedstr = merge_opts(fo->opt_opts, fo->opt_addopts);
-      plog(XLOG_USER, "merge opts \"%s\" add \"%s\" => \"%s\"",
+      plog(XLOG_INFO, "merge opts \"%s\" add \"%s\" => \"%s\"",
 	   fo->opt_opts, fo->opt_addopts, mergedstr);
       XFREE(fo->opt_opts);
       fo->opt_opts = mergedstr;
       remmergedstr = merge_opts(fo->opt_remopts, fo->opt_addopts);
-      plog(XLOG_USER, "merge remopts \"%s\" add \"%s\" => \"%s\"",
+      plog(XLOG_INFO, "merge remopts \"%s\" add \"%s\" => \"%s\"",
 	   fo->opt_remopts, fo->opt_addopts, remmergedstr);
       XFREE(fo->opt_remopts);
       fo->opt_remopts = remmergedstr;

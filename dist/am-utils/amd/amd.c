@@ -1,4 +1,5 @@
-/*	$NetBSD: amd.c,v 1.1.1.1 2000/06/07 00:52:22 dogcow Exp $ */
+/*	$NetBSD: amd.c,v 1.1.1.2 2000/11/19 23:43:33 wiz Exp $	*/
+
 /*
  * Copyright (c) 1997-2000 Erez Zadok
  * Copyright (c) 1989 Jan-Simon Pendry
@@ -39,7 +40,7 @@
  *
  *      %W% (Berkeley) %G%
  *
- * Id: amd.c,v 1.8 2000/01/12 16:44:13 ezk Exp 
+ * Id: amd.c,v 1.8.2.1 2000/05/26 23:40:50 ionut Exp
  *
  */
 
@@ -178,8 +179,8 @@ daemon_mode(void)
   if (gopt.flags & CFM_PRINT_PID) {
     if (STREQ(gopt.pid_file, "/dev/stdout")) {
       printf("%ld\n", (long) am_mypid);
+      /* flush stdout, just in case */
       fflush(stdout);
-      /* do not fclose stdout */
     } else {
       FILE *f;
       mode_t prev_umask = umask(0022); /* set secure temporary umask */

@@ -1,6 +1,5 @@
 # -*- text -*-
 PRIMARY AUTHORS AND MAJOR CONTRIBUTORS TO AM_UTILS:
-
 Original authors of amd were the Berkeley team and especially Jan-Simon
 Pendry.  Since then many people have contributed patches.
 
@@ -85,6 +84,8 @@ syslog and/or syslog facilities.
 January 29, 1998: fix for 0.0.0.0 loopback on SunOS 3.X which defines
 IFF_ROUTE instead of IFF_LOOPBACK.
 
+May 30, 2000: correct logging types for addopts/mergeopts messages.
+
 * Daniel S. Riley  <dsr@mail.lns.cornell.edu>
 
 July 11, 1997: fixes to DU-4.0 to support string POSIX.1 signals, and struct
@@ -127,6 +128,9 @@ use.
 
 December 10, 1999: assorted fixed and lots of fixes to support in-kernel
 mount tables in Solaris 8.
+
+February 9, 2000: new debug options hrtime (hi-res timer) and xdrtrace.  bug
+fixes.
 
 * Jason Thorpe <thorpej@nas.nasa.gov>
 
@@ -282,6 +286,9 @@ November 1, 1999: fixes to sync maps even if they are set to mapcache:=sync.
 
 January 19, 2000: fix (and reduce the incidence of) stale file handles when
 doing rapid mounts and umounts in succession.
+
+June 5, 2000: better handling of potential race-conditions during rapid
+u/mounts.  Correctly update d_drops stats for amq -s.
 
 * Johann Pfefferl <johann.pfefferl.jp@germany.agfa.com>
 November 16, 1999: fix to ldap code so repeated calls to string2he don't

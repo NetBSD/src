@@ -1,4 +1,5 @@
-/*	$NetBSD: nfs_prot_bsdi2.h,v 1.1.1.1 2000/06/07 00:52:21 dogcow Exp $ */
+/*	$NetBSD: nfs_prot_bsdi2.h,v 1.1.1.2 2000/11/19 23:43:02 wiz Exp $	*/
+
 /*
  * Copyright (c) 1997-2000 Erez Zadok
  * Copyright (c) 1990 Jan-Simon Pendry
@@ -39,7 +40,7 @@
  *
  *      %W% (Berkeley) %G%
  *
- * Id: nfs_prot_bsdi2.h,v 1.3 2000/01/12 16:44:46 ezk Exp 
+ * Id: nfs_prot_bsdi2.h,v 1.3.2.1 2000/06/09 20:16:26 ezk Exp
  *
  */
 
@@ -69,6 +70,13 @@
 #ifndef ____MSDOSFS_MSDOSFSMOUNT_H__
 # define ____MSDOSFS_MSDOSFSMOUNT_H__
 #endif /* ____MSDOSFS_MSDOSFSMOUNT_H__ */
+
+/*
+ * getifaddrs() on bsdi2 is broken.  Don't use it.
+ */
+#ifdef HAVE_GETIFADDRS
+# undef HAVE_GETIFADDRS
+#endif /* HAVE_GETIFADDRS */
 
 
 /*
