@@ -1,10 +1,10 @@
-.\"	$NetBSD: packages.7,v 1.38 2000/10/15 12:13:38 rh Exp $
+.\"	$NetBSD: packages.7,v 1.39 2000/10/22 08:40:05 rh Exp $
 .\"
 .\" from: NetBSD: bsd.pkg.mk,v 1.89 1998/06/01 21:30:10 hubertf Exp
 .\"
 .\"	This file is in the public domain.
 .\"
-.Dd August 19, 2000
+.Dd October 22, 2000
 .Dt PACKAGES 7
 .Os
 .Sh NAME
@@ -554,10 +554,18 @@ target to completely clean up and lose the list of dependent packages.  Use
 with care!
 .It DEPENDS_TARGET
 The target to execute when a package is calling a dependency.  The default
-is
-.Dq install .
+depends on the target that is used:
+.Dq package
+for
+.Dq make package ,
+.Dq update
+for
+.Dq make update ,
+and
+.Dq reinstall
+for all other targets.
 .It NOCLEAN
-If set, prevent the 
+If set, prevent the
 .Dq update
 target from cleaning up after itself.
 .It PKG_VERBOSE
@@ -575,6 +583,18 @@ During update, deinstall each package before calling
 (see the
 .Dq update
 target for more information).
+.It UPDATE_TARGET
+The target to execute for building a package during
+.Dq make update .
+Defaults to
+.Dq install .
+Other good targets are
+.Dq package
+or
+.Dq bin-install .
+Do not set this to
+.Dq update
+or you will get stuck in an endless loop!
 .El
 .Sh INSTALL VARIABLES
 This section documents variables that serve as convenient aliases.
