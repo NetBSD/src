@@ -1,4 +1,4 @@
-/*	$NetBSD: xinstall.c,v 1.59 2001/11/19 02:51:00 perry Exp $	*/
+/*	$NetBSD: xinstall.c,v 1.60 2001/11/22 23:27:38 dillo Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1993\n\
 #if 0
 static char sccsid[] = "@(#)xinstall.c	8.1 (Berkeley) 7/21/93";
 #else
-__RCSID("$NetBSD: xinstall.c,v 1.59 2001/11/19 02:51:00 perry Exp $");
+__RCSID("$NetBSD: xinstall.c,v 1.60 2001/11/22 23:27:38 dillo Exp $");
 #endif
 #endif /* not lint */
 
@@ -400,7 +400,7 @@ install(char *from_name, char *to_name, u_int flags)
 {
 	struct stat	from_sb, to_sb;
 	struct timeval	tv[2];
-	int		devnull, from_fd, to_fd, serrno;
+	int		devnull, from_fd, to_fd, serrno, tmpmode;
 	char		*p, tmpl[MAXPATHLEN], *oto_name;
 
 	if (flags & DIRECTORY || strcmp(from_name, _PATH_DEVNULL)) {
@@ -502,9 +502,10 @@ install(char *from_name, char *to_name, u_int flags)
 		(void)unlink(to_name);
 		errx(1, "%s: chown/chgrp: %s", to_name, strerror(serrno));
 	}
+	tmpmode = mode;
 	if (dounpriv)
-		mode &= S_IRWXU|S_IRWXG|S_IRWXO;
-	if (fchmod(to_fd, mode) == -1) {
+		tmpmode &= S_IRWXU|S_IRWXG|S_IRWXO;
+	if (fchmod(to_fd, tmpmode) == -1) {
 		serrno = errno;
 		(void)unlink(to_name);
 		errx(1, "%s: chmod: %s", to_name, strerror(serrno));
