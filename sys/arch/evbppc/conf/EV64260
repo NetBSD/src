@@ -1,4 +1,4 @@
-#	$NetBSD: EV64260,v 1.17 2005/01/31 16:54:33 hannken Exp $
+#	$NetBSD: EV64260,v 1.18 2005/02/01 20:59:55 matt Exp $
 #
 #	MVP -- Motorola's Multiprocessing Verification Platform
 #
@@ -177,6 +177,10 @@ gtmpsc1 	at gt0 unit 1		# Serial #1
 gfe0		at gt0 unit 0 flags 1	# Ethernet #0 (RMMI)
 gfe1		at gt0 unit 1 flags 1	# Ethernet #1 (RMMI)
 gfe2		at gt0 unit 2 flags 1	# Ethernet #2 (RMMI)
+
+# I2C
+gtiic0		at gt0 unit 0		# I2C controller
+iic*		at gtiic?
 
 # PCI devices
 ppb*		at pci? dev ? function ?	# PCI-PCI bridges
