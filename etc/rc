@@ -1,4 +1,4 @@
-#	$NetBSD: rc,v 1.118 1999/03/17 15:49:47 drochner Exp $
+#	$NetBSD: rc,v 1.119 1999/03/19 00:35:44 perry Exp $
 #	originally from: @(#)rc	8.2 (Berkeley) 3/17/94
 
 # System startup script run by init on autoboot
@@ -164,7 +164,11 @@ fi
 
 if checkyesno syslogd; then
 	echo 'starting system logger'
-	rm -f /dev/log
+	# Transitional symlink for old binaries
+	if [ ! -h /dev/log ] ; then
+		ln -sf /var/run/log /dev/log
+	fi
+	rm -f /var/run/log
 	syslogd $syslogd_flags
 fi
 
