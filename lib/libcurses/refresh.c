@@ -1,4 +1,4 @@
-/*	$NetBSD: refresh.c,v 1.17 2000/04/15 13:17:04 blymn Exp $	*/
+/*	$NetBSD: refresh.c,v 1.18 2000/04/15 23:01:15 jdc Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)refresh.c	8.7 (Berkeley) 8/13/94";
 #else
-__RCSID("$NetBSD: refresh.c,v 1.17 2000/04/15 13:17:04 blymn Exp $");
+__RCSID("$NetBSD: refresh.c,v 1.18 2000/04/15 23:01:15 jdc Exp $");
 #endif
 #endif				/* not lint */
 
@@ -785,6 +785,17 @@ domvcur(oy, ox, ny, nx)
 			curscr->wattr &= ~__ATTRIBUTES | __ALTCHARSET | __COLOR;
 		if (OP != NULL && !strcmp(ME, OP))
 			curscr->wattr &= ~__COLOR;
+	}
+	if (curscr->wattr & __ALTCHARSET) {
+		tputs(AE, 0, __cputchar);
+		curscr->wattr &= ~__ALTCHARSET;
+	}
+	if (curscr->wattr & __COLOR) {
+		if (OC != NULL && CC == NULL)
+			tputs(OC, 0, __cputchar);
+		if (OP != NULL)
+			tputs(OP, 0, __cputchar);
+		curscr->wattr &= ~__COLOR;
 	}
 
 	__mvcur(oy, ox, ny, nx, 1);
