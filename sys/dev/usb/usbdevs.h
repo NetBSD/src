@@ -1,10 +1,10 @@
-/*	$NetBSD: usbdevs.h,v 1.36 1999/08/23 16:54:13 augustss Exp $	*/
+/*	$NetBSD: usbdevs.h,v 1.37 1999/08/24 21:25:52 soren Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	aNetBSD: usbdevs,v 1.36 1999/08/23 16:53:32 augustss Exp 
+ *	aNetBSD: usbdevs,v 1.37 1999/08/24 21:25:22 soren Exp 
  */
 
 /*
@@ -144,7 +144,7 @@
 /* Acer products */
 #define	USB_PRODUCT_ACER_ACERSCAN_C310U	0x12a6		/* Acerscan C310U */
 
-/* Cypress Semiconduuctor products */
+/* Cypress Semiconductor products */
 #define	USB_PRODUCT_CYPRESS_MOUSE	0x0001		/* mouse */
 
 /* Epson products */
