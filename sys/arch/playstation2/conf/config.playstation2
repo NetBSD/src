@@ -1,7 +1,7 @@
 #
 # deafult config file.
 #
-# 	$NetBSD: config.playstation2,v 1.7 2002/06/17 05:14:21 lukem Exp $
+# 	$NetBSD: config.playstation2,v 1.8 2003/04/26 14:34:16 ragge Exp $
 #
 
 maxusers	16
@@ -83,3 +83,4 @@ pseudo-device	clockctl		# user control of clock subsystem
 pseudo-device	gif		2	# IPv[46] over IPv[46] tunnel (RFC1933)
 
 pseudo-device	wsmux			# mouse & keyboard multiplexor
+pseudo-device	ksyms			# /dev/ksyms
