@@ -1,4 +1,4 @@
-/*	$NetBSD: tulipreg.h,v 1.18 2000/04/04 19:22:52 thorpej Exp $	*/
+/*	$NetBSD: tulipreg.h,v 1.19 2000/05/25 22:18:07 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -111,6 +111,7 @@
  *		  from CIS.
  *		- Transmit buffers must also be 32-bit aligned.
  *		- The BUSMODE_SWR bit is not self-clearing.
+ *		- Must include FS|LS in setup packet descriptor.
  *		- SIA is not 21143-like, and all media attachments
  *		  are MII-on-SIO.
  *
