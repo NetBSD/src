@@ -38,7 +38,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)nfs_ops.c	8.1 (Berkeley) 6/6/93";*/
-static char *rcsid = "$Id: nfs_ops.c,v 1.4 1995/03/22 17:15:08 mycroft Exp $";
+static char *rcsid = "$Id: nfs_ops.c,v 1.5 1996/02/19 20:57:48 christos Exp $";
 #endif /* not lint */
 
 #include "am.h"
@@ -54,7 +54,6 @@ typedef nfs_fh fhandle_t;
 #ifdef NFS_HDR
 #include NFS_HDR
 #endif /* NFS_HDR */
-#include <sys/mount.h>
 #include "mount.h"
 
 /*
@@ -96,7 +95,7 @@ struct fh_cache {
 	int	fh_error;		/* Valid data? */
 	int	fh_id;			/* Unique id */
 	int	fh_cid;			/* Callout id */
-	struct fhstatus fh_handle;	/* Handle on filesystem */
+	fhstatus fh_handle;		/* Handle on filesystem */
 	struct sockaddr_in fh_sin;	/* Address of mountd */
 	fserver *fh_fs;			/* Server holding filesystem */
 	char	*fh_path;		/* Filesystem on host */
@@ -163,6 +162,9 @@ voidp idv;
 int done;
 {
 	fh_cache *fp = find_nfs_fhandle_cache(idv, done);
+#if NFS_PROTOCOL_VERSION >= 3
+	fp->fh_handle.fhs_vers = MOUNTVERS;
+#endif
 	if (fp) {
 		fp->fh_error = pickup_rpc_reply(pkt, len, (voidp) &fp->fh_handle, xdr_fhstatus);
 		if (!fp->fh_error) {
@@ -211,11 +213,11 @@ fh_cache *fp;
 /*
  * Determine the file handle for a node
  */
-static int prime_nfs_fhandle_cache P((char *path, fserver *fs, struct fhstatus *fhbuf, voidp wchan));
+static int prime_nfs_fhandle_cache P((char *path, fserver *fs, fhstatus *fhbuf, voidp wchan));
 static int prime_nfs_fhandle_cache(path, fs, fhbuf, wchan)
 char *path;
 fserver *fs;
-struct fhstatus *fhbuf;
+fhstatus *fhbuf;
 voidp wchan;
 {
 	fh_cache *fp, *fp_save = 0;
@@ -233,7 +235,7 @@ voidp wchan;
 		if (fs == fp->fh_fs && strcmp(path, fp->fh_path) == 0) {
 			switch (fp->fh_error) {
 			case 0:
-				error = fp->fh_error = unx_error(fp->fh_handle.fhs_status);
+				error = fp->fh_error = unx_error(fp->fh_handle.fhs_stat);
 				if (error == 0) {
 					if (fhbuf)
 						bcopy((voidp) &fp->fh_handle, (voidp) fhbuf,
@@ -446,7 +448,7 @@ mntfs *mf;
 {
 	if (!mf->mf_private) {
 		int error;
-		struct fhstatus fhs;
+		fhstatus fhs;
 	
 		char *colon = strchr(mf->mf_info, ':');
 		if (colon == 0)
@@ -464,9 +466,9 @@ mntfs *mf;
 	return 0;
 }
 
-int mount_nfs_fh P((struct fhstatus *fhp, char *dir, char *fs_name, char *opts, mntfs *mf));
+int mount_nfs_fh P((fhstatus *fhp, char *dir, char *fs_name, char *opts, mntfs *mf));
 int mount_nfs_fh(fhp, dir, fs_name, opts, mf)
-struct fhstatus *fhp;
+fhstatus *fhp;
 char *dir;
 char *fs_name;
 char *opts;
@@ -527,8 +529,12 @@ mntfs *mf;
 	/*
 	 * set mount args
 	 */
-	NFS_FH_DREF(nfs_args.fh, (NFS_FH_TYPE) fhp->fhstatus_u.fhs_fhandle);
+	NFS_FH_DREF(nfs_args.fh, (NFS_FH_TYPE) fhp->fhs_fhandle);
 
+#if NFS_PROTOCOL_VERSION >= 3
+	nfs_args.fhsize = fhp->fhs_size;
+	nfs_args.version = NFS_ARGSVERSION;
+#endif
 #ifdef ULTRIX_HACK
 	nfs_args.optstr = mnt.mnt_opts;
 #endif /* ULTRIX_HACK */
@@ -665,7 +671,7 @@ mntfs *mf;
 {
 #ifdef notdef
 	int error;
-	struct fhstatus fhs;
+	fhstatus fhs;
 	char *colon;
 
 	if (!(colon = strchr(fs_name, ':')))
@@ -686,7 +692,7 @@ mntfs *mf;
 		return EINVAL;
 	}
 
-	return mount_nfs_fh((struct fhstatus *) mf->mf_private, dir, fs_name, opts, mf);
+	return mount_nfs_fh((fhstatus *) mf->mf_private, dir, fs_name, opts, mf);
 }
 
 static int nfs_fmount(mf)
@@ -758,7 +764,7 @@ am_node *mp;
 		f.fh_fs = fs;
 		f.fh_id = 0;
 		f.fh_error = 0;
-		(void) prime_nfs_fhandle_cache(colon+1, mf->mf_server, (struct fhstatus *) 0, (voidp) mf);
+		(void) prime_nfs_fhandle_cache(colon+1, mf->mf_server, (fhstatus *) 0, (voidp) mf);
 		(void) call_mountd(&f, MOUNTPROC_UMNT, (fwd_fun) 0, (voidp) 0);
 		*colon = ':';
 	}
