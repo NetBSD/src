@@ -1,4 +1,4 @@
-.\"	$NetBSD: wsfontload.8,v 1.20 2003/02/25 10:36:23 wiz Exp $
+.\"	$NetBSD: wsfontload.8,v 1.21 2003/05/04 00:52:39 gmcgarry Exp $
 .\"
 .\" Copyright (c) 1999, 2001
 .\" 	Matthias Drochner.  All rights reserved.
@@ -77,12 +77,15 @@ Specify the device to operate on.
 Default is
 .Pa /dev/wsfont .
 .It Fl w Ar width
-Sets the width of a font character in pixels. Default is 8.
+Sets the width of a font character in pixels.
+Default is 8.
 .It Fl h Ar height
-Sets the height of a font character in pixels. Default is 16.
+Sets the height of a font character in pixels.
+Default is 16.
 .It Fl e Ar encoding
-Sets the encoding of the font. This can be either a symbolic abbreviation
-or a numeric value. Currently recognized abbreviations are
+Sets the encoding of the font.
+This can be either a symbolic abbreviation or a numeric value.
+Currently recognized abbreviations are
 .Ql iso
 for ISO-8859-1 encoding,
 .Ql ibm
@@ -92,7 +95,8 @@ for the custom encoding of the supplemental fonts which came with
 the
 .Bx
 .Dq pcvt
-console driver. Per default,
+console driver.
+Per default,
 .Ql iso
 is assumed.
 .It Fl N Ar name
@@ -101,11 +105,11 @@ If none is given, the
 .Ar fontfile
 name is used to create one.
 .It Fl b
-Specifies that the font data is ordered right-to-left bit wise. The default
-is left-to-right.
+Specifies that the font data is ordered right-to-left bit wise.
+The default is left-to-right.
 .It Fl B
-Specifies that the font data is ordered right-to-left byte wise. The default
-is left-to-right.
+Specifies that the font data is ordered right-to-left byte wise.
+The default is left-to-right.
 .It Fl v
 Prints the font's properties before loading it.
 .El
@@ -129,6 +133,14 @@ distribution. This (or another 8\(mu8-font) is necessary to use the
 50-line screen type on
 .Xr vga 4
 displays.
+.Pp
+.Dl wsfontload -N orator -e ibm /usr/share/wscons/fonts/orator.816
+.Dl wsconsctl -dw font=orator
+.Pp
+Load the
+.Dq orator
+IBM-encoded 8\(mu16 font and switch the console to this
+alternate font.
 .Sh SEE ALSO
 .Xr wscons 4 ,
 .Xr wsconscfg 8 ,
