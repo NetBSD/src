@@ -1,4 +1,4 @@
-/*	$NetBSD: db_machdep.c,v 1.23 2000/06/29 07:14:23 mrg Exp $	*/
+/*	$NetBSD: db_machdep.c,v 1.24 2000/12/30 20:16:34 matt Exp $	*/
 
 /* 
  * :set tabs=4
@@ -81,16 +81,16 @@ static	int splsave; /* IPL before entering debugger */
  *			ISBN 0-932376-07-X
  */
 typedef struct __vax_frame {
-	u_int	vax_cond;				/* condition handler               */
-	u_int	vax_psw:16;				/* 16 bit processor status word    */
-	u_int	vax_regs:12;			/* Register save mask.             */
-	u_int	vax_zero:1;				/* Always zero                     */
-	u_int	vax_calls:1;			/* True if CALLS, false if CALLG   */
-	u_int	vax_spa:2;				/* Stack pointer alignment         */
-	u_int	*vax_ap;				/* argument pointer                */
-	struct __vax_frame	*vax_fp;	/* frame pointer of previous frame */
-	u_int	vax_pc;					/* program counter                 */
-	u_int	vax_args[1];			/* 0 or more arguments             */
+	u_int	vax_cond;		/* condition handler               */
+	u_int	vax_psw:16;		/* 16 bit processor status word    */
+	u_int	vax_regs:12;		/* Register save mask.             */
+	u_int	vax_zero:1;		/* Always zero                     */
+	u_int	vax_calls:1;		/* True if CALLS, false if CALLG   */
+	u_int	vax_spa:2;		/* Stack pointer alignment         */
+	u_int	*vax_ap;		/* argument pointer                */
+	struct __vax_frame *vax_fp;	/* frame pointer of previous frame */
+	u_int	vax_pc;			/* program counter                 */
+	u_int	vax_args[1];		/* 0 or more arguments             */
 } VAX_CALLFRAME;
 
 /*
@@ -257,7 +257,7 @@ db_dump_stack(VAX_CALLFRAME *fp, u_int stackbase,
 		return;
 	}
 
-	while (((u_int)(fp->vax_fp) > stackbase) && 
+	while (((u_int)(fp->vax_fp) > stackbase - 0x100) && 
 			((u_int)(fp->vax_fp) < (stackbase + USPACE))) {
 
 		diff = INT_MAX;
