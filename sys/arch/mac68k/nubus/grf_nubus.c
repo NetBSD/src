@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_nubus.c,v 1.47 1998/07/01 14:49:08 scottr Exp $	*/
+/*	$NetBSD: grf_nubus.c,v 1.48 1998/08/09 18:19:09 briggs Exp $	*/
 
 /*
  * Copyright (c) 1995 Allen Briggs.  All rights reserved.
@@ -68,6 +68,7 @@ static void	grfmv_intr_supermacgfx __P((void *vsc));
 static void	grfmv_intr_lapis __P((void *vsc));
 static void	grfmv_intr_formac __P((void *vsc));
 static void	grfmv_intr_vimage __P((void *vsc));
+static void	grfmv_intr_gvimage __P((void *vsc));
 
 static int	grfmv_mode __P((struct grf_softc *gp, int cmd, void *arg));
 static int	grfmv_match __P((struct device *, struct cfdata *, void *));
@@ -310,6 +311,9 @@ bad:
 		break;
 	case NUBUS_DRHW_VIMAGE:
 		add_nubus_intr(na->slot, grfmv_intr_vimage, sc);
+		break;
+	case NUBUS_DRHW_GVIMAGE:
+		add_nubus_intr(na->slot, grfmv_intr_gvimage, sc);
 		break;
 	case NUBUS_DRHW_MICRON:
 		/* What do we know about this one? */
@@ -666,4 +670,18 @@ grfmv_intr_vimage(vsc)
 
 	bus_space_write_1(sc->sc_tag, sc->sc_handle, 0x800000, 0x67);
 	bus_space_write_1(sc->sc_tag, sc->sc_handle, 0x800000, 0xE7);
+}
+
+/*
+ * Routine to clear interrupts for the Vimage by Interware Co., Ltd.
+ */
+/*ARGSUSED*/
+static void
+grfmv_intr_gvimage(vsc)
+	void	*vsc;
+{
+	struct grfbus_softc *sc = (struct grfbus_softc *)vsc;
+	u_int8_t dummy;
+
+	dummy = bus_space_read_1(sc->sc_tag, sc->sc_handle, 0xf00000);
 }
