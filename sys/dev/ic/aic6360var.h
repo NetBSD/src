@@ -1,4 +1,4 @@
-/*	$NetBSD: aic6360var.h,v 1.10 2004/08/24 00:53:29 thorpej Exp $	*/
+/*	$NetBSD: aic6360var.h,v 1.11 2004/12/07 22:23:45 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1996 Charles M. Hannum.  All rights reserved.
@@ -72,7 +72,7 @@ struct aic_dma_seg {
  * occasionally xs->retries.
  */
 struct aic_acb {
-	struct scsi_generic scsipi_cmd;
+	struct scsipi_generic scsipi_cmd;
 	int scsipi_cmd_length;
 	u_char *data_addr;		/* Saved data pointer */
 	int data_length;		/* Residue */
