@@ -1,5 +1,5 @@
-#	$NetBSD: Makefile,v 1.9 1999/08/25 05:16:41 thorpej Exp $
+#	$NetBSD: Makefile,v 1.10 2000/06/12 14:42:02 sommerfeld Exp $
 
-SUBDIR+= execve extent unfdpass getcwd sigtramp sysvmsg sysvsem sysvshm
+SUBDIR+= execve extent getcwd lockf sigtramp sysvmsg sysvsem sysvshm unfdpass 
 
 .include <bsd.subdir.mk>
