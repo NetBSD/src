@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.4.3,v 1.1.2.48 2000/08/02 15:45:24 he Exp $
+#	$NetBSD: CHANGES-1.4.3,v 1.1.2.49 2000/08/04 15:21:50 he Exp $
 
 A complete list of changes from NetBSD 1.4.2 to NetBSD 1.4.3:
 
@@ -1119,3 +1119,7 @@ sys/netinet/ip_fil.c				1.56 via patch
 
   Properly report initialization error.  Enable IPF automatically
   if it wasn't already enabled before doing a NAT operation.
+
+lib/libc/net/gethnamaddr.c			1.36
+
+  Prevent host_addrs overrun, possibly provoked by rogue NIS server.
