@@ -1,4 +1,4 @@
-/*	$NetBSD: adb_direct.c,v 1.21 1999/03/18 09:10:19 scottr Exp $	*/
+/*	$NetBSD: adb_direct.c,v 1.22 1999/05/06 06:01:27 scottr Exp $	*/
 
 /* From: adb_direct.c 2.02 4/18/97 jpw */
 
@@ -316,26 +316,26 @@ int	send_adb __P((u_char *, void *, void *));
  * is in [0].
  */
 void
-print_single(thestring)
-	u_char *thestring;
+print_single(str)
+	u_char *str;
 {
 	int x;
 
-	if ((int)(thestring[0]) == 0) {
-		printf_intr("nothing returned\n");
-		return;
-	}
-	if (thestring == 0) {
+	if (str == 0) {
 		printf_intr("no data - null pointer\n");
 		return;
 	}
-	if (thestring[0] > 20) {
-		printf_intr("ADB: ACK > 20 no way!\n");
-		thestring[0] = 20;
+	if (*str == 0) {
+		printf_intr("nothing returned\n");
+		return;
 	}
-	printf_intr("(length=0x%x):", thestring[0]);
-	for (x = 0; x < thestring[0]; x++)
-		printf_intr("  0x%02x", thestring[x + 1]);
+	if (*str > 20) {
+		printf_intr("ADB: ACK > 20 no way!\n");
+		*str = (u_char)20;
+	}
+	printf_intr("(length=0x%x):", (u_int)*str);
+	for (x = 1; x <= *str; x++)
+		printf_intr("  0x%02x", (u_int)*(str + x));
 	printf_intr("\n");
 }
 #endif
@@ -1082,7 +1082,7 @@ send_adb_II(u_char * in, u_char * buffer, void *compRout, void *data, int comman
 			adbOutQueue.outBuf[1 + i] = buffer[i];
 	} else
 		/* if data ready, just copy over */
-		for (i = 0; i <= (adbOutQueue.outBuf[0] + 1); i++)
+		for (i = 0; i <= (in[0] + 1); i++)
 			adbOutQueue.outBuf[i] = in[i];
 
 	adbOutQueue.saveBuf = buffer;	/* save buffer to know where to save
@@ -1472,7 +1472,7 @@ send_adb_IIsi(u_char * in, u_char * buffer, void *compRout, void *data, int
 						 * data, if any */
 			adbOutputBuffer[2 + i] = buffer[i];
 	} else
-		for (i = 0; i <= (adbOutputBuffer[0] + 1); i++)
+		for (i = 0; i <= (in[0] + 1); i++)
 			adbOutputBuffer[i] = in[i];
 
 	adbSentChars = 0;	/* nothing sent yet */
@@ -2200,6 +2200,7 @@ adb_reinit(void)
 
 	if (adbHardware != ADB_HW_PB)	/* ints must be on for PB? */
 		splx(s);
+
 	return;
 }
 
