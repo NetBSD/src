@@ -1,3 +1,8 @@
+2001-10-19  Andrew Cagney  <ac131313@redhat.com>
+
+	* configure.in: When Linux or NetBSD, enable PowerPC simulator.
+	* configure: Re-generate.
+
 Sat Mar  4 16:48:54 2000  Andrew Cagney  <cagney@b1.cygnus.com>
 
 	* MAINTAINERS: New file.  Blank.

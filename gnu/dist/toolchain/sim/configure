@@ -1440,7 +1440,8 @@ case "${target}" in
 	sim_target=mn10200
 	;;
   sh*-*-*)		sim_target=sh ;;
-  powerpc*-*-eabi* | powerpc*-*-solaris* | powerpc*-*-sysv4* | powerpc*-*-elf* | powerpc*-*-linux* )
+  powerpc*-*-eabi* | powerpc*-*-solaris* | powerpc*-*-sysv4* | \
+  powerpc*-*-elf* | powerpc*-*-linux* | powerpc*-*-netbsd* )
 	# The PowerPC simulator uses the GCC extension long long as well as
 	# ANSI prototypes, so don't enable it for random host compilers
 	# unless asked to.
