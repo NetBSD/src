@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.4 1995/12/28 06:45:01 jonathan Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.5 1996/01/29 22:52:34 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -42,7 +42,6 @@
 
 struct mainbus_softc {
 	struct	device sc_dv;
-	struct	abus sc_bus;
 };
 
 /* Definition of the mainbus driver. */
@@ -56,15 +55,12 @@ void	mb_intr_establish __P((struct confargs *ca,
 			       int (*handler)(intr_arg_t),
 			       intr_arg_t val ));
 void	mb_intr_disestablish __P((struct confargs *));
-caddr_t	mb_cvtaddr __P((struct confargs *));
-int	mb_matchname __P((struct confargs *, char *));
 
 /* KN01 has devices directly on the system bus */
 void	kn01_intr_establish __P((struct confargs *ca,
 			       int (*handler)(intr_arg_t),
 			       intr_arg_t val ));
 void	kn01_intr_disestablish __P((struct confargs *));
-caddr_t	kn01_cvtaddr __P((struct confargs *));
 static void	kn01_attach __P((struct device *, struct device *, void *));
 
 
@@ -104,13 +100,6 @@ mbattach(parent, self, aux)
 
 	printf("\n");
 
-	sc->sc_bus.ab_dv = (struct device *)sc;
-	sc->sc_bus.ab_type = BUS_MAIN;
-	sc->sc_bus.ab_intr_establish = mb_intr_establish;
-	sc->sc_bus.ab_intr_disestablish = mb_intr_disestablish;
-	sc->sc_bus.ab_cvtaddr = mb_cvtaddr;
-	sc->sc_bus.ab_matchname = mb_matchname;
-
 	/*
 	 * Try to find and attach all of the CPUs in the machine.
 	 */
@@ -128,7 +117,7 @@ mbattach(parent, self, aux)
 		nca.ca_name = "cpu";
 		nca.ca_slot = 0;
 		nca.ca_offset = 0;
-		nca.ca_bus = &sc->sc_bus;
+		nca.ca_addr = 0;
 		if (config_found(self, &nca, mbprint))
 			cpuattachcnt++;
 	}
@@ -149,12 +138,17 @@ mbattach(parent, self, aux)
 	    if (cputype == DS_3MIN || cputype == DS_MAXINE)
 		printf("UNTESTED autoconfiguration!!\n");	/*XXX*/
 
+#if 0
 		/* we have a TurboChannel bus! */
-		nca.ca_name = "tc";
+		strcpy(nca.ca_name, "tc");
 		nca.ca_slot = 0;
 		nca.ca_offset = 0;
-		nca.ca_bus = &sc->sc_bus;
+		
 		config_found(self, &nca, mbprint);
+#else
+		config_tcbus(self, &nca, mbprint);
+#endif
+
 	}
 #endif /*Turbochannel*/
 
@@ -166,11 +160,6 @@ mbattach(parent, self, aux)
 #if defined(DS3100)
 	/* XXX mipsfair: just a guess */
 	if (cputype == DS_PMAX || cputype == DS_MIPSFAIR) {
-		/*XXX*/
-		sc->sc_bus.ab_intr_establish = kn01_intr_establish;
-		sc->sc_bus.ab_intr_disestablish = kn01_intr_disestablish;
-		sc->sc_bus.ab_cvtaddr = kn01_cvtaddr;
-
 		kn01_attach(parent, self, aux);
 	}
 #endif /*DS3100*/
@@ -180,12 +169,12 @@ mbattach(parent, self, aux)
 
 #define KN01_MAXDEVS 5
 struct confargs kn01_devs[KN01_MAXDEVS] = {
-	/* name	      index   pri xxx */
-	{ "pm",		0,    3,   (u_int)KV(KN01_PHYS_FBUF_START) },
-	{ "dc",  	1,    2,   (u_int)KV(KN01_SYS_DZ)	},
-	{ "lance", 	2,    1,   (u_int)KV(KN01_SYS_LANCE)	},
-	{ "sii",	3,    0,   (u_int)KV(KN01_SYS_SII)	},
-	{ "dallas_rtc",	4,    16,  (u_int)KV(KN01_SYS_CLOCK)	}
+	/*   name       slot  offset 		   addr intpri  */
+	{ "pm",		0,   0,  (u_int)KV(KN01_PHYS_FBUF_START), 3,  },
+	{ "dc",  	1,   0,  (u_int)KV(KN01_SYS_DZ),	  2,  },
+	{ "lance", 	2,   0,  (u_int)KV(KN01_SYS_LANCE),       1,  },
+	{ "sii",	3,   0,  (u_int)KV(KN01_SYS_SII),	  0,  },
+	{ "mc146818",	4,   0,  (u_int)KV(KN01_SYS_CLOCK),       16, }
 };
 
 /*
@@ -209,7 +198,6 @@ kn01_attach(parent, self, aux)
 			printf("mbattach: bad config for slot %d\n", i);
 			break;
 		}
-		nca->ca_bus = &sc->sc_bus;
 
 #if defined(DIAGNOSTIC) || defined(DEBUG)
 		if (nca->ca_slot > KN01_MAXDEVS)
@@ -225,6 +213,16 @@ dev slot > number of slots for %s",
 		/* Tell the autoconfig machinery we've found the hardware. */
 		config_found(self, nca, mbprint);
 	}
+
+	/*
+	 * The Decstation 5100 has an sii, clock, ethernet, and dc,
+	 * like  the 3100 and presumably at the same address. The
+	 * 5100 also has a slot for PrestoServe NVRAM and for
+	 * an additional `mbc' dc-like serial option.
+	 * If we supported those devices, we would attempt to configure
+	 * them now.
+	 */
+
 }
 
 static int
@@ -256,23 +254,6 @@ mb_intr_disestablish(ca)
 	panic("can never mb_intr_disestablish");
 }
 
-caddr_t
-mb_cvtaddr(ca)
-	struct confargs *ca;
-{
-
-	return (NULL);
-}
-
-int
-mb_matchname(ca, name)
-	struct confargs *ca;
-	char *name;
-{
-
-	return (strcmp(name, ca->ca_name) == 0);
-}
-
 void
 kn01_intr_establish(ca, handler, val)
 	struct confargs *ca;
@@ -290,9 +271,33 @@ kn01_intr_disestablish(ca)
 	printf("(kn01: ignoring intr_disestablish) ");
 }
 
-caddr_t
-kn01_cvtaddr(ca)
+/*
+ * An  interrupt-establish method.  This should somehow be folded
+ * back into the autoconfiguration machinery. Until the TC machine
+ * portmasters agree on how to do that, it's a separate function
+ */
+void
+generic_intr_establish(ca, handler, arg)
 	struct confargs *ca;
+	intr_handler_t handler;
+	intr_arg_t arg;
 {
-	return ((void *)ca->ca_offset);
+	struct device *dev = arg;
+
+	extern struct cfdriver ioasiccd, tccd;
+
+	if (dev->dv_parent->dv_cfdata->cf_driver == &ioasiccd) {
+		/*XXX*/ printf("ioasic interrupt for %d\n", ca->ca_slotpri);
+		asic_intr_establish(ca, handler, arg);
+	} else
+	if (dev->dv_parent->dv_cfdata->cf_driver == &tccd) {
+		tc_intr_establish(dev->dv_parent, ca->ca_slotpri, 0, handler, arg);
+	} else
+	if (dev->dv_parent->dv_cfdata->cf_driver == &mainbuscd) {
+		kn01_intr_establish(ca, handler, arg);
+	}
+	else {
+		printf("intr_establish: unknown parent bustype for %s\n",
+			dev->dv_xname);
+	}
 }

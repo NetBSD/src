@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.1 1995/08/10 05:17:11 jonathan Exp $	*/
+/*	$NetBSD: cpu.c,v 1.2 1996/01/29 22:52:30 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -84,7 +84,6 @@ cpuattach(parent, dev, aux)
 		nca.ca_name = "kn01";
 		nca.ca_slot = 0;
 		nca.ca_offset = 0;
-		nca.ca_bus = NULL;
 		if (!config_found(dev, &nca, cpuprint))
 			panic("cpuattach: couldn't attach LCA bus interface");
 	}

@@ -204,7 +204,7 @@ noattach(parent, self, aux)
 	       ca->ca_name, self->dv_unit,
 	       parent->dv_xname);
 #else
-	panic("Can't do ew-attach of old device %s\n",
+	panic("Can't do new-config attach of old device %s\n",
 	      ca->ca_name, self->dv_unit);
 #endif
 	return;
