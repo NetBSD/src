@@ -1,4 +1,4 @@
-/*	$NetBSD: xencons.c,v 1.1.8.2 2004/12/17 12:15:49 bouyer Exp $	*/
+/*	$NetBSD: xencons.c,v 1.1.8.3 2005/01/18 14:21:41 bouyer Exp $	*/
 
 /*
  *
@@ -33,7 +33,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xencons.c,v 1.1.8.2 2004/12/17 12:15:49 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xencons.c,v 1.1.8.3 2005/01/18 14:21:41 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -61,8 +61,9 @@ static struct xencons_softc *xencons_console_device;
 
 int xencons_match (struct device *, struct cfdata *, void *);
 void xencons_attach (struct device *, struct device *, void *);
-/* int xencons_intr (void *); */
-void xencons_init (void);
+int xencons_intr (void *);
+void xencons_tty_input(struct xencons_softc *, char*, int);
+
 
 struct xencons_softc {
 	struct	device sc_dev;
@@ -150,7 +151,17 @@ xencons_attach(struct device *parent, struct device *self, void *aux)
 		/* Set db_max_line to avoid paging. */
 		db_max_line = 0x7fffffff;
 
-		(void)ctrl_if_register_receiver(CMSG_CONSOLE, xencons_rx, 0);
+		if (xen_start_info.flags & SIF_INITDOMAIN) {
+			int irq = bind_virq_to_irq(VIRQ_CONSOLE);
+			if (event_set_handler(irq, xencons_intr, sc,
+			    IPL_TTY) != 0)
+				printf("console: "
+				    "can't register xencons_intr\n");
+			hypervisor_enable_irq(irq);
+		} else {
+			(void)ctrl_if_register_receiver(CMSG_CONSOLE,
+			    xencons_rx, 0);
+		}
 		xencons_console_device = sc;
 		cn_init_magic(&xencons_cnm_state);
 		cn_set_magic("+++++");
@@ -337,7 +348,6 @@ xencons_rx(ctrl_msg_t *msg, unsigned long id)
 	int s;
 	// unsigned long flags;
 	struct xencons_softc *sc;
-	struct tty *tp;
 
 	sc = device_lookup(&xencons_cd, XENCONS_UNIT(cn_tab->cn_dev));
 	if (sc == NULL)
@@ -366,24 +376,47 @@ xencons_rx(ctrl_msg_t *msg, unsigned long id)
 		}
 		goto out;
 	}
-	// save_and_cli(flags);
-	// simple_lock(&xencons_lock);
-	tp = sc->sc_tty;
-	if (tp == NULL)
-		goto out;
 
-	for (i = 0; i < msg->length; i++) {
-		cn_check_magic(sc->sc_tty->t_dev, msg->msg[i],
-		    xencons_cnm_state);
-		(*tp->t_linesw->l_rint)(msg->msg[i], tp);
-	}
+	xencons_tty_input(sc, msg->msg, msg->length);
  out:
-	// simple_unlock(&xencons_lock);
-	// restore_flags(flags);
 	splx(s);
  out2:
 	msg->length = 0;
 	ctrl_if_send_response(msg);
+}
+
+void
+xencons_tty_input(struct xencons_softc *sc, char* buf, int len)
+{
+	struct tty *tp;
+	int i;
+
+	tp = sc->sc_tty;
+	if (tp == NULL)
+		return;
+
+	for (i = 0; i < len; i++) {
+		cn_check_magic(sc->sc_tty->t_dev, buf[i], xencons_cnm_state);
+		(*tp->t_linesw->l_rint)(buf[i], tp);
+	}
+}
+
+/* privileged receive callback */
+int
+xencons_intr(void *p)
+{
+	static char rbuf[16];
+	int len;
+	struct xencons_softc *sc = p;
+
+	if (sc->polling)
+		return 1;
+
+	while ((len =
+	    HYPERVISOR_console_io(CONSOLEIO_read, sizeof(rbuf), rbuf)) > 0) {
+		xencons_tty_input(sc, rbuf, len);
+	}
+	return 1;
 }
 
 void
@@ -401,6 +434,7 @@ int
 xenconscn_getc(dev_t dev)
 {
 	int ret;
+	char c;
 
 	if (xencons_console_device == NULL) {
 		printf("xenconscn_getc(): not console\n");
@@ -411,7 +445,13 @@ xenconscn_getc(dev_t dev)
 		printf("xenconscn_getc() but not polling\n");
 		return 0;
 	}
-
+	if (xen_start_info.flags & SIF_INITDOMAIN) {
+		while (HYPERVISOR_console_io(CONSOLEIO_read, 1, &c) == 0)
+			;
+		cn_check_magic(dev, c, xencons_cnm_state);
+		return c;
+	}
+		
 	while (xencons_console_device->buf_write ==
 	    xencons_console_device->buf_read) {
 		HYPERVISOR_yield();
