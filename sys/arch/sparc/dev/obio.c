@@ -1,4 +1,4 @@
-/*	$NetBSD: obio.c,v 1.27 1996/10/13 03:00:04 christos Exp $	*/
+/*	$NetBSD: obio.c,v 1.28 1996/12/10 22:55:01 pk Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Theo de Raadt
@@ -61,17 +61,17 @@ struct bus_softc {
 };
 
 /* autoconfiguration driver */
-static int	busmatch __P((struct device *, void *, void *));
+static int	busmatch __P((struct device *, struct cfdata *, void *));
 static void	obioattach __P((struct device *, struct device *, void *));
 static void	vmesattach __P((struct device *, struct device *, void *));
 static void	vmelattach __P((struct device *, struct device *, void *));
 
 int		busprint __P((void *, const char *));
-static int	busattach __P((struct device *, void *, void *, int));
+static int	busattach __P((struct device *, struct cfdata *, void *, int));
 void *		bus_map __P((struct rom_reg *, int, int));
-int		obio_scan __P((struct device *, void *, void *));
-int 		vmes_scan __P((struct device *, void *, void *));
-int 		vmel_scan __P((struct device *, void *, void *));
+int		obio_scan __P((struct device *, struct cfdata *, void *));
+int 		vmes_scan __P((struct device *, struct cfdata *, void *));
+int 		vmel_scan __P((struct device *, struct cfdata *, void *));
 int 		vmeintr __P((void *));
 
 struct cfattach obio_ca = {
@@ -102,11 +102,11 @@ struct intrhand **vmeints;
 
 
 int
-busmatch(parent, vcf, aux)
+busmatch(parent, cf, aux)
 	struct device *parent;
-	void *vcf, *aux;
+	struct cfdata *cf;
+	void *aux;
 {
-	struct cfdata *cf = vcf;
 	register struct confargs *ca = aux;
 	register struct romaux *ra = &ca->ca_ra;
 
@@ -283,13 +283,13 @@ vmelattach(parent, self, args)
 }
 
 int
-busattach(parent, child, args, bustype)
+busattach(parent, cf, args, bustype)
 	struct device *parent;
-	void *args, *child;
+	struct cfdata *cf;
+	void *args;
 	int bustype;
 {
 #if defined(SUN4)
-	struct cfdata *cf = child;
 	register struct confargs *ca = args;
 	struct confargs oca;
 	caddr_t tmp;
@@ -313,11 +313,6 @@ busattach(parent, child, args, bustype)
 			return 0;
 		if (cpumod != SUN4_100 && !(cf->cf_loc[0] & 0xf0000000))
 			return 0;
-	}
-
-	if (parent->dv_cfdata->cf_driver->cd_indirect) {
-		printf(" indirect devices not supported\n");
-		return 0;
 	}
 
 	oca.ca_ra.ra_iospace = -1;
@@ -377,7 +372,8 @@ busattach(parent, child, args, bustype)
 int
 obio_scan(parent, child, args)
 	struct device *parent;
-	void *child, *args;
+	struct cfdata *child;
+	void *args;
 {
 	return busattach(parent, child, args, BUS_OBIO);
 }
@@ -385,7 +381,8 @@ obio_scan(parent, child, args)
 int
 vmes_scan(parent, child, args)
 	struct device *parent;
-	void *child, *args;
+	struct cfdata *child;
+	void *args;
 {
 	return busattach(parent, child, args, BUS_VME16);
 }
@@ -393,7 +390,8 @@ vmes_scan(parent, child, args)
 int
 vmel_scan(parent, child, args)
 	struct device *parent;
-	void *child, *args;
+	struct cfdata *child;
+	void *args;
 {
 	return busattach(parent, child, args, BUS_VME32);
 }

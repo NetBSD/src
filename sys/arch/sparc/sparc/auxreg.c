@@ -1,4 +1,4 @@
-/*	$NetBSD: auxreg.c,v 1.16 1996/10/13 03:00:26 christos Exp $ */
+/*	$NetBSD: auxreg.c,v 1.17 1996/12/10 23:17:42 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -54,7 +54,7 @@
 #include <sparc/sparc/vaddrs.h>
 #include <sparc/sparc/auxreg.h>
 
-static int auxregmatch __P((struct device *, void *, void *));
+static int auxregmatch __P((struct device *, struct cfdata *, void *));
 static void auxregattach __P((struct device *, struct device *, void *));
 
 struct cfattach auxreg_ca = {
@@ -93,9 +93,10 @@ blink(zero)
  * The OPENPROM calls this "auxiliary-io".
  */
 static int
-auxregmatch(parent, vcf, aux)
+auxregmatch(parent, cf, aux)
 	struct device *parent;
-	void *aux, *vcf;
+	struct cfdata *cf;
+	void *aux;
 {
 	register struct confargs *ca = aux;
 

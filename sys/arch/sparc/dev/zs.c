@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.44 1996/10/13 03:00:18 christos Exp $ */
+/*	$NetBSD: zs.c,v 1.45 1996/12/10 22:55:08 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -114,7 +114,7 @@ struct zs_softc {
 };
 
 /* Definition of the driver for autoconfig. */
-static int	zsmatch __P((struct device *, void *, void *));
+static int	zsmatch __P((struct device *, struct cfdata *, void *));
 static void	zsattach __P((struct device *, struct device *, void *));
 
 struct cfattach zs_ca = {
@@ -225,11 +225,11 @@ zs_write(zc, reg, val)
  * not set up the keyboard as ttya, etc.
  */
 static int
-zsmatch(parent, vcf, aux)
+zsmatch(parent, cf, aux)
 	struct device *parent;
-	void *vcf, *aux;
+	struct cfdata *cf;
+	void *aux;
 {
-	struct cfdata *cf = vcf;
 	struct confargs *ca = aux;
 	struct romaux *ra = &ca->ca_ra;
 

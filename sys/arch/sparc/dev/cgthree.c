@@ -1,4 +1,4 @@
-/*	$NetBSD: cgthree.c,v 1.31 1996/10/13 02:59:39 christos Exp $ */
+/*	$NetBSD: cgthree.c,v 1.32 1996/12/10 22:54:52 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -89,7 +89,7 @@ struct cgthree_softc {
 
 /* autoconfiguration driver */
 static void	cgthreeattach(struct device *, struct device *, void *);
-static int	cgthreematch(struct device *, void *, void *);
+static int	cgthreematch(struct device *, struct cfdata *, void *);
 static void	cgthreeunblank(struct device *);
 
 /* cdevsw prototypes */
@@ -134,11 +134,11 @@ struct cg3_videoctrl {
  * Match a cgthree.
  */
 int
-cgthreematch(parent, vcf, aux)
+cgthreematch(parent, cf, aux)
 	struct device *parent;
-	void *vcf, *aux;
+	struct cfdata *cf;
+	void *aux;
 {
-	struct cfdata *cf = vcf;
 	struct confargs *ca = aux;
 	struct romaux *ra = &ca->ca_ra;
 
