@@ -1,4 +1,4 @@
-/* $NetBSD: user.c,v 1.19 2000/05/09 09:25:21 agc Exp $ */
+/* $NetBSD: user.c,v 1.20 2000/05/16 20:23:28 agc Exp $ */
 
 /*
  * Copyright (c) 1999 Alistair G. Crooks.  All rights reserved.
@@ -36,7 +36,7 @@
 __COPYRIGHT(
 	"@(#) Copyright (c) 1999 \
 	        The NetBSD Foundation, Inc.  All rights reserved.");
-__RCSID("$NetBSD: user.c,v 1.19 2000/05/09 09:25:21 agc Exp $");
+__RCSID("$NetBSD: user.c,v 1.20 2000/05/16 20:23:28 agc Exp $");
 #endif
 
 #include <sys/types.h>
@@ -128,14 +128,6 @@ typedef struct user_t {
 #define DEF_EXPIRE	(char *) NULL
 #endif
 
-#ifndef MASTER
-#define MASTER		"/etc/master.passwd"
-#endif
-
-#ifndef ETCGROUP
-#define ETCGROUP	"/etc/group"
-#endif
-
 #ifndef WAITSECS
 #define WAITSECS	10
 #endif
@@ -220,7 +212,6 @@ strlcpy(char *to, char *from, size_t tosize)
 }
 #endif
 
-#ifdef EXTENSIONS
 /* return 1 if all of `s' is numeric */
 static int
 is_number(char *s)
@@ -232,7 +223,6 @@ is_number(char *s)
 	}
 	return 1;
 }
-#endif
 
 /*
  * check that the effective uid is 0 - called from funcs which will
@@ -292,15 +282,15 @@ creategid(char *group, int gid, char *name)
 		warnx("group `%s' already exists", group);
 		return 0;
 	}
-	if ((from = fopen(ETCGROUP, "r")) == (FILE *) NULL) {
-		warn("can't create gid for %s: can't open %s", name, ETCGROUP);
+	if ((from = fopen(_PATH_GROUP, "r")) == (FILE *) NULL) {
+		warn("can't create gid for %s: can't open %s", name, _PATH_GROUP);
 		return 0;
 	}
 	if (flock(fileno(from), LOCK_EX | LOCK_NB) < 0) {
-		warn("can't lock `%s'", ETCGROUP);
+		warn("can't lock `%s'", _PATH_GROUP);
 	}
 	(void) fstat(fileno(from), &st);
-	(void) snprintf(f, sizeof(f), "%s.XXXXXX", ETCGROUP);
+	(void) snprintf(f, sizeof(f), "%s.XXXXXX", _PATH_GROUP);
 	if ((fd = mkstemp(f)) < 0) {
 		(void) fclose(from);
 		warn("can't create gid: mkstemp failed");
@@ -325,11 +315,11 @@ creategid(char *group, int gid, char *name)
 	(void) fprintf(to, "%s:*:%d:%s\n", group, gid, name);
 	(void) fclose(from);
 	(void) fclose(to);
-	if (rename(f, ETCGROUP) < 0) {
-		warn("can't create gid: can't rename `%s' to `%s'", f, ETCGROUP);
+	if (rename(f, _PATH_GROUP) < 0) {
+		warn("can't create gid: can't rename `%s' to `%s'", f, _PATH_GROUP);
 		return 0;
 	}
-	(void) chmod(ETCGROUP, st.st_mode & 07777);
+	(void) chmod(_PATH_GROUP, st.st_mode & 07777);
 	return 1;
 }
 
@@ -348,15 +338,15 @@ modify_gid(char *group, char *newent)
 	int		fd;
 	int		cc;
 
-	if ((from = fopen(ETCGROUP, "r")) == (FILE *) NULL) {
-		warn("can't create gid for %s: can't open %s", group, ETCGROUP);
+	if ((from = fopen(_PATH_GROUP, "r")) == (FILE *) NULL) {
+		warn("can't create gid for %s: can't open %s", group, _PATH_GROUP);
 		return 0;
 	}
 	if (flock(fileno(from), LOCK_EX | LOCK_NB) < 0) {
-		warn("can't lock `%s'", ETCGROUP);
+		warn("can't lock `%s'", _PATH_GROUP);
 	}
 	(void) fstat(fileno(from), &st);
-	(void) snprintf(f, sizeof(f), "%s.XXXXXX", ETCGROUP);
+	(void) snprintf(f, sizeof(f), "%s.XXXXXX", _PATH_GROUP);
 	if ((fd = mkstemp(f)) < 0) {
 		(void) fclose(from);
 		warn("can't create gid: mkstemp failed");
@@ -395,11 +385,11 @@ modify_gid(char *group, char *newent)
 	}
 	(void) fclose(from);
 	(void) fclose(to);
-	if (rename(f, ETCGROUP) < 0) {
-		warn("can't create gid: can't rename `%s' to `%s'", f, ETCGROUP);
+	if (rename(f, _PATH_GROUP) < 0) {
+		warn("can't create gid: can't rename `%s' to `%s'", f, _PATH_GROUP);
 		return 0;
 	}
-	(void) chmod(ETCGROUP, st.st_mode & 07777);
+	(void) chmod(_PATH_GROUP, st.st_mode & 07777);
 	return 1;
 }
 
@@ -647,11 +637,11 @@ adduser(char *login, user_t *up)
 	if (!valid_login(login)) {
 		errx(EXIT_FAILURE, "`%s' is not a valid login name", login);
 	}
-	if ((masterfd = open(MASTER, O_RDONLY)) < 0) {
-		err(EXIT_FAILURE, "can't open `%s'", MASTER);
+	if ((masterfd = open(_PATH_MASTERPASSWD, O_RDONLY)) < 0) {
+		err(EXIT_FAILURE, "can't open `%s'", _PATH_MASTERPASSWD);
 	}
 	if (flock(masterfd, LOCK_EX | LOCK_NB) < 0) {
-		err(EXIT_FAILURE, "can't lock `%s'", MASTER);
+		err(EXIT_FAILURE, "can't lock `%s'", _PATH_MASTERPASSWD);
 	}
 	pw_init();
 	if ((ptmpfd = pw_lock(WAITSECS)) < 0) {
@@ -800,11 +790,11 @@ moduser(char *login, char *newlogin, user_t *up)
 	if ((pwp = getpwnam(login)) == (struct passwd *) NULL) {
 		errx(EXIT_FAILURE, "No such user `%s'", login);
 	}
-	if ((masterfd = open(MASTER, O_RDONLY)) < 0) {
-		err(EXIT_FAILURE, "can't open `%s'", MASTER);
+	if ((masterfd = open(_PATH_MASTERPASSWD, O_RDONLY)) < 0) {
+		err(EXIT_FAILURE, "can't open `%s'", _PATH_MASTERPASSWD);
 	}
 	if (flock(masterfd, LOCK_EX | LOCK_NB) < 0) {
-		err(EXIT_FAILURE, "can't lock `%s'", MASTER);
+		err(EXIT_FAILURE, "can't lock `%s'", _PATH_MASTERPASSWD);
 	}
 	pw_init();
 	if ((ptmpfd = pw_lock(WAITSECS)) < 0) {
@@ -815,7 +805,7 @@ moduser(char *login, char *newlogin, user_t *up)
 		(void) close(masterfd);
 		(void) close(ptmpfd);
 		(void) pw_abort();
-		err(EXIT_FAILURE, "can't fdopen fd for %s", MASTER);
+		err(EXIT_FAILURE, "can't fdopen fd for %s", _PATH_MASTERPASSWD);
 	}
 	if (up != (user_t *) NULL) {
 		if (up->u_mkdir) {
@@ -978,22 +968,23 @@ usermgmt_usage(char *prog)
 	} else if (strcmp(prog, "userdel") == 0) {
 		(void) fprintf(stderr, "Usage: %s -D [-p preserve]\n", prog);
 		(void) fprintf(stderr, "Usage: %s [-p preserve] [-r] [-v] "
-		    "user\n", prog);
+			"user\n", prog);
 #ifdef EXTENSIONS
 	} else if (strcmp(prog, "userinfo") == 0) {
 		(void) fprintf(stderr, "Usage: %s [-e] [-v] user\n", prog);
 #endif
 	} else if (strcmp(prog, "groupadd") == 0) {
 		(void) fprintf(stderr, "Usage: %s [-g gid] [-o] [-v] group\n",
-		    prog);
+			prog);
 	} else if (strcmp(prog, "groupdel") == 0) {
 		(void) fprintf(stderr, "Usage: %s [-v] group\n", prog);
 	} else if (strcmp(prog, "groupmod") == 0) {
 		(void) fprintf(stderr, "Usage: %s [-g gid] [-o] [-n newname] "
-		    "[-v] group\n", prog);
+			"[-v] group\n", prog);
 	} else if (strcmp(prog, "user") == 0 || strcmp(prog, "group") == 0) {
-		(void) fprintf(stderr, "Usage: %s ( add | del | mod ) ...\n",
-		    prog);
+		(void) fprintf(stderr,
+			"Usage: %s ( add | del | mod | info ) ...\n",
+			prog);
 #ifdef EXTENSIONS
 	} else if (strcmp(prog, "groupinfo") == 0) {
 		(void) fprintf(stderr, "Usage: %s [-e] [-v] group\n", prog);
@@ -1028,7 +1019,15 @@ useradd(int argc, char **argv)
 			bigD = 1;
 			break;
 		case 'G':
-			memsave(&u.u_groupv[u.u_groupc++], optarg, strlen(optarg));
+			while ((u.u_groupv[u.u_groupc] = strsep(&optarg, ",")) != NULL &&
+			       u.u_groupc < NGROUPS_MAX) {
+				if (u.u_groupv[u.u_groupc][0] != 0) {
+					u.u_groupc++;
+				}
+			}
+			if (optarg != NULL) {
+				warnx("Truncated list of secondary groups to %d entries", NGROUPS_MAX);
+			}
 			break;
 		case 'b':
 			defaultfield = 1;
@@ -1137,7 +1136,15 @@ usermod(int argc, char **argv)
 	while ((c = getopt(argc, argv, "G:c:d:e:f:g:l:mos:u:" MOD_OPT_EXTENSIONS)) != -1) {
 		switch(c) {
 		case 'G':
-			memsave(&u.u_groupv[u.u_groupc++], optarg, strlen(optarg));
+			while ((u.u_groupv[u.u_groupc] = strsep(&optarg, ",")) != NULL &&
+			       u.u_groupc < NGROUPS_MAX) {
+				if (u.u_groupv[u.u_groupc][0] != 0) {
+					u.u_groupc++;
+				}
+			}
+			if (optarg != NULL) {
+				warnx("Truncated list of secondary groups to %d entries", NGROUPS_MAX);
+			}
 			break;
 		case 'c':
 			memsave(&u.u_comment, optarg, strlen(optarg));
@@ -1322,7 +1329,7 @@ groupadd(int argc, char **argv)
 		warnx("warning - invalid group name `%s'", argv[optind]);
 	}
 	if (!creategid(argv[optind], gid, "")) {
-		err(EXIT_FAILURE, "can't add group: problems with %s file", ETCGROUP);
+		err(EXIT_FAILURE, "can't add group: problems with %s file", _PATH_GROUP);
 	}
 	return EXIT_SUCCESS;
 }
@@ -1353,7 +1360,7 @@ groupdel(int argc, char **argv)
 	}
 	checkeuid();
 	if (!modify_gid(argv[optind], NULL)) {
-		err(EXIT_FAILURE, "can't change %s file", ETCGROUP);
+		err(EXIT_FAILURE, "can't change %s file", _PATH_GROUP);
 	}
 	return EXIT_SUCCESS;
 }
@@ -1426,7 +1433,7 @@ groupmod(int argc, char **argv)
 			(cpp[1] == NULL) ? "" : ",");
 	}
 	if (!modify_gid(argv[optind], buf)) {
-		err(EXIT_FAILURE, "can't change %s file", ETCGROUP);
+		err(EXIT_FAILURE, "can't change %s file", _PATH_GROUP);
 	}
 	return EXIT_SUCCESS;
 }
