@@ -1,4 +1,4 @@
-/* $NetBSD: osf1_exec_ecoff.c,v 1.4 2002/08/26 21:06:02 christos Exp $ */
+/* $NetBSD: osf1_exec_ecoff.c,v 1.5 2002/11/29 19:40:14 jdolecek Exp $ */
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: osf1_exec_ecoff.c,v 1.4 2002/08/26 21:06:02 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: osf1_exec_ecoff.c,v 1.5 2002/11/29 19:40:14 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -191,20 +191,22 @@ osf1_exec_ecoff_dynamic(struct proc *p, struct exec_package *epp)
 	struct ecoff_exechdr ldr_exechdr;
 	struct nameidata nd;
 	struct vnode *ldr_vp;
-	const char *pathbuf;
         size_t resid;  
 	int error;
 
+	strncpy(emul_arg->loader_name, OSF1_LDR_EXEC_DEFAULT_LOADER,
+		MAXPATHLEN + 1);
+
 	/*
 	 * locate the loader
+	 * includes /emul/osf1 if appropriate
 	 */
-	error = emul_find(p, NULL, epp->ep_esch->es_emul->e_path,
-	    OSF1_LDR_EXEC_DEFAULT_LOADER, &pathbuf, 0);
-	/* includes /emul/osf1 if appropriate */
-	strncpy(emul_arg->loader_name, pathbuf, MAXPATHLEN + 1);
+	error = emul_find_interp(p, epp->ep_esch->es_emul->e_path,
+	    emul_arg->loader_name);
+	if (error)
+		return error;
+
 	emul_arg->flags |= OSF1_EXEC_EMUL_FLAGS_HAVE_LOADER;
-	if (!error)
-		free((char *)pathbuf, M_TEMP);
 
 #if 0
 	uprintf("loader is %s\n", emul_arg->loader_name);
