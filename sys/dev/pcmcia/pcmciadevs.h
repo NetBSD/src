@@ -1,10 +1,10 @@
-/*	$NetBSD: pcmciadevs.h,v 1.11 1998/08/15 20:46:31 thorpej Exp $	*/
+/*	$NetBSD: pcmciadevs.h,v 1.12 1998/08/15 21:29:24 thorpej Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcmciadevs,v 1.10 1998/08/15 20:46:06 thorpej Exp 
+ *	NetBSD: pcmciadevs,v 1.11 1998/08/15 21:28:26 thorpej Exp 
  */
 
 /*
@@ -42,12 +42,14 @@
  * List of known PCMCIA vendors
  */
 
+#define	PCMCIA_VENDOR_NEWMEDIA	0x0057	/* NewMedia Corporation */
 #define	PCMCIA_VENDOR_IBM	0x00a4	/* IBM Corporation */
 #define	PCMCIA_VENDOR_MOTOROLA	0x0109	/* Motorola Corporation */
 #define	PCMCIA_VENDOR_3COM	0x0101	/* 3Com Corporation */
 #define	PCMCIA_VENDOR_MEGAHERTZ	0x0102	/* Megahertz Corporation */
 #define	PCMCIA_VENDOR_SOCKET	0x0104	/* Socket Communications */
 #define	PCMCIA_VENDOR_TDK	0x0105	/* TDK Corporation */
+#define	PCMCIA_VENDOR_SMC	0x0108	/* Standard Microsystems Corporation */
 #define	PCMCIA_VENDOR_USROBOTICS	0x0115	/* US Robotics Corporation */
 #define	PCMCIA_VENDOR_MEGAHERTZ2	0x0128	/* Megahertz Corporation */
 #define	PCMCIA_VENDOR_ADAPTEC	0x012f	/* Adaptec Corporation */
@@ -55,9 +57,6 @@
 #define	PCMCIA_VENDOR_SIMPLETECH	0x014d	/* Simple Technology */
 #define	PCMCIA_VENDOR_DAYNA	0x0194	/* Dayna Corporation */
 #define	PCMCIA_VENDOR_IODATA	0x01bf	/* I-O DATA */
-#define	PCMCIA_VENDOR_NEWMEDIA	0x0057	/* NewMedia Corporation */
-#define	PCMCIA_VENDOR_SOCKET	0x0104	/* Socket Communications */
-#define	PCMCIA_VENDOR_SMC	0x0108	/* Standard Microsystems Corporation */
 
 /*
  * List of known products.  Grouped by vendor.
