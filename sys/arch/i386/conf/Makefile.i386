@@ -1,6 +1,6 @@
 # Copyright 1990 W. Jolitz
 # 	from: @(#)Makefile.i386	7.1 5/10/91
-#	$Id: Makefile.i386,v 1.34 1993/10/17 20:56:09 pk Exp $
+#	$Id: Makefile.i386,v 1.35 1993/10/18 14:35:45 pk Exp $
 #
 # Makefile for NetBSD
 #
@@ -52,7 +52,7 @@ DRIVER_C_C= ${CC} -c ${CFLAGS} ${PROF} ${PARAM} $<
 SYSTEM_OBJS=locore.o ${OBJS} param.o ioconf.o conf.o ${LIBKERN}
 SYSTEM_DEP=Makefile symbols.sort ${SYSTEM_OBJS}
 SYSTEM_LD_HEAD= 	@echo loading $@; rm -f $@
-SYSTEM_LD= @${LD} -z -e start T ${LOAD_ADDRESS} -o $@ -X vers.o ${SYSTEM_OBJS}
+SYSTEM_LD= @${LD} -z -e start -T ${LOAD_ADDRESS} -o $@ -X vers.o ${SYSTEM_OBJS}
 SYSTEM_LD_TAIL= @echo rearranging symbols; symorder symbols.sort $@; ${DBSYM} -fT ${LOAD_ADDRESS} $@; ${STRIP} -x $@; size $@; chmod 755 $@
 
 # (XXX) ok, this is weird.  but we've got a working ed, and a broken ex, and
