@@ -1,4 +1,4 @@
-/*	$NetBSD: wireg.h,v 1.36 2002/08/11 00:00:41 thorpej Exp $	*/
+/*	$NetBSD: wireg.h,v 1.37 2002/08/11 06:13:54 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -765,3 +765,4 @@ struct wi_frame {
 #define WI_SNAP_WORD0		(WI_SNAP_K1 | (WI_SNAP_K1 << 8))
 #define WI_SNAP_WORD1		(WI_SNAP_K2 | (WI_SNAP_CONTROL << 8))
 #define WI_SNAPHDR_LEN		0x6
+#define	WI_FCS_LEN		0x4
