@@ -1,4 +1,4 @@
-/*	$NetBSD: irqhandler.h,v 1.10 1997/10/14 09:20:21 mark Exp $	*/
+/*	$NetBSD: irqhandler.h,v 1.11 1998/02/21 23:16:28 mark Exp $	*/
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -250,9 +250,6 @@ int intr_release __P((void *ih));
 void irq_setmasks __P((void));
 void disable_irq __P((int));
 void enable_irq __P((int));
-u_int enable_interrupts __P((u_int));
-u_int disable_interrupts __P((u_int));
-u_int restore_interrupts __P((u_int));
 #endif	/* _KERNEL */
 #endif	/* _LOCORE */
 
