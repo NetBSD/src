@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipiconf.c,v 1.3 1997/10/01 01:19:13 enami Exp $	*/
+/*	$NetBSD: scsipiconf.c,v 1.4 1997/10/03 02:04:20 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
@@ -118,7 +118,7 @@ scsipi_dtype(type)
 	switch (type) {
 	case T_DIRECT:
 		dtype = "direct";
-			break;
+		break;
 	case T_SEQUENTIAL:
 		dtype = "sequential";
 		break;
@@ -128,11 +128,11 @@ scsipi_dtype(type)
 	case T_PROCESSOR:
 		dtype = "processor";
 		break;
-	case T_CDROM:
-		dtype = "cdrom";
-		break;
 	case T_WORM:
 		dtype = "worm";
+		break;
+	case T_CDROM:
+		dtype = "cdrom";
 		break;
 	case T_SCANNER:
 		dtype = "scanner";
@@ -145,6 +145,16 @@ scsipi_dtype(type)
 		break;
 	case T_COMM:
 		dtype = "communication";
+		break;
+	case T_IT8_1:
+	case T_IT8_2:
+		dtype = "it8";		/* ??? */
+		break;
+	case T_STORARRAY:
+		dtype = "storage array";
+		break;
+	case T_ENCLOSURE:
+		dtype = "enclosure services";
 		break;
 	case T_NODEVICE:
 		panic("scsipi_dtype: impossible device type");

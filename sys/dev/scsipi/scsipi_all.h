@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipi_all.h,v 1.4 1997/10/02 16:03:47 mjacob Exp $	*/
+/*	$NetBSD: scsipi_all.h,v 1.5 1997/10/03 02:04:19 thorpej Exp $	*/
 
 /*
  * SCSI and SCSI-like general interface description
@@ -102,25 +102,28 @@ struct scsipi_sense_data {
 
 
 struct scsipi_sense_data_unextended {
-/* 1*/	u_int8_t error_code;
+/* 1*/	u_int8_t error_code; 
 /* 4*/	u_int8_t block[3];
-};
+}; 
 
-#define	T_DIRECT	0
-#define	T_SEQUENTIAL	1
-#define	T_PRINTER	2
-#define	T_PROCESSOR	3
-#define	T_WORM		4
-#define	T_CDROM		5
-#define	T_SCANNER 	6
-#define	T_OPTICAL 	7
+#define	T_DIRECT	0x00	/* direct access device */
+#define	T_SEQUENTIAL	0x01	/* sequential access device */
+#define	T_PRINTER	0x02	/* printer device */
+#define	T_PROCESSOR	0x03	/* processor device */
+#define	T_WORM		0x04	/* write once, read many device */
+#define	T_CDROM		0x05	/* cd-rom device */
+#define	T_SCANNER 	0x06	/* scanner device */
+#define	T_OPTICAL 	0x07	/* optical memory device */
+#define	T_CHANGER	0x08	/* medium changer device */
+#define	T_COMM		0x09	/* communication device */
+#define	T_IT8_1		0x0a	/* ??? */
+#define	T_IT8_2		0x0b	/* ??? */
+#define	T_STORARRAY	0x0c	/* storage array device */
+#define	T_ENCLOSURE	0x0d	/* enclosure services device */
 #define	T_NODEVICE	0x1F
 
-#define	T_CHANGER	8
-#define	T_COMM		9
-
-#define	T_REMOV		1
-#define	T_FIXED		0
+#define	T_REMOV		1	/* device is removable */
+#define	T_FIXED		0	/* device is not removable */
 
 /*
  * XXX
