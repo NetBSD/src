@@ -1,4 +1,4 @@
-#	$NetBSD: files.ixdp425,v 1.3 2003/05/31 01:16:31 ichiro Exp $
+#	$NetBSD: files.ixdp425,v 1.4 2003/09/25 14:11:18 ichiro Exp $
 #
 # Intel IXP425 networkproccesor board configuration info
 #
@@ -33,3 +33,14 @@ file    arch/evbarm/ixdp425/ixdp425_led.c		ixdpled needs-flag
 # "device" declaration in files.evbarm (because of needs-flag)
 attach	ixpcom at ixpsip with ixpcom_ixdp
 file	arch/evbarm/ixdp425/ixpcom_ixdp425.c		ixpcom_ixdp
+
+#
+# Machine-independent CardBus drivers
+#
+
+# XXX dev/pcmcia needs fdc
+#device fdc {drive = -1}
+
+#include "dev/pcmcia/files.pcmcia"
+
+#file	arch/evbarm/ixdp425/rbus_machdep.c          cardbus

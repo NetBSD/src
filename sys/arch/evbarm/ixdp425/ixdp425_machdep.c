@@ -1,4 +1,4 @@
-/*	$NetBSD: ixdp425_machdep.c,v 1.6 2003/07/15 00:25:05 lukem Exp $ */
+/*	$NetBSD: ixdp425_machdep.c,v 1.7 2003/09/25 14:11:18 ichiro Exp $ */
 /*
  * Copyright (c) 2003
  *	Ichiro FUKUHARA <ichiro@ichiro.org>.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixdp425_machdep.c,v 1.6 2003/07/15 00:25:05 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixdp425_machdep.c,v 1.7 2003/09/25 14:11:18 ichiro Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -314,6 +314,7 @@ cpu_reboot(int howto, char *bootstr)
 
 /* Static device mappings. */
 static const struct pmap_devmap ixp425_devmap[] = {
+	/* Physical/Virtual address for I/O space */
     {
 	IXP425_IO_VBASE,
 	IXP425_IO_HWBASE,
@@ -322,6 +323,7 @@ static const struct pmap_devmap ixp425_devmap[] = {
 	PTE_NOCACHE,
     },
 
+	/* Expansion Bus */
     {
 	IXP425_EXP_VBASE,
 	IXP425_EXP_HWBASE,
@@ -329,11 +331,21 @@ static const struct pmap_devmap ixp425_devmap[] = {
 	VM_PROT_READ|VM_PROT_WRITE,
 	PTE_NOCACHE,
     },
-     
+
+	/* IXP425 PCI Configuration */
     {
 	IXP425_PCI_VBASE,
 	IXP425_PCI_HWBASE,
 	IXP425_PCI_SIZE,
+	VM_PROT_READ|VM_PROT_WRITE,
+	PTE_NOCACHE,
+    },
+
+	/* PCI Memory Space */
+    {
+	IXP425_PCI_MEM_VBASE,
+	IXP425_PCI_MEM_HWBASE,
+	IXP425_PCI_MEM_SIZE,
 	VM_PROT_READ|VM_PROT_WRITE,
 	PTE_NOCACHE,
     },
@@ -398,7 +410,12 @@ initarm(void *arg)
 	/* XXX overwrite bootconfig to hardcoded values */
 	bootconfig.dramblocks = 1;
 	bootconfig.dram[0].address = 0x10000000;
+/* XXX */
+#if BOARDTYPE == zao425
 	bootconfig.dram[0].pages = 0x04000000 / PAGE_SIZE; /* SDRAM 64MB */
+#elif BOARDTYPE == ixdp425
+	bootconfig.dram[0].pages = 0x10000000 / PAGE_SIZE; /* SDRAM 256MB */
+#endif
 
 	kerneldatasize = (u_int32_t)&end - (u_int32_t)KERNEL_TEXT_BASE;
 
@@ -441,7 +458,6 @@ initarm(void *arg)
 	freemempos = 0x10000000;
 
 #ifdef VERBOSE_INIT_ARM
-        printf("CP15 Register1 = 0x%08x\n", cpu_get_control());
         printf("physical_start = 0x%08lx, physical_end = 0x%08lx\n",
                 physical_start, physical_end);
 #endif
@@ -761,13 +777,15 @@ initarm(void *arg)
 void
 consinit(void)
 {
-	extern struct bus_space ixpsip_bs_tag;
 	static int consinit_called;
 
 	if (consinit_called != 0)
 		return;
 
 	consinit_called = 1;
+
+	pmap_devmap_register(ixp425_devmap);
+
 	if (ixdp_ixp4xx_comcnattach(&ixpsip_bs_tag, comcnunit,
 				comcnspeed, FREQ, comcnmode))
 		panic("can't init serial console (UART%d)", comcnunit);
