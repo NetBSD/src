@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.65 1998/08/22 22:06:23 tv Exp $
+#	$NetBSD: Makefile,v 1.66 1998/08/27 14:11:45 tv Exp $
 
 .include <bsd.own.mk>			# for configuration variables.
 
@@ -63,8 +63,7 @@ build: beforeinstall
 	(cd ${.CURDIR}/gnu/lib/libgcc && \
 	    ${MAKE} depend && NOMAN= ${MAKE} && NOMAN= ${MAKE} install)
 .else
-.if	(${MACHINE_ARCH} != "alpha") && \
-	(${MACHINE_ARCH} != "powerpc")
+.if	(${MACHINE_ARCH} != "powerpc")
 	(cd ${.CURDIR}/gnu/usr.bin/gcc/libgcc && \
 	    ${MAKE} depend && NOMAN= ${MAKE} && NOMAN= ${MAKE} install)
 .endif
