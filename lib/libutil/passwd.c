@@ -32,7 +32,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$NetBSD: passwd.c,v 1.6 1997/05/22 03:08:42 lukem Exp $";
+static char rcsid[] = "$NetBSD: passwd.c,v 1.7 1997/06/20 06:17:27 mikel Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -157,7 +157,7 @@ pw_edit(notsetuid, filename)
 		editor = strdup(_PATH_VI);
 	else
 		editor = strdup(editor);
-	if (p = strrchr(editor, '/'))
+	if ((p = strrchr(editor, '/')))
 		++p;
 	else
 		p = editor;
@@ -360,7 +360,7 @@ pw_scan(bp, pw, flags)
 				break;	
 		}
 
-	if (p = strsep(&bp, ":")) {			/* too many */
+	if ((p = strsep(&bp, ":"))) {			/* too many */
 fmt:		warnx("corrupted entry");
 		return (0);
 	}
