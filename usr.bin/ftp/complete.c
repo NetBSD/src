@@ -1,4 +1,4 @@
-/*	$NetBSD: complete.c,v 1.35 1999/11/26 21:41:55 lukem Exp $	*/
+/*	$NetBSD: complete.c,v 1.36 1999/11/28 06:32:04 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1997-1999 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: complete.c,v 1.35 1999/11/26 21:41:55 lukem Exp $");
+__RCSID("$NetBSD: complete.c,v 1.36 1999/11/28 06:32:04 lukem Exp $");
 #endif /* not lint */
 
 /*
@@ -147,14 +147,14 @@ complete_command(word, list)
 	size_t wordlen;
 	unsigned char rv;
 
-	words = sl_init();
+	words = xsl_init();
 	wordlen = strlen(word);
 
 	for (c = cmdtab; c->c_name != NULL; c++) {
 		if (wordlen > strlen(c->c_name))
 			continue;
 		if (strncmp(word, c->c_name, wordlen) == 0)
-			sl_add(words, c->c_name);
+			xsl_add(words, c->c_name);
 	}
 
 	rv = complete_ambiguous(word, list, words);
@@ -206,8 +206,7 @@ complete_local(word, list)
 	if ((dd = opendir(dir)) == NULL)
 		return (CC_ERROR);
 
-	words = sl_init();
-
+	words = xsl_init();
 	len = strlen(file);
 
 	for (dp = readdir(dd); dp != NULL; dp = readdir(dd)) {
@@ -225,7 +224,7 @@ complete_local(word, list)
 			char *tcp;
 
 			tcp = xstrdup(dp->d_name);
-			sl_add(words, tcp);
+			xsl_add(words, tcp);
 		}
 	}
 	closedir(dd);
@@ -264,14 +263,14 @@ complete_option(word, list)
 	size_t wordlen;
 	unsigned char rv;
 
-	words = sl_init();
+	words = xsl_init();
 	wordlen = strlen(word);
 
 	for (o = optiontab; o->name != NULL; o++) {
 		if (wordlen > strlen(o->name))
 			continue;
 		if (strncmp(word, o->name, wordlen) == 0)
-			sl_add(words, o->name);
+			xsl_add(words, o->name);
 	}
 
 	rv = complete_ambiguous(word, list, words);
@@ -319,7 +318,7 @@ complete_remote(word, list)
 
 		if (dirlist != NULL)
 			sl_free(dirlist, 1);
-		dirlist = sl_init();
+		dirlist = xsl_init();
 
 		mflag = 1;
 		emesg = NULL;
@@ -338,7 +337,7 @@ complete_remote(word, list)
 			else
 				tcp = cp;
 			tcp = xstrdup(tcp);
-			sl_add(dirlist, tcp);
+			xsl_add(dirlist, tcp);
 		}
 		if (emesg != NULL) {
 			fprintf(ttyout, "\n%s\n", emesg);
@@ -348,13 +347,13 @@ complete_remote(word, list)
 		dirchange = 0;
 	}
 
-	words = sl_init();
+	words = xsl_init();
 	for (i = 0; i < dirlist->sl_cur; i++) {
 		cp = dirlist->sl_str[i];
 		if (strlen(file) > strlen(cp))
 			continue;
 		if (strncmp(file, cp, strlen(file)) == 0)
-			sl_add(words, cp);
+			xsl_add(words, cp);
 	}
 	rv = complete_ambiguous(file, list, words);
 	sl_free(words, 0);
@@ -393,7 +392,8 @@ complete(el, ch)
 	dolist = 0;
 			/* if cursor and word is same, list alternatives */
 	if (lastc_argc == cursor_argc && lastc_argo == cursor_argo
-	    && strncmp(word, margv[cursor_argc], cursor_argo) == 0)
+	    && strncmp(word, margv[cursor_argc] ? margv[cursor_argc] : "",
+			cursor_argo) == 0)
 		dolist = 1;
 	else if (cursor_argc < margc)
 		(void)strlcpy(word, margv[cursor_argc], cursor_argo + 1);

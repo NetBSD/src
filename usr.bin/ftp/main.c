@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.68 1999/11/26 21:41:56 lukem Exp $	*/
+/*	$NetBSD: main.c,v 1.69 1999/11/28 06:32:05 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1996-1999 The NetBSD Foundation, Inc.
@@ -108,7 +108,7 @@ __COPYRIGHT("@(#) Copyright (c) 1985, 1989, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.6 (Berkeley) 10/9/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.68 1999/11/26 21:41:56 lukem Exp $");
+__RCSID("$NetBSD: main.c,v 1.69 1999/11/28 06:32:05 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -211,7 +211,7 @@ main(argc, argv)
 	if (sndbuf_size <= 0)
 		sndbuf_size = 8192;
 
-	marg_sl = sl_init();
+	marg_sl = xsl_init();
 	if ((tmpdir = getenv("TMPDIR")) == NULL)
 		tmpdir = _PATH_TMP;
 
@@ -692,7 +692,7 @@ makeargv()
 	marg_sl->sl_cur = 0;		/* reset to start of marg_sl */
 	for (margc = 0; ; margc++) {
 		argp = slurpstring();
-		sl_add(marg_sl, argp);
+		xsl_add(marg_sl, argp);
 		if (argp == NULL)
 			break;
 	}
@@ -874,13 +874,13 @@ help(argc, argv)
 	if (argc == 1) {
 		StringList *buf;
 
-		buf = sl_init();
+		buf = xsl_init();
 		fprintf(ttyout,
 		    "%sommands may be abbreviated.  Commands are:\n\n",
 		    proxy ? "Proxy c" : "C");
 		for (c = cmdtab; (p = c->c_name) != NULL; c++)
 			if (!proxy || c->c_proxy)
-				sl_add(buf, p);
+				xsl_add(buf, p);
 		list_vertical(buf);
 		sl_free(buf, 0);
 		return;
