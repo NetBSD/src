@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr.c,v 1.101 2000/04/08 13:49:43 tsutsui Exp $	*/
+/*	$NetBSD: ncr.c,v 1.102 2000/06/26 15:29:34 mrg Exp $	*/
 
 /**************************************************************************
 **
@@ -221,8 +221,10 @@
 #include <machine/clock.h>
 #endif
 #include <vm/vm.h>
+#ifndef __NetBSD__
 #include <vm/pmap.h>
 #include <vm/vm_extern.h>
+#endif
 #endif /* KERNEL */
 
 
@@ -1534,7 +1536,7 @@ static	int	read_tekram_eeprom
 
 #if 0
 static char ident[] =
-	"\n$NetBSD: ncr.c,v 1.101 2000/04/08 13:49:43 tsutsui Exp $\n";
+	"\n$NetBSD: ncr.c,v 1.102 2000/06/26 15:29:34 mrg Exp $\n";
 #endif
 
 static const u_long	ncr_version = NCR_VERSION	* 11
