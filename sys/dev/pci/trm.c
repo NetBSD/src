@@ -1,4 +1,4 @@
-/*	$NetBSD: trm.c,v 1.9 2002/04/05 03:13:48 mjacob Exp $	*/
+/*	$NetBSD: trm.c,v 1.10 2002/04/05 18:27:55 bouyer Exp $	*/
 /*
  * Device Driver for Tekram DC395U/UW/F, DC315/U
  * PCI SCSI Bus Master Host Adapter
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trm.c,v 1.9 2002/04/05 03:13:48 mjacob Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trm.c,v 1.10 2002/04/05 18:27:55 bouyer Exp $");
 
 /* #define TRM_DEBUG */
 #ifdef TRM_DEBUG
@@ -965,10 +965,8 @@ trm_select(sc, srb)
 	DPRINTF(("trm_select.....\n"));
 
 	if ((srb->xs->xs_control & XS_CTL_POLL) == 0) {
-		int timeout = srb->xs->timeout;
-		timeout = (timeout > 100000) ?
-		    timeout / 1000 * hz : timeout * hz / 1000;
-		callout_reset(&srb->xs->xs_callout, timeout, trm_timeout, srb);
+		callout_reset(&srb->xs->xs_callout, mstohz(srb->xs->timeout),
+		    trm_timeout, srb);
 	}
 
 	bus_space_write_1(iot, ioh, TRM_SCSI_HOSTID, sc->sc_id);
