@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_refclock.c,v 1.2 2003/12/04 16:23:37 drochner Exp $	*/
+/*	$NetBSD: ntp_refclock.c,v 1.3 2004/10/10 22:13:04 christos Exp $	*/
 
 /*
  * ntp_refclock - processing support for reference clocks
@@ -72,7 +72,7 @@
  * This interface is strongly discouraged and may be abandoned in
  * future.
  */
-#define MAXUNIT 	4	/* max units */
+#define MAXUNIT 	8	/* max units */
 #define FUDGEFAC	.1	/* fudge correction factor */
 
 int fdpps;			/* pps file descriptor */
