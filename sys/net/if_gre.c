@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gre.c,v 1.35 2002/06/09 19:17:43 itojun Exp $ */
+/*	$NetBSD: if_gre.c,v 1.36 2002/06/10 17:07:51 itojun Exp $ */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gre.c,v 1.35 2002/06/09 19:17:43 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gre.c,v 1.36 2002/06/10 17:07:51 itojun Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"
@@ -341,9 +341,7 @@ int
 gre_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 {
 	struct proc *p = curproc;	/* XXX */
-	struct ifaddr *ifa = (struct ifaddr *)data;
 	struct ifreq *ifr = (struct ifreq *)data;
-	struct in_ifaddr *ia = (struct in_ifaddr *)data;
 	struct if_laddrreq *lifr = (struct if_laddrreq *)data;
 	struct gre_softc *sc = ifp->if_softc;
 	int s;
@@ -356,26 +354,9 @@ gre_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 	s = splnet();
 	switch (cmd) {
 	case SIOCSIFADDR:
+		ifp->if_flags |= IFF_UP;
+		break;
 	case SIOCSIFDSTADDR: 
-		if ((error = suser(p->p_ucred, &p->p_acflag)) != 0)
-			break;
-		/*
-		 * set tunnel endpoints in case that we "only"
-		 * have ip over ip encapsulation. This allows to
-		 * set tunnel endpoints with ifconfig.
-		 */
-		if (ifa->ifa_addr->sa_family == AF_INET) {
-			sa = ifa->ifa_addr;
-			sc->g_src = (satosin(sa))->sin_addr;
-			sc->g_dst = ia->ia_dstaddr.sin_addr;
-			if ((sc->g_src.s_addr != INADDR_ANY) &&
-			    (sc->g_dst.s_addr != INADDR_ANY)) {
-				if (sc->route.ro_rt != 0) /* free old route */
-					RTFREE(sc->route.ro_rt);
-				if (gre_compute_route(sc) == 0)
-					ifp->if_flags |= IFF_UP;
-			}
-		}
 		break;
 	case SIOCSIFFLAGS:
 		if ((error = suser(p->p_ucred, &p->p_acflag)) != 0)
