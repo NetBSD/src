@@ -1,4 +1,4 @@
-/*	$NetBSD: SYS.h,v 1.5 2002/05/26 11:48:00 wiz Exp $	*/
+/*	$NetBSD: SYS.h,v 1.6 2002/05/26 12:24:55 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -42,7 +42,11 @@
 #include <sys/syscall.h>
 #include <arm/swi.h>
 
+#ifdef __STDC__
 #define SYSTRAP(x)	swi SWI_OS_NETBSD | SYS_ ## x
+#else
+#define SYSTRAP(x)	swi SWI_OS_NETBSD | SYS_/**/x
+#endif
 
 #ifdef __ELF__
 #define	CERROR		_C_LABEL(__cerror)

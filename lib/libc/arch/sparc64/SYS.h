@@ -1,4 +1,4 @@
-/*	$NetBSD: SYS.h,v 1.11 2002/05/26 11:48:04 wiz Exp $	*/
+/*	$NetBSD: SYS.h,v 1.12 2002/05/26 12:24:58 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -45,7 +45,11 @@
 #include <sys/syscall.h>
 #include <machine/trap.h>
 
+#ifdef __STDC__
 #define _CAT(x,y) x##y
+#else
+#define _CAT(x,y) x/**/y
+#endif
 
 /*
  * ERROR branches to cerror.  This is done with a macro so that I can

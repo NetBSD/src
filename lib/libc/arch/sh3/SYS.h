@@ -34,12 +34,13 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)SYS.h	5.5 (Berkeley) 5/7/91
- *	$NetBSD: SYS.h,v 1.3 2002/05/26 11:48:03 wiz Exp $
+ *	$NetBSD: SYS.h,v 1.4 2002/05/26 12:24:58 wiz Exp $
  */
 
 #include <machine/asm.h>
 #include <sys/syscall.h>
 
+#ifdef __STDC__
 #define SYSTRAP(x)					\
 		mov.l	903f, r0;			\
 		.long	0xc380;	/* trapa #0x80 */	\
@@ -49,6 +50,17 @@
 		.align	2;				\
 	903:	.long	(SYS_ ## x);			\
 	904:
+#else
+#define SYSTRAP(x)					\
+		mov.l	903f, r0;			\
+		trapa	#0x80;				\
+		nop;					\
+		bra	904f;				\
+		nop;					\
+		.align	2;				\
+	903:	.long	(SYS_/**/x);			\
+	904:
+#endif
 
 #define _SYSCALL_NOERROR(x,y)				\
 		ENTRY(x);				\
