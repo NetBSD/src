@@ -1,4 +1,4 @@
-/*	$NetBSD: intvec.s,v 1.16 1996/02/17 18:48:59 ragge Exp $   */
+/*	$NetBSD: intvec.s,v 1.17 1996/03/02 13:45:39 ragge Exp $   */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -177,8 +177,14 @@ mcheck:	.globl	mcheck
         rei
 
 L4:	addl2	(sp)+,sp	# remove info pushed on stack
-	mtpr	$0xF,$PR_MCESR	# clear the bus error bit
-	movl	_memtest,(sp)	# REI to new adress
+	cmpl	_cpunumber, $1	# Is it a 11/780?
+	bneq	1f		# No...
+
+	mtpr	$0, $PR_SBIFS	# Clear SBI fault register
+	brb	2f
+
+1:	mtpr	$0xF,$PR_MCESR	# clear the bus error bit
+2:	movl	_memtest,(sp)	# REI to new adress
 	rei
 
 	TRAPCALL(invkstk, T_KSPNOTVAL)

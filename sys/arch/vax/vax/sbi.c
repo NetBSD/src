@@ -1,4 +1,4 @@
-/*	$NetBSD: sbi.c,v 1.5 1996/02/02 18:09:04 mycroft Exp $ */
+/*	$NetBSD: sbi.c,v 1.6 1996/03/02 13:45:48 ragge Exp $ */
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -62,7 +62,6 @@ sbi_print(aux, name)
 		switch (sa->type) {
 		case NEX_MBA:
 			printf("mba%d at %s",nmba++, name);
-			unsupp++;
 			break;
 		default:
 			printf("unknown device 0x%x at %s", sa->type, name);
@@ -141,20 +140,22 @@ sbi_attach(parent, self, aux)
 	 * We have to fake identifying depending on different CPUs.
 	 */
 	for (nexnum = 0; nexnum < maxnex; nexnum++) {
+		volatile int tmp;
+
 		if (badaddr((caddr_t)&nexus[nexnum], 4))
 			continue;
 
-		switch(cpunumber){
+		switch (cpunumber) {
 #ifdef VAX750
 		case VAX_750:
-		{	extern int nexty750[];
+		{	extern	int nexty750[];
 			sa.type = nexty750[nexnum];
 			break;
 		}
 #endif
 #ifdef VAX730
 		case VAX_730:
-		{	extern int nexty730[];
+		{	extern	int nexty730[];
 			sa.type = nexty730[nexnum];
 			break;
 		}
@@ -166,7 +167,8 @@ sbi_attach(parent, self, aux)
 			break;
 #endif
 		default:
-			sa.type = nexus[nexnum].nexcsr.nex_type;
+			tmp = nexus[nexnum].nexcsr.nex_csr; /* no byte reads */
+			sa.type = tmp & 255;
 		}
 		sa.nexnum = nexnum;
 		sa.nexaddr = nexus + nexnum;

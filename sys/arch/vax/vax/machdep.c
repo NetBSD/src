@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.25 1996/02/11 13:43:37 ragge Exp $  */
+/* $NetBSD: machdep.c,v 1.26 1996/03/02 13:45:44 ragge Exp $  */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -697,10 +697,5 @@ ns_cksum()
 
 cmrerr()
 {
-#if 0
-	switch (cpunumber) {
-	case VAX_750:
-		ka750_memerr();
-	}
-#endif
+	(*cpu_calls[cpunumber].cpu_memerr) ();
 }
