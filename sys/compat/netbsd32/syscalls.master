@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.1 1998/08/26 10:20:37 mrg Exp $
+	$NetBSD: syscalls.master,v 1.2 1998/08/26 13:42:50 mrg Exp $
 
 ;	from: NetBSD: syscalls.master,v 1.81 1998/07/05 08:49:50 jonathan Exp
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
@@ -115,7 +115,11 @@
 52	NOARGS		{ int sys_sigpending(void); }
 53	COMPAT_13	{ int compat_sparc32_sigaltstack13(const sparc32_sigaltstack13p_t nss, sparc32_sigaltstack13p_t oss); }
 54	STD		{ int compat_sparc32_ioctl(int fd, sparc32_u_long com, ... sparc32_voidp data); }
-55	COMPAT_12	{ int oreboot(int opt); } oreboot
+#ifdef COMPAT_12
+55	NOARGS		{ int compat_12_sys_reboot(int opt); }
+#else
+55	OBSOL		oreboot
+#endif
 56	STD		{ int compat_sparc32_revoke(const sparc32_charp path); }
 57	STD		{ int compat_sparc32_symlink(const sparc32_charp path, const sparc32_charp link); }
 58	STD		{ int compat_sparc32_readlink(const sparc32_charp path, sparc32_charp buf, sparc32_size_t count); }
