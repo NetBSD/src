@@ -1,4 +1,4 @@
-/*	$NetBSD: px.c,v 1.46 2003/02/20 22:16:06 atatat Exp $	*/
+/*	$NetBSD: px.c,v 1.47 2003/04/02 04:19:49 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: px.c,v 1.46 2003/02/20 22:16:06 atatat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: px.c,v 1.47 2003/04/02 04:19:49 thorpej Exp $");
 
 /*
  * px.c: driver for the DEC TURBOchannel 2D and 3D accelerated framebuffers
@@ -230,7 +230,7 @@ static const u_char px_shuffle[256] = {
 	0xab, 0xeb, 0xbb, 0xfb, 0xaf, 0xef, 0xbf, 0xff,
 };
 
-#define PXMAP_INFO_SIZE	(NBPG)
+#define PXMAP_INFO_SIZE	(PAGE_SIZE)
 #define PXMAP_RBUF_SIZE	(4096 * 16 + 8192 * 2)
 
 /* Need alignment to 8KB here... */
@@ -1954,9 +1954,9 @@ pxmmap(dev, off, prot)
 	/* 
 	 * STIC control registers
 	 */	
-	if (off < NBPG)
+	if (off < PAGE_SIZE)
 		return mips_btop(MIPS_KSEG1_TO_PHYS(pxi->pxi_stic) + off);
-	off -= NBPG;
+	off -= PAGE_SIZE;
 	
 	/*
 	 * STIC poll registers

@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.12 2003/03/11 10:40:16 hannken Exp $	*/
+/*	$NetBSD: cpu.c,v 1.13 2003/04/02 04:22:03 thorpej Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -39,6 +39,8 @@
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/properties.h>
+
+#include <uvm/uvm_extern.h>
 
 #include <machine/cpu.h>
 #include <powerpc/ibm4xx/dev/plbvar.h>
@@ -235,7 +237,8 @@ dcache_flush_page(vaddr_t va)
 	int i;
 
 	if (curcpu()->ci_ci.dcache_line_size)
-		for (i = 0; i < NBPG; i += curcpu()->ci_ci.dcache_line_size)
+		for (i = 0; i < PAGE_SIZE;
+		     i += curcpu()->ci_ci.dcache_line_size)
 			asm volatile("dcbf %0,%1" : : "r" (va), "r" (i));
 	asm volatile("sync;isync" : : );
 }
@@ -246,7 +249,8 @@ icache_flush_page(vaddr_t va)
 	int i;
 
 	if (curcpu()->ci_ci.icache_line_size)
-		for (i = 0; i < NBPG; i += curcpu()->ci_ci.icache_line_size)
+		for (i = 0; i < PAGE_SIZE;
+		     i += curcpu()->ci_ci.icache_line_size)
 			asm volatile("icbi %0,%1" : : "r" (va), "r" (i));
 	asm volatile("sync;isync" : : );
 }

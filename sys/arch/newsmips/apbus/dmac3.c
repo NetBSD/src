@@ -1,4 +1,4 @@
-/*	$NetBSD: dmac3.c,v 1.4 2002/10/02 04:27:51 thorpej Exp $	*/
+/*	$NetBSD: dmac3.c,v 1.5 2003/04/02 04:17:50 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000 Tsubai Masanari.  All rights reserved.
@@ -162,9 +162,9 @@ dmac3_start(sc, addr, len, direction)
 	start = mips_trunc_page(addr);
 	end   = mips_round_page(addr + len);
 	p = sc->sc_dmamap;
-	for (v = start; v < end; v += NBPG) {
+	for (v = start; v < end; v += PAGE_SIZE) {
 		pa = kvtophys(v);
-		mips_dcache_wbinv_range(MIPS_PHYS_TO_KSEG0(pa), NBPG);
+		mips_dcache_wbinv_range(MIPS_PHYS_TO_KSEG0(pa), PAGE_SIZE);
 		*p++ = 0;
 		*p++ = (pa >> PGSHIFT) | 0xc0000000;
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: scsi_1185.c,v 1.9 2002/05/31 21:43:49 thorpej Exp $	*/
+/*	$NetBSD: scsi_1185.c,v 1.10 2003/04/02 04:17:52 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -59,6 +59,8 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
+
+#include <uvm/uvm_extern.h>
 
 #include <dev/scsipi/scsi_all.h>
 #include <dev/scsipi/scsipi_all.h>
@@ -1802,7 +1804,7 @@ clean_k2dcache(scb)
 		for (i = 0; i < pages; i++) {
 			pa = sc_map->mp_addr[i] << PGSHIFT;
 			mips_dcache_wbinv_range_index(MIPS_PHYS_TO_KSEG0(pa),
-			    NBPG);
+			    PAGE_SIZE);
 		}
 	}
 }

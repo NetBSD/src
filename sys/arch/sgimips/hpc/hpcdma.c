@@ -1,4 +1,4 @@
-/*	$NetBSD: hpcdma.c,v 1.5 2002/11/09 18:49:02 thorpej Exp $	*/
+/*	$NetBSD: hpcdma.c,v 1.6 2003/04/02 04:27:19 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001 Wayne Knowles
@@ -48,6 +48,8 @@
 #include <sys/device.h>
 #include <sys/buf.h>
 
+#include <uvm/uvm_extern.h>
+
 #include <machine/bus.h>
 
 #include <sgimips/hpc/hpcvar.h>
@@ -76,10 +78,10 @@ hpcdma_init(struct hpc_attach_args *haa, struct hpc_dma_softc *sc, int ndesc)
 
 	/* Alloc 1 additional descriptor - needed for DMA bug fix */
 	allocsz = sizeof(struct hpc_dma_desc) * (ndesc + 1);
-	KASSERT(allocsz <= NBPG);
+	KASSERT(allocsz <= PAGE_SIZE);
 
-	if (bus_dmamap_create(sc->sc_dmat, NBPG, 1 /*seg*/,
-			      NBPG, 0, BUS_DMA_WAITOK,
+	if (bus_dmamap_create(sc->sc_dmat, PAGE_SIZE, 1 /*seg*/,
+			      PAGE_SIZE, 0, BUS_DMA_WAITOK,
 			      &sc->sc_dmamap) != 0) {
 		printf(": failed to create dmamap\n");
 		return;

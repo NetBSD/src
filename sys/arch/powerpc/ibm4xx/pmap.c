@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.18 2003/03/11 10:40:16 hannken Exp $	*/
+/*	$NetBSD: pmap.c,v 1.19 2003/04/02 04:22:03 thorpej Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -88,7 +88,7 @@
  * kernmap is an array of PTEs large enough to map in
  * 4GB.  At 16KB/page it is 256K entries or 2MB.
  */
-#define KERNMAP_SIZE	((0xffffffffU/NBPG)+1)
+#define KERNMAP_SIZE	((0xffffffffU/PAGE_SIZE)+1)
 caddr_t kernmap;
 
 #define MINCTX		2
@@ -207,7 +207,8 @@ pte_enter(struct pmap *pm, vaddr_t va, u_int pte)
 		if (!pte) return (1);
 		/* Allocate a page XXXX this will sleep! */
 		pa = 0;
-		pm->pm_ptbl[seg] = (uint *)uvm_km_alloc1(kernel_map, NBPG, 1);
+		pm->pm_ptbl[seg] =
+		    (uint *)uvm_km_alloc1(kernel_map, PAGE_SIZE, 1);
 	}
 	pm->pm_ptbl[seg][ptn] = pte;
 
@@ -637,7 +638,8 @@ pmap_release(struct pmap *pm)
 
 	for (i = 0; i < STSZ; i++)
 		if (pm->pm_ptbl[i]) {
-			uvm_km_free(kernel_map, (vaddr_t)pm->pm_ptbl[i], NBPG);
+			uvm_km_free(kernel_map, (vaddr_t)pm->pm_ptbl[i],
+			    PAGE_SIZE);
 			pm->pm_ptbl[i] = NULL;
 		}
 	if (pm->pm_ctx) ctx_free(pm);
@@ -686,11 +688,11 @@ pmap_zero_page(paddr_t pa)
 {
 
 #ifdef PPC_4XX_NOCACHE
-	memset((caddr_t)pa, 0, NBPG);
+	memset((caddr_t)pa, 0, PAGE_SIZE);
 #else
 	int i;
 
-	for (i = NBPG/CACHELINESIZE; i > 0; i--) {
+	for (i = PAGE_SIZE/CACHELINESIZE; i > 0; i--) {
 		__asm __volatile ("dcbz 0,%0" :: "r"(pa));
 		pa += CACHELINESIZE;
 	}
@@ -704,7 +706,7 @@ void
 pmap_copy_page(paddr_t src, paddr_t dst)
 {
 
-	memcpy((caddr_t)dst, (caddr_t)src, NBPG);
+	memcpy((caddr_t)dst, (caddr_t)src, PAGE_SIZE);
 	dcache_flush_page(dst);
 }
 
@@ -802,7 +804,7 @@ pmap_enter(struct pmap *pm, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 	/*
 	 * Have to remove any existing mapping first.
 	 */
-	pmap_remove(pm, va, va + NBPG);
+	pmap_remove(pm, va, va + PAGE_SIZE);
 
 	if (flags & PMAP_WIRED) flags |= prot;
 
@@ -1008,7 +1010,7 @@ pmap_remove(struct pmap *pm, vaddr_t va, vaddr_t endva)
 			ppc4xx_tlb_flush(va, pm->pm_ctx);
 			pm->pm_stats.resident_count--;
 		}
-		va += NBPG;
+		va += PAGE_SIZE;
 	}
 
 	splx(s);
@@ -1051,7 +1053,7 @@ pmap_protect(struct pmap *pm, vaddr_t sva, vaddr_t eva, vm_prot_t prot)
 				*ptp &= ~TTE_WR;
 				ppc4xx_tlb_flush(sva, pm->pm_ctx);
 			}
-			sva += NBPG;
+			sva += PAGE_SIZE;
 		}
 		splx(s);
 		return;
@@ -1109,14 +1111,14 @@ pmap_page_protect(struct vm_page *pg, vm_prot_t prot)
 
 		pm = pv->pv_pm;
 		va = pv->pv_va;
-		pmap_protect(pm, va, va+NBPG, prot);
+		pmap_protect(pm, va, va+PAGE_SIZE, prot);
 	}
 	/* Now check the head pv */
 	if (pvh->pv_pm) {
 		pv = pvh;
 		pm = pv->pv_pm;
 		va = pv->pv_va;
-		pmap_protect(pm, va, va+NBPG, prot);
+		pmap_protect(pm, va, va+PAGE_SIZE, prot);
 	}
 }
 
@@ -1547,7 +1549,7 @@ pmap_testout()
 	int ref, mod;
 
 	/* Allocate a page */
-	va = (vaddr_t)uvm_km_alloc1(kernel_map, NBPG, 1);
+	va = (vaddr_t)uvm_km_alloc1(kernel_map, PAGE_SIZE, 1);
 	loc = (int*)va;
 
 	pmap_extract(pmap_kernel(), va, &pa);
@@ -1803,6 +1805,6 @@ pmap_testout()
 
 	pmap_enter(pmap_kernel(), va, pa, VM_PROT_ALL,
 		VM_PROT_ALL|PMAP_WIRED);
-	uvm_km_free(kernel_map, (vaddr_t)va, NBPG);
+	uvm_km_free(kernel_map, (vaddr_t)va, PAGE_SIZE);
 }
 #endif
