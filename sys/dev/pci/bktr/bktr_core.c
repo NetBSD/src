@@ -1,4 +1,4 @@
-/*	$NetBSD: bktr_core.c,v 1.25 2002/12/25 06:20:11 toshii Exp $	*/
+/*	$NetBSD: bktr_core.c,v 1.26 2002/12/25 06:40:27 toshii Exp $	*/
 
 /* FreeBSD: src/sys/dev/bktr/bktr_core.c,v 1.114 2000/10/31 13:09:56 roger Exp */
 
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bktr_core.c,v 1.25 2002/12/25 06:20:11 toshii Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bktr_core.c,v 1.26 2002/12/25 06:40:27 toshii Exp $");
 
 #include "opt_bktr.h"		/* Include any kernel config options */
 
@@ -3198,8 +3198,8 @@ yuv422_prog( bktr_ptr_t bktr, char i_flag,
 
 	OUTB(bktr, BKTR_E_VSCALE_HI, INB(bktr, BKTR_E_VSCALE_HI) & ~0x80); /* clear Ycomb */
 	OUTB(bktr, BKTR_O_VSCALE_HI, INB(bktr, BKTR_O_VSCALE_HI) & ~0x80);
-	OUTB(bktr, BKTR_E_VSCALE_HI, INB(bktr, BKTR_E_VSCALE_HI) | ~0x40); /* set chroma comb */
-	OUTB(bktr, BKTR_O_VSCALE_HI, INB(bktr, BKTR_O_VSCALE_HI) | ~0x40);
+	OUTB(bktr, BKTR_E_VSCALE_HI, INB(bktr, BKTR_E_VSCALE_HI) | 0x40); /* set chroma comb */
+	OUTB(bktr, BKTR_O_VSCALE_HI, INB(bktr, BKTR_O_VSCALE_HI) | 0x40);
 
 	/* disable gamma correction removal */
 	OUTB(bktr, BKTR_COLOR_CTL, INB(bktr, BKTR_COLOR_CTL) | BT848_COLOR_CTL_GAMMA);
