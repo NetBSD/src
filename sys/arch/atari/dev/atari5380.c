@@ -1,4 +1,4 @@
-/*	$NetBSD: atari5380.c,v 1.23 1997/01/12 15:46:37 leo Exp $	*/
+/*	$NetBSD: atari5380.c,v 1.24 1997/03/30 21:08:30 leo Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -51,6 +51,8 @@
 #include <machine/stdarg.h>
 #include <machine/iomap.h>
 #include <machine/mfp.h>
+
+#include <atari/atari/intr.h>
 
 #if defined(FALCON_SCSI)
 #include <machine/dma.h>
@@ -252,7 +254,15 @@ scsi_tt_init(struct ncr_softc *sc)
 		MFP2->mf_iprb &= ~IB_SCDM;
 		MFP2->mf_imrb |= IB_SCDM;
 	}
-	else SCSI_DMA->s_hdma_ctrl = 0;
+	else if (machineid & ATARI_HADES) {
+		SCSI_DMA->s_hdma_ctrl = 0;
+
+		if (intr_establish(2, AUTO_VEC, 0,
+					(hw_ifun_t)ncr5380_drq_intr,
+					NULL) == NULL)
+		panic("scsi_tt_init: Can't establish drq-interrupt");
+	}
+	else panic("scsi_tt_init: should not come here");
 
 	MFP2->mf_iera |= IA_SCSI;	/* SCSI-5380 interrupts		*/
 	MFP2->mf_ipra &= ~IA_SCSI;

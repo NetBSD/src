@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.33 1997/03/16 11:04:59 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.34 1997/03/30 21:08:19 leo Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -370,23 +370,7 @@ _intr_glue:
 	jra	rei
 
 _lev2intr:
-#ifndef TT_SCSI
 	rte				|  HBL, can't be turned off on Falcon!
-#else
-	/*
-	 * The Hades uses this vector for SCSI pseudo-DMA
-	 */
-	addql	#1,_intrcnt+24		|  add another 5380-DMA interrupt
-
-	moveml	d0-d1/a0-a1,sp@-	|  Save scratch registers
-	movw	sp@(16),sp@-		|  push previous SR value
-	clrw	sp@-			|     padded to longword
-	jbsr	_ncr5380_drq_intr	|  handle interrupt
-	addql	#4,sp			|  pop SR
-	moveml	sp@+,d0-d1/a0-a1
-	addql	#1,_cnt+V_INTR		|  chalk up another interrupt
-	jra	rei
-#endif
 
 _lev4intr:				|  VBL interrupts can not be turned
 	rte				|  off on a Falcon, so just ignore them.
