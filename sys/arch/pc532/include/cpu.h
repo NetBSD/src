@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.22 1997/03/20 12:02:36 matthias Exp $	*/
+/*	$NetBSD: cpu.h,v 1.23 1997/03/22 08:29:19 matthias Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -105,6 +105,7 @@ int	ieee_handle_exception __P((struct proc *));
 
 /* machdep.c */
 void	dumpconf __P((void));
+void	softnet __P((void *));
 
 /* locore.s */
 void	delay __P((int));
