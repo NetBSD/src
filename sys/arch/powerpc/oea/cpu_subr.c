@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_subr.c,v 1.1 2003/02/03 17:10:09 matt Exp $	*/
+/*	$NetBSD: cpu_subr.c,v 1.2 2003/02/26 21:05:23 jklos Exp $	*/
 
 /*-
  * Copyright (c) 2001 Matt Thomas.
@@ -440,6 +440,12 @@ u_int l2cr_config = L2CR_CONFIG;
 u_int l2cr_config = 0;
 #endif
 
+#ifdef L3CR_CONFIG
+u_int l3cr_config = L3CR_CONFIG;
+#else
+u_int l3cr_config = 0;
+#endif
+
 void
 cpu_config_l2cr(int vers)
 {
@@ -495,9 +501,81 @@ cpu_config_l2cr(int vers)
 			printf(": 256KB L2 cache");
 
 			l3cr = mfspr(SPR_L3CR);
-			if (l3cr & L3CR_L3E)
-				printf(", %cMB L3 backside cache",
+
+			/*
+			 * Configure L3 cache if not enabled.
+			 */
+			if ((l3cr & L3CR_L3E) == 0 && l3cr_config != 0) {
+				/* By The Book (numbered steps from section 3.7.1.3 of MPC7450UM) */
+				
+				/* 1: Set all L3CR bits for final config except L3E, L3I, L3PE, and L3CLKEN */
+				/*  (also mask off reserved bits in case they were included in L3CR_CONFIG) */
+				l3cr = l3cr_config & ~(L3CR_L3E|L3CR_L3I|L3CR_L3PE|L3CR_L3CLKEN|L3CR_RESERVED);
+				mtspr(SPR_L3CR, l3cr);
+
+				/* 2: Set L3CR[5] (otherwise reserved bit) to 1 */
+				l3cr |= 0x04000000;
+				mtspr(SPR_L3CR, l3cr);
+
+				/* 3: Set L3CLKEN to 1*/
+				l3cr |= L3CR_L3CLKEN;
+				mtspr(SPR_L3CR, l3cr);
+
+				/* 4/5: Perform a global cache invalidate (ref section 3.7.3.6) */
+				__asm __volatile("dssall;sync");
+				/* L3 cache is already disabled, no need to clear L3E */
+				mtspr(SPR_L3CR, l3cr|L3CR_L3I);
+				do {
+					x = mfspr(SPR_L3CR);
+				} while (x & L3CR_L3I);
+				
+				/* 6: Clear L3CLKEN to 0 */
+				l3cr &= ~L3CR_L3CLKEN;
+				mtspr(SPR_L3CR, l3cr);
+
+				/* 7: Perform a 'sync' and wait at least 100 CPU cycles */
+				__asm __volatile("sync");
+				delay(100);
+
+				/* 8: Set L3E and L3CLKEN */
+				l3cr |= (L3CR_L3E|L3CR_L3CLKEN);
+				mtspr(SPR_L3CR, l3cr);
+
+				/* 9: Perform a 'sync' and wait at least 100 CPU cycles */
+				__asm __volatile("sync");
+				delay(100);
+			}
+			
+			if (l3cr & L3CR_L3E) {
+				printf(", %cMB L3 backside cache at ",
 				   l3cr & L3CR_L3SIZ ? '2' : '1');
+				switch (l3cr & L3CR_L3CLK) {
+				case L3CLK_20:
+					printf("2:1 ratio");
+					break;
+				case L3CLK_25:
+					printf("2.5:1 ratio");
+					break;
+				case L3CLK_30:
+					printf("3:1 ratio");
+					break;
+				case L3CLK_35:
+					printf("3.5:1 ratio");
+					break;
+				case L3CLK_40:
+					printf("4:1 ratio");
+					break;
+				case L3CLK_50:
+					printf("5:1 ratio");
+					break;
+				case L3CLK_60:
+					printf("6:1 ratio");
+					break;
+				default:
+					printf("unknown ratio");
+					break;
+				}
+			}
 			printf("\n");
 			return;
 		}
