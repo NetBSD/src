@@ -1,4 +1,4 @@
-/*	$NetBSD: sparc64.h,v 1.3 2000/10/20 05:47:03 mrg Exp $	*/
+/*	$NetBSD: sparc64.h,v 1.4 2003/12/08 00:52:48 petrov Exp $	*/
 
 /*
  * Copyright (C) 1996 Wolfgang Solfrank.
@@ -38,38 +38,21 @@ struct mem_region {
 	u_int64_t size;
 };
 
-int prom_set_trap_table __P((vaddr_t tba));
-u_int64_t prom_vtop __P((vaddr_t vaddr));
-vaddr_t prom_claim_virt __P((vaddr_t vaddr, int len));
-vaddr_t prom_alloc_virt __P((int len, int align));
-int prom_free_virt __P((vaddr_t vaddr, int len));
-int prom_unmap_virt __P((vaddr_t vaddr, int len));
-int prom_map_phys __P((u_int64_t paddr, off_t size, vaddr_t vaddr, int mode));
-u_int64_t prom_alloc_phys __P((int len, int align));
-u_int64_t prom_claim_phys __P((paddr_t phys, int len));
-int prom_free_phys __P((paddr_t paddr, int len));
-u_int64_t prom_get_msgbuf __P((int len, int align));
-
-/*
- * Compatibility stuff.
- */
-#define OF_findroot()	OF_peer(0)
-#define OF_fd_phandle(x) OF_instance_to_package(x)
-
-/*
- * These two functions get used solely in boot() in machdep.c.
- *
- * Not sure whether boot itself should be implementation dependent instead.	XXX
- */
-void ppc_exit __P((void)) __attribute__((__noreturn__));
-void ppc_boot __P((char *bootspec)) __attribute__((__noreturn__));
-
-int dk_match __P((char *name));
-
-void ofrootfound __P((void));
+int prom_set_trap_table (vaddr_t);
+u_int64_t prom_vtop (vaddr_t);
+vaddr_t prom_claim_virt (vaddr_t, int);
+vaddr_t prom_alloc_virt (int, int);
+int prom_free_virt (vaddr_t, int);
+int prom_unmap_virt (vaddr_t, int);
+int prom_map_phys (u_int64_t, off_t, vaddr_t, int);
+u_int64_t prom_alloc_phys (int , int);
+u_int64_t prom_claim_phys (paddr_t, int);
+int prom_free_phys (paddr_t, int);
+u_int64_t prom_get_msgbuf (int, int);
 
 /*
  * Debug
  */
-void prom_printf __P((const char *, ...));
+void prom_printf (const char *, ...);
+
 #endif	/* _MACHINE_SPARC64_H_ */
