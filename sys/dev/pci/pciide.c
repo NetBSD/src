@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide.c,v 1.102 2001/01/05 15:29:39 bouyer Exp $	*/
+/*	$NetBSD: pciide.c,v 1.103 2001/01/05 15:34:05 bouyer Exp $	*/
 
 
 /*
@@ -1422,7 +1422,7 @@ piix_chip_map(sc, pa)
 			    DEBUG_PROBE);
 		}
 		if (sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_82801AA_IDE ||
-		    sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_82801AB_IDE
+		    sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_82801AB_IDE ||
 		    sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_82801BA_IDE) {
 			WDCDEBUG_PRINT((", IDE_CONTROL 0x%x",
 			    pci_conf_read(sc->sc_pc, sc->sc_tag, PIIX_CONFIG)),
