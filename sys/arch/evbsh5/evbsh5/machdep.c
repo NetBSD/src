@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.9 2002/10/14 14:21:35 scw Exp $	*/
+/*	$NetBSD: machdep.c,v 1.10 2002/10/22 09:30:27 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -105,11 +105,21 @@ char cpu_model[128];
 bus_space_handle_t _evbsh5_bh_pbridge;
 bus_space_handle_t _evbsh5_bh_sysfpga;
 
+static struct mem_region mr[2];
 
-vaddr_t
-evbsh5_memory_init(vaddr_t endkernel, struct mem_region *mr)
+void
+evbsh5_init(vaddr_t endkernel)
 {
+	extern char sh5_panic_stack[];
+#if NDTFCONS > 0
+	extern char *_dtf_buffer;
+	extern void _dtf_trap_frob(void);
+	vaddr_t dtfbuf;
+	paddr_t frob_p;
+#endif
 	u_long ksize;
+	vsize_t size;
+	caddr_t v;
 
 	endkernel = sh5_round_page(endkernel);
 
@@ -121,19 +131,9 @@ evbsh5_memory_init(vaddr_t endkernel, struct mem_region *mr)
 	mr[1].mr_start = 0;
 	mr[1].mr_size = 0;
 
-	return (endkernel);
-}
+	pmap_bootstrap(endkernel, EVBSH5_RAM_START_PHYS, mr);
 
-void
-evbsh5_init(void)
-{
-	extern char sh5_panic_stack[];
-#if NDTFCONS > 0
-	extern char *_dtf_buffer;
-	extern void _dtf_trap_frob(void);
-	vaddr_t dtfbuf;
-	paddr_t frob_p;
-#endif
+	__asm __volatile("putcon %0, sr" :: "r"(SH5_CONREG_SR_IMASK_ALL));
 
 	/* XXX: Will need to be revisited for SMP */
 	curcpu()->ci_panicstkphys = EVBSH5_RAM_START_PHYS +
@@ -184,6 +184,15 @@ evbsh5_init(void)
 #endif
 
 	boothowto = RB_SINGLE | RB_KDB;
+
+	/*
+	 * Call allocsys() now so we can steal pages from KSEG0.
+	 */
+	size = (vsize_t)allocsys(NULL, NULL);
+	if ((v = (caddr_t)uvm_pageboot_alloc(round_page(size))) == 0)
+		panic("startup: no room for tables");
+	if ((allocsys(v, NULL) - v) != size)
+		panic("startup: table size inconsistency");
 }
 
 #ifndef SH5_CPU_SPEED
@@ -245,26 +254,13 @@ compute_ctc_tick_per_us(void)
 void
 cpu_startup(void)
 {
-	caddr_t v;
 	u_int i, base, residual;
 	vaddr_t minaddr, maxaddr;
 	vsize_t size;
 	char pbuf[16];
 
 	/*
-	 * Find out how much space we need, allocate it,
-	 * and then give everything true virtual addresses.
-	 */
-	size = (vsize_t)allocsys(NULL, NULL);
-	if ((v = (caddr_t)uvm_km_zalloc(kernel_map, round_page(size))) == 0)
-		panic("startup: no room for tables");
-	if ((allocsys(v, NULL) - v) != size)
-		panic("startup: table size inconsistency");
-
-
-	/*
-	 * Now allocate buffers proper.  They are different than the above
-	 * in that they usually occupy more virtual memory than physical.
+	 * Now allocate buffers proper.
 	 */
 	size = MAXBSIZE * nbuf;
 	if (uvm_map(kernel_map, (vaddr_t *) &buffers, round_page(size),
@@ -323,8 +319,8 @@ cpu_startup(void)
 
 	strcpy(cpu_model, "SuperH SH5");
 
-	printf("%s%s running at %dMHz\n", version, cpu_model,
-	    (u_int)_sh5_ctc_ticks_per_us);
+	printf("%s%s running in %d-bit mode at %dMHz\n", version, cpu_model,
+	    (sizeof(void *) == 8) ? 64 : 32, (u_int)_sh5_ctc_ticks_per_us);
 	format_bytes(pbuf, sizeof(pbuf), ctob(physmem));
 	printf("total memory = %s\n", pbuf);
 	format_bytes(pbuf, sizeof(pbuf), ptoa(uvmexp.free));
