@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_syscalls.c,v 1.41.4.6 2001/02/03 21:54:29 he Exp $	*/
+/*	$NetBSD: lfs_syscalls.c,v 1.41.4.7 2001/08/16 15:15:04 tv Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -95,6 +95,9 @@
 #define FVG_UNLOCK 0x01	  /* Needs to be unlocked */
 #define FVG_PUT	   0x02	  /* Needs to be vput() */
 
+/* Max block count for lfs_markv() */
+#define MARKV_MAXBLKCNT		65536
+
 struct buf *lfs_fakebuf __P((struct vnode *, int, size_t, caddr_t));
 int lfs_fasthashget __P((dev_t, ino_t, int *, struct vnode **));
 
@@ -187,6 +190,9 @@ sys_lfs_markv(p, v, retval)
 		      fs->lfs_cleansz - fs->lfs_segtabsz) * fs->lfs_ifpb;
 
 	origcnt = cnt = SCARG(uap, blkcnt);
+	if ((u_int) cnt > MARKV_MAXBLKCNT)
+		return (EINVAL);
+
 	start = malloc(cnt * sizeof(BLOCK_INFO), M_SEGMENT, M_WAITOK);
 	error = copyin(SCARG(uap, blkiov), start, cnt * sizeof(BLOCK_INFO));
 	if (error)
@@ -584,6 +590,9 @@ sys_lfs_bmapv(p, v, retval)
 		return (error);
 	
 	origcnt = cnt = SCARG(uap, blkcnt);
+	if ((u_int) cnt > MARKV_MAXBLKCNT)
+		return (EINVAL);
+
 	start = malloc(cnt * sizeof(BLOCK_INFO), M_SEGMENT, M_WAITOK);
 	error = copyin(SCARG(uap, blkiov), start, cnt * sizeof(BLOCK_INFO));
 	if (error) {
