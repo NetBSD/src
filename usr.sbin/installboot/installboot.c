@@ -1,4 +1,4 @@
-/*	$NetBSD: installboot.c,v 1.8 2002/05/14 06:18:51 lukem Exp $	*/
+/*	$NetBSD: installboot.c,v 1.9 2002/05/15 02:18:22 lukem Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: installboot.c,v 1.8 2002/05/14 06:18:51 lukem Exp $");
+__RCSID("$NetBSD: installboot.c,v 1.9 2002/05/15 02:18:22 lukem Exp $");
 #endif	/* !__lint */
 
 #include <sys/utsname.h>
@@ -48,7 +48,6 @@ __RCSID("$NetBSD: installboot.c,v 1.8 2002/05/14 06:18:51 lukem Exp $");
 #include <fcntl.h>
 #include <limits.h>
 #include <stdio.h>
-#include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
@@ -169,6 +168,8 @@ main(int argc, char *argv[])
 	if ((params->fsfd = open(params->filesystem, mode, 0600)) == -1)
 		err(1, "Opening file system `%s' read-%s",
 		    params->filesystem, op);
+	if (fstat(params->fsfd, &params->fsstat) == -1)
+		err(1, "Examining file system `%s'", params->filesystem);
 	if (params->fstype != NULL) {
 		if (! params->fstype->match(params))
 			err(1, "File system `%s' is not of type %s",
@@ -189,6 +190,11 @@ main(int argc, char *argv[])
 		    == -1)
 			err(1, "Opening primary bootstrap `%s'",
 			    params->stage1);
+		if (fstat(params->s1fd, &params->s1stat) == -1)
+			err(1, "Examining primary bootstrap `%s'",
+			    params->stage1);
+		if (!S_ISREG(params->s1stat.st_mode))
+			err(1, "`%s' must be a regular file", params->stage1);
 	}
 	if (argc == 3) {
 		params->stage2 = argv[2];
@@ -217,8 +223,14 @@ main(int argc, char *argv[])
 	if (rv == 0)
 		errx(1, "%s bootstrap operation failed", op);
 
-	if (fsync(params->fsfd) == -1)
-		err(1, "Synchronising file system `%s'", params->filesystem);
+	if (S_ISREG(params->fsstat.st_mode)) {
+		if (fsync(params->fsfd) == -1)
+			err(1, "Synchronising file system `%s'",
+			    params->filesystem);
+	} else {
+		/* Sync filesystems (to clean in-memory superblock?) */
+		sync();
+	}
 	if (close(params->fsfd) == -1)
 		err(1, "Closing file system `%s'", params->filesystem);
 	if (argc == 2)
