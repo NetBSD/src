@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.107 2003/01/17 23:10:32 thorpej Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.108 2003/01/20 01:28:33 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.107 2003/01/17 23:10:32 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.108 2003/01/20 01:28:33 simonb Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_largepages.h"
@@ -392,8 +392,6 @@ kvtop(addr)
 		panic("kvtop: zero page frame");
 	return((int)pa);
 }
-
-extern struct vm_map *phys_map;
 
 /*
  * Map a user I/O request into kernel virtual address space.
