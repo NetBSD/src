@@ -1,4 +1,4 @@
-.\"	$NetBSD: mdoc.7,v 1.11 1998/10/28 05:57:20 ross Exp $
+.\"	$NetBSD: mdoc.7,v 1.12 1999/03/31 00:11:41 ross Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -145,7 +145,11 @@ Display options:
 .It Fl ragged
 Unjustified (ragged edges).
 .It Fl filled
-Justified.
+Filled, and if
+.Xr troff 1 ,
+also justified.
+.It Fl unfilled
+Unfilled, unjustified.
 .It Fl literal
 Literal text or code.
 .It Fl file Ar name
