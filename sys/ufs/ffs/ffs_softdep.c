@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_softdep.c,v 1.55 2004/01/10 17:16:38 hannken Exp $	*/
+/*	$NetBSD: ffs_softdep.c,v 1.56 2004/03/11 11:48:16 yamt Exp $	*/
 
 /*
  * Copyright 1998 Marshall Kirk McKusick. All Rights Reserved.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_softdep.c,v 1.55 2004/01/10 17:16:38 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_softdep.c,v 1.56 2004/03/11 11:48:16 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -65,7 +65,6 @@ extern struct simplelock bqueue_slock; /* XXX */
 MALLOC_DEFINE(M_PAGEDEP, "pagedep", "file page dependencies");
 MALLOC_DEFINE(M_INODEDEP, "inodedep", "Inode depependencies");
 MALLOC_DEFINE(M_NEWBLK, "newblk", "New block allocation");
-MALLOC_DEFINE(M_INDIRDEP, "indirdep", "Indirect block dependencies");
 
 /*
  * These definitions need to be adapted to the system to which
@@ -3360,7 +3359,6 @@ softdep_disk_io_initiation(bp)
 	struct worklist *wk, *nextwk;
 	struct indirdep *indirdep;
 	struct inodedep *inodedep;
-	caddr_t saveddata;
 
 	/*
 	 * We only care about write operations. There should never
@@ -3411,15 +3409,11 @@ softdep_disk_io_initiation(bp)
 			/*
 			 * Replace up-to-date version with safe version.
 			 */
-			MALLOC(saveddata, caddr_t, bp->b_bcount, M_INDIRDEP,
-			    M_WAITOK);
 			ACQUIRE_LOCK(&lk);
 			indirdep->ir_state &= ~ATTACHED;
 			indirdep->ir_state |= UNDONE;
-			indirdep->ir_saveddata = saveddata;
-			bcopy(bp->b_data, indirdep->ir_saveddata, bp->b_bcount);
-			bcopy(indirdep->ir_savebp->b_data, bp->b_data,
-			      bp->b_bcount);
+			indirdep->ir_saveddata = bp->b_data;
+			bp->b_data = indirdep->ir_savebp->b_data;
 			FREE_LOCK(&lk);
 			continue;
 
@@ -3962,8 +3956,7 @@ softdep_disk_write_complete(bp)
 			indirdep = WK_INDIRDEP(wk);
 			if (indirdep->ir_state & GOINGAWAY)
 				panic("disk_write_complete: indirdep gone");
-			bcopy(indirdep->ir_saveddata, bp->b_data, bp->b_bcount);
-			FREE(indirdep->ir_saveddata, M_INDIRDEP);
+			bp->b_data = indirdep->ir_saveddata;
 			indirdep->ir_saveddata = 0;
 			indirdep->ir_state &= ~UNDONE;
 			indirdep->ir_state |= ATTACHED;
