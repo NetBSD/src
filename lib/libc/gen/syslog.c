@@ -1,4 +1,4 @@
-/*	$NetBSD: syslog.c,v 1.10 1995/08/31 16:28:01 mycroft Exp $	*/
+/*	$NetBSD: syslog.c,v 1.11 1997/07/13 19:34:16 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -33,11 +33,12 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
 #if 0
 static char sccsid[] = "@(#)syslog.c	8.4 (Berkeley) 3/18/94";
 #else
-static char rcsid[] = "$NetBSD: syslog.c,v 1.10 1995/08/31 16:28:01 mycroft Exp $";
+__RCSID("$NetBSD: syslog.c,v 1.11 1997/07/13 19:34:16 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -106,7 +107,8 @@ vsyslog(pri, fmt, ap)
 	int fd, saved_errno;
 #define	TBUF_LEN	2048
 #define	FMT_LEN		1024
-	char *stdp, tbuf[TBUF_LEN], fmt_cpy[FMT_LEN];
+	char *stdp = NULL;	/* pacify gcc */
+	char tbuf[TBUF_LEN], fmt_cpy[FMT_LEN];
 	int tbuf_left, fmt_left, prlen;
 
 #define	INTERNALLOG	LOG_ERR|LOG_CONS|LOG_PERROR|LOG_PID
@@ -183,7 +185,7 @@ vsyslog(pri, fmt, ap)
 	 * We wouldn't need this mess if printf handled %m, or if 
 	 * strerror() had been invented before syslog().
 	 */
-	for (t = fmt_cpy, fmt_left = FMT_LEN; ch = *fmt; ++fmt) {
+	for (t = fmt_cpy, fmt_left = FMT_LEN; (ch = *fmt) != '\0'; ++fmt) {
 		if (ch == '%' && fmt[1] == 'm') {
 			++fmt;
 			prlen = snprintf(t, fmt_left, "%s",
