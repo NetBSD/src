@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_nubus.c,v 1.48 1998/08/09 18:19:09 briggs Exp $	*/
+/*	$NetBSD: grf_nubus.c,v 1.49 1998/08/12 02:36:38 scottr Exp $	*/
 
 /*
  * Copyright (c) 1995 Allen Briggs.  All rights reserved.
@@ -148,9 +148,10 @@ grfmv_attach(parent, self, aux)
 
 	sc->sc_tag = na->na_tag;
 	sc->card_id = na->drhw;
-	sc->sc_bufpa = (caddr_t)NUBUS_SLOT2PA(na->slot);
+	sc->sc_basepa = (bus_addr_t)NUBUS_SLOT2PA(na->slot);
+	sc->sc_fbofs = 0;
 
-	if (bus_space_map(sc->sc_tag, (bus_addr_t)sc->sc_bufpa, NBMEMSIZE,
+	if (bus_space_map(sc->sc_tag, sc->sc_basepa, NBMEMSIZE,
 	    0, &sc->sc_handle)) {
 		printf(": grfmv_attach: failed to map slot %d\n", na->slot);
 		return;
@@ -201,16 +202,16 @@ bad:
 
 	gm = &sc->curr_mode;
 	gm->mode_id = mode;
-	gm->fbbase = (caddr_t)sc->sc_handle; /* XXX evil! */
-	gm->fboff = image.offset;
-	gm->rowbytes = image.rowbytes;
-	gm->width = image.right - image.left;
-	gm->height = image.bottom - image.top;
-	gm->fbsize = gm->height * gm->rowbytes;
-	gm->hres = image.hRes;
-	gm->vres = image.vRes;
 	gm->ptype = image.pixelType;
 	gm->psize = image.pixelSize;
+	gm->width = image.right - image.left;
+	gm->height = image.bottom - image.top;
+	gm->rowbytes = image.rowbytes;
+	gm->hres = image.hRes;
+	gm->vres = image.vRes;
+	gm->fbsize = gm->height * gm->rowbytes;
+	gm->fbbase = (caddr_t)sc->sc_handle;	/* XXX evil hack */
+	gm->fboff = image.offset;
 
 	strncpy(cardname, nubus_get_card_name(sc->sc_tag, sc->sc_handle,
 	    &sc->sc_slot), CARD_NAME_LEN);
