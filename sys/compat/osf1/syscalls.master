@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.33 2000/12/09 05:27:30 mycroft Exp $
+	$NetBSD: syscalls.master,v 1.34 2000/12/09 07:10:36 mycroft Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -73,12 +73,12 @@
 			    long bufsize, int flags); }
 19	STD		{ off_t osf1_sys_lseek(int fd, off_t offset, \
 			    int whence); }
-20	NOARGS		{ pid_t sys_getpid(void); }
+20	NOARGS		{ pid_t sys_getpid_with_ppid(void); }
 21	STD		{ int osf1_sys_mount(int type, const char *path, \
 			    int flags, caddr_t data); }
 22	STD		{ int osf1_sys_unmount(const char *path, int flags); }
 23	STD		{ int osf1_sys_setuid(uid_t uid); }
-24	NOARGS		{ uid_t sys_getuid(void); }
+24	NOARGS		{ uid_t sys_getuid_with_euid(void); }
 25	UNIMPL		exec_with_loader
 26	UNIMPL		ptrace
 27	STD		{ int osf1_sys_recvmsg_xopen(int s, \
@@ -106,7 +106,7 @@
 45	STD		{ int osf1_sys_open(const char *path, int flags, \
 			    int mode); }
 46	OBSOL		sigaction
-47	NOARGS		{ gid_t sys_getgid(void); }
+47	NOARGS		{ gid_t sys_getgid_with_egid(void); }
 ; XXX
 48	NOARGS		{ int compat_13_sys_sigprocmask(int how, \
 			    sigset13_t mask); }
