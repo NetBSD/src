@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_exec.h,v 1.6 2002/11/13 15:16:31 jdolecek Exp $ */
+/*	$NetBSD: linux_exec.h,v 1.7 2002/11/21 15:18:37 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -60,8 +60,6 @@
 
 #define LINUX_ATEXIT_SIGNATURE 1
 #define LINUX_GCC_SIGNATURE 1
-
-#define LINUX_ELF_AUX_ENTRIES 14
 
 #define LINUX_ELF_AUX_ARGSIZ \
     ((howmany(LINUX_ELF_AUX_ENTRIES * sizeof(LinuxAuxInfo), sizeof(Elf32_Addr))))
