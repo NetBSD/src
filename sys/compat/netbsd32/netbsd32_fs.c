@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_fs.c,v 1.16 2004/04/21 01:05:36 christos Exp $	*/
+/*	$NetBSD: netbsd32_fs.c,v 1.17 2004/04/22 14:32:09 hannken Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_fs.c,v 1.16 2004/04/21 01:05:36 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_fs.c,v 1.17 2004/04/22 14:32:09 hannken Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ktrace.h"
@@ -102,15 +102,14 @@ netbsd32_getfsstat(l, v, retval)
 			    SCARG(uap, flags) != MNT_LAZY &&
 			    (SCARG(uap, flags) == MNT_WAIT ||
 			     SCARG(uap, flags) == 0) &&
-			    (error = VFS_STATFS(mp, sp, p)) != 0) {
+			    (error = VFS_STATVFS(mp, sp, p)) != 0) {
 				simple_lock(&mountlist_slock);
 				nmp = mp->mnt_list.cqe_next;
 				vfs_unbusy(mp);
 				continue;
 			}
-			sp->f_flags = mp->mnt_flag & MNT_VISFLAGMASK;
-			sp->f_oflags = sp->f_flags & 0xffff;
-			netbsd32_from_statfs(sp, &sb32);
+			sp->f_flag = mp->mnt_flag & MNT_VISFLAGMASK;
+			netbsd32_from_statvfs(sp, &sb32);
 			error = copyout(&sb32, sfsp, sizeof(sb32));
 			if (error) {
 				vfs_unbusy(mp);
@@ -466,10 +465,10 @@ netbsd32_statfs(l, v, retval)
 	mp = nd.ni_vp->v_mount;
 	sp = &mp->mnt_stat;
 	vrele(nd.ni_vp);
-	if ((error = VFS_STATFS(mp, sp, p)) != 0)
+	if ((error = VFS_STATVFS(mp, sp, p)) != 0)
 		return (error);
-	sp->f_flags = mp->mnt_flag & MNT_VISFLAGMASK;
-	netbsd32_from_statfs(sp, &s32);
+	sp->f_flag = mp->mnt_flag & MNT_VISFLAGMASK;
+	netbsd32_from_statvfs(sp, &s32);
 	return (copyout(&s32, (caddr_t)NETBSD32PTR64(SCARG(uap, buf)),
 	    sizeof(s32)));
 }
@@ -496,10 +495,10 @@ netbsd32_fstatfs(l, v, retval)
 		return (error);
 	mp = ((struct vnode *)fp->f_data)->v_mount;
 	sp = &mp->mnt_stat;
-	if ((error = VFS_STATFS(mp, sp, p)) != 0)
+	if ((error = VFS_STATVFS(mp, sp, p)) != 0)
 		goto out;
-	sp->f_flags = mp->mnt_flag & MNT_VISFLAGMASK;
-	netbsd32_from_statfs(sp, &s32);
+	sp->f_flag = mp->mnt_flag & MNT_VISFLAGMASK;
+	netbsd32_from_statvfs(sp, &s32);
 	error = copyout(&s32, (caddr_t)NETBSD32PTR64(SCARG(uap, buf)),
 	    sizeof(s32));
  out:
