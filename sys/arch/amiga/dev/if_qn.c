@@ -1,4 +1,4 @@
-/*	$NetBSD: if_qn.c,v 1.4 1996/03/17 01:17:37 thorpej Exp $	*/
+/*	$NetBSD: if_qn.c,v 1.5 1996/04/21 21:11:50 veego Exp $	*/
 
 /*
  * Copyright (c) 1995 Mika Kortelainen
@@ -157,7 +157,7 @@ struct	qn_softc {
 
 int	qnmatch __P((struct device *, void *, void *));
 void	qnattach __P((struct device *, struct device *, void *));
-int	qnintr __P((struct qn_softc *sc));
+int	qnintr __P((void *));
 int	qnioctl __P((struct ifnet *, u_long, caddr_t));
 void	qnstart __P((struct ifnet *));
 void	qnwatchdog __P((int));
@@ -167,6 +167,9 @@ void	qnstop __P((struct qn_softc *));
 static	u_short qn_put __P((u_short volatile *, struct mbuf *));
 static	void qn_rint __P((struct qn_softc *, u_short));
 static	void qn_flush __P((struct qn_softc *));
+static	void inline word_copy_from_card __P((u_short volatile *, u_short *, u_short));
+static	void inline word_copy_to_card __P((u_short *, u_short volatile *, u_short));
+static	void qn_get_packet __P((struct qn_softc *, u_short)); 
 #ifdef QN_DEBUG1
 static	void qn_dump __P((struct qn_softc *));
 #endif
@@ -209,7 +212,6 @@ qnattach(parent, self, aux)
 	struct zbus_args *zap;
 	struct qn_softc *sc = (struct qn_softc *)self;
 	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
-	int i;
 
 	zap = (struct zbus_args *)aux;
 
@@ -477,8 +479,9 @@ word_copy_from_card(card, b, len)
 
 static void inline
 word_copy_to_card(a, card, len)
-	u_short *a, len;
+	u_short *a;
 	u_short volatile *card;
+	u_short len;
 {
 	register u_short l = len/2;
 
@@ -498,14 +501,14 @@ qn_put(addr, m)
 	u_short volatile *addr;
 	struct mbuf *m;
 {
-	u_char *data, savebyte[2];
+	u_short *data, savebyte[2];
 	int len, wantbyte;
 	u_short totlen;
 
 	totlen = wantbyte = 0;
 
 	for (; m != NULL; m = m->m_next) {
-		data = mtod(m, u_char *);
+		data = mtod(m, u_short *);
 		len = m->m_len;
 		totlen += len;
 		if (len > 0) {
@@ -767,9 +770,10 @@ qn_rint(sc, rstat)
  * Our interrupt routine
  */
 int
-qnintr(sc)
-	struct qn_softc *sc;
+qnintr(arg)
+	void *arg;
 {
+	struct qn_softc *sc = arg;
 	u_short tint, rint, tintmask;
 	char return_tintmask = 0;
 
@@ -892,7 +896,7 @@ qnioctl(ifp, command, data)
 
 			if (ns_nullhost(*ina))
 				ina->x_host =
-				    *(union ns_host *)(sc->sc_arpcom.sc_enaddr);
+				    *(union ns_host *)(sc->sc_arpcom.ac_enaddr);
 			else
 				bcopy(ina->x_host.c_host,
 				    sc->sc_arpcom.ac_enaddr,

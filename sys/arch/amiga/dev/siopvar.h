@@ -1,4 +1,4 @@
-/*	$NetBSD: siopvar.h,v 1.13 1996/02/03 18:47:10 chuck Exp $	*/
+/*	$NetBSD: siopvar.h,v 1.14 1996/04/21 21:12:38 veego Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -197,5 +197,10 @@ struct	siop_softc {
 
 void siop_minphys __P((struct buf *bp));
 int siop_scsicmd __P((struct scsi_xfer *));
+void siopinitialize __P((struct siop_softc *));
+void siopintr __P((struct siop_softc *));
+#ifdef DEBUG
+void siop_dump __P((struct siop_softc *));
+#endif
 
 #endif /* _SIOPVAR_H */

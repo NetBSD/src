@@ -1,4 +1,4 @@
-/*      $NetBSD: grf_cl.c,v 1.8 1996/03/17 05:58:35 mhitch Exp $        */
+/*      $NetBSD: grf_cl.c,v 1.9 1996/04/21 21:11:11 veego Exp $        */
 
 /*
  * Copyright (c) 1995 Ezra Story
@@ -70,35 +70,40 @@
 
 #include <machine/cpu.h>
 #include <dev/cons.h>
+#include <amiga/dev/itevar.h>
 #include <amiga/amiga/device.h>
 #include <amiga/dev/grfioctl.h>
 #include <amiga/dev/grfvar.h>
 #include <amiga/dev/grf_clreg.h>
 #include <amiga/dev/zbusvar.h>
 
-static int cl_mondefok __P((struct grfvideo_mode * gv));
-static void cl_boardinit();
-static void CompFQ __P((u_int fq, u_char * num, u_char * denom));
-static int cl_getvmode __P((struct grf_softc * gp, struct grfvideo_mode * vm));
-static int cl_setvmode __P((struct grf_softc * gp, unsigned int mode));
-static int cl_toggle __P((struct grf_softc * gp, unsigned short));
-static int cl_getcmap __P((struct grf_softc * gfp, struct grf_colormap * cmap));
-static int cl_putcmap __P((struct grf_softc * gfp, struct grf_colormap * cmap));
-static void cl_off __P((struct grf_softc * gp));
-static void cl_inittextmode __P((struct grf_softc * gp));
-static int cl_ioctl __P((register struct grf_softc * gp, int cmd, void *data));
-static int cl_getmousepos __P((struct grf_softc * gp, struct grf_position * data));
-static int cl_setmousepos __P((struct grf_softc * gp, struct grf_position * data));
-static int cl_setspriteinfo __P((struct grf_softc * gp, struct grf_spriteinfo * data));
-static int cl_getspriteinfo __P((struct grf_softc * gp, struct grf_spriteinfo * data));
-static int cl_getspritemax __P((struct grf_softc * gp, struct grf_position * data));
-static int cl_blank __P((struct grf_softc * gp, int * on));
-
+static int cl_mondefok __P((struct grfvideo_mode *));
+static void cl_boardinit __P((struct grf_softc *));
+static void CompFQ __P((u_int, u_char *, u_char *));
+static int cl_getvmode __P((struct grf_softc *, struct grfvideo_mode *));
+static int cl_setvmode __P((struct grf_softc *, unsigned int));
+static int cl_toggle __P((struct grf_softc *, unsigned short));
+static int cl_getcmap __P((struct grf_softc *, struct grf_colormap *));
+static int cl_putcmap __P((struct grf_softc *, struct grf_colormap *));
+#ifndef CL5426CONSOLE
+static void cl_off __P((struct grf_softc *));
+#endif
+static void cl_inittextmode __P((struct grf_softc *));
+static int cl_ioctl __P((register struct grf_softc *, u_long, void *));
+static int cl_getmousepos __P((struct grf_softc *, struct grf_position *));
+static int cl_setmousepos __P((struct grf_softc *, struct grf_position *));
+static int cl_setspriteinfo __P((struct grf_softc *, struct grf_spriteinfo *));
+static int cl_getspriteinfo __P((struct grf_softc *, struct grf_spriteinfo *));
+static int cl_getspritemax __P((struct grf_softc *, struct grf_position *));
+static int cl_blank __P((struct grf_softc *, int *));
+int cl_setmonitor __P((struct grf_softc *, struct grfvideo_mode *));
+void cl_writesprpos __P((volatile char *, short, short));
+void writeshifted __P((volatile char *, char, char));
 
 void grfclattach __P((struct device *, struct device *, void *));
 int grfclprint __P((void *, char *));
 int grfclmatch __P((struct device *, void *, void *));
-void cl_memset __P((unsigned char *d, unsigned char c, int l));
+void cl_memset __P((unsigned char *, unsigned char, int));
 
 /* Graphics display definitions.
  * These are filled by 'grfconfig' using GRFIOCSETMON.
@@ -247,7 +252,6 @@ grfclattach(pdp, dp, auxp)
 	static struct grf_softc congrf;
 	struct zbus_args *zap;
 	struct grf_softc *gp;
-	int     x;
 	static char attachflag = 0;
 
 	zap = auxp;
@@ -335,7 +339,6 @@ cl_boardinit(gp)
 {
 	unsigned char *ba = gp->g_regkva;
 	int     x;
-	void   *bah;
 
 	/* wakeup board and flip passthru OFF */
 
@@ -481,6 +484,7 @@ cl_setvmode(gp, mode)
 	return (0);
 }
 
+#ifndef CL5426CONSOLE
 void
 cl_off(gp)
 	struct grf_softc *gp;
@@ -493,6 +497,7 @@ cl_off(gp)
 	RegOnpass(ba);
 	WSeq(ba, SEQ_ID_CLOCKING_MODE, 0x21);
 }
+#endif
 
 int
 cl_blank(gp, on)
@@ -507,11 +512,13 @@ cl_blank(gp, on)
  * Change the mode of the display.
  * Return a UNIX error number or 0 for success.
  */
+int
 cl_mode(gp, cmd, arg, a2, a3)
 	register struct grf_softc *gp;
-	int     cmd;
-	void   *arg;
-	int     a2, a3;
+	u_long cmd;
+	void *arg;
+	u_long a2;
+	int a3;
 {
 	int     error;
 
@@ -547,7 +554,7 @@ cl_mode(gp, cmd, arg, a2, a3)
 		return (0);
 
 	case GM_GRFIOCTL:
-		return (cl_ioctl(gp, (int) arg, (caddr_t) a2));
+		return (cl_ioctl(gp, a2, arg));
 
 	default:
 		break;
@@ -559,7 +566,7 @@ cl_mode(gp, cmd, arg, a2, a3)
 int
 cl_ioctl(gp, cmd, data)
 	register struct grf_softc *gp;
-	int     cmd;
+	u_long cmd;
 	void   *data;
 {
 	switch (cmd) {
@@ -634,7 +641,7 @@ cl_writesprpos(ba, x, y)
 
 void
 writeshifted(to, shiftx, shifty)
-	unsigned char *to;
+	volatile char *to;
 	char    shiftx;
 	char    shifty;
 {
@@ -675,9 +682,11 @@ cl_setmousepos(gp, data)
 	struct grf_position *data;
 {
 	volatile char *ba = gp->g_regkva;
+        short rx, ry, prx, pry;
+#ifdef CL_SHIFTSPRITE
 	volatile char *fb = gp->g_fbkva;
         volatile char *sprite = fb + (cl_fbsize - 1024);
-        short rx, ry, prx, pry;
+#endif
 
         /* no movement */
 	if (cl_cursprite.pos.x == data->x && cl_cursprite.pos.y == data->y)
@@ -949,6 +958,9 @@ cl_getcmap(gfp, cmap)
 		gp = green + cmap->index;
 		bp = blue + cmap->index;
 		break;
+	default:
+		rp = gp = bp = 0;
+		break;
 	}
 
 	do {
@@ -1000,6 +1012,9 @@ cl_putcmap(gfp, cmap)
 			rp = red + cmap->index;
 			gp = green + cmap->index;
 			bp = blue + cmap->index;
+			break;
+		default:
+			rp = gp = bp = 0;
 			break;
 		}
 
@@ -1060,7 +1075,7 @@ CompFQ(fq, num, denom)
 #define OSC     14318180
 #define count(n,d,p)    ((OSC * n)/(d * (1+p)))
 
-	unsigned char n, d, p, minn, mind, minp;
+	unsigned char n, d, p, minn, mind, minp = 0;
 	unsigned long err, minerr;
 
 /*
@@ -1093,7 +1108,7 @@ denom = 0x00 - 0x1f (1) 0x20 - 0x3e (even)
 	*num = minn;
 	*denom = (mind << 1) | minp;
 	if (minerr > 500000)
-		printf("Warning: CompFQ minimum error = %d\n", minerr);
+		printf("Warning: CompFQ minimum error = %ld\n", minerr);
 	return;
 }
 
@@ -1138,12 +1153,12 @@ cl_load_mon(gp, md)
 	struct grfvideo_mode *gv;
 	struct grfinfo *gi;
 	volatile unsigned char *ba;
-	volatile unsigned char *fb;
+	volatile caddr_t fb;
 	unsigned char num0, denom0;
 	unsigned short HT, HDE, HBS, HBE, HSS, HSE, VDE, VBS, VBE, VSS,
 	        VSE, VT;
 	char    LACE, DBLSCAN, TEXT;
-	unsigned short clkdiv, clksel;
+	unsigned short clkdiv;
 	int     uplim, lowlim;
 
 	/* identity */
@@ -1264,7 +1279,7 @@ cl_load_mon(gp, md)
 		WCrt(ba, CRT_ID_CURSOR_START, 0x00);
 		WCrt(ba, CRT_ID_CURSOR_END, md->fy & 0x1f);
 #endif
-		WCrt(ba, CRT_ID_UNDERLINE_LOC, md->fy - 1 & 0x1f);
+		WCrt(ba, CRT_ID_UNDERLINE_LOC, (md->fy - 1) & 0x1f);
 
 		WCrt(ba, CRT_ID_CURSOR_LOC_HIGH, 0x00);
 		WCrt(ba, CRT_ID_CURSOR_LOC_LOW, 0x00);
@@ -1301,6 +1316,10 @@ cl_load_mon(gp, md)
 		break;
 	case 24:
 		clkdiv = 2;
+		break;
+	default:
+		clkdiv = 0;
+		panic("grfcl: Unsuported depth: %i", gv->depth);
 		break;
 	}
 
