@@ -1,4 +1,4 @@
-.\"	$NetBSD: wiconfig.8,v 1.9 2000/07/04 05:20:03 itojun Exp $
+.\"	$NetBSD: wiconfig.8,v 1.10 2000/07/27 20:24:19 onoe Exp $
 .\"
 .\" Copyright (c) 1997, 1998, 1999
 .\"	Bill Paul <wpaul@ctr.columbia.edu> All rights reserved.
@@ -146,10 +146,9 @@ be normal text (i.e., "hello") or a series of hexadecimal digits
 (i.e., "0x1234512345"). For WaveLAN Silver cards, the key is
 restricted to 40 bits, hence the key can be either a 5-character text string
 or 10 hexadecimal digits. For WaveLAN Gold cards, the key can be up to
-112 bits, which means the key can be specified as either a 14-character
-text string or 28 hexadecimal digits.  (The card claims to be 128-bit RC4,
-but you can only send 112 bits to the driver.  Strange, I wonder where the
-other 16 bits come from, and what they are.)
+104 bits, which means the key can be specified as either a 13-character
+text string or 26 hexadecimal digits.  The key will be combined with the
+24-bit IV to consist the seed for RC4 in either case.
 .It Fl T Ar 1|2|3|4
 Specify which of the four WEP encryption keys will be used to encrypt
 transmitted packets.
