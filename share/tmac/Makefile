@@ -1,5 +1,5 @@
 #	from: @(#)Makefile	6.13 (Berkeley) 3/20/91
-#	$Id: Makefile,v 1.10 1994/02/10 01:55:21 cgd Exp $
+#	$Id: Makefile,v 1.11 1994/06/02 23:40:19 jtc Exp $
 
 BINDIR= /usr/share
 FILES=	tmac.andoc
@@ -20,7 +20,7 @@ realinstall:
 		chown ${BINOWN}:${BINGRP} ${DESTDIR}${BINDIR}/tmac/tmac.$$i; \
 		chmod 444 ${DESTDIR}${BINDIR}/tmac/tmac.$$i; \
 	done
-	install -c -o ${BINOWN} -g ${BINOWN} -m 444 ${FILES} \
+	install -c -o ${BINOWN} -g ${BINGRP} -m 444 ${FILES} \
 		${DESTDIR}${BINDIR}/tmac
 
 .include <bsd.prog.mk>
