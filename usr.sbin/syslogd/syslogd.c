@@ -41,7 +41,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1988, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)syslogd.c	8.3 (Berkeley) 4/4/94";
 #else
-__RCSID("$NetBSD: syslogd.c,v 1.16 1997/10/17 13:49:37 lukem Exp $");
+__RCSID("$NetBSD: syslogd.c,v 1.17 1997/10/24 01:41:47 mrg Exp $");
 #endif
 #endif /* not lint */
 
@@ -286,7 +286,7 @@ main(argc, argv)
 	if (funix < 0 ||
 	    bind(funix, (struct sockaddr *)&sunx, SUN_LEN(&sunx)) < 0 ||
 	    chmod(LogName, 0666) < 0) {
-		(void) sprintf(line, "cannot create %s", LogName);
+		(void)snprintf(line, sizeof line, "cannot create %s", LogName);
 		logerror(line);
 		dprintf("cannot create %s (%d)\n", LogName, errno);
 		die(0);
@@ -611,7 +611,7 @@ fprintlog(f, flags, msg)
 	v = iov;
 	if (f->f_type == F_WALL) {
 		v->iov_base = greetings;
-		v->iov_len = sprintf(greetings,
+		v->iov_len = snprintf(greetings, sizeof greetings,
 		    "\r\n\7Message from syslogd@%s at %.24s ...\r\n",
 		    f->f_prevhost, ctime(&now));
 		v++;
@@ -638,8 +638,8 @@ fprintlog(f, flags, msg)
 		v->iov_len = strlen(msg);
 	} else if (f->f_prevcount > 1) {
 		v->iov_base = repbuf;
-		v->iov_len = sprintf(repbuf, "last message repeated %d times",
-		    f->f_prevcount);
+		v->iov_len = snprintf(repbuf, sizeof repbuf,
+		    "last message repeated %d times", f->f_prevcount);
 	} else {
 		v->iov_base = f->f_prevline;
 		v->iov_len = f->f_prevlen;
@@ -656,7 +656,7 @@ fprintlog(f, flags, msg)
 
 	case F_FORW:
 		dprintf(" %s\n", f->f_un.f_forw.f_hname);
-		l = sprintf(line, "<%d>%.15s %s", f->f_prevpri,
+		l = snprintf(line, sizeof line, "<%d>%.15s %s", f->f_prevpri,
 		    iov[0].iov_base, iov[4].iov_base);
 		if (l > MAXLINE)
 			l = MAXLINE;
@@ -876,7 +876,7 @@ die(signo)
 	}
 	if (signo) {
 		dprintf("syslogd: exiting on signal %d\n", signo);
-		(void)sprintf(buf, "exiting on signal %d", signo);
+		(void)snprintf(buf, sizeof buf, "exiting on signal %d", signo);
 		errno = 0;
 		logerror(buf);
 	}
@@ -1035,7 +1035,7 @@ cfline(line, f)
 		else {
 			pri = decode(buf, prioritynames);
 			if (pri < 0) {
-				(void)sprintf(ebuf,
+				(void)snprintf(ebuf, sizeof ebuf,
 				    "unknown priority name \"%s\"", buf);
 				logerror(ebuf);
 				return;
@@ -1053,7 +1053,7 @@ cfline(line, f)
 			else {
 				i = decode(buf, facilitynames);
 				if (i < 0) {
-					(void)sprintf(ebuf,
+					(void)snprintf(ebuf, sizeof ebuf,
 					    "unknown facility name \"%s\"",
 					    buf);
 					logerror(ebuf);
