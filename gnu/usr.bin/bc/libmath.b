@@ -1,7 +1,7 @@
 /* libmath.b for bc for minix.  */
 
 /*  This file is part of bc written for MINIX.
-    Copyright (C) 1991, 1992 Free Software Foundation, Inc.
+    Copyright (C) 1991, 1992, 1993 Free Software Foundation, Inc.
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -35,7 +35,17 @@ scale = 20
 */
 
 define e(x) {
-  auto  a, d, e, f, i, m, v, z
+  auto  a, d, e, f, i, m, n, v, z
+
+  /* a - holds x^y of x^y/y! */
+  /* d - holds y! */
+  /* e - is the value x^y/y! */
+  /* v - is the sum of the e's */
+  /* f - number of times x was divided by 2. */
+  /* m - is 1 if x was minus. */
+  /* i - iteration count. */
+  /* n - the scale to compute the sum. */
+  /* z - orignal scale. */
 
   /* Check the sign of x. */
   if (x<0) {
@@ -45,13 +55,16 @@ define e(x) {
 
   /* Precondition x. */
   z = scale;
-  scale = 4 + z + .44*x;
+  n = 6 + z + .44*x;
+  scale = scale(x)+1;
   while (x > 1) {
     f += 1;
     x /= 2;
+    scale += 1;
   }
 
   /* Initialize the variables. */
+  scale = n;
   v = 1+x
   a = x
   d = 1
@@ -81,7 +94,7 @@ define l(x) {
 
   /* Precondition x to make .5 < x < 2.0. */
   z = scale;
-  scale += 4;
+  scale = 6 + scale;
   f = 2;
   i=0
   while (x >= 2) {  /* for large numbers */
@@ -117,7 +130,7 @@ define s(x) {
 
   /* precondition x. */
   z = scale 
-  scale = 1.1*z + 1;
+  scale = 1.1*z + 2;
   v = a(1)
   if (x < 0) {
     m = 1;
@@ -160,25 +173,37 @@ define c(x) {
 define a(x) {
   auto a, e, f, i, m, n, s, v, z
 
-  /* Special case and for fast answers */
-  if (x==1) {
-    if (scale <= 25) return (.7853981633974483096156608/1)
-    if (scale <= 40) return (.7853981633974483096156608458198757210492/1)
-    if (scale <= 60) \
-      return (.785398163397448309615660845819875721049292349843776455243736/1)
-  }
-  if (x==.2) {
-    if (scale <= 25) return (.1973955598498807583700497/1)
-    if (scale <= 40) return (.1973955598498807583700497651947902934475/1)
-    if (scale <= 60) \
-      return (.197395559849880758370049765194790293447585103787852101517688/1)
-  }
+  /* a is the value of a(.2) if it is needed. */
+  /* f is the value to multiply by a in the return. */
+  /* e is the value of the current term in the series. */
+  /* v is the accumulated value of the series. */
+  /* m is 1 or -1 depending on x (-x -> -1).  results are divided by m. */
+  /* i is the denominator value for series element. */
+  /* n is the numerator value for the series element. */
+  /* s is -x*x. */
+  /* z is the saved user's scale. */
 
   /* Negative x? */
+  m = 1;
   if (x<0) {
-    m = 1;
+    m = -1;
     x = -x;
   }
+
+  /* Special case and for fast answers */
+  if (x==1) {
+    if (scale <= 25) return (.7853981633974483096156608/m)
+    if (scale <= 40) return (.7853981633974483096156608458198757210492/m)
+    if (scale <= 60) \
+      return (.785398163397448309615660845819875721049292349843776455243736/m)
+  }
+  if (x==.2) {
+    if (scale <= 25) return (.1973955598498807583700497/m)
+    if (scale <= 40) return (.1973955598498807583700497651947902934475/m)
+    if (scale <= 60) \
+      return (.197395559849880758370049765194790293447585103787852101517688/m)
+  }
+
 
   /* Save the scale. */
   z = scale;
@@ -186,12 +211,12 @@ define a(x) {
   /* Note: a and f are known to be zero due to being auto vars. */
   /* Calculate atan of a known number. */ 
   if (x > .2)  {
-    scale = z+4;
+    scale = z+5;
     a = a(.2);
   }
    
   /* Precondition x. */
-  scale = z+2;
+  scale = z+3;
   while (x > .2) {
     f += 1;
     x = (x-.2) / (1+x*.2);
@@ -206,8 +231,7 @@ define a(x) {
     e = (n *= s) / i;
     if (e == 0) {
       scale = z;
-      if (m) return ((f*a+v)/-1);
-      return ((f*a+v)/1);
+      return ((f*a+v)/m);
     }
     v += e
   }
