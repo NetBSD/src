@@ -1,7 +1,7 @@
-/*	$NetBSD: ns_config.c,v 1.2.2.2 1999/12/04 16:54:13 he Exp $	*/
+/*	$NetBSD: ns_config.c,v 1.2.2.3 2000/12/13 23:57:42 he Exp $	*/
 
 #if !defined(lint) && !defined(SABER)
-static const char rcsid[] = "Id: ns_config.c,v 8.104 1999/11/08 23:09:42 vixie Exp";
+static const char rcsid[] = "Id: ns_config.c,v 8.105 1999/11/16 06:01:37 vixie Exp";
 #endif /* not lint */
 
 /*
@@ -3059,4 +3059,6 @@ load_configuration(const char *filename) {
 
 	initial_configuration = 0;
 	loading = 0;
+	/* release queued notifies */
+	notify_afterload();
 }

@@ -1,4 +1,4 @@
-.\"     $NetBSD: named.8,v 1.2.2.2 1999/12/04 17:10:16 he Exp $
+.\"     $NetBSD: named.8,v 1.2.2.3 2000/12/13 23:57:45 he Exp $
 .\"
 .\" ++Copyright++ 1985, 1996
 .\" -
@@ -77,7 +77,7 @@
 .Op Fl w Ar directory
 .Op Ar config_file
 .Sh DESCRIPTION
-.Ic Named
+.Nm
 is the Internet domain name server.
 See RFC's 1033, 1034, and 1035 for more information on the Internet
 name-domain system.  Without any arguments,
@@ -96,7 +96,7 @@ flags.
 .Pp
 .Sy NOTE:
 Several of 
-.Nm named Ns 's
+.Nm "" Ns 's
 options, and much more of its behaviour, can be controlled in the configuration 
 file.  Please refer to the configuration file guide included with this 
 .Sy BIND
@@ -116,7 +116,7 @@ is set to
 .Sy NOTE:
 The new debugging framework is considerably more sophisticated than it
 was in older versions of 
-.Nm NAMED .
+.Nm "" .
 The configuration file's
 .Dq Li logging
 statement allows for multiple, distinct levels of debugging for each of
@@ -126,7 +126,7 @@ etc.).  Please refer to the configuration file guide included with this
 distribution for further information about these extensive new capabilities.
 .It Fl p Ar port#
 Use the specified remote port number; this is the port number to which 
-.Nm NAMED
+.Nm
 will send queries.  The default value is the standard port number, i.e.,
 the port number returned by 
 .Xr getservbyname 3 
@@ -141,7 +141,7 @@ was supported; the first port was that used when contacting
 servers, and the second one was the service port bound by the 
 .Em local 
 instance of
-.Nm NAMED .
+.Nm "" .
 The current usage is equivalent to the old usage without the 
 .Ar localport#
 specified; this functionality can be specified with the 
@@ -166,7 +166,7 @@ Run this process in the foreground; don't
 and daemonize.  (The default is to daemonize.)
 .It Fl q
 Trace all incoming queries if 
-.Nm NAMED 
+.Nm
 has been compiled with
 .Li QRYLOG 
 defined.  

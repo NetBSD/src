@@ -1,4 +1,4 @@
-/*	$NetBSD: ns_main.c,v 1.4.2.4 2000/10/10 21:12:52 he Exp $	*/
+/*	$NetBSD: ns_main.c,v 1.4.2.5 2000/12/13 23:57:43 he Exp $	*/
 
 #if !defined(lint) && !defined(SABER)
 static const char sccsid[] = "@(#)ns_main.c	4.55 (Berkeley) 7/1/91";
@@ -756,6 +756,10 @@ tcp_send(struct qinfo *qp) {
 		sq_remove(sp);
 		return (SERVFAIL);
 	}
+	if (fcntl(sp->s_rfd, F_SETFD, 1) < 0) {
+		sq_remove(sp);
+		return (SERVFAIL);
+	}
 	if (sq_openw(sp, qp->q_msglen + INT16SZ) == -1) {
 		sq_remove(sp);
 		return (SERVFAIL);
@@ -1433,6 +1437,11 @@ opensocket_d(interface *ifp) {
 		ns_notice(ns_log_default, "fcntl(dfd, F_DUPFD, 20): %s",
 			  strerror(errno));
 #endif
+	if (fcntl(ifp->dfd, F_SETFD, 1) < 0) {
+		ns_error(ns_log_default, "F_SETFD: %s", strerror(errno));
+		close(ifp->dfd);
+		return (-1);
+	}
 	ns_debug(ns_log_default, 1, "ifp->addr %s d_dfd %d",
 		 sin_ntoa(nsa), ifp->dfd);
 	if (setsockopt(ifp->dfd, SOL_SOCKET, SO_REUSEADDR,
@@ -1518,6 +1527,11 @@ opensocket_s(interface *ifp) {
 		ns_notice(ns_log_default, "fcntl(sfd, F_DUPFD, 20): %s",
 			  strerror(errno));
 #endif
+	if (fcntl(ifp->sfd, F_SETFD, 1) < 0) {
+		ns_error(ns_log_default, "F_SETFD: %s", strerror(errno));
+		close(ifp->sfd);
+		return (-1);
+	}
 	if (setsockopt(ifp->sfd, SOL_SOCKET, SO_REUSEADDR,
 		       (char *)&on, sizeof on) != 0) {
 		ns_notice(ns_log_default, "setsockopt(REUSEADDR): %s",
@@ -1619,6 +1633,8 @@ opensocket_f() {
 			 strerror(errno));
 	if (ds > evHighestFD(ev))
 		ns_panic(ns_log_default, 1, "socket too high: %d", ds);
+	if (fcntl(ds, F_SETFD, 1) < 0)
+		ns_panic(ns_log_default, 1, "F_SETFD: %s", strerror(errno));
 	if (setsockopt(ds, SOL_SOCKET, SO_REUSEADDR,
 	    (char *)&on, sizeof on) != 0) {
 		ns_notice(ns_log_default, "setsockopt(REUSEADDR): %s",

@@ -1,7 +1,7 @@
-/*	$NetBSD: ns_ctl.c,v 1.1.1.1.2.3 2000/10/10 21:12:23 he Exp $	*/
+/*	$NetBSD: ns_ctl.c,v 1.1.1.1.2.4 2000/12/13 23:57:42 he Exp $	*/
 
 #if !defined(lint) && !defined(SABER)
-static const char rcsid[] = "Id: ns_ctl.c,v 8.28 1999/10/13 16:39:04 vixie Exp";
+static const char rcsid[] = "Id: ns_ctl.c,v 8.28.2.1 2000/11/09 23:15:28 vixie Exp";
 #endif /* not lint */
 
 /*
@@ -248,6 +248,7 @@ ns_ctl_install(controls *new) {
 	/* Add any new controls which were found. */
 	for (ctl = HEAD(*new); ctl != NULL; ctl = next) {
 		next = NEXT(ctl, link);
+		UNLINK(*new, ctl, link);
 		APPEND(server_controls, ctl, link);
 		install(ctl);
 		if (ctl->sctx == NULL)

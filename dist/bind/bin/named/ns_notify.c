@@ -1,7 +1,7 @@
-/*	$NetBSD: ns_notify.c,v 1.1.1.1.2.2 1999/12/04 16:55:23 he Exp $	*/
+/*	$NetBSD: ns_notify.c,v 1.1.1.1.2.3 2000/12/13 23:57:43 he Exp $	*/
 
 #if !defined(lint) && !defined(SABER)
-static const char rcsid[] = "Id: ns_notify.c,v 8.4 1999/10/15 19:49:04 vixie Exp";
+static const char rcsid[] = "Id: ns_notify.c,v 8.5 1999/11/16 06:01:39 vixie Exp";
 #endif /* not lint */
 
 /*
@@ -80,6 +80,7 @@ static void		notify_timer(evContext, void *,
 /* Local. */
 
 static LIST(struct notify) pending_notifies;
+static LIST(struct notify) loading_notifies;
 
 /* Public. */
 
@@ -125,6 +126,11 @@ ns_notify(const char *dname, ns_class class, ns_type type) {
 	ni->type = type;
 	evInitID(&ni->timer);
 
+	if (loading != 0) {
+		APPEND(loading_notifies, ni, link);
+		return;
+	}
+
 	/* Delay notification for from five seconds up to fifteen minutes. */
 	max_delay = MIN(nzones/5, 895);
 	max_delay = MAX(max_delay, 25);
@@ -146,6 +152,19 @@ ns_notify(const char *dname, ns_class class, ns_type type) {
 		 (dname && *dname) ? dname : ".",
 		 p_class(class), p_type(type),
 		 ni, zp, delay);
+}
+
+void
+notify_afterload() {
+	struct notify *ni;
+
+	INSIST(loading == 0);
+	while ((ni = HEAD(loading_notifies)) != NULL) {
+		UNLINK(loading_notifies, ni, link);
+		ns_notify(ni->name, ni->class, ni->type);
+		freestr(ni->name);
+		memput(ni, sizeof *ni);
+	}
 }
 
 /*
