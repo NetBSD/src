@@ -1,4 +1,4 @@
-/*	$NetBSD: sbdsp.c,v 1.98 1999/03/22 14:38:02 mycroft Exp $	*/
+/*	$NetBSD: sbdsp.c,v 1.99 1999/08/02 17:37:42 augustss Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -1536,8 +1536,8 @@ sbdsp_intr(arg)
 			sc->sc_intr16(arg);
 	}
 #if NMIDI > 0
-	if ((irq & SBP_IRQ_MPU401) && sc->sc_hasmpu) {
-		mpu_intr(&sc->sc_mpu);
+	if ((irq & SBP_IRQ_MPU401) && sc->sc_mpudev) {
+		mpu_intr(sc->sc_mpudev);
 	}
 #endif
 	return 1;

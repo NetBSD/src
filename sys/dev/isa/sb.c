@@ -1,4 +1,4 @@
-/*	$NetBSD: sb.c,v 1.67 1999/03/22 07:37:35 mycroft Exp $	*/
+/*	$NetBSD: sb.c,v 1.68 1999/08/02 17:37:42 augustss Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -235,19 +235,18 @@ sbattach(sc)
 
 	sbdsp_attach(sc);
 
+	audio_attach_mi(&sb_hw_if, sc, &sc->sc_dev);
+
 #if NMIDI > 0
-	if (ISSB16CLASS(sc)) {
-		if (sc->sc_hasmpu && mpu_find(&sc->sc_mpu))
-			midi_attach_mi(&mpu_midi_hw_if, &sc->sc_mpu, &sc->sc_dev);
-		else
-			sc->sc_hasmpu = 0;
+	if (sc->sc_hasmpu) {
+		arg.type = AUDIODEV_TYPE_MPU;
+		arg.hwif = 0;
+		arg.hdl = 0;
+		sc->sc_mpudev = config_found(&sc->sc_dev, &arg, audioprint);
 	} else {
-		sc->sc_hasmpu = 0;
 		midi_attach_mi(&sb_midi_hw_if, sc, &sc->sc_dev);
 	}
 #endif
-
-	audio_attach_mi(&sb_hw_if, sc, &sc->sc_dev);
 
 	if (sc->sc_model >= SB_20) {
 		arg.type = AUDIODEV_TYPE_OPL;
