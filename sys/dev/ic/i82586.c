@@ -1,4 +1,4 @@
-/*	$NetBSD: i82586.c,v 1.20 1999/02/17 03:41:00 thorpej Exp $	*/
+/*	$NetBSD: i82586.c,v 1.20.2.1 1999/09/10 23:08:17 he Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -236,8 +236,6 @@ static int	i82586_cmd_wait		__P((struct ie_softc *));
 
 #ifdef I82586_DEBUG
 void 		print_rbd 	__P((struct ie_softc *, int));
-
-int spurious_intrs = 0;
 #endif
 
 
@@ -622,11 +620,6 @@ i82586_intr(v)
 	status = sc->ie_bus_read16(sc, off) & IE_ST_WHENCE;
 
 	if ((status & IE_ST_WHENCE) == 0) {
-#ifdef I82586_DEBUG
-		if ((spurious_intrs++ % 25) == 0)
-		    printf("%s: i82586_intr: %d spurious interrupts\n",
-			   sc->sc_dev.dv_xname, spurious_intrs);
-#endif
 		if (sc->intrhook)
 			(sc->intrhook)(sc, INTR_EXIT);
 
