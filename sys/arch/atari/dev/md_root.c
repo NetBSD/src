@@ -1,4 +1,4 @@
-/*	$NetBSD: md_root.c,v 1.10 1996/12/28 23:37:26 pk Exp $	*/
+/*	$NetBSD: md_root.c,v 1.11 1996/12/28 23:51:23 pk Exp $	*/
 
 /*
  * Copyright (c) 1996 Leo Weppelman.
@@ -45,7 +45,7 @@
 #include <sys/dkbad.h>
 
 #include <dev/cons.h>
-#include <dev/ramdisk.h>
+#include <dev/md.h>
 
 #include <atari/atari/device.h>
 
