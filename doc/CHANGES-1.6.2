@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.2,v 1.1.2.143 2003/09/09 21:38:47 lukem Exp $
+#	$NetBSD: CHANGES-1.6.2,v 1.1.2.144 2003/09/10 16:59:17 grant Exp $
 
 A complete list of changes from NetBSD 1.6.1 to NetBSD 1.6.2:
 
@@ -1534,4 +1534,15 @@ sys/arch/sun3/include/param.h			patch
 	Apply patch from Matthias Scheler to fix the sun3 build after the
 	pullup of ticket 1434 broke it.
 	[tron, ticket #1453]
-			
+
+sys/arch/i386/conf/DISKLESS
+sys/arch/i386/conf/GENERIC
+sys/arch/i386/conf/GENERIC_LAPTOP    
+sys/arch/i386/conf/GENERIC_PS2TINY
+sys/arch/i386/conf/INSTALL
+sys/arch/i386/conf/INSTALL_LAPTOP
+sys/arch/i386/conf/INSTALL_SMALL
+sys/arch/i386/conf/NET4501
+
+	Enable USERCONF.
+	[jmmv, ticket #1389]
