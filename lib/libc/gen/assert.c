@@ -1,3 +1,5 @@
+/*	$NetBSD: assert.c,v 1.6 1995/02/25 08:50:56 cgd Exp $	*/
+
 /*-
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -32,8 +34,11 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-/* from: static char sccsid[] = "@(#)assert.c	8.1 (Berkeley) 6/4/93"; */
-static char *rcsid = "$Id: assert.c,v 1.5 1994/05/17 00:07:23 cgd Exp $";
+#if 0
+static char sccsid[] = "@(#)assert.c	8.1 (Berkeley) 6/4/93";
+#else
+static char *rcsid = "$NetBSD: assert.c,v 1.6 1995/02/25 08:50:56 cgd Exp $";
+#endif
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>

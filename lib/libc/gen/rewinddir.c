@@ -1,3 +1,5 @@
+/*	$NetBSD: rewinddir.c,v 1.4 1995/02/25 08:51:37 cgd Exp $	*/
+
 /*-
  * Copyright (c) 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -32,8 +34,11 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-/*static char sccsid[] = "from: @(#)rewinddir.c	8.1 (Berkeley) 6/8/93";*/
-static char rcsid[] = "$Id: rewinddir.c,v 1.3 1994/07/27 14:39:49 jtc Exp $";
+#if 0
+static char sccsid[] = "@(#)rewinddir.c	8.1 (Berkeley) 6/8/93";
+#else
+static char rcsid[] = "$NetBSD: rewinddir.c,v 1.4 1995/02/25 08:51:37 cgd Exp $";
+#endif
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
