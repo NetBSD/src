@@ -1,4 +1,4 @@
-#	$NetBSD: files.mac68k.newconf,v 1.30 1995/04/22 23:39:37 christos Exp $
+#	$NetBSD: files.mac68k.newconf,v 1.31 1995/04/27 12:10:51 christos Exp $
 
 #	@(#)files.sparc	8.1 (Berkeley) 7/19/93
 #
@@ -66,13 +66,13 @@ file	arch/mac68k/mac68k/trap.c
 file	arch/mac68k/mac68k/via.c
 file	arch/mac68k/mac68k/vm_machdep.c
 
-file	compat/sunos/sunos_misc.c		compat_sunos
-file	compat/sunos/sunos_init_sysent.c	compat_sunos
-file	compat/sunos/sunos_ioctl.c		compat_sunos
-file	compat/sunos/sunos_exec.c		compat_sunos
-file	arch/m68k/m68k/sunos_machdep.c		compat_sunos
-
 file	dev/cons.c
 file	dev/cninit.c
 
 major	{vnd = 8}
+
+# Compatibility modules
+
+# SunOS Binary Compatibility (COMPAT_SUNOS)
+include "../../../compat/sunos/files.sunos"
+file	arch/m68k/m68k/sunos_machdep.c	compat_sunos
