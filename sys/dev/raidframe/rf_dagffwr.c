@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_dagffwr.c,v 1.20 2004/03/06 23:34:27 oster Exp $	*/
+/*	$NetBSD: rf_dagffwr.c,v 1.21 2004/03/06 23:52:20 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_dagffwr.c,v 1.20 2004/03/06 23:34:27 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_dagffwr.c,v 1.21 2004/03/06 23:52:20 oster Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -608,8 +608,7 @@ rf_CommonCreateSmallWriteDAG(RF_Raid_t *raidPtr, RF_AccessStripeMap_t *asmap,
 		/* physical disk addr desc */
 		readDataNodes[i].params[0].p = pda;
 		/* buffer to hold old data */
-		readDataNodes[i].params[1].p = rf_AllocBuffer(raidPtr,
-		    dag_h, pda, allocList);
+		readDataNodes[i].params[1].p = rf_AllocBuffer(raidPtr, pda, allocList);
 		readDataNodes[i].params[2].v = parityStripeID;
 		readDataNodes[i].params[3].v = RF_CREATE_PARAM3(RF_IO_NORMAL_PRIORITY,
 		    which_ru);
@@ -630,8 +629,7 @@ rf_CommonCreateSmallWriteDAG(RF_Raid_t *raidPtr, RF_AccessStripeMap_t *asmap,
 			    dag_h, "Rop", allocList);
 		readParityNodes[i].params[0].p = pda;
 		/* buffer to hold old parity */
-		readParityNodes[i].params[1].p = rf_AllocBuffer(raidPtr,
-		    dag_h, pda, allocList);
+		readParityNodes[i].params[1].p = rf_AllocBuffer(raidPtr, pda, allocList);
 		readParityNodes[i].params[2].v = parityStripeID;
 		readParityNodes[i].params[3].v = RF_CREATE_PARAM3(RF_IO_NORMAL_PRIORITY,
 		    which_ru);
@@ -653,9 +651,7 @@ rf_CommonCreateSmallWriteDAG(RF_Raid_t *raidPtr, RF_AccessStripeMap_t *asmap,
 				    1, 4, 0, dag_h, "Roq", allocList);
 			readQNodes[i].params[0].p = pda;
 			/* buffer to hold old Q */
-			readQNodes[i].params[1].p = rf_AllocBuffer(raidPtr, 
-								   dag_h, pda,
-								   allocList);
+			readQNodes[i].params[1].p = rf_AllocBuffer(raidPtr, pda, allocList);
 			readQNodes[i].params[2].v = parityStripeID;
 			readQNodes[i].params[3].v = RF_CREATE_PARAM3(RF_IO_NORMAL_PRIORITY,
 			    which_ru);
