@@ -43,7 +43,7 @@ static char copyright[] =
 
 #ifndef lint
 /* from: static char sccsid[] = "@(#)main.c	8.2 (Berkeley) 1/3/94"; */
-static char *rcsid = "$Id: main.c,v 1.6 1994/02/03 23:44:53 cgd Exp $";
+static char *rcsid = "$Id: main.c,v 1.7 1995/02/23 17:25:23 jtc Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -130,7 +130,7 @@ main(argc, argv)
 		default:
 		case '?':
 			(void)fprintf(stderr,
-"usage:\tsed script [-an] [file ...]\n\tsed [-an] [-e script] ... [-f scipt_file] ... [file ...]\n");
+"usage:\tsed script [-an] [file ...]\n\tsed [-an] [-e script] ... [-f script_file] ... [file ...]\n");
 			exit(1);
 		}
 	argc -= optind;
