@@ -1,4 +1,4 @@
-/* $NetBSD: systemsw.c,v 1.3 2002/03/06 07:47:57 simonb Exp $ */
+/* $NetBSD: systemsw.c,v 1.4 2002/05/03 03:36:51 simonb Exp $ */
 
 /*
  * Copyright 2000, 2001
@@ -133,7 +133,7 @@ delay_triv(u_long n)
 	u_long i;
 	long divisor = curcpu()->ci_divisor_delay;
 
-	while (--n > 0)
+	while (n-- > 0)
 		for (i = divisor; i > 0; i--)
 			;
 }
