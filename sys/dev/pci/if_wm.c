@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.98 2005/03/05 21:37:07 thorpej Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.99 2005/03/09 19:06:19 matt Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.98 2005/03/05 21:37:07 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.99 2005/03/09 19:06:19 matt Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -137,7 +137,7 @@ int	wm_debug = WM_DEBUG_TX|WM_DEBUG_RX|WM_DEBUG_LINK;
 #define	WM_NEXTTX(sc, x)	(((x) + 1) & WM_NTXDESC_MASK(sc))
 #define	WM_NEXTTXS(sc, x)	(((x) + 1) & WM_TXQUEUELEN_MASK(sc))
 
-#define	WM_MAXTXDMA		ETHER_MAX_LEN_JUMBO
+#define	WM_MAXTXDMA		round_page(IP_MAXPACKET) /* for TSO */
 
 /*
  * Receive descriptor list size.  We have one Rx buffer for normal
@@ -276,6 +276,8 @@ struct wm_softc {
 	struct evcnt sc_ev_rxtusum;	/* TCP/UDP cksums checked in-bound */
 	struct evcnt sc_ev_txipsum;	/* IP checksums comp. out-bound */
 	struct evcnt sc_ev_txtusum;	/* TCP/UDP cksums comp. out-bound */
+	struct evcnt sc_ev_txtso;	/* TCP seg offload out-bound */
+	struct evcnt sc_ev_txtsopain;	/* painful header manip. for TSO */
 
 	struct evcnt sc_ev_txseg[WM_NTXSEGS]; /* Tx packets w/ N segments */
 	struct evcnt sc_ev_txdrop;	/* Tx packets dropped (too many segs) */
@@ -1214,6 +1216,13 @@ wm_attach(struct device *parent, struct device *self, void *aux)
 		ifp->if_capabilities |=
 		    IFCAP_CSUM_IPv4 | IFCAP_CSUM_TCPv4 | IFCAP_CSUM_UDPv4;
 
+	/* 
+	 * If we're a i82544 or greater (except i82547), we can do
+	 * TCP segmentation offload.
+	 */
+	if (sc->sc_type >= WM_T_82544 && sc->sc_type != WM_T_82547)
+		ifp->if_capabilities |= IFCAP_TSOv4;
+
 	/*
 	 * Attach the interface.
 	 */
@@ -1249,6 +1258,11 @@ wm_attach(struct device *parent, struct device *self, void *aux)
 	    NULL, sc->sc_dev.dv_xname, "txipsum");
 	evcnt_attach_dynamic(&sc->sc_ev_txtusum, EVCNT_TYPE_MISC,
 	    NULL, sc->sc_dev.dv_xname, "txtusum");
+
+	evcnt_attach_dynamic(&sc->sc_ev_txtso, EVCNT_TYPE_MISC,
+	    NULL, sc->sc_dev.dv_xname, "txtso");
+	evcnt_attach_dynamic(&sc->sc_ev_txtsopain, EVCNT_TYPE_MISC,
+	    NULL, sc->sc_dev.dv_xname, "txtsopain");
 
 	for (i = 0; i < WM_NTXSEGS; i++) {
 		sprintf(wm_txseg_evcnt_names[i], "txseg%d", i);
@@ -1372,6 +1386,54 @@ wm_tx_offload(struct wm_softc *sc, struct wm_txsoft *txs, uint32_t *cmdp,
 	seg = 0;
 	fields = 0;
 
+	if (m0->m_pkthdr.csum_flags & M_CSUM_TSOv4) {
+		int hlen = offset + iphl;
+		WM_EVCNT_INCR(&sc->sc_ev_txtso);
+		if (__predict_false(m0->m_len <
+				    (hlen + sizeof(struct tcphdr)))) {
+			/*
+			 * TCP/IP headers are not in the first mbuf; we need
+			 * to do this the slow and painful way.  Let's just
+			 * hope this doesn't happen very often.
+			 */
+			struct ip ip;
+			struct tcphdr th;
+
+			WM_EVCNT_INCR(&sc->sc_ev_txtsopain);
+
+			m_copydata(m0, offset, sizeof(ip), &ip);
+			m_copydata(m0, hlen, sizeof(th), &th);
+
+			th.th_sum = in_cksum_phdr(ip.ip_src.s_addr,
+			    ip.ip_dst.s_addr, htons(IPPROTO_TCP));
+
+			m_copyback(m0, hlen + offsetof(struct tcphdr, th_sum),
+			    sizeof(th.th_sum), &th.th_sum);
+
+			hlen += th.th_off << 2;
+		} else {
+			/*
+			 * TCP/IP headers are in the first mbuf; we can do
+			 * this the easy way.
+			 */
+			struct ip *ip =
+			    (struct ip *) (mtod(m0, caddr_t) + offset);
+			struct tcphdr *th =
+			    (struct tcphdr *) (mtod(m0, caddr_t) + hlen);
+
+			th->th_sum = in_cksum_phdr(ip->ip_src.s_addr,
+			    ip->ip_dst.s_addr, htons(IPPROTO_TCP));
+
+			hlen += th->th_off << 2;
+		}
+
+		cmd |= WTX_TCPIP_CMD_TSE;
+		cmdlen |= WTX_TCPIP_CMD_TSE | WTX_TCPIP_CMD_IP |
+		    WTX_TCPIP_CMD_TCP | (m0->m_pkthdr.len - hlen);
+		seg = WTX_TCPIP_SEG_HDRLEN(hlen) |
+		    WTX_TCPIP_SEG_MSS(m0->m_pkthdr.segsz);
+	}
+
 	/*
 	 * NOTE: Even if we're not using the IP or TCP/UDP checksum
 	 * offload feature, if we load the context descriptor, we
@@ -1381,14 +1443,15 @@ wm_tx_offload(struct wm_softc *sc, struct wm_txsoft *txs, uint32_t *cmdp,
 	ipcs = WTX_TCPIP_IPCSS(offset) |
 	    WTX_TCPIP_IPCSO(offset + offsetof(struct ip, ip_sum)) |
 	    WTX_TCPIP_IPCSE(offset + iphl - 1);
-	if (m0->m_pkthdr.csum_flags & M_CSUM_IPv4) {
+	if (m0->m_pkthdr.csum_flags & (M_CSUM_IPv4|M_CSUM_TSOv4)) {
 		WM_EVCNT_INCR(&sc->sc_ev_txipsum);
 		fields |= WTX_IXSM;
 	}
 
 	offset += iphl;
 
-	if (m0->m_pkthdr.csum_flags & (M_CSUM_TCPv4|M_CSUM_UDPv4)) {
+	if (m0->m_pkthdr.csum_flags &
+	    (M_CSUM_TCPv4|M_CSUM_UDPv4|M_CSUM_TSOv4)) {
 		WM_EVCNT_INCR(&sc->sc_ev_txtusum);
 		fields |= WTX_TXSM;
 		tucs = WTX_TCPIP_TUCSS(offset) |
@@ -1540,7 +1603,7 @@ wm_start(struct ifnet *ifp)
 #endif
 	struct wm_txsoft *txs;
 	bus_dmamap_t dmamap;
-	int error, nexttx, lasttx = -1, ofree, seg, segs_needed;
+	int error, nexttx, lasttx = -1, ofree, seg, segs_needed, use_tso;
 	bus_addr_t curaddr;
 	bus_size_t seglen, curlen;
 	uint32_t cksumcmd;
@@ -1584,6 +1647,22 @@ wm_start(struct ifnet *ifp)
 		txs = &sc->sc_txsoft[sc->sc_txsnext];
 		dmamap = txs->txs_dmamap;
 
+		use_tso = (m0->m_pkthdr.csum_flags & M_CSUM_TSOv4) != 0;
+
+		/*
+		 * So says the Linux driver:
+		 * The controller does a simple calculation to make sure
+		 * there is enough room in the FIFO before initiating the
+		 * DMA for each buffer.  The calc is:
+		 *	4 = ceil(buffer len / MSS)
+		 * To make sure we don't overrun the FIFO, adjust the max
+		 * buffer len if the MSS drops.
+		 */
+		dmamap->dm_maxsegsz =
+		    (use_tso && (m0->m_pkthdr.segsz << 2) < WTX_MAX_LEN)
+		    ? m0->m_pkthdr.segsz << 2
+		    : WTX_MAX_LEN;
+
 		/*
 		 * Load the DMA map.  If this fails, the packet either
 		 * didn't fit in the allotted number of segments, or we
@@ -1615,6 +1694,10 @@ wm_start(struct ifnet *ifp)
 		}
 
 		segs_needed = dmamap->dm_nsegs;
+		if (use_tso) {
+			/* For sentinel descriptor; see below. */
+			segs_needed++;
+		}
 
 		/*
 		 * Ensure we have enough descriptors free to describe
@@ -1713,6 +1796,17 @@ wm_start(struct ifnet *ifp)
 			     curaddr += curlen, seglen -= curlen,
 			     nexttx = WM_NEXTTX(sc, nexttx)) {
 				curlen = seglen;
+
+				/*
+				 * So says the Linux driver:
+				 * Work around for premature descriptor
+				 * write-backs in TSO mode.  Append a
+				 * 4-byte sentinel descriptor.
+				 */
+				if (use_tso &&
+				    seg == dmamap->dm_nsegs - 1 &&
+				    curlen > 8)
+					curlen -= 4;
 
 				wm_set_dma_addr(
 				    &sc->sc_txdescs[nexttx].wtx_addr,
