@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.31 1996/02/17 09:47:48 pk Exp $ */
+/*	$NetBSD: clock.c,v 1.32 1996/02/18 15:38:41 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -172,7 +172,6 @@ oclockmatch(parent, vcf, aux)
 	struct device *parent;
 	void *aux, *vcf;
 {
-	struct cfdata *cf = vcf;
 	register struct confargs *ca = aux;
 
 #if defined(SUN4)
@@ -271,7 +270,6 @@ clockmatch(parent, vcf, aux)
 	struct device *parent;
 	void *aux, *vcf;
 {
-	struct cfdata *cf = vcf;
 	register struct confargs *ca = aux;
 
 #if defined(SUN4)
@@ -362,7 +360,6 @@ timermatch(parent, vcf, aux)
 	struct device *parent;
 	void *aux, *vcf;
 {
-	struct cfdata *cf = vcf;
 	register struct confargs *ca = aux;
 
 #if defined(SUN4)
@@ -372,7 +369,17 @@ timermatch(parent, vcf, aux)
 		return (0);
 	}
 #endif /* SUN4 */
-	return (strcmp("counter-timer", ca->ca_ra.ra_name) == 0);
+#if defined(SUN4C)
+	if (cputyp == CPU_SUN4C) { 
+		return (strcmp("counter-timer", ca->ca_ra.ra_name) == 0);
+	}
+#endif /* SUN4C */
+#if defined(SUN4M)
+	if (cputyp == CPU_SUN4M) {
+		return (strcmp("counter", ca->ca_ra.ra_name) == 0);
+	}
+#endif /* SUN4M */
+	return (0);
 }
 
 /* ARGSUSED */
@@ -686,7 +693,7 @@ struct chiptime {
 	int	year;
 };
 
-int
+void
 timetochip(c)
 	register struct chiptime *c;
 {
@@ -1040,26 +1047,21 @@ microtime(tvp)
 {
 	int s;
 	static struct timeval lasttime;
+	static struct timeval oneusec = {0, 1};
 
 	if (!oldclk) {
 		lo_microtime(tvp);
 		return;
 	}
+
 	s = splhigh();
 	*tvp = time;
-	tvp->tv_usec;
-	while (tvp->tv_usec > 1000000) {
-		tvp->tv_sec++;
-		tvp->tv_usec -= 1000000;
-	}
-	if (tvp->tv_sec == lasttime.tv_sec &&
-	    tvp->tv_usec <= lasttime.tv_usec &&
-	    (tvp->tv_usec = lasttime.tv_usec + 1) > 1000000) {
-		tvp->tv_sec++;
-		tvp->tv_usec -= 1000000;
-	}
-	lasttime = *tvp;
 	splx(s);
+
+	if (timercmp(tvp, &lasttime, <=))
+		timeradd(&lasttime, &oneusec, tvp);
+
+	lasttime = *tvp;
 }
 #endif /* SUN4 */
 
