@@ -1,4 +1,4 @@
-#	$NetBSD: files.uba,v 1.12 2002/08/26 08:08:06 ragge Exp $
+#	$NetBSD: files.uba,v 1.13 2003/03/23 11:01:16 ragge Exp $
 #
 # Config file and device description for machine-independent
 # code for devices Digital Equipment Corp. Unibus and Q22 bus.
@@ -84,3 +84,10 @@ file	dev/qbus/dmz.c				dmz needs-flag
 
 # Common code for dmf/dmz
 file	dev/qbus/dmx.c				dmf | dmz
+
+# RX01/02 floppy disk controller
+device  rfc { drive=-1 }
+attach  rfc at uba
+device  rf: disk
+attach  rf at rfc
+file	dev/qbus/rf.c				rf | rfc needs-flag
