@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist,v 1.27 1996/07/15 06:24:07 leo Exp $
+#	$NetBSD: NetBSD.dist,v 1.28 1996/08/09 10:32:45 thorpej Exp $
 #	from: @(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 /set type=dir uname=root gname=wheel mode=0755
@@ -1563,6 +1563,17 @@ vi.recover	 mode=01777
 ..
 
 # ./var/tmp
+..
+
+# ./var/yp
+yp
+
+# ./var/yp/binding
+binding
+# ./var/yp/binding
+..
+
+# ./var/yp
 ..
 
 # ./var
