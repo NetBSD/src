@@ -1,4 +1,4 @@
-/* $NetBSD: ansi.h,v 1.11 2000/05/10 17:53:45 thorpej Exp $ */
+/* $NetBSD: ansi.h,v 1.12 2000/06/27 05:53:22 kleink Exp $ */
 
 /*-
  * Copyright (c) 1990, 1993
@@ -68,8 +68,6 @@ typedef struct {
 #define	_BSD_TIMER_T_		int		/* timer_t */
 #define	_BSD_SUSECONDS_T_	int		/* suseconds_t */
 #define	_BSD_USECONDS_T_	unsigned int	/* useconds_t */
-#define	_BSD_INTPTR_T_		long		/* intptr_t */
-#define	_BSD_UINTPTR_T_		unsigned long	/* uintptr_t */
 
 /*
  * Runes (wchar_t) is declared to be an ``int'' instead of the more natural
