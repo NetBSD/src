@@ -1,4 +1,4 @@
-/*	$NetBSD: ipft_td.c,v 1.1.1.7 1997/10/30 05:27:59 mrg Exp $	*/
+/*	$NetBSD: ipft_td.c,v 1.1.1.8 1997/11/14 08:03:20 mrg Exp $	*/
 
 /*
  * Copyright (C) 1993-1997 by Darren Reed.
@@ -53,21 +53,16 @@ tcpdump -nqte
 #include <netinet/tcp.h>
 #include <netinet/udp.h>
 #include <netinet/ip_icmp.h>
-#ifndef	linux
-#include <netinet/tcpip.h>
-#endif
 #include <net/if.h>
 #include <netdb.h>
 #include <netinet/ip_compat.h>
+#include <netinet/tcpip.h>
 #include "ipf.h"
 #include "ipt.h"
-#ifdef	linux
-#include "tcpip.h"
-#endif
 
 #if !defined(lint)
 static const char sccsid[] = "@(#)ipft_td.c	1.8 2/4/96 (C)1995 Darren Reed";
-static const char rcsid[] = "@(#)Id: ipft_td.c,v 2.0.2.6 1997/09/28 07:11:54 darrenr Exp ";
+static const char rcsid[] = "@(#)Id: ipft_td.c,v 2.0.2.6.2.1 1997/11/12 10:56:10 darrenr Exp ";
 #endif
 
 static	int	tcpd_open __P((char *));

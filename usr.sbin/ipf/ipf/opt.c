@@ -1,4 +1,4 @@
-/*	$NetBSD: opt.c,v 1.1.1.7 1997/10/30 05:27:24 mrg Exp $	*/
+/*	$NetBSD: opt.c,v 1.1.1.8 1997/11/14 08:03:01 mrg Exp $	*/
 
 /*
  * Copyright (C) 1993-1997 by Darren Reed.
@@ -20,20 +20,16 @@
 #include <netinet/ip_var.h>
 #endif
 #include <netinet/tcp.h>
-#ifndef	linux
-#include <netinet/tcpip.h>
-#endif
 #include <net/if.h>
 #include <arpa/inet.h>
 #include <netinet/ip_compat.h>
+#include <netinet/tcpip.h>
+#include <netinet/ip_fil.h>
 #include "ipf.h"
-#ifdef	linux
-#include "tcpip.h"
-#endif
 
 #if !defined(lint)
 static const char sccsid[] = "@(#)opt.c	1.8 4/10/96 (C) 1993-1995 Darren Reed";
-static const char rcsid[] = "@(#)Id: opt.c,v 2.0.2.9 1997/09/28 07:12:08 darrenr Exp ";
+static const char rcsid[] = "@(#)Id: opt.c,v 2.0.2.9.2.1 1997/11/12 10:58:44 darrenr Exp ";
 #endif
 
 extern	int	opts;

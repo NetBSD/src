@@ -1,4 +1,4 @@
-/*	$NetBSD: misc.c,v 1.1.1.7 1997/10/30 05:28:07 mrg Exp $	*/
+/*	$NetBSD: misc.c,v 1.1.1.8 1997/11/14 08:03:25 mrg Exp $	*/
 
 /*
  * Copyright (C) 1993-1997 by Darren Reed.
@@ -26,31 +26,33 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <netinet/in_systm.h>
+#ifndef	linux
 #include <netinet/ip_var.h>
+#endif
 #include <netinet/ip.h>
 #include <netinet/udp.h>
 #include <netinet/tcp.h>
 #include <netinet/ip_icmp.h>
-#include <netinet/tcpip.h>
 #include <net/if.h>
 #include <netdb.h>
 #include <arpa/nameser.h>
 #include <resolv.h>
 #include <netinet/ip_compat.h>
+#include <netinet/tcpip.h>
 #include <netinet/ip_fil.h>
 #include "ipf.h"
 #include "ipt.h"
 
 #if !defined(lint)
 static const char sccsid[] = "@(#)misc.c	1.3 2/4/96 (C) 1995 Darren Reed";
-static const char rcsid[] = "@(#)Id: misc.c,v 2.0.2.8 1997/10/19 15:39:28 darrenr Exp ";
+static const char rcsid[] = "@(#)Id: misc.c,v 2.0.2.8.2.1 1997/11/12 10:58:26 darrenr Exp ";
 #endif
 
 extern	int	opts;
 
 
 void	printpacket(ip)
-struct	ip	*ip;
+ip_t	*ip;
 {
 	struct	tcphdr	*tcp;
 
