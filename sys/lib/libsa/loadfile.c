@@ -1,4 +1,4 @@
-/* $NetBSD: loadfile.c,v 1.20 2001/10/31 17:20:50 thorpej Exp $ */
+/* $NetBSD: loadfile.c,v 1.21 2002/12/11 09:55:20 pk Exp $ */
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -94,7 +94,8 @@
 #include "loadfile.h"
 
 /*
- * Open 'filename', read in program and and return 0 if ok 1 on error.
+ * Open 'filename', read in program and return the opened file
+ * descriptor if ok, or -1 on error.
  * Fill in marks
  */
 int
@@ -165,7 +166,9 @@ loadfile(fname, marks, flags)
 	}
 
 	if (rval == 0) {
-		PROGRESS(("=0x%lx\n", marks[MARK_END] - marks[MARK_START]));
+		if ((flags & LOAD_ALL) != 0)
+			PROGRESS(("=0x%lx\n",
+				  marks[MARK_END] - marks[MARK_START]));
 		return fd;
 	}
 err:
