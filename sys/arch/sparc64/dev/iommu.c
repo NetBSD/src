@@ -1,4 +1,4 @@
-/*	$NetBSD: iommu.c,v 1.35 2001/05/26 21:27:15 chs Exp $	*/
+/*	$NetBSD: iommu.c,v 1.36 2001/07/20 00:07:13 eeh Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Matthew R. Green
@@ -134,6 +134,7 @@
 #define IDB_BUSDMA	0x1
 #define IDB_IOMMU	0x2
 #define IDB_INFO	0x4
+#define	IDB_SYNC	0x8
 int iommudebug = 0x0;
 #define DPRINTF(l, s)   do { if (iommudebug & l) printf s; } while (0)
 #else
@@ -152,10 +153,11 @@ static	int iommu_strbuf_flush_done __P((struct iommu_state *));
  *	- create a private DVMA map.
  */
 void
-iommu_init(name, is, tsbsize)
+iommu_init(name, is, tsbsize, iovabase)
 	char *name;
 	struct iommu_state *is;
 	int tsbsize;
+	u_int32_t iovabase;
 {
 	psize_t size;
 	vaddr_t va;
@@ -176,7 +178,8 @@ iommu_init(name, is, tsbsize)
 	 */
 	is->is_cr = (tsbsize << 16) | IOMMUCR_EN;
 	is->is_tsbsize = tsbsize;
-	is->is_dvmabase = IOTSB_VSTART(is->is_tsbsize);
+	is->is_dvmabase = iovabase;
+	if (iovabase == -1) is->is_dvmabase = IOTSB_VSTART(is->is_tsbsize);
 
 	/*
 	 * Allocate memory for I/O pagetables.  They need to be physically
@@ -241,7 +244,7 @@ iommu_init(name, is, tsbsize)
 	 */
 	printf("DVMA map: %x to %x\n", 
 		(unsigned int)is->is_dvmabase,
-		(unsigned int)IOTSB_VEND);
+		(unsigned int)(is->is_dvmabase+(size<<10)));
 	is->is_dvmamap = extent_create(name,
 				       is->is_dvmabase, (u_long)IOTSB_VEND,
 				       M_DEVBUF, 0, 0, EX_NOWAIT);
@@ -363,8 +366,7 @@ iommu_remove(is, va, len)
 			       (void *)(u_long)&is->is_tsb[IOTSBSLOT(va,is->is_tsbsize)],
 			       (long)(is->is_tsb[IOTSBSLOT(va,is->is_tsbsize)]), 
 			       (u_long)len));
-		} else
-			membar_sync();	/* XXX */
+		}
 
 		if (len <= NBPG)
 			len = 0;
@@ -412,10 +414,10 @@ iommu_strbuf_flush_done(is)
 	 */
 
 	is->is_flush = 0;
-	membar_sync();
+	membar_sync();	/* #StoreStore is prolly enuf. */
 	bus_space_write_8(is->is_bustag, (bus_space_handle_t)(u_long)
 			  &is->is_sb->strbuf_flushsync, 0, is->is_flushpa);
-	membar_sync();
+	membar_sync();	/* Prolly not needed at all. */
 
 	microtime(&flushtimeout); 
 	cur = flushtimeout;
@@ -545,8 +547,10 @@ iommu_dvmamap_load(t, is, map, buf, buflen, p, flags)
 			sgsize = buflen;
 
 		DPRINTF(IDB_BUSDMA,
-		    ("iommu_dvmamap_load: map %p loading va %p dva %lx at pa %lx\n",
-		    map, (void *)vaddr, (long)dvmaddr, (long)(curaddr&~(NBPG-1))));
+		    ("iommu_dvmamap_load: map %p loading va %p "
+			    "dva %lx at pa %lx\n",
+			    map, (void *)vaddr, (long)dvmaddr,
+			    (long)(curaddr&~(NBPG-1))));
 		iommu_enter(is, trunc_page(dvmaddr), trunc_page(curaddr),
 		    flags);
 			
@@ -791,14 +795,14 @@ iommu_dvmamap_sync(t, is, map, offset, len, ops)
 	 */
 
 	if (ops & BUS_DMASYNC_PREREAD) {
-		DPRINTF(IDB_BUSDMA,
+		DPRINTF(IDB_SYNC,
 		    ("iommu_dvmamap_sync: syncing va %p len %lu "
 		     "BUS_DMASYNC_PREREAD\n", (void *)(u_long)va, (u_long)len));
 
 		/* Nothing to do */;
 	}
 	if (ops & BUS_DMASYNC_POSTREAD) {
-		DPRINTF(IDB_BUSDMA,
+		DPRINTF(IDB_SYNC,
 		    ("iommu_dvmamap_sync: syncing va %p len %lu "
 		     "BUS_DMASYNC_POSTREAD\n", (void *)(u_long)va, (u_long)len));
 		/* if we have a streaming buffer, flush it here first */
@@ -817,7 +821,7 @@ iommu_dvmamap_sync(t, is, map, offset, len, ops)
 			}
 	}
 	if (ops & BUS_DMASYNC_PREWRITE) {
-		DPRINTF(IDB_BUSDMA,
+		DPRINTF(IDB_SYNC,
 		    ("iommu_dvmamap_sync: syncing va %p len %lu "
 		     "BUS_DMASYNC_PREWRITE\n", (void *)(u_long)va, (u_long)len));
 		/* if we have a streaming buffer, flush it here first */
@@ -836,7 +840,7 @@ iommu_dvmamap_sync(t, is, map, offset, len, ops)
 			}
 	}
 	if (ops & BUS_DMASYNC_POSTWRITE) {
-		DPRINTF(IDB_BUSDMA,
+		DPRINTF(IDB_SYNC,
 		    ("iommu_dvmamap_sync: syncing va %p len %lu "
 		     "BUS_DMASYNC_POSTWRITE\n", (void *)(u_long)va, (u_long)len));
 		/* Nothing to do */;

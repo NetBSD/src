@@ -1,4 +1,4 @@
-/*	$NetBSD: ebusvar.h,v 1.4 2000/04/15 03:08:13 mrg Exp $	*/
+/*	$NetBSD: ebusvar.h,v 1.5 2001/07/20 00:07:13 eeh Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Matthew R. Green
@@ -58,7 +58,8 @@ struct ebus_softc {
 
 	int				sc_node;
 
-	bus_space_tag_t			sc_bustag;	/* from mum */
+	bus_space_tag_t			sc_memtag;	/* from pci */
+	bus_space_tag_t			sc_iotag;	/* from pci */
 	bus_space_tag_t			sc_childbustag;	/* pass to children */
 	bus_dma_tag_t			sc_dmatag;	/* XXX */
 

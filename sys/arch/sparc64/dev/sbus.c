@@ -1,4 +1,4 @@
-/*	$NetBSD: sbus.c,v 1.42 2001/05/18 21:35:23 mrg Exp $ */
+/*	$NetBSD: sbus.c,v 1.43 2001/07/20 00:07:13 eeh Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -326,7 +326,7 @@ sbus_attach(parent, self, aux)
 		panic("couldn't malloc iommu name");
 	snprintf(name, 32, "%s dvma", sc->sc_dev.dv_xname);
 
-	iommu_init(name, &sc->sc_is, 0);
+	iommu_init(name, &sc->sc_is, 0, -1);
 
 	/* Enable the over temp intr */
 	ih = (struct intrhand *)
