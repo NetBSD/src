@@ -1,4 +1,4 @@
-/* $NetBSD: asc.c,v 1.1 1996/03/07 23:54:28 mark Exp $ */
+/* $NetBSD: asc.c,v 1.2 1996/03/13 20:28:50 mark Exp $ */
 
 /*
  * Copyright (c) 1996 Mark Brinicombe
@@ -250,7 +250,11 @@ asc_dmago(dev, addr, count, flags)
 	int count, flags;
 {
 	printf("asc_dmago\n");
+#ifdef DDB
 	Debugger();
+#else
+	panic("Hit a brick wall\n");
+#endif
 #if 0
 	volatile struct sdmac *sdp;
 
@@ -361,7 +365,11 @@ asc_dmanext(dev)
 	struct sbic_softc *dev;
 {
 	printf("asc_dmanext\n");
+#ifdef DDB
 	Debugger();
+#else
+	panic("Hit a brick wall\n");
+#endif
 #if 0
 	volatile struct sdmac *sdp;
 	int i, stat;
@@ -447,7 +455,12 @@ asc_intr(sc)
 
 int kvtop()
 {
+	printf("kvtop\n");
+#ifdef DDB
 	Debugger();
+#else
+	panic("Hit a brick wall\n");
+#endif
 	return(0);
 }
 
