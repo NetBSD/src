@@ -1,4 +1,4 @@
-#	$NetBSD: files.pci,v 1.156 2002/01/06 16:06:15 jmcneill Exp $
+#	$NetBSD: files.pci,v 1.157 2002/01/07 11:58:28 tron Exp $
 #
 # Config file and device description for machine-independent PCI code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -234,7 +234,7 @@ file	dev/ic/bt463.c			tga
 file	dev/ic/ibm561.c			tga
 
 # Brooktree Bt848 video capture
-device	bktr: pcibus, radio
+device	bktr: pcibus
 attach	bktr at pci
 file	dev/pci/bktr/bktr_audio.c	bktr
 file	dev/pci/bktr/bktr_card.c	bktr
