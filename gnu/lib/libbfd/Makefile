@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 1999/02/13 02:54:22 lukem Exp $
+#	$NetBSD: Makefile,v 1.5 1999/02/24 17:17:29 drochner Exp $
 
 LIB=		bfd
 
@@ -110,11 +110,9 @@ SRCS+=			cpu-m68k.c m68knetbsd.c m68k4knetbsd.c sunos.c \
 
 ##### mipse[bl] #####
 
-.if (${MACHINE_ARCH} == "mips" || \
-     ${MACHINE_ARCH} == "mipseb" || ${MACHINE_ARCH} == "mipsel" || \
+.if (${MACHINE_ARCH} == "mipseb" || ${MACHINE_ARCH} == "mipsel" || \
      !defined(BFD_SLIM))
 ARCHES+=		mips
-DEFAULT_VEC.mips=	bfd_elf32_littlemips_vec # compatibility
 DEFAULT_VEC.mipseb=	bfd_elf32_bigmips_vec
 DEFAULT_VEC.mipsel=	bfd_elf32_littlemips_vec
 SELECT_VECS+=		${DEFAULT_VEC.mipseb} ${DEFAULT_VEC.mipsel} \
