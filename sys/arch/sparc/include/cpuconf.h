@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuconf.h,v 1.2 2003/08/07 16:29:38 agc Exp $	*/
+/*	$NetBSD: cpuconf.h,v 1.3 2005/01/16 23:19:52 chs Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -128,10 +128,10 @@ extern int cputyp;
 #define	CPU_ISSUN4U		(0)
 
 /*
- * Step 3: Sun4M and Sun4D systems have an SRMMU.  Define some
- * short-hand for this.
+ * Step 3: Define some short-hand for the different MMUs.
  */
 #define	CPU_HAS_SRMMU		(CPU_ISSUN4M || CPU_ISSUN4D)
+#define CPU_HAS_SUNMMU		(CPU_ISSUN4 || CPU_ISSUN4C)
 
 #endif /* _KERNEL || _STANDALONE */
 
