@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.242 1998/09/02 22:32:09 is Exp $
+#	$NetBSD: files,v 1.243 1998/09/08 17:19:03 rvb Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -366,7 +366,6 @@ file adosfs/adutil.c			adosfs
 file adosfs/advfsops.c			adosfs
 file adosfs/advnops.c			adosfs
 file cfs/cfs_namecache.c		cfs
-file cfs/cfs_nbsd.c			cfs
 file cfs/cfs_psdev.c			vcfs			needs-count
 file cfs/cfs_subr.c			cfs
 file cfs/cfs_venus.c			cfs
