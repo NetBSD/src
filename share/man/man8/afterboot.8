@@ -1,6 +1,6 @@
-.\"	$NetBSD: afterboot.8,v 1.4 2003/01/19 20:12:34 jdolecek Exp $
+.\"	$NetBSD: afterboot.8,v 1.5 2003/03/10 06:46:59 lukem Exp $
 .\"
-.\" Copyright (c) 2002 The NetBSD Foundation, Inc.
+.\" Copyright (c) 2002-2003 The NetBSD Foundation, Inc.
 .\" All rights reserved.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
@@ -36,7 +36,7 @@
 .\" Originally created by Marshall M. Midden -- 1997-10-20, m4@umn.edu
 .\" Adapted to NetBSD by Julio Merino -- 2002-05-10, jmmv@hispabsd.org
 .\"
-.Dd November 30, 2002
+.Dd March 10, 2003
 .Dt AFTERBOOT 8
 .Os
 .Sh NAME
@@ -844,7 +844,7 @@ If you are using toolchain to build your kernel, you will also need to
 build a new set of toolchain binaries. You can do it by entering
 .Pa /usr/src
 and issuing
-.Ic ./build.sh -t .
+.Ic ./build.sh tools
 .Sh SEE ALSO
 .Xr chgrp 1 ,
 .Xr chmod 1 ,
