@@ -38,7 +38,7 @@
  *
  *      %W% (Berkeley) %G%
  *
- * $Id: srvr_nfs.c,v 1.6 1997/09/26 17:00:25 christos Exp $
+ * $Id: srvr_nfs.c,v 1.7 1997/10/10 16:11:12 christos Exp $
  *
  */
 
@@ -727,9 +727,20 @@ find_nfs_srvr(mntfs *mf)
     }
 
     if (!nfs_version) {
+#if 0
       free((voidp)ip);
       ip = 0;			/* Server probably down - no ping responce */
+#else
+      /*
+       * Server is down or does not support the portmapper call
+       * We mark it as version 2 and we let the nfs code deal
+       * with the case that is down.
+       */
+      nfs_version = NFS_VERSION;
+      nfs_proto = "udp";
+#endif
     }
+   
 #else /* not HAVE_FS_NFS3 */
     nfs_version = NFS_VERSION;
 #endif /* not HAVE_FS_NFS3 */
