@@ -1,4 +1,4 @@
-/*	$NetBSD: iomd_iic.S,v 1.1 1997/10/14 11:16:36 mark Exp $	*/
+/*	$NetBSD: iomd_iic.S,v 1.2 1998/04/01 22:52:24 mark Exp $	*/
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -50,13 +50,6 @@
 #include <arm32/iomd/iomdreg.h>
 
 #define IIC_BITDELAY 10
-
-sp	.req	r13
-lr	.req	r14
-pc	.req	r15
-
-	.text
-	.align	0
 
 ENTRY(iic_set_state)
 	/*
