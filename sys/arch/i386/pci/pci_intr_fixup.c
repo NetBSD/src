@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_intr_fixup.c,v 1.21 2002/09/20 14:52:39 kanaoka Exp $	*/
+/*	$NetBSD: pci_intr_fixup.c,v 1.22 2002/11/22 15:23:52 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_intr_fixup.c,v 1.21 2002/09/20 14:52:39 kanaoka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_intr_fixup.c,v 1.22 2002/11/22 15:23:52 fvdl Exp $");
 
 #include "opt_pcibios.h"
 
@@ -85,7 +85,6 @@ __KERNEL_RCSID(0, "$NetBSD: pci_intr_fixup.c,v 1.21 2002/09/20 14:52:39 kanaoka 
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcidevs.h>
 
-#include <i386/isa/icu.h>
 #include <i386/pci/pci_intr_fixup.h>
 #include <i386/pci/pcibios.h>
 

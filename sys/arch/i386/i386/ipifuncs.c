@@ -1,4 +1,4 @@
-/* $NetBSD: ipifuncs.c,v 1.4 2002/11/02 01:57:31 perry Exp $ */
+/* $NetBSD: ipifuncs.c,v 1.5 2002/11/22 15:23:40 fvdl Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -229,6 +229,7 @@ i386_ipi_handler(void)
 	for (bit = 0; bit < I386_NIPI && pending; bit++) {
 		if (pending & (1<<bit)) {
 			pending &= ~(1<<bit);
+			ci->ci_ipi_events[bit].ev_count++;
 			(*ipifunc[bit])(ci);
 		}
 	}

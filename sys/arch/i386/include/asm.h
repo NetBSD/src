@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.21 2002/05/31 18:07:31 thorpej Exp $	*/
+/*	$NetBSD: asm.h,v 1.22 2002/11/22 15:23:45 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -41,6 +41,10 @@
 #ifndef _I386_ASM_H_
 #define _I386_ASM_H_
 
+#ifdef _KERNEL_OPT
+#include "opt_multiprocessor.h"
+#endif
+
 #ifdef PIC
 #define PIC_PROLOGUE	\
 	pushl	%ebx;	\
@@ -81,7 +85,7 @@
 #endif
 
 /* let kernels and others override entrypoint alignment */
-#ifndef _ALIGN_TEXT
+#if !defined(_ALIGN_TEXT) && !defined(_KERNEL)
 # ifdef __ELF__
 #  define _ALIGN_TEXT .align 4
 # else
@@ -93,6 +97,13 @@
 	.text; _ALIGN_TEXT; .globl x; .type x,@function; x:
 
 #ifdef _KERNEL
+
+#if defined(MULTIPROCESSOR)
+#define CPUVAR(off) %fs:__CONCAT(CPU_INFO_,off)
+#else
+#define CPUVAR(off) _C_LABEL(cpu_info_primary)+__CONCAT(CPU_INFO_,off)
+#endif /* MULTIPROCESSOR */
+
 /* XXX Can't use __CONCAT() here, as it would be evaluated incorrectly. */
 #ifdef __ELF__
 #ifdef __STDC__
@@ -107,7 +118,22 @@
 #define	IDTVEC(name)	ALIGN_TEXT; .globl _X/**/name; _X/**/name:
 #endif /* __STDC__ */
 #endif /* __ELF__ */
+
+#ifdef __ELF__
+#define ALIGN_DATA	.align	4
+#define ALIGN_TEXT	.align	4,0x90  /* 4-byte boundaries, NOP-filled */
+#define SUPERALIGN_TEXT	.align	16,0x90 /* 16-byte boundaries better for 486 */
+#else
+#define ALIGN_DATA	.align	2
+#define ALIGN_TEXT	.align	2,0x90  /* 4-byte boundaries, NOP-filled */
+#define SUPERALIGN_TEXT	.align	4,0x90  /* 16-byte boundaries better for 486 */
+#endif /* __ELF__ */
+
+#define _ALIGN_TEXT ALIGN_TEXT
+
 #endif /* _KERNEL */
+
+
 
 #ifdef GPROF
 # ifdef __ELF__
@@ -158,5 +184,7 @@
 	.stabs msg,30,0,0,0 ;						\
 	.stabs __STRING(_/**/sym),1,0,0,0
 #endif /* __STDC__ */
+
+
 
 #endif /* !_I386_ASM_H_ */

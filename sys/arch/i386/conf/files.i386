@@ -1,4 +1,4 @@
-#	$NetBSD: files.i386,v 1.222 2002/11/14 21:39:14 christos Exp $
+#	$NetBSD: files.i386,v 1.223 2002/11/22 15:23:36 fvdl Exp $
 #
 # new style config file for i386 architecture
 #
@@ -67,20 +67,22 @@ defflag	opt_kstack_dr0.h		KSTACK_CHECK_DR0
 file	arch/i386/i386/autoconf.c
 file	arch/i386/i386/bus_machdep.c
 file	arch/i386/i386/consinit.c
-file	arch/i386/i386/db_dbgreg.s	ddb | kstack_check_dr0
+file	arch/i386/i386/db_dbgreg.S	ddb | kstack_check_dr0
 file	arch/i386/i386/db_disasm.c	ddb
 file	arch/i386/i386/db_interface.c	ddb
 file	arch/i386/i386/db_memrw.c	ddb | kgdb
 file	arch/i386/i386/db_trace.c	ddb
 file	arch/i386/i386/disksubr.c	disk
 file	arch/i386/i386/gdt.c
-file	arch/i386/i386/in_cksum.s	inet | inet6
+file	arch/i386/i386/i8259.c
+file	arch/i386/i386/in_cksum.S	inet | inet6
+file	arch/i386/i386/intr.c
 file	arch/i386/i386/ipkdb_glue.c	ipkdb
 file	arch/i386/i386/kgdb_machdep.c	kgdb
 file	arch/i386/i386/machdep.c
 file	arch/i386/i386/math_emulate.c	math_emulate
 file	arch/i386/i386/mem.c
-file	arch/i386/i386/microtime.s
+file	arch/i386/i386/microtime.S
 file	arch/i386/i386/tsc_microtime.c	i586_cpu | i686_cpu
 file	arch/i386/i386/mtrr_i686.c	mtrr
 file	arch/i386/i386/mtrr_k6.c	mtrr
@@ -95,7 +97,7 @@ file	arch/i386/i386/trap.c
 file	arch/i386/i386/vm_machdep.c
 file	dev/cons.c
 
-file	arch/i386/i386/mptramp.s  	multiprocessor
+file	arch/i386/i386/mptramp.S  	multiprocessor
 file	arch/i386/i386/lock_machdep.c	lockdebug
 file    arch/i386/i386/ipifuncs.c       multiprocessor
 
@@ -131,7 +133,7 @@ include	"dev/i2o/files.i2o"
 # attribute used to bring in BIOS trampoline code for real-mode probing
 # of certain devices/BIOS features
 define	bioscall
-file	arch/i386/i386/bioscall.s	bioscall needs-flag
+file	arch/i386/i386/bioscall.S	bioscall needs-flag
 
 # BIOS32 routines
 define	bios32
@@ -314,7 +316,7 @@ include	"dev/vme/files.vme"
 device	apm: bioscall
 attach	apm at mainbus
 file	arch/i386/i386/apm.c		apm needs-count
-file	arch/i386/i386/apmcall.s	apm
+file	arch/i386/i386/apmcall.S	apm
 
 # Intel SMP specification 1.4
 define mpbios
@@ -348,7 +350,7 @@ file	arch/i386/i386/vm86.c			vm86
 
 # VM86 in kernel
 file	arch/i386/i386/kvm86.c			kvm86
-file	arch/i386/i386/kvm86call.s		kvm86
+file	arch/i386/i386/kvm86call.S		kvm86
 
 # Binary compatibility with previous NetBSD releases (COMPAT_XX)
 file	arch/i386/i386/compat_13_machdep.c	compat_13 | compat_aout
@@ -356,13 +358,13 @@ file	arch/i386/i386/compat_13_machdep.c	compat_13 | compat_aout
 # SVR4 binary compatibility (COMPAT_SVR4)
 include	"compat/svr4/files.svr4"
 file	arch/i386/i386/svr4_machdep.c		compat_svr4
-file	arch/i386/i386/svr4_sigcode.s		compat_svr4
+file	arch/i386/i386/svr4_sigcode.S		compat_svr4
 file	arch/i386/i386/svr4_syscall.c		compat_svr4
 
 # MACH binary compatibility (COMPAT_MACH)
 include	"compat/mach/files.mach"
 file	arch/i386/i386/mach_machdep.c		compat_mach | compat_darwin
-file	arch/i386/i386/mach_sigcode.s		compat_mach | compat_darwin
+file	arch/i386/i386/mach_sigcode.S		compat_mach | compat_darwin
 file	arch/i386/i386/mach_syscall.c		compat_mach | compat_darwin
 file	arch/i386/i386/macho_machdep.c		exec_macho
 
@@ -372,20 +374,20 @@ include	"compat/darwin/files.darwin"
 # iBCS-2 binary compatibility (COMPAT_IBCS2)
 include	"compat/ibcs2/files.ibcs2"
 file	arch/i386/i386/ibcs2_machdep.c		compat_ibcs2
-file	arch/i386/i386/ibcs2_sigcode.s		compat_ibcs2
+file	arch/i386/i386/ibcs2_sigcode.S		compat_ibcs2
 file	arch/i386/i386/ibcs2_syscall.c		compat_ibcs2
 
 # Linux binary compatibility (COMPAT_LINUX)
 include	"compat/linux/files.linux"
 include	"compat/linux/arch/i386/files.linux_i386"
-file	arch/i386/i386/linux_sigcode.s		compat_linux
+file	arch/i386/i386/linux_sigcode.S		compat_linux
 file	arch/i386/i386/linux_syscall.c		compat_linux
 file	arch/i386/i386/linux_trap.c		compat_linux
 
 # FreeBSD binary compatibility (COMPAT_FREEBSD)
 include	"compat/freebsd/files.freebsd"
 file	arch/i386/i386/freebsd_machdep.c	compat_freebsd
-file	arch/i386/i386/freebsd_sigcode.s	compat_freebsd
+file	arch/i386/i386/freebsd_sigcode.S	compat_freebsd
 file	arch/i386/i386/freebsd_syscall.c	compat_freebsd
 
 # a.out binary compatibility (COMPAT_AOUT)
