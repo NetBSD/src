@@ -1,4 +1,4 @@
-/*	$NetBSD: mailwrapper.c,v 1.2 1999/02/20 22:10:07 thorpej Exp $	*/
+/*	$NetBSD: mailwrapper.c,v 1.3 1999/05/29 18:18:15 christos Exp $	*/
 
 /*
  * Copyright (c) 1998
@@ -40,9 +40,59 @@
 
 #define _PATH_MAILERCONF	"/etc/mailer.conf"
 
+struct arglist {
+	size_t argc, maxc;
+	char **argv;
+};
+
 int main __P((int, char *[], char *[]));
 
+static void initarg __P((struct arglist *));
+static void addarg __P((struct arglist *, const char *, int));
+static void freearg __P((struct arglist *, int));
+
 extern const char *__progname;	/* from crt0.o */
+
+static void
+initarg(al)
+	struct arglist *al;
+{
+	al->argc = 0;
+	al->maxc = 10;
+	if ((al->argv = malloc(al->maxc * sizeof(char *))) == NULL)
+		err(1, "mailwrapper");
+}
+
+static void
+addarg(al, arg, copy)
+	struct arglist *al;
+	const char *arg;
+	int copy;
+{
+	if (al->argc == al->maxc) {
+	    al->maxc <<= 1;
+	    if ((al->argv = realloc(al->argv,
+		al->maxc * sizeof(char *))) == NULL)
+		    err(1, "mailwrapper");
+	}
+	if (copy) {
+		if ((al->argv[al->argc++] = strdup(arg)) == NULL)
+			err(1, "mailwrapper:");
+	} else
+		al->argv[al->argc++] = (char *)arg;
+}
+
+static void
+freearg(al, copy)
+	struct arglist *al;
+	int copy;
+{
+	size_t i;
+	if (copy)
+		for (i = 0; i < al->argc; i++)
+			free(al->argv[i]);
+	free(al->argv);
+}
 
 int
 main(argc, argv, envp)
@@ -51,8 +101,13 @@ main(argc, argv, envp)
 	char *envp[];
 {
 	FILE *config;
-	char *line, *cp, *from, *to;
+	char *line, *cp, *from, *to, *ap;
 	size_t len, lineno = 0;
+	struct arglist al;
+
+	initarg(&al);
+	for (len = 0; len < argc; len++)
+		addarg(&al, argv[len], 0);
 
 	if ((config = fopen(_PATH_MAILERCONF, "r")) == NULL)
 		err(1, "mailwrapper: can't open %s", _PATH_MAILERCONF);
@@ -65,43 +120,46 @@ main(argc, argv, envp)
 			err(1, "mailwrapper");
 		}
 
-#define	WHITESPACE	" \t"
-#define	PARSE_ERROR \
-		errx(1, "mailwrapper: parse error in %s at line %lu", \
-		    _PATH_MAILERCONF, (u_long)lineno)
-
+#define	WS	" \t\n"
 		cp = line;
 
-		cp += strspn(cp, WHITESPACE);
+		cp += strspn(cp, WS);
 		if (cp[0] == '\0') {
 			/* empty line */
 			free(line);
 			continue;
 		}
 
-		if ((from = strsep(&cp, WHITESPACE)) == NULL)
-			PARSE_ERROR;
+		if ((from = strsep(&cp, WS)) == NULL)
+			goto parse_error;
 
-		cp += strspn(cp, WHITESPACE);
+		cp += strspn(cp, WS);
 
-		if ((to = strsep(&cp, WHITESPACE)) == NULL)
-			PARSE_ERROR;
+		if ((to = strsep(&cp, WS)) == NULL)
+			goto parse_error;
 
-		if (cp != NULL) {
-			cp += strspn(cp, WHITESPACE);
-			if (cp[0] != '\0')
-				PARSE_ERROR;
-		}
-
-		if (strcmp(from, __progname) == 0)
+		if (strcmp(from, __progname) == 0) {
+			for (ap = strsep(&cp, WS); ap != NULL; 
+			    ap = strsep(&cp, WS))
+			    if (*ap)
+				    addarg(&al, ap, 0);
 			break;
+		}
 
 		free(line);
 	}
 
-	fclose(config);
+	(void)fclose(config);
 
-	execve(to, argv, envp);
-
+	execve(to, al.argv, envp);
+	freearg(&al, 0);
+	free(line);
 	err(1, "mailwrapper: execing %s", to);
+	/*NOTREACHED*/
+parse_error:
+	freearg(&al, 0);
+	free(line);
+	errx(1, "mailwrapper: parse error in %s at line %lu",
+	    _PATH_MAILERCONF, (u_long)lineno);
+	/*NOTREACHED*/
 }
