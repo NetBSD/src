@@ -1,4 +1,4 @@
-/*	$NetBSD: lock.h,v 1.40 2000/11/22 06:31:22 thorpej Exp $	*/
+/*	$NetBSD: lock.h,v 1.41 2000/11/24 03:59:09 chs Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -296,11 +296,15 @@ void	lockmgr_printinfo(__volatile struct lock *);
 void	spinlock_switchcheck(void);
 #endif
 
+#if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)
 #define	spinlockinit(lkp, name, flags)					\
 	lockinit((lkp), 0, (name), 0, (flags) | LK_SPIN)
-
 #define	spinlockmgr(lkp, flags, intrlk)					\
 	lockmgr((lkp), (flags) | LK_SPIN, (intrlk))
+#else
+#define	spinlockinit(lkp, name, flags)		(void)(lkp)
+#define	spinlockmgr(lkp, flags, intrlk)		(0)
+#endif
 
 #if defined(LOCKDEBUG)
 int	_spinlock_release_all(__volatile struct lock *, const char *, int);
@@ -340,10 +344,10 @@ void	simple_lock_switchcheck(void);
 #define	LOCK_ASSERT(x)		/* nothing */
 #else
 #define	simple_lock_init(alp)	(alp)->lock_data = __SIMPLELOCK_UNLOCKED
-#define	simple_lock(alp)		/* nothing */
-#define	simple_lock_try(alp)	(1)	/* always succeeds */
-#define	simple_unlock(alp)		/* nothing */
-#define	LOCK_ASSERT(x)			/* nothing */
+#define	simple_lock(alp)	(void)(alp)
+#define	simple_lock_try(alp)	(1)
+#define	simple_unlock(alp)	(void)(alp)
+#define	LOCK_ASSERT(x)		/* nothing */
 #endif
 
 #endif /* _KERNEL */
