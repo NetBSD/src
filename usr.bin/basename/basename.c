@@ -1,4 +1,4 @@
-/*	$NetBSD: basename.c,v 1.8 1995/03/25 18:17:47 glass Exp $	*/
+/*	$NetBSD: basename.c,v 1.9 1995/09/02 05:29:46 jtc Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -41,16 +41,16 @@ static char copyright[] =
 
 #ifndef lint
 #if 0
-static char sccsid[] = "@(#)basename.c	8.3 (Berkeley) 4/2/94";
-#else
-static char rcsid[] = "$NetBSD: basename.c,v 1.8 1995/03/25 18:17:47 glass Exp $";
+static char sccsid[] = "@(#)basename.c	8.4 (Berkeley) 5/4/95";
 #endif
+static char rcsid[] = "$NetBSD: basename.c,v 1.9 1995/09/02 05:29:46 jtc Exp $";
 #endif /* not lint */
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <locale.h>
+#include <unistd.h>
 
 void usage __P((void));
 
