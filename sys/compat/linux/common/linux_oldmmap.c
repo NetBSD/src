@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_oldmmap.c,v 1.58 2002/03/29 20:49:40 christos Exp $	*/
+/*	$NetBSD: linux_oldmmap.c,v 1.58.4.1 2003/10/22 03:47:58 jmc Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_oldmmap.c,v 1.58 2002/03/29 20:49:40 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_oldmmap.c,v 1.58.4.1 2003/10/22 03:47:58 jmc Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -82,6 +82,9 @@ linux_sys_old_mmap(p, v, retval)
 
 	if ((error = copyin(SCARG(uap, lmp), &lmap, sizeof lmap)))
 		return error;
+
+	if (lmap.lm_pos & PAGE_MASK)
+		return EINVAL;
 
 	SCARG(&nlmap,addr) = (unsigned long)lmap.lm_addr;
 	SCARG(&nlmap,len) = lmap.lm_len;
