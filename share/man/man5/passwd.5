@@ -1,4 +1,4 @@
-.\"	$NetBSD: passwd.5,v 1.5 1997/06/27 16:10:12 lukem Exp $
+.\"	$NetBSD: passwd.5,v 1.6 1997/08/16 13:52:43 lukem Exp $
 .\"
 .\" Copyright (c) 1988, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -34,7 +34,7 @@
 .\"
 .\"     @(#)passwd.5	8.1 (Berkeley) 6/5/93
 .\"
-.Dd July 18, 1995
+.Dd August 16, 1997
 .Dt PASSWD 5
 .Os
 .Sh NAME
@@ -120,6 +120,10 @@ field is the number in seconds,
 from the epoch, until the
 password for the account must be changed.
 This field may be left empty to turn off the password aging feature.
+If this is set to
+.Dq -1
+then the user will be prompted to change their password at the next
+login.
 .Pp
 The
 .Ar expire
@@ -128,6 +132,13 @@ field is the number in seconds,
 from the epoch, until the
 account expires.
 This field may be left empty to turn off the account aging feature.
+.Pp
+If either of the
+.Ar change
+or
+.Ar expire
+fields are set, the system will remind the user of the impending
+change or expiry if they login within the 14 days before the event.
 .Pp
 The
 .Ar gecos
