@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_socket.c,v 1.16 1998/03/01 02:22:32 fvdl Exp $	*/
+/*	$NetBSD: sys_socket.c,v 1.17 1998/04/25 17:35:18 matt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -59,8 +59,8 @@ soo_read(fp, uio, cred)
 	struct uio *uio;
 	struct ucred *cred;
 {
-
-	return (soreceive((struct socket *)fp->f_data, (struct mbuf **)0,
+	struct socket *so = (struct socket *) fp->f_data;
+	return ((*so->so_receive)(so, (struct mbuf **)0,
 		uio, (struct mbuf **)0, (struct mbuf **)0, (int *)0));
 }
 
@@ -71,8 +71,8 @@ soo_write(fp, uio, cred)
 	struct uio *uio;
 	struct ucred *cred;
 {
-
-	return (sosend((struct socket *)fp->f_data, (struct mbuf *)0,
+	struct socket *so = (struct socket *) fp->f_data;
+	return ((*so->so_send)(so, (struct mbuf *)0,
 		uio, (struct mbuf *)0, (struct mbuf *)0, 0));
 }
 

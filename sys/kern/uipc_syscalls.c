@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_syscalls.c,v 1.29 1998/03/01 02:22:34 fvdl Exp $	*/
+/*	$NetBSD: uipc_syscalls.c,v 1.30 1998/04/25 17:35:19 matt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1990, 1993
@@ -421,6 +421,7 @@ sendit(p, s, mp, flags, retsize)
 	register int i;
 	struct mbuf *to, *control;
 	int len, error;
+	struct socket *so;
 #ifdef KTRACE
 	struct iovec *ktriov = NULL;
 #endif
@@ -491,8 +492,8 @@ sendit(p, s, mp, flags, retsize)
 	}
 #endif
 	len = auio.uio_resid;
-	error = sosend((struct socket *)fp->f_data, to, &auio,
-		       NULL, control, flags);
+	so = (struct socket *)fp->f_data;
+	error = (*so->so_send)(so, to, &auio, NULL, control, flags);
 	if (error) {
 		if (auio.uio_resid != len && (error == ERESTART ||
 		    error == EINTR || error == EWOULDBLOCK))
@@ -616,6 +617,7 @@ recvit(p, s, mp, namelenp, retsize)
 	register int i;
 	int len, error;
 	struct mbuf *from = 0, *control = 0;
+	struct socket *so;
 #ifdef KTRACE
 	struct iovec *ktriov = NULL;
 #endif
@@ -648,9 +650,9 @@ recvit(p, s, mp, namelenp, retsize)
 	}
 #endif
 	len = auio.uio_resid;
-	error = soreceive((struct socket *)fp->f_data, &from, &auio,
-			  NULL, mp->msg_control ? &control : NULL,
-			  &mp->msg_flags);
+	so = (struct socket *)fp->f_data;
+	error = (*so->so_receive)(so, &from, &auio, NULL,
+			  mp->msg_control ? &control : NULL, &mp->msg_flags);
 	if (error) {
 		if (auio.uio_resid != len && (error == ERESTART ||
 		    error == EINTR || error == EWOULDBLOCK))
