@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vnops.c,v 1.122 2003/10/25 18:26:46 christos Exp $	*/
+/*	$NetBSD: lfs_vnops.c,v 1.123 2003/10/30 01:43:10 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.122 2003/10/25 18:26:46 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.123 2003/10/30 01:43:10 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1561,8 +1561,7 @@ lfs_putpages(void *v)
 	struct segment *sp;
 	off_t origoffset, startoffset, endoffset, origendoffset, blkeof;
 	off_t off, max_endoffset;
-	int pages_per_block;
-	int s, sync, dirty, pagedaemon;
+	int s, sync, pagedaemon;
 	struct vm_page *pg;
 	UVMHIST_FUNC("lfs_putpages"); UVMHIST_CALLED(ubchist);
 
@@ -1627,7 +1626,6 @@ lfs_putpages(void *v)
 	 * Extend page range to start and end at block boundaries.
 	 * (For the purposes of VOP_PUTPAGES, fragments don't exist.)
 	 */
-	pages_per_block = fs->lfs_bsize >> PAGE_SHIFT;
 	origoffset = ap->a_offlo;
 	origendoffset = ap->a_offhi;
 	startoffset = origoffset & ~(fs->lfs_bmask);
@@ -1670,8 +1668,8 @@ lfs_putpages(void *v)
 		int r;
 
 		/* If no pages are dirty, we can just use genfs_putpages. */
-		if ((dirty = check_dirty(fs, vp, startoffset, endoffset, blkeof,
-					 ap->a_flags, 1)) != 0)
+		if (check_dirty(fs, vp, startoffset, endoffset, blkeof,
+				ap->a_flags, 1) != 0)
 			break;
 
 		if ((r = genfs_putpages(v)) != EDEADLK)

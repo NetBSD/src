@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_input.c,v 1.67 2003/10/14 05:33:04 itojun Exp $	*/
+/*	$NetBSD: ip6_input.c,v 1.68 2003/10/30 01:43:09 simonb Exp $	*/
 /*	$KAME: ip6_input.c,v 1.188 2001/03/29 05:34:31 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_input.c,v 1.67 2003/10/14 05:33:04 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_input.c,v 1.68 2003/10/30 01:43:09 simonb Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -770,7 +770,6 @@ ip6_hopopts_input(plenp, rtalertp, mp, offp)
 	struct mbuf *m = *mp;
 	int off = *offp, hbhlen;
 	struct ip6_hbh *hbh;
-	u_int8_t *opt;
 
 	/* validation of the length of the header */
 	IP6_EXTHDR_GET(hbh, struct ip6_hbh *, m,
@@ -789,7 +788,6 @@ ip6_hopopts_input(plenp, rtalertp, mp, offp)
 	KASSERT(IP6_HDR_ALIGNED_P(hbh));
 	off += hbhlen;
 	hbhlen -= sizeof(struct ip6_hbh);
-	opt = (u_int8_t *)hbh + sizeof(struct ip6_hbh);
 
 	if (ip6_process_hopopts(m, (u_int8_t *)hbh + sizeof(struct ip6_hbh),
 				hbhlen, rtalertp, plenp) < 0)

@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vfsops.c,v 1.136 2003/10/25 18:26:46 christos Exp $	*/
+/*	$NetBSD: lfs_vfsops.c,v 1.137 2003/10/30 01:43:10 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.136 2003/10/25 18:26:46 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.137 2003/10/30 01:43:10 simonb Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -1784,7 +1784,7 @@ static int
 lfs_gop_write(struct vnode *vp, struct vm_page **pgs, int npages, int flags)
 {
 	int i, s, error, run;
-	int fs_bshift, dev_bshift;
+	int fs_bshift;
 	vaddr_t kva;
 	off_t eof, offset, startoffset;
 	size_t bytes, iobytes, skipbytes;
@@ -1849,13 +1849,10 @@ lfs_gop_write(struct vnode *vp, struct vm_page **pgs, int npages, int flags)
 
 	GOP_SIZE(vp, vp->v_size, &eof, GOP_SIZE_WRITE);
 
-	if (vp->v_type == VREG) {
+	if (vp->v_type == VREG)
 		fs_bshift = vp->v_mount->mnt_fs_bshift;
-		dev_bshift = vp->v_mount->mnt_dev_bshift;
-	} else {
+	else
 		fs_bshift = DEV_BSHIFT;
-		dev_bshift = DEV_BSHIFT;
-	}
 	error = 0;
 	pg = pgs[0];
 	startoffset = pg->offset;
