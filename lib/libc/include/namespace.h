@@ -1,4 +1,4 @@
-/*	$NetBSD: namespace.h,v 1.19 1998/10/13 20:54:03 kleink Exp $	*/
+/*	$NetBSD: namespace.h,v 1.20 1998/10/13 21:03:32 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -195,6 +195,7 @@
 #define gmtime_r		_gmtime_r
 #define group_from_gid		_group_from_gid
 #define heapsort		_heapsort
+#define inet_aton		_inet_aton
 #define inet_lnaof		_inet_lnaof
 #define inet_makeaddr		_inet_makeaddr
 #define inet_net_ntop		_inet_net_ntop

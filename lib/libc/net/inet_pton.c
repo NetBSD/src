@@ -1,4 +1,4 @@
-/*	$NetBSD: inet_pton.c,v 1.7 1998/01/06 05:01:23 perry Exp $	*/
+/*	$NetBSD: inet_pton.c,v 1.8 1998/10/13 21:03:31 kleink Exp $	*/
 
 /* Copyright (c) 1996 by Internet Software Consortium.
  *
@@ -21,7 +21,7 @@
 #if 0
 static char rcsid[] = "Id: inet_pton.c,v 8.7 1996/08/05 08:31:35 vixie Exp ";
 #else
-__RCSID("$NetBSD: inet_pton.c,v 1.7 1998/01/06 05:01:23 perry Exp $");
+__RCSID("$NetBSD: inet_pton.c,v 1.8 1998/10/13 21:03:31 kleink Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -38,6 +38,7 @@ __RCSID("$NetBSD: inet_pton.c,v 1.7 1998/01/06 05:01:23 perry Exp $");
 #include <errno.h>
 
 #ifdef __weak_alias
+__weak_alias(inet_aton,_inet_aton);
 __weak_alias(inet_pton,_inet_pton);
 #endif
 
