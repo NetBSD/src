@@ -1,4 +1,4 @@
-/*	$NetBSD: __setjmp14.S,v 1.1 1998/09/29 20:24:36 thorpej Exp $	*/
+/*	$NetBSD: __setjmp14.S,v 1.2 1998/10/01 22:46:36 matthias Exp $	*/
 
 /* 
  * Copyright (c) 1992 Helsinki University of Technology
@@ -25,19 +25,18 @@
 #include <machine/jmpbuf.h>
 
 #if defined(LIBC_SCCS)
-	RCSID("$NetBSD: __setjmp14.S,v 1.1 1998/09/29 20:24:36 thorpej Exp $")
+	RCSID("$NetBSD: __setjmp14.S,v 1.2 1998/10/01 22:46:36 matthias Exp $")
 #endif
 
 ENTRY(__setjmp14)
-	movd	4(sp),r2		/* jmp_buf */
 	movd	0(sp),JMP_BUF_PC(r2)	/* pc of caller */
 
 	/* Get signal mask. */
-	addr	JMP_BUF_SIGMASK(r2),tos
+	addr	JMP_BUF_SIGMASK(4(sp)),tos
 	movqd	0,tos
 	movqd	0,tos
 	bsr	_C_LABEL(__sigprocmask14)
-	adjspb	-12
+	adjspd	-12
 
 	movd	4(sp),r2		/* jmp_buf */
 
@@ -54,14 +53,12 @@ ENTRY(__setjmp14)
 	ret	0
 
 ENTRY(__longjmp14)
-	movd	4(sp),r2		/* jmp_buf */
-
 	/* Restore signal mask. */
-	movd	0,tos
-	addr	JMP_BUF_SIGMASK(r2),tos
-	movd	3,tos			/* SIG_SETMASK */
+	movqd	0,tos
+	addr	JMP_BUF_SIGMASK(8(sp)),tos
+	movqd	3,tos			/* SIG_SETMASK */
 	bsr	_C_LABEL(__sigprocmask14)
-	adjspb	-12
+	adjspd	-12
 
 	movd	4(sp),r2		/* jmp_buf */
 	movd	8(sp),r0		/* return value */

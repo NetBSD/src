@@ -1,4 +1,4 @@
-/*	$NetBSD: SYS.h,v 1.8 1997/05/08 13:38:29 matthias Exp $	*/
+/*	$NetBSD: SYS.h,v 1.9 1998/10/01 22:46:35 matthias Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -77,5 +77,5 @@
 	PSEUDO(x,x)
 
 #define CALL(x,y)							\
-	bsr CAT(_,y);							\
+	bsr _C_LABEL(y);						\
 	adjspd -4*x
