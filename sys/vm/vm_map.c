@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_map.c,v 1.30 1997/12/31 07:47:42 thorpej Exp $	*/
+/*	$NetBSD: vm_map.c,v 1.31 1998/01/03 02:53:04 thorpej Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -71,6 +71,7 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/malloc.h>
+#include <sys/proc.h>
 
 #ifdef SYSVSHM
 #include <sys/shm.h>
@@ -206,26 +207,85 @@ vmspace_alloc(min, max, pageable)
 }
 
 /*
+ * Make p1 and p2 share address space.
+ */
+void
+vmspace_share(p1, p2)
+	struct proc *p1, *p2;
+{
+
+	p2->p_vmspace = p1->p_vmspace;
+	p1->p_vmspace->vm_refcnt++;
+}
+
+/*
+ * Make p not share its address space.
+ */
+void
+vmspace_unshare(p)
+	struct proc *p;
+{
+	struct vmspace *nvm, *ovm = p->p_vmspace;
+
+	if (ovm->vm_refcnt == 1)
+		return;
+
+	nvm = vmspace_fork(ovm);
+	p->p_vmspace = nvm;
+	pmap_activate(p);
+	vmspace_free(ovm);
+}
+
+/*
  * Perform operations on VM space that need to happen during exec.
  */
 void
 vmspace_exec(p)
 	struct proc *p;
 {
-	struct vmspace *ovm = p->p_vmspace;
+	struct vmspace *nvm, *ovm = p->p_vmspace;
 	vm_map_t map = &ovm->vm_map;
 
 #ifdef sparc
 	/* XXX cgd 960926: the sparc #ifdef should be a MD hook */
 	kill_user_windows(p);	/* before stack addresses go away */
 #endif
-	/* Kill shared memory and unmap old program. */
+
+	if (ovm->vm_refcnt == 1) {
+		/*
+		 * Destroy this process's VM space.
+		 */
 #ifdef SYSVSHM
-	if (ovm->vm_shm)
-		shmexit(p);
+		/* Kill shared memory. */
+		if (ovm->vm_shm)
+			shmexit(ovm);
 #endif
-	vm_deallocate(map, VM_MIN_ADDRESS,
-	    VM_MAXUSER_ADDRESS - VM_MIN_ADDRESS);
+		/* Unmap old program. */
+		vm_deallocate(map, VM_MIN_ADDRESS,
+		    VM_MAXUSER_ADDRESS - VM_MIN_ADDRESS);
+	} else {
+		/*
+		 * This address space is being shared.  We must
+		 * create a new one to avoid disrupting other
+		 * processes that are using it.  Since we would
+		 * immediately unmap the entire address space,
+		 * we do minimal work here.
+		 */
+		nvm = vmspace_alloc(map->min_offset, map->max_offset,
+		    map->entries_pageable);
+#if defined(i386) || defined(pc532)		/* XXX XXX XXX */
+		/* Allocate page table space. */
+		{ vm_offset_t addr = VM_MAXUSER_ADDRESS;
+		(void) vm_allocate(&nvm->vm_map, &addr, VM_MAX_ADDRESS - addr,
+		    FALSE);
+		(void) vm_map_inherit(&nvm->vm_map, addr, VM_MAX_ADDRESS,
+		    VM_INHERIT_NONE);
+		}
+#endif
+		p->p_vmspace = nvm;
+		pmap_activate(p);
+		vmspace_free(ovm);
+	}
 }
 
 void
@@ -2165,6 +2225,17 @@ vmspace_fork(vm1)
 	vm_map_entry_t	new_entry;
 	pmap_t		new_pmap;
 
+#if defined(i386) || defined(pc532)		/* XXX XXX XXX */
+	/*
+	 *	Avoid copying any of the parent's page tables or other
+	 *	per-process objects that reside in the map by marking
+	 *	all of them non-inheritable.
+	 */
+
+	(void) vm_map_inherit(old_map, VM_MAXUSER_ADDRESS, VM_MAX_ADDRESS,
+	    VM_INHERIT_NONE);
+#endif
+
 	vm_map_lock(old_map);
 
 	vm2 = vmspace_alloc(old_map->min_offset, old_map->max_offset,
@@ -2296,6 +2367,20 @@ vmspace_fork(vm1)
 
 	new_map->size = old_map->size;
 	vm_map_unlock(old_map);
+
+#if defined(i386) || defined(pc532)		/* XXX XXX XXX */
+	/* Allocate page table space. */
+	{ vm_offset_t addr = VM_MAXUSER_ADDRESS;
+	(void) vm_allocate(new_map, &addr, VM_MAX_ADDRESS - addr, FALSE);
+	(void) vm_map_inherit(new_map, addr, VM_MAX_ADDRESS,
+	    VM_INHERIT_NONE);
+	}
+#endif
+
+#ifdef SYSVSHM
+	if (vm1->vm_shm)
+		shmfork(vm1, vm2);
+#endif
 
 	return(vm2);
 }
