@@ -69,7 +69,7 @@ static int
 match_word(const char *str, const char *word)
 {
 
-	while (*str && tolower(*str) == tolower(*word))
+	while (*str && tolower((unsigned char)*str) == tolower((unsigned char)*word))
 		++str, ++word;
 	return (*str == ' ' && *word == '\0');
 }
@@ -229,7 +229,7 @@ openpam_read_chain(pam_handle_t *pamh,
 			++this->optc;
 			q = next_word(q);
 		}
-		this->optv = calloc(this->optc + 1, sizeof(char *));
+		this->optv = calloc((size_t)(this->optc + 1), sizeof(char *));
 		if (this->optv == NULL)
 			goto syserr;
 		for (i = 0; i < this->optc; ++i) {
@@ -265,8 +265,12 @@ openpam_read_chain(pam_handle_t *pamh,
 static const char *openpam_policy_path[] = {
 	"/etc/pam.d/",
 	"/etc/pam.conf",
+#ifndef __NetBSD__
 	"/usr/local/etc/pam.d/",
 	"/usr/local/etc/pam.conf",
+#else
+	/* Possibly /usr/pkg? */
+#endif
 	NULL
 };
 
