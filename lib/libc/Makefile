@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.115 2004/04/07 03:49:16 ross Exp $
+#	$NetBSD: Makefile,v 1.116 2004/04/18 04:26:15 lukem Exp $
 #	@(#)Makefile	8.2 (Berkeley) 2/3/94
 #
 # All library objects contain sccsid strings by default; they may be
@@ -56,9 +56,9 @@ ARCHSUBDIR=	${MACHINE_CPU}
 .endif
 
 ARCHDIR=	${.CURDIR}/arch/${ARCHSUBDIR}
-AINC=		-I${ARCHDIR}
+AFLAGS+=	-I${ARCHDIR}
 .if defined(DESTDIR)
-AINC+=		-nostdinc -idirafter ${DESTDIR}/usr/include
+AFLAGS+=	-nostdinc -idirafter ${DESTDIR}/usr/include
 .endif
 CLEANFILES+=	tags
 
