@@ -1,4 +1,4 @@
-/* $NetBSD: rpb.h,v 1.19 1998/03/20 21:48:03 thorpej Exp $ */
+/* $NetBSD: rpb.h,v 1.20 1998/04/15 00:47:33 mjacob Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -59,7 +59,7 @@ struct rpb {
 #define	ST_DEC_2100_A500	9		/* "Sable" (?) */
 #define	ST_DEC_APXVME_64	10		/* "AXPvme" (VME?) */
 #define	ST_DEC_AXPPCI_33	11		/* "NoName" (PCI/ISA) */
-#define	ST_DEC_21000		12		/* "TurboLaser" (?) */
+#define	ST_DEC_21000		12		/* "TurboLaser" (PCI/EISA) */
 #define	ST_DEC_2100_A50		13		/* "Avanti" (PCI/ISA) */
 #define	ST_DEC_MUSTANG		14		/* "Mustang" (?) */
 #define	ST_DEC_KN20AA		15		/* kn20aa (PCI/EISA) */
@@ -67,7 +67,7 @@ struct rpb {
 #define	ST_EB66			19		/* EB66 (PCI/ISA?) */
 #define	ST_EB64P		20		/* EB64+ (PCI/ISA?) */
 #define	ST_ALPHABOOK1		21		/* Alphabook (?) */
-#define	ST_DEC_4100		22		/* "Rawhide" (?) */
+#define	ST_DEC_4100		22		/* "Rawhide" (PCI/EISA) */
 #define	ST_DEC_EV45_PBP		23		/* "Lego" (?) */
 #define	ST_DEC_2100A_A500	24		/* "Lynx" (?) */
 #define	ST_EB164		26		/* EB164 (PCI/ISA) */
