@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.25 1996/05/13 01:01:55 mycroft Exp $	*/
+/*	$NetBSD: audio.c,v 1.26 1996/05/13 02:26:15 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -79,10 +79,6 @@
 #include <sys/signalvar.h>
 #include <sys/conf.h>
 #include <sys/audioio.h>
-
-#if defined(__alpha__) || defined(__i386__)
-#include <machine/intr.h>
-#endif
 
 #include <dev/audiovar.h>
 #include <dev/audio_if.h>
