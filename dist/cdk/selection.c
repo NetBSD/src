@@ -1,9 +1,9 @@
 #include <cdk.h>
 
 /*
- * $Author: garbled $
- * $Date: 2001/01/09 18:41:54 $
- * $Revision: 1.3 $
+ * $Author: wiz $
+ * $Date: 2001/12/04 17:56:31 $
+ * $Revision: 1.4 $
  */
 
 /*
@@ -752,7 +752,7 @@ static void createCDKSelectionItemList (CDKSELECTION *selection, char **list, in
 {
    int widestItem, x;
 
-   /* Is the view size smaller then the window??? */
+   /* Is the view size smaller than the window??? */
    selection->listSize		= listSize;
    selection->maxTopItem	= MAXIMUM (0, listSize - selection->viewSize);
    

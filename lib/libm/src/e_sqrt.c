@@ -12,7 +12,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBM_SCCS) && !defined(lint)
-__RCSID("$NetBSD: e_sqrt.c,v 1.10 1999/07/02 15:37:41 simonb Exp $");
+__RCSID("$NetBSD: e_sqrt.c,v 1.11 2001/12/04 17:56:33 wiz Exp $");
 #endif
 
 /* __ieee754_sqrt(x)
@@ -418,7 +418,7 @@ B.  sqrt(x) by Reciproot Iteration
 	R:= r		... restore rounded mode
 	return sqrt(x):=z.
 
-	If multiplication is cheaper then the foregoing red tape, the
+	If multiplication is cheaper than the foregoing red tape, the
 	Inexact flag can be evaluated by
 
 	    I := i;
