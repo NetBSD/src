@@ -546,16 +546,13 @@ DECLARE_PEM_rw(PKCS8, X509_SIG)
 
 DECLARE_PEM_rw(PKCS8_PRIV_KEY_INFO, PKCS8_PRIV_KEY_INFO)
 
-#ifndef NO_RSA
 
 DECLARE_PEM_rw_cb(RSAPrivateKey, RSA)
 
 DECLARE_PEM_rw(RSAPublicKey, RSA)
 DECLARE_PEM_rw(RSA_PUBKEY, RSA)
 
-#endif
 
-#ifndef NO_DSA
 
 DECLARE_PEM_rw_cb(DSAPrivateKey, DSA)
 
@@ -563,13 +560,10 @@ DECLARE_PEM_rw(DSA_PUBKEY, DSA)
 
 DECLARE_PEM_rw(DSAparams, DSA)
 
-#endif
 
-#ifndef NO_DH
 
 DECLARE_PEM_rw(DHparams, DH)
 
-#endif
 
 DECLARE_PEM_rw_cb(PrivateKey, EVP_PKEY)
 

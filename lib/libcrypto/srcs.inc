@@ -1,44 +1,22 @@
-.include "asn1.inc"
-.include "crypto.inc"
-.include "bf.inc"
-.include "bio.inc"
-.include "bn.inc"
-.include "buffer.inc"
-.include "cast.inc"
-.include "comp.inc"
-.include "conf.inc"
-.include "des.inc"
-.include "dh.inc"
-.include "dsa.inc"
-.include "err.inc"
-.include "evp.inc"
-.include "hmac.inc"
-.include "lhash.inc"
-.include "md2.inc"
-.include "mdc2.inc"
-.include "objects.inc"
-.include "pem.inc"
-.include "pkcs12.inc"
-.include "pkcs7.inc"
-.include "rand.inc"
-.include "rc2.inc"
-.include "rc4.inc"
-.include "md5.inc"
-.include "ripemd.inc"
-.include "sha.inc"
-.include "stack.inc"
-.include "txt_db.inc"
-.include "x509.inc"
-.include "x509v3.inc"
+#	$NetBSD: srcs.inc,v 1.2.2.3 2000/10/07 01:14:16 itojun Exp $
 
-.if (${MKCRYPTO_RSA} != "no")
-.include "rsa.inc"
-.endif
+CRYPTOINCS=	asn1.inc crypto.inc bf.inc bio.inc bn.inc buffer.inc \
+		cast.inc comp.inc conf.inc des.inc dh.inc dsa.inc \
+		err.inc evp.inc hmac.inc lhash.inc md2.inc mdc2.inc \
+		objects.inc pem.inc pkcs12.inc pkcs7.inc rand.inc rc2.inc \
+		rc4.inc md5.inc ripemd.inc rsa.inc sha.inc stack.inc \
+		txt_db.inc x509.inc x509v3.inc
 
-.if (${MKCRYPTO_IDEA} != "no")
-.include "idea.inc"
-.endif
+# patented algorithms - see ../libcrypto_*
+CRYPTOINCS+=	idea.inc
+CRYPTOINCS+=	rc5.inc
 
-.if (${MKCRYPTO_RC5} != "no")
-.include "rc5.inc"
+CRYPTOINCS+=	man.inc
+
+.for cryptoinc in ${CRYPTOINCS}
+.if exists(${.CURDIR}/arch/${MACHINE_ARCH:C/mipse[bl]/mips/}/${cryptoinc})
+.include "${.CURDIR}/arch/${MACHINE_ARCH:C/mipse[bl]/mips/}/${cryptoinc}"
+.else
+.include "${cryptoinc}"
 .endif
+.endfor

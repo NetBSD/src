@@ -256,7 +256,7 @@ int main(int argc, char **argv)
 	Time_F(START);
 	for (count=0,run=1; COND(cb); count+=4)
 		{
-		unsigned long data[2];
+		IDEA_INT data[2];
 
 		idea_encrypt(data,&sch);
 		idea_encrypt(data,&sch);

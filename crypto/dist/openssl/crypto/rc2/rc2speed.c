@@ -193,7 +193,7 @@ int main(int argc, char **argv)
 	count=10;
 	do	{
 		long i;
-		unsigned long data[2];
+		u_int32_t data[2];
 
 		count*=2;
 		Time_F(START);
@@ -236,7 +236,7 @@ int main(int argc, char **argv)
 	Time_F(START);
 	for (count=0,run=1; COND(cb); count+=4)
 		{
-		unsigned long data[2];
+		u_int32_t data[2];
 
 		RC2_encrypt(data,&sch);
 		RC2_encrypt(data,&sch);

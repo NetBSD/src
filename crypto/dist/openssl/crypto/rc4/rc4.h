@@ -63,11 +63,9 @@
 extern "C" {
 #endif
 
-#ifdef NO_RC4
-#error RC4 is disabled.
-#endif
 
-#include <openssl/opensslconf.h> /* RC4_INT */
+#include <sys/types.h>
+#define RC4_INT u_int32_t
 
 typedef struct rc4_key_st
 	{

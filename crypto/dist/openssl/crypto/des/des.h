@@ -63,9 +63,6 @@
 extern "C" {
 #endif
 
-#ifdef NO_DES
-#error DES is disabled.
-#endif
 
 #ifdef _KERBEROS_DES_H
 #error <openssl/des.h> replaces <kerberos/des.h>.
@@ -74,6 +71,9 @@ extern "C" {
 #include <stdio.h>
 #include <openssl/opensslconf.h> /* DES_LONG */
 #include <openssl/e_os2.h>	/* OPENSSL_EXTERN */
+
+#include <sys/types.h>
+#define	DES_LONG	u_int32_t
 
 typedef unsigned char des_cblock[8];
 typedef /* const */ unsigned char const_des_cblock[8];

@@ -63,18 +63,9 @@
 extern "C" {
 #endif
 
-#ifdef NO_RIPEMD
-#error RIPEMD is disabled.
-#endif
 
-#if defined(WIN16) || defined(__LP32__)
-#define RIPEMD160_LONG unsigned long
-#elif defined(_CRAY) || defined(__ILP64__)
-#define RIPEMD160_LONG unsigned long
-#define RIPEMD160_LONG_LOG2 3
-#else
-#define RIPEMD160_LONG unsigned int
-#endif
+#include <sys/types.h>
+#define RIPEMD160_LONG	u_int32_t
 
 #define RIPEMD160_CBLOCK	64
 #define RIPEMD160_LBLOCK	(RIPEMD160_CBLOCK/4)

@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.136.4.4 2000/08/11 17:09:57 msaitoh Exp $
+#	$NetBSD: bsd.own.mk,v 1.136.4.5 2000/10/07 01:14:24 itojun Exp $
 
 .if !defined(_BSD_OWN_MK_)
 _BSD_OWN_MK_=1
@@ -265,23 +265,9 @@ MKCRYPTO=no
 MKCRYPTO?=yes
 .endif
 
-.if defined(NOCRYPTO_RSA)
-MKCRYPTO_RSA=no
-.else
-MKCRYPTO_RSA?=yes
-.endif
+MKCRYPTO_IDEA?=no
 
-.if defined(NOCRYPTO_IDEA)
-MKCRYPTO_IDEA=no
-.else
-MKCRYPTO_IDEA?=yes
-.endif
-
-.if defined(NOCRYPTO_RC5)
-MKCRYPTO_RC5=no
-.else
-MKCRYPTO_RC5?=yes
-.endif
+MKCRYPTO_RC5?=no
 
 .if defined(NOKERBEROS) || (${MKCRYPTO} == "no")
 MKKERBEROS=no
