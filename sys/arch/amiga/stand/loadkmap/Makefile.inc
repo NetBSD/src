@@ -1,14 +1,10 @@
-# $NetBSD: Makefile.inc,v 1.9 2000/09/17 18:24:13 is Exp $
+# $NetBSD: Makefile.inc,v 1.10 2000/09/27 08:28:34 aymeric Exp $
 
 BINDIR=/usr/share/keymaps/amiga
 MKMAN=	no
 CLEANFILES=${FILES}
 
-realall: ${PROG} ${FILES}
+realall: ${HOSTPROG} ${FILES}
 
-${FILES}: ${PROG}
-	./${PROG} > $@
-
-# don't install ${PROG}
-proginstall::
-
+${FILES}: ${HOSTPROG}
+	./${HOSTPROG} > $@

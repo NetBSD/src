@@ -1,4 +1,4 @@
-/*	$NetBSD: sw-kbdmap.c,v 1.3 1996/06/08 15:28:58 is Exp $	*/
+/*	$NetBSD: sw-kbdmap.c,v 1.4 2000/09/27 08:28:36 aymeric Exp $	*/
 
 /*
  * Copyright (c) 1993 Markus Wild
@@ -29,6 +29,9 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <unistd.h>
+
 #include "../../../dev/kbdmap.h"
 
 /* define a default keymap. This can be changed by keyboard ioctl's 
@@ -507,7 +510,9 @@ unsigned char acctable[KBD_NUM_ACC][64] = {
 };
 
 
-main()
-{
-  write (1, &kbdmap, sizeof (kbdmap));
+int
+main(void) {
+	write(1, &kbdmap, sizeof (kbdmap));
+
+	return 0;
 }
