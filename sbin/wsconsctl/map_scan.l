@@ -1,4 +1,4 @@
-/*	$NetBSD: map_scan.l,v 1.1 1998/12/28 14:01:17 hannken Exp $ */
+/*	$NetBSD: map_scan.l,v 1.2 2005/01/19 20:37:52 xtraeme Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -47,8 +47,7 @@
 #define yywrap()	1
 
 void
-map_scan_setinput(str)
-	char *str;
+map_scan_setinput(char *str)
 {
 	yy_scan_string(str);
 }

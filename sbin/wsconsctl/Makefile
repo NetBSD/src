@@ -1,5 +1,6 @@
-#	$NetBSD: Makefile,v 1.10 2003/10/21 10:01:20 lukem Exp $
+#	$NetBSD: Makefile,v 1.11 2005/01/19 20:37:52 xtraeme Exp $
 
+WARNS=	2
 PROG=	wsconsctl
 SRCS=	display.c keyboard.c keysym.c map_parse.y map_scan.l \
 		mouse.c util.c wsconsctl.c
