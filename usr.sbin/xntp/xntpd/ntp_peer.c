@@ -324,7 +324,7 @@ unpeer(peer_to_remove)
 		if (peer == 0) {
 			peer_hash_count[hash]++;
 			msyslog(LOG_ERR, "peer struct for %s not in table!",
-			    ntoa(&peer->srcadr));
+			    ntoa(&peer_to_remove->srcadr));
 		} else {
 			peer->next = peer_to_remove->next;
 		}
@@ -348,7 +348,7 @@ unpeer(peer_to_remove)
 			assoc_hash_count[hash]++;
 			msyslog(LOG_ERR,
 			    "peer struct for %s not in association table!",
-			    ntoa(&peer->srcadr));
+			    ntoa(&peer_to_remove->srcadr));
 		} else {
 			peer->ass_next = peer_to_remove->ass_next;
 		}

@@ -30,6 +30,8 @@ int	ntp_optopt;	/* for compatibility, option character checked */
 static char	*scan = NULL;	/* Private scan pointer. */
 static const char	*prog = "amnesia";
 
+static int badopt P((char *, int));
+
 /*
  * Print message about a bad option.
  */
@@ -51,10 +53,10 @@ int
 ntp_getopt(argc, argv, optstring)
 	int argc;
 	char *argv[];
-	char *optstring;
+	const char *optstring;
 {
 	register char c;
-	register char *place;
+	register const char *place;
 
 	prog = argv[0];
 	ntp_optarg = NULL;

@@ -5,14 +5,14 @@
 #include <config.h>
 #endif
 
+#ifdef REFCLOCK
+
 #include <stdio.h>
 #include <sys/types.h>
 
 #include "ntpd.h"
 #include "ntp_refclock.h"
 #include "ntp_stdlib.h"
-
-#ifdef REFCLOCK
 
 static struct refclock refclock_none = {
 	noentry, noentry, noentry, noentry, noentry, noentry, NOFLAGS
@@ -174,6 +174,24 @@ extern	struct refclock refclock_shm;
 #define refclock_shm refclock_none
 #endif
 
+#ifdef PALISADE
+extern  struct refclock refclock_palisade;
+#else
+#define refclock_palisade refclock_none
+#endif
+
+#ifdef CLOCK_ONCORE
+extern  struct refclock refclock_oncore;
+#else
+#define refclock_oncore refclock_none
+#endif 
+
+#if defined(JUPITER) && defined(PPS)
+extern	struct refclock refclock_jupiter;
+#else
+#define refclock_jupiter refclock_none
+#endif
+
 /*
  * Order is clock_start(), clock_shutdown(), clock_poll(),
  * clock_control(), clock_init(), clock_buginfo, clock_flags;
@@ -210,10 +228,14 @@ struct refclock *refclock_conf[] = {
 	&refclock_hpgps,	/* 26 REFCLK_GPS_HP */
 	&refclock_arc, 		/* 27 REFCLK_ARCRON_MSF */
 	&refclock_shm,		/* 28 REFCLK_SHM */
-	&refclock_none,		/* 29 reserved */
-	&refclock_none,		/* 30 reserved */
+        &refclock_palisade,     /* 29 REFCLK_PALISADE */
+        &refclock_oncore,       /* 30 REFCLK_ONCORE */
+        &refclock_jupiter,      /* 31 REFCLK_GPS_JUPITER */
+	&refclock_none		/* 32 reserved */
 };
 
 u_char num_refclock_conf = sizeof(refclock_conf)/sizeof(struct refclock *);
 
-#endif
+#else /* not (REFCLOCK) */
+int refclock_conf_bs;
+#endif /* not (REFCLOCK) */

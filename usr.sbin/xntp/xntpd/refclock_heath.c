@@ -133,6 +133,8 @@ static	int	heath_start	P((int, struct peer *));
 static	void	heath_shutdown	P((int, struct peer *));
 static	void	heath_receive	P((struct recvbuf *));
 static	void	heath_poll	P((int, struct peer *));
+static	int	comparetm 	P((struct tm *, struct tm *));
+static	time_t	invert		P((struct tm *, struct tm *(*)(const time_t *)));
 
 /*
  * Transfer vector
@@ -180,14 +182,14 @@ struct tm *a, *b;
         return 0;
 }
 
-static long
+static time_t
 invert(x, func)
 struct tm *x;
-struct tm *(*func)();
+struct tm *(*func) P((const time_t *));
 {
         struct tm *y;
         int result;
-        long trial;
+        time_t trial;
         long lower=0L;
         long upper=(long)((unsigned long)(~lower) >> 1);
 

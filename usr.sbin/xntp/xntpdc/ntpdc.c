@@ -239,7 +239,10 @@ char *progname;
 int debug;
 
 #ifdef NO_MAIN_ALLOWED
+void xntpdcmain P((int, char *[]));
 CALL(xntpdc,"xntpdc",xntpdcmain);
+#else
+int main P((int, char *[]));
 #endif
 
 #ifdef SYS_VXWORKS
@@ -260,13 +263,10 @@ void clear_globals()
 /*
  * main - parse arguments and handle options
  */
-#if !defined(VMS)
-void
-#endif /* VMS */
-#ifndef NO_MAIN_ALLOWED
-main
+#ifdef NO_MAIN_ALLOWED
+void xntpdcmain
 #else
-xntpdcmain
+int main
 #endif
 (argc, argv)
 int argc;
@@ -286,7 +286,7 @@ char *argv[];
 #endif
 
 	progname = argv[0];
-	while ((c = ntp_getopt(argc, argv, "c:dilnps")) != EOF)
+	while ((c = ntp_getopt(argc, argv, "c:dilnps")) != -1)
 		switch (c) {
 		case 'c':
 			ADDCMD(ntp_optarg);
@@ -1254,7 +1254,7 @@ help(pcmd, fp)
 	int n;
 	struct xcmd *xcp;
 	char *cmd;
-	char *cmdsort[100];
+	const char *cmdsort[100];
 	int length[100];
 	int maxlength;
 	int numperline;

@@ -368,4 +368,6 @@ trak_poll(unit, peer)
 	up->polled = 1;
 }
 
-#endif
+#else /* not (REFCLOCK && TRAK) */
+int refclock_track_bs;
+#endif /* not (REFCLOCK && TRAK) */

@@ -484,7 +484,7 @@ getstartup(argc, argv)
 	/*
 	 * Decode argument list
 	 */
-	while ((c = ntp_getopt(argc, argv, xntp_options)) != EOF)
+	while ((c = ntp_getopt(argc, argv, xntp_options)) != -1)
 		switch (c) {
 #ifdef DEBUG
 		case 'd':
@@ -646,7 +646,7 @@ getconfig(argc, argv)
 	/*
 	 * Decode argument list
 	 */
-	while ((c = ntp_getopt(argc, argv, xntp_options)) != EOF) {
+	while ((c = ntp_getopt(argc, argv, xntp_options)) != -1) {
 		switch (c) {
 		case 'a':
 			proto_config(PROTO_AUTHENTICATE, 1);
@@ -1130,7 +1130,7 @@ getconfig(argc, argv)
 			if (SRCADR(&peeraddr) == htonl(INADDR_ANY))
 				maskaddr.sin_addr.s_addr = 0;
 			if (!errflg)
-				restrict(RESTRICT_FLAGS, &peeraddr, &maskaddr,
+				hack_restrict(RESTRICT_FLAGS, &peeraddr, &maskaddr,
 				    (int)peerkey, peerversion);
 			break;
 			

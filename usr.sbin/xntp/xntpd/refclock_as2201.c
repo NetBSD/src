@@ -464,4 +464,6 @@ as2201_poll(unit, peer)
 		pp->polls++;
 }
 
-#endif /* REFCLOCK */
+#else /* not (REFCLOCK && AS2201) */
+int refclock_as2201_bs;
+#endif /* not (REFCLOCK && AS2201) */

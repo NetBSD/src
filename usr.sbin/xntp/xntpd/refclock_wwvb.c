@@ -250,6 +250,7 @@ wwvb_receive(rbufp)
 	char	syncchar;	/* synchronization indicator */
 	char	qualchar;	/* quality indicator */
 	char	leapchar;	/* leap indicator */
+	int tz = 0;
 
 #ifdef DEBUG
 	if (debug)
@@ -301,8 +302,6 @@ wwvb_receive(rbufp)
 	 * exit.
 	 */
 	switch (pp->lencode) {
-	        int tz = 0;
-
 		case LENWWVB0:
 
 		/*
@@ -481,4 +480,6 @@ wwvb_poll(unit, peer)
 		pp->polls++;
 }
 
-#endif
+#else /* not (REFCLOCK && WWVB) */
+int refclock_wwvb_bs;
+#endif /* not (REFCLOCK && WWVB) */

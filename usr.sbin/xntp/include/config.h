@@ -88,7 +88,7 @@
 #define ATOM 1
 
 /* Datum/Bancomm bc635/VME interface */
-#define BANC 1
+/* #undef BANC */
 
 /* ELV/DCF7000 clock */
 #define CLOCK_DCF7000 1
@@ -121,7 +121,7 @@
 #define DATUM 1
 
 /* TrueTime GPS receiver/VME interface */
-#define GPSVME
+/* #undef GPSVME */
 
 /* Heath GC-1000 WWV/WWVH receiver */
 #define HEATH 1
@@ -130,7 +130,7 @@
 #define HPGPS 1
 
 /* Sun IRIG audio decoder */
-#define IRIG 1
+/* #undef IRIG */
 
 /* Leitch CSD 5300 Master Clock System Driver */
 #define LEITCH 1
@@ -142,13 +142,13 @@
 #define MSFEES 1
 
 /* Magnavox MX4200 GPS receiver */
-#define MX4200
+#define MX4200 1
 
 /* NMEA GPS receiver */
 #define NMEA 1
 
 /* PARSE driver interface */
-#define PARSE
+#define PARSE 1
 
 /* PARSE kernel PLL PPS support */
 /* #undef PPS_SYNC */
@@ -252,7 +252,7 @@
 /* #undef UDP_BACKWARDS_SETOWN */
 
 /* must we have a CTTY for fsetown? */
-/* #undef USE_FSETOWNCTTY */
+#define USE_FSETOWNCTTY 1
 
 /* can we use SIGIO for tcp and udp IO? */
 #define HAVE_SIGNALED_IO 1

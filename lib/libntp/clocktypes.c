@@ -68,6 +68,12 @@ struct clktype clktypes[] = {
 	    "ARCRON_MSF" },
 	{ REFCLK_SHM,		"Clock attached thru shared Memory (28)",
 	    "SHM" },
+        { REFCLK_PALISADE,      "Trimble Navigation Palisade GPS (29)",
+            "PALISADE" },
+        { REFCLK_ONCORE,        "Motorola UT Oncore GPS (30)",
+            "ONCORE" },
+        { REFCLK_GPS_JUPITER,   "Rockwell Jupiter GPS Receiver (31)",
+          "GPS_JUPITER" },
 	{ -1,			"", "" }
 };
 

@@ -28,7 +28,8 @@
 struct ctl_proc {
 	short control_code;	/* defined request code */
 	u_short flags;		/* flags word */
-	void (*handler)();	/* routine to handle request */
+	void (*handler)		/* routine to handle request */
+		P((struct recvbuf *, int));
 };
 
 /*
@@ -333,6 +334,9 @@ static u_char clocktypes[] = {
 	CTL_SST_TS_UHF,		/* REFCLK_GPS_HP (26) */
 	CTL_SST_TS_TELEPHONE,	/* REFCLK_ARCRON_MSF (27) */
 	CTL_SST_TS_TELEPHONE,	/* REFCLK_SHM (28) */
+        CTL_SST_TS_UHF,         /* REFCLK_PALISADE (29) */
+        CTL_SST_TS_UHF,         /* REFCLK_ONCORE (30) */
+	CTL_SST_TS_UHF,		/* REFCLK_JUPITER (31) */
 };
 
 
@@ -513,9 +517,9 @@ ctl_error(errcode)
  * process_control - process an incoming control message
  */
 void
-process_control(rbufp, restrict)
+process_control(rbufp, restrict_mask)
 	struct recvbuf *rbufp;
-	int restrict;
+	int restrict_mask;
 {
 	register struct ntp_control *pkt;
 	register int req_count;
@@ -666,7 +670,7 @@ process_control(rbufp, restrict)
 				ctl_error(CERR_PERMISSION);
 				return;
 			}
-			(cc->handler)(rbufp, restrict);
+			(cc->handler)(rbufp, restrict_mask);
 			return;
 		}
 	}
@@ -939,7 +943,8 @@ ctl_putlfp(tag, ts)
 	const char *tag;
 	l_fp *ts;
 {
-	register char *cp, *cq;
+	register const char *cq;
+	register char *cp;
 	char buffer[200];
 
 	cp = buffer;
@@ -1772,9 +1777,9 @@ ctl_getitem(var_list, data)
  */
 /*ARGSUSED*/
 static void
-control_unspec(rbufp, restrict)
+control_unspec(rbufp, restrict_mask)
 	struct recvbuf *rbufp;
-	int restrict;
+	int restrict_mask;
 {
 	struct peer *peer;
 
@@ -1802,9 +1807,9 @@ control_unspec(rbufp, restrict)
  */
 /*ARGSUSED*/
 static void
-read_status(rbufp, restrict)
+read_status(rbufp, restrict_mask)
 	struct recvbuf *rbufp;
-	int restrict;
+	int restrict_mask;
 {
 	register int i;
 	register struct peer *peer;
@@ -1867,9 +1872,9 @@ read_status(rbufp, restrict)
  */
 /*ARGSUSED*/
 static void
-read_variables(rbufp, restrict)
+read_variables(rbufp, restrict_mask)
 	struct recvbuf *rbufp;
-	int restrict;
+	int restrict_mask;
 {
 	register struct ctl_var *v;
 	register int i;
@@ -1976,9 +1981,9 @@ read_variables(rbufp, restrict)
  */
 /*ARGSUSED*/
 static void
-write_variables(rbufp, restrict)
+write_variables(rbufp, restrict_mask)
 	struct recvbuf *rbufp;
-	int restrict;
+	int restrict_mask;
 {
 	register struct ctl_var *v;
 	register int ext_var;
@@ -2084,9 +2089,9 @@ write_variables(rbufp, restrict)
  */
 /*ARGSUSED*/
 static void
-read_clock_status(rbufp, restrict)
+read_clock_status(rbufp, restrict_mask)
 	struct recvbuf *rbufp;
-	int restrict;
+	int restrict_mask;
 {
 #ifndef REFCLOCK
 	/*
@@ -2199,9 +2204,9 @@ read_clock_status(rbufp, restrict)
  */
 /*ARGSUSED*/
 static void
-write_clock_status(rbufp, restrict)
+write_clock_status(rbufp, restrict_mask)
 	struct recvbuf *rbufp;
-	int restrict;
+	int restrict_mask;
 {
 	ctl_error(CERR_PERMISSION);
 }
@@ -2216,16 +2221,16 @@ write_clock_status(rbufp, restrict)
  * set_trap - set a trap in response to a control message
  */
 static void
-set_trap(rbufp, restrict)
+set_trap(rbufp, restrict_mask)
 	struct recvbuf *rbufp;
-	int restrict;
+	int restrict_mask;
 {
 	int traptype;
 
 	/*
 	 * See if this guy is allowed
 	 */
-	if (restrict & RES_NOTRAP) {
+	if (restrict_mask & RES_NOTRAP) {
 		ctl_error(CERR_PERMISSION);
 		return;
 	}
@@ -2234,7 +2239,7 @@ set_trap(rbufp, restrict)
 	 * Determine his allowed trap type.
 	 */
 	traptype = TRAP_TYPE_PRIO;
-	if (restrict & RES_LPTRAP)
+	if (restrict_mask & RES_LPTRAP)
 		traptype = TRAP_TYPE_NONPRIO;
 
 	/*
@@ -2252,9 +2257,9 @@ set_trap(rbufp, restrict)
  * unset_trap - unset a trap in response to a control message
  */
 static void
-unset_trap(rbufp, restrict)
+unset_trap(rbufp, restrict_mask)
 	struct recvbuf *rbufp;
-	int restrict;
+	int restrict_mask;
 {
 	int traptype;
 
@@ -2266,7 +2271,7 @@ unset_trap(rbufp, restrict)
 	 * Set the trap type based on this.
 	 */
 	traptype = TRAP_TYPE_PRIO;
-	if (restrict & RES_LPTRAP)
+	if (restrict_mask & RES_LPTRAP)
 		traptype = TRAP_TYPE_NONPRIO;
 
 	/*

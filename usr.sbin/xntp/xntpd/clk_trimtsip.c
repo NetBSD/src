@@ -104,8 +104,11 @@ struct trimble
   u_char  t_leap;		/* possible leap warning */
 };
 
-static unsigned long inp_tsip();
-static unsigned long cvt_trimtsip();
+static u_long inp_tsip P((parse_t *, unsigned int, timestamp_t *));
+static u_long cvt_trimtsip P((char *, unsigned int, void *, clocktime_t *, void *));
+static float getflt P((u_char *));
+static double getdbl P((u_char *));
+static int getint P((u_char *));
 
 struct clockformat clock_trimtsip =
 {
@@ -113,8 +116,8 @@ struct clockformat clock_trimtsip =
   cvt_trimtsip,			/* Trimble TSIP conversion */
   syn_simple,			/* easy time stamps for RS232 (fallback) */
   pps_simple,			/* easy PPS monitoring */
-  (unsigned long (*)())0,	/* no time code synthesizer monitoring */
-  (void *)0,			/* no configuration data */
+  NULL,				/* no time code synthesizer monitoring */
+  NULL,				/* no configuration data */
   "Trimble SV6/TSIP",
   128,				/* input buffer */
   CVT_FIXEDONLY,                /* we do our own input handling */
@@ -131,9 +134,10 @@ struct clockformat clock_trimtsip =
 #define DLE		0x10
 #define ETX		0x03
 
+
 static unsigned long inp_tsip(parseio, ch, ctime)
      register parse_t      *parseio;
-     register unsigned char ch;
+     register unsigned int ch;
      register timestamp_t  *ctime;
 {
   register struct trimble *t = (struct trimble *)parseio->parse_pdata;
@@ -213,13 +217,14 @@ static int    getint P((u_char *));
  * convert TSIP type format
  */
 static unsigned long
-cvt_trimtsip(buffer, size, format, clock, t)
+cvt_trimtsip(buffer, size, vf, clock, vt)
   register char          *buffer;
-  register int            size;
-  register struct format *format;
+  register unsigned int   size;
+  register void		 *vf;
   register clocktime_t   *clock;
-  register struct trimble *t;
+  register void		 *vt;
 {
+  register struct trimble *t = vt;
 #define mb(_X_) (buffer[2+(_X_)]) /* shortcut for buffer access */
   register u_char cmd;
 

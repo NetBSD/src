@@ -624,4 +624,6 @@ hpgps_poll(unit, peer)
             pp->polls++;
 }
 
-#endif
+#else /* not (REFCLOCK && HPGPS) */
+int refclock_hpgps_bs;
+#endif /* not (REFCLOCK && HPGPS) */

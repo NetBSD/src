@@ -130,7 +130,7 @@ getcode(code, codetab)
 
 	while (codetab->code != -1) {
 		if (codetab->code == code)
-			return codetab->string;
+			return (char *) codetab->string;
 		codetab++;
 	}
 	(void) sprintf(buf, "%s_%d", codetab->string, code);

@@ -410,4 +410,6 @@ field_parse(cp, fn)
 	}
 	return (++tp);
 }
-#endif
+#else /* not (REFCLOCK && NMEA) */
+int refclock_nmea_bs;
+#endif /* not (REFCLOCK && NMEA) */

@@ -104,6 +104,15 @@ struct event {
 #define	TIMER_NSLOTS	(1<<(NTP_MAXPOLL-(NTP_MINPOLL-1)))
 #define	TIMER_SLOT(t)	(((t) >> (NTP_MINPOLL-1)) & (TIMER_NSLOTS-1))
 
+#ifdef TIMERQUEUE_DEBUG
+
+/* use the non-macro versions of these routines from xntpd/ntp_timer.c */
+void	TIMER_ENQUEUE(struct event *ea, struct event *iev);
+void	TIMER_INSERT(struct event *ea, struct event *iev);
+void	TIMER_DEQUEUE(struct event *ev);
+
+#else /* TIMERQUEUE_DEBUG */
+
 #ifndef SYS_WINNT
 /*
  * TIMER_ENQUEUE() puts stuff on the timer queue.  It takes as
@@ -211,6 +220,8 @@ struct event {
  	}
 
 #endif /* SYS_WINNT */  
+
+#endif /* TIMERQUEUE_DEBUG */  
 
 /*
  * The interface structure is used to hold the addresses and socket
@@ -429,7 +440,10 @@ struct peer {
 #define REFCLK_GPS_HP		26	/* HP 58503A Time & Frequency Receiver */
 #define REFCLK_ARCRON_MSF       27      /* ARCRON MSF radio clock. */
 #define REFCLK_SHM		28	/* clock attached thru shared memory */
-#define REFCLK_MAX		30	/* maximum index (room to expand) */
+#define REFCLK_PALISADE         29      /* Trimble Navigation Palisade GPS */
+#define REFCLK_ONCORE           30      /* Motorola UT Oncore GPS */
+#define REFCLK_GPS_JUPITER      31      /* Rockwell Jupiter GPS receiver */
+#define REFCLK_MAX		32	/* maximum index (room to expand) */
 
 /*
  * We tell reference clocks from real peers by giving the reference

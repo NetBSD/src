@@ -332,4 +332,6 @@ pst_poll(unit, peer)
 		pp->polls++;
 }
 
-#endif
+#else /* not (REFCLOCK && PST) */
+int refclock_pst_bs;
+#endif /* not (REFCLOCK && PST) */

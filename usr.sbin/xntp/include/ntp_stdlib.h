@@ -40,7 +40,7 @@ extern	u_long	calyearstart	P((u_long));
 extern	const char *clockname	P((int));
 extern	int	clocktime	P((int, int, int, int, int, u_long, u_long *, u_int32 *));
 extern	char *	emalloc		P((u_int));
-extern	int	ntp_getopt	P((int, char **, char *));
+extern	int	ntp_getopt	P((int, char **, const char *));
 extern	void	init_auth	P((void));
 extern	void	init_lib	P((void));
 extern	void	init_random	P((void));

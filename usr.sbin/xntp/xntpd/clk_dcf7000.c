@@ -40,15 +40,15 @@ static struct format dcf7000_fmt =
   0
 };    
 
-static u_long cvt_dcf7000();
+static u_long cvt_dcf7000 P((char *, unsigned int, void *, clocktime_t *, void *));
 
 clockformat_t clock_dcf7000 =
 {
-  (unsigned long (*)())0,	/* no input handling */
+  NULL,				/* no input handling */
   cvt_dcf7000,			/* ELV DCF77 conversion */
   syn_simple,			/* easy time stamps */
-  (u_long (*)())0,		/* no direct PPS monitoring */
-  (u_long (*)())0,		/* no time code synthesizer monitoring */
+  NULL,				/* no direct PPS monitoring */
+  NULL,				/* no time code synthesizer monitoring */
   (void *)&dcf7000_fmt,		/* conversion configuration */
   "ELV DCF7000",		/* ELV clock */
   24,				/* string buffer */
@@ -66,12 +66,14 @@ clockformat_t clock_dcf7000 =
  * convert dcf7000 type format
  */
 static u_long
-cvt_dcf7000(buffer, size, format, clock)
+cvt_dcf7000(buffer, size, vf, clock, vt)
   register char          *buffer;
-  register int            size;
-  register struct format *format;
+  register unsigned int   size;
+  register void          *vf;
   register clocktime_t   *clock;
+  register void          *vt;
 {
+  register struct format *format = vf;
   if (!Strok(buffer, format->fixed_string))
     {
       return CVT_NONE;

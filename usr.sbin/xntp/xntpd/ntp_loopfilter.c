@@ -87,6 +87,7 @@ int pps_update;			/* pps update valid */
 int fdpps = -1;			/* pps file descriptor */
 int pps_enable;			/* pps disabled by default */
 char cutout;			/* override for max capture range */
+extern	l_fp sys_clock_offset;	/* correction for current system time */
 
 /*
  * Imported from the ntp_proto module
@@ -202,7 +203,7 @@ local_clock(fp_offset, peer, fastset)
 	interval = current_time - last_time;
 	 if (interval < 1)
 		interval = 1;
-	time_constant = min(peer->ppoll, sys_poll) - 2;
+	time_constant = min(peer->ppoll, sys_poll) - 4;
 	clock_adjust = 0;
 	offset = fp_offset->l_f;
 
@@ -308,7 +309,7 @@ local_clock(fp_offset, peer, fastset)
 		}
 		ntv.esterror = sys_rootdispersion << 4;
 		ntv.maxerror = ntv.esterror + (sys_rootdelay << 2);
-		ntv.constant = min(peer->ppoll, sys_poll) - 2;
+		ntv.constant = min(peer->ppoll, sys_poll) - 4;
 		ntv.status = STA_PLL;
 		if (pps_enable)
 			ntv.status |= STA_PPSFREQ;
@@ -585,8 +586,16 @@ adj_host_clock()
 	 */
 	if (sys_peer) {
 		if (sys_peer->refclktype == REFCLK_LOCALCLOCK &&
-		    sys_peer->flags & FLAG_PREFER)
+		    sys_peer->flags & FLAG_PREFER) {
+                       /* I think that sys_clock_offset might be jammed
+                        * to exactly zero now.  It might have had a
+                        * small residual before things switched to the
+                        * local refclock prefer at lower stratum, or a
+                        * glitch might have happened during interrupts
+                        * when the external control jumped the time */
+	                L_CLR(&sys_clock_offset);
 			return;
+		}
  	}
 	L_CLR(&offset);
 	L_ADDF(&offset, adjustment);
@@ -680,7 +689,7 @@ loop_config(item, lfp_value)
 		ntv.maxerror = NTP_MAXDISPERSE;
 		ntv.esterror = NTP_MAXDISPERSE;
 		ntv.status = STA_PLL | STA_UNSYNC;
-		ntv.constant = sys_poll - 2;
+		ntv.constant = sys_poll - 4;
 #ifdef SIGSYS
 		newsigsys.sa_handler = pll_trap;
 		newsigsys.sa_flags = 0;

@@ -562,8 +562,6 @@ authencrypt(keyno, pkt, length)
 	u_int32 *pkt;
 	int length;	/* length of encrypted portion of packet */
 {
-    int sendlength = 0;
-
     if (keyno && keyno != cache_keyid) {
 	authkeyuncached++;
 	if (!authhavekey(keyno)) {
@@ -574,7 +572,7 @@ authencrypt(keyno, pkt, length)
 
 #ifdef	DES
     if (!keyno || (cache_flags & KEY_DES))
-	return sendlength = DESauthencrypt(keyno, pkt, length);
+	return DESauthencrypt(keyno, pkt, length);
 #endif
 
 #ifdef	MD5

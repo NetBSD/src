@@ -7,6 +7,7 @@
 #include <config.h>
 #endif
 
+#if defined(REFCLOCK) && defined(LOCAL_CLOCK)
 
 #include <stdio.h>
 #include <ctype.h>
@@ -15,8 +16,6 @@
 #include "ntpd.h"
 #include "ntp_refclock.h"
 #include "ntp_stdlib.h"
-
-#if defined(REFCLOCK) && defined(LOCAL_CLOCK)
 
 /*
  * This is a hack to allow a machine to use its own system clock as a
@@ -187,4 +186,6 @@ local_poll(unit, peer)
 	L_CLR(&pp->fudgetime2);
 }
 
-#endif	/* REFCLOCK */
+#else /* not (REFCLOCK && LOCAL_CLOCK) */
+int refclock_local_bs;
+#endif /* not (REFCLOCK && LOCAL_CLOCK) */

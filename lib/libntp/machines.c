@@ -112,10 +112,7 @@ gettimeofday(tvp)
 }
 #endif /* SYS_PTX */
 
-#ifdef HAVE_SETTIMEOFDAY
-const char *set_tod_using = "settimeofday";
-#else /* not HAVE_SETTIMEOFDAY */
-# ifdef HAVE_CLOCK_SETTIME
+#if defined(HAVE_CLOCK_SETTIME) && defined(CLOCK_REALTIME)
 const char *set_tod_using = "clock_settime";
 
 /*#include <time.h>	*/
@@ -134,6 +131,9 @@ settimeofday(tvp, tzp)
   return clock_settime(CLOCK_REALTIME, &ts);
 }
 
+#else /* not HAVE_CLOCK_SETTIME || not CLOCK_REALTIME */
+# ifdef HAVE_SETTIMEOFDAY
+const char *set_tod_using = "settimeofday";
 # else /* not (HAVE_SETTIMEOFDAY || HAVE_CLOCK_SETTIME) */
 #  ifdef HAVE_STIME
 char *set_tod_using = "stime";
@@ -146,9 +146,11 @@ settimeofday(tvp, tzp)
   return (stime(&tvp->tv_sec));	/* lie as bad as SysVR4 */
 }
 
+#  else
+#   include <Bletch: How do we set the time here?>
 #  endif /* HAVE_STIME */
 # endif /* not (HAVE_SETTIMEOFDAY || HAVE_CLOCK_SETTIME) */
-#endif /* not HAVE_SETTIME */
+#endif /* not HAVE_CLOCK_SETTIME */
 
 
 #else /* SYS_WINNT */

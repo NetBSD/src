@@ -25,3 +25,5 @@
 extern char lib_stringbuf[LIB_NUMBUFS][LIB_BUFLENGTH];
 extern int lib_nextbuf;
 extern int lib_inited;
+
+void init_lib P((void));

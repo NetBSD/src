@@ -45,6 +45,9 @@ MD5authencrypt(keyno, pkt, length)
 {
     MD5_CTX ctx;
     int len;		/* in 4 byte quantities */
+#ifdef __NetBSD__
+    unsigned char hash[16];
+#endif
 
     authencryptions++;
 
@@ -64,10 +67,18 @@ MD5authencrypt(keyno, pkt, length)
     MD5Init(&ctx);
     MD5Update(&ctx, (unsigned const char *)cache_key, cache_keylen);
     MD5Update(&ctx, (unsigned const char *)pkt, length);
+#ifdef __NetBSD__
+    MD5Final(hash, &ctx);
+#else
     MD5Final(&ctx);
+#endif
 
     memmove((char *)&pkt[NOCRYPT_int32S + len],
-	    (char *)ctx.digest,
+#ifdef __NetBSD__
+	    (char *) hash,
+#else
+	    (char *) ctx.digest,
+#endif
 	    BLOCK_OCTETS);
     return (4 + BLOCK_OCTETS);	/* return size of key and MAC  */
 }

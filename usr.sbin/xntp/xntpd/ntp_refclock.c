@@ -561,7 +561,7 @@ refclock_receive(peer, offset, delay, dispersion, reftime, rectime, leap)
 	l_fp *rectime;		/* time at last peer update */
 	int leap;		/* synchronization/leap code */
 {
-	int restrict;
+	int restrict_mask;
 	int trustable;
 	int refclock_own_states;
 	u_fp precision;
@@ -587,12 +587,12 @@ refclock_receive(peer, offset, delay, dispersion, reftime, rectime, leap)
 	 * The authentication and access-control machinery works, but
 	 * its utility may be questionable.
 	 */
-	restrict = restrictions(&peer->srcadr);
-	if (restrict & (RES_IGNORE|RES_DONTSERVE))
+	restrict_mask = restrictions(&peer->srcadr);
+	if (restrict_mask & (RES_IGNORE|RES_DONTSERVE))
 		return;
 	peer->processed++;
 	peer->timereceived = current_time;
-	if (restrict & RES_DONTTRUST)
+	if (restrict_mask & RES_DONTTRUST)
 		trustable = 0;
 	else
 		trustable = 1;
@@ -720,8 +720,9 @@ refclock_gtlin(rbufp, lineptr, bmax, tsptr)
 		} else
 			trtmp = rbufp->recv_time;
 	}
-
-#else /* TIOCDCDTIMESTAMP */
+	else
+	/* XXX fallback to old method if kernel refuses TIOCDCDTIMESTAMP */
+#endif  /* TIOCDCDTIMESTAMP */
 	if (dpend >= dpt + 8) {
 		if (buftvtots(dpend - 8, &tstmp)) {
 			L_SUB(&trtmp, &tstmp);
@@ -744,7 +745,6 @@ refclock_gtlin(rbufp, lineptr, bmax, tsptr)
 				trtmp = rbufp->recv_time;
 		}
 	}
-#endif /* TIOCDCDTIMESTAMP */
 
 	/*
 	 * Edit timecode to remove control chars. Don't monkey with the

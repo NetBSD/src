@@ -436,4 +436,6 @@ arb_poll(unit, peer)
 	
 }
 
-#endif
+#else /* not (REFCLOCK && ARBITER) */
+int refclock_arbiter_bs;
+#endif /* not (REFCLOCK && ARBITER) */

@@ -1494,7 +1494,7 @@ do_restrict(srcadr, inter, inpkt, op)
 	while (items-- > 0) {
 		matchaddr.sin_addr.s_addr = cr->addr;
 		matchmask.sin_addr.s_addr = cr->mask;
-		restrict(op, &matchaddr, &matchmask, cr->mflags,
+		hack_restrict(op, &matchaddr, &matchmask, cr->mflags,
 		    cr->flags);
 		cr++;
 	}

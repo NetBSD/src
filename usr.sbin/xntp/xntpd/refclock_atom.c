@@ -146,6 +146,7 @@ static	void	atom_poll	P((int, struct peer *));
 #ifdef PPS
 static	void	atom_pps	P((struct peer *));
 #endif /* PPS */
+static	int	atom_cmpl_fp	P((const void *, const void *));
 
 /*
  * Transfer vector
@@ -252,10 +253,6 @@ pps_sample(tsr)
 	int i;
 	l_fp lftemp;		/* l_fp temps */
 
-#ifdef	DEBUG
-	if (debug > 2)
-		printf("pps_sample: pollcnt %d\n", up->pollcnt);
-#endif
 	/*
 	 * This routine is called once per second by an auxilliary
 	 * routine in another driver. It saves the sign-extended
@@ -268,6 +265,11 @@ pps_sample(tsr)
 
 	pp = peer->procptr;
 	up = (struct atomunit *)pp->unitptr;
+
+#ifdef	DEBUG
+	if (debug > 2)
+		printf("pps_sample: pollcnt %d\n", up->pollcnt);
+#endif
 
 	L_CLR(&lftemp);
 	L_ADDF(&lftemp, tsr->l_f);
@@ -373,8 +375,8 @@ atom_receive(rbufp)
 	    &pp->lastrec);
 #ifdef	DEBUG
 	if (debug > 2)
-		printf("atom_receive: pollcnt %d, lastrec %ld\n",
-		       up->pollcnt, pp->lastrec);
+		printf("atom_receive: pollcnt %d, lastrec %d\n",
+		       up->pollcnt, pp->lastrec.l_ui);
 #endif
 
 	/*
@@ -458,7 +460,12 @@ atom_poll(unit, peer)
 			 */
 			(void)sprintf(device, DEVICE, unit);
 			if (!(fd = refclock_open(device, SPEED232,
-	 		    LDISC_CLKPPS))) {
+#ifdef PPS
+						 LDISC_PPS
+#else
+						 LDISC_CLKPPS
+#endif
+						 ))) {
 				refclock_report(peer, CEVNT_FAULT);
 				return;
 			}
@@ -544,4 +551,6 @@ atom_poll(unit, peer)
 			 &pp->lastrec, &pp->lastrec, pp->leap);
 }
 
-#endif /* ATOM && REFCLOCK */
+#else /* not (ATOM && REFCLOCK) */
+int refclock_atom_bs;
+#endif /* not (ATOM && REFCLOCK) */

@@ -306,10 +306,10 @@ restrictions(srcadr)
 
 
 /*
- * restrict - add/subtract/manipulate entries on the restrict list
+ * hack_restrict - add/subtract/manipulate entries on the restrict list
  */
 void
-restrict(op, resaddr, resmask, mflags, flags)
+hack_restrict(op, resaddr, resmask, mflags, flags)
 	int op;
 	struct sockaddr_in *resaddr;
 	struct sockaddr_in *resmask;

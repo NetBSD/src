@@ -108,13 +108,17 @@ static	void	printrefid	P((FILE *, struct server *));
  * timer expiries.
  */
 #ifdef NO_MAIN_ALLOWED
+void ntptracemain P((int, char *[]));
+
 CALL(ntptrace,"ntptrace",ntptracemain);
-#endif
-void
-#ifndef NO_MAIN_ALLOWED
-main
 #else
-ntptracemain
+int main P((int, char *[]));
+#endif
+
+#ifndef NO_MAIN_ALLOWED
+int main
+#else
+void ntptracemain
 #endif /* NO_MAIN_ALLOWED */
 (argc, argv)
 	int argc;
@@ -138,7 +142,7 @@ ntptracemain
 	/*
 	 * Decode argument list
 	 */
-	while ((c = ntp_getopt(argc, argv, "do:nr:t:v")) != EOF)
+	while ((c = ntp_getopt(argc, argv, "do:nr:t:v")) != -1)
 		switch (c) {
 		case 'd':
 			++debug;

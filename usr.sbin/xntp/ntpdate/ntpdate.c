@@ -17,6 +17,9 @@
 #include <signal.h>
 #include <ctype.h>
 #include <errno.h>
+#ifdef HAVE_POLL_H
+#include <poll.h>
+#endif
 #ifndef SYS_WINNT
 #include <netdb.h>
 #include <sys/signal.h>
@@ -66,12 +69,12 @@ struct timeval tv0 = {0,0};
 #define	NTPDATE_PRIO	(-12)
 #else
 #define	NTPDATE_PRIO	(100)
-#endif
-
 #if defined(HAVE_TIMER_SETTIME) || defined (HAVE_TIMER_CREATE)
 /* POSIX TIMERS - vxWorks doesn't have itimer - casey */
 static timer_t ntpdate_timerid;
 #endif
+#endif
+
 
 /*
  * Compatibility stuff for Version 2
@@ -93,7 +96,11 @@ int debug = 0;
  * File descriptor masks etc. for call to select
  */
 int fd;
+#ifdef HAVE_POLL_H
+struct pollfd fdmask;
+#else
 fd_set fdmask;
+#endif
 
 /*
  * Initializing flag.  All async routines watch this and only do their
@@ -213,6 +220,9 @@ WSADATA wsaData;
 #endif /* SYS_WINNT */
 
 #ifdef NO_MAIN_ALLOWED
+void ntpdatemain P((int, char *[]));
+
+void
 CALL(ntpdate,"ntpdate",ntpdatemain);
 
 void clear_globals()
@@ -273,17 +283,18 @@ void clear_globals()
   always_step = 0;
   never_step = 0;
 }
+#else
+int main P((int, char *[]));
 #endif
 
 /*
  * Main program.  Initialize us and loop waiting for I/O and/or
  * timer expiries.
  */
-void
 #ifndef NO_MAIN_ALLOWED
-main
+int main
 #else
-ntpdatemain
+void ntpdatemain
 #endif /* NO_MAIN_ALLOWED */
 (argc, argv)
      int argc;
@@ -325,7 +336,7 @@ ntpdatemain
   /*
    * Decode argument list
    */
-  while ((c = ntp_getopt(argc, argv, "a:bBde:k:o:p:qr:st:uv")) != EOF)
+  while ((c = ntp_getopt(argc, argv, "a:bBde:k:o:p:qr:st:uv")) != -1)
     switch (c)
       {
       case 'a':
@@ -514,7 +525,11 @@ ntpdatemain
   was_alarmed = 0;
   rbuflist = (struct recvbuf *)0;
   while (complete_servers < sys_numservers) {
+#ifdef HAVE_POLL_H
+    struct pollfd rdfdes;
+#else
     fd_set rdfdes;
+#endif
     int nfound;
 
     if (alarm_flag) {		/* alarmed? */
@@ -533,8 +548,12 @@ ntpdatemain
       timeout.tv_usec = 0;
       rdfdes = fdmask;
 #ifndef SYS_VXWORKS
+#ifdef HAVE_POLL_H
+      nfound = poll(&rdfdes, 1, timeout.tv_sec * 1000);
+#else
       nfound = select(fd+1, &rdfdes, (fd_set *)0,
 		      (fd_set *)0, &timeout);
+#endif
 #else
       nfound = select(fd+1, &rdfdes, (fd_set *)0,
 		      (fd_set *)0, &tv0);
@@ -551,10 +570,18 @@ ntpdatemain
 #ifndef SYS_WINNT
 	if (errno != EINTR)
 #endif
+#ifdef HAVE_POLL_H
+	  msyslog(LOG_ERR, "poll() error: %m");
+#else
 	  msyslog(LOG_ERR, "select() error: %m");
+#endif
       } else {
 #ifndef SYS_VXWORKS
+#ifdef HAVE_POLL_H
+	msyslog(LOG_DEBUG, "poll(): nfound = %d, error: %m", nfound);
+#else
 	msyslog(LOG_DEBUG, "select(): nfound = %d, error: %m", nfound);
+#endif
 #endif
       }
       if (alarm_flag) {		/* alarmed? */
@@ -1560,8 +1587,13 @@ init_io()
     }
   }
 
+#ifdef HAVE_POLL_H
+  fdmask.fd = fd;
+  fdmask.events = POLLIN;
+#else
   FD_ZERO(&fdmask);
   FD_SET(fd, &fdmask);
+#endif
 
   /*
    * set non-blocking,
@@ -1691,7 +1723,11 @@ input_handler()
   struct timeval tvzero;
   int fromlen;
   l_fp ts;
+#ifdef HAVE_POLL_H
+  struct pollfd fds;
+#else
   fd_set fds;
+#endif
 
   /*
    * Do a poll to see if we have data
@@ -1699,7 +1735,11 @@ input_handler()
   for (;;) {
     fds = fdmask;
     tvzero.tv_sec = tvzero.tv_usec = 0;
+#ifdef HAVE_POLL_H
+    n = poll(&fds, 1, tvzero.tv_sec * 1000);
+#else
     n = select(fd+1, &fds, (fd_set *)0, (fd_set *)0, &tvzero);
+#endif
 
     /*
      * If nothing to do, just return.  If an error occurred,
@@ -1710,7 +1750,11 @@ input_handler()
       return;
     else if (n == -1) {
       if (errno != EINTR)
+#ifdef HAVE_POLL_H
+	msyslog(LOG_ERR, "poll() error: %m");
+#else
 	msyslog(LOG_ERR, "select() error: %m");
+#endif
       return;
     }
     get_systime(&ts);

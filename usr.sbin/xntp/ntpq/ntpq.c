@@ -434,6 +434,7 @@ char *progname;
 int debug;
 
 #ifdef NO_MAIN_ALLOWED
+void ntpqmain P((int, char *[]));
 CALL(ntpq,"ntpq",ntpqmain);
 
 void clear_globals()
@@ -449,17 +450,16 @@ void clear_globals()
     numcmds = 0;
     numhosts = 0;
     }
+#else
+int main P((int, char *[]));
 #endif
 /*
  * main - parse arguments and handle options
  */
-#if !defined(VMS)
-void
-#endif /* VMS */
 #ifndef NO_MAIN_ALLOWED
-main
+int main
 #else
-ntpqmain
+void ntpqmain
 #endif
 (argc, argv)
 int argc;
@@ -478,7 +478,7 @@ char *argv[];
 	delay_time.l_uf = DEFDELAY;
 
 	progname = argv[0];
-	while ((c = ntp_getopt(argc, argv, "c:dinp")) != EOF)
+	while ((c = ntp_getopt(argc, argv, "c:dinp")) != -1)
 		switch (c) {
 		case 'c':
 			ADDCMD(ntp_optarg);
@@ -1840,7 +1840,7 @@ help(pcmd, fp)
 	int n;
 	struct xcmd *xcp;
 	char *cmd;
-	char *cmdsort[100];
+	const char *cmdsort[100];
 	int length[100];
 	int maxlength;
 	int numperline;

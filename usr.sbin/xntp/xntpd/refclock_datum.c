@@ -868,4 +868,6 @@ static void datum_pts_receive(rbufp)
 #endif
 
 }
-#endif
+#else /* not (REFCLOCK && DATUM) */
+int refclock_datum_bs;
+#endif /* not (REFCLOCK && DATUM) */

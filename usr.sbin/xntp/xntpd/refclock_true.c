@@ -873,4 +873,6 @@ true_sample720()
 }
 #endif
 
-#endif /*defined(REFCLOCK) && defined(TRUETIME)*/
+#else /* not (REFCLOCK && TRUETIME) */
+int refclock_true_bs;
+#endif /* not (REFCLOCK && TRUETIME) */

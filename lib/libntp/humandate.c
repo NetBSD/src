@@ -20,6 +20,8 @@ static const char *days[] = {
         "Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"
 };
 
+char *humanlogtime P((void));
+
 char *
 humandate(ntptime)
 	u_long ntptime;
