@@ -1,4 +1,4 @@
-/*	$NetBSD: vrpiu.c,v 1.15 2001/09/16 05:32:21 uch Exp $	*/
+/*	$NetBSD: vrpiu.c,v 1.16 2001/09/24 14:29:30 takemura Exp $	*/
 
 /*
  * Copyright (c) 1999-2001 Shin Takemura All rights reserved.
@@ -184,7 +184,7 @@ vrpiuattach(struct device *parent, struct device *self, void *aux)
 	sc->sc_vrip = va->va_vc;
 
 	sc->sc_interval = scan_interval(WSMOUSE_RES_DEFAULT);
-	if ((p = platid_search(&platid, hpcbattery_parameters)) == NULL)
+	if ((p = platid_search_data(&platid, hpcbattery_parameters)) == NULL)
 		sc->sc_battery_spec = NULL;
 	else
 		sc->sc_battery_spec  = p->data;
