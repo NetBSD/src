@@ -1,11 +1,10 @@
 #	from: @(#)Makefile	7.3 (Berkeley) 6/9/91
-#	$Id: Makefile,v 1.5 1994/04/18 08:44:28 cgd Exp $
+#	$Id: Makefile,v 1.6 1994/07/18 08:03:20 cgd Exp $
 
 # Makefile for i386 tags file and boot blocks
 
 NOPROG=	noprog
 NOMAN=	noman
-NOOBJ=	noobj
 
 SUBDIR=	boot floppy
 
@@ -26,5 +25,7 @@ tags:
 links:
 	-for i in ${DI386}; do \
 	    cd $$i && rm -f tags; ln -s ../tags tags; done
+
+obj: _SUBDIRUSE
 
 .include <bsd.prog.mk>
