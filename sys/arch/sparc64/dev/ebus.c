@@ -1,4 +1,4 @@
-/*	$NetBSD: ebus.c,v 1.5 2000/04/08 04:33:09 mrg Exp $	*/
+/*	$NetBSD: ebus.c,v 1.6 2000/04/13 14:39:34 mrg Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Matthew R. Green
@@ -159,9 +159,10 @@ ebus_attach(parent, self, aux)
 		if (ebus_setup_attach_args(sc, node, &eba) != 0) {
 			printf("ebus_attach: %s: incomplete\n", name);
 			continue;
+		} else {
+			DPRINTF(EDB_CHILD, ("- found child `%s', attaching\n", eba.ea_name));
+			(void)config_found(self, &eba, ebus_print);
 		}
-		DPRINTF(EDB_CHILD, ("- found child `%s', attaching\n", eba.ea_name));
-		(void)config_found(self, &eba, ebus_print);
 		ebus_destroy_attach_args(&eba);
 	}
 }
