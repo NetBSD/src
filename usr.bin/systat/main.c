@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.8 1996/05/10 23:16:36 thorpej Exp $	*/
+/*	$NetBSD: main.c,v 1.9 1996/12/13 19:26:21 scottr Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1992, 1993
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$NetBSD: main.c,v 1.8 1996/05/10 23:16:36 thorpej Exp $";
+static char rcsid[] = "$NetBSD: main.c,v 1.9 1996/12/13 19:26:21 scottr Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -97,28 +97,28 @@ main(argc, argv)
 
 	while ((ch = getopt(argc, argv, "M:N:w:")) != EOF)
 		switch(ch) {
-                case 'M':
-                        memf = optarg;
-                        break;
-                case 'N':
-                        nlistf = optarg;
-                        break;
-                case 'w':
-                        if ((naptime = atoi(optarg)) <= 0)
-                                errx(1, "interval <= 0.");
-                        break;
-                case '?':
-                default:
-                        usage();
-                }
-        argc -= optind;
-        argv += optind;
-        /*
-         * Discard setgid privileges if not the running kernel so that bad
-         * guys can't print interesting stuff from kernel memory.
-         */
-        if (nlistf != NULL || memf != NULL)
-                setgid(getgid());
+		case 'M':
+			memf = optarg;
+			break;
+		case 'N':
+			nlistf = optarg;
+			break;
+		case 'w':
+			if ((naptime = atoi(optarg)) <= 0)
+				errx(1, "interval <= 0.");
+			break;
+		case '?':
+		default:
+			usage();
+		}
+	argc -= optind;
+	argv += optind;
+	/*
+	 * Discard setgid privileges if not the running kernel so that bad
+	 * guys can't print interesting stuff from kernel memory.
+	 */
+	if (nlistf != NULL || memf != NULL)
+		setgid(getgid());
 
 	while (argc > 0) {
 		if (isdigit(argv[0][0])) {
@@ -151,6 +151,7 @@ main(argc, argv)
 	signal(SIGINT, die);
 	signal(SIGQUIT, die);
 	signal(SIGTERM, die);
+	signal(SIGWINCH, redraw);
 
 	/*
 	 * Initialize display.  Load average appears in a one line
@@ -249,6 +250,20 @@ display(signo)
 	move(CMDLINE, col);
 	refresh();
 	alarm(naptime);
+}
+
+void
+redraw(signo)
+	int signo;
+{
+	sigset_t set;
+
+	sigemptyset(&set);
+	sigaddset(&set, SIGALRM);
+	sigprocmask(SIG_BLOCK, &set, NULL);
+	wrefresh(curscr);
+	refresh();
+	sigprocmask(SIG_UNBLOCK, &set, NULL);
 }
 
 void

@@ -1,4 +1,4 @@
-/*	$NetBSD: vmstat.c,v 1.6 1996/08/11 04:16:28 explorer Exp $	*/
+/*	$NetBSD: vmstat.c,v 1.7 1996/12/13 19:26:23 scottr Exp $	*/
 
 /*-
  * Copyright (c) 1983, 1989, 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)vmstat.c	8.2 (Berkeley) 1/12/94";
 #endif
-static char rcsid[] = "$NetBSD: vmstat.c,v 1.6 1996/08/11 04:16:28 explorer Exp $";
+static char rcsid[] = "$NetBSD: vmstat.c,v 1.7 1996/12/13 19:26:23 scottr Exp $";
 #endif /* not lint */
 
 /*
@@ -208,10 +208,10 @@ initkre()
 		return(0);
 	if (dk_ndrive && !once) {
 #define	allocate(e, t) \
-    s./**/e = (t *)calloc(dk_ndrive, sizeof (t)); \
-    s1./**/e = (t *)calloc(dk_ndrive, sizeof (t)); \
-    s2./**/e = (t *)calloc(dk_ndrive, sizeof (t)); \
-    z./**/e = (t *)calloc(dk_ndrive, sizeof (t));
+	s./**/e = (t *)calloc(dk_ndrive, sizeof (t)); \
+	s1./**/e = (t *)calloc(dk_ndrive, sizeof (t)); \
+	s2./**/e = (t *)calloc(dk_ndrive, sizeof (t)); \
+	z./**/e = (t *)calloc(dk_ndrive, sizeof (t));
 		once = 1;
 #undef allocate
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: netstat.c,v 1.4 1996/08/11 04:19:16 explorer Exp $	*/
+/*	$NetBSD: netstat.c,v 1.5 1996/12/13 19:26:21 scottr Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)netstat.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$NetBSD: netstat.c,v 1.4 1996/08/11 04:19:16 explorer Exp $";
+static char rcsid[] = "$NetBSD: netstat.c,v 1.5 1996/12/13 19:26:21 scottr Exp $";
 #endif /* not lint */
 
 /*
@@ -120,7 +120,7 @@ static	char *inetname();
 
 void
 closenetstat(w)
-        WINDOW *w;
+	WINDOW *w;
 {
 	register struct netinfo *p;
 
@@ -133,7 +133,7 @@ closenetstat(w)
 		p->ni_line = -1;
 		p = p->ni_forw;
 	}
-        if (w != NULL) {
+	if (w != NULL) {
 		wclear(w);
 		wrefresh(w);
 		delwin(w);

@@ -1,4 +1,4 @@
-/*	$NetBSD: cmdtab.c,v 1.2 1995/01/20 08:51:51 jtc Exp $	*/
+/*	$NetBSD: cmdtab.c,v 1.3 1996/12/13 19:26:19 scottr Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1992, 1993
@@ -37,31 +37,31 @@
 #if 0
 static char sccsid[] = "@(#)cmdtab.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$NetBSD: cmdtab.c,v 1.2 1995/01/20 08:51:51 jtc Exp $";
+static char rcsid[] = "$NetBSD: cmdtab.c,v 1.3 1996/12/13 19:26:19 scottr Exp $";
 #endif /* not lint */
 
 #include "systat.h"
 #include "extern.h"
 
 struct	cmdtab cmdtab[] = {
-        { "pigs",	showpigs,	fetchpigs,	labelpigs,
+	{ "pigs",	showpigs,	fetchpigs,	labelpigs,
 	  initpigs,	openpigs,	closepigs,	0,
 	  CF_LOADAV },
-        { "swap",	showswap,	fetchswap,	labelswap,
+	{ "swap",	showswap,	fetchswap,	labelswap,
 	  initswap,	openswap,	closeswap,	0,
 	  CF_LOADAV },
-        { "mbufs",	showmbufs,	fetchmbufs,	labelmbufs,
+	{ "mbufs",	showmbufs,	fetchmbufs,	labelmbufs,
 	  initmbufs,	openmbufs,	closembufs,	0,
 	  CF_LOADAV },
-        { "iostat",	showiostat,	fetchiostat,	labeliostat,
+	{ "iostat",	showiostat,	fetchiostat,	labeliostat,
 	  initiostat,	openiostat,	closeiostat,	cmdiostat,
 	  CF_LOADAV },
-        { "vmstat",	showkre,	fetchkre,	labelkre,
+	{ "vmstat",	showkre,	fetchkre,	labelkre,
 	  initkre,	openkre,	closekre,	cmdkre,
 	  0 },
-        { "netstat",	shownetstat,	fetchnetstat,	labelnetstat,
+	{ "netstat",	shownetstat,	fetchnetstat,	labelnetstat,
 	  initnetstat,	opennetstat,	closenetstat,	cmdnetstat,
 	  CF_LOADAV },
-        { 0 }
+	{ 0 }
 };
 struct  cmdtab *curcmd = &cmdtab[0];
