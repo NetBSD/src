@@ -1,4 +1,4 @@
-/*	$NetBSD: dk.c,v 1.4 2004/09/27 15:22:42 martin Exp $	*/
+/*	$NetBSD: dk.c,v 1.5 2004/09/30 23:20:41 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dk.c,v 1.4 2004/09/27 15:22:42 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dk.c,v 1.5 2004/09/30 23:20:41 thorpej Exp $");
 
 #include "opt_dkwedge.h"
 
@@ -229,8 +229,7 @@ dkwedge_add(struct dkwedge_info *dkw)
 	memcpy(sc->sc_ptype, dkw->dkw_ptype, sizeof(sc->sc_ptype));
 	sc->sc_ptype[sizeof(sc->sc_ptype) - 1] = '\0';
 
-	bufq_alloc(&sc->sc_bufq,
-	    BUFQ_DISK_DEFAULT_STRAT()|BUFQ_SORT_RAWBLOCK);
+	bufq_alloc(&sc->sc_bufq, BUFQ_FCFS);
 
 	callout_init(&sc->sc_restart_ch);
 	callout_setfunc(&sc->sc_restart_ch, dkrestart, sc);
