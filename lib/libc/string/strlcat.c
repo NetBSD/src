@@ -1,4 +1,5 @@
-/*	$OpenBSD: strlcat.c,v 1.2 1999/06/17 16:28:58 millert Exp $	*/
+/*	$NetBSD: strlcat.c,v 1.2 1999/09/08 22:56:55 lukem Exp $	*/
+/*	from OpenBSD: strlcat.c,v 1.2 1999/06/17 16:28:58 millert Exp 	*/
 
 /*
  * Copyright (c) 1998 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -27,8 +28,9 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: strlcat.c,v 1.2 1999/06/17 16:28:58 millert Exp $";
+__RCSID("$NetBSD: strlcat.c,v 1.2 1999/09/08 22:56:55 lukem Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -40,7 +42,8 @@ static char *rcsid = "$OpenBSD: strlcat.c,v 1.2 1999/06/17 16:28:58 millert Exp 
  * will be copied.  Always NUL terminates (unless siz == 0).
  * Returns strlen(src); if retval >= siz, truncation occurred.
  */
-size_t strlcat(dst, src, siz)
+size_t
+strlcat(dst, src, siz)
 	char *dst;
 	const char *src;
 	size_t siz;
@@ -49,6 +52,9 @@ size_t strlcat(dst, src, siz)
 	register const char *s = src;
 	register size_t n = siz;
 	size_t dlen;
+
+	if (dst == NULL || src == NULL)
+		return (0);
 
 	/* Find the end of dst and adjust bytes left but don't go past end */
 	while (*d != '\0' && n-- != 0)
