@@ -1,4 +1,4 @@
-/*	$NetBSD: frame.h,v 1.5 1997/10/14 09:20:15 mark Exp $	*/
+/*	$NetBSD: frame.h,v 1.6 1998/11/25 13:09:14 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994-1997 Mark Brinicombe.
@@ -71,6 +71,7 @@ typedef struct irqframe {
 	unsigned int if_r12;
 	unsigned int if_usr_sp;
 	unsigned int if_usr_lr;
+	unsigned int if_svc_sp;
 	unsigned int if_svc_lr;
 	unsigned int if_pc;
 } irqframe_t;
@@ -94,6 +95,7 @@ typedef struct trapframe {
 	unsigned int tf_r12;
 	unsigned int tf_usr_sp;
 	unsigned int tf_usr_lr;
+	unsigned int tf_svc_sp;
 	unsigned int tf_svc_lr;
 	unsigned int tf_pc;
 } trapframe_t;
@@ -148,7 +150,7 @@ void validate_trapframe __P((trapframe_t *, int));
 
 /*
  * PUSHFRAME - macro to push a trap frame on the stack in the current mode
- * Since the current mode is used, the SVC R14 field is not defined.
+ * Since the current mode is used, the SVC lr field is not defined.
  *
  * NOTE: r13 and r14 are stored separately as a work around for the
  * SA110 rev 2 STM^ bug
@@ -156,8 +158,7 @@ void validate_trapframe __P((trapframe_t *, int));
 
 #define PUSHFRAME							   \
 	str	lr, [sp, #-4]!;		/* Push the return address */	   \
-	sub	sp, sp, #0x00000004;	/* Skip SVC R14 */		   \
-	sub	sp, sp, #(4*15);	/* Adjust the stack pointer */	   \
+	sub	sp, sp, #(4*17);	/* Adjust the stack pointer */	   \
 	stmia	sp, {r0-r12};		/* Push the user mode registers */ \
 	add	r0, sp, #(4*13);	/* Adjust the stack pointer */	   \
 	stmia	r0, {r13-r14}^;		/* Push the user mode registers */ \
@@ -167,7 +168,7 @@ void validate_trapframe __P((trapframe_t *, int));
 
 /*
  * PULLFRAME - macro to pull a trap frame from the stack in the current mode
- * Since the current mode is used, the SVC R14 field is ignored.
+ * Since the current mode is used, the SVC lr field is ignored.
  */
 
 #define PULLFRAME							   \
@@ -175,16 +176,15 @@ void validate_trapframe __P((trapframe_t *, int));
         msr     spsr_all, r0;						   \
         ldmia   sp, {r0-r14}^;		/* Restore registers (usr mode) */ \
         mov     r0, r0;                 /* NOP for previous instruction */ \
-	add	sp, sp, #(4*15);	/* Adjust the stack pointer */	   \
- 	add	sp, sp, #0x00000004;	/* Skip SVC R14 */		   \
+	add	sp, sp, #(4*17);	/* Adjust the stack pointer */	   \
  	ldr	lr, [sp], #0x0004;	/* Pull the return address */
 
 /*
  * PUSHFRAMEINSVC - macro to push a trap frame on the stack in SVC32 mode
  * This should only be used if the processor is not currently in SVC32
  * mode. The processor mode is switched to SVC mode and the trap frame is
- * stored. The SVC R14 field is used to store the previous value of
- * R14 in SVC mode.  
+ * stored. The SVC lr field is used to store the previous value of
+ * lr in SVC mode.  
  *
  * NOTE: r13 and r14 are stored separately as a work around for the
  * SA110 rev 2 STM^ bug
@@ -199,8 +199,10 @@ void validate_trapframe __P((trapframe_t *, int));
 	bic     r2, r2, #(PSR_MODE);	/* Fix for SVC mode */		   \
 	orr     r2, r2, #(PSR_SVC32_MODE);				   \
 	msr     cpsr_all, r2;		/* Punch into SVC mode */	   \
+	mov	r2, sp;			/* Save	SVC sp */		   \
 	str	r0, [sp, #-4]!;		/* Push return address */	   \
-	str	lr, [sp, #-4]!;		/* Push SVC r14 */		   \
+	str	lr, [sp, #-4]!;		/* Push SVC lr */		   \
+	str	r2, [sp, #-4]!;		/* Push SVC sp */		   \
 	msr     spsr_all, r3;		/* Restore correct spsr */	   \
 	ldmdb	r1, {r0-r3};		/* Restore 4 regs from xxx mode */ \
 	sub	sp, sp, #(4*15);	/* Adjust the stack pointer */	   \
@@ -214,7 +216,7 @@ void validate_trapframe __P((trapframe_t *, int));
 /*
  * PULLFRAMEFROMSVCANDEXIT - macro to pull a trap frame from the stack
  * in SVC32 mode and restore the saved processor mode and PC.
- * This should be used when the SVC R14 register needs to be restored on
+ * This should be used when the SVC lr register needs to be restored on
  * exit.
  */
 
@@ -224,7 +226,7 @@ void validate_trapframe __P((trapframe_t *, int));
         ldmia   sp, {r0-r14}^;		/* Restore registers (usr mode) */ \
         mov     r0, r0;	  		/* NOP for previous instruction */ \
 	add	sp, sp, #(4*15);	/* Adjust the stack pointer */	   \
-	ldmia	sp!, {lr, pc}^		/* Restore lr and exit */
+	ldmia	sp, {sp, lr, pc}^	/* Restore lr and exit */
 
 #endif _LOCORE
 
