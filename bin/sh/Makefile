@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.57 2002/05/15 20:45:17 bjh21 Exp $
+#	$NetBSD: Makefile,v 1.58 2002/08/19 09:56:02 lukem Exp $
 #	@(#)Makefile	8.4 (Berkeley) 5/5/95
 
 .include <bsd.own.mk>
@@ -25,7 +25,7 @@ CPPFLAGS+=-DSHELL -I. -I${.CURDIR}
 CPPFLAGS+=-DSMALL
 .endif
 
-.PATH:	${.CURDIR}/bltin ${.CURDIR}/../test
+.PATH:	${.CURDIR}/bltin ${NETBSDSRCDIR}/bin/test
 
 CLEANFILES+= mkinit mknodes mksyntax
 CLEANFILES+= ${GENSRCS} y.tab.h
