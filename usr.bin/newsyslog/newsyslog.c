@@ -1,4 +1,4 @@
-/*	$NetBSD: newsyslog.c,v 1.42 2001/06/10 12:06:35 ad Exp $	*/
+/*	$NetBSD: newsyslog.c,v 1.43 2002/02/11 10:57:58 wiz Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Andrew Doran <ad@NetBSD.org>
@@ -55,7 +55,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: newsyslog.c,v 1.42 2001/06/10 12:06:35 ad Exp $");
+__RCSID("$NetBSD: newsyslog.c,v 1.43 2002/02/11 10:57:58 wiz Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -85,7 +85,7 @@ __RCSID("$NetBSD: newsyslog.c,v 1.42 2001/06/10 12:06:35 ad Exp $");
 #define	PRHDRINFO(x)	((void)(verbose ? printf x : 0))
 #define	PRINFO(x)	((void)(verbose ? printf("  ") + printf x : 0))
 
-#define	CE_COMPRESS	0x01	/* Compress the achived log files */
+#define	CE_COMPRESS	0x01	/* Compress the archived log files */
 #define	CE_BINARY	0x02	/* Logfile is a binary file/non-syslog */
 #define	CE_NOSIGNAL	0x04	/* Don't send a signal when trimmed */
 #define	CE_CREATE	0x08	/* Create log file if none exists */
