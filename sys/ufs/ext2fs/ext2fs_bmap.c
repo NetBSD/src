@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_bmap.c,v 1.1 1997/06/11 09:33:46 bouyer Exp $	*/
+/*	$NetBSD: ext2fs_bmap.c,v 1.2 1997/07/24 17:18:03 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.
@@ -119,7 +119,7 @@ ext2fs_bmaparray(vp, bn, bnp, ap, nump, runp)
 	struct ufsmount *ump;
 	struct mount *mp;
 	struct vnode *devvp;
-	struct indir a[NIADDR], *xap;
+	struct indir a[NIADDR+1], *xap;
 	daddr_t daddr;
 	long metalbn;
 	int error, maxrun = 0, num;
@@ -167,6 +167,13 @@ ext2fs_bmaparray(vp, bn, bnp, ap, nump, runp)
 	daddr = ip->i_e2fs_blocks[NDADDR + xap->in_off];
 
 	devvp = VFSTOUFS(vp->v_mount)->um_devvp;
+
+#ifdef DIAGNOSTIC
+    if (num > NIADDR + 1 || num < 1) {
+		printf("ext2fs_bmaparray: num=%d\n", num);
+		panic("ext2fs_bmaparray: num");
+	}
+#endif
 	for (bp = NULL, ++xap; --num; ++xap) {
 		/* 
 		 * Exit the loop if there is no disk address assigned yet and
