@@ -1,4 +1,4 @@
-/*	$NetBSD: SYS.h,v 1.12 2000/03/23 04:58:59 mycroft Exp $ */
+/*	$NetBSD: SYS.h,v 1.13 2002/01/14 00:55:55 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1996 Jonathan STone
@@ -109,6 +109,12 @@
 #define RSYSCALL(x)							\
 	PSEUDO(x,x)
 
+/*
+ * Do a syscall that has an internal name and a weak external alias.
+ */
+#define	WSYSCALL(weak,strong)						\
+	WEAK_ALIAS(weak,strong);					\
+	PSEUDO(strong,weak)
 
 /*
  * Do a renamed or pseudo syscall (e.g., _exit()), where the entrypoint

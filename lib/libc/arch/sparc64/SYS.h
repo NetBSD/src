@@ -37,7 +37,7 @@
  *	@(#)SYS.h	8.1 (Berkeley) 6/4/93
  *
  *	from: Header: SYS.h,v 1.2 92/07/03 18:57:00 torek Exp
- *	$NetBSD: SYS.h,v 1.6 2001/07/23 07:26:50 thorpej Exp $
+ *	$NetBSD: SYS.h,v 1.7 2002/01/14 00:55:56 thorpej Exp $
  */
 
 #include <machine/asm.h>
@@ -95,6 +95,14 @@
 #define	PSEUDO(x,y) \
 	ENTRY(x); mov (_CAT(SYS_,y))|SYSCALL_G2RFLAG,%g1; add %o7,8,%g2; \
 	t ST_SYSCALL; ERROR()
+
+/*
+ * WSYSCALL(weak,strong) is like RSYSCALL(weak), except that weak is
+ * a weak internal alias for the strong symbol.
+ */
+#define	WSYSCALL(weak,strong) \
+	WEAK_ALIAS(weak,strong); \
+	PSEUDO(strong,weak)
 
 /*
  * SYSCALL_NOERROR is like SYSCALL, except it's used for syscalls 
