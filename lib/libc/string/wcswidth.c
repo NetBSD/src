@@ -1,4 +1,4 @@
-/*	$NetBSD: wcswidth.c,v 1.2 2001/01/03 14:29:37 lukem Exp $	*/
+/*	$NetBSD: wcswidth.c,v 1.3 2005/02/09 21:35:47 kleink Exp $	*/
 
 /*-
  * Copyright (c)1999 Citrus Project,
@@ -30,9 +30,10 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: wcswidth.c,v 1.2 2001/01/03 14:29:37 lukem Exp $");
+__RCSID("$NetBSD: wcswidth.c,v 1.3 2005/02/09 21:35:47 kleink Exp $");
 #endif /* LIBC_SCCS and not lint */
 
+#include "namespace.h"
 #include <assert.h>
 #include <wchar.h>
 

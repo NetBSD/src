@@ -1,4 +1,4 @@
-/*	$NetBSD: vsprintf.c,v 1.13 2003/08/07 16:43:35 agc Exp $	*/
+/*	$NetBSD: vsprintf.c,v 1.14 2005/02/09 21:35:47 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)vsprintf.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: vsprintf.c,v 1.13 2003/08/07 16:43:35 agc Exp $");
+__RCSID("$NetBSD: vsprintf.c,v 1.14 2005/02/09 21:35:47 kleink Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -66,7 +66,7 @@ vsprintf(str, fmt, ap)
 	f._flags = __SWR | __SSTR;
 	f._bf._base = f._p = (unsigned char *)str;
 	f._bf._size = f._w = INT_MAX;
-	ret = vfprintf_unlocked(&f, fmt, ap);
+	ret = __vfprintf_unlocked(&f, fmt, ap);
 	*f._p = 0;
 	return (ret);
 }

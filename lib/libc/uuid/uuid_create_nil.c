@@ -1,4 +1,4 @@
-/*	$NetBSD: uuid_create_nil.c,v 1.1 2004/09/13 21:44:54 thorpej Exp $	*/
+/*	$NetBSD: uuid_create_nil.c,v 1.2 2005/02/09 21:35:47 kleink Exp $	*/
 
 /*-
  * Copyright (c) 2002 Marcel Moolenaar
@@ -31,13 +31,17 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: uuid_create_nil.c,v 1.1 2004/09/13 21:44:54 thorpej Exp $");
+__RCSID("$NetBSD: uuid_create_nil.c,v 1.2 2005/02/09 21:35:47 kleink Exp $");
 #endif
 
 #include "namespace.h"
 
 #include <string.h>
 #include <uuid.h>
+
+#ifdef __weak_alias
+__weak_alias(uuid_create_nil,_uuid_create_nil)
+#endif
 
 /*
  * uuid_create_nil() - create a nil UUID.

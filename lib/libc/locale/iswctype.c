@@ -1,4 +1,4 @@
-/*	$NetBSD: iswctype.c,v 1.14 2003/08/07 16:43:04 agc Exp $	*/
+/*	$NetBSD: iswctype.c,v 1.15 2005/02/09 21:35:46 kleink Exp $	*/
 
 /*
  * Copyright (c) 1989 The Regents of the University of California.
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: iswctype.c,v 1.14 2003/08/07 16:43:04 agc Exp $");
+__RCSID("$NetBSD: iswctype.c,v 1.15 2005/02/09 21:35:46 kleink Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -50,6 +50,10 @@ __RCSID("$NetBSD: iswctype.c,v 1.14 2003/08/07 16:43:04 agc Exp $");
 #include "runetype.h"
 #include "rune_local.h"
 #include "_wctrans_local.h"
+
+#ifdef __weak_alias
+__weak_alias(wcwidth,_wcwidth)
+#endif
 
 #ifdef lint
 #define __inline
@@ -204,7 +208,6 @@ towlower(c)
 	return (__tolower_w(c));
 }
 
-#undef wcwidth
 int
 wcwidth(c)
 	wchar_t c;

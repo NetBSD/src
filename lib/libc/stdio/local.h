@@ -1,4 +1,4 @@
-/*	$NetBSD: local.h,v 1.18 2004/05/10 16:47:11 drochner Exp $	*/
+/*	$NetBSD: local.h,v 1.19 2005/02/09 21:35:47 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -64,6 +64,9 @@ extern int	__svfscanf __P((FILE * __restrict, const char * __restrict,
 extern int	__svfscanf_unlocked __P((FILE * __restrict, const char * __restrict,
 		    _BSD_VA_LIST_))
 		    __attribute__((__format__(__scanf__, 2, 0)));
+extern int	__vfprintf_unlocked __P((FILE * __restrict, const char * __restrict,
+		    _BSD_VA_LIST_));
+
 
 extern int	__sdidinit;
 

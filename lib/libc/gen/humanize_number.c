@@ -1,4 +1,4 @@
-/*	$NetBSD: humanize_number.c,v 1.8 2004/07/27 01:56:24 enami Exp $	*/
+/*	$NetBSD: humanize_number.c,v 1.9 2005/02/09 21:35:46 kleink Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2002 The NetBSD Foundation, Inc.
@@ -41,9 +41,10 @@
 #ifndef __lint
 __COPYRIGHT("@(#) Copyright (c) 2002\n\
 	The NetBSD Foundation, inc. All rights reserved.\n");
-__RCSID("$NetBSD: humanize_number.c,v 1.8 2004/07/27 01:56:24 enami Exp $");
+__RCSID("$NetBSD: humanize_number.c,v 1.9 2005/02/09 21:35:46 kleink Exp $");
 #endif /* !__lint */
 
+#include "namespace.h"
 #include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: vfprintf.c,v 1.47 2004/07/02 03:00:01 christos Exp $	*/
+/*	$NetBSD: vfprintf.c,v 1.48 2005/02/09 21:35:47 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -37,7 +37,7 @@
 #if 0
 static char *sccsid = "@(#)vfprintf.c	5.50 (Berkeley) 12/16/92";
 #else
-__RCSID("$NetBSD: vfprintf.c,v 1.47 2004/07/02 03:00:01 christos Exp $");
+__RCSID("$NetBSD: vfprintf.c,v 1.48 2005/02/09 21:35:47 kleink Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -184,7 +184,7 @@ vfprintf(fp, fmt0, ap)
 	int ret;
 
 	FLOCKFILE(fp);
-	ret = vfprintf_unlocked(fp, fmt0, ap);
+	ret = __vfprintf_unlocked(fp, fmt0, ap);
 	FUNLOCKFILE(fp);
 
 	return ret;
@@ -193,7 +193,7 @@ vfprintf(fp, fmt0, ap)
 	    
 
 int
-vfprintf_unlocked(fp, fmt0, ap)
+__vfprintf_unlocked(fp, fmt0, ap)
 	FILE *fp;
 	const char *fmt0;
 	_BSD_VA_LIST_ ap;

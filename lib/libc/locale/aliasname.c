@@ -1,4 +1,4 @@
-/* $NetBSD: aliasname.c,v 1.1 2002/02/13 07:45:52 yamt Exp $ */
+/* $NetBSD: aliasname.c,v 1.2 2005/02/09 21:35:46 kleink Exp $ */
 
 /*-
  * Copyright (c)2002 YAMAMOTO Takashi,
@@ -28,9 +28,10 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: aliasname.c,v 1.1 2002/02/13 07:45:52 yamt Exp $");
+__RCSID("$NetBSD: aliasname.c,v 1.2 2005/02/09 21:35:46 kleink Exp $");
 #endif /* LIBC_SCCS and not lint */
 
+#include "namespace.h"
 #include <assert.h>
 #include <stdio.h>
 #include <string.h>

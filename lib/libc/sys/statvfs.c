@@ -1,4 +1,4 @@
-/*	$NetBSD: statvfs.c,v 1.1 2004/04/21 01:05:32 christos Exp $	*/
+/*	$NetBSD: statvfs.c,v 1.2 2005/02/09 21:35:47 kleink Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -36,7 +36,14 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include "namespace.h"
 #include <sys/statvfs.h>
+
+#ifdef __weak_alias
+__weak_alias(statvfs,_statvfs)
+__weak_alias(fstatvfs,_fstatvfs)
+__weak_alias(fhstatvfs,_fhstatvfs)
+#endif
 
 int
 statvfs(const char *file, struct statvfs *st)

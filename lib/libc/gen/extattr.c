@@ -1,4 +1,4 @@
-/*	$NetBSD: extattr.c,v 1.1 2005/01/02 16:43:26 thorpej Exp $	*/
+/*	$NetBSD: extattr.c,v 1.2 2005/02/09 21:35:46 kleink Exp $	*/
 
 /*-
  * Copyright (c) 2001 Robert N. M. Watson
@@ -32,9 +32,10 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: extattr.c,v 1.1 2005/01/02 16:43:26 thorpej Exp $");
+__RCSID("$NetBSD: extattr.c,v 1.2 2005/02/09 21:35:46 kleink Exp $");
 #endif /* LIBC_SCCS and not lint */
 
+#include "namespace.h"
 #include <sys/types.h>
 #include <sys/extattr.h>
 
