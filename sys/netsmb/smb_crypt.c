@@ -1,4 +1,4 @@
-/*	$NetBSD: smb_crypt.c,v 1.3 2002/01/04 02:39:39 deberg Exp $	*/
+/*	$NetBSD: smb_crypt.c,v 1.4 2003/02/19 08:13:46 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2000-2001, Boris Popov
@@ -50,8 +50,6 @@
 #include <netsmb/smb_conn.h>
 #include <netsmb/smb_subr.h>
 #include <netsmb/smb_dev.h>
-
-#include "opt_smb.h"
 
 #ifdef NETSMBCRYPTO
 
