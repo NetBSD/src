@@ -1,4 +1,4 @@
-/*	$NetBSD: udp_var.h,v 1.13 1996/05/22 13:55:39 mycroft Exp $	*/
+/*	$NetBSD: udp_var.h,v 1.14 1997/07/28 22:19:54 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -70,11 +70,15 @@ struct	udpstat {
  * Names for UDP sysctl objects
  */
 #define	UDPCTL_CHECKSUM		1	/* checksum UDP packets */
-#define UDPCTL_MAXID		2
+#define	UDPCTL_SENDSPACE	2	/* default send buffer */
+#define	UDPCTL_RECVSPACE	3	/* default recv buffer */
+#define	UDPCTL_MAXID		4
 
 #define UDPCTL_NAMES { \
 	{ 0, 0 }, \
 	{ "checksum", CTLTYPE_INT }, \
+	{ "sendspace", CTLTYPE_INT }, \
+	{ "recvspace", CTLTYPE_INT }, \
 }
 
 #ifdef _KERNEL

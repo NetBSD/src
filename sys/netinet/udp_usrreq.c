@@ -1,4 +1,4 @@
-/*	$NetBSD: udp_usrreq.c,v 1.41 1997/06/24 19:31:34 thorpej Exp $	*/
+/*	$NetBSD: udp_usrreq.c,v 1.42 1997/07/28 22:19:53 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1990, 1993
@@ -455,8 +455,8 @@ release:
 	return (error);
 }
 
-u_long	udp_sendspace = 9216;		/* really max datagram size */
-u_long	udp_recvspace = 40 * (1024 + sizeof(struct sockaddr_in));
+int	udp_sendspace = 9216;		/* really max datagram size */
+int	udp_recvspace = 40 * (1024 + sizeof(struct sockaddr_in));
 					/* 40 1K datagrams */
 
 /*ARGSUSED*/
@@ -638,6 +638,12 @@ udp_sysctl(name, namelen, oldp, oldlenp, newp, newlen)
 	switch (name[0]) {
 	case UDPCTL_CHECKSUM:
 		return (sysctl_int(oldp, oldlenp, newp, newlen, &udpcksum));
+	case UDPCTL_SENDSPACE:
+		return (sysctl_int(oldp, oldlenp, newp, newlen,
+		    &udp_sendspace));
+	case UDPCTL_RECVSPACE:
+		return (sysctl_int(oldp, oldlenp, newp, newlen, 
+		    &udp_recvspace));
 	default:
 		return (ENOPROTOOPT);
 	}
