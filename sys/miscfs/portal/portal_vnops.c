@@ -1,4 +1,4 @@
-/*	$NetBSD: portal_vnops.c,v 1.26 1997/06/24 19:12:57 thorpej Exp $	*/
+/*	$NetBSD: portal_vnops.c,v 1.27 1997/11/27 20:36:05 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -79,13 +79,13 @@ int	portal_open	__P((void *));
 #define	portal_access	genfs_nullop
 int	portal_getattr	__P((void *));
 int	portal_setattr	__P((void *));
-#define	portal_read	genfs_badop
-#define	portal_write	genfs_badop
-#define	portal_ioctl	genfs_badop
-#define	portal_poll	genfs_badop
-#define	portal_mmap	genfs_badop
+#define	portal_read	genfs_eopnotsupp
+#define	portal_write	genfs_eopnotsupp
+#define	portal_ioctl	genfs_eopnotsupp
+#define	portal_poll	genfs_eopnotsupp
+#define	portal_mmap	genfs_eopnotsupp
 #define	portal_fsync	genfs_nullop
-#define	portal_seek	genfs_badop
+#define	portal_seek	genfs_seek
 #define	portal_remove	genfs_eopnotsupp
 int	portal_link	__P((void *));
 #define	portal_rename	genfs_eopnotsupp
@@ -93,7 +93,7 @@ int	portal_link	__P((void *));
 #define	portal_rmdir	genfs_eopnotsupp
 int	portal_symlink	__P((void *));
 int	portal_readdir	__P((void *));
-#define	portal_readlink	genfs_badop
+#define	portal_readlink	genfs_eopnotsupp
 #define	portal_abortop	genfs_abortop
 int	portal_inactive	__P((void *));
 int	portal_reclaim	__P((void *));
@@ -108,9 +108,9 @@ int	portal_pathconf	__P((void *));
 #define	portal_blkatoff	genfs_badop
 #define	portal_valloc	genfs_eopnotsupp
 #define	portal_vfree	genfs_nullop
-#define	portal_truncate	genfs_badop
-#define	portal_update	genfs_badop
-#define	portal_bwrite	genfs_badop
+#define	portal_truncate	genfs_eopnotsupp
+#define	portal_update	genfs_eopnotsupp
+#define	portal_bwrite	genfs_eopnotsupp
 
 int (**portal_vnodeop_p) __P((void *));
 struct vnodeopv_entry_desc portal_vnodeop_entries[] = {
