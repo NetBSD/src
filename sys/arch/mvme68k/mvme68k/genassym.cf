@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.11 1999/02/14 17:54:29 scw Exp $
+#	$NetBSD: genassym.cf,v 1.12 1999/03/27 18:35:34 scw Exp $
 
 #
 # Copyright (c) 1982, 1990, 1993
@@ -46,9 +46,7 @@ include <sys/user.h>
 
 include <vm/vm.h>
 
-ifdef UVM
 include <uvm/uvm_extern.h>
-endif
 
 include <machine/cpu.h>
 include <machine/psl.h>
@@ -138,11 +136,7 @@ define	SSLEEP			SSLEEP
 define	SRUN			SRUN
 
 # interrupt/fault metering
-ifdef UVM
 define	UVMEXP_INTRS		offsetof(struct uvmexp, intrs)
-else
-define	V_INTR			offsetof(struct vmmeter, v_intr)
-endif
 
 # PSL values (should just include psl.h?)
 define	PSL_S			PSL_S
