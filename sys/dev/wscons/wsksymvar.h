@@ -1,4 +1,4 @@
-/*	$NetBSD: wsksymvar.h,v 1.8 1999/12/21 11:59:13 drochner Exp $ */
+/*	$NetBSD: wsksymvar.h,v 1.8.4.1 2000/07/07 09:50:21 hannken Exp $ */
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
 #endif
 
 typedef u_int16_t keysym_t;
-typedef u_int16_t kbd_t;
+typedef u_int32_t kbd_t;
 
 struct wscons_keymap {
 	keysym_t command;
