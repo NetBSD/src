@@ -1,4 +1,4 @@
-/*	$NetBSD: atareg.h,v 1.20 2004/08/21 02:17:07 thorpej Exp $	*/
+/*	$NetBSD: atareg.h,v 1.21 2004/08/23 10:08:48 he Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.
@@ -141,6 +141,7 @@
 #define	WDCC_READDMA_EXT	0x25	/* read 48-bit addressing with DMA */
 #define	WDCC_WRITEDMA_EXT	0x35	/* write 48-bit addressing with DMA */
 
+#ifdef _KERNEL
 /* Convert a 32-bit command to a 48-bit command. */
 static __inline int __unused
 atacmd_to48(int cmd32)
@@ -163,11 +164,13 @@ atacmd_to48(int cmd32)
 		/* NOTREACHED */
 	}
 }
+#endif /* _KERNEL */
 
 /* Native SATA command queueing */
 #define	WDCC_READ_FPDMA_QUEUED	0x60	/* SATA native queued read (48bit) */
 #define	WDCC_WRITE_FPDMA_QUEUED	0x61	/* SATA native queued write (48bit) */
 
+#ifdef _KERNEL
 /* Convert a 32-bit command to a Native SATA Queued command. */
 static __inline int __unused
 atacmd_tostatq(int cmd32)
@@ -182,6 +185,7 @@ atacmd_tostatq(int cmd32)
 		/* NOTREACHED */
 	}
 }
+#endif /* _KERNEL */
 
 /* Subcommands for SET_FEATURES (features register) */
 #define	WDSF_WRITE_CACHE_EN	0x02
