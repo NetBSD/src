@@ -1,10 +1,10 @@
-/*	$NetBSD: tcdevs_data.h,v 1.12 1998/06/18 23:29:46 jonathan Exp $	*/
+/*	$NetBSD: tcdevs_data.h,v 1.13 1999/09/18 01:46:25 ad Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: tcdevs,v 1.10 1998/06/18 23:28:12 jonathan Exp 
+ *	NetBSD: tcdevs,v 1.11 1999/09/18 01:46:01 ad Exp 
  */
 
 /*
@@ -100,14 +100,14 @@ struct tc_knowndev tc_knowndevs[] = {
 	    TC_DESCRIPTION_PMAG_DA,
 	},
 	{
-	    "PMAG-DV ",
-	    TC_DEVICE_PMAG_DV,
-	    TC_DESCRIPTION_PMAG_DV,
-	},
-	{
 	    "PMAG-FA ",
 	    TC_DEVICE_PMAG_FA,
 	    TC_DESCRIPTION_PMAG_FA,
+	},
+	{
+	    "PMAG-DV ",
+	    TC_DEVICE_PMAG_DV,
+	    TC_DESCRIPTION_PMAG_DV,
 	},
 	{
 	    "PMAGB-BA",
