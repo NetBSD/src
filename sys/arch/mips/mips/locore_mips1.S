@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_mips1.S,v 1.11 1999/05/21 06:36:37 nisimura Exp $	*/
+/*	$NetBSD: locore_mips1.S,v 1.12 1999/05/22 02:35:35 nisimura Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -1017,6 +1017,7 @@ LEAF(mips1_TLBFlushPID)
 	j	ra
 	mtc0	v1, MIPS_COP_0_STATUS		# Restore the status register
 END(mips1_TLBFlushPID)
+#endif
 
 /*--------------------------------------------------------------------------
  *
@@ -1098,6 +1099,7 @@ LEAF(mips1_TLBUpdate)
 	mtc0	v1, MIPS_COP_0_STATUS		# Restore the status register
 END(mips1_TLBUpdate)
 
+#if 0
 /*--------------------------------------------------------------------------
  *
  * mips1_TLBFind --
@@ -1706,7 +1708,6 @@ END(mips1_purge_perprocess_tlb)
  * Purge a single TLB entry contains specified VPN if exists.
  */
 LEAF(mips1_purge_single_tlb)
-ALEAF(mips1_TLBFlushAddr)
 	mfc0	v1, MIPS_COP_0_STATUS		# save status register
 	mtc0	zero, MIPS_COP_0_STATUS		# disable interrupts
 
@@ -1741,7 +1742,6 @@ END(mips1_purge_single_tlb)
  * into TLB victimizing a ramdomly choosen one.
  */
 LEAF(mips1_update_tlb)
-ALEAF(mips1_TLBUpdate)
 	mfc0	v1, MIPS_COP_0_STATUS		# save status register
 	mtc0	zero, MIPS_COP_0_STATUS		# disable interrupts
 
