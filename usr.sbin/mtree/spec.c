@@ -1,4 +1,4 @@
-/*	$NetBSD: spec.c,v 1.54 2004/01/30 19:09:03 ross Exp $	*/
+/*	$NetBSD: spec.c,v 1.55 2004/05/11 17:11:03 christos Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -70,7 +70,7 @@
 #if 0
 static char sccsid[] = "@(#)spec.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: spec.c,v 1.54 2004/01/30 19:09:03 ross Exp $");
+__RCSID("$NetBSD: spec.c,v 1.55 2004/05/11 17:11:03 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -376,7 +376,7 @@ parsedev(char *arg)
 	int	argc;
 	pack_t	*pack;
 	dev_t	result;
-	char	*error = NULL;
+	const char *error = NULL;
 
 	if ((dev = strchr(arg, ',')) != NULL) {
 		*dev++='\0';
