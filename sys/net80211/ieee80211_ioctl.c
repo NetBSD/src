@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_ioctl.c,v 1.8 2004/01/16 14:07:32 onoe Exp $	*/
+/*	$NetBSD: ieee80211_ioctl.c,v 1.9 2004/04/21 18:16:14 itojun Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002, 2003 Sam Leffler, Errno Consulting
@@ -35,7 +35,7 @@
 #ifdef __FreeBSD__
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211_ioctl.c,v 1.9 2003/11/13 05:23:58 sam Exp $");
 #else
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_ioctl.c,v 1.8 2004/01/16 14:07:32 onoe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_ioctl.c,v 1.9 2004/04/21 18:16:14 itojun Exp $");
 #endif
 
 /*
@@ -103,7 +103,8 @@ ieee80211_cfgget(struct ifnet *ifp, u_long cmd, caddr_t data)
 		/* nothing appropriate */
 		break;
 	case WI_RID_NODENAME:
-		strcpy((char *)&wreq.wi_val[1], hostname);
+		strlcpy((char *)&wreq.wi_val[1], hostname,
+		    sizeof(wreq.wi_val) - sizeof(wreq.wi_val[0]));
 		wreq.wi_val[0] = htole16(strlen(hostname));
 		wreq.wi_len = (1 + strlen(hostname) + 1) / 2;
 		break;
