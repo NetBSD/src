@@ -1,4 +1,5 @@
 #!/bin/ksh
+#	$NetBSD: checkver,v 1.3 1999/01/27 00:02:55 hubertf Exp $
 #
 # Copyright (c) 1998 The NetBSD Foundation, Inc.
 # All rights reserved.
