@@ -1,4 +1,4 @@
-#	$Id: Makefile,v 1.1 1993/10/13 11:16:19 cgd Exp $
+#	$Id: Makefile,v 1.2 1993/10/13 11:36:28 cgd Exp $
 
 LIB=	c_sa
 
@@ -12,8 +12,5 @@ NOPROFILE=
 NOPIC=
 
 install:
-
-# and for things which we don't have sources for, but are built out of
-# other sources
 
 .include <bsd.lib.mk>
