@@ -1,4 +1,4 @@
-/*	$NetBSD: print.c,v 1.33 2002/11/09 12:27:08 enami Exp $	*/
+/*	$NetBSD: print.c,v 1.34 2003/05/07 13:00:24 grant Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)print.c	8.5 (Berkeley) 7/28/94";
 #else
-__RCSID("$NetBSD: print.c,v 1.33 2002/11/09 12:27:08 enami Exp $");
+__RCSID("$NetBSD: print.c,v 1.34 2003/05/07 13:00:24 grant Exp $");
 #endif
 #endif /* not lint */
 
@@ -113,9 +113,11 @@ printlong(DISPLAY *dp)
 			    (long long)howmany(sp->st_blocks, blocksize));
 		(void)strmode(sp->st_mode, buf);
 		np = p->fts_pointer;
-		(void)printf("%s %*lu %-*s  %-*s  ", buf, dp->s_nlink,
-		    (unsigned long)sp->st_nlink, dp->s_user, np->user,
-		    dp->s_group, np->group);
+		(void)printf("%s %*lu ", buf, dp->s_nlink,
+		    (unsigned long)sp->st_nlink);
+		if (!f_grouponly)
+			(void)printf("%-*s  ", dp->s_user, np->user);
+		(void)printf("%-*s  ", dp->s_group, np->group);
 		if (f_flags)
 			(void)printf("%-*s ", dp->s_flags, np->flags);
 		if (S_ISCHR(sp->st_mode) || S_ISBLK(sp->st_mode))

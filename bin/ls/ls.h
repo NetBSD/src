@@ -1,4 +1,4 @@
-/*	$NetBSD: ls.h,v 1.11 2000/06/17 16:11:25 assar Exp $	*/
+/*	$NetBSD: ls.h,v 1.12 2003/05/07 13:00:24 grant Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -44,6 +44,7 @@ extern long blocksize;		/* block size units */
 
 extern int f_accesstime;	/* use time of last access */
 extern int f_flags;		/* show flags associated with a file */
+extern int f_grouponly;		/* long listing without owner */
 extern int f_inode;		/* print inode */
 extern int f_longform;		/* long listing format */
 extern int f_sectime;		/* print the real time for all files */
