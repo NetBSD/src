@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_run.c,v 1.13 2003/11/09 18:56:48 christos Exp $	*/
+/*	$NetBSD: pthread_run.c,v 1.14 2003/12/07 20:29:07 christos Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,9 +37,10 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_run.c,v 1.13 2003/11/09 18:56:48 christos Exp $");
+__RCSID("$NetBSD: pthread_run.c,v 1.14 2003/12/07 20:29:07 christos Exp $");
 
 #include <ucontext.h>
+#include <errno.h>
 
 #include "pthread.h"
 #include "pthread_int.h"
@@ -277,4 +278,28 @@ pthread__sched_bulk(pthread_t self, pthread_t qhead)
 		}
 	}
 	pthread_spinunlock(self, &pthread__runqueue_lock);
+}
+
+
+/*ARGSUSED*/
+int
+pthread_getschedparam(pthread_t thread, int *policy, struct sched_param *param)
+{
+	if (param == NULL || policy == NULL)
+		return EINVAL;
+	param->sched_priority = 0;
+	*policy = SCHED_RR;
+	return 0;
+}
+
+/*ARGSUSED*/
+int
+pthread_setschedparam(pthread_t thread, int policy, 
+    const struct sched_param *param)
+{
+	if (param == NULL || policy < SCHED_FIFO || policy > SCHED_RR)
+		return EINVAL;
+	if (param->sched_priority > 0 || policy != SCHED_RR)
+		return ENOTSUP;
+	return 0;
 }
