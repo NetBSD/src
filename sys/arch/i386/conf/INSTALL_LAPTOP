@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL_LAPTOP,v 1.11 2001/09/14 21:44:22 nathanw Exp $
+#	$NetBSD: INSTALL_LAPTOP,v 1.12 2001/11/04 09:00:39 yamt Exp $
 #
 #	INSTALL - Installation kernel.
 #
@@ -298,7 +298,9 @@ com2	at isa? port 0x3e8 irq 5
 # PCMCIA SCSI controllers
 aic*	at pcmcia? function ?		# Adaptec APA-1460 SCSI
 
+# CardBus SCSI cards
 ahc* 	at cardbus? dev ? function ?	# Adaptec ADP-1480
+adv*	at cardbus? dev ? function ?	# AdvanSys 1200[A,B], 9xx[U,UA] SCSI
 
 # SCSI bus support
 scsibus* at ahc?
