@@ -1,11 +1,11 @@
 #	from: @(#)Makefile.inc	5.6 (Berkeley) 6/4/91
-#	$Id: Makefile.inc,v 1.20 1994/05/20 06:19:47 jtc Exp $
+#	$Id: Makefile.inc,v 1.21 1994/06/16 05:27:17 mycroft Exp $
 
 # stdlib sources
 .PATH: ${.CURDIR}/arch/${MACHINE_ARCH}/stdlib ${.CURDIR}/stdlib
 
 SRCS+=	a64l.c abort.c atexit.c atoi.c atof.c atol.c bsearch.c calloc.c \
-	exit.c getenv.c getopt.c heapsort.c l64a.c malloc.c \
+	exit.c getenv.c getopt.c heapsort.c l64a.c malloc.c merge.c \
 	multibyte.c putenv.c qsort.c radixsort.c rand.c random.c realpath.c \
 	setenv.c strtod.c strtol.c strtoq.c strtoul.c strtouq.c system.c \
 	_rand48.c drand48.c erand48.c jrand48.c lcong48.c lrand48.c \
@@ -31,7 +31,7 @@ MAN3+=	abort.0 abs.0 alloca.0 atexit.0 atof.0 atoi.0 atol.0 bsearch.0 \
 	realloc.0 realpath.0 strtod.0 strtol.0 strtoul.0 system.0
 
 MLINKS+=getenv.3 setenv.3 getenv.3 unsetenv.3 getenv.3 putenv.3
-MLINKS+=qsort.3 heapsort.3
+MLINKS+=qsort.3 heapsort.3 qsort.3 mergesort.3
 MLINKS+=rand.3 srand.3
 MLINKS+=strtol.3 strtoq.3
 MLINKS+=strtoul.3 strtouq.3
