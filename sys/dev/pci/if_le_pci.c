@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le_pci.c,v 1.24 1998/08/15 10:51:19 mycroft Exp $	*/
+/*	$NetBSD: if_le_pci.c,v 1.25 1998/10/01 20:39:01 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -117,6 +117,7 @@
 
 int le_pci_match __P((struct device *, struct cfdata *, void *));
 void le_pci_attach __P((struct device *, struct device *, void *));
+int le_pci_mediachange __P((struct lance_softc *));
 
 struct cfattach le_pci_ca = {
 	sizeof(struct le_softc), le_pci_match, le_pci_attach
@@ -145,6 +146,15 @@ hide u_int16_t le_pci_rdcsr __P((struct lance_softc *, u_int16_t));
 
 #define	LE_PCI_MEMSIZE	16384
 
+static int le_pci_supmedia[] = {
+	IFM_ETHER|IFM_AUTO,
+	IFM_ETHER|IFM_AUTO|IFM_FDX,
+	IFM_ETHER|IFM_10_T,
+	IFM_ETHER|IFM_10_T|IFM_FDX,
+	IFM_ETHER|IFM_10_5,
+	IFM_ETHER|IFM_10_5|IFM_FDX,
+};
+
 hide void
 le_pci_wrcsr(sc, port, val)
 	struct lance_softc *sc;
@@ -171,6 +181,69 @@ le_pci_rdcsr(sc, port)
 	bus_space_write_2(iot, ioh, lesc->sc_rap, port);
 	val = bus_space_read_2(iot, ioh, lesc->sc_rdp);
 	return (val);
+}
+
+int
+le_pci_mediachange(sc)
+	struct lance_softc *sc;
+{
+	struct le_softc *lesc = (struct le_softc *)sc;
+	bus_space_tag_t iot = lesc->sc_iot;
+	bus_space_handle_t ioh = lesc->sc_ioh;
+	int newmedia = sc->sc_media.ifm_media;
+	u_int16_t reg;
+
+	if (IFM_SUBTYPE(newmedia) !=
+	    IFM_SUBTYPE(lesc->currentmedia)) {
+		if (IFM_SUBTYPE(newmedia) == IFM_AUTO) {
+			/* switch to autoselect - BCR2 bit 1 */
+			bus_space_write_2(iot, ioh, PCNET_PCI_RAP, 2);
+			reg = bus_space_read_2(iot, ioh, PCNET_PCI_BDP);
+			reg |= 2;
+			bus_space_write_2(iot, ioh, PCNET_PCI_RAP, 2);
+			bus_space_write_2(iot, ioh, PCNET_PCI_BDP, reg);
+		} else {
+			/* force media type (in init block) */
+			lance_reset(sc);
+			if (IFM_SUBTYPE(newmedia) == IFM_10_T)
+				sc->sc_initmodemedia = 1; /* UTP */
+			else
+				sc->sc_initmodemedia = 0; /* AUI */
+			lance_init(sc);
+
+			if (IFM_SUBTYPE(lesc->currentmedia) == IFM_AUTO) {
+				/* take away autoselect - BCR2 bit 1 */
+				bus_space_write_2(iot, ioh, PCNET_PCI_RAP, 2);
+				reg = bus_space_read_2(iot, ioh, PCNET_PCI_BDP);
+				reg &= ~2;
+				bus_space_write_2(iot, ioh, PCNET_PCI_RAP, 2);
+				bus_space_write_2(iot, ioh, PCNET_PCI_BDP, reg);
+			}
+		}
+		
+	}
+
+	if ((IFM_OPTIONS(newmedia) ^ IFM_OPTIONS(lesc->currentmedia))
+	    & IFM_FDX) {
+		/* toggle full duplex - BCR9 */
+		bus_space_write_2(iot, ioh, PCNET_PCI_RAP, 9);
+		reg = bus_space_read_2(iot, ioh, PCNET_PCI_BDP);
+		if (IFM_OPTIONS(newmedia) & IFM_FDX) {
+			reg |= 1; /* FDEN */
+			/* allow FDX on AUI only if explicitely chosen,
+			 not in autoselect mode */
+			if (IFM_SUBTYPE(newmedia) == IFM_10_5)
+				reg |= 2; /* AUIFD */
+			else
+				reg &= ~2;
+		} else
+			reg &= ~1;
+		bus_space_write_2(iot, ioh, PCNET_PCI_RAP, 9);
+		bus_space_write_2(iot, ioh, PCNET_PCI_BDP, reg);
+	}
+
+	lesc->currentmedia = newmedia;
+	return (0);
 }
 
 int
@@ -287,6 +360,12 @@ le_pci_attach(parent, self, aux)
 	sc->sc_rdcsr = le_pci_rdcsr;
 	sc->sc_wrcsr = le_pci_wrcsr;
 	sc->sc_hwinit = NULL;
+
+	sc->sc_supmedia = le_pci_supmedia;
+	sc->sc_nsupmedia = sizeof(le_pci_supmedia) / sizeof(int);
+	sc->sc_defaultmedia = le_pci_supmedia[0];
+	sc->sc_mediachange = le_pci_mediachange;
+	lesc->currentmedia = le_pci_supmedia[0];
 
 	printf("%s", sc->sc_dev.dv_xname);
 	am79900_config(&lesc->sc_am79900);
