@@ -1,4 +1,4 @@
-/*	$NetBSD: fifo_vnops.c,v 1.30.4.4 2002/09/06 08:48:34 jdolecek Exp $	*/
+/*	$NetBSD: fifo_vnops.c,v 1.30.4.5 2002/09/22 11:24:46 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993, 1995
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fifo_vnops.c,v 1.30.4.4 2002/09/06 08:48:34 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fifo_vnops.c,v 1.30.4.5 2002/09/22 11:24:46 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -547,6 +547,8 @@ fifo_kqfilter(void *v)
 	default:
 		return (1);
 	}
+
+	ap->a_kn->kn_hook = (caddr_t)so;
 
 	SLIST_INSERT_HEAD(&sb->sb_sel.si_klist, ap->a_kn, kn_selnext);
 	sb->sb_flags |= SB_KNOTE;
