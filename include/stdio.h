@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)stdio.h	5.17 (Berkeley) 6/3/91
- *	$Id: stdio.h,v 1.3 1993/08/01 18:45:17 mycroft Exp $
+ *	$Id: stdio.h,v 1.4 1993/10/04 04:49:17 cgd Exp $
  */
 
 #ifndef	_STDIO_H_
@@ -232,7 +232,7 @@ int	 scanf __P((const char *, ...));
 void	 setbuf __P((FILE *, char *));
 int	 setvbuf __P((FILE *, char *, int, size_t));
 int	 sprintf __P((char *, const char *, ...));
-int	 sscanf __P((char *, const char *, ...));
+int	 sscanf __P((const char *, const char *, ...));
 FILE	*tmpfile __P((void));
 char	*tmpnam __P((char *));
 int	 ungetc __P((int, FILE *));
