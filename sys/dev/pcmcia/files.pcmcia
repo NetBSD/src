@@ -21,8 +21,7 @@ attach	ne at pcmcia with ne_pcmcia
 file	dev/pcmcia/if_ne_pcmcia.c		ne_pcmcia
 
 # Adaptec APA-1460 SCSI Host Adapter
-device	aicx
-attach	aicx at pcmcia with aic_pcmcia
+attach	aic at pcmcia with aic_pcmcia
 file	dev/pcmcia/aic_pcmcia.c			aic_pcmcia
 
 attach	com at pcmcia with com_pcmcia
