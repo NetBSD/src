@@ -1,4 +1,4 @@
-$NetBSD: pcmciadevs,v 1.25 1998/12/18 22:07:39 thorpej Exp $
+$NetBSD: pcmciadevs,v 1.26 1998/12/19 23:47:51 nathanw Exp $
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -121,6 +121,7 @@ product TDK LAK_CD021BX		0x0200 TDK LAK-CD021BX Ethernet
 product TDK DFL9610		0x0d0a TDK DFL9610 Ethernet & Digital Cellular
 
 /* TDK Vendor ID also used by Xircom! */
+product TDK XIR_CE		0x0108 Xircom CreditCard Ethernet
 product TDK XIR_PS_CE2_10	0x010b Xircom CreditCard CE2 Ethernet
 
 /* NewMedia Products */
