@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.62 2001/01/07 06:16:02 sjg Exp $	*/
+/*	$NetBSD: main.c,v 1.63 2001/01/10 15:54:00 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -39,7 +39,7 @@
  */
 
 #ifdef MAKE_BOOTSTRAP
-static char rcsid[] = "$NetBSD: main.c,v 1.62 2001/01/07 06:16:02 sjg Exp $";
+static char rcsid[] = "$NetBSD: main.c,v 1.63 2001/01/10 15:54:00 christos Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
@@ -51,7 +51,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.62 2001/01/07 06:16:02 sjg Exp $");
+__RCSID("$NetBSD: main.c,v 1.63 2001/01/10 15:54:00 christos Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -137,6 +137,7 @@ Boolean			ignoreErrors;	/* -i flag */
 Boolean			beSilent;	/* -s flag */
 Boolean			oldVars;	/* variable substitution style */
 Boolean			checkEnvFirst;	/* -e flag */
+Boolean			parseWarnFatal;	/* -W flag */
 Boolean			jobServer; 	/* -J flag */
 static Boolean		jobsRunning;	/* TRUE if the jobs might be running */
 static const char *	tracefile;
@@ -148,9 +149,11 @@ static void		usage __P((void));
 
 static char *curdir;			/* startup directory */
 static char *objdir;			/* where we chdir'ed to */
-static char *progname;			/* the program name */
+char *progname;				/* the program name */
 
 Boolean forceJobs = FALSE;
+
+extern Lst parseIncPath;
 
 /*-
  * MainParseArgs --
@@ -194,15 +197,17 @@ rearg:	while((c = getopt(argc, argv, OPTFLAGS)) != -1) {
 			break;
 		case 'J':
 			if (sscanf(optarg, "%d,%d", &job_pipe[0], &job_pipe[1]) != 2) {
-				(void)fprintf(stderr,
-				    "make: internal error -- J option malformed (%s??)\n", optarg);
+			    (void)fprintf(stderr,
+				"%s: internal error -- J option malformed (%s??)\n",
+				progname, optarg);
 				usage();
 			}
 			if ((fcntl(job_pipe[0], F_GETFD, 0) < 0) ||
 			    (fcntl(job_pipe[1], F_GETFD, 0) < 0)) {
 #if 0
 			    (void)fprintf(stderr,
-			      "make: warning -- J descriptors were closed!\n");
+				"%s: warning -- J descriptors were closed!\n",
+				progname);
 #endif
 			    job_pipe[0] = -1;
 			    job_pipe[1] = -1;
@@ -226,8 +231,9 @@ rearg:	while((c = getopt(argc, argv, OPTFLAGS)) != -1) {
 		case 'L':
 			maxLocal = strtol(optarg, &p, 0);
 			if (*p != '\0' || maxLocal < 1) {
-				(void) fprintf(stderr, "make: illegal argument to -L -- must be positive integer!\n");
-				exit(1);
+			    (void) fprintf(stderr, "%s: illegal argument to -L -- must be positive integer!\n",
+				progname);
+			    exit(1);
 			}
 			Var_Append(MAKEFLAGS, "-L", VAR_GLOBAL);
 			Var_Append(MAKEFLAGS, optarg, VAR_GLOBAL);
@@ -250,6 +256,9 @@ rearg:	while((c = getopt(argc, argv, OPTFLAGS)) != -1) {
 			tracefile = estrdup(optarg);
 			Var_Append(MAKEFLAGS, "-T", VAR_GLOBAL);
 			Var_Append(MAKEFLAGS, optarg, VAR_GLOBAL);
+			break;
+		case 'W':
+			parseWarnFatal = TRUE;
 			break;
 		case 'd': {
 			char *modules = optarg;
@@ -298,8 +307,8 @@ rearg:	while((c = getopt(argc, argv, OPTFLAGS)) != -1) {
 					break;
 				default:
 					(void)fprintf(stderr,
-				"make: illegal argument to d option -- %c\n",
-					    *modules);
+				"%s: illegal argument to d option -- %c\n",
+					    progname, *modules);
 					usage();
 				}
 			Var_Append(MAKEFLAGS, "-d", VAR_GLOBAL);
@@ -321,7 +330,8 @@ rearg:	while((c = getopt(argc, argv, OPTFLAGS)) != -1) {
 			forceJobs = TRUE;
 			maxJobs = strtol(optarg, &p, 0);
 			if (*p != '\0' || maxJobs < 1) {
-				(void) fprintf(stderr, "make: illegal argument to -j -- must be positive integer!\n");
+				(void) fprintf(stderr, "%s: illegal argument to -j -- must be positive integer!\n",
+				    progname);
 				exit(1);
 			}
 #ifndef REMOTE
@@ -528,13 +538,13 @@ main(argc, argv)
 	 */
 	curdir = cdpath;
 	if (getcwd(curdir, MAXPATHLEN) == NULL) {
-		(void)fprintf(stderr, "make: %s.\n", strerror(errno));
+		(void)fprintf(stderr, "%s: %s.\n", progname, strerror(errno));
 		exit(2);
 	}
 
 	if (stat(curdir, &sa) == -1) {
-	    (void)fprintf(stderr, "make: %s: %s.\n",
-			  curdir, strerror(errno));
+	    (void)fprintf(stderr, "%s: %s: %s.\n",
+		 progname, curdir, strerror(errno));
 	    exit(2);
 	}
 
@@ -567,8 +577,9 @@ main(argc, argv)
 	    struct utsname utsname;
 
 	    if (uname(&utsname) == -1) {
-		    perror("make: uname");
-		    exit(2);
+		(void)fprintf(stderr, "%s: uname failed (%s).\n", progname,
+		    strerror(errno));
+		exit(2);
 	    }
 	    machine = utsname.machine;
 #else
@@ -778,10 +789,12 @@ main(argc, argv)
 		sysMkPath = Lst_Init (FALSE);
 		Dir_Expand (_PATH_DEFSYSMK, sysIncPath, sysMkPath);
 		if (Lst_IsEmpty(sysMkPath))
-			Fatal("make: no system rules (%s).", _PATH_DEFSYSMK);
+			Fatal("%s: no system rules (%s).", progname,
+			    _PATH_DEFSYSMK);
 		ln = Lst_Find(sysMkPath, (ClientData)NULL, ReadMakefile);
 		if (ln != NILLNODE)
-			Fatal("make: cannot open %s.", (char *)Lst_Datum(ln));
+			Fatal("%s: cannot open %s.", progname,
+			    (char *)Lst_Datum(ln));
 	}
 
 	if (!Lst_IsEmpty(makefiles)) {
@@ -789,7 +802,8 @@ main(argc, argv)
 
 		ln = Lst_Find(makefiles, (ClientData)NULL, ReadMakefile);
 		if (ln != NILLNODE)
-			Fatal("make: cannot open %s.", (char *)Lst_Datum(ln));
+			Fatal("%s: cannot open %s.", progname, 
+			    (char *)Lst_Datum(ln));
 	} else if (!ReadMakefile("makefile", NULL))
 		(void)ReadMakefile("Makefile", NULL);
 
@@ -957,7 +971,6 @@ ReadMakefile(p, q)
 	ClientData p, q;
 {
 	char *fname = p;		/* makefile to read */
-	extern Lst parseIncPath;
 	FILE *stream;
 	size_t len = MAXPATHLEN;
 	char *name, *path = emalloc(len);
@@ -1429,7 +1442,7 @@ Punt(va_alist)
 	fmt = va_arg(ap, char *);
 #endif
 
-	(void)fprintf(stderr, "make: ");
+	(void)fprintf(stderr, "%s: ", progname);
 	(void)vfprintf(stderr, fmt, ap);
 	va_end(ap);
 	(void)fprintf(stderr, "\n");
@@ -1528,7 +1541,7 @@ erealloc(ptr, size)
 void
 enomem()
 {
-	(void)fprintf(stderr, "make: %s.\n", strerror(errno));
+	(void)fprintf(stderr, "%s: %s.\n", progname, strerror(errno));
 	exit(2);
 }
 
