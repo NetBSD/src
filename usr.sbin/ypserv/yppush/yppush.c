@@ -1,4 +1,4 @@
-/*	$NetBSD: yppush.c,v 1.14 2000/09/13 21:40:15 thorpej Exp $	*/
+/*	$NetBSD: yppush.c,v 1.15 2001/01/11 00:16:11 lukem Exp $	*/
 
 /*
  *
@@ -145,6 +145,7 @@ main(argc, argv)
 	argv += optind;
 	if (argc != 1)
 		usage();
+	openlog("yppush", LOG_PID, LOG_DAEMON);
 	ypi.map = argv[0];
 	if (strlen(ypi.map) > YPMAXMAP)
 		errx(1, "%s: map name too long (limit %d)", ypi.map, YPMAXMAP);
