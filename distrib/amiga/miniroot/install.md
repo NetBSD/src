@@ -1,4 +1,4 @@
-#	$NetBSD: install.md,v 1.6 1997/11/14 10:09:08 veego Exp $
+#	$NetBSD: install.md,v 1.7 1997/11/21 21:16:41 is Exp $
 #
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -286,6 +286,12 @@ md_copy_kernel() {
 	local _sets
 	local _filename
 	local _f
+
+	if [ "$MODE" = "install" ]; then
+		echo -n "Adding keymap initialization to rc.local..."
+		echo /usr/sbin/loadkmap ${__keymap__} >> /mnt/etc/rc.local
+		echo "done."
+	fi
 
 	if [ -e /netbsd ]; then
 		echo -n "Copying kernel..."
