@@ -1,4 +1,4 @@
-/*      $NetBSD: vm_machdep.c,v 1.36 1997/11/04 20:52:27 ragge Exp $       */
+/*      $NetBSD: vm_machdep.c,v 1.37 1998/01/03 00:37:31 thorpej Exp $       */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -98,13 +98,11 @@ cpu_fork(p1, p2)
 	struct trapframe *tf;
 	struct pmap *pmap, *opmap;
 	extern vm_map_t pte_map;
-	int bytesiz;
 
 	nyproc = &p2->p_addr->u_pcb;
 	tf = p1->p_addr->u_pcb.framep;
 	opmap = p1->p_vmspace->vm_map.pmap;
 	pmap = p2->p_vmspace->vm_map.pmap;
-	pmap->pm_pcb = nyproc;
 
 #ifdef notyet
 	/* Mark page invalid */
@@ -112,14 +110,13 @@ cpu_fork(p1, p2)
 	*p2pte = 0; 
 #endif
 
-	/* Set up internal defs in PCB, and alloc PTEs. */
-	bytesiz = btoc(MAXTSIZ + MAXDSIZ + MMAPSPACE + MAXSSIZ) *
-	    sizeof(struct pte);
-	nyproc->P0BR = (void *)kmem_alloc_wait(pte_map, bytesiz);
-	nyproc->P0LR = btoc(MAXTSIZ + MAXDSIZ + MMAPSPACE) | AST_PCB;
-	nyproc->P1BR = (void *)nyproc->P0BR + bytesiz - 0x800000;
-	nyproc->P1LR = (0x200000 - btoc(MAXSSIZ));
+	/*
+	 * Activate address space for the new process.  The PTEs have
+	 * already been allocated by way of pmap_create().
+	 */
+	pmap_activate(p2);
 
+	/* Set up internal defs in PCB. */
 	nyproc->iftrap = NULL;
 	nyproc->KSP = (u_int)p2->p_addr + USPACE;
 
