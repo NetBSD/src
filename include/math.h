@@ -1,4 +1,4 @@
-/*	$NetBSD: math.h,v 1.23 2001/01/05 23:36:38 christos Exp $	*/
+/*	$NetBSD: math.h,v 1.24 2002/02/19 13:08:12 simonb Exp $	*/
 
 /*
  * ====================================================
@@ -20,13 +20,35 @@
 
 #include <sys/cdefs.h>
 #include <sys/featuretest.h>
-#include <machine/math.h>
+
+union __float_u {
+	unsigned char __dummy[sizeof(float)];
+	float __val;
+};
+
+union __double_u {
+	unsigned char __dummy[sizeof(double)];
+	double __val;
+};
+
+#include <machine/math.h>		/* may use __float_u or __double_u */
 
 /*
  * ANSI/POSIX
  */
-extern __const char __infinity[];
-#define HUGE_VAL	(*(__const double *)(__const void *)__infinity)
+extern __const union __double_u __infinity;
+#define HUGE_VAL	__infinity.__val
+
+/*
+ * ISO C99
+ */
+#if defined(__HAVE_NANF) && \
+    (!defined(_ANSI_SOURCE) && \
+    (!defined(_POSIX_C_SOURCE) && !defined(_XOPEN_SOURCE) || \
+     defined(_ISOC99_SOURCE) || (__STDC_VERSION__ - 0) >= 199901L))
+extern __const union __float_u __nanf;
+#define	NAN		__nanf.__val
+#endif /* __HAVE_NANF && (!_ANSI_SOURCE && ....) */
 
 /*
  * XOPEN/SVID

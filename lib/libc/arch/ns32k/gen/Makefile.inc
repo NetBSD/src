@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.13 1999/12/23 10:15:07 kleink Exp $
+#	$NetBSD: Makefile.inc,v 1.14 2002/02/19 13:08:24 simonb Exp $
 
 # objects built from assembler sources (need lint stubs)
 ASSRCS+=alloca.S fabs.S modf.S
@@ -12,6 +12,9 @@ SRCS+=	setjmp.S sigsetjmp.S
 
 # objects built from C sources
 SRCS+=	flt_rounds.c fpgetmask.c fpgetround.c fpgetsticky.c fpsetmask.c \
-	fpsetround.c fpsetsticky.c infinity.c frexp.c isinf.c isnan.c ldexp.c \
-	nanf.c \
+	fpsetround.c fpsetsticky.c \
 	bswap64.c
+
+# Common ieee754 constants and functions
+SRCS+=	ieee754_nanf.c	ieee754_infinity.c
+SRCS+=	ieee754_frexp.c ieee754_isinf.c ieee754_isnan.c ieee754_ldexp.c
