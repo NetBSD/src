@@ -1,4 +1,4 @@
-/*	$NetBSD: sig_machdep.c,v 1.6 2003/10/29 23:39:45 christos Exp $	*/
+/*	$NetBSD: sig_machdep.c,v 1.7 2003/11/02 08:20:09 christos Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 	
-__KERNEL_RCSID(0, "$NetBSD: sig_machdep.c,v 1.6 2003/10/29 23:39:45 christos Exp $"); 
+__KERNEL_RCSID(0, "$NetBSD: sig_machdep.c,v 1.7 2003/11/02 08:20:09 christos Exp $"); 
 
 #include "opt_cputype.h"
 #include "opt_compat_netbsd.h"
@@ -76,7 +76,7 @@ getframe(struct lwp *l, int sig, int *onstack)
 }		
 
 struct sigframe_siginfo {
-	ksiginfo_t sf_si;
+	siginfo_t sf_si;
 	ucontext_t sf_uc;
 };
 
