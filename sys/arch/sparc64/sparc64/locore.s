@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.172 2003/02/10 18:23:26 martin Exp $	*/
+/*	$NetBSD: locore.s,v 1.173 2003/03/24 13:27:44 nakayama Exp $	*/
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath
@@ -2836,10 +2836,11 @@ winfixsave:
 	CHKPT(%g2,%g5,0x16)
 
 	/* Did we save a user or kernel window ? */
-!	srax	%g3, 48, %g7				! User or kernel store? (TAG TARGET)
-	sllx	%g3, (64-13), %g7			! User or kernel store? (TAG ACCESS)
-	brnz,pt	%g7, 1f					! User fault -- save windows to pcb
-	 set	(2*NBPG)-8, %g7
+!	srax	%g3, 48, %g5				! User or kernel store? (TAG TARGET)
+	sllx	%g3, (64-13), %g5			! User or kernel store? (TAG ACCESS)
+	sethi	%hi((2*NBPG)-8), %g7
+	brnz,pt	%g5, 1f					! User fault -- save windows to pcb
+	 or	%g7, %lo((2*NBPG)-8), %g7
 
 	and	%g4, CWP, %g4				! %g4 = %cwp of trap
 	wrpr	%g4, 0, %cwp				! Kernel fault -- restore %cwp and force and trap to debugger
