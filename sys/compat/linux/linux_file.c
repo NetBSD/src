@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_file.c,v 1.21 1997/10/20 22:05:16 thorpej Exp $	*/
+/*	$NetBSD: linux_file.c,v 1.22 1998/02/14 21:57:02 kleink Exp $	*/
 
 /*
  * Copyright (c) 1995 Frank van der Linden
@@ -674,7 +674,7 @@ linux_sys_chown(p, v, retval)
 		syscallarg(int) uid;
 		syscallarg(int) gid;
 	} */ *uap = v;
-	struct sys_chown_args bca;
+	struct sys___posix_chown_args bca;
 	caddr_t sg = stackgap_init(p->p_emul);
 
 	LINUX_CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
@@ -685,7 +685,7 @@ linux_sys_chown(p, v, retval)
 	SCARG(&bca, gid) = ((linux_gid_t)SCARG(uap, gid) == (linux_gid_t)-1) ?
 		(gid_t)-1 : SCARG(uap, gid);
 	
-	return sys_chown(p, &bca, retval);
+	return sys___posix_chown(p, &bca, retval);
 }
 
 int
@@ -699,7 +699,7 @@ linux_sys_fchown(p, v, retval)
 		syscallarg(int) uid;
 		syscallarg(int) gid;
 	} */ *uap = v;
-	struct sys_fchown_args bfa;
+	struct sys___posix_fchown_args bfa;
 
 	SCARG(&bfa, fd) = SCARG(uap, fd);
 	SCARG(&bfa, uid) = ((linux_uid_t)SCARG(uap, uid) == (linux_uid_t)-1) ?
@@ -707,7 +707,7 @@ linux_sys_fchown(p, v, retval)
 	SCARG(&bfa, gid) = ((linux_gid_t)SCARG(uap, gid) == (linux_gid_t)-1) ?
 		(gid_t)-1 : SCARG(uap, gid);
 	
-	return sys_fchown(p, &bfa, retval);
+	return sys___posix_fchown(p, &bfa, retval);
 }
 
 int
@@ -725,7 +725,7 @@ linux_sys_rename(p, v, retval)
 	LINUX_CHECK_ALT_EXIST(p, &sg, SCARG(uap, from));
 	LINUX_CHECK_ALT_CREAT(p, &sg, SCARG(uap, to));
 
-	return sys_posix_rename(p, uap, retval);
+	return sys___posix_rename(p, uap, retval);
 }
 
 int
