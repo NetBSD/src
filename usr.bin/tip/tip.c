@@ -1,4 +1,4 @@
-/*	$NetBSD: tip.c,v 1.17 1997/11/23 04:03:04 mrg Exp $	*/
+/*	$NetBSD: tip.c,v 1.18 1997/12/17 16:56:30 mellon Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)tip.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: tip.c,v 1.17 1997/11/23 04:03:04 mrg Exp $");
+__RCSID("$NetBSD: tip.c,v 1.18 1997/12/17 16:56:30 mellon Exp $");
 #endif /* not lint */
 
 /*
@@ -81,6 +81,7 @@ main(argc, argv)
 	int i;
 	char *p;
 	char sbuf[12];
+	int fcarg;
 
 	gid = getgid();
 	egid = getegid();
@@ -199,6 +200,15 @@ notnumber:
 	}
 	if (!HW)
 		ttysetup(i);
+
+	if ((fcarg = fcntl(FD, F_GETFL, 0)) < 0 ||
+	    fcntl(FD, F_SETFL, fcarg & ~O_NONBLOCK) < 0) {
+		printf("tip: can't clear O_NONBLOCK: %s", strerror (errno));
+		daemon_uid();
+		(void)uu_unlock (uucplock);
+		exit(1);
+	}
+		
 cucommon:
 	/*
 	 * From here down the code is shared with
