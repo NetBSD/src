@@ -41,6 +41,7 @@
 # Disks:
 #	sd*	Sun SCSI disks
 #	fd*	Floppies
+#	vnd*	"file" pseudo-disks
 # Pseudo terminals:
 #	pty*	set of 16 master and slave pseudo terminals
 # Printers:
@@ -52,6 +53,8 @@
 #	cgthree*
 #	cgsix*
 #	bpf*	packet filter
+#	lkm	loadable kernel modules interface
+#	tun*	network tunnel driver
 
 PATH=/sbin:/bin/:/usr/bin:/usr/sbin:/usr/etc
 umask 77
@@ -118,6 +121,24 @@ bpf*)
 	chown root.wheel bpf$unit
 	;;
 
+tun*)
+	unit=`expr $i : 'tun\(.*\)'`
+	rm -f tun$unit
+	mknod tun$unit c 111 $unit
+	chmod 600 tun$unit
+	chown root.wheel tun$unit
+	;;
+
+vnd*)
+	unit=`expr $i : '...\(.*\)'`
+	name=vnd; blk=8; chr=110
+	rm -f ${name}${unit}c r${name}${unit}c
+	mknod ${name}${unit}c	b $blk `expr $unit '*' 8 + 2`
+	mknod r${name}${unit}c	c $chr `expr $unit '*' 8 + 2`
+	chgrp operator ${name}${unit}c r${name}${unit}c
+	chmod 640 ${name}${unit}c r${name}${unit}c
+	;;
+
 fd*|sd*)
 	umask 2 ; unit=`expr $i : '..\(.*\)'`
 	case $i in
@@ -129,8 +150,6 @@ fd*|sd*)
 	17|18|19|20|21|22|23|24|25|26|27|28|29|30|31)
 		mknod ${name}${unit}c	b $blk `expr $unit '*' 8 + 2`
 		mknod r${name}${unit}c	c $chr `expr $unit '*' 8 + 2`
-		if [ $name != cd -a $name != vnd ]
-		then
 		mknod ${name}${unit}a	b $blk `expr $unit '*' 8 + 0`
 		mknod ${name}${unit}b	b $blk `expr $unit '*' 8 + 1`
 		mknod ${name}${unit}d	b $blk `expr $unit '*' 8 + 3`
@@ -145,7 +164,6 @@ fd*|sd*)
 		mknod r${name}${unit}f	c $chr `expr $unit '*' 8 + 5`
 		mknod r${name}${unit}g	c $chr `expr $unit '*' 8 + 6`
 		mknod r${name}${unit}h	c $chr `expr $unit '*' 8 + 7`
-		fi
 		chgrp operator ${name}${unit}[a-h] r${name}${unit}[a-h]
 		chmod 640 ${name}${unit}[a-h] r${name}${unit}[a-h]
 		;;
@@ -154,6 +172,13 @@ fd*|sd*)
 		;;
 	esac
 	umask 77
+	;;
+
+lkm)
+	rm -f lkm
+	mknod lkm c 112 0
+	chown root.kmem lkm
+	chmod 640 lkm
 	;;
 
 pty*)
