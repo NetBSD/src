@@ -133,7 +133,7 @@ main(argc, argv)
 	if (!*argv)
 		usage();
 
-	if (!f_cat && !f_how)
+	if (!f_cat && !f_how && !f_where)
 		if (!isatty(1))
 			f_cat = 1;
 		else if ((pager = getenv("PAGER")) != NULL)
