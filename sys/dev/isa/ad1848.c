@@ -1,4 +1,4 @@
-/*	$NetBSD: ad1848.c,v 1.18 1997/03/20 03:56:11 mycroft Exp $	*/
+/*	$NetBSD: ad1848.c,v 1.19 1997/03/20 06:48:51 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994 John Brezak
@@ -149,7 +149,6 @@ static int ad1848_init_values[] = {
 
 void	ad1848_reset __P((struct ad1848_softc *));
 int	ad1848_set_speed __P((struct ad1848_softc *, u_long));
-int	ad1848_set_format __P((struct ad1848_softc *, u_int, u_int)); 
 void	ad1848_mute_monitor __P((void *, int));
 
 static int ad_read __P((struct ad1848_softc *, int));
@@ -975,15 +974,40 @@ ad1848_query_encoding(addr, fp)
 }
 
 int
-ad1848_set_encoding(addr, encoding)
+ad1848_set_format(addr, encoding, precision)
     void *addr;
-    u_int encoding;
+    u_int encoding, precision;
 {
     register struct ad1848_softc *sc = addr;
-	
-    DPRINTF(("ad1848_set_encoding: %d\n", encoding));
+    static u_char format2bits[] =  {
+      /* AUDIO_ENCODING_NONE */   0,
+      /* AUDIO_ENCODING_ULAW */   FMT_ULAW >> 5,
+      /* AUDIO_ENCODING_ALAW */   FMT_ALAW >> 5, 
+      /* AUDIO_ENCODING_PCM16 */  FMT_TWOS_COMP >> 5,
+      /* AUDIO_ENCODING_PCM8 */   FMT_PCM8 >> 5,
+      /* AUDIO_ENCODING_ADPCM */  0,
+    };
 
-    return (ad1848_set_format(sc, encoding, sc->precision));
+    DPRINTF(("ad1848_set_format: encoding=%d precision=%d\n", encoding, precision));
+    
+    switch (encoding) {
+    case AUDIO_ENCODING_ULAW:
+    case AUDIO_ENCODING_ALAW:
+    case AUDIO_ENCODING_PCM16:
+    case AUDIO_ENCODING_PCM8:
+	break;
+    default:
+	return (EINVAL);
+    }
+
+    sc->encoding = encoding;
+    sc->precision = precision;
+    sc->format_bits = format2bits[encoding];
+    sc->need_commit = 1;
+
+    DPRINTF(("ad1848_set_format: bits=%x\n", sc->format_bits));
+
+    return (0);
 }
 
 int
@@ -993,18 +1017,6 @@ ad1848_get_encoding(addr)
     register struct ad1848_softc *sc = addr;
 
     return (sc->encoding);
-}
-
-int
-ad1848_set_precision(addr, precision)
-    void *addr;
-    u_int precision;
-{
-    register struct ad1848_softc *sc = addr;
-	
-    DPRINTF(("ad1848_set_precision: %d\n", precision));
-
-    return (ad1848_set_format(sc, sc->encoding, precision));
 }
 
 int
@@ -1025,7 +1037,7 @@ ad1848_set_channels(addr, channels)
 	
     DPRINTF(("ad1848_set_channels: %d\n", channels));
 
-    if (channels < 1 || channels > 2)
+    if (channels != 1 && channels != 2)
 	return (EINVAL);
 
     sc->channels = channels;
@@ -1336,50 +1348,6 @@ ad1848_set_speed(sc, arg)
     sc->speed = speed_table[selected].speed;
     sc->speed_bits = speed_table[selected].bits;
     sc->need_commit = 1;
-
-    return (0);
-}
-
-int
-ad1848_set_format(sc, encoding, precision)
-    register struct ad1848_softc *sc;
-    u_int encoding, precision;
-{
-    static u_char format2bits[] =  {
-      /* AUDIO_ENCODING_NONE */   0,
-      /* AUDIO_ENCODING_ULAW */   FMT_ULAW >> 5,
-      /* AUDIO_ENCODING_ALAW */   FMT_ALAW >> 5, 
-      /* AUDIO_ENCODING_PCM16 */  FMT_TWOS_COMP >> 5,
-      /* AUDIO_ENCODING_PCM8 */   FMT_PCM8 >> 5,
-      /* AUDIO_ENCODING_ADPCM */  0,
-    };
-
-    DPRINTF(("ad1848_set_format: encoding=%d precision=%d\n", encoding, precision));
-    
-    switch (encoding) {
-    case AUDIO_ENCODING_ULAW:
-    case AUDIO_ENCODING_ALAW:
-    case AUDIO_ENCODING_PCM8:
-	if (precision == 16)
-	    precision = 8;
-	break;
-    case AUDIO_ENCODING_PCM16:
-	if (precision == 8)
-	    encoding = AUDIO_ENCODING_PCM8;
-	break;
-    default:
-	return (EINVAL);
-    }
-
-    if (precision != 8 && precision != 16)
-	return (EINVAL);
-    
-    sc->encoding = encoding;
-    sc->precision = precision;
-    sc->format_bits = format2bits[encoding];
-    sc->need_commit = 1;
-
-    DPRINTF(("ad1848_set_format: bits=%x\n", sc->format_bits));
 
     return (0);
 }
