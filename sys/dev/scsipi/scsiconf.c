@@ -1,4 +1,4 @@
-/*	$NetBSD: scsiconf.c,v 1.93 1997/10/03 02:04:17 thorpej Exp $	*/
+/*	$NetBSD: scsiconf.c,v 1.94 1998/01/12 09:49:15 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
@@ -102,9 +102,7 @@ struct cfattach scsibus_ca = {
 	sizeof(struct scsibus_softc), scsibusmatch, scsibusattach
 };
 
-struct cfdriver scsibus_cd = {
-	NULL, "scsibus", DV_DULL
-};
+extern struct cfdriver scsibus_cd;
 
 int scsibusprint __P((void *, const char *));
 

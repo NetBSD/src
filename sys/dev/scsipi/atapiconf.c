@@ -1,4 +1,4 @@
-/*	$NetBSD: atapiconf.c,v 1.7 1998/01/06 17:03:15 bouyer Exp $	*/
+/*	$NetBSD: atapiconf.c,v 1.8 1998/01/12 09:49:10 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 Manuel Bouyer.  All rights reserved.
@@ -69,9 +69,7 @@ struct cfattach atapibus_ca = {
 	sizeof(struct atapibus_softc), atapibusmatch, atapibusattach
 };
 
-struct cfdriver atapibus_cd = {
-	NULL, "atapibus", DV_DULL
-};
+extern struct cfdriver atapibus_cd;
 
 int atapibusprint __P((void *, const char *));
 

@@ -1,4 +1,4 @@
-#	$NetBSD: files.scsipi,v 1.11 1997/10/01 01:18:51 enami Exp $
+#	$NetBSD: files.scsipi,v 1.12 1998/01/12 09:49:13 thorpej Exp $
 #
 # Config file and device description for machine-independent SCSI code.
 # Included by ports that need it.  Ports that use it must provide
@@ -12,47 +12,47 @@ file	dev/scsipi/scsipi_ioctl.c	scsi | atapi
 file	dev/scsipi/scsi_base.c		scsi 
 file	dev/scsipi/atapi_base.c		atapi
 
-device	scsibus {target = -1, lun = -1}
+device	scsibus class dull {target = -1, lun = -1}
 attach	scsibus at scsi
 file	dev/scsipi/scsiconf.c		scsibus			needs-flag
 
-device	atapibus {drive = -1}
+device	atapibus class dull {drive = -1}
 attach	atapibus at atapi
 file	dev/scsipi/atapiconf.c          atapibus		needs-flag
 
-device	cd: disk
+device	cd class disk: disk
 attach	cd at scsibus with cd_scsibus
 attach	cd at atapibus with cd_atapibus
 file	dev/scsipi/cd_scsi.c		cd_scsibus
 file	dev/scsipi/cd_atapi.c		cd_atapibus
 file	dev/scsipi/cd.c		       cd | cd_scsibus | cd_atapibus needs-flag
 
-device	ch: disk
+device	ch class dull: disk
 attach	ch at scsibus
 file	dev/scsipi/ch.c			ch			needs-flag
 
-device	se: ifnet, ether, arp
+device	se class ifnet: ifnet, ether, arp
 attach	se at scsibus
 file	dev/scsipi/if_se.c		se			needs-flag
 
-device	sd: disk
+device	sd class disk: disk
 attach	sd at scsibus
 file	dev/scsipi/sd.c			sd			needs-flag
 
-device	st: tape
+device	st class tape: tape
 attach	st at scsibus
 file	dev/scsipi/st.c			st			needs-flag
 
-device	ss: tape
+device	ss class dull: tape
 attach	ss at scsibus
 file	dev/scsipi/ss.c			ss			needs-flag
 file	dev/scsipi/ss_mustek.c		ss
 file	dev/scsipi/ss_scanjet.c		ss
 
-device	su: disk
+device	su class dull: disk
 attach	su at scsibus
 file	dev/scsipi/su.c			su			needs-flag
 
-device	uk: disk
+device	uk class dull: disk
 attach	uk at scsibus
 file	dev/scsipi/uk.c			uk			needs-flag
