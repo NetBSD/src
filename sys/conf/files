@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.641 2003/10/13 08:34:15 dyoung Exp $
+#	$NetBSD: files,v 1.642 2003/10/17 18:16:42 cdi Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -984,6 +984,7 @@ defpseudo pty:		tty
 defpseudo tb:		tty
 defpseudo rnd
 defpseudo ksyms
+defpseudo nullcons
 
 defpseudo loop:		ifnet
 defpseudo sl:		ifnet
@@ -1084,6 +1085,7 @@ file	dev/midi.c			midi | midibus		needs-flag
 file	dev/midisyn.c			midisyn
 file	dev/mm.c
 file	dev/mulaw.c			mulaw
+file	dev/nullcons_subr.c		nullcons		needs-flag
 file	dev/radio.c			radio			needs-flag
 file	dev/rnd.c			rnd			needs-flag
 file	dev/rndpool.c			rnd			needs-flag
