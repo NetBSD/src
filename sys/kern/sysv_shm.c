@@ -1,4 +1,5 @@
 /*
+ * Copyright (c) 1994 Charles Hannum.
  * Copyright (c) 1994 Adam Glass
  * All rights reserved.
  *
@@ -74,7 +75,7 @@ struct shmmap_state {
 
 static void shm_deallocate_segment __P((struct shmid_ds *));
 static int shm_find_segment_by_key __P((key_t));
-static struct shmid_ds *shm_find_segment_by_shmid __P((int, int *));
+static struct shmid_ds *shm_find_segment_by_shmid __P((int));
 static int shm_delete_mapping __P((struct proc *, struct shmmap_state *));
 
 static int
@@ -91,9 +92,8 @@ shm_find_segment_by_key(key)
 }
 
 static struct shmid_ds *
-shm_find_segment_by_shmid(shmid, where)
+shm_find_segment_by_shmid(shmid)
 	int shmid;
-	int *where;
 {
 	int segnum;
 	struct shmid_ds *shmseg;
@@ -106,8 +106,6 @@ shm_find_segment_by_shmid(shmid, where)
 	    != SHMSEG_ALLOCATED ||
 	    shmseg->shm_perm.seq != IPCID_TO_SEQ(shmid))
 		return NULL;
-	if (where)
-		*where = segnum;
 	return shmseg;
 }
 
@@ -224,7 +222,7 @@ shmat(p, uap, retval)
 		bzero((caddr_t)shmmap_s, size);
 		p->p_vmspace->vm_shm = (caddr_t)shmmap_s;
 	}
-	shmseg = shm_find_segment_by_shmid(uap->shmid, NULL);
+	shmseg = shm_find_segment_by_shmid(uap->shmid);
 	if (shmseg == NULL)
 		return EINVAL;
 	if (error = ipcperm(cred, &shmseg->shm_perm,
@@ -284,7 +282,7 @@ shmctl(p, uap, retval)
 	struct shmid_ds inbuf;
 	struct shmid_ds *shmseg;
 
-	shmseg = shm_find_segment_by_shmid(uap->shmid, &segnum);
+	shmseg = shm_find_segment_by_shmid(uap->shmid);
 	if (shmseg == NULL)
 		return EINVAL;
 	switch (uap->cmd) {
@@ -313,7 +311,7 @@ shmctl(p, uap, retval)
 		shmseg->shm_perm.mode |= SHMSEG_REMOVED;
 		if (shmseg->shm_nattch <= 0) {
 			shm_deallocate_segment(shmseg);
-			shm_last_free = segnum;
+			shm_last_free = IPCID_TO_IX(uap->shmid);
 		}
 		break;
 #if 0
@@ -401,6 +399,7 @@ shmget_allocate_segment(p, uap, mode, retval)
 	    VM_PROT_DEFAULT, MAP_ANON, shmid, 0);
 	if (result != KERN_SUCCESS) {
 		shmseg->shm_perm.mode = SHMSEG_FREE;
+		shm_last_free = segnum;
 		free((caddr_t)shm_handle, M_SHM);
 		return ENOMEM;
 	}
