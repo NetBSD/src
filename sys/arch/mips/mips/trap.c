@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.15 1995/04/28 22:50:29 jonathan Exp $	*/
+/*	$NetBSD: trap.c,v 1.16 1995/04/29 21:10:31 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -82,6 +82,9 @@
 #include <le.h>
 #include <dc.h>
 
+#include <sys/cdefs.h>
+#include <sys/syslog.h>
+
 struct	proc *machFPCurProcPtr;		/* pointer to last proc to use FP */
 
 extern void MachKernGenException();
@@ -162,7 +165,19 @@ struct trapdebug {		/* trap history buffer for debugging */
 	u_int	ra;
 	u_int	code;
 } trapdebug[TRAPSIZE], *trp = trapdebug;
-#endif
+
+#endif	/* DEBUG */
+
+
+#ifdef DEBUG /* stack trace code, also useful to DDB one day */
+extern void stacktrace();
+extern void logstacktrace();
+
+/* extern functions printed by name in stack backtraces */
+extern void idle(),  cpu_switch(), splx(), MachEmptyWriteBuffer();
+extern void MachUTLBMiss();
+#endif	/* DEBUG */
+
 
 static void pmax_errintr();
 static void kn02_errintr(), kn02ba_errintr();
@@ -1659,8 +1674,14 @@ kdbpeek(addr)
 	}
 	return (*(int *)addr);
 }
+#endif
 
+#ifdef DEBUG
 #define MIPS_JR_RA	0x03e00008	/* instruction code for jr ra */
+
+/* forward */
+char *fn_name(unsigned addr);
+void stacktrace_subr __P((int, int, int, int, void (*)(const char*, ...)));
 
 /*
  * Print a stack backtrace.
@@ -1669,6 +1690,21 @@ void
 stacktrace(a0, a1, a2, a3)
 	int a0, a1, a2, a3;
 {
+	stacktrace_subr(a0, a1, a2, a3, printf);
+}
+
+void
+logstacktrace(a0, a1, a2, a3)
+	int a0, a1, a2, a3;
+{
+	stacktrace_subr(a0, a1, a2, a3, addlog);
+}
+
+void
+stacktrace_subr(a0, a1, a2, a3, printfn)
+	int a0, a1, a2, a3;
+	void (*printfn) __P((const char*, ...));
+{
 	unsigned pc, sp, fp, ra, va, subr;
 	unsigned instr, mask;
 	InstFmt i;
@@ -1676,6 +1712,7 @@ stacktrace(a0, a1, a2, a3)
 	int regs[3];
 	extern setsoftclock();
 	extern char start[], edata[];
+	unsigned int frames =  0;
 
 	cpu_getregs(regs);
 
@@ -1685,33 +1722,80 @@ stacktrace(a0, a1, a2, a3)
 	ra = 0;
 	fp = regs[2];
 
+/* Jump here when done with a frame, to start a new one */
 loop:
-	/* check for current PC in the kernel interrupt handler code */
-	if (pc >= (unsigned)MachKernIntr && pc < (unsigned)MachUserIntr) {
-		/* NOTE: the offsets depend on the code in locore.s */
-		printf("interrupt\n");
-		a0 = kdbpeek(sp + 36);
-		a1 = kdbpeek(sp + 40);
-		a2 = kdbpeek(sp + 44);
-		a3 = kdbpeek(sp + 48);
-		pc = kdbpeek(sp + 20);
-		ra = kdbpeek(sp + 92);
-		sp = kdbpeek(sp + 100);
-		fp = kdbpeek(sp + 104);
+	ra = 0;
+
+/* Jump here after a nonstandard (interrupt handler) frame */
+specialframe:
+	stksize = 0;
+	subr = 0;
+	if	(frames++ > 100) {
+		(*printfn)("\nstackframe count exceeded\n");
+		return;	/*XXX*/
 	}
 
-	/* check for current PC in the exception handler code */
-	if (pc >= 0x80000000 && pc < (unsigned)setsoftclock) {
+	/* check for bad SP: could foul up next frame */
+	if (sp & 3 || sp < 0x80000000) {
+		(*printfn)("SP 0x%x: not in kernel\n", sp);
 		ra = 0;
 		subr = 0;
 		goto done;
 	}
 
+	/* Backtraces should contine through interrupts from kernel mode */
+	if (pc >= (unsigned)MachKernIntr && pc < (unsigned)MachUserIntr) {
+		/* NOTE: the offsets depend on the code in locore.s */
+		(*printfn)("MachKernIntr+%x: (%x, %x ,%x) -------\n",
+		       pc-(unsigned)MachKernIntr, a0, a1, a2);
+		a0 = kdbpeek(sp + 36);
+		a1 = kdbpeek(sp + 40);
+		a2 = kdbpeek(sp + 44);
+		a3 = kdbpeek(sp + 48);
+
+		pc = kdbpeek(sp + 20);	/* exc_pc - pc at time of exception */
+		ra = kdbpeek(sp + 92);	/* ra at time of exception */
+		sp = sp + 108;
+		goto specialframe;
+	}
+
+
+# define Between(x, y, z) \
+		( ((x) <= (y)) && ((y) < (z)) )
+# define pcBetween(a,b) \
+		Between((unsigned)a, pc, (unsigned)b)
+
+	/*
+	 * Check for current PC in  exception handler code that don't
+	 * have a preceding "j ra" at the tail of the preceding function. 
+	 * Depends on relative ordering of functions in locore.
+	 */
+	if (pcBetween(MachKernGenException, MachUserGenException))
+		subr = (unsigned) MachKernGenException;
+	else if (pcBetween(MachUserGenException,MachKernIntr))
+		subr = (unsigned) MachUserGenException;
+	else if (pcBetween(MachKernIntr, MachUserIntr))
+		subr = (unsigned) MachKernIntr;
+	else if (pcBetween(MachUserIntr, MachTLBMissException))
+		subr = (unsigned) MachUserIntr;
+	else if (pcBetween(splx, MachEmptyWriteBuffer))
+		subr = (unsigned) splx;
+	else if (pcBetween(cpu_switch, fuword))
+		subr = (unsigned) cpu_switch;
+	else if (pcBetween(idle, cpu_switch))	{
+		subr = (unsigned) idle;
+		ra = 0;
+		goto done;
+	}
+	else if (pc >= (unsigned)MachUTLBMiss && pc < (unsigned)setsoftclock) {
+		(*printfn)("<<locore>>");
+		goto done;
+	}
+
 	/* check for bad PC */
 	if (pc & 3 || pc < 0x80000000 || pc >= (unsigned)edata) {
-		printf("PC 0x%x: not in kernel\n", pc);
+		(*printfn)("PC 0x%x: not in kernel\n", pc);
 		ra = 0;
-		subr = 0;
 		goto done;
 	}
 
@@ -1719,20 +1803,28 @@ loop:
 	 * Find the beginning of the current subroutine by scanning backwards
 	 * from the current PC for the end of the previous subroutine.
 	 */
-	va = pc - sizeof(int);
-	while ((instr = kdbpeek(va)) != MIPS_JR_RA)
+	if (!subr) {
+		va = pc - sizeof(int);
+		while ((instr = kdbpeek(va)) != MIPS_JR_RA)
 		va -= sizeof(int);
-	va += 2 * sizeof(int);	/* skip back over branch & delay slot */
-	/* skip over nulls which might separate .o files */
-	while ((instr = kdbpeek(va)) == 0)
-		va += sizeof(int);
-	subr = va;
+		va += 2 * sizeof(int);	/* skip back over branch & delay slot */
+		/* skip over nulls which might separate .o files */
+		while ((instr = kdbpeek(va)) == 0)
+			va += sizeof(int);
+		subr = va;
+	}
 
+	/*
+	 * Jump here for locore entry pointsn for which the preceding
+	 * function doesn't end in "j ra"
+	 */
+stackscan:
 	/* scan forwards to find stack size and any saved registers */
 	stksize = 0;
 	more = 3;
 	mask = 0;
-	for (; more; va += sizeof(int), more = (more == 3) ? 3 : more - 1) {
+	for (va = subr; more; va += sizeof(int),
+	     		      more = (more == 3) ? 3 : more - 1) {
 		/* stop if hit our current position */
 		if (va >= pc)
 			break;
@@ -1780,7 +1872,7 @@ loop:
 			/* only restore the first one */
 			if (mask & (1 << i.IType.rt))
 				break;
-			mask |= 1 << i.IType.rt;
+			mask |= (1 << i.IType.rt);
 			switch (i.IType.rt) {
 			case 4: /* a0 */
 				a0 = kdbpeek(sp + (short)i.IType.imm);
@@ -1812,22 +1904,66 @@ loop:
 			/* look for stack pointer adjustment */
 			if (i.IType.rs != 29 || i.IType.rt != 29)
 				break;
-			stksize = (short)i.IType.imm;
+			stksize = - ((short)i.IType.imm);
 		}
 	}
 
 done:
-	printf("%x+%x (%x,%x,%x,%x) ra %x sz %d\n",
-		subr, pc - subr, a0, a1, a2, a3, ra, stksize);
+	(*printfn)("%s+%x (%x,%x,%x,%x) ra %x sz %d\n",
+		fn_name(subr), pc - subr, a0, a1, a2, a3, ra, stksize);
 
 	if (ra) {
 		if (pc == ra && stksize == 0)
-			printf("stacktrace: loop!\n");
+			(*printfn)("stacktrace: loop!\n");
 		else {
 			pc = ra;
-			sp -= stksize;
+			sp += stksize;
+			ra = 0;
 			goto loop;
 		}
+	} else {
+		if (curproc)
+			(*printfn)("User-level: pid %d\n", curproc->p_pid);
+		else
+			(*printfn)("User-level: curproc NULL\n");
 	}
 }
+
+/*
+ * Functions ``special'' enough to print by name
+ */
+#ifdef __STDC__
+#define Name(_fn)  { (void*)_fn, # _fn }
+#else
+#define Name(_fn) { _fn, "_fn"}
+#endif
+static struct { void *addr; char *name;} names[] = {
+	Name(interrupt),
+	Name(trap),
+	Name(MachKernGenException),
+	Name(MachUserGenException),
+	Name(MachKernIntr),
+	Name(MachUserIntr),
+	Name(splx),
+	Name(idle),
+	Name(cpu_switch),
+	{0, 0}
+};
+
+/*
+ * Map a function address to a string name, if known; or a hex string.
+ */
+char *
+fn_name(unsigned addr)
+{
+	static char buf[17];
+	int i = 0;
+
+	for (i = 0; names[i].name; i++)
+		if (names[i].addr == (void*)addr)
+			return (names[i].name);
+	sprintf(buf, "%x", addr);
+	return (buf);
+}
+
 #endif /* DEBUG */
