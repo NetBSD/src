@@ -1,15 +1,17 @@
-#	$NetBSD: Makefile,v 1.10 2002/04/11 07:56:13 lukem Exp $
+#	$NetBSD: Makefile,v 1.11 2002/04/19 07:08:51 lukem Exp $
 #
 
 PROG=	installboot
-SRCS=	installboot.c sum.c machines.c \
+SRCS=	installboot.c sum.c machines.c fstypes.c \
+	ffs.c ffs_bswap.c \
 	alpha.c pmax.c sparc64.c vax.c
 MAN=	installboot.8
 
 WARNS?=	3
 
+UFSSRC=		${_SRC_TOP_}/sys/ufs
 CPPFLAGS+=	-I${.CURDIR}
-.PATH:		${.CURDIR}/arch
+.PATH:		${.CURDIR}/arch ${UFSSRC}/ffs
 
 .ifndef HOSTPROG
 # list of MACHINEs to enable the compat symlink /usr/mdec/installboot
