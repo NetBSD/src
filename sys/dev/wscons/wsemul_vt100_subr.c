@@ -1,4 +1,4 @@
-/* $NetBSD: wsemul_vt100_subr.c,v 1.5 1999/01/10 00:28:21 augustss Exp $ */
+/* $NetBSD: wsemul_vt100_subr.c,v 1.6 2000/02/25 17:42:51 mycroft Exp $ */
 
 /*
  * Copyright (c) 1998
@@ -774,14 +774,16 @@ vt100_decmode(edp, nr, op)
 	int nr, op;
 {
 	int res = 0; /* default: unknown */
+	int flags;
 
+	flags = edp->flags;
 	switch (nr) {
 	    case 1: /* DECCKM application/nomal cursor keys */
 		if (op == VTMODE_SET)
-			edp->flags |= VTFL_APPLCURSOR;
+			flags |= VTFL_APPLCURSOR;
 		else if (op == VTMODE_RESET)
-			edp->flags &= ~VTFL_APPLCURSOR;
-		res = ((edp->flags & VTFL_APPLCURSOR) ? 1 : 2);
+			flags &= ~VTFL_APPLCURSOR;
+		res = ((flags & VTFL_APPLCURSOR) ? 1 : 2);
 		break;
 	    case 2: /* DECANM ANSI vt100/vt52 */
 		res = 3; /* permanently set ??? */
@@ -793,17 +795,17 @@ vt100_decmode(edp, nr, op)
 		break;
 	    case 6: /* DECOM move within/outside margins */
 		if (op == VTMODE_SET)
-			edp->flags |= VTFL_DECOM;
+			flags |= VTFL_DECOM;
 		else if (op == VTMODE_RESET)
-			edp->flags &= ~VTFL_DECOM;
-		res = ((edp->flags & VTFL_DECOM) ? 1 : 2);
+			flags &= ~VTFL_DECOM;
+		res = ((flags & VTFL_DECOM) ? 1 : 2);
 		break;
 	    case 7: /* DECAWM autowrap */
 		if (op == VTMODE_SET)
-			edp->flags |= VTFL_DECAWM;
+			flags |= VTFL_DECAWM;
 		else if (op == VTMODE_RESET)
-			edp->flags &= ~VTFL_DECAWM;
-		res = ((edp->flags & VTFL_DECAWM) ? 1 : 2);
+			flags &= ~VTFL_DECAWM;
+		res = ((flags & VTFL_DECAWM) ? 1 : 2);
 		break;
 	    case 8: /* DECARM keyboard autorepeat */
 		break;
@@ -812,22 +814,23 @@ vt100_decmode(edp, nr, op)
 	    case 19: /* DECPEX printer extent: screen/scrolling region */
 		break;
 	    case 25: /* DECTCEM text cursor on/off */
-		if (op == VTMODE_SET || op == VTMODE_RESET) {
-			edp->flags = (edp->flags & ~VTFL_CURSORON) |
-			    ((op == VTMODE_SET) ? VTFL_CURSORON : 0);
+		if (op == VTMODE_SET)
+			flags |= VTFL_CURSORON;
+		else if (op == VTMODE_RESET)
+			flags &= ~VTFL_CURSORON;
+		if (flags != edp->flags)
 			(*edp->emulops->cursor)(edp->emulcookie,
-						(op == VTMODE_SET),
+						flags & VTFL_CURSORON,
 						edp->crow, edp->ccol);
-		}
-		res = ((edp->flags & VTFL_CURSORON) ? 1 : 2);
+		res = ((flags & VTFL_CURSORON) ? 1 : 2);
 		break;
 	    case 42: /* DECNRCM use 7-bit NRC /
 		      7/8 bit from DEC multilingual or ISO-latin-1*/
 		if (op == VTMODE_SET)
-			edp->flags |= VTFL_NATCHARSET;
+			flags |= VTFL_NATCHARSET;
 		else if (op == VTMODE_RESET)
-			edp->flags &= ~VTFL_NATCHARSET;
-		res = ((edp->flags & VTFL_NATCHARSET) ? 1 : 2);
+			flags &= ~VTFL_NATCHARSET;
+		res = ((flags & VTFL_NATCHARSET) ? 1 : 2);
 		break;
 	    case 66: /* DECNKM numeric keypad */
 		break;
@@ -839,5 +842,7 @@ vt100_decmode(edp, nr, op)
 #endif
 		break;
 	}
+	edp->flags = flags;
+
 	return (res);
 }
