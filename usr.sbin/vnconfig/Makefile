@@ -1,6 +1,7 @@
-#	$NetBSD: Makefile,v 1.4 1995/12/30 18:14:01 thorpej Exp $
+#	$NetBSD: Makefile,v 1.5 1997/09/29 05:24:24 enami Exp $
 
 PROG=		vnconfig
 MAN=		vnconfig.8
+LDADD+=		-lutil
 
 .include <bsd.prog.mk>
