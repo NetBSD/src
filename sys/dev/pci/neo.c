@@ -1,4 +1,4 @@
-/*	$NetBSD: neo.c,v 1.5 2000/11/27 01:56:53 sommerfeld Exp $	*/
+/*	$NetBSD: neo.c,v 1.6 2000/11/27 02:37:14 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1999 Cameron Grant <gandalf@vilnya.demon.co.uk>
@@ -108,8 +108,6 @@
  *
  * TO-DO list:
  *    Figure out interaction with video stuff (look at Xfree86 driver?)
- *
- *    Power management (neoactivate)
  *
  *    Figure out how to shrink that huge table neo-coeff.h
  */
