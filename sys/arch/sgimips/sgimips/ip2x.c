@@ -1,4 +1,4 @@
-/*	$NetBSD: ip2x.c,v 1.3 2004/01/01 13:32:30 sekiya Exp $	*/
+/*	$NetBSD: ip2x.c,v 1.4 2004/01/10 05:22:09 sekiya Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Rafal K. Boni
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip2x.c,v 1.3 2004/01/01 13:32:30 sekiya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip2x.c,v 1.4 2004/01/10 05:22:09 sekiya Exp $");
 
 #include "opt_cputype.h"
 #include "opt_machtypes.h"
@@ -41,14 +41,18 @@ __KERNEL_RCSID(0, "$NetBSD: ip2x.c,v 1.3 2004/01/01 13:32:30 sekiya Exp $");
 
 #include <machine/sysconf.h>
 #include <machine/machtype.h>
+#include <machine/bus.h>
 #include <mips/locore.h>
 
 #include <mips/cache.h>
 
+#include <sgimips/dev/int2reg.h>
+
 u_int32_t next_clk_intr;
 u_int32_t missed_clk_intrs;
 static unsigned long last_clk_intr;
-u_int32_t int23addr;
+static bus_space_handle_t ioh;		/* for int2/3 */
+static bus_space_tag_t iot;
 
 static struct evcnt mips_int5_evcnt =
     EVCNT_INITIALIZER(EVCNT_TYPE_INTR, NULL, "mips", "int 5 (clock)");
@@ -57,7 +61,6 @@ static struct evcnt mips_spurint_evcnt =
     EVCNT_INITIALIZER(EVCNT_TYPE_INTR, NULL, "mips", "spurious interrupts");
 
 void		ip2x_init(void);
-void 		ip2x_bus_reset(void);
 int 		ip2x_local0_intr(void);
 int		ip2x_local1_intr(void);
 int 		ip2x_mappable_intr(void *);
@@ -65,12 +68,17 @@ void		ip2x_intr(u_int, u_int, u_int, u_int);
 void		ip2x_intr_establish(int, int, int (*)(void *), void *);
 
 unsigned long 	ip2x_clkread(void);
-unsigned long	ip2x_cal_timer(u_int32_t, u_int32_t);
+unsigned long	ip2x_cal_timer(void);
 
 /* ip22_cache.S */
 extern void	ip22_sdcache_do_wbinv(vaddr_t, vaddr_t);
 extern void	ip22_sdcache_enable(void);
 extern void	ip22_sdcache_disable(void);
+
+/* imc has the bus reset code */
+extern void	imc_bus_reset(void);
+extern void	imc_bus_error(void);
+extern void	imc_watchdog_tickle(void);
 
 void
 ip2x_init(void)
@@ -83,7 +91,7 @@ ip2x_init(void)
 	if ( !strcmp(cpu_model, "SGI-IP20"))
 	{
 		mach_type = MACH_SGI_IP20;
-		int23addr = 0x1fb801c0;
+		ioh = MIPS_PHYS_TO_KSEG1(0x1fb801c0);
 
 		sysid = *(volatile u_int32_t *)MIPS_PHYS_TO_KSEG1(0x1fbd0000);
 		mach_boardrev = (sysid & 0x7000) >> 12;
@@ -95,17 +103,17 @@ ip2x_init(void)
 		if (sysid & 1)
 		{
 			mach_subtype = MACH_SGI_IP22_FULLHOUSE;
-			int23addr = 0x1fbd9000;
+			ioh = MIPS_PHYS_TO_KSEG1(0x1fbd9000);
 		}
 		else
 		{
 			mach_subtype = MACH_SGI_IP22_GUINESS;
-			int23addr = 0x1fbd9880;
+			ioh = MIPS_PHYS_TO_KSEG1(0x1fbd9880);
 		}
 
 		mach_boardrev = (sysid >> 1) & 0x0f;
 
-		/* Hardcode interrupts 7, 11 to mappable interrupt 0,1 handlers */
+		/* Wire interrupts 7, 11 to mappable interrupt 0,1 handlers */
 		intrtab[7].ih_fun = ip2x_mappable_intr;
 		intrtab[7].ih_arg	= (void*) 0;
 
@@ -114,22 +122,16 @@ ip2x_init(void)
 	}
 
 	/* Clean out interrupt masks */
-	*(volatile u_int32_t *)MIPS_PHYS_TO_KSEG1(int23addr + 0x04) = 0x00;
-	*(volatile u_int32_t *)MIPS_PHYS_TO_KSEG1(int23addr + 0x0c) = 0x00;
-
-	*(volatile u_int32_t *)MIPS_PHYS_TO_KSEG1(int23addr + 0x14) = 0x00;
-	*(volatile u_int32_t *)MIPS_PHYS_TO_KSEG1(int23addr + 0x18) = 0x00;
-
-
-	/* enable watchdog timer, clear it */
-	*(volatile u_int32_t *)MIPS_PHYS_TO_KSEG1(0x1fa00004) |= 0x100;
-	*(volatile u_int32_t *)MIPS_PHYS_TO_KSEG1(0x1fa00014) = 0;
+	bus_space_write_4(iot, ioh, INT2_LOCAL0_MASK, 0);
+	bus_space_write_4(iot, ioh, INT2_LOCAL1_MASK, 0);
+	bus_space_write_4(iot, ioh, INT2_MAP_MASK0, 0);
+	bus_space_write_4(iot, ioh, INT2_MAP_MASK1, 0);
 
 	/* Reset timer interrupts */
-	*(volatile u_int32_t *)MIPS_PHYS_TO_KSEG1(int23addr + 0x20) = 3;
+	bus_space_write_4(iot, ioh, INT2_TIMER_CLEAR, 0x03);
 
 	platform.iointr = ip2x_intr;
-	platform.bus_reset = ip2x_bus_reset;
+	platform.bus_reset = imc_bus_reset;
 	platform.intr_establish = ip2x_intr_establish;
 
 	biomask = 0x0700;
@@ -138,13 +140,12 @@ ip2x_init(void)
 	clockmask = 0xbf00;
 
 	/* Prime cache */
-	ip2x_cal_timer(int23addr + 0x3c, int23addr + 0x38);
+	ip2x_cal_timer();
 
 	cps = 0;
 	for(i = 0; i < sizeof(ctrdiff) / sizeof(ctrdiff[0]); i++) {
 		do {
-			ctrdiff[i] = ip2x_cal_timer(int23addr + 0x3c,
-			    int23addr + 0x38);
+			ctrdiff[i] = ip2x_cal_timer();
 		} while (ctrdiff[i] == 0);
 
 		cps += ctrdiff[i];
@@ -171,13 +172,6 @@ ip2x_init(void)
 	    (curcpu()->ci_cpu_freq / 10000) % 100);
 }
 
-void
-ip2x_bus_reset(void)
-{
-	*(volatile u_int32_t *)MIPS_PHYS_TO_KSEG1(0x1fa000ec) = 0;
-	*(volatile u_int32_t *)MIPS_PHYS_TO_KSEG1(0x1fa000fc) = 0;
-}
-
 /*
  * NB: Do not re-enable interrupts here -- reentrancy here can cause all
  * sorts of Bad Things(tm) to happen, including kernel stack overflows.
@@ -192,8 +186,7 @@ ip2x_intr(status, cause, pc, ipending)
 	u_int32_t newcnt;
 	struct clockframe cf;
 
-	/* Tickle Indy/I2 MC watchdog timer */
-	*(volatile u_int32_t *)MIPS_PHYS_TO_KSEG1(0x1fa00014) = 0;
+	imc_watchdog_tickle();
 
 	if (ipending & MIPS_INT_MASK_5) {
 		last_clk_intr = mips3_cp0_count_read();
@@ -233,13 +226,7 @@ ip2x_intr(status, cause, pc, ipending)
 	}
 
 	if (ipending & MIPS_INT_MASK_4) {
-		printf("IP2x bus error: cpu_stat %08x addr %08x, "
-		    "gio_stat %08x addr %08x\n",
-		    *(volatile u_int32_t *)MIPS_PHYS_TO_KSEG1(0x1fa000ec),
-		    *(volatile u_int32_t *)MIPS_PHYS_TO_KSEG1(0x1fa000e4),
-		    *(volatile u_int32_t *)MIPS_PHYS_TO_KSEG1(0x1fa000fc),
-		    *(volatile u_int32_t *)MIPS_PHYS_TO_KSEG1(0x1fa000f4));
-		ip2x_bus_reset();
+		imc_bus_error();
 		cause &= ~MIPS_INT_MASK_4;
 	}
 
@@ -258,9 +245,8 @@ ip2x_mappable_intr(void* arg)
 	int which = (int)arg;
 
 	ret = 0;
-	mstat = *(volatile u_int32_t *)MIPS_PHYS_TO_KSEG1(int23addr + 0x10);
-	mmask = *(volatile u_int32_t *)MIPS_PHYS_TO_KSEG1(int23addr + 0x14 +
-								(which * 4));
+	mstat = bus_space_read_4(iot, ioh, INT2_MAP_STATUS);
+	mmask = bus_space_read_4(iot, ioh, INT2_MAP_MASK0 + (which * 4));
 
 	mstat &= mmask;
 
@@ -288,8 +274,8 @@ ip2x_local0_intr()
 	u_int32_t l0mask;
 
 	ret = 0;
-	l0stat = *(volatile u_int32_t *)MIPS_PHYS_TO_KSEG1(int23addr + 0x00);
-	l0mask = *(volatile u_int32_t *)MIPS_PHYS_TO_KSEG1(int23addr + 0x04);
+	l0stat = bus_space_read_4(iot, ioh, INT2_LOCAL0_STATUS);
+	l0mask = bus_space_read_4(iot, ioh, INT2_LOCAL0_MASK);
 
 	l0stat &= l0mask;
 
@@ -313,8 +299,8 @@ ip2x_local1_intr()
 	u_int32_t l1stat;
 	u_int32_t l1mask;
 
-	l1stat = *(volatile u_int32_t *)MIPS_PHYS_TO_KSEG1(int23addr + 0x08);
-	l1mask = *(volatile u_int32_t *)MIPS_PHYS_TO_KSEG1(int23addr + 0x0c);
+	l1stat = bus_space_read_4(iot, ioh, INT2_LOCAL1_STATUS);
+	l1mask = bus_space_read_4(iot, ioh, INT2_LOCAL1_MASK);
 
 	l1stat &= l1mask;
 
@@ -337,7 +323,7 @@ void
 ip2x_intr_establish(level, ipl, handler, arg)
 	int level;
 	int ipl;
-	int (*handler) __P((void *));
+	int (*handler) (void *);
 	void *arg;
 {
 	u_int32_t mask;
@@ -355,31 +341,31 @@ ip2x_intr_establish(level, ipl, handler, arg)
 	intrtab[level].ih_arg = arg;
 
 	if (level < 8) {
-		mask = *(volatile u_int32_t *)MIPS_PHYS_TO_KSEG1(int23addr + 0x4);
+		mask = bus_space_read_4(iot, ioh, INT2_LOCAL0_MASK);
 		mask |= (1 << level);
-		*(volatile u_int32_t *)MIPS_PHYS_TO_KSEG1(int23addr + 0x4) = mask;
+		bus_space_write_4(iot, ioh, INT2_LOCAL0_MASK, mask);
 	} else if (level < 16) {
-		mask = *(volatile u_int32_t *)MIPS_PHYS_TO_KSEG1(int23addr + 0xc);
+		mask = bus_space_read_4(iot, ioh, INT2_LOCAL1_MASK);
 		mask |= (1 << (level - 8));
-		*(volatile u_int32_t *)MIPS_PHYS_TO_KSEG1(int23addr + 0xc) = mask;
+		bus_space_write_4(iot, ioh, INT2_LOCAL1_MASK, mask);
 	} else if (level < 24) {
-		/* Map0 interrupt maps to l0 interrupt bit 7, so turn that on too */
-		mask = *(volatile u_int32_t *)MIPS_PHYS_TO_KSEG1(int23addr + 0x4);
+		/* Map0 interrupt maps to l0 bit 7, so turn that on too */
+		mask = bus_space_read_4(iot, ioh, INT2_LOCAL0_MASK);
 		mask |= (1 << 7);
-		*(volatile u_int32_t *)MIPS_PHYS_TO_KSEG1(int23addr + 0x4) = mask;
+		bus_space_write_4(iot, ioh, INT2_LOCAL0_MASK, mask);
 
-		mask = *(volatile u_int32_t *)MIPS_PHYS_TO_KSEG1(int23addr + 0x14);
+		mask = bus_space_read_4(iot, ioh, INT2_MAP_MASK0);
 		mask |= (1 << (level - 16));
-		*(volatile u_int32_t *)MIPS_PHYS_TO_KSEG1(int23addr + 0x14) = mask;
+		bus_space_write_4(iot, ioh, INT2_MAP_MASK0, mask);
 	} else {
-		/* Map1 interrupt maps to l1 interrupt bit 3, so turn that on too */
-		mask = *(volatile u_int32_t *)MIPS_PHYS_TO_KSEG1(int23addr + 0xc);
+		/* Map1 interrupt maps to l1 bit 3, so turn that on too */
+		mask = bus_space_read_4(iot, ioh, INT2_LOCAL1_MASK);
 		mask |= (1 << 3);
-		*(volatile u_int32_t *)MIPS_PHYS_TO_KSEG1(int23addr + 0xc) = mask;
+		bus_space_write_4(iot, ioh, INT2_LOCAL1_MASK, mask);
 
-		mask = *(volatile u_int32_t *)MIPS_PHYS_TO_KSEG1(int23addr + 0x18);
+		mask = bus_space_read_4(iot, ioh, INT2_MAP_MASK1);
 		mask |= (1 << (level - 24));
-		*(volatile u_int32_t *)MIPS_PHYS_TO_KSEG1(int23addr + 0x18) = mask;
+		bus_space_write_4(iot, ioh, INT2_MAP_MASK1, mask);
 	}
 }
 
@@ -394,7 +380,7 @@ ip2x_clkread(void)
 }
 
 unsigned long
-ip2x_cal_timer(u_int32_t tctrl, u_int32_t tcount)
+ip2x_cal_timer(void)
 {
 	int s;
 	int roundtime;
@@ -413,23 +399,23 @@ ip2x_cal_timer(u_int32_t tctrl, u_int32_t tcount)
 
 	s = splhigh();
 
-	*(volatile u_int32_t *)MIPS_PHYS_TO_KSEG1(tctrl) = 0x80 | 0x30 | 0x04;
-	*(volatile u_int32_t *)MIPS_PHYS_TO_KSEG1(tcount) = sampletime & 0xff;
-	*(volatile u_int32_t *)MIPS_PHYS_TO_KSEG1(tcount) = sampletime >> 8;
+	bus_space_write_4(iot, ioh, INT2_TIMER_CONTROL, (0x80 | 0x30 | 0x04));
+	bus_space_write_4(iot, ioh, INT2_TIMER_2, (sampletime & 0xff));
+	bus_space_write_4(iot, ioh, INT2_TIMER_2, (sampletime >> 8));
 
 	startctr = mips3_cp0_count_read();
 
 	/* Wait for the MSB to count down to zero */
 	do {
-		*(volatile u_int32_t *)MIPS_PHYS_TO_KSEG1(tctrl) = 0x80 | 0x00;
-		lsb = *(volatile u_int32_t *)MIPS_PHYS_TO_KSEG1(tcount) & 0xff;
-		msb = *(volatile u_int32_t *)MIPS_PHYS_TO_KSEG1(tcount) & 0xff;
+		bus_space_write_4(iot, ioh, INT2_TIMER_CONTROL, (0x80 | 0x00));
+		lsb = bus_space_read_4(iot, ioh, INT2_TIMER_2) & 0xff;
+		msb = bus_space_read_4(iot, ioh, INT2_TIMER_2) & 0xff;
 
 		endctr = mips3_cp0_count_read();
 	} while (msb);
 
 	/* Turn off timer */
-	*(volatile u_int32_t *)MIPS_PHYS_TO_KSEG1(tctrl) = 0x80 | 0x30 | 0x08;
+	bus_space_write_4(iot, ioh, INT2_TIMER_CONTROL, (0x80 | 0x30 | 0x08));
 
 	splx(s);
 
