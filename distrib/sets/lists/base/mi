@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.151 2000/03/10 05:51:56 groo Exp $
+# $NetBSD: mi,v 1.152 2000/03/14 08:49:50 shin Exp $
 .
 ./altroot
 ./bin
@@ -52,6 +52,7 @@
 ./etc/openssl/misc
 ./etc/openssl/private
 ./etc/postfix
+./etc/rc.d
 ./etc/skel
 ./etc/sliphome
 ./etc/uucp
