@@ -1,4 +1,4 @@
-/*      $NetBSD: ukbd.c,v 1.22 1999/01/09 12:10:36 drochner Exp $        */
+/*      $NetBSD: ukbd.c,v 1.23 1999/01/10 00:23:32 augustss Exp $        */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -73,9 +73,7 @@
 #include <dev/wscons/wskbdvar.h>
 #include <dev/wscons/wsksymdef.h>
 #include <dev/wscons/wsksymvar.h>
-#include <dev/wscons/wskbdmap_mfii.h>
 
-#include "opt_pckbd_layout.h"
 #include "opt_wsdisplay_compat.h"
 
 #elif defined(__FreeBSD__)
@@ -114,28 +112,31 @@ struct ukbd_data {
 	u_int8_t	keycode[NKEYCODE];
 };
 
-#define PRESS 0
-#define RELEASE 0x100
+#define PRESS    0x000
+#define RELEASE  0x100
+#define CODEMASK 0x0ff
 
+/* Translate USB bitmap to USB keycode. */
 #define NMOD 6
 static struct {
 	int mask, key;
 } ukbd_mods[NMOD] = {
-	{ MOD_CONTROL_L, 29 },
-	{ MOD_CONTROL_R, 58 },
-	{ MOD_SHIFT_L,   42 },
-	{ MOD_SHIFT_R,   54 },
-	{ MOD_ALT_L,     56 },
-	{ MOD_ALT_R,    184 },
+	{ MOD_CONTROL_L, 224 },
+	{ MOD_CONTROL_R, 228 },
+	{ MOD_SHIFT_L,   225 },
+	{ MOD_SHIFT_R,   229 },
+	{ MOD_ALT_L,     226 },
+	{ MOD_ALT_R,     230 },
 };
 
+#if defined(__NetBSD__) && defined(WSDISPLAY_COMPAT_RAWKBD)
 #define NN 0			/* no translation */
 /* 
- * Translate USB keycodes to US keyboard AT scancodes.
+ * Translate USB keycodes to US keyboard XT scancodes.
  * Scancodes >= 128 represent EXTENDED keycodes.
  */
 static u_int8_t ukbd_trtab[256] = {
-	   0,   0,   0,   0,  30,  48,  46,  32, /* 00 - 07 */
+	  NN,  NN,  NN,  NN,  30,  48,  46,  32, /* 00 - 07 */
 	  18,  33,  34,  35,  23,  36,  37,  38, /* 08 - 0F */
 	  50,  49,  24,  25,  16,  19,  31,  20, /* 10 - 17 */
 	  22,  47,  17,  45,  21,  44,   2,   3, /* 18 - 1F */
@@ -163,11 +164,12 @@ static u_int8_t ukbd_trtab[256] = {
           NN,  NN,  NN,  NN,  NN,  NN,  NN,  NN, /* C8 - CF */
           NN,  NN,  NN,  NN,  NN,  NN,  NN,  NN, /* D0 - D7 */
           NN,  NN,  NN,  NN,  NN,  NN,  NN,  NN, /* D8 - DF */
-          NN,  NN,  NN,  NN,  NN,  NN,  NN,  NN, /* E0 - E7 */
+          29,  42,  56,  NN,  58,  54,  184, NN, /* E0 - E7 */
           NN,  NN,  NN, 219,  NN,  NN,  NN, 220, /* E8 - EF */
           NN,  NN,  NN,  NN,  NN,  NN,  NN,  NN, /* F0 - F7 */
           NN,  NN,  NN,  NN,  NN,  NN,  NN,  NN, /* F8 - FF */
 };
+#endif /* defined(__NetBSD__) && defined(WSDISPLAY_COMPAT_RAWKBD) */
 
 #define KEY_ERROR 0x01
 
@@ -188,17 +190,18 @@ struct ukbd_softc {
 	int sc_leds;
 #if defined(__NetBSD__)
 	struct device *sc_wskbddev;
-#ifdef WSDISPLAY_COMPAT_RAWKBD
+#if defined(WSDISPLAY_COMPAT_RAWKBD)
 #define REP_DELAY1 400
 #define REP_DELAYN 100
 	int sc_rawkbd;
 	int sc_nrep;
 	char sc_rep[MAXKEYS];
-#endif
+#endif /* defined(WSDISPLAY_COMPAT_RAWKBD) */
 
 	int sc_polling;
-	int sc_pollchar;
-#endif
+	int sc_npollchar;
+	u_int16_t sc_pollchars[MAXKEYS];
+#endif /* defined(__NetBSD__) */
 };
 
 #define	UKBDUNIT(dev)	(minor(dev))
@@ -220,6 +223,7 @@ void	ukbd_disco __P((void *));
 
 int	ukbd_enable __P((void *, int));
 void	ukbd_set_leds __P((void *, int));
+
 #if defined(__NetBSD__)
 int	ukbd_ioctl __P((void *, u_long, caddr_t, int, struct proc *));
 int	ukbd_cnattach __P((void *v));
@@ -229,18 +233,16 @@ const struct wskbd_accessops ukbd_accessops = {
 	ukbd_enable,
 	ukbd_set_leds,
 	ukbd_ioctl,
-#if 0
+#if defined(CNATTACH)
 	ukbd_cnattach,
 #endif
 };
 
+extern const struct wscons_keydesc ukbd_keydesctab[];
+
 const struct wskbd_mapdata ukbd_keymapdata = {
-	pckbd_keydesctab,
-#ifdef PCKBD_LAYOUT
-	PCKBD_LAYOUT,
-#else
+	ukbd_keydesctab,
 	KB_US,
-#endif
 };
 #endif
 
@@ -334,7 +336,7 @@ USB_ATTACH(ukbd)
 
 	/* Flash the leds; no real purpose, just shows we're alive. */
 	ukbd_set_leds(sc, WSKBD_LED_SCROLL | WSKBD_LED_NUM | WSKBD_LED_CAPS);
-	usbd_delay_ms(uaa->device, 300);
+	usbd_delay_ms(uaa->device, 400);
 	ukbd_set_leds(sc, 0);
 
 	sc->sc_wskbddev = config_found(self, &a, wskbddevprint);
@@ -429,7 +431,7 @@ ukbd_intr(reqh, addr, status)
 	struct ukbd_softc *sc = addr;
 	struct ukbd_data *ud = &sc->sc_ndata;
 	int mod, omod;
-	int ibuf[MAXKEYS];	/* chars events */
+	u_int16_t ibuf[MAXKEYS];	/* chars events */
 	int nkeys, i, j;
 	int key, c;
 #define ADDKEY(c) ibuf[nkeys++] = (c)
@@ -468,9 +470,7 @@ ukbd_intr(reqh, addr, status)
 			for (j = 0; j < NKEYCODE; j++)
 				if (key == ud->keycode[j])
 					goto rfound;
-			c = ukbd_trtab[key];
-			if (c)
-				ADDKEY(c | RELEASE);
+			ADDKEY(key | RELEASE);
 		rfound:
 			;
 		}
@@ -483,11 +483,8 @@ ukbd_intr(reqh, addr, status)
 			for (j = 0; j < NKEYCODE; j++)
 				if (key == sc->sc_odata.keycode[j])
 					goto pfound;
-			c = ukbd_trtab[key];
-			DPRINTFN(2,("ukbd_intr: press key=0x%02x -> 0x%02x\n",
-				    key, c));
-			if (c)
-				ADDKEY(c | PRESS);
+			DPRINTFN(2,("ukbd_intr: press key=0x%02x\n", key));
+			ADDKEY(key | PRESS);
 		pfound:
 			;
 		}
@@ -499,9 +496,9 @@ ukbd_intr(reqh, addr, status)
 
 #if defined(__NetBSD__)
 	if (sc->sc_polling) {
-		DPRINTFN(1,("ukbd_intr: pollchar = 0x%02x\n", ibuf[0]));
-		if (nkeys > 0)
-			sc->sc_pollchar = ibuf[0]; /* XXX lost keys? */
+		DPRINTFN(1,("ukbd_intr: pollchar = 0x%03x\n", ibuf[0]));
+		memcpy(sc->sc_pollchars, ibuf, nkeys * sizeof(u_int16_t));
+		sc->sc_npollchar = nkeys;
 		return;
 	}
 #ifdef WSDISPLAY_COMPAT_RAWKBD
@@ -509,19 +506,23 @@ ukbd_intr(reqh, addr, status)
 		char cbuf[MAXKEYS * 2];
 		int npress;
 
-		for (npress = i = j = 0; i < nkeys; i++, j++) {
-			c = ibuf[i];
+		for (npress = i = j = 0; i < nkeys; i++) {
+			key = ibuf[i];
+			c = ukbd_trtab[key & CODEMASK];
+			if (c == NN)
+				continue;
 			if (c & 0x80)
 				cbuf[j++] = 0xe0;
 			cbuf[j] = c & 0x7f;
-			if (c & RELEASE)
+			if (key & RELEASE)
 				cbuf[j] |= 0x80;
 			else {
-				/* remember keys for autorepeat */
+				/* remember pressed keys for autorepeat */
 				if (c & 0x80)
 					sc->sc_rep[npress++] = 0xe0;
 				sc->sc_rep[npress++] = c & 0x7f;
 			}
+			j++;
 		}
 		wskbd_rawinput(sc->sc_wskbddev, cbuf, j);
 		untimeout(ukbd_rawrepeat, sc);
@@ -534,17 +535,19 @@ ukbd_intr(reqh, addr, status)
 #endif
 
 	for (i = 0; i < nkeys; i++) {
-		c = ibuf[i];
+		key = ibuf[i];
 		wskbd_input(sc->sc_wskbddev, 
-		    c & RELEASE ? WSCONS_EVENT_KEY_UP : WSCONS_EVENT_KEY_DOWN,
-		    c & 0xff);
+		    key&RELEASE ? WSCONS_EVENT_KEY_UP : WSCONS_EVENT_KEY_DOWN,
+		    key&CODEMASK);
 	}
+
 #elif defined(__FreeBSD__)
 	/* XXX shouldn't the keys be used? */
 	for (i = 0; i < nkeys; i++) {
 		c = ibuf[i];
 		printf("%c (%d) %s\n", 
-		       ((c&0xff) < 32 || (c&0xff) > 126? '.':(c&0xff)), c,
+		       ((c&CODEMASK) < 32 || (c&CODEMASK) > 126 ? '.' :
+			(c&CODEMASK)), c,
 		       (c&RELEASE? "released":"pressed"));
 		if (ud->modifiers)
 			printf("0x%04x\n", ud->modifiers);
@@ -637,18 +640,20 @@ ukbd_cngetc(v, type, data)
 	usbd_lock_token s;
 	int c;
 
-	DPRINTFN(1,("ukbd_cngetc: enter\n"));
+	DPRINTFN(-1,("ukbd_cngetc: enter\n"));
 	s = usbd_lock();
 	sc->sc_polling = 1;
-	sc->sc_pollchar = -1;
-	while(sc->sc_pollchar == -1)
+	while(sc->sc_npollchar <= 0)
 		usbd_dopoll(sc->sc_iface);
 	sc->sc_polling = 0;
-	c = sc->sc_pollchar;
+	c = sc->sc_pollchars[0];
+	sc->sc_npollchar--;
+	memcpy(sc->sc_pollchars, sc->sc_pollchars+1, 
+	       sc->sc_npollchar * sizeof(u_int16_t));
 	*type = c & RELEASE ? WSCONS_EVENT_KEY_UP : WSCONS_EVENT_KEY_DOWN;
-	*data = c & 0xff;
+	*data = c & CODEMASK;
 	usbd_unlock(s);
-	DPRINTFN(1,("ukbd_cngetc: return 0x%02x\n", c));
+	DPRINTFN(-1,("ukbd_cngetc: return 0x%02x\n", c));
 }
 
 void
