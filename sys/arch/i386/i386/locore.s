@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.202 1998/10/01 04:37:15 erh Exp $	*/
+/*	$NetBSD: locore.s,v 1.203 1998/11/26 23:47:36 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -1030,13 +1030,13 @@ ENTRY(bcopy)
 ENTRY(kcopy)
 	pushl	%esi
 	pushl	%edi
-
 	movl	_curpcb,%eax	# load curpcb into eax and set on-fault
+	pushl	PCB_ONFAULT(%eax)
 	movl	$_copy_fault, PCB_ONFAULT(%eax)
 
-	movl	12(%esp),%esi
-	movl	16(%esp),%edi
-	movl	20(%esp),%ecx
+	movl	16(%esp),%esi
+	movl	20(%esp),%edi
+	movl	24(%esp),%ecx
 	movl	%edi,%eax
 	subl	%esi,%eax
 	cmpl	%ecx,%eax		# overlapping?
@@ -1045,16 +1045,16 @@ ENTRY(kcopy)
 	shrl	$2,%ecx			# copy by 32-bit words
 	rep
 	movsl
-	movl	20(%esp),%ecx
+	movl	24(%esp),%ecx
 	andl	$3,%ecx			# any bytes left?
 	rep
 	movsb
 
-	xorl	%eax,%eax
+	movl    _curpcb,%edx
+	popl    PCB_ONFAULT(%edx)
 	popl	%edi
 	popl	%esi
-	movl    _curpcb,%edx
-	movl    %eax,PCB_ONFAULT(%edx)
+	xorl	%eax,%eax
 	ret
 
 	ALIGN_TEXT
@@ -1066,19 +1066,19 @@ ENTRY(kcopy)
 	decl	%esi
 	rep
 	movsb
-	movl	20(%esp),%ecx		# copy remainder by 32-bit words
+	movl	24(%esp),%ecx		# copy remainder by 32-bit words
 	shrl	$2,%ecx
 	subl	$3,%esi
 	subl	$3,%edi
 	rep
 	movsl
+	cld
 
-	xorl	%eax,%eax
+	movl    _curpcb,%edx
+	popl    PCB_ONFAULT(%edx)
 	popl	%edi
 	popl	%esi
-	movl    _curpcb,%edx
-	movl    %eax,PCB_ONFAULT(%edx)
-	cld
+	xorl	%eax,%eax
 	ret
 #endif
 
@@ -1096,10 +1096,11 @@ ENTRY(kcopy)
 ENTRY(copyout)
 	pushl	%esi
 	pushl	%edi
+	pushl	$0
 	
-	movl	12(%esp),%esi
-	movl	16(%esp),%edi
-	movl	20(%esp),%eax
+	movl	16(%esp),%esi
+	movl	20(%esp),%edi
+	movl	24(%esp),%eax
 
 	/*
 	 * We check that the end of the destination buffer is not past the end
@@ -1151,7 +1152,7 @@ ENTRY(copyout)
 	decl	%ecx
 	jns	1b
 
-	movl	16(%esp),%edi
+	movl	20(%esp),%edi
 	jmp	3f
 	
 2:	/* Simulate a trap. */
@@ -1182,11 +1183,11 @@ ENTRY(copyout)
 	andb	$3,%cl
 	rep
 	movsb
-	xorl	%eax,%eax
 
+	popl	PCB_ONFAULT(%edx)
 	popl	%edi
 	popl	%esi
-	movl	%eax,PCB_ONFAULT(%edx)
+	xorl	%eax,%eax
 	ret
 
 /*
@@ -1197,11 +1198,12 @@ ENTRY(copyin)
 	pushl	%esi
 	pushl	%edi
 	movl	_curpcb,%eax
+	pushl	$0
 	movl	$_copy_fault,PCB_ONFAULT(%eax)
 	
-	movl	12(%esp),%esi
-	movl	16(%esp),%edi
-	movl	20(%esp),%eax
+	movl	16(%esp),%esi
+	movl	20(%esp),%edi
+	movl	24(%esp),%eax
 
 	/*
 	 * We check that the end of the destination buffer is not past the end
@@ -1224,19 +1226,19 @@ ENTRY(copyin)
 	andb	$3,%cl
 	rep
 	movsb
-	xorl	%eax,%eax
 
+	movl	_curpcb,%edx
+	popl	PCB_ONFAULT(%edx)
 	popl	%edi
 	popl	%esi
-	movl	_curpcb,%edx
-	movl	%eax,PCB_ONFAULT(%edx)
+	xorl	%eax,%eax
 	ret
 
 ENTRY(copy_fault)
+	movl	_curpcb,%edx
+	popl	PCB_ONFAULT(%edx)
 	popl	%edi
 	popl	%esi
-	movl	_curpcb,%edx
-	movl	$0,PCB_ONFAULT(%edx)
 	movl	$EFAULT,%eax
 	ret
 
