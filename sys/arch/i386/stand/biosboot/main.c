@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.10 1997/09/17 18:37:58 drochner Exp $	*/
+/*	$NetBSD: main.c,v 1.11 1997/09/17 19:39:37 drochner Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997
@@ -239,7 +239,7 @@ main()
 
 		c = awaitkey(TIMEOUT, 1);
 		if ((c != '\r') && (c != '\n') && (c != '\0')) {
-			printf("\ntype \"?\" or \"help\" for help.\n");
+			printf("type \"?\" or \"help\" for help.\n");
 			bootmenu(); /* does not return */
 		}
 
