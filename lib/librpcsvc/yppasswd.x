@@ -36,20 +36,9 @@
 %#ifndef lint
 %/*static char sccsid[] = "from: @(#)yppasswd.x 1.1 87/04/13 Copyr 1987 Sun Micro";*/
 %/*static char sccsid[] = "from: @(#)yppasswd.x	2.1 88/08/01 4.0 RPCSRC";*/
-%static char rcsid[] = "$NetBSD: yppasswd.x,v 1.2 1996/09/26 23:45:31 thorpej Exp $";
+%static char rcsid[] = "$NetBSD: yppasswd.x,v 1.3 1996/12/02 06:51:12 mikel Exp $";
 %#endif /* not lint */
 #endif
-
-program YPPASSWDPROG {
-	version YPPASSWDVERS {
-		/*
-		 * Update my passwd entry 
-		 */
-		int
-		YPPASSWDPROC_UPDATE(yppasswd) = 1;
-	} = 1;
-} = 100009;
-
 
 struct x_passwd {
 	string pw_name<>;	/* username */
@@ -66,4 +55,12 @@ struct yppasswd {
 	x_passwd newpw;		/* new passwd entry */
 };
 
-
+program YPPASSWDPROG {
+	version YPPASSWDVERS {
+		/*
+		 * Update my passwd entry 
+		 */
+		int
+		YPPASSWDPROC_UPDATE(yppasswd) = 1;
+	} = 1;
+} = 100009;
