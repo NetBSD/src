@@ -1,4 +1,4 @@
-/*	$NetBSD: smc91cxx.c,v 1.11 1998/08/08 23:51:41 mycroft Exp $	*/
+/*	$NetBSD: smc91cxx.c,v 1.12 1998/11/17 20:25:01 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -176,9 +176,6 @@ void	smc91cxx_resume __P((struct smc91cxx_softc *));
 void	smc91cxx_stop __P((struct smc91cxx_softc *));
 void	smc91cxx_watchdog __P((struct ifnet *));
 int	smc91cxx_ioctl __P((struct ifnet *, u_long, caddr_t));
-
-int	smc91cxx_enable __P((struct smc91cxx_softc *));
-void	smc91cxx_disable __P((struct smc91cxx_softc *));
 
 /* XXX Should be in a common header file. */
 #define	ETHER_MAX_LEN	1518
