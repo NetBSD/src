@@ -1,4 +1,4 @@
-/*	$NetBSD: mv.c,v 1.13 1997/10/07 02:06:37 hubertf Exp $	*/
+/*	$NetBSD: mv.c,v 1.14 1997/10/08 11:26:04 kleink Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)mv.c	8.2 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: mv.c,v 1.13 1997/10/07 02:06:37 hubertf Exp $");
+__RCSID("$NetBSD: mv.c,v 1.14 1997/10/08 11:26:04 kleink Exp $");
 #endif
 #endif /* not lint */
 
@@ -58,6 +58,7 @@ __RCSID("$NetBSD: mv.c,v 1.13 1997/10/07 02:06:37 hubertf Exp $");
 #include <err.h>
 #include <errno.h>
 #include <fcntl.h>
+#include <locale.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -86,6 +87,8 @@ main(argc, argv)
 	struct stat sb;
 	int ch;
 	char path[MAXPATHLEN + 1];
+
+	setlocale(LC_ALL, "");
 
 	while ((ch = getopt(argc, argv, "if")) != -1)
 		switch (ch) {
@@ -126,10 +129,14 @@ main(argc, argv)
 	*endp++ = '/';
 	++baselen;
 	for (rval = 0; --argc; ++argv) {
+		p = *argv + strlen(*argv) - 1;
+		while (*p == '/' && p != *argv)
+			*p-- = '\0';
 		if ((p = strrchr(*argv, '/')) == NULL)
 			p = *argv;
 		else
 			++p;
+
 		if ((baselen + (len = strlen(p))) >= MAXPATHLEN) {
 			warnx("%s: destination pathname too long", *argv);
 			rval = 1;
