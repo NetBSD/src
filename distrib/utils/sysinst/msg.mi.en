@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.en,v 1.84 2002/02/04 14:35:10 mrg Exp $	*/
+/*	$NetBSD: msg.mi.en,v 1.85 2002/03/29 01:03:14 shin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -473,8 +473,8 @@ message badlocalsetdir
 {%s is not a directory}
 
 message badsetdir
-{%s does not contain the mandatory installation sets etc.tgz, 
-base.tgz and kern.tgz.  Are you sure you've got the right directory?}
+{%s does not contain the mandatory installation sets etc.tgz 
+and base.tgz.  Are you sure you've got the right directory?}
 
 message nonet
 {I can not find any network interfaces for use by NetBSD.  You will be
