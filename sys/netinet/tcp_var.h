@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_var.h,v 1.47 1998/05/02 04:21:59 thorpej Exp $	*/
+/*	$NetBSD: tcp_var.h,v 1.48 1998/05/06 01:24:38 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -84,8 +84,8 @@
  */
 struct tcpcb {
 	struct ipqehead segq;		/* sequencing queue */
+	u_int	t_timer[TCPT_NTIMERS];	/* tcp timers */
 	short	t_state;		/* state of this connection */
-	short	t_timer[TCPT_NTIMERS];	/* tcp timers */
 	short	t_rxtshift;		/* log(2) of rexmt exp. backoff */
 	short	t_rxtcur;		/* current retransmit value */
 	short	t_dupacks;		/* consecutive dup acks recd */
