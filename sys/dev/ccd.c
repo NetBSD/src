@@ -1,4 +1,4 @@
-/*	$NetBSD: ccd.c,v 1.92 2003/10/17 05:16:15 lukem Exp $	*/
+/*	$NetBSD: ccd.c,v 1.93 2003/10/26 23:42:57 chs Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -125,7 +125,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ccd.c,v 1.92 2003/10/17 05:16:15 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ccd.c,v 1.93 2003/10/26 23:42:57 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -725,7 +725,7 @@ ccdstart(cs)
 
 #ifdef DEBUG
 	if (ccddebug & CCDB_FOLLOW)
-		printf("ccdstart(%p, %p)\n", cs, bp);
+		printf("ccdstart(%p)\n", cs);
 #endif
 
 	/* See if there is work for us to do. */
