@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.10 2004/12/10 18:53:43 christos Exp $	*/
+/*	$NetBSD: machdep.c,v 1.11 2004/12/14 18:07:42 tls Exp $	*/
 /*	NetBSD: machdep.c,v 1.552 2004/03/24 15:34:49 atatat Exp 	*/
 
 /*-
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.10 2004/12/10 18:53:43 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.11 2004/12/14 18:07:42 tls Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_ibcs2.h"
@@ -847,12 +847,14 @@ haltsys:
 		 */
 #endif
 	}
-
+#if 0
 	if (howto & RB_HALT) {
+#endif
 		printf("\n");
-		printf("The operating system has halted.\n");
-		printf("Please press any key to reboot.\n\n");
+		printf("The guest operating system has halted.\n");
+		printf("To reboot, recreate this Xen domain.\n\n");
 
+#if 0
 #ifdef BEEP_ONHALT
 		{
 			int c;
@@ -877,8 +879,9 @@ haltsys:
 	}
 
 	printf("rebooting...\n");
+#endif
 	if (cpureset_delay > 0)
-		delay(cpureset_delay * 1000);
+		delay(cpureset_delay * 1000);	/* XXX not nice under Xen! */
 	cpu_reset();
 	for(;;) ;
 	/*NOTREACHED*/
